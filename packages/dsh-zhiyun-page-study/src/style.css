@@ -416,5 +416,17 @@ body[data-zhiyun] .zs-search-drawer .zs-chips { row-gap:6px; }
 body[data-zhiyun][data-ds-dark-theme] .zs-search-box,
 body[data-zhiyun][data-ds-dark-theme] .zs-search-trigger { background:color-mix(in srgb,var(--zy-surface) 80%,var(--zy-bg)); }
 body[data-zhiyun][data-ds-dark-theme] .zs-advanced-popover { background:color-mix(in srgb,var(--zy-surface) 80%,var(--zy-bg)); box-shadow:0 18px 40px -18px rgba(0,0,0,.6); }
+body[data-zhiyun] .zs-quiz, body[data-zhiyun] .zs-note { display:flex; flex-direction:column; gap:12px; }
+body[data-zhiyun] .zs-quiz-blocks, body[data-zhiyun] .zs-quiz-group ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+body[data-zhiyun] .zs-quiz-blocks label, body[data-zhiyun] .zs-quiz-tools label { display:flex; gap:8px; align-items:flex-start; font-size:13px; line-height:1.6; }
+body[data-zhiyun] .zs-quiz-tools, body[data-zhiyun] .zs-note-tools, body[data-zhiyun] .zs-quiz-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+body[data-zhiyun] .zs-quiz-tools input[type="number"] { width:4em; margin-left:6px; }
+body[data-zhiyun] .zs-quiz-item { display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--zy-line); }
+body[data-zhiyun] .zs-quiz-item p { margin:4px 0 0; }
+body[data-zhiyun] .zs-quiz-group h3 { margin:8px 0 0; font-size:14px; }
+body[data-zhiyun] .zs-quiz-problem { margin:0; color:var(--zy-accent); font-size:13px; line-height:1.6; }
+body[data-zhiyun] .zs-note-editor { width:100%; min-height:160px; padding:12px; border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); color:var(--zy-text); font:inherit; line-height:1.7; resize:vertical; }
+body[data-zhiyun] .zs-note-preview { white-space:pre-wrap; line-height:1.8; }
+body[data-zhiyun] .zs-transcript p.zs-line-focus { background:var(--zy-soft); border-radius:6px; }
 @media(max-width:1050px) { body[data-zhiyun] .zs-search-box { width:190px; max-width:38vw; } }
 @media(max-width:850px) { body[data-zhiyun] .zs-handout-toolbar { align-items:flex-start; flex-direction:column; } body[data-zhiyun] .zs-content-switch { flex-wrap:wrap; } body[data-zhiyun] .zs-breadcrumb-row { flex-wrap:wrap; } body[data-zhiyun] .zs-search-entry { flex:1 1 100%; } body[data-zhiyun] .zs-search-box { width:auto; max-width:none; flex:1 1 auto; } body[data-zhiyun] .zs-advanced-popover { width:auto; left:0; right:0; } }

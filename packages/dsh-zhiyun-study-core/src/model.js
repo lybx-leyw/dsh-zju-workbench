@@ -1,5 +1,5 @@
 export function createStudyController(call, navigation) {
-  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false };
+  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true };
   const listeners = new Set(), lifetime = new AbortController();
   let closed = false, selection = 0, account = 0, timer = null, polling = false;
   const lessonLoads = new Map();
@@ -16,7 +16,7 @@ export function createStudyController(call, navigation) {
     const epoch = ++account;
     selection++;
     lessonLoads.clear();
-    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, busy: false });
+    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false });
     try {
       const initial = await request("state");
       if (epoch !== account || closed) return;
@@ -95,14 +95,16 @@ export function createStudyController(call, navigation) {
   async function selectLesson(lesson, course = state.course) {
     if (!course) return;
     const ticket = ++selection, key = { courseId: course.id, subId: lesson.subId };
-    update({ course, lesson, lessons: state.lessonsByCourse[String(course.id)] ?? state.lessons, lessonsMeta: state.lessonMetaByCourse[String(course.id)] ?? state.lessonsMeta, content: null, result: null, lecture: null, lectureBusy: false, finalPassBusy: false, busy: false, job: null, error: null, contentLoading: true });
-    const outcomes = await Promise.allSettled([request("content", key), request("result", key)]);
+    update({ course, lesson, lessons: state.lessonsByCourse[String(course.id)] ?? state.lessons, lessonsMeta: state.lessonMetaByCourse[String(course.id)] ?? state.lessonsMeta, content: null, result: null, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, job: null, error: null, contentLoading: true });
+    const outcomes = await Promise.allSettled([request("content", key), request("result", key), request("quiz", key), request("note", key)]);
     if (ticket !== selection || closed) return;
-    const [content, result] = outcomes;
+    const [content, result, quiz, note] = outcomes;
     const parsed = result.status === "fulfilled" ? result.value.result : null;
     const job = result.status === "fulfilled" ? result.value.job : null;
     const sectionKey = `${course.id}:${lesson.subId}`;
-    update({ lecture: parsed?.lecture ?? null, content: content.status === "fulfilled" ? content.value : null, result: parsed, job, sectionStates: { ...state.sectionStates, [sectionKey]: { parsed: Boolean(parsed), resultStatus: parsed?.status ?? null, job } }, contentLoading: false, error: outcomes.filter((r) => r.status === "rejected").map((r) => r.reason.message).join("；") || null });
+    const noteWired = note.status === "fulfilled" || note.reason?.code !== "NOT_WIRED";
+    const banner = [content, result, quiz, note].filter((item) => item.status === "rejected" && item.reason?.code !== "NOT_WIRED").map((item) => item.reason.message);
+    update({ lecture: parsed?.lecture ?? null, content: content.status === "fulfilled" ? content.value : null, result: parsed, quiz: quiz.status === "fulfilled" ? quiz.value : null, note: note.status === "fulfilled" ? note.value : null, noteWired, job, sectionStates: { ...state.sectionStates, [sectionKey]: { parsed: Boolean(parsed), resultStatus: parsed?.status ?? null, job } }, contentLoading: false, error: banner.join("；") || null });
     if (result.status === "fulfilled" && result.value.job?.error) update({ error: result.value.job.error.message });
     if (result.status === "fulfilled" && result.value.job?.state === "running") {
       update({ activeJob: result.value.job });
@@ -236,6 +238,41 @@ export function createStudyController(call, navigation) {
         if (ticket === selection && epoch === account) update({ lecture: out.lecture, result: { ...state.result, lecture: out.lecture, canRestoreLecture: true } });
       } catch (e) { if (ticket === selection && epoch === account) update({ error: e.message }); }
       finally { if (ticket === selection && epoch === account) update({ busy: false, finalPassBusy: false }); }
+    },
+    async generateQuiz(input) {
+      const key = currentKey(); if (!key) return;
+      const ticket = selection, epoch = account;
+      update({ quizBusy: true, error: null });
+      try {
+        const quiz = await request("quiz-generate", { ...key, ...input });
+        if (ticket === selection && epoch === account) update({ quiz });
+      } catch (e) { if (ticket === selection && epoch === account) update({ error: e.message }); }
+      finally { if (ticket === selection && epoch === account) update({ quizBusy: false }); }
+    },
+    async adoptQuiz(id) { return this.changeQuiz("quiz-adopt", id); },
+    async discardQuiz(id) { return this.changeQuiz("quiz-discard", id); },
+    async changeQuiz(method, id) {
+      const key = currentKey(); if (!key) return;
+      const ticket = selection, epoch = account;
+      update({ quizBusy: true, error: null });
+      try {
+        const quiz = await request(method, { ...key, id });
+        if (ticket === selection && epoch === account) update({ quiz });
+      } catch (e) { if (ticket === selection && epoch === account) update({ error: e.message }); }
+      finally { if (ticket === selection && epoch === account) update({ quizBusy: false }); }
+    },
+    async saveNote(markdown) {
+      const key = currentKey(); if (!key) return;
+      const ticket = selection, epoch = account;
+      update({ noteBusy: true, error: null });
+      try {
+        const note = await request("note-save", { ...key, markdown, title: state.lesson?.title });
+        if (ticket === selection && epoch === account) update({ note, noteWired: true });
+        return note;
+      } catch (e) {
+        if (ticket === selection && epoch === account) update({ error: e.message, ...(e.code === "NOT_WIRED" ? { noteWired: false } : {}) });
+        return null;
+      } finally { if (ticket === selection && epoch === account) update({ noteBusy: false }); }
     },
     async restoreLecture() {
       const key = currentKey(); if (!key) return;
