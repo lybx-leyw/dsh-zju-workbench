@@ -1,0 +1,1074 @@
+/* packages/dsh-zhiyun-page-paper/src/style.css
+ *
+ * 「论文」页的样式。所有类都带 `zp-` 前缀，状态类一律跟在前缀类后面组合
+ * （`.zp-drawer.is-open` 而不是裸 `.is-open`）—— 各包样式表是同特异性的独立
+ * <style>，胜负只看挂载顺序；裸状态类会和壳/其他页面包的同类规则撞车，
+ * 这正是 scripts/check-css-order.mjs 拦的那类隐患。
+ *
+ * 主题色全部取壳里的 --zy-* 变量，不引入新色板。
+ */
+
+/* ------------------------------------------------------------------ 页骨架 */
+
+/*
+ * 这一页要铺满：阅读器不该被壳默认的 980px 阅读宽度和 43px 内边距框住。
+ *
+ * 为什么用 `:has(.zp-page)`（按自己渲染出来的子元素反选祖先）而不是
+ * `.zy-page[data-page=paper] .zy-content`：
+ * 后者与 `dsh-zhiyun-page-study` 里的同名覆盖（`.zy-page[data-page=study] .zy-content`）
+ * 是**同特异性、同主体、记号相交**的一对，值又不同 —— 胜负只剩挂载顺序这一条依据，
+ * 正是 scripts/check-css-order.mjs 判为隐患的形状（拆包时踩过一次）。
+ * `:has()` 版本的特异性与它不等，因此不构成那种隐性竞争；同时它挂在**本包自己的
+ * 类名**上，不需要壳认识「paper」这个页面 id。
+ *
+ * 注意必须是**后代**而不是子代（`>`）：插槽渲染出来的东西外面还套着一层
+ * `<div data-slot="zhiyun.paper.content" style="display:contents">`，
+ * `.zp-page` 不是 `.zy-content` 的直接子元素。写成 `:has(> .zp-page)` 会静默不生效，
+ * 页面看起来「渲染成功」但阅读器被压在 150px 高（实测）。
+ *
+ * 空态（还没选文献）时子元素是 `.zp-landing`，这条不生效，于是保留常规页边距。
+ */
+body[data-zhiyun] .zy-content:has(.zp-page) {
+  max-width: none;
+  padding: 0;
+  height: 100%;
+}
+
+body[data-zhiyun] .zp-page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--zy-bg);
+}
+
+body[data-zhiyun] .zp-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 空态（还没挑论文） */
+body[data-zhiyun] .zp-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+body[data-zhiyun] .zp-landing-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ------------------------------------------------------------------ 顶栏 */
+
+body[data-zhiyun] .zp-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--zy-line);
+  background: var(--zy-surface);
+  flex-shrink: 0;
+}
+
+body[data-zhiyun] .zp-bar-meta {
+  font-size: 11px;
+  color: var(--zy-muted);
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-bar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body[data-zhiyun] .zp-bar-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  font-size: 11px;
+}
+
+body[data-zhiyun] .zp-bar-actions button:hover {
+  border-color: var(--zy-accent);
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-bar-actions button.is-primary {
+  border-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+  color: var(--zy-accent);
+  background: color-mix(in srgb, var(--zy-accent) 8%, var(--zy-surface));
+}
+
+body[data-zhiyun] .zp-bar-actions button:disabled {
+  opacity: .55;
+}
+
+body[data-zhiyun] .zp-bar-error {
+  padding: 7px 14px;
+  font-size: 11px;
+  color: #b42318;
+  background: color-mix(in srgb, #b42318 8%, var(--zy-surface));
+  border-bottom: 1px solid var(--zy-line);
+}
+
+/* --------------------------------------------------------------- 文献库 */
+
+body[data-zhiyun] .zp-library {
+  position: relative;
+  min-width: 0;
+}
+
+body[data-zhiyun] .zp-library-trigger {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 340px;
+  padding: 6px 10px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  font-size: 11px;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-library-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-library-pop {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 380px;
+  max-height: 62vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--zy-line);
+  border-radius: 9px;
+  background: var(--zy-surface);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .16);
+  overflow: hidden;
+}
+
+body[data-zhiyun] .zp-library-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--zy-line);
+  font-size: 11px;
+}
+
+body[data-zhiyun] .zp-library-head button {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 5px;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-library-head button:hover {
+  background: var(--zy-hover);
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-library-list {
+  flex: 1;
+  min-height: 60px;
+  overflow: auto;
+  padding: 6px;
+}
+
+body[data-zhiyun] .zp-library-empty {
+  padding: 16px 10px;
+  font-size: 11px;
+  color: var(--zy-muted);
+  margin: 0;
+}
+
+body[data-zhiyun] .zp-library-topic-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 4px;
+  font-size: 10px;
+  letter-spacing: .3px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-library-topic-name > span {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--zy-soft);
+}
+
+body[data-zhiyun] .zp-library-list button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--zy-text);
+  text-align: left;
+}
+
+body[data-zhiyun] .zp-library-list button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-library-list button:hover {
+  background: var(--zy-hover);
+}
+
+body[data-zhiyun] .zp-library-list button.is-current {
+  color: var(--zy-accent);
+  background: color-mix(in srgb, var(--zy-accent) 10%, var(--zy-surface));
+}
+
+body[data-zhiyun] .zp-library-foot {
+  border-top: 1px solid var(--zy-line);
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+body[data-zhiyun] .zp-library-row {
+  display: flex;
+  gap: 7px;
+}
+
+body[data-zhiyun] .zp-library-row input,
+body[data-zhiyun] .zp-library-row select {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-bg);
+  font-size: 11px;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-library-row button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-library-row button.is-primary {
+  border-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+  color: var(--zy-accent);
+  background: color-mix(in srgb, var(--zy-accent) 8%, var(--zy-surface));
+}
+
+body[data-zhiyun] .zp-library-notice {
+  font-size: 10px;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-library-error {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #b42318;
+}
+
+body[data-zhiyun] .zp-library-dir {
+  font-size: 10px;
+  color: var(--zy-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- 阅读区 */
+
+body[data-zhiyun] .zp-reader {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--zy-soft);
+}
+
+body[data-zhiyun] .zp-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+body[data-zhiyun] .zp-frame-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 12px;
+  color: var(--zy-secondary);
+  background: var(--zy-bg);
+}
+
+body[data-zhiyun] .zp-frame-hint.is-error {
+  color: #b42318;
+}
+
+body[data-zhiyun] .zp-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--zy-line);
+  border-top-color: var(--zy-accent);
+  border-radius: 50%;
+  animation: zp-spin .8s linear infinite;
+}
+
+/* 译文浮层画在父页面里（不是 iframe 内），所以用得到壳的变量与图标。 */
+body[data-zhiyun] .zp-pop {
+  position: fixed;
+  z-index: 60;
+  width: 344px;
+  max-height: 46vh;
+  overflow: auto;
+  border: 1px solid var(--zy-line);
+  border-radius: 9px;
+  background: var(--zy-surface);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, .18);
+}
+
+body[data-zhiyun] .zp-pop-source {
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--zy-line);
+  font-size: 10px;
+  color: var(--zy-muted);
+  background: var(--zy-soft);
+}
+
+body[data-zhiyun] .zp-pop-body {
+  display: flex;
+  gap: 8px;
+  padding: 11px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-pop-body > p {
+  margin: 0;
+}
+
+body[data-zhiyun] .zp-pop-body > svg {
+  flex-shrink: 0;
+  color: var(--zy-accent);
+  margin-top: 2px;
+}
+
+body[data-zhiyun] .zp-pop-body.is-error {
+  color: #b42318;
+  flex-direction: column;
+  gap: 9px;
+}
+
+body[data-zhiyun] .zp-pop-message {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+body[data-zhiyun] .zp-pop-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px 11px;
+}
+
+body[data-zhiyun] .zp-pop-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  font-size: 11px;
+}
+
+body[data-zhiyun] .zp-pop-actions button.is-primary {
+  border-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+  color: var(--zy-accent);
+  background: color-mix(in srgb, var(--zy-accent) 8%, var(--zy-surface));
+}
+
+body[data-zhiyun] .zp-pop-note {
+  padding: 0 11px 9px;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-pop-cache {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+/* --------------------------------------------------------- AI 助手抽屉 */
+
+body[data-zhiyun] .zp-drawer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 46px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--zy-line);
+  background: var(--zy-surface);
+  min-height: 0;
+}
+
+body[data-zhiyun] .zp-drawer.is-open {
+  width: 392px;
+}
+
+body[data-zhiyun] .zp-drawer-resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -2px;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 2;
+}
+
+body[data-zhiyun] .zp-drawer:not(.is-open) .zp-drawer-resize {
+  display: none;
+}
+
+body[data-zhiyun] .zp-drawer-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--zy-line);
+  flex-shrink: 0;
+}
+
+body[data-zhiyun] .zp-drawer-head > strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+body[data-zhiyun] .zp-drawer-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 6px;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-drawer-toggle:hover {
+  background: var(--zy-hover);
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-drawer-session {
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-drawer-head-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+body[data-zhiyun] .zp-drawer-head-actions button {
+  display: inline-flex;
+  padding: 5px;
+  border-radius: 6px;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-drawer-head-actions button:hover {
+  background: var(--zy-hover);
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-drawer-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+body[data-zhiyun] .zp-drawer-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 26px 4px;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-drawer-empty > svg {
+  color: var(--zy-accent);
+  opacity: .7;
+}
+
+body[data-zhiyun] .zp-drawer-empty > strong {
+  font-size: 12px;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-drawer-empty > p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+body[data-zhiyun] .zp-drawer-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #b42318;
+  background: color-mix(in srgb, #b42318 8%, var(--zy-surface));
+}
+
+body[data-zhiyun] .zp-drawer-folded {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--zy-muted);
+  background: var(--zy-soft);
+}
+
+body[data-zhiyun] .zp-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+body[data-zhiyun] .zp-bubble-role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-bubble-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-bubble-text {
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--zy-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+body[data-zhiyun] .zp-bubble.is-user .zp-bubble-text {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--zy-soft);
+}
+
+body[data-zhiyun] .zp-bubble.is-assistant .zp-bubble-text {
+  padding-left: 1px;
+}
+
+/* 助手回答由宿主的 MarkdownText 渲染，它自带一套 `.markdown` 规则（字号、
+   行高、标题边距）。父层的 `white-space: pre-wrap` 是给用户气泡的纯文本用的，
+   对 Markdown 产出会把每个换行与缩进都画出来，必须关掉。 */
+body[data-zhiyun] .zp-bubble-text.zp-md {
+  white-space: normal;
+}
+
+/* MarkdownText 的默认色板来自宿主主题（`--dsw-alias-label-*`），在智云 Pro 的
+   主题覆盖下偏灰。这里把正文与链接拉回本页的色。
+
+   选 `[data-markdown-variant]` 而不是它的 `.markdown`：宿主用 CSS Modules，
+   那个类名在产物里是 `_markdown_1ypvv_5` 这种哈希，跟着它写规则会在下一次
+   宿主改哈希时**静默失效**（真踩过：字号一直没生效，肉眼只觉得「有点大」）。
+   `data-markdown-variant` 是宿主显式写进 DOM 的稳定属性。 */
+body[data-zhiyun] .zp-md [data-markdown-variant] {
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-md a {
+  color: var(--zy-accent);
+  text-decoration-color: color-mix(in srgb, var(--zy-accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+body[data-zhiyun] .zp-md [data-markdown-variant] > :first-child {
+  margin-top: 0;
+}
+
+body[data-zhiyun] .zp-md [data-markdown-variant] > :last-child {
+  margin-bottom: 0;
+}
+
+/* 页码链接（`linkCitations` 产出的 `[第 12 页](https://zhiyun.invalid/…)`）
+   渲染成 `a`，但外观要和普通引用一样是「一个页码小标签」，不是蓝色下划线长链接。 */
+body[data-zhiyun] .zp-md a[href^='https://zhiyun.invalid/paper/page/'] {
+  display: inline-flex;
+  padding: 0 5px;
+  margin: 0 1px;
+  border-radius: 4px;
+  font-size: 11px;
+  text-decoration: none;
+  color: var(--zy-accent);
+  background: color-mix(in srgb, var(--zy-accent) 10%, transparent);
+}
+
+body[data-zhiyun] .zp-md a[href^='https://zhiyun.invalid/paper/page/']:hover {
+  background: color-mix(in srgb, var(--zy-accent) 20%, transparent);
+}
+
+/* 宿主给每个外链前面挂了一个「链接类别」图标（域名图标，未知域名退化成地球）。
+   页码链接不是外链，那个图标在这里只会把「第 12 页」推宽，藏掉。 */
+body[data-zhiyun] .zp-md a[href^='https://zhiyun.invalid/paper/page/'] svg {
+  display: none;
+}
+
+body[data-zhiyun] .zp-page-ref {
+  display: inline-flex;
+  padding: 0 5px;
+  margin: 0 1px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--zy-accent);
+  background: color-mix(in srgb, var(--zy-accent) 10%, transparent);
+}
+
+body[data-zhiyun] .zp-page-ref:hover {
+  background: color-mix(in srgb, var(--zy-accent) 20%, transparent);
+}
+
+body[data-zhiyun] .zp-typing {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  padding: 3px 0;
+}
+
+body[data-zhiyun] .zp-typing > i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--zy-muted);
+  animation: zp-typing 1.1s ease-in-out infinite;
+}
+
+body[data-zhiyun] .zp-typing > i:nth-child(2) {
+  animation-delay: .16s;
+}
+
+body[data-zhiyun] .zp-typing > i:nth-child(3) {
+  animation-delay: .32s;
+}
+
+body[data-zhiyun] .zp-drawer-compose {
+  border-top: 1px solid var(--zy-line);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+body[data-zhiyun] .zp-drawer-quote {
+  border-left: 2px solid var(--zy-accent);
+  padding: 3px 0 3px 8px;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-drawer-quote > p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--zy-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+body[data-zhiyun] .zp-drawer-compose textarea {
+  width: 100%;
+  resize: none;
+  padding: 8px 9px;
+  border: 1px solid var(--zy-line);
+  border-radius: 7px;
+  background: var(--zy-bg);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--zy-text);
+  font-family: inherit;
+}
+
+body[data-zhiyun] .zp-drawer-compose textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--zy-accent) 45%, var(--zy-line));
+}
+
+body[data-zhiyun] .zp-drawer-compose-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body[data-zhiyun] .zp-drawer-hint {
+  font-size: 10px;
+  color: var(--zy-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-drawer-compose-actions button.is-primary {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #fff;
+  background: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-drawer-compose-actions button.is-primary:disabled {
+  opacity: .5;
+}
+
+/* --------------------------------------------------- 设置（个人 → 设置） */
+
+body[data-zhiyun] .zp-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+body[data-zhiyun] .zp-settings-lead {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.75;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-settings-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid var(--zy-line);
+  border-radius: 9px;
+  background: var(--zy-surface);
+}
+
+body[data-zhiyun] .zp-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+body[data-zhiyun] .zp-card-head > strong {
+  font-size: 12px;
+}
+
+body[data-zhiyun] .zp-card-head > span {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-card-head > span.is-ok {
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-card-desc {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-card input {
+  padding: 6px 9px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-bg);
+  font-size: 11px;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-card-msg {
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--zy-secondary);
+  background: var(--zy-soft);
+}
+
+body[data-zhiyun] .zp-card-msg.is-ok {
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-card-msg.is-error {
+  color: #b42318;
+  background: color-mix(in srgb, #b42318 8%, var(--zy-surface));
+}
+
+body[data-zhiyun] .zp-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+body[data-zhiyun] .zp-card-actions button {
+  padding: 6px 11px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  font-size: 11px;
+}
+
+body[data-zhiyun] .zp-card-actions button.is-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+  color: var(--zy-accent);
+  background: color-mix(in srgb, var(--zy-accent) 8%, var(--zy-surface));
+}
+
+body[data-zhiyun] .zp-card-actions button:disabled {
+  opacity: .5;
+}
+
+/* ------------------------------------------------- /resume 会话面板 */
+
+/* 浮在抽屉之上，**固定高度**（用户明确要求「固定大小的可滑动窗口」）：会话条数
+   不该决定面板多大，滚动的只有列表。 */
+body[data-zhiyun] .zp-resume {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 52px;
+  height: 340px;
+  max-height: calc(100% - 68px);
+  display: flex;
+  flex-direction: column;
+  z-index: 6;
+  border: 1px solid var(--zy-line);
+  border-radius: 9px;
+  background: var(--zy-surface);
+  box-shadow: 0 12px 32px color-mix(in srgb, #000 22%, transparent);
+  outline: none;
+}
+
+body[data-zhiyun] .zp-resume-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--zy-line);
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-resume-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-resume-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--zy-muted);
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zp-resume-close:hover {
+  background: var(--zy-soft);
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-resume-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+body[data-zhiyun] .zp-resume-row {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  padding: 6px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zp-resume-row.is-active {
+  background: var(--zy-soft);
+}
+
+body[data-zhiyun] .zp-resume-row.is-current .zp-resume-code {
+  color: var(--zy-accent);
+  border-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+}
+
+body[data-zhiyun] .zp-resume-code {
+  flex-shrink: 0;
+  margin-top: 1px;
+  padding: 0 4px;
+  border: 1px solid var(--zy-line);
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 16px;
+  color: var(--zy-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] .zp-resume-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* 首句一行截断：面板靠它认人，换行会把每行撑成两三行，一屏看不完几条。 */
+body[data-zhiyun] .zp-resume-first {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--zy-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-resume-meta {
+  font-size: 10px;
+  color: var(--zy-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-resume-foot {
+  flex-shrink: 0;
+  border-top: 1px solid var(--zy-line);
+  padding: 6px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+body[data-zhiyun] .zp-resume-keys {
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-resume-notice {
+  font-size: 10px;
+  color: var(--zy-accent);
+}
+
+/* ------------------------------------------------------------------ 动效 */
+
+@keyframes zp-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes zp-typing {
+  0%, 60%, 100% { opacity: .3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-2px); }
+}
+
+/* ------------------------------------------------------------- 窄屏适配 */
+
+@media (max-width: 900px) {
+  body[data-zhiyun] .zp-library-pop {
+    width: min(380px, calc(100vw - 40px));
+  }
+}
+
+@media (max-width: 760px) {
+  body[data-zhiyun] .zp-drawer.is-open {
+    width: 100%;
+  }
+
+  body[data-zhiyun] .zp-bar {
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    row-gap: 8px;
+  }
+
+  body[data-zhiyun] .zp-bar-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "dsh-zhiyun-page-paper",
+  "version": "0.1.0",
+  "description": "智云 Pro「论文阅读」页：左侧 PDF 阅读器（可选取文本），右侧 AI 助手抽屉与选中即译",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./client": "./lib/client.js", "./package.json": "./package.json" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "external": ["dsh-zhiyun-ui-primitives"] }
+  }
+}
