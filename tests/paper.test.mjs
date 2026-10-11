@@ -629,6 +629,116 @@ test('未知帧与畸形帧原样返回，不制造状态变化', () => {
   }
 });
 
+/* ────────────────── 注入的工作台上下文不能当气泡（真机实测的缺陷） ────────────────── */
+
+/**
+ * 真实日志（`.verify-scratch/host-<时间戳>/sessions/...` 解出来）里，一次「提问」会在
+ * `user/message` 名下留下四条记录：
+ *
+ *   seq 8  source {kind:'user'}               85 字符   ← 用户真的说了什么
+ *   seq 9  source {kind:'agent-instructions'} 636       ← AGENTS.md
+ *   seq 10 source {kind:'runtime-context'}    575       ← 文件策略/审批策略
+ *   seq 11 source {kind:'skill-catalog'}      111727    ← 技能目录
+ *
+ * 后三条必须折叠。判据取自宿主自己的对话 UI
+ * （`.ref/packages/client/ui-chat/src/client/conversation-nodes/message.ts:76`）：
+ * `source.kind !== 'user'` 就是 context 节点，不是用户的输入。
+ */
+const injectedRecord = (seq, id, kind, text) => ({
+  type: 'event',
+  event: { type: 'user/message', seq, data: { id, role: 'user', source: { kind }, content: [{ type: 'text', text }] } },
+});
+
+test('注入的上下文（AGENTS/运行时/技能目录）不当气泡，只计数', () => {
+  const records = [
+    injectedRecord(1, 'u1', 'agent-instructions', '<system-reminder>\nThe following workspace instructions…'),
+    injectedRecord(2, 'u2', 'runtime-context', 'Current runtime context. This snapshot supersedes…'),
+    injectedRecord(3, 'u3', 'skill-catalog', 'A skill is a reusable set of task-specific instructions…'),
+    { type: 'event', event: { type: 'user/message', seq: 4, data: { id: 'u4', role: 'user', source: { kind: 'user' }, content: [{ type: 'text', text: '这篇论文的核心贡献是什么？' }] } } },
+  ];
+  const messages = messagesFromRecords(records);
+
+  assert.deepEqual(messages.map((message) => message.text), ['这篇论文的核心贡献是什么？'],
+    '技能目录有 10 万字符，混进气泡会把整个抽屉铺满');
+
+  const feed = applyFrame(EMPTY_FEED, { type: 'snapshot', records });
+  assert.equal(feed.contextCount, 3, '折叠了几条要如实告诉用户，否则看起来像「助手一句话没说」');
+  assert.equal(feed.messages.length, 1);
+});
+
+test('注入的上下文走 event 帧也不进气泡，且计数累加', () => {
+  const first = applyFrame(EMPTY_FEED, { type: 'event', event: injectedRecord(1, 'x1', 'skill-catalog', '技能目录…').event });
+  assert.equal(first.messages.length, 0);
+  assert.equal(first.contextCount, 1);
+
+  const second = applyFrame(first, { type: 'event', event: injectedRecord(2, 'x2', 'runtime-context', '运行时…').event });
+  assert.equal(second.contextCount, 2);
+
+  // 重连重推同一份快照不能把计数翻倍。
+  const replayed = applyFrame(second, { type: 'snapshot', records: [
+    injectedRecord(1, 'x1', 'skill-catalog', '技能目录…'),
+    injectedRecord(2, 'x2', 'runtime-context', '运行时…'),
+  ] });
+  assert.equal(replayed.contextCount, 2);
+});
+
+test('没有 source 字段的老消息仍然当真人发言（宁可多显示，不可吞掉提问）', () => {
+  const messages = messagesFromRecords([userRecord(1, 'u1', '没有 source 的提问')]);
+  assert.deepEqual(messages.map((message) => message.text), ['没有 source 的提问']);
+});
+
+/* ────────────────── 一轮答不出来时必须收掉空转的三个点 ────────────────── */
+
+test('turn/end 报错：收掉实时气泡并把原因如实说出来', () => {
+  // 实测：没有模型凭证时这一轮**没有** assistant/message，只有 durable 的
+  // assistant/attempt（finish reason=error），随后 step/end、turn/end。
+  const live = applyFrame(EMPTY_FEED, {
+    type: 'assistant-stream',
+    frame: { type: 'start', attemptId: 'att1', revision: 1, startedAfterSeq: 0, turn: 1, step: 1 },
+  });
+  assert.equal(hasLiveAttempt(live), true);
+
+  const ended = applyFrame(live, {
+    type: 'event',
+    event: { type: 'turn/end', seq: 18, data: { turn: 1, reason: { kind: 'error', error: { message: 'llm-deepseek: no API key for provider route "deepseek-official"' } } } },
+  });
+
+  assert.equal(ended.live, null, '不收掉的话气泡永远停在三个点上，看起来像还在回答');
+  assert.equal(hasLiveAttempt(ended), false);
+  assert.match(ended.turnError, /no API key/, '答不出来的原因必须如实显示，不能静默');
+});
+
+test('完成的一轮由权威消息结算，turn/end 不制造错误提示', () => {
+  const live = applyFrame(EMPTY_FEED, {
+    type: 'assistant-stream',
+    frame: { type: 'start', attemptId: 'att1', revision: 1, startedAfterSeq: 0, turn: 1, step: 1 },
+  });
+  const answered = applyFrame(live, { type: 'event', event: assistantRecord(5, 'a1', '注意力是一种加权', 1).event });
+  assert.equal(answered.live, null);
+  assert.equal(answered.turnError, null);
+
+  const ended = applyFrame(answered, { type: 'event', event: { type: 'turn/end', seq: 6, data: { turn: 1, reason: { kind: 'completed' } } } });
+  assert.equal(ended, answered, '正常收尾不该改变状态（也就不会让抽屉抖一下）');
+});
+
+test('上一轮结束不能收掉下一轮正在生成的气泡', () => {
+  const live = applyFrame(EMPTY_FEED, {
+    type: 'assistant-stream',
+    frame: { type: 'start', attemptId: 'att2', revision: 1, startedAfterSeq: 0, turn: 3, step: 1 },
+  });
+  const stale = applyFrame(live, { type: 'event', event: { type: 'turn/end', seq: 9, data: { turn: 1, reason: { kind: 'error', error: { message: '旧轮' } } } } });
+  assert.equal(stale.live, live.live, '第 1 轮的收尾事件不能打断第 3 轮');
+});
+
+test('step/end 也要收掉实时气泡（有些失败停在 step 不走到 turn/end）', () => {
+  const live = applyFrame(EMPTY_FEED, {
+    type: 'assistant-stream',
+    frame: { type: 'start', attemptId: 'att1', revision: 1, startedAfterSeq: 0, turn: 1, step: 1 },
+  });
+  const ended = applyFrame(live, { type: 'event', event: { type: 'step/end', seq: 17, data: { turn: 1, step: 1 } } });
+  assert.equal(ended.live, null);
+});
+
 /* ────────────────────────── SSE store ────────────────────────── */
 
 class FakeEventSource {

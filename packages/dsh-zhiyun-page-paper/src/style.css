@@ -561,6 +561,18 @@ body[data-zhiyun] .zp-drawer-error {
   background: color-mix(in srgb, #b42318 8%, var(--zy-surface));
 }
 
+body[data-zhiyun] .zp-drawer-folded {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--zy-muted);
+  background: var(--zy-soft);
+}
+
 body[data-zhiyun] .zp-bubble {
   display: flex;
   flex-direction: column;

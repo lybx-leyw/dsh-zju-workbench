@@ -3,7 +3,7 @@
  *
  * 上游 `/paper-reader/api/session/follow` 推的是宿主原生的 `SessionFollowFrame`
  * （历史快照 + 增量事件 + 实时流三路混在一个通道里）。这个文件是**唯一**
- * 认识它形状的地方 —— 页面其他部分只看到 `{messages, live, error}`。
+ * 认识它形状的地方 —— 页面其他部分只看到 `{messages, live, turnError, contextCount}`。
  *
  * 为什么不直接用现成的 React 组件渲染对话：`ui-subagent` 那套（retain +
  * SessionProvider + `renderFactorySlot('conversation.content')`）只能在
@@ -22,8 +22,14 @@
  * 否则气泡会出现「说完 → 清空 → 零点几秒后重新出现」的闪烁。
  */
 
-/** 空状态。冻结，避免调用方手滑改到共享对象。 */
-export const EMPTY_FEED = Object.freeze({ messages: Object.freeze([]), live: null });
+/**
+ * 空状态。冻结，避免调用方手滑改到共享对象。
+ *
+ * `contextCount`：被折叠掉的工作台上下文条数（见 `isInjectedContext`）。
+ * `turnError`：这一轮**答不出来**的原因（`turn/end` 的 error 原因），与传输层
+ * 的 `phase:'error'` 不是一回事 —— 一个是「模型没配好」，一个是「连接断了」。
+ */
+export const EMPTY_FEED = Object.freeze({ messages: Object.freeze([]), live: null, turnError: null, contextCount: 0 });
 
 const TEXT_BLOCK = 'text';
 
@@ -35,6 +41,28 @@ function blocksToText(content) {
     .join('\n');
 }
 
+/**
+ * 这条 `user/message` 是不是**工作台自己注入的上下文**，而不是用户说的话。
+ *
+ * 依据是宿主自己的判据：`.ref/packages/client/ui-chat/src/client/conversation-nodes/message.ts`
+ * 里 `if (event.data.source.kind !== 'user')` 就把它当 context 节点渲染（折叠的
+ * 提示条），只有 `kind === 'user'` 才是真正的用户输入（steering 也是 user
+ * source，由 inbox 认领决定）。
+ *
+ * 不这么滤会怎样：宿主的运行时上下文、`AGENTS.md`、以及**技能目录**
+ * （实测一条 111727 字符）全都以 `user/message` 的形式进日志，抽屉会把它们
+ * 当聊天气泡铺满整个面板。
+ *
+ * `source` 缺失时**当作真消息**：真实日志里 source 必填，但测试与旧数据可能
+ * 没有，宁可多显示一条也不能把用户的提问吞掉。
+ */
+export function isInjectedContext(event) {
+  if (!event || event.type !== 'user/message') return false;
+  const source = event.data?.source;
+  if (!source || typeof source !== 'object') return false;
+  return source.kind !== 'user';
+}
+
 /** 帧里的 `data` 在线上都是 `JsonValue`，边界处一次窄化不可避免，也都集中在这里。 */
 function eventToMessage(event) {
   if (!event || typeof event !== 'object') return null;
@@ -42,6 +70,7 @@ function eventToMessage(event) {
 
   if (event.type === 'user/message') {
     // user/message 的 data **就是** message 本身（与 assistant 不同，它不包一层）。
+    if (isInjectedContext(event)) return null;
     const text = blocksToText(data?.content);
     if (!text.trim()) return null;
     return { id: data?.id ?? `u:${event.seq}`, role: 'user', text, seq: event.seq ?? null };
@@ -62,6 +91,32 @@ function eventToMessage(event) {
   }
 
   return null;
+}
+
+/**
+ * 一轮/一步结束（无论成功还是失败）时，那条 `live` 气泡必须收掉。
+ *
+ * 不这么做会怎样（实测）：没有模型凭证时，本轮**根本不产生** `assistant/message`
+ * ——失败只记成一条 durable `assistant/attempt`（finish reason = error），随后
+ * `step/end`、`turn/end`。`live` 于是永远停在 `text:''`，用户看到三个点
+ * 一直转，像是还在回答。
+ *
+ * 前一轮的结束事件不能收掉后一轮正在生成的气泡，所以按 turn 比大小。
+ */
+function settleLive(live, turn) {
+  if (live === null) return null;
+  if (typeof turn !== 'number') return null;
+  if (typeof live.turn !== 'number') return null;
+  return turn >= live.turn ? null : live;
+}
+
+/** 只留「为什么答不出来」这一句，别把整个 failure 对象塞进气泡。 */
+function turnErrorMessage(reason) {
+  if (!reason || typeof reason !== 'object') return null;
+  if (reason.kind !== 'error') return null;
+  const failure = reason.error;
+  const message = failure && typeof failure === 'object' ? failure.message : null;
+  return typeof message === 'string' && message.trim() ? message.trim() : '这一轮没能生成回答。';
 }
 
 function appendMessage(messages, message) {
@@ -90,23 +145,49 @@ export function applyFrame(feed, frame) {
 
   if (frame.type === 'snapshot') {
     let messages = feed.messages;
+    let seen = 0;
     for (const record of frame.records ?? []) {
       if (record?.type !== 'event') continue;
+      if (isInjectedContext(record.event)) seen += 1;
       const message = eventToMessage(record.event);
       if (message) messages = appendMessage(messages, message);
     }
-    return messages === feed.messages ? feed : { ...feed, messages };
+    // 重连会重推同一份快照，所以 contextCount 取最大值而不是累加。
+    const nextCount = Math.max(feed.contextCount, seen);
+    if (messages === feed.messages && nextCount === feed.contextCount) return feed;
+    return { ...feed, messages, contextCount: nextCount };
   }
 
   if (frame.type === 'event') {
-    const message = eventToMessage(frame.event);
-    if (!message) return feed;
+    const event = frame.event;
+
+    // 一轮/一步收尾：答不出来时把原因如实说出来，并收掉空转的实时气泡。
+    if (event?.type === 'turn/end') {
+      const turnError = turnErrorMessage(event.data?.reason);
+      const live = settleLive(feed.live, event.data?.turn);
+      if (live === feed.live && turnError === null) return feed;
+      return { ...feed, live, turnError: turnError ?? null };
+    }
+    if (event?.type === 'step/end') {
+      const live = settleLive(feed.live, event.data?.turn);
+      return live === feed.live ? feed : { ...feed, live };
+    }
+
+    const injected = isInjectedContext(event);
+    const message = eventToMessage(event);
+    if (!message) {
+      // 注入的上下文不显示，但要让抽屉知道「这里折叠了东西」，否则用户
+      // 看到的是「我问了，助手一句话都没有」而不知道上下文被藏起来了。
+      if (injected) return { ...feed, contextCount: feed.contextCount + 1 };
+      return feed;
+    }
     const messages = appendMessage(feed.messages, message);
     if (messages === feed.messages) return feed;
     // 权威消息到了：这一轮的实时气泡到此为止，避免同一条回答显示两遍。
     const settled = message.role === 'assistant' && feed.live !== null
       && (message.turn === null || feed.live.turn === null || message.turn >= feed.live.turn);
-    return { messages, live: settled ? null : feed.live };
+    // 新的一轮开始了，上一轮的错误提示让位。
+    return { messages, live: settled ? null : feed.live, turnError: null, contextCount: feed.contextCount };
   }
 
   if (frame.type === 'assistant-stream') {
@@ -114,7 +195,7 @@ export function applyFrame(feed, frame) {
     if (!inner || typeof inner !== 'object') return feed;
 
     if (inner.type === 'start') {
-      return { ...feed, live: { attemptId: inner.attemptId, turn: inner.turn ?? null, step: inner.step ?? null, text: '' } };
+      return { ...feed, turnError: null, live: { attemptId: inner.attemptId, turn: inner.turn ?? null, step: inner.step ?? null, text: '' } };
     }
     if (inner.type === 'chunk') {
       // 断言：没有 start 就收到 chunk（断线重连、或帧丢弃）也要能显示，

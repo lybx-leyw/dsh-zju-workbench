@@ -145,7 +145,6 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
 
   const messages = state.messages;
   const live = state.live;
-
   return <aside className={`zp-drawer${open ? ' is-open' : ''}`} style={open ? { width } : undefined} aria-label="论文 AI 助手" aria-hidden={!open}>
     <div className="zp-drawer-resize" role="separator" aria-orientation="vertical" aria-label="调整助手宽度" onMouseDown={startResize}/>
     <header className="zp-drawer-head">
@@ -161,13 +160,20 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
 
     {open && <>
       <div className="zp-drawer-list" ref={listRef}>
-        {messages.length === 0 && !live && <div className="zp-drawer-empty">
+        {/* 折叠了几条要如实说。**不能只在列表为空时才显示** —— 恰恰是列表里
+            有了真对话之后，用户才会以为「这里看到的就是全部」，而会话日志里
+            其实还躺着文献路径、运行时策略和技能目录。 */}
+        {state.contextCount > 0 && <div className="zp-drawer-folded">
+          <Icon name="layers" size={14}/>已折叠 {state.contextCount} 条工作台上下文（文献路径、运行时策略等），只显示对话本身。
+        </div>}
+        {messages.length === 0 && !live && !state.turnError && <div className="zp-drawer-empty">
           <Icon name="chat" size={22}/>
           <strong>关于这篇文献，问点什么</strong>
           <p>在左侧选中英文会自动翻译；想深入就点浮层里的「就此提问」，或直接在下面输入。</p>
         </div>}
         {messages.map((message) => <Bubble key={message.id} role={message.role} text={message.text} onJumpToPage={onJumpToPage}/>)}
         {live && <Bubble role="assistant" live text={live.text} onJumpToPage={onJumpToPage}/>}
+        {state.turnError && <div className="zp-drawer-error"><Icon name="close" size={14}/>{state.turnError}</div>}
         {state.phase === 'error' && state.error && <div className="zp-drawer-error"><Icon name="close" size={14}/>{state.error}</div>}
       </div>
 

@@ -37,10 +37,10 @@ export function createSessionFeed({ topic, name, eventSourceFactory } = {}) {
   // 快照必须是**同一个对象**直到状态真的变了：`useStore` 是 `useSyncExternalStore`，
   // 每次调用都返回新对象会让 React 认为「又变了」而无限重渲染（#185），
   // 崩掉的不只是抽屉，是整个插槽。所以只在 emit 时重建一次。
-  let snapshot = { ...state, messages: feed.messages, live: feed.live };
+  let snapshot = { ...state, messages: feed.messages, live: feed.live, turnError: feed.turnError, contextCount: feed.contextCount };
 
   const emit = () => {
-    snapshot = { ...state, messages: feed.messages, live: feed.live };
+    snapshot = { ...state, messages: feed.messages, live: feed.live, turnError: feed.turnError, contextCount: feed.contextCount };
     for (const listener of listeners) listener();
   };
   const setState = (patch) => {
@@ -53,7 +53,7 @@ export function createSessionFeed({ topic, name, eventSourceFactory } = {}) {
 
   const pushFrame = (frame) => {
     const next = applyFrame(feed, frame);
-    if (next.messages === feed.messages && next.live === feed.live) return;
+    if (next === feed) return;
     feed = next;
     emit();
   };
