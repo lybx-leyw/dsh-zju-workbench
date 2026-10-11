@@ -1,8 +1,10 @@
 # dsh-zhiyun-page-study
 
-「学习」页：课程树、讲义阅读、字幕 / PPT / 终稿四视图、分层检索与解析模型选择。
+「学习」页：课程树、讲义阅读、字幕 / PPT / 终稿四视图、分层检索、解析模型选择，以及本节的出题和笔记。
 
-**改这一页的东西都在这里**（领域状态除外，见下）。这是拆分后最大的页面包：`study-workspace.jsx`（工作台）、`lecture-reader.jsx`（讲义正文渲染）、`layered-search.js` + `layers.js`（分层检索）、`format.js`（时间与节次格式化）。
+**改这一页的东西都在这里**（领域状态除外，见下）。这是拆分后最大的页面包：`study-workspace.jsx`（工作台）、`lecture-reader.jsx`（讲义正文渲染）、`quiz-panel.jsx`（待审与采纳）、`note-panel.jsx`（本节笔记）、`note-links.js`（页码和时间链接的定位）、`layered-search.js` + `layers.js`（分层检索）、`format.js`（时间与节次格式化）。
+
+出题和笔记的读写在 `dsh-zhiyun-study-core`。这一页只渲染：从已选片段出填空或简答，待审题要用户采纳才进复习队列；笔记里的页码链切到课件，时间链切到字幕。另一节的链接留在原地并说明跳不过去。
 
 ## 边界
 

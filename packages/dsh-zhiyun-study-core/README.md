@@ -20,9 +20,11 @@
 
 ## 后端
 
-`/api/zhiyun-study` 是 POST-only 的 RPC，信封 `{type:'client-request', rpcId, method:'zhiyun-study', payload:{method, args}}`，方法白名单 16 项；响应统一 `{type:'server-response', rpcId, result}` 且 `cache-control: no-store`。错误进 `{ok:false, error:{code, message, details:{}}}`，不把内部堆栈漏给浏览器。
+`/api/zhiyun-study` 是 POST-only 的 RPC，信封 `{type:'client-request', rpcId, method:'zhiyun-study', payload:{method, args}}`，方法白名单 24 项；响应统一 `{type:'server-response', rpcId, result}` 且 `cache-control: no-store`。错误进 `{ok:false, error:{code, message, details:{}}}`，不把内部堆栈漏给浏览器。
 
-`inject` 只声明**硬依赖**（`workspaceRegistry / connection / profileContext / zhiyunClassroom / zhiyunParser / llm / zhiyunKnowledge`）。讲义与终审是可选加工步骤，用 `ctx.get('zhiyunLecture')` / `ctx.get('zhiyunFinalPass')` 惰性取 —— 写进 `inject` 会让「停用其中一个」直接拖死整个学习面板（连解析都用不了）。
+`inject` 只声明**硬依赖**（`workspaceRegistry / connection / profileContext / zhiyunClassroom / zhiyunParser / llm / zhiyunKnowledge`）。讲义、终审、出题与节笔记是可选加工步骤，用 `ctx.get('zhiyunLecture')` / `ctx.get('zhiyunFinalPass')` / `ctx.get('zhiyunQuiz')` / `ctx.get('zhiyunNotes')` 惰性取 —— 写进 `inject` 会让「停用其中一个」直接拖死整个学习面板（连解析都用不了）。
+
+出题只接受调用方点名的知识片段，不接受整节。生成结果经出题包的 `saveGenerated` 落成 `proposed`，写进该节的知识库记录；复习队列只在用户采纳之后出现。终稿一变，这一节的题目随讲义一起作废。节笔记走 `zhiyunNotes`，键是 `账号.节次`，避免笔记服务本身不带账号时串到另一个登录身份。页码和时间链接由笔记包生成，学习页只负责在本节课件和字幕里定位。
 
 ## 产物语义（继承自原 `dsh-zhiyun-study`）
 

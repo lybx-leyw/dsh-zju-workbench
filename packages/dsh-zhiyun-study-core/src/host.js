@@ -10,7 +10,7 @@ import path from 'node:path';
 import { StudyWorkbench, publicError } from "./workbench.js";
 import { LEARNING_SPACE_DIR, LEARNING_SPACE_TITLE } from './learning-space.js';
 
-// ⚠️ 只声明**硬依赖**：讲义与终审是可选加工步骤，用 `ctx.get` 惰性取。
+// ⚠️ 只声明**硬依赖**：讲义、终审、出题与节笔记是可选加工步骤，用 `ctx.get` 惰性取。
 //    写进 inject 会让「停用其中一个」直接拖死整个学习面板（连解析都用不了）。
 export const inject = ["workspaceRegistry", "connection", "profileContext", "zhiyunClassroom", "zhiyunParser", "llm", "zhiyunKnowledge"];
 
@@ -29,7 +29,8 @@ export async function apply(ctx) {
   const workbench = new StudyWorkbench({ classroom: ctx.zhiyunClassroom, parser: ctx.zhiyunParser, llm: ctx.llm,
     knowledge: ctx.zhiyunKnowledge,
     directory: path.join(ctx.profileContext.dir, "data/zhiyun-study"),
-    lecture: () => ctx.get("zhiyunLecture"), finalPass: () => ctx.get("zhiyunFinalPass") });
+    lecture: () => ctx.get("zhiyunLecture"), finalPass: () => ctx.get("zhiyunFinalPass"),
+    quiz: () => ctx.get("zhiyunQuiz"), notes: () => ctx.get("zhiyunNotes") });
   await workbench.ready;
   ctx.provide("zhiyunStudy", workbench);
   const remove = ctx.connection.fetch.register({ path: "/api/zhiyun-study", methods: ["POST"], requestBody: "buffered", fetch: async (request) => {
@@ -39,7 +40,7 @@ export async function apply(ctx) {
       if (message?.type !== "client-request" || message.method !== "zhiyun-study" || typeof message.rpcId !== "string" || message.rpcId.length > 200) throw Object.assign(new Error("invalid envelope"), { code: "INPUT" });
       rpcId = message.rpcId;
       const { method, args } = message.payload ?? {};
-      if (!["state", "login", "logout", "courses", "lessons", "content", "result", "results", "start", "cancel", "models", "models-save", "lecture", "final-pass", "lecture-restore", "search"].includes(method) || args === null || typeof args !== "object" || Array.isArray(args)) throw Object.assign(new Error("unknown"), { code: "INPUT" });
+      if (!["state", "login", "logout", "courses", "lessons", "content", "result", "results", "start", "cancel", "models", "models-save", "lecture", "final-pass", "lecture-restore", "search", "quiz", "quiz-generate", "quiz-adopt", "quiz-discard", "note", "note-save", "note-link", "note-link-text"].includes(method) || args === null || typeof args !== "object" || Array.isArray(args)) throw Object.assign(new Error("unknown"), { code: "INPUT" });
       result = { ok: true, value: await workbench.invoke(method, args, request.signal) };
     } catch (error) {
       result = { ok: false, error: { ...publicError(error), details: {} } };

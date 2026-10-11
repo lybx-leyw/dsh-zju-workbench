@@ -2,6 +2,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { exportReorganization, mergeReorganization } from "dsh-zhiyun-lecture/agent-text";
+import { QUIZ_TYPES } from "dsh-zhiyun-quiz/model";
+import { QUIZ_MATERIAL_SELECTIONS, makeSourceMaterial } from "dsh-zhiyun-quiz/generate";
+import { createQuizStore } from "dsh-zhiyun-quiz/store";
+import { hasContent, pageLink, parseZySectionUri, timeLink } from "dsh-zhiyun-notes/note";
 import { writeFileAtomic } from "@deepseek-ai/dsh-atomic-write";
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 const fault = (code, message) => Object.assign(new Error(message), { code });
@@ -19,6 +23,8 @@ const faultMessages = {
   NO_PROVIDER: "终审所需的宿主子 Agent 服务不可用。", AGENT_START_FAILED: "终审 Agent 启动失败，请检查宿主模型和预设。",
   NO_MAIN: "本节没有可用的主线块，请先完成终稿标注。", NO_TOPICS: "未从课件中提取出可写成讲义的知识点。",
   SLIDE_READ_FAILED: "课件图片尚未成功解析。请重新整理这节课，再生成讲义。",
+  NOT_FOUND: "找不到这道题，它可能已被丢弃。",
+  PERSIST: "笔记没有写入，请重试。",
 };
 export const publicError = (error) => ({ code: error.code ?? "FAILED", message: {
   ...faultMessages,
@@ -35,7 +41,7 @@ export const publicError = (error) => ({ code: error.code ?? "FAILED", message: 
   BUSY: "已有加工任务正在运行，请等待完成或先取消。"
 }[error.code] ?? "操作未完成，请重试。" });
 export class StudyWorkbench {
-  constructor({ classroom, parser, llm, directory, lecture, finalPass, knowledge }) {
+  constructor({ classroom, parser, llm, directory, lecture, finalPass, quiz, notes, knowledge }) {
     this.classroom = classroom;
     this.parser = parser;
     this.llm = llm;
@@ -51,6 +57,11 @@ export class StudyWorkbench {
     //    缺了应当只让「讲义 / 终审」这两个动作如实报未接入，而不是把页面拖死。
     this.lectureOf = lecture ?? (() => undefined);
     this.finalPassOf = finalPass ?? (() => undefined);
+    // 出题与节笔记同样是可选加工：停用其中一个只让对应动作报未接入。
+    // 出题的题库不使用插件上的单例 store（那个 store 跨节共享、且不落盘），
+    // 每次按本节记录自建一份，再把快照写回知识库。
+    this.quizOf = quiz ?? (() => undefined);
+    this.notesOf = notes ?? (() => undefined);
     this.jobs = new Map();
     this.closed = false;
     this.accountBusy = false;
@@ -169,7 +180,8 @@ export class StudyWorkbench {
         const keep = previous?.sourceVersion === sourceVersion;
         await this.save(key, { ...result, sourceVersion, title: typeof context === "string" ? context : result.sourceId,
           lecture: keep ? previous.lecture ?? null : null, knowledgeTree: keep ? previous.knowledgeTree ?? null : null,
-          lectureHistory: keep ? previous.lectureHistory ?? [] : [] });
+          lectureHistory: keep ? previous.lectureHistory ?? [] : [],
+          quiz: keep ? previous.quiz ?? null : null });
         job.state = result.status === "ready" ? "ready" : "partial";
         });
       } catch (error) {
@@ -238,6 +250,153 @@ export class StudyWorkbench {
       return { lecture: reviewed, unchanged: out.unchanged };
     });
   }
+  quizView(store, extra = {}) {
+    const pub = (item) => ({
+      id: item.id, type: item.type.code, stem: item.stem, answer: item.answer, status: item.status.code,
+      blockIndex: item.blockIndex, page: item.page, atSec: item.atSec,
+    });
+    return {
+      pending: store.pending.map(pub),
+      queue: store.reviewQueue.map(pub),
+      discarded: store.all.filter((item) => item.status.code === "rejected").length,
+      problems: extra.problems ?? [],
+      rejected: (extra.rejected ?? []).map((item) => ({ rule: item.rule ?? "", reason: String(item.reason ?? ""), blockIndex: item.blockIndex ?? null })),
+      saved: extra.saved ?? 0,
+      loadNotes: extra.loadNotes ?? [],
+    };
+  }
+  openQuizStore(stored) {
+    const store = createQuizStore();
+    const loaded = store.loadItems(Array.isArray(stored?.quiz?.items) ? stored.quiz.items : []);
+    if (Array.isArray(stored?.quiz?.attempts)) store.loadAttempts(stored.quiz.attempts);
+    return { store, loaded };
+  }
+  quizTypes(raw) {
+    const codes = raw == null ? ["cloze", "shortAnswer"] : raw;
+    if (!Array.isArray(codes) || codes.length === 0 || codes.length > 4) throw fault("INPUT", "题型无效");
+    return codes.map((code) => {
+      const type = { cloze: QUIZ_TYPES.cloze, shortAnswer: QUIZ_TYPES.shortAnswer, mcq: QUIZ_TYPES.mcq, caseStudy: QUIZ_TYPES.caseStudy }[code];
+      if (!type) throw fault("INPUT", "题型无效");
+      return type;
+    });
+  }
+  quizMaterials(stored, indexes) {
+    if (!Array.isArray(indexes) || indexes.length === 0) throw fault("INPUT", "请先选择要出题的知识片段");
+    return indexes.map((index) => {
+      if (!Number.isInteger(index)) throw fault("INPUT", "知识片段编号无效");
+      const block = stored.blocks.find((item) => item.index === index);
+      if (!block) throw fault("INPUT", "选中的知识片段不在这节终稿里");
+      return makeSourceMaterial({
+        blockIndex: block.index, page: block.page ?? 0, atSec: Math.floor((block.startMs ?? 0) / 1000),
+        summary: block.tag?.summary ?? null, facets: block.tag?.facets ?? [],
+        text: (block.sentences ?? []).map((line) => line.text).join(""),
+        selection: QUIZ_MATERIAL_SELECTIONS.userSelected,
+      });
+    });
+  }
+  async quizState(key) {
+    const stored = await this.result(key);
+    let opened;
+    try { opened = this.openQuizStore(stored); }
+    catch { throw fault("CORRUPT", "已有题目无法读取"); }
+    return this.quizView(opened.store, { loadNotes: opened.loaded.notes ?? [] });
+  }
+  async generateQuiz(key, payload, signal) {
+    const quiz = this.quizOf();
+    if (typeof quiz?.generate !== "function") throw fault("NOT_WIRED", "出题未接入");
+    return this.mutate(key, signal, async (signal) => {
+      const stored = await this.result(key);
+      if (!stored) throw fault("INPUT", "请先生成终稿");
+      const materials = this.quizMaterials(stored, payload.blockIndexes);
+      const maxCards = payload.maxCards == null ? null : payload.maxCards;
+      if (maxCards !== null && (!Number.isInteger(maxCards) || maxCards < 1 || maxCards > 20)) throw fault("INPUT", "出题数量无效");
+      let outcome;
+      try {
+        outcome = await quiz.generate({
+          blocks: materials,
+          context: {
+            courseId: identity(key).courseId, sectionId: identity(key).subId,
+            pageCount: Array.isArray(stored.pages) ? stored.pages.length : 0,
+            sourceRevision: stored.sourceVersion ?? "", types: this.quizTypes(payload.types),
+          },
+          signal, maxCards,
+        });
+      } catch (error) {
+        if (signal.aborted || error?.code === "CANCELLED") throw error;
+        throw fault(error.code || "FAILED", error.message);
+      }
+      const { store, loaded } = this.openQuizStore(stored);
+      const saved = outcome.admitted?.length ? store.saveGenerated(outcome.admitted) : { saved: 0, notes: [] };
+      if (saved.saved > 0) await this.save(key, { ...stored, quiz: store.snapshot() });
+      return this.quizView(store, {
+        problems: outcome.problems ?? [], rejected: outcome.rejected ?? [], saved: saved.saved,
+        loadNotes: [...(loaded.notes ?? []), ...(saved.notes ?? [])],
+      });
+    });
+  }
+  async changeQuiz(key, id, action, signal) {
+    const quiz = this.quizOf();
+    if (typeof quiz?.generate !== "function") throw fault("NOT_WIRED", "出题未接入");
+    if (typeof id !== "string" || !id || id.length > 200) throw fault("INPUT", "题目编号无效");
+    return this.mutate(key, signal, async () => {
+      const stored = await this.result(key);
+      if (!stored) throw fault("INPUT", "请先生成终稿");
+      const { store } = this.openQuizStore(stored);
+      try { store[action](id); }
+      catch (error) { throw fault(error.code === "NOT_FOUND" ? "NOT_FOUND" : "INPUT", error.message); }
+      await this.save(key, { ...stored, quiz: store.snapshot() });
+      return this.quizView(store);
+    });
+  }
+  noteIds(user, courseId, subId) {
+    const accountId = String(user.id);
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(accountId)) throw fault("INPUT", "账号标识不能写入笔记");
+    return { courseId, sectionId: `${accountId}.${subId}` };
+  }
+  noteView(note) {
+    return {
+      courseId: note.courseId, sectionId: note.sectionId, title: note.title ?? "",
+      markdown: note.markdown ?? "", updatedAt: note.updatedAt ?? null, hasContent: hasContent(note),
+    };
+  }
+  notesService() {
+    const notes = this.notesOf();
+    if (typeof notes?.getOrEmpty !== "function" || typeof notes?.put !== "function") throw fault("NOT_WIRED", "节笔记未接入");
+    return notes;
+  }
+  async readNote(user, courseId, subId) {
+    const ids = this.noteIds(user, courseId, subId);
+    try { return this.noteView(await this.notesService().getOrEmpty(ids)); }
+    catch (error) { if (error.code === "NOT_WIRED" || error.code === "INPUT") throw error; throw fault(error.code || "FAILED", error.message); }
+  }
+  async saveNote(user, courseId, subId, payload) {
+    const ids = this.noteIds(user, courseId, subId);
+    if (typeof payload.markdown !== "string" || payload.markdown.length > 100000) throw fault("INPUT", "笔记正文无效");
+    const title = payload.title == null ? undefined : payload.title;
+    if (title !== undefined && (typeof title !== "string" || title.length > 200)) throw fault("INPUT", "笔记标题无效");
+    try { return this.noteView(await this.notesService().put({ ...ids, markdown: payload.markdown, title })); }
+    catch (error) {
+      if (error.code === "NOT_WIRED" || error.code === "INPUT") throw error;
+      throw fault(error.code === "PERSIST" ? "PERSIST" : (error.code || "FAILED"), error.message);
+    }
+  }
+  linkText(user, payload) {
+    const ids = this.noteIds(user, identifier(payload.courseId), identifier(payload.subId));
+    try {
+      if (payload.kind === "page") {
+        if (!Number.isInteger(payload.page)) throw fault("INPUT", "页码无效");
+        return { markdown: pageLink({ ...ids, page: payload.page }) };
+      }
+      if (payload.kind === "time") {
+        if (typeof payload.atSec !== "number" || !Number.isFinite(payload.atSec)) throw fault("INPUT", "时间无效");
+        return { markdown: timeLink({ ...ids, atSec: payload.atSec }) };
+      }
+    } catch (error) {
+      if (error.code) throw error;
+      throw fault("INPUT", error.message);
+    }
+    throw fault("INPUT", "链接类型无效");
+  }
   async restoreLecture(key, signal) {
     return this.mutate(key, signal, async () => {
       const stored = await this.result(key), history = [...(stored?.lectureHistory ?? [])];
@@ -275,6 +434,10 @@ export class StudyWorkbench {
       return this.knowledge.search({ accountId: String(user.id), query: payload.query,
         ...(payload.courseId == null ? {} : { courseId: identifier(payload.courseId) }), layer: payload.layer ?? "final" });
     }
+    if (method === "note-link") {
+      if (typeof payload.href !== "string" || payload.href.length > 2000) throw fault("INPUT", "链接无效");
+      return { target: parseZySectionUri(payload.href) };
+    }
     const courseId = identifier(payload.courseId);
     if (method === "lessons") return this.classroom.listLessons(courseId, { onlyPlayable: false, signal });
     // 批量解析状态：界面展开一门课时要知道每个节次有没有已存产物，逐节
@@ -301,6 +464,13 @@ export class StudyWorkbench {
     if (method === "lecture") return this.assembleLecture(key, payload, signal);
     if (method === "final-pass") return this.finalPass(key, payload, signal);
     if (method === "lecture-restore") return this.restoreLecture(key, signal);
+    if (method === "quiz") return this.quizState(key);
+    if (method === "quiz-generate") return this.generateQuiz(key, payload, signal);
+    if (method === "quiz-adopt") return this.changeQuiz(key, payload.id, "adopt", signal);
+    if (method === "quiz-discard") return this.changeQuiz(key, payload.id, "discard", signal);
+    if (method === "note") return this.readNote(user, courseId, subId);
+    if (method === "note-save") return this.saveNote(user, courseId, subId, payload);
+    if (method === "note-link-text") return this.linkText(user, payload);
     if (method === "start") return this.start(courseId, subId, payload.context);
     if (method === "cancel") {
       const job = this.jobs.get(key);
