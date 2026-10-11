@@ -74,7 +74,7 @@
 </head>
 <body>
 <div class="board">
-<svg viewBox="0 0 1420 780" role="img" aria-label="zhiyun-pro-js 插件依赖图：宿主、能力包、加工包、领域状态与共享原语、界面外壳与页面包">
+<svg viewBox="0 0 1420 880" role="img" aria-label="zhiyun-pro-js 插件依赖图：宿主、能力包、加工包、领域状态与共享原语、界面外壳与页面包">
   <defs>
     <filter id="soft" x="-20%" y="-30%" width="140%" height="180%">
       <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity=".10"/>
@@ -99,10 +99,10 @@
     <text class="colhead" x="615" y="34" text-anchor="middle">加工包</text>
     <text class="colhead" x="895" y="34" text-anchor="middle">领域状态 · 共享原语</text>
     <text class="colhead" x="1245" y="34" text-anchor="middle">界面外壳 · 页面包</text>
-    <line class="colrule" x1="215" y1="78" x2="215" y2="726"/>
-    <line class="colrule" x1="478" y1="78" x2="478" y2="726"/>
-    <line class="colrule" x1="745" y1="78" x2="745" y2="726"/>
-    <line class="colrule" x1="1048" y1="78" x2="1048" y2="726"/>
+    <line class="colrule" x1="215" y1="78" x2="215" y2="826"/>
+    <line class="colrule" x1="478" y1="78" x2="478" y2="826"/>
+    <line class="colrule" x1="745" y1="78" x2="745" y2="826"/>
+    <line class="colrule" x1="1048" y1="78" x2="1048" y2="826"/>
   </g>
 
   <!-- ── 边：方向 = 依赖方向（左提供 → 右使用） ── -->
@@ -113,6 +113,7 @@
     <path class="edge host" data-from="host" data-to="knowledge" marker-end="url(#a-host)" d="M190,390 C222,390 222,373 250,373"/>
     <path class="edge host" data-from="host" data-to="final-pass" marker-end="url(#a-host)" d="M190,440 C222,440 222,488 250,488"/>
     <path class="edge host" data-from="host" data-to="notes" marker-end="url(#a-host)" d="M190,455 H212 V580 H500 V503 H515"/>
+    <path class="edge host" data-from="host" data-to="paper" marker-end="url(#a-host)" d="M190,470 H220 V613 H250"/>
     <path class="edge host" data-from="host" data-to="study-core" marker-end="url(#a-host)" d="M190,300 H790"/>
     <path class="edge host" data-from="host" data-to="shell" marker-end="url(#a-host)" d="M115,300 V68 H1085 V100"/>
 
@@ -126,6 +127,10 @@
     <path class="edge hard" data-from="parser" data-to="study-core" marker-end="url(#a-hard)" d="M450,272 H790"/>
     <path class="edge hard" data-from="knowledge" data-to="study-core" marker-end="url(#a-hard)" d="M450,388 H480 V286 H790"/>
     <path class="edge lazy" data-from="final-pass" data-to="study-core" marker-end="url(#a-lazy)" d="M450,488 H500 V452 H790"/>
+    <path class="edge lazy" data-from="paper" data-to="parser" marker-end="url(#a-lazy)" d="M350,580 V291"/>
+
+    <!-- 能力 → 页面：HTTP（选中即译由本仓提供，问答/文献库由锁版上游提供） -->
+    <path class="edge hard" data-from="paper" data-to="page-paper" marker-end="url(#a-hard)" d="M450,613 H1085 V506 H1116"/>
 
     <!-- 加工 → 领域状态：静态 import（agent-text 子路径） -->
     <path class="edge import" data-from="lecture" data-to="study-core" marker-end="url(#a-import)" d="M715,196 H780 V244 H790"/>
@@ -133,15 +138,16 @@
     <!-- 领域状态 → 外壳 -->
     <path class="edge lazy" data-from="study-core" data-to="shell" marker-end="url(#a-lazy)" d="M1000,318 H1040 V196 H1100"/>
     <path class="edge hard" data-from="study-core" data-to="page-courses" marker-end="url(#a-hard)" d="M1000,430 H1055 V414 H1116"/>
-    <path class="edge hard" data-from="study-core" data-to="page-study" marker-end="url(#a-hard)" d="M1055,414 V532 H1116"/>
-    <path class="edge hard" data-from="study-core" data-to="page-me" marker-end="url(#a-hard)" d="M1055,532 V650 H1116"/>
+    <path class="edge hard" data-from="study-core" data-to="page-study" marker-end="url(#a-hard)" d="M1055,414 V624 H1116"/>
+    <path class="edge hard" data-from="study-core" data-to="page-me" marker-end="url(#a-hard)" d="M1055,532 V742 H1116"/>
 
     <!-- 共享原语 → 外壳与页面：静态 import -->
     <path class="edge import" data-from="ui-primitives" data-to="shell" marker-end="url(#a-import)" d="M1000,150 H1100"/>
     <path class="edge import" data-from="ui-primitives" data-to="page-today" marker-end="url(#a-import)" d="M1000,170 H1020 V240 H1116"/>
     <path class="edge import" data-from="ui-primitives" data-to="page-courses" marker-end="url(#a-import)" d="M1020,240 V358 H1116"/>
-    <path class="edge import" data-from="ui-primitives" data-to="page-study" marker-end="url(#a-import)" d="M1020,358 V476 H1116"/>
-    <path class="edge import" data-from="ui-primitives" data-to="page-me" marker-end="url(#a-import)" d="M1020,476 V594 H1116"/>
+    <path class="edge import" data-from="ui-primitives" data-to="page-paper" marker-end="url(#a-import)" d="M1020,358 V506 H1116"/>
+    <path class="edge import" data-from="ui-primitives" data-to="page-study" marker-end="url(#a-import)" d="M1020,506 V624 H1116"/>
+    <path class="edge import" data-from="ui-primitives" data-to="page-me" marker-end="url(#a-import)" d="M1020,624 V742 H1116"/>
   </g>
 
   <!-- ── 宿主 ── -->
@@ -153,7 +159,7 @@
 
   <!-- ── 界面外壳（页面挂在这里） ── -->
   <g class="node" data-id="shell">
-    <rect class="shellbox" x="1100" y="100" width="290" height="594" rx="20"/>
+    <rect class="shellbox" x="1100" y="100" width="290" height="704" rx="20"/>
     <text class="shellname" x="1120" y="136">dsh-zhiyun-shell</text>
     <text class="shellrole" x="1120" y="158">界面外壳 · 插槽契约 · 主题覆盖</text>
     <text class="iface" x="1120" y="180">provide zhiyunNavigation</text>
@@ -196,6 +202,15 @@
     <text class="pkg" x="282" y="482">dsh-zhiyun-final-pass</text>
     <text class="role" x="264" y="504">考前冲刺</text>
     <text class="iface" x="264" y="519">provide zhiyunFinalPass</text>
+  </g>
+
+  <g class="node" data-id="paper">
+    <rect class="card" x="250" y="580" width="200" height="66" rx="13"/>
+    <rect x="250" y="590" width="4" height="46" rx="2" fill="#2563eb"/>
+    <circle class="dot" cx="270" cy="602" r="4" fill="#2563eb"/>
+    <text class="pkg" x="282" y="607">dsh-zhiyun-paper</text>
+    <text class="role" x="264" y="629">论文阅读 · 兼容层</text>
+    <text class="iface" x="264" y="644">provide zhiyunPaper · /zhiyun-paper</text>
   </g>
 
   <!-- ── 加工包 ── -->
@@ -274,24 +289,34 @@
     <text class="iface" x="1134" y="431">inject zhiyunStudyController</text>
   </g>
 
-  <g class="node" data-id="page-study">
+  <g class="node" data-id="page-paper">
     <rect class="card" x="1120" y="454" width="250" height="104" rx="13"/>
     <rect x="1120" y="474" width="4" height="64" rx="2" fill="#0891b2"/>
     <circle class="dot" cx="1140" cy="486" r="4" fill="#0891b2"/>
-    <text class="pkg" x="1152" y="491">dsh-zhiyun-page-study</text>
-    <text class="role" x="1134" y="513">「学习」页 · 树 · 讲义 · 检索</text>
-    <text class="iface" x="1134" y="535">slot zhiyun.study.content</text>
-    <text class="iface" x="1134" y="549">inject zhiyunStudyController</text>
+    <text class="pkg" x="1152" y="491">dsh-zhiyun-page-paper</text>
+    <text class="role" x="1134" y="513">「论文」页 · PDF · 助手 · 悬停翻译</text>
+    <text class="iface" x="1134" y="535">slot zhiyun.paper.content</text>
+    <text class="iface" x="1134" y="549">HTTP /zhiyun-paper · /paper-reader</text>
   </g>
 
-  <g class="node" data-id="page-me">
+  <g class="node" data-id="page-study">
     <rect class="card" x="1120" y="572" width="250" height="104" rx="13"/>
     <rect x="1120" y="592" width="4" height="64" rx="2" fill="#0891b2"/>
     <circle class="dot" cx="1140" cy="604" r="4" fill="#0891b2"/>
-    <text class="pkg" x="1152" y="609">dsh-zhiyun-page-me</text>
-    <text class="role" x="1134" y="631">「个人」页 · 账号与偏好设置</text>
-    <text class="iface" x="1134" y="653">slot zhiyun.me.content · account</text>
+    <text class="pkg" x="1152" y="609">dsh-zhiyun-page-study</text>
+    <text class="role" x="1134" y="631">「学习」页 · 树 · 讲义 · 检索</text>
+    <text class="iface" x="1134" y="653">slot zhiyun.study.content</text>
     <text class="iface" x="1134" y="667">inject zhiyunStudyController</text>
+  </g>
+
+  <g class="node" data-id="page-me">
+    <rect class="card" x="1120" y="690" width="250" height="104" rx="13"/>
+    <rect x="1120" y="710" width="4" height="64" rx="2" fill="#0891b2"/>
+    <circle class="dot" cx="1140" cy="722" r="4" fill="#0891b2"/>
+    <text class="pkg" x="1152" y="727">dsh-zhiyun-page-me</text>
+    <text class="role" x="1134" y="749">「个人」页 · 账号与偏好设置</text>
+    <text class="iface" x="1134" y="771">slot zhiyun.me.content · account</text>
+    <text class="iface" x="1134" y="785">inject zhiyunStudyController</text>
   </g>
 
   <!-- ── 图例 ── -->

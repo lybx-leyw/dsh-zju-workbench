@@ -11,6 +11,12 @@
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) · MIT · 参考提交 `5badb15009ae1756c3afe0ae0cef1faafc290ccc`。本项目的运行宿主：阅读其源码与文档以了解 Cordis 插件写法、宿主 API 与客户端启动图谱（种子词表等常量对照自其源码），未复制其实现；运行时以 npm 依赖形式引入。
 - [DSH Codex UI](https://github.com/MichengAI/dsh-codex-ui) · Apache-2.0 · 参考提交 `ff42c6f9296ee7022ab2e919f849ecd05d4df63e`。参考其 manifest、浏览器 factory 装配、插槽所有权与宿主验证方式。没有引入该插件的业务或界面实现。
 
+## 运行时依赖的第三方插件
+
+以下项目以 npm 依赖形式引入，按各自协议使用，未复制其源码到本仓库：
+
+- [dsh-paper-reader](https://github.com/GGboya/dsh-paper-reader) · MIT · 版本 `1.3.1`（精确锁定，见 `packages/dsh-zhiyun-paper/src/upstream.js`）。「论文阅读」栏目在 `packages/dsh-zhiyun-paper/` 里以子插件方式挂载它的宿主半边（HTTP 路由与 agent 工具），客户端界面由 `dsh-zhiyun-page-paper` 重写。锁版与改写理由见该包 README。
+
 ## 含实现移植
 
 暂无。今后若有插件包移植了第三方实现，移植说明写在该包内的 `ATTRIBUTION.md`，并在本文件指向它。

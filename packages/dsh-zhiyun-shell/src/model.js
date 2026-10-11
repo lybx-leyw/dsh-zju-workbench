@@ -1,6 +1,10 @@
 export const NAV = Object.freeze([
   { id: 'today', label: '今天', icon: 'sun', hint: '从今天开始，按自己的节奏学习' },
   { id: 'courses', label: '我的课', icon: 'book', hint: '课程、回放与课堂资料' },
+  // 紧挨「我的课」：两者都是「读材料」的入口，用户找论文时先看课程再看文献是自然顺序。
+  // hint 里刻意不出现「规划」——tests/profile.test.mjs 用 matchingPages('规划') 断言
+  // 搜索只命中「问一问」，那是一条守卫别名的测试，别让新页面污染它。
+  { id: 'paper', label: '论文', icon: 'paper', hint: '打开本地 PDF，选中英文即可翻译并提问' },
   { id: 'ask', label: '问一问', icon: 'chat', hint: '和 AI 一起理解、思考与规划' },
   { id: 'study', label: '学习', icon: 'layers', hint: '把学过的内容，慢慢变成自己的知识' },
   { id: 'me', label: '个人', icon: 'user', hint: '你的学习空间' },
