@@ -97,6 +97,9 @@ async function paperProbe(page, evidence, checks) {
   // 左侧必须真的是 PDF（canvas 由 pdf.js 画出来，文本层可选中）。
   const reader = page.frameLocator('.zp-frame');
   await reader.locator('.page canvas').first().waitFor({ timeout: 30000 });
+  // 文本层比 canvas 晚一步（pdf.js 先画布后铺 span），所以要等它出现再数，
+  // 否则这条断言会随机失败。
+  await reader.locator('.textLayer span').first().waitFor({ timeout: 30000 });
   assert.ok(await reader.locator('.textLayer span').count() >= 3, 'the PDF text layer is selectable');
 
   // 抽屉默认收起，展开后必须占住正文右缘（不是浮在中间，也不是把正文压没）。
@@ -140,11 +143,71 @@ async function paperProbe(page, evidence, checks) {
   assert.match(bubbles.join('\n'), /核心贡献/, 'the question itself is shown');
   // 折叠了几条要如实说，否则用户会以为助手一句话没说。
   assert.equal(await page.locator('.zp-drawer-folded').count(), 1, 'folded context is reported to the user');
+  // 用户气泡是纯文本：划选来的原文常带 `*`、反引号、`#`，按 Markdown 渲染会把原样文字画走样。
+  // （助手气泡反过来必须走渲染器，这里没模型凭证拿不到助手回答，那条由 tests/paper.test.mjs 守。）
+  assert.equal(
+    await page.locator('.zp-bubble.is-user [data-markdown-variant]').count(),
+    0,
+    'the user bubble must stay plain text',
+  );
+
+  // `/resume` 是命令不是提问：它必须被输入框拦下，而不是发给论文助手。
+  const labeled = page.waitForResponse(response => response.url().includes('/zhiyun-paper/api/sessions/labels'), { timeout: 60000 });
+  await page.locator('.zp-drawer-compose textarea').fill('/resume');
+  await page.locator('.zp-drawer-compose textarea').press('Enter');
+  await page.locator('.zp-resume').waitFor({ timeout: 15000 });
+  assert.equal((await labeled).status(), 200, 'the session labels endpoint answers for this paper');
+  // 标签里的「首句」必须是**用户自己问的那句**：上游把文献路径、选区、`用户的问题：`
+  // 前缀都拼进了同一条消息，直接显示原文会把每行都撑满且看不出区别。
+  await page.locator('.zp-resume-row .zp-resume-first', { hasText: '这篇论文的核心贡献是什么？' })
+    .first().waitFor({ timeout: 15000 });
+  assert.equal(await page.locator('.zp-drawer-compose textarea').inputValue(), '', 'the command is consumed, not left in the box');
+  assert.equal(await page.locator('.zp-bubble.is-user', { hasText: '/resume' }).count(), 0, '/resume must never reach the model');
+  const palette = await page.evaluate(() => {
+    const box = document.querySelector('.zp-resume');
+    const list = document.querySelector('.zp-resume-list');
+    const rect = box.getBoundingClientRect();
+    const rows = [...document.querySelectorAll('.zp-resume-row')];
+    return {
+      focused: box.contains(document.activeElement),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+      scrollable: getComputedStyle(list).overflowY,
+      codes: rows.map(row => row.querySelector('.zp-resume-code')?.textContent ?? ''),
+      firsts: rows.map(row => row.querySelector('.zp-resume-first')?.textContent ?? ''),
+    };
+  });
+  assert.ok(palette.focused, 'the palette takes focus so ↑↓/Enter/Delete hit it, not the textarea');
+  assert.ok(palette.width > 200 && palette.width < 520, `palette width = ${palette.width} (fixed, fits the drawer)`);
+  assert.ok(palette.height >= 240, `palette height = ${palette.height}`);
+  assert.equal(palette.scrollable, 'auto', 'the palette list scrolls instead of growing');
+  assert.ok(palette.codes.length >= 1, 'the session just created is listed');
+  assert.ok(palette.codes.every(code => /^#[0-9a-z]{4}$/.test(code)), `session codes = ${palette.codes.join(',')}`);
+  assert.ok(palette.firsts.every(text => text.length > 0), 'every row carries a label (first question / title / placeholder)');
+
+  // ↑↓ 在面板上移动选中项，到边界绕回另一端。本次探针只发过一个问题，
+  // 所以这里往往只有一行 —— 单行时绕回原位是正确的，不能当成失败。
+  const activeAt = () => page.evaluate(() => [...document.querySelectorAll('.zp-resume-row')].findIndex(row => row.classList.contains('is-active')));
+  const wasAt = await activeAt();
+  await page.locator('.zp-resume').press('ArrowUp');
+  const upAt = await activeAt();
+  if (palette.codes.length > 1) {
+    assert.notEqual(upAt, wasAt, 'ArrowUp moves the selection');
+  } else {
+    assert.equal(upAt, 0, 'a single-row list keeps its only row selected');
+  }
+  await page.locator('.zp-resume').press('ArrowDown');
+  assert.equal(await activeAt(), wasAt, 'ArrowDown moves it back');
+
+  await page.screenshot({ path: path.join(evidence, 'paper-resume.png'), fullPage: true });
+  await page.locator('.zp-resume').press('Escape');
+  await page.waitForFunction(() => document.querySelectorAll('.zp-resume').length === 0, null, { timeout: 5000 });
 
   await page.screenshot({ path: path.join(evidence, 'paper-drawer.png'), fullPage: true });
   await page.locator('.zp-drawer-toggle').click();
   assert.equal(await page.locator('.zp-drawer.is-open').count(), 0, 'the drawer collapses again');
   checks.push('Paper page: local PDF renders, the AI drawer answers, injected context stays folded');
+  checks.push('Paper page: /resume opens a fixed-size scrollable session palette with ↑↓ navigation');
 }
 await mkdir(evidence, { recursive: true });
 let server;

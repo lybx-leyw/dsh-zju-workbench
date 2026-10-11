@@ -43,6 +43,22 @@ import {
 } from '../packages/dsh-zhiyun-page-paper/src/selection-text.js';
 import { createSessionFeed } from '../packages/dsh-zhiyun-page-paper/src/session-feed.js';
 import { frameThemeCss, readThemeTokens } from '../packages/dsh-zhiyun-page-paper/src/frame-theme.js';
+import { linkCitations, pageFromLink } from '../packages/dsh-zhiyun-page-paper/src/citations.js';
+import {
+  buildRows,
+  indexAfterRemove,
+  initialIndex,
+  isResumeCommand,
+  moveIndex,
+  rowText,
+  sessionCode,
+} from '../packages/dsh-zhiyun-page-paper/src/resume.js';
+import {
+  cleanQuestion,
+  createSessionAdmin,
+  firstUserQuestion,
+  isPaperSessionId,
+} from '../packages/dsh-zhiyun-paper/src/session-admin.js';
 import * as clientApi from '../packages/dsh-zhiyun-page-paper/src/library.js';
 
 const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
@@ -978,7 +994,330 @@ test('主题注入：藏掉已经搬到本壳的上游控件', () => {
   assert.match(css, /html, body \{ background: var\(--zp-frame-bg\); color: var\(--zp-frame-text\); \}/);
 });
 
-/* ────────────────────────── 接线 ────────────────────────── */
+/* ────────────────────────── 助手回答的 Markdown 与页码引用 ────────────────────────── */
+
+test('页码引用：单个引用改写成 Markdown 链接，页数原样保留', () => {
+  assert.equal(linkCitations('摘要第一句就划线（第 1 页）。'),
+    '摘要第一句就划线（[第 1 页](https://zhiyun.invalid/paper/page/1)）。');
+  assert.equal(linkCitations('见 [12]。'), '见 [第 12 页](https://zhiyun.invalid/paper/page/12)。');
+});
+
+test('页码引用：多页引用把每个页码单独做成链接，读起来仍是「第 1、9、12 页」', () => {
+  // 实测的真实回答就是这么写的（`（第 1、9、12 页）`）——不能整段包成一个链接，
+  // 那样点哪都跳第一页。
+  assert.equal(linkCitations('（第 1、9、12 页）'),
+    '（第 [1](https://zhiyun.invalid/paper/page/1)、[9](https://zhiyun.invalid/paper/page/9)、[12](https://zhiyun.invalid/paper/page/12) 页）');
+  // 「和」「及」「/」都是模型写过的连接词。
+  assert.match(linkCitations('（第 9 和 7 页）'), /\[9\].*\[7\]/);
+});
+
+test('页码引用：区间展开成逐页链接，超大区间不猜', () => {
+  assert.equal(linkCitations('第 1-3 页'),
+    '第 [1](https://zhiyun.invalid/paper/page/1)、[2](https://zhiyun.invalid/paper/page/2)、[3](https://zhiyun.invalid/paper/page/3) 页');
+  // `第 1-100 页` 更像误匹配（或真是一大段），展开成 100 个链接只会把回答刷屏。
+  assert.equal(linkCitations('第 1-100 页'), '第 1-100 页');
+});
+
+test('页码引用：代码块与行内代码、已有链接里面一律不动', () => {
+  const fenced = '```js\n// 第 1 页\nconst a = 1;\n```\n正文（第 3 页）';
+  assert.equal(linkCitations(fenced), '```js\n// 第 1 页\nconst a = 1;\n```\n正文（[第 3 页](https://zhiyun.invalid/paper/page/3)）');
+  assert.equal(linkCitations('`第 1 页` 不该动'), '`第 1 页` 不该动');
+  assert.equal(linkCitations('[已有](https://x.test/a)（第 2 页）'),
+    '[已有](https://x.test/a)（[第 2 页](https://zhiyun.invalid/paper/page/2)）');
+});
+
+test('页码引用：链接地址是保留域，且能双向解析回来', () => {
+  const href = 'https://zhiyun.invalid/paper/page/42';
+  assert.equal(pageFromLink(href), 42);
+  assert.equal(pageFromLink('https://example.com/paper/page/42'), null, '别人发的链接不能被当页码');
+  assert.equal(pageFromLink('https://zhiyun.invalid/paper/page/0'), null);
+  assert.equal(pageFromLink('https://zhiyun.invalid/paper/page/abc'), null);
+  assert.equal(pageFromLink(null), null);
+  // RFC 2606 保留域：拦截失效时浏览器也只会得到一个必然解析失败的地址，
+  // 不会把「第 12 页」真的发到某个站点去。
+  assert.match(href, /^https:\/\/zhiyun\.invalid\//);
+});
+
+test('页码引用：没有引用的回答原样返回（不能凭空加东西）', () => {
+  assert.equal(linkCitations('这段没有页码。'), '这段没有页码。');
+  assert.equal(linkCitations(''), '');
+  assert.equal(linkCitations(null), '');
+  assert.equal(linkCitations(undefined), '');
+});
+
+test('接线：助手气泡走宿主的 Markdown 渲染器，用户气泡保持纯文本', () => {
+  const source = readFileSync(path.join(here, '../packages/dsh-zhiyun-page-paper/src/AssistantDrawer.jsx'), 'utf8');
+  assert.match(source, /from '@deepseek-ai\/dsh-client-ui-primitives'/);
+  assert.match(source, /<MarkdownText\b/);
+  assert.match(source, /streaming=\{live\}/, '实时气泡也要走同一个渲染器，否则流式时是另一套排版');
+  assert.match(source, /variant="compact"/, '抽屉窄，默认 body 变体的段落间距太大');
+  // labels 的身份必须稳定：每次渲染新建对象会让组件表每个 chunk 重建一次。
+  const labels = source.match(/const MARKDOWN_LABELS = \{[\s\S]*?\};/);
+  assert.ok(labels, 'labels 必须是模块级常量');
+  assert.ok(!/labels=\{\{/.test(source), 'labels 不能写成内联字面量');
+  // 用户气泡是纯文本：选区里带着 `*`、反引号时渲染反而走样。
+  assert.match(source, /role === 'user'\s*\n?\s*\? <div className="zp-bubble-text">\{text\}<\/div>/);
+  // 页码链接必须被 delegate 拦下来跳页，不能真去开那个地址。
+  assert.match(source, /openExternalLink=\{openExternalLink\}/);
+  assert.match(source, /pageFromLink\(href\)/);
+});
+
+test('接线：样式不许跟宿主 CSS Modules 的哈希类名（.markdown）挂钩', () => {
+  // 真踩过：一开始写 `.zp-md .markdown { font-size: 12px }`，但宿主用 CSS Modules，
+  // 产物里的类名是 `_markdown_1ypvv_5` 这种哈希 —— 规则一条都不命中，字号/行高
+  // 全部静默失效，肉眼只会觉得「有点大」。宿主显式写进 DOM 的稳定钩子是
+  // `data-markdown-variant`，样式必须挂在它上面。
+  const css = readFileSync(path.join(here, '../packages/dsh-zhiyun-page-paper/src/style.css'), 'utf8');
+  assert.match(css, /\[data-markdown-variant\]/, 'MarkdownText 的样式要选稳定属性');
+  assert.ok(!/\.zp-md[^{]*\s\.markdown[\s>{:]/.test(css), '不能选宿主哈希出来的 .markdown 类名');
+});
+
+/* ────────────────────────── 会话标签（宿主半边） ────────────────────────── */
+
+/** 一条真人发言的 `user/message` 事件。 */
+function userMessage(text, source = { kind: 'user' }) {
+  return { type: 'user/message', seq: 1, time: 1, data: { id: 'm1', content: [{ type: 'text', text }], source } };
+}
+
+test('会话标签：注入的工作台上下文不算提问，第一条真人发言才是首句', () => {
+  // 真踩过的那类问题：会话日志里前几条 `user/message` 全是 AGENTS / 运行时策略 /
+  // 技能目录，直接取第一条会把每行标签都显示成同一段系统文本。
+  const events = [
+    { type: 'session/permission', data: {} },
+    userMessage('# AGENTS.md\n\n你是智云 Pro…', { kind: 'agent-instructions' }),
+    userMessage('Current runtime context:\n…', { kind: 'runtime-context' }),
+    userMessage('[论文伴读] 文献：未分类/Nature25-PFN（同目录下，search_paper 可直接检索；回答注明页码）\n用户的问题：用一句话说明这篇论文的核心贡献，并标出页码。'),
+    userMessage('第二个问题不该被选中'),
+  ];
+  assert.equal(firstUserQuestion(events), '用一句话说明这篇论文的核心贡献，并标出页码。');
+});
+
+test('会话标签：洗掉上游拼的文献上下文与选区引用，只留用户真问的那句', () => {
+  const raw = '[论文伴读] 文献：未分类/Nature25-PFN（同目录下，search_paper 可直接检索；回答注明页码）\n'
+    + '用户在阅读器里选中了一段文字（选中于第 3 页）：\n"""TabPFN is a foundation model"""\n'
+    + '用户的问题：这一步为什么不需要梯度下降？';
+  assert.equal(cleanQuestion(raw), '这一步为什么不需要梯度下降？');
+  // 没有标记时整段当下（老会话可能是另一种拼法），但不能是空的。
+  assert.equal(cleanQuestion('未分类/Nature25-PFN'), '未分类/Nature25-PFN');
+  assert.equal(cleanQuestion('   \n  '), null);
+  assert.equal(cleanQuestion('x'.repeat(900)).length, 401, '超长要截断并加省略号');
+});
+
+test('会话标签：没有 source 字段的老消息仍当真人发言（宁可多显示，不可吞掉提问）', () => {
+  const events = [
+    { type: 'user/message', data: { content: [{ type: 'text', text: '老的提问' }] } },
+    userMessage('新的提问'),
+  ];
+  assert.equal(firstUserQuestion(events), '老的提问');
+  assert.equal(firstUserQuestion([]), null);
+  assert.equal(firstUserQuestion(undefined), null);
+});
+
+test('会话标签：只认论文阅读自己的 dpr- 前缀，别家会话 id 一律拒绝', () => {
+  assert.ok(isPaperSessionId('dpr-5pyq5YiG57G7L05hdHVyZTI1LVBGTg-1'));
+  assert.ok(isPaperSessionId('dpr-x'));
+  for (const bad of ['', 'dpr-', 'sess-abc', 'dpr-a/b', null, undefined, 42, 'x'.repeat(600)]) {
+    assert.ok(!isPaperSessionId(bad), `${String(bad)} 不该被当作论文会话`);
+  }
+});
+
+test('会话标签：逐条尽力而为，某条读不出来只让它自己空着', async () => {
+  const warned = [];
+  const admin = createSessionAdmin({
+    getSessionController: () => ({
+      list: async () => ({ items: [
+        { sessionId: 'dpr-a-1', projections: { values: { title: '小样本的边界' } } },
+        { sessionId: 'dpr-a-2' },
+      ] }),
+      inspect: async (sessionId) => {
+        if (sessionId === 'dpr-a-2') throw new Error('读日志失败');
+        return { events: [userMessage('第一个问题')] };
+      },
+    }),
+    getWorkspaceRegistry: () => null,
+    warn: (message) => warned.push(message),
+  });
+
+  const cards = await admin.cards(['dpr-a-1', 'dpr-a-2', 'other-1']);
+  assert.deepEqual(cards, [
+    { sessionId: 'dpr-a-1', title: '小样本的边界', firstQuestion: '第一个问题' },
+    { sessionId: 'dpr-a-2', title: null, firstQuestion: null },
+  ], '不属于本文献的 id 不该进结果');
+  assert.equal(warned.length, 1);
+  assert.match(warned[0], /dpr-a-2/);
+});
+
+test('会话标签：宿主没有 sessionController 时如实 503，而不是假装列表为空', async () => {
+  const admin = createSessionAdmin({ getSessionController: () => null, getWorkspaceRegistry: () => null });
+  await assert.rejects(() => admin.cards(['dpr-a-1']), (err) => err.code === 'NO_SESSION_ADMIN');
+  await assert.rejects(() => admin.archive('dpr-a-1'), (err) => err.code === 'NO_SESSION_ADMIN');
+  assert.equal(paperErrorStatus('NO_SESSION_ADMIN'), 503);
+});
+
+test('删除会话：走宿主 workspaceRegistry 归档，并带 stopActivity', async () => {
+  const calls = [];
+  const admin = createSessionAdmin({
+    getSessionController: () => null,
+    getWorkspaceRegistry: () => ({ archiveSession: async (id, options) => { calls.push([id, options]); } }),
+  });
+  const result = await admin.archive('dpr-a-1');
+  assert.deepEqual(calls, [['dpr-a-1', { stopActivity: true }]], '正在生成回答的会话也要删得掉');
+  assert.deepEqual(result, { ok: true, sessionId: 'dpr-a-1' });
+  await assert.rejects(() => admin.archive('sess-别人的'), (err) => err.code === 'INPUT');
+});
+
+test('自有路由：会话标签与归档两条路由的形状与方法限制', async () => {
+  const archived = [];
+  const handler = createPaperHandler({
+    connection: { requestRejection: () => undefined },
+    getTranslator: () => null,
+    sessionAdmin: {
+      cards: async (ids) => ids.map((sessionId) => ({ sessionId, title: null, firstQuestion: '问过什么' })),
+      archive: async (sessionId) => { archived.push(sessionId); return { ok: true, sessionId }; },
+    },
+    describe: () => ({ ok: true }),
+  });
+
+  const labels = createResponse();
+  handler(createRequest({
+    method: 'POST',
+    url: `${PAPER_ROUTE_PREFIX}/api/sessions/labels`,
+    body: JSON.stringify({ sessionIds: ['dpr-a-1'] }),
+  }), labels);
+  const labeled = await settle(labels);
+  assert.equal(labeled.status, 200);
+  assert.deepEqual(labeled.json.cards, [{ sessionId: 'dpr-a-1', title: null, firstQuestion: '问过什么' }]);
+
+  const remove = createResponse();
+  handler(createRequest({
+    method: 'POST',
+    url: `${PAPER_ROUTE_PREFIX}/api/sessions/archive`,
+    body: JSON.stringify({ sessionId: 'dpr-a-1' }),
+  }), remove);
+  const removed = await settle(remove);
+  assert.equal(removed.status, 200);
+  assert.deepEqual(archived, ['dpr-a-1']);
+
+  // 方法不允许时给 allow 头（与既有两条路由同一套）。
+  const wrong = createResponse();
+  handler(createRequest({ url: `${PAPER_ROUTE_PREFIX}/api/sessions/labels` }), wrong);
+  const rejected = await settle(wrong);
+  assert.equal(rejected.status, 405);
+  assert.equal(rejected.headers.allow, 'POST');
+});
+
+test('自有路由：拿不到宿主会话服务时 503 NO_SESSION_ADMIN（不是 500，也不是空列表）', async () => {
+  const handler = createPaperHandler({
+    connection: { requestRejection: () => undefined },
+    getTranslator: () => null,
+    describe: () => ({ ok: true }),
+  });
+  for (const url of ['/api/sessions/labels', '/api/sessions/archive']) {
+    const res = createResponse();
+    handler(createRequest({ method: 'POST', url: `${PAPER_ROUTE_PREFIX}${url}`, body: '{}' }), res);
+    const seen = await settle(res);
+    assert.equal(seen.status, 503);
+    assert.equal(seen.json.code, 'NO_SESSION_ADMIN');
+  }
+});
+
+/* ────────────────────────── /resume 面板（纯逻辑） ────────────────────────── */
+
+test('/resume 是命令不是提问：只有整行是它才拦', () => {
+  assert.ok(isResumeCommand('/resume'));
+  assert.ok(isResumeCommand('  /resume  '));
+  assert.ok(isResumeCommand('/RESUME'));
+  assert.ok(isResumeCommand('/resume 2'));
+  assert.ok(!isResumeCommand('/resumes'));
+  assert.ok(!isResumeCommand('请用 /resume 切换会话'), '夹在句子里的话是对模型的提问');
+  assert.ok(!isResumeCommand(''));
+});
+
+test('会话代号：稳定、四位、只由 id 决定', () => {
+  assert.equal(sessionCode('dpr-5pyq5YiG57G7L05hdHVyZTI1LVBGTg-1'), sessionCode('dpr-5pyq5YiG57G7L05hdHVyZTI1LVBGTg-1'));
+  assert.match(sessionCode('dpr-a-1'), /^[0-9a-z]{4}$/);
+  assert.notEqual(sessionCode('dpr-a-1'), sessionCode('dpr-a-2'));
+  assert.equal(sessionCode(''), '----');
+  assert.equal(sessionCode(null), '----');
+});
+
+test('会话面板：↑↓ 到边界绕回另一端，选中项永远有效', () => {
+  assert.equal(moveIndex(0, 1, 3), 1);
+  assert.equal(moveIndex(2, 1, 3), 0, '最后一项往下 = 回到第一项');
+  assert.equal(moveIndex(0, -1, 3), 2, '第一项往上 = 跳到最后一项');
+  assert.equal(moveIndex(-1, 1, 3), 0);
+  assert.equal(moveIndex(-1, -1, 3), 2);
+  assert.equal(moveIndex(0, 1, 0), -1);
+});
+
+test('会话面板：删完选中项落在「原来那一项的下一项」，末尾退回最后一项', () => {
+  assert.equal(indexAfterRemove(0, 3), 0);
+  assert.equal(indexAfterRemove(1, 3), 1);
+  assert.equal(indexAfterRemove(2, 3), 1, '删掉最后一项就退回新的最后一项');
+  assert.equal(indexAfterRemove(0, 1), -1, '删空了就没有选中项');
+  assert.equal(indexAfterRemove(-1, 2), 0);
+});
+
+test('会话面板：行标签是「哈希代号 · 论文名 · 首句」，首句缺失才回落到标题', () => {
+  const entry = { n: 2, sessionId: 'dpr-a-2', title: '模型起的标题', firstQuestion: '用户自己问的那句' };
+  assert.equal(rowText(entry, 'Nature25-PFN'), `#${sessionCode('dpr-a-2')} · Nature25-PFN · 用户自己问的那句`);
+  assert.equal(rowText({ ...entry, firstQuestion: null }, 'Nature25-PFN').endsWith('· 模型起的标题'), true);
+  assert.equal(rowText({ ...entry, firstQuestion: null, title: null, blank: true }, '论文').endsWith('（还没有提问）'), true);
+  assert.equal(rowText({ ...entry, firstQuestion: null, title: null, blank: false }, '').endsWith('（没有可读的内容）'), true);
+});
+
+test('会话面板：按 n 升序（旧在上），标签按 id 对上，当前会话被标记', () => {
+  const sessions = [
+    { n: 3, sessionId: 'dpr-a-3', blank: false, running: true },
+    { n: 1, sessionId: 'dpr-a-1', blank: false },
+    { n: 2, sessionId: 'dpr-a-2', blank: true },
+  ];
+  const cards = [{ sessionId: 'dpr-a-1', title: null, firstQuestion: '第一句' }];
+  const rows = buildRows(sessions, cards, 2);
+  assert.deepEqual(rows.map((row) => row.n), [1, 2, 3]);
+  assert.equal(rows[0].firstQuestion, '第一句');
+  assert.equal(rows[1].firstQuestion, null, '缺标签的会话不该串到别人的标签上');
+  assert.deepEqual(rows.map((row) => row.current), [false, true, false]);
+  assert.equal(rows[2].running, true);
+  assert.equal(initialIndex(rows), 1, '默认选中当前会话');
+});
+
+test('会话面板：当前会话不在列表里时默认选最后一项（最新）', () => {
+  const rows = buildRows([
+    { n: 1, sessionId: 'dpr-a-1' },
+    { n: 2, sessionId: 'dpr-a-2' },
+  ], [], 9);
+  assert.equal(initialIndex(rows), 1);
+  assert.equal(initialIndex([]), -1);
+});
+
+test('接线：/resume 面板挂进抽屉，删除走本包归档路由，且不弹新窗口', () => {
+  const dir = '../packages/dsh-zhiyun-page-paper/src';
+  const drawer = readFileSync(path.join(here, `${dir}/AssistantDrawer.jsx`), 'utf8');
+  const palette = readFileSync(path.join(here, `${dir}/SessionPalette.jsx`), 'utf8');
+
+  // 命令必须在发请求之前被拦下 —— 否则 `/resume` 会被当成问题发给论文助手。
+  const submitBody = drawer.slice(drawer.indexOf('const submit'), drawer.indexOf('const startFresh'));
+  assert.match(submitBody, /isResumeCommand\(question\)/);
+  assert.ok(submitBody.indexOf('isResumeCommand') < submitBody.indexOf('await ask('),
+    '命令识别必须在 ask() 之前');
+  assert.match(drawer, /paletteOpen && <SessionPalette/);
+  assert.match(drawer, /onPick=\{pickSession\}/);
+
+  // 面板自己抢焦点：↑↓/Enter/Delete 要在它身上生效，而不是在输入框里。
+  assert.match(palette, /tabIndex=\{-1\}[\s\S]*?ref=\{boxRef\}/);
+  assert.match(palette, /boxRef\.current\?\.focus\(\)/);
+  // 往上翻历史时不该被强制拽回底部：贴底只在「离底不到一屏半」时发生。
+  assert.match(drawer, /list\.clientHeight \* 1\.5/);
+  // 换会话要强制到底（用户抱怨的正是切回旧会话停在最上面）。
+  assert.match(drawer, /\}, \[state\.sessionId, open\]\)/);
+
+  // 「删除」必须是本包的归档路由：上游那条只允许归档空白会话。
+  assert.match(palette, /archiveSessionById/);
+  assert.ok(!/archiveSession\(topic/.test(palette), '不要走上游那条只删空白会话的路由');
+  assert.match(palette, /已删除 #/);
+});
+
 
 test('接线：两个新包都已进 profile 与构建清单', () => {
   const profile = readJson('profiles/zhiyun-bench/package.json');

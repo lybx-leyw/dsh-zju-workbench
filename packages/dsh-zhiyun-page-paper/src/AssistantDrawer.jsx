@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon, useStore } from 'dsh-zhiyun-ui-primitives';
+import { MarkdownDelegateProvider, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { ask, newSession } from './library.js';
 import { createSessionFeed } from './session-feed.js';
+import { SessionPalette } from './SessionPalette.jsx';
+import { linkCitations, pageFromLink } from './citations.js';
+import { RESUME_COMMAND_TEXT, isResumeCommand } from './resume.js';
 
 /**
  * 右侧的 AI 助手抽屉。
@@ -27,6 +31,16 @@ const WIDTH_KEY = 'zhiyun.paper.drawer';
 const MIN_WIDTH = 300;
 const MAX_WIDTH = 720;
 const DEFAULT_WIDTH = 392;
+
+/**
+ * 宿主 Markdown 渲染器的文案。
+ *
+ * 必须是**模块级常量**：`MarkdownText` 按 `labels` 的**身份**缓存它的组件表
+ * （宿主源码注释：「a fresh object per render would rebuild MarkdownText's
+ * component table every chunk」），每次渲染新建一个字面量会让流式回答每来一个
+ * 增量就重建一遍。`packages/dsh-zhiyun-page-study/src/lecture-reader.jsx` 也是这么写的。
+ */
+const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
 
 function readStoredWidth() {
   try {
@@ -54,6 +68,7 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
   const [width, setWidth] = useState(readStoredWidth);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [notice, pushNotice] = useTransientMessage();
   const listRef = useRef(null);
   const inputRef = useRef(null);
@@ -75,18 +90,43 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
     if (open) inputRef.current?.focus();
   }, [selection, open]);
 
-  // 新消息进来时贴底（只在已经接近底部时，避免抢用户正在回看的滚动）。
+  // 抽屉收起 / 换论文时把面板一并关掉，否则下次展开会顶着一个陈旧的列表。
+  useEffect(() => {
+    if (!open) setPaletteOpen(false);
+  }, [open]);
+  useEffect(() => { setPaletteOpen(false); }, [topic, name]);
+
+  // 新消息进来时贴底。**默认就是贴底的** —— 追问是这里的主循环，回答生成到一半
+  // 却停在上面几屏之外，用户会以为「没反应」。
+  //
+  // 只有一种情况不抢滚动：**用户自己往上翻了**（当前视图离底部超过一屏的 1.5 倍）。
+  // 这不是猜的：能往上翻说明用户正在回看历史，此时把他拽回底部是打断。
+  // 换会话 / 首屏时 `scrollTop` 是 0，距底必然大于阈值 —— 所以那两个时刻要
+  // 单独强制贴底，否则「切回旧会话默认停在最上面」正是用户抱怨的那个问题。
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
-    const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 120;
-    if (nearBottom) list.scrollTop = list.scrollHeight;
+    list.scrollTop = list.scrollHeight;
+  }, [state.sessionId, open]);
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const away = list.scrollHeight - list.scrollTop - list.clientHeight;
+    if (away < list.clientHeight * 1.5) list.scrollTop = list.scrollHeight;
   }, [state.messages.length, state.live?.text]);
 
   const submit = useCallback(async (event) => {
     event?.preventDefault?.();
     const question = draft.trim();
     if (!question || busy) return;
+    // `/resume` 不发给模型：它是本地的会话管理入口（见 `resume.js` 的注释）。
+    // 必须**在** busy 检查之后、发送之前拦下，否则这行字会被当成问题发给论文助手。
+    if (isResumeCommand(question)) {
+      setDraft('');
+      setPaletteOpen(true);
+      return;
+    }
     setBusy(true);
     try {
       const quote = selection?.text;
@@ -116,6 +156,14 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
       pushNotice(`新建会话失败：${error instanceof Error ? error.message : String(error)}`);
     }
   }, [topic, name, feed, pushNotice]);
+
+  /** 从 `/resume` 面板切到某条旧会话。`n` 是上游的权威编号。 */
+  const pickSession = useCallback((row) => {
+    setPaletteOpen(false);
+    if (!row) return;
+    feed.open(row.n);
+    pushNotice(`已切到会话 ${row.n}`);
+  }, [feed, pushNotice]);
 
   const startResize = useCallback((event) => {
     event.preventDefault();
@@ -153,6 +201,7 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
         <strong>AI 助手</strong>
         <span className="zp-drawer-session" title={state.sessionId ?? ''}>{state.sessionId ? `会话 ${state.n ?? '—'}` : '未连接'}</span>
         <div className="zp-drawer-head-actions">
+          <button type="button" title="切换会话（/resume）" aria-label="切换会话" onClick={() => setPaletteOpen(true)}><Icon name="history" size={16}/></button>
           <button type="button" title="新建会话" aria-label="新建会话" onClick={startFresh}><Icon name="plus" size={16}/></button>
         </div>
       </>}
@@ -186,49 +235,67 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
           ref={inputRef}
           rows={2}
           value={draft}
-          placeholder="围绕这篇文献提问…（Enter 发送，Shift+Enter 换行）"
+          placeholder={`围绕这篇文献提问…（Enter 发送，Shift+Enter 换行，${RESUME_COMMAND_TEXT} 切换会话）`}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submit(); }
           }}
         />
         <div className="zp-drawer-compose-actions">
-          <span className="zp-drawer-hint">{busy ? '发送中…' : notice ?? '回答会带上页码引用'}</span>
+          <span className="zp-drawer-hint">{busy ? '发送中…' : notice ?? `回答会带上页码引用 · ${RESUME_COMMAND_TEXT} 管理会话`}</span>
           <button type="submit" className="is-primary" disabled={busy || !draft.trim()}><Icon name="arrow" size={15}/>发送</button>
         </div>
       </form>
+
+      {paletteOpen && <SessionPalette
+        topic={topic}
+        name={name}
+        currentN={state.n}
+        onPick={pickSession}
+        onClose={() => setPaletteOpen(false)}
+      />}
     </>}
   </aside>;
 }
 
-/** 页码引用 `[第 12 页]` 与上游提示词里要求的 `&page=12` 链接都做成可点的跳转。 */
-const PAGE_REF = /(?:^|[\s(（])(?:第\s*(\d{1,4})\s*页|\[(\d{1,4})\])/g;
-
 function Bubble({ role, text, live = false, onJumpToPage }) {
-  const parts = useMemo(() => splitPageRefs(text), [text]);
   return <div className={`zp-bubble is-${role}${live ? ' is-live' : ''}`}>
     <div className="zp-bubble-role">{role === 'user' ? '我' : '助手'}{live && <span className="zp-bubble-dot"/>}</div>
-    <div className="zp-bubble-text">
-      {parts.length === 0 ? '' : parts.map((part, index) => part.page
-        ? <button type="button" key={index} className="zp-page-ref" onClick={() => onJumpToPage?.(part.page)}>第 {part.page} 页</button>
-        : <React.Fragment key={index}>{part.text}</React.Fragment>)}
-      {live && !text && <span className="zp-typing"><i/><i/><i/></span>}
-    </div>
+    {/* 用户的提问保持纯文本：选中一段英文再提问时，选区里常带 Markdown 记号
+        （`*`、`[]`、反引号），渲染出来反而走样。助手的回答才是 Markdown。 */}
+    {role === 'user'
+      ? <div className="zp-bubble-text">{text}</div>
+      : <AssistantText text={text} live={live} onJumpToPage={onJumpToPage}/>}
   </div>;
 }
 
-/** 把文本切成「普通文字」与「页码引用」两种片段。 */
-export function splitPageRefs(text) {
-  if (typeof text !== 'string' || !text) return [];
-  const parts = [];
-  let cursor = 0;
-  PAGE_REF.lastIndex = 0;
-  for (let match = PAGE_REF.exec(text); match !== null; match = PAGE_REF.exec(text)) {
-    const start = match.index + (match[0].length - match[0].trimStart().length);
-    if (start > cursor) parts.push({ text: text.slice(cursor, start) });
-    parts.push({ page: Number(match[1] ?? match[2]) });
-    cursor = match.index + match[0].length;
-  }
-  if (cursor < text.length) parts.push({ text: text.slice(cursor) });
-  return parts;
+/**
+ * 助手的回答：交给宿主自己的 Markdown 渲染器。
+ *
+ * 三件事各自有出处：
+ *   - `MarkdownText` 是宿主渲染助手消息的**同一个**组件（`ui-chat` 的
+ *     `AssistantMarkdown.tsx` 就用它），复制/代码块/表格/数学公式的行为与
+ *     「问一问」里完全一致，不必自己维护一套 Markdown 实现。
+ *   - 页码引用先经 `linkCitations` 改写成链接，再由 `openExternalLink` 拦下来
+ *     跳页（这个拦截是宿主为了「链接在侧栏打开」预留的公开口子）。
+ *   - `variant="compact"`：默认的 body 变体段落间距 16px、标题上边距 32px，
+ *     塞进 392px 宽的抽屉里太散。
+ */
+function AssistantText({ text, live, onJumpToPage }) {
+  const rendered = useMemo(() => linkCitations(text), [text]);
+  const openExternalLink = useCallback((href) => {
+    const page = pageFromLink(href);
+    if (page !== null) {
+      onJumpToPage?.(page);
+      return;
+    }
+    // 回答里真出现外链（论文 DOI、arXiv）时按宿主的默认行为开新窗口。
+    globalThis.open?.(href, '_blank', 'noopener,noreferrer');
+  }, [onJumpToPage]);
+  return <div className="zp-bubble-text zp-md">
+    <MarkdownDelegateProvider openExternalLink={openExternalLink}>
+      <MarkdownText text={rendered} streaming={live} labels={MARKDOWN_LABELS} variant="compact"/>
+    </MarkdownDelegateProvider>
+    {live && !text && <span className="zp-typing"><i/><i/><i/></span>}
+  </div>;
 }

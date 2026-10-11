@@ -612,6 +612,63 @@ body[data-zhiyun] .zp-bubble.is-assistant .zp-bubble-text {
   padding-left: 1px;
 }
 
+/* 助手回答由宿主的 MarkdownText 渲染，它自带一套 `.markdown` 规则（字号、
+   行高、标题边距）。父层的 `white-space: pre-wrap` 是给用户气泡的纯文本用的，
+   对 Markdown 产出会把每个换行与缩进都画出来，必须关掉。 */
+body[data-zhiyun] .zp-bubble-text.zp-md {
+  white-space: normal;
+}
+
+/* MarkdownText 的默认色板来自宿主主题（`--dsw-alias-label-*`），在智云 Pro 的
+   主题覆盖下偏灰。这里把正文与链接拉回本页的色。
+
+   选 `[data-markdown-variant]` 而不是它的 `.markdown`：宿主用 CSS Modules，
+   那个类名在产物里是 `_markdown_1ypvv_5` 这种哈希，跟着它写规则会在下一次
+   宿主改哈希时**静默失效**（真踩过：字号一直没生效，肉眼只觉得「有点大」）。
+   `data-markdown-variant` 是宿主显式写进 DOM 的稳定属性。 */
+body[data-zhiyun] .zp-md [data-markdown-variant] {
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-md a {
+  color: var(--zy-accent);
+  text-decoration-color: color-mix(in srgb, var(--zy-accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+body[data-zhiyun] .zp-md [data-markdown-variant] > :first-child {
+  margin-top: 0;
+}
+
+body[data-zhiyun] .zp-md [data-markdown-variant] > :last-child {
+  margin-bottom: 0;
+}
+
+/* 页码链接（`linkCitations` 产出的 `[第 12 页](https://zhiyun.invalid/…)`）
+   渲染成 `a`，但外观要和普通引用一样是「一个页码小标签」，不是蓝色下划线长链接。 */
+body[data-zhiyun] .zp-md a[href^='https://zhiyun.invalid/paper/page/'] {
+  display: inline-flex;
+  padding: 0 5px;
+  margin: 0 1px;
+  border-radius: 4px;
+  font-size: 11px;
+  text-decoration: none;
+  color: var(--zy-accent);
+  background: color-mix(in srgb, var(--zy-accent) 10%, transparent);
+}
+
+body[data-zhiyun] .zp-md a[href^='https://zhiyun.invalid/paper/page/']:hover {
+  background: color-mix(in srgb, var(--zy-accent) 20%, transparent);
+}
+
+/* 宿主给每个外链前面挂了一个「链接类别」图标（域名图标，未知域名退化成地球）。
+   页码链接不是外链，那个图标在这里只会把「第 12 页」推宽，藏掉。 */
+body[data-zhiyun] .zp-md a[href^='https://zhiyun.invalid/paper/page/'] svg {
+  display: none;
+}
+
 body[data-zhiyun] .zp-page-ref {
   display: inline-flex;
   padding: 0 5px;
@@ -841,6 +898,143 @@ body[data-zhiyun] .zp-card-actions button.is-primary {
 
 body[data-zhiyun] .zp-card-actions button:disabled {
   opacity: .5;
+}
+
+/* ------------------------------------------------- /resume 会话面板 */
+
+/* 浮在抽屉之上，**固定高度**（用户明确要求「固定大小的可滑动窗口」）：会话条数
+   不该决定面板多大，滚动的只有列表。 */
+body[data-zhiyun] .zp-resume {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 52px;
+  height: 340px;
+  max-height: calc(100% - 68px);
+  display: flex;
+  flex-direction: column;
+  z-index: 6;
+  border: 1px solid var(--zy-line);
+  border-radius: 9px;
+  background: var(--zy-surface);
+  box-shadow: 0 12px 32px color-mix(in srgb, #000 22%, transparent);
+  outline: none;
+}
+
+body[data-zhiyun] .zp-resume-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--zy-line);
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zp-resume-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-resume-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--zy-muted);
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zp-resume-close:hover {
+  background: var(--zy-soft);
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zp-resume-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+body[data-zhiyun] .zp-resume-row {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  padding: 6px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zp-resume-row.is-active {
+  background: var(--zy-soft);
+}
+
+body[data-zhiyun] .zp-resume-row.is-current .zp-resume-code {
+  color: var(--zy-accent);
+  border-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+}
+
+body[data-zhiyun] .zp-resume-code {
+  flex-shrink: 0;
+  margin-top: 1px;
+  padding: 0 4px;
+  border: 1px solid var(--zy-line);
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 16px;
+  color: var(--zy-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] .zp-resume-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* 首句一行截断：面板靠它认人，换行会把每行撑成两三行，一屏看不完几条。 */
+body[data-zhiyun] .zp-resume-first {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--zy-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-resume-meta {
+  font-size: 10px;
+  color: var(--zy-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zp-resume-foot {
+  flex-shrink: 0;
+  border-top: 1px solid var(--zy-line);
+  padding: 6px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+body[data-zhiyun] .zp-resume-keys {
+  font-size: 10px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zp-resume-notice {
+  font-size: 10px;
+  color: var(--zy-accent);
 }
 
 /* ------------------------------------------------------------------ 动效 */

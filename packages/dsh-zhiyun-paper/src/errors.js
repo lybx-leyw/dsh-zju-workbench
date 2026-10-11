@@ -19,6 +19,7 @@ export class PaperError extends Error {
 export const PAPER_ERROR_STATUS = Object.freeze({
   INPUT: 400,
   NO_LLM: 503,
+  NO_SESSION_ADMIN: 503,
   CONFIG: 503,
   CANCELLED: 499,
   TIMEOUT: 504,

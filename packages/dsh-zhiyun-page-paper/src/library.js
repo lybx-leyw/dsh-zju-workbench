@@ -160,3 +160,24 @@ export const translateSelection = (text, signal) =>
     body: JSON.stringify({ text }),
     signal,
   });
+
+/**
+ * `/resume` 面板的标签材料：按会话 id 取 `{ sessionId, title, firstQuestion }[]`。
+ *
+ * 上游 `/paper-reader/api/sessions` 只给编号，认不出「哪条是我当时在问什么」，
+ * 所以标签要在本包自己的路由上补（首句取法见宿主半边 `session-admin.js`）。
+ */
+export const loadSessionLabels = (sessionIds, signal) =>
+  requestJson(`${PAPER_PREFIX}/api/sessions/labels`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ sessionIds }),
+    signal,
+  });
+
+/**
+ * 归档一个会话（面板上按 Delete 的「删除」）。走本包路由而不是上游那条：
+ * 上游只允许归档**空白**会话，有内容的一律 409。
+ */
+export const archiveSessionById = (sessionId) =>
+  postJson(`${PAPER_PREFIX}/api/sessions/archive`, { sessionId });

@@ -1,11 +1,13 @@
 /**
  * 兼容层自有的 HTTP 面（前缀 `/zhiyun-paper`）。
  *
- * # 为什么只有两条路由
+ * # 为什么只有四条路由
  *
  * 阅读、文献库、转录、整篇翻译、会话注入 —— 上游那 24 条 `/paper-reader/*` 路由
  * 我们**原样复用**（上游宿主半边以子插件挂在本包下，见 `index.js`），页面直接
- * 打它们即可。这一层只补齐上游没有的那一件事：**选中即译**。
+ * 打它们即可。这一层只补齐上游没有的事：**选中即译**，以及 `/resume` 面板需要的
+ * **会话标签**与**归档任意会话**（上游那条归档路由只允许删空白会话，理由见
+ * `session-admin.js`）。
  *
  * 之所以不把上游的路由反代一遍（页面统一打 `/zhiyun-paper/*`）：那需要复刻
  * 上游每个端点的请求/响应形状，等于把「兼容层」写成了「重新实现」，
@@ -62,10 +64,13 @@ function asPaperError(err) {
  * @param options.connection - 宿主 `connection` 服务；`requestRejection(req)` 返回
  *   401/403/undefined，挡掉非本应用来源的请求（与上游同一套防护）。
  * @param options.getTranslator - 惰性取翻译器。返回 `null` 表示当前拿不到窄 llm 接口。
+ * @param options.sessionAdmin - 会话管理的宿主半边（`createSessionAdmin` 的产物）。缺省时
+ *   会话路由返回 503，而不是让插件激活失败 —— 「没配模型」和「宿主没这个服务」
+ *   都不该拦住宿主启动。
  * @param options.describe - 产出 `/api/status` 的负载（上游挂载状态、版本核对结果、缓存统计）。
  */
-export function createPaperHandler({ connection, getTranslator, describe }) {
-  const deps = { getTranslator, describe };
+export function createPaperHandler({ connection, getTranslator, sessionAdmin = null, describe }) {
+  const deps = { getTranslator, sessionAdmin, describe };
 
   return function handler(req, res) {
     const rejection = typeof connection?.requestRejection === 'function'
@@ -89,7 +94,7 @@ export function createPaperHandler({ connection, getTranslator, describe }) {
   };
 }
 
-async function dispatch(req, res, url, sub, { getTranslator, describe }) {
+async function dispatch(req, res, url, sub, { getTranslator, sessionAdmin, describe }) {
   if (sub === '/api/status') {
     if (req.method !== 'GET') return sendMethodNotAllowed(res, 'GET');
     return sendJson(res, 200, describe());
@@ -104,6 +109,28 @@ async function dispatch(req, res, url, sub, { getTranslator, describe }) {
         + '并确认 profile 已启用 dsh-zhiyun-parser');
     }
     const result = await translator.translate(body.text);
+    return sendJson(res, 200, result);
+  }
+
+  // `/resume` 面板的列表：给会话补上「论文名 + 首句」这两样上游不给的标签材料。
+  if (sub === '/api/sessions/labels') {
+    if (req.method !== 'POST') return sendMethodNotAllowed(res, 'POST');
+    const body = await readJsonBody(req);
+    if (!sessionAdmin) {
+      throw new PaperError('NO_SESSION_ADMIN', '会话标签需要宿主的 sessionController 服务（当前不可用）');
+    }
+    const cards = await sessionAdmin.cards(body.sessionIds);
+    return sendJson(res, 200, { cards });
+  }
+
+  // 面板上的「删除」：归档一个会话（含内容会话，上游那条只允许空白会话）。
+  if (sub === '/api/sessions/archive') {
+    if (req.method !== 'POST') return sendMethodNotAllowed(res, 'POST');
+    const body = await readJsonBody(req);
+    if (!sessionAdmin) {
+      throw new PaperError('NO_SESSION_ADMIN', '删除会话需要宿主的 workspaceRegistry 服务（当前不可用）');
+    }
+    const result = await sessionAdmin.archive(body.sessionId);
     return sendJson(res, 200, result);
   }
 

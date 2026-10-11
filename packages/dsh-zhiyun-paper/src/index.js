@@ -14,7 +14,7 @@
  *
  *   1. 以子插件形式挂上上游（`ctx.plugin`），把我们定好的 `dataDir` 传给它；
  *   2. 运行时核对上游版本，与 `upstream.js` 的预期不符时**大声报警但不拦启动**；
- *   3. 注册本包自己的 `/zhiyun-paper` 前缀路由（选中翻译 + 状态）。
+ *   3. 注册本包自己的 `/zhiyun-paper` 前缀路由（选中翻译 + 状态 + 会话标签/归档）。
  *
  * # 上游版本核对为什么不能直接拦住启动
  *
@@ -34,6 +34,7 @@ import { createRequire } from 'node:module';
 
 import { createSelectionTranslator } from './selection.js';
 import { createPaperHandler, PAPER_ROUTE_PREFIX } from './routes.js';
+import { createSessionAdmin } from './session-admin.js';
 import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
 
 export const name = 'zhiyun-paper';
@@ -69,6 +70,7 @@ export async function apply(ctx, config = {}) {
       error: null,
     },
     translate: { available: false, stats: null },
+    sessions: { available: false },
   };
 
   if (status.upstream.installed !== UPSTREAM_VERSION) {
@@ -108,14 +110,34 @@ export async function apply(ctx, config = {}) {
     console.warn(`[zhiyun-paper] 上游阅读器挂载失败，论文页将提示不可用：${status.upstream.error}`);
   }
 
+  // ── 会话管理：惰性取宿主服务 ──────────────────────────────────────────
+  // `sessionController` / `workspaceRegistry` 都不写进 inject（同上：可选服务否则会把
+  // 插件拖成 pending），取不到就让面板上的会话功能如实 503，不影响阅读与翻译。
+  const sessionAdmin = createSessionAdmin({
+    getSessionController: () => {
+      const controller = ctx.get('sessionController');
+      return controller ?? null;
+    },
+    getWorkspaceRegistry: () => {
+      const registry = ctx.get('workspaceRegistry');
+      return registry ?? null;
+    },
+    warn: (message) => console.warn(`[zhiyun-paper] ${message}`),
+  });
+
   // ── 本包自有路由 ──────────────────────────────────────────────────────
   ctx.inject(['webServer', 'connection'], (scope) => {
     const handler = createPaperHandler({
       connection: scope.connection,
       getTranslator,
+      sessionAdmin,
       describe: () => {
         const live = getTranslator();
         status.translate = { available: Boolean(live), stats: live ? live.stats : null };
+        status.sessions = {
+          available: typeof ctx.get('sessionController')?.inspect === 'function'
+            && typeof ctx.get('workspaceRegistry')?.archiveSession === 'function',
+        };
         return status;
       },
     });
