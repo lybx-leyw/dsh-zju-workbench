@@ -95,13 +95,33 @@ try {
     await page.waitForFunction(() => !document.body.hasAttribute('data-ds-dark-theme'));
   }
   checks.push('Real host boot and initial Today selection');
-  assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), 5);
+  assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), 6);
   await page.screenshot({ path: path.join(evidence, 'today-light.png'), fullPage: true });
-  for (const [label, id] of [['我的课', 'courses'], ['学习', 'study'], ['个人', 'me']]) {
+  for (const [label, id] of [['我的课', 'courses'], ['论文', 'paper'], ['学习', 'study'], ['个人', 'me']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${id}]`).waitFor();
   }
   checks.push('All product pages navigate through host layout');
+  // 「论文」页在真实宿主里必须真的渲染出来：导航能点开只证明外壳注册了插槽，
+  // 不证明页面包激活了。这里等它自己的 DOM 出现，并确认空文献库走的是空态。
+  await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '论文', exact: true }).click();
+  await page.locator('.zy-page[data-page=paper]').waitFor();
+  await page.locator('.zp-landing').waitFor({ timeout: 30000 });
+  assert.equal(await page.locator('.zy-content .zy-empty').count(), 1, 'an empty library shows the landing empty state');
+  assert.equal(await page.locator('.zp-frame').count(), 0, 'no reader frame is mounted before a paper is picked');
+  await page.screenshot({ path: path.join(evidence, 'paper.png'), fullPage: true });
+  checks.push('The paper page activates and renders its own empty state');
+  // 上游宿主插件（锁版依赖）必须挂上了它的前缀路由；页面包自有的 /zhiyun-paper 也必须活着。
+  const paperStatus = await page.evaluate(async () => {
+    const [own, upstream] = await Promise.all([
+      fetch('/zhiyun-paper/api/status').then(r => r.status).catch(() => 0),
+      fetch('/paper-reader/api/library').then(r => r.status).catch(() => 0),
+    ]);
+    return { own, upstream };
+  });
+  assert.equal(paperStatus.own, 200, 'the compat layer serves /zhiyun-paper/api/status');
+  assert.equal(paperStatus.upstream, 200, 'the pinned upstream host half serves its own /paper-reader routes');
+  checks.push('Both the compat layer and the pinned upstream plugin answer on their own route prefixes');
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '学习', exact: true }).click();
   await page.getByRole('button', { name: '前往个人面板登录' }).waitFor();
   await page.getByRole('button', { name: '前往个人面板登录' }).click();
@@ -238,7 +258,7 @@ try {
     // official theme come back, with no leftover styles or slot occupants.
     // 拆包后「产品」= 壳 + 共享原语 + 领域核心 + 四个页面包，要一起停 —— 页面包在
     // dsh.client.external 里声明了原语包，只停一半会让模块表缺行（require 落空）。
-    await writeFile(patch, '- id: zhiyun-shell\n  disabled: true\n- id: zhiyun-ui-primitives\n  disabled: true\n- id: zhiyun-study-core\n  disabled: true\n- id: zhiyun-page-today\n  disabled: true\n- id: zhiyun-page-courses\n  disabled: true\n- id: zhiyun-page-study\n  disabled: true\n- id: zhiyun-page-me\n  disabled: true\n- id: ui-sidebar\n  disabled: false\n');
+    await writeFile(patch, '- id: zhiyun-shell\n  disabled: true\n- id: zhiyun-ui-primitives\n  disabled: true\n- id: zhiyun-study-core\n  disabled: true\n- id: zhiyun-page-today\n  disabled: true\n- id: zhiyun-page-courses\n  disabled: true\n- id: zhiyun-page-study\n  disabled: true\n- id: zhiyun-page-me\n  disabled: true\n- id: zhiyun-page-paper\n  disabled: true\n- id: zhiyun-paper\n  disabled: true\n- id: ui-sidebar\n  disabled: false\n');
     await page.waitForTimeout(800);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await settleHostOverlays(page);

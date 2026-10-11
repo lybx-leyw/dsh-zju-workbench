@@ -25,6 +25,11 @@ const paths = {
   history: 'M3 12a9 9 0 1 0 2.6-6.4M3 4v5h5M12 8v4.2l3 1.8',
   menu: 'M4 7h16M4 12h16M4 17h16',
   more: 'M12 6h.01M12 12h.01M12 18h.01',
+  // 论文阅读：一页带折角的稿纸。折角是「这是一份文档而不是一本书」的通用记号
+  // （book 图标已被「我的课」占用，两者在侧栏相邻，形状必须一眼可分）。
+  paper: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Zm0 0v5h5M9 13h6M9 17h4',
+  // 翻译：两段互译的文字（上游「中」按钮与悬停浮层共用）。
+  translate: 'M4 5h9M8.5 5v2c0 3-2 6-5 7m2-5c0 2 2 4 5 5m3-1 4 7 4-7m-7 7h6',
 };
 export function Icon({ name, size = 19 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] ?? paths.book}/></svg>;
