@@ -1,5 +1,6 @@
 node_modules/
 .ref/
+.ref_book2skill/
 .ref-codex-ui/
 .runtime/
 artifacts/
@@ -10,3 +11,14 @@ artifacts/
 .temp_env
 *.dpapi
 packages/*/lib/
+# Python 的字节码缓存：本仓有 Python 工具（deploy/ 的收件服务、robot/ 的机器人），
+# 跑一次就会在同级生成 __pycache__，且里面的 .pyc 会记录**本地绝对路径**。
+__pycache__/
+*.py[cod]
+# .workbuddy 是 agent 的本地记忆（含会话过程与机器信息），不进公开仓库。
+.workbuddy/
+# 单包构建的本地快捷脚本：内容按各人环境手改，不该进仓库。
+build-one.local.mjs
+# 收件服务的本地落盘目录：Windows 上没有 /mnt/workspace，server.py 必然退回到这里。
+# 里面是**真实用户反馈**而不是代码，一旦被 git add -A 带上就是公开仓库的信息泄露。
+deploy/*/data/
