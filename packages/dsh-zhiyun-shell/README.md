@@ -2,7 +2,7 @@
 
 智云 Pro 的界面外壳插件：侧栏、页框架、主题层、导航服务与插槽契约。当前验证宿主为 `0.2.0-rc.2`。宿主提供 React 和全部 DSH 客户端服务；不要再打包一份 React。
 
-外壳**不认识任何具体页面**：它声明 `NAV` 里每个页面（除「问一问」是宿主原生会话）的面板骨架和内容插槽，页面由各自的插件包填充（`dsh-zhiyun-page-today / -courses / -paper / -study / -me`）。内容插槽按 `NAV` 的条目逐个注册：加一项导航就自动多一个 `zhiyun.<id>.content`。页面包没装时页面显示「暂时不可用」占位，外壳照常工作。
+外壳**不认识任何具体页面**：它声明 `NAV` 里每个页面（除「问一问」是宿主原生会话）的面板骨架和内容插槽，页面由各自的插件包填充（`dsh-zhiyun-page-today / -courses / -paper / -study / -me / -plugins`）。内容插槽按 `NAV` 的条目逐个注册：加一项导航就自动多一个 `zhiyun.<id>.content`。页面包没装时页面显示「暂时不可用」占位，外壳照常工作。
 
 构建：在仓库根运行 `npm run build`。本地 profile 通过目录链接加载 `lib/`，修改源文件后需重新构建，DSH 的客户端更新机制会更新页面。
 
@@ -18,6 +18,7 @@
 | `zhiyun.study.content` | 学习页正文 |
 | `zhiyun.me.content` | 个人页正文 |
 | `zhiyun.me.account` | 个人页账号区块（嵌在个人页正文里） |
+| `zhiyun.plugins.content` | 插件依赖页正文 |
 
 页面包在客户端导出 `inject: ['slots']`，然后：
 
@@ -42,7 +43,17 @@ export function apply(ctx) {
 
 页面组件同时从渲染参数里拿到外壳注入的 `controller`（`navigate / toggleSidebar / toggleTheme`）和 `renderSlot`。`ctx.slots.inject` 在声明已存在时立即执行，声明后到也会补执行，外壳卸载时贡献随之撤销（连同 `ctx.inject` 的作用域一起）。
 
-`controller.navigate(id)` 支持 `today / courses / paper / ask / study / me`，`ask` 进入现有 DSH 会话。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。
+`controller.navigate(id)` 支持 `today / courses / paper / ask / study / me / plugins`，`ask` 进入现有 DSH 会话。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。
+
+## 取消一页之后
+
+「插件」页可以取消一个没有被依赖的叶包（例如不用「论文」就把 `dsh-zhiyun-page-paper` 关掉）。外壳的反应：
+
+- 侧栏与 `Ctrl+K` 跳转都不再列它 —— 两处用**同一份**清单（`model.js` 的 `hiddenPageIds`），否则会出现「侧栏看不到、跳转却能过去」的半坏状态；
+- 它的面板与内容插槽**照常注册**，只是页面包的内容不再挂载，于是那一页走 `Page` 的「暂时不可用」占位；
+- 正停在被取消的那一页时，自动回「今天」。
+
+状态来自宿主插件管理的行级读数（`listPlugins`），与「插件」页同一份真值，所以那边一勾这边立刻变。**`remote` 必须写进 `inject`**：`ctx.remote` 上的命名空间是注入门禁的，没声明就访问 `remote.pluginManager` 会抛（真机踩到过）；而 `remote` 与 `pluginManager` 由 `dsh-api-remotes` 无条件一起挂载，不会多出连坐面。读数失败或服务缺失时一律**退回空集**（一页都不藏）—— 宁可多一个入口，也不能因为可选能力缺席把导航弄没。
 
 ## 领域服务（由 `dsh-zhiyun-study-core` 提供）
 

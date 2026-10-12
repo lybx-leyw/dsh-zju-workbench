@@ -74,7 +74,15 @@
 </head>
 <body>
 <div class="board">
-<svg viewBox="0 0 1420 880" role="img" aria-label="zhiyun-pro-js 插件依赖图：宿主、能力包、加工包、领域状态与共享原语、界面外壳与页面包">
+<!--
+  这张图是**手工维护的历史存档**，只画到「论文」页为止。
+
+  现在运行时的活图在产品的「插件」页（packages/dsh-zhiyun-page-plugins/）：它从 DSH 运行时
+  直接读出拓扑序与依赖边（模块图的 inject/external、两棵 Cordis 树的 fiber.inject 服务边、
+  以及插槽的声明/注册边），所以既包含「插件」页自己，也不会像这份文件一样随拆包而过期。
+  要更新依赖关系，请看那一页 —— 不要在这里手抄第二份。
+-->
+<svg viewBox="0 0 1420 880" role="img" aria-label="zhiyun-pro-js 插件依赖图（历史存档）：宿主、能力包、加工包、领域状态与共享原语、界面外壳与页面包">
   <defs>
     <filter id="soft" x="-20%" y="-30%" width="140%" height="180%">
       <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity=".10"/>
