@@ -1,0 +1,13 @@
+{
+  "name": "dsh-zhiyun-page-plugins",
+  "version": "0.1.0",
+  "description": "智云 Pro「插件」页：按运行时依赖关系图列出本工作台的插件，并取消没有被依赖的叶包（页面插件）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./client": "./lib/client.js", "./package.json": "./package.json" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "external": ["dsh-zhiyun-ui-primitives"] }
+  }
+}

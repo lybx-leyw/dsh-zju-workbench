@@ -3,6 +3,7 @@ import { mkdir, writeFile, readFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { initialize, lock, root, runHost } from './profile.mjs';
+import { CLIENT_PACKAGES } from './build.mjs';
 import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-study-core/src/learning-space.js';
 
 const evidence = path.join(root, 'artifacts');
@@ -70,6 +71,24 @@ function minimalPdf(lines) {
   for (const offset of offsets) pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
   pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(pdf, 'latin1');
+}
+
+/**
+ * 整体停用「产品」时要关掉的那几行。
+ *
+ * 「产品 UI」= 有客户端半边的包（壳 + 共享原语 + 领域核心 + 各页面包），也就是
+ * `CLIENT_PACKAGES`；再加上论文宿主半边（它承载 `/paper-reader` 与文献设置页）。
+ *
+ * ⚠️ 口径必须是「有客户端半边的包」，不能是「本仓所有包」：业务包（课堂/解析/出题/笔记/
+ * 知识库/讲义/终审）不该被这段测试停掉，全停一遍会让恢复时同时重载十来个宿主插件，
+ * 上游 `ui-cordis` 的清单读取会在这中间抢跑失败（`dynamicCordisRunner/inventory: Failed to fetch`），
+ * 于是最后那条「没有浏览器报错」的断言红掉。也不要手写：手写的清单在加「插件」页时漏了一行，
+ * 表现是下面「样式已撤回」的断言 60 秒后超时。从 `CLIENT_PACKAGES` 推导，两边都不会漏。
+ * @returns 行 id（= 包名去掉 `dsh-` 前缀，与本仓每个 cordis.patch.yml 里 insert 的 id 一致）。
+ */
+function productRowIds() {
+  const bundles = [...CLIENT_PACKAGES, 'dsh-zhiyun-paper'];
+  return [...new Set(bundles.map(bundle => bundle.replace(/^dsh-/, '')))].sort();
 }
 
 /** 往 profile 的文献库里放一篇真论文，供下面的抽屉端到端断言使用。 */
@@ -255,13 +274,28 @@ try {
     await page.waitForFunction(() => !document.body.hasAttribute('data-ds-dark-theme'));
   }
   checks.push('Real host boot and initial Today selection');
-  assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), 6);
+  // 侧栏页数：今天 / 我的课 / 论文 / 问一问 / 学习 / 个人 / 插件。
+  assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), 7);
   await page.screenshot({ path: path.join(evidence, 'today-light.png'), fullPage: true });
   for (const [label, id] of [['我的课', 'courses'], ['论文', 'paper'], ['学习', 'study'], ['个人', 'me']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${id}]`).waitFor();
   }
   checks.push('All product pages navigate through host layout');
+  // 「插件」页：依赖图必须真的从运行时读出来，而且宿主面的硬边要认得出
+  // （解析包被领域包依赖 —— 少了这条边它会被当成可以取消的叶）。
+  await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '插件', exact: true }).click();
+  await page.locator('.zy-page[data-page=plugins]').waitFor();
+  await page.locator('.zpl-row').first().waitFor({ timeout: 60000 });
+  const pluginRows = await page.locator('.zpl-row').evaluateAll(list => list.map(row => ({
+    name: row.querySelector('.zpl-row-head strong')?.textContent,
+    inner: row.querySelector('.zpl-badge-inner') !== null,
+  })));
+  const parserRow = pluginRows.find(row => row.name === 'parser');
+  assert.ok(parserRow?.inner === true, '解析包必须显示为「被 N 个包依赖」，而不是叶');
+  assert.deepEqual(await page.locator('.zpl-badge-wait').allInnerTexts(), [], '健康组合里不该有「等待依赖」');
+  checks.push('The plugins page derives the dependency graph from the runtime, including host-plane hard edges');
+  await page.screenshot({ path: path.join(evidence, 'plugins.png'), fullPage: true });
   // 「论文」页在真实宿主里必须真的渲染出来：导航能点开只证明外壳注册了插槽，
   // 不证明页面包激活了。这里等它自己的 DOM 出现，并确认空文献库走的是空态。
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '论文', exact: true }).click();
@@ -436,9 +470,16 @@ try {
 
     // Disabling the product bundle is a removal: the host sidebar and the
     // official theme come back, with no leftover styles or slot occupants.
-    // 拆包后「产品」= 壳 + 共享原语 + 领域核心 + 四个页面包，要一起停 —— 页面包在
-    // dsh.client.external 里声明了原语包，只停一半会让模块表缺行（require 落空）。
-    await writeFile(patch, '- id: zhiyun-shell\n  disabled: true\n- id: zhiyun-ui-primitives\n  disabled: true\n- id: zhiyun-study-core\n  disabled: true\n- id: zhiyun-page-today\n  disabled: true\n- id: zhiyun-page-courses\n  disabled: true\n- id: zhiyun-page-study\n  disabled: true\n- id: zhiyun-page-me\n  disabled: true\n- id: zhiyun-page-paper\n  disabled: true\n- id: zhiyun-paper\n  disabled: true\n- id: ui-sidebar\n  disabled: false\n');
+    //
+    // 「产品」= 本仓全部源包（壳 + 共享原语 + 领域核心 + 各页面包），要**一起**停：
+    // 页面包在 dsh.client.external 里声明了原语包，只停一半会让模块表缺行（require 落空），
+    // 而漏停任何一个包都会让它继续注册插槽/挂样式，下面两条断言就会在 60 秒后超时。
+    //
+    // 这张清单从各包自己的 cordis.patch.yml 解析出来，**不手写**：手写的那份在加「插件」页时
+    // 漏了一行，真机上就是超时失败。注意必须走 YAML 解析而不是正则抓第一个 `- id:` ——
+    // 壳的 patch 先改上游 `ui-sidebar` 再用 `insert:` 插自己，正则抓不到 `zhiyun-shell`。
+    const productRows = [...productRowIds()].map(id => `- id: ${id}\n  disabled: true`);
+    await writeFile(patch, [...productRows, '- id: ui-sidebar\n  disabled: false\n'].join('\n') + '\n');
     await page.waitForTimeout(800);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await settleHostOverlays(page);
