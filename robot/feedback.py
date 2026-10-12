@@ -49,6 +49,10 @@ import server  # noqa: E402
 
 ENDPOINT = (os.environ.get("FEEDBACK_ENDPOINT") or "https://leywlybx-zju-workbench-alpha.ms.show").rstrip("/")
 
+# `.ms.show` 的边缘过滤按 UA 放行：没有浏览器 UA 一律 403（见 `call()` 的说明）。
+# 这份 UA 是**协议的一部分**，不是"装成浏览器"的小聪明 —— 我们的客户端本来就跑在浏览器里。
+USER_AGENT = "Mozilla/5.0 (compatible; zhiyun-feedback-robot/1)"
+
 
 def log(message: str) -> None:
     """诊断信息走 stderr，绝不污染 stdout 里的 JSON。"""
@@ -61,9 +65,16 @@ def die(message: str, code: int = 1) -> None:
 
 
 def call(path: str, payload: dict | None = None) -> dict:
-    """打一次服务端。任何失败都以非零码退出 —— 定时任务靠退出码判断成败。"""
+    """打一次服务端。任何失败都以非零码退出 —— 定时任务靠退出码判断成败。
+
+    **必须带一个浏览器 User-Agent。** 魔搭 Studio 的 `.ms.show` 域名对疑似爬虫的
+    请求返回 403（返回体还是一句误导性的"请使用 API 地址"），而浏览器请求正常放行。
+    不设 UA 时 urllib 会自报 `Python-urllib/3.x`，于是线上每条命令都 403 ——
+    本地跑（没有那层网关）却一切正常，所以这个坑只有连真服务才暴露。
+    """
     data = None if payload is None else json.dumps(payload, ensure_ascii=False).encode("utf-8")
     request = urllib.request.Request(f"{ENDPOINT}{path}", data=data, method="POST" if data else "GET")
+    request.add_header("user-agent", USER_AGENT)
     if data is not None:
         request.add_header("content-type", "application/json")
     try:

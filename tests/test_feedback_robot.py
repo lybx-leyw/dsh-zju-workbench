@@ -118,5 +118,52 @@ class NoTokenTest(unittest.TestCase):
         self.assertNotIn("canReply", source)
 
 
+class UserAgentTest(unittest.TestCase):
+    """每个请求都要带浏览器 UA。
+
+    魔搭 Studio 的 `.ms.show` 对自报 `Python-urllib/3.x` 的请求返回 403
+    （返回体还是一句误导性的"请使用 API 地址"）。**本地服务没有那层网关**，
+    所以这个坑跑遍本地测试都看不出来，只有连真服务才暴露 —— 部署当天就踩到了。
+    """
+
+    def test_every_request_carries_a_browser_user_agent(self):
+        seen = []
+
+        class FakeResponse:
+            status = 200
+
+            def read(self):
+                return b'{"ok": true, "issues": []}'
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *rest):
+                return False
+
+        def fake_urlopen(request, timeout=None):
+            seen.append(dict(request.headers))
+            return FakeResponse()
+
+        original = robot.urllib.request.urlopen
+        robot.urllib.request.urlopen = fake_urlopen
+        try:
+            robot.call("/feedback")
+            robot.call("/feedback", {"kind": "new", "title": "t", "detail": "d", "name": "n"})
+        finally:
+            robot.urllib.request.urlopen = original
+
+        self.assertEqual(len(seen), 2, "GET 与 POST 都要走到")
+        for headers in seen:
+            # urllib 会把 header 名首字母大写，所以这里用大小写无关的查找。
+            ua = next((v for k, v in headers.items() if k.lower() == "user-agent"), "")
+            self.assertTrue(ua, f"请求必须带 UA：{headers}")
+            self.assertIn("Mozilla/5.0", ua, f"UA 要是浏览器形态，否则 .ms.show 会 403：{ua}")
+
+    def test_user_agent_is_not_a_camouflage_of_a_specific_browser(self):
+        # 不必也不该装成某个具体浏览器版本；能过网关即可，所以自报身份。
+        self.assertIn("zhiyun-feedback-robot", robot.USER_AGENT)
+
+
 if __name__ == "__main__":
     unittest.main()
