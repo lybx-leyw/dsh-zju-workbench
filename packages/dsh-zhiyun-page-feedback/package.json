@@ -1,0 +1,18 @@
+{
+  "name": "dsh-zhiyun-page-feedback",
+  "version": "0.1.0",
+  "description": "智云 Pro「反馈」页：内嵌的迷你社区（发需求、评论讨论、状态推进），形态照 GitHub issue，署名用本机随机笔名",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./board": "./src/board.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "external": ["dsh-zhiyun-ui-primitives"] }
+  }
+}

@@ -24,7 +24,8 @@
         "dsh-zhiyun-page-me",
         "dsh-zhiyun-paper",
         "dsh-zhiyun-page-paper",
-        "dsh-zhiyun-page-plugins"
+        "dsh-zhiyun-page-plugins",
+        "dsh-zhiyun-page-feedback"
       ],
       "patchReload": "live"
     }

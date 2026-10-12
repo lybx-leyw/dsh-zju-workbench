@@ -45,6 +45,7 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-page-me',
   'dsh-zhiyun-page-paper',
   'dsh-zhiyun-page-plugins',
+  'dsh-zhiyun-page-feedback',
 ];
 
 /**

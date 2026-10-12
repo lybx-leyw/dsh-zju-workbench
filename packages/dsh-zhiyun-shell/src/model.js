@@ -12,6 +12,9 @@ export const NAV = Object.freeze([
   // 不属于学习动线（找一个学习入口时不该先撞见它）。
   // hint 里同样刻意避开「规划」（同上面那条守卫）。
   { id: 'plugins', label: '插件', icon: 'graph', hint: '看这个工作台由哪些包组成，取消用不到的那些' },
+  // 「反馈」与「插件」并列放在最后：两者都是关于工作台**本身**的页（怎么组装、怎么
+  // 提需求），不属于学习动线。hint 同样避开「规划」（守卫别名）。
+  { id: 'feedback', label: '反馈', icon: 'chat', hint: '提需求、在讨论串里聊，看维护者怎么回' },
 ]);
 export const panelKey = id => `zhiyun.${id}`;
 /**
