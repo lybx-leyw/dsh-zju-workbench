@@ -19,6 +19,7 @@
 | `zhiyun.me.content` | 个人页正文 |
 | `zhiyun.me.account` | 个人页账号区块（嵌在个人页正文里） |
 | `zhiyun.plugins.content` | 插件依赖页正文 |
+| `zhiyun.feedback.content` | 反馈页正文 |
 
 页面包在客户端导出 `inject: ['slots']`，然后：
 
@@ -43,7 +44,7 @@ export function apply(ctx) {
 
 页面组件同时从渲染参数里拿到外壳注入的 `controller`（`navigate / toggleSidebar / toggleTheme`）和 `renderSlot`。`ctx.slots.inject` 在声明已存在时立即执行，声明后到也会补执行，外壳卸载时贡献随之撤销（连同 `ctx.inject` 的作用域一起）。
 
-`controller.navigate(id)` 支持 `today / courses / paper / ask / study / me / plugins`，`ask` 进入现有 DSH 会话。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。
+`controller.navigate(id)` 支持 `today / courses / paper / ask / study / me / plugins / feedback`，`ask` 进入现有 DSH 会话。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。
 
 ## 取消一页之后
 
