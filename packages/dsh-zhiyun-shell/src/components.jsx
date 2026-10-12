@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Empty, Icon, Mark, useStore } from 'dsh-zhiyun-ui-primitives';
-import { NAV, activePage, matchingPages, beijingDate } from './model.js';
+import { NAV, activePage, matchingPages, visiblePages, beijingDate } from './model.js';
 
 function useClock() {
   const [now, setNow] = useState(() => new Date());
@@ -9,10 +9,10 @@ function useClock() {
   return now;
 }
 
-export function SearchDialog({ controller, open, onClose }) {
+export function SearchDialog({ controller, open, onClose, pages }) {
   const dialog = useRef(null);
   const [query, setQuery] = useState('');
-  const items = matchingPages(query);
+  const items = matchingPages(query, pages);
   useEffect(() => {
     if (open) { setQuery(''); dialog.current.showModal(); }
     else if (dialog.current.open) dialog.current.close();
@@ -25,9 +25,12 @@ export function SearchDialog({ controller, open, onClose }) {
   </dialog>;
 }
 
-export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo }) {
+export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidden }) {
   const active = activePage(usePanelInfo(info => info.activePanelId));
   const [searchOpen, setSearchOpen] = useState(false);
+  // 被取消的页不在侧栏、也不在跳转搜索里 —— 两处必须用同一份清单，否则会出现
+  // 「侧栏看不到，但 Ctrl+K 能跳过去」的半坏状态。
+  const pages = visiblePages(useStore(hidden));
   useEffect(() => {
     function key(event) {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setSearchOpen(value => !value); }
@@ -38,7 +41,7 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo }) {
   return <aside className={`zy-sidebar${collapsed ? ' zy-collapsed' : ''}`} aria-label="智云主导航">
     <button className="zy-brand" title="智云 Pro · 今天" aria-label="智云 Pro · 今天" onClick={() => controller.navigate('today')}><Mark compact={collapsed}/>{!collapsed && <span>智云</span>}</button>
     <button className="zy-search-button" onClick={() => setSearchOpen(true)} title="跳转 Ctrl+K"><Icon name="search"/>{!collapsed && <><span>跳转到…</span><kbd>Ctrl K</kbd></>}</button>
-    <nav className="zy-nav" aria-label="主要页面">{NAV.map(item => <button key={item.id} className={active === item.id ? 'is-active' : ''} aria-current={active === item.id ? 'page' : undefined} aria-label={item.label} title={item.label} onClick={() => controller.navigate(item.id)}><Icon name={item.icon}/>{!collapsed && <span>{item.label}</span>}</button>)}</nav>
+    <nav className="zy-nav" aria-label="主要页面">{pages.map(item => <button key={item.id} className={active === item.id ? 'is-active' : ''} aria-current={active === item.id ? 'page' : undefined} aria-label={item.label} title={item.label} onClick={() => controller.navigate(item.id)}><Icon name={item.icon}/>{!collapsed && <span>{item.label}</span>}</button>)}</nav>
     {!collapsed && <div className="zy-sidebar-middle">
       <div className="zy-divider"/>
       {/* 会话管理不在侧栏：它属于「问一问」的版面（见 SessionHeader）。侧栏只留一句心情。 */}
@@ -50,7 +53,7 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo }) {
       <button className="zy-collapse" onClick={controller.toggleSidebar} title={collapsed ? '展开导航' : '收起导航'} aria-label={collapsed ? '展开导航' : '收起导航'}><Icon name="collapse"/>{!collapsed && <span>收起导航</span>}</button>
       {!collapsed && <div className="zy-profile-label"><span/>独立学习空间 <small>{__ZHIYUN_PROFILE__}</small></div>}
     </div>
-    <SearchDialog controller={controller} open={searchOpen} onClose={() => setSearchOpen(false)}/>
+    <SearchDialog controller={controller} open={searchOpen} onClose={() => setSearchOpen(false)} pages={pages}/>
   </aside>;
 }
 

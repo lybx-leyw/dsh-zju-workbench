@@ -30,6 +30,8 @@ const paths = {
   paper: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Zm0 0v5h5M9 13h6M9 17h4',
   // 翻译：两段互译的文字（上游「中」按钮与悬停浮层共用）。
   translate: 'M4 5h9M8.5 5v2c0 3-2 6-5 7m2-5c0 2 2 4 5 5m3-1 4 7 4-7m-7 7h6',
+  // 插件依赖：三个节点用折线连起来 —— 「谁依赖谁」这件事的最小图形记号。
+  graph: 'M8 6.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm13 11a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm0-11a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM8 6.5h5.5M13.5 6.5v11M13.5 17.5H16',
 };
 export function Icon({ name, size = 19 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] ?? paths.book}/></svg>;
