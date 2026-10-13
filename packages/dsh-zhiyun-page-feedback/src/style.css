@@ -3,6 +3,16 @@
    胜负只看挂载顺序，裸状态类会和别处撞车（scripts/check-css-order.mjs 拦的正是这类）。
    颜色只取外壳的 --zy-* 变量，不引入新色板。 */
 
+/* 字号下限 11px（F-002「屏幕设计不够符合屏幕工效学」）：原先编号、状态、时间、字数
+   这类辅助文字是 10px / 10.5px，中文在那个尺寸下笔画粘连，长时间读这一页会累。
+   11px 是本页辅助文字的新下限 —— 再往下不设。正文（12.5px）与标题不动：那两档没有
+   可读性问题，一起放大只会把一屏塞得更满。 */
+
+/* 第二轮：按 docs/contributing/skills/human-factors-screen-design 逐条核对后的调节。
+   换算基准取该 skill 的参考条件 600 mm / 96 ppi：16'≈10.6px、20'≈13.2px、24'≈15.8px
+   （视觉高度，非 font-size）。本页只改**落在本页样式表内**的三类：对比度、状态标签的
+   第二通道、行长。字号与卡片边框不在此列，理由见文件末尾「未动的部分」。 */
+
 /* ------------------------------------------------------------------ 表单 */
 
 .zfb-form {
@@ -52,38 +62,54 @@
 
 .zfb-ok { margin: 10px 0 0; font-size: 12px; color: var(--zy-accent); }
 .zfb-form-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 4px; }
-.zfb-counter { font-size: 10px; color: var(--zy-muted); font-variant-numeric: tabular-nums; }
+/* 字数计数是 11px 小字，用 --zy-muted 在亮色下只有 4.11:1，未达正文 4.5:1 的下限
+   （skill ch03）。换成 --zy-secondary 后亮 5.37:1 / 暗 7.44:1，两档主题都过线。
+   层次改由字号承担，不再靠把颜色压到合规线以下。 */
+.zfb-counter { font-size: 11px; color: var(--zy-secondary); font-variant-numeric: tabular-nums; }
 .zfb-submit { border-radius: 8px; padding: 9px 20px; background: var(--zy-action); color: #fff; font-size: 12.5px; }
 .zfb-submit:hover { background: var(--zy-action-hover); }
 .zfb-submit:disabled { opacity: .6; cursor: default; }
 
 /* ------------------------------------------------------------------ 列表 */
 
-.zfb-muted { font-size: 11.5px; color: var(--zy-muted); margin: 6px 0; }
+/* 同上：11.5px 的说明文字（"正在读取"、"共 N 条"、表单提示、页脚）原本取 --zy-muted，
+   亮色 4.11:1 不达 AA。改 --zy-secondary（5.37:1）。 */
+.zfb-muted { font-size: 11.5px; color: var(--zy-secondary); margin: 6px 0; }
 .zfb-foot { padding-top: 22px; }
 
 .zfb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .zfb-item { border: 1px solid var(--zy-line); border-radius: 10px; background: var(--zy-surface); padding: 15px 18px; }
 .zfb-item-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .zfb-item-head strong { font-size: 13px; font-weight: 500; }
-.zfb-id { font-size: 10.5px; font-variant-numeric: tabular-nums; color: var(--zy-accent); background: var(--zy-soft); border-radius: 5px; padding: 2px 7px; }
-.zfb-tag { margin-left: auto; font-size: 10px; border-radius: 5px; padding: 3px 8px; border: 1px solid var(--zy-line); color: var(--zy-secondary); }
-.zfb-tag-done { color: var(--zy-accent); background: var(--zy-soft); border-color: transparent; }
-.zfb-tag-open { color: var(--zy-secondary); }
-.zfb-tag-declined { color: var(--zy-muted); }
-.zfb-summary { font-size: 12px; color: var(--zy-secondary); margin: 9px 0 0; line-height: 1.75; }
+.zfb-id { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--zy-accent); background: var(--zy-soft); border-radius: 5px; padding: 2px 7px; }
+/* 状态标签的第二通道（skill ch03 规则 3：颜色永远不能是唯一的通道）。
+   三态都带文字（"已实现"/"推进中"/"本期不采纳"），但 open 与 declined 此前只靠
+   --zy-secondary(#666b72) 与 --zy-muted(#777e85) 两档相近的灰区分 —— 两色对比
+   1.31:1，颜色这条通道等于没有，等于只剩文字一条。现在给三态各配一种边框：
+   已实现实心、推进中虚线、本期不采纳点线；边框色也从 --zy-line（1.29:1，等于看不见）
+   换成 --zy-secondary，形状才真的看得出来。灰度取色不再压到 4.5:1 以下。 */
+.zfb-tag { margin-left: auto; font-size: 11px; border-radius: 5px; padding: 3px 8px; border: 1px solid var(--zy-line); color: var(--zy-secondary); }
+.zfb-tag-done { color: var(--zy-accent); background: var(--zy-soft); border-color: transparent; border-style: solid; }
+.zfb-tag-open { border-style: dashed; border-color: var(--zy-secondary); }
+.zfb-tag-declined { color: var(--zy-secondary); border-style: dotted; border-color: var(--zy-secondary); }
+/* 行长（skill ch02）：measure 的上限是 80 个拉丁字符，中文按 40 字算。内容区 884px 宽、
+   本页正文 12–12.5px，一行能排到 70 个汉字，远超上限 —— 长讨论串读到行尾容易串行。
+   用 em 定上限：1em 在中文下约等于一个字宽，40em 就是 40 个字，字号若调整行长自动跟着走。 */
+.zfb-summary { font-size: 12px; color: var(--zy-secondary); margin: 9px 0 0; line-height: 1.75; max-width: 40em; }
 .zfb-item-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; }
-.zfb-meta { font-size: 10px; color: var(--zy-muted); font-variant-numeric: tabular-nums; }
+.zfb-meta { font-size: 11px; color: var(--zy-secondary); font-variant-numeric: tabular-nums; }
 
 /* 需求类别记号（新需求 / 追踪）。 */
-.zfb-kind { font-size: 10px; border-radius: 5px; padding: 2px 7px; border: 1px solid var(--zy-line); color: var(--zy-secondary); }
+.zfb-kind { font-size: 11px; border-radius: 5px; padding: 2px 7px; border: 1px solid var(--zy-line); color: var(--zy-secondary); }
 .zfb-kind-new { color: var(--zy-accent); border-color: color-mix(in srgb, var(--zy-accent) 30%, var(--zy-line)); }
 .zfb-kind-track { color: var(--zy-secondary); }
 
 /* ------------------------------------------------------- 迷你社区（issue 形态） */
 
 .zfb-me { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 11.5px; color: var(--zy-secondary); margin: 14px 0 4px; }
-.zfb-link { color: var(--zy-accent); font-size: 11.5px; }
+/* 同上：把点击区撑到 24px 高。只加纵向内边距 —— 横向文字本身已有 34px 宽，够 24px；
+   纵向补 5px 再用 -5px 外边距抵回去，`.zfb-me` 这一行的间距不受影响。 */
+.zfb-link { color: var(--zy-accent); font-size: 11.5px; padding: 5px 0; margin: -5px 0; }
 .zfb-link:hover { text-decoration: underline; }
 
 .zfb-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 16px 0 12px; }
@@ -95,23 +121,27 @@
 .zfb-open:hover .zfb-item-head strong { color: var(--zy-accent); }
 
 .zfb-who { font-size: 11px; color: var(--zy-secondary); }
-.zfb-badge { font-size: 10px; border-radius: 5px; padding: 2px 7px; color: var(--zy-accent); background: var(--zy-soft); }
+.zfb-badge { font-size: 11px; border-radius: 5px; padding: 2px 7px; color: var(--zy-accent); background: var(--zy-soft); }
 
-.zfb-back { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--zy-secondary); margin: 12px 0 10px; }
+/* 点击目标 24×24 CSS px（skill ch06）。"回到全部需求"是导航控件，不是正文里的行内
+   链接，不适用行内豁免：原来只有 11.5px 文字那么高（约 14px），鼠标和手指都偏小。
+   补 min-height 与左右内边距到 24px，再用负外边距抵掉多出来的占位，视觉位置不变。 */
+.zfb-back { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 0 8px; font-size: 11.5px; color: var(--zy-secondary); margin: 12px 0 10px; margin-left: -8px; }
 .zfb-back:hover { color: var(--zy-accent); }
 .zfb-back svg { transform: rotate(180deg); }
 
 .zfb-thread { border: 1px solid var(--zy-line); border-radius: 10px; background: var(--zy-surface); padding: 18px 20px 16px; }
 .zfb-thread-head { padding-bottom: 4px; }
-.zfb-thread-meta { font-size: 11px; color: var(--zy-muted); margin: 8px 0 0; display: flex; align-items: center; gap: 8px; }
-.zfb-thread-body { font-size: 12.5px; color: var(--zy-text); line-height: 1.8; margin: 12px 0 0; white-space: pre-wrap; }
+/* 同样是 11px 小字（"谁发起 · 什么时候"），--zy-muted 在亮色下 4.11:1 不达 AA，一并换掉。 */
+.zfb-thread-meta { font-size: 11px; color: var(--zy-secondary); margin: 8px 0 0; display: flex; align-items: center; gap: 8px; }
+.zfb-thread-body { font-size: 12.5px; color: var(--zy-text); line-height: 1.8; margin: 12px 0 0; white-space: pre-wrap; max-width: 40em; }
 
 /* 评论区：左侧一条竖线把"讨论"与"正文"分开，像 issue 里的时间线 */
 .zfb-comments { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .zfb-comment { border-left: 2px solid var(--zy-line); padding: 2px 0 2px 14px; }
 .zfb-comment-head { display: flex; align-items: center; gap: 8px; }
 .zfb-comment-head strong { font-size: 11.5px; font-weight: 600; }
-.zfb-comment-body { font-size: 12.5px; color: var(--zy-text); line-height: 1.8; margin: 6px 0 0; white-space: pre-wrap; }
+.zfb-comment-body { font-size: 12.5px; color: var(--zy-text); line-height: 1.8; margin: 6px 0 0; white-space: pre-wrap; max-width: 40em; }
 /* 官方答复：整条换个底与描边，扫一眼就知道"维护者回过话了" */
 .zfb-comment-robot { border-left-color: var(--zy-accent); background: var(--zy-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; }
 .zfb-comment-robot .zfb-comment-body { color: var(--zy-text); }
@@ -130,3 +160,23 @@
   .zfb-thread { padding: 15px 16px 14px; }
   .zfb-toolbar { flex-direction: column; align-items: flex-start; }
 }
+
+/* ------------------------------------------------ 核对过了，但本轮不动的部分
+   按 skill 逐条比对后，还有两项不达标，但修它们都要越出"本页样式表"这条边界，
+   所以列在这里等确认，不擅自改：
+
+   1. 卡片边框的对比度。--zy-line 对 --zy-surface 只有 1.29:1（非文本要素要求 3:1）。
+      卡片底色 #fff 与页面底色 #f7f7f5 的对比是 1.03:1，靠底色分不出边界，边框于是
+      成了识别卡片边界的唯一线索 —— 这条线索现在是失效的。要修必须改外壳的
+      --zy-line，会波及工作台全部页面，不属于本页的最小改动。
+
+   2. 字号未进舒适区。按参考条件 600mm / 96ppi 换算，可辨下限 16'≈10.6px、舒适阅读
+      20'≈13.2px、需快速扫读 24'≈15.8px（都是视觉高度）。本页辅助文字 11px、
+      正文 12.5px、列表标题 13px，都过了可辨下限，但正文未到 20'，而"一屏扫很多条"
+      的列表标题按任务性质该按 24' 算。再往上调就要脱离外壳 13px 的基准字号，
+      这一页会和其余页面不一样。口径上还有一层不确定：这些 arcmin 值源自拉丁字母的
+      cap height，中文是方块字，直接套 cap height 会低估约三成，规范没有给中文口径。
+
+   另外两条是核对通过、无需改动的：行距（正文 1.75–1.8，要求 ≥1.5）；焦点可见性
+   （外壳的 button:focus-visible 已覆盖本页所有按钮）。讨论串没有自动刷新，
+   因此"自动更新内容须可暂停""数值每秒最多更新一次"这两条不适用。 */
