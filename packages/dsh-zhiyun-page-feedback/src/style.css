@@ -3,6 +3,11 @@
    胜负只看挂载顺序，裸状态类会和别处撞车（scripts/check-css-order.mjs 拦的正是这类）。
    颜色只取外壳的 --zy-* 变量，不引入新色板。 */
 
+/* 字号下限 11px（F-002「屏幕设计不够符合屏幕工效学」）：原先编号、状态、时间、字数
+   这类辅助文字是 10px / 10.5px，中文在那个尺寸下笔画粘连，长时间读这一页会累。
+   11px 是本页辅助文字的新下限 —— 再往下不设。正文（12.5px）与标题不动：那两档没有
+   可读性问题，一起放大只会把一屏塞得更满。 */
+
 /* ------------------------------------------------------------------ 表单 */
 
 .zfb-form {
@@ -52,7 +57,7 @@
 
 .zfb-ok { margin: 10px 0 0; font-size: 12px; color: var(--zy-accent); }
 .zfb-form-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 4px; }
-.zfb-counter { font-size: 10px; color: var(--zy-muted); font-variant-numeric: tabular-nums; }
+.zfb-counter { font-size: 11px; color: var(--zy-muted); font-variant-numeric: tabular-nums; }
 .zfb-submit { border-radius: 8px; padding: 9px 20px; background: var(--zy-action); color: #fff; font-size: 12.5px; }
 .zfb-submit:hover { background: var(--zy-action-hover); }
 .zfb-submit:disabled { opacity: .6; cursor: default; }
@@ -66,17 +71,17 @@
 .zfb-item { border: 1px solid var(--zy-line); border-radius: 10px; background: var(--zy-surface); padding: 15px 18px; }
 .zfb-item-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .zfb-item-head strong { font-size: 13px; font-weight: 500; }
-.zfb-id { font-size: 10.5px; font-variant-numeric: tabular-nums; color: var(--zy-accent); background: var(--zy-soft); border-radius: 5px; padding: 2px 7px; }
-.zfb-tag { margin-left: auto; font-size: 10px; border-radius: 5px; padding: 3px 8px; border: 1px solid var(--zy-line); color: var(--zy-secondary); }
+.zfb-id { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--zy-accent); background: var(--zy-soft); border-radius: 5px; padding: 2px 7px; }
+.zfb-tag { margin-left: auto; font-size: 11px; border-radius: 5px; padding: 3px 8px; border: 1px solid var(--zy-line); color: var(--zy-secondary); }
 .zfb-tag-done { color: var(--zy-accent); background: var(--zy-soft); border-color: transparent; }
 .zfb-tag-open { color: var(--zy-secondary); }
 .zfb-tag-declined { color: var(--zy-muted); }
 .zfb-summary { font-size: 12px; color: var(--zy-secondary); margin: 9px 0 0; line-height: 1.75; }
 .zfb-item-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; }
-.zfb-meta { font-size: 10px; color: var(--zy-muted); font-variant-numeric: tabular-nums; }
+.zfb-meta { font-size: 11px; color: var(--zy-muted); font-variant-numeric: tabular-nums; }
 
 /* 需求类别记号（新需求 / 追踪）。 */
-.zfb-kind { font-size: 10px; border-radius: 5px; padding: 2px 7px; border: 1px solid var(--zy-line); color: var(--zy-secondary); }
+.zfb-kind { font-size: 11px; border-radius: 5px; padding: 2px 7px; border: 1px solid var(--zy-line); color: var(--zy-secondary); }
 .zfb-kind-new { color: var(--zy-accent); border-color: color-mix(in srgb, var(--zy-accent) 30%, var(--zy-line)); }
 .zfb-kind-track { color: var(--zy-secondary); }
 
@@ -95,7 +100,7 @@
 .zfb-open:hover .zfb-item-head strong { color: var(--zy-accent); }
 
 .zfb-who { font-size: 11px; color: var(--zy-secondary); }
-.zfb-badge { font-size: 10px; border-radius: 5px; padding: 2px 7px; color: var(--zy-accent); background: var(--zy-soft); }
+.zfb-badge { font-size: 11px; border-radius: 5px; padding: 2px 7px; color: var(--zy-accent); background: var(--zy-soft); }
 
 .zfb-back { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--zy-secondary); margin: 12px 0 10px; }
 .zfb-back:hover { color: var(--zy-accent); }
