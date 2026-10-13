@@ -1,0 +1,93 @@
+{
+  "_comment": "Public-domain / openly-licensed human factors engineering sources for screen & interface design. Every entry is a US Government work (17 U.S.C. 105, no copyright) or an openly licensed standard. No copyrighted commercial textbooks are listed here on purpose.",
+  "sources": [
+    {
+      "file": "FAA-HF-STD-001B.pdf",
+      "title": "FAA Human Factors Design Standard (HF-STD-001B)",
+      "publisher": "US Federal Aviation Administration, Human-Systems Integration Branch (ANG-E5B)",
+      "year": "2016",
+      "license": "US Government work - public domain",
+      "page": "https://hf.tc.faa.gov/publications/2016-12-human-factors-design-standard/",
+      "url": "https://rosap.ntl.bts.gov/view/dot/71693/dot_71693_DS1.pdf",
+      "kind": "pdf",
+      "why": "The most directly actionable engineering rulebook for this task. Contains hard numeric requirements for display character height, stroke width, contrast, line spacing, colour coding, alarms, and - crucially - explicit min/default/max rules for user-adjustable parameters, which is exactly the 'active adjustment default value' question."
+    },
+    {
+      "file": "NASA-HIDH-Rev1.pdf",
+      "title": "NASA Human Integration Design Handbook (HIDH), Revision 1",
+      "publisher": "NASA (NASA/SP-2010-3407/REV1)",
+      "year": "2014",
+      "license": "US Government work - public domain",
+      "page": "https://www.nasa.gov/human-integration-design-handbook/",
+      "url": "https://www.nasa.gov/wp-content/uploads/2015/03/human_integration_design_handbook_revision_1.pdf",
+      "kind": "pdf",
+      "why": "Chapter 10 (Crew Interfaces) is a full human-factors treatment of displays, controls, and touch targets with anthropometric justification for sizes and spacing. Complements FAA with the underlying rationale rather than only the rule."
+    },
+    {
+      "file": "MIL-STD-1472G.pdf",
+      "title": "MIL-STD-1472G: Department of Defense Design Criteria Standard - Human Engineering",
+      "publisher": "US Department of Defense",
+      "year": "2012",
+      "license": "US Government work - public domain",
+      "page": "https://everyspec.com/MIL-STD/MIL-STD-1400-1499/MIL-STD-1472G_39997/",
+      "url": "https://everyspec.com/MIL-STD/MIL-STD-1400-1499/download.php?spec=MIL-STD-1472G.039997.pdf",
+      "kind": "pdf",
+      "why": "The canonical 'shall' statement standard. Section 5.2 covers visual displays: legibility, luminance/contrast ratios, viewing distance/angle, flicker, and colour. Authoritative for normative numbers."
+    },
+    {
+      "file": "NUREG-0700-Rev4.pdf",
+      "title": "NUREG-0700 Rev.4: Human-System Interface Design Review Guidelines",
+      "publisher": "US Nuclear Regulatory Commission",
+      "year": "2020",
+      "license": "US Government work - public domain",
+      "page": "https://www.nrc.gov/regulations-legislation/nureg-series-publications/publications-prepared-by-nrc-staff/human-system-interface-design-review-guidelines-nureg-0700/r4",
+      "url": "https://www.nrc.gov/docs/ML2602/ML26022A094.pdf",
+      "kind": "pdf",
+      "why": "The CURRENT revision, and the closest analogue in this set to modern screen UI: a review checklist for computer-based human-system interfaces. Native digital typesetting (62 embedded fonts), so its numbers are trustworthy. Strong on navigation, display elements, screen density, interaction management, and user-adjustable parameters. NOTE: identifying the genuine Rev.4 took two attempts - the URL first assumed to be Rev.4 (ML20134N366.pdf) is actually Rev.1 Vol.1, and nrc.gov returns 403 to unadorned requests. The real PDF is linked from the r4 landing page and its identity is confirmed by its own PDF Title metadata."
+    },
+    {
+      "file": "NUREG-0700-Rev1-Vol1.pdf",
+      "title": "NUREG-0700 Rev.1 Vol.1: Human-System Interface Design Review Guideline",
+      "publisher": "US Nuclear Regulatory Commission",
+      "year": "2002",
+      "license": "US Government work - public domain",
+      "page": "https://www.nrc.gov/regulations-legislation/nureg-series-publications/publications-prepared-by-nrc-staff/human-system-interface-design-review-guidelines-nureg-0700",
+      "url": "https://www.nrc.gov/docs/ML2013/ML20134N366.pdf",
+      "kind": "pdf",
+      "why": "Retained as the superseded historical revision, and because it holds numeric rules Rev.4 dropped - above all the classic character-height-vs-viewing-distance relationship (15 min arc = viewing distance x 0.004 minimum; 20 min arc = x 0.006 preferred) and the detailed stroke-width, matrix-size and line-length tables. QUALITY CAUTION: this PDF is a 300 ppi scan with an OCR text layer and non-embedded fonts. Its prose contains OCR artefacts (e.g. 'nunimuns' for 'minimum', 'altematives' for 'alternatives'). Sampled inspection found the NUMBERS intact and the OCR damage confined to words, but any figure taken from this file should be cross-checked against Rev.4 or the original page image before being relied on."
+    },
+    {
+      "file": "FHWA-HRT-16-060-TMC-Human-Factors-Guidelines.pdf",
+      "title": "Human Factors Guidelines for Transportation Management Centers (FHWA-HRT-16-060)",
+      "publisher": "US Federal Highway Administration, Turner-Fairbank Highway Research Center",
+      "year": "2018",
+      "license": "US Government work - public domain",
+      "page": "https://www.fhwa.dot.gov/publications/research/safety/16060/",
+      "url": "https://www.fhwa.dot.gov/publications/research/safety/16060/16060.pdf",
+      "kind": "pdf",
+      "why": "83 operator-facing human factors guidelines for a control-centre workstation environment - the closest US-government analogue to a dense monitoring dashboard. Strong on display density, colour coding limits, conspicuity/clutter, and workstation geometry (monitor distance and gaze angle). NOTE: despite the URL path containing 'safety', this publication is the TMC guidelines, not a pedestrian-crossing study; the identity was verified against the document's own title page."
+    },
+    {
+      "file": "FAA-HF-STD-010A-Color-Use-ATC-Displays.pdf",
+      "title": "FAA-HF-STD-010A: Color Use in Air Traffic Control System Displays",
+      "publisher": "US Federal Aviation Administration",
+      "year": "2020",
+      "license": "US Government work - public domain",
+      "page": "https://rosap.ntl.bts.gov/view/dot/92012",
+      "url": "https://rosap.ntl.bts.gov/view/dot/92012/dot_92012_DS1.pdf",
+      "kind": "pdf",
+      "why": "The single richest source in this set for normative, implementable numbers. Its Table 5.6-I gives character-height requirements as arcmin of visual angle - i.e. resolution- and distance-independent - synthesized from ANSI/HFES 100 and 200, ISO 9241-303, MIL-STD-1472G, NASA HIDH and NUREG-0700. Also carries quantitative colour-difference rules (CIELUV dE), luminance and contrast limits, palette size caps, and explicit minimum/default/maximum rules for user-adjustable display settings. NOTE: this file was originally mis-titled 'DOT Human Factors Volume 1' from the ROSAP landing page; the document's own title page identifies it as FAA-HF-STD-010A."
+    },
+    {
+      "file": "WCAG22.html",
+      "title": "Web Content Accessibility Guidelines (WCAG) 2.2",
+      "publisher": "W3C",
+      "year": "2023",
+      "license": "W3C Document License (permissive, redistribution allowed)",
+      "page": "https://www.w3.org/TR/WCAG22/",
+      "url": "https://www.w3.org/TR/WCAG22/",
+      "kind": "html",
+      "why": "The one source that is normative for actual screen/web content rather than for physical control rooms or aircraft. Supplies success criteria (contrast 1.4.3/1.4.6, text spacing 1.4.12, resize 1.4.4, target size 2.5.8) that map one-to-one onto CSS."
+    }
+  ]
+}
