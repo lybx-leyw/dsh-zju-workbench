@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-fsrs-scheduler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 ts-fsrs（FSRS 间隔重复调度），为「学习/习题」页补充复习节奏能力（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "ts-fsrs": "5.4.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
