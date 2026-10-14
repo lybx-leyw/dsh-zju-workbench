@@ -7,7 +7,7 @@
 | 服务 | 谁提供 | 谁取用 |
 | --- | --- | --- |
 | `zhiyunStudy` | `src/host.js`（宿主半边） | 宿主侧插件、测试 fixture |
-| `zhiyunStudyController` | `src/client.jsx`（客户端半边） | 四个页面包里的三页（今天页不用） |
+| `zhiyunStudyController` | `src/client.jsx`（客户端半边） | 今天、我的课、学习、个人 |
 | `zhiyunLearningSpace` | `src/client.jsx` | 外壳的会话抽屉（`ctx.get` 惰性取） |
 
 页面包用 `ctx.inject(['zhiyunStudyController'], …)` 等它到位再注册插槽；外壳用 `ctx.get('zhiyunLearningSpace')` 直接取。两者都不写进 `inject` —— 领域层被停用时，外壳照常启动，只是列不出会话。
@@ -20,7 +20,9 @@
 
 ## 后端
 
-`/api/zhiyun-study` 是 POST-only 的 RPC，信封 `{type:'client-request', rpcId, method:'zhiyun-study', payload:{method, args}}`，方法白名单 24 项；响应统一 `{type:'server-response', rpcId, result}` 且 `cache-control: no-store`。错误进 `{ok:false, error:{code, message, details:{}}}`，不把内部堆栈漏给浏览器。
+`/api/zhiyun-study` 是 POST-only 的 RPC，信封 `{type:'client-request', rpcId, method:'zhiyun-study', payload:{method, args}}`，方法白名单 25 项；响应统一 `{type:'server-response', rpcId, result}` 且 `cache-control: no-store`。错误进 `{ok:false, error:{code, message, details:{}}}`，不把内部堆栈漏给浏览器。
+
+`schedule` 只读课表，沿用当前登录身份。不传日期时由课堂数据源按上海时区的今天取一天。日期不合法记为 `INPUT`。课表是否收全看返回的 `meta.complete`，今天页在它不是 `true` 时不把列表画成全天安排。
 
 `inject` 只声明**硬依赖**（`workspaceRegistry / connection / profileContext / zhiyunClassroom / zhiyunParser / llm / zhiyunKnowledge`）。讲义、终审、出题与节笔记是可选加工步骤，用 `ctx.get('zhiyunLecture')` / `ctx.get('zhiyunFinalPass')` / `ctx.get('zhiyunQuiz')` / `ctx.get('zhiyunNotes')` 惰性取 —— 写进 `inject` 会让「停用其中一个」直接拖死整个学习面板（连解析都用不了）。
 

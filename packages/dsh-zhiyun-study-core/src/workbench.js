@@ -92,6 +92,20 @@ export class StudyWorkbench {
     // 手写 `writeFile` + `rename` 在 Windows 上会偶发失败。
     await writeFileAtomic(file, JSON.stringify(data), { mode: 0o600, dirMode: 0o700 });
   }
+  async scheduleWindow(payload, signal) {
+    const window = {};
+    for (const key of ["start", "end"]) {
+      if (payload[key] == null || payload[key] === "") continue;
+      if (typeof payload[key] !== "string") throw fault("INPUT", "日期无效");
+      window[key] = payload[key];
+    }
+    try {
+      return await this.classroom.getSchedule({ ...window, signal });
+    } catch (error) {
+      if (error instanceof TypeError) throw fault("INPUT", "日期无效");
+      throw error;
+    }
+  }
   async user() {
     if (this.accountBusy) throw fault("ACCOUNT_BUSY", "账号正在切换");
     const user = await this.classroom.getCurrentUser();
@@ -429,6 +443,7 @@ export class StudyWorkbench {
     }
     const user = await this.user();
     if (method === "courses") return this.classroom.listCourses({ signal });
+    if (method === "schedule") return this.scheduleWindow(payload, signal);
     if (method === "search") {
       if (typeof payload.query !== "string" || payload.query.length > 500) throw fault("INPUT", "检索词无效");
       return this.knowledge.search({ accountId: String(user.id), query: payload.query,

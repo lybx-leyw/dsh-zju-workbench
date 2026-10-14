@@ -1,7 +1,7 @@
 export function createStudyController(call, navigation) {
-  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true };
+  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null };
   const listeners = new Set(), lifetime = new AbortController();
-  let closed = false, selection = 0, account = 0, timer = null, polling = false;
+  let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0;
   const lessonLoads = new Map();
   const update = (patch) => {
     if (closed) return;
@@ -16,7 +16,7 @@ export function createStudyController(call, navigation) {
     const epoch = ++account;
     selection++;
     lessonLoads.clear();
-    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false });
+    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null });
     try {
       const initial = await request("state");
       if (epoch !== account || closed) return;
@@ -160,6 +160,29 @@ export function createStudyController(call, navigation) {
       return open;
     },
     navigate: (page) => navigation.navigate(page),
+    /**
+     * 只读今天的课表。失败留在 `scheduleError`，不写进页面横幅用的 `error`，
+     * 免得学习页把一次课表失败当成解析失败。
+     */
+    async loadSchedule() {
+      const ticket = ++scheduleTicket;
+      const epoch = account;
+      if (!state.user) {
+        update({ schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null });
+        return;
+      }
+      update({ scheduleLoading: true, scheduleError: null });
+      try {
+        const data = await request("schedule");
+        if (ticket !== scheduleTicket || epoch !== account || closed) return;
+        update({ schedule: data.items ?? [], scheduleMeta: data.meta ?? null });
+      } catch (e) {
+        if (ticket !== scheduleTicket || epoch !== account || closed) return;
+        update({ schedule: null, scheduleMeta: null, scheduleError: e.message });
+      } finally {
+        if (ticket === scheduleTicket && epoch === account && !closed) update({ scheduleLoading: false });
+      }
+    },
     async authenticate(credentials) {
       update({ busy: true, error: null });
       try {

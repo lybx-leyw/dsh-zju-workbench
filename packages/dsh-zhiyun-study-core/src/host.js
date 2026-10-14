@@ -40,7 +40,7 @@ export async function apply(ctx) {
       if (message?.type !== "client-request" || message.method !== "zhiyun-study" || typeof message.rpcId !== "string" || message.rpcId.length > 200) throw Object.assign(new Error("invalid envelope"), { code: "INPUT" });
       rpcId = message.rpcId;
       const { method, args } = message.payload ?? {};
-      if (!["state", "login", "logout", "courses", "lessons", "content", "result", "results", "start", "cancel", "models", "models-save", "lecture", "final-pass", "lecture-restore", "search", "quiz", "quiz-generate", "quiz-adopt", "quiz-discard", "note", "note-save", "note-link", "note-link-text"].includes(method) || args === null || typeof args !== "object" || Array.isArray(args)) throw Object.assign(new Error("unknown"), { code: "INPUT" });
+      if (!["state", "login", "logout", "courses", "schedule", "lessons", "content", "result", "results", "start", "cancel", "models", "models-save", "lecture", "final-pass", "lecture-restore", "search", "quiz", "quiz-generate", "quiz-adopt", "quiz-discard", "note", "note-save", "note-link", "note-link-text"].includes(method) || args === null || typeof args !== "object" || Array.isArray(args)) throw Object.assign(new Error("unknown"), { code: "INPUT" });
       result = { ok: true, value: await workbench.invoke(method, args, request.signal) };
     } catch (error) {
       result = { ok: false, error: { ...publicError(error), details: {} } };
