@@ -8,6 +8,7 @@ import {mountKnowledge} from './fixtures/study-storage.mjs';
 import {createStudyController,playableLessons} from '../packages/dsh-zhiyun-study-core/src/model.js';
 import {searchLesson,hitBlockIndexes} from '../packages/dsh-zhiyun-page-study/src/layered-search.js';
 import {focusFromParsed,noteSegments} from '../packages/dsh-zhiyun-page-study/src/note-links.js';
+import {corpusRows} from '../packages/dsh-zhiyun-page-study/src/corpus.js';
 import {makeItem,QUIZ_STATUSES,QUIZ_TYPES} from '../packages/dsh-zhiyun-quiz/src/model.js';
 import {createQuizGenerator} from '../packages/dsh-zhiyun-quiz/src/generate.js';
 import {createMemorySectionNoteStore,createSectionNoteService} from '../packages/dsh-zhiyun-notes/src/store.js';
@@ -261,4 +262,48 @@ test('quiz stays proposed until adopted, notes stay on this account, and unwired
     assert.equal((await s.invoke('quiz',key)).queue.length,0);
     assert.ok(kept===1);
   }finally{await s.dispose();await notes.dispose();await rm(dir,{recursive:true,force:true});}
+});
+
+test('corpus search stays on the final layer and a misspelled course does not open a lesson',async()=>{
+  const long='密度函数'.repeat(30);
+  const view=corpusRows([
+    {courseId:'10',subId:'20',matches:[{text:long}]},
+    {courseId:'11',subId:'1',matches:[{text:'另一门'}]},
+  ],[{id:'10',title:'线代'}],{limit:1});
+  assert.equal(view.truncated,true);
+  assert.equal(view.rows[0].title,'线代');
+  assert.equal(view.rows[0].snippet.endsWith('…'),true);
+  assert.equal(view.rows[0].snippet.length,81);
+  const asked=[];
+  const controller=createStudyController(async(method,payload)=>{
+    asked.push(method);
+    if(method==='state')return{user:{id:'1'},jobs:[]};
+    if(method==='courses')return{items:[{id:'10',title:'线代'}],meta:{complete:true}};
+    if(method==='search'){
+      assert.equal(payload.layer,'final');
+      assert.equal(payload.courseId,undefined);
+      if(payload.query==='失败')throw new Error('检索没有完成');
+      return[{courseId:'10',subId:'20',matches:[{text:'密度函数'}]}];
+    }
+    if(method==='lessons')return{items:[{id:'10_20',subId:'20',title:'第一节',isPlayable:true}],meta:{complete:true}};
+    if(method==='results')return{items:{}};
+    if(method==='content')return{slides:{items:[],meta:{complete:true}},subtitles:{items:[],meta:{complete:true}}};
+    if(method==='result')return{result:null,job:null};
+    return{items:[],meta:{complete:true}};
+  },{navigate(){}});
+  try{
+    await controller.refresh();
+    await controller.searchCorpus('   ');
+    assert.equal(asked.includes('search'),false);
+    await controller.searchCorpus('失败');
+    assert.equal(controller.getSnapshot().error,null);
+    assert.match(controller.getSnapshot().corpusError,/没有完成/);
+    await controller.searchCorpus('密度');
+    assert.equal(controller.getSnapshot().corpusHits.length,1);
+    assert.equal(await controller.openCorpusHit({courseId:'99',subId:'1'}),false);
+    assert.match(controller.getSnapshot().corpusError,/不在当前课程列表/);
+    assert.equal(controller.getSnapshot().lesson,null);
+    assert.equal(await controller.openCorpusHit({courseId:'10',subId:'20'}),true);
+    assert.equal(controller.getSnapshot().lesson.subId,'20');
+  }finally{controller.dispose();}
 });

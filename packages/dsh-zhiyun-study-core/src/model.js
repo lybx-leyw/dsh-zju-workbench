@@ -1,7 +1,7 @@
 export function createStudyController(call, navigation) {
-  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null };
+  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null };
   const listeners = new Set(), lifetime = new AbortController();
-  let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0;
+  let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0, corpusTicket = 0;
   const lessonLoads = new Map();
   const update = (patch) => {
     if (closed) return;
@@ -16,7 +16,7 @@ export function createStudyController(call, navigation) {
     const epoch = ++account;
     selection++;
     lessonLoads.clear();
-    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null });
+    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null });
     try {
       const initial = await request("state");
       if (epoch !== account || closed) return;
@@ -160,6 +160,50 @@ export function createStudyController(call, navigation) {
       return open;
     },
     navigate: (page) => navigation.navigate(page),
+    /**
+     * 在当前账号已整理的终稿里做字面检索。空词不请求。
+     * 失败留在 `corpusError`，不写进学习页横幅。
+     */
+    async searchCorpus(query) {
+      const ticket = ++corpusTicket;
+      const epoch = account;
+      const text = typeof query === "string" ? query.trim() : "";
+      if (!state.user || !text) {
+        update({ corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null });
+        return;
+      }
+      update({ corpusBusy: true, corpusError: null, corpusQuery: text });
+      try {
+        const hits = await request("search", { query: text, layer: "final" });
+        if (ticket !== corpusTicket || epoch !== account || closed) return;
+        update({ corpusHits: Array.isArray(hits) ? hits : [] });
+      } catch (e) {
+        if (ticket !== corpusTicket || epoch !== account || closed) return;
+        update({ corpusHits: null, corpusError: e.message });
+      } finally {
+        if (ticket === corpusTicket && epoch === account && !closed) update({ corpusBusy: false });
+      }
+    },
+    async openCorpusHit(hit) {
+      const course = state.courses.find((item) => String(item.id) === String(hit?.courseId));
+      if (!course) {
+        update({ corpusError: "这门课不在当前课程列表里。" });
+        return false;
+      }
+      try {
+        const loaded = await loadCourse(course);
+        const lesson = (loaded?.items ?? []).find((item) => String(item.subId) === String(hit.subId));
+        if (!lesson) {
+          update({ corpusError: "这节不在可回放列表里。" });
+          return false;
+        }
+        await selectLesson(lesson, course);
+        return true;
+      } catch (e) {
+        update({ corpusError: e.message });
+        return false;
+      }
+    },
     /**
      * 只读今天的课表。失败留在 `scheduleError`，不写进页面横幅用的 `error`，
      * 免得学习页把一次课表失败当成解析失败。
