@@ -492,6 +492,7 @@ export class StudyWorkbench {
     if (method === "schedule") return this.scheduleWindow(payload, signal);
     if (method === "recent") return this.recall(user);
     if (method === "recent-save") return this.remember(user, payload);
+    if (method === "review") return this.knowledge.acceptedQuiz({ accountId: String(user.id) });
     if (method === "search") {
       if (typeof payload.query !== "string" || payload.query.length > 500) throw fault("INPUT", "检索词无效");
       return this.knowledge.search({ accountId: String(user.id), query: payload.query,

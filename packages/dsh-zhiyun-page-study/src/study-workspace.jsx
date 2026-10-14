@@ -112,7 +112,12 @@ function SearchResults({ outcome, jumpToHit }) {
 export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) {
   const state = useStudy(controller), [tab, setTab] = useState("终稿"), [query, setQuery] = useState(""), [mode, setMode] = useState(defaultQueryMode.id), [role, setRole] = useState(""), [facets, setFacets] = useState([]), [layers, setLayers] = useState(null), [optionsOpen, setOptionsOpen] = useState(false), [lectureFocus, setLectureFocus] = useState(null), [page, setPage] = useState(0), [subtitleFocus, setSubtitleFocus] = useState(null), [mobileTree, setMobileTree] = useState(false);
   const advancedRef = React.useRef(null);
-  useEffect(() => { setQuery(""); setRole(""); setFacets([]); setOptionsOpen(false); setLectureFocus(null); setPage(0); setSubtitleFocus(null); setTab("终稿"); }, [state.lesson?.id, state.course?.id]);
+  useEffect(() => {
+    setQuery(""); setRole(""); setFacets([]); setOptionsOpen(false); setLectureFocus(null); setPage(0); setSubtitleFocus(null);
+    const focus = state.focusTab;
+    const openQuiz = focus?.tab === "出题" && String(focus.courseId) === String(state.course?.id) && String(focus.subId) === String(state.lesson?.subId);
+    setTab(openQuiz ? "出题" : "终稿");
+  }, [state.lesson?.id, state.course?.id, state.focusTab]);
   // 浮窗是「选项」的住处，点外面或按 Esc 就收；它只覆盖在自己那一角，不接管正文的点击。
   useEffect(() => {
     if (!optionsOpen) return undefined;

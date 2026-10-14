@@ -149,3 +149,82 @@ test('opening a lesson records it, and today can resume that lesson', async () =
     controller.dispose();
   }
 });
+
+test('review lists only this account’s accepted questions, without answers', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-review-'));
+  const host = await mountKnowledge(dir);
+  let user = { id: '1' };
+  const service = new StudyWorkbench({
+    directory: dir,
+    knowledge: host.service,
+    llm: { listProviders: () => [], resolveModelInfo: async () => ({}) },
+    classroom: { getCurrentUser: async () => user },
+    parser: { llm: { routes: {} }, parseClassroom: async () => ({}) },
+  });
+  const base = {
+    sourceId: 'zhiyun:1:10:20', status: 'ready', fetchedAt: '2026-10-14T00:00:00.000Z', schema: 1,
+    sentences: [], unassignedSentences: [], blocks: [], spine: '', outline: [], vocabulary: [], warnings: [], lecture: null,
+  };
+  try {
+    const many = Array.from({ length: 21 }, (_, index) => ({
+      id: String(index).padStart(2, '0'), status: 'accepted', type: 'cloze', stem: `题 ${index}`, answer: '不外泄',
+    }));
+    await host.service.put({
+      ...base, accountId: '1', courseId: '10', subId: '20',
+      quiz: { items: [
+        ...many,
+        { id: 'draft', status: 'proposed', type: 'cloze', stem: '不该出现' },
+        { id: 'gone', status: 'rejected', type: 'shortAnswer', stem: '也不该出现' },
+        { id: 'blank', status: 'accepted', type: 'cloze', stem: '   ' },
+      ] },
+    });
+    await host.service.put({
+      ...base, accountId: '10', courseId: '10', subId: '20', sourceId: 'zhiyun:10:10:20',
+      quiz: { items: [{ id: 'other', status: 'accepted', type: 'shortAnswer', stem: '十号账号的题', answer: '别人的答案' }] },
+    });
+    const mine = await service.invoke('review', {});
+    assert.equal(mine.truncated, true);
+    assert.equal(mine.items.length, 20);
+    assert.equal(mine.items[0].id, '00');
+    assert.equal(mine.items.some((item) => item.id === 'draft' || item.id === 'gone' || item.id === 'other' || item.stem.includes('十号')), false);
+    assert.equal('answer' in mine.items[0], false);
+    user = { id: '10' };
+    const theirs = await service.invoke('review', {});
+    assert.deepEqual(theirs.items.map((item) => item.id), ['other']);
+    assert.equal(theirs.items[0].stem, '十号账号的题');
+    assert.equal('answer' in theirs.items[0], false);
+  } finally {
+    await service.dispose();
+    await host.dispose();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('opening an accepted question lands on that lesson and a miss stays off the study banner', async () => {
+  const controller = createStudyController(async (method) => {
+    if (method === 'state') return { user: { id: '1' }, jobs: [] };
+    if (method === 'courses') return { items: [{ id: '10', title: '线代' }], meta: { complete: true } };
+    if (method === 'review') return { items: [{ courseId: '10', subId: '20', id: 'q1', type: 'cloze', stem: '密度的定义' }], truncated: false };
+    if (method === 'lessons') return { items: [{ id: '10_20', subId: '20', title: '第一节', isPlayable: true }], meta: { complete: true } };
+    if (method === 'results') return { items: {} };
+    if (method === 'content') return { slides: { items: [], meta: { complete: true } }, subtitles: { items: [], meta: { complete: true } } };
+    if (method === 'result') return { result: null, job: null };
+    if (method === 'recent-save') return { courseId: '10', subId: '20', courseTitle: '线代', lessonTitle: '第一节', openedAt: '2026-10-14T00:00:00.000Z' };
+    return null;
+  }, { navigate() {} });
+  try {
+    await controller.refresh();
+    await controller.loadReview();
+    assert.equal(controller.getSnapshot().error, null);
+    assert.equal(controller.getSnapshot().review[0].stem, '密度的定义');
+    assert.equal(await controller.openReview(controller.getSnapshot().review[0]), true);
+    assert.equal(controller.getSnapshot().lesson.subId, '20');
+    assert.deepEqual(controller.getSnapshot().focusTab, { tab: '出题', courseId: '10', subId: '20' });
+    assert.equal(await controller.openReview({ courseId: '99', subId: '20', id: 'x' }), false);
+    assert.match(controller.getSnapshot().reviewError, /不在当前课程列表/);
+    assert.equal(controller.getSnapshot().error, null);
+    assert.equal(controller.getSnapshot().review[0].id, 'q1');
+  } finally {
+    controller.dispose();
+  }
+});

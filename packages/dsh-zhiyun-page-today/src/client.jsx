@@ -21,6 +21,35 @@ function place(entry) {
   return [entry.roomName, entry.teacherName].filter(Boolean).join(' · ');
 }
 
+const TYPE_LABEL = { cloze: '填空', shortAnswer: '简答' };
+
+function clipStem(stem) {
+  const text = String(stem ?? '').trim();
+  return text.length > 80 ? `${text.slice(0, 80)}…` : text;
+}
+
+function Gaps({ state: s, controller }) {
+  const open = async (item) => {
+    const opened = await controller.openReview(item);
+    if (opened) controller.navigate('study');
+  };
+  if (!s.user) return <div className="zy-empty-row"><Icon name="check"/><div><strong>留给空档的题</strong><p>登录后显示已采纳的题</p></div></div>;
+  if (s.reviewError && !s.review) return <div className="zy-empty-row"><Icon name="check"/><div><strong>已采纳的题没有读出来</strong><p>{s.reviewError}</p><button className="zy-text-button" type="button" onClick={() => controller.loadReview()}>再读一次 <Icon name="arrow" size={16}/></button></div></div>;
+  if (!s.review) return <div className="zy-empty-row"><Icon name="check"/><div><strong>正在读取已采纳的题</strong><p>还不能列出可以插空做的题。</p></div></div>;
+  if (!s.review.length) return <div className="zy-empty-row"><Icon name="check"/><div><strong>还没有采纳的题</strong><p>在学习页出题并采纳之后，会出现在这里。</p></div></div>;
+  return <div className="zt-list">
+    {s.reviewError ? <p className="zt-note">{s.reviewError}</p> : null}
+    {s.review.map((item) => {
+      const course = s.courses.find((row) => String(row.id) === String(item.courseId));
+      const label = TYPE_LABEL[item.type] ?? '题目';
+      return <button className="zt-row" type="button" key={`${item.courseId}:${item.subId}:${item.id}`} onClick={() => open(item)}>
+        <span><strong>{label} · {course?.title || '未命名课程'}</strong><p>{clipStem(item.stem)}</p></span>
+      </button>;
+    })}
+    {s.reviewTruncated ? <p className="zt-note">还有更多已采纳的题，这里先列 20 条。</p> : null}
+  </div>;
+}
+
 function Row({ entry, onOpen }) {
   const where = place(entry);
   return <button className="zt-row" type="button" onClick={() => onOpen(entry)}>
@@ -35,6 +64,7 @@ export function Today({ controller }) {
     if (!s.loading && s.user) {
       void controller.loadSchedule();
       void controller.loadRecent();
+      void controller.loadReview();
     }
   }, [controller, s.loading, s.user]);
   const agenda = projectAgenda(s.schedule, s.scheduleMeta, Date.now());
@@ -58,7 +88,7 @@ export function Today({ controller }) {
     </>}
     <div className="zy-agenda-grid">
       <section><SectionTitle aside="按时间先后">今天的课</SectionTitle>{!s.user || s.scheduleError || agenda.kind === 'incomplete' || s.scheduleLoading && !s.schedule ? <div className="zy-empty-row"><Icon name="calendar"/><div><strong>固定时间的安排</strong><p>{!s.user ? '登录后显示今天的课' : '课表确认之后才会列在这里'}</p></div></div> : agenda.entries.length ? <div className="zt-list">{agenda.entries.map((entry) => <Row key={`${entry.day}:${entry.sourceId ?? entry.subId}:${entry.startMs}`} entry={entry} onOpen={openCourse}/>)}</div> : <div className="zy-empty-row"><Icon name="calendar"/><div><strong>今天没有固定时间的课</strong><p>课表已经确认，这一天是空的</p></div></div>}</section>
-      <section><SectionTitle aside="按空闲时间处理">插空完成</SectionTitle><div className="zy-empty-row"><Icon name="check"/><div><strong>留给空档的小任务</strong><p>自建计划还没有接入</p></div></div></section>
+      <section><SectionTitle aside="已采纳的题">插空完成</SectionTitle><Gaps state={s} controller={controller}/></section>
     </div>
     <SectionTitle aside="接着上次打开的那一节">最近在看</SectionTitle>
     {!s.user ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>下一次打开，从上次继续</h3><p>登录后，这里留下你上次打开的那一节。</p></div><button className="zy-secondary" onClick={() => controller.navigate('me')}>去登录 <Icon name="arrow" size={15}/></button></div> : s.recentError ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>上次的位置没有读出来</h3><p>{s.recentError}</p></div><button className="zy-secondary" onClick={() => controller.loadRecent()}>再读一次 <Icon name="arrow" size={15}/></button></div> : s.recent ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>{s.recent.lessonTitle || '未命名节次'}</h3><p>{s.recent.courseTitle || '未命名课程'}</p></div><button className="zy-secondary" onClick={async () => { const opened = await controller.resumeRecent(); if (opened) controller.navigate('study'); }}>继续 <Icon name="arrow" size={15}/></button></div> : <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>还没有打开过一节课</h3><p>在学习页打开一节之后，这里会留下它。</p></div><button className="zy-secondary" onClick={() => controller.navigate('courses')}>我的课 <Icon name="arrow" size={15}/></button></div>}

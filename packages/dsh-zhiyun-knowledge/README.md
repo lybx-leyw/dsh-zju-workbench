@@ -32,6 +32,7 @@
 | `put(record)` | 写入或**替换**（同一把键再写是替换，不是追加）。写前按宿主 schema 校验，坏记录以 `INVALID_RECORD` 拒绝，不落盘。返回 `{ key, replaced }`。 |
 | `get({accountId,courseId,subId})` | 取完整产物；没有这条返回 `undefined`。 |
 | `listByCourse({accountId,courseId,full?})` | 列出该账号该课程下的节次摘要（`full: true` 时带完整 `record`），按 `subId` 排序。 |
+| `acceptedQuiz({accountId})` | 只列出该账号 `status === accepted` 的题干和定位，不带答案。按课程、节次、题目 id 排序，最多 20 条。 |
 | `remove({accountId,courseId,subId})` | 删除；`true` 确实删了，`false` 本来就没有。 |
 | `search({accountId,query,courseId?})` | **字面**检索：在**块正文 / 块概述 / 块衔接**里做连续子串匹配。返回命中片段（字段名 + 块序号 + 原文）。 |
 | `size` / `domainName` / `tableName` / `recordSchema` / `closed` | 诊断信息。 |

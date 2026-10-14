@@ -20,11 +20,13 @@
 
 ## 后端
 
-`/api/zhiyun-study` 是 POST-only 的 RPC，信封 `{type:'client-request', rpcId, method:'zhiyun-study', payload:{method, args}}`，方法白名单 27 项；响应统一 `{type:'server-response', rpcId, result}` 且 `cache-control: no-store`。错误进 `{ok:false, error:{code, message, details:{}}}`，不把内部堆栈漏给浏览器。
+`/api/zhiyun-study` 是 POST-only 的 RPC，信封 `{type:'client-request', rpcId, method:'zhiyun-study', payload:{method, args}}`，方法白名单 28 项；响应统一 `{type:'server-response', rpcId, result}` 且 `cache-control: no-store`。错误进 `{ok:false, error:{code, message, details:{}}}`，不把内部堆栈漏给浏览器。
 
 `schedule` 只读课表，沿用当前登录身份。不传日期时由课堂数据源按上海时区的今天取一天。日期不合法记为 `INPUT`。课表是否收全看返回的 `meta.complete`，今天页在它不是 `true` 时不把列表画成全天安排。
 
 `recent` / `recent-save` 只记当前账号上次打开的那一节，写在学习数据目录的 `recent.json`。打开一节课时由客户端记下课程和节次标题；时间由服务端填写。另一个账号读不到这条。文件损坏时报 `RECENT`，不把它说成「还没打开过」。
+
+`review` 只读当前账号已经采纳的题：题干和定位，不带答案。待审和已放弃的题不在这份列表里。最多 20 条。
 
 `inject` 只声明**硬依赖**（`workspaceRegistry / connection / profileContext / zhiyunClassroom / zhiyunParser / llm / zhiyunKnowledge`）。讲义、终审、出题与节笔记是可选加工步骤，用 `ctx.get('zhiyunLecture')` / `ctx.get('zhiyunFinalPass')` / `ctx.get('zhiyunQuiz')` / `ctx.get('zhiyunNotes')` 惰性取 —— 写进 `inject` 会让「停用其中一个」直接拖死整个学习面板（连解析都用不了）。
 
