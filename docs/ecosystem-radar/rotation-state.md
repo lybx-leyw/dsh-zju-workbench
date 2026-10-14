@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `A` |
-| `last_run_at` | `2026-10-15 03:35` |
-| `group_runs`（累计） | A=2, B=1, C=2 |
+| `last_group` | `C` |
+| `last_run_at` | `2026-10-15 06:00` |
+| `group_runs`（累计） | A=2, B=1, C=3 |
 
 ### 流水
 
@@ -64,6 +64,14 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-14 第三轮 | C | **重复轮次**（公式缺陷所致）；增量 4 条 🔵；出骨架 `dsh-radar-market` |
 | 2026-10-14 16:18 | B | zju / cc98 / campus app（B组浙大场景；36条新增；无骨架） |
 | 2026-10-15 03:35 | A | deepseek-harness plugin / cordis plugin / dsh plugin / dsh market / dsh desktop（A组·DSH插件生态） |
+| 2026-10-15 06:00 | C | timetable ics export / paper annotation reader / ocr notes taking / quiz practice / fitness tracker / spaced repetition flashcard / html to markdown converter / pdf to markdown（C组·学生功能域；22条登记；无新增 🟢，不出骨架） |
+
+> **⚠ 漂移说明（2026-10-15 第三轮发现）**：当日 **B 组实际于 00:1x 跑过**
+> （见 `registry.md` 的「2026-10-15 · B 组」章节，36 条候选），但**未写入本流水**。
+> 因此本轮（06:00）按规则 2 判断时，脚本误以为「今天只跑过 A」而建议再跑 B ——
+> 那将违反「同日绝不重跑」。本轮**人工改跑 C 组**（今日真正未跑过的组）。
+> 另：`scripts/radar-rotation.mjs` 用 `new Date()`（UTC）取「今天」，在北京 00:00–08:00
+> 区间会把「今天」算成前一天，本轮以 `--today 2026-10-15` 规避。两处均建议修复。
 
 > **回填说明**：以上三轮发生在状态文件建立**之前**，按当日报告与 `registry.md` 的实际记录回填。
 > 因无法精确还原首轮/第二轮的分钟级时间，仅 `last_run_at` 记第三轮的 23:01。B 组至今未跑

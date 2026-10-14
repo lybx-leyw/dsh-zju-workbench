@@ -140,3 +140,36 @@
 | `mckenna0625/dsh-langgraph-paper-pipeline` | A 原生DSH | 无许可证 | 论文 | — | ⛔ | rejected | 2026-10-15 | ★1。无许可证 + Python |
 | `YaoApp/yao` | 其他 | NOASSERTION | 通用 | — | ⚠ 待核 | pending-license | 2026-10-15 | ★8130。Agent/工作空间平台（Go）。许可证待人工核验，不采用 |
 | `cholf5/dsh-plugin-dev-notes` | A 原生DSH | MIT | 笔记（开发向） | 全新 | 🔵 | proposed | 2026-10-15 | ★11。插件开发笔记，无描述。体量过小，仅作线索 |
+
+---
+
+## 2026-10-15 · C 组（学生功能域）· 追加
+
+> 关键词：`timetable ics export`、`paper annotation reader`、`ocr notes taking`、`quiz practice`、
+> `fitness tracker`、`spaced repetition flashcard`、`html to markdown converter`、`pdf to markdown`。
+> 搜索 8 次，API 无 403。原始命中 63 个未登记仓库，经相关性二次过滤后保留 22 条登记在下。
+> **`open-spaced-repetition/fsrs.js` 不登记** —— 与既有骨架 `dsh-radar-fsrs-scheduler` 锁定的
+> `ts-fsrs` 重复且无增益（同组织同算法的 TS 后继），按 ⛔ 处理但不占用登记行。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `ctrlaltwill/LearnKit` | B 其他JS | MIT | 复习 / 刷题 | 重复可强化（学习页·复习调度） | 🟡 | proposed | 2026-10-15 | ★182（活跃）。Obsidian 学习系统（flashcards + FSRS + image-occlusion + 自测）。**调度层与 `ts-fsrs` 骨架重复**，仅 image-occlusion 有独有增益 → 建议只提取该思路，不整包集成 |
+| `Charlielin-Fan/zotero-ai-reader` | B 其他JS | MIT | 论文批注 | 重复可强化（论文阅读页） | 🟡 | proposed | 2026-10-15 | ★2（低活跃）。Zotero 全文证据批注。与 `Vncntvx/dsh-zotero` 同域，**二选一**（优先后者）。体量过小 |
+| `st3v3nmw/obsidian-spaced-repetition` | B 其他JS | MIT | 复习 | 重复可强化（学习页） | 🔵 | proposed | 2026-10-15 | ★2589。Obsidian 插件形态强耦合宿主；调度层与 `ts-fsrs` 重复，仅作线索 |
+| `kirill-markin/flashcards-open-source-app` | B 其他JS | MIT | 复习 | 重复可强化（学习页） | 🔵 | proposed | 2026-10-15 | ★93。完整独立 App（iOS/Android/Web），非可封装库 |
+| `VienDinhCom/supermemo` | B 其他JS | MIT | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-15 | ★337。SM-2 算法实现，**旧于 FSRS**，已被 `ts-fsrs` 骨架覆盖。登记但建议不采用 |
+| `pieralukasz/true-recall` | B 其他JS | NOASSERTION | 复习 | — | ⚠ 待核 | pending-license | 2026-10-15 | ★65。Obsidian 插件，许可证待人工核验 |
+| `chrisryugj/kordoc` | B 其他JS | MIT | 文档转换 | 全新 | 🔵 | proposed | 2026-10-15 | ★2448（活跃）。PDF/Office→Markdown（CLI + MCP，含 OCR）。**面向韩文 HWP 格式**，与本仓中文场景不符，需裁定是否移植 |
+| `philschmid/clipper.js` | B 其他JS | Apache-2.0 | 文档解析 | 全新 | 🔵 | proposed | 2026-10-15 | ★629。HTML→Markdown 爬虫。**2024-01 后停更** |
+| `KKonstantinov/markdown-for-agents` | B 其他JS | MIT | 文档解析 | 全新 | 🔵 | proposed | 2026-10-15 | ★34（活跃）。HTML→Markdown 省 token，可作解析层参考 |
+| `zhikangSu/DeepRead` | B 其他JS | 无许可证 | 论文精读 | — | ⛔ | rejected | 2026-10-15 | ★9。描述贴合但**无许可证** → 只登记，不得摘取任何代码 |
+| `dimostzim/PaperSprint` | B 其他JS | 无许可证 | 论文精读 | — | ⛔ | rejected | 2026-10-15 | ★4。无许可证 |
+| `mrmps/pdf2md` | B 其他JS | 无许可证 | 文档转换 | — | ⛔ | rejected | 2026-10-15 | ★380。浏览器端 PDF→MD，无许可证 |
+| `Nano-Collective/get-md` | B 其他JS | NOASSERTION | 文档转换 | — | ⚠ 待核 | pending-license | 2026-10-15 | ★95。HTML→MD，许可证待核 |
+| `koljapluemer/obsidian-the-queue` | B 其他JS | 无许可证 | 复习 | — | ⛔ | rejected | 2026-10-15 | ★44。无许可证 |
+| `simonoppowa/OpenNutriTracker` | B 其他JS | GPL-3.0 | 锻炼 | — | ⛔ | rejected | 2026-10-15 | ★2685。GPL 红线 + Dart |
+| `timfraedrich/OutRun` | B 其他JS | GPL-3.0 | 锻炼 | — | ⛔ | rejected | 2026-10-15 | ★880。GPL 红线 + Swift |
+| `maksimowiczm/FoodYou` | B 其他JS | GPL-3.0 | 锻炼 | — | ⛔ | rejected | 2026-10-15 | ★619。GPL 红线 + Kotlin |
+| `subconcept-labs/ulangi` | B 其他JS | GPL-3.0 | 复习 | — | ⛔ | rejected | 2026-10-15 | ★455。GPL 红线 + 2023 年后停更 |
+| `kordoc` 之外的韩文/多语文档 | B 其他JS | 混合 | — | — | ⛔ | rejected | 2026-10-15 | 泛化关键词命中的无关项（钢琴练习器、健身房 SaaS 等）经相关性二次过滤后不登记 |
+| `edu/quiz-template` 类通用答题模板 | B 其他JS | MIT | 刷题 | **重复且无增益** | ⛔ | rejected | 2026-10-15 | `quiz practice` 命中大量通用答题模板，均与 `dsh-zhiyun-quiz` 重合且无更优底层，不登记 |
