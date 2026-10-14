@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { StudyWorkbench } from '../packages/dsh-zhiyun-study-core/src/workbench.js';
@@ -80,6 +80,71 @@ test('the today page load keeps a schedule failure off the study error banner', 
     assert.equal(controller.getSnapshot().error, null);
     assert.match(controller.getSnapshot().scheduleError, /无法连接/);
     assert.equal(controller.getSnapshot().schedule, null);
+  } finally {
+    controller.dispose();
+  }
+});
+
+test('the last opened lesson is remembered for this account only', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-recent-'));
+  const host = await mountKnowledge(dir);
+  let user = { id: '1' };
+  const service = new StudyWorkbench({
+    directory: dir,
+    knowledge: host.service,
+    llm: { listProviders: () => [], resolveModelInfo: async () => ({}) },
+    classroom: {
+      getCurrentUser: async () => user,
+      login: async (credentials) => { user = { id: credentials.username }; return { user }; },
+    },
+    parser: { llm: { routes: {} }, parseClassroom: async () => ({}) },
+  });
+  try {
+    assert.equal(await service.invoke('recent', {}), null);
+    const saved = await service.invoke('recent-save', { courseId: '10', subId: '20', courseTitle: '线代', lessonTitle: '第一节' });
+    assert.equal(saved.lessonTitle, '第一节');
+    assert.match(saved.openedAt, /^\d{4}-\d{2}-\d{2}T/);
+    assert.equal((await service.invoke('recent', {})).courseId, '10');
+    await service.invoke('login', { username: '2', password: 'fixture' });
+    assert.equal(await service.invoke('recent', {}), null);
+    user = { id: '1' };
+    assert.equal((await service.invoke('recent', {})).lessonTitle, '第一节');
+    await writeFile(path.join(dir, 'recent.json'), '{', 'utf8');
+    await assert.rejects(service.invoke('recent', {}), { code: 'RECENT' });
+  } finally {
+    await service.dispose();
+    await host.dispose();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('opening a lesson records it, and today can resume that lesson', async () => {
+  const saved = [];
+  const controller = createStudyController(async (method, payload) => {
+    if (method === 'state') return { user: { id: '1' }, jobs: [] };
+    if (method === 'courses') return { items: [{ id: '10', title: '线代' }], meta: { complete: true } };
+    if (method === 'recent-save') {
+      saved.push(payload);
+      return { courseId: '10', subId: '20', courseTitle: '线代', lessonTitle: '第一节', openedAt: '2026-10-14T00:00:00.000Z' };
+    }
+    if (method === 'recent') return { courseId: '10', subId: '20', courseTitle: '线代', lessonTitle: '第一节', openedAt: '2026-10-14T00:00:00.000Z' };
+    if (method === 'lessons') return { items: [{ id: '10_20', subId: '20', title: '第一节', isPlayable: true }], meta: { complete: true } };
+    if (method === 'results') return { items: {} };
+    if (method === 'content') return { slides: { items: [], meta: { complete: true } }, subtitles: { items: [], meta: { complete: true } } };
+    if (method === 'result') return { result: null, job: null };
+    return null;
+  }, { navigate() {} });
+  try {
+    await controller.refresh();
+    await controller.selectLesson({ subId: '20', title: '第一节' }, { id: '10', title: '线代' });
+    assert.equal(saved[0].courseTitle, '线代');
+    assert.equal(saved[0].lessonTitle, '第一节');
+    assert.equal(controller.getSnapshot().error, null);
+    assert.equal(controller.getSnapshot().recent.lessonTitle, '第一节');
+    controller.getSnapshot().recent = null;
+    await controller.loadRecent();
+    assert.equal(await controller.resumeRecent(), true);
+    assert.equal(controller.getSnapshot().lesson.subId, '20');
   } finally {
     controller.dispose();
   }

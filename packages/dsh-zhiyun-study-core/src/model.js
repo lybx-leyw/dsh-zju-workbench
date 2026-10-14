@@ -1,7 +1,7 @@
 export function createStudyController(call, navigation) {
-  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null };
+  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null };
   const listeners = new Set(), lifetime = new AbortController();
-  let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0, corpusTicket = 0;
+  let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0, corpusTicket = 0, recentTicket = 0;
   const lessonLoads = new Map();
   const update = (patch) => {
     if (closed) return;
@@ -16,7 +16,7 @@ export function createStudyController(call, navigation) {
     const epoch = ++account;
     selection++;
     lessonLoads.clear();
-    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null });
+    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null });
     try {
       const initial = await request("state");
       if (epoch !== account || closed) return;
@@ -110,6 +110,10 @@ export function createStudyController(call, navigation) {
       update({ activeJob: result.value.job });
       schedule();
     }
+    try {
+      const entry = await request("recent-save", { courseId: String(course.id), subId: String(lesson.subId), courseTitle: course.title ?? "", lessonTitle: lesson.title ?? "" });
+      if (ticket === selection && !closed) update({ recent: entry });
+    } catch { /* 记不住位置，不影响已经打开的这一节。 */ }
   }
   function schedule() {
     clearTimeout(timer);
@@ -225,6 +229,47 @@ export function createStudyController(call, navigation) {
         update({ schedule: null, scheduleMeta: null, scheduleError: e.message });
       } finally {
         if (ticket === scheduleTicket && epoch === account && !closed) update({ scheduleLoading: false });
+      }
+    },
+    async loadRecent() {
+      const ticket = ++recentTicket;
+      const epoch = account;
+      if (!state.user) {
+        update({ recent: null, recentLoading: false, recentError: null });
+        return;
+      }
+      update({ recentLoading: true, recentError: null });
+      try {
+        const recent = await request("recent");
+        if (ticket !== recentTicket || epoch !== account || closed) return;
+        update({ recent: recent ?? null });
+      } catch (e) {
+        if (ticket !== recentTicket || epoch !== account || closed) return;
+        update({ recent: null, recentError: e.message });
+      } finally {
+        if (ticket === recentTicket && epoch === account && !closed) update({ recentLoading: false });
+      }
+    },
+    async resumeRecent() {
+      const recent = state.recent;
+      if (!recent) return false;
+      const course = state.courses.find((item) => String(item.id) === String(recent.courseId));
+      if (!course) {
+        update({ recentError: "这门课不在当前课程列表里。" });
+        return false;
+      }
+      try {
+        const loaded = await loadCourse(course);
+        const lesson = (loaded?.items ?? []).find((item) => String(item.subId) === String(recent.subId));
+        if (!lesson) {
+          update({ recentError: "这节不在可回放列表里。" });
+          return false;
+        }
+        await selectLesson(lesson, course);
+        return true;
+      } catch (e) {
+        update({ recentError: e.message });
+        return false;
       }
     },
     async authenticate(credentials) {
