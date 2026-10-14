@@ -146,6 +146,20 @@
 .zfb-comment-robot { border-left-color: var(--zy-accent); background: var(--zy-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; }
 .zfb-comment-robot .zfb-comment-body { color: var(--zy-text); }
 
+/* 机器人答复改由宿主的 `MarkdownText` 渲染后，`.zfb-comment-body` 里不再是"一段文本"，
+   而是 p / ul / pre / blockquote / table 一组块元素。四件事必须收回本页：
+   1. 首尾外边距 —— 宿主渲染器给每个块元素都带 margin，叠在容器已有的 6px 上会多出一截；
+   2. `white-space: pre-wrap` 是给"纯文本评论"保留用户手打换行的，会继承给渲染结果；
+      代码块的对齐不能被软换行搅乱，所以 `<pre>` 里改回 `pre` 并让它自己滚动；
+   3. 代码块与表格的长度不受 markdown 作者控制，横向溢出会把整张卡片撑宽，只能让它们内部滚；
+   4. 列表的左缩进交给渲染器，这里只确保列表内容仍是本页的行距与字号。 */
+.zfb-md > *:first-child { margin-top: 0; }
+.zfb-md > *:last-child { margin-bottom: 0; }
+.zfb-md pre { white-space: pre; overflow-x: auto; max-width: 100%; }
+.zfb-md table { display: block; overflow-x: auto; max-width: 100%; }
+.zfb-md img { max-width: 100%; }
+.zfb-md li { line-height: 1.8; }
+
 /* 展开的一整条讨论串末尾的输入框：贴底、贴左，像接着上面的话往下说。 */
 .zfb-reply { margin-top: 16px; border-top: 1px solid var(--zy-line); padding-top: 14px; }
 .zfb-reply textarea { display: block; width: 100%; box-sizing: border-box; border: 1px solid var(--zy-line); border-radius: 7px; background: var(--zy-bg); color: var(--zy-text); font: inherit; font-size: 12.5px; padding: 9px 11px; resize: vertical; }

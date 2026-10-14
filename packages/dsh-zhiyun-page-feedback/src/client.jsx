@@ -11,6 +11,7 @@
 // 空社区并**明确说明是连不上**，而不是装作"还没有人提过"。
 import React, { useEffect, useState } from 'react';
 import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
   ago, checkComment, checkIssue, LIMITS, loadIssues, localName, orderIssues,
   resetName, submitComment, submitIssue, summarize,
@@ -35,7 +36,23 @@ function StateTag({ status }) {
   return <span className={`zfb-tag zfb-tag-${status}`}>{label}</span>;
 }
 
-/** 一条评论。机器人回帖长相不同，读者一眼能分出「官方」与「路人」。 */
+/**
+ * 宿主 Markdown 渲染器的文案。
+ *
+ * 必须是**模块级常量**：`MarkdownText` 按 `labels` 的**身份**缓存组件表，每次渲染
+ * 新建一个字面量会让它反复重建。`dsh-zhiyun-page-paper/src/AssistantDrawer.jsx`
+ * 与 `dsh-zhiyun-page-study/src/lecture-reader.jsx` 也是这么写的。
+ */
+const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
+
+/**
+ * 一条评论。
+ *
+ * 只有**机器人**的答复走宿主的 `MarkdownText`：那些答复本来就是 Markdown 写的
+ * （标题、加粗、列表、代码块），按纯文本渲染会把 `**` 这类记号原样显示给人看。
+ * 路人的评论保持纯文本 —— 一是它们不是 Markdown，二是没必要把匿名用户的输入
+ * 交给一个会解析记号的渲染器。
+ */
 function Comment({ item }) {
   return <li className={`zfb-comment${item.robot ? ' zfb-comment-robot' : ''}`}>
     <div className="zfb-comment-head">
@@ -43,7 +60,11 @@ function Comment({ item }) {
       {item.robot && <span className="zfb-badge">官方答复</span>}
       <time className="zfb-meta">{ago(item.at)}</time>
     </div>
-    <p className="zfb-comment-body">{item.body}</p>
+    {/* `MarkdownText` 产出的是一组块元素（p / ul / pre / blockquote / table），
+        所以容器用 `<div>` 而不是 `<p>` —— 块元素嵌进 `<p>` 里是无效 HTML。 */}
+    {item.robot
+      ? <div className="zfb-comment-body zfb-md"><MarkdownText text={item.body} labels={MARKDOWN_LABELS}/></div>
+      : <p className="zfb-comment-body">{item.body}</p>}
   </li>;
 }
 
