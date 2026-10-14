@@ -1,0 +1,8 @@
+# dsh bundle patch：把本候选骨架插进 profile 的层栈。
+#
+# ⚠️ 本文件存在 ≠ 已接入。候选骨架【未评审、未接入 profile】，
+#    profiles/zhiyun-bench/package.json 的 dsh.profile.bundles 里【没有】这一条，
+#    人工评审通过后才由人决定是否接入（见 README「接入前必须先做的事」）。
+- insert:
+    - id: radar-dsh-web
+      name: dsh-radar-dsh-web
