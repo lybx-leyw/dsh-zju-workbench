@@ -10,6 +10,8 @@
         "@deepseek-ai/dsh-web-app",
         "dsh-zhiyun-shell",
         "dsh-zhiyun-ui-primitives",
+        "dsh-zhiyun-net-proxy",
+        "dsh-zhiyun-omni",
         "dsh-zhiyun-classroom",
         "dsh-zhiyun-parser",
         "dsh-zhiyun-study-core",

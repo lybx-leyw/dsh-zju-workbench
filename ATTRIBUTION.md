@@ -19,4 +19,16 @@
 
 ## 含实现移植
 
-暂无。今后若有插件包移植了第三方实现，移植说明写在该包内的 `ATTRIBUTION.md`，并在本文件指向它。
+- [ZJU-Omni](https://github.com/Vita0818/ZJU-Omni) · **MIT** · 移植提交 `192d1015a53a7b09f23ae143d56686c8fbf706af`。
+  移植其**数据层**（教务课表/成绩/考试、学在浙大、CC98、拼题A 的接口适配）到 `packages/dsh-zhiyun-omni/`，
+  做成数据包而非 AI 工具。改动（凭据层由 macOS 钥匙串改为 Windows DPAPI、删除 MCP 工具层等）
+  与完整来源说明见该包的 [ATTRIBUTION.md](packages/dsh-zhiyun-omni/ATTRIBUTION.md)。
+
+## 协议实现说明（无第三方代码引入）
+
+`packages/dsh-zhiyun-net-proxy/src/connect.js` 实现了 HTTP `CONNECT`（RFC 9110）与
+SOCKS5（RFC 1928 / RFC 1929）的客户端握手。这两者是**公开的协议标准**，实现按标准
+编写，未复制任何第三方项目的代码。同目录 `relay.js` 的「单代理端点 + 就近分流」
+思路，与 [dsh-net-proxy](https://github.com/mafeis/dsh-net-proxy)（MIT）所解决的
+问题相邻（都涉及本地中继与代理转发），阅读其源码有助于理解该问题域；本包的实现
+是独立编写的，未移植其代码，也未将其列为运行时依赖。
