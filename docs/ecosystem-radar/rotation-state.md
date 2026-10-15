@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `C` |
-| `last_run_at` | `2026-10-15 06:00` |
-| `group_runs`（累计） | A=2, B=1, C=3 |
+| `last_group` | `A` |
+| `last_run_at` | `2026-10-15 09:00` |
+| `group_runs`（累计） | A=3, B=1, C=3 |
 
 ### 流水
 
@@ -65,6 +65,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-14 16:18 | B | zju / cc98 / campus app（B组浙大场景；36条新增；无骨架） |
 | 2026-10-15 03:35 | A | deepseek-harness plugin / cordis plugin / dsh plugin / dsh market / dsh desktop（A组·DSH插件生态） |
 | 2026-10-15 06:00 | C | timetable ics export / paper annotation reader / ocr notes taking / quiz practice / fitness tracker / spaced repetition flashcard / html to markdown converter / pdf to markdown（C组·学生功能域；22条登记；无新增 🟢，不出骨架） |
+| 2026-10-15 09:00 | A | 自动记录 |
 
 > **⚠ 漂移说明（2026-10-15 第三轮发现）**：当日 **B 组实际于 00:1x 跑过**
 > （见 `registry.md` 的「2026-10-15 · B 组」章节，36 条候选），但**未写入本流水**。

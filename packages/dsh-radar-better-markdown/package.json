@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-better-markdown",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版挂载上游 dsh-better-markdown，为论文阅读页 / 笔记页提供抗流式、带 Mermaid 与 KaTeX 的 Markdown 渲染底层（强化式集成）",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dependencies": {
+    "dsh-better-markdown": "0.1.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
