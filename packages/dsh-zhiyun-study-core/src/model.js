@@ -1,7 +1,7 @@
 export function createStudyController(call, navigation) {
-  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true };
+  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null };
   const listeners = new Set(), lifetime = new AbortController();
-  let closed = false, selection = 0, account = 0, timer = null, polling = false;
+  let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0, corpusTicket = 0, recentTicket = 0, reviewTicket = 0;
   const lessonLoads = new Map();
   const update = (patch) => {
     if (closed) return;
@@ -16,7 +16,7 @@ export function createStudyController(call, navigation) {
     const epoch = ++account;
     selection++;
     lessonLoads.clear();
-    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false });
+    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null });
     try {
       const initial = await request("state");
       if (epoch !== account || closed) return;
@@ -110,6 +110,10 @@ export function createStudyController(call, navigation) {
       update({ activeJob: result.value.job });
       schedule();
     }
+    try {
+      const entry = await request("recent-save", { courseId: String(course.id), subId: String(lesson.subId), courseTitle: course.title ?? "", lessonTitle: lesson.title ?? "" });
+      if (ticket === selection && !closed) update({ recent: entry });
+    } catch { /* 记不住位置，不影响已经打开的这一节。 */ }
   }
   function schedule() {
     clearTimeout(timer);
@@ -160,6 +164,155 @@ export function createStudyController(call, navigation) {
       return open;
     },
     navigate: (page) => navigation.navigate(page),
+    /**
+     * 在当前账号已整理的终稿里做字面检索。空词不请求。
+     * 失败留在 `corpusError`，不写进学习页横幅。
+     */
+    async searchCorpus(query) {
+      const ticket = ++corpusTicket;
+      const epoch = account;
+      const text = typeof query === "string" ? query.trim() : "";
+      if (!state.user || !text) {
+        update({ corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null });
+        return;
+      }
+      update({ corpusBusy: true, corpusError: null, corpusQuery: text });
+      try {
+        const hits = await request("search", { query: text, layer: "final" });
+        if (ticket !== corpusTicket || epoch !== account || closed) return;
+        update({ corpusHits: Array.isArray(hits) ? hits : [] });
+      } catch (e) {
+        if (ticket !== corpusTicket || epoch !== account || closed) return;
+        update({ corpusHits: null, corpusError: e.message });
+      } finally {
+        if (ticket === corpusTicket && epoch === account && !closed) update({ corpusBusy: false });
+      }
+    },
+    async openCorpusHit(hit) {
+      const course = state.courses.find((item) => String(item.id) === String(hit?.courseId));
+      if (!course) {
+        update({ corpusError: "这门课不在当前课程列表里。" });
+        return false;
+      }
+      try {
+        const loaded = await loadCourse(course);
+        const lesson = (loaded?.items ?? []).find((item) => String(item.subId) === String(hit.subId));
+        if (!lesson) {
+          update({ corpusError: "这节不在可回放列表里。" });
+          return false;
+        }
+        await selectLesson(lesson, course);
+        return true;
+      } catch (e) {
+        update({ corpusError: e.message });
+        return false;
+      }
+    },
+    /**
+     * 只读今天的课表。失败留在 `scheduleError`，不写进页面横幅用的 `error`，
+     * 免得学习页把一次课表失败当成解析失败。
+     */
+    async loadSchedule() {
+      const ticket = ++scheduleTicket;
+      const epoch = account;
+      if (!state.user) {
+        update({ schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null });
+        return;
+      }
+      update({ scheduleLoading: true, scheduleError: null });
+      try {
+        const data = await request("schedule");
+        if (ticket !== scheduleTicket || epoch !== account || closed) return;
+        update({ schedule: data.items ?? [], scheduleMeta: data.meta ?? null });
+      } catch (e) {
+        if (ticket !== scheduleTicket || epoch !== account || closed) return;
+        update({ schedule: null, scheduleMeta: null, scheduleError: e.message });
+      } finally {
+        if (ticket === scheduleTicket && epoch === account && !closed) update({ scheduleLoading: false });
+      }
+    },
+    async loadRecent() {
+      const ticket = ++recentTicket;
+      const epoch = account;
+      if (!state.user) {
+        update({ recent: null, recentLoading: false, recentError: null });
+        return;
+      }
+      update({ recentLoading: true, recentError: null });
+      try {
+        const recent = await request("recent");
+        if (ticket !== recentTicket || epoch !== account || closed) return;
+        update({ recent: recent ?? null });
+      } catch (e) {
+        if (ticket !== recentTicket || epoch !== account || closed) return;
+        update({ recent: null, recentError: e.message });
+      } finally {
+        if (ticket === recentTicket && epoch === account && !closed) update({ recentLoading: false });
+      }
+    },
+    async resumeRecent() {
+      const recent = state.recent;
+      if (!recent) return false;
+      const course = state.courses.find((item) => String(item.id) === String(recent.courseId));
+      if (!course) {
+        update({ recentError: "这门课不在当前课程列表里。" });
+        return false;
+      }
+      try {
+        const loaded = await loadCourse(course);
+        const lesson = (loaded?.items ?? []).find((item) => String(item.subId) === String(recent.subId));
+        if (!lesson) {
+          update({ recentError: "这节不在可回放列表里。" });
+          return false;
+        }
+        await selectLesson(lesson, course);
+        return true;
+      } catch (e) {
+        update({ recentError: e.message });
+        return false;
+      }
+    },
+    async loadReview() {
+      const ticket = ++reviewTicket;
+      const epoch = account;
+      if (!state.user) {
+        update({ review: null, reviewTruncated: false, reviewLoading: false, reviewError: null });
+        return;
+      }
+      update({ reviewLoading: true, reviewError: null });
+      try {
+        const data = await request("review");
+        if (ticket !== reviewTicket || epoch !== account || closed) return;
+        update({ review: data.items ?? [], reviewTruncated: Boolean(data.truncated) });
+      } catch (e) {
+        if (ticket !== reviewTicket || epoch !== account || closed) return;
+        update({ review: null, reviewTruncated: false, reviewError: e.message });
+      } finally {
+        if (ticket === reviewTicket && epoch === account && !closed) update({ reviewLoading: false });
+      }
+    },
+    async openReview(item) {
+      if (!item) return false;
+      const course = state.courses.find((row) => String(row.id) === String(item.courseId));
+      if (!course) {
+        update({ reviewError: "这门课不在当前课程列表里。" });
+        return false;
+      }
+      try {
+        const loaded = await loadCourse(course);
+        const lesson = (loaded?.items ?? []).find((row) => String(row.subId) === String(item.subId));
+        if (!lesson) {
+          update({ reviewError: "这节不在可回放列表里。" });
+          return false;
+        }
+        await selectLesson(lesson, course);
+        update({ focusTab: { tab: "出题", courseId: String(course.id), subId: String(lesson.subId) }, reviewError: null });
+        return true;
+      } catch (e) {
+        update({ reviewError: e.message });
+        return false;
+      }
+    },
     async authenticate(credentials) {
       update({ busy: true, error: null });
       try {

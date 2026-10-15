@@ -6,13 +6,27 @@ import { NotePanel } from "./note-panel.jsx";
 import { time, lessonWhen } from "./format.js";
 import { QueryMode, queryModes, defaultQueryMode, queryModeOf, LayerId, defaultSearchLayers, layerLabel, availableLayers, layerRegistry, lineRoles, facetOptions } from "./layers.js";
 import { searchLesson, hitBlockIndexes, lessonCatalog, searchNote } from "./layered-search.js";
+import { corpusRows } from "./corpus.js";
 
-function CourseTree({ state, controller, ModelSettings }) {
+function CorpusSearch({ state, controller, onOpen }) {
+  const [text, setText] = useState("");
+  const view = corpusRows(state.corpusHits, state.courses);
+  return <div className="zs-corpus">
+    <label className="zs-tree-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="在已整理的终稿里找" placeholder="在已整理的终稿里找，回车" value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void controller.searchCorpus(text); }} /></label>
+    {state.corpusBusy && <p className="zs-tree-hint">正在查找…</p>}
+    {state.corpusError && <p className="zs-tree-hint">{state.corpusError}</p>}
+    {state.corpusHits && !state.corpusBusy && !view.rows.length && <p className="zs-tree-hint">终稿里没有这几个字。</p>}
+    {view.rows.length > 0 && <div className="zs-corpus-list">{view.rows.map((row) => <button type="button" className="zs-corpus-hit" key={`${row.courseId}:${row.subId}`} onClick={() => onOpen(row)}><strong>{row.title}</strong>{row.snippet ? <small>{row.snippet}</small> : null}</button>)}{view.truncated && <p className="zs-tree-hint">只列出前 {view.rows.length} 节</p>}</div>}
+  </div>;
+}
+
+function CourseTree({ state, controller, ModelSettings, onOpenHit }) {
   const [query, setQuery] = useState("");
   const courses = state.courses.filter((course) => `${course.title} ${course.teacher ?? ""} ${course.termName ?? ""}`.toLowerCase().includes(query.trim().toLowerCase()));
   return <aside className="zs-course-tree" aria-label="课程与节次">
     <div className="zs-tree-top"><div><span className="zs-eyebrow">学习空间</span><h2>课程目录</h2></div><span className="zs-course-total">{state.courses.length}</span></div>
     <label className="zs-tree-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="查找课程" placeholder="查找课程" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
+    <CorpusSearch state={state} controller={controller} onOpen={onOpenHit} />
     <div className="zs-course-list">
       {courses.map((course) => {
         const id = String(course.id), isOpen = Boolean(state.expandedCourses[id]), loading = Boolean(state.loadingCourses[id]);
@@ -98,7 +112,12 @@ function SearchResults({ outcome, jumpToHit }) {
 export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) {
   const state = useStudy(controller), [tab, setTab] = useState("终稿"), [query, setQuery] = useState(""), [mode, setMode] = useState(defaultQueryMode.id), [role, setRole] = useState(""), [facets, setFacets] = useState([]), [layers, setLayers] = useState(null), [optionsOpen, setOptionsOpen] = useState(false), [lectureFocus, setLectureFocus] = useState(null), [page, setPage] = useState(0), [subtitleFocus, setSubtitleFocus] = useState(null), [mobileTree, setMobileTree] = useState(false);
   const advancedRef = React.useRef(null);
-  useEffect(() => { setQuery(""); setRole(""); setFacets([]); setOptionsOpen(false); setLectureFocus(null); setPage(0); setSubtitleFocus(null); setTab("终稿"); }, [state.lesson?.id, state.course?.id]);
+  useEffect(() => {
+    setQuery(""); setRole(""); setFacets([]); setOptionsOpen(false); setLectureFocus(null); setPage(0); setSubtitleFocus(null);
+    const focus = state.focusTab;
+    const openQuiz = focus?.tab === "出题" && String(focus.courseId) === String(state.course?.id) && String(focus.subId) === String(state.lesson?.subId);
+    setTab(openQuiz ? "出题" : "终稿");
+  }, [state.lesson?.id, state.course?.id, state.focusTab]);
   // 浮窗是「选项」的住处，点外面或按 Esc 就收；它只覆盖在自己那一角，不接管正文的点击。
   useEffect(() => {
     if (!optionsOpen) return undefined;
@@ -149,7 +168,7 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
     <div className="zs-workbench-shell">
       <button className="zs-mobile-tree-toggle" aria-expanded={mobileTree} onClick={() => setMobileTree((value) => !value)}><span>课程目录</span><span>{state.course?.title ?? "选择一门课程"}</span><span aria-hidden="true">{mobileTree ? "⌃" : "⌄"}</span></button>
       <div className={`zs-workbench${mobileTree ? " is-tree-open" : ""}`}>
-        <CourseTree state={state} controller={controller} ModelSettings={ModelSettings} />
+        <CourseTree state={state} controller={controller} ModelSettings={ModelSettings} onOpenHit={async (row) => { const opened = await controller.openCorpusHit(row); if (opened) setQuery(state.corpusQuery || ""); }} />
         <main className="zs-reader">
           <Notice>{state.error}</Notice>
           {!state.lesson ? <div className="zs-reader-empty"><span className="zs-motto-text">海纳江河，启真厚德</span><h1>从一节课开始，搭建自己的知识脉络。</h1><p>展开左侧课程，选择一节课堂。课件、字幕和解析内容会在这里自然汇合。</p><div className="zs-empty-hint"><span>01</span><div><strong>选择课程与节次</strong><small>课程资料会按课堂归档</small></div><span>02</span><div><strong>阅读与整理</strong><small>在同一处查看课件、字幕与讲义</small></div></div></div> : <>

@@ -25,6 +25,7 @@ const faultMessages = {
   SLIDE_READ_FAILED: "课件图片尚未成功解析。请重新整理这节课，再生成讲义。",
   NOT_FOUND: "找不到这道题，它可能已被丢弃。",
   PERSIST: "笔记没有写入，请重试。",
+  RECENT: "上次打开的位置读不出来，原文件已保留。",
 };
 export const publicError = (error) => ({ code: error.code ?? "FAILED", message: {
   ...faultMessages,
@@ -66,6 +67,7 @@ export class StudyWorkbench {
     this.closed = false;
     this.accountBusy = false;
     this.controllers = new Set();
+    this.recentQueue = Promise.resolve();
     this.ready = this.loadRoutes();
   }
   async loadRoutes() {
@@ -91,6 +93,64 @@ export class StudyWorkbench {
     // EACCES/EBUSY/EPERM 重试，并保证替换后的 inode 带上传入的权限位。
     // 手写 `writeFile` + `rename` 在 Windows 上会偶发失败。
     await writeFileAtomic(file, JSON.stringify(data), { mode: 0o600, dirMode: 0o700 });
+  }
+  async scheduleWindow(payload, signal) {
+    const window = {};
+    for (const key of ["start", "end"]) {
+      if (payload[key] == null || payload[key] === "") continue;
+      if (typeof payload[key] !== "string") throw fault("INPUT", "日期无效");
+      window[key] = payload[key];
+    }
+    try {
+      return await this.classroom.getSchedule({ ...window, signal });
+    } catch (error) {
+      if (error instanceof TypeError) throw fault("INPUT", "日期无效");
+      throw error;
+    }
+  }
+  recentFile() { return path.join(this.directory, "recent.json"); }
+  async readRecentFile() {
+    try {
+      const parsed = JSON.parse(await readFile(this.recentFile(), "utf8"));
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw fault("RECENT", "上次打开的位置无法读取");
+      return parsed;
+    } catch (error) {
+      if (error.code === "ENOENT") return {};
+      if (error.code === "RECENT") throw error;
+      if (error instanceof SyntaxError) throw fault("RECENT", "上次打开的位置无法读取");
+      throw error;
+    }
+  }
+  enqueueRecent(task) {
+    const run = this.recentQueue.then(task, task);
+    this.recentQueue = run.then(() => {}, () => {});
+    return run;
+  }
+  clipTitle(value) {
+    if (value == null || value === "") return "";
+    if (typeof value !== "string") throw fault("INPUT", "标题无效");
+    return value.slice(0, 200);
+  }
+  async recall(user) {
+    if (!/^[^\s:]+$/.test(String(user.id))) throw fault("INPUT", "账号标识无效");
+    const all = await this.readRecentFile();
+    return all[String(user.id)] ?? null;
+  }
+  async remember(user, payload) {
+    if (!/^[^\s:]+$/.test(String(user.id))) throw fault("INPUT", "账号标识无效");
+    const entry = {
+      courseId: identifier(payload.courseId),
+      subId: identifier(payload.subId),
+      courseTitle: this.clipTitle(payload.courseTitle),
+      lessonTitle: this.clipTitle(payload.lessonTitle),
+      openedAt: new Date().toISOString(),
+    };
+    await this.enqueueRecent(async () => {
+      const all = await this.readRecentFile();
+      all[String(user.id)] = entry;
+      await this.atomic(this.recentFile(), all);
+    });
+    return entry;
   }
   async user() {
     if (this.accountBusy) throw fault("ACCOUNT_BUSY", "账号正在切换");
@@ -429,6 +489,10 @@ export class StudyWorkbench {
     }
     const user = await this.user();
     if (method === "courses") return this.classroom.listCourses({ signal });
+    if (method === "schedule") return this.scheduleWindow(payload, signal);
+    if (method === "recent") return this.recall(user);
+    if (method === "recent-save") return this.remember(user, payload);
+    if (method === "review") return this.knowledge.acceptedQuiz({ accountId: String(user.id) });
     if (method === "search") {
       if (typeof payload.query !== "string" || payload.query.length > 500) throw fault("INPUT", "检索词无效");
       return this.knowledge.search({ accountId: String(user.id), query: payload.query,

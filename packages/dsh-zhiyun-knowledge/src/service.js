@@ -15,6 +15,7 @@
  *    不让它落盘、也不让它把整个域卡在下次 `open()` 上。
  * ③ **按课程/关键词读**：`listByCourse` / `search` 只按键前缀取本账号本课程，
  *    再对块正文、块概述、块衔接做**字面**筛选（不是向量检索，也不是 AI 检索）。
+ *    `acceptedQuiz` 同样只扫本账号，只拿出已采纳的题干。
  *
  * # 为什么读操作直接读内存而不是重新校验
  *
@@ -209,6 +210,44 @@ export function createKnowledgeService({ domain, spec }) {
         out.push(full ? { ...summarize(key, record), record } : summarize(key, record));
       }
       return out.sort((a, b) => (a.subId < b.subId ? -1 : a.subId > b.subId ? 1 : 0));
+    },
+
+    /**
+     * 当前账号已经采纳的题。`proposed` / `rejected` 不在这里。
+     *
+     * 只返回定位和题干，不带答案。按课程、节次、题目 id 排序，最多 20 条。
+     * 键前缀是 `accountId:`（后面必须是分隔冒号），所以账号 `1` 不会扫到 `10`。
+     */
+    acceptedQuiz({ accountId } = {}) {
+      assertOpen();
+      const account = identityPart(accountId, 'accountId');
+      const prefix = prefixOf(account);
+      const found = [];
+      for (const [key, record] of table.entries()) {
+        if (!key.startsWith(prefix)) continue;
+        assertKeyMatchesRecord(key, record);
+        if (record.accountId !== account) continue;
+        const quizItems = Array.isArray(record.quiz?.items) ? record.quiz.items : [];
+        for (const item of quizItems) {
+          if (!item || typeof item !== 'object') continue;
+          const status = typeof item.status === 'string' ? item.status : item.status?.code;
+          if (status !== 'accepted') continue;
+          if (typeof item.stem !== 'string' || !item.stem.trim()) continue;
+          if (typeof item.id !== 'string' && typeof item.id !== 'number') continue;
+          const type = typeof item.type === 'string' ? item.type : item.type?.code;
+          found.push({
+            courseId: record.courseId,
+            subId: record.subId,
+            id: String(item.id),
+            type: typeof type === 'string' ? type : '',
+            stem: item.stem,
+          });
+        }
+      }
+      found.sort((a, b) => (a.courseId < b.courseId ? -1 : a.courseId > b.courseId ? 1
+        : a.subId < b.subId ? -1 : a.subId > b.subId ? 1
+          : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      return { items: found.slice(0, 20), truncated: found.length > 20 };
     },
 
     /**

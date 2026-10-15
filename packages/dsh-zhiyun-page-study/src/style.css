@@ -174,6 +174,12 @@ body[data-zhiyun] .zs-course-total { min-width:25px; height:25px; display:grid; 
 body[data-zhiyun] .zs-tree-search { display:flex; align-items:center; gap:9px; height:36px; margin:0 0 12px; padding:0 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-muted); }
 body[data-zhiyun] .zs-tree-search>span { font-size:19px; line-height:1; }
 body[data-zhiyun] .zs-tree-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--zy-text); font:inherit; font-size:11px; }
+body[data-zhiyun] .zs-corpus { margin:0 0 12px; }
+body[data-zhiyun] .zs-corpus .zs-tree-search { margin-bottom:8px; }
+body[data-zhiyun] .zs-corpus-list { display:flex; flex-direction:column; gap:6px; }
+body[data-zhiyun] .zs-corpus-hit { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; padding:8px 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:inherit; text-align:left; }
+body[data-zhiyun] .zs-corpus-hit strong { font-size:12px; font-weight:500; }
+body[data-zhiyun] .zs-corpus-hit small { font-size:10px; color:var(--zy-muted); }
 body[data-zhiyun] .zs-course-list { flex:1; min-height:0; overflow:auto; padding-right:4px; }
 body[data-zhiyun] .zs-course-group { margin-bottom:3px; }
 body[data-zhiyun] .zs-course-toggle { display:flex; align-items:center; width:100%; min-height:49px; gap:9px; padding:6px 9px; border:0; border-radius:7px; background:transparent; color:var(--zy-text); text-align:left; cursor:pointer; }
