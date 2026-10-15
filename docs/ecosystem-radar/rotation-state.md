@@ -52,8 +52,8 @@ node scripts/radar-rotation.mjs --group
 | 项 | 值 |
 | --- | --- |
 | `last_group` | `A` |
-| `last_run_at` | `2026-10-15 18:05` |
-| `group_runs`（累计） | A=6, B=1, C=3 |
+| `last_run_at` | `2026-10-15 21:05` |
+| `group_runs`（累计） | A=7, B=1, C=3 |
 
 ### 流水
 
@@ -70,6 +70,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-15 12:00 | A | **能力域细分**：`dsh plugin rag/ocr/graph/pdf/speech/workflow`、`cordis plugin service`、`dsh plugin knowledge/citation/notes editor`（全新能力域切片；79条新增；出骨架 `dsh-radar-deep-read`） |
 | 2026-10-15 14:59 | A | **管理/治理面**切片：`dsh plugin mcp/browser/image/classroom/exam/writing/chart/dashboard/ai tutor`（52条新增；出骨架 `dsh-radar-context-dashboard`）。脚本判 `same-day(exhausted)`（三组今天已跑完），本轮**不重复任何组的关键词**、改跑正交新切片 |
 | 2026-10-15 18:05 | A | **插件开发/调试工具链 + Agent 编排**切片（当日第七轮；脚本判 same-day(exhausted)，不重复已跑关键词）：dsh plugin sdk / dsh skill marketplace / deepseek-harness agent orchestration / dsh plugin developer toolchain / dsh plugin debugging（77条新增；出骨架 dsh-radar-context-lens） |
+| 2026-10-15 21:05 | A | dsh plugin mobile app / desktop app / health check / system monitor / notification push / performance benchmark / error tracking / log analyzer / cost usage / permission audit（第8轮·宿主外壳/运维/审计切片） |
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
 > （见 `registry.md`「2026-10-15 · B 组」36 条），但**未写入流水**，

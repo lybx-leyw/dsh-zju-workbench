@@ -507,3 +507,83 @@
 | `CleverC2200/dsh-agent-manage` | A 原生DSH | MIT | 通用（市场） | 重复且无增益（插件页） | ⛔ | rejected | 2026-10-15 | ★0，2026-10-15 推送。插件市场：安装注入 Claude Code/Codex 插件。**插件市场簇** → ⛔ |
 | `Friend-Xu/dsh-install` | A 原生DSH | MIT | 通用（安装管理） | 重复且无增益（插件页） | ⛔ | rejected | 2026-10-15 | ★0。MCP + 技能安装管理。**插件页已自建** → ⛔ |
 | `Alex-Yanggg/awesome-DSH-plugin` | 清单 | CC0-1.0 | 通用（线索源） | 全新（线索源） | 🔵 | proposed | 2026-10-15 | ★101。DSH 插件精选清单（第 **5** 个 awesome 清单）。**作线索源**，不单独集成 |
+
+---
+
+## 2026-10-15 · 第八轮（A 组 · **宿主外壳 / 运维 / 安全审计**切片）
+
+> 关键词：`dsh plugin mobile app`、`dsh plugin desktop app`、`dsh plugin health check`、
+> `dsh plugin system monitor`、`dsh plugin notification push`、`dsh plugin performance benchmark`、
+> `dsh plugin error tracking`、`dsh plugin log analyzer`、`dsh plugin cost usage`、
+> `dsh plugin permission audit`（**10 次调用，达 ≤10 上限**）。
+> API 状态：✅ 无 403（开跑时 search 剩余 30/30）。
+> 去重基线：registry 396 条已登记项；本轮去重后 **81 条新增**（88 条去重候选，剔除撞词 1 条，其余为已登记）。
+>
+> 许可证分布（新增 81 条）：**宽名单 72 ｜ NOASSERTION 1 ｜ 无许可证 8 ｜ 红线 0**。
+>
+> ⚠ **本轮采用「簇登记」以抑制膨胀**：用量/成本簇（22 条）与桌面外壳簇（17 条）
+> 高度同质，**折叠为分组行**而非逐条登记，详见文末说明。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `vibeinging/dsh-desktop` | A 原生DSH | MIT | 通用（宿主外壳） | 全新 | 🔵 | proposed | 2026-10-15 | ★483，2026-10-14 推送，**在维护**。Electron 桌面工作区（Sessions/项目/文件/联网研究）。功能面远超本仓需要，形态为独立应用而非插件集，仅线索 |
+| `Clarklevis1995/dsh-plugin-mobile-gateway` | A 原生DSH | MIT | 通用（移动接入） | 全新 | 🟡 | proposed | 2026-10-15 | ★78，2026-10-13 推送。WebSocket 网关让同网段移动端接入（npm 0.10.1 可锁版，带 dsh.client）。⚠ 需强安全评审：本仓目前是本地单机形态 |
+| `PolinniZhong/dsh-personal-center` | A 原生DSH | MIT | 通用（个人面板） | 重复可强化（个人页） | 🟡 | proposed | 2026-10-15 | ★118，npm 1.1.2 可锁版。Token 用量统计/成本估算/自定义指令/全局字号/桌面宠物。⚠ 与「个人」页偏好设置+「用量」域重叠，**取其一即止**（本轮用量簇共 22 条） |
+| `kenz1117/dsh-ui-usage-billing` | A 原生DSH | MIT | 通用（用量面板） | 重复且无增益（用量簇） | 🔵 | proposed | 2026-10-15 | ★79，2026-10-15 推送。侧栏成本指标 + 从会话聚合真实用量。用量簇内取一即可 |
+| `jkrandom-sudo/dsh-plugin-audit` | A 原生DSH | MIT | 通用（插件安全） | 重复可强化（插件页） | 🟢 | proposed | 2026-10-15 | ★4，MIT，npm 0.1.4 可锁版。**插件静态权限画像（带文件/行号证据）+ 运行时哨兵**。本仓插件页**无任何**权限扫描能力 → 已出骨架 `dsh-radar-plugin-audit`。⚠ 哨兵建议默认关闭 |
+| `rogerdigital/dsh-vet` | A 原生DSH | MIT | 通用（插件安全） | 重复可强化（插件页） | 🟡 | proposed | 2026-10-15 | ★2，MIT，但 npm 的 `dsh` 字段为 `{seams:[fs,shell,web]}` **非 `bundle.patch` 形状** → 不能直接锁版挂载。装前审查 + 供应链审计，带 `dsh-vet/v1` 报告标准 |
+| `Evhye38496/dsh-perfscope` | A 原生DSH | MIT | 通用（插件体检） | 重复且无增益（审计簇） | 🔵 | proposed | 2026-10-15 | ★2，MIT，npm 0.1.1 可锁版。一键健康检查打分 Scan→Score→Fix→Share。⚠ 与 `dsh-plugin-audit` **同簇**，审计簇取一即可 |
+| `LeslieWylie/dsh-fleet-audit` | A 原生DSH | MIT | 通用（凭据卫生） | 全新（安全域） | 🔵 | proposed | 2026-10-15 | ★1，MIT。只读、零依赖、确定性：检查凭据文件权限、内嵌 git-remote 凭据（脱敏）、provider token 字面量。**与插件审计不同轴**（查的是机器上的凭据暴露面） |
+| `C6Lactide/dsh-plugin-doctor` | A 原生DSH | MIT | 通用（插件体检） | 重复且无增益（审计簇） | 🔵 | proposed | 2026-10-15 | ★0，MIT。检查 patch 层 YAML、include 形式、双份拷贝一致性。⚠ 与 `coderfu123/dsh-plugin-doctor` **同名不同仓**，审计簇内取一 |
+| `chuanxuWei/dsh-trust-center` | A 原生DSH | MIT | 通用（插件安全） | 重复可强化（插件页） | 🔵 | proposed | 2026-10-15 | ★0，MIT。审计型权限与供应链信任中心，**npm 未发布** → 无法锁版，仅参考 |
+| `baihejiangnan/dsh-plugin-safety-net` | A 原生DSH | MIT | 通用（插件安全） | 重复且无增益（审计簇） | 🔵 | proposed | 2026-10-15 | ★0，MIT。受控安装 + 插件管理 + 健康检查。审计簇内另一条，取一 |
+| `ice5kysl/dsh-plugin-health` | A 原生DSH | MIT | 通用（插件体检） | 重复且无增益（审计簇） | 🔵 | proposed | 2026-10-15 | ★0，MIT。零依赖体检 CLI：manifest/npm/repo/docs + 只读面安全扫描。审计簇，取一 |
+| `qinshige/dsh-performance-guard` | A 原生DSH | MIT | 通用（性能诊断） | 全新（性能域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。宿主与 Web 性能诊断、反复的插件隔离排查、安全恢复。⚠ 与本仓 `scripts/radar-rotation` 一类的排查经验同族，**「插件隔离排查」思路可借鉴** |
+| `Suxeca/dsh-plugin-repo-auditor` | A 原生DSH | MIT | 通用（仓库审计） | 全新（安全域） | 🔵 | proposed | 2026-10-15 | ★0，MIT，2026-10-14 推送。用 CMU StarScout 启发式审 GitHub 仓库的**假 star / 水军 / 空壳代码库** + 供应链与敏感权限静态检查。⚠ **与雷达自身的候选甄别高度相关**，可作选品工具线索 |
+| `SOH4C4759/dsh-plugin-restart` | A 原生DSH | MIT | 通用（运维） | 全新（运维域） | 🔵 | proposed | 2026-10-15 | ★1，MIT，2026-10-08 推送。侧栏底一键重启 + 分离式 supervisor。⚠ **本仓改 profile 后手动重启的痛点直接对应**，可作开发期工具线索 |
+| `nicecx/dsh-reset-handoff` | A 原生DSH | MIT | 通用（运维） | 全新（运维域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。把重启请求交给外部运维 agent 的版本化 JSON 协议（preflight→gate→restart→health-check→recover）。**设计值得借鉴**：承认「DSH 不会自己重启」 |
+| `Nasbaye/dsh-launcher` | A 原生DSH | MIT | 通用（运维） | 全新（运维域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。一键重启插件：状态点 + 预检 + 重启后续跑 + token 截断自动续。运维簇 |
+| `idoall/dsh-notify` | A 原生DSH | MIT | 通用（通知） | 全新（提醒域） | 🔵 | proposed | 2026-10-15 | ★1，MIT，2026-10-15 推送。页内任务通知：toast + 铃铛历史 + WebAudio 提示音 + 后台标签闪烁。**不碰 OS 通知矩阵**，形态克制，可作「今天」页提醒线索 |
+| `Lubaoshuai/dsh-notify` | A 原生DSH | MIT | 通用（通知） | 全新（提醒域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。agent 可调 `notify_send` + 外部投递（Telegram/Slack/Discord/飞书/钉钉/Bark/ntfy/webhook）。通知簇，取一 |
+| `wwweljf/dsh-plugins` | A 原生DSH | MIT | 通用（通知） | 全新（提醒域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。回合结束提示音 + 微信推送。通知簇，取一 |
+| `Aurthes/dsh-web-push` | A 原生DSH | MIT | 通用（通知） | 全新（提醒域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。Web Push → OS 级手机通知，带点击跳转会话。通知簇，取一 |
+| `hnmrxz/dsh-plugin-sysmon` | A 原生DSH | MIT | 通用（系统监控） | 全新（本机资源） | 🔵 | proposed | 2026-10-15 | ★1，MIT。本机 CPU/内存/磁盘/负载/uptime 显示在底栏。**与学习场景无关**，但本仓「今天」页若需本机负载提示可参考 |
+| `YOUNG26815/dsh-sysmon` | A 原生DSH | MIT | 通用（系统监控） | 全新（本机资源） | 🔵 | proposed | 2026-10-15 | ★0，MIT。系统哨兵：CPU/内存/磁盘/进程 + agent 工具 + 实时仪表盘。系统监控簇，取一 |
+| `JularDepick/dsh-system-monitor-plugin` | A 原生DSH | Apache-2.0 | 通用（系统监控） | 全新（本机资源） | 🔵 | proposed | 2026-10-15 | ★0，Apache-2.0。监控 dsh 系统进程资源占用并以图表汇报。系统监控簇，取一 |
+| `maoqizhen/dsh-pc-manager` | A 原生DSH | MIT | 通用（系统监控） | 无关 | 🔵 | proposed | 2026-10-15 | ★0，MIT。系统监控 + 垃圾清理。清理功能**超出本仓边界**，不合 |
+| `U-Illll/dsh-memory` | A 原生DSH | MIT | 通用（记忆） | 全新（记忆域） | 🔵 | proposed | 2026-10-15 | ★1，MIT。wiki 双链记忆图 + 9 个工具（混合检索/读/链接扫描/记住/忘记/编译/健康检查/常驻检索子代理）。记忆域 |
+| `Tommy00748/dsh-self-evolution` | A 原生DSH | MIT | 通用（自演化） | 全新（记忆域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。有界自管理记忆 + 每回合自动复核定稿技能 + 技能健康检查 + 跨会话召回。记忆域 |
+| `YFY-AI/dsh-llm-fallback` | A 原生DSH | MIT | 通用（模型层） | 全新（模型层） | 🔵 | proposed | 2026-10-15 | ★1，MIT。LLM provider 故障转移：优先级路由 + 健康检查 + 手动切换。⚠ **与本仓 `dsh-zhiyun-net-proxy` 的中继思路相关**，可作可用性兜底线索 |
+| `force-push/dsh-a2a-plugin` | A 原生DSH | MIT | 通用（互操作） | 全新（互操作域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。双向 A2A 协议客户端（JSON-RPC 2.0 / SSE / 子代理委派）。互操作域 |
+| `frank6com/obsidian-harness-like` | A 原生DSH | MIT | 笔记（Obsidian） | 全新（跨形态） | 🔵 | proposed | 2026-10-15 | ★5。在 Obsidian 内跑 Cordis 插件系统 + AI agent，读写笔记走审批。形态为外部编辑器，与本仓内建笔记不同，仅作**审批式读写**设计参考 |
+| `caixuf/dsh-native-mobile` | A 原生DSH | Apache-2.0 | 通用（移动接入） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★0，Apache-2.0，2026-10-15 推送。Kotlin/Compose 原生客户端 + 进程内认证网关，走真实 DSH `/api` 协议单 WebSocket 复用。移动簇中**协议最正规**的一条 |
+| `Wike-CHI/dsh-mobile` | A 原生DSH | Apache-2.0 | 通用（移动能力） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★3，Apache-2.0。MobileService seam + mock/mobile-mcp provider + agent 工具（observe/open_app/tap/type/back）+ 分级执行策略。移动簇 |
+| `superclaude1/dsh-vision-android` | A 原生DSH | MIT | 通用（移动能力） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★2，MIT。多模态视觉 + Android adb UI 自动化做真机测试。移动簇 |
+| `SunWay0573/dsh-mobile` | A 原生DSH | MIT | 通用（移动接入） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★1，Kotlin 为主。手机控制本机 agent：远程唤醒、感知工作状态休眠、推送、隐私帘。移动簇 |
+| `qingshanyuluo/dsh-mobile-ux` | A 原生DSH | MIT | 通用（移动接入） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★1。纯 CSS 移动 UI + 带密码的 Cloudflare 隧道 + 极简 Android WebView。移动簇 |
+| `alexcarterio/dsh-mobile-access` | A 原生DSH | MIT | 通用（移动接入） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★1，MIT。局域网网关 + 设备审批 + 移动布局 + 推送 + PWA。移动簇 |
+| `agent-mobile/dsh-mobile-gateway` | A 原生DSH | MIT | 通用（移动接入） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★1，MIT。token 门控的 `/m/api`。移动簇 |
+| `Liki-K-Wang/dsh_mobile_app` | A 原生DSH | MIT | 通用（移动接入） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。扫码配对 Android 手机到本机 web GUI（LAN/Tailscale）。移动簇 |
+| `AKHYui/DSH-Remote-plugin` | A 原生DSH | MIT | 通用（远程接入） | 全新（移动域） | 🔵 | proposed | 2026-10-15 | ★0，MIT。经单条出站 WebSocket 暴露本机 harness（无入站端口、可穿 NAT），固定 op 白名单。⚠ **出站中继思路与 `dsh-zhiyun-net-proxy` 同族** |
+| `evanfang0054/dsh-tailscale-console` | A 原生DSH | MIT | 通用（远程接入） | 全新（运维域） | 🔵 | proposed | 2026-10-15 | ★1，MIT。Tailscale 远程访问运营面板：健康检查、HTTPS 入口开关、代理绕过、中继运维、ACL 生成。⚠ 本仓若做远程访问需先定安全模型 |
+| `Alain-Prot0s5/dsh-screenshot` | A 原生DSH | MIT | 通用（桌面工具） | 无关 | 🔵 | proposed | 2026-10-15 | ★2，MIT，PowerShell + 仅 Win10/11 + 需 DSH Desktop。⚠ 本仓为 Web 工作台，**平台与形态均不合** |
+| `rifkyazizf/dsh-session-tabs` | A 原生DSH | MIT | 通用（会话 UI） | 全新（UI 域） | 🔵 | proposed | 2026-10-15 | ★1，MIT，2026-10-08 推送。会话标签页（桌面版）。UI 域小工具 |
+| `Max-Samson/dsh-usage-chart` 等 **用量/成本簇 19 条** | A 原生DSH | 多为 MIT（1 条无许可） | 通用（用量面板） | **重复且无增益**（用量簇） | ⛔ | rejected | 2026-10-15 | 全部是「token 用量 / 费用估算 / 余额」面板，形态高度同质（侧栏挂件、悬浮窗、设置页仪表盘）。本仓**无用量面板**但「个人」页已承载偏好设置；**簇内取一即可，不逐条集成**。含 `jLeon-account/dsh-client-usage`（无许可证，仅登记） |
+
+<!-- 折叠组 -->
+
+### 健康提醒簇（2 条，同名不同仓，取一）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `rshh5/dsh-health-reminder` | A 原生DSH | MIT | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★1。A flat monochrome health-reminder plugin for DSH Web: schedu |
+| `rshh0520/dsh-health-reminder` | A 原生DSH | MIT | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★0。DSH Web health reminder plugin: scheduled water-drinking rem |
+
+### 其余（域偏 / 形态不合 / 撞词）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Favio8/dsh-plugins` | A 原生DSH | 无许可证 | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★1。DeepSeek Harness (DSH) source plugin collection, one folder  |
+| `change979666/ox-alpha-dsh` | A 原生DSH | MIT | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★0。Bilingual DSH Desktop model hub plugin for Ox Alpha, custom  |
+| `SodiumLayer/dsh-obscura` | A 原生DSH | MIT | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★0。Obscura settings-page plugin for DeepSeek Harness: starts an |
+| `geosmall/logic-dshot-gitlab` | A 原生DSH | 无许可证 | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★0。DShot Logic Analyzer Plugin |
