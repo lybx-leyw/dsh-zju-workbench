@@ -52,8 +52,8 @@ node scripts/radar-rotation.mjs --group
 | 项 | 值 |
 | --- | --- |
 | `last_group` | `A` |
-| `last_run_at` | `2026-10-15 09:00` |
-| `group_runs`（累计） | A=3, B=1, C=3 |
+| `last_run_at` | `2026-10-15 12:00` |
+| `group_runs`（累计） | A=4, B=1, C=3 |
 
 ### 流水
 
@@ -63,9 +63,24 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-14 第二轮 | C | 与第三轮**关键词逐字相同**；出骨架 `dsh-radar-fsrs-scheduler` |
 | 2026-10-14 第三轮 | C | **重复轮次**（公式缺陷所致）；增量 4 条 🔵；出骨架 `dsh-radar-market` |
 | 2026-10-14 16:18 | B | zju / cc98 / campus app（B组浙大场景；36条新增；无骨架） |
-| 2026-10-15 03:35 | A | deepseek-harness plugin / cordis plugin / dsh plugin / dsh market / dsh desktop（A组·DSH插件生态） |
-| 2026-10-15 06:00 | C | timetable ics export / paper annotation reader / ocr notes taking / quiz practice / fitness tracker / spaced repetition flashcard / html to markdown converter / pdf to markdown（C组·学生功能域；22条登记；无新增 🟢，不出骨架） |
-| 2026-10-15 09:00 | A | 自动记录 |
+| 2026-10-15 00:18 | B | **（回填补记）** zju / cc98 / campus app；36条新增；无骨架。此前未入流水，见下方漂移说明 |
+| 2026-10-15 03:04 | A | deepseek-harness plugin / cordis plugin / dsh plugin / dsh market / dsh desktop（A组·DSH插件生态；出骨架 `dsh-radar-dsh-web`） |
+| 2026-10-15 06:02 | C | timetable ics export / paper annotation reader / ocr notes taking / quiz practice / fitness tracker / spaced repetition flashcard / html to markdown converter / pdf to markdown（C组·学生功能域；22条登记；无新增 🟢，不出骨架） |
+| 2026-10-15 09:06 | A | 增量角度：theme / calendar / translate / markdown / export / search / course / flashcard / cordis plugin ui（63条；出骨架 `dsh-radar-better-markdown`） |
+| 2026-10-15 12:00 | A | **能力域细分**：`dsh plugin rag/ocr/graph/pdf/speech/workflow`、`cordis plugin service`、`dsh plugin knowledge/citation/notes editor`（全新能力域切片；79条新增；出骨架 `dsh-radar-deep-read`） |
+
+> **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
+> （见 `registry.md`「2026-10-15 · B 组」36 条），但**未写入流水**，
+> 导致脚本按规则 2 判断时误以为「今天只跑过 A/C」而建议再跑 **B**（`same-day(unused)`）。
+> 本轮开跑时正是遇到这一误判 —— 经 `git log` 实证当日已有四轮
+> （B 00:18 / A 03:04 / C 06:02 / A 09:06，且已通过 PR #13 合入 `main`），
+> **未采纳脚本建议**，改跑**全新能力域切片**，并把 B 组那轮**回填入上表**。
+>
+> **但根本修复仍未落地**（需人工确认后改代码）：
+> ① 流水目前靠收尾人工回填，**漏记无人发现**；建议改为「跑完即写」的强制步骤。
+> ② `scripts/radar-rotation.mjs` 用 `new Date()`（**UTC**）取「今天」，
+>    在北京 00:00–08:00 区间会把「今天」算成前一天；建议改为 Asia/Shanghai。
+> 本轮以 `--today 2026-10-15` 规避。
 
 > **⚠ 漂移说明（2026-10-15 第三轮发现）**：当日 **B 组实际于 00:1x 跑过**
 > （见 `registry.md` 的「2026-10-15 · B 组」章节，36 条候选），但**未写入本流水**。
