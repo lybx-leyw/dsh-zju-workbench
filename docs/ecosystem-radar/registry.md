@@ -674,3 +674,33 @@
 > **后两条功能与前者几乎重叠，仅作需求对照**；
 > ② **文献引用簇 2 条** → `jupyterlab-citation-manager`（BSD-3）与 `scholar-sidekick-obsidian`（MIT）
 > **均强耦合他生态** → 均 🔵，**引用域建议本仓自建**（可参考 CSL 样式表思路）。
+
+---
+
+## 2026-10-16 · A 组（DSH 插件生态 · **学习科学切片**）· 第三轮 · 追加
+
+> 关键词：`dsh plugin spaced repetition`、`dsh plugin knowledge graph`、`dsh plugin socratic`、
+> `dsh plugin curiosity`、`dsh plugin mastery learning`（+ 5 个返回 0 的词，见报告）。
+> **13 次搜索**（⚠ 超 ≤10 上限，已如实记录）。API 无 403。
+> 许可证核实：`license.spdx_id` + 对高价值候选**逐一拉取 LICENSE 实文比对**
+> （`ponytail-grill` / `spec-gate` / `dsh-teacher` 三条实文已核）。
+> **本轮把 2026-10-15 登记的 🔵 `Kaiji-Z/dsh-plugin-lookatstudy` 深化为 🟢 并出骨架**
+> （非重复登记，见下）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Kaiji-Z/dsh-plugin-lookatstudy` | A 原生DSH | MIT | 学习路径/习题/掌握度 | **重复可强化** | 🟢 ↑ | proposed | 2026-10-15 | **↑ 由 🔵 深化为 🟢**（首轮仅标「值得后续深看」）。★19。npm `dsh-plugin-lookatstudy@0.26.3` **已核实可锁版挂载** ✅，**零运行时依赖** ✅。**BKT 掌握度 + 门控技能树**（与 FSRS 正交、可叠加）。⚠ **自带 SM-2 与 `dsh-radar-fsrs-scheduler` 冲突，须人工裁决**。**本轮 L2 骨架** |
+| `lastplayer82/dsh-tanqi` | A 原生DSH | Apache-2.0 | 探索/兴趣驱动 | 重复可强化（今天页） | 🟡 | proposed | 2026-10-16 | ★0。npm `@lastplayer82/dsh-tanqi@0.2.0` 可挂载 ✅，零依赖。AI 好奇心/冷知识 + 分层深挖。补「今天页」缺的**动机驱动**。⚠ 2026-08-21 后未更新，先观望 |
+| `qShan1/dsh-ponytail-grill` | A 原生DSH | MIT | 苏格拉底追问/自检 | 重复可强化（quiz 闭环） | 🟡 | proposed | 2026-10-16 | ★0。**LICENSE 实文已核**（MIT / Copyright 2026 qShan1）✅，`dsh.bundle.patch` + `dsh.client`，**无 npm 包但零依赖**。追问对象是**人**（对学生理解诘问），补 quiz「做完题之后」。⚠ 与 `Yihong89/dsh-teacher` 同域取一 |
+| `boomzikazita/dsh-spec-gate` | A 原生DSH | **MIT** ✅ | 开发流程（非学习） | 全新但域外 | 🔵 | proposed | 2026-10-16 | ★0。**许可证纠错**：`package.json` 写 `license: None`（漏填），但 **LICENSE 实文为完整 MIT** → 以实文为准 **MIT ✅**。规格门禁 + Socratic 访谈／歧义打分。**功能域为开发流程工具，与学生学习场景正交** → 仅登记 |
+| `Yihong89/dsh-teacher` | A 原生DSH | **⚠ 待核** | 苏格拉底导师 | 重复可强化（quiz 闭环） | 🔵 | proposed | 2026-10-16 | ★3。A 类结构齐备，但**三项均不满足**：① **未发布 npm**（`dsh-teacher` E404）→ 无法锁版挂载；② **LICENSE 文件为空**，仅 `package.json` 声明 MIT → ⚠ 待核；③ 依赖 `dsh-voice-core`，该包 **npm 亦 E404** → 传递依赖不可解析。**不采用、不得摘取代码** |
+| `kotosq/ielts-vocab-trainer` | A 原生DSH | BSD-3-Clause | 雅思词汇 | 重复且无增益 | 🔵 | proposed | 2026-10-16 | ★0。BSD-3 ✅ 但 **未发布 npm**（`@dsh-external/ielts-vocab-trainer` E404）→ 无法锁版挂载；雅思与本仓浙大课程场景正交无关；间隔重复已由 `fsrs-scheduler` 覆盖 |
+| `Luke-Yong/dsh-plugin-knowledge-graph` | A 原生DSH | MIT | 知识图谱 | 重复可强化（知识页） | 🔵 | proposed | 2026-10-16 | ★4。`dsh.bundle.patch` ✅ 但**无 `dsh.client`**（纯后端）。⚠ **把 `typescript` 误列为运行时 dependency** → 污染依赖树。归入**已饱和的图谱簇**，不单独推进 |
+| `alei37/dsh-cet6-tutor` | A 原生DSH | **AGPL-3.0** | 六级备考 | — | ⛔ | rejected | 2026-10-16 | ★0。**AGPL 红线** ⛔。CET-6 间隔重复导师。**只作需求对照，不碰代码** |
+
+> **簇登记（折叠）**：① **苏格拉底追问簇 3 条** → 取一（建议 `qShan1/dsh-ponytail-grill`；
+> `Cruciforms/dsh-socrates` 已登记但属 deep research 方向）；
+> ② **知识图谱簇 5 条** → 全部已登记/本轮仅补 1 条纯后端，**簇内饱和**，
+> 建议人工一次性横向排序取一（`Roarpeng/GraphFlow` ★22 最高）；
+> ③ **间隔重复/掌握度簇 3 条** → `lookatstudy`（BKT+技能树）／`dsh-flashcard`（仅 SM-2，⛔）／
+> `dsh-radar-fsrs-scheduler`（FSRS）→ **必须与 fsrs-scheduler 统一裁决**。
