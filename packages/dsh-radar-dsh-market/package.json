@@ -1,0 +1,10 @@
+{
+  "name": "dsh-radar-dsh-market",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁定挂载上游 dsh-market，为「插件」页提供插件市场能力（强化式集成）",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+}

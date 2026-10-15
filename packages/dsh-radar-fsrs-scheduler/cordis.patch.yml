@@ -1,0 +1,3 @@
+- insert:
+    - id: radar-fsrs-scheduler
+      name: dsh-radar-fsrs-scheduler

@@ -1,0 +1,15 @@
+{
+  "name": "dsh-radar-dsh-web",
+  "version": "0.1.0",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版挂载上游 dsh-web 的创意工坊宿主半边，为智云 Pro「插件」页补上生态工坊的浏览与分发能力",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "dependencies": {
+    "dsh-web": "0.0.1"
+  }
+}
