@@ -345,3 +345,68 @@
 | `Anionex/dsh-vision-toolkit` | A 原生DSH | MIT | 论文 | 重复可强化 | 🟡 | proposed | 2026-10-15 | 本轮再次命中（去重确认）。视觉簇 |
 | `zhaoxuejie/dsh-plugin-academic-paper` | A 原生DSH | MIT | 论文 | 重复可强化 | 🔵 | proposed | 2026-10-15 | 本轮再次命中（去重确认）。文献簇 |
 | `EthanYoQ/AI-Novel-Writer`（重复行合并） | — | — | — | — | — | — | — | 见上方 GPL 行，此处不重复计数 |
+
+## 2026-10-15 · A 组（DSH 插件生态 · **管理/治理面**）· 追加
+
+> 关键词：`dsh plugin mcp`、`dsh plugin browser`、`dsh plugin image`、`dsh plugin classroom`、
+> `dsh plugin exam`、`dsh plugin writing`、`dsh plugin chart`、`dsh plugin dashboard`、
+> `dsh plugin ai tutor`。搜索 **9 次**（未超 ≤10 上限），API 无 403。
+> 全部关键词均为**历史轮次从未使用过**的管理/治理面切片。原始命中 217 条（去重后），
+> 与既有 registry（266 条）逐条 `owner/repo` 比对后剔除 165 条已登记项，**52 条为本轮新增**。
+> 类型 A = 原生 DSH 插件包（`dsh.bundle.patch` 或 `dsh.client`，可锁版者已逐条 `npm view` 核实）/
+> B 类本轮未产出（该切片天然聚焦 DSH 生态）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `bowenliang123/dsh-context` | A 原生DSH | Apache-2.0 | 通用（上下文治理） | 重复可强化（今天页·会话状态） | 🟢 | proposed | 2026-10-15 | ★2134，本仓 radar 历史**最高星**候选。`dsh-context@0.71.0` **已核可锁版**（Apache-2.0）。`bundle.patch` + `client.inject` **6 个 UI 分包**（含 sidebar-right/settings）→ **面板型、非纯 tool**。上下文**构成分解**（按来源归类）+ 逐会话预算；现有仅有「用了多少 token」一个粗粒度数字。补「事前可见」缺口。**已出骨架 `dsh-radar-context-dashboard`** |
+| `yyh-001/DSH-X` | A 原生DSH | MIT | 通用（启动器） | 全新（宿主外围） | 🔵 | proposed | 2026-10-15 | ★693，2026-10-15 推送。轻量桌面启动器：启动项/多实例/版本/插件/MCP/技能管理。`npm view dsh-x` **E404**，包名待核（可能非 npm 分发）→ 不可锁版，只登记 |
+| `0xsline/awesome-deepseek-harness` | 清单 | CC0-1.0 | 通用（线索源） | 全新（线索源） | 🔵 | proposed | 2026-10-15 | ★1180。DSH 生态精选清单（Python 仓库）。**作线索源**，与 `awesome-dsh-plugin`、`walkinglabs/awesome-deepseek-harness-plugins`、`Blue-Whale-Harness` 并列 |
+| `hashgraph-online/awesome-ai-plugins` | 清单 | Apache-2.0 | 通用（线索源） | 全新（线索源） | 🔵 | proposed | 2026-10-15 | ★670。AI 助手插件精选（**跨生态**，非 DSH 专属）。线索源价值有限 |
+| `vibeinging/dsh-desktop` | A 原生DSH | MIT | 通用（桌面端） | 全新（宿主外围） | 🔵 | proposed | 2026-10-15 | ★483。DSH 桌面应用（本地 AI 工作区）。形态为**完整宿主**，与本仓「profile 内嵌」不同路 |
+| `Dominic789654/awesome-deepseek-harness` | 清单 | NOASSERTION | 通用（线索源） | 全新（线索源） | ⚠ 待核 | pending-license | 2026-10-15 | ★377。插件/技能/MCP/patch/orchestrator 清单。许可证待核，**作线索源风险低**，建议优先核 |
+| `yyh-001/dsh-meme` | A 原生DSH | MIT | 通用（娱乐） | 全新 | 🔵 | proposed | 2026-10-15 | ★192。表情包插件（斗图/图库市场）。**与学习场景无关** |
+| `Totoro-qaq/dsh-plugin-bridge` | A 原生DSH | MIT | 通用（会话迁移） | 全新（会话管理域） | 🔵 | proposed | 2026-10-15 | ★163。`dsh-plugin-bridge@0.4.4` **已核可锁版**。跨 preset 会话迁移（定式握手，原会话不动）。与本仓「多域会话」可能有用，但非学生场景刚需 |
+| `ZSeven-W/dsh-crew` | A 原生DSH | MIT | 通用（多智能体） | 全新 | 🔵 | proposed | 2026-10-15 | ★163。从 Claude Code / Codex 派活给 DSH agent。**跨工具编排**，与本仓形态不同路 |
+| `dickpy/dsh-imagegen` | A 原生DSH | Apache-2.0 | 论文（配图）/通用 | 全新（无生图层） | 🔵 | proposed | 2026-10-15 | ★116。Web GUI 文生图/图生图。本仓无生图域；论文配图或有用但非核心 |
+| `wqty123/dsh-browser` | A 原生DSH | MIT | 通用（浏览器） | 全新（浏览器域） | 🔵 | proposed | 2026-10-15 | ★113。`dsh-browser@0.1.0` **已核可锁版**。共享真实浏览器插件。与 `dsh plugin browser` 关键词下其余条件相近者同属浏览器簇 |
+| `YOU-SHOULD-KNOW-ME/antigrative-dashboard` | A 原生DSH | MIT | 通用（用量面板） | 重复可强化（用量域） | 🔵 | proposed | 2026-10-15 | ★111。内联仪表盘：tok/s、缓存命中率、五小时/周配额。**用量域**，簇内已取 `dsh-context`（★2134），本条保留线索 |
+| `Tabbit-Browser/dsh-tabbit` | A 原生DSH | MIT | 通用（浏览器） | 全新（浏览器簇） | 🔵 | proposed | 2026-10-15 | ★107。Tabbit 浏览器插件。浏览器簇 |
+| `Stormycry-cryp/dsh-AuthInOne` | A 原生DSH | MIT | 通用（登录/模型切换） | 全新 | 🔵 | proposed | 2026-10-15 | ★105，2026-08-15 后未更新。Provider/Auth 登录 + 模型切换一体化 |
+| `Sanqi-normal/dsh-webui-market-plugin` | A 原生DSH | MIT | 通用（插件市场） | **重复且无增益**（插件页） | ⛔ | rejected | 2026-10-15 | ★104。社区插件市场（浏览 awesome-dsh-plugin.com 目录）。**插件市场第 5 个候选**，与 `dsh-market`/`dsh-plugin-shop`/`DSH-Plugins-Marketplace`/`DSH_Creative_Workshop` 互为重复无增益 |
+| `kenz1117/dsh-ui-usage-billing` | A 原生DSH | MIT | 通用（用量计费） | 重复可强化（用量域） | 🔵 | proposed | 2026-10-15 | ★79，2026-10-15 推送。侧栏成本指标 + 真实用量。用量簇，同不取 |
+| `yi-yezhiqiu/dsh-prompt-market` | A 原生DSH | MIT | 通用（提示词） | 全新 | 🔵 | proposed | 2026-10-15 | ★76。提示词市场（浏览/搜索/收藏，选中即写入输入框）。零后端、免构建、数据只存本机 |
+| `dhicoc/dsh-chinese-traditional-wisdom-skill` | A 原生DSH | **无** | — | — | ⛔ | rejected | 2026-10-15 | ★55。玄学技能包（八字/紫微/六爻）。**无许可证** → 只登记；且域不符 |
+| `xmutfyh/dsh-plugin-writing-guard` | A 原生DSH | MIT | 论文写作 | 重复可强化（论文页·写作纪律） | 🟡 | proposed | 2026-10-15 | ★46。科研写作与文档诚信守卫（论证经济性/去 AI 腔/守证据）。**论文页已有 `dsh-radar-better-markdown` 管呈现，本条管「写作纪律」，互补不重复**；且与 `dsh-radar-deep-read` 的产出环节可串联 |
+| `LaplaceYoung/dsh-directorx` | A 原生DSH | Apache-2.0 | 通用（多模态） | 全新 | 🔵 | proposed | 2026-10-15 | ★35。视频/图像/音频技能 + 知识语料。**多模态创作**，非学生场景 |
+| `huangziyuan-general/dsh-novel-forge` | A 原生DSH | MIT | 通用（长文写作） | 全新 | 🔵 | proposed | 2026-10-15 | ★19，2026-10-15 推送。长篇写作约束（细纲审批/设定校验/去 AI 味）。**小说域**，与本仓论文域不同 |
+| `gongyijie85/mattpocock-skills-dsh` | 技能包 | MIT | 通用（线索源） | 全新（线索源） | 🔵 | proposed | 2026-10-15 | ★19。Matt Pocock 技能集（TypeScript 向）。**Shell 仓库**，技能包 |
+| `ryubyte/dsh-a2a` | A 原生DSH | MIT | 通用（互操作） | 全新 | 🔵 | proposed | 2026-10-15 | ★13。A2A v1.0 双端插件（Client 发现远程 Agent / Server 暴露 JSON-RPC+SSE） |
+| `Xenia0922/dsh-opencode-go-usage` | A 原生DSH | MIT | 通用（用量面板） | 重复可强化（用量域） | 🔵 | proposed | 2026-10-15 | ★11。`dsh-opencode-go-usage@1.4.1` **已核可锁版**。悬浮用量仪表盘（配额/逐请求成本/模型来源分布）。用量簇 |
+| `EchoUser005/dsh-fate-spectrum` | A 原生DSH | MIT | —（玄学） | — | 🔵 | proposed | 2026-10-15 | ★10。离线确定性命盘。**域不符** |
+| `HaoyanZhang123/dsh-plugin-control-your-development` | A 原生DSH | MIT | 通用（产品看板） | 全新 | 🔵 | proposed | 2026-10-15 | ★10。把 AI 开发进展变成产品仪表盘（skill + 右侧栏面板） |
+| `Max-Samson/dsh-usage-chart` | A 原生DSH | MIT | 通用（用量面板） | 重复可强化（用量域） | 🔵 | proposed | 2026-10-15 | ★9。实时 token/成本/逐轮图表。用量簇 |
+| `shiyan688/dsh-novel-craft` | A 原生DSH | MIT | 通用（小说） | 全新 | 🔵 | proposed | 2026-10-15 | ★8。反馈驱动的 AI 小说写作。**小说域** |
+| `lxfu1/dsh-plugin-chart` | A 原生DSH | MIT | 通用（图表） | 重复可强化（图表域） | 🔵 | proposed | 2026-10-15 | ★8。内置 AntV 图表可视化技能 + 原生渲染。**图表簇**，与 `dsh-plugin-mermaid` 同域 |
+| `YangShen-SWE/dsh-plugin-simple-pet` | A 原生DSH | NOASSERTION | — | — | ⚠ 待核 | pending-license | 2026-10-15 | ★7。Windows 桌宠 + 计费/配额。**PowerShell** + 域不符 + 许可证待核 |
+| `xmutfyh/writing-guard-skill` | 技能包 | MIT | 论文写作 | 仅供参考 | 🔵 | proposed | 2026-10-15 | ★6。上条 writing-guard 的 CC/Codex 可执行版规则集。**与 `dsh-plugin-writing-guard` 同源**，取一即可 |
+| `ddedook/dsh-novel` | A 原生DSH | MIT | 通用（小说） | 全新 | 🔵 | proposed | 2026-10-15 | ★5。工作区即一本小说（人物/世界观/大纲落本地）。小说簇 |
+| `Physicolor/dsh-widgets` | A 原生DSH | MIT | 通用（组件） | 全新（基础设施） | 🔵 | proposed | 2026-10-15 | ★5，2026-10-14 推送。右侧栏自定义组件系统。**基础设施**，可作承载层线索 |
+| `Monokuna-Hugo/dsh-kaoyan-english` | A 原生DSH | MIT | **考研英语** | 全新（考试域） | 🟡 | proposed | 2026-10-15 | ★4。考研英语阅读命题助手（抓取外刊 → 命题）。`npm view dsh-kaoyan-english` **E404** → **不可锁版**，须源码级移植。**考试域**，与 `dsh-zhiyun-final-pass` 同属备考但内容不同 |
+| `lj970926/dsh-plugin-mermaid` | A 原生DSH | MIT | 通用（图表） | 重复可强化（图表域） | 🔵 | proposed | 2026-10-15 | ★4。mermaid 代码块渲染（chart/source 切换）。**与 `dsh-radar-better-markdown` 的 Mermaid 能力重复**，取一即可 |
+| `tianyagk/dsh-tradewatcher` | A 原生DSH | MIT | —（盯盘） | — | 🔵 | proposed | 2026-10-15 | ★4。行情侧栏面板。**域不符** |
+| `c-ling/dsh-plugin-goldboard` | A 原生DSH | MIT | —（黄金） | — | 🔵 | proposed | 2026-10-15 | ★4。黄金行情看板。**域不符** |
+| `1-CellBio/dsh-okf` | A 原生DSH | **无** | 论文（引用库） | — | ⛔ | rejected | 2026-10-15 | ★3。研究 PDF → 可引用 markdown 库。**无许可证** → 只登记；功能与 `dsh-radar-deep-read` 相近，本也无增益空间 |
+| `Aampidy/dsh-mcmp` | A 原生DSH | MIT | 竞赛（数模） | 全新（竞赛域） | 🔵 | proposed | 2026-10-15 | ★3。数学建模竞赛论文全自动流水线。**竞赛域**，本仓无此面板 |
+| `cute-baobao/dsh-usage-meter` | A 原生DSH | MIT | 通用（用量） | 重复可强化（用量域） | 🔵 | proposed | 2026-10-15 | ★3。逐模型逐小时 token 记录。用量簇 |
+| `junwei529/work-charter-dsh` | A 原生DSH | MIT | 通用（策略） | 全新 | 🔵 | proposed | 2026-10-15 | ★2。Work Charter 策略插件（session-coordinator 支撑） |
+| `zerro-223/dsh-token-usage` | A 原生DSH | MIT | 通用（用量） | 重复可强化（用量域） | 🔵 | proposed | 2026-10-15 | ★2。逐请求 token 统计 Web UI。用量簇 |
+| `tanzhangjia/dsh-plugins-examples` | A 原生DSH | MIT | 通用（开发线索源） | 全新（线索源） | 🔵 | proposed | 2026-10-15 | ★1。本地插件开发示例。**开发线索源** |
+| `kapelame/deepseek-harness-leetcode` | A 原生DSH | MIT | **刷题** | 全新（刷题域） | 🟡 | proposed | 2026-10-15 | ★1，2026-10-15 推送。LeetCode Hot 100：讲义 + 沙箱判题 + AI 导师 + 间隔复习。`npm view deepseek-harness-leetcode` **E404** → **不可锁版**，须源码级移植。**与 `dsh-zhiyun-quiz` 同属刷题但题库不同**，且自带间隔复习（与 `dsh-radar-fsrs-scheduler` 重叠需协调） |
+| `zengqingsong/dsh-classroom-plugin` | A 原生DSH | MIT | 课堂 | 全新（课堂域） | 🔵 | proposed | 2026-10-15 | ★0。无 description。与 `dsh-zhiyun-classroom` 同域但信息不足，**无法判断是否重复** |
+| `yuanstarstar/dsh-bit-login` | A 原生DSH | MIT | 校园网 | 仅供参考 | 🔵 | proposed | 2026-10-15 | ★0。北理工校园网（Srun）登录 + 成绩/课表。**非浙大**，但 Srun 认证流程可借鉴（本仓已有 `dsh-zhiyun-net-proxy`） |
+| `Elion-Wang/class-help` | A 原生DSH | MIT | **课堂笔记** | 重复可强化（课堂/笔记域） | 🟡 | proposed | 2026-10-15 | ★0。课堂 AI 助手：**实时录音 + 本地转录（sensevoice）** → 经授权整理成笔记并归入课程目录 + 作业助教。`npm view class-help` **E404** → **不可锁版**，须源码级移植。**与 `dsh-zhiyun-classroom`/`dsh-zhiyun-lecture` 同域**，但「实时转录 → 课程目录」这一段本仓空白，**强化式集成候选** |
+| `hopefullstack-collab/dsh-plugin-company-example` | A 原生DSH | MIT | 通用（示例） | 全新（示例） | 🔵 | proposed | 2026-10-15 | ★0。企业插件示例（SSO + Settings hub）。**示例代码** |
+| `BotHarness/dsh-companion-example` | A 原生DSH | MIT | 通用（示例） | 全新（示例） | 🔵 | proposed | 2026-10-15 | ★0。最小 bundle 示例（host Service + Cordis 事件 + client Slot）。**开发线索源** |
+| `joao-paulo-santos/dsh-bouncing-squares-example` | A 原生DSH | MIT | 通用（示例） | 全新（示例） | 🔵 | proposed | 2026-10-15 | ★0。`dsh-granular-settings` 示例。**示例代码** |
+| `haozheou/dsh-exam-expert` | A 原生DSH | **无** | 考试（出题） | — | ⛔ | rejected | 2026-10-15 | ★0。出题流水线（角色+目录→通读→看板）。**无许可证** → 只登记；且 ★0 体量过小 |
+| `casteadelqui/dsh-go` | A 原生DSH | MIT | —（围棋） | — | 🔵 | proposed | 2026-10-15 | ★0。可玩围棋面板。**域不符** |
