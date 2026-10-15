@@ -587,3 +587,44 @@
 | `change979666/ox-alpha-dsh` | A 原生DSH | MIT | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★0。Bilingual DSH Desktop model hub plugin for Ox Alpha, custom  |
 | `SodiumLayer/dsh-obscura` | A 原生DSH | MIT | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★0。Obscura settings-page plugin for DeepSeek Harness: starts an |
 | `geosmall/logic-dshot-gitlab` | A 原生DSH | 无许可证 | 通用 | 全新（簇内取一） | 🔵 | proposed | 2026-10-15 | ★0。DShot Logic Analyzer Plugin |
+
+---
+
+## 2026-10-16 · B 组（浙大场景 · **细分场景轴**）· 追加
+
+> 关键词（全部为 B 组内的正交新切片，不与已跑的 `zju` / `zju course` / `cc98` / `campus app` 重复）：
+> `zju tool`、`zju courses`、`zju webvpn`、`zju calendar`、`zju grade`、`zju learning`、
+> `zju exam`、`zju zhiyun`、`zju cloud classroom`、`cc98 client` + `zju skill`。
+> **搜索 10 次**（上限 10），API 无 403，本轮**完整**。
+> 许可证核实：GitHub API `license.spdx_id` + 对高价值候选**逐一拉取 LICENSE 实文比对**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Phil-Fan/awesome-zju-tools` | B 其他JS | CC0-1.0 | 浙大工具索引 | **全新（线索源）** | 🟢 | proposed | 2026-10-16 | ★240。浙大工具/脚本/资源合集（MDX+Astro 站点 zjutools.top），**2026-10-15 当日更新**。与 `awesome-dsh-plugin` 同性质：价值在**索引了谁**，只作雷达外部线索池，**不制成插件**。⚠ 清单内第三方项目须**逐个独立核证**许可证，不得因收录于 CC0 清单即假定可用。LICENSE 文件名为**小写 `license`** |
+| `memset0/Learning-at-ZJU-Helper` | B 其他JS | MIT | 学在浙大/智云课堂 | **重复且可强化**（课程/讲座页） | 🟡 | proposed | 2026-10-16 | ★58。userscript（webpack+Hyperapp+UI5），**插件化架构**（`src/plugins/` 可插拔 + 上下文工具链）。功能：PTA 助手 / 视频播放器网页全屏 / 带时间戳精准空降 / 专注模式 / 画中画。**强化点**：本仓 `dsh-zhiyun-classroom`+`dsh-zhiyun-lecture` **无"播放器增强"层**。⚠ **2024-12 停更 22 个月**；技术栈错配（userscript ≠ DSH 包），建议走 **(a) 能力提取 + 重写**而非 (b) iframe 注入。MIT 允许借鉴，摘代码须记 ATTRIBUTION |
+| `Dunn1127/zju-career-calendar` | B 其他JS | MIT | 宣讲会/双选会 | **全新**（求职时间线） | 🟡 | proposed | 2026-10-16 | ★0。浙大宣讲日历：采集器（cheerio）+ 静态站点 + 离线 PWA + 收藏；devDeps 含 `ical.js`。`node>=24`。**与"今天"页的学业日程不同源**（求职 vs 学业），本仓无招聘类能力 → 无重复风险。**L2 骨架选定** → `packages/dsh-radar-career-calendar`。⚠ **版权归属异常**：LICENSE 正文写"大连理工宣讲日历贡献者"却为浙大仓库，疑模板未改/fork 改写，**须人工核证**；⚠ **采集合规性须裁定**（robots/ToS/限速/是否含个人联系方式） |
+| `baihe26/zju-literature-downloader` | B 其他JS | MIT | 论文获取 | **重复且可强化**（论文页） | 🟡 | proposed | 2026-10-16 | ★34。Codex/Claude **skill**（`SKILL.md`+`agents/`+`scripts/`），经**用户已授权**浙大图书馆/WebVPN Chrome 会话下载校验阅读 PDF。**强化点**：本仓 `dsh-zhiyun-paper` 只解决"读"，**"合规取全文"是空白**。⚠ **合规红线为最高优先**：不得内置绕过付费墙机制，建议**只引导不代下**。与 `3-Tian/zju-paper-fetcher`（★0，MIT，同作者同类）**归一取一** |
+| `xhacker/zju-jwb-to-icalendar` | B 其他JS | MIT | 课表 iCal 导出 | **重复且可强化**（课程页） | 🟡 | proposed | 2026-10-16 | ★17。教务网课表 → iCalendar（可导入 iOS/Google 日历）。**本仓课程页缺 iCal 导出通路**。⚠ **2017-08 停更 9 年**（jwbinfosys 选择器几乎必然失效）+ Python 非 JS → **只作"能力缺口"线索登记，实现由本仓自建**（课表→VEVENT 映射，工作量小）。`Dunn1127/zju-career-calendar` 的 `ical.js` 用法可作参考 |
+| `YangShu233-Snow/Learning_at_ZJU_third_client` | B 其他JS | NOASSERTION | 学在浙大 | 全新 | ⚠ 待核 | pending-license | 2026-10-16 | ★88（forks 7）。**2026-10-15 当日活跃**，本轮**最活跃且最贴合本仓场景**者：学在浙大第三方客户端，目标"实现绝大部分网页端功能且更流畅"。Python，无 `cordis.patch.yml`（B 类）。**许可证待人工核验，不采用、不摘取任何代码**。⚠ **建议优先核验**：若宽松，可能是比 `Learning-at-ZJU-Helper`（停更 22 月）**更值得接的对象** |
+| `Zarad0X/openclaw-zju-skills` | B 其他JS | MIT | 课程/成绩/CC98 | 全新 | 🔵 | proposed | 2026-10-16 | ★10。浙大 OpenClaw skills（课程/邮件/成绩/CC98 自动化）。**他生态**（OpenClaw），架构可参考，不直接接 |
+| `WEN-JY/academic-research-skills` | B 其他JS | MIT | 科研 | 全新 | 🔵 | proposed | 2026-10-16 | ★6。浙大 MEM 学术研究 Agent skills（JS）。科研 OS 簇，**簇内不建议接入** |
+| `yimuEwood/zju-research-skills` | B 其他JS | Apache-2.0 | 科研 | 全新 | 🔵 | proposed | 2026-10-16 | ★1。跨 agent 科研工作流系统「ZJU Research OS」（Python）。同上，簇内不建议接入 |
+| `Anchorite-no/cc98-autosign-fast` | B 其他JS | MIT | 校园论坛 | 全新 | 🔵 | proposed | 2026-10-16 | ★6。CC98 自动签到（Go，支持 WebVPN/多账号）。非 JS 技术栈，仅线索。相比已登记 `inuEbisu/CC98Autosign`（Python，WTFPL）更活跃 |
+| `macanine/zju-zhiyun-cli` | B 其他JS | 无许可证 | 智云课堂 | — | ⛔ | rejected | 2026-10-16 | ★0。智云课堂 CLI。**无许可证**，不得摘取代码，仅线索 |
+| `Xecades/zju-zhiyun-down` | B 其他JS | 无许可证 | 智云课堂回放 | — | ⛔ | rejected | 2026-10-16 | ★5。轮询智云课堂回放 API 下载视频。**无许可证**，仅线索 |
+| `StephenChen1108/edgeless-zju-transcript-exporter` | B 其他JS | 无许可证 | 智云字幕导出 | — | ⛔ | rejected | 2026-10-16 | ★3。从 Edge 导出智云课堂字幕。**无许可证**，仅线索 |
+| `Meteors27/ZJU-Calendar-Maker` | B 其他JS | 无许可证 | 课表 ics | 重复且无增益 | ⛔ | rejected | 2026-10-16 | ★19。一键生成课程表 ics（Python）。**无许可证** + 2023 停更。功能与 `xhacker/zju-jwb-to-icalendar` 重复，**簇内取一，取 MIT 那条** |
+| `ZJUZhiyuCai/zju-activity-calendar` | B 其他JS | NOASSERTION | 活动日历 | — | ⛔ | rejected | 2026-10-16 | ★1。许可证不明 |
+| `Lucent-Snow/zju-scholar` | B 其他JS | **GPL-3.0** | 课表/成绩/考试/作业/智云字幕 | 重复且无增益 | ⛔ | rejected | 2026-10-16 | ★21。Claude Code Skill，**功能域与本仓高度重叠**，但 **GPL 红线** → 只作**需求清单对照**，不碰代码 |
+| `Lucent-Snow/ZJU-English-dictation-tool` | B 其他JS | 无许可证 | 英语听写 | — | ⛔ | rejected | 2026-10-16 | ★15。无许可证 |
+| `3-Tian/zju-paper-fetcher` | B 其他JS | MIT | 论文获取 | 重复且无增益 | 🔵 | proposed | 2026-10-16 | ★0。DOI → 经 wengine WebVPN 驱动 Chrome 下载。与 `baihe26/zju-literature-downloader` **同簇归一取一**（取 ★34 那条） |
+| `KqSmea8/zjuGradeMonitor` | B 其他JS | 无许可证 | 成绩监控 | — | ⛔ | rejected | 2026-10-16 | ★0。无许可证 + 2019 停更 |
+| `a9257/ZJU-GRADES` | B 其他JS | 无许可证 | 成绩查询 | — | ⛔ | rejected | 2026-10-16 | ★0。无许可证 + 2019 停更 |
+| `FrazierLei/ZJU-toolkit` | B 其他JS | Apache-2.0 | 通用工具 | — | 🔵 | proposed | 2026-10-16 | ★20。Python 实现的浙大实用功能集。2021 停更，仅线索 |
+| `awmleer/zjuwlan` | B 其他JS | MIT | 校园网认证 | 重复且可强化（网络代理） | 🔵 | proposed | 2026-10-16 | ★3。ZJUWLAN 命令行认证（JS）。与本仓 `dsh-zhiyun-net-proxy` 同域但形态不同（CLI vs 工作台），2022 停更，仅线索 |
+| `eWloYW8/ZJUWebVPN` | B 其他JS | WTFPL | WebVPN 接入 | — | 🔵 | proposed | 2026-10-16 | ★9。ZJU WebVPN Python 封装。**WTFPL 属宽松但不在白名单枚举内** → 只登记不采用 |
+| `haoqunjiang/cc98-ionic` | B 其他JS | BSD-3-Clause | 校园论坛 | 全新 | 🔵 | proposed | 2026-10-16 | ★4。CC98 第三方客户端（Ionic/JS）。2018 停更，许可证宽松但过时，仅线索 |
+
+> **簇登记（折叠）**：① **浙大 Agent Skill 簇 4 条** → 取一（论文获取取 `baihe26/...`；科研 OS 类不建议接入）；
+> ② **课表 iCal 导出簇 3 条** → 取一（取 MIT 的 `xhacker/zju-jwb-to-icalendar`，实现自建）；
+> ③ **论文获取簇 2 条** → 归一（`baihe26/...` ★34 vs `3-Tian/...` ★0，同作者，取前者）。
