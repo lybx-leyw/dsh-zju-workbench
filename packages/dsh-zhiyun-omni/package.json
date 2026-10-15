@@ -1,0 +1,12 @@
+{
+  "name": "dsh-zhiyun-omni",
+  "version": "0.1.0",
+  "description": "浙大校园数据源（教务课表/成绩/考试、学在浙大作业、CC98、拼题A）：移植自 Vita0818/ZJU-Omni 的数据层，以本仓 connection 数据接口暴露给页面",
+  "private": true,
+  "type": "module",
+  "main": "./src/host.js",
+  "exports": { ".": "./src/host.js", "./package.json": "./package.json" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}
