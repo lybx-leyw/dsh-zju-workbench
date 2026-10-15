@@ -410,3 +410,100 @@
 | `joao-paulo-santos/dsh-bouncing-squares-example` | A 原生DSH | MIT | 通用（示例） | 全新（示例） | 🔵 | proposed | 2026-10-15 | ★0。`dsh-granular-settings` 示例。**示例代码** |
 | `haozheou/dsh-exam-expert` | A 原生DSH | **无** | 考试（出题） | — | ⛔ | rejected | 2026-10-15 | ★0。出题流水线（角色+目录→通读→看板）。**无许可证** → 只登记；且 ★0 体量过小 |
 | `casteadelqui/dsh-go` | A 原生DSH | MIT | —（围棋） | — | 🔵 | proposed | 2026-10-15 | ★0。可玩围棋面板。**域不符** |
+
+---
+
+## 2026-10-15 · 第七轮（A 组 · **插件开发/调试工具链 + Agent 编排**切片）
+
+> **本轮来源**：`node scripts/radar-rotation.mjs --today 2026-10-15` 判 `same-day(exhausted)`
+> （当日三组均已跑过、A 组已 4 次）。按规则 2 的 `exhausted` 分支语义，**不重复任何已跑关键词**，
+> 改跑**全新正交切片**：`dsh plugin sdk`、`dsh skill marketplace`、`deepseek-harness agent
+> orchestration`、`dsh plugin developer toolchain`、`dsh plugin debugging`。
+>
+> 搜索 **5 次**（未超 ≤10 上限），API 无 403。原始命中 77 条（`owner/repo` 去重后），
+> 与既有 registry（318 条）逐条比对后**全部为本轮新增**。
+>
+> **切片价值**：本轮首次系统触及**「插件开发/调试工具链」**这一能力域（前六轮聚焦
+> RAG/OCR/PDF/论文/UI/管理面，从未覆盖）。该切片**产出密度高于上一轮治理面**
+> （77 条中 🟢 1 / 🟡 3 / 🔵 等，治理面 52 条中 🔵 占 73%）。
+> 类型 A = 原生 DSH 插件包；B 类本轮未产出（该切片天然聚焦 DSH 生态）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `gordonlu/dsh-context-lens` | A 原生DSH | MIT | 通用（插件治理/成本） | **重复可强化**（插件页） | 🟢 | proposed | 2026-10-15 | **本轮唯一 🟢，已出骨架 `dsh-radar-context-lens`**。★0 但 npm `dsh-context-lens@0.3.1` **已核可锁版**。请求上下文剖析器：按**插件归因**的 token 占比 + KV cache 分账 + 相邻请求增删。**强化式集成三条件全中**：仍是插件页同一个面板 + 功能正交（依赖关系 vs 上下文成本）+ 底层多调更优实现。插件页 README 自述「只读依赖事实、不解析源码」→ 成本视角**结构性缺失**。⚠ 上游自述 WIP、token 占比为**估算**非计费真值 |
+| `KinomotoMio/dsh-context-lens` | A 原生DSH | MIT | 通用（上下文可观测） | 重复可强化（插件页） | 🟡 | proposed | 2026-10-15 | ★5。同名不同仓（另一作者）。「See what every plugin puts into the model」+ **Reader 有序视图** + 归因接口。`npm view @kinomotomio/dsh-context-lens` **E404 未发布** → **不可锁版**，须源码级移植。功能较 `gordonlu` 版**更完整**（含 Agent 可调接口）但成熟度同样 WIP。**两版同域，建议取一**；`gordonlu` 版可锁版故优先 |
+| `FeatherHunter/dsh-plugin-ui-debug` | A 原生DSH | **BSD-3-Clause** | 通用（UI 调试） | 全新（插件开发域） | 🟡 | proposed | 2026-10-15 | ★7。**让 AI 在真实 Chrome 中看界面/点按钮/拖组件**（Playwright + CDP）。本仓有 `dsh-plugin-ui-debug` 所辖的**空白**：现有测试是 `node --test` 单测，**没有真实浏览器驱动的 UI 验证**。`npm view` 待核 → 若无包则源码级移植 |
+| `hinayoung23/dsh-cordis-plugin-kit` | A 原生DSH | MIT | 通用（插件开发） | 全新（插件开发域） | 🟡 | proposed | 2026-10-15 | ★2。**离线** Cordis/DSH 插件标准 + 脚手架 + 静态检查 + 运行时调试 + 性能门禁。⚠ **与本仓 `scripts/` 已有部分重叠**（`check-css-order.mjs`/`parser-verify.mjs`/`profile.mjs`）：需先比对再决定，重叠部分应**取优不叠加** |
+| `CkEFFAF/dsh-plugin-devkit` | A 原生DSH | MIT | 通用（插件开发） | 全新（插件开发域） | 🔵 | proposed | 2026-10-15 | ★1。运行时 inspector（`/debug`）+ 隔离 debug-boot + **无浏览器**的宿主契约测试 + client slot 预览。与上条 `cordis-plugin-kit` 同域，**「无浏览器宿主契约测试」**对本仓 `scripts/test-host.mjs` 有借鉴价值 |
+| `0718lol/dsh-forge` | A 原生DSH | MIT | 通用（插件开发） | 全新（插件开发域） | 🔵 | proposed | 2026-10-15 | ★0。插件开发者工具链：scaffold / compat-test / ship。该切片第三个工具链候选，**信息量最低**（★0、无 topics） |
+| `toolclub/dsh-agent-team-gui` | A 原生DSH | MIT | 通用（多智能体） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★287，2026-10-12 推送，**本轮最高星**。持久化多模型工作流团队：动态 lead 规划 + 有界 DAG + 逐 agent 模型/工具 + Run Center + Token 洞察。**整页型编排面板**，与本仓「多页面工作台」形态不同路；但其 **Token 洞察**与 `dsh-context-lens` 同域 |
+| `kukucaiCndy/Corum-Harness` | A 原生DSH | Apache-2.0 | 通用（桌面端） | 全新（宿主外围） | 🔵 | proposed | 2026-10-15 | ★76，2026-10-15 推送。基于 DSH 底座的**桌面版 Agent** + IDE 功能补全。形态为完整宿主，同 `dsh-desktop` 一类 |
+| `huaweicloud/huaweicloud-devkit` | 技能包 | Apache-2.0 | —（云服务） | — | 🔵 | proposed | 2026-10-15 | ★66。华为云官方 AI agent 插件（skills + MCP + 安全护栏）。**域不符**，但与 DSH 无关的官方 devkit，仅登记 |
+| `zenx0x/allinluna` | A 原生DSH | Apache-2.0 | 通用（多智能体） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★63。资源感知多智能体编排（Codex + DSH 双端）。编排域 |
+| `rootkiller6788/dsh-flow` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★34。插件化微内核架构，用于构建/编排/扩展。**基础设施型**，可作承载层线索 |
+| `olicesx/kixparadigm` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★30。AI 自编排极简范式（常驻认知层）。编排域 |
+| `chumingjun/dsh-harness-one` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★26。可视化 AI 工作流编排器：多智能体 DAG。编排域 |
+| `Wenaixi/dsh-superpower` | A 原生DSH | MIT | 通用（工程技能） | 全新（技能域） | 🔵 | proposed | 2026-10-15 | ★24。移植 obra/superpowers 的 **15 个工程技能**（双语描述）。技能包，与本仓开发流程或有交集 |
+| `PerryLink/dsh-skill-pack-security` | A 原生DSH | Apache-2.0 | 通用（安全） | 全新（安全域） | 🔵 | proposed | 2026-10-15 | ★22。安全审计技能包 + **`plugin_vet` 供应链门禁**。⚠ 与雷达自身的「污染防护/信息泄露检查」思路同源，**可作本任务的工具线索** |
+| `StvLi/dsh-ros2` | A 原生DSH | MIT | —（机器人） | — | 🔵 | proposed | 2026-10-15 | ★22。ROS 2 诊断插件。**域不符** |
+| `CodermanYHZ/dsh-node-flow` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★11。节点式工作流画布（子代理/条件/循环/定时）。编排域 |
+| `hoyyang/dsh-mall` | A 原生DSH | MIT | 通用（插件市场） | **重复且无增益**（插件页） | ⛔ | rejected | 2026-10-15 | ★10。插件商场（AI 装前审查/装后诊断 + 五维评分雷达）。**插件市场第 6 个候选**，与 `dsh-market`/`dsh-plugin-shop`/`DSH-Plugins-Marketplace` 等互为重复 → ⛔。**但「AI 装前审查 + 装后诊断」这一能力本身是本仓插件页的真缺口**，见报告「值得单独摘出的一点」 |
+| `peiqi10086/dsh-skills-market` | A 原生DSH | MIT | 通用（技能市场） | 重复且无增益（技能市场簇） | 🔵 | proposed | 2026-10-15 | ★9。本地 skills 管理 + SkillHub 商城。**技能市场簇**，本簇本轮命中 10+ 条，同质化严重 |
+| `whutzefengxie-ops/dsh-shadow-mind` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★9。独立 Shadow agent 编排。编排域 |
+| `pn1024/dsh-skill-market` | A 原生DSH | MIT | 通用（技能市场） | 重复且无增益（技能市场簇） | 🔵 | proposed | 2026-10-15 | ★7。技能市场（SkillHub + ClawHub）。技能市场簇 |
+| `TindalosKorone/dsh-cheatengine` | A 原生DSH | MIT | 通用（调试） | 全新（调试域） | 🔵 | proposed | 2026-10-15 | ★7。桥接 Cheat Engine 做动态调试。**宿主外围型**，域偏 |
+| `CocoSgt/dsh-inspector` | A 原生DSH | **无** | 通用（调试） | — | ⛔ | rejected | 2026-10-15 | ★6。**无许可证** → 只登记，不采用 |
+| `yangbobo2021/relay-dsh-plugin-claude` | A 原生DSH | MIT | 通用（互操作） | 全新（互操作域） | 🔵 | proposed | 2026-10-15 | ★6。Claude Code 集成插件。跨工具互操作 |
+| `Luck9Star/dsh-gateway-provider` | A 原生DSH | MIT | 通用（模型网关） | 全新（模型层） | 🔵 | proposed | 2026-10-15 | ★5。通用 LLM 网关 provider（newapi / LiteLLM）。模型接入层 |
+| `huabai-flowerwhite/dsh-plugin-design` | A 原生DSH | MIT | 通用（插件规范） | 全新（插件开发域） | 🔵 | proposed | 2026-10-15 | ★5。发现/检查第三方插件并对照 **DH-TP-S** 规范。**插件治理规范**，与 `dsh-plugin-devkit` 同域互补 |
+| `YYTbit/oh-my-deepseek-harness` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★5。多智能体编排。编排域 |
+| `37chengshan/agent-mcp` | 技能包 | MIT | —（MCP） | — | 🔵 | proposed | 2026-10-15 | ★5。无 description，信息不足 |
+| `wz-heng/dsh-feishu-bridge` | A 原生DSH | MIT | —（飞书） | — | 🔵 | proposed | 2026-10-15 | ★4。飞书频道桥（fail-closed 设计）。**域不符**，但 fail-closed 设计可借鉴 |
+| `Jan-Jianhao-Liu/omo-deepseek-harness` | A 原生DSH | CC0-1.0 | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★4。OMO 规约智能体 + 超任务编排（不间断规划/分类委派/自主校验）。编排域 |
+| `ZSeven-W/dsh-qa` | A 原生DSH | MIT | 通用（QA） | 全新（测试域） | 🔵 | proposed | 2026-10-15 | ★4。**Agent 像真实用户一样探索你的应用**做 QA。⚠ 与本仓 `tests/` 和 `scripts/shots.mjs` 有交集，**「像用户一样探索」是现有单测覆盖不到的一层**，值得留意 |
+| `dushaobindoudou/dsh-bots` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★3。Bots 工作台，桥接 sdk-bots 编排网关。编排域 |
+| `cxdyun/dsh-skills-marketplace` | A 原生DSH | MIT | 通用（技能市场） | 重复且无增益（技能市场簇） | 🔵 | proposed | 2026-10-15 | ★3。类 CodeX 插件市场。技能市场簇 |
+| `open-dshai/dsh-employee` | A 原生DSH | MIT | 通用（数字员工） | 全新（市场簇） | 🔵 | proposed | 2026-10-15 | ★3。数字员工市场面板。市场簇变体 |
+| `stephenlzc/dsh-swarm-panel` | A 原生DSH | **无** | 通用（编排） | — | ⛔ | rejected | 2026-10-15 | ★3。会话流可观测 + 持久多智能体编排。**无许可证** → 只登记 |
+| `KanoNoUta/dsh-captain` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★3。GPT 规划 + DeepSeek 执行 + 独立校验。编排域 |
+| `Jarad-z/dsh-goalmesh` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★3。目标驱动多智能体编排（有界 DAG 调度）。编排域 |
+| `daybreak33167-commits/dsh-subscriptions` | A 原生DSH | **无** | — | — | ⛔ | rejected | 2026-10-15 | ★2。驱动 Cursor 模型。**无许可证** → 只登记 |
+| `akira399/dsh-plugin-publisher` | A 原生DSH | MIT | 通用（插件发布） | 全新（插件开发域） | 🔵 | proposed | 2026-10-15 | ★2。插件开发与 GitHub 发布工作流（consent-gated）。插件开发域 |
+| `xsoc1/math-research-dsh` | 技能包 | MIT | 论文（数学） | 全新（科研域） | 🔵 | proposed | 2026-10-15 | ★2。math-research 的市场化 SKU（严谨开放式数学）。科研域 |
+| `a554878526/dsh-debug-mode` | A 原生DSH | MIT | 通用（调试） | 全新（调试域） | 🔵 | proposed | 2026-10-15 | ★2。runtime-first 调试模式。调试域 |
+| `lukaiwuyi/dsh-frontend-tools` | A 原生DSH | MIT | 通用（前端桥接） | 全新（基础设施） | 🔵 | proposed | 2026-10-15 | ★1。DSH 插件 + client SDK：把 web/Electron/Tauri 接到 DSH。**基础设施**，可作承载层线索 |
+| `guyuefangyuanl/Deeperian` | A 原生DSH | MIT | 笔记 | 全新（笔记域） | 🔵 | proposed | 2026-10-15 | ★1。Obsidian 插件内嵌 DSH agent（WIP）。⚠ 与本仓 `dsh-zhiyun-notes` **域重叠但形态不同**（外部编辑器 vs 本仓内建） |
+| `2026heshao/dsh-armory` | A 原生DSH | MIT | 通用（管理面板） | 重复可强化（管理面） | 🔵 | proposed | 2026-10-15 | ★1，2026-10-14 推送。MCP 管理 + Skills + WorkBuddy 专家 一体板。**管理面簇**，同不取 |
+| `win4r/dsh-plugin-skill` | 技能包 | **无** | 通用（开发） | — | ⛔ | rejected | 2026-10-15 | ★1。插件脚手架/调试技能。**无许可证** → 只登记 |
+| `shine-233/dsh-plugin-debug` | A 原生DSH | MIT | 通用（调试） | 全新（调试域） | 🔵 | proposed | 2026-10-15 | ★1。crash guard + 事故取证 + trace 分析。**PowerShell**，平台受限 |
+| `lemonmmice/dsh-postman` | A 原生DSH | Apache-2.0 | 通用（API 调试） | 全新（调试域） | 🔵 | proposed | 2026-10-15 | ★1。Postman 风格 API 调试面板。调试域。⚠ 本仓有 `/api/zhiyun-*` 路由，或有用 |
+| `nemosr/dsh-personal-plugins` | A 原生DSH | MIT | 通用（浏览器测试） | 全新（测试域） | 🔵 | proposed | 2026-10-15 | ★1。个人插件集：web_app_testing + host-web-debugger。测试域 |
+| `cybtachyon/dsh-plugin-degen-investigator` | A 原生DSH | MIT | 通用（调试） | 全新（调试域） | 🔵 | proposed | 2026-10-15 | ★1。监视运行中 agent、检测**重复工具调用**。⚠ 与雷达自身「关键词重复」问题同族，思路可借鉴 |
+| `zhaoxuejie/dsh-plugin-session-export` | A 原生DSH | MIT | 通用（会话复盘） | 重复可强化（会话导出） | 🔵 | proposed | 2026-10-15 | ★1。会话黑匣子：旁路采集事件 → 导出 Markdown/HTML 复盘。与既有 `bwndlct/dsh-session-export` 同域，取一即可 |
+| `xingyingyuzhui/dsh-vision-bench` | A 原生DSH | MIT | —（嵌入式） | — | 🔵 | proposed | 2026-10-15 | ★1。Keil 调试 + Modbus HMI。**域不符** |
+| `zerosloney/dsh-debugger-dap` | A 原生DSH | **无** | 通用（调试） | — | ⛔ | rejected | 2026-10-15 | ★1。交互式 DAP 调试器。**无许可证** → 只登记 |
+| `weekitmo/dsh-trace` | A 原生DSH | MIT | 通用（调试） | 全新（调试域） | 🔵 | proposed | 2026-10-15 | ★1。检查脱敏后的 LLM HTTP 请求/响应。⚠ **与本仓 `dsh-zhiyun-net-proxy` 的中继思路有交集**（都在看出口流量），可作观测层线索 |
+| `floydc-sz/dsh-serial-debugger` | A 原生DSH | MIT | —（串口） | — | 🔵 | proposed | 2026-10-15 | ★1。串口调试。**域不符** |
+| `Gladdonilli/dsh-cursor-sdk` | A 原生DSH | MIT | 通用（模型接入） | 全新（模型层） | 🔵 | proposed | 2026-10-15 | ★0。官方 Cursor SDK provider。模型接入层 |
+| `salathleizhang/dsh-agent-sdk` | A 原生DSH | MIT | 通用（SDK） | 全新（基础设施） | 🔵 | proposed | 2026-10-15 | ★0。可嵌入的插件式编码 agent 运行时。基础设施 |
+| `Lgv-H/dsh-maibot-plugin-writer` | A 原生DSH | MIT | —（麦麦） | — | 🔵 | proposed | 2026-10-15 | ★0。让 DSH 自己写/校验/安装麦麦插件。**域不符** |
+| `lovedheart/dsh-tool-browser` | A 原生DSH | **无** | 通用（浏览器） | — | ⛔ | rejected | 2026-10-15 | ★0。有状态浏览器工具（Playwright/CDP）。**无许可证** → 只登记；浏览器簇亦已饱和 |
+| `orangeofcarl0-sys/palimpsest` | A 原生DSH | MIT | 通用（编排） | 全新（编排域） | 🔵 | proposed | 2026-10-15 | ★0，2026-10-14 推送。证据治理的多智能体编排。编排域 |
+| `oneinitAI/dsh-settings-plus-demo` | A 原生DSH | **无** | 通用（示例） | — | ⛔ | rejected | 2026-10-15 | ★0。`dsh-settings-plus` 注册 SDK 示例。**无许可证** → 只登记 |
+| `TsukiNullNeko/dsh-ui-tool-mode` | A 原生DSH | MIT | 通用（UI） | 全新（UI 域） | 🔵 | proposed | 2026-10-15 | ★0。一个头部按钮切换原生 tool schema。小工具 |
+| `Timeflys2018/knowme-dsh-bridge` | A 原生DSH | MIT | 通用（互操作） | 全新（互操作域） | 🔵 | proposed | 2026-10-15 | ★0。B3-small 线桥 cordis 插件（交互控制方法）。互操作层 |
+| `wat-bill/dsh-chm2docs` | A 原生DSH | NOASSERTION | —（文档转换） | — | ⚠ 待核 | pending-license | 2026-10-15 | ★0。Windows `.chm` → 文档（SDK 手册）。**许可证待核**；域偏 |
+| `TheFengyuye/tracelens` | A 原生DSH | MIT | 通用（可观测） | 全新（可观测域） | 🔵 | proposed | 2026-10-15 | ★0。LLM & Agent 可观测：trace / replay / analyze。⚠ **与 `dsh-context-lens` 同域**，但偏 trace/replay 而非按插件归因，**同域取优** |
+| `Nuomc/dsh-skills-marketplace` | A 原生DSH | **无** | 通用（技能市场） | — | ⛔ | rejected | 2026-10-15 | ★0。技能市场。**无许可证** → 只登记；技能市场簇 |
+| `w2112515/dsh-marketplace-publish` | 技能包 | MIT | 通用（发布） | 仅供参考 | 🔵 | proposed | 2026-10-15 | ★0。插件市场上架用 portable skill。**发布流程线索** |
+| `QT7-C23/DSH-Marketplace` | A 原生DSH | MIT | 通用（市场） | 重复且无增益（插件页） | ⛔ | rejected | 2026-10-15 | ★0。社区市场 + 资源管理器。**插件市场第 7 个候选** → ⛔ |
+| `S-AN-Shu/dsh-skill-manager` | A 原生DSH | MIT | 通用（技能管理） | 重复且无增益（技能市场簇） | 🔵 | proposed | 2026-10-15 | ★0。安全受限的技能管理 + GitHub 市场。技能市场簇 |
+| `Aidea-cc/dsh-skill-hub` | A 原生DSH | MIT | 通用（技能市场） | 重复且无增益（技能市场簇） | 🔵 | proposed | 2026-10-15 | ★0。与 `pn1024/dsh-skill-market` **描述逐字相同**（SkillHub + ClawHub + sidebar）。疑似同源，取一 |
+| `Asher191919/dsh-skills-hub` | A 原生DSH | **无** | 通用（技能市场） | — | ⛔ | rejected | 2026-10-15 | ★0。技能市场面板。**无许可证** → 只登记 |
+| `JACKWang19559/dsh-skill-hub` | A 原生DSH | MIT | 通用（技能市场） | 重复且无增益（技能市场簇） | 🔵 | proposed | 2026-10-15 | ★0。桌面版 Skills 管理面板。技能市场簇 |
+| `wzn16/dsh-skill-market` | A 原生DSH | MIT | 通用（技能市场） | 重复且无增益（技能市场簇） | 🔵 | proposed | 2026-10-15 | ★0，2026-10-15 推送。可视化技能商店。技能市场簇 |
+| `CaseyTso/dsh-plugin-market` | A 原生DSH | **AGPL-3.0** | 通用（市场） | — | ⛔ | rejected | 2026-10-15 | ★0。双源市场。**AGPL-3.0 非宽松白名单** → 只登记，**不得摘取任何代码** |
+| `chenyuyu6666/aiknowledge-skills` | 技能包 | **无** | — | — | ⛔ | rejected | 2026-10-15 | ★0。AIWorkspace 统一技能库（跨生态）。**无许可证** → 只登记 |
+| `CleverC2200/dsh-agent-manage` | A 原生DSH | MIT | 通用（市场） | 重复且无增益（插件页） | ⛔ | rejected | 2026-10-15 | ★0，2026-10-15 推送。插件市场：安装注入 Claude Code/Codex 插件。**插件市场簇** → ⛔ |
+| `Friend-Xu/dsh-install` | A 原生DSH | MIT | 通用（安装管理） | 重复且无增益（插件页） | ⛔ | rejected | 2026-10-15 | ★0。MCP + 技能安装管理。**插件页已自建** → ⛔ |
+| `Alex-Yanggg/awesome-DSH-plugin` | 清单 | CC0-1.0 | 通用（线索源） | 全新（线索源） | 🔵 | proposed | 2026-10-15 | ★101。DSH 插件精选清单（第 **5** 个 awesome 清单）。**作线索源**，不单独集成 |

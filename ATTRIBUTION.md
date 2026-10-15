@@ -17,6 +17,15 @@
 
 - [dsh-paper-reader](https://github.com/GGboya/dsh-paper-reader) · MIT · 版本 `1.3.1`（精确锁定，见 `packages/dsh-zhiyun-paper/src/upstream.js`）。「论文阅读」栏目在 `packages/dsh-zhiyun-paper/` 里以子插件方式挂载它的宿主半边（HTTP 路由与 agent 工具），客户端界面由 `dsh-zhiyun-page-paper` 重写。锁版与改写理由见该包 README。
 
+## 候选骨架引用的第三方插件（**尚未接入、未评审**）
+
+以下条目由「生态雷达」任务登记。它们出现在 `packages/dsh-radar-*/` 的**候选骨架**里，
+**未写入 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`，不会在运行时挂载**。
+列在此处的目的是：**已阅读其源码/文档**，需按 CONTRIBUTING 3.3 留痕。
+若评审后决定接入，应把条目**上移**到「运行时依赖的第三方插件」一节。
+
+- [dsh-context-lens](https://github.com/gordonlu/dsh-context-lens) · MIT · 版本 `0.3.1`（精确锁定，见 `packages/dsh-radar-context-lens/src/upstream.js`）。请求上下文剖析器（按插件归因的 token 占比 + KV cache 分账）。候选骨架拟把它锁版挂载，为「插件」页（`dsh-zhiyun-page-plugins`）补上上下文成本视角 —— 撤销「论文那一块能不能关」只能看见结构、看不见代价的缺口。**未复制其源码**，骨架内只有占位与 TODO。上游自述为 Work in progress，且 token 占比为**估算**而非 provider 计费真值。
+
 ## 含实现移植
 
 - [ZJU-Omni](https://github.com/Vita0818/ZJU-Omni) · **MIT** · 移植提交 `192d1015a53a7b09f23ae143d56686c8fbf706af`。
