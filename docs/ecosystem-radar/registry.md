@@ -628,3 +628,49 @@
 > **簇登记（折叠）**：① **浙大 Agent Skill 簇 4 条** → 取一（论文获取取 `baihe26/...`；科研 OS 类不建议接入）；
 > ② **课表 iCal 导出簇 3 条** → 取一（取 MIT 的 `xhacker/zju-jwb-to-icalendar`，实现自建）；
 > ③ **论文获取簇 2 条** → 归一（`baihe26/...` ★34 vs `3-Tian/...` ★0，同作者，取前者）。
+
+---
+
+## 2026-10-16 · C 组（学生功能域 · **能力轴新切片**）· 追加
+
+> 关键词（全部为 C 组内的正交新切片，不与已跑的 `timetable ics export` / `paper annotation reader` /
+> `ocr notes taking` / `quiz practice` / `fitness tracker` 重复）：
+> `flashcard srs`、`markdown notes editor`、`citation bibliography manager`、`handwriting math ocr`、
+> `mindmap knowledge graph`、`pdf summarizer llm`、`lecture video transcript`、`exam practice question bank`、
+> `latex equation editor javascript`、`academic pdf reader react`。
+> **搜索 10 次**（上限 10），API 无 403，本轮**完整**。`zju paper annotation reader` → `total_count = 0`（记"该关键词无结果"）。
+> 许可证核实：GitHub API `license.spdx_id` + 对高价值候选**逐一拉取 LICENSE 实文比对**
+> （`lecture-to-notes` / `marksman` / `iwe` 三条实文已核）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `drpwchen/lecture-to-notes` | B 其他JS | MIT | 讲座录像→笔记 | **重复可强化** | 🟡 | proposed | 2026-10-16 | ★108，**2026-10-13 活跃**。实为 **Python** 管线（faster-whisper/Surya/PyMuPDF）。录像+课件→**带时间戳逐字稿 + 幻灯片对齐**，产出**双向同步 HTML 查看器**（点要点跳时刻/播放高亮要点）。自述目标是 **traceability 而非 accuracy**。**强化对象**：`dsh-zhiyun-lecture`×`classroom` 的"拿到课件之后"通路 —— 本仓**音视频理解与时间轴对齐完全空白**。⚠ 技术栈错配（Python），建议**能力提取（取对齐设计与 `slides_grounded.json` 证据模型）而非外挂管线**；⚠ **课堂音视频数据策略须人工拍板**（红线）。**本轮 L2 骨架选定对象** |
+| `artempyanykh/marksman` | B 其他JS | MIT | 笔记/Wiki 写作 | **重复可强化** | 🟡 | proposed | 2026-10-16 | ★3365，2026-09-14。实为 **F#**。Markdown **LSP**（补全/跳转/诊断）。**强化对象**：`dsh-zhiyun-notes`。⚠ **但本仓笔记是"节笔记"（绑定账号+课程+节次），非自由文件树** —— LSP 的跨文件价值**未必成立**。建议**先定笔记形态定位**再决定是否推进；若仅需内链补全，不如**直接扩展既有 `zy://` 协议** |
+| `iwe-org/iwe` | B 其他JS | Apache-2.0 | 知识管理/笔记网络 | **重复可强化** | 🟡 | proposed | 2026-10-16 | ★1774，**2026-10-15 当日活跃**。实为 **Rust**。Markdown **知识图谱**：LSP + CLI + **MCP memory**（`ai-memory`/`ai-agents`），主页 iwe.md。**强化对象**：`dsh-zhiyun-knowledge` 的**字面检索 → 图检索**（真正的底层升级）。⚠ ① 与首轮登记的 `modsearch`/`modlens` **功能域交叉，不可两条都接**，须横向比对；② 本仓知识域键空间是「账号+课程+节次」，**须先确认能否在其上建图** |
+| `jupyterlab-contrib/jupyterlab-citation-manager` | B 其他JS | BSD-3-Clause | 文献引用 | 全新 | 🔵 | proposed | 2026-10-16 | ★75，2026-09-04。Zotero Web API 引用管理器。**引用/文献域是本仓全新缺口**，但形态是 JupyterLab 扩展，**强耦合不可复用** |
+| `mlava/scholar-sidekick-obsidian` | B 其他JS | MIT | 文献引用 | 全新 | 🔵 | proposed | 2026-10-16 | ★2，2026-10-12。DOI/PMID/ISBN → 格式化引用，**10000+ CSL 样式**。**CSL 样式表思路可作本仓自建引用功能的参考**；形态为 Obsidian 插件 |
+| `dmarienko/skena` | B 其他JS | MIT | 知识图谱 | 重复可强化 | 🔵 | proposed | 2026-10-16 | ★8，2026-09-30。VS Code 扩展：JSON Canvas → 交互节点图，连 markdown vault。**JSON Canvas 格式**可作知识图存储参考 |
+| `shaunhurryup/lovely-mindmap` | B 其他JS | MIT | 知识图谱 | 重复可强化 | 🔵 | proposed | 2026-10-16 | ★89，2025-02-23。TS 构建知识图谱。可作**图谱渲染**参考 |
+| `DavidMiserak/GoCard` | B 其他JS | MIT | 复习调度 | 重复可强化 | 🔵 | proposed | 2026-10-16 | ★59，2026-05-15。**纯 Markdown 文件的 SRS**（SM-2）。与已登记 `ts-fsrs` **同域**：`ts-fsrs` 是"FSRS 本身"，此条是"应用形态"。Go TUI **不可复用**；**「文件即卡片」的数据模型可参考** |
+| `1989877799-ai/PaperLens` | B 其他JS | MIT | 论文阅读 | 重复可强化 | 🔵 | proposed | 2026-10-16 | ★0，2026-07-31 后未更新。DeepSeek 驱动的英文论文阅读器（React），仅线索 |
+| `Amey-Thakur/LATEXRENDER` | B 其他JS | MIT | 公式编辑 | 全新 | 🔵 | proposed | 2026-10-16 | ★5，2026-09-06。纯浏览器 LaTeX 公式编辑器，导出 14 种格式。体量过小，仅线索 |
+| `antonmedv/textarea` | B 其他JS | MIT | 通用文本编辑 | 重复且无增益 | ⛔ | proposed | 2026-10-16 | ★2527，2026-10-05。"活在 URL 里的极简文本编辑器"。与本仓功能域无关，**重复且无增益** |
+| `pieralukasz/true-recall` | B 其他JS | **NOASSERTION** | 复习调度 | — | ⚠ 待核 | proposed | 2026-10-16 | ★64，2026-10-14。Obsidian 原生间隔重复：**FSRS v6 调度 + 图像遮挡（image occlusion）**。**图像遮挡题型是本仓「习题」域尚未考虑过的** → **建议人工优先核验许可证**。**不采用、不得摘取代码** |
+| `Sreehari05055/thesys-core` | B 其他JS | **NOASSERTION** | 学术研究 | — | ⚠ 待核 | proposed | 2026-10-16 | ★174，2026-10-14。开放研究工作站：学术搜索 + PDF 上传 + 内联引用（TS）。API 报 `NOASSERTION`。**若实为 AGPL 则 ⛔**。**不采用、不得摘取代码** |
+| `papis/papis` | B 其他JS | GPL-3.0 | 文献管理 | — | ⛔ | proposed | 2026-10-16 | ★1789，2026-10-03。**GPL 红线**。文献管理功能相关，但许可不行 —— 只作需求对照 |
+| `Slydite/lore-engine` | B 其他JS | MPL-2.0 | 讲座→笔记 | — | ⛔ | proposed | 2026-10-16 | ★118，2025-10-11。"PDF + 视频（带转写）→ 教育内容"管线，**与 🟡-1 功能域几乎重叠**，却因 **MPL 红线** ⛔。**只作需求清单对照，不碰代码** |
+| `CeciliaGuo331/dehydrater` | B 其他JS | AGPL-3.0 | 讲座→笔记 | — | ⛔ | proposed | 2026-10-16 | ★6，2026-10-13。**中文**课堂录音整理：录像/录音 + 课件 → 逐字稿与按课件组织的笔记，无需 GPU。**功能最贴合却因 AGPL 红线** ⛔。同上，只作需求对照 |
+| `thiswillbeyourgithub/wdoc` | B 其他JS | AGPL-3.0 | 多文档摘要 | — | ⛔ | proposed | 2026-10-16 | ★544，2026-10-12。**AGPL 红线** |
+| `hedgedoc/hedgedoc` | B 其他JS | AGPL-3.0 | 协作笔记 | — | ⛔ | proposed | 2026-10-16 | ★7482，2026-10-15。**AGPL 红线** |
+| `ankidroid/Anki-Android` | B 其他JS | GPL-3.0 | 复习 | — | ⛔ | proposed | 2026-10-16 | ★12019，2026-10-15。**GPL 红线** |
+| `vnotex/vnote` | B 其他JS | LGPL-3.0 | 笔记 | — | ⛔ | proposed | 2026-10-16 | ★13005，2026-10-15。**LGPL 红线**（C++ 原生） |
+| `Laverna/laverna` | B 其他JS | MPL-2.0 | 笔记 | — | ⛔ | proposed | 2026-10-16 | ★9166，2021-05-30 停更。**MPL 红线** |
+| `daniel3735928559/guppy` | B 其他JS | **无许可证** | 公式编辑 | — | ⛔ | proposed | 2026-10-16 | ★193，2022-12-09。WYSIWYG 公式编辑器（LaTeX 兼容 + 结构化输出），**功能相关但无许可证 → 不可摘取代码** |
+| `toeverything/AFFiNE` | B 其他JS | **NOASSERTION** | 知识库 | — | ⛔ | proposed | 2026-10-16 | ★73540。许可证不明，不采用 |
+| 认证类题库 App（`nosadaniel/kcna_cert_demo_quiz` / `nguyenviettung7691/az-104-exam-simulator` 等） | B 其他JS | MIT 等 | 刷题 | **重复且无增益** | ⛔ | proposed | 2026-10-16 | 均为 **K8s / Azure / CEH 等认证题库**，与本仓课程学习**无关**，且本仓已有 `dsh-zhiyun-quiz`。**不集成** |
+
+> **簇登记（折叠）**：① **讲座/课堂→笔记簇 3 条** → 许可证决定归属：
+> `lecture-to-notes`（MIT ✅，取）／`lore-engine`（MPL ⛔）／`dehydrater`（AGPL ⛔）——
+> **后两条功能与前者几乎重叠，仅作需求对照**；
+> ② **文献引用簇 2 条** → `jupyterlab-citation-manager`（BSD-3）与 `scholar-sidekick-obsidian`（MIT）
+> **均强耦合他生态** → 均 🔵，**引用域建议本仓自建**（可参考 CSL 样式表思路）。

@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-lecture-notes",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】B 类能力提取：把上游 lecture-to-notes（MIT）的「录像/录音 + 课件 → 时间戳逐字稿 → 与讲义双向同步」管道，强化本仓讲座域的「怎么看懂一节课」环节（强化式集成，非全新）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

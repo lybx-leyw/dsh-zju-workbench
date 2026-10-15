@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `B` |
-| `last_run_at` | `2026-10-16 00:00` |
-| `group_runs`（累计） | A=7, B=2, C=3 |
+| `last_group` | `C` |
+| `last_run_at` | `2026-10-16 03:10` |
+| `group_runs`（累计） | A=7, B=2, C=4 |
 
 ### 流水
 
@@ -73,6 +73,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-15 21:05 | A | dsh plugin mobile app / desktop app / health check / system monitor / notification push / performance benchmark / error tracking / log analyzer / cost usage / permission audit（第8轮·宿主外壳/运维/审计切片） |
 | 2026-10-16 00:00 | B | **跨天重置**（`289 % 3 = 1` → B）。**细分场景轴**：`zju tool`/`courses`/`webvpn`/`calendar`/`grade`/`learning`/`exam`/`zhiyun`/`cloud classroom` + `cc98 client`/`zju skill`（10 次搜索；新增 24 条；🟢1 + 🟡4 + ⚠1；出骨架 `dsh-radar-career-calendar`） |
 | 2026-10-16 00:00 | B | 自动记录 |
+| 2026-10-16 03:10 | C | 自动记录 |
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
 > （见 `registry.md`「2026-10-15 · B 组」36 条），但**未写入流水**，
