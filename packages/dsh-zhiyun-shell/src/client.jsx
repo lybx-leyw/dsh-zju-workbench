@@ -125,7 +125,7 @@ function applyUI(ctx) {
     for (const page of NAV.filter(item => item.id !== 'ask')) {
       yield ctx.slots.register({
         name: 'main', key: panelKey(page.id),
-        children: { [`zhiyun.${page.id}.content`]: { kind: 'single', scope: 'root' }, ...(page.id === 'me' ? { 'zhiyun.me.account': { kind: 'single', scope: 'root' } } : {}) },
+        children: { [`zhiyun.${page.id}.content`]: { kind: 'single', scope: 'root' }, ...(page.id === 'me' ? { 'zhiyun.me.account': { kind: 'single', scope: 'root' }, 'zhiyun.me.network': { kind: 'single', scope: 'root' } } : {}) },
         inject: () => ({ controller, page: page.id }),
       }, Page);
     }

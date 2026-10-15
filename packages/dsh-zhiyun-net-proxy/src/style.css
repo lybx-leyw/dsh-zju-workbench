@@ -1,0 +1,257 @@
+/* 网络代理面板的样式。
+ *
+ * # 为什么这个文件这么短（先读这段再改）
+ *
+ * 面板的**外框与折叠交互不属于本包**：它复用壳的 `<details class="zy-settings-group">`
+ * + `<summary>` + `<div class="zy-settings-body">`（见 client.jsx 的 frame()），
+ * 于是这块的边框、圆角、图标块、标题/描述排布、右端 chevron 与它的旋转、summary 下的
+ * 分隔线**全部**由 `dsh-zhiyun-shell/src/style.css` 提供 —— 与「个人」页上其余设置组
+ * 逐像素同源，壳调尺寸/换主题时这里自动跟随。
+ *
+ * 按钮同理走 ui-primitives 的 `.zs-button` / `.zs-primary`（不在本文件里重写），
+ * 输入框则沿用本页既有的观感（边框/圆角/内边距取自 `.zs-account input` 那一组）。
+ *
+ * ⇒ 所以这里只写**这张面板独有**的东西：代理条目的内部排布、规则的「域名 → 目标」
+ *   一行、以及几个状态读数。任何一句「把边框/按钮/标题再画一遍」都是重复，会导致
+ *   同一个界面有两套真源 —— 那正是这一版要修掉的问题。
+ *
+ * 前缀 `znp-` 只为本包选择器服务：跨包改 `.zy-*` 会波及另外几页，且同特异性规则
+ * 谁生效只看挂载顺序，是这个仓库 `npm run check:css` 专门在拦的隐患。
+ * 颜色一律取壳里的 `--zy-*` 变量，明暗两套主题自动跟随。
+ */
+
+/* 折叠组展开后的纵向节奏。用 gap 而不是给每个子块加 margin：
+   子块会随用户增删代理而增减，margin 的首尾会多出一截空隙。 */
+body[data-zhiyun] .znp { margin-top: 12px; }
+body[data-zhiyun] .znp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* 总开关：做成一行「标题 + 说明」，与摘要里的 strong/small 同一套字号层级。 */
+body[data-zhiyun] .znp-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+body[data-zhiyun] .znp-switch input {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  accent-color: var(--zy-action);
+}
+body[data-zhiyun] .znp-switch strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+body[data-zhiyun] .znp-switch small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--zy-secondary);
+}
+
+/* 运行状态：一行纯文本读数，不用胶囊徽章 —— 摘要里已经有同样的信息，
+   展开后再摆一排圆角标签会显得比这一页其他设置项花哨。 */
+body[data-zhiyun] .znp-status {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .znp-h {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+body[data-zhiyun] .znp-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .znp-muted {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--zy-secondary);
+}
+
+/* 组内小节。用细分隔线而不是再加一层卡片边框：折叠组本身已经是一张卡片，
+   内部再套边框就是「卡片套卡片」。 */
+body[data-zhiyun] .znp-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .znp-group:first-of-type { padding-top: 0; border-top: 0; }
+body[data-zhiyun] .znp-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body[data-zhiyun] .znp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* 代理卡片是**内层**容器，所以它保留边框（与折叠组的外框区分开），
+   但用 --zy-sidebar（比 surface 略深）做底，视觉上退到外框之后。 */
+body[data-zhiyun] .znp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid var(--zy-line);
+  border-radius: 8px;
+  background: var(--zy-sidebar);
+}
+body[data-zhiyun] .znp-item-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body[data-zhiyun] .znp-id {
+  flex: none;
+  font-size: 11px;
+  color: var(--zy-muted);
+}
+/* 名称占满 id 与删除按钮之间的空档 —— 不给 flex 的话它会缩成输入框的默认宽度，
+   而「名称」是这一行里唯一的自由文本，应当占据主要宽度。 */
+body[data-zhiyun] .znp-label { flex: 1; min-width: 0; }
+body[data-zhiyun] .znp-item-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+body[data-zhiyun] .znp-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+body[data-zhiyun] .znp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .znp-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body[data-zhiyun] .znp-arrow {
+  flex: none;
+  display: inline-flex;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .znp-fallback {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+body[data-zhiyun] .znp-fallback .znp-field { max-width: 260px; }
+
+/* 输入框与下拉：观感对齐 `.zs-account input` / `.zs-study select` 那一组
+   （同样的边框、圆角、内边距、focus 轮廓），但选择器挂在 `.znp` 下，
+   不去复写那几条通用规则。 */
+body[data-zhiyun] .znp input,
+body[data-zhiyun] .znp select {
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--zy-line);
+  border-radius: 5px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  font: inherit;
+  font-size: 12px;
+}
+body[data-zhiyun] .znp input:focus-visible,
+body[data-zhiyun] .znp select:focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 1px;
+}
+body[data-zhiyun] .znp-rule input { flex: 1; }
+body[data-zhiyun] .znp-rule select { flex: none; max-width: 220px; }
+/* 代理卡片底色比输入框深，两个 field 控件跟着用深底才不显得发白。 */
+body[data-zhiyun] .znp-item input,
+body[data-zhiyun] .znp-item select { background: var(--zy-surface); }
+
+body[data-zhiyun] .znp-icon-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-muted);
+  cursor: pointer;
+}
+body[data-zhiyun] .znp-icon-button:hover {
+  border-color: var(--zy-line);
+  background: var(--zy-hover);
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .znp-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+}
+body[data-zhiyun] .znp-result-ok { color: var(--zy-accent); }
+body[data-zhiyun] .znp-result-bad { color: #b42318; }
+body[data-zhiyun] .znp-note-ok {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .znp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .znp-foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 窄列下「域名 → 目标」挤成一行会窄到看不清填的是什么：改成竖排。
+   必须写在上面那些基规则**之后** —— 同特异性下后写的赢，放前面就是死规则。 */
+@media (max-width: 760px) {
+  body[data-zhiyun] .znp-rule {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  body[data-zhiyun] .znp-arrow {
+    display: none;
+  }
+  body[data-zhiyun] .znp-rule select { max-width: none; }
+  body[data-zhiyun] .znp-item-head { flex-wrap: wrap; }
+}

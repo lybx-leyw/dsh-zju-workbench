@@ -38,6 +38,7 @@ export const HOST_SEEDS = [
 export const CLIENT_PACKAGES = [
   'dsh-zhiyun-ui-primitives',
   'dsh-zhiyun-shell',
+  'dsh-zhiyun-net-proxy',
   'dsh-zhiyun-study-core',
   'dsh-zhiyun-page-today',
   'dsh-zhiyun-page-courses',

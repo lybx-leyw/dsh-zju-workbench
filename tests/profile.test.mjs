@@ -61,7 +61,7 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   assert.equal(await readFile(path.join(home, 'user-note.txt'), 'utf8'), 'keep my notes');
   assert.equal(JSON.parse(await readFile(manifest, 'utf8')).description, 'user customization');
   assert.equal(await realpath(path.join(first.profile, 'node_modules', 'dsh-zhiyun-shell')), await realpath(path.join(root, 'packages/dsh-zhiyun-shell')));
-  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell', 'dsh-zhiyun-ui-primitives', 'dsh-zhiyun-classroom', 'dsh-zhiyun-parser', 'dsh-zhiyun-study-core', 'dsh-zhiyun-lecture', 'dsh-zhiyun-final-pass', 'dsh-zhiyun-quiz', 'dsh-zhiyun-notes', 'dsh-zhiyun-knowledge', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-me', 'dsh-zhiyun-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-feedback']);
+  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell', 'dsh-zhiyun-ui-primitives', 'dsh-zhiyun-net-proxy', 'dsh-zhiyun-omni', 'dsh-zhiyun-classroom', 'dsh-zhiyun-parser', 'dsh-zhiyun-study-core', 'dsh-zhiyun-lecture', 'dsh-zhiyun-final-pass', 'dsh-zhiyun-quiz', 'dsh-zhiyun-notes', 'dsh-zhiyun-knowledge', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-me', 'dsh-zhiyun-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-feedback']);
   // 每个本仓包都要有 profile 里的目录链接 —— 漏一个的表现是「启动了但那一页空白」。
   for (const name of sourceBundles) {
     assert.equal(await realpath(path.join(first.profile, 'node_modules', name)), await realpath(path.join(root, 'packages', name)), `${name} 缺 profile 链接`);

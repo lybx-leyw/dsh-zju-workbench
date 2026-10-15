@@ -37,14 +37,18 @@ test('真实仓库：没有跨包 @media 顺序依赖，也没有跨包同属性
 
 test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静默少检查一个包）', () => {
   const sheets = loadSheets(root);
-  // 这八个包有 src/style.css；其余包没有样式表，不该出现在结果里。
+  // 这些包有 src/style.css；其余包没有样式表，不该出现在结果里。
+  // 加包的样式表时**必须**在这里补一行：只加文件不改这里，测试会红；
+  // 反过来若哪天这里被改成「不比了」，漏读一个包就再也没人发现了。
   assert.deepEqual([...sheets.keys()], [
+    'dsh-zhiyun-net-proxy',
     'dsh-zhiyun-page-courses',
     'dsh-zhiyun-page-feedback',
     'dsh-zhiyun-page-me',
     'dsh-zhiyun-page-paper',
     'dsh-zhiyun-page-plugins',
     'dsh-zhiyun-page-study',
+    'dsh-zhiyun-page-today',
     'dsh-zhiyun-shell',
     'dsh-zhiyun-ui-primitives',
   ]);
