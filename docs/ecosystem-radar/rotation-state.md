@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `B` |
-| `last_run_at` | `2026-10-16 18:35` |
-| `group_runs`（累计） | A=9, B=7, C=5 |
+| `last_group` | `A` |
+| `last_run_at` | `2026-10-16 21:10` |
+| `group_runs`（累计） | A=10, B=7, C=5 |
 
 ### 流水
 
@@ -78,6 +78,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-16 09:01 | B | **同日第四轮**（规则 2：今日已跑 B 00:00 / C 03:10 / A 06:15 → 脚本判 `same-day(exhausted)`）。按 10-15 先例**不重复任何已跑关键词**，改跑**正交新轴：校园基础设施 / 系统能力轴**（`zju login`/`zju auth`/`zju vpn`/`zju captcha`/`zju library`/`zju jwb` 等；20 次搜索 ⚠ 超限一倍，为一次性验证该轴是否枯竭）。新增 **20 条**；🟢1 + 🟡2 + 🔵9 + ⛔11（**0 条 NOASSERTION**）；出骨架 `dsh-radar-panda-calendar`。**该轴一次即扫尽**（`zju seat booking`/`zju notice announcement`/`zju scholarship`/`zju freshman guide`/`zju graduation credit audit`/`zju graduate student tool` 六词全返 0） |
 | 2026-10-16 04:12 | B | 学科资产/课程内容轴：zju physics/math/lab report/software engineering/campus map + user:ZJU-Turing/org:zju-isee + topic:zju(+lang:js/ts)；30词；第30次触发API 403限额，本轮不完整；145条新增；🟢1+🟡1+🔵22+⚠3+⛔118；出骨架 dsh-radar-zju-recorder |
 | 2026-10-16 15:05 | B | 自动记录 |
+| 2026-10-16 21:10 | A | 第八轮·A组跨harness互操作/插件市场与治理轴（hub: cross-harness / plugin marketplace / plugin score / security audit） |
 | 2026-10-16 18:35 | B（跨校同型轴） | `course review rating platform` 等 10 词（11 次调用，⚠超限 1 次）；抓取 60 条量级 → **新候选仅 1 条**；🟡0 🟢0 🔵1 ⛔9；**无骨架、不开 PR**。⚠ 开场 `ls-remote` 静默失败被误读为「分支不存在」，push 被拒后 reset 到 `origin/radar`（`c87c23a`）重做 —— **与 10-15 第二轮同型坑，建议修脚本**。**新结论：跨校同型轴同样薄** |
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑

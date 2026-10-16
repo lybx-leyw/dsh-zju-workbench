@@ -946,3 +946,45 @@
 > **本轴结论（供后续轮次直接引用）**：跨校同型轴**只在「具体功能名词」上有效**；
 > 升格到**抽象平台名词**（`student planner pwa`、`campus portal`）即 `total_count = 0`。
 > **不建议作为主力轴**；建议主力退回 A 组，B 组降频为事件驱动。
+
+### 2026-10-16 · 第八轮（A 组 · 跨 harness 互操作 / 插件市场与治理轴）
+
+> 关键词：`cordis`、`cordis plugin in:name,description`、`harness plugin in:name,description`、
+> `harness plugin marketplace in:name,description`、`agent plugin cross-harness in:name,description`、
+> `dsh plugin marketplace in:name,description`、`dsh plugin store in:name,description`、
+> `dsh plugin registry discover in:name,description`、`mcp server marketplace agent skills in:name,description`、
+> `dsh plugin security audit`（10 次调用，**未超限**；0 次 403）。
+> 抓取约 80 条 → **新候选 11 条**。**本轮是当日产出率最高的一轮**（见 `2026-10-16-g.md`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `PerryLink/dsh-score` | A 原生DSH | Apache-2.0 ✅ | 插件质量/工作台可用性 | **重复可强化** | 🟡 | proposed | 2026-10-16 | ★12，push 2026-10-12。TypeScript。**插件多维质量评分**（消费 dsh-test-drive 安装实测 + 维护活跃度 + 文档完备度）。**强化式集成三条件成立**：仍是「插件」页（`dsh-zhiyun-page-plugins`）+ 功能正交（现有答"关掉谁会不会连坐"，本条答"装谁靠不靠得住"）+ 底层新增本仓完全没有的评分能力。**骨架已生成** `packages/dsh-radar-plugin-score`。⚠ 上游 ★ 低、fork 0，属早期项目，采用前须隔离环境验证、并确认评分数据源可否离线 |
+| `PensiveFei/dsh-secure-audit` | A 原生DSH | MIT ✅ | 隐私/成绩等 PII 脱敏 | **重复可强化** | 🟡 | proposed | 2026-10-16 | ★84（本子轴活跃度最高），push 2026-10-11。JavaScript（**移植成本低于 TS 项**）。**只读**安全检查（prompt-injection 检测 + 中文 PII 脱敏 + 本地配置审计），与本仓「不另开写入口」原则契合。**答"安不安全"，与 dsh-score 的"好不好"正交**。受「L2 每日最多 1 个」限制未出骨架，**建议下一轮出** |
+| `wshobson/agents` | B 其他JS | MIT ✅ | 插件发现 | 全新 | 🔵 | proposed | 2026-10-16 | ★**40898**，fork 4339，push 2026-10-15。**语言 Python**。跨 harness 插件市场（Claude Code / Codex / Cursor / OpenCode / Copilot / Antigravity / Pi 六种统一市场）。**价值在"跨 harness 统一市场"这一范式**，可作方法论线索；非 JS 栈且非 DSH 生态 → **不直接集成** |
+| `imsai-sh/awesome-deepseek-harness-plugins` | A 原生DSH | MIT ✅ | 插件发现 | **重复无增益** | 🔵 | proposed | 2026-10-16 | ★296，fork 282，push 2026-10-16。JavaScript。11,000+ 插件市场 + 搜索 + 排名 + 免费 API。**与已登记骨架 `dsh-radar-dsh-market`（锁定 `dsh-market` ★6494）功能重叠**，后者 ★ 更高且先登记 → 不集成，**只作线索源**（可从中捞候选） |
+| `Kilo-Org/kilo-marketplace` | B 其他JS | Apache-2.0 ✅ | — | 全新 | 🔵 | proposed | 2026-10-16 | ★194，push 2026-09-28。Skills / MCP Servers / 插件统一市场，**非 DSH 生态**。作跨生态市场范式参考 |
+| `whyihaveyou/dsh-suite` | A 原生DSH | MIT ✅ | 插件发现 | **重复无增益** | 🔵 | proposed | 2026-10-16 | ★60，fork 14，push 2026-10-16。HTML。"每小时刷新活目录 + 兼容实测 + 内置商店 + 脚手架"。**与 dsh-market 骨架重叠** → 不集成 |
+| `mishibeikejie/zat-dsh-engine` | A 原生DSH | MIT ✅ | 插件发现 | **重复无增益** | 🔵 | proposed | 2026-10-16 | ★77，push 2026-09-24。TypeScript。可视化插件市场。**与 dsh-market 骨架重叠** → 不集成 |
+| `web-casa/Awesome-DeepSeek-Harness-Plugins` | A 原生DSH | **NOASSERTION** ⚠ | 插件发现 | — | ⚠ | pending-license | 2026-10-16 | ★117，push 2026-08-31。"官方自动生成的 DSH Cordis 插件清单"。**许可证无法识别 → 待人工核验，本轮不采用、不摘取任何代码** |
+| `2BingLing/dsh-market` | A 原生DSH | **NOASSERTION** ⚠ | 插件发现 | — | ⚠ | pending-license | 2026-10-16 | ★154，push 2026-10-15。"持续收录 6000+ 插件 · 中文搜索 + 五维评分"。**许可证不明，且与已登记 MIT 的 `dsh-market/dsh-market` 疑似同型 → 待人工核验，不采用** |
+| `bradeGithub/DSH-Plugins-Marketplace` | A 原生DSH | MIT ✅ | 插件发现 | **重复无增益** | ⛔ | rejected | 2026-10-16 | ★176，JavaScript。在 DSH Web GUI 内浏览/安装 `topic:dsh-plugin` 全部插件。**与 dsh-market 骨架重复且无增益** → 不集成 |
+| `ZASENJC/dsh-plugins-store` | A 原生DSH | MIT ✅ | 插件发现 | **重复无增益** | ⛔ | rejected | 2026-10-16 | ★70，TypeScript。自动分类/收录/验证的市场。**与 dsh-market 骨架重复且无增益** → 不集成 |
+| `dshplugin-app/dsh-plugin-registry` 等 4 条 | A 原生DSH | MIT ✅ / **无** | — | — | ⛔ | rejected | 2026-10-16 | `dsh plugin registry discover` 命中项，**全部 ★0-2**，含 `vbarter/dsh-plugin-registry`（**无许可证**）、`Jesse-njx/dsh-plugin-manager-registry`、`MalcolmFeng/dsh-nacos-bridge-plugin`。活跃度与许可证均不达标，**不逐条铺开** |
+
+> **本轮结论（供后续轮次直接引用）**：
+> ① **A 组未枯竭 —— 枯竭的是「功能域切片」，不是「生态连接切片」**。此前 9 轮 A 组全部只查
+> 「DSH 插件能做什么」（rag/ocr/graph/paper/theme/学习科学/开发工具链/运维…），
+> 本轮首查**「与外部 ecosystem 的连接面」**即捞到 11 条新候选、2 条 🟡，
+> **产出率为当日 B 组枯竭轮与跨校同型轴的 3~5 倍**。**建议 A 组以「连接面」为新主力轴**。
+> ② **插件市场子轴封板**：单轮命中 **6 个**同类项（★296/176/154/77/70/60），
+> 全部与已登记 `dsh-radar-dsh-market`（`dsh-market` ★6494）重叠。
+> **后续遇同类项直接判 ⛔「重复且无增益」，只登记一行、不重复评估**。
+> ③ **「插件治理」（质量评分 / 安全审计 / 供应链）是真空白且是强化式集成的理想落点** ——
+> 本仓有 22 个 bundle 却**零质量/安全元数据**。建议下轮深挖，延伸词：
+> `dsh plugin vet`、`plugin supply chain`、`dsh plugin provenance`、
+> `plugin permission manifest`、`dsh plugin compatibility test`。
+> ④ **长尾切片必须加 `in:name,description`**：`cross-harness` 收窄后仅 13 条、
+> `registry discover` 仅 4 条；不加限定符则 `harness plugin` 返 8332 条（混入全部
+> Claude Code / Cursor 生态）。**注意：这与首跑校准的「限定符别叠加」不矛盾** ——
+> 那条针对 `license:`/`stars:` **叠加过滤**，而 `in:` 是**收窄检索面**，作用方向相反。
+> ⑤ **`cordis` 是含义过载词**：裸搜 3828 条（含人名/地名），**必须与 `plugin`/`harness` 组合**。
