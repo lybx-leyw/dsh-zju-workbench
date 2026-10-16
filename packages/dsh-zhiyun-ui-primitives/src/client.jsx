@@ -16,7 +16,12 @@ export function apply(ctx) {
     label: 'zhiyun: shared primitive styles',
   });
 }
-export const { Icon, Mark, Empty, SectionTitle, Notice, useStore, useStudy, mountStyle } = primitives;
+// ⚠️ 这张清单是**逐个列**的，新增原语必须同时加到这里，否则它在 `primitives.jsx` 里
+//    定义得好好的、产物里也有那个字符串，但**入口 bundle 不往外传** —— 使用方拿到
+//    `undefined`，React 报 #130（Element type is invalid），表现是那一整块插槽崩掉、
+//    界面上凭空少一片。这个坑真踩过：新加的 `StudentAvatar` 漏在了这里。
+//    `tests/ui-primitives.test.mjs` 会比对两个文件的导出名，防止再漏。
+export const { Icon, Mark, Empty, SectionTitle, Notice, StudentAvatar, useStore, useStudy, mountStyle } = primitives;
 
 // ⚠️ 这里**不能**写 `export default primitives`。
 //

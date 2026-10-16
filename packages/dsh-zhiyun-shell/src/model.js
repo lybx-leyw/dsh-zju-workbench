@@ -1,22 +1,77 @@
 export const NAV = Object.freeze([
-  { id: 'today', label: '今天', icon: 'sun', hint: '从今天开始，按自己的节奏学习' },
-  { id: 'courses', label: '我的课', icon: 'book', hint: '课程、回放与课堂资料' },
+  // ⚠️ 每个图标必须**自带含义且彼此不重样**：侧栏是只有图标的导轨，名字靠悬停浮出。
+  //    曾经「论文」「笔记」共用折角稿纸、「问一问」「反馈」共用对话气泡、
+  //    「我的课」「看课」共用一本书 —— 一排里出现两个一样的图形，导轨就没法用了。
+  { id: 'today', label: '今天', icon: 'calendarToday', hint: '从今天开始，按自己的节奏学习' },
+  { id: 'courses', label: '我的课', icon: 'cap', hint: '课程、回放与课堂资料' },
+  // 「看课」是**从「我的课」进来的子页**，不是主导航项 —— 所以 `sidebar: false`。
+  //
+  // 为什么仍然放进 NAV 而不是另建一套路由：外壳的面板、插槽、`navigate()`、
+  // `activePage()` 全部以 NAV 为唯一真源（`navigate()` 对不在 NAV 的 id 直接抛错）。
+  // 另建一套就要在这四处各加一条分支，那才是真正的重复。用「在 NAV 里但不上侧栏」
+  // 表达，只多一个字段。
+  { id: 'player', label: '看课', icon: 'play', hint: '看这一节的回放，对照课件与字幕', sidebar: false },
   // 紧挨「我的课」：两者都是「读材料」的入口，用户找论文时先看课程再看文献是自然顺序。
   // hint 里刻意不出现「规划」——tests/profile.test.mjs 用 matchingPages('规划') 断言
   // 搜索只命中「问一问」，那是一条守卫别名的测试，别让新页面污染它。
   { id: 'paper', label: '论文', icon: 'paper', hint: '打开本地 PDF，选中英文即可翻译并提问' },
-  { id: 'ask', label: '问一问', icon: 'chat', hint: '和 AI 一起理解、思考与规划' },
-  { id: 'study', label: '学习', icon: 'layers', hint: '把学过的内容，慢慢变成自己的知识' },
+  { id: 'ask', label: '问一问', icon: 'askBubble', hint: '和 AI 一起理解、思考与规划' },
+  { id: 'study', label: '学习', icon: 'bulb', hint: '把学过的内容，慢慢变成自己的知识' },
+  // 「笔记」紧跟「学习」：学完就记是连着发生的两步（整理 → 落成自己的话）。
+  // hint 避开「规划」（守卫别名，见上面那条注释）。
+  { id: 'notes', label: '笔记', icon: 'notebook', hint: '用双链把想法连成一张知识网' },
   { id: 'me', label: '个人', icon: 'user', hint: '你的学习空间' },
   // 「插件」放在最后：它是关于这个工作台**自己怎么组装**的一页，属于设置性质，
   // 不属于学习动线（找一个学习入口时不该先撞见它）。
   // hint 里同样刻意避开「规划」（同上面那条守卫）。
-  { id: 'plugins', label: '插件', icon: 'graph', hint: '看这个工作台由哪些包组成，取消用不到的那些' },
+  { id: 'plugins', label: '插件', icon: 'plug', hint: '看这个工作台由哪些包组成，取消用不到的那些' },
   // 「反馈」与「插件」并列放在最后：两者都是关于工作台**本身**的页（怎么组装、怎么
   // 提需求），不属于学习动线。hint 同样避开「规划」（守卫别名）。
-  { id: 'feedback', label: '反馈', icon: 'chat', hint: '提需求、在讨论串里聊，看维护者怎么回' },
+  { id: 'feedback', label: '反馈', icon: 'megaphone', hint: '提需求、在讨论串里聊，看维护者怎么回' },
 ]);
 export const panelKey = id => `zhiyun.${id}`;
+
+/**
+ * 导航**上半组**：固定在上面、**不可撤销**的页 —— 学习动线（今天 / 我的课 / 论文 /
+ * 问一问 / 学习 / 笔记）。
+ *
+ * 它们不出现在「···」菜单里，也没有图钉可点：菜单只管**下半组**（分隔线下方
+ * 那些由用户固定进来的页）。这条划分与 NAV 里那条注释是同一套理由 ——
+ * 「插件」「反馈」是关于**工作台自己**的页，找一个学习入口时不该先撞见它们，
+ * 所以默认收在「···」里，要用了再钉上去。
+ *
+ * ⚠️ 用 `Object.freeze` 的**清单**而不是给 NAV 加字段：上半组是「版式契约」，
+ *    和 `FULL_BLEED_PAGES` 一样集中在这里，一眼能看全导轨长什么样。
+ */
+export const RAIL_DEFAULT = Object.freeze(['today', 'courses', 'paper', 'ask', 'study', 'notes']);
+
+/**
+ * **单独钉在导轨最下方**的页：个人。
+ *
+ * 它不参与上半组/下半组那套分组 —— 呈现方式也不一样（一个圆形头像，不是图标），
+ * 位置固定在左下角最底，与「切换明暗」等全局控件同处一块。
+ * 同样**不可撤销**：既是账号入口，也是"这是我的空间"的唯一视觉标识。
+ */
+export const RAIL_ACCOUNT = 'me';
+
+/**
+ * **整幅铺开**的页：内容区不套 `.zy-content` 的版心（980px 上限 + 文章式内边距）。
+ *
+ * 为什么需要这个区分：`.zy-content` 是给**文章型**页面用的（今天 / 个人 / 插件），
+ * 它的 max-width 与内边距让长文本行宽可读。但编辑器不是文章 —— 它是一个应用面板：
+ *
+ *   1. 版心 980px 减去左右各 48px 内边距，只剩约 880px；笔记页里再放
+ *      ribbon + 文件树 + 编辑器 + 右栏，正文被挤到一两百像素宽；
+ *   2. `.zy-content` 的高度由内容决定，于是页内元素的 `height:100%` 解析成
+ *      `auto` —— 面板变成一张浮在滚动容器里的小卡片，四周全是死空间。
+ *
+ * 这类页面**自己**负责滚动（内部分区各自 overflow），所以整页不再纵向滚动。
+ *
+ * ⚠️ 用显式清单而不是"按页面 id 猜"：铺开是一种版式契约，加进来时要有人想清楚
+ * "这一页的滚动归谁"。猜错的表现是页脚被裁掉或出现双层滚动条。
+ */
+export const FULL_BLEED_PAGES = Object.freeze(['notes']);
+
 /**
  * 一个页面由哪个包承载。
  *
@@ -49,20 +104,32 @@ export function hiddenPageIds(enabled, pages = NAV) {
 }
 /**
  * 实际显示在侧栏与跳转搜索里的页。
+ *
+ * 过滤两类：
+ *   1. `hidden` —— 承载它的包被用户取消了；
+ *   2. `sidebar === false` —— **子页**（如「看课」）。它是从别的页进来的，
+ *      直接列在主导航里没有意义：点进去没有课程上下文，只能显示空态。
+ *      同时也不该出现在 Ctrl+K 里 —— 那里搜出来一条「看课」同样点不出东西。
+ *
  * @param hidden - 要藏起来的页面 id 集合。
  * @param pages - 候选页；默认 `NAV`。
  * @returns 保留下来的页。
  */
 export function visiblePages(hidden, pages = NAV) {
-  return pages.filter(page => !hidden.has(page.id));
+  return pages.filter(page => !hidden.has(page.id) && page.sidebar !== false);
 }
 export function activePage(panel, pages = NAV) {
+  // ⚠️ 这里**不**过滤 `sidebar: false`：子页也要能被认出来。
+  // 过滤了的话，停在「看课」时 `activePage` 返回 null，侧栏会把「问一问」当成
+  // 当前页高亮，而主面板其实在看课 —— 两处说的不是同一件事。
   if (panel == null || panel === 'conversation') return 'ask';
   return pages.find(page => panelKey(page.id) === panel)?.id ?? null;
 }
 export function matchingPages(query, pages = NAV) {
   const normalized = query.trim().toLocaleLowerCase();
-  return pages.filter(page => `${page.label} ${page.hint}`.toLocaleLowerCase().includes(normalized));
+  return pages
+    .filter(page => page.sidebar !== false)
+    .filter(page => `${page.label} ${page.hint}`.toLocaleLowerCase().includes(normalized));
 }
 
 // 这里曾经有一份 pickLearningWorkspace 的副本。拆包时学习空间连同它的挑选规则一起
