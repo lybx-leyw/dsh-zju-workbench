@@ -1048,3 +1048,59 @@
 > **窄而专的技术词优于宽泛场景词** —— 与 A 组「收窄检索面」的经验一致。
 > ⑤ **`fsrs-browser` 与既有 `ts-fsrs` 骨架的分层关系需人工裁决**（方案 ①替换 / ②分层 / ③维持），
 > 二者同属 `open-spaced-repetition` 组织，**不应同时采用**，否则违反「功能仍相似正交」。
+
+---
+
+## 2026-10-17 · C 组（学生功能域 · **同日第二轮**）· 追加
+
+> 本轮与同日 **00:01 的「第九轮 · C 组」**（提交 `771580b`）**同日同组**，系取组时本地
+> `rotation-state.md` 快照陈旧所致（详见 `docs/ecosystem-radar/2026-10-17-c2.md` §12）。
+> 已 **rebase 到远端最新、不覆盖第九轮产出**，并将与第九轮**重复的 7 条剔除**：
+> `M1ck4/pdfmd`、`Tessie27/Live-Caption-Saver`、`AbdulBasit313/React-Quiz-App-Template`、
+> `Waqar-743/SnapNote`、`JXC240/paper-reader`、`RobbieRao/VibeResearchPaperReader`、`Tentengg/Paper-Reader`。
+> 关键词：`timetable ics export`、`paper annotation reader`、`ocr notes taking`、`quiz practice`、
+> `fitness tracker language:typescript`、`spaced repetition flashcard`、`html to markdown converter`、
+> `pdf to markdown`、`pomodoro study timer`、`lecture notes ai summarize`。搜索 10 次，API 无 403。
+> 原始命中 241 个不同仓库（含第九轮已登记项），按远端 registry 去重后登记 **23 条**在下。
+> **本轮增量细分轴：文档 → Markdown 格式转换**（第九轮未覆盖）。
+> **本轮唯一 🟢 已出骨架 `dsh-radar-markitdown-js`。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Mirza-Glitch/markitdown-js` | B 其他JS | MIT | 笔记/论文/课件（文档导入） | **重复可强化**（导入通路） | 🟢 | skeleton-created | 2026-10-17 | ★21。**本轮核心命中（第九轮未覆盖）**。npm `markitdown-js@0.0.14`（MIT，`type: module`，2025-03-02）。按格式分派到专用库：`mammoth`(docx)/`turndown`(html)/`node-pptx-parser`(pptx)/`xlsx`/`pdf-parse`。**本仓原无格式转换底层**（`dsh-zhiyun-parser` 是 LLM 解析、`pdfjs-dist` 只管渲染）→ 强化式集成成立。⚠ 上游停滞约 19 个月；依赖含 `exiftool-vendored`/`fluent-ffmpeg`/`node-tesseract-ocr` 二进制项，建议自建收敛子集。已出骨架。待裁定 vs `instax-dutta/MarkItDownJS` |
+| `instax-dutta/MarkItDownJS` | B 其他JS | MIT | 笔记/论文/课件（文档导入） | 重复可强化（导入通路） | 🟡 | proposed | 2026-10-17 | ★1（但 2026-08-24 活跃）。通用文档→MD 引擎（PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/XML/图片/音频/EPUB/压缩包）。覆盖广于 `markitdown-js`，但 **★1 社区验证不足**。**与 🟢 候选二选一，不要都接** |
+| `danburzo/percollate` | B 其他JS | MIT | 笔记/论文（网页导入） | 重复可强化（导入通路） | 🟡 | proposed | 2026-10-17 | ★4688（2025-08 停更）。Node CLI：网页 → 可读 PDF/EPUB/HTML/**Markdown**（内置 Readability）。成熟度远高于 🟢 候选，但**是 CLI 非可 import 库**，需改造 → 适配成本中高。与 `markitdown-js` 同属「→MD」细分，建议分工（网页走 percollate、本地文档走 markitdown-js）或二选一 |
+| `ankimcp/anki-mcp-server` | B 其他JS | MIT | 复习 | 重复可强化（学习调度） | 🟡 | proposed | 2026-10-17 | ★516（活跃，2026-10-11）。Anki 的 MCP server（TS）。**调度层与既有骨架 `dsh-radar-fsrs-scheduler`（`ts-fsrs`）及第九轮的 `dsh-radar-fsrs-browser` 重叠**；形态为 MCP server（服务端）非可嵌入库。仅「Anki 卡片格式互操作」有独有增益 |
+| `SYuan03/Skill-Anything` | B 其他JS | MIT | 习题/复习 | 重复可强化（学习页） | 🟡 | proposed | 2026-10-17 | ★337（活跃，2026-09-26）。任意来源（PDF/视频/网页/音频/文本）→ 12 节学习包 + 测验 + 闪卡 + 间隔重复。**Python 技术栈** → 代码不可复用，仅借鉴产物结构。与 `dsh-zhiyun-quiz` + FSRS 骨架域重叠，增益有限 |
+| `Cawlumm/lyftr` | B 其他JS | MIT | 锻炼 | **全新**（无锻炼面板） | 🟡 | proposed | 2026-10-17 | ★359（活跃，2026-10-16）。自托管锻炼记录（React + **Go** 后端 + SQLite + Docker）。**前后端一体且后端非 JS** → 仅可提取前端数据模型与图表思路。**本仓无锻炼面板 → 属「全新」而非强化式集成**，建议降 🔵。提请裁定 |
+| `microsoft/markitdown` | B 其他JS | MIT | 文档转换（设计参考） | 仅供参考 | 🔵 | proposed | 2026-10-17 | ★190577。**Python**。生态位最高的文件→MD 工具。非 JS → 不可直接集成，仅作「格式分派矩阵」**设计参考**。🟢 候选 `markitdown-js` 即其 JS 端口 |
+| `mixmark-io/turndown` | B 其他JS | MIT | 文档转换（底层件） | 重复可强化（导入通路·底层） | 🔵 | proposed | 2026-10-17 | ★11476。**JS HTML→Markdown 事实标准**（npm `turndown@7.2.4` MIT），正是 `markitdown-js` 的内部依赖。**若走自建收敛子集路线，这是核心件**。配套 `turndown-plugin-gfm@1.0.2`（MIT）。提请裁定：整包接 vs 自建 |
+| `datalab-to/marker` | B 其他JS | Apache-2.0 | 文档转换 | 仅供参考 | 🔵 | proposed | 2026-10-17 | ★40504。**Python**。高精度 PDF→MD+JSON。仅参考 |
+| `firecrawl/anydoc` | B 其他JS | MIT | 文档转换 | 仅供参考 | 🔵 | proposed | 2026-10-17 | ★22886。**Rust**。Word/PPT/Excel/OpenDocument/RTF/EPUB/CSV/PDF → 干净 MD。仅参考 |
+| `firecrawl/pdf-inspector` | B 其他JS | MIT | 文档解析 | 仅供参考 | 🔵 | proposed | 2026-10-17 | ★19664。**Rust**。PDF 检测/分类/文本抽取（自动判扫描件）。仅参考 |
+| `chatdoc-com/OCRFlux` | B 其他JS | Apache-2.0 | 文档解析 | 仅供参考 | 🔵 | proposed | 2026-10-17 | ★2532。**Python**。多模态 PDF→Markdown 工具包。仅参考 |
+| `showdownjs/showdown` | B 其他JS | MIT | 文档转换 | 无关（方向正交） | 🔵 | proposed | 2026-10-17 | ★14873。JS 双向 MD⇄HTML。本仓需求是 HTML→MD（单向），方向正交，无集成价值 |
+| `open-spaced-repetition/py-fsrs` | B 其他JS | MIT | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-17 | ★513。**Python** 版 FSRS。与 `ts-fsrs`（骨架）及第九轮 `fsrs-browser` 同组织同算法 → 登记但**不建议采用** |
+| `alyssaxuu/carden` | B 其他JS | MIT | 复习 | 重复可强化（学习页） | 🔵 | proposed | 2026-10-17 | ★490。JS 闪卡 + 间隔重复 + 游戏化。**2022-06 停更**，调度层（自有算法）旧于 FSRS → 仅线索 |
+| `flashcards/flashcards.github.io` | B 其他JS | MIT | 复习 | 仅供参考 | 🔵 | proposed | 2026-10-17 | ★184。社区开发者闪卡库（内容向，非底层） |
+| `gymcoach-app/gymcoach` | B 其他JS | MIT | 锻炼 | **全新**（无锻炼面板） | 🔵 | proposed | 2026-10-17 | ★99（活跃，2026-10-14）。自托管锻炼记录 + 自带 LLM 的 AI 教练。**本仓无锻炼面板**，形态为独立自托管 App → 仅参考 |
+| `liuchuan01/Fitness-OS` | B 其他JS | Apache-2.0 | 锻炼 | **全新**（无锻炼面板） | 🔵 | proposed | 2026-10-17 | ★76（活跃，2026-10-07）。个人 AI 健身工作台（3D 身体 + 训练记录 + **DeepSeek Harness** 集成）。形态为独立工作台 → 仅参考 |
+| `basarsubasi/simplefitnessapp` | B 其他JS | MIT | 锻炼 | **全新**（无锻炼面板） | 🔵 | proposed | 2026-10-17 | ★225。FOSS 健身追踪 App（移动端形态）→ 仅参考 |
+| `hasaneyldrm/logpress-public` | B 其他JS | MIT | 锻炼 | **全新**（无锻炼面板） | 🔵 | proposed | 2026-10-17 | ★274（活跃，2026-07）。React Native AI 训练追踪（iOS/Android）→ 移动端形态，仅参考 |
+| `zixun-ai/obsidian-paper-reader` | B 其他JS | MIT | 论文批注 | 仅供参考 | 🔵 | proposed | 2026-10-17 | 强耦合 Obsidian 宿主；支持标注/墨迹/链接笔记。许可证已核实（`/license` → MIT） |
+| `CatchTheTornado/text-extract-api` | B 其他JS | MIT | 文档抽取 | 仅供参考 | 🔵 | proposed | 2026-10-17 | ★3184。Python 文档抽取 API（+ Ollama 本地 OCR），**2025-12 停更**、非 JS → 仅参考 |
+| `BallCard/zju-study-workbench` | B 其他JS | MIT | 课程/笔记 | 仅供参考 | 🔵 | proposed | 2026-10-17 | ★0，**仓库已 archived**。ZJU 课程资料 + AI 笔记 + LaTeX PDF + Git 进度工作台。**归档 → 不建议跟进**，仅作场景印证 |
+| 非 JS 的 HTML/PDF→MD 转换库汇总 | B 其他JS | 混合 | — | — | ⛔ | rejected | 2026-10-17 | `html to markdown converter` / `pdf to markdown` 命中大量**非 JS** 或纯方向正交项，经技术栈过滤后不登记：`JohannesKaufmann/html-to-markdown`(Go)、`letmutex/htmd`(Rust)、`suntong/html2md`(Go)、`vsch/flexmark-java`(Java)、`mysticmind/reversemarkdown-net`(C#)、`thephpleague/html-to-markdown`(PHP)、`JosephusPaye/markdown-to-html`、`breakdance/breakdance`(JS 但 2026-01 停更且被 turndown 覆盖)、`netgusto/upndown`(JS，2024 停更)、`alanshaw/markdown-pdf`(方向反之 MD→PDF)、`wisupai/e2m`、`thombashi/sqlitebiter`、`vdjagilev/nmap-formatter` 等 |
+| `ujifgc/pagedown` | B 其他JS | NOASSERTION | 文档转换 | — | ⚠ 待核 | pending-license | 2026-10-17 | ★447。许可证待人工核验；**方向正交（MD→HTML）+ 2020-10 停更 → 建议直接 ⛔** |
+| `StudyLions/StudyLion` | B 其他JS | NOASSERTION | 学习计时 | — | ⚠ 待核 | pending-license | 2026-10-17 | ★139。Python Discord 学习计时 bot。许可证待核；**形态（Discord bot）不符** |
+| `pooriyayt/StudyMasterPro` | B 其他JS | NOASSERTION | 学习管理 | — | ⚠ 待核 | pending-license | 2026-10-17 | ★21。Python + PyQt5 桌面学习管理。许可证待核；非 JS |
+| `Kennygunderman/state-of-health-tracker` | B 其他JS | **无** | — | — | ⛔ | rejected | 2026-10-17 | ★481。React Native 健康追踪。**`/license` 端点返回 Not Found → 确认无许可证** → 只登记，不得摘取任何代码 |
+| `macanine/zju-english-helper` / `kenqia/zju-forum-search` | B 其他JS | **无** | — | — | ⛔ | rejected | 2026-10-17 | 分别为浙大大英默写器（★3）、CC98 自然语言找帖扩展（★2）。**`/license` Not Found → 无许可证** → 只登记（注：第九轮已登 `kenqia/zju-forum-search`，本轮仅作补充说明，不重复占行） |
+| `mcpower/icallate` / `Treeki/myplace-timetable-export` / `jaidenlabelle/algonquin-timetable-to-ics` / `WoodyABCD/CityU-timetable-to-ics-exporter` / `finwarman/kcl-timetable` | B 其他JS | **无** | 课表 ICS | — | ⛔ | rejected | 2026-10-17 | 各校课表→ICS 小工具，**均无许可证**。ICS 生成逻辑思路可借鉴，**代码不可摘** |
+| 各校课表→ICS 导出器（有证） | B 其他JS | MIT | 课表 ICS | **重复且无增益** | ⛔ | rejected | 2026-10-17 | `TOHgoto/cuhk-timetable-exporter`(★2,MIT)、`khosbilegt/mq-timetable-exporter`(★2,MIT)、`JaciBrunning/ElsieScraper`(无证)。（`computerfan/XJTLU-Timetable-to-ICS`、`clemmbn/auriga-extract` 第九轮已登）。与既有 `DongLanQwQ0/ZJU-Tongge-Schedule` 同域，且**本仓尚无课表数据层**（`docs/robot-digest/2026-10-13.md` F-001）→ 前置未就绪，无增益 |
+| 通用答题 App / 模板 | B 其他JS | 混合 | 刷题 | **重复且无增益** | ⛔ | rejected | 2026-10-17 | `cnrture/Quizzy-Compose-Multi-Module`(Kotlin ★77)、`Vaibhav2002/Quizzify`(Kotlin ★43)、`eddy-hu/quizbee`(无证 ★40)、`MrPowers/code_quizzer`(无证 ★203)、`Tc2r1/Dev_Interview_Prep_App`(NOASSERTION ★51)、`LorenKociko/CCNA-Practice`(无证 ★73)。均与 `dsh-zhiyun-quiz` **重合且无更优底层**。宽词 `quiz practice`（8549 条）已**饱和**，建议改用窄限定 |
+| 番茄钟类 | B 其他JS | 混合 | 计时 | **重复且无增益** | ⛔ | rejected | 2026-10-17 | `Arijit-05/Fomodoro`(Kotlin ★187)、`narlock/TamoStudy`(Java ★94)、`andreidimaano/Calcifer`(JS ★42)、`njallam/stream-pomodoro`(无证)、`aribaskagan/KEGOMODORO`(MIT)、`fgerschau/pomodoro-timer`(无证)。**技术栈多非 JS**，且单一计时器与本仓「今天」页重合无增益。**该关键词价值密度低，建议下次不再单跑** |
+| 学习者独立 App / 桌面端 | B 其他JS | 混合 | 学习管理 | **重复且无增益** | ⛔ | rejected | 2026-10-17 | `Limekana/StudyDesk`(MIT ★26)、`hoangsonww/StudySync-Study-Buddy-App`(MIT ★28)、`SuryaThejas-07/Virtual_Fitness_Trainer`(无证 ★39)、`Devam338/fit_forge`(无证 ★38)。独立应用形态，非可封装库 |
+| `lowlighter/metrics` | B 其他JS | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | ★17293。GitHub 个人主页信息图生成器。**域完全不符**（`fitness tracker` 误命中其 fitness 插件） |
+| GPL/AGPL 红线项（本轮 C 组命中） | B 其他JS | GPL/AGPL ⛔ | — | — | ⛔ | rejected | 2026-10-17 | `iamgio/quarkdown`(GPL-3.0 ★16318)、`artcc/freelingo`(AGPL-3.0 ★179)、`WhyAsh5114/MyFit`(AGPL-3.0 ★142)、`HHousen/lecture2notes`(AGPL-3.0 ★67)、`femiaf13/manatee-fitness`(AGPL-3.0 ★48)、`xiaoxiae/Florodoro`(GPL-3.0 ★39)、`bttger/markdown-flashcards`(GPL-3.0 ★96)、`cubetastic33/sakubun`(GPL-3.0 ★41)、`helloworld1/AnyMemo`(GPL-2.0 ★158)、`dunossauro/copylot`(GPL-3.0 ★31)、`QSCTech/zjunet`(GPL-3.0 ★332)、`zhaoluting/marp-themes`(GPL-3.0 ★87)、`RunasSudo/allocics.js`(AGPL-3.0 ★2)。**许可证红线 → 只登记，不摘任何代码** |
+| 浙大课程资料 / 作业仓库（约 80 条） | B 其他JS | NOASSERTION/无 | — | — | ⛔ | rejected | 2026-10-17 | `zju-isee/zju-isee`、`lhxcs/ZJU_Courses`、`tiny656/PAT`、`merelydust/PAT-Advanced-Level`、`jinzcdev/pintia-solutions`、`macanine/zju-linear-algebra-papers`、`zhenguren/zju-study-map`、`AmeliaaaGXY/ZJU-SmartCampus-Map`、`dilititi/Echo-in-ZJU*`、`yuaanlin/*` 课程作业系列、`ZJU-Turing/*` 等。**C 组关键词误命中的 B 组域**，全部 `NOASSERTION` 或无许可证 / 纯资料内容 → **内容版权，只作线索，不逐条登记、不摘取** |
