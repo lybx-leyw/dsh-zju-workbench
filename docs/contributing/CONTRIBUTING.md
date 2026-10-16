@@ -86,6 +86,19 @@ npm run dev
 
 后续开发先在原终端按 `Ctrl+C` 停止服务，再用 `npm run dev` 重新构建并启动；无需重新构建时使用 `npm start`。`dev` 不会持续监听源码变化。依赖锁文件变化后重新执行 `npm ci`。
 
+命令行能打开之后，可以用桌面壳把**同一个** profile 开在窗口里。壳不安装宿主，也不构建客户端，因此前面的 `npm run dev` 必须已经成功。
+
+首次需要安装 Electron（一百多 MB）：
+
+```bash
+npm --prefix apps/desktop install
+npm run desktop
+```
+
+之后在仓库根目录执行 `npm run desktop`。客户端有改动时，先 `npm run dev`（或只需构建时用 `npm run build`），再开窗口。壳用启动它的那个 Node 拉起宿主，与 `npm start` 是同一个运行时。Electron 自带的 Node 会被宿主原生模块拒绝（运行时指纹不匹配），实例会立刻以退出码 1 结束。Windows 上若仓库目录带有 Low 完整性标签，启动器会在打开窗口前把 Electron 发行目录调到 Medium，其余文件不动。
+
+窗口里应看到与浏览器相同的五项导航。日志写在 Electron userData 目录的 `launcher.log`；Windows 上 `electron.exe` 不把标准输出回传到终端。
+
 ### 1.3 常用配置与排查
 
 | 需求 | 操作 |
@@ -94,6 +107,8 @@ npm run dev
 | 查看合并后的插件配置 | 构建完成后执行 `npm run profile:dump` |
 | 更换启动端口 | `npm start -- --port 3081` |
 | 提示缺少客户端产物 | 运行 `npm run dev`，先构建再启动 |
+| 用窗口打开工作台 | 首次 `npm --prefix apps/desktop install`，之后 `npm run desktop`。先确认 `npm start` 能起来 |
+| 窗口提示实例退出（退出码 1） | 关掉窗口后重新执行 `npm run desktop`，让它使用当前终端的 Node。先用 `npm start` 确认命令行本身能起来 |
 | 提示宿主缺失或版本不匹配 | 按 1.2 安装，并检查是否设置了指向其他宿主的环境变量 |
 
 需要指定安装或数据位置时，再设置以下环境变量：

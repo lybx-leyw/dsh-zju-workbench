@@ -5,6 +5,7 @@ import { chromium } from 'playwright';
 import { initialize, lock, root, runHost } from './profile.mjs';
 import { CLIENT_PACKAGES } from './build.mjs';
 import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-study-core/src/learning-space.js';
+import { NAV, RAIL_DEFAULT } from '../packages/dsh-zhiyun-shell/src/model.js';
 
 const evidence = path.join(root, 'artifacts');
 
@@ -274,17 +275,27 @@ try {
     await page.waitForFunction(() => !document.body.hasAttribute('data-ds-dark-theme'));
   }
   checks.push('Real host boot and initial Today selection');
-  // 侧栏页数：今天 / 我的课 / 论文 / 问一问 / 学习 / 个人 / 插件。
-  assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), 7);
+  // 导轨上的页面数**从 RAIL_DEFAULT 推导**，不写死数字。
+  // ⚠️ 导轨不再等于「NAV 里所有上侧栏的页」：默认固定在导轨上的是 RAIL_DEFAULT
+  //    （学习动线 + 个人），「插件」「反馈」默认收在末尾的「···」菜单里，
+  //    由用户点图钉固定。数字是结论，依据在 RAIL_DEFAULT 里。
+  assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), RAIL_DEFAULT.length + 1);
   await page.screenshot({ path: path.join(evidence, 'today-light.png'), fullPage: true });
-  for (const [label, id] of [['我的课', 'courses'], ['论文', 'paper'], ['学习', 'study'], ['个人', 'me']]) {
+  for (const [label, id] of [['我的课', 'courses'], ['论文', 'paper'], ['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${id}]`).waitFor();
   }
+  // 「个人」**不在导航里**：它是导轨最下方那一格圆形头像。点头像浮出**账号面板**，
+  // 「设置」才进个人页 —— 登录也在同一层（见下面那段）。这里顺便把这条路径走全。
+  await page.getByRole('button', { name: '账号', exact: true }).click();
+  await page.locator('.zy-account-menu').waitFor();
+  await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
+  await page.locator('.zy-page[data-page=me]').waitFor();
   checks.push('All product pages navigate through host layout');
-  // 「插件」页：依赖图必须真的从运行时读出来，而且宿主面的硬边要认得出
-  // （解析包被领域包依赖 —— 少了这条边它会被当成可以取消的叶）。
-  await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '插件', exact: true }).click();
+  // 「插件」也不在导轨上：它属于「···」菜单（默认不固定，要用了再钉）。
+  // 所以这里走菜单，而不是直接找导航按钮。
+  await page.locator('.zy-rail-more').click();
+  await page.locator('.zy-rail-menu-open', { hasText: '插件' }).click();
   await page.locator('.zy-page[data-page=plugins]').waitFor();
   await page.locator('.zpl-row').first().waitFor({ timeout: 60000 });
   const pluginRows = await page.locator('.zpl-row').evaluateAll(list => list.map(row => ({
@@ -322,10 +333,15 @@ try {
   // 需要我们自己起的宿主（文献由 writeProbePaper 放进去）；--running 模式下没有。
   if (runtime) await paperProbe(page, evidence, checks);
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '学习', exact: true }).click();
-  await page.getByRole('button', { name: '前往个人面板登录' }).waitFor();
-  await page.getByRole('button', { name: '前往个人面板登录' }).click();
+  await page.getByRole('button', { name: '登录智云课堂' }).waitFor();
+  await page.getByRole('button', { name: '登录智云课堂' }).click();
+  await page.getByRole('dialog', { name: '登录智云课堂' }).waitFor();
   await page.getByRole('region', { name: '智云课堂账号' }).waitFor();
   await page.getByLabel('浙大账号', { exact: true }).waitFor();
+  // ⚠️ 必须关掉：`showModal()` 会把页面其余部分变成 inert，
+  //    不关的话下面点侧栏会一直被对话框挡住。
+  await page.getByRole('button', { name: '关闭', exact: true }).click();
+  await page.getByRole('dialog', { name: '登录智云课堂' }).waitFor({ state: 'hidden' });
   await page.getByRole('navigation', {name:'主要页面'}).getByRole('button',{name:'学习',exact:true}).click();
   await page.screenshot({ path: path.join(evidence, 'study.png'), fullPage: true });
   await page.keyboard.press('Control+k');
@@ -381,7 +397,8 @@ try {
   await page.locator('.zy-drawer-scrim').click({ position: { x: 500, y: 400 } });
   await drawer.waitFor({ state: 'hidden' });
   checks.push('Session management is a full-height left drawer attached to the Ask panel');
-  await page.getByRole('button', { name: '个人', exact: true }).click();
+  await page.getByRole('button', { name: '账号', exact: true }).click();
+  await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
   const settings = page.locator('.zy-settings-group');
   await settings.first().waitFor();
   assert.ok(await settings.count() >= 2, 'host settings providers appear inside Personal');
@@ -416,15 +433,15 @@ try {
   }
   await page.locator('.zy-scroll').evaluate(node => { node.scrollTop = 0; });
   if (await page.locator('body').evaluate(body => body.hasAttribute('data-ds-dark-theme'))) {
-    await page.locator('.zy-page-header').getByRole('button', { name: '切换明暗', exact: true }).click();
+    await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
     await page.waitForFunction(() => !document.body.hasAttribute('data-ds-dark-theme'));
   }
   await page.screenshot({ path: path.join(evidence, 'personal-light.png'), fullPage: true });
-  await page.locator('.zy-page-header').getByRole('button', { name: '切换明暗', exact: true }).click();
+  await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
   await page.waitForFunction(() => document.body.hasAttribute('data-ds-dark-theme'));
   await page.waitForTimeout(250);
   await page.screenshot({ path: path.join(evidence, 'personal-dark.png'), fullPage: true });
-  await page.locator('.zy-page-header').getByRole('button', { name: '切换明暗', exact: true }).click();
+  await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
   await page.getByRole('button', { name: '今天', exact: true }).click();
   await page.keyboard.press('Control+Alt+Comma');
   await page.locator('.zy-page[data-page=me]').waitFor();
@@ -441,10 +458,17 @@ try {
   // Every document load goes through the same onboarding handling: the host's
   // model step reappears per load whenever no model is configured.
   await reloadProduct(page);
-  await page.getByRole('button', { name: '收起导航', exact: true }).click();
-  await page.locator('.zy-collapsed').waitFor();
+  // ⚠️ 侧栏**不允许展开**（产品决定）：导轨只有图标，名字靠悬停浮出。
+  //    所以这里不再有「收起/展开导航」按钮，改验「它一直是收起的、且悬停能读到名字」。
+  await page.locator('.zy-sidebar.zy-collapsed').waitFor({ timeout: 10000 });
+  const railWidth = await page.locator('.zy-sidebar').evaluate(node => Math.round(node.getBoundingClientRect().width));
+  assert.ok(railWidth <= 60, `导轨应保持收起的 56px，实测 ${railWidth}px`);
+  await page.locator('.zy-rail-nav .zy-rail-item').first().hover();
+  const tip = page.locator('.zy-rail-tip');
+  await tip.waitFor({ timeout: 5000 });
+  assert.ok((await tip.textContent()).trim().length > 0, '悬停必须浮出页面名字（导轨没有常驻文字）');
+  checks.push('Rail-only navigation: always collapsed, names surface on hover');
   await page.screenshot({ path: path.join(evidence, 'navigation-collapsed.png'), fullPage: true });
-  await page.getByRole('button', { name: '展开导航', exact: true }).click();
   await page.setViewportSize({ width: 760, height: 900 });
   await page.waitForTimeout(250);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);

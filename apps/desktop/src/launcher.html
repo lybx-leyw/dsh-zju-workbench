@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:">
+  <title>智云 Pro</title>
+  <link rel="stylesheet" href="launcher.css">
+</head>
+<body>
+  <main class="card">
+    <span class="mark" aria-hidden="true">
+      <svg viewBox="0 0 44 36" fill="none"><path d="M6 9h32v18a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M13 30v4M31 30v4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </span>
+    <h1>智云 Pro</h1>
+    <p class="status"><span class="dot" data-phase="starting"></span><span id="detail">正在准备…</span></p>
+    <p class="hint" id="hint" hidden></p>
+
+    <details class="log" id="logbox" hidden>
+      <summary>查看实例输出</summary>
+      <pre id="log"></pre>
+    </details>
+
+    <button type="button" id="retry" hidden>重试</button>
+    <p class="foot">这个窗口只是快捷入口：它起一个实例并把它开在这里，数据与命令行 <code>npm start</code> 完全一致。</p>
+  </main>
+  <script src="launcher.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "dsh-zhiyun-page-player",
+  "version": "0.1.0",
+  "description": "「看课」页：一节回放的视频、课件与字幕同屏，点字幕跳视频、翻课件滚字幕",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./client": "./lib/client.js", "./package.json": "./package.json" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "external": ["dsh-zhiyun-ui-primitives"] }
+  }
+}

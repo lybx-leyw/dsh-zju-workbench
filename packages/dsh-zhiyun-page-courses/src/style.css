@@ -46,42 +46,119 @@ body[data-zhiyun] .zs-search input {
   width: 280px;
   max-width: 75%;
 }
-body[data-zhiyun] .zs-course-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
-}
-body[data-zhiyun] .zs-course {
-  padding: 22px;
-  background: var(--zy-surface);
+/* ── 课程列表（点开就地展开节次）────────────────────────────────────────────
+ *
+ * 从「网格卡片」改成「列表节点」：一门课展开后要放它的节次，
+ * 卡片网格里放不下（一个格子撑开会把整行推下去，视线跳很远）。
+ * 列表的展开是**行内**的，用户不丢位置。
+ */
+body[data-zhiyun] .zs-myc-list {
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--zy-line);
   border-radius: 8px;
-  text-align: left;
-  color: var(--zy-text);
+  background: var(--zy-surface);
+  overflow: hidden;
 }
-body[data-zhiyun] .zs-course:hover {
-  border-color: var(--zy-accent);
+body[data-zhiyun] .zs-myc-node + .zs-myc-node {
+  border-top: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zs-myc-node.is-open {
+  background: var(--zy-bg);
+}
+body[data-zhiyun] .zs-myc-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  background: transparent;
+  color: var(--zy-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-myc-head:hover {
+  background: var(--zy-hover);
+}
+body[data-zhiyun] .zs-myc-caret {
+  flex: none;
+  width: 14px;
+  color: var(--zy-muted);
+  font-size: 11px;
+}
+body[data-zhiyun] .zs-myc-main {
+  flex: 1;
+  min-width: 0;
+}
+body[data-zhiyun] .zs-myc-main strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+body[data-zhiyun] .zs-myc-main small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--zy-secondary);
 }
 body[data-zhiyun] .zs-course-code {
   font-size: 10px;
-  color: var(--zy-secondary);
+  color: var(--zy-muted);
 }
-body[data-zhiyun] .zs-course h2 {
-  font-size: 16px;
-  font-weight: 500;
-  margin: 12px 0 6px;
-}
-body[data-zhiyun] .zs-course p {
-  font-size: 12px;
-  color: var(--zy-secondary);
-}
-body[data-zhiyun] .zs-course footer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 25px;
+body[data-zhiyun] .zs-myc-count {
+  flex: none;
   font-size: 11px;
   color: var(--zy-accent);
 }
+
+/* 节次列表：左侧一条竖线，表示「这些属于上面那门课」。 */
+body[data-zhiyun] .zs-myc-lessons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 18px 15px 44px;
+}
+body[data-zhiyun] .zs-myc-lesson {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--zy-line);
+  border-left: 2px solid var(--zy-accent);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-myc-lesson:hover {
+  border-color: var(--zy-accent);
+}
+body[data-zhiyun] .zs-myc-lesson-main {
+  min-width: 0;
+}
+body[data-zhiyun] .zs-myc-lesson-main strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+body[data-zhiyun] .zs-myc-lesson-main small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-myc-lesson-go {
+  flex: none;
+  font-size: 11px;
+  color: var(--zy-accent);
+}
+
 /* 这两条原本住在 ui-primitives 的 <style> 里，但它们的基规则是本包上方的 .zs-heading。
    两张表同特异性、按挂载顺序决胜：primitives 的 inject 为空、最先挂，本包等
    zhiyunStudyController 才挂、排在后 —— 留在那边必输，覆盖永远不生效。跟着基规则搬来本包。 */
@@ -91,5 +168,8 @@ body[data-zhiyun] .zs-course footer {
   }
   body[data-zhiyun] .zs-heading {
     margin-bottom: 18px;
+  }
+  body[data-zhiyun] .zs-myc-lessons {
+    padding-left: 20px;
   }
 }

@@ -1,0 +1,8 @@
+# dsh bundle patch：把 Obsidian 式笔记库插进 profile 的层栈。
+#
+# 本包是**纯逻辑 + 薄宿主半边**：解析与索引是零 IO 的纯函数，
+# 宿主半边只从注入的存储读笔记、建索引、经数据路由交给页面。
+# 笔记内容由调用方（或将来的页面包）推入，本包不自己写文件。
+- insert:
+    - id: zhiyun-vault
+      name: dsh-zhiyun-vault
