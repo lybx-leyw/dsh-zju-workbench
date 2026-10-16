@@ -305,6 +305,14 @@ test('接线：每个有客户端半边的包都进了构建清单、profile 与
   for (const name of clientPackages) {
     if (!new RegExp(`'${name}'`).test(build)) missing.push(`${name}: 不在 scripts/build.mjs 的 CLIENT_PACKAGES`);
     if (!bundles.includes(name)) missing.push(`${name}: 不在 profiles/zhiyun-bench 的 bundles`);
+    // 声明了 `dsh.client` 就**必须**有 `./client` 出口 —— 否则宿主组装客户端模块表时
+    // 直接抛「declares dsh.client but exports no "./client" bundle」并**拒启整个工作台**。
+    // 这条是实测踩出来的：新建页面包时漏了 `"./client": "./lib/client.js"`，
+    // 启动当场失败，而上面两条（build / bundles）都是绿的 —— 它们看不出这个洞。
+    const manifest = JSON.parse(read(`packages/${name}/package.json`));
+    if (manifest.dsh?.client !== undefined && manifest.exports?.['./client'] === undefined) {
+      missing.push(`${name}: 声明了 dsh.client 但 exports 里没有 "./client"（宿主会拒启）`);
+    }
   }
   // 页面包额外要求：NAV 里必须有一项与它的 `zhiyun.<id>.content` 插槽对应。
   for (const name of clientPackages.filter(item => item.startsWith('dsh-zhiyun-page-'))) {

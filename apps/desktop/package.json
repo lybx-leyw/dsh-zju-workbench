@@ -1,0 +1,15 @@
+{
+  "name": "zhiyun-pro-desktop",
+  "productName": "Zhiyun Pro Launcher",
+  "private": true,
+  "version": "0.1.0",
+  "description": "智云 Pro 的桌面快捷入口：起一个 DSH 实例，把它开在窗口里。不打包、不管 profile。",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node src/launch.mjs"
+  },
+  "devDependencies": {
+    "electron": "^44.8.0"
+  }
+}

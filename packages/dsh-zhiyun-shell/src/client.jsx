@@ -32,6 +32,15 @@ function applyUI(ctx) {
    * 取不到就是空集 —— 空集 = 一页都不藏，侧栏照常。
    */
   const hidden = createHiddenPages(ctx);
+  /**
+   * 账号面板（点导轨头像浮出来的那一层）的开合。
+   *
+   * 它挂在**壳的导航控制器**上，而不是某个页面里：打开它的入口有三个来源 ——
+   * 导轨头像、以及「今天」「我的课」「学习」三页的登录按钮。那三页已经拿到了壳的
+   * `controller`（页面契约里的 owner props），所以把它们的方法加在这里，
+   * 比新造一个服务、要求每个包去 inject 便宜得多，也不会多出一条连坐依赖。
+   */
+  const account = createToggleStore();
   // binding 必须先于 controller 建立：controller.navigate 立刻就会用到它，
   // 而别的插件在自己的 apply 里调 zhiyunNavigation.navigate 也可能早于下面几行执行。
   const binding = createLearningSpaceBinding(ctx, () => active === 'ask', drawer);
@@ -52,6 +61,9 @@ function applyUI(ctx) {
     },
     toggleSidebar: () => ctx.layout.toggleSidebar(),
     toggleTheme: () => ctx.theme.setTheme(ctx.theme.getTheme().active.colorScheme === 'dark' ? 'light' : 'dark'),
+    /** 打开/关闭账号面板。页面里的登录入口调它（见 createToggleStore 的说明）。 */
+    openAccount: () => account.open(),
+    closeAccount: () => account.close(),
   };
   ctx.effect(() => drawer.close, 'zhiyun: sessions drawer');
   ctx.effect(() => () => hidden.dispose(), 'zhiyun: hidden pages store');
@@ -94,8 +106,11 @@ function applyUI(ctx) {
       //    （带工作区切换），与本工作台的单一学习空间不是一回事。不声明 = 它不挂载。
       'sidebar.settings': { kind: 'single', scope: 'root' },
       'sidebar.footer.action': { kind: 'list', scope: 'root' },
+      // 账号面板里的登录表单。**内容由页面包提供**（`zhiyun-page-me` 注册），
+      // 壳只负责"什么时候把它显示出来"—— 壳不认识智云课堂的账号协议。
+      'sidebar.account.signin': { kind: 'single', scope: 'root' },
     },
-    inject: () => ({ controller, hidden }),
+    inject: () => ({ controller, hidden, account }),
   }, Sidebar));
   // DSH 0.2 gives child-slot ownership exclusively to the original entry.
   // Adapt its component in place so forms retain that authorization, store,
@@ -125,7 +140,7 @@ function applyUI(ctx) {
     for (const page of NAV.filter(item => item.id !== 'ask')) {
       yield ctx.slots.register({
         name: 'main', key: panelKey(page.id),
-        children: { [`zhiyun.${page.id}.content`]: { kind: 'single', scope: 'root' }, ...(page.id === 'me' ? { 'zhiyun.me.account': { kind: 'single', scope: 'root' }, 'zhiyun.me.network': { kind: 'single', scope: 'root' } } : {}) },
+        children: { [`zhiyun.${page.id}.content`]: { kind: 'single', scope: 'root' }, ...(page.id === 'me' ? { 'zhiyun.me.network': { kind: 'single', scope: 'root' } } : {}) },
         inject: () => ({ controller, page: page.id }),
       }, Page);
     }
@@ -133,6 +148,28 @@ function applyUI(ctx) {
     controller.navigate('today');
   });
   ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark', priority: -10 }, () => <div className="zy-hero-brand"><span>海纳江河，启真厚德</span></div>));
+}
+
+/**
+ * 一个极小的开合 store（uSES 口径：`subscribe` + `getSnapshot`）。
+ *
+ * 目前只有账号面板用它。写成通用的小工厂而不是内联一个布尔量，是因为
+ * 组件侧要用 `useSyncExternalStore` 订阅它 —— 而那个 hook 要求
+ * `getSnapshot` 返回**稳定值**（每次渲染都新建对象会死循环），所以状态必须
+ * 存在闭包里、由 store 自己发通知，不能在渲染路径上现算。
+ *
+ * @returns `{ subscribe, getSnapshot, open, close }`。
+ */
+function createToggleStore() {
+  let open = false;
+  const listeners = new Set();
+  const emit = () => { for (const listener of listeners) listener(); };
+  return {
+    subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
+    getSnapshot: () => open,
+    open() { if (!open) { open = true; emit(); } },
+    close() { if (open) { open = false; emit(); } },
+  };
 }
 
 /**

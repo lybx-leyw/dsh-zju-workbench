@@ -165,6 +165,15 @@ export function createStudyController(call, navigation) {
     },
     navigate: (page) => navigation.navigate(page),
     /**
+     * 打开壳的**账号面板**（登录 / 退出都在里面）。
+     *
+     * 登录入口有三个页面用得到，但那三页手上的 `controller` 是**本控制器**、
+     * 不是壳的控制器 —— 所以壳的动作要顺着 `navigation` 这条路转发出来，
+     * 和 `navigate` 完全一样的走法。`?.` 是防御：壳不在场时（`zhiyunNavigation`
+     * 取不到）按一下不该抛异常。
+     */
+    openAccount: () => navigation.openAccount?.(),
+    /**
      * 在当前账号已整理的终稿里做字面检索。空词不请求。
      * 失败留在 `corpusError`，不写进学习页横幅。
      */

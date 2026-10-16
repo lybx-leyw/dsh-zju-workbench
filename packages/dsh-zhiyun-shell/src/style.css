@@ -13,34 +13,122 @@ body[data-zhiyun][data-ds-dark-theme] {
 }
 .zy-sidebar,.zy-page,.zy-search-dialog,.zy-hero-brand { font-family:var(--zy-font);color:var(--zy-text);font-size:13px;line-height:1.6;font-synthesis:none; }
 .zy-sidebar,.zy-page,.zy-search-dialog,.zy-sidebar *,.zy-page *,.zy-search-dialog * {box-sizing:border-box;}
-.zy-sidebar button,.zy-page button:where(:not(.zy-settings-body *)),.zy-search-dialog button {font:inherit;cursor:pointer;border:0;color:inherit;background:transparent;}
+/* `appearance:none` 是按钮的常规重置：让平台的原生绘制（边框、圆角、底色）不参与，
+ * 只用我们写的样式。仓库里 `.zy-topbar` 早就单独加了这一条，这一层重置一直漏着。
+ *
+ * ⚠️ 别把它当成"圆角不生效"的解 —— 排查头像那个超椭圆问题时我一度这么以为，
+ *    实测（同尺寸对照：加不加 appearance 都按圆角命中）证明不成立。真正的原因是
+ *    宿主继承下来的 `corner-shape`，见下面 `.zy-rail-avatar` 那一段。 */
+.zy-sidebar button,.zy-page button:where(:not(.zy-settings-body *)),.zy-search-dialog button {font:inherit;cursor:pointer;border:0;color:inherit;background:transparent;appearance:none;}
 .zy-sidebar button:focus-visible,.zy-page button:focus-visible,.zy-search-dialog button:focus-visible {outline:2px solid var(--zy-accent);outline-offset:3px;}
 .zy-sidebar svg,.zy-page svg {flex-shrink:0;}
-.zy-sidebar {height:100%;display:flex;flex-direction:column;background:var(--zy-sidebar);padding:20px 12px 12px;overflow:hidden;font-size:12px;line-height:1.5;}
+/* 侧栏 = **一条导轨**（只有图标，不允许展开）。
+ *
+ * 名字靠悬停浮出（`.zy-rail-tip`），所以导轨上的每个可点元素都必须挂提示 ——
+ * 这是这一版唯一的文字出口。
+ *
+ * 宿主侧栏那一列展开 280px、收起 56px（实测）。我们**始终**让它停在 56px
+ * （见 components.jsx 里那段 effect），导轨取 55px 正好填满：既不会在列里偏左，
+ * 也不会因为列宽变化而让图标跟着移动。 */
+.zy-sidebar {height:100%;display:flex;background:var(--zy-sidebar);overflow:hidden;font-size:12px;line-height:1.5;}
 /* The motto replaces the native hero brand title. */
 body[data-zhiyun] span:has(.zy-hero-brand) + span {display:none;}
-.zy-brand {display:flex;gap:9px;align-items:center;text-align:left;padding:0 8px 18px!important;flex-shrink:0;}
-.zy-brand>span:last-child {font-size:18px;font-weight:600;letter-spacing:0;white-space:nowrap;}
-.zy-brand b {font-size:11px;font-weight:500;border:1px solid var(--zy-line);padding:1px 5px;border-radius:4px;vertical-align:middle;margin-left:3px;}
-.zy-brand small {display:block;font-size:10px;color:var(--zy-secondary);letter-spacing:.6px;font-weight:400;margin-top:2px;}
 .zy-mark {display:inline-flex;align-items:center;justify-content:center;width:44px;height:38px;color:var(--zy-brand);flex-shrink:0;}
 .zy-mark svg {width:44px;height:36px;}
 .zy-mark-large {width:68px;height:56px;}.zy-mark-large svg{width:68px;height:56px;}
 .zy-mark-compact{width:32px;height:38px;}.zy-mark-compact svg{width:30px;height:36px;}
-.zy-collapsed .zy-brand{justify-content:center;width:100%;}
 .zy-sidebar .zy-mark{width:36px;height:30px;}.zy-sidebar .zy-mark svg{width:36px;height:30px;}
 .zy-sidebar .zy-mark-compact{width:26px;height:30px;}.zy-sidebar .zy-mark-compact svg{width:24px;height:30px;}
-.zy-search-button {display:flex;gap:8px;align-items:center;border:1px solid var(--zy-line)!important;border-radius:6px;padding:6px 9px!important;color:var(--zy-secondary)!important;margin-bottom:14px;}
-.zy-search-button>span{flex:1;text-align:left;}.zy-search-button kbd{font-size:10px;color:var(--zy-muted);font-family:inherit;}
-.zy-nav {display:flex;flex-direction:column;gap:3px;}
-.zy-nav button {display:flex;gap:9px;align-items:center;min-height:34px;padding:7px 10px;border-radius:6px;text-align:left;color:var(--zy-secondary);position:relative;}
-.zy-nav svg,.zy-search-button>svg{width:16px;height:16px;}
-.zy-nav button:hover,.zy-collapse:hover {background:var(--zy-hover);}
-.zy-nav button.is-active {background:color-mix(in srgb,var(--zy-soft) 65%,var(--zy-sidebar));color:var(--zy-accent);font-weight:500;}
-.zy-nav button.is-active:before {content:'';position:absolute;left:0;width:2px;height:14px;border-radius:2px;background:var(--zy-accent);}
-.zy-sidebar-middle {flex:1;min-height:0;overflow:auto;padding:0 7px;}.zy-divider{height:1px;background:var(--zy-line);margin:16px 0 12px;}
-.zy-sidebar-note{font-size:10px;line-height:1.8;color:var(--zy-muted);margin:12px 0;}
-.zy-extension-actions{margin-top:10px;}
+.zy-rail {flex:0 0 55px;display:flex;flex-direction:column;align-items:center;padding:12px 0 10px;overflow:visible;}
+/* 品牌下面是导航，没有「跳转到」按钮 —— 那一项只有 Ctrl+K（见 components.jsx）。 */
+.zy-rail-brand {display:grid;place-items:center;width:34px;height:34px;margin-bottom:12px;}
+.zy-rail-nav {display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;}
+/* ── ⚠️ 为什么导轨里的规则都写成 `.zy-sidebar …`（两个选择器）──────────────
+ *
+ * 样式表开头有一条按钮重置：`.zy-sidebar button {font:inherit;cursor:pointer;
+ * border:0;color:inherit;background:transparent;}` —— 它的特异性是 `(0,1,1)`，
+ * 而单类选择器只有 `(0,1,0)`：**重置会赢**，我写的 `color` / `background`
+ * 会静默失效。
+ *
+ * 这个坑真踩过：头像写了 `background: …` 却始终是透明的（`getComputedStyle`
+ * 报 `rgba(0,0,0,0)`），看起来就像"这个头像没有背景色"。加一个 `.zy-sidebar`
+ * 前缀把它抬到 `(0,2,0)` 即可 —— 名字比 `body[data-zhiyun]` 前缀短，
+ * 而且本来就在侧栏里。 */
+.zy-sidebar .zy-rail-item {position:relative;display:grid;place-items:center;width:34px;height:34px;border-radius:7px;color:var(--zy-secondary);}
+.zy-rail-item svg {width:16px;height:16px;}
+.zy-rail-item:hover {background:var(--zy-hover);}
+.zy-sidebar .zy-rail-item.is-active {color:var(--zy-accent);background:color-mix(in srgb,var(--zy-soft) 65%,var(--zy-sidebar));}
+/* 导轨底部的全局控件（settings 槽 / 扩展入口 / 明暗 / 头像） */
+.zy-sidebar-bottom {margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;padding-top:10px;}
+.zy-rail-actions {display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;}
+/* 「个人」的头像：圆形，钉在导轨**最下方**（全局控件之后）。
+ * 它不是一个功能图标而是一个"人"—— 用头像既表明是谁，也把账号入口与上面那排
+ * 页面图标分开。
+ *
+ * 两处刻意：
+ *   1. **底色比导轨底明显一档**（蓝调，而不是与导轨同色的浅灰）。同色时看起来
+ *      只是"一个深色剪影浮在那儿"，读不出这是一张头像。
+ *   2. **圆框用 `box-shadow` 的 ring，不用 `border`**：`box-sizing:border-box` 下
+ *      边框会吃掉内部宽度，把 24 的剪影挤小；ring 画在外圈，不占内部面积。
+ *      `overflow:hidden` 也不会裁掉 box-shadow（它不属于内容）。
+ */
+/* ⚠️ `corner-shape: round` 是为了让 `border-radius: 50%` 真的是**圆**。
+ *
+ * 宿主把 `corner-shape: superellipse(1.5)` 设在 `html`/`body` 上（iOS 风的"超椭圆"
+ * 外观，见 dsh-client-ui-* 各包），所有后代都继承。于是 `border-radius: 50%` 画出来
+ * 是**圆角方**，不是圆 —— computed style 里一切正常（`50%`），只有画出来和命中
+ * 是超椭圆，所以肉眼才看得出来、代码里查不到。
+ *
+ * 这一格是"头像"，必须是正圆，所以显式改回经典圆角语义。
+ * 不支持 `corner-shape` 的浏览器会忽略这一行，而那时 `border-radius: 50%` 本来就是圆。 */
+.zy-sidebar .zy-rail-avatar {display:grid;place-items:center;width:24px;height:24px;margin-top:6px;padding:0;border:0;border-radius:50%;corner-shape:round;overflow:hidden;background:color-mix(in srgb,var(--zy-accent) 18%,var(--zy-surface));color:var(--zy-accent);box-shadow:0 0 0 1.5px color-mix(in srgb,var(--zy-accent) 34%,var(--zy-line));}
+.zy-sidebar .zy-rail-avatar:hover {color:var(--zy-action);box-shadow:0 0 0 1.5px var(--zy-accent);}
+.zy-sidebar .zy-rail-avatar.is-active {box-shadow:0 0 0 2px var(--zy-accent);}
+/* 导轨上的名字提示。
+ * `position:fixed` 是必须的：宿主侧栏列 `overflow:hidden`，那一列只有 56px 宽 ——
+ * absolute 的提示会被列本身剪掉（导轨自己设 overflow:visible 也没用，裁剪在祖先上）。 */
+.zy-rail-tip {position:fixed;z-index:40;transform:translateY(-50%);padding:4px 9px;border-radius:6px;background:var(--zy-text);color:var(--zy-sidebar);font-size:11.5px;line-height:1.4;white-space:nowrap;pointer-events:none;box-shadow:0 4px 14px #0003;}
+/* 导轨上「···」与它下面那一组之间的分隔线（固定进来的页在它下方） */
+.zy-rail-divider {width:22px;height:1px;margin:6px 0;background:var(--zy-line);}
+/* 「···」菜单。同样用 `position:fixed`：菜单比导轨宽得多，而宿主侧栏列
+ * `overflow:hidden` —— absolute 会被那一列 56px 的宽度裁掉。 */
+.zy-rail-menu {position:fixed;z-index:45;min-width:198px;display:flex;flex-direction:column;gap:1px;padding:6px;border:1px solid var(--zy-line);border-radius:10px;background:var(--zy-surface);box-shadow:0 14px 34px #0003;}
+.zy-rail-menu-row {display:flex;align-items:center;border-radius:7px;}
+.zy-rail-menu-row:hover {background:var(--zy-hover);}
+.zy-rail-menu-row.is-current .zy-rail-menu-open {color:var(--zy-accent);font-weight:600;}
+/* 同样要带 `.zy-sidebar` 前缀压过按钮重置（见导轨那一段的说明）：
+ * 不加的话未固定行的图钉会继承导轨的文字色，而不是它该有的 `--zy-muted`。 */
+.zy-sidebar .zy-rail-menu-open {display:flex;align-items:center;gap:10px;flex:1;min-width:0;height:34px;padding:0 8px;color:var(--zy-text);font-size:13px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* 图钉平时不显示（与 ChatGPT 一致：没固定的行不摆一枚灰钉子），悬停才浮出来；
+ * 已固定的常亮 —— 否则「哪些固定了」只能靠逐个试才知道。 */
+.zy-sidebar .zy-rail-menu-pin {display:grid;place-items:center;width:28px;height:28px;margin-right:4px;border-radius:6px;color:var(--zy-muted);opacity:0;transition:opacity 120ms ease;}
+.zy-rail-menu-row:hover .zy-rail-menu-pin {opacity:.5;}
+.zy-rail-menu-row:hover .zy-rail-menu-pin:hover {opacity:1;background:var(--zy-line);}
+.zy-rail-menu-row.is-pinned .zy-rail-menu-pin {opacity:1;color:var(--zy-accent);}
+/* ── 账号面板（头像点开那一层）──────────────────────────────────────
+ * 头像那一格的头像（`.zy-account-face`）与导轨上的头像同款：圆形 + 底色 + 圆框。
+ * 它是 `<span>` 不是 `<button>`，所以不受按钮重置影响，但同样继承宿主的
+ * `corner-shape` —— 圆形也得显式要。 */
+.zy-account-menu {min-width:226px;}
+.zy-account-head {display:flex;align-items:center;gap:10px;padding:6px 8px 9px;}
+.zy-account-face {display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:50%;corner-shape:round;overflow:hidden;background:color-mix(in srgb,var(--zy-accent) 18%,var(--zy-surface));color:var(--zy-accent);box-shadow:0 0 0 1.5px color-mix(in srgb,var(--zy-accent) 34%,var(--zy-line));}
+.zy-account-id {display:flex;flex-direction:column;min-width:0;}
+.zy-account-id strong {font-size:13px;font-weight:600;color:var(--zy-text);}
+.zy-account-id small {font-size:11.5px;line-height:1.5;color:var(--zy-muted);}
+.zy-account-divider {height:1px;margin:2px 6px 5px;background:var(--zy-line);}
+/* 「登录」那一行的雪佛龙推到最右，表示它还会再展开一层（对话框）。 */
+.zy-account-open>svg:last-child {margin-left:auto;color:var(--zy-muted);}
+/* 账号对话框。`width` 用 `min()` 兜住窄窗口；`padding:0` 因为内边距由
+ * 头部与正文各自给（头部要整条分隔线贴边）。 */
+.zy-account-dialog {width:min(420px,calc(100vw - 40px));padding:0;border:1px solid var(--zy-line);border-radius:12px;background:var(--zy-surface);color:var(--zy-text);box-shadow:0 18px 48px #0004;}
+.zy-account-dialog::backdrop {background:#00000059;}
+.zy-account-dialog-head {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid var(--zy-line);}
+.zy-account-dialog-head strong {font-size:14px;font-weight:600;}
+.zy-account-dialog-body {padding:16px;}
+/* 关闭按钮要带 `.zy-sidebar` 前缀：它是个 `<button>`，会吃到那条重置，
+ * 单类选择器的 `color` 会输给重置的 `color:inherit`（见导轨那一段的说明）。 */
+.zy-sidebar .zy-account-dialog-close {display:grid;place-items:center;width:28px;height:28px;border-radius:7px;color:var(--zy-secondary);}
+.zy-sidebar .zy-account-dialog-close:hover {background:var(--zy-hover);color:var(--zy-text);}
 /* 「问一问」的会话入口：坐在宿主会话头的 leading 列里，和会话名同一行。
    28px 对齐标题行（30px），右边留一点空，标题从按钮之后开始，不会叠在图标上。 */
 body[data-zhiyun] .zy-topbar {position:relative;z-index:1;box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;margin:0 8px 0 0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--zy-text);cursor:pointer;font-family:var(--zy-font);line-height:0;appearance:none;}
@@ -95,13 +183,16 @@ body[data-zhiyun][data-ds-dark-theme] .zy-drawer-scrim {background:color-mix(in 
 .zy-drawer-input {flex:1;min-width:0;margin:6px 4px;padding:7px 10px;font:inherit;font-size:13.5px;color:var(--zy-text);border:1px solid var(--zy-accent);border-radius:8px;background:var(--zy-bg);outline:none;}
 body[data-zhiyun][data-ds-dark-theme] .zy-drawer-error,body[data-zhiyun][data-ds-dark-theme] .zy-drawer-menu button.is-danger {color:#e7a29c;}
 @media(prefers-reduced-motion:reduce){.zy-drawer,.zy-drawer-scrim{transition:none;}}
-.zy-sidebar-bottom {margin-top:auto;padding-top:20px;flex-shrink:0;}.zy-native-settings{min-height:32px;padding:0 4px;}
-.zy-collapse{display:flex;align-items:center;gap:10px;padding:7px 10px!important;width:100%;border-radius:6px;color:var(--zy-secondary)!important;font-size:11px!important;}
-.zy-profile-label {display:flex;align-items:center;gap:6px;font-size:10px;color:var(--zy-muted);border-top:1px solid var(--zy-line);margin-top:14px;padding:15px 5px 0;}.zy-profile-label>span{width:5px;height:5px;background:var(--zy-accent);border-radius:50%;}.zy-profile-label small{margin-left:auto;font-size:9px;}
-.zy-collapsed{padding:16px 6px 12px;}.zy-collapsed .zy-brand{padding:0 4px 16px!important;}.zy-collapsed .zy-search-button{justify-content:center;padding:7px 0!important;border:none!important;margin-bottom:10px;}.zy-collapsed .zy-nav button{justify-content:center;padding:7px 0;}.zy-collapsed .zy-collapse{justify-content:center;padding:7px 0!important;}.zy-collapsed .zy-native-settings{padding:0;}.zy-collapsed .zy-sidebar-bottom{padding-top:16px;}
+.zy-native-settings{min-height:32px;padding:0 4px;}
 .zy-page {display:flex;flex-direction:column;height:100%;min-width:0;background:var(--zy-bg);}
-.zy-page-header {height:69px;min-height:69px;border-bottom:1px solid var(--zy-line);display:flex;align-items:center;padding:0 36px;gap:21px;}.zy-page-header>strong{font-size:15px;font-weight:600;}.zy-header-date{font-size:11px;color:var(--zy-secondary);}.zy-header-actions{margin-left:auto;display:flex;align-items:center;gap:20px;}.zy-header-actions>button{display:flex;align-items:center;gap:7px;color:var(--zy-secondary);}.zy-ask-button{font-size:11px!important;}
 .zy-scroll{flex:1;overflow:auto;min-height:0;}.zy-content{max-width:980px;margin:0 auto;padding:43px 48px 28px;}
+/* 整幅铺开的应用型页面（见 model.js 的 FULL_BLEED_PAGES）。
+ * ⚠️ 选择器写成 `.zy-content.zy-content-flush`（两个类）而不是单个类：下面窄屏
+ *    的 @media 只改 `.zy-content`，同特异性时后者会因为靠后而赢 —— 那样窗口一窄，
+ *    文章式内边距又会回来。两个类直接压过它，不依赖声明顺序。
+ * height:100% 能解析，是因为 `.zy-scroll` 在 `.zy-page` 这个列向 flex 里 flex:1，
+ * 高度是确定的。于是面板填满整个内容区，滚动交给页面内部的分区。 */
+.zy-content.zy-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0;}
 .zy-intro {display:flex;justify-content:space-between;align-items:center;margin-bottom:34px;gap:24px;}.zy-eyebrow{font-size:10px;color:var(--zy-accent);letter-spacing:1.2px;}.zy-intro h1{font-size:27px;font-weight:500;line-height:1.4;letter-spacing:-.7px;margin:9px 0 9px;}.zy-intro p{font-size:12px;color:var(--zy-secondary);margin:0;}.zy-intro>svg,.zy-date-icon{color:var(--zy-accent);opacity:.65;}.zy-date-icon{margin-right:12px;}
 .zy-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 12px;}.zy-section-title h2{font-size:13px;font-weight:600;margin:0;}.zy-section-title>span{font-size:10px;color:var(--zy-muted);}
 .zy-now {border:1px solid color-mix(in srgb,var(--zy-accent) 13%,var(--zy-line));border-left:3px solid var(--zy-accent);background:var(--zy-soft);border-radius:9px;padding:21px 24px 19px;}.zy-pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--zy-accent);}.zy-pill>span{width:5px;height:5px;border-radius:50%;background:var(--zy-accent);}.zy-now h2{font-size:19px;letter-spacing:-.3px;font-weight:500;margin:11px 0 5px;}.zy-now p{font-size:11px;color:var(--zy-secondary);margin:0 0 15px;}
@@ -113,8 +204,8 @@ body[data-zhiyun][data-ds-dark-theme] .zy-drawer-error,body[data-zhiyun][data-ds
 .zy-inline-note {display:flex;align-items:center;gap:12px;color:var(--zy-secondary);margin-top:23px;font-size:11px;}.zy-inline-note p{flex:1;}.zy-tabs{display:flex;gap:25px;border-bottom:1px solid var(--zy-line);margin-bottom:22px;}.zy-tabs button{padding:10px 3px 12px;color:var(--zy-secondary);position:relative;}.zy-tabs button[aria-selected=true]{color:var(--zy-accent);font-weight:600;}.zy-tabs button[aria-selected=true]:after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--zy-accent);}
 .zy-person-card{display:flex;align-items:center;gap:17px;border-bottom:1px solid var(--zy-line);padding:10px 0 30px;margin-bottom:32px;}.zy-person-card h2{font-size:17px;font-weight:500;margin:0 0 4px;}.zy-person-card p{color:var(--zy-secondary);margin:0;font-size:11px;}.zy-tag{margin-left:auto;color:var(--zy-accent);font-size:10px;background:var(--zy-soft);padding:4px 9px;border-radius:5px;}.zy-preferences{padding:0 22px;}.zy-preferences>div{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:21px 0;}.zy-preferences>div+div{border-top:1px solid var(--zy-line);}.zy-preferences strong{display:block;font-size:12px;font-weight:500;}.zy-preferences small{display:block;color:var(--zy-secondary);font-size:10px;margin-top:5px;}.zy-stat-empty{display:flex;align-items:center;gap:12px;color:var(--zy-muted);padding:17px 22px;margin-top:22px;font-size:11px;}
 .zy-search-dialog{border:1px solid var(--zy-line);border-radius:12px;width:min(520px,calc(100vw - 32px));background:var(--zy-surface);padding:0;margin:15vh auto auto;box-shadow:0 20px 70px #0002;}.zy-search-dialog::backdrop{background:#15281f55;backdrop-filter:blur(3px);}.zy-search-input{padding:17px 20px;display:flex;gap:13px;align-items:center;border-bottom:1px solid var(--zy-line);}.zy-search-input input{border:0;outline:0;min-width:0;flex:1;background:transparent;color:var(--zy-text);font:inherit;}.zy-search-input kbd{font:10px inherit;border:1px solid var(--zy-line);border-radius:4px;padding:2px 5px;}.zy-search-results{padding:9px;}.zy-search-results>button{display:flex;align-items:center;gap:15px;width:100%;text-align:left;padding:11px;border-radius:7px;}.zy-search-results>button:hover{background:var(--zy-hover);}.zy-search-results>button>span{flex:1;}.zy-search-results small{display:block;font-size:10px;color:var(--zy-secondary);margin-top:3px;}.zy-search-results>p{color:var(--zy-muted);padding:25px;text-align:center;}.zy-hero-brand{display:flex;align-items:center;justify-content:center;gap:14px;}.zy-hero-brand>span:last-child{font-size:25px;font-weight:500;}.zy-hero-brand small{display:block;font-size:12px;color:var(--zy-secondary);margin-top:3px;}
-@media(max-width:1050px){.zy-content{padding:32px 28px;}.zy-page-header{padding:0 28px;}.zy-agenda-grid{gap:14px;}.zy-empty-row{padding:16px 12px;}}
-@media(max-width:650px){.zy-content{padding:25px 19px;}.zy-page-header{padding:0 19px;height:58px;min-height:58px;gap:12px;}.zy-header-date{display:none;}.zy-intro h1{font-size:24px;}.zy-agenda-grid{grid-template-columns:1fr;gap:0;margin-bottom:20px;}.zy-resume{flex-wrap:wrap;padding:17px;}.zy-resume>.zy-secondary{margin-left:61px;}.zy-now{padding:18px;}.zy-person-card{flex-wrap:wrap;}.zy-tag{margin-left:0;}.zy-preferences{padding:0 15px;}.zy-header-actions{gap:15px;}.zy-intro>svg,.zy-date-icon{display:none;}}
+@media(max-width:1050px){.zy-content{padding:32px 28px;}.zy-agenda-grid{gap:14px;}.zy-empty-row{padding:16px 12px;}}
+@media(max-width:650px){.zy-content{padding:25px 19px;}.zy-intro h1{font-size:24px;}.zy-agenda-grid{grid-template-columns:1fr;gap:0;margin-bottom:20px;}.zy-resume{flex-wrap:wrap;padding:17px;}.zy-resume>.zy-secondary{margin-left:61px;}.zy-now{padding:18px;}.zy-person-card{flex-wrap:wrap;}.zy-tag{margin-left:0;}.zy-preferences{padding:0 15px;}.zy-intro>svg,.zy-date-icon{display:none;}}
 @media(prefers-reduced-motion:no-preference){.zy-content{animation:zy-enter 180ms ease-out;}@keyframes zy-enter{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}}
 
 /* Personal owns the visible settings surface; native modal portals remain
@@ -148,6 +239,6 @@ body[data-zhiyun][data-ds-dark-theme] .zy-drawer-error,body[data-zhiyun][data-ds
 .zy-now h2{font-weight:600;}.zy-now p{font-size:12px;line-height:1.8;}
 .zy-hero-brand>span:last-child{font-family:'Songti SC','STSong','SimSun',serif;font-size:clamp(22px,2.1vw,28px);font-weight:400;letter-spacing:.12em;line-height:1.65;color:var(--zy-secondary);text-align:center;text-wrap:balance;}
 .zy-personal-note{margin:22px 0 0;font-size:11px;text-align:center;color:var(--zy-muted);}
-.zy-page button,.zy-nav button{transition:background-color 120ms ease,color 120ms ease;}
+.zy-page button,.zy-rail-item{transition:background-color 120ms ease,color 120ms ease;}
 @media(max-width:650px){.zy-person-card{padding:18px;}.zy-settings-group>summary{padding:16px;gap:11px;}.zy-settings-body{padding:16px;}}
-@media(prefers-reduced-motion:reduce){.zy-page button,.zy-nav button{transition:none;}}
+@media(prefers-reduced-motion:reduce){.zy-page button,.zy-rail-item{transition:none;}}

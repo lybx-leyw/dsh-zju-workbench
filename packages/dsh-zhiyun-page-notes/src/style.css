@@ -1,0 +1,657 @@
+/* packages/dsh-zhiyun-page-notes/src/style.css
+ *
+ * 笔记页样式。前缀 `zs-nt-*` 专属本页 —— 上一轮我在「我的课」用 `.zs-lesson`
+ * 撞了 ui-primitives 的同名类（CSS 检查抓到），这里从一开始就用专属前缀。
+ *
+ * 颜色只取壳的 `--zy-*` 变量，明暗两套主题自动跟随。
+ *
+ * # 版式照着 Obsidian 的分区来
+ *
+ *   ribbon │ 文件树 │ 标签页 / 编辑器 / 状态栏 │ 右栏
+ *
+ * 四处是刻意的：
+ *   1. **铺满整个内容区，不是浮在文章流里的一张卡片**。这一页在壳的
+ *      `FULL_BLEED_PAGES` 清单里（见 model.js），不套 `.zy-content` 的 980px 版心。
+ *      外面那圈边框与圆角也一并去掉了 —— 应用面板的边界是窗口，不是描边。
+ *   2. **正文列宽封顶 ~700px 并居中**（Obsidian 的 "readable line length"）。
+ *      面板铺开了，但正文行宽不能跟着铺开，否则宽屏上每行长得读不下去。
+ *   3. **激活的标签页与编辑器同色**，非激活的融进标签栏。靠背景色区分，
+ *      不靠边框加粗，这样一排标签页看起来是一条连续的带子。
+ *   4. **左缩进用 `--zs-nt-depth` 变量算**，不给每一层写一条 CSS。
+ *
+ * 尺寸按"能连点一小时不累"定：文件树行高约 27px、正文 15.5px、正文行高 1.9。
+ * 第一版按信息密度调（12.5px / 4px 内边距），在真实窗口里读起来太紧。
+ */
+
+body[data-zhiyun] .zs-nt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* 父级 `.zy-content-flush` 是列向 flex，`flex:1` 让面板吃满整个内容区高度。 */
+  flex: 1;
+  min-height: 0;
+}
+
+/* 整块工作区。**没有边框与圆角**：它填满内容区，边界由窗口给。
+ * `overflow:hidden` 是兜底：下面三栏都设了最小宽度，窗口极窄时总宽会超出容器 ——
+ * 与其让状态栏横着溢出到窗口外，不如裁掉（用户会关掉一栏，这是可恢复的）。 */
+body[data-zhiyun] .zs-nt-work {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--zy-bg);
+}
+
+/* ── ribbon：最左的窄图标列 ───────────────────────────────────────── */
+body[data-zhiyun] .zs-nt-ribbon {
+  flex: none;
+  width: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 0;
+  background: var(--zy-sidebar);
+  border-right: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zs-nt-ribbon button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--zy-secondary);
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-ribbon button:hover {
+  background: var(--zy-hover);
+  color: var(--zy-text);
+}
+/* 开着的面板：图标染色，让"我现在开着什么"不用去数面板。 */
+body[data-zhiyun] .zs-nt-ribbon button.is-on {
+  color: var(--zy-accent);
+  background: var(--zy-soft);
+}
+body[data-zhiyun] .zs-nt-ribbon button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+/* 把右栏开关顶到底部：与 Obsidian 一样，右侧类开关在 ribbon 的另一头。 */
+body[data-zhiyun] .zs-nt-ribbon-gap {
+  flex: 1;
+}
+
+/* ── 文件树 ──────────────────────────────────────────────────────── */
+body[data-zhiyun] .zs-nt-explorer {
+  /* ⚠️ `0 1 264px` 而不是 `none`：两侧面板**必须能让位**给正文。
+   *    第一版写成 `flex:none`（永不收缩），于是窄窗口 + 右栏打开时，
+   *    正文区被挤到 298px —— 面板铺得越满，这个毛病越明显。 */
+  flex: 0 1 264px;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px 8px;
+  background: var(--zy-sidebar);
+  border-right: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zs-nt-explorer-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px;
+}
+body[data-zhiyun] .zs-nt-explorer-head button {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-secondary);
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-explorer-head button:hover {
+  background: var(--zy-hover);
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-nt-explorer-head button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+body[data-zhiyun] .zs-nt-filter {
+  margin: 0 2px;
+  padding: 7px 10px;
+  border: 1px solid var(--zy-line);
+  border-radius: 7px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  font: inherit;
+  font-size: 13px;
+}
+body[data-zhiyun] .zs-nt-filter:focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 0;
+}
+body[data-zhiyun] .zs-nt-hint {
+  margin: 10px 6px;
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+body[data-zhiyun] .zs-nt-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+body[data-zhiyun] .zs-nt-rowbtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 5px 8px 5px calc(4px + var(--zs-nt-depth, 0) * 15px);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-text);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-rowbtn:hover {
+  background: var(--zy-hover);
+}
+body[data-zhiyun] .zs-nt-row.is-current > .zs-nt-rowbtn {
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+}
+/* 正在被拖的那一行淡下去：拖动时用户需要知道"我拿起来的是哪一个"。 */
+body[data-zhiyun] .zs-nt-row.is-dragging > .zs-nt-rowbtn {
+  opacity: .45;
+}
+body[data-zhiyun] .zs-nt-caret {
+  flex: none;
+  width: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--zy-muted);
+}
+/* 折叠箭头默认朝右（chevron 的形状），展开时转 90°。 */
+body[data-zhiyun] .zs-nt-caret svg {
+  transition: transform .12s ease;
+}
+body[data-zhiyun] .zs-nt-row.is-expanded > .zs-nt-rowbtn .zs-nt-caret svg {
+  transform: rotate(90deg);
+}
+body[data-zhiyun] .zs-nt-rowicon {
+  flex: none;
+  display: inline-flex;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-nt-rowicon.zs-nt-folder {
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-nt-rowname {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-zhiyun] .zs-nt-rowname.is-open {
+  font-weight: 500;
+}
+/* 附件的类型角标（PNG / PDF…）：一眼看出这条不是能编辑的正文。 */
+body[data-zhiyun] .zs-nt-ext {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--zy-line);
+  border-radius: 4px;
+  font-size: 10.5px;
+  letter-spacing: .4px;
+  color: var(--zy-muted);
+}
+
+/* ── 中：标签页 + 编辑器 + 状态栏 ────────────────────────────────── */
+body[data-zhiyun] .zs-nt-main {
+  /* 正文是这一页的主角：给它一个最低宽度，窄窗口时让两侧面板退让，
+   * 而不是把编辑器压成一条。 */
+  flex: 1 1 auto;
+  min-width: 400px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--zy-bg);
+}
+body[data-zhiyun] .zs-nt-tabs {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 8px 10px 0;
+  background: var(--zy-sidebar);
+  border-bottom: 1px solid var(--zy-line);
+  overflow-x: auto;
+}
+body[data-zhiyun] .zs-nt-tab {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  max-width: 210px;
+  border-radius: 7px 7px 0 0;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-nt-tab:hover {
+  background: var(--zy-hover);
+}
+/* 激活页与编辑器同色，且把下边框"吃掉"，于是它看起来和正文连成一片。 */
+body[data-zhiyun] .zs-nt-tab.is-active {
+  background: var(--zy-bg);
+  color: var(--zy-text);
+  box-shadow: inset 0 1px 0 var(--zy-line), inset 1px 0 0 var(--zy-line), inset -1px 0 0 var(--zy-line);
+}
+body[data-zhiyun] .zs-nt-tabname {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 8px 5px 8px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-zhiyun] .zs-nt-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--zy-accent);
+}
+body[data-zhiyun] .zs-nt-tabclose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 5px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--zy-muted);
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-tabclose:hover {
+  background: var(--zy-line);
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-nt-tabnew {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin: 0 2px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-secondary);
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-tabnew:hover {
+  background: var(--zy-hover);
+  color: var(--zy-text);
+}
+
+/* 面包屑：← → 是打开历史，右边是"在哪个目录里的哪一篇"。 */
+body[data-zhiyun] .zs-nt-crumbs {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--zy-line);
+  font-size: 12.5px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-nt-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-secondary);
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-nav:hover:not(:disabled) {
+  background: var(--zy-hover);
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-nt-nav:disabled {
+  opacity: .35;
+  cursor: default;
+}
+body[data-zhiyun] .zs-nt-crumb-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-zhiyun] .zs-nt-crumb-path em {
+  font-style: normal;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-nt-crumb-path strong {
+  color: var(--zy-text);
+  font-weight: 500;
+}
+body[data-zhiyun] .zs-nt-crumbs-right {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+body[data-zhiyun] .zs-nt-saving {
+  color: var(--zy-muted);
+  font-size: 12px;
+}
+body[data-zhiyun] .zs-nt-mode {
+  padding: 5px 12px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-mode:hover {
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-nt-mode.is-on {
+  background: var(--zy-soft);
+  border-color: var(--zy-accent);
+  color: var(--zy-accent);
+}
+
+/* 正文列：封顶 + 居中。面板铺开了，但读到第 100 个字时眼睛要能回来。 */
+body[data-zhiyun] .zs-nt-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 34px 40px 64px;
+}
+body[data-zhiyun] .zs-nt-title,
+body[data-zhiyun] .zs-nt-input,
+body[data-zhiyun] .zs-nt-preview-body {
+  width: 100%;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+/* 文件名即大标题（Obsidian 的 inline title）。 */
+body[data-zhiyun] .zs-nt-title {
+  flex: none;
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: .3px;
+}
+body[data-zhiyun] .zs-nt-input {
+  flex: 1;
+  min-height: 420px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--zy-text);
+  /* 与 Obsidian 一致：正文用界面字体（不是等宽），行高给足。 */
+  font-family: inherit;
+  font-size: 15.5px;
+  line-height: 1.9;
+  resize: none;
+  outline: none;
+}
+body[data-zhiyun] .zs-nt-input:focus-visible {
+  outline: none;
+}
+body[data-zhiyun] .zs-nt-input::placeholder {
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-nt-preview-body {
+  font-size: 15.5px;
+  line-height: 1.9;
+}
+body[data-zhiyun] .zs-nt-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-nt-empty strong {
+  font-size: 16px;
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-nt-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* 状态栏：左"这是哪个库"，右"这篇有多少东西"。 */
+body[data-zhiyun] .zs-nt-status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 16px;
+  background: var(--zy-sidebar);
+  border-top: 1px solid var(--zy-line);
+  font-size: 11.5px;
+  color: var(--zy-secondary);
+  /* ⚠️ 不许换行：状态栏一换行就会变成三四行、把编辑器挤掉一截。
+     挤不下时宁可截断（下面的 overflow 处理），也不要撑高。 */
+  white-space: nowrap;
+}
+body[data-zhiyun] .zs-nt-status-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-nt-status-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  overflow: hidden;
+}
+body[data-zhiyun] .zs-nt-stat {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 11.5px;
+  white-space: nowrap;
+  cursor: default;
+}
+/* 反链那一项是有用的：点它把右栏叫出来（右栏关着的时候尤其需要）。 */
+body[data-zhiyun] button.zs-nt-stat {
+  cursor: pointer;
+}
+body[data-zhiyun] button.zs-nt-stat:hover {
+  color: var(--zy-accent);
+}
+
+/* ── 右：关系 ─────────────────────────────────────────────────────── */
+body[data-zhiyun] .zs-nt-side {
+  /* 与文件树同理：可收缩，但有个地板。右栏是一列链接，190px 仍然读得下去。 */
+  flex: 0 1 264px;
+  min-width: 186px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  background: var(--zy-sidebar);
+  border-left: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zs-nt-side section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+body[data-zhiyun] .zs-nt-side h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--zy-secondary);
+  margin: 0;
+}
+body[data-zhiyun] .zs-nt-side h3 span {
+  margin-left: 6px;
+  color: var(--zy-muted);
+  font-weight: 400;
+}
+body[data-zhiyun] .zs-nt-side p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+body[data-zhiyun] .zs-nt-sidebtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-sidebtn:hover:not(:disabled) {
+  background: var(--zy-hover);
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-nt-sidebtn:disabled {
+  opacity: .5;
+  cursor: default;
+}
+body[data-zhiyun] .zs-nt-danger:hover:not(:disabled) {
+  color: #e05252;
+}
+body[data-zhiyun] .zs-nt-refs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* ⚠️ 不给 `.zs-text`（**跨包共享的类**）设字号。
+ *
+ * 原先这里写的是 `.zs-nt-refs .zs-text { font-size: 11.5px }` —— 与学习页里
+ * 多处 `.zs-text` 同特异性，谁赢只看**挂载顺序**（CSS 顺序检查当场抓到 4 条）。
+ * 正确做法是把字号挂在自己的专属类上，让共享类保持宿主/原语给的样子。
+ */
+body[data-zhiyun] .zs-nt-ref {
+  display: block;
+  width: 100%;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--zy-accent);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-nt-ref:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+body[data-zhiyun] .zs-nt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+body[data-zhiyun] .zs-nt-tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid var(--zy-line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-nt-tags b {
+  font-weight: 400;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-nt-rename {
+  display: flex;
+  gap: 7px;
+}
+body[data-zhiyun] .zs-nt-rename input {
+  flex: 1;
+  min-width: 0;
+}
+body[data-zhiyun] .zs-nt-note-ok {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--zy-accent);
+}
+
+/* 窄屏：把两侧面板的**基准宽度**收一收（现在它们是可收缩的 flex 项，
+   设 `width` 不会生效 —— 主轴尺寸由 `flex-basis` 决定）。
+   **不**用 `display:none` 强行藏掉任何一栏 —— 那会让 ribbon 上的开关按下没反应
+   （看起来像坏了）。收不收由用户决定；挤不下时面板自己让位给正文。 */
+@media (max-width: 1280px) {
+  body[data-zhiyun] .zs-nt-side {
+    flex-basis: 232px;
+  }
+}
+@media (max-width: 1080px) {
+  body[data-zhiyun] .zs-nt-explorer {
+    flex-basis: 226px;
+  }
+}
+@media (max-width: 900px) {
+  body[data-zhiyun] .zs-nt-scroll {
+    padding: 26px 24px 48px;
+  }
+}

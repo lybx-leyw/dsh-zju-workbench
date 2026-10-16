@@ -17,9 +17,21 @@
 | `zhiyun.paper.content` | 论文阅读页正文 |
 | `zhiyun.study.content` | 学习页正文 |
 | `zhiyun.me.content` | 个人页正文 |
-| `zhiyun.me.account` | 个人页账号区块（嵌在个人页正文里） |
 | `zhiyun.plugins.content` | 插件依赖页正文 |
 | `zhiyun.feedback.content` | 反馈页正文 |
+
+侧栏那一列还声明了几个**控件插槽**（与页面无关）：
+
+| 插槽 | 内容位置 |
+| --- | --- |
+| `sidebar.settings` | 宿主的原生设置面（**被 CSS 刻意隐藏**，可见的设置面归「个人」页） |
+| `sidebar.footer.action` | 导轨底部扩展入口（当前无人注册） |
+| `sidebar.account.signin` | **账号对话框里的登录表单**（头像 → 登录） |
+
+> 「个人」不在导轨的页面图标里：它是导轨**最下方那格圆形头像**。点头像浮出账号面板
+> （身份 + 登录 + 设置），面板里点「设置」才进个人页。登录表单由 `dsh-zhiyun-page-me`
+> 注册进 `sidebar.account.signin`，**不在个人页正文上** —— 登录是应用级动作，
+> 入口在头像那一层，也因此不会因为「个人」页被停用而消失。
 
 页面包在客户端导出 `inject: ['slots']`，然后：
 

@@ -16,7 +16,13 @@ export const name = 'zhiyun-study-core-client';
  */
 export const inject = ['connection'];
 export function apply(ctx) {
-  const navigation = { navigate: (page) => ctx.get('zhiyunNavigation')?.navigate(page) };
+  // 转发壳的动作。`zhiyunNavigation` 就是壳的控制器对象本身（见壳里那句
+  // `reflect.provide('zhiyunNavigation', controller)`），所以 `openAccount` 本来就在上面；
+  // 这里只把两个动作包一层，让**页面手上的控制器**也能开账号面板。
+  const navigation = {
+    navigate: (page) => ctx.get('zhiyunNavigation')?.navigate(page),
+    openAccount: () => ctx.get('zhiyunNavigation')?.openAccount?.(),
+  };
   const controller = createStudyController(async (method, payload, signal) => {
     const result = await ctx.connection.rpc.call('/api', 'zhiyun-study', { method, args: payload }, signal);
     if (!result.ok) throw Object.assign(new Error(result.error.message), { code: result.error.code });
