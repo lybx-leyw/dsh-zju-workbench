@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-panda-calendar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版挂载上游 dsh-panda-calendar，为「今天」页补上农历/干支/节气/节日的历法表达底层（强化式集成）",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dependencies": {
+    "dsh-panda-calendar": "1.2.4"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

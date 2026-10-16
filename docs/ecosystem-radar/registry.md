@@ -704,3 +704,66 @@
 > 建议人工一次性横向排序取一（`Roarpeng/GraphFlow` ★22 最高）；
 > ③ **间隔重复/掌握度簇 3 条** → `lookatstudy`（BKT+技能树）／`dsh-flashcard`（仅 SM-2，⛔）／
 > `dsh-radar-fsrs-scheduler`（FSRS）→ **必须与 fsrs-scheduler 统一裁决**。
+
+---
+
+## 2026-10-16 · B 组（浙大场景 · **校园基础设施 / 系统能力轴**）· 第四轮 · 追加
+
+> 关键词：`zju captcha`、`zju login`、`zju vpn`、`zju auth`、
+> `zju jwbinfosys OR zdbk OR zju jwb`、`zju grade point`、`campus timetable scraper zju`、
+> `zju cloud classroom`、`zju zhiyun course video`、`zju library`
+> （+ 追加 8 词验证轴是否枯竭，见报告）。**20 次搜索**（⚠ 超 ≤10 上限，已如实记录）。API 无 403。
+> 许可证核实：`license.spdx_id` + 对 🟢/🟡 候选**逐一拉取 LICENSE 实文比对**，
+> 并对 npm 包（`login-zju@1.0.9`、`dsh-panda-calendar@1.2.4`）做 **registry 二次核实**。
+> **本轮 0 条 `NOASSERTION`**（与 10-16 第二/三轮形成对比）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `5dbwat4/login-ZJU` | B 其他JS | **MIT** ✅ | 账号/登录（全场景前置） | **重复可强化** | 🟢 | proposed | 2026-10-16 | ★16，**2026-10-14 活跃**。**LICENSE 实文已核**（`Copyright (c) 2024 5dbwat4`）✅。npm `login-zju@1.0.9`（2026-07-03）**MIT ✅ 已核实可锁版引入**，依赖**仅 `nanoid ^5.1.9`**（零传递污染），**无 engines/peer 门槛**。**把浙大 12 个系统的登录态统一成一套 API**（`new ZJUAM(u,p)` + `service.fetch()` 即用）：ZJUAM/ZDBK/COURSE/COURSES/CLASSROOM/APILIB/BOOKINGLIB/CC98/ETA/FORM/OPEN/ALT。**强化对象**：本仓 `dsh-zhiyun-classroom/src/auth.js` 是**手写 CAS、只服务智云一个目标**；上游是同一流程的**通用化实现**。三条判据均成立 → **强化式集成**。⚠ **① 绝不可与现有智云登录并行**（建议上游只管智云之外的 11 个业务）；⚠ **② 凭据流向变了**（明文入参，须确认不落盘/不进日志）；⚠ ③ 核对 `nanoid` 版本冲突。**本轮 L2 骨架备选之一** → 实际骨架出了 panda-calendar |
+| `SylarLong/iztro` | B 其他JS | **MIT** ✅ | 日程/时间（校历/农历） | **重复可强化** | 🟡 | proposed | 2026-10-16 | **★4227**，**2026-10-15 当日活跃**。**纯 JS 农历/黄历权威底层**（中西历互转 + 干支 + 生肖 + 廿四节气 + 传统节日 + 每日宜忌）。本仓「今天」页**只有公历**，无任何历法逻辑。⚠ **上游字面用途是紫微斗数排盘**（与本仓无关）→ 若接入**只可取历法模块**，命理部分不接入、不显示，**此点须人工拍板（产品取向）**。⚠ **与骨架 `dsh-radar-panda-calendar` 同域，两条须裁决取一** |
+| `runcat-tommy/dsh-panda-calendar` | A 原生DSH | **MIT** ✅ | 日程/时间（历法） | **重复可强化** | 🟡 → **出骨架** | proposed | 2026-10-16 | ★1。npm `dsh-panda-calendar@1.2.4` **MIT ✅ 已核实可锁版挂载**，`dependencies`/`peerDependencies` **均空**（零传递污染）。`dsh.bundle.patch` + `dsh.client`（4 个 inject 点）。**离线圈日引擎 73384 天逐日校验、0 不一致**（数据派生自 `lunar-javascript` 6tail/MIT，有生成器与测试可溯源）。⚠ **① 默认会在 `conversation.view` 注册「熊猫日历」标签页**（是否允许须人工裁决）；⚠ ② 自带紫微斗数/天气/时间戳，**均不接入**。**本轮 L2 骨架** → `packages/dsh-radar-panda-calendar` |
+| `Mythologyli/zju-web-login` | B 其他JS | MIT ✅ | 校园网认证 | 全新但形态不合 | 🔵 | proposed | 2026-10-16 | ★42，2026-01-31。**ZJU 网络网页认证登录脚本**。⚠ 实为**用户脚本（Tampermonkey 形态）**，非库 → 不可作依赖；但**认证表单字段与跳转链是现行有效的一手资料**，可作 `dsh-zhiyun-net-proxy` 的能力缺口对照 |
+| `mohan-zeyu/golang-login-zju` | B 其他JS | MIT ✅ | 统一身份认证 | 重复可强化 | 🔵 | proposed | 2026-10-16 | ★5，2026-06-25。**Go** 版 ZJU 登录库。与 `5dbwat4/login-ZJU` 同域但**语言不可直用** → 只作**交叉验证**（两套独立实现对同一 CAS 流程的共识，可反证上游流程未漂移） |
+| `n0sig/ZJU-Web-Auth-Bash` | B 其他JS | **无许可证** | 校园网认证 | — | ⛔ | rejected | 2026-10-16 | ★28。Bash 认证脚本。**无许可证 → 不得摘取任何代码** |
+| `Xinzhe99/zju-autologin` | B 其他JS | MIT ✅ | 校园网认证 | 全新但形态不合 | 🔵 | proposed | 2026-10-16 | ★4，2026-10-14。**srun 门户 + PyQt6 托盘应用**（Python）。⚠ 桌面形态与 web 客户端不兼容；**同域已有** `yuanstarstar/dsh-bit-login`（10-15 登记，Srun 参考）→ **簇内饱和，不单独推进** |
+| `eWloYW8/ZJUWebVPN` | B 其他JS | WTFPL | WebVPN 访问 | 重复可强化 | 🔵 | proposed | 2026-10-16 | ★9，2025-12-26。Python wrapper，包装浙大 WebVPN 自动访问。⚠ 本仓已有 WebVPN 通路（`dsh-zhiyun-net-proxy` 分域中继）→ 倾向**重复且无增益**；保 🔵 仅因 **WTFPL 极宽松**，可作实现参考。⚠ WTFPL 不在白名单字面表内（但非 copyleft）—— **不进 L2 骨架，故不触发白名单约束**；若要升 🟢 须人工确认 |
+| `ChenyuHeee/Libot` | B 其他JS | MIT ✅ | 图书馆座位 | 全新但形态不合 | 🔵 | proposed | 2026-10-16 | ★3，2026-01-08。**Python** macOS/Windows 桌面工具：每分钟轮询浙大图书馆座位，有空位推**钉钉群**（群号 145455027687）。⚠ 形态完全不兼容（桌面 app + 需用户自建群）→ 仅作「**图书馆座位域确有真实需求**」的线索；若要做，由本仓自建 |
+| `birchtree2/zju-grad-course-helper` | B 其他JS | MIT ✅ | 研究生选课 | **重复且无增益** | ⛔ | rejected | 2026-10-16 | ★0，2026-09-15。**JS 浏览器扩展**。⚠ 扩展形态不能作为依赖；与 `Zhangyc0/ZJU-Course-Selection` 同域 → **选课簇整体不进集成评估**（见下） |
+| `Zhangyc0/ZJU-Course-Selection` | B 其他JS | MIT ✅ | 选课脚本 | **重复且无增益** | ⛔ | rejected | 2026-10-16 | ★15，2021-08-13 停更 5 年（Python）。许可虽合规，但功能为「**自动抢课**」→ **高风险行为**（违反教务系统使用条款、可能触发账号处罚）。建议**不进任何集成评估**，只登记。**建议把「自动抢课/签到/评教」写进 radar 排除规则**，免每轮重复判断 |
+| `QSCTech/jw-scraper` | B 其他JS | MIT ✅ | 教务数据 | **重复且无增益** | ⛔ | rejected | 2026-10-16 | ★7，2023-02-22。**Go** 教务网爬虫 SDK。⚠ 与 `xhacker/zju-jwb-to-icalendar`（10-16 已登记）同域且 Go 不可直用 → **簇内取一，已取 MIT 的 TS 那条** |
+| `awmleer/zju-library` | B 其他JS | **无许可证** | 图书馆 | — | ⛔ | rejected | 2026-10-16 | ★22，2022-05-21。浙大图书馆 app（React Native）。**无许可证** + 停更 4 年 → **不得摘取任何代码** |
+| `FrazierLei/ZJU-toolkit` | B 其他JS | Apache-2.0 ✅ | 综合工具集 | 仅供参考 | 🔵 | proposed | 2026-10-16 | ★20，2021-01-26。Python 浙大杂项功能集。⚠ **已登记，本轮补记细节**：许可合规但**停更 5 年**且形态为「脚本集合」→ 无集成价值，仅作用户需求清单对照 |
+| `clarkok/captcha-viewer` | B 其他JS | **无许可证** | 验证码识别 | — | ⛔ | rejected | 2026-10-16 | ★1，2013-10-08 停更 **13 年**。验证码识别实验（针对 `jwbinfosys` 的 `CheckCode.aspx`）。**无许可证且已失效** → 只证「教务网验证码」曾是真实痛点，**不碰代码** |
+| `StephenChen1108/edgeless-zju-transcript-exporter` | B 其他JS | **无许可证** | 智云字幕导出 | **重复且无增益** | ⛔ | rejected | 2026-10-16 | ★3，2026-09-29。智云字幕导出（Edge 扩展）。**无许可证** → 仅线索；且智云字幕域本仓已覆盖（`dsh-zhiyun-classroom`）→ 重复且无增益 |
+| `Mythologyli/zju-connect` | B 其他JS | **AGPL-3.0** | 校园网络（RVPN） | — | ⛔ | rejected | 2026-10-16 | **★796（本轴最高）**，2026-10-08 活跃。ZJU RVPN 客户端的 Go 实现。**AGPL 红线** ⛔。功能与本仓网络域高度相关 → **只作需求清单对照，不碰代码** |
+| `Mythologyli/ZJU-Connect-for-Windows` | B 其他JS | **LGPL-3.0** | 校园网络（RVPN） | — | ⛔ | rejected | 2026-10-16 | ★473，2026-03-12。Qt/C++ 桌面客户端。**LGPL 红线** ⛔ |
+| `QSCTech/zjunet` | B 其他JS | **GPL-3.0** | VPN/WLAN/DNS | — | ⛔ | rejected | 2026-10-16 | ★332，2023-12-21。**求是潮官方**命令行脚本（VPN / WLAN / DNS）。功能最贴合校园网络域，**却 GPL 红线** ⛔ → 只作需求对照，不碰代码 |
+| `Cillo-x/zjuam-auth` | B 其他JS | **GPL-3.0** | 统一身份认证 | — | ⛔ | rejected | 2026-10-16 | ★0，2026-10-03。**零依赖 Node.js** 的浙大统一身份认证客户端，支持 CAS 登录与 **OAuth2 授权码**。**GPL 红线** ⛔ → 不碰代码。⚠ **但值得人工看一眼**：**OAuth2 是本仓登录域从未考虑过的形态**，若 `open.zju.edu.cn` 支持，可能比 CAS 更合适（须核官方文档，实现由本仓自建） |
+
+> **簇登记（折叠）**：
+> ① **统一身份认证簇 6 条** → `5dbwat4/login-ZJU`（**MIT/TS/npm 可挂载 → 取，🟢**）／
+> `mohan-zeyu/golang-login-zju`（MIT 但 Go → 交叉验证）／
+> `Cillo-x/zjuam-auth`（**GPL ⛔**，但含 OAuth2 形态 → 需求对照）／
+> `n0sig/ZJU-Web-Auth-Bash`（无许可 ⛔）／`Mythologyli/zju-web-login`（MIT 但用户脚本）／
+> `Xinzhe99/zju-autologin`（MIT 但 PyQt）→ **本轮取一，其余登记**。
+>
+> ② **校园网络 / VPN 簇 4 条** → `Mythologyli/zju-connect`（**AGPL ⛔ ★796**）／
+> `Mythologyli/ZJU-Connect-for-Windows`（**LGPL ⛔ ★473**）／`QSCTech/zjunet`（**GPL ⛔ ★332**）／
+> `eWloYW8/ZJUWebVPN`（WTFPL 🔵）→ **簇内三个最高星标全部 copyleft**。
+> **结论：本仓校园网络能力必须自建**（与 2026-10-14 起 `QSCTech/zjunet` 被排除的结论一致）。
+>
+> ③ **选课簇 2 条** → `Zhangyc0/ZJU-Course-Selection`（Python 停更 + 抢课风险）／
+> `birchtree2/zju-grad-course-helper`（扩展）→ **均不进集成评估**。
+>
+> ④ **农历 / 日历簇 2 条** → `SylarLong/iztro`（**🟡**）／
+> `runcat-tommy/dsh-panda-calendar`（**🟡 + 本轮骨架**）→ **两条同域，须人工裁决取一**。
+>
+> ⑤ **图书馆簇 3 条** → `ChenyuHeee/Libot`（MIT，桌面）／`awmleer/zju-library`（无许可 ⛔）／
+> `5dbwat4/login-ZJU` 的 `APILIB`+`BOOKINGLIB`（**取这条**：库形态、可复用）
+> → **取 `login-ZJU` 里的图书馆通路，两条独立 app 不取**。
+
+> **⚠ 本轮红线模式（建议人工注意）**：本轴 20 条候选中有 **8 条无许可证或 copyleft**
+> （AGPL 1 / LGPL 1 / GPL 2 / 无许可 3，另有 1 条 WTFPL）。
+> 占全部新候选 **40%**（若只算被排除的 11 条则占 73%）。
+> 浙大校园基础设施生态的普遍特征是**「学生自用的脚本 / 桌面工具」，许可证意识弱**。
+> **这条轴上可用的 JS 库实际上只有 `login-ZJU` 一条**。
