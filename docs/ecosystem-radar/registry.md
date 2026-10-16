@@ -767,3 +767,124 @@
 > 占全部新候选 **40%**（若只算被排除的 11 条则占 73%）。
 > 浙大校园基础设施生态的普遍特征是**「学生自用的脚本 / 桌面工具」，许可证意识弱**。
 > **这条轴上可用的 JS 库实际上只有 `login-ZJU` 一条**。
+
+---
+
+## 2026-10-16 · B 组（浙大场景 · **学科资产 / 课程内容轴**）· 第五轮 · 追加
+
+> 关键词：`zju physics`、`zju chemistry`、`zju biology`、`zju math`、`zju lab report`、
+> `zju computer science course`、`zju software engineering`、`zju course notes latex`、
+> `zju exam past paper`、`zju study group OR collaboration`、`zju thesis typst`、
+> `zju campus map`、`user:ZJU-Turing`、`org:zju-isee`、`topic:zju`、
+> `topic:zju language:javascript`、`topic:zju language:typescript`、
+> `zju matlab OR simulation javascript`、`zju data visualization` 等 30 词。
+> ⚠ **第 30 次调用触发 API 403 限额**（`rate limit exceeded for user ID 242547135`）
+> → **本轮为「不完整轮次」**，改用前 29 次已获数据出报告，未覆盖切片明确留待后续。
+> 许可证核实：全部以 `license.spdx_id` 为准；对 🟢/🟡 候选**额外拉取 LICENSE 实文比对**。
+> **本轮 3 条 `NOASSERTION`**（单列待核）。**145 条新候选**，与 registry 529 条逐条比对，无重复。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `p16e0nd/zju-recorder` | B 其他JS | **MIT** ✅ | 课堂直播/录制 | **重复可强化** | 🟢 | proposed | 2026-10-16 | ★0，2026-09-30。**LICENSE 实文已核**（`Copyright (c) 2026 ZJU Recorder contributors`）✅。**智云课堂本地版**（Node.js，`app/server.js` 149KB）。**三块可提取能力**：① **OAuth2 授权码链路**（`casapi`→`oauth2.0/authorize`→`tgmedia get-info?code=ST-xxx`→`_token` cookie 内藏 JWT）—— 本仓 `dsh-zhiyun-classroom/src/auth.js` 是 **CAS 直连**，**无此链路**；② `CookieJar` 显式处理 `domain`/host-only/`path`；③ RSA **密码反转 + 分块** 实现（本仓为整块，可交叉验证）。**强化对象**：课堂页直播通路。⚠ **① 形态不兼容**（Windows 本地工具，`127.0.0.1:8787`）→ **只提取能力，不挂载整体**；⚠ **② 凭据流向**（支持明文账密自动登录，须确认不落盘）；⚠ **③ 录制须承接上游 `DISCLAIMER.md` 边界且默认关闭**；⚠ ④ `flv.min.js`/`hls.min.js` 为**第三方构建产物，许可证未核，不得引入**。**本轮 L2 骨架** → `packages/dsh-radar-zju-recorder` |
+| `macanine/zjumihomo-converter` | B 其他JS | **MIT** ✅ | 校园网络分流 | **重复可强化**（仅规则数据） | 🟡 | proposed | 2026-10-16 | ★0，2026-10-06。**LICENSE 实文已核**（`Copyright (c) 2025 Js-Sung`）✅。Clash/Mihomo 订阅转换器，**运行时依赖仅 `js-yaml ^4.1.0`**。**真正有价值的是内置「校园网分流规则」这份数据**，而非转换代码 → 只能提取规则、不能整体挂载。带 `test/mihomo-check.mjs` 可作**规则合法性校验**参考。⚠ **语义须对齐**：本仓 `dsh-zhiyun-net-proxy` 是**分域中继**，与「绕过网络管控」语义不同；不得把后者带入本仓任何用户可见文案 |
+| `hongxin/csmath-2022` | B 其他JS | MIT ✅ | 数学（CS 方向） | 仅供参考（内容库） | 🔵 | proposed | 2026-10-16 | ★62。CS 方向博士生数学课（优化/ML 理论）。**内容库非工具**，MIT 但无代码价值。**同系列 `csmath-2019`/`-2020`/`CSMATH` 均无许可证** → 只 2021/2022 两条合规 |
+| `hongxin/csmath-2021` | B 其他JS | MIT ✅ | 数学（CS 方向） | 仅供参考（内容库） | 🔵 | proposed | 2026-10-16 | ★30，同上系列 |
+| `upupming/zhr-action-demo` | B 其他JS | MIT ✅ | 日常打卡 | 仅供参考 | 🔵 | proposed | 2026-10-16 | ★61，2023-01-02。健康打卡 GitHub Action。**功能已停用**，只证历史形态 |
+| `jinzcdev/pintia-solutions` | B 其他JS | MIT ✅ | 刷题（PTA） | 仅供参考 | 🔵 | proposed | 2026-10-16 | ★40。PTA 700+ 题解（C++）。与刷题面板同域，但**内容不可机器消费** |
+| `longqianh/ZJU-experiment-report-template` | B 其他JS | Apache-2.0 ✅ | 实验报告 | 仅供参考（模板） | 🔵 | proposed | 2026-10-16 | ★36。实验报告 LaTeX 模板 |
+| `TheNetAdmin/ZjuReportTemplate` | B 其他JS | MIT ✅ | 实验报告 | 仅供参考（模板） | 🔵 | proposed | 2026-10-16 | ★18，2019 停更。同上 |
+| `ZJU-SE-2021/MSaaS` | B 其他JS | MIT ✅ | 软工课设 | 无关 | 🔵 | proposed | 2026-10-16 | ★14。医疗系统课设 |
+| `ZJU-Turing/TuringPlugins` | B 其他JS | MIT ✅ | 课程文档站 | 无关 | 🔵 | proposed | 2026-10-16 | ★4。`[DEPRECATED]` mkdocs 插件集（Python）。**形态为文档站插件**，与本仓无交集 |
+| `windingwind/Requestool` | B 其他JS | MIT ✅ | 教务（jwglxt） | 全新但形态不合 | 🔵 | proposed | 2026-10-16 | ★4，2020-02-23。`zju-jwglxt` 的 Chrome 扩展。扩展形态不可作依赖；2020 停更 |
+| `ShawHaines/ComputationalPhysics` | B 其他JS | MIT ✅ | 计算物理 | 仅供参考 | 🔵 | proposed | 2026-10-16 | ★2。课程作业（Jupyter） |
+| `Luyf12/SRE_odometer` | B 其他JS | Apache-2.0 ✅ | 软工需求 | 无关 | 🔵 | proposed | 2026-10-16 | ★2。软工课设 |
+| `YuhaoLian/ZJU-Personal-Course` | B 其他JS | Unlicense ✅ | 课程存档 | 无关 | 🔵 | proposed | 2026-10-16 | ★1。个人作业存档（HTML） |
+| `fengnian123/zju_data-Data-visualization` | B 其他JS | MIT ✅ | 数据可视化 | 无关 | 🔵 | proposed | 2026-10-16 | ★1。可视化大作业 |
+| `dilititi/Echo-in-ZJU` | B 其他JS | Apache-2.0 ✅ | 校园地图 | 全新但形态不合 | 🔵 | proposed | 2026-10-16 | ★0。紫金港**声音地图**（交互式网页）。形态为网页艺术项目，无能力可提取 |
+| `GeorgeC6/ZJU-College-Physics-Exp-Plots` | B 其他JS | MIT ✅ | 大物实验绘图 | 无关 | 🔵 | proposed | 2026-10-16 | ★0。**MATLAB**，技术栈不符 |
+| `mem-courses/discrete-mathmatics` | B 其他JS | MIT ✅ | 离散数学 | 仅供参考 | 🔵 | proposed | 2026-10-16 | ★0，2024-06-05。离散数学笔记（Typst） |
+| `spiritysdx/Probability-Theory-and-Mathematical-Statistics-ZJU-4-ed.-` | B 其他JS | MIT ✅ | 概率论 | 仅供参考 | 🔵 | proposed | 2026-10-16 | ★1。概率论教材（浙大4版）资料 |
+| `Zyeeor/Object_Oriented_Programming` | B 其他JS | MIT ✅ | — | 无关 | 🔵 | proposed | 2026-10-16 | ★0。与本仓无对应功能 |
+| `smilenow/Java-Application` | B 其他JS | MIT ✅ | — | 无关 | 🔵 | proposed | 2026-10-16 | ★1 ❌ 无关（翁恺课程作业） |
+| `junl666/MATH285-Lab-ZJUI-SP23` | B 其他JS | MIT ✅ | — | 无关 | 🔵 | proposed | 2026-10-16 | ★1 ❌ 无关 |
+| `cxz66666/data-visualization-summerschool2020` | B 其他JS | MIT ✅ | — | 无关 | 🔵 | proposed | 2026-10-16 | ★0 ❌ 无关（COVID 可视化 demo） |
+| `Circle-Ming/time` | B 其他JS | MIT ✅ | — | 无关 | 🔵 | proposed | 2026-10-16 | ★0 ❌ 无关（math_lab） |
+| `NoughtQ/notebook` | B 其他JS | **NOASSERTION** | 笔记 | — | ⚠ 待核 | proposed | 2026-10-16 | ★135，2026-10-02。个人笔记库。**许可证待人工核验，不采用、不摘代码** |
+| `ZJU-Turing/TuringDoneRight` | B 其他JS | **NOASSERTION** | 课程指南 | — | ⚠ 待核 | proposed | 2026-10-16 | ★76，2026-07-25。图灵班学长组资料网站。**待人工核验** |
+| `ZJU-Mix/ZJU-General-Physics-Assistance-Project` | B 其他JS | **NOASSERTION** | 普物笔记 | — | ⚠ 待核 | proposed | 2026-10-16 | ★4，2025-01-16。普物(H) 笔记工程。**待人工核验** |
+| `zju-isee/zju-isee` | B 其他JS | **无许可证** | 电子/信电 | — | ⛔ | rejected | 2026-10-16 | ★**323**（本轴最高）。信电专业课程仓库，2023-12 停更。**无许可证 → 不得摘取任何代码** |
+| `tiny656/PAT` | B 其他JS | **无许可证** | 刷题 | — | ⛔ | rejected | 2026-10-16 | ★284。PAT 题解。无许可证 |
+| `maksymilan/zju-resume-template` | B 其他JS | **无许可证** | 简历 | — | ⛔ | rejected | 2026-10-16 | ★202，2026-01-10。浙大简历模板（TeX）。无许可证 |
+| `zhanghai/zju-csse-undergraduate-design-latex-template` | B 其他JS | **无许可证** | 毕设 | — | ⛔ | rejected | 2026-10-16 | ★164，2017 停更。本科毕设 LaTeX 模板。无许可证 |
+| `hongxin/csmath-2019` | B 其他JS | **无许可证** | 数学（CS 方向） | — | ⛔ | rejected | 2026-10-16 | ★134。**同系列仅 2021/2022 有 MIT**，本条无许可证 |
+| `hongxin/csmath-2020` | B 其他JS | **无许可证** | 数学（CS 方向） | — | ⛔ | rejected | 2026-10-16 | ★82。同上 |
+| `hongxin/CSMATH` | B 其他JS | **无许可证** | 数学（CS 方向） | — | ⛔ | rejected | 2026-10-16 | ★23，2026-03-17。同上系列 |
+| `merelydust/PAT-Advanced-Level` | B 其他JS | **无许可证** | 刷题 | — | ⛔ | rejected | 2026-10-16 | ★116。PAT 甲级题解。无许可证 |
+| `megrxu/zjureport` | B 其他JS | **LPPL-1.3c** | 实验报告 | — | ⛔ | rejected | 2026-10-16 | ★110，2026-04-07 活跃。实验报告模板（TeX）。**LPPL 非白名单且非标准开源许可** ⛔ |
+| `zhaoluting/marp-themes` | B 其他JS | **GPL-3.0** ⛔ | 演示主题 | — | ⛔ | rejected | 2026-10-16 | ★87。Marp 主题（含「浙大蓝」学术主题）。**GPL 红线** ⛔ |
+| `lhxcs/ZJU_Courses` | B 其他JS | **无许可证** | 课程资料 | — | ⛔ | rejected | 2026-10-16 | ★46。无许可证 |
+| `Deturium/School-Bus` | B 其他JS | **无许可证** | CTF 平台 | — | ⛔ | rejected | 2026-10-16 | ★43，2018 停更。AAA 战队 CTF 平台前端（Vue）。无许可证 |
+| `ruoxining/ZJUCourse` | B 其他JS | **无许可证** | 课程资料 | — | ⛔ | rejected | 2026-10-16 | ★55。无许可证 |
+| `zjuchenlong/Thesis-latex` | B 其他JS | **无许可证** | 毕设 | — | ⛔ | rejected | 2026-10-16 | ★38。博士论文（TeX）。无许可证 |
+| `01tu01/share_mathematic_material_ZJUT` | B 其他JS | **无许可证** | 数学 | — | ⛔ | rejected | 2026-10-16 | ★36。**浙江工业大学**（非浙大）。无许可证 |
+| `TonyCrane/ZJU-General-Physics-Experiment-I` | B 其他JS | **无许可证** | 大物实验 | — | ⛔ | rejected | 2026-10-16 | ★26，2022 停更。无许可证 |
+| `yuaanlin/zju-se-project` | B 其他JS | **无许可证** | 软工课设 | — | ⛔ | rejected | 2026-10-16 | ★20。无许可证 |
+| `yuaanlin/computer-graphics-final-project` | B 其他JS | **无许可证** | 图形学 | — | ⛔ | rejected | 2026-10-16 | ★12。WebGL 课设。无许可证 |
+| `szcf-weiya/ZJU-MATH4901M-2025Fall` | B 其他JS | **无许可证** | 数学前沿 | — | ⛔ | rejected | 2026-10-16 | ★13。LLM 统计前沿讨论班。无许可证 |
+| `kaleo996/ZJU-Discrete-Math-2022` | B 其他JS | **无许可证** | 离散数学 | — | ⛔ | rejected | 2026-10-16 | ★13。语雀笔记导出。无许可证 |
+| `macanine/zju-english-helper` | B 其他JS | **无许可证** | 大英单词 | — | ⛔ | rejected | 2026-10-16 | ★3，**2026-10-14 活跃**。**大英默写器 Pro**（TypeScript）。⚠ **场景高度贴合但无许可证** → 只作需求证据，**建议本仓自建** |
+| `macanine/chalaoshi` | B 其他JS | **无许可证** | 课程评价 | — | ⛔ | rejected | 2026-10-16 | ★1，**2026-09-11**。**查老师增强网页**（TS）。⚠ 同上，**建议本仓自建** |
+| `kenqia/zju-forum-search` | B 其他JS | **无许可证** | 论坛检索 | — | ⛔ | rejected | 2026-10-16 | ★2，**2026-10-15 推送**。CC98 **自然语言找帖**（多轮 AI 检索，TS 扩展）。⚠ 形态为浏览器扩展 + 无许可证 → 只作需求证据 |
+| `ZJU-Turing/GeneralEducationAdmin` | B 其他JS | **无许可证** | 通识课评价 | — | ⛔ | rejected | 2026-10-16 | ★2，2026-02-09。**图灵班通识课程评价系统**（Vue）。⚠ 同上，**建议本仓自建** |
+| `DeeJ6126/ZJU_CLS_Study_Web` | B 其他JS | **无许可证** | 学习 | — | ⛔ | rejected | 2026-10-16 | ★1，**2026-10-15 推送**。无描述。无许可证 |
+| `shrike-505/ZJU-GeneralPhysicsExperiment2-Report` | B 其他JS | **GPL-3.0** ⛔ | 大物实验 | — | ⛔ | rejected | 2026-10-16 | ★6。**GPL 红线** ⛔ |
+| `Shuenhoy/ZJUHardwareLabReportTemplate` | B 其他JS | **GPL-3.0** ⛔ | 硬件实验 | — | ⛔ | rejected | 2026-10-16 | ★4。**GPL 红线** ⛔ |
+| `fffelix-jan/ADSQuizMachine` | B 其他JS | **AGPL-3.0** ⛔ | 刷题（ADS） | — | ⛔ | rejected | 2026-10-16 | ★2。ADS 判断题练习机。**AGPL 红线** ⛔ |
+| `yzyDavid/tss-backend` | B 其他JS | **GPL-3.0** ⛔ | 软工课设 | — | ⛔ | rejected | 2026-10-16 | ★2。**GPL 红线** ⛔ |
+| `yzyDavid/tss-frontend` | B 其他JS | **GPL-3.0** ⛔ | 软工课设 | — | ⛔ | rejected | 2026-10-16 | ★1。**GPL 红线** ⛔ |
+| 其余 ~78 条（`zju physics`/`zju software engineering`/`zju study group`/`zju campus map`/`topic:zju` 等切片命中的课设与个人存档） | B 其他JS | **无许可证** | 课程作业 | — | ⛔ | rejected | 2026-10-16 | 全部 `license: null`。**不为每条单列**：本轴 145 条候选中 **104 条无许可证（72%）**，其中绝大多数是 ★0–★4 的课程作业与个人存档。**本轴的可集成密度极低（仅 21% 落在宽松白名单内，且其中多为 ★0 模板）** |
+
+> **簇登记（折叠）**：
+> ① **智云课堂本地客户端簇 1 条** → `p16e0nd/zju-recorder`（**MIT/JS → 取，🟢 + 本轮骨架**）。
+> 与既有 `edgeless-zju-transcript-exporter`（10-16 第四轮，**无许可证** ⛔）、
+> `iamNCJ/ZJU-Tronclass-Courseware-Downloader`（本轮，**无许可证** ⛔）同域 →
+> **该域三个同类项目只有 zju-recorder 一条合规**，故取之。
+>
+> ② **实验报告模板簇 6 条** → `longqianh`（Apache-2.0 ✅）／`TheNetAdmin`（MIT ✅）／
+> `megrxu/zjureport`（**LPPL ⛔ ★110 最高星**）／`shrike-505`（**GPL ⛔**）／
+> `Shuenhoy`（**GPL ⛔**）／其余无证 → **模板类整体不进集成评估**（本仓非 LaTeX 排版工具），
+> 只登记。⚠ 注意**星标最高的两条均为非白名单许可**。
+>
+> ③ **课程资料 / 笔记内容库簇（~90 条）** → `QSCTech/zju-icicles`（★41259，无证）／
+> `zju-isee/zju-isee`（★323，无证）／`NoughtQ/notebook`（⚠ NOASSERTION）／
+> `ruoxining`、`lhxcs`、`ZJU-Turing/TuringCourses` 等 → **全部为「内容」而非「能力」**，
+> ⛔ 或 ⚠，**不进入集成评估**。本仓无内容托管定位。
+>
+> ④ **PAT / 刷题簇 4 条** → `tiny656/PAT`（★284 无证）／`merelydust/PAT-Advanced-Level`（★116 无证）／
+> `jinzcdev/pintia-solutions`（**MIT ✅ ★40**）／`xlucn/PAT`（10-15 已登记，无证）
+> → **仅 `jinzcdev/pintia-solutions` 合规**，但为**题解内容**非工具 → 🔵 只登记。
+>
+> ⑤ **数学（CS 方向）CSMATH 簇 5 条** → `csmath-2021`/`-2022`（**MIT ✅**）／
+> `csmath-2019`/`-2020`/`CSMATH`（**无证 ⛔**）→ **同系列许可不一致**，
+> 但同为内容库 → 🔵/⛔ 只登记。
+>
+> ⑥ **无许可证但**场景活跃**簇 4 条**（★0–★3，均 2026-09/10 推送）→
+> `macanine/zju-english-helper`（大英默写）／`macanine/chalaoshi`（查老师）／
+> `kenqia/zju-forum-search`（CC98 自然语言检索）／`ZJU-Turing/GeneralEducationAdmin`（通识课评价）
+> → **⚠ 本轮最值得人工注意的一组**：**场景贴合度高于本轮任何合规候选**，
+> 但**全部无许可证** → **不碰代码**，登记为**需求证据**，若要做**由本仓自建**。
+
+> **⚠ 本轮红线模式（建议人工注意）**：新候选 145 条中
+> **无许可证 104 条（72%）／copyleft 6 条／LPPL 1 条／NOASSERTION 3 条**，
+> **仅 31 条（21%）在宽松白名单内**，而这 31 条里绝大多数是 ★0–★4 的课程作业，
+> 真正「可被当作库/能力调用」的**只有 `zju-recorder` 与 `zjumihomo-converter` 两条**。
+> **本轴的可集成密度是迄今所有轴中最低的** —— 与第四轮「校园基础设施轴」同源
+> （学生自用项目许可证意识弱），但本轮更极端：
+> 课程资料 / 题解 / 笔记的作者**根本没想过要授权**。
+
+> **✅ 本轮新增 2 条方法论结论（已写入当日报告 `2026-10-16-d.md` 第五节）**：
+> ① **`topic:zju + language:javascript|typescript` 是迄今信噪比最高的检索式**
+> —— 26/27 两次调用 26 条命中、**21 条为新（81%）**；而裸词 `zju software engineering`
+> （30 条命中）只 13 条新且全部无证。**建议 B 组后续以 `topic:` 切片为主。**
+> ② **`关键词A OR 关键词B` 布尔式完全失效** —— 5 次调用返回**同一批 5632 条**
+> （恰等于 `zju` 单词总命中数），学科限定词不起作用。**建议写入排除规则：禁止 `A OR B` 形式。**

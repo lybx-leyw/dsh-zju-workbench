@@ -52,8 +52,8 @@ node scripts/radar-rotation.mjs --group
 | 项 | 值 |
 | --- | --- |
 | `last_group` | `B` |
-| `last_run_at` | `2026-10-16 09:01` |
-| `group_runs`（累计） | A=9, B=4, C=5 |
+| `last_run_at` | `2026-10-16 04:12` |
+| `group_runs`（累计） | A=9, B=5, C=5 |
 
 ### 流水
 
@@ -76,6 +76,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-16 03:10 | C | 自动记录 |
 | 2026-10-16 06:15 | A | **同日第三轮**（规则 2：今日已跑 B 00:00 / C 03:10 → 取未跑过的 A）。**学习科学切片**：`dsh plugin spaced repetition`/`knowledge graph`/`socratic`/`curiosity`/`mastery learning` + 5 个返 0 词（13 次搜索 ⚠ 超限 3 次）。新增 8 条；🟢1（由 10-15 的 🔵 深化）+🟡2+🔵3+⚠1+⛔1；出骨架 `dsh-radar-lookatstudy` |
 | 2026-10-16 09:01 | B | **同日第四轮**（规则 2：今日已跑 B 00:00 / C 03:10 / A 06:15 → 脚本判 `same-day(exhausted)`）。按 10-15 先例**不重复任何已跑关键词**，改跑**正交新轴：校园基础设施 / 系统能力轴**（`zju login`/`zju auth`/`zju vpn`/`zju captcha`/`zju library`/`zju jwb` 等；20 次搜索 ⚠ 超限一倍，为一次性验证该轴是否枯竭）。新增 **20 条**；🟢1 + 🟡2 + 🔵9 + ⛔11（**0 条 NOASSERTION**）；出骨架 `dsh-radar-panda-calendar`。**该轴一次即扫尽**（`zju seat booking`/`zju notice announcement`/`zju scholarship`/`zju freshman guide`/`zju graduation credit audit`/`zju graduate student tool` 六词全返 0） |
+| 2026-10-16 04:12 | B | 学科资产/课程内容轴：zju physics/math/lab report/software engineering/campus map + user:ZJU-Turing/org:zju-isee + topic:zju(+lang:js/ts)；30词；第30次触发API 403限额，本轮不完整；145条新增；🟢1+🟡1+🔵22+⚠3+⛔118；出骨架 dsh-radar-zju-recorder |
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
 > （见 `registry.md`「2026-10-15 · B 组」36 条），但**未写入流水**，
