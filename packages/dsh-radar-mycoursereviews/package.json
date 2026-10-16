@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-mycoursereviews",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】借鉴上游 compsci-adl/mycoursereviews 的课程评价数据模型（课程/评分/标签/检索），强化本仓课程维度的结构化评价能力（强化式集成·能力提取+自建，非 iframe 注入）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

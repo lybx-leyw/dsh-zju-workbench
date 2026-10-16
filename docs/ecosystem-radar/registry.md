@@ -888,3 +888,42 @@
 > （30 条命中）只 13 条新且全部无证。**建议 B 组后续以 `topic:` 切片为主。**
 > ② **`关键词A OR 关键词B` 布尔式完全失效** —— 5 次调用返回**同一批 5632 条**
 > （恰等于 `zju` 单词总命中数），学科限定词不起作用。**建议写入排除规则：禁止 `A OR B` 形式。**
+
+---
+
+## 2026-10-16 · B 组（浙大场景 · **校园生活 / 生活服务轴**）· 第六轮 · 追加
+
+> 轮换脚本判 `same-day(exhausted)`（今日已跑 B/C/A）。按既有先例**不重复任何已跑关键词**，
+> 改跑 **B 组正交新轴：校园生活/服务**（毕业/宿舍食堂/校园卡/体育场馆/通知/奖学金等）。
+> 15 次搜索（⚠ 超限 5 次，为一次性判断该轴是否枯竭）；**去重基线 565 条**。
+> **本轮最重要结论：B 组已实质性枯竭**，详见 `2026-10-16-e.md` 第二节。
+> 新候选 **12 条**（🟡1 + 🔵5 + ⛔6）；**0 条 NOASSERTION**；出骨架 1 个。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `compsci-adl/mycoursereviews` | B 其他JS | MIT | 选课评价 | 重复且可强化（反馈页） | 🟡 | proposed | 2026-10-16 | ★2 / **forks=6**；TypeScript + Next.js + Drizzle + Keycloak，2026-10-12 推送（活跃）。**课程维度结构化评价**（评分+标签+检索），与 `dsh-zhiyun-page-feedback`（issue 形态的诉求板）**非同面板、功能正交、外部底层更优** → 符合「强化式集成」三条。**L2 骨架选定** → `packages/dsh-radar-mycoursereviews`。⚠ **数据/课程目录属阿德莱德大学，不得搬运**，只能借鉴数据模型，课程数据须接浙大来源 → 属「能力提取+自建」。/LICENSE 端点已核 `spdx_id=MIT` |
+| `OpenLake/RateMyCourse` | B 其他JS | MIT | 选课评价 | 重复且可强化（反馈页） | 🔵 | proposed | 2026-10-16 | ★0 但 **forks=26**（fork 远超 star，典型"内部平台被广泛复刻"）；Next.js + TypeScript + Supabase；2026-06-13 推送。与上条**同簇取一**（取更活跃者）。可作**第二设计参照**；若 `mycoursereviews` 评审驳回则改评估本条 |
+| `DelightRun/ZJUThesis-MPhil` | B 其他JS | MIT | 论文撰写 | 全新 | 🔵 | proposed | 2026-10-16 | ★37。浙大计算机学院**硕士**论文 LaTeX 模板。与已登记 `TheNetAdmin/zjuthesis`（★3776，**本科**毕设）**覆盖学位层次互补**。TeX 非 JS 技术栈 → 只作线索，不进雷达实现面。/LICENSE 端点已核 MIT |
+| `zju-pil-lab/zju-pil-lab.github.io` | B 其他JS | MIT | — | 无关 | ⛔ | rejected | 2026-10-16 | ★0。实验室官网（TypeScript），非工具 |
+| `ChenyuHeee/zju-bulletin-board` | B 其他JS | **无许可证** | 通知公告聚合 | 全新 | 🔵 | proposed | 2026-10-16 | ★2。浙大学院通知公告聚合（Python，每日自动抓取 + GitHub Pages 展示）。**2026-10-16 当日活跃**。**场景价值高（本仓无通知聚合能力，「今天」页可增通知源）**，但**无证 → 不碰代码**，只作**需求证据**；若要做**由本仓自建** |
+| `Kepler16f/zju-kezhou` | B 其他JS | **无许可证** | 培养方案/选课风险审计 | 重复且可强化（课程页） | 🔵 | proposed | 2026-10-16 | ★0。学业罗盘：本科培养方案结构化 + 选课风险审计智能体（Dify 低代码轨 + Flutter App 轨）。**2026-10-15 新建**，思路与本仓课程页契合。**无证 → 仅作设计对照，不碰代码** |
+| `ZJU-R/zjuTimeTable` | B 其他JS | **无许可证** | 选课查看 | 重复且无增益 | ⛔ | rejected | 2026-10-16 | ★19。浙大选课查看器（第三方，Python/FastAPI）。**无证** + 2024-06 停更，功能与已登记课表类重复 |
+| `shuwei1204/ZJUthesis` | B 其他JS | **无许可证** | 论文撰写 | 重复且无增益 | ⛔ | rejected | 2026-10-16 | ★131。浙大论文 LaTeX 模板，**2018 停更 8 年**，已被 `TheNetAdmin/zjuthesis` 完全覆盖 |
+| `eclipselu/zjuthesis-mphil` | B 其他JS | **无许可证** | 论文撰写 | 重复且无增益 | ⛔ | rejected | 2026-10-16 | ★28。硕士论文模板，**2017 停更 9 年** |
+| `huoyao/ZJUThesis` | B 其他JS | **GPL-3.0** | 论文撰写 | 重复且无增益 | ⛔ | rejected | 2026-10-16 | ★12。**GPL 红线** + 2016 停更 |
+| `elgoog577215-beep/ZJU_Platform` | B 其他JS | **无许可证** | — | 无关 | ⛔ | rejected | 2026-10-16 | ★5。无描述、无证 |
+| `quark-zju/dotfiles` | B 其他JS | **无许可证** | — | 无关 | ⛔ | rejected | 2026-10-16 | ★4。个人 dotfiles，非工具 |
+| 浙工大簇（`zjutjh/zjutthesis` ★52／`Devin100086/ZJUT-BAOYAN` ★39／`wanger233/zjut-cjcx` ★33／`Kukukukiki192/ZJUT-SE` ★23／`zhangshenxu/zjuthelp-weixin` ★20／`gzpbbd/ZJUT-Online-Judge` ★14／`Frontlook/ZJUT-GPA-calculator` ★0／`IM594/Dormitory_ZJUT` ★1） | B 其他JS | 多为**无许可证** | **非浙大** | 无关 | ⛔ | rejected | 2026-10-16 | **浙江工业大学 ≠ 浙江大学** —— 校名相近但主体不同，**整簇排除**（本轮 `zjut` 459 条命中的主力，须注意 `zjut` 会被大量浙工大仓库污染） |
+| 个人主页/空仓库簇（`vmmoskani/zjuf`／`sadieen/zjur`／`Leager-zju/Leager-zju`／`tzhangZJU/tzhangZJU.github.io`／`zjuzhfbloodz/zjuzhfbloodz.github.io`／`zjuyk/zjuyk`／`Vita0818/ZJU-CS2045M-Project2`／`pyd966/notes`／`spnotold/enterprise-approval-system`／`yangkao/-Self-use-only-zjuers.com---ui-remake`／`shufengdong/sparrowzz`／`shengyuzhang/AI4GC-ZJU`／`panjoel812/zju-english-dictation`／`DeeJ6126/ZJU_CLS_Study_Web`） | B 其他JS | 多为**无许可证**（极少数 GPL） | — | 无关 | ⛔ | rejected | 2026-10-16 | 个人主页 / 课程作业 / 空仓库 / 自用改造，**无工具价值**。多为 `zju pushed:>2026-09-01` 切片带入 |
+
+> **✅ 本轮新增 3 条方法论结论（已写入当日报告 `2026-10-16-e.md`）**：
+> ① **B 组已实质性枯竭** —— 15 次搜索中 **6 次 `total_count=0`**、**2 次泛化失效**
+> （`total_count` 恰为 5635 = `zju` 单词总数）、`topic:zju` 的 **Top20 已 100% 登记**。
+> **建议 B 组降频**（`group_runs` B 已达 6 轮 + 本轮）。
+> ② **`zju pushed:>YYYY-MM-DD`（时间窗切片）是 `topic:` 饱和后唯一还有产的切片**
+> —— 503 条里捞出 8 条全新活跃仓库。**但它捞的是"新"不是"相关"**，
+> 副产品是大量个人主页/空仓库噪声，**须配合相关性二次过滤**。
+> ③ **★本校切片枯竭时，改走"跨校同型功能域"检索式** —— 本轮唯一合规候选
+> （`course review rating platform`，2/2 命中 MIT）即由此得到，而浙大专属切片
+> 合规率仅 4/16。**校园问题的解跨校同型，且正式课程设计项目许可证意识更强**。
+> **建议写入关键词池：B 组后续以"功能域词"为主、"校名"为辅。**
