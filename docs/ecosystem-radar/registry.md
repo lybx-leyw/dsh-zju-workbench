@@ -927,3 +927,22 @@
 > （`course review rating platform`，2/2 命中 MIT）即由此得到，而浙大专属切片
 > 合规率仅 4/16。**校园问题的解跨校同型，且正式课程设计项目许可证意识更强**。
 > **建议写入关键词池：B 组后续以"功能域词"为主、"校名"为辅。**
+
+### 2026-10-16 · 第七轮（跨校同型轴）
+
+> 关键词：`course review rating platform`、`university course planning assistant language:typescript`、
+> `library seat booking reservation university`、`university notice announcement aggregator typescript`、
+> `timetable generator optimizer typescript`、`grade gpa calculator university typescript`、
+> `exam countdown study planner javascript`、`student planner all-in-one pwa typescript`、
+> `campus information portal integration react`、`school management system rest api javascript`（11 次调用）。
+> 抓取 60 条量级 → **新候选仅 1 条**。**结论：跨校同型轴同样薄**（见 `2026-10-16-f.md`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `OpenLake/RateMyCourse` | B 其他JS | MIT ✅ | 课程评价 | 全新 | 🔵 | proposed | 2026-10-16 | ★**0**，push **2026-06-13**（停滞 4 个月）。IIT Bhilai。Next.js+TS+Supabase 课程/教师评价平台。**数据与抓取脚本强绑他校教务（`scripts/fetch_courses.py`），对浙大零可复用性**；★0 + 停滞 + 非强化关系 → 只登记。**若将来补「课程评价」场景，建议自建（浙大可用 CC98 数据），不移植此项目** |
+| `compsci-adl/mycoursereviews` | B 其他JS | MIT ✅ | 课程评价 | 重复可强化 | 🟡 | proposed | 2026-10-16（**首登第六轮，本轮独立复跑命中**） | ★2，push 2026-10-12。Adelaide 大学课程评价平台（TypeScript）。**本轮复跑 `course review rating platform` 再次命中，许可证与分级与第六轮一致 → 交叉印证**，不重复判定 |
+| 其余 9 条同型项 | 多为课程作业 | **无** | — | — | ⛔ | rejected | 2026-10-16 | `university course planning assistant` / `timetable generator optimizer` / `gpa calculator` / `exam countdown planner` / `school management system` 等词命中项**全部★0-2 且无许可证**，属学生课程作业，无集成价值。**不逐条铺开** |
+
+> **本轴结论（供后续轮次直接引用）**：跨校同型轴**只在「具体功能名词」上有效**；
+> 升格到**抽象平台名词**（`student planner pwa`、`campus portal`）即 `total_count = 0`。
+> **不建议作为主力轴**；建议主力退回 A 组，B 组降频为事件驱动。
