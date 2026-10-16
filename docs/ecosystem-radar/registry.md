@@ -988,3 +988,63 @@
 > Claude Code / Cursor 生态）。**注意：这与首跑校准的「限定符别叠加」不矛盾** ——
 > 那条针对 `license:`/`stars:` **叠加过滤**，而 `in:` 是**收窄检索面**，作用方向相反。
 > ⑤ **`cordis` 是含义过载词**：裸搜 3828 条（含人名/地名），**必须与 `plugin`/`harness` 组合**。
+
+---
+
+## 2026-10-17 · C 组（学生功能域 · 第九轮）
+
+> 跨天首轮（北京时间 00:01），公式取组 `290 % 3 = 2` → C 组。
+> 关键词：`timetable ics export` / `paper annotation reader` / `ocr notes taking` /
+> `quiz practice app` / `fitness tracker javascript` / `spaced repetition flashcard typescript` /
+> `FSRS scheduler rust wasm` / `pdf markdown converter javascript`（10 次搜索，达上限未超限）。
+> 去重后未登记项 17 条，经相关性二次过滤保留 12 条有效候选。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `open-spaced-repetition/fsrs-browser` | B 其他JS | BSD-3-Clause ✅ | 复习节奏 | **重复可强化**（学习页 · 复习调度） | 🟢 | proposed | 2026-10-17 | ★57，Rust→WASM，**零运行时依赖**。含 **Optimizer**（本仓 `ts-fsrs` 无此路径）+ Scheduler。已出骨架 `dsh-radar-fsrs-browser`（锁版 6.6.0）。⚠ 须裁决与 `dsh-radar-fsrs-scheduler` 的关系 |
+| `alex-krassavin/reamkit` | B 其他JS | MIT ✅ | 笔记 / 课件解析 | **重复可强化**（解析 · 导入） | 🟡 | proposed | 2026-10-17 | ★10，**纯 TypeScript** 读 docx/xlsx/pptx/pdf → MD/HTML/PDF，**无需 LibreOffice / headless Office / 商业 SDK**。可强化 `dsh-zhiyun-parser`；项目偏小需评估维护风险 |
+| `Vantalens/Trans2Former` | B 其他JS | MIT ✅ | 笔记 / OCR | **重复可强化**（解析 · OCR 路径） | 🟡 | proposed | 2026-10-17 | ★6，本地优先 14 入 / 11 出，**内置 PP-OCRv5 本地 OCR** + 转换质量报告，全程离线。与 `dsh-zhiyun-parser` 视觉路径正交 |
+| `M1ck4/pdfmd` | B 其他JS | MIT ✅ | 笔记 | **重复可强化**（PDF→MD） | 🟡 | proposed | 2026-10-17 | ★302 / fork 77，头部 PDF→MD，智能标题识别 + 去页眉页脚 + 孤立片段合并。**Python 实现**，若接入需移植，成本中高 |
+| `Tessie27/Live-Caption-Saver` | B 其他JS | **CC0-1.0** ✅ | 课堂录音 / 笔记 | **全新**（课堂字幕采集） | 🟡 | proposed | 2026-10-17 | ★12，Windows 实时字幕 OCR 抓取 + 时间戳自动落盘。对应「课堂录音」场景，但**平台绑定 Windows**，Web 端价值有限 |
+| `computerfan/XJTLU-Timetable-to-ICS` | B 其他JS | MIT ✅ | 课表 | 重复可强化（课表导入） | 🔵 | proposed | 2026-10-17 | ★4，西交利物浦课表→ICS 命令行。**单校小工具**，仅作 ICS 导出范式参考 |
+| `clemmbn/auriga-extract` | B 其他JS | MIT ✅ | 课表 | 重复可强化（课表导入） | 🔵 | proposed | 2026-10-17 | ★5，ISAE-SUPAERO 课表导出为单 ics。同上，单校工具 |
+| `JXC240/paper-reader` | B 其他JS | MIT ✅ | 论文批注 | 重复可强化（论文阅读） | 🔵 | proposed | 2026-10-17 | ★1，本地 PDF 批注伴侣。2026-10-16 建仓，**过新未验证** |
+| `RobbieRao/VibeResearchPaperReader` | B 其他JS | MIT ✅ | 论文批注 | 重复可强化（论文阅读） | 🔵 | proposed | 2026-10-17 | ★1，离线双语论文批注 + 段落级 + 自动保存 + 可移植 JSON（Python）。规模过小 |
+| `Tentengg/Paper-Reader` | B 其他JS | MIT ✅ | 论文批注 | 重复可强化（论文阅读） | 🔵 | proposed | 2026-10-17 | ★1，AI 桌面 PDF 阅读器，多模型分析。2026-03 后停滞 |
+| `jojomondag/FileToMarkdown` | B 其他JS | MIT ✅ | 笔记 | 重复可强化（格式转换） | 🔵 | proposed | 2026-10-17 | ★27，60+ 格式转 MD，CLI + API + 浏览器。**最近 push 2025-08 已停滞** |
+| `elliotblackburn/mdpdf` | B 其他JS | Apache-2.0 ✅ | 笔记 / 导出 | 方向相反 | 🔵 | proposed | 2026-10-17 | ★803，MD→PDF（含样式表）。**本仓要的是 PDF→MD，方向相反**，仅参考 |
+| `sindresorhus/gulp-markdown-pdf` | B 其他JS | MIT ✅ | 笔记 / 导出 | 方向相反 | 🔵 | proposed | 2026-10-17 | ★64，MD→PDF，2023 后停滞。同上，方向相反 |
+| `ChloeVPin/openlet` | B 其他JS | MIT ✅ | 复习 / 闪卡 | **重复无增益** | ⛔ | rejected | 2026-10-17 | ★2，FSRS 闪卡 + 协作文件夹。与 §fsrs-browser / fsrs-scheduler 同域但从零起，**无算法或数据增量** → 不集成 |
+| `masaok/metastack` | B 其他JS | MIT ✅ | 复习 / 闪卡 | **重复无增益** | ⛔ | rejected | 2026-10-17 | ★2，FSRS 闪卡（系统设计面试向）。同上，**无增量** → 不集成 |
+| `walterscarborough/LibSpacey` | B 其他JS | MIT ✅ | 复习 | **重复无增益** | ⛔ | rejected | 2026-10-17 | ★26，C++ SM2 实现（含 TS 包装）。**算法代际落后于 FSRS**（本仓已选 FSRS 路线），2023 停滞 → 不集成 |
+| `seenmttai/markdown-pdfjs` | B 其他JS | MIT ✅ | 笔记 / 导出 | 方向相反 | 🔵 | proposed | 2026-10-17 | ★5，浏览器端 MD→PDF，无服务端。方向相反，仅参考 |
+| `SuriyaG894/md-converter-ext` | B 其他JS | MIT ✅ | 笔记 / 导出 | 方向相反 | 🔵 | proposed | 2026-10-17 | ★2，Chrome 扩展 MD→PDF/DOCX，全离线。方向相反，仅参考 |
+| `AnimatingAntier/InkRead-AI-paper-reader` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-17 | ★1，砚读 InkRead，功能贴合论文场景，但**无许可证 → 不可采用，不得摘取任何代码**，仅登记 |
+| `hemelroy/NoteHub` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-17 | ★2，OCR 课堂笔记（面向残障学生）。**无许可证**且 2019 停滞 |
+| `Waqar-743/SnapNote` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-17 | ★6，桌面笔记 + 剪贴板捕获 + OCR。**无许可证** |
+| `sunnnn2005/smart-handwritten-note-taking-app` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-17 | ★2，iPad 手写笔记（Swift/PencilKit）。**无许可证**且非 JS 栈 |
+| `zhaouv/vscode-markdown-draw` | B 其他JS | Apache-2.0 ✅ | — | 无关 | ⛔ | rejected | 2026-10-17 | ★39，VS Code 手绘 SVG 插件。**非笔记本体**，与本仓无关 |
+| `avigael/react-native-fitness-app` | B 其他JS | MIT ✅ | — | 无关 | ⛔ | rejected | 2026-10-17 | ★28，React Native 演示项目，2023 停滞。与浙大/考试/刷题/笔记/论文/锻炼无关 |
+| `Sachin-deepak-S/fitness-adventure` | B 其他JS | MIT ✅ | — | 技术栈不符 | ⛔ | rejected | 2026-10-17 | ★15，游戏化健身。**PHP/MySQL，非 JS 栈** |
+| `erleiuat/minska` | B 其他JS | MIT ✅ | — | 无关 | ⛔ | rejected | 2026-10-17 | ★25，Vue 卡路里/体重记录，2023 停滞。与学生场景无关联 |
+| `tonderaikawere/python-learning` | B 其他JS | MIT ✅ | — | 无关 | ⛔ | rejected | 2026-10-17 | ★25，Python 桌面学习 App（tkinter）。**非 JS 栈**，无关 |
+| `bandinopla/skill-assessments-quizzes` | B 其他JS | MIT ✅ | — | **重复无增益** | ⛔ | rejected | 2026-10-17 | ★14，通用面试题库。`dsh-zhiyun-quiz` 已覆盖出题+质检 → 不集成 |
+| `AbdulBasit313/React-Quiz-App-Template` | B 其他JS | MIT ✅ | — | **重复无增益** | ⛔ | rejected | 2026-10-17 | ★63，Quiz UI 模板（React/TS/Tailwind）。仅 UI 样板，**无算法/数据增量** → 不集成 |
+| `hellosagar/Quiz-App` / `cnrture/Quizzy-Compose-Multi-Module` | B 其他JS | MIT ✅ | — | 技术栈不符 | ⛔ | rejected | 2026-10-17 | ★101 / ★77，Android（Java/Kotlin）原生 Quiz App。**非 JS 栈**，不逐条铺开 |
+
+> **本轮结论（供后续轮次直接引用）**：
+> ① **C 组「课表导出 / 论文批注」两轴接近枯竭**。`timetable ics export` 57 条里符合
+> 「JS 栈 + 宽松许可」的仅 4 条且**全是单校小工具**（4–34★，如 XJTLU / 奈梅亨 / ISAE-SUPAERO）；
+> `paper annotation reader` 22 条里已登记 5 条，新发现 4 条**全是 1★ 且建仓 < 2 个月**。
+> **后续遇「单校课表工具」「1★ 论文阅读器」直接判 🔵/⛔，只登记一行。**
+> ② **C 组「文档解析」轴仍有价值**：`reamkit`（纯 TS、无 LibreOffice 依赖）与
+> `Trans2Former`（本地 PP-OCRv5 OCR）都能强化 `dsh-zhiyun-parser`，
+> 但均为小项目（6–10★），**适配成本需人工评估**。建议下轮延伸：
+> `document converter typescript no libreoffice`、`local ocr wasm browser`。
+> ③ **宽词已饱和，建议弃用**：`quiz practice app`（2711）与 `fitness tracker javascript`（1069）
+> 合计贡献 3780 条结果，**去重后 0 条进入候选**（头部全为 App 架构演示 / 课程作业 / UI 模板）。
+> 后续 C 组改用窄限定：`quiz practice spaced repetition`、`fitness tracker wearable api`。
+> ④ **`FSRS scheduler rust wasm` 是精准命中词**（total 仅 2），一轮即捞到本轮唯一 🟢。
+> **窄而专的技术词优于宽泛场景词** —— 与 A 组「收窄检索面」的经验一致。
+> ⑤ **`fsrs-browser` 与既有 `ts-fsrs` 骨架的分层关系需人工裁决**（方案 ①替换 / ②分层 / ③维持），
+> 二者同属 `open-spaced-repetition` 组织，**不应同时采用**，否则违反「功能仍相似正交」。

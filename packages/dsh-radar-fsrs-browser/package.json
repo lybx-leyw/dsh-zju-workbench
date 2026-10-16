@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-fsrs-browser",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 fsrs-browser（FSRS 的 WASM 实现，含 Optimizer + Scheduler），为「学习/习题」页补充复习调度与参数优化能力（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "fsrs-browser": "6.6.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
