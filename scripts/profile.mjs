@@ -176,6 +176,24 @@ export function runHost(runtime, args, { pipe = false } = {}) {
     windowsHide: true, stdio: pipe ? ['ignore', 'pipe', 'pipe'] : 'inherit',
   });
 }
+/**
+ * 哪些**声明了 `dsh.client`** 的包缺 `lib/client.js`。
+ *
+ * 只查这一类包：它们的宿主半是空壳，少了客户端产物表现为「前端起来了但这一页空白」，
+ * 比启动失败更难查。`npm start` 与桌面壳（`apps/desktop`）都调它 —— 提取出来是为了
+ * 两处共用同一份判断，而不是各写一遍。
+ *
+ * @returns 缺产物的包名数组（空数组 = 齐全）。
+ */
+export async function missingClientBundles() {
+  const missing = [];
+  for (const name of sourceBundles) {
+    const manifest = JSON.parse(await readFile(path.join(root, 'packages', name, 'package.json'), 'utf8'));
+    if (manifest.dsh?.client === undefined) continue;
+    if (!await exists(path.join(root, 'packages', name, 'lib/client.js'))) missing.push(name);
+  }
+  return missing;
+}
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const command = process.argv[2] ?? 'check';
@@ -184,14 +202,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.log(`智云 Pro · DSH ${runtime.version}\n宿主: ${runtime.app}\nProfile: ${runtime.profile}\n数据: ${runtime.home}`);
     if (runtime.repointed?.length) console.log(`已把 profile 的宿主链接改指到当前安装：${runtime.repointed.join('、')}`);
     if (command === 'start' || command === 'dump') {
-      // 只检查**声明了 dsh.client 的包**：它们的宿主半是空壳，少了 lib/client.js
-      // 表现为「前端起来了但这一页空白」，比启动失败更难查。
-      const missing = [];
-      for (const name of sourceBundles) {
-        const manifest = JSON.parse(await readFile(path.join(root, 'packages', name, 'package.json'), 'utf8'));
-        if (manifest.dsh?.client === undefined) continue;
-        if (!await exists(path.join(root, 'packages', name, 'lib/client.js'))) missing.push(name);
-      }
+      const missing = await missingClientBundles();
       if (missing.length > 0) throw new Error(`请先运行 npm run build（缺客户端产物：${missing.join('、')}）`);
       const extra = process.argv.slice(3);
       const args = command === 'dump' ? ['--dump-config'] : hostArgs(extra, process.env.ZHIYUN_PORT);

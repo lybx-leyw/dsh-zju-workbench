@@ -1,0 +1,85 @@
+/* 加载页的样式。
+ *
+ * 明暗跟随系统（`prefers-color-scheme`），不读产品的主题 —— 这一页在**产品还没起来**
+ * 的时候就要能看，所以不能依赖产品注入的任何变量或样式表。 */
+:root {
+  color-scheme: light dark;
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --text: #252a30;
+  --secondary: #666b72;
+  --muted: #8b9096;
+  --line: #e1e3e5;
+  --accent: #00479d;
+  --danger: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #191c20;
+    --surface: #22262b;
+    --text: #e8ebee;
+    --secondary: #afb6bf;
+    --muted: #868d95;
+    --line: #343a41;
+    --accent: #94bdf4;
+    --danger: #f2b8b5;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.6 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+}
+.card {
+  width: min(560px, calc(100vw - 48px));
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  text-align: center;
+}
+.mark { display: inline-flex; color: var(--accent); }
+.mark svg { width: 44px; height: 36px; }
+h1 { margin: 14px 0 6px; font-size: 19px; font-weight: 600; }
+.status { display: flex; align-items: center; justify-content: center; gap: 9px; margin: 0; color: var(--secondary); }
+.dot { width: 8px; height: 8px; border-radius: 50%; corner-shape: round; background: var(--accent); flex: none; }
+/* 启动中做个呼吸；就绪时这一页马上被替换，所以只给"还在等"这一个状态加动画。 */
+body[data-phase="starting"] .dot { animation: pulse 1.4s ease-in-out infinite; }
+body[data-phase="error"] .dot { background: var(--danger); animation: none; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { body[data-phase="starting"] .dot { animation: none; } }
+
+.hint { margin: 14px 0 0; color: var(--secondary); text-align: left; }
+.log { margin: 16px 0 0; text-align: left; }
+.log summary { cursor: pointer; color: var(--secondary); }
+.log pre {
+  max-height: 240px;
+  overflow: auto;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--muted);
+  font: 11px/1.55 Consolas, "Cascadia Mono", monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+button {
+  margin-top: 18px;
+  padding: 8px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled { opacity: .5; cursor: default; }
+.foot { margin: 20px 0 0; color: var(--muted); font-size: 11.5px; }
+.foot code { font-family: Consolas, "Cascadia Mono", monospace; color: var(--secondary); }
