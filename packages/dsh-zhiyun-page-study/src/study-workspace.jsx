@@ -163,7 +163,7 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
     document.getElementById(`zs-line-${subtitleFocus}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [tab, subtitleFocus]);
   if (state.loading) return <div className="zs-workspace-loading"><span className="zs-spinner" />正在连接课堂与学习资料…</div>;
-  if (!state.user) return <div className="zs-workspace-signin"><div className="zs-signin-mark">知</div><h1>连接智云课堂</h1><p>登录后，课程、课件与课堂字幕会汇集到这间学习工作台。</p><button className="zs-primary" onClick={() => controller.navigate("me")}>前往个人面板登录</button><Notice>{state.error}</Notice></div>;
+  if (!state.user) return <div className="zs-workspace-signin"><div className="zs-signin-mark">知</div><h1>连接智云课堂</h1><p>登录后，课程、课件与课堂字幕会汇集到这间学习工作台。</p><button className="zs-primary" onClick={() => controller.openAccount()}>登录智云课堂</button><Notice>{state.error}</Notice></div>;
   return <section className="zs-study" aria-label="学习工作台">
     <div className="zs-workbench-shell">
       <button className="zs-mobile-tree-toggle" aria-expanded={mobileTree} onClick={() => setMobileTree((value) => !value)}><span>课程目录</span><span>{state.course?.title ?? "选择一门课程"}</span><span aria-hidden="true">{mobileTree ? "⌃" : "⌄"}</span></button>

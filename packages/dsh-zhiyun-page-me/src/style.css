@@ -3,35 +3,37 @@
  * 由 packages/dsh-zhiyun-study/src/style.css 按「哪个包真的用到这个类」机械切分而来，
  * 规则文本逐字未改（顺序保持原文件中的相对顺序）。.zy-* 与宿主外观无关的
  * 公共类留在壳，领域状态的样式跟着各自的包走。
+ *
+ * ⚠️ `zs-account` 的卡片外壳（padding / 边框 / 圆角 / 底色 / 下外边距）已去掉：
+ *    这一块不再长在个人页上，而是搬进导轨头像的**账号对话框** ——
+ *    对话框自己给外壳，里面再套一层卡片就成了"卡片里的卡片"。
  */
 
-body[data-zhiyun] .zs-account {
-  padding: 20px;
-  border: 1px solid var(--zy-line);
-  border-radius: 9px;
-  background: var(--zy-surface);
-  margin: 0 0 24px;
-}
-body[data-zhiyun] .zs-account h2 {
-  font-size: 15px;
-  font-weight: 500;
-  margin: 0;
-}
 body[data-zhiyun] .zs-account p {
   color: var(--zy-secondary);
   font-size: 12px;
 }
+/* 表单是**竖排**的：这块只住在 420px 宽的账号对话框里，横排会变成
+   "两个窄输入框 + 一个按钮挤在一行"（改竖排之前的实际观感）。 */
 body[data-zhiyun] .zs-account form {
   display: flex;
-  align-items: end;
+  flex-direction: column;
+  align-items: stretch;
   gap: 12px;
-  flex-wrap: wrap;
 }
-/* 这条原本住在 ui-primitives 的 <style> 里，但它的基规则是本包上方的 .zs-account form。
-   两张表同特异性、按挂载顺序决胜：primitives 的 inject 为空、最先挂，本包等
-   zhiyunStudyController 才挂、排在后 —— 留在那边必输，覆盖永远不生效。跟着基规则搬来本包。 */
-@media (max-width: 760px) {
-  body[data-zhiyun] .zs-account form {
-    align-items: stretch;
-  }
+/* ui-primitives 在 `@media (max-width:760px)` 里给 `.zs-account label` 设了
+   `flex: 1; min-width: 160px` —— 那是按**横排**表单设计的。竖排之后要收回来，
+   否则窄屏下两个输入框仍会被撑成并排（而它们现在该各占一行）。
+   本选择器特异性 (0,2,3) 高于那条 (0,2,2)，不依赖挂载顺序。 */
+body[data-zhiyun] .zs-account form label {
+  flex: none;
+  min-width: 0;
+}
+/* 主按钮靠左，不必占满一行：「连接课堂」四个字配一个全宽按钮太重。
+   ⚠️ 只写 `align-self`，**不写 `padding`** —— ui-primitives 里有一条
+   `.zs-current-actions .zs-primary { padding: 8px 12px }`，和这里的
+   `.zs-account .zs-primary` 同特异性（在 check:css 眼里是同一个主体元素），
+   两条都写 padding 就会变成"靠挂载顺序决胜"。按钮本来的内边距够用。 */
+body[data-zhiyun] .zs-account .zs-primary {
+  align-self: flex-start;
 }

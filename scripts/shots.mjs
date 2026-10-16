@@ -69,10 +69,15 @@ try {
   await page.locator('.zy-drawer').waitFor({ state: 'hidden' });
   await page.waitForTimeout(700);
   await page.screenshot({ path: path.join(out, 'ask-drawer-closed.png'), fullPage: true });
-  for (const [label, pageId] of [['我的课', 'courses'], ['学习', 'study'], ['个人', 'me']]) {
+  for (const [label, pageId] of [['我的课', 'courses'], ['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${pageId}]`).waitFor();
   }
+  // 「个人」不在导航里：头像 → 账号面板 → 设置。截图脚本也要走这条真路径，
+  // 否则它拍到的会是别的页面（而文件名写着 me.png）。
+  await page.getByRole('button', { name: '账号', exact: true }).click();
+  await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
+  await page.locator('.zy-page[data-page=me]').waitFor();
   await page.screenshot({ path: path.join(out, 'me.png'), fullPage: true });
   await page.setViewportSize({ width: 760, height: 900 });
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
