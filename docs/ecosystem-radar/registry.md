@@ -1104,3 +1104,61 @@
 | `lowlighter/metrics` | B 其他JS | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | ★17293。GitHub 个人主页信息图生成器。**域完全不符**（`fitness tracker` 误命中其 fitness 插件） |
 | GPL/AGPL 红线项（本轮 C 组命中） | B 其他JS | GPL/AGPL ⛔ | — | — | ⛔ | rejected | 2026-10-17 | `iamgio/quarkdown`(GPL-3.0 ★16318)、`artcc/freelingo`(AGPL-3.0 ★179)、`WhyAsh5114/MyFit`(AGPL-3.0 ★142)、`HHousen/lecture2notes`(AGPL-3.0 ★67)、`femiaf13/manatee-fitness`(AGPL-3.0 ★48)、`xiaoxiae/Florodoro`(GPL-3.0 ★39)、`bttger/markdown-flashcards`(GPL-3.0 ★96)、`cubetastic33/sakubun`(GPL-3.0 ★41)、`helloworld1/AnyMemo`(GPL-2.0 ★158)、`dunossauro/copylot`(GPL-3.0 ★31)、`QSCTech/zjunet`(GPL-3.0 ★332)、`zhaoluting/marp-themes`(GPL-3.0 ★87)、`RunasSudo/allocics.js`(AGPL-3.0 ★2)。**许可证红线 → 只登记，不摘任何代码** |
 | 浙大课程资料 / 作业仓库（约 80 条） | B 其他JS | NOASSERTION/无 | — | — | ⛔ | rejected | 2026-10-17 | `zju-isee/zju-isee`、`lhxcs/ZJU_Courses`、`tiny656/PAT`、`merelydust/PAT-Advanced-Level`、`jinzcdev/pintia-solutions`、`macanine/zju-linear-algebra-papers`、`zhenguren/zju-study-map`、`AmeliaaaGXY/ZJU-SmartCampus-Map`、`dilititi/Echo-in-ZJU*`、`yuaanlin/*` 课程作业系列、`ZJU-Turing/*` 等。**C 组关键词误命中的 B 组域**，全部 `NOASSERTION` 或无许可证 / 纯资料内容 → **内容版权，只作线索，不逐条登记、不摘取** |
+
+---
+
+## 2026-10-17 · 第十轮（**B 组首轮 + A 组治理轴深挖**）· 追加
+
+> 轮换脚本 `node scripts/radar-rotation.mjs --today 2026-10-17` 判 `same-day(unused)`
+> （今日已跑 C @ 00:01）→ 取今日未跑过的 **B 组**；B 组新增轴一轮即枯竭（10 次搜索 7 次返 0），
+> 遂转 **A 组治理/连接面轴**（承接第八轮指定的延伸词清单）。**共 16 次搜索**（⚠ 超 ≤10 上限 6 次，
+> 已在报告 §1「自律说明」如实记录：B 组 10 次为一次性验证新轴、A 组 6 次为上一轮指定动作）。
+> API 全程 200，**本轮完整**。许可证核实：`license.spdx_id` + 对 🟢/🟡 候选**逐一拉取 LICENSE 实文比对**。
+> 原始命中与去重基线见 `2026-10-17-b2.md`。
+
+### A 组 · 治理轴（本轮主力）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `liujianqiao701/dsh-compat-vet` | A 原生DSH | MIT ✅ | 工作台可用性 | **重复可强化**（插件页） | 🟢 | proposed | 2026-10-17 | ★0，push 2026-09-30。JavaScript。**插件兼容性体检**：探测本机 dsh 版本与能力（含实测校准），预警「下次启动会被拒绝加载」的插件与「快要不适配」的插件，给中文预警 + 一键修复。**npm `dsh-compat-vet@0.3.2` 的 `dsh` 字段为 `{bundle:{patch:'./cordis.patch.yml'}, engines:{dsh:'*'}, client:{...}}` —— 标准 bundle 形状、可锁版挂载**（同域 `rogerdigital/dsh-vet` 是 `{seams:[...]}`，**非 bundle 形状、不能挂载**，这是本轮选它的**决定性理由**）。**强化式集成三条件成立**：仍是「插件」页（不新增导航项，上游自带 `./client` 可整页挂但**刻意不用**）+ 功能正交（现有答「谁依赖谁、现在能关掉谁」的**横向**拓扑；本条答「下次启动还能不能被加载」的**纵向**可用性）+ 底层新增本仓完全没有的版本矩阵判定能力（本仓 `packages/` 无 compat 包，`page-plugins/src` 无 peer/semver 实现）。**LICENSE 实文已核**（`MIT License / Copyright (c) 2026 liujianqiao`）；**npm 实包已核**（patch 行 id `compat-vet`；files 含 9 个 lib 模块 + 6 个真机验证脚本 + 9 个测试文件）。**骨架已生成** `packages/dsh-radar-compat-vet`。⚠ **上游极早期（★0/fork 0/建仓当月即无更新）**，采用前须隔离环境实跑其 `verify-real-boot.mjs`。⚠ **不得暴露其「一键修复」写入口**（与本仓「不另开写入口」冲突，只取只读预警） |
+| `wulun811/dsh-plugin-vet` | A 原生DSH | MIT ✅ | 插件安全 | **重复可强化**（插件页） | 🟡 | proposed | 2026-10-17 | ★4，fork 1，push 2026-09-29。TypeScript。确定性**静态扫描（11 条规则）** + LLM 审计协议 + 双段记分卡；**可选**运行时守卫（T1 哨兵 / T2 `fs` & `child_process` 钩子）+ 蜜罐诱饵。上游自述 *"Monitor-and-alert only — vet never blocks or kills on its own"*（**只监视不阻断**），与本仓「只读、不另开写入口」原则**契合度好**。**LICENSE 实文已核 MIT**。⚠ **npm 未发布**（`registry.npmjs.org/dsh-plugin-vet` → `Not found`）→ **不可锁版挂载**，须走源码路径。与 §2.4 同簇取优 |
+| `nisconder/npm-safe-forDSH` | A 原生DSH | Apache-2.0 ✅ | 依赖安全 | **重复可强化**（插件页 · **新维度**） | 🟡 | proposed | 2026-10-17 | ★4，push 2026-08-29。TypeScript。**装前检查 npm 包**：22 条供应链规则 + **深层 tarball 扫描** + CI 门禁 + 本地优先。npm 已发布 `@npm-safe/dsh-tool-npm-safe`。**答的是「我要装的这个 npm 依赖本身安不安全」**——与「插件能不能加载」（兼容性）、「插件能碰到什么」（权限画像）**都不同**，是治理簇内**第三个正交维度**。**LICENSE 实文已核 Apache-2.0**。⚠ 依赖含 `sqlite`，采用前须核离线可用性。**建议下一轮出骨架** |
+| `ChaoYuZhang001/dsh-gate` | A 原生DSH | MIT ✅ | 插件供应链 | **重复可强化**（插件页） | 🟡 | proposed | 2026-10-17 | ★1，push 2026-10-01。TypeScript。**GitHub Action + 静态 Provider**，做兼容性 / 权限 / **provenance** 三项检查，覆盖 **Desktop 社区目录**。**形态特殊**：偏 CI 侧门禁而非运行时面板 → 若采用，落在**构建期**而非插件页。**LICENSE 实文已核 MIT** |
+| `Darren-Tang/dsh-provenance` | A 原生DSH | MIT ✅ | 插件供应链 | 全新（溯源域） | 🔵 | proposed | 2026-10-17 | ★1，push 2026-08-19。TypeScript。装前供应链 preflight：**验证你安装的和你看的源码一致**。npm 已发布 `dsh-provenance`。治理簇**第四个正交维度**（溯源/一致性），概念明确；但 ★1 且 npm `dsh` 字段未见 `bundle.patch` → 仅登记。**LICENSE 实文已核 MIT** |
+| `Zaogaogwc/dsh-plugin-manager` | A 原生DSH | MIT ✅ | 插件管理 | **重复无增益** | 🔵 | proposed | 2026-10-17 | ★1，push 2026-08-15。JavaScript。Mod 风格插件管理：provenance + **预览优先的热切换** + 预设 + AI 过滤 + 诊断 + 更新。⚠ **与「插件」页现有开关语义部分重叠** → 不集成，仅作交互范式参考 |
+| `SongYuhui14/dsh-plugin-compat-checker` | A 原生DSH | MIT ✅ | 工作台可用性 | **重复且无增益** | 🔵 | proposed | 2026-10-17 | ★1，push 2026-08-19。JavaScript。装前兼容性预测（**与本轮 🟢 上游同做一件事**）。**npm 未发布、无 `bundle.patch`** → 不能锁版挂载，故不选为骨架。**LICENSE 实文已核 MIT** |
+| `Edge-Echo/dsh-release-evidence` | A 原生DSH | MIT ✅ | 插件质量 | 全新（发布证据域） | 🔵 | proposed | 2026-10-17 | ★1，push 2026-10-04。JavaScript。把插件发布的**证据包**（生命周期测试 / 回归评估 / 兼容性 / 质量预算）聚合为**可独立验证的签名包**——自述 *"Does not run the tests — proves which ones ran and that their reports were not altered"*（不重跑测试，而证明哪些跑过且报告未被篡改）。**范式有新意**，但 ★1 且未发布 → 登记备查。**LICENSE 实文已核 MIT** |
+| `2imagine50/dsh-plugin-vet` | A 原生DSH | MIT ✅ | 插件安全 | **重复无增益** | 🔵 | proposed | 2026-10-17 | ★0，push 2026-09-10。JavaScript。「安装前审查一个 dsh 插件：**不安装、不运行**它的代码」。与 🟢 上游功能重叠，★0 → 不集成 |
+| `duxingxiake3/dsh-plugin-market` | A 原生DSH | MIT ✅ | 插件发现 | **重复无增益** | 🔵 | proposed | 2026-10-17 | ★1，push 2026-10-02。JavaScript。DSH 内「发现 / 审视 / 安装」市场。**与已登记骨架 `dsh-radar-dsh-market`（`dsh-market` ★6494）重叠** → 不集成 |
+| `ACEMaravilla/dsh-plugin-market` | A 原生DSH | MIT ✅ | 插件发现 | **重复无增益** | 🔵 | proposed | 2026-10-17 | ★0，push 2026-08-16。TypeScript。Model-facing 插件市场（`plugin_search`/`plugin_vet`/`plugin_report`/`plugin_install`）。同上重叠 → 不集成 |
+| `SongYuhui14/dsh-code-vetter` | A 原生DSH | MIT ✅ | 代码安全 | 场景错位 | 🔵 | proposed | 2026-10-17 | ★1，push 2026-08-19。JavaScript。AI 代码安全审查（SQL/命令注入、硬编码密钥、危险函数、弱加密、鉴权绕过，OWASP/CWE 对齐）。**扫描对象是「代码」不是「插件」** → 与治理轴场景错位，仅登记。**LICENSE 实文已核 MIT** |
+| `LCYLYM/dsh-attachments-guardian-fixture` | A 原生DSH | MIT ✅ | — | 无关 | 🔵 | proposed | 2026-10-17 | ★0，push 2026-10-16。JavaScript。**测试夹具**（为自动化插件兼容性维护提供公共 fixture），非可用插件 → 仅登记 |
+| `HYBB-rash/dsh-liangshen` | A 原生DSH | Apache-2.0 ✅ | — | 重复无增益 | 🔵 | proposed | 2026-10-17 | ★4，push 2026-09-04。TypeScript。LiangShen DSH 预设的**维护分支**（fork of `dsh-plugins`），非独立能力 → 仅登记 |
+| `poplarity/dsh-science-workbench` | A 原生DSH | MIT ✅ | 科研工作台 | 待评估（功能域） | 🔵 | proposed | 2026-10-17 | ★11，push 2026-10-15。JavaScript。**可复现科研工作台**插件。**属功能域（科研）而非本轮治理轴** → 本轮仅登记，**建议留待 A 组功能域轮次单独评估**（可能与「论文」页 / 知识页相关） |
+
+### A 组 · 非 DSH 生态的供应链/agent 配置审计（仅作线索）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `homeofe/supply-chain-guard` | B 其他JS | Apache-2.0 ✅ | 依赖安全 | 全新（能力对照） | 🔵 | proposed | 2026-10-17 | ★7，fork 3，push 2026-10-16。TypeScript。**离线**供应链扫描器：**15 生态**、含**传递依赖 lockfile**；检测 350+ 威胁指标（含 GlassWorm、Shai-Hulud）；GitHub Action + MCP server + CycloneDX SBOM + SLSA 分级。**非 DSH 生态** → 不直接集成；但「离线 + 多生态 + 传递依赖」是**强能力**，作方法论与能力对照线索 |
+| `basitalisandhu/agent-config-audit` | B 其他JS | MIT ✅ | Agent 配置安全 | 全新（需求清单） | 🔵 | proposed | 2026-10-17 | ★0，fork 1，push 2026-10-16。Python。审计 **Claude Code** 权限规则（含**被静默跳过的规则**）、`.mcp.json` 密钥与未锁定 MCP server、**外泄 hook**、插件清单、`CLAUDE.md`/`AGENTS.md`/`.cursor` 的 prompt injection；输出 Table/JSON/Markdown/**SARIF** + GitHub Action + pre-commit。**非 DSH 生态且 ★0** → 只作「agent 配置审计该查什么」的**清单参照**（其覆盖面值得本仓后续自建时对照） |
+| `qualixar/skillfortify` | B 其他JS | **NOASSERTION** ⚠ | 插件安全 | — | ⚠ | pending-license | 2026-10-17 | ★38，push 2026-10-02。Python。自称「首个 AI agent skill/plugin 正式安全扫描器」（静态 + 动态）。**许可证无法识别 → 待人工核验，本轮不采用、不摘取任何代码** |
+
+### B 组 · 新增轴（考研/保研/科研训练）—— 一轮即枯竭
+
+| 仓库 / 簇 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Devin100086/ZJUT-BAOYAN` | B 其他JS | **无许可证** | 保研 | — | ⛔ | rejected | 2026-10-17 | ★39。**浙工大**保研分享库（`zjut` ≠ `zju`，**非浙大**）；**内容库非工具** + 无证 → 排除 |
+| `yhshu/BaoYan-2019` | B 其他JS | **GPL-3.0** ⛔ | 保研 | — | ⛔ | rejected | 2026-10-17 | ★10。2019 年计算机推免复习（针对 THU/PKU/ZJU 机试）。**GPL 红线** + 2019 停更 7 年 → 排除 |
+| `shamsudduha124/gradapplier` | B 其他JS | **无许可证** | 留学申请 | — | ⛔ | rejected | 2026-10-17 | ★0，2026-09-03 建仓。TypeScript。研究生申请文书工具。无证 + ★0 → 排除 |
+| B 组本轮 7 个返 0 词 | — | — | — | — | — | — | 2026-10-17 | `zju campus tool language:typescript`、`zju study tool language:javascript`、`zju note taking language:typescript`、`zju postgraduate exam 408`、`zju recommendation postgraduate baoyan tool`、`postgraduate exam study planner javascript`、`zju graduate admission recommendation` —— **全部 `total_count = 0`**。**结论：B 组新增轴一轮即扫尽**（见报告 §3.1） |
+
+### ⛔ 排除簇（同上，集中登记不逐条铺开）
+
+| 仓库 / 簇 | 类型 | 许可证 | 原因 | 分级 | 状态 | 首次发现 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `truelove-dreamer/dsh-plugin-vetting` | A 原生DSH | **无许可证** ⛔ | ★5，2026-08-26。JavaScript。启发式恶意软件检测。**`/license` 端点返 `Not Found`** → 无证，**不采用、不摘取任何代码**，仅登记一行。⚠ 功能贴合且 ★ 高于本轮骨架上游，**若认为值得用须先联系作者补许可证** | ⛔ | rejected | 2026-10-17 |
+| `ateen18/dsh-plugin-security-review` | A 原生DSH | **无许可证** ⛔ | ★4，2026-08-24。JavaScript。装前静态审查 + 运行时审计 + 可选 tool-call 守卫 + 一键面板。**同上 `Not Found`** → 同上处理 | ⛔ | rejected | 2026-10-17 |
+| 供应链通用簇（`apache/ofbiz-plugins` ★177、`Coloquinte/moosic-yosys-plugin` ★25、`TorturedDude/supply-chain-guard-plugin` ★16、`sbom-tool/gh-guard` ★15、`EncoreDigitalGroup/heimdall` ★10、`oracle/macaron-utilities` ★10、`duhu2000/supply-chain-qcc-enhanced` ★5、`saschagrunert/nri-supply-chain` ★4、`attach-dev/attach-guard` ★7） | B 其他JS | 多为宽松 ✅ | **与本仓无关**：OFBiz ERP 插件、Yosys 逻辑锁定、Kotlin/PHP/Java/Go 栈、企查查 MCP、容器镜像证明 —— `plugin supply chain` 宽词带入的**同名污染**。非 JS 栈或非 agent 插件语境 → 排除 | ⛔ | rejected | 2026-10-17 |
+| Android/Cordova 权限簇（`Bphreaker/cordova-plugin-remove-ad-permission`、`globules-io/cordova-plugin-remove-duplicate-permissions`、`vmoranv/jshook_plugin_android_permission_audit`、`Lzy-joy/AndManifestPlugin`、`wwdemoteam/DTCordovaPermissions`、`happinov/cordova-plugin-android-systemalertwindow`、`openbrf/example-plugin`、`Alpha-xp5-ai/OneSignalPro`、`chrisneagu/FTC-Skystone-...`、`Lhagawajaw/11-36-00-PM-...`） | B 其他JS | 混合 | `plugin permission manifest` 单词命中项**全部为 Android Manifest / Cordova / Unreal / FTC SDK / 构建日志**同名污染，**与 DSH 插件权限无关** → 排除。**结论：该关键词对本仓无价值，建议从关键词池移除**（同 2026-10-17 的 `quiz practice app` 处理） | ⛔ | rejected | 2026-10-17 |
+| `deepseek-harness-java/vet-clinic-af` | A 原生DSH | 无 | ★0。Java Native Plugin 的**宠物医疗门诊**场景 —— `vet` 一词的**双关污染**（兽医 vs 审视）→ 排除 | ⛔ | rejected | 2026-10-17 |
