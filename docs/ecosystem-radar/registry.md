@@ -1443,3 +1443,24 @@
 | `xbzbing/dsh-git-panel` | A 原生DSH | MIT | 通用 | 无关（IDE 面板） | ⛔ | rejected | 2026-10-18 | ★12。IDE 风格 Git 面板 |
 | `HaoyueQin/dsh-diff-stat` | A 原生DSH | MIT | 通用 | 无关（IDE 面板） | ⛔ | rejected | 2026-10-18 | ★8。edit/write 行内 +N −M 徽标 |
 | `1692775560/dsh-Mimir-Academic-research` | A 原生DSH | MIT | **论文** | 重复可强化（论文域） | 🔵 | proposed | 2026-10-18 | ★541。LaTeX 边写边编译 + arXiv 管理 + 实验追踪 + GPU SSH。**整台科研工作台**，体量远超本仓论文页，只能借鉴不能挂载；`nan` 关键词轮漏登，本轮补登 |
+
+## 2026-10-18 · B 组（第二十轮 · **CC98 轴**）
+
+> 关键词：`zju` / `zju courses` / `cc98` / `campus app` / `zju tool`（5 次搜索，未超限；API 全程 200）。
+> 85 条新仓 → 二次过滤后 13 条有效候选：🟢1 + 🟡1 + 🔵4 + ⚠1 + ⛔6。
+> 许可证以 GitHub API `license.spdx_id` 为准，重点项另拉 `LICENSE`/`package.json` 实文核实。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Lucent-Snow/CC98-CLI` | B 其他JS | MIT | 校园论坛 / 课堂讨论 | 重复可强化（补 `dsh-zhiyun-omni` 的 `cc98` 读层） | 🟢 | proposed | 2026-10-18 | ★18。TS 原生 CLI+TUI 客户端，走 OpenID API。**`cc98-mcp` 的端点与 WebVPN 实现即参考自它**。无 DSH 形状、未导出为库 → 只能作底层实现，不能直接挂载 |
+| `EviterLesRoses2/cc98-mcp` | A 原生DSH | MIT | 校园论坛（AI 读帖） | 重复可强化（**存疑**） | 🟡 | proposed | 2026-10-18 | ★4。stdio MCP server，10 个只读工具，`CC98_WEBVPN_MODE=auto`。⚠ **npm `cc98-mcp` = 404，未发布** → 锁版不成立。与 `Lucent-Snow/CC98-CLI` 同源，二选一优先后者。骨架 `dsh-radar-cc98-sdk`（骨架内自述「按现行判据很可能应判 ⛔」） |
+| `walavave/CC98-CLI` | B 其他JS | MIT | 校园论坛 | 重复无增益（同一实现的分支） | 🔵 | proposed | 2026-10-18 | ★5。描述与 `Lucent-Snow/CC98-CLI` 逐字相同，后建 3 天 |
+| `stevenstg/obsidian-cc98-publish` | B 其他JS | MIT | 笔记 → 论坛发帖 | 重复无增益（笔记导出已覆盖） | 🔵 | proposed | 2026-10-18 | ★6。Obsidian 插件：MD→UBB + 图片上传。本仓无发帖需求；「MD→UBB 转换」可作参考 |
+| `CPbianma/zju-library-booker` | B 其他JS | MIT | 图书馆预约 | 全新（本仓无场馆预约） | 🔵 | proposed | 2026-10-18 | ★1。TS，仅查询 + 预约预览（不执行）。预约风控/验证码是不可绕过的前提 |
+| `Zarad0X/openclaw-zju-skills` | B 其他JS | MIT | 课表/成绩/邮箱/CC98 | 重复无增益（`omni` 已覆盖） | 🔵 | proposed | 2026-10-18 | ★10。OpenClaw Skill 集合（非 JS 库）。价值在「校园 API 清单」，非可复用代码 |
+| `kaixuanwang2003/zju-welcome` | B 其他JS | **NOASSERTION** | 新生指南 | — | ⚠ 待核 | proposed | 2026-10-18 | ★154，2026-09-20 仍活跃。HTML 策展站，**无许可证**，不采用、不摘代码 |
+| `QSCTech/zju-icicles` 等课程资料族（73 条，含 `ZJU-Turing/TuringCourses` `NOASSERTION`、`PeiPei233/zju-learning-assistant` MIT 但为批量下载器、`Phil-Fan/awesome-zju-tools` CC0 已登记线索源） | B 其他JS | `null` / `NOASSERTION` / 线索源 | 课程资料 | — | ⛔ | rejected | 2026-10-18 | 内容版权受限（`null`）；且**非 JS 栈**（C/C++/Verilog/VHDL/LaTeX）。`zju courses` 一词 29 条**全部**落此簇，入候选 0 条 |
+| `Mythologyli/zju-connect`（AGPL-3.0 ★798）、`Mythologyli/ZJU-Connect-for-Windows`（LGPL-3.0）、`QSCTech/zjunet`（GPL-3.0）、`5dbwat4/ZJU-live-better`（GPL-3.0 ★220） | B 其他JS | **GPL 族** | 校园网络 | 重复无增益（WebVPN 已有） | ⛔ | rejected | 2026-10-18 | 许可证红线；且 `dsh-zhiyun-net-proxy` / `omni` 已覆盖 |
+| `vsloong/Sunshine`（Apache-2.0 ★84）、`ucsd/campus-mobile`（Dart）、`neuland-ingolstadt/neuland.app-native`（AGPL）、`thu-info-community/thu-info-app`（NOASSERTION ★237） | B 其他JS | 混合 | 校园 App | — | ⛔ | rejected | 2026-10-18 | 非 JS 栈 / 非本校；`campus app` 轴噪声 |
+| `oddfar/campus-imaotai`（★4134）、`oddfar/campus-example`、`oddfar/uni-app_campus_web` | B 其他JS | Apache/MIT | — | 无关 | ⛔ | rejected | 2026-10-18 | 撞词：这里的 campus 指「i茅台 campus」或通用校园社交站，与浙大无关 |
+| `biu9/cc98-summary`、`Ansherly/CC98-Desktop`（null）、`Ansherly/CC98-Ocean`（null）、`Yutyrannus/CC98.u`（MIT，2016 Ionic）、`kodango/cc98`（null，2012 Userscript） | B 其他JS | null / MIT | 校园论坛 | 重复无增益 | ⛔ | rejected | 2026-10-18 | 无许可证 / 停更 10 年 / 同一实现的重新打包 |

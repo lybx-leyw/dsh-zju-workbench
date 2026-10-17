@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-cc98-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版挂载上游 cc98-mcp@0.1.0（MIT），把 CC98 读取层做成可被现有页面/AI 调用的数据服务（强化式集成）",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dependencies": {
+    "cc98-mcp": "0.1.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
