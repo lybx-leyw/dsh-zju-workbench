@@ -1301,3 +1301,47 @@
 > ④ **C 组存在结构性约束**：高星学生工具多出现在**移动端（Kotlin/Swift）/ 桌面端 / Python**，
 > 而本仓是 JS/TS Web → **「高价值 ∩ JS 栈」交集趋近空集**。建议调整轮换比（A:C:B = 2:1:1），需人工裁决。
 > ⑤ **本轮唯一「潜在 🟡」`open-sunsama`（★104，9 个月）卡在 `NOASSERTION`** → 待核，不采用。
+
+---
+
+## 第十四轮 · 2026-10-17 · 音乐 / 乐理 / 谱面正交轴
+
+> 取组：脚本判 `same-day(exhausted)`，按先例改跑**正交新切片**（音乐/乐理，前十三轮从未触及）。
+> 10 次搜索（**未超限**）、0 次 403；38 个唯一仓库全部首次登记（命中 37 + 人工核实 1）；
+> **1 🟢 + 3 🟡 + 4 🔵 + 4 ⚠ + 26 ⛔**。详见 `2026-10-17-f.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `opensheetmusicdisplay/opensheetmusicdisplay` | B 其他JS | **BSD-3-Clause** ✅ | 音乐课 / 乐理 / 视唱 | **重复可强化**（看课页 · 课件区素材） | 🟢 | proposed | 2026-10-17 | ★1992 / fork 384，TS，建 2016-02-08，push 2026-10-15。MusicXML → 浏览器/无头渲染的事实标准（底层 VexFlow），含 cursor + 小节定位 + 逐音事件。锁版 `opensheetmusicdisplay@2.2.1`（npm 解包 ≈2.3 MB，自带 `vexflow@1.2.93`）。**强化三判据**：同一面板（课件区多一种素材，不新开页）/ 相似正交（媒体+播放头+对齐对象，对齐对象由字幕行换成小节）/ 更优底层（本仓无任何乐谱渲染能力）。**L2 骨架 `dsh-radar-score-practice`**。⚠ 配套 `osmd-audio-player@0.7.0` 声明 `opensheetmusicdisplay: ^0.8.4` → **大版本错配，未裁决前不可用** |
+| `tan-z-tan/musicxml-io` | B 其他JS | MIT ✅ | 乐谱数据 / 练习分析 | 全新（数据层） | 🟡 | proposed | 2026-10-17 | ★7，TS，建 2025-12-27，push 2026-10-11，`0.12.1`（仅依赖 `fflate`）。MusicXML 解析/改写/序列化，可作 OSMD 之外的轻量数据层。**成熟度存疑**（★7、新建） |
+| `Romanticjojo/Syrinx` | B 其他JS | Apache-2.0 ✅ | 乐器练习 / 逐音评分 | 重复可强化（看课页 · 练习反馈） | 🟡 | proposed | 2026-10-17 | ★69，TS，建 2026-08-31，push 2026-09-16。Electron/Web 长笛练习伴侣：**OSMD 渲染 + 麦克风音准检测 + 逐音打分 + 个人曲库**。**「练习反馈」而非「看谱」的真实落地样本** → 若人工判定真需求是练习反馈，应优先走此路径（同为宽松许可）。风险：新建、早期 |
+| `isc/arabesque` | B 其他JS | MIT ✅ | 钢琴练习 / 乐理训练 | 重复可强化（练习面板） | 🟡 | proposed | 2026-10-17 | **★0** / fork 0，JS，建 2025-12-28，push **2026-10-17**。Web MIDI 键盘 + MusicXML + 实时逐音反馈 / 训练模式 / 严格模式 / 练习日志，PWA 且上架 App Store。功能最贴「学生自己练」，但★0 → **仅作设计参照** |
+| `vexflow/vexflow` | B 其他JS | MIT ✅ | 乐理 / 谱面 | 重复可强化（若走非 OSMD 路线） | 🔵 | proposed | 2026-10-17 | ★247（fork 2023-04 建），TS，push 2026-09-16。OSMD 的底层渲染引擎。**若不用 OSMD 需自带 MusicXML 解析** → 成本高于收益，仅作降级备选 |
+| `grimmdude/MidiWriterJS` | B 其他JS | MIT ✅ | —（MIDI 导出） | **不在接缝上** | 🔵 | proposed | 2026-10-17 | ★608 / fork 66，JS，建 2016-03-13，push 2026-06-16。程序化生成 MIDI/JSON。**本仓无 MIDI 出口需求** → 不用 |
+| `Zachacious/MusicTheoryJS` | B 其他JS | ISC ✅ | 乐理练习 / 出题 | 重复可强化（若做乐理题） | 🔵 | proposed | 2026-10-17 | ★17，TS，push 2026-08-01。零依赖乐理库（和弦解析/调性分析/音阶/MIDI/记谱）。**只有在决定做「乐理题」时才需要**；当前无对应面板 |
+| `wilfriedago/obsidian-tinymist` | B 其他JS | MIT ✅ | 论文 / 写作 | 重复且无增益（强耦合 Obsidian） | 🔵 | proposed | 2026-10-17 | ★8，TS，建 2026-09-17，push 2026-10-15。Obsidian 插件：Tinymist LSP 驱动的 Typst 编辑/预览/导出。与 `dsh-zhiyun-vault` 文件式方案不对接 → **仅「LSP → 预览」接缝写法可参照** |
+| `SYKhayyat/ksav` | B 其他JS | Apache-2.0 ✅ | 写作 / 排版 | 全新（无对应面板） | 🔵 | proposed | 2026-10-17 | ★0，TS，建 2026-07-23，push 2026-10-16。真 Typst 引擎驱动的希伯来文 RTL 编辑器。**RTL 与中文无关** → 不引入；证明「真编译器 + Web 编辑器」路线可行，对论文页 Typst 路线有参考价值 |
+| `0xfe/vexflow` | B 其他JS | **`NOASSERTION`** ⚠ | 乐理 / 谱面 | 重复可强化（但许可证不可核） | ⚠ 待核 | pending-license | 2026-10-17 | **★4398** / fork 654 量级的「VexFlow 原仓」，push 2025-03-05。⚠ **API 识别不出许可证** → 待人工核验，**不采用、不摘代码**。若采用 VexFlow 必须改从 `vexflow/vexflow`（MIT）取 |
+| `0xfe/vextab` | B 其他JS | **`NOASSERTION`** ⚠ | 乐理 / 记谱 | — | ⚠ 待核 | pending-license | 2026-10-17 | ★654，JS，push 2026-04-15。VexTab 记谱文本解析器（VexFlow 配套）。同上，许可证不可识别 → 待核 |
+| `phucdhh/HeyTeX` | B 其他JS | **`NOASSERTION`** ⚠ | 论文 / 公式排版 | 重复可强化（但许可证不可核） | ⚠ 待核 | pending-license | 2026-10-17 | ★4，JS，push 2026-07-04。浏览器端 LaTeX & Typst 实时协作编辑器（WASM）。**★4 且许可证不可识别** → 双重不达标 |
+| `Pushplaybang/music-tools` | B 其他JS | **`NOASSERTION`** ⚠ | 视唱练耳 | 全新（无对应面板） | ⚠ 待核 | pending-license | 2026-10-17 | ★2，JS，push 2026-03-25。钢琴/吉他交互式耳力训练 quiz。★2 + 许可证不可识别 → 不采用 |
+| `sightreader/performer` | B 其他JS | GPL-3.0 ⛔ | 视唱 | — | ⛔ | rejected | 2026-10-17 | ★3，TS，2023-01 停更。强 copyleft → 排除 |
+| `SanQuilmas/ReMusic` | B 其他JS | **LGPL-3.0** ⛔ | 纸质谱扫描 | — | ⛔ | rejected | 2026-10-17 | ★3，PHP，push 2025-05-27。纸质乐谱扫描 → 可编辑数字谱（`sheet music ocr javascript` 唯一命中）。copyleft + 非 JS 栈 → 排除 |
+| `anlohse/midicomposer` | 非 JS（C++） | 无许可证 ⛔ | — | — | ⛔ | rejected | 2026-10-17 | ★1，C++20 桌面 MIDI 编辑器。技术栈不符 + 无证 → 排除 |
+| `beejsbj/midi-strudel`、`wowanirudh-boop/keyfall`、`jellybro99/musical_zettelkasten`、`joelkingsley/sheet-flow`、`DanWong530/music-dictation-quiz`、`foreline/sight-reading`、`unknownman/midiano`、`elbankster/MIDI-Piano-Chord-Trainer`（Python） | 混合 | **全部 `null`（无许可证）** | — | — | ⛔ | rejected | 2026-10-17 | ★0–★4 的长尾玩具/早期项目，**无一有许可证** → 按硬边界排除、不摘代码 |
+| **撞词 / 无接缝簇**：`smith86n/wiki-is-mostly-fake-radom-words-word-genrationr-`（MediaWiki 模板，★10）、`isaac5373/personal-blog`、`amatlosz/asdf-tinymist`（Shell）、`stephengaito/asdf-tinymist`（Shell）、`sublimelsp/LSP-Tinymist`（Python）、`lumine-code/ide-tinymist`（★0）、`qiulinfan/obsidian-tinymist`（★0，与 `wilfriedago` 同型）、`jere-mie/wasmtex`（★3）、`artur-shlyapnikov/harmony`（★0）、`amvn-rwt/vibe-chords`（★2）、`larszu/UnableSet`（Ableton 控制器）、`EDGEGlobe-lab/geo-midi-controller-app`（CC0，但为 MIDI 控制器面板）、`Kaushal1011/LLM-Music-Composer`（无证）、`igapyon/miku-abc-player`、`mathenri/sheet-music-app`、`anywhichway/sheet-music` | 混合 | 混合 | — | — | ⛔ | rejected | 2026-10-17 | 词义撞车（`music editor` → MediaWiki/博客模板）、体量 ★≤4、或与学习工作台无接缝 → 排除 |
+
+### 第十四轮 · 核心结论（供后续轮次直接引用）
+
+> ① **`opensheetmusicdisplay OR vexflow`（total 325）是本轴唯一有效入口**；其余 9 词合计仅 3 条 🟡，
+> 且一半为 ★0–★4 长尾 → **「音乐/乐理」轴一轮即接近见底，建议封板**。
+> ② **「视唱练耳 / 耳力训练」子轴一轮即尽**（`solfa solfege sight reading training` → total **0**；
+> `ear training music quiz web` → total 3，全是 ★0–★2 且两无证）→ **子轴封板**。
+> ③ **「浏览器 Typst / Tinymist」子轴无货**：结果全是 Obsidian/编辑器适配器，**Tinymist 本体是 Rust LSP、
+> 不是 JS 项目** → 若走 Typst 路线应**锁版 Tinymist 二进制**，不必再搜 JS 包。
+> ④ **许可证陷阱**：`0xfe/vexflow`（★4398，大众引用最多的那个仓库）**API 识别为 `NOASSERTION`**，
+> 而同组织后继仓 `vexflow/vexflow`（★247）为 MIT → **任何 VexFlow 引用必须从后者取**，此条应写入后续任何谱面类决策。
+> ⑤ **产品层真实样本是「练习反馈」而非「看谱」**：`Syrinx`（Apache-2.0，音准+逐音打分）与 `arabesque`（MIT，Web MIDI 实时反馈）
+> 都比纯渲染更贴学生；若人工判定真需求为练习反馈，**应优先改做 Syrinx 能力提取**。
+> ⑥ **轮换失衡仍在扩大**（A=11 / B=8 / C=8，今日已五轮）。本轮为「能力域」补充，与 B 组无交集；
+> **A 组（原生 DSH 插件）仍是唯一高产出轴**，建议人工裁决轮换比。

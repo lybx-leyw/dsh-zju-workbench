@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-score-practice",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 opensheetmusicdisplay（MusicXML→SVG 乐谱渲染）与 osmd-audio-player（乐谱驱动的音频回放），为「看课」页补充「乐谱同步 / 逐音跟随」能力（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "opensheetmusicdisplay": "2.2.1",
+    "osmd-audio-player": "0.7.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
