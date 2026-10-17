@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学习区 AI 宠物 · 鲸鱼娘素材</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --text: #252a30;
+    --secondary: #666b72;
+    --muted: #6b7178;
+    --line: #e1e3e5;
+    --accent: #00479d;
+    --soft: #e7eef8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #191c20;
+      --surface: #22262b;
+      --text: #e8ebee;
+      --secondary: #afb6bf;
+      --muted: #9099a4;
+      --line: #363b43;
+      --accent: #94bdf4;
+      --soft: #25344a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.7 "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 72px; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  header h1 { font-size: 22px; font-weight: 500; margin: 8px 0; }
+  header p { margin: 0 0 6px; color: var(--secondary); font-size: 13px; max-width: 66ch; }
+  header .credit { font-size: 12px; color: var(--muted); }
+  header .credit a { color: var(--accent); }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 24px;
+    align-items: start;
+    margin: 28px 0 8px;
+  }
+  .hero-stage {
+    background: var(--soft);
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    min-height: 340px;
+    padding: 16px;
+  }
+  .hero-stage canvas { width: 288px; height: 288px; display: block; }
+  .hero-note { font-size: 12px; color: var(--secondary); }
+  .hero-note h2 { font-size: 14px; font-weight: 500; margin: 0 0 8px; color: var(--text); }
+  .hero-note dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
+  .hero-note dt { color: var(--muted); }
+  .hero-note dd { margin: 0; font-family: ui-monospace, Consolas, monospace; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(206px, 1fr));
+    gap: 16px;
+    margin-top: 28px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 120ms;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card h3 { font-size: 13px; font-weight: 500; margin: 0; }
+  .card h3 span { color: var(--muted); font-weight: 400; }
+  .card .meta { font-size: 11px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+  .stage { background: var(--soft); border-radius: 10px; display: grid; place-items: center; padding: 8px; }
+  .stage canvas { width: 176px; height: 176px; display: block; }
+
+  .notes { margin-top: 34px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .note { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; }
+  .note h3 { font-size: 13px; font-weight: 500; margin: 0 0 4px; }
+  .note p { margin: 0; font-size: 12px; color: var(--secondary); }
+  code { font-size: 12px; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">AI pet · whale-girl</span>
+    <h1>学习区 AI 宠物 · 鲸鱼娘</h1>
+    <p>
+      学习区那个「点开即可问答」的宠物。素材取自 whale-girl 插件（和大肥鱼桌面端同一套图）：
+      15 个动作状态，每张是横向排列的 sprite sheet，帧序与帧率按同目录的 <code>manifest.json</code> 播放。
+    </p>
+    <p class="credit">
+      角色设计 <a href="https://space.bilibili.com/4168597" target="_blank" rel="noopener noreferrer">ZipZipPipe</a>
+      · 素材与插件 <a href="https://github.com/vlln/whale-girl" target="_blank" rel="noopener noreferrer">vlln/whale-girl</a>（MIT）
+      · 桌面适配 <a href="https://github.com/xiaoshihou514/dsh-desktop-pet" target="_blank" rel="noopener noreferrer">xiaoshihou514/dsh-desktop-pet</a>（MIT）
+    </p>
+  </header>
+
+  <section class="hero">
+    <div class="hero-stage"><canvas id="heroCanvas" width="576" height="576"></canvas></div>
+    <div class="hero-note">
+      <h2>当前播放</h2>
+      <dl>
+        <dt>状态</dt><dd id="heroState">idle</dd>
+        <dt>帧</dt><dd id="heroFrame">1 / 3</dd>
+        <dt>fps</dt><dd id="heroFps">2</dd>
+        <dt>playback</dt><dd id="heroPlayback">blink</dd>
+      </dl>
+      <p style="margin:12px 0 0">点下面任意一张卡片，主画布切到那个状态。</p>
+    </div>
+  </section>
+
+  <section class="grid" id="grid"></section>
+
+  <section class="notes">
+    <div class="note">
+      <h3>帧是从横向 sheet 里切的</h3>
+      <p>每张 <code>256×帧数</code> 宽、256 高。播放器只用 <code>drawImage</code> 截一帧，不做缩放变形，清晰度与原图一致。</p>
+    </div>
+    <div class="note">
+      <h3>四种 playback</h3>
+      <p><code>loop</code> 循环、<code>once</code> 停尾帧、<code>blink</code> 眨眼式、<code>pingpong</code> 来回。按 manifest 里各自的值走，没有写死。</p>
+    </div>
+    <div class="note">
+      <h3>许可与致谢</h3>
+      <p>素材 MIT，但角色设计署名 <strong>ZipZipPipe</strong>，需随图保留。完整许可见 <code>assets/LICENSE-whale-girl</code>。</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const labels = {
+  idle: '待机', working: '干活中', celebrate: '庆祝', error: '出错', disappointed: '失落',
+  joy: '开心', eat: '吃东西', play: '玩耍', drag: '被拖动', walk: '走路', sleep: '睡觉',
+  wake: '醒来', welcome: '打招呼', think: '思考', wait: '等待',
+};
+
+const SHEET = 256;
+let manifest = null;
+const cache = new Map();
+
+function loadImg(name) {
+  if (!cache.has(name)) {
+    cache.set(name, new Promise((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = rej;
+      im.src = 'assets/whale-girl/' + name;
+    }));
+  }
+  return cache.get(name);
+}
+
+function draw(canvas, img, frame) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const css = canvas.clientWidth || SHEET;
+  const want = Math.round(css * dpr);
+  if (canvas.width !== want) { canvas.width = want; canvas.height = want; }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, frame * SHEET, 0, SHEET, SHEET, 0, 0, canvas.width, canvas.height);
+}
+
+// 按 playback 推进帧号
+function nextFrame(spec, frame, dir) {
+  if (spec.playback === 'pingpong') {
+    let n = frame + dir;
+    let d = dir;
+    if (n >= spec.frames - 1) { n = spec.frames - 1; d = -1; }
+    if (n <= 0) { n = 0; d = 1; }
+    return { frame: n, dir: d };
+  }
+  if (spec.playback === 'once') return { frame: Math.min(spec.frames - 1, frame + 1), dir: 1 };
+  return { frame: (frame + 1) % spec.frames, dir: 1 };
+}
+
+const hero = {
+  canvas: document.getElementById('heroCanvas'),
+  frame: 0, dir: 1, timer: null, name: 'idle',
+  set(name) {
+    clearTimeout(this.timer);
+    this.name = name;
+    this.frame = 0;
+    this.dir = 1;
+    const spec = manifest.states[name];
+    document.getElementById('heroState').textContent = name;
+    document.getElementById('heroFps').textContent = spec.fps;
+    document.getElementById('heroPlayback').textContent = spec.playback;
+    loadImg(spec.sheet).then((img) => {
+      const step = () => {
+        draw(this.canvas, img, this.frame);
+        document.getElementById('heroFrame').textContent = (this.frame + 1) + ' / ' + spec.frames;
+        const n = nextFrame(spec, this.frame, this.dir);
+        this.frame = n.frame;
+        this.dir = n.dir;
+        const ms = spec.frameMs ? (spec.frameMs[this.frame] || 1000 / spec.fps) : 1000 / spec.fps;
+        this.timer = setTimeout(step, ms);
+      };
+      step();
+    }).catch(() => {
+      document.getElementById('heroState').textContent = '载入失败';
+    });
+  },
+};
+
+function buildCards() {
+  const grid = document.getElementById('grid');
+  for (const [name, spec] of Object.entries(manifest.states)) {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML =
+      '<h3>' + (labels[name] || name) + ' <span>' + name + '</span></h3>' +
+      '<div class="meta">' + spec.frames + ' 帧 · ' + spec.fps + ' fps · ' + spec.playback + '</div>' +
+      '<div class="stage"><canvas width="352" height="352"></canvas></div>';
+    const canvas = card.querySelector('canvas');
+    const meta = card.querySelector('.meta');
+    card.addEventListener('click', () => hero.set(name));
+    loadImg(spec.sheet).then((img) => {
+      let f = 0, dir = 1;
+      draw(canvas, img, 0);
+      if (spec.frames > 1) {
+        setInterval(() => {
+          const n = nextFrame(spec, f, dir);
+          f = n.frame; dir = n.dir;
+          draw(canvas, img, f);
+        }, Math.max(60, 1000 / spec.fps));
+      }
+    }).catch(() => { meta.textContent = '载入失败'; });
+    grid.appendChild(card);
+  }
+}
+
+fetch('assets/manifest.json')
+  .then((r) => r.json())
+  .then((m) => {
+    manifest = m.characters[m.default];
+    buildCards();
+    hero.set('idle');
+  })
+  .catch(() => {
+    document.getElementById('grid').textContent =
+      '载入 manifest 失败：请用本地静态服务器打开本页（file:// 会因 CORS 拒绝读取 JSON）。';
+  });
+</script>
+</body>
+</html>
