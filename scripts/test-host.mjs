@@ -281,7 +281,7 @@ try {
   //    由用户点图钉固定。数字是结论，依据在 RAIL_DEFAULT 里。
   assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), RAIL_DEFAULT.length + 1);
   await page.screenshot({ path: path.join(evidence, 'today-light.png'), fullPage: true });
-  for (const [label, id] of [['我的课', 'courses'], ['论文', 'paper'], ['学习', 'study']]) {
+  for (const [label, id] of [['论文', 'paper'], ['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${id}]`).waitFor();
   }
@@ -482,15 +482,17 @@ try {
     await writeFile(patch, '- insert:\n    - id: test-course-panel\n      name: zhiyun-test-course-panel\n');
     await page.waitForTimeout(800);
     await reloadProduct(page);
-    await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '我的课', exact: true }).click();
+    // 插件遮蔽的是「今天」页正文 —— 启动就落在今天，所以不用先点导航。
+    // （原先遮蔽「我的课」；那个页面包并入「学习」之后已经没有 `zhiyun.courses.content`
+    //  这个插槽了。用例要证的东西没变：外部插件能顶掉产品内容，并靠服务跳转。）
     await page.locator('[data-test-course-provider]').waitFor({ timeout: 30000 });
-    await page.getByRole('button', { name: '返回今天', exact: true }).click();
-    await page.locator('.zy-page[data-page=today]').waitFor();
+    await page.getByRole('button', { name: '去学习', exact: true }).click();
+    await page.locator('.zy-page[data-page=study]').waitFor();
     await writeFile(patch, '[]\n');
     await page.waitForTimeout(800);
     await reloadProduct(page);
     assert.equal(await page.locator('[data-test-course-provider]').count(), 0, 'an uninstalled plugin must leave no rendered content');
-    checks.push('Independent plugin contributes course content and drives navigation through the product service');
+    checks.push('Independent plugin shadows a product page and drives navigation through the product service');
 
     // Disabling the product bundle is a removal: the host sidebar and the
     // official theme come back, with no leftover styles or slot occupants.

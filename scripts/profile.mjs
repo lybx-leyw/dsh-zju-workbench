@@ -23,7 +23,7 @@ export const sourceBundles = (await readdir(path.join(root, 'packages'), { withF
  * 整个 profile 起不来（拆包真机上踩过）。这里刻意**不用前缀猜测**：
  * 同前缀但没登记的条目可能来自别的分支或用户自己链进来的包，一律不动。
  */
-export const retiredBundles = ['dsh-zhiyun-pro-ui', 'dsh-zhiyun-study'];
+export const retiredBundles = ['dsh-zhiyun-pro-ui', 'dsh-zhiyun-study', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-player'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
 /** 校验一个候选安装目录：六个宿主包版本一致、在清单内，Cordis 大版本匹配。 */
 async function readHost(app) {
