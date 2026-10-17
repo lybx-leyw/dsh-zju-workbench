@@ -59,7 +59,7 @@ body[data-zhiyun] .zs-primary {
   border: 1px solid var(--zy-line);
   border-radius: 6px;
   padding: 7px 12px;
-  font-size: 12px !important;
+  font-size: 13px !important;
   text-decoration: none;
   color: var(--zy-text);
   background: var(--zy-surface);
@@ -181,7 +181,7 @@ body[data-zhiyun] .zs-lesson strong {
 body[data-zhiyun] .zs-lesson small {
   display: block;
   margin-top: 3px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-secondary);
 }
 body[data-zhiyun] .zs-section-head {
@@ -192,7 +192,7 @@ body[data-zhiyun] .zs-section-head {
   border-bottom: 1px solid var(--zy-line);
 }
 body[data-zhiyun] .zs-section-head h2 {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 500;
   margin: 6px 0;
 }
@@ -226,9 +226,9 @@ body[data-zhiyun] .zs-tabs button[aria-selected=true] {
   border-color: var(--zy-accent);
   color: var(--zy-accent);
 }
-body[data-zhiyun] .zs-models .zs-notice { font-size:10px; }
+body[data-zhiyun] .zs-models .zs-notice { font-size:11px; }
 body[data-zhiyun] .zs-reader > .zs-notice:first-child:empty { display:none; }
-body[data-zhiyun] .zs-current-actions .zs-button,body[data-zhiyun] .zs-current-actions .zs-primary { min-height:35px; padding:8px 12px; font-size:10px!important; }
+body[data-zhiyun] .zs-current-actions .zs-button,body[data-zhiyun] .zs-current-actions .zs-primary { min-height:40px; padding:9px 13px; font-size:13px!important; }
 /* 响应式覆盖必须和「它要覆盖的基规则」待在同一个包里。
  *
  * 这些 @media 曾经整块住在原 dsh-zhiyun-study 的 style.css 尾部，靠文档顺序压过前面的基规则。
