@@ -141,12 +141,26 @@ focus and are unreliable for assistive technology.
 | [ch10](chapters/ch10-accessibility-consistency.md) | Accessibility and consistency | timing, input flexibility, consistency, motion |
 | [ch11](chapters/ch11-cjk-typography.md) | **CJK typography**（工程推导） | 汉字字面率、视觉角度换算、行高、中英混排 |
 | [ch12](chapters/ch12-modern-web-accessibility.md) | **Modern web accessibility**（实践） | 语义 HTML、ARIA、焦点、键盘、动态内容、表单 |
+| [ch13](chapters/ch13-information-architecture-cognitive-load.md) | Information architecture & cognitive load | 识别优于回忆、Hick、分块、渐进披露、命名 |
+| [ch14](chapters/ch14-states-feedback-and-errors.md) | States, feedback, errors | 状态矩阵、空/加载/错误、撤销、乐观更新 |
+| [ch15](chapters/ch15-content-and-microcopy.md) | Content & microcopy | 按钮动词、空状态、错误文案、术语、数字格式 |
+| [ch16](chapters/ch16-design-system-and-tokens.md) | Design system & tokens | 单一真值、三层 token、作用域、设计债 |
+| [ch17](chapters/ch17-data-display.md) | Data display | 表格、列表、图表选型、数字格式 |
+| [ch18](chapters/ch18-responsive-i18n-and-windowing.md) | Responsive, i18n, windowing | 断点、200% 缩放、文本膨胀、RTL、DPI |
+| [ch19](chapters/ch19-decision-priority-and-evidence.md) | **Decision priority & evidence**（元规则） | 证据分级、冲突裁决、偏离记录、ADR |
 
 ## Topic index
 
 - **Accessibility** → ch10, ch06, ch12
 - **ARIA / focus / keyboard** → ch12
 - **CJK / 中文排版** → ch11
+- **Cognitive load / information architecture** → ch13
+- **States / feedback / errors** → ch14
+- **Microcopy / content** → ch15
+- **Design system / tokens / CSS scope** → ch16
+- **Tables / lists / charts** → ch17
+- **Responsive / i18n / windowing** → ch18
+- **Priority / evidence / deviations** → ch19
 - **Alerts / alarms** → ch08, ch03
 - **Colour / colour coding** → ch03, ch08
 - **Contrast** → ch03, ch01
@@ -207,6 +221,12 @@ derivation: the original sources are Latin-cap-height based, so their arcmin thr
 applied to Han characters without conversion. Ch 12 (modern web accessibility) is implementation
 practice from WCAG 2.2 and the ARIA APG, not new normative data. Both are labelled at the top of
 their files and must not be quoted as standard text.
+
+**Ch 13–ch19 are practice layers (E2–E5), not standard text.** They cover information
+architecture and cognitive load, states and error handling, microcopy, design tokens and CSS
+scope, data display, responsive/i18n/windowing, and the meta-rules for evidence grading and
+conflict resolution. Where they differ from ch01–ch12, **the earlier chapters win**; every
+deviation must be recorded in [repo-profile.md](repo-profile.md) §5.
 
 **This is design guidance, not a compliance certificate.** These documents assume expert
 human-factors judgement — the FAA standard says so in its own foreword. Applying a number to
