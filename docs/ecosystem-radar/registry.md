@@ -1345,3 +1345,49 @@
 > 都比纯渲染更贴学生；若人工判定真需求为练习反馈，**应优先改做 Syrinx 能力提取**。
 > ⑥ **轮换失衡仍在扩大**（A=11 / B=8 / C=8，今日已五轮）。本轮为「能力域」补充，与 B 组无交集；
 > **A 组（原生 DSH 插件）仍是唯一高产出轴**，建议人工裁决轮换比。
+
+## 2026-10-17 · 第十五轮 · A 组（导出/工作流/MCP 编排正交切片）
+
+> 取组：脚本判 `same-day(exhausted)`；不重复已跑关键词，改跑正交新切片。8 次搜索、0 次 403。
+> 35 个唯一新仓库 → 有效 13 条（🟡2 / 🔵10）、⚠3、⛔22。**无 🟢、无骨架**。
+> 完整报告见 [`2026-10-17-g.md`](./2026-10-17-g.md)。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `omdsh-dev/dsh-paddle-ocr` | A 原生DSH | BSD-3-Clause | 课件/讲义解析 | 重复可强化（parser 版面块） | 🟡 | proposed | 2026-10-17 | **本轮最高价值**：PaddleOCR-VL 版面解析，按块输出 + 1000 页 async + 队列退避；补 `vision.js` 拼图预算与「看错版面」空白。⚠ 云端 + 独立 token，与「只用 ctx.llm、无独立 API key」原则冲突 → 未出骨架，待裁决 |
+| `Sev7eEn7/dsh-sieve` | A 原生DSH | MIT | 通用（长上下文） | 重复可强化（上下文预算） | 🟡 | proposed | 2026-10-17 | 工具输出过滤 + 旧上下文裁剪（原文归档）+ 技能渐进披露；离线重放 −36.28% 字符、在线 −21.2% 输入 token（**历史数据，Jev/Laya 配置未复测**）。全局 middleware，须核宿主钩子冲突 |
+| `guyusky/dsh-export-plugin` | A 原生DSH | MIT | 通用 | 新颖（会话导出） | 🔵 | proposed | 2026-10-17 | 零 npm 依赖、纯前端注入，隐藏 iframe + `window.print()`，复用 `/api/session.export`；★0 |
+| `dawsondx/dsh-doc-share` | A 原生DSH | MIT | 通用 | 新颖（报告化导出） | 🔵 | proposed | 2026-10-17 | 对话→封面+摘要+章节排版 → PNG/HTML/PDF；★1 |
+| `AnakinCao/dsh-md-export` | A 原生DSH | MIT | 笔记导出 | 重复可强化（笔记页） | 🔵 | proposed | 2026-10-17 | md→独立 HTML（mermaid 内联）/PDF；**与 `dsh-radar-better-markdown` 同依赖 `dsh-better-sidebar`，须统一裁决**；★1 |
+| `Hudson-Junior-Wang/dsh-chat-pdf-export` | A 原生DSH | MIT | 通用 | 新颖 | 🔵 | proposed | 2026-10-17 | 打印「已渲染」的助手正文，高保真；★0 |
+| `PerryLink/dsh-mcp-panel` | A 原生DSH | Apache-2.0 | 通用 | 重复（omni 已管 MCP） | 🔵 | proposed | 2026-10-17 | 只走 `mcp/status` 只读接缝 + 追加式 profile patch 写，架构干净；★76 |
+| `SeverusZh/dsh-plugin-subagent-director` | A 原生DSH | MIT | 通用 | 全新（子代理选模型） | 🔵 | proposed | 2026-10-17 | 按子代理/角色模板分配 provider+model；★21 |
+| `mrdevlorx/dsh-model-garden` | A 原生DSH | MIT | 通用 | 全新（模型选择器） | 🔵 | proposed | 2026-10-17 | provider 分组/收藏的可搜索模型选择器；★7 |
+| `cyanseek/dsh-native-playbook` | A 原生DSH | MIT | 通用 | 全新（原生能力管理） | 🔵 | proposed | 2026-10-17 | 任务感知 use/prepare/verify 原生能力；★4 |
+| `988hj7tczd-oss/dsh-computer-use` | A 原生DSH | MIT | 通用 | 重复（宿主已有） | 🔵 | proposed | 2026-10-17 | 跨平台桌面自动化；★53 |
+| `Zhiyuan-Fan/Awesome-DeepSeek-Harness-Plugins` | 线索源 | MIT | — | 全新（线索源） | 🔵 | proposed | 2026-10-17 | ★574 精选清单，可并入关键词池 |
+| `AwesomeHou/dsh-plugin-marketplace` | A 原生DSH | MIT | 通用 | 重复（插件页） | 🔵 | proposed | 2026-10-17 | live-sync `topic:dsh-plugin`；已有同类候选多条 |
+| `LaoGordon/dsh-literature-search` | A 原生DSH | ISC | 论文 | 重复可强化（论文检索） | 🔵 | proposed | 2026-10-17 | arXiv/Crossref/OpenAlex 多源；★0 且根 package.json 名 `dsh-plugin-workspace`、无 `dsh.bundle` → 结构不规范，仅线索 |
+| `tearslee/dsh-workbuddy2api` | A 原生DSH | MIT | 通用 | 无关（网关运维） | 🔵 | proposed | 2026-10-17 | 守护 workbuddy2api 并自动注册 |
+| `Thedeergod666/dsh-musage` | A 原生DSH | MIT | 通用 | 无关（计费） | 🔵 | proposed | 2026-10-17 | 5 provider 套餐余额监控 |
+| `wenzetan/dsh-llm-newapi` | A 原生DSH | MIT | 通用 | 无关（网关） | 🔵 | proposed | 2026-10-17 | NewAPI OpenAI 兼容 provider |
+| `wingoo/codex-plugin-dsh` | A 原生DSH | MIT | 通用 | 无关（provider） | 🔵 | proposed | 2026-10-17 | 本地 Codex App Server 作 provider |
+| `akira399/dsh-plugin-publisher` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-17 | 插件开发/发布工作流；已有 `dsh-radar-plugin-audit` |
+| `alenhu2005/dsh-usage-export` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-17 | token 用量 + 导出，非学生场景 |
+| `songoao25/dsh-bottom-info-bar` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-17 | 状态栏 provider/mode 徽章 |
+| `Renzic-Stone/DSH-EasyRewrite` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-17 | 消息撤回/重编辑，宿主已有 |
+| `zjl1989-li/dsh-harness-zh-cn` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-17 | 运行时汉化 system prompt；界面本身中文 |
+| `Como44/dsh-zh-more` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-17 | 斜杠命令/插件卡片中文化 |
+| `KNGLOKIKO/dsh-plugin-approval-zh` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-17 | 审批卡片中文化 |
+| `Ragnoryok1/dsh-client-locale-ru` | A 原生DSH | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | 俄语语言包 |
+| `GuidoMaxier/dsh-locale-es` | A 原生DSH | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | 西语语言包 |
+| `xISPx/dsh-locale-ru` | A 原生DSH | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | 俄语语言包 |
+| `rbstxt/dsh-locale-ja` | A 原生DSH | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | 日语语言包 |
+| `KannaKuron/dsh-agent-lang` | A 原生DSH | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | 工具描述/思考/回复分语种控制 |
+| `cjm-m/dsh-paste-code-block` | A 原生DSH | MIT | 通用 | 无关（输入框） | ⛔ | rejected | 2026-10-17 | 长代码折叠粘贴 |
+| `furkancak1r/dsh-composer-plus` | A 原生DSH | MIT | 通用 | 无关（输入框） | ⛔ | rejected | 2026-10-17 | git Changes 面板 / 输入历史 |
+| `C3H3-AI/dsh-quark-backup` | A 原生DSH | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | 夸克网盘定时备份 |
+| `C3H3-AI/dsh-boot-wake` | A 原生DSH | MIT | — | 无关 | ⛔ | rejected | 2026-10-17 | 重启/跨日自动唤醒会话 |
+| `alib8b8/dsh-plugin-aflare` | A 原生DSH | **NOASSERTION** | — | — | ⚠ 待核 | proposed | 2026-10-17 | 许可证待人工核验，**不采用、不摘代码** |
+| `shuxidemosheng/dsh-tool-todo-plus` | A 原生DSH | **NOASSERTION** | 学习/今天 | 重复（todo_write 增强 fork） | ⚠ 待核 | proposed | 2026-10-17 | 许可证待核；功能与本仓待办重叠 |
+| `walkinglabs/awesome-deepseek-harness-plugins` | 线索源 | **NOASSERTION** | — | 全新（线索源） | ⚠ 待核 | proposed | 2026-10-17 | 清单类，仅文字参考、不摘代码；风险低但须核 |
