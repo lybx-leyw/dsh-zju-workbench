@@ -1262,3 +1262,42 @@
 > ④ **本仓雷达的系统性短板（自评）**：只做静态分级，**15 个骨架无一经真机挂载**。
 > 上游 `dsh-plugin-radar`（★1474）用 k8s 做运行级实测，本仓学不起；但「每个骨架在隔离 `DSH_HOME` 挂一次」
 > 可做，范式见 `dsh-compat-vet/scripts/verify-real-boot.mjs`。
+
+---
+
+## 第十三轮 · 2026-10-17 · C 组补位轴（时间管理 / 专注计时 / 任务分解 / 卡片生成）
+
+> 取组：脚本判 `same-day(exhausted)`，按先例改跑**正交新切片**（与今日已跑词无交集）。
+> 13 次搜索（⚠ 超限 3 次，为 2 个返 0 词的放宽回补）、0 次 403；87 条全部首次登记；
+> **0 🟢 + 0 🟡 + 4 🔵 + 2 ⚠ + 81 ⛔**。详见 `2026-10-17-e.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `v1tzor/StudyAssistant` | B 其他JS | Apache-2.0 ✅ | 学习计时 / 任务 / 统计 | **重复且无增益** | 🔵 | proposed | 2026-10-17 | ★47 / fork 7，**Kotlin（KMP）**，push 2026-10-14，建 2024-04-17。离线优先的 AI-agent 学习助手（Tasks / Goals / Timer / Statistics / Analytics / Multi-Org；Compose + Ktor + SQLDelight）。**本轮唯一有真实工程量的项目，但非 JS 栈 → 源码不可复用**；仅「计时与统计同源」的产品结构可参照。与 `dsh-zhiyun-study-core` 计时/统计域重合且无更优底层 |
+| `klaschukk/koda` | B 其他JS | MIT ✅ | 学习计时 / 日计划 | **重复且无增益**（且需新面板） | 🔵 | proposed | 2026-10-17 | ★0，TypeScript，push 2026-09-21。Electron + React 日计划器：时间块日历 + 专注计时 + 每日复盘，「计划→专注→复盘」闭环。与「今天」页 + 专注计时同域，★0 不支撑引入 → 仅线索 |
+| `NoNightWatch/agent-manager-for-ai-planner` | B 其他JS | MIT ✅ | —（Agent 编排） | **与本仓无接缝** | 🔵 | proposed | 2026-10-17 | ★7，TypeScript，push 2026-04-08。任务拆分 + 模型分层 + 成本控制的 AI 编排层。**对象是 agent 任务而非学生学习计划** → 对象错位；「按任务难度选模型档」对 `dsh-zhiyun-omni` 路由有参考价值 |
+| `Ordnungen/ord-dashboard` | B 其他JS | MIT ✅ | 笔记 / 复习 | **重复且无增益**（强耦合 Obsidian） | 🔵 | proposed | 2026-10-17 | ★0，TypeScript，push 2026-09-27。Obsidian 插件：笔记参与度分析 + 间隔重复。**强耦合 Obsidian API**，与自有文件式 `dsh-zhiyun-vault` 无法对接；「笔记→复习」链路本仓已有 `quiz` + `reviewQueue` → 无增益 |
+| `ShadowWalker2014/open-sunsama` | B 其他JS | **`NOASSERTION`** ⚠ | 日计划 / 时间块 | 重复可强化（**但对象为职场**） | ⚠ 待核 | pending-license | 2026-10-17 | **★104**，TypeScript，push 2026-10-17，建 2026-01-29。开源 Sunsama 替代：按天看板 + 拖拽时间块 + 专注计时 + 未完成滚动 + **一键 MCP 连接器（OAuth）/ REST API**，Web/桌面/移动三端。**许可证无法识别 → 待人工核验，不采用、不摘代码**；即便核实通过，产品面向职场（学生场景需重做）→ 至多 🟡。价值点在「时间块=一等公民」数据模型 + MCP 免密钥范式 |
+| `SparshGarg999/ExamArchitect` | B 其他JS | **无许可证** ⛔ | 考试复习计划 | 场景贴合但**不可采用** | ⚠ 待核→⛔ | rejected | 2026-10-17 | ★43，JavaScript，push 2026-06-04。真题卷 → 主题抽取 → 预测考点 → 个性化复习计划（PWA + FastAPI）。**场景高度贴合，但 `license = null` → 按硬边界不采用、不摘代码**，仅登记 |
+
+### 第十三轮 · 排除簇（集中登记，不逐条铺开）
+
+| 仓库 / 簇 | 类型 | 许可证 | 原因 | 分级 | 状态 | 首次发现 |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Pomodoro / 专注计时单页应用簇**（`Arijit-05/Fomodoro`（★187，Kotlin）、`sonnylazuardi/react-tomato-timer`（★107）、`narlock/TamoStudy`（★94，Java）、`andreidimaano/Calcifer`（★42）、`Vishnu-Chandra/FocusTab-Browser-Extension`（★26）、`maruf009sultan/Pomoflare`（★23）、`mvareva/focus-timer`（★21）、`fgerschau/pomodoro-timer`（★15）、`teoh4770/pomotama`（★15）、`LalaGa-1119/cat-focus-timer`（★7）、`lucianodiisouza/holedeep`、`arrudadev/pomodoro-timer`、`sid-talesara/mindmelo`、`chiscookeke11/focus_timer_desktop_app`、`kabbagepatch/focus-coffee`、`Stephana-Jolly/Tokido-Timer`、`gomenasia/Focus-timer`、`zeus495/Focus-Timer-Web-UI-App`、`AhmedNaoum97/pomodoro`、`vasylpryimakdev/pomodoro-timer`、`RadyaI/miau-pomodoro`、`xiaoxiae/Florodoro`（GPL-3.0）、`dunossauro/copylot`（GPL-3.0）、`brandon-wallace/pomodoro-focus`（GPL-3.0）等 ~24 条） | B 其他JS | 混合（**多条 `null` / 3 条 GPL-3.0**） | **重复且无增益**：计时器本体是 300 行级实现，**不存在「更优底层」**；多条非 JS 栈（Kotlin/Java）。趣味交互（`holedeep` 黑洞强制休息、`focus-coffee` 透明主题）不构成强化 → 排除 | ⛔ | rejected | 2026-10-17 |
+| **学生作业级 Study Planner / Dashboard 簇**（`SRISAKSHI-12/Study-Planner`、`amreeshsharma/study-planner`、`msk-panigrahi/Study-planner-focus-tracker-`、`Ankita200628/student-study-planner`、`Kash15if/study-planner`、`MSS1625/StudyPlanner`、`manjumaigur/Study-Planner`、`megihalili911-pixel/studyplan-web-app`、`Mohammedimad01/StudyFlow`、`FahimMahmudEkram/Study-Tracker`、`Dilhara-De-Alwis/StudyFlow`、`nandandas2407-web/Time-Tracker`、`Pavitrr-V/tymerr`、`vishwakarthikeya/StudySync-Student-Productivity-Dashboard`、`Vaibhavdoye/smart-study-planner-`、`Ksh1t1j07/smart-study-planner-dashboard`、`AnushaSubramani-2316/Front-End-prj-Study-Sphere-`、`mauryamisthi19-coder/StudyHub-Student-Productivity-Platform`、`ManikantaAddanki/AI-Study-Planner-Scheduler`、`Saifuddin-khan/AI-Powered-Student-Study-Planner`、`Adi-Marathe/StudyFlow` 等 ~21 条） | B 其他JS | **绝大多数 `null`（无许可证）** | `study planner javascript`（624）/ `study timer analytics dashboard javascript`（16）的**同名污染**：头部全为训练营作业、毕业设计、HTML+CSS 模板（★≤8、多无证）。**该词族对本仓无价值，建议弃用** | ⛔ | rejected | 2026-10-17 |
+| **Cloze 闪卡生成器簇**（`angrbrd/flashcard-generator`、`drewwmercer/Flashcard-Generator`、`risaco/flashcard-generator`、`miritalakhani/Flashcard-Generator`、`ItsOkayItsOfficial/Flashcard-Generator`、`EkaterinaShainiak/Flashcard-Generator`、`jasonboru/Flashcard-Generator`、`KOM2005/Flashcard-Generator`、`Wat-Sacca/cloze-xlsx`、`developerKunal18/AI-Rule-Based-Flashcard-Generator-from-PDF-Python-`） | B 其他JS | **全部 `null`（无许可证）** | `cloze flashcard generator`（113 条）**整页为 2017 年「UofA Bootcamp Week 11 — Cloze Constructors」同一份作业的十余次 fork**，无许可证 + 2017 年停更 → **`cloze` 子轴封板** | ⛔ | rejected | 2026-10-17 |
+| **`study analytics` 撞词簇**（`igerber/diff-diff`（DiD 因果推断）、`byukan/Marketing-Data-Science`、`ItsAwSM/Python-for-Data-Analytics`、`Aryia-Behroziuan/neurons`、`sw-song/kaggle-study`、`marcoshsq/Data_Science_Roadmap`、`iAART/aart`（黑洞光子环射线追踪）、`SomiaNasir/Google-Data-Analytics-Capstone-Cyclistic-Case-Study`） | 非 JS / 课程作业 | 混合 | `study` 撞「**研究**」、`analytics` 撞「**数据分析**」→ 全为统计学/数据科学课程，与「学习时长统计」无关。**该词不可用** | ⛔ | rejected | 2026-10-17 |
+| **撞词 / 无接缝杂项**（`danderfer/Comp_Sci_Sem_2`（★214，"Bee Movie" 脚本）、`armourinfosec/Offensive-Linux-Privilege-Escalation`（★32，「study notes」）、`lichman0405/taskforge`（无证）、`PiyushAnand2006/Ekans`（无证）、`ClimbStack/climbstack-app`（React Native）、`Mapl6/personal-os`、`Chrysidoidea/mentis-planor`、`RomanGumeniuk/stupid-simple`、`rizksn/rzk-calendar-frontend`（无证）、`lucasfmujica/morchitask`（无证）、`a2105z/Chronos`（Python）、`ManakRaj-7/NexusDesk-Premium-Productivity-Desktop-Web-App`、`SENESO/notion-clone`、`styrene-lab/omegon-pi`、`trietphan/clawswarm`、`xQUANTUMTECH/agent-engine`、`melikeisil/Iris`（Java/Jira）） | B 其他JS | 混合 | 二次过滤后**均与学习工作台无接缝**（词义撞车 / 无许可证 / 技术栈不符）→ 排除 | ⛔ | rejected | 2026-10-17 |
+
+### 第十三轮 · 核心结论（供后续轮次直接引用）
+
+> ① **C 组「补位轴」同为薄轴，且有效候选率创十三轮最低（4/87 ≈ 4.6%）。**
+> ② **宽词 `study planner`(624) / `study timer`(6284) / `study analytics`(14830) 已彻底饱和**：
+> 三者合计 ~2.2 万条，入候选仅 1 条（且非 JS）；共同特征是「训练营作业 / 模板 / 数据分析课程 + 九成无许可证」
+> → **建议从词池永久移除，只保留窄技术词**。
+> ③ **三段式窄词 `task breakdown …` / `cloze deletion …` / `flashcard generation llm …` 全返 0**；
+> 两段式放宽后才回到作业簇 → **「任务分解」「卡片生成」两个子轴一轮即见底，建议封板**。
+> ④ **C 组存在结构性约束**：高星学生工具多出现在**移动端（Kotlin/Swift）/ 桌面端 / Python**，
+> 而本仓是 JS/TS Web → **「高价值 ∩ JS 栈」交集趋近空集**。建议调整轮换比（A:C:B = 2:1:1），需人工裁决。
+> ⑤ **本轮唯一「潜在 🟡」`open-sunsama`（★104，9 个月）卡在 `NOASSERTION`** → 待核，不采用。
