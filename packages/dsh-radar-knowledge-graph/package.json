@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-knowledge-graph",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版挂载上游 dsh-knowledge-graph，在「笔记」页现有 vault 图谱（链接级）之上，为单篇源文补出「讲了什么」的语义图谱（概念 / 定义 / 关系 / 双向锚点）（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-knowledge-graph": "0.1.3"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

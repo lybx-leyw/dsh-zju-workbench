@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `C` |
-| `last_run_at` | `2026-10-17 09:06` |
-| `group_runs`（累计） | A=10, B=8, C=7 |
+| `last_group` | `A` |
+| `last_run_at` | `2026-10-17 12:05` |
+| `group_runs`（累计） | A=11, B=8, C=7 |
 
 ### 流水
 
@@ -81,6 +81,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-16 21:10 | A | 第八轮·A组跨harness互操作/插件市场与治理轴（hub: cross-harness / plugin marketplace / plugin score / security audit） |
 | 2026-10-17 06:10 | B | B组新增轴(考研/保研)+A组治理轴深挖(承接第八轮延伸词清单) |
 | 2026-10-17 09:06 | C | C组第十一轮·复习调度/FSRS优化器轴(10全新词；有效候选10条；🟡1+🔵3+⛔6；无新🟢不出骨架；发现reviewQueue为只读投影、本仓无调度写入方) |
+| 2026-10-17 12:05 | A | A组 sort=updated 新仓视图：deepseek-harness-plugin/cordis-plugin/dsh-plugin/dsh-ecosystem/dsh-theme/topic 视图/双词限定(11次，超限1)；17条新增(🟢1+🔵13+⚠1+⛔2簇)；骨架 dsh-radar-knowledge-graph |
 | 2026-10-17 00:01 | C（第九轮） | **跨天首轮**（`290 % 3 = 2` → C，与公式一致）。**学生功能域**：`timetable ics export`/`paper annotation reader`/`ocr notes taking`/`quiz practice app`/`fitness tracker javascript`/`spaced repetition flashcard typescript`/`FSRS scheduler rust wasm`/`pdf markdown converter javascript`（10 次搜索，达上限未超限；API 全程 200）。新增 29 条登记（有效候选 12 条）；**🟢1 + 🟡4 + 🔵8 + ⛔16（0 条 NOASSERTION）**；出骨架 `dsh-radar-fsrs-browser`（B 类锁版 `fsrs-browser@6.6.0`）。**新结论**：① C 组「课表导出/论文批注」两轴接近枯竭（单校工具 + 1★ 论文阅读器）；② 宽词 `quiz practice app`(2711)/`fitness tracker js`(1069) 已饱和、去重后 0 条入候选；③ 窄技术词 `FSRS scheduler rust wasm`(total 2) 一轮即中本轮唯一 🟢 |
 | 2026-10-16 18:35 | B（跨校同型轴） | `course review rating platform` 等 10 词（11 次调用，⚠超限 1 次）；抓取 60 条量级 → **新候选仅 1 条**；🟡0 🟢0 🔵1 ⛔9；**无骨架、不开 PR**。⚠ 开场 `ls-remote` 静默失败被误读为「分支不存在」，push 被拒后 reset 到 `origin/radar`（`c87c23a`）重做 —— **与 10-15 第二轮同型坑，建议修脚本**。**新结论：跨校同型轴同样薄** |
 
