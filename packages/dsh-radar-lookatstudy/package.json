@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-lookatstudy",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版挂载上游 dsh-plugin-lookatstudy，为「学习/习题」页补上 BKT 掌握度建模与门控技能树推进（强化式集成）",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dependencies": {
+    "dsh-plugin-lookatstudy": "0.26.3"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

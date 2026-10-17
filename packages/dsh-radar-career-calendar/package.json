@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-career-calendar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】B 类能力提取：把上游 zju-career-calendar（MIT）的「校招宣讲采集 → iCal/PWA 订阅」管道，重写为工作台内的求职日历承载（全新能力，非强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
