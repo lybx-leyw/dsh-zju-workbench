@@ -1391,3 +1391,55 @@
 | `alib8b8/dsh-plugin-aflare` | A 原生DSH | **NOASSERTION** | — | — | ⚠ 待核 | proposed | 2026-10-17 | 许可证待人工核验，**不采用、不摘代码** |
 | `shuxidemosheng/dsh-tool-todo-plus` | A 原生DSH | **NOASSERTION** | 学习/今天 | 重复（todo_write 增强 fork） | ⚠ 待核 | proposed | 2026-10-17 | 许可证待核；功能与本仓待办重叠 |
 | `walkinglabs/awesome-deepseek-harness-plugins` | 线索源 | **NOASSERTION** | — | 全新（线索源） | ⚠ 待核 | proposed | 2026-10-17 | 清单类，仅文字参考、不摘代码；风险低但须核 |
+
+## 2026-10-18 · A 组（第十九轮 · topic 全量视图 + 存量再评级）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `timestatic/dsh-session-notebook` | A 原生DSH | Apache-2.0 | 笔记/课堂对话 | 重复可强化（今天页轨迹+笔记页） | 🟢 | proposed | 2026-10-18 | ★0。划线/引用→可搜索知识库，带 text-anchor 锚定 + 快照恢复，本仓笔记域纯存储无此能力。npm `@timestatic/dsh-session-notebook@0.1.0` 已发布可锁版。⚠ 注入 4 个宿主插槽（全站划线），须先拆宿主/客户端。⚠ npm `license` 字段为空（仓库 LICENSE 为 Apache-2.0）。骨架 dsh-radar-session-notebook |
+| `chenxiachan/thoughtdag` | A 原生DSH | MIT | 学习/思考脉络 | 重复可强化（知识页） | 🟡 | proposed | 2026-10-18 | ★648。无限画布+可编辑思维图（React Flow，knowledge-graph/note-taking）。⚠ **仓库 `private:true` 且 npm 上 `thoughtdag@0.2.2` 是另一产品**（按文件反查会话）、无 `dsh.bundle` → 锁版不成立，须源码级移植 |
+| `FTShare-Lab/dsh_kline` | A 原生DSH | MIT | 金融通识/数据可视化 | 全新（本仓无行情域） | 🟡 | proposed | 2026-10-18 | ★33。交互式 K 线（多市场/技术指标/支撑压力/新闻基本面），原生侧栏展示。学生场景弱，故 🟡 非 🟢 |
+| `Ychris12138/dsh-usage-stats` | A 原生DSH | MIT | 通用 | 重复无增益（用量域饱和） | 🔵 | proposed | 2026-10-18 | ★177。余额/配额/token 分析。用量簇已 23+ 条，`dsh-personal-center` 已 🟡「取其一即止」 |
+| `Likenttt/garmin-connect-plugin-for-dsh` | A 原生DSH | MIT | 锻炼 | 全新（本仓无锻炼面板） | 🔵 | proposed | 2026-10-18 | ★31。TS+MCP，浏览器式 MFA。**唯一可用的锻炼域项**，但强依赖个人 Garmin 账号，与「无独立 API key」原则冲突，须人工裁决 |
+| `Amakurai/dsh-liketavern` | A 原生DSH | MIT | — | 无关 | 🔵 | proposed | 2026-10-18 | ★121。SillyTavern 风格角色扮演界面 |
+| `skymecode/deepseek-harness-for-vscode` | A 原生DSH | MIT | 通用 | 无关（编辑器扩展） | 🔵 | proposed | 2026-10-18 | ★157。VS Code 扩展形态，非 Web 工作台插件 |
+| `No-PRM/dsh-explorer` | A 原生DSH | MIT | 通用 | 无关（IDE 面板） | 🔵 | proposed | 2026-10-18 | ★8。VS Code 风格文件树+git 装饰+diff，桌面 IDE 形态 |
+| `A1eksib286/dsh-plugin-mathtype` | A 原生DSH | **NOASSERTION** | 论文/公式 | — | ⚠ 待核 | proposed | 2026-10-18 | ★0。Word 公式升级为 MathType OLE 对象。许可证未声明，**不采用、不摘代码** |
+| `2BingLing/dsh-market` | A 原生DSH | **NOASSERTION** | 通用 | 重复无增益（插件市场已 3 个） | ⚠ 待核 | proposed | 2026-10-18 | ★155。6000+ 插件中文搜索+五维评分。无许可证，且与 `dsh-radar-dsh-market`/`dsh-radar-market` 同域 |
+| `PensiveFei/dsh-voice-scribe`(再评级) | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★36。2026-10-15 登为 🟡；本轮语音输入簇 10 条中 9 条同质，且 `dsh-voice-mode` 能力更全（全双工+本地免 Key）→ 降为 ⛔，取值最全的一支 |
+| `WizisCool/dsh-ears` | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★23。语音输入+文本润色，与上条同质 |
+| `Real-WangLe/dsh-voice-local` | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★12。SenseVoice 本地离线，与 `dsh-voice-mode` 本地路径重叠 |
+| `3274375092/dsh-voice` | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★8 |
+| `Zhangbo-cn/dsh-voice-input-plugin` | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★6 |
+| `baisama-cloud/dsh-stt-input` | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★3 |
+| `QT-Chen/dsh-mic-input` | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★3 |
+| `0nt-one/dsh-voice-input` | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★5 |
+| `DIAG5/dsh-better-input` | A 原生DSH | MIT | 语音输入 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★26。语音+提示词优化+多格式转 MD 的套件，整体仍是输入框增强 |
+| `AKS1st/dsh-mermaid` | A 原生DSH | MIT | 通用 | 重复无增益（markdown 渲染） | ⛔ | rejected | 2026-10-18 | ★9。已出 `dsh-radar-better-markdown` 覆盖围栏渲染 |
+| `realguan/dsh-mermaid-preview` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★2 |
+| `baconbao/dsh-mermaid-image-preview` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★4 |
+| `sijidoubi/dsh-plugin-mermaid` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★1。mermaid_render 工具 |
+| `huiyeo/dsh-plugin-mermaid-preview` | A 原生DSH | MIT | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★1。右侧栏 .mmd 预览 |
+| `WYH66666666/DSH-Transparent-UI-Plugin` | A 原生DSH | **AGPL-3.0** | — | 无关（主题） | ⛔ | rejected | 2026-10-18 | ★416。AGPL 一律排除 |
+| `XieRW/dsh-beauty-skins` | A 原生DSH | MIT | — | 重复无增益（主题） | ⛔ | rejected | 2026-10-18 | ★100。主题域已判死（累计 ⛔ 13 条） |
+| `KinGao294/dsh-skin` | A 原生DSH | MIT | — | 重复无增益（主题） | ⛔ | rejected | 2026-10-18 | ★17 |
+| `dugujun3-cloud/dsh-wallpaper` | A 原生DSH | MIT | — | 重复无增益（主题） | ⛔ | rejected | 2026-10-18 | ★2。wallhaven 在线壁纸 |
+| `Andersen216/dsh-whale-girl-live2d` | A 原生DSH | MIT | — | 重复无增益（桌宠） | ⛔ | rejected | 2026-10-18 | ★39。本仓已自行落地 `docs/ai-pet`（鲸鱼娘 Live2D） |
+| `leaforgh/dsh-whale-pet` 族（`meto-ventus/dsh-ventus-whale` ★8 等） | A 原生DSH | MIT | — | 重复无增益（桌宠） | ⛔ | rejected | 2026-10-18 | ★8。3D 虎鲸桌宠，同上 |
+| `jasondu/dsh-ui-mobile` | A 原生DSH | MIT | 通用 | 重复无增益（移动端） | ⛔ | rejected | 2026-10-18 | ★5。离屏侧栏+详情抽屉；`dsh-web-mobile`(★139) 已登记未定 |
+| `biubiu23333333/dsh-mobile-layout` | A 原生DSH | MIT | 通用 | 重复无增益（移动端） | ⛔ | rejected | 2026-10-18 | ★0。窄屏 ≤719px 布局 |
+| `juanlian583/dsh-mobile-adapt` | A 原生DSH | MIT | 通用 | 重复无增益（移动端） | ⛔ | rejected | 2026-10-18 | ★0 |
+| `huanxi-drxx/dsh-client-ui-mobile` | A 原生DSH | MIT | 通用 | 重复无增益（移动端） | ⛔ | rejected | 2026-10-18 | ★4 |
+| `TecFancy/dsh-mobile` | A 原生DSH | MIT | 通用 | 重复无增益（移动端） | ⛔ | rejected | 2026-10-18 | ★2 |
+| `kexin8/dsh-composer-keys` | A 原生DSH | MIT | 通用 | 无关（输入框） | ⛔ | rejected | 2026-10-18 | ★4。↑↓ 历史 / Ctrl+C 清空 |
+| `blue-a11y/dsh-client-shortcuts` | A 原生DSH | MIT | 通用 | 无关（输入框） | ⛔ | rejected | 2026-10-18 | ★1。全局快捷键注册表 |
+| `dream12347/dsh-session-manager` | A 原生DSH | MIT | 通用 | 重复无增益（会话管理） | ⛔ | rejected | 2026-10-18 | ★85。与 `hkkz9522/dsh-session-manager` 同名；壳层已管会话列表 |
+| `hkkz9522/dsh-session-manager` | A 原生DSH | MIT | 通用 | 重复无增益（会话管理） | ⛔ | rejected | 2026-10-18 | ★50。同上，同名竞品 |
+| `FylarOpen/dsh-fylar-office-editor` | A 原生DSH | **null** | 通用 | — | ⛔ | rejected | 2026-10-18 | ★196。Office 预览/编辑，**无许可证**，只登记不摘码 |
+| `drscrewdriver/dsh-docx-sidebar` | A 原生DSH | **null** | 笔记 | — | ⛔ | rejected | 2026-10-18 | ★1。右侧栏读 .docx，**无许可证** |
+| `drscrewdriver/dsh-office-render` | A 原生DSH | **null** | 通用 | — | ⛔ | rejected | 2026-10-18 | ★1。Office→PDF 忠实排版，**无许可证** |
+| `tyfforu/dsh-flashcard` | A 原生DSH | MIT | 复习 | 重复无增益（quiz+FSRS） | ⛔ | rejected | 2026-10-18 | ★0。Anki 式侧栏复习，与本仓 `dsh-zhiyun-quiz` + FSRS 骨架重叠 |
+| `GZX2211/dsh-Visual-Workflow` | A 原生DSH | MIT | 通用 | 重复无增益（编排） | ⛔ | rejected | 2026-10-18 | ★51。可视化 Agent 编排；本仓不面向编排 |
+| `xbzbing/dsh-git-panel` | A 原生DSH | MIT | 通用 | 无关（IDE 面板） | ⛔ | rejected | 2026-10-18 | ★12。IDE 风格 Git 面板 |
+| `HaoyueQin/dsh-diff-stat` | A 原生DSH | MIT | 通用 | 无关（IDE 面板） | ⛔ | rejected | 2026-10-18 | ★8。edit/write 行内 +N −M 徽标 |
+| `1692775560/dsh-Mimir-Academic-research` | A 原生DSH | MIT | **论文** | 重复可强化（论文域） | 🔵 | proposed | 2026-10-18 | ★541。LaTeX 边写边编译 + arXiv 管理 + 实验追踪 + GPU SSH。**整台科研工作台**，体量远超本仓论文页，只能借鉴不能挂载；`nan` 关键词轮漏登，本轮补登 |
