@@ -19,6 +19,9 @@ disagreement is recorded rather than averaged away — see [CROSS-SOURCE-REGISTE
 - **With a chapter** — ask for `ch07`; that file is loaded.
 - **Quick numbers** — `cheatsheet.md`. **Implementable techniques** — `patterns.md`.
   **Terminology** — `glossary.md`.
+- **For this repository** — read [repo-profile.md](repo-profile.md) first: it maps the tokens
+  (`--zy-fs-*`, `--zy-muted`, …) to the thresholds below and records known deviations.
+  Run `node scripts/check-hf.mjs` before a PR; tick [checklist.md](checklist.md).
 
 ---
 
@@ -136,10 +139,14 @@ focus and are unreliable for assistive technology.
 | [ch08](chapters/ch08-alerts-warnings-messages.md) | Alerts, warnings, messages | priority, redundancy, audio, dialog structure |
 | [ch09](chapters/ch09-navigation-menus-forms.md) | Navigation, menus, forms | breadth/depth, labels, form spacing, errors |
 | [ch10](chapters/ch10-accessibility-consistency.md) | Accessibility and consistency | timing, input flexibility, consistency, motion |
+| [ch11](chapters/ch11-cjk-typography.md) | **CJK typography**（工程推导） | 汉字字面率、视觉角度换算、行高、中英混排 |
+| [ch12](chapters/ch12-modern-web-accessibility.md) | **Modern web accessibility**（实践） | 语义 HTML、ARIA、焦点、键盘、动态内容、表单 |
 
 ## Topic index
 
-- **Accessibility** → ch10, ch06
+- **Accessibility** → ch10, ch06, ch12
+- **ARIA / focus / keyboard** → ch12
+- **CJK / 中文排版** → ch11
 - **Alerts / alarms** → ch08, ch03
 - **Colour / colour coding** → ch03, ch08
 - **Contrast** → ch03, ch01
@@ -168,6 +175,8 @@ focus and are unreliable for assistive technology.
 
 Also in this folder:
 
+- [repo-profile.md](repo-profile.md) — **本仓库的 token 映射与实测值（评审先读这个）**
+- [checklist.md](checklist.md) — PR 前逐条勾选
 - [CROSS-SOURCE-REGISTER.md](CROSS-SOURCE-REGISTER.md) — where the 8 sources
   disagree, why, and which to prefer. **Read this before quoting a number in a context the
   sources did not write for.**
@@ -192,6 +201,12 @@ behaviour.
   10.4-18 and MIL-STD Figure 3 *were* recovered.
 - **Menus deeper than 3–4 levels**, which modern web navigation routinely exceeds. The chapters
   say where the rule stops binding and what principle survives.
+
+**Ch 11 / Ch 12 are additions, not source-derived.** Ch 11 (CJK typography) is an engineering
+derivation: the original sources are Latin-cap-height based, so their arcmin thresholds cannot be
+applied to Han characters without conversion. Ch 12 (modern web accessibility) is implementation
+practice from WCAG 2.2 and the ARIA APG, not new normative data. Both are labelled at the top of
+their files and must not be quoted as standard text.
 
 **This is design guidance, not a compliance certificate.** These documents assume expert
 human-factors judgement — the FAA standard says so in its own foreword. Applying a number to
