@@ -1162,3 +1162,53 @@
 | 供应链通用簇（`apache/ofbiz-plugins` ★177、`Coloquinte/moosic-yosys-plugin` ★25、`TorturedDude/supply-chain-guard-plugin` ★16、`sbom-tool/gh-guard` ★15、`EncoreDigitalGroup/heimdall` ★10、`oracle/macaron-utilities` ★10、`duhu2000/supply-chain-qcc-enhanced` ★5、`saschagrunert/nri-supply-chain` ★4、`attach-dev/attach-guard` ★7） | B 其他JS | 多为宽松 ✅ | **与本仓无关**：OFBiz ERP 插件、Yosys 逻辑锁定、Kotlin/PHP/Java/Go 栈、企查查 MCP、容器镜像证明 —— `plugin supply chain` 宽词带入的**同名污染**。非 JS 栈或非 agent 插件语境 → 排除 | ⛔ | rejected | 2026-10-17 |
 | Android/Cordova 权限簇（`Bphreaker/cordova-plugin-remove-ad-permission`、`globules-io/cordova-plugin-remove-duplicate-permissions`、`vmoranv/jshook_plugin_android_permission_audit`、`Lzy-joy/AndManifestPlugin`、`wwdemoteam/DTCordovaPermissions`、`happinov/cordova-plugin-android-systemalertwindow`、`openbrf/example-plugin`、`Alpha-xp5-ai/OneSignalPro`、`chrisneagu/FTC-Skystone-...`、`Lhagawajaw/11-36-00-PM-...`） | B 其他JS | 混合 | `plugin permission manifest` 单词命中项**全部为 Android Manifest / Cordova / Unreal / FTC SDK / 构建日志**同名污染，**与 DSH 插件权限无关** → 排除。**结论：该关键词对本仓无价值，建议从关键词池移除**（同 2026-10-17 的 `quiz practice app` 处理） | ⛔ | rejected | 2026-10-17 |
 | `deepseek-harness-java/vet-clinic-af` | A 原生DSH | 无 | ★0。Java Native Plugin 的**宠物医疗门诊**场景 —— `vet` 一词的**双关污染**（兽医 vs 审视）→ 排除 | ⛔ | rejected | 2026-10-17 |
+
+---
+
+## 2026-10-17 · 第十一轮（C 组 · **复习调度 / FSRS 参数优化**轴 · 定向深挖）
+
+> 当日第三轮（`same-day(unused)`，累计 C=6 < A=10）→ 取 C 组。
+> 按「同类项不重复评估」与「不重复已跑关键词」纪律，**不重跑任何已跑词**，
+> 改跑 **10 个全新词**，全部指向同一条轴：**复习调度 / FSRS 优化器**（由第九轮 `fsrs-browser` 打开）。
+> 去重后未登记 84 条 → 相关性过滤后**有效候选 10 条**。**无新 🟢，本轮不出骨架**（见报告 §5）。
+> ⚠ `note taking markdown obsidian plugin javascript` 为第 11 次调用，**超 ≤10 上限 1 次**（如实记录）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `open-spaced-repetition/fsrs-rs` | B 其他JS | BSD-3-Clause ✅ | 复习调度 | **重复可强化**（溯源） | 🟡 | proposed | 2026-10-17 | ★**445**，fork 45，Rust，push 2026-10-09，crates.io 发布，**活跃**。FSRS 的 **Rust 参考实现**（Optimizer + Scheduler），是第九轮 🟢 `fsrs-browser` 与 npm `@open-spaced-repetition/binding` 的**共同上游** → **补上许可证追溯链**。**本仓无 Rust 构建链** → 不以 crate 集成，**只作溯源登记** |
+| `ihv-forge/ts-fsrs-optimizer` | B 其他JS | **`NOASSERTION` ⚠ → 已实文核实为 BSD-3-Clause** | 参数优化 | 重复且**无增益** ⛔ | 🔵 | proposed | 2026-10-17 | ★1，TypeScript，push 2026-10-01，npm 已发布。**纯 TS 优化器：无原生模块、无 WASM、无服务端**。⚠ **GitHub API 报 `NOASSERTION` 系误报** —— 已拉 `LICENSE` 实文：首行 `BSD 3-Clause License`，署名 `Copyright (c) 2023, Open Spaced Repetition` + `(c) 2026, ihv-forge`，自述为 `fsrs-rs` 衍生作品 → **在白名单内，无红线**。**仍不采用的真实理由是 ★1 极早期 + 与既有 🟢 `fsrs-browser` 能力重叠（无增益），与许可证无关** |
+| `open-spaced-repetition/fsrs-optimizer` | B 其他JS | BSD-3-Clause ✅ | 参数优化 | 重复且**无增益** ⛔ | 🔵 | proposed | 2026-10-17 | ★112，**Python**，push 2026-08-06，PyPI `FSRS-Optimizer` 6.5.0。**依赖 `torch`/`scipy`/`pandas`/`scikit-learn`** 的重型实现。本仓为 JS 技术栈 → **不可复用**，登记但不建议采用 |
+| `ishiko732/fsrs-wxt` | B 其他JS | **无许可证** ⛔ | 参数优化 | 仅作**实现范式**参考 | 🔵 | rejected | 2026-10-17 | ★1，TypeScript（WXT + React），push 2026-06-08。扩展形态：导入本地 Anki `revlog.csv` → WASM 优化器算 FSRS 参数。**`/license` 无文件 + API `license: null` → 无许可证，不采用、不摘取任何代码**。⭐ **但留下一条例的（可执行）事实**：其 `package.json` 依赖 `@open-spaced-repetition/binding: 0.5.0` + `@open-spaced-repetition/binding-wasm32-wasi: 0.5.0`，二者**均已核实为 npm 官方发布**（`repository = open-spaced-repetition/ts-fsrs`，**MIT**，与既有骨架锁版 `ts-fsrs` **同组织同仓库**）→ **本仓若走「分层」方案应用这两个官方包，而非第三方 `fsrs-wxt`**；亦说明第九轮「方案②代价高」的估计偏高（同组织两个包，非跨组织拼接） |
+| `khannoussi-malek/PaperLab` | B 其他JS | Apache-2.0 ✅ | 论文精读 / 笔记 | **重复可强化**（论文阅读页 · RAG） | 🔵 | proposed | 2026-10-17 | ★8，fork 1，Python（Electron + FastAPI + React），push 2026-10-17，建仓 2026-09-13。**本地优先 PDF 阅读器**：批注锚定到页、**AI 回答带引用**、离线 Ollama、pgvector RAG、**内置 MCP server**、topics 含 `zotero-alternative`。与「论文阅读」页（`dsh-zhiyun-paper` / `dsh-zhiyun-page-paper`）同域，但**形态为独立桌面应用而非可嵌入库**，本仓论文页又为 iframe 壳 → **不集成**；其「答案必须带引用」的交互纪律可参考 |
+| `bruce2431/Pj13-PaperReader` | B 其他JS | **无许可证** ⛔ | 论文精读 | 重复（论文阅读页） | ⛔ | rejected | 2026-10-17 | ★0，TypeScript，push 2026-10-14，建仓 2026-10-11（**3 天内**）。中文「论文精读 PDF 阅读器：目录页 + 阅读器 + 生词卡 + 批注卡」，零依赖 Node 后端（`node:http` + `node:sqlite`）+ Vite/React/pdf.js，**为扫描版 PDF 的 OCR 文本层做字形对齐**。**无许可证 + ★0 + 建仓 3 天** → 排除。**但「OCR 文本层字形对齐」是本仓没有的具体技术点**，若 `dsh-zhiyun-parser` 后续要处理扫描版讲义可回看此思路（**只读思路、不取代码**） |
+| `nanhualyq/ir-ext` | B 其他JS | **无许可证** ⛔ | 复习 / 增量阅读 | 全新（本仓无增量阅读） | ⛔ | rejected | 2026-10-17 | ★0，TypeScript，push 2026-09-12，建仓 2024-06-21。浏览器扩展，**增量阅读（Incremental Reading）**。**无许可证** → 不采用。⭐ **方法论价值高**：`incremental reading browser extension`（`total_count = 1`）是**本轮唯一有新语义**的词。增量阅读 = 「读长文时就地成卡、与阅读进度一同调度」。本仓「读（page-study）/ 记（notes）/ 出题（quiz）」**三段都有但手动串联** → **缺的正是串联本身**。**建议下一轮 C 组单列该轴**：`incremental reading` / `readwise alternative` / `cloze extraction` |
+| `open-spaced-repetition/fsrs-optimizer-tiny` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-17 | ★4，Python，push 2023-09-05。**无许可证且 2023 年即停更**（描述为空）→ 排除，仅登记一行 |
+| `VictorAurelius/2026-Smart-Quiz` | B 其他JS | MIT ✅ | 刷题 / 语言学习 | **重复且无增益** ⛔ | ⛔ | rejected | 2026-10-17 | ★2，TypeScript，push 2026-07-08。离线优先日语（JLPT N5–N3）/ 中文（HSK）背题应用。**与 `dsh-zhiyun-quiz` 覆盖面重复且无底层增量**，内容库亦非本仓场景 → 排除 |
+| `SoumiryaSarangi/ExamPrep-AI` | B 其他JS | MIT ✅ | 考试备考 | **重复且无增益** ⛔ | ⛔ | rejected | 2026-10-17 | ★2，JavaScript，push 2026-08-30。「讲义 PDF → 笔记 / 卡 / 题 / 限时考」的 AI 备考平台。**与「学习」页既有链路（解析 → 出题 → 质检）逐环节重复**，且依赖 GPT 云调用（与本仓本地优先取向不符）→ 排除 |
+
+### 第十一轮 · 排除簇（集中登记，不逐条铺开）
+
+| 仓库 / 簇 | 类型 | 许可证 | 原因 | 分级 | 状态 | 首次发现 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 学习管理平台 / 学生仪表盘簇（`CeylonTech-Labs/LearnHub_Front`、`sahmedhusain/01-dashboard`、`minkushgoyal/student-learning-dashboard`、`dabdenehanshu0-droid/colloge-deshbord`、`Fouzia-Oreen/BrightBrainz_Learning-Management-System`、`Sanikamca24009/Learning-Management-System`、`akhil-palla/orbiixx-lms`、`IsaShaikh/smartedu-platform`、`Algorithm-Artist-ctrl/smart-education-platform`、`nafisa3003/IELTS-Beta-Webapp-Next`、`hashu007/EDUPREDICT-...`、`Mounusha25/edu_morph`、`akishoreapl-droid/campiusiq`、`sreecharan-desu/student-education-api`、`waterskiheatlightning933/edu-shield-ai`、`davidchileshe074/nmlc-admin-dashboard-main`、`Anish-jx/EduQuiz`、`JeremySaaj/MindMate-AI`、`shawnrajeev/Cognify--AI-Powered-Learning-Platform` 等 ~20 条） | B 其他JS | **绝大多数 `null`（无许可证）** | `learning analytics student dashboard typescript`（total 20）与 `spaced repetition scheduler wasm` 等词的**同名污染**：**全为通用 LMS / 学生仪表盘 / 毕业设计级样板**，与浙大场景无关联，且**几乎全部无许可证**。**该关键词族对本仓无价值，建议弃用** | ⛔ | rejected | 2026-10-17 |
+| 同名噪声簇（`rn-snehapriya/Automatic-Note-Taking-From-Video-Using-Tesseract-OCR`（Jupyter，无证，2022 停更）、`Zenardi/ff7r-pc-optimization`（**最终幻想 VII 重置版**性能优化，`fsrs`/`optimizer` 撞词）、`Neutron-I7950/fsr4-frame-boost-native`（**AMD FSR 4 画质**指南）、`Pexilo/SoTReader`（**盗贼之海**截图 OCR）、`selimfirat/nino`（GPL）、`bryanjenningz/react-mandarin-reader`（GPL-3.0）、`ayoung012/rmit-timetable-export`（GPL-3.0）、`kevin-v96/annotation-pointers`（GPL-3.0）、`jaidenlabelle/cineplex-timetable-exporter`（**影院**排片导出，非课表；无证）、`AbdulWSaqib1996/timetable-pwa`（无证）、`PardhavMaradani/vit-timetable-export-plugin`（无证）等） | B 其他JS | 混合（多条 **GPL-3.0** / 无证） | ① **词义撞车**：`fsr4 / ff7r` 与 `FSRS` 无关；`Cineplex` 影院排片 ≠ 课表；`Sea of Thieves` ≠ 笔记。② **GPL 红线**多条。③ 无许可证多条。④ 单校/单机构小工具，与本仓无接缝 → 排除 | ⛔ | rejected | 2026-10-17 |
+| FSRS 生态重复实现簇（`davafons/nagori-fsrs`（Ruby 绑定，NOASSERTION）、`yasinErdemli/FSRSKit`（Swift，BSD-3）、`Qxy0happy/fsrs-dual-optimizer`（Go，MIT）、`Heward165/RecallSharp`（C#，MIT）、`rzhang003/FSRS-Optimizer`、`Prj-geek/dsa-fsrs-optimizer`、`Rucha0901/flashcard-fsrs-optimizer`、`YuuseiKurobane/linear-adr-optimizer-python`、`shesl-tinkerland/fsrs4anki-optimizer`（均无证）、`luisangel2895/neurova-web` 等） | B 其他JS | 混合 | **本仓技术栈为 JS/TS** → **Ruby / Swift / Go / C# / Python 实现全部不可复用**；其余无许可证且 ★0。逻辑同 `py-fsrs`（第十轮已判「重复且无增益」）→ **簇内一次性排除，`fsrs optimizer` 子轴就此封板** | ⛔ | rejected | 2026-10-17 |
+
+### 第十一轮 · 核心结论（供后续轮次直接引用）
+
+> **⚠ `reviewQueue` 是只读投影，本仓无任何调度写入方。** 本轮以**代码级证据**推翻第九轮骨架的前置假设：
+> ① `dsh-zhiyun-quiz/src/store.js:501` 的 `reviewQueue` **只是 `status === 'accepted'` 过滤器**，
+> **无时间 / 间隔 / 优先级维度**（采纳顺序 = 复习顺序）；
+> ② `dsh-zhiyun-study-core/src/workbench.js:314-321` 的 `quizView` 投影**不含 `fsrsRating` / `selfRecall` / `dueAt` / `attempts`**
+> → **界面拿不到评分，无法交给任何调度器**；
+> ③ `generate.js:1087` 的 `computeBacklog`（读 `dueAt` / `isNew`）**全仓仅 2 处命中**（定义处 + README 移植台账一行），
+> **`src/index.js` 未导出、无任何调用方**；
+> ④ **全仓写入 `dueAt` 的代码：0 处**（仅 2 处读取）。
+>
+> **⇒ 调度能力（写入方）是完整缺口；第九轮骨架 TODO 第 3 条「接缝已存在、只需不越界」不成立 —— 实际是两端都没接。**
+> **⇒ 但三条强化判据仍成立**：①面板不新增（⚠ 依据须改为「新增『到期/积压』显示本就是本仓纪律」，见 `generate.js:1076-1083` 对 review debt 的论证）；
+> ②功能正交（现有答「哪些题已采纳」，调度答「先做哪道」）；③**缺口比原论证更大（从无到有，而非手动换自动）**。
+>
+> **⇒ 正面结论**：`store.js:38-54` 的 **FSRS 隔离已做好**（`fsrsRating` **只**来自 `selfRecall`，
+> `autoVerdict === correct` 时仍为 `null`；理由是 Anki 手册「忘了却按 Hard 会让间隔静默偏长」）
+> → **接入 FSRS 不需先补数据合规层，`fsrsRating` 可直接作为调度输入**（降低落地成本）。
