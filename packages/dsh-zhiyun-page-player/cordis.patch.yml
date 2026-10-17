@@ -1,7 +1,0 @@
-# dsh bundle patch：把「看课」页插进 profile 的层栈。
-#
-# 这一页**不在侧栏**（NAV 里 `sidebar: false`）：它从「我的课」点某一节进来，
-# 没有课程上下文时点进去只能看到空态，所以不列在主导航、也不进 Ctrl+K。
-- insert:
-    - id: zhiyun-page-player
-      name: dsh-zhiyun-page-player

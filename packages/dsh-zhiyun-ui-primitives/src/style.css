@@ -40,13 +40,13 @@ body[data-zhiyun] .zs-final pre {
   font: inherit;
   line-height: 1.8;
 }
-body[data-zhiyun] .zs-heading p,
-body[data-zhiyun] .zs-heading small,
+/* `.zs-heading` / `.zs-courses` / `.zs-search` 三条随「我的课」页面包一起删掉了：
+   那一页已并入「学习」，对应的类在本仓没有任何地方再用。留着它们不是「以防万一」，
+   而是让下一个读样式的人以为还存在一个「我的课」页面。 */
 body[data-zhiyun] .zs-muted {
   color: var(--zy-secondary);
 }
 body[data-zhiyun] .zs-study button,
-body[data-zhiyun] .zs-courses button,
 body[data-zhiyun] .zs-account button {
   font: inherit;
   cursor: pointer;
@@ -76,8 +76,7 @@ body[data-zhiyun] .zs-primary:hover {
   background: var(--zy-action-hover);
 }
 body[data-zhiyun] .zs-study button:disabled,
-body[data-zhiyun] .zs-account button:disabled,
-body[data-zhiyun] .zs-courses button:disabled {
+body[data-zhiyun] .zs-account button:disabled {
   opacity: .45;
   cursor: default;
 }
@@ -209,6 +208,10 @@ body[data-zhiyun] .zs-actions {
   flex-wrap: wrap;
   justify-content: end;
 }
+/* `.zs-tabs` 与 dsh-zhiyun-page-study 的 `.zs-content-switch` 是同一语义（互斥视图切换）的两种呈现：
+   这里是下划线式，那里是药丸式。观感各异是刻意的，但**度量是一份契约** —— 字号 12px、
+   命中高度不低于 24px、键盘焦点有可见环。改这边时请同步看那边，反之亦然，
+   否则同一个产品里两组切换的手感会分叉。 */
 body[data-zhiyun] .zs-tabs {
   display: flex;
   gap: 20px;

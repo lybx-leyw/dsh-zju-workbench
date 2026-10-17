@@ -166,14 +166,28 @@ body[data-zhiyun] .zy-page[data-page=study] .zy-content { max-width:none; width:
 body[data-zhiyun] .zs-study { width:100%; color:var(--zy-text); }
 body[data-zhiyun] .zs-workbench-shell { width:100%; }
 body[data-zhiyun] .zs-workbench { display:grid; grid-template-columns:minmax(246px, 286px) minmax(0,1fr); gap:34px; align-items:start; }
+/* 目录收起：左列收成一条窄导轨，正文吃掉让出来的宽度。
+   收起状态不写死宽度的原因是 —— 它的内容只有一个竖向「目录」钮，宽度由内容自己撑。 */
+body[data-zhiyun] .zs-workbench.is-tree-collapsed { grid-template-columns:auto minmax(0,1fr); }
 body[data-zhiyun] .zs-course-tree { position:sticky; top:0; display:flex; flex-direction:column; min-width:0; max-height:calc(100vh - 132px); padding:2px 0 0; }
+/* 收起时目录缩成一个窄条，只有一个竖向「目录」钮。 */
+body[data-zhiyun] .zs-course-tree.is-collapsed { align-items:flex-start; }
+body[data-zhiyun] .zs-tree-collapse { flex:none; width:26px; height:26px; display:grid; place-items:center; border:0; border-radius:6px; background:transparent; color:var(--zy-muted); font:inherit; font-size:15px; cursor:pointer; margin-left:6px; }
+body[data-zhiyun] .zs-tree-collapse:hover { background:var(--zy-hover); color:var(--zy-text); }
+body[data-zhiyun] .zs-tree-expand { display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 6px; border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); color:var(--zy-muted); font:inherit; font-size:15px; cursor:pointer; }
+body[data-zhiyun] .zs-tree-expand:hover { background:var(--zy-hover); color:var(--zy-text); }
+/* 「目录」两个字竖排：窄条里横排会折行。 */
+body[data-zhiyun] .zs-tree-expand-text { writing-mode:vertical-rl; font-size:11px; letter-spacing:.15em; }
 body[data-zhiyun] .zs-tree-top { display:flex; align-items:center; justify-content:space-between; padding:0 10px 16px; }
 body[data-zhiyun] .zs-eyebrow { display:block; color:var(--zy-muted); font-size:11px; letter-spacing:.08em; }
 body[data-zhiyun] .zs-tree-top h2 { margin:3px 0 0; font-size:16px; font-weight:600; }
 body[data-zhiyun] .zs-course-total { min-width:25px; height:25px; display:grid; place-items:center; border-radius:7px; background:var(--zy-soft); color:var(--zy-accent); font-size:11px; }
 body[data-zhiyun] .zs-tree-search { display:flex; align-items:center; gap:9px; height:36px; margin:0 0 12px; padding:0 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-muted); }
 body[data-zhiyun] .zs-tree-search>span { font-size:19px; line-height:1; }
-body[data-zhiyun] .zs-tree-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--zy-text); font:inherit; font-size:11px; }
+body[data-zhiyun] .zs-tree-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--zy-text); font:inherit; font-size:12px; }
+/* 内层 input 关掉了 outline，环就**必须**画在外层容器上 —— 否则键盘聚焦课程目录搜索框时
+   一点反馈都没有。这和工具栏那颗搜索框是同一个缺陷，两处都要有环。 */
+body[data-zhiyun] .zs-tree-search:focus-within { border-color:var(--zy-accent); outline:2px solid var(--zy-accent); outline-offset:1px; }
 body[data-zhiyun] .zs-corpus { margin:0 0 12px; }
 body[data-zhiyun] .zs-corpus .zs-tree-search { margin-bottom:8px; }
 body[data-zhiyun] .zs-corpus-list { display:flex; flex-direction:column; gap:6px; }
@@ -186,8 +200,10 @@ body[data-zhiyun] .zs-course-toggle { display:flex; align-items:center; width:10
 body[data-zhiyun] .zs-course-toggle:hover { background:var(--zy-hover); }
 body[data-zhiyun] .zs-chevron { width:14px; flex:none; color:var(--zy-muted); font-size:17px; text-align:center; }
 body[data-zhiyun] .zs-course-name { display:flex; flex-direction:column; min-width:0; flex:1; gap:2px; }
-body[data-zhiyun] .zs-course-name strong { overflow:hidden; color:var(--zy-text); font-size:11px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-body[data-zhiyun] .zs-course-name small,.zs-course-count { color:var(--zy-muted); font-size:11px; }
+body[data-zhiyun] .zs-course-name strong { overflow:hidden; color:var(--zy-text); font-size:12.5px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+/* 学期（「2026-2027」）与节次数都是用户要读的元信息：按 repo-profile 第 1 节，
+   必须读的元信息 ≥12px，11px 只留给可忽略的装饰。 */
+body[data-zhiyun] .zs-course-name small,.zs-course-count { color:var(--zy-muted); font-size:12px; }
 body[data-zhiyun] .zs-course-count { flex:none; }
 body[data-zhiyun] .zs-course-group.is-open > .zs-course-toggle { background:color-mix(in srgb,var(--zy-soft) 46%,transparent); }
 body[data-zhiyun] .zs-tree-lessons { margin:2px 0 7px 13px; padding-left:9px; border-left:1px solid var(--zy-line); }
@@ -199,8 +215,10 @@ body[data-zhiyun] .zs-state-dot.is-ready { background:#44856a; }
 body[data-zhiyun] .zs-state-dot.is-running { background:#bd8745; animation:zs-pulse 1s infinite alternate; }
 @keyframes zs-pulse { to { opacity:.35; } }
 body[data-zhiyun] .zs-tree-lesson-copy { display:flex; flex-direction:column; min-width:0; flex:1; gap:2px; }
-body[data-zhiyun] .zs-tree-lesson-copy strong { overflow:hidden; font-size:11px; font-weight:500; text-overflow:ellipsis; white-space:nowrap; }
-body[data-zhiyun] .zs-tree-lesson-copy small,.zs-state-label { color:var(--zy-muted); font-size:11px; white-space:nowrap; }
+body[data-zhiyun] .zs-tree-lesson-copy strong { overflow:hidden; font-size:12.5px; font-weight:500; text-overflow:ellipsis; white-space:nowrap; }
+/* 节次时间与「待整理 / 已整理 / 解析中」是状态信息，用户要据此判断该不该打开这一节 ——
+   同属「必须能读」，因此跟着提到 12px。 */
+body[data-zhiyun] .zs-tree-lesson-copy small,.zs-state-label { color:var(--zy-muted); font-size:12px; white-space:nowrap; }
 body[data-zhiyun] .zs-state-label { flex:none; }
 body[data-zhiyun] .zs-tree-hint { padding:7px 9px; color:var(--zy-muted); font-size:11px; }
 body[data-zhiyun] .zs-tree-empty { margin:10px 8px; padding:12px 10px; border:1px dashed var(--zy-line); border-radius:7px; color:var(--zy-muted); font-size:11px; }
@@ -220,33 +238,37 @@ body[data-zhiyun] .zs-empty-hint > span { color:var(--zy-accent); font-size:11px
 body[data-zhiyun] .zs-empty-hint > div { display:flex; flex-direction:column; gap:3px; padding-right:20px; }
 body[data-zhiyun] .zs-empty-hint strong { font-size:11px; font-weight:500; }
 body[data-zhiyun] .zs-empty-hint small { color:var(--zy-muted); font-size:11px; }
-body[data-zhiyun] .zs-current-section { padding:4px 0 19px; border-bottom:1px solid var(--zy-line); }
+/* 表头只有一行：面包屑（课程 / 节次）在上，整理状态与时间在左、动作在右。
+   这里刻意**没有**节次大标题 —— 左侧目录里已经高亮着同一句话，
+   再写一遍就是把主视图的高度挪去说重复的话。
+   三张「终稿 / 课件 / 字幕」卡片同理已删除：它们的去向 tab 栏里都有。 */
+body[data-zhiyun] .zs-current-section { padding:0 0 12px; border-bottom:1px solid var(--zy-line); }
 body[data-zhiyun] .zs-breadcrumb { display:flex; align-items:center; gap:8px; overflow:hidden; color:var(--zy-muted); font-size:11px; white-space:nowrap; }
 body[data-zhiyun] .zs-breadcrumb span:last-child { overflow:hidden; color:var(--zy-secondary); text-overflow:ellipsis; }
-body[data-zhiyun] .zs-current-main { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:15px; }
-body[data-zhiyun] .zs-current-main h1 { margin:6px 0 3px; font-size:23px; font-weight:600; letter-spacing:-.025em; line-height:1.35; }
-body[data-zhiyun] .zs-current-main p { margin:0; color:var(--zy-secondary); font-size:11px; }
-body[data-zhiyun] .zs-current-state { display:inline-flex; align-items:center; gap:6px; color:var(--zy-secondary); font-size:11px; }
+body[data-zhiyun] .zs-current-main { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:8px; }
+body[data-zhiyun] .zs-current-meta { display:flex; align-items:center; gap:10px; min-width:0; }
+body[data-zhiyun] .zs-current-when { overflow:hidden; color:var(--zy-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zhiyun] .zs-current-state { display:inline-flex; flex:none; align-items:center; gap:6px; color:var(--zy-secondary); font-size:11px; }
 body[data-zhiyun] .zs-current-state i { width:6px; height:6px; border-radius:50%; background:#b88a4a; }
 body[data-zhiyun] .zs-current-state.is-ready i { background:#44856a; }
 body[data-zhiyun] .zs-current-actions { display:flex; align-items:center; gap:8px; flex:none; }
 body[data-zhiyun] .zs-progress { margin-top:12px; padding:9px 11px; border-radius:6px; background:var(--zy-soft); font-size:11px; }
-body[data-zhiyun] .zs-assets { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:18px 0 24px; }
-body[data-zhiyun] .zs-asset-card { position:relative; display:flex; align-items:center; min-width:0; min-height:87px; gap:12px; padding:14px; border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); color:var(--zy-text); text-align:left; cursor:pointer; transition:border-color .15s,background .15s,transform .15s; }
-body[data-zhiyun] .zs-asset-card:hover { border-color:color-mix(in srgb,var(--zy-accent) 42%,var(--zy-line)); transform:translateY(-1px); }
-body[data-zhiyun] .zs-asset-card.is-active { border-color:color-mix(in srgb,var(--zy-accent) 38%,var(--zy-line)); background:color-mix(in srgb,var(--zy-soft) 45%,var(--zy-surface)); }
-body[data-zhiyun] .zs-asset-icon { display:grid; width:34px; height:34px; flex:none; place-items:center; border-radius:8px; background:var(--zy-soft); color:var(--zy-accent); font-size:17px; }
-body[data-zhiyun] .zs-asset-copy { display:flex; flex-direction:column; min-width:0; gap:3px; }
-body[data-zhiyun] .zs-asset-copy small { color:var(--zy-secondary); font-size:11px; }
-body[data-zhiyun] .zs-asset-copy strong { overflow:hidden; font-size:12px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-body[data-zhiyun] .zs-asset-copy > span { overflow:hidden; color:var(--zy-muted); font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
-body[data-zhiyun] .zs-asset-arrow { position:absolute; top:10px; right:11px; color:var(--zy-muted); font-size:11px; }
 body[data-zhiyun] .zs-content-section { min-width:0; }
 body[data-zhiyun] .zs-content-heading { display:flex; align-items:end; justify-content:space-between; gap:16px; padding:4px 0 10px; border-bottom:1px solid var(--zy-line); }
 body[data-zhiyun] .zs-content-heading h2 { margin:3px 0 0; font-size:15px; font-weight:600; }
 body[data-zhiyun] .zs-content-tools { display:flex; align-items:center; gap:12px; }
+/* `.zs-content-switch` 与 ui-primitives 的 `.zs-tabs` 是同一语义（互斥视图切换）的两种呈现：
+   这里是药丸式，那里是下划线式。观感可以不同，但**度量必须对齐** —— 字号、命中高度、焦点环，
+   否则同一个产品里两组切换一个「轻」一个「重」，用户按下时会觉得是两个东西。
+   对照值：`.zs-tabs button` 是 12px + 垂直 padding 12px（命中高度约 40px）。
+   药丸式不必这么大，只要别掉到 24px 以下：12px 字号乘继承的 1.6 行高 ≈ 19px 行盒，
+   加 7px 上下 padding 约 33px 命中高度，留有余量。 */
 body[data-zhiyun] .zs-content-switch { display:flex; align-items:center; gap:4px; padding:3px; border-radius:7px; background:color-mix(in srgb,var(--zy-sidebar) 65%,var(--zy-bg)); }
-body[data-zhiyun] .zs-content-switch button { padding:5px 10px; border:0; border-radius:5px; background:transparent; color:var(--zy-secondary); font:inherit; font-size:11px; cursor:pointer; }
+body[data-zhiyun] .zs-content-switch button { padding:7px 10px; border:0; border-radius:5px; background:transparent; color:var(--zy-secondary); font:inherit; font-size:12px; cursor:pointer; }
+/* 键盘可达：外壳的 `.zy-page button:focus-visible` 已经给了环，这里仍显式写一条 ——
+   它是 tablist，读屏与键盘用户会反复在它上面左右箭头，环必须落在按钮本体上（offset 2px，
+   药丸圆角外侧不会被切掉），而不是依赖后代继承来的偶然结果。 */
+body[data-zhiyun] .zs-content-switch button:focus-visible { outline:2px solid var(--zy-accent); outline-offset:2px; }
 body[data-zhiyun] .zs-content-switch button[aria-selected=true] { background:var(--zy-surface); color:var(--zy-accent); box-shadow:0 1px 3px #00000012; }
 /* 下面这几条自带 `font-size` 的控件规则必须比 :58 的宿主重置（`body[data-zhiyun] .zs-study button`
    的 `font: inherit`，特异性 0-2-2）更高：多写一层 `.zs-study` 就够了，否则声明会被 inherit 顶掉，
@@ -307,9 +329,6 @@ body[data-zhiyun] .zs-mobile-tree-toggle { display:none; }
 @media (max-width: 980px) {
   body[data-zhiyun] .zy-page[data-page=study] .zy-content { padding:20px 22px 28px; }
   body[data-zhiyun] .zs-workbench { grid-template-columns:minmax(210px,240px) minmax(0,1fr); gap:22px; }
-  body[data-zhiyun] .zs-assets { gap:8px; }
-  body[data-zhiyun] .zs-asset-card { gap:8px; padding:11px 9px; }
-  body[data-zhiyun] .zs-asset-icon { width:30px; height:30px; }
 }
 @media (max-width: 720px) {
   body[data-zhiyun] .zy-page[data-page=study] .zy-content { padding:12px 15px 24px; }
@@ -320,10 +339,9 @@ body[data-zhiyun] .zs-mobile-tree-toggle { display:none; }
   body[data-zhiyun] .zs-workbench.is-tree-open .zs-course-tree { display:flex; }
   body[data-zhiyun] .zs-tree-top { padding-bottom:9px; }
   body[data-zhiyun] .zs-reader { width:100%; }
-  body[data-zhiyun] .zs-current-main { align-items:flex-start; flex-direction:column; gap:12px; }
-  body[data-zhiyun] .zs-current-main h1 { font-size:19px; }
-  body[data-zhiyun] .zs-assets { grid-template-columns:1fr; gap:7px; padding:13px 0 18px; }
-  body[data-zhiyun] .zs-asset-card { min-height:62px; }
+  /* 表头只有一行，窄屏也不必改成竖排 —— 动作钮换到下一行就够。 */
+  body[data-zhiyun] .zs-current-main { flex-wrap:wrap; gap:8px; }
+  body[data-zhiyun] .zs-current-actions { margin-left:auto; }
   body[data-zhiyun] .zs-content-heading { align-items:flex-start; flex-direction:column; }
   body[data-zhiyun] .zs-content-tools { width:100%; justify-content:space-between; }
   body[data-zhiyun] .zs-outline { flex-direction:column; gap:11px; }
@@ -405,7 +423,11 @@ body[data-zhiyun] .zs-breadcrumb-row { display:flex; align-items:center; justify
 body[data-zhiyun] .zs-breadcrumb { min-width:0; }
 body[data-zhiyun] .zs-search-entry { position:relative; display:flex; flex:0 0 auto; align-items:center; gap:8px; min-width:0; }
 body[data-zhiyun] .zs-search-box { display:flex; align-items:center; gap:6px; width:252px; max-width:44vw; min-width:0; padding:0 9px; border:1px solid var(--zy-line); border-radius:6px; background:var(--zy-surface); color:var(--zy-muted); font-size:11px; transition:border-color .15s; }
-body[data-zhiyun] .zs-search-box:focus-within { border-color:color-mix(in srgb,var(--zy-accent) 45%,var(--zy-line)); }
+/* 焦点环画在外层 .zs-search-box 上，而不是里面的 input 上：input 是无边框、无内边距的
+   裸输入区，它的 outline 会紧贴文字、钻到放大镜图标与「×」下面，看起来像渲染错位。
+   外层是用户认知里的「整个搜索框」，环画在它的圆角外沿才和按钮、tab 的焦点环一致。
+   因此内层 input 的 outline 显式关掉 —— 关掉的**前提**就是下面这条可见的环，不能只留 outline:none。 */
+body[data-zhiyun] .zs-search-box:focus-within { border-color:color-mix(in srgb,var(--zy-accent) 45%,var(--zy-line)); outline:2px solid var(--zy-accent); outline-offset:1px; }
 body[data-zhiyun] .zs-search-box input { flex:1 1 auto; width:100%; min-width:0; min-height:28px; padding:0; border:0; background:transparent; color:var(--zy-text); font-size:11px; }
 body[data-zhiyun] .zs-search-box input:focus-visible { outline:none; }
 body[data-zhiyun] .zs-search-box input::placeholder { color:var(--zy-muted); }

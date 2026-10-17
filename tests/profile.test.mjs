@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile, realpath, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { initialize, locateHost, root, lock, exists, hostArgs, sourceBundles } from '../scripts/profile.mjs';
+import { initialize, locateHost, root, lock, exists, hostArgs, sourceBundles, retiredBundles } from '../scripts/profile.mjs';
 import { activePage, matchingPages, beijingDate, hiddenPageIds, pageBundle, visiblePages, NAV } from '../packages/dsh-zhiyun-shell/src/model.js';
 
 test('navigation preserves native conversation and ignores foreign panel ids', () => {
@@ -35,8 +35,26 @@ test('被取消的页从侧栏与跳转里一起消失（两处必须同一份�
   // 它不参与这条断言。用 NAV.length 会比出「少一个」，那是把两件事混在了一起。
   const sidebarPages = NAV.filter(page => page.sidebar !== false);
   assert.equal(visiblePages(hiddenPageIds(new Map())).length, sidebarPages.length);
-  // 而子页确实还在 NAV 里（能被 navigate 打开、能被 activePage 认出来）。
-  assert.ok(NAV.some(page => page.id === 'player' && page.sidebar === false));
+});
+
+test('「我的课」「看课」已并入「学习」：导航只剩一个入口，两个页面包不再被访问', () => {
+  // ⚠️ 这条钉的是**合并**而不是删除功能：回放与课程目录都还在，只是住进了「学习」页
+  //    （`zs-content-switch` 的「视频」栏 + 左栏课程目录）。留在这里的守卫是：
+  //    NAV 里不许再出现 courses / player 两个 id —— 它们对应的 bundle 已经删了，
+  //    留着 id 会让 `navigate()` 把一个没人承载的面板切出来（空白页）。
+  assert.equal(NAV.some(page => page.id === 'courses'), false, '「我的课」不再是独立页');
+  assert.equal(NAV.some(page => page.id === 'player'), false, '「看课」不再是独立页');
+  assert.equal(NAV.some(page => page.id === 'study'), true, '合并后的落点是「学习」');
+  // 承载页面的包名由 id 推导，所以这两个名字也就不该再有包：`sourceBundles` 是从
+  // `packages/` 目录读出来的，目录没了它就自然消失。这条防的是「目录删了、清单没删」。
+  assert.equal(sourceBundles.includes('dsh-zhiyun-page-courses'), false);
+  assert.equal(sourceBundles.includes('dsh-zhiyun-page-player'), false);
+  // 而「学习」页自己要还在清单里 —— 上面两条若因为删错目录而通过，这条会红。
+  assert.equal(sourceBundles.includes('dsh-zhiyun-page-study'), true);
+  // 老 profile 里可能还留着这两个名字：Loader 解不开那一行，整个 profile 起不来。
+  // 所以它们必须登记在 `retiredBundles` 里，初始化时被清掉（下面那条用例会实测）。
+  assert.ok(retiredBundles.includes('dsh-zhiyun-page-courses'));
+  assert.ok(retiredBundles.includes('dsh-zhiyun-page-player'));
 });
 
 test('activePage 只认还在的页：被取消的页不再算作当前页', () => {
@@ -66,7 +84,7 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   assert.equal(await readFile(path.join(home, 'user-note.txt'), 'utf8'), 'keep my notes');
   assert.equal(JSON.parse(await readFile(manifest, 'utf8')).description, 'user customization');
   assert.equal(await realpath(path.join(first.profile, 'node_modules', 'dsh-zhiyun-shell')), await realpath(path.join(root, 'packages/dsh-zhiyun-shell')));
-  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell', 'dsh-zhiyun-ui-primitives', 'dsh-zhiyun-net-proxy', 'dsh-zhiyun-omni', 'dsh-zhiyun-univer-office', 'dsh-zhiyun-classroom', 'dsh-zhiyun-parser', 'dsh-zhiyun-study-core', 'dsh-zhiyun-lecture', 'dsh-zhiyun-final-pass', 'dsh-zhiyun-quiz', 'dsh-zhiyun-notes', 'dsh-zhiyun-vault', 'dsh-zhiyun-player', 'dsh-zhiyun-knowledge', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-player', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-me', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-feedback']);
+  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell', 'dsh-zhiyun-ui-primitives', 'dsh-zhiyun-net-proxy', 'dsh-zhiyun-omni', 'dsh-zhiyun-univer-office', 'dsh-zhiyun-classroom', 'dsh-zhiyun-parser', 'dsh-zhiyun-study-core', 'dsh-zhiyun-lecture', 'dsh-zhiyun-final-pass', 'dsh-zhiyun-quiz', 'dsh-zhiyun-notes', 'dsh-zhiyun-vault', 'dsh-zhiyun-player', 'dsh-zhiyun-knowledge', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-me', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-feedback']);
   // 每个本仓包都要有 profile 里的目录链接 —— 漏一个的表现是「启动了但那一页空白」。
   for (const name of sourceBundles) {
     assert.equal(await realpath(path.join(first.profile, 'node_modules', name)), await realpath(path.join(root, 'packages', name)), `${name} 缺 profile 链接`);

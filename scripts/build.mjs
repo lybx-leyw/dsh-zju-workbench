@@ -41,8 +41,6 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-net-proxy',
   'dsh-zhiyun-study-core',
   'dsh-zhiyun-page-today',
-  'dsh-zhiyun-page-courses',
-  'dsh-zhiyun-page-player',
   'dsh-zhiyun-page-study',
   'dsh-zhiyun-page-me',
   'dsh-zhiyun-page-notes',

@@ -69,7 +69,7 @@ try {
   await page.locator('.zy-drawer').waitFor({ state: 'hidden' });
   await page.waitForTimeout(700);
   await page.screenshot({ path: path.join(out, 'ask-drawer-closed.png'), fullPage: true });
-  for (const [label, pageId] of [['我的课', 'courses'], ['学习', 'study']]) {
+  for (const [label, pageId] of [['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${pageId}]`).waitFor();
   }

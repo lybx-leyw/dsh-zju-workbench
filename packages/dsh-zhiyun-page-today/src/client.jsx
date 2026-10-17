@@ -70,12 +70,10 @@ export function Today({ controller }) {
   const agenda = projectAgenda(s.schedule, s.scheduleMeta, Date.now());
   const openCourse = (entry) => {
     const course = s.courses.find((item) => String(item.id) === String(entry.courseId));
-    if (course) {
-      void controller.selectCourse(course);
-      controller.navigate('study');
-      return;
-    }
-    controller.navigate('courses');
+    // 课程目录与回放都住在「学习」页，所以对不上课程时也是去「学习」——
+    // 那里能自己挑一门课。（「我的课」已经并入「学习」，不再是一次跳转的目标。）
+    if (course) void controller.selectCourse(course);
+    controller.navigate('study');
   };
   const lead = !s.user ? null : s.scheduleLoading && !s.schedule ? null : s.scheduleError ? null : agenda.current ?? agenda.upcoming[0] ?? null;
 
@@ -91,7 +89,7 @@ export function Today({ controller }) {
       <section><SectionTitle aside="已采纳的题">插空完成</SectionTitle><Gaps state={s} controller={controller}/></section>
     </div>
     <SectionTitle aside="接着上次打开的那一节">最近在看</SectionTitle>
-    {!s.user ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>下一次打开，从上次继续</h3><p>登录后，这里留下你上次打开的那一节。</p></div><button className="zy-secondary" onClick={() => controller.openAccount()}>去登录 <Icon name="arrow" size={15}/></button></div> : s.recentError ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>上次的位置没有读出来</h3><p>{s.recentError}</p></div><button className="zy-secondary" onClick={() => controller.loadRecent()}>再读一次 <Icon name="arrow" size={15}/></button></div> : s.recent ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>{s.recent.lessonTitle || '未命名节次'}</h3><p>{s.recent.courseTitle || '未命名课程'}</p></div><button className="zy-secondary" onClick={async () => { const opened = await controller.resumeRecent(); if (opened) controller.navigate('study'); }}>继续 <Icon name="arrow" size={15}/></button></div> : <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>还没有打开过一节课</h3><p>在学习页打开一节之后，这里会留下它。</p></div><button className="zy-secondary" onClick={() => controller.navigate('courses')}>我的课 <Icon name="arrow" size={15}/></button></div>}
+    {!s.user ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>下一次打开，从上次继续</h3><p>登录后，这里留下你上次打开的那一节。</p></div><button className="zy-secondary" onClick={() => controller.openAccount()}>去登录 <Icon name="arrow" size={15}/></button></div> : s.recentError ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>上次的位置没有读出来</h3><p>{s.recentError}</p></div><button className="zy-secondary" onClick={() => controller.loadRecent()}>再读一次 <Icon name="arrow" size={15}/></button></div> : s.recent ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>{s.recent.lessonTitle || '未命名节次'}</h3><p>{s.recent.courseTitle || '未命名课程'}</p></div><button className="zy-secondary" onClick={async () => { const opened = await controller.resumeRecent(); if (opened) controller.navigate('study'); }}>继续 <Icon name="arrow" size={15}/></button></div> : <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>还没有打开过一节课</h3><p>在学习页打开一节之后，这里会留下它。</p></div><button className="zy-secondary" onClick={() => controller.navigate('study')}>去学习 <Icon name="arrow" size={15}/></button></div>}
     <div className="zy-quiet-footer">不必一次学完所有，今天也可以只前进一步。</div>
   </>;
 }
