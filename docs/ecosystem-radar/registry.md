@@ -1464,3 +1464,31 @@
 | `vsloong/Sunshine`（Apache-2.0 ★84）、`ucsd/campus-mobile`（Dart）、`neuland-ingolstadt/neuland.app-native`（AGPL）、`thu-info-community/thu-info-app`（NOASSERTION ★237） | B 其他JS | 混合 | 校园 App | — | ⛔ | rejected | 2026-10-18 | 非 JS 栈 / 非本校；`campus app` 轴噪声 |
 | `oddfar/campus-imaotai`（★4134）、`oddfar/campus-example`、`oddfar/uni-app_campus_web` | B 其他JS | Apache/MIT | — | 无关 | ⛔ | rejected | 2026-10-18 | 撞词：这里的 campus 指「i茅台 campus」或通用校园社交站，与浙大无关 |
 | `biu9/cc98-summary`、`Ansherly/CC98-Desktop`（null）、`Ansherly/CC98-Ocean`（null）、`Yutyrannus/CC98.u`（MIT，2016 Ionic）、`kodango/cc98`（null，2012 Userscript） | B 其他JS | null / MIT | 校园论坛 | 重复无增益 | ⛔ | rejected | 2026-10-18 | 无许可证 / 停更 10 年 / 同一实现的重新打包 |
+
+## 2026-10-18 · C 组（第二十一轮 · **技术基座轴**）· 追加
+
+> 切片：**公式渲染 / 文献引文 / 转写摘要**（C 组首次走技术基座层，此前只扫功能层）。
+> 10 次搜索（达上限未超），API 全程 200。76 条新仓 → 19 条有效候选。
+> 🟢1 + 🟡1 + 🔵6 + ⚠2 + ⛔9（簇内合计）。骨架：`packages/dsh-radar-temml/`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `ronkok/Temml` | B 其他JS | **MIT** ✅ | 论文/笔记/讲座（公式渲染） | 重复可强化（⚠ 基线为空，待裁） | 🟢 | skeleton-created | 2026-10-18 | ★356，2026-10-08 与 npm 0.14.0 同日发布。**零依赖纯库**，周下载 72.9 万，`renderToString(tex)` → MathML 字符串，本地实测可用。本仓**无任何公式渲染器**（`$k_1$` 现由宿主 `MarkdownText` 原样显示）→ 严格说是「无→有」，雷达按「同类内容呈现升级」记强化，**定性需人工拍**。⚠ 与 `dsh-radar-better-markdown`（自带 KaTeX）**二选一或明确分层，不可都上**。已出骨架 |
+| `citation-js/citation-js` | B 其他JS | **MIT** ✅ | 论文（参考文献） | 全新 | 🟡 | proposed | 2026-10-18 | ★213，2026-10-11 活跃。BibTeX/RIS/DOI/Wikidata → CSL-JSON → 按 CSL 样式排版。**要真用需自建整条 UI**（导入/选样式/插引用/生成文献表）= 新功能页而非强化 → **本轮未出骨架**，等「论文页是否做参考文献」的产品决策。底层依赖 `citeproc-js` 为 NOASSERTION，许可证链须一并核 |
+| `larsgw/citation.js`、`pcooksey/bibtex-js`、`ORCID/bibtexParseJs`、`cacfd3a/bibtex-js` | B 其他JS | MIT | 论文（引文） | 重复无增益（被 citation-js 覆盖） | ⛔ | rejected | 2026-10-18 | 合并为 1 族行避免登记表膨胀。`larsgw/citation.js`(★241) 是 citation-js **旧仓/同名仓**（已迁移，勿重复引入）；`pcooksey/bibtex-js`(★279) **2020 后停更**且只做「.bib → HTML 列表」；`bibtexParseJs`(★113)、`cacfd3a/bibtex-js`(★84) 均为**单向解析器**，能力被 citation-js 完全覆盖 |
+| `tamuratak/latex-utensils` | B 其他JS | MIT | 论文（LaTeX 解析） | 全新（暂不需要） | 🔵 | proposed | 2026-10-18 | ★45，TS + PEG.js。解析器非渲染器，本仓目前不解析 `.tex`。若将来做「公式编辑往返」可再看 |
+| `asnunes/mathml-to-latex` | B 其他JS | MIT | 论文（公式） | 全新（二期） | 🔵 | proposed | 2026-10-18 | ★83，2026-06-10。MathML → LaTeX 反向转换。若采用 Temml，**读写往返**可能用到；属二期 |
+| `mika-cn/mathml2latex` | B 其他JS | MIT | 论文（公式） | 全新（二期） | 🔵 | proposed | 2026-10-18 | ★46，**已 archived**（2023-03 停更），不再维护，仅作 `asnunes` 的备选参考 |
+| `fred-wang/TeXZilla` | B 其他JS | **`null`** | 论文（公式） | — | ⛔ | rejected | 2026-10-18 | ★150 但**无许可证** → 不采用、不摘代码。能力与 Temml 重叠，无选它的理由 |
+| `lo-tp/sm2-plus` | B 其他JS | MIT | 复习（闪卡） | 重复无增益 | ⛔ | rejected | 2026-10-18 | ★54，**2019-01 停更**。SM-2 改进版；本仓已有 FSRS 系列（`fsrs-browser`/`fsrs-scheduler` 骨架），**SM-2 是更旧的算法**，无强化空间 |
+| `simpread/memos-daily-review-plugin` | B 其他JS | MIT | 复习（每日回顾） | 重复无增益 | 🔵 | proposed | 2026-10-18 | ★9，2026-02-24。形态是 **Memos 插件**而非可嵌入库；「每日回顾」的设计可参考，代码不可复用 |
+| `Juris-M/citeproc-js` | B 其他JS | **NOASSERTION** | 论文（CSL 处理器） | 全新（引文必需底层） | ⚠ 待核 | proposed | 2026-10-18 | ★365，CSL 处理器事实标准。**NOASSERTION 成因是 CPAL-1.0 + MIT 双许可的混合写法**（并非真的没写 LICENSE）→ **须人工读 LICENSE 原文**。若上 citation-js，这是唯一绕不开的核验点 |
+| `GeeLaw/bibtex-ts` | B 其他JS | **NOASSERTION** | 论文（BibTeX） | 全新（暂不需要） | ⚠ 待核 | proposed | 2026-10-18 | ★6，格式保持型 BibTeX 解析（保留原始排版，能力独特）。NOASSERTION，不采用不摘码 |
+| 转写/摘要 app 簇（`haucongle/yt-summarizer`、`MakazhanAlpamys/TubeMind`、`chaimae101/youtube-summarizer`、`dmpapageo/youtube-summarizer`、`AjayThomas-crl/brievo-ai`、`tadhithya/AI-YouTube-Summarizer`、`asakohayase/ai-youtube-quiz-generator`、`Priyanshu9898/You-Tube-Transcript-Summarizer`、`MedamoniSharan/Ai-PodcastSummarizer`、`anandkumar16/ai-meeting-summarizer`、`sakhawatkabir/ai-meeting-notes`、`ketankauntia/Meeting-Summarizer-ai`） | B 其他JS | **`null`**（11/12） | 讲座（视频摘要） | 重复无增益 | ⛔ | rejected | 2026-10-18 | 12 条，**11 条无许可证**（唯一 MIT 者 `seanwessmith/…` 是 C 语言项目）。共同形态：粘一个 LLM API 做 YouTube 摘要，★≤5、无库形态、无可提取能力。**建议整簇不再扫（存量）** |
+| 间隔重复 app 簇（`alanbuzek/spaced_repetition`、`SaschaMet/Brain-Wave`、`anmolsharma152/AlgoDeck`、`VivekChaurasia03/leetcode-repeater`、`melisaaleyna/WordApp`、`thinkful-ei-armadillo/*` 2 条、`EmreEksi03/…` 等） | B 其他JS | `null` / NOASSERTION | 复习 | 重复无增益 | ⛔ | rejected | 2026-10-18 | 10 条。有 MIT 的几条（★≤10）均为完整 app 且算法更旧（SM-2 / Leitner），与本仓 FSRS 重复且无增益；其余无许可证 |
+| `abhishekalandikar/MCQ-QB-and-Exam-Generator`、`Rizwan-Ullah-tech/MCQ-Generator` | B 其他JS | **`null`** | 习题 | 重复无增益 | ⛔ | rejected | 2026-10-18 | `exam question bank generator` 全部结果（total=2）。★0，本地 CRUD 题库，无许可证 |
+| `JorelMurray/Spaced-Repetition-Application`、`KeonTsang/Spaced-repetition-game`、`hamederostamkhani/sCardRecall`、`ArthurMaceddo/cs50w-projects` | B 其他JS | MIT/`null` | — | — | ⛔ | rejected | 2026-10-18 | **非 JS 栈**（Python / Java / Django），违反「限定 JS 技术栈」 |
+| `kbhujbal/AlphaAnalyst-…`、`akash-kumar5/Lexx-LegalAI`、`Obaid38/KnowledgeHub-…`、`iamsaurabhc/picard-oss`、`SamurAIGPT/ai-knowledge-base`、`huangy22/Academic_Citation_Network`、`0xAdafang/LuminAi_WebClient`、`WojciechGos/sumarize-yt-transcription-microservices`、`Voza47/Video-Summarizer-Using-NLP` | B 其他JS | 混合 | — | 无关 | ⛔ | rejected | 2026-10-18 | `citation-js` 一词的语义漂移产物：股票分析 / 印度法律 / 通用 RAG / 微服务练习。与本仓场景无关 |
+| `shandianchengzi/Zotero_Item_Updater`（GPL-3.0）、`kwikwag/mathml2latex`（GPL-2.0）、`marcovo/phpbb_mathjax`（GPL-2.0）、`AABoyles/jsBibtex`（GPL-3.0） | B 其他JS | **GPL 族** | — | — | ⛔ | rejected | 2026-10-18 | 许可证红线（GPL 不属宽松白名单） |
+| `faroit/bibtex-js`、`dpfau/serviette`、`ixchow/bib` | B 其他JS | MIT/`null` | 论文（BibTeX） | 重复无增益 | ⛔ | rejected | 2026-10-18 | 2013–2020 停更 / 同一实现重新打包 / 作者自述「not production ready」 |
+| `meirallmains299/ChatGPT_Latex`、`AdinathChaudhari/markdown-studio`、`jfluhler/gemini-export`、`aeudes/slidev-addon-citations`、`citation-js/replacer`、`lewisacidic/simple-cite`、`vdmitriyev/jsorcidbibtex`、`JDMCreator/bibtex-names.js`、`hubgit/citation-parsers` | B 其他JS | MIT/`null`/TeX | — | — | ⛔ | rejected | 2026-10-18 | 浏览器扩展 / 单文件 HTML 工具 / 薄包装 / 对比清单；★≤15，无独立价值 |

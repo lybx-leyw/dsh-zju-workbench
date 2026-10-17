@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-temml",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 temml（TeX → MathML，零依赖），为讲座要点 / 笔记 / 论文助手回答里的 $...$ 公式补上服务端渲染能力（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "temml": "0.14.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
