@@ -3,20 +3,21 @@ export const NAV = Object.freeze([
   //    曾经「论文」「笔记」共用折角稿纸、「问一问」「反馈」共用对话气泡、
   //    「我的课」「看课」共用一本书 —— 一排里出现两个一样的图形，导轨就没法用了。
   { id: 'today', label: '今天', icon: 'calendarToday', hint: '从今天开始，按自己的节奏学习' },
-  { id: 'courses', label: '我的课', icon: 'cap', hint: '课程、回放与课堂资料' },
-  // 「看课」是**从「我的课」进来的子页**，不是主导航项 —— 所以 `sidebar: false`。
-  //
-  // 为什么仍然放进 NAV 而不是另建一套路由：外壳的面板、插槽、`navigate()`、
-  // `activePage()` 全部以 NAV 为唯一真源（`navigate()` 对不在 NAV 的 id 直接抛错）。
-  // 另建一套就要在这四处各加一条分支，那才是真正的重复。用「在 NAV 里但不上侧栏」
-  // 表达，只多一个字段。
-  { id: 'player', label: '看课', icon: 'play', hint: '看这一节的回放，对照课件与字幕', sidebar: false },
-  // 紧挨「我的课」：两者都是「读材料」的入口，用户找论文时先看课程再看文献是自然顺序。
+  // 紧挨「今天」：两者都是「读材料」的入口，用户找论文时先看课程再看文献是自然顺序。
   // hint 里刻意不出现「规划」——tests/profile.test.mjs 用 matchingPages('规划') 断言
   // 搜索只命中「问一问」，那是一条守卫别名的测试，别让新页面污染它。
   { id: 'paper', label: '论文', icon: 'paper', hint: '打开本地 PDF，选中英文即可翻译并提问' },
   { id: 'ask', label: '问一问', icon: 'askBubble', hint: '和 AI 一起理解、思考与规划' },
-  { id: 'study', label: '学习', icon: 'bulb', hint: '把学过的内容，慢慢变成自己的知识' },
+  // 「学习」= 课程目录 + 回放 + 整理，**一页**。
+  //
+  // 这里曾经是三页：「我的课」（只列课程与节次）、「看课」（回放的视频/课件/字幕）、
+  // 「学习」（讲义/终稿/出题/笔记）。三者读的是**同一份** `state.content`，用户走的
+  // 也是同一段动线（选课 → 看回放 → 整理 → 回看），拆成三页的代价是每一步都要离开
+  // 当前上下文：看课时读不到讲义，读讲义时回不到那一段，还得记着自己是从哪进来的。
+  //
+  // 现在播放是这一页里的一栏（`zs-content-switch` 的「视频」），课程目录是左栏，
+  // 整理在其余几栏。导航因此少两项 —— 这是**合并**，不是删功能。
+  { id: 'study', label: '学习', icon: 'bulb', hint: '课程、回放、课件与笔记，都在这一页' },
   // 「笔记」紧跟「学习」：学完就记是连着发生的两步（整理 → 落成自己的话）。
   // hint 避开「规划」（守卫别名，见上面那条注释）。
   { id: 'notes', label: '笔记', icon: 'notebook', hint: '用双链把想法连成一张知识网' },
@@ -32,7 +33,7 @@ export const NAV = Object.freeze([
 export const panelKey = id => `zhiyun.${id}`;
 
 /**
- * 导航**上半组**：固定在上面、**不可撤销**的页 —— 学习动线（今天 / 我的课 / 论文 /
+ * 导航**上半组**：固定在上面、**不可撤销**的页 —— 学习动线（今天 / 论文 /
  * 问一问 / 学习 / 笔记）。
  *
  * 它们不出现在「···」菜单里，也没有图钉可点：菜单只管**下半组**（分隔线下方
@@ -43,7 +44,7 @@ export const panelKey = id => `zhiyun.${id}`;
  * ⚠️ 用 `Object.freeze` 的**清单**而不是给 NAV 加字段：上半组是「版式契约」，
  *    和 `FULL_BLEED_PAGES` 一样集中在这里，一眼能看全导轨长什么样。
  */
-export const RAIL_DEFAULT = Object.freeze(['today', 'courses', 'paper', 'ask', 'study', 'notes']);
+export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'ask', 'study', 'notes']);
 
 /**
  * **单独钉在导轨最下方**的页：个人。
@@ -107,9 +108,9 @@ export function hiddenPageIds(enabled, pages = NAV) {
  *
  * 过滤两类：
  *   1. `hidden` —— 承载它的包被用户取消了；
- *   2. `sidebar === false` —— **子页**（如「看课」）。它是从别的页进来的，
- *      直接列在主导航里没有意义：点进去没有课程上下文，只能显示空态。
- *      同时也不该出现在 Ctrl+K 里 —— 那里搜出来一条「看课」同样点不出东西。
+ *   2. `sidebar === false` —— 子页（从别的页 drill-in 进来的页面）。它是从别的页
+ *      进来的，直接列在主导航里没有意义：点进去没有上下文，只能显示空态。
+ *      同时也不该出现在 Ctrl+K 里 —— 那里搜出来同样点不出东西。
  *
  * @param hidden - 要藏起来的页面 id 集合。
  * @param pages - 候选页；默认 `NAV`。
@@ -120,8 +121,8 @@ export function visiblePages(hidden, pages = NAV) {
 }
 export function activePage(panel, pages = NAV) {
   // ⚠️ 这里**不**过滤 `sidebar: false`：子页也要能被认出来。
-  // 过滤了的话，停在「看课」时 `activePage` 返回 null，侧栏会把「问一问」当成
-  // 当前页高亮，而主面板其实在看课 —— 两处说的不是同一件事。
+  // 过滤了的话，停在子页时 `activePage` 返回 null，侧栏会把「问一问」当成
+  // 当前页高亮，而主面板其实在别处 —— 两处说的不是同一件事。
   if (panel == null || panel === 'conversation') return 'ask';
   return pages.find(page => panelKey(page.id) === panel)?.id ?? null;
 }

@@ -1,0 +1,548 @@
+/* packages/dsh-zhiyun-page-study/src/video.css
+ *
+ * 「视频」栏的样式。前缀 `zs-video-*` 只为这一栏服务，与学习页其余两栏互不遮蔽。
+ *
+ * 颜色一律取壳里的 `--zy-*` 变量，不引入新色板 —— 明暗两套主题自动跟随。
+ *
+ * ⚠️ 视频节点用 CSS 控制**位置与尺寸**，不用条件渲染 —— 条件渲染会把它从树里
+ *    摘掉，声音当场断（原始设计的第一条约定）。所以「互换主视图」在 CSS 里只是
+ *    换网格行/列：`[data-main="video"]` 让视频占大格、课件占小格；`[data-main="ppt"]` 反过来。
+ *
+ * # 高度从哪来
+ *
+ * 这一栏住在**会滚动的学习页正文**里，没有播放器页那种「整幅铺开」的确定高度链，
+ * 所以它自己声明「我占多少屏」：`76vh`。这**不是**在凑某块内容的尺寸 ——
+ * 主视图里能放多大由网格分配，元素自己只 `object-fit: contain`；
+ * 这里的 76vh 回答的是另一个问题：一屏里给播放器几成。
+ * 上下限同样只说这一件事（窗口很高时不再无限长；窗口很矮时靠 vh 自己缩，
+ * 不靠一个钉死的像素下限 —— 见下面的 min-height）。
+ */
+
+body[data-zhiyun] .zs-video {
+  display: flex;
+  flex-direction: column;
+  height: 76vh;
+  /* 下限跟着窗口走，而不是钉死 360px：200% 缩放下 CSS 像素高度减半，
+     360px 可能比整个视口还高，`height: 76vh` 被这个下限顶穿，主视图只剩一条缝。
+     取 min(360px, 52vh) 之后，矮窗口里下限恒小于那 76vh，永远不反过来抢高度；
+     它只在"窗口够高、但别的东西把这一栏压扁"时兜底。 */
+  min-height: min(360px, 52vh);
+  max-height: 880px;
+  min-width: 0;
+}
+
+/* ── 三格版式 ─────────────────────────────────────────────────────
+ *
+ *          ┌───────────────────┬──────────┐
+ *          │                   │  小窗     │
+ *          │      主视图        ├──────────┤
+ *          │                   │           │
+ *          │                   │  字幕     │
+ *          └───────────────────┴──────────┘
+ *
+ * 谁占左列由 `data-main` 决定。尺寸**全部交给网格**：列宽按比例分，
+ * 行高按"剩下的空间"分，元素自己只负责 `object-fit: contain`。
+ *
+ * 第一行按小窗内容定高，第二行吃掉剩下 —— 字幕要滚动，所以它得有确定的剩余
+ * 高度（`minmax(0, 1fr)`，不然它会把整栏顶长）。
+ *
+ * 第一行的下限是 0 而不是 `auto`：小窗靠 `aspect-ratio` 定高，窗口一矮，
+ * 它按比例算出来的高度会超过整栏，把第二行压到 0（字幕整块消失）。允许它被压扁，
+ * 宽高比就自然让位给"看得见"。
+ */
+body[data-zhiyun] .zs-video-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 28%);
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+
+/* 舞台（视频与课件共用的一组外观）。
+ * `min-*: 0` 是网格里的必需品：默认 `min-height: auto` 会让块拒绝收缩，
+ * 内容一多就把整行顶高、突破上面的分配。 */
+body[data-zhiyun] .zs-video-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: var(--zy-sidebar);
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* 主视图：左列跨两行。不写高宽，由网格给。 */
+body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-video,
+body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-ppt {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+/* 小窗：右列第一行。高度按内容比例（下面给 16:9 兜住）。 */
+body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt,
+body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-video {
+  grid-column: 2;
+  grid-row: 1;
+  aspect-ratio: 16 / 9;
+}
+
+/* 没有回放：小窗那一格没有内容，就不派东西给它（视频舞台不在树里，见 video-panel.jsx）。
+ *
+ * 课件因此**独占左列两行**，字幕照旧在右列往下排；右列第一行留空，但既然本来就
+ * 没有小窗内容、也没有互换钮，那点空隙只是行距，不是"占位"。
+ *
+ * 为什么不用 `grid-template-columns: 1fr` 让课件铺满整幅：那会把字幕也压到窄处
+ * 或者被迫改成上下堆叠，与"有回放时"的版式差得太远，读课件的位置会跳。
+ * 列宽保持一致，用户读的永远是"左边那块大的"。
+ *
+ * 特异性：`.zs-video:not([data-main]) …-ppt` 比上面那条小窗规则多一个伪类，
+ * 不靠书写顺序取胜（同包内顺序是确定的，但这里没必要依赖它）。
+ */
+body[data-zhiyun] .zs-video:not([data-main]) .zs-video-stage-ppt {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+/* 字幕也要**显式**占右列两行，不能靠自动排布。
+ *
+ * 自动排布会把它塞进右列第一行，而第一行是 `minmax(0, auto)` —— 1300 多条字幕会
+ * 把那个 auto 撑成整幅列表的高度，整栏溢出（今天不会，因为小窗先占住了第一行）。
+ * 跨两行则让它在右列里有确定的剩余高度、内部自己滚。 */
+body[data-zhiyun] .zs-video:not([data-main]) .zs-video-transcript {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+/* ── 视频 ──────────────────────────────────────────────────────── */
+body[data-zhiyun] .zs-video-stage-video {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+/* 没有回放时这里根本没有舞台 —— 那句提醒是一条 `.zs-video-notice`（见下），
+   不再是一张卡面，所以原先 `.is-empty` 的一整套退色样式随之删除。 */
+body[data-zhiyun] .zs-video-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* 主视图与小窗都"这一格能多大就多大"，区别只在格子大小 —— 由网格决定，
+     视频自己不参与。`contain` 保证不变形，多出来的是黑边（播放器的常态）。 */
+  object-fit: contain;
+  background: #000;
+}
+body[data-zhiyun] .zs-video-novideo,
+body[data-zhiyun] .zs-video-empty {
+  margin: auto;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-video-empty strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-video-empty p {
+  margin: 0;
+  font-size: 11.5px;
+}
+
+/* 没有回放的一行提示，落在字幕标题行的右侧（见 video-panel.jsx 的 transcript-head）。
+ *
+ * 它**不是**一个卡片：没有边框、没有底色、不参与网格分配，所以不会再来占小窗
+ * 那一格。`min-width: 0` + 省略号让它在一行里随列宽让位，窄屏也不会把标题挤走。
+ *
+ * 让它吃掉标题行里剩下的空间（`flex: 1` + 右对齐）：提示要贴右，但**不能**用
+ * `margin-left: auto` 把它顶过去 —— 那样它右侧的"条数/折叠钮"会被再推一格，
+ * 空当裂成两段。这里让它自己占下那条空当、文字靠右，是同一个视觉结果，
+ * 且与相邻元素谁在谁右边无关。
+ */
+body[data-zhiyun] .zs-video-notice {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--zy-muted);
+  font-size: 11px;
+}
+
+/* ── 课件 ──────────────────────────────────────────────────────── */
+/* 舞台是一张两行网格：翻页条按自身高度占第一行，图片吃掉第二行剩下的。 */
+body[data-zhiyun] .zs-video-stage-ppt {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--zy-surface);
+}
+body[data-zhiyun] .zs-video-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--zy-line);
+  font-size: 11.5px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-video-pos {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-zhiyun] .zs-video-at {
+  margin-left: 6px;
+  color: var(--zy-muted);
+  font-variant-numeric: tabular-nums;
+}
+body[data-zhiyun] .zs-video-pin {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid var(--zy-line);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-video-step {
+  flex: none;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-video-step:hover:not(:disabled) {
+  border-color: var(--zy-accent);
+  color: var(--zy-accent);
+}
+body[data-zhiyun] .zs-video-step:disabled {
+  opacity: .4;
+  cursor: default;
+}
+body[data-zhiyun] .zs-video-stage-ppt .zs-video-slide {
+  display: block;
+  /* 占满网格给它的那一行。`contain` 保证整页可见、不裁掉边上的公式，
+     多出来的留白是背景色 —— 这是"图比格子窄"时的正常结果，不是布局错。 */
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  background: var(--zy-surface);
+}
+body[data-zhiyun] .zs-video-stage-ppt .zs-video-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 12px;
+}
+
+/* 小窗左上角的切换钮：把小窗和主视图互换。
+ *
+ * 它是**小窗这个格子**的控件，不是某个舞台的 —— 放在网格里自成一项，靠
+ * `grid-column: 2; grid-row: 1` 落在小窗那一格（右列第一行），再 `align/justify: start`
+ * 贴到左上角。所以无论谁是主视图，它永远停在小窗的左上角，不会跟着课件跑到主视图。
+ */
+body[data-zhiyun] .zs-video-swap {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  justify-self: start;
+  margin: 6px 0 0 6px;
+  z-index: 2;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--zy-surface) 88%, transparent);
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-video-swap:hover {
+  border-color: var(--zy-accent);
+  color: var(--zy-accent);
+  background: var(--zy-surface);
+}
+/* 小窗里的课件只当预览：没有翻页条，图片铺满整个格子。 */
+body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt .zs-video-slide {
+  border-radius: 10px;
+  background: var(--zy-surface);
+}
+
+/* ── 字幕（右下）─────────────────────────────────────────────── */
+body[data-zhiyun] .zs-video-transcript {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+  overflow: hidden;
+}
+body[data-zhiyun] .zs-video-transcript-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--zy-line);
+  font-size: 11.5px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-video-transcript-head small {
+  /* 标题行现在最多有四样东西（标题 / 无回放提示 / 条数 / 折叠钮），
+     靠 `space-between` 自动分布，不给其中任何一样写 `margin-left: auto` ——
+     两处 auto 会叠出第二个空当，看着像排版塌了。 */
+  color: var(--zy-muted);
+  font-size: 11px;
+}
+/* 折叠钮：外观贴着标题走（无边框、只有 hover 才显形），因为它是一个"视图开关"，
+   不是这一栏的主操作 —— 有边框的按钮会和翻页钮抢注意力。尺寸由内容 + padding 定。 */
+body[data-zhiyun] .zs-video-transcript-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-video-transcript-toggle:hover {
+  background: var(--zy-hover);
+  color: var(--zy-accent);
+}
+body[data-zhiyun] .zs-video-transcript-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* 折叠态的那一行：默认藏，折叠才显。
+   它和列表是**同一个开关的两个方向**，所以两条规则挨着写 —— 拆开容易漏掉一边
+   （漏了就是展开时列表和单行同时出现）。
+   高度交给内容：一句短话就一行，长句子最多两行（超出的用省略号收），
+   右栏因此不会被一句长字幕撑长，也就不会反过来把课件压扁。 */
+body[data-zhiyun] .zs-video-transcript-active {
+  display: none;
+  flex: none;
+  min-width: 0;
+  overflow: hidden;
+}
+body[data-zhiyun] .zs-video[data-transcript="off"] .zs-video-transcript-active {
+  display: block;
+}
+/* 折叠态：只留"正在讲的那一句"。
+   列表用 `display: none` 藏起来而不是不渲染 —— 1300 多条重新挂载一次很贵，
+   而且收起再展开时用户还停在原来那一段附近（滚动位置不丢）。
+   这一条写在 `.zs-video-transcript-body` 之后：两者管同一个属性，同包内后写的赢，
+   虽然带属性的版本特异性更高、胜负其实与顺序无关，但让"覆盖"排在"基规则"后面
+   读起来才是正常顺序。 */
+body[data-zhiyun] .zs-video[data-transcript="off"] .zs-video-transcript-body {
+  display: none;
+}
+/* 折叠时面板**不撑满**那一格：`align-self: start` 让它收缩到标题行 + 一句的高度。
+   不加这句，网格默认的 stretch 会把它拉满右列下方，收起之后反而多出一大块空面板
+   —— 那和"把空间还回去"正好相反。 */
+body[data-zhiyun] .zs-video[data-transcript="off"] .zs-video-transcript {
+  align-self: start;
+}
+body[data-zhiyun] .zs-video-transcript-active .zs-video-line {
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-video-transcript-active .zs-video-line span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+body[data-zhiyun] .zs-video-transcript-idle {
+  margin: 0;
+  padding: 8px 10px;
+  color: var(--zy-muted);
+  font-size: 11.5px;
+}
+body[data-zhiyun] .zs-video-transcript-empty {
+  margin: 0;
+  padding: 18px 12px;
+  font-size: 11.5px;
+  color: var(--zy-muted);
+}
+
+/* 一行字幕：时间 + 文本。时间列固定宽 —— 不等宽会让文本起点参差，扫读时很晃。 */
+body[data-zhiyun] .zs-video-line {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 8px;
+  align-items: baseline;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--zy-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.65;
+  text-align: left;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-video-line:hover {
+  background: var(--zy-hover);
+}
+body[data-zhiyun] .zs-video-line time {
+  color: var(--zy-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+/* 当前正在讲的那一句：左侧竖条 + 底色。竖条比整行强调色更克制 ——
+   一整行高亮会在快速播放时闪得很花。 */
+body[data-zhiyun] .zs-video-line.is-active {
+  border-left-color: var(--zy-accent);
+  background: var(--zy-soft);
+}
+body[data-zhiyun] .zs-video-line.is-active time {
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zs-video-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 180px;
+  color: var(--zy-secondary);
+  font-size: 11px;
+}
+
+/* ── 中等窗口：字幕下移 ───────────────────────────────────────────
+ * 900–1120 之间右列已经被压到 `minmax(220px, 28%)` 的下限，一行字幕放不下十个字，
+ * 读起来比不放还累。所以这一段**只把字幕挪走**，不动主视图与小窗的左右关系：
+ * 上面仍是"大的在左、小窗在右"，第二行的整幅宽度交给字幕 —— 一行能读完整句，
+ * 而且不必像 900 以下那样把播放器也堆成竖排。
+ *
+ * ⚠️ 必须写在 900 那条**之前**：两者同为 `max-width`，900 及以下同时命中两条，
+ *    同特异性下后写的那条赢，900 的竖排要能盖住这里的"两行版式"。
+ */
+@media (max-width: 1120px) {
+  body[data-zhiyun] .zs-video-grid {
+    /* 两行：上面一排是主视图 + 小窗，底下一整行归字幕。
+       两行都用 `fr` 分那 76vh，而**不是**用 `auto` 让小窗定高：小窗的 16:9
+       在 220px 宽时只有 124px，`auto` 会让上面整排缩成一条横幅，主视图跟着没。
+       比例给主视图多一份，字幕够读就行。 */
+    grid-template-rows: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+  /* 主视图只占**第一行**了 —— 底下一行让给字幕，跨两行会和它重叠。 */
+  body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-video,
+  body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-ppt {
+    grid-row: 1;
+  }
+  body[data-zhiyun] .zs-video-transcript {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  /* 没有回放时字幕的落位与上面那条相同（横跨整行、放底下），但**要再写一遍**：
+     基规则里那条 `.zs-video:not([data-main]) .zs-video-transcript` 多一个伪类，
+     特异性高于这里的 `.zs-video-transcript`，不重写就压不住它。 */
+  body[data-zhiyun] .zs-video:not([data-main]) .zs-video-transcript {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  /* 没有回放时上面整排只有课件一块，那就让它占满整行 —— 右列本来就没内容，
+     留着那 28% 的空档只会让课件变窄。 */
+  body[data-zhiyun] .zs-video:not([data-main]) .zs-video-stage-ppt {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  /* 互换钮仍在右列第一行（小窗的左上角）—— 位置没变，这里不需要覆盖。 */
+  /* 小窗在这一段不跟着行高拉伸：行高是 `1.4fr`（为了主视图够大），拉满会让一个
+     16:9 的预览变成又窄又高的一根，画面居中、四周全是底色，看着像加载失败。
+     让它按自身比例贴着格子顶边，下面留的空白算行距。
+     但**不能让它比那一行还高**（窗口很矮时 16:9 会算出比行高更大的值，那就压到
+     字幕那一行上去了），所以补一条 `max-height: 100%` 把它夹在格子里。 */
+  body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt,
+  body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-video {
+    align-self: start;
+    max-height: 100%;
+  }
+}
+
+/* 字幕收起时，把它那一行的高度还给主视图。
+ *
+ * 只在 901–1120 这段需要：那里两行是 `1.4fr / 1fr` 死分的，收起后字幕只剩一行字，
+ * 底下那一整行会空着 —— 空着也不还，就白收了。改成第二行 `auto`、第一行吃剩下的。
+ *
+ * 为什么不写在段落之外（基规则里）：宽屏那套是 `auto / 1fr`，第二行本来就"吃剩下"，
+ * 收起时面板自己贴顶（`align-self: start`），不需要动行高。而 ≤900 是竖排、
+ * 高度由内容定，改行高反而会把三行挤成两行。用 `min-width: 901px` 把它圈在这段里，
+ * 就不必和那两套版式互相提防。
+ */
+@media (max-width: 1120px) and (min-width: 901px) {
+  body[data-zhiyun] .zs-video[data-transcript="off"] .zs-video-grid {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+}
+
+/* ── 窄窗口 ───────────────────────────────────────────────────────
+ * 右列收窄到 1/3 以下会连字幕都放不下一行，此时改成**上下堆叠**：
+ * 主视图、小窗、字幕依次排下来。高度不再由 `76vh` 决定 —— 内容多高就多高，
+ * 页面照常滚动。互换依然成立：`data-main` 只决定谁在上面。
+ */
+@media (max-width: 900px) {
+  body[data-zhiyun] .zs-video {
+    height: auto;
+    max-height: none;
+  }
+  body[data-zhiyun] .zs-video-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+  }
+  body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-video,
+  body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-ppt {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt,
+  body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-video {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  body[data-zhiyun] .zs-video-transcript {
+    grid-column: 1;
+    grid-row: 3;
+    max-height: 40vh;
+  }
+  /* 同上：没回放时基规则那条带 `:not([data-main])` 的落位特异性更高，得在这里
+     覆盖成竖排的第三行，否则字幕会留在"右列跨两行"的位置上 —— 那时候已经没有
+     右列了，它会被塞进隐式列，整页横向溢出。 */
+  body[data-zhiyun] .zs-video:not([data-main]) .zs-video-transcript {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  /* 窄屏上下堆叠后，小窗挪到第二行，互换钮跟着到第二行的左上角。 */
+  body[data-zhiyun] .zs-video-swap {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}

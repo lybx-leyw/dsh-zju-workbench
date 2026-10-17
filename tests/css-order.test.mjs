@@ -40,14 +40,17 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
   // 这些包有 src/style.css；其余包没有样式表，不该出现在结果里。
   // 加包的样式表时**必须**在这里补一行：只加文件不改这里，测试会红；
   // 反过来若哪天这里被改成「不比了」，漏读一个包就再也没人发现了。
+  //
+  // 学习页有两张表（`style.css` + `video.css`，播放器那一栏自带一份）——
+  // `loadSheets` 按包聚合，所以它仍然只是**一行**。两张表同属一个包，
+  // 所以「跨包顺序依赖」的守卫对它们之间的关系不作判断：同包内谁后写谁赢，
+  // 这是确定的，不是挂载顺序。视频栏的类名全部带 `zs-video-` 前缀，正是为此。
   assert.deepEqual([...sheets.keys()], [
     'dsh-zhiyun-net-proxy',
-    'dsh-zhiyun-page-courses',
     'dsh-zhiyun-page-feedback',
     'dsh-zhiyun-page-me',
     'dsh-zhiyun-page-notes',
     'dsh-zhiyun-page-paper',
-    'dsh-zhiyun-page-player',
     'dsh-zhiyun-page-plugins',
     'dsh-zhiyun-page-study',
     'dsh-zhiyun-page-today',

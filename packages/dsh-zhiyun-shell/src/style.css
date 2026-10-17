@@ -35,6 +35,38 @@ body[data-zhiyun][data-ds-dark-theme] {
  * （见 components.jsx 里那段 effect），导轨取 55px 正好填满：既不会在列里偏左，
  * 也不会因为列宽变化而让图标跟着移动。 */
 .zy-sidebar {height:100%;display:flex;background:var(--zy-sidebar);overflow:hidden;font-size:12px;line-height:1.5;}
+/* ── 「跳到主内容」──────────────────────────────────────────────────────
+ * 导轨上是品牌 + 一排页面图标 + 底部几个全局控件，学习页里还有课程树 —— 纯键盘用户
+ * 每次进页面都要按完一整串 Tab 才够得到正文。这个链接是那一串的**第一个**可聚焦
+ * 元素，一次 Tab 就能跳过导航。
+ *
+ * ⚠️ 默认只用 `left:-9999px` 挪出视口，**不能**用 display:none / visibility:hidden
+ *    （也不用 `clip`/`width:1px` 那类收缩写法）：它们会把它一起从 Tab 序列里摘掉，
+ *    键盘就永远聚焦不到它 —— 而「聚焦时显形」是这个链接**唯一**的呈现方式，
+ *    被摘掉等于这个功能不存在。
+ *
+ * `position:fixed` 而不是 absolute：宿主侧栏列 `overflow:hidden`，那一列只有 56px
+ * 宽，absolute 的链接连显形时都会被那一列裁掉（与 `.zy-rail-tip` 是同一个坑）。
+ *
+ * `top` 用宿主自己的 `--dsh-frame-overlay-top`（它给浮层留的就是这个位置：Windows 是
+ * 标题栏高度 + 20，macOS 是红绿灯 48 + 20，全屏回到 20；普通浏览器里没有这个变量，
+ * 退回 8px）。不让开窗口标题区的话，显形时它会压在 Windows 那条
+ * `-webkit-app-region: drag` 的拖拽区上 —— 点它变成拖窗口，链接点不动。
+ *
+ * z-index 取 80：壳自己的浮层最高到 45（`.zy-rail-menu`），页面包的浮层到 60
+ * （如论文页的译文浮层）—— 显形时被正文盖住就等于没有。 */
+body[data-zhiyun] .zy-skip-link {
+  position:fixed;top:var(--dsh-frame-overlay-top,var(--zy-space-2));left:-9999px;z-index:80;
+  padding:var(--zy-space-2) var(--zy-space-3);
+  border:1px solid var(--zy-accent);border-radius:8px;
+  background:var(--zy-surface);color:var(--zy-accent);
+  font-size:var(--zy-fs-sm);line-height:1.5;white-space:nowrap;
+  text-decoration:none;box-shadow:0 8px 24px #0003;
+}
+/* 显形时回到左上角。`:focus` 与 `:focus-visible` 都写：键盘 Tab 过来命中后者，
+ * 读屏或脚本直接 `.focus()` 时只命中前者，两处都要能显形。 */
+body[data-zhiyun] .zy-skip-link:focus,
+body[data-zhiyun] .zy-skip-link:focus-visible {left:var(--zy-space-2);outline:2px solid var(--zy-accent);outline-offset:2px;}
 /* The motto replaces the native hero brand title. */
 body[data-zhiyun] span:has(.zy-hero-brand) + span {display:none;}
 .zy-mark {display:inline-flex;align-items:center;justify-content:center;width:44px;height:38px;color:var(--zy-brand);flex-shrink:0;}

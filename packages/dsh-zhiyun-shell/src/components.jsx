@@ -179,6 +179,13 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidde
   });
 
   return <div className="zy-sidebar zy-collapsed" aria-label="智云主导航">
+    {/* 「跳到主内容」。
+        ⚠️ 必须留在**这里**（侧栏根节点的第一个孩子），不能挂到页面上：宿主的框架先渲染
+           侧栏列、再渲染中间列，所以全页 DOM 顺序上侧栏在最前。放进 `.zy-page` 的话，
+           它前面已经压着整个导轨和课程树，一次 Tab 跳不过去。
+        导轨收起只是把这一列压到 56px，组件照常挂载；`position:fixed`（见 style.css）
+        也不受那一列 `overflow:hidden` 影响，所以两种状态下它都排在最前。 */}
+    <a className="zy-skip-link" href="#zy-main">跳到主内容</a>
     <aside className="zy-rail">
       {/* 品牌提示里带上学习空间的名字：侧栏不再展开后，原来底部那一行
           「独立学习空间 · <profile>」没有别的地方可放，挂在这里正好。 */}
@@ -369,7 +376,14 @@ export function Page({ page, controller, renderSlot }) {
   // 多栏面板挤成一张小卡片。见 model.js 的 FULL_BLEED_PAGES。
   const contentClass = FULL_BLEED_PAGES.includes(page) ? 'zy-content zy-content-flush' : 'zy-content';
   return <div className="zy-page" data-page={page}>
-    <main className="zy-scroll"><div className={contentClass}>{renderSlot(`zhiyun.${page}.content`, { controller, renderSlot }, { fallback: React.createElement(missing) })}</div></main>
+    {/* skip link 的落点（见 Sidebar 里那个 `#zy-main`）。
+        `tabIndex={-1}` 不是为了进 Tab 序列，而是让锚点跳转能把焦点**移进**这个容器：
+        不写的话浏览器只滚动、焦点还留在链接上，再按一次 Tab 又从头绕回导轨。
+        `-1` 同时保证它自己不出现在 Tab 序列里 —— 跳过导航之后，下一个 Tab 应该落到
+        正文里的第一个可聚焦元素，而不是又退回这里。
+        id 不会重复：七个页面各注册一个 `main` 面板，宿主按 `entryKey` 只挂当前那一个
+        （见 client.jsx 的 `ctx.slots.register({ name: 'main', key: … })`）。 */}
+    <main className="zy-scroll" id="zy-main" tabIndex={-1}><div className={contentClass}>{renderSlot(`zhiyun.${page}.content`, { controller, renderSlot }, { fallback: React.createElement(missing) })}</div></main>
   </div>;
 }
 

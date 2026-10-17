@@ -16,7 +16,9 @@ try{
   browser=await chromium.launch({channel:'msedge',headless:true});page=await browser.newPage({viewport:{width:1440,height:980}});page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url,{waitUntil:'domcontentloaded'});await settle(page);
   const nav=name=>page.getByRole('navigation',{name:'主要页面'}).getByRole('button',{name,exact:true});
-  const expandCourse=async()=>{const mobile=page.locator('.zs-mobile-tree-toggle');if(await mobile.isVisible())await mobile.click();const toggle=page.locator('.zs-course-toggle').filter({hasText:'概率论与数理统计'});if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();};
+  // 先等课程行出来再展开：点开只是发一个「读节次」的请求，节次是异步回来的。
+  // 不 waitFor 就断言 `.zs-tree-lesson` 的数目，会在数据比渲染慢的机器上偶发 0（本轮实测踩到）。
+  const expandCourse=async()=>{const mobile=page.locator('.zs-mobile-tree-toggle');if(await mobile.isVisible())await mobile.click();const toggle=page.locator('.zs-course-toggle').filter({hasText:'概率论与数理统计'});await toggle.waitFor();if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();await page.locator('.zs-course-toggle').filter({hasText:'概率论与数理统计'}).locator('..').locator('.zs-tree-lesson').first().waitFor();};
   // 登录从「个人页上的一个区块」搬到了**账号对话框**（导轨头像 → 登录）。三个动作抽成
   // 小工具，因为三条路径都要走一遍；`closeLogin` 必须有 —— `showModal()` 之后页面其余
   // 部分是 inert，不关掉后面点侧栏会一直被挡住。
@@ -24,10 +26,9 @@ try{
   const closeLogin=async()=>{await page.getByRole('button',{name:'关闭',exact:true}).click();await page.getByRole('dialog',{name:'登录智云课堂'}).waitFor({state:'hidden'});};
   const signInClassroom=async()=>{await openLogin();await page.getByLabel('浙大账号',{exact:true}).fill('fixture-account');await page.getByLabel('密码',{exact:true}).fill('fixture-password');await page.getByRole('button',{name:'连接课堂',exact:true}).click();await page.getByText('已连接 · 测试同学',{exact:true}).waitFor();await closeLogin();};
   await nav('学习').click();await signInClassroom();checks.push('Personal login connects authenticated classroom service without browser persistence of credentials');
-  // ⚠️ 这一条原来走「我的课 → 点课程 → 自动跳学习页」。那个动线已经被改了：
-  //    「我的课」现在是**两层**（点课程就地展开节次 → 点节次进看课页 `/player`），
-  //    不再跳「学习」页。剖析与终稿住在**学习页**，所以这里直接进学习页。
-  //    （已知缺口：新的「我的课 → 看课」那条路还没有脚本覆盖。）
+  // 「我的课」「看课」已经并入**学习页**：课程目录是左栏，播放是正文区的一栏
+  // （`zs-content-switch` 的「视频」）。所以这里不再有跨页跳转 —— 一门课、一节回放、
+  // 终稿、字幕、课件全在同一页里切换，节次上下文不会在跳转中丢。
   await nav('学习').click();await expandCourse();
   assert.equal(await page.getByRole('button',{name:/第三节 · 尚未发布/}).count(),0,'未发布的节次不该出现在课程树里');assert.equal(await page.locator('.zs-tree-lesson').count(),2);assert.equal((await page.locator('.zs-course-toggle').filter({hasText:'概率论与数理统计'}).locator('.zs-course-count').innerText()).trim(),'2','计数按可回放的节次算，而不是课程表槽位');checks.push('Course tree hides sessions that cannot be replayed and counts only replayable ones');
   await page.getByRole('button',{name:/第一节 · 概率密度函数/}).click();await page.getByRole('button',{name:'整理这节课',exact:true}).waitFor({state:'visible'});await page.getByRole('button',{name:'整理这节课',exact:true}).click();await page.getByRole('button',{name:'取消',exact:true}).click();await page.getByRole('button',{name:'取消',exact:true}).waitFor({state:'hidden'});checks.push('Course tree selection starts a cancellable parser job through native RPC');

@@ -6,11 +6,15 @@ import React, { useState } from 'react';
 import { Notice, mountStyle } from 'dsh-zhiyun-ui-primitives';
 import { StudyWorkspace } from './study-workspace.jsx';
 import css from './style.css';
+// 视频栏是第二套样式（`zs-video-*`）：它有自己的网格与窄屏断点，不跟正文共用规则。
+// 两个属性名不同 → 两张独立 <style>；同包内后写的赢，顺序在文件里就看得见。
+import videoCss from './video.css';
 
 export const name = 'zhiyun-page-study-client';
 export const inject = ['slots'];
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunStudyStyle', css, label: 'zhiyun: study page styles' });
+  mountStyle(ctx, { attribute: 'zhiyunStudyVideoStyle', css: videoCss, label: 'zhiyun: study video pane styles' });
   // 惰性取领域状态：停用状态包时这一页只是空着（壳显示占位），不会把整个前端拖成 pending。
   ctx.inject(['zhiyunStudyController'], (scope) => {
     scope.slots.inject('zhiyun.study.content', () => scope.slots.register(
