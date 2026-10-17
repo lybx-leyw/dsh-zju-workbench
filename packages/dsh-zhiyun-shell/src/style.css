@@ -6,6 +6,8 @@ body[data-zhiyun] {
      所以它们自己再声明一次同一个变量，避免两处字体不一样。 */
   /* 字号阶梯（P0-1）：中文正文 ≥12px，元信息 ≥11px，禁止 <11px。 */
   --zy-fs-meta:11px;--zy-fs-sm:12px;--zy-fs-base:13px;--zy-fs-md:14px;--zy-fs-lg:17px;--zy-fs-xl:21px;--zy-fs-display:24px;
+  /* 间距阶梯（P2）：4px 基准，新代码优先使用；存量逐步迁移，不强制重排。 */
+  --zy-space-1:4px;--zy-space-2:8px;--zy-space-3:12px;--zy-space-4:16px;--zy-space-6:24px;--zy-space-8:32px;--zy-space-12:48px;--zy-space-16:64px;
   --zy-font:'Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
   --dsw-font-family:var(--zy-font);
   --dsw-alias-button-info-fill:var(--zy-action);--dsw-alias-button-info-hover:var(--zy-action-hover);

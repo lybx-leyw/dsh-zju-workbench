@@ -14,7 +14,7 @@
 .zpl-button:disabled { opacity: .5; cursor: default; }
 
 .zpl-summary { display: flex; flex-wrap: wrap; gap: 8px; }
-.zpl-summary span { border: 1px solid var(--zy-line, #d7dee9); border-radius: 999px; padding: 4px 12px; font-size: 12px; color: var(--zy-secondary, #666b72); }
+.zpl-summary span { border: 1px solid var(--zy-line, #d7dee9); border-radius: 999px; padding: 4px 12px; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--zy-secondary, #666b72); }
 .zpl-summary strong { color: inherit; font-weight: 600; }
 
 .zpl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }

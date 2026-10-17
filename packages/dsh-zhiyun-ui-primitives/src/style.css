@@ -141,6 +141,7 @@ body[data-zhiyun] .zs-list-heading {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
   color: var(--zy-muted);
   padding: 22px 7px 10px;
 }
