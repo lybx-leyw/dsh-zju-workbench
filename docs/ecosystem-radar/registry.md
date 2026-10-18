@@ -1609,3 +1609,21 @@
 | `ZJU-FAST-Lab/e2e_opt`★55、`ZJU-OmniAI/LLM_in_Work`★19、`ZJUBCA/zjubca.wallet`★29、`SJoJoK/ZJU_Charger`★16、`TeresaPeng-zju/be-water`★24、`ZHENG28/zjut_LibrarySeatSystem`★7、`Santosh766/Discounted-Price-Prediction`、`codepiper/UniversityNotifications`、`AhmedZ70/UniCentral`、`022003harsh/TechBard`、`Shaamiilll/Skillup-E-learning` | — | 混合 | — | 无关 | ⛔ | rejected | 2026-10-19 | 科研代码 / Office-AI 桥接 / 加密钱包 / 充电桩 / 无关 SaaS。`zju_library_seat` 为 SSM 造假项目 |
 | `Slowist-Lee/website-converter` | B 其他JS | `null` | WebVPN 链接转换 | 重复无增益 | ⛔ | rejected | 2026-10-19 | ★2，WebVPN 代理链接→普通链接。本仓 `dsh-zhiyun-net-proxy` 已在数据出口层处理分域代理，**不需要在渲染层再转换链接**；且无许可证 |
 | `lybx-leyw/dsh-zju-workbench` | — | `null` | — | 自身 | ⛔ | rejected | 2026-10-19 | 本仓自身 |
+
+## 2026-10-19 · 第二十八轮（A 组 · 规划/计划轴 · `dsh-plugin <动词>` 视图）
+
+> 同日第 2 轮（00:00 已跑 B 组第二十七轮）。搜索 10 次，0 次 403。本轮 `NOASSERTION` 0 条。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `KelaoHu/dsh-lowtide` | A 原生DSH | **MIT** ✅（仓库/package.json/npm/元数据四源一致） | 规划 / 时间管理 | **重复可强化**（规划页卡片 → 执行端） | 🟢 | skeleton-created | 2026-10-19 | ★174，2026-10-17 push，**npm `dsh-lowtide@0.2.8` 已发布**（锁版成立）。峰谷价窗口调度 + 四策略 + 待裁定 + 执行报告（实花/已省）。中文文案 383 条。⚠ 上游 `cordis.patch.yml` 的 `permission` 块**整行替换**宿主权限行并加 3 个 `approval: never` 预设 → 骨架**只取 insert**。⚠ `POST /ds-lowtide/tasks` 需默认关闭。已出骨架 `dsh-radar-lowtide` |
+| `zriyox/dsh-goal-scaffold` | A 原生DSH | MIT ✅ | 计划制定 | 重复可强化（规划页缺验收判据） | 🟡 | proposed | 2026-10-19 | ★2，2026-08-15。一句话大需求先拦截 → plan.md（每条带验收判据）+ 轮次上限 goal。**未发布 npm** → 锁版不成立，只能源码级移植。触发靠 `minLength:80` 长度阈值而非任务规模，仅记思路 |
+| `ztl34245881-commits/dsh-task-planner` | A 原生DSH | MIT ✅ | 规划 / 经验复用 | 重复可强化（plans.js 每次从零拆） | 🟡 | proposed | 2026-10-19 | ★3，2026-08-14。`plan_task` 回忆相似旧方案 → 评估 → 拆步，自动落 draft 课。⚠ **仓库仅 5 个文件、无 `src/` 无 `lib/`**，实现缺失、装不上。只记「经验复用」思路 |
+| `viyiviyi/dsh-tree-task-flow` | A 原生DSH | MIT ✅ | 任务拆解 | 重复可强化（卡片层级） | 🔵 | proposed | 2026-10-19 | ★3，2026-10-15。目标→任务→子任务三级树；节点完成时**把执行过程从上下文折叠**（省 token 的巧思）。容器是「对话内任务流」，与规划页卡片不同容器，只取折叠思路 |
+| `weibaohui/dsh-tasks` | A 原生DSH | MIT ✅ | 定时事项 | 全新（本仓无定时任务） | 🔵 | proposed | 2026-10-19 | ★9，2026-10-09。cron 定时 → 新建 agent 会话提交提示词。与 lowtide 同轴不同层（cron vs 价格窗口，无裁定）。lowtide 通过后本条转「重复无增益」 |
+| `godv61/dsh-task-engine` | A 原生DSH | MIT ✅ | 通用（软件工程） | 全新（工程流水线） | 🔵 | proposed | 2026-10-19 | ★9，2026-10-14。任务阶段 + 验证记录 + commit 联动。学生场景弱 |
+| `LeemanCheung/dsh-task-dag` | A 原生DSH | MIT ✅ | 通用 | 全新（无子代理编排） | 🔵 | proposed | 2026-10-19 | ★12，2026-09-26。子代理/工作流执行图 DAG 可视化。与 `dsh-radar-plugin-graph`（模块依赖图）同域不同物 |
+| 看板簇：`cloader/dsh-taskboard`★65、`callmesoul/deepseek-kanban-plugin`★4、`jerryxff26-alt/dsh-delivery-board`★3、`FiretrUCK666/dsh-task-board`★2、`scwlkq/dsh-task-board`★2、`navid-kianfar/dsh-tasks-manager`★2、`Ericwong5021/dsh-kanban`★2、`GPNUdirichlet/dsh-kanban`★1 | A/— | 混合（`callmesoul` 为 `null`） | 多项目管理 | **重复无增益** | ⛔ | rejected | 2026-10-19 | 全部「侧栏 + 多列 + 拖拽」同形态；本仓无多项目看板需求，`shengsheng90/DSH-taskboard`★336 已在册为同域最强 |
+| 状态/通知簇：`p2coder/dsh-task-control`★9、`vlln/dsh-task-status`★8、`PickedAshi/DSH_taskbar_status_display_2.0`★6、`ltao0829/dsh-task-notify`★5、`1514100951/dsh-notify-plugins`★2 | A 原生DSH | MIT / BSD-3 / `null` | 通用 | **重复无增益** | ⛔ | rejected | 2026-10-19 | 暂停/恢复/取消、后台状态条、完成通知，宿主已有；`PickedAshi` 无许可证 |
+| 甘特/todo 簇：`xx529/dsh-task-gantt`★2、`liuyuguo99/dsh-task-todo`★1、`Luke-Yong/dsh-plugin-project-management`★1 | A 原生DSH | MIT ✅ | 规划视图 | 重复无增益（前置条件不成立） | ⛔ | rejected | 2026-10-19 | 甘特需预估工期，本仓卡片只有 `due`，无起点可画 |
+| 合集/技能文本：`kouyichi/dsh-plugins`★2、`ZhQkYu/dsh-token-saver-plugins`★1、`seanrobertwright/Deepseek-Archon-Plugin`★1、`tcflying/else-workflow-plugins`、`ZG2017/dsh-plugin-insight-mode`★1、`bauerelizabeth07139/plan-guardian-skill`、`akeno6388/dsh-plugin-kirara-dev`★1、`lanbaolu/dsh-plugin-standard`、`LeslieWylie/dsh-plugin-release`★2、`dreamtao2199/dsh-plugin-handbook`、`Mian-mian-hub/dsh-devrel-toolkit`、`Klukai-416-Clukay/dsh-skill-curator`、`qgd1850890306-rgb/dsh-todo-checklist`★1、`863683348/dsh-plugin-academic-writing`★3、`863683348/dsh-plugin-local-life`、`RavenWangChina/yuanzhu`(AGPL-3.0)、`Twofruitsgrape/dsh-comsol`(Python) | A/— | 混合（2 条 `null`，1 条 AGPL） | — | 无关/不可评估 | ⛔ | rejected | 2026-10-19 | 多插件合集、纯 skill 文本、非 JS 栈或与「规划」无关；`yuanzhu` 为 **AGPL-3.0** 红线 |
