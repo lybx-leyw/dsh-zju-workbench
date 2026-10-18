@@ -1,0 +1,17 @@
+{
+  "name": "dsh-zhiyun-page-planning",
+  "version": "0.1.0",
+  "description": "智云 Pro「规划」页：读取用户自己部署的中转站，把推上去的个人规划与日记摆成第一栏（页面插件）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "external": ["dsh-zhiyun-ui-primitives"] }
+  }
+}

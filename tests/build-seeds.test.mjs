@@ -51,6 +51,26 @@ async function bareSpecifiers(entry) {
   return bare;
 }
 
+test('每个有 src/client.jsx 的包都在 CLIENT_PACKAGES 里', async () => {
+  // 这份清单是手工维护的，漏一个不会报错：Loader 照旧解析宿主半边，
+  // 但那个包没有 lib/client.js，页面渲染成空白占位 —— 排查成本极高。
+  // 「规划」页第一次构建时正是漏在这里，所以补一条会红的断言。
+  const { readdir } = await import('node:fs/promises');
+  const entries = await readdir(`${root}packages`, { withFileTypes: true });
+  const missing = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith('dsh-')) continue;
+    let hasClient = true;
+    try {
+      await readFile(`${root}packages/${entry.name}/src/client.jsx`, 'utf8');
+    } catch {
+      hasClient = false;
+    }
+    if (hasClient && !CLIENT_PACKAGES.includes(entry.name)) missing.push(entry.name);
+  }
+  assert.deepEqual(missing, [], `这些包有 client.jsx 却不在 CLIENT_PACKAGES 里：${missing.join(', ')}`);
+});
+
 test('每个客户端包的裸模块 import 都被 HOST_SEEDS 或本包的 dsh.client.external 覆盖', async () => {
   const failures = [];
   let checked = 0;

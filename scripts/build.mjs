@@ -34,7 +34,14 @@ export const HOST_SEEDS = [
   '@deepseek-ai/dsh-client-ui-dockkit',
 ];
 
-/** 客户端包 = 有 src/client.jsx 的包。每个包构建到自己的 lib/client.js。 */
+/**
+ * 客户端包 = 有 src/client.jsx 的包。每个包构建到自己的 lib/client.js。
+ *
+ * ⚠️ 这是一份**手工维护**的清单，新增页面包时必须加进来 —— 漏了不会报错，
+ *    只会让那个包在运行时找不到客户端 bundle（`profiles/` 里写着它，Loader 能
+ *    解析宿主半边，页面却渲染成空白占位）。这就是「规划」页第一次构建时发生的事。
+ *    `tests/build-seeds.test.mjs` 有一条断言在盯着「有 client.jsx 的包是否都在这里」。
+ */
 export const CLIENT_PACKAGES = [
   'dsh-zhiyun-ui-primitives',
   'dsh-zhiyun-shell',
@@ -42,6 +49,7 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-study-core',
   'dsh-zhiyun-page-today',
   'dsh-zhiyun-page-study',
+  'dsh-zhiyun-page-planning',
   'dsh-zhiyun-page-me',
   'dsh-zhiyun-page-notes',
   'dsh-zhiyun-page-paper',
