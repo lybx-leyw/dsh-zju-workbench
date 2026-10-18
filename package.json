@@ -27,6 +27,7 @@
     "parser:parity": "node scripts/parser-reference.mjs",
     "classroom:verify": "node scripts/classroom-verify.mjs",
     "classroom:parity": "node scripts/classroom-parity.mjs",
+    "classroom:live-probe": "node scripts/classroom-live-probe.mjs",
     "test:host": "node scripts/test-host.mjs",
     "test:desktop": "node scripts/test-desktop.mjs"
   },

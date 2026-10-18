@@ -79,6 +79,30 @@ npm run classroom:verify -- --live --probe-resources --logout-at-end
 npm run classroom:parity
 ```
 
+### 直播链路探针
+
+`live.js` 里有一处是**推的、没实测过**：`sub_content` 的直出流结构。若上游字段名与
+代码假设不符，`resolveStreams` 会返回空 `streams` —— 界面上是「这一节现在没有可用的
+机位」，**不报错也不提示**。这是整套直播唯一会静默失败的点，所以给它单独一个探针：
+
+```powershell
+npm run classroom:live-probe -- --live                      # 复用 classroom:verify 的会话
+npm run classroom:live-probe -- --live --date 2026-10-20     # 指定日期
+npm run classroom:live-probe -- --live --trace               # 打印每条请求去向
+```
+
+它做三件事：确认 Bearer 头有效、打印机位的类型与能否过转发白名单、**打印
+`sub_content` 的字段结构**（只给键名与类型，字符串只给长度）。
+
+只读且保守：不发 POST、不下载分片（只对 m3u8 取前 2 KB 判断是不是播放列表）、
+不写任何文件、不动会话。**输出里不含完整流地址与签名** —— 那里是 `auth_key`，
+等同于短期凭据。
+
+看两项就能定性：
+
+- `bearer.present=false` → 直播每条请求都会失败，而上游只会回「今天没有课」
+- `streams.verdict` 说没解出机位 → 字段名假设不成立，对照上面的 `raw-fields` 键名改 `collect()`
+
 首次验证从指定文件读取 `ZJU_USER/ZJU_PASS`，也可由进程环境变量提供。后续命令默认复用 `.runtime/classroom-verify/session.dpapi`；`--fresh` 才重新登录。资源探测请求前 4096 字节并取消响应，不下载完整视频。验证报告只记录数量与状态，存放 `artifacts/classroom`。
 
 `classroom:parity` 需 Dart SDK 和相邻 Flutter 仓库，可用 `--flutter-root` 指定；Windows 可用 `DART_EXECUTABLE` 指向 dart.exe。普通 Node 测试使用已记录的 Dart 脱敏基线，无需 Dart。`--capture-live` 使用已有验证会话，按字段白名单生成脱敏接口样本及 Dart 基线，不能作为日常测试自动执行。
