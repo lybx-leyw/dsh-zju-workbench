@@ -1,11 +1,42 @@
 # dsh-radar-zju-recorder —— 候选骨架
 
-> ## ⚠ 候选骨架：**未评审 · 未接入 profile · 不可直接使用**
+> ## ✅ 评审结论：**已并入，本骨架待删**（2026-10-18）
+>
+> 本目录仍是候选骨架（未评审、未接入、不可直接使用）；它记录的能力**已评审通过**
+> 并落地到正式包，见下表。**本目录不再是任何工作的起点**，保留只为让读到它的人
+> 找到去处；确认无误后整目录可删（`git rm -r packages/dsh-radar-zju-recorder`）。
+>
+> | 骨架说的能力 | 实际去向 |
+> | --- | --- |
+> | OAuth2 授权码入口 | `dsh-zhiyun-classroom/src/auth.js` → `authenticate(…, { entry: 'oauth' })` |
+> | `_token` cookie → JWT | 同上 `jwtFromTokenCookie()` / `inspectJwt()`；直播每条请求用它拼 Bearer |
+> | 实时流观看（m3u8） | `dsh-zhiyun-classroom/src/live.js` + `stream.js`，页面侧 `dsh-zhiyun-page-study` |
+> | CookieJar 迁移 | **作废** —— 本仓 `tough-cookie@6.0.2` 已覆盖（实测 domain / host-only / path 语义完备） |
+> | RSA「交叉验证」 | **判断有误，已修正** —— 见下方「评审修正」 |
+> | 录制（ffmpeg） | **未做**。需要二进制分发，与浏览器工作台形态冲突，另行立项 |
+>
+> ## 评审修正：骨架的三处说法与实际不符
+>
+> 1. **「本仓完全无 OAuth2 链路」是错的。** 现有 `auth.js` 从 `tgmedia/index.php?r=auth/login`
+>    起跑的 20 跳循环**已经会经过** `cas/oauth2.0/authorize`（见 `tests/classroom.test.mjs`）。
+>    真实差异只有两处：**入口**（`tgmedia` vs `yjapi/casapi`）与**终态取用户**
+>    （`JWTUser` cookie vs `_token` 里的 JWT）。
+> 2. **RSA「交叉验证」不成立。** 实测：短 ASCII 密码两边输出**完全相同**（所谓「同族不同法」
+>    在单块时数学等价，交叉验证只会给假安全感）；中文密码因上游用 `charCodeAt`
+>    逐 UTF-16 码元、本仓用 `Buffer` utf8 而**确实不同**；>126 字符时上游是**多块空格拼接**、
+>    本仓单块，是**两种协议**而非两种实现。
+> 3. **`apply()` 不是「纯占位」。** 骨架的 `apply()` 注册了 `/zhiyun-recorder` 路由，
+>    且 handler 用了 Fetch 的 `Response` —— 宿主 `WebRoute.handler` 是
+>    `(req, res) => void | Promise<void>`，返回值会被丢弃、请求挂到超时。
+>    这正是「看起来能跑」的骨架最该避免的形态。
+>
+> ---
+
+> ## ⚠ 以下为原始骨架声明（历史记录，已失效）
 >
 > 本目录由 `dsh-ecosystem-radar` 自动生成，**仅用于人工评审**。
 > 这不是一个可用插件：`src/index.js` 是空实现，`TODO` 未落实。
 > **请勿**把它加入任何 profile，**请勿**在真实环境挂载。
-> 评审通过后才可继续实现；驳回则整目录删除。
 
 ---
 
