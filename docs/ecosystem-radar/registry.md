@@ -1531,3 +1531,24 @@
 | `PerryLink/dsh-score` ★12、`PerryLink/dsh-skill-pack-security` ★22 | A 原生DSH | Apache-2.0 | — | 重复无增益 | ⛔ | rejected | 2026-10-18 | 与在册 `plugin-score`、`plugin-audit` 重复 |
 | `Nexus-Aethra/DSHBox`、`redoop/cordis-rust` | A 原生DSH / 内核 | **`null`** | — | — | ⛔ | rejected | 2026-10-18 | 无许可证红线；后者是 Rust 重写 cordis 内核，与 JS 栈无关 |
 | 开发/宿主杂项簇（`Classicoke/cleverer-dsh`、`omdsh-dev/dsh-plugin-skills`、`liyown/dshx`、`anweat/dsh-browser`、`keyiadiannao/dsh-power-button`、`a903067276-rgb/dsh-file-mentions`、`qphotoai/dsh-computer-use-windows`、`fb0sh/dsh-pentester`、`HakureiMonika/dsh-sandbox-escalation-fix`、`hytime/dsh-thinking-effort`、`Player-MINEPIG/dsh-tavern`、`majiayu000/dsh-desk`、`CREAIT-nl/dsh-plugins`） | A 原生DSH | 多为 MIT | — | 无关 | ⛔ | rejected | 2026-10-18 | 13 条：开发脚手架 / 浏览器 / 电源键 / 文件提及 / 渗透测试 / 酒馆兼容 / 沙箱升级 / 推理档位 / 桌面壳。与学生场景无关或属宿主层 |
+
+## 2026-10-18 · A 组（第二十四轮 · **知识图谱 / 链接图渲染轴**）
+
+> 同日第六轮。脚本判 `same-day(exhausted)`（今日已跑 A×3 / B / C），按先例**不重跑已跑组**。
+> 本轮从**本仓空洞**出发（vault 的 `graph` RPC 无任何页面消费者），反查生态渲染库。
+> 7 次搜索（≤10，0 次 403）：`knowledge graph visualization library`(20) / `obsidian graph view`(289，stars+updated) /
+> `force-directed graph react`(73) / `graphology sigma.js`(11) / `cytoscape.js`(621) / `wallet filter`(244，探针)。
+> 有效候选 9 条；🟢1 + 🔵4 + ⚠1 + ⛔3 族；骨架 `dsh-radar-note-graph`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `cytoscape/cytoscape.js` | B 其他JS | **MIT** ✅ | 笔记（知识网） | **全新**（补缺视图，**非强化**） | 🟢 | skeleton-created | 2026-10-18 | ★11239，JS，push 2026-10-15。`cytoscape@3.34.4` 实核：`dependencies:{}` **零运行时依赖**、单包、内置图算法、Canvas/SVG 双渲染器、`cy.mount()` 直挂 DOM（无需 React 绑定）。**判据③不成立**：本仓**无任何图谱渲染器**；vault 已产出 `graph:{nodes[{id,title,inDegree,outDegree,tags}],edges}`（`src/index/vault-index.js` L208），但 `page-notes/src/client.jsx`（694 行）**零消费** → 这是「无→有」。判 🟢 的理由是「接进来就有东西看、不新建任何东西」，**不是强化**（与 `dsh-radar-temml` 同处置，定性须人工拍）。⚠ 入度/出度**不在** cytoscape，vault 已算好。已出骨架 `dsh-radar-note-graph`；⚠ 挂载形态二选一（建议纯库包、删 patch）；⚠ 右栏默认收起→默认不可见；⚠ 布局需 >800 篇降 preset |
+| `zsviczian/excalibrain` | B 其他JS（Obsidian 插件） | MIT | 笔记（关系图） | 全新（借范式） | 🔵 | proposed | 2026-10-18 | ★1004，2026-09-29。**「以当前笔记为根的关系图」**（根节点 + 上下游两栏）—— 「跟随当前节点」交互的唯一成熟参考。绑 Obsidian API，**不可嵌入** → 只借交互范式，不借代码 |
+| `Sanqui/obsidian-persistent-graph` | B 其他JS（Obsidian 插件） | MIT | 笔记（图谱坐标） | 全新（范式参考） | 🔵 | proposed | 2026-10-18 | ★147。节点坐标持久化的标准做法（存 workspace 状态）。骨架首版**不做**持久化（要新增存储位，与「笔记库只有 .md」冲突）；将来要做时唯一该参考的实现 |
+| `vasturiano/react-force-graph` | B 其他JS | MIT | — | 重复（簇内落选） | 🔵 | proposed | 2026-10-18 | ★3325，2026-09-29。力导向图 React 组件，能力最强但绑 `three`（2D/3D/VR/AR），对「侧栏小图」过度设计 → 簇内选了零依赖的 cytoscape。将来做**全屏图谱**再回看 |
+| `Wimmics/venus` | B 其他JS | Apache-2.0 | 论文/笔记（KG 仪表盘） | 全新（远期） | 🔵 | proposed | 2026-10-18 | ★2，2026-10-08，学术原型（知识图谱可视化仪表盘，多视图联动）。★2 过新不采用；「多视图共用一份选择状态」适合将来「笔记页 + 论文页共用图谱」时参考 |
+| `brianpetro/obsidian-smart-connections` | B 其他JS（Obsidian 插件） | **NOASSERTION** | 笔记（语义近邻） | 可强化（语义图簇） | ⚠ 待核 | pending-license | 2026-10-18 | ★5512，JS，2026-10-10，**本轴 ★ 最高**。图谱+列表双视图、本地 embedding、语义近邻 —— 正好补 `dsh-radar-knowledge-graph` 缺的「近邻」。许可证无法确认 → **不采用、不摘码**，须人工读 LICENSE 原文 |
+| `HEmile/juggl`(★821)、`Developer-Mike/obsidian-advanced-canvas`(★1562)、`noduslabs/infranodus-obsidian-plugin`(★175)、`pixmix/obsidian-viewer-nextcloud`、`IdreesInc/Waypoint`(★863) | B 其他JS（Obsidian 插件） | **GPL-3.0 / AGPL-3.0 / MPL-2.0** | — | — | ⛔ | rejected | 2026-10-18 | **5 条许可证红线**（GPL-3.0×2、AGPL-3.0×2、MPL-2.0）。`juggl` 本是最贴「可样式化局部关系图」的参考，也只能登记不可用 |
+| Obsidian 图谱插件新仓簇（`elliott-json-park/obsidian-tag-graph`★1、`LowKI2/cortex-graph`★0、`NicoKNL/tasks-map`★54、`sskhekhaliya/obsidian-GraphWay`、`PGD618/my-web`、`Sammie-07/gogo-brain-wiki`、`Pierovercleaver/Notes-Editor-Obsidian`、`batuhan-bas/mufka`★4）、`ElsaTam/obsidian-extended-graph`(★238) | B 其他JS | MIT / `null` / NOASSERTION | 笔记 | 重复无增益 | ⛔ | rejected | 2026-10-18 | 9 条，全为 **Obsidian 插件 / 个人 app / 数字花园模板**，不可嵌入；除 `tasks-map`(任务图) 与 `extended-graph` 外 ★≤4 且多为当周建仓。**建议本轴 3 个月内不再扫 `obsidian graph view` 的 updated 视图** |
+| 自研图渲染簇（`Aoviz-Team/graphs`★18、`i-artist/aoviz`★6、`Biki-dev/OKVE`★1、`inferagraph/core`★2）、薄包装（`plotly/react-cytoscapejs`★534、`plotly/dash-cytoscape`★679） | B 其他JS | MIT / `null` | — | 重复无增益 | ⛔ | rejected | 2026-10-18 | 自研渲染 ★低 / 2022–2024 停更 / `null` 许可证，能力被 cytoscape 完全覆盖；`react-cytoscapejs` 最后 push 2025-01，`cy.mount()` 少一层依赖 |
+| `wallet filter` 前 10 条（`anjulalk/cardstock`、`rzazo24/quill`、`ArmySHan/Trove-Discord-Wallet-Bot`、`MrLouisWright/ioc-sentinel` 等） | — | MIT / `null` | — | 无关 | ⛔ | rejected | 2026-10-18 | **主动探针**：为「网络代理」页的过滤词表找底层。1 次搜索即证明「filter 词表」在 GitHub 上的唯一语义是**加密钱包 / 卡包优惠 / 交易机器人** → 该轴封板 |
