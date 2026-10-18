@@ -52,8 +52,8 @@ node scripts/radar-rotation.mjs --group
 | 项 | 值 |
 | --- | --- |
 | `last_group` | `A` |
-| `last_run_at` | `2026-10-18 18:00` |
-| `group_runs`（累计） | A=17, B=9, C=9 |
+| `last_run_at` | `2026-10-18 21:00` |
+| `group_runs`（累计） | A=18, B=9, C=9 |
 
 ### 流水
 
@@ -94,6 +94,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-17 15:20 | C（第十三轮） | **同日第四轮**（脚本判 `same-day(exhausted)`；今日已跑 B 06:10 / C 09:06 / A 12:05）。按先例**不重复任何已跑关键词**，改跑正交新切片：时间管理/专注计时/任务分解/卡片生成（`time blocking calendar typescript`/`pomodoro timer react focus`/`task breakdown study planner javascript`/`cloze deletion flashcard generator typescript`/`study timer analytics dashboard javascript` 等 13 次搜索，⚠超限 3 次；0 次 403）。87 条全部首次登记 → **有效 4 条；0 🟢 + 0 🟡 + 4 🔵 + 2 ⚠ + 81 ⛔**；**无骨架、不开 PR**。新结论：① 宽词 `study planner`(624)/`study timer`(6284)/`study analytics`(14830) 彻底饱和（合计 2.2 万条仅 1 条入候选且非 JS）→ 建议移除；② 三段式窄词 `task breakdown`/`cloze deletion`/`flashcard generation llm` 全返 0 → 两子轴封板；③ C 组「高价值 ∩ JS 栈」交集趋近空集，建议调轮换比 A:C:B=2:1:1（待人工裁决） |
 | 2026-10-17 00:01 | C（第九轮） | **跨天首轮**（`290 % 3 = 2` → C，与公式一致）。**学生功能域**：`timetable ics export`/`paper annotation reader`/`ocr notes taking`/`quiz practice app`/`fitness tracker javascript`/`spaced repetition flashcard typescript`/`FSRS scheduler rust wasm`/`pdf markdown converter javascript`（10 次搜索，达上限未超限；API 全程 200）。新增 29 条登记（有效候选 12 条）；**🟢1 + 🟡4 + 🔵8 + ⛔16（0 条 NOASSERTION）**；出骨架 `dsh-radar-fsrs-browser`（B 类锁版 `fsrs-browser@6.6.0`）。**新结论**：① C 组「课表导出/论文批注」两轴接近枯竭（单校工具 + 1★ 论文阅读器）；② 宽词 `quiz practice app`(2711)/`fitness tracker js`(1069) 已饱和、去重后 0 条入候选；③ 窄技术词 `FSRS scheduler rust wasm`(total 2) 一轮即中本轮唯一 🟢 |
 | 2026-10-16 18:35 | B（跨校同型轴） | `course review rating platform` 等 10 词（11 次调用，⚠超限 1 次）；抓取 60 条量级 → **新候选仅 1 条**；🟡0 🟢0 🔵1 ⛔9；**无骨架、不开 PR**。⚠ 开场 `ls-remote` 静默失败被误读为「分支不存在」，push 被拒后 reset 到 `origin/radar`（`c87c23a`）重做 —— **与 10-15 第二轮同型坑，建议修脚本**。**新结论：跨校同型轴同样薄** |
+| 2026-10-18 21:00 | A | A组第二十六轮：**插件自省 / 依赖图底层轴**（`dependency graph visualization javascript`44 /`plugin dependency graph`173 / `npm dependency tree visualization`15 / `dsh plugin inspector`12 / `dsh plugin graph`91 /`cordis plugin service`34 / `plugin introspection cordis`**0** / `dsh plugin audit before install`6 /`javascript circular dependency detector`1，9次搜索未超限、0次403）。26条新仓→有效12条；**🟢1(skott)🟡1(capability-inspector)🔵3⛔7簇**；骨架 `dsh-radar-plugin-graph`（锁版 `skott@0.35.12`）。新结论：① `dsh plugin <名词>` 已饱和（graph 91 / inspector 12 的可用项全在册），只认 30 以内的窄词；② `plugin dependency graph` 是**词面陷阱**——173 条几乎全是 Gradle/Maven/sbt，JS 栈 0 条；③ 三词叠加 `plugin introspection cordis` 直接 0 → **抽象词 + 框架名 = 死词**；④ 首次出现能给现有页面**换底层**的候选：插件页能画边、算层序，但算不出文件级环 / 未加载边 / 空边；⑤ 装前审计轴**封板 3 个月**（本轮 3 个新审计工具全部与在册实现重复）；⑥ ⚠ 埋点：clone 到已存在目录时首试必败（本次 `already exists` 空转一次）；⑦ ⚠ 本次 push 首次被拒（`non-fast-forward`：远端 radar 已在 18:00 前进过一轮）→ **开跑前必须先 `fetch origin radar` 再决定起点**，skill 文档里「ls-remote 一次判存在」与「clone 后即 checkout」的顺序有竞态 |
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
 > （见 `registry.md`「2026-10-15 · B 组」36 条），但**未写入流水**，
