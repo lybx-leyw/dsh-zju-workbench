@@ -1,0 +1,17 @@
+# 候选骨架：**未接入 profile** —— 本 patch 只有一条 insert，
+# 把上游 `@xiaoso/dsh-tool-plus` 挂成一个独立 loader 条目。
+#
+# ⚠ 这里**故意不复刻**上游自带的 `cordis.patch.yml`。上游那份 patch 会：
+#     - id: tool-bash   disabled: true
+#     - id: tool-pwsh   disabled: true
+#     - id: tool-fs     disabled: true
+#     - id: tool-fs-search disabled: true
+#   即**停用宿主的四行官方工具**，用自己的实现顶替。本仓的沙箱治理、
+#   `ctx.shell` 能力缝（hooks / tmux-context 依赖它）都挂在被停用的那几行上，
+#   整包套用等于把治理层一并拆掉。见 README「为什么不能整包套用」与 TODO-1。
+#
+# 评审通过后，正确的做法是在本包里**逐项**把需要的工具行重定向到上游实现，
+# 而不是把上游那一整份 patch 当子 patch 引进来。
+- insert:
+    - id: radar-tool-plus
+      name: dsh-radar-tool-plus
