@@ -39,6 +39,7 @@
 //    进度条打架。
 // 3. **点字幕才跳**：不自动滚动。用户可能正在读某一行，自动滚走是打断。
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { HlsVideo } from './hls-video.jsx';
 
 /**
  * 只放行 http(s) 的媒体地址。
@@ -174,9 +175,16 @@ export function VideoPanel({ state }) {
   //
   // 这不违反"播放器常驻"：没有 `videoUrl` 也就没有 `<video>` 可卸载。有回放时
   // 两个舞台照旧都在树里，只有 `data-main` 变。
+  //
+  // ⚠️ 为什么用 `HlsVideo` 而不是裸 `<video src>`：回放地址通常是 mp4（原生可播），
+  //    但历史课件里也有 HLS 源。裸 `<video>` 在 Chrome 上碰到 m3u8 是**黑屏且
+  //    不报错**；`HlsVideo` 只在「是 m3u8 且原生不支持」时才去拉 hls.js，mp4
+  //    路径一个字节都不变（见 `hls.js` 的 `needsHlsJs`）。
+  //    它仍然把同一个 `ref` 交回来 —— `timeupdate` / `currentTime` 那套时间轴
+  //    契约完全没有变，这是本栏"时间轴是唯一真源"的前提。
   const videoStage = videoUrl
     ? <div className="zs-video-stage zs-video-stage-video">
-      <video ref={videoRef} className="zs-video-media" src={videoUrl} controls preload="metadata" playsInline />
+      <HlsVideo ref={videoRef} src={videoUrl} className="zs-video-media" preload="metadata" />
     </div>
     : null;
 

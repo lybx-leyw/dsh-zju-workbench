@@ -1,7 +1,7 @@
 export function createStudyController(call, navigation) {
-  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null };
+  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null, live: null, liveBusy: false, liveError: null, liveStreams: null, liveToday: null, liveTodayLoading: false };
   const listeners = new Set(), lifetime = new AbortController();
-  let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0, corpusTicket = 0, recentTicket = 0, reviewTicket = 0;
+  let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0, corpusTicket = 0, recentTicket = 0, reviewTicket = 0, liveTodayTicket = 0, liveStreamsTicket = 0;
   const lessonLoads = new Map();
   const update = (patch) => {
     if (closed) return;
@@ -12,11 +12,28 @@ export function createStudyController(call, navigation) {
     return call(method, payload, lifetime.signal);
   }
   const currentKey = () => state.lesson ? { courseId: state.course.id, subId: state.lesson.subId } : null;
+  /**
+   * 从「今天的直播列表」里挑出与某节课对应的一条，作为 `state.live`。
+   *
+   * 为什么 `live` 由本控制器**推导**而不是留给界面写：它和 `lesson` 是同一个
+   * 选择的两个面（一节可回放的课，同时可能有正在进行的直播）。若让多个组件各自
+   * 记住「这节有没有直播」，切节次时就会一半新一半旧。所以只留一个真源 ——
+   * `liveToday`，`live` 永远从它按 courseId/subId 派生。
+   *
+   * 两种形状都收：`liveToday` 希望是完整的 `{ items, meta }`（`meta.complete`
+   * 决定「今天到底收全了没有」，界面要据此决定提示语），但早期/测试里也可能
+   * 直接给数组。缺 ID 时返回 null，而不是拿一节无关的课顶上。
+   */
+  const liveOf = (liveToday, courseId, subId) => {
+    if (courseId == null || subId == null) return null;
+    const list = Array.isArray(liveToday) ? liveToday : Array.isArray(liveToday?.items) ? liveToday.items : [];
+    return list.find((item) => String(item?.courseId ?? "") === String(courseId) && String(item?.subId ?? "") === String(subId)) ?? null;
+  };
   async function refresh() {
     const epoch = ++account;
     selection++;
     lessonLoads.clear();
-    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null });
+    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null, live: null, liveBusy: false, liveError: null, liveStreams: null, liveToday: null, liveTodayLoading: false });
     try {
       const initial = await request("state");
       if (epoch !== account || closed) return;
@@ -82,7 +99,7 @@ export function createStudyController(call, navigation) {
   }
   async function selectCourse(course) {
     const ticket = ++selection;
-    update({ course, lesson: null, lessons: [], content: null, result: null, job: null, error: null, sectionLoading: true, contentLoading: false, expandedCourses: { ...state.expandedCourses, [String(course.id)]: true } });
+    update({ course, lesson: null, lessons: [], content: null, result: null, job: null, error: null, sectionLoading: true, contentLoading: false, live: null, liveStreams: null, liveBusy: false, liveError: null, expandedCourses: { ...state.expandedCourses, [String(course.id)]: true } });
     try {
       const lessons = await loadCourse(course);
       if (ticket === selection) update({ lessons: lessons.items, lessonsMeta: lessons.meta });
@@ -95,7 +112,10 @@ export function createStudyController(call, navigation) {
   async function selectLesson(lesson, course = state.course) {
     if (!course) return;
     const ticket = ++selection, key = { courseId: course.id, subId: lesson.subId };
-    update({ course, lesson, lessons: state.lessonsByCourse[String(course.id)] ?? state.lessons, lessonsMeta: state.lessonMetaByCourse[String(course.id)] ?? state.lessonsMeta, content: null, result: null, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, job: null, error: null, contentLoading: true });
+    // 切节次时把上一节的直播信息一起清干净：`live` 是按 courseId/subId 派生的，
+    // 而刚点开的这一节还不知道有没有直播。清空之后 `loadLiveToday()` 会重新派生；
+    // 留着旧值的话，界面会在新一节的标题下显示上一节的机位。
+    update({ course, lesson, lessons: state.lessonsByCourse[String(course.id)] ?? state.lessons, lessonsMeta: state.lessonMetaByCourse[String(course.id)] ?? state.lessonsMeta, content: null, result: null, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, job: null, error: null, contentLoading: true, live: liveOf(state.liveToday, course.id, lesson.subId), liveStreams: null, liveBusy: false, liveError: null });
     const outcomes = await Promise.allSettled([request("content", key), request("result", key), request("quiz", key), request("note", key)]);
     if (ticket !== selection || closed) return;
     const [content, result, quiz, note] = outcomes;
@@ -238,6 +258,69 @@ export function createStudyController(call, navigation) {
         update({ schedule: null, scheduleMeta: null, scheduleError: e.message });
       } finally {
         if (ticket === scheduleTicket && epoch === account && !closed) update({ scheduleLoading: false });
+      }
+    },
+    /**
+     * 读「此刻正在上的直播」（`live-today`）。
+     *
+     * 与 `loadSchedule` 同一姿态：失败留在 `liveError`，不写进页面横幅的 `error`
+     * —— 直播是**附加**信息，拉不到不该让学习页显示成「解析失败」。而且这个
+     * 动作本身可能因为「直播未接入」（宿主那边 `classroom.live` 不存在）而失败，
+     * 那是配置事实，不是当前这节课出了问题。
+     *
+     * 只写 `liveToday` 与 `live`，**不碰** `liveStreams`：取流是另一条独立动作
+     * （用户点了某个机位才发），合在一起会让「刷新今天的直播」把正在播的地址
+     * 清掉，播放器会莫名其妙断流。
+     */
+    async loadLiveToday() {
+      const ticket = ++liveTodayTicket;
+      const epoch = account;
+      if (!state.user) {
+        update({ liveToday: null, live: null, liveTodayLoading: false, liveError: null });
+        return;
+      }
+      update({ liveTodayLoading: true, liveError: null });
+      try {
+        const data = await request("live-today");
+        if (ticket !== liveTodayTicket || epoch !== account || closed) return;
+        // 整个 `{ items, meta }` 一起留下（而不是只留 items）：`meta.complete` 是
+        // 「今天是不是收全了」的唯一依据，界面要据此决定说「今天没有直播」还是
+        // 「今天的直播没读全」。
+        update({ liveToday: data ?? null, live: liveOf(data, state.course?.id, state.lesson?.subId) });
+      } catch (e) {
+        if (ticket !== liveTodayTicket || epoch !== account || closed) return;
+        update({ liveToday: null, live: null, liveError: e.message });
+      } finally {
+        if (ticket === liveTodayTicket && epoch === account && !closed) update({ liveTodayLoading: false });
+      }
+    },
+    /**
+     * 取某节课的机位清单（`live-streams`）。
+     *
+     * 地址改写（换成 `/zhiyun-live/hls?u=…`）在**宿主侧**做，这里拿到的
+     * `playUrl` 已经是能直接塞给 `<video>` 的本机地址 —— 客户端不该知道、也不
+     * 该需要知道原始 CDN 域名与签名。
+     *
+     * 选中的 `courseId`/`subId` 记在 `liveStreams` 的返回值里（宿主会带上），
+     * 这样界面能判断「手上这份清单还是不是当前这一节的」。失败**向上抛**：
+     * 调用方（那个播放面板）需要在同一个地方收起 loading 并显示原因，吞掉只会
+     * 让它停在「正在取流」。
+     */
+    async loadLiveStreams(courseId, subId) {
+      const ticket = ++liveStreamsTicket;
+      const epoch = account;
+      if (courseId == null || subId == null) return null;
+      update({ liveBusy: true, liveError: null });
+      try {
+        const data = await request("live-streams", { courseId: String(courseId), subId: String(subId) });
+        if (ticket !== liveStreamsTicket || epoch !== account || closed) return data ?? null;
+        update({ liveStreams: data ?? null });
+        return data ?? null;
+      } catch (e) {
+        if (ticket === liveStreamsTicket && epoch === account && !closed) update({ liveStreams: null, liveError: e.message });
+        throw e;
+      } finally {
+        if (ticket === liveStreamsTicket && epoch === account && !closed) update({ liveBusy: false });
       }
     },
     async loadRecent() {
