@@ -1552,3 +1552,24 @@
 | Obsidian 图谱插件新仓簇（`elliott-json-park/obsidian-tag-graph`★1、`LowKI2/cortex-graph`★0、`NicoKNL/tasks-map`★54、`sskhekhaliya/obsidian-GraphWay`、`PGD618/my-web`、`Sammie-07/gogo-brain-wiki`、`Pierovercleaver/Notes-Editor-Obsidian`、`batuhan-bas/mufka`★4）、`ElsaTam/obsidian-extended-graph`(★238) | B 其他JS | MIT / `null` / NOASSERTION | 笔记 | 重复无增益 | ⛔ | rejected | 2026-10-18 | 9 条，全为 **Obsidian 插件 / 个人 app / 数字花园模板**，不可嵌入；除 `tasks-map`(任务图) 与 `extended-graph` 外 ★≤4 且多为当周建仓。**建议本轴 3 个月内不再扫 `obsidian graph view` 的 updated 视图** |
 | 自研图渲染簇（`Aoviz-Team/graphs`★18、`i-artist/aoviz`★6、`Biki-dev/OKVE`★1、`inferagraph/core`★2）、薄包装（`plotly/react-cytoscapejs`★534、`plotly/dash-cytoscape`★679） | B 其他JS | MIT / `null` | — | 重复无增益 | ⛔ | rejected | 2026-10-18 | 自研渲染 ★低 / 2022–2024 停更 / `null` 许可证，能力被 cytoscape 完全覆盖；`react-cytoscapejs` 最后 push 2025-01，`cy.mount()` 少一层依赖 |
 | `wallet filter` 前 10 条（`anjulalk/cardstock`、`rzazo24/quill`、`ArmySHan/Trove-Discord-Wallet-Bot`、`MrLouisWright/ioc-sentinel` 等） | — | MIT / `null` | — | 无关 | ⛔ | rejected | 2026-10-18 | **主动探针**：为「网络代理」页的过滤词表找底层。1 次搜索即证明「filter 词表」在 GitHub 上的唯一语义是**加密钱包 / 卡包优惠 / 交易机器人** → 该轴封板 |
+
+## 2026-10-18 · A 组（第二十五轮 · **Markdown 结构判定层 / 目录条 / 语言控制**）
+
+> 同日第 7 轮。脚本判 `same-day(exhausted)`，按先例不重跑已跑组。
+> 15 次搜索（⚠ 超限 5 次，探针失败后未及时止损），0 次 403。
+> 唯一 🟢 是**强化式集成**且判据③**成立**（正则近似 → CommonMark token 判定），本月首条无争议的强化候选。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `markdown-it/markdown-it` | B 其他JS（纯库） | **MIT** ✅ | 笔记 / 论文（`[[双链]]` 预览、页码引用） | **重复且可强化**（判据①②③全成立） | 🟢 | skeleton-created | 2026-10-18 | ★21984，push 2026-10-16，零运行时依赖（argparse/entities/linkify-it/mdurl/punycode.js/uc.micro）。锁版 `markdown-it@14.1.0`。替掉本仓三处「正则猜语法」：`vault#excludedRanges`（缺缩进代码/setext/HTML 块）、`page-notes/client.jsx` L220 右栏正则（连围栏都不排除）、`page-paper/citations.js#protectedRanges`（单行，缺缩进代码/HTML 块）。**验收 = 与现有实现差分零差异**（`tests/vault.test.mjs` 342 行全过）。已出骨架 `dsh-radar-vault-parse`；⚠ 评审须先回答反方案（补正则 vs 接库）；⚠ 推荐走纯库包、删 patch |
+| `a792883583/dsh-chat-toc` | A 原生DSH | MIT ✅ | 学习（长会话阅读） | **全新**（补目录，非强化） | 🟡 | proposed | 2026-10-18 | ★3，push 2026-09-30，`package.json` 实核 `dependencies:{}`、有 `dsh.bundle.patch`、inject `dsh-client-runtime`+`dsh-client-locale`。会话右侧边缘目录条（hover 展开、点击跳转）。与 `miaomiao636/dsh-message-navigator`（★2，功能更全更重）**二选一**，不并列接入 |
+| `miaomiao636/dsh-message-navigator` | A 原生DSH | MIT ✅ | 学习（长会话） | 全新（同域备选） | 🔵 | proposed | 2026-10-18 | ★2，push 2026-09-01，零 deps，inject `dsh-client-ui-layout`+`dsh-client-ui-conversation`。用户消息大纲 + 点击跳转 + 滚动高亮 + 搜索 + 导出大纲 → 能力更全也更容易与宿主会话 UI 打架 |
+| `KannaKuron/dsh-agent-lang` | A 原生DSH | MIT ✅ | 通用（中文输出） | 全新（可选） | 🔵 | proposed | 2026-10-18 | ★1，v0.12.0，inject `dsh-client-locale`+`ui-slots`+`ui-settings`。控制**工具调用描述/思维链语言**。本仓 UI 全中文、模型输出未约束 → 非痛点 |
+| `Ragnoryok1/dsh-client-locale-ru`、`xISPx/dsh-locale-ru`、`linmino/dsh-zh-tw-ui` | A 原生DSH | MIT ✅ | — | 无关 | 🔵 | proposed | 2026-10-18 | 语言包簇（俄/繁中）。与浙大中文用户无关，只作「locale 包怎么写」的范本；繁中包对简体用户无收益 |
+| `gwsbhqt/dsh-insight`、`liuhaolong16/dsh-hot-refresh` | A 原生DSH | MIT | 通用（插件开发） | **重复无增益** | 🔵 | proposed | 2026-10-18 | `insight`★3 只读洞察面板（插件/服务/工具/方法）—— 本仓 `page-plugins` 的 `buildView`+依赖图已覆盖；`hot-refresh`★1 开发期热刷新，`patchReload: live` 已覆盖大半。均属开发者工具，非学生场景 |
+| `A1eksib286/dsh-plugin-mathtype` | A 原生DSH | **NOASSERTION** | — | — | ⚠ 待核 | pending-license | 2026-10-18 | ★0，Python，Word 公式升级为 MathType OLE。许可证无法确认 → **不采用、不摘码**，须人工读 LICENSE |
+| `dakkaboy/dsh-locale-ru` | A 原生DSH | **NOASSERTION** | — | — | ⚠ 待核 | pending-license | 2026-10-18 | ★0，与 `xISPx/dsh-locale-ru`(MIT) 疑似同源复刻 —— **「无许可证 fork」的典型样本**，不采用 |
+| 会话导出簇（`121212165/dsh-plugin-transcript`、`kittimzhe/dsh-session-export`、`DEVbyQIN/dsh-session-md`、`guyusky/dsh-export-plugin`、`huangfuren/dsh-conversation`） | A 原生DSH | MIT | — | **重复无增益** | ⛔ | rejected | 2026-10-18 | 5 条全部 ★0–2。10-17 已判定「导出」轴被「零依赖 + `window.print()`」范式杀穿，无护城河；本轮复核维持 |
+| 粘贴打包簇（`sakuraqqq/dsh-auto-paste`、`X-noesis/dsh-paste-packer`、`XWIDE/dsh-draft-keeper`） | A 原生DSH | MIT | — | **重复无增益** | ⛔ | rejected | 2026-10-18 | ★1–3，改 composer 行为（大段文本转附件/打包卡片/保留粘贴图片）。与本仓「附件 / 草稿」模型重复，且属于**改宿主输入框**的高风险面 |
+| 应用/外壳（`techflag/workdsh`★239、`Kazama-Suichiku/dshcode`★0、`vastsa/PI-Desktop`★6979 **LGPL-3.0**） | A 原生DSH / 应用 | MIT / **LGPL-3.0** | — | 无关 | ⛔ | rejected | 2026-10-18 | `workdsh` 已在册（重复无增益）；`dshcode` 是 Tauri 桌面 fork；`PI-Desktop` 许可证红线 |
+| `clipboard sync plugin harness`（total 0）、`uniclip desktop clipboard`（total 1，0★ Java 2017） | — | — | — | 无关 | ⛔ | rejected | 2026-10-18 | **主动探针**：跨设备剪贴板同步插件在本生态**查无实据**（1 次搜索即废）。该轴与本工作台「跨设备」叙事距离远，**建议封板**。⚠ `uniclip` 一词会误召回本仓已采纳的 `ronkok/Temml` —— 搜索词与仓名不同源，「没搜到」≠「不存在」 |
