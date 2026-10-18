@@ -204,7 +204,7 @@ body[data-zhiyun] .zp-library-topic-name {
   align-items: center;
   gap: 6px;
   padding: 6px 8px 4px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: .3px;
   color: var(--zy-muted);
 }
@@ -286,7 +286,7 @@ body[data-zhiyun] .zp-library-row button.is-primary {
 }
 
 body[data-zhiyun] .zp-library-notice {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-secondary);
 }
 
@@ -297,7 +297,7 @@ body[data-zhiyun] .zp-library-error {
 }
 
 body[data-zhiyun] .zp-library-dir {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -361,7 +361,7 @@ body[data-zhiyun] .zp-pop {
 body[data-zhiyun] .zp-pop-source {
   padding: 8px 11px;
   border-bottom: 1px solid var(--zy-line);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
   background: var(--zy-soft);
 }
@@ -422,13 +422,13 @@ body[data-zhiyun] .zp-pop-actions button.is-primary {
 
 body[data-zhiyun] .zp-pop-note {
   padding: 0 11px 9px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
 body[data-zhiyun] .zp-pop-cache {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
@@ -493,7 +493,7 @@ body[data-zhiyun] .zp-drawer-toggle:hover {
 }
 
 body[data-zhiyun] .zp-drawer-session {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
@@ -583,7 +583,7 @@ body[data-zhiyun] .zp-bubble-role {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
@@ -718,7 +718,7 @@ body[data-zhiyun] .zp-drawer-compose {
 body[data-zhiyun] .zp-drawer-quote {
   border-left: 2px solid var(--zy-accent);
   padding: 3px 0 3px 8px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
@@ -757,7 +757,7 @@ body[data-zhiyun] .zp-drawer-compose-actions {
 }
 
 body[data-zhiyun] .zp-drawer-hint {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -798,7 +798,7 @@ body[data-zhiyun] .zp-settings-lead {
 body[data-zhiyun] .zp-settings-meta {
   display: flex;
   gap: 14px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
@@ -824,7 +824,7 @@ body[data-zhiyun] .zp-card-head > strong {
 
 body[data-zhiyun] .zp-card-head > span {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
@@ -843,7 +843,7 @@ body[data-zhiyun] .zp-card label {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
@@ -934,7 +934,7 @@ body[data-zhiyun] .zp-resume-head {
 
 body[data-zhiyun] .zp-resume-count {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
@@ -987,7 +987,7 @@ body[data-zhiyun] .zp-resume-code {
   padding: 0 4px;
   border: 1px solid var(--zy-line);
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 16px;
   color: var(--zy-muted);
   font-variant-numeric: tabular-nums;
@@ -1011,7 +1011,7 @@ body[data-zhiyun] .zp-resume-first {
 }
 
 body[data-zhiyun] .zp-resume-meta {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1028,12 +1028,12 @@ body[data-zhiyun] .zp-resume-foot {
 }
 
 body[data-zhiyun] .zp-resume-keys {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-muted);
 }
 
 body[data-zhiyun] .zp-resume-notice {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--zy-accent);
 }
 

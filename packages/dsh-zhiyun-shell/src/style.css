@@ -1,9 +1,13 @@
 body[data-zhiyun] {
   /* 求是蓝来自官网公开主题配置；浅色表面保持 Pro 的暖灰层次。 */
-  --zy-bg:#f7f7f5;--zy-surface:#fff;--zy-sidebar:#eff1f3;--zy-text:#252a30;--zy-secondary:#666b72;--zy-muted:#777e85;--zy-line:#e1e3e5;--zy-accent:#00479d;--zy-soft:#e7eef8;--zy-hover:#e6eaf0;--zy-brand:#00479d;--zy-brand-soft:#e7eef8;--zy-action:#00479d;--zy-action-hover:#003b83;
+  --zy-bg:#f7f7f5;--zy-surface:#fff;--zy-sidebar:#eff1f3;--zy-text:#252a30;--zy-secondary:#666b72;--zy-muted:#6b7178;--zy-line:#e1e3e5;--zy-accent:#00479d;--zy-soft:#e7eef8;--zy-hover:#e6eaf0;--zy-brand:#00479d;--zy-brand-soft:#e7eef8;--zy-action:#00479d;--zy-action-hover:#003b83;
   /* 一个字体栈，全产品共用：Windows 上优先 Segoe UI Variable（Win11 的 UI 字），
      中文落到雅黑 UI。会话区里的自有表面（会话条/历史面板）不继承 .zy-page，
      所以它们自己再声明一次同一个变量，避免两处字体不一样。 */
+  /* 字号阶梯（P0-1）：中文正文 ≥12px，元信息 ≥11px，禁止 <11px。 */
+  --zy-fs-meta:11px;--zy-fs-sm:12px;--zy-fs-base:13px;--zy-fs-md:14px;--zy-fs-lg:17px;--zy-fs-xl:21px;--zy-fs-display:24px;
+  /* 间距阶梯（P2）：4px 基准，新代码优先使用；存量逐步迁移，不强制重排。 */
+  --zy-space-1:4px;--zy-space-2:8px;--zy-space-3:12px;--zy-space-4:16px;--zy-space-6:24px;--zy-space-8:32px;--zy-space-12:48px;--zy-space-16:64px;
   --zy-font:'Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
   --dsw-font-family:var(--zy-font);
   --dsw-alias-button-info-fill:var(--zy-action);--dsw-alias-button-info-hover:var(--zy-action-hover);
@@ -31,6 +35,38 @@ body[data-zhiyun][data-ds-dark-theme] {
  * （见 components.jsx 里那段 effect），导轨取 55px 正好填满：既不会在列里偏左，
  * 也不会因为列宽变化而让图标跟着移动。 */
 .zy-sidebar {height:100%;display:flex;background:var(--zy-sidebar);overflow:hidden;font-size:12px;line-height:1.5;}
+/* ── 「跳到主内容」──────────────────────────────────────────────────────
+ * 导轨上是品牌 + 一排页面图标 + 底部几个全局控件，学习页里还有课程树 —— 纯键盘用户
+ * 每次进页面都要按完一整串 Tab 才够得到正文。这个链接是那一串的**第一个**可聚焦
+ * 元素，一次 Tab 就能跳过导航。
+ *
+ * ⚠️ 默认只用 `left:-9999px` 挪出视口，**不能**用 display:none / visibility:hidden
+ *    （也不用 `clip`/`width:1px` 那类收缩写法）：它们会把它一起从 Tab 序列里摘掉，
+ *    键盘就永远聚焦不到它 —— 而「聚焦时显形」是这个链接**唯一**的呈现方式，
+ *    被摘掉等于这个功能不存在。
+ *
+ * `position:fixed` 而不是 absolute：宿主侧栏列 `overflow:hidden`，那一列只有 56px
+ * 宽，absolute 的链接连显形时都会被那一列裁掉（与 `.zy-rail-tip` 是同一个坑）。
+ *
+ * `top` 用宿主自己的 `--dsh-frame-overlay-top`（它给浮层留的就是这个位置：Windows 是
+ * 标题栏高度 + 20，macOS 是红绿灯 48 + 20，全屏回到 20；普通浏览器里没有这个变量，
+ * 退回 8px）。不让开窗口标题区的话，显形时它会压在 Windows 那条
+ * `-webkit-app-region: drag` 的拖拽区上 —— 点它变成拖窗口，链接点不动。
+ *
+ * z-index 取 80：壳自己的浮层最高到 45（`.zy-rail-menu`），页面包的浮层到 60
+ * （如论文页的译文浮层）—— 显形时被正文盖住就等于没有。 */
+body[data-zhiyun] .zy-skip-link {
+  position:fixed;top:var(--dsh-frame-overlay-top,var(--zy-space-2));left:-9999px;z-index:80;
+  padding:var(--zy-space-2) var(--zy-space-3);
+  border:1px solid var(--zy-accent);border-radius:8px;
+  background:var(--zy-surface);color:var(--zy-accent);
+  font-size:var(--zy-fs-sm);line-height:1.5;white-space:nowrap;
+  text-decoration:none;box-shadow:0 8px 24px #0003;
+}
+/* 显形时回到左上角。`:focus` 与 `:focus-visible` 都写：键盘 Tab 过来命中后者，
+ * 读屏或脚本直接 `.focus()` 时只命中前者，两处都要能显形。 */
+body[data-zhiyun] .zy-skip-link:focus,
+body[data-zhiyun] .zy-skip-link:focus-visible {left:var(--zy-space-2);outline:2px solid var(--zy-accent);outline-offset:2px;}
 /* The motto replaces the native hero brand title. */
 body[data-zhiyun] span:has(.zy-hero-brand) + span {display:none;}
 .zy-mark {display:inline-flex;align-items:center;justify-content:center;width:44px;height:38px;color:var(--zy-brand);flex-shrink:0;}
@@ -193,19 +229,19 @@ body[data-zhiyun][data-ds-dark-theme] .zy-drawer-error,body[data-zhiyun][data-ds
  * height:100% 能解析，是因为 `.zy-scroll` 在 `.zy-page` 这个列向 flex 里 flex:1，
  * 高度是确定的。于是面板填满整个内容区，滚动交给页面内部的分区。 */
 .zy-content.zy-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0;}
-.zy-intro {display:flex;justify-content:space-between;align-items:center;margin-bottom:34px;gap:24px;}.zy-eyebrow{font-size:10px;color:var(--zy-accent);letter-spacing:1.2px;}.zy-intro h1{font-size:27px;font-weight:500;line-height:1.4;letter-spacing:-.7px;margin:9px 0 9px;}.zy-intro p{font-size:12px;color:var(--zy-secondary);margin:0;}.zy-intro>svg,.zy-date-icon{color:var(--zy-accent);opacity:.65;}.zy-date-icon{margin-right:12px;}
-.zy-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 12px;}.zy-section-title h2{font-size:13px;font-weight:600;margin:0;}.zy-section-title>span{font-size:10px;color:var(--zy-muted);}
-.zy-now {border:1px solid color-mix(in srgb,var(--zy-accent) 13%,var(--zy-line));border-left:3px solid var(--zy-accent);background:var(--zy-soft);border-radius:9px;padding:21px 24px 19px;}.zy-pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--zy-accent);}.zy-pill>span{width:5px;height:5px;border-radius:50%;background:var(--zy-accent);}.zy-now h2{font-size:19px;letter-spacing:-.3px;font-weight:500;margin:11px 0 5px;}.zy-now p{font-size:11px;color:var(--zy-secondary);margin:0 0 15px;}
+.zy-intro {display:flex;justify-content:space-between;align-items:center;margin-bottom:34px;gap:24px;}.zy-eyebrow{font-size:11px;color:var(--zy-accent);letter-spacing:1.2px;}.zy-intro h1{font-size:24px;font-weight:500;line-height:1.4;letter-spacing:-.7px;margin:9px 0 9px;}.zy-intro p{font-size:12px;color:var(--zy-secondary);margin:0;}.zy-intro>svg,.zy-date-icon{color:var(--zy-accent);opacity:.65;}.zy-date-icon{margin-right:12px;}
+.zy-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 12px;}.zy-section-title h2{font-size:13px;font-weight:600;margin:0;}.zy-section-title>span{font-size:11px;color:var(--zy-muted);}
+.zy-now {border:1px solid color-mix(in srgb,var(--zy-accent) 13%,var(--zy-line));border-left:3px solid var(--zy-accent);background:var(--zy-soft);border-radius:9px;padding:21px 24px 19px;}.zy-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--zy-accent);}.zy-pill>span{width:5px;height:5px;border-radius:50%;background:var(--zy-accent);}.zy-now h2{font-size:19px;letter-spacing:-.3px;font-weight:500;margin:11px 0 5px;}.zy-now p{font-size:11px;color:var(--zy-secondary);margin:0 0 15px;}
 .zy-text-button{display:inline-flex;align-items:center;gap:8px;padding:0!important;color:var(--zy-accent)!important;font-size:11px!important;}.zy-text-button:hover{text-decoration:underline;text-underline-offset:3px;}
-.zy-agenda-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:28px;}.zy-empty-row{display:flex;align-items:center;gap:13px;border:1px solid var(--zy-line);border-radius:8px;padding:19px 17px;background:var(--zy-surface);}.zy-empty-row>svg{color:var(--zy-muted);}.zy-empty-row strong{font-size:12px;font-weight:500;}.zy-empty-row p{font-size:10px;color:var(--zy-muted);margin:4px 0 0;}
-.zy-resume{display:flex;align-items:center;gap:16px;padding:19px 21px;border:1px solid var(--zy-line);border-radius:9px;background:var(--zy-surface);}.zy-book-cover{height:56px;width:45px;display:grid;place-items:center;background:var(--zy-sidebar);color:var(--zy-secondary);border:1px solid var(--zy-line);border-left:4px solid var(--zy-line);border-radius:3px 6px 6px 3px;flex-shrink:0;}.zy-resume h3{font-size:12px;font-weight:500;margin:0 0 5px;}.zy-resume p{font-size:10px;color:var(--zy-muted);margin:0;}.zy-resume>.zy-secondary{margin-left:auto;flex-shrink:0;}
+.zy-agenda-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:28px;}.zy-empty-row{display:flex;align-items:center;gap:13px;border:1px solid var(--zy-line);border-radius:8px;padding:19px 17px;background:var(--zy-surface);}.zy-empty-row>svg{color:var(--zy-muted);}.zy-empty-row strong{font-size:12px;font-weight:500;}.zy-empty-row p{font-size:11px;color:var(--zy-muted);margin:4px 0 0;}
+.zy-resume{display:flex;align-items:center;gap:16px;padding:19px 21px;border:1px solid var(--zy-line);border-radius:9px;background:var(--zy-surface);}.zy-book-cover{height:56px;width:45px;display:grid;place-items:center;background:var(--zy-sidebar);color:var(--zy-secondary);border:1px solid var(--zy-line);border-left:4px solid var(--zy-line);border-radius:3px 6px 6px 3px;flex-shrink:0;}.zy-resume h3{font-size:12px;font-weight:500;margin:0 0 5px;}.zy-resume p{font-size:11px;color:var(--zy-muted);margin:0;}.zy-resume>.zy-secondary{margin-left:auto;flex-shrink:0;}
 .zy-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--zy-line)!important;border-radius:6px;background:var(--zy-surface)!important;padding:7px 11px!important;font-size:11px!important;}.zy-secondary:hover{border-color:var(--zy-accent)!important;color:var(--zy-accent)!important;}
-.zy-quiet-footer {font-size:10px;text-align:center;color:var(--zy-muted);padding-top:32px;letter-spacing:.4px;}.zy-card{border:1px solid var(--zy-line);border-radius:10px;background:var(--zy-surface);}.zy-empty{min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:48px 28px;text-align:center;}.zy-empty-icon{width:68px;height:68px;display:grid;place-items:center;border-radius:20px;background:var(--zy-sidebar);color:var(--zy-accent);margin-bottom:20px;}.zy-empty h3{font-size:16px;font-weight:500;margin:0 0 9px;}.zy-empty p{font-size:12px;color:var(--zy-secondary);max-width:350px;margin:0;line-height:1.9;}
+.zy-quiet-footer {font-size:11px;text-align:center;color:var(--zy-muted);padding-top:32px;letter-spacing:.4px;}.zy-card{border:1px solid var(--zy-line);border-radius:10px;background:var(--zy-surface);}.zy-empty{min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:48px 28px;text-align:center;}.zy-empty-icon{width:68px;height:68px;display:grid;place-items:center;border-radius:20px;background:var(--zy-sidebar);color:var(--zy-accent);margin-bottom:20px;}.zy-empty h3{font-size:16px;font-weight:500;margin:0 0 9px;}.zy-empty p{font-size:12px;color:var(--zy-secondary);max-width:350px;margin:0;line-height:1.9;}
 .zy-inline-note {display:flex;align-items:center;gap:12px;color:var(--zy-secondary);margin-top:23px;font-size:11px;}.zy-inline-note p{flex:1;}.zy-tabs{display:flex;gap:25px;border-bottom:1px solid var(--zy-line);margin-bottom:22px;}.zy-tabs button{padding:10px 3px 12px;color:var(--zy-secondary);position:relative;}.zy-tabs button[aria-selected=true]{color:var(--zy-accent);font-weight:600;}.zy-tabs button[aria-selected=true]:after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--zy-accent);}
-.zy-person-card{display:flex;align-items:center;gap:17px;border-bottom:1px solid var(--zy-line);padding:10px 0 30px;margin-bottom:32px;}.zy-person-card h2{font-size:17px;font-weight:500;margin:0 0 4px;}.zy-person-card p{color:var(--zy-secondary);margin:0;font-size:11px;}.zy-tag{margin-left:auto;color:var(--zy-accent);font-size:10px;background:var(--zy-soft);padding:4px 9px;border-radius:5px;}.zy-preferences{padding:0 22px;}.zy-preferences>div{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:21px 0;}.zy-preferences>div+div{border-top:1px solid var(--zy-line);}.zy-preferences strong{display:block;font-size:12px;font-weight:500;}.zy-preferences small{display:block;color:var(--zy-secondary);font-size:10px;margin-top:5px;}.zy-stat-empty{display:flex;align-items:center;gap:12px;color:var(--zy-muted);padding:17px 22px;margin-top:22px;font-size:11px;}
-.zy-search-dialog{border:1px solid var(--zy-line);border-radius:12px;width:min(520px,calc(100vw - 32px));background:var(--zy-surface);padding:0;margin:15vh auto auto;box-shadow:0 20px 70px #0002;}.zy-search-dialog::backdrop{background:#15281f55;backdrop-filter:blur(3px);}.zy-search-input{padding:17px 20px;display:flex;gap:13px;align-items:center;border-bottom:1px solid var(--zy-line);}.zy-search-input input{border:0;outline:0;min-width:0;flex:1;background:transparent;color:var(--zy-text);font:inherit;}.zy-search-input kbd{font:10px inherit;border:1px solid var(--zy-line);border-radius:4px;padding:2px 5px;}.zy-search-results{padding:9px;}.zy-search-results>button{display:flex;align-items:center;gap:15px;width:100%;text-align:left;padding:11px;border-radius:7px;}.zy-search-results>button:hover{background:var(--zy-hover);}.zy-search-results>button>span{flex:1;}.zy-search-results small{display:block;font-size:10px;color:var(--zy-secondary);margin-top:3px;}.zy-search-results>p{color:var(--zy-muted);padding:25px;text-align:center;}.zy-hero-brand{display:flex;align-items:center;justify-content:center;gap:14px;}.zy-hero-brand>span:last-child{font-size:25px;font-weight:500;}.zy-hero-brand small{display:block;font-size:12px;color:var(--zy-secondary);margin-top:3px;}
+.zy-person-card{display:flex;align-items:center;gap:17px;border-bottom:1px solid var(--zy-line);padding:10px 0 30px;margin-bottom:32px;}.zy-person-card h2{font-size:17px;font-weight:500;margin:0 0 4px;}.zy-person-card p{color:var(--zy-secondary);margin:0;font-size:11px;}.zy-tag{margin-left:auto;color:var(--zy-accent);font-size:11px;background:var(--zy-soft);padding:4px 9px;border-radius:5px;}.zy-preferences{padding:0 22px;}.zy-preferences>div{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:21px 0;}.zy-preferences>div+div{border-top:1px solid var(--zy-line);}.zy-preferences strong{display:block;font-size:12px;font-weight:500;}.zy-preferences small{display:block;color:var(--zy-secondary);font-size:11px;margin-top:5px;}.zy-stat-empty{display:flex;align-items:center;gap:12px;color:var(--zy-muted);padding:17px 22px;margin-top:22px;font-size:11px;}
+.zy-search-dialog{border:1px solid var(--zy-line);border-radius:12px;width:min(520px,calc(100vw - 32px));background:var(--zy-surface);padding:0;margin:15vh auto auto;box-shadow:0 20px 70px #0002;}.zy-search-dialog::backdrop{background:#15281f55;backdrop-filter:blur(3px);}.zy-search-input{padding:17px 20px;display:flex;gap:13px;align-items:center;border-bottom:1px solid var(--zy-line);}.zy-search-input input{border:0;outline:0;min-width:0;flex:1;background:transparent;color:var(--zy-text);font:inherit;}.zy-search-input kbd{font:11px inherit;border:1px solid var(--zy-line);border-radius:4px;padding:2px 5px;}.zy-search-results{padding:9px;}.zy-search-results>button{display:flex;align-items:center;gap:15px;width:100%;text-align:left;padding:11px;border-radius:7px;}.zy-search-results>button:hover{background:var(--zy-hover);}.zy-search-results>button>span{flex:1;}.zy-search-results small{display:block;font-size:11px;color:var(--zy-secondary);margin-top:3px;}.zy-search-results>p{color:var(--zy-muted);padding:25px;text-align:center;}.zy-hero-brand{display:flex;align-items:center;justify-content:center;gap:14px;}.zy-hero-brand>span:last-child{font-size:25px;font-weight:500;}.zy-hero-brand small{display:block;font-size:12px;color:var(--zy-secondary);margin-top:3px;}
 @media(max-width:1050px){.zy-content{padding:32px 28px;}.zy-agenda-grid{gap:14px;}.zy-empty-row{padding:16px 12px;}}
-@media(max-width:650px){.zy-content{padding:25px 19px;}.zy-intro h1{font-size:24px;}.zy-agenda-grid{grid-template-columns:1fr;gap:0;margin-bottom:20px;}.zy-resume{flex-wrap:wrap;padding:17px;}.zy-resume>.zy-secondary{margin-left:61px;}.zy-now{padding:18px;}.zy-person-card{flex-wrap:wrap;}.zy-tag{margin-left:0;}.zy-preferences{padding:0 15px;}.zy-intro>svg,.zy-date-icon{display:none;}}
+@media(max-width:650px){.zy-content{padding:25px 19px;}.zy-intro h1{font-size:21px;}.zy-agenda-grid{grid-template-columns:1fr;gap:0;margin-bottom:20px;}.zy-resume{flex-wrap:wrap;padding:17px;}.zy-resume>.zy-secondary{margin-left:61px;}.zy-now{padding:18px;}.zy-person-card{flex-wrap:wrap;}.zy-tag{margin-left:0;}.zy-preferences{padding:0 15px;}.zy-intro>svg,.zy-date-icon{display:none;}}
 @media(prefers-reduced-motion:no-preference){.zy-content{animation:zy-enter 180ms ease-out;}@keyframes zy-enter{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}}
 
 /* Personal owns the visible settings surface; native modal portals remain

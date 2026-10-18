@@ -70,12 +70,12 @@ test('readPlane：包内的子 fiber 归到同一个包，硬边才认得出来'
   const read = readPlane({
     entries: [
       { options: { name: 'dsh-zhiyun-study-core' }, fiber: coreFiber },
-      { options: { name: 'dsh-zhiyun-page-courses' }, fiber: pageFiber },
+      { options: { name: 'dsh-zhiyun-page-study' }, fiber: pageFiber },
     ],
     runtimes: [{ fibers: [coreFiber, pageFiber, childFiber] }],
     store,
   });
-  const page = read.rows.find(row => row.name === 'dsh-zhiyun-page-courses');
+  const page = read.rows.find(row => row.name === 'dsh-zhiyun-page-study');
   assert.deepEqual(page.requires, ['slots', 'zhiyunStudyController'], '子 fiber 的 inject 要算到包上');
   assert.deepEqual(page.unresolved, ['slots'], 'store 里没有的才是「等待依赖」');
   assert.equal(read.providers.get('zhiyunStudyController'), 'dsh-zhiyun-study-core');

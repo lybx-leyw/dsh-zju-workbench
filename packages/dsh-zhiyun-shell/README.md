@@ -2,7 +2,12 @@
 
 智云 Pro 的界面外壳插件：侧栏、页框架、主题层、导航服务与插槽契约。当前验证宿主为 `0.2.0-rc.2`。宿主提供 React 和全部 DSH 客户端服务；不要再打包一份 React。
 
-外壳**不认识任何具体页面**：它声明 `NAV` 里每个页面（除「问一问」是宿主原生会话）的面板骨架和内容插槽，页面由各自的插件包填充（`dsh-zhiyun-page-today / -courses / -paper / -study / -me / -plugins`）。内容插槽按 `NAV` 的条目逐个注册：加一项导航就自动多一个 `zhiyun.<id>.content`。页面包没装时页面显示「暂时不可用」占位，外壳照常工作。
+外壳**不认识任何具体页面**：它声明 `NAV` 里每个页面（除「问一问」是宿主原生会话）的面板骨架和内容插槽，页面由各自的插件包填充（`dsh-zhiyun-page-today / -paper / -study / -me / -plugins / -feedback`）。内容插槽按 `NAV` 的条目逐个注册：加一项导航就自动多一个 `zhiyun.<id>.content`。页面包没装时页面显示「暂时不可用」占位，外壳照常工作。
+
+> **课程与回放只有一页**：`courses`（我的课）与 `player`（看课）曾经是独立的两页，
+> 现已并入 `study`（学习）—— 课程目录是它的左栏、回放是正文区的一栏、整理是其余几栏。
+> 导航因此只剩 `study` 一个入口，`dsh-zhiyun-page-courses` / `-player` 两个包已删除
+> （列在 `scripts/profile.mjs` 的 `retiredBundles` 里，老 profile 会在初始化时被清掉）。
 
 构建：在仓库根运行 `npm run build`。本地 profile 通过目录链接加载 `lib/`，修改源文件后需重新构建，DSH 的客户端更新机制会更新页面。
 
@@ -13,9 +18,8 @@
 | 插槽 | 内容位置 |
 | --- | --- |
 | `zhiyun.today.content` | 今天页正文 |
-| `zhiyun.courses.content` | 我的课页正文 |
 | `zhiyun.paper.content` | 论文阅读页正文 |
-| `zhiyun.study.content` | 学习页正文 |
+| `zhiyun.study.content` | 学习页正文（课程目录 + 回放 + 整理，全在这一页） |
 | `zhiyun.me.content` | 个人页正文 |
 | `zhiyun.plugins.content` | 插件依赖页正文 |
 | `zhiyun.feedback.content` | 反馈页正文 |
@@ -43,12 +47,12 @@ export function apply(ctx) {
   );
 }
 
-// 还要领域状态（我的课 / 学习 / 个人）：先等 controller 到位，再注册插槽
+// 还要领域状态（学习 / 个人）：先等 controller 到位，再注册插槽
 export function apply(ctx) {
   ctx.inject(['zhiyunStudyController'], (scope) => {
-    scope.slots.inject('zhiyun.courses.content', () =>
-      scope.slots.register({ name: 'zhiyun.courses.content', priority: 10 },
-        () => <CoursesPage controller={scope.zhiyunStudyController} />)
+    scope.slots.inject('zhiyun.study.content', () =>
+      scope.slots.register({ name: 'zhiyun.study.content', priority: 10 },
+        () => <StudyPage controller={scope.zhiyunStudyController} />)
     );
   });
 }
@@ -56,7 +60,7 @@ export function apply(ctx) {
 
 页面组件同时从渲染参数里拿到外壳注入的 `controller`（`navigate / toggleSidebar / toggleTheme`）和 `renderSlot`。`ctx.slots.inject` 在声明已存在时立即执行，声明后到也会补执行，外壳卸载时贡献随之撤销（连同 `ctx.inject` 的作用域一起）。
 
-`controller.navigate(id)` 支持 `today / courses / paper / ask / study / me / plugins / feedback`，`ask` 进入现有 DSH 会话。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。
+`controller.navigate(id)` 支持 `today / paper / ask / study / me / plugins / feedback`，`ask` 进入现有 DSH 会话。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。
 
 ## 取消一页之后
 
