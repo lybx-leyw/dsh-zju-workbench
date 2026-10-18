@@ -49,6 +49,7 @@ import { createContext } from './core/context.ts';
 import { createRuntime, PLATFORM_LABELS } from './platforms/index.ts';
 import { authForget, authLogin, authStatus } from './auth/actions.ts';
 import { safeError } from './core/errors.ts';
+import * as cookiesModule from './core/cookies.ts';
 
 export const name = 'zhiyun-omni';
 
@@ -86,6 +87,41 @@ export async function apply(ctx, config = {}) {
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
+
+  /**
+   * 宿主凭据服务的读取器。
+   *
+   * 记录键是 `zhiyun-classroom/account` —— **写入方是课堂包**，因为「登录课堂」
+   * 才是用户提供浙大账号的那个时刻。本包只读，不写：一个数据包不该替用户保存密码。
+   *
+   * @returns 读取器；宿主没装凭据服务时 null（退回本包自己的 DPAPI）。
+   */
+  const hostCredentials = () => ({
+    /**
+     * 每次调用**现取**凭据服务，不在 apply 时缓存。
+     *
+     * ⚠️ 这是踩过的坑：本包在 profile 里排在 `dsh-zhiyun-classroom` **之前**加载
+     * （omni=5，classroom=7），而 `inject` 只等 `profileContext`。于是 apply 那一刻
+     * `ctx.get('credentials')` 往往还是 undefined —— 把它缓存成 null 之后，即使
+     * 用户后来登录了课堂、凭据已经写进 `.credentials.yaml`，本包也永远读不到，
+     * 表现为「明明登录了却一直说未配置」。
+     */
+    async readAccount() {
+      const service = ctx.get?.('credentials');
+      if (!service || typeof service.readRecord !== 'function') return null;
+      try {
+        const record = await service.readRecord('zhiyun-classroom/account');
+        if (!record || record.kind !== 'grant') return null;
+        const { username, password } = record.payload ?? {};
+        if (typeof username !== 'string' || !username) return null;
+        if (typeof password !== 'string' || !password) return null;
+        return { username, password };
+      } catch {
+        // 凭据存储读坏不该让数据包起不来，退回本包后端即可
+        return null;
+      }
+    },
+  });
   const warn = (message) => {
     const line = `[zhiyun-omni] ${message}`;
     if (typeof ctx.logger?.warn === 'function') ctx.logger.warn(line);
@@ -107,7 +143,13 @@ export async function apply(ctx, config = {}) {
   let auth = null;
   try {
     const cfg = loadConfig(env);
-    runtime = createRuntime(createContext(cfg, { env }));
+    runtime = createRuntime(createContext(cfg, {
+      env,
+      // 从**宿主凭据服务**读浙大账号。写入方是 `dsh-zhiyun-classroom`（用户
+      // 在「个人」页登录时写）。同一个账号因此只需要登录一次，规划页的学在浙大
+      // 待办就能直接读到，不必再去终端跑 configure。
+      hostCredentials: hostCredentials(),
+    }));
     auth = { authStatus, authLogin, authForget };
     status.platforms = [...cfg.platforms];
     status.dataDir = cfg.dataDir;
@@ -165,7 +207,22 @@ export async function apply(ctx, config = {}) {
     if (typeof reader[fn] !== 'function' || !Object.prototype.hasOwnProperty.call(Object.getPrototypeOf(reader), fn)) {
       throw new Error(`未知数据方法：${method}`);
     }
-    return await reader[fn]({ ...(args ?? {}), signal });
+    const call = () => reader[fn]({ ...(args ?? {}), signal });
+
+    /**
+     * **必须包在会话里**（`withSession`）。
+     *
+     * 读取器内部调 `client.json()` → `this.http()`，而 `http()` 从 AsyncLocalStorage
+     * 取当前会话，取不到就抛「平台请求必须在会话内执行」。上游把每个读取方法都包在
+     * `withSession(fn)` 里；移植时删掉工具层后这层包装的调用点一并丢了 ——
+     * 表现为**所有平台读取都失败**，而错误信息看起来像配置问题，极难归因。
+     *
+     * 拼题A 不走 CAS，它用 Cookie，会话由 `importCookie` 直接写好，所以单独放行。
+     */
+    const client = runtime[platform]?.client;
+    if (platform === 'pta' || typeof client?.withSession !== 'function') return await call();
+    // 读操作 readOnly=true：拼题A 之外这些平台都是只读取数，不做 preflight，避免多发一次请求
+    return await client.withSession(call, { readOnly: true });
   }
 
   /** 认证类动作：与数据方法同一条通道，但走 auth/*。 */
@@ -213,6 +270,48 @@ export async function apply(ctx, config = {}) {
     }, 'zhiyun: omni data route');
   });
 
+  /**
+   * 拼题A 的**客户端级**动作。
+   *
+   * `invoke()` 只暴露读取器（reader）上的方法，因为那才是「数据方法」。但拼题A 有两件
+   * 事不属于读取：`status()`（我这配了没）与 `importCookie()`（存一份 Cookie）。
+   * 它们挂在上游的 `PtaClient` 上，不在 reader 上 —— 用 `invoke('pta.status')` 会得到
+   * 「未知数据方法」。这里是给宿主侧（规划页）用的窄口子，只放这两个动作。
+   */
+  async function ptaAction(action, args = {}) {
+    const client = runtime?.pta?.client;
+    if (!client) throw new Error('拼题A 未启用（检查 ZJU_PLATFORMS）');
+    if (action === 'status') return await client.status();
+    if (action === 'importCookie') {
+      const input = typeof args.input === 'string' ? args.input.trim() : '';
+      if (!input) throw new Error('没有收到 Cookie 内容');
+      return await client.importCookie(input);
+    }
+    throw new Error(`未知拼题A 动作：${String(action)}`);
+  }
+
+  /**
+   * 注入 SSO 票根，供**复用已有登录态**的调用方使用（如规划页的会话桥接）。
+   *
+   * 背景：用户在工作台登录课堂后，`dsh-zhiyun-classroom` 已经握有 CAS 票根，而 omni
+   * 有自己的一套凭据。把票根交给 omni 后，`casLogin` 能**不提交密码**就换出本平台的
+   * 会话 —— 这是「用户已登录却被告知去终端配置账号」这个问题的正解。
+   *
+   * 只接受 `StoredCookie` 数组（`{name, value, domain, path, ...}`），不接受 Cookie 串：
+   * 调用方必须已经解析过，本函数不做格式猜测。
+   *
+   * @param cookies - 票根数组。
+   * @returns 实际接受的条数（`rememberSso` 只保留 zju 域的）。
+   */
+  function rememberSso(cookies) {
+    if (!runtime) throw new Error(`数据源不可用：${status.error?.message ?? '初始化失败'}`);
+    if (!Array.isArray(cookies) || cookies.length === 0) throw new Error('没有收到 SSO cookie');
+    const { CookieJar } = cookiesModule;
+    const jar = CookieJar.from(cookies);
+    runtime.ctx.network.rememberSso(jar);
+    return jar.list().length;
+  }
+
   const removeService = ctx.provide('zhiyunOmni', {
     routePath,
     dataDir,
@@ -220,7 +319,21 @@ export async function apply(ctx, config = {}) {
     runtime: () => runtime,
     describe,
     invoke,
+    pta: ptaAction,
     auth: authAction,
+    /**
+     * 立即登录某个平台。
+     *
+     * 单独暴露（而不是让调用方拼 `auth('login')`）是因为会话桥接要的语义很明确：
+     * 「我给了票根，你去换会话」。authLogin 内部会走 withSession 与自动重登。
+     *
+     * @param platform - 平台 id，默认 xzzd。
+     */
+    login: async (platform = 'xzzd') => {
+      if (!runtime || !auth) throw new Error('数据源不可用（认证模块未初始化）');
+      return await auth.authLogin(runtime, platform);
+    },
+    rememberSso,
     status: () => status,
   });
 
