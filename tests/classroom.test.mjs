@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { ClassroomSource, SessionStore, Transport } from '../packages/dsh-zhiyun-classroom/src/source.js';
-import { rsaEncrypt, executionToken, nextLocation } from '../packages/dsh-zhiyun-classroom/src/auth.js';
+import { authenticate, inspectJwt, jwtFromTokenCookie, rsaEncrypt, executionToken, nextLocation } from '../packages/dsh-zhiyun-classroom/src/auth.js';
 import * as models from '../packages/dsh-zhiyun-classroom/src/models.js';
 import { apply } from '../packages/dsh-zhiyun-classroom/src/index.js';
 
@@ -160,3 +160,103 @@ test('Cordis registers an independent service without logging in and cancels it 
   dispose = await apply({ profileContext: { dir: path.join(tmpdir(), `zhiyun-plugin-${Date.now()}`) }, provide: (key, value) => { assert.equal(key, 'zhiyunClassroom'); service = value; } });
   assert.equal(await service.getCurrentUser(), null); await dispose(); assert.equal(service.transport.closed, true);
 });
+// oauth 入口与 cas 入口共用 CAS 表单，但起点与表单之后的续跑不同：casapi 会先跳
+// oauth2.0/authorize 拿授权码，回调再在 _token cookie 里写入 JWT，最后 302 classroom。
+// 这个测试固定住这条链，也固定住「_token 必须真的落进 jar」这个契约。
+test('oauth entry walks casapi → authorize → CAS form → _token → classroom and keeps the token cookie', async () => {
+  const events = [], seen = {};
+  const ds = source(async (url, options) => {
+    const target = new URL(url);
+    const post = options.method === 'POST';
+    events.push(`${target.hostname}${target.pathname}${post ? ' POST' : ''}`);
+    // 回调分支必须排在 casapi 通用分支前，否则回调会被当成「又一次入口」。
+    if (target.pathname === '/casapi/index.php' && target.searchParams.get('r') === 'auth/callback') {
+      // Yii 的 _token 是 URL 编码的签名包裹，JWT 只是里面的一段。
+      const jwt = ['eyJhbGciOiJIUzI1NiJ9', Buffer.from(JSON.stringify({ sub: '112' })).toString('base64url'), 'sig'].join('.');
+      return new Response('', { status: 302, headers: {
+        'Set-Cookie': `_token=${encodeURIComponent(`{"_csrf":"x"}${jwt}`)}; Domain=cmc.zju.edu.cn; Path=/; Secure`,
+        location: 'https://classroom.zju.edu.cn/' } });
+    }
+    // 起点必须带上 forward 与 tenant_code，否则服务端不会把我们送进 classroom 的授权链。
+    if (target.pathname === '/casapi/index.php') {
+      seen.start = { tenant: target.searchParams.get('tenant_code'), forward: target.searchParams.get('forward') };
+      return new Response('', { status: 302, headers: { location: 'https://zjuam.zju.edu.cn/cas/oauth2.0/authorize?client_id=tgmedia' } });
+    }
+    if (target.pathname === '/cas/oauth2.0/authorize') return new Response('', { status: 302, headers: { location: 'https://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fyjapi.cmc.zju.edu.cn%2Fcasapi%2Findex.php%3Fr%3Dcallback' } });
+    if (target.pathname === '/cas/v2/getPubKey') return json({ modulus: '10001', exponent: '3' });
+    if (target.pathname === '/cas/login' && post) {
+      seen.form = { execution: options.body.get('execution'), event: options.body.get('_eventId'), password: options.body.get('password'),
+        // 表单必须回投到带 service 的登录页，丢了 service CAS 不会回调。
+        service: target.searchParams.get('service') };
+      return new Response('', { status: 302, headers: {
+        'Set-Cookie': 'iPlanetDirectoryPro=sso; Domain=zju.edu.cn; Path=/; Secure',
+        location: 'https://yjapi.cmc.zju.edu.cn/casapi/index.php?r=auth%2Fcallback&code=ST-1' } });
+    }
+    if (target.pathname === '/cas/login') return new Response('<input name="execution" value="oauth-token">');
+    if (target.hostname === 'education.cmc.zju.edu.cn') return json({ params: { result: { total: 1, data: [course(1)] } } });
+    return new Response('classroom');
+  });
+  await authenticate(ds.transport, { username: 'mock-user', password: 'mock-password' }, { entry: 'oauth' });
+  assert.deepEqual(seen.start, { tenant: '112', forward: 'https://classroom.zju.edu.cn/' });
+  assert.equal(seen.form.execution, 'oauth-token');
+  assert.equal(seen.form.event, 'submit');
+  assert.equal(seen.form.password.length, 128);
+  assert.equal(seen.form.service, 'https://yjapi.cmc.zju.edu.cn/casapi/index.php?r=callback');
+  // 链路顺序：casapi 起点 → authorize → 表单页 → getPubKey → POST → 回调。
+  assert.deepEqual(events.slice(0, 6), [
+    'yjapi.cmc.zju.edu.cn/casapi/index.php', 'zjuam.zju.edu.cn/cas/oauth2.0/authorize', 'zjuam.zju.edu.cn/cas/login',
+    'zjuam.zju.edu.cn/cas/v2/getPubKey', 'zjuam.zju.edu.cn/cas/login POST', 'yjapi.cmc.zju.edu.cn/casapi/index.php']);
+  assert.equal(events.at(-1), 'classroom.zju.edu.cn/');
+  const jar = await ds.transport.session.jar.getCookies('https://yjapi.cmc.zju.edu.cn/');
+  const token = jar.find(c => c.key === '_token');
+  assert.ok(token, '_token 必须落进 jar');
+  assert.match(jwtFromTokenCookie(jar), /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/);
+  await ds.logout();
+  // 默认入口仍是既有 CAS 直连，不受新增入口影响：不传 entry 时不会碰 casapi。
+  let sawCasapi = false;
+  const direct = source(url => {
+    const target = new URL(url);
+    if (target.hostname === 'yjapi.cmc.zju.edu.cn') sawCasapi = true;
+    if (target.pathname === '/cas/v2/getPubKey') return json({ modulus: '10001', exponent: '3' });
+    return new Response('<input name="execution" value="t">');
+  });
+  await assert.rejects(direct.login({ username: 'mock-user', password: 'mock-password' }), { code: 'AUTH_REJECTED' });
+  assert.equal(sawCasapi, false);
+});
+test('jwtFromTokenCookie extracts the JWT from a Yii signature wrapper and returns null when absent', () => {
+  const payload = Buffer.from(JSON.stringify({ sub: '112', exp: 2000000000 })).toString('base64url');
+  const jwt = `eyJhbGciOiJIUzI1NiJ9.${payload}.c2ln-xxx_yyy`;
+  // Cookie 头字符串，值是 URL 编码的 Yii 签名包裹 {"...JWT..."}。
+  const header = `_token=${encodeURIComponent(`{"_csrf":"abc","jwt":"${jwt}"}`)}; JWTUser=%7B%22sub%22%3A%221%22%7D`;
+  assert.equal(jwtFromTokenCookie(header), jwt);
+  // 已解码的形态也要能抠出来（服务端不总是编码两次）。
+  assert.equal(jwtFromTokenCookie(`_token={"sig":"deadbeef"}${jwt}`), jwt);
+  // tough-cookie 的 Cookie 数组与浏览器侧 {name,value} 数组都应支持。
+  assert.equal(jwtFromTokenCookie([{ key: 'JWTUser', value: 'x' }, { key: '_token', value: encodeURIComponent(`{"a":1}${jwt}`) }]), jwt);
+  assert.equal(jwtFromTokenCookie([{ name: '_token', value: encodeURIComponent(`{"a":1}${jwt}`) }]), jwt);
+  // 各种取不到的形状一律 null，不抛错。
+  for (const missing of [null, undefined, '', 'JWTUser=abc', '_token=; Path=/', '_token=%7B%22a%22%3A1%7D', [], [{ key: 'other', value: 'x' }], {}])
+    assert.equal(jwtFromTokenCookie(missing), null);
+});
+test('inspectJwt reports expiry and malformed payloads without verifying signatures', () => {
+  assert.deepEqual(inspectJwt(''), { present: false, exp: null, expiresAt: null, expired: null, malformed: false });
+  assert.deepEqual(inspectJwt(undefined), { present: false, exp: null, expiresAt: null, expired: null, malformed: false });
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const encode = payload => Buffer.from(JSON.stringify(payload)).toString('base64url');
+  // 过期 token：exp 早于当前时间，签名段随意写，本函数不看签名。
+  const stale = inspectJwt(`${header}.${encode({ sub: '1', exp: 1000000000 })}.sig`);
+  assert.equal(stale.present, true); assert.equal(stale.expired, true); assert.equal(stale.malformed, false);
+  assert.equal(stale.exp, 1000000000); assert.equal(stale.expiresAt, '2001-09-09T01:46:40.000Z');
+  // 未来 token：exp 远大于当前时间。
+  const fresh = inspectJwt(`${header}.${encode({ exp: 4000000000 })}.sig`);
+  assert.equal(fresh.expired, false); assert.equal(fresh.expiresAt, '2096-10-02T07:06:40.000Z');
+  // 没有 exp 的合法 JWT：只是「不知道何时过期」，不判畸形，也不冒充未过期。
+  const noExp = inspectJwt(`${header}.${encode({ sub: '1' })}.sig`);
+  assert.equal(noExp.present, true); assert.equal(noExp.malformed, false); assert.equal(noExp.expired, null);
+  // 畸形：段数不对、payload 不是 base64url、payload 不是 JSON 对象。
+  for (const bad of ['not-a-jwt', 'a.b', `${header}.!!!not-base64!!!.sig`, `${header}.${Buffer.from('plain').toString('base64url')}.sig`, `${header}.${Buffer.from('[1,2]').toString('base64url')}.sig`]) {
+    const actual = inspectJwt(bad);
+    assert.equal(actual.present, true); assert.equal(actual.malformed, true); assert.equal(actual.expired, null);
+  }
+});
+

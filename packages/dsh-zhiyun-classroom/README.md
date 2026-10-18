@@ -37,6 +37,28 @@ try {
 | `downloadSlides(courseId,subId,{directory,concurrency=6,signal,onProgress})` | 图片下载结果逐页汇总，最多 8 并发 |
 | `dispose()` | 取消请求、关闭客户端、等待会话写入 |
 
+## 直播（`source.live`）
+
+直播与回放是两条不相交的通路，所以是独立的 `LiveSource`（`source.live`），但**共用同一个 transport** —— 同一次登录不该存在第二份 cookie。
+
+| 方法 | 结果 |
+| --- | --- |
+| `listCurrent({signal,now})` | 此刻在播的课（今天 + 当前时段）；课间返回空列表 |
+| `listLiveDay(date,{signal})` | 某天全天直播课；单时段失败标 `partial-quantum`，全失败才抛 |
+| `resolveStreams(courseId,subId,{signal})` | `{streams,dropped,source}`；机位 key 为 teacher/screen/student/extra |
+
+三处与回放**不同**、写错就会静默失败的地方：
+
+1. **要 `Authorization: Bearer <JWT>`**，不是 cookie。直播网关每条请求都要这个头，缺了的表现是「今天没有课」而不是报错。JWT 从登录后的 `_token` cookie 里取，取不到就**不带**这个头（让上游如实拒绝，而不是编一个空 Bearer 把真实原因盖成 401）。
+2. **`search_time` 要不补零**（`2026-6-3`）。补零会被上游当成空日期。
+3. **`quantum_id` 分片**：传 0 是「探路」拿时段表，不是某个时段。上游没有全天聚合接口。
+
+不可播放的流（`webrtc`/`mp4`/图片）进 `dropped` 而不是静默丢弃 —— 北教部分教室只给 `webrtc://`，直接 return 会让那个机位在界面上凭空消失。
+
+浏览器里播直播**必须**经过本机转发（`/zhiyun-live`，见 `src/stream.js`）：CDN 校验 Referer、m3u8 里的分片是相对地址且带鉴权参数、以及跨域。转发层只做「拉取 + 改写 + 转发」，白名单是 `*.zju.edu.cn` 且仅 https，日志不含 query（那是签名）。
+
+登录支持两个入口：`entry:'cas'`（默认，`tgmedia` 直连）与 `entry:'oauth'`（`yjapi/casapi` 授权码）。后者多一条取 JWT 的路径，`_token` cookie 里藏的就是它。`inspectJwt()` 只解析 payload、**不校验签名**，仅用于「会话还剩多久」这类展示。
+
 列表结果统一 `{items, meta}`。`meta.complete` 为 true/false/null，分别代表已收全、部分结果、完整性尚未确认；`reason` 给出 total/empty-page/repeated-page/page-limit 等停止原因。不能在 UI 中把 false/null 默认为全部内容。`version` 是此响应规范化字段的快照摘要，包含资源地址，后续同步应另外设计语义内容版本。
 
 ID 规范化为字符串；节次保留 Dart 的 `courseId_subId`，另有带来源的 `sourceId`。字幕使用毫秒，PPT 的 createdSec 与课表 startAt/endAt 保留秒，同时提供毫秒字段；视频同时保留纳秒与毫秒时长。课表日期原样保留为 YYYY-MM-DD。PPT 同图不同时间保留为独立事件，避免丢失三流融合锚点。
@@ -51,6 +73,7 @@ Windows 持久化会话使用当前用户 DPAPI；未提供 sessionFile 时仅�
 
 ```powershell
 npm run test:classroom
+node tests/classroom-live.test.mjs
 npm run classroom:verify -- --live --credentials-file <本机凭据文件> --start 2026-10-05 --end 2026-10-11
 npm run classroom:verify -- --live --probe-resources --logout-at-end
 npm run classroom:parity

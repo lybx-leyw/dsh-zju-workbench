@@ -2,13 +2,15 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { Transport } from './transport.js';
 import { SessionStore } from './session.js';
-import { authenticate } from './auth.js';
+import { authenticate, inspectJwt, jwtFromTokenCookie } from './auth.js';
+import { LiveSource } from './live.js';
 import { ClassroomError, array, object, shape } from './errors.js';
 import * as models from './models.js';
 import { download } from './download.js';
 export { ClassroomError } from './errors.js';
 export { SessionStore } from './session.js';
 export { Transport } from './transport.js';
+export { LiveSource } from './live.js';
 
 export const ENDPOINTS = Object.freeze({
   courses: 'https://education.cmc.zju.edu.cn/personal/courseapi/vlabpassportapi/v1/account-profile/course',
@@ -40,6 +42,9 @@ export class ClassroomSource {
   constructor({ transport, sessionFile, protect, fetch, log, timeoutMs, maxPages = 20, pageSize = 100 } = {}) {
     if (!Number.isInteger(maxPages) || maxPages < 1 || !Number.isInteger(pageSize) || pageSize < 1) throw new TypeError('分页限制须为正整数');
     this.transport = transport ?? new Transport({ session: new SessionStore({ file: sessionFile, protect }), fetch, log, timeoutMs });
+    // 直播与回放共用同一次登录（同一个 transport），但各自成类：
+    // 回放回答「已完成的那节课有什么」，直播回答「此刻在播什么」，语义不该混。
+    this.live = new LiveSource({ transport: this.transport });
     this.maxPages = maxPages; this.pageSize = pageSize; this.ready = this.transport.session.load();
   }
   async restoreSession(options = {}) {
