@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-upstream-radar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版挂载上游 upstream-radar@0.45.0，在「插件」页依赖图上补「下次启动还能不能被加载」的兼容列，判定证据来自隔离环境的真装真跑（而非静态读 peer 范围）——把现有页的「横向拓扑」补成「纵向可用性」（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "upstream-radar": "0.45.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

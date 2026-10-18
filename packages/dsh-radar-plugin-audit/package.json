@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-plugin-audit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版挂载上游 dsh-plugin-audit，为「插件」页现有依赖图加一列静态权限画像（可触达的文件/进程/主机/凭据），把「我可以关掉它」补成「我该不该关掉它」（强化式集成）",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dependencies": {
+    "dsh-plugin-audit": "0.1.4"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

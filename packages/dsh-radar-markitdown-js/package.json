@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-markitdown-js",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入上游 markitdown-js，为笔记页 / 论文页的导入通路补上「文档 → Markdown」格式转换底层（强化式集成）",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dependencies": {
+    "markitdown-js": "0.0.14"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

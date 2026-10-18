@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-plugin-score",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile】锁版挂载上游 dsh-score，为「插件」页增强插件质量评分维度（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@perrylink/dsh-score": "0.0.0-TODO-锁版待定"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-tool-plus",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版挂载上游 @xiaoso/dsh-tool-plus 0.1.14，把「今天」页的终端分页换成持久 shell + 结构化文件工具集（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@xiaoso/dsh-tool-plus": "0.1.14"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
