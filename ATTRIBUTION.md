@@ -30,6 +30,8 @@
 - [dsh-tool-plus](https://github.com/xiaoso456/dsh-tool-plus) · **MIT** · 版本 `0.1.14`（精确锁定，见 `packages/dsh-radar-tool-plus/src/upstream.js`）。基础工具增强：持久 bash 会话、输出最小化、后台作业托管、结构化 read/多模式 edit/原子 write、grep/glob。候选骨架拟把它锁版挂载，替换「今天」页终端分页的执行器 —— 本仓终端每次调用都是新 shell，`cd`/`export` 全丢，冗长输出直灌上下文。**未复制其源码**，骨架内只有占位与 TODO。⚠ **不拟整包套用上游 patch**：上游 `cordis.patch.yml` 会停用 `tool-bash`/`tool-pwsh`/`tool-fs`/`tool-fs-search` 四行官方工具，且其执行器不设沙箱参数，与本仓权限治理冲突（见骨架 TODO-1/TODO-2）。其内核为 [oh-my-pi](https://github.com/can1357/oh-my-pi)（can1357，**MIT**，★35,776），上游已用 `THIRD_PARTY_NOTICES.md` 声明移植范围；`@oh-my-pi/pi-natives` 随包分发上游编译的 Rust 二进制（不可审，建议关掉 hashline 只用纯 JS 编辑模式）。
 - [dsh-session-notebook](https://github.com/timestatic/dsh-session-notebook) · **Apache-2.0** · 版本 `0.1.0`（精确锁定，见 `packages/dsh-radar-session-notebook/src/upstream.js`）。对话笔记插件：会话内划线/引用 → 可搜索、可打标签、可导出的个人知识库，带文本锚定、消息高亮与增量快照恢复。候选骨架拟把它锁版挂载，为「今天」页轨迹与「笔记」页之间补上**「对话 → 笔记」这条断掉的边** —— 本仓笔记域是纯存储，没有锚定、引用、快照。**未复制其源码**，骨架内只有占位与 TODO。⚠ 上游会向 **4 个宿主插槽**注入 UI（全站划线），接入前须先拆宿主/客户端；⚠ npm 包 `license` 字段为空（仓库 LICENSE 为 Apache-2.0，已核）。
 
+- [pinyin-match](https://github.com/xmflswood/pinyin-match) · **MIT** · 版本 `1.2.10`（精确锁定，见 `packages/dsh-radar-pinyin-match/package.json`）。拼音检索库（汉字 / 全拼 / 首字母 / 多音字 / 繁简双字典），`match()` 直接回命中**闭区间**。候选骨架拟把它接到「学习」页（`dsh-zhiyun-page-study`）分层检索的 `findIn()` 底层：本仓自述「只做字面子串、不切词」，实测 `ddj` / `daodejing` / `lisao` 全部 0 命中 —— 中文课「只记得读音」的动作完全落空。**未复制其源码**，骨架内只有占位与 TODO。⚠ 上游**不是无脑更强**：整串拼音切分失败即整体回 `false`，且简体入口对纯繁体文本的拼音查询回 `false` → 必须「字面先行 + 繁体入口懒加载」，验收标准是**命中集合 ⊇ 旧实现**。详见该包 README「已知风险」。
+
 ### 已阅读源码/文档、拟在候选骨架中**仅作能力提取**（不引入依赖）
 
 以下条目由「生态雷达」登记。它们**既不是运行时依赖，也不含任何代码移植** ——

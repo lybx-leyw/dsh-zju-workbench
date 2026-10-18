@@ -1627,3 +1627,26 @@
 | 状态/通知簇：`p2coder/dsh-task-control`★9、`vlln/dsh-task-status`★8、`PickedAshi/DSH_taskbar_status_display_2.0`★6、`ltao0829/dsh-task-notify`★5、`1514100951/dsh-notify-plugins`★2 | A 原生DSH | MIT / BSD-3 / `null` | 通用 | **重复无增益** | ⛔ | rejected | 2026-10-19 | 暂停/恢复/取消、后台状态条、完成通知，宿主已有；`PickedAshi` 无许可证 |
 | 甘特/todo 簇：`xx529/dsh-task-gantt`★2、`liuyuguo99/dsh-task-todo`★1、`Luke-Yong/dsh-plugin-project-management`★1 | A 原生DSH | MIT ✅ | 规划视图 | 重复无增益（前置条件不成立） | ⛔ | rejected | 2026-10-19 | 甘特需预估工期，本仓卡片只有 `due`，无起点可画 |
 | 合集/技能文本：`kouyichi/dsh-plugins`★2、`ZhQkYu/dsh-token-saver-plugins`★1、`seanrobertwright/Deepseek-Archon-Plugin`★1、`tcflying/else-workflow-plugins`、`ZG2017/dsh-plugin-insight-mode`★1、`bauerelizabeth07139/plan-guardian-skill`、`akeno6388/dsh-plugin-kirara-dev`★1、`lanbaolu/dsh-plugin-standard`、`LeslieWylie/dsh-plugin-release`★2、`dreamtao2199/dsh-plugin-handbook`、`Mian-mian-hub/dsh-devrel-toolkit`、`Klukai-416-Clukay/dsh-skill-curator`、`qgd1850890306-rgb/dsh-todo-checklist`★1、`863683348/dsh-plugin-academic-writing`★3、`863683348/dsh-plugin-local-life`、`RavenWangChina/yuanzhu`(AGPL-3.0)、`Twofruitsgrape/dsh-comsol`(Python) | A/— | 混合（2 条 `null`，1 条 AGPL） | — | 无关/不可评估 | ⛔ | rejected | 2026-10-19 | 多插件合集、纯 skill 文本、非 JS 栈或与「规划」无关；`yuanzhu` 为 **AGPL-3.0** 红线 |
+
+## 2026-10-19 · 第二十九轮（A 组派生 · **中文检索底层轴**）
+
+> 同日第 3 轮（00:00 B 组第二十七轮 / 03:10 A 组第二十八轮）。搜索 15 次，上限 10，**⚠ 超限 5 次**；0 次 403。
+> 本轮 `NOASSERTION` 1 条（`bluelovers/ws-segment`，未采用）。**依据：从本仓空洞出发** ——
+> `dsh-zhiyun-page-study/src/layered-search.js` 自述「匹配是字面（不切词、不算相关度）」。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `xmflswood/pinyin-match` | B 其他JS | **MIT** ✅（仓库/元数据/package.json/npm 四源一致） | 笔记 / 讲义检索 | **重复可强化**（学习页检索换底层） | 🟢 | skeleton-created | 2026-10-19 | ★1072，2025-12-07 push，**npm `pinyin-match@1.2.10`**（锁版成立），**零运行时依赖**。汉字/全拼/首字母/多音字/繁简双字典，`match()` 回**闭区间** `[s,e]|false`。实测本仓 `ddj`/`daodejing`/`lisao`/`ls` 全部 0 命中 → 上游可命中。⚠ **简体入口对纯繁体文本的拼音查询回 false**（须繁体入口懒加载）；⚠ 1440 字块 × 1000 次 = 306ms（Node22）。已出骨架 `dsh-radar-pinyin-match` |
+| `nk2028/opencc-js` | B 其他JS | **MIT AND Apache-2.0** ✅（含 `opencc-data` Apache-2.0） | 古文 / 简繁混排 | 重复可强化（但方式冲突） | 🟡 | proposed | 2026-10-19 | ★361，2026-09-21 push，`1.4.2`。实测 `cn→twp` 词级转换正确（头发→頭髮/里面→裡面/后来→後來）。**本轮不采用**：解决方式要么整库转写（`dist/umd/full.js` **1.1MB**，浏览器端首屏不可接受），要么改写用户输入语义；留待「讲义自带简繁切换」独立需求再评 |
+| `tongwentang/tongwen-core` | B 其他JS | MIT ✅ | 简繁阅读 | 重复可强化（同上） | 🔵 | proposed | 2026-10-19 | ★71，2024-09 push，npm `tongwen-core@4.1.1`（374KB，零依赖）。纯 JS 简繁转换（词库级）。比 opencc-js 小，但仍属「转换」而非「查询侧多一种读法」 |
+| `hotoo/pinyin` | B 其他JS | MIT ✅ | 拼音 | 重复（被 pinyin-match 覆盖） | 🔵 | proposed | 2026-10-19 | ★7830，2026-06 push。汉字→拼音**转换**库（不是检索）。若将来要做「给术语表加注音」可用；检索场景被 pinyin-match 覆盖，**重复无增益** |
+| `Kaifuny/pinyin4js` | B 其他JS | MIT ✅ | 拼音 | 重复无增益 | 🔵 | proposed | 2026-10-19 | ★178，2022-02 push，npm `1.3.18`（931KB）。转换+首字母，但**不支持多音字检索/繁简**，且体积大 |
+| `breezewish/pinyinlite` | B 其他JS | MIT ✅ | 拼音 | 重复无增益 | 🔵 | proposed | 2026-10-19 | ★238，2017 停更。极轻量转换库，无检索能力 |
+| `fengkx/jieba-wasm` | 非 JS 源 | MIT ✅ | 分词 | 全新（本仓无分词） | 🔵 | proposed | 2026-10-19 | ★102，2026-01 push，npm `jieba-wasm@2.4.0`（**15.7MB wasm**）。真正的「先分词再索引 / 相关度」路线；体积与 wasm 加载成本对浏览器首屏不友好，且本仓当前无相关度排序需求 → 只记录 |
+| `messense/jieba-rs` | 非 JS 源（Rust） | MIT ✅ | 分词 | 全新 | 🔵 | proposed | 2026-10-19 | ★986，2026-10-15 push。上游 jieba 的 Rust 实现，是 `jieba-wasm` 的底座。非 JS 栈，仅作技术路线参考 |
+| `bluelovers/ws-segment` | B 其他JS | **`NOASSERTION`** ⚠ | 分词 | — | 🔵 | proposed | 2026-10-19 | ★12，2026-10-14 push。TS 中文分词。**许可证 `NOASSERTION` → 待人工核验，不采用、不摘码** |
+| `maxchang3/web-word-segment` | B 其他JS | MIT ✅ | 中文分词教学 | 无关 | ⛔ | rejected | 2026-10-19 | ★1。一个基于 `jieba-wasm` + `Intl.Segmenter` 的**网页演示**，不是库 |
+| `hermanschaaf/jieba-js`★52 / `shataniya/cncut`★5 / `Superjomn/qlin`★2 / `uranbekanarbaev/pinyin-to-chinese`★0 / `Xiej5645/writerHanzi`★0 | B/— | 混合（多为 `null`） | — | 无关 | ⛔ | rejected | 2026-10-19 | 2013–2014 的 jieba 移植 / 无证小工具 / 拼音→汉字（反向，需求不存在）/ 汉字笔顺练习（与本轮轴无关） |
+| `Xebec33/Mainland_Traditional_Chinese_Converter`★5 / `fartbagxp/home-simplified-to-traditional`★1 / `holsoma/spotify-web-lyrics-trad-simplified`★1 / `brentwong2020/CopyTradify`★0 / `QiyuanLuo233/simplified2traditional`★0 / `LibreService/my_opencc`★13 / `bluelovers/cjk-convert`★14 | B/— | Apache-2.0 / MIT / **AGPL-3.0** / `null` | — | 无关 | ⛔ | rejected | 2026-10-19 | 在线转换小工具、Tampermonkey 脚本、InDesign 脚本；`my_opencc` 为 **AGPL-3.0** 红线；`cjk-convert` 无许可证 |
+| `Yark-yao/Chinese-Stroke-Order-Generator`★50 / `jilldata/hanzi-stroke-data` | B 其他JS | MIT / `null` | 汉字学习 | 无关（本轮轴外） | ⛔ | rejected | 2026-10-19 | 笔顺 GIF 生成器（Puppeteer 依赖）；笔顺数据集无许可证。**轴外误召回** |
+| `edvardsr/cc-cedict`★35 / `polo-language/chinese-dictionary`★3 / `joshchaotang/claude-code-i18n`★37 / `n0/GitHub-Achievement-CLI`★87 / `ffzz/match-name-lambda`★0 | B/— | 混合（2 条 `null`） | — | 无关 | ⛔ | rejected | 2026-10-19 | 英汉词典 / Claude Code 汉化 / GitHub 成就脚本。`fuzzy matching chinese language:typescript`（total 1）与 `traditional simplified chinese language:typescript`（total 44）**前排多为误召回** |
