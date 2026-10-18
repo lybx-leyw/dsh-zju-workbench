@@ -9,5 +9,6 @@
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
     "client": { "platform": "web", "external": ["dsh-zhiyun-ui-primitives"] }
-  }
+  },
+  "dependencies": { "hls.js": "1.7.3" }
 }
