@@ -1,0 +1,428 @@
+/* 「规划」页的样式。
+ *
+ * 三条硬约束，与其它页面包一致：
+ *   1. **所有选择器带 `body[data-zhiyun]` 前缀**（本页类名统一 `zpg-`）。各包样式表是
+ *      同特异性的独立 <style>，胜负只看挂载顺序；不加前缀的裸类会与别处撞车，
+ *      `scripts/check-css-order.mjs` 拦的正是这类。
+ *   2. **颜色只取外壳的 `--zy-*`**，不引入新色板 —— 换主题时这一页自动跟随。
+ *   3. **字号取 `--zy-fs-*`**，不自己写 px。
+ *
+ * 数值依据 docs/contributing/skills/human-factors-screen-design（下称 skill）。
+ * 换算基准：CJK 0.88 em / 600 mm / 96 ppi（ch11 §11.2），即 12px→16.0′、
+ * 13px→17.3′、14px→18.7′。16′ 是 legibility floor，20–22′ 是舒适区。
+ *
+ * 上一版这一页的问题（本轮逐个修掉）：
+ *   · 字号 11/12/13px 混用且写裸 px，正文 12px 只有 16.0′、正压线；
+ *   · `.zp-kind-*` 自造四种颜色（#2f6b3f 等），既不在 --zy-* 里，深色主题下不可读；
+ *   · 页头自己画了一遍 `.zy-intro` 的形状，与其它页对不齐；
+ *   · 加载 / 失败 / 空态各占不同位置，眼睛要来回找。
+ */
+
+/* ------------------------------------------------------------------ 页头 */
+/* 沿用外壳 `.zy-intro`（eyebrow + h1 + 说明 + 右侧装饰图标），这里只补右侧工具区。
+   工具区不走 `.zy-intro>svg` 那个装饰槽：装饰是 38px 图标，把按钮塞进去会让
+   点击目标悬浮在标题块基线之外。 */
+body[data-zhiyun] .zpg-head { align-items: flex-start; margin-bottom: 26px; }
+body[data-zhiyun] .zpg-tools { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+/* 计数是"可忽略信息"（skill ch11 §11.2 结论 2 允许 11px 用于计数），但必须 ≥4.5:1：
+   --zy-secondary 亮色 5.01:1 / 暗色 8.36:1，两档都过线（repo-profile §2）。 */
+body[data-zhiyun] .zpg-count { font-size: var(--zy-fs-meta); color: var(--zy-secondary); font-variant-numeric: tabular-nums; }
+/* 刷新按钮：外壳 `.zy-secondary` 是 padding 7px 11px + 11px 字号，合计约 27px 高
+   （≥24px AA，skill ch06 规则 7）。补 min-height 到 32px，与右侧图标块的视觉重心对齐，
+   同时把命中区抬到明显高于下限。 */
+body[data-zhiyun] .zpg-refresh { min-height: 32px; font-size: var(--zy-fs-sm); }
+body[data-zhiyun] .zpg-refresh:disabled { opacity: .55; cursor: default; }
+
+/* ------------------------------------------------- 状态区（加载/失败/空态） */
+/* 三者占同一块（skill ch14 状态矩阵）：切换状态时页面不跳、眼睛不换位置。 */
+body[data-zhiyun] .zpg-slot { min-height: 220px; }
+
+/* 加载提示：文字 + 一个静态圆点。**不做动画** —— skill ch04 要求自动移动内容可暂停，
+   而为一次几秒的读取加转圈动画，收益抵不上"必须提供暂停"的复杂度。
+   1s 内出现、15s 以上才需要提示"较久"（ch05 反馈阶梯），这里都不触发。 */
+body[data-zhiyun] .zpg-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 18px 2px;
+  font-size: var(--zy-fs-sm);
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zpg-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--zy-accent); opacity: .8; }
+
+/* ------------------------------------------------------------------ 分组 */
+body[data-zhiyun] .zpg-days { display: flex; flex-direction: column; gap: 4px; }
+body[data-zhiyun] .zpg-day + .zpg-day { margin-top: 12px; }
+body[data-zhiyun] .zpg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+
+/* 分组标题的副标题：类别构成。全部收起时用户看不到正文，"这一天有什么"就靠这一行。
+   11px 属"可忽略信息"档（ch11 结论 2），但对比度取 --zy-secondary 保证 ≥4.5:1。 */
+body[data-zhiyun] .zpg-day-scope { margin: -4px 0 10px; font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
+body[data-zhiyun] .zpg-day-expanded { color: var(--zy-accent); }
+
+/* ------------------------------------------------------------- 单条记录 */
+/* 卡片边框用的是外壳 --zy-line（非文本对比 1.29:1，未达 3:1）。这是外壳级偏差，
+   见 repo-profile §5 与反馈页样式末尾的「不动的部分」—— 改它波及全部页面。
+   本页的补偿：卡片底色 --zy-surface 与页面底 --zy-bg 只有 1.03:1，不足以分界，
+   于是靠**左侧 3px 强调条**给每条一个明确起点（形状通道），不依赖边框。
+
+   条目是 `<details>`：收起时只留摘要行，展开才出正文。实测一条正文 1734 字，
+   全展开时一屏放不下一两条 —— 列表的任务是"认出哪一条"，不是读完所有内容。 */
+body[data-zhiyun] .zpg-item {
+  border: 1px solid var(--zy-line);
+  border-left: 3px solid var(--zy-line);
+  border-radius: 9px;
+  background: var(--zy-surface);
+}
+/* 展开后左侧强调条改成强调色：让"我正在读这一条"与"这是列表里的哪一条"分开。
+   仍是形状通道（条的颜色与位置），文字不变。 */
+body[data-zhiyun] .zpg-item[open] { border-left-color: var(--zy-accent); }
+
+/* 摘要行 = 可点区域。高度 44px：skill ch06 的 AAA 触控目标，也是"整行可点"该有的
+   尺寸。padding 与卡片内边距分离，让命中区一直延伸到卡片边缘。 */
+body[data-zhiyun] .zpg-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px 10px 16px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+body[data-zhiyun] .zpg-summary:hover { background: var(--zy-hover); }
+/* 焦点环向内收 2px，否则会被卡片圆角裁掉一截（ch12 焦点可见性） */
+body[data-zhiyun] .zpg-summary:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: -2px; }
+/* 去掉原生三角 —— 本页用自己的 caret，旋转方向与外设置项（.zy-settings-group）一致 */
+body[data-zhiyun] .zpg-summary::-webkit-details-marker { display: none; }
+body[data-zhiyun] .zpg-summary { list-style: none; }
+
+/* 标题：14px（18.7′，接近舒适区）。"一屏扫很多条"的任务按 skill ch11 取较高一档，
+   故比正文 13px 高一档。**单行截断**：摘要行的作用是让用户认出这是哪一条，
+   两行标题会把节奏打乱；完整标题在展开后仍从正文首句可得。 */
+body[data-zhiyun] .zpg-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--zy-fs-md);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 右侧元信息：字数 + 时间。字数让用户在展开前就知道要读多久（ch05 让成本可预期）。 */
+body[data-zhiyun] .zpg-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body[data-zhiyun] .zpg-chars { min-width: 5ch; text-align: right; }
+body[data-zhiyun] .zpg-time { min-width: 8ch; text-align: right; }
+
+/* caret：收起右指、展开下指。方向与外壳设置分组的 chevron 一致（那是唯一的
+   "可展开"视觉约定，本页跟随它，不另立一套）。 */
+body[data-zhiyun] .zpg-caret { display: grid; place-items: center; width: 24px; height: 24px; flex: none; color: var(--zy-secondary); }
+body[data-zhiyun] .zpg-caret svg { transition: transform .15s ease; }
+body[data-zhiyun] .zpg-item[open] .zpg-caret svg { transform: rotate(90deg); }
+/* 尊重「减少动态效果」偏好：旋转是辅助提示，不是信息本身（ch10 动效） */
+@media (prefers-reduced-motion: reduce) {
+  body[data-zhiyun] .zpg-caret svg { transition: none; }
+}
+
+/* 正文区：与摘要行同内边距，但顶部留一条分隔线，让"摘要 / 正文"是两层。 */
+body[data-zhiyun] .zpg-body { padding: 2px 18px 16px 16px; border-top: 1px solid var(--zy-line); }
+
+/* 正文：13px（17.3′）是 skill ch11 的"必须读的正文"下限。
+   行高 1.75 落在 CJK 建议的 1.6–1.8（§11.3）。
+   行长上限 40em —— 1em≈1 个汉字，40 汉字是 WCAG 1.4.8 AAA 的上限（§11.4）。
+   内容区 884px、13px 时不限行宽能排到 68 字，所以这条上限是必需的，不是可选。 */
+body[data-zhiyun] .zpg-text {
+  margin: 12px 0 0;
+  font-size: var(--zy-fs-base);
+  line-height: 1.75;
+  color: var(--zy-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 40em;
+}
+
+/* 类别记号：**颜色不是唯一通道**（skill ch03 规则 3）。这里同时给了图标（形状）
+   与文字（"规划/日记/笔记/事件"），颜色只作辅助，且只用外壳变量 —— 上一版自造的
+   四种绿色/棕色在深色主题下全部不可读，已删。
+   描边用 --zy-secondary（非文本 5.01:1，达 3:1），不用 --zy-line（1.29:1 等于看不见）。 */
+body[data-zhiyun] .zpg-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-secondary);
+  border: 1px solid var(--zy-secondary);
+  border-radius: 5px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+/* 四个类别用**边框样式**区分（形状通道），不靠色相 —— 色相在灰度打印与色觉缺陷下会失效。 */
+body[data-zhiyun] .zpg-kind-plan { border-style: solid; }
+body[data-zhiyun] .zpg-kind-diary { border-style: dashed; }
+body[data-zhiyun] .zpg-kind-note { border-style: dotted; }
+body[data-zhiyun] .zpg-kind-event { border-style: double; }
+
+body[data-zhiyun] .zpg-tags { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; }
+body[data-zhiyun] .zpg-tag { font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
+body[data-zhiyun] .zpg-tag::before { content: '#'; opacity: .7; }
+
+body[data-zhiyun] .zpg-foot { margin: 18px 0 0; font-size: var(--zy-fs-sm); color: var(--zy-secondary); }
+
+/* ------------------------------------------------------------------ 失败 */
+/* 红边框是第二通道，第一通道是标题文字（ch03 规则 3）。左侧 3px 强调条与本页卡片
+   同构，失败卡看起来仍属于这一页，而不是一个外来的弹窗。 */
+body[data-zhiyun] .zpg-error {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid color-mix(in srgb, #c0392b 34%, var(--zy-line));
+  border-left: 3px solid #c0392b;
+  border-radius: 9px;
+  background: var(--zy-surface);
+  padding: 14px 18px 15px 16px;
+}
+body[data-zhiyun] .zpg-error-icon { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--zy-soft); color: #c0392b; }
+body[data-zhiyun] .zpg-error-body { min-width: 0; }
+body[data-zhiyun] .zpg-error-body strong { display: block; font-size: var(--zy-fs-md); font-weight: 600; line-height: 1.4; }
+body[data-zhiyun] .zpg-error-why { margin: 6px 0 0; font-size: var(--zy-fs-base); line-height: 1.7; color: var(--zy-text); overflow-wrap: anywhere; max-width: 40em; }
+/* 「下一步」用 --zy-secondary 降一级：它是建议，不是事实 */
+body[data-zhiyun] .zpg-error-next { margin: 6px 0 0; font-size: var(--zy-fs-sm); line-height: 1.7; color: var(--zy-secondary); max-width: 40em; }
+
+/* ------------------------------------------------------------ 设置表单 */
+body[data-zhiyun] .zpg-form { display: flex; flex-direction: column; gap: 16px; }
+body[data-zhiyun] .zpg-field { display: flex; flex-direction: column; gap: 6px; }
+/* 字段标签 12px：必须读，不能落到 11px（skill ch11 结论 2 的下限之外） */
+body[data-zhiyun] .zpg-field > span { font-size: var(--zy-fs-sm); color: var(--zy-text); }
+body[data-zhiyun] .zpg-field input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--zy-line);
+  border-radius: 7px;
+  background: var(--zy-bg);
+  color: var(--zy-text);
+  font: inherit;
+  font-size: var(--zy-fs-base);
+  /* 输入框高度 ≥24px：9+9 内边距 + 13px 行高 ≈ 31px（ch06 规则 7） */
+}
+/* 焦点可见：2px 描边 + offset，不依赖颜色单独表意（ch12 焦点） */
+body[data-zhiyun] .zpg-field input:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
+body[data-zhiyun] .zpg-field small { font-size: var(--zy-fs-sm); line-height: 1.7; color: var(--zy-secondary); max-width: 40em; }
+body[data-zhiyun] .zpg-field small code { font-size: var(--zy-fs-meta); }
+body[data-zhiyun] .zpg-form-foot { display: flex; align-items: center; gap: 12px; }
+body[data-zhiyun] .zpg-form-foot button:disabled { opacity: .6; cursor: default; }
+/* 保存按钮旁的状态文字：壳的 summary 只在折叠态可见，展开后要有个地方
+   说明"现在连的是什么"。11px 属可忽略信息档，对比度用 --zy-secondary 保证 ≥4.5:1。 */
+body[data-zhiyun] .zpg-form-state { font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
+
+/* --------------------------------------------------------- 数据源状态条 */
+/* 三个来源各一小段。用户看到空列表时，这一条立刻回答"是没配还是配了读不到"
+   —— skill ch14 要求空/错/加载三态可区分，光有一个空盒子做不到这件事。 */
+body[data-zhiyun] .zpg-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 0 0 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zpg-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zpg-source strong { font-weight: 600; color: var(--zy-text); }
+/* 圆点只是辅助记号；真正的区分靠后面的文字（"已同步"/"同步失败"），
+   所以这里不担心色觉缺陷 —— 颜色不是唯一通道（ch03 规则 3）。 */
+body[data-zhiyun] .zpg-source-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--zy-secondary); flex: none; }
+body[data-zhiyun] .zpg-source-ok .zpg-source-dot { background: var(--zy-accent); }
+body[data-zhiyun] .zpg-source-warn { color: var(--zy-secondary); }
+body[data-zhiyun] .zpg-source-warn .zpg-source-dot { background: transparent; border: 1px solid var(--zy-secondary); }
+body[data-zhiyun] .zpg-source-hint { font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
+
+/* ------------------------------------------------------------- 待办行 */
+/* 待办是"要去做的事"，视觉上比记录更实：左侧强调条用强调色，与记录的灰条区分。
+   待办没有展开正文，所以它不是 <details>，摘要区用 `.zpg-summary-static` 去掉
+   手型光标与 hover —— 点了不会展开，就不该看起来能点（假承诺）。 */
+body[data-zhiyun] .zpg-item-todo { border-left-color: var(--zy-accent); }
+body[data-zhiyun] .zpg-summary-static { cursor: default; }
+body[data-zhiyun] .zpg-summary-static:hover { background: transparent; }
+body[data-zhiyun] .zpg-detail { color: var(--zy-secondary); }
+/* 截止时间与倒计时：倒计时是"还剩多久"，比绝对时刻更能回答急不急。
+   两者字号相同、用斜体区分主次，不靠颜色（ch03）。 */
+body[data-zhiyun] .zpg-due { display: inline-flex; align-items: baseline; gap: 6px; }
+body[data-zhiyun] .zpg-left { font-style: normal; color: var(--zy-accent); }
+/* 打开外部页的箭头：命中区补到 24px（ch06 规则 7），否则只有一个图标大小 */
+body[data-zhiyun] .zpg-open {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 5px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zpg-open:hover { color: var(--zy-accent); background: var(--zy-hover); }
+body[data-zhiyun] .zpg-open:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: -1px; }
+
+/* ------------------------------------------------- 待办 / 拼题A 的类别记号 */
+/* 边框样式继续承担"形状通道"：todo 实线、pta 双线，与中转站那四类区分开。 */
+body[data-zhiyun] .zpg-kind-todo { border-style: solid; }
+body[data-zhiyun] .zpg-kind-pta { border-style: double; }
+
+/* ------------------------------------------------------------ 设置表单 */
+/* 拼题A 那块与中转站那块之间加一条分隔：两者是**互不相干**的配置，
+   挨在一起而不分隔会让人以为填完上面才轮到下面。 */
+body[data-zhiyun] .zpg-form-pta { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--zy-line); }
+body[data-zhiyun] .zpg-field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--zy-line);
+  border-radius: 7px;
+  background: var(--zy-bg);
+  color: var(--zy-text);
+  font: inherit;
+  font-size: var(--zy-fs-base);
+  line-height: 1.6;
+  resize: vertical;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+body[data-zhiyun] .zpg-field textarea:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
+/* 配置状态小标：文字本身已写明"已配置/未配置"，颜色只作辅助 */
+body[data-zhiyun] .zpg-pill {
+  margin-left: 8px;
+  font-size: var(--zy-fs-meta);
+  font-weight: 400;
+  color: var(--zy-secondary);
+  border: 1px dotted var(--zy-secondary);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+body[data-zhiyun] .zpg-pill-ok { border-style: solid; }
+
+
+/* --------------------------------------------------- AI 自动规划结果 */
+/* 规划是**花钱且耗时**的操作，所以两件事必须做对：
+   1. 按钮上的进行态明确（"正在规划…"），不做无限 spinner —— 一次调用几秒到十几秒，
+      文字比动画更能说明"它在干活"；
+   2. 结果就地显示在页头下方，不弹窗：弹窗会挡住刚生成的卡片。 */
+body[data-zhiyun] .zpg-plan { border-color: var(--zy-accent); color: var(--zy-accent); }
+body[data-zhiyun] .zpg-plan:disabled { opacity: .5; }
+
+/* 结果行：成功与失败共用位置，只靠左侧记号区分（颜色不是唯一通道，ch03） */
+body[data-zhiyun] .zpg-plan-msg {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  font-size: var(--zy-fs-sm);
+  color: var(--zy-secondary);
+  border-left: 2px solid var(--zy-accent);
+  background: var(--zy-soft);
+  border-radius: 0 6px 6px 0;
+}
+body[data-zhiyun] .zpg-plan-msg-error { border-left-color: #c0392b; }
+
+/* 已拆标记：让"这条不用再规划"一眼可见，同时说明映射还在 */
+body[data-zhiyun] .zpg-planned {
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-accent);
+  border: 1px solid var(--zy-accent);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* 拆出的卡片：整块比原文更实（实线框 + 稍亮底），因为它是"要做的事" */
+body[data-zhiyun] .zpg-cards { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; }
+body[data-zhiyun] .zpg-card {
+  border: 1px solid color-mix(in srgb, var(--zy-accent) 34%, var(--zy-line));
+  border-radius: 8px;
+  background: var(--zy-bg);
+  padding: 10px 12px;
+}
+body[data-zhiyun] .zpg-card-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+/* 卡片标题 13px：与正文同档，但它更粗，靠字重区分层级（ch11 中文不宜靠字号硬拉） */
+body[data-zhiyun] .zpg-card-head strong { font-size: var(--zy-fs-base); font-weight: 600; }
+body[data-zhiyun] .zpg-card-due {
+  margin-left: auto;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-secondary);
+  font-variant-numeric: tabular-nums;
+}
+body[data-zhiyun] .zpg-card-action { margin: 6px 0 0; font-size: var(--zy-fs-sm); line-height: 1.7; color: var(--zy-text); max-width: 40em; }
+
+/* 「忘掉这次拆分」是文字按钮，不是链接：它改变状态，不该长得像可以中键新开标签页。
+   命中区补到 24px（ch06）。 */
+body[data-zhiyun] .zpg-link {
+  align-self: flex-start;
+  min-height: 24px;
+  padding: 2px 8px;
+  margin-left: -8px;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-secondary);
+  border-radius: 5px;
+}
+body[data-zhiyun] .zpg-link:hover { color: var(--zy-accent); background: var(--zy-hover); }
+body[data-zhiyun] .zpg-link:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: -1px; }
+
+
+/* ------------------------------------------- AI 拆出的卡片（已升格为待办） */
+/* 边框样式继续承担形状通道：AI 规划与学在浙大/拼题A 一眼可分，
+   不靠色相（ch03 规则 3）。 */
+body[data-zhiyun] .zpg-kind-plan-card { border-style: dashed; }
+
+/* 卡片的具体动作：比标题低一档、比元信息高一档，行长受 40em 约束（ch11 §11.4） */
+body[data-zhiyun] .zpg-todo-action {
+  margin: 6px 0 0;
+  padding: 0 16px 0;
+  font-size: var(--zy-fs-sm);
+  line-height: 1.7;
+  color: var(--zy-text);
+  max-width: 40em;
+}
+
+
+/* 「已拆成 N 条」的指路条：不是卡片，是一行说明 + 撤销入口 */
+body[data-zhiyun] .zpg-planned-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0 0;
+  font-size: var(--zy-fs-sm);
+  color: var(--zy-secondary);
+}
+
+/* ------------------------------------------------------------------ 窄屏 */
+/* 窄屏下右侧元信息会与标题抢宽度。取舍：**先保住标题**（它是识别依据），
+   把字数与时间折到第二行 —— 让标题至少还剩一半宽度，而不是两个都被压成省略号。 */
+@media (max-width: 650px) {
+  body[data-zhiyun] .zpg-head { flex-direction: column; gap: 14px; }
+  body[data-zhiyun] .zpg-tools { width: 100%; justify-content: space-between; }
+  body[data-zhiyun] .zpg-summary { flex-wrap: wrap; gap: 6px 10px; padding: 10px 12px; }
+  body[data-zhiyun] .zpg-title { flex-basis: calc(100% - 46px); white-space: normal; }
+  body[data-zhiyun] .zpg-meta { order: 3; width: 100%; justify-content: flex-start; padding-left: 2px; }
+  body[data-zhiyun] .zpg-caret { order: 2; margin-left: auto; }
+  body[data-zhiyun] .zpg-body { padding: 2px 14px 14px; }
+}
+
+/* ------------------------------------------------ 核对过了、本轮不动的部分
+   与反馈页同样的两处外壳级偏差，本页不擅自越界改：
+
+   1. 卡片边框 `--zy-line` 对 `--zy-surface` 只有 1.29:1（非文本要求 3:1）。
+      修它必须改外壳 token，会波及全部页面。本页已用左侧 3px 强调条做补偿。
+   2. 正文 13px 是 17.3′，已达 legibility floor 但未进 20–22′ 舒适区。再往上调
+      就脱离外壳 13px 基准，这一页会与其余页面不一致。
+ */

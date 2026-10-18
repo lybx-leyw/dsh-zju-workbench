@@ -51,6 +51,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'dsh-zhiyun-page-me',
     'dsh-zhiyun-page-notes',
     'dsh-zhiyun-page-paper',
+    'dsh-zhiyun-page-planning',
     'dsh-zhiyun-page-plugins',
     'dsh-zhiyun-page-study',
     'dsh-zhiyun-page-today',

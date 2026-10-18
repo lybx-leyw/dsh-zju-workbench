@@ -2,7 +2,7 @@ import type { Config } from './config.ts';
 import { CookieJar } from './cookies.ts';
 import { ToolError, isToolError } from './errors.ts';
 import { HttpClient, directTransport, type FetchImpl, type Transport } from './http.ts';
-import { Accounts, type SecurityRunner } from './keychain.ts';
+import { Accounts, type HostCredentialReader, type SecurityRunner } from './keychain.ts';
 import { RateLimiter } from './ratelimit.ts';
 import { SessionStore, type TransportMode } from './store.ts';
 import { CAS_HOST, IDENTITY_HOST } from '../auth/cas.ts';
@@ -21,12 +21,24 @@ export interface ContextOptions {
   env?: Record<string, string | undefined>;
   fetchImpl?: FetchImpl;
   securityRunner?: SecurityRunner;
+  /**
+   * 宿主凭据读取器（`ctx.credentials` 的适配）。
+   *
+   * 由接入层（`host.js`）注入，`core/` 不认识 cordis —— 这样这个模块保持可单测、
+   * 也不把宿主依赖漏进数据层。不传就只用本包自己的 DPAPI。
+   */
+  hostCredentials?: HostCredentialReader | null;
 }
 
 export function createContext(cfg: Config, options: ContextOptions = {}): AppContext {
   const env = options.env ?? process.env;
   const legacy = env.ZJU_OMNI_LEGACY_DIR;
-  const accounts = new Accounts(cfg.dataDir, { env, runner: options.securityRunner, legacyDir: legacy === undefined ? undefined : legacy || null });
+  const accounts = new Accounts(cfg.dataDir, {
+    env,
+    runner: options.securityRunner,
+    legacyDir: legacy === undefined ? undefined : legacy || null,
+    hostCredentials: options.hostCredentials ?? null,
+  });
   const sessions = new SessionStore(cfg.dataDir);
   const limiter = new RateLimiter(cfg.minIntervalMs);
   const ctx = { cfg, accounts, sessions, limiter, fetchImpl: options.fetchImpl } as AppContext;

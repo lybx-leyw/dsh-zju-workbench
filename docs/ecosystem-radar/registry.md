@@ -1,4 +1,4 @@
-# 生态雷达 · 候选登记表
+﻿# 生态雷达 · 候选登记表
 
 > **追加式**去重真值。状态取值：`proposed` / `adopted` / `rejected`。
 > 每次扫描只追加**新出现**的仓库；已登记的不再重复。
@@ -785,7 +785,7 @@
 
 | 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `p16e0nd/zju-recorder` | B 其他JS | **MIT** ✅ | 课堂直播/录制 | **重复可强化** | 🟢 | proposed | 2026-10-16 | ★0，2026-09-30。**LICENSE 实文已核**（`Copyright (c) 2026 ZJU Recorder contributors`）✅。**智云课堂本地版**（Node.js，`app/server.js` 149KB）。**三块可提取能力**：① **OAuth2 授权码链路**（`casapi`→`oauth2.0/authorize`→`tgmedia get-info?code=ST-xxx`→`_token` cookie 内藏 JWT）—— 本仓 `dsh-zhiyun-classroom/src/auth.js` 是 **CAS 直连**，**无此链路**；② `CookieJar` 显式处理 `domain`/host-only/`path`；③ RSA **密码反转 + 分块** 实现（本仓为整块，可交叉验证）。**强化对象**：课堂页直播通路。⚠ **① 形态不兼容**（Windows 本地工具，`127.0.0.1:8787`）→ **只提取能力，不挂载整体**；⚠ **② 凭据流向**（支持明文账密自动登录，须确认不落盘）；⚠ **③ 录制须承接上游 `DISCLAIMER.md` 边界且默认关闭**；⚠ ④ `flv.min.js`/`hls.min.js` 为**第三方构建产物，许可证未核，不得引入**。**本轮 L2 骨架** → `packages/dsh-radar-zju-recorder` |
+| `p16e0nd/zju-recorder` | B 其他JS | **MIT** ✅ | 课堂直播/录制 | **重复可强化** | 🟢 | adopted | 2026-10-16 | ★0，2026-09-30。**LICENSE 实文已核**（`Copyright (c) 2026 ZJU Recorder contributors`）✅。**智云课堂本地版**（Node.js，`app/server.js` 149KB）。**三块可提取能力**：① **OAuth2 授权码链路**（`casapi`→`oauth2.0/authorize`→`tgmedia get-info?code=ST-xxx`→`_token` cookie 内藏 JWT）—— 本仓 `dsh-zhiyun-classroom/src/auth.js` 是 **CAS 直连**，**无此链路**；② `CookieJar` 显式处理 `domain`/host-only/`path`；③ RSA **密码反转 + 分块** 实现（本仓为整块，可交叉验证）。**强化对象**：课堂页直播通路。⚠ **① 形态不兼容**（Windows 本地工具，`127.0.0.1:8787`）→ **只提取能力，不挂载整体**；⚠ **② 凭据流向**（支持明文账密自动登录，须确认不落盘）；⚠ **③ 录制须承接上游 `DISCLAIMER.md` 边界且默认关闭**；⚠ ④ `flv.min.js`/`hls.min.js` 为**第三方构建产物，许可证未核，不得引入**。**✅ 已并入（2026-10-18）**：能力提取进 `dsh-zhiyun-classroom`——OAuth2 授权码入口（`entry:'oauth'`）+ `_token`→JWT + Bearer 头，直播走新建的 `live.js`/`stream.js`（HLS 转发 + m3u8 改写），`CookieJar` 一项**作废**（本仓 `tough-cookie@6.0.2` 已覆盖，实测 domain/host-only/path 语义完备）。骨架包 `packages/dsh-radar-zju-recorder` 待删。⚠ RSA「交叉验证」判断有误：短 ASCII 密码两者输出**完全相同**、中文密码因 UTF-8/UTF-16 取字节方式不同而不同、>126 字符上游是多块空格拼接而本仓单块（协议不同） |
 | `macanine/zjumihomo-converter` | B 其他JS | **MIT** ✅ | 校园网络分流 | **重复可强化**（仅规则数据） | 🟡 | proposed | 2026-10-16 | ★0，2026-10-06。**LICENSE 实文已核**（`Copyright (c) 2025 Js-Sung`）✅。Clash/Mihomo 订阅转换器，**运行时依赖仅 `js-yaml ^4.1.0`**。**真正有价值的是内置「校园网分流规则」这份数据**，而非转换代码 → 只能提取规则、不能整体挂载。带 `test/mihomo-check.mjs` 可作**规则合法性校验**参考。⚠ **语义须对齐**：本仓 `dsh-zhiyun-net-proxy` 是**分域中继**，与「绕过网络管控」语义不同；不得把后者带入本仓任何用户可见文案 |
 | `hongxin/csmath-2022` | B 其他JS | MIT ✅ | 数学（CS 方向） | 仅供参考（内容库） | 🔵 | proposed | 2026-10-16 | ★62。CS 方向博士生数学课（优化/ML 理论）。**内容库非工具**，MIT 但无代码价值。**同系列 `csmath-2019`/`-2020`/`CSMATH` 均无许可证** → 只 2021/2022 两条合规 |
 | `hongxin/csmath-2021` | B 其他JS | MIT ✅ | 数学（CS 方向） | 仅供参考（内容库） | 🔵 | proposed | 2026-10-16 | ★30，同上系列 |

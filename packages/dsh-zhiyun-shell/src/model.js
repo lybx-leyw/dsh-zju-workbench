@@ -18,6 +18,13 @@ export const NAV = Object.freeze([
   // 现在播放是这一页里的一栏（`zs-content-switch` 的「视频」），课程目录是左栏，
   // 整理在其余几栏。导航因此少两项 —— 这是**合并**，不是删功能。
   { id: 'study', label: '学习', icon: 'bulb', hint: '课程、回放、课件与笔记，都在这一页' },
+  // 「规划」紧跟「学习」：学完当天的事，接下来就是安排明天 —— 动线是连着的。
+  //
+  // ⚠️ label 与 hint 都**刻意不含「规划」**吗？不 —— 这一页就是叫「规划」。
+  //    原先 tests/profile.test.mjs 用 matchingPages('规划') 断言"只命中问一问"，
+  //    那条断言的前提是"还没有规划页"。现在有了，断言随之改成"问一问与规划各命中一次"，
+  //    否则等于为了让旧测试好过而给页面起个不含本词的名字，是本末倒置。
+  { id: 'planning', label: '规划', icon: 'calendar', hint: '读你自己中转站里推上来的规划与日记' },
   // 「笔记」紧跟「学习」：学完就记是连着发生的两步（整理 → 落成自己的话）。
   // hint 避开「规划」（守卫别名，见上面那条注释）。
   { id: 'notes', label: '笔记', icon: 'notebook', hint: '用双链把想法连成一张知识网' },
@@ -34,7 +41,7 @@ export const panelKey = id => `zhiyun.${id}`;
 
 /**
  * 导航**上半组**：固定在上面、**不可撤销**的页 —— 学习动线（今天 / 论文 /
- * 问一问 / 学习 / 笔记）。
+ * 问一问 / 学习 / 规划 / 笔记）。
  *
  * 它们不出现在「···」菜单里，也没有图钉可点：菜单只管**下半组**（分隔线下方
  * 那些由用户固定进来的页）。这条划分与 NAV 里那条注释是同一套理由 ——
@@ -44,7 +51,7 @@ export const panelKey = id => `zhiyun.${id}`;
  * ⚠️ 用 `Object.freeze` 的**清单**而不是给 NAV 加字段：上半组是「版式契约」，
  *    和 `FULL_BLEED_PAGES` 一样集中在这里，一眼能看全导轨长什么样。
  */
-export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'ask', 'study', 'notes']);
+export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'ask', 'study', 'planning', 'notes']);
 
 /**
  * **单独钉在导轨最下方**的页：个人。

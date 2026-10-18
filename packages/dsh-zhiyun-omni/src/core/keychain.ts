@@ -69,7 +69,7 @@ export interface Credentials {
 }
 
 /** 凭据后端种类。写进 `accounts.json`，用来判断旧记录在当前平台是否还可用。 */
-export type CredentialBackend = 'environment' | 'macos-keychain' | 'dpapi' | 'legacy-zju-tronclass';
+export type CredentialBackend = 'environment' | 'macos-keychain' | 'dpapi' | 'legacy-zju-tronclass' | 'host-credentials';
 
 export interface AccountRecord {
   username: string;
@@ -100,6 +100,22 @@ export interface AccountsOptions {
   platform?: NodeJS.Platform;
   /** DPAPI 密文所在目录。默认与 `accounts.json` 同级。 */
   secretDir?: string;
+  /**
+   * 宿主凭据服务（`ctx.credentials`）的读取器。
+   *
+   * 本包原本只认自己那套 DPAPI，于是「用户在课堂登录了」和「omni 说没配账号」
+   * 成了两件事。接入这个之后，**别处（`dsh-zhiyun-classroom`）存进宿主凭据的账号
+   * 会被优先采用** —— 用户不需要为同一个浙大账号配两遍。
+   *
+   * 传 null / 不传表示宿主没有凭据服务，退回本包自己的后端。
+   */
+  hostCredentials?: HostCredentialReader | null;
+}
+
+/** 从宿主凭据服务读账号的最小接口（由调用方注入，避免 core 依赖 cordis）。 */
+export interface HostCredentialReader {
+  /** @returns `{ username, password }`，没配时 null。 */
+  readAccount(): Promise<{ username: string; password: string } | null>;
 }
 
 /**
@@ -138,6 +154,8 @@ export class Accounts {
   private legacyDir: string | null;
   private platform: NodeJS.Platform;
   private secretDir: string;
+  /** 宿主凭据读取器；null 表示宿主没装凭据服务。 */
+  private host: HostCredentialReader | null;
 
   constructor(dataDir: string, options: AccountsOptions = {}) {
     this.file = join(dataDir, 'accounts.json');
@@ -146,6 +164,7 @@ export class Accounts {
     this.runner = options.runner ?? defaultRunner;
     this.legacyDir = options.legacyDir === undefined ? LEGACY_TRONCLASS.dir : options.legacyDir;
     this.platform = options.platform ?? process.platform;
+    this.host = options.hostCredentials ?? null;
   }
 
   /** 当前平台可用的本地后端。null 表示只能用环境变量。 */
@@ -177,6 +196,20 @@ export class Accounts {
   async status(kind: AccountKind): Promise<CredentialStatus> {
     const [userVar, passVar] = ENV_NAMES[kind];
     if (this.env[userVar] && this.env[passVar]) return { kind, configured: true, backend: 'environment', username: this.env[userVar] };
+
+    // 宿主凭据优先于本包自己的 DPAPI：用户在「个人」页登录课堂时，
+    // `dsh-zhiyun-classroom` 会把账号写进宿主凭据。同一个浙大账号不该被要两次。
+    if (this.host) {
+      try {
+        const shared = await this.host.readAccount();
+        if (shared?.username && shared.password) {
+          return { kind, configured: true, backend: 'host-credentials', username: shared.username };
+        }
+      } catch {
+        // 宿主凭据不可读就继续走本包的老路径，不把错误抛给用户
+      }
+    }
+
     const record = (await this.records())[kind];
     // 记录的后端必须与当前平台一致：把 macOS 上配好的 accounts.json 拷到 Windows 后，
     // 记录还在、密文却不可解 —— 那种状态要如实报「未配置」，而不是让用户撞解密失败。
@@ -193,6 +226,17 @@ export class Accounts {
   async load(kind: AccountKind): Promise<Credentials> {
     const [userVar, passVar] = ENV_NAMES[kind];
     if (this.env[userVar] && this.env[passVar]) return { username: this.env[userVar]!, password: this.env[passVar]! };
+
+    // 宿主凭据（课堂登录时写入）—— 这就是「登录一次，两边都能用」的实现。
+    if (this.host) {
+      try {
+        const shared = await this.host.readAccount();
+        if (shared?.username && shared.password) return shared;
+      } catch {
+        // 落到本包自己的后端
+      }
+    }
+
     const status = await this.status(kind);
     if (!status.configured || !status.username) {
       throw new ToolError('CONFIGURATION_REQUIRED', `请先在本机终端运行 npm run configure -- ${kind}，把${ACCOUNT_LABELS[kind]}账号存入本机凭据库。只需配置一次，不要在对话中发送密码。`, {

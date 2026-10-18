@@ -458,3 +458,81 @@ body[data-zhiyun] .zs-note-preview { white-space:pre-wrap; line-height:1.8; }
 body[data-zhiyun] .zs-transcript p.zs-line-focus { background:var(--zy-soft); border-radius:6px; }
 @media(max-width:1050px) { body[data-zhiyun] .zs-search-box { width:190px; max-width:38vw; } }
 @media(max-width:850px) { body[data-zhiyun] .zs-handout-toolbar { align-items:flex-start; flex-direction:column; } body[data-zhiyun] .zs-content-switch { flex-wrap:wrap; } body[data-zhiyun] .zs-breadcrumb-row { flex-wrap:wrap; } body[data-zhiyun] .zs-search-entry { flex:1 1 100%; } body[data-zhiyun] .zs-search-box { width:auto; max-width:none; flex:1 1 auto; } body[data-zhiyun] .zs-advanced-popover { width:auto; left:0; right:0; } }
+
+/* ------------------------------------------------------------------ 直播 */
+
+/* 直播入口夹在「课程目录」标题与搜索框之间，所以它的外边距要跟旁边几个块对齐：
+   `.zs-tree-search` 与 `.zs-corpus` 都是 `margin:0 0 12px`，这里也 12px —— 三块顶栏
+   之间任何一个间距不一样，收起来的目录一眼就能看出来歪。 */
+body[data-zhiyun] .zs-live-fold { margin:0 0 12px; }
+body[data-zhiyun] .zs-live-fold-toggle { display:flex; align-items:center; gap:8px; width:100%; min-height:34px; padding:0 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-text); text-align:left; }
+body[data-zhiyun] .zs-live-fold-toggle:hover { background:var(--zy-hover); }
+body[data-zhiyun] .zs-live-fold-toggle:focus-visible { outline:2px solid var(--zy-accent); outline-offset:1px; }
+/* 那颗点只表达「此刻有没有在播」，不用红点：红点在明暗两套主题里都得另配一个值，
+   而 `--zy-accent` 本来就是这套界面里「这里有事」的颜色。`[data-on]` 而不是
+   `is-on`，因为它是**状态值**（on/off）而不是布尔类，取值写在 DOM 上更直白。 */
+body[data-zhiyun] .zs-live-fold-dot { flex:none; width:6px; height:6px; border-radius:50%; background:var(--zy-muted); }
+body[data-zhiyun] .zs-live-fold-dot[data-on="on"] { background:var(--zy-accent); }
+body[data-zhiyun] .zs-live-fold-title { flex:1; min-width:0; font-size:12px; }
+body[data-zhiyun] .zs-live-fold-chevron { flex:none; color:var(--zy-muted); font-size:12px; }
+body[data-zhiyun] .zs-live-fold-body { margin-top:6px; padding:6px 0 0 9px; border-left:1px solid var(--zy-line); }
+body[data-zhiyun] .zs-live-fold-list { display:flex; flex-direction:column; gap:6px; }
+body[data-zhiyun] .zs-live-fold-item { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; padding:8px 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-text); text-align:left; }
+body[data-zhiyun] .zs-live-fold-item:hover { border-color:color-mix(in srgb,var(--zy-accent) 40%,var(--zy-line)); background:var(--zy-hover); }
+body[data-zhiyun] .zs-live-fold-item strong { overflow:hidden; max-width:100%; font-size:12.5px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zhiyun] .zs-live-fold-item small { color:var(--zy-muted); font-size:12px; line-height:1.6; }
+/* 「未接入」「部分时段未取到」这类说明用强调色：它是**结论**，不是装饰 ——
+   灰底小字在这一列里跟节次的元信息长得一模一样，会被直接跳过。 */
+body[data-zhiyun] .zs-live-reason { color:var(--zy-accent); line-height:1.75; }
+/* 折叠区里的重试钮：`.zs-text` 是零内边距的裸文字钮，直接跟在
+   `.zs-tree-hint` 的 7px/9px 内边距后面会贴着左边缘之外的视觉基线，
+   补同一份左右内边距让它跟上面的说明对齐。 */
+body[data-zhiyun] .zs-live-retry { display:block; margin:0 9px; font-size:11px; }
+
+/* 直播面板：机位一行、播放器一块、说明若干行。 */
+body[data-zhiyun] .zs-live { display:flex; flex-direction:column; gap:12px; }
+body[data-zhiyun] .zs-live-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+body[data-zhiyun] .zs-live-head-copy { display:flex; flex-direction:column; min-width:0; gap:3px; }
+body[data-zhiyun] .zs-live-title { overflow:hidden; font-size:14px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zhiyun] .zs-live-meta { color:var(--zy-muted); font-size:12px; }
+body[data-zhiyun] .zs-live-busy { flex:none; color:var(--zy-secondary); font-size:11px; }
+/* 机位组横排且允许换行：一节直播最多四路机位（教师/屏幕/学生/其他），窄屏下
+   四颗药丸会顶出目录宽度 —— 换行比横向滚动好，机位数量本来就不固定。 */
+body[data-zhiyun] .zs-live-seats { display:flex; flex-wrap:wrap; gap:6px; }
+/* 多写一层 `.zs-study`（0-3-1）是为了压过 ui-primitives 的
+   `body[data-zhiyun] .zs-study button { font:inherit; cursor:pointer }`（0-2-2）：
+   同特异性下 tab 与药丸的度量必须对齐，靠挂载顺序决胜迟早会漂。 */
+body[data-zhiyun] .zs-study .zs-live-seat { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border:1px solid var(--zy-line); border-radius:99px; background:transparent; color:var(--zy-secondary); font:inherit; font-size:12px; line-height:1.6; }
+body[data-zhiyun] .zs-study .zs-live-seat:hover { border-color:color-mix(in srgb,var(--zy-accent) 40%,var(--zy-line)); color:var(--zy-accent); }
+body[data-zhiyun] .zs-study .zs-live-seat:focus-visible { outline:2px solid var(--zy-accent); outline-offset:2px; }
+/* 选中态要「一眼看出」，所以同时换三样：底色、字色、字重。
+   只换边框的话，在明色主题下跟 hover 几乎分不开。 */
+body[data-zhiyun] .zs-study .zs-live-seat.is-on { border-color:transparent; background:var(--zy-soft); color:var(--zy-accent); font-weight:600; }
+/* 放不了的机位用虚线边：实线 + 灰字跟「没选中」太像，用户会以为再点一下就能播。 */
+body[data-zhiyun] .zs-study .zs-live-seat:disabled { border-style:dashed; color:var(--zy-muted); cursor:default; opacity:.72; }
+body[data-zhiyun] .zs-study .zs-live-seat:disabled:hover { border-color:var(--zy-line); color:var(--zy-muted); }
+/* 播放器背景用 `--zy-bg` 而不是写死黑：HLS 起播前那几帧要给出一块"这块是画面"的底色，
+   而写死黑色在暗色主题下会跟页面糊成一片、看起来像播放器没渲染。 */
+body[data-zhiyun] .zs-live-video { display:block; width:100%; max-height:calc(100vh - 300px); border:1px solid var(--zy-line); border-radius:6px; background:var(--zy-bg); }
+/* 一个能播的机位都没有：这是**内容位**的空态，不是错误 —— 所以照 `.zs-content-empty`
+   的口径做，不加 `zs-live-reason` 的强调色。 */
+body[data-zhiyun] .zs-live-noplay { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:220px; padding:30px; border:1px dashed var(--zy-line); border-radius:6px; text-align:center; }
+body[data-zhiyun] .zs-live-noplay strong { font-size:13px; font-weight:500; }
+body[data-zhiyun] .zs-live-noplay small { max-width:400px; margin-top:6px; color:var(--zy-muted); font-size:11px; line-height:1.8; }
+/* 换节途中的「正在取这一节的机位…」与重试钮都属于这块占位内容，跟着它居中；
+   `.zs-text` 是左对齐的裸文字钮，不单独摆一下会贴在左侧边框上。 */
+body[data-zhiyun] .zs-live-noplay .zs-text { margin-top:10px; font-size:11px; }
+/* dropped 只说明、不占按钮位，所以给它正文级的行高与长度容忍（一行放不下就折行），
+   而不是节次元信息那种 `nowrap`。 */
+body[data-zhiyun] .zs-live-dropped { margin:0; color:var(--zy-muted); font-size:11px; line-height:1.8; overflow-wrap:anywhere; }
+body[data-zhiyun] .zs-live-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:250px; padding:30px; text-align:center; }
+body[data-zhiyun] .zs-live-empty > span { display:grid; width:38px; height:38px; place-items:center; margin-bottom:11px; border-radius:10px; background:var(--zy-soft); color:var(--zy-accent); font-size:18px; }
+body[data-zhiyun] .zs-live-empty strong { font-size:13px; font-weight:500; }
+body[data-zhiyun] .zs-live-empty small { max-width:400px; margin-top:6px; color:var(--zy-muted); font-size:11px; line-height:1.8; }
+/* 空态里的原因与重试跟着空态走：`p` 默认有外边距，会把居中的整块顶歪。 */
+body[data-zhiyun] .zs-live-empty .zs-live-reason { max-width:400px; margin:10px 0 0; font-size:11px; }
+body[data-zhiyun] .zs-live-empty .zs-text { margin-top:10px; font-size:11px; }
+/* 暗色下机位药丸与折叠区都要比卡片再深一档，否则 `--zy-surface` 与页面底几乎同色、
+   边框成了唯一的形状线索。 */
+body[data-zhiyun][data-ds-dark-theme] .zs-live-fold-toggle,
+body[data-zhiyun][data-ds-dark-theme] .zs-live-fold-item { background:color-mix(in srgb,var(--zy-surface) 80%,var(--zy-bg)); }

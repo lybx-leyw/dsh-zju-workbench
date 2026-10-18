@@ -13,6 +13,53 @@ const identifier = (value) => {
   if (typeof value !== "string" || !/^\d{1,20}$/.test(value)) throw fault("INPUT", "课程或节次编号无效");
   return value;
 };
+// 与课堂包 `models.date` 同一条规则：只认 YYYY-MM-DD，并且拒掉 `2026-02-31`
+// 这种「格式对、日子不存在」的日期（`Date.parse` 会把它悄悄滚到三月）。
+//
+// 为什么不直接 import `models.date`：本包的依赖表里没有 `dsh-zhiyun-classroom`
+// （classroom 是宿主 inject 进来的**服务实例**，不是可 import 的模块对象），
+// 为一行校验添一条运行时依赖不划算。代价是这条规则有两份，改动时要两边同步。
+const isoDay = (value) => {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw fault("INPUT", "日期须为 YYYY-MM-DD");
+  const time = Date.parse(`${value}T00:00:00Z`);
+  if (!Number.isFinite(time) || new Date(time).toISOString().slice(0, 10) !== value) throw fault("INPUT", "日期不存在");
+  return value;
+};
+// 直播流必须经本机转发端点播放，浏览器才能放：CDN 校验 Referer/Origin、清单里
+// 写的是相对分片、并且跨域（三条原因都写在 `classroom/src/stream.js` 的文件头）。
+// 前缀与那边的 `STREAM_ROUTE_PREFIX` 必须一致 —— 同样因为依赖表里没有 classroom
+// 包，这里留一份字符串常量，而不是为了一个字符串去 import 一个包。
+const LIVE_RELAY_PREFIX = "/zhiyun-live";
+const liveRelayUrl = (url) => (typeof url === "string" && url ? `${LIVE_RELAY_PREFIX}/hls?u=${encodeURIComponent(url)}` : null);
+/**
+ * 把一路直播流收敛成**客户端该怎么播**的样子。
+ *
+ * 两条取舍：
+ *
+ * 1. 只留转发地址，**不留原始 CDN 地址**。原始直链交给浏览器既放不出来（CDN 校验
+ *    Referer、清单里是相对分片、还有跨域），也没必要让它出现在页面的 DOM、React
+ *    props 与网络面板里。所以 `url` / `watchUrl` / `recordUrl` 三个字段**一律**换成
+ *    转发地址 —— 键名一个不少（按老字段读的界面不会读到 undefined），但读到的一定
+ *    是能播的本机地址；原始地址在返回值里不再出现。
+ * 2. 转发端点只接受 `https:` 目标（`stream.js` 的 `checkTarget` 有一条协议白名单），
+ *    所以 `rtmp:` / `webrtc:` 这类地址改写过去只会换回 403。与其给一个注定失败的
+ *    播放按钮，不如把地址留空、让 `playable: false` 说明「这路流浏览器放不了」。
+ *    `type` 原样保留，界面想自己判断也有依据。
+ */
+const relayStream = (stream) => {
+  const watch = typeof stream?.watchUrl === "string" && stream.watchUrl ? stream.watchUrl : stream?.url;
+  const record = typeof stream?.recordUrl === "string" && stream.recordUrl ? stream.recordUrl : watch;
+  const hls = (value) => (/^https:\/\//i.test(value ?? "") ? liveRelayUrl(value) : null);
+  const play = hls(watch);
+  return {
+    key: stream?.key ?? "extra", label: stream?.label ?? null, type: stream?.type ?? "unknown",
+    url: play, watchUrl: play, recordUrl: hls(record), playUrl: play, playable: Boolean(play),
+  };
+};
+// dropped 里只剩「哪几路没被采用」的安全元数据：key / label / type 够界面说明情况，
+// host 是 CDN 主机名，客户端用不到，白白送进 DOM 也没有收益。
+const relayDropped = (item) => ({ key: item?.key ?? "extra", label: item?.label ?? null, type: item?.type ?? "unknown" });
+
 // The parser's final transcript is immutable input to the separately versioned handout.
 export const finalVersion = record => digest(JSON.stringify([record.sourceId, record.pages, record.sentences, record.unassignedSentences, record.blocks, record.spine, record.outline]));
 const identity = key => { const [accountId, courseId, subId] = key.split(":"); return { accountId, courseId, subId }; };
@@ -457,6 +504,48 @@ export class StudyWorkbench {
     }
     throw fault("INPUT", "链接类型无效");
   }
+  /**
+   * 直播数据源（`classroom.live`）的取用入口。
+   *
+   * ⚠️ 这里**必须**能优雅降级：`live` 是另一个任务接线进来的可选能力，宿主那边
+   *    `zhiyunClassroom` 是服务实例，谁都不知道它有没有 `.live`（旧版本没有、
+   *    接线失败没有、单测里的假 classroom 也没有）。缺了只让这三个 RPC 如实报
+   *    「未接入」，绝不能让学习页的其他动作跟着挂 —— 直播与课程/解析/讲义是
+   *    互不相交的几条通路，缺一条不该连坐。
+   *
+   * 报 `NOT_WIRED` 而不是 `FAILED`：前者在 `publicError` 里有一句「所需加工插件
+   * 未启用」，是**配置**语义，用户不需要重试；后者会被当成一次性的网络抖动。
+   */
+  liveSource() {
+    const live = this.classroom?.live;
+    if (!live || typeof live.listCurrent !== "function" || typeof live.listLiveDay !== "function" || typeof live.resolveStreams !== "function") {
+      throw fault("NOT_WIRED", "直播未接入");
+    }
+    return live;
+  }
+  // 列表原样返回 `{ items, meta }`：`meta` 里的 `complete` / `reason` 是「这天是不是
+  // 收全了」的唯一依据（按时段分片请求，个别时段失败会标 `partial-quantum`），
+  // 界面据此决定要不要提示「部分时段没读到」，工作台不该替它猜。
+  async liveToday(signal) {
+    return this.liveSource().listCurrent({ signal });
+  }
+  async liveDay(payload, signal) {
+    const date = isoDay(payload.date);
+    return this.liveSource().listLiveDay(date, { signal });
+  }
+  // 返回形状与 `live-day` 有意不同：`{ streams, dropped, source }` 是**一路课**的
+  // 机位清单，不是列表页。改写只在这里做（见 `relayStream`），客户端拿到的
+  // `playUrl` / `watchUrl` / `recordUrl` 全部指向本机转发端点。
+  async liveStreams(payload, signal) {
+    const courseId = identifier(payload.courseId), subId = identifier(payload.subId);
+    const out = await this.liveSource().resolveStreams(courseId, subId, { signal });
+    return {
+      courseId, subId,
+      streams: (Array.isArray(out?.streams) ? out.streams : []).map(relayStream),
+      dropped: (Array.isArray(out?.dropped) ? out.dropped : []).map(relayDropped),
+      source: out?.source ?? "live",
+    };
+  }
   async restoreLecture(key, signal) {
     return this.mutate(key, signal, async () => {
       const stored = await this.result(key), history = [...(stored?.lectureHistory ?? [])];
@@ -489,6 +578,13 @@ export class StudyWorkbench {
     }
     const user = await this.user();
     if (method === "courses") return this.classroom.listCourses({ signal });
+    // 直播三条**必须排在下面 `const courseId = identifier(payload.courseId)` 之前**：
+    // 那句是给「每一条都要一门课」的节次级方法准备的，而 `live-today` / `live-day`
+    // 根本不该带 courseId —— 排到后面会让一次「看今天有什么直播」被课程编号校验
+    // 拦下来。三条都放在这里，顺序即契约。
+    if (method === "live-today") return this.liveToday(signal);
+    if (method === "live-day") return this.liveDay(payload, signal);
+    if (method === "live-streams") return this.liveStreams(payload, signal);
     if (method === "schedule") return this.scheduleWindow(payload, signal);
     if (method === "recent") return this.recall(user);
     if (method === "recent-save") return this.remember(user, payload);

@@ -2,13 +2,15 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { Transport } from './transport.js';
 import { SessionStore } from './session.js';
-import { authenticate } from './auth.js';
+import { authenticate, inspectJwt, jwtFromTokenCookie } from './auth.js';
+import { LiveSource } from './live.js';
 import { ClassroomError, array, object, shape } from './errors.js';
 import * as models from './models.js';
 import { download } from './download.js';
 export { ClassroomError } from './errors.js';
 export { SessionStore } from './session.js';
 export { Transport } from './transport.js';
+export { LiveSource } from './live.js';
 
 export const ENDPOINTS = Object.freeze({
   courses: 'https://education.cmc.zju.edu.cn/personal/courseapi/vlabpassportapi/v1/account-profile/course',
@@ -37,10 +39,17 @@ function result(items, { complete = true, reason = 'single-response', total = nu
 }
 
 export class ClassroomSource {
-  constructor({ transport, sessionFile, protect, fetch, log, timeoutMs, maxPages = 20, pageSize = 100 } = {}) {
+  constructor({ transport, sessionFile, protect, fetch, log, timeoutMs, maxPages = 20, pageSize = 100, onLogin } = {}) {
     if (!Number.isInteger(maxPages) || maxPages < 1 || !Number.isInteger(pageSize) || pageSize < 1) throw new TypeError('分页限制须为正整数');
     this.transport = transport ?? new Transport({ session: new SessionStore({ file: sessionFile, protect }), fetch, log, timeoutMs });
+    // 直播与回放共用同一次登录（同一个 transport），但各自成类：
+    // 回放回答「已完成的那节课有什么」，直播回答「此刻在播什么」，语义不该混。
+    this.live = new LiveSource({ transport: this.transport });
     this.maxPages = maxPages; this.pageSize = pageSize; this.ready = this.transport.session.load();
+    // 登录成功后的回调。用于把账号与会话交给**宿主凭据服务**，
+    // 让 dsh-zhiyun-omni 不必再要一次同样的账号（见 index.js 的装配）。
+    // 失败不影响登录本身 —— 课堂能用了，只是别的包还读不到。
+    this.onLogin = onLogin ?? null;
   }
   async restoreSession(options = {}) {
     await this.ready;
@@ -56,7 +65,14 @@ export class ClassroomSource {
       await this.transport.session.clear();
       await authenticate(this.transport, credentials, options);
       await this.listCourses(options);
-      return { authenticated: true, user: await this.getCurrentUser() };
+      const user = await this.getCurrentUser();
+      // 只在这个时刻把凭据交给宿主：用户刚刚亲口提供了账号，写下去是"记住我"，
+      // 不是偷偷收集。失败只记日志，绝不回滚已成功的登录。
+      if (this.onLogin) {
+        try { await this.onLogin({ credentials, jar: this.transport.session.jar, user }); }
+        catch (error) { this.transport.log?.(`[zhiyun-classroom] 写入宿主凭据失败：${error?.message ?? error}`); }
+      }
+      return { authenticated: true, user };
     });
     loginQueues.set(account, task);
     this.loginTask = task;
