@@ -424,18 +424,38 @@ export function createHandler({
     return { synced: true, added: added.length, total: pulled.total ?? pulled.entries.length, error: null };
   };
 
-  /** 组装页面需要的一切。待办失败不拖垮整页 —— 它们各自带 error。 */
-  const snapshot = async () => ({
-    config: mask(getConfig()),
-    entries: store.list(),
-    remote: await sync(),
-    todos: await loadTodos(),
-    pta: ptaStatus ? await ptaStatus() : { configured: false },
-    // 规划结果与映射：页面据此标"已拆过"并展示卡片
-    plans: plan ? plan.list() : {},
-    // 哪些源条目已拆过 —— 页面用 entryPrefix 对齐，两端口径必须一致
-    planned: plan ? plan.plannedKeys() : [],
-  });
+  /**
+   * 组装页面需要的一切。待办失败不拖垮整页 —— 它们各自带 error。
+   *
+   * **三路远程必须并行。** 中转站、待办、拼题A 状态彼此不依赖，但写在对象字面量里
+   * 逐个 `await` 会被顺序求值，页面打开要等三者耗时之和；中转站跑在创空间上、
+   * 冷启动要几秒，这一项就把整页拖住。改成 `Promise.all` 后只等最慢的一路。
+   *
+   * ⚠️ `entries` 与 `config` **必须在同步之前取值**，语义与改动前一致：页面看到的
+   *    是本次同步**前**的本地内容，本次新增了多少由 `remote.added` 单独报出。
+   *    放到并行之后再取，新增条目会被算进 `entries`，两处就说成同一件事了。
+   *    `store.list()` 返回副本，先取一份不受后面 `absorb` 影响。
+   */
+  const snapshot = async () => {
+    const config = mask(getConfig());
+    const entries = store.list();
+    const [remote, todos, pta] = await Promise.all([
+      sync(),
+      loadTodos(),
+      ptaStatus ? ptaStatus() : Promise.resolve({ configured: false }),
+    ]);
+    return {
+      config,
+      entries,
+      remote,
+      todos,
+      pta,
+      // 规划结果与映射：页面据此标"已拆过"并展示卡片
+      plans: plan ? plan.list() : {},
+      // 哪些源条目已拆过 —— 页面用 entryPrefix 对齐，两端口径必须一致
+      planned: plan ? plan.plannedKeys() : [],
+    };
+  };
 
   return async function handler(req, res) {
     const host = hostOf(req.headers.host);
@@ -699,32 +719,32 @@ export async function apply(ctx, config = {}) {
    */
   const loadTodos = async () => {
     const omni = ctx.get('zhiyunOmni');
-    const result = {
-      xzzd: { ok: false, rows: [], error: null },
-      pta: { ok: false, rows: [], error: null },
-    };
     if (!omni) {
       const why = { code: 'OMNI_UNAVAILABLE', message: '校园数据包（dsh-zhiyun-omni）未启用' };
-      result.xzzd.error = why;
-      result.pta.error = why;
-      return result;
+      return {
+        xzzd: { ok: false, rows: [], error: why },
+        pta: { ok: false, rows: [], error: why },
+      };
     }
 
     // 学在浙大：先用桥接把「已登录的课堂会话」变成 omni 的会话，再读。
     // 这一步是**每次读之前都试**（桥接内部会跳过已存在的），因为用户可能刚刚
     // 在「个人」页登录过 —— 那时 omni 还没有会话，而页面已经能用了。
-
-    try {
-      result.xzzd = { ok: true, rows: normalizeXzzdTodos(await omni.invoke('xzzd.todos', {})), error: null };
-    } catch (error) {
-      result.xzzd = {
-        ok: false,
-        rows: [],
-        error: describeXzzdError(error),
-      };
-    }
-
-    return await finishPta(result);
+    //
+    // ⚠️ 两路**必须并行**：学在浙大与拼题A 是两个不同站点、互不依赖，逐个 await
+    //    会把两次校园网往返相加。各路自己捕获异常 —— 失败语义不变，
+    //    谁失败都只影响它自己那一栏，不会拖垮另一栏。
+    const [xzzd, pta] = await Promise.all([
+      (async () => {
+        try {
+          return { ok: true, rows: normalizeXzzdTodos(await omni.invoke('xzzd.todos', {})), error: null };
+        } catch (error) {
+          return { ok: false, rows: [], error: describeXzzdError(error) };
+        }
+      })(),
+      finishPta(),
+    ]);
+    return { xzzd, pta };
   };
 
   /**
@@ -751,20 +771,23 @@ export async function apply(ctx, config = {}) {
     return { code, message: String(error?.message ?? error) };
   };
 
-  /** 拼题A 单独读：它的失败原因与学在浙大不同（缺 Cookie，不是缺账号）。 */
-  const finishPta = async (result) => {
+  /**
+   * 拼题A 单独读：它的失败原因与学在浙大不同（缺 Cookie，不是缺账号）。
+   *
+   * 只返回 `pta` 那一栏，不接整个 result —— 它与学在浙大并行跑，两路不能互相写。
+   */
+  const finishPta = async () => {
     const omni = ctx.get('zhiyunOmni');
     try {
       const sets = await omni.invoke('pta.problemSets', { active_only: true, max_sets: 20 });
-      result.pta = { ok: true, rows: normalizePtaSets(sets), error: null };
+      return { ok: true, rows: normalizePtaSets(sets), error: null };
     } catch (error) {
-      result.pta = {
+      return {
         ok: false,
         rows: [],
         error: { code: error?.code ?? 'PTA_FAILED', message: String(error?.message ?? error) },
       };
     }
-    return result;
   };
 
 
