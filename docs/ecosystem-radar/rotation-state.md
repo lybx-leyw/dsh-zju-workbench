@@ -51,14 +51,15 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `A`（A 组派生 · 模型请求管线「往返面」轴） |
-| `last_run_at` | `2026-10-19 21:00` |
-| `group_runs`（累计） | A=23, B=10, C=10 |
+| `last_group` | `C`（C 组 · 字幕原文层轴） |
+| `last_run_at` | `2026-10-20 00:00` |
+| `group_runs`（累计） | A=23, B=10, C=11 |
 
 ### 流水
 
 | 时间 | 组 | 说明 |
 | --- | --- | --- |
+| 2026-10-20 00:00 | C | C组第三十五轮（跨天首轮，本地 `293%3=2`→C，**与公式一致**；脚本因用 UTC 日期判为 `2026-10-19`+`formula(stale-state)`→B，**未采纳**）。**字幕原文层轴**：`subtitle segment merge algorithm`(0) / `srt vtt subtitle parser javascript`(1) / `subtitle segmentation input:name`(0) / `sentence splitter language:typescript`(17) / `punctuation restore language:typescript`(0) / `subtitle parser typescript`(7) / `srt parser`(274) / `lecture transcript alignment`(1) / `audio transcription subtitle websubtitle in:name`(0) / `audio silence detection javascript`(1) / `caption format standard webvtt`(1) / `subtitle editor language:typescript`(107) → **12 次搜索（⚠超限 2 次）、0 次 403**。约 96 条去重命中 → 首次登记 24 条 → 有效 8 条；**🟢1(media-captions)🟡1(subtitle.js)🔵3⚠1⛔18（含 4 簇）**；骨架 `dsh-radar-media-captions`（B 类，锁版 `media-captions@1.0.4`）。新结论：① **起点是读代码**（`workbench.js:325`/`:399` 的 `join("")` 无分隔、`core.js:57` 无标点恢复、`subtitle().english` 全仓 0 引用），不是凭印象挑词；② **「格式解析」≠「句子化」**——上游能把 SRT/VTT 拆成 cue，但**不会**把两个 cue 连成一句，本仓缺口无任何 JS 库可代偿；③ 三个最贴的词全返 **0** → **中文标点恢复在 JS 生态是事实空缺**（中文语义底层连续第三轴只能自写）；④ **npm 包名 ≠ 仓库名**：`vidstack/captions` 的包叫 `media-captions`（`vidstack-captions` 404），且 `latest` 标签停在 2023 年的 `0.0.18`、真正的新版挂在 `next=1.0.4` → **A/B 类都要查 `dist-tags`，不能只查「包存在」**；⑤ 字幕域可迁移能力只有三样（格式解析 / 反向序列化 / 双语轨），其余是重复劳动 → **建议封板 3 个月** |
 | 2026-10-14 首轮 | A | DSH 插件生态；11 个 A 类候选；出骨架 `dsh-radar-dsh-market`（占位） |
 | 2026-10-14 第二轮 | C | 与第三轮**关键词逐字相同**；出骨架 `dsh-radar-fsrs-scheduler` |
 | 2026-10-14 第三轮 | C | **重复轮次**（公式缺陷所致）；增量 4 条 🔵；出骨架 `dsh-radar-market` |

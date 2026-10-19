@@ -1770,3 +1770,38 @@
 > 它也是首条「不面向任何单一页面」的候选（强化的是**所有页面共用的那一层**）。
 > ③ **A 类候选的瓶颈已从「找得到」变为「装得上」**：本轮三门全过的 🟢 死在第四道门
 > （宿主版本窗口），详见报告 §4。
+
+## 2026-10-20 · 第三十五轮（C 组 · **字幕原文层**轴）
+
+> 跨天首轮（本地 `293 % 3 = 2` → C）。**12 次搜索（⚠超限 2 次）、0 次 403**，约 96 条去重命中 → **首次登记 24 条** → 有效 8 条。
+> **🟢1 / 🟡1 / 🔵3 / ⚠1 / ⛔18（含 4 簇）**；骨架 `packages/dsh-radar-media-captions/`。
+> 起点是**读代码得出的三处缺口**（F-1 `join("")` 无分隔 / F-2 无标点恢复 / F-3 `english` 轨从未使用），
+> **不是**凭印象挑的词。详见 `2026-10-20.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `vidstack/captions` | B 其他JS | **MIT** ✅（GitHub + npm 两处一致） | 课堂字幕 / 讲义 / 出题（**原文层**） | **重复可强化**（字幕页 + 终稿原文层） | 🟢 | skeleton-created | 2026-10-20 | ★149，push 2026-09-09。**npm 主包名 `media-captions`**（`vidstack-captions` 404）；`latest=0.0.18`(2023) / **`next=1.0.4`**(2024-07-29)，**必须写死 1.0.4**；零运行时依赖，unpacked 162,428 B，纯 ESM。**不提供中文断句 / 标点恢复 / 浙云 JSON 信道**（见报告 §5 结论①）。已出骨架 `dsh-radar-media-captions` |
+| `gsantiago/subtitle.js` | B 其他JS | **MIT** ✅ | 字幕导入/导出（外挂字幕、复习材料） | 重复可强化（**方向不同**：格式搬运，非句子化） | 🟡 | proposed | 2026-10-20 | ★435，push 2026-01-24。npm `subtitle@4.2.2`（MIT，unpkg 实测）。**能 stringify 回去** —— 本仓缺「导出 .srt/.vtt 给外部工具」通路。4 个运行时依赖，Node stream 风格，浏览器端需包一层 |
+| `plussub/srt-vtt-parser` | B 其他JS | **MIT** ✅ | 字幕解析 | 重复且**无增益**（⊂ 🟢） | 🔵 | proposed | 2026-10-20 | ★31，push 2024-07-29。零依赖 TS 解析器，但 **npm 404（锁版不成立）**、无渲染层、格式面窄于 🟢。第三门不过 |
+| `textlint-rule/sentence-splitter` | B 其他JS | **MIT** ✅ | 笔记 / 讲义断句 | 重复可强化（**但中文不成立**） | 🔵 | proposed | 2026-10-20 | ★138，push 2026-04-02。描述明写 `{Japanese, English}`，中文标点无保证 → 对本仓中文课堂无价值 |
+| `laubonghaudoi/subtitle-editor` | B 其他JS | MIT ✅ | 字幕校对 | 仅参考（形态不合 + **同名不同物**） | 🔵 | proposed | 2026-10-20 | ★57，纯 Web。但 npm `subtitle-editor@1.0.0` 是 **2019 年的另一个包（ISC / Vue2 / webpack2）** → 不可作依赖来源，只可读交互 |
+| `oramasearch/chunker` | B 其他JS | **`NOASSERTION`** ⚠ | 讲义分块 | — | ⚠ 待核 | pending-license | 2026-10-20 | ★33，2024-03 后停更。**待人工核验，不采用、不摘代码** |
+| 字幕编辑器簇：`pepri/subtitles-editor`(`null`,★59)、`hamidb80/subtitle-editor`(MIT,★42)、`the-dissidents/subtle`(**GPL-2.0**,★29)、`drakang4/jamak`(MIT,★19,2020停更)、`moaminsharifi/subtitle-flow`(MIT,★18)、`Ratheshan03/ai-subtitle-editor`(`null`,★15) | B 其他JS | 混合 | 字幕校对 | **重复无增益** | ⛔ | rejected | 2026-10-20 | 6 家全是「载入视频 + 手工改时间轴」的**双语单轨编辑器**，**没有一家做中文句读**；且本仓字幕来自 API、不来自用户上传 .srt → 编辑场景不成立。`subtle` 为 GPL 红线 |
+| 播放器字幕轨簇：`ApayRus/frazy-parser`(MIT,★9)、`XiangnianZhou/neta`(MIT,★1,2020)、`AlexandreMT/subtitling`(`null`)、`Leawind/srt-parser-ts`(**GPL-3.0**)、`pedromsilvapt/subbox`(`null`)、`ShipItAndPray/pretext-captions`(`null`) | B 其他JS | 混合 | 字幕解析 | **重复且无增益** | ⛔ | rejected | 2026-10-20 | 能力 ⊂ `media-captions`；或 ★≤9；或无许可证。`srt-parser-ts` GPL 红线 |
+| 通用断句/分词簇：`sirlancelot/string-segmenter`(`null`)、`chax-at/simple-sentence-splitter`(`null`)、`MarkusBansky/chasm`(GPL-3.0)、`seanghay/split-khmer`(MIT,高棉语)、`nunuhi/sentence-splitter`(`null`)、`stoicaandrei/sentence-splitter`(`null`)、`cli3338198/sentence-splitter`(`null`)、`perezamadorluisenrique-gif/text-format`(MIT,大小写转换) | B 其他JS | 混合 | 笔记断句 | **重复无增益** | ⛔ | rejected | 2026-10-20 | 语言不覆盖中文；或 ★≤2；或无许可证。**`sentence splitter` 前排全是日/高棉/通用分词器 —— 中文断句在 JS 生态为空**（见报告 §5 结论②） |
+| 习题/刷题簇：`ZaneH/piano-trainer`(MIT,★2210)、`drbarzaga/react-dojo`(MIT,★33)、`linkedin-faq/linkedin-quizzes-kodyfire`(MIT,★28)、`magentaqin/quiz-me`(MIT,★17)、`iamgideonidoko/linassess`(MIT,★9)、`blackmouse572/quizler-fe`(`null`)、`SohamXYZDev/openboard`(MIT,★6)、`psatler/quiz-nextjs`(`null`)、`Neerajkr7/cca-foundations-exam-practice`(MIT)、`SnakeEye-sudo/Offline-Exam-Practice`(`null`)、`ayozoo/pdf-quiz-practice`(`null`)、`abdullah-khaled0/PDF-Quiz-Generator-with-AI-and-React`(`null`)、`SakshiBhalla77/Pdf-Quiz`(`null`)、`chanchaldabriya/pdf-quiz-app-client`(`null`)、`DHKLeung/life-in-the-uk-test`(`null`)、`notwld/Lab-Exam-Practice`(`null`)、`notwld/lab-exam-practice-react-dotnet`(`null`)、`Didula-Lakminda/Frontend_Practice_Paper`(`null`) | B 其他JS | 多数 `null` | 刷题 | **重复无增益** | ⛔ | rejected | 2026-10-20 | 本仓 `dsh-zhiyun-quiz` 已有「题形状 + 先筛后出 + 四层质检链 + 去重」，远完整于模板类题库。**`piano-trainer`★2210 是键盘乐器练习，与「刷题」仅字面同词 → star 数在此轴第 4 次被证明不可作判据** |
+| 笔记 OCR 簇：`zeus-12/uxie`(`null`,★197)、`Waqar-743/SnapNote`(`null`)、`NitinN77/Smart-Note-Taker`(`null`)、`benjamintaito/inknote`(MIT)、`Marwan-Alhindi/notaplus`(`null`)、`Nilesh98-codes/note-sync-docs`(`null`)、`mentor98/Smart-AI-Note-Taking-App`(`null`)、`King-fly/note-taker`(`null`)、`mainit-na-tinapay/Rubric`(`null`) | B 其他JS | 多数 `null` | 笔记 OCR | **重复无增益** | ⛔ | rejected | 2026-10-20 | 9 条里 7 条无许可证 → 红线。`inknote` 是 Windows 手写笔应用，形态不合。OCR 通路 2026-10-17 已判「Trans2Former + parser 视觉路径足够」 |
+| 论文阅读簇：`LinzuoZhang/Paper-Lantern`(MIT,★10)、`Tentengg/Paper-Reader`(MIT,★1)、`haunledeshuchang/moyue-reader`(MIT,★1)、`ChangHsiang/PDF-Reader`(MIT,★0)、`GindaChen/scholarly-reader`(MIT,★0)、`martin2026US-lab/paper-space`(MIT,★0)（`zotero-ai-reader` 在册） | B 其他JS | MIT | 论文精读 | **重复无增益** | ⛔ | rejected | 2026-10-20 | 本仓论文页是 `dsh-zhiyun-page-paper` + **锁版上游 `@ggboy123/dsh-paper-reader`** 的完整兼容层（24 路由 + 5 agent 工具 + 选中即译）。这 6 家全是 ★≤10 的独立桌面/扩展应用，**无一家提供可嵌入式解析层** |
+| 课表 ICS 复扫：`marioMLLL/ecnu-timetable-calendar`、`computerfan/XJTLU-Timetable-to-ICS`、`khosbilegt/mq-timetable-exporter`、`RunasSudo/allocics.js`(AGPL-3.0)、`0iy/schulportal-hessen-timetable-export`、`Jay-Nepal/sunway-izone-timetable-export`、`PNRYates/knoxi-calendar`、`JustBrandonLim/timetable-grabber-sit`、`romankurakin/dkuzeit`、`NLion74/ics-webuntis`、`vincentdchan/SCAUCourseExporter`、`GarytheNoob/hku-timetable-exporter`、`sceneeeee/xjtlu-timetable-bookmarklet`、`n0x1d3/curtin-calendar`(GPL-3.0)、`naykakashima/UoDTimetables`、`navlemis/timetablext`、`TeoTzeShuen/timetable-exporter`、`Foahh/tpg-timetable-exporter`、`Ishaan-nasir/SnapCal`、`PardhavMaradani/vit-timetable-export-plugin` | B 其他JS | 混合 | 课表 ICS | **重复无增益** | ⛔ | rejected | 2026-10-20 | 前排 10 条**全部已登记**，剩余 10 条同型且 ★≤4。**课表 ICS 轴维持 2026-10-14 的「饱和」判定** |
+| 非 JS / 形态不合：`cdown/srt`(Python,MIT,★537)、`byroot/pysrt`(Python,**GPL-3.0**,★491)、`finwarman/kcl-timetable`(Python)、`JaciBrunning/ElsieScraper`(Ruby)、`kilohealth/rn-fitness-tracker`(MIT,★126,RN 原生桥) | — | — | — | 技术栈 / 形态不符 | ⛔ | rejected | 2026-10-20 | C 组限定 JS/TS。`rn-fitness-tracker` 是 Google Fit / HealthKit 原生桥，Web 工作台用不上 |
+
+> **本轴结论（三条）**：
+> ① **「格式解析」与「句子化」是两件事** —— `media-captions` 能把 SRT/VTT 拆成 cue，
+> 但**不会**把两个 cue 连成一句、也不补句号。本仓 `join("")` 的缺口**没有任何 JS 库能替我们补**。
+> ② **中文标点恢复在 JS 生态里是空的**：`punctuation restore language:typescript` → **0**、
+> `subtitle segment merge algorithm` → **0**、`subtitle segmentation input:name` → **0**。
+> 三个最贴的词全 0 → 这是**事实空缺**，不是搜索姿势问题。中文语义底层连续第三轴（检索/数词/标点）
+> 都只能自写薄实现。
+> ③ **字幕域能提供的能力只有三样**：格式解析（🟢）、反向序列化（🟡）、双语轨渲染（cue settings）。
+> 其余「编辑器 / 播放器轨 / SRT CLI」全是重复劳动 → **字幕域建议封板 3 个月**，
+> 下轮 C 组转「作答统计可视化」或「错题变体生成」。
