@@ -1805,3 +1805,48 @@
 > ③ **字幕域能提供的能力只有三样**：格式解析（🟢）、反向序列化（🟡）、双语轨渲染（cue settings）。
 > 其余「编辑器 / 播放器轨 / SRT CLI」全是重复劳动 → **字幕域建议封板 3 个月**，
 > 下轮 C 组转「作答统计可视化」或「错题变体生成」。
+
+## 2026-10-20 · 第三十六轮（A 组派生 · 检索底层轴）
+
+> 关键词（12 次搜索 ⚠ 超限 2 次，全程 0 次 403；另 3 次纯元数据核实已单列）：
+> `dsh-plugin search`(802)、`dsh plugin search`(487)、`cordis plugin search`(80)、`dsh plugin content index`(0)、
+> `dsh plugin knowledge base`(45)、`dsh plugin rag`(37)、`dsh plugin lexical`(5)、`dsh plugin session search`(50)、
+> `cordis plugin full-text search`(2)、`in:name dsh-search`(515)、`dsh plugin pdf extraction`(8)、`dsh plugin layout parser`(1)、
+> `cordis web plugin markdown`(7)。
+> **131 个未登记仓库** → 有效 9 条；**🟢1（`minisearch`，B 类）+ 🟡3 + 🔵4 + ⚠1 + ⛔6 簇**。
+> **本轮出骨架** `packages/dsh-radar-search-rank`（B 类 · 锁版 `minisearch@7.1.2`）。
+> 起点是本仓自述的弱项：`layered-search.js` 第 ⑥ 条「字面、不切词、不算相关度」；
+> 实测另发现 **L-2 沉默失败**：`layers` 传空集 → `empty:true` 零命中且不报错。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `lucaong/minisearch` | **B 其他JS（纯库）** | **MIT** ✅ | 学习页检索 | **重复可强化**（`layered-search.js` 排序层） | 🟢 | proposed | 2026-10-20 | npm `7.1.2` **实查可锁** ✅（`latest` 已 7.2.0；unpacked 820,346 B，含 UMD+ESM+sourcemap，**进 bundle 体积未实测**）；`dependencies: {}` 零传递依赖。能力：字段加权 + 前缀 + 可外接 `tokenize`（中文）+ 打分排序。**判据①②③全成立**：同一检索框 / 同域不同问题（有没有 vs 哪条更贴）/ 新增排序与分词。**边界收窄**：只对页面算好的 `hits` 重排，不增删、不改档位、不改 2×11 维「先筛后扫」。**本轮 L2 骨架** `packages/dsh-radar-search-rank`。风险：R-1 中文分词质量（`Intl.Segmenter` 对「动量守恒定律」的切分需夹具证明）、R-2 体积、R-3 顺序变了但「更好」需差分计数证明 |
+| `linkingoscar/dsh-attachment-formats` | **A 原生DSH** | **Apache-2.0** ✅（含 `NOTICE`） | 讲义/课件附件 → 可检索文本 | 全新（本仓无附件文本抽取） | 🟡 | proposed | 2026-10-20 | ★4，2026-09-30 push。形态 ✅：`dsh.bundle.patch` + `dsh.client.inject: ["slots","sessions"]`，patch **仅一行 insert、无 `!!js`**（第三十二轮的挂载障碍此处不存在）。能力：PDF 文本层、docx/xlsx/pptx→MD、扫描件 OCR、长文档溢出成 index card。**第三门不过**：npm `dsh-attachment-formats` 与 `@linkingoscar/dsh-attachment-formats` **均 Not Found**（`publishConfig.access=public` 但从未 publish）→ 只能 vendored 复制 → **违反「不搬运上游源码」**，故不建骨架。**它的价值是「本仓附件缺口的说明书」**：notes 只存 Markdown、paper 用 iframe 扛 PDF、univer-office 管预览，三路不通且都无法把扫描版讲义变成可检索文本；若要做，**自写**、只参照能力清单 |
+| `PolinniZhong/dsh-session-workbench` | A 原生DSH | MIT ✅ | 会话历史检索 / 召回 | 重复可强化，但**违反判据①** | 🟡 | proposed | 2026-10-20 | ★50，2026-09-28 push，包体 3.4 MB。会话库全文检索 + 召回 + 会话视图（显示/隐藏/拖拽排序）。**本仓没有「会话」页面**，接进来等于新开面板 → 判据①不成立，不出骨架。⚠ 本轮**未实查 npm 可锁版**（只看 `package.json` 推断），下轮以 npm 实查为准 |
+| `omdsh-dev/dsh-kb-sieve` | A 原生DSH | **Apache-2.0** ✅ | 资料库 → 可审计知识包 | 重复无落地增益（学习页已有块级检索） | 🟡 | proposed | 2026-10-20 | ★2，2026-08-12 push。`kb_build`/`kb_query`/`kb_read` 三工具，**纯计算零子代理**；md/txt/docx/pdf → `references/` + SQLite FTS5(BM25, title=10/body=1) + manifest。**第三门不过**：`private: true` + 包名 `@dsh-external/dsh-kb-sieve`，README 自己写的是 `git+https://` 安装 → 不可锁版。⚠ 未实查 npm。**价值**：印证排序层方向——生态里做本地检索的也在用 **FTS5 + BM25 + 字段加权**，与本轮骨架同源 |
+| `Zn-Dk/dsh-session-explorer` | A 原生DSH | MIT ✅ | 会话检索 | 无关（本仓无会话页） | 🔵 | proposed | 2026-10-20 | ★4，2026-09-09。消息级全文检索 + 时间线可视化 |
+| `121212165/dsh-plugin-transcript-search` | A 原生DSH | MIT ✅ | 归档会话检索 | 无关 | 🔵 | proposed | 2026-10-20 | ★1，2026-10-19。读 `dsh-plugin-transcript` 写的 JSONL 侧车；**本仓会话不落 JSONL** |
+| `huangxp12/dsh-plugin-search` | A 原生DSH | MIT ✅ | 「插件」页过滤 | **重复无增益** | 🔵 | proposed | 2026-10-20 | ★1，2026-10-08。给插件页加关键词过滤；本仓插件页已有自建过滤 |
+| `JackAIStudio/dsh-robust-search` | A 原生DSH | MIT ✅ | 会话检索 | 无关，但**可作参照实现** | 🔵 | proposed | 2026-10-20 | ★1，2026-09-15。隔离坏会话日志 + **SQLite FTS5 CJK 分词**。与本轮骨架同思路；不采用（依赖 SQLite，浏览器端跑不了） |
+| `1parado/dsh-deepseek-web-search` | A 原生DSH | **`NOASSERTION`** ⚠ | 联网搜索 | 原则冲突（灰色网页登录） | ⚠ | proposed | 2026-10-20 | ★5，2026-10-17。中文描述：用网页版 DeepSeek 账号做 web_search。**待人工核验许可证，不采用、不摘码** |
+| Web Search provider 簇：`DDDMUC/dsh-free-search`(★501)、`A3Boy/dsh-web-tools`(★36)、`MochiNek0/dsh-web-search-free`(★34)、`anysearch-team/anysearch-dsh`(★559)、`cyijun/dsh-surfing-plugin`、`moguiyu/dsh-tavily`、`rogerdigital/dsh-searxng`、`X-C1811/dsh-web-search-plugin`、`Yuuz12/dsh-tavily`、`bocha-ai/dsh-web-search-bocha`、`gsh150801/dsh-anysearch-plugin`、`Modellix/dsh-modellix`、`SeerableOfficial/dsh-web-search-toggle`、`zHElEARN/dsh-web-search-session-header`(`null`)、`wtoco/dsh-mimo-websearch`(`null`) | A 原生DSH | 多数 MIT，2 条 `null` | 联网搜索 | **重复无增益**（第 4–18 家） | ⛔ | rejected | 2026-10-20 | 宿主已有 `web_search` seam；本仓没有任何「网页搜索」面板。**该轴彻底饱和，建议封板 3 个月**；`wtoco/dsh-mimo-websearch` 与 `zHElEARN/…` 无许可证为红线 |
+| RAG 知识库簇：`xiaoshi7915/dsh-kb-manager`、`AlowEnsoul/dsh-rag-kb`、`YYTbit/dsh-plugin-rag`、`mervyn-teo/dsh-plugin-rag`、`zuijiuyueliang/dsh-plugin-rag`(`null`)、`y7d26/dsh-knowledge`、`NaughtDZ/dsh-knowledge`、`CodfishYao/dsh-knowledge-base-local`、`RonnieGex/dsh-cited`、`wangning19940904/dsh-llm-wiki`、`huangfuren/dsh-outline`、`JoeyTrribbiani/dsh-rag-knowledge`(Python)、`SiqiSun42/dsh-rag-evaluate-plugin`(Python)、`yyang8891/dsh-plugin-kb4rag`、`RogueServitor-495/dsh-plugin-knowledge-base`(`null`)、`ds-customize/dsh-plugin-knowledge-base`(`null`) | A 原生DSH | 多数 MIT，3 条 `null` | 资料库问答 | **重复无增益**（第 3–18 家） | ⛔ | rejected | 2026-10-20 | 均为「导入文档 → 向量化 → 语义检索」。本仓「学习」页已有整理后的块级检索，RAG 是另一条数据路径（需重建索引），且多数绑外部 embedding 服务，与本仓「不引入独立后端」冲突 |
+| 会话检索簇：`TOBYCAI/dsh-sessions-manager`(★30)、`itsyuyi/dsh-workspace-search`、`Tieboyh/dsh-session-search`(`null`)、`dipertq/dsh-session-search`(`null`)、`fuguoqiang-bnu/dsh-plugin-session-search`、`Victue/dsh-session-search`、`2275803244-cpu/dsh-session-search`、`240xu/dsh-session-search`(`NOASSERTION`)、`ewoowe/dsh-session-messages-plugin`、`Sivan757/dsh-plugin-session-fleet`、`kjx-talesofai/dsh-plugin-session-palette`、`MarchLiu/dsh-graft`(`null`) | A 原生DSH | MIT / `null` / 1 `NOASSERTION` | 会话搜索 | 重复无增益 / 无关 | ⛔ | rejected | 2026-10-20 | 12 家做同一件事：在会话日志上做全文检索。**本仓没有会话页面**，无落点；4 家无许可证、1 家 `NOASSERTION` |
+| 记忆簇：`Starry0214/dsh-memory`、`yan5236/dsh-memory`、`Towzai/dsh-memory`、`Frog755/dsh-hybrid-memory`、`AstroLiao/dsh-memory-core`、`boomzikazita/dsh-memory`(Python)、`sglwsjxh/dsh-mem`(**AGPL-3.0**)、`reedflame40224/vcp-memo`(`NOASSERTION`) | A 原生DSH | MIT / AGPL-3.0 / `NOASSERTION` | 记忆 | 重复无增益 | ⛔ | rejected | 2026-10-20 | 跨会话记忆第 4–11 家；AGPL 与 `NOASSERTION` 为红线。同类已在册多轮登记 |
+| 非 JS 栈簇：`vshulcz/deja-vu`(Go,★1252)、`Ikalus1988/MisakaNet`(Python,★544)、`Ariestar/sivtr`(Rust,★257)、`chainbase-labs/Agentkey`(Shell,★665)、`jingchangzhao-gif/dsh-errkb`(Go)、`lawcontinue/dsh-vision-tools`(Python) | — | MIT/Apache-2.0 | — | 技术栈不合 | ⛔ | rejected | 2026-10-20 | skill 限定 JS/TS 技术栈；星数再高也不接（deja-vu ★1252 是 Go 的 agent 记忆） |
+| 界面微调 / 皮肤 / 市场簇：`MichengAI/dsh-codex-ui`(★178)、`hyzyn/dsh-plugin-kit`(★54)、`FSMargoo/dsh-at-file`(★527)、`keman-ai/dsh-skin-market`、`sakka6868/dsh-skin`、`objectivex666/dsh-settings-search`(**GPL-3.0**)、`lov0vo/dsh-composer-autopair`、`daoyu1993-lab/dsh-plugin-type-to-compose`、`imsai-sh/dsh-1024store` | A 原生DSH | MIT / GPL-3.0 | — | 重复无增益 | ⛔ | rejected | 2026-10-20 | 侧栏/皮肤/@文件补全/插件市场第 N 家；`dsh-settings-search` 为 GPL-3.0 红线。`dsh-at-file`★527 是 Codex 风格 @ 补全，本仓 `page-notes` 已有 `[[` 链接补全，重复 |
+| 其余单点小工具：`Tyan66666/billion-context-dsh`、`jermaine123123/agent-context-editor`、`duhu2000/dsh-mcp-connector`、`Mr-remon219/search-boost`、`Lxiayu/DshCockpit`、`Eray114514/dsh-find-plugins`、`taikaikaikai-pixel/dsh-tap`、`everclear077/dsh-progressive-tools`、`ZekaiShi/evo-subagent`、`youdotcom-oss/agent-skills`、`lpeixin/dsh-project-compass`、`Fisfzy/zotero-harvest`、`AbcdefgXW/dsh-toolbox-web`、`Leitarkkk/dsh-research-nudge`、`Pasumao/dsh-plugin-dev-kb`、`chocobo77/dsh-infinite-context`、`shuishuipingan/InkWeaver`(**GPL-3.0**)、`lifensame/dsh-plugin`、`stopchewing/dsh-mcp-view`、`stvlynn/dsh-dify-marketplace`、`meme-dog/dsh-plugin-finder`、`KevinWen7415/dsh-virtual-workspace`、`yancf666/dsh-usage-panel`、`janpauldahlke/dsh-web-missions`、`liuqingman/dsh-hawkeye-scan`、`hrhgit/deepseek-harness-plugin-manager`、`BandieraRosa/dsh-plugin-notion`、`sandbaseai/dsh-kit`(`null`)、`121212165/dsh-plugin-deep-search`、`Lings01/dsh-filepanel-plugin`、`ice5kysl/dsh-workspace-kit`、`honwee/dsh-plugin-mynah`、`fan969690/dsh-desktop-tools`、`xuanyuanluoxue/computer-use-vision`(`NOASSERTION`)、`meliodascz89/dsh-orchestra`、`bloodarea/dsh-knowspace`(`null`)、`feely0208/dsh-content-trust`、`BotonJ/dsh-plugin-sentinel`、`Jeffine322/dsh-tool-pdf`(`null`)、`suomir1995/dsh-link-collect`、`suomir1995/dsh-notes`、`margbug01/dsh-ma-plugins`、`rex178178/dsh-turnbar`、`truelove-dreamer/dsh-plugin-recall`(`null`)、`HIT-HTML/dsh-ENHANCED`、`Kai-ZKH/dsh-branch-tree`、`gaoheng980610/dsh-knowledge-base`、`xzs125/dsh-docs-knowledge`、`nan1010082085/dsh-plugin-ima-sync`、`ralfsqual/dsh-pdf-reader`、`nnma12358/dsh-plugin-win-desktop-kit`、`Qqiutand/dsh-study-reader`、`HaoKuo/dsh-notebook-studio`、`Niobium-41-nb/dsh-html-output`、`Kevoyuan/dsh-skill-fuzzy`(`NOASSERTION`)、`johnhom1024/dsh-ios-input-fix` | A 原生DSH | 混合 | — | 重复 / 无关 / 已覆盖 | ⛔ | rejected | 2026-10-20 | 单点能力（上下文裁剪、MCP 连接器、用量面板、桌面巡检、插件查找、@ 补全、IDE 风格面板…）。在册已有对应项；`dsh-usage-panel` 属已封板的用量轴；`InkWeaver` GPL-3.0、`computer-use-vision`/`dsh-skill-fuzzy` `NOASSERTION`、`bloodarea`/`dsh-kit`/`dsh-tool-pdf`/`dsh-plugin-recall` 无许可证，均为红线 |
+
+> **本轴结论（四条）**：
+> ① **「检索」在 A 组已裂成两半**：搜索侧（web search 15 家 / RAG 16 家 / 会话 12 家）**彻底饱和**；
+> 排序侧（相关度、字段加权、结果重排）**一家都没有**。本仓 `layered-search.js` 374 行里也没有一行排序。
+> ② **本轮最有价值的产出不是候选，是 L-2**：`layers` 传空集 → `empty:true` 零命中且**不报错**。
+> 它现在只被 `study-workspace.jsx` 的 `layers ?? defaultSearchLayers` 侥幸绕过。
+> ③ **「可锁版」这一门又多一种死法**：第三十四轮是宿主版本窗口，本轮是 **npm 声明 `public` 却从未 publish**
+> （`dsh-attachment-formats`）。`private: true`（`dsh-kb-sieve`）、双名 404（`dsh-raw-html`）已是第三、第四种。
+> ④ **B 类替换底层需要一条新判据**：差分测试的断言必须是「命中集合 ⊇ 旧实现」。
+> 拼音（第二十九轮）、高亮（第三十一轮）、排序（本轮）三轮各自独立得到同一结论。
+>
+> ⑤ **与同日第三十五轮（C 组 · 字幕原文层）的关系**：两者都落在「文本怎么进检索」这条链上，但**前后段不同**——
+> C 组修的是**原料**（字幕 `join("")` 无分隔、缺标点），本轮修的是**排序**（命中顺序 = 数组顺序）。
+> 顺序上应先修原料再修排序：没有句子边界的文本，任何相关度打分都只能落在「整块」这一粒度上。
