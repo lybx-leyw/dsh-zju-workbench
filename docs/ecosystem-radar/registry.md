@@ -1734,3 +1734,39 @@
 > `zju calendar` 6 条、`zju library` 53 条的价值项**全部在册**（多是数据库课设噪声）。
 > **建议 B 组由「每 3 天必跑」降为事件驱动**，额度让给仍在稳定出 🟢 的 A 组。
 > 另：`中文词 + OR` 在 GitHub search 上是**无效组合**（退化回泛 `zju`，且不返回 `total_count`），后续 B 组禁用。
+
+---
+
+## 2026-10-19 · 第三十四轮（A 组派生 · 模型请求管线「往返面」轴）
+
+> 关键词（13 次搜索 ⚠ 超限 3 次，全程 0 次 403）：`dsh plugin model provider`(190)、
+> `dsh plugin provider in:description`(223)、`cordis plugin llm provider`(26)、`dsh plugin fallback`(82)、
+> `dsh plugin usage stats`(55)、`dsh plugin token usage`(193)、`dsh plugin gateway`(102)、
+> `dsh plugin notification`(179)、`dsh plugin mcp`(534)、`deepseek harness plugin in:name`(162)、
+> 补扫 `dsh plugin notification in:description`(74)、`dsh plugin hook in:description`(18)、
+> `dsh plugin permission in:description`(33)、`dsh plugin export in:description`(62)、`dsh plugin desktop in:description`(292)。
+> 约 2,200 条命中 → 未登记 54 条 → 有效 3 条；**🟢1（`dsh-llm-fallbacks`）+ 🟡1（`loongsuite/dsh-plugin`）+ 🔵2 + ⚠1 + ⛔48 簇**。
+> **本轮出骨架** `packages/dsh-radar-llm-fallback`（锁版 `dsh-llm-fallbacks@0.6.7`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `omdsh-dev/dsh-llm-fallbacks` | **A 原生DSH** | **MIT** ✅ | 通用（所有页面共用请求管线） | **重复可强化**（`dsh-llm` 失败路径） | 🟢 | proposed | 2026-10-19 | ★21，2026-10-18 push（活跃），topics `dsh-plugin` 族，`dsh.bundle.patch` + `dsh.client.inject`（6 个前端包）齐全。npm `dsh-llm-fallbacks@0.6.7` **可锁版** ✅（unpacked 905,327 B，dist 696 KB，运行时依赖仅 `use-sync-external-store`）。**三门全过**（形态 / 许可 / 可锁版）。内容：按触发码（`AUTH`/`QUOTA`/`RATE_LIMIT`，可扩 `CONTEXT_WINDOW_EXCEEDED`）沿 fallback 链切换 provider/model + 冷却 + 可选半开恢复；峰谷分时路由；角色化 subagent。**判据③需实测**（本仓无跨 provider 失败转移，但「更优质」未用失败码样本验证）。**本轮 L2 骨架** `packages/dsh-radar-llm-fallback`。⚠ 三点硬风险：**R-1 宿主窗口 `^0.2.1-rc.2` 与本仓 `0.2.0-rc.2`/`0.2.1-alpha.1` 均不相交**（semver prerelease 规则）；R-2 须排在 `dsh-llm-retry` 之后；R-4 npm `package.json` 缺 `license` 字段但 tarball 内有 MIT `LICENSE` |
+| `loongsuite/dsh-plugin` | **A 原生DSH** | **Apache-2.0** ✅ | 通用（运维/可观测） | 全新（本仓无追踪） | 🟡 | proposed | 2026-10-19 | ★29，2026-10-12 push，topics `opentelemetry`/`genai`/`tracing`。npm `@loongsuite/dsh-plugin@0.1.3` 可锁 ✅（unpacked 144,637 B）。把每个 agent turn 变成 GenAI span 树（step / LLM 调用含 TTFT / 工具执行 / token），经 OTLP 导出到 Jaeger / Tempo / Langfuse。**不做骨架的理由**：① 本仓没有后端，OTLP endpoint 是「运维配置」不是「学生功能」，默认开启等于把每位同学的使用数据往外发 → **隐私边界**；② 学生场景契合度低（不是「全新面板」而是「没有任何面板」）；留作「若做导师侧性能诊断」的底层 |
+| `PolinniZhong/dsh-personal-center` | A 原生DSH | MIT ✅ | 个人配置 / 用量 | **重复且无增益**（与在册 `dsh-bottom-info-bar`/`dsh-usage-*` 同列） | 🔵 | proposed | 2026-10-19 | ★118，2026-09-28 push。把它按功能拆开看：Token 用量统计（在册已有 4 家：`dsh-bottom-info-bar`/`dsh-usage-chart`/`dsh-usage-panel`/`dsh-hud`）、成本估算（同上）、自定义指令、**外观全局字号**（本仓「个人」页唯一外观项就是这个）、桌面宠物。**唯独没被覆盖的是「全局字号」与「自定义指令」**，二者都属本仓「个人」页的自有实现（`dsh-zhiyun-page-me`）→ 按「不简单集成重复功能」不接；npm unpacked **8,233,357 B（8.2 MB，多因桌宠素材）**，作为工作台依赖过重 |
+| `0xsline/awesome-deepseek-harness` 等 5 个 awesome 清单 | A 原生DSH（清单） | CC0 / MIT / ⚠`NOASSERTION` | 通用 | 全新（线索源，与在册 `awesome-dsh-plugin` 同列） | 🔵 | proposed | 2026-10-19 | `0xsline/awesome-deepseek-harness` ★1218 CC0 ✅（本轮 `dsh plugin mcp` 第 1 名）；`Zhiyuan-Fan/Awesome-DeepSeek-Harness-Plugins` ★574 MIT ✅；`imsai-sh/awesome-deepseek-harness-plugins` ★300 MIT ✅（自述「11,000+ dsh plugins」的市场）；`Dominic789654/…` ★387 与 `web-casa/…` ★117 为 **`NOASSERTION`** ⚠ 待核。**只作线索源**，不摘内容；★1218 的清单可作为下一次「窄词池」的来源 |
+| `dsh-external/*` 系列（本轮 4 个 URL 实测 **404**）、`graygravity/dsh-notify`（404）、`web-casa/dsh-mcp-manager`（404） | — | — | — | — | ⛔ | rejected | 2026-10-19 | 这些名字来自 `pipetow` / `Tania-X` 等 README 的推荐顺带提法，**仓库实际不存在**（`api.github.com/repos/...` 返回 `Not Found`）→ 「README 里出现的仓库名 ≠ 存在的仓库」，登记一行，避免下轮再核 |
+| 用量统计簇：`lanlandeli/dsh-usage-stats`(⚠`NOASSERTION`,★11)、`AKS1st/model-usage-plugin`、`zhangzheng25/dsh-token-monitor`、`jkStars/dsh-token-usage-stats`、`jianweideng0515-create/dsh-usage-stats`(BSD-3)、`1841220388zzzcccxxx-star/dsh-token-stats`、`Yolotd/dsh-plugin-duwg`、`kindred-7/dsh-usage-stats`(`null`)、`feiyang-dev/dsh-usage-plugin`(★36)、`HaoyueQin/dsh-usage-statistics-panel`(★27)、`AlfredChaos/dsh-usage-panel`、`Max-Samson/dsh-usage-chart`、`a903067276-rgb/dsh-hud` | A 原生DSH | 多数 MIT，1 条 `NOASSERTION`、1 条 `null` | 用量 | **重复无增益**（第 5–17 家） | ⛔ | rejected | 2026-10-19 | 本轮最大的一簇：**13 个新仓做的是同一件事**（token 用量 / 成本 / 热力图 / 图表）。在册已有 4 家 + 本仓「个人」页有外观分区。**该轴已彻底饱和**，建议封板；`lanlandeli` 一条 `NOASSERTION`（无 `license` 字段）单列待核 |
+| Provider/登录簇：`Mars-Sea/dsh-commandcode-provider`(★411)、`cv-superding/dsh-deepseek-web-login`(Apache-2.0,★289)、`Stormycry-cryp/dsh-AuthInOne`(★105)、`mo-n/dsh-provider-qoder`、`wqy8593521/dsh-model-pro`、`tearslee/dsh-workbuddy2api`、`bufeibufei/dsh-openai-codex`、`fan56/dsh-model-sync`(`null`)、`Victor-770/dsh-commandcode-provider`、`viztor/dsh-opencode-patch`、`wingoo/codex-plugin-dsh` | A 原生DSH | 多数 MIT | 通用（接入第三方模型） | **重复无增益 / 不用** | ⛔ | rejected | 2026-10-19 | 全部是「把某个第三方订阅/网页版接成 provider」。**与本仓原则冲突**：① 本仓只用宿主内置 provider，不替用户接入灰色网页登录（ToS 风险）；② 免费额度下的降级策略已由本轮 🟢 覆盖。`dsh-AuthInOne`★105 是同族里唯一做「多 provider 统一登录」的，仍属「换一个登录页」而非强化 |
+| 网关/远端簇：`Clarklevis1995/dsh-mobile`(★568)、`Clarklevis1995/dsh-plugin-mobile-gateway`(★88)、`hytime/dsh-thinking-effort`(★53)、`islibaodong/dsh-login`、`litestartup-com/dsh-api-gateway`、`siegfly/dsh-deepseek-vision`、`clarknu/dsh-gateway`、`CaiZongyuan/dsh-ag-ui`、`yybai25/dsh-ssh-desktop`、`grunmin/dsh-acp-enhanced`、`WDahah/portable-dsh-multi-agent-plugin`、`SeverusZh/dsh-plugin-subagent-director`、`Jonah-Wu23/dsh-agy-safe`、`YFY-AI/dsh-llm-fallback` | A 原生DSH | 多数 MIT | — | 与 web 客户端形态不兼容 / 重复 | ⛔ | rejected | 2026-10-19 | 移动端 / 远程 shell / API 网关 / 协议桥。**本仓是 web 工作台**，这些改的是「怎么连上来」，不是「连上来之后能做什么」。`YFY-AI/dsh-llm-fallback`（★1）是其 `publishConfig.registry = npm.pkg.github.com` → **公网 npm 装不了**，且与本轮 🟢 **名字几乎相同、勿混** |
+| 通知簇：`hikarioyama/Smart-DSH`(`null`,★33)、`ly6170/dsh-messager`、`c-ling/dsh-plugin-notify`、`117BS/dsh-perlica-ding`、`yuxino/dsh-blue-whale-maid`(⚠`NOASSERTION`,★6)、`halosb/dsh-workmate`、`Mars-Sea/dsh-deeppilot`、`ltao0829/dsh-task-notify`(BSD-3)、`pitetow/dsh-notify-on-complete`、`Tania-X/dsh-notify-macos` | A 原生DSH | 多数 MIT | 学习提醒 | **重复无增益**（第 4–12 家） | ⛔ | rejected | 2026-10-19 | 「回合结束 → 桌面/飞书/钉钉/Webhook 推送」。在册已有 3 家，本仓「今天」页已有提醒语义。**该轴饱和**，封板 3 个月；`Smart-DSH`★33 无许可证（`null`）为红线，`dsh-blue-whale-maid` `NOASSERTION` 待核 |
+| 审计/钩子簇：`jkrandom-sudo/dsh-plugin-audit`、`chunfenxiazhi-collab/dsh-stability-audit`、`truelove-dreamer/dsh-plugin-hooks`(`null`)、`wula1223/dsh-plugin-dev`、`rasyidmmz/dsh-ai-memory`、`SeverusZh/dsh-yolo-mode`、`xlxs123/dsh-session-multiselect`、`wingsky-1/dsh-plugin-hub`、`weekitmo/oh-my-dsh-plugins` | A 原生DSH | MIT / `null` | 通用 | **重复无增益** | ⛔ | rejected | 2026-10-19 | 审计/钩子已是在册 `plugin-audit`/`compat-vet`/`upstream-radar` 第 10–12 家；`dsh-yolo-mode`（自动批准沙箱升级）与本仓「学生场景最小权限」原则相反；其余 ★≤5 的清单/模板类。`dsh-plugin-hooks` 无许可证为红线 |
+| `Fayelin12/dsh-office`、`HongMing-Huang/dsh-file-upload`、`cinob/dsh-web-search-multi`、`tuojc/dsh-browser-firefox`、`qphotoai/dsh-computer-use-windows`、`songoao25/dsh-bottom-info-bar`(在册)、`JerryLiu369/agent-web-search`、`wingsky-1/dsh-plugin-hub`、`justhalfbit/dsh-plugin-jev-effort-selector`、`HaoyueQin/dsh-diff-stat`、`yuioi666/dsh-plugin-model-capability`、`a86582751/dsh-nexttavern`(GPL-3.0)、`bwndlct/dsh-session-export`、`yangyongzhen/dsh-session-export`(`null`)、`azure5100/huahua-dsh-record-replay` | A 原生DSH | 混合 | — | 无关 / 已覆盖 | ⛔ | rejected | 2026-10-19 | 单点小工具（上传/搜索/浏览器/截图/差异徽章/模型能力表/会话导出/录播回放）。会话导出与本仓「笔记」重复且无更优底层；`dsh-nexttavern` 为 GPL-3.0 红线 |
+
+> **本轴结论（三条）**：
+> ① **「用量/通知/审计」三个子轴同时饱和**——本轮 54 条新仓里 40 条落在这三簇，且都是「第 N 家」。
+> A 组内卷的主战场已从「新能力」转向「同一能力的复刻」。
+> ② **唯一还空着的是「请求管线本身」**：provider 接入（饱和）、网关（形态不合）、
+> 而**「失败之后按链降级」** 此前从未被登记——本轮 🟢 正是从这个空档出来的，
+> 它也是首条「不面向任何单一页面」的候选（强化的是**所有页面共用的那一层**）。
+> ③ **A 类候选的瓶颈已从「找得到」变为「装得上」**：本轮三门全过的 🟢 死在第四道门
+> （宿主版本窗口），详见报告 §4。

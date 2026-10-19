@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `A`（A 组派生 · Agent 工作流 / 审查门禁轴） |
-| `last_run_at` | `2026-10-19 15:00` |
-| `group_runs`（累计） | A=22, B=10, C=10 |
+| `last_group` | `A`（A 组派生 · 模型请求管线「往返面」轴） |
+| `last_run_at` | `2026-10-19 21:00` |
+| `group_runs`（累计） | A=23, B=10, C=10 |
 
 ### 流水
 
@@ -102,6 +102,7 @@ node scripts/radar-rotation.mjs --group
 
 | 2026-10-19 12:00 | A | A组派生第三十一轮（同日第 5 轮；脚本判 `same-day(exhausted)`→B，**不采纳**，B 今日已跑）。**渲染底层轴**：`markdown it commonmark renderer`(10) / `markdown renderer to html`(556) / `mdast unist`(46) / `html sanitizer`(724) / `html to markdown`(9924) / `syntax highlight code`(5230) / `highlight.js`(5158) / `katex math render`(118) / `tree-sitter highlight`(401) / `mermaid diagram`(4555)` 等 **12 次搜索（⚠超限 2 次）、0 次 403**。108 仓 → 有效 12 条；**🟢1(highlight.js)🟡1(dsh-raw-html)🔵9⚠2⛔6簇**；骨架 `dsh-radar-code-highlight`（锁版 `highlight.js@11.12.0`）。新结论：① **A 类候选要同时过三道门：形态 / 许可 / 可锁版**——`dsh-raw-html` 是原生 DSH（带 patch+client.inject）但 `private:true`、npm 双名 404 → 锁版不成立，只能 vendored 复制（违反「不搬源码」）；在维护的 v2 又 `NOASSERTION`；② **`highlightAuto()` 在 core-only 下不报错，只认已注册语言**——会把 C 代码着成 python 类名，「亮了但是错的」，必须禁用，验收得看「颜色对不对」而非「有没有颜色」；③ 本仓 `better-markdown` L37 早写过要评估 mermaid/katex/shiki 体积，本轮实测 mermaid `unpackedSize` **122MB** → 该项可直接关闭；④ 「高亮」轴的系统性噪声是**编辑器/IDE 扩展/截图工具**（★5000+ 的 syntaxhighlighter 是 2020 停更的 DOM 注入库）；⑤ 「图表」轴前排 ★85466 的 archify 是 agent skill 不是库——**star 数在本轴完全不可作为判据**。⚠ 本轮 core-only 首屏体积**未实测**，报告中标注为估算，不得引用为事实 |
 | 2026-10-19 15:00 | A | A组派生第三十二轮（同日第 6 轮；脚本判 `same-day(exhausted)`→B，**不采纳**，B 今日已跑；且脚本因 `last_group` 为空报 `formula(stale-state)`）。**Agent 工作流 / 审查门禁轴**：`dsh plugin`(12394 探针，前10全在册) / `plugin in:description harness review`(182) / `dsh plugin agent mode`(57) / `dsh plugin review gate`(23) / `dsh plan mode plugin`(23) / `dsh-plugin in:name`(4101 探针) + C 轴复核 6 词（`spaced repetition scheduler language:javascript` 105 / `fsrs… OR …` **0（OR 限定符再次丢词）** / `fsrs-typescript` 33 / `sm-2 algorithm javascript` 8 / `supermemo algorithm language:typescript` 13 / `ebbinghaus forgetting curve javascript` 4 / `spaced repetition algorithm in:name` 11 / `srs flashcards typescript` 35）等 **12 次搜索（⚠超限 2 次）、0 次 403**。约 130 条命中 → 首次登记 6 条（4 有效 + 2 簇）；**🟢1(dsh-evolve-modes)🔵1⚠1⛔2簇**；骨架 `dsh-radar-evolve-modes`（A 类锁版 `@graysilver/dsh-evolve-modes@0.4.1`）。新结论：① **复习调度轴确认枯竭**——8 次搜索约 200 条，无一条新增可用库，建议 C 组该子轴封板 3 个月、改跑「作答统计可视化 / 错题变体生成」；② **A 类「三门」制度化后立即见效**：`dsh-web-studyhub`（★124、完全对口习题、MIT、原生 DSH）死在第三门——npm 包名 `@ericwang1358/dsh-daily-flashcard` **404**，且核心是 **SM-2（旧于 FSRS）**→⛔；`dsh plugin <X>` 命中后第一件事应是查 registry，不是读 README；③ **上游 patch 里的 `!!js` 是 A 类挂载的新障碍**——`dsh-evolve-modes` 自带 patch 用 `!!js` 按平台取 `shellTool`，本仓安全补丁不支持 YAML 内执行 JS → 骨架改为「本仓 id 插入 + 运行时 `import()` 上游调其 `apply` + 平台配置走本仓 config」，**上游 patch 从此只作「挂载意图说明书」用**；④ 同名不同物风险首次显性化：上游「计划」= DSH plan-mode，本仓「规划」= 学生周计划表，骨架按后者出具并在 README 单列 |
+| 2026-10-19 21:00 | A | A组派生第三十四轮（同日第 8 轮；脚本判 `formula(stale-state)`→B，**未采纳**，B 今日已跑两轮且第三十三轮已宣布封板）。**模型请求管线「往返面」轴**：`dsh plugin model provider`(190) / `dsh plugin provider in:description`(223) / `cordis plugin llm provider`(26) / `dsh plugin fallback`(82) / `dsh plugin usage stats`(55) / `dsh plugin token usage`(193) / `dsh plugin gateway`(102) / `dsh plugin notification`(179) / `dsh plugin mcp`(534) / `deepseek harness plugin in:name`(162) + 3 次 `in:description` 补扫（notification 74 / hook 18 / permission 33）→ **13 次搜索（⚠超限 3 次）、0 次 403**。约 2,200 条命中 → 未登记 54 条 → 有效 3 条；**🟢1(dsh-llm-fallbacks)🟡1(loongsuite/dsh-plugin)🔵2⚠1⛔48 簇**；骨架 `dsh-radar-llm-fallback`（A 类锁版 `dsh-llm-fallbacks@0.6.7`）。新结论：① **首条「不面向任何单一页面」的候选**——强化的是全站 `dsh-llm` 请求管线的失败路径，本仓 `packages/*` 无一个依赖 `dsh-llm`、profile 无显式 retry 行；② **A 类出现第四道门「宿主版本窗口」**：上游 26 项 peer 全为 `^0.2.1-rc.2`，本仓 `hostVersions` 的 `0.2.0-rc.2` 与 `0.2.1-alpha.1` **均不满足**（semver prerelease：`alpha`<`rc`）→ 骨架定位为「条件性 🟢」，评审要么升宿主要么放弃；③ **用量/通知/审计三子轴同时饱和**（54 条新仓里 40 条落在这三簇，全是「第 N 家」）→ 建议三轴封板 3 个月、额度转给管线类窄词；④ `in:description` 在 DSH 生态**零增量**（#1 190 vs #2 223，前 8 条相同）→ 建议从 A 组派生轴移出；⑤ README 里出现的仓库名 **5 个实测 404** → 「README 提法 ≠ 存在」
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑

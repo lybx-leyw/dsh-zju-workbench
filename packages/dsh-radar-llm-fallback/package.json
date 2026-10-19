@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-llm-fallback",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 dsh-llm-fallbacks（MIT，原生 DSH Web 插件），为整个工作台的模型请求提供「失败后按链降级 + 峰谷分时路由」的底层（强化式集成，A 类锁版挂载 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-llm-fallbacks": "0.6.7"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
