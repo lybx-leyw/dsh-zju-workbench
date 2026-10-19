@@ -1850,3 +1850,45 @@
 > ⑤ **与同日第三十五轮（C 组 · 字幕原文层）的关系**：两者都落在「文本怎么进检索」这条链上，但**前后段不同**——
 > C 组修的是**原料**（字幕 `join("")` 无分隔、缺标点），本轮修的是**排序**（命中顺序 = 数组顺序）。
 > 顺序上应先修原料再修排序：没有句子边界的文本，任何相关度打分都只能落在「整块」这一粒度上。
+
+---
+
+## 2026-10-20 · C 组派生（第三十七轮）· **关键路径健全性轴** · 追加
+
+> 关键词：`learned card generation language:javascript`(**0**) / `anki card template language:typescript`(7) /
+> `handwriting math recognition language:javascript`(8) / `onnxruntime-web ocr`(22) / `distractor generation question`(47) /
+> `text diff match patch chinese`(**0**) / `diff-match-patch language:javascript`(56) /
+> `handwritten notes to text language:typescript`(32) / `equation keyboard latex input`(1) /
+> `quiz generator language:typescript stars:>100`(1)。
+> **10 次搜索（达上限未超限）、0 次 403，本轮完整**。约 120 条去重命中 → 首次登记 13 行（含 2 簇）。
+> **🟢1（`ocr-web`，B 类）+ 🔵5 + ⚠2 + ⛔4 簇**；骨架 `packages/dsh-radar-ocr-web`（B 类 · 锁版 `@ocr-web/core@0.2.1`）。
+> 起点是读码发现的两处断环：**F-1 `recordAttempt()` 全仓无调用方**、**F-2 出题原料只能来自已解析的讲义块**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `bent2685/ocr-web` | **B 其他JS（纯库）** | **MIT** ✅（LICENSE 实文首行已核，非仅 API 字段） | 板书/截图/手写 → 出题原料 | **重复可强化**（补 `quizMaterials()` 只能吃讲义块这一缺环） | 🟢 | proposed | 2026-10-20 | ★3 / fork 0，**2026-05-08 push（约 5 个月未更新）**。npm `@ocr-web/core@0.2.1` **实查可锁** ✅（unpacked **256,788 B**）+ `@ocr-web/models-ppocrv5@0.1.1`（**8,007 B**，**只有 jsDelivr URL 常量，不含模型**）+ peer `onnxruntime-web`（unpacked **144,618,540 B**，全后端）。**零运行时依赖**。能力：PP-OCRv5（DBNet 检测 + CRNN/CTC 识别，字典 18,384 字含 CJK）、**Worker 模式**、字节级 `onProgress`、`OcrLine` 带 `points` 四边形 + `score`。**判据①②③全成立**：同一 `quiz-panel` / 同一条「文字→出题」链的相邻环 / 本仓此前**完全没有**这一层。**本轮 L2 骨架** `packages/dsh-radar-ocr-web`。三条风险：R-1 本仓无 wasm 静态管线、R-2 模型默认外联与离线定位冲突、R-5 ★3 且停更 5 个月。⚠ **上游 peer 写 `^1.25.0`，但 npm 上 `1.25.0` 只有 `-dev.*` 预发布**（稳定版自 `1.25.1` 起）→ 骨架锁 `1.25.1` |
+| `JackuB/diff-match-patch` | B 其他JS（纯库） | **Apache-2.0** ✅ | 简答题判分（逐字差异） | 重复可强化，但**当前无消费者** | 🔵 | proposed | 2026-10-20 | ★270，2023-05-18（3 年未更新）。Google `diff-match-patch` 的 npm 封装；逐字 diff，**中文按码点切分，天然可用**。**价值在 F-1 之后**：`attempts` 接上才会需要「答案差在哪」。现在接进来是在空链上加环节 → 不出骨架 |
+| `AnsonLai/docx-redline-js` | B 其他JS | **MIT** ✅ | 讲义修订对比 | 无关（本仓讲义是块结构化，不比 docx） | 🔵 | proposed | 2026-10-20 | ★15，**2026-10-18 push**（活跃）。Host-independent OOXML 引擎，原生修订标记。仅作「版本 diff」思路参考 |
+| `ECuiDev/obsidian-quiz-generator` | B 其他JS | **MIT** ✅ | 从笔记出闪卡 | **重复无增益** | 🔵 | proposed | 2026-10-20 | ★174。多模型（OpenAI/Gemini/Ollama）从笔记生成交互式闪卡 + quiz UI。**形态强耦合 Obsidian**；出题逻辑与本仓 `dsh-zhiyun-quiz` 的「规则门禁 + 自审 + 待审」相比更弱（无来源锚点、无质检链）→ 不采用 |
+| `Gilbetrar/anki-renderer` | B 其他JS | **MIT** ✅ | 卡片模板渲染 | 无关（本仓不导出 Anki 包） | 🔵 | proposed | 2026-10-20 | ★1，2026-06-09。Anki 卡片模板 → WASM 渲染。若本仓未来要「导出到 Anki」才用得上 |
+| `Just-anoob/NotesReader` | B 其他JS | **Apache-2.0** ✅ | 手写笔记 → 文本 | 重复可强化（同 `ocr-web`） | 🔵 | proposed | 2026-10-20 | ★0。AI 笔记编译，**依赖外部视觉模型 API**（非本地推理）→ 与 `ocr-web` 相比多一条数据外发，**故不取**，仅登记 |
+| `MyScript/myscript-math-web` | B 其他JS | **`NOASSERTION`** ⚠ | 手写公式 → LaTeX | 全新（本仓无公式手写输入） | ⚠ | pending-license | 2026-10-20 | ★244，**2021-01-04 停更**。手写数学公式识别（商业 MyScript 引擎的 Web 封装）。**能力对口**（理工科手写推导），但①许可证 `NOASSERTION` ②停更近 6 年 ③实为商业 API 客户端。**待人工核验许可证，不采用、不摘码** |
+| `Fanfulla/OCR-buddy` | B 其他JS | **`NOASSERTION`** ⚠ | 本地 OCR 扩展 | 重复可强化 | ⚠ | pending-license | 2026-10-20 | ★54，2026-09-27。100% 本地 OCR Chrome 扩展（代码/正文/LaTeX 公式）。**能力比 `ocr-web` 更宽**（含公式），但 `NOASSERTION` + 扩展形态难封装。**待人工核验许可证，不采用、不摘码**。若许可证为宽松，**下轮应优先评估它替代 `ocr-web`** |
+| `StabRise/ScaleDP-TS` / `Zapca/Math-Notes` | B 其他JS | **AGPL-3.0** / **GPL-3.0** ⛔ | 浏览器内 PDF 解析 / 手写公式求解 | — | ⛔ | rejected | 2026-10-20 | ★38 / ★0。**许可证红线**，无论能力多对口都不接 |
+| 无许可证单点：`rotkonetworks/ocr.rotko.net`、`anirbandotdev/PrivacyLens`、`Artemiy111/anki-card`、`Zecat/anki-hanzi-quiz`、`justinmeiners/gesture-recognition`、`samirhssn/richmath-input-react` | B 其他JS | **`null`** ⛔ | — | — | ⛔ | rejected | 2026-10-20 | 全部无许可证。注：`rotko.net` 与 `ocr-web` 同为「PP-OCRv5 mobile + onnxruntime-web 浏览器内」，**能力上等价**，仅因无许可证排除 |
+| `distractor generation` 簇：`Yifan-Gao/Distractor-Generation-RACE`(★70)、`harrylclc/LTR-DG`(★28)、`narain280493/Automatic-Question-Generation`(★22)、`DRSY/DGen`(★22)、`umass-ml4ed/prompt_distractor_generation_NAACL`、`ryyrn/Knowledge_Graph_Guided_Distractor_Generation`、`xinzhu-cai/probase-concept-generator`、`obss/disgem`、`FawziElNaggar/Question-MCQ-_Answer_Generation`、`zpqiu/EDGE`(GPL-3.0) | 非 JS / B | 8 条**无许可证**、1 条 `NOASSERTION`、1 条 GPL | 选择题干扰项 | **全新（但技术栈不合）** | ⛔ | rejected | 2026-10-20 | 全部 **Python**（AAAI/EMNLP 论文实现），且 8 条无许可证。本仓 `quiz-panel.jsx` 明确「选择题这一版不出」→ 即便能接也没有落点 |
+| `handwritten notes to text` 簇：`csfahad/writeshift`、`heyaryansingh/type-it-up`、`malikmuhammadsaadshafiq-dev/mvp-handwriting-to-text-scann`、`cryptozues/Handwritten-Text-Digitizer`、`harsh-0712/notes-digitize`、`drealdumore/write-it`、`VanshNagpal10/IntelliDocs` | B 其他JS | **全部 `null`** ⛔ | 手写 → 文本 | 重复可强化 | ⛔ | rejected | 2026-10-20 | 全部是 ChatGPT/Gemini 视觉 API 的套壳 App，**零本地推理**、**零许可证**。与 `ocr-web` 相比多一条「学生手写内容上传给第三方」——对本地化工作台是**负面** |
+
+> **本轴结论（四条）**：
+> ① **本轮最有价值的产出是 F-1，不是候选**：`grep -rn recordAttempt` 全仓**只有 `store.js:604` 定义处一处，无调用方**。
+> `attempts` 轨（错题归因 / 薄弱点统计 / 「近 3 次都错」规则的**唯一**依据）代码全在、测试全过，**却永远没有数据**。
+> `quiz-panel.jsx` 只有采纳/丢弃/移出队列，**没有「作答」**。这条**不需要任何外部库**，不应出骨架、应直接修。
+> ② **C 组的「功能域」方向确实在枯竭，但「链上缺环」方向还没走完**：本轮 10 次搜索只捞出 1 个 🟢，
+> 而读码 10 分钟就找到 2 处断环。**下轮 C 组建议继续用「先读码找断环、再定向搜」的方法**，
+> 而不是继续枚举 `quiz practice` / `flashcard` 这类功能词。
+> ③ **「PP-OCRv5 + onnxruntime-web 浏览器内 OCR」已经是成熟方案**，本轮 22 条命中里有 **3 条**是同一技术栈
+> （`ocr-web` / `rotko.net` / `ScaleDP-TS`），差别只在**许可证**（MIT / 无 / AGPL）。这说明选型不该再纠结
+> 「有没有库」，而是「谁的许可证干净、谁的部署成本低」。
+> ④ **上游 peer 区间可与 npm 现实脱节**：`@ocr-web/core` 写 `onnxruntime-web: ^1.25.0`，
+> 而 npm 上 `1.25.0` **只有 `-dev.*`**。这与第三十四轮「宿主版本窗口」、第三十六轮「声明 public 却从未 publish」
+> 同属「文档/元数据与仓库现实不一致」的第五种形态 —— **锁版前必须 `npm view <pkg> versions` 实查，不能只读 peer 区间**。
