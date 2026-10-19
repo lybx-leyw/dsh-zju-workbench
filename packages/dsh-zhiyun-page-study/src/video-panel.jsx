@@ -39,7 +39,9 @@
 //    进度条打架。
 // 3. **点字幕才跳**：不自动滚动。用户可能正在读某一行，自动滚走是打断。
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { computeSectionStats, toSeekBar } from 'dsh-zhiyun-player';
 import { HlsVideo } from './hls-video.jsx';
+import { blocksForStats } from './seek-bar.js';
 
 /**
  * 只放行 http(s) 的媒体地址。
@@ -104,9 +106,35 @@ function TranscriptLine({ line, index, active, onJump, domId }) {
   </button>;
 }
 
+function ContentRail({ bar, nowMs, onJump }) {
+  const play = bar.axisMs > 0 ? Math.min(1, Math.max(0, nowMs / bar.axisMs)) : 0;
+  const current = bar.segments.find((segment) => play >= segment.from && play < segment.to) ?? null;
+  const seek = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (rect.width <= 0 || !(bar.axisMs > 0)) return;
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    onJump(ratio * bar.axisMs);
+  };
+  const nudge = (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const step = event.key === 'ArrowRight' ? 5000 : -5000;
+    onJump(Math.min(bar.axisMs, Math.max(0, nowMs + step)));
+  };
+  return <div className="zs-video-rail">
+    <div className="zs-video-heat" aria-hidden="true">{bar.heat.map((bucket, index) => <span key={index} className="zs-video-heat-cell" data-empty={bucket.heat == null ? 'true' : undefined} style={{ left: `${bucket.from * 100}%`, width: `${Math.max(0, (bucket.to - bucket.from) * 100)}%`, '--heat': bucket.heat ?? 0 }} />)}</div>
+    <div className="zs-video-seek" role="slider" tabIndex={0} aria-label="按课堂内容跳转" aria-valuemin={0} aria-valuemax={Math.round(bar.axisMs)} aria-valuenow={Math.round(Math.min(bar.axisMs, Math.max(0, nowMs)))} onClick={seek} onKeyDown={nudge}>
+      {bar.segments.map((segment, index) => <span key={index} className="zs-video-seg" data-role={segment.role ?? 'none'} title={segment.summary || undefined} style={{ left: `${segment.from * 100}%`, width: `${Math.max(0, (segment.to - segment.from) * 100)}%` }} />)}
+      <span className="zs-video-playhead" style={{ left: `${play * 100}%` }} />
+    </div>
+    <p className="zs-video-rail-note"><span data-role="main">主线</span><span data-role="branch">支线</span><span>细条是语速，灰段是估不出来</span>{current?.summary ? <span className="zs-video-rail-now">{current.summary}</span> : null}</p>
+  </div>;
+}
+
 export function VideoPanel({ state }) {
   const videoRef = useRef(null);
   const [nowMs, setNowMs] = useState(0);
+  const [axisMs, setAxisMs] = useState(0);
   const lesson = state.lesson;
   const slides = state.content?.slides?.items ?? [];
   const subtitles = state.content?.subtitles?.items ?? [];
@@ -141,17 +169,23 @@ export function VideoPanel({ state }) {
     const node = videoRef.current;
     if (!node) return undefined;
     const onTime = () => setNowMs(node.currentTime * 1000);
+    const onDuration = () => setAxisMs(Number.isFinite(node.duration) ? node.duration * 1000 : 0);
     node.addEventListener('timeupdate', onTime);
     node.addEventListener('seeked', onTime);
+    node.addEventListener('loadedmetadata', onDuration);
+    node.addEventListener('durationchange', onDuration);
+    onDuration();
     return () => {
       node.removeEventListener('timeupdate', onTime);
       node.removeEventListener('seeked', onTime);
+      node.removeEventListener('loadedmetadata', onDuration);
+      node.removeEventListener('durationchange', onDuration);
     };
   }, [videoUrl]);
 
   // 换节时把「钉住的页」放开、时间归零、主视图也回到这一节的默认 ——
   // 否则上一节的页码与主视图选择会带到新节上。
-  useEffect(() => { setPinned(false); setNowMs(0); setMain(videoUrl ? 'video' : 'ppt'); }, [lesson?.subId, videoUrl]);
+  useEffect(() => { setPinned(false); setNowMs(0); setAxisMs(0); setMain(videoUrl ? 'video' : 'ppt'); }, [lesson?.subId, videoUrl]);
 
   const autoSlide = useMemo(() => indexAt(slides, nowMs), [slides, nowMs]);
   const slideIndex = pinned && slides.length ? Math.min(Math.max(autoSlide, 0), slides.length - 1) : Math.max(autoSlide, 0);
@@ -182,9 +216,18 @@ export function VideoPanel({ state }) {
   //    路径一个字节都不变（见 `hls.js` 的 `needsHlsJs`）。
   //    它仍然把同一个 `ref` 交回来 —— `timeupdate` / `currentTime` 那套时间轴
   //    契约完全没有变，这是本栏"时间轴是唯一真源"的前提。
+  const contentBar = useMemo(() => {
+    const blocks = blocksForStats(state.result);
+    if (!blocks.some((block) => Number.isFinite(block.startMs))) return null;
+    const stats = computeSectionStats(blocks);
+    const axis = axisMs > 0 ? axisMs : stats.durationMs;
+    if (!(axis > 0) || stats.segments.length === 0) return null;
+    return toSeekBar(stats, axis);
+  }, [state.result, axisMs]);
   const videoStage = videoUrl
     ? <div className="zs-video-stage zs-video-stage-video">
       <HlsVideo ref={videoRef} src={videoUrl} className="zs-video-media" preload="metadata" />
+      {contentBar && <ContentRail bar={contentBar} nowMs={nowMs} onJump={jumpTo} />}
     </div>
     : null;
 

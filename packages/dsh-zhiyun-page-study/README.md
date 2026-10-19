@@ -7,7 +7,7 @@
 | 区域 | 是什么 | 文件 |
 | --- | --- | --- |
 | 左栏（课程目录） | 课程 → 节次，就地展开；已整理 / 解析中的状态点 | `study-workspace.jsx` 的 `CourseTree` |
-| 正文区「视频」栏 | 视频主视图 + 课件小窗 + 字幕，两者可互换 | `video-panel.jsx` / `video.css` |
+| 正文区「视频」栏 | 视频主视图 + 课件小窗 + 字幕，两者可互换。终稿出来后，视频下有内容分段和语速条 | `video-panel.jsx` / `seek-bar.js` / `video.css` |
 | 正文区其余栏 | 终稿 / 讲义 / PPT / 字幕 / 出题 / 笔记 + 分层检索 | `study-workspace.jsx`、`lecture-reader.jsx`、`quiz-panel.jsx`、`note-panel.jsx`、`note-links.js`、`layered-search.js`、`layers.js`、`format.js` |
 
 出题和笔记的读写在 `dsh-zhiyun-study-core`。这一页只渲染：从已选片段出填空或简答，
