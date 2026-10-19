@@ -1709,3 +1709,28 @@
 | `sixtysevenlf/dsh-skill-blender-modeling`（`NOASSERTION`）、`cuddly-guacamole/opencode-routing-suite`（`NOASSERTION`）、`PerryLink/dsh-github`（Apache-2.0，CI 工具非教学模式） | A 原生DSH | 混合 | — | 无关 / 待核 | ⚠ 待核 | pending-license | 2026-10-19 | 前两条许可证 **`NOASSERTION`** → 待人工核验、不采用；第三条与本轴（Agent 工作模式）无关，仅记录 |
 | 「安全审查门禁」簇：`ateen18/dsh-plugin-security-review`（`null`）★4、`ShanHaiFish/dsh-plugin-security-review`（MIT）★2、`dushaobindoudou/dsh-plugin-security`（MIT）★2 | A 原生DSH | `null` / MIT | — | **重复无增益**（审计簇第 7/8/9 家） | ⛔ | rejected | 2026-10-19 | 全是「插件**安装**前的供应链安全评审」，与在册 `plugin-audit` / `compat-vet` / `skill-pack-security` 同列；与本轮 `dsh-evolve-modes` 的「**产出**质量审查」**不是同一件事**（前者审包，后者审结果）。首条无许可证为红线 |
 | 「规划文件 / 计划归档」簇：`Asaka-RUM/dsh-planning-with-files`（`NOASSERTION`）★2、`asd176916847/dsh-plan-first-dev`（MIT）★1、`likesrt/dsh-plugin-plan-archive`（`null`）★0、`Dalizi2026/dsh-model-dispatch`（MIT）★12、`lincong1987/dsh-model-switch`（MIT）★10 | A 原生DSH | 混合 | — | **无关 / 重复无增益** | ⛔ | rejected | 2026-10-19 | 前三条是「Manus 式计划文件 / 强制 plan-first / 计划归档」，属 **DSH plan-mode 的周边**，与「学生周计划表」不同物（见本行 🟢 备注的同名不同物问题）；后两条是模型切换，`dsh plugin plan mode` 一词的**系统性噪声**。许可证 `NOASSERTION`/`null` 两条仅登记不摘码 |
+
+## 2026-10-19 · 第三十三轮（B 组 · 校园数据「读后整理层」轴）
+
+> 关键词（10 次，达上限未超限，0 次 403）：`zju lost found`(0)、`zju notice`(1)、`zju calendar`(6)、
+> `zju 失物 OR 招领`(降级作废)、`zju 通知 OR 公告`(降级作废)、`zju bulletin board`(1)、
+> `zju useful scripts`(3)、`zju library`(53)、`zju activity`(2)、`zju grade point`(0)。
+> 补扫（不在 10 次内、仅用于否决 L2）：`keyword extraction rake`(150)、`textrank sentence ranking`(15)。
+> **本轮 0 个 🟢 / 0 个 🟡 / 0 个骨架，未开 PR（门槛未触达）。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Jnove/mentor-agent` | 非 JS（Python） | **`null`** ⛔ | 政策问答 / 通知跟进 | 重复且无增益 | ⛔ | rejected | 2026-10-19 | ★1，2026-07-09 建 / 2026-08-30 push。描述仅一句「帮浙大学生理解政策、跟进最新通知」，无 topics、无可用文档。**无许可证 + 非 JS 栈**，三条判据全不成立 |
+| `5dbwat4/ZJU-live-better` | B 其他JS | **GPL-3.0** ⛔ | 校园生活脚本集 | — | ⛔ | rejected | 2026-10-19（`zju` 批量扫时已在册，本轮 `zju useful scripts` 复出） | ★221，2026-10-07 push。**许可证红线**，不摘码 |
+| `ChenyuHeee/ZJU-live-better` | B 其他JS | GPL-3.0 | — | — | ⛔ | rejected | 2026-10-19 | ★3，上一条的 fork → 去重归一，不再单列评估 |
+| `zhullyb/zjut-useful-scripts` | 非 JS（Shell） | `null` | — | — | ⛔ | rejected | 2026-10-19 | ★0，**浙工大（非浙大）** + 无许可证 |
+| `ZJUZhiyuCai/zju-activity-calendar` | 非 JS（Python） | **`NOASSERTION`** ⚠ | 校园活动 | — | 🔵 | pending-license | 2026-10-19 | ★1，2026-04-26。无描述、无 topics。许可证 **`NOASSERTION` → 待人工核验、不采用**。本轮唯一 `NOASSERTION` 新面孔。`zju activity`(total 2) 的第二条是 2014 年 GPL 仓，已弃 |
+| `Meteors27/ZJU-Calendar-Maker` | 非 JS（Python） | `null` | 课表导出 | 重复且无增益 | ⛔ | rejected | 2026-10-19 | ★19，**2023-03 停更**。ics 导出，与本仓 `dsh-zhiyun-tongge-schedule` / `career-calendar` 重复且无证 |
+| `cmjang/zjut-calendar` | 非 JS | MIT ✅ | — | — | ⛔ | rejected | 2026-10-19 | ★0，2021-10 停更。**浙工大**，非浙大 |
+| `zhpywhatever/ZJU_Calendar` | 非 JS（Python） | `null` | 校历 | — | ⛔ | rejected | 2026-10-19 | ★0，2024-11。无许可证 |
+| `waseem18/node-rake` | B 其他JS | **MIT** ✅ | 笔记 / 讲义（关键词抽取） | **重复且无增益**（实测由「可强化」降级） | ⛔ | rejected | 2026-10-19 | ★103，2023-07-27 push，npm `node-rake@1.0.1`（2018-03 发布，unpacked **12,459 B**，**零运行时依赖** → 可锁版 ✅）。**实测两处硬伤**：① 中文输入直接 `TypeError`（`index.js:75`），根因 `removeStopWords` 的 `\b` 对 CJK 无词边界 + `stopWords.txt` 无中文词；② `index.js:63` 用频率**值**当键（`Object.values(wordFreq).forEach(freq => wordDegree[freq] += …)`），评分被污染。本仓 `layered-search.js` L10 自述「不切词、不算相关度」→ 需求真实，但**此库不是那个更优底层**。若要做，应本仓自写 30 行中文友好切分 |
+
+> **本轴结论**：B 组「校园信息侧」**封板**。10 次搜索换 1 条无许可 Python 仓库；
+> `zju calendar` 6 条、`zju library` 53 条的价值项**全部在册**（多是数据库课设噪声）。
+> **建议 B 组由「每 3 天必跑」降为事件驱动**，额度让给仍在稳定出 🟢 的 A 组。
+> 另：`中文词 + OR` 在 GitHub search 上是**无效组合**（退化回泛 `zju`，且不返回 `total_count`），后续 B 组禁用。
