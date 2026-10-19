@@ -1650,3 +1650,23 @@
 | `Xebec33/Mainland_Traditional_Chinese_Converter`★5 / `fartbagxp/home-simplified-to-traditional`★1 / `holsoma/spotify-web-lyrics-trad-simplified`★1 / `brentwong2020/CopyTradify`★0 / `QiyuanLuo233/simplified2traditional`★0 / `LibreService/my_opencc`★13 / `bluelovers/cjk-convert`★14 | B/— | Apache-2.0 / MIT / **AGPL-3.0** / `null` | — | 无关 | ⛔ | rejected | 2026-10-19 | 在线转换小工具、Tampermonkey 脚本、InDesign 脚本；`my_opencc` 为 **AGPL-3.0** 红线；`cjk-convert` 无许可证 |
 | `Yark-yao/Chinese-Stroke-Order-Generator`★50 / `jilldata/hanzi-stroke-data` | B 其他JS | MIT / `null` | 汉字学习 | 无关（本轮轴外） | ⛔ | rejected | 2026-10-19 | 笔顺 GIF 生成器（Puppeteer 依赖）；笔顺数据集无许可证。**轴外误召回** |
 | `edvardsr/cc-cedict`★35 / `polo-language/chinese-dictionary`★3 / `joshchaotang/claude-code-i18n`★37 / `n0/GitHub-Achievement-CLI`★87 / `ffzz/match-name-lambda`★0 | B/— | 混合（2 条 `null`） | — | 无关 | ⛔ | rejected | 2026-10-19 | 英汉词典 / Claude Code 汉化 / GitHub 成就脚本。`fuzzy matching chinese language:typescript`（total 1）与 `traditional simplified chinese language:typescript`（total 44）**前排多为误召回** |
+
+## 2026-10-19 · 第三十轮（C 组 · **答案等价判定轴**）
+
+> 同日第 4 轮（00:00 B / 03:10 A / 06:05 A 派生）。搜索 **10 次**（达上限未超限），0 次 403，**0 条 `NOASSERTION`**。
+> **依据：从本仓空洞出发** —— `dsh-zhiyun-quiz` 的 `QUIZ_AUTOGRADE_VERDICTS` 有 `unknown`（判不了），
+> 但判据只有 `normalizeForTrace()` 的字符串归一；实测 7 类等价写法全部落空。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `MikeMcl/decimal.js` | B 其他JS | **MIT** ✅（metadata/npm/包内 LICENCE 一致） | 填空判分 | **重复可强化**（作答判定换底层，加等价归一） | 🟢 | skeleton-created | 2026-10-19 | ★7267，2026-08-30 push，**npm `decimal.js@10.6.0`**（锁版成立），0 依赖，~284KB。`Decimal#equals` 任意精度 → `1/2` vs `0.5`、`5e3` vs `5000`。已出骨架 `dsh-radar-answer-equiv` |
+| `Achuan-2/chinese_number_to_digits` | B 其他JS | MIT ✅ | 数词→数值 | 重复可强化（但实现有错） | 🔵 | proposed | 2026-10-19 | ★1，4.0KB 单文件、无 ESM、无 npm。**实测 `一千二百万→1002000000`、`十二亿三千四百万→4204000000` 均错**。只作行为观测，不摘码 |
+| `spa5k/chinese-numbers-to-arabic` | B 其他JS | MIT ✅ | 同上 | 重复可强化（但实现有错） | 🔵 | proposed | 2026-10-19 | ★5，npm `2.0.0`（24.7KB，0 依赖）。**实测 `一亿二千万→1000020000000` 错**，与上一行错法方向相反 → 取交集亦不成立 |
+| `lisez/lib-arabic-chinese` | B 其他JS | MIT ✅ | 数字读法 | 方向相反（阿拉伯→中文） | 🔵 | proposed | 2026-10-19 | ★4，npm `2.0.0`（18KB，0 依赖）。单向，判分所需方向相反 |
+| `anton-bot/chinese-numbers-converter.js` | B 其他JS | **Unlicense** ✅ | 数字读法 | 单向且覆盖不全 | 🔵 | proposed | 2026-10-19 | ★24，2020 停更。单向；未覆盖「亿/万」复合读法 |
+| `LiuQixuan/ChineseNumerals`（npm `chinesenum`） | B 其他JS | MIT ✅ | 数词转换 | 声称双向、实测单向 | 🔵 | proposed | 2026-10-19 | npm `1.0.2`，115KB。**实测 `chinanumeralsToNum` 对任意输入抛错**（`Cannot read properties of undefined`）→ 只有 `numToChinanumerals` 可用 |
+| `MikeMcl/decimal.js-light`★410 / `royNiladri/js-big-decimal`★165 / `shinuza/decimal-js`★56 | B 其他JS | 均 MIT ✅ | 数值判定 | 重复无增益（被 decimal.js 覆盖） | 🔵 | proposed | 2026-10-19 | 精度面/API 均弱于 `decimal.js`；若评审嫌 284KB 可改 light，但需重做等值判定 |
+| `Wall-ee/chinese2digits` | 非 JS（Python） | **`null`** ⛔ | 数词→数值 | — | ⛔ | rejected | 2026-10-19 | ★374，描述最贴（含「点二八」「负百分之四十」），但**无许可证** → 只登记「仅供参考」，不摘码不移植 |
+| `HardusLom/UnitLab` | B 其他JS | **`null`** ⛔ | 单位换算 | 轴外 | ⛔ | rejected | 2026-10-19 | ★0。单位换算轴同轮唯一命中，无许可证；且本轮不做单位换算 |
+| 制卡/cloze 簇：`jsoendermann/ClozedForBusiness`(**GPL-3.0**)、`peterjcarroll/ClozeMaker`、`milwrite/cloze-reader`、`quetzalt52/Flashcard-Generator`、`jackson9413/cloze-forge`、`NovaCards/anki-card-cleaner` 等 | — | 混合（GPL / `null` / MIT） | 制卡 | 无关 | ⛔ | rejected | 2026-10-19 | 制卡工具不是判分层；GPL-3.0 红线 |
+| 判分器簇：`qbreader/qb-answer-checker`(JS,`null`)、`Akshint0407/Automated-Answer-Checker`(Py,Apache)、`Junibabng/MyAnswerChecker`(Py,MIT)、`Jay22519/Automatic-Answer-checker-`(Jupyter,`null`)、`arnabm14/Subjective_Answer_Checker`(Py,`null`) 等 | — | 混合 | 判分 | 形态不符 | ⛔ | rejected | 2026-10-19 | quizbowl 答案行判等 / 站内服务，非可复用库；多数非 JS 栈 |

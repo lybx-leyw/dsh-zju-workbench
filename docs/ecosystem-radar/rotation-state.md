@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `A` |
-| `last_run_at` | `2026-10-19 06:05` |
-| `group_runs`（累计） | A=20, B=10, C=9 |
+| `last_group` | `C` |
+| `last_run_at` | `2026-10-19 09:20` |
+| `group_runs`（累计） | A=20, B=10, C=10 |
 
 ### 流水
 
@@ -97,6 +97,8 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-18 21:00 | A | A组第二十六轮：**插件自省 / 依赖图底层轴**（`dependency graph visualization javascript`44 /`plugin dependency graph`173 / `npm dependency tree visualization`15 / `dsh plugin inspector`12 / `dsh plugin graph`91 /`cordis plugin service`34 / `plugin introspection cordis`**0** / `dsh plugin audit before install`6 /`javascript circular dependency detector`1，9次搜索未超限、0次403）。26条新仓→有效12条；**🟢1(skott)🟡1(capability-inspector)🔵3⛔7簇**；骨架 `dsh-radar-plugin-graph`（锁版 `skott@0.35.12`）。新结论：① `dsh plugin <名词>` 已饱和（graph 91 / inspector 12 的可用项全在册），只认 30 以内的窄词；② `plugin dependency graph` 是**词面陷阱**——173 条几乎全是 Gradle/Maven/sbt，JS 栈 0 条；③ 三词叠加 `plugin introspection cordis` 直接 0 → **抽象词 + 框架名 = 死词**；④ 首次出现能给现有页面**换底层**的候选：插件页能画边、算层序，但算不出文件级环 / 未加载边 / 空边；⑤ 装前审计轴**封板 3 个月**（本轮 3 个新审计工具全部与在册实现重复）；⑥ ⚠ 埋点：clone 到已存在目录时首试必败（本次 `already exists` 空转一次）；⑦ ⚠ 本次 push 首次被拒（`non-fast-forward`：远端 radar 已在 18:00 前进过一轮）→ **开跑前必须先 `fetch origin radar` 再决定起点**，skill 文档里「ls-remote 一次判存在」与「clone 后即 checkout」的顺序有竞态 |
 | 2026-10-19 00:00 | B | B组第二十七轮（跨天首轮，`292%3=1`→B）：**「浙大工具脚本 ↔ 本仓数据层」对读轴**。`zju in:name`(JS 458 / TS 177)、`zju grade gpa`(0)、`zju zdbk`(4)、`zju timetable`(4)、`zju crawler OR spider`(5637)、`zju webvpn`(7)、`zju course selection`(4)、`zju exam schedule`(1)、`zju library seat`(2)、`pintia OR pta zju`(5637)；**11 次搜索 ⚠超限 1 次、0 次 403**。109 仓 → 47 条首次登记；有效 6 条；**🟢1(tongge-schedule)🟡1(zju842-practice)🔵4⛔41**；骨架 `dsh-radar-tongge-schedule`。新结论：① 🟢 来自「本仓有空 RPC、生态有完整实现」——B 组最稳的产出模式；② **教务库代号是最锋利的窄词**（`zju zdbk` total 4 命中 2 条 MIT+JS），代号 > 自然语言；③ `OR` 限定符会丢弃其他词（`zju crawler OR spider` 与 `pintia OR pta zju` 均返 5637 = 纯 `zju`）→ **B 组禁用 `OR`**；④ `zju in:name` 有系统性误报（owner 名带 zju、`zjut` 浙工大混入）；⑤ `campus app` 类宽词的系统性噪声是「各校自建 course review 平台」，9 条全 `null` 许可证；⑥ B 组有效密度降至 6/47 = 12.8%，后续须改用服务代号窄词 |
 | 2026-10-19 06:05 | A | A组第二十九轮（同日第 3 轮；脚本仍判 `formula(new-day)`，未采纳）。**中文检索底层轴**：`pinyin in:name,description language:javascript`(718) / `jieba wasm`(13) / `traditional simplified chinese language:typescript`(44) / `chinese word segmentation javascript`(3) 等 **15 次搜索（⚠超限 5 次）、0 次 403**。有效 10 条；**🟢1(pinyin-match)🟡1(opencc-js)🔵7⚠1** + 4 组 ⛔ 簇；骨架 `dsh-radar-pinyin-match`（锁版 `pinyin-match@1.2.10`）。新结论：① 起点是**本仓自己承认的弱点**（`layered-search.js` 自述「字面、不切词」）——实测 `ddj`/`daodejing`/`lisao`/`ls` 全 0 命中，缺口可复现；② **中文生态的搜索写法是「名词 + language 限定」**（`pinyin in:name,description` 718 一轮捞尽；自然语言三词基本返 0）→ 建议 A 组派生轴一律先试这个写法；③ 上游**不是无脑更强**：`match()` 整串切分失败即整体回 `false`，且简体入口对纯繁体文本的拼音查询回 `false` → 「字面先行 + 繁体入口懒加载」是硬约束，验收标准是**命中集合 ⊇ 旧实现**；④ star 数不构成判据，**接口形状**才构成（`hotoo/pinyin`★7830 是转换器，`pinyin-match`★1072 直接回区间）。⚠ 本轮我先写错一条实测（`23曾` 误记为 false），复核后已改正并写进报告 L-1 |
+
+| 2026-10-19 09:20 | C | C组第三十轮（同日第 4 轮；脚本判 `same-day(unused)`→C，**采纳**）。**答案等价判定轴**：`answer checker in:name`(232) / `chinese number converter`(26) / `chinese digits in:name`(9) / `decimal.js`(507) / `chinese2digits`(3) / `unit conversion si prefix`(1) / `cloze deletion text`(16) 等 **10 次搜索（达上限未超限）、0 次 403**。有效 10 条；**🟢1(decimal.js)🔵5⛔4簇**，0 条 NOASSERTION；骨架 `dsh-radar-answer-equiv`（锁版 `decimal.js@10.6.0`）。新结论：① 起点是本仓自述的弱项——`QUIZ_AUTOGRADE_VERDICTS` 有 `unknown`，但判据只有 `normalizeForTrace()` 字符串归一；实测 `一千二百万`/`1/2`/`1,000`/`5e3`/`0.50` 全落空，而 `３％` 命中（对照组，新层不得回退）；② **中文数词解析 JS 生态整体不可靠**：Achuan-2 把 `一千二百万`算成 `1002000000`，spa5k 把 `一亿二千万`算成 `1000020000000`，**错法方向相反** → 取交集亦不成立，只能自写薄解析（沙箱有理数原型 6/6 正确）+ 上游只供 `Decimal`；③ 中文语义底层（检索/数词）连续两轮都是「结构对、边界错」，骨架统一写「既有路径先行、上游落空兜底」；④ ★最高、描述最贴的 `Wall-ee/chinese2digits`★374 恰好无许可证 ⛔ —— **star 与可用性再次无关** |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
