@@ -1670,3 +1670,31 @@
 | `HardusLom/UnitLab` | B 其他JS | **`null`** ⛔ | 单位换算 | 轴外 | ⛔ | rejected | 2026-10-19 | ★0。单位换算轴同轮唯一命中，无许可证；且本轮不做单位换算 |
 | 制卡/cloze 簇：`jsoendermann/ClozedForBusiness`(**GPL-3.0**)、`peterjcarroll/ClozeMaker`、`milwrite/cloze-reader`、`quetzalt52/Flashcard-Generator`、`jackson9413/cloze-forge`、`NovaCards/anki-card-cleaner` 等 | — | 混合（GPL / `null` / MIT） | 制卡 | 无关 | ⛔ | rejected | 2026-10-19 | 制卡工具不是判分层；GPL-3.0 红线 |
 | 判分器簇：`qbreader/qb-answer-checker`(JS,`null`)、`Akshint0407/Automated-Answer-Checker`(Py,Apache)、`Junibabng/MyAnswerChecker`(Py,MIT)、`Jay22519/Automatic-Answer-checker-`(Jupyter,`null`)、`arnabm14/Subjective_Answer_Checker`(Py,`null`) 等 | — | 混合 | 判分 | 形态不符 | ⛔ | rejected | 2026-10-19 | quizbowl 答案行判等 / 站内服务，非可复用库；多数非 JS 栈 |
+
+## 2026-10-19 · 第三十一轮（A 组派生 · **渲染底层轴**）
+
+> 同日第 5 轮（00:00 B / 03:10 A / 06:05 A派生 / 09:20 C）。`radar-rotation.mjs` 返回 `same-day(exhausted)` → B，
+> B 组今天已跑过，**不采纳**，改跑从未扫过的**渲染底层轴**（Markdown / 代码高亮 / 数学 / 图表 / HTML 净化）。
+> 搜索 **12 次（⚠ 超限 2 次）**，0 次 403；第 11 次为发现 `dsh-raw-html` 后的 A 类补扫，第 12 次为去重校验。
+> **依据：从本仓空洞出发** —— `dsh-radar-better-markdown/src/index.js` L37 的 TODO（「评估 mermaid + katex + shiki 的体积与首屏影响」）+ `page-notes/src/client.jsx` L23-26（正文渲染交宿主），两条合起来 = 渲染是宿主的事，但**渲染得好不好看无人管**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `highlightjs/highlight.js` | B 其他JS | **BSD-3-Clause** ✅（GitHub metadata + npm `license` 两源一致） | 讲义/论文/笔记里的代码块 | **重复且可强化**（着色层从无到有） | 🟢 | skeleton-created | 2026-10-19 | ★25002，2026-09-06 push，**npm `highlight.js@11.12.0`**（锁版成立），**`dependencies` 为空、无构建步骤**。实测：`lib/core.js` 可直接 import；未 register 的语言 `highlight()` **抛 `Unknown language`**（不会静默猜）；`highlightAuto()` 在 core-only 下**仍返回结果**（只认已注册语言）→ **必须禁用**，否则 C 代码会被着成 python 类名。⚠ 全量 `unpackedSize` 5.50 MB（`es/` 2.7 MB、`styles/` 2.4 MB），**core-only 首屏体积未实测**。已出骨架 `dsh-radar-code-highlight` |
+| `plolpl789/dsh-raw-html` | **A 原生DSH** | MIT ✅ | 对话正文渲染（非笔记） | 重复但**面板不对**（对话流 vs 笔记/讲义） | 🟡 | proposed | 2026-10-19 | ★80，2026-08-28 push，topics `dsh-plugin` 族，`dsh.bundle.patch` + `dsh.client.inject` 齐全。**本轮不接，三门只过一道**：①形态 ✅ ②许可 ✅ ③**锁版 ❌ —— repo `private:true`，npm `dsh-raw-html` 与 `@plolpl789/dsh-raw-html` 均 404**；且 v1 接入依赖 `patch/patch-frontend.cjs`（改宿主渲染），与本仓「不改上游源码」冲突。字体资产 30+ woff2，作为工作台依赖过重。**价值：DSH 生态里唯一现成的「HTML→卡片 + KaTeX + Mermaid」参考实现（只读参考）** |
+| `plolpl789/dsh-raw-html-v2` | A 原生DSH | **`NOASSERTION`** ⚠ | 同上 | 同上 | 🔵 | pending-license | 2026-10-19 | ★74，**2026-10-08 仍活跃**，「官方 Slot API 版、零 bundle 补丁、复用 v1 引擎」——形态上**比 v1 更符合本仓规则**（不需要改宿主）。但 `package.json` 无 `license` 字段 → API 判 `NOASSERTION`，**待人工核验，不采用、不摘码**；且同样 npm 未发布 → 锁版仍不成立 |
+| `serkodev/markdown-exit` | B 其他JS | MIT ✅ | 笔记/论文解析 | 重复可强化（增益有限） | 🔵 | proposed | 2026-10-19 | ★1370，2026-08-24 push，npm `markdown-exit@1.3.0`（164 KB tarball，deps 7 个全纯 JS）。markdown-it 的 TS 重写、**同名 API**，可作已出的 `dsh-radar-vault-parse`（锁 `markdown-it@14.1.0`）的替换备选；无实质增益 → 不改现有骨架 |
+| `comarkdown/comark` | B 其他JS | MIT ✅ | AI 回答流式渲染 | **全新**（本仓无流式 Markdown） | 🔵 | proposed | 2026-10-19 | ★1063，**2026-10-19 当日活跃**。把 Markdown 流式渲染到 React/Vue/Svelte/Angular/终端；与静态笔记渲染正交。若「问一问」要做流式富文本再回看 |
+| `cure53/DOMPurify` | B 其他JS | Apache-2.0 ✅ | — | **全新**（当期无需求） | 🔵 | proposed | 2026-10-19 | ★17472，2026-10-16 push，npm `dompurify@3.4.17`（`(MPL-2.0 OR Apache-2.0)` → 取 Apache 分支）。本仓唯一 `dangerouslySetInnerHTML` 是 `ui-primitives` 的品牌 SVG 常量（非用户内容）→ 无需求。**条件性前置件**：若采纳任何「正文 HTML」通路，必须先上它 |
+| `bevacqua/insane` | B 其他JS | MIT ✅ | — | 重复（DOMPurify 的轻量替代） | 🔵 | proposed | 2026-10-19 | ★483，2024-05 停更。白名单式净化器，无需 DOM；只作记录 |
+| `wooorm/starry-night` | B 其他JS | MIT ✅ | 代码高亮 | 重复（被 highlight.js 覆盖） | 🔵 | proposed | 2026-10-19 | ★1817，2026-08-30 push。GitHub 同款、521 语法，但依赖 `vscode-textmate`（含 oniguruma wasm 风险）；本轮取一取 highlight.js |
+| `mermaid-js/mermaid` | B 其他JS | MIT ✅ | 图表 | **全新**（无需求） | 🔵 | proposed | 2026-10-19 | ★90738，2026-10-19 活跃。npm `mermaid@12.2.0` **`unpackedSize` 122 MB**（d3/cytoscape/elkjs/katex…）→ 首屏绝不可接受；且本仓无「正文图表」需求。**结论：不做**（`better-markdown` TODO 里提到它，可据此关闭该项） |
+| `yuzutech/kroki` | 非 JS 库（Java 服务） | MIT ✅ | 图表 | 全新 | 🔵 | proposed | 2026-10-19 | ★4372。服务端出图（Docker），形态不符 |
+| `syntax-tree/mdast-util-from-markdown` 等 unified 簇 | B 其他JS | MIT ✅ | Markdown 解析 | 重复无增益（比 markdown-it 更重） | 🔵 | proposed | 2026-10-19 | ★294。需 `micromark` + 多个 `mdast-util-*` 串联，体积与依赖数均大于 markdown-it（已登记并出骨架） |
+| `leizongmin/js-xss` | B 其他JS | **`NOASSERTION`** ⚠ | — | 重复（净化） | 🔵 | pending-license | 2026-10-19 | ★5308，2026-05 push，API `NOASSERTION`（LICENSE 非标准文本）→ **待人工核验，不采用**。本轮无净化需求 |
+| `sbfkcel/towxml`★2896 / `zhaoxuhui1122/vue-markdown`★471 / `borismus/markdown-preview`★215 | B/— | 均 **`null`** | — | — | ⛔ | rejected | 2026-10-19 | 小程序渲染库 / 归档的 md 编辑器 / 2016 的 Chrome 扩展。**无许可证**，只登记 |
+| `MarketingPipeline/Markdown-Tag`（GPL-3.0）★460 / `aaronsw/html2text`（GPL-3.0）★2812 / `sbarex/SourceCodeSyntaxHighlight`（GPL-3.0）★4309 / `elvirbrk/NoteHighlight2016`（GPL-2.0）★3929 / `solancer/sarala`（GPL-3.0）★49 | — | **GPL 族** | — | — | ⛔ | rejected | 2026-10-19 | 许可证红线 |
+| `syntaxhighlighter/syntaxhighlighter`★5296（2020 停更、需全局 DOM 注入）/ `720kb/highlighter.js`★379（高亮 DOM 元素非代码）/ `mplewis/src2png`★2177（代码→图片）/ `volca/markdown-preview`★251（扩展） | — | MIT | — | 名不符实 / 过时 | ⛔ | rejected | 2026-10-19 | 「高亮」轴的系统性噪声：多数是**编辑器/扩展/截图工具**，不是可嵌入的着色库 |
+| Markdown 应用簇：`gaowei-space/markdown-blog`(Go)、`assemble/assemble`★4256、`colinhacks/devii`★496、`hexojs/hexo-renderer-markdown-it`★369、`CHENXCHEN/...plus`★122、`links` 类 | — | MIT | — | — | ⛔ | rejected | 2026-10-19 | 是「应用/站点生成器/框架适配器」，不是库 |
+| 图表 agent-skill 簇：`tt-a1i/archify`★85466、`cathrynlavery/diagram-design`★57834、`ahmedkhaleel2004/gitdiagram`★18313、`Agents365-ai/drawio-skill`★10229、`oh-my-mermaid/oh-my-mermaid`★3166、`axtonliu/axton-obsidian-visual-skills`★3653 | — | MIT | — | — | ⛔ | rejected | 2026-10-19 | **全是 agent skill / 站点 / CLI**，非 JS 可嵌入库；`mermaid diagram` 一词前排几乎全被此簇占据 |
+| 非 JS 栈簇：`erweixin/RaTeX`(Rust,`NOASSERTION`)、`PhraseHQ/SwaTex`(Swift)、`lingarajsankaravelu/Katex`(Kotlin,`null`)、`ije/md4w`(Zig)、`CodingSha/SPMathKit`(ObjC)、`zg` 类 | — | 混合 | — | — | ⛔ | rejected | 2026-10-19 | `katex math render` 前列全是各语言重实现，JS 栈只有 `katex` 本体（本仓已有 `dsh-radar-temml` 覆盖公式侧） |

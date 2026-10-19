@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `C` |
-| `last_run_at` | `2026-10-19 09:20` |
-| `group_runs`（累计） | A=20, B=10, C=10 |
+| `last_group` | `A`（A 组派生 · 渲染底层轴） |
+| `last_run_at` | `2026-10-19 12:00` |
+| `group_runs`（累计） | A=21, B=10, C=10 |
 
 ### 流水
 
@@ -99,6 +99,8 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-19 06:05 | A | A组第二十九轮（同日第 3 轮；脚本仍判 `formula(new-day)`，未采纳）。**中文检索底层轴**：`pinyin in:name,description language:javascript`(718) / `jieba wasm`(13) / `traditional simplified chinese language:typescript`(44) / `chinese word segmentation javascript`(3) 等 **15 次搜索（⚠超限 5 次）、0 次 403**。有效 10 条；**🟢1(pinyin-match)🟡1(opencc-js)🔵7⚠1** + 4 组 ⛔ 簇；骨架 `dsh-radar-pinyin-match`（锁版 `pinyin-match@1.2.10`）。新结论：① 起点是**本仓自己承认的弱点**（`layered-search.js` 自述「字面、不切词」）——实测 `ddj`/`daodejing`/`lisao`/`ls` 全 0 命中，缺口可复现；② **中文生态的搜索写法是「名词 + language 限定」**（`pinyin in:name,description` 718 一轮捞尽；自然语言三词基本返 0）→ 建议 A 组派生轴一律先试这个写法；③ 上游**不是无脑更强**：`match()` 整串切分失败即整体回 `false`，且简体入口对纯繁体文本的拼音查询回 `false` → 「字面先行 + 繁体入口懒加载」是硬约束，验收标准是**命中集合 ⊇ 旧实现**；④ star 数不构成判据，**接口形状**才构成（`hotoo/pinyin`★7830 是转换器，`pinyin-match`★1072 直接回区间）。⚠ 本轮我先写错一条实测（`23曾` 误记为 false），复核后已改正并写进报告 L-1 |
 
 | 2026-10-19 09:20 | C | C组第三十轮（同日第 4 轮；脚本判 `same-day(unused)`→C，**采纳**）。**答案等价判定轴**：`answer checker in:name`(232) / `chinese number converter`(26) / `chinese digits in:name`(9) / `decimal.js`(507) / `chinese2digits`(3) / `unit conversion si prefix`(1) / `cloze deletion text`(16) 等 **10 次搜索（达上限未超限）、0 次 403**。有效 10 条；**🟢1(decimal.js)🔵5⛔4簇**，0 条 NOASSERTION；骨架 `dsh-radar-answer-equiv`（锁版 `decimal.js@10.6.0`）。新结论：① 起点是本仓自述的弱项——`QUIZ_AUTOGRADE_VERDICTS` 有 `unknown`，但判据只有 `normalizeForTrace()` 字符串归一；实测 `一千二百万`/`1/2`/`1,000`/`5e3`/`0.50` 全落空，而 `３％` 命中（对照组，新层不得回退）；② **中文数词解析 JS 生态整体不可靠**：Achuan-2 把 `一千二百万`算成 `1002000000`，spa5k 把 `一亿二千万`算成 `1000020000000`，**错法方向相反** → 取交集亦不成立，只能自写薄解析（沙箱有理数原型 6/6 正确）+ 上游只供 `Decimal`；③ 中文语义底层（检索/数词）连续两轮都是「结构对、边界错」，骨架统一写「既有路径先行、上游落空兜底」；④ ★最高、描述最贴的 `Wall-ee/chinese2digits`★374 恰好无许可证 ⛔ —— **star 与可用性再次无关** |
+
+| 2026-10-19 12:00 | A | A组派生第三十一轮（同日第 5 轮；脚本判 `same-day(exhausted)`→B，**不采纳**，B 今日已跑）。**渲染底层轴**：`markdown it commonmark renderer`(10) / `markdown renderer to html`(556) / `mdast unist`(46) / `html sanitizer`(724) / `html to markdown`(9924) / `syntax highlight code`(5230) / `highlight.js`(5158) / `katex math render`(118) / `tree-sitter highlight`(401) / `mermaid diagram`(4555)` 等 **12 次搜索（⚠超限 2 次）、0 次 403**。108 仓 → 有效 12 条；**🟢1(highlight.js)🟡1(dsh-raw-html)🔵9⚠2⛔6簇**；骨架 `dsh-radar-code-highlight`（锁版 `highlight.js@11.12.0`）。新结论：① **A 类候选要同时过三道门：形态 / 许可 / 可锁版**——`dsh-raw-html` 是原生 DSH（带 patch+client.inject）但 `private:true`、npm 双名 404 → 锁版不成立，只能 vendored 复制（违反「不搬源码」）；在维护的 v2 又 `NOASSERTION`；② **`highlightAuto()` 在 core-only 下不报错，只认已注册语言**——会把 C 代码着成 python 类名，「亮了但是错的」，必须禁用，验收得看「颜色对不对」而非「有没有颜色」；③ 本仓 `better-markdown` L37 早写过要评估 mermaid/katex/shiki 体积，本轮实测 mermaid `unpackedSize` **122MB** → 该项可直接关闭；④ 「高亮」轴的系统性噪声是**编辑器/IDE 扩展/截图工具**（★5000+ 的 syntaxhighlighter 是 2020 停更的 DOM 注入库）；⑤ 「图表」轴前排 ★85466 的 archify 是 agent skill 不是库——**star 数在本轴完全不可作为判据**。⚠ 本轮 core-only 首屏体积**未实测**，报告中标注为估算，不得引用为事实 |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
