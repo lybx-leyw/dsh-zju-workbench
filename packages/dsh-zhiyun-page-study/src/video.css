@@ -209,6 +209,23 @@ body[data-zhiyun] .zs-video-rail-note [data-role="branch"]::before {
 body[data-zhiyun] .zs-video-rail-note [data-role="main"]::before { background: var(--zy-action); }
 body[data-zhiyun] .zs-video-rail-note [data-role="branch"]::before { background: var(--zy-secondary); }
 body[data-zhiyun] .zs-video-rail-now { color: var(--zy-text); }
+body[data-zhiyun] .zs-video-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0 0 10px;
+}
+body[data-zhiyun] .zs-video-facts div { min-width: 0; }
+body[data-zhiyun] .zs-video-facts dt {
+  font-size: 11px;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-video-facts dd {
+  margin: 1px 0 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--zy-text);
+}
 
 /* 没有回放的一行提示，落在字幕标题行的右侧（见 video-panel.jsx 的 transcript-head）。
  *

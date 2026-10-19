@@ -41,7 +41,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { computeSectionStats, toSeekBar } from 'dsh-zhiyun-player';
 import { HlsVideo } from './hls-video.jsx';
-import { blocksForStats } from './seek-bar.js';
+import { blocksForStats, sectionFacts } from './seek-bar.js';
 
 /**
  * 只放行 http(s) 的媒体地址。
@@ -104,6 +104,10 @@ function TranscriptLine({ line, index, active, onJump, domId }) {
     <time>{time(line.startMs)}</time>
     <span>{line.text}</span>
   </button>;
+}
+
+function SectionFacts({ stats }) {
+  return <dl className="zs-video-facts">{sectionFacts(stats).map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
 }
 
 function ContentRail({ bar, nowMs, onJump }) {
@@ -187,6 +191,18 @@ export function VideoPanel({ state }) {
   // 否则上一节的页码与主视图选择会带到新节上。
   useEffect(() => { setPinned(false); setNowMs(0); setAxisMs(0); setMain(videoUrl ? 'video' : 'ppt'); }, [lesson?.subId, videoUrl]);
 
+  const sectionStats = useMemo(() => {
+    const blocks = blocksForStats(state.result);
+    if (!blocks.some((block) => Number.isFinite(block.startMs))) return null;
+    const stats = computeSectionStats(blocks);
+    return stats.records.length ? stats : null;
+  }, [state.result]);
+  const contentBar = useMemo(() => {
+    if (!sectionStats) return null;
+    const axis = axisMs > 0 ? axisMs : sectionStats.durationMs;
+    if (!(axis > 0) || sectionStats.segments.length === 0) return null;
+    return toSeekBar(sectionStats, axis);
+  }, [sectionStats, axisMs]);
   const autoSlide = useMemo(() => indexAt(slides, nowMs), [slides, nowMs]);
   const slideIndex = pinned && slides.length ? Math.min(Math.max(autoSlide, 0), slides.length - 1) : Math.max(autoSlide, 0);
   const activeLine = useMemo(() => indexAt(subtitles, nowMs), [subtitles, nowMs]);
@@ -216,14 +232,6 @@ export function VideoPanel({ state }) {
   //    路径一个字节都不变（见 `hls.js` 的 `needsHlsJs`）。
   //    它仍然把同一个 `ref` 交回来 —— `timeupdate` / `currentTime` 那套时间轴
   //    契约完全没有变，这是本栏"时间轴是唯一真源"的前提。
-  const contentBar = useMemo(() => {
-    const blocks = blocksForStats(state.result);
-    if (!blocks.some((block) => Number.isFinite(block.startMs))) return null;
-    const stats = computeSectionStats(blocks);
-    const axis = axisMs > 0 ? axisMs : stats.durationMs;
-    if (!(axis > 0) || stats.segments.length === 0) return null;
-    return toSeekBar(stats, axis);
-  }, [state.result, axisMs]);
   const videoStage = videoUrl
     ? <div className="zs-video-stage zs-video-stage-video">
       <HlsVideo ref={videoRef} src={videoUrl} className="zs-video-media" preload="metadata" />
@@ -282,6 +290,7 @@ export function VideoPanel({ state }) {
     data-transcript={transcriptOpen ? 'on' : 'off'}
     aria-label="课堂视频"
   >
+    {sectionStats && <SectionFacts stats={sectionStats} />}
     <div className="zs-video-grid">
       {/* ⚠️ 有回放时两个舞台**都在树里**，靠 `data-main` 决定谁占据大格。
           顺序也不能条件化：把某一个从树下摘掉就是卸载播放器。
