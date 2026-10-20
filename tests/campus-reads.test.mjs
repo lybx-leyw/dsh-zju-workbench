@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sharedRead } from '../packages/dsh-zhiyun-campus/src/reads.js';
+import { sharedRead } from '../packages/dsh-zhiyun-source-campus/src/reads.js';
 
 test('concurrent consumers and local edits reuse one source read until expiry', async () => {
   let count = 0, at = 0;

@@ -36,13 +36,13 @@
 
 | # | 判据 | 是否成立 | 依据 |
 | --- | --- | --- | --- |
-| ① | **仍是同一个面板** | ✅ | 落在既有**讲座域**（`dsh-zhiyun-lecture` / `dsh-zhiyun-classroom`），**不新增导航项** |
+| ① | **仍是同一个面板** | ✅ | 落在既有**讲座域**（`dsh-zhiyun-core-lecture` / `dsh-zhiyun-source-classroom`），**不新增导航项** |
 | ② | **功能仍相似正交** | ✅ | 两边都是"把这门课整理成能复习的形态"，非两套并列能力 |
 | ③ | **底层多调了更优质实现** | ✅ | 上游有**时间轴对齐**与**可溯源逐字稿**；本仓**两者皆无** |
 
 ### 它到底增强了什么
 
-> **`packages/dsh-zhiyun-lecture`（讲义装配）× `dsh-zhiyun-classroom`（课堂来源）
+> **`packages/dsh-zhiyun-core-lecture`（讲义装配）× `dsh-zhiyun-source-classroom`（课堂来源）
 > 之间那条「拿到课件之后，怎么还原老师当时讲了什么」的通路。**
 
 | 环节 | 本仓现状 | 上游带来的 |
@@ -70,7 +70,7 @@
 | (b) 外挂本地管线 | 把上游 Python 管线作为本地进程运行，本包只调用与呈现 | 引入 faster-whisper / torch / GPU 依赖，**与本仓无 GPU 环境冲突** |
 
 > **建议优先 (a)**：上游价值在**设计与证据链模型**，不在其具体实现。
-> 且本仓**已有 `dsh-zhiyun-parser`（三阶段解析器）**，
+> 且本仓**已有 `dsh-zhiyun-core-parser`（三阶段解析器）**，
 > 这类"原始材料 → 结构化文本"的入口**应当复用**，而不是再起一套。
 
 ### 【2】本地算力假设与隐私（**红线**）
@@ -116,9 +116,9 @@
 
 - [ ] 裁定路线 **(a) 还是 (b)**
 - [ ] 裁定 **ASR 通道** + **数据策略**（红线）
-- [ ] 定义**证据模型** `{ 时间戳区间, 课件页 id }`，落到 `dsh-zhiyun-knowledge` 既有键空间
-- [ ] 与 `dsh-zhiyun-lecture` **讲义装配管道**对接（把"老师原话"作为上下文证据）
-- [ ] 与 `dsh-zhiyun-notes` **节笔记**对接（**扩展既有 `zy://section` 协议**，不新增链接格式）
+- [ ] 定义**证据模型** `{ 时间戳区间, 课件页 id }`，落到 `dsh-zhiyun-core-knowledge` 既有键空间
+- [ ] 与 `dsh-zhiyun-core-lecture` **讲义装配管道**对接（把"老师原话"作为上下文证据）
+- [ ] 与 `dsh-zhiyun-core-notes` **节笔记**对接（**扩展既有 `zy://section` 协议**，不新增链接格式）
 - [ ] 呈现层：双向同步 + **"对齐仅供参考"标注**
 - [ ] 补 `tests/radar-lecture-notes.test.mjs`（断言证据模型完整性，含跨来源场景）
 

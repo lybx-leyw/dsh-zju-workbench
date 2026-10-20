@@ -72,7 +72,7 @@ export const UPSTREAM_MOUNT = {
  *
  * 上游覆盖四类材料：书 / 论文 / 视频 / 网页。
  * 本仓场景只明确需要**论文**（论文阅读页）；书与网页可视需要保留；
- * **视频**与本仓既有 `dsh-zhiyun-lecture`（讲座）域不同，
+ * **视频**与本仓既有 `dsh-zhiyun-core-lecture`（讲座）域不同，
  * 是否开放需人工裁定 —— 见 README「需要人工裁定的事项」。
  */
 export const UPSTREAM_MATERIAL_KINDS = ['book', 'paper', 'video', 'web'];

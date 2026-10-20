@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { adaptSettingsSurface } from '../packages/dsh-zhiyun-shell/src/settings-adapter.js';
+import { adaptSettingsSurface } from '../packages/dsh-zhiyun-shell-workbench/src/settings-adapter.js';
 
 test('设置适配保留插槽归属与 store，换代和卸载时恢复原组件', () => {
   let entries = [];

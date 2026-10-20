@@ -25,7 +25,7 @@ import {
   writeAccount,
   writeRecord,
   writeXzzdSession,
-} from '../packages/dsh-zhiyun-classroom/src/host-credentials.js';
+} from '../packages/dsh-zhiyun-source-classroom/src/host-credentials.js';
 
 /** 造一个内存版宿主凭据服务，行为对齐 `dsh-credentials-local`。 */
 function fakeCredentials() {
@@ -160,7 +160,7 @@ test('源码里不出现"去终端 configure"这类把成本转嫁给用户的�
   );
   // 只查**命令**写法，不查 `configured` 这个标识符（它包含 configure 子串）
   assert.equal(/npm run/.test(client), false, '规划页不该让用户去终端跑命令');
-  assert.equal(/dsh-zhiyun-omni configure/.test(client), false, '规划页不该出现 configure 命令');
+  assert.equal(/dsh-zhiyun-source-omni configure/.test(client), false, '规划页不该出现 configure 命令');
 });
 
 /**

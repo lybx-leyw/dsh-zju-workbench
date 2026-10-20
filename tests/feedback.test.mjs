@@ -360,7 +360,7 @@ test('相对时间只给量级，注入 now 才可测', () => {
 
 test('接线：注册了 zhiyun.feedback.content 插槽', () => {
   assert.match(source, /'zhiyun\.feedback\.content'/, '页面必须注册 zhiyun.feedback.content 插槽');
-  assert.match(readFileSync(`${root}packages/dsh-zhiyun-shell/src/model.js`, 'utf8'), /id: 'feedback'/, '外壳 NAV 里必须有 id: feedback');
+  assert.match(readFileSync(`${root}packages/dsh-zhiyun-shell-workbench/src/model.js`, 'utf8'), /id: 'feedback'/, '外壳 NAV 里必须有 id: feedback');
 });
 
 test('接线：页面只依赖 slots，收件服务挂了不影响它渲染', () => {

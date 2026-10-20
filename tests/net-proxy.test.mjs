@@ -18,11 +18,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
 
-import { defaults, matchesHost, normalize, resolveRoute, withInheritedDirect, DIRECT, isLoopback } from '../packages/dsh-zhiyun-net-proxy/src/config.js';
-import { directHosts } from '../packages/dsh-zhiyun-net-proxy/src/egress.js';
+import { defaults, matchesHost, normalize, resolveRoute, withInheritedDirect, DIRECT, isLoopback } from '../packages/dsh-zhiyun-source-netproxy/src/config.js';
+import { directHosts } from '../packages/dsh-zhiyun-source-netproxy/src/egress.js';
 
 test('设置路由：密码绝不外泄，写操作必须有自定义头，坏配置必须被拒', async () => {
-  const { createSettingsHandler } = await import('../packages/dsh-zhiyun-net-proxy/src/settings.js');
+  const { createSettingsHandler } = await import('../packages/dsh-zhiyun-source-netproxy/src/settings.js');
 
   const SECRET = 'SUPER-SECRET-PASSWORD-123';
   const config = normalize({
@@ -229,7 +229,7 @@ test('回环判定：本地服务不该被送进中继', () => {
 });
 
 test('中间件协议行为：假代理实测「分域」真的发生', async () => {
-  const { createRelay } = await import('../packages/dsh-zhiyun-net-proxy/src/relay.js');
+  const { createRelay } = await import('../packages/dsh-zhiyun-source-netproxy/src/relay.js');
 
   // 两个假上游代理，各自记下「谁被访问过」——这是判断分流是否真的生效的唯一证据。
   const hits = { alpha: 0, beta: 0 };

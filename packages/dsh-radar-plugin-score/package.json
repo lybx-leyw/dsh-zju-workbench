@@ -9,9 +9,7 @@
     ".": "./src/index.js",
     "./package.json": "./package.json"
   },
-  "dependencies": {
-    "@perrylink/dsh-score": "0.0.0-TODO-锁版待定"
-  },
+  "dependencies": {},
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"

@@ -1,0 +1,107 @@
+import { ClassroomError, object, shape } from './errors.js';
+import { SessionStore } from './session.js';
+import { resourceUrl } from './urls.js';
+
+export const REFERER = 'https://classroom.zju.edu.cn/';
+
+/**
+ * 默认放行主机 —— **classroom 那一套**。
+ *
+ * ⚠️ 这是从 `dsh-zhiyun-source-classroom` 原样复制来的，所以默认值只覆盖智云课堂的域名。
+ *    学在浙大（`courses.zju.edu.cn`）与拼题A（`pintia.cn`）**不在**其中，
+ *    必须由调用方通过 `hosts` 传进来。
+ *
+ *    不传的后果很隐蔽：`Transport.request` 只在 `AUTH_HOSTS.has(host)` 时才
+ *    读写 cookie，于是**请求一个 cookie 都不带、回来的 Set-Cookie 也一个都不存** ——
+ *    登录流程"成功"了，会话却永远是空的，下一次读立刻回到未登录。
+ *    这正是学在浙大"连不上"的根因。
+ */
+export const AUTH_HOSTS = new Set(['zjuam.zju.edu.cn', 'tgmedia.cmc.zju.edu.cn', 'classroom.zju.edu.cn', 'interactivemeta.cmc.zju.edu.cn', 'education.cmc.zju.edu.cn', 'yjapi.cmc.zju.edu.cn']);
+
+export class Transport {
+  constructor({
+    session = new SessionStore(),
+    fetch: fetcher = globalThis.fetch,
+    timeoutMs = 60000,
+    log = () => {},
+    hosts = AUTH_HOSTS,
+    referer = REFERER,
+    cookieFilter = null,
+  } = {}) {
+    this.session = session; this.fetcher = fetcher; this.timeoutMs = timeoutMs; this.log = log;
+    this.hosts = hosts;
+    this.referer = referer;
+    /**
+     * 逐条决定"这个 cookie 要不要发出去"。
+     *
+     * ⚠️ classroom 的默认实现是**只把 `iPlanetDirectoryPro` 发给 zjuam**：
+     *
+     * ```js
+     * (c, _i, _arr) => c.key !== 'iPlanetDirectoryPro' || <host> === 'zjuam.zju.edu.cn'
+     * ```
+     *
+     * 那条规则对智云课堂成立（它的会话靠 `_token` 走，不靠 SSO 票），
+     * 但**对学在浙大是致命的**：学在浙大恰恰要带着 SSO 票去
+     * `courses.zju.edu.cn`，让站点的 CAS 过滤器认出身份。
+     *
+     * 所以这里默认**不过滤**（发全部），并由调用方按需覆盖 ——
+     * 复制来的那份默认行为不再强加给新站点。
+     */
+    this.cookieFilter = cookieFilter ?? (() => true);
+    this.controllers = new Set(); this.closed = false;
+  }
+  async request(url, { signal, method = 'GET', body, headers = {}, stream = false, auth = true, timeoutMs = this.timeoutMs } = {}) {
+    if (this.closed) throw new ClassroomError('DISPOSED', '数据源已关闭');
+    url = resourceUrl(url);
+    const target = new URL(url);
+    if (target.protocol !== 'https:' && !(target.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(target.hostname))) throw new ClassroomError('URL', '不支持的请求协议');
+    const controller = new AbortController(); this.controllers.add(controller);
+    const combined = AbortSignal.any([controller.signal, AbortSignal.timeout(timeoutMs), ...(signal ? [signal] : [])]);
+    let cookies = '';
+    let handedOff = false;
+    const epoch = this.session.epoch;
+    try {
+      if (auth && this.hosts.has(target.hostname)) cookies = (await this.session.jar.getCookies(url))
+        .filter(this.cookieFilter).map(c => c.cookieString()).join('; ');
+      combined.throwIfAborted();
+      const response = await this.fetcher(url, { method, body, redirect: 'manual', signal: combined,
+        headers: { 'User-Agent': 'Mozilla/5.0 Chrome/122.0.0.0 Safari/537.36', Accept: 'application/json, text/plain, */*', Referer: this.referer,
+          ...headers, ...(cookies ? { Cookie: cookies } : {}) } });
+      if (epoch === this.session.epoch && auth && this.hosts.has(target.hostname)) {
+        const receivedCookies = response.headers.getSetCookie();
+        for (const cookie of receivedCookies) {
+          try { await this.session.jar.setCookie(cookie, url); } catch { throw new ClassroomError('COOKIE', '服务端 Cookie 域或格式异常'); }
+        }
+        if (receivedCookies.length) await this.session.save();
+      }
+      this.log({ method, host: target.hostname, path: target.pathname, status: response.status });
+      if (stream) { handedOff = true; return { response, release: () => this.controllers.delete(controller), signal: combined }; }
+      const text = await response.text();
+      return { status: response.status, headers: response.headers, text };
+    } catch (error) {
+      if (error instanceof ClassroomError) throw error;
+      if (combined.aborted) throw new ClassroomError(signal?.aborted || controller.signal.aborted ? 'CANCELLED' : 'TIMEOUT', '请求已取消或超时');
+      throw new ClassroomError('NETWORK', '无法连接智云服务');
+    } finally { if (!handedOff) this.controllers.delete(controller); }
+  }
+  async json(url, label, options) {
+    const result = await this.request(url, options);
+    if ([401, 403].includes(result.status)) throw new ClassroomError('SESSION_EXPIRED', '智云登录会话已过期', { status: result.status, label });
+    if (result.status >= 400) throw new ClassroomError('HTTP', '智云服务请求失败', { status: result.status, label });
+    if (result.status >= 300 && result.status < 400) throw new ClassroomError('SESSION_EXPIRED', '智云请求被重定向，需要重新登录', { label });
+    if (/^\s*</.test(result.text)) {
+      if (/name=["']execution["']|cas\/login/i.test(result.text)) throw new ClassroomError('SESSION_EXPIRED', '智云登录会话已过期', { label });
+      throw shape(label, '预期 JSON，收到 HTML');
+    }
+    let data;
+    try { data = JSON.parse(result.text); } catch { throw shape(label, '不是 JSON'); }
+    if (!object(data)) throw shape(label, '不是对象');
+    if ([401, 403].includes(Number(data.code))) throw new ClassroomError('SESSION_EXPIRED', '智云登录会话已过期', { label });
+    // Course API uses business code=1000 for success, not an HTTP status.
+    if (Number(data.code) >= 400 && Number(data.code) <= 599) throw new ClassroomError('BUSINESS', '智云服务返回失败', { label });
+    if (data.success === false || data.success === 'false') throw new ClassroomError('BUSINESS', '智云服务返回失败', { label });
+    return data;
+  }
+  cancelAll() { for (const controller of this.controllers) controller.abort(); this.controllers.clear(); }
+  close() { this.closed = true; this.cancelAll(); }
+}

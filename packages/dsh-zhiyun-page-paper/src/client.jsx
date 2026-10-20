@@ -1,4 +1,4 @@
-import { mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 import { Paper } from './Paper.jsx';
 import { SettingsSection } from './SettingsSection.jsx';

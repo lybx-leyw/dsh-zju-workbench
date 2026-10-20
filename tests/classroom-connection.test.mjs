@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { savedAccountConnection } from '../packages/dsh-zhiyun-classroom/src/connection.js';
+import { savedAccountConnection } from '../packages/dsh-zhiyun-source-classroom/src/connection.js';
 const account={username:'fake',password:'fake'};
 function setup(login) {
   let current=account;
@@ -35,8 +35,8 @@ test('a saved account change cannot reuse the previous account SSO',async()=>{
 });
 
 test('an expired SSO ticket cannot mask a rejected password', async () => {
- const { Transport }=await import('../packages/dsh-zhiyun-classroom/src/transport.js');
- const { authenticate }=await import('../packages/dsh-zhiyun-classroom/src/auth.js');
+ const { Transport }=await import('../packages/dsh-zhiyun-source-classroom/src/transport.js');
+ const { authenticate }=await import('../packages/dsh-zhiyun-source-classroom/src/auth.js');
  let posts=0;
  const transport=new Transport({fetch:async(url,init)=>{
   const target=new URL(url);

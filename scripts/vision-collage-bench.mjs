@@ -5,11 +5,11 @@ import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {performance} from 'node:perf_hooks';
 import {root,locateHost} from './profile.mjs';
-import {ClassroomSource} from '../packages/dsh-zhiyun-classroom/src/source.js';
-import {HarnessLlm} from '../packages/dsh-zhiyun-parser/src/llm.js';
-import {faithfulRequest} from '../packages/dsh-zhiyun-parser/src/prompts.js';
-import {LectureParser} from '../packages/dsh-zhiyun-parser/src/parser.js';
-import {transcribeSlides} from '../packages/dsh-zhiyun-parser/src/vision.js';
+import {ClassroomSource} from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import {HarnessLlm} from '../packages/dsh-zhiyun-core-parser/src/llm.js';
+import {faithfulRequest} from '../packages/dsh-zhiyun-core-parser/src/prompts.js';
+import {LectureParser} from '../packages/dsh-zhiyun-core-parser/src/parser.js';
+import {transcribeSlides} from '../packages/dsh-zhiyun-core-parser/src/vision.js';
 
 const args=process.argv.slice(2),option=(name,fallback)=>{const i=args.indexOf(name);return i<0?fallback:args[i+1];};
 if(!args.includes('--live'))throw Error('Use --live --credentials-file <local file>; real model requests incur cost.');

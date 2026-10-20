@@ -3,7 +3,7 @@ import { parseEnv } from 'node:util';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { initialize, runHost, root } from './profile.mjs';
-import { ClassroomError } from '../packages/dsh-zhiyun-campus/src/cas/errors.js';
+import { ClassroomError } from '../packages/dsh-zhiyun-source-campus/src/cas/errors.js';
 
 export function probeCredentials(text) {
   const env = parseEnv(text);
@@ -46,13 +46,13 @@ export function requestBudget(fetcher, { maxRequests = 12, maxLogins = 1, reques
 }
 
 export async function runProbe(ctx, { envFile, reportFile, sessionDir, resume = false }) {
-  const { Transport } = await import('../packages/dsh-zhiyun-campus/src/cas/transport.js');
-  const { SessionStore } = await import('../packages/dsh-zhiyun-campus/src/cas/session.js');
-  const { xzzdLogin, xzzdAuthorize } = await import('../packages/dsh-zhiyun-campus/src/cas/login.js');
-  const { XzzdApi, hasXzzdSession } = await import('../packages/dsh-zhiyun-campus/src/xzzd.js');
-  const { PtaApi, parsePtaCookie } = await import('../packages/dsh-zhiyun-campus/src/pta.js');
-  const { CAMPUS_HOSTS } = await import('../packages/dsh-zhiyun-campus/src/hosts.js');
-  const { createEgress, loadUndici } = await import('../packages/dsh-zhiyun-campus/src/egress.js');
+  const { Transport } = await import('../packages/dsh-zhiyun-source-campus/src/cas/transport.js');
+  const { SessionStore } = await import('../packages/dsh-zhiyun-source-campus/src/cas/session.js');
+  const { xzzdLogin, xzzdAuthorize } = await import('../packages/dsh-zhiyun-source-campus/src/cas/login.js');
+  const { XzzdApi, hasXzzdSession } = await import('../packages/dsh-zhiyun-source-campus/src/xzzd.js');
+  const { PtaApi, parsePtaCookie } = await import('../packages/dsh-zhiyun-source-campus/src/pta.js');
+  const { CAMPUS_HOSTS } = await import('../packages/dsh-zhiyun-source-campus/src/hosts.js');
+  const { createEgress, loadUndici } = await import('../packages/dsh-zhiyun-source-campus/src/egress.js');
   const account = probeCredentials(await readFile(envFile, 'utf8'));
   const undici = await loadUndici();
   if (!undici) throw new Error('UNDICI_UNAVAILABLE');
@@ -96,7 +96,7 @@ async function main() {
     console.log('Credential fields ready; zero network requests. --live runs one bounded real-host experiment.');
     return;
   }
-  const { dpapi } = await import('../packages/dsh-zhiyun-campus/src/cas/session.js');
+  const { dpapi } = await import('../packages/dsh-zhiyun-source-campus/src/cas/session.js');
   await dpapi(Buffer.from('offline-storage-preflight'));
   const evidence = path.join(root, 'artifacts', 'campus-live');
   if (resume) {

@@ -19,7 +19,7 @@
 //
 // 人体工效学 skill 的条款在 `style.css` 里逐条标注。
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
@@ -1477,7 +1477,7 @@ function ErrorBlock({ error }) {
  * 只有一项：Cookie。它与中转站是**互不相干**的两件事，所以分成两个折叠分组
  * （见 `apply` 里那两处 `settings.section` 注册）。
  *
- * 学在浙大不在这里 —— 它用的是「浙大一卡通」账号（`dsh-zhiyun-card` 那块），
+ * 学在浙大不在这里 —— 它用的是「浙大一卡通」账号（`dsh-zhiyun-source-card` 那块），
  * 与拼题A 的 Cookie 是两套完全不同的凭证。
  */
 export function PtaSection() {

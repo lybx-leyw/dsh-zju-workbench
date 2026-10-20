@@ -43,11 +43,11 @@ export const HOST_SEEDS = [
  *    `tests/build-seeds.test.mjs` 有一条断言在盯着「有 client.jsx 的包是否都在这里」。
  */
 export const CLIENT_PACKAGES = [
-  'dsh-zhiyun-ui-primitives',
-  'dsh-zhiyun-shell',
-  'dsh-zhiyun-net-proxy',
-  'dsh-zhiyun-card',
-  'dsh-zhiyun-study-core',
+  'dsh-zhiyun-shell-ui',
+  'dsh-zhiyun-shell-workbench',
+  'dsh-zhiyun-source-netproxy',
+  'dsh-zhiyun-source-card',
+  'dsh-zhiyun-core-study',
   'dsh-zhiyun-page-today',
   'dsh-zhiyun-page-study',
   'dsh-zhiyun-page-planning',

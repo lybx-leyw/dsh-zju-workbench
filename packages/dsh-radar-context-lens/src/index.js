@@ -16,13 +16,13 @@
  *
  * # 集成方式（A 类 · 锁版挂载 + 外围兼容层）
  *
- * 效法 `packages/dsh-zhiyun-paper`（上游 `@ggboy123/dsh-paper-reader` 锁版 `1.3.1`）：
+ * 效法 `packages/dsh-zhiyun-host-paper`（上游 `@ggboy123/dsh-paper-reader` 锁版 `1.3.1`）：
  * **绝不改上游源码**，只在上游之外加适配。上游自带 `dsh.bundle.patch`，是原生 DSH 插件包。
  *
  * # TODO（真正的适配点，评审前不要实现）
  *
  * 1. **挂载入口**：上游 `patch` 会插入它自己的 Lens 视图（在 Chat / Trajectory 旁）。
- *    需确认它与本仓 `dsh-zhiyun-shell` 的会话区是否冲突 —— 冲突则改为只挂宿主半边、
+ *    需确认它与本仓 `dsh-zhiyun-shell-workbench` 的会话区是否冲突 —— 冲突则改为只挂宿主半边、
  *    由本包把读数喂给插件页（见 `./upstream.js`）。
  * 2. **数据出口**：上游是 read-only 观测，**与插件页「不另开写入口」的边界一致**。
  *    若要复用，读它的 public API 即可，**不要**在插件页加写操作。

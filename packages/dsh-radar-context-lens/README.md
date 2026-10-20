@@ -51,7 +51,7 @@
 
 ### 集成方式：锁版挂载 + 外围兼容层
 
-效法 `packages/dsh-zhiyun-paper`（上游 `@ggboy123/dsh-paper-reader` 锁版 `1.3.1`）：
+效法 `packages/dsh-zhiyun-host-paper`（上游 `@ggboy123/dsh-paper-reader` 锁版 `1.3.1`）：
 
 - `dependencies` 写**精确版本** `0.3.1`，**不用 `^`**；
 - **绝不改上游源码**；
@@ -100,7 +100,7 @@ packages/dsh-radar-context-lens/
 
 1. **先定 (a)/(b)**：整页挂载，还是只取数据接到插件页那张图？
    选 (a) 就**不满足**「仍是同一个面板」，建议驳回。
-2. **真机挂载验证**：DSH `0.2.0-rc.2` 上挂一次，确认与 `dsh-zhiyun-shell` 会话区不冲突。
+2. **真机挂载验证**：DSH `0.2.0-rc.2` 上挂一次，确认与 `dsh-zhiyun-shell-workbench` 会话区不冲突。
 3. **文案口径**：确认 token 占比在界面上标注为**估算**。
 4. **是否值得**：上游 ★0 且自述 WIP。若认定「成本视角」优先级不够，
    本骨架可直接 `rejected`，本仓**没有**沉没成本 —— 它只有占位。

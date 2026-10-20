@@ -39,7 +39,7 @@
 
 ## 增强哪个现有功能
 
-`packages/dsh-zhiyun-paper`（论文阅读页）、`packages/dsh-zhiyun-notes`（笔记页）
+`packages/dsh-zhiyun-host-paper`（论文阅读页）、`packages/dsh-zhiyun-core-notes`（笔记页）
 的 Markdown 呈现区。当前呈现能力朴素；接上游后**同一区域**获得：
 
 - 抗流式的增量渲染（长文档/流式回答不再闪烁重排）

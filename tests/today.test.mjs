@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { StudyWorkbench } from '../packages/dsh-zhiyun-study-core/src/workbench.js';
-import { createStudyController } from '../packages/dsh-zhiyun-study-core/src/model.js';
+import { StudyWorkbench } from '../packages/dsh-zhiyun-core-study/src/workbench.js';
+import { createStudyController } from '../packages/dsh-zhiyun-core-study/src/model.js';
 import { mountKnowledge } from './fixtures/study-storage.mjs';
 import { clock, projectAgenda } from '../packages/dsh-zhiyun-page-today/src/agenda.js';
 

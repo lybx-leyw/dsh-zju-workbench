@@ -1,7 +1,7 @@
 // 「插件依赖」页的**宿主半边**。
 //
 // 为什么这一页需要一个真正干活的宿主半边：宿主与浏览器各有一棵独立的 Cordis 插件树，
-// 而本仓最重要的那几条依赖边全在**宿主面** —— dsh-zhiyun-study-core 的 `inject` 里写着
+// 而本仓最重要的那几条依赖边全在**宿主面** —— dsh-zhiyun-core-study 的 `inject` 里写着
 // `zhiyunClassroom / zhiyunParser / zhiyunKnowledge`，解析包写着 `zhiyunClassroom`，
 // 讲义与出题包写着 `zhiyunParser`。浏览器里读不到宿主那棵树，所以由这里读出来交给客户端；
 // 浏览器面（模块边、客户端硬边）由客户端自己就地读。
@@ -10,7 +10,7 @@
 // 以及 `ctx.reflect.store` 里每条实现的 `name`/`fiber`。不解析源码，不扫描目录。
 import { readPlane } from './runtime.js';
 
-/** 与 dsh-zhiyun-study-core 同一套信封：宿主面读运行时，必须已经有一棵装载完成的树。 */
+/** 与 dsh-zhiyun-core-study 同一套信封：宿主面读运行时，必须已经有一棵装载完成的树。 */
 export const inject = ['connection', 'loader'];
 
 /** 一次请求能带的包数上限：图只关心本仓这几个包，超出的请求直接拒掉而不是白算。 */

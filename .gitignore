@@ -22,3 +22,7 @@ build-one.local.mjs
 # 收件服务的本地落盘目录：Windows 上没有 /mnt/workspace，server.py 必然退回到这里。
 # 里面是**真实用户反馈**而不是代码，一旦被 git add -A 带上就是公开仓库的信息泄露。
 deploy/*/data/
+# 一次性审计脚本的工作目录：里面的脚本会直接读 `.runtime/home/.credentials.yaml`
+# 的真实凭据去比对仓库，属于本地排查工具而非项目产物。放到根目录还会让
+# `git add -A` 每次都把它们带进暂存区（2026-10-20 两次踩到）。
+.audit/

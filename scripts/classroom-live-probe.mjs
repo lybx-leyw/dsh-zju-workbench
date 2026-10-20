@@ -44,11 +44,11 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ClassroomSource, ClassroomError } from '../packages/dsh-zhiyun-classroom/src/source.js';
-import { mediaType } from '../packages/dsh-zhiyun-classroom/src/live.js';
-import { checkTarget, STREAM_ROUTE_PREFIX } from '../packages/dsh-zhiyun-classroom/src/stream.js';
-import { inspectJwt } from '../packages/dsh-zhiyun-classroom/src/auth.js';
-import { shanghaiDate } from '../packages/dsh-zhiyun-classroom/src/models.js';
+import { ClassroomSource, ClassroomError } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import { mediaType } from '../packages/dsh-zhiyun-source-classroom/src/live.js';
+import { checkTarget, STREAM_ROUTE_PREFIX } from '../packages/dsh-zhiyun-source-classroom/src/stream.js';
+import { inspectJwt } from '../packages/dsh-zhiyun-source-classroom/src/auth.js';
+import { shanghaiDate } from '../packages/dsh-zhiyun-source-classroom/src/models.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);

@@ -5,7 +5,7 @@
 // 登录是应用级动作，入口在头像那一层，而不是"设置页上的一个区块" —— 于是它不再
 // 因为「个人」页被停用而消失。
 import React from 'react';
-import { Icon, Mark, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { Icon, Mark, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 
 export const name = 'zhiyun-page-me-client';
@@ -33,7 +33,7 @@ export function apply(ctx) {
  *    （平台账号，与浙大凭证无关）。把浙大凭证的入口留在这里，会让人以为
  *    "登录这个工作台 = 登录浙大课堂"，两件事被绑死。
  * 2. **浙大凭证改了归属。** 「浙大一卡通」现在在「设置」里配置，由智云课堂与
- *    学在浙大**共用**（见 `dsh-zhiyun-card`）。它不再属于某一个页面。
+ *    学在浙大**共用**（见 `dsh-zhiyun-source-card`）。它不再属于某一个页面。
  *
  * 所以这里只留一句说明 + 指路，不再有任何输入框。等我们自己的登录策略落地时，
  * 这块就是它的位置。

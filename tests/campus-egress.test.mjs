@@ -1,5 +1,5 @@
 /**
- * 出口策略（`dsh-zhiyun-campus/src/egress.js`）与 WebVPN 协议层。
+ * 出口策略（`dsh-zhiyun-source-campus/src/egress.js`）与 WebVPN 协议层。
  *
  * 这些断言全部来自**真机实测**，不是"看起来合理"：
  *
@@ -13,11 +13,11 @@ import assert from 'node:assert/strict';
 import {
   isCampusHost, isPintiaHost, needsCampusNetwork, interpretCampusProbe,
   createEgress, MODES, CAMPUS_PROBE_URL,
-} from '../packages/dsh-zhiyun-campus/src/egress.js';
+} from '../packages/dsh-zhiyun-source-campus/src/egress.js';
 import {
   toWebvpnUrl, fromWebvpnUrl, isWebvpnLoginUrl, wrdEncrypt, wrdDecrypt,
   parseWebvpnLoginPage, describeWebvpnFailure, WEBVPN_ORIGIN,
-} from '../packages/dsh-zhiyun-campus/src/webvpn/protocol.js';
+} from '../packages/dsh-zhiyun-source-campus/src/webvpn/protocol.js';
 
 /* ────────────────────────────────────── 域名分域 */
 

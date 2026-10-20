@@ -1,6 +1,6 @@
 // 「今天」页：读今天的课表。日历和自建计划仍不在这里。
 import React, { useEffect } from 'react';
-import { Icon, Notice, SectionTitle, mountStyle, useStudy } from 'dsh-zhiyun-ui-primitives';
+import { Icon, Notice, SectionTitle, mountStyle, useStudy } from 'dsh-zhiyun-shell-ui';
 import { clock, projectAgenda } from './agenda.js';
 import css from './style.css';
 

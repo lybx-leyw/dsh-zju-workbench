@@ -1225,7 +1225,7 @@ export async function apply(ctx, config = {}) {
    *
    * 学在浙大待办与拼题A 题集原先都经 omni（**移植自为 macOS 写的上游**）。那两条链路
    * 上有几处结构性问题：一次失败封锁 15 分钟（偶发抖动变成"半天不可用"）、
-   * 认证层带 webvpn 分支、拼题A 的 N+1。现在改由 `dsh-zhiyun-campus`（本仓原生，
+   * 认证层带 webvpn 分支、拼题A 的 N+1。现在改由 `dsh-zhiyun-source-campus`（本仓原生，
    * 复用智云课堂那套已在 Windows 跑通的 CAS 与 HTTP 传输）提供。
    *
    * omni 仍留在 profile 里 —— 教务课表/成绩（`zdbk`）还在用它，「今天」页依赖那份。
@@ -1258,11 +1258,11 @@ export async function apply(ctx, config = {}) {
     // ── 退回 omni（旧路径，保留以便逐步迁移）──────────────────────────
     const omni = ctx.get('zhiyunOmni');
     if (!omni) {
-      const why = { code: 'CAMPUS_UNAVAILABLE', message: '校园数据包未启用：需要 dsh-zhiyun-campus（或旧的 dsh-zhiyun-omni）' };
+      const why = { code: 'CAMPUS_UNAVAILABLE', message: '校园数据包未启用：需要 dsh-zhiyun-source-campus（或旧的 dsh-zhiyun-source-omni）' };
       return { xzzd: { ok: false, rows: [], error: why }, pta: { ok: false, rows: [], error: why } };
     }
 
-    // 学在浙大：凭据由 `dsh-zhiyun-classroom` 登录时写进宿主凭据服务。
+    // 学在浙大：凭据由 `dsh-zhiyun-source-classroom` 登录时写进宿主凭据服务。
     const xzzd = (async () => {
       try {
         return { ok: true, rows: normalizeXzzdTodos(await omni.invoke('xzzd.todos', {})), error: null };
@@ -1367,7 +1367,7 @@ export async function apply(ctx, config = {}) {
   /**
    * 学在浙大读不到时，把原因翻译成**用户能照做的一句**。
    *
-   * 凭据已经集中在宿主（`dsh-zhiyun-classroom` 登录时写入），所以这里**不再出现
+   * 凭据已经集中在宿主（`dsh-zhiyun-source-classroom` 登录时写入），所以这里**不再出现
    * "去终端配账号"** —— 那是在两个包各自存凭据时才有的事。
    */
   const describeXzzdError = (error) => translateXzzdError({
@@ -1412,7 +1412,7 @@ export async function apply(ctx, config = {}) {
       return { source: result?.source, cookie_names: result?.names ?? [] };
     }
     const omni = ctx.get('zhiyunOmni');
-    if (!omni) throw new Error('校园数据包未启用（需要 dsh-zhiyun-campus 或 dsh-zhiyun-omni），无法保存拼题A Cookie');
+    if (!omni) throw new Error('校园数据包未启用（需要 dsh-zhiyun-source-campus 或 dsh-zhiyun-source-omni），无法保存拼题A Cookie');
     if (typeof omni.pta !== 'function') throw new Error('数据包版本过旧（缺 pta 能力）');
     const result = await omni.pta('importCookie', { input: raw });
     log(`拼题A Cookie 已保存（来源：${result?.source ?? '未知'}，${result?.cookie_names?.length ?? 0} 个键）`);

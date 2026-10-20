@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { exportLectureForAgent, mergeAgentLectureText } from '../packages/dsh-zhiyun-lecture/src/agent-text.js';
-import { countShape } from '../packages/dsh-zhiyun-final-pass/src/index.js';
+import { exportLectureForAgent, mergeAgentLectureText } from '../packages/dsh-zhiyun-core-lecture/src/agent-text.js';
+import { countShape } from '../packages/dsh-zhiyun-core-final-pass/src/index.js';
 const lecture = () => ({ title: '完整课堂', chapters: [{ no: 1, title: '概率', topics: [
   { title: '独立性', fromPage: 2, toPage: 4, sourceBlockIndexes: [3, 5], anchor: { page: 2, tSec: 120 }, draft: '课堂原话', passages: [{ text: '修改前的正文' }], register: 'draft' },
   { title: '条件概率', fromPage: 5, toPage: 6, sourceBlockIndexes: [8], passages: [{ text: '保留的另一知识点' }], anchor: { page: 5, tSec: 180 } },

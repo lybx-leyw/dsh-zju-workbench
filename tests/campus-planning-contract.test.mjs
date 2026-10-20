@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { apply } from '../packages/dsh-zhiyun-campus/src/index.js';
-import { apply as applyClassroom } from '../packages/dsh-zhiyun-classroom/src/index.js';
+import { apply } from '../packages/dsh-zhiyun-source-campus/src/index.js';
+import { apply as applyClassroom } from '../packages/dsh-zhiyun-source-classroom/src/index.js';
 import { createHandler } from '../packages/dsh-zhiyun-page-planning/src/index.js';
 
 async function harness(t, {expire=false,rateLimit=false,badShape=false,realClassroom=false,classroomUnavailable=false}={}) {

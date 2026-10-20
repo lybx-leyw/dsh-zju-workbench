@@ -33,7 +33,7 @@
  *      （MIT，★35.8k，当日仍在推送）的工具套件，本仓终端分页**没有**：持久会话、
  *      输出最小化、后台作业托管、`rm` 回收站、行区间读取、AST 结构化检索。
  *
- * ── 集成方式（效法 packages/dsh-zhiyun-paper）────────────────────
+ * ── 集成方式（效法 packages/dsh-zhiyun-host-paper）────────────────────
  *
  *   ❌ 不改上游源码。
  *   ✅ 锁版（写死 0.1.14，不用 `^`）引入上游。
@@ -44,7 +44,7 @@
  *
  *  TODO-1 【阻塞项】不套用上游 patch。上游 `cordis.patch.yml` 会 `disabled: true` 掉
  *          `tool-bash` / `tool-pwsh` / `tool-fs` / `tool-fs-search` 四行，用自己的实现顶替。
- *          本仓的沙箱治理（`dsh-zhiyun-shell` 的权限模式）与 `ctx.shell` 能力缝
+ *          本仓的沙箱治理（`dsh-zhiyun-shell-workbench` 的权限模式）与 `ctx.shell` 能力缝
  *          （hooks / tmux-context 等消费者）都依赖这几行。**须先确认**：能否只把
  *          「终端分页用哪个执行器」这一处重定向到上游，而不动其余三行；
  *          不能则**降级 🟡**，改为抽取 `src/bash-runtime` 做源码级移植。

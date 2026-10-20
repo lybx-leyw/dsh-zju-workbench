@@ -2,7 +2,7 @@
  * 上游包的**锁版凭据**（单一真源）。
  *
  * 为什么把版本号单独放一个模块、而不是散在 package.json 和注释里
- * （与 `dsh-zhiyun-paper/src/upstream.js` 同一套理由）：
+ * （与 `dsh-zhiyun-host-paper/src/upstream.js` 同一套理由）：
  *
  *   1. `package.json` 里的依赖必须写**精确版本**（`0.3.1`，不是 `^0.3.1`）。
  *      上游的观测口径会随版本变（token 估算密度、KV cache 字段、
@@ -48,7 +48,7 @@ export function readInstalledVersion() {
  * 上游是 read-only 观测插件：它自己在 Chat / Trajectory 旁加一个 Lens 视图。
  * 本仓若要复用，只有两条路（评审时二选一）：
  *
- *   a. **整页挂载**：接受上游自带视图，确认不与 `dsh-zhiyun-shell` 会话区冲突；
+ *   a. **整页挂载**：接受上游自带视图，确认不与 `dsh-zhiyun-shell-workbench` 会话区冲突；
  *   b. **只取数据**：不挂上游视图，只调它的 public API 拿「按插件归因的 token 占比」，
  *      喂给「插件」页现有那张依赖图 —— 让每一行同时显示「依赖关系 + 成本」。
  *

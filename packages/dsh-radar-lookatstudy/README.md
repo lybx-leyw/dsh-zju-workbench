@@ -41,12 +41,12 @@
 
 ## 增强哪个现有功能
 
-`packages/dsh-zhiyun-quiz`（出题与质检）、`packages/dsh-zhiyun-study-core`（学习核心）
+`packages/dsh-zhiyun-core-quiz`（出题与质检）、`packages/dsh-zhiyun-core-study`（学习核心）
 与「学习 / 习题」页的**推进逻辑**。
 
 | 本仓现状 | 上游补上的 | 结果 |
 | --- | --- | --- |
-| `dsh-zhiyun-quiz`：**出题器**（零 UI、零落盘） | 技能树门控 | 「会出题」升级为「**按掌握度决定下一个该学什么**」 |
+| `dsh-zhiyun-core-quiz`：**出题器**（零 UI、零落盘） | 技能树门控 | 「会出题」升级为「**按掌握度决定下一个该学什么**」 |
 | 无任何掌握度建模 | **BKT** 贝叶斯知识追踪 | 从「答对/答错」二值记录，升级为**知识点级掌握概率** |
 | 无学习路径形态 | gated skill tree | 从平铺题目列表，升级为**有前置依赖的学习路径** |
 

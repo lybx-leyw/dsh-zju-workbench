@@ -1,0 +1,7 @@
+# dsh bundle patch：把智云 Pro 的网络代理宿主半边插进 profile 的层栈。
+#
+# 它挂上游 dsh-net-proxy（MIT），由那个包提供 fetch 包装层 + harness 代理层
+# 与 /_dsh/net-proxy 设置路由；本包只负责锁版、默认策略与生命周期。
+- insert:
+    - id: zhiyun-net-proxy
+      name: dsh-zhiyun-source-netproxy

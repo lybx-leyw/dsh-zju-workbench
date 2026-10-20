@@ -26,8 +26,8 @@
  *   2. **功能仍相似正交** —— 两边都在做「把外来文档变成可读文本」，
  *      不是两套并列能力。
  *   3. **底层多调了更优质实现** —— 本仓**原本没有格式转换底层**：
- *      `dsh-zhiyun-parser` 是三阶段 **LLM 解析器**（依赖仅 `sharp`），
- *      走「模型理解」而非「格式转换」；`dsh-zhiyun-paper` 的 `pdfjs-dist`
+ *      `dsh-zhiyun-core-parser` 是三阶段 **LLM 解析器**（依赖仅 `sharp`），
+ *      走「模型理解」而非「格式转换」；`dsh-zhiyun-host-paper` 的 `pdfjs-dist`
  *      只负责 PDF **渲染**。上游按格式分派到**各格式的专用成熟库**
  *      （`mammoth` / `turndown` / `node-pptx-parser` / `xlsx` / `pdf-parse`），
  *      这正是现有链路缺的那一层。

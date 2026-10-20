@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useStudy } from 'dsh-zhiyun-ui-primitives';
+import { useStudy } from 'dsh-zhiyun-shell-ui';
 import { LectureReader } from "./lecture-reader.jsx";
 import { VideoPanel } from "./video-panel.jsx";
 import { QuizPanel } from "./quiz-panel.jsx";

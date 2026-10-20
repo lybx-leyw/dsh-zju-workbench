@@ -10,7 +10,7 @@
 | 正文区「视频」栏 | 视频主视图 + 课件小窗 + 字幕，两者可互换 | `video-panel.jsx` / `video.css` |
 | 正文区其余栏 | 终稿 / 讲义 / PPT / 字幕 / 出题 / 笔记 + 分层检索 | `study-workspace.jsx`、`lecture-reader.jsx`、`quiz-panel.jsx`、`note-panel.jsx`、`note-links.js`、`layered-search.js`、`layers.js`、`format.js` |
 
-出题和笔记的读写在 `dsh-zhiyun-study-core`。这一页只渲染：从已选片段出填空或简答，
+出题和笔记的读写在 `dsh-zhiyun-core-study`。这一页只渲染：从已选片段出填空或简答，
 待审题要用户采纳才进复习队列；笔记里的页码链切到课件，时间链切到字幕。另一节的链接
 留在原地并说明跳不过去。目录上方另有一个入口，在当前账号已整理的终稿里做字面查找；
 点中一节后打开它，并把同一个词放进这一节自己的检索框。从今天页点一条已采纳的题进来时，
@@ -40,14 +40,14 @@
 
 ## 边界
 
-- **领域状态不在这里**：账号、课程树取数、解析任务、持久化都在 `dsh-zhiyun-study-core`
+- **领域状态不在这里**：账号、课程树取数、解析任务、持久化都在 `dsh-zhiyun-core-study`
   提供的 `zhiyunStudyController` 里，本包用 `ctx.inject(['zhiyunStudyController'], …)` 惰性取。
   停用领域包时这一页空着，不会把整个前端拖成 pending。
 - **检索与格式化留在本包**：`searchLesson` / `hitBlockIndexes` / `layerSpecOf` /
   `time` / `lessonWhen` 只有这一页用，属于「这一页怎么呈现」，不属于领域。
   `tests/study.test.mjs` 直接从本包 import 它们（`src/layered-search.js`）。
 - `lecture-reader.jsx` 用宿主的 `@deepseek-ai/dsh-client-ui-primitives`（`MarkdownText`，种子词），
-  跨包原语用 `dsh-zhiyun-ui-primitives`（`useStudy` / `Notice`）—— 两个不同的包，别混。
+  跨包原语用 `dsh-zhiyun-shell-ui`（`useStudy` / `Notice`）—— 两个不同的包，别混。
 - **两张样式表**：`style.css`（整页）与 `video.css`（视频栏）。同包内后写的赢，
   顺序是确定的，不吃挂载顺序的亏；视频栏的类名一律 `zs-video-` 前缀，与整页的
   `zs-*` 不重名，`npm run check:css` 因此不会把它们报成跨包竞争。

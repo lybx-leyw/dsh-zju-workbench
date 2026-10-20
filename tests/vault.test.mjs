@@ -10,10 +10,10 @@ import assert from 'node:assert/strict';
 
 import {
   parseNoteLinks, splitWikilink, normalizeTarget, basenameOf, excludedRanges,
-} from '../packages/dsh-zhiyun-vault/src/parse/links.js';
+} from '../packages/dsh-zhiyun-core-vault/src/parse/links.js';
 import {
   buildIndex, createResolver, titleOf, renameLinks, targetCandidates,
-} from '../packages/dsh-zhiyun-vault/src/index/vault-index.js';
+} from '../packages/dsh-zhiyun-core-vault/src/index/vault-index.js';
 
 test('`[[目标|别名]]`：别名不属于目标', () => {
   const { wikilinks } = parseNoteLinks('见 [[真实笔记|显示成这个]]。');

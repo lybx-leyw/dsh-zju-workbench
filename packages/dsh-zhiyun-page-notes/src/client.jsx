@@ -43,7 +43,7 @@
 // 把用户删掉的内容又救回来。
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-import { Icon, Notice, mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 
 export const name = 'zhiyun-page-notes-client';

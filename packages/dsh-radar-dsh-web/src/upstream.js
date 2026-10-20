@@ -1,7 +1,7 @@
 /**
  * 上游包的**锁版凭据**（单一真源）。
  *
- * 与 `dsh-zhiyun-paper/src/upstream.js`、`dsh-radar-market/src/upstream.js` 同一套做法，
+ * 与 `dsh-zhiyun-host-paper/src/upstream.js`、`dsh-radar-market/src/upstream.js` 同一套做法，
  * 理由也相同，此处只记本包特有的部分：
  *
  *   1. `package.json` 里的依赖必须写**精确版本**（`0.0.1`，不是 `^0.0.1`）。

@@ -1,9 +1,9 @@
 // 「学习」页：学习工作台（课程树 / 讲义 / 字幕 / 终稿 / 检索 / 解析模型选择）。
 //
-// 领域状态（取数、任务、持久化）在 dsh-zhiyun-study-core 提供的 `zhiyunStudyController`
+// 领域状态（取数、任务、持久化）在 dsh-zhiyun-core-study 提供的 `zhiyunStudyController`
 // 服务里；本包只负责渲染与交互，以及「这一页特有的检索与格式化」。
 import React, { useState } from 'react';
-import { Notice, mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
 import { StudyWorkspace } from './study-workspace.jsx';
 import css from './style.css';
 // 视频栏是第二套样式（`zs-video-*`）：它有自己的网格与窄屏断点，不跟正文共用规则。

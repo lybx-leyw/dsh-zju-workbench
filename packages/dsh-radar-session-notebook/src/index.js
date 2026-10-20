@@ -34,7 +34,7 @@
  *      **快照与恢复**（`snapshot-*.js` / `restore-*.js` / `json-backup.js`：预算内增量快照 + 可恢复）。
  *      本仓笔记域是**纯存储**，没有任何一处做锚定或快照。
  *
- * ── 集成方式（效法 packages/dsh-zhiyun-paper）────────────────────
+ * ── 集成方式（效法 packages/dsh-zhiyun-host-paper）────────────────────
  *
  *   ❌ 不改上游源码。
  *   ✅ 锁版（写死 0.1.0，不用 `^`）引入上游。
@@ -51,7 +51,7 @@
  *
  *  TODO-2 落点：在 `dsh-zhiyun-page-today` 的轨迹区加「选中即引用」，
  *          不新开面板；引用产生的条目写入「笔记」页当期 vault 的**同一棵树**
- *          （不改 `dsh-zhiyun-vault` 的存储形状，只多一类来源标记）。
+ *          （不改 `dsh-zhiyun-core-vault` 的存储形状，只多一类来源标记）。
  *
  *  TODO-3 锚定语义：上游的 `text-anchor.js` 与我们 `zy://section/<账号>.<节次>`
  *          是两套定位体系。需要一个**双向映射**（会话消息 → 课程节次），

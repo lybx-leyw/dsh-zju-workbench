@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { ClassroomSource, SessionStore, Transport } from '../packages/dsh-zhiyun-classroom/src/source.js';
-import { authenticate, inspectJwt, jwtFromTokenCookie, rsaEncrypt, executionToken, nextLocation } from '../packages/dsh-zhiyun-classroom/src/auth.js';
-import * as models from '../packages/dsh-zhiyun-classroom/src/models.js';
-import { apply } from '../packages/dsh-zhiyun-classroom/src/index.js';
+import { ClassroomSource, SessionStore, Transport } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import { authenticate, inspectJwt, jwtFromTokenCookie, rsaEncrypt, executionToken, nextLocation } from '../packages/dsh-zhiyun-source-classroom/src/auth.js';
+import * as models from '../packages/dsh-zhiyun-source-classroom/src/models.js';
+import { apply } from '../packages/dsh-zhiyun-source-classroom/src/index.js';
 
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status });
 function source(handler, options = {}) { return new ClassroomSource({ fetch: handler, ...options }); }

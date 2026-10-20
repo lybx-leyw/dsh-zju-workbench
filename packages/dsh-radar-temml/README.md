@@ -45,8 +45,8 @@ require('temml').renderToString('\\frac{a}{b}', { throwOnError: false })
 | 功能仍相似正交 | ✅ 仍是「呈现一段讲座/笔记文本」，只是数学片段从「源码」变成「排版结果」 |
 | 底层多调更优质实现 | ⚠ 本仓**当前没有任何公式渲染器**，故是「无 → 有」 |
 
-**增强哪个现有功能**：讲座要点页（`dsh-zhiyun-page-study` ← `dsh-zhiyun-lecture`）、
-笔记页（`dsh-zhiyun-notes`）、论文阅读页的助手回答（`dsh-zhiyun-page-paper`）。
+**增强哪个现有功能**：讲座要点页（`dsh-zhiyun-page-study` ← `dsh-zhiyun-core-lecture`）、
+笔记页（`dsh-zhiyun-core-notes`）、论文阅读页的助手回答（`dsh-zhiyun-page-paper`）。
 
 ### ⚠ 定性风险（请评审重点看）
 
@@ -73,8 +73,8 @@ require('temml').renderToString('\\frac{a}{b}', { throwOnError: false })
 
 | 位置 | 现状 |
 | --- | --- |
-| `dsh-zhiyun-lecture/src/tree.js` | `looksLikeNotationOnly()` 用 `/^\$...\$$/` 判断「这一行是否为公式」，用于**标题判定**，不是渲染 |
-| `dsh-zhiyun-parser/src/correction-policy.js` | 对 `$...$` 做**文本清洗**（去 `\quad`、剥 `\mathrm` 等），产出仍是纯文本 |
+| `dsh-zhiyun-core-lecture/src/tree.js` | `looksLikeNotationOnly()` 用 `/^\$...\$$/` 判断「这一行是否为公式」，用于**标题判定**，不是渲染 |
+| `dsh-zhiyun-core-parser/src/correction-policy.js` | 对 `$...$` 做**文本清洗**（去 `\quad`、剥 `\mathrm` 等），产出仍是纯文本 |
 | `dsh-zhiyun-page-paper/src/citations.js` | 只处理「第 N 页」页码引用，与公式无关 |
 | 依赖树 | 无 `katex` / `mathjax` / `temml` 任何一项 |
 

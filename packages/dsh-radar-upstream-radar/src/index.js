@@ -42,7 +42,7 @@
  * 所以**应当汇入同一列**，用 `source: 'static' | 'isolated-run'` 区分，而不是做成两列。
  * **但本轮不改动 compat-vet 骨架** —— 是否合并由人工裁决（见报告 §6 第 1 条）。
  *
- * ── 集成方式（效法 packages/dsh-zhiyun-paper / dsh-radar-compat-vet）────
+ * ── 集成方式（效法 packages/dsh-zhiyun-host-paper / dsh-radar-compat-vet）────
  *
  *   ❌ 不改上游源码。
  *   ✅ 锁版（写死 0.45.0，不用 `^`）引入上游。

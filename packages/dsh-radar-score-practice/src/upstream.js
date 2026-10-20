@@ -1,13 +1,13 @@
 // 【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】
 //
-// 上游封装占位 —— 效法 packages/dsh-zhiyun-paper/src/upstream.js 的组织方式。
+// 上游封装占位 —— 效法 packages/dsh-zhiyun-host-paper/src/upstream.js 的组织方式。
 //
 // 本文件**不含任何上游源码**，仅预留「把 opensheetmusicdisplay / osmd-audio-player
 // 包成本仓可用的素材接口」的接缝。上游全部实现来自：
 //   - opensheetmusicdisplay@2.2.1（BSD-3-Clause，https://github.com/opensheetmusicdisplay/opensheetmusicdisplay）
 //   - osmd-audio-player@0.7.0（MIT，https://github.com/jimutt/osmd-audio-player）
 //
-// 设计原则（与 dsh-zhiyun-paper/src/upstream.js 一致）：
+// 设计原则（与 dsh-zhiyun-host-paper/src/upstream.js 一致）：
 //   - 上游只被本文件 import，其余代码只依赖本文件导出的稳定接口；
 //   - 上游 API 变更时，改动收敛在本文件内；
 //   - 绝不复制上游实现进来。

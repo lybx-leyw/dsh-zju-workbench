@@ -1,5 +1,5 @@
 /**
- * 浙大校园数据包（`dsh-zhiyun-omni`）的契约测试。
+ * 浙大校园数据包（`dsh-zhiyun-source-omni`）的契约测试。
  *
  * 这个包是**移植**来的（见包内 `ATTRIBUTION.md`），业务逻辑由上游自己的测试覆盖。
  * 所以这里不重复测「教务接口解析得对不对」——那些测试没搬过来，也不该在这里重造。
@@ -23,12 +23,12 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { loadConfig, defaultDataDir, ALL_PLATFORMS } from '../packages/dsh-zhiyun-omni/src/core/config.ts';
-import { createContext } from '../packages/dsh-zhiyun-omni/src/core/context.ts';
-import { createRuntime } from '../packages/dsh-zhiyun-omni/src/platforms/index.ts';
-import { Accounts, backendLabel, dpapi } from '../packages/dsh-zhiyun-omni/src/core/keychain.ts';
+import { loadConfig, defaultDataDir, ALL_PLATFORMS } from '../packages/dsh-zhiyun-source-omni/src/core/config.ts';
+import { createContext } from '../packages/dsh-zhiyun-source-omni/src/core/context.ts';
+import { createRuntime } from '../packages/dsh-zhiyun-source-omni/src/platforms/index.ts';
+import { Accounts, backendLabel, dpapi } from '../packages/dsh-zhiyun-source-omni/src/core/keychain.ts';
 
-const pkgRoot = fileURLToPath(new URL('../packages/dsh-zhiyun-omni/', import.meta.url));
+const pkgRoot = fileURLToPath(new URL('../packages/dsh-zhiyun-source-omni/', import.meta.url));
 
 /** 建一个只有数据层、不连网的运行时。 */
 function makeRuntime(platforms = 'zdbk,xzzd,cc98,pta') {
@@ -91,7 +91,7 @@ test('数据层零外部依赖：package.json 不该有 dependencies', async () 
   // 上游的工具层用 @modelcontextprotocol/sdk 与 zod；本包删了工具层，
   // 数据层只用 Node 内置模块。一旦有人把工具层加回来，这条会红。
   assert.equal(pkg.dependencies, undefined, '数据包不该有运行时依赖');
-  assert.equal(pkg.name, 'dsh-zhiyun-omni');
+  assert.equal(pkg.name, 'dsh-zhiyun-source-omni');
   assert.equal(pkg.dsh.bundle.patch, './cordis.patch.yml', 'profile 靠它挂载');
 });
 

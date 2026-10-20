@@ -2,7 +2,7 @@
  * 智云 Pro「插件」页的**生态检索半边**（候选骨架 · 占位实现）。
  *
  * ⚠️ 这是**骨架**：未评审、未接入 profile、不可直接使用。本文件只有占位与 TODO，
- *    **不写业务逻辑**。与 `dsh-zhiyun-paper` 的区别在于：那一份已经是能跑的实现，
+ *    **不写业务逻辑**。与 `dsh-zhiyun-host-paper` 的区别在于：那一份已经是能跑的实现，
  *    这一份只是把「将来要怎么接」的形状摆出来，供人工评审判断方向是否成立。
  *
  * # 这个包要做的事（意图）
@@ -20,7 +20,7 @@
  * 上游的 `dsh.client.inject` 里列着 `@deepseek-ai/dsh-client-ui-settings`，
  * 且它自带 `./client` 导出 —— 它会**自己接管 settings 的 `plugins` 分组**。
  * 这与 `dsh-paper-reader` 的客户端半边刻意不引入是**同一条理由**（见
- * `packages/dsh-zhiyun-paper/README.md`）：它会抢本仓外壳的布局主张与设置分组。
+ * `packages/dsh-zhiyun-host-paper/README.md`）：它会抢本仓外壳的布局主张与设置分组。
  *
  * ⇒ **只挂宿主半边，UI 由 `dsh-zhiyun-page-plugins` 重写。**
  *   该重写**不在本骨架范围内**，是人工评审通过后、接入之前必须完成的前置工作。
@@ -46,8 +46,8 @@ export const name = 'radar-market';
 /**
  * 只硬依赖 `profileContext`（数据目录）。`webServer` / `connection` / `remote`
  * 全部走 `ctx.inject` / `ctx.get` 惰性取 —— 可选宿主服务不写进 inject，
- * 否则对方没就绪时本插件会一直 pending（这条规矩见 dsh-zhiyun-paper 与
- * dsh-zhiyun-study-core 的 README）。
+ * 否则对方没就绪时本插件会一直 pending（这条规矩见 dsh-zhiyun-host-paper 与
+ * dsh-zhiyun-core-study 的 README）。
  */
 export const inject = ['profileContext'];
 

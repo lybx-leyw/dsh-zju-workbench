@@ -39,7 +39,7 @@ test('request ceiling includes redirects and rejects unapproved hosts before sen
 });
 
 test('CAS redirects resolve relative locations and reject foreign origins', async () => {
-  const { upgrade } = await import('../packages/dsh-zhiyun-campus/src/cas/login.js');
+  const { upgrade } = await import('../packages/dsh-zhiyun-source-campus/src/cas/login.js');
   assert.equal(upgrade('/user/index', 'https://courses.zju.edu.cn/login'), 'https://courses.zju.edu.cn/user/index');
   assert.equal(upgrade('http://courses.zju.edu.cn/user/index'), 'https://courses.zju.edu.cn/user/index');
   for (const url of ['https://example.org/', '//example.org/', 'https://user:pass@courses.zju.edu.cn/', 'https://courses.zju.edu.cn:444/']) {
@@ -48,9 +48,9 @@ test('CAS redirects resolve relative locations and reject foreign origins', asyn
 });
 
 test('an existing SSO ticket continues business redirects without another password POST', async () => {
-  const { Transport } = await import('../packages/dsh-zhiyun-campus/src/cas/transport.js');
-  const { CAMPUS_HOSTS } = await import('../packages/dsh-zhiyun-campus/src/hosts.js');
-  const { xzzdLogin } = await import('../packages/dsh-zhiyun-campus/src/cas/login.js');
+  const { Transport } = await import('../packages/dsh-zhiyun-source-campus/src/cas/transport.js');
+  const { CAMPUS_HOSTS } = await import('../packages/dsh-zhiyun-source-campus/src/hosts.js');
+  const { xzzdLogin } = await import('../packages/dsh-zhiyun-source-campus/src/cas/login.js');
   const calls = [];
   const transport = new Transport({hosts:CAMPUS_HOSTS, fetch: async (url, init) => {
     calls.push({url, method:init.method});

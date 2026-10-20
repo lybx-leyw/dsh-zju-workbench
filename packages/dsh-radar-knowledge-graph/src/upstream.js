@@ -1,7 +1,7 @@
 /**
  * 上游包的**锁版凭据**（单一真源）。
  *
- * 与 `dsh-zhiyun-paper/src/upstream.js`、`dsh-radar-context-lens/src/upstream.js` 同一套理由：
+ * 与 `dsh-zhiyun-host-paper/src/upstream.js`、`dsh-radar-context-lens/src/upstream.js` 同一套理由：
  *
  *   1. `package.json` 里的依赖必须写**精确版本**（`0.1.3`，不是 `^0.1.3`）。
  *      上游仍在 0.1.x（npm 上 4 个版本全在 2026-09-01 一天内发布），

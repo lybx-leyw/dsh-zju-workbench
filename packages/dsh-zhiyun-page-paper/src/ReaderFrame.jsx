@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Icon } from 'dsh-zhiyun-ui-primitives';
+import { Icon } from 'dsh-zhiyun-shell-ui';
 import { readerUrl } from './library.js';
 import {
   createDwell,
@@ -183,7 +183,7 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
       setFailure(null);
     };
 
-    const onError = () => { if (!cancelled) setFailure('阅读器加载失败：请确认宿主已启用 dsh-zhiyun-paper。'); };
+    const onError = () => { if (!cancelled) setFailure('阅读器加载失败：请确认宿主已启用 dsh-zhiyun-host-paper。'); };
 
     frame.addEventListener('load', onLoad);
     frame.addEventListener('error', onError);

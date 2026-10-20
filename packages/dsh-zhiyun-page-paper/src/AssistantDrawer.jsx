@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Icon, useStore } from 'dsh-zhiyun-ui-primitives';
+import { Icon, useStore } from 'dsh-zhiyun-shell-ui';
 import { MarkdownDelegateProvider, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { ask, newSession } from './library.js';
 import { createSessionFeed } from './session-feed.js';

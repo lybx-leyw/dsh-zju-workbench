@@ -17,7 +17,7 @@ import {
   CARD_RECORD_KEY, MASK, ROUTE_PATH, WEBVPN_LABEL, WEBVPN_RECORD_KEY, WRITE_HEADER,
   cardStatus, clearCard, clearWebvpn, createHandler, fillCardIfEmpty, normalizePassword,
   normalizeUsername, readCard, readWebvpn, webvpnStatus, writeCard, writeWebvpn,
-} from '../packages/dsh-zhiyun-card/src/index.js';
+} from '../packages/dsh-zhiyun-source-card/src/index.js';
 
 /** 内存版宿主凭据服务，模拟 `ctx.credentials`。 */
 function memoryCtx() {

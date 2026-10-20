@@ -15,9 +15,9 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ClassroomSource } from '../packages/dsh-zhiyun-classroom/src/source.js';
-import { LiveSource, cameraKey, mediaType } from '../packages/dsh-zhiyun-classroom/src/live.js';
-import { checkTarget, rewritePlaylist } from '../packages/dsh-zhiyun-classroom/src/stream.js';
+import { ClassroomSource } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import { LiveSource, cameraKey, mediaType } from '../packages/dsh-zhiyun-source-classroom/src/live.js';
+import { checkTarget, rewritePlaylist } from '../packages/dsh-zhiyun-source-classroom/src/stream.js';
 
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status });
 /** 用假 fetch 造一个 ClassroomSource；直播走它共享的 transport。 */
@@ -196,7 +196,7 @@ test('rewritePlaylist rewrites both segments and URI= attributes against the pla
 });
 
 test('stream relay surfaces the route prefix shared with the host wiring', async () => {
-  const { STREAM_ROUTE_PREFIX, createStreamHandler } = await import('../packages/dsh-zhiyun-classroom/src/stream.js');
+  const { STREAM_ROUTE_PREFIX, createStreamHandler } = await import('../packages/dsh-zhiyun-source-classroom/src/stream.js');
   assert.equal(STREAM_ROUTE_PREFIX, '/zhiyun-live');
   // handler 的签名必须是 (req, res)：宿主 WebRoute.handler 用 Node 响应所有权模型，
   // 不是 Fetch 的 Request => Response。写错的表现是请求挂死到超时。
