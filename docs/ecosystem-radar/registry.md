@@ -2015,3 +2015,17 @@
 | `chen731215-dev/dsh-tavern-v2` / `a86582751/dsh-nexttavern` / `Amakurai/dsh-liketavern` | A 原生DSH | **NOASSERTION** / **GPL-3.0** / MIT | — | 无关（角色扮演前端） | ⛔ | rejected | 2026-10-20 | ★56 / ★185 / ★123。前两者为 **NOASSERTION 待核**与 **GPL** → 排除；`liketavern` 虽 MIT，但把 dsh web 改造成 SillyTavern 前端，与学习台无交集 |
 | `provenance` 三词命中的非 DSH 簇：`bengarvey/lineage`(★122) / `aws-solutions-library-samples/guidance-for-media-provenance-with-c2pa-on-aws` / `Security4Media/c2pa-video-player` / `Tybravo/StellarProof` 等 90 余条 | B 其他JS | 多 MIT / 多 `null` | — | 无关 | ⛔ | rejected | 2026-10-20 | **「溯源」在 GitHub 是媒体取证（C2PA）+ 区块链存证的代名词**，`data lineage` 则是族谱/可视化玩具 → 与「文档来自哪段原文」同形不同义。**本轴在开源生态里没有对应物** |
 | `jkStars/dsh-token-usage-stats` / `woosh2010/dsh-usage-dashboard` / `Hjay1101/dsh-plugin-token-usage` / `samecorner/dsh-token-usage` / `lightli369/dsh-llm-usage-stats` / `wellorbetter/dsh-plugin-window-stats` | A 原生DSH | MIT ✅ | — | **重复无增益**（维持第三十四轮） | ⛔ | rejected | 2026-10-20 | ★1–3，六个包做同一件事（token 用量面板）→ 用量轴确认饱和，不再逐条评估 |
+
+### 2026-10-21 · 第四十三轮（A 组 · **计划分解 / 依赖调度轴**）
+
+> 取组：`last_run_at` 为 10-20 21:15 → 跨天重置 → `day_of_year % 3`（294%3=0）→ **A 组**。
+> 与第四十二轮同组但**轴不同**（那轮是持久记忆/归属台账），关键词零重叠。
+> 12 次 API 调用（其中 2 次是 OR 限定符失效后的重试）、**0 次 403**、本轮完整。
+> `dsh plugin` 前两页 60 条里仅 1 条新面孔；**首次登记 3 行，🟢1 / ⛔2**；**0 条 NOASSERTION**；**2 个 A 类**。
+> 骨架 `packages/dsh-radar-agent-teams`（A 类锁版 `@nanmicoder/dsh-agent-teams@0.1.25`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `NanmiCoder/dsh-agent-teams`（npm `@nanmicoder/dsh-agent-teams@0.1.25`） | A 原生DSH | **MIT** ✅（GitHub + npm 一致） | 计划分解 / 执行推进 | **重复且可强化**（「规划」周计划 + 「今天」当日待办） | 🟢 | skeleton-created | 2026-10-21 | ★2299，push 2026-10-18，31 个版本，npm unpacked 3,418,813 B。**A 类三件套齐全**：根有 `cordis.patch.yml`（insert `id: agent-teams`）、`exports` 含 `.`/`./client`、21 项 `@deepseek-ai/dsh-*` peer。**强化点**：本仓计划是**扁平清单**（无 `dependsOn`/无中间状态/无执行者，顺序靠学生自排），上游是**依赖感知任务状态机**（依赖未完成不能认领、空闲成员自动认领、失败尝试可安全接管）——对「读讲义→刷题→订正」这类硬顺序课业是底层实质升级。**版本窗口**：上游推荐 Host `0.2.1-rc.2`；本仓 `runtime.lock.json` `preferredHostVersion=0.2.0-rc.2`，**在上游 peer 窗口内但未跑 `scripts/test-host.mjs`** → 只算「交集非空」，不算「已测」。**⚠ 最大未知（评审第一问）**：上游把 14 个 `agent_teams_*` 工具注册进**共享 `tools` 表**、并往**全局 system prompt** 插 usage；本仓是一整个工作台（「问一问」「笔记」共用），可能诱导模型在日常会话里无端组建团队 → **此条不解决则方案作废**。其余见骨架 TODO 3–9（面板可否不自动注册 / `memberProvider` 默认 `spawn` 需改最省 / 体积 3.26 MB） |
+| `dsh-tauri/deepseek-harness-desktop` | B 其他JS（Tauri 桌面壳） | MIT ✅ | 无（换承载端） | 重复且无增益 | ⛔ | rejected | 2026-10-21 | ★3362，push 2026-10-20，207 fork，「8 MB 安装包 / 免环境」。本仓是 Web 工作台 + profile 形态，**换承载端不增强任何面板**，也不改变任何功能；且非插件包（无 mount 意图）→ 强化式集成三条第 ① 条即不成立 |
+| `dataelement/dsh-desktop` | B 其他JS（桌面壳） | MIT ✅ | 无 | 重复且无增益 | ⛔ | rejected | 2026-10-21 | ★15878，push 2026-10-20。同上；与 `dsh-tauri` 二者择一足够，**本仓两者都不需要** |

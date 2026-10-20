@@ -1,0 +1,19 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 与上游 `@nanmicoder/dsh-agent-teams@0.1.25` 自带的 `cordis.patch.yml` 的区别：
+#   上游那份自己 insert 了 `id: agent-teams` / `name: '@nanmicoder/dsh-agent-teams'`，
+#   并给了 `config.stateDir` 与 `config.memberProvider` 两个默认值。
+#   本骨架不用那份 patch，理由有二：
+#     1. 上游 patch 的 id 是**上游名**，与「一律 `dsh-radar-` 前缀」的污染防护冲突；
+#     2. 挂载意图要由本包显式声明（哪个面板、默认开不开），而不是照抄上游。
+#   做法：本包用**自己的 id** 插入，由 `src/index.js` 在宿主侧 `import()` 上游、
+#   调它导出的 `apply(ctx)`，把上游当**库**用。**上游源码一行不改。**
+#
+# 为什么**不带 config**：
+#   上游 config 里 `stateDir`（默认 `.agent-teams`，写在会话工作区）与
+#   `memberProvider`（`spawn` / `fork`）都直接决定落盘位置与子 Agent 拓扑，
+#   属于评审必须先裁定的产品决策（见 src/index.js TODO 3 / TODO 4）。
+#   骨架阶段**不预置默认值**，避免「评审时看不出来它悄悄改了什么」。
+- insert:
+    - id: radar-agent-teams
+      name: dsh-radar-agent-teams
