@@ -2029,3 +2029,34 @@
 | `NanmiCoder/dsh-agent-teams`（npm `@nanmicoder/dsh-agent-teams@0.1.25`） | A 原生DSH | **MIT** ✅（GitHub + npm 一致） | 计划分解 / 执行推进 | **重复且可强化**（「规划」周计划 + 「今天」当日待办） | 🟢 | skeleton-created | 2026-10-21 | ★2299，push 2026-10-18，31 个版本，npm unpacked 3,418,813 B。**A 类三件套齐全**：根有 `cordis.patch.yml`（insert `id: agent-teams`）、`exports` 含 `.`/`./client`、21 项 `@deepseek-ai/dsh-*` peer。**强化点**：本仓计划是**扁平清单**（无 `dependsOn`/无中间状态/无执行者，顺序靠学生自排），上游是**依赖感知任务状态机**（依赖未完成不能认领、空闲成员自动认领、失败尝试可安全接管）——对「读讲义→刷题→订正」这类硬顺序课业是底层实质升级。**版本窗口**：上游推荐 Host `0.2.1-rc.2`；本仓 `runtime.lock.json` `preferredHostVersion=0.2.0-rc.2`，**在上游 peer 窗口内但未跑 `scripts/test-host.mjs`** → 只算「交集非空」，不算「已测」。**⚠ 最大未知（评审第一问）**：上游把 14 个 `agent_teams_*` 工具注册进**共享 `tools` 表**、并往**全局 system prompt** 插 usage；本仓是一整个工作台（「问一问」「笔记」共用），可能诱导模型在日常会话里无端组建团队 → **此条不解决则方案作废**。其余见骨架 TODO 3–9（面板可否不自动注册 / `memberProvider` 默认 `spawn` 需改最省 / 体积 3.26 MB） |
 | `dsh-tauri/deepseek-harness-desktop` | B 其他JS（Tauri 桌面壳） | MIT ✅ | 无（换承载端） | 重复且无增益 | ⛔ | rejected | 2026-10-21 | ★3362，push 2026-10-20，207 fork，「8 MB 安装包 / 免环境」。本仓是 Web 工作台 + profile 形态，**换承载端不增强任何面板**，也不改变任何功能；且非插件包（无 mount 意图）→ 强化式集成三条第 ① 条即不成立 |
 | `dataelement/dsh-desktop` | B 其他JS（桌面壳） | MIT ✅ | 无 | 重复且无增益 | ⛔ | rejected | 2026-10-21 | ★15878，push 2026-10-20。同上；与 `dsh-tauri` 二者择一足够，**本仓两者都不需要** |
+
+### 2026-10-21 · 第四十四轮（C 组 · **复习链闭环 / 复习容量轴**）
+
+> 取组：`last_run_at` 为今天 → 同日续跑。脚本报 `formula(stale-state)`→C，但其 `last_group` 解析失败
+> 且**用了 UTC 日期**（自报「今天=10-20」），建议不可信；本轮轴从读码得出、落在 C 组功能域内，故取 **C**
+> （偏离脚本一次，理由记于 `2026-10-21-r44.md` 抬头）。
+> 11 次搜索（上限 10，1 次为 `stars:>` 归零后的放宽重试）→ **超限 1 次**、0 次 403、本轮完整。
+> 命中约 9,800 条、高度重复 → **首次登记 2 行，🟡1 / 🔵1**（另有 3 条已登记项复核、5 条许可证外单列）。
+> **0 个 🟢、0 个 A 类、未出骨架**——本轮结论是「先闭环再调度」（见报告的 R-1/R-2/R-3）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `femto-fsrs`（npm 包，**无 GitHub 仓**） | B 其他JS（npm） | **MIT** ✅（npm `license`；`repository: null`） | 复习调度 | **重复且无增益**（`ts-fsrs@5.4.2` 已在 `dsh-radar-fsrs-scheduler` 锁版） | 🟡 | proposed（**待复核**） | 2026-10-21 | `femto-fsrs@2.0.0`，**零依赖**，unpacked **18,076 B**（`ts-fsrs` 体积的零头），自称 FSRS 5 最小实现。**判 🟡 不判 🟢 的两条硬理由**：① 本仓已锁 `ts-fsrs`，同功能两套实现为仓规明令禁止（`quiz/src/index.js:26–28`）；② **无 GitHub 仓库** → 无 issue、无可见更新史，答不了「上游还在不在」。保留 🟡 的用途：若将来因**体积**要换浏览器侧调度，它是已核实许可的备选。⚠ **参数集与 FSRS 版本未比对**（是否与 `ts-fsrs 5.4.2` 默认权重等价，本轮**未验证**），报告不声称等价 |
+| `kitschpatrol/yanki-obsidian` | B 其他JS（Obsidian 插件） | **MIT** ✅ | 笔记 → 复习卡 | **无关**（载体是 Anki，本仓无此对象） | 🔵 | proposed | 2026-10-21 | ★197，push 2026-10-16（活跃），topics `anki,flashcards,markdown,obsidian`。把 vault 里**纯 Markdown 写法的闪卡**同步进 Anki。**判 🔵**：其价值在「Markdown 能表达复习卡」这一格式约定，而约定绑死 Anki 侧解析器；本仓产出侧是「LLM 生成 → 质检 → 待审 → 采纳」（`quiz/generate.js`），**换载体等于换掉整个产出侧**，不满足强化式集成第 ① 条。只取其**语法设计参照**（`问题::答案` / `==挖空==`），**不摘代码** |
+| `femto-fsrs` ↔ `open-spaced-repetition/ts-fsrs` | — | MIT / MIT | — | **同功能双实现** | ⛔（合并入上条） | — | 2026-10-21 | 本轮不再为 `ts-fsrs` 单开行（2026-10-14 已登记 🟢 并已出骨架）。此处记录**关系**：`femto-fsrs` 是它的小体积替代，二选一，**不得并存** |
+| `open-spaced-repetition/fsrs.js`（2026-10-14 已判「不登记」） | B 其他JS | MIT | 复习调度 | 重复无增益 | ⛔ | 维持 | 2026-10-21 | 本轮复核：`latest` push **2024-04-10**，停在 FSRS 4 时代，仍在 `ts-fsrs` 之下 → 维持「不登记」 |
+| `@open-spaced-repetition/binding@0.5.0` | B 其他JS（Node/WASI 绑定） | **MIT** ✅ | 复习调度（参数优化） | 与 `ts-fsrs` 同仓、**非独立能力** | 🔵 | proposed（仅备查） | 2026-10-21 | 本轮核实许可为 MIT，`optionalDependencies` 覆盖 **11 个平台**（含 `wasm32-wasi`）、`engines.node >= 20`。用途是 **FSRS Optimizer**（用个人作答史拟合参数），与本仓「学生单用户、样本 <3」现状不匹配 → 只备查。⚠ 「当前平台二进制是否真被 npm 装上」**未实测** |
+| `ankitects/anki` / `andymatuschak/orbit` / `pieralukasz/true-recall` | 非 JS / B | **NOASSERTION** ⚠ | — | — | ⛔ | rejected | 2026-10-21 | ★32,148（Rust）/ ★1,837（TS）/ ★65。**许可证待人工核验，不采用、不摘代码**。`anki` 即便核出 MIT 也是 Rust 栈，不合 skill 的 JS 限定 |
+| `koljapluemer/obsidian-the-queue` / `subconcept-labs/ulangi` / `h16nning/skola` / `debanjandhar12/logseq-anki-sync` | B | **`null`** ⛔ / **GPL-3.0** / **AGPL-3.0** / **AGPL-3.0** | 复习 | — | ⛔ | rejected | 2026-10-21 | 无许可证 1 条、强著佐权 3 条 → **全部只登记、不摘代码**。`skola`（AGPL，★55，本地优先 SRS PWA）形态最贴近「学生自用」，但许可不可用 |
+| `ECuiDev/obsidian-quiz-generator`（2026-10-20 已登记 🔵） | B | MIT ✅ | 从笔记出闪卡 | 重复无增益 | 🔵 | 维持 | 2026-10-21 | 复核：★174，**push 2024-11-13 已停更近 2 年**，30 open issues → 维持 🔵，**不再重评** |
+| `st3v3nmw/obsidian-spaced-repetition`（2026-10-15 已登记 🔵） | B | MIT ✅ | 复习 | 重复可强化 | 🔵 | 维持 | 2026-10-21 | 复核：★2,591，但 **356 open issues**，插件形态强耦合 Obsidian → 维持 🔵（只作线索） |
+| `ctrlaltwill/LearnKit`（2026-10-15 已登记 🟡） | B | MIT ✅ | 复习 / 刷题 | 重复可强化 | 🟡 | 维持 | 2026-10-21 | 复核：★181，push 2026-10-17，仍在活跃。维持「只提取 image-occlusion 思路、不整包集成」 |
+| `open-spaced-repetition/awesome-fsrs` | — | CC0-1.0 ✅ | — | **线索源** | 🔵 | proposed | 2026-10-21 | ★727，push 2026-10-20。FSRS 实现索引（含各语言绑定）→ 与 `awesome-dsh-plugin` 同类，作为**后续查绑定的入口**，不入包 |
+
+#### 本轮无 🟢 的原因（写进登记表以免下轮重犯）
+
+`dsh-zhiyun-quiz` 的复习链在**三处同时断开**：① `reviewQueue` 只按 `status` 过滤，**无 `due`、无排序字段**
+（`store.js:501`，实测队列项无 `due`/`fsrsRating` 字段）；② `recordAttempt` **全仓零调用方**（`store.js:604` 仅定义）——
+`workbench.js:627–630` 的 method 白名单里没有 `quiz-attempt`；③ `openQuizStore`（`workbench.js:376–379`）只 `loadItems`、
+不喂 `attempts`，而 `quiz-generate`/`changeQuiz` 用 `store.snapshot()` **整份覆盖写回** → 实测「保存前 1 条 → 写回 0 条」，
+随后 `masteryOf()` 报「数据不足（做过 0 题）」。**结论：先闭环（R-1/R-2，约 20 行、零新依赖），再接调度（R-3）。**
