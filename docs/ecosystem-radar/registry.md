@@ -1932,3 +1932,17 @@
 > ④ **L-2 `meta.complete` 这条保护目前是空转的** —— `getSchedule()` 走 `result()` 默认 `complete = true`，
 > 课表永远不会是 `null`；因此今天页 `agenda.js:16` 的 `incomplete` 分支**只能由 meta 缺失触发**，从未被真实验证。
 > 不是 bug，但建议加课表分页时同步补 `meta` 断言。
+
+### 2026-10-20 · 第三十九轮（C 组派生 · 复习队列「排序与容量」轴）
+
+> 起点：读码找断环（`acceptedQuiz` 只有字典序 + `slice(0,20)`；`computeBacklog` 零调用方）。
+> 9 次搜索（未超限）、0 次 403；4 个学习语汇词直接返 0（`anki queue sorting` / `review debt` 等）。
+> **无 A 类、无 🟢、0 条 NOASSERTION、未出骨架**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `xiaohajiayou/Leetcode-Mastery-Scheduler` | B 其他JS | MIT（`package.json` 写 ISC，同属白名单） | 刷题/复习 | 重复可强化（学习页·复习队列排序） | 🟡 | proposed | 2026-10-20 | ★543，2026-04 后未动。可移植的**规则**三条：①`reviewService.js:60-95` 按 `getCurrentRetrievability` 升序（最可能忘的排最前）②`utils.js:168-175` 直接用 `ts-fsrs` 的 `forgetting_curve` + `dateDiffInDays`，不自写公式 ③`sort.js` 把「推迟时长」单列一维（正=逾期/负=未到期）。**判 🟡**：非库形态（Chrome 扩展，算法层绑 `store.js`）；自带 `ts-fsrs ^4.7.0` 与本仓 `5.4.2` 撞大版本；`qualityToRating` 用整数 1–4 + `default→Good` 兜底，与本仓字符串枚举 `['again','hard','good','easy']` 及「不许把判不了当某档」纪律冲突。**前提不成立**：`recordAttempt` 仍无调用方 ⇒ 无 `selfRecall` ⇒ 无 `stability` ⇒ 排序空转，故不出骨架 |
+| `luciopaiva/heapify` | B 其他JS | MIT | — | 重复无增益 | 🔵 | rejected | 2026-10-20 | ★743。零依赖优先队列；本仓队列仅 20 条截断，`Array.sort` 足够；只有「答题后增量插队」才需要堆，而本仓尚无答题入口 |
+| `ignlg/heap-js` | B 其他JS | BSD-3-Clause | — | 重复无增益 | 🔵 | rejected | 2026-10-20 | ★167。与 heapify 二选一即可，当前两者都不需要 |
+| `clauderic/dnd-kit` | B 其他JS | MIT | 复习队列手排 | 全新（但与本轮方向相反） | 🔵 | proposed | 2026-10-20 | ★17730，仍活跃（2026-10-15）。`@dnd-kit/core@6.3.1` + `@dnd-kit/sortable@10.0.0`，依赖 `tslib`/`@dnd-kit/utilities`。仅当允许**手动**调序时才用；与「按遗忘曲线自动排」是相反的两种产品判断，先有数据再谈 |
+| 撞车簇：`scheduler`/`knapsack` 前排 | B 其他JS | MIT / `null` / GPL-2.0 混杂 | — | 重复无增益 | ⛔ | rejected | 2026-10-20 | ★774 React 可视化排程、★587 Kettle 调度监控、★344 定时任务、★240 kue-scheduler、★199 Google-Meet 自动上课；knapsack 前排 ★≤6 可视化玩具 → 全是「调度」的另一义项，**建议两词移出 C 组派生词池** |
