@@ -1961,3 +1961,27 @@
 | `upphiminn/jLouvain` | B 其他JS | MIT ✅ | 学科聚类 | 重复且无增益 | ⛔ | rejected | 2026-10-20 | ★156，但 **2021 停更**、无图数据结构配套；被 `graphology-communities-louvain@2.0.2` 完全覆盖 |
 | mdast→docx/pdf 簇（`md2docx/mdast2docx` 等 6 个） | B 其他JS | MPL-2.0 ⛔ / 其余 MIT | 讲义导出 | 与「笔记」页无关 | ⛔ | rejected | 2026-10-20 | 全是**导出器**（方向不同的重复劳动）；★ 最高 40 |
 | 图可视化簇（`zakjan/pixi-graph` 等） | B 其他JS | MIT / 多个 null | — | 仅参考 | ⛔ | rejected | 2026-10-20 | `graphology <X>` 搜到的**全是渲染/布局插件**，无一图算法；本轮 53 条命中里 0 条可用 → 「算法层要按 npm 包名找，不能按 GitHub 关键词找」 |
+
+### 2026-10-20 · 第四十一轮（B 组 · 浙大场景 / 中文检索底层轴）
+
+> 关键词：`chinese word segmentation javascript`(3) / `jieba in:name`(753) / `chinese search tokenizer language:typescript`(1) /
+> `bm25 fuzzy search language:javascript`(2) / `segmentit`(9) / `nodejieba`(25) / `chinese segmentation wasm`(4) /
+> `pinyin segmentation language:javascript`(3) / `jieba-wasm`(11) / `chinese full-text search language:javascript`(3)；
+> 补扫 `wasm segmenter japanese language:typescript`(**0**)、`lunr-chinese OR elasticlunr chinese`(**114,160 = 纯 `chinese`，OR 限定符再次丢词**)。
+> **10 次搜索（达上限未超限）、0 次 403，本轮完整**。约 810 条命中 → 首次登记 12 行（含 3 簇）；**🟢1🔵3⛔8 行**；**0 条 `NOASSERTION`**、**0 个 A 类**；
+> 本轮出骨架 `packages/dsh-radar-search-segment`（B 类，锁版 `jieba-wasm@2.4.0`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `fengkx/jieba-wasm`（npm `jieba-wasm@2.4.0`） | B 其他JS（WASM 绑定） | **MIT** ✅（GitHub + npm 一致） | 中文讲义检索 | **重复可强化**（「学习」页检索 `findIn` / 宿主 `knowledge.search`） | 🟢 | skeleton-created | 2026-10-20 | ★102，push 2026-01-27。底层 `messense/jieba-rs`（★986，MIT）。**缺口实测（直接 import 本仓真实 `findIn`）**：`泰勒展开` 对 `泰勒 展开`、`行最简形` 对 `行 最简形` 均返回 `null`，分词后有序词序列命中；对照组 `极值点`/`拉格朗日中值定理` 两侧均命中。**⚠ 缺口不是「词被切开」**（`矩阵的秩`/`行列式` 字面均 true），是**写法不一致**。**⚠ 反例 F-3**：`特征值` 对 `特征 值` 两法皆空（`cut_for_search` 产出 `[特征, 特征值]`）→ 须「主词 + 子词」双轨。**入口差异已实测**：Node 分支 CJS（同步读 wasm，无需 init，且**具名导入会失败**，只能默认导入）；浏览器分支 ESM 且**必须 `await __wbg_init()`**。体积 **wasm gzip 2,815,114 B** + 胶水 2,600 B → **禁止进浏览器 bundle**。**Q-1 阻塞**：`findIn` 是客户端函数，接浏览器就要送 2.8 MB，不接则「学习」页仍不切词 → 评审先裁决走哪侧 |
+| `yanyiwu/nodejieba` | B 其他JS | MIT ✅ | 同上 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★3234，push 2026-10-12（最活跃的 Node 侧 jieba）。**判 🔵 而非 🟢**：原生模块（`node-gyp` 编译），WorkBuddy/DSH 的 electron 与 CI 都要预编译产物；`jieba-wasm` 已能给等价能力且免编译 → 同为 jieba 词典，无理由选重的那个 |
+| `linonetwo/segmentit` | B 其他JS | MIT ✅ | 中文切词 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★322，**push 2023-04-13 已停更 2 年半**。纯 JS（无 wasm）、体积远小于 jieba-wasm，但词典规模与更新频率均劣于 jieba-rs；且依赖 `preval.macro`（Babel 宏，构建链耦合）。**备选**，仅在「拒绝 2.8 MB wasm」时考虑 |
+| `louis-1448-2/obsidian-zh-search` | B 其他JS | MIT ✅ | 中文笔记检索 | **重复可强化**（「笔记」页检索） | 🔵 | proposed | 2026-10-20 | ★0，push 2026-10-19（新仓）。思路与本轮骨架**同构**（中文优先 FTS = 分词 + 索引），但形态是 Obsidian 插件、无独立 npm 包 → 只作**设计参照**，不摘代码 |
+| `AliceLJY/babel-memory` | B 其他JS | MIT ✅ | 中文全文检索预处理 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★0，push 2026-09-05。22 语种 FTS 预处理（CJK/泰语切分 + 多语言停用词）。⚠ 无发布包、无测试可见 → 只登记 |
+| `messense/jieba-rs` | B 其他JS（Rust） | MIT ✅ | — | 上游依赖 | 🔵 | proposed | 2026-10-20 | ★986，push 2026-10-15。**非 JS**，不进集成候选；登记理由：`jieba-wasm` 的**真正的上游**，其更新节奏决定 wasm 版能否跟进 |
+| `maxchang3/web-word-segment` | B 其他JS | MIT ✅ | — | 参考实现 | 🔵 | proposed | 2026-10-20 | ★1，2025-04。`jieba-wasm` + `Intl.Segmenter` 对照 demo，可作**验收基线**（对比「浏览器原生切词」的差距），不入包 |
+| `cxumol/jieba-wasm-html` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-20 | ★33，**2022 停更**。单页 HTML 打包版，无法作为依赖引入；与 `jieba-wasm` 同源 |
+| `hermanschaaf/jieba-js` / `shataniya/cncut` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-20 | ★52 / ★5，`license` 均 `null`。只登记，**不摘代码** |
+| `Xmader/gse-wasm` / `FlickerReader/jiebago-wasm-bind` / `Anillc/jieba-wasm` / `shouya/jieba-wasm` | B 其他JS | 多数 `null` ⛔ | — | 重复且无增益 | ⛔ | rejected | 2026-10-20 | 全部 ★≤9、2019–2023 停更、且**多数无许可证**；被 `fengkx/jieba-wasm` 完全覆盖 |
+| 非 JS 的 jieba 移植簇：`fxsjy/jieba`(★35,202 Python)、`huaban/jieba-analysis`(★2,708 Java)、`fukuball/jieba-php`(★1,379)、`anderscui/jieba.NET`(★1,142)、`wangbin/jiebago`(★506，`null`)、`qinwf/jiebaR`(★365 NOASSERTION) | 非 JS | 多数 MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-20 | skill 限定 JS 栈。**这是本轮最值得记的一条**：`jieba in:name` 753 条里 ★ 最高的前 10 全部是非 JS 移植 → **「分词」在 GitHub 上是按语言家族分布的，按关键词找必然先撞到 Python/Java 的原版** |
+| `Superjomn/qlin` / `epiphany131/novel-platform` / `chankamlam/chinese-search` / `ole3021/lunr-chinese` / `yoch/frozenminisearch` / `ammisaidkaidi/smart-hybrid-search` / `Carpathica/SegmentIt` / `uranbekanarbaev/pinyin-to-chinese` 等 | B 其他JS | MIT / `null` 混杂 | — | 无关或体量过小 | ⛔ | rejected | 2026-10-20 | ★0–8；`novel-platform` 是小说站、`SegmentIt` 是图像分割（**同名不同物**，与 `segmentit` 撞名）、`smart-hybrid-search` 面向阿拉伯语、`pinyin-to-chinese` 是输入法方向。`frozenminisearch` 是 `minisearch` 的只读变体（2026-10-20 新建，★1），第三十六轮已锁版 `minisearch@7.1.2` → 无增益 |
