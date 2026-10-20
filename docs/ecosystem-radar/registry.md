@@ -1985,3 +1985,33 @@
 | `Xmader/gse-wasm` / `FlickerReader/jiebago-wasm-bind` / `Anillc/jieba-wasm` / `shouya/jieba-wasm` | B 其他JS | 多数 `null` ⛔ | — | 重复且无增益 | ⛔ | rejected | 2026-10-20 | 全部 ★≤9、2019–2023 停更、且**多数无许可证**；被 `fengkx/jieba-wasm` 完全覆盖 |
 | 非 JS 的 jieba 移植簇：`fxsjy/jieba`(★35,202 Python)、`huaban/jieba-analysis`(★2,708 Java)、`fukuball/jieba-php`(★1,379)、`anderscui/jieba.NET`(★1,142)、`wangbin/jiebago`(★506，`null`)、`qinwf/jiebaR`(★365 NOASSERTION) | 非 JS | 多数 MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-20 | skill 限定 JS 栈。**这是本轮最值得记的一条**：`jieba in:name` 753 条里 ★ 最高的前 10 全部是非 JS 移植 → **「分词」在 GitHub 上是按语言家族分布的，按关键词找必然先撞到 Python/Java 的原版** |
 | `Superjomn/qlin` / `epiphany131/novel-platform` / `chankamlam/chinese-search` / `ole3021/lunr-chinese` / `yoch/frozenminisearch` / `ammisaidkaidi/smart-hybrid-search` / `Carpathica/SegmentIt` / `uranbekanarbaev/pinyin-to-chinese` 等 | B 其他JS | MIT / `null` 混杂 | — | 无关或体量过小 | ⛔ | rejected | 2026-10-20 | ★0–8；`novel-platform` 是小说站、`SegmentIt` 是图像分割（**同名不同物**，与 `segmentit` 撞名）、`smart-hybrid-search` 面向阿拉伯语、`pinyin-to-chinese` 是输入法方向。`frozenminisearch` 是 `minisearch` 的只读变体（2026-10-20 新建，★1），第三十六轮已锁版 `minisearch@7.1.2` → 无增益 |
+
+## 2026-10-20 · 第四十二轮（A 组 · **持久记忆 / 归属台账轴**）
+
+> **无搜索超限**：8 次（上限 10），0 次 403 → **本轮完整**。约 460 条未登记命中 → 首次登记 14 行。
+> 关键词：`deepseek-harness plugin`(9,720 探针)、`dsh plugin provenance`(15)、`dsh plugin citation`(17)、
+> `cordis plugin telemetry`(4)、`provenance tracking javascript`(4)、`content provenance language:typescript`(82)、
+> `data lineage javascript`(7)、`dsh plugin memory`(430)。
+> **🟢1 / 🟡1 / 🔵4(含 1 结构升级) / ⛔3 簇**；**`NOASSERTION` 2 条待核、无许可证 3 条（均只登记、未摘代码）**。
+> **本轮出骨架** `packages/dsh-radar-me-memory`（A 类 · 锁版 `dsh-auto-memory@0.9.0`）。
+> 两条判据更新：① **A 类第五道门「宿主编译选项」**——`dsh-memory` 的 FTS5 在无该选项的 `node:sqlite` 上
+> **`apply()` 即抛错**；② **`kind:'single'` 槽体系下「外围兼容层」写不出来**——需 UI 的候选只能新开槽。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `AskTheWay/dsh-auto-memory` | **A 原生DSH** | **MIT** ✅（npm + 仓内一致） | 跨会话记忆 → 「我的」页台账 | **重复可强化**（「我的」页仅有设置、零台账） | 🟢 | skeleton-created | 2026-10-20 | ★137，push 2026-10-20，unpacked 164,828 B、**零 dependencies**。`dsh.bundle.patch` ✅ + `client.platform:web`。peer `>=0.1.5-rc.2 <0.3.0` → **与 `hostVersions` 相容**（不卡第三十四轮那道门）。**存储是纯 Markdown，不用 SQLite** → 不踩 FTS5 坑。⚠ **判据①条件性成立**：已读打包 `lib/client.js:1589–1595`，上游注册 `main`（顶层页）+ `sidebar.panellist`（侧栏项）→ 原样挂载即**新增两处入口**；且 `dsh.client` 是整包级、Loader 无「只挂宿主侧」开关。骨架阻塞于 TODO-0（shell 的 `zhiyun.<page>.content` 是 `kind:'single'`，容不下第二个注册者） |
+| `zhan-tz/dsh-plugin-runbook` | A 原生DSH | MIT ✅ | —（科研脚本项目） | 全新，但**不可锁版** | 🟡 | proposed | 2026-10-20 | ★1，push 2026-08-23。`v0.18.0`，`dsh.bundle.patch` ✅、`client.js` **220 KB**。Jupyter 式运行本：稳定脚本 cell + 执行记录 + Evidence 世代 + Git/agent 双作者 + **重跑须确认**。**npm `dsh-plugin-runbook` 404** → A 类「锁版」地基不在；且落 `main` 独立页。可取的只有**规则**（执行记录 / 证据世代 / 重跑确认），不能取 UI → 🟡 待 npm 发布后重评 |
+| `Jesse-njx/dsh-memory` | A 原生DSH | MIT ✅ | 跨会话记忆 | 重复可强化，但**加载即失败** | 🔵 | proposed | 2026-10-20 | ★1，npm `0.1.0` 可锁。`node:sqlite` + **FTS5 虚表 + 触发器**，`memory_search` 把每个 token **逐字引号化**（防 FTS 运算符干扰）写得考究。**实测（§2.1）**：无 FTS5 的 `node:sqlite` 上 `apply()` 抛 `ERR_SQLITE_ERROR: no such module: fts5`，并留下 16 KB 半成品 db → **A 类第五道门**。另：全机一份 `$DSH_HOME/memory/memory.db`，与本仓按账号切分冲突。**只作参照，不集成** |
+| `Phant0Meow/dsh-meow-memory` | A 原生DSH | MIT ✅ | 跨会话记忆 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★**229**（本轴最高），push 2026-10-17。七层 SQLite（soul/user/project/…）。**npm 404** → 无法锁版；且同属 SQLite 依赖组 |
+| `ZSeven-W/dsh-noema` | A 原生DSH | MIT ✅ | 长期记忆 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★129，push 2026-10-06。npm 404 → 无法锁版 |
+| `yj-liuzepeng/dsh-project-brain` | A 原生DSH | MIT ✅ | —（项目级） | 无关 | 🔵 | proposed | 2026-10-20 | ★101，npm `1.3.0` 可锁，但 **unpacked 3.46 MB**；「项目架构分析」面向代码仓，本仓无此对象 |
+| `EternalNight996/memory-eternal` | A 原生DSH | MIT ✅ | 记忆 + 知识卡片 | 重复可强化（边界重叠） | 🔵 | proposed | 2026-10-20 | ★23，npm `0.10.54` 可锁，1.53 MB。对话沉淀知识卡 + 图谱 + 审核/回收。**「知识卡」与知识库边界不清**，且体量大 → 仅登记 |
+| `bonerush/dsh-obsidian-mem` | A 原生DSH | MIT ✅ | 记忆 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★11。npm 404。Markdown 记忆 + 项目文档，思路与本轮骨架同源 |
+| `poplarity/dsh-science-workbench` | A 原生DSH | MIT ✅ | —（生物信息） | **无关（结论性）** | 🔵 | proposed（**维持**） | 2026-10-17 | **结构升级不成立**：本轮正是「留待功能域轮次」，复核后判 `0.3.1` 内容为 **9 个 `bio_*` 工具 + Jupyter 环境快照**，与课程讲义/习题无交集 → **结案为 🔵，不再挂起**。★11 为「领域对口度」而非通用价值 |
+| `gwsbhqt/dsh-insight` | A 原生DSH | MIT ✅ | —（可观测） | **重复无增益**（维持） | 🔵 | proposed（**维持**） | 2026-10-15 | 第三十二轮已判，本轮复核维持：`page-plugins` 的 `buildView` + 依赖图覆盖其「每个插件来自哪里」 |
+| `121212165/dsh-plugin-token-telemetry` | A 原生DSH | **`null`** ⛔ | — | 与 `dsh-plugin-tool-trace` 重叠 | ⛔ | rejected | 2026-10-20 | ★1，**无许可证** → 只登记，**不摘代码** |
+| `121212165/dsh-plugin-tool-trace` | A 原生DSH | MIT ✅ | — | 用量轴饱和（第三十四轮） | ⛔ | rejected | 2026-10-20 | ★1，逐工具调用时长/参数/返回体 → 与 `dsh-plugin-token-telemetry` 同人同批，且用量轴已饱和 |
+| `liuhange789/data-asset-inspector` / `gulagala001/oh-my-dsh` / `wilburli/onlyMemory-plugin` / `warrenop/open-preset-harness` | A 原生DSH | `null` ×3 / **NOASSERTION** ×1 | — | 无关 | ⛔ | rejected | 2026-10-20 | 三条**无许可证**、一条 **`NOASSERTION` 待核**；数据资产合规模块包与本仓场景无关 → 全部只登记 |
+| `chen731215-dev/dsh-tavern-v2` / `a86582751/dsh-nexttavern` / `Amakurai/dsh-liketavern` | A 原生DSH | **NOASSERTION** / **GPL-3.0** / MIT | — | 无关（角色扮演前端） | ⛔ | rejected | 2026-10-20 | ★56 / ★185 / ★123。前两者为 **NOASSERTION 待核**与 **GPL** → 排除；`liketavern` 虽 MIT，但把 dsh web 改造成 SillyTavern 前端，与学习台无交集 |
+| `provenance` 三词命中的非 DSH 簇：`bengarvey/lineage`(★122) / `aws-solutions-library-samples/guidance-for-media-provenance-with-c2pa-on-aws` / `Security4Media/c2pa-video-player` / `Tybravo/StellarProof` 等 90 余条 | B 其他JS | 多 MIT / 多 `null` | — | 无关 | ⛔ | rejected | 2026-10-20 | **「溯源」在 GitHub 是媒体取证（C2PA）+ 区块链存证的代名词**，`data lineage` 则是族谱/可视化玩具 → 与「文档来自哪段原文」同形不同义。**本轴在开源生态里没有对应物** |
+| `jkStars/dsh-token-usage-stats` / `woosh2010/dsh-usage-dashboard` / `Hjay1101/dsh-plugin-token-usage` / `samecorner/dsh-token-usage` / `lightli369/dsh-llm-usage-stats` / `wellorbetter/dsh-plugin-window-stats` | A 原生DSH | MIT ✅ | — | **重复无增益**（维持第三十四轮） | ⛔ | rejected | 2026-10-20 | ★1–3，六个包做同一件事（token 用量面板）→ 用量轴确认饱和，不再逐条评估 |
