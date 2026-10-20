@@ -74,14 +74,7 @@ function CorpusSearch({ state, controller, onOpen }) {
  * 周末、假期）。折叠态只显示场数，用户点开才 `loadLiveToday()` —— 那一刻他要的
  * 就是这份列表，请求才花得值。
  *
- * 场数在没读过时显示 `0` 而不是省略：这个折叠区的标题本身是「此刻有几场」的
- * 常驻入口，让它随请求完成才出现/变形，会让目录顶部的高度抖一下。`liveError`
- * 时标题仍写 0 —— 真实原因是「没读到」，那写在展开区里，不该在折叠态撒谎。
- *
- * # 为什么选一节之后要把折叠区留着
- *
- * 展开状态由本组件自己持有，不写进 controller：它是一次纯界面动作（看或不看），
- * 与「选中了哪一节」无关。切节次时如果跟着收起，用户每换一节课都要再点开一次。
+ * 标题区分尚未查看、读取中与读取失败，只有成功读取后才显示场数。
  */
 function LiveNowFold({ state, controller, onPick }) {
   const [open, setOpen] = useState(false);
@@ -109,7 +102,7 @@ function LiveNowFold({ state, controller, onPick }) {
         指向一个不存在的 id 会被辅助技术当成失效引用，比不给更容易误导。 */}
     <button type="button" className="zs-live-fold-toggle" aria-expanded={open} aria-controls={open ? "zs-live-fold-body" : undefined} onClick={toggle}>
       <span className="zs-live-fold-dot" aria-hidden="true" data-on={items.length > 0 ? "on" : "off"} />
-      <span className="zs-live-fold-title">正在直播 · {items.length} 场</span>
+      <span className="zs-live-fold-title">正在直播 · {loading ? "读取中" : error ? "读取失败" : state.liveToday ? `${items.length} 场` : "待查看"}</span>
       <span className="zs-live-fold-chevron" aria-hidden="true">{open ? "⌃" : "⌄"}</span>
     </button>
     {open && <div className="zs-live-fold-body" id="zs-live-fold-body">

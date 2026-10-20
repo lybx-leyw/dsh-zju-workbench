@@ -3,7 +3,7 @@ import { SessionStore } from './session.js';
 import { resourceUrl } from './urls.js';
 
 export const REFERER = 'https://classroom.zju.edu.cn/';
-export const AUTH_HOSTS = new Set(['zjuam.zju.edu.cn', 'tgmedia.cmc.zju.edu.cn', 'classroom.zju.edu.cn', 'interactivemeta.cmc.zju.edu.cn', 'education.cmc.zju.edu.cn', 'yjapi.cmc.zju.edu.cn']);
+export const AUTH_HOSTS = new Set(['zjuam.zju.edu.cn', 'identity.zju.edu.cn', 'tgmedia.cmc.zju.edu.cn', 'classroom.zju.edu.cn', 'interactivemeta.cmc.zju.edu.cn', 'education.cmc.zju.edu.cn', 'yjapi.cmc.zju.edu.cn']);
 export class Transport {
   constructor({ session = new SessionStore(), fetch: fetcher = globalThis.fetch, timeoutMs = 60000, log = () => {} } = {}) {
     this.session = session; this.fetcher = fetcher; this.timeoutMs = timeoutMs; this.log = log;

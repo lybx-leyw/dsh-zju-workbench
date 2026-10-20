@@ -46,6 +46,9 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
   // 所以「跨包顺序依赖」的守卫对它们之间的关系不作判断：同包内谁后写谁赢，
   // 这是确定的，不是挂载顺序。视频栏的类名全部带 `zs-video-` 前缀，正是为此。
   assert.deepEqual([...sheets.keys()], [
+    // 按包名排序（`loadSheets` 内部 `readdirSync().sort()`），不是按加入顺序 ——
+    // 所以 `dsh-zhiyun-card` 必须排在 `dsh-zhiyun-net-proxy` **之前**。
+    'dsh-zhiyun-card',
     'dsh-zhiyun-net-proxy',
     'dsh-zhiyun-page-feedback',
     'dsh-zhiyun-page-me',

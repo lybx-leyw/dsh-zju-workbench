@@ -83,6 +83,7 @@ export const publicError = (error) => ({ code: error.code ?? "FAILED", message: 
   PARTIAL_SOURCE: "课件或字幕仍在处理中，请稍后再试。",
   INPUT: "输入信息无效。",
   NETWORK: "课堂服务暂时无法连接，请稍后重试。",
+  API_SHAPE: "课堂服务返回的数据格式发生变化，请更新应用或反馈问题。",
   AUTH_REJECTED: "账号或密码未通过验证。",
   CREDENTIALS: "请输入浙大账号和密码。",
   ACCOUNT_BUSY: "账号正在切换，请稍候。",

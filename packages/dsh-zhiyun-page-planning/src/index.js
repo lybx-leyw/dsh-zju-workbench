@@ -24,13 +24,23 @@
  */
 
 import path from 'node:path';
-import { DEDUPE_PREFIX, entryPrefix } from './entries.js';
 import {
-  PlanStore, PLAN_PROMPT, pickPending, planError, readPlanResponse, toPlanInput,
+  DEDUPE_PREFIX, LEGACY_DEDUPE_PREFIX, entryPrefix, legacyEntryPrefix, contentDigest,
+} from './entries.js';
+import {
+  createLocal, createSplit, localError, patchLocal, setDone as setDoneLocal,
+} from './local.js';
+import { TickStore, tickKey } from './ticks.js';
+import { URGENCY, urgencyOf } from './time.js';
+import {
+  PlanStore, PLAN_PROMPT, pickPending, planError, planTitle, readPlanResponse, toPlanInput,
 } from './plans.js';
 
 // 重新导出：既有调用方与测试按这个包名导入它们
-export { DEDUPE_PREFIX, entryPrefix };
+export {
+  DEDUPE_PREFIX, LEGACY_DEDUPE_PREFIX, entryPrefix, legacyEntryPrefix, contentDigest,
+};
+export { TickStore, tickKey } from './ticks.js';
 import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
 
 export const name = 'zhiyun-planning';
@@ -198,6 +208,8 @@ export class LocalStore {
   constructor(file) {
     this.file = file;
     this.entries = [];
+    /** 迁移时算出的 `旧键 → 新键`，供 `PlanStore.rekey` 用（见 `migrateKeys`）。 */
+    this.keyMapping = {};
     this.load();
   }
 
@@ -209,7 +221,37 @@ export class LocalStore {
       // 文件不存在 / 坏了都退回空表：这份缓存只影响本页展示，不该让插件起不来
       this.entries = [];
     }
+    this.migrateKeys();
     return this.entries;
+  }
+
+  /**
+   * 把**旧口径**的键就地换成新口径，并收集 `旧键 → 新键`。
+   *
+   * 去重键从「拼起来截 40 字」换成「内容指纹」后，老 `entries.json` 里的 `prefix`
+   * 仍是旧值。不迁移的后果是两条：
+   *   1. 下次同步时同一批内容算出新键，与文件里的旧键对不上 → **整份内容再存一遍**；
+   *   2. `plans.json` 的映射键也是旧值 → **所有条目被重新拆一遍**（真花钱）。
+   *
+   * 判断依据不靠版本号，靠**当前内容算出来的键是否等于存下来的键** ——
+   * 这样对"已经迁移过"的文件是幂等的（算出相同就不动），也不用在文件里加字段。
+   *
+   * @returns 实际改了几条。
+   */
+  migrateKeys() {
+    let changed = 0;
+    for (const row of this.entries) {
+      if (!row || typeof row !== 'object') continue;
+      const next = entryPrefix(row);
+      const stored = typeof row.prefix === 'string' ? row.prefix : '';
+      if (stored === next) continue;
+      // 记住旧键指向哪 —— 哪怕旧键是空的也记（空键意味着"没存过"，不必迁移映射）
+      if (stored) this.keyMapping[stored] = next;
+      row.prefix = next;
+      changed += 1;
+    }
+    if (changed > 0) this.save();
+    return changed;
   }
 
   /** 落盘。先写临时文件再 rename，断电不会留下半个 JSON。 */
@@ -231,6 +273,170 @@ export class LocalStore {
   list() {
     return [...this.entries].sort((a, b) => (a.at ?? 0) - (b.at ?? 0));
   }
+}
+
+/* ══════════════════════════════════════════════════════════ 我的规划（本地） */
+
+/**
+ * 用户**在本机手写**的规划。.
+ *
+ * 与 `LocalStore` 的分工要说清楚：
+ *   - `LocalStore`（`entries.json`）是中转站内容的**缓存**，只增不改，别人的数据；
+ *   - 这里（`local.json`）是**用户自己的**规划，可增删改，是这一页真正的一等来源。
+ *
+ * 为什么不用 `entries.json` 那座仓库：那份是"只增不减"的，而规划必须能删、能改、
+ * 能勾完成 —— 塞进去等于把两种完全不同的生命周期混在一个文件里。
+ */
+export class LocalPlanStore {
+  /**
+   * @param file - `local.json` 路径。
+   * @param now - 注入当前时间（测试用）。
+   */
+  constructor(file, now = () => Date.now()) {
+    this.file = file;
+    this.now = now;
+    this.items = [];
+    this.load();
+  }
+
+  load() {
+    try {
+      const parsed = JSON.parse(readFileSync(this.file, 'utf8'));
+      // 逐条校验：手改坏了某一条不该让整份规划消失
+      this.items = (Array.isArray(parsed?.items) ? parsed.items : []).filter(isStoredItem);
+    } catch {
+      // 不存在 / 坏了都退回空表：这份是用户手写的，读不了也不能让插件起不来
+      this.items = [];
+    }
+    return this.items;
+  }
+
+  /** 落盘。先写临时文件再 rename，断电不会留下半个 JSON。 */
+  save() {
+    mkdirSync(path.dirname(this.file), { recursive: true });
+    const tmp = `${this.file}.tmp`;
+    writeFileSync(tmp, `${JSON.stringify({ items: this.items }, null, 2)}\n`, 'utf8');
+    renameSync(tmp, this.file);
+  }
+
+  /** 全部条目（按创建时间正序；页面自己决定怎么排）。 */
+  list() {
+    return [...this.items].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+  }
+
+  find(id) {
+    return this.items.find((item) => item.id === id) ?? null;
+  }
+
+  /** 新建。 */
+  create(input) {
+    const item = createLocal(input, this.now());
+    this.items.push(item);
+    this.save();
+    return item;
+  }
+
+  /** 修改。找不到返回 null（由调用方转成 404）。 */
+  update(id, patch) {
+    const current = this.find(id);
+    if (!current) return null;
+    const next = patchLocal(current, patch, this.now());
+    this.items = this.items.map((item) => (item.id === id ? next : item));
+    this.save();
+    return next;
+  }
+
+  /** 勾选 / 取消完成。 */
+  setDone(id, done) {
+    const current = this.find(id);
+    if (!current) return null;
+    const next = setDoneLocal(current, done, this.now());
+    this.items = this.items.map((item) => (item.id === id ? next : item));
+    this.save();
+    return next;
+  }
+
+  /** 删除。真删，不是打标记 —— 用户按的是「删掉」。 */
+  remove(id) {
+    const before = this.items.length;
+    this.items = this.items.filter((item) => item.id !== id);
+    if (this.items.length === before) return false;
+    // 顺手清掉别处指向它的拆分关系，否则源条目会显示"已拆 3 条"而那 3 条都不在了。
+    // 拆出来的卡也一起删：它们的存在理由就是那条原文，原文没了它们就是孤立的碎片。
+    const removed = new Set([id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const item of this.items) {
+        if (item.splitFrom && removed.has(item.splitFrom) && !removed.has(item.id)) {
+          removed.add(item.id);
+          changed = true;
+        }
+      }
+    }
+    this.items = this.items.filter((item) => !removed.has(item.id));
+    for (const item of this.items) {
+      if (Array.isArray(item.splitInto) && item.splitInto.some((child) => removed.has(child))) {
+        item.splitInto = item.splitInto.filter((child) => !removed.has(child));
+      }
+    }
+    this.save();
+    return true;
+  }
+
+  /**
+   * 把一条规划**拆成**若干条子规划。
+   *
+   * 拆是幂等的：已经拆过（`splitInto` 非空）的源条目默认不再拆，除非 `force`。
+   * 这条规则与中转站条目那边同源 —— 拆一次要花一次模型调用，不能靠猜重复扣钱。
+   *
+   * @param id - 源规划 id。
+   * @param cards - 已经校验过的卡片 `{ title, action, due, tags }`。
+   * @param options - `{ force }` 已拆过也重拆（会先清掉旧的那批）。
+   * @returns `{ source, created, removed }`；源不存在返回 null。
+   */
+  split(id, cards, { force = false } = {}) {
+    const source = this.find(id);
+    if (!source) return null;
+
+    const previous = Array.isArray(source.splitInto) ? source.splitInto : [];
+    // 不 force 且已拆过 → 什么都不做，由调用方说明"这条已经拆过了"
+    if (previous.length > 0 && !force) return { source, created: [], removed: 0, skipped: true };
+
+    // 重拆时先删掉上一批，否则同一件事会在列表里出现两遍
+    if (previous.length > 0) {
+      const old = new Set(previous);
+      this.items = this.items.filter((item) => !old.has(item.id));
+    }
+
+    const created = [];
+    for (const card of cards) {
+      // `action` 是模型给的"具体动作"，落到本地规划的 `detail` 上 ——
+      // 少一个字段、多一处显示逻辑，不值得为它单开一列。
+      const item = createSplit({ title: card.title, detail: card.action ?? '', due: card.due ?? null }, id, this.now());
+      created.push(item);
+      this.items.push(item);
+    }
+
+    const fresh = this.find(id);
+    fresh.splitInto = created.map((item) => item.id);
+    fresh.updatedAt = Math.floor(this.now() / 1000);
+    this.save();
+    return { source: fresh, created, removed: previous.length, skipped: false };
+  }
+}
+
+/**
+ * 一条从磁盘读回的记录是否**至少形状可用**。
+ *
+ * 不重新跑 `normalizeLocalInput`：那是给"写入"用的，会拒掉缺字段的旧记录 ——
+ * 而旧记录恰恰要尽量留住。这里只挡"完全不是一条规划"的东西。
+ */
+function isStoredItem(item) {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
+  if (typeof item.id !== 'string' || !item.id) return false;
+  if (typeof item.title !== 'string' || !item.title.trim()) return false;
+  return true;
 }
 
 /* ══════════════════════════════════════════════════════════ 待办聚合 */
@@ -283,32 +489,10 @@ export function normalizePtaSets(payload) {
     kind: 'problemSet',
   }));
 }
+/* 紧迫度：实现与页面共用 `time.js`（页面才是分组标题的消费者，两边各写一份会漂）。 */
 
-/** 待办的紧迫度分组：先看什么，由"还剩多久"决定，不是"哪天真"。 */
-export const URGENCY = {
-  overdue: 'overdue',
-  today: 'today',
-  week: 'week',
-  later: 'later',
-  none: 'none',
-};
-
-/**
- * 判紧迫度。
- *
- * @param due - ISO 时间串或 null。
- * @param now - 当前毫秒时间戳（注入以便测试）。
- * @returns `overdue` / `today`（24h 内）/ `week`（7 天内）/ `later` / `none`。
- */
-export function urgencyOf(due, now = Date.now()) {
-  if (!due) return URGENCY.none;
-  const at = Date.parse(due);
-  if (Number.isNaN(at)) return URGENCY.none;
-  if (at < now) return URGENCY.overdue;
-  if (at - now <= 24 * 3600 * 1000) return URGENCY.today;
-  if (at - now <= 7 * 24 * 3600 * 1000) return URGENCY.week;
-  return URGENCY.later;
-}
+// 重新导出：既有调用方与测试按这个包名导入它们
+export { URGENCY, urgencyOf };
 
 /* ══════════════════════════════════════════════════════════ 配置读写 */
 
@@ -383,6 +567,32 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+/**
+ * 从请求体里挑出**可写字段**，并把白名单外的键**当错误报出来**。
+ *
+ * ⚠️ 不能只是"挑出认识的键、忽略其余"：那样 `local-update` 带上 `done: true`
+ * 会**静默变成一次改名** —— 用户以为勾了完成，页面却什么都没发生。
+ * 静默丢弃一个明确表达过的意图，比直接报错更难查。
+ *
+ * 也不能让 `body` 原样进 store：里面的 `id` / `done` / `createdAt` 都该由服务端
+ * 说了算，客户端传了就改，等于把"完成"和"改了名"混成同一个动作。
+ *
+ * @param body - 请求体。
+ * @returns `{ title?, detail?, due? }`，只含**确实出现**的键（`patchLocal` 据此判断改哪些）。
+ * @throws `INVALID_INPUT` —— 出现白名单外的键。
+ */
+function pickLocalInput(body) {
+  const out = {};
+  for (const key of ['title', 'detail', 'due']) {
+    if (body[key] !== undefined) out[key] = body[key];
+  }
+  const extra = Object.keys(body).filter((key) => key !== 'id' && !(key in out));
+  if (extra.length > 0) {
+    throw localError('INVALID_INPUT', `不认识的字段：${extra.join('、')}（完成状态请用 local-done）`);
+  }
+  return out;
+}
+
 async function readJsonBody(req, limit = 32 * 1024) {
   const chunks = [];
   let size = 0;
@@ -402,15 +612,26 @@ async function readJsonBody(req, limit = 32 * 1024) {
  * 路由处理函数。
  *
  * 动作：
- *   GET  ?          读一切（配置 + 本地 + 中转站增量 + 两类待办 + PTA 状态）
- *   POST ?save      存域名与读密钥，然后立刻同步一次
- *   POST ?refresh   重新同步中转站 + 待办
- *   POST ?pta       存拼题A Cookie
+ *   GET  ?              读一切（配置 + 本地 + 中转站增量 + 两类待办 + 我的规划）
+ *   POST ?save          存域名与读密钥，然后立刻同步一次
+ *   POST ?refresh       重新同步中转站 + 待办
+ *   POST ?pta           存拼题A Cookie
+ *   POST ?plan          让 AI 拆"还没拆过的"（默认只拆新增）
+ *   POST ?plan-force    强制重拆全部
+ *   POST ?plan-forget   忘掉某条原文的拆分结果
+ *   POST ?local-create  新建一条「我的规划」
+ *   POST ?local-update  改一条（只改传了的字段）
+ *   POST ?local-done    勾选 / 取消完成
+ *   POST ?local-remove  删除一条
  *
- * @param options - `{ getConfig, saveConfig, store, fetchRemote, loadTodos, savePtaCookie, ptaStatus }`。
+ * @param options - `{ getConfig, saveConfig, store, local, fetchRemote, loadTodos,
+ *   savePtaCookie, ptaStatus, plan }`。
  */
 export function createHandler({
-  getConfig, saveConfig: save, store, fetchRemote, loadTodos, savePtaCookie, ptaStatus, plan,
+  getConfig, saveConfig: save, store, local, splitLocal, tickStore,
+  fetchRemote, loadTodos, savePtaCookie, ptaStatus, plan,
+  /** 日志出口。默认静默：`log` 是 `apply` 作用域的闭包，这里拿不到，也不该依赖它。 */
+  log = () => {},
 }) {
   /** 同步中转站：拉取 → 合并进本地 → 回新增条数。失败不抛，只带回错误。 */
   const sync = async () => {
@@ -424,18 +645,67 @@ export function createHandler({
     return { synced: true, added: added.length, total: pulled.total ?? pulled.entries.length, error: null };
   };
 
-  /** 组装页面需要的一切。待办失败不拖垮整页 —— 它们各自带 error。 */
-  const snapshot = async () => ({
-    config: mask(getConfig()),
-    entries: store.list(),
-    remote: await sync(),
-    todos: await loadTodos(),
-    pta: ptaStatus ? await ptaStatus() : { configured: false },
-    // 规划结果与映射：页面据此标"已拆过"并展示卡片
-    plans: plan ? plan.list() : {},
-    // 哪些源条目已拆过 —— 页面用 entryPrefix 对齐，两端口径必须一致
-    planned: plan ? plan.plannedKeys() : [],
-  });
+  /**
+   * 组装页面需要的一切。待办失败不拖垮整页 —— 它们各自带 error。
+   *
+   * ⚠️ 四条链路**必须并发**。它们彼此不依赖（中转站、学在浙大、拼题A、本地映射
+   * 各走各的网络/磁盘），串起来等于把各自的首屏延迟相加。早先是逐个 `await`，
+   * 实测 4.7 秒里有 1 秒纯粹是"等前面那条走完才发下一条"。
+   *
+   * ⚠️ **必须用 `allSettled`，不能 `all`。** 这是踩过的坑：`all` 只要有一条 reject，
+   *    整个 `snapshot()` 就抛出去；宿主 Web 层捕到未处理的 handler 异常后回的是
+   *    **空 body 的 400**，页面上的表现是「设置接口返回 400 / 宿主侧没起来」——
+   *    而实际上宿主好好的，只是"学在浙大没登录"这种**正常状态**走到了 throw 分支。
+   *    一个来源读不到，不该让整页拿不到任何数据。
+   *
+   * ⚠️ 这里的键名不能叫 `planned`：`?plan` 的返回值里 `planned` 是**数字**
+   * （这次拆了几条原文），而它后面要展开进同一个对象（`{ ...result, ...snapshot }`）。
+   * 早先两处都叫 `planned`，数组覆盖数字后页面据此判断 `planned > 0`，
+   * 于是"拆出 24 张卡片"的成功结果被显示成"没有新的条目需要规划"。
+   * 名字分开（`plannedKeys` 数组 / `planned` 数字）才是长久之计 ——
+   * 靠展开顺序解决，改一行就会退回去。
+   */
+  const snapshot = async () => {
+    const settled = await Promise.allSettled([
+      sync(),
+      loadTodos(),
+      ptaStatus ? ptaStatus() : Promise.resolve({ configured: false }),
+    ]);
+
+    /** 某条链路炸了时，把它变成该区块自己的 error，而不是让整页失败。 */
+    const valueOr = (result, onError) => {
+      if (result.status === 'fulfilled') return result.value;
+      const message = String(result.reason?.message ?? result.reason ?? '未知错误');
+      log(`快照里有一条链路失败：${message}`);
+      return onError(message);
+    };
+
+    const remote = valueOr(settled[0], (message) => ({
+      synced: false, added: 0, error: { code: 'UNREACHABLE', message },
+    }));
+    const todos = valueOr(settled[1], (message) => ({
+      xzzd: { ok: false, rows: [], error: { code: 'XZZD_FAILED', message } },
+      pta: { ok: false, rows: [], error: { code: 'PTA_FAILED', message } },
+    }));
+    const pta = valueOr(settled[2], (message) => ({ configured: false, error: message }));
+
+    return {
+      config: mask(getConfig()),
+      entries: store.list(),
+      remote,
+      todos,
+      pta,
+      // 规划结果与映射：页面据此标"已拆过"并展示卡片
+      plans: plan ? plan.list() : {},
+      // 哪些源条目已拆过 —— 页面用 entryPrefix 对齐，两端口径必须一致
+      plannedKeys: plan ? plan.plannedKeys() : [],
+      // 用户手写的规划：**本地一等来源**，不需要任何配置就能有内容
+      local: local ? local.list() : [],
+      // 平台待办上的本机勾选：`xzzd:123` → `{ doneAt }`。
+      // 页面据此把"我已处理"的条目标掉 —— 这是**本机的标记**，不是平台的完成状态。
+      ticks: tickStore ? tickStore.all() : {},
+    };
+  };
 
   return async function handler(req, res) {
     const host = hostOf(req.headers.host);
@@ -447,7 +717,18 @@ export function createHandler({
     const action = String(req.url ?? '').split('?')[1] ?? '';
 
     if (req.method === 'GET') {
-      sendJson(res, 200, await snapshot());
+      // 兜一层 try：`snapshot()` 内部已经用 allSettled 收住各条链路，但万一有
+      // 意料之外的抛出（比如磁盘写满时 `store.list()` 出错），也不能让宿主捕到
+      // 未处理异常 —— 那样回的是**空 body 的 400**，页面只能显示"宿主侧没起来"，
+      // 而这句提示会把排查引到完全错误的方向。
+      try {
+        sendJson(res, 200, await snapshot());
+      } catch (error) {
+        log(`读取快照失败：${error?.message ?? error}`);
+        sendJson(res, 500, {
+          error: { code: 'SNAPSHOT_FAILED', message: String(error?.message ?? error) },
+        });
+      }
       return;
     }
 
@@ -484,6 +765,130 @@ export function createHandler({
       return;
     }
 
+    /**
+     * 勾掉 / 取消勾掉一条**平台待办**（学在浙大 / 拼题A）。
+     *
+     * ⚠️ 这是**本机的标记**，不是平台的完成状态。勾一下不会让学在浙大认为作业交过，
+     * 也不会让拼题A 关闭题集 —— 它只表示「这件事我不需要再被提醒了」。
+     * 页面上必须把这层意思写清楚（见 `TodoRow` 的提示），否则用户会以为勾了等于交了。
+     *
+     * 平台那边仍然权威：它说未提交就是未提交，本机勾选只是我自己的判断。
+     */
+    if (action === 'todo-done') {
+      if (!tickStore) {
+        sendJson(res, 400, { error: '本机勾选未启用' });
+        return;
+      }
+      if (!body) {
+        sendJson(res, 400, { error: '请求体不是合法 JSON' });
+        return;
+      }
+      const result = tickStore.setDone(body.source, body.id, body.done !== false);
+      if (!result) {
+        // 没有稳定身份就不该能勾：勾了也会在下次同步时凭空消失
+        sendJson(res, 400, { error: '这条没有可用的身份（来源或 id 缺失），无法记录勾选' });
+        return;
+      }
+      sendJson(res, 200, { ok: true, ...result, ...(await snapshot()) });
+      return;
+    }
+
+    // ── 「我的规划」：用户手写，可增删改 ───────────────────────────────
+    // 这是这一页**唯一**的写入口。中转站仍然是只读的（写要用那边的写密钥，
+    // 且那边只有 append、不能改），所以规划的编辑全都落在这几个动作上。
+    if (action.startsWith('local-')) {
+      if (!local) {
+        sendJson(res, 400, { error: '本地规划存储未启用' });
+        return;
+      }
+      if (!body) {
+        sendJson(res, 400, { error: '请求体不是合法 JSON' });
+        return;
+      }
+      try {
+        if (action === 'local-create') {
+          sendJson(res, 200, { ok: true, item: local.create(body), ...(await snapshot()) });
+          return;
+        }
+
+        const id = typeof body.id === 'string' ? body.id : '';
+        if (!id) {
+          sendJson(res, 400, { error: '缺少 id' });
+          return;
+        }
+
+        if (action === 'local-update') {
+          // 只把输入字段交给 store：id/done 之类不能从这里改（那是 local-done 的职责）
+          const item = local.update(id, pickLocalInput(body));
+          if (!item) {
+            sendJson(res, 404, { error: '这条规划不存在（可能已被删除）' });
+            return;
+          }
+          sendJson(res, 200, { ok: true, item, ...(await snapshot()) });
+          return;
+        }
+
+        if (action === 'local-done') {
+          const item = local.setDone(id, body.done !== false);
+          if (!item) {
+            sendJson(res, 404, { error: '这条规划不存在（可能已被删除）' });
+            return;
+          }
+          sendJson(res, 200, { ok: true, item, ...(await snapshot()) });
+          return;
+        }
+
+        if (action === 'local-remove') {
+          if (!local.remove(id)) {
+            sendJson(res, 404, { error: '这条规划不存在（可能已被删除）' });
+            return;
+          }
+          sendJson(res, 200, { ok: true, ...(await snapshot()) });
+          return;
+        }
+
+        if (action === 'local-unsplit') {
+          // 忘掉一次拆分：删掉它拆出的子项，并清空源条目的 splitInto。
+          // 与 `plan-forget` 是同一件事的两条路 —— 那边按内容前缀，这边按 id。
+          if (!local.find(id)) {
+            sendJson(res, 404, { error: '这条规划不存在（可能已被删除）' });
+            return;
+          }
+          local.split(id, [], { force: true });
+          sendJson(res, 200, { ok: true, ...(await snapshot()) });
+          return;
+        }
+
+        if (action === 'local-split' || action === 'local-split-force') {
+          if (!splitLocal) {
+            sendJson(res, 400, { error: 'AI 规划未启用（缺少模型服务）' });
+            return;
+          }
+          try {
+            const result = await splitLocal(id, { force: action === 'local-split-force' });
+            sendJson(res, 200, { ok: true, ...result, ...(await snapshot()) });
+          } catch (error) {
+            const code = error?.code ?? 'PLAN_FAILED';
+            sendJson(res, code === 'NO_PENDING' ? 200 : 400, {
+              ok: false,
+              error: { code, message: String(error?.message ?? error) },
+              ...(code === 'NO_PENDING' ? await snapshot() : {}),
+            });
+          }
+          return;
+        }
+
+        sendJson(res, 400, { error: `未知动作 ${action}` });
+      } catch (error) {
+        // 校验失败（INVALID_INPUT）是用户能改的，回 400 + 原话；
+        // 其它是内部错误，也如实说出来而不是假装成功。
+        sendJson(res, error?.code === 'INVALID_INPUT' ? 400 : 500, {
+          error: { code: error?.code ?? 'LOCAL_FAILED', message: String(error?.message ?? error) },
+        });
+      }
+      return;
+    }
+
     // ── AI 自动规划：把混杂的中转站条目拆成卡片 ────────────────────────
     // 花钱的操作，所以：默认只拆"没拆过的"，重拆必须显式传 force。
     if (action === 'plan' || action === 'plan-force') {
@@ -517,6 +922,38 @@ export function createHandler({
       }
       plan.forget(prefix);
       sendJson(res, 200, { ok: true, ...(await snapshot()) });
+      return;
+    }
+
+    /**
+     * 勾选 / 取消**中转站拆出的某一张卡片**。
+     *
+     * 卡片没有自己的 id，用 `prefix + index` 定位（前缀里含 `\0`，所以由客户端
+     * 原样传回字符串，不做编码变换）。完成状态落在 `plans.json` 的
+     * `cards[i].done` —— **不写回中转站**：那边只读，而且"我做完了"是本地的
+     * 事实，不该变成别人存储里的一条。
+     */
+    if (action === 'plan-card-done') {
+      if (!plan) {
+        sendJson(res, 400, { error: 'AI 规划未启用' });
+        return;
+      }
+      const prefix = typeof body?.prefix === 'string' ? body.prefix : '';
+      const index = Number(body?.index);
+      if (!prefix) {
+        sendJson(res, 400, { error: '缺少 prefix' });
+        return;
+      }
+      if (!Number.isInteger(index) || index < 0) {
+        sendJson(res, 400, { error: 'index 必须是非负整数' });
+        return;
+      }
+      const card = plan.setCardDone(prefix, index, body?.done !== false);
+      if (!card) {
+        sendJson(res, 404, { error: '这张卡片不存在（那条原文可能已被重新拆分）' });
+        return;
+      }
+      sendJson(res, 200, { ok: true, card, ...(await snapshot()) });
       return;
     }
 
@@ -569,6 +1006,16 @@ export async function apply(ctx, config = {}) {
   let current = loadConfig(configFile);
   const store = new LocalStore(cacheFile);
 
+  // 用户手写的规划（本地一等来源，可增删改）。与 `store`（中转站内容的缓存）分开
+  // 两个文件：那份只增不改，这份必须能删能改，混在一起生命周期就打架。
+  const mineFile = config.localFile ?? path.join(dataDir, 'local.json');
+  const mine = new LocalPlanStore(mineFile, () => Date.now());
+
+  // 平台待办上的**本机勾选**。第三个文件，因为它是第三种生命周期：
+  // 既不是别人的内容缓存，也不是用户写的条目，而是"我认为这件事不用再提醒了"。
+  const ticksFile = config.ticksFile ?? path.join(dataDir, 'ticks.json');
+  const ticks = new TickStore(ticksFile, () => Date.now());
+
   /* ── AI 自动规划 ─────────────────────────────────────────────────── */
 
   const plansFile = config.plansFile ?? path.join(dataDir, 'plans.json');
@@ -582,6 +1029,14 @@ export async function apply(ctx, config = {}) {
       renameSync(tmp, file);
     },
   );
+
+  // 去重键换过口径（拼起来截 40 字 → 内容指纹）。老的一对文件里存的是旧键，
+  // 不迁移的话：同一条内容算出新键对不上 → 本地重复一份 + 所有条目**重新拆一遍**
+  //（AI 调用，真花钱）。迁移依据是 LocalStore 在 load 时算出的"旧键→新键"。
+  const rekeyed = plans.rekey(store.keyMapping);
+  if (rekeyed > 0) {
+    log(`去重键迁移完成：${rekeyed} 条映射改指新键（旧口径会把长标题的正文挤出键外）`);
+  }
 
   /**
    * 取窄 llm 接口。
@@ -643,9 +1098,13 @@ export async function apply(ctx, config = {}) {
     // 结果按**源条目前缀**归属。一张卡属于哪条原文，用 sourceTitle 对回去；
     // 对不上时按"全部归到本批第一条"处理会掩盖问题，所以对不上的卡**单独记在
     // 本批"未归属"里**，页面能看见，而不是悄悄混进某一条。
+    //
+    // ⚠️ 键必须用 `planTitle()`（送模型的那个截断标题），不能用完整标题：
+    // 标题超过 80 字的条目，模型照抄它看到的截断标题回来，用完整标题查必然落空，
+    // 整批卡片会被判成 orphan。两处取标题必须同一个函数。
     const byTitle = new Map();
     for (const entry of pending) {
-      byTitle.set(String(entry.title ?? '').trim(), entryPrefix(entry));
+      byTitle.set(planTitle(entry).trim(), entryPrefix(entry));
     }
     const grouped = new Map(); // prefix -> cards[]
     const orphans = [];
@@ -686,90 +1145,248 @@ export async function apply(ctx, config = {}) {
     list: () => plans.all(),
     plannedKeys: () => Object.keys(plans.all()),
     forget: (prefix) => plans.forget(prefix),
+    setCardDone: (prefix, index, done) => plans.setCardDone(prefix, index, done),
     recentRuns: () => plans.recentRuns(),
     file: plansFile,
   };
 
   /**
-   * 两类待办。
+   * 把**用户自己写的一条规划**交给模型拆成子项。
    *
-   * 学在浙大与拼题A 都从 `zhiyunOmni` 取 —— 但**它们失败的原因不同**，所以要分别
-   * 带回错误：学在浙大缺的是 CAS 账号（和智云共用，配一次即可），拼题A 缺的是 Cookie
-   * （需要在本页单独粘贴）。混成一句"待办读取失败"，用户不知道该去哪配。
+   * 这才是"AI 辅助规划"真正要服务的对象：中转站条目是别人/别的脚本推上来的，
+   * 而用户在这里手打的那几行才是他此刻真正在想的事。原来的 AI 功能只拆中转站
+   * 内容，等于把最有用的场景漏掉了。
+   *
+   * 与 `runPlan` 共用同一套提示词、同一套卡片校验、同一个"不发明截止时间"的约束 ——
+   * 只拆一条时不必再发明第二份规则。
    */
-  const loadTodos = async () => {
-    const omni = ctx.get('zhiyunOmni');
-    const result = {
-      xzzd: { ok: false, rows: [], error: null },
-      pta: { ok: false, rows: [], error: null },
-    };
-    if (!omni) {
-      const why = { code: 'OMNI_UNAVAILABLE', message: '校园数据包（dsh-zhiyun-omni）未启用' };
-      result.xzzd.error = why;
-      result.pta.error = why;
-      return result;
+  const splitLocalPlan = async (id, { force = false, signal } = {}) => {
+    const llm = llmOf();
+    if (!llm) throw planError('NO_LLM', '还没有可用的模型：请先在设置里配置 AI 服务');
+
+    const source = mine.find(id);
+    if (!source) throw planError('NOT_FOUND', '这条规划不存在（可能已被删除）');
+
+    const already = Array.isArray(source.splitInto) ? source.splitInto : [];
+    if (already.length > 0 && !force) {
+      throw planError('NO_PENDING', '这条已经拆过了。要重新拆，请用「重新拆分」');
     }
 
-    // 学在浙大：先用桥接把「已登录的课堂会话」变成 omni 的会话，再读。
-    // 这一步是**每次读之前都试**（桥接内部会跳过已存在的），因为用户可能刚刚
-    // 在「个人」页登录过 —— 那时 omni 还没有会话，而页面已经能用了。
-
+    let route;
     try {
-      result.xzzd = { ok: true, rows: normalizeXzzdTodos(await omni.invoke('xzzd.todos', {})), error: null };
+      route = typeof llm.resolve === 'function' ? await llm.resolve(signal) : null;
+      route = route?.text ?? route?.vision ?? route;
     } catch (error) {
-      result.xzzd = {
-        ok: false,
-        rows: [],
-        error: describeXzzdError(error),
-      };
+      throw planError('NO_LLM', `解析模型失败：${error?.message ?? error}`);
     }
 
-    return await finishPta(result);
+    // 送模型的形状与中转站条目保持一致：`title` + `text`。
+    // 本地规划的备注落在 `text` 上，这样提示词不必为"两种输入"分叉。
+    const variable = JSON.stringify(toPlanInput([{
+      kind: 'plan',
+      title: source.title,
+      text: source.detail || source.title,
+      at: source.createdAt,
+    }]), null, 2);
+
+    let response;
+    try {
+      response = await llm.call({
+        stage: 'plan',
+        route,
+        constant: PLAN_PROMPT,
+        variable,
+        signal,
+      });
+    } catch (error) {
+      throw planError(error?.code ?? 'LLM_FAILED', `模型调用失败：${error?.message ?? error}`);
+    }
+
+    const text = typeof response?.text === 'string' ? response.text : '';
+    const { cards, dropped } = readPlanResponse(text);
+
+    const result = mine.split(id, cards, { force });
+    if (!result) throw planError('NOT_FOUND', '这条规划不存在（可能已被删除）');
+
+    const model = route?.model ?? null;
+    log(`拆分「${source.title}」：${cards.length} 张（丢弃 ${dropped} 张不合规，重拆清掉 ${result.removed} 条）`);
+    return {
+      split: result.created.length,
+      dropped,
+      removed: result.removed,
+      model,
+    };
   };
 
   /**
-   * 学在浙大读不到时，把原因翻译成**用户能照做的一句**。
+   * 两类待办。
    *
-   * 凭据已经集中在宿主（`dsh-zhiyun-classroom` 登录时写入，`dsh-zhiyun-omni` 读取），
-   * 所以这里**不再出现"去终端配账号"** —— 那是在两个包各自存凭据时才有的事。
-   * 现在只可能是：没登录过、会话过期、或账号在但会话要重建。
+   * # 为什么从 `zhiyunOmni` 换成 `zhiyunCampus`
+   *
+   * 学在浙大待办与拼题A 题集原先都经 omni（**移植自为 macOS 写的上游**）。那两条链路
+   * 上有几处结构性问题：一次失败封锁 15 分钟（偶发抖动变成"半天不可用"）、
+   * 认证层带 webvpn 分支、拼题A 的 N+1。现在改由 `dsh-zhiyun-campus`（本仓原生，
+   * 复用智云课堂那套已在 Windows 跑通的 CAS 与 HTTP 传输）提供。
+   *
+   * omni 仍留在 profile 里 —— 教务课表/成绩（`zdbk`）还在用它，「今天」页依赖那份。
+   *
+   * # 为什么优先 campus、而不是二选一
+   *
+   * 先取 `zhiyunCampus`，取不到才退回 omni。这样 profile 里暂时没有新包时页面仍能用，
+   * 不至于因为一次装箱漏项就整块待办消失。
+   *
+   * ⚠️ 两个平台**并发**读，各自 try/catch：一个来源失败不该让另一个也拿不到。
    */
-  const describeXzzdError = (error) => {
-    const code = error?.code ?? 'XZZD_FAILED';
-    if (code === 'CONFIGURATION_REQUIRED' || code === 'LOGIN_REQUIRED') {
-      return {
-        code: 'NEED_LOGIN',
-        message: '还没登录过浙大账号：在「个人」页点「连接课堂」登录一次，学在浙大待办就会出现在这里。',
-      };
+  const loadTodos = async () => {
+    const campus = ctx.get('zhiyunCampus');
+    if (campus) {
+      try {
+        const result = await campus.todos();
+        // campus 已经按 `{ xzzd: { ok, rows, error }, pta: {...} }` 的形状返回，
+        // 行也是页面要的形状 —— 这里不再重复归一化
+        return {
+          xzzd: { ...result.xzzd, error: translateXzzdError(result.xzzd?.error) },
+          pta: { ...result.pta, error: translatePtaError(result.pta?.error) },
+        };
+      } catch (error) {
+        // campus 内部已经把每条链路收成 error，走到这里说明是它自己没有正常装配
+        const why = { code: 'CAMPUS_FAILED', message: String(error?.message ?? error) };
+        return { xzzd: { ok: false, rows: [], error: why }, pta: { ok: false, rows: [], error: why } };
+      }
     }
-    if (code === 'AUTHENTICATION_REQUIRED' || code === 'AUTH_CHALLENGE_REQUIRED') {
-      return {
-        code: 'NEED_LOGIN',
-        message: '浙大登录态已过期：在「个人」页重新登录一次课堂即可。',
-      };
+
+    // ── 退回 omni（旧路径，保留以便逐步迁移）──────────────────────────
+    const omni = ctx.get('zhiyunOmni');
+    if (!omni) {
+      const why = { code: 'CAMPUS_UNAVAILABLE', message: '校园数据包未启用：需要 dsh-zhiyun-campus（或旧的 dsh-zhiyun-omni）' };
+      return { xzzd: { ok: false, rows: [], error: why }, pta: { ok: false, rows: [], error: why } };
     }
-    return { code, message: String(error?.message ?? error) };
+
+    // 学在浙大：凭据由 `dsh-zhiyun-classroom` 登录时写进宿主凭据服务。
+    const xzzd = (async () => {
+      try {
+        return { ok: true, rows: normalizeXzzdTodos(await omni.invoke('xzzd.todos', {})), error: null };
+      } catch (error) {
+        return { ok: false, rows: [], error: describeXzzdError(error) };
+      }
+    })();
+
+    const pta = (async () => {
+      try {
+        // `with_exam: false`：这一页只用「题集名 + 截止时间」，列表接口一次给全。
+        // 默认为每个题集补一次 `/exams` 是 N+1，且被 200ms 的 limiter 串起来 ——
+        // 实测 12 个题集 3.7 秒，是首屏最慢的一段。
+        const sets = await omni.invoke('pta.problemSets', {
+          active_only: true, max_sets: 20, with_exam: false,
+        });
+        return { ok: true, rows: normalizePtaSets(sets), error: null };
+      } catch (error) {
+        return {
+          ok: false,
+          rows: [],
+          error: { code: error?.code ?? 'PTA_FAILED', message: String(error?.message ?? error) },
+        };
+      }
+    })();
+
+    const [xzzdResult, ptaResult] = await Promise.all([xzzd, pta]);
+
+    /**
+     * 顺手清掉"平台那边已经没有的条目"的勾选。
+     *
+     * 只在**这一侧确实读到了**的时候清：某一边读取失败时 `rows` 是空的，
+     * 那时候按空表去 prune 会把用户所有现有的勾选一次性删光 —— 一次网络抖动
+     * 就把他一学期的标记清空，这是绝对不能做的事。
+     */
+    if (tickStore) {
+      const live = [];
+      if (xzzdResult.ok) {
+        for (const row of xzzdResult.rows) live.push(tickKey('xzzd', row.id));
+      }
+      if (ptaResult.ok) {
+        for (const row of ptaResult.rows) live.push(tickKey('pta', row.id));
+      }
+      // 只有两边都读到了才 prune；有一边失败就整体跳过这一轮
+      if (xzzdResult.ok && ptaResult.ok) {
+        const removed = tickStore.prune(live.filter(Boolean));
+        if (removed > 0) log(`清掉了 ${removed} 条平台侧已不存在的勾选`);
+      }
+    }
+
+    return { xzzd: xzzdResult, pta: ptaResult };
   };
 
-  /** 拼题A 单独读：它的失败原因与学在浙大不同（缺 Cookie，不是缺账号）。 */
-  const finishPta = async (result) => {
-    const omni = ctx.get('zhiyunOmni');
-    try {
-      const sets = await omni.invoke('pta.problemSets', { active_only: true, max_sets: 20 });
-      result.pta = { ok: true, rows: normalizePtaSets(sets), error: null };
-    } catch (error) {
-      result.pta = {
-        ok: false,
-        rows: [],
-        error: { code: error?.code ?? 'PTA_FAILED', message: String(error?.message ?? error) },
+  /**
+   * 把 campus 回的学在浙大错误翻译成**用户能照做的一句**。
+   *
+   * campus 自己已经给出 `NEED_LOGIN` 这类确定的 code；这里只补齐 omni 那套旧码
+   * （`CONFIGURATION_REQUIRED` 等）的映射 —— 两条路径都走这个函数，页面文案只有一份。
+   *
+   * ⚠️ 这里的文案必须跟着**凭据的写入口**走。写入口现在是「设置 → 浙大一卡通」，
+   *    不是「个人」页那个「连接课堂」按钮（那个表单已改成占位，按钮不存在了）。
+   *    还写着"去个人页点连接课堂"会把用户指向一个点不到的东西 —— 比不提示更糟。
+   *    同理，面向用户的称呼统一成「浙大一卡通」；CAS / 统一身份认证这类协议术语
+   *    不该出现在这一层（那是实现细节，用户认的是"一卡通"这个名字）。
+   */
+  const translateXzzdError = (error) => {
+    if (!error) return null;
+    const code = error.code ?? 'XZZD_FAILED';
+    // campus 已经给出**完整且更新过**的指引时（含「设置 → 浙大一卡通」），
+    // 原样透传，不要用这里的旧文案盖掉它 —— 否则下游一处漏改就白改了上游。
+    const current = typeof error.message === 'string' && error.message.includes('浙大一卡通');
+    if ((code === 'NEED_LOGIN' || code === 'CONFIGURATION_REQUIRED' || code === 'LOGIN_REQUIRED') && current) {
+      return { code: 'NEED_LOGIN', message: error.message };
+    }
+    if (code === 'NEED_LOGIN' || code === 'CONFIGURATION_REQUIRED' || code === 'LOGIN_REQUIRED') {
+      return {
+        code: 'NEED_LOGIN',
+        message: '还没配置「浙大一卡通」：去「设置 → 浙大一卡通」填一次学号和密码，学在浙大与智云课堂会共用这一份。',
       };
     }
-    return result;
+    if (code === 'AUTHENTICATION_REQUIRED' || code === 'AUTH_CHALLENGE_REQUIRED' || code === 'SESSION_EXPIRED') {
+      return {
+        code: 'NEED_LOGIN',
+        message: '「浙大一卡通」的登录态已过期：去「设置 → 浙大一卡通」核对一次密码，课堂与学在浙大会各自重新登录。',
+      };
+    }
+    return { code, message: String(error.message ?? code) };
   };
+
+  /** 拼题A 的失败原因同样是"该去哪儿配"，但答案是"粘 Cookie"而不是"登录"。 */
+  const translatePtaError = (error) => {
+    if (!error) return null;
+    const code = error.code ?? 'PTA_FAILED';
+    if (code === 'COOKIE_IMPORT_REQUIRED' || code === 'COOKIE_EXPIRED') {
+      return {
+        code: 'COOKIE_IMPORT_REQUIRED',
+        message: '拼题A 需要在「设置 → 拼题A」粘贴一次 Cookie（它登录要短信验证，无法自动登录）。',
+      };
+    }
+    return { code, message: String(error.message ?? code) };
+  };
+  /**
+   * 学在浙大读不到时，把原因翻译成**用户能照做的一句**。
+   *
+   * 凭据已经集中在宿主（`dsh-zhiyun-classroom` 登录时写入），所以这里**不再出现
+   * "去终端配账号"** —— 那是在两个包各自存凭据时才有的事。
+   */
+  const describeXzzdError = (error) => translateXzzdError({
+    code: error?.code ?? 'XZZD_FAILED',
+    message: error?.message ?? String(error),
+  });
 
 
   /** 拼题A 是否已配 Cookie（只回键名，不回值）。 */
   const ptaStatus = async () => {
+    // 优先 campus：Cookie 现在存在它自己的会话文件里
+    const campus = ctx.get('zhiyunCampus');
+    if (campus) {
+      try {
+        return await campus.ptaStatus();
+      } catch (error) {
+        return { configured: false, error: String(error?.message ?? error) };
+      }
+    }
     const omni = ctx.get('zhiyunOmni');
     if (!omni) return { configured: false, error: '校园数据包未启用' };
     if (typeof omni.pta !== 'function') return { configured: false, error: '数据包版本过旧（缺 pta 能力）' };
@@ -781,10 +1398,21 @@ export async function apply(ctx, config = {}) {
     }
   };
 
-  /** 存拼题A Cookie。走 `omni.pta('importCookie')`，由数据包做格式识别与落盘。 */
+  /**
+   * 存拼题A Cookie。
+   *
+   * 优先存进 campus 自己的会话（新路径）；没有 campus 才退回 omni。
+   * 两条路的输入格式识别都由各自实现负责 —— 页面只传用户粘的原文。
+   */
   const savePtaCookie = async (raw) => {
+    const campus = ctx.get('zhiyunCampus');
+    if (campus) {
+      const result = await campus.savePtaCookie(raw);
+      log(`拼题A Cookie 已保存（来源：${result?.source ?? '未知'}，${result?.names?.length ?? 0} 个键）`);
+      return { source: result?.source, cookie_names: result?.names ?? [] };
+    }
     const omni = ctx.get('zhiyunOmni');
-    if (!omni) throw new Error('校园数据包（dsh-zhiyun-omni）未启用，无法保存拼题A Cookie');
+    if (!omni) throw new Error('校园数据包未启用（需要 dsh-zhiyun-campus 或 dsh-zhiyun-omni），无法保存拼题A Cookie');
     if (typeof omni.pta !== 'function') throw new Error('数据包版本过旧（缺 pta 能力）');
     const result = await omni.pta('importCookie', { input: raw });
     log(`拼题A Cookie 已保存（来源：${result?.source ?? '未知'}，${result?.cookie_names?.length ?? 0} 个键）`);
@@ -797,6 +1425,10 @@ export async function apply(ctx, config = {}) {
         getConfig: () => current,
         saveConfig: (next) => { current = saveConfig(configFile, next); return current; },
         store,
+        local: mine,
+        splitLocal: splitLocalPlan,
+        tickStore: ticks,
+        log,
         fetchRemote: (cfg) => pullEntries(cfg, config.fetch ?? fetch),
         loadTodos,
         savePtaCookie,
@@ -804,17 +1436,34 @@ export async function apply(ctx, config = {}) {
         plan: planService,
       });
       const dispose = scope.webServer.register({ kind: 'exact', path: ROUTE_PATH, handler });
-      log(`设置路由：${ROUTE_PATH}（本地留存 ${cacheFile}）`);
+      log(`设置路由：${ROUTE_PATH}（中转站留存 ${cacheFile}；我的规划 ${mineFile}）`);
       return dispose;
     }, 'zhiyun: planning settings route');
   });
+
+  const mineService = {
+    list: () => mine.list(),
+    find: (id) => mine.find(id),
+    create: (input) => mine.create(input),
+    update: (id, patch) => mine.update(id, patch),
+    setDone: (id, done) => mine.setDone(id, done),
+    remove: (id) => mine.remove(id),
+    split: (id, cards, options) => mine.split(id, cards, options),
+    ai: splitLocalPlan,
+    file: mineFile,
+  };
 
   const removeService = ctx.provide('zhiyunPlanning', {
     routePath: ROUTE_PATH,
     configFile,
     cacheFile,
+    localFile: mineFile,
     config: () => current,
     entries: () => store.list(),
+    local: () => mine.list(),
+    mine: mineService,
+    ticks: () => ticks.all(),
+    tickStore: ticks,
     plans: planService,
     pull: () => pullEntries(current, config.fetch ?? fetch),
     todos: loadTodos,

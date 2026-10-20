@@ -192,3 +192,117 @@ test('工具档位不再抛错（工具层已删，它不该拦启动）', () =>
   assert.equal(loadConfig({ ...process.env, MCP_TOOL_PROFILE: 'nonsense', ZJU_PLATFORMS: 'zdbk' }).profile, 'full');
   assert.equal(loadConfig({ ...process.env, MCP_TOOL_PROFILE: 'lite', ZJU_PLATFORMS: 'zdbk' }).profile, 'lite');
 });
+
+/* ──────────────────────────────── 拼题A 题集：N+1 与 with_exam 开关 */
+
+/**
+ * 造一个只回题集数据的假 fetch，记录每次请求。
+ *
+ * 题集列表一次给 `name` / `endAt` / `status`；`/exams` 只是逐题集补齐详情。
+ * 早先 `problemSets` 无条件补齐 → N+1 且被 200ms limiter 串起来，
+ * 12 个题集要 3.7 秒，占「规划」页首屏的绝大部分。
+ */
+function fakePta({ sets = 3 } = {}) {
+  const calls = [];
+  const fetchImpl = async (url) => {
+    const target = String(url);
+    calls.push(target);
+    const json = (payload) => new Response(JSON.stringify(payload), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+    if (target.includes('/api/problem-sets?')) {
+      return json({
+        problemSets: Array.from({ length: sets }, (_, i) => ({
+          id: String(i + 1),
+          name: `题集${i + 1}`,
+          endAt: new Date(Date.now() + (i + 1) * 86400000).toISOString(),
+          status: 'RUNNING',
+        })),
+      });
+    }
+    if (target.includes('/exams')) {
+      return json({ exam: { status: 'RUNNING', endAt: new Date(Date.now() + 86400000).toISOString(), ended: false, score: 42 } });
+    }
+    return json({});
+  };
+  return { fetchImpl, calls };
+}
+
+/**
+ * 用假 fetch 建一个只启用拼题A 的运行时（数据目录指向临时位置）。
+ *
+ * 拼题A 的列表接口要求 Cookie（`requireCookie: true`），所以先往**临时**数据目录
+ * 里写一份假会话 —— 不碰用户真实的 `~/.local/share` 或 profile 目录。
+ */
+async function ptaRuntime(fetchImpl) {
+  const dir = await mkdtemp(path.join(tmpdir(), 'omni-pta-'));
+  const env = { ...process.env, ZJU_PLATFORMS: 'pta', ZJU_OMNI_DATA_DIR: dir };
+  const ctx = createContext(loadConfig(env), { env, fetchImpl });
+  await ctx.sessions.write({
+    platform: 'pta', mode: 'direct', saved_at: new Date().toISOString(),
+    cookies: [{ name: 'SESSION', value: 'test-cookie', domain: 'pintia.cn', path: '/', hostOnly: false, secure: true }],
+  });
+  return { runtime: createRuntime(ctx), dir };
+}
+
+test('with_exam:false 只发 1 个请求（默认补齐是 N+1，首屏最慢的一段）', async () => {
+  const cheap = fakePta({ sets: 12 });
+  const cheapRun = await ptaRuntime(cheap.fetchImpl);
+  try {
+    const cheapRows = await cheapRun.runtime.pta.reader.problemSets({
+      active_only: true, max_sets: 20, with_exam: false,
+    });
+    assert.equal(cheap.calls.length, 1, `不该逐题集打 /exams，实际发了 ${cheap.calls.length} 个请求`);
+    assert.equal(cheapRows.problem_sets.length, 12, '条数不能少 —— 关的是详情，不是列表');
+    assert.equal(cheapRows.exam_details, false, '要如实告诉调用方详情没取');
+
+    // 默认行为不变：仍然逐题集补齐（AI 工具要 score/status 那些字段）。
+    const full = fakePta({ sets: 12 });
+    const fullRun = await ptaRuntime(full.fetchImpl);
+    try {
+      const fullRows = await fullRun.runtime.pta.reader.problemSets({ active_only: true, max_sets: 20 });
+      assert.equal(full.calls.length, 13, '默认仍是 1 + N，不能静默改掉既有消费方拿到的字段');
+      assert.equal(fullRows.exam_details, true);
+      assert.equal(fullRows.problem_sets[0].score, 42, '补齐时 score 来自 /exams');
+      assert.equal(cheapRows.problem_sets[0].score, null, '不补齐时 score 为空');
+    } finally {
+      await rm(fullRun.dir, { recursive: true, force: true });
+    }
+  } finally {
+    await rm(cheapRun.dir, { recursive: true, force: true });
+  }
+});
+
+test('关掉补齐后，页面要的字段仍然齐全（名字、截止时间、是否结束）', async () => {
+  const sets = fakePta({ sets: 4 });
+  const run = await ptaRuntime(sets.fetchImpl);
+  try {
+    const rows = (await run.runtime.pta.reader.problemSets({
+      active_only: true, max_sets: 20, with_exam: false,
+    })).problem_sets;
+
+    for (const row of rows) {
+      assert.ok(row.name, '题集名必须来自列表接口');
+      assert.ok(row.ends_at?.iso, '截止时间必须来自列表接口');
+      // ended 不该是 null：关掉补齐后由 ends_at 与当前时间推出来
+      assert.equal(typeof row.ended, 'boolean', 'ended 要能判出来，不能留 null');
+      assert.equal(row.ended, false, '未来截止的题集不该判成已结束');
+      assert.ok(row.url, '要有可点的来源链接');
+    }
+  } finally {
+    await rm(run.dir, { recursive: true, force: true });
+  }
+});
+
+test('不带 active_only 时，过期的题集判成已结束', async () => {
+  const run = await ptaRuntime(async () => new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }));
+  try {
+    // 列表接口回的 endAt 在过去 → 关掉补齐时 ended 应为 true
+    const past = new Date(Date.now() - 86400000).toISOString();
+    const summarized = run.runtime.pta.reader.summarize({ id: '9', name: '过期题集', endAt: past, status: 'RUNNING' }, null);
+    assert.equal(summarized.ends_at.iso, new Date(past).toISOString(), '截止时间原样带出');
+  } finally {
+    await rm(run.dir, { recursive: true, force: true });
+  }
+});
+

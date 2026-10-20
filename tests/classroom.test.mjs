@@ -35,6 +35,14 @@ test('models preserve resource metadata and all time units', () => {
   assert.throws(() => models.date('2026-02-31'));
 });
 
+test('course progress is clamped to <=1 even when learnNum exceeds subjectNum', () => {
+  // 平台数据脏（看完数 > 总数）时不能给出 >100% 的进度；>1 的裸值按百分数换算。
+  const dirty = models.course({ ...course(9), progress: '{"subjectProgress":120,"learnNum":6,"subjectNum":5}' });
+  assert.equal(dirty.progress, 1);
+  const percent = models.course({ ...course(10), progress: '{"subjectProgress":1.5,"learnNum":3,"subjectNum":5}' });
+  assert.equal(percent.progress, 0.015);
+});
+
 test('legacy classroom media URLs upgrade to HTTPS without changing signatures or leaking session cookies', async () => {
   const url = 'http://video.cmc.zju.edu.cn/media/slide.jpg?signature=a%2Fb%2Bc&x=1&x=2';
   const mapped = models.slide({ created_sec: 2, content: { pptimgurl: url, pptthumb: url } }, 1);

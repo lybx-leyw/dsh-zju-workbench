@@ -62,12 +62,12 @@ async function finishAtClassroom(transport, { url, hop }) {
   await transport.session.save();
 }
 // CAS 表单提交：两个入口唯一的分叉是「第一页从哪来」。
-async function submitCasForm(transport, { username, password }, { signal, entry }) {
-  const landing = entry === 'oauth'
+async function submitCasForm(transport, { username, password }, { signal, entry, page }) {
+  const landing = page ?? (entry === 'oauth'
     // oauth 入口的第一页由服务端 302 领过来：casapi → oauth2.0/authorize → cas/login。
     ? await follow(transport, OAUTH_ENTRY, { signal, label: '登录页' })
     // cas 入口保持既有行为：直接取 CAS 登录页，不额外追随（现状就是这么跑的）。
-    : { url: `${CAS}/login`, result: await transport.request(`${CAS}/login`, { signal }) };
+    : { url: `${CAS}/login`, result: await transport.request(`${CAS}/login`, { signal }) });
   const execution = executionToken(landing.result.text);
   if (!execution) throw new ClassroomError('AUTH_SHAPE', '登录页缺少 execution');
   const key = await transport.json(`${CAS}/v2/getPubKey`, '登录公钥', { signal });
@@ -131,9 +131,27 @@ export function inspectJwt(token) {
   return result;
 }
 export async function authenticate(transport, { username, password }, { signal, entry = 'cas' } = {}) {
-  if (!username || !password) throw new ClassroomError('CREDENTIALS', '请提供浙大账号与密码');
+  // 面向用户的称呼统一成「浙大一卡通」。CAS 术语（zjuam / iPlanetDirectoryPro /
+  // 统一身份认证）留在技术描述里不改 —— 那是协议的名字，不是用户要认的东西。
+  if (!username || !password) throw new ClassroomError('CREDENTIALS', '请先在「设置 → 浙大一卡通」填入学号与密码');
   if (entry !== 'cas' && entry !== 'oauth') throw new ClassroomError('AUTH_ENTRY', '未知的登录入口');
-  const { login, form } = await submitCasForm(transport, { username, password }, { signal, entry });
+  let page;
+  const cookies = await transport.session.jar.getCookies(CAS + '/login');
+  if (cookies.some(c => c.key === 'iPlanetDirectoryPro' && c.value)) {
+    const start = entry === 'oauth' ? OAUTH_ENTRY : CAS_ENTRY;
+    const landing = await follow(transport, start, { signal, label: '业务登录' });
+    if (new URL(landing.url).hostname === 'classroom.zju.edu.cn') return finishAtClassroom(transport, landing);
+    if (new URL(landing.url).hostname !== 'zjuam.zju.edu.cn' || !executionToken(landing.result.text)) {
+      throw new ClassroomError('AUTH_INCOMPLETE', '课堂认证未到达预期登录页面');
+    }
+    // Expired SSO reached a real CAS form. Remove the old ticket so a rejected
+    // password cannot be mistaken for success just because that ticket remains.
+    for (const cookie of cookies.filter(c => c.key === 'iPlanetDirectoryPro')) {
+      await transport.session.jar.setCookie(cookie.cookieString() + '; Max-Age=0; Path=' + cookie.path + (cookie.hostOnly ? '' : '; Domain=' + cookie.domain), CAS + '/login');
+    }
+    page = landing;
+  }
+  const { login, form } = await submitCasForm(transport, { username, password }, { signal, entry, page });
   // 表单之后两个入口的续跑起点不同：
   //   cas   —— 既有行为，固定去 tgmedia 的业务登录；
   //   oauth —— 跟着 CAS 的 302 回调走（authorize → *_token → classroom）。

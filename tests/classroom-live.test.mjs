@@ -203,3 +203,47 @@ test('stream relay surfaces the route prefix shared with the host wiring', async
   assert.equal(typeof createStreamHandler(), 'function');
   assert.equal(createStreamHandler().length, 2);
 });
+
+
+test('gateway aggregate quantum zero does not invalidate real live windows', async () => {
+  const source = classroom(async url => {
+    const q = new URL(url).searchParams.get('quantum_id');
+    return json({code: 0, list: q === '0' ? [
+      {id: 93, class_begin_time: '08:00', class_end_time: '09:30'},
+      {id: 0, name: 'aggregate', list: []},
+      {quantum_id: '0', list: []},
+    ] : [{course_id: '101', sub_id: '202', title: 'Fixture'}]});
+  });
+  try {
+    const current = await source.live.listCurrent({now: new Date('2026-01-05T00:30:00Z')});
+    assert.equal(current.items.length, 1);
+    assert.equal(current.items[0].quantumId, 93);
+    assert.equal((await source.live.listLiveDay('2026-01-05')).items.length, 1);
+  } finally { await source.dispose(); }
+});
+
+test('malformed nonaggregate quantum still reports a schema error', async () => {
+  const source = classroom(async () => json({code: 0, list: [{name: 'missing id'}]}));
+  try { await assert.rejects(source.live.listQuantum('2026-01-05'), {code: 'API_SHAPE'}); }
+  finally { await source.dispose(); }
+});
+
+
+test('selected quantum response retains grouped courses and ignores other windows', async () => {
+  const source = classroom(async url => {
+    const q = new URL(url).searchParams.get('quantum_id');
+    return json({code: 0, list: q === '0' ? [
+      {id: 93, class_begin_time: '08:00', class_end_time: '09:30', list: []},
+      {id: 0, list: []}
+    ] : [
+      {id: 93, list: [{course_id: 101, sub_id: 202, title: 'Fixture'}]},
+      {id: 94, list: [{course_id: 303, sub_id: 404}]},
+      {id: 0, list: []}
+    ]});
+  });
+  try {
+    const current = await source.live.listCurrent({now: new Date('2026-01-05T00:30:00Z')});
+    assert.deepEqual(current.items.map(x => x.courseId), ['101']);
+    assert.equal((await source.live.listLiveDay('2026-01-05')).items.length, 1);
+  } finally { await source.dispose(); }
+});

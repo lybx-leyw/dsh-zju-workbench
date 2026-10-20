@@ -33,7 +33,15 @@
  *
  * `ctx.credentials` 不可用时（精简组合、测试里的最小 ctx）**全部方法返回 null**，
  * 由调用方退回各自的老路径。本模块不认识任何磁盘格式，也不写任何文件。
+ *
+ * # 账号那条记录归共享层管
+ *
+ * `readAccount` / `writeAccount` 现在都委托给 `dsh-zhiyun-card`：记录形状与
+ * 「覆盖 vs 补空」的语义都在那里（见 `writeCard` 与 `fillCardIfEmpty`）。
+ * 保留这两个导出只是为了不破坏既有调用方与测试。
  */
+
+import { readCard, writeCard } from 'dsh-zhiyun-card';
 
 /** 记录键的两段：`<scope>/<id>`。scope 必须是**注册的插件名**。 */
 export const RECORD_SCOPE = 'zhiyun-classroom';
@@ -108,7 +116,15 @@ export async function writeRecord(ctx, id, payload) {
   const service = credentialsOf(ctx);
   if (!service) return false;
   try {
-    await service.modifyRecord(recordKey(id), () => ({ kind: 'grant', payload }));
+    await service.modifyRecord(recordKey(id), () => ({
+      kind: 'grant',
+      // ⚠️ **只能有 `kind` 与 `payload` 两个字段。**
+      //    宿主 `dsh-credentials-local` 的 `parseRecord` 对 grant 做白名单校验，
+      //    多一个字段会让**整个工作台启动失败**（而且是在加载 yaml 时抛，
+      //    报错指向文件解析，看不出是哪段代码写的）。
+      //    所以用途说明一律放进 payload，不放顶层。
+      payload,
+    }));
     return true;
   } catch {
     return false;
@@ -136,29 +152,41 @@ export async function deleteRecord(ctx, id) {
 /**
  * 读**账号**（用户名 + 密码）。
  *
+ * 直接委托共享层：记录形状与校验口径只有一份，两个包不会各按各的理解解析。
+ *
  * @param ctx - 插件上下文。
  * @returns `{ username, password }` 或 null。
  */
 export async function readAccount(ctx) {
-  const payload = await readRecord(ctx, ACCOUNT_ID);
-  if (!payload || typeof payload !== 'object') return null;
-  const { username, password } = payload;
-  if (typeof username !== 'string' || !username) return null;
-  if (typeof password !== 'string' || !password) return null;
-  return { username, password };
+  return await readCard(ctx);
 }
 
 /**
  * 存**账号**。只在用户主动登录时调用 —— 本模块不主动收集密码。
  *
+ * # 为什么委托给共享层
+ *
+ * 账号那条记录的**形状**（`kind` / `label` / `payload` 里的字段与类型）不是本模块
+ * 的知识，而是 `dsh-zhiyun-card` 的。同一个记录键现在有两个写入方：设置里的
+ * `writeCard`（用户明确覆盖）与登录成功后的回填（`fillCardIfEmpty`，只补空缺）。
+ * 形状在这里再写一份的后果已经出现过：本模块少写 `label`，于是登录回填一次之后，
+ * 宿主凭据列表里那条记录的用途说明就没了 —— 而 `readCard` 不校验 `label`，
+ * **读起来一切正常**，只有界面上看得出不对。
+ *
+ * 所以这里只保留"无条件覆盖"这个语义，形状交给共享层构造。
+ *
+ * 保留本函数（而不让调用方直接用 `writeCard`）：它是本模块对内的稳定出口，
+ * `planning-credentials.test.mjs` 也直接测它。行为与 `writeCard` 一致。
+ *
  * @param ctx - 插件上下文。
  * @param account - `{ username, password }`。
  * @returns 写成功返回 true。
  */
-export async function writeAccount(ctx, { username, password }) {
+export async function writeAccount(ctx, account) {
+  const { username, password } = account ?? {};
   if (typeof username !== 'string' || !username) return false;
   if (typeof password !== 'string' || !password) return false;
-  return await writeRecord(ctx, ACCOUNT_ID, { username, password });
+  return await writeCard(ctx, { username, password });
 }
 
 /**

@@ -210,12 +210,26 @@ export class LiveSource {
     const day = day8(date);
     const headers = await this.authHeaders();
     const data = await this.transport.json(query(this.endpoints.courses, this.listParams(day, 0)), '直播时段', { signal, headers });
-    return rows(liveList(data, '直播时段'), '直播时段', 'list', quantumRow);
+    // The gateway includes a quantum_id=0 aggregate group alongside timed groups.
+    // It has no clock window and must not invalidate the real quantums.
+    const timed = liveList(data, '直播时段').filter(row => !object(row) || ![0, '0'].includes(row.id ?? row.quantum_id));
+    return rows(timed, '直播时段', 'list', quantumRow);
   }
   async coursesOf(day, quantum, { signal } = {}) {
     const headers = await this.authHeaders();
     const data = await this.transport.json(query(this.endpoints.courses, this.listParams(day, quantum.quantumId)), '直播课程', { signal, headers });
-    return rows(liveList(data, '直播课程'), '直播课程', 'list', row => liveCourse(row, quantum));
+    const list = liveList(data, '直播课程');
+    // need_time_quantum keeps the response grouped even for a selected quantum.
+    // Retain flat responses for gateways that omit the grouping envelope.
+    const grouped = list.some(row => object(row) && Array.isArray(row.list));
+    const courses = grouped
+      ? list.flatMap(row => {
+        if (!object(row)) throw shape('直播课程', 'list[]');
+        if (String(row.id ?? row.quantum_id) !== String(quantum.quantumId)) return [];
+        return array(row.list, '直播课程', 'list[].list');
+      })
+      : list;
+    return rows(courses, '直播课程', 'list', row => liveCourse(row, quantum));
   }
   async listLiveDay(date, { signal } = {}) {
     const day = day8(date);

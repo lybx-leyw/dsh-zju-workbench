@@ -30,12 +30,12 @@ export class SessionStore {
     if (!this.file) return;
     let bytes;
     try { bytes = await readFile(this.file); } catch (error) { if (error.code === 'ENOENT') return; throw new ClassroomError('STORAGE', '无法读取会话文件'); }
-    try { this.jar = CookieJar.deserializeSync(JSON.parse((await this.protect(bytes, true)).toString('utf8'))); }
+    try { const saved = JSON.parse((await this.protect(bytes, true)).toString('utf8')); this.jar = CookieJar.deserializeSync(saved); this.accountKey = saved.accountKey ?? null; }
     catch { throw new ClassroomError('STORAGE', '会话无法解密或已损坏，请清除后重新登录'); }
   }
   save() {
     if (!this.file) return Promise.resolve();
-    const snapshot = JSON.stringify(this.jar.serializeSync());
+    const snapshot = JSON.stringify({ ...this.jar.serializeSync(), accountKey: this.accountKey ?? null });
     const operation = this.pending.catch(() => {}).then(async () => {
       const encrypted = await this.protect(Buffer.from(snapshot));
       // 会话文件写在 Windows 上，手写 `writeFile` + `rename` 会撞上瞬态

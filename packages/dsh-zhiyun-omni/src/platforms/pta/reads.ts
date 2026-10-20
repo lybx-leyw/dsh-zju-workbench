@@ -54,7 +54,28 @@ export class PtaReader {
     };
   }
 
-  async problemSets({ active_only = true, max_sets = 30 }: { active_only?: boolean; max_sets?: number } = {}) {
+  /**
+   * 题集列表。
+   *
+   * # 为什么要能关掉逐题集的 exam 补齐
+   *
+   * 列表接口本身已经给出 `name` / `startAt` / `endAt` / `status` —— 也就是说
+   * "这个题集叫什么、什么时候截止"一次请求就够了。而 `status`/`score`/`ended`
+   * 要逐题集再打一次 `/exams`，是 **N+1**。
+   *
+   * 那 N 次又是**串行**的：`HttpClient` 的 limiter（`ZJU_MIN_INTERVAL_MS`，默认
+   * 200ms）按 lane 排队，**并发也快不了** —— 请求数不变时总耗时就被 200ms×N 锁住。
+   * 实测 12 个题集 ≈ 3.7 秒，占「规划」页首屏的绝大部分。
+   *
+   * 所以给调用方一个显式的取舍：要考试分数（AI 工具）时保留补齐；
+   * 只要"什么时候截止"（规划页）时传 `with_exam: false`，1 个请求就回来。
+   * **不能默认关掉** —— 那会静默改变既有消费方拿到的字段。
+   *
+   * @param options.active_only - 只要未结束的题集。
+   * @param options.max_sets - 最多取几个题集。
+   * @param options.with_exam - 是否逐题集补齐 exam 详情（`status`/`score`/`ended`）。默认 true。
+   */
+  async problemSets({ active_only = true, max_sets = 30, with_exam = true }: { active_only?: boolean; max_sets?: number; with_exam?: boolean } = {}) {
     const filter = active_only ? JSON.stringify({ endAtAfter: this.now().toISOString() }) : '{}';
     const data = await this.api.get('/api/problem-sets', { filter }, { requireCookie: true });
     if (!Array.isArray(data.problemSets)) throw new ToolError('SCHEMA_CHANGED', '拼题A 题集列表缺少 problemSets。');
@@ -63,15 +84,34 @@ export class PtaReader {
     const errors: Raw[] = [];
     for (const set of sets.slice(0, max_sets)) {
       let exam: Raw | null = null;
-      try {
-        exam = await this.exam(String(set.id));
-      } catch (e) {
-        errors.push({ problem_set_id: String(set.id), error: safeError(e) });
+      // 不补齐时 `exam` 留 null：`summarize` 会退回列表接口自带的 status，
+      // `ended` 则由 ends_at 与当前时间推出来（见下）。
+      if (with_exam) {
+        try {
+          exam = await this.exam(String(set.id));
+        } catch (e) {
+          errors.push({ problem_set_id: String(set.id), error: safeError(e) });
+        }
       }
-      rows.push(this.summarize(set, exam));
+      const row = this.summarize(set, exam);
+      // 没查 exam 时 `ended` 为 null。用列表自带的 ends_at 推一个 —— 这**不是**猜：
+      // `active_only` 的过滤条件就是 endAtAfter=now，所以这些题集按定义都还没结束；
+      // 而不带该过滤时，ends_at 已过期就等于结束。判不出来（无截止时间）就保持 null。
+      if (row.ended === null && row.ends_at?.iso) {
+        row.ended = Date.parse(row.ends_at.iso) <= this.now().getTime();
+      }
+      rows.push(row);
     }
     rows.sort((a, b) => (a.ends_at.iso ? Date.parse(a.ends_at.iso) : Infinity) - (b.ends_at.iso ? Date.parse(b.ends_at.iso) : Infinity));
-    return { active_only, problem_sets: rows, total: sets.length, truncated: sets.length > max_sets, errors, note: 'ends_at 为题集（考试）截止时间。只读：不会替你开始考试或创建考试记录。' };
+    return {
+      active_only,
+      problem_sets: rows,
+      total: sets.length,
+      truncated: sets.length > max_sets,
+      errors,
+      exam_details: with_exam,
+      note: 'ends_at 为题集（考试）截止时间。只读：不会替你开始考试或创建考试记录。',
+    };
   }
 
   async progress(id: string): Promise<{ total: number; accepted: number; by_status: Record<string, number> } | null> {

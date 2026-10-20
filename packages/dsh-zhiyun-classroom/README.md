@@ -1,6 +1,6 @@
 # 智云课堂数据源
 
-宿主插件注册 `ctx.zhiyunClassroom`；业务插件声明 `inject = ['zhiyunClassroom']` 后使用。插件只建立客户端，不自动登录、不读取 Flutter 的凭据文件、不修改前端。状态按 DSH `profileContext.dir` 隔离，卸载时撤销服务、取消请求。
+宿主插件注册 `ctx.zhiyunClassroom`；业务插件声明 `inject = ['zhiyunClassroom']` 后使用。挂载插件时只建立客户端，不联网。首次读取用户状态时复用已有会话；令牌过期后，从「设置 → 浙大一卡通」读取账号并恢复连接。状态按 DSH `profileContext.dir` 隔离，卸载时撤销服务、取消请求。
 
 纯 JS 使用不需要 Cordis：
 
@@ -108,3 +108,10 @@ npm run classroom:live-probe -- --live --trace               # 打印每条请�
 `classroom:parity` 需 Dart SDK 和相邻 Flutter 仓库，可用 `--flutter-root` 指定；Windows 可用 `DART_EXECUTABLE` 指向 dart.exe。普通 Node 测试使用已记录的 Dart 脱敏基线，无需 Dart。`--capture-live` 使用已有验证会话，按字段白名单生成脱敏接口样本及 Dart 基线，不能作为日常测试自动执行。
 
 2026-10-07 已通过新登录、会话恢复、30 门课程、两节内容、本周/空日课表、资源 Range 和本地注销验证。缺失课件/视频等可选资源及异常分页使用离线测试；未覆盖所有课程和所有服务端状态。
+
+
+## 账号恢复与网络出口
+
+宿主服务的 `getCurrentUser()` 会按需恢复登录。并发状态读取共用一次登录，失败后 60 秒内不重复提交；更改保存的账号或密码会立即触发重新认证，并清除旧账号会话。已有 SSO 时先续接业务授权，只有校方实际返回登录表单才提交密码，不把旧票据当成登录成功证据。显式退出后，本次运行不会立即自动重连；纯 `ClassroomSource` 库仍由调用方管理登录。
+
+课堂请求使用本包自己的直连 dispatcher，与宿主 AI 服务的代理相互独立。会话仍保存到当前 profile 的 DPAPI 文件，实验目录中的会话不会被 App 自动发现。

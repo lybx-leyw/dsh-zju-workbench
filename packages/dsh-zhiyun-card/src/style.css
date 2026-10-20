@@ -1,0 +1,180 @@
+/* 「浙大一卡通」设置分区的样式。
+ *
+ * 三条硬约束，与其它包的样式表一致：
+ *   1. **所有选择器带 `body[data-zhiyun]` 前缀**。各包的样式表是同特异性的独立
+ *      `<style>`，胜负只看挂载顺序；不加前缀的裸类会与别处撞车，
+ *      `scripts/check-css-order.mjs` 拦的正是这类。
+ *   2. **颜色只取外壳的 `--zy-*`**，不引入新色板 —— 换主题时这块自动跟随。
+ *      （错误提示走 ui-primitives 的 `.zs-notice`，这里**不**自造红色。）
+ *   3. **字号取 `--zy-fs-*`**，不自己写 px。
+ *
+ * 视觉上与「规划」页的设置表单（`.zpg-field` / `.zpg-form` / `.zpg-form-foot`）
+ * 同源，但类名用自己的 `zcd-` 前缀：两个包的表各自独立挂载，共用类名就等于把
+ * 胜负交给挂载顺序。
+ *
+ * 数值依据 docs/contributing/skills/human-factors-screen-design（下称 skill）：
+ * 输入框 ≥24px 高（ch06 规则 7）、焦点 2px 描边（ch12）、正文 13px 是 legibility
+ * floor（ch11 §11.2）。
+ */
+
+/* ------------------------------------------------------------------ 容器 */
+/* 字段之间 16px：比行内间距大一档，让"一个字段"与"下一个字段"分得开 */
+body[data-zhiyun] .zcd-form { display: flex; flex-direction: column; gap: 24px; }
+
+/* 两块凭据各自是一个 <form> / <details>，内部间距与原来的表单一致。
+   两块之间留 24px（比字段间距再大一档）：它们是**两套系统**，
+   间距必须让"这块结束了、下一块是另一件事"一眼看得出来。 */
+body[data-zhiyun] .zcd-block { display: flex; flex-direction: column; gap: 16px; }
+
+/* ------------------------------------------------------------ WebVPN 折叠块 */
+/* 默认收起：在校内完全用不到这一块，摊开会让设置页变长一半。
+   `summary` 是原生可聚焦元素，键盘能直接 Tab 到并回车展开，不需要额外补 role。 */
+body[data-zhiyun] .zcd-vpn {
+  padding-top: 16px;
+  border-top: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zcd-vpn > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  cursor: pointer;
+  font-size: var(--zy-fs-sm);
+  color: var(--zy-text);
+  /* 命中区 ≥24px：summary 默认行高偏矮，补一点上下内距 */
+  padding: 4px 0;
+}
+body[data-zhiyun] .zcd-vpn > summary:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 2px; }
+body[data-zhiyun] .zcd-vpn > summary strong { font-weight: 600; }
+body[data-zhiyun] .zcd-vpn > summary small { font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
+/* 展开后内容与 summary 之间要留出呼吸，否则第一行说明会贴着标题 */
+body[data-zhiyun] .zcd-vpn[open] > summary { margin-bottom: 4px; }
+
+/* 说明文字：这一段是本分区唯一的反直觉信息（两处共用一份凭证），所以放在最前，
+   且用正文色而不是次要色 —— 它必须被读到，不是装饰。 */
+body[data-zhiyun] .zcd-lead {
+  margin: 0;
+  max-width: 40em;
+  font-size: var(--zy-fs-base);
+  line-height: 1.75;
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zcd-lead strong { font-weight: 600; }
+
+
+/* ------------------------------------------------------------ 配置状态条 */
+/* 三种状态（读取中 / 已配置 / 未配置）共用同一行、同一位置：用户来这里只问
+   "到底有没有配"，答案不该在页面上跳来跳去。
+   圆点是**第二通道**（实心=已配置 / 空心=未配置），文字本身已经写明是哪一种，
+   所以不依赖颜色区分（ch03 规则 3）。 */
+body[data-zhiyun] .zcd-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  margin: 0;
+  padding: 4px 10px;
+  font-size: var(--zy-fs-sm);
+  color: var(--zy-secondary);
+  border: 1px solid var(--zy-line);
+  border-radius: 999px;
+}
+body[data-zhiyun] .zcd-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  /* 未配置：空心圆。形状通道，灰度下也分得开 */
+  background: transparent;
+  border: 1px solid var(--zy-secondary);
+}
+body[data-zhiyun] .zcd-status-ok { color: var(--zy-text); border-color: var(--zy-accent); }
+body[data-zhiyun] .zcd-status-ok .zcd-status-dot { background: var(--zy-accent); border-color: var(--zy-accent); }
+
+/* ------------------------------------------------------------------ 字段 */
+body[data-zhiyun] .zcd-field { display: flex; flex-direction: column; gap: 6px; }
+/* 字段标签 12px：必须读，不能落到 11px（ch11 结论 2 的下限之外） */
+body[data-zhiyun] .zcd-field > span { font-size: var(--zy-fs-sm); color: var(--zy-text); }
+body[data-zhiyun] .zcd-field input {
+  box-sizing: border-box;
+  width: 100%;
+  /* 高度 ≈ 9+9 内边距 + 13px 行高 = 31px，明显高于 24px 下限（ch06 规则 7） */
+  padding: 9px 11px;
+  border: 1px solid var(--zy-line);
+  border-radius: 7px;
+  background: var(--zy-bg);
+  color: var(--zy-text);
+  font: inherit;
+  font-size: var(--zy-fs-base);
+}
+/* 焦点可见：2px 描边 + offset。**不能**靠背景色变化代替 —— 键盘用户看不到自己
+   在哪一格（ch12 焦点）。 */
+body[data-zhiyun] .zcd-field input:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
+body[data-zhiyun] .zcd-field input:disabled { opacity: .6; cursor: default; }
+/* 打码值 `********` 是等宽的固定串，用等宽字体让"这是占位符而非真密码"更明显 */
+body[data-zhiyun] .zcd-field input[type="password"] { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; }
+body[data-zhiyun] .zcd-field small {
+  font-size: var(--zy-fs-sm);
+  line-height: 1.7;
+  color: var(--zy-secondary);
+  max-width: 40em;
+}
+body[data-zhiyun] .zcd-field small code { font-size: var(--zy-fs-meta); }
+
+/* ------------------------------------------------------------------ 按钮 */
+/* 命中区 32px：ch06 规则 7 要求 ≥24px，这里再抬高一档，与壳的 `.zy-secondary`
+   （约 27px）并列时不显得矮。圆角与字段一致，让"表单"看起来是一整块。 */
+body[data-zhiyun] .zcd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--zy-line);
+  border-radius: 7px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  font: inherit;
+  font-size: var(--zy-fs-sm);
+  cursor: pointer;
+}
+body[data-zhiyun] .zcd-btn:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
+body[data-zhiyun] .zcd-btn:disabled { opacity: .55; cursor: default; }
+
+/* 主按钮：强调色描边 + 稍亮底 + 加粗。**不用实底反白**：亮色主题下写 `color: white`
+   会引入一个不在 --zy-* 里的字面色，而 `--zy-action` 在深色主题下偏亮
+   （#245fa9），拿 `--zy-bg` 当文字色只有 2.7:1 —— 不可读。描边式在两种主题下
+   都能只靠已有 token 拿到 ≥4.5:1。 */
+body[data-zhiyun] .zcd-btn-primary {
+  border-color: var(--zy-accent);
+  background: var(--zy-soft);
+  color: var(--zy-text);
+  font-weight: 600;
+}
+body[data-zhiyun] .zcd-btn-primary:hover:not(:disabled) { background: var(--zy-hover); }
+
+/* 「清除」是**不可撤销**的动作（两处都会退回未登录），所以它比保存淡一档：
+   不是隐藏，但也不要抢走主按钮的注意力。 */
+body[data-zhiyun] .zcd-btn-quiet { color: var(--zy-secondary); background: transparent; }
+body[data-zhiyun] .zcd-btn-quiet:hover:not(:disabled) { color: var(--zy-text); background: var(--zy-hover); }
+
+body[data-zhiyun] .zcd-foot { display: flex; align-items: center; gap: 10px; }
+
+/* 成功提示：不加边框与底色（那是 `.zs-notice` 给错误用的形状），
+   免得"保存好了"看起来像一条警告。 */
+body[data-zhiyun] .zcd-msg {
+  margin: 0;
+  max-width: 40em;
+  font-size: var(--zy-fs-sm);
+  line-height: 1.7;
+  color: var(--zy-secondary);
+}
+
+/* ------------------------------------------------------------------ 窄屏 */
+/* 窄屏下两个按钮并排会把文字挤成两行。改成各占一半、等宽，
+   而不是让「清除」被折到下一行单独一行（那会让它看起来更重要）。 */
+@media (max-width: 650px) {
+  body[data-zhiyun] .zcd-foot { flex-wrap: wrap; }
+  body[data-zhiyun] .zcd-btn { flex: 1 1 auto; }
+}

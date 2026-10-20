@@ -62,10 +62,12 @@ export class ClassroomSource {
     const previous = Promise.allSettled([loginQueues.get(account) ?? Promise.resolve(), this.loginTask ?? Promise.resolve()]);
     const task = previous.then(async () => {
       options.signal?.throwIfAborted();
-      await this.transport.session.clear();
+      if (!options.reuseSso) await this.transport.session.clear();
       await authenticate(this.transport, credentials, options);
+      this.transport.session.accountKey = account;
+      await this.transport.session.save();
       await this.listCourses(options);
-      const user = await this.getCurrentUser();
+      const user = await this.getCurrentUser({ connect: false });
       // 只在这个时刻把凭据交给宿主：用户刚刚亲口提供了账号，写下去是"记住我"，
       // 不是偷偷收集。失败只记日志，绝不回滚已成功的登录。
       if (this.onLogin) {

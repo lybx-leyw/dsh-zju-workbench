@@ -1,0 +1,17 @@
+{
+  "name": "dsh-zhiyun-card",
+  "version": "0.1.0",
+  "description": "浙大一卡通账号（智云课堂与学在浙大共用的凭证）：设置界面 + 宿主凭据读写",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "external": ["dsh-zhiyun-ui-primitives"] }
+  }
+}

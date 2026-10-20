@@ -21,6 +21,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-ui-primitives';
 import css from './style.css';
+// 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
+// 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
+import { URGENCY_LABEL, dayKey, dayLabel, urgencyOf } from './time.js';
+import { errorText } from './error.js';
 
 export const name = 'zhiyun-page-planning-client';
 
@@ -41,8 +45,9 @@ const MASK = '********';
  *
  * 失败一律抛宿主给的原话 —— 域名格式、密钥长度这些规则的真源在宿主，
  * 页面自己再判一遍只会让"页面说能存"和"宿主拒绝"两句话对不上。
+ * 拆 `error` 对象的活交给 `errorText`（见 `error.js` 上的说明）。
  *
- * @param action - `''`（读取）/ `'save'` / `'refresh'` / `'pta'`。
+ * @param action - `''`（读取）/ `'save'` / `'refresh'` / `'pta'` / `'plan'`。
  * @param body - POST 的请求体。
  * @returns 解析后的 JSON。
  */
@@ -54,7 +59,7 @@ async function settings(action = '', body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error ?? `设置接口返回 ${response.status}`);
+  if (!response.ok) throw new Error(errorText(payload.error, response.status));
   return payload;
 }
 
@@ -109,61 +114,56 @@ function countdown(iso, now = Date.now()) {
   return ms < 0 ? `已过期 ${body}` : `还剩 ${body}`;
 }
 
-/** 同一分类内的分组键：条目按天，待办按紧迫度（见宿主 `urgencyOf`）。 */
-function urgencyOf(iso, now = Date.now()) {
-  if (!iso) return 'none';
-  const at = Date.parse(iso);
-  if (Number.isNaN(at)) return 'none';
-  if (at < now) return 'overdue';
-  if (at - now <= 86400000) return 'today';
-  if (at - now <= 604800000) return 'week';
-  return 'later';
-}
-
-const URGENCY_LABEL = {
-  overdue: '已过期',
-  today: '今天截止',
-  week: '一周内',
-  later: '更晚',
-  none: '没有截止时间',
-};
-
-/** 分组标题：待办用紧迫度，条目用日期。 */
-function dayLabel(seconds) {
-  const date = new Date(seconds * 1000);
-  if (Number.isNaN(date.getTime())) return '时间未知';
-  return new Intl.DateTimeFormat('zh-CN', {
-    timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'long',
-  }).format(date);
-}
+/** 同一分类内的分组键：条目按天，待办按紧迫度（见 `time.js`）。 */
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunPlanningStyle', css, label: 'zhiyun: planning styles' });
   ctx.slots.inject('zhiyun.planning.content', () => ctx.slots.register(
     { name: 'zhiyun.planning.content' },
-    Planning,
+    // 把 ctx 传进去只为**惰性取** `zhiyunStudyController`（课表上下文）。
+    // 不在 `apply` 时取：那个控制器由领域包的客户端半边提供，而本页在它停用时
+    // 也要能打开（这是当初决定不与「今天」合并的核心理由）。
+    () => <Planning ctx={ctx} />,
   ));
   // 设置集中在「个人 → 设置」：壳里的 PersonalSettingsBridge 会把所有
   // settings.section 按 order 摊成折叠分组，所以这里零改壳。
+  //
+  // ⚠️ **拆成两块**，不再合成一个「规划数据源」。理由：中转站与拼题A 是**互不相干**
+  //    的两件事（一个是你自己的数据中转站，一个是第三方判题平台），
+  //    它们共用同一个折叠分组只会让人以为"配完上面才轮到下面"。
+  //    而且这两块将来都可能被别的页面用到，不该绑在"规划页"这个名字上。
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
-    id: 'zhiyun-planning',
+    id: 'zhiyun-pta',
+    // 拼题A 排在个人中转站之前：它更常需要重配（Cookie 会过期）
     order: 65,
-    label: () => '规划数据源',
-  }, SettingsSection));
+    label: () => '拼题A',
+  }, PtaSection));
+  ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section',
+    id: 'zhiyun-relay',
+    order: 70,
+    label: () => '个人中转站',
+  }, RelaySection));
 }
 
-/** 错误码 → 标题与下一步建议。 */
+/**
+ * 错误码 → 标题与下一步建议。
+ *
+ * ⚠️ 这里的「下一步」必须跟着**设置分区改名**一起更新。
+ *    早先写着"去「个人 → 设置 → 规划数据源」"，而那个名字已经拆成
+ *    「拼题A」与「个人中转站」两块 —— 文案不改，用户会去找一个不存在的入口。
+ */
 const ERROR = {
-  NOT_CONFIGURED: { title: '还没有配置数据源', next: '去「个人 → 设置 → 规划数据源」填域名和读密钥。' },
-  // 学在浙大「还没登录」—— 与"读取失败"是两件事，处置也不同
+  NOT_CONFIGURED: { title: '还没有配置中转站', next: '去「设置 → 个人中转站」填域名和读密钥。' },
+  // 学在浙大缺的是**账号**，不是 Cookie。而账号现在在「浙大一卡通」那一块配。
   NEED_LOGIN: {
-    title: '还没登录浙大账号',
-    next: '在「个人」页点「连接课堂」登录一次，学在浙大待办就会出现在这里。',
+    title: '还没配置浙大一卡通',
+    next: '去「设置 → 浙大一卡通」填一次账号密码 —— 智云课堂与学在浙大共用这一份。',
   },
   KEY_REJECTED: {
     title: '读密钥被拒绝',
-    next: '到「个人 → 设置 → 规划数据源」核对读密钥；换过域名的话也要一起改。',
+    next: '到「设置 → 个人中转站」核对读密钥；换过域名的话也要一起改。',
   },
   UNREACHABLE: { title: '连不上中转站', next: '确认那台创空间还在运行。本地已存的内容不受影响。' },
   UPSTREAM: { title: '中转站自己报错了', next: '打开域名看它的 /health 是否正常。' },
@@ -172,13 +172,27 @@ const ERROR = {
 };
 
 /** 页面正文。 */
-export function Planning() {
+export function Planning({ ctx }) {
   const [loading, setLoading] = useState(true);
-  const [state, setState] = useState({ entries: [], todos: null, remote: null, pta: null, plans: {}, planned: [] });
+  const [state, setState] = useState({ entries: [], todos: null, remote: null, pta: null, plans: {}, local: [], ticks: {} });
   // 规划是花钱且耗时的操作，单独状态：它不该让整页进"loading"把已有内容藏起来
   const [planning, setPlanning] = useState(false);
   const [planMsg, setPlanMsg] = useState(null);
   const [error, setError] = useState(null);
+  // 写入口自己的状态：提交中 / 失败原因。**不**复用整页的 loading，
+  // 否则写一条规划会让整页闪成"正在读取待办与中转站"。
+  const [composer, setComposer] = useState({ busy: false, error: null });
+  // 单条规划正在跑 AI 拆分时的 id（只灰掉那一条，不是整页）
+  const [busyId, setBusyId] = useState(null);
+  // 课表上下文：读不到就不显示，绝不因此让页面报错
+  const [schedule, setSchedule] = useState(null);
+  /**
+   * 视图：列表 / 日历。
+   *
+   * 默认列表。日历是**同一批数据的另一种呈现**，不是另一个数据源 —— 所以切换
+   * 不触发任何请求，也不改变谁被算作"待办"。
+   */
+  const [view, setView] = useState('list');
 
   const apply = useCallback((payload) => {
     setState({
@@ -187,7 +201,8 @@ export function Planning() {
       remote: payload.remote ?? null,
       pta: payload.pta ?? null,
       plans: payload.plans ?? {},
-      planned: Array.isArray(payload.planned) ? payload.planned : [],
+      local: Array.isArray(payload.local) ? payload.local : [],
+      ticks: payload.ticks && typeof payload.ticks === 'object' ? payload.ticks : {},
     });
     // 只有中转站这条链路会给出"整页级"错误；待办各自的错误在各自区块里说
     setError(payload.remote?.error ?? null);
@@ -229,13 +244,29 @@ export function Planning() {
     try {
       const payload = await settings('plan', {});
       apply(payload);
+      // ⚠️ `NO_PENDING` 回的是 **200 + ok:false**：它不是故障，是"没有活干"，
+      // 所以不能当 HTTP 错误处理。但它也不是成功 —— 不认这一位，
+      // 宿主那句说明就会被当成功结果无声吞掉（下一条分支才是它的落点）。
+      if (payload.ok === false) {
+        const reason = errorText(payload.error, 200);
+        setPlanMsg({ kind: 'error', text: reason });
+        return;
+      }
+      // ⚠️ `planned` 是**这次拆了几条原文**（数字），不是已拆过的键名单 ——
+      // 那份名单叫 `plannedKeys`。两者同名过一次，数组盖掉数字，
+      // 于是拆出 24 张卡片的成功结果被显示成"没有新的条目需要规划"。
       const created = payload.created ?? 0;
-      const planned = payload.planned ?? 0;
+      const plannedCount = typeof payload.planned === 'number' ? payload.planned : 0;
+      const dropped = payload.dropped ?? 0;
+      const orphans = payload.orphans ?? 0;
+      // 对不上原文的卡片会进 `orphans`（宿主只报个数）。真丢了就要说出来 ——
+      // 与 `dropped` 同样的口径，不能一个报一个不报。
+      const notes = [];
+      if (dropped > 0) notes.push(`丢弃 ${dropped} 张不合规`);
+      if (orphans > 0) notes.push(`${orphans} 张对不上原文`);
       setPlanMsg({
         kind: 'ok',
-        text: planned > 0
-          ? `已把 ${planned} 条原文拆成 ${created} 张卡片${payload.dropped ? `（丢弃 ${payload.dropped} 张不合规）` : ''}`
-          : '没有新的条目需要规划',
+        text: `已把 ${plannedCount} 条原文拆成 ${created} 张卡片${notes.length ? `（${notes.join('，')}）` : ''}`,
       });
     } catch (failure) {
       setPlanMsg({ kind: 'error', text: failure.message });
@@ -257,12 +288,149 @@ export function Planning() {
   const todos = useMemo(() => {
     const xzzd = state.todos?.xzzd ?? { rows: [], error: null };
     const pta = state.todos?.pta ?? { rows: [], error: null };
+    const ticks = state.ticks ?? {};
+    /**
+     * 把本机勾选**并进**平台待办行。
+     *
+     * 不并的话，页面拿到的还是"平台说未完成"，用户勾过的条目会在每次刷新后
+     * 弹回未勾 —— 那比不能勾更让人困惑。
+     */
+    const withTicks = (rows) => (rows ?? []).map((row) => {
+      const tick = ticks[`${row.source}:${row.id}`];
+      return { ...row, done: Boolean(tick), doneAt: tick?.doneAt ?? null };
+    });
     return {
-      rows: [...(xzzd.rows ?? []), ...(pta.rows ?? [])],
+      rows: [...withTicks(xzzd.rows), ...withTicks(pta.rows)],
       xzzdError: xzzd.error,
       ptaError: pta.error,
     };
-  }, [state.todos]);
+  }, [state.todos, state.ticks]);
+
+  /* ── 「我的规划」：写、改、勾、删、拆 ──────────────────────────────── */
+
+  /**
+   * 把本地规划折成与待办同形状的行。
+   *
+   * 为什么折而不是单独一套渲染：它们在页面上就是"要去做的事"，和学在浙大待办
+   * 同池排序才有意义（不然"周三交作业"和"我自己记的周三交报告"会分两处出现）。
+   * `source: 'mine'` 是唯一的区别标记，页面据此换成可勾选的那一版行。
+   */
+  const localRows = useMemo(() => (state.local ?? []).map((item) => ({
+    source: 'mine',
+    sourceLabel: '我的规划',
+    id: item.id,
+    title: item.title,
+    detail: item.detail ?? '',
+    due: item.due ?? null,
+    dueText: null,
+    url: null,
+    kind: 'mine',
+    done: Boolean(item.done),
+    doneAt: item.doneAt ?? null,
+    splitInto: Array.isArray(item.splitInto) ? item.splitInto : [],
+    splitFrom: item.splitFrom ?? null,
+    createdAt: item.createdAt ?? 0,
+  })), [state.local]);
+
+  /** 统一的写操作包装：只把这一块置忙，失败就地显示，不动整页 loading。 */
+  const mutate = useCallback(async (action, body, options = {}) => {
+    if (options.id) setBusyId(options.id);
+    else setComposer({ busy: true, error: null });
+    try {
+      const payload = await settings(action, body);
+      if (payload.ok === false) throw new Error(errorText(payload.error, 200));
+      apply(payload);
+      return payload;
+    } catch (failure) {
+      const message = failure.message;
+      if (options.id) setPlanMsg({ kind: 'error', text: message });
+      else setComposer({ busy: false, error: message });
+      return null;
+    } finally {
+      if (options.id) setBusyId(null);
+      else setComposer({ busy: false, error: null });
+    }
+  }, [apply]);
+
+  /** 新建一条规划。成功返回新条目，供输入框清空用。 */
+  const createPlan = useCallback(async (input) => {
+    const payload = await mutate('local-create', input);
+    return payload?.item ?? null;
+  }, [mutate]);
+
+  const togglePlan = useCallback((row) => mutate('local-done', { id: row.id, done: !row.done }, { id: row.id }), [mutate]);
+
+  /**
+   * 勾掉一条**平台待办**（学在浙大 / 拼题A）。
+   *
+   * 这是本机标记，不写回平台 —— 见 `ticks.js` 顶部的说明。
+   */
+  const toggleTodo = useCallback((row) => mutate(
+    'todo-done',
+    { source: row.source, id: row.id, done: !row.done },
+    // 复合键：两个平台的 id 都是小整数，不区分来源会撞（`xzzd:12` vs `pta:12`）
+    { id: `todo:${row.source}:${row.id}` },
+  ), [mutate]);
+
+  /** 勾选 AI 拆出的卡片（状态落在 plans.json，不碰中转站）。 */
+  const toggleCard = useCallback((row) => mutate(
+    'plan-card-done',
+    { prefix: row.prefix, index: row.index, done: !row.done },
+    { id: row.id },
+  ), [mutate]);
+  const removePlan = useCallback((row) => mutate('local-remove', { id: row.id }, { id: row.id }), [mutate]);
+  const editPlan = useCallback((row, patch) => mutate('local-update', { id: row.id, ...patch }, { id: row.id }), [mutate]);
+
+  /**
+   * 让 AI 拆一条**自己写的**规划。
+   *
+   * 与页头那个「AI 自动规划」分开：那个拆的是中转站条目（历史内容），这个拆的是
+   * 你刚写下的那一句。两者共用宿主的同一条提示词与校验，只是入口不同。
+   */
+  const splitPlan = useCallback(async (row) => {
+    const force = row.splitInto.length > 0;
+    const payload = await mutate(force ? 'local-split-force' : 'local-split', { id: row.id }, { id: row.id });
+    if (!payload) return;
+    const split = payload.split ?? 0;
+    const extra = [];
+    if (payload.removed) extra.push(`清掉旧的 ${payload.removed} 条`);
+    if (payload.dropped) extra.push(`丢弃 ${payload.dropped} 张不合规`);
+    setPlanMsg({
+      kind: 'ok',
+      text: `已把「${row.title}」拆成 ${split} 条${extra.length ? `（${extra.join('，')}）` : ''}`,
+    });
+  }, [mutate]);
+
+  /** 忘掉一次拆分：删掉拆出的子项，让源条目回到"还没拆"。 */
+  const unsplitPlan = useCallback((row) => mutate('local-unsplit', { id: row.id }, { id: row.id }), [mutate]);
+
+  /**
+   * 读今天的课表，作为规划的**上下文**。
+   *
+   * 为什么是上下文而不是合并：`zhiyunStudyController` 属于领域包，可能没装、
+   * 可能没登录 —— 拿不到就安静地不显示，绝不让这一页因此报错或空掉。
+   * 这正是当初决定"两个页面不合并"的理由，这里必须守住。
+   *
+   * 数据只用于一件事：把"这天有没有课"标在截止时间旁边，让人在拆规划时看得见
+   * 那天的实际压力。
+   */
+  useEffect(() => {
+    const controller = ctx?.get?.('zhiyunStudyController');
+    if (!controller || typeof controller.subscribe !== 'function') return undefined;
+    const read = () => {
+      try {
+        const snapshot = controller.getSnapshot?.();
+        // 没登录就没有课表 —— 不是错误，只是没有这条上下文
+        setSchedule(snapshot?.user ? (snapshot.schedule ?? null) : null);
+        if (snapshot?.user) Promise.resolve(controller.loadSchedule?.()).catch(() => {});
+      } catch {
+        // 控制器内部状态异常也只是"没有课表"，绝不冒泡成页面错误
+        setSchedule(null);
+      }
+    };
+    read();
+    return controller.subscribe(read);
+  }, [ctx]);
 
   /**
    * 合成一条时间轴。
@@ -298,18 +466,51 @@ export function Planning() {
           action: card.action,
           tags: Array.isArray(card.tags) ? card.tags : [],
           prefix,
+          // 卡片也能勾完成：状态存在 plans.json 的 cards[i].done 上。
+          // 中转站那边只读，所以"我做完了"是本机的事实，不写回去。
+          index,
+          done: Boolean(card.done),
+          doneAt: card.doneAt ?? null,
         });
       });
     }
     return rows;
   }, [state.plans]);
 
+  /**
+   * 「还没做」的几份切片 —— **必须在 `groups` / `calendar` 之前声明**。
+   *
+   * ⚠️ 这几个 `const` 曾经写在 `groups` 之后，而 `groups` 的 `useMemo` 体里直接
+   *    引用了它们。`const` 有暂时性死区，于是页面首次渲染就抛
+   *    `Cannot access 'openTodos' before initialization` —— 表现为**整页白屏**。
+   *    构建不会报这种错（它只管语法与类型无关），只有真正跑起来才炸。
+   */
+  const openMine = useMemo(() => localRows.filter((row) => !row.done), [localRows]);
+  const doneMine = useMemo(() => localRows.filter((row) => row.done), [localRows]);
+  /** 已完成里的 AI 卡片。 */
+  const doneCards = useMemo(() => planCards.filter((row) => row.done), [planCards]);
+  /**
+   * 已完成的平台待办（本机勾掉的）。
+   *
+   * 它只在本页算完成（`ticks.json` 里的标记），平台那边没变 —— 所以它出现在
+   * 「已完成」里时，那一行仍然带着「平台状态没变」的说明。
+   */
+  const doneTodos = useMemo(() => todos.rows.filter((row) => row.done), [todos.rows]);
+  /**
+   * **还没做**的平台待办。
+   *
+   * 分组与日历都只看这一份：勾掉的条目不该继续占着「已过期 / 今天截止」这些位置，
+   * 否则勾了它还在最显眼处 —— 那勾选就没意义了。
+   */
+  const openTodos = useMemo(() => todos.rows.filter((row) => !row.done), [todos.rows]);
+
   const groups = useMemo(() => {
     const now = Date.now();
     const order = ['overdue', 'today', 'week', 'later', 'none'];
     const buckets = new Map();
-    // 待办与拆出的卡片**同池**：它们都是"要去做的事"，只是来源不同
-    for (const row of [...todos.rows, ...planCards]) {
+    // 待办与拆出的卡片**同池**：它们都是"要去做的事"，只是来源不同。
+    // ⚠️ 只放**还没做**的：勾掉的条目继续留在「已过期」里，等于勾了也没用。
+    for (const row of [...openTodos, ...planCards.filter((row) => !row.done), ...openMine]) {
       const key = `todo:${urgencyOf(row.due, now)}`;
       if (!buckets.has(key)) buckets.set(key, []);
       buckets.get(key).push(row);
@@ -328,8 +529,9 @@ export function Planning() {
 
     const byDay = [];
     for (const entry of state.entries) {
-      const date = new Date((entry.at ?? 0) * 1000);
-      const key = Number.isNaN(date.getTime()) ? 'unknown' : date.toISOString().slice(0, 10);
+      // 分组键与标签**必须同一时区**，否则跨 UTC 日界的条目会分成两个同名组。
+      // 见 `dayKey` 上的注释。
+      const key = dayKey(entry.at);
       const last = byDay[byDay.length - 1];
       if (last && last.key === key) last.rows.push(entry);
       else byDay.push({ key, label: dayLabel(entry.at), rows: [entry] });
@@ -339,14 +541,59 @@ export function Planning() {
     for (const group of byDay) group.rows.reverse();
 
     return { todoGroups, entryGroups: byDay };
-  }, [todos.rows, state.entries, planCards]);
+  }, [openTodos, state.entries, planCards, openMine]);
 
-  const configured = state.remote !== null && state.remote.synced !== undefined
-    ? true
-    : false;
-  const remoteOk = state.remote?.synced === true;
+  /**
+   * 日历视图的格子：只收**有确定截止时间**的事。
+   *
+   * 为什么只收有日期的：这一页的多数条目 `due` 是 null（写的时候不逼着填时间），
+   * 而中转站条目是"写下"而不是"截止"。把它们塞进日历的某一天是编造时间。
+   * 没有日期的那部分仍然留在列表里，一条不少。
+   */
+  const calendar = useMemo(() => {
+    const dated = [
+      ...openTodos,
+      ...planCards.filter((row) => !row.done),
+      ...openMine,
+    ].filter((row) => {
+      if (!row.due) return false;
+      return !Number.isNaN(Date.parse(row.due));
+    });
+
+    // 按上海时区归到"哪一天"，与 dayKey 同一口径
+    const byDay = new Map();
+    for (const row of dated) {
+      const key = dayKey(Math.floor(Date.parse(row.due) / 1000));
+      if (!byDay.has(key)) byDay.set(key, []);
+      byDay.get(key).push(row);
+    }
+    // 34 天窗口：今天往前 6 天（回看刚过去的）+ 往后 27 天
+    //
+    // ⚠️ `dayKey` 收的是**秒**，`Date.now()` 给的是毫秒 —— 少除一次 1000 会把
+    //    "今天"算到五万年后，窗口里一格都对不上。这是实际发生过的错。
+    const base = Date.parse(dayKey(Math.floor(Date.now() / 1000)) + 'T00:00:00+08:00');
+    const days = [];
+    for (let offset = -6; offset < 28; offset += 1) {
+      const at = base + offset * 86400000;
+      const key = dayKey(at / 1000);
+      days.push({
+        key,
+        offset,
+        date: new Date(at),
+        rows: (byDay.get(key) ?? []).sort((a, b) => Date.parse(a.due) - Date.parse(b.due)),
+      });
+    }
+    // 超出窗口的日期不丢：单独列在末尾，避免"我的事不见了"
+    const outside = [...byDay.entries()]
+      .filter(([key]) => !days.some((day) => day.key === key))
+      .map(([key, rows]) => ({ key, rows }));
+    return { days, outside, total: dated.length, undated: [
+      ...todos.rows, ...planCards.filter((r) => !r.done), ...openMine,
+    ].filter((row) => !row.due).length };
+  }, [openTodos, planCards, openMine]);
+
   // 卡片已经并进 todos.rows 之外的 planCards，二者都是"要做的"
-  const hasAnything = todos.rows.length > 0 || planCards.length > 0 || state.entries.length > 0;
+  const hasAnything = todos.rows.length > 0 || planCards.length > 0 || state.entries.length > 0 || localRows.length > 0;
 
   return (
     <div className="zpg-page">
@@ -354,10 +601,29 @@ export function Planning() {
         <div>
           <span className="zy-eyebrow">接下来与写过的</span>
           <h1>规划</h1>
-          <p>待办来自学在浙大与拼题A，其余是你自己中转站里的内容。</p>
+          <p>写下要做的事，AI 帮你拆成可执行的条目；待办来自学在浙大与拼题A。</p>
         </div>
         <div className="zpg-tools">
-          {!loading && <span className="zpg-count">{summarize(todos.rows.length + planCards.length, state.entries.length)}</span>}
+          {!loading && <span className="zpg-count">{summarize(todos.rows.length + planCards.length + localRows.length, state.entries.length)}</span>}
+          {/* 视图切换：列表 / 日历。日历只呈现有截止时间的事，切换不发请求。 */}
+          <span className="zpg-view" role="group" aria-label="视图">
+            <button
+              type="button"
+              className={view === 'list' ? 'zpg-view-on' : ''}
+              aria-pressed={view === 'list'}
+              onClick={() => setView('list')}
+            >
+              列表
+            </button>
+            <button
+              type="button"
+              className={view === 'calendar' ? 'zpg-view-on' : ''}
+              aria-pressed={view === 'calendar'}
+              onClick={() => setView('calendar')}
+            >
+              日历
+            </button>
+          </span>
           <button
             type="button"
             className="zy-secondary zpg-plan"
@@ -388,7 +654,14 @@ export function Planning() {
 
       {!loading && (
         <div className="zpg-slot">
-          {/* 数据源状态：每个来源一句话，失败原因分别说 —— 它们该去的地方不一样 */}
+          {/* 写入口放在最前：这一页的主动作是"写下要做什么"，不是浏览别人推来的东西 */}
+          <PlanComposer
+            busy={composer.busy}
+            error={composer.error}
+            onCreate={createPlan}
+            schedule={schedule}
+          />
+
           {planMsg && (
             <p className={`zpg-plan-msg ${planMsg.kind === 'error' ? 'zpg-plan-msg-error' : ''}`} role="status">
               {planMsg.text}
@@ -400,54 +673,135 @@ export function Planning() {
             pta={state.pta}
             remote={state.remote}
             entryCount={state.entries.length}
+            mineCount={localRows.length}
           />
 
           {error && <ErrorBlock error={error} />}
 
           {!hasAnything && !error && (
             <Empty icon="calendar" title="还没有内容">
-              配好数据源之后，这里会出现你的待办、以及从中转站同步过来的记录。
+              上面写一条规划就能开始；也可以在「个人 → 设置 → 规划数据源」配好数据源，
+              让待办与中转站的内容也出现在这里。
             </Empty>
           )}
 
-          {groups.todoGroups.length > 0 && (
-            <div className="zpg-days">
-              {groups.todoGroups.map((group) => (
-                <section key={group.key} className="zpg-day" aria-labelledby={`zpg-${group.key}`}>
-                  <SectionTitle aside={group.rows.length > 1 ? `${group.rows.length} 条` : null}>
-                    <span id={`zpg-${group.key}`}>{group.label}</span>
-                  </SectionTitle>
-                  <ul className="zpg-list">
-                    {group.rows.map((row) => <TodoRow key={`${row.source}:${row.id}`} row={row} />)}
-                  </ul>
-                </section>
-              ))}
-            </div>
+          {/* 自己做过的：单独一栏，可勾掉也可以再打开 */}
+          {(doneMine.length > 0 || doneCards.length > 0 || doneTodos.length > 0) && (
+            <section className="zpg-day zpg-done-block" aria-labelledby="zpg-done">
+              <SectionTitle aside={`${doneMine.length + doneCards.length + doneTodos.length} 条`}>
+                <span id="zpg-done">已完成</span>
+              </SectionTitle>
+              <ul className="zpg-list">
+                {doneMine.map((row) => (
+                  <MineRow
+                    key={row.id}
+                    row={row}
+                    onToggle={togglePlan}
+                    onRemove={removePlan}
+                    onEdit={editPlan}
+                    onSplit={splitPlan}
+                    onUnsplit={unsplitPlan}
+                    busy={busyId === row.id}
+                    schedule={schedule}
+                  />
+                ))}
+                {doneCards.map((row) => (
+                  <CardRow key={row.id} row={row} onToggle={toggleCard} busy={busyId === row.id} />
+                ))}
+                {/* 本机勾掉的平台待办：每一行仍带着「平台状态没变」的说明 */}
+                {doneTodos.map((row) => (
+                  <TodoRow
+                    key={`${row.source}:${row.id}`}
+                    row={row}
+                    onToggle={toggleTodo}
+                    busy={busyId === `todo:${row.source}:${row.id}`}
+                  />
+                ))}
+              </ul>
+            </section>
           )}
 
-          {groups.entryGroups.length > 0 && (
-            <div className="zpg-days">
-              {groups.entryGroups.map((group) => (
-                <section key={group.key} className="zpg-day" aria-labelledby={`zpg-day-${group.key}`}>
-                  <DayHeading id={`zpg-day-${group.key}`} label={group.label} rows={group.rows} />
-                  <ul className="zpg-list">
-                    {group.rows.map((item) => (
-                      <EntryRow
-                        key={item.seq ?? item.prefix}
-                        item={item}
-                        plan={state.plans[item.prefix]}
-                        onForget={forgetPlan}
-                      />
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
+          {view === 'calendar' ? (
+            <CalendarView
+              calendar={calendar}
+              onToggle={toggleCard}
+              onTogglePlan={togglePlan}
+              onToggleTodo={toggleTodo}
+              busyId={busyId}
+            />
+          ) : (
+            <>
+              {/* 待办分组：平台待办、自己写的、AI 拆出的**同池**按紧迫度排，
+                  但各自用不同形态 —— 它们能被做的动作不一样。 */}
+              {groups.todoGroups.length > 0 && (
+                <div className="zpg-days">
+                  {groups.todoGroups.map((group) => (
+                    <section key={group.key} className={`zpg-day ${group.key === 'overdue' ? 'zpg-day-overdue' : ''}`} aria-labelledby={`zpg-${group.key}`}>
+                      <SectionTitle aside={group.rows.length > 1 ? `${group.rows.length} 条` : null}>
+                        <span id={`zpg-${group.key}`}>{group.label}</span>
+                      </SectionTitle>
+                      <ul className="zpg-list">
+                        {group.rows.map((row) => {
+                          if (row.source === 'mine') {
+                            return (
+                              <MineRow
+                                key={row.id}
+                                row={row}
+                                onToggle={togglePlan}
+                                onRemove={removePlan}
+                                onEdit={editPlan}
+                                onSplit={splitPlan}
+                                onUnsplit={unsplitPlan}
+                                busy={busyId === row.id}
+                                schedule={schedule}
+                              />
+                            );
+                          }
+                          if (row.source === 'plan') {
+                            return <CardRow key={row.id} row={row} onToggle={toggleCard} busy={busyId === row.id} />;
+                          }
+                          // 学在浙大 / 拼题A：平台数据，只读 + 外链
+                          return (
+                            <TodoRow
+                              key={`${row.source}:${row.id}`}
+                              row={row}
+                              onToggle={toggleTodo}
+                              busy={busyId === `todo:${row.source}:${row.id}`}
+                            />
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              )}
+
+              {groups.entryGroups.length > 0 && (
+                <div className="zpg-days">
+                  {groups.entryGroups.map((group) => (
+                    <section key={group.key} className="zpg-day" aria-labelledby={`zpg-day-${group.key}`}>
+                      <DayHeading id={`zpg-day-${group.key}`} label={group.label} rows={group.rows} />
+                      <ul className="zpg-list">
+                        {group.rows.map((item) => (
+                          <EntryRow
+                            key={item.seq ?? item.prefix}
+                            item={item}
+                            plan={state.plans[item.prefix]}
+                            onForget={forgetPlan}
+                          />
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           {hasAnything && (
             <p className="zpg-foot">
               中转站的内容已在本机留了一份，那台创空间丢了数据也不会影响这里。
+              你自己写的规划只存在本机。
             </p>
           )}
         </div>
@@ -470,17 +824,22 @@ function summarize(todoCount, entryCount) {
  * 三个来源各占一小段：能读的显示条数，读不了的显示**该去哪儿配**。
  * 这一块的价值在于：用户看到空列表时立刻知道是"没配"还是"配了但读不到"。
  *
- * ⚠️ 学在浙大缺账号**不是故障**，是还没做一次配置。所以它的文案写"未配置"并给出
- *    可直接照做的命令，而不是把 `LOGIN_REQUIRED` 原文摊在页面上 —— 看见一段英文
- *    代码的用户会以为页面坏了，而其实只要在终端跑一条命令。
+ * ⚠️ 学在浙大缺账号**不是故障**，是还没做一次配置。所以它的文案写"未配置"并指出
+ *    可照做的下一步，而不是把 `LOGIN_REQUIRED` 原文摊在页面上 —— 看见一段英文
+ *    代码的用户会以为页面坏了。
+ *
+ * ⚠️ 「下一步」指向**设置里的浙大一卡通那一块**。它曾经指向「个人」页的
+ *    「连接课堂」按钮，但那个入口已经改成占位：写入口统一到了设置。文案不改，
+ *    用户会去找一个不存在的按钮。
  */
-function SourceBar({ todos, pta, remote, entryCount }) {
+function SourceBar({ todos, pta, remote, entryCount, mineCount }) {
   const xzzd = todos.xzzdError;
   const ptaError = todos.ptaError;
   const remoteError = remote?.error;
-  // 学在浙大读不到 = 还没登录过浙大账号。**不引导去终端跑命令**：凭据已经集中在
-  // 宿主（课堂登录时写入，omni 读取），所以只需在「个人」页登录一次。
-  // 「还没登录」不是故障，是待完成的动作。三个码都归于这一类：
+  // 学在浙大读不到 = 还没配过「浙大一卡通」。**不引导去终端跑命令**，也**不再**
+  // 指向「个人」页那个「连接课堂」按钮 —— 凭据现在统一在「设置 → 浙大一卡通」写入，
+  // 那一份由智云课堂与学在浙大共用。
+  // 「没配」不是故障，是待完成的动作。三个码都归于这一类：
   //   NEED_LOGIN      —— 宿主侧翻译后的统一码（当前口径）
   //   LOGIN_REQUIRED  —— 数据包原始码（宿主翻译漏掉时兜底）
   //   NO_SESSION      —— 旧桥接方案留下的码，保留以免旧缓存读到就显示"读取失败"
@@ -489,12 +848,14 @@ function SourceBar({ todos, pta, remote, entryCount }) {
 
   return (
     <div className="zpg-sources">
+      {/* 自己写的排第一：它不需要任何配置，也是这一页的主动作 */}
+      <SourceItem label="我的规划" ok text={mineCount > 0 ? `${mineCount} 条` : '还没有 · 在上面写一条'} />
       <SourceItem
         label="学在浙大"
         ok={!xzzd}
         text={needLogin
-          ? '未登录 · 去「个人」页点「连接课堂」'
-          : xzzd ? '读取失败' : `${todos.rows.filter((r) => r.source === 'xzzd').length} 条`}
+          ? '浙大一卡通未登录 · 去「设置」里配一次'
+          : xzzd ? (xzzd.message || '暂时无法读取，请稍后再试') : `${todos.rows.filter((r) => r.source === 'xzzd').length} 条`}
         title={xzzd?.message}
       />
       <SourceItem
@@ -530,27 +891,465 @@ function SourceItem({ label, ok, text, title }) {
 }
 
 /**
- * 一条待办。
+ * 写入口。
  *
- * 待办是**可点去处理的**（学在浙大/拼题A 都有原始页面），所以它用 `<a>`；
- * 这与中转站条目不同 —— 那种是只读文本，做成可点是假承诺。
+ * 这一页的主动作是"写下要做什么"，所以它排在最前面，而不是藏在某个按钮后面。
+ *
+ * 三个设计取舍：
+ *   1. **只有标题必填**。逼着填截止时间会让"随便记一条"变成一件麻烦事，
+ *      而没有时间的规划本来就是这个页面上最常见的东西（`due: null` 是正常值）。
+ *   2. 截止时间用 `datetime-local`：原生控件自带日期选择器，键盘也能直接输入，
+ *      比自造的日历控件可靠得多，也不必为它写一份无障碍支持。
+ *   3. 提交后**不清空失败内容** —— 写了一大段却因为网络失败被清掉是最糟的体验。
  */
-function TodoRow({ row }) {
+function PlanComposer({ busy, error, onCreate, schedule }) {
+  const [title, setTitle] = useState('');
+  const [detail, setDetail] = useState('');
+  const [due, setDue] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const submit = async (event) => {
+    event.preventDefault();
+    const name = title.trim();
+    if (!name) return;
+    const created = await onCreate({
+      title: name,
+      detail: detail.trim(),
+      // 空串要转成 null：宿主把 '' 当"没说时间"，但显式传更清楚
+      due: due ? new Date(due).toISOString() : null,
+    });
+    if (created) {
+      // 只在**成功**时清空
+      setTitle('');
+      setDetail('');
+      setDue('');
+      setOpen(false);
+    }
+  };
+
+  return (
+    <form className="zpg-composer" onSubmit={submit}>
+      <div className="zpg-composer-row">
+        <label className="zpg-composer-title">
+          <span className="zpg-visually-hidden">要做什么</span>
+          <input
+            type="text"
+            value={title}
+            maxLength={80}
+            placeholder="要做什么？例如「周三前交第三章作业」"
+            onChange={(event) => setTitle(event.target.value)}
+            disabled={busy}
+            aria-label="要做什么"
+          />
+        </label>
+        <button type="submit" className="zy-primary zpg-composer-add" disabled={busy || !title.trim()}>
+          <Icon name="plus" size={16} />
+          {busy ? '正在保存…' : '添加'}
+        </button>
+      </div>
+
+      {/* 备注与截止时间默认收起：绝大多数情况只需要写一句话 */}
+      {open ? (
+        <div className="zpg-composer-more">
+          <label className="zpg-field">
+            <span>备注（可选）</span>
+            <textarea
+              rows={3}
+              value={detail}
+              maxLength={500}
+              placeholder="一段话里塞了好几件事也没关系 —— 写完可以让 AI 帮你拆开"
+              onChange={(event) => setDetail(event.target.value)}
+              disabled={busy}
+            />
+          </label>
+          <label className="zpg-field zpg-field-inline">
+            <span>截止时间（可选）</span>
+            <input
+              type="datetime-local"
+              value={due}
+              onChange={(event) => setDue(event.target.value)}
+              disabled={busy}
+            />
+            {/* 课表上下文：只在真读到了课表时才说，读不到就一个字都不提 */}
+            {due && scheduleHint(schedule, due) && (
+              <small className="zpg-schedule-hint">{scheduleHint(schedule, due)}</small>
+            )}
+          </label>
+        </div>
+      ) : (
+        <button type="button" className="zpg-link" onClick={() => setOpen(true)}>
+          + 加备注或截止时间
+        </button>
+      )}
+
+      {error && <p className="zpg-composer-error" role="alert">{error}</p>}
+    </form>
+  );
+}
+
+/**
+ * 「那天有没有课」的一句话提示。
+ *
+ * 只回答"有没有、几节"，不做任何建议 —— 我们不知道这件事要花多久，
+ * 硬给"你来得及/来不及"是替用户做了一个他不该被代做的判断。
+ *
+ * @param schedule - 课表（`[{ day, courses }]`）或 null。
+ * @param dueLocal - `datetime-local` 的值（`YYYY-MM-DDTHH:mm`，本地时区）。
+ * @returns 提示文案，或空串表示无话可说。
+ */
+function scheduleHint(schedule, dueLocal) {
+  if (!Array.isArray(schedule) || schedule.length === 0) return '';
+  const at = new Date(dueLocal);
+  if (Number.isNaN(at.getTime())) return '';
+  // 用上海时区取"哪一天"，与页面别处同一口径
+  const day = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(at);
+  const row = schedule.find((item) => item?.day === day);
+  const count = Array.isArray(row?.courses) ? row.courses.length : 0;
+  if (count === 0) return '这天没有课。';
+  return `这天有 ${count} 节课。`;
+}
+
+/**
+ * 一条**自己写的**规划。
+ *
+ * 与 `TodoRow` 的差别是它**可操作**：能勾完成、能改、能删、能让 AI 拆。
+ * 学在浙大/拼题A 的待办做不到这些 —— 那不是我们的数据，勾了也没有地方存
+ * （中转站只接受追加，且那两份数据在平台侧才是权威）。
+ */
+function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, schedule }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ title: row.title, detail: row.detail, due: toLocalInput(row.due) });
+  const [confirming, setConfirming] = useState(false);
+
+  // 外部数据变了（比如 AI 拆完刷新）要把草稿跟上，否则编辑框会停在旧值上
+  useEffect(() => {
+    setDraft({ title: row.title, detail: row.detail, due: toLocalInput(row.due) });
+  }, [row.title, row.detail, row.due]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const name = draft.title.trim();
+    if (!name) return;
+    await onEdit(row, {
+      title: name,
+      detail: draft.detail.trim(),
+      due: draft.due ? new Date(draft.due).toISOString() : null,
+    });
+    setEditing(false);
+  };
+
+  const splitCount = row.splitInto.length;
+
+  return (
+    <li>
+      <div className={`zpg-item zpg-item-mine ${row.done ? 'zpg-item-done' : ''}`}>
+        {editing ? (
+          <form className="zpg-edit" onSubmit={save}>
+            <label className="zpg-field">
+              <span>要做什么</span>
+              <input
+                type="text"
+                value={draft.title}
+                maxLength={80}
+                onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+                disabled={busy}
+                autoFocus
+              />
+            </label>
+            <label className="zpg-field">
+              <span>备注</span>
+              <textarea
+                rows={2}
+                value={draft.detail}
+                maxLength={500}
+                onChange={(event) => setDraft({ ...draft, detail: event.target.value })}
+                disabled={busy}
+              />
+            </label>
+            <label className="zpg-field zpg-field-inline">
+              <span>截止时间</span>
+              <input
+                type="datetime-local"
+                value={draft.due}
+                onChange={(event) => setDraft({ ...draft, due: event.target.value })}
+                disabled={busy}
+              />
+            </label>
+            <div className="zpg-edit-foot">
+              <button className="zy-primary" disabled={busy || !draft.title.trim()}>
+                {busy ? '正在保存…' : '保存'}
+              </button>
+              <button type="button" className="zpg-link" onClick={() => setEditing(false)} disabled={busy}>
+                取消
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div className="zpg-summary zpg-summary-static">
+              {/* 勾选框是**原生控件**：键盘可操作、朗读器认、不依赖自绘 */}
+              <input
+                type="checkbox"
+                className="zpg-check"
+                checked={row.done}
+                disabled={busy}
+                onChange={() => onToggle(row)}
+                aria-label={row.done ? `把「${row.title}」标为未完成` : `把「${row.title}」标为已完成`}
+              />
+              <span className={`zpg-kind ${row.splitFrom ? 'zpg-kind-split' : 'zpg-kind-mine'}`}>
+                <Icon name={row.splitFrom ? 'layers' : 'check'} size={13} />
+                {row.splitFrom ? 'AI 拆出' : '我的规划'}
+              </span>
+              <span className={`zpg-title ${row.done ? 'zpg-title-done' : ''}`}>{row.title}</span>
+              <span className="zpg-meta">
+                {splitCount > 0 && <span className="zpg-planned">已拆 {splitCount} 条</span>}
+                <span className="zpg-due">
+                  {whenIso(row.due)}
+                  {row.due && !row.done && <em className="zpg-left">{countdown(row.due)}</em>}
+                </span>
+              </span>
+            </div>
+
+            {row.detail && !row.done && <p className="zpg-todo-action">{row.detail}</p>}
+
+            {/* 课表上下文：只在有截止时间、且真读到课表时出现 */}
+            {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
+              <p className="zpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
+            )}
+
+            <div className="zpg-row-actions">
+              {/* 让 AI 拆这一条 —— 这一页最有用的动作，所以放在第一个 */}
+              <button type="button" className="zpg-link" onClick={() => onSplit(row)} disabled={busy}>
+                <Icon name="bulb" size={13} />
+                {busy ? '正在拆分…' : splitCount > 0 ? '重新拆分' : 'AI 拆分'}
+              </button>
+              {splitCount > 0 && (
+                <button type="button" className="zpg-link" onClick={() => onUnsplit(row)} disabled={busy}>
+                  忘掉这次拆分
+                </button>
+              )}
+              <button type="button" className="zpg-link" onClick={() => setEditing(true)} disabled={busy}>
+                编辑
+              </button>
+              {confirming ? (
+                <>
+                  {/* 删除不可撤销，所以要一次确认；但确认就地做，不弹窗 */}
+                  <button type="button" className="zpg-link zpg-link-danger" onClick={() => onRemove(row)} disabled={busy}>
+                    确认删除
+                  </button>
+                  <button type="button" className="zpg-link" onClick={() => setConfirming(false)} disabled={busy}>
+                    取消
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="zpg-link" onClick={() => setConfirming(true)} disabled={busy}>
+                  删除
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * ISO 时间串 → `datetime-local` 输入框要的本地时间格式。
+ *
+ * `datetime-local` 认的是**本地时间**且没有时区后缀（`YYYY-MM-DDTHH:mm`），
+ * 直接塞 ISO（`...Z`）在多数浏览器里会被当成无效值而显示成空 —— 用户会以为
+ * 自己填的截止时间丢了。
+ *
+ * @param iso - ISO 串或 null。
+ * @returns `YYYY-MM-DDTHH:mm`，或空串。
+ */
+function toLocalInput(iso) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  // 用上海时区的墙钟时间：这一页的其余显示也都是上海时区
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date);
+  const pick = (type) => parts.find((part) => part.type === type)?.value ?? '';
+  return `${pick('year')}-${pick('month')}-${pick('day')}T${pick('hour')}:${pick('minute')}`;
+}
+
+/**
+ * 一条 **AI 从中转站拆出的卡片**。
+ *
+ * 与 `MineRow` 的区别很具体：它**不能改也不能删**（内容是模型从原文拆出来的，
+ * 改它就等于改了原文的意思；删它则会与 `plans.json` 里的映射脱节 —— 要删该用
+ * 「忘掉这次拆分」）。但它**能勾完成**：那件事做没做完只有用户知道，
+ * 而这个状态存在我们自己的 `plans.json` 里，不需要碰中转站。
+ */
+function CardRow({ row, onToggle, busy }) {
+  return (
+    <li>
+      <div className={`zpg-item zpg-item-card ${row.done ? 'zpg-item-done' : ''}`}>
+        <div className="zpg-summary zpg-summary-static">
+          <input
+            type="checkbox"
+            className="zpg-check"
+            checked={row.done}
+            disabled={busy}
+            onChange={() => onToggle(row)}
+            aria-label={row.done ? `把「${row.title}」标为未完成` : `把「${row.title}」标为已完成`}
+          />
+          <span className="zpg-kind zpg-kind-split">
+            <Icon name="layers" size={13} />
+            AI 拆出
+          </span>
+          <span className={`zpg-title ${row.done ? 'zpg-title-done' : ''}`}>{row.title}</span>
+          <span className="zpg-meta">
+            <span className="zpg-due">
+              {whenIso(row.due)}
+              {row.due && !row.done && <em className="zpg-left">{countdown(row.due)}</em>}
+            </span>
+          </span>
+        </div>
+        {row.action && !row.done && <p className="zpg-todo-action">{row.action}</p>}
+        {row.detail && !row.done && <p className="zpg-row-hint">{row.detail}</p>}
+      </div>
+    </li>
+  );
+}
+
+/**
+ * 日历视图：**只呈现有确定截止时间的事**。
+ *
+ * 三条设计约束：
+ *
+ *   1. **不编造日期**。没有 `due` 的条目不进格子，下面用一句话说明还有几件，
+ *      而它们仍然完整地留在列表视图里。把无日期的条目塞进某一天，等于替用户
+ *      编了一个他没写的截止时间 —— 那正是提示词里明令禁止的事。
+ *   2. **回看 6 天、往后 4 周**。这个窗口覆盖"刚过去、正当时、未来一个月"，
+ *      再远的事情用列表看更合适（也会让格子挤成马赛克）。
+ *   3. 空格子**也画出来**：「这天没安排」本身是有用信息，与今天页「今天没有课」
+ *      是同一类判断。空着不画反而让人怀疑自己漏了什么。
+ */
+function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId }) {
+  const { days, outside, undated } = calendar;
+  const todayKey = dayKey(Math.floor(Date.now() / 1000));
+  const weekdayFmt = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', weekday: 'short' });
+  const dayFmt = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', day: 'numeric' });
+
+  return (
+    <div className="zpg-cal">
+      <div className="zpg-cal-grid">
+        {days.map((day) => {
+          const isToday = day.key === todayKey;
+          const overdue = day.offset < 0 && day.rows.some((row) => !row.done);
+          return (
+            <section
+              key={day.key}
+              className={[
+                'zpg-cal-cell',
+                isToday ? 'zpg-cal-today' : '',
+                overdue ? 'zpg-cal-past' : '',
+                day.rows.length === 0 ? 'zpg-cal-blank' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <header className="zpg-cal-head">
+                <span className="zpg-cal-weekday">{weekdayFmt.format(day.date)}</span>
+                <span className="zpg-cal-day">{dayFmt.format(day.date)}</span>
+                {isToday && <span className="zpg-cal-badge">今天</span>}
+              </header>
+              {day.rows.length > 0 ? (
+                <ul className="zpg-cal-list">
+                  {day.rows.map((row) => {
+                    // 三类行各有各的勾选动作：平台待办是**本机标记**，
+                    // 自己的规划与 AI 卡片是真正的完成状态。
+                    const toggle = row.source === 'mine'
+                      ? () => onTogglePlan(row)
+                      : row.source === 'plan'
+                        ? () => onToggle(row)
+                        : () => onToggleTodo(row);
+                    const busyKey = row.source === 'xzzd' || row.source === 'pta'
+                      ? `todo:${row.source}:${row.id}`
+                      : row.id;
+                    return (
+                      <li key={`${row.source}:${row.id}`} className="zpg-cal-item">
+                        <input
+                          type="checkbox"
+                          className="zpg-check zpg-check-sm"
+                          checked={Boolean(row.done)}
+                          disabled={busyId === busyKey}
+                          onChange={toggle}
+                          aria-label={`把「${row.title}」标为已完成`}
+                        />
+                        <span
+                          className={`zpg-cal-title ${row.done ? 'zpg-title-done' : ''}`}
+                          title={row.title}
+                        >
+                          {row.title}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : <p className="zpg-cal-none" aria-label="没有安排">·</p>}
+            </section>
+          );
+        })}
+      </div>
+
+      {outside.length > 0 && (
+        <p className="zpg-cal-note">
+          窗口之外还有 {outside.reduce((sum, group) => sum + group.rows.length, 0)} 件有日期的安排，用列表视图看更合适。
+        </p>
+      )}
+      {undated > 0 && (
+        <p className="zpg-cal-note">
+          另外 {undated} 件没有截止时间 —— 没有日期就不该被摆在某一天里，它们在列表视图里都在。
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 一条**平台待办**（学在浙大 / 拼题A）。
+ *
+ * 它能勾，但勾的是**本机标记**，不是平台的完成状态 —— 勾一下不会让学在浙大认为
+ * 作业交过了，也不会让拼题A 关闭题集。所以这里必须做两件事：
+ *
+ *   1. 勾选框旁边留一句「本机标记」，说明它的含义（不能让人以为勾了等于交了）；
+ *   2. 勾掉之后这一条**仍然可点去原页面**（`<a>` 还在）—— 因为真正的动作在那边。
+ *
+ * 平台那边仍然是权威：它说未提交就是未提交。本机勾选只表示"这件事我不需要再被提醒"。
+ */
+function TodoRow({ row, onToggle, busy }) {
   const kind = KIND[row.kind] ?? KIND_FALLBACK;
   return (
     <li>
-      <div className="zpg-item zpg-item-todo">
+      <div className={`zpg-item zpg-item-todo ${row.done ? 'zpg-item-done' : ''}`}>
         <div className="zpg-summary zpg-summary-static">
+          <input
+            type="checkbox"
+            className="zpg-check"
+            checked={Boolean(row.done)}
+            disabled={busy}
+            onChange={() => onToggle(row)}
+            aria-label={row.done
+              ? `把「${row.title}」标为未完成（只影响本页，不影响平台）`
+              : `把「${row.title}」标为已完成（只影响本页，不影响平台）`}
+          />
           <span className={`zpg-kind ${kind.cls}`}>
             <Icon name={kind.icon} size={13} />
             {row.sourceLabel}
           </span>
-          <span className="zpg-title">{row.title}</span>
+          <span className={`zpg-title ${row.done ? 'zpg-title-done' : ''}`}>{row.title}</span>
           <span className="zpg-meta">
             {row.detail && <span className="zpg-detail">{row.detail}</span>}
             <span className="zpg-due">
               {whenIso(row.due)}
-              {row.due && <em className="zpg-left">{countdown(row.due)}</em>}
+              {row.due && !row.done && <em className="zpg-left">{countdown(row.due)}</em>}
             </span>
           </span>
           {row.url && (
@@ -559,9 +1358,13 @@ function TodoRow({ row }) {
             </a>
           )}
         </div>
-        {/* AI 拆出的卡片带「具体动作」：那才是可执行的那一句。
-            放在标题下面而不是等宽并排 —— 它通常比标题长。 */}
-        {row.action && <p className="zpg-todo-action">{row.action}</p>}
+        {/* 勾掉之后才说这句话：没勾的人不需要读，勾了的人必须知道它的边界。 */}
+        {row.done && (
+          <p className="zpg-row-hint">
+            已在本页标记完成，平台那边的状态没有改变。
+            {row.url && '要真正提交，仍要点右边的箭头去原页面。'}
+          </p>
+        )}
       </div>
     </li>
   );
@@ -669,19 +1472,17 @@ function ErrorBlock({ error }) {
 }
 
 /**
- * 设置分区。
+ * 设置分区：**拼题A**。
  *
- * 两个彼此独立的配置：
- *   1. 中转站（域名 + 读密钥）；
- *   2. 拼题A Cookie（短信验证，只能手动导入；与智云账号无关）。
- * 学在浙大不在这里 —— 它复用智云的 CAS 账号，避免两处填同一份密码。
+ * 只有一项：Cookie。它与中转站是**互不相干**的两件事，所以分成两个折叠分组
+ * （见 `apply` 里那两处 `settings.section` 注册）。
+ *
+ * 学在浙大不在这里 —— 它用的是「浙大一卡通」账号（`dsh-zhiyun-card` 那块），
+ * 与拼题A 的 Cookie 是两套完全不同的凭证。
  */
-export function SettingsSection() {
-  const [endpoint, setEndpoint] = useState('');
-  const [readKey, setReadKey] = useState('');
+export function PtaSection() {
   const [cookie, setCookie] = useState('');
   const [state, setState] = useState({ loading: true, saving: false, message: null, error: null });
-  const [summary, setSummary] = useState('读取中…');
   const [pta, setPta] = useState(null);
 
   useEffect(() => {
@@ -689,38 +1490,13 @@ export function SettingsSection() {
     settings('').then(
       (payload) => {
         if (!live) return;
-        setEndpoint(payload.config?.endpoint ?? '');
-        setReadKey(payload.config?.readKey ?? '');
         setPta(payload.pta ?? null);
-        setSummary(describeSummary(payload));
         setState({ loading: false, saving: false, message: null, error: null });
       },
       (failure) => { if (live) setState({ loading: false, saving: false, message: null, error: failure.message }); },
     );
     return () => { live = false; };
   }, []);
-
-  const saveEndpoint = async (event) => {
-    event.preventDefault();
-    setState({ loading: false, saving: true, message: null, error: null });
-    try {
-      const payload = await settings('save', { endpoint, readKey });
-      setEndpoint(payload.config?.endpoint ?? endpoint);
-      setReadKey(payload.config?.readKey ?? '');
-      setPta(payload.pta ?? null);
-      setSummary(describeSummary(payload));
-      setState({
-        loading: false,
-        saving: false,
-        message: payload.remote?.error
-          ? `已保存，但同步失败：${payload.remote.error.message}`
-          : `已保存，本地共 ${payload.entries?.length ?? 0} 条记录`,
-        error: null,
-      });
-    } catch (failure) {
-      setState({ loading: false, saving: false, message: null, error: failure.message });
-    }
-  };
 
   const saveCookie = async (event) => {
     event.preventDefault();
@@ -740,11 +1516,101 @@ export function SettingsSection() {
     }
   };
 
-  // ⚠️ 这里**不画** `<details>` / `<summary>` / `.zy-settings-group`。
+  // ⚠️ 这里**不画** `<details>` / `.zy-settings-group`。
   //    壳的 `PersonalSettingsBridge` 已经为每个 `settings.section` 注册渲染了外层折叠分组
   //    （图标 + 标题 + 副标题 + chevron + body），然后才把本组件渲染进 body 里。
-  //    自己再包一层，结果就是截图里那种"壳套壳"：两层折叠框、两个"规划数据源"标题。
-  //    参考 `dsh-zhiyun-page-paper/src/SettingsSection.jsx` —— 它直接返回 `<form>`。
+  //    自己再包一层会变成"壳套壳"：两层折叠框、两个同名标题。
+  return (
+    <>
+      <form className="zpg-form" onSubmit={saveCookie}>
+        <label className="zpg-field">
+          <span>
+            拼题A Cookie
+            {pta && (
+              <span className={`zpg-pill ${pta.configured ? 'zpg-pill-ok' : ''}`}>
+                {pta.configured ? '已配置' : '未配置'}
+              </span>
+            )}
+          </span>
+          <textarea
+            name="ptaCookie"
+            rows={3}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="登录 pintia.cn 后，从任一 /api 请求复制 Cookie 或整条 cURL 粘贴到这里"
+            value={cookie}
+            onChange={(event) => setCookie(event.target.value)}
+            disabled={state.loading || state.saving}
+          />
+          <small>
+            拼题A 登录要短信验证，无法用账号密码自动登录，只能粘贴 Cookie。
+            它与「浙大一卡通」是**不同**的凭证，所以单独一项。
+          </small>
+        </label>
+        <div className="zpg-form-foot">
+          <button className="zy-primary" disabled={state.loading || state.saving || !cookie.trim()}>
+            {state.saving ? '正在保存…' : '保存 Cookie'}
+          </button>
+        </div>
+      </form>
+
+      {state.message && <Notice>{state.message}</Notice>}
+      {state.error && <Notice>{state.error}</Notice>}
+    </>
+  );
+}
+
+/**
+ * 设置分区：**个人中转站**。
+ *
+ * 只有两项：域名 + 读密钥。这是用户**自己部署**的中转站，与拼题A 毫无关系。
+ *
+ * 为什么不叫「规划数据源」：这一页只是它的**消费者之一**，将来别的页面
+ * （或脚本）也会读这份内容。用一个页面名去命名一份基础设施，会让人以为
+ * 删掉那页它就不存在了。
+ */
+export function RelaySection() {
+  const [endpoint, setEndpoint] = useState('');
+  const [readKey, setReadKey] = useState('');
+  const [state, setState] = useState({ loading: true, saving: false, message: null, error: null });
+  const [summary, setSummary] = useState('读取中…');
+
+  useEffect(() => {
+    let live = true;
+    settings('').then(
+      (payload) => {
+        if (!live) return;
+        setEndpoint(payload.config?.endpoint ?? '');
+        setReadKey(payload.config?.readKey ?? '');
+        setSummary(describeRelaySummary(payload));
+        setState({ loading: false, saving: false, message: null, error: null });
+      },
+      (failure) => { if (live) setState({ loading: false, saving: false, message: null, error: failure.message }); },
+    );
+    return () => { live = false; };
+  }, []);
+
+  const saveEndpoint = async (event) => {
+    event.preventDefault();
+    setState({ loading: false, saving: true, message: null, error: null });
+    try {
+      const payload = await settings('save', { endpoint, readKey });
+      setEndpoint(payload.config?.endpoint ?? endpoint);
+      setReadKey(payload.config?.readKey ?? '');
+      setSummary(describeRelaySummary(payload));
+      setState({
+        loading: false,
+        saving: false,
+        message: payload.remote?.error
+          ? `已保存，但同步失败：${payload.remote.error.message}`
+          : `已保存，本地共 ${payload.entries?.length ?? 0} 条记录`,
+        error: null,
+      });
+    } catch (failure) {
+      setState({ loading: false, saving: false, message: null, error: failure.message });
+    }
+  };
+
   return (
     <>
       <form className="zpg-form" onSubmit={saveEndpoint}>
@@ -761,7 +1627,7 @@ export function SettingsSection() {
             disabled={state.loading || state.saving}
             required
           />
-          <small>「规划」页要同步的那台中转站，只支持 http / https。同步过的内容会在本机留一份。</small>
+          <small>你自己部署的那台中转站，只支持 http / https。同步过的内容会在本机留一份。</small>
         </label>
         <label className="zpg-field">
           <span>读密钥</span>
@@ -786,38 +1652,6 @@ export function SettingsSection() {
         </div>
       </form>
 
-      <form className="zpg-form zpg-form-pta" onSubmit={saveCookie}>
-        <label className="zpg-field">
-          <span>
-            拼题A Cookie
-            {pta && (
-              <span className={`zpg-pill ${pta.configured ? 'zpg-pill-ok' : ''}`}>
-                {pta.configured ? '已配置' : '未配置'}
-              </span>
-            )}
-          </span>
-          <textarea
-            name="ptaCookie"
-            rows={3}
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="登录 pintia.cn 后，从任一 /api 请求复制 Cookie 或整条 cURL 粘贴到这里"
-            value={cookie}
-            onChange={(event) => setCookie(event.target.value)}
-            disabled={state.loading || state.saving}
-          />
-          <small>
-            拼题A 登录要短信验证，无法用账号密码自动登录，只能粘贴 Cookie。
-            它与智云/学在浙大用的是**不同**凭证，所以单独一项。
-          </small>
-        </label>
-        <div className="zpg-form-foot">
-          <button className="zy-primary" disabled={state.loading || state.saving || !cookie.trim()}>
-            {state.saving ? '正在保存…' : '保存 Cookie'}
-          </button>
-        </div>
-      </form>
-
       {state.message && <Notice>{state.message}</Notice>}
       {state.error && <Notice>{state.error}</Notice>}
     </>
@@ -825,10 +1659,7 @@ export function SettingsSection() {
 }
 
 /** 折叠状态下的一行摘要：让收起来也知道连了什么。 */
-function describeSummary(payload) {
-  const parts = [];
-  if (payload.config?.configured) parts.push(`中转站 ${payload.entries?.length ?? 0} 条`);
-  else parts.push('中转站未配置');
-  parts.push(payload.pta?.configured ? '拼题A 已配置' : '拼题A 未配置');
-  return parts.join(' · ');
+function describeRelaySummary(payload) {
+  if (!payload.config?.configured) return '未配置';
+  return `已配置 · 本地 ${payload.entries?.length ?? 0} 条记录`;
 }
