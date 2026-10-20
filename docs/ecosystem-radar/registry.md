@@ -1946,3 +1946,18 @@
 | `ignlg/heap-js` | B 其他JS | BSD-3-Clause | — | 重复无增益 | 🔵 | rejected | 2026-10-20 | ★167。与 heapify 二选一即可，当前两者都不需要 |
 | `clauderic/dnd-kit` | B 其他JS | MIT | 复习队列手排 | 全新（但与本轮方向相反） | 🔵 | proposed | 2026-10-20 | ★17730，仍活跃（2026-10-15）。`@dnd-kit/core@6.3.1` + `@dnd-kit/sortable@10.0.0`，依赖 `tslib`/`@dnd-kit/utilities`。仅当允许**手动**调序时才用；与「按遗忘曲线自动排」是相反的两种产品判断，先有数据再谈 |
 | 撞车簇：`scheduler`/`knapsack` 前排 | B 其他JS | MIT / `null` / GPL-2.0 混杂 | — | 重复无增益 | ⛔ | rejected | 2026-10-20 | ★774 React 可视化排程、★587 Kettle 调度监控、★344 定时任务、★240 kue-scheduler、★199 Google-Meet 自动上课；knapsack 前排 ★≤6 可视化玩具 → 全是「调度」的另一义项，**建议两词移出 C 组派生词池** |
+
+### 2026-10-20 · 第四十轮（C 组派生 · 笔记库链接解析与图结构轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `remarkjs/remark`（npm `remark-parse@11.0.0`） | B 其他JS | MIT ✅（npm + GitHub 一致） | 笔记/讲义正文结构 | **重复可强化**（「笔记」页反链底座） | 🟢 | skeleton-created | 2026-10-20 | ★9021，push 2026-09-27。产出带类型的 mdast，使「代码块里的 `[[x]]`」能按节点类型排除而非正则猜。⚠ 与 2026-10-19 登记的 `mdast-util-from-markdown`（判 🔵）同族但**换的对象不同**：当时是「替换渲染器」，本轮是「替换『哪段是代码』的判定」。锁版 5 依赖见骨架。已出骨架 `dsh-radar-vault-graph` |
+| `syntax-tree/unist-util-visit`（5.1.0） | B 其他JS | MIT ✅ | 同上（遍历层） | 重复可强化 | 🟢 | proposed | 2026-10-20 | ★360，push 2026-01-22。**实测** `visit(tree,'text',…)` 天然跳过 `inlineCode`/`code`。单包 33,781B。合并进上述骨架，不单独出包 |
+| `graphology`（0.26.0）+ `graphology-communities-louvain`（2.0.2） | B 其他JS | MIT ✅（两包一致） | 笔记结构/学科簇 | **全新**（本仓零图算法） | 🟡 | proposed | 2026-10-20 | 官方 monorepo 仍活跃。**实测**两簇样例社团检测正确。⚠ 只认无向图；社区编号随遍历顺序变，须规范化；`addEdge` 在节点不存在时抛 `NotFoundGraphError`，须先 `mergeNode`。合并进骨架 |
+| `tats-u/markdown-cjk-friendly` | B 其他JS | MIT ✅ | 中文笔记的强调符边界 | 全新（但本仓无渲染入口） | 🔵 | proposed | 2026-10-20 | ★171，push 2026-10-19。**已读其 `specification.md`**：改的是 CommonMark 的 flanking delimiter 定义，不是「中英文加空格」。⚠ 正文由**宿主** `MarkdownText` 渲染（`page-notes/src/client.jsx:26`），本仓接管不了 → 只登记 |
+| `escwxyz/remark-obsidian-callout` | B 其他JS | Apache-2.0 ✅ | 笔记（callout 块） | 重复无增益（无渲染入口） | 🔵 | proposed | 2026-10-20 | ★34，push 2025-09-03。与上条同因作废 |
+| `flowershow/remark-wiki-link` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-20 | ★49，**license 为 null** → 只登记，不摘代码。功能 ⊂ 本仓 `splitWikilink` |
+| `wikibonsai/wikirefs` | B 其他JS | **GPL-3.0** ⛔ | — | — | ⛔ | rejected | 2026-10-20 | ★10。传染性许可，直接排除 |
+| `upphiminn/jLouvain` | B 其他JS | MIT ✅ | 学科聚类 | 重复且无增益 | ⛔ | rejected | 2026-10-20 | ★156，但 **2021 停更**、无图数据结构配套；被 `graphology-communities-louvain@2.0.2` 完全覆盖 |
+| mdast→docx/pdf 簇（`md2docx/mdast2docx` 等 6 个） | B 其他JS | MPL-2.0 ⛔ / 其余 MIT | 讲义导出 | 与「笔记」页无关 | ⛔ | rejected | 2026-10-20 | 全是**导出器**（方向不同的重复劳动）；★ 最高 40 |
+| 图可视化簇（`zakjan/pixi-graph` 等） | B 其他JS | MIT / 多个 null | — | 仅参考 | ⛔ | rejected | 2026-10-20 | `graphology <X>` 搜到的**全是渲染/布局插件**，无一图算法；本轮 53 条命中里 0 条可用 → 「算法层要按 npm 包名找，不能按 GitHub 关键词找」 |
