@@ -1892,3 +1892,43 @@
 > ④ **上游 peer 区间可与 npm 现实脱节**：`@ocr-web/core` 写 `onnxruntime-web: ^1.25.0`，
 > 而 npm 上 `1.25.0` **只有 `-dev.*`**。这与第三十四轮「宿主版本窗口」、第三十六轮「声明 public 却从未 publish」
 > 同属「文档/元数据与仓库现实不一致」的第五种形态 —— **锁版前必须 `npm view <pkg> versions` 实查，不能只读 peer 区间**。
+
+---
+
+## 2026-10-20 · 第三十八轮（B 组派生 · 校园数据「抓取后解析层」轴）
+
+> 同日第 4 轮（00:00 C / 03:15 A / 06:00 C）。B 组「校园信息侧」已于 10-19 第三十三轮封板，
+> 本轮改走「**先读码找断环、再定向搜**」：起点是 `packages/dsh-zhiyun-classroom/src/auth.js:27`
+> 的 `executionToken()`（用正则抠 `<input>`）。
+> 关键词（9 次，未超限，0 次 403）：`html parser language:javascript stars:>200`(**18**) /
+> `html query selector language:typescript stars:>50`(**0**) / `deno dom`(81) / `linkedom`(28) /
+> `htmlrewriter`(41) / `cheerio`(5,484) / `html parser`(13,404) / `dom implementation`(4,592) /
+> `css selector engine language:javascript`(58)。
+> 补扫（不计入 10 次）：`html sanitizer language:javascript`(144)、
+> `zju comment scraper javascript`(**0**，A 组探针)。
+> 约 19,000 条命中 → 有效候选 4 条；**🟢1（cheerio/slim）🔵1（DOMPurify）⛔2 簇（10 条）**；
+> 本轮 **0 条 `NOASSERTION`**、**0 个 A 类**。
+> **本轮出骨架** `packages/dsh-radar-dom-parse`（B 类，锁版 `cheerio@1.2.0`，**走 `./slim` 入口**）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `cheeriojs/cheerio` | **B 其他JS（纯库）** | **MIT** ✅ | 教务登录 / 抓取页面解析 | **重复可强化**（`auth.js` 的 `executionToken()`） | 🟢 | proposed | 2026-10-20 | ★30,523，**2026-10-19 push**（活跃）。npm `cheerio@1.2.0` **实查可锁** ✅（`engines: node>=20.18.1`，与本仓 `^22.19.0 \|\| >=24.0.0` 兼容）。**⚠ 必须走 `./slim` 子入口**：包根 `dist/esm/index.js:11` 静态 `import * as undici from 'undici'`（只为 `fromURL()`，Node-only）→ 浏览器构建直接失败。esbuild 实测（minify/ESM/browser）：`./slim` **199,966 B**、包根 **384,451 B**、`linkedom` **275,245 B**。**缺口已实测复现（非推断）**：本仓 `executionToken()` 对 `<input name="execution" value="a>b">` 返回 **`undefined`**（`[^>]*` 用 `>` 界定标签边界，而 `>` 在双引号属性值里合法），→ `submitCasForm()` L72 抛 `AUTH_SHAPE: 登录页缺少 execution` → **登录直接失败**；对 `value="abc&amp;def"` 返回 `"abc&amp;def"`（未解码实体，静默错值）。**判据①②③全成立**。**本轮 L2 骨架** `packages/dsh-radar-dom-parse`。⚠ 三点：R-1 `auth.js` 是已上线代码，替换属回归高风险；R-2 CAS 页由服务端取回，客户端无此 HTML → 若只服务端用则 bundle 里是死代码；R-4 与在册 `dsh-radar-vault-parse`（markdown-it）**不重叠**（输入语言不同） |
+| `cure53/DOMPurify` | B 其他JS（纯库） | **`(MPL-2.0 OR Apache-2.0)`** ✅（按 Apache-2.0 可用） | 富文本 / 不可信 HTML | 无关（本仓目前不拼 HTML） | 🔵 | proposed | 2026-10-20 | ★17,478，2026-10-16 push。**登记理由只有一条**：防止把「上了 cheerio」误读成「可以不做净化」—— **sanitizer 是「把不可信 HTML 变安全」，解析器是「把 HTML 变可查询」，两件事**。本仓 `grep sanitize packages/*/package.json` **零命中**，净化需求目前由「不拼 HTML」这条纪律覆盖 → 本轮无落点。⚠ 若将来接入，须注意它**不是** MPL 单许可（双许可可选 Apache，不触红线） |
+| CF `HTMLRewriter` 绑定簇：`cloudflare/html-rewriter-wasm`(★218, **`null`** ⛔)、`worker-tools/parsed-html-rewriter`(★45)、`ttys026/cfo`(★4)、`akira108/html-rewriter-readability`(★4)、`tldraw/cloudflare-workers-unfurl`(★18) | B 其他JS | 多数 MIT，1 条 `null` | — | 运行时不兼容 | ⛔ | rejected | 2026-10-20 | 全部是 **Cloudflare Workers 专用绑定**（依赖 `HTMLRewriter` 全局或 Workers 运行时）。本仓是 Cordis 宿主 + 浏览器，**跑不了**。`html-rewriter-wasm` ★218 是唯一「wasm 化可移出 Workers」的，但**无许可证** ⛔ |
+| 非 JS 的 HTML 解析器簇：`jhy/jsoup`(★11,411 Java)、`AngleSharp/AngleSharp`(★5,543 C#)、`scinfu/SwiftSoup`(★5,127 Swift)、`psf/requests-html`(★13,805 Python)、`opendataloader-project/opendataloader-pdf`(★29,748 Java) | 非 JS | 多数 MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-20 | skill 限定 JS 技术栈。`opendataloader-pdf` 是 `html parser` 的第 2 名，但它是 **PDF 表格提取**，与本轴（页面表单解析）无关；`requests-html` 停更于 2024-04 |
+| 对照件（**不入册**，防下轮重搜）：`WebReflection/linkedom`(ISC, ★2088, `0.18.13`, bundle 275,245 B, **属性名大小写敏感**)、`fb55/htmlparser2`(MIT, ★4793, 无 CSS 选择器)、`capricorn86/happy-dom`(MIT, ★4709, 含 window 全套、过重)、`fgnass/domino`(BSD-2, ★791)、`parse5@8.0.1`(MIT, cheerio 传递依赖)、`dperini/nwmatcher`/`nwsapi`(MIT, **只做选择器匹配不做解析**) | B 其他JS | 均宽松 ✅ | — | 重复但增益不如 cheerio | 🔵 | — | 2026-10-20 | 六件全部实查 npm 版本与许可，**故意不逐行入册**，仅在此记录选型依据。`linkedom` 是唯一真正的次选（能力等价、体积 +37%、且 `NAME="execution"` 时 `querySelector('input[name=execution]')` 匹配不到，cheerio 能） |
+
+> **本轴结论（四条）**：
+> ① **B 组「找新插件」确已封板（本轮 0 个新 DSH 插件），但「抓取后解析层」有产出** ——
+> 唯一 🟢 是**早就存在**的 cheerio（★30,523），它成为候选**完全是因为先读到了 `auth.js:27` 那段正则**。
+> 与第三十七轮（`recordAttempt` 无调用方）、第三十六轮（`layers` 空集静默）同一模式：
+> **本仓价值洼地在「已有能力的接缝」上，不在「缺一个外部库」上。**
+> ② **「改用解析器」这件事，入口比库重要** —— `cheerio` 包根静态 `import undici`（Node-only，`dist/esm/index.js:11`），
+> `./slim` 不带它、体积从 384 KB 降到 200 KB。**第三门「可锁版」应扩成「包存在 + 从哪个入口进」**：
+> 第三十六轮查「包是否存在」（四种死法），本轮新增第五种 —— **包存在、但默认入口在目标运行时跑不了**。
+> ③ **最有价值的产出仍是缺陷** —— L-1 的 `>` 断点今天没炸（CAS execution 为 `e1s1`），
+> 一旦触发，现象是「登录页缺少 execution」，**看起来像官网改版，实际是本仓正则的假设错了**。
+> 「把上游变化当原因」比任何缺失能力都更难查。修法有两条（换解析器 / 正则改 1 行），**本骨架只是给出选择**。
+> ④ **L-2 `meta.complete` 这条保护目前是空转的** —— `getSchedule()` 走 `result()` 默认 `complete = true`，
+> 课表永远不会是 `null`；因此今天页 `agenda.js:16` 的 `incomplete` 分支**只能由 meta 缺失触发**，从未被真实验证。
+> 不是 bug，但建议加课表分页时同步补 `meta` 断言。

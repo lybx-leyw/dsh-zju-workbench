@@ -51,14 +51,15 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `C`（C 组派生 · 关键路径健全性轴） |
-| `last_run_at` | `2026-10-20 06:00` |
-| `group_runs`（累计） | A=24, B=10, C=12 |
+| `last_group` | `B`（B 组派生 · 校园数据「抓取后解析层」轴） |
+| `last_run_at` | `2026-10-20 09:05` |
+| `group_runs`（累计） | A=24, B=11, C=12 |
 
 ### 流水
 
 | 时间 | 组 | 说明 |
 | --- | --- | --- |
+| 2026-10-20 09:01 | B | B组派生第三十八轮（同日第 4 轮；今日已跑 C 00:00 / A 03:15 / C 06:00 → 取今日唯一未跑的 **B**）。**校园数据「抓取后解析层」轴**（先读码找断环、再定向搜）：`html parser language:javascript stars:>200`(18) / `html query selector language:typescript stars:>50`(**0**) / `deno dom`(81) / `linkedom`(28) / `htmlrewriter`(41) / `cheerio`(5484) / `html parser`(13404) / `dom implementation`(4592) / `css selector engine language:javascript`(58) + 补扫 `html sanitizer language:javascript`(144)、`zju comment scraper javascript`(**0**，A 组探针) → **9 次搜索（未超限）、0 次 403**。约 19,000 条命中 → 有效 4 条；**🟢1(cheerio/slim)🔵1(DOMPurify)⛔2 簇**；**0 条 NOASSERTION、0 个 A 类**；骨架 `dsh-radar-dom-parse`（B 类锁版 `cheerio@1.2.0`，**走 `./slim`**）。新结论：① **B 组「找新插件」确已封板**（0 个新 DSH 插件），唯一 🟢 是**早就存在**的 cheerio，它成为候选**只因先读到 `auth.js:27` 的正则** —— 与第三十七轮（`recordAttempt` 无调用方）、第三十六轮（`layers` 空集静默）同模式：**价值洼地在「已有能力的接缝」上**；② **「改用解析器」入口比库重要** —— `cheerio` 包根 `dist/esm/index.js:11` 静态 `import * as undici`（Node-only），浏览器构建会直接失败；`./slim` 不带它，esbuild 实测 384,451 B → **199,966 B**（`linkedom` 275,245 B）→ **第三门「可锁版」新增第五种死法：包存在但默认入口在目标运行时跑不了**；③ **最有价值的产出仍是缺陷 L-1**：`executionToken()` 的 `[^>]*` 遇到 `value="a>b"` 返回 `undefined` → `AUTH_SHAPE: 登录页缺少 execution` → **登录直接失败**，而现象看起来像「官网改版」；`&amp;` 亦不解码（静默错值）。修法两条（换解析器 / 正则改 1 行），骨架只提供选择；④ **L-2 `meta.complete` 空转**：`getSchedule()` 恒 `complete=true`，今天页 `incomplete` 分支从未被真实触发。⚠ 自查：`cheerio/slim` 的 **gzip 体积未实测**（只有未压缩 bundle 值），报告已标注。 |
 | 2026-10-20 00:00 | C | C组第三十五轮（跨天首轮，本地 `293%3=2`→C，**与公式一致**；脚本因用 UTC 日期判为 `2026-10-19`+`formula(stale-state)`→B，**未采纳**）。**字幕原文层轴**：`subtitle segment merge algorithm`(0) / `srt vtt subtitle parser javascript`(1) / `subtitle segmentation input:name`(0) / `sentence splitter language:typescript`(17) / `punctuation restore language:typescript`(0) / `subtitle parser typescript`(7) / `srt parser`(274) / `lecture transcript alignment`(1) / `audio transcription subtitle websubtitle in:name`(0) / `audio silence detection javascript`(1) / `caption format standard webvtt`(1) / `subtitle editor language:typescript`(107) → **12 次搜索（⚠超限 2 次）、0 次 403**。约 96 条去重命中 → 首次登记 24 条 → 有效 8 条；**🟢1(media-captions)🟡1(subtitle.js)🔵3⚠1⛔18（含 4 簇）**；骨架 `dsh-radar-media-captions`（B 类，锁版 `media-captions@1.0.4`）。新结论：① **起点是读代码**（`workbench.js:325`/`:399` 的 `join("")` 无分隔、`core.js:57` 无标点恢复、`subtitle().english` 全仓 0 引用），不是凭印象挑词；② **「格式解析」≠「句子化」**——上游能把 SRT/VTT 拆成 cue，但**不会**把两个 cue 连成一句，本仓缺口无任何 JS 库可代偿；③ 三个最贴的词全返 **0** → **中文标点恢复在 JS 生态是事实空缺**（中文语义底层连续第三轴只能自写）；④ **npm 包名 ≠ 仓库名**：`vidstack/captions` 的包叫 `media-captions`（`vidstack-captions` 404），且 `latest` 标签停在 2023 年的 `0.0.18`、真正的新版挂在 `next=1.0.4` → **A/B 类都要查 `dist-tags`，不能只查「包存在」**；⑤ 字幕域可迁移能力只有三样（格式解析 / 反向序列化 / 双语轨），其余是重复劳动 → **建议封板 3 个月** |
 | 2026-10-14 首轮 | A | DSH 插件生态；11 个 A 类候选；出骨架 `dsh-radar-dsh-market`（占位） |
 | 2026-10-14 第二轮 | C | 与第三轮**关键词逐字相同**；出骨架 `dsh-radar-fsrs-scheduler` |
