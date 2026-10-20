@@ -2060,3 +2060,54 @@
 `workbench.js:627–630` 的 method 白名单里没有 `quiz-attempt`；③ `openQuizStore`（`workbench.js:376–379`）只 `loadItems`、
 不喂 `attempts`，而 `quiz-generate`/`changeQuiz` 用 `store.snapshot()` **整份覆盖写回** → 实测「保存前 1 条 → 写回 0 条」，
 随后 `masteryOf()` 报「数据不足（做过 0 题）」。**结论：先闭环（R-1/R-2，约 20 行、零新依赖），再接调度（R-3）。**
+
+---
+
+### 第四十五轮 · 2026-10-21 · A 组（检索口径统一轴）
+
+> 搜索 10 次（`dsh plugin quiz/classroom/calendar/kanban/lecture/paper/reading/flashcard/mindmap/tutor`），
+> 约 180 条命中 → **首次登记 8 行（🟡0 🔵5 ⛔3）**；另 3 条 `NOASSERTION` 待核、10 条无许可证、2 条 GPL。
+> **零 🟢，未出 A 类骨架**（本轮 L2 出的是 B 类对照物 `dsh-radar-knowledge-fold`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `MrElysium/dsh-md-quiz` | A 原生DSH | **MIT** ✅ | 复习 / 答题式阅读 | **重复且无增益** | ⛔ | rejected | 2026-10-21 | ★6，push 2026-08-18。5 阶段游戏化循环把任意 Markdown 变答题。本仓 `dsh-zhiyun-quiz` 有 `anchorFromMaterial` 源块锚点 + `sourceRevision` + 规则门禁 + 待审，**该插件无来源锚点、无质检链**，接入等于绕过质检。**npm `dsh-md-quiz` 404**（官方 registry 直查），不可锁版。两条独立理由 |
+| `mrk-king/dsh-paper-reading` | A 原生DSH | **BSD-3-Clause** ✅ | 论文阅读 | **重复且无增益** | ⛔ | rejected | 2026-10-21 | ★0。pdf.js 阅读器 + 按论文记忆问答 + 预设门控。本仓 `dsh-zhiyun-paper` 已锁版 `@ggboy123/dsh-paper-reader@1.3.1` + `pdfjs-dist` → 同一件事的第二套实现。npm `@dsh-external/dsh-paper-reading` 404 |
+| `Madao1210/dsh-deep-reading` | A 原生DSH | **MIT** ✅ | 精读 | **重复且无增益** | ⛔ | rejected | 2026-10-21 | ★3，push 2026-10-10。逐章理解书籍。与已 🟢 的 `PensiveFei/deep-read-summarize`（已出骨架 `dsh-radar-deep-read`，MapReduce + JSON Schema + 解析器层）同域同形态。npm `dsh-deep-reading` 404 |
+| `hzxwonder-dsh-plugins/dsh-plugin-latex` | A 原生DSH | **MIT** ✅ | 论文写作 | **重复可强化（弱）** | 🔵 | proposed | 2026-10-21 | ★0，push 2026-09-27。**句级写作地图**是本仓没有的东西，但整体是「本地 LaTeX 编译 + Overleaf 同步」，本仓论文域为 iframe 承载、无编译链 → 接入等于新起管线。npm `dsh-plugin-latex` 404。**只作需求线索：句级写作地图值得自写** |
+| `jianyuepei/dsh-session-mindmap` | A 原生DSH | **MIT** ✅ | 笔记 | **全新（弱）** | 🔵 | proposed | 2026-10-21 | ★0。会话 → 自包含交互式 HTML 思维导图。本仓「笔记」是 vault 节点结构（`dsh-zhiyun-vault` + `graph` RPC），导出物语义相反。npm `dsh-session-mindmap` 404 |
+| `stuarthu/dsh-chrome` | A 原生DSH | **MIT** ✅ | 通用 | **无关（形态而非能力）** | 🔵 | proposed | 2026-10-21 | ★9。Chrome 侧栏嵌入完整 DSH Web UI + 页面读取 host 插件。**本轮唯一可锁版的 A 类**（`dsh-chrome@0.1.3`/MIT，registry 实测）→ 留作「A 类可锁版」正例 |
+| `haoyanzhang123/dsh-plugin-control-your-schedule` | A 原生DSH | **MIT** ✅ | 日程 / 便签 | **重复可强化（弱）** | 🔵 | proposed | 2026-10-21 | ★3。便签 + 画布 + 日程 + 手写面板四合一。**画布与手写**本仓确无；但 ★3、单作者、HTML 为主、无 issue 史。npm 404 → 不上骨架 |
+| `yihong89/dsh-teacher` | A 原生DSH | **MIT** ✅ | 苏格拉底辅导 | **重复可强化** | 🔵 | proposed | 2026-10-21 | ★3。「知识缺口追踪」与已 🟢 的 `lookatstudy`（BKT 掌握度）同义项 → 重复；保留线索仅因**苏格拉底引导的 prompt 设计**可借鉴。**不摘代码** |
+
+**`NOASSERTION` 待人工核验（不采用）**：
+
+| 仓库 | 备注 |
+| --- | --- |
+| `naodeng/dsh-qa` | ★31，push 2026-10-20，本轮 ★ 最高的新面孔（本地 QA Workbench，零依赖）。**许可证待核**，核前不使用 |
+| `Trouvaille-xx/dsh-StardewValley-UI` | ★1，星露谷主题 UI 包。与本仓无关，但许可证不明 |
+| `zhen-yang-cn/dsh-xmind-mindmap` | ★0，描述自称 **Proprietary**。XMind/Markdown 卡片 + 侧栏 `.xmind` 预览，形态对口但**闭源** → 只登记 |
+
+**无许可证（`null`）⛔ 排除，不摘代码**：`miuzel/dsh-graph`(★24, TS 目标看板)、`callmesoul/deepseek-kanban-plugin`(★4, Vue)、`kouyichi/dsh-plugins`(★2, 自称 31 插件)、`ktao732084-arch/dsh-vibegap`、`ccjlovewsy/dsh-mindmap-live`、`mckenna0625/dsh-langgraph-paper-pipeline`、`gqallen931/paper-gogo-plugin`、`ZEVIN17/PaperViz-dsh`、`LLLin000/paperforge-dsh`、`puremapping/dsh-plugin-reading-pipeline`。
+
+**GPL 红线 ⛔**：`ArisaYamatogi/dsh-lecture-copilot`（**GPL-3.0**，录音+翻译+OneNote 笔记，★4）；`alei37/dsh-cet6-tutor`（AGPL-3.0，2026-10-16 已 ⛔，本轮复现，维持）。
+
+**token 统计族整体 ⛔（不再逐条登记）**：`Hou-DL/dsh-token-pulse`、`skkjkk/dsh-usage-dashboard`、`Fiennes4590/dsh-token-usage-calendar`、`greyhackintoch-dev/dsh-month-tokens`、`KIDLi1412/dsh-token-heatmap`、`xiyi123465/dsh-usage-calendar` —— 六个不同作者做同一件事（本地 token 用量日历/热力图），与本仓任何功能无交集 → **重复且无增益**，只留此一行。
+
+#### 本轮无 🟢 的原因
+
+① **可锁版率崩到 1/7**：8 条新 A 类候选里，官方 registry 直查只有 `dsh-chrome` 存在；
+② **形态对口的三条（`dsh-md-quiz` / `dsh-paper-reading` / `dsh-deep-reading`）全部与已采纳候选同域**，
+接进来就是第二套实现（仓规明令禁止同功能两套）；
+③ 真正的新缺口（**句级写作地图**、**画布/手写**）都只出现在 ★0~★3、单作者、不可锁版的包里
+→ **缺口是真的，但这些包接不进来**，应按「自写」而非「集成」处理。
+
+#### 本轮最有价值的产出：C-1（不需要任何新库）
+
+`dsh-zhiyun-quiz/src/quality.js:166` `normalizeForMatch`（全角折叠 + 小写 + 去空白）与
+`dsh-zhiyun-knowledge/src/service.js:282` `fragment.text.includes(needle)`（裸 includes）**同仓两套口径**。
+→ 修法：`service.js:282` 一行（`fold` 两次），或提为共享工具。**这是第四十二轮 R-1 的第二次独立复现，且落在用户可见的「知识」页检索上。**
+
+#### 方法学修正
+
+`npm view` 走的是腾讯镜像，可能滞后/缺包 → **锁版判定一律以 `https://registry.npmjs.org/<pkg>` 直查为准**。
