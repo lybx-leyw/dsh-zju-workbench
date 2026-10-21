@@ -288,6 +288,34 @@ export async function apply(ctx, config = {}) {
       }
     }
     stage('acquireSso');
+    /**
+     * 把分段贴到 **`xzzdSession`** 上，而不是 transport。
+     *
+     * ⚠️ 踩过两次：
+     *   1. 起初挂在 `transport.loginProfile` —— `transportFor()` 每次都
+     *      `new Transport`，探针事后调 `xzzdClient()` 拿到的是另一个实例，
+     *      永远读到 undefined；
+     *   2. 挪到 session 后仍读不到 —— 因为赋值写在 `try` 末尾，**登录一抛异常
+     *      就跳过了**。而"登录慢/失败"恰恰是最需要看分段的场景。
+     *
+     * 所以放在 `finally` 里：成功、失败、超时都能拿到。
+     */
+    const captureLoginProfile = () => {
+      if (!marks.start) return;
+      const span = (a, b) => (marks[a] && marks[b]
+        ? { ms: marks[b].at - marks[a].at, requests: marks[b].timings - marks[a].timings }
+        : null);
+      const last = marks.save ?? marks.casLogin ?? marks.acquireSso ?? marks.start;
+      xzzdSession.loginProfile = {
+        prelude: span('start', 'acquireSso'),
+        casLogin: span('acquireSso', 'casLogin'),
+        save: span('casLogin', 'save'),
+        total: last.at - marks.start.at,
+        totalRequests: last.timings - marks.start.timings,
+        /** 登录是否成功走完（失败时 total 只覆盖到出错的那一段）。 */
+        completed: Boolean(marks.save),
+      };
+    };
     try {
       await xzzdLogin(transport, account);
       stage('casLogin');
@@ -295,29 +323,6 @@ export async function apply(ctx, config = {}) {
       await transport.session.save();
       stage('save');
       log('学在浙大会话已建立');
-      /**
-       * 把分段贴到 **`xzzdSession`** 上，而不是 transport。
-       *
-       * ⚠️ 这里踩过一次：起初挂在 `transport.loginProfile` 上，结果探针读不到 ——
-       * 因为 `transportFor()` **每次都 `new Transport`**，探针事后调
-       * `xzzdClient()` 拿到的是另一个实例（登录早已完成、根本没走这段代码，
-       * 于是 `loginProfile` 是 undefined，报告还因此误判成"会话复用"）。
-       *
-       * `xzzdSession` 是真正跨调用复用的那个对象，挂它才不会被换掉。
-       */
-      if (marks.start) {
-        const span = (a, b) => (marks[a] && marks[b]
-          ? { ms: marks[b].at - marks[a].at, requests: marks[b].timings - marks[a].timings }
-          : null);
-        xzzdSession.loginProfile = {
-          prelude: span('start', 'acquireSso'),
-          ssoHandoff: span('acquireSso', 'casLogin'),
-          casLogin: span('casLogin', 'save'),
-          persistedAt: marks.save?.at ?? null,
-          total: marks.save ? marks.save.at - marks.start.at : null,
-          totalRequests: marks.save ? marks.save.timings - marks.start.timings : null,
-        };
-      }
       return transport;
     } catch (error) {
       // CAS 拒绝要能和网络问题分开：前者用户改密码，后者只需重试
@@ -342,6 +347,9 @@ export async function apply(ctx, config = {}) {
           + ' 去「设置 → 浙大一卡通」的 WebVPN 一栏检查上网账号。');
       }
       throw fault(code, error?.message ?? String(error));
+    } finally {
+      // 成功、失败、超时都记一次 —— 见 captureLoginProfile 上的说明
+      captureLoginProfile();
     }
   };
 

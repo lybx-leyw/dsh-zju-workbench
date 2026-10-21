@@ -1044,3 +1044,25 @@ test('探测遇到网络错误时向上抛，不误判成"需要重登"', async 
     '网络错误应原样抛出，不该被吞成 false 然后去提交密码',
   );
 });
+
+test('登出必须立即落盘，延迟写会让旧会话在磁盘上复活', async () => {
+  // 安全语义，不是性能语义：`clear()` 默认延迟合并且不 await，
+  // 但登出必须把"空 jar"立刻写下去 —— 否则进程退出后旧会话还在。
+  const store = slowStore({ delayMs: 10 });
+  await store.jar.setCookie('session=alive; Domain=.courses.zju.edu.cn; Path=/', 'https://courses.zju.edu.cn/');
+
+  await store.clear({ persist: true });
+  const left = await store.jar.getCookies('https://courses.zju.edu.cn/');
+  assert.equal(left.length, 0, '内存里的 cookie 必须清掉');
+  // persist:true 意味着 save() 已被 await，不会有挂起的定时器
+  assert.equal(store.saveTimer, null, '不该留下延迟落盘定时器');
+});
+
+test('登录前清空会话走延迟落盘（不阻塞），因为随后就会写新会话', async () => {
+  const store = slowStore({ delayMs: 300 });
+  const t0 = Date.now();
+  await store.clear();          // 默认延迟
+  const elapsed = Date.now() - t0;
+  assert.ok(elapsed < 100, `清空会话不该等待落盘，实测 ${elapsed}ms`);
+  await store.flush();
+});

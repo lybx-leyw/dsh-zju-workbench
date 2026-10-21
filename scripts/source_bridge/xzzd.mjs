@@ -44,32 +44,35 @@ export async function run({ account, dataDir, card }) {
    */
   const xzzd = data?.todos?.xzzd ?? null;
 
-  // `xzzd.ok === false` 是**链路失败**（会话、权限、网络），不是"没有待办"。
-  // 把它当空列表报"通过"会掩盖真问题 —— 这正是验收要看的。
-  if (!xzzd) {
-    throw Object.assign(new Error('campus 的 GET 没有返回 todos.xzzd'), { code: 'XZZD_SHAPE' });
-  }
-  if (!xzzd.ok) {
-    const error = xzzd.error ?? {};
-    throw Object.assign(
-      new Error(String(error.message ?? '学在浙大读取失败')),
-      { code: error.code ?? 'XZZD_FAILED' },
-    );
-  }
-
-  const rows = xzzd.rows ?? [];
-
   /**
    * 登录分段：从 campus 服务的 `loginProfile()` 取。
    *
    * ⚠️ 不要自己去 `xzzdClient().transport` 上摸 —— `transportFor()` 每次都
    * `new Transport`，摸到的是新实例，`loginProfile` 永远是 undefined，
    * 报告还会因此误判成"会话复用"（踩过）。
+   *
+   * ⚠️ 必须在**抛错之前**取：登录失败时恰恰最需要看分段（"卡在哪一段"），
+   * 而那时 `xzzd.ok === false` 会直接 throw，把诊断数据丢掉。
    */
   let loginProfile = null;
   try {
     loginProfile = services.get('zhiyunCampus')?.loginProfile?.() ?? null;
   } catch { /* 诊断数据拿不到不影响主流程 */ }
+
+  // `xzzd.ok === false` 是**链路失败**（会话、权限、网络），不是"没有待办"。
+  // 把它当空列表报"通过"会掩盖真问题 —— 这正是验收要看的。
+  if (!xzzd) {
+    throw Object.assign(new Error('campus 的 GET 没有返回 todos.xzzd'), { code: 'XZZD_SHAPE', login: loginProfile });
+  }
+  if (!xzzd.ok) {
+    const error = xzzd.error ?? {};
+    throw Object.assign(
+      new Error(String(error.message ?? '学在浙大读取失败')),
+      { code: error.code ?? 'XZZD_FAILED', login: loginProfile },
+    );
+  }
+
+  const rows = xzzd.rows ?? [];
 
   return {
     todos: rows.length,

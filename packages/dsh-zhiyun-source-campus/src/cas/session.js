@@ -98,5 +98,30 @@ export class SessionStore {
     await this.save().catch(() => {});
   }
 
-  async clear() { this.epoch++; await this.jar.removeAllCookies(); await this.save(); }
+  /**
+   * 清空会话。
+   *
+   * @param options.persist - 是否**立即**落盘（默认 `false`，延迟合并写）。
+   *
+   * # 为什么默认不立即落盘
+   *
+   * 最常见的调用点是"准备重新登录"——紧接着就会走完整登录并写入新会话。
+   * 此时的"清空后落盘"是**纯粹白等**：一次 DPAPI 子进程约 1.2 秒（本机实测），
+   * 而它写下的空 jar 一秒后就被覆盖。
+   *
+   * 实测证据：登录分段里 `prelude` 段 1132ms 且 `requests: 0` ——
+   * 没有任何网络请求，时间全花在这里。
+   *
+   * # 但**登出必须传 `persist: true`**
+   *
+   * 登出的语义是"让这台机器上的会话消失"。如果延迟落盘、进程恰好又退出，
+   * 磁盘上的旧会话就会**复活** —— 那是安全问题，不是性能问题。
+   * 所以 `logout()` 一律显式要求立即落盘。
+   */
+  async clear({ persist = false } = {}) {
+    this.epoch++;
+    await this.jar.removeAllCookies();
+    if (persist) await this.save();
+    else this.scheduleSave();
+  }
 }

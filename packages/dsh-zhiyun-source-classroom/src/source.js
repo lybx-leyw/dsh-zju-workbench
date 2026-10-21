@@ -89,7 +89,8 @@ export class ClassroomSource {
     this.loginTask = task;
     try { return await task; } finally { if (loginQueues.get(account) === task) loginQueues.delete(account); }
   }
-  async logout() { await this.ready; this.transport.cancelAll(); await this.transport.session.clear(); }
+  // 登出必须**立即**落盘：延迟写 + 进程退出 = 旧会话在磁盘上复活（安全问题）
+  async logout() { await this.ready; this.transport.cancelAll(); await this.transport.session.clear({ persist: true }); }
   async getCurrentUser() {
     await this.ready;
     for (const host of ['interactivemeta.cmc.zju.edu.cn', 'yjapi.cmc.zju.edu.cn', 'education.cmc.zju.edu.cn', 'classroom.zju.edu.cn']) {

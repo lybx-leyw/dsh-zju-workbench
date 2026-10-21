@@ -324,9 +324,16 @@ export async function campusGet(route) {
 
 /** 把错误收成可序列化的形状（凭证已在 Python 侧擦除，这里只留 code/message）。 */
 export function fail(error) {
+  /**
+   * `error.login` 是各域探针在**抛错前**挂上来的诊断数据（例如登录分段）。
+   *
+   * 为什么要有这条通道：登录失败时恰恰最需要"卡在哪一段"，而失败会走
+   * throw → 这里。不带上就等于在最需要的时候丢掉诊断。
+   */
   return {
     ok: false,
     code: error?.code ?? error?.name ?? 'ERROR',
     message: String(error?.message ?? error).slice(0, 400),
+    ...(error?.login ? { login: error.login } : {}),
   };
 }
