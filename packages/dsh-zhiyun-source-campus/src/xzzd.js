@@ -4,8 +4,16 @@
  * 接口名称与字段由平台契约决定，不按词义猜复数、字段或请求格式：
  * - 课程使用 GET 与数组 conditions；提交状态是 homework_activities / exam_ids。
  * - 仅作业提交状态的 404 表示该课无作业；其他未知错误和字段漂移明确失败。
- * - **课内 5 个端点并行**（独立 GET、总请求数不变、只省 RTT）；**课程之间串行**
- *   （`COURSE_CONCURRENCY = 1`）。429 一出现就立刻停止，不把限流放大为自动重试。
+ * - **课内先并发 3 个必看端点，再按需补 2 个过滤器**：activities 为空就不必问
+ *   "哪些作业已交"，exams 为空就不必问 "哪些测验已交"。空课因此只花 3 个请求。
+ *   实测 11 门课 55 → 38 请求。
+ * - **课程之间串行**（`COURSE_CONCURRENCY = 1`）。429 一出现就立刻停止，不把限流
+ *   放大为自动重试。
+ *
+ * ⚠️ 关于并发的实测结论（2026-10-21）：三个"必看"端点确实是 `Promise.all`
+ *    并行发出的，本地验证（真实 HTTP 服务器 + 真实 Transport + undici）也确认
+ *    峰值并发 = 3。但真机上每门课仍要 ≈5 × 单请求延迟，说明**服务端对同一会话
+ *    的并发请求是排队处理的**。所以在这一层，减少请求数比提高并发更有效。
  * - 只读请求的会话失效由宿主认证一次，只重试该请求，第二次失败直接报告。
  * - 时间固定按平台的上海时区解释；数字标志与无截止时间的互动有单独规则。
  *
@@ -283,21 +291,45 @@ export class XzzdApi {
     };
 
     /**
-     * ⚠️ `Promise.all` 在**第一个** reject 时立刻抛，其余请求仍在飞 —— 那没问题
-     * （结果被丢弃），但要清楚：
+     * 两段式抓取：先拿「必看的三个」，再**按需**补两个「只用于排已交」的。
      *
-     *   1. `read()` 内部已按「403 丢这一类、404 视情况空数组」降级，所以它
-     *      reject 出来的一定是真该中止整门课的错误；
-     *   2. `RATE_LIMITED` 一出现就要立刻停手，不能让并行的另外几个继续压过去
-     *      —— `Promise.all` 的语义正好满足。
+     * # 为什么这样能省请求
+     *
+     * 五个端点里，`homeworkSubmissionStatus` 只为判定 `activities` 里哪些已交，
+     * `submittedExams` 只为判定 `exams` 里哪些已交 —— 两者都是**过滤器**，
+     * 不是数据源。所以：
+     *
+     *   activities 为空 → 没有任何作业要过滤 → 不必发 homeworkSubmissionStatus
+     *   exams 为空      → 没有任何测验要过滤 → 不必发 submittedExams
+     *
+     * 而 `classrooms` 是独立数据源（课堂互动待办），无论怎样都要发。
+     *
+     * # 为什么先发三个再补两个（而不是五个一起发）
+     *
+     * 因为"要不要补"取决于前三个的结果。五个一起发就没有条件可依了。
+     *
+     * 代价是多一个 RTT 的串行等待；但真机实测显示服务端对同一会话的并发请求
+     * 本就是排队处理的（11 门课 × 5 请求 = 55 请求 / 60.8 秒 ≈ 1106ms/请求，
+     * 而每门课 5530ms ≈ 5 × 1106ms，正是串行特征），所以少发请求比多发并发更有用。
+     *
+     * @returns `{ activities, exams, homeworkActivities, submittedExamIds, classrooms }`。
      */
-    const [activities, exams, homeworkActivities, submittedExamIds, classrooms] = await Promise.all([
+    const [activities, exams, classrooms] = await Promise.all([
       read('activities', ['activities']),
       read('exams', ['exams']),
-      read('homeworkSubmissionStatus', ['homework_activities', 'activities'], { empty404: true }),
-      read('submittedExams', ['exam_ids', 'submitted_exams', 'submittedExams']),
       read('classroomList', ['classrooms']),
     ]);
+
+    // 只有真有作业时才需要"哪些已交"
+    const homeworkActivities = activities.length === 0
+      ? []
+      : await read('homeworkSubmissionStatus', ['homework_activities', 'activities'], { empty404: true });
+
+    // 只有真有测验时才需要"哪些已交"
+    const submittedExamIds = exams.length === 0
+      ? []
+      : await read('submittedExams', ['exam_ids', 'submitted_exams', 'submittedExams']);
+
     return { activities, exams, homeworkActivities, submittedExamIds, classrooms };
   }
 

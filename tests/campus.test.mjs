@@ -694,3 +694,90 @@ test('课程之间仍然串行：COURSE_CONCURRENCY 保持 1', async () => {
   const api = new XzzdApi(await makeTransport(recorder([]), [XZZD_COOKIE]));
   await assert.rejects(() => api.todos({ concurrency: 8 }), /并发/, '并发参数不允许超过 2');
 });
+
+/* ────────────────────────────── courseBundle：按需请求（省掉无用的过滤器） */
+
+/**
+ * `homeworkSubmissionStatus` 与 `submittedExams` 是**过滤器**，不是数据源：
+ * 前者只为判定 activities 里哪些已交，后者只为判定 exams 里哪些已交。
+ *
+ * 所以 activities 为空时不必发前者、exams 为空时不必发后者。
+ * 真机 11 门课 55 请求 / 60.8 秒 ≈ 1106ms/请求，且每门课 ≈ 5×1106ms
+ * （串行特征）—— 在服务端本就排队的前提下，少发请求比多发并发更有用。
+ */
+
+test('activities 为空时不发 homeworkSubmissionStatus（省一个请求）', async () => {
+  const fetchImpl = courseScenario([
+    ['/activities', () => json({ activities: [] })],
+    ['/exams', () => json({ exams: [{ id: 1 }] })],
+    ['/homework/submission-status', () => json({ activities: [] })],
+    ['/submitted-exams', () => json({ submitted_exams: [] })],
+    ['/classroom-list', () => json({ classrooms: [] })],
+  ]);
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  const bundle = await api.courseBundle(7);
+
+  assert.deepEqual(bundle.homeworkActivities, [], '没有作业就返回空，语义与"查了但没有"一致');
+  const urls = fetchImpl.calls.map((c) => c.url);
+  assert.equal(
+    urls.some((u) => u.includes('/homework/submission-status')), false,
+    '没有 activities 时不该再问"哪些已交"',
+  );
+});
+
+test('exams 为空时不发 submittedExams（省一个请求）', async () => {
+  const fetchImpl = courseScenario([
+    ['/activities', () => json({ activities: [{ id: 1 }] })],
+    ['/exams', () => json({ exams: [] })],
+    ['/homework/submission-status', () => json({ activities: [] })],
+    ['/submitted-exams', () => json({ submitted_exams: [] })],
+    ['/classroom-list', () => json({ classrooms: [] })],
+  ]);
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  await api.courseBundle(7);
+
+  const urls = fetchImpl.calls.map((c) => c.url);
+  assert.equal(
+    urls.some((u) => u.includes('/submitted-exams')), false,
+    '没有 exams 时不该再问"哪些已交"',
+  );
+});
+
+test('有作业也有测验时，两个过滤器都要发（不能过度省略）', async () => {
+  const fetchImpl = courseScenario([
+    ['/activities', () => json({ activities: [{ id: 1 }] })],
+    ['/exams', () => json({ exams: [{ id: 2 }] })],
+    ['/homework/submission-status', () => json({ activities: [] })],
+    ['/submitted-exams', () => json({ submitted_exams: [] })],
+    ['/classroom-list', () => json({ classrooms: [] })],
+  ]);
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  await api.courseBundle(7);
+
+  const urls = fetchImpl.calls.map((c) => c.url);
+  assert.ok(urls.some((u) => u.includes('/homework/submission-status')), '有作业就必须查提交状态');
+  assert.ok(urls.some((u) => u.includes('/submitted-exams')), '有测验就必须查已交列表');
+});
+
+test('空课只花 3 个请求，全量课 5 个（一增一减都要对）', async () => {
+  // 空课：activities/exams/classrooms 三个，跳过两个过滤器
+  const empty = courseScenario([
+    ['/activities', () => json({ activities: [] })],
+    ['/exams', () => json({ exams: [] })],
+    ['/classroom-list', () => json({ classrooms: [] })],
+  ]);
+  const a = new XzzdApi(await makeTransport(empty, [XZZD_COOKIE]));
+  await a.courseBundle(7);
+  assert.equal(empty.calls.length, 3, `空课应只发 3 个请求，实际 ${empty.calls.length}`);
+
+  const full = courseScenario([
+    ['/activities', () => json({ activities: [{ id: 1 }] })],
+    ['/exams', () => json({ exams: [{ id: 2 }] })],
+    ['/homework/submission-status', () => json({ activities: [] })],
+    ['/submitted-exams', () => json({ submitted_exams: [] })],
+    ['/classroom-list', () => json({ classrooms: [] })],
+  ]);
+  const b = new XzzdApi(await makeTransport(full, [XZZD_COOKIE]));
+  await b.courseBundle(7);
+  assert.equal(full.calls.length, 5, `有内容的课仍是 5 个请求，实际 ${full.calls.length}`);
+});

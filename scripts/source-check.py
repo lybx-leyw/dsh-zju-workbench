@@ -1388,20 +1388,24 @@ def make_live_chain(platform: str, title: str, blurb: str, credentials: dict, li
     # 这一项不是"通过/失败"，是给优化用的诊断数据。
     profile = data.get("profile")
     if isinstance(profile, dict) and profile.get("courseCount") is not None:
-        slowest = sorted(profile.get("perCourse") or [], key=lambda row: -(row.get("ms") or 0))[:3]
+        per_course = profile.get("perCourse") or []
         detail = (f"{profile.get('courseCount')} 门课 · {profile.get('requests')} 请求 · "
                   f"爬取 {profile.get('crawlMs')}ms / 总计 {profile.get('totalMs')}ms")
-        evidence = ""
+        lines = []
         if profile.get("courseCount"):
             avg = (profile.get("crawlMs") or 0) / max(profile["courseCount"], 1)
             per_req = ((profile.get("crawlMs") or 0) / profile["requests"]) if profile.get("requests") else None
-            evidence = f"每门课均值 {avg:.0f}ms"
-            if per_req is not None:
-                evidence += f"；单请求均值 {per_req:.0f}ms"
-            if slowest:
-                evidence += "\n最慢几门：" + "；".join(
-                    f"{row.get('course')} {row.get('ms')}ms（{row.get('requests')} 请求）" for row in slowest)
-        result.add("耗时构成", PASS, detail=detail, evidence=evidence)
+            lines.append(f"每门课均值 {avg:.0f}ms" + (f"；单请求均值 {per_req:.0f}ms" if per_req is not None else ""))
+        if per_course:
+            # 明细比均值有用得多：每门课都接近"单请求均值" → 并行生效；
+            # 每门课≈5×单请求均值 → 并行没生效（或有服务端排队）。
+            slowest = sorted(per_course, key=lambda row: -(row.get("ms") or 0))[:3]
+            lines.append("最慢几门：" + "；".join(
+                f"{row.get('course')} {row.get('ms')}ms（{row.get('requests')} 请求，"
+                f"活动{row.get('activities')}/测验{row.get('exams')}/互动{row.get('classrooms')}）"
+                for row in slowest))
+            lines.append("全部每门课耗时：" + ", ".join(f"{r.get('ms')}ms" for r in per_course))
+        result.add("耗时构成", PASS, detail=detail, evidence="\n".join(lines))
     return result
 
 
