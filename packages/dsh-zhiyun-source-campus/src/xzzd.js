@@ -307,22 +307,45 @@ export class XzzdApi {
    * @param options.now - 注入当前时间（测试用）。
    * @returns `{ todos, courses, note }`。
    */
-  async todos({ now = () => new Date(), signal, concurrency = COURSE_CONCURRENCY } = {}) {
+  async todos({ now = () => new Date(), signal, concurrency = COURSE_CONCURRENCY, profile = null } = {}) {
     if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 2) throw new ClassroomError('CONFIG', '课程并发只能为 1 或 2');
+    const startedAt = Date.now();
     const semesterIds = await this.activeSemesterIds({ signal });
+    const afterSemesters = Date.now();
     const courses = await this.courses(semesterIds, { signal });
+    const afterCourses = Date.now();
     if (courses.length === 0) {
       return { todos: [], courses: [], note: '活跃学期里没有进行中的课程。' };
     }
 
     const at = now();
     const todos = [];
+    /** 每门课的耗时与请求数，只在传了 `profile` 时才记录。 */
+    const perCourse = [];
+    const requestsBefore = this.transport?.requests ?? null;
 
     // 分批并发：全并发容易触发风控
     for (let start = 0; start < courses.length; start += concurrency) {
       const batch = courses.slice(start, start + concurrency);
       const bundles = await Promise.all(
-        batch.map(async (course) => ({ course, bundle: await this.courseBundle(course.id, { signal }) })),
+        batch.map(async (course) => {
+          const t = Date.now();
+          const before = this.transport?.requests ?? null;
+          const bundle = await this.courseBundle(course.id, { signal });
+          if (profile) {
+            perCourse.push({
+              course: course.name,
+              ms: Date.now() - t,
+              requests: before == null || this.transport?.requests == null ? null : this.transport.requests - before,
+              activities: bundle.activities?.length ?? 0,
+              exams: bundle.exams?.length ?? 0,
+              homework: bundle.homeworkActivities?.length ?? 0,
+              submittedExams: bundle.submittedExamIds?.length ?? 0,
+              classrooms: bundle.classrooms?.length ?? 0,
+            });
+          }
+          return { course, bundle };
+        }),
       );
       for (const { course, bundle } of bundles) {
         todos.push(...buildCourseTodos(course, bundle, at));
@@ -335,6 +358,23 @@ export class XzzdApi {
       return av - bv;
     });
 
+    if (profile) {
+      return {
+        todos,
+        courses,
+        note: '按「已发布 + 未截止 + 未提交」过滤。',
+        profile: {
+          totalMs: Date.now() - startedAt,
+          semestersMs: afterSemesters - startedAt,
+          coursesMs: afterCourses - afterSemesters,
+          crawlMs: Date.now() - afterCourses,
+          courseCount: courses.length,
+          requests: requestsBefore == null || this.transport?.requests == null
+            ? null : this.transport.requests - requestsBefore,
+          perCourse,
+        },
+      };
+    }
     return { todos, courses, note: '按「已发布 + 未截止 + 未提交」过滤。' };
   }
 }

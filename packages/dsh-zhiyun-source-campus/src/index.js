@@ -340,11 +340,22 @@ export async function apply(ctx, config = {}) {
    * 那个坑的根源）。
    */
   const loadTodosUncached = async () => {
+    /**
+     * 是否收集耗时剖析。
+     *
+     * 只在**诊断**时打开（`ZHIYUN_PROFILE_TODOS=1`），生产不带这个变量，
+     * 所以没有额外开销（`profile: null` 时代码只多一次 `if`）。
+     *
+     * 为什么用环境变量而不是给 `todos()` 加参数：`loadTodos` 被 `sharedRead`
+     * 包了一层、又被网页路由和规划页共用，加参数要一路透传四五处；而这个
+     * 开关只影响"记不记诊断数据"，不影响任何行为。
+     */
+    const wantProfile = process.env.ZHIYUN_PROFILE_TODOS === '1';
     const [xzzd, pta] = await Promise.all([
       (async () => {
         try {
-          const result = await (await xzzdClient()).todos();
-          return { ok: true, rows: normalizeXzzd(result.todos), error: null };
+          const result = await (await xzzdClient()).todos({ profile: wantProfile });
+          return { ok: true, rows: normalizeXzzd(result.todos), error: null, ...(wantProfile ? { profile: result.profile } : {}) };
         } catch (error) {
           return { ok: false, rows: [], error: toError(error) };
         }

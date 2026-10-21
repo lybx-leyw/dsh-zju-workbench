@@ -18,6 +18,10 @@ export const label = '学在浙大';
  */
 export async function run({ account, dataDir, card }) {
   const creds = memoryCredentials();
+
+  // 让 campus 在这一轮把耗时剖析挂在结果上（只影响"记不记诊断数据"）
+  process.env.ZHIYUN_PROFILE_TODOS = '1';
+
   const { ctx, routes } = await mount('dsh-zhiyun-source-campus', {
     dataDir,
     credentials: creds.service,
@@ -51,10 +55,19 @@ export async function run({ account, dataDir, card }) {
   }
 
   const rows = xzzd.rows ?? [];
+
   return {
     todos: rows.length,
     sample: String(rows[0]?.title ?? '').slice(0, 60),
     // 顺带把出口状态带出来，报告里能看出走的是直连还是网关
     egress: data.egress ?? null,
+    /**
+     * 性能剖析。**不再单独爬一遍** —— campus 在 `ZHIYUN_PROFILE_TODOS=1` 时
+     * 会把 `todos()` 的 profile 挂在 `xzzd.profile` 上（见 `loadTodosUncached`）。
+     *
+     * 早先这里写的是「再调一次 `xzzdClient().todos({profile:true})`」，
+     * 那会让探针把同样的 150 个请求发两遍、耗时翻倍 —— 测量本身污染测量。
+     */
+    profile: xzzd.profile ?? null,
   };
 }

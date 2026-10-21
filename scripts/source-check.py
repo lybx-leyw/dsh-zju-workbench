@@ -1375,10 +1375,33 @@ def make_live_chain(platform: str, title: str, blurb: str, credentials: dict, li
         if value is None:
             result.add(key, SKIP, detail="源没有返回")
         elif isinstance(value, dict):
+            # `profile` 是性能剖析，单独渲染（见下），别按 k=v 一串糊出来
+            if key == "profile":
+                continue
             # 嵌套结构（如 topic）展平展示，避免报告出现一整块 JSON
             result.add(key, PASS, detail=", ".join(f"{k}={v}" for k, v in value.items()))
         else:
             result.add(key, PASS, detail=str(value)[:120])
+
+    # 性能剖析：待办的耗时几乎完全由「请求数 × 单请求延迟」决定，
+    # 而请求数是逐门课累加的（5 端点 × 课程数），肉眼看不出来。
+    # 这一项不是"通过/失败"，是给优化用的诊断数据。
+    profile = data.get("profile")
+    if isinstance(profile, dict) and profile.get("courseCount") is not None:
+        slowest = sorted(profile.get("perCourse") or [], key=lambda row: -(row.get("ms") or 0))[:3]
+        detail = (f"{profile.get('courseCount')} 门课 · {profile.get('requests')} 请求 · "
+                  f"爬取 {profile.get('crawlMs')}ms / 总计 {profile.get('totalMs')}ms")
+        evidence = ""
+        if profile.get("courseCount"):
+            avg = (profile.get("crawlMs") or 0) / max(profile["courseCount"], 1)
+            per_req = ((profile.get("crawlMs") or 0) / profile["requests"]) if profile.get("requests") else None
+            evidence = f"每门课均值 {avg:.0f}ms"
+            if per_req is not None:
+                evidence += f"；单请求均值 {per_req:.0f}ms"
+            if slowest:
+                evidence += "\n最慢几门：" + "；".join(
+                    f"{row.get('course')} {row.get('ms')}ms（{row.get('requests')} 请求）" for row in slowest)
+        result.add("耗时构成", PASS, detail=detail, evidence=evidence)
     return result
 
 

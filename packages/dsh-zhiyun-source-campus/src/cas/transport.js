@@ -49,11 +49,20 @@ export class Transport {
      */
     this.cookieFilter = cookieFilter ?? (() => true);
     this.controllers = new Set(); this.closed = false;
+    /**
+     * 累计发起的请求数。
+     *
+     * 只用于诊断（"这次待办到底打了多少个请求"），不影响任何行为。
+     * 之所以值得有个计数器：待办的耗时几乎完全由**请求数 × 单请求延迟**决定，
+     * 而请求数是逐门课累加的（5 个端点 × 课程数），肉眼看不出来。
+     */
+    this.requests = 0;
   }
   async request(url, { signal, method = 'GET', body, headers = {}, stream = false, auth = true, timeoutMs = this.timeoutMs } = {}) {
     if (this.closed) throw new ClassroomError('DISPOSED', '数据源已关闭');
     url = resourceUrl(url);
     const target = new URL(url);
+    this.requests += 1;
     if (target.protocol !== 'https:' && !(target.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(target.hostname))) throw new ClassroomError('URL', '不支持的请求协议');
     const controller = new AbortController(); this.controllers.add(controller);
     const combined = AbortSignal.any([controller.signal, AbortSignal.timeout(timeoutMs), ...(signal ? [signal] : [])]);
