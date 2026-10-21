@@ -1,4 +1,4 @@
-﻿// 「规划」页：把四份东西并成一张表。
+// 「规划」页：把四份东西并成一张表。
 //
 // # 四类数据源
 //
@@ -391,25 +391,16 @@ export function Planning({ ctx }) {
     createdAt: item.createdAt ?? 0,
   })), [state.local]);
 
-  /** 统一的写操作包装：只把这一块置忙，失败就地显示，不动整页 loading。 */
-  const mutate = useCallback(async (action, body, options = {}) => {
-    if (options.id) setBusyId(options.id);
-    else setComposer({ busy: true, error: null });
-    try {
-      const payload = await settings(action, body);
-      if (payload.ok === false) throw new Error(errorText(payload.error, 200));
-      apply(payload);
-      return payload;
-    } catch (failure) {
-      const message = failure.message;
-      if (options.id) setPlanMsg({ kind: 'error', text: message });
-      else setComposer({ busy: false, error: message });
-      return null;
-    } finally {
-      if (options.id) setBusyId(null);
-      else setComposer({ busy: false, error: null });
-    }
-  }, [apply]);
+  /**
+   * ⚠️ 这里曾经有一个 `mutate()` 包装：统一"置忙 → 等往返 → `apply(整份快照)`"。
+   *
+   * 它已经被逐个替换掉了 —— 本页的写操作分两类，**都不该走那条路**：
+   *
+   *   · 纯本端（勾选 / 增删改 / 忘掉拆分）→ 乐观更新，本地改完即最终状态；
+   *   · 调 AI（拆分）→ 只有模型给得出结果，但只回 `local`，不回整份快照。
+   *
+   * 留着它只会诱使后来者继续走"等一整份快照"的旧路，所以删掉。
+   */
 
   /**
    * 新建一条**自己写的**规划。
@@ -598,25 +589,83 @@ export function Planning({ ctx }) {
   /**
    * 让 AI 拆一条**自己写的**规划。
    *
-   * 与页头那个「AI 自动规划」分开：那个拆的是中转站条目（历史内容），这个拆的是
-   * 你刚写下的那一句。两者共用宿主的同一条提示词与校验，只是入口不同。
+   * # 这个**不能**乐观更新 —— 它要调 LLM
+   *
+   * 与「忘掉拆分」不同：拆分的结果（拆出哪几条、每条叫什么）只有模型给得出来，
+   * 本地编不出来。所以它必须等一次真实往返，而那次往返通常是**几秒**。
+   *
+   * 能优化的是**响应感**，不是延迟本身：
+   *   1. 点下去立刻进入忙态（`busyId`），按钮变「正在拆分…」；
+   *   2. 同时给一条「正在让 AI 拆分…」的提示 —— 几秒的等待里，
+   *      界面必须立刻承认"我收到了"，否则用户会以为没点中而重复点。
+   *
+   * 不假装它零延迟：给一个假的即时结果，比让它等更糟。
    */
   const splitPlan = useCallback(async (row) => {
     const force = row.splitInto.length > 0;
-    const payload = await mutate(force ? 'local-split-force' : 'local-split', { id: row.id }, { id: row.id });
-    if (!payload) return;
-    const split = payload.split ?? 0;
-    const extra = [];
-    if (payload.removed) extra.push(`清掉旧的 ${payload.removed} 条`);
-    if (payload.dropped) extra.push(`丢弃 ${payload.dropped} 张不合规`);
-    setPlanMsg({
-      kind: 'ok',
-      text: `已把「${row.title}」拆成 ${split} 条${extra.length ? `（${extra.join('，')}）` : ''}`,
-    });
-  }, [mutate]);
+    // 立刻进入忙态：这一步必须是同步的，且在 await 之前
+    setBusyId(row.id);
+    setPlanMsg({ kind: 'ok', text: `正在让 AI 拆分「${row.title}」…` });
+    try {
+      const payload = await settings(force ? 'local-split-force' : 'local-split', { id: row.id });
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+      const split = payload.split ?? 0;
+      const extra = [];
+      if (payload.removed) extra.push(`清掉旧的 ${payload.removed} 条`);
+      if (payload.dropped) extra.push(`丢弃 ${payload.dropped} 张不合规`);
+      setPlanMsg({
+        kind: 'ok',
+        text: `已把「${row.title}」拆成 ${split} 条${extra.length ? `（${extra.join('，')}）` : ''}`,
+      });
+      /**
+       * 拆分**改变了条目结构**（多了子项、源条目多了 splitInto），所以这里
+       * 必须用服务端回的数据刷新，不能只改本地一处 —— 与纯本端的勾选不同。
+       */
+      if (Array.isArray(payload.local)) {
+        setState((current) => ({ ...current, local: payload.local }));
+      }
+    } catch (failure) {
+      setPlanMsg({ kind: 'error', text: `拆分没有完成：${failure.message}` });
+    } finally {
+      setBusyId(null);
+    }
+  }, []);
 
-  /** 忘掉一次拆分：删掉拆出的子项，让源条目回到"还没拆"。 */
-  const unsplitPlan = useCallback((row) => mutate('local-unsplit', { id: row.id }, { id: row.id }), [mutate]);
+  /**
+   * 忘掉一次拆分：删掉拆出的子项，让源条目回到"还没拆"。
+   *
+   * # 这是纯本端操作，必须乐观更新
+   *
+   * 它只改 `local.json`：把源条目的 `splitInto` 清空、删掉它拆出的子项。
+   * 不碰中转站，也不产生任何远端数据 —— 所以本地改完就是最终状态。
+   *
+   * 之前走 `mutate()`：等一轮往返、拿回整份快照、再替换整个 state。
+   * 对一个纯本端操作来说，那让用户白等一次几十 KB 的重算与序列化。
+   */
+  const unsplitPlan = useCallback(async (row) => {
+    const before = state.local ?? [];
+    /**
+     * ① 本地立刻生效。
+     *
+     * 要同时做两件事：删掉 `splitFrom === row.id` 的子项，并把源条目的
+     * `splitInto` 清空。只做前一件的话，源条目上还挂着"已拆 2 条"的标签，
+     * 但下面一条子项都没有 —— 那比不生效更让人困惑。
+     */
+    setState((current) => ({
+      ...current,
+      local: (current.local ?? [])
+        .filter((item) => item.splitFrom !== row.id)
+        .map((item) => (item.id === row.id ? { ...item, splitInto: [] } : item)),
+    }));
+    try {
+      const payload = await settings('local-unsplit', { id: row.id });
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+    } catch (failure) {
+      // 回滚：磁盘没清掉就不能让界面显示"已忘掉"
+      setState((current) => ({ ...current, local: before }));
+      setPlanMsg({ kind: 'error', text: `忘掉拆分没有保存：${failure.message}` });
+    }
+  }, [state.local]);
 
   /**
    * 读今天的课表，作为规划的**上下文**。

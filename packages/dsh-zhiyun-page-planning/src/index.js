@@ -1078,13 +1078,21 @@ export function createHandler({
           }
           try {
             const result = await splitLocal(id, { force: action === 'local-split-force' });
-            sendJson(res, 200, { ok: true, ...result, ...(await snapshot()) });
+            /**
+             * 只回 `local`，**不回整份快照**。
+             *
+             * 拆分确实改变了条目结构（多了子项、源条目多了 `splitInto`），
+             * 所以前端需要新的 `local`。但中转站 / 平台待办那些与这次拆分
+             * 无关 —— 回整份快照等于让用户为一个 LLM 调用额外等一次几十 KB
+             * 的重算与序列化。
+             */
+            sendJson(res, 200, { ok: true, ...result, local: local.list() });
           } catch (error) {
             const code = error?.code ?? 'PLAN_FAILED';
             sendJson(res, code === 'NO_PENDING' ? 200 : 400, {
               ok: false,
               error: { code, message: String(error?.message ?? error) },
-              ...(code === 'NO_PENDING' ? await snapshot() : {}),
+              ...(code === 'NO_PENDING' ? { local: local.list() } : {}),
             });
           }
           return;

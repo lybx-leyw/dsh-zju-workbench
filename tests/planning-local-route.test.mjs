@@ -214,7 +214,7 @@ test('缺少 id、请求体不是 JSON、未知动作都各有明确的拒绝', 
 
 /* ─────────────────────────────────────────── AI 拆分 */
 
-test('拆分自己写的规划：回 split 条数，并把卡片写进快照', async () => {
+test('拆分自己写的规划：回 split 条数与 local，不回整份快照', async () => {
   const h = await harness();
   try {
     const created = (await h.call('POST', '/?local-create', { title: '下周要交的三件事' })).body.item;
@@ -225,7 +225,7 @@ test('拆分自己写的规划：回 split 条数，并把卡片写进快照', a
     assert.equal(r.body.split, 2);
     assert.equal(r.body.model, 'test-model');
     const titles = r.body.local.map((i) => i.title);
-    assert.ok(titles.includes('子项一') && titles.includes('子项二'), `拆出的条目要在快照里：${titles}`);
+    assert.ok(titles.includes('子项一') && titles.includes('子项二'), `拆出的条目要在 local 里：${titles}`);
 
     // 源条目要标出"已拆 2 条"，页面据此显示
     const source = r.body.local.find((i) => i.id === created.id);
@@ -233,6 +233,17 @@ test('拆分自己写的规划：回 split 条数，并把卡片写进快照', a
     // 子项要能认出自己来自哪条
     for (const child of r.body.local.filter((i) => i.splitFrom)) {
       assert.equal(child.splitFrom, created.id);
+    }
+
+    /**
+     * ⚠️ 只回 `local`，不回整份快照。
+     *
+     * 拆分确实改变了条目结构（多了子项），所以前端需要新的 `local`；但中转站 /
+     * 平台待办与这次拆分无关 —— 回整份快照等于让用户为一个 LLM 调用额外等一次
+     * 几十 KB 的重算与序列化。
+     */
+    for (const banned of ['todos', 'entries', 'remote', 'pta', 'plans', 'config']) {
+      assert.equal(r.body[banned], undefined, `拆分不该回 ${banned}`);
     }
   } finally {
     await h.done();
@@ -328,5 +339,36 @@ test('没有模型服务时拆分回 400 而不是崩', async () => {
     assert.match(r.body.error, /AI 规划未启用/);
   } finally {
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('忘掉拆分只回 ok + id，不回整份快照', async () => {
+  /**
+   * 「忘掉一次拆分」是**纯本端**操作：清掉源条目的 `splitInto`、删掉它拆出的子项。
+   * 它不碰中转站，也不产生任何远端数据 —— 本地改完就是最终状态。
+   *
+   * 所以它只该回 `{ ok, id }`。回整份快照意味着用户为一个纯本地写多等一次
+   * 几十 KB 的重算与序列化。前端配合做乐观更新（先删子项、再清标签）。
+   */
+  const h = await harness();
+  try {
+    const created = (await h.call('POST', '/?local-create', { title: 'x' })).body.item;
+    await h.call('POST', '/?local-split', { id: created.id });
+    assert.equal(h.local.list().length, 3, '1 源 + 2 子');
+
+    const r = await h.call('POST', '/?local-unsplit', { id: created.id });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.id, created.id);
+    for (const banned of ['todos', 'entries', 'remote', 'pta', 'plans', 'config']) {
+      assert.equal(r.body[banned], undefined, `忘掉拆分不该回 ${banned}`);
+    }
+
+    // 状态用 store 与 GET 各核一次
+    assert.deepEqual(h.local.list().map((i) => i.title), ['x'], '子项该消失，源留着');
+    assert.deepEqual(h.local.list()[0].splitInto, []);
+    assert.deepEqual((await h.call('GET', '/')).body.local.map((i) => i.title), ['x']);
+  } finally {
+    await h.done();
   }
 });
