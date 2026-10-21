@@ -7,6 +7,17 @@ import { apply } from '../packages/dsh-zhiyun-source-campus/src/index.js';
 import { apply as applyClassroom } from '../packages/dsh-zhiyun-source-classroom/src/index.js';
 import { createHandler } from '../packages/dsh-zhiyun-page-planning/src/index.js';
 
+/**
+ * ⚠️ 本文件测的是**逐课爬取**那条路的完整契约（会话失效重试、429 中止、
+ * 结构漂移、并发上限）。那些语义只在 `ZHIYUN_TODOS=slow` 下存在 ——
+ * 聚合端点 `/api/todos` 是 1 个请求，压根没有"逐课循环"可测。
+ *
+ * 所以这里**显式钉住 slow 模式**，而不是依赖产品默认值：默认值将来怎么变
+ * （例如为了性能切成 fast）都不该让这组契约测试悄悄失去意义，也不该让它们
+ * 因为夹具只模拟了逐课端点而集体变红。
+ */
+process.env.ZHIYUN_TODOS = 'slow';
+
 async function harness(t, {expire=false,rateLimit=false,badShape=false,realClassroom=false,classroomUnavailable=false}={}) {
  const dir=await mkdtemp(path.join(tmpdir(),'campus-contract-'));
  const services={},calls=[];let active=0,maxActive=0,authorizations=0,expired=false;

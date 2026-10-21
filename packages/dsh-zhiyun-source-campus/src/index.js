@@ -354,20 +354,24 @@ export async function apply(ctx, config = {}) {
     /**
      * 待办数据源。
      *
-     *   `slow`（默认）  逐课抓取，`5N` 个请求 —— 现有行为，**保持默认**
-     *   `fast`          官方聚合端点 `/api/todos?no-intercept=true`，**1 个请求**
+     *   `fast`（默认）  官方聚合端点 `/api/todos?no-intercept=true`，**1 个请求**
+     *   `slow`          逐课抓取，`5N` 个请求（旧行为，留作对照与兜底）
      *   `diff`          两条都跑并对比，把差异放进 `xzzd.diff`（诊断用）
      *
-     * # 为什么默认还是 slow
+     * # 为什么默认改成 fast（2026-10-21 决策）
      *
-     * 「`/api/todos` 会漏」这条断言在本仓与上游传了几手，但**没有一处给出
-     * 漏什么、在什么条件下漏**（详见 `docs/todos-vs-zju-mcp.md`）。而 `zju-mcp`
-     * 的作者显然不认同它 —— 那个实现就是用 `/api/todos` 的。
+     * 真机数据说话：逐课 11 门课 42 请求、单请求 p50 = 2112ms、总计 48 秒。
+     * 每门课 ≈ 2 × 2112ms，正是「三个必看端点 + 按需补两个过滤器」两阶段的
+     * 两个 RTT。也就是说**瓶颈是单请求延迟本身**（2 秒/请求），不是并发不够
+     * —— 在这种链路上，唯一有效的手段就是少发请求。
      *
-     * 证据不足时，默认值应当保守：**保持现有行为**，把更快的路留成显式选项，
-     * 等 `diff` 跑出对账数据再决定。直接改默认等于拿用户的待办做实验。
+     * 而 `/api/todos` 只发 1 个。桌面的 `zju-mcp`（`courses_list_todos.py`）
+     * 用它「几秒就返回」，可作为这条链路确实能快的实证。
+     *
+     * 「会漏」那条断言：只有结论没有证据（上游只写"避免 bug"），且 `zju-mcp`
+     * 是反例实现。`diff` 模式保留着，要核实随时可跑。
      */
-    const todoMode = String(process.env.ZHIYUN_TODOS ?? 'slow').toLowerCase();
+    const todoMode = String(process.env.ZHIYUN_TODOS ?? 'fast').toLowerCase();
     const [xzzd, pta] = await Promise.all([
       (async () => {
         try {

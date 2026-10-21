@@ -25,6 +25,9 @@ import {
 } from '../packages/dsh-zhiyun-source-campus/src/pta.js';
 import { normalizeXzzd, normalizePta } from '../packages/dsh-zhiyun-source-campus/src/index.js';
 import { Transport, AUTH_HOSTS } from '../packages/dsh-zhiyun-source-campus/src/cas/transport.js';
+import { SessionStore } from '../packages/dsh-zhiyun-source-campus/src/cas/session.js';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { CAMPUS_HOSTS } from '../packages/dsh-zhiyun-source-campus/src/hosts.js';
 
 /** 造一个已装 cookie 的 Transport，`fetch` 可注入。 */
@@ -884,4 +887,70 @@ test('diffTodos 在两边一致时报零差异', () => {
   assert.deepEqual(diff.onlyFast, []);
   assert.deepEqual(diff.onlySlow, []);
   assert.deepEqual(diff.missingFromFast, []);
+});
+
+/* ────────────────────────────── 会话落盘不得阻塞请求 */
+
+/**
+ * 这组测试钉的是一个**实测出来的性能缺陷**（2026-10-21）。
+ *
+ * `SessionStore.protect()` 会 spawn `powershell.exe` 做 DPAPI 加密，
+ * 本机实测**单次 1249ms**。而 `Transport.request` 原先在每个带 `Set-Cookie`
+ * 的响应后都 `await this.session.save()` —— 一次逐课待办几十个请求，于是
+ * 每个请求白等一秒多，而且这些保存还因为 `pending` 串行化互相排队。
+ *
+ * 真机数据：42 个请求、p50 = 2112ms、总计 48 秒。对照 `zju-mcp`：内存会话、
+ * 不落盘，几秒就返回。
+ *
+ * 修法是 `scheduleSave()`：请求立刻继续，落盘延迟合并。
+ * 这里用一个「慢保护器」把缺陷放大成可断言的形式。
+ */
+
+/** 造一个"加密很慢"的 SessionStore，并把 file 设成假路径以启用落盘路径。 */
+function slowStore({ delayMs = 300 } = {}) {
+  const store = new SessionStore({
+    file: path.join(tmpdir(), `fake-${Math.random().toString(16).slice(2)}.dpapi`),
+    protect: async () => { await new Promise((r) => setTimeout(r, delayMs)); return Buffer.from('x'); },
+  });
+  return store;
+}
+
+test('scheduleSave 不阻塞调用方（慢保护器下也只花毫秒级）', async () => {
+  const store = slowStore({ delayMs: 300 });
+  const t0 = Date.now();
+  for (let i = 0; i < 5; i += 1) store.scheduleSave();
+  const elapsed = Date.now() - t0;
+
+  assert.ok(elapsed < 100, `scheduleSave 必须立刻返回，实测 ${elapsed}ms`);
+  await store.flush();
+});
+
+test('await save() 在慢保护器下确实很慢（对照组，证明测得出差异）', async () => {
+  const store = slowStore({ delayMs: 300 });
+  const t0 = Date.now();
+  for (let i = 0; i < 3; i += 1) await store.save();
+  const elapsed = Date.now() - t0;
+
+  assert.ok(elapsed >= 900, `3 次串行 save 应≥900ms，实测 ${elapsed}ms`);
+});
+
+test('Transport 在收到 Set-Cookie 时不 await 落盘', async () => {
+  // 直接看 Transport 行为：一个会回 Set-Cookie 的 fetch + 慢保护器，
+  // 请求耗时应接近 0（而不是等 300ms 落盘）
+  const store = slowStore({ delayMs: 300 });
+  const transport = new Transport({
+    session: store,
+    hosts: new Set(['courses.zju.edu.cn']),
+    fetch: async () => new Response('{}', {
+      status: 200,
+      headers: { 'set-cookie': 'k=v; Domain=.zju.edu.cn; Path=/' },
+    }),
+  });
+
+  const t0 = Date.now();
+  await transport.request('https://courses.zju.edu.cn/api/x');
+  const elapsed = Date.now() - t0;
+
+  assert.ok(elapsed < 150, `请求不该等待落盘，实测 ${elapsed}ms`);
+  await store.flush();
 });

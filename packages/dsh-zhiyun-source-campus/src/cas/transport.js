@@ -5,6 +5,20 @@ import { resourceUrl } from './urls.js';
 export const REFERER = 'https://classroom.zju.edu.cn/';
 
 /**
+ * 统一的 User-Agent。
+ *
+ * ⚠️ 必须是**完整的浏览器 UA 串**（含平台段与内核段）。早先这里写的是
+ * `Mozilla/5.0 Chrome/122.0.0.0 Safari/537.36` —— 缺了平台段
+ * （`(Windows NT 10.0; Win64; x64) AppleWebKit/...`），是不合法的 UA 格式。
+ *
+ * 对照 `zju-mcp` 的同名常量，它用的是完整串。站点若按 UA 判断客户端类型，
+ * 残缺串可能被归到"非浏览器"，进而走不同的处理路径（限速、降级、改写响应）。
+ * 这与"同样是 `/api/todos`，有人拿到完整列表、有人拿到残缺列表"是同一类风险。
+ */
+export const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+  + ' (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+/**
  * 默认放行主机 —— **classroom 那一套**。
  *
  * ⚠️ 这是从 `dsh-zhiyun-source-classroom` 原样复制来的，所以默认值只覆盖智云课堂的域名。
@@ -83,14 +97,27 @@ export class Transport {
         .filter(this.cookieFilter).map(c => c.cookieString()).join('; ');
       combined.throwIfAborted();
       const response = await this.fetcher(url, { method, body, redirect: 'manual', signal: combined,
-        headers: { 'User-Agent': 'Mozilla/5.0 Chrome/122.0.0.0 Safari/537.36', Accept: 'application/json, text/plain, */*', Referer: this.referer,
+        headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json, text/plain, */*', Referer: this.referer,
           ...headers, ...(cookies ? { Cookie: cookies } : {}) } });
       if (epoch === this.session.epoch && auth && this.hosts.has(target.hostname)) {
         const receivedCookies = response.headers.getSetCookie();
         for (const cookie of receivedCookies) {
           try { await this.session.jar.setCookie(cookie, url); } catch { throw new ClassroomError('COOKIE', '服务端 Cookie 域或格式异常'); }
         }
-        if (receivedCookies.length) await this.session.save();
+        /**
+         * ⚠️ 这里**不能** `await this.session.save()`。
+         *
+         * `save()` 会 spawn `powershell.exe` 做 DPAPI 加密 —— 本机实测单次
+         * **1249ms**。而每个带 `Set-Cookie` 的响应都会走到这里，一次逐课待办
+         * 有几十个请求，于是每个请求白等一秒多，且保存互相排队。
+         *
+         * `scheduleSave()` 把落盘推迟并合并：请求立刻继续，磁盘副本稍后写一次。
+         * 内存里的 jar 始终是最新的，所以同一次运行内行为完全不变。
+         */
+        if (receivedCookies.length) {
+          if (typeof this.session.scheduleSave === 'function') this.session.scheduleSave();
+          else await this.session.save?.();
+        }
       }
       this.log({ method, host: target.hostname, path: target.pathname, status: response.status });
       if (stream) { handedOff = true; return { response, release: () => this.controllers.delete(controller), signal: combined }; }
