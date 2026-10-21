@@ -2111,3 +2111,207 @@
 #### 方法学修正
 
 `npm view` 走的是腾讯镜像，可能滞后/缺包 → **锁版判定一律以 `https://registry.npmjs.org/<pkg>` 直查为准**。
+
+### 第四十六轮 · 2026-10-21 · A 组（topic 精确检索轴）
+
+> 搜索 8 次（`topic:deepseek-harness-plugin` 835 / `topic:cordis-plugin` 575 / `topic:dsh-plugin` 21197（⚠ 污染） /
+> `topic:dsh-extension` 5 / `topic:dsh-ecosystem` 11 / `topic:dsh-desktop` 181 / 前两者的 `language:javascript` 479、`language:typescript` 281），
+> 263 个唯一仓库 → **首次登记 190 行（🔵146 / ⚠待核17 / ⛔27，零 🟢 零 🟡）**。
+> **零 🟢 → 按技能文档未出「可直接集成」骨架**；L2 出的是 B 类对照物 `dsh-radar-fence-normalize`。
+> 自我纠正：`dream-num/dsh-univer-office` 初判「三门全过的新 A 类」，实查后**本章早已锁版接入并写进 profile** → 改判 ⛔（报告 §二 C-2）。
+> 本轮把「桌面壳 / token 额度族 / IM 网关 / 趣味」四类噪声各归并成一行口径，逐条独立登记但不逐条读码（见报告 §七）。
+
+| 仓库 | 类型 | 许可证 | 星/推送 | 分级 | 状态 | 理由（归并口径或单条理由） |
+| --- | --- | --- | --- | --- | --- | --- |
+| `reactive-resume/reactive-resume` | B 其他JS | MIT | ★44605 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `volcengine/OpenViking` | B 其他JS | AGPL-3.0 | ★40453 / 2026-10-20 | ⛔ | rejected | AGPL-3.0 红线 —— 不摘码 |
+| `esengine/DeepSeek-Reasonix` | B 其他JS | MIT | ★35882 / 2026-10-21 | 🔵 | proposed | 任务编排，与本仓「规划/今天」页同域但方向不同（见 §二 C-1） |
+| `Tencent/WeKnora` | B 其他JS | NOASSERTION | ★34866 / 2026-10-20 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `freestylefly/awesome-gpt-image-2` | B 其他JS | MIT | ★34786 / 2026-10-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `anywhere-labs/dsh-desktop` | A 原生DSH | MIT | ★31997 / 2026-10-20 | 🔵 | proposed | **承载端**（Electron 壳，自身即 Cordis 插件 `dsh-plugin-desktop`，npm 可锁版但停在 2.0.0/2026-08-16，落后仓库 2.0.18）；与学生场景无关，见 §二 C-4 |
+| `Molunerfinn/PicGo` | B 其他JS | MIT | ★27379 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `titanwings/distilly` | B 其他JS | MIT | ★25835 / 2026-10-13 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `nocobase/nocobase` | B 其他JS | NOASSERTION | ★24644 / 2026-10-21 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `walkinglabs/learn-harness-engineering` | A 原生DSH | MIT | ★21033 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `EverMind-AI/EverOS` | B 其他JS | Apache-2.0 | ★13537 / 2026-10-20 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `MemTensor/MemOS` | A 原生DSH | Apache-2.0 | ★11978 / 2026-10-20 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `Tencent/BrowserSkill` | B 其他JS | MIT | ★9287 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `anbeime/skill` | B 其他JS | **无** | ★8414 / 2026-10-20 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `plastic-labs/honcho` | B 其他JS | AGPL-3.0 | ★7712 / 2026-10-20 | ⛔ | rejected | AGPL-3.0 红线 —— 不摘码 |
+| `lingfengQAQ/webnovel-writer` | B 其他JS | GPL-3.0 | ★7578 / 2026-10-19 | ⛔ | rejected | GPL-3.0 红线 —— 不摘码 |
+| `yjh051108/dsh-routing-suite` | A 原生DSH | MIT | ★6991 / 2026-09-18 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `ZSeven-W/openpencil` | B 其他JS | MIT | ★6304 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Q00/ouroboros` | B 其他JS | MIT | ★6253 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `superdesigndev/treg` | B 其他JS | NOASSERTION | ★5899 / 2026-10-20 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `iflytek/skillhub` | B 其他JS | Apache-2.0 | ★5251 / 2026-10-20 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `crafter-station/petdex` | A 原生DSH | MIT | ★4261 / 2026-10-10 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `QingYunA/answer-me-with-html` | B 其他JS | MIT | ★4104 / 2026-10-21 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `xiaobright/dsh-anchored-standard` | A 原生DSH | NOASSERTION | ★3744 / 2026-09-10 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `foryourhealth111-pixel/Vibe-Skills` | B 其他JS | Apache-2.0 | ★3736 / 2026-10-20 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `strukto-ai/mirage` | B 其他JS | Apache-2.0 | ★3699 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `agentscope-ai/ReMe` | B 其他JS | Apache-2.0 | ★3656 / 2026-10-19 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `T-Auto/dsh-ops` | A 原生DSH | NOASSERTION | ★3477 / 2026-10-20 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `edison7009/EchoBird` | B 其他JS | MIT | ★3385 / 2026-10-21 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `chuspeeism/dashi-taskboard` | A 原生DSH | Apache-2.0 | ★3370 / 2026-10-16 | 🔵 | proposed | **任务面板**：★3370、2 万行 `AGENTS.md` 的 agent 派工规程。方向与本仓「规划」页**不同**（它是给 agent 派任务，不是给用户排作业），见 §二 C-1 |
+| `sopaco/deepwiki-rs` | B 其他JS | MIT | ★3136 / 2026-09-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `shaobeichen/dsh-pocket` | A 原生DSH | GPL-2.0 | ★2021 / 2026-10-17 | ⛔ | rejected | GPL-2.0 红线 —— 不摘码 |
+| `myYangyunfan/dsh_desktop` | A 原生DSH | MIT | ★719 / 2026-10-18 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `KimGLee/Cambium` | B 其他JS | NOASSERTION | ★624 / 2026-09-12 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `dream-num/dsh-univer-office` | A 原生DSH | Apache-2.0 | ★574 / 2026-10-08 | ⛔ | rejected | **重复且无增益**：本仓 `packages/dsh-zhiyun-univer-office` 已锁版 `0.3.7` 接入并写进 profile（`6b09396`）。本行动因是「registry 无此名 → 误判为新候选」，见报告 §二 C-2 |
+| `houyanchao/chatgpt-gemini-timeline` | B 其他JS | NOASSERTION | ★469 / 2026-09-27 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `xing-shuyin/pi-web-ui` | B 其他JS | MIT | ★322 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `Fanch-hui/codex-bridge` | A 原生DSH | Apache-2.0 | ★276 / 2026-10-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `MarcoG-h/DSH-Launcher` | A 原生DSH | **无** | ★269 / 2026-09-18 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `Devin-AXIS/jev-dsh-decision` | A 原生DSH | **无** | ★258 / 2026-09-20 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `Astro-Han/pawwork` | A 原生DSH | Apache-2.0 | ★203 / 2026-10-12 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `taxueseek/argo` | B 其他JS | Apache-2.0 | ★203 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Anionex/dsh-turn-rewind` | A 原生DSH | BSD-3-Clause | ★136 / 2026-10-18 | 🔵 | proposed | 会话/工作区回退（BSD-3-Clause）；与本仓无对应面板，但与 `PerryLink/dsh-checkpoint-rewind` 同题，仅登记 |
+| `sjh9714/dsh-win32` | A 原生DSH | MIT | ★133 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WestFox-AwA/dsh-wish-specializer` | A 原生DSH | BSD-3-Clause | ★132 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `fangqian616/consensus-pipeline` | B 其他JS | MIT | ★129 / 2026-10-10 | 🔵 | proposed | 任务编排，与本仓「规划/今天」页同域但方向不同（见 §二 C-1） |
+| `BruzWJ/Liang-Saint-Slider` | A 原生DSH | MIT | ★93 / 2026-08-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `like-study1/Oh-My-DSH` | A 原生DSH | MIT | ★93 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `linhut/gongwen-skill` | A 原生DSH | MIT | ★83 / 2026-10-01 | 🔵 | proposed | Office 文档能力，与本仓文档导入通路相关（见 §二 C-2） |
+| `openma-ai/Martty` | A 原生DSH | MIT | ★80 / 2026-10-17 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WM-CODER/custom-first-control-prompt` | A 原生DSH | MIT | ★75 / 2026-09-01 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Ebony-Vinyl/EAC-design-world` | A 原生DSH | AGPL-3.0 | ★71 / 2026-10-18 | ⛔ | rejected | AGPL-3.0 红线 —— 不摘码 |
+| `Aa728848/dsh-chatgpt-subscription` | A 原生DSH | MIT | ★69 / 2026-10-20 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `eleckoi/ElecKoi` | A 原生DSH | AGPL-3.0 | ★63 / 2026-10-17 | ⛔ | rejected | AGPL-3.0 红线 —— 不摘码 |
+| `zaofan-make/dsh-qqbot` | A 原生DSH | MIT | ★61 / 2026-10-20 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `keleus/deepseek-pet` | A 原生DSH | MIT | ★57 / 2026-10-16 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `LaplaceYoung/oh-my-dsh` | A 原生DSH | **无** | ★57 / 2026-08-15 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `zhuiyueya/dsh-im-gateway` | A 原生DSH | MIT | ★53 / 2026-09-27 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `houyanchao/dsh-timeline` | A 原生DSH | NOASSERTION | ★47 / 2026-08-20 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `openma-ai/deepseek-harness-acp` | A 原生DSH | NOASSERTION | ★45 / 2026-10-19 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `limuyang2/agent-team` | A 原生DSH | MIT | ★43 / 2026-08-26 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `EdgeTypE/dsh-better-deepseek` | A 原生DSH | **无** | ★37 / 2026-08-14 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `kw78/dsh-office-tools` | A 原生DSH | MIT | ★34 / 2026-10-13 | 🔵 | proposed | Office 文档能力，与本仓文档导入通路相关（见 §二 C-2） |
+| `ZRui-C/dsh-computer-use` | A 原生DSH | Apache-2.0 | ★33 / 2026-10-07 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `sikadi233-hub/minecraft-dev` | A 原生DSH | MIT | ★31 / 2026-10-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `omdsh-dev/dsh-advisor` | A 原生DSH | MIT | ★31 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Lzcdebear/better-dsh-session-deletetool` | A 原生DSH | MIT | ★31 / 2026-10-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `fengyungithub/dsh-short-video-studio` | A 原生DSH | Apache-2.0 | ★30 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `GaganSD/pi-extensions` | A 原生DSH | MIT | ★28 / 2026-10-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `PerryLink/dsh-checkpoint-rewind` | A 原生DSH | Apache-2.0 | ★27 / 2026-10-19 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `sugarforever/dsh-lark` | A 原生DSH | MIT | ★26 / 2026-09-07 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `czcdr/dsh-plugin-rea` | A 原生DSH | MIT | ★25 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `rootkiller6788/dsh-launcher` | A 原生DSH | MIT | ★25 / 2026-09-16 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `zaizaizhao/dsh-branchmark` | A 原生DSH | MIT | ★25 / 2026-10-08 | 🔵 | proposed | 任务编排，与本仓「规划/今天」页同域但方向不同（见 §二 C-1） |
+| `cloveric/tarocub` | A 原生DSH | MIT | ★24 / 2026-10-17 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `SpookySandwich/dsh-plugin-message-edit` | A 原生DSH | NOASSERTION | ★23 / 2026-10-05 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `AlliotTech/deepseek-harness-docker` | A 原生DSH | MIT | ★23 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `tomowang/dsh-tui` | A 原生DSH | MIT | ★23 / 2026-10-17 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `plyflai/dsh-ux-plus` | A 原生DSH | MIT | ★22 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `MindLab-Research/dsh-generative-ui` | A 原生DSH | Apache-2.0 | ★22 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `JustGenius-s/DSH-Desktop` | A 原生DSH | MIT | ★22 / 2026-10-11 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `zangxx66/dsh-prompt-setting` | A 原生DSH | MIT | ★21 / 2026-10-17 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `datit309/supergraph` | B 其他JS | MIT | ★21 / 2026-10-17 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `xxxyz/DeepSeekHarness-MCP-Manager` | A 原生DSH | MIT | ★21 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `nullptr-DZF/dsh-academic-research-skills` | A 原生DSH | NOASSERTION | ★21 / 2026-08-27 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `ZK-Andy/dsh-continual-evolve` | A 原生DSH | MIT | ★21 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `JunNanLYS/dsh-layered-memory` | A 原生DSH | MIT | ★20 / 2026-09-07 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `LiuJunheng/DeepSeekHarnessGreen` | A 原生DSH | Apache-2.0 | ★19 / 2026-10-17 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `gulagala001/dsh-intelligent-ui` | A 原生DSH | MIT | ★19 / 2026-10-20 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `Lenonss/DSH_VsCodeMode` | A 原生DSH | MIT | ★19 / 2026-10-19 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WLV-ZEDD/dsh-chatgpt-web` | A 原生DSH | MIT | ★19 / 2026-10-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `v587d/capital-generation` | B 其他JS | MIT | ★18 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `z953218350/dsh-history-tree` | A 原生DSH | MIT | ★17 / 2026-08-31 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Z-6354/dsh-mobile-hanui` | A 原生DSH | MIT | ★17 / 2026-10-05 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `2861292267/DSH-Official-WorkBuddy-Credit-Proxy` | A 原生DSH | MIT | ★17 / 2026-10-19 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `hyqibot/DeepSeek-Harness-Token-Free` | A 原生DSH | NOASSERTION | ★17 / 2026-08-24 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `wlj521/dsh-ui-tweaks` | A 原生DSH | MIT | ★17 / 2026-10-13 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `S3K926/dsh-selfwake` | A 原生DSH | MIT | ★16 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `muyuanjin/dsh-ptc-plus` | A 原生DSH | MIT | ★16 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `MengYuil/dsh-ponytail` | A 原生DSH | MIT | ★16 / 2026-10-17 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `baisama-cloud/dsh-galgame-generator` | A 原生DSH | MIT | ★16 / 2026-09-10 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `Clizo1209/dsh-playwright-browser` | A 原生DSH | MIT | ★16 / 2026-08-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Kaalia0912/dsh-whale-musume-persona` | A 原生DSH | MIT | ★14 / 2026-08-20 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `panzeyu2013/dsh-chamber` | A 原生DSH | MIT | ★14 / 2026-10-19 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WNJXYK/dsh-codex-oauth` | A 原生DSH | MIT | ★14 / 2026-08-15 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `yingjian666/dsh-zh-thinking` | A 原生DSH | MIT | ★14 / 2026-10-01 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `cuddly-guacamole/dsh-auto-approval-llm` | A 原生DSH | BSD-3-Clause | ★14 / 2026-10-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `S3K926/dsh-session-switch` | A 原生DSH | MIT | ★13 / 2026-10-01 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `MrMu666/dsh-lan-tool` | A 原生DSH | **无** | ★13 / 2026-10-18 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `orrinzeng/dsh-cursor-subscription` | A 原生DSH | MIT | ★13 / 2026-09-30 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `cv-superding/dsh-webin` | A 原生DSH | NOASSERTION | ★12 / 2026-10-16 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `z953218350/dsh-archive-manager` | A 原生DSH | MIT | ★12 / 2026-08-31 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `Innocent-children/TaskBelay` | B 其他JS | Apache-2.0 | ★12 / 2026-10-19 | 🔵 | proposed | 任务编排，与本仓「规划/今天」页同域但方向不同（见 §二 C-1） |
+| `xiaoksio/dsh-solution-explorer` | A 原生DSH | MIT | ★12 / 2026-10-10 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `SpookySandwich/dsh-plugin-smooth-stream` | A 原生DSH | MIT | ★11 / 2026-09-29 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `SheltonLiu-N/nano-cordis` | A 原生DSH | MIT | ★11 / 2026-08-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `yxccai/dsh-desktop` | A 原生DSH | MIT | ★11 / 2026-08-21 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `Minglink/dsh-stream-market` | A 原生DSH | MIT | ★11 / 2026-09-04 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `cryjkd/dsh-clawbot` | A 原生DSH | MIT | ★11 / 2026-09-05 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `TryDing-T/dsh-Plugin--ChineseChess` | A 原生DSH | MIT | ★11 / 2026-09-09 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `xiaozhuyuqing/dsh-repeat-guard` | A 原生DSH | MIT | ★11 / 2026-10-02 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `xiaolinlin360/dsh-supabase` | A 原生DSH | MIT | ★10 / 2026-08-27 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `zxmqq1234/dsh-auto-retry` | A 原生DSH | MIT | ★10 / 2026-10-15 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `jaibhasin/dsh-browser-agent` | A 原生DSH | MIT | ★10 / 2026-10-11 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `TH060419/gatherthread` | A 原生DSH | Apache-2.0 | ★10 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `HakureiMonika/dsh-browser-scope` | A 原生DSH | MIT | ★10 / 2026-09-28 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `yu-wenchao/deepseek-harness-desktop-Install` | A 原生DSH | MIT | ★9 / 2026-08-31 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `dushaobindoudou/dsh-acp` | A 原生DSH | MIT | ★9 / 2026-10-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `walksls/dsh-degeneration-kit` | A 原生DSH | MIT | ★9 / 2026-10-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `bloodtmai-cmyk/dsh-harness-enterprise` | A 原生DSH | MIT | ★9 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Gru110110110/dsh-launcher` | A 原生DSH | NOASSERTION | ★9 / 2026-10-01 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `foolgry/dsh-desktop` | A 原生DSH | **无** | ★9 / 2026-09-22 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `Zoria-Lind/dsh-behavior-enhancer` | A 原生DSH | MIT | ★9 / 2026-10-19 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `peterwangze/dsh-novel-writing` | A 原生DSH | **无** | ★8 / 2026-10-21 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `bloodtmai-cmyk/dsh-ai-hub` | A 原生DSH | MIT | ★8 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `civaapple-alt/mini-dsh` | A 原生DSH | MIT | ★8 / 2026-08-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `vdnight89/InfiniteDSH` | A 原生DSH | MIT | ★8 / 2026-08-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `haoranwang0921/dsh-session-cleaner` | A 原生DSH | Apache-2.0 | ★8 / 2026-09-05 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `EhsanShahbazii/DeepSeek-Orbit` | B 其他JS | MIT | ★8 / 2026-10-08 | 🔵 | proposed | Office 文档能力，与本仓文档导入通路相关（见 §二 C-2） |
+| `zcx960/deepseek-desktop` | A 原生DSH | MIT | ★8 / 2026-09-18 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `CSlawyer1985/dsh-desktop` | A 原生DSH | MIT | ★7 / 2026-08-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `Lee-Hilex/dsh-mineru` | A 原生DSH | MIT | ★7 / 2026-09-27 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `sixtysevenlf/dsh-opencode-go-monitor` | A 原生DSH | BSD-3-Clause | ★6 / 2026-09-18 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `jasonrale/dsh-archive-manager` | A 原生DSH | MIT | ★6 / 2026-08-17 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Mcd0LUO/dsh-guard-repeat-output` | A 原生DSH | MIT | ★6 / 2026-10-11 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `Loping151/dsh-vibeos` | A 原生DSH | NOASSERTION | ★6 / 2026-10-02 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `sasajun2345/dsh-minigame-plugin` | A 原生DSH | MIT | ★6 / 2026-08-16 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `ruler770525/dsh-anchored-flash` | A 原生DSH | NOASSERTION | ★6 / 2026-08-17 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `wkscc310/dsh-client-ui-cpa-quota` | A 原生DSH | MIT | ★6 / 2026-10-19 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `baisama-cloud/dsh-custom-brand` | A 原生DSH | MIT | ★6 / 2026-10-13 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Bernardxu123/dsh-mobile-gate` | A 原生DSH | MIT | ★6 / 2026-08-14 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `Luaphes/dsh-web-attention-badge` | A 原生DSH | MIT | ★6 / 2026-09-09 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `G0K0U/kvmem-agent-16gb` | A 原生DSH | MIT | ★4 / 2026-09-25 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WTStarMark/dsh-myskin` | A 原生DSH | MIT | ★4 / 2026-10-06 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `RyanZeeee/dsh-chattree` | A 原生DSH | MIT | ★4 / 2026-09-13 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `iyam-x/iyam-dsh-desktop` | A 原生DSH | MIT | ★4 / 2026-09-28 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `hnmrxz/deepseek-harness-desktop-HarmonyOS` | A 原生DSH | MIT | ★4 / 2026-09-21 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `huyang218/dsh-desktop` | A 原生DSH | MIT | ★3 / 2026-08-26 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `MIHassan3/DSH-Launcher` | A 原生DSH | MIT | ★3 / 2026-10-10 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `gordan-code/dsh-jev-advisor` | A 原生DSH | MIT | ★3 / 2026-10-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `xingxingbk-git/dsh-deepseek-chat` | A 原生DSH | **无** | ★3 / 2026-10-17 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `yu-wenchao/dsh-tool-lipsync` | A 原生DSH | MIT | ★3 / 2026-09-05 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `ling-long-ling/dsh-novel-writer` | A 原生DSH | MIT | ★3 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `MoonlitDropOfBlood/DSH-Desktop` | A 原生DSH | MIT | ★3 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `EternalNight996/dsh-desktop` | A 原生DSH | MIT | ★3 / 2026-09-28 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `nguyenduclong-ict/dsh-session-progress` | A 原生DSH | **无** | ★3 / 2026-10-01 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `zwqjoy/AgentCabin` | A 原生DSH | Apache-2.0 | ★3 / 2026-10-06 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `oslook/awesome-dsh-plugins` | A 原生DSH | MIT | ★3 / 2026-08-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `LLLike27/One-Time-Link` | B 其他JS | **无** | ★2 / 2026-01-03 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `m2lan/dsh-desktop` | A 原生DSH | MIT | ★2 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `clclyzybzjsq/dsh-btw` | A 原生DSH | MIT | ★2 / 2026-09-06 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `qingtan-labs/deepseek-harness-macos` | A 原生DSH | MIT | ★2 / 2026-10-04 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `988hj7tczd-oss/harness-desktop` | A 原生DSH | MIT | ★2 / 2026-08-31 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `jiuge2467/DSH-Desktop` | A 原生DSH | MIT | ★2 / 2026-08-19 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `TinyPandaGame/SpecsRelay-DSH` | A 原生DSH | MIT | ★2 / 2026-09-25 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `twenty-3rd/dsh-skill-switch` | A 原生DSH | MIT | ★2 / 2026-10-07 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `toyvfish/dsh-model-seat` | A 原生DSH | MIT | ★2 / 2026-10-11 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `LBurny/deepseek-harness-desktop-releases` | A 原生DSH | MIT | ★2 / 2026-10-02 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `honghuachen/deepseekharness-desktop` | A 原生DSH | MIT | ★2 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `kirbylynx/deepshell-agent` | A 原生DSH | MIT | ★2 / 2026-09-28 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `canadaeee/dsh-weixin` | A 原生DSH | MIT | ★2 / 2026-08-19 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `Sutera-Diffusus/dsh-statusbar` | A 原生DSH | MIT | ★1 / 2026-08-16 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `jhckevin/dsh-request-privacy` | A 原生DSH | MIT | ★1 / 2026-09-05 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `ysyyhhh/agent-ecosystem-observatory` | A 原生DSH | MIT | ★0 / 2026-09-11 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `zielinski2880/argo` | B 其他JS | NOASSERTION | ★0 / 2026-10-17 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `canadaeee/dsh-feishu` | A 原生DSH | MIT | ★0 / 2026-08-19 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `shine-yu-student/dsh-calm` | A 原生DSH | MIT | ★0 / 2026-08-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `ccr-wer/dsh-dolphin-security` | A 原生DSH | MIT | ★0 / 2026-10-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Minglink/dsh-community` | A 原生DSH | MIT | ★0 / 2026-10-18 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `chenzhi-clude/dsh-hooks-pack` | A 原生DSH | MIT | ★0 / 2026-08-25 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+
+**本轮 `NOASSERTION` 共 17 条、无许可证 11 条、AGPL/GPL 6 条 —— 均按「只登记、不采用、不摘码」处理。**
