@@ -19,7 +19,7 @@
 //
 // 人体工效学 skill 的条款在 `style.css` 里逐条标注。
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Empty, Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
@@ -826,14 +826,21 @@ export function Planning({ ctx }) {
 
   return (
     <div className="zpg-page">
-      <div className="zy-intro zpg-head">
-        <div>
-          <span className="zy-eyebrow">接下来与写过的</span>
-          <h1>规划</h1>
-          <p>写下要做的事，AI 帮你拆成可执行的条目；待办来自学在浙大与拼题A。</p>
-        </div>
+      {/*
+        ⚠️ **这里刻意没有大标题。**
+
+        侧栏已经写着「规划」，页面里再写一遍「规划」+ 一句「写下要做的事…」
+        是纯重复 —— 用户不需要被告知自己在哪一页。同类的工作型页面（笔记）
+        也是这样直接进内容的；只有「今天」那种欢迎性质的首页才需要大标题。
+
+        留下的只有一条**极轻的工具行**：左侧是规模数字，右侧是真正有用的
+        四个动作（视图切换 / AI 规划 / 刷新）。它不占据视线，但随时够得到。
+      */}
+      <div className="zpg-head">
+        <span className="zpg-count">
+          {!loading ? summarize(todos.rows.length + planCards.length + localRows.length, state.entries.length) : ''}
+        </span>
         <div className="zpg-tools">
-          {!loading && <span className="zpg-count">{summarize(todos.rows.length + planCards.length + localRows.length, state.entries.length)}</span>}
           {/* 视图切换：列表 / 日历。日历只呈现有截止时间的事，切换不发请求。 */}
           <span className="zpg-view" role="group" aria-label="视图">
             <button
@@ -861,13 +868,14 @@ export function Planning({ ctx }) {
             title="把中转站里混杂的条目按事项拆成卡片"
           >
             <Icon name="bulb" size={16} />
-            {planning ? '正在规划…' : 'AI 自动规划'}
+            {planning ? '正在规划…' : 'AI 拆解'}
           </button>
           <button
             type="button"
             className="zy-secondary zpg-refresh"
             onClick={refresh}
             disabled={loading || refreshing || planning}
+            title="重新拉一次平台待办与中转站"
           >
             <Icon name="history" size={16} />
             {refreshing ? '正在刷新' : '刷新'}
@@ -983,9 +991,14 @@ export function Planning({ ctx }) {
                 <div className="zpg-days">
                   {groups.todoGroups.map((group) => (
                     <section key={group.key} className={`zpg-day ${group.key === 'overdue' ? 'zpg-day-overdue' : ''}`} aria-labelledby={`zpg-${group.key}`}>
-                      <SectionTitle aside={group.rows.length > 1 ? `${group.rows.length} 条` : null}>
-                        <span id={`zpg-${group.key}`}>{group.label}</span>
-                      </SectionTitle>
+                      {/*
+                        用**轻量分组标签**而不是外壳的 `SectionTitle`（它渲染 `<h2>`）。
+                        一页有六档分组，六个 `<h2>` 会让"分组"看起来比"条目"还重 ——
+                        而这些标签只是路标，不是章节标题。
+                      */}
+                      <GroupLabel id={`zpg-${group.key}`} count={group.rows.length} tone={group.key}>
+                        {group.label}
+                      </GroupLabel>
                       <ul className="zpg-list">
                         {group.rows.map((row) => {
                           if (row.source === 'mine') {
@@ -1035,9 +1048,9 @@ export function Planning({ ctx }) {
               {newEntries.length > 0 && (
                 <div className="zpg-days">
                   <section className="zpg-day zpg-day-new" aria-labelledby="zpg-arrivals">
-                    <SectionTitle aside={`${newEntries.length} 条`}>
-                      <span id="zpg-arrivals">新到</span>
-                    </SectionTitle>
+                    <GroupLabel id="zpg-arrivals" count={newEntries.length} tone="new">
+                      新到
+                    </GroupLabel>
                     <ul className="zpg-list">
                       {newEntries.map((item) => (
                         <EntryRow
@@ -1185,6 +1198,35 @@ function SourceBar({ todos, pta, remote, entryCount, mineCount }) {
   //   NO_SESSION      —— 旧桥接方案留下的码，保留以免旧缓存读到就显示"读取失败"
   const needLogin = ['NEED_LOGIN', 'LOGIN_REQUIRED', 'NO_SESSION'].includes(xzzd?.code);
   const needCookie = ptaError?.code === 'COOKIE_IMPORT_REQUIRED';
+
+  /**
+   * 有没有**需要用户动手**的事。
+   *
+   * 数据源状态是有用的，但它不该在一切正常时也占四行 —— 用户来看的是"要做什么"，
+   * 不是"四个数据源各自怎么样"。所以：
+   *
+   *   全部正常 → 收成一行小字（`我的 3 · 学在浙大 12 · 拼题A 2 · 中转站 40`）
+   *   有异常   → 展开成清单，只有出问题的那几条带警示
+   *
+   * 判据是"有没有异常"，而不是"配了几个"：没配中转站只是没启用，不是错误。
+   */
+  const hasTrouble = Boolean(xzzd) || Boolean(ptaError) || Boolean(remoteError);
+
+  /** 一行摘要：只报数量，异常项单独展开说。 */
+  const compact = [
+    mineCount > 0 ? `我的 ${mineCount}` : '我的 0',
+    `学在浙大 ${xzzd ? '读取失败' : todos.rows.filter((r) => r.source === 'xzzd').length}`,
+    `拼题A ${ptaError ? '未就绪' : todos.rows.filter((r) => r.source === 'pta').length}`,
+    `中转站 ${entryCount}`,
+  ].join(' · ');
+
+  if (!hasTrouble) {
+    return (
+      <p className="zpg-sources-compact" title="数据源状态：都在正常工作">
+        {compact}
+      </p>
+    );
+  }
 
   return (
     <div className="zpg-sources">
@@ -1762,10 +1804,35 @@ function DayHeading({ id, label, rows }) {
   const scope = describeScope(rows);
   return (
     <div className="zpg-day-head">
-      <SectionTitle aside={rows.length > 1 ? `${rows.length} 条` : null}>
-        <span id={id}>{label}</span>
-      </SectionTitle>
+      <GroupLabel id={id} count={rows.length}>
+        {label}
+      </GroupLabel>
       <p className="zpg-day-scope">{scope}</p>
+    </div>
+  );
+}
+
+/**
+ * 轻量分组标签：一条路标，不是一个章节标题。
+ *
+ * # 为什么不用外壳的 `SectionTitle`
+ *
+ * 那个组件渲染 `<h2>`。规划页一屏里可能有六七个分组（已过期 / 24 小时内 /
+ * 今天之内 / 一周内 / 更晚 / 没有时间 / 新到），六七个 `<h2>` 会让"分组"
+ * 看起来比"条目"还重 —— 而它们只是告诉眼睛"下面这一类是什么"。
+ *
+ * 所以这里用一个小的、加粗的、带计数的小标签，`role="heading"` + `aria-level`
+ * 保留语义（读屏仍能按标题跳），但视觉上明显轻于条目本身。
+ *
+ * @param options.id - 供 `aria-labelledby` 引用。
+ * @param options.count - 条数；≤1 时不显示（"1 条"没有信息量）。
+ * @param options.tone - `overdue` 时用强调色，其余用次要色。
+ */
+function GroupLabel({ id, count = 0, tone = '', children }) {
+  return (
+    <div className={`zpg-group-label ${tone ? `zpg-group-${tone}` : ''}`}>
+      <span id={id} role="heading" aria-level={3}>{children}</span>
+      {count > 1 && <span className="zpg-group-count">{count}</span>}
     </div>
   );
 }

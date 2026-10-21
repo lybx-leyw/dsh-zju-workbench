@@ -19,11 +19,21 @@
  */
 
 /* ------------------------------------------------------------------ 页头 */
-/* 沿用外壳 `.zy-intro`（eyebrow + h1 + 说明 + 右侧装饰图标），这里只补右侧工具区。
-   工具区不走 `.zy-intro>svg` 那个装饰槽：装饰是 38px 图标，把按钮塞进去会让
-   点击目标悬浮在标题块基线之外。 */
-body[data-zhiyun] .zpg-head { align-items: flex-start; margin-bottom: 26px; }
-body[data-zhiyun] .zpg-tools { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+/* 页头**从简**：没有大标题、没有说明段落。
+   侧栏已经写着「规划」，页面里再重复一遍只是噪音 —— 工作型页面应当直接进内容
+   （笔记页也是这么做的）。留下的只有一条细工具行：左边规模数字，右边动作。
+
+   `justify-content: space-between` + `align-items: center` 让它像一条工具栏，
+   而不是一个需要被"读"的标题块。 */
+body[data-zhiyun] .zpg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  min-height: 32px;
+}
+body[data-zhiyun] .zpg-tools { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 /* 计数是"可忽略信息"（skill ch11 §11.2 结论 2 允许 11px 用于计数），但必须 ≥4.5:1：
    --zy-secondary 亮色 5.01:1 / 暗色 8.36:1，两档都过线（repo-profile §2）。 */
 body[data-zhiyun] .zpg-count { font-size: var(--zy-fs-meta); color: var(--zy-secondary); font-variant-numeric: tabular-nums; }
@@ -228,7 +238,17 @@ body[data-zhiyun] .zpg-form-state { font-size: var(--zy-fs-meta); color: var(--z
 
 /* --------------------------------------------------------- 数据源状态条 */
 /* 三个来源各一小段。用户看到空列表时，这一条立刻回答"是没配还是配了读不到"
-   —— skill ch14 要求空/错/加载三态可区分，光有一个空盒子做不到这件事。 */
+   —— skill ch14 要求空/错/加载三态可区分，光有一个空盒子做不到这件事。
+
+   ⚠️ 但**全部正常时不展开**：那是四行占位，而用户来看的是"要做什么"。
+   正常时只留一行灰色小字（`.zpg-sources-compact`），有异常才展开成清单。 */
+body[data-zhiyun] .zpg-sources-compact {
+  margin: 0 0 12px;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-secondary);
+  font-variant-numeric: tabular-nums;
+  opacity: .85;
+}
 body[data-zhiyun] .zpg-sources {
   display: flex;
   flex-wrap: wrap;
@@ -474,9 +494,33 @@ body[data-zhiyun] .zpg-day-overdue {
   padding-left: 12px;
   margin-left: -15px;
 }
-body[data-zhiyun] .zpg-day-overdue .zy-section-title h2 { color: #c0392b; }
 /* 逾期的行本身：左侧条改用警示色，让"这一条已经晚了"在行级别也成立 */
 body[data-zhiyun] .zpg-day-overdue .zpg-item { border-left-color: color-mix(in srgb, #c0392b 70%, var(--zy-line)); }
+
+/* --------------------------------------------------- 轻量分组标签 */
+/* 一条路标，不是章节标题。见 `GroupLabel` 上的说明：
+   一屏六七个分组，用 `<h2>` 会让"分组"比"条目"还重。 */
+body[data-zhiyun] .zpg-group-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+  padding: 0 2px;
+  font-size: var(--zy-fs-sm);
+  font-weight: 600;
+  color: var(--zy-secondary);
+  letter-spacing: .01em;
+}
+body[data-zhiyun] .zpg-group-count {
+  font-size: var(--zy-fs-meta);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  opacity: .75;
+}
+/* 过期用警示色：这是唯一需要"补救"的一档 */
+body[data-zhiyun] .zpg-group-overdue { color: #c0392b; }
+/* 新到用强调色：性质不同（"你还不知道"），但不必像过期那样喊 */
+body[data-zhiyun] .zpg-group-new { color: var(--zy-accent); }
 /* 完成的条目整条降一级（文字变次要色、标题划线）—— 它还在列表里，但已经不再是"接下来" */
 body[data-zhiyun] .zpg-item-done { opacity: .72; }
 body[data-zhiyun] .zpg-item-done .zpg-summary { background: transparent; }

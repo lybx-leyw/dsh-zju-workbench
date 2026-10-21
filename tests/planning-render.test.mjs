@@ -93,7 +93,18 @@ test('页面组件能真的渲染出 HTML（白屏的第一道闸）', async () 
   const html = renderToStaticMarkup(React.createElement(client.Planning, { ctx: null }));
   assert.ok(html.length > 200, `渲染结果太短，可能是空页面：${html.length}`);
   assert.match(html, /zpg-page/, '应渲染出页面的根节点');
-  assert.match(html, /规划/, '应出现页面标题');
+  /**
+   * ⚠️ 这里**不再断言出现「规划」二字**。
+   *
+   * 页头的大标题已按设计去掉：侧栏已经写着「规划」，页面里再写一遍是重复。
+   * 而这条断言的本意只是"别渲染成白屏"，所以改成检查**真正稳定的结构**。
+   *
+   * 注意：这个用例在**无缓存**下渲染，`loading` 初始为 true（页面会先显示
+   * 「正在读取」），所以写入口还没出现 —— 那是真实行为，不该被断言成"必须有"。
+   * 稳定的锚点是根节点与工具行：它们无论加载与否都在。
+   */
+  assert.match(html, /zpg-tools/, '应渲染出工具行（加载中也存在）');
+  assert.match(html, /zpg-head/, '应渲染出页头');
 });
 
 test('两个设置分区都能渲染（拆开之后各自都要能站住）', async () => {
