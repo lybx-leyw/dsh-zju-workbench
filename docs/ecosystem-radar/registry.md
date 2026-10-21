@@ -2315,3 +2315,15 @@
 | `chenzhi-clude/dsh-hooks-pack` | A 原生DSH | MIT | ★0 / 2026-08-25 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
 
 **本轮 `NOASSERTION` 共 17 条、无许可证 11 条、AGPL/GPL 6 条 —— 均按「只登记、不采用、不摘码」处理。**
+
+### 2026-10-21 · 第四十七轮（B 组 · **zdbk 选课增强轴**）
+
+> 9 次搜索，0 次 403。`zju` / `zju course` / `cc98` / `campus app` / `zju language:typescript`
+> 五大轴**连续第 3 轮零增量**；净增量仅来自窄功能词 `zju zdbk`（total 4）。详见 `2026-10-21-r47.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `0x000005/better-zdbk` | B 其他JS | **MIT** ✅ | 选课 / 课表 | **重复且可强化**（今天页课表行的地点语义） | 🟡 | proposed | 2026-10-21 | ★3。单文件油猴脚本（661 KB，`@version 1.2.1`，`@match zdbk.zju.edu.cn/jwglxt/xsxk*`），**建仓与唯一一次 push 同日 2026-09-15**，36 天无动。主功能是整站 UI 改写，**只取「地点字符串 → 校区 + 校区别名」一层**（`isCampusMismatch` + `campusAliases{紫金港:[银泉]}`）。⚠ 别名仅 1 条，对 `东1/西2/段1/蒙民伟楼` 等不含校区名的地点会**系统性误报**，不可照抄。已出骨架 `dsh-radar-campus-zone` |
+
+**本轮 `NOASSERTION` 0 条、无许可证 2 条（`PMUGO50/ZJUGPA`、`shenluyao/ZJU_zdbk_plan`，后者已在册）、GPL 族 4 条（均已在册）**
+—— 均按「只登记、不采用、不摘码」处理。课程资料族与 `campus app` 噪声簇按族处理，不逐条登记。

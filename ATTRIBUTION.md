@@ -40,6 +40,7 @@
 
 - [login-ZJU](https://github.com/5dbwat4/login-ZJU) · **MIT** · ★16 · npm `login-zju@1.0.9`（2026-07-03）。服务端库，把浙大 **12 个系统**（ZJUAM / ZDBK / COURSE / COURSES / CLASSROOM / APILIB / BOOKINGLIB / CC98 / ETA / FORM / OPEN / ALT）的登录态统一成一套 API（`new ZJUAM(u, p)` + `service.fetch()` 即用）。**已阅读其 README、`index.ts`、`src/utils/cookie-jar.ts`、`src/utils/fetch-utils.ts`、`src/classroom.ts`、`src/course.ts` 与 `LICENSE`**，用于（a）确认许可证实文为 MIT，（b）核对本仓 `dsh-zhiyun-classroom/src/auth.js` 的手写 CAS 流程与上游通用实现在**跳转链与票据形状**上的一致/差异。**未复制其源码**。其 `nanoid ^5.1.9` 为唯一运行时依赖。
 - [lunar-javascript](https://github.com/6tail/lunar-javascript) · **MIT** · ★1704。农历 / 黄历权威实现（日历、公历↔农历、干支、生肖、节气、节日、彭祖百忌、每日宜忌）。**已阅读其文档与许可**，用于核实 `dsh-panda-calendar` 内嵌历法表的**来源与许可可追溯性**（见上一条）。**未复制其源码**，也未将其列为依赖。
+- [better-zdbk](https://github.com/0x000005/better-zdbk) · **MIT** · ★3 · 单文件油猴脚本 `zdbk.user.js`（661 KB / 8706 行，`@version 1.2.1`），作用域 `zdbk.zju.edu.cn/jwglxt/xsxk*`。**已阅读**其 `LICENSE`、元数据头、`CONFIG.campusAliases`（约 211 行）、`isCampusMismatch()`（约 3180–3190 行）与 `updateCourseNotices()`（约 3196–3222 行）。用于划定本仓**「地点字符串 → 校区」这一层完全缺失**的能力缺口，并核对「全部节次都在本校区之外」的聚合口径。**未复制其源码**，也未将其列为依赖（上游未发布 npm）；候选骨架 `dsh-radar-campus-zone` 内只有占位与 TODO。⚠ 其主功能是 zdbk 选课页的整站 UI 改写，**不拟接入**；⚠ 其校区别名表仅 `紫金港 ⊃ 银泉` 一条，对不含校区名的楼栋会系统性误报，**不可照抄判定精度**。
 - [iztro](https://github.com/SylarLong/iztro) · **MIT** · ★4227。紫微斗数排盘库，**顺带提供**完整的农历/干支/节气/节日历法能力。**已阅读其 README 与许可**，用于评估「历法底层取自建还是取上游」的取舍。⚠ 其**字面用途（命理排盘）与本仓无关**，若采用只可取历法模块 —— **该取舍属产品取向判断，尚未拍板**。**未复制其源码**。
 
 ## 含实现移植
