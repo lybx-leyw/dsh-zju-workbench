@@ -733,10 +733,26 @@ export function createHandler({
    * 靠展开顺序解决，改一行就会退回去。
    */
   const snapshot = async () => {
+    /**
+     * 各段耗时（毫秒）。
+     *
+     * 为什么要有它：用户反馈「切回 todo 栏还是慢」，而缓存层单独测都是命中的
+     * （campus 226ms → 0ms、中转站 3 次只拉 1 次）。所以慢在别处，但**没有
+     * 任何观测点**能看出是哪一段 —— 只能靠猜，而猜错过两次。
+     *
+     * 这个字段随响应一起返回（`timing`），页面不需要显示，但 `curl` 一次就能
+     * 读出真相：是三段之一慢，还是 `snapshot` 之外的路径慢。
+     */
+    const timing = {};
+    const timed = async (label, run) => {
+      const begin = Date.now();
+      try { return await run(); } finally { timing[label] = Date.now() - begin; }
+    };
+    const beginAll = Date.now();
     const settled = await Promise.allSettled([
-      sync(),
-      loadTodos(),
-      ptaStatus ? ptaStatus() : Promise.resolve({ configured: false }),
+      timed('remote', sync),
+      timed('todos', loadTodos),
+      timed('pta', () => (ptaStatus ? ptaStatus() : Promise.resolve({ configured: false }))),
     ]);
 
     /** 某条链路炸了时，把它变成该区块自己的 error，而不是让整页失败。 */
@@ -762,6 +778,13 @@ export function createHandler({
       remote,
       todos,
       pta,
+      /**
+       * 快照各段耗时 + 总耗时。
+       *
+       * 页面不显示它；`curl 'http://127.0.0.1:<port>/_dsh/zhiyun-planning'` 一次
+       * 就能读出「哪一段慢」。缓存是否命中也是一眼的事（命中时 `todos` 个位数）。
+       */
+      timing: { ...timing, total: Date.now() - beginAll, cached: { remote: remote?.cached === true } },
       // 规划结果与映射：页面据此标"已拆过"并展示卡片
       plans: plan ? plan.list() : {},
       // 哪些源条目已拆过 —— 页面用 entryPrefix 对齐，两端口径必须一致
