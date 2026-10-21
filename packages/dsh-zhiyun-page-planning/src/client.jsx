@@ -171,10 +171,47 @@ const ERROR = {
   IPC: { title: '设置接口不可用', next: '宿主侧没起来，重启一次工作台再试。' },
 };
 
+/** 空状态。列表形状集中一处，免得 `useState` 与 `apply` 两处漂移。 */
+const EMPTY_SNAPSHOT = {
+  entries: [], todos: null, remote: null, pta: null, plans: {}, local: [], ticks: {},
+};
+
+/**
+ * 上一次**成功**读到的快照（模块级，跨挂载存活）。
+ *
+ * # 为什么必须有它（切页卡顿的真正原因）
+ *
+ * 壳每次切页都会**卸载**当前页组件、再挂载目标页（`renderSlot` 只渲染当前页）。
+ * 于是每次回到「规划」都要走一遍：`loading = true` → 渲染占位 →
+ * `await fetch()` → 再渲染真实内容。
+ *
+ * 也就是说——**哪怕服务端只用 50ms 返回，用户也会先看到一屏"正在读取"**，
+ * 而如果那次请求恰好要重登 CAS，就是好几秒的白屏。用户感知到的"每次切都要
+ * 加载"就是这个空窗，与有没有缓存无关：旧代码没有任何跨挂载的记忆。
+ *
+ * 放在模块作用域而不是 `useState`：页面组件被卸载后，模块本身仍在（ESM 只求值
+ * 一次），所以这份值能跨挂载留下来。**它只影响首屏渲染，不改变任何数据语义**
+ * —— 挂载后照常发一次请求，拿到新数据就覆盖。
+ */
+let lastSnapshot = null;
+
 /** 页面正文。 */
 export function Planning({ ctx }) {
-  const [loading, setLoading] = useState(true);
-  const [state, setState] = useState({ entries: [], todos: null, remote: null, pta: null, plans: {}, local: [], ticks: {} });
+  /**
+   * 有缓存时**直接以缓存作为初始状态**，并把 `loading` 初始为 false。
+   *
+   * 这样切回来时第一帧就是上次的内容（用户看到的是"立刻出现"），随后后台
+   * 请求回来再原地更新 —— 不再出现"先占位、再等待、再显示"的三段式抖动。
+   */
+  const [loading, setLoading] = useState(lastSnapshot === null);
+  const [state, setState] = useState(() => lastSnapshot ?? EMPTY_SNAPSHOT);
+  /**
+   * 「刷新」按钮自己的忙态。
+   *
+   * 与 `loading` 分开：`loading` 的语义是"还没有内容可显示"（整页占位），
+   * 而刷新时内容明明在屏幕上，把它打回占位等于点了刷新先丢内容。
+   */
+  const [refreshing, setRefreshing] = useState(false);
   // 规划是花钱且耗时的操作，单独状态：它不该让整页进"loading"把已有内容藏起来
   const [planning, setPlanning] = useState(false);
   const [planMsg, setPlanMsg] = useState(null);
@@ -195,7 +232,7 @@ export function Planning({ ctx }) {
   const [view, setView] = useState('list');
 
   const apply = useCallback((payload) => {
-    setState({
+    const next = {
       entries: Array.isArray(payload.entries) ? payload.entries : [],
       todos: payload.todos ?? null,
       remote: payload.remote ?? null,
@@ -203,13 +240,25 @@ export function Planning({ ctx }) {
       plans: payload.plans ?? {},
       local: Array.isArray(payload.local) ? payload.local : [],
       ticks: payload.ticks && typeof payload.ticks === 'object' ? payload.ticks : {},
-    });
+    };
+    setState(next);
+    // 记下来供**下次挂载**直接用（见 `lastSnapshot` 的说明）。只存成功读到的。
+    lastSnapshot = next;
     // 只有中转站这条链路会给出"整页级"错误；待办各自的错误在各自区块里说
     setError(payload.remote?.error ?? null);
   }, []);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    /**
+     * ⚠️ **已经有内容时不要把整页打回 loading。**
+     *
+     * 旧代码一进来就 `setLoading(true)`，于是切回来先看到一屏"正在读取"，
+     * 等请求回来才换成真实内容 —— 哪怕服务端只要 50ms，也会闪一下；要重登
+     * CAS 就是好几秒白屏。这正是"每次切都要加载"的观感来源。
+     *
+     * 现在只有**真的没东西可显示**（无缓存）时才进 loading；有缓存就原地更新。
+     */
+    setLoading(lastSnapshot === null);
     try {
       apply(await settings(''));
     } catch (failure) {
@@ -222,13 +271,15 @@ export function Planning({ ctx }) {
   useEffect(() => { void load(); }, [load]);
 
   const refresh = async () => {
-    setLoading(true);
+    // 手动刷新：**保留当前内容**，只让按钮自己置忙。
+    // 不能复用 `loading` —— 那会把整页打回占位，用户点了刷新反而先丢内容。
+    setRefreshing(true);
     try {
       apply(await settings('refresh', {}));
     } catch (failure) {
       setError({ code: 'IPC', message: failure.message });
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -638,10 +689,10 @@ export function Planning({ ctx }) {
             type="button"
             className="zy-secondary zpg-refresh"
             onClick={refresh}
-            disabled={loading || planning}
+            disabled={loading || refreshing || planning}
           >
             <Icon name="history" size={16} />
-            {loading ? '正在读取' : '刷新'}
+            {refreshing ? '正在刷新' : '刷新'}
           </button>
         </div>
       </div>

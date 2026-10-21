@@ -279,12 +279,28 @@ function NoteRelations({ name, markdown, backlinks, tags, onOpen, onRename, onRe
   </aside>;
 }
 
+/**
+ * 上次挂载时的笔记库状态（模块级，跨挂载存活）。
+ *
+ * # 为什么必须有它
+ *
+ * 壳每次切页都会**卸载**当前页、再挂载目标页。而这一页挂载时要先
+ * `refreshTree()` 拉整棵树、再 `openNote()` 打开第一篇 —— 期间一直停在
+ * `phase === 'loading'`，整页只有一个占位。于是「切到笔记」永远要等一轮
+ * 网络，哪怕数据一点没变。
+ *
+ * 放在模块作用域而不是 `useState`：组件卸载后模块仍在（ESM 只求值一次），
+ * 所以这份值能跨挂载留下来。**它只用于首屏渲染**，挂载后照常刷新。
+ */
+let lastLibrary = null;
+
 export function NotesLibrary() {
-  const [phase, setPhase] = useState('loading');
-  const [entries, setEntries] = useState([]);
+  // 有缓存时直接以它为初始值 —— 切回来第一帧就是上次的目录与当前笔记
+  const [phase, setPhase] = useState(lastLibrary ? 'ready' : 'loading');
+  const [entries, setEntries] = useState(() => lastLibrary?.entries ?? []);
   const [tabs, setTabs] = useState([]);
-  const [active, setActive] = useState(null);
-  const [expanded, setExpanded] = useState(() => new Set());
+  const [active, setActive] = useState(() => lastLibrary?.active ?? null);
+  const [expanded, setExpanded] = useState(() => new Set(lastLibrary?.expanded ?? []));
   const [explorerOpen, setExplorerOpen] = useState(true);
   // ⚠️ 右栏**默认收起**：宿主里这一页的可用宽度只有窗口减去它自己的侧栏，
   //    再常驻一列 250px 会把正文挤到读不下去（实测状态栏都换行了）。
@@ -310,7 +326,10 @@ export function NotesLibrary() {
 
   const refreshTree = useCallback(async () => {
     const next = await notes('tree');
-    setEntries(Array.isArray(next) ? next : []);
+    const list = Array.isArray(next) ? next : [];
+    setEntries(list);
+    // 记下来供**下次挂载**直接用（见 `lastLibrary` 的说明）
+    lastLibrary = { ...(lastLibrary ?? {}), entries: list };
     return next;
   }, []);
 
@@ -393,6 +412,22 @@ export function NotesLibrary() {
   // （effect 在 render 结束后才执行），但读代码的人得先往后翻才知道它调了什么。
   useEffect(() => {
     void (async () => {
+      /**
+       * 有缓存时：**先把上次的内容画出来，再后台刷新**。
+       *
+       * 缓存里的 `active` 是一个路径，正文由下面的子组件按路径读一次 ——
+       * 那是单文件读取，毫秒级；整棵树的重建（`tree`）才是慢的那一步，
+       * 它挪到后台，不阻塞首屏。
+       */
+      if (lastLibrary) {
+        try {
+          if (lastLibrary.active) await openNote(lastLibrary.active, { history: false });
+          else await refreshSide(null);
+        } catch { /* 单篇读失败不该让整页进 error */ }
+        // 后台刷新目录树：失败就保持旧树，不打扰用户
+        void refreshTree().catch(() => {});
+        return;
+      }
       try {
         const items = await refreshTree();
         setPhase('ready');
@@ -411,6 +446,16 @@ export function NotesLibrary() {
     // 只在挂载时跑一次。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * 把「当前打开的笔记」与「展开的目录」同步进模块级缓存。
+   *
+   * 只同步这两个 UI 位置，不碰 `tabs`：标签页里有未保存的草稿，跨挂载恢复
+   * 草稿会让"上次没保存的东西"突然又出现，那是另一类意外，不做。
+   */
+  useEffect(() => {
+    lastLibrary = { ...(lastLibrary ?? {}), active, expanded: [...expanded] };
+  }, [active, expanded]);
 
   /** 编辑当前标签页：立刻反映到界面，800ms 后写盘。 */
   const edit = (value) => {
