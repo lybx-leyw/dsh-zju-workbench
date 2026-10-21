@@ -522,8 +522,92 @@ body[data-zhiyun] .zpg-edit .zpg-field input:focus-visible,
 body[data-zhiyun] .zpg-edit .zpg-field textarea:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
 body[data-zhiyun] .zpg-edit-foot { display: flex; align-items: center; gap: 10px; }
 
-/* 「已完成」一栏与上方拉开距离：它是**回顾**，不是接着要做的事 */
-body[data-zhiyun] .zpg-done-block { margin-top: 22px; }
+/* 「已完成」折叠成一行 —— 勾掉的事不该继续占视觉重量。
+   用原生 <details>：默认收起、键盘可用、无需额外状态。
+   与上方拉开距离：它是**回顾**，不是接着要做的事。 */
+body[data-zhiyun] .zpg-done-fold {
+  margin-top: 22px;
+  border-top: 1px solid var(--zy-line);
+  padding-top: 10px;
+}
+body[data-zhiyun] .zpg-done-fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 2px;
+  font-size: var(--zy-fs-sm);
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zpg-done-fold > summary:hover { color: var(--zy-text); }
+body[data-zhiyun] .zpg-done-fold > summary:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 2px; }
+body[data-zhiyun] .zpg-done-fold > summary small { font-size: var(--zy-fs-meta); color: var(--zy-secondary); opacity: .8; }
+body[data-zhiyun] .zpg-done-list { margin-top: 8px; }
+
+/* --------------------------------------------------- 顶部摘要条 */
+/* 一眼回答"现在最该关心什么"。只渲染非零项，所以这里不管空态。 */
+body[data-zhiyun] .zpg-focus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+body[data-zhiyun] .zpg-focus-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 12px;
+  min-height: 32px;
+  border: 1px solid var(--zy-line);
+  border-radius: 8px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  cursor: pointer;
+  font-size: var(--zy-fs-sm);
+}
+body[data-zhiyun] .zpg-focus-item:hover { background: var(--zy-hover); }
+body[data-zhiyun] .zpg-focus-item:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
+body[data-zhiyun] .zpg-focus-item b {
+  font-size: 1.15em;
+  font-variant-numeric: tabular-nums;
+}
+/* 颜色只用外壳变量表达"性质不同"，不引入新色板。
+   过期用强调色（它是唯一需要"补救"的），新到用同样的色但更轻。 */
+body[data-zhiyun] .zpg-focus-overdue { border-color: var(--zy-accent); }
+body[data-zhiyun] .zpg-focus-overdue b { color: var(--zy-accent); }
+body[data-zhiyun] .zpg-focus-new b { color: var(--zy-accent); opacity: .85; }
+
+/* --------------------------------------------------- 快捷时间片 */
+body[data-zhiyun] .zpg-quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+}
+body[data-zhiyun] .zpg-quick-hint {
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-secondary);
+  margin-right: 2px;
+}
+body[data-zhiyun] .zpg-quick-item {
+  padding: 5px 10px;
+  min-height: 28px;
+  border: 1px solid var(--zy-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--zy-secondary);
+  cursor: pointer;
+  font-size: var(--zy-fs-meta);
+}
+body[data-zhiyun] .zpg-quick-item:hover { background: var(--zy-hover); color: var(--zy-text); }
+body[data-zhiyun] .zpg-quick-item:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
+body[data-zhiyun] .zpg-quick-item:disabled { opacity: .55; cursor: default; }
+body[data-zhiyun] .zpg-quick-custom { border-style: dashed; }
+
+/* 「新到」那一组：与普通日期组区分开，但不用彩色 —— 只是"先说" */
+body[data-zhiyun] .zpg-day-new { border-left: 2px solid var(--zy-accent); padding-left: 12px; }
+
 body[data-zhiyun] .zpg-row-hint {
   margin: 2px 0 0;
   padding: 0 16px;

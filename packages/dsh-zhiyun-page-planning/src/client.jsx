@@ -23,7 +23,7 @@ import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-shell-
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
-import { URGENCY_LABEL, dayKey, dayLabel, urgencyOf } from './time.js';
+import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel } from './time.js';
 import { errorText } from './error.js';
 
 export const name = 'zhiyun-page-planning-client';
@@ -710,22 +710,40 @@ export function Planning({ ctx }) {
    */
   const openTodos = useMemo(() => todos.rows.filter((row) => !row.done), [todos.rows]);
 
+  /**
+   * 新到的网关条目（48 小时内入库）。
+   *
+   * 用户「可能还不知道」的东西 —— 这一页的职责之一就是告诉他，而不是等他
+   * 自己一条条翻。判据用 `cachedAt`（首次入库时刻），不需要额外的"已读"状态。
+   */
+  const newEntries = useMemo(() => {
+    const now = Date.now();
+    return (state.entries ?? []).filter((row) => isNewArrival(row.cachedAt, now));
+  }, [state.entries]);
+
+  const newArrivals = newEntries.length;
+
+  /** 顶部摘要：过期 / 24h 内 / 今天之内 / 新到。只统计未完成项。 */
+  const focus = useMemo(
+    () => focusSummary({ openTodos: [...openTodos, ...openMine, ...planCards.filter((r) => !r.done)], newArrivals }),
+    [openTodos, openMine, planCards, newArrivals],
+  );
+
   const groups = useMemo(() => {
     const now = Date.now();
-    const order = ['overdue', 'today', 'week', 'later', 'none'];
     const buckets = new Map();
     // 待办与拆出的卡片**同池**：它们都是"要去做的事"，只是来源不同。
     // ⚠️ 只放**还没做**的：勾掉的条目继续留在「已过期」里，等于勾了也没用。
     for (const row of [...openTodos, ...planCards.filter((row) => !row.done), ...openMine]) {
-      const key = `todo:${urgencyOf(row.due, now)}`;
+      const key = `todo:${focusOf(row.due, now)}`;
       if (!buckets.has(key)) buckets.set(key, []);
       buckets.get(key).push(row);
     }
-    const todoGroups = order
+    const todoGroups = FOCUS_ORDER
       .filter((key) => buckets.has(`todo:${key}`))
       .map((key) => ({
         key,
-        label: URGENCY_LABEL[key],
+        label: FOCUS_LABEL[key],
         rows: buckets.get(`todo:${key}`).sort((a, b) => {
           const at = a.due ? Date.parse(a.due) : Infinity;
           const bt = b.due ? Date.parse(b.due) : Infinity;
@@ -734,7 +752,12 @@ export function Planning({ ctx }) {
       }));
 
     const byDay = [];
+    /**
+     * ⚠️ 新到的条目**不进日期组**：它们已经被提到页面最前面的「新到」那一块。
+     * 两处各出现一次会让人以为同一条被推了两遍。
+     */
     for (const entry of state.entries) {
+      if (isNewArrival(entry.cachedAt, now)) continue;
       // 分组键与标签**必须同一时区**，否则跨 UTC 日界的条目会分成两个同名组。
       // 见 `dayKey` 上的注释。
       const key = dayKey(entry.at);
@@ -884,6 +907,13 @@ export function Planning({ ctx }) {
 
           {error && <ErrorBlock error={error} />}
 
+          {/*
+            顶部摘要条：一眼回答"现在最该关心什么"。
+            只显示**非零**的项 —— 一屏全是 0 的卡片既占地方又没信息。
+            点一下滚到对应分组，是"结论 + 入口"而不仅是个数字。
+          */}
+          <FocusBar focus={focus} />
+
           {!hasAnything && !error && (
             <Empty icon="calendar" title="还没有内容">
               上面写一条规划就能开始；也可以在「个人 → 设置 → 规划数据源」配好数据源，
@@ -891,13 +921,23 @@ export function Planning({ ctx }) {
             </Empty>
           )}
 
-          {/* 自己做过的：单独一栏，可勾掉也可以再打开 */}
+          {/*
+            已完成：**折叠成一行**。
+
+            用户勾掉一件事，就是不想再被它提醒。把它整块摊在列表里（哪怕是
+            末尾）等于继续占着视觉重量。折成一行之后：平时只有「已完成 12 条」，
+            想回看就点开 —— 是"随时能查"，而不是"一直在眼前"。
+
+            用原生 `<details>`：键盘可用、无需 JS 状态、默认收起。
+          */}
           {(doneMine.length > 0 || doneCards.length > 0 || doneTodos.length > 0) && (
-            <section className="zpg-day zpg-done-block" aria-labelledby="zpg-done">
-              <SectionTitle aside={`${doneMine.length + doneCards.length + doneTodos.length} 条`}>
-                <span id="zpg-done">已完成</span>
-              </SectionTitle>
-              <ul className="zpg-list">
+            <details className="zpg-done-fold">
+              <summary>
+                <Icon name="check" size={15} />
+                <span>已完成 {doneMine.length + doneCards.length + doneTodos.length} 条</span>
+                <small>点开查看</small>
+              </summary>
+              <ul className="zpg-list zpg-done-list">
                 {doneMine.map((row) => (
                   <MineRow
                     key={row.id}
@@ -924,7 +964,7 @@ export function Planning({ ctx }) {
                   />
                 ))}
               </ul>
-            </section>
+            </details>
           )}
 
           {view === 'calendar' ? (
@@ -979,6 +1019,36 @@ export function Planning({ ctx }) {
                       </ul>
                     </section>
                   ))}
+                </div>
+              )}
+
+              {/*
+                新到的网关条目：**单独提到最前**。
+
+                这些是别人往中转站里加的、用户可能还不知道的内容 —— 摘要条里
+                那个「新到 N」就跳到这里。列在按日期分的条目组之前，因为
+                "我不知道有新东西"比"某天写了什么"更值得先说。
+
+                ⚠️ 只把这批条目**移到前面**，不在日期组里删掉它们 ——
+                否则同一批内容会在两个地方各出现一次，让人以为重复了。
+              */}
+              {newEntries.length > 0 && (
+                <div className="zpg-days">
+                  <section className="zpg-day zpg-day-new" aria-labelledby="zpg-arrivals">
+                    <SectionTitle aside={`${newEntries.length} 条`}>
+                      <span id="zpg-arrivals">新到</span>
+                    </SectionTitle>
+                    <ul className="zpg-list">
+                      {newEntries.map((item) => (
+                        <EntryRow
+                          key={item.seq ?? item.prefix}
+                          item={item}
+                          plan={state.plans[item.prefix]}
+                          onForget={forgetPlan}
+                        />
+                      ))}
+                    </ul>
+                  </section>
                 </div>
               )}
 
@@ -1038,6 +1108,70 @@ function summarize(todoCount, entryCount) {
  *    「连接课堂」按钮，但那个入口已经改成占位：写入口统一到了设置。文案不改，
  *    用户会去找一个不存在的按钮。
  */
+/**
+ * 顶部摘要条：一眼回答「现在最该关心什么」。
+ *
+ * # 为什么需要它
+ *
+ * 学生的真实问题是"我漏了什么、接下来几小时要干什么"。旧页面把这些和
+ * 「一周内」「更晚」「没有截止时间」平铺在同一个滚动列里 —— 得扫一遍才知道
+ * 有几条过期。摘要条把结论前置：**数字 + 一句短标签**，点一下滚到那一组。
+ *
+ * # 几条设计约束
+ *
+ * 1. **只显示非零项**。一屏 0 的卡片既占地方又没信息 —— 没有过期就是好消息，
+ *    不该用「已过期 0」去占一行。
+ * 2. **全部为 0 时整条不出现**，页面直接从快捷添加开始；不要留一条空壳。
+ * 3. `newArrivals` 用不同色调：它是"你还没看过的东西"，性质与截止压力不同。
+ * 4. 每个都是 `role="button"` 的锚点，键盘也能跳到对应分组。
+ *
+ * @param focus - `focusSummary()` 的结果。
+ */
+function FocusBar({ focus }) {
+  const items = [
+    { key: 'overdue', label: '已过期', tone: 'overdue' },
+    { key: 'soon', label: '24 小时内', tone: 'soon' },
+    { key: 'today', label: '今天之内', tone: 'today' },
+  ].filter((item) => (focus?.[item.key] ?? 0) > 0);
+
+  const arrivals = focus?.newArrivals ?? 0;
+  if (items.length === 0 && arrivals === 0) return null;
+
+  /** 滚到分组标题。分组 id 由渲染处写成 `zpg-<key>`。 */
+  const jump = (key) => {
+    const target = document.getElementById(`zpg-${key}`);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <div className="zpg-focus" role="group" aria-label="现在的重点">
+      {items.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          className={`zpg-focus-item zpg-focus-${item.tone}`}
+          onClick={() => jump(item.key)}
+          title={`跳到「${item.label}」`}
+        >
+          <b>{focus[item.key]}</b>
+          <span>{item.label}</span>
+        </button>
+      ))}
+      {arrivals > 0 && (
+        <button
+          type="button"
+          className="zpg-focus-item zpg-focus-new"
+          onClick={() => jump('arrivals')}
+          title="跳到新到的条目"
+        >
+          <b>{arrivals}</b>
+          <span>新到</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 function SourceBar({ todos, pta, remote, entryCount, mineCount }) {
   const xzzd = todos.xzzdError;
   const ptaError = todos.ptaError;
@@ -1113,6 +1247,15 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
   const [detail, setDetail] = useState('');
   const [due, setDue] = useState('');
   const [open, setOpen] = useState(false);
+  /**
+   * 快捷时间片的候选。
+   *
+   * ⚠️ 必须在**渲染时**算一次而不是模块级常量：它们基于"现在"，
+   * 页面开着一小时后，"今天 18:00" 应该从候选里消失。
+   * 用 `useMemo` 按秒粒度缓存太频繁，这里按一次挂载算一份就够 ——
+   * 用户在这个输入框上停留的时间不会长到让候选失效。
+   */
+  const quick = useMemo(() => quickTimes(), []);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -1131,6 +1274,15 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
       setDue('');
       setOpen(false);
     }
+  };
+
+  /** 把一个快捷时间片填进 `due`（`datetime-local` 要本地格式的串）。 */
+  const applyQuick = (stamp) => {
+    const d = new Date(stamp);
+    const pad = (n) => String(n).padStart(2, '0');
+    // `datetime-local` 的值按**本地时区**解释，所以这里也用本地分量拼
+    setDue(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    setOpen(true);
   };
 
   return (
@@ -1153,6 +1305,35 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
           {busy ? '正在保存…' : '添加'}
         </button>
       </div>
+
+      {/*
+        快捷时间片：像调闹钟一样，点一下就定好什么时候。
+        只在**没填时间时**显示 —— 已经有时间了还给一堆候选，等于让人再选一次。
+      */}
+      {!due && quick.length > 0 && (
+        <div className="zpg-quick" role="group" aria-label="快捷截止时间">
+          <span className="zpg-quick-hint">什么时候？</span>
+          {quick.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="zpg-quick-item"
+              onClick={() => applyQuick(item.due)}
+              disabled={busy}
+            >
+              {item.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="zpg-quick-item zpg-quick-custom"
+            onClick={() => setOpen(true)}
+            disabled={busy}
+          >
+            自定义…
+          </button>
+        </div>
+      )}
 
       {/* 备注与截止时间默认收起：绝大多数情况只需要写一句话 */}
       {open ? (

@@ -37,6 +37,164 @@ export const URGENCY_LABEL = {
   none: '没有截止时间',
 };
 
+/* ══════════════════════════════════════════ 紧迫度（学生视角重排） */
+
+/**
+ * 学生打开「规划」时真正想先看到的东西，按这个顺序：
+ *
+ *   1. `overdue`  **过期了还没勾** —— 最需要"想办法补救"的，必须最显眼；
+ *   2. `soon`     **24 小时内到期** —— 今晚/明早就得干的事；
+ *   3. `today`    **今天余下** —— 今天之内、但还不算火烧眉毛；
+ *   4. `week`     一周内；
+ *   5. `later`    更晚；
+ *   6. `none`     没填时间。
+ *
+ * 与旧的 `URGENCY` 相比只多了一档 `soon`：旧口径把"24 小时内"和"今天之内"
+ * 混成 `today`，于是**明早 8 点截止**和**今晚 23:59 截止**排在同一组 ——
+ * 而这两件事在学生的紧迫感里差得很远。
+ */
+export const FOCUS_ORDER = ['overdue', 'soon', 'today', 'week', 'later', 'none'];
+
+/** 各档标题。`soon` 单独成档，文案要写清是"24 小时内"。 */
+export const FOCUS_LABEL = {
+  overdue: '已过期',
+  soon: '24 小时内',
+  today: '今天之内',
+  week: '一周内',
+  later: '更晚',
+  none: '没有截止时间',
+};
+
+/**
+ * 按**学生视角**分档。
+ *
+ * 与 `urgencyOf` 的区别：
+ *   - 多一档 `soon`（24 小时内），把"今晚 vs 明早"分开；
+ *   - `today` 的含义收窄为"今天结束之前，但超过 24 小时"（跨天时才会出现）。
+ *
+ * @param due - ISO 时间串或 null。
+ * @param now - 当前毫秒时间戳。
+ * @returns `overdue` / `soon` / `today` / `week` / `later` / `none`。
+ */
+export function focusOf(due, now = Date.now()) {
+  if (!due) return 'none';
+  const at = Date.parse(due);
+  if (Number.isNaN(at)) return 'none';
+  if (at < now) return 'overdue';
+
+  const left = at - now;
+  if (left <= 24 * 3600 * 1000) return 'soon';
+  if (left <= 3 * 24 * 3600 * 1000) return 'today';
+  if (left <= 7 * 24 * 3600 * 1000) return 'week';
+  return 'later';
+}
+
+/**
+ * 一条网关条目算不算"新到的"（用户可能还不知道）。
+ *
+ * 判据是**入库时刻** `cachedAt`：它记录这条第一次被 `absorb` 写进本地的秒数。
+ * 不用"已读"状态，是因为那需要新增一份可变的阅读记录，而用户真正在意的
+ * 只是"最近有没有我不知道的东西进来"。
+ *
+ * @param cachedAt - 条目入库的秒级时间戳。
+ * @param now - 当前毫秒时间戳。
+ * @param windowHours - 多久之内算新，默认 48 小时（跨一个工作日 + 一晚）。
+ * @returns 是不是新到的。
+ */
+export function isNewArrival(cachedAt, now = Date.now(), windowHours = 48) {
+  const at = Number(cachedAt);
+  if (!Number.isFinite(at) || at <= 0) return false;
+  return now - at * 1000 <= windowHours * 3600 * 1000;
+}
+
+/**
+ * 顶部摘要条要显示的数字。
+ *
+ * 只统计**没做**的条目 —— 勾掉的已完成内容不该进任何提醒。
+ *
+ * @param options.openTodos - 未完成的待办行（含 `due`）。
+ * @param options.newArrivals - 新到的网关条目数。
+ * @param options.now - 当前毫秒时间戳。
+ * @returns `{ overdue, soon, today, newArrivals }`，都是数字。
+ */
+export function focusSummary({ openTodos = [], newArrivals = 0, now = Date.now() } = {}) {
+  const counts = { overdue: 0, soon: 0, today: 0 };
+  for (const row of openTodos) {
+    const key = focusOf(row?.due, now);
+    if (key in counts) counts[key] += 1;
+  }
+  return { ...counts, newArrivals };
+}
+
+/* ══════════════════════════════════════════ 快捷时间（像调闹钟一样） */
+
+/**
+ * 把「现在」对齐到上海时区的某个整点/整分。
+ *
+ * 为什么不用 `new Date()` 直接加减：用户想的是"今天晚上 22:00"，而不是
+ * "现在 + 10 小时"。所以一律**先定到当天的某个时刻**再加天数。
+ *
+ * 上海是 UTC+8 且无夏令时 —— 按 UTC 构造再减 8 小时即可，不依赖宿主机时区。
+ *
+ * @param now - 当前毫秒时间戳。
+ * @param options.dayOffset - 相对今天的天数偏移。
+ * @param options.hour - 目标小时（上海时区）。
+ * @param options.minute - 目标分钟。
+ * @returns 目标时刻的毫秒时间戳。
+ */
+export function atShanghai(now, { dayOffset = 0, hour = 9, minute = 0 } = {}) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(now));
+  const grab = (type) => Number(parts.find((p) => p.type === type)?.value);
+  const midnightUtc = Date.UTC(grab('year'), grab('month') - 1, grab('day'));
+  const targetUtc = midnightUtc
+    + dayOffset * 24 * 3600 * 1000
+    + hour * 3600 * 1000
+    + minute * 60 * 1000;
+  return targetUtc - 8 * 3600 * 1000;
+}
+
+/**
+ * 下一个指定星期几的 09:00（上海时区）。
+ *
+ * @param now - 当前毫秒时间戳。
+ * @param weekday - 1=周一 … 7=周日。
+ * @returns 目标时刻（毫秒）。若今天正好是那天，取**下**一周。
+ */
+export function nextWeekday(now, weekday = 1) {
+  const fmt = new Intl.DateTimeFormat('en-US', { timeZone: ZONE, weekday: 'short' });
+  const map = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
+  const todayDow = map[fmt.format(new Date(now))] ?? 1;
+  let delta = (weekday - todayDow + 7) % 7;
+  if (delta === 0) delta = 7;
+  return atShanghai(now, { dayOffset: delta, hour: 9 });
+}
+
+/**
+ * 快捷时间片：学生最常用的几个「什么时候」。
+ *
+ * 全部返回**确定的时刻**，不做自然语言猜测 —— 把"周三"猜成这周还是下周的
+ * 代价太高（猜错了用户会以为工具坏了，而不是以为自己写错了）。
+ *
+ * 只返回**还没过去**的项：给出一个过去的时间等于让用户建一条立刻过期的待办。
+ *
+ * @param now - 当前毫秒时间戳。
+ * @returns `[{ key, label, due }]`，`due` 是毫秒时间戳。
+ */
+export function quickTimes(now = Date.now()) {
+  /** 今晚 22:00；若已经过了，就顺延到明晚。 */
+  const tonight = atShanghai(now, { hour: 22 });
+  const tonightDue = tonight > now ? tonight : atShanghai(now, { dayOffset: 1, hour: 22 });
+
+  return [
+    { key: 'today18', label: '今天 18:00', due: atShanghai(now, { hour: 18 }) },
+    { key: 'tonight', label: '今晚 22:00', due: tonightDue },
+    { key: 'tomorrow', label: '明天 09:00', due: atShanghai(now, { dayOffset: 1, hour: 9 }) },
+    { key: 'nextweek', label: '下周一 09:00', due: nextWeekday(now, 1) },
+  ].filter((item) => item.due > now);
+}
+
 /**
  * 判紧迫度：先看什么，由"还剩多久"决定，不是"哪天真"。
  *
