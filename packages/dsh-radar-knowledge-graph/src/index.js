@@ -75,6 +75,13 @@
  *    本仓笔记库目前不存图片附件（`![[图片.png]]` 只做嵌入解析）→ 首版**关掉图片路径**。
  */
 
+import {
+  UPSTREAM_PACKAGE,
+  UPSTREAM_VERSION,
+  UPSTREAM_REPOSITORY,
+  UPSTREAM_LICENSE,
+} from './upstream.js';
+
 export const name = 'dsh-radar-knowledge-graph';
 
 /** 占位：本骨架**不实现任何业务逻辑**，仅登记元信息供评审。 */
@@ -82,10 +89,10 @@ export const RADAR_SKELETON = {
   status: 'candidate-skeleton',
   reviewed: false,
   wiredIntoProfile: false,
-  upstream: 'dsh-knowledge-graph',
-  upstreamVersion: '0.1.3',
-  upstreamLicense: 'MIT',
-  upstreamRepo: 'https://github.com/cwbcheng/dsh-knowledge-graph',
+  upstream: UPSTREAM_PACKAGE,
+  upstreamVersion: UPSTREAM_VERSION,
+  upstreamLicense: UPSTREAM_LICENSE,
+  upstreamRepo: UPSTREAM_REPOSITORY,
   integration: 'A · 锁版挂载 + 外围兼容层',
   enhances: 'dsh-zhiyun-page-notes / dsh-zhiyun-core-vault 的「链接图」→ 补「语义图」',
 };

@@ -149,11 +149,42 @@ export const CARD_LABEL = '浙大一卡通';
 /** WebVPN 那份凭据在宿主凭据列表里的说明。 */
 export const WEBVPN_LABEL = 'WebVPN 上网账号';
 
+/**
+ * CC98 账号的记录键。**与一卡通分开存**。
+ *
+ * # 为什么必须分开
+ *
+ * CC98 有**自己的账号体系**（`openid.cc98.org` 的 OAuth2），与浙大统一认证
+ * （`zjuam.zju.edu.cn` 的 CAS）是两套东西：
+ *
+ * - 只用 CC98 的人（校外、已毕业、只注册过论坛）没有浙大统一认证身份；
+ * - 有浙大身份的人，CC98 密码也未必与一卡通密码相同。
+ *
+ * 早先 cc98 数据包是**借**一卡通那份记录去登 CC98 的 —— 在那个假设下，
+ * 只有 CC98 账号的人永远登不进去，而失败提示还把用户指向「改一卡通密码」，
+ * 方向完全相反。这正是 WebVPN 那条注释里描述过的同一个坑。
+ *
+ * 分开存还有两个好处：清除其中一个不会顺手动掉另一个；失败时能明确说清
+ * 「是哪一套账号被拒了」。
+ */
+export const CC98_RECORD_KEY = 'zhiyun-cc98/account';
+
+/** CC98 那份凭据在宿主凭据列表里的说明。 */
+export const CC98_LABEL = 'CC98 论坛账号';
+
 /** 造 WebVPN 记录。形状与 `cardRecord` 一致（`grant` 只允许 kind + payload）。 */
 function webvpnRecord({ username, password }) {
   return {
     kind: 'grant',
     payload: { username: username.trim(), password, label: WEBVPN_LABEL },
+  };
+}
+
+/** 造 CC98 记录。 */
+function cc98Record({ username, password }) {
+  return {
+    kind: 'grant',
+    payload: { username: username.trim(), password, label: CC98_LABEL },
   };
 }
 
@@ -330,6 +361,69 @@ export async function webvpnStatus(ctx) {
   return { configured: true, username: account.username };
 }
 
+/**
+ * 读 CC98 账号。
+ *
+ * 返回 null 表示「没配」，**不代表 CC98 与一卡通等价** —— 调用方不该拿
+ * 一卡通那份来兜底，那会把「没配 CC98 账号」变成「用错账号登不上」。
+ *
+ * @param ctx - 插件上下文。
+ * @returns `{ username, password }` 或 null。
+ */
+export async function readCc98(ctx) {
+  const service = credentialsOf(ctx);
+  if (!service) return null;
+  try {
+    const record = await service.readRecord(CC98_RECORD_KEY);
+    if (!record || record.kind !== 'grant') return null;
+    const { username, password } = record.payload ?? {};
+    if (typeof username !== 'string' || !username) return null;
+    if (typeof password !== 'string' || !password) return null;
+    return { username, password };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 写 CC98 账号（无条件覆盖）。
+ *
+ * @param ctx - 插件上下文。
+ * @param account - `{ username, password }`。
+ * @returns 写成功返回 true。
+ */
+export async function writeCc98(ctx, account) {
+  const valid = validAccount(account);
+  if (!valid) return false;
+  const service = credentialsOf(ctx);
+  if (!service) return false;
+  try {
+    await service.modifyRecord(CC98_RECORD_KEY, () => cc98Record(valid));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** 删掉 CC98 账号（幂等）。 */
+export async function clearCc98(ctx) {
+  const service = credentialsOf(ctx);
+  if (!service || typeof service.deleteRecord !== 'function') return false;
+  try {
+    await service.deleteRecord(CC98_RECORD_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** CC98 凭据状态（只回有无与账号名，不回密码）。 */
+export async function cc98Status(ctx) {
+  const account = await readCc98(ctx);
+  if (!account) return { configured: false, username: '' };
+  return { configured: true, username: account.username };
+}
+
 /* ══════════════════════════════════════════════════════════ 宿主半边 */
 
 export const name = 'zhiyun-card';
@@ -408,15 +502,16 @@ export function normalizePassword(value) {
 }
 
 /**
- * 两种凭据的**同一套**读写口径。
+ * 三种凭据的**同一套**读写口径。
  *
- * 一卡通与 WebVPN 上网账号的记录形状、校验规则、打码语义完全相同 —— 差别只有
- * 记录键与"它是哪套系统"的说明。把差别收进这张表，而不是把 handler 复制成两份：
- * 复制出来的第二份迟早会漏掉"密码传打码值表示不改"这类规则。
+ * 一卡通、WebVPN 上网账号、CC98 论坛账号的记录形状、校验规则、打码语义完全相同 ——
+ * 差别只有记录键与"它是哪套系统"的说明。把差别收进这张表，而不是把 handler 复制成
+ * 三份：复制出来的第二份迟早会漏掉"密码传打码值表示不改"这类规则。
  */
 const RECORDS = {
   card: { key: CARD_RECORD_KEY, label: CARD_LABEL, read: readCard, write: writeCard, clear: clearCard, status: cardStatus },
   webvpn: { key: WEBVPN_RECORD_KEY, label: WEBVPN_LABEL, read: readWebvpn, write: writeWebvpn, clear: clearWebvpn, status: webvpnStatus },
+  cc98: { key: CC98_RECORD_KEY, label: CC98_LABEL, read: readCc98, write: writeCc98, clear: clearCc98, status: cc98Status },
 };
 
 /** 把一份凭据状态画成页面直接能用的形状（密码永远只给打码值）。 */
@@ -433,17 +528,38 @@ function credentialView(status) {
  * 路由处理函数。
  *
  * 动作：
- *   GET  ?                读两份凭据的状态（账号名回显、密码打码）
+ *   GET  ?                读三份凭据的状态（账号名回显、密码打码）
  *   POST ?save            存一卡通账号密码（密码传打码值表示不改）
  *   POST ?clear           清除一卡通
  *   POST ?webvpn-save     存 WebVPN 上网账号
  *   POST ?webvpn-clear    清除 WebVPN 上网账号
+ *   POST ?cc98-save       存 CC98 论坛账号
+ *   POST ?cc98-clear      清除 CC98 论坛账号
  *
- * 两条凭据**互不影响**：清一卡通不会动 WebVPN，反之亦然。
+ * 三份凭据**互不影响**：清一卡通不会动 WebVPN 或 CC98，反之亦然。
+ *
+ * ⚠️ 动作名与 `RECORDS` 的键**刻意不统一**：`save` / `clear` 是历史动作名
+ *   （沿用一卡通那一份），改它会让已经写死的调用方（设置页、脚本）403。
+ *   新加凭据一律用 `<kind>-save` / `<kind>-clear`。
  *
  * @param options - `{ ctx, log }`。
  */
 export function createHandler({ ctx, log = () => {} }) {
+  /**
+   * 动作名 → 凭据种类。
+   *
+   * 从"两个三元表达式"改成表，是因为第三种凭据一进来，三元就会长成
+   * `a ? x : b ? y : c ? z : null` —— 那种链子加第四种时必错。
+   */
+  const ACTION_KIND = {
+    save: 'card',
+    clear: 'card',
+    'webvpn-save': 'webvpn',
+    'webvpn-clear': 'webvpn',
+    'cc98-save': 'cc98',
+    'cc98-clear': 'cc98',
+  };
+
   /** 保存一份凭据。`kind` 决定写哪一份记录。 */
   const saveOne = async (res, kind, body, label) => {
     const record = RECORDS[kind];
@@ -489,8 +605,14 @@ export function createHandler({ ctx, log = () => {} }) {
     const action = String(req.url ?? '').split('?')[1] ?? '';
 
     if (req.method === 'GET') {
-      const [card, webvpn] = await Promise.all([cardStatus(ctx), webvpnStatus(ctx)]);
-      sendJson(res, 200, { card: credentialView(card), webvpn: credentialView(webvpn) });
+      const [card, webvpn, cc98] = await Promise.all([
+        cardStatus(ctx), webvpnStatus(ctx), cc98Status(ctx),
+      ]);
+      sendJson(res, 200, {
+        card: credentialView(card),
+        webvpn: credentialView(webvpn),
+        cc98: credentialView(cc98),
+      });
       return;
     }
 
@@ -504,18 +626,17 @@ export function createHandler({ ctx, log = () => {} }) {
       return;
     }
 
-    if (action === 'clear' || action === 'webvpn-clear') {
-      const kind = action === 'clear' ? 'card' : 'webvpn';
+    const kind = ACTION_KIND[action];
+    if (!kind) {
+      sendJson(res, 400, { error: `未知动作 ${action || '(空)'}` });
+      return;
+    }
+
+    if (action.endsWith('-clear') || action === 'clear') {
       const record = RECORDS[kind];
       await record.clear(ctx);
       log(`${record.label}已清除`);
       sendJson(res, 200, { ok: true, [kind]: credentialView({ configured: false, username: '' }) });
-      return;
-    }
-
-    const saveKind = action === 'save' ? 'card' : action === 'webvpn-save' ? 'webvpn' : null;
-    if (!saveKind) {
-      sendJson(res, 400, { error: `未知动作 ${action || '(空)'}` });
       return;
     }
 
@@ -525,7 +646,7 @@ export function createHandler({ ctx, log = () => {} }) {
       return;
     }
 
-    await saveOne(res, saveKind, body, RECORDS[saveKind].label);
+    await saveOne(res, kind, body, RECORDS[kind].label);
   };
 }
 

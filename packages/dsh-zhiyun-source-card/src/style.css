@@ -1,4 +1,4 @@
-/* 「浙大一卡通」设置分区的样式。
+﻿/* 「浙大一卡通」设置分区的样式。
  *
  * 三条硬约束，与其它包的样式表一致：
  *   1. **所有选择器带 `body[data-zhiyun]` 前缀**。各包的样式表是同特异性的独立
@@ -26,14 +26,14 @@ body[data-zhiyun] .zcd-form { display: flex; flex-direction: column; gap: 24px; 
    间距必须让"这块结束了、下一块是另一件事"一眼看得出来。 */
 body[data-zhiyun] .zcd-block { display: flex; flex-direction: column; gap: 16px; }
 
-/* ------------------------------------------------------------ WebVPN 折叠块 */
+/* ------------------------------------------------------------ 折叠块（WebVPN / CC98 共用） */
 /* 默认收起：在校内完全用不到这一块，摊开会让设置页变长一半。
    `summary` 是原生可聚焦元素，键盘能直接 Tab 到并回车展开，不需要额外补 role。 */
-body[data-zhiyun] .zcd-vpn {
+body[data-zhiyun] .zcd-fold {
   padding-top: 16px;
   border-top: 1px solid var(--zy-line);
 }
-body[data-zhiyun] .zcd-vpn > summary {
+body[data-zhiyun] .zcd-fold > summary {
   display: flex;
   align-items: baseline;
   gap: 10px;
@@ -44,11 +44,11 @@ body[data-zhiyun] .zcd-vpn > summary {
   /* 命中区 ≥24px：summary 默认行高偏矮，补一点上下内距 */
   padding: 4px 0;
 }
-body[data-zhiyun] .zcd-vpn > summary:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 2px; }
-body[data-zhiyun] .zcd-vpn > summary strong { font-weight: 600; }
-body[data-zhiyun] .zcd-vpn > summary small { font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
+body[data-zhiyun] .zcd-fold > summary:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 2px; }
+body[data-zhiyun] .zcd-fold > summary strong { font-weight: 600; }
+body[data-zhiyun] .zcd-fold > summary small { font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
 /* 展开后内容与 summary 之间要留出呼吸，否则第一行说明会贴着标题 */
-body[data-zhiyun] .zcd-vpn[open] > summary { margin-bottom: 4px; }
+body[data-zhiyun] .zcd-fold[open] > summary { margin-bottom: 4px; }
 
 /* 说明文字：这一段是本分区唯一的反直觉信息（两处共用一份凭证），所以放在最前，
    且用正文色而不是次要色 —— 它必须被读到，不是装饰。 */

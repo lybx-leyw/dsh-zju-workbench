@@ -11,5 +11,6 @@
   },
   "dependencies": {
     "dsh-univer-office": "0.3.7"
-  }
+  },
+  "//note": "⚠️ 本条依赖必须装在本包自己的 node_modules 下（tests/univer-office.test.mjs 会断言）。它是旧工作区（packages/*）布局留下来的：根 node_modules 与包内 node_modules 各有一份 0.3.7。根 package.json 已无 workspaces，npm ci 只会在包内装，所以换机器/重装依赖后这一份才是权威 —— 改动依赖后请复核 npm ls dsh-univer-office。"
 }

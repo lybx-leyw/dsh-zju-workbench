@@ -23,7 +23,7 @@ export const UPSTREAM_PACKAGE = 'dsh-knowledge-graph';
 export const UPSTREAM_VERSION = '0.1.3';
 
 /** 上游仓库（作者、许可证核实来源）。 */
-export const UPSTREAM_REPO = 'https://github.com/cwbcheng/dsh-knowledge-graph';
+export const UPSTREAM_REPOSITORY = 'https://github.com/cwbcheng/dsh-knowledge-graph';
 
 /** 上游许可证：MIT（GitHub API `license.spdx_id = MIT`，`LICENSE` 实文首行已比对）。 */
 export const UPSTREAM_LICENSE = 'MIT';

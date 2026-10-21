@@ -38,6 +38,7 @@ import { Transport } from './cas/transport.js';
 import { SessionStore } from './cas/session.js';
 import { xzzdLogin } from './cas/login.js';
 import { XzzdApi, hasXzzdSession } from './xzzd.js';
+import { XzzdReader } from './xzzd-reads.js';
 import { PtaApi, parsePtaCookie } from './pta.js';
 import { CAMPUS_HOSTS, PTA_BASE, XZZD_BASE } from './hosts.js';
 import { createEgress, loadUndici } from './egress.js';
@@ -449,6 +450,92 @@ export async function apply(ctx, config = {}) {
     };
   };
 
+  /**
+   * 看题：题集详情 / 题目列表 / 题目 / 我的进度。
+   *
+   * 统一走一个入口而不是四个动作名，是因为它们**共用同一份 Cookie 与会话**，
+   * 而参数校验（题集 id、题型）也在同一层。页面只需传 `{ action, ...args }`。
+   *
+   * 全程只读：不提交代码、不开始考试。
+   *
+   * @param body - `{ action, problemSetId, problemId, problemType, page, limit, offset }`。
+   * @returns 对应方法的结果。
+   */
+  const ptaRead = async (body = {}) => {
+    const action = String(body?.action ?? '').trim();
+    const api = new PtaApi(await ptaTransport());
+    const signal = undefined;
+    switch (action) {
+      case 'problemSet':
+        return api.problemSet(body.problemSetId, { signal });
+      case 'problems':
+        return api.problems(body.problemSetId, {
+          problemType: body.problemType ?? null,
+          page: Number(body.page ?? 1),
+          limit: Number(body.limit ?? 50),
+          signal,
+        });
+      case 'problem':
+        return api.problem(body.problemSetId, body.problemId, {
+          offset: Number(body.offset ?? 0),
+          maxCharacters: Number(body.maxCharacters ?? 16000),
+          signal,
+        });
+      case 'progress':
+        return api.progress(body.problemSetId, { signal });
+      default:
+        throw fault('INVALID_INPUT', `未知的看题动作：${action || '(空)'}。可选 problemSet / problems / problem / progress`);
+    }
+  };
+
+  /**
+   * 学在浙大的深入读取：活动 / 作业 / 活动详情 / 课件 / 我的提交。
+   *
+   * 与 `ptaRead` 同构（一个动作名 + 参数），理由也一样：
+   * 它们共用同一份会话，参数校验也该在同一层。
+   *
+   * @param body - `{ action, courseId, activityId, page, pageSize, withSubmissions }`。
+   * @returns 对应方法的结果。
+   */
+  const xzzdRead = async (body = {}) => {
+    const action = String(body?.action ?? '').trim();
+    const api = await xzzdClient();
+    const reader = new XzzdReader(api, XZZD_BASE);
+    const signal = undefined;
+    switch (action) {
+      case 'activities':
+        return reader.activities(body.courseId, {
+          page: Number(body.page ?? 1),
+          pageSize: Number(body.pageSize ?? 30),
+          type: body.type ?? null,
+          signal,
+        });
+      case 'assignments':
+        return reader.assignments(body.courseId, {
+          page: Number(body.page ?? 1),
+          pageSize: Number(body.pageSize ?? 30),
+          withSubmissions: Boolean(body.withSubmissions),
+          signal,
+        });
+      case 'activity':
+        return reader.activity(body.activityId, { signal });
+      case 'materials':
+        return reader.materials(body.courseId, {
+          page: Number(body.page ?? 1),
+          pageSize: Number(body.pageSize ?? 30),
+          signal,
+        });
+      case 'submission':
+        return reader.activitySubmission(
+          { id: body.activityId, course_id: body.courseId, group_set_id: body.groupSetId, submit_by_group: body.isGroup },
+          { signal },
+        );
+      default:
+        throw fault('INVALID_INPUT', `未知的作业读取动作：${action || '(空)'}。可选 activities / assignments / activity / materials / submission`);
+    }
+  };
+
+
   ctx.inject(['webServer'], (scope) => {
     scope.effect(() => {
       const handler = async (req, res) => {
@@ -492,6 +579,26 @@ export async function apply(ctx, config = {}) {
             return;
           }
 
+          // 看题：`?pta=problemSet|problems|problem|progress`，参数走 body。
+          // 单独一条动作而不是塞进 GET —— 题面可能几十 KB，而且带 id 参数，
+          // 放进查询串会被中间层（代理日志、Referer）记下来。
+          if (action === 'pta-read') {
+            const chunks = [];
+            for await (const chunk of req) chunks.push(chunk);
+            const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+            send(200, { ok: true, result: await ptaRead(body) });
+            return;
+          }
+
+          // 学在浙大的深入读取：活动 / 作业 / 活动详情 / 课件 / 我的提交。
+          if (action === 'xzzd-read') {
+            const chunks = [];
+            for await (const chunk of req) chunks.push(chunk);
+            const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+            send(200, { ok: true, result: await xzzdRead(body) });
+            return;
+          }
+
           // 重新探测出口：用户换了网络（进/出校园网）之后点一下，不必重启。
           if (action === 'reprobe') {
             send(200, { ok: true, egress: await egressStatus({ probe: true }) });
@@ -525,11 +632,62 @@ export async function apply(ctx, config = {}) {
     /** 给别处（脚本/测试）直接用的两个客户端构造器。 */
     xzzdClient,
     ptaClient: async () => new PtaApi(await ptaTransport()),
+    /** 看题（题集详情 / 题目列表 / 题目 / 进度），只读。 */
+    ptaRead,
+    /** 学在浙大深入读取（活动 / 作业 / 课件 / 我的提交），只读。 */
+    xzzdRead,
+  });
+
+  /**
+   * **共享出口**：让其它 `source-*` 包也用同一套网络策略。
+   *
+   * # 为什么必须在 campus 里、而不是每个包各自建一个
+   *
+   * WebVPN 是**网关会话**：它是"一张登录票换所有校园站点"。如果 zdbk / cc98 /
+   * xxt / classroom 各自 `webvpnLogin()` 一次，第二个登录会把第一个的票作废 ——
+   * 这与本仓在 CAS 上踩过的"两个包各自登录、单点互踢"是同一类事故，只是换了层。
+   *
+   * 同样地，undici 的 `Agent`（直连 dispatcher）与校园网探测结果也只该有一份：
+   * 每包一个 Agent 会各开一套连接池，每包探一次校园网会让首个请求多绕几跳。
+   *
+   * 所以出口**只有一份**，所有权在 campus，其它包通过这个服务借。
+   *
+   * # 各包怎么用
+   *
+   * ```js
+   * // 在发请求时**惰性**取（不能在 apply 阶段缓存：campus 可能晚于本包就绪）
+   * const fetch = (url, init) => ctx.get?.('zhiyunEgress')?.fetch(url, init)
+   *   ?? globalThis.fetch(url, init);
+   * ```
+   *
+   * 拿不到服务时会退回直连 —— campus 没装时其它包仍能用，只是校外走不通。
+   */
+  const removeEgressService = ctx.provide('zhiyunEgress', {
+    /** 出口模式：`auto` / `direct` / `webvpn`。 */
+    mode: egress.mode,
+    /**
+     * 带出口策略的 fetch：自动分域（非校园域直连、校园域按模式走）+ 校外自动绕
+     * WebVPN + 直连失败后按条件升级一次。
+     *
+     * 签名与 `globalThis.fetch` 一致，可直接喂给 `Transport`。
+     */
+    fetch: egress.fetch,
+    /** 只发不走策略（调用方已确定要直连时用，比如 WebVPN 网关自己的登录页）。 */
+    send: egress.send,
+    /** 逻辑地址 → 物理地址（WebVPN 改写）。需要自己拼请求的包可用。 */
+    toPhysical: egress.toPhysical,
+    /** 当前出口状态：`{ mode, campus, viaWebvpn, degraded }`。 */
+    state: () => egress.state(),
+    /** 主动探一次校园网（`true` 校内 / `false` 校外 / `null` 探不到）。 */
+    probeCampus: () => egress.probeCampus(),
+    /** 清探测缓存（换了网络、用户改了设置时用）。 */
+    forget: () => egress.forget(),
   });
 
   return async () => {
     // 先摘服务与路由，再关 agent：反过来的话，卸载窗口里打进来的请求会打到一个
     // 已关闭的 dispatcher 上。
+    if (typeof removeEgressService === 'function') removeEgressService();
     if (typeof removeService === 'function') removeService();
     await egress.close().catch(() => {});
   };

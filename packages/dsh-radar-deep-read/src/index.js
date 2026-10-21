@@ -73,14 +73,18 @@
  *     一个管「怎么读」，一个管「怎么显示」。但同挂到论文页时需确认加载顺序。
  */
 
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
+
 export const name = 'dsh-radar-deep-read';
+
+/** 锁版凭据的只读快照（供页面显示与人工复核；不在此处调用上游）。 */
+export const UPSTREAM = Object.freeze({ package: UPSTREAM_PACKAGE, version: UPSTREAM_VERSION });
 
 export function apply() {
   // TODO: 评审通过后实现。当前刻意留空 —— 骨架不是实现。
   //
   // 预计形状（供评审时判断工作量，非最终设计）：
   //
-  //   import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
   //   // 1) 运行时核对上游版本（不抛错，记状态供页面显示）
   //   // 2) 确认上游是 tool 还是 client，据此决定「不新增 UI」还是「挂 UI」
   //   // 3) 把「精读产出」交给笔记域（dsh-zhiyun-core-notes），由笔记域决定落哪一节

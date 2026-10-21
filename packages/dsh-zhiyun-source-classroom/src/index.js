@@ -16,10 +16,35 @@ export const name = 'zhiyun-classroom';
 // 只是别的包读不到这份账号（见 host-credentials.js）。
 export const inject = ['profileContext'];
 export async function apply(ctx, config = {}) {
-  const network = config.fetch ? null : classroomNetwork();
+  // 本地兜底出口：只有 undici dispatcher（绕开全局代理），**不含 WebVPN**。
+  // 在没有 campus 的情况下仍有意义 —— 智云的主机都在公网。
+  const localNet = config.fetch ? null : classroomNetwork();
+
+  /**
+   * 本包的 `fetch`。
+   *
+   * 优先用**共享出口** `zhiyunEgress`（campus 提供）：它比这里的本地兜底多了
+   * 「校园网判定 + 校外绕 WebVPN」，而且 undici 连接池与 WebVPN 会话全省一份 ——
+   * 各包各自登录 WebVPN 会互相踢掉（与 CAS 双登录同一类事故）。
+   *
+   * 惰性解析：每次请求才查服务。campus 在 profile 里排在 classroom 之后，
+   * apply 阶段取一定拿不到，缓存成 null 就永久退化成直连了。
+   */
+  const fetcher = typeof config.fetch === 'function'
+    ? config.fetch
+    : (url, init) => {
+      try {
+        const egress = ctx.get?.('zhiyunEgress');
+        if (egress && typeof egress.fetch === 'function') return egress.fetch(url, init);
+      } catch {
+        // 服务解析失败不该让请求变成异常
+      }
+      return localNet.fetch(url, init);
+    };
+
   // profileContext is owned by DSH, not a guessed global home/cwd.
   const source = new ClassroomSource({
-    fetch: config.fetch ?? network.fetch,
+    fetch: fetcher,
     protect: config.protect,
     sessionFile: path.join(ctx.profileContext.dir, 'data', 'zhiyun-classroom', 'session.dpapi'),
     /**
@@ -93,6 +118,6 @@ export async function apply(ctx, config = {}) {
   }
   // Mounting is offline. The first state request restores the saved account.
   return async () => {
-    try { await removeRoutes?.(); } finally { await source.dispose(); await network?.close(); }
+    try { await removeRoutes?.(); } finally { await source.dispose(); await localNet?.close(); }
   };
 }

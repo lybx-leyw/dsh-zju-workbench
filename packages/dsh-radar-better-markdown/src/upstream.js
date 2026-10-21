@@ -20,6 +20,9 @@ export const UPSTREAM_PACKAGE = 'dsh-better-markdown';
 /** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
 export const UPSTREAM_VERSION = '0.1.2';
 
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/zhu1090093659/dsh-better-markdown';
+
 /**
  * 上游在 `dsh` 字段里声明的挂载形状（2026-10-15 经 npm registry 核实）：
  *

@@ -66,9 +66,15 @@
  *   [ ] **不接入 profile。** 绝不写入 `profiles/zhiyun-bench/package.json`。
  */
 
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
+
 export const name = 'dsh-radar-cc98-sdk';
 
 export const inject = [];
+
+/** 锁版凭据的只读快照（供评审对照；不在此处拉起上游进程）。 */
+export const UPSTREAM = Object.freeze({ package: UPSTREAM_PACKAGE, version: UPSTREAM_VERSION });
+
 
 /**
  * 占位入口：**故意留空**。

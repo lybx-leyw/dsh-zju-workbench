@@ -18,8 +18,15 @@
 //   4. 与 dsh-zhiyun-core-player 的时间轴单位对齐（ms 还是秒；见其 stats.js 的时间口径）。
 //   5. 无谱面时整体降级：不渲染空容器、不占版面（宁可不出现，不要出现一个空盒子）。
 
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
+
+/** 插件名（与目录名、patch 的 id/name 一致）。 */
+export const name = 'dsh-radar-score-practice';
+
+/** 锁版凭据的快照（供评审对照；`relation` 等定性字段与凭据无关，仍写在这里）。 */
 export const UPSTREAM = {
-  name: 'dsh-radar-score-practice',
+  package: UPSTREAM_PACKAGE,
+  version: UPSTREAM_VERSION,
   scope: '看课页 · 课件区补充「可跟随的乐谱素材」',
   relation: '强化式集成（同一面板 / 相似正交 / 换更优底层）',
 };

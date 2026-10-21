@@ -903,8 +903,13 @@ test('⑥ ★★ Dart golden：系统提示词与 App 的 kLectureWrittenSystemP
   //    `tests/fixtures/`：它是这个包自己的磁盘契约，跟着包走才不会被
   //    「测试目录归别人管」的写作范围挡住。
   const { readFile } = await import('node:fs/promises');
-  const golden = await readFile(
+  const raw = await readFile(
     new URL('../packages/dsh-zhiyun-core-lecture/fixtures/system-prompt.txt', import.meta.url), 'utf8');
+  // ⚠️ 必须先归一换行符再比对：夹具是 `.txt`，在 Windows 上 checkout 会（随
+  //    `core.autocrlf` / `gitattributes`）变成 CRLF，而在 Linux/CI 上是 LF。
+  //    不归一的话，**内容一个字都没改**也会红，而且红得像「提示词被改了」。
+  //    归一之后这条仍在做它该做的事：内容里多/少一个反引号还是会红。
+  const golden = raw.replace(/\r\n/g, '\n');
   assert.equal(kLectureWrittenSystemPrompt, golden,
     '提示词与 App 不一致 —— 这不是排版问题，是把那次 A/B 对照的实验条件改掉了');
   assert.ok(golden.includes('`$...$`'), '行内代码的反引号必须真的在（先前正是这里漏了 4 个）');

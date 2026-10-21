@@ -20,6 +20,9 @@ export const UPSTREAM_PACKAGE = 'cc98-mcp';
 /** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
 export const UPSTREAM_VERSION = '0.1.0';
 
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/EviterLesRoses2/cc98-mcp';
+
 /**
  * 上游的事实（2026-10-18 经 GitHub API + 文件树 + `package.json`/`README` 实文核实）：
  *

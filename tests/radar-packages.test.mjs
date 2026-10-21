@@ -45,6 +45,19 @@ const skeletonDirs = readdirSync(path.join(root, 'packages'))
   .filter((name) => name.startsWith('dsh-radar-'))
   .sort();
 
+/**
+ * 上游**尚未核实**（npm 上也没有）的骨架。
+ *
+ * 这类骨架按 `dsh-radar-career-calendar` 的先例处理：**不写 `dependencies`、
+ * 也不写 `UPSTREAM_PACKAGE` / `UPSTREAM_VERSION`** —— 宁可不声明，也不要摆一对
+ * 看着像锁版凭据、实则待定的常量。逐条点名，评审确认包名与版本后从这里移出。
+ */
+const UNVERIFIED_UPSTREAM = [
+  // `npm view @perrylink/dsh-score` 为 E404（2026-10-20 复核）；线索见其 src/upstream.js。
+  'dsh-radar-plugin-score',
+];
+
+
 test('仓库里至少有一个雷达候选骨架目录（否则本测试文件已失效）', () => {
   assert.ok(skeletonDirs.length > 0, `未找到 packages/dsh-radar-*，实际：${skeletonDirs.join(', ')}`);
 });
@@ -124,6 +137,28 @@ for (const dir of skeletonDirs) {
       const deps = manifest.dependencies ?? {};
 
       const source = readText(`packages/${dir}/src/upstream.js`);
+
+      // 「上游未核实」的骨架：**没有依赖**，因此也不许摆一对看起来像锁版凭据的常量。
+      // 逐个点名而不是"没依赖就放行"，这样新增一个既没依赖又没凭据的骨架会红。
+      if (Object.keys(deps).length === 0) {
+        assert.ok(
+          UNVERIFIED_UPSTREAM.includes(dir),
+          `${dir} 既没有 dependencies 也不在「上游未核实」名单里 —— `
+            + '要么补锁版依赖，要么在 tests/radar-packages.test.mjs 的 UNVERIFIED_UPSTREAM 里登记理由',
+        );
+        assert.equal(
+          /export const UPSTREAM_PACKAGE = '/.test(source),
+          false,
+          `${dir} 的上游未核实，不应声明 UPSTREAM_PACKAGE（假装锁版已完成）`,
+        );
+        assert.equal(
+          /export const UPSTREAM_VERSION = '/.test(source),
+          false,
+          `${dir} 的上游未核实，不应声明 UPSTREAM_VERSION（假装锁版已完成）`,
+        );
+        return;
+      }
+
       const pkgMatch = /export const UPSTREAM_PACKAGE = '([^']+)'/.exec(source);
       const verMatch = /export const UPSTREAM_VERSION = '([^']+)'/.exec(source);
       assert.ok(pkgMatch, 'src/upstream.js 必须导出 UPSTREAM_PACKAGE');

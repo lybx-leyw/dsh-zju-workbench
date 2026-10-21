@@ -39,6 +39,54 @@ export const PTA_PAGE_LIMIT = 100;
 /** 服务端排序字段。 */
 export const PTA_ORDER_BY = 'END_AT';
 
+/**
+ * 拼题A 的题型枚举与中文标签。
+ *
+ * 顺序照抄上游：`problems()` 在不指定题型时按这个顺序挑第一个可用的，
+ * 编程题优先 —— 那是最常见的一类。
+ */
+export const PTA_PROBLEM_TYPES = [
+  'PROGRAMMING',
+  'CODE_COMPLETION',
+  'MULTIPLE_FILE',
+  'TRUE_OR_FALSE',
+  'MULTIPLE_CHOICE',
+  'MULTIPLE_CHOICE_MORE_THAN_ONE_ANSWER',
+  'FILL_IN_THE_BLANK',
+  'FILL_IN_THE_BLANK_FOR_PROGRAMMING',
+  'SUBJECTIVE',
+];
+
+export const PTA_TYPE_LABELS = {
+  PROGRAMMING: '编程题',
+  CODE_COMPLETION: '函数题',
+  MULTIPLE_FILE: '多文件编程',
+  TRUE_OR_FALSE: '判断题',
+  MULTIPLE_CHOICE: '单选题',
+  MULTIPLE_CHOICE_MORE_THAN_ONE_ANSWER: '多选题',
+  FILL_IN_THE_BLANK: '填空题',
+  FILL_IN_THE_BLANK_FOR_PROGRAMMING: '程序填空题',
+  SUBJECTIVE: '主观题',
+};
+
+/**
+ * 校验并归一 id。
+ *
+ * PTA 的 id 是纯数字串。放任何其它字符进去都会被服务端当成另一条路径 ——
+ * 提前拦住比让它打出去更安全（也避免把 `../` 之类混进 URL）。
+ *
+ * @param value - 原始值。
+ * @param label - 出错时告诉用户这是哪个字段。
+ * @returns 归一后的数字串。
+ */
+export function ptaId(value, label = 'ID') {
+  const text = String(value ?? '').trim();
+  if (!/^[0-9]{1,24}$/.test(text)) {
+    throw new ClassroomError('INVALID_ID', `拼题A ${label} 应为数字串（取自题集或题目网址）`);
+  }
+  return text;
+}
+
 /** Referer 必须是 dashboard，否则可能被拒。 */
 const PTA_REFERER = `${PTA_BASE}/problem-sets/dashboard`;
 
@@ -111,31 +159,28 @@ export class PtaApi {
   }
 
   /**
-   * 拉题集列表。
+   * 发一次 GET 并解出 JSON —— 错误分类**只有这一处**。
    *
-   * @param options.includeEnded - 是否保留已截止的（默认否）。
-   * @param options.limit - 单页上限。
-   * @param options.now - 注入当前时间（测试用）。
+   * 抽出来是因为看题、题目列表、做题进度、题集详情的失败语义与题集列表
+   * 完全一样（404=Cookie 失效、400=双重编码、200 里包业务错误……）。
+   * 早先每个方法各写一遍，改一条就要改四处，迟早漂移。
+   *
+   * @param path - 以 `/api/` 开头的路径。
+   * @param options.query - 查询参数（由 URLSearchParams 编码一次）。
+   * @param options.referer - 覆盖 Referer（看题页与 dashboard 不同）。
    * @param options.signal - 中止信号。
-   * @returns `{ problemSets, total }`。
+   * @returns 解析后的 JSON 对象。
    */
-  async problemSets({ includeEnded = false, limit = PTA_PAGE_LIMIT, now = () => new Date(), signal } = {}) {
-    // ⚠️ 用 URLSearchParams 让 URL 自己编码一次。手工 encodeComponent 会双重编码 → 400。
-    const params = new URLSearchParams({
-      limit: String(limit),
-      order_by: PTA_ORDER_BY,
-      asc: 'true',
-    });
-    if (!includeEnded) {
-      params.set('filter', JSON.stringify({ endAtAfter: yesterdayUtcMidnight(now()) }));
+  async get(path, { query = null, referer = PTA_REFERER, signal } = {}) {
+    if (typeof path !== 'string' || !path.startsWith('/api/') || path.includes('..')) {
+      throw new ClassroomError('INVALID_PATH', '只允许拼题A 的 /api/ 接口路径');
     }
-    const target = `${PTA_BASE}/api/problem-sets?${params.toString()}`;
-
+    const target = `${PTA_BASE}${path}${query ? `?${new URLSearchParams(query).toString()}` : ''}`;
     const result = await this.transport.request(target, {
       headers: {
         Accept: 'application/json;charset=UTF-8',
         'Accept-Language': 'zh-CN',
-        Referer: PTA_REFERER,
+        Referer: referer,
         'User-Agent': USER_AGENT,
       },
       signal,
@@ -182,6 +227,30 @@ export class PtaApi {
       }
       throw new ClassroomError('PLATFORM_REJECTED', `拼题A 拒绝请求：${data.error.message ?? code}`);
     }
+    return data;
+  }
+
+  /**
+   * 拉题集列表。
+   *
+   * @param options.includeEnded - 是否保留已截止的（默认否）。
+   * @param options.limit - 单页上限。
+   * @param options.now - 注入当前时间（测试用）。
+   * @param options.signal - 中止信号。
+   * @returns `{ problemSets, total }`。
+   */
+  async problemSets({ includeEnded = false, limit = PTA_PAGE_LIMIT, now = () => new Date(), signal } = {}) {
+    // ⚠️ 用 URLSearchParams 让 URL 自己编码一次。手工 encodeComponent 会双重编码 → 400。
+    const query = {
+      limit: String(limit),
+      order_by: PTA_ORDER_BY,
+      asc: 'true',
+    };
+    if (!includeEnded) {
+      query.filter = JSON.stringify({ endAtAfter: yesterdayUtcMidnight(now()) });
+    }
+
+    const data = await this.get('/api/problem-sets', { query, signal });
 
     const rows = data.problemSets;
     if (!Array.isArray(rows)) {
@@ -214,6 +283,208 @@ export class PtaApi {
       });
 
     return { problemSets, total: rows.length };
+  }
+
+  /* ──────────────────────────────── 看题 ──────────────────────────────── */
+
+  /**
+   * 题集详情：题型分布、我的进度、描述。
+   *
+   * **一次请求拿到"这题集里有哪些题型、各多少题"** —— `problem-summaries`
+   * 按题型聚合，比逐题型翻页问一遍便宜得多。
+   *
+   * @param problemSetId - 题集 id。
+   * @param options.signal - 中止信号。
+   * @returns `{ id, name, description, problemTypes, progress }`。
+   */
+  async problemSet(problemSetId, { signal } = {}) {
+    const id = ptaId(problemSetId, '题集 ID');
+    const detail = await this.get(`/api/problem-sets/${id}/exam-problems`, { signal }).catch(() => null);
+    const summaries = await this.get(`/api/problem-sets/${id}/problem-summaries`, { signal });
+
+    const bucket = summaries?.summaries;
+    const problemTypes = bucket && typeof bucket === 'object' && !Array.isArray(bucket)
+      ? Object.entries(bucket).map(([type, value]) => ({
+        type,
+        label: PTA_TYPE_LABELS[type] ?? type,
+        total: value?.total ?? null,
+        totalScore: value?.totalScore ?? null,
+      }))
+      : [];
+
+    // 进度要 Cookie；拿不到不算失败（题集仍可读）
+    let progress = null;
+    try {
+      progress = await this.progress(id, { signal });
+    } catch {
+      progress = null;
+    }
+
+    return {
+      id,
+      name: String(detail?.problemSet?.name ?? '').trim() || null,
+      description: String(detail?.problemSet?.description ?? '').trim() || null,
+      problemTypes,
+      progress,
+    };
+  }
+
+  /**
+   * 题集里某个题型的题目列表（分页），**带上我的提交状态**。
+   *
+   * 提交状态来自另一个端点（`exam-problem-status`），它允许匿名读题但
+   * 认不出"我做没做" —— 所以拿不到时 `myStatus` 为 null，而不是当成"没做"。
+   *
+   * @param problemSetId - 题集 id。
+   * @param options.problemType - 题型；省略时按 summaries 里第一个可用题型。
+   * @param options.page - 页码（从 1 开始）。
+   * @param options.limit - 单页条数。
+   * @param options.signal - 中止信号。
+   * @returns `{ problems, typeLabel, total, nextPage }`。
+   */
+  async problems(problemSetId, { problemType = null, page = 1, limit = 50, signal } = {}) {
+    const id = ptaId(problemSetId, '题集 ID');
+    let type = problemType;
+    if (!type) {
+      const summaries = await this.get(`/api/problem-sets/${id}/problem-summaries`, { signal });
+      const available = Object.keys(summaries?.summaries ?? {});
+      type = ['PROGRAMMING', 'CODE_COMPLETION', ...available].find((t) => available.includes(t)) ?? null;
+      if (!type) return { problemSetId: id, problemType: null, typeLabel: null, total: null, problems: [], nextPage: null };
+    }
+
+    const data = await this.get(`/api/problem-sets/${id}/exam-problem-list`, {
+      query: { problem_type: type, page: page - 1, limit },
+      signal,
+    });
+    if (!Array.isArray(data.problemSetProblems)) {
+      throw new ClassroomError('API_SHAPE', '拼题A 题目列表缺少 problemSetProblems');
+    }
+
+    let statuses = new Map();
+    try {
+      const status = await this.get(`/api/problem-sets/${id}/exam-problem-status`, { signal });
+      if (Array.isArray(status.problemStatus)) {
+        statuses = new Map(status.problemStatus.map((row) => [String(row.id), String(row.problemSubmissionStatus ?? '')]));
+      }
+    } catch {
+      // 匿名可读题集拿不到状态：留空，不当成"未做"
+    }
+
+    const problems = data.problemSetProblems.map((row) => ({
+      id: String(row.id),
+      label: row.label ? String(row.label) : null,
+      title: String(row.title ?? '').trim(),
+      score: row.score ?? null,
+      deadline: normalizeDeadline(row.deadline),
+      acceptCount: row.acceptCount ?? null,
+      submitCount: row.submitCount ?? null,
+      myStatus: statuses.get(String(row.id)) || null,
+    }));
+
+    const total = Number(data.total);
+    const more = Number.isFinite(total) ? page * limit < total : problems.length >= limit;
+    return {
+      problemSetId: id,
+      problemType: type,
+      typeLabel: PTA_TYPE_LABELS[type] ?? type,
+      total: Number.isFinite(total) ? total : null,
+      problems,
+      nextPage: more ? page + 1 : null,
+    };
+  }
+
+  /**
+   * 题目详情：**完整题面**（原始 Markdown，含 LaTeX）。
+   *
+   * 题面可能很长，所以支持 `offset` / `maxCharacters` 分页读取 ——
+   * 一次全塞给调用方既费内存也容易撑爆上下文。
+   *
+   * ⚠️ 只读：不提交代码、不创建提交记录。
+   *
+   * @param problemSetId - 题集 id。
+   * @param problemId - 题目 id。
+   * @param options.offset - 从第几个字符开始。
+   * @param options.maxCharacters - 本次最多返回多少字符。
+   * @param options.signal - 中止信号。
+   * @returns 题目详情与 `nextOffset`。
+   */
+  async problem(problemSetId, problemId, { offset = 0, maxCharacters = 16000, signal } = {}) {
+    const id = ptaId(problemSetId, '题集 ID');
+    const pid = ptaId(problemId, '题目 ID');
+    const data = await this.get(`/api/problem-sets/${id}/exam-problems/${pid}`, {
+      referer: `${PTA_BASE}/problem-sets/${id}/exam/overview`,
+      signal,
+    });
+    const row = data.problemSetProblem;
+    if (!row || typeof row !== 'object') {
+      throw new ClassroomError('API_SHAPE', '拼题A 题目详情缺少 problemSetProblem');
+    }
+
+    const config = row.problemConfig?.programmingProblemConfig
+      ?? row.problemConfig?.codeCompletionProblemConfig
+      ?? row.problemConfig?.multipleFileProblemConfig
+      ?? null;
+    const content = String(row.content ?? '');
+    const type = String(row.type ?? '');
+
+    return {
+      problemSetId: id,
+      id: pid,
+      label: row.label ? String(row.label) : null,
+      title: String(row.title ?? '').trim(),
+      type: type || null,
+      typeLabel: PTA_TYPE_LABELS[type] ?? null,
+      score: row.score ?? null,
+      author: row.author ? String(row.author) : null,
+      organization: data.organization?.name ? String(data.organization.name) : null,
+      timeLimitMs: config?.timeLimit ?? null,
+      memoryLimitKb: config?.memoryLimit ?? null,
+      codeSizeLimitKb: config?.codeSizeLimit ?? null,
+      compiler: row.compiler ? String(row.compiler) : null,
+      deadline: normalizeDeadline(row.deadline),
+      content: content.slice(offset, offset + maxCharacters),
+      nextOffset: offset + maxCharacters < content.length ? offset + maxCharacters : null,
+      totalCharacters: content.length,
+      url: this.problemUrl(id, pid, type),
+    };
+  }
+
+  /**
+   * 我的做题进度：总数、通过数、按状态分布。
+   *
+   * @param problemSetId - 题集 id。
+   * @param options.signal - 中止信号。
+   * @returns `{ total, accepted, byStatus }`，没有数据时 null。
+   */
+  async progress(problemSetId, { signal } = {}) {
+    const id = ptaId(problemSetId, '题集 ID');
+    const data = await this.get(`/api/problem-sets/${id}/exam-problem-status`, { signal });
+    if (!Array.isArray(data.problemStatus)) return null;
+    const byStatus = {};
+    for (const row of data.problemStatus) {
+      const key = String(row.problemSubmissionStatus ?? '') || 'UNKNOWN';
+      byStatus[key] = (byStatus[key] ?? 0) + 1;
+    }
+    return {
+      total: data.problemStatus.length,
+      accepted: byStatus.PROBLEM_ACCEPTED ?? 0,
+      byStatus,
+    };
+  }
+
+  /**
+   * 题目在 PTA 网页上的地址 —— 便于用户跳过去提交。
+   *
+   * @param problemSetId - 题集 id。
+   * @param problemId - 题目 id。
+   * @param type - 题型（决定页码 type 参数）。
+   * @returns 网址。
+   */
+  problemUrl(problemSetId, problemId, type) {
+    const pageType = type === 'PROGRAMMING' ? 7 : type === 'CODE_COMPLETION' ? 6 : null;
+    return problemId && pageType
+      ? `${PTA_BASE}/problem-sets/${problemSetId}/exam/problems/type/${pageType}?problemSetProblemId=${problemId}`
+      : `${PTA_BASE}/problem-sets/${problemSetId}/exam/overview`;
   }
 }
 

@@ -24,11 +24,18 @@
  * 线索留在这里，等评审确认真实包名与版本后再补。
  */
 
-/** 上游在 npm 上的包名。⚠ 待核实（GitHub 仓库为 `PerryLink/dsh-score`）。 */
-export const UPSTREAM_PACKAGE = '@perrylink/dsh-score';
-
-/** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。⚠ 待核实。 */
-export const UPSTREAM_VERSION = '0.0.0-TODO-锁版待定';
+/**
+ * ⚠ 上游**尚未核实**，因此本文件**不声明** `UPSTREAM_PACKAGE` / `UPSTREAM_VERSION`。
+ *
+ * 与 `dsh-radar-career-calendar` 同一处理：没有可信的上游包名与版本，就不摆一对
+ * 「看起来像锁版凭据」的常量 —— 那会让读者以为锁版已经完成。线索留在下面：
+ *
+ *   上游（待核实）在 npm 上的包名：`@perrylink/dsh-score`（2026-10-20 复核为 E404）
+ *   上游（待核实）版本：无（npm 上不存在该包）
+ *
+ * 评审确认真实包名与版本后，再同时补 `dependencies` 与这两个常量，
+ * `tests/radar-packages.test.mjs` 会自动把这条纳入锁版断言。
+ */
 
 /**
  * 上游信息（2026-10-16 经 GitHub API 核实）：

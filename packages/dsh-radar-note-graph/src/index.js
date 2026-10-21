@@ -47,14 +47,19 @@
 //   4. **不做 3D / 不做时间轴 / 不做标签图**：那些是 `obsidian-extended-graph` 的领域，
 //      属于「再造一个视图」，本节目标只有「把已有数据画出来」。
 
-export const NAME = 'dsh-radar-note-graph';
+import { LOCK, UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
 
-// 上游常量是单一真源（版本号改动只改这里 + package.json）。
+export const name = 'dsh-radar-note-graph';
+
+/** 兼容旧名（同一值）。 */
+export const NAME = name;
+
+// 上游常量是单一真源（版本号改动只改 `./upstream.js` 的 LOCK + package.json）。
 export const UPSTREAM = Object.freeze({
-  pkg: 'cytoscape',
-  version: '3.34.4',
+  pkg: UPSTREAM_PACKAGE,
+  version: UPSTREAM_VERSION,
   layoutPkg: 'cytoscape-fcose',
-  layoutVersion: '2.2.0',
+  layoutVersion: LOCK['cytoscape-fcose'],
 });
 
 /**

@@ -1221,19 +1221,14 @@ export async function apply(ctx, config = {}) {
   /**
    * 两类待办。
    *
-   * # 为什么从 `zhiyunOmni` 换成 `zhiyunCampus`
+   * # 数据来源：`zhiyunCampus`
    *
-   * 学在浙大待办与拼题A 题集原先都经 omni（**移植自为 macOS 写的上游**）。那两条链路
-   * 上有几处结构性问题：一次失败封锁 15 分钟（偶发抖动变成"半天不可用"）、
-   * 认证层带 webvpn 分支、拼题A 的 N+1。现在改由 `dsh-zhiyun-source-campus`（本仓原生，
-   * 复用智云课堂那套已在 Windows 跑通的 CAS 与 HTTP 传输）提供。
+   * 学在浙大待办与拼题A 题集都由 `dsh-zhiyun-source-campus` 提供（本仓原生，
+   * 复用智云课堂那套已在 Windows 跑通的 CAS 与 HTTP 传输）。
    *
-   * omni 仍留在 profile 里 —— 教务课表/成绩（`zdbk`）还在用它，「今天」页依赖那份。
-   *
-   * # 为什么优先 campus、而不是二选一
-   *
-   * 先取 `zhiyunCampus`，取不到才退回 omni。这样 profile 里暂时没有新包时页面仍能用，
-   * 不至于因为一次装箱漏项就整块待办消失。
+   * 更早的 omni（移植自为 macOS 写的上游）已在 2026-10-20 按平台拆分后删除：
+   * zdbk/cc98/xxt 各自独立成包，xzzd 与 pta 并入 campus。所以这里没有旧路径可退 ——
+   * 取不到 campus 就是真的没装。
    *
    * ⚠️ 两个平台**并发**读，各自 try/catch：一个来源失败不该让另一个也拿不到。
    */
@@ -1255,65 +1250,11 @@ export async function apply(ctx, config = {}) {
       }
     }
 
-    // ── 退回 omni（旧路径，保留以便逐步迁移）──────────────────────────
-    const omni = ctx.get('zhiyunOmni');
-    if (!omni) {
-      const why = { code: 'CAMPUS_UNAVAILABLE', message: '校园数据包未启用：需要 dsh-zhiyun-source-campus（或旧的 dsh-zhiyun-source-omni）' };
-      return { xzzd: { ok: false, rows: [], error: why }, pta: { ok: false, rows: [], error: why } };
-    }
-
-    // 学在浙大：凭据由 `dsh-zhiyun-source-classroom` 登录时写进宿主凭据服务。
-    const xzzd = (async () => {
-      try {
-        return { ok: true, rows: normalizeXzzdTodos(await omni.invoke('xzzd.todos', {})), error: null };
-      } catch (error) {
-        return { ok: false, rows: [], error: describeXzzdError(error) };
-      }
-    })();
-
-    const pta = (async () => {
-      try {
-        // `with_exam: false`：这一页只用「题集名 + 截止时间」，列表接口一次给全。
-        // 默认为每个题集补一次 `/exams` 是 N+1，且被 200ms 的 limiter 串起来 ——
-        // 实测 12 个题集 3.7 秒，是首屏最慢的一段。
-        const sets = await omni.invoke('pta.problemSets', {
-          active_only: true, max_sets: 20, with_exam: false,
-        });
-        return { ok: true, rows: normalizePtaSets(sets), error: null };
-      } catch (error) {
-        return {
-          ok: false,
-          rows: [],
-          error: { code: error?.code ?? 'PTA_FAILED', message: String(error?.message ?? error) },
-        };
-      }
-    })();
-
-    const [xzzdResult, ptaResult] = await Promise.all([xzzd, pta]);
-
-    /**
-     * 顺手清掉"平台那边已经没有的条目"的勾选。
-     *
-     * 只在**这一侧确实读到了**的时候清：某一边读取失败时 `rows` 是空的，
-     * 那时候按空表去 prune 会把用户所有现有的勾选一次性删光 —— 一次网络抖动
-     * 就把他一学期的标记清空，这是绝对不能做的事。
-     */
-    if (tickStore) {
-      const live = [];
-      if (xzzdResult.ok) {
-        for (const row of xzzdResult.rows) live.push(tickKey('xzzd', row.id));
-      }
-      if (ptaResult.ok) {
-        for (const row of ptaResult.rows) live.push(tickKey('pta', row.id));
-      }
-      // 只有两边都读到了才 prune；有一边失败就整体跳过这一轮
-      if (xzzdResult.ok && ptaResult.ok) {
-        const removed = tickStore.prune(live.filter(Boolean));
-        if (removed > 0) log(`清掉了 ${removed} 条平台侧已不存在的勾选`);
-      }
-    }
-
-    return { xzzd: xzzdResult, pta: ptaResult };
+    // omni 已在 2026-10-20 按平台拆分后删除（zdbk/cc98/xxt 各自独立成包，
+    // xzzd 与 pta 并入 campus）。这里不再有旧路径可退 —— 没有 campus 就是
+    // 真的没装，如实说一句，不要编一个空结果。
+    const why = { code: 'CAMPUS_UNAVAILABLE', message: '校园数据包未启用：需要 dsh-zhiyun-source-campus' };
+    return { xzzd: { ok: false, rows: [], error: why }, pta: { ok: false, rows: [], error: why } };
   };
 
   /**
@@ -1387,12 +1328,12 @@ export async function apply(ctx, config = {}) {
         return { configured: false, error: String(error?.message ?? error) };
       }
     }
-    const omni = ctx.get('zhiyunOmni');
-    if (!omni) return { configured: false, error: '校园数据包未启用' };
-    if (typeof omni.pta !== 'function') return { configured: false, error: '数据包版本过旧（缺 pta 能力）' };
+    if (!ctx.get('zhiyunCampus')) return { configured: false, error: '校园数据包未启用' };
     try {
-      const status = await omni.pta('status');
-      return { configured: Boolean(status?.configured), source: status?.source ?? null, names: status?.cookie_names ?? [] };
+      const status = await ctx.get('zhiyunCampus').ptaStatus();
+      // campus 的 ptaStatus 只给 `{ configured, names }`（没有 `source`）——
+      // 它不区分"来自环境变量还是会话文件"，那是 omni 的旧概念。
+      return { configured: Boolean(status?.configured), names: status?.names ?? [] };
     } catch (error) {
       return { configured: false, error: String(error?.message ?? error) };
     }
@@ -1401,22 +1342,15 @@ export async function apply(ctx, config = {}) {
   /**
    * 存拼题A Cookie。
    *
-   * 优先存进 campus 自己的会话（新路径）；没有 campus 才退回 omni。
-   * 两条路的输入格式识别都由各自实现负责 —— 页面只传用户粘的原文。
+   * 只有 campus 一条路（omni 已删除）。输入格式识别由 campus 负责 ——
+   * 页面只传用户粘的原文。
    */
   const savePtaCookie = async (raw) => {
     const campus = ctx.get('zhiyunCampus');
-    if (campus) {
-      const result = await campus.savePtaCookie(raw);
-      log(`拼题A Cookie 已保存（来源：${result?.source ?? '未知'}，${result?.names?.length ?? 0} 个键）`);
-      return { source: result?.source, cookie_names: result?.names ?? [] };
-    }
-    const omni = ctx.get('zhiyunOmni');
-    if (!omni) throw new Error('校园数据包未启用（需要 dsh-zhiyun-source-campus 或 dsh-zhiyun-source-omni），无法保存拼题A Cookie');
-    if (typeof omni.pta !== 'function') throw new Error('数据包版本过旧（缺 pta 能力）');
-    const result = await omni.pta('importCookie', { input: raw });
-    log(`拼题A Cookie 已保存（来源：${result?.source ?? '未知'}，${result?.cookie_names?.length ?? 0} 个键）`);
-    return result;
+    if (!campus) throw new Error('校园数据包未启用（需要 dsh-zhiyun-source-campus），无法保存拼题A Cookie');
+    const result = await campus.savePtaCookie(raw);
+    log(`拼题A Cookie 已保存（来源：${result?.source ?? '未知'}，${result?.names?.length ?? 0} 个键）`);
+    return { source: result?.source, cookie_names: result?.names ?? [] };
   };
 
   ctx.inject(['webServer'], (scope) => {

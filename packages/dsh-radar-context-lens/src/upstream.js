@@ -24,7 +24,7 @@ export const UPSTREAM_PACKAGE = 'dsh-context-lens';
 export const UPSTREAM_VERSION = '0.3.1';
 
 /** 上游仓库（作者、许可证核实来源）。 */
-export const UPSTREAM_REPO = 'https://github.com/gordonlu/dsh-context-lens';
+export const UPSTREAM_REPOSITORY = 'https://github.com/gordonlu/dsh-context-lens';
 
 /** 上游许可证：MIT（GitHub API `license.spdx_id = MIT`，npm `license = MIT`）。 */
 export const UPSTREAM_LICENSE = 'MIT';

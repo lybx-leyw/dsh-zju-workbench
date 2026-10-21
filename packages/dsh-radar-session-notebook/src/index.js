@@ -73,6 +73,10 @@
 
 import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
 
+/** 插件名（与目录名、patch 的 id/name 一致）。 */
+export const name = 'dsh-radar-session-notebook';
+
+
 /**
  * 占位入口。**不做任何事** —— 返回的是一份「我打算做什么」的描述，
  * 由宿主按需读取（本骨架不注册任何路由、不注入任何 UI）。

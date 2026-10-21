@@ -4,8 +4,8 @@
  * # 这个文件守的是真实故障
  *
  * 第一版 `snapshot()` 用 `Promise.all`，注释还写着"各链路内部都把异常收成了 error，
- * 所以 all 不会被 reject"。这句话是错的：`loadTodos` 在 `zhiyunOmni` 缺席、
- * 或者 `omni.invoke` 在 try 之外抛错时**会** reject。
+ * 所以 all 不会被 reject"。这句话是错的：`loadTodos` 在校园数据包缺席时**会** reject
+ * （当年那个包叫 `zhiyunOmni`，现已按平台拆分删除；但这条降级约束不变）。
  *
  * 后果不是"某一区块缺失"，而是：
  *

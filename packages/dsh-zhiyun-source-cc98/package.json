@@ -1,0 +1,22 @@
+{
+  "name": "dsh-zhiyun-source-cc98",
+  "version": "0.1.0",
+  "description": "浙大 CC98 论坛（api.cc98.org）数据源：OAuth2 密码模式取令牌，10 个只读方法（搜索/帖子/十大/新帖/版面/用户/通知/私信），不含任何写操作",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./ubb": "./src/ubb.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "dsh-zhiyun-source-campus": "0.1.0",
+    "dsh-zhiyun-source-card": "0.1.0"
+  }
+}

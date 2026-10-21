@@ -4,8 +4,9 @@
 # 本包自身**没有**可挂载的逻辑（src/index.js 为占位），
 # 这一行是让上游在被评审通过后**能被锁版挂载**的接线点。
 #
-# 上游入口是 `upstream-radar/dsh`（见上游 package.json 的 exports 与 dsh.bundle.patch），
-# 不是裸包名 —— 上游把 CLI 库与 DSH 插件分成了两个入口，此处必须照抄它的 `/dsh` 子路径。
+# ⚠ 这里的 `name` 是本包自己（与目录名一致，候选骨架的形态约束），
+# 不是上游的 `upstream-radar/dsh` 入口。上游把 CLI 库与 DSH 插件分成了两个入口，
+# 真正切到上游入口的那一步属于**评审通过后的集成动作**，不在骨架内完成。
 - insert:
     - id: radar-upstream-radar
-      name: upstream-radar/dsh
+      name: dsh-radar-upstream-radar

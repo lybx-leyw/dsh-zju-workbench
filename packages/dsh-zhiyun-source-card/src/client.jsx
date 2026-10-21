@@ -1,4 +1,4 @@
-// 「浙大一卡通」的设置分区（客户端半边）。
+﻿// 「浙大一卡通」的设置分区（客户端半边）。
 //
 // # 它为什么在设置里，而不在某一页里
 //
@@ -93,6 +93,13 @@ export function SettingsSection() {
   const [vpnForm, setVpnForm] = useState({ username: '', password: '' });
   const [vpnHasPassword, setVpnHasPassword] = useState(false);
   /**
+   * CC98 那块的状态。**第三套独立凭据** —— CC98 用自己的账号体系
+   * （`openid.cc98.org` 的 OAuth2），不是浙大统一认证。
+   */
+  const [cc98Status, setCc98Status] = useState(null);
+  const [cc98Form, setCc98Form] = useState({ username: '', password: '' });
+  const [cc98HasPassword, setCc98HasPassword] = useState(false);
+  /**
    * 宿主那边是否已存着密码（决定提交时留空该翻成打码值还是报错）。
    *
    * ⚠️ 必须声明在 `applyCard` **之前**：那个 `useCallback` 的体里引用了
@@ -127,6 +134,65 @@ export function SettingsSection() {
     setVpnHasPassword(Boolean(vpn?.password));
   }, []);
 
+  /**
+   * 同上，用于 CC98 那块。
+   *
+   * ⚠️ CC98 的账号**不是**浙大统一认证那套（见宿主 `CC98_RECORD_KEY` 的注释）。
+   * 分成独立一块，是因为这两套账号可以完全不同：只有 CC98 账号的人没有学号身份，
+   * 有学号的人 CC98 密码也可能另一个。
+   */
+  const applyCc98 = useCallback((cc98) => {
+    setCc98Status({ configured: Boolean(cc98?.configured), username: cc98?.username ?? '' });
+    setCc98Form({ username: cc98?.username ?? '', password: '' });
+    setCc98HasPassword(Boolean(cc98?.password));
+  }, []);
+
+  /**
+   * 三种凭据的"界面接线"表。
+   *
+   * 每一项只声明**差异**（读哪份表单、回填哪一块、按钮忙态前缀、提示文案），
+   * 保存/清除的**共同逻辑**留在上面的 `saveOne` / `clearOne` 里。
+   * 这样加第四种凭据时只加一行表项，不必去三个地方改 `isVpn` 三元。
+   */
+  const CREDENTIAL_KINDS = {
+    card: {
+      actionPrefix: '', // 一卡通沿用历史动作名 `save` / `clear`
+      form: (s) => s.form,
+      hasPassword: (s) => s.hasPassword,
+      apply: (s, value) => s.applyCard(value),
+      savedText: '已保存。智云课堂与学在浙大都会用这一份凭证。',
+      clearedText: '已清除。两处都会退回"还没登录"的状态。',
+    },
+    webvpn: {
+      actionPrefix: 'webvpn',
+      form: (s) => s.vpnForm,
+      hasPassword: (s) => s.vpnHasPassword,
+      apply: (s, value) => s.applyVpn(value),
+      savedText: 'WebVPN 上网账号已保存。只有在校外访问学在浙大时才会用到它。',
+      clearedText: 'WebVPN 上网账号已清除。',
+    },
+    cc98: {
+      actionPrefix: 'cc98',
+      form: (s) => s.cc98Form,
+      hasPassword: (s) => s.cc98HasPassword,
+      apply: (s, value) => s.applyCc98(value),
+      savedText: 'CC98 账号已保存。这是论坛自己的账号，与浙大一卡通是两套。',
+      clearedText: 'CC98 账号已清除。',
+    },
+  };
+
+  /**
+   * 交给 `saveOne` / `clearOne` 的那份"当前状态"。
+   *
+   * 显式列出来而不是直接传一堆 setState：表里的 `apply` 需要一个稳定的对象，
+   * 而 hook 的 setter 本身是稳定的 —— 组合成对象放这里，语义更清楚。
+   */
+  const state = {
+    form, setForm, hasPassword, applyCard,
+    vpnForm, vpnHasPassword, applyVpn,
+    cc98Form, cc98HasPassword, applyCc98,
+  };
+
   useEffect(() => {
     // 组件卸载后再 setState 是 React 的常见告警来源；`live` 让迟到的那次直接作废。
     let live = true;
@@ -135,44 +201,44 @@ export function SettingsSection() {
         if (!live) return;
         applyCard(payload.card);
         applyVpn(payload.webvpn);
+        applyCc98(payload.cc98);
       },
       (failure) => {
         if (!live) return;
         // 读不到**不等于**没配：状态条说"未配置"会让用户以为凭据丢了，去重填一遍。
         setStatus((current) => current ?? { configured: false, username: '' });
         setVpnStatus((current) => current ?? { configured: false, username: '' });
+        setCc98Status((current) => current ?? { configured: false, username: '' });
         setMessage({ kind: 'error', text: failure.message });
       },
     );
     return () => { live = false; };
-  }, [applyCard, applyVpn]);
+  }, [applyCard, applyVpn, applyCc98]);
 
   /**
    * 保存一份凭据。
    *
-   * @param kind - `'card'` 或 `'webvpn'`：决定打哪个动作名、读哪一份表单。
+   * @param kind - `'card'` / `'webvpn'` / `'cc98'`。
    */
   const saveOne = async (kind) => {
-    const isVpn = kind === 'webvpn';
-    const source = isVpn ? vpnForm : form;
-    const hasSaved = isVpn ? vpnHasPassword : hasPassword;
-    setBusy(isVpn ? 'vpn-save' : 'save');
+    // 三种凭据的提交口径完全相同（动作名 / 表单 / 打码值 / 落库函数），
+    // 差别只有"打哪个动作、读哪份表单、回填哪一块"。写成表而不是三元链：
+    // 三元链在第二种时还可读，第三种就开始出错。
+    const spec = CREDENTIAL_KINDS[kind];
+    const source = spec.form(state);
+    const hasSaved = spec.hasPassword(state);
+    setBusy(`${kind}-save`);
     setMessage(null);
     try {
-      const payload = await settings(isVpn ? 'webvpn-save' : 'save', {
+      const payload = await settings(`${spec.actionPrefix}-save`, {
         username: source.username,
         // 留空 = 沿用已存的密码。翻成打码值是宿主约定的"不改"表示法；没存过密码
         // 却传打码值，宿主会明确拒绝（"还没有保存过密码，请填写一次"），
         // 那句话比页面自己编一句更准确。
         password: source.password ? source.password : MASK,
       });
-      if (isVpn) applyVpn(payload.webvpn); else applyCard(payload.card);
-      setMessage({
-        kind: 'ok',
-        text: isVpn
-          ? 'WebVPN 上网账号已保存。只有在校外访问学在浙大时才会用到它。'
-          : '已保存。智云课堂与学在浙大都会用这一份凭证。',
-      });
+      spec.apply(state, payload[kind]);
+      setMessage({ kind: 'ok', text: spec.savedText });
     } catch (failure) {
       setMessage({ kind: 'error', text: failure.message });
     } finally {
@@ -182,16 +248,13 @@ export function SettingsSection() {
 
   /** 清除一份凭据。 */
   const clearOne = async (kind) => {
-    const isVpn = kind === 'webvpn';
-    setBusy(isVpn ? 'vpn-clear' : 'clear');
+    const spec = CREDENTIAL_KINDS[kind];
+    setBusy(`${kind}-clear`);
     setMessage(null);
     try {
-      const payload = await settings(isVpn ? 'webvpn-clear' : 'clear', {});
-      if (isVpn) applyVpn(payload.webvpn); else applyCard(payload.card);
-      setMessage({
-        kind: 'ok',
-        text: isVpn ? 'WebVPN 上网账号已清除。' : '已清除。两处都会退回"还没登录"的状态。',
-      });
+      const payload = await settings(`${spec.actionPrefix}-clear`, {});
+      spec.apply(state, payload[kind]);
+      setMessage({ kind: 'ok', text: spec.clearedText });
     } catch (failure) {
       setMessage({ kind: 'error', text: failure.message });
     } finally {
@@ -213,8 +276,10 @@ export function SettingsSection() {
    * 而"点得下去、点了报错"比"点不下去 + 一句说明"更让人以为是自己填错了。
    * 其余规则（含空格、超长）仍由宿主判断，页面不重复实现一遍。
    */
-  const canSave = canSaveWith(form, hasPassword) && !working;
-  const canSaveVpn = canSaveWith(vpnForm, vpnHasPassword) && !working;
+  const canSaveSpec = (spec) => canSaveWith(spec.form(state), spec.hasPassword(state)) && !working;
+  const canSave = canSaveSpec(CREDENTIAL_KINDS.card);
+  const canSaveVpn = canSaveSpec(CREDENTIAL_KINDS.webvpn);
+  const canSaveCc98 = canSaveSpec(CREDENTIAL_KINDS.cc98);
 
   return (
     <div className="zcd-form">
@@ -299,7 +364,7 @@ export function SettingsSection() {
       {/* ─────────────────────────────── WebVPN 上网账号 ───────────────────────────────
           单独一块，理由见组件顶部：这是**另一套系统的另一个密码**。
           默认收起（`<details>`）：在校内根本用不到，摊开会让这一页变长一半。 */}
-      <details className="zcd-block zcd-vpn">
+      <details className="zcd-block zcd-fold">
         <summary>
           <strong>WebVPN 上网账号</strong>
           <small>{vpnStatus === null
@@ -365,6 +430,82 @@ export function SettingsSection() {
             title={vpnStatus?.configured ? '清掉本机保存的上网账号' : '还没有可清除的凭证'}
           >
             {busy === 'vpn-clear' ? '正在清除…' : '清除'}
+          </button>
+        </div>
+      </details>
+
+      {/* ─────────────────────────────── CC98 论坛账号 ───────────────────────────────
+          **第三套独立凭据**。CC98 用自己的账号体系（openid.cc98.org 的 OAuth2），
+          不是浙大统一认证 —— 只有 CC98 账号的人没有学号身份，有学号的人 CC98
+          密码也可能另一个。所以它必须单独一块，绝不能与一卡通合并。
+
+          默认收起（`<details>`）：不刷论坛的人用不到，摊开会把这一页拉长。 */}
+      <details className="zcd-block zcd-fold">
+        <summary>
+          <strong>CC98 论坛账号</strong>
+          <small>{cc98Status === null
+            ? '正在读取…'
+            : cc98Status.configured
+              ? `已配置 · ${cc98Status.username}`
+              : '未配置（想用 CC98 数据源才需要）'}</small>
+        </summary>
+
+        <p className="zcd-lead">
+          CC98 <strong>有自己的账号体系</strong>，与上面的统一身份认证
+          <strong>不是一回事</strong>：它的登录在 <code>openid.cc98.org</code>，
+          认的是论坛账号（论坛 ID / 注册邮箱那一路），不是学号。
+        </p>
+
+        <label className="zcd-field">
+          <span>CC98 账号</span>
+          <input
+            type="text"
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={64}
+            placeholder="论坛账号（不是学号）"
+            value={cc98Form.username}
+            onChange={(event) => setCc98Form({ ...cc98Form, username: event.target.value })}
+            disabled={working}
+          />
+        </label>
+
+        <label className="zcd-field">
+          <span>CC98 密码</span>
+          <input
+            type="password"
+            autoComplete="new-password"
+            placeholder={cc98HasPassword ? '留空则沿用已存的密码' : '填一次 CC98 密码'}
+            value={cc98Form.password}
+            onChange={(event) => setCc98Form({ ...cc98Form, password: event.target.value })}
+            disabled={working}
+          />
+          <small>
+            {cc98HasPassword
+              ? <>已存着密码，<strong>留空即沿用</strong>。</>
+              : <>还没存过 CC98 密码。</>}
+            {' '}与一卡通密码互不相干 —— 填错了只会影响 CC98，不会影响课堂与学在浙大。
+          </small>
+        </label>
+
+        <div className="zcd-foot">
+          <button
+            type="button"
+            className="zcd-btn zcd-btn-primary"
+            onClick={() => void saveOne('cc98')}
+            disabled={!canSaveCc98}
+          >
+            <Icon name="check" size={15} />
+            {busy === 'cc98-save' ? '正在保存…' : '保存 CC98 账号'}
+          </button>
+          <button
+            type="button"
+            className="zcd-btn zcd-btn-quiet"
+            onClick={() => void clearOne('cc98')}
+            disabled={working || !cc98Status?.configured}
+            title={cc98Status?.configured ? '清掉本机保存的 CC98 账号' : '还没有可清除的凭证'}
+          >
+            {busy === 'cc98-clear' ? '正在清除…' : '清除'}
           </button>
         </div>
       </details>

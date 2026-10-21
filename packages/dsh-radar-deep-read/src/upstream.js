@@ -21,6 +21,9 @@ export const UPSTREAM_PACKAGE = 'deep-read-summarize';
 /** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
 export const UPSTREAM_VERSION = '0.3.13';
 
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/dsh-deep-read/deep-read-summarize';
+
 /**
  * ⚠ **命名陷阱（2026-10-15 实测）**：
  *

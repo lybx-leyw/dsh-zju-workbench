@@ -33,6 +33,13 @@
  *    `^22.19.0 || >=24.0.0` —— 取本仓更严者，**无需**放宽。
  */
 
+import {
+  UPSTREAM_PACKAGE,
+  UPSTREAM_VERSION,
+  UPSTREAM_REPOSITORY,
+  UPSTREAM_LICENSE,
+} from './upstream.js';
+
 export const name = 'dsh-radar-context-lens';
 
 /** 占位：本骨架**不实现任何业务逻辑**，仅登记元信息供评审。 */
@@ -40,10 +47,10 @@ export const RADAR_SKELETON = {
   status: 'candidate-skeleton',
   reviewed: false,
   wiredIntoProfile: false,
-  upstream: 'dsh-context-lens',
-  upstreamVersion: '0.3.1',
-  upstreamLicense: 'MIT',
-  upstreamRepo: 'https://github.com/gordonlu/dsh-context-lens',
+  upstream: UPSTREAM_PACKAGE,
+  upstreamVersion: UPSTREAM_VERSION,
+  upstreamLicense: UPSTREAM_LICENSE,
+  upstreamRepo: UPSTREAM_REPOSITORY,
   integration: 'A · 锁版挂载 + 外围兼容层',
   enhances: 'dsh-zhiyun-page-plugins（插件页）的「依赖图」→ 补「上下文成本」',
 };

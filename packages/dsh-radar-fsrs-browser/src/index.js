@@ -38,7 +38,12 @@
 //      只是题目排序 / 到期标记 / 参数来源变了。
 //   5. 不搬运上游源码；完成后按 CONTRIBUTING 流程补测试、接入 profile、写 OWNERS。
 
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
+
 export const name = 'dsh-radar-fsrs-browser';
+
+/** 锁版凭据的只读快照（供评审对照；不在此处初始化 WASM）。 */
+export const UPSTREAM = Object.freeze({ package: UPSTREAM_PACKAGE, version: UPSTREAM_VERSION });
 
 // TODO: 薄封装上游 fsrs-browser（示例，待实现）
 // import { ... } from 'fsrs-browser';

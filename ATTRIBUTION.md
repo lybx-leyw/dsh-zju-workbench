@@ -43,9 +43,19 @@
 ## 含实现移植
 
 - [ZJU-Omni](https://github.com/Vita0818/ZJU-Omni) · **MIT** · 移植提交 `192d1015a53a7b09f23ae143d56686c8fbf706af`。
-  移植其**数据层**（教务课表/成绩/考试、学在浙大、CC98、拼题A 的接口适配）到 `packages/dsh-zhiyun-source-omni/`，
-  做成数据包而非 AI 工具。改动（凭据层由 macOS 钥匙串改为 Windows DPAPI、删除 MCP 工具层等）
-  与完整来源说明见该包的 [ATTRIBUTION.md](packages/dsh-zhiyun-source-omni/ATTRIBUTION.md)。
+  移植其**数据层**（教务课表/成绩/考试、学在浙大、CC98、拼题A 的接口适配）做成数据包而非 AI 工具。
+  原落地包 `dsh-zhiyun-source-omni` 已于 2026-10-20 按平台拆分为本仓原生实现：
+
+  | 平台 | 现落点 |
+  | --- | --- |
+  | 教务 `zdbk` | [dsh-zhiyun-source-zdbk](packages/dsh-zhiyun-source-zdbk/) |
+  | CC98 | [dsh-zhiyun-source-cc98](packages/dsh-zhiyun-source-cc98/) |
+  | 学习通 `xxt` | [dsh-zhiyun-source-xxt](packages/dsh-zhiyun-source-xxt/) |
+  | 学在浙大 `xzzd` | [dsh-zhiyun-source-campus](packages/dsh-zhiyun-source-campus/)（原生重写，已修正 6 处缺陷） |
+  | 拼题A `pta` | 同上（原生重写，并新增看题能力） |
+  | 智云 `zhiyun` | [dsh-zhiyun-source-classroom](packages/dsh-zhiyun-source-classroom/)（原生重写） |
+
+  各包的 README 记录了各自的改动与取舍；原移植说明见 git 历史（`dsh-zhiyun-source-omni/ATTRIBUTION.md`）。
 
 ## 协议实现说明（无第三方代码引入）
 

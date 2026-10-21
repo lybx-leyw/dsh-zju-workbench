@@ -7,6 +7,7 @@
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
+    "./http": "./src/cas/http.js",
     "./package.json": "./package.json"
   },
   "dsh": {

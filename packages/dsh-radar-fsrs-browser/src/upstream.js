@@ -18,12 +18,17 @@
 //   3. 初始化失败（WASM 不可用）时的降级策略：回退到纯 TS 算法实现，
 //      而不是让「学习」页整体不可用 —— 这是本方案必须验证的健壮性前提。
 
-// export const UPSTREAM = {
-//   name: 'fsrs-browser',
-//   version: '6.6.0',
-//   license: 'BSD-3-Clause',
-//   repository: 'https://github.com/open-spaced-repetition/fsrs-browser',
-// };
-
 // TODO: 上游加载与降级
 // export async function loadUpstream() { /* 动态 import + WASM 初始化 + 失败降级 */ }
+
+/** 上游在 npm 上的包名（与 `package.json` 的依赖键逐字符相同）。 */
+export const UPSTREAM_PACKAGE = 'fsrs-browser';
+
+/** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
+export const UPSTREAM_VERSION = '6.6.0';
+
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/open-spaced-repetition/fsrs-browser';
+
+/** 上游许可证：BSD-3-Clause。 */
+export const UPSTREAM_LICENSE = 'BSD-3-Clause';

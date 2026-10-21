@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 
 import {
   CARD_RECORD_KEY, MASK, ROUTE_PATH, WEBVPN_LABEL, WEBVPN_RECORD_KEY, WRITE_HEADER,
+  CC98_LABEL, CC98_RECORD_KEY, readCc98, writeCc98, clearCc98, cc98Status,
   cardStatus, clearCard, clearWebvpn, createHandler, fillCardIfEmpty, normalizePassword,
   normalizeUsername, readCard, readWebvpn, webvpnStatus, writeCard, writeWebvpn,
 } from '../packages/dsh-zhiyun-source-card/src/index.js';
@@ -388,3 +389,91 @@ test('WebVPN 凭据的读写在无凭据服务时安全退化', async () => {
   assert.equal(await clearWebvpn(bareCtx), false);
   assert.deepEqual(await webvpnStatus(bareCtx), { configured: false, username: '' });
 });
+
+/* ────────────────────────────────────── CC98 论坛账号（第三份凭据） */
+
+test('CC98 账号是**第三份**独立记录，与一卡通、WebVPN 都不共用', async () => {
+  // CC98 有自己的账号体系（openid.cc98.org 的 OAuth2），不是浙大统一认证。
+  // 曾经它借用一卡通那份记录，后果是「只有 CC98 账号的人永远登不进去」，
+  // 而失败提示还把人指向改一卡通密码 —— 这条钉住那个缺陷不会回归。
+  const ctx = memoryCtx();
+  const handler = createHandler({ ctx });
+
+  await call(handler, 'POST', '/?save', { username: '学号A', password: 'CAS密码' });
+  await call(handler, 'POST', '/?webvpn-save', { username: '学号B', password: '上网密码' });
+  await call(handler, 'POST', '/?cc98-save', { username: '论坛ID', password: 'CC98密码' });
+
+  const state = (await call(handler, 'GET', '/')).body;
+  assert.equal(state.card.username, '学号A');
+  assert.equal(state.webvpn.username, '学号B');
+  assert.equal(state.cc98.username, '论坛ID');
+
+  // 三个键，互不相同
+  assert.equal(new Set([CARD_RECORD_KEY, WEBVPN_RECORD_KEY, CC98_RECORD_KEY]).size, 3);
+  assert.ok(ctx.store.has(CC98_RECORD_KEY));
+  assert.equal(ctx.store.get(CC98_RECORD_KEY).payload.password, 'CC98密码');
+  assert.equal(ctx.store.get(CARD_RECORD_KEY).payload.password, 'CAS密码', '一卡通不该被覆盖');
+});
+
+test('只有 CC98 账号的人也配置得成（不需要学号）', async () => {
+  const ctx = memoryCtx();
+  const handler = createHandler({ ctx });
+
+  await call(handler, 'POST', '/?cc98-save', { username: 'only-cc98', password: 'p' });
+
+  const state = (await call(handler, 'GET', '/')).body;
+  assert.equal(state.cc98.configured, true);
+  assert.equal(state.card.configured, false, '一卡通仍然是空的 —— 两者独立');
+  assert.equal(await readCard(ctx), null);
+  assert.deepEqual(await readCc98(ctx), { username: 'only-cc98', password: 'p' });
+});
+
+test('清除 CC98 不动另外两份', async () => {
+  const ctx = memoryCtx();
+  const handler = createHandler({ ctx });
+
+  await call(handler, 'POST', '/?save', { username: 'A', password: 'p1' });
+  await call(handler, 'POST', '/?webvpn-save', { username: 'B', password: 'p2' });
+  await call(handler, 'POST', '/?cc98-save', { username: 'C', password: 'p3' });
+
+  const cleared = await call(handler, 'POST', '/?cc98-clear', {});
+  assert.equal(cleared.status, 200);
+  assert.equal(cleared.body.cc98.configured, false);
+
+  const state = (await call(handler, 'GET', '/')).body;
+  assert.equal(state.card.configured, true, '一卡通不该被动');
+  assert.equal(state.webvpn.configured, true, 'WebVPN 不该被动');
+});
+
+test('CC98 密码不回显明文，留空沿用', async () => {
+  const ctx = memoryCtx();
+  const handler = createHandler({ ctx });
+
+  await call(handler, 'POST', '/?cc98-save', { username: 'C', password: 'CC98-SECRET' });
+
+  const state = (await call(handler, 'GET', '/')).body;
+  assert.equal(state.cc98.password, MASK, '只回打码值');
+  assert.equal(JSON.stringify(state).includes('CC98-SECRET'), false, '明文不许出现在响应里');
+
+  // 只改账号、密码留空（传打码值）→ 沿用旧密码
+  await call(handler, 'POST', '/?cc98-save', { username: 'C2', password: MASK });
+  assert.equal((await readCc98(ctx)).password, 'CC98-SECRET');
+  assert.equal((await readCc98(ctx)).username, 'C2');
+});
+
+test('CC98 凭据记录的形状也只允许 kind + payload', async () => {
+  const ctx = memoryCtx();
+  await writeCc98(ctx, { username: 'C', password: 'p' });
+  const record = ctx.store.get(CC98_RECORD_KEY);
+  assert.deepEqual(Object.keys(record).sort(), ['kind', 'payload']);
+  assert.equal(record.kind, 'grant');
+  assert.equal(record.payload.label, CC98_LABEL);
+});
+
+test('CC98 凭据的读写在无凭据服务时安全退化', async () => {
+  assert.equal(await readCc98(bareCtx), null);
+  assert.equal(await writeCc98(bareCtx, { username: 'C', password: 'p' }), false);
+  assert.equal(await clearCc98(bareCtx), false);
+  assert.deepEqual(await cc98Status(bareCtx), { configured: false, username: '' });
+});
+

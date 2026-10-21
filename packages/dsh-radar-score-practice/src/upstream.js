@@ -26,12 +26,21 @@
 //   4. 确认 PlaybackManager 的 seek / cursor / measureIndex 接口与播放器时钟的对接方式。
 //   5. 渲染失败（非法 MusicXML / 字体缺失）时返回可读错误并**整体移除容器**，不留空白。
 
-// export const UPSTREAM = {
-//   packages: [
-//     { name: 'opensheetmusicdisplay', version: '2.2.1', license: 'BSD-3-Clause' },
-//     { name: 'osmd-audio-player', version: '0.7.0', license: 'MIT' },
-//   ],
-// };
+/** 主依赖（渲染引擎）的包名与版本；多依赖的完整形状见下面的 `UPSTREAM.packages`。 */
+export const UPSTREAM_PACKAGE = 'opensheetmusicdisplay';
+
+/** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
+export const UPSTREAM_VERSION = '2.2.1';
+
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/opensheetmusicdisplay/opensheetmusicdisplay';
+
+export const UPSTREAM = {
+  packages: [
+    { name: UPSTREAM_PACKAGE, version: UPSTREAM_VERSION, license: 'BSD-3-Clause' },
+    { name: 'osmd-audio-player', version: '0.7.0', license: 'MIT' },
+  ],
+};
 
 // TODO: 上游装配
 // export async function loadRenderer(hostEl) { /* new OpenSheetMusicDisplay(hostEl, options) + load(xml) */ }

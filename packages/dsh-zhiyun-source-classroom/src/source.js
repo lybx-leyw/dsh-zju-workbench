@@ -18,6 +18,15 @@ export const ENDPOINTS = Object.freeze({
   slides: 'https://classroom.zju.edu.cn/pptnote/v1/schedule/search-ppt',
   subtitles: 'https://yjapi.cmc.zju.edu.cn/courseapi/v3/web-socket/search-trans-result',
   schedule: 'https://yjapi.cmc.zju.edu.cn/courseapi/v2/schedule/get-week-schedules',
+  /**
+   * 「我这天有什么课」—— 与 `schedule` 是两个端点、两种口径。
+   *
+   * `schedule` 按周给排课（可能含非本人课程，以课程为单位）；
+   * 这个按**天**返回我本人课表里的节次，带直播所需的 `sub_id`。
+   */
+  myDay: 'https://classroom.zju.edu.cn/courseapi/v2/course-live/get-my-course-day',
+  /** 课程搜索：能搜到「我选的」之外的课（旁听、按老师找课）。 */
+  search: 'https://classroom.zju.edu.cn/pptnote/v1/searchlist',
 });
 const query = (url, params) => `${url}?${new URLSearchParams(params)}`;
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -94,6 +103,63 @@ export class ClassroomSource {
     }
     return null;
   }
+  /**
+   * 按关键词 / 教师名**搜索**课程 —— 用于找旁听课、或按老师找一门课。
+   *
+   * 与 `listCourses()` 的区别：那个只返回**我选的**课；这个能搜到全部可见课程。
+   *
+   * 端点要求带上当前用户的 `user_id` 与 `user_name`，所以必须先登录
+   * （搜索结果是按"这个人能看到什么"过滤的，不是公开检索）。
+   *
+   * @param options.keyword - 课程名关键词。
+   * @param options.teacher - 教师名。
+   * @param options.page - 页码（从 1 开始，每页 16 条）。
+   * @param options.signal - 中止信号。
+   * @returns `{ courses, total, nextPage }`。
+   */
+  async searchCourses({ keyword = '', teacher = '', page = 1, signal } = {}) {
+    await this.ready;
+    const me = await this.getCurrentUser();
+    if (!me?.id) {
+      throw new ClassroomError('SESSION_EXPIRED', '搜索课程需要先登录智云课堂');
+    }
+    const perPage = 16;
+    const data = await this.transport.json(
+      query(ENDPOINTS.search, {
+        tenant_id: 112,
+        tenant_code: 112,
+        user_id: me.id,
+        user_name: me.name ?? '',
+        page,
+        per_page: perPage,
+        title: String(keyword ?? ''),
+        realname: String(teacher ?? ''),
+        trans: '',
+      }),
+      '搜索课程',
+      { signal },
+    );
+
+    const list = data?.total?.list;
+    if (!Array.isArray(list)) {
+      throw new ClassroomError('API_SHAPE', '智云课堂搜索结果缺少 total.list');
+    }
+    const total = Number(data.total?.total);
+    const courses = list.map((row) => ({
+      courseId: String(row?.course_id ?? row?.id ?? ''),
+      title: String(row?.title ?? row?.course_title ?? '').trim(),
+      teacher: row?.realname ? String(row.realname) : null,
+      term: row?.term_name ? String(row.term_name) : null,
+    })).filter((row) => row.courseId);
+
+    const end = page * perPage;
+    return {
+      courses,
+      total: Number.isFinite(total) ? total : null,
+      nextPage: Number.isFinite(total) && end < total ? page + 1 : null,
+    };
+  }
+
   async listCourses({ signal } = {}) {
     await this.ready;
     const items = [], seen = new Set(), fingerprints = new Set();
@@ -155,6 +221,152 @@ export class ClassroomSource {
     onProgress?.({ phase: 'subtitles', completed: items.length, total: items.length });
     return result(items);
   }
+
+  /**
+   * 逐字稿：把字幕拼成**可翻页的纯文本**。
+   *
+   * # 为什么不复用 `getSubtitles` 的返回值直接拼
+   *
+   * 它拼了。但「要文本」和「要时间轴」是两个用法：
+   *
+   * - 时间轴（播放器跳转）要**每条**都带 `startMs`，越精确越好；
+   * - 逐字稿（阅读、喂给 AI）要的是**可读的段落**，几十个时间戳把正文切碎反而难读。
+   *
+   * 所以这里给一个 `timestampEverySec` 旋钮：传 0 时每段都带时间戳（与原字幕一一对应）；
+   * 传 60 时按分钟聚成块，只在块首标一次 —— 读数不变，行数骤降。
+   *
+   * # 分页是为了**不把整节课塞进一次响应**
+   *
+   * 一节 90 分钟的课约 3–5 万字。一次返回会撑爆调用方的上下文，
+   * 所以用 `offset` / `maxCharacters` 切片，并给出 `nextOffset`，让调用方自己决定读多少。
+   *
+   * @param courseId - 课程 id。
+   * @param subId - 节次 id。
+   * @param options.offset - 从第几个字符开始（默认 0）。
+   * @param options.maxCharacters - 本次最多返回多少字符（默认 16000）。
+   * @param options.withTimestamps - 是否带时间戳（默认带）。
+   * @param options.timestampEverySec - 时间戳聚合间隔；0 表示每段都标。
+   * @param options.signal - 中止信号。
+   * @returns `{ available, text, nextOffset, totalCharacters, segments, duration }`。
+   */
+  async getTranscript(courseId, subId, {
+    offset = 0, maxCharacters = 16000, withTimestamps = true, timestampEverySec = 0, signal,
+  } = {}) {
+    const { items } = await this.getSubtitles(courseId, subId, { signal });
+    const clock = (ms) => {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      const pad = (n) => String(n).padStart(2, '0');
+      return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+    };
+
+    if (!items.length) {
+      return {
+        available: false, text: '', nextOffset: null, totalCharacters: 0, segments: 0, duration: null,
+      };
+    }
+
+    let full;
+    if (timestampEverySec > 0) {
+      const blocks = [];
+      let block = -1;
+      for (const item of items) {
+        const line = String(item.text ?? '').trim();
+        if (!line) continue;
+        const index = Math.floor((item.startMs ?? 0) / (timestampEverySec * 1000));
+        if (index !== block) {
+          block = index;
+          blocks.push(withTimestamps ? `[${clock(item.startMs ?? 0)}] ${line}` : line);
+        } else {
+          blocks[blocks.length - 1] += ` ${line}`;
+        }
+      }
+      full = blocks.join('\n');
+    } else {
+      full = items
+        .map((item) => (withTimestamps ? `[${clock(item.startMs ?? 0)}] ${item.text}` : item.text))
+        .join('\n');
+    }
+
+    const last = items[items.length - 1];
+    const duration = Number.isFinite(last?.endMs) ? clock(last.endMs) : null;
+    const end = offset + maxCharacters;
+    return {
+      available: true,
+      segments: items.length,
+      duration,
+      text: full.slice(offset, end),
+      nextOffset: end < full.length ? end : null,
+      totalCharacters: full.length,
+    };
+  }
+
+  /**
+   * 按天列出「我的课」—— 与我本人课表相关的节次（含直播状态）。
+   *
+   * 与 `getSchedule()` 的区别：那个是**时间段**内的排课（可能含别人的课、
+   * 以课程为单位），这个是以**我**为口径按天倒序取，且带上 `upcoming` 标记。
+   *
+   * @param options.date - 起始日（`YYYY-MM-DD`，默认今天，北京时间）。
+   * @param options.days - 往前取几天（1–14，默认 1）。
+   * @param options.signal - 中止信号。
+   * @returns `{ from, to, lectures }`。
+   */
+  async getMyLectures({ date, days = 1, signal } = {}) {
+    await this.ready;
+    if (!Number.isInteger(days) || days < 1 || days > 14) {
+      throw new ClassroomError('INVALID_INPUT', 'days 取 1–14');
+    }
+    const end = models.date(date ?? models.shanghaiDate());
+    const shift = (day, delta) => {
+      const at = new Date(`${day}T00:00:00+08:00`);
+      at.setDate(at.getDate() + delta);
+      return models.shanghaiDate(at);
+    };
+    const nowSec = Math.floor(Date.now() / 1000);
+    const lectures = [];
+    const seen = new Set();
+
+    for (let i = 0; i < days; i += 1) {
+      const day = shift(end, -i);
+      const data = await this.transport.json(
+        query(ENDPOINTS.myDay, { day }),
+        '当天课程',
+        { signal },
+      );
+      const groups = data?.list == null
+        ? null
+        : Array.isArray(data.list) ? data.list : Object.values(data.list);
+      if (!groups) continue;
+      for (const group of groups) {
+        const courses = group?.course == null
+          ? []
+          : Array.isArray(group.course) ? group.course : Object.values(group.course);
+        for (const row of courses) {
+          const subId = String(row?.sub_id ?? '');
+          if (!subId || seen.has(subId)) continue;
+          seen.add(subId);
+          const begin = Number(row?.course_begin ?? row?.class_begin);
+          lectures.push({
+            courseId: String(row?.id ?? row?.course_id ?? ''),
+            courseTitle: String(row?.title ?? '').trim(),
+            subId,
+            teacher: row?.realname ? String(row.realname) : null,
+            room: row?.room_name ? String(row.room_name) : null,
+            beginsAt: Number.isFinite(begin) ? new Date(begin * 1000).toISOString() : null,
+            date: day,
+            ...(Number.isFinite(begin) && begin > nowSec ? { upcoming: true } : {}),
+          });
+        }
+      }
+    }
+
+    lectures.sort((a, b) => String(b.beginsAt ?? b.date).localeCompare(String(a.beginsAt ?? a.date)));
+    return { from: shift(end, -(days - 1)), to: end, lectures };
+  }
+
   async getLessonContent(courseId, subId, options = {}) {
     const [slides, subtitles] = await Promise.all([this.getSlides(courseId, subId, options), this.getSubtitles(courseId, subId, options)]);
     return { sourceId: models.lessonKey(courseId, subId), courseId: String(courseId), subId: String(subId), slides, subtitles,
