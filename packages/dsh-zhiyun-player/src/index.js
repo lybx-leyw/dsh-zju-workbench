@@ -13,11 +13,10 @@
  * 不必知道这些函数住在哪个文件的哪条相对路径上。
  * 这与本仓其他领域包的形状一致（`zhiyunNotes` / `zhiyunQuiz` / `zhiyunKnowledge` …）。
  *
- * # 消费方尚未出现
+ * # 消费方
  *
- * 「在工作台里播起回放」这一步走的是 DSH 现成能力（右侧栏 tab），
- * 不需要自定义播放器控件；进度条的绘制需要自定义控件层，等有落点时再接。
- * 届时消费方直接 `ctx.get('zhiyunPlayerStats')` 即可，本文件不用改。
+ * 学习页视频栏经客户端包拿到同一批函数（`src/client.jsx`），画在回放下面。
+ * 宿主侧别的插件仍然 `ctx.get('zhiyunPlayerStats')`，不必改这里。
  */
 
 import {
