@@ -165,7 +165,7 @@ function call(handler, method, url, body) {
   });
 }
 
-test('路由能勾卡片，并把结果放进快照', async () => {
+test('路由能勾卡片，只回这张卡片（不回整份快照）', async () => {
   const store = memoryStore();
   store.record(PREFIX, cards());
   const plan = {
@@ -181,8 +181,15 @@ test('路由能勾卡片，并把结果放进快照', async () => {
   assert.equal(r.status, 200);
   assert.equal(r.body.ok, true);
   assert.equal(r.body.card.done, true);
-  // 快照里的 plans 要带上新状态，页面据此渲染勾选
-  assert.equal(r.body.plans[PREFIX].cards[0].done, true);
+  /**
+   * ⚠️ 这里**刻意不再要求**响应里带整份快照。
+   *
+   * 卡片完成状态是纯本端的（落在 `plans.json`，不写回中转站），前端做乐观更新，
+   * 拿回这张卡片核对即可。回快照等于每点一下都让用户等一次几十 KB 的重算。
+   * 状态本身用 store 核对 —— 那才是它在磁盘上的真相。
+   */
+  assert.equal(r.body.plans, undefined, '勾卡片不该回整份快照');
+  assert.equal(store.all()[PREFIX].cards[0].done, true, '状态要真的落进 store');
 });
 
 test('前缀里的 \\u0000 原样传回即可，不做编码变换', async () => {

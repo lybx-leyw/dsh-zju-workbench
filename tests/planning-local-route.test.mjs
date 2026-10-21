@@ -7,8 +7,12 @@
  *   1. 没带写头 → 拒绝（跨站发不出自定义头，这是 CSRF 的那道闸）；
  *   2. 非回环 Host → 拒绝（防 DNS rebinding）；
  *   3. 客户端不能借 `local-update` 改 `id` / `done`（那是两个不同的动作）；
- *   4. 每条写操作都要回一份**完整快照**，页面不必再发一次 GET；
- *   5. 失败要能读（对象形状的 error 不能被字符串化）。
+ *   4. **纯本端写只回本次结果**（`item` / `ok` / `id`），不回整份快照 ——
+ *      那些动作不产生任何远端新数据，回快照只是让用户多等一次几十 KB 的重算。
+ *      例外是 `local-split` / `plan`：它们真的产生新条目，需要那份快照；
+ *   5. 失败要能读（对象形状的 error 不能被字符串化）；
+ *   6. **网关来的条目只读**：`LocalStore` 只暴露 `absorb` / `list`，
+ *      结构上没有 update / remove 的入口（见本文件末尾那条断言）。
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -107,18 +111,29 @@ test('回环的三种写法都放行', async () => {
 
 /* ─────────────────────────────────────────── CRUD */
 
-test('新建回完整快照（页面不必再发一次 GET）', async () => {
+test('新建只回新条目，不回整份快照', async () => {
   const h = await harness();
   try {
     const r = await h.call('POST', '/?local-create', { title: '交作业', due: '2026-10-21T23:59:00+08:00' });
     assert.equal(r.status, 200);
     assert.equal(r.body.ok, true);
     assert.ok(r.body.item?.id, '要回新建的那条');
-    assert.deepEqual(r.body.local.map((i) => i.title), ['交作业'], '快照里要有 local');
-    // 快照的其余部分也要在，否则页面会以为"数据源都没了"
-    for (const key of ['config', 'entries', 'remote', 'todos', 'pta', 'plans', 'plannedKeys']) {
-      assert.ok(key in r.body, `快照缺少 ${key}`);
+    assert.equal(r.body.item.title, '交作业');
+    /**
+     * ⚠️ 这里**刻意不再要求**响应里带整份快照。
+     *
+     * 新建自己是本端写，但它需要服务端生成 id —— 所以只回这一条 `item`，
+     * 前端拿到就插进列表。旧实现把 `...await snapshot()` 拼进响应，等于每新建
+     * 一条都要重算并序列化几十 KB，纯属让用户多等。
+     */
+    for (const banned of ['config', 'entries', 'remote', 'todos', 'pta', 'plans', 'local']) {
+      assert.equal(r.body[banned], undefined, `不该回 ${banned}`);
     }
+
+    // 状态用 store 与一次 GET 核对，而不是相信写操作的响应
+    assert.deepEqual(h.local.list().map((i) => i.title), ['交作业']);
+    const snap = await h.call('GET', '/');
+    assert.deepEqual(snap.body.local.map((i) => i.title), ['交作业'], '快照里要有 local');
   } finally {
     await h.done();
   }
@@ -160,13 +175,19 @@ test('勾完成 / 取消完成走 local-done', async () => {
   }
 });
 
-test('删一条回快照，删不存在的回 404', async () => {
+test('删一条只回 ok + id，删不存在的回 404', async () => {
   const h = await harness();
   try {
     const created = (await h.call('POST', '/?local-create', { title: 'x' })).body.item;
     let r = await h.call('POST', '/?local-remove', { id: created.id });
     assert.equal(r.status, 200);
-    assert.deepEqual(r.body.local, []);
+    // 只回这次删掉的 id，不回整份快照
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.id, created.id);
+    assert.equal(r.body.local, undefined, '删除不该回快照');
+    // 真的删掉了（用 store 与 GET 各核一次）
+    assert.deepEqual(h.local.list(), []);
+    assert.deepEqual((await h.call('GET', '/')).body.local, []);
 
     r = await h.call('POST', '/?local-remove', { id: created.id });
     assert.equal(r.status, 404);
@@ -265,8 +286,14 @@ test('忘掉一次拆分：删掉子项并清空 splitInto', async () => {
 
     const r = await h.call('POST', '/?local-unsplit', { id: created.id });
     assert.equal(r.status, 200);
-    assert.deepEqual(r.body.local.map((i) => i.title), ['x'], '子项该消失，源留着');
-    assert.deepEqual(r.body.local[0].splitInto, []);
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.id, created.id);
+    assert.equal(r.body.local, undefined, 'unsplit 是本端写，不该回整份快照');
+    // 真的清掉了（用 store 与 GET 各核一次）
+    const after = h.local.list();
+    assert.deepEqual(after.map((i) => i.title), ['x'], '子项该消失，源留着');
+    assert.deepEqual(after[0].splitInto, []);
+    assert.deepEqual((await h.call('GET', '/')).body.local.map((i) => i.title), ['x']);
   } finally {
     await h.done();
   }

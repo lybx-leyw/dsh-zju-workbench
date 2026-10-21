@@ -403,13 +403,53 @@ export function Planning({ ctx }) {
     }
   }, [apply]);
 
-  /** 新建一条规划。成功返回新条目，供输入框清空用。 */
+  /**
+   * 新建一条**自己写的**规划。
+   *
+   * 这是唯一不能完全乐观的操作：新条目的 `id` / `createdAt` 由服务端生成，
+   * 本地编不出来。但也不必等整份快照 —— 服务端只回这一条 `item`，
+   * 拿到就插进列表，界面从"提交中"到"出现"只有一次往返。
+   *
+   * @returns 新建的条目（供输入框清空用），失败则 null。
+   */
   const createPlan = useCallback(async (input) => {
-    const payload = await mutate('local-create', input);
-    return payload?.item ?? null;
-  }, [mutate]);
+    setComposer({ busy: true, error: null });
+    try {
+      const payload = await settings('local-create', input);
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+      const item = payload?.item ?? null;
+      if (item) {
+        setState((current) => ({ ...current, local: [...(current.local ?? []), item] }));
+      }
+      return item;
+    } catch (failure) {
+      setComposer({ busy: false, error: failure.message });
+      return null;
+    } finally {
+      setComposer((current) => ({ ...current, busy: false }));
+    }
+  }, []);
 
-  const togglePlan = useCallback((row) => mutate('local-done', { id: row.id, done: !row.done }, { id: row.id }), [mutate]);
+  /**
+   * 勾掉一条**自己写的**规划（纯本端，乐观更新）。
+   */
+  const togglePlan = useCallback(async (row) => {
+    const nextDone = !row.done;
+    const before = state.local ?? [];
+    setState((current) => ({
+      ...current,
+      local: (current.local ?? []).map((item) => (
+        item.id === row.id ? { ...item, done: nextDone, doneAt: nextDone ? Date.now() : null } : item
+      )),
+    }));
+    try {
+      const payload = await settings('local-done', { id: row.id, done: nextDone });
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+    } catch (failure) {
+      setState((current) => ({ ...current, local: before }));
+      setPlanMsg({ kind: 'error', text: `勾选没有保存：${failure.message}` });
+    }
+  }, [state.local]);
 
   /**
    * 勾掉一条**平台待办**（学在浙大 / 拼题A）。
@@ -458,14 +498,94 @@ export function Planning({ ctx }) {
     }
   }, [state.ticks]);
 
-  /** 勾选 AI 拆出的卡片（状态落在 plans.json，不碰中转站）。 */
-  const toggleCard = useCallback((row) => mutate(
-    'plan-card-done',
-    { prefix: row.prefix, index: row.index, done: !row.done },
-    { id: row.id },
-  ), [mutate]);
-  const removePlan = useCallback((row) => mutate('local-remove', { id: row.id }, { id: row.id }), [mutate]);
-  const editPlan = useCallback((row, patch) => mutate('local-update', { id: row.id, ...patch }, { id: row.id }), [mutate]);
+  /**
+   * 勾选 AI 拆出的卡片（状态落在 `plans.json`，不碰中转站）。
+   *
+   * 同样是**纯本端状态**，所以乐观更新：先改 `state.plans`，再异步写盘。
+   * 卡片没有自己的 id，定位是 `prefix + index`。
+   */
+  const toggleCard = useCallback(async (row) => {
+    const nextDone = !row.done;
+    const before = state.plans ?? {};
+
+    const patchCards = (plans, prefix, index, done) => {
+      const entry = plans?.[prefix];
+      if (!entry || !Array.isArray(entry.cards)) return plans;
+      return {
+        ...plans,
+        [prefix]: {
+          ...entry,
+          cards: entry.cards.map((card, i) => (i === index ? { ...card, done } : card)),
+        },
+      };
+    };
+
+    // ① 本地立刻生效
+    setState((current) => ({
+      ...current,
+      plans: patchCards(current.plans ?? {}, row.prefix, row.index, nextDone),
+    }));
+
+    // ② 再写下去
+    try {
+      const payload = await settings('plan-card-done', {
+        prefix: row.prefix, index: row.index, done: nextDone,
+      });
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+    } catch (failure) {
+      setState((current) => ({ ...current, plans: before }));
+      setPlanMsg({ kind: 'error', text: `卡片勾选没有保存：${failure.message}` });
+    }
+  }, [state.plans]);
+
+  /**
+   * 删掉一条**自己写的**规划。
+   *
+   * ⚠️ 只对 `source === 'mine'` 的条目开放 —— 网关来的条目（中转站 / 学在浙大 /
+   * 拼题A）**不允许增删改**，那边是别人或平台的权威数据，本页只读。
+   */
+  const removePlan = useCallback(async (row) => {
+    const before = state.local ?? [];
+    // ① 本地立刻消失
+    setState((current) => ({
+      ...current, local: (current.local ?? []).filter((item) => item.id !== row.id),
+    }));
+    try {
+      const payload = await settings('local-remove', { id: row.id });
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+    } catch (failure) {
+      setState((current) => ({ ...current, local: before }));
+      setPlanMsg({ kind: 'error', text: `删除没有保存：${failure.message}` });
+    }
+  }, [state.local]);
+
+  /**
+   * 改一条**自己写的**规划（同样是纯本端）。
+   *
+   * `patch` 里只可能有 title / detail / due —— 完成状态归 `togglePlan`。
+   */
+  const editPlan = useCallback(async (row, patch) => {
+    const before = state.local ?? [];
+    // ① 本地立刻生效
+    setState((current) => ({
+      ...current,
+      local: (current.local ?? []).map((item) => (item.id === row.id ? { ...item, ...patch } : item)),
+    }));
+    try {
+      const payload = await settings('local-update', { id: row.id, ...patch });
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+      // 服务端可能做了规范化（去空白、截断），以它回的为准 —— 仍不是整份快照
+      if (payload?.item) {
+        setState((current) => ({
+          ...current,
+          local: (current.local ?? []).map((item) => (item.id === row.id ? { ...item, ...payload.item } : item)),
+        }));
+      }
+    } catch (failure) {
+      setState((current) => ({ ...current, local: before }));
+      setPlanMsg({ kind: 'error', text: `修改没有保存：${failure.message}` });
+    }
+  }, [state.local]);
 
   /**
    * 让 AI 拆一条**自己写的**规划。

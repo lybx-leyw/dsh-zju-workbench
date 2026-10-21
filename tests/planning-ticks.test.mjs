@@ -400,3 +400,131 @@ test('反复勾同一个键不会让 ticks 文件膨胀', async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+/* ────────────────────────────── 本端写操作：只回本次结果，不碰网关 */
+
+/**
+ * 需求（OWNER）：**只有自己新增的规划允许增删改**；网关来的条目（中转站 /
+ * 学在浙大 / 拼题A）只读 —— 它们只能被"拆分 / 打勾"这类**本端状态**操作影响，
+ * 条目本身不能改、不能删。
+ *
+ * 另一半：这些本端写操作**不该回整份快照**。它们不产生任何远端新数据，
+ * 回快照等于每点一下都让用户等一次几十 KB 的重算与序列化。
+ */
+
+/** 起一个带**可写 local store** 的 handler（内存实现，不碰磁盘）。 */
+function makeLocalHandler({ plan = null } = {}) {
+  const items = [];
+  let seq = 0;
+  const local = {
+    list: () => items.map((item) => ({ ...item })),
+    find: (id) => items.find((item) => item.id === id) ?? null,
+    create: (input) => {
+      seq += 1;
+      const item = { id: `local-${seq}`, title: String(input?.title ?? '').trim(), done: false, createdAt: seq };
+      items.push(item);
+      return { ...item };
+    },
+    update: (id, patch) => {
+      const item = items.find((row) => row.id === id);
+      if (!item) return null;
+      Object.assign(item, patch);
+      return { ...item };
+    },
+    setDone: (id, done) => {
+      const item = items.find((row) => row.id === id);
+      if (!item) return null;
+      item.done = done !== false;
+      return { ...item };
+    },
+    remove: (id) => {
+      const i = items.indexOf(items.find((row) => row.id === id));
+      if (i < 0) return false;
+      items.splice(i, 1);
+      return true;
+    },
+    split: () => {},
+  };
+  const handler = createHandler({
+    getConfig: () => ({ endpoint: '', readKey: '' }),
+    saveConfig: () => {},
+    store: { entries: [], list: () => [], absorb: () => ({ added: [], skipped: 0 }) },
+    local,
+    tickStore: null,
+    fetchRemote: async () => ({ ok: false, code: 'NOT_CONFIGURED', message: '没配' }),
+    loadTodos: async () => EMPTY_TODOS,
+    savePtaCookie: async () => ({}),
+    ptaStatus: async () => ({ configured: false }),
+    plan,
+    snapshotFile: null,
+  });
+  return { handler, items };
+}
+
+test('local-create 只回新条目，不回整份快照', async () => {
+  const { handler } = makeLocalHandler();
+  const r = await call(handler, 'POST', '/?local-create', { title: '新规划' });
+
+  assert.equal(r.status, 200);
+  assert.equal(r.body.ok, true);
+  assert.equal(r.body.item.title, '新规划');
+  for (const banned of ['todos', 'entries', 'remote', 'local', 'plans', 'ticks']) {
+    assert.equal(r.body[banned], undefined, `不该回 ${banned}`);
+  }
+});
+
+test('local-done / local-update / local-remove 都只回本次结果', async () => {
+  const { handler } = makeLocalHandler();
+  const created = await call(handler, 'POST', '/?local-create', { title: 'A' });
+  const id = created.body.item.id;
+
+  const done = await call(handler, 'POST', '/?local-done', { id, done: true });
+  assert.equal(done.body.item.done, true);
+  assert.equal(done.body.todos, undefined, 'local-done 不该回快照');
+
+  const updated = await call(handler, 'POST', '/?local-update', { id, title: 'B' });
+  assert.equal(updated.body.item.title, 'B');
+  assert.equal(updated.body.todos, undefined, 'local-update 不该回快照');
+
+  const removed = await call(handler, 'POST', '/?local-remove', { id });
+  assert.equal(removed.body.ok, true);
+  assert.equal(removed.body.id, id);
+  assert.equal(removed.body.todos, undefined, 'local-remove 不该回快照');
+});
+
+test('plan-card-done 只回这张卡片，不回整份快照', async () => {
+  const card = { done: true };
+  const plan = {
+    run: async () => ({}), list: () => ({}), plannedKeys: () => [], forget() {},
+    setCardDone: () => card,
+  };
+  const { handler } = makeLocalHandler({ plan });
+
+  const r = await call(handler, 'POST', '/?plan-card-done', { prefix: 'p1', index: 0, done: true });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.ok, true);
+  // 响应是 JSON 反序列化的副本，所以比结构而不是引用
+  assert.deepEqual(r.body.card, card);
+  assert.equal(r.body.prefix, 'p1');
+  assert.equal(r.body.index, 0);
+  assert.equal(r.body.todos, undefined, '勾卡片不该回快照');
+});
+
+/**
+ * 网关条目的只读边界。
+ *
+ * 这一条**不靠运行时守卫**，而是靠结构：`LocalStore` 只暴露 `absorb`（合并入站）
+ * 与 `list`（读），根本没有 update / remove 之类的方法 —— 所以不存在"改网关条目"
+ * 的入口。这里把它钉成断言，防止以后有人顺手加一个写方法。
+ */
+test('网关条目（entries）在结构上没有任何写入口', async () => {
+  const { LocalStore } = await import('../packages/dsh-zhiyun-page-planning/src/index.js');
+  const store = new LocalStore(path.join(tmpdir(), `entries-${Math.random().toString(16).slice(2)}.json`));
+
+  for (const banned of ['update', 'remove', 'delete', 'setDone', 'edit']) {
+    assert.equal(typeof store[banned], 'undefined', `LocalStore 不该有 ${banned}（网关条目只读）`);
+  }
+  // 只有这两个是对外的
+  assert.equal(typeof store.absorb, 'function', 'absorb 是唯一写入口（合并入站）');
+  assert.equal(typeof store.list, 'function');
+});

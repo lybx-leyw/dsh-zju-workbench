@@ -1007,8 +1007,19 @@ export function createHandler({
         return;
       }
       try {
+        /**
+         * ⚠️ 这一组**都不回整份快照**。
+         *
+         * `local-*` 与 `plan-card-done` 都是**纯本端写**：条目只存在 `local.json`
+         * / `plans.json` 里，网关那边只有 append、不能改（见文件头的只读边界）。
+         * 也就是说这些动作不产生任何远端新数据，回快照纯属让用户等一次
+         * 几十 KB 的重算与序列化。
+         *
+         * 前端配合做乐观更新，拿到 `item` / `ok` 即可。要新的整份数据，
+         * 下次进页面自然会拉（而且有本地快照，几乎瞬时）。
+         */
         if (action === 'local-create') {
-          sendJson(res, 200, { ok: true, item: local.create(body), ...(await snapshot()) });
+          sendJson(res, 200, { ok: true, item: local.create(body) });
           return;
         }
 
@@ -1025,7 +1036,7 @@ export function createHandler({
             sendJson(res, 404, { error: '这条规划不存在（可能已被删除）' });
             return;
           }
-          sendJson(res, 200, { ok: true, item, ...(await snapshot()) });
+          sendJson(res, 200, { ok: true, item });
           return;
         }
 
@@ -1035,7 +1046,7 @@ export function createHandler({
             sendJson(res, 404, { error: '这条规划不存在（可能已被删除）' });
             return;
           }
-          sendJson(res, 200, { ok: true, item, ...(await snapshot()) });
+          sendJson(res, 200, { ok: true, item });
           return;
         }
 
@@ -1044,7 +1055,7 @@ export function createHandler({
             sendJson(res, 404, { error: '这条规划不存在（可能已被删除）' });
             return;
           }
-          sendJson(res, 200, { ok: true, ...(await snapshot()) });
+          sendJson(res, 200, { ok: true, id });
           return;
         }
 
@@ -1056,7 +1067,7 @@ export function createHandler({
             return;
           }
           local.split(id, [], { force: true });
-          sendJson(res, 200, { ok: true, ...(await snapshot()) });
+          sendJson(res, 200, { ok: true, id });
           return;
         }
 
@@ -1154,7 +1165,11 @@ export function createHandler({
         sendJson(res, 404, { error: '这张卡片不存在（那条原文可能已被重新拆分）' });
         return;
       }
-      sendJson(res, 200, { ok: true, card, ...(await snapshot()) });
+      /**
+       * ⚠️ 与 `todo-done` 同理：卡片完成状态是**纯本端**的（落在 `plans.json`，
+       * 不写回中转站），所以只回这张卡片，不回整份快照。
+       */
+      sendJson(res, 200, { ok: true, card, prefix, index });
       return;
     }
 
