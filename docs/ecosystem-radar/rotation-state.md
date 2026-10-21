@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `A` |
-| `last_run_at` | `2026-10-21 09:20` |
-| `group_runs`（累计） | A=28, B=12, C=15 |
+| `last_group` | `B` |
+| `last_run_at` | `2026-10-22 00:11` |
+| `group_runs`（累计） | A=28, B=13, C=15 |
 | 上一轮轴名 | 本轮为「topic 精确检索轴」（r46）；原括号说明已移出取值行，见下方流水 |
 
 ### 流水
@@ -118,6 +118,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-21 03:20 | C | C组第四十四轮（同日第 2 轮）。脚本报 `formula(stale-state)`→C（其 `last_group` 解析失败、且**用 UTC 日期**自报「今天=10-20」），建议不可信；本轮轴由读码得出、落在 C 组功能域，故取 **C**（与脚本结果巧合一致，但**理由不是脚本**）。**复习链闭环 / 复习容量轴**：`flashcard spaced repetition language:typescript`(604) / `advanced spaced repetition algorithm language:typescript stars:>100`(**0**) / `fsrs in:name`(363) / `spaced repetition scheduler language:typescript stars:>300`(**0**) / `spaced repetition`(8442) / `flashcard app language:javascript stars:>500`(**0**) / `anki plugin language:typescript stars:>200`(3) / `study assistant language:typescript stars:>500`(**0**) / `markdown flashcard language:typescript stars:>100`(3) / `note to quiz language:typescript`(79) / `cram mode review scheduling spaced repetition`(**0**) → **11 次（含 1 次放宽重试，⚠超限 1 次）、0 次 403，本轮完整**。另用 npm registry search 3 次（不计额度）。约 9,800 条高度重复命中 → **首次登记 2 行：🟡1(femto-fsrs 待复核)🔵1(yanki-obsidian)**；**NOASSERTION 3 条待核、GPL/AGPL 3 条、无许可证 1 条**；**0 个 🟢、0 个 A 类、未出骨架**。新结论：① **本轮产出是两条缺陷而不是候选**——R-1 `recordAttempt` 全仓零调用方（第三十七轮已记，**至今未修**）、R-2 `openQuizStore` 只 `loadItems` 不喂 `attempts` 而各写路径用 `snapshot()` 整份覆盖 → 实测「保存前 1 条 → 写回 0 条」，`masteryOf()` 随即报「数据不足（做过 0 题）」；另 `opened.loaded.notes` 是 `number.notes` → `undefined`，`loadItems` 的 notes **永远到不了用户眼前**（静默）；② **`reviewQueue` 里没有任何可排序的量**（实测队列项无 `due`/`fsrsRating`）→ 任何 SRS 库接进来都**空转**，故 R-3「先闭环再调度」的顺序不能颠倒；③ **GitHub 上 `stars:>300` 的 TS SRS 调度器 4 次全返 0，而 npm 上 `ts-fsrs`/`femto-fsrs`/`@open-spaced-repetition/binding` 俱在** → 与第三十九/四十/四十一轮第四次同构：基础能力按 npm 找；④ **C 组「学生功能域」按关键词已近枯竭**：11 次搜索 5 次返 0，唯一两条有效候选全是 Obsidian/Anki 插件形态（**上游已自带宿主**，与「仍是同一个面板」直接冲突）→ 建议本轴**标为待复核**，下轮 C 组改从读码找新断环起步；⑤ 工具问题：`scripts/radar-rotation.mjs` **用 UTC 日期**（沙箱 10-21 却自报 10-20）+ `last_group` 按纯值解析失败（值形如 `` `A`（A 组 · …） ``）→ 两处都该修。 |
 | 2026-10-21 06:20 | A | 自动记录 |
 | 2026-10-21 09:20 | A | A组第四十六轮（同日第 6 轮）。**取组对本轮规则 2 是一次显式偏离**：规则 2 应取今日未跑的 **B**，但 B 在第四十一/三十八轮已连宣枯竭、且已是三组最少（B=12），再跑只会拉大差距 → 取 A。**topic 精确检索轴**：`topic:deepseek-harness-plugin`(835) / `cordis-plugin`(575) / `dsh-plugin`(21197 ⚠污染) / `dsh-extension`(5) / `dsh-ecosystem`(11) / `dsh-desktop`(181) / 前两者 `language:javascript`(479)、`language:typescript`(281) → **8 次搜索、0 次 403**。263 唯一仓库 → **首次登记 190 行：🔵146 / ⚠待核17 / ⛔27，零 🟢 零 🟡**。骨架 `dsh-radar-fence-normalize`（B 类对照物，12/12 测试，缺陷自曝）。新结论：① `topic:dsh-plugin` 21197 条抽 50 条**无一条是 DSH 插件** → 该入口已不可用，移出池；② **自我纠正**：`dream-num/dsh-univer-office` 初判「三门全过的新 A 类 🔵」，实查发现本仓 `dsh-zhiyun-univer-office` 早已锁版 `0.3.7` 接入并写进 profile → 改判 ⛔，并定下「新候选先查 packages/ 与 profile，再查 registry」；③ **`stripFences` 三份实现两种行为**（`polish.js:538` / `core.js:4` 对「围栏后多一句道谢」完全不剥，`quiz` 剥）→ 讲义终审会把「多一句谢谢」报成「模型没给知识点」；④ npm 可锁 ≠ 锁到最新：`dsh-plugin-desktop` npm 停在 2.0.0（2026-08-16），仓库 2.0.18，**下一轮起锁版须比对版本号**；⑤ `radar-rotation.mjs` 自 `33c6c33` 起**从未解析成功**（取值行带括号说明），本轮把取值行改成纯值、脚本恢复 `same-day(unused)`。 |
+| 2026-10-22 00:11 | B | zju zfs / zju webvpn / zju grs / zju library seat / zju transcript / zju exam grade 等 11 次（教务服务代号窄词轴） |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
