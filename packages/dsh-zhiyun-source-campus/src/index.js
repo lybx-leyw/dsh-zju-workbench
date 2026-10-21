@@ -263,6 +263,23 @@ export async function apply(ctx, config = {}) {
     }
     const identity = createHash('sha256').update(account.username).digest('hex');
     if (!force && xzzdSession.accountKey === identity && await hasXzzdSession(transport)) return transport;
+
+    /**
+     * 登录分段计时（只在诊断时收集）。
+     *
+     * 为什么需要：profile 里的 `semestersMs`/`crawlMs` 都从 `todos()` 内部起算，
+     * **不含登录**。于是「登录与读取 4482ms、其中待办只发 1 个请求」这种情形
+     * 完全看不出 4 秒花在哪。
+     */
+    const mark = () => (
+      process.env.ZHIYUN_PROFILE_TODOS === '1'
+        ? { at: Date.now(), timings: transport.timings?.length ?? 0 }
+        : null
+    );
+    const marks = {};
+    const stage = (label) => { const m = mark(); if (m) marks[label] = m; };
+
+    stage('start');
     await xzzdSession.clear();
     const classroom = ctx.get?.('zhiyunClassroom');
     if (typeof classroom?.acquireSso === 'function') {
@@ -270,11 +287,31 @@ export async function apply(ctx, config = {}) {
         await xzzdSession.jar.setCookie(cookie.toString(), 'https://zjuam.zju.edu.cn/cas/login');
       }
     }
+    stage('acquireSso');
     try {
       await xzzdLogin(transport, account);
+      stage('casLogin');
       xzzdSession.accountKey = identity;
       await transport.session.save();
+      stage('save');
       log('学在浙大会话已建立');
+      /**
+       * 把分段贴到 transport 上，供上层（探针）读走。
+       * 各段的「请求数」也记 —— 光看毫秒分不清"跳数多"还是"某一跳慢"。
+       */
+      if (marks.start) {
+        const span = (a, b) => (marks[a] && marks[b]
+          ? { ms: marks[b].at - marks[a].at, requests: marks[b].timings - marks[a].timings }
+          : null);
+        transport.loginProfile = {
+          prelude: span('start', 'acquireSso'),
+          ssoHandoff: span('acquireSso', 'casLogin'),
+          casLogin: span('casLogin', 'save'),
+          persist: span('save', 'save'),
+          total: marks.save ? marks.save.at - marks.start.at : null,
+          totalRequests: marks.save ? marks.save.timings - marks.start.timings : null,
+        };
+      }
       return transport;
     } catch (error) {
       // CAS 拒绝要能和网络问题分开：前者用户改密码，后者只需重试

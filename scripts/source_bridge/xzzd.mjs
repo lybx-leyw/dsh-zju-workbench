@@ -22,14 +22,17 @@ export async function run({ account, dataDir, card }) {
   // 让 campus 在这一轮把耗时剖析挂在结果上（只影响"记不记诊断数据"）
   process.env.ZHIYUN_PROFILE_TODOS = '1';
 
-  const { ctx, routes } = await mount('dsh-zhiyun-source-campus', {
+  const { ctx, routes, services } = await mount('dsh-zhiyun-source-campus', {
     dataDir,
     credentials: creds.service,
   });
   await card.writeCard(ctx, account);
 
   const route = routeOf(routes, '/api/zhiyun-campus', 'webServer');
+
+  const began = Date.now();
   const data = await campusGet(route);
+  const wallMs = Date.now() - began;
 
   /**
    * ⚠️ 形状是 `{ todos: { xzzd, pta }, pta: <status>, egress }` —— 注意
@@ -56,6 +59,22 @@ export async function run({ account, dataDir, card }) {
 
   const rows = xzzd.rows ?? [];
 
+  /**
+   * 登录分段：从 campus 服务里把 transport 的 `loginProfile` 取出来。
+   *
+   * 这块以前是**黑盒** —— profile 只覆盖 `todos()` 内部，而"登录与读取"的
+   * 大头恰恰在登录。没有它就只能反问"为什么 4 秒"。
+   *
+   * ⚠️ `xzzdClient()` 复用的是同一个已登录的 transport（内部有 `xzzdAuthTask`
+   * 去重 + `hasXzzdSession` 短路），所以这里**不会再登录一次**，只是拿引用。
+   */
+  let loginProfile = null;
+  try {
+    const campus = services.get('zhiyunCampus');
+    const api = await campus?.xzzdClient?.();
+    loginProfile = api?.transport?.loginProfile ?? null;
+  } catch { /* 诊断数据拿不到不影响主流程 */ }
+
   return {
     todos: rows.length,
     sample: String(rows[0]?.title ?? '').slice(0, 60),
@@ -69,5 +88,8 @@ export async function run({ account, dataDir, card }) {
      * 那会让探针把同样的 150 个请求发两遍、耗时翻倍 —— 测量本身污染测量。
      */
     profile: xzzd.profile ?? null,
+    /** 整条链路的墙钟耗时（含登录），与 profile 的 todos 内部计时互补。 */
+    wallMs,
+    login: loginProfile,
   };
 }

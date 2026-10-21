@@ -1412,6 +1412,27 @@ def make_live_chain(platform: str, title: str, blurb: str, credentials: dict, li
                 f"单请求耗时 p50={dist.get('p50')}ms p90={dist.get('p90')}ms "
                 f"max={dist.get('max')}ms（{dist.get('count')} 个样本，合计 {dist.get('sum')}ms）")
         result.add("耗时构成", PASS, detail=detail, evidence="\n".join(lines))
+
+    # 登录分段：profile 只覆盖 todos() 内部，"登录与读取"的大头往往在登录。
+    login = data.get("login")
+    wall = data.get("wallMs")
+    if isinstance(login, dict) or wall:
+        parts = []
+        if isinstance(login, dict):
+            for label, key in (
+                ("SSO 预取", "prelude"),
+                ("CAS", "casLogin"),
+                ("落盘", "persist"),
+            ):
+                span = login.get(key)
+                if isinstance(span, dict) and span.get("ms") is not None:
+                    parts.append(f"{label} {span['ms']}ms")
+            if login.get("totalRequests") is not None:
+                parts.append(f"登录共 {login['totalRequests']} 请求")
+        detail = " · ".join(parts) if parts else "没有登录（会话复用）"
+        if wall:
+            detail = f"整链路 {wall}ms · {detail}"
+        result.add("登录耗时", PASS, detail=detail, evidence="")
     return result
 
 
