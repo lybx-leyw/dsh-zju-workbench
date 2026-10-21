@@ -31,6 +31,25 @@ export const API_MY_SEMESTERS = `${XZZD_BASE}/api/my-semesters?fields=id,name,so
 /** 我的课程（参数见 `myCoursesBody`）。 */
 export const API_MY_COURSES = `${XZZD_BASE}/api/my-courses`;
 
+/**
+ * 官方聚合待办端点。
+ *
+ * ⚠️ 历史包袱：本仓的移植注释一直写着「`/api/todos` 会漏，所以走逐课」，
+ *    但**没有留下任何证据**（漏什么、漏多少、在什么条件下漏，都不知道），
+ *    对应的 Flutter 源文件也不在仓库里。而逐课抓取的代价是可量化的：
+ *    11 门课 55 个请求、真机 60.8 秒。
+ *
+ *    **`?no-intercept=true` 不能省。** 这是与 `zju-mcp`（`vibe-learning-in-zju`）
+ *    对照后补上的：它调的就是 `/api/todos?no-intercept=true`。没有这个参数时，
+ *    该站的响应拦截层可能改写返回体（这正是"同样是 `/api/todos`，有人拿到
+ *    完整列表、有人拿到残缺列表"的一种可能来源）。
+ *
+ *    所以这里改成「**两个都跑，拿数据说话**」：先用聚合端点，再与逐课结果
+ *    对账（见 `diffTodos`）。只有确认它确实漏，才退回逐课 —— 而不是凭一句
+ *    没有出处的注释就永远承担 55 个请求。
+ */
+export const API_TODOS = `${XZZD_BASE}/api/todos?no-intercept=true`;
+
 /** 逐门课的子端点。 */
 export const courseApis = (courseId) => ({
   activities: `${XZZD_BASE}/api/courses/${courseId}/activities`,
@@ -334,6 +353,77 @@ export class XzzdApi {
   }
 
   /**
+   * 用官方聚合端点 `/api/todos` 一次拿全部待办。
+   *
+   * # 为什么值得存在
+   *
+   * 逐课抓取要 `5 × 课程数` 个请求（真机 11 门课 55 个请求、60.8 秒），
+   * 而这一个端点只发 **1 个** 请求。差距是数量级的。
+   *
+   * # 关于「会漏」
+   *
+   * 本仓移植注释与上游 `ZJU-live-better-main` 都写着「`/api/todos` 有 bug，
+   * 所以另写了 `reliableTodolist.js` 绕开它」。但**没有任何一处写明漏什么**
+   * —— 上游源码只写了那一句，没给复现条件。
+   *
+   * 从返回字段能看出它**结构上**少两类东西（不是"偶发遗漏"）：
+   *
+   *   1. 没有课堂互动（`classroom-list` 那一类）。样例 `type` 只出现 homework，
+   *      而逐课版会把 `status === 'start'` 的课堂活动也算成待办；
+   *   2. 没有"满分即完成"的过滤（`completion_criterion_key === 'score'`）——
+   *      不过这类条目本来也不该进待办，所以顶多多出几条噪音，不会漏。
+   *
+   * 也就是说：**它可能漏的是"课堂互动"，而不是作业/测验**。这与"实际感觉没漏过"
+   * 并不矛盾 —— 课堂互动本来就少。这个判断可以被 `diffTodos()` 验证。
+   *
+   * @param options.now - 注入当前时间。
+   * @returns `{ todos, note }`，todos 项与 `todos()` 同形。
+   */
+  async todosFast({ now = () => new Date(), signal } = {}) {
+    const data = await this.json(API_TODOS, { signal });
+    const list = Array.isArray(data?.todo_list) ? data.todo_list : null;
+    if (!list) throw new ClassroomError('API_SHAPE', '学在浙大 /api/todos 响应缺少 todo_list');
+
+    const at = now();
+    const todos = [];
+    for (const row of list) {
+      const id = int(row?.id);
+      if (id <= 0) continue;
+      // 服务端已经过滤过"未完成"，但截止时间仍要自己判一次：
+      // 它可能把刚过期的还留着，而页面展示"已过期待办"会造成误导。
+      if (!isPendingTodo({
+        published: true,              // 聚合端点只回已发布的
+        startTime: null,              // 它不给 start_time，视为已开始
+        endTime: str(row?.end_time) || null,
+        submitted: false,             // 它只回未提交的
+        fullyScored: false,
+        now: at,
+      })) continue;
+
+      const courseId = row?.course_id == null ? '' : String(row.course_id);
+      const type = str(row?.type) || 'activity';
+      todos.push({
+        id: String(id),
+        title: str(row?.title).trim() || (type === 'quiz' ? '（无标题测验）' : '（无标题活动）'),
+        courseId,
+        courseName: str(row?.course_name).trim(),
+        type,
+        due: normalizeDeadline(row?.end_time).iso,
+        dueText: normalizeDeadline(row?.end_time).text,
+        url: `${XZZD_BASE}/course/${courseId}/learning-activity#/${id}`,
+        source: 'xzzd',
+      });
+    }
+
+    todos.sort((a, b) => {
+      const av = a.due ? Date.parse(a.due) : Infinity;
+      const bv = b.due ? Date.parse(b.due) : Infinity;
+      return av - bv;
+    });
+    return { todos, note: '/api/todos 聚合端点（1 个请求）。' };
+  }
+
+  /**
    * 拉全部待办。
    *
    * @param options.now - 注入当前时间（测试用）。
@@ -355,6 +445,7 @@ export class XzzdApi {
     /** 每门课的耗时与请求数，只在传了 `profile` 时才记录。 */
     const perCourse = [];
     const requestsBefore = this.transport?.requests ?? null;
+    const timingsBefore = this.transport?.timings ? this.transport.timings.length : null;
 
     // 分批并发：全并发容易触发风控
     for (let start = 0; start < courses.length; start += concurrency) {
@@ -391,6 +482,16 @@ export class XzzdApi {
     });
 
     if (profile) {
+      /**
+       * 单请求耗时分布。
+       *
+       * 只有均值是不够的：如果 55 个请求里有 2 个卡了 10 秒（首次 TLS 握手、
+       * 服务端慢查询），均值会被拉到几百毫秒，看起来像"每个都慢"，而实际
+       * 优化点完全不同。所以要 p50 / p90 / max 三个数一起看。
+       */
+      const samples = (this.transport?.timings ?? []).slice(timingsBefore ?? 0)
+        .map((row) => row.ms).sort((a, b) => a - b);
+      const pick = (q) => (samples.length ? samples[Math.min(samples.length - 1, Math.floor(samples.length * q))] : null);
       return {
         todos,
         courses,
@@ -404,6 +505,13 @@ export class XzzdApi {
           requests: requestsBefore == null || this.transport?.requests == null
             ? null : this.transport.requests - requestsBefore,
           perCourse,
+          requestMs: {
+            count: samples.length,
+            p50: pick(0.5),
+            p90: pick(0.9),
+            max: samples.length ? samples[samples.length - 1] : null,
+            sum: samples.reduce((a, b) => a + b, 0),
+          },
         },
       };
     }
@@ -412,6 +520,61 @@ export class XzzdApi {
 }
 
 /* ────────────────────────────────── 拼装 */
+
+/**
+ * 对比两条路的结果，回答「`/api/todos` 到底漏不漏」。
+ *
+ * # 为什么需要它
+ *
+ * 「`/api/todos` 会漏」这句话在本仓与上游传了几手，**但从未有数据**。
+ * 而它决定的代价很大：信它 → 每次 5N 个请求、真机 60 秒；不信它 → 1 个请求。
+ *
+ * 所以不靠断言，靠对账：两条路都跑一次，把差异列出来。
+ * 见过的差异要能解释，解释不了的才是真问题。
+ *
+ * 键用 `courseId:type:id` —— 光比标题会在标题重复时误判。
+ *
+ * @param fast - `todosFast()` 的 todos。
+ * @param slow - `todos()` 的 todos。
+ * @returns 差异摘要。
+ */
+export function diffTodos(fast, slow) {
+  const key = (row) => `${row.courseId ?? ''}:${row.type ?? ''}:${row.id ?? ''}`;
+  const fastMap = new Map((Array.isArray(fast) ? fast : []).map((row) => [key(row), row]));
+  const slowMap = new Map((Array.isArray(slow) ? slow : []).map((row) => [key(row), row]));
+
+  const onlyFast = [...fastMap.keys()].filter((k) => !slowMap.has(k)).map((k) => fastMap.get(k));
+  const onlySlow = [...slowMap.keys()].filter((k) => !fastMap.has(k)).map((k) => slowMap.get(k));
+  const both = [...fastMap.keys()].filter((k) => slowMap.has(k)).length;
+
+  /**
+   * 给"只在逐课版里有"的条目分类。
+   *
+   * 目的不是掩盖差异，而是把「已知的结构性差异」（课堂互动）与
+   * 「真正的遗漏」（作业/测验）分开 —— 后者才是 upstream 说的 bug。
+   */
+  const byType = {};
+  for (const row of onlySlow) {
+    const t = row.type ?? '(未知)';
+    byType[t] = (byType[t] ?? 0) + 1;
+  }
+
+  return {
+    fastCount: fastMap.size,
+    slowCount: slowMap.size,
+    both,
+    onlyFast,
+    onlySlow,
+    onlySlowByType: byType,
+    /**
+     * 逐课版有、聚合端点没有的**作业/测验**条目。
+     *
+     * 这才是"漏"的判定标准：课堂互动的缺失是结构决定的（端点不返回这一类），
+     * 而作业/测验本该都在。非空就说明上游那句 bug 属实。
+     */
+    missingFromFast: onlySlow.filter((row) => row.type !== 'classroom'),
+  };
+}
 
 /** 取数字字段，非法给 0。 */
 const int = (value) => {

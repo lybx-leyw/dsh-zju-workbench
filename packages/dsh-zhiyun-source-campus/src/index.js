@@ -37,7 +37,7 @@ import { sharedRead } from './reads.js';
 import { Transport } from './cas/transport.js';
 import { SessionStore } from './cas/session.js';
 import { xzzdLogin } from './cas/login.js';
-import { XzzdApi, hasXzzdSession } from './xzzd.js';
+import { XzzdApi, hasXzzdSession, diffTodos } from './xzzd.js';
 import { XzzdReader } from './xzzd-reads.js';
 import { PtaApi, parsePtaCookie } from './pta.js';
 import { CAMPUS_HOSTS, PTA_BASE, XZZD_BASE } from './hosts.js';
@@ -68,7 +68,7 @@ export const inject = ['profileContext'];
 /** 本包的数据路由。与 omni 的 `/api/zhiyun-omni` 并列，互不干扰。 */
 export const ROUTE_PATH = '/api/zhiyun-campus';
 
-export { XzzdApi, PtaApi, parsePtaCookie, hasXzzdSession };
+export { XzzdApi, PtaApi, parsePtaCookie, hasXzzdSession, diffTodos };
 export { XZZD_BASE, PTA_BASE, XZZD_HOST, PTA_HOST, CAMPUS_HOSTS } from './hosts.js';
 
 /**
@@ -351,11 +351,51 @@ export async function apply(ctx, config = {}) {
      * 开关只影响"记不记诊断数据"，不影响任何行为。
      */
     const wantProfile = process.env.ZHIYUN_PROFILE_TODOS === '1';
+    /**
+     * 待办数据源。
+     *
+     *   `slow`（默认）  逐课抓取，`5N` 个请求 —— 现有行为，**保持默认**
+     *   `fast`          官方聚合端点 `/api/todos?no-intercept=true`，**1 个请求**
+     *   `diff`          两条都跑并对比，把差异放进 `xzzd.diff`（诊断用）
+     *
+     * # 为什么默认还是 slow
+     *
+     * 「`/api/todos` 会漏」这条断言在本仓与上游传了几手，但**没有一处给出
+     * 漏什么、在什么条件下漏**（详见 `docs/todos-vs-zju-mcp.md`）。而 `zju-mcp`
+     * 的作者显然不认同它 —— 那个实现就是用 `/api/todos` 的。
+     *
+     * 证据不足时，默认值应当保守：**保持现有行为**，把更快的路留成显式选项，
+     * 等 `diff` 跑出对账数据再决定。直接改默认等于拿用户的待办做实验。
+     */
+    const todoMode = String(process.env.ZHIYUN_TODOS ?? 'slow').toLowerCase();
     const [xzzd, pta] = await Promise.all([
       (async () => {
         try {
-          const result = await (await xzzdClient()).todos({ profile: wantProfile });
-          return { ok: true, rows: normalizeXzzd(result.todos), error: null, ...(wantProfile ? { profile: result.profile } : {}) };
+          const api = await xzzdClient();
+
+          if (todoMode === 'slow') {
+            const result = await api.todos({ profile: wantProfile });
+            return { ok: true, rows: normalizeXzzd(result.todos), error: null, ...(wantProfile ? { profile: result.profile } : {}) };
+          }
+
+          // fast / diff 都先走聚合端点（1 个请求）
+          const fast = await api.todosFast();
+
+          // 对账模式：再跑一次逐课的，把差异交出去（只在诊断时发生）
+          if (todoMode === 'diff') {
+            const slow = await api.todos({ profile: wantProfile });
+            const slowRows = normalizeXzzd(slow.todos);
+            return {
+              ok: true,
+              rows: normalizeXzzd(fast.todos),
+              error: null,
+              diff: diffTodos(fast.todos, slow.todos),
+              slowCount: slowRows.length,
+              ...(wantProfile && slow.profile ? { profile: slow.profile } : {}),
+            };
+          }
+
+          return { ok: true, rows: normalizeXzzd(fast.todos), error: null };
         } catch (error) {
           return { ok: false, rows: [], error: toError(error) };
         }

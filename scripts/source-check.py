@@ -1405,6 +1405,12 @@ def make_live_chain(platform: str, title: str, blurb: str, credentials: dict, li
                 f"活动{row.get('activities')}/测验{row.get('exams')}/互动{row.get('classrooms')}）"
                 for row in slowest))
             lines.append("全部每门课耗时：" + ", ".join(f"{r.get('ms')}ms" for r in per_course))
+        # 单请求耗时分布：均值会掩盖"少数请求特别慢"，所以要 p50/p90/max
+        dist = profile.get("requestMs")
+        if isinstance(dist, dict) and dist.get("count"):
+            lines.append(
+                f"单请求耗时 p50={dist.get('p50')}ms p90={dist.get('p90')}ms "
+                f"max={dist.get('max')}ms（{dist.get('count')} 个样本，合计 {dist.get('sum')}ms）")
         result.add("耗时构成", PASS, detail=detail, evidence="\n".join(lines))
     return result
 

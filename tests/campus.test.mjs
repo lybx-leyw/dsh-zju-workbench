@@ -18,6 +18,7 @@ import assert from 'node:assert/strict';
 import {
   XzzdApi, buildCourseTodos, isPendingTodo, normalizeDeadline, hasXzzdSession,
   API_MY_SEMESTERS, API_MY_COURSES, courseApis, ONGOING_STATUS, COURSE_CONCURRENCY,
+  diffTodos, API_TODOS,
 } from '../packages/dsh-zhiyun-source-campus/src/xzzd.js';
 import {
   PtaApi, parsePtaCookie, yesterdayUtcMidnight, isPendingProblemSet,
@@ -780,4 +781,107 @@ test('空课只花 3 个请求，全量课 5 个（一增一减都要对）', as
   const b = new XzzdApi(await makeTransport(full, [XZZD_COOKIE]));
   await b.courseBundle(7);
   assert.equal(full.calls.length, 5, `有内容的课仍是 5 个请求，实际 ${full.calls.length}`);
+});
+
+/* ────────────────────────────── todosFast：官方聚合端点 /api/todos */
+
+/**
+ * `/api/todos` 只发 **1 个** 请求，而逐课抓取要 5N 个（真机 11 门课 55 个
+ * 请求 / 60.8 秒）。差距是数量级的，所以这条路值得存在。
+ *
+ * 但要钉住两件事：
+ *   1. 它仍然**自己**过滤过期条目（端点可能留刚过期的在列表里）；
+ *   2. 输出形状与 `todos()` **逐字段一致**，上层 `normalizeXzzd` 才不用分支。
+ */
+
+/** 造一个只回 /api/todos 的 fetch。 */
+function todoListFixture(todoList) {
+  return recorder([['/api/todos', () => json({ todo_list: todoList })]]);
+}
+
+test('todosFast 只发 1 个请求，且输出形状与 todos() 一致', async () => {
+  const fetchImpl = todoListFixture([
+    {
+      id: 932577,
+      title: '冬季论文作业提交',
+      course_id: 76325,
+      course_name: '中国近现代史纲要（H）',
+      course_code: '(2024-2025-1)-MARX1002GH-0097194-1',
+      course_type: 1,
+      type: 'homework',
+      is_locked: false,
+      end_time: '2099-12-24T06:30:00Z',
+    },
+  ]);
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  const result = await api.todosFast();
+
+  assert.equal(fetchImpl.calls.length, 1, `应只发 1 个请求，实际 ${fetchImpl.calls.length}`);
+  assert.equal(result.todos.length, 1);
+
+  const [row] = result.todos;
+  // 与逐课版同名的字段必须都在
+  for (const field of ['id', 'title', 'courseId', 'courseName', 'type', 'due', 'dueText', 'url', 'source']) {
+    assert.ok(field in row, `缺少字段 ${field}`);
+  }
+  assert.equal(row.id, '932577');
+  assert.equal(row.courseId, '76325');
+  assert.equal(row.courseName, '中国近现代史纲要（H）');
+  assert.equal(row.type, 'homework');
+  assert.equal(row.source, 'xzzd');
+  // 时间必须归一成带时区的 ISO（末尾已有 Z，按 UTC 解释）
+  assert.match(row.due, /^2099-12-24T06:30:00\.000Z$/, `due 归一不对：${row.due}`);
+});
+
+test('todosFast 自己过滤掉已过期与缺 id 的条目', async () => {
+  const fetchImpl = todoListFixture([
+    { id: 1, title: '过期了', course_id: 1, type: 'homework', end_time: '2020-01-01T00:00:00Z' },
+    { id: 2, title: '还没到', course_id: 1, type: 'homework', end_time: '2099-01-01T00:00:00Z' },
+    { title: '没有 id', course_id: 1, type: 'homework', end_time: '2099-01-01T00:00:00Z' },
+  ]);
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  const result = await api.todosFast();
+
+  assert.deepEqual(result.todos.map((r) => r.id), ['2'], '只留未过期且有 id 的');
+});
+
+test('todosFast 在响应缺 todo_list 时明确报 API_SHAPE', async () => {
+  const fetchImpl = recorder([['/api/todos', () => json({ something: 'else' })]]);
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  await assert.rejects(
+    () => api.todosFast(),
+    (error) => error.code === 'API_SHAPE',
+    '结构漂移要报出来，不能静默当"没有待办"',
+  );
+});
+
+/* ────────────────────────────── diffTodos：两条路对账 */
+
+test('diffTodos 把「只在逐课版里有」的条目按类型分开，课堂互动不算漏', () => {
+  const fast = [
+    { courseId: '1', type: 'homework', id: '10', title: '作业' },
+  ];
+  const slow = [
+    { courseId: '1', type: 'homework', id: '10', title: '作业' },   // 两边都有
+    { courseId: '1', type: 'classroom', id: '20', title: '互动' },  // 聚合端点结构上没有
+    { courseId: '2', type: 'quiz', id: '30', title: '测验' },       // 这才是真漏
+  ];
+  const diff = diffTodos(fast, slow);
+
+  assert.equal(diff.fastCount, 1);
+  assert.equal(diff.slowCount, 3);
+  assert.equal(diff.both, 1);
+  assert.equal(diff.onlySlowByType.classroom, 1);
+  assert.equal(diff.onlySlowByType.quiz, 1);
+  // 判定标准：课堂互动缺失是结构性的，作业/测验缺失才是上游说的 bug
+  assert.deepEqual(diff.missingFromFast.map((r) => r.id), ['30']);
+});
+
+test('diffTodos 在两边一致时报零差异', () => {
+  const rows = [{ courseId: '1', type: 'homework', id: '10', title: '作业' }];
+  const diff = diffTodos(rows, [...rows]);
+  assert.equal(diff.both, 1);
+  assert.deepEqual(diff.onlyFast, []);
+  assert.deepEqual(diff.onlySlow, []);
+  assert.deepEqual(diff.missingFromFast, []);
 });

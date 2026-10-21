@@ -57,6 +57,14 @@ export class Transport {
      * 而请求数是逐门课累加的（5 个端点 × 课程数），肉眼看不出来。
      */
     this.requests = 0;
+    /**
+     * 每次请求的耗时样本（只保留最近 200 条）。
+     *
+     * ⚠️ 只记 `ms` 与 `path`，**不记 header / cookie / body** —— 这是诊断数据，
+     * 不该把凭证带进去。有了它才能看出「1.1 秒/请求」到底是普遍慢，
+     * 还是少数请求（如首次 TLS 握手）拖累了均值。
+     */
+    this.timings = [];
   }
   async request(url, { signal, method = 'GET', body, headers = {}, stream = false, auth = true, timeoutMs = this.timeoutMs } = {}) {
     if (this.closed) throw new ClassroomError('DISPOSED', '数据源已关闭');
@@ -65,6 +73,7 @@ export class Transport {
     this.requests += 1;
     if (target.protocol !== 'https:' && !(target.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(target.hostname))) throw new ClassroomError('URL', '不支持的请求协议');
     const controller = new AbortController(); this.controllers.add(controller);
+    const startedAt = Date.now();
     const combined = AbortSignal.any([controller.signal, AbortSignal.timeout(timeoutMs), ...(signal ? [signal] : [])]);
     let cookies = '';
     let handedOff = false;
@@ -86,6 +95,9 @@ export class Transport {
       this.log({ method, host: target.hostname, path: target.pathname, status: response.status });
       if (stream) { handedOff = true; return { response, release: () => this.controllers.delete(controller), signal: combined }; }
       const text = await response.text();
+      // 记一条耗时样本（诊断用；只留路径与毫秒，不含凭证）
+      this.timings.push({ ms: Date.now() - startedAt, path: target.pathname, status: response.status });
+      if (this.timings.length > 200) this.timings.splice(0, this.timings.length - 200);
       return { status: response.status, headers: response.headers, text };
     } catch (error) {
       if (error instanceof ClassroomError) throw error;
