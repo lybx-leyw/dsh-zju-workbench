@@ -12,6 +12,9 @@ import {corpusRows} from '../packages/dsh-zhiyun-page-study/src/corpus.js';
 import {makeItem,QUIZ_STATUSES,QUIZ_TYPES} from '../packages/dsh-zhiyun-core-quiz/src/model.js';
 import {createQuizGenerator} from '../packages/dsh-zhiyun-core-quiz/src/generate.js';
 import {createMemorySectionNoteStore,createSectionNoteService} from '../packages/dsh-zhiyun-core-notes/src/store.js';
+// 回放下面那层「主线/语速/四汇总」：字段换算在 seek-bar，统计函数在 core-player。
+import {blocksForStats,sectionFacts} from '../packages/dsh-zhiyun-page-study/src/seek-bar.js';
+import {computeSectionStats,toSeekBar} from '../packages/dsh-zhiyun-core-player/src/stats.js';
 async function fixture(directory){
   const host=await mountKnowledge(directory); let user={id:'1',name:'Alice'};
   const result={schema:1,status:'ready',blocks:[],sourceId:'fixture',pages:[],sentences:[],unassignedSentences:[],spine:'',outline:[],vocabulary:[],warnings:[],fetchedAt:new Date().toISOString()};
@@ -306,4 +309,39 @@ test('corpus search stays on the final layer and a misspelled course does not op
     assert.equal(await controller.openCorpusHit({courseId:'10',subId:'20'}),true);
     assert.equal(controller.getSnapshot().lesson.subId,'20');
   }finally{controller.dispose();}
+});
+
+test('the video rail reads parser roles and keeps an unestimable speed as null', () => {
+  const blocks = blocksForStats({
+    blocks: [
+      { startMs: 0, endMs: 10000, sentences: [{ text: '甲'.repeat(10) }], tag: { role: '主线', facets: ['概念'], summary: '定义' } },
+      { startMs: 10000, endMs: 20000, sentences: [{ text: '' }], tag: { role: '支线', facets: [], summary: '闲聊' } },
+      { startMs: 20000, endMs: 30000, tag: { role: '没见过', facets: ['例题'], summary: '例题' }, sentences: [{ text: '乙'.repeat(20) }] },
+    ],
+  });
+  assert.deepEqual(blocks.map((block) => block.role), ['main', 'branch', null]);
+  const bar = toSeekBar(computeSectionStats(blocks), 30000);
+  assert.equal(bar.segments[0].role, 'main');
+  assert.equal(bar.heat[0].heat, null, '空块的语速保持 null，不画成最慢');
+  assert.equal(bar.heat[0].charsPerSecond, null);
+});
+
+test('section facts say unknown instead of zero when speed and mainline share cannot be estimated', () => {
+  const single = sectionFacts(computeSectionStats(blocksForStats({
+    blocks: [{ startMs: 0, endMs: 10000, sentences: [{ text: '只有一块' }], tag: { role: '主线', facets: [], summary: '' } }],
+  })));
+  assert.equal(single.find((fact) => fact.label === '平均语速').value, '估不出来');
+  assert.equal(single.find((fact) => fact.label === '主线占比').value, '估不出来');
+  assert.equal(single.find((fact) => fact.label === '知识点数').value, '1');
+  assert.equal(single.find((fact) => fact.label === '例题').value, '0');
+  const two = sectionFacts(computeSectionStats(blocksForStats({
+    blocks: [
+      { startMs: 0, endMs: 10000, sentences: [{ text: '甲'.repeat(60) }], tag: { role: '主线', facets: ['例题'], summary: '' } },
+      { startMs: 10000, endMs: 20000, sentences: [{ text: '乙'.repeat(60) }], tag: { role: '支线', facets: [], summary: '' } },
+    ],
+  })));
+  assert.equal(two.find((fact) => fact.label === '平均语速').value, '720 字/分');
+  assert.equal(two.find((fact) => fact.label === '主线占比').value, '100%');
+  assert.equal(two.find((fact) => fact.label === '例题').value, '1');
+  assert.equal(two.find((fact) => fact.label === '知识点数').value, '2');
 });

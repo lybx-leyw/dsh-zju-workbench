@@ -1,4 +1,4 @@
-// HLS 直播的 `<video>`：一处接线，两个面板共用。
+﻿// HLS 直播的 `<video>`：一处接线，两个面板共用。
 //
 // # 为什么是组件而不是在两处各写一遍 useEffect
 //
@@ -14,7 +14,7 @@
 // Safari 认识，所以原生优先（见 `hls.js` 的 `nativeHls`）。这个判断依赖真实
 // 元素，只能在 ref 挂上之后做 —— 也就是 `useEffect`。
 import React, { useEffect, useRef, useState } from 'react';
-import { attach, needsHlsJs } from './hls.js';
+import { attach, isHlsUrl, needsHlsJs } from './hls.js';
 
 /**
  * @param src - 流地址。空值时只渲染空播放器，不做任何接线。
@@ -30,7 +30,24 @@ export const HlsVideo = React.forwardRef(function HlsVideo({ src, live = false, 
   // 是为了让「有没有走降级」体现在渲染结果里，而不是一个看不见的隐式副作用。
   const [fallback, setFallback] = useState('');
   const target = src || '';
-  const usingFallback = fallback === target && Boolean(target);
+
+  /**
+   * 这个地址要不要交给原生 `<video>`。
+   *
+   * ⚠️ **这里曾经有过一个 bug**：初版只在 `fallback === target` 时给 `src`，
+   *    也就是"只有 hls.js 挂了才用原生"。于是**普通 mp4 永远没有 `src`** ——
+   *    effect 里 `needsHlsJs()` 返回 false 直接 return，渲染时 `src` 又因为不在
+   *    fallback 状态而缺席，结果是一个没有源的 `<video>`：不报错、不黑屏报错，
+   *    就是"点了没反应"。智云回放恰恰是 `.mp4` 直链，所以必然踩中。
+   *
+   * 现在的判定是：**非 HLS 一律走原生**，HLS 才需要 effect 里那套
+   * 「原生优先、否则挂 hls.js」的分支。
+   *
+   * 判定不看 DOM 元素：`needsHlsJs` 需要真实元素才能问 `canPlayType`，
+   * 而渲染阶段拿不到。这里只做"是不是 HLS"的纯字符串判断，
+   * 具体交给谁播放由 effect 决定 —— 两边不会打架：非 HLS 时 effect 直接 return。
+   */
+  const useNativeSrc = Boolean(target) && (fallback === target || !isHlsUrl(target));
 
   // 内部 ref 干活，外部 ref（如果有）跟着指向同一个节点。
   const setRef = (node) => {
@@ -61,7 +78,7 @@ export const HlsVideo = React.forwardRef(function HlsVideo({ src, live = false, 
   return <video
     ref={setRef}
     className={className}
-    {...(usingFallback ? { src: target } : {})}
+    {...(useNativeSrc ? { src: target } : {})}
     controls
     autoPlay={live}
     muted={live}
