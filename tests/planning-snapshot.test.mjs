@@ -23,6 +23,10 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 import { createHandler } from '../packages/dsh-zhiyun-page-planning/src/index.js';
 
@@ -42,6 +46,9 @@ function makeHandler(overrides = {}) {
     savePtaCookie: async () => ({}),
     ptaStatus: async () => ({ configured: false }),
     plan: null,
+    // 测试一律不落盘：每个用例必须独立。共享 snapshot.json 会让前一个用例
+    // 写下的失败态被后一个读到，表现为一堆莫名其妙的 undefined（真踩过）。
+    snapshotFile: null,
     ...overrides,
   });
 }
@@ -60,6 +67,25 @@ function get(handler) {
       end(chunk) { resolve({ status: this.status, body: JSON.parse(chunk) }); },
     };
     // handler 若抛出，让它 reject 出来 —— 这正是要防的情况
+    handler(req, res).catch((error) => resolve({ status: 'threw', error }));
+  });
+}
+
+/** 发一个 POST（写操作）：带写头与 JSON body。 */
+function post(handler, action = '', body = {}) {
+  return new Promise((resolve) => {
+    const payload = JSON.stringify(body);
+    const req = {
+      method: 'POST',
+      url: `/?${action}`,
+      headers: { host: '127.0.0.1:43120', 'x-zhiyun-planning': '1', 'content-type': 'application/json' },
+      async *[Symbol.asyncIterator]() { yield Buffer.from(payload); },
+    };
+    const res = {
+      status: 0,
+      writeHead(status) { this.status = status; },
+      end(chunk) { resolve({ status: this.status, body: JSON.parse(chunk) }); },
+    };
     handler(req, res).catch((error) => resolve({ status: 'threw', error }));
   });
 }
@@ -329,4 +355,136 @@ test('用户自己的条目不受远端缓存影响', async () => {
   const second = await get(handler);   // 这一次远端走缓存
   assert.equal(second.body.local.length, 1, '本地条目必须照常返回');
   assert.equal(second.body.local[0].title, '我自己加的');
+});
+
+/* ────────────────────────────── 本地快照：先给旧数据，后台刷新 */
+
+/**
+ * 需求（OWNER）：页面上写着「中转站的内容已在本机留了一份」「你自己写的规划
+ * 只存在本机」—— 既然数据本来就在本地，**切回这一页时就不该再等网络**。
+ *
+ * 旧行为：每次 GET 同步 await 三条链路。哪怕都有内存缓存，只要进程重启过
+ * 或 TTL 刚好过期，首屏就得白等几秒。
+ *
+ * 新行为：有本地副本 → 立刻返回（标 `stale: true`），同时后台刷新。
+ */
+
+/** 用临时目录起一个会落盘的 handler。 */
+async function withDiskSnapshot(fn) {
+  const dir = await mkdtemp(path.join(tmpdir(), 'planning-snap-'));
+  const snapshotFile = path.join(dir, 'snapshot.json');
+  try {
+    return await fn({ snapshotFile, dir });
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+/** 造一个"待办要花 ms 毫秒"的 handler，并记录真实拉取次数。 */
+function slowTodosHandler({ snapshotFile, ms = 300 }) {
+  let todoCalls = 0;
+  const handler = createHandler({
+    getConfig: () => ({ endpoint: '', readKey: '' }),
+    saveConfig: () => {},
+    store: { list: () => [], absorb: () => ({ added: [], skipped: 0 }) },
+    local: { list: () => [{ id: 'mine', title: '我的' }], find: () => null },
+    tickStore: null,
+    fetchRemote: async () => ({ ok: true, entries: [], total: 0 }),
+    loadTodos: async () => {
+      todoCalls += 1;
+      await new Promise((resolve) => setTimeout(resolve, ms));
+      return {
+        xzzd: { ok: true, rows: [{ id: '1', title: '作业' }], error: null },
+        pta: { ok: true, rows: [], error: null },
+      };
+    },
+    savePtaCookie: async () => ({}),
+    ptaStatus: async () => ({ configured: false }),
+    plan: null,
+    snapshotFile,
+  });
+  return { handler, calls: () => todoCalls };
+}
+
+test('首次没有本地副本时，只能同步等一次并写下副本', async () => {
+  await withDiskSnapshot(async ({ snapshotFile }) => {
+    const { handler } = slowTodosHandler({ snapshotFile, ms: 100 });
+    const t0 = Date.now();
+    const first = await get(handler);
+    const elapsed = Date.now() - t0;
+
+    assert.ok(elapsed >= 100, `首次必然等一次，实测 ${elapsed}ms`);
+    assert.equal(first.body.todos.xzzd.rows.length, 1);
+    assert.notEqual(first.body.timing.stale, true, '首次不是 stale');
+  });
+});
+
+test('有本地副本时**立刻**返回，不等网络', async () => {
+  // 这是本次改动的核心：第二次访问必须是毫秒级，哪怕待办要 300ms
+  await withDiskSnapshot(async ({ snapshotFile }) => {
+    const { handler } = slowTodosHandler({ snapshotFile, ms: 300 });
+    await get(handler);                       // 第一次：建立副本
+    await new Promise((r) => setTimeout(r, 50));
+
+    const t0 = Date.now();
+    const second = await get(handler);
+    const elapsed = Date.now() - t0;
+
+    assert.ok(elapsed < 100, `有副本时应立刻返回，实测 ${elapsed}ms（待办本身要 300ms）`);
+    assert.equal(second.body.timing.stale, true, '应标 stale');
+    assert.equal(second.body.todos.xzzd.rows.length, 1, '旧数据照常可用');
+  });
+});
+
+test('本地副本里的 local / ticks 会被**当前值**覆盖', async () => {
+  // 最不能接受的一类 bug：刚加的条目因缓存旧值而消失
+  await withDiskSnapshot(async ({ snapshotFile }) => {
+    const mine = [{ id: 'a', title: '先有的' }];
+    const handler = createHandler({
+      getConfig: () => ({ endpoint: '', readKey: '' }),
+      saveConfig: () => {},
+      store: { list: () => [], absorb: () => ({ added: [], skipped: 0 }) },
+      local: { list: () => mine, find: () => null },
+      tickStore: null,
+      fetchRemote: async () => ({ ok: true, entries: [], total: 0 }),
+      loadTodos: async () => ({ xzzd: { ok: true, rows: [], error: null }, pta: { ok: true, rows: [], error: null } }),
+      savePtaCookie: async () => ({}),
+      ptaStatus: async () => ({ configured: false }),
+      plan: null,
+      snapshotFile,
+    });
+
+    await get(handler);                       // 副本里 local 只有 1 条
+    mine.push({ id: 'b', title: '后来加的' });
+    const after = await get(handler);         // 这次走副本
+
+    assert.equal(after.body.local.length, 2, '刚加的条目必须立刻可见，不能被缓存旧值盖掉');
+    assert.ok(after.body.local.some((row) => row.id === 'b'));
+  });
+});
+
+test('?refresh 强制同步拉取，不吃本地副本', async () => {
+  await withDiskSnapshot(async ({ snapshotFile }) => {
+    const { handler, calls } = slowTodosHandler({ snapshotFile, ms: 60 });
+    await get(handler);
+    const before = calls();
+
+    const t0 = Date.now();
+    const refreshed = await post(handler, 'refresh');
+    const elapsed = Date.now() - t0;
+
+    assert.equal(calls(), before + 1, 'refresh 必须真拉一次');
+    assert.ok(elapsed >= 60, `refresh 是同步的，实测 ${elapsed}ms`);
+    assert.notEqual(refreshed.body.timing.stale, true, 'refresh 不该标 stale');
+  });
+});
+
+test('本地副本损坏时不崩，退回同步拉取', async () => {
+  await withDiskSnapshot(async ({ snapshotFile }) => {
+    writeFileSync(snapshotFile, '{ 这不是 JSON', 'utf8');
+    const { handler } = slowTodosHandler({ snapshotFile, ms: 20 });
+    const { status, body } = await get(handler);
+    assert.equal(status, 200);
+    assert.equal(body.todos.xzzd.rows.length, 1);
+  });
 });

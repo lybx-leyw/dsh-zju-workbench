@@ -670,6 +670,15 @@ export function createHandler({
   fetchRemote, loadTodos, savePtaCookie, ptaStatus, plan,
   /** 中转站缓存有效期（测试可调小；默认 10 分钟）。 */
   remoteCacheTtlMs = REMOTE_CACHE_TTL_MS,
+  /**
+   * 本地快照文件。`null` = 不落盘（测试用；也用于"完全无盘环境"）。
+   *
+   * ⚠️ 必须可注入：这处漏过一次 —— 起初它固定走 `dataDir`，于是测试之间
+   * 共享同一份 `snapshot.json`，前一个用例写下的失败态被后一个读到，
+   * 表现为一堆莫名其妙的 `Cannot read properties of undefined`。
+   * 「每个 handler 实例有自己的快照文件」是唯一正确的隔离方式。
+   */
+  snapshotFile = null,
   /** 日志出口。默认静默：`log` 是 `apply` 作用域的闭包，这里拿不到，也不该依赖它。 */
   log = () => {},
 }) {
@@ -732,7 +741,7 @@ export function createHandler({
    * 名字分开（`plannedKeys` 数组 / `planned` 数字）才是长久之计 ——
    * 靠展开顺序解决，改一行就会退回去。
    */
-  const snapshot = async () => {
+  const snapshotFresh = async () => {
     /**
      * 各段耗时（毫秒）。
      *
@@ -797,6 +806,84 @@ export function createHandler({
     };
   };
 
+  /**
+   * 读快照：**先给本地副本，再后台刷新**。
+   *
+   * # 这是本页体验的关键
+   *
+   * 页面上写着「中转站的内容已在本机留了一份」「你自己写的规划只存在本机」。
+   * 既然数据本来就在本地，切回这一页时就不该再等网络。
+   *
+   * 旧实现每次 GET 都同步 `await` 三条链路。哪怕它们都有内存缓存，只要
+   * **进程重启过**（dev 热重载、工作台重启）或 TTL 刚好过期，首屏就得白等 ——
+   * 而且三秒级。
+   *
+   * 现在的行为：
+   *
+   *   有本地副本 → **立刻返回**（毫秒级），标 `stale: true`
+   *               同时后台跑一次真实拉取，结果写回本地副本
+   *   没有副本   → 只能同步等一次（首次启动），并写副本
+   *
+   * `?refresh` 走 `snapshotFresh()`，强制同步拉取 —— 那是"我就要最新的"。
+   */
+  let refreshing = null;
+
+  /** 读本地快照；没有/坏了就 null。`snapshotFile` 为 null 时不落盘。 */
+  const readSnapshot = () => {
+    if (!snapshotFile) return null;
+    try {
+      const parsed = JSON.parse(readFileSync(snapshotFile, 'utf8'));
+      return parsed && typeof parsed === 'object' && parsed.at ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
+  /** 写本地快照。失败只影响"下次首屏快不快"，不该冒泡。 */
+  const writeSnapshot = (value) => {
+    if (!snapshotFile) return;
+    try {
+      mkdirSync(path.dirname(snapshotFile), { recursive: true });
+      const tmp = `${snapshotFile}.tmp`;
+      writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+      renameSync(tmp, snapshotFile);
+    } catch { /* 写不进去就下次再试 */ }
+  };
+
+  const snapshot = async () => {
+    const cached = readSnapshot();
+    if (cached) {
+      // 后台刷新：不 await、失败静默（下次再来还会试），且同时只跑一个
+      if (!refreshing) {
+        refreshing = snapshotFresh()
+          .then((fresh) => { writeSnapshot({ at: Date.now(), value: fresh }); return fresh; })
+          .catch(() => null)
+          .finally(() => { refreshing = null; });
+      }
+      /**
+       * 本地副本 + 本机即时状态。
+       *
+       * ⚠️ `local` / `ticks` / `plans` **必须用当前值覆盖缓存里的**：
+       * 它们是用户自己的操作，缓存副本可能落后。用旧值会让"刚加的一条"
+       * 切页后消失 —— 那是最不能接受的一类 bug。
+       */
+      return {
+        ...cached.value,
+        local: local ? local.list() : [],
+        ticks: tickStore ? tickStore.all() : {},
+        plans: plan ? plan.list() : {},
+        plannedKeys: plan ? plan.plannedKeys() : [],
+        entries: store.list(),
+        config: mask(getConfig()),
+        timing: { ...(cached.value?.timing ?? {}), stale: true, snapshotAgeMs: Date.now() - cached.at },
+      };
+    }
+
+    const fresh = await snapshotFresh();
+    writeSnapshot({ at: Date.now(), value: fresh });
+    return fresh;
+  };
+
   const handler = async function handler(req, res) {
     const host = hostOf(req.headers.host);
     if (!['127.0.0.1', 'localhost', '::1'].includes(host)) {
@@ -851,7 +938,15 @@ export function createHandler({
     }
 
     if (action === 'refresh') {
-      sendJson(res, 200, await snapshot());
+      /**
+       * `?refresh` = **我就要最新的**。
+       *
+       * 走 `snapshotFresh()` 同步拉一次（并且顺手更新本地副本），而不是
+       * 走默认那条"先给本地副本"的路径 —— 否则点了刷新还看到旧数据。
+       */
+      const fresh = await snapshotFresh();
+      writeSnapshot({ at: Date.now(), value: fresh });
+      sendJson(res, 200, fresh);
       return;
     }
 
@@ -1115,6 +1210,33 @@ export async function apply(ctx, config = {}) {
   // 既不是别人的内容缓存，也不是用户写的条目，而是"我认为这件事不用再提醒了"。
   const ticksFile = config.ticksFile ?? path.join(dataDir, 'ticks.json');
   const ticks = new TickStore(ticksFile, () => Date.now());
+
+  /**
+   * 上次成功快照的**本地副本**。
+   *
+   * # 为什么必须有它（这是本页最要紧的一处）
+   *
+   * 页面上写着「中转站的内容已在本机留了一份」「你自己写的规划只存在本机」——
+   * 既然数据本来就在本地，**切回这一页时就不该再等网络**。而之前的实现在
+   * 每次 GET 里同步 `await` 三条链路（中转站 / 学在浙大 / PTA），哪怕它们
+   * 全都有缓存，只要进程重启过、或缓存 TTL 刚好过期，首屏就得白等。
+   *
+   * 现在改成「**先给本地副本，再后台刷新**」：
+   *
+   *   1. 有本地副本 → 立刻返回它（毫秒级），标 `stale: true`；
+   *   2. 同时（不阻塞）发起一次真实拉取，结果写回本地副本；
+   *   3. 页面下次来取就能看到新的。
+   *
+   * 这与「10 分钟 TTL」是两层不同的东西：
+   *
+   *   TTL 缓存          进程内、到点就必须重新拉（阻塞）
+   *   本地快照          跨进程、永远先给（不阻塞），新鲜度交给后台刷新
+   *
+   * `snapshotFile === null` 时完全不落盘（测试、或明确不要盘的环境）。
+   * 读写实现见 `createHandler` 里的 `readSnapshot` / `writeSnapshot` —— 它们
+   * 必须与 `snapshot()` 同作用域（曾因放到 `apply` 里而报 not defined）。
+   */
+
 
   /* ── AI 自动规划 ─────────────────────────────────────────────────── */
 
@@ -1468,6 +1590,8 @@ export async function apply(ctx, config = {}) {
         savePtaCookie,
         ptaStatus,
         plan: planService,
+        // 本地快照：切回这一页时先给这份，后台再刷新（见 createHandler 里的说明）
+        snapshotFile: config.snapshotFile ?? path.join(dataDir, 'snapshot.json'),
       });
       const dispose = scope.webServer.register({ kind: 'exact', path: ROUTE_PATH, handler });
       log(`设置路由：${ROUTE_PATH}（中转站留存 ${cacheFile}；我的规划 ${mineFile}）`);
