@@ -1,4 +1,4 @@
-// 「规划」页：把四份东西并成一张表。
+﻿// 「规划」页：把四份东西并成一张表。
 //
 // # 四类数据源
 //
@@ -1599,7 +1599,9 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
               </span>
             </div>
 
-            {row.detail && !row.done && <p className="zpg-todo-action">{row.detail}</p>}
+            {row.detail && !row.done && (
+              <DetailsBlock detail={row.detail} />
+            )}
 
             {/* 课表上下文：只在有截止时间、且真读到课表时出现 */}
             {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
@@ -1675,7 +1677,37 @@ function toLocalInput(iso) {
  * 「忘掉这次拆分」）。但它**能勾完成**：那件事做没做完只有用户知道，
  * 而这个状态存在我们自己的 `plans.json` 里，不需要碰中转站。
  */
-function CardRow({ row, onToggle, busy }) {
+/**
+ * 条目详情：默认收起，点「查看详情」才展开。
+ *
+ * # 为什么需要它
+ *
+ * 列表的任务是"认出哪一条"，不是读完所有内容（skill ch13：识别优于回忆）。
+ * 把 action / detail 直接铺出来，每条都占两三行，扫一眼分不出主次。
+ *
+ * 三种行（平台待办 / AI 拆出的卡片 / 我的规划）现在共用这一个：形态一致，
+ * 用户不用记住"哪类条目要点哪里"。
+ *
+ * 用原生 `<details>`：键盘可操作、Ctrl+F 能自动展开、重渲染不丢展开态。
+ * 不能用 CSS `max-height` 折叠 —— 隐藏内容仍会被朗读器读到，等于"看不见但存在"。
+ */
+function DetailsBlock({ action, detail }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details className="zpg-details" open={open}>
+      <summary onClick={(event) => { event.preventDefault(); setOpen((v) => !v); }}>
+        <Icon name="arrow" size={12} />
+        查看详情
+      </summary>
+      <div className="zpg-details-body">
+        {action && <p className="zpg-todo-action">{action}</p>}
+        {detail && <p className="zpg-row-hint">{detail}</p>}
+      </div>
+    </details>
+  );
+}
+
+export function CardRow({ row, onToggle, busy }) {
   return (
     <li>
       <div className={`zpg-item zpg-item-card ${row.done ? 'zpg-item-done' : ''}`}>
@@ -1700,8 +1732,15 @@ function CardRow({ row, onToggle, busy }) {
             </span>
           </span>
         </div>
-        {row.action && !row.done && <p className="zpg-todo-action">{row.action}</p>}
-        {row.detail && !row.done && <p className="zpg-row-hint">{row.detail}</p>}
+        {/*
+          详情默认收起，点「查看详情」才展开。
+          与平台待办（TodoRow）一致：列表的任务是"认出哪一条"，不是读完所有内容。
+          以前卡片把 action / detail 直接铺出来，等于每条都占两行 —— 与
+          同池的其它条目形态不一致。
+        */}
+        {(row.action || row.detail) && !row.done && (
+          <DetailsBlock action={row.action} detail={row.detail} />
+        )}
       </div>
     </li>
   );
@@ -1833,7 +1872,6 @@ function TodoRow({ row, onToggle, busy }) {
           </span>
           <span className={`zpg-title ${row.done ? 'zpg-title-done' : ''}`}>{row.title}</span>
           <span className="zpg-meta">
-            {row.detail && <span className="zpg-detail">{row.detail}</span>}
             <span className="zpg-due">
               {whenIso(row.due)}
               {row.due && !row.done && <em className="zpg-left">{countdown(row.due)}</em>}
@@ -1845,6 +1883,14 @@ function TodoRow({ row, onToggle, busy }) {
             </a>
           )}
         </div>
+        {/*
+          详情默认收起，点「查看详情」才展开。
+          与 AI 拆出的卡片、我的规划一致：列表的任务是"认出哪一条"。
+          以前 TodoRow 把 detail 塞进 meta 一行，跟后两类条目的形态对不上。
+        */}
+        {row.detail && !row.done && (
+          <DetailsBlock detail={row.detail} />
+        )}
         {/* 勾掉之后才说这句话：没勾的人不需要读，勾了的人必须知道它的边界。 */}
         {row.done && (
           <p className="zpg-row-hint">

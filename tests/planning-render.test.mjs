@@ -179,3 +179,53 @@ test('加载中也能添加入口（不必等数据读完）', async () => {
   assert.match(html, /正在读取/, '这个用例的前提是处于加载态');
   assert.match(html, /zpg-fab/, '加载中也应能添加');
 });
+
+/* ────────────────────────────── 详情默认收起：点「查看详情」才展开 */
+
+/**
+ * 列表的任务是"认出哪一条"，不是读完所有内容（skill ch13 识别优于回忆）。
+ * 把详情直接铺出来，每条都占两三行，扫一眼分不出主次。
+ *
+ * 三种行（平台待办 / AI 拆出的卡片 / 我的规划）现在共用同一个 `<details>`：
+ * 形态一致，用户不用记住"哪类条目要点哪里"。
+ *
+ * 这组测试钉两件事：
+ *   1. 有 detail 的行默认收起（HTML 里**有**内容，但 `<details>` 不带 `open`）；
+ *   2. 用原生 `<details>` 而不是 CSS 折叠（后者会被朗读器读到，等于"看不见但存在"）。
+ */
+test('卡片详情默认收起，不在 HTML 里铺开', async () => {
+  const React = (await import('react')).default;
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const client = await loadClient('f');
+
+  const card = { title: '写报告', action: '先把提纲列出来', detail: '周三前给导师', done: false, id: 'c1' };
+  const html = renderToStaticMarkup(React.createElement(client.CardRow, { row: card, onToggle: () => {}, busy: false }));
+
+  assert.match(html, /zpg-details/, '有详情就该有展开控件');
+  assert.equal(
+    /<details[^>]*\sopen/.test(html), false,
+    '默认不该带 open 属性（那会一进来就展开）',
+  );
+});
+
+test('没有 detail/action 的卡片不渲染展开控件', async () => {
+  const React = (await import('react')).default;
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const client = await loadClient('g');
+
+  const card = { title: '买水果', done: false, id: 'c2' };
+  const html = renderToStaticMarkup(React.createElement(client.CardRow, { row: card, onToggle: () => {}, busy: false }));
+
+  assert.equal(/zpg-details/.test(html), false, '没有详情时不该多一个"查看详情"');
+});
+
+test('已完成的卡片不渲染详情（勾掉就是不想再看）', async () => {
+  const React = (await import('react')).default;
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const client = await loadClient('h');
+
+  const card = { title: '写报告', action: '先列提纲', detail: '周三前', done: true, id: 'c3' };
+  const html = renderToStaticMarkup(React.createElement(client.CardRow, { row: card, onToggle: () => {}, busy: false }));
+
+  assert.equal(/zpg-details/.test(html), false, '勾掉的卡片不该再带详情');
+});

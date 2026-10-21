@@ -663,6 +663,37 @@ body[data-zhiyun] .zpg-row-hint {
   color: var(--zy-secondary);
 }
 
+/* --------------------------------------------------- 条目详情：默认收起 */
+/* 三种行（平台待办 / AI 卡片 / 我的规划）共用这一个展开控件：
+   列表的任务是"认出哪一条"，不是读完所有内容（skill ch13 识别优于回忆）。
+
+   用原生 <details>：键盘可操作、Ctrl+F 能自动展开、重渲染不丢展开态。
+   不能用 CSS max-height 折叠 —— 隐藏内容仍会被朗读器读到，等于"看不见但存在"。 */
+body[data-zhiyun] .zpg-details { margin: 4px 0 0; padding: 0 0 0 34px; }
+body[data-zhiyun] .zpg-details > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-secondary);
+  padding: 2px 0;
+}
+body[data-zhiyun] .zpg-details > summary:hover { color: var(--zy-text); }
+body[data-zhiyun] .zpg-details > summary:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 2px; }
+body[data-zhiyun] .zpg-details[open] > summary { color: var(--zy-accent); }
+body[data-zhiyun] .zpg-details-body {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--zy-line);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.7;
+  color: var(--zy-text);
+  max-width: 40em;
+}
+body[data-zhiyun] .zpg-details-body p { margin: 0; }
+body[data-zhiyun] .zpg-details-body p + p { margin-top: 6px; }
+
 /* --------------------------------------------------- 视图切换（列表/日历） */
 /* 分段控件：两段、当前段有实心底。命中区 28px（ch06 规则 7 要求 ≥24px）。
    用 aria-pressed 表达状态，视觉只是它的第二通道。 */
