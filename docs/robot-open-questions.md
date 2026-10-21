@@ -21,7 +21,7 @@
   2. 改外壳的 `--zy-action-hover`（暗色下降低提亮幅度或改走加深，代价：全工作台按钮一起变）；
   3. 不动背景色，改用文字/描边做区分（代价：同样要在本页开特例）。
 - **相关位置**：`packages/dsh-zhiyun-page-feedback/src/style.css` 的 `.zfb-submit:hover`；
-  变量定义在 `packages/dsh-zhiyun-shell/src/style.css`（`--zy-action` / `--zy-action-hover`）。
+  变量定义在 `packages/dsh-zhiyun-shell-workbench/src/style.css`（`--zy-action` / `--zy-action-hover`）。
 
 ## 2026-10-14 · F-003-b 「提新需求」与「追踪已有」两种模式形同虚设
 
@@ -57,7 +57,7 @@
   3. 不动边框，改用「底色差 + 阴影」承担边界识别（代价：亮色主题底色可用余量极小，效果有限，
      且阴影会改变整页的视觉重量）。
 - **相关位置**：`packages/dsh-zhiyun-page-feedback/src/style.css` 的 `.zfb-item`、`.zfb-thread`、
-  `.zfb-comment`、`.zfb-tag`、`.zfb-kind`；变量定义在 `packages/dsh-zhiyun-shell/src/style.css`
+  `.zfb-comment`、`.zfb-tag`、`.zfb-kind`；变量定义在 `packages/dsh-zhiyun-shell-workbench/src/style.css`
   （`--zy-line` / `--zy-surface` / `--zy-bg`）。
 
 ## 2026-10-15 · F-002-d 字号未进「舒适阅读」区间（**补录**）
@@ -78,4 +78,4 @@
      属跨包改动。
 - **相关位置**：`packages/dsh-zhiyun-page-feedback/src/style.css`（`.zfb-item` 标题、`.zfb-summary`
   摘要、`.zfb-meta` / `.zfb-field` / `.zfb-counter` 辅助文字、`.zfb-back`）；基准字号与排版变量在
-  `packages/dsh-zhiyun-shell/src/style.css`。
+  `packages/dsh-zhiyun-shell-workbench/src/style.css`。

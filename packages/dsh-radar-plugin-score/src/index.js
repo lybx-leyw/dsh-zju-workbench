@@ -16,10 +16,10 @@
 //
 // TODO（采用前必须完成）：
 //   1. 【锁版】确认上游实际版本，写入 package.json 的 dependencies，**版本号写死、不用 `^`**
-//      （见 src/upstream.js 的 UPSTREAM_VERSION，与 packages/dsh-zhiyun-paper 的写法一致）。
+//      （见 src/upstream.js 的 UPSTREAM_VERSION，与 packages/dsh-zhiyun-host-paper 的写法一致）。
 //      注意：须先确认上游在 npm 上的**真实包名** —— 本骨架的 `@perrylink/dsh-score`
 //      仅为占位，未经 registry 核实。
-//   2. 效法 packages/dsh-zhiyun-paper：宿主半边挂载上游 + 补本仓自有能力。
+//   2. 效法 packages/dsh-zhiyun-host-paper：宿主半边挂载上游 + 补本仓自有能力。
 //   3. 效法 packages/dsh-zhiyun-page-paper：页面半边用同源 iframe 承载上游页面、
 //      注入 --zy-* 主题、接管已搬进本壳的上游控件；数据走上游 API。
 //   4. **确认评分数据源可否离线** —— 若上游依赖外部 API 计算分数，

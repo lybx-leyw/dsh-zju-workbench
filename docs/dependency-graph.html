@@ -145,14 +145,12 @@
 
     <!-- 领域状态 → 外壳 -->
     <path class="edge lazy" data-from="study-core" data-to="shell" marker-end="url(#a-lazy)" d="M1000,318 H1040 V196 H1100"/>
-    <path class="edge hard" data-from="study-core" data-to="page-courses" marker-end="url(#a-hard)" d="M1000,430 H1055 V414 H1116"/>
     <path class="edge hard" data-from="study-core" data-to="page-study" marker-end="url(#a-hard)" d="M1055,414 V624 H1116"/>
     <path class="edge hard" data-from="study-core" data-to="page-me" marker-end="url(#a-hard)" d="M1055,532 V742 H1116"/>
 
     <!-- 共享原语 → 外壳与页面：静态 import -->
     <path class="edge import" data-from="ui-primitives" data-to="shell" marker-end="url(#a-import)" d="M1000,150 H1100"/>
     <path class="edge import" data-from="ui-primitives" data-to="page-today" marker-end="url(#a-import)" d="M1000,170 H1020 V240 H1116"/>
-    <path class="edge import" data-from="ui-primitives" data-to="page-courses" marker-end="url(#a-import)" d="M1020,240 V358 H1116"/>
     <path class="edge import" data-from="ui-primitives" data-to="page-paper" marker-end="url(#a-import)" d="M1020,358 V506 H1116"/>
     <path class="edge import" data-from="ui-primitives" data-to="page-study" marker-end="url(#a-import)" d="M1020,506 V624 H1116"/>
     <path class="edge import" data-from="ui-primitives" data-to="page-me" marker-end="url(#a-import)" d="M1020,624 V742 H1116"/>
@@ -168,7 +166,7 @@
   <!-- ── 界面外壳（页面挂在这里） ── -->
   <g class="node" data-id="shell">
     <rect class="shellbox" x="1100" y="100" width="290" height="704" rx="20"/>
-    <text class="shellname" x="1120" y="136">dsh-zhiyun-shell</text>
+    <text class="shellname" x="1120" y="136" textLength="220" lengthAdjust="spacingAndGlyphs">dsh-zhiyun-shell-workbench</text>
     <text class="shellrole" x="1120" y="158">界面外壳 · 插槽契约 · 主题覆盖</text>
     <text class="iface" x="1120" y="180">provide zhiyunNavigation</text>
     <text class="iface" x="1120" y="196">inject slots · layout · theme</text>
@@ -180,7 +178,7 @@
     <rect class="card" x="250" y="110" width="200" height="66" rx="13"/>
     <rect x="250" y="120" width="4" height="46" rx="2" fill="#2563eb"/>
     <circle class="dot" cx="270" cy="132" r="4" fill="#2563eb"/>
-    <text class="pkg" x="282" y="137">dsh-zhiyun-classroom</text>
+    <text class="pkg" x="282" y="137" textLength="160" lengthAdjust="spacingAndGlyphs">dsh-zhiyun-source-classroom</text>
     <text class="role" x="264" y="159">课堂接入</text>
     <text class="iface" x="264" y="174">provide zhiyunClassroom</text>
   </g>
@@ -189,7 +187,7 @@
     <rect class="card" x="250" y="225" width="200" height="66" rx="13"/>
     <rect x="250" y="235" width="4" height="46" rx="2" fill="#2563eb"/>
     <circle class="dot" cx="270" cy="247" r="4" fill="#2563eb"/>
-    <text class="pkg" x="282" y="252">dsh-zhiyun-parser</text>
+    <text class="pkg" x="282" y="252">dsh-zhiyun-core-parser</text>
     <text class="role" x="264" y="274">课件 · 字幕解析</text>
     <text class="iface" x="264" y="289">provide zhiyunParser</text>
   </g>
@@ -198,7 +196,7 @@
     <rect class="card" x="250" y="340" width="200" height="66" rx="13"/>
     <rect x="250" y="350" width="4" height="46" rx="2" fill="#059669"/>
     <circle class="dot" cx="270" cy="362" r="4" fill="#059669"/>
-    <text class="pkg" x="282" y="367">dsh-zhiyun-knowledge</text>
+    <text class="pkg" x="282" y="367" textLength="160" lengthAdjust="spacingAndGlyphs">dsh-zhiyun-core-knowledge</text>
     <text class="role" x="264" y="389">知识库存储</text>
     <text class="iface" x="264" y="404">provide zhiyunKnowledge</text>
   </g>
@@ -207,7 +205,7 @@
     <rect class="card" x="250" y="455" width="200" height="66" rx="13"/>
     <rect x="250" y="465" width="4" height="46" rx="2" fill="#7c3aed"/>
     <circle class="dot" cx="270" cy="477" r="4" fill="#7c3aed"/>
-    <text class="pkg" x="282" y="482">dsh-zhiyun-final-pass</text>
+    <text class="pkg" x="282" y="482" textLength="160" lengthAdjust="spacingAndGlyphs">dsh-zhiyun-core-final-pass</text>
     <text class="role" x="264" y="504">考前冲刺</text>
     <text class="iface" x="264" y="519">provide zhiyunFinalPass</text>
   </g>
@@ -216,7 +214,7 @@
     <rect class="card" x="250" y="580" width="200" height="66" rx="13"/>
     <rect x="250" y="590" width="4" height="46" rx="2" fill="#2563eb"/>
     <circle class="dot" cx="270" cy="602" r="4" fill="#2563eb"/>
-    <text class="pkg" x="282" y="607">dsh-zhiyun-paper</text>
+    <text class="pkg" x="282" y="607">dsh-zhiyun-host-paper</text>
     <text class="role" x="264" y="629">论文阅读 · 兼容层</text>
     <text class="iface" x="264" y="644">provide zhiyunPaper · /zhiyun-paper</text>
   </g>
@@ -226,7 +224,7 @@
     <rect class="card" x="515" y="180" width="200" height="66" rx="13"/>
     <rect x="515" y="190" width="4" height="46" rx="2" fill="#7c3aed"/>
     <circle class="dot" cx="535" cy="202" r="4" fill="#7c3aed"/>
-    <text class="pkg" x="547" y="207">dsh-zhiyun-lecture</text>
+    <text class="pkg" x="547" y="207">dsh-zhiyun-core-lecture</text>
     <text class="role" x="529" y="229">讲稿整理</text>
     <text class="iface" x="529" y="244">provide zhiyunLecture</text>
   </g>
@@ -235,7 +233,7 @@
     <rect class="card" x="515" y="310" width="200" height="66" rx="13"/>
     <rect x="515" y="320" width="4" height="46" rx="2" fill="#7c3aed"/>
     <circle class="dot" cx="535" cy="332" r="4" fill="#7c3aed"/>
-    <text class="pkg" x="547" y="337">dsh-zhiyun-quiz</text>
+    <text class="pkg" x="547" y="337">dsh-zhiyun-core-quiz</text>
     <text class="role" x="529" y="359">习题生成</text>
     <text class="iface" x="529" y="374">provide zhiyunQuiz</text>
   </g>
@@ -244,7 +242,7 @@
     <rect class="card" x="515" y="470" width="200" height="66" rx="13"/>
     <rect x="515" y="480" width="4" height="46" rx="2" fill="#059669"/>
     <circle class="dot" cx="535" cy="492" r="4" fill="#059669"/>
-    <text class="pkg" x="547" y="497">dsh-zhiyun-notes</text>
+    <text class="pkg" x="547" y="497">dsh-zhiyun-core-notes</text>
     <text class="role" x="529" y="519">笔记</text>
     <text class="iface" x="529" y="534">provide zhiyunNotes</text>
   </g>
@@ -254,7 +252,7 @@
     <rect class="card" x="790" y="120" width="210" height="66" rx="13"/>
     <rect x="790" y="130" width="4" height="46" rx="2" fill="#0891b2"/>
     <circle class="dot" cx="810" cy="142" r="4" fill="#0891b2"/>
-    <text class="pkg" x="822" y="147">dsh-zhiyun-ui-primitives</text>
+    <text class="pkg" x="822" y="147">dsh-zhiyun-shell-ui</text>
     <text class="role" x="804" y="169">共享 UI 原语 · 无状态</text>
     <text class="iface" x="804" y="184">Icon · Mark · Empty · Notice</text>
   </g>
@@ -264,7 +262,7 @@
     <rect class="card" x="790" y="236" width="210" height="254" rx="16" stroke="#ea580c" stroke-width="2"/>
     <rect x="790" y="248" width="4" height="230" rx="2" fill="#ea580c"/>
     <circle class="dot" cx="810" cy="260" r="4.5" fill="#ea580c"/>
-    <text class="pkg" x="822" y="265">dsh-zhiyun-study-core</text>
+    <text class="pkg" x="822" y="265">dsh-zhiyun-core-study</text>
     <text class="role" x="804" y="287">领域状态层 · 多页唯一真源</text>
     <line class="divider" x1="804" y1="302" x2="986" y2="302"/>
     <text class="iface" x="804" y="324">inject workspaceRegistry · llm</text>
@@ -285,16 +283,6 @@
     <text class="role" x="1134" y="277">「今天」页 · 日程与插空任务</text>
     <text class="iface" x="1134" y="299">slot zhiyun.today.content</text>
     <text class="iface" x="1134" y="313">无领域依赖 · 只用共享原语</text>
-  </g>
-
-  <g class="node" data-id="page-courses">
-    <rect class="card" x="1120" y="336" width="250" height="104" rx="13"/>
-    <rect x="1120" y="356" width="4" height="64" rx="2" fill="#0891b2"/>
-    <circle class="dot" cx="1140" cy="368" r="4" fill="#0891b2"/>
-    <text class="pkg" x="1152" y="373">dsh-zhiyun-page-courses</text>
-    <text class="role" x="1134" y="395">「我的课」页 · 课程网格与登录</text>
-    <text class="iface" x="1134" y="417">slot zhiyun.courses.content</text>
-    <text class="iface" x="1134" y="431">inject zhiyunStudyController</text>
   </g>
 
   <g class="node" data-id="page-paper">

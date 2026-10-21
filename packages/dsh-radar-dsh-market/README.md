@@ -16,7 +16,7 @@
 
 - **类型**：A · 原生 DSH 插件包（最高优先）
 - **与现有功能的关系**：**强化式集成** —— 增强本仓「插件」页（`dsh-zhiyun-page-plugins`）
-- **集成方式**：锁版挂载上游 + 外围兼容层（效法 `packages/dsh-zhiyun-paper` 与 `dsh-zhiyun-page-paper`）
+- **集成方式**：锁版挂载上游 + 外围兼容层（效法 `packages/dsh-zhiyun-host-paper` 与 `dsh-zhiyun-page-paper`）
 - **UI 预期**：仍是**同一个「插件」面板**，不新增页面、不改交互
 
 ## 尚未完成（采用前必做）

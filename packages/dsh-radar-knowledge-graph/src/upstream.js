@@ -1,7 +1,7 @@
 /**
  * 上游包的**锁版凭据**（单一真源）。
  *
- * 与 `dsh-zhiyun-paper/src/upstream.js`、`dsh-radar-context-lens/src/upstream.js` 同一套理由：
+ * 与 `dsh-zhiyun-host-paper/src/upstream.js`、`dsh-radar-context-lens/src/upstream.js` 同一套理由：
  *
  *   1. `package.json` 里的依赖必须写**精确版本**（`0.1.3`，不是 `^0.1.3`）。
  *      上游仍在 0.1.x（npm 上 4 个版本全在 2026-09-01 一天内发布），
@@ -23,7 +23,7 @@ export const UPSTREAM_PACKAGE = 'dsh-knowledge-graph';
 export const UPSTREAM_VERSION = '0.1.3';
 
 /** 上游仓库（作者、许可证核实来源）。 */
-export const UPSTREAM_REPO = 'https://github.com/cwbcheng/dsh-knowledge-graph';
+export const UPSTREAM_REPOSITORY = 'https://github.com/cwbcheng/dsh-knowledge-graph';
 
 /** 上游许可证：MIT（GitHub API `license.spdx_id = MIT`，`LICENSE` 实文首行已比对）。 */
 export const UPSTREAM_LICENSE = 'MIT';

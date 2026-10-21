@@ -39,7 +39,7 @@
 //    进度条打架。
 // 3. **点字幕才跳**：不自动滚动。用户可能正在读某一行，自动滚走是打断。
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { computeSectionStats, toSeekBar } from 'dsh-zhiyun-player';
+import { computeSectionStats, toSeekBar } from 'dsh-zhiyun-core-player';
 import { HlsVideo } from './hls-video.jsx';
 import { blocksForStats, sectionFacts } from './seek-bar.js';
 

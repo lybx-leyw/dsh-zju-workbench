@@ -15,10 +15,28 @@
  *      否则它只是一句口号。（本轮仅出骨架，测试留待评审通过后补。）
  */
 
-export const UPSTREAM_PACKAGE = 'cc98-mcp';
+/**
+ * ⚠️ **2026-10-21 复核：上游未核实，且本骨架已无挂载需求。**
+ *
+ * 本文件早就写明「npm 上 `cc98-mcp` 返回 404，上游从未发布到 npm」，并给了两条
+ * 出路：(a) 等发 npm / 改 git 依赖，(b) 放弃挂载、按 MIT 做源码级移植。
+ *
+ * 后来实际走的是 (b) 的加强版：`dsh-zhiyun-source-cc98` 用本仓自己的 HTTP 层
+ * **原生重写**了 CC98 读取（10 个只读方法 + OAuth2 密码模式 + UBB 清洗），
+ * 并且已接入 profile。本骨架想达成的目标已有可用实现。
+ *
+ * 因此 `package.json` 的 `dependencies` 已清空，这里也**不再声明**
+ * `UPSTREAM_PACKAGE` / `UPSTREAM_VERSION` —— 按 `dsh-radar-career-calendar`
+ * 的先例，没有可信的包名与版本就不摆一对"看起来像锁版凭据"的常量。
+ * 本包已登记在 `tests/radar-packages.test.mjs` 的 `UNVERIFIED_UPSTREAM` 里。
+ *
+ * 线索（供日后复核，不是可安装声明）：
+ *   - 上游仓库：EviterLesRoses2/cc98-mcp（MIT）
+ *   - npm 包名（未发布）：`cc98-mcp`，仓库内 version 为 `0.1.0`
+ */
 
-/** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
-export const UPSTREAM_VERSION = '0.1.0';
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/EviterLesRoses2/cc98-mcp';
 
 /**
  * 上游的事实（2026-10-18 经 GitHub API + 文件树 + `package.json`/`README` 实文核实）：

@@ -24,7 +24,7 @@ documentation completeness…*
 
 - **类型**：**A · 原生 DSH 插件包**（最高优先）
 - **关系**：**强化式集成**（✅ 鼓励）—— 不是「全新」，也不是「重复且无增益」
-- **集成方式**：**锁版挂载上游 + 外围兼容层**（效法 `packages/dsh-zhiyun-paper`
+- **集成方式**：**锁版挂载上游 + 外围兼容层**（效法 `packages/dsh-zhiyun-host-paper`
   与 `packages/dsh-zhiyun-page-paper`）
 - **增强哪个现有功能**：**「插件」页** `packages/dsh-zhiyun-page-plugins`（侧栏第 7 项）
 - **UI 预期**：仍是**同一个「插件」面板**，**不新增导航项**、不改交互路径

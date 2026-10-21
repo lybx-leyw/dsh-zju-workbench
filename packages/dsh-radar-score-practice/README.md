@@ -74,5 +74,5 @@ MusicXML 渲染完全由 OSMD（BSD-3-Clause）承担，音频调度（若采用
 - [ ] 确认「看课」页课件区是否已有非视频素材挂载位（无则先提 issue 定接缝）
 - [ ] 实测打包体积与首屏影响，改为动态 import
 - [ ] 实测音源离线化，或落地「静音跟随」降级
-- [ ] 与 `dsh-zhiyun-player` 的时间轴单位对齐（ms / 秒）
+- [ ] 与 `dsh-zhiyun-core-player` 的时间轴单位对齐（ms / 秒）
 - [ ] 补测试（`npm test`）、接入 profile、按 CONTRIBUTING 写 `OWNERS`

@@ -2,7 +2,7 @@
  * 上游包的**锁版凭据**（单一真源）。
  *
  * 为什么把版本号单独放一个模块、而不是散在 `package.json` 和注释里
- * （与 `dsh-zhiyun-paper/src/upstream.js`、`dsh-radar-context-lens/src/upstream.js`
+ * （与 `dsh-zhiyun-host-paper/src/upstream.js`、`dsh-radar-context-lens/src/upstream.js`
  * 同一套理由）：
  *
  *   1. `package.json` 里的依赖必须写**精确版本**（`0.1.4`，不是 `^0.1.4`）。

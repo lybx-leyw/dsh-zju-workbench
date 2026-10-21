@@ -3,7 +3,7 @@
 // 页面不认识任何服务：图与写动作都由 store 通过插槽 inject 递进来（`{ store }`），
 // 组件只读快照、只调回调。样式用本包自己的 `zpl-` 前缀，不去改外壳的 `.zy-*`。
 import React, { useEffect, useState } from 'react';
-import { Icon, Notice, SectionTitle, useStore } from 'dsh-zhiyun-ui-primitives';
+import { Icon, Notice, SectionTitle, useStore } from 'dsh-zhiyun-shell-ui';
 
 /** 一行左侧的状态点：已启用 / 已取消 / 等待依赖。 */
 function StateDot({ row }) {

@@ -23,6 +23,6 @@
 > `zhiyunStudyController` 绑给了页面组件，而它盖过外壳通过插槽注入的 owner props。
 > 所以那三页的「登录智云课堂」按钮调的是**领域控制器**上的 `openAccount()` ——
 > 学习核心把它顺着 `navigation` 转发给外壳（和 `navigate` 完全同一条路），
-> 见 `dsh-zhiyun-study-core`。
+> 见 `dsh-zhiyun-core-study`。
 
 `#zy-personal-settings` 是宿主设置适配器的落点：外壳的 `components.jsx` 用 MutationObserver 找到这个容器（`settings-adapter.js` 只做插槽条目的换装，不碰 DOM），再把原生设置分组 portal 进来。改这个 id 要同步改外壳。

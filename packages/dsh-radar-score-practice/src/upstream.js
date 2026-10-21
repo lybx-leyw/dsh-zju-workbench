@@ -1,13 +1,13 @@
 // 【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】
 //
-// 上游封装占位 —— 效法 packages/dsh-zhiyun-paper/src/upstream.js 的组织方式。
+// 上游封装占位 —— 效法 packages/dsh-zhiyun-host-paper/src/upstream.js 的组织方式。
 //
 // 本文件**不含任何上游源码**，仅预留「把 opensheetmusicdisplay / osmd-audio-player
 // 包成本仓可用的素材接口」的接缝。上游全部实现来自：
 //   - opensheetmusicdisplay@2.2.1（BSD-3-Clause，https://github.com/opensheetmusicdisplay/opensheetmusicdisplay）
 //   - osmd-audio-player@0.7.0（MIT，https://github.com/jimutt/osmd-audio-player）
 //
-// 设计原则（与 dsh-zhiyun-paper/src/upstream.js 一致）：
+// 设计原则（与 dsh-zhiyun-host-paper/src/upstream.js 一致）：
 //   - 上游只被本文件 import，其余代码只依赖本文件导出的稳定接口；
 //   - 上游 API 变更时，改动收敛在本文件内；
 //   - 绝不复制上游实现进来。
@@ -26,12 +26,21 @@
 //   4. 确认 PlaybackManager 的 seek / cursor / measureIndex 接口与播放器时钟的对接方式。
 //   5. 渲染失败（非法 MusicXML / 字体缺失）时返回可读错误并**整体移除容器**，不留空白。
 
-// export const UPSTREAM = {
-//   packages: [
-//     { name: 'opensheetmusicdisplay', version: '2.2.1', license: 'BSD-3-Clause' },
-//     { name: 'osmd-audio-player', version: '0.7.0', license: 'MIT' },
-//   ],
-// };
+/** 主依赖（渲染引擎）的包名与版本；多依赖的完整形状见下面的 `UPSTREAM.packages`。 */
+export const UPSTREAM_PACKAGE = 'opensheetmusicdisplay';
+
+/** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
+export const UPSTREAM_VERSION = '2.2.1';
+
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/opensheetmusicdisplay/opensheetmusicdisplay';
+
+export const UPSTREAM = {
+  packages: [
+    { name: UPSTREAM_PACKAGE, version: UPSTREAM_VERSION, license: 'BSD-3-Clause' },
+    { name: 'osmd-audio-player', version: '0.7.0', license: 'MIT' },
+  ],
+};
 
 // TODO: 上游装配
 // export async function loadRenderer(hostEl) { /* new OpenSheetMusicDisplay(hostEl, options) + load(xml) */ }

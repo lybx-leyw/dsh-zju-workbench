@@ -1,7 +1,7 @@
 // 【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】
 //
 // 目标：把上游 cytoscape（图论 / 网络可视化库，MIT，零运行时依赖）封装成
-//       「笔记」页右栏的一个**折叠区** —— 把 `dsh-zhiyun-vault` 早就算好的
+//       「笔记」页右栏的一个**折叠区** —— 把 `dsh-zhiyun-core-vault` 早就算好的
 //       `graph: { nodes, edges }` 真正画出来。
 //
 // 上游：https://github.com/cytoscape/cytoscape.js
@@ -32,7 +32,7 @@
 //   有人会说「右侧反链列表已经是图谱了」。不是：
 //   - 反链列表是**单点**的（当前这一篇），图谱是**全库**的；
 //   - 反链列表读不出「谁和谁通过第三篇连上了」，而这恰恰是 `[[双链]]` 的意义；
-//   - `dsh-zhiyun-vault` 已经为此维护了 `inDegree / outDegree / orphans / tags`，
+//   - `dsh-zhiyun-core-vault` 已经为此维护了 `inDegree / outDegree / orphans / tags`，
 //     这些字段**目前没有任何消费者**（vault README 第 3 行明确写了「知识图谱」，
 //     但页面里没有任何渲染）。本包消费它们。
 //
@@ -47,14 +47,19 @@
 //   4. **不做 3D / 不做时间轴 / 不做标签图**：那些是 `obsidian-extended-graph` 的领域，
 //      属于「再造一个视图」，本节目标只有「把已有数据画出来」。
 
-export const NAME = 'dsh-radar-note-graph';
+import { LOCK, UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
 
-// 上游常量是单一真源（版本号改动只改这里 + package.json）。
+export const name = 'dsh-radar-note-graph';
+
+/** 兼容旧名（同一值）。 */
+export const NAME = name;
+
+// 上游常量是单一真源（版本号改动只改 `./upstream.js` 的 LOCK + package.json）。
 export const UPSTREAM = Object.freeze({
-  pkg: 'cytoscape',
-  version: '3.34.4',
+  pkg: UPSTREAM_PACKAGE,
+  version: UPSTREAM_VERSION,
   layoutPkg: 'cytoscape-fcose',
-  layoutVersion: '2.2.0',
+  layoutVersion: LOCK['cytoscape-fcose'],
 });
 
 /**
@@ -80,7 +85,7 @@ export function apply(ctx) {
 //
 // TODO 2 · 数据读取（**不要**自己重新解析 .md）
 //   - 一律走 vault 的既有 RPC：`vault.invoke('graph')` → `{ nodes, edges }`。
-//   - 节点形状（已核，packages/dsh-zhiyun-vault/src/index/vault-index.js）：
+//   - 节点形状（已核，packages/dsh-zhiyun-core-vault/src/index/vault-index.js）：
 //     `{ id: 相对路径(不含 .md), title, inDegree, outDegree, tags }`；边 `{ from, to }`。
 //   - **不要**在这里做「未解析链接」推断：vault 已分 `missing` / `ambiguous`，
 //     图谱只画已解析的边；未解析的另做一行文字（见 TODO 4）。

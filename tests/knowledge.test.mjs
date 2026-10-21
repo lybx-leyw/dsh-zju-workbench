@@ -21,10 +21,10 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { root, lock } from '../scripts/profile.mjs';
-import * as plugin from '../packages/dsh-zhiyun-knowledge/src/index.js';
-import { KnowledgeError } from '../packages/dsh-zhiyun-knowledge/src/errors.js';
-import { DOMAIN_NAME, LECTURES_TABLE, keyOf, identityPart, createLectureSpec } from '../packages/dsh-zhiyun-knowledge/src/domain.js';
-import { MATCH_FIELDS } from '../packages/dsh-zhiyun-knowledge/src/service.js';
+import * as plugin from '../packages/dsh-zhiyun-core-knowledge/src/index.js';
+import { KnowledgeError } from '../packages/dsh-zhiyun-core-knowledge/src/errors.js';
+import { DOMAIN_NAME, LECTURES_TABLE, keyOf, identityPart, createLectureSpec } from '../packages/dsh-zhiyun-core-knowledge/src/domain.js';
+import { MATCH_FIELDS } from '../packages/dsh-zhiyun-core-knowledge/src/service.js';
 
 /** 首选宿主（清单里验证过的那条线），与仓库其它宿主用例同源。 */
 const HOST_VERSION = lock.preferredHostVersion ?? lock.hostVersions[0];
@@ -522,7 +522,7 @@ test('⑥续 provide 撞名时挂载失败，但域不许被永久占住（否�
 });
 
 test('⑦ 产品代码零文件 IO：持久化只走 ctx.storageDomain（这条约束用自检钉住）', async () => {
-  const dir = new URL('../packages/dsh-zhiyun-knowledge/src/', import.meta.url);
+  const dir = new URL('../packages/dsh-zhiyun-core-knowledge/src/', import.meta.url);
   const files = (await readdir(dir)).filter((file) => file.endsWith('.js'));
   assert.ok(files.length >= 5, 'errors / host / domain / service / index');
   // 先剥注释再扫：说明文字里就写着「本包不碰 node:fs」，不剥注释会把自己的注释判红。

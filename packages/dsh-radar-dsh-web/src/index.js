@@ -37,7 +37,7 @@
  * # 为什么不接它的客户端半边
  *
  * 与 `dsh-radar-market` 同一条理由（见 [`../dsh-radar-market/README.md`] 与
- * [`../dsh-zhiyun-paper/README.md`]）：上游若自带 `./client` 导出并声明
+ * [`../dsh-zhiyun-host-paper/README.md`]）：上游若自带 `./client` 导出并声明
  * `dsh.client.inject`，它会**自己接管 settings 分组与布局主张**
  * （`sidebar.workspaces` / `shell.overlay`），与本仓外壳冲突。
  *

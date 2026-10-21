@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { buildCleanSentences, templates, parseBlockDrafts, coverage } from '../packages/dsh-zhiyun-parser/src/core.js';
-import { correctionComparison } from '../packages/dsh-zhiyun-parser/src/correction-policy.js';
-import { ParserCache } from '../packages/dsh-zhiyun-parser/src/cache.js';
-import { mixRequest } from '../packages/dsh-zhiyun-parser/src/prompts.js';
+import { buildCleanSentences, templates, parseBlockDrafts, coverage } from '../packages/dsh-zhiyun-core-parser/src/core.js';
+import { correctionComparison } from '../packages/dsh-zhiyun-core-parser/src/correction-policy.js';
+import { ParserCache } from '../packages/dsh-zhiyun-core-parser/src/cache.js';
+import { mixRequest } from '../packages/dsh-zhiyun-core-parser/src/prompts.js';
 import { lock } from '../scripts/profile.mjs';
 import { mountHost, lesson } from './fixtures/parser/host.mjs';
 

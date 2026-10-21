@@ -21,7 +21,7 @@
 雷达的强化式集成要求三条同时成立，其中 ③ 是「**已有实现**、外部有更优底层」。
 本候选的实际情况是：
 
-- `dsh-zhiyun-vault` **已经**算出了 `graph: { nodes, edges }`，
+- `dsh-zhiyun-core-vault` **已经**算出了 `graph: { nodes, edges }`，
   每个节点带 `inDegree / outDegree / tags`，还能给出 `orphans`（孤立节点）；
 - 但 `packages/dsh-zhiyun-page-notes/src/` 里**没有任何代码在画它** ——
   `graph` 这个 RPC 方法没有任何页面消费者，`vault` 的 README 第 3 行写的
@@ -43,7 +43,7 @@
 
 | 方案 | 结论 |
 | --- | --- |
-| **cytoscape@3.34.4** | ✅ **选它**。`dependencies: {}` 零运行时依赖；图论能力（连通分量、最短路径）**内置**，将来「两篇笔记怎么连上的」不用再引一个库；SVG/Canvas 双渲染器，导出 PDF 不空白。⚠ 修正一处易错认知：**入度/出度不在 cytoscape 里**，`dsh-zhiyun-vault` 已算好并随节点下发（`inDegree`/`outDegree`），本包只负责映射 |
+| **cytoscape@3.34.4** | ✅ **选它**。`dependencies: {}` 零运行时依赖；图论能力（连通分量、最短路径）**内置**，将来「两篇笔记怎么连上的」不用再引一个库；SVG/Canvas 双渲染器，导出 PDF 不空白。⚠ 修正一处易错认知：**入度/出度不在 cytoscape 里**，`dsh-zhiyun-core-vault` 已算好并随节点下发（`inDegree`/`outDegree`），本包只负责映射 |
 | `sigma`(4.0.3) + `graphology`(0.26.0) | WebGL，几千节点更流畅，但**两条包**（sigma 依赖 `graphology-utils`，graphology 依赖 `events`），且 WebGL 在打印/导出路径上更脆弱 |
 | `vasturiano/react-force-graph`（★3325） | 强，但**绑定 3D/VR 叙事**，对「侧栏里一张小图」是过度设计；且依赖 `three` |
 | 自写 SVG + 力导向 | 布局收敛、拖拽、缩放、命中测试都要自己写；本仓**没有**这类积分 |

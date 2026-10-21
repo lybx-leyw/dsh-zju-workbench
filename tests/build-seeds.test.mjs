@@ -102,12 +102,28 @@ test('本包的 dsh.client.external 声明的每个包都真的被 import 了（
   assert.deepEqual(stale, [], `external 声明过期：\n${stale.join('\n')}`);
 });
 
-test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的文件', async () => {
+// 允许**有意内联**的第三方依赖（包名 -> 理由）。
+// 其余任何 src/ 之外的文件出现在产出里，都说明某个裸模块 import 没被 external 化。
+const INTENTIONALLY_BUNDLED = {
+  // 见 packages/dsh-zhiyun-page-study/src/hls.js 文件头：客户端产物是 CJS，
+  // esbuild 在 CJS 下不做代码分割，所以「按需加载」只能靠选最小构建产物，
+  // 体积（~363 KB）已被显式接受。它必须进产出，否则直播直接不可用。
+  'hls.js': 'page-study：HLS 直播播放器，按设计内联（见 src/hls.js 体积权衡）',
+};
+
+test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的文件（有意内联的除外）', async () => {
   for (const name of CLIENT_PACKAGES) {
     const { result } = await buildClientPackage(name, { write: false, metafile: true });
     const inputs = Object.keys(result.metafile.inputs).map((p) => path.resolve(root, p));
     const own = path.resolve(root, 'packages', name, 'src') + path.sep;
-    const foreign = inputs.filter((p) => !p.startsWith(own));
+    const foreign = inputs.filter((p) => {
+      if (p.startsWith(own)) return false;
+      const bundled = /[\\/]node_modules[\\/]([^\\/]+)(?:[\\/]|$)/.exec(p);
+      if (bundled === null) return true;
+      // scoped 包（@scope/name）取两段
+      const base = bundled[1].startsWith('@') ? `${bundled[1]}/${p.split(bundled[1])[1].split(/[\\/]/)[1]}` : bundled[1];
+      return !(base in INTENTIONALLY_BUNDLED);
+    });
     assert.deepEqual(foreign, [], `${name} 的产出内联了外部文件（external 漏项）：\n${foreign.join('\n')}`);
   }
 });

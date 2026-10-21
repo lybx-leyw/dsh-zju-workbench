@@ -8,9 +8,9 @@
 >
 > | 骨架说的能力 | 实际去向 |
 > | --- | --- |
-> | OAuth2 授权码入口 | `dsh-zhiyun-classroom/src/auth.js` → `authenticate(…, { entry: 'oauth' })` |
+> | OAuth2 授权码入口 | `dsh-zhiyun-source-classroom/src/auth.js` → `authenticate(…, { entry: 'oauth' })` |
 > | `_token` cookie → JWT | 同上 `jwtFromTokenCookie()` / `inspectJwt()`；直播每条请求用它拼 Bearer |
-> | 实时流观看（m3u8） | `dsh-zhiyun-classroom/src/live.js` + `stream.js`，页面侧 `dsh-zhiyun-page-study` |
+> | 实时流观看（m3u8） | `dsh-zhiyun-source-classroom/src/live.js` + `stream.js`，页面侧 `dsh-zhiyun-page-study` |
 > | CookieJar 迁移 | **作废** —— 本仓 `tough-cookie@6.0.2` 已覆盖（实测 domain / host-only / path 语义完备） |
 > | RSA「交叉验证」 | **判断有误，已修正** —— 见下方「评审修正」 |
 > | 录制（ffmpeg） | **未做**。需要二进制分发，与浏览器工作台形态冲突，另行立项 |
@@ -72,7 +72,7 @@ DISCLAIMER.md / SECURITY.md   使用边界与安全边界声明
 
 - **类型**：**B · 其他 JS 项目**
   —— ⚠ **不是 A 类**。上游没有 DSH 插件装载点，因此本包**不含上游 npm 锁版依赖**，
-  也**不能**套用 `dsh-zhiyun-paper` 的「锁版挂载」形状（那是 A 类专属）。
+  也**不能**套用 `dsh-zhiyun-host-paper` 的「锁版挂载」形状（那是 A 类专属）。
 - **集成方式**：**能力提取 + 封装**（B 类），**强化式集成**
 - **与现有功能的关系**：**重复且可强化** ✅
 
@@ -80,7 +80,7 @@ DISCLAIMER.md / SECURITY.md   使用边界与安全边界声明
 
 | 判据 | 本候选 |
 | --- | --- |
-| 仍是同一个面板 | ✅ 仍是「**智云课堂**」页（`dsh-zhiyun-classroom`），不新增独立页面、不改导航 |
+| 仍是同一个面板 | ✅ 仍是「**智云课堂**」页（`dsh-zhiyun-source-classroom`），不新增独立页面、不改导航 |
 | 功能仍相似正交 | ✅ 同属「**智云课堂的视频从哪来、怎么看**」。本仓只有**下载后的离线解析**与 **CAS 直连**；上游补的是**实时流观看/录制**与**OAuth2 授权码链路** |
 | 底层多调了更优质实现 | ✅ 上游的 **`_token` cookie → JWT** 抓取链路本仓**完全没有**；`CookieJar` 的完整度高于本仓手写版 |
 
@@ -88,7 +88,7 @@ DISCLAIMER.md / SECURITY.md   使用边界与安全边界声明
 
 ## 增强哪个现有功能
 
-`packages/dsh-zhiyun-classroom`（智云课堂页）的**直播 / 回放通路**。
+`packages/dsh-zhiyun-source-classroom`（智云课堂页）的**直播 / 回放通路**。
 
 | 本仓现状 | 上游补上的 | 结果 |
 | --- | --- | --- |
@@ -183,9 +183,9 @@ function encryptPassword(password, modulusHex, exponentHex) {
 
 1. **【首要】** 确认「提取能力而非挂载整体」成立 —— 不成立则本包废弃。
 2. 实测上游 OAuth2 链条**是否仍有效**（注释不是契约）。
-3. RSA 与 `packages/dsh-zhiyun-classroom/src/auth.js` **交叉验证**，不一致时以本仓为准。
-4. `CookieJar` 语义**归位到 `dsh-zhiyun-classroom/src/transport.js`**，
+3. RSA 与 `packages/dsh-zhiyun-source-classroom/src/auth.js` **交叉验证**，不一致时以本仓为准。
+4. `CookieJar` 语义**归位到 `dsh-zhiyun-source-classroom/src/transport.js`**，
    不许同一 profile 里有两套 cookie 状态。
-5. 凭据流向**全链路审计**，确认不绕开 `dsh-zhiyun-net-proxy`。
+5. 凭据流向**全链路审计**，确认不绕开 `dsh-zhiyun-source-netproxy`。
 6. 补 `tests/radar-zju-recorder.test.mjs`，其中「凭据不出现在任何 status/日志输出里」
    **必须是会红的测试**。

@@ -1,7 +1,7 @@
 /**
  * 上游包的**锁版凭据**（单一真源）。
  *
- * 与 `dsh-zhiyun-paper/src/upstream.js`、`dsh-radar-dsh-web/src/upstream.js` 同一套做法，理由相同，
+ * 与 `dsh-zhiyun-host-paper/src/upstream.js`、`dsh-radar-dsh-web/src/upstream.js` 同一套做法，理由相同，
  * 此处只记本包特有的部分：
  *
  *   1. `package.json` 里的依赖必须写**精确版本**（`0.14.0`，不是 `^0.14.0`）。
@@ -34,7 +34,7 @@ export const UPSTREAM_REPOSITORY = 'https://github.com/ronkok/Temml';
 /**
  * 本仓**没有**任何客户端公式渲染器（核对于 2026-10-18）。
  *
- * `dsh-zhiyun-lecture/src/tree.js` 的 `looksLikeNotationOnly()` 只用 `/^\$...\$$/`
+ * `dsh-zhiyun-core-lecture/src/tree.js` 的 `looksLikeNotationOnly()` 只用 `/^\$...\$$/`
  * 判断「整行是否为公式」，那是**分词启发式**，不是渲染；`$k_1$` 原样交给宿主
  * `MarkdownText` 显示。`dsh-zhiyun-page-paper/src/citations.js` 只处理「第 N 页」
  * 页码引用，与公式无关。

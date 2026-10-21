@@ -52,11 +52,11 @@
 //   1. 只做薄封装：`temml.renderToString(tex, options)` → MathML 字符串。
 //      **不要**重新实现解析、不要 fork、不要改上游产物。
 //   2. 确认 `displayMode` 的取法：`$$...$$` → `{ displayMode: true }`；
-//      `$...$` → 行内。分界符扫描**复用** `dsh-zhiyun-lecture/src/tree.js` 的
+//      `$...$` → 行内。分界符扫描**复用** `dsh-zhiyun-core-lecture/src/tree.js` 的
 //      `looksLikeNotationOnly()` 已有正则，不要另写一套（两套分界符判定必然漂移）。
 //   3. **降级必须有**：`throwOnError: false` + 上游的 `ParseError` 捕获；
 //      渲染失败时**原样输出源码**，而不是空白或报错框 —— 讲座笔记里一条坏公式
-//      不该毁掉整页（与 `dsh-zhiyun-parser` 的纠错策略同向）。
+//      不该毁掉整页（与 `dsh-zhiyun-core-parser` 的纠错策略同向）。
 //   4. 注入目标要窄：只处理**已经由本仓产出**的结构化文本字段，
 //      **不要**去改宿主 `MarkdownText` 的渲染管线（那是 `@deepseek-ai/dsh-client-ui-primitives`
 //      的地盘，改它等于接管宿主 UI 主张）。

@@ -43,11 +43,15 @@ export const HOST_SEEDS = [
  *    `tests/build-seeds.test.mjs` 有一条断言在盯着「有 client.jsx 的包是否都在这里」。
  */
 export const CLIENT_PACKAGES = [
-  'dsh-zhiyun-ui-primitives',
-  'dsh-zhiyun-player',
-  'dsh-zhiyun-shell',
-  'dsh-zhiyun-net-proxy',
-  'dsh-zhiyun-study-core',
+  'dsh-zhiyun-shell-ui',
+  'dsh-zhiyun-shell-workbench',
+  'dsh-zhiyun-source-netproxy',
+  'dsh-zhiyun-source-card',
+  'dsh-zhiyun-core-study',
+  // 回放下面那层「主线/语速/四汇总」由本包算，学习页 external import 它 ——
+  // 所以它必须有自己的客户端产物。（远端以旧名 `dsh-zhiyun-player` 加入，
+  // 本仓按性质改名为 `core-player`，合并时对应成新名。）
+  'dsh-zhiyun-core-player',
   'dsh-zhiyun-page-today',
   'dsh-zhiyun-page-study',
   'dsh-zhiyun-page-planning',

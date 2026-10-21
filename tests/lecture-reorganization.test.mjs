@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exportReorganization,mergeReorganization} from '../packages/dsh-zhiyun-lecture/src/agent-text.js';
+import {exportReorganization,mergeReorganization} from '../packages/dsh-zhiyun-core-lecture/src/agent-text.js';
 const lecture=()=>({title:'课',chapters:[{no:1,title:'旧章',topics:[{title:'封面',sourceBlockIndexes:[1,2],blocks:[{kind:'definition',title:'定义',text:'定义正文'},{kind:'example',title:'例题',stem:'题目条件',solution:'已讲的解答'}]}]}]});
 const record={blocks:[{index:1,page:4,startMs:1000,tag:{role:'主线',summary:'定义'}},{index:2,page:7,startMs:2000,tag:{role:'主线',summary:'例题'}}],outline:[]};
 const organized=()=>`#!section x 课

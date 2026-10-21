@@ -4,9 +4,9 @@ import sharp from 'sharp';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { composeSlides, collageRequest, splitCollage } from '../packages/dsh-zhiyun-parser/src/vision.js';
-import { LectureParser } from '../packages/dsh-zhiyun-parser/src/parser.js';
-import { Transport } from '../packages/dsh-zhiyun-classroom/src/transport.js';
+import { composeSlides, collageRequest, splitCollage } from '../packages/dsh-zhiyun-core-parser/src/vision.js';
+import { LectureParser } from '../packages/dsh-zhiyun-core-parser/src/parser.js';
+import { Transport } from '../packages/dsh-zhiyun-source-classroom/src/transport.js';
 import { lock } from '../scripts/profile.mjs';
 import { mountHost, answer, png } from './fixtures/parser/host.mjs';
 

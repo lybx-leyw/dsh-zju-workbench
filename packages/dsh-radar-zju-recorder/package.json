@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】从上游 p16e0nd/zju-recorder 提取智云 SSO（OAuth2 授权码 + _token cookie→JWT）与实时流观看/录制能力，强化 dsh-zhiyun-classroom 的直播通路（强化式集成）",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】从上游 p16e0nd/zju-recorder 提取智云 SSO（OAuth2 授权码 + _token cookie→JWT）与实时流观看/录制能力，强化 dsh-zhiyun-source-classroom 的直播通路（强化式集成）",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",

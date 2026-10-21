@@ -6,7 +6,7 @@
 //   - 硬边：浏览器面就地读（`ctx.loader`/`ctx.registry`/`ctx.reflect`），宿主面由本包
 //     `/api/zhiyun-plugins` 读出来 —— 两棵树互不可见，缺一面就会把 parser 这种「被
 //     study-core 硬依赖」的包误判成叶，而取消它的后果正是本仓 README 反复警告的那种。
-import { mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { mountStyle } from 'dsh-zhiyun-shell-ui';
 import { createStore } from './store.js';
 import { Panel } from './Panel.jsx';
 import css from './style.css';

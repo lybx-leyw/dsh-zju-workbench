@@ -45,7 +45,7 @@
 即：**它会自己接管 settings 的 `plugins` 分组**。
 
 这与 `dsh-paper-reader` 的客户端半边**刻意不引入**是**同一条理由**（见
-[`packages/dsh-zhiyun-paper/README.md`](../dsh-zhiyun-paper/README.md)）：
+[`packages/dsh-zhiyun-host-paper/README.md`](../dsh-zhiyun-host-paper/README.md)）：
 它会抢本仓外壳的布局主张与设置分组（`sidebar.workspaces`、`shell.overlay`、设置分组）。
 
 ⇒ **本包只挂宿主半边；UI 由 `dsh-zhiyun-page-plugins` 重写。**

@@ -30,7 +30,7 @@
  *
  * 缺任何一条都只能算重复集成，应当拒绝。
  *
- * ── 集成方式（效法 packages/dsh-zhiyun-paper / dsh-radar-plugin-audit）────
+ * ── 集成方式（效法 packages/dsh-zhiyun-host-paper / dsh-radar-plugin-audit）────
  *
  *   ❌ 不改上游源码。
  *   ✅ 锁版（写死 0.3.2，不用 `^`）引入上游。

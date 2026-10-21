@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Empty, Icon } from 'dsh-zhiyun-ui-primitives';
+import { Empty, Icon } from 'dsh-zhiyun-shell-ui';
 import { AssistantDrawer } from './AssistantDrawer.jsx';
 import { LibraryPanel } from './LibraryPanel.jsx';
 import { ReaderFrame } from './ReaderFrame.jsx';
