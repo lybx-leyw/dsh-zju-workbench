@@ -177,3 +177,156 @@ test('正常路径不受影响：所有区块都在且都是 ok', async () => {
   assert.equal(body.todos.xzzd.ok, true);
   assert.equal(body.todos.pta.ok, true);
 });
+
+/* ────────────────────────────── 中转站 10 分钟缓存 */
+
+/**
+ * 需求（OWNER）：中转站与学在浙大/PTA 的数据 **10 分钟内有缓存就走缓存**，
+ * 否则重新拉。
+ *
+ * 为什么：这些来源变化不频繁（老师不会每分钟发一次作业、别人也不会每分钟
+ * 往中转站里加一条），而每次刷新规划页都重拉一遍，等于把网络延迟重复加到
+ * 首屏。
+ *
+ * ⚠️ 但**用户自己新增/勾选的条目绝不能进这个缓存** —— 它们存在 `store` /
+ * `local` 里，本来就即时生效。缓存只包住"远端那一份"。
+ */
+
+/** 用可变时钟起一个 handler，便于把时间推过 TTL。 */
+function makeCachedHandler({ ttlMs = 10 * 60 * 1000, entries = [{ text: '来自中转站' }] } = {}) {
+  let clock = 1_000_000;
+  const pulls = [];
+  const handler = createHandler({
+    getConfig: () => ({ endpoint: 'https://relay.example/api', readKey: 'k1' }),
+    saveConfig: () => {},
+    store: { list() { return []; }, absorb() { return { added: entries, skipped: 0 }; } },
+    local: { list: () => [], find: () => null },
+    tickStore: null,
+    fetchRemote: async () => {
+      pulls.push(clock);
+      return { ok: true, entries, total: entries.length };
+    },
+    loadTodos: async () => ({
+      xzzd: { ok: true, rows: [], error: null },
+      pta: { ok: true, rows: [], error: null },
+    }),
+    savePtaCookie: async () => ({}),
+    ptaStatus: async () => ({ configured: false }),
+    plan: null,
+    remoteCacheTtlMs: ttlMs,
+  });
+  return { handler, pulls, advance: (ms) => { clock += ms; return clock; } };
+}
+
+test('中转站：10 分钟内重复刷新只拉一次', async () => {
+  const { handler, pulls } = makeCachedHandler();
+
+  await get(handler);
+  await get(handler);
+  await get(handler);
+
+  assert.equal(pulls.length, 1, `3 次刷新应只拉 1 次，实际 ${pulls.length} 次`);
+});
+
+test('中转站：缓存命中时 remote 标出 cached', async () => {
+  const { handler } = makeCachedHandler();
+  const first = await get(handler);
+  const second = await get(handler);
+
+  assert.equal(first.body.remote.cached, undefined, '第一次是真拉，不该标 cached');
+  assert.equal(second.body.remote.cached, true, '第二次应标 cached');
+});
+
+test('中转站：换 endpoint 或 readKey 立刻失效，不复用旧缓存', async () => {
+  // 这条是正确性边界：沿用 A 站的缓存会把 A 的内容显示成 B 的
+  const pulls = [];
+  let cfg = { endpoint: 'https://a.example/api', readKey: 'ka' };
+  const handler = createHandler({
+    getConfig: () => cfg,
+    saveConfig: () => {},
+    store: { list() { return []; }, absorb() { return { added: [], skipped: 0 }; } },
+    local: { list: () => [], find: () => null },
+    tickStore: null,
+    fetchRemote: async () => {
+      pulls.push(cfg.endpoint);
+      return { ok: true, entries: [], total: 0 };
+    },
+    loadTodos: async () => ({ xzzd: { ok: true, rows: [], error: null }, pta: { ok: true, rows: [], error: null } }),
+    savePtaCookie: async () => ({}),
+    ptaStatus: async () => ({ configured: false }),
+    plan: null,
+  });
+
+  await get(handler);
+  await get(handler);
+  assert.deepEqual(pulls, ['https://a.example/api'], '同一配置应复用缓存');
+
+  cfg = { endpoint: 'https://b.example/api', readKey: 'kb' };
+  await get(handler);
+  assert.deepEqual(pulls, ['https://a.example/api', 'https://b.example/api'], '换站必须重拉');
+});
+
+test('中转站：manual clear() 后立刻重拉', async () => {
+  const { handler, pulls } = makeCachedHandler();
+  await get(handler);
+  await get(handler);
+  assert.equal(pulls.length, 1);
+
+  handler.remoteCache.clear();
+  await get(handler);
+  assert.equal(pulls.length, 2, 'clear 后应重拉');
+});
+
+test('中转站：拉取失败**不进缓存**，下次照常重试', async () => {
+  // 失败缓存 10 分钟 = 用户修好配置后还要等十分钟，那是不可接受的
+  let fail = true;
+  let calls = 0;
+  const handler = createHandler({
+    getConfig: () => ({ endpoint: 'https://relay.example/api', readKey: 'k' }),
+    saveConfig: () => {},
+    store: { list() { return []; }, absorb() { return { added: [], skipped: 0 }; } },
+    local: { list: () => [], find: () => null },
+    tickStore: null,
+    fetchRemote: async () => {
+      calls += 1;
+      return fail
+        ? { ok: false, code: 'ECONNRESET', message: '断了' }
+        : { ok: true, entries: [{ text: 'x' }], total: 1 };
+    },
+    loadTodos: async () => ({ xzzd: { ok: true, rows: [], error: null }, pta: { ok: true, rows: [], error: null } }),
+    savePtaCookie: async () => ({}),
+    ptaStatus: async () => ({ configured: false }),
+    plan: null,
+  });
+
+  const bad = await get(handler);
+  assert.equal(bad.body.remote.error.code, 'ECONNRESET');
+
+  fail = false;
+  const good = await get(handler);
+  assert.equal(calls, 2, '失败不该被缓存住');
+  assert.equal(good.body.remote.synced, true);
+  assert.equal(good.body.remote.error, null);
+});
+
+test('用户自己的条目不受远端缓存影响', async () => {
+  // 缓存只包住远端那一份。本地新增/勾选必须永远即时可见。
+  const localEntries = [{ id: 'mine-1', title: '我自己加的' }];
+  const handler = createHandler({
+    getConfig: () => ({ endpoint: 'https://relay.example/api', readKey: 'k' }),
+    saveConfig: () => {},
+    store: { list() { return []; }, absorb() { return { added: [], skipped: 0 }; } },
+    local: { list: () => localEntries, find: () => null },
+    tickStore: null,
+    fetchRemote: async () => ({ ok: true, entries: [], total: 0 }),
+    loadTodos: async () => ({ xzzd: { ok: true, rows: [], error: null }, pta: { ok: true, rows: [], error: null } }),
+    savePtaCookie: async () => ({}),
+    ptaStatus: async () => ({ configured: false }),
+    plan: null,
+  });
+
+  await get(handler);
+  const second = await get(handler);   // 这一次远端走缓存
+  assert.equal(second.body.local.length, 1, '本地条目必须照常返回');
+  assert.equal(second.body.local[0].title, '我自己加的');
+});

@@ -63,6 +63,44 @@ const FETCH_TIMEOUT_MS = 15000;
 /** 一次拉取最多取回的条目数。 */
 const MAX_ENTRIES = 2000;
 
+/**
+ * 中转站内容的缓存有效期。
+ *
+ * 为什么是 10 分钟：中转站里的条目是"别人往里加的待办"，变化远不如自己
+ * 勾选/新增频繁。而每次刷新规划页都重新拉一遍，等于把一次网络往返加到首屏。
+ *
+ * ⚠️ 只缓存**远端**那一份。本地新增/勾选/删除都在 `store` 里，永远即时生效
+ * —— 用户自己改的东西绝不能因为缓存而看不见。
+ */
+export const REMOTE_CACHE_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * 一个只保一条的带键缓存（键变即失效）。
+ *
+ * 为什么不用 `sharedRead`：那个在 `dsh-zhiyun-source-campus` 里，且语义是
+ * "合并并发 + 复用结果"，与这里"按 endpoint+readKey 判新鲜度"不同。
+ * 这里只需要最简单的：同键且在 TTL 内 → 命中。
+ *
+ * @param options.ttlMs - 有效期，默认 10 分钟。
+ */
+function createRemoteCache({ ttlMs = REMOTE_CACHE_TTL_MS } = {}) {
+  let entry = null;
+  return {
+    /** @returns 命中则返回缓存值，否则 null。 */
+    get({ key, now = Date.now() }) {
+      if (!entry || entry.key !== key || now >= entry.until) return null;
+      return entry.value;
+    },
+    set({ key, now = Date.now() }, value) {
+      entry = { key, value, until: now + ttlMs };
+    },
+    /** 清空（测试与"手动刷新"用）。 */
+    clear() { entry = null; },
+    /** 当前缓存的时间点与键，供诊断展示。 */
+    peek() { return entry ? { key: entry.key, until: entry.until, ttlMs } : null; },
+  };
+}
+
 
 /* ══════════════════════════════════════════════════════════ 中转站传输层 */
 
@@ -630,17 +668,46 @@ async function readJsonBody(req, limit = 32 * 1024) {
 export function createHandler({
   getConfig, saveConfig: save, store, local, splitLocal, tickStore,
   fetchRemote, loadTodos, savePtaCookie, ptaStatus, plan,
+  /** 中转站缓存有效期（测试可调小；默认 10 分钟）。 */
+  remoteCacheTtlMs = REMOTE_CACHE_TTL_MS,
   /** 日志出口。默认静默：`log` 是 `apply` 作用域的闭包，这里拿不到，也不该依赖它。 */
   log = () => {},
 }) {
+  /**
+   * 中转站远端内容的缓存（10 分钟）。
+   *
+   * 挂在 handler 实例上而不是模块级：多个 handler（测试、多 profile）之间
+   * 不该共享缓存，否则一个 handler 的配置会看到另一个的数据。
+   */
+  const remoteCache = createRemoteCache({ ttlMs: remoteCacheTtlMs });
+
   /** 同步中转站：拉取 → 合并进本地 → 回新增条数。失败不抛，只带回错误。 */
   const sync = async () => {
     const config = getConfig();
     if (!config.endpoint || !config.readKey) {
       return { synced: false, added: 0, error: null };
     }
+    /**
+     * 中转站内容 10 分钟内复用上次结果。
+     *
+     * 依据：中转站是"别人往里加的待办"，变化远不如自己勾选频繁；而每次刷新
+     * 规划页都拉一遍，等于把网络延迟加到首屏上。
+     *
+     * 缓存键**必须含 endpoint + readKey**：换中转站或换读取口令之后拿到的
+     * 是另一份数据，复用旧缓存会把 A 站的内容显示成 B 站的。
+     *
+     * ⚠️ 只缓存远端那一份。`store.absorb()` 每次照常跑 —— 本地新增/勾选的
+     * 条目本来就在 `store` 里，不受这里影响。
+     */
+    const cacheKey = `${config.endpoint}\u0000${config.readKey}`;
+    const cached = remoteCache.get({ key: cacheKey, now: Date.now() });
+    if (cached) {
+      const { added } = store.absorb(cached.entries);
+      return { synced: true, added: added.length, total: cached.total, error: null, cached: true };
+    }
     const pulled = await fetchRemote(config);
     if (!pulled.ok) return { synced: false, added: 0, error: { code: pulled.code, message: pulled.message } };
+    remoteCache.set({ key: cacheKey, now: Date.now() }, { entries: pulled.entries, total: pulled.total ?? pulled.entries.length });
     const { added } = store.absorb(pulled.entries);
     return { synced: true, added: added.length, total: pulled.total ?? pulled.entries.length, error: null };
   };
@@ -707,7 +774,7 @@ export function createHandler({
     };
   };
 
-  return async function handler(req, res) {
+  const handler = async function handler(req, res) {
     const host = hostOf(req.headers.host);
     if (!['127.0.0.1', 'localhost', '::1'].includes(host)) {
       sendJson(res, 403, { error: '只接受回环访问' });
@@ -988,6 +1055,16 @@ export function createHandler({
     save({ endpoint, readKey });
     sendJson(res, 200, await snapshot());
   };
+
+  /**
+   * 把中转站缓存挂到 handler 上。
+   *
+   * 用途：调用方（页面/脚本/测试）可以 `handler.remoteCache.clear()` 强制下次
+   * 重新拉；也可以 `peek()` 看缓存是否命中、什么时候过期。
+   * 不暴露它的话，"想立刻刷新一次"就只剩重启进程这一条路。
+   */
+  handler.remoteCache = remoteCache;
+  return handler;
 }
 
 /* ══════════════════════════════════════════════════════════ 装配 */

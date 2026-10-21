@@ -470,8 +470,21 @@ export async function apply(ctx, config = {}) {
 
   // Local planning edits also ask for snapshots. They must not repeat a complete
   // campus crawl (five requests per course) or resubmit a rejected CAS login.
+  /**
+   * 待办缓存 10 分钟。
+   *
+   * 为什么是 10 分钟而不是 60 秒：学在浙大/PTA 上的待办变化并不频繁（老师
+   * 不会每分钟发一次作业），而每次刷新规划页都重拉一遍，等于把网络延迟
+   * 重复加到首屏上。实测单次冷拉 2–5 秒，用户感知很明显。
+   *
+   * 失效条件仍然严格：`key` 里含**账号**与**PTA cookie**，换账号/换 cookie
+   * 立刻失效；`invalidate()` 供手动刷新。
+   *
+   * ⚠️ 只影响"读平台数据"这一层。用户在规划页**自己新增/勾选/删除**的条目
+   * 存在 `store` / `local` 里，与这个缓存无关，永远即时生效。
+   */
   const loadTodos = sharedRead(loadTodosUncached, {
-    ttlMs: config.readTtlMs ?? 60000,
+    ttlMs: config.readTtlMs ?? 10 * 60 * 1000,
     key: async () => {
       await ensurePta();
       const cookies = await ptaSession.jar.getCookies(`${PTA_BASE}/`);
