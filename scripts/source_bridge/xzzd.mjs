@@ -60,19 +60,15 @@ export async function run({ account, dataDir, card }) {
   const rows = xzzd.rows ?? [];
 
   /**
-   * 登录分段：从 campus 服务里把 transport 的 `loginProfile` 取出来。
+   * 登录分段：从 campus 服务的 `loginProfile()` 取。
    *
-   * 这块以前是**黑盒** —— profile 只覆盖 `todos()` 内部，而"登录与读取"的
-   * 大头恰恰在登录。没有它就只能反问"为什么 4 秒"。
-   *
-   * ⚠️ `xzzdClient()` 复用的是同一个已登录的 transport（内部有 `xzzdAuthTask`
-   * 去重 + `hasXzzdSession` 短路），所以这里**不会再登录一次**，只是拿引用。
+   * ⚠️ 不要自己去 `xzzdClient().transport` 上摸 —— `transportFor()` 每次都
+   * `new Transport`，摸到的是新实例，`loginProfile` 永远是 undefined，
+   * 报告还会因此误判成"会话复用"（踩过）。
    */
   let loginProfile = null;
   try {
-    const campus = services.get('zhiyunCampus');
-    const api = await campus?.xzzdClient?.();
-    loginProfile = api?.transport?.loginProfile ?? null;
+    loginProfile = services.get('zhiyunCampus')?.loginProfile?.() ?? null;
   } catch { /* 诊断数据拿不到不影响主流程 */ }
 
   return {

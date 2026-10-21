@@ -1418,18 +1418,23 @@ def make_live_chain(platform: str, title: str, blurb: str, credentials: dict, li
     wall = data.get("wallMs")
     if isinstance(login, dict) or wall:
         parts = []
-        if isinstance(login, dict):
+        if isinstance(login, dict) and login.get("total") is not None:
             for label, key in (
                 ("SSO 预取", "prelude"),
                 ("CAS", "casLogin"),
-                ("落盘", "persist"),
             ):
                 span = login.get(key)
                 if isinstance(span, dict) and span.get("ms") is not None:
-                    parts.append(f"{label} {span['ms']}ms")
-            if login.get("totalRequests") is not None:
-                parts.append(f"登录共 {login['totalRequests']} 请求")
-        detail = " · ".join(parts) if parts else "没有登录（会话复用）"
+                    reqs = f"/{span['requests']} 请求" if span.get("requests") is not None else ""
+                    parts.append(f"{label} {span['ms']}ms{reqs}")
+            parts.append(f"登录共 {login.get('totalRequests')} 请求 · 小计 {login.get('total')}ms")
+            detail = " · ".join(parts)
+        elif isinstance(login, dict):
+            # 有对象但没 total：说明会话是从磁盘复用的，这次没走登录
+            detail = "本次走会话复用（未执行登录）"
+        else:
+            # 探针没拿到诊断数据 —— 别谎称"复用"，那会掩盖"其实登录了"
+            detail = "没有采到登录分段（仅诊断模式收集）"
         if wall:
             detail = f"整链路 {wall}ms · {detail}"
         result.add("登录耗时", PASS, detail=detail, evidence="")

@@ -296,18 +296,24 @@ export async function apply(ctx, config = {}) {
       stage('save');
       log('学在浙大会话已建立');
       /**
-       * 把分段贴到 transport 上，供上层（探针）读走。
-       * 各段的「请求数」也记 —— 光看毫秒分不清"跳数多"还是"某一跳慢"。
+       * 把分段贴到 **`xzzdSession`** 上，而不是 transport。
+       *
+       * ⚠️ 这里踩过一次：起初挂在 `transport.loginProfile` 上，结果探针读不到 ——
+       * 因为 `transportFor()` **每次都 `new Transport`**，探针事后调
+       * `xzzdClient()` 拿到的是另一个实例（登录早已完成、根本没走这段代码，
+       * 于是 `loginProfile` 是 undefined，报告还因此误判成"会话复用"）。
+       *
+       * `xzzdSession` 是真正跨调用复用的那个对象，挂它才不会被换掉。
        */
       if (marks.start) {
         const span = (a, b) => (marks[a] && marks[b]
           ? { ms: marks[b].at - marks[a].at, requests: marks[b].timings - marks[a].timings }
           : null);
-        transport.loginProfile = {
+        xzzdSession.loginProfile = {
           prelude: span('start', 'acquireSso'),
           ssoHandoff: span('acquireSso', 'casLogin'),
           casLogin: span('casLogin', 'save'),
-          persist: span('save', 'save'),
+          persistedAt: marks.save?.at ?? null,
           total: marks.save ? marks.save.at - marks.start.at : null,
           totalRequests: marks.save ? marks.save.timings - marks.start.timings : null,
         };
@@ -728,6 +734,17 @@ export async function apply(ctx, config = {}) {
     ptaRead,
     /** 学在浙大深入读取（活动 / 作业 / 课件 / 我的提交），只读。 */
     xzzdRead,
+    /**
+     * 上次登录的分段耗时（诊断用）。
+     *
+     * 为什么需要它：`profile` 只覆盖 `todos()` 内部，而"登录与读取"的大头
+     * 往往在登录那一段。没有这个入口，探针只能事后调 `xzzdClient()` 去摸
+     * transport —— 但 `transportFor()` 每次都 `new Transport`，摸到的是新实例，
+     * `loginProfile` 永远是 undefined（曾因此误报"会话复用"）。
+     *
+     * 这里直接读 `xzzdSession`（真正跨调用复用的对象），不会摸错。
+     */
+    loginProfile: () => xzzdSession.loginProfile ?? null,
   });
 
   /**
