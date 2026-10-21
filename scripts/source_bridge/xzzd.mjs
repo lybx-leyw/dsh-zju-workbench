@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 学在浙大：CAS（**不带** service）→ 待办。
  *
  * 取数走 campus 路由的 GET —— 那正是「规划」页用的那条：
@@ -27,17 +27,30 @@ export async function run({ account, dataDir, card }) {
   const route = routeOf(routes, '/api/zhiyun-campus', 'webServer');
   const data = await campusGet(route);
 
-  // `todos.ok === false` 是**链路失败**（会话、权限、网络），不是"没有待办"。
+  /**
+   * ⚠️ 形状是 `{ todos: { xzzd, pta }, pta: <status>, egress }` —— 注意
+   * `todos` 底下是**两个子对象**，不是 `{ok,rows,error}` 平铺。
+   *
+   * 这里踩过一次：写成 `data.todos.ok`，于是永远 falsy，误报成
+   * 「学在浙大读取失败 / XZZD_FAILED」，而真正的错误信息藏在
+   * `data.todos.xzzd.error` 里、根本没被读出来。报告只有一句空 evidence。
+   */
+  const xzzd = data?.todos?.xzzd ?? null;
+
+  // `xzzd.ok === false` 是**链路失败**（会话、权限、网络），不是"没有待办"。
   // 把它当空列表报"通过"会掩盖真问题 —— 这正是验收要看的。
-  if (!data?.todos?.ok) {
-    const error = data?.todos?.error ?? {};
+  if (!xzzd) {
+    throw Object.assign(new Error('campus 的 GET 没有返回 todos.xzzd'), { code: 'XZZD_SHAPE' });
+  }
+  if (!xzzd.ok) {
+    const error = xzzd.error ?? {};
     throw Object.assign(
       new Error(String(error.message ?? '学在浙大读取失败')),
       { code: error.code ?? 'XZZD_FAILED' },
     );
   }
 
-  const rows = data.todos.rows ?? [];
+  const rows = xzzd.rows ?? [];
   return {
     todos: rows.length,
     sample: String(rows[0]?.title ?? '').slice(0, 60),
