@@ -142,3 +142,40 @@ test('页面组件在没有宿主 ctx 时也不炸（这是它必须能独立打
     );
   }
 });
+
+/* ────────────────────────────── 添加入口：右下角浮动按钮 */
+
+/**
+ * 写入口原先常驻页面顶部（输入框 + 时间片 + 备注区），占首屏最大一块。
+ * 但用户多数时候是来**看**的 —— 那一大块只在真要添的时候才有意义。
+ *
+ * 现在收成一个圆形「+」，点了才展开面板。这组测试钉住：
+ *   1. **默认收起**：HTML 里没有输入框（否则首屏还是被它占着）；
+ *   2. 按钮本身存在，且带 `aria-expanded`（读屏要知道它控制一个面板）；
+ *   3. 它在**加载态也渲染** —— 用户可以先写一条，不必等数据读完。
+ */
+test('添加入口默认收起：HTML 里不出现输入框', async () => {
+  const React = (await import('react')).default;
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const client = await loadClient('d');
+
+  const html = renderToStaticMarkup(React.createElement(client.Planning, { ctx: null }));
+
+  assert.match(html, /zpg-fab/, '应渲染出浮动的添加入口');
+  assert.equal(
+    /zpg-composer-title/.test(html), false,
+    '默认不该渲染输入框 —— 那会重新占掉首屏',
+  );
+  assert.match(html, /aria-expanded="false"/, '按钮要声明当前是收起的');
+});
+
+test('加载中也能添加入口（不必等数据读完）', async () => {
+  // 无缓存时 loading 初始为 true，主体被替换成"正在读取" —— 但添加按钮必须还在
+  const React = (await import('react')).default;
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const client = await loadClient('e');
+
+  const html = renderToStaticMarkup(React.createElement(client.Planning, { ctx: null }));
+  assert.match(html, /正在读取/, '这个用例的前提是处于加载态');
+  assert.match(html, /zpg-fab/, '加载中也应能添加');
+});

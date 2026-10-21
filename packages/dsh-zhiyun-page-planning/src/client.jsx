@@ -18,7 +18,7 @@
 // # 版式依据
 //
 // 人体工效学 skill 的条款在 `style.css` 里逐条标注。
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Empty, Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
@@ -891,14 +891,6 @@ export function Planning({ ctx }) {
 
       {!loading && (
         <div className="zpg-slot">
-          {/* 写入口放在最前：这一页的主动作是"写下要做什么"，不是浏览别人推来的东西 */}
-          <PlanComposer
-            busy={composer.busy}
-            error={composer.error}
-            onCreate={createPlan}
-            schedule={schedule}
-          />
-
           {planMsg && (
             <p className={`zpg-plan-msg ${planMsg.kind === 'error' ? 'zpg-plan-msg-error' : ''}`} role="status">
               {planMsg.text}
@@ -1095,6 +1087,18 @@ export function Planning({ ctx }) {
           )}
         </div>
       )}
+
+      {/*
+        添加入口常驻在右下角（不随列表滚动）。放在页面根部而不是 `zpg-slot` 里：
+        `zpg-slot` 在加载态会被替换掉，而"添加"在加载中也应该可用 ——
+        用户可以先写一条，不必等数据读完。
+      */}
+      <PlanComposer
+        busy={composer.busy}
+        error={composer.error}
+        onCreate={createPlan}
+        schedule={schedule}
+      />
     </div>
   );
 }
@@ -1290,6 +1294,44 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
   const [due, setDue] = useState('');
   const [open, setOpen] = useState(false);
   /**
+   * 浮动面板是否展开。
+   *
+   * 写入口原先常驻在页面最上方（一整行输入框 + 一排时间片 + 备注区），
+   * 占据首屏最大的一块。但用户多数时候是来**看**的，不是来**写**的 ——
+   * 那一大块只在真要添的时候才有意义。
+   *
+   * 所以收成右下角的圆形「+」，点了才展开面板。
+   */
+  const [panel, setPanel] = useState(false);
+  const titleRef = useRef(null);
+  const rootRef = useRef(null);
+
+  /** 展开面板时把焦点给输入框 —— 点「+」之后可以直接打字。 */
+  useEffect(() => {
+    if (panel) titleRef.current?.focus();
+  }, [panel]);
+
+  /**
+   * 关闭面板的两条通路：`Escape`、以及点到面板外面。
+   *
+   * 只挂在这两个时机上（而不是一直监听）：面板关着的时候不该占任何全局监听。
+   * 有草稿时**不清空** —— 误关一下就把写了一半的东西丢了，比不关更烦人。
+   */
+  useEffect(() => {
+    if (!panel) return undefined;
+    const onKey = (event) => { if (event.key === 'Escape') setPanel(false); };
+    const onClick = (event) => {
+      if (rootRef.current && !rootRef.current.contains(event.target)) setPanel(false);
+    };
+    document.addEventListener('keydown', onKey);
+    // `mousedown` 而不是 `click`：click 要等到抬起，拖选文本时会误关
+    document.addEventListener('mousedown', onClick);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onClick);
+    };
+  }, [panel]);
+  /**
    * 快捷时间片的候选。
    *
    * ⚠️ 必须在**渲染时**算一次而不是模块级常量：它们基于"现在"，
@@ -1310,11 +1352,12 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
       due: due ? new Date(due).toISOString() : null,
     });
     if (created) {
-      // 只在**成功**时清空
+      // 只在**成功**时清空并收起：失败时保留草稿，让用户能改着重试
       setTitle('');
       setDetail('');
       setDue('');
       setOpen(false);
+      setPanel(false);
     }
   };
 
@@ -1328,91 +1371,103 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
   };
 
   return (
-    <form className="zpg-composer" onSubmit={submit}>
-      <div className="zpg-composer-row">
-        <label className="zpg-composer-title">
-          <span className="zpg-visually-hidden">要做什么</span>
-          <input
-            type="text"
-            value={title}
-            maxLength={80}
-            placeholder="要做什么？例如「周三前交第三章作业」"
-            onChange={(event) => setTitle(event.target.value)}
-            disabled={busy}
-            aria-label="要做什么"
-          />
-        </label>
-        <button type="submit" className="zy-primary zpg-composer-add" disabled={busy || !title.trim()}>
-          <Icon name="plus" size={16} />
-          {busy ? '正在保存…' : '添加'}
-        </button>
-      </div>
-
+    <div className="zpg-fab-wrap" ref={rootRef}>
       {/*
-        快捷时间片：像调闹钟一样，点一下就定好什么时候。
-        只在**没填时间时**显示 —— 已经有时间了还给一堆候选，等于让人再选一次。
+        收起态：右下角一个圆形「+」。
+        `aria-expanded` 让读屏知道它开了一个面板；`title` 给鼠标用户一句说明。
       */}
-      {!due && quick.length > 0 && (
-        <div className="zpg-quick" role="group" aria-label="快捷截止时间">
-          <span className="zpg-quick-hint">什么时候？</span>
-          {quick.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className="zpg-quick-item"
-              onClick={() => applyQuick(item.due)}
-              disabled={busy}
-            >
-              {item.label}
+      <button
+        type="button"
+        className={`zpg-fab ${panel ? 'zpg-fab-open' : ''}`}
+        onClick={() => setPanel((v) => !v)}
+        aria-expanded={panel}
+        aria-controls="zpg-composer-panel"
+        title={panel ? '收起（Esc）' : '添加一条规划'}
+      >
+        <Icon name={panel ? 'close' : 'plus'} size={22} />
+        <span className="zpg-visually-hidden">{panel ? '收起添加面板' : '添加一条规划'}</span>
+      </button>
+
+      {panel && (
+        <form id="zpg-composer-panel" className="zpg-composer zpg-composer-panel" onSubmit={submit} role="dialog" aria-label="添加一条规划">
+          <div className="zpg-composer-row">
+            <label className="zpg-composer-title">
+              <span className="zpg-visually-hidden">要做什么</span>
+              <input
+                ref={titleRef}
+                type="text"
+                value={title}
+                maxLength={80}
+                placeholder="要做什么？例如「周三前交第三章作业」"
+                onChange={(event) => setTitle(event.target.value)}
+                disabled={busy}
+                aria-label="要做什么"
+              />
+            </label>
+            <button type="submit" className="zy-primary zpg-composer-add" disabled={busy || !title.trim()}>
+              {busy ? '保存中…' : '添加'}
             </button>
-          ))}
-          <button
-            type="button"
-            className="zpg-quick-item zpg-quick-custom"
-            onClick={() => setOpen(true)}
-            disabled={busy}
-          >
-            自定义…
-          </button>
-        </div>
-      )}
+          </div>
 
-      {/* 备注与截止时间默认收起：绝大多数情况只需要写一句话 */}
-      {open ? (
-        <div className="zpg-composer-more">
-          <label className="zpg-field">
-            <span>备注（可选）</span>
-            <textarea
-              rows={3}
-              value={detail}
-              maxLength={500}
-              placeholder="一段话里塞了好几件事也没关系 —— 写完可以让 AI 帮你拆开"
-              onChange={(event) => setDetail(event.target.value)}
-              disabled={busy}
-            />
-          </label>
-          <label className="zpg-field zpg-field-inline">
-            <span>截止时间（可选）</span>
-            <input
-              type="datetime-local"
-              value={due}
-              onChange={(event) => setDue(event.target.value)}
-              disabled={busy}
-            />
-            {/* 课表上下文：只在真读到了课表时才说，读不到就一个字都不提 */}
-            {due && scheduleHint(schedule, due) && (
-              <small className="zpg-schedule-hint">{scheduleHint(schedule, due)}</small>
-            )}
-          </label>
-        </div>
-      ) : (
-        <button type="button" className="zpg-link" onClick={() => setOpen(true)}>
-          + 加备注或截止时间
-        </button>
-      )}
+          {/*
+            快捷时间片：像调闹钟一样，点一下就定好什么时候。
+            只在**没填时间时**显示 —— 已经有时间了还给一堆候选，等于让人再选一次。
+          */}
+          {!due && quick.length > 0 && (
+            <div className="zpg-quick" role="group" aria-label="快捷截止时间">
+              <span className="zpg-quick-hint">什么时候？</span>
+              {quick.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className="zpg-quick-item"
+                  onClick={() => applyQuick(item.due)}
+                  disabled={busy}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
 
-      {error && <p className="zpg-composer-error" role="alert">{error}</p>}
-    </form>
+          {/* 备注与截止时间默认收起：绝大多数情况只需要写一句话 */}
+          {open ? (
+            <div className="zpg-composer-more">
+              <label className="zpg-field">
+                <span>备注（可选）</span>
+                <textarea
+                  rows={3}
+                  value={detail}
+                  maxLength={500}
+                  placeholder="一段话里塞了好几件事也没关系 —— 写完可以让 AI 帮你拆开"
+                  onChange={(event) => setDetail(event.target.value)}
+                  disabled={busy}
+                />
+              </label>
+              <label className="zpg-field zpg-field-inline">
+                <span>截止时间（可选）</span>
+                <input
+                  type="datetime-local"
+                  value={due}
+                  onChange={(event) => setDue(event.target.value)}
+                  disabled={busy}
+                />
+                {/* 课表上下文：只在真读到了课表时才说，读不到就一个字都不提 */}
+                {due && scheduleHint(schedule, due) && (
+                  <small className="zpg-schedule-hint">{scheduleHint(schedule, due)}</small>
+                )}
+              </label>
+            </div>
+          ) : (
+            <button type="button" className="zpg-link" onClick={() => setOpen(true)}>
+              + 加备注或截止时间
+            </button>
+          )}
+
+          {error && <p className="zpg-composer-error" role="alert">{error}</p>}
+        </form>
+      )}
+    </div>
   );
 }
 

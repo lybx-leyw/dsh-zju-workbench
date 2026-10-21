@@ -1,7 +1,6 @@
 /* 「规划」页的样式。
  *
- * 三条硬约束，与其它页面包一致：
- *   1. **所有选择器带 `body[data-zhiyun]` 前缀**（本页类名统一 `zpg-`）。各包样式表是
+ * 三条硬约束，与其它页面包一致： *   1. **所有选择器带 `body[data-zhiyun]` 前缀**（本页类名统一 `zpg-`）。各包样式表是
  *      同特异性的独立 <style>，胜负只看挂载顺序；不加前缀的裸类会与别处撞车，
  *      `scripts/check-css-order.mjs` 拦的正是这类。
  *   2. **颜色只取外壳的 `--zy-*`**，不引入新色板 —— 换主题时这一页自动跟随。
@@ -772,3 +771,56 @@ body[data-zhiyun] .zpg-check-sm { width: 14px; height: 14px; margin-top: 2px; }
    2. 正文 13px 是 17.3′，已达 legibility floor 但未进 20–22′ 舒适区。再往上调
       就脱离外壳 13px 基准，这一页会与其余页面不一致。
  */
+
+/* ------------------------------------------------- 添加入口：右下角浮动按钮 */
+/* 写入口原先常驻页面顶部（输入框 + 时间片 + 备注区），占首屏最大一块。
+   但用户多数时候是来**看**的 —— 那一大块只在真要添的时候才有意义。
+   现在收成一个圆形「+」，点了才展开面板。
+
+   用 `position: absolute` 相对 `.zpg-page`，而不是 `fixed`：
+   外壳的 `.zy-content` 有一个入场动画（`transform: translateY`），
+   动画期间 `fixed` 会相对它而不是视口定位，位置会跳一下。 */
+body[data-zhiyun] .zpg-page { position: relative; }
+body[data-zhiyun] .zpg-fab-wrap {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+body[data-zhiyun] .zpg-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--zy-line);
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px color-mix(in srgb, #000 16%, transparent);
+  transition: transform .16s ease, background .16s ease;
+}
+body[data-zhiyun] .zpg-fab:hover { background: var(--zy-hover); transform: translateY(-1px); }
+body[data-zhiyun] .zpg-fab:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 2px; }
+/* 展开时换成「×」：同一个按钮既开又关，不必再放一个"关闭" */
+body[data-zhiyun] .zpg-fab-open { background: var(--zy-hover); }
+
+/* 面板：浮在按钮上方，靠右对齐。宽度用 min() 以免窄窗口溢出。 */
+body[data-zhiyun] .zpg-composer-panel {
+  width: min(420px, calc(100vw - 96px));
+  padding: 14px;
+  border: 1px solid var(--zy-line);
+  border-radius: 12px;
+  background: var(--zy-surface);
+  box-shadow: 0 16px 48px color-mix(in srgb, #000 22%, transparent);
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-zhiyun] .zpg-fab { transition: none; }
+}
