@@ -174,30 +174,40 @@ export function nextWeekday(now, weekday = 1) {
 /* ══════════════════════════════════════════ 周历的分格 */
 
 /**
- * 把有日期的条目按**周**分格（周一 → 周日）。
+ * 把有日期的条目排成**月历**（周日在第一列）。
+ *
+ * # 为什么是月历
+ *
+ * 之前是「按周对齐、铺 6 周」。用户要的是真正的月历：**顶上一行写周日→周六，
+ * 格子里只标日期数字，用 `<` `>` 翻月份**。周标签与"10月27日起"那类文字都不必要
+ * —— 它们只是重复了格子里的信息。
  *
  * # 为什么单独一个纯函数
  *
  * 这段计算原先写在 `client.jsx` 的 `useMemo` 里，测试只能**复刻**一份 ——
  * 结果就是"页面按周对齐了，测试还在断言连续 34 格"。复刻两份一定会漂，
- * 而日历分格的规则（哪些进、按哪天归、周从哪天起）是**必须**被测试钉住的。
+ * 而日历分格的规则（哪些进、按哪天归、每月第一格补几格）是必须被测试钉住的。
  *
- * 现在两边共用同一份实现：页面 `useMemo(() => buildWeekCalendar(...))`，
+ * 现在两边共用同一份实现：页面 `useMemo(() => buildMonthCalendar(...))`，
  * 测试直接调用。规则改一处，两边同时变。
  *
- * # 周界的选择
+ * # 周界
  *
- * 起点是**周一**（ISO），不是周日。国内日历与课表都从周一开始；把周日放
- * 第一列会让"上周末"与"本周一"之间隔着整行。
+ * 起点是**周日**（`getDay()` 天然如此：周日=0）。国内日历也有周日起排的版本，
+ * 用户明确要求这一种。
  *
- * 窗口：从本周一**往前推一周**开始（回看刚过去的），往后铺 5 周。
- * 再远的事情用列表看更合适 —— 塞进格子只会让最后几周空成马赛克。
+ * # 首尾补格
+ *
+ * 月历的每一行都得是 7 格，所以月初前面用上月末尾补齐、月末后面用下月开头补齐。
+ * 补齐的格子标 `outside: true` —— 它们**照常显示条目**（那天的待办确实在那天），
+ * 只是视觉上淡一点，让人一眼看出"不属于本月"。
  *
  * @param rows - 候选条目（`{ id, due, done }`，`due` 是 ISO 串或 null）。
  * @param options.now - 当前毫秒时间戳（注入以便测试）。
- * @returns `{ weeks, outside, undated }`。
+ * @param options.monthOffset - 相对当月的偏移：0=本月，-1=上月，1=下月。
+ * @returns `{ weeks, monthKey, monthLabel, weekdayLabels, outside, undated }`。
  */
-export function buildWeekCalendar(rows, { now = Date.now() } = {}) {
+export function buildMonthCalendar(rows, { now = Date.now(), monthOffset = 0 } = {}) {
   const dated = rows.filter((row) => {
     if (!row.due) return false;
     return !Number.isNaN(Date.parse(row.due));
@@ -211,39 +221,70 @@ export function buildWeekCalendar(rows, { now = Date.now() } = {}) {
     byDay.get(key).push(row);
   }
 
-  const todayAt = Date.parse(dayKey(Math.floor(now / 1000)) + 'T00:00:00+08:00');
-  const today = new Date(todayAt);
-  // getDay()：周日=0、周一=1 …… 换算成"距本周一多少天"（周一=0）
-  const dowOffset = (today.getDay() + 6) % 7;
-  const weekStart = todayAt - dowOffset * 86400000;
   const todayKey = dayKey(Math.floor(now / 1000));
+  const todayAt = Date.parse(`${todayKey}T00:00:00+08:00`);
+
+  /**
+   * 取某个上海日历日期的各分量。
+   *
+   * ⚠️ 不能用 `date.getDay()` / `getUTCMonth()`：前者按**宿主时区**算，
+   * 后者按 UTC 算，而这一页的口径是上海。开发机不在 +08 时，
+   * 两者都会给出错的一天（周末甚至差一整格）。
+   */
+  const partsOf = (ms) => {
+    const p = new Intl.DateTimeFormat('en-CA', {
+      timeZone: ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(new Date(ms));
+    const grab = (type) => Number(p.find((x) => x.type === type)?.value);
+    return { year: grab('year'), month: grab('month'), day: grab('day') };
+  };
+  /** 上海口径的星期：周日=0。 */
+  const dowOf = (ms) => {
+    const label = new Intl.DateTimeFormat('en-US', { timeZone: ZONE, weekday: 'short' }).format(new Date(ms));
+    return { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[label] ?? 0;
+  };
+
+  const nowParts = partsOf(now);
+  // 目标月：把 monthOffset 归一化，允许跨年
+  const rawMonth = nowParts.month - 1 + monthOffset;
+  const targetYear = nowParts.year + Math.floor(rawMonth / 12);
+  const targetMonth = ((rawMonth % 12) + 12) % 12 + 1;   // 1-based
+
+  // 目标月 1 号（上海），用 UTC 构造再减 8 小时
+  const firstUtc = Date.UTC(targetYear, targetMonth - 1, 1);
+  const firstAt = firstUtc - 8 * 3600 * 1000;
+  const daysInMonth = Math.round((Date.UTC(targetYear, targetMonth, 1) - firstUtc) / 86400000);
+
+  // 月历第一格：回退到包含 1 号的那一周的**周日**
+  const gridStart = firstAt - dowOf(firstAt) * 86400000;
+  const totalCells = Math.ceil((dowOf(firstAt) + daysInMonth) / 7) * 7;
 
   const weeks = [];
-  for (let w = -1; w < 5; w += 1) {
-    const weekDays = [];
-    for (let d = 0; d < 7; d += 1) {
-      const at = weekStart + (w * 7 + d) * 86400000;
-      const key = dayKey(at / 1000);
-      weekDays.push({
-        key,
-        date: new Date(at),
-        isToday: key === todayKey,
-        isPast: at < todayAt,
-        rows: (byDay.get(key) ?? []).sort((a, b) => Date.parse(a.due) - Date.parse(b.due)),
-      });
-    }
-    weeks.push({ key: dayKey(weekStart / 1000 + w * 7 * 86400), days: weekDays });
+  for (let i = 0; i < totalCells; i += 1) {
+    const at = gridStart + i * 86400000;
+    const parts = partsOf(at);
+    const day = {
+      key: dayKey(at / 1000),
+      date: new Date(at),
+      /** 属于本月吗（首尾补的格子不属于）。 */
+      outside: parts.year !== targetYear || parts.month !== targetMonth,
+      /** 只在格子里显示日期数字，星期由表头统一给出。 */
+      dayNumber: parts.day,
+      isToday: dayKey(at / 1000) === todayKey,
+      isPast: at < todayAt,
+      rows: (byDay.get(dayKey(at / 1000)) ?? []).sort((a, b) => Date.parse(a.due) - Date.parse(b.due)),
+    };
+    if (i % 7 === 0) weeks.push({ key: day.key, days: [] });
+    weeks[weeks.length - 1].days.push(day);
   }
-
-  // 超出窗口的日期不丢：单独列出来，避免"我的事不见了"
-  const windowKeys = new Set(weeks.flatMap((week) => week.days.map((day) => day.key)));
-  const outside = [...byDay.entries()]
-    .filter(([key]) => !windowKeys.has(key))
-    .map(([key, rows]) => ({ key, rows }));
 
   return {
     weeks,
-    outside,
+    monthKey: `${targetYear}-${String(targetMonth).padStart(2, '0')}`,
+    monthLabel: new Intl.DateTimeFormat('zh-CN', { timeZone: ZONE, year: 'numeric', month: 'long' })
+      .format(new Date(firstAt + 86400000)),
+    /** 表头：周日 → 周六。页面直接渲染，不再每格重复星期。 */
+    weekdayLabels: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
     total: dated.length,
     undated: rows.filter((row) => !row.due || Number.isNaN(Date.parse(row.due))).length,
   };

@@ -723,20 +723,55 @@ body[data-zhiyun] .zpg-view .zpg-view-on {
   font-weight: 600;
 }
 
-/* ------------------------------------------------------------ 日历 */
-/* 按周对齐的 7 列表格：每一行是周一到周日。
-   写死 7 列（`repeat(7, …)`）而不是 auto-fill：它**必须是**一周一行，
-   auto-fill 会在窄屏下折成 5 列，那就不是周历了。
+/* ------------------------------------------------------------ 日历（月历） */
+/* 真正的月历：顶上一行「周日 … 周六」，格子里只标日期数字，`<` `>` 翻月份。
+   格子写死 7 列（`repeat(7, …)`）而不是 auto-fill —— 它**必须是**七列，
+   auto-fill 会在窄屏折成 5 列，那就不是日历了。
 
-   窄屏下格子会窄到挤；这是可接受的取舍 —— 日历的语义（周/星期）比
-   格子宽度重要。真要处理窄屏，应当做成横向滚动，而不是破坏七列。 */
-body[data-zhiyun] .zpg-cal-week { margin-bottom: 18px; }
-body[data-zhiyun] .zpg-cal-week-label {
-  margin: 0 0 8px;
-  font-size: var(--zy-fs-sm);
+   窄屏下格子会窄到挤；这是可接受的取舍 —— 日历的语义（星期对齐）比格子宽度
+   重要。真要处理窄屏应当做横向滚动，而不是破坏七列。 */
+
+/* 月份栏：`‹ 2026年10月 ›` + 可选的「回到本月」 */
+body[data-zhiyun] .zpg-cal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+body[data-zhiyun] .zpg-cal-month {
+  font-size: var(--zy-fs-base);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+body[data-zhiyun] .zpg-cal-nav {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-text);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+body[data-zhiyun] .zpg-cal-nav:hover { background: var(--zy-hover); }
+body[data-zhiyun] .zpg-cal-nav:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
+body[data-zhiyun] .zpg-cal-today-btn { margin-left: 4px; }
+
+/* 表头：只写一次星期。格子里不再重复 —— 纵向对齐已经说明了它是星期几。 */
+body[data-zhiyun] .zpg-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: var(--zy-fs-meta);
   color: var(--zy-secondary);
 }
+body[data-zhiyun] .zpg-cal-weekdays > span { padding-left: 2px; }
+
 body[data-zhiyun] .zpg-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -744,49 +779,43 @@ body[data-zhiyun] .zpg-cal-grid {
 }
 body[data-zhiyun] .zpg-cal-cell {
   min-height: 84px;
-  padding: 8px 9px 9px;
+  padding: 6px 7px 8px;
   border: 1px solid var(--zy-line);
   border-radius: 8px;
   background: var(--zy-surface);
 }
+/* 上月末 / 下月初补的格子：存在但不抢眼，一眼能看出不属于本月 */
+body[data-zhiyun] .zpg-cal-outside { opacity: .45; background: transparent; }
 /* 今天：左侧强调条 + 加粗的日期。形状通道（ch03 规则 3），不靠色相。 */
 body[data-zhiyun] .zpg-cal-today { border-left: 3px solid var(--zy-accent); }
 /* 已经过去、且还有没做完的事 —— 这才是需要看见的"欠着"。 */
 body[data-zhiyun] .zpg-cal-past { border-left: 3px solid #c0392b; }
-/* 空格子：降低存在感但不隐藏（"这天没安排"本身就是信息） */
-body[data-zhiyun] .zpg-cal-blank { background: transparent; border-style: dashed; }
 body[data-zhiyun] .zpg-cal-head {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
-body[data-zhiyun] .zpg-cal-weekday { font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
-body[data-zhiyun] .zpg-cal-day { font-size: var(--zy-fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
-body[data-zhiyun] .zpg-cal-today .zpg-cal-day { color: var(--zy-accent); }
-/* 「今天」小标：文字本身已表态，颜色只作辅助 */
-body[data-zhiyun] .zpg-cal-badge {
-  margin-left: auto;
+body[data-zhiyun] .zpg-cal-day {
   font-size: var(--zy-fs-meta);
-  color: var(--zy-accent);
-  border: 1px solid var(--zy-accent);
-  border-radius: 4px;
-  padding: 0 4px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--zy-secondary);
 }
-body[data-zhiyun] .zpg-cal-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-body[data-zhiyun] .zpg-cal-item { display: flex; align-items: flex-start; gap: 6px; }
+body[data-zhiyun] .zpg-cal-today .zpg-cal-day { color: var(--zy-accent); }
+body[data-zhiyun] .zpg-cal-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+body[data-zhiyun] .zpg-cal-item { display: flex; align-items: flex-start; gap: 5px; }
 /* 标题两行截断：格子里放不下长标题，但两行足够认出是哪件事；完整标题在 title 属性里 */
 body[data-zhiyun] .zpg-cal-title {
   flex: 1;
   min-width: 0;
-  font-size: var(--zy-fs-sm);
+  font-size: var(--zy-fs-meta);
   line-height: 1.45;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-body[data-zhiyun] .zpg-cal-none { margin: 0; font-size: var(--zy-fs-meta); color: var(--zy-secondary); }
 body[data-zhiyun] .zpg-cal-note {
   margin: 12px 0 0;
   font-size: var(--zy-fs-sm);
