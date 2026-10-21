@@ -71,7 +71,19 @@ test('empty profile → saved account SSO → all five endpoints → planning ro
  assert.ok(rows.some(r=>r.title==='Open classroom'&&r.due===null));
  assert.ok(!rows.some(r=>r.title==='Submitted exam'));
  assert.equal(rows.filter(r=>r.title==='Submitted').length,1,'course one has no submission records; course two is submitted');
- assert.equal(h.maxActive(),1);assert.equal(h.authorizations(),1);
+ /*
+  * 并发口径（OWNER 决策，2026-10-21）：
+  *
+  * 课内那 5 个端点已改为并行 —— 它们彼此独立、总请求数不变，只省 RTT。
+  * 所以这里不再要求 maxActive() === 1，而是钉住两件真正要守的事：
+  *
+  *   1. **有上限**：最多 5（= 一门课的端点数）。若哪天有人"顺手"把课程
+  *      也全并发了，瞬间并发会冲到 5×课程数，这条会立刻变红；
+  *   2. **课程之间仍串行**：`COURSE_CONCURRENCY` 保持 1 —— 那才是真正
+  *      会成倍放大并发的维度，也是风控的实际来源。
+  */
+ assert.ok(h.maxActive()<=5,`课内 5 端点并行，同时在飞不该超过 5，实测 ${h.maxActive()}`);
+ assert.equal(h.authorizations(),1);
 });
 test('expired business session retries its read once without repeating course discovery',async t=>{
  const h=await harness(t,{expire:true});const result=await h.service.todos();

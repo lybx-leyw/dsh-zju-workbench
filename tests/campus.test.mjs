@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 
 import {
   XzzdApi, buildCourseTodos, isPendingTodo, normalizeDeadline, hasXzzdSession,
-  API_MY_SEMESTERS, API_MY_COURSES, courseApis, ONGOING_STATUS,
+  API_MY_SEMESTERS, API_MY_COURSES, courseApis, ONGOING_STATUS, COURSE_CONCURRENCY,
 } from '../packages/dsh-zhiyun-source-campus/src/xzzd.js';
 import {
   PtaApi, parsePtaCookie, yesterdayUtcMidnight, isPendingProblemSet,
@@ -582,4 +582,115 @@ test('拼题A 未配 Cookie 时报"需要粘贴"，不是笼统的失败', async
     false,
     'CAMPUS_FAILED 是兜底码，出现它说明抛了没有 code 的普通错误（如常量未定义）',
   );
+});
+
+/* ────────────────────────────────────── courseBundle：课内 5 端点并行 */
+
+/**
+ * 这组测试钉住「课内并行」的契约（OWNER 决策 2026-10-21）。
+ *
+ * 背景：30 门课的待办原先要 78 秒 —— 每门课 5 个端点串行，5 个 RTT × 30。
+ * 改成并行后每门课只花 1 RTT（实测等比基准 15200ms → 3250ms）。
+ *
+ * 并行最怕三件事，下面逐条钉住：
+ *   1. **假并行**：写起来像并发，实际还是一个个 await（性能没变好）；
+ *   2. **429 被吞**：限流信号被别的成功结果掩盖，继续压接口；
+ *   3. **403 不再降级**：单个端点没权限本该只丢那一类，却让整门课失败。
+ */
+
+/** 造一门课的场景：学期 + 课程 + 5 个端点。 */
+function courseScenario(endpoints) {
+  return recorder([
+    ['/api/my-semesters', () => json({ semesters: [{ id: 100, is_active: true }] })],
+    ['/api/my-courses', () => json({ courses: [{ id: 7, name: '课', status: 'ongoing' }] })],
+    ...endpoints,
+  ]);
+}
+
+test('courseBundle 的 5 个端点真的并发（不是挨个 await）', async () => {
+  // 用「同时在飞的请求数」判定，而不是看代码形状：
+  // 真并发 → 峰值 > 1；串行 → 恒为 1。
+  let inFlight = 0;
+  let peak = 0;
+  const slow = (payload) => async () => {
+    inFlight += 1;
+    peak = Math.max(peak, inFlight);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    inFlight -= 1;
+    return json(payload);
+  };
+
+  const fetchImpl = courseScenario([
+    ['/activities', slow({ activities: [] })],
+    ['/exams', slow({ exams: [] })],
+    ['/homework/submission-status', slow({ activities: [] })],
+    ['/submitted-exams', slow({ submitted_exams: [] })],
+    ['/classroom-list', slow({ classrooms: [] })],
+  ]);
+
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  await api.courseBundle(7);
+
+  assert.ok(peak > 1, `5 个端点应同时在飞，实测峰值 = ${peak}（=1 说明还是串行）`);
+});
+
+test('courseBundle 遇到 429 立即中止，不重试放大', async () => {
+  let hits = 0;
+  const fetchImpl = courseScenario([
+    ['/activities', async () => { hits += 1; return new Response('{}', { status: 429 }); }],
+    ['/exams', () => json({ exams: [] })],
+    ['/homework/submission-status', () => json({ activities: [] })],
+    ['/submitted-exams', () => json({ submitted_exams: [] })],
+    ['/classroom-list', () => json({ classrooms: [] })],
+  ]);
+
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  await assert.rejects(
+    () => api.courseBundle(7),
+    (error) => error.code === 'RATE_LIMITED',
+    '429 必须以 RATE_LIMITED 抛出，不能被降级成空数组',
+  );
+  assert.equal(hits, 1, '限流端点只该被打一次（不得自动重试）');
+});
+
+test('courseBundle 的 403 仍然只丢那一类，不拖垮整门课', async () => {
+  const fetchImpl = courseScenario([
+    ['/activities', () => new Response('{}', { status: 403 })],
+    ['/exams', () => json({ exams: [{ id: 1 }] })],
+    ['/homework/submission-status', () => json({ activities: [] })],
+    ['/submitted-exams', () => json({ submitted_exams: [] })],
+    ['/classroom-list', () => new Response('{}', { status: 403 })],
+  ]);
+
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  const bundle = await api.courseBundle(7);
+
+  assert.deepEqual(bundle.activities, [], '403 的活动列表降级为空');
+  assert.deepEqual(bundle.classrooms, [], '403 的课堂互动降级为空');
+  assert.equal(bundle.exams.length, 1, '没被 403 的端点照常返回');
+});
+
+test('courseBundle 的 SESSION_EXPIRED 必须抛出（并行也不能吞）', async () => {
+  const fetchImpl = courseScenario([
+    ['/activities', () => new Response('{}', { status: 401 })],
+    ['/exams', () => json({ exams: [] })],
+    ['/homework/submission-status', () => json({ activities: [] })],
+    ['/submitted-exams', () => json({ submitted_exams: [] })],
+    ['/classroom-list', () => json({ classrooms: [] })],
+  ]);
+
+  const api = new XzzdApi(await makeTransport(fetchImpl, [XZZD_COOKIE]));
+  await assert.rejects(
+    () => api.courseBundle(7),
+    (error) => error.code === 'SESSION_EXPIRED',
+    '会话失效是整体失败，不能被并行的成功分支掩盖',
+  );
+});
+
+test('课程之间仍然串行：COURSE_CONCURRENCY 保持 1', async () => {
+  // 课内并行放开了，但**跨课程**必须还是串行 —— 那才是会成倍放大并发的维度。
+  assert.equal(COURSE_CONCURRENCY, 1);
+  // 且并发参数仍被限制在 1..2，不允许悄悄放宽
+  const api = new XzzdApi(await makeTransport(recorder([]), [XZZD_COOKIE]));
+  await assert.rejects(() => api.todos({ concurrency: 8 }), /并发/, '并发参数不允许超过 2');
 });

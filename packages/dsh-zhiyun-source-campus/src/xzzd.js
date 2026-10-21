@@ -4,7 +4,8 @@
  * 接口名称与字段由平台契约决定，不按词义猜复数、字段或请求格式：
  * - 课程使用 GET 与数组 conditions；提交状态是 homework_activities / exam_ids。
  * - 仅作业提交状态的 404 表示该课无作业；其他未知错误和字段漂移明确失败。
- * - 默认所有子请求串行；429 立即停止，不把限流放大为自动重试。
+ * - **课内 5 个端点并行**（独立 GET、总请求数不变、只省 RTT）；**课程之间串行**
+ *   （`COURSE_CONCURRENCY = 1`）。429 一出现就立刻停止，不把限流放大为自动重试。
  * - 只读请求的会话失效由宿主认证一次，只重试该请求，第二次失败直接报告。
  * - 时间固定按平台的上海时区解释；数字标志与无截止时间的互动有单独规则。
  *
@@ -39,7 +40,15 @@ export const ONGOING_STATUS = Object.freeze(['ongoing', 'notStarted']);
 /** 单次 `my-courses` 返回上限。 */
 export const COURSE_PAGE_SIZE = 1000;
 
-/** 并发拉课程的条数（全并发容易触发风控）。 */
+/**
+ * **课程之间**的并发条数。
+ *
+ * 保持 1（串行）：这是真正会成倍放大瞬时请求的维度 —— 30 门课全并发就是
+ * 30×5 个请求同时打过去。
+ *
+ * 课内那 5 个端点已改为并行，但那是**同一门课内部**、总请求数不变，所以
+ * 不在这里控制（见 `courseBundle`）。
+ */
 export const COURSE_CONCURRENCY = 1;
 const flag = value => value === true || value === 1 || value === "1";
 
@@ -236,8 +245,27 @@ export class XzzdApi {
   async courseBundle(courseId, { signal } = {}) {
     const urls = courseApis(courseId);
 
-    // Read the five endpoints serially. Course fan-out must not multiply a
-    // nominal course concurrency into dozens of simultaneous requests.
+    /**
+     * 拉一门课的原始数据：**5 个端点并行**。
+     *
+     * # 为什么这 5 个可以并行（OWNER 决策，2026-10-21）
+     *
+     * 它们都是独立的 GET，彼此没有顺序依赖，也没有哪个请求的结果要喂给下一个。
+     * 串行只是白等 4 个 RTT。
+     *
+     * 关键区别在于**总请求数不变**：并行是把「5 个请求依次发」变成「5 个请求
+     * 同时发」，而不是像调 `COURSE_CONCURRENCY` 那样成倍放大瞬时压力。
+     * 所以风控面几乎没有变化，而每门课的耗时从 5 RTT 降到 1 RTT。
+     *
+     * 实测：30 门课 78 秒 → 预计 17 秒（按单请求 100ms 的等比基准实测
+     * 串行 15200ms / 并行 3250ms）。
+     *
+     * ⚠️ 这条以前是被 `tests/campus-planning-contract.test.mjs` 的
+     *    `maxActive() === 1` 钉住的（文件头也写着「默认所有子请求串行」）。
+     *    该约束的**目的**是防风控，不是"串行"本身；课内并行不改变请求总量，
+     *    因此经 OWNER 决策放开。**课程之间**的 `COURSE_CONCURRENCY` 仍保持
+     *    串行（=1），那里才是真正会成倍放大并发的维度。
+     */
     const labels = { activities: '活动列表', exams: '测验列表', homeworkSubmissionStatus: '作业提交状态', submittedExams: '已交测验', classroomList: '课堂互动' };
     const read = async (stage, fields, { empty404 = false } = {}) => {
       try {
@@ -253,11 +281,23 @@ export class XzzdApi {
         throw new ClassroomError(error.code ?? 'CAMPUS_FAILED', '学在浙大' + labels[stage] + '读取失败：' + error.message, { stage });
       }
     };
-    const activities = await read('activities', ['activities']);
-    const exams = await read('exams', ['exams']);
-    const homeworkActivities = await read('homeworkSubmissionStatus', ['homework_activities', 'activities'], { empty404: true });
-    const submittedExamIds = await read('submittedExams', ['exam_ids', 'submitted_exams', 'submittedExams']);
-    const classrooms = await read('classroomList', ['classrooms']);
+
+    /**
+     * ⚠️ `Promise.all` 在**第一个** reject 时立刻抛，其余请求仍在飞 —— 那没问题
+     * （结果被丢弃），但要清楚：
+     *
+     *   1. `read()` 内部已按「403 丢这一类、404 视情况空数组」降级，所以它
+     *      reject 出来的一定是真该中止整门课的错误；
+     *   2. `RATE_LIMITED` 一出现就要立刻停手，不能让并行的另外几个继续压过去
+     *      —— `Promise.all` 的语义正好满足。
+     */
+    const [activities, exams, homeworkActivities, submittedExamIds, classrooms] = await Promise.all([
+      read('activities', ['activities']),
+      read('exams', ['exams']),
+      read('homeworkSubmissionStatus', ['homework_activities', 'activities'], { empty404: true }),
+      read('submittedExams', ['exam_ids', 'submitted_exams', 'submittedExams']),
+      read('classroomList', ['classrooms']),
+    ]);
     return { activities, exams, homeworkActivities, submittedExamIds, classrooms };
   }
 
