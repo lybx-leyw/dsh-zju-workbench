@@ -223,6 +223,29 @@ export async function xzzdLogin(transport, credentials, { signal } = {}) {
   const { username, password } = credentials ?? {};
   if (!username || !password) throw new ClassroomError('CREDENTIALS', '请先在「设置 → 浙大一卡通」填入学号与密码');
 
+  /**
+   * ## 第 0 步：先用**业务会话**探一下，能通就完全不必碰 CAS
+   *
+   * 学在浙大的登录态落在 `courses.zju.edu.cn` 的 `session` cookie 上，
+   * 与 CAS 的 `iPlanetDirectoryPro` 是**两个独立生命周期**：CAS 票据通常
+   * 几十分钟就过期，而业务 session 往往还能用很久。
+   *
+   * 早先这里只检查 `iPlanetDirectoryPro`，于是出现下面这种白等：
+   *
+   *   - 业务 session 完全有效 → 但 CAS 票据过期了 → 走完整 CAS（4 跳 + RSA
+   *     加密 + 授权跳转），实测约 6 秒
+   *   - 而实际只需要**一个** `GET /user/index`（p50 105ms）
+   *
+   * 这就是"冷启动要等 6 秒"的主要来源。参照 `zju-mcp` 的做法：它把会话缓存
+   * 15 分钟，期间完全不重登。
+   *
+   * ⚠️ 安全性：这一步**不验证密码**，只验证"已有的 session cookie 还能不能读
+   * 到自己的数据"。它不能替代登录 —— 只有在调用方已经持有会话（同一进程复用，
+   * 或从 DPAPI 文件恢复）时才会走到这里；没有 cookie 时 `probeBusinessSession`
+   * 会立刻返回 false，照常走完整 CAS。
+   */
+  if (await probeBusinessSession(transport, { signal })) return;
+
   // A previous attempt may have completed CAS but stopped during business
   // redirects. Continue that ticket; do not invalidate it with another POST.
   const existing = await transport.session.jar.getCookies(`${CAS_BASE}/login`);
@@ -320,6 +343,56 @@ export async function xzzdLogin(transport, credentials, { signal } = {}) {
   // 从 /user/index 起步，一路跟到站点不再重定向为止。
   // 每一跳都经过 Transport，它会按 hosts 白名单把 Set-Cookie 收进 jar。
   return xzzdAuthorize(transport, { signal });
+}
+
+/**
+ * 探测「已有的业务会话还能不能用」。
+ *
+ * 发**一个** `GET /user/index`：
+ *
+ *   - 200 且停留在 `courses.zju.edu.cn` → 会话有效，直接返回 true（省掉整条 CAS）
+ *   - 302 去 CAS / 401 / 403 / 落到登录页 → false，调用方走完整登录
+ *   - 网络错误 → 原样抛出（那是网络问题，不该被当成"需要重登"）
+ *
+ * 为什么要单独抽一个函数而不是复用 `xzzdAuthorize`：后者会**跟跳转**，
+ * 落到 CAS 时就抛 `AUTH_EXPIRED`。探测需要的是"能通/不能通"这个布尔，
+ * 抛异常会让控制流变复杂，而且它的错误码语义与真正登录失败不同。
+ *
+ * @returns 会话是否仍然有效。
+ */
+async function probeBusinessSession(transport, { signal } = {}) {
+  // 没有任何业务 cookie 时不必发请求 —— 一定是未登录
+  let cookies;
+  try {
+    cookies = await transport.session.jar.getCookies(`${COURSES_BASE}/user/index`);
+  } catch {
+    return false;
+  }
+  if (!cookies.some((cookie) => cookie.key === 'session' && cookie.value)) return false;
+
+  let step;
+  try {
+    step = await hop(transport, `${COURSES_BASE}/user/index`, { signal });
+  } catch (error) {
+    // 网络类错误照常抛：把它当"未登录"会导致无谓的密码提交
+    if (error?.code === 'NETWORK' || error?.code === 'TIMEOUT') throw error;
+    return false;
+  }
+
+  // 有跳转 = 被踢去 CAS 或别处，会话已不可用
+  if (step.location) return false;
+  if (step.status !== 200) return false;
+
+  // 落到登录页（CAS 表单特征）同样视为无效
+  if (executionToken(step.text)) return false;
+
+  // 最后确认站点仍认为自己有会话
+  try {
+    const after = await transport.session.jar.getCookies(`${COURSES_BASE}/user/index`);
+    return after.some((cookie) => cookie.key === 'session' && cookie.value);
+  } catch {
+    return false;
+  }
 }
 
 /** Continue an existing SSO ticket without submitting the password again. */

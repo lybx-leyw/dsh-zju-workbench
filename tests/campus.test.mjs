@@ -26,6 +26,7 @@ import {
 import { normalizeXzzd, normalizePta } from '../packages/dsh-zhiyun-source-campus/src/index.js';
 import { Transport, AUTH_HOSTS } from '../packages/dsh-zhiyun-source-campus/src/cas/transport.js';
 import { SessionStore } from '../packages/dsh-zhiyun-source-campus/src/cas/session.js';
+import { xzzdLogin } from '../packages/dsh-zhiyun-source-campus/src/cas/login.js';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { CAMPUS_HOSTS } from '../packages/dsh-zhiyun-source-campus/src/hosts.js';
@@ -953,4 +954,93 @@ test('Transport 在收到 Set-Cookie 时不 await 落盘', async () => {
 
   assert.ok(elapsed < 150, `请求不该等待落盘，实测 ${elapsed}ms`);
   await store.flush();
+});
+
+/* ────────────────────────────── 登录复用：业务会话有效时不碰 CAS */
+
+/**
+ * 这是「冷启动 6 秒」的主要来源（2026-10-21 实测）。
+ *
+ * 学在浙大的登录态在 `courses.zju.edu.cn` 的 `session` cookie 上，与 CAS 的
+ * `iPlanetDirectoryPro` 是**两个独立生命周期**：CAS 票据几十分钟就过期，
+ * 业务 session 往往还能用很久。
+ *
+ * 旧实现只检查 CAS 票据，于是「业务 session 完全有效、但 CAS 票据过期」也要
+ * 走完整 CAS（4 跳 + RSA + 授权），白等约 6 秒。而实际只需要一个
+ * `GET /user/index`（p50 105ms）。
+ *
+ * 修法：登录前先拿已有 session 探一次，通就直接返回。
+ */
+
+/** 造一个"业务会话有效"的 fetch：/user/index 回 200，不跳转。 */
+function validSessionFetch() {
+  return recorder([
+    ['/user/index', () => new Response('<html>我的课程</html>', {
+      status: 200, headers: { 'content-type': 'text/html' },
+    })],
+  ]);
+}
+
+/** 给 transport 装一个 courses 的 session cookie。 */
+async function withSessionCookie(cookies = [['session=alive; Domain=.courses.zju.edu.cn; Path=/', 'https://courses.zju.edu.cn/user/index']]) {
+  const fetchImpl = validSessionFetch();
+  const transport = await makeTransport(fetchImpl, [...cookies, XZZD_COOKIE]);
+  return { transport, fetchImpl };
+}
+
+test('业务会话有效时，登录只发 1 个请求且不提交密码', async () => {
+  const { transport, fetchImpl } = await withSessionCookie();
+  await xzzdLogin(transport, { username: 'u', password: 'p' });
+
+  const urls = fetchImpl.calls.map((c) => c.url);
+  assert.equal(urls.length, 1, `应只探一次 /user/index，实际 ${urls.length} 个请求：${urls.join(', ')}`);
+  assert.ok(urls[0].includes('/user/index'), '探的必须是业务页');
+  assert.equal(urls.some((u) => u.includes('/cas/login')), false, '不该碰 CAS 登录页');
+  assert.equal(urls.some((u) => u.includes('getPubKey')), false, '不该取公钥（那意味着要提交密码）');
+});
+
+test('业务会话被踢回 CAS 时，老老实实走完整登录', async () => {
+  // /user/index 302 去 CAS → 探针应判为无效，继续登录
+  const fetchImpl = recorder([
+    ['/user/index', () => new Response('', {
+      status: 302, headers: { location: 'https://zjuam.zju.edu.cn/cas/login?service=x' },
+    })],
+    ['/cas/login', () => new Response('<html><input name="execution" value="e1s1"></html>', {
+      status: 200, headers: { 'content-type': 'text/html' },
+    })],
+  ]);
+  const transport = await makeTransport(fetchImpl, [XZZD_COOKIE]);
+
+  // 会走到 CAS 流程；这里只断言"确实去碰了 CAS"，不模拟完整登录
+  await xzzdLogin(transport, { username: 'u', password: 'p' }).catch(() => {});
+  const urls = fetchImpl.calls.map((c) => c.url);
+  assert.ok(urls.some((u) => u.includes('/cas/login')), '会话无效时必须回退到 CAS 登录');
+});
+
+test('没有 session cookie 时不发探测请求（省一跳）', async () => {
+  const fetchImpl = recorder([]);
+  const transport = await makeTransport(fetchImpl, []);
+
+  await xzzdLogin(transport, { username: 'u', password: 'p' }).catch(() => {});
+  const first = fetchImpl.calls[0];
+  // 第一跳必须是 CAS 登录页，不能先探业务页
+  assert.ok(first && first.url.includes('/cas/login'), `第一跳应是 CAS，实际 ${first?.url}`);
+});
+
+test('探测遇到网络错误时向上抛，不误判成"需要重登"', async () => {
+  // 网络错误当成未登录 → 会白提交一次密码（可能累加失败计数），必须避免
+  const fetchImpl = async (url) => {
+    if (String(url).includes('/user/index')) {
+      const error = new Error('boom');
+      error.code = 'NETWORK';
+      throw error;
+    }
+    return new Response('{}', { status: 200 });
+  };
+  const transport = await makeTransport(fetchImpl, [XZZD_COOKIE]);
+  await assert.rejects(
+    () => xzzdLogin(transport, { username: 'u', password: 'p' }),
+    (error) => error.code === 'NETWORK',
+    '网络错误应原样抛出，不该被吞成 false 然后去提交密码',
+  );
 });
