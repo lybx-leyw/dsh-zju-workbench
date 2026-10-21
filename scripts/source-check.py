@@ -11,7 +11,7 @@
                             进程退出即消失，不写任何文件
 ```
 
-凭证**绝不落盘**，这有三条硬保证（见 `CredentialVault` 与 `LIVE_JS`）：
+凭证**绝不落盘**，这有三条硬保证（见 `CredentialVault` 与 `scripts/source_bridge/`）：
 
 1. 从来没有 `open(..., 'w')` 碰过它 —— 会话罐是纯内存的 `SessionStore({})`，
    共享层对"没有 file 的 SessionStore"直接不写盘（`save()` 立刻返回）；
@@ -679,218 +679,6 @@ def run_probe(v: Verifier, names: list[str]) -> dict[str, dict]:
 # 环境变量只存在于两个进程的内存里，不写磁盘、不进 shell 历史（我们不拼命令行参数）。
 # 子进程退出即销毁。命令行参数才是危险的那条路（`ps` 可见 + 进历史），所以不用它。
 
-LIVE_JS = r"""
-import { pathToFileURL } from 'node:url';
-
-const root = process.argv[2];
-const platforms = process.argv.slice(3);
-const emit = (value) => process.stdout.write('@@RESULT@@' + JSON.stringify(value) + '\n');
-// 包内 `src/` 的绝对 URL。调用方永远传**目录 URL**（以 / 结尾），
-// 拼接时也只拼相对文件名 —— 早先写成 `rel(pkg) + '../cas/http.js'`，
-// 那会从 `src/` 往上跳到包根的 `cas/`，直接 MODULE_NOT_FOUND。
-const srcOf = (name) => pathToFileURL(root + 'packages/' + name + '/src/').href;
-
-// ── 共享：内存会话 + Transport ────────────────────────────────────────────
-// 会话罐**不传 file** → 共享层对没有 file 的 SessionStore 直接不写盘。
-// 这是"凭证不落盘"的技术保证，而不是我们的口头承诺。
-const { Transport, SessionStore, ClassroomError } = await import(srcOf('dsh-zhiyun-source-campus') + 'cas/http.js');
-
-/**
- * 共享出口：**与生产路径同一套策略**。
- *
- * 不接它的后果实测过：直连 `api.cc98.org` 时 `globalThis.fetch` 会走宿主为 LLM
- * 配的全局代理，10.7 秒后 NETWORK 失败；而走 egress 的 undici 直连 97ms 就拿到
- * 响应。也就是说，不接出口会把"代理打不通国内站点"误报成"数据源坏了"。
- *
- * 这里用 `auto` 模式，但不提供 `onWebvpnRequired`：验证器**不替用户登 WebVPN**
- * （那需要上网账号，属于产品行为，不该藏在验证工具里）。需要网关时会抛
- * `WEBVPN_REQUIRED`，那本身就是一条有价值的结论 ——「这条链路在校外需要网关」。
- */
-const { createEgress, loadUndici } = await import(srcOf('dsh-zhiyun-source-campus') + 'egress.js');
-const EGRESS_LOG = [];
-const egress = createEgress({
-  mode: 'auto',
-  undici: await loadUndici(),
-  log: (message) => EGRESS_LOG.push(String(message)),
-});
-
-function memorySession() { return new SessionStore({}); }
-
-function transportFor(hosts, referer) {
-  return new Transport({
-    session: memorySession(),
-    timeoutMs: 25000,
-    fetch: egress.fetch,
-    hosts: new Set(hosts),
-    referer,
-    log: () => {},
-  });
-}
-
-function fail(error) {
-  return { ok: false, code: error?.code ?? error?.name ?? 'ERROR', message: String(error?.message ?? error).slice(0, 400) };
-}
-
-async function runCc98(account) {
-  const { Cc98Client, Cc98Reader, TokenStore, CC98_HOSTS, REFERER } = await import(srcOf('dsh-zhiyun-source-cc98') + 'index.js');
-  const session = memorySession();
-  const tokens = new TokenStore({ store: session, account: async () => account });
-  const client = new Cc98Client({ tokens, session, fetch: egress.fetch });
-  const reader = new Cc98Reader(client);
-
-  const hot = await reader.hot({ range: 'today' });
-  const boards = await reader.boards();
-  const newest = await reader.newTopics({ size: 5 });
-  const results = {
-    hot: hot.topics.length,
-    boards: boards.groups.reduce((n, g) => n + g.boards.length, 0),
-    newTopics: newest.topics.length,
-  };
-  // 顺带验一次「详情 + 楼层」与 UBB 清洗：这是本包最容易悄悄坏的地方。
-  const first = newest.topics[0] ?? hot.topics[0];
-  if (first?.id) {
-    const topic = await reader.topic({ topic_id: first.id, size: 3 });
-    results.topic = { id: topic.id, posts: topic.posts.length, total: topic.total_floors };
-    results.topicTextSample = String(topic.posts[0]?.text ?? '').slice(0, 80);
-  }
-  return results;
-}
-
-async function runXzzd(account) {
-  const { xzzdLogin } = await import(srcOf('dsh-zhiyun-source-campus') + 'cas/login.js');
-  const { XzzdApi, hasXzzdSession } = await import(srcOf('dsh-zhiyun-source-campus') + 'xzzd.js');
-  const { CAMPUS_HOSTS, XZZD_BASE } = await import(srcOf('dsh-zhiyun-source-campus') + 'hosts.js');
-
-  const transport = transportFor(CAMPUS_HOSTS, `${XZZD_BASE}/user/index`);
-  await xzzdLogin(transport, account);
-  if (!(await hasXzzdSession(transport))) {
-    throw Object.assign(new Error('登录流程结束但没有拿到学在浙大会话'), { code: 'AUTH_INCOMPLETE' });
-  }
-  const api = new XzzdApi(transport);
-  const todos = await api.todos();
-  return { todos: todos.todos.length, sample: String(todos.todos[0]?.title ?? '').slice(0, 60) };
-}
-
-async function runZdbk(account) {
-  const { casLogin } = await import(srcOf('dsh-zhiyun-source-zdbk') + 'cas.js');
-  const { ZdbkClient } = await import(srcOf('dsh-zhiyun-source-zdbk') + 'client.js');
-  const { ZdbkReader } = await import(srcOf('dsh-zhiyun-source-zdbk') + 'reads.js');
-  const { ZDBK_HOSTS, ZDBK_BASE } = await import(srcOf('dsh-zhiyun-source-zdbk') + 'hosts.js');
-
-  const transport = transportFor(ZDBK_HOSTS, `${ZDBK_BASE}/`);
-  await casLogin(transport, { credentials: async () => account });
-  const reader = new ZdbkReader(new ZdbkClient(transport));
-  const grades = await reader.grades();
-  const timetable = await reader.timetable().catch(() => null);
-  return {
-    grades: grades.items?.length ?? grades.length ?? null,
-    gpa: grades.gpa?.value ?? grades.summary?.gpa ?? null,
-    timetable: Array.isArray(timetable?.days) ? timetable.days.length : null,
-  };
-}
-
-async function runClassroom(account) {
-  const { authenticate } = await import(srcOf('dsh-zhiyun-source-classroom') + 'auth.js');
-  const { ClassroomSource } = await import(srcOf('dsh-zhiyun-source-classroom') + 'source.js');
-  const source = new ClassroomSource({ sessionFile: null, fetch: egress.fetch, log: () => {} });
-  const login = await authenticate(source.transport, account);
-  if (!login?.authenticated && login?.authenticated !== undefined) {
-    throw Object.assign(new Error('课堂登录未确认'), { code: 'AUTH_INCOMPLETE' });
-  }
-  const courses = await source.listCourses();
-  return { courses: courses.items.length, complete: courses.meta?.complete ?? null };
-}
-
-async function runXxt(cookie) {
-  const { XxtClient } = await import(srcOf('dsh-zhiyun-source-xxt') + 'client.js');
-  const { XxtReader } = await import(srcOf('dsh-zhiyun-source-xxt') + 'reads.js');
-  // 纯内存会话 + 直接种 Cookie：学习通按域分片，让客户端自己种。
-  const client = new XxtClient({ session: memorySession(), env: {}, fetch: egress.fetch });
-  await client.importCookie(cookie);
-  const reader = new XxtReader(client);
-  const courses = await reader.courses();
-  return { courses: Array.isArray(courses?.courses) ? courses.courses.length : (Array.isArray(courses) ? courses.length : null) };
-}
-
-async function runPta(cookie) {
-  const { PtaApi } = await import(srcOf('dsh-zhiyun-source-campus') + 'pta.js');
-  const { parsePtaCookie } = await import(srcOf('dsh-zhiyun-source-campus') + 'pta.js');
-  const { PTA_BASE, PTA_HOST } = await import(srcOf('dsh-zhiyun-source-campus') + 'hosts.js');
-  // 拼题A 是**整串 Cookie** 认证：解析成 name=value 对，逐条种进 jar。
-  const session = memorySession();
-  const parsed = parsePtaCookie(cookie);
-  if (!parsed) {
-    throw Object.assign(new Error('没有从输入里识别出 Cookie（接受 cURL / 请求头 / DevTools 表格 / 裸字符串）'), { code: 'COOKIE_INVALID' });
-  }
-  for (const pair of parsed.cookie.split(';').map(s => s.trim()).filter(Boolean)) {
-    const eq = pair.indexOf('=');
-    if (eq <= 0) continue;
-    await session.jar.setCookie(`${pair}; Domain=.pintia.cn; Path=/`, PTA_BASE + '/');
-  }
-  const api = new PtaApi(new Transport({
-    session,
-    timeoutMs: 25000,
-    fetch: egress.fetch,
-    hosts: new Set([PTA_HOST, 'passport.pintia.cn', 'www.pintia.cn']),
-    referer: PTA_BASE + '/',
-    log: () => {},
-  }));
-  const sets = await api.problemSets({ includeEnded: false });
-  const out = { problemSets: sets.problemSets.length, total: sets.total };
-  // 顺带验一次看题链路：取第一个题集的题目列表（只读，不开始考试）。
-  const first = sets.problemSets[0];
-  if (first?.id) {
-    const problems = await api.problems(first.id, { limit: 5 });
-    out.problems = problems.problems.length;
-    out.problemType = problems.typeLabel ?? problems.problemType;
-    if (problems.problems[0]?.id) {
-      const detail = await api.problem(first.id, problems.problems[0].id, { maxCharacters: 400 });
-      out.problemTitle = String(detail.title ?? '').slice(0, 60);
-      out.problemChars = detail.totalCharacters;
-    }
-  }
-  return out;
-}
-
-const RUNNERS = { cc98: runCc98, xzzd: runXzzd, zdbk: runZdbk, classroom: runClassroom, xxt: runXxt, pta: runPta };
-
-for (const platform of platforms) {
-  const begin = Date.now();
-  try {
-    let payload;
-    if (platform === 'xxt') {
-      payload = await runXxt(process.env.VERIFY_XXT_COOKIE ?? '');
-    } else if (platform === 'pta') {
-      payload = await runPta(process.env.VERIFY_PTA_COOKIE ?? '');
-    } else if (platform === 'cc98') {
-      // CC98 有自己的账号体系，用**它自己的**那一组环境变量。
-      payload = await runCc98({
-        username: process.env.VERIFY_CC98_USER ?? '',
-        password: process.env.VERIFY_CC98_PASS ?? '',
-      });
-    } else {
-      payload = await RUNNERS[platform]({
-        username: process.env.VERIFY_ZJU_USER ?? '',
-        password: process.env.VERIFY_ZJU_PASS ?? '',
-      });
-    }
-    emit({ platform, ok: true, ms: Date.now() - begin, data: payload, egress: egress.state() });
-  } catch (error) {
-    emit({ platform, ok: false, ms: Date.now() - begin, ...fail(error), egress: egress.state() });
-  }
-}
-
-await egress.close().catch(() => {});
-"""
-
-
-def write_live_probe() -> Path:
-    target = ROOT / ".verify-scratch" / "source-check" / "live.mjs"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(LIVE_JS, encoding="utf-8")
-    return target
-
-
 def run_live(v: Verifier, platforms: list[str], account: Account | None, cookie: str | None,
              cc98: Account | None = None, pta: str | None = None) -> dict[str, dict]:
     """跑真机探针。凭证走**环境变量**交给子进程（不进命令行、不进 `ps`、不进历史）。
@@ -912,10 +700,13 @@ def run_live(v: Verifier, platforms: list[str], account: Account | None, cookie:
     if cookie:
         extra["VERIFY_XXT_COOKIE"] = cookie
 
-    probe = write_live_probe()
+    # 桥接器：`scripts/source_bridge/`（一个域一个文件）。
+    # 它负责「造最小 ctx → apply() → 走包自己的 connection 路由 / 服务」，
+    # 所以这里只传平台名与凭证，不碰任何包的内部实现。
+    bridge = ROOT / "scripts" / "source_bridge" / "index.mjs"
     root_arg = str(ROOT).replace("\\", "/").rstrip("/") + "/"
     code, out, err = v.run(
-        [v.node, str(probe), root_arg, *platforms],
+        [v.node, str(bridge), "--root", root_arg, "--platform", ",".join(platforms)],
         timeout=max(v.timeout, 120) * 2,
         extra_env=extra,
     )
@@ -1564,6 +1355,13 @@ def make_live_chain(platform: str, title: str, blurb: str, credentials: dict, li
                    detail=f"{where} · {via} · 模式 {egress.get('mode')}",
                    evidence="降级：undici 不可用，请求会受全局代理影响"
                             if egress.get("degraded") else "")
+
+    # 桥接器报告「这条链路要的凭证没给」—— 那是 SKIP，不是 FAIL。
+    # 判定顺序放在 ok 之前：它也是 ok=False，但语义完全不同。
+    if item.get("skipped"):
+        result.add("凭证", SKIP, detail=item.get("message") or "没有提供凭证",
+                   evidence="在网页里提交即可（凭证只在进程内存里，不落盘）；勾选离线可明确跳过。")
+        return result
 
     if not item.get("ok"):
         code = item.get("code") or "ERROR"
