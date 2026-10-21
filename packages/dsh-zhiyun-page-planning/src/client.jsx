@@ -414,14 +414,49 @@ export function Planning({ ctx }) {
   /**
    * 勾掉一条**平台待办**（学在浙大 / 拼题A）。
    *
-   * 这是本机标记，不写回平台 —— 见 `ticks.js` 顶部的说明。
+   * # 状态完全在本端，所以必须**乐观更新**
+   *
+   * 网关只传待办内容，不传状态；"勾没勾"只存在本机 `ticks.json` 里。
+   * 也就是说这一个动作**不依赖任何远端结果** —— 本地改完就已经是最终状态。
+   *
+   * 所以这里先改 `state.ticks`（界面立刻变），再异步把这一次写下去。
+   * 之前走统一的 `mutate()`：那会先置忙态、等一轮往返、再拿回**整份快照**
+   * 才更新界面。数据没错，但用户点一下要等「网络 + 快照重算」才看到勾，
+   * 对"本端状态"这种事来说是没必要的延迟。
+   *
+   * 失败处理：把乐观改动**回滚**，并把原因显示出来 —— 不能让用户以为勾上了
+   * 而磁盘上其实没写进去（下次打开又会弹回未勾）。
    */
-  const toggleTodo = useCallback((row) => mutate(
-    'todo-done',
-    { source: row.source, id: row.id, done: !row.done },
-    // 复合键：两个平台的 id 都是小整数，不区分来源会撞（`xzzd:12` vs `pta:12`）
-    { id: `todo:${row.source}:${row.id}` },
-  ), [mutate]);
+  const toggleTodo = useCallback(async (row) => {
+    const key = `${row.source}:${row.id}`;
+    const nextDone = !row.done;
+    const before = state.ticks ?? {};
+
+    // ① 本地立刻生效
+    setState((current) => {
+      const ticks = { ...(current.ticks ?? {}) };
+      if (nextDone) ticks[key] = { doneAt: Math.floor(Date.now() / 1000) };
+      else delete ticks[key];
+      return { ...current, ticks };
+    });
+
+    // ② 再把它写下去（不阻塞界面）
+    try {
+      const payload = await settings('todo-done', { source: row.source, id: row.id, done: nextDone });
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+      /**
+       * ⚠️ 这里**不调用 `apply(payload)`**。
+       *
+       * 服务端回的是整份快照，展开它会用服务端的 `ticks` 覆盖本地刚做的乐观
+       * 改动；两者理论上一致，但多此一举，且会让刚更新的界面再抖一次。
+       * 只要 `ticks[key]` 与 `payload.ticks[key]` 一致就无事可做。
+       */
+    } catch (failure) {
+      // 回滚：磁盘没写成功就不能让界面显示"已勾"
+      setState((current) => ({ ...current, ticks: before }));
+      setPlanMsg({ kind: 'error', text: `勾选没有保存：${failure.message}` });
+    }
+  }, [state.ticks]);
 
   /** 勾选 AI 拆出的卡片（状态落在 plans.json，不碰中转站）。 */
   const toggleCard = useCallback((row) => mutate(

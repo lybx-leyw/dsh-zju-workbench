@@ -278,8 +278,17 @@ test('路由能勾平台待办，并把 ticks 放进快照', async () => {
     assert.deepEqual(r.body.ticks['xzzd:101'] !== undefined, true);
     assert.equal(r.body.ticks['pta:101'], undefined, '同名 id 的另一边不该被连带勾上');
 
-    // 快照里也要有 todos，页面据此渲染
-    assert.ok(r.body.todos?.xzzd?.rows, '快照要带 todos');
+    /**
+     * ⚠️ 这里**刻意不再要求**响应里带整份快照。
+     *
+     * 勾选是**纯本端状态**：网关只传待办内容，不传状态，所以写盘完成即最终结果。
+     * 旧实现把 `...await snapshot()` 拼进响应，等于每勾一下都要重算并序列化几十 KB
+     * （本地副本也要读盘、算 mask、拼 todos）—— 而前端已经乐观更新过，拿了也用不上。
+     *
+     * 现在的契约是「只回这一次改动」：`{ ok, key, done, ticks: { <key>: … } }`。
+     * 页面靠自己的 `state.ticks` 渲染，下一次快照自然会带上完整表。
+     */
+    assert.equal(r.body.todos, undefined, '勾选不该回整份快照（那是纯本端状态）');
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -321,3 +330,73 @@ test('勾选不需要模型服务（纯粹是本机写）', async () => {
   }
 });
 
+
+/* ────────────────────────────── 打勾只回本次改动（不回整份快照） */
+
+/**
+ * 需求（OWNER）：网关只传待办内容，**不传状态**；所有状态都在本端。
+ * 所以「勾一下」必须是本端立刻生效的纯本地写，不该顺带重算远端数据。
+ *
+ * 这组测试钉两件事：
+ *   1. 响应只含**这一次**改动（不含整份 todos / entries）；
+ *   2. 重复勾同一键是幂等的，且不产生额外记录。
+ */
+
+test('打勾的响应只含本次改动，不含整份快照', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'plan-tick-shape-'));
+  try {
+    const store = new TickStore(path.join(dir, 'ticks.json'));
+    const handler = makeHandler({ tickStore: store, todos: EMPTY_TODOS });
+
+    const r = await call(handler, 'POST', '/?todo-done', { source: 'xzzd', id: '7', done: true });
+
+    assert.equal(r.status, 200);
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.key, 'xzzd:7');
+    assert.equal(r.body.done, true);
+    // 只带这一个键
+    assert.deepEqual(Object.keys(r.body.ticks), ['xzzd:7']);
+    // 整份数据一律不出现
+    for (const banned of ['todos', 'entries', 'remote', 'pta', 'plans', 'local']) {
+      assert.equal(r.body[banned], undefined, `不该回 ${banned}`);
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('取消勾选回空 ticks（表示这一键已删除）', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'plan-tick-del-'));
+  try {
+    const store = new TickStore(path.join(dir, 'ticks.json'));
+    const handler = makeHandler({ tickStore: store, todos: EMPTY_TODOS });
+
+    await call(handler, 'POST', '/?todo-done', { source: 'xzzd', id: '7', done: true });
+    const r = await call(handler, 'POST', '/?todo-done', { source: 'xzzd', id: '7', done: false });
+
+    assert.equal(r.body.ok, true);
+    assert.equal(r.body.done, false);
+    assert.deepEqual(r.body.ticks, {});
+    // 存储里也真的删了，否则下次快照会把它带回"已勾"
+    assert.equal(store.isDone('xzzd', '7'), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('反复勾同一个键不会让 ticks 文件膨胀', async () => {
+  // 乐观更新会连续发好几次（用户快速点），存储必须是幂等的
+  const dir = await mkdtemp(path.join(tmpdir(), 'plan-tick-idem-'));
+  try {
+    const store = new TickStore(path.join(dir, 'ticks.json'));
+    const handler = makeHandler({ tickStore: store, todos: EMPTY_TODOS });
+
+    for (let i = 0; i < 5; i += 1) {
+      await call(handler, 'POST', '/?todo-done', { source: 'xzzd', id: '9', done: true });
+    }
+    assert.equal(Object.keys(store.all()).length, 1, '重复勾只该留一条');
+    assert.equal(store.isDone('xzzd', '9'), true);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

@@ -974,7 +974,23 @@ export function createHandler({
         sendJson(res, 400, { error: '这条没有可用的身份（来源或 id 缺失），无法记录勾选' });
         return;
       }
-      sendJson(res, 200, { ok: true, ...result, ...(await snapshot()) });
+      /**
+       * ⚠️ **不回整份快照**。
+       *
+       * 勾选是**纯本端状态**：网关只传待办内容，不传状态，所以这一次写盘
+       * 完成后就已经是最终结果。回整份快照意味着每次打勾都要重算并序列化
+       * 几十 KB（本地副本也要读盘、算 mask、拼 todos），纯属浪费 ——
+       * 而且前端拿了也用不上（它已经乐观更新过了）。
+       *
+       * 只回 `{ key, done }`，加上 `ticks` 里这一条的最新值，够调用方核对了。
+       */
+      sendJson(res, 200, {
+        ok: true,
+        key: result.key,
+        done: result.done,
+        // 只带这一个键，不是整张表：调用方拿它对账自己那一次改动即可
+        ticks: result.done ? { [result.key]: tickStore.all()[result.key] ?? null } : {},
+      });
       return;
     }
 
