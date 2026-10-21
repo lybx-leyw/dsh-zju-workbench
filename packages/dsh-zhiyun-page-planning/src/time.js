@@ -171,6 +171,84 @@ export function nextWeekday(now, weekday = 1) {
   return atShanghai(now, { dayOffset: delta, hour: 9 });
 }
 
+/* ══════════════════════════════════════════ 周历的分格 */
+
+/**
+ * 把有日期的条目按**周**分格（周一 → 周日）。
+ *
+ * # 为什么单独一个纯函数
+ *
+ * 这段计算原先写在 `client.jsx` 的 `useMemo` 里，测试只能**复刻**一份 ——
+ * 结果就是"页面按周对齐了，测试还在断言连续 34 格"。复刻两份一定会漂，
+ * 而日历分格的规则（哪些进、按哪天归、周从哪天起）是**必须**被测试钉住的。
+ *
+ * 现在两边共用同一份实现：页面 `useMemo(() => buildWeekCalendar(...))`，
+ * 测试直接调用。规则改一处，两边同时变。
+ *
+ * # 周界的选择
+ *
+ * 起点是**周一**（ISO），不是周日。国内日历与课表都从周一开始；把周日放
+ * 第一列会让"上周末"与"本周一"之间隔着整行。
+ *
+ * 窗口：从本周一**往前推一周**开始（回看刚过去的），往后铺 5 周。
+ * 再远的事情用列表看更合适 —— 塞进格子只会让最后几周空成马赛克。
+ *
+ * @param rows - 候选条目（`{ id, due, done }`，`due` 是 ISO 串或 null）。
+ * @param options.now - 当前毫秒时间戳（注入以便测试）。
+ * @returns `{ weeks, outside, undated }`。
+ */
+export function buildWeekCalendar(rows, { now = Date.now() } = {}) {
+  const dated = rows.filter((row) => {
+    if (!row.due) return false;
+    return !Number.isNaN(Date.parse(row.due));
+  });
+
+  // 按上海时区归到"哪一天"，与 `dayKey` 同一口径
+  const byDay = new Map();
+  for (const row of dated) {
+    const key = dayKey(Math.floor(Date.parse(row.due) / 1000));
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key).push(row);
+  }
+
+  const todayAt = Date.parse(dayKey(Math.floor(now / 1000)) + 'T00:00:00+08:00');
+  const today = new Date(todayAt);
+  // getDay()：周日=0、周一=1 …… 换算成"距本周一多少天"（周一=0）
+  const dowOffset = (today.getDay() + 6) % 7;
+  const weekStart = todayAt - dowOffset * 86400000;
+  const todayKey = dayKey(Math.floor(now / 1000));
+
+  const weeks = [];
+  for (let w = -1; w < 5; w += 1) {
+    const weekDays = [];
+    for (let d = 0; d < 7; d += 1) {
+      const at = weekStart + (w * 7 + d) * 86400000;
+      const key = dayKey(at / 1000);
+      weekDays.push({
+        key,
+        date: new Date(at),
+        isToday: key === todayKey,
+        isPast: at < todayAt,
+        rows: (byDay.get(key) ?? []).sort((a, b) => Date.parse(a.due) - Date.parse(b.due)),
+      });
+    }
+    weeks.push({ key: dayKey(weekStart / 1000 + w * 7 * 86400), days: weekDays });
+  }
+
+  // 超出窗口的日期不丢：单独列出来，避免"我的事不见了"
+  const windowKeys = new Set(weeks.flatMap((week) => week.days.map((day) => day.key)));
+  const outside = [...byDay.entries()]
+    .filter(([key]) => !windowKeys.has(key))
+    .map(([key, rows]) => ({ key, rows }));
+
+  return {
+    weeks,
+    outside,
+    total: dated.length,
+    undated: rows.filter((row) => !row.due || Number.isNaN(Date.parse(row.due))).length,
+  };
+}
+
 /**
  * 快捷时间片：学生最常用的几个「什么时候」。
  *

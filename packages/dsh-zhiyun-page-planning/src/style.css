@@ -724,12 +724,23 @@ body[data-zhiyun] .zpg-view .zpg-view-on {
 }
 
 /* ------------------------------------------------------------ 日历 */
-/* 34 格（回看 6 天 + 往后 4 周）。用 auto-fill 而不是写死 7 列：窄屏下自然折成
-   5 列或 4 列，不必为每个断点单独写一次，也不会出现"最后一格孤零零"的尴尬。 */
+/* 按周对齐的 7 列表格：每一行是周一到周日。
+   写死 7 列（`repeat(7, …)`）而不是 auto-fill：它**必须是**一周一行，
+   auto-fill 会在窄屏下折成 5 列，那就不是周历了。
+
+   窄屏下格子会窄到挤；这是可接受的取舍 —— 日历的语义（周/星期）比
+   格子宽度重要。真要处理窄屏，应当做成横向滚动，而不是破坏七列。 */
+body[data-zhiyun] .zpg-cal-week { margin-bottom: 18px; }
+body[data-zhiyun] .zpg-cal-week-label {
+  margin: 0 0 8px;
+  font-size: var(--zy-fs-sm);
+  font-weight: 600;
+  color: var(--zy-secondary);
+}
 body[data-zhiyun] .zpg-cal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
 }
 body[data-zhiyun] .zpg-cal-cell {
   min-height: 84px;

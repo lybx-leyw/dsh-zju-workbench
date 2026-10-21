@@ -1,4 +1,4 @@
-﻿// 「规划」页：把四份东西并成一张表。
+// 「规划」页：把四份东西并成一张表。
 //
 // # 四类数据源
 //
@@ -23,7 +23,7 @@ import { Empty, Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
-import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel } from './time.js';
+import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel, buildWeekCalendar } from './time.js';
 import { errorText } from './error.js';
 
 export const name = 'zhiyun-page-planning-client';
@@ -779,47 +779,11 @@ export function Planning({ ctx }) {
    * 而中转站条目是"写下"而不是"截止"。把它们塞进日历的某一天是编造时间。
    * 没有日期的那部分仍然留在列表里，一条不少。
    */
-  const calendar = useMemo(() => {
-    const dated = [
-      ...openTodos,
-      ...planCards.filter((row) => !row.done),
-      ...openMine,
-    ].filter((row) => {
-      if (!row.due) return false;
-      return !Number.isNaN(Date.parse(row.due));
-    });
-
-    // 按上海时区归到"哪一天"，与 dayKey 同一口径
-    const byDay = new Map();
-    for (const row of dated) {
-      const key = dayKey(Math.floor(Date.parse(row.due) / 1000));
-      if (!byDay.has(key)) byDay.set(key, []);
-      byDay.get(key).push(row);
-    }
-    // 34 天窗口：今天往前 6 天（回看刚过去的）+ 往后 27 天
-    //
-    // ⚠️ `dayKey` 收的是**秒**，`Date.now()` 给的是毫秒 —— 少除一次 1000 会把
-    //    "今天"算到五万年后，窗口里一格都对不上。这是实际发生过的错。
-    const base = Date.parse(dayKey(Math.floor(Date.now() / 1000)) + 'T00:00:00+08:00');
-    const days = [];
-    for (let offset = -6; offset < 28; offset += 1) {
-      const at = base + offset * 86400000;
-      const key = dayKey(at / 1000);
-      days.push({
-        key,
-        offset,
-        date: new Date(at),
-        rows: (byDay.get(key) ?? []).sort((a, b) => Date.parse(a.due) - Date.parse(b.due)),
-      });
-    }
-    // 超出窗口的日期不丢：单独列在末尾，避免"我的事不见了"
-    const outside = [...byDay.entries()]
-      .filter(([key]) => !days.some((day) => day.key === key))
-      .map(([key, rows]) => ({ key, rows }));
-    return { days, outside, total: dated.length, undated: [
-      ...todos.rows, ...planCards.filter((r) => !r.done), ...openMine,
-    ].filter((row) => !row.due).length };
-  }, [openTodos, planCards, openMine]);
+  const calendar = useMemo(() => buildWeekCalendar([
+    ...openTodos,
+    ...planCards.filter((row) => !row.done),
+    ...openMine,
+  ]), [openTodos, planCards, openMine]);
 
   // 卡片已经并进 todos.rows 之外的 planCards，二者都是"要做的"
   const hasAnything = todos.rows.length > 0 || planCards.length > 0 || state.entries.length > 0 || localRows.length > 0;
@@ -1760,70 +1724,80 @@ export function CardRow({ row, onToggle, busy }) {
  *      是同一类判断。空着不画反而让人怀疑自己漏了什么。
  */
 function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId }) {
-  const { days, outside, undated } = calendar;
-  const todayKey = dayKey(Math.floor(Date.now() / 1000));
+  const { weeks, outside, undated } = calendar;
   const weekdayFmt = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', weekday: 'short' });
   const dayFmt = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', day: 'numeric' });
 
+  /** 周标签：本周写「本周」，其余写起始日（如「10月27日–」）。 */
+  const weekLabel = (week, index) => {
+    if (week.days.some((day) => day.isToday)) return '本周';
+    const first = week.days[0].date;
+    return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', month: 'numeric', day: 'numeric' }).format(first) + '起';
+  };
+
   return (
     <div className="zpg-cal">
-      <div className="zpg-cal-grid">
-        {days.map((day) => {
-          const isToday = day.key === todayKey;
-          const overdue = day.offset < 0 && day.rows.some((row) => !row.done);
-          return (
-            <section
-              key={day.key}
-              className={[
-                'zpg-cal-cell',
-                isToday ? 'zpg-cal-today' : '',
-                overdue ? 'zpg-cal-past' : '',
-                day.rows.length === 0 ? 'zpg-cal-blank' : '',
-              ].filter(Boolean).join(' ')}
-            >
-              <header className="zpg-cal-head">
-                <span className="zpg-cal-weekday">{weekdayFmt.format(day.date)}</span>
-                <span className="zpg-cal-day">{dayFmt.format(day.date)}</span>
-                {isToday && <span className="zpg-cal-badge">今天</span>}
-              </header>
-              {day.rows.length > 0 ? (
-                <ul className="zpg-cal-list">
-                  {day.rows.map((row) => {
-                    // 三类行各有各的勾选动作：平台待办是**本机标记**，
-                    // 自己的规划与 AI 卡片是真正的完成状态。
-                    const toggle = row.source === 'mine'
-                      ? () => onTogglePlan(row)
-                      : row.source === 'plan'
-                        ? () => onToggle(row)
-                        : () => onToggleTodo(row);
-                    const busyKey = row.source === 'xzzd' || row.source === 'pta'
-                      ? `todo:${row.source}:${row.id}`
-                      : row.id;
-                    return (
-                      <li key={`${row.source}:${row.id}`} className="zpg-cal-item">
-                        <input
-                          type="checkbox"
-                          className="zpg-check zpg-check-sm"
-                          checked={Boolean(row.done)}
-                          disabled={busyId === busyKey}
-                          onChange={toggle}
-                          aria-label={`把「${row.title}」标为已完成`}
-                        />
-                        <span
-                          className={`zpg-cal-title ${row.done ? 'zpg-title-done' : ''}`}
-                          title={row.title}
-                        >
-                          {row.title}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : <p className="zpg-cal-none" aria-label="没有安排">·</p>}
-            </section>
-          );
-        })}
-      </div>
+      {weeks.map((week, index) => (
+        <section key={week.key} className="zpg-cal-week" aria-label={weekLabel(week, index)}>
+          <h3 className="zpg-cal-week-label">{weekLabel(week, index)}</h3>
+          <div className="zpg-cal-grid" role="grid" aria-label={weekLabel(week, index)}>
+            {week.days.map((day) => {
+              const overdue = day.isPast && !day.isToday && day.rows.some((row) => !row.done);
+              return (
+                <section
+                  key={day.key}
+                  className={[
+                    'zpg-cal-cell',
+                    day.isToday ? 'zpg-cal-today' : '',
+                    overdue ? 'zpg-cal-past' : '',
+                    day.rows.length === 0 ? 'zpg-cal-blank' : '',
+                  ].filter(Boolean).join(' ')}
+                >
+                  <header className="zpg-cal-head">
+                    <span className="zpg-cal-weekday">{weekdayFmt.format(day.date)}</span>
+                    <span className="zpg-cal-day">{dayFmt.format(day.date)}</span>
+                    {day.isToday && <span className="zpg-cal-badge">今天</span>}
+                  </header>
+                  {day.rows.length > 0 ? (
+                    <ul className="zpg-cal-list">
+                      {day.rows.map((row) => {
+                        // 三类行各有各的勾选动作：平台待办是**本机标记**，
+                        // 自己的规划与 AI 卡片是真正的完成状态。
+                        const toggle = row.source === 'mine'
+                          ? () => onTogglePlan(row)
+                          : row.source === 'plan'
+                            ? () => onToggle(row)
+                            : () => onToggleTodo(row);
+                        const busyKey = row.source === 'xzzd' || row.source === 'pta'
+                          ? `todo:${row.source}:${row.id}`
+                          : row.id;
+                        return (
+                          <li key={`${row.source}:${row.id}`} className="zpg-cal-item">
+                            <input
+                              type="checkbox"
+                              className="zpg-check zpg-check-sm"
+                              checked={Boolean(row.done)}
+                              disabled={busyId === busyKey}
+                              onChange={toggle}
+                              aria-label={`把「${row.title}」标为已完成`}
+                            />
+                            <span
+                              className={`zpg-cal-title ${row.done ? 'zpg-title-done' : ''}`}
+                              title={row.title}
+                            >
+                              {row.title}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : <p className="zpg-cal-none" aria-label="没有安排">·</p>}
+                </section>
+              );
+            })}
+          </div>
+        </section>
+      ))}
 
       {outside.length > 0 && (
         <p className="zpg-cal-note">

@@ -10,47 +10,27 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dayKey, looksLikeSeconds } from '../packages/dsh-zhiyun-page-planning/src/time.js';
+import { dayKey, looksLikeSeconds, buildWeekCalendar } from '../packages/dsh-zhiyun-page-planning/src/time.js';
 
 /**
- * 复刻 `client.jsx` 里 `calendar` 那段纯逻辑（JSX 里的 useMemo 解析不了，
- * 所以把规则本身固化成一份可测的实现）。
+ * 与页面**共用**同一份实现（`time.js` 的 `buildWeekCalendar`）。
  *
- * @param rows - 候选条目（`{ id, due, source, done }`）。
- * @param now - 当前毫秒时间戳。
- * @returns `{ days, outside, undated, total }`。
+ * 这里曾经复刻了 `client.jsx` 里的那段逻辑（"JSX 里的 useMemo 解析不了"），
+ * 结果就是：页面按周对齐了，这份测试还在断言"连续 34 格" —— 两边各写一份
+ * 就一定会漂，而这次改周历恰好就漂了。所以删掉复刻，直接调共享实现。
+ *
+ * 返回形状做了一层适配（`days` 展平），让既有的断言（归日口径、排序、
+ * 窗口外不丢、单位护栏）原样有效，不必重写。
  */
 function buildCalendar(rows, now) {
-  const dated = rows.filter((row) => {
-    if (!row.due) return false;
-    return !Number.isNaN(Date.parse(row.due));
-  });
-
-  const byDay = new Map();
-  for (const row of dated) {
-    const key = dayKey(Math.floor(Date.parse(row.due) / 1000));
-    if (!byDay.has(key)) byDay.set(key, []);
-    byDay.get(key).push(row);
-  }
-
-  // `dayKey` 收**秒**；`now` 是毫秒。少除一次 1000 会把"今天"算到五万年后。
-  const base = Date.parse(dayKey(Math.floor(now / 1000)) + 'T00:00:00+08:00');
-  const days = [];
-  for (let offset = -6; offset < 28; offset += 1) {
-    const at = base + offset * 86400000;
-    const key = dayKey(at / 1000);
-    days.push({
-      key,
-      offset,
-      rows: (byDay.get(key) ?? []).sort((a, b) => Date.parse(a.due) - Date.parse(b.due)),
-    });
-  }
-
-  const outside = [...byDay.entries()]
-    .filter(([key]) => !days.some((day) => day.key === key))
-    .map(([key, list]) => ({ key, rows: list }));
-
-  return { days, outside, undated: rows.filter((row) => !row.due).length, total: dated.length };
+  const result = buildWeekCalendar(rows, { now });
+  return {
+    days: result.weeks.flatMap((week) => week.days),
+    weeks: result.weeks,
+    outside: result.outside,
+    undated: result.undated,
+    total: result.total,
+  };
 }
 
 const NOW = Date.parse('2026-10-19T12:00:00+08:00');
@@ -101,14 +81,17 @@ test('同一天的多条按时刻先后排', () => {
 
 /* ────────────────────────────────────── 窗口 */
 
-test('窗口是"回看 6 天 + 往后 27 天"共 34 格，含今天', () => {
+test('窗口按周对齐：6 周、每周 7 格，第一格是周一', () => {
   const cal = buildCalendar([], NOW);
-  assert.equal(cal.days.length, 34);
-  assert.equal(cal.days[0].offset, -6);
-  assert.equal(cal.days.at(-1).offset, 27);
+  assert.equal(cal.weeks.length, 6, '回看一周 + 本周 + 往后四周');
+  for (const week of cal.weeks) assert.equal(week.days.length, 7, '每周正好 7 格');
+
+  // 每一周的第一天必须是周一（dayKey 到上海时区，2026-10-12 是周一）
+  assert.equal(cal.weeks[0].days[0].key, '2026-10-12', '第一周从上周一开始');
+  assert.equal(cal.weeks[1].days[0].key, '2026-10-19', '本周从周一 10-19 开始');
   const today = cal.days.find((day) => day.key === dayKey(NOW / 1000));
   assert.ok(today, '今天必须在窗口里');
-  assert.equal(today.offset, 0);
+  assert.equal(today.isToday, true);
 });
 
 test('窗口外的日期不丢，单独报出来', () => {
@@ -131,17 +114,26 @@ test('每一天的格子都存在（空格子也画，因为"这天没安排"是
 /* ────────────────────────────────────── 边界日期 */
 
 test('窗口两端正好落在边界上的条目要算进窗口', () => {
-  // ⚠️ 减法要在**毫秒**上做（NOW 是毫秒）。写成 `dayKey(NOW / 1000 - 6 * 86400)`
-  // 会把"6 天"当成 6 秒，测出来的边界根本不在窗口边缘。
-  const first = dayKey((NOW - 6 * 86400000) / 1000);
-  const last = dayKey((NOW + 27 * 86400000) / 1000);
-  const cal = buildCalendar([
+  // 窗口：从本周一往前一周开始，往后 5 周。两端要用**周界**算，不是 ±6/27 天。
+  const cal = buildCalendar([], NOW);
+  const first = cal.weeks[0].days[0].key;
+  const last = cal.weeks.at(-1).days.at(-1).key;
+  const withEdges = buildCalendar([
     { id: 'edge-first', due: `${first}T00:01:00+08:00` },
     { id: 'edge-last', due: `${last}T23:59:00+08:00` },
   ], NOW);
-  const inWindow = cal.days.flatMap((day) => day.rows.map((row) => row.id));
+  const inWindow = withEdges.days.flatMap((day) => day.rows.map((row) => row.id));
   assert.deepEqual(inWindow.sort(), ['edge-first', 'edge-last']);
-  assert.equal(cal.outside.length, 0, '两端都在窗口内');
+  assert.equal(withEdges.outside.length, 0, '两端都在窗口内');
+});
+
+test('周日的条目落在同一周的最后一格，不是下一周的第一格', () => {
+  // 2026-10-25 是周日（本周是 10-19 ~ 10-25）。按周对齐后它必须还在本周的末尾。
+  const cal = buildCalendar([{ id: 'sunday', due: '2026-10-25T15:00:00+08:00' }], NOW);
+  const week = cal.weeks.find((w) => w.days.some((day) => day.key === '2026-10-19'));
+  assert.ok(week, '本周的格子要存在');
+  assert.equal(week.days[6].key, '2026-10-25', '最后一格是周日');
+  assert.equal(week.days[6].rows[0]?.id, 'sunday', '周日的事落在本周末尾');
 });
 
 /* ────────────────────────────────────── 单位护栏 */
