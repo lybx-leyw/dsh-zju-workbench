@@ -2335,3 +2335,30 @@
 | `geniucker-dev/zju-learnpilot` | ⛔ 非 JS 栈（Python Skill，`uv run`） | **MIT** ✅ | 智云课堂 / 回放 / 讲师义 | **重复且可强化**（栈不符，不出骨架） | 🔵 | proposed | 2026-10-22 | ★1，建仓 2026-10-04、push 2026-10-20。单文件 `scripts/zju.py`（212 KB）+ `SKILL.md` + 14 个 pytest。**做的是本仓没有的反向链路**：「知识点 → 转写起止时间」「任意 `--at t` 回查窗口内转写 + PPT 候选页 + 音视频分段」「任意时刻取录播真实帧」。谱系：`PeiPei233/zju-learning-assistant`（★532，MIT，Rust）的 Python 重写，**非 JS 包装**；npm `zju` 仅 11 包无一相关（已实查）。只作**设计参考**（`ppt.events` 的 确定/相邻候选/无时间 三分法），**不摘码**。同时暴露本仓缺陷 S-1/S-2/S-3，见当日报告 §3.3 |
 
 **本轮 `NOASSERTION` 0 条**；无许可证 4 条、GPL 族 1 条、WTFPL 1 条 —— **全部已在册**，按「只登记、不采用」处理。
+
+## 2026-10-22 · C 组（第四十九轮 · 知识点归因底层轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `RudrenduPaul/MasteryTrace`（npm `masterytrace-cli`） | B 其他JS（纯库） | **MIT** ✅ | 刷题 → 薄弱点定位 | **重复且可强化** | 🟢 | proposed | 2026-10-22 | ★0，建仓 2026-07-15、push 2026-10-20，npm `0.1.3`（2026-09-25）。**BKT（pInit/pTransit/pSlip/pGuess + 网格拟合）+ 2PL IRT**，TS 源 + 独立 Python 移植。实测 3 次「忘了」→ 后验 0.077→0.064→0.062。`npm i masterytrace-cli@0.1.3` 实测 3 包装好、12 个具名导出。⚠ 依赖 `zod@^4.6.5`（未压缩约 8.1 MB）；★0 单点维护；事件 schema 是「一条事件一个技能」，**一题多点须拆事件**。已出骨架 `dsh-radar-mastery-bkt`（TODO-0 阻塞：`pointIds` 尚未落到题上） |
+| `geekie/irt-js`（npm `irt-js`） | B 其他JS（纯库） | **MIT** ✅ | 刷题 → 能力估计 | 重复可强化（**不推荐**） | 🔵 | proposed | 2026-10-22 | ★16，**push 2019-07-15**，npm `0.2.0` 发布于 **2017-09-15**。只导出 `estimateAbilityEAP` / `itemResponseFunction` / `information`，**不含题目参数估计**（`zeta` 要调用方给）→ 本仓每题作答 1–3 次，估不出参数，等于不可用。零依赖、ES5 CJS 是它唯一的优点 |
+| `laser-institute/knowledge-tracing` | B 其他JS | **MIT** ✅ | 知识追踪 | 重复可强化 | 🔵 | proposed | 2026-10-22 | ★3，push 2026-05-22，但**仓库 107 MB**（数据/论文产物），无 npm 发版 → **不可锁版**，仅作算法线索 |
+| `SottoFM/learning-model` | B 其他JS | **MIT** ✅ | 掌握度 + 练习优先级 | 重复可强化 | 🔵 | proposed | 2026-10-22 | ★0，2026 新建。接口比 MasteryTrace 更贴本仓（贝叶斯掌握度 + 练习优先），但**无发版、仓库小、无测试痕迹** → 只作备选线索 |
+| `pieralukasz/true-recall` | B 其他JS | **`NOASSERTION`** ⚠ | 复习（Obsidian 插件） | 重复无增益 | ⚠ | rejected | 2026-10-22 | ★65，FSRS v6 + AI 出卡。**许可证待人工核验，不采用、不摘码** |
+| `amangupta9560/SUNSTONE-ARENA` / `muhanedalhilal/Massar` / `jas212-on/adaptive-learning-agent` | B | `null` / `null` / **`NOASSERTION`** ⛔ | — | — | ⛔ | rejected | 2026-10-22 | `bkt knowledge tracing language:javascript` 的全部 3 条结果，★≤1、全部无可用许可证 |
+| `quiz analytics dashboard language:typescript` 簇（26 条无许可证 + 2 条 MIT 且互为镜像） | B | 多数 `null` ⛔ | — | — | ⛔ | rejected | 2026-10-22 | 全部是脚手架 / demo / 营销漏斗，**0 条相关**。`krishyadav90/QuiziFy` 与 `marlito0226/Quizfy` 是同一份代码的镜像 |
+| `dfsp-spirit/catjs-irt` | B | **GPL-3.0** ⛔ | 自适应测验 | — | ⛔ | rejected | 2026-10-22 | ★1。CAT 的 JS 实现，强著佐权 → 只登记、不摘码 |
+| `jilljenn/ktm` / `bigdata-ustc/EduKTM` / `thosgt/kt-algos` / `seewoo5/KT` / `THUwangcy/HawkesKT` 等 10 条 | — | MIT / Apache-2.0 | — | — | ⛔ | rejected | 2026-10-22 | **全部 Python / Jupyter**，栈不符（`kt knowledge tracing` ★ 前 10 无一 JS） |
+
+**本轮 `NOASSERTION` 1 条待核**（`true-recall`）；无许可证 / `null` 约 31 条；GPL 1 条 —— 全部**只登记、不采用、不摘码**。
+
+> **读码结论（非候选，但比候选重要）**：
+> ① **撤回第四十四轮 R-2** —— 当前 `workbench.js:375-380` 的 `openQuizStore` **确实** `loadAttempts`，
+> 按原样复刻实跑「落库 3 条 → 再采纳一题」仍为 3 条；该段自 `a66bcda`（2026-10-11）起未变。
+> 当时是只跑 `store` 层「`loadItems`→`snapshot`」推演得出，漏了那行。
+> ② `attributeByPoint` / `masteryOf` / `masteryByPoint`（`store.js:632/678/701`）**全仓零调用、零测试**；
+> `pointIds` **到不了题上**（`makeItem` 不收、`itemToJson` 不序列化、`quizMaterials` 不填）
+> → 归因与掌握度在真实数据上**恒为空**。
+> ③ `byId(a.quizId) === null` 时 `continue`，题被删后作答仍在却**静默归零**
+> （实测 `masteryLabel` = `数据不足（做过 0 题，少于 3 题）`）→ 与「不许静默失败」冲突，
+> 修法是一条 `unattributed: N` 字段。**三条都不需要新依赖；建议先补环，再接 BKT。**

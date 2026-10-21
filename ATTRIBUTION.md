@@ -32,6 +32,8 @@
 
 - [pinyin-match](https://github.com/xmflswood/pinyin-match) · **MIT** · 版本 `1.2.10`（精确锁定，见 `packages/dsh-radar-pinyin-match/package.json`）。拼音检索库（汉字 / 全拼 / 首字母 / 多音字 / 繁简双字典），`match()` 直接回命中**闭区间**。候选骨架拟把它接到「学习」页（`dsh-zhiyun-page-study`）分层检索的 `findIn()` 底层：本仓自述「只做字面子串、不切词」，实测 `ddj` / `daodejing` / `lisao` 全部 0 命中 —— 中文课「只记得读音」的动作完全落空。**未复制其源码**，骨架内只有占位与 TODO。⚠ 上游**不是无脑更强**：整串拼音切分失败即整体回 `false`，且简体入口对纯繁体文本的拼音查询回 `false` → 必须「字面先行 + 繁体入口懒加载」，验收标准是**命中集合 ⊇ 旧实现**。详见该包 README「已知风险」。
 
+- [MasteryTrace](https://github.com/RudrenduPaul/MasteryTrace) · **MIT** · 版本 `masterytrace-cli@0.1.3`（精确锁定，见 `packages/dsh-radar-mastery-bkt/package.json`）。BKT（`pInit` / `pTransit` / `pSlip` / `pGuess` 四参数 + 网格拟合）与 2PL IRT 的 TS 实现，另有独立 Python 移植。候选骨架拟把它接到「学习」页出题区**已有的知识点**上，把现在的二值规则（「近 3 次都错 / 近 3 次都对 / 有对有错」）**增强**为连续的后验掌握概率，为「先复习哪几个点」提供可排序的输入。**未复制其源码**，骨架内只有占位与 TODO。⚠ 上游 ★0、单点维护（建仓 2026-07-15）；⚠ 依赖 `zod@^4.6.5`（未压缩约 8.1 MB）；⚠ 其事件 schema 是「一条事件 = 一个技能」，本仓「一题多知识点」须拆事件，`responseCount` 会大于真实作答次数，**必须在界面上说清**；⚠ **接入前有前置阻塞**：本仓 `pointIds` 尚未落到题上（`makeItem` 不收、`itemToJson` 不序列化），见该包 README 的 TODO-0。
+
 ### 已阅读源码/文档、拟在候选骨架中**仅作能力提取**（不引入依赖）
 
 以下条目由「生态雷达」登记。它们**既不是运行时依赖，也不含任何代码移植** ——
