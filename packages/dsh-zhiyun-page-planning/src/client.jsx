@@ -880,6 +880,18 @@ export function Planning({ ctx }) {
             <Icon name="history" size={16} />
             {refreshing ? '正在刷新' : '刷新'}
           </button>
+          {/*
+            添加入口放在工具行，与「刷新」「AI 拆解」并列。
+            放在页面底部意味着**每次新建都要先滚到底** —— 长列表下这是
+            每天十几次的多余动作。放到这里：想看的时候它不抢眼，想写的时候
+            就在手边。输入面板从这一行**向下展开**，而不是右下角浮出来。
+          */}
+          <PlanComposer
+            busy={composer.busy}
+            error={composer.error}
+            onCreate={createPlan}
+            schedule={schedule}
+          />
         </div>
       </div>
 
@@ -1087,18 +1099,6 @@ export function Planning({ ctx }) {
           )}
         </div>
       )}
-
-      {/*
-        添加入口常驻在右下角（不随列表滚动）。放在页面根部而不是 `zpg-slot` 里：
-        `zpg-slot` 在加载态会被替换掉，而"添加"在加载中也应该可用 ——
-        用户可以先写一条，不必等数据读完。
-      */}
-      <PlanComposer
-        busy={composer.busy}
-        error={composer.error}
-        onCreate={createPlan}
-        schedule={schedule}
-      />
     </div>
   );
 }
@@ -1294,13 +1294,11 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
   const [due, setDue] = useState('');
   const [open, setOpen] = useState(false);
   /**
-   * 浮动面板是否展开。
+   * 输入面板是否展开。
    *
-   * 写入口原先常驻在页面最上方（一整行输入框 + 一排时间片 + 备注区），
-   * 占据首屏最大的一块。但用户多数时候是来**看**的，不是来**写**的 ——
-   * 那一大块只在真要添的时候才有意义。
-   *
-   * 所以收成右下角的圆形「+」，点了才展开面板。
+   * 它在**顶部工具行**里（与「刷新」「AI 拆解」并列），点了「+」就从那一行
+   * 向下展开。不写死成右下角浮动：那意味着长列表里每次新建都要先滚到底，
+   * 而"添一条"本该是随时够得到的动作。
    */
   const [panel, setPanel] = useState(false);
   const titleRef = useRef(null);
@@ -1373,24 +1371,29 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
   return (
     <div className="zpg-fab-wrap" ref={rootRef}>
       {/*
-        收起态：右下角一个圆形「+」。
-        `aria-expanded` 让读屏知道它开了一个面板；`title` 给鼠标用户一句说明。
+        收起态：工具行里一个与其它按钮同高的「+」。
+        它排在最后，因为"写"比"看"用得少 —— 但**始终在手边**，不必滚动。
       */}
       <button
         type="button"
-        className={`zpg-fab ${panel ? 'zpg-fab-open' : ''}`}
+        className="zy-secondary zpg-fab"
         onClick={() => setPanel((v) => !v)}
         aria-expanded={panel}
         aria-controls="zpg-composer-panel"
         title={panel ? '收起（Esc）' : '添加一条规划'}
       >
-        <Icon name={panel ? 'close' : 'plus'} size={22} />
-        <span className="zpg-visually-hidden">{panel ? '收起添加面板' : '添加一条规划'}</span>
+        <Icon name={panel ? 'close' : 'plus'} size={16} />
+        {panel ? '收起' : '添加'}
       </button>
 
       {panel && (
-        <form id="zpg-composer-panel" className="zpg-composer zpg-composer-panel" onSubmit={submit} role="dialog" aria-label="添加一条规划">
-          <div className="zpg-composer-row">
+        <form
+          id="zpg-composer-panel"
+          className="zpg-composer zpg-composer-panel"
+          onSubmit={submit}
+          role="dialog"
+          aria-label="添加一条规划"
+        >          <div className="zpg-composer-row">
             <label className="zpg-composer-title">
               <span className="zpg-visually-hidden">要做什么</span>
               <input

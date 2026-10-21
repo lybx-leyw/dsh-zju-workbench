@@ -478,9 +478,14 @@ body[data-zhiyun] .zpg-visually-hidden {
 /* 自己写的规划：左侧强调条用实线强调色，与"别人的待办"区分开 */
 body[data-zhiyun] .zpg-item-mine { border-left-color: var(--zy-accent); }
 
-/* AI 拆出的卡片：**虚线**左侧条 + 稍弱的底，与"我的规划"（实线强调色）区分 ——
-   形状通道（ch03 规则 3），灰度打印下也分得开。 */
-body[data-zhiyun] .zpg-item-card { border-left: 3px dashed var(--zy-accent); background: var(--zy-bg); }
+/* AI 拆出的卡片：**虚线**左侧条，与"我的规划"（实线）区分 ——
+   形状通道（ch03 规则 3），灰度打印下也分得开。
+
+   ⚠️ 底色**不再**换成 `--zy-bg`。用户既然让 AI 拆，说明有一定信任度；
+   而 AI 做的是"拆分"不是"新规划"，准确率通常很高 —— 把它底色调暗等于
+   在视觉上降权，那一眼看过去像"次要的"。现在它与其他平台条目**同底色**，
+   差别只在左侧条是虚线、标签写"AI 拆出"。 */
+body[data-zhiyun] .zpg-item-card { border-left: 3px dashed var(--zy-accent); }
 /* 平台待办（学在浙大/拼题A）：右侧外链箭头是它唯一的"可操作"信号，
    所以左侧条用中性色，不与"我能勾的"抢注意力。 */
 body[data-zhiyun] .zpg-item-todo { border-left-color: var(--zy-line); }
@@ -772,46 +777,32 @@ body[data-zhiyun] .zpg-check-sm { width: 14px; height: 14px; margin-top: 2px; }
       就脱离外壳 13px 基准，这一页会与其余页面不一致。
  */
 
-/* ------------------------------------------------- 添加入口：右下角浮动按钮 */
-/* 写入口原先常驻页面顶部（输入框 + 时间片 + 备注区），占首屏最大一块。
-   但用户多数时候是来**看**的 —— 那一大块只在真要添的时候才有意义。
-   现在收成一个圆形「+」，点了才展开面板。
+/* ------------------------------------------------- 添加入口：工具行里的「+」 */
+/* 写入口原先常驻页面顶部，占首屏最大一块；后来一度收成右下角浮动圆钮，
+   但那意味着长列表里**每次新建都要先滚到底**（用户实测后指出）。
 
-   用 `position: absolute` 相对 `.zpg-page`，而不是 `fixed`：
-   外壳的 `.zy-content` 有一个入场动画（`transform: translateY`），
-   动画期间 `fixed` 会相对它而不是视口定位，位置会跳一下。 */
+   现在放在顶部工具行，与「刷新」「AI 拆解」并列：想看的时候它不抢眼，
+   想写的时候就在手边。面板从这一行**向下展开**，不是从右下角浮出来。
+
+   `.zpg-page` 建立定位上下文，让面板能贴着工具行展开。 */
 body[data-zhiyun] .zpg-page { position: relative; }
 body[data-zhiyun] .zpg-fab-wrap {
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  z-index: 20;
-  display: flex;
+  position: relative;
+  display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
-body[data-zhiyun] .zpg-fab {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 1px solid var(--zy-line);
-  background: var(--zy-surface);
-  color: var(--zy-text);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 6px 20px color-mix(in srgb, #000 16%, transparent);
-  transition: transform .16s ease, background .16s ease;
-}
-body[data-zhiyun] .zpg-fab:hover { background: var(--zy-hover); transform: translateY(-1px); }
-body[data-zhiyun] .zpg-fab:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 2px; }
-/* 展开时换成「×」：同一个按钮既开又关，不必再放一个"关闭" */
-body[data-zhiyun] .zpg-fab-open { background: var(--zy-hover); }
+body[data-zhiyun] .zpg-fab { min-height: 32px; font-size: var(--zy-fs-sm); }
+body[data-zhiyun] .zpg-fab:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 1px; }
 
-/* 面板：浮在按钮上方，靠右对齐。宽度用 min() 以免窄窗口溢出。 */
+/* 面板：从工具行向下展开，绝对定位在按钮下方、靠右对齐。
+   宽度用 min() 以免窄窗口溢出。`top: 100%` 让它正好贴着按钮下沿。 */
 body[data-zhiyun] .zpg-composer-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
   width: min(420px, calc(100vw - 96px));
   padding: 14px;
   border: 1px solid var(--zy-line);
@@ -819,8 +810,4 @@ body[data-zhiyun] .zpg-composer-panel {
   background: var(--zy-surface);
   box-shadow: 0 16px 48px color-mix(in srgb, #000 22%, transparent);
   margin: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body[data-zhiyun] .zpg-fab { transition: none; }
 }
