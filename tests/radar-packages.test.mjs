@@ -55,6 +55,9 @@ const skeletonDirs = readdirSync(path.join(root, 'packages'))
 const UNVERIFIED_UPSTREAM = [
   // `npm view @perrylink/dsh-score` 为 E404（2026-10-20 复核）；线索见其 src/upstream.js。
   'dsh-radar-plugin-score',
+  // `npm view cc98-mcp` 为 E404（上游从未发 npm）；且其目标形态已由
+  // `dsh-zhiyun-source-cc98` 原生实现，不再需要挂载任何上游（2026-10-21 复核）。
+  'dsh-radar-cc98-sdk',
 ];
 
 

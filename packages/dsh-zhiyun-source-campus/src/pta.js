@@ -198,7 +198,24 @@ export class PtaApi {
       throw new ClassroomError('BAD_REQUEST', '拼题A 返回 400：多半是查询串编码有问题', { status: 400 });
     }
     if (result.status === 403) {
-      throw new ClassroomError('FORBIDDEN', '拼题A 拒绝访问', { status: 403 });
+      // 403 有两种完全不同的原因，别让用户猜：
+      //   - **Cookie 失效 / 未登录**：拼题A 对匿名请求也可能回 403（而不是 401）；
+      //   - **真的无权**：该题集未开放、未开始，或当前账号没被加入。
+      // 判据：这一次请求有没有带上 Cookie。没带 → 先让他去配；带了还被拒 → 是权限。
+      const hasCookie = await (async () => {
+        try {
+          return (await this.transport.session.jar.getCookies(`${PTA_BASE}/`)).length > 0;
+        } catch {
+          return false;
+        }
+      })();
+      if (!hasCookie) {
+        throw new ClassroomError('COOKIE_EXPIRED',
+          '拼题A 拒绝访问（403），且这次请求没有带上 Cookie —— 请先登录 pintia.cn 并粘贴一份 Cookie', { status: 403 });
+      }
+      throw new ClassroomError('FORBIDDEN',
+        '拼题A 拒绝访问（403）。Cookie 已带上，所以多半是权限问题：'
+        + '该题集可能未开放 / 未开始，或这个账号没被加入。换一道题集或问问老师。', { status: 403 });
     }
     if (result.status === 429) {
       throw new ClassroomError('RATE_LIMITED', '拼题A 请求过于频繁，请稍后再试', { status: 429 });

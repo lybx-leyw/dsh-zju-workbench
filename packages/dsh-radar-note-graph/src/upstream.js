@@ -67,6 +67,3 @@ export function toElements(/* graph */) {
 export function layoutOptions(/* nodeCount */) {
   throw new Error('[dsh-radar-note-graph] 占位：尚未实现（候选骨架）');
 }
-
-/** 上游仓库（作者、许可证核实来源）。 */
-export const UPSTREAM_REPOSITORY = 'https://github.com/cytoscape/cytoscape.js';
