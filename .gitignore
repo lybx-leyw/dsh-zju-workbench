@@ -26,3 +26,5 @@ deploy/*/data/
 # 的真实凭据去比对仓库，属于本地排查工具而非项目产物。放到根目录还会让
 # `git add -A` 每次都把它们带进暂存区（2026-10-20 两次踩到）。
 .audit/
+# .codebuddy 是 agent 的本地记忆（与会话过程），与 .workbuddy 同类，不进公开仓库。
+.codebuddy/
