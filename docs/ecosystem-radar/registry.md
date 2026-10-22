@@ -2490,3 +2490,39 @@
 > 若决定做，需先在 `dsh-zhiyun-source-campus` 补学期字段 —— **这是接线活，不需要新依赖**。
 > ④ **「限定符别叠加」再被验证两次**（`paper annotation + stars:>30` → 0、`exam dragdrop` → 0）。
 > 建议升级为流程硬性要求：**首个查询一律不加 `stars:` / `language:`**，只在结果里过滤。
+
+## 2026-10-23 · B 组派生（第五十四轮 · **「专注计时底座」轴**）· 追加
+
+> 同日第 2 轮（今日 r53 已跑 C 组）。B 组三组主词（`zju` / `cc98` / `campus app`）已在 r41 / r48 / r51 / r52
+> 连续判枯竭，故本轮不重跑主词，改用 **先读码找断环、再定向搜**：
+> `grep -rniE "pomodoro|番茄|focus session"` 全仓 **0 命中**；本仓「时间」只有 `time.js` 的 `focusOf()`（五档）
+> 与 `focusSummary()`（数三个数）→ **「今天还剩多少整块时间」数据已在、出口没有**。
+> 8 次搜索（上限 10）、API 全程 200、**0 次 403、本轮完整**。**首次登记 11 行（含 3 行簇）→ 🟢1 / 🔵3 / ⛔6 / ⚠1。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `statelyai/xstate` | B 其他JS（纯状态机库，无 patch） | **MIT** ✅（GitHub `spdx_id` + npm `versions['5.33.3'].license` 两处一致） | 专注计时 / 规划页 | **重复且可强化** → **强化式集成** | 🟢 | proposed | 2026-10-23 | ★30,342，push 2026-10-21，npm **`xstate@5.33.3`**（2026-10-17，`dist-tags.latest` 实查）✅ 可锁版。`unpackedSize` **2,313,880 B**；**零运行时依赖**。**强化三判据**：①同一面板（「规划」页摘要条加一个数，不新增导航/插槽）②相似正交（「哪些事在逼近」vs「今天还剩多少整块时间」）③本仓时间逻辑**零离线测试**，上游可整根换时钟。⚠ ③ **仅成立于「可测性」一层**，不声称「接上后体验更好」。**三条实测（本轮最有价值的产出）**：**M3** `after: ({context}) => ({[context.remain]:'x'})` **静默失效**（注入时钟一次未被调用、不抛错不告警；CJS/ESM 各复现一次，与 v5 文档说法不一致）→ 动态时长**只能**用常量对象形式；**M4** `getPersistedSnapshot()` **无 deadline 字段** → 刷新后定时器从头开始；**M5** 暂停期间 `Date.now()` 照走，沿用旧 deadline 会「一恢复就到点」。另 **M6** 上游**确实**会 `clearTimeout`（日志 `set1/clear1/set2`）；**M7** `after` 未 stop 的 actor 会让 Node 进程不退出；**M8** `getSnapshot()` ≠ `getPersistedSnapshot()`（前者不可 JSON 化）；**M9** `@xstate/react@6.1.0` 带两个 peer 依赖，React 19 用 `useSyncExternalStore` 手接即可。**已出骨架 `dsh-radar-focus-machine`** |
+| `super-productivity/super-productivity` | B 其他JS（完整桌面应用） | **MIT** ✅ | 时间盒 / 待办 | 仅供参考（算法） | 🔵 | proposed | 2026-10-23 | ★23,064，push 2026-10-22。Electron + Angular **成品**，自带宿主 → 与「仍是同一个面板」直接冲突。可借的只有时间盒算法（几百行），且与 Angular 状态强耦合 → 不摘码 |
+| `zidoro/pomatez` | B 其他JS（Electron 应用） | **MIT** ✅ | 专注计时 | 重复无增益（**且不可锁版**） | 🔵 | proposed | 2026-10-23 | ★4,913，push 2026-05-19。**npm 上 `pomatez` 404**（本轮实查）→ B 类第二门「可锁版」不过；形态为完整桌面应用 |
+| `afonsopacifer/react-pomodoro` | B 其他JS（单页） | **MIT** ✅ | 专注计时 | **重复且无增益** | 🔵 | proposed | 2026-10-23 | ★398，**push 2023-01-27**（近四年未动）。只有 300 行级 UI，**无状态机可借** → 判据③不成立 |
+| 单页计时器簇（`KeziahMoselle/tempus`★120 MIT·2020、`astroud/pomodoro-react-app`★60 MIT、`luizbatanero/pomodoro-react`★60 `null`、`nmsn/pomo`★50 MIT、`dejwid/react-pomodoro-timer`★32 `null`、`mihajlija/pomodoro`★27 `null`、`mbogdan0/simple-pomodoro`★1 MIT） | B | MIT / `null` | 专注计时 | **重复且无增益** | ⛔ | rejected | 2026-10-23 | **与 r44（2026-10-17「番茄钟类」）同一结论的第二次复现**：计时器本体是 300 行级实现，**不存在「更优底层」** |
+| 嵌入式 / 原生簇（`dryjak/STM32-Pomodoro-Timer`★1 C、`yenuka23/Spidey-Pomodoro-Companion` C++、`PaulRychkov/pomodoro`★0 Go、`sakagenoan-svg/devdroidai-dogfood-focusclock`★0 Kotlin、`872000/focusforge`★0 Swift、`eltech-online/eltech-esp32-desk-timer`★0 C++） | B | MIT / `null` | — | 无关 | ⛔ | rejected | 2026-10-23 | **非 JS 栈**，Web 工作台结构性用不上 |
+| 计时底层陈旧簇（`Pjaerr/PWA-Timer`★30 Unlicense·2018、`daniellmb/perfnow.js`★46 **`null`**·2016、`heycato/Timer.js`★3 `null`·2014、`BinaryMuse/timex`★2 MIT·2016、`Splode/worker-timer-demo`★7 MIT·2020） | B | 混杂 | — | 重复无增益 | ⛔ | rejected | 2026-10-23 | 全部停在 2014–2020；`performance.now` polyfill 在 2026 已无意义（浏览器原生）。2026 年的新包全是 ★0 的 `high-resolution-timer` 变体（疑似模板仓），无一个 ★>0 |
+| Electron 计时器簇（`p32929/PotatoTimer`★6 MIT、`Piotr-Gala/TimeTimer`★0 `null`、`ChristianTedeschini/alura-timer`★0 `null`、`YuBan834/star-focus`★1 MIT、`screamman-ssh/Counties`★1 MIT、`univdev/ww-timer`★1 `null`、`rendfall/test-web-worker-timer`★1 `null`、`alfonso-lopez-dev/chronoMaster-studio`★1 `null`、`heyoboo/web-worker-timer`★0 `null`） | B | MIT / `null` | — | 重复无增益 | ⛔ | rejected | 2026-10-23 | ★≤6，与 `pomatez` 同形（成品应用 / demo），不构成可锁版底层 |
+| `maxbeyer1/pomo` | B | **MPL-2.0** ⛔ | — | — | ⛔ | rejected | 2026-10-23 | ★1，push 2022-06-11。**许可证不在宽松白名单**（MPL-* 明确排除）→ 只登记、不采用、不摘码 |
+| `alexqgon93/ChessClock` / `alfindigital/fokusin` | B | `null` / MIT | — | 无关 | ⛔ | rejected | 2026-10-23 | 均 ★0；前者 Kotlin 无证、后者零依赖单页印尼语番茄钟 → 不可锁版亦无增益 |
+| `normandhoni-cs/blink-eye`（★263） | B | **NOASSERTION** ⚠ | 护眼提醒 | — | ⚠ | pending-license | 2026-10-23 | push 2026-10-17，TS，跨平台护眼/休息提醒（Electron）。**许可证待人工核验，不采用、不摘码**；且形态为成品桌面应用 |
+
+**本轮 `NOASSERTION` 1 条待核**（`normandhoni-cs/blink-eye`）；**无许可证 12 条**；**copyleft 1 条**（`maxbeyer1/pomo` MPL-2.0）—— 只登记、不采用、不摘码。
+
+> **方法论结论（非候选，但比候选重要）**：
+> ① **r53 的判别线要再切一刀**。r53 写的是「缺一行调用 → 补接线；缺一套规范实现 → 接依赖」。
+> 本轮暴露**第三种情况**：**缺的是一层不变量**（「暂停期间时钟不被回溯」）。这时接进来的不是工具函数，而是**一个模型** ——
+> 而模型的价值恰恰在它的**边界**（M3/M4/M5），不在 API。建议写成三条判别线。
+> ② **M3 是「不报错的错」第五次复现**（r50 F-1 / r51 R3 / r53 R1·R2·R3 / 本轮 M3）。
+> 凡引入「调度 / 序列化 / 时钟」类上游，验收**必须**含「同一输入两次结果逐字相同」与「不变量在暂停 / 恢复 / 重载三种转移下守恒」两条断言。
+> ③ **GitHub 上「专注计时」没有可用的底层，只有成品**：★ 高的全是完整应用（★23k / ★4.9k，有宿主不可嵌），
+> ★ 低的全是 2018–2023 的单页 demo，计时底层停在 2014–2016 且多为 `null`。
+> 与 r40（图算法）、r41（中文分词）**第三次同构**：**基础能力在 npm 上，GitHub 只用来发现新包**。本轮真正该锁的是 `xstate`，不是任何 pomodoro 仓库。
+> ④ 流程自查：首轮探针用「手动持有点火函数」的假时钟，把已 `clearTimeout` 的回调又点了一次，误判成「上游没撤销定时器」，
+> 第二轮用真 `setTimeout` 纠正（M6）。**假时钟必须实现「撤销后回调永不再触发」的语义**，否则任何基于假时钟的结论都不可信。
