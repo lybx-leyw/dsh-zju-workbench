@@ -2429,3 +2429,27 @@
 | `bevacqua/fuzzysearch` / `mattyork/fuzzy` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-22 | ★2,741（2023-05 停更）/ ★834（2021-12 停更）。两者都只做**子序列**匹配、无容差、无区间打分；被 `fuzzysort` 完全覆盖，而 `fuzzysort` 本轮也只给 🔵 |
 | `nextapps-de/flexsearch` / `EthanRutherford/fast-fuzzy` / `DumbWareio/DumbPad` | B 其他JS | Apache-2.0 ✅ / ISC ✅ / **GPL-3.0** ⛔ | — | 重复且无增益 | ⛔ | rejected | 2026-10-22 | `flexsearch`★13,809（2026-06 push）是**索引引擎**（自带 tokenizer + 打分），接进来等于把在途的 `search-rank`（minisearch）与 `search-segment`（jieba-wasm）**同时**推翻 —— 换引擎不是强化；`fast-fuzzy`★388 功能被 Fuse 覆盖且不做中文；`DumbPad`★474 是编辑器应用、**GPL-3.0** 红线。另 `javascript-fuzzy-string-search`★0 / `javascript-text-search`★0（`null`）无发布包 |
 | — | — | — | — | — | — | **note** | 2026-10-22 | **本轮结论（读码，与候选无关）**：`layered-search.js` 的 `findIn` 上现已有**四条**在途骨架（`search-rank` 排序 / `search-segment` 切词 / `pinyin-match` 读音 / 本轮 `search-fuzzy` 容错），**四者实现时互斥于同一行代码**。建议评审**合并裁决**：只准一个 → 优先 `pinyin-match`；准多个 → 必须先定义「字面 → 拼音 → 近似」三级链的失败边界，否则会出现**双重猜测**（拼音拆错字、Fuse 再把错字配回去），用户无法判断结果可信度。**未改任何代码**，只记结论 |
+
+## 2026-10-22 · 第五十二轮 · B 组（课程平台媒体 / 生活服务**正交新切片**）· 追加
+
+> 今日已跑 A r50 / B r48 / C r49 / 派生 r51 → 按 README「三组今天都跑过 → 不重跑」，
+> 本轮**不重复任何已跑关键词**，改跑两条此前从未扫过的正交轴。
+> 13 次搜索（⚠ 超限 3 次，报告 §1.1 有说明）；API 全程 200、0 次 403、本轮**完整**。
+> **有效候选 6 条：0 🟢 + 0 🟡 + 3 🔵 + 3 ⛔（族）；无骨架、不开 PR。**
+> （`ChenyuHeee/Libot` 已于 2026-10-16 登记为 🔵，本轮不重复登记；`5dbwat4/login-ZJU`、`PeiPei233/zju-learning-assistant` 等已登记项本轮重扫**评级不变**。）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `xxone111/zju-notes-assistant` | B 其他JS（**Agent Skill**：`SKILL.md` + 10 份 reference + 4 个 Node 脚本） | **MIT** ✅（`LICENSE` 实文已核：`MIT License / Copyright (c) 2026 xxone111`） | 课程笔记 / 转录导出 | **重复且无增益** | ⛔ | rejected | 2026-10-22 | ★4，**2026-10-11 建仓当日推送后未再动**，20 文件 / 136 KB（代码仅 4 脚本）。做「127.0.0.1 网页登录 → 导出智云 ASR 原文 / 课件 PDF / 学在浙大附件 → AI 生成精注或章节笔记」。**逐项对表本仓已全覆盖且更严**：会话管理（`source-classroom`；上游是明文 `~/.zju-notes-assistant/auth.json`）／ASR 逐页转录（`core-parser.transcribeSlides`）／页窗对齐（`fromMs`/`toMs`，且以 PPT 树为骨架）／课件附注（`core-notes.putAsset{page}` + `zy://section` 双链）／附件下载（`source-classroom/src/download.js` 的 Range 续传 + ETag `If-Range` + 并发锁；上游无续传、无锁、无校验）。**强化三判据仅成立 ①**（同一面板），②③ 均不成立 → ⛔。**若产品认定「精注导出成 PDF」是新需求，则应改判 🔵 单列评估**（见报告 §7.2） |
+| └ 其 `references/` 文档 | B 其他JS（文档） | MIT ✅ | 论文/笔记（PDF 回写） | 全新（仅思路） | 🔵 | proposed | 2026-10-22 | 10 份**写给 agent 的操作手册**：`matching.md`（页码匹配的失败模式，含「图片型 PDF 无文字层」）、`pdf-integration.md`（PDF 回写）、`safety.md`（权限边界）。将来做「课件精注 → PDF」时是现成的踩坑清单。**只读思路、不摘代码** |
+| `phillychi3/tronclass-util` | B 其他JS（**Tampermonkey 用户脚本**，vite 打包发 GreasyFork） | MIT（声明） | 课程视频/课件 | 重复（且**合规红线**） | ⛔ | rejected | 2026-10-22 | ★10，2026-07-21。README 自述 8 项功能里 **6 项红线**：快速观看影片、一键完成每周影音教材观看、一键读取投影片、**防止影片焦点侦测（后台播放不中断）**、自动填期末问卷、自动刷课。本仓课堂模块刻意不做自动刷课（`source-classroom` 定位「只读、不做自动登录」）→ 引入即自毁合规基线 |
+| TronClass / 超星**下载器簇**（`YanhuiJessica/TronCUClass`★21 MIT、`BobLiu0518/TronClass-Resource-Download`★11 MIT、`fish-can/TronClass-PDF-Downloader`★39 `null`、`eWloYW8/ZJU-course-material-download`★14 MIT、`eWloYW8/ZJU-course-video-complete`★7 MIT、`ColdThunder11/ChaoXingDownload`★483 GPL-3.0、`RytterMohn/chaoxingDownload`★60 MIT、`iamNCJ/ZJU-Tronclass-Courseware-Downloader`★7 `null`、`Kcalb35/Tronclass-pdf-downloaderforChrome`★9 `null`、`vvirgooo2/Auto-video-tronclass-zju`★8 `null`、`CUC-Life-Hack/tronclass-hack`★9 GPL-3.0） | B 其他JS（浏览器扩展 / 用户脚本） | MIT / `null` / GPL-3.0 | 课件下载 | **重复且无增益** | ⛔ | rejected | 2026-10-22 | 11 条，三条理由任一即足：① 本仓 `download.js` 已有 Range 续传 + ETag + 并发锁，**簇内无一条达标**（判据③不成立）；② 全是扩展/脚本，依赖目标站 DOM，与「服务端取数 + 自绘 UI」正交；③ ★ 最高的几条恰是「下载无权限资源 / 快速完成视频进度」→ 合规红线。**结论：浙大课程平台 JS 生态「高星 = 高违规」** |
+| 刷课 / 答题簇（`zhu-hailin/chaoxing-ai-assistant`★89 MIT、`lyj0309/chaoxing-xuexitong-autoflush`★105 `null`、`SSmJaE/XueXiTongSign_Electron`★76 `null`、`RainySY/chaoxing-xuexitong-autoflush`★68 `null`、`dzj0821/ChaoXingScripts`★68 GPL-3.0、`qcxs/chaoxing`★60 MIT、`pang-qin/chaoxing-toolkit`★57 `null`、`bclswl0827/Fuck-ChaoXing`★54 MIT） | B 其他JS | MIT / `null` / GPL-3.0 | — | 无关（对抗教学考核） | ⛔ | rejected | 2026-10-22 | 8 条，全部为自动刷课 / 章节测验 AI 填答案 / 考试切屏 / 过人脸 / 多设备同签。**不登记细节、不摘任何代码**；本仓明确不做此类功能 |
+| 生活服务轴新仓（`ZHENG28/zjut_LibrarySeatSystem`★7 `null`、`Midoria7/LeggedGymForG1H1`★0 `null`、`Jnove/mentor-agent`★1 `null`、`congee949/EventChain-For-ZJU`★0 `null`、`Lormited/XMU-TronClass-Helper`★6 MIT 他校） | B 其他JS | `null` / MIT | — | — | ⛔ | rejected | 2026-10-22 | 许可证 `null` ×4 + 词面撞车（`zju gym` 命中的是机器人课程项目）+ 他校工具不可直用 |
+| `RinnMoe/TronClassPlusPlus` | B 其他JS（浏览器增强插件） | **NOASSERTION** ⚠ | 课程浏览 | 重复 | ⚠ 待核 | pending-license | 2026-10-22 | ★6，2026-05-23。**许可证无法确认 → 不采用、不摘码**，须人工读 LICENSE 原文。即便核出宽松许可，「课程页增强」也被本仓页面完全覆盖 |
+| （无结果记录）`zju campus secondhand` / `zju 二手` / `zju event` | — | — | 二手 / 活动 | — | — | note | 2026-10-22 | `total_count` 分别为 **0 / 0 / 1**（唯一条 `EventChain-For-ZJU` 是 ★0 / `null` / Go 的「校园 Polymarket」概念）。**生活服务轴封板 3 个月** |
+
+> **本轮方法论结论**：
+> ① **浙大课程平台 JS 生态「高星 = 高违规」** —— `chaoxing javascript` 前 10 条里 ★ 最高的 6 条全是刷课/答题。**按 `stars` 排序会稳定把违规工具排到最前** → 该轴默认改按 `updated`，并在筛选阶段先看 description 有无「刷 / 绕过 / 自动答题 / 无权限」。
+> ② **B 组「可嵌入的 JS 库」存量已在 10-16 扫穿**（`5dbwat4/login-ZJU` 是 10 余轮里唯一 🟢），此后零 🟢；本轮 13 次搜索再次印证。
+> ③ **「一条龙导出」型项目一律判重复无增益**（含 ★532 的 `PeiPei233/zju-learning-assistant`、本轮的 `zju-notes-assistant`）：本仓的优势在「在线解析 + 页窗对齐 + 双链」，不在「批量落盘」。
