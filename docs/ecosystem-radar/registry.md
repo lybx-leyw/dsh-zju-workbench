@@ -2408,3 +2408,24 @@
 > 建议把「`name` 是否以 `@deepseek-ai/` 开头且 npm 404」列为 A 类**硬性首筛**（已两次独立命中）。
 > ⑤ `yh4922/dsh-workspace` 暴露**许可证判定的一个灰区**：仓库无 `LICENSE`、API `license: null`，但 `package.json` 写 MIT。
 > 本轮按「以仓库为准」判 ⛔ —— **建议把这条写进硬边界，避免下一轮误判。**
+
+## 2026-10-22 · 第五十一轮（检索域派生 · 「近似 / 容错」轴）
+
+> 关键词（**7 次**，0 次 403，本轮完整；`rotation-state.md` 显示今日 ABC 三组均已跑过 → 走派生轴）：
+> `fuzzy search javascript in:name`(2)、`fuzzy match javascript in:name`(**0**)、
+> `fuzzy search language:javascript stars:>50`(23)、`typo tolerant search language:javascript`(20)、
+> `fuse.js alternative`(**0**)；另 2 次纯元数据核实（GitHub `/repos` ×3、npm registry ×3）。
+> **73 条命中 → 首次登记 5 行（其中 1 行是簇）+ 1 行本轮结论**；**🟢1 🔵3 ⛔2 簇**；
+> **0 条 `NOASSERTION`、0 条无许可证、0 条 copyleft**。
+> **本轮出骨架** `packages/dsh-radar-search-fuzzy`（B 类 · 锁版 `fuse.js@7.5.0`）。
+> 起点仍是 `layered-search.js` 第 ⑥ 条自述「字面、不切词、不算相关度」—— 但这次补的是**第四条轴**：
+> 前三条（`search-rank` 排序 / `search-segment` 切词 / `pinyin-match` 读音）都不覆盖「**打错一个字**」。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `krisk/Fuse`（npm `fuse.js@7.5.0`） | **B 其他JS（纯库）** | **Apache-2.0** ✅ | 学习页检索容错 | **重复可强化**（`layered-search.js` 的 `findIn` 判据层） | 🟢 | proposed | 2026-10-22 | ★20,506，push 2026-08-09；npm `7.5.0`（2026-07-13），`dependencies: {}` 零传递依赖，unpacked 417,199 B（**进 bundle 体积未实测**）。能力：bitap 近似匹配 + 回命中区间（**闭区间**）。**判据①②③全成立**：同一检索框 / 同域不同问题（有没有 vs 打错还算不算）/ 新增容错与区间。**实测差分**（8 条语料）：`付里叶` 0→2、`中植定理` 0→1、`离散傅里叶` 0→2；`傅里叶`/`fourier`/`中值定理` 零回归；`量子力学`等 6 条无关词全 0。⚠ **三坑**：R1 命中集合须 ⊇ 旧实现（字面 `indexOf` 不能删）；R2 `minMatchCharLength` **不能固定**（=1 时单字「的」命中 5 条噪声，=2 时「傅利叶」漏掉 → 必须严格→放宽分层扫描）；R3 `matches[].indices` **不保证存在**（多文档实例实测 `undefined`）。⚠ 版本事实：7.5.0 **无** `dist/fuse.min.js`（404），只有 `fuse.mjs`/`fuse.basic.min.mjs`；**只能用 basic 构建**（完整构建的 extended search 会引入 `^ ! ' |` 新语法＝改档位）。⚠ **与 `dsh-radar-pinyin-match` 改同一行 `findIn`** → 须合并裁决，见骨架 README |
+| `farzher/fuzzysort`（npm `4.0.2`） | B 其他JS（纯库） | MIT ✅ | 学习页检索 | 重复可强化，**正交不足** | 🔵 | proposed | 2026-10-22 | ★4,356，push 2026-08-13；`4.0.2`（2026-08-13），零依赖，unpacked 78,875 B。只做**子序列**命中（`fbl` 命中 `foobar`），**没有内建错字容差** —— `傅利叶` 这类替换错直接落空，与本轮要解决的问题正交度不足 → 不出骨架。适合做「命令面板式」前缀缩写检索，本仓无此场景 |
+| `leeoniya/uFuzzy`（npm `@leeoniya/ufuzzy@1.0.19`） | B 其他JS（纯库） | MIT ✅ | 学习页检索 | 重复可强化，**中文增益不成立** | 🔵 | proposed | 2026-10-22 | ★3,038，push 2026-09-08；`1.0.19`（2025-08-22），零依赖，unpacked 134,546 B，iife 仅 8,410 B（**最省**）。**实测中文**：`intraMode:1 + intraIns:1` 下 `付里叶`/`中植定理`/`离散傅里叶` **全部 0 命中**，只有英文 `fourier` 命中 → 中文场景无增益。若将来只做英文/代码符号检索，它比 Fuse 更省，保留为备选 |
+| `bevacqua/fuzzysearch` / `mattyork/fuzzy` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-22 | ★2,741（2023-05 停更）/ ★834（2021-12 停更）。两者都只做**子序列**匹配、无容差、无区间打分；被 `fuzzysort` 完全覆盖，而 `fuzzysort` 本轮也只给 🔵 |
+| `nextapps-de/flexsearch` / `EthanRutherford/fast-fuzzy` / `DumbWareio/DumbPad` | B 其他JS | Apache-2.0 ✅ / ISC ✅ / **GPL-3.0** ⛔ | — | 重复且无增益 | ⛔ | rejected | 2026-10-22 | `flexsearch`★13,809（2026-06 push）是**索引引擎**（自带 tokenizer + 打分），接进来等于把在途的 `search-rank`（minisearch）与 `search-segment`（jieba-wasm）**同时**推翻 —— 换引擎不是强化；`fast-fuzzy`★388 功能被 Fuse 覆盖且不做中文；`DumbPad`★474 是编辑器应用、**GPL-3.0** 红线。另 `javascript-fuzzy-string-search`★0 / `javascript-text-search`★0（`null`）无发布包 |
+| — | — | — | — | — | — | **note** | 2026-10-22 | **本轮结论（读码，与候选无关）**：`layered-search.js` 的 `findIn` 上现已有**四条**在途骨架（`search-rank` 排序 / `search-segment` 切词 / `pinyin-match` 读音 / 本轮 `search-fuzzy` 容错），**四者实现时互斥于同一行代码**。建议评审**合并裁决**：只准一个 → 优先 `pinyin-match`；准多个 → 必须先定义「字面 → 拼音 → 近似」三级链的失败边界，否则会出现**双重猜测**（拼音拆错字、Fuse 再把错字配回去），用户无法判断结果可信度。**未改任何代码**，只记结论 |
