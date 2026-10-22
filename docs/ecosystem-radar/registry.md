@@ -2362,3 +2362,49 @@
 > ③ `byId(a.quizId) === null` 时 `continue`，题被删后作答仍在却**静默归零**
 > （实测 `masteryLabel` = `数据不足（做过 0 题，少于 3 题）`）→ 与「不许静默失败」冲突，
 > 修法是一条 `unattributed: N` 字段。**三条都不需要新依赖；建议先补环，再接 BKT。**
+
+## 2026-10-22 · A 组（第五十轮 · **跨节深链轴**）
+
+> 本轮 0 个 🟢。核心结论写在报告 §2：**「笔记里的跨节链接跳不过去」是写进 README 的显式设计，不是断环**，
+> 且照它跳会 `selectLesson` 清空 `state.content` → 掐断播放。因此本簇**一条 🔴 都不给**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `FuWenLianggit/dsh-session-link` | A 原生DSH | **MIT** ✅ | — | **无关**（对话会话深链，不涉课程节/页码/时间轴） | 🔵 | proposed | 2026-10-22 | ★1，push 2026-08-15，8 KB。npm `dsh-session-link` ✅ 但最新为 **`0.2.5`（10 版）**，仓库 `package.json` 写 `0.1.0` → **声明与发布不一致，锁版须以 npm 为准** |
+| `hd25071/dsh-plugin-conversation-toolkit` | A 原生DSH | **MIT** ✅ | — | **无关**（复制对话为 Markdown / 复制对话深链） | 🔵 | proposed | 2026-10-22 | ★0，push 2026-10-11。npm **404 不可锁版** → 评审若要只能 `file:` 本地挂载 |
+| `ZhijiangTang/dsh-dead-links` | A 原生DSH | **MIT** ✅ | 文档维护 | **看似相关、实则不同义**：只扫 `https?://`（`index.js:20` HEAD→GET），不解析 `zy://` 锚点 | 🔵 | proposed | 2026-10-22 | ★0，push 2026-08-16，12 KB，零依赖。npm `dsh-dead-links@0.1.1` ✅ 可锁版。**本仓锚点校验已有 `parseZySectionUri():197-240` 返回 `BAD_SECTION_LINK`，缺的是消费方** |
+| `gxpppp/dsh-obsidian` | A 原生DSH | MIT ✅（**但包名冒用官方 scope**） | 笔记桥 | **重复无增益**（本仓 `parse/links.js` 的 8 条 wikilink 语义已钉测试，比它完整） | ⛔ | rejected | 2026-10-22 | ★5，push 2026-08-31。包名 `@deepseek-ai/dsh-client-ui-obsidian`，**官方 registry 404** → 无人能证明 scope 归属。**冒用 scope 首筛第二次命中**（第一次为第四十五轮 `OoWJZZoO/dsh-read-image`） |
+| `iamzcr/dsh-obsidian-assistant` | A 原生DSH | **MIT** ✅ | 笔记检索 / 反链 / 图谱 | **重复无增益**：12 个工具全是"读写本地 vault"，**没有本仓缺的那一环** | ⛔ | rejected | 2026-10-22 | ★5，push 2026-08-17。需 Obsidian Local REST API 才有一半能力；本仓笔记域是纯存储 + 已实现的图算法 |
+| `Lion-1209/wiki-web` | B 其他JS | **MIT** ✅ | — | 重复无增益（自托管 wiki 站） | ⛔ | rejected | 2026-10-22 | ★0，push 2026-09-17，64 KB，单 `server.js`。与本仓工作台无接缝 |
+| `wuenna/dsh-obsidian-bridge` | A 原生DSH（名不符实） | **无许可证** ⛔ | — | 只登记，不采用、不摘码 | ⛔ | rejected | 2026-10-22 | ★0，push 2026-09-23。**无 `LICENSE` 文件**；`package.json` 无 `dsh` 字段、npm 404 → **根本不是可挂载的 Cordis 包** |
+| `yh4922/dsh-workspace` | A 原生DSH | **`null`** ⛔ | 远程工作区 | 无关（本仓单机单人） | ⛔ | rejected | 2026-10-22 | ★10，push 2026-10-21，1.5 MB。**仓库无 `LICENSE`，API `license: null`**；`package.json` 自称 MIT **不采信**（发布声明 ≠ 仓库许可）。npm `@yh4922/dsh-workspace@0.12.3` 存在但不采用 |
+| `AKS1st/dock-markdown` | A 原生DSH | **MIT** ✅ | Markdown 查看 | **重复无增益**：依赖 `dock` / `dock-files` 两个**本仓没有**的宿主服务 → 挂上不工作 | ⛔ | rejected | 2026-10-22 | ★3，push 2026-09-11，501 KB。npm `dock-markdown@0.1.2` 可锁版，但依赖面不满足 |
+| `james-yao-xj/dsh-plugin-handout` | A 原生DSH | **MIT** ✅ | 讲义共读 | **重复无增益**（与已 🟡 的 `dsh-zotero`、已登记的 `dsh-paper` 同域） | ⛔ | rejected | 2026-10-22 | ★2，push 2026-10-07 |
+| `henryxiao709/dsh-pdf` | A 原生DSH | **MIT** ✅ | PDF 转文本 | **重复无增益**（`dsh-pdf-reader` / `dsh-document-reader` / `dsh-tool-pdf` 之后第 4 家） | ⛔ | rejected | 2026-10-22 | ★2，push 2026-08-16。`pdfjs-dist` + OCR，与已登记三家同域 |
+| `elegantythos/exam-paper-plugin` | A 原生DSH | **MIT** ✅ | 试卷生成 | 全新（试卷排版）但与本仓「刷题」页无接缝 | 🔵 | proposed | 2026-10-22 | ★1，push 2026-08-19。**Python** → 栈不符，不出骨架 |
+| `wly8691-jpg/knowlp-rag` | A 原生DSH | **MIT** ✅ | 笔记 RAG | 重复无增益 | 🔵 | proposed | 2026-10-22 | ★3，push 2026-10-06。**Python** 主体，只记线索 |
+| `NoLeakMCP`（`ishamishra0408`） | — | **`NOASSERTION`** ⚠ | — | 无关 | ⚠ | rejected | 2026-10-22 | ★1。**许可证待人工核验，不采用、不摘码** |
+| `jackycra/dsh-dead-links` | — | — | — | — | — | rejected | 2026-10-22 | **仓库不存在**：检索结果里出现，但 `GET /repos/jackycra/dsh-dead-links` 返回 404（已删 / 改名）。仅记录，不登记为候选 |
+
+**本轮 `NOASSERTION` 1 条待核**（`NoLeakMCP`）；**无许可证 2 条**（`wuenna/dsh-obsidian-bridge`、`yh4922/dsh-workspace`）；
+**仓库不存在 1 条**（`jackycra/dsh-dead-links`）—— 全部**只登记、不采用、不摘码**。
+
+**npm 可锁版核实（官方 registry 直查）**：8 个包名 **4 `✅` / 4 `❌`**（`dsh-dead-links@0.1.1`、
+`dsh-session-link@0.2.5`、`dock-markdown@0.1.2`、`@yh4922/dsh-workspace@0.12.3` 存在；
+`@deepseek-ai/dsh-client-ui-obsidian` **冒用 scope**、`dsh-plugin-conversation-toolkit`、`dsh-link-plugin`、
+`dsh-obsidian-bridge` 全 404）→ **可锁版率 50%，与第四十五轮 1/7 同量级，建议列为常规核查项。**
+
+> **读码结论（非候选，但比候选重要）**：
+> ① **本轮推翻了一个假设**：`note-links.js:30` 的 `other-section` 分支看似"漏了一个 case"，
+> 但 `page-study/README.md:14` 明写「另一节的链接留在原地并说明跳不过去」，`tests/study.test.mjs:242` 有断言 ——
+> **这是设计决定**。按它跳过去会触发 `selectLesson` 清空 13 个字段（含 `content`），
+> 而视频栏读的正是 `state.content` → **播放中的视频被掐断**。
+> ② 能力其实**在**（`model.js:350-363` 的 `loadRecent` 已有 `loadCourse → selectLesson` 跨课载入先例），
+> **入口不在**（`shell/client.jsx:48` 的 `navigate(id)` 不收参数；全仓页面侧无 `URLSearchParams` 消费），
+> 而**设计上又不希望它发生** → 三者叠加，结论是「**缺口真实、但不该用集成解决**」，若要做需先开壳的入口参数（旁路画中画）。
+> ③ `parseZySectionUri()` 已能报 `BAD_SECTION_LINK`，**缺的是消费方** —— 与第四十九轮"能力已有、出口没有"同一形状，
+> 第三/四十九轮结论第三次复现：**本仓的缺口多数是接线问题，不是依赖问题。**
+> ④ `gxpppp/dsh-obsidian` 代表 **A 类新常态**：形态对、许可证对，但**包名冒用官方 scope**（npm 404）。
+> 建议把「`name` 是否以 `@deepseek-ai/` 开头且 npm 404」列为 A 类**硬性首筛**（已两次独立命中）。
+> ⑤ `yh4922/dsh-workspace` 暴露**许可证判定的一个灰区**：仓库无 `LICENSE`、API `license: null`，但 `package.json` 写 MIT。
+> 本轮按「以仓库为准」判 ⛔ —— **建议把这条写进硬边界，避免下一轮误判。**

@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-section-deeplink",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【对照物·未评审·未接入 profile·不可挂载】跨节深链：用来说明「笔记里的 zy://section 跨节链接跳不过去」缺的不是库，而是壳的入口参数。本包 apply() 直接抛错。",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

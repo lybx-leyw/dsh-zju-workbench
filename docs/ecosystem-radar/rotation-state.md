@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `C` |
-| `last_run_at` | `2026-10-22 03:10` |
-| `group_runs`（累计） | A=28, B=14, C=16 |
+| `last_group` | `A` |
+| `last_run_at` | `2026-10-22 09:20` |
+| `group_runs`（累计） | A=29, B=14, C=16 |
 | 上一轮轴名 | 本轮为「知识点归因底层轴」（r49）；上一轮 r48 为「教务服务代号窄词轴」 |
 
 ### 流水
@@ -120,6 +120,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-21 06:20 | A | 自动记录 |
 | 2026-10-21 09:20 | A | A组第四十六轮（同日第 6 轮）。**取组对本轮规则 2 是一次显式偏离**：规则 2 应取今日未跑的 **B**，但 B 在第四十一/三十八轮已连宣枯竭、且已是三组最少（B=12），再跑只会拉大差距 → 取 A。**topic 精确检索轴**：`topic:deepseek-harness-plugin`(835) / `cordis-plugin`(575) / `dsh-plugin`(21197 ⚠污染) / `dsh-extension`(5) / `dsh-ecosystem`(11) / `dsh-desktop`(181) / 前两者 `language:javascript`(479)、`language:typescript`(281) → **8 次搜索、0 次 403**。263 唯一仓库 → **首次登记 190 行：🔵146 / ⚠待核17 / ⛔27，零 🟢 零 🟡**。骨架 `dsh-radar-fence-normalize`（B 类对照物，12/12 测试，缺陷自曝）。新结论：① `topic:dsh-plugin` 21197 条抽 50 条**无一条是 DSH 插件** → 该入口已不可用，移出池；② **自我纠正**：`dream-num/dsh-univer-office` 初判「三门全过的新 A 类 🔵」，实查发现本仓 `dsh-zhiyun-univer-office` 早已锁版 `0.3.7` 接入并写进 profile → 改判 ⛔，并定下「新候选先查 packages/ 与 profile，再查 registry」；③ **`stripFences` 三份实现两种行为**（`polish.js:538` / `core.js:4` 对「围栏后多一句道谢」完全不剥，`quiz` 剥）→ 讲义终审会把「多一句谢谢」报成「模型没给知识点」；④ npm 可锁 ≠ 锁到最新：`dsh-plugin-desktop` npm 停在 2.0.0（2026-08-16），仓库 2.0.18，**下一轮起锁版须比对版本号**；⑤ `radar-rotation.mjs` 自 `33c6c33` 起**从未解析成功**（取值行带括号说明），本轮把取值行改成纯值、脚本恢复 `same-day(unused)`。 |
 | 2026-10-22 00:11 | B | zju zfs / zju webvpn / zju grs / zju library seat / zju transcript / zju exam grade 等 11 次（教务服务代号窄词轴） |
+| 2026-10-22 09:20 | A | A组第五十轮（同日第 3 轮；今日已跑 B 00:11 / C 03:10 → 按规则 2，**A 是今天唯一未跑的组**，取 A）。**跨节深链轴**（先读码找接缝、再定向搜）：`cordis plugin pdf`(13) / `dsh plugin pdf reader`(8) / `dsh plugin deep link`(2) / `dsh plugin wiki links`(2) / `dsh plugin backlink`(1) / `dsh plugin note graph`(1) / `dsh plugin transclusion`(**0**) / `dsh plugin link preview`(1) / `dsh plugin router page`(13) / `dsh plugin app link`(1) / `dsh plugin workspace open`(27) / `dsh plugin obsidian`(48) / `dsh plugin markdown link`(7) / `dsh plugin wikilink`(1) → **14 次搜索（⚠ 超上限 4 次，已记流程违规）**、0 次 403，本轮完整。首次登记 13 行：**🔵4 ⛔8 ⚠1，零 🟢**；另「仓库不存在」1 条（`jackycra/dsh-dead-links` API 404）；`NOASSERTION` 1 条待核、无许可证 2 条；npm 可锁版 4/8。骨架 `dsh-radar-section-deeplink`（**B 类、零依赖、`apply()` 抛错**，**定位是对照物而非候选**）。新结论：① **本轮推翻了一个假设** —— `note-links.js:30` 的 `other-section` 分支看似漏 case，但 `page-study/README.md:14` 明写「另一节的链接留在原地并说明跳不过去」、`tests/study.test.mjs:242` 有断言 → **是设计决定**；② 若照它跳，`selectLesson()`（`model.js:112`）会清空 `content` 等 13 个字段，而视频栏读的正是 `state.content` → **播放被掐断**（读码推断，未实跑）；③ **能力在、入口不在**：`model.js:350-363` 的 `loadRecent` 已有跨课载入先例，但 `shell/client.jsx:48` 的 `navigate(id)` 不收参数、`client.jsx:143` 每页 `kind:'single'` 无第二注册位 → 「缺口真实、但不该用集成解决」，若要做先开壳的入口参数；④ `parseZySectionUri()` 已能报 `BAD_SECTION_LINK`，**缺的是消费方** → 与第四十九轮「能力已有、出口没有」同一形状，**本仓缺口多为接线问题而非依赖问题**（第三次复现）；⑤ **A 类新常态：包名冒用官方 scope** —— `gxpppp/dsh-obsidian` 的包名 `@deepseek-ai/dsh-client-ui-obsidian` 官方 registry **404**（第二次独立命中，首次为第四十五轮 `OoWJZZoO/dsh-read-image`）→ 建议固化为 A 类硬性首筛；⑥ **许可证灰区**：`yh4922/dsh-workspace` 仓库无 `LICENSE`、API `license: null`，但 `package.json` 自称 MIT → 本轮判 ⛔（以仓库为准），建议写进硬边界；⑦ **可锁版率 50%（4/8）**，与第四十五轮 1/7 同量级 → 应作为 A 类常规核查项而非偶发发现。 |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
