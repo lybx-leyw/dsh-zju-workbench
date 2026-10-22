@@ -17,6 +17,17 @@ export const LOCK = Object.freeze({
   'cytoscape-fcose': '2.2.0',
 });
 
+/**
+ * 主依赖（cytoscape）的包名与版本 —— 供 `src/index.js` 与测试断言「声明、实际安装、
+ * 代码预期」三者一致。多依赖的形状见上面的 `LOCK`（单一真源仍是 `LOCK`）。
+ */
+export const UPSTREAM_PACKAGE = 'cytoscape';
+export const UPSTREAM_VERSION = '3.34.4';
+
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/cytoscape/cytoscape.js';
+
+
 /** 上游许可证（三源核对结论见 README「许可证」表）。 */
 export const LICENSES = Object.freeze({
   cytoscape: 'MIT',

@@ -33,7 +33,7 @@
  *   且上游形态（dashboard / sidebar）**正好接得上**既有页面。
  *   缺任何一条判据都只能算重复集成，应当拒绝。
  *
- * ── 集成方式（效法 packages/dsh-zhiyun-paper）────────────────────
+ * ── 集成方式（效法 packages/dsh-zhiyun-host-paper）────────────────────
  *
  *   ❌ 不改上游源码。
  *   ✅ 锁版（写死 0.71.0，不用 `^`）引入上游。
@@ -78,14 +78,18 @@
  *     需确认加载顺序（先有统计，精读才可观测）。
  */
 
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION, UPSTREAM_MOUNT } from './upstream.js';
+
 export const name = 'dsh-radar-context-dashboard';
+
+/** 锁版凭据的只读快照（供页面显示与人工复核；不在此处做任何上游调用）。 */
+export const UPSTREAM = Object.freeze({ package: UPSTREAM_PACKAGE, version: UPSTREAM_VERSION });
 
 export function apply() {
   // TODO: 评审通过后实现。当前刻意留空 —— 骨架不是实现。
   //
   // 预计形状（供评审时判断工作量，非最终设计）：
   //
-  //   import { UPSTREAM_PACKAGE, UPSTREAM_VERSION, UPSTREAM_MOUNT } from './upstream.js';
   //   // 1) 运行时核对上游版本（不抛错，记状态供页面显示）
   //   // 2) 核对 DSH 版本是否落在 UPSTREAM_MOUNT.dshReleasesCompatibility 内
   //   // 3) 把「上下文构成」交给「今天」页承载，由该页决定放哪张卡片

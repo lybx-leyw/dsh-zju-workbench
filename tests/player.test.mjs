@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import {
   computeSectionStats, buildContentSegments, buildSpeedBuckets,
   countKnowledgePoints, countChars, toSeekBar, STATS_MERGE_GAP_SEC,
-} from '../packages/dsh-zhiyun-player/src/stats.js';
+} from '../packages/dsh-zhiyun-core-player/src/stats.js';
 
 /** 造一个块。startMs/endMs 是毫秒。 */
 const block = (startSec, endSec, text, role = 'main', facets = []) => ({

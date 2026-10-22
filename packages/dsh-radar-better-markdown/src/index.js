@@ -19,7 +19,7 @@
  *
  * 缺任何一条都只能算重复集成，应当拒绝。
  *
- * ── 集成方式（效法 packages/dsh-zhiyun-paper）────────────────────
+ * ── 集成方式（效法 packages/dsh-zhiyun-host-paper）────────────────────
  *
  *   ❌ 不改上游源码。
  *   ✅ 锁版（写死 0.1.2，不用 `^`）引入上游。
@@ -31,7 +31,7 @@
  *   [ ] 核验 `dsh-better-markdown@0.1.2` 的 `dsh.bundle.patch` 指向的挂载点 id，
  *       与本包 `cordis.patch.yml` 的 `radar-better-markdown` 是否冲突。
  *   [ ] 确认上游 `client` 入口的暴露方式（自渲染 HTML / 组件导出 / 全局挂载？
- *       三种承载方式对应三种接法，见 dsh-zhiyun-paper 的 iframe 承载先例）。
+ *       三种承载方式对应三种接法，见 dsh-zhiyun-host-paper 的 iframe 承载先例）。
  *   [ ] 定「呈现区替换」的边界：哪些区域换、哪些不换（结论/引用块若无 Markdown
  *       语义则不动），并写成测试。
  *   [ ] 评估 `mermaid` + `katex` + `shiki` 的体积与首屏影响；本仓是学习工作台，

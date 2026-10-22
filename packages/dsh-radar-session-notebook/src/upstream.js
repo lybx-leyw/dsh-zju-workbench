@@ -20,6 +20,9 @@ export const UPSTREAM_PACKAGE = '@timestatic/dsh-session-notebook';
 /** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
 export const UPSTREAM_VERSION = '0.1.0';
 
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/timestatic/dsh-session-notebook';
+
 /**
  * 上游的挂载形状（2026-10-18 核对 npm `0.1.0` 的 `package.json` 得）：
  *

@@ -15,7 +15,7 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const PKG_DIR = path.join(ROOT, 'packages');
-const SHELL_CSS = path.join(PKG_DIR, 'dsh-zhiyun-shell', 'src', 'style.css');
+const SHELL_CSS = path.join(PKG_DIR, 'dsh-zhiyun-shell-workbench', 'src', 'style.css');
 
 const errors = [];
 const warns = [];

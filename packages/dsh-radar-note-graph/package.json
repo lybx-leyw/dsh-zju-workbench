@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 cytoscape（零依赖，MIT），为「笔记」页的 vault 链接图补上可视化画布（数据早已由 dsh-zhiyun-vault 算好，但一直没有任何视图在画）（全新视图）",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 cytoscape（零依赖，MIT），为「笔记」页的 vault 链接图补上可视化画布（数据早已由 dsh-zhiyun-core-vault 算好，但一直没有任何视图在画）（全新视图）",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",

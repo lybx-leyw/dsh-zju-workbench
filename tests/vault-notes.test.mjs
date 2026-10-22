@@ -156,8 +156,8 @@ test('宿主半边：重命名会改写别的笔记里指向它的链接', async
   try {
     const mod = await import('../packages/dsh-zhiyun-page-notes/src/index.js');
     const provided = {};
-    // 用一个**真的**索引器（dsh-zhiyun-vault），验两者协作。
-    const vaultMod = await import('../packages/dsh-zhiyun-vault/src/host.js');
+    // 用一个**真的**索引器（dsh-zhiyun-core-vault），验两者协作。
+    const vaultMod = await import('../packages/dsh-zhiyun-core-vault/src/host.js');
     const services = {};
     const makeCtx = (target) => ({
       profileContext: { dir: path.join(dir, 'profile') },
@@ -223,7 +223,7 @@ test('宿主半边：文件夹的建 / 列 / 移 / 删，以及嵌套路径下�
   const dir = await mkdtemp(path.join(tmpdir(), 'vault-folders-'));
   try {
     const mod = await import('../packages/dsh-zhiyun-page-notes/src/index.js');
-    const vaultMod = await import('../packages/dsh-zhiyun-vault/src/host.js');
+    const vaultMod = await import('../packages/dsh-zhiyun-core-vault/src/host.js');
     const provided = {};
     const services = {};
     // 两个半边一起上：验的是"文件夹 + 双链"这组协作，不是各自孤立的行为。

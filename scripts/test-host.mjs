@@ -4,8 +4,8 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 import { initialize, lock, root, runHost } from './profile.mjs';
 import { CLIENT_PACKAGES } from './build.mjs';
-import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-study-core/src/learning-space.js';
-import { NAV, RAIL_DEFAULT } from '../packages/dsh-zhiyun-shell/src/model.js';
+import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-core-study/src/learning-space.js';
+import { NAV, RAIL_DEFAULT } from '../packages/dsh-zhiyun-shell-workbench/src/model.js';
 
 const evidence = path.join(root, 'artifacts');
 
@@ -88,7 +88,7 @@ function minimalPdf(lines) {
  * @returns 行 id（= 包名去掉 `dsh-` 前缀，与本仓每个 cordis.patch.yml 里 insert 的 id 一致）。
  */
 function productRowIds() {
-  const bundles = [...CLIENT_PACKAGES, 'dsh-zhiyun-paper'];
+  const bundles = [...CLIENT_PACKAGES, 'dsh-zhiyun-host-paper'];
   return [...new Set(bundles.map(bundle => bundle.replace(/^dsh-/, '')))].sort();
 }
 

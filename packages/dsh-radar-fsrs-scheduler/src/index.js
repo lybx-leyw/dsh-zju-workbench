@@ -9,10 +9,10 @@
 // TODO（采用前必须完成）：
 //   1. 确认 ts-fsrs 的版本（当前锁 5.4.2）与 API 表面（createEmptyCard / fsrs.repeat /
 //      Rating / State 等），只做薄封装，不重新实现算法。
-//   2. 确定调度状态落在哪里：优先复用 dsh-zhiyun-study-core 的领域状态层
+//   2. 确定调度状态落在哪里：优先复用 dsh-zhiyun-core-study 的领域状态层
 //      （学习空间 / 学习控制器），【不要】自建落盘；每道题的 card 状态按「账号 + 课程 + 节次」
-//      维度存放，与 dsh-zhiyun-knowledge 的粒度保持一致。
-//   3. 与 dsh-zhiyun-quiz 的接缝：quiz 只负责出题与质检，本包只负责「下一次该复习谁」，
+//      维度存放，与 dsh-zhiyun-core-knowledge 的粒度保持一致。
+//   3. 与 dsh-zhiyun-core-quiz 的接缝：quiz 只负责出题与质检，本包只负责「下一次该复习谁」，
 //      两者不要互相侵入；由集成层（页面或 study-core）把两者串起来。
 //   4. UI 预期：不新增页面、不改交互 ——「学习」页仍是同一棵树，只是题目排序/到期标记变了。
 //   5. 不搬运上游源码；完成后按 CONTRIBUTING 流程补测试、接入 profile、写 OWNERS。

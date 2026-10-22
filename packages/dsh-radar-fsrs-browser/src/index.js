@@ -29,16 +29,21 @@
 //   1. 核实 fsrs-browser 6.6.0 的 API 表面（module: fsrs_browser.js，
 //      types: fsrs_browser.d.ts），只做薄封装，不重新实现算法。
 //      wasm 产物的加载方式需确认（打包器 / 静态资源路径），这是本方案主要技术风险。
-//   2. 确定调度状态落在哪里：优先复用 dsh-zhiyun-study-core 的领域状态层
+//   2. 确定调度状态落在哪里：优先复用 dsh-zhiyun-core-study 的领域状态层
 //      （学习空间 / 学习控制器），【不要】自建落盘；每道题的 card 状态按
-//      「账号 + 课程 + 节次」维度存放，与 dsh-zhiyun-knowledge 的粒度保持一致。
-//   3. 与 dsh-zhiyun-quiz 的接缝：quiz 只负责出题与质检，本包只负责
+//      「账号 + 课程 + 节次」维度存放，与 dsh-zhiyun-core-knowledge 的粒度保持一致。
+//   3. 与 dsh-zhiyun-core-quiz 的接缝：quiz 只负责出题与质检，本包只负责
 //      「下一次该复习谁」与「参数如何优化」，两者不要互相侵入。
 //   4. UI 预期：不新增页面、不改交互 ——「学习」页仍是同一棵树，
 //      只是题目排序 / 到期标记 / 参数来源变了。
 //   5. 不搬运上游源码；完成后按 CONTRIBUTING 流程补测试、接入 profile、写 OWNERS。
 
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from './upstream.js';
+
 export const name = 'dsh-radar-fsrs-browser';
+
+/** 锁版凭据的只读快照（供评审对照；不在此处初始化 WASM）。 */
+export const UPSTREAM = Object.freeze({ package: UPSTREAM_PACKAGE, version: UPSTREAM_VERSION });
 
 // TODO: 薄封装上游 fsrs-browser（示例，待实现）
 // import { ... } from 'fsrs-browser';

@@ -20,7 +20,7 @@
  *      `radarCc98` 服务，由一个**未来**的 CC98 读数视图（或既有的候选包）消费。
  *      注意：本仓**目前没有任何 CC98 面板**，所以「同一个面板」这一条**只在有消费方时才成立**
  *      —— 见下方「接入边界」第 2 条，这是本骨架最需要人工裁决的一处。
- *   2. **功能仍相似正交** —— 本仓已有 `dsh-zhiyun-omni` 的 `cc98` 平台
+ *   2. **功能仍相似正交** —— 本仓已有 `dsh-zhiyun-source-omni` 的 `cc98` 平台
  *      （`hot` / `boards` / `boardTopics` / `topic` / `search` / `user` / `notifications`
  *      / `messages` / `conversations` / `newTopics` 十个读函数，另有两步确认的发帖/回帖）。
  *      上游那 10 个工具与这十个函数**几乎一一对应** —— 这是**同一功能域**，不是新功能。
@@ -30,7 +30,7 @@
  *
  *   判 🟢 的依据只能是「上游底层更优」。可核实的差异只有**两项**：
  *     (a) `CC98_WEBVPN_MODE=auto` 的**降级链**（直连 → WebVPN 自动切）；
- *         本仓 `dsh-zhiyun-omni` 的 `ZJU_NETWORK=auto` 已是同一形状（见其 README「配置」）——
+ *         本仓 `dsh-zhiyun-source-omni` 的 `ZJU_NETWORK=auto` 已是同一形状（见其 README「配置」）——
  *         **不是增益**。
  *     (b) `cc98_get_image` 返回**图片本体**给 AI —— 本仓 `omni` 的 `cc98` 读函数返回的是
  *         **结构化 JSON**，未做「图片→AI 可看」的转码。这一项**可能是**真实增益，
@@ -38,7 +38,7 @@
  *   因此本包的立场是：**若评审不认 (b)，应直接判 ⛔、整包删除**，不要因为「已出骨架」而放行。
  *   骨架存在的意义是把这条判断摆到桌面上，而不是替评审做决定。
  *
- * ── 集成方式（效法 packages/dsh-zhiyun-paper）────────────────────
+ * ── 集成方式（效法 packages/dsh-zhiyun-host-paper）────────────────────
  *
  *   ❌ 不改上游源码。
  *   ✅ 锁版（写死 0.1.0，不用 `^`）引入上游 —— ⚠ **但上游未发 npm，见 upstream.js 的风险段**。
@@ -52,13 +52,13 @@
  *       (b) 放弃挂载、按 MIT 源码级移植 `webvpn.ts`/`client.ts`/`ubb.ts` 三块，
  *       并在包内 `ATTRIBUTION.md` 写明来源、提交号与改动（CONTRIBUTING 3.3）。
  *       **未拍板前不得推进任何实现。**
- *   [ ] **划界**：与 `dsh-zhiyun-omni` 的 `cc98` 平台**逐函数对照**，列一张
+ *   [ ] **划界**：与 `dsh-zhiyun-source-omni` 的 `cc98` 平台**逐函数对照**，列一张
  *       「上游工具 → omni 函数 → 差异」表。若差异全是「形态」而非「更优」，
  *       按「重复且无增益」驳回本包（这是本包**最可能的结局**）。
  *   [ ] **线程模型**：上游是 stdio MCP server，本仓插件跑在同一进程。
  *       不得 `spawn` 子进程并让其存活于插件生命周期之外；须在 `ctx.on('dispose')` 里关闭。
  *   [ ] **凭据**：`CC98_USERNAME`/`CC98_PASSWORD`/`ZJU_USERNAME`/`ZJU_PASSWORD` **不得**写进
- *       任何文件或 profile；须走本仓既有凭据库（见 `dsh-zhiyun-omni/src/core/keychain.ts` 的做法）。
+ *       任何文件或 profile；须走本仓既有凭据库（见 `dsh-zhiyun-source-omni/src/core/keychain.ts` 的做法）。
  *   [ ] **只读边界**：上游全部工具只读，**保持只读**。不要在上游之上补发帖能力 ——
  *       本仓 `omni` 已有「两步确认」的写路径，重复造写入口是风险不是功能。
  *   [ ] **下载类工具**：`cc98_download` 默认写 `~/Downloads/cc98` —— 与本仓「数据落 profile 数据目录」
@@ -69,6 +69,21 @@
 export const name = 'dsh-radar-cc98-sdk';
 
 export const inject = [];
+
+/**
+ * 上游线索的只读快照（供评审对照；**不是**锁版凭据）。
+ *
+ * 上游未发布到 npm（E404），且其目标形态已由 `dsh-zhiyun-source-cc98` 原生实现，
+ * 所以这里不再有"我们锁了哪个版本"可声明。字段写成 `null` 而不是删掉整个对象，
+ * 是为了让评审一眼看到"这里本该有锁版凭据、现在没有，以及为什么"。
+ */
+export const UPSTREAM = Object.freeze({
+  package: 'cc98-mcp',
+  version: null,
+  published: false,
+  supersededBy: 'dsh-zhiyun-source-cc98',
+});
+
 
 /**
  * 占位入口：**故意留空**。

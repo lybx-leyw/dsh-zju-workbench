@@ -27,9 +27,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { root, lock } from '../scripts/profile.mjs';
-import * as plugin from '../packages/dsh-zhiyun-final-pass/src/index.js';
-import { WUYUE_SYSTEM_PROMPT, wuyueTaskText } from '../packages/dsh-zhiyun-final-pass/src/prompts.js';
-import { FinalPassError, countShape } from '../packages/dsh-zhiyun-final-pass/src/index.js';
+import * as plugin from '../packages/dsh-zhiyun-core-final-pass/src/index.js';
+import { WUYUE_SYSTEM_PROMPT, wuyueTaskText } from '../packages/dsh-zhiyun-core-final-pass/src/prompts.js';
+import { FinalPassError, countShape } from '../packages/dsh-zhiyun-core-final-pass/src/index.js';
 
 // ═══════════════════════════════════════════════════════════════
 // 假宿主：只实现本插件真正用到的那几个方法，其余一律记录

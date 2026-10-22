@@ -13,6 +13,16 @@ body[data-zhiyun] .zs-account p {
   color: var(--zy-secondary);
   font-size: 12px;
 }
+/* 指路那一句：比普通说明多一层强调 —— 它含"去哪儿配"这个可执行信息，
+   但仍属**次要信息**，所以不提字号，只提对比度。 */
+body[data-zhiyun] .zs-account .zs-account-hint {
+  color: var(--zy-text);
+  line-height: 1.7;
+}
+body[data-zhiyun] .zs-account .zs-account-hint strong {
+  font-weight: 600;
+  color: var(--zy-accent);
+}
 /* 表单是**竖排**的：这块只住在 420px 宽的账号对话框里，横排会变成
    "两个窄输入框 + 一个按钮挤在一行"（改竖排之前的实际观感）。 */
 body[data-zhiyun] .zs-account form {

@@ -1,7 +1,7 @@
 /**
  * 共享原语的**出口清单**契约。
  *
- * `dsh-zhiyun-ui-primitives` 的入口是 `src/client.jsx`，它把 `primitives.jsx` 的东西
+ * `dsh-zhiyun-shell-ui` 的入口是 `src/client.jsx`，它把 `primitives.jsx` 的东西
  * **逐个解构**再导出：
  *
  *     export const { Icon, Mark, … } = primitives;
@@ -10,7 +10,7 @@
  * 忘了加。症状非常难查 ——
  *
  *   - 构建**成功**，产物里也能搜到那个名字（它在 primitives 的命名空间里）；
- *   - 使用方 `import { 新原语 } from 'dsh-zhiyun-ui-primitives'` 拿到 `undefined`；
+ *   - 使用方 `import { 新原语 } from 'dsh-zhiyun-shell-ui'` 拿到 `undefined`；
  *   - React 抛 #130「Element type is invalid」，**整块插槽**崩掉、界面上凭空少一片，
  *     而报错栈是压缩过的，指不到这一行。
  *
@@ -27,8 +27,8 @@ const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.u
 const read = (rel) => readFileSync(path.join(root, rel), 'utf8');
 
 test('原语的入口清单与 primitives.jsx 的导出一一对应（漏一个就整块插槽崩掉）', () => {
-  const primitives = read('packages/dsh-zhiyun-ui-primitives/src/primitives.jsx');
-  const client = read('packages/dsh-zhiyun-ui-primitives/src/client.jsx');
+  const primitives = read('packages/dsh-zhiyun-shell-ui/src/primitives.jsx');
+  const client = read('packages/dsh-zhiyun-shell-ui/src/client.jsx');
 
   // `export function X` / `export const X` / `export let X` / `export class X`
   const exported = [...primitives.matchAll(/^export\s+(?:async\s+)?(?:function|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)]

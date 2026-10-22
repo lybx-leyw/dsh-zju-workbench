@@ -48,8 +48,8 @@
 
 | 吃上下文的环节 | 现状 |
 | --- | --- |
-| 论文阅读页（`dsh-zhiyun-paper`） | 吞吐整篇 PDF |
-| 笔记域（`dsh-zhiyun-notes`） | 挂长文 |
+| 论文阅读页（`dsh-zhiyun-host-paper`） | 吞吐整篇 PDF |
+| 笔记域（`dsh-zhiyun-core-notes`） | 挂长文 |
 | 精读（`dsh-radar-deep-read`） | **分段多次调用模型**，是最大户 |
 | 「问一问」 | 多轮追问持续累积 |
 

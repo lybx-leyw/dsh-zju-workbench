@@ -197,8 +197,8 @@ Owner: @alice, @bob + Open
 
 ```text
 OWNERS                                      # 可不写；不写即为 shared
-packages/dsh-zhiyun-shell/OWNERS            Owner: @alice
-packages/dsh-zhiyun-shell/src/OWNERS        Owner: @alice, @bob + Open
+packages/dsh-zhiyun-shell-workbench/OWNERS            Owner: @alice
+packages/dsh-zhiyun-shell-workbench/src/OWNERS        Owner: @alice, @bob + Open
 scripts/OWNERS                              Owner: @bob, @carol + Open
 ```
 
@@ -238,7 +238,7 @@ test('用例名说清被钉住的行为', () => {
 });
 ```
 
-需要外部真值的用例，把夹具放在包内的 `fixtures/`，并在注释里写明生成方式；例见 `packages/dsh-zhiyun-notes/fixtures/dart-golden-*.json`。涉及宿主的改动（插槽、导航、主题、宿主适配）用 `npm run test:host` 在真实宿主中验证，它会在 `artifacts/` 留下报告与截图。
+需要外部真值的用例，把夹具放在包内的 `fixtures/`，并在注释里写明生成方式；例见 `packages/dsh-zhiyun-core-notes/fixtures/dart-golden-*.json`。涉及宿主的改动（插槽、导航、主题、宿主适配）用 `npm run test:host` 在真实宿主中验证，它会在 `artifacts/` 留下报告与截图。
 
 ### 3.3 参考其他项目前先确认协议
 

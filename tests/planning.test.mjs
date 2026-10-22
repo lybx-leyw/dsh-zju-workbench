@@ -15,12 +15,15 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
+  contentDigest,
   DEDUPE_PREFIX,
+  LEGACY_DEDUPE_PREFIX,
   LocalStore,
   ROUTE_PATH,
   URGENCY,
   WRITE_HEADER,
   entryPrefix,
+  legacyEntryPrefix,
   loadConfig,
   mask,
   mergeIncoming,
@@ -120,19 +123,61 @@ test('四种失败必须能被区分开', async () => {
 
 /* ──────────────────────────────────────────────── 本地留存与去重（本页核心） */
 
-test('去重前缀：同一内容稳定，不同内容可分', () => {
+test('去重键：同一内容稳定，不同内容可分', () => {
   const a = { kind: 'note', title: '标题', text: '正文内容' };
-  assert.equal(entryPrefix(a), entryPrefix({ ...a }), '同样的输入必须给同样的前缀');
+  assert.equal(entryPrefix(a), entryPrefix({ ...a }), '同样的输入必须给同样的键');
   assert.notEqual(entryPrefix(a), entryPrefix({ ...a, title: '另一个标题' }));
   assert.notEqual(entryPrefix(a), entryPrefix({ ...a, kind: 'plan' }));
-  assert.ok(entryPrefix(a).length <= DEDUPE_PREFIX);
+  assert.notEqual(entryPrefix(a), entryPrefix({ ...a, text: '另一段正文' }));
 });
 
-test('去重前缀只取前 N 字符：尾部微调不该变成新条目', () => {
-  // 这是"前缀匹配"刻意的取舍：用户改一个错别字仍算同一条，避免重复堆积
+test('长标题不会把正文挤出键外（这是会真丢数据的那一类）', () => {
+  // 中转站允许标题 200 字。旧口径把 kind+title+text 拼起来截 40 字，
+  // 于是标题一长，两条**正文完全不同**的日记会算出同一个键：
+  // 第二条被 mergeIncoming 静默跳过、不落盘 —— 用户写的东西一辈子看不到。
+  const long = '一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四';
+  const a = { kind: 'diary', title: `${long}A`, text: '正文甲' };
+  const b = { kind: 'diary', title: `${long}B`, text: '正文乙' };
+
+  // 先确认这就是旧口径的真实故障（否则这条测试在测空气）
+  assert.equal(legacyEntryPrefix(a), legacyEntryPrefix(b), '旧口径确实会撞键');
+  // 新口径必须分得开
+  assert.notEqual(entryPrefix(a), entryPrefix(b), '长标题下两条不同内容必须有不同键');
+});
+
+test('标题完全相同、只有正文不同，也必须分得开', () => {
+  // 最常见的真实形态：「今天的日记」写了两次。
+  const a = { kind: 'diary', title: '今天的日记', text: '上午上课，下午写作业' };
+  const b = { kind: 'diary', title: '今天的日记', text: '上午开会，下午跑步' };
+  assert.notEqual(entryPrefix(a), entryPrefix(b));
+});
+
+test('标题与正文都相同 → 同一个键（重复同步仍要合并）', () => {
+  const a = { kind: 'note', title: '标题', text: '正文' };
+  assert.equal(entryPrefix(a), entryPrefix({ ...a, seq: 99 }), 'seq 变了不代表内容变了');
+  assert.equal(entryPrefix(a), entryPrefix({ ...a, at: 12345 }), 'at 不参与键');
+});
+
+test('空白差异归一，不算新条目', () => {
+  const a = { kind: 'note', title: ' 标题 ', text: 'a\nb  c' };
+  const b = { kind: 'note', title: '标题', text: 'a b c' };
+  assert.equal(entryPrefix(a), entryPrefix(b), '换行/连续空白/首尾空格不该造成"新的一条"');
+});
+
+test('尾部改动现在是**新的一条**（中转站 append-only，改稿就是新记录）', () => {
+  // 旧口径刻意把"改一个错别字"当成同一条，避免重复堆积。
+  // 但中转站只有追加、没有更新 —— 合并掉改动等于让页面永远停在旧版本，
+  // 而省下的那点重复远不如"编辑不生效"严重。
   const base = { kind: 'diary', title: '今天', text: 'x'.repeat(200) };
   const edited = { ...base, text: `${'x'.repeat(200)}（改了一个字）` };
-  assert.equal(entryPrefix(base), entryPrefix(edited), '超长正文的尾部改动在前缀里看不出来');
+  assert.notEqual(entryPrefix(base), entryPrefix(edited));
+});
+
+test('内容指纹覆盖全文，不只是前半段', () => {
+  const base = { kind: 'note', title: 't', text: 'x'.repeat(500) };
+  const tailChanged = { ...base, text: `${'x'.repeat(500)}尾巴` };
+  assert.notEqual(contentDigest(base), contentDigest(tailChanged), '第 500 字之后改动也要反映到指纹');
+  assert.notEqual(entryPrefix(base), entryPrefix(tailChanged));
 });
 
 test('重复同步不会重复保存', () => {

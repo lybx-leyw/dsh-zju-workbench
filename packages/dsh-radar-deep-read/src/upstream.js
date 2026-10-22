@@ -21,6 +21,9 @@ export const UPSTREAM_PACKAGE = 'deep-read-summarize';
 /** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。 */
 export const UPSTREAM_VERSION = '0.3.13';
 
+/** 上游仓库（作者、许可证核实来源）。 */
+export const UPSTREAM_REPOSITORY = 'https://github.com/dsh-deep-read/deep-read-summarize';
+
 /**
  * ⚠ **命名陷阱（2026-10-15 实测）**：
  *
@@ -72,7 +75,7 @@ export const UPSTREAM_MOUNT = {
  *
  * 上游覆盖四类材料：书 / 论文 / 视频 / 网页。
  * 本仓场景只明确需要**论文**（论文阅读页）；书与网页可视需要保留；
- * **视频**与本仓既有 `dsh-zhiyun-lecture`（讲座）域不同，
+ * **视频**与本仓既有 `dsh-zhiyun-core-lecture`（讲座）域不同，
  * 是否开放需人工裁定 —— 见 README「需要人工裁定的事项」。
  */
 export const UPSTREAM_MATERIAL_KINDS = ['book', 'paper', 'video', 'web'];

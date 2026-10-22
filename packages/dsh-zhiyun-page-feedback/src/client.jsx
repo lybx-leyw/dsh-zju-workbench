@@ -10,7 +10,7 @@
 // 的地方，不能因为别的包停用、或某个服务没就绪而一起消失。收件服务连不上时页面显示成
 // 空社区并**明确说明是连不上**，而不是装作"还没有人提过"。
 import React, { useEffect, useState } from 'react';
-import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-shell-ui';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
   ago, checkComment, checkIssue, LIMITS, loadIssues, localName, orderIssues,

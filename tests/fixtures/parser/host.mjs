@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { root } from '../../../scripts/profile.mjs';
-import * as parserPlugin from '../../../packages/dsh-zhiyun-parser/src/index.js';
+import * as parserPlugin from '../../../packages/dsh-zhiyun-core-parser/src/index.js';
 
 // A deterministic adapter inside the actual DSH runtime; never a provider HTTP client.
 export const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWP4//8/AAX+Av5Y8msOAAAAAElFTkSuQmCC', 'base64');

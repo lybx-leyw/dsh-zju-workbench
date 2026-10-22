@@ -89,17 +89,17 @@ npm `dsh-univer-office@0.3.7`）—— **Univer 官方为 DeepSeek Harness 出�
 所以表现不是「少了 Office 能力」，是**整个工作台起不来**。（全新 init 会照抄模板、
 不触发这条校验，所以只在升级时炸 —— 更难发现。）
 
-### 所以：建 `dsh-zhiyun-univer-office` 这个薄包装包
+### 所以：建 `dsh-zhiyun-host-office` 这个薄包装包
 
 它在 `packages/` 下、名字在本仓前缀里 → 过得了上面那条校验。它只做四件事：
 依赖载体、把自己 insert 进层栈、让上游以**自己的名字**进 Loader、版本核对。
-实现与理由见 [packages/dsh-zhiyun-univer-office/README.md](../packages/dsh-zhiyun-univer-office/README.md)。
+实现与理由见 [packages/dsh-zhiyun-host-office/README.md](../packages/dsh-zhiyun-host-office/README.md)。
 
 ⚠️ **「插自己」那条不能少**：profile 的层栈从空条目列表开始拼，bundle 列在
 `dsh.profile.bundles` 里不会被自动加载。漏了它，上游的客户端半边照样进图谱、
 包装包的宿主半边却静默不跑（实测：状态路由 404、启动无日志）。
 
-这与 `dsh-zhiyun-paper` 的情况不同：那个上游**只有宿主半边、没有客户端图谱声明**，
+这与 `dsh-zhiyun-host-paper` 的情况不同：那个上游**只有宿主半边、没有客户端图谱声明**，
 所以要包一层来提供自己的 UI。这里上游是完整的双半边 bundle，包装层只负责装配。
 
 ## 目录

@@ -3,8 +3,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
-import { ClassroomSource, ENDPOINTS } from '../packages/dsh-zhiyun-classroom/src/source.js';
-import * as models from '../packages/dsh-zhiyun-classroom/src/models.js';
+import { ClassroomSource, ENDPOINTS } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import * as models from '../packages/dsh-zhiyun-source-classroom/src/models.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);

@@ -1,0 +1,17 @@
+{
+  "name": "dsh-zhiyun-core-vault",
+  "version": "0.1.0",
+  "description": "Obsidian 式笔记库：双向链接、标签、知识图谱、未解析链接、重命名改链。纯逻辑，零 IO",
+  "private": true,
+  "type": "module",
+  "main": "./src/host.js",
+  "exports": {
+    ".": "./src/host.js",
+    "./parse": "./src/parse/links.js",
+    "./index": "./src/index/vault-index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

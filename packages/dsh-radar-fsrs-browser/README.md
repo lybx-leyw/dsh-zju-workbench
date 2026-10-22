@@ -22,7 +22,7 @@
 - **类型**：**B · 其他 JS 项目** —— 上游无 `dsh.bundle.patch` / `cordis.patch.yml`，
   故本包**不含上游 DSH 依赖**，按 B 类「能力提取 + 封装」处理。
 - **与现有功能的关系**：**强化式集成** —— 增强「学习」页（`dsh-zhiyun-page-study`）
-  与「习题」能力（`dsh-zhiyun-quiz`）的复习调度。
+  与「习题」能力（`dsh-zhiyun-core-quiz`）的复习调度。
 - **为什么算强化而非重复**：三条**同时**成立 ——
   1. **仍是同一个面板**：「学习」页不新增页面、不改交互，仍是同一棵树；
   2. **功能仍相似正交**：还是做题与复习，只是「先复习谁」由调度器决定、
@@ -30,8 +30,8 @@
   3. **底层多调了更优质实现**：引入本仓**没有**的 **WASM 加速 Optimizer**
      （既有的纯 TS `ts-fsrs` 无 Optimizer WASM 路径）。
 - **集成方式**：锁版引入 npm 包 + 薄封装（能力提取 + 封装，**不搬运上游源码**）
-- **边界**：`dsh-zhiyun-quiz` 继续只管出题与质检；本包只管「下一次该复习谁」与
-  「参数如何优化」；状态优先落 `dsh-zhiyun-study-core`，**不自建落盘**。
+- **边界**：`dsh-zhiyun-core-quiz` 继续只管出题与质检；本包只管「下一次该复习谁」与
+  「参数如何优化」；状态优先落 `dsh-zhiyun-core-study`，**不自建落盘**。
 
 ## ⚠ 关键前置裁决：与 `dsh-radar-fsrs-scheduler` 的关系
 
@@ -51,7 +51,7 @@
 
 本骨架**不含任何上游源码**，仅声明依赖并留下封装 TODO；
 FSRS 算法与优化器实现完全来自上游 `fsrs-browser`（BSD-3-Clause）。
-`src/upstream.js` 为纯接缝占位，效法 `packages/dsh-zhiyun-paper/src/upstream.js` 的组织方式。
+`src/upstream.js` 为纯接缝占位，效法 `packages/dsh-zhiyun-host-paper/src/upstream.js` 的组织方式。
 
 ## 主要技术风险（采用前须验证）
 
@@ -66,6 +66,6 @@ FSRS 算法与优化器实现完全来自上游 `fsrs-browser`（BSD-3-Clause）
 - [ ] **裁决**与 `dsh-radar-fsrs-scheduler` 的关系（方案 ①②③，见上表）
 - [ ] 核实 `fsrs-browser` 6.6.0 的 API 表面，写薄封装（不重写算法）
 - [ ] 实测 WASM 资产加载与失败降级路径
-- [ ] 与 `dsh-zhiyun-study-core` 对齐状态存放粒度（账号 + 课程 + 节次）
-- [ ] 明确与 `dsh-zhiyun-quiz` 的接缝，避免职责互相侵入
+- [ ] 与 `dsh-zhiyun-core-study` 对齐状态存放粒度（账号 + 课程 + 节次）
+- [ ] 明确与 `dsh-zhiyun-core-quiz` 的接缝，避免职责互相侵入
 - [ ] 补测试（`npm test`）、接入 profile、按 CONTRIBUTING 写 `OWNERS`

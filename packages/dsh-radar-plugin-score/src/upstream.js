@@ -1,7 +1,7 @@
 /**
  * 上游包的**锁版凭据**（单一真源）。
  *
- * 效法 `packages/dsh-radar-lookatstudy/src/upstream.js` 与 `packages/dsh-zhiyun-paper`：
+ * 效法 `packages/dsh-radar-lookatstudy/src/upstream.js` 与 `packages/dsh-zhiyun-host-paper`：
  * 把版本号单独放一个模块，而不是散在 `package.json` 和注释里。原因：
  *
  *   1. `package.json` 里的依赖必须写**精确版本**（不是 `^`）。上游是 Cordis 插件形态，
@@ -15,13 +15,27 @@
  *      （本轮仅出骨架，测试留待评审通过后补。）
  *
  * ⚠ **以下两行均为占位，尚未经 registry 核实** —— 采用前必须替换为真实值。
+ *
+ * 2026-10-20 复核：`npm view @perrylink/dsh-score` 返回 **E404**，该包在 npm 上
+ * **不存在**（GitHub 仓库 `PerryLink/dsh-score` 也没有发布 npm 包的迹象）。
+ * 因此 `package.json` 里**不能**写这条依赖：占位版本号（`0.0.0-TODO-锁版待定`）
+ * 会让整个仓库的 `npm install` 直接 `EINVALIDTAGNAME` 失败，而装上也不会有任何东西。
+ * 现在的做法与 `dsh-radar-career-calendar` 一致：**未核实上游就不声明依赖**，
+ * 线索留在这里，等评审确认真实包名与版本后再补。
  */
 
-/** 上游在 npm 上的包名。⚠ 待核实（GitHub 仓库为 `PerryLink/dsh-score`）。 */
-export const UPSTREAM_PACKAGE = '@perrylink/dsh-score';
-
-/** 我们适配并测试过的上游版本，必须与 `package.json` 的依赖逐字符相同。⚠ 待核实。 */
-export const UPSTREAM_VERSION = '0.0.0-TODO-锁版待定';
+/**
+ * ⚠ 上游**尚未核实**，因此本文件**不声明** `UPSTREAM_PACKAGE` / `UPSTREAM_VERSION`。
+ *
+ * 与 `dsh-radar-career-calendar` 同一处理：没有可信的上游包名与版本，就不摆一对
+ * 「看起来像锁版凭据」的常量 —— 那会让读者以为锁版已经完成。线索留在下面：
+ *
+ *   上游（待核实）在 npm 上的包名：`@perrylink/dsh-score`（2026-10-20 复核为 E404）
+ *   上游（待核实）版本：无（npm 上不存在该包）
+ *
+ * 评审确认真实包名与版本后，再同时补 `dependencies` 与这两个常量，
+ * `tests/radar-packages.test.mjs` 会自动把这条纳入锁版断言。
+ */
 
 /**
  * 上游信息（2026-10-16 经 GitHub API 核实）：

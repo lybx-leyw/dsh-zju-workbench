@@ -16,13 +16,13 @@
 ## 集成判定
 
 - **类型**：B · 其他 JS 项目（非 DSH 原生插件包；无 `dsh.bundle.patch` 上游，故不含上游 DSH 依赖）
-- **与现有功能的关系**：**强化式集成** —— 增强「学习」页（`dsh-zhiyun-page-study`）与「习题」能力（`dsh-zhiyun-quiz`）
+- **与现有功能的关系**：**强化式集成** —— 增强「学习」页（`dsh-zhiyun-page-study`）与「习题」能力（`dsh-zhiyun-core-quiz`）
 - **为什么算强化而非重复**：三条同时成立 ——
   1. **仍是同一个面板**：「学习」页不新增页面、不改交互；
   2. **功能仍相似正交**：还是做题与复习，只是「先复习谁」由调度器决定；
   3. **底层多调了更优质实现**：把「手动/固定顺序刷题」的底层换成 FSRS 记忆模型调度。
 - **集成方式**：锁版引入 npm 包 + 薄封装（能力提取 + 封装，不搬运上游源码）
-- **边界**：`dsh-zhiyun-quiz` 继续只管出题与质检；本包只管「下一次该复习谁」；状态优先落 `dsh-zhiyun-study-core`，不自建落盘
+- **边界**：`dsh-zhiyun-core-quiz` 继续只管出题与质检；本包只管「下一次该复习谁」；状态优先落 `dsh-zhiyun-core-study`，不自建落盘
 
 ## 上游未改动声明
 
@@ -31,6 +31,6 @@
 ## 尚未完成（采用前必做）
 
 - [ ] 核实 `ts-fsrs` 5.4.2 的 API 表面，写薄封装（不重写算法）
-- [ ] 与 `dsh-zhiyun-study-core` 对齐状态存放粒度（账号 + 课程 + 节次）
-- [ ] 明确与 `dsh-zhiyun-quiz` 的接缝，避免职责互相侵入
+- [ ] 与 `dsh-zhiyun-core-study` 对齐状态存放粒度（账号 + 课程 + 节次）
+- [ ] 明确与 `dsh-zhiyun-core-quiz` 的接缝，避免职责互相侵入
 - [ ] 补测试（`npm test`）、接入 profile、按 CONTRIBUTING 写 `OWNERS`

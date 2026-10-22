@@ -18,7 +18,7 @@
 
 - [dsh-paper-reader](https://github.com/GGboya/dsh-paper-reader) · MIT · 版本 `1.3.1`。
   本包的**结构**（`src/index.js` 挂载/拆卸 + `src/upstream.js` 锁版凭据两个文件的划分、
-  「版本不符只警告不拦启动」的取舍）参考了本仓 `packages/dsh-zhiyun-paper/` 的写法。
+  「版本不符只警告不拦启动」的取舍）参考了本仓 `packages/dsh-zhiyun-host-paper/` 的写法。
   这是**同一作者的仓库内部参考**，不构成第三方借鉴；此处仅记录形态来源，便于人工评审对照。
 
 ## 含实现移植

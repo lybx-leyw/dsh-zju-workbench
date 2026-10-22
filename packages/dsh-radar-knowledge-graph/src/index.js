@@ -9,7 +9,7 @@
  * 把上游 `dsh-knowledge-graph`（MIT，npm `0.1.3`）**锁版挂载**进来，
  * 在**「笔记」页已有的那张 vault 图谱**上，补出它当前**结构性缺失**的那一半：
  *
- *   - 已有（`packages/dsh-zhiyun-vault`）：`[[链接]]` 构成的**链接图** ——
+ *   - 已有（`packages/dsh-zhiyun-core-vault`）：`[[链接]]` 构成的**链接图** ——
  *     反链、未解析链接、孤立节点、出入度。它回答「**我的笔记之间怎么连**」，
  *     边来自**用户自己写下**的 `[[…]]`。
  *   - 没有：**单篇源文内部**的知识结构 —— 概念、定义、例 / 反例、规则，
@@ -21,7 +21,7 @@
  *
  * ── 集成方式（A 类 · 锁版挂载 + 外围兼容层）──────────────────────
  *
- * 效法 `packages/dsh-zhiyun-paper`（上游 `@ggboy123/dsh-paper-reader` 锁版 `1.3.1`）
+ * 效法 `packages/dsh-zhiyun-host-paper`（上游 `@ggboy123/dsh-paper-reader` 锁版 `1.3.1`）
  * 与 `packages/dsh-zhiyun-page-paper`：
  *
  *   ❌ **绝不改上游源码**（上游 `lib/` 是构建产物，`dist/` 视情况随包发布）。
@@ -37,8 +37,8 @@
  *   2. **功能仍相似正交** —— 同一批笔记、同一个问题「我刚才记的那个概念在哪」：
  *      vault 按**链接**找（我写过什么），上游按**语义**找（原文说了什么）。
  *   3. **底层多调了更优质实现** —— 本仓**没有任何**正文语义抽取能力：
- *      `dsh-zhiyun-vault` 只解析 `[[…]]` 与标签（纯函数、零 IO），
- *      `dsh-zhiyun-parser` 产出的是**逐句 ASR 转写 + 纠错**，不是概念级结构。
+ *      `dsh-zhiyun-core-vault` 只解析 `[[…]]` 与标签（纯函数、零 IO），
+ *      `dsh-zhiyun-core-parser` 产出的是**逐句 ASR 转写 + 纠错**，不是概念级结构。
  *      自研等价物 = 本体设计 + 约束抽取 + 双向锚点 + 证据核验，规模不是「再写个解析器」。
  *
  * ── TODO（真正的适配点，评审前不要实现）────────────────────────
@@ -61,7 +61,7 @@
  *    由用户在页面上**确认后**才作为「附加视图」呈现（对齐本仓「不另开写入口」惯例）。
  *
  * 4. **持久化栈** —— 上游自带 SQLite（常驻模式保存全文 + canonical graph + checkpoint），
- *    而本仓 `dsh-zhiyun-knowledge` 的硬约束是「**持久化只用宿主存储栈**、
+ *    而本仓 `dsh-zhiyun-core-knowledge` 的硬约束是「**持久化只用宿主存储栈**、
  *    一行文件 IO 都没有」（见该包 README 与 `tests/knowledge.test.mjs` 的自检）。
  *    这两件事**不能同时成立**：要么接受上游自带 SQLite（需评审明确豁免），
  *    要么只挂只读接口、放弃它的 checkpoint 续跑。
@@ -75,6 +75,13 @@
  *    本仓笔记库目前不存图片附件（`![[图片.png]]` 只做嵌入解析）→ 首版**关掉图片路径**。
  */
 
+import {
+  UPSTREAM_PACKAGE,
+  UPSTREAM_VERSION,
+  UPSTREAM_REPOSITORY,
+  UPSTREAM_LICENSE,
+} from './upstream.js';
+
 export const name = 'dsh-radar-knowledge-graph';
 
 /** 占位：本骨架**不实现任何业务逻辑**，仅登记元信息供评审。 */
@@ -82,12 +89,12 @@ export const RADAR_SKELETON = {
   status: 'candidate-skeleton',
   reviewed: false,
   wiredIntoProfile: false,
-  upstream: 'dsh-knowledge-graph',
-  upstreamVersion: '0.1.3',
-  upstreamLicense: 'MIT',
-  upstreamRepo: 'https://github.com/cwbcheng/dsh-knowledge-graph',
+  upstream: UPSTREAM_PACKAGE,
+  upstreamVersion: UPSTREAM_VERSION,
+  upstreamLicense: UPSTREAM_LICENSE,
+  upstreamRepo: UPSTREAM_REPOSITORY,
   integration: 'A · 锁版挂载 + 外围兼容层',
-  enhances: 'dsh-zhiyun-page-notes / dsh-zhiyun-vault 的「链接图」→ 补「语义图」',
+  enhances: 'dsh-zhiyun-page-notes / dsh-zhiyun-core-vault 的「链接图」→ 补「语义图」',
 };
 
 export function apply() {
