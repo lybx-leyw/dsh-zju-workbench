@@ -2453,3 +2453,40 @@
 > ① **浙大课程平台 JS 生态「高星 = 高违规」** —— `chaoxing javascript` 前 10 条里 ★ 最高的 6 条全是刷课/答题。**按 `stars` 排序会稳定把违规工具排到最前** → 该轴默认改按 `updated`，并在筛选阶段先看 description 有无「刷 / 绕过 / 自动答题 / 无权限」。
 > ② **B 组「可嵌入的 JS 库」存量已在 10-16 扫穿**（`5dbwat4/login-ZJU` 是 10 余轮里唯一 🟢），此后零 🟢；本轮 13 次搜索再次印证。
 > ③ **「一条龙导出」型项目一律判重复无增益**（含 ★532 的 `PeiPei233/zju-learning-assistant`、本轮的 `zju-notes-assistant`）：本仓的优势在「在线解析 + 页窗对齐 + 双链」，不在「批量落盘」。
+
+## 2026-10-23 · C 组（第五十三轮 · **「课表带走」轴**）· 追加
+
+> 跨天首轮，`day_of_year % 3` = `296 % 3` = 2 → **C 组**。8 次搜索（上限 10）、API 全程 200、**0 次 403、本轮完整**。
+> 因 C 组功能域已被 r30–r49 反复扫过，本轮改用 r37 的方法：**先读码找断环、再定向搜**。
+> 读码结论：**iCalendar 序列化在本仓是零实现**（13 个 grep 命中全是 `verticalRule` / `toPhysical` 之类子串误伤），
+> 而课表（`page-today/src/agenda.js` 的 `projectAgenda`）与截止时间（`plans.js` 的 `due` + `time.js` 的 `ZONE`）
+> **数据齐全** → 缺口是「**带得走**」，不是「缺功能」。**首次登记 10 行（含 2 行簇）→ 🟢1 / 🔵2 / ⛔6 / ⚠1。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `adamgibbons/ics` | B 其他JS（纯生成器库） | **ISC** ✅（GitHub `spdx_id` + npm `versions['3.12.1'].license` 两处一致） | 课表 / 作业截止 → 系统日历 | **重复且可强化** → **强化式集成** | 🟢 | proposed | 2026-10-23 | ★787，push **2026-10-01**，npm `ics@3.12.1`（同日发布）✅ 可锁版。`unpackedSize` 72,079 B；esbuild bundle **实测 75 KB**（大头 yup）。依赖 `yup@^1.2.0`/`nanoid@^3.1.23`/`runes2@^1.1.2` **全 MIT**、无 copyleft、无 `node:` 内置依赖 → 可进前端 bundle。**强化三判据全成立**：①同一面板（「规划」页页头一个导出动作，不新增导航）②相似正交（站内「接下来做什么」vs 日历里「看得到」）③本仓 iCalendar **零实现**。**实测三条「不报错的错」**：**R1** 不传 `uid` 时 UID 随机（`aXPsYcWAV4xBuUE_N_2JP`），而课表条目**无稳定 id** → 每导出一次日历多一套重复事件；传 `uid` 后两次逐字相同 → 必须由 `(termKey, courseTitle, startMs)` 确定性派生。**R2** `timezone` 字段**被拒**（`unspecified keys`）→ 无 VTIMEZONE，只能「浮动」或「UTC」，建议 UTC。**R3** 把 `Date(ms).getUTC*()` 当本地时间传 → `DTSTART` **早 8 小时且不报错**。另：多传 `id` → 整条 `ValidationError`（yup `noUnknown`）。**已出骨架 `dsh-radar-ics-export`** |
+| `jens-maus/node-ical` | B 其他JS（解析器） | **Apache-2.0** ✅ | 日历回流（未来） | 全新（但**方向相反**） | 🔵 | proposed | 2026-10-23 | ★173，push 2026-10-19，npm `0.27.3`（2026-10-03）。RFC 5545 **解析** + RRULE 展开。本仓缺的是**生成**不是解析；同批检索另有 `mifi/ical-expander`（MIT，★72，依赖 `ical.js`）亦为解析器，同判。**依赖 `rrule-temporal` + `temporal-polyfill`**，体积远大于 `ics`。仅当将来做「外部日历 → 本仓」回流时才需要，且**必须先有冲突合并策略** |
+| `marioMLLL/ecnu-timetable-calendar` | B 其他JS | **MIT** ✅ | 他校（华东师大）课表导出 | 重复无增益 | 🔵 | proposed | 2026-10-23 | ★8，push 2026-09-22。教务系统 → .ics 的思路可看，但**数据源完全不同**，且导出逻辑只有几十行（`ics` 的薄壳）→ 只作思路参考，不摘码 |
+| `ical-generator@11.1.2`（npm，★ 未统计） | B 其他JS（备选上游） | **MIT** ✅ | 同上 | 强化式集成（**换上游备选**） | 🔵 | proposed | 2026-10-23 | 不单独登记为候选，只在骨架 README 的「拍板项 2」点名：**它支持 `timezone` 参数**，是 R2（时间显示北京时间）的唯一解。代价：bundle 814 KB 源体积。**若产品要求日历里必须显示北京时间，则 `ics` 不满足、需换它** |
+| `NLion74/ics-webuntis` | B 其他JS | **NOASSERTION** ⚠ | 他校课表导出 | — | ⚠ | pending-license | 2026-10-23 | ★11，push 2026-09-14。**许可证待人工核验，不采用、不摘码**；且 WebUntis 数据源不可复用 |
+| `finwarman/kcl-timetable`(★14) / `Treeki/myplace-timetable-export`(★2) / `mcpower/icallate`(★5) | B | `null` ⛔ | 他校 | — | ⛔ | rejected | 2026-10-23 | Python / Ruby / HTML，无许可证。只登记 |
+| 他校课表导出器（`JustBrandonLim/timetable-grabber-sit`★34 MIT、`computerfan/XJTLU-Timetable-to-ICS`★4 MIT、`romankurakin/dkuzeit`★4 MIT、`clemmbn/auriga-extract`★5 MIT） | B | **MIT** ✅ | 他校 | **重复且无增益** | ⛔ | rejected | 2026-10-23 | 许可证没问题，但**数据源不可复用**且导出逻辑极薄（都是 `ics` 的薄壳）→ 判据③不成立 |
+| `icalgen` 簇（`wysie/icalgen`★35、`touch4it/ical-timezones`★11、`chichow5/heuicsgen`★1、`localift/ical-generator`★0、`hkwi/WorkingDays.ics`★0） | B | `null` ×4 / `NOASSERTION` | — | 重复无增益 | ⛔ | rejected | 2026-10-23 | 全部无可用许可证；能力被 `adamgibbons/ics` 完全覆盖 |
+| `tritech/node-icalendar`（★233） | B | **MIT** ✅ | — | 重复无增益 | ⛔ | rejected | 2026-10-23 | **push 2020-02-15**，六年未动；功能被 `ics`（生成）/ `node-ical`（解析）覆盖 |
+| web PDF 批注簇（`techs-targe/pdfmark`★0 MIT、`kimuchi0141/Web-pdf-editor`★0 MIT、`pujunru/PDF-Viewer`★0 `null`、`BhargavBorse/pdf-viewer-with-annotation`★5 `null`、`Comet-Suite/smilo-pdf-viewer`★0 `null`、`gLUK00/OpenMark`★1 MIT） | B | 混杂 | 论文批注 | **重复且无增益** | ⛔ | rejected | 2026-10-23 | ★≤5、多为 demo；本仓「论文」页已有 PDF 阅读器 + 选中即译（`dsh-zhiyun-page-paper`）。**且「批注要不要能带走」本仓尚无明确需求** → 先按兵不动 |
+| 刷题簇（`ceo-0168/life-in-the-uk-practice`★1 MIT、`cLeffNote44/Geo-Locate`★0 MIT、`AKIB-UZ-ZAMAN/Solvix-v2`★0 `null`、`JDenn0514/Dendro`★0 `null`、`renumalu/QuizForge-AI`★1 `null`、`ryanmcgann4/med-qbank`★0 `null`、`Elfi91/Quiz-practice`★0 MIT、`Papaperun/study-quiz-builder`★0 `null`、`tson2809/quiz`★1 `null`） | B | MIT / `null` | 刷题 | **重复且无增益** | ⛔ | rejected | 2026-10-23 | ★≤4 的单人小站 / 单科专用。本仓已有 FSRS 调度（r24）+ BKT 掌握度（r49）→ 三者都不缺 |
+| （无结果记录）`fitness tracker language:typescript` | — | — | 锻炼 | — | — | note | 2026-10-23 | `total_count` = **0**，**第三次零结果**（r35 / r52 / 本轮）。Web 端锻炼追踪**结构性无解**（接触不到 Google Fit / HealthKit，r35 已登记 `rn-fitness-tracker` 为「原生桥，Web 用不上」）→ **建议把「锻炼」移出 C 组默认词池** |
+
+**本轮 `NOASSERTION` 1 条待核**（`NLion74/ics-webuntis`）；**无许可证 8 条**；**0 条 copyleft** —— 只登记、不采用、不摘码。
+
+> **方法论结论（非候选，但比候选重要）**：
+> ① **C 组第四次复现「能力/数据已在、出口没有」**（r37 关键路径 / r49 掌握度 / r50 锚点校验 / 本轮 iCalendar）。
+> 但本轮补了一层**判别线**：缺的是「一行调用」→ 补接线；缺的是「一套规范实现」→ 才接依赖。
+> iCalendar 属后者（RFC 5545 的 75-octet 折行与 `,` `;` `\` 转义不该手写）。**这条判别线防的是把接线问题当依赖问题。**
+> ② **本轮候选的失败模式全是「不报错的错」**：随机 UID（每次导出多一套重复事件）、浮动时间（跨时区错）、
+> `getUTC*` 当本地时间（早 8 小时）—— 三者产出的 `.ics` **语法完全合法**，只在内容上错。
+> → 接入「序列化 / 格式化」类上游时，验收**必须**含两条断言：**同一输入两次输出逐字相同**、**时区往返守恒**。
+> ③ **R1 暴露一个接线缺口**：`stableUid` 需要 `termKey`，而 `projectAgenda` 只输出 `day`、**没有学期标识**。
+> 若决定做，需先在 `dsh-zhiyun-source-campus` 补学期字段 —— **这是接线活，不需要新依赖**。
+> ④ **「限定符别叠加」再被验证两次**（`paper annotation + stars:>30` → 0、`exam dragdrop` → 0）。
+> 建议升级为流程硬性要求：**首个查询一律不加 `stars:` / `language:`**，只在结果里过滤。

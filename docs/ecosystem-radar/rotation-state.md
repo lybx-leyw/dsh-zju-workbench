@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `B` |
-| `last_run_at` | `2026-10-22 18:05` |
-| `group_runs`（累计） | A=29, B=16, C=16 |
+| `last_group` | `C` |
+| `last_run_at` | `2026-10-22 16:00` |
+| `group_runs`（累计） | A=29, B=16, C=17 |
 | 上一轮轴名 | 本轮 r52 为「B 组 · 课程平台媒体 / 生活服务正交轴」；上一轮 r51 为「检索域派生 · 「近似 / 容错」轴」 |
 
 ### 流水
@@ -123,6 +123,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-22 00:11 | B | zju zfs / zju webvpn / zju grs / zju library seat / zju transcript / zju exam grade 等 11 次（教务服务代号窄词轴） |
 | 2026-10-22 09:20 | A | A组第五十轮（同日第 3 轮；今日已跑 B 00:11 / C 03:10 → 按规则 2，**A 是今天唯一未跑的组**，取 A）。**跨节深链轴**（先读码找接缝、再定向搜）：`cordis plugin pdf`(13) / `dsh plugin pdf reader`(8) / `dsh plugin deep link`(2) / `dsh plugin wiki links`(2) / `dsh plugin backlink`(1) / `dsh plugin note graph`(1) / `dsh plugin transclusion`(**0**) / `dsh plugin link preview`(1) / `dsh plugin router page`(13) / `dsh plugin app link`(1) / `dsh plugin workspace open`(27) / `dsh plugin obsidian`(48) / `dsh plugin markdown link`(7) / `dsh plugin wikilink`(1) → **14 次搜索（⚠ 超上限 4 次，已记流程违规）**、0 次 403，本轮完整。首次登记 13 行：**🔵4 ⛔8 ⚠1，零 🟢**；另「仓库不存在」1 条（`jackycra/dsh-dead-links` API 404）；`NOASSERTION` 1 条待核、无许可证 2 条；npm 可锁版 4/8。骨架 `dsh-radar-section-deeplink`（**B 类、零依赖、`apply()` 抛错**，**定位是对照物而非候选**）。新结论：① **本轮推翻了一个假设** —— `note-links.js:30` 的 `other-section` 分支看似漏 case，但 `page-study/README.md:14` 明写「另一节的链接留在原地并说明跳不过去」、`tests/study.test.mjs:242` 有断言 → **是设计决定**；② 若照它跳，`selectLesson()`（`model.js:112`）会清空 `content` 等 13 个字段，而视频栏读的正是 `state.content` → **播放被掐断**（读码推断，未实跑）；③ **能力在、入口不在**：`model.js:350-363` 的 `loadRecent` 已有跨课载入先例，但 `shell/client.jsx:48` 的 `navigate(id)` 不收参数、`client.jsx:143` 每页 `kind:'single'` 无第二注册位 → 「缺口真实、但不该用集成解决」，若要做先开壳的入口参数；④ `parseZySectionUri()` 已能报 `BAD_SECTION_LINK`，**缺的是消费方** → 与第四十九轮「能力已有、出口没有」同一形状，**本仓缺口多为接线问题而非依赖问题**（第三次复现）；⑤ **A 类新常态：包名冒用官方 scope** —— `gxpppp/dsh-obsidian` 的包名 `@deepseek-ai/dsh-client-ui-obsidian` 官方 registry **404**（第二次独立命中，首次为第四十五轮 `OoWJZZoO/dsh-read-image`）→ 建议固化为 A 类硬性首筛；⑥ **许可证灰区**：`yh4922/dsh-workspace` 仓库无 `LICENSE`、API `license: null`，但 `package.json` 自称 MIT → 本轮判 ⛔（以仓库为准），建议写进硬边界；⑦ **可锁版率 50%（4/8）**，与第四十五轮 1/7 同量级 → 应作为 A 类常规核查项而非偶发发现。 |
 | 2026-10-22 12:09 | B | B组第五十一轮（同日第 4 轮）。**脚本先给出 `same-day(exhausted)`（今日 ABC 均已跑：B 第四十八轮 / C 第四十九轮 / A 第五十轮）** → 按 README「三组都跑过不建议再跑」，本轮**不重跑任何整组**，走**检索域派生轴**（先读码找接缝、再定向搜）：`fuzzy search javascript in:name`(2) / `fuzzy match javascript in:name`(**0**) / `fuzzy search language:javascript stars:>50`(23) / `typo tolerant search language:javascript`(20) / `fuse.js alternative`(**0**) → **7 次搜索、0 次 403，本轮完整**。73 条命中 → **首次登记 5 行（含 1 簇）+ 1 行本轮结论：🟢1 🔵3 ⛔2 簇**；`NOASSERTION` 0、无许可证 0、copyleft 1（`DumbPad` GPL-3.0，已排除）。骨架 `dsh-radar-search-fuzzy`（B 类 · 锁版 `fuse.js@7.5.0`，Apache-2.0，零传递依赖）。新结论：① **`findIn` 上已有四条在途骨架**（`search-rank` 排序 / `search-segment` 切词 / `pinyin-match` 读音 / 本轮容错），四者**互斥于同一行代码** → 已把「合并裁决 + 三级链双重猜测风险」写进骨架 README；② **R2 实测**：`minMatchCharLength` **不能固定** —— =1 时单字「的」在 8 条语料里命中 5 条，=2 时「傅利叶」（中间字替换）漏掉 → 必须严格档→放宽档分层扫描，这是本包唯一的架构性结论；③ **R3 实测**：多文档同一 `Fuse` 实例下 `matches` 可为 `undefined`，单文档实例稳定 → `indices` 不可假定存在；④ **版本事实**：`fuse.js@7.5.0` **无** `dist/fuse.min.js`（unpkg 404），只有 `fuse.mjs`/`fuse.basic.min.mjs`，且**只能用 basic 构建**（完整构建 extended search 会引入 `^ ! ' |` 新语法＝改档位）；⑤ **uFuzzy 的中文增益不成立**（`付里叶`/`中植定理`/`离散傅里叶` 全 0，只有 `fourier` 命中）→ 仅 🔵 备选。 |
+| 2026-10-22 16:00 | C | timetable ics export / paper annotation reader / ocr notes taking / quiz practice / fitness tracker |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
