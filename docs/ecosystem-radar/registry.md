@@ -2586,3 +2586,30 @@
 | `lookingsbfor/dsh-audit`、`dongsheng123132/dsh-license-obligation-proof`、`qingshanjiluo/dsh-security-audit` | A 原生DSH（混合） | MIT ✅ / MIT ✅ / **`null`** ⛔ | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-24 | `dsh-audit`（★1）自称 CLI tool，2026-09-04 后无更新；`license-obligation-proof`（★0）是 MCP/证据链，非本仓形态；`dsh-security-audit`（★0）**无许可证红线**，仅登记 |
 | `Gty2408/dsh-plugin-publish`、`KaramachiA217/dsh-bundle-manager`、`123twtd/dsh-plugin-manager`、`NewBeeJack/dsh-extension-manager` | A 原生DSH | MIT（均在白名单内） | 通用（插件管理） | 重复无增益 | ⛔ | rejected | 2026-10-24 | 四个「插件管理器/发布器」：发布器是**作者侧工具**；其余三个都要**自己的面板**管插件列表 —— 与插件页**同概念双入口**，且本仓 `pluginManager` 已有行级开关。`dsh-bundle-manager` ★1、2026-08-19 后无更新 |
 | 同作者安全 guard 簇：`feely0208/dsh-plugins`（**无许可证**，市场索引，49 插件）、`feely0208/dsh-phishing-guard`（Python）、`feely0208/dsh-secret-scan`、`feely0208/dsh-env-audit` | A 原生DSH（混合） | `null` ⛔ / MIT | 通用（安全） | 全新（安全域，非本仓面板） | 🔵 | proposed | 2026-10-24 | 2026-10-16 同日三连发，★ 均 1。与本仓「插件依赖」页无交集 → 只登记一行备查；`dsh-plugins` 无许可证，**仅作线索源**、不摘码 |
+
+
+## 2026-10-24 · B 组（第五十九轮 · **「笔记 → CC98 写出」轴**）· 追加
+
+> 同日第 2 轮（承接 r58 的 A 组）。取组：今日 A 已跑 → 规则 2 `same-day(unused)`，B(17) < C(19) → **B**。
+> 起点是读码：全仓 UBB 相关只有 `dsh-zhiyun-source-cc98/src/ubb.js`，且只有 `ubbToText`（**读**方向）；
+> `markdownToUbb|toUbb|toUBB` **0 命中**；笔记页 `grep -i cc98` **0 命中** → **有进口、没出口**。
+> 搜索 11 次（⚠ 超限 1 次，见报告 §5）、0 次 403、本轮完整。首次登记 9 行（含 2 行簇）。
+> 骨架 `dsh-radar-cc98-ubb-bridge`（**B 类** · 能力提取 · 零依赖 · 零上游代码）。
+> 已在册本轮只复核：`baihe26/zju-literature-downloader`（★35，push 10-23，维持 🟡）、
+> `burriedalien666/zju842-practice`（★22，维持 🟡）、`memset0/Learning-at-ZJU-Helper`（★59 但 push 2024-12，维持 🟡）、
+> `upupming/zju-grs-ics`（`null`，维持 ⛔）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `stevenstg/obsidian-cc98-publish` | **B 其他JS** | **MIT** ✅（GitHub `spdx_id` / `package.json.license` / `LICENSE` 三处一致） | 笔记 → 论坛（CC98 写出口） | **重复可强化**（判据①②③全成立） | 🟢 | proposed | 2026-10-24 | ★8，push 2026-10-19。Obsidian 插件（TS），**未发布 npm** → 只能锁 git 提交。核心三层 `md-to-ubb.ts`+`links.ts`+`convert.ts` = 1207 行**零宿主依赖纯函数**，实测可在 `node --experimental-strip-types` 下直接跑；`obsidian` 只出现在 `images.ts`/`settings.ts` 一类外围文件 → **能力提取**（非锁版挂载，`obsidian` 是虚拟模块装不上）。骨架 `dsh-radar-cc98-ubb-bridge` 已出。⚠ 三处存疑：**引用块丢 `[quote]`**、表格原样透传、硬换行原样；⚠ 读/写不对偶（内联代码含 `[b]` 时方括号被剥） |
+| `Coran-tech/cc98-reborn` | B 其他JS | **MIT** ✅（`LICENSE` 1081 B 实读） | 论坛阅读 | **重复无增益** | 🔵 | proposed | 2026-10-24 | ★4，push 2026-10-16，**本簇最活跃**。Chrome/Edge 扩展（`manifest.json`，无 `package.json`）；`src/content.js` **1.1 MB 单文件**、`styles.css` 552 KB → **整站 UI 重构**，与本仓「数据层 + 原生页面」不同构。`markup-converter.js` / `extended-ubb.js` 可**只读借鉴**其方言覆盖面，**不摘码**。另含 `question-service/`（PHP+SQLite）与 `question-mark-sites-source/`（Next.js）两个子项目 |
+| `ZJU-CC98/CC98.Achievement` | B 其他JS | Apache-2.0 ✅ | 论坛 | 全新（域外：成就系统） | 🔵 | proposed | 2026-10-24 | ★1，push 2026-07-20（3 月未动）。与阅读/写作均无关，登记备查 |
+| `shellRaining/cc98` | B 其他JS | **MIT** ✅ | 论坛 | 重复且无增益 | 🔵 | proposed | 2026-10-24 | ★3，建仓 2026-07-08 / push 2026-10-16，18.5 MB。Vue3+Vite+ 第三方整站客户端 → 与「笔记导出」零交集，且是第二个论坛界面 |
+| `EviterLesRoses2/cc98-mcp` | B 其他JS | **MIT** ✅ | 论坛 | **重复且无增益**（与 `dsh-zhiyun-source-cc98` 十方法逐条对应） | ⛔ | rejected | 2026-10-24 | ★4，仅 28 KB，只读 MCP。10 个工具与本仓 `cc98.*` 一一对应；形态是「给别的 Claude 用」而非本仓插件 |
+| `lwsher/CC98_AI_frontend` | B 其他JS | **MIT** ✅ | — | 未知 | ⚠ 待核 | pending-relevance | 2026-10-24 | ★4，2026-08-12 建仓 / push 2026-09-06。**仓库 description 为空**、README 未取到 → **相关度不明**，许可证虽明确但按「阶段 3 第 8 条」不采用、不排期，待人工看一眼 |
+| `zjufishboy/TalkTrue` | B 其他JS | **MIT** ✅ | 选课/评课 | 全新（域外） | 🔵 | proposed | 2026-10-24 | ★3，**2023-01 停更**。「内网版浙大查老师（CC98 言果平台）」，**只有前端**，后端不在仓里 → 不可独立运行 |
+| `biu9/cc98-summary` | B 其他JS | **`null`** ⛔ | 论坛 | — | ⛔ | rejected | 2026-10-24 | ★14（本簇最高星），**无许可证红线**，只登记不摘码；description 为空、2026-04 后未动 |
+| `Slowist-Lee/cc98-highlight` | B 其他JS | MIT ✅ | 论坛 | 重复无增益 | 🔵 | proposed | 2026-10-24 | ★1，2025-07 停更；浏览器端高亮脚本，与数据层无关 |
+| `Aleph-000/cc98-cleaner`、`walavave/CC98-CLI` | B 其他JS | **`null`** ⛔ / MIT ✅ | 论坛 | 重复无增益 | ⛔ / 🔵 | rejected / proposed | 2026-10-24 | `cc98-cleaner` ★4 **无许可证** → 不摘码；`CC98-CLI` ★5 与本仓已登记的 `Lucent-Snow/CC98-CLI`（★19）同型且更小 → 取已在册那条 |
+| `sel-fish/md2ubb`、`varHarrie/md2ubb`、`zjjncsn/markdown-to-ubb` | B 其他JS | MIT / MIT / **`null`** ⛔ | 笔记 → 论坛 | 重复且无增益 | ⛔ | rejected | 2026-10-24 | 同为 Markdown→UBB 但各有一条硬伤：`sel-fish` ★3 是 **Python**（技术栈不符）；`varHarrie` ★2 **2017-04 停更**且不认识 `[size=7]`/`[bili]`/`[upload]`；`zjjncsn` **无许可证**。**同簇归一取一**，取 `obsidian-cc98-publish` |
+| `AsukaSong/react-ubb-editor` | B 其他JS | WTFPL | 论坛 | 重复无增益 | 🔵 | proposed | 2026-10-24 | ★3，**2021-08 停更**。React UBB 编辑器组件；本仓 CC98 只读，不需要第二个编辑器 |
