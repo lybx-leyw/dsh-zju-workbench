@@ -2595,6 +2595,7 @@
 > `markdownToUbb|toUbb|toUBB` **0 命中**；笔记页 `grep -i cc98` **0 命中** → **有进口、没出口**。
 > 搜索 11 次（⚠ 超限 1 次，见报告 §5）、0 次 403、本轮完整。首次登记 9 行（含 2 行簇）。
 > 骨架 `dsh-radar-cc98-ubb-bridge`（**B 类** · 能力提取 · 零依赖 · 零上游代码）。
+> **自动验收四项全过**：报告/registry ✅；骨架 `json`+`yaml`+`node --check` ✅ 且 `apply()` 抛错 ✅；commit `5f76fec` 已 push 并由 `ls-remote` 验证 ✅；PR 复用滚动 PR #21（head 已前进到 `5f76fec`）✅。
 > 已在册本轮只复核：`baihe26/zju-literature-downloader`（★35，push 10-23，维持 🟡）、
 > `burriedalien666/zju842-practice`（★22，维持 🟡）、`memset0/Learning-at-ZJU-Helper`（★59 但 push 2024-12，维持 🟡）、
 > `upupming/zju-grs-ics`（`null`，维持 ⛔）。
