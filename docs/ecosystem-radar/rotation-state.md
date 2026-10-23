@@ -51,10 +51,10 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `B` |
-| `last_run_at` | `2026-10-23 03:40` |
-| `group_runs`（累计） | A=29, B=17, C=17 |
-| 上一轮轴名 | 本轮 r54 为「B 组派生 · 专注计时底座轴」；同日 r53 为「C 组 · 课表带走轴」；r52 为「B 组 · 课程平台媒体 / 生活服务正交轴」 |
+| `last_group` | `A` |
+| `last_run_at` | `2026-10-23 09:06` |
+| `group_runs`（累计） | A=30, B=17, C=17 |
+| 上一轮轴名 | 本轮 r56 为「A 组 · 同名仓库消歧轴」；同日 r54 为「B 组派生 · 专注计时底座轴」；r53 为「C 组 · 课表带走轴」 |
 
 ### 流水
 
@@ -125,6 +125,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-22 12:09 | B | B组第五十一轮（同日第 4 轮）。**脚本先给出 `same-day(exhausted)`（今日 ABC 均已跑：B 第四十八轮 / C 第四十九轮 / A 第五十轮）** → 按 README「三组都跑过不建议再跑」，本轮**不重跑任何整组**，走**检索域派生轴**（先读码找接缝、再定向搜）：`fuzzy search javascript in:name`(2) / `fuzzy match javascript in:name`(**0**) / `fuzzy search language:javascript stars:>50`(23) / `typo tolerant search language:javascript`(20) / `fuse.js alternative`(**0**) → **7 次搜索、0 次 403，本轮完整**。73 条命中 → **首次登记 5 行（含 1 簇）+ 1 行本轮结论：🟢1 🔵3 ⛔2 簇**；`NOASSERTION` 0、无许可证 0、copyleft 1（`DumbPad` GPL-3.0，已排除）。骨架 `dsh-radar-search-fuzzy`（B 类 · 锁版 `fuse.js@7.5.0`，Apache-2.0，零传递依赖）。新结论：① **`findIn` 上已有四条在途骨架**（`search-rank` 排序 / `search-segment` 切词 / `pinyin-match` 读音 / 本轮容错），四者**互斥于同一行代码** → 已把「合并裁决 + 三级链双重猜测风险」写进骨架 README；② **R2 实测**：`minMatchCharLength` **不能固定** —— =1 时单字「的」在 8 条语料里命中 5 条，=2 时「傅利叶」（中间字替换）漏掉 → 必须严格档→放宽档分层扫描，这是本包唯一的架构性结论；③ **R3 实测**：多文档同一 `Fuse` 实例下 `matches` 可为 `undefined`，单文档实例稳定 → `indices` 不可假定存在；④ **版本事实**：`fuse.js@7.5.0` **无** `dist/fuse.min.js`（unpkg 404），只有 `fuse.mjs`/`fuse.basic.min.mjs`，且**只能用 basic 构建**（完整构建 extended search 会引入 `^ ! ' |` 新语法＝改档位）；⑤ **uFuzzy 的中文增益不成立**（`付里叶`/`中植定理`/`离散傅里叶` 全 0，只有 `fourier` 命中）→ 仅 🔵 备选。 |
 | 2026-10-22 16:00 | C | timetable ics export / paper annotation reader / ocr notes taking / quiz practice / fitness tracker |
 | 2026-10-23 03:40 | B | B组派生第五十四轮（同日第 2 轮；脚本判 `same-day(exhausted)` → 按 README「三组都跑过不再整组重跑」，改走 **B 组派生轴**「专注计时底座」）。**起点是读码**：`grep -rniE "pomodoro|番茄|focus session"` 全仓 **0 命中**，而「今天的课」已有 `projectAgenda()` 的 `startMs/endMs`、「规划」页只有 `focusOf()` 五档 + `focusSummary()` 三个数 → **「今天还剩多少整块时间」数据已在、出口没有**。关键词 `pomodoro timer state machine`(11) / `pomodoro timer react`(2820) / `xstate timer machine javascript`(**0**) / `countdown timer web worker drift`(**0**) / `timer web worker language:javascript`(26) / `pomodoro language:typescript stars:>5`(163) / `performance.now timer`(12) / `productivity timer electron javascript`(19) → **8 次搜索（未超限）、0 次 403，本轮完整**。约 2,900 条命中 → **首次登记 11 行（含 3 簇）：🟢1 🔵3 ⛔6 ⚠1**；`NOASSERTION` 1 条待核、无许可证 12 条、MPL-1 条；骨架 `dsh-radar-focus-machine`（**B 类**，锁版 `xstate@5.33.3`，零运行时依赖）。新结论：① **r53 的判别线要切成三条**——本轮缺的不是「一行调用」也不是「一套规范实现」，而是**一层不变量**（暂停期间时钟不被回溯），此时接进来的是一**个模型**，价值在它的**边界**而非 API；② **M3 是本轮最重要的产出**：`after: ({context}) => …)` 函数形式**静默失效**（注入时钟一次未被调用、不抛错不告警，CJS/ESM 各复现一次，与 v5 文档说法不一致）→ 动态时长只能用常量对象形式；③ **M4 快照里没有 deadline**（`getPersistedSnapshot()` 仅 7 个字段）、**M5 暂停期间 `Date.now()` 照走** → 「还剩多久」必须由本包存；④ **GitHub 上专注计时只有成品没有底层**（★23k/★4.9k 均为完整 Electron 应用，`pomatez` npm 404；★ 低的全是 2018–2023 单页 demo），与 r40/r41 **第三次同构**：基础能力在 npm 上，GitHub 只用来发现新包；⑤ **流程自查**：首版探针用「手动持有点火函数」的假时钟，把已 `clearTimeout` 的回调又点了一次，误判成「上游没撤销定时器」，用真 `setTimeout` 复测后纠正（M6）——**假时钟必须实现「撤销后回调永不再触发」**，否则基于假时钟的结论不可信。 |
+| 2026-10-23 09:06 | A | A组第五十六轮（同日第 3 轮；脚本判 `same-day(unused)`，今日已跑 C 第五十三轮 / B 第五十四轮 → **A 为今天唯一未跑的组**）。**同名仓库消歧轴**：`deepseek-harness plugin`(9998) / `cordis plugin`(1986) / `dsh plugin`(13109) / `dsh-market`(293) / `dsh-desktop`(2139) / `topic:dsh-plugin approval`(316) → **8 次搜索（未超限）、0 次 403，本轮完整**。79 unique 中 **44 已登记（56%）**、22 为 `dsh` 分词噪声、13 相关 → **首次登记 14 行：🔵1 ⛔11 ⚠2，零 🟢**；骨架 **0 个**。新结论：① **M1 本轮最重要 —— 两对同名不同仓、许可证一绿一红**（`dsh-trading`：`maddogfinance` MIT ★41 vs `zhu1090093659` NOASSERTION ★274；`dsh-market`：`dsh-market` MIT ★8243 vs `2BingLing` NOASSERTION ★168）→ registry 主键是 `owner/repo`，但**人按 repo 名检索**，建议加「repo 名重复 ∧ spdx_id 不同 → 报警」自检；② **M2 A 组进入收割尾期**：连续两轮（r52 派生轴、本轮）**零 🟢**，而存量已有 **52 个 `dsh-radar-*` 骨架 vs 28 个已接入** → 瓶颈从「发现」移到「裁决」，建议 A 组降频、腾轮做骨架存量审计；③ **`luobosibing2/dsh-jev-plugin` 是本轮唯一「功能域真空白」候选**（`grep approval|supervision|interjection` 全仓 0 命中），但 **`@dsh-jev/plugin` npm 404 未发布 → A 类锁版不成立**，只能挂观察，不得摘码；④ **`zhu1090093659/dsh-skins` 两源许可证不一致**（仓库 BSD-3-Clause / npm Apache-2.0），同属主题域累计第 15 条 ⛔；⑤ 主题域应改预标记规则（topics ∩ skin/theme → 自动 ⛔ 待复核），而不是每次人读 description。 |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑

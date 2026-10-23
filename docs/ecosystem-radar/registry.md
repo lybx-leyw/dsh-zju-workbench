@@ -2526,3 +2526,17 @@
 > 与 r40（图算法）、r41（中文分词）**第三次同构**：**基础能力在 npm 上，GitHub 只用来发现新包**。本轮真正该锁的是 `xstate`，不是任何 pomodoro 仓库。
 > ④ 流程自查：首轮探针用「手动持有点火函数」的假时钟，把已 `clearTimeout` 的回调又点了一次，误判成「上游没撤销定时器」，
 > 第二轮用真 `setTimeout` 纠正（M6）。**假时钟必须实现「撤销后回调永不再触发」的语义**，否则任何基于假时钟的结论都不可信。
+| `NanmiCoder/dsh-agent-teams` | A 原生DSH | MIT | 规划/今天 | **重复且无增益**（骨架已在） | ⛔ | rejected | 2026-10-23 | ★2366。**已出骨架 `packages/dsh-radar-agent-teams`（2026-10-15）**，本轮仅重跑命中，不构成新候选、不改骨架 |
+| `dsh-market/dsh-market` | A 原生DSH | MIT | 插件 | **重复且无增益**（骨架已在） | ⛔ | rejected | 2026-10-23 | ★8243（骨架出时 ★6494）。**已有 `packages/dsh-radar-dsh-market` + `dsh-radar-market` 两份骨架未裁决**，不再出第三份 |
+| `YELEBAI/dsh-plugin-marketplace` | A 原生DSH | MIT | 插件 | 重复无增益（插件市场第 N 家） | ⛔ | rejected | 2026-10-23 | ★21。npm 0.5.5 / 仓库 0.9.5 **版本错位**，锁版无意义；`dsh.marketplace.profiles` 写死 `["web","desktop"]`，与本仓 `zhiyun-bench` 不匹配 |
+| `kingOfSoySauce/dsh-skin-market` | A 原生DSH | MIT | 通用（主题） | **重复且无增益**（主题域已自建） | ⛔ | rejected | 2026-10-23 | ★247。npm 0.1.67 与仓库一致。主题域累计第 14 条 ⛔；接皮肤市场会再开一个主题源，破坏 paper 包 `frame-theme.js` 的 `--zy-*` 映射 |
+| `zhu1090093659/dsh-skins` | A 原生DSH | BSD-3-Clause（仓库）/ Apache-2.0（npm）**不一致** | 通用（主题） | **重复且无增益**（主题域已自建） | ⛔ | rejected | 2026-10-23 | ★24。npm 名 `@linxin666/dsh-client-ui-skin-center@0.4.8`。**两源许可证不一致须人工核**；按更严者 BSD-3-Clause 仍在白名单，但同属主题域第 15 条 ⛔ |
+| `luobosibing2/dsh-jev-plugin` | A 原生DSH | MIT | 通用（审批/监督门控） | 全新（本仓**零实现**：approval/supervision/interjection 全 0 命中） | ⛔→观察 | proposed | 2026-10-23 | ★196，2026-10-22 仍在推。**`@dsh-jev/plugin` npm 404 未发布** → A 类「锁版引入」不成立，无法出骨架。**一旦发布即升 🟡 复评；在此之前不得摘码**。功能域为本仓真空白 |
+| `maddogfinance/dsh-trading` | A 原生DSH | MIT | 通用（交易研究） | 全新（域外） | ⛔ | rejected | 2026-10-23 | ★41，2026-08-23 最后推送（近 2 月未动）。monorepo；子包 `@dsh-trading/tool-market@0.2.0` 可锁版但根包 `version: null`。**学生场景契合 0**。⚠ 与 `zhu1090093659/dsh-trading` **同名不同仓，勿混** |
+| `FishBottle7/opencode2dsh` | A 原生DSH | MIT | 通用（第三方模型源） | 全新（域外） | ⛔ | rejected | 2026-10-23 | ★330。接 OpenCode Zen 免费模型。与工作台单一 provider 策略冲突，「免费源」类插件生命周期极短 |
+| `yannicksong0106/dsh-550c-boot` | A 原生DSH | MIT | 通用（启动动画） | 重复无增益（外壳启动画面已自建） | ⛔ | rejected | 2026-10-23 | ★178。纯装饰；「首帧由宿主半边注入」会改宿主渲染时序，与本仓外壳 Loading 卡接管冲突 |
+| `YishenTu/claudian` | B 其他 JS | MIT | 笔记（Obsidian） | 重复且无增益（平台错配） | ⛔ | rejected | 2026-10-23 | ★15767（本轮最高星）。**宿主是 Obsidian 不是 DSH**，不可挂载；仅可作「vault 内嵌 AI 协作者」交互参考 |
+| `ZJUSCT/mirror-front` | B 其他 JS | MIT | 无（浙大镜像站前端） | 全新（域外，属 B 组） | ⛔ | rejected | 2026-10-23 | ★36。**DSH 无关**，被 `dsh plugin` 查询误捞。**转交 B 组**：可作「校内服务状态」线索，但与本仓 DSH 集成目标无交集 |
+| `hust-open-atom-club/oh-dsh` | A 原生DSH | MIT（仅 GitHub 元数据，**未核 LICENSE 文件**） | 通用（runtime 分发） | 全新（跨形态） | 🔵 | proposed | 2026-10-23 | ★323。Desktop/Web/TUI 三形态 runtime。**不是插件是宿主分发**，无法挂 `dsh.bundle.patch`。仅作架构参考；引用前须核 LICENSE 文件 |
+| `zhu1090093659/dsh-trading` | A 原生DSH | **NOASSERTION** | 通用（交易终端） | 全新（域外） | ⚠ 待核 | pending-license | 2026-10-23 | ★274。Agent 原生交易终端（Crypto/US/CN/HK）。**许可证待人工核，不采用、不摘码**。⚠ **与 `maddogfinance/dsh-trading`(MIT) 同名不同仓**，最易误判的一对 |
+| `See-Sol-Lab/DeepSeekGUI` | A 原生DSH | **NOASSERTION** | 通用（桌面端） | 全新（桌面端簇本仓不自建） | ⚠ 待核 | pending-license | 2026-10-23 | ★280。桌面 GUI（Git/内置浏览器/记忆）。**许可证待核，不采用**。桌面端簇全线已登记，无集成意图 |
