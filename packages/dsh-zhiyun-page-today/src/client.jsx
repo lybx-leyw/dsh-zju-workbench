@@ -1,7 +1,8 @@
-// 「今天」页：读今天的课表。日历和自建计划仍不在这里。
-import React, { useEffect } from 'react';
+// 「今天」页：课表、已采纳的题、上次打开的那一节，以及今天到期还没勾掉的事。
+import React, { useEffect, useRef, useState } from 'react';
 import { Icon, Notice, SectionTitle, mountStyle, useStudy } from 'dsh-zhiyun-shell-ui';
 import { clock, projectAgenda } from './agenda.js';
+import { collectDue } from './due.js';
 import css from './style.css';
 
 export const name = 'zhiyun-page-today-client';
@@ -12,9 +13,15 @@ export function apply(ctx) {
   ctx.inject(['zhiyunStudyController'], (scope) => {
     scope.slots.inject('zhiyun.today.content', () => scope.slots.register(
       { name: 'zhiyun.today.content', priority: 10 },
-      () => <Today controller={scope.zhiyunStudyController} />,
+      () => <Today controller={scope.zhiyunStudyController} planning={() => readPlanning(scope)} />,
     ));
   });
+}
+
+/** 规划包是可选的。停用、还没配、或取不到时，今天页照常画课表。 */
+function readPlanning(scope) {
+  try { return scope.get('zhiyunPlanning') ?? null; }
+  catch { return null; }
 }
 
 function place(entry) {
@@ -58,8 +65,42 @@ function Row({ entry, onOpen }) {
   </button>;
 }
 
-export function Today({ controller }) {
+export function Today({ controller, planning }) {
   const s = useStudy(controller);
+  const introRef = useRef(null);
+  const [due, setDue] = useState(null);
+  useEffect(() => {
+    const node = introRef.current;
+    let stop = false;
+    const load = async () => {
+      const service = planning?.() ?? null;
+      if (!service) {
+        if (!stop) setDue(null);
+        return;
+      }
+      try {
+        const local = typeof service.local === 'function' ? service.local() : [];
+        const ticks = typeof service.ticks === 'function' ? service.ticks() : {};
+        let todos = null;
+        if (typeof service.todos === 'function') {
+          try { todos = await service.todos(); }
+          catch { todos = null; }
+        }
+        if (stop) return;
+        const next = collectDue(local, todos, ticks, Date.now());
+        setDue(next.items.length ? next : null);
+      } catch {
+        if (!stop) setDue(null);
+      }
+    };
+    void load();
+    if (!node || typeof IntersectionObserver !== 'function') return () => { stop = true; };
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void load();
+    });
+    observer.observe(node);
+    return () => { stop = true; observer.disconnect(); };
+  }, [planning]);
   useEffect(() => {
     if (!s.loading && s.user) {
       void controller.loadSchedule();
@@ -78,7 +119,7 @@ export function Today({ controller }) {
   const lead = !s.user ? null : s.scheduleLoading && !s.schedule ? null : s.scheduleError ? null : agenda.current ?? agenda.upcoming[0] ?? null;
 
   return <>
-    <div className="zy-intro"><div><span className="zy-eyebrow">一点一滴，学有所获</span><h1>今天，从容开始。</h1><p>看看接下来的安排，留一点时间给自己。</p></div><span className="zy-date-icon"><Icon name="sun" size={42}/></span></div>
+    <div className="zy-intro" ref={introRef}><div><span className="zy-eyebrow">一点一滴，学有所获</span><h1>今天，从容开始。</h1><p>看看接下来的安排，留一点时间给自己。</p></div><span className="zy-date-icon"><Icon name="sun" size={42}/></span></div>
     <SectionTitle>今天的安排</SectionTitle>
     {!s.user ? <section className="zy-now"><span className="zy-pill"><span/>今天</span><h2>先连上浙大课堂</h2><p>这一步需要「浙大一卡通」的账号密码 —— 在设置里配一次，智云课堂与学在浙大都用它。</p><button className="zy-text-button" onClick={() => controller.navigate('me')}>去设置里配置 <Icon name="arrow" size={16}/></button></section> : <>
       {s.scheduleError ? <Notice>{s.scheduleError}</Notice> : null}
@@ -88,6 +129,7 @@ export function Today({ controller }) {
       <section><SectionTitle aside="按时间先后">今天的课</SectionTitle>{!s.user || s.scheduleError || agenda.kind === 'incomplete' || s.scheduleLoading && !s.schedule ? <div className="zy-empty-row"><Icon name="calendar"/><div><strong>固定时间的安排</strong><p>{!s.user ? '登录后显示今天的课' : '课表确认之后才会列在这里'}</p></div></div> : agenda.entries.length ? <div className="zt-list">{agenda.entries.map((entry) => <Row key={`${entry.day}:${entry.sourceId ?? entry.subId}:${entry.startMs}`} entry={entry} onOpen={openCourse}/>)}</div> : <div className="zy-empty-row"><Icon name="calendar"/><div><strong>今天没有固定时间的课</strong><p>课表已经确认，这一天是空的</p></div></div>}</section>
       <section><SectionTitle aside="已采纳的题">插空完成</SectionTitle><Gaps state={s} controller={controller}/></section>
     </div>
+    {due ? <section><SectionTitle aside="到规划页里改">今天到期</SectionTitle><div className="zt-list">{due.items.map((item) => <button className="zt-row" type="button" key={item.key} onClick={() => controller.navigate('planning')}><span className="zt-time">{item.label}</span><span><strong>{item.title}</strong>{item.detail ? <p>{item.detail}</p> : null}</span></button>)}{due.truncated ? <p className="zt-note">还有更多今天到期的事，这里先列 20 条。</p> : null}</div></section> : null}
     <SectionTitle aside="接着上次打开的那一节">最近在看</SectionTitle>
     {!s.user ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>下一次打开，从上次继续</h3><p>配好「浙大一卡通」之后，这里留下你上次打开的那一节。</p></div><button className="zy-secondary" onClick={() => controller.navigate('me')}>去设置 <Icon name="arrow" size={15}/></button></div> : s.recentError ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>上次的位置没有读出来</h3><p>{s.recentError}</p></div><button className="zy-secondary" onClick={() => controller.loadRecent()}>再读一次 <Icon name="arrow" size={15}/></button></div> : s.recent ? <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>{s.recent.lessonTitle || '未命名节次'}</h3><p>{s.recent.courseTitle || '未命名课程'}</p></div><button className="zy-secondary" onClick={async () => { const opened = await controller.resumeRecent(); if (opened) controller.navigate('study'); }}>继续 <Icon name="arrow" size={15}/></button></div> : <div className="zy-resume"><span className="zy-book-cover"><Icon name="book" size={26}/></span><div><h3>还没有打开过一节课</h3><p>在学习页打开一节之后，这里会留下它。</p></div><button className="zy-secondary" onClick={() => controller.navigate('study')}>去学习 <Icon name="arrow" size={15}/></button></div>}
     <div className="zy-quiet-footer">不必一次学完所有，今天也可以只前进一步。</div>
