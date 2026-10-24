@@ -2654,3 +2654,16 @@
 | `quark-zju/vscode-line-history` | B 其他JS | **MIT** ✅ | 编辑器行历史 | 无关 | 🔵 | proposed | 2026-10-25 | ★13，TypeScript。VSCode 行级编辑历史追踪插件。属作者个人工具，与学习工作台无关 |
 | `CrazySpottedDove/fiz` | ⛔ 非 JS 栈（Rust） | **无许可证** ⛔ | 学在浙大第三方 | — | ⛔ | rejected | 2026-10-25 | ★56，Rust，push 2025-11-11，`license: null`。双红线：栈不符 + 无证。与 `Learning_at_ZJU_third_client` 同域，两者均不可用 |
 | `xlab-hackson/zju-agent` | B 其他JS | **无许可证** ⛔ | 校园问答 agent | — | ⛔ | rejected | 2026-10-25 | ★1，TypeScript，建仓 2026-07，`license: null`。★1 + 无证 + 无描述，出局 |
+
+### 第六十四轮 · 2026-10-25 · B 组 · 轴「学分核对 / 培养方案达成度」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Kepler16f/zju-kezhou` | B 其他JS（Flutter App + 纯 stdlib Python 引擎） | **MIT** ✅（`LICENSE` 1,664 B 逐字 MIT 正文 + 「第三方说明」附件；GitHub spdx 因附件报 `NOASSERTION`，**已通读全文**判定为 MIT） | 学分核对 / 培养方案 / 选课风险 | **重复且可强化** | 🟢 | proposed | 2026-10-25 | ★0，建仓 2026-10-15、push 2026-10-21（6 天 8 次迭代，`ENGINE_VERSION=1.7`）。**非 DSH 插件（无 `cordis.patch.yml`/`package.json`，contents API 实测 404）、npm 无包** → 不能锁版挂载，只能 vendor。可复用资产：`engine/`（`audit.py` 54 KB + `common.py` 3 KB，纯 stdlib）+ `schema/`（`plan`/`record`/`report` 三份 JSON Schema 2020-12）。**强化三判据全成立**：①落点是 `reads.js` 的 `earned_credits`，本包 `inject=[]` **没有 slots 注入点，结构上不可能新建页**；②现有=一个总数，接入后=同一数的模块拆分（同粒度不同层次）；③上游有本仓全无的口径：选课组「至少 N 门」折算、外语 L1/L2/L3 封顶、`selected_no_credit` 与 `earned` 分列、在修证据降级 red→yellow、并列选项组取最优、结论可回方案页码。**明确不取** `assets/`（OFL 字体）、`compass_app/`（Flutter）。骨架 `packages/dsh-radar-credit-audit`，TODO-0（vendor 方式）/TODO-1（学期口径）为阻塞项 |
+| `Jnove/ZJUCoursetrace` | B 其他JS（React Native/Expo，TypeScript） | **MIT** ✅ | 课表 / 成绩 / 考试 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★3，push 2026-10-08，`package.json` 45 个依赖（Expo 54 全家桶），**npm 404**。`lib/` 下有 `ics-export.ts`/`grade-watcher.ts`/`calendar-service.ts`，与本仓 `dsh-radar-ics-export` 及 `source-zdbk` 的 grades/exams **同域**。唯一可确认的价值是架构决策：v2.0.0 起**移除后端、认证全在客户端**（与本仓「数据不出本机」一致，属**确认**而非增量）。不取码 |
+| `bfyes/ZJUSCORE` | B 其他JS（Tampermonkey 单文件） | **MIT** ✅ | 学在浙大页内成绩标注 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★1，push 2026-09-09，仓库 34 KB / 单文件 `zjuscore.user.js`。**价值在数据源发现**：它把成绩**内联标注进学在浙大课程活动列表**，说明该列表已带可解析的成绩字段 → 对本仓 `dsh-zhiyun-source-xxt` 有线索价值。无可复用 JS 模块 |
+| `memset0/Learning-at-ZJU-Helper` | B 其他JS（userscript + webpack） | **MIT** ✅ | 学在浙大 / 智云课堂辅助 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★59（本轮第二高），但 **push 2024-12-05（23 个月未动）**。功能（学在浙大/智云）已被本仓 `source-classroom` + `source-xxt` 覆盖；构建链是 webpack 打包 userscript，无可嵌入模块。**★ 高不等于值得接** |
+| `eWloYW8/ZJU-course-material-download` | B 其他JS（userscript） | MIT ✅ | 下载学在浙大课件 | 无关 | ⛔ | rejected | 2026-10-25 | ★14，push 2026-01-24。description 自述「下载**无权限**的课件资源」→ **用途是绕过访问控制**，与本仓「只读自己有权访问的数据」边界冲突。**排除理由不是许可证，是用途**；不取码、不作需求证据 |
+| `ADSR1042/Lazuli` | B 其他JS（浏览器插件） | **GPL-3.0** ⛔ | 选课助手 + 老师评分 | — | ⛔ | rejected | 2026-10-25 | ★50，push 2025-06-20。**许可证红线**，只登记不摘码。功能域与已登记的 `mycoursereviews` 重合 |
+| `PeiPei233/zju-score-push-template` | B 其他JS | **`license: null`** ⛔ | 成绩更新推送（钉钉） | — | ⛔ | rejected | 2026-10-25 | ★26，push 2024-06-26。无证 + 停更 16 个月 |
+| `Colamentos2023/ZJU_NewScoreGetter`（★2）、`YooLc/zju-score-monitor`（★2，MIT 但 2023 停更） | B 其他JS（Python） | **`null`** ⛔ / MIT | 成绩爬取 / 钉钉机器人 | 重复无增益 | ⛔ | rejected | 2026-10-25 | 「成绩出分推送」本轮**再次**四次撞到无证或停更（10-16 已有 `zjuGradeMonitor`、`ZJU-GRADES` 两条同因出局）→ 该能力在 GitHub 上只有个人爬虫、无可复用底座，**建议封板 3 个月** |
