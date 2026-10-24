@@ -135,7 +135,7 @@ function ContentRail({ bar, nowMs, onJump }) {
   </div>;
 }
 
-export function VideoPanel({ state }) {
+export function VideoPanel({ state, seek = null }) {
   const videoRef = useRef(null);
   const [nowMs, setNowMs] = useState(0);
   const [axisMs, setAxisMs] = useState(0);
@@ -214,6 +214,24 @@ export function VideoPanel({ state }) {
     if (node && Number.isFinite(ms)) node.currentTime = Math.max(0, ms / 1000);
     setNowMs(ms);
   };
+
+  // 从知识点跳回来时，这一栏可能刚刚挂上。元数据还没到就把 currentTime
+  // 写上去，浏览器会丢掉；loadedmetadata 再写一次。
+  useEffect(() => {
+    if (seek?.nonce == null || seek.ms == null || !Number.isFinite(Number(seek.ms))) return undefined;
+    const ms = Number(seek.ms);
+    const apply = () => {
+      const node = videoRef.current;
+      if (node) node.currentTime = Math.max(0, ms / 1000);
+      setNowMs(ms);
+      setPinned(Boolean(seek.pin));
+    };
+    apply();
+    const node = videoRef.current;
+    if (!node) return undefined;
+    node.addEventListener("loadedmetadata", apply);
+    return () => node.removeEventListener("loadedmetadata", apply);
+  }, [seek?.nonce, videoUrl]);
 
   if (state.contentLoading) {
     return <div className="zs-video-loading"><span className="zs-spinner" />正在读取课件与字幕…</div>;

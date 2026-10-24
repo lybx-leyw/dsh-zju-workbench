@@ -435,7 +435,8 @@ function makeLocalHandler({ plan = null } = {}) {
       const item = items.find((row) => row.id === id);
       if (!item) return null;
       item.done = done !== false;
-      return { ...item };
+      // 与真实 store 同契约：返回 `{ item, next }`（桩不模拟重复，next 恒为 null）
+      return { item: { ...item }, next: null };
     },
     remove: (id) => {
       const i = items.indexOf(items.find((row) => row.id === id));

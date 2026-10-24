@@ -24,6 +24,8 @@ import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
 import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel, buildMonthCalendar } from './time.js';
+import { REPEAT_LABEL } from './local.js';
+import { createPetStream } from './pet-stream.js';
 import { errorText } from './error.js';
 
 export const name = 'zhiyun-page-planning-client';
@@ -386,6 +388,7 @@ export function Planning({ ctx }) {
     kind: 'mine',
     done: Boolean(item.done),
     doneAt: item.doneAt ?? null,
+    repeat: item.repeat ?? null,
     splitInto: Array.isArray(item.splitInto) ? item.splitInto : [],
     splitFrom: item.splitFrom ?? null,
     createdAt: item.createdAt ?? 0,
@@ -403,7 +406,26 @@ export function Planning({ ctx }) {
    */
 
   /**
-   * 新建一条**自己写的**规划。
+   * pet 里确认后新建的条目，接到列表上。
+   *
+   * pet 走的是同一条 `local-create`，但它拿到的 `item` 在**自己那一层**，
+   * 需要回传给页面才能立刻出现在列表里 —— 否则用户刚在气泡里点了「好」，
+   * 列表里却没有，要刷新才看得到。
+   *
+   * @param item - 服务端回的新条目。
+   */
+  const adoptCreated = useCallback((item) => {
+    if (!item?.id) return;
+    setState((current) => {
+      const local = current.local ?? [];
+      // 幂等：同一个 id 不重复插（重放/双触发时不该出现两条）
+      if (local.some((row) => row.id === item.id)) return current;
+      return { ...current, local: [...local, item] };
+    });
+  }, []);
+
+  /**
+   * 把一句话变成一条**自己写的**规划。
    *
    * 这是唯一不能完全乐观的操作：新条目的 `id` / `createdAt` 由服务端生成，
    * 本地编不出来。但也不必等整份快照 —— 服务端只回这一条 `item`，
@@ -432,6 +454,19 @@ export function Planning({ ctx }) {
   /**
    * 勾掉一条**自己写的**规划（纯本端，乐观更新）。
    */
+  /**
+   * 勾一条「我的规划」。
+   *
+   * # 重复任务会带回下一次
+   *
+   * 服务端在勾完成时**顺带生成下一次**（在同一次落盘里，见 `local.js` 的
+   * `setDone`），并把它放在 `payload.next` 回来。这里要把 `next` 也插进列表 ——
+   * 否则用户勾完只看见这一条被划掉，会以为「重复」没生效，而实际上它已经
+   * 写进文件了，只是这次页面没刷新出来（下次打开才冒出来，那更困惑）。
+   *
+   * 乐观更新只动**当前这一条的勾选态**：下一次的 id 由服务端生成，
+   * 本地编不出来，所以它一定是等回来的。
+   */
   const togglePlan = useCallback(async (row) => {
     const nextDone = !row.done;
     const before = state.local ?? [];
@@ -444,6 +479,15 @@ export function Planning({ ctx }) {
     try {
       const payload = await settings('local-done', { id: row.id, done: nextDone });
       if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+      const created = payload?.next ?? null;
+      if (created) {
+        setState((current) => ({
+          ...current,
+          local: [...(current.local ?? []), created],
+        }));
+        const when = created.due ? whenIso(created.due) : null;
+        setPlanMsg({ kind: 'ok', text: `这条会重复，下一次${when ? `排在 ${when}` : '已生成'}` });
+      }
     } catch (failure) {
       setState((current) => ({ ...current, local: before }));
       setPlanMsg({ kind: 'error', text: `勾选没有保存：${failure.message}` });
@@ -680,12 +724,17 @@ export function Planning({ ctx }) {
   useEffect(() => {
     const controller = ctx?.get?.('zhiyunStudyController');
     if (!controller || typeof controller.subscribe !== 'function') return undefined;
+    let loadedUser = null;
     const read = () => {
       try {
         const snapshot = controller.getSnapshot?.();
         // 没登录就没有课表 —— 不是错误，只是没有这条上下文
         setSchedule(snapshot?.user ? (snapshot.schedule ?? null) : null);
-        if (snapshot?.user) Promise.resolve(controller.loadSchedule?.()).catch(() => {});
+        const user = snapshot?.user ?? null;
+        if (user !== loadedUser) {
+          loadedUser = user;
+          if (user) Promise.resolve(controller.loadSchedule?.()).catch(() => {});
+        }
       } catch {
         // 控制器内部状态异常也只是"没有课表"，绝不冒泡成页面错误
         setSchedule(null);
@@ -1122,6 +1171,13 @@ export function Planning({ ctx }) {
           )}
         </div>
       )}
+
+      {/*
+        助手固定在右下角。放在 `.zpg-page` 内部（而不是 portal 到 body）：
+        它是这一页的一部分，离开这一页就该消失 —— 全局悬浮要改 shell 包，
+        而且一个在「设置」页插嘴的助手是打扰。
+      */}
+      <PlanningPet onCreated={adoptCreated} />
     </div>
   );
 }
@@ -1316,6 +1372,9 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
   const [detail, setDetail] = useState('');
   const [due, setDue] = useState('');
   const [open, setOpen] = useState(false);
+  // 重复：空串表示不重复。锚点默认按截止日 —— 对「每周交作业」最符合直觉。
+  const [repeatUnit, setRepeatUnit] = useState('');
+  const [repeatAnchor, setRepeatAnchor] = useState('due');
   /**
    * 输入面板是否展开。
    *
@@ -1371,12 +1430,19 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
       detail: detail.trim(),
       // 空串要转成 null：宿主把 '' 当"没说时间"，但显式传更清楚
       due: due ? new Date(due).toISOString() : null,
+      // 没选周期就不带 repeat（服务端把 undefined 当"不重复"）。
+      // 选了周期但没填时间是不可能的：选择器只在有 due 时才显示。
+      repeat: due && repeatUnit
+        ? { every: 1, unit: repeatUnit, anchor: repeatAnchor }
+        : null,
     });
     if (created) {
       // 只在**成功**时清空并收起：失败时保留草稿，让用户能改着重试
       setTitle('');
       setDetail('');
       setDue('');
+      setRepeatUnit('');
+      setRepeatAnchor('due');
       setOpen(false);
       setPanel(false);
     }
@@ -1416,7 +1482,8 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
           onSubmit={submit}
           role="dialog"
           aria-label="添加一条规划"
-        >          <div className="zpg-composer-row">
+        >
+          <div className="zpg-composer-row">
             <label className="zpg-composer-title">
               <span className="zpg-visually-hidden">要做什么</span>
               <input
@@ -1483,6 +1550,47 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
                   <small className="zpg-schedule-hint">{scheduleHint(schedule, due)}</small>
                 )}
               </label>
+              {/*
+                重复：只在**填了截止时间**时才给。
+                没有起点就没有"下一次"，让人选一个算不出结果的规则只会更困惑。
+              */}
+              {due && (
+                <div className="zpg-field zpg-field-inline zpg-repeat">
+                  <span>重复</span>
+                  <div className="zpg-repeat-row">
+                    <select
+                      value={repeatUnit}
+                      onChange={(event) => setRepeatUnit(event.target.value)}
+                      disabled={busy}
+                      aria-label="重复周期"
+                    >
+                      <option value="">不重复</option>
+                      <option value="day">每天</option>
+                      <option value="week">每周</option>
+                      <option value="month">每月</option>
+                    </select>
+                    {repeatUnit && (
+                      <select
+                        value={repeatAnchor}
+                        onChange={(event) => setRepeatAnchor(event.target.value)}
+                        disabled={busy}
+                        aria-label="下一次从哪天算"
+                        title="从哪天起算"
+                      >
+                        <option value="due">按截止日</option>
+                        <option value="done">按完成日</option>
+                      </select>
+                    )}
+                  </div>
+                  {repeatUnit && (
+                    <small className="zpg-schedule-hint">
+                      {repeatAnchor === 'due'
+                        ? '每次仍按原来的截止日往后推（拖到最后也还是压同一个点）'
+                        : '下次从你实际做完那天起算（间隔按你的真实节奏）'}
+                    </small>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <button type="button" className="zpg-link" onClick={() => setOpen(true)}>
@@ -1615,6 +1723,20 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
               <span className={`zpg-title ${row.done ? 'zpg-title-done' : ''}`}>{row.title}</span>
               <span className="zpg-meta">
                 {splitCount > 0 && <span className="zpg-planned">已拆 {splitCount} 条</span>}
+                {/* 重复标记：让人一眼看出这条勾掉之后还会再来一次 */}
+                {row.repeat && (
+                  <span className="zpg-repeat-tag" title={
+                    row.repeat.anchor === 'done'
+                      ? '勾完成后，下一次从你实际做完那天起算'
+                      : '勾完成后，下一次仍按原来的截止日往后推'
+                  }>
+                    {/* 用 `history`（带循环箭头的图标）表示重复 —— 共享原语里没有 repeat，
+                        为一个标签去改 shell-ui 不划算，而 history 的形状语义已足够接近。 */}
+                    <Icon name="history" size={12} />
+                    {REPEAT_LABEL[row.repeat.unit] ?? '重复'}
+                    {row.repeat.anchor === 'done' ? '·按完成日' : ''}
+                  </span>
+                )}
                 <span className="zpg-due">
                   {whenIso(row.due)}
                   {row.due && !row.done && <em className="zpg-left">{countdown(row.due)}</em>}
@@ -2273,4 +2395,286 @@ export function RelaySection() {
 function describeRelaySummary(payload) {
   if (!payload.config?.configured) return '未配置';
   return `已配置 · 本地 ${payload.entries?.length ?? 0} 条记录`;
+}
+
+/* ══════════════════════════════════════════ pet：右下角的对话角色 */
+
+/**
+ * pet 的气泡。
+ *
+ * # 为什么是"角色"而不是输入框
+ *
+ * 输入框要求用户先把想法整理成字段；而人的真实状态是"想起什么说什么"。
+ * pet 把入口变成一次对话：说一句、它回一句、你觉得对就点「好」。
+ *
+ * # 三个刻意的取舍
+ *
+ * 1. **只在规划页**。全局悬浮要改 shell 包，而且一个在「设置」页插嘴的
+ *    助手是打扰。它在这里是因为这里是"写下要做的事"的地方。
+ * 2. **确认留在气泡里**，不跳回表单。聊天结束还要回表单点一次「添加」，
+ *    等于白聊 —— 用户已经用自然语言表达过了。
+ * 3. **`create` 只出卡，不落库**。卡片上有一个「好」按钮，那一刻才真的写。
+ *    这是 AI 相关功能共同的一条底线：AI 记错了必须有人拦。
+ */
+function PlanningPet({ onCreated }) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
+  // 待确认的那条草案（同一时刻只留一条：连着说两件事要分开确认）
+  const [pendingDraft, setPendingDraft] = useState(null);
+  const listRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // 有新消息时滚到底部 —— 聊天气泡里"看不到最新那条"是最基本的问题
+  useEffect(() => {
+    const node = listRef.current;
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [messages, pendingDraft, open]);
+
+  // 打开时聚焦输入框，省掉一次点击
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
+  // Esc 收起
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event) => { if (event.key === 'Escape') setOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  /**
+   * 发一句话，**边收边显示**。
+   *
+   * # 流式的两种失败必须分开处理
+   *
+   *   · 服务端说 `NO_STREAM`（老模型通道不支持）→ **退回普通模式**再来一次。
+   *     用户不该为"通道能力"这种东西看到报错，他要的只是一句回话。
+   *   · 其它失败（网络断、模型报错）→ 如实显示。这时再自动重试只会
+   *     花第二次钱，还可能在已经显示了一半的情况下把气泡弄乱。
+   *
+   * # 为什么先塞一个空 assistant 气泡
+   *
+   * 逐字追加需要一个**稳定的落点**。如果等第一段 delta 到了才建气泡，
+   * 用户会先看到自己那句孤零零地待着，然后才冒出回应 —— 中间那一刻像卡住。
+   * 先占位（内容是空串，显示为"…"），第一段 delta 一到就替换掉。
+   */
+  const send = async () => {
+    const said = text.trim();
+    if (!said || sending) return;
+    setText('');
+    setError(null);
+    const history = messages.slice(-8);
+    // 用户那句 + 一个待填充的助手气泡（用 index 定位，避免和已有气泡混淆）
+    setMessages((current) => [...current, { role: 'user', text: said }, { role: 'assistant', text: '' }]);
+    setSending(true);
+
+    /** 把最新那段助手气泡改成给定内容。 */
+    const patchAssistant = (next) => setMessages((current) => {
+      const copy = [...current];
+      for (let i = copy.length - 1; i >= 0; i -= 1) {
+        if (copy[i].role === 'assistant') { copy[i] = { ...copy[i], text: next }; break; }
+      }
+      return copy;
+    });
+
+    let typed = '';
+    const finish = (payload) => {
+      // 收尾用服务端的 `say` 校正一次：流式期间可能有半截围栏没显示出来
+      const finalSay = typeof payload?.say === 'string' && payload.say ? payload.say : typed;
+      patchAssistant(finalSay);
+      if (payload?.action === 'create' && payload?.draft) setPendingDraft(payload.draft);
+      if (Array.isArray(payload?.notes) && payload.notes.length > 0) setError(payload.notes.join('；'));
+    };
+
+    try {
+      const stream = createPetStream({
+        url: `${ROUTE}?pet-stream`,
+        body: { text: said, history },
+        onDelta: (chunk) => { typed += chunk; patchAssistant(typed); },
+        onFinal: finish,
+        onError: (message, meta) => {
+          // NO_STREAM 不在这里报 —— 交给下面的回退路径，用户不该看到它
+          if (meta?.code !== 'NO_STREAM') setError(message);
+        },
+      });
+      const outcome = await stream.start();
+
+      /**
+       * 流式没跑起来 → **悄悄退回普通模式**再试一次。
+       *
+       * 触发条件：服务端明确回 `NO_STREAM`（老通道不支持 `callStream`），
+       * 或者一个 delta 都没收到、也没有 final —— 那说明这条路整个没通。
+       * 用户不该为"通道能力"这种东西看到报错。
+       */
+      if (outcome.unsupported || (!outcome.final && outcome.deltas === 0)) {
+        const payload = await settings('pet-chat', { text: said, history });
+        if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+        finish(payload);
+      }
+    } catch (failure) {
+      setError(failure.message);
+      // 失败时把话放回输入框，用户不用重打
+      setText(said);
+      // 清掉那个空占位气泡，别留一个空气泡在那儿
+      setMessages((current) => {
+        const copy = [...current];
+        if (copy.length && copy[copy.length - 1].role === 'assistant' && !copy[copy.length - 1].text) copy.pop();
+        return copy;
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  /** 用户点了「好」——这一步才真的落库。 */
+  const confirm = async () => {
+    if (!pendingDraft || sending) return;
+    const draft = pendingDraft;
+    setSending(true);
+    setError(null);
+    try {
+      const payload = await settings('local-create', {
+        title: draft.title,
+        detail: draft.detail ?? '',
+        due: draft.due ?? null,
+        repeat: draft.repeat ?? null,
+      });
+      if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
+      const item = payload?.item ?? null;
+      setPendingDraft(null);
+      setMessages((current) => [...current, {
+        role: 'assistant',
+        text: whenIso(item?.due) ? `记好了：${draft.title}（${whenIso(item.due)}）` : `记好了：${draft.title}`,
+      }]);
+      // 把新条目推给页面，列表立刻出现 —— 不必等下一次快照
+      if (item && typeof onCreated === 'function') onCreated(item);
+    } catch (failure) {
+      setError(failure.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (!open) {
+    return <button
+      type="button"
+      className="zpg-pet-fab"
+      onClick={() => setOpen(true)}
+      aria-label="打开规划助手"
+      title="跟助手聊聊要做什么"
+    >
+      <span className="zpg-pet-face" aria-hidden="true">
+        <span className="zpg-pet-eye" /><span className="zpg-pet-eye" />
+      </span>
+    </button>;
+  }
+
+  return <div className="zpg-pet" role="dialog" aria-label="规划助手">
+    <header className="zpg-pet-head">
+      <span className="zpg-pet-face zpg-pet-face-sm" aria-hidden="true">
+        <span className="zpg-pet-eye" /><span className="zpg-pet-eye" />
+      </span>
+      <span className="zpg-pet-name">小助</span>
+      <span className="zpg-pet-hint">说说你要做什么</span>
+      <button
+        type="button"
+        className="zpg-pet-close"
+        onClick={() => setOpen(false)}
+        aria-label="收起助手"
+        title="收起（Esc）"
+      >
+        <Icon name="close" size={14} />
+      </button>
+    </header>
+
+    <div className="zpg-pet-body" ref={listRef}>
+      {messages.length === 0 && (
+        <p className="zpg-pet-hello">
+          有什么要记的？直接说就行，比如「下周三交第三章作业」。
+        </p>
+      )}
+
+      {/*
+        助手气泡：流式期间它的 text 会**逐字变长**。
+        空串是"还没收到第一个字"，此时显示「…」——否则会是一个看空白的空气泡，
+        用户以为卡死了。这个占位与 `sending` 无关：字到了就显示字。
+      */}
+      {messages.map((item, index) => (
+        <p
+          key={index}
+          className={`zpg-pet-msg zpg-pet-msg-${item.role}${item.role === 'assistant' && !item.text ? ' zpg-pet-thinking' : ''}`}
+        >
+          {item.text || (item.role === 'assistant' ? '…' : '')}
+        </p>
+      ))}
+
+      {/* 确认卡：把模型的理解**摊开**给人看，而不是只报一句"记好了" */}
+      {pendingDraft && (
+        <div className="zpg-pet-draft">
+          <p className="zpg-pet-draft-title">{pendingDraft.title}</p>
+          <dl className="zpg-pet-draft-meta">
+            <div>
+              <dt>时间</dt>
+              <dd>{pendingDraft.due ? whenIso(pendingDraft.due) : '没定'}</dd>
+            </div>
+            {pendingDraft.repeat && (
+              <div>
+                <dt>重复</dt>
+                <dd>
+                  {REPEAT_LABEL[pendingDraft.repeat.unit] ?? '重复'}
+                  {pendingDraft.repeat.anchor === 'done' ? '（按完成日）' : ''}
+                </dd>
+              </div>
+            )}
+          </dl>
+          <div className="zpg-pet-draft-actions">
+            <button type="button" className="zy-primary" onClick={confirm} disabled={sending}>
+              好，记下
+            </button>
+            <button
+              type="button"
+              className="zy-secondary"
+              onClick={() => { setPendingDraft(null); }}
+              disabled={sending}
+            >
+              不对
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && <p className="zpg-pet-error" role="alert">{error}</p>}
+    </div>
+
+    <div className="zpg-pet-input">
+      <input
+        ref={inputRef}
+        type="text"
+        value={text}
+        maxLength={1000}
+        placeholder={pendingDraft ? '先确认上面这条…' : '说点什么…'}
+        onChange={(event) => setText(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            void send();
+          }
+        }}
+        disabled={sending}
+        aria-label="跟助手说话"
+      />
+      <button
+        type="button"
+        className="zy-primary"
+        onClick={() => void send()}
+        disabled={sending || !text.trim()}
+      >
+        说
+      </button>
+    </div>
+  </div>;
 }

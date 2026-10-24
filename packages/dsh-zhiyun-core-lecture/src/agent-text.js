@@ -1,6 +1,8 @@
 // Legacy App codec remains available for old artifacts. v2 below reorganizes
 // handout structure while retaining input-unit coverage and final-source refs.
 import { parseBlockKind } from './polish.js';
+import { judgeWritten, REGISTER } from './register.js';
+import { withDerivation } from './derivation.js';
 
 const line = value => String(value ?? '').replace(/[\r\n|]/g, ' ').trim();
 const fail = message => Object.assign(new Error(message), { code: 'FORMAT' });
@@ -11,6 +13,22 @@ export function blockText(block) {
 export function effectiveBlocks(topic) {
   return topic.blocks?.length ? topic.blocks : (topic.passages ?? []).map(p => ({ kind: parseBlockKind(p.label) ?? parseBlockKind('讲解'), text: p.text, title: '' }));
 }
+/**
+ * 终审改了正文之后，成稿状态必须**重新判**。
+ *
+ * 合回成功只说明文本能对上来源，不等于已经把口述写成书面语：模型可能原样返回，
+ * 也可能只是在口述稿上加了个逗号。早先这里直接把每个知识点写成
+ * `register: 'written'`，于是课堂称呼（「各位同学」）和说半截的句子被终审
+ * 一路放行，阅读界面全部显示成成稿 —— 验收结论被合回这一步悄悄覆盖掉了。
+ *
+ * `alreadyWritten` 沿用原知识点的判断：输入本来就是成稿时，原样返回是正确行为。
+ */
+function judgeMergedTopic(original, body) {
+  const source = original?.draft ?? (original?.passages ?? []).map(p => p.text).join('\n\n');
+  const verdict = withDerivation(judgeWritten({ source, rewritten: body, alreadyWritten: original?.register === REGISTER.written }), body);
+  return { register: verdict.register, notes: verdict.notes };
+}
+
 function subtitle(raw, kind, body = '') {
   const title = String(raw ?? '').trim().replace(/\s+/g, ' ').replace(/^[，、；：\s]+|[。！？；：，、\s]+$/g, '');
   const norm = s => s.replace(/[\s。！？；：，、]/g, '');
@@ -69,7 +87,8 @@ export function mergeAgentLectureText(lecture, text) {
     }));
     if (!blocks.length) return topic;
     updated++;
-    return { ...topic, blocks, passages: blocks.map(b => ({ text: blockText(b), label: b.kind.label })), register: 'written' };
+    const body = blocks.map(blockText).join('\n\n');
+    return { ...topic, blocks, passages: blocks.map(b => ({ text: blockText(b), label: b.kind.label })), ...judgeMergedTopic(topic, body) };
   }) }));
   // No content-quality gates: preserve absent topics and ignore unknown topics,
   // exactly as the App merge does. Anchors, ranges, titles and sources stay put.
@@ -83,13 +102,20 @@ export function reviewUnits(lecture) {
 }
 const sourcesOf = value => value.sourceBlockIndexes ?? value.blockIndexes ?? [];
 export function exportReorganization(lecture, sectionId, record) {
+  const units = reviewUnits(lecture);
+  const required = new Set(units.flatMap(u => sourcesOf(u.block).length ? sourcesOf(u.block) : sourcesOf(u.topic)));
   const lines = [`#!section ${line(sectionId)} ${line(lecture.title)}`, '#!protocol 2',
     '#!instruction 可重写章、知识点和块标题，拆分、合并、调整层级。每个原稿 ref 必须由正文承接，src 必须引用下方终稿。',
     '#!outline ' + JSON.stringify(record.outline ?? [])];
-  for (const b of record.blocks.filter(b => b.tag?.role === '主线')) {
+  for (const b of record.blocks.filter(b => (b.lectureEligible ?? b.tag?.role === '主线') && required.has(b.index))) {
     lines.push(`#!source ${b.index} | P${b.page ?? 0} | ${line(b.tag?.summary ?? '')}`);
+    lines.push(`#!transcript ${b.index} ${JSON.stringify({evidenceKind:b.evidenceKind ?? 'legacy',
+      cleanStatus:b.cleanStatus ?? 'unknown', text:b.sourceText ?? b.sentences?.map(s=>s.text).join('') ?? b.text ?? '',
+      raw:b.sentences?.map(s=>s.rawText ?? s.text).join('') ?? '',rejectedCorrections:b.correctionIssues??[]})}`);
   }
-  const units = reviewUnits(lecture);
+  const evidence = new Map(record.blocks.filter(b => required.has(b.index))
+    .flatMap(b => b.slideEvidence ?? []).map(p => [p.page, p]));
+  for (const page of evidence.values()) lines.push(`#!evidence P${page.page} ${JSON.stringify(page.text)}`);
   for (const [ci, c] of lecture.chapters.entries()) {
     for (const [ti, t] of c.topics.entries()) {
       lines.push(`##!topic ${ci + 1} ${ti + 1} | ${line(t.title) || '未命名知识点'} | 章=${line(c.title) || '未命名章'}`);
@@ -108,7 +134,7 @@ export function mergeReorganization(lecture, text, record, sectionId) {
   const reject = message => { throw fail(`讲义重组未保存：${message}`); };
   if (!String(text).split(/\r?\n/).some(l => l.startsWith(`#!section ${sectionId} `))) reject('课节标识改变');
   const units = reviewUnits(lecture), unitById = new Map(units.map(u => [u.id, u]));
-  const sourceById = new Map(record.blocks.filter(b => b.tag?.role === '主线').map(b => [b.index, b]));
+  const sourceById = new Map(record.blocks.filter(b => b.lectureEligible ?? (b.tag?.role === '主线' && b.cleanStatus !== 'incomplete')).map(b => [b.index, b]));
   const seenUnits = new Set(), seenSources = new Set(), seenTopics = new Set(), chapters = [];
   let current, currentBlock;
   const locate = ids => {
@@ -123,7 +149,12 @@ export function mergeReorganization(lecture, text, record, sectionId) {
     if (!currentBlock) return;
     const { lines, solutionLines, refs, sourceBlockIndexes, kind, title } = currentBlock;
     const body = lines.join('\n').trim(), solution = solutionLines.join('\n').trim();
-    if (!body) reject('有空正文块');
+    /* 例题的题干可以为空（有的例题整段只有解答），正文块不行。
+     * 早先这里对一切块都要求 body 非空，于是「题干空、解答有内容」的例题
+     * 导出后必然被自己的合回拒掉 —— 导出与合回对同一份数据给出相反结论，
+     * 终审就会在完全没改坏任何东西的情况下报「有空正文块」。
+     * 判据因此改成「整块一个字都没有才算空」。 */
+    if (!body && !(kind.wire === 'example' && solution)) reject('有空正文块');
     if (!refs.length || refs.some(id => !unitById.has(id))) reject('原稿 ref 缺失或不存在');
     if (!sourceBlockIndexes.length || sourceBlockIndexes.some(id => !sourceById.has(id))) reject('终稿 src 缺失或不存在');
     const allowed = new Set(refs.flatMap(id => {const u=unitById.get(id);return sourcesOf(u.block).length ? sourcesOf(u.block) : sourcesOf(u.topic);}));
@@ -143,7 +174,7 @@ export function mergeReorganization(lecture, text, record, sectionId) {
       let chapter=chapters.find(c=>c.no===+cn);
       if (!chapter) { chapter={no:+cn,title:chapterTitle.trim(),topics:[]}; chapters.push(chapter); }
       if (chapters.at(-1)!==chapter || chapter.title!==chapterTitle.trim()) reject('章编号或标题不一致');
-      current={no:+tn,title:title.trim(),blocks:[],register:'written'};chapter.topics.push(current);
+      current={no:+tn,title:title.trim(),blocks:[],register:REGISTER.draft};chapter.topics.push(current);
       continue;
     }
     if (raw.startsWith('>>> BLOCK ')) {
@@ -176,6 +207,7 @@ export function mergeReorganization(lecture, text, record, sectionId) {
       t.no=ti+1;t.sourceBlockIndexes=[...new Set(t.blocks.flatMap(b=>b.sourceBlockIndexes))].sort((a,b)=>a-b);
       t.blockIndexes=t.sourceBlockIndexes;Object.assign(t,locate(t.sourceBlockIndexes));
       t.passages=t.blocks.map(b=>({text:blockText(b),label:b.kind.label}));
+      Object.assign(t, judgeMergedTopic(lecture.chapters[ci]?.topics[ti], t.blocks.map(blockText).join('\n\n')));
     }
   }
   return {lecture:{...lecture,structureSchema:2,chapters},updated:chapters.flatMap(c=>c.topics).length,

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 规划页的**宿主半边**：四个数据源的聚合。
  *
  * # 这一页的数据模型
@@ -31,10 +31,13 @@ import {
   createLocal, createSplit, localError, patchLocal, setDone as setDoneLocal,
 } from './local.js';
 import { TickStore, tickKey } from './ticks.js';
-import { URGENCY, urgencyOf } from './time.js';
+import { URGENCY, urgencyOf, dateTable } from './time.js';
 import {
-  PlanStore, PLAN_PROMPT, pickPending, planError, planTitle, readPlanResponse, toPlanInput,
+  PlanStore, PLAN_PROMPT, pickPending, planError, parsePlanJson, planTitle, readPlanResponse, toPlanInput,
 } from './plans.js';
+import {
+  MAX_MESSAGE, createPetPrompt, createStreamParser, normalizeReply, readPetResponse, trimHistory,
+} from './pet.js';
 
 // 重新导出：既有调用方与测试按这个包名导入它们
 export {
@@ -384,14 +387,25 @@ export class LocalPlanStore {
     return next;
   }
 
-  /** 勾选 / 取消完成。 */
+  /**
+   * 勾选 / 取消完成。
+   *
+   * 重复任务会在这里**顺带生成下一次**。两件事必须在**一次 save 里**完成：
+   * 分开写的话，窗口期内崩溃会留下"勾了但下一次没生成"，而用户看不出来 ——
+   * 他只会觉得这条消失了。
+   *
+   * @param id - 条目 id。
+   * @param done - 是否完成。
+   * @returns `{ item, next }`；找不到时 null。
+   */
   setDone(id, done) {
     const current = this.find(id);
     if (!current) return null;
-    const next = setDoneLocal(current, done, this.now());
-    this.items = this.items.map((item) => (item.id === id ? next : item));
+    const { item, next } = setDoneLocal(current, done, this.now());
+    this.items = this.items.map((row) => (row.id === id ? item : row));
+    if (next) this.items.push(next);
     this.save();
-    return next;
+    return { item, next };
   }
 
   /** 删除。真删，不是打标记 —— 用户按的是「删掉」。 */
@@ -606,6 +620,76 @@ function sendJson(res, status, payload) {
 }
 
 /**
+ * 开始一个 SSE 响应。
+ *
+ * # 为什么要自己写而不是用现成的库
+ *
+ * 宿主的路由只给**原生 `req` / `res`**（见 `webServer.register`），而 SSE 的
+ * 全部要求就是三行头加一段 `data: …\n\n`。为这点东西引依赖不值得，
+ * 而且自己写能精确控制 `flushHeaders` 的时机 —— 早一帧出去，用户就早一帧看到字。
+ *
+ * @returns `{ send, end, fail }`：发一帧 / 正常收尾 / 报错收尾。
+ */
+function openEventStream(res) {
+  res.writeHead(200, {
+    'content-type': 'text/event-stream; charset=utf-8',
+    'cache-control': 'no-store, no-transform',
+    // 关掉中间层的缓冲：没有这一行，nginx 之类的代理会把整段攒完再发，
+    // 流式就退化成"等很久，然后一次性全出来"。
+    'x-accel-buffering': 'no',
+    connection: 'keep-alive',
+  });
+  /**
+   * ⚠️ **这一行是"逐字"和"一下子全出来"的分界线**。
+   *
+   * Node 的 socket 默认开着 Nagle 算法：它会把连续的小包攒成一个 TCP 段再发。
+   * SSE 每帧只有十几到几十字节，正好是 Nagle 最爱的攒包对象 ——
+   * 实测未关时，模型明明逐字吐了 17 段，浏览器只在 879–1018ms 之间
+   * 收到 **4 个** 分块，看起来就是"等一秒，然后整句蹦出来"。
+   *
+   * `setNoDelay(true)` 关掉它，每帧立刻出手。这是"真流式"的必要条件，
+   * 光有 SSE 格式是不够的。
+   */
+  try { res.socket?.setNoDelay?.(true); } catch { /* 拿不到 socket 就按原样发 */ }
+  res.flushHeaders?.();
+
+  let closed = false;
+  const send = (event, data) => {
+    if (closed) return;
+    // SSE 的 data 不能含裸换行，逐行加前缀是最稳的写法
+    const body = String(data ?? '').split('\n').map((line) => `data: ${line}`).join('\n');
+    res.write(`event: ${event}\n${body}\n\n`);
+  };
+  return {
+    send,
+    end: (payload) => {
+      if (closed) return;
+      /**
+       * ⚠️ **必须先发 final，再把 closed 置位**。
+       *
+       * `send()` 开头有一句 `if (closed) return;`。早先这里先 `closed = true`
+       * 再 `send('final', …)`，于是收尾帧被自己那道闸挡掉了 —— 前端只收到
+       * 一串 delta，永远等不到 `final`，气泡停在最后一个字、确认卡也不弹。
+       * 表现是"流式看起来能用，但永远收不了尾"，比彻底失败还难查。
+       */
+      if (payload !== undefined) send('final', JSON.stringify(payload));
+      closed = true;
+      res.end();
+    },
+    fail: (message) => {
+      if (closed) return;
+      // 同理：先发 error，再关闸
+      send('error', JSON.stringify({ message: String(message ?? '出错了') }));
+      closed = true;
+      res.end();
+    },
+    /** 客户端断开时置位，后端据此停止继续调用模型。 */
+    get closed() { return closed; },
+    markClosed() { closed = true; },
+  };
+}
+
+/**
  * 从请求体里挑出**可写字段**，并把白名单外的键**当错误报出来**。
  *
  * ⚠️ 不能只是"挑出认识的键、忽略其余"：那样 `local-update` 带上 `done: true`
@@ -616,12 +700,13 @@ function sendJson(res, status, payload) {
  * 说了算，客户端传了就改，等于把"完成"和"改了名"混成同一个动作。
  *
  * @param body - 请求体。
- * @returns `{ title?, detail?, due? }`，只含**确实出现**的键（`patchLocal` 据此判断改哪些）。
+ * @returns `{ title?, detail?, due?, repeat? }`，只含**确实出现**的键
+ *   （`patchLocal` 据此判断改哪些）。`repeat: null` 是显式取消重复。
  * @throws `INVALID_INPUT` —— 出现白名单外的键。
  */
 function pickLocalInput(body) {
   const out = {};
-  for (const key of ['title', 'detail', 'due']) {
+  for (const key of ['title', 'detail', 'due', 'repeat']) {
     if (body[key] !== undefined) out[key] = body[key];
   }
   const extra = Object.keys(body).filter((key) => key !== 'id' && !(key in out));
@@ -668,6 +753,23 @@ async function readJsonBody(req, limit = 32 * 1024) {
 export function createHandler({
   getConfig, saveConfig: save, store, local, splitLocal, tickStore,
   fetchRemote, loadTodos, savePtaCookie, ptaStatus, plan,
+  /**
+   * pet 的对话实现。
+   *
+   * ⚠️ **必须由调用方注入**：`createHandler` 是模块级导出函数，而 `petChat`
+   * 是 `apply()` 里的闭包（它要用 `llmOf()` / `mine` / `config`）。
+   * 早先在路由里直接写 `petChat(...)`，那个名字在 `createHandler` 的作用域里
+   * **根本不存在** —— 请求会抛 `petChat is not defined`，而单元测试直调
+   * `service.pet` 走的是另一条路，完全测不到这里。
+   *
+   * 默认值 `null` 让"没接线"变成一句可读的 400，而不是一个 ReferenceError。
+   */
+  petChat = null,
+  /**
+   * pet 的**流式**实现。与 `petChat` 同样必须注入（理由相同）。
+   * 缺它时 `pet-stream` 回 400，前端退回 `pet-chat`。
+   */
+  petChatStream = null,
   /** 中转站缓存有效期（测试可调小；默认 10 分钟）。 */
   remoteCacheTtlMs = REMOTE_CACHE_TTL_MS,
   /**
@@ -994,6 +1096,88 @@ export function createHandler({
       return;
     }
 
+    /**
+     * ── pet：一句话进来，一句话 + 可选动作出去 ─────────────────────────
+     *
+     * ⚠️ 必须排在 `local-` 那一块**之前**，而且是独立分支。
+     *
+     * 早先它被写在 `if (action.startsWith('local-')) { … }` 内部 —— 但
+     * `pet-chat` 不以 `local-` 开头，那个块根本进不去，请求一路落到末尾的
+     * 「未知动作 pet-chat」，客户端拿 400，气泡永远停在「…」。
+     *
+     * 这个错误**通过了全部单元测试和集成测试**：测试直接调 `service.pet`，
+     * 走的是服务层，绕过了 HTTP 路由分发。所以测试没红、页面全坏。
+     * 教训是：路由这类"分发"代码必须有一条**走真实 HTTP 路径**的测试。
+     */
+    if (action === 'pet-chat') {
+      if (!body) {
+        sendJson(res, 400, { error: '请求体不是合法 JSON' });
+        return;
+      }
+      // 没接线时给一句能读懂的话，而不是让它抛 ReferenceError
+      if (typeof petChat !== 'function') {
+        sendJson(res, 400, { error: '规划助手没有接线（petChat 未注入）' });
+        return;
+      }
+      const text = typeof body.text === 'string' ? body.text : '';
+      try {
+        const result = await petChat(text, { history: body.history });
+        sendJson(res, 200, { ok: true, ...result });
+      } catch (error) {
+        const code = error?.code ?? 'PET_FAILED';
+        // 模型不可用是配置问题，不该 500 —— 页面要能显示"去配置 AI"
+        sendJson(res, code === 'NO_LLM' ? 200 : 400, {
+          ok: false,
+          error: { code, message: String(error?.message ?? error) },
+        });
+      }
+      return;
+    }
+
+    /**
+     * pet 的**流式**对话（SSE）。
+     *
+     * # 为什么分成 `delta` / `final` / `error` 三种帧
+     *
+     *   · `delta` —— 人话增量。前端**追加**到当前气泡，这就是"逐字显示"。
+     *   · `final` —— 收尾的车票：`{ say, action, draft, notes }`。
+     *     前端拿到它才知道"说完了，要不要弹确认卡"。
+     *   · `error` —— 中途失败。已经吐出去的字**不收回**（收不回来），
+     *     只是补一句原因，让用户知道为什么停在那里。
+     *
+     * # 客户端断开怎么办
+     *
+     * `req.on('close')` 里 abort 掉信号，`callStream` 会抛 `CANCELLED`，
+     * 上游模型请求随之取消 —— 否则用户关掉页面，后端还在为一个没人看的
+     * 回答付 token。
+     */
+    if (action === 'pet-stream') {
+      if (!body) {
+        sendJson(res, 400, { error: '请求体不是合法 JSON' });
+        return;
+      }
+      if (typeof petChatStream !== 'function') {
+        sendJson(res, 400, { error: '规划助手的流式接口没有接线' });
+        return;
+      }
+      const controller = new AbortController();
+      req.on('close', () => { controller.abort(); });
+      const stream = openEventStream(res);
+      try {
+        const result = await petChatStream(body.text, {
+          history: body.history,
+          signal: controller.signal,
+          onDelta: (chunk) => stream.send('delta', chunk),
+        });
+        stream.end({ ok: true, ...result });
+      } catch (error) {
+        // 客户端主动断开不算错误，别再往里写
+        if (controller.signal.aborted) { stream.markClosed(); return; }
+        stream.fail(error?.message ?? error);
+      }
+      return;
+    }
+
     // ── 「我的规划」：用户手写，可增删改 ───────────────────────────────
     // 这是这一页**唯一**的写入口。中转站仍然是只读的（写要用那边的写密钥，
     // 且那边只有 append、不能改），所以规划的编辑全都落在这几个动作上。
@@ -1018,6 +1202,7 @@ export function createHandler({
          * 前端配合做乐观更新，拿到 `item` / `ok` 即可。要新的整份数据，
          * 下次进页面自然会拉（而且有本地快照，几乎瞬时）。
          */
+
         if (action === 'local-create') {
           sendJson(res, 200, { ok: true, item: local.create(body) });
           return;
@@ -1041,12 +1226,14 @@ export function createHandler({
         }
 
         if (action === 'local-done') {
-          const item = local.setDone(id, body.done !== false);
-          if (!item) {
+          const result = local.setDone(id, body.done !== false);
+          if (!result) {
             sendJson(res, 404, { error: '这条规划不存在（可能已被删除）' });
             return;
           }
-          sendJson(res, 200, { ok: true, item });
+          // 把 `next` 一起回给客户端：页面要立刻显示"下一次是几号"，
+          // 否则用户勾完只看到这一条消失，会以为重复功能没生效。
+          sendJson(res, 200, { ok: true, item: result.item, next: result.next });
           return;
         }
 
@@ -1412,6 +1599,173 @@ export async function apply(ctx, config = {}) {
   };
 
   /**
+   * pet 的一次对话：一句话进来，**一句话 + 可选动作**出去。
+   *
+   * # 为什么是多轮而不是单轮
+   *
+   * 学生经常一次说不完整：「下周有个作业」（缺是什么）、「第三章」（缺哪天）。
+   * 单轮接口只能把半句话硬凑成一条，追问才是对的。
+   *
+   * # 信任底线
+   *
+   * `action === 'create'` 也只产出草案，落库仍要用户在气泡里点确认。
+   * 否则"AI 记错了"就没有拦截点。
+   *
+   * # 为什么要喂当前待办
+   *
+   * 用户会问"我今天有什么事""那条周三的还在吗"。不给真实数据，模型只能编。
+   * 只给摘要（标题 + 日期），不塞 `detail` —— 那会让提示词膨胀而毫无帮助。
+   *
+   * @param message - 用户说的这句话。
+   * @param options.history - 之前的对话 `[{ role, text }]`。
+   * @param options.signal - 中止信号。
+   * @returns `{ say, action, draft, notes, model }`。
+   */
+  const petChat = async (message, { history = [], signal } = {}) => {
+    const text = typeof message === 'string' ? message.trim() : '';
+    if (!text) throw planError('INVALID_INPUT', '说点什么吧');
+    if (text.length > MAX_MESSAGE) {
+      throw planError('INVALID_INPUT', `一次最多 ${MAX_MESSAGE} 字`);
+    }
+
+    const llm = llmOf();
+    if (!llm) throw planError('NO_LLM', '还没有可用的模型：请先在设置里配置 AI 服务');
+
+    let route;
+    try {
+      route = typeof llm.resolve === 'function' ? await llm.resolve(signal) : null;
+      route = route?.text ?? route?.vision ?? route;
+    } catch (error) {
+      throw planError('NO_LLM', `解析模型失败：${error?.message ?? error}`);
+    }
+
+    // 今天的日期 + 逐日对照表（模型不知道今天几号）
+    const now = Date.now();
+    const calendar = dateTable(now, { days: 14 });
+    const today = calendar[0];
+
+    // 当前未完成的事：只给摘要，最多 20 条
+    const pending = mine.list()
+      .filter((item) => !item.done)
+      .map((item) => ({ title: item.title, due: item.due ?? null }));
+
+    const prompt = createPetPrompt({
+      today: today.date,
+      weekday: today.weekday,
+      calendar,
+      pending,
+    });
+
+    // 历史裁剪后再序列化：模型看得懂 JSON 数组，且顺序明确
+    const turns = trimHistory(history);
+    const variable = turns.length === 0
+      ? text
+      : `${JSON.stringify(turns, null, 2)}\n\n用户这次说：${text}`;
+
+    let response;
+    try {
+      response = await llm.call({
+        stage: 'pet',
+        route,
+        constant: prompt,
+        variable,
+        signal,
+      });
+    } catch (error) {
+      throw planError(error?.code ?? 'LLM_FAILED', `模型调用失败：${error?.message ?? error}`);
+    }
+
+    const raw = typeof response?.text === 'string' ? response.text : '';
+    const reply = readPetResponse(raw);
+    return { ...reply, model: route?.model ?? null };
+  };
+
+  /**
+   * pet 的**流式**对话：边说边把字推给前端。
+   *
+   * # 和 `petChat` 的分工
+   *
+   * 两者共用同一个提示词、同一套校验、同一条信任底线，区别只在传输：
+   *   - `petChat` 等完整回包，一次性回 JSON。**它的价值是简单可靠**，
+   *     而且不依赖 `llm.callStream`（老通道走不通时还能用）。
+   *   - `petChatStream` 走 SSE 逐字推，解决"两三秒里毫无反馈"。
+   *
+   * 保留两条路不是冗余：流式在新旧模型通道上行为不同（`callStream` 是新加的），
+   * 一旦某条通道不支持流，`petChat` 仍然是保底。
+   *
+   * # 为什么要先算完 `say` 再发 JSON
+   *
+   * 模型按约定「先说人话，再给一段 JSON」。这里把收到的增量喂给
+   * `createStreamParser`，它只把**确定属于人话的那部分**吐出来 ——
+   * 围栏之后的 JSON 一个字符都不会进气泡。收尾时再用同一份全文解出
+   * `action` / `draft`。
+   *
+   * @param message - 用户这句话。
+   * @param options.history - 之前的对话。
+   * @param options.signal - 中止信号（客户端断开时触发）。
+   * @param options.onDelta - 每收到一段人话就回调一次。
+   * @returns `{ say, action, draft, notes, model }`，与 `petChat` 同形。
+   */
+  const petChatStream = async (message, { history = [], signal, onDelta } = {}) => {
+    const text = typeof message === 'string' ? message.trim() : '';
+    if (!text) throw planError('INVALID_INPUT', '说点什么吧');
+    if (text.length > MAX_MESSAGE) throw planError('INVALID_INPUT', `一次最多 ${MAX_MESSAGE} 字`);
+
+    const llm = llmOf();
+    if (!llm) throw planError('NO_LLM', '还没有可用的模型：请先在设置里配置 AI 服务');
+    if (typeof llm.callStream !== 'function') {
+      // 没有流式能力时就报出来，让调用方退回 petChat —— 悄悄降级成
+      // "等完整包"会让用户以为流式坏了，却不知道原因
+      throw planError('NO_STREAM', '当前模型通道不支持流式，请用普通模式');
+    }
+
+    let route;
+    try {
+      route = typeof llm.resolve === 'function' ? await llm.resolve(signal) : null;
+      route = route?.text ?? route?.vision ?? route;
+    } catch (error) {
+      throw planError('NO_LLM', `解析模型失败：${error?.message ?? error}`);
+    }
+
+    const now = Date.now();
+    const calendar = dateTable(now, { days: 14 });
+    const today = calendar[0];
+    const pending = mine.list()
+      .filter((item) => !item.done)
+      .map((item) => ({ title: item.title, due: item.due ?? null }));
+
+    const prompt = createPetPrompt({ today: today.date, weekday: today.weekday, calendar, pending });
+    const turns = trimHistory(history);
+    const variable = turns.length === 0
+      ? text
+      : `${JSON.stringify(turns, null, 2)}\n\n用户这次说：${text}`;
+
+    const parser = createStreamParser();
+    let raw = '';
+    try {
+      for await (const chunk of llm.callStream({ stage: 'pet', route, constant: prompt, variable, signal })) {
+        if (chunk.type === 'delta') {
+          raw += chunk.text;
+          const add = parser.push(chunk.text);
+          // 诊断：模型端每个 delta 的到达时刻（排查"逐字还是整句"用）
+          if (add && typeof onDelta === 'function') onDelta(add);
+        }
+      }
+    } catch (error) {
+      throw planError(error?.code ?? 'LLM_FAILED', `模型调用失败：${error?.message ?? error}`);
+    }
+
+    const { say, payload } = parser.finish();
+    // 用与 `petChat` **同一个**校验器，保证两条路的规则不会分叉
+    const reply = normalizeReply({
+      say: say || '（模型没有回话）',
+      action: payload?.action,
+      draft: payload?.draft ?? null,
+    });
+    return { ...reply, model: route?.model ?? null };
+  };
+
+  /**
    * 把**用户自己写的一条规划**交给模型拆成子项。
    *
    * 这才是"AI 辅助规划"真正要服务的对象：中转站条目是别人/别的脚本推上来的，
@@ -1629,6 +1983,9 @@ export async function apply(ctx, config = {}) {
         savePtaCookie,
         ptaStatus,
         plan: planService,
+        // pet 的对话实现是 `apply()` 的闭包，必须显式注入（见 createHandler 的说明）
+        petChat,
+        petChatStream,
         // 本地快照：切回这一页时先给这份，后台再刷新（见 createHandler 里的说明）
         snapshotFile: config.snapshotFile ?? path.join(dataDir, 'snapshot.json'),
       });
@@ -1647,6 +2004,8 @@ export async function apply(ctx, config = {}) {
     remove: (id) => mine.remove(id),
     split: (id, cards, options) => mine.split(id, cards, options),
     ai: splitLocalPlan,
+    // pet 的多轮对话：回一句话 + 可选动作。**不写库**，用户确认后才 `create`。
+    pet: petChat,
     file: mineFile,
   };
 

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>知识树基准台 · 真实课程</title>
+<link rel="stylesheet" href="/ui/bench.css">
+</head>
+<body>
+
+<header id="bar">
+  <div class="brand">
+    <span class="eyebrow">Knowledge Tree Bench</span>
+    <b>真实课程离线测评</b>
+  </div>
+  <div class="fields">
+    <label>数据集<select id="dataset"></select></label>
+    <label>页数<input id="maxPages" type="number" min="0" max="200" value="0"></label>
+    <label>斩杀线<input id="splitLine" type="number" min="200" max="8000" step="100" value="1200"></label>
+    <label>并发<input id="concurrency" type="number" min="1" max="8" value="3"></label>
+    <!-- ★ 只有 API Key 是必填的。接口与模型留空即用 DeepSeek 全套默认。 -->
+    <label class="wide key">API Key<input id="apiKey" type="password" placeholder="sk-… 必填" autocomplete="off" spellcheck="false"></label>
+    <label class="wide">接口<input id="baseUrl" placeholder="留空 = DeepSeek 官方" autocomplete="off" spellcheck="false"></label>
+    <label>模型<input id="model" placeholder="留空 = deepseek-flash" autocomplete="off" spellcheck="false"></label>
+    <label>视觉<input id="visionModel" placeholder="留空 = 同模型" autocomplete="off" spellcheck="false"></label>
+  </div>
+  <div class="actions">
+    <button id="run">开始评测</button>
+    <span id="status" class="status">填 Key 即可开始</span>
+  </div>
+  <div class="runprogress">
+    <div class="rpbar"><i id="runBar"></i></div>
+    <span id="runPct">0%</span>
+    <span class="rpsep">·</span>
+    <span>事件 <b id="evLive">0</b></span>
+  </div>
+  <div id="demoLink" class="demoLink" hidden></div>
+  <button id="historyBtn" class="historyBtn" title="看以前的运行、对比参数">历史运行</button>
+  <div id="historyPanel" class="historyPanel" hidden></div>
+</header>
+
+<main id="runStage">
+  <div class="placeholder">
+    <b>评测只跑、不演</b>
+    <span>填一个 API Key，点「开始评测」。跑完之后在右下角点「逐步调适」，
+      进入动画模式逐步核对每一步的产物。</span>
+  </div>
+  <div id="log" class="runlog"></div>
+</main>
+
+<script>
+window.__BENCH_DEFAULTS__ = /*__DEFAULTS__*/{};
+window.__BENCH_DATA__ = /*__BENCH_DATA__*/{};
+window.__BENCH_TOKEN__ = '/*__TOKEN__*/';
+</script>
+<script src="/ui/bench.js"></script>
+</body>
+</html>

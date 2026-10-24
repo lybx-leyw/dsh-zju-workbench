@@ -20,7 +20,7 @@
 
 ## 后端
 
-`/api/zhiyun-study` 是 POST-only 的 RPC，信封 `{type:'client-request', rpcId, method:'zhiyun-study', payload:{method, args}}`，方法白名单 28 项；响应统一 `{type:'server-response', rpcId, result}` 且 `cache-control: no-store`。错误进 `{ok:false, error:{code, message, details:{}}}`，不把内部堆栈漏给浏览器。
+`/api/zhiyun-study` 是 POST-only 的 RPC，信封 `{type:'client-request', rpcId, method:'zhiyun-study', payload:{method, args}}`，方法使用显式白名单；响应统一 `{type:'server-response', rpcId, result}` 且 `cache-control: no-store`。错误进 `{ok:false, error:{code, message, details:{}}}`，不把内部堆栈漏给浏览器。
 
 `schedule` 只读课表，沿用当前登录身份。不传日期时由课堂数据源按上海时区的今天取一天。日期不合法记为 `INPUT`。课表是否收全看返回的 `meta.complete`，今天页在它不是 `true` 时不把列表画成全天安排。
 
@@ -28,22 +28,39 @@
 
 `review` 只读当前账号已经采纳的题：题干和定位，不带答案。待审和已放弃的题不在这份列表里。最多 20 条。
 
-`inject` 只声明**硬依赖**（`workspaceRegistry / connection / profileContext / zhiyunClassroom / zhiyunParser / llm / zhiyunKnowledge`）。讲义、终审、出题与节笔记是可选加工步骤，用 `ctx.get('zhiyunLecture')` / `ctx.get('zhiyunFinalPass')` / `ctx.get('zhiyunQuiz')` / `ctx.get('zhiyunNotes')` 惰性取 —— 写进 `inject` 会让「停用其中一个」直接拖死整个学习面板（连解析都用不了）。
+基础服务在加载时注入；讲义服务惰性读取，点击生成时要求 zhiyunLecture.generate 已接入。出题和笔记按需读取各自服务。
 
 出题只接受调用方点名的知识片段，不接受整节。生成结果经出题包的 `saveGenerated` 落成 `proposed`，写进该节的知识库记录；复习队列只在用户采纳之后出现。终稿一变，这一节的题目随讲义一起作废。节笔记走 `zhiyunNotes`，键是 `账号.节次`，避免笔记服务本身不带账号时串到另一个登录身份。页码和时间链接由笔记包生成，学习页只负责在本节课件和字幕里定位。
 
-## 产物语义（继承自原 `dsh-zhiyun-study`）
+## 统一生成（v4）
 
-- **终稿**：三阶段解析后的页面、纠错字幕、时间戳、主支线标签和块；保留全部课堂内容供检索、复核与来源跳转。
-- **知识树**：从 PPT 原文抽出的章节和知识点，保留本次未讲到的节点，独立于阅读稿。
-- **讲义**：主线块在知识树上的阅读投影，由讲义插件填写正文。支线与未标注块留在终稿，讲义不收录。
-- **讲义终审 v2**：使用 DSH 原生 agents/subagents 整节重组，可重写章节和知识点名、拆分合并节点。原稿块 `ref` 追踪承接关系，终稿块 `src` 追踪证据；页码与时间从来源推导。
+App 仅通过 start 启动后台任务：读取整节 → 课件识别与转录清洗/标记并发 → 语义分组 → 分级聚合与重构树 → 按知识点成稿 → 逐点终审。
 
-终稿与原始 PPT 知识树独立保存。存储、版本失效与互斥写入由 `npm run test:study` 覆盖。
+成稿和终审由讲义包的 generate 编排，bench 也调用同一入口。App 只存储和展示产物，不重新建树、筛块或拼装另一份提示词。未另配时默认并发 3；使用页面配置时，各阶段并发上限统一取所选供应商 worker 数之和。切分阈值 1200、课件拼图 4 页，清洗和聚合输出预算 16384，终审预算 32768。模型来自个人配置；比较实跑结果时应选用 bench 相同的模型。
+
+result 轮询返回整条任务的实际阶段、完成数、阶段开始时间与总耗时。识别和清洗分别保留进度；成稿分卷、终审知识点完成时立即更新。取消或切换账号会中断整条链。逐点终审部分失败时保留原稿并标记部分完成。
+
+不再提供 lecture、lecture-polish 或 lecture-restore RPC。没有 v4 标记的旧讲义不展示，重新生成后替换；不从历史数据另建树兼容。解析资源仍保留完整来源供检索和跳转。
 
 ## 验证
 
 - `npm run test:study`：真实宿主知识库存储、账号隔离、迁移、版本失效、互斥写入与失败保留。
 - `npm run test:study-host`：原生宿主 RPC、终稿阅读、课件、字幕、主题、窄屏与刷新恢复。
 
-`src/workbench.js` 静态 import 了 `dsh-zhiyun-core-lecture/agent-text`（讲义文本契约），所以 `package.json` 里显式声明了这条依赖 —— 原来它是靠 profile 的 node_modules 链接才解析到的隐式依赖。
+## 多供应商生成配置
+
+models 返回宿主模型目录和已保存的 workers；models-save 接受 `{ workers: [{ provider, model, workers }] }`，只保存标识与整数配额，校验供应商已配置且模型可解析。开始生成时快照该配置，创建独立解析器和讲义服务，共用一个 WorkerPoolLlm；启动、保存与运行中的配置变更互斥，任务结束释放实例。任务查询返回各供应商的配额、在途数、完成数和失败数。
+
+## 全局生成队列
+
+`start` 将节次加入 FIFO 队列，同节正在运行或等待时返回已有任务；不同节默认串行执行，每节内部继续使用共享 worker 配额。入队时快照供应商、模型和 worker，队列状态不依赖当前选中的课程。`queue` 与 `state` 返回当前账号的任务、标题、阶段与耗时；前端轮询整条队列，并单独加载当前课堂完成后的结果。`cancel` 可取消正在运行的任务或移出等待任务，失败和取消后自动继续。切换账号或关闭服务会中断全部任务；队列由当前宿主进程持有，不跨宿主重启恢复。
+
+## 知识点题库
+
+`bank-catalog` 读取当前账号所有已整理节次的知识点，按语义分组归属材料，优先采用同名讲义正文。客户端只提交知识点标识、题型与数量；材料、范围、来源修订和锚点均由宿主重新查得。`bank-generate` 先按模式分配数量，再逐知识点改写、生成和规则检查，逐题存入独立题库，失败如实返回计划与实际数量。`bank-load`、`bank-practice`、`bank-answer`、`bank-discard` 共用账号级写互斥；作答以练习会话与题号核对，重复提交不重复计数。
+
+## 后台出题批次
+
+`bank-generate` 持久化分配方案与检查点后立即返回批次。`bank-progress` 无需等待模型或持有长事务；`bank-pause`、`bank-resume` 控制同一批次。批次、题目和练习写操作通过账号级短事务串行，模型请求在事务外运行。批次停止与账号切换、宿主卸载一起等待；缓存和原始分配在宿主重启后仍可恢复。阶段检查点包含版本及资料指纹，题目与草稿游标一次提交，缓存不匹配时拒绝恢复。
+
+新批次接受 `strategies:[{id,weight}]`、`difficulty`（basic/advanced/challenge）、`source`（course/web），与 `mode`（uniform/random）、`types`、`count` 独立。概念底稿存入同账号 `conceptCache`，通过资料摘要跨批次复用。完整历史题只在服务端用于生成上下文与去重，客户端无法提供或覆盖资料。`bank-load` 附带概念与考查角度覆盖统计；`bank-practice` 支持 `freshRatio`、策略与题型过滤，`bank-answer` 的简答题必须显式提交 `selfVerdict`，存为自评而非机器判分。

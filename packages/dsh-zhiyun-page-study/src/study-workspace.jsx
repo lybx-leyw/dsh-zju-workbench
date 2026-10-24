@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { GenerationQueue } from './generation-queue.jsx';
 import { useStudy } from 'dsh-zhiyun-shell-ui';
-import { LectureReader } from "./lecture-reader.jsx";
 import { VideoPanel } from "./video-panel.jsx";
-import { QuizPanel } from "./quiz-panel.jsx";
-import { NotePanel } from "./note-panel.jsx";
+import { BranchBoard } from './branch-board.jsx';
+import { KnowledgeBoard, entryForBlock } from "./knowledge-board.jsx";
 import { HlsVideo } from "./hls-video.jsx";
 import { time, lessonWhen } from "./format.js";
 import { QueryMode, queryModes, defaultQueryMode, queryModeOf, LayerId, defaultSearchLayers, layerLabel, availableLayers, layerRegistry, lineRoles, facetOptions } from "./layers.js";
 import { searchLesson, hitBlockIndexes, lessonCatalog, searchNote } from "./layered-search.js";
 import { corpusRows } from "./corpus.js";
+
+// Keep the unfinished live experience off the UI; enable here when it is ready.
+const LIVE_UI_ENABLED = false;
 
 /**
  * 直播时段的读法。
@@ -133,7 +136,7 @@ function LiveNowFold({ state, controller, onPick }) {
   </section>;
 }
 
-function CourseTree({ state, controller, ModelSettings, onOpenHit, onPickLive, collapsed, onToggle }) {
+function CourseTree({ state, controller, onOpenHit, onPickLive, collapsed, onToggle }) {
   const [query, setQuery] = useState("");
   const courses = state.courses.filter((course) => `${course.title} ${course.teacher ?? ""} ${course.termName ?? ""}`.toLowerCase().includes(query.trim().toLowerCase()));
   // ⚠️ `aria-expanded` 不能挂在这个 aside 上：它只对可交互角色有效，挂在 aside / generic
@@ -143,11 +146,11 @@ function CourseTree({ state, controller, ModelSettings, onOpenHit, onPickLive, c
     {collapsed
       ? <button className="zs-tree-expand" aria-label="展开课程目录" aria-expanded={false} title="展开课程目录" onClick={onToggle}><span aria-hidden="true">⇥</span><span className="zs-tree-expand-text">目录</span></button>
       : <>
-        <div className="zs-tree-top"><div><span className="zs-eyebrow">学习空间</span><h2>课程目录</h2></div><span className="zs-course-total">{state.courses.length}</span><button className="zs-tree-collapse" aria-label="收起课程目录" aria-expanded={true} title="收起课程目录" onClick={onToggle}>⇤</button></div>
+        <div className="zs-tree-top"><div><span className="zs-eyebrow">学习空间</span><h2>课程目录</h2></div><span className="zs-course-total">{state.courses.length}</span>{!state.lesson && <GenerationQueue controller={controller} />}<button className="zs-tree-collapse" aria-label="收起课程目录" aria-expanded={true} title="收起课程目录" onClick={onToggle}>⇤</button></div>
         {/* 直播入口夹在「课程目录」标题与搜索框之间：它答的是「今天有什么可以**现在**看」，
             而下面整片答的是「往期有什么可以**回头**看」。放进课程列表里会让两种时间语义
             混在同一份滚动流里，而它自己的折叠区又需要稳定位置 —— 于是给它一段固定的顶栏。 */}
-        <LiveNowFold state={state} controller={controller} onPick={onPickLive} />
+        {LIVE_UI_ENABLED && <LiveNowFold state={state} controller={controller} onPick={onPickLive} />}
         <label className="zs-tree-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="查找课程" placeholder="查找课程" value={query} onChange={(event) => setQuery(event.target.value)} /></label>
         <CorpusSearch state={state} controller={controller} onOpen={onOpenHit} />
         <div className="zs-course-list">
@@ -166,7 +169,7 @@ function CourseTree({ state, controller, ModelSettings, onOpenHit, onPickLive, c
           {isOpen && <div className="zs-tree-lessons">{loading && !lessons.length ? <p className="zs-tree-hint">正在读取节次…</p> : lessons.map((lesson) => {
             const key = `${id}:${lesson.subId}`, status = state.sectionStates[key], selected = state.course?.id === course.id && state.lesson?.id === lesson.id;
             const job = status?.job ?? (state.activeJob?.courseId === course.id && state.activeJob?.subId === lesson.subId ? state.activeJob : null);
-            const label = job?.state === "running" ? "解析中" : status?.parsed ? status.resultStatus === "ready" ? "已整理" : "待完善" : status ? "待整理" : "课堂资料";
+            const label = job?.state === "queued" ? "排队中" : job?.state === "running" ? "生成中" : status?.parsed ? status.resultStatus === "ready" ? "已整理" : "待完善" : status ? "待整理" : "课堂资料";
             return <button className={`zs-tree-lesson${selected ? " is-selected" : ""}`} key={lesson.id} aria-current={selected ? "page" : undefined} onClick={() => void controller.selectLesson(lesson, course)}>
               <span className={`zs-state-dot${job?.state === "running" ? " is-running" : status?.parsed ? " is-ready" : ""}`} aria-hidden="true" />
               <span className="zs-tree-lesson-copy"><strong>{lesson.title}</strong><small>{lessonWhen(lesson.startAt)}</small></span><span className="zs-state-label">{label}</span>
@@ -176,7 +179,7 @@ function CourseTree({ state, controller, ModelSettings, onOpenHit, onPickLive, c
       })}
       {!courses.length && <div className="zs-tree-empty"><p>{query ? "没有找到匹配课程。" : state.error ? "课程列表暂时无法读取。" : "这里还没有课程。"}</p>{!query && <button className="zs-text" onClick={() => controller.refresh()}>重新读取课程 →</button>}</div>}
     </div>
-      <div className="zs-tree-footer">{state.coursesMeta?.complete === false && <span>课程列表尚未收全</span>}<ModelSettings controller={controller} /></div>
+      <div className="zs-tree-footer">{state.coursesMeta?.complete === false && <span>课程列表尚未收全</span>}</div>
       </>}
   </aside>;
 }
@@ -205,7 +208,7 @@ function AdvancedSearchPanel({ state, mode, setMode, role, setRole, facets, setF
         {(facets.length > 0 || Boolean(role)) && <button type="button" className="zs-text" onClick={() => { setFacets([]); setRole(""); }}>清空筛选</button>}
       </>}
       <div className="zs-filter-row"><span className="zs-filter-label">层范围</span><div className="zs-chips">{availableLayers.map((spec) => { const count = catalog.layers[spec.id] ?? 0; const idle = filtersActive && !blockLayers.has(spec.id); return <Chip key={spec.id} label={spec.label} count={count} on={layerOn(spec.id)} disabled={!count} idle={idle} title={!count ? "本节这一层没有内容" : idle ? `${spec.label}：标签过滤已按维度收窄，这一层本轮不参与（它没有块级标签）` : `${spec.label}：本节 ${count} 条`} onClick={() => toggleLayer(spec.id)} />; })}</div></div>
-      {filtersActive && <p className="zs-filter-hint">已按维度收窄：只有「终稿（块级）」与「老师原话（句子层）」能出结果，其余层本轮不参与。</p>}
+      {filtersActive && <p className="zs-filter-hint">已按维度收窄：只有「讲义资源（块级）」与「老师原话（句子层）」能出结果，其余层本轮不参与。</p>}
       <div className="zs-filter-row"><span className="zs-filter-label">未接入</span><div className="zs-chips">{layerRegistry.filter((spec) => !spec.available).map((spec) => <span key={spec.id} className="zs-chip is-off" title={spec.reason}>{spec.label}</span>)}</div></div>
       {layers && <button type="button" className="zs-text" onClick={() => setLayers(null)}>恢复默认层</button>}
     </div>
@@ -214,20 +217,13 @@ function AdvancedSearchPanel({ state, mode, setMode, role, setRole, facets, setF
 
 // 课堂内容的 tab 组按 WAI-ARIA APG 的 tabs 模式做 roving tabindex：
 // 整组只留当前选中的那一个在 Tab 序列里（tabIndex=0），其余是 -1。
-// 否则键盘用户要连按 8 次 Tab 才能越过这一排，方向键也换不了 tab ——
-// 一排「档位」被当成 8 个独立按钮，读屏用户听到的也是 8 个孤立控件。
-//
-// 「直播」放在最后而不是「视频」旁边：它跟其余七栏不同源 —— 那七栏读的是**这一节
-// 已录下来的**资料，直播读的是**此刻正在发生**的流，而且常态就是空的（没在播、
-// 或用户还没从左侧选一节）。摆进「视频」旁边会让人以为它是回放的一个子档。
-//
-// 它**常驻**、不按 `state.liveStreams` 有无动态增减：tab 数组一旦随数据变化，
-// roving tabindex 的 `items.current[index]` 与 `aria-controls` 指向的位置就会错位，
-// 键盘用户按方向键时落点是随机的。没有内容时给空态就够了。
-const contentTabs = ["视频", "终稿", "讲义", "PPT", "字幕", "出题", "笔记", "直播"];
+// 顶栏只有两档。课件和字幕是视频栏里的开关，终稿、讲义、笔记和题
+// 收进知识点。直播不占这一排：它从左侧「正在直播」进来，落在视频栏的直播画面上。
+const contentTabs = ["视频", "知识点", "支线黑板"];
 
 function ContentTabs({ tab, setTab }) {
   const items = React.useRef([]);
+  items.current.length = contentTabs.length;
   // 焦点与选中一起移动：APG 的自动激活（automatic activation）里，方向键移动的
   // 就是「当前 tab」本身，内容随之切换。拆成「先移焦点、回车才选中」会让读屏
   // 用户多按一次键才知道内容变了。
@@ -401,12 +397,12 @@ function SearchResults({ outcome, jumpToHit }) {
 }
 
 export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) {
-  const state = useStudy(controller), [tab, setTab] = useState("终稿"), [query, setQuery] = useState(""), [mode, setMode] = useState(defaultQueryMode.id), [role, setRole] = useState(""), [facets, setFacets] = useState([]), [layers, setLayers] = useState(null), [optionsOpen, setOptionsOpen] = useState(false), [lectureFocus, setLectureFocus] = useState(null), [page, setPage] = useState(0), [subtitleFocus, setSubtitleFocus] = useState(null), [mobileTree, setMobileTree] = useState(false), [treeCollapsed, setTreeCollapsed] = useState(false), [livePick, setLivePick] = useState(null);
+  const state = useStudy(controller), [tab, setTab] = useState("知识点"), [query, setQuery] = useState(""), [mode, setMode] = useState(defaultQueryMode.id), [role, setRole] = useState(""), [facets, setFacets] = useState([]), [layers, setLayers] = useState(null), [optionsOpen, setOptionsOpen] = useState(false), [lectureFocus, setLectureFocus] = useState(null), [entry, setEntry] = useState(null), [screen, setScreen] = useState("replay"), [videoSeek, setVideoSeek] = useState(null), [mobileTree, setMobileTree] = useState(false), [treeCollapsed, setTreeCollapsed] = useState(false), [livePick, setLivePick] = useState(null);
   // 「用户点开的那条直播」住在页面而不是控制器里：`liveStreams` 只带 ID，
   // 且取流失败时会被控制器清成 null —— 标题与时段那时就只剩这份副本还记得。
   // 它也不该进 `state`：选直播**不改变选中节次**（回放与直播是两条通路），
   // 所以 `course`/`lesson` 不该跟着动，而 `livePick` 正是「我在看直播」这件事的住址。
-  const liveTab = tab === "直播";
+  const liveOn = LIVE_UI_ENABLED && screen === "live";
   /**
    * 点左侧「正在直播」里的某一场。
    *
@@ -415,18 +411,21 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
    * 信息，让一条拉不到的通路把整页顶成「出错」是错的口径（`model.js` 里也是这么定的）。
    */
   const openLive = (item) => {
+    if (!LIVE_UI_ENABLED) return;
     setLivePick(item);
-    setTab("直播");
+    setScreen("live");
+    setTab("视频");
     void controller.loadLiveStreams(item.courseId, item.subId).catch(() => { /* 原因见 state.liveError */ });
   };
   const advancedRef = React.useRef(null);
   useEffect(() => {
-    setQuery(""); setRole(""); setFacets([]); setOptionsOpen(false); setLectureFocus(null); setPage(0); setSubtitleFocus(null);
+    setQuery(""); setRole(""); setFacets([]); setOptionsOpen(false); setLectureFocus(null); setScreen("replay"); setVideoSeek(null);
     const focus = state.focusTab;
     const openQuiz = focus?.tab === "出题" && String(focus.courseId) === String(state.course?.id) && String(focus.subId) === String(state.lesson?.subId);
-    // 有回放的节次默认停在「视频」—— 从课程树点进来的人第一步就是想看那一节，
-    // 让他先看一眼黑板再说。没有回放的节次（只有课件/字幕可读）落在「终稿」。
-    setTab(openQuiz ? "出题" : state.lesson?.videoUrl ? "视频" : "终稿");
+    // 有回放的节次默认停在「视频」。没有回放就停在知识点。
+    // 从今天页点一道已采纳的题进来，直接打开这一节的出题，不再单开一栏。
+    setEntry(openQuiz ? { kind: "quiz" } : null);
+    setTab(openQuiz || !state.lesson?.videoUrl ? "知识点" : "视频");
   }, [state.lesson?.id, state.course?.id, state.focusTab]);
   // 浮窗是「选项」的住处，点外面或按 Esc 就收；它只覆盖在自己那一角，不接管正文的点击。
   useEffect(() => {
@@ -437,7 +436,7 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
     document.addEventListener("keydown", onKeyDown);
     return () => { document.removeEventListener("mousedown", onPointerDown); document.removeEventListener("keydown", onKeyDown); };
   }, [optionsOpen]);
-  const slides = state.content?.slides.items ?? [], subtitles = state.content?.subtitles.items ?? [], active = state.activeJob, running = active?.state === "running", ownRunning = running && active.courseId === state.course?.id && active.subId === state.lesson?.subId;
+  const slides = state.content?.slides.items ?? [], subtitles = state.content?.subtitles.items ?? [], active = state.activeJob, running = active?.state === "running", ownRunning = ["running", "queued"].includes(state.job?.state);
   // 检索是纯函数的输入输出：档位 + 2×11 维 + 层范围进，命中集出。控制器不参与。
   const wanted = layers ?? defaultSearchLayers;
   const outcome = searchLesson(state.result, { query, mode, role, facets, layers: wanted });
@@ -457,16 +456,40 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
   const toggleLayer = (id) => { const base = layers ?? [...defaultSearchLayers]; setLayers(base.includes(id) ? base.filter((item) => item !== id) : [...base, id]); };
   const toggleFacet = (label) => setFacets((value) => (value.includes(label) ? value.filter((item) => item !== label) : [...value, label]));
   const jumpToHit = (hit) => {
-    // 抽屉常驻在节次头部下方（正常流式布局，不覆盖正文），命中可能指向当前没在看的 tab，
-    // 所以块级命中要先切回终稿再定位。
-    // 关键词检索时正文是空的（让位给结果），块根本不存在：先退出检索把正文还原成全量，再滚动过去。
-    if (hit.blockIndex != null) { if (keywordSearch) { setQuery(""); setOptionsOpen(false); } setTab("终稿"); setTimeout(() => document.getElementById(`zs-block-${hit.blockIndex}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 0); }
-    else if (hit.layer === LayerId.lecture) { setLectureFocus({ chapterNo: hit.chapterNo, topicNo: hit.topicNo, nonce: Date.now() }); setTab("讲义"); }
-    else if (hit.page != null) { const index = slides.findIndex((item) => item.page === hit.page); if (index >= 0) { setPage(index); setTab("PPT"); } }
+    // 命中可能在另一档。关键词检索时终稿正文是空的：先退出检索，再打开那一块。
+    if (hit.blockIndex != null) {
+      if (keywordSearch) { setQuery(""); setOptionsOpen(false); }
+      const branch = state.result?.blocks?.find(block => block.index === hit.blockIndex)?.tag?.role === "支线";
+      setTab(branch ? "支线黑板" : "知识点");
+      setEntry({ ...entryForBlock(state.result, hit.blockIndex), nonce: Date.now() });
+    } else if (hit.layer === LayerId.lecture) {
+      setLectureFocus({ chapterNo: hit.chapterNo, topicNo: hit.topicNo, nonce: Date.now() });
+      setTab("知识点");
+      setEntry({ kind: "read", chapterNo: hit.chapterNo, topicNo: hit.topicNo });
+    } else if (hit.page != null) {
+      const index = slides.findIndex((item) => item.page === hit.page);
+      if (index >= 0) {
+        setScreen("replay");
+        setTab("视频");
+        setVideoSeek({ ms: slides[index]?.startMs ?? 0, nonce: Date.now(), pin: true });
+      }
+    }
   };
-  const onLocate = (target) => {
-    if (target.kind === "page") { setPage(target.index); setTab("PPT"); }
-    if (target.kind === "time") { setSubtitleFocus(target.subtitleIndex); setTab("字幕"); }
+  const locateMedia = (target) => {
+    setScreen("replay");
+    setTab("视频");
+    if (target?.kind === "page") {
+      const slide = slides[target.index];
+      setVideoSeek({ ms: slide?.startMs ?? 0, nonce: Date.now(), pin: true });
+    } else if (target?.kind === "time") {
+      const line = subtitles[target.subtitleIndex];
+      setVideoSeek({ ms: line?.startMs ?? 0, nonce: Date.now() });
+    }
+  };
+  const openVideoAt = (ms) => {
+    setScreen("replay");
+    setTab("视频");
+    setVideoSeek({ ms: ms ?? 0, nonce: Date.now() });
   };
   // 没有选中节次、但用户从左侧点了直播：正文区整块让给直播。
   //
@@ -474,30 +497,26 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
   // （`model.js` 的 `loadCourse` 会丢掉不可回放的节次），要求用户先去点一节不存在的
   // 回放才能看直播，等于把这条路封死。所以直播自己撑得起正文区。
   //
-  // 这一块**不带 tab 条**：其余七栏读的都是「这一节的资料」，没有节次时它们全是空的。
+  // 这一块**不带 tab 条**：视频和知识点读的都是「这一节的资料」，没有节次时它们全是空的。
   // 给一排按下去只剩空态的按钮，比不给更糟 —— 用户会以为是自己点错了。
   const liveOnly = <section className="zs-content-section">
     <div className="zs-content-heading"><div><span className="zs-eyebrow">此刻直播</span><h2>课堂直播</h2></div></div>
     <LivePane state={state} controller={controller} pick={livePick} />
   </section>;
-  useEffect(() => {
-    if (tab !== "字幕" || subtitleFocus == null) return;
-    document.getElementById(`zs-line-${subtitleFocus}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [tab, subtitleFocus]);
   if (state.loading) return <div className="zs-workspace-loading"><span className="zs-spinner" />正在连接课堂与学习资料…</div>;
   if (!state.user) return <div className="zs-workspace-signin"><div className="zs-signin-mark">知</div><h1>连接智云课堂</h1><p>登录后，课程、课件与课堂字幕会汇集到这间学习工作台。</p><button className="zs-primary" onClick={() => controller.openAccount()}>登录智云课堂</button><Notice>{state.error}</Notice></div>;
   return <section className="zs-study" aria-label="学习工作台">
     <div className="zs-workbench-shell">
       <button className="zs-mobile-tree-toggle" aria-expanded={mobileTree} onClick={() => setMobileTree((value) => !value)}><span>课程目录</span><span>{state.course?.title ?? "选择一门课程"}</span><span aria-hidden="true">{mobileTree ? "⌃" : "⌄"}</span></button>
       <div className={`zs-workbench${mobileTree ? " is-tree-open" : ""}${treeCollapsed ? " is-tree-collapsed" : ""}`}>
-        <CourseTree state={state} controller={controller} ModelSettings={ModelSettings} collapsed={treeCollapsed} onToggle={() => setTreeCollapsed((value) => !value)} onPickLive={openLive} onOpenHit={async (row) => { const opened = await controller.openCorpusHit(row); if (opened) setQuery(state.corpusQuery || ""); }} />
+        <CourseTree state={state} controller={controller} collapsed={treeCollapsed} onToggle={() => setTreeCollapsed((value) => !value)} onPickLive={openLive} onOpenHit={async (row) => { const opened = await controller.openCorpusHit(row); if (opened) setQuery(state.corpusQuery || ""); }} />
         <main className="zs-reader">
           <Notice>{state.error}</Notice>
           {/* 直播分支排在「没有节次」之前：点了直播但还没选节次时，用户要的是直播，
               不是那张「从一节课开始」的引导页 —— 后者会让人以为点击没生效。
               只看 `tab`、不看 `livePick`：`livePick` 是页面重挂载（切走再回来、
               刷新）时会丢的组件内状态，而「我在直播栏」这件事不该跟着它一起丢。 */}
-          {!state.lesson && liveTab ? liveOnly : !state.lesson ? <div className="zs-reader-empty"><span className="zs-motto-text">海纳江河，启真厚德</span><h1>从一节课开始，搭建自己的知识脉络。</h1><p>展开左侧课程，选择一节课堂。课件、字幕和解析内容会在这里自然汇合。</p><div className="zs-empty-hint"><span>01</span><div><strong>选择课程与节次</strong><small>课程资料会按课堂归档</small></div><span>02</span><div><strong>阅读与整理</strong><small>在同一处查看课件、字幕与讲义</small></div></div></div> : <>
+          {!state.lesson && liveOn ? liveOnly : !state.lesson ? <div className="zs-reader-empty"><span className="zs-motto-text">海纳江河，启真厚德</span><h1>从一节课开始，搭建自己的知识脉络。</h1><p>展开左侧课程，选择一节课堂。课件、字幕和解析内容会在这里自然汇合。</p><div className="zs-empty-hint"><span>01</span><div><strong>选择课程与节次</strong><small>课程资料会按课堂归档</small></div><span>02</span><div><strong>阅读与整理</strong><small>在同一处查看课件、字幕与讲义</small></div></div></div> : <>
             <header className="zs-current-section">
               <div className="zs-breadcrumb-row">
                 <div className="zs-breadcrumb"><span>{state.course?.title}</span><span aria-hidden="true">/</span><span>{state.lesson.title}</span></div>
@@ -514,14 +533,13 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
                   而它占掉的两行高度是从主视图（视频/课件）身上割的肉。留下的这一行是
                   目录里没有的信息：整理状态、时间、教师，以及右侧的动作。
                   时间取不到时整格不出（`lessonWhen` 兜底的「课堂学习」在这里没有信息量）。 */}
-              <div className="zs-current-main"><div className="zs-current-meta"><span className={`zs-current-state${state.result?.status === "ready" ? " is-ready" : ""}`}><i />{running ? ownRunning ? "正在解析" : "其他课堂解析中" : state.result ? state.result.status === "ready" ? "学习资料已整理" : "解析部分完成" : "等待整理"}</span>{state.lesson.startAt && <span className="zs-current-when">{lessonWhen(state.lesson.startAt)}{state.lesson.lecturerName ? ` · ${state.lesson.lecturerName}` : ""}</span>}</div><div className="zs-current-actions">
+              <div className="zs-current-main"><div className="zs-current-meta"><span className={`zs-current-state${state.result?.status === "ready" ? " is-ready" : ""}`}><i />{ownRunning ? state.job.state === "queued" ? "等待生成" : "正在生成" : state.result ? state.result.status === "ready" ? "学习资料已整理" : "解析部分完成" : "等待整理"}</span>{state.lesson.startAt && <span className="zs-current-when">{lessonWhen(state.lesson.startAt)}{state.lesson.lecturerName ? ` · ${state.lesson.lecturerName}` : ""}</span>}</div><div className="zs-current-actions"><GenerationQueue controller={controller} />
                 {/* `state.live` 是控制器按 courseId/subId 从 `liveToday` **派生**出来的
                     （见 `model.js` 的 `liveOf`），所以它非空就等于「这一节此刻真在播」。
                     用它做一份就地入口：用户已经在这节回放上，不必再回头去左侧目录里
                     找同一节课。排在「课堂回放」左边 —— 直播是**过时就没了**的那一个。 */}
-                {state.live && <button className="zs-button" onClick={() => openLive(state.live)}><span aria-hidden="true">◉</span> 正在直播</button>}
-                {state.lesson.videoUrl && <button className="zs-button" onClick={() => setTab("视频")}><span aria-hidden="true">▷</span> 课堂回放</button>}<button className="zs-primary" disabled={state.busy || running || state.contentLoading || !state.content || state.content.slides.meta.complete !== true || state.content.subtitles.meta.complete !== true} onClick={() => controller.start()}>{state.result ? "重新整理" : "整理这节课"}<span aria-hidden="true"> ↗</span></button></div></div>
-              {running && <div className="zs-progress" role="status"><span>{ownRunning ? "正在整理" : "另一节课堂正在整理"} · {({ source: "读取资料", faithful: "看图转述", mix: "纠错与分块", tags: "整理内容标签", done: "完成" })[active.progress.phase] ?? active.progress.phase} {active.progress.total ? `${active.progress.done}/${active.progress.total}` : ""}</span>{active.progress.total > 0 && <progress value={active.progress.done} max={active.progress.total} />}<button className="zs-text" disabled={state.busy} onClick={() => controller.cancel()}>取消</button></div>}
+                {LIVE_UI_ENABLED && state.live && <button className="zs-button" onClick={() => openLive(state.live)}><span aria-hidden="true">◉</span> 正在直播</button>}
+                {state.lesson.videoUrl && <button className="zs-button" onClick={() => { setScreen("replay"); setTab("视频"); }}><span aria-hidden="true">▷</span> 课堂回放</button>}<ModelSettings controller={controller} requiresVision={Boolean(state.content?.slides?.items?.length)} disabled={running || state.busy} generationDisabled={state.busy || ownRunning || state.contentLoading || !state.content || state.content.slides.meta.complete !== true || state.content.subtitles.meta.complete !== true} onGenerate={() => controller.start()} label={ownRunning ? state.job.state === "queued" ? "已加入队列" : "正在生成讲义" : state.result ? "重新生成讲义" : "生成讲义"} /></div></div>
             </header>
             {state.result && searching && <div className="zs-search-drawer" id="zs-search-drawer">
               <SearchResults outcome={outcome} jumpToHit={jumpToHit} />
@@ -529,16 +547,17 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
             <section className="zs-content-section">
               {/* 「直播」栏的标题不带「当前课堂」：它可能和下面这一节的资料无关
                   （用户可以在 A 节的正文里看 B 节的直播，`loadLiveStreams` 不动选中节次）。 */}
-              <div className="zs-content-heading"><div><span className="zs-eyebrow">{liveTab ? "此刻直播" : "当前课堂"}</span><h2>{tab === "视频" ? "课堂视频" : tab === "讲义" ? "课堂讲义" : tab === "终稿" ? "解析终稿" : tab === "PPT" ? "课堂课件" : tab === "出题" ? "从本节出题" : tab === "笔记" ? "本节笔记" : tab === "直播" ? "课堂直播" : "课堂字幕"}</h2></div><div className="zs-content-tools"><ContentTabs tab={tab} setTab={setTab} /><button className="zs-icon-button" title="刷新课堂" aria-label="刷新课堂" disabled={state.loading || state.busy} onClick={() => controller.refresh()}>↻</button></div></div>
+              <div className="zs-content-heading"><div><span className="zs-eyebrow">{tab === "视频" && liveOn ? "此刻直播" : "当前课堂"}</span><h2>{tab === "视频" ? (liveOn ? "课堂直播" : "课堂视频") : tab}</h2></div><div className="zs-content-tools">{LIVE_UI_ENABLED && tab === "视频" && (state.live || livePick) && <div className="zs-content-switch" role="group" aria-label="画面"><button type="button" aria-pressed={!liveOn} onClick={() => setScreen("replay")}>回放</button><button type="button" aria-pressed={liveOn} onClick={() => openLive(state.live ?? livePick)}>直播</button></div>}<ContentTabs tab={tab} setTab={setTab} /><button className="zs-icon-button" title="刷新课堂" aria-label="刷新课堂" disabled={state.loading || state.busy} onClick={() => controller.refresh()}>↻</button></div></div>
               {/* 直播栏**不排**在 `contentLoading` 后面：它读的是直播网关，不是这一节的
                   课件与字幕。等一份跟它无关的请求，只会让点了直播的人对着「正在读取课件
                   与字幕…」发呆 —— 而那两样东西本来就不是他要的。 */}
-              {liveTab ? <div id="zs-content-panel" role="tabpanel" aria-labelledby={`zs-tab-${tab}`}><LivePane state={state} controller={controller} pick={livePick} /></div>
+              {tab === "视频" && liveOn ? <div id="zs-content-panel" role="tabpanel" aria-labelledby={`zs-tab-${tab}`}><LivePane state={state} controller={controller} pick={livePick} /></div>
                 : state.contentLoading ? <div className="zs-content-loading"><span className="zs-spinner" />正在读取课件与字幕…</div> : <div id="zs-content-panel" role="tabpanel" aria-labelledby={`zs-tab-${tab}`}>
-                {tab === "视频" ? <VideoPanel state={state} /> : tab === "出题" ? <QuizPanel key={state.lesson?.id} state={state} controller={controller} /> : tab === "笔记" ? <NotePanel state={state} controller={controller} slides={slides} subtitles={subtitles} pageIndex={page} onLocate={onLocate} /> : tab === "讲义" ? <LectureReader state={state} controller={controller} focus={lectureFocus} onSource={(topic) => { setTab("终稿"); setQuery(""); setRole(""); setFacets([]); setTimeout(() => document.getElementById(`zs-block-${topic.sourceBlockIndexes?.[0] ?? topic.blockIndexes?.[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 0); }} /> : tab === "PPT" ? slides.length ? <><div className="zs-slide-controls"><span>第 <strong>{slides[page]?.page}</strong> 页 <span className="zs-muted">/ {slides.length}</span></span><div><button className="zs-button" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>上一页</button><button className="zs-button" disabled={page >= slides.length - 1} onClick={() => setPage((value) => value + 1)}>下一页</button></div></div><img className="zs-slide" src={safeLink(slides[page]?.imageUrl)} alt={`第 ${slides[page]?.page} 页课件`} /><p className="zs-slide-time">课堂时间 {time(slides[page]?.startMs ?? 0)}</p></> : <div className="zs-content-empty"><span>▧</span><strong>这节课暂时没有课件</strong><small>课堂资料完成同步后会显示在这里</small></div>
-                  : tab === "字幕" ? <div className="zs-transcript">{subtitles.map((line, index) => <p key={index} id={`zs-line-${index}`} className={subtitleFocus === index ? "zs-line-focus" : undefined}><time>{time(line.startMs)}</time><span>{line.text}</span></p>)}{!subtitles.length && <div className="zs-content-empty"><span>≋</span><strong>这节课暂时没有字幕</strong><small>课堂资料完成同步后会显示在这里</small></div>}</div>
-                    : state.result ? <><Notice>{state.result.status !== "ready" ? "部分页面或标签还未整理完成；原始字幕仍然保留，可以重新整理。" : null}</Notice><p className="zs-layer-note">终稿保留纠错后的课堂原话、主支线标签和来源时间。<button className="zs-text" onClick={() => setTab("讲义")}>阅读知识点讲义 →</button></p><div className="zs-outline"><div><small>本节主线</small><h3>{state.result.spine || "主线尚未生成"}</h3></div><div className="zs-outline-links">{state.result.outline.map((outline, index) => <button className="zs-text" key={index} onClick={() => document.getElementById(`zs-block-${outline.from}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}>{outline.title}<span>↓</span></button>)}</div></div>
-                  <div className="zs-blocks">{blocks.map((block) => <article className="zs-block" id={`zs-block-${block.index}`} key={block.index}><header><span>{time(block.startMs ?? 0)} · {block.page ? `第 ${block.page} 页` : "字幕"} · {block.tag.role ?? "未标注"}</span><div>{(block.tag.facets ?? []).map((item) => <span className="zs-facet" key={item}>{item}</span>)}</div></header>{block.tag.summary && <h3>{block.tag.summary}</h3>}{block.bridge && <p className="zs-bridge">{block.bridge}</p>}{block.sentences.map((line, index) => <p key={index}>{line.text}</p>)}</article>)}</div>{blocks.length ? null : keywordSearch && outcome.hits.length ? <p className="zs-muted">正文已让位给检索结果：{outcome.hits.length} 条命中都在上方「检索结果」面板里，点任意一条即可回到对应位置。</p> : <p className="zs-muted">没有匹配的内容。</p>}<details className="zs-diagnostics"><summary>查看整理记录</summary><p>{state.result.sentences.length + (state.result.unassignedSentences?.length ?? 0)} 句字幕 · {state.result.blocks.length} 个知识片段 · {state.result.failedPages?.length ?? 0} 页需重试{state.result.unassignedSentences?.length ? ` · ${state.result.unassignedSentences.length} 句没落到任何一页（已单列保留）` : ""}</p>{state.result.warnings.map((warning, index) => <p key={index}>{warning}</p>)}</details></> : <div className="zs-unparsed"><div className="zs-unparsed-icon">✦</div><h3>让课堂内容变成自己的理解</h3><p>{slides.length} 页课件 · {subtitles.length} 条字幕。整理后，这里会呈现课堂主线、重点和可检索的知识片段。</p>{state.content && (state.content.slides.meta.complete !== true || state.content.subtitles.meta.complete !== true) ? <Notice>课堂资料尚未收全，请刷新课堂后再试。</Notice> : <button className="zs-text" onClick={() => controller.start()}>开始整理这节课 →</button>}</div>}
+                {tab === "视频"
+                  ? <VideoPanel state={state} seek={videoSeek} />
+                  : tab === "支线黑板"
+                    ? <BranchBoard key={state.lesson?.id} result={state.result} onOpenVideo={openVideoAt} focus={entry} />
+                    : <KnowledgeBoard key={state.lesson?.id} state={state} controller={controller} Notice={Notice} slides={slides} subtitles={subtitles} entry={entry} onEntry={setEntry} onOpenVideo={openVideoAt} onLocate={locateMedia} focus={lectureFocus} visibleBlocks={blocks} searching={searching} keywordSearch={keywordSearch} hitCount={outcome.hits.length} />}
               </div>}
             </section>
           </>}

@@ -1,0 +1,154 @@
+:root {
+  --paper: #f6f3ec; --paper-2: #efebe1; --ink: #1e1b17; --ink-2: #4a453d; --muted: #7d766a;
+  --faint: #8b8377; --rule: #dcd5c7; --rule-soft: #e8e2d5;
+  --accent: #b8402f; --mix: #3f6b52; --vision: #3d6278; --warn: #8a6829;
+  --mono: "JetBrains Mono", "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --sans: "PingFang SC", "Microsoft YaHei UI", "Hiragino Sans GB", "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--paper); color: var(--ink);
+  font: 400 13px/1.5 var(--sans);
+  display: flex; flex-direction: column;
+  padding: 0 14px 10px; overflow: hidden;
+}
+
+/* ── 基准控制条 ──────────────────────────────────────────────────
+ *
+ * 固定在最上方，浮在演示舞台之上。演示本身是 100dvh 布局，所以下面用
+ * `body { padding-top }` 给它让出高度，其余布局完全交给 pipeline.css。
+ */
+
+#bar {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 90;
+  display: flex; gap: 12px; align-items: flex-end;
+  padding: 6px 12px;
+  background: rgba(246, 243, 236, .97);
+  border-bottom: 1px solid var(--rule);
+  backdrop-filter: blur(6px);
+}
+
+#bar .brand { display: flex; flex-direction: column; gap: 1px; flex: none; min-width: 150px; }
+#bar .brand .eyebrow {
+  font: 500 8px/1 var(--mono); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--accent);
+}
+#bar .brand b { font: 500 12px/1.2 var(--sans); color: var(--ink); }
+
+#bar .fields { display: flex; gap: 8px; align-items: flex-end; flex: 1; flex-wrap: wrap; }
+#bar label {
+  display: flex; flex-direction: column; gap: 2px;
+  font: 500 8px/1 var(--mono); letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+}
+#bar label.wide { flex: 0 0 200px; }
+#bar input, #bar select {
+  font: 400 11px/1.3 var(--mono); color: var(--ink); background: #fff;
+  border: 1px solid var(--rule); border-radius: 2px; padding: 3px 5px;
+  width: 100%; min-width: 0;
+}
+#bar input:focus, #bar select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+#bar label:not(.wide) input { width: 62px; }
+
+#bar .actions { display: flex; gap: 6px; align-items: center; flex: none; padding-bottom: 1px; }
+#bar button {
+  font: 500 11px/1 var(--sans); padding: 5px 12px;
+  border: 1px solid var(--ink); border-radius: 2px;
+  background: var(--ink); color: var(--paper); cursor: pointer;
+}
+#bar button:disabled { opacity: .4; cursor: not-allowed; }
+#bar button.ghost { background: transparent; color: var(--ink-2); border-color: var(--rule); }
+#bar .status { font: 400 10px/1 var(--mono); color: var(--muted); min-width: 78px; }
+#bar .status.err { color: var(--accent); }
+#bar .status.ok { color: var(--mix); }
+
+/* 给控制条让出高度（演示是 100dvh 布局，不改它的内部） */
+body { padding-top: 46px; }
+
+/* 让「真实链路事件」面板可读：演示的 log 是给它的假日志用的 */
+#log { max-height: 30vh; }
+
+/* 跑完之后的「查看演示」入口 —— 评测与演示是两件事，这个链接把它们接起来 */
+.demoLink {
+  position: fixed; right: 12px; bottom: 10px; z-index: 95;
+  display: flex; gap: 8px; align-items: baseline;
+  padding: 6px 10px; background: #fff; border: 1px solid var(--ink); border-radius: 2px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.10); font: 400 11px/1.4 var(--sans);
+}
+.demoLink a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.demoLink a:hover { text-decoration: underline; }
+.demoLink .dim { color: var(--faint); font: 400 9px/1 var(--mono); }
+
+/* 评测页的主体：一个安静的占位区（不放动画，只说明去哪看结果） */
+#runStage {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--rule); border-radius: 2px; background: #fbf9f4;
+}
+#runStage .placeholder {
+  display: flex; flex-direction: column; gap: 8px; max-width: 460px;
+  text-align: center; color: var(--muted); font: 400 12px/1.8 var(--sans);
+}
+#runStage .placeholder b { font: 500 14px/1.4 var(--sans); color: var(--ink); }
+
+/* 评测页的诊断日志：跑的时候这里滚，跑完就不用看了 */
+#runStage { position: relative; flex-direction: column; }
+#runStage .placeholder { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.runlog {
+  flex: 0 0 42%; min-height: 0; overflow: auto; width: 100%;
+  border-top: 1px solid var(--rule-soft); padding: 6px 12px;
+  font: 400 10.5px/1.6 var(--mono); color: var(--ink-2); background: #fff;
+}
+.runlog .lrow { display: flex; gap: 8px; padding: 1px 0; border-bottom: 1px dotted var(--rule-soft); }
+.runlog .lrow:last-child { border-bottom: 0; }
+.runlog .lt { color: var(--faint); flex: none; }
+.runlog .lb { flex: 1; min-width: 0; word-break: break-word; }
+.runlog .lrow.err .lb { color: var(--accent); }
+.runlog .lrow.ok .lb { color: var(--mix); }
+
+/* 状态三档：ok 绿 / warn 黄 / err 红。
+ * ⚠️ 「跑完但有缺陷」必须是黄色，不能因为跑完就画绿。 */
+#bar .status.warn { color: var(--warn); }
+#bar .status.err { color: var(--accent); }
+#bar .status.ok { color: var(--mix); }
+
+/* 细粒度进度：让"正在工作"和"卡住"看起来不一样 */
+#bar .runprogress {
+  display: flex; align-items: center; gap: 6px; flex: none;
+  padding-bottom: 2px; font: 400 10px/1 var(--mono); color: var(--muted);
+}
+#bar .runprogress .rpbar {
+  width: 110px; height: 3px; background: var(--rule-soft); border-radius: 2px; overflow: hidden;
+}
+#bar .runprogress .rpbar i { display: block; height: 100%; width: 0; background: var(--mix); transition: width .2s; }
+#bar .runprogress #runPct { min-width: 30px; text-align: right; }
+#bar .runprogress .rpsep { color: var(--faint); }
+#bar .runprogress b { color: var(--ink); font-weight: 500; }
+
+/* 控制条高度不再固定 46px —— 它可能换行，正文让位要用变量 */
+body { padding-top: var(--barH, 46px); }
+
+/* 历史运行：回答"这次跟上次有什么不同"。
+ * 审查第 31 条：早先只有日志 id，你得自己记住每次改了什么。 */
+.historyBtn {
+  position: fixed; right: 12px; bottom: 56px; z-index: 95;
+  font: 500 10.5px/1 var(--sans); padding: 5px 10px;
+  border: 1px solid var(--rule); border-radius: 2px;
+  background: #fff; color: var(--ink-2); cursor: pointer;
+}
+.historyBtn:hover { border-color: var(--ink); color: var(--ink); }
+.historyPanel {
+  position: fixed; right: 12px; bottom: 92px; z-index: 96;
+  width: 460px; max-height: 62vh; overflow: auto;
+  background: #fff; border: 1px solid var(--ink); border-radius: 2px;
+  box-shadow: 0 6px 22px rgba(0,0,0,.14); padding: 10px 12px;
+  font: 400 11px/1.6 var(--sans);
+}
+.historyPanel h4 { margin: 0 0 6px; font: 500 12px/1.4 var(--sans); }
+.historyPanel table { width: 100%; border-collapse: collapse; font: 400 10px/1.5 var(--mono); }
+.historyPanel th { text-align: left; color: var(--faint); border-bottom: 1px solid var(--rule); padding: 2px 4px; }
+.historyPanel td { padding: 2px 4px; border-bottom: 1px dotted var(--rule-soft); }
+.historyPanel tr.cur td { background: rgba(184,64,47,.06); }
+.historyPanel .rlink { color: var(--accent); cursor: pointer; text-decoration: none; }
+.historyPanel .rlink:hover { text-decoration: underline; }

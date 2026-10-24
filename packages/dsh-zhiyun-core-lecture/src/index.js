@@ -26,10 +26,14 @@
  * 若集成层要用别的适配器，`config.llm` 可以直接注入一个同形状的对象。
  */
 
-import { createLectureAssembler } from './polish.js';
+import { createLectureAssembler, kLecturePolishSystemPrompt } from './polish.js';
+import { PATCH_INSTRUCTION } from './polish-patch.js';
 import { buildLectureTree } from './tree.js';
 import { judgeWritten } from './register.js';
+import { exportReorganization, mergeReorganization } from './agent-text.js';
 import { LectureError } from './errors.js';
+import { generateLecture } from './generate.js';
+export { GENERATION_VERSION } from './generate.js';
 
 export const name = 'zhiyun-lecture';
 
@@ -43,8 +47,8 @@ export const name = 'zhiyun-lecture';
  */
 export const inject = ['zhiyunParser'];
 
-export async function apply(ctx, config = {}) {
-  const llm = config.llm ?? ctx.zhiyunParser?.llm;
+export function createLectureService(config = {}) {
+  const llm = config.llm;
   if (!llm || typeof llm.call !== 'function') {
     throw new LectureError('CONFIG', '讲义加工需要注入窄 llm 接口（{ call({stage,route,constant,variable,signal}) }）；'
       + '宿主侧由 zhiyunParser 提供，也可用 config.llm 直接给出');
@@ -52,22 +56,24 @@ export async function apply(ctx, config = {}) {
 
   // 路由**延迟解析**：插件激活不该因为「模型还没配好」而失败 ——
   // 没配模型时用户仍应能用知识树与书面语验收（那两条一次模型调用都不发）。
-  let route;
   let resolving;
   const resolveRoute = async (signal) => {
-    if (route !== undefined) return route;
     if (typeof llm.resolve !== 'function') return undefined;
-    resolving ??= llm.resolve(signal)
-      .then((routes) => { route = routes?.text ?? routes?.vision; return route; })
+    resolving ??= llm.resolve(signal, { vision: false })
+      .then((routes) => routes?.text ?? routes?.vision)
       .finally(() => { resolving = null; });
     return resolving;
   };
 
   const assembler = createLectureAssembler({
+    cache: config.cache,
     llm: {
+      resolve: resolveRoute,
       call: async (request) => {
         const resolved = await resolveRoute(request.signal);
-        return llm.call({ ...request, route: request.route ?? resolved });
+        const baseRoute = request.route ?? resolved;
+        const route = request.stage === 'lecture-polish' ? { ...baseRoute, maxTokens: 32768 } : baseRoute;
+        return llm.call({ ...request, route });
       },
     },
     concurrency: config.concurrency,
@@ -81,8 +87,53 @@ export async function apply(ctx, config = {}) {
   //    （树决定分章分知识点、验收决定正文算不算成稿）。集成层如果自己
   //    `import` 子路径去拼，就等于把「输入到底该长什么样」在两处各写一遍 ——
   //    那正是本仓说过的「同一件事有两份实现，半年内无声漂开」。
+  //
+  // `polish` 也一样：它要的 `text` / `merge` 必须与装配层**同一份 codec**
+  // （`exportReorganization` / `mergeReorganization`），否则"导出的格式"与
+  // "合回的格式"会在两处各自演化。所以这里把 codec 一起交出去，让集成层
+  // 只负责"什么时候润色"，不负责"润色的文本长什么样"。
   const service = {
     assemble: assembler.assemble,
+    /**
+     * 全文润色（习坎最后一步）。
+     *
+     * @param {{lecture:object, record:object, sectionId:string, signal?:AbortSignal}} input
+     *   `record` 是解析终稿（只需要 `blocks` 与 `outline`）—— 合回时要按它
+     *   校验"原稿块全覆盖、来源不越界"。导出的文本与合回的函数在**这里**
+     *   一次配好，集成层不需要知道格式。
+     */
+    polish: async ({ lecture, record, sectionId, signal, onProgress }) => {
+      if (assembler.closed) throw new LectureError('DISPOSED', '讲义加工器已关闭');
+      signal?.throwIfAborted();
+      const id = String(sectionId ?? lecture?.title ?? '');
+      const text = exportReorganization(lecture, id, record ?? { blocks: [], outline: [] });
+      const merge = t => mergeReorganization(lecture, t, record ?? { blocks: [], outline: [] }, id);
+      // Validate the harness's own source contract before spending review tokens.
+      merge(text);
+      const cache = config.cache;
+      const resolved = await resolveRoute(signal);
+      const key = cache?.key('lecture-polish-scoped-v2', [resolved, kLecturePolishSystemPrompt, PATCH_INSTRUCTION, text]);
+      if (key) {
+        const saved = await cache.get(key);
+        if (saved) {
+          try {
+            const result = JSON.parse(saved.raw);
+            const checked = merge(result.text);
+            signal?.throwIfAborted();
+            const total = lecture.chapters.reduce((n, c) => n + c.topics.length, 0);
+            onProgress?.({ phase: 'polish', done: total, total, cached: true });
+            return { ...result, lecture: checked.lecture, coverage: checked.coverage, calls: [], cached: true };
+          } catch (error) { if (signal?.aborted) throw error; }
+        }
+      }
+      const result = await assembler.polish({
+        lecture, text, signal, onProgress, cache, cacheRoute: resolved, allowPartial:true,
+        merge,
+      });
+      const checked = merge(result.text);
+      if (key && result.complete !== false) await cache.put(key, JSON.stringify(result));
+      return { ...result, lecture: checked.lecture, coverage: checked.coverage, cached: false };
+    },
     buildTree: buildLectureTree,
     judgeWritten,
     dispose: assembler.dispose,
@@ -91,11 +142,15 @@ export async function apply(ctx, config = {}) {
     get closed() { return assembler.closed; },
   };
 
+  service.generate = input => generateLecture({ ...input, service });
+
+  service.createRun = options => createLectureService({ ...config, ...options });
+  return service;
+}
+
+export async function apply(ctx, config = {}) {
+  const service = createLectureService({ ...config, llm: config.llm ?? ctx.zhiyunParser?.llm,
+    cache: config.cache ?? ctx.zhiyunParser?.cache });
   const removeService = ctx.provide('zhiyunLecture', service);
-  return () => {
-    // ⚠️ 先中断在飞的请求，再摘服务：反过来会让刚被调用的 assemble 在
-    //    服务已消失之后还往模型端点发请求（白花钱，而且没人收结果）。
-    assembler.dispose();
-    if (typeof removeService === 'function') removeService();
-  };
+  return () => { service.dispose(); removeService?.(); };
 }

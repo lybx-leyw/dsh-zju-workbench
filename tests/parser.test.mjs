@@ -28,7 +28,13 @@ test('Dart baseline remains intact; JS applies its explicitly relaxed correction
   assert.deepEqual(mixRequest({ page: 2, lines, fromMs: 1000, toMs: 3000, faithfulText: reference.faithful.raw, terms: ['概率密度函数'] }), { ...reference.mix, constant: correctionPrompt(reference.mix.constant) });
   assert.equal(faithfulRequest('context', 2).variable, reference.faithfulRequest);
   assert.deepEqual(tagRequest([{index:1,page:2,startMs:1000,endMs:3000,bridge:'接着上文',sentences:[{text:'旧四史'},{text:'概率密度函数'}]}],templates.vocabulary,'context',1),reference.chunk);
-  assert.deepEqual(outlineRequest([{index:1,tag:{summary:'概率密度函数'}},{index:2,tag:{summary:''}}],'context'),reference.outline);
+  const request = outlineRequest([{index:1,tag:{role:'主线',facets:['概念'],summary:'概率密度函数'}},{index:2,tag:{role:'支线',facets:[],summary:''}}],'context');
+  assert.ok(request.constant.startsWith(reference.outline.constant.split('【输出格式】')[0]));
+  assert.equal((request.constant.match(/【唯一输出格式】/g) ?? []).length, 1);
+  assert.match(request.constant, /三个字段缺一不可/);
+  assert.match(request.constant, /knowledge 数组/);
+  assert.match(request.variable, /1\. \[主线 概念\] 概率密度函数/);
+  assert.match(request.variable, /2\. \[支线 \] （这一块没有概述）/);
 });
 test('missing and duplicate time anchors never discard or duplicate subtitle provenance', () => {
   const subtitles = Array.from({ length: 10 }, (_, i) => ({ startMs: i * 1000, endMs: i * 1000 + 800, text: `line${i}` }));
@@ -104,63 +110,65 @@ test('truncated host stream is rejected instead of accepting partial text', asyn
   const llm = new HarnessLlm({ selection:()=>({}), attachments:{saveImage(){}}, llm:{prepareCall:async()=>({ config:{}, stream:async function*(){yield {type:'text-delta',index:0,text:'partial'};yield {type:'finish',reason:{kind:'max-tokens'}};} })} });
   await assert.rejects(llm.call({route:{},constant:'',variable:'',stage:'mix'}), {code:'TRUNCATED'});
 });
-test('subtitle-only input remains intact without requesting any model', async () => {
-  const parser = new LectureParser({ llm:{ resolve:()=>assert.fail(), call(){}, image(){} } });
-  const output = await parser.parse({slides:[],subtitles:lesson().subtitles});
-  // 没有课件帧 → 字幕**单列**保留：它们没有页，所以既不进块层、也不去标注
-  // （与 App 的 `unassignedSentences` 同口径），但仍然一句不丢。
-  assert.equal(output.sentences.length,0); assert.equal(output.unassignedSentences.length,2);
-  assert.deepEqual(output.unassignedSentences.map(s=>s.text),lesson().subtitles.map(s=>s.text));
-  assert.equal(output.blocks.length,0); assert.equal(output.status,'partial'); assert.equal(output.calls.length,0);
+test('纯字幕输入无需视觉模型，仍清洗标记并保留逐句来源', async () => {
+  const dir=await mkdtemp(path.join(tmpdir(),'text-only-'));let host;
+  try {host=await mountHost(lock.hostVersions[0],dir,answer,{modalities:['text']});
+    const output=await host.parser.parse({slides:[],subtitles:lesson().subtitles});
+    assert.equal(output.sentences.length,2);assert.equal(output.unassignedSentences.length,2);
+    assert.equal(output.resource.unanchoredUncleanedSentenceCount,0);
+    assert.equal(output.resource.transcriptOnlySentenceCount,2);
+    assert.deepEqual(output.sentences.map(s=>s.sourceIndex),[0,1]);
+    assert.equal(output.blocks[0].tag.role,'主线');assert.equal(output.blocks[0].evidenceKind,'transcript-only');
+    assert.ok(!host.requests.some(r=>r.messages[0].content.some(c=>c.type==='image')));
+  }finally{await host?.dispose();await rm(dir,{recursive:true,force:true});}
 });
-test('tag chunks are sent together and only the failed chunk is re-sent', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-chunks-')); let host;
-  const parts = [];
+
+test('mix retries an incomplete inline tag card without an independent tags call', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-inline-tags-')); let host; let attempts = 0;
   try {
-    const respond = options => {
-      const [constantBlock, variableBlock] = options.messages[0].content;
-      const constant = constantBlock.text, variable = variableBlock.text;
-      if (constant.includes('完整转述')) return '## 页面文字\n字\n## 页面画面\n一张曲线图\n## 术语\n无';
-      // 每句一块 → 25 块正好切成 24 + 1 两卷。
-      if (constant.includes('逐块语音稿清洗器')) return ['## 逐块标注', ...Array.from({ length: 25 }, (_, i) => `块 ${i + 1}-${i + 1}`)].join('\n');
-      if (constant.includes('维度标注')) {
-        const indices = [...variable.matchAll(/^### 块 (\d+)/gm)].map(m => +m[1]);
-        parts.push(indices.join(','));
-        // 第二卷**首次**故意漏块（答题卡不完整）→ 只该补发这一卷。
-        if (indices.includes(25) && parts.filter(p => p.includes('25')).length === 1) return JSON.stringify({ tags: [] });
-        return JSON.stringify({ tags: indices.map(index => ({ index, role: '主线', facets: ['概念'], summary: `概述${index}` })) });
+    host = await mountHost(lock.hostVersions[0], dir, options => {
+      const constant = options.messages[0].content[0].text;
+      if (constant.includes('逐块语音稿清洗器')) {
+        attempts++;
+        const tags = Array.from({length: attempts === 1 ? 24 : 25}, (_, i) => ({index:i+1,role:'主线',facets:['概念'],summary:'概述'+(i+1)}));
+        return ['## 逐块标注', ...Array.from({length:25}, (_,i)=>'块 '+(i+1)+'-'+(i+1)), '## 块标记', JSON.stringify({tags})].join('\n');
       }
-      const count = +variable.match(/共 (\d+) 块/)?.[1];
-      return JSON.stringify({ spine: '主线', outline: [{ title: '一段', from: 1, to: count }] });
-    };
-    host = await mountHost(lock.hostVersions[0], dir, respond);
-    const output = await host.parser.parse({
-      sourceId: 'fixture:chunks', context: 'context',
-      slides: [{ page: 1, createdSec: 1, imageBytes: png, mediaType: 'image/png' }],
-      subtitles: Array.from({ length: 25 }, (_, i) => ({ startMs: i * 1000, endMs: i * 1000 + 900, text: `第${i + 1}句` })),
+      return answer(options);
     });
-    assert.equal(output.blocks.length, 25);
-    assert.deepEqual(output.tagFailures, []);
-    assert.equal(output.status, 'ready');
-    assert.equal(parts.length, 3, '两卷各发一次 + 只补发失败的第二卷');
-    assert.deepEqual(parts.filter(p => !p.includes('25')), ['1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24'], '没失败的那一卷不该重发');
-    assert.ok(output.blocks.every(b => b.tag.role === '主线' && b.tag.summary), '补发成功后每一块都要有标注');
-  } finally { await host?.dispose(); await rm(dir,{recursive:true,force:true}); }
+    const output = await host.parser.parse({sourceId:'fixture:inline-tags',context:'context',
+      slides:[{page:1,createdSec:1,imageBytes:png,mediaType:'image/png'}],
+      subtitles:Array.from({length:25},(_,i)=>({startMs:i*1000+1500,endMs:i*1000+1900,text:'第'+(i+1)+'句'})),
+    });
+    assert.equal(output.status,'ready'); assert.equal(output.blocks.length,25);
+    assert.equal(attempts,2); assert.ok(!output.calls.some(c=>c.stage==='tags'));
+    assert.ok(output.blocks.every(b=>b.tag.role==='主线'&&b.tag.summary));
+  } finally {await host?.dispose();await rm(dir,{recursive:true,force:true});}
 });
+
 test('disposal aborts source fetch and explicit partial-source opt-in is required', async () => {
   const pending = new LectureParser({llm:{resolve(){},call(){},image(){}}, classroom:{getLessonContent:async(_c,_s,{signal}) => new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}))}});
   const job = pending.parseClassroom('1','2'); pending.dispose(); await assert.rejects(job,{code:'CANCELLED'});
   const partial = new LectureParser({llm:{resolve(){},call(){},image(){}},classroom:{getLessonContent:async()=>({slides:{meta:{complete:true},items:[]},subtitles:{meta:{complete:false},items:[]}})}});
   await assert.rejects(partial.parseClassroom('1','2'),{code:'PARTIAL_SOURCE'});
 });
-test('repeated invalid corrections stop retrying, preserve ASR, and stay out of the success cache', async () => {
+test('an over-limit rewrite reverts that sentence, keeps the block, and caches the page', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-retry-')); let host;
   try {
-    host = await mountHost(lock.hostVersions[0], dir, options => options.messages[0].content[0].text.includes('逐块语音稿清洗器') ? '1. 正文：完全重写原文为不相关的一段话\n块 2-2' : answer(options));
+    host = await mountHost(lock.hostVersions[0], dir, options => options.messages[0].content[0].text.includes('逐块语音稿清洗器') ? '## 逐块标注\n1. 正文：完全重写原文为不相关的一段话\n块 1-2\n## 块标记\n{"tags":[{"index":1,"role":"主线","facets":["概念"],"summary":"原稿知识"}]}' : answer(options));
     const output = await host.parser.parse(lesson());
-    assert.equal(output.status,'partial'); assert.deepEqual(output.sentences.map(s=>s.text),lesson().subtitles.map(s=>s.text));
-    assert.deepEqual(output.failedPages,[1]); assert.equal(output.blocks.length,1); assert.equal(output.calls.filter(c=>c.stage==='mix').length,2);
-    const count = host.requests.length; await host.parser.parse(lesson()); assert.equal(host.requests.length,count+2,'invalid mixes must be retried on the next run');
+    assert.equal(output.status,'ready');
+    assert.deepEqual(output.sentences.map(s=>s.text),lesson().subtitles.map(s=>s.text));
+    assert.deepEqual(output.sentences.map(s=>s.cleanStatus),['reverted','reviewed']);
+    assert.deepEqual(output.failedPages,[]);
+    assert.equal(output.blocks.length,1);
+    assert.equal(output.blocks[0].cleanStatus,'reviewed');
+    assert.equal(output.blocks[0].lectureEligible,true);
+    assert.equal(output.resource.blockedCorrectionCount,1);
+    assert.equal(output.calls.filter(c=>c.stage==='mix'&&!c.kind&&!c.cached).length,1);
+    assert.equal(output.calls.filter(c=>c.kind==='correction-repair').length,0);
+    const count = host.requests.length;
+    await host.parser.parse(lesson());
+    assert.equal(host.requests.length,count,'通过结构校验的页要缓存，超限句下一次不再整页重洗');
   } finally {await host?.dispose();await rm(dir,{recursive:true,force:true});}
 });
 test('one bad page retains all subtitles while successful neighboring pages remain usable', async () => {
@@ -215,8 +223,9 @@ function taggingAnswer(facet, faithfulText = '## 页面文字\n旧四史，概�
   return config => {
     const constant = config.messages[0].content[0].text;
     const variable = config.messages[0].content[1].text;
-    if (constant.includes('完整转述')) return faithfulText;
-    if (constant.includes('逐块语音稿清洗器')) return '## 逐块标注\n1. 正文：旧四史\n块 1-2';
+    if (constant.includes('完整转述') || constant.includes('整页课件转写器')) return faithfulText;
+    if (constant.includes('逐块语音稿清洗器')) return `## 逐块标注\n1. 正文：旧四史\n块 1-2\n## 块标记\n${JSON.stringify({tags:[{index:1,role:'主线',facets:[facet],summary:'概率密度函数'}]})}`;
+    if (constant.includes('建树阶段的merge')) return JSON.stringify({blocks:JSON.parse(variable).blocks.map(b=>({index:b.index,text:b.text}))});
     // 分卷标注的常量段开头是「你在给一节大学课做**维度标注**（分卷进行）」——
     // 整节主线的常量段里也有「维度标注」四个字（它要引用这一阶段的产物），
     // 所以只能按**开头**判，按 include 判会把两种请求混成一种。
@@ -229,12 +238,12 @@ function taggingAnswer(facet, faithfulText = '## 页面文字\n旧四史，概�
   };
 }
 /** 只看**分卷标注**那一次调用（主线请求的常量段里也会提到「维度标注」）。 */
-const tagOnly = requests => requests.filter(r => r.messages[0].content[0].text.startsWith('你在给一节大学课做**维度标注**（分卷进行）'));
+const tagOnly = requests => requests.filter(r => r.messages[0].content[0].text.includes('逐块语音稿清洗器'));
 /** 分卷提示里真正**注入的清单**（`【已有标签（**优先用它们**）】` 之后那一段）。 */
 function injectedVocabulary(constant) {
   const marker = '【已有标签（**优先用它们**）】';
   const start = constant.indexOf(marker);
-  if (start < 0) return null;
+  if (start < 0) return constant.match(/facets 从以下词表选择：([^\n]+)。/)?.[1] ?? null;
   return constant.slice(start + marker.length).split('\n')[0].trim();
 }
 test('★ unconfigured accel sends the byte-identical request shape', async () => {
@@ -255,8 +264,8 @@ test('★ unconfigured accel sends the byte-identical request shape', async () =
     { accel: { tags: { maxTokens: 4096, reasoningEffort: 'low' }, outline: {}, escalation: { maxTokens: 60000 } } });
   const output = await parser.parse(lesson());
   assert.equal(output.status, 'ready');
-  assert.deepEqual(calls().map(c => c.maxTokens), [undefined, undefined, 4096, undefined], '只有标注阶段带上了预算');
-  assert.deepEqual(calls().map(c => c.reasoningEffort), [undefined, undefined, 'low', undefined], '只有标注阶段带上了档位');
+  assert.deepEqual(calls().map(c => c.maxTokens), [undefined, 4096, undefined, undefined], '旧tags预算映射到同时完成标记的mix');
+  assert.deepEqual(calls().map(c => c.reasoningEffort), [undefined, 'low', undefined, undefined], '旧tags档位映射到mix');
   parser.dispose();
   // ②b 适配器不认 accel：不能静默忽略 —— 那样用户以为降本生效了，而钱一分没少。
   const bare = new LectureParser({ llm: { resolve() {}, call() {}, image() {} }, accel: { tags: { maxTokens: 4096 } } });
@@ -320,6 +329,17 @@ test('★ truncation escalates at most once and otherwise keeps the TRUNCATED fa
   assert.equal(result.text, '完整回包'); assert.equal(result.escalated, 1); assert.deepEqual(result.usage, { outputTokens: 3 });
   const noAccel = new HarnessLlm({ selection:()=>({}), attachments:{ saveImage(){} }, llm: { prepareCall: async config => ({ config, stream: async function* () { yield { type: 'text-delta', index: 0, text: 'x' }; yield { type: 'finish', reason: { kind: 'stop' } }; } }) } });
   assert.equal((await noAccel.call({ route: {}, constant: '', variable: '', stage: 'mix' })).escalated, 0, '没配升档时成功路径不报告升档');
+});
+
+test('预算耗尽且无正文时不自动升预算重发，保留消耗信息', async () => {
+  let calls=0;
+  const llm=new HarnessLlm({selection:()=>({}),attachments:{saveImage(){}},accel:{escalation:{maxTokens:60000}},llm:{prepareCall:async config=>{
+    calls++;return {config,stream:async function*(){yield {type:'usage',usage:{outputTokens:12000}};yield {type:'finish',reason:{kind:'max-tokens'}};}};
+  }}});
+  await assert.rejects(llm.call({route:{maxTokens:12000},stage:'merge',constant:'',variable:''}),error=>{
+    assert.equal(error.code,'TRUNCATED');assert.equal(error.details.emptyOutput,true);assert.equal(error.details.usage.outputTokens,12000);return true;
+  });
+  assert.equal(calls,1);
 });
 test('★ injected vocabulary store saves new tags once and seeds the next parse', async () => {
   const store = createMemoryVocabularyStore();
@@ -446,7 +466,7 @@ test('★ json file vocabulary store writes through the host atomic writer', asy
     assert.ok((await readFile(path.join(dir, 'nested/vocabulary.json'), 'utf8')).includes('tag_vocabulary'));
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
-test('★ real host: no accel adds no request fields; the vocabulary file reaches the host prompt', async () => {
+test('★ real host: v4 default budgets and the persisted vocabulary reach the host prompt', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-vocab-host-')); let host;
   try {
     // 宿主侧的默认词表文件（`<profile>/data/zhiyun-parser/vocabulary.json`）先放一个
@@ -461,9 +481,10 @@ test('★ real host: no accel adds no request fields; the vocabulary file reache
     const tagged = tagOnly(host.requests);
     assert.equal(tagged.length, 1);
     assert.deepEqual(injectedVocabulary(tagged[0].messages[0].content[0].text).split('、'), output.vocabulary.map(t => t.name));
-    // 未配 accel → 请求上除了 provider/model 没有任何新字段（与上面直连那条同口径）。
+    // Plugin defaults match the v4 bench; direct HarnessLlm remains opt-in.
+    assert.ok(host.requests.some(request => request.maxTokens === 16384));
     for (const request of host.requests) {
-      assert.deepEqual(Object.keys(request).filter(key => key !== 'messages' && key !== 'signal').sort(), ['model', 'provider']);
+      assert.ok(request.maxTokens === undefined || request.maxTokens === 16384);
     }
   } finally { await host?.dispose(); await rm(dir, { recursive: true, force: true }); }
 });
@@ -516,15 +537,18 @@ test('unrecognized model block syntax retries and cannot become cached ready thr
   try {
     host = await mountHost(lock.hostVersions[0], dir, options => {
       const prompt=options.messages[0].content[0].text;
-      if (prompt.includes('逐块语音稿清洗器')) return '## 逐块标注\n1-2 衔接：格式缺少块字';
+      if (prompt.includes('逐块语音稿清洗器') && options.messages[0].content[1].text.includes('这是第 1 页')) return '## 逐块标注\n1-2 衔接：格式缺少块字';
       return answer(options);
     });
-    const result = await host.parser.parse(lesson());
-    assert.equal(result.status, 'partial'); assert.equal(result.sentences.length, 2);
-    assert.equal(result.blocks.length, 1); assert.ok(result.failures.some(f=>f.code==='BLOCK_COVERAGE'));
+    const input = lesson();
+    input.slides.push({page:2,createdSec:4,imageBytes:png,mediaType:'image/png'});
+    input.subtitles.push({startMs:4100,endMs:4900,text:'旧事史'});
+    const result = await host.parser.parse(input);
+    assert.equal(result.status, 'partial'); assert.equal(result.sentences.length, 3);
+    assert.equal(result.blocks.length, 2); assert.ok(result.failures.some(f=>f.page===1));
     assert.ok(result.warnings.some(w=>w.includes('回退为整页一块')));
     assert.ok(host.requests.some(r=>r.messages[0].content.some(b=>b.text?.includes('不要省略「块」字'))));
-    const calls = host.requests.length; await host.parser.parse(lesson());
+    const calls = host.requests.length; await host.parser.parse(input);
     assert.ok(host.requests.length > calls, 'failed fallback must never be cached as converged');
   } finally { await host?.dispose(); await rm(dir, {recursive:true,force:true}); }
 });

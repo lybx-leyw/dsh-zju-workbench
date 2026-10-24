@@ -273,14 +273,3 @@ body[data-zhiyun] .zs-current-actions .zs-button,body[data-zhiyun] .zs-current-a
     justify-content: start;
   }
 }
-body[data-zhiyun] .zs-handout-toc { display:flex; flex-wrap:wrap; gap:10px 22px; padding:20px 0; }
-body[data-zhiyun] .zs-handout-block--explain { border-left-color:#4d8edb; background:#f4f8fd; }
-body[data-zhiyun] .zs-handout-block--definition { border-left-color:#8a6bd1; background:#f8f5fd; }
-body[data-zhiyun] .zs-handout-block--procedure { border-left-color:#2f9b86; background:#f2faf7; }
-body[data-zhiyun] .zs-handout-block--example { border-left-color:#e59b3b; background:#fff8ed; }
-body[data-zhiyun] .zs-handout-block--note { border-left-color:#8a96a8; background:#f6f8fa; }
-body[data-zhiyun][data-ds-dark-theme] .zs-handout-block--explain { background:color-mix(in srgb,#4d8edb 10%,var(--zy-surface)); }
-body[data-zhiyun][data-ds-dark-theme] .zs-handout-block--definition { background:color-mix(in srgb,#8a6bd1 10%,var(--zy-surface)); }
-body[data-zhiyun][data-ds-dark-theme] .zs-handout-block--procedure { background:color-mix(in srgb,#2f9b86 10%,var(--zy-surface)); }
-body[data-zhiyun][data-ds-dark-theme] .zs-handout-block--example { background:color-mix(in srgb,#e59b3b 10%,var(--zy-surface)); }
-body[data-zhiyun][data-ds-dark-theme] .zs-handout-block--note { background:color-mix(in srgb,#8a96a8 10%,var(--zy-surface)); }

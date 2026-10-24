@@ -1,7 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { exportLectureForAgent, mergeAgentLectureText } from '../packages/dsh-zhiyun-core-lecture/src/agent-text.js';
-import { countShape } from '../packages/dsh-zhiyun-core-final-pass/src/index.js';
+/** 数一数协议文本里的知识点与正文块（本测试自用的小工具）。
+ *
+ *  ⚠️ 原来它来自 `dsh-zhiyun-core-final-pass` —— 那个包（自由发挥式终审）
+ *     已经整包删除，所以这份**只服务于本测试**的计数留在这里，
+ *     而不是让测试去依赖一个已不存在的包。
+ */
+const countShape = (text) => ({
+  topics: [...String(text).matchAll(/^##!topic /gm)].length,
+  blocks: [...String(text).matchAll(/^>>> BLOCK /gm)].length,
+});
 const lecture = () => ({ title: '完整课堂', chapters: [{ no: 1, title: '概率', topics: [
   { title: '独立性', fromPage: 2, toPage: 4, sourceBlockIndexes: [3, 5], anchor: { page: 2, tSec: 120 }, draft: '课堂原话', passages: [{ text: '修改前的正文' }], register: 'draft' },
   { title: '条件概率', fromPage: 5, toPage: 6, sourceBlockIndexes: [8], passages: [{ text: '保留的另一知识点' }], anchor: { page: 5, tSec: 180 } },

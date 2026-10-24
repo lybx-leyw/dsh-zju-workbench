@@ -33,6 +33,7 @@ import {
   checkPolishFiller, checkPolishShrink, isBrokenOutput, tidyWrittenText,
   kLectureWrittenSystemPrompt, kLectureFillerWords, kStage, kStageName,
 } from '../packages/dsh-zhiyun-core-lecture/src/polish.js';
+import {ParserCache} from '../packages/dsh-zhiyun-core-parser/src/cache.js';
 import { LectureError } from '../packages/dsh-zhiyun-core-lecture/src/errors.js';
 
 // ═══════════════════════════════════════════════════════════════
@@ -773,7 +774,7 @@ test('⑤ 并发 1 时严格串行；并发上限校验拒绝坏值', async () =
   const llm = fakeLlm({ onCall: async () => { await new Promise((r) => setTimeout(r, 2)); } });
   await run(fx, llm, { concurrency: 1 });
   assert.equal(llm.peak, 1, '并发 1 必须严格串行');
-  for (const bad of [0, -1, 17, 2.5, '3']) {
+  for (const bad of [0, -1, 513, 2.5, '3']) {
     assert.throws(() => createLectureAssembler({ llm, concurrency: bad }),
       (error) => error instanceof LectureError && error.code === 'CONFIG');
   }
@@ -1134,4 +1135,73 @@ test('⑨ ★★ `looksLikeNotationOnly` 里的正则**故意保留** Dart 的�
   // 反过来：那两条**真的**会命中 Dart 正则的行，两边都要丢掉。
   assert.equal(tidySlideHeading('[a-zA-Z]'), '', '[ + 字母 会被那条正则整段吃掉');
   assert.equal(tidySlideHeading('$k_1$'), '', '纯记号仍然要丢（这是那条正则的正当用途）');
+});
+test('成功填充断点复用；模型与正文变化使缓存失效，截断不原样重发', async () => {
+  const cache=new ParserCache();const fx=lessonFixture({pages:1});const llm=fakeLlm();
+  const a=createLectureAssembler({llm,cache,route:'model-a'});
+  try {const first=await a.assemble({tree:fx.tree,blocks:fx.blocks});assert.equal(first.failures.length,0);
+    await a.assemble({tree:fx.tree,blocks:fx.blocks});assert.equal(llm.callCount,1);
+    const b=createLectureAssembler({llm,cache,route:'model-b'});try{await b.assemble({tree:fx.tree,blocks:fx.blocks});assert.equal(llm.callCount,2);}finally{b.dispose();}
+    const changed=JSON.parse(JSON.stringify(fx));changed.blocks[0].text+='补充条件。';await a.assemble({tree:changed.tree,blocks:changed.blocks});assert.equal(llm.callCount,3);
+  }finally{a.dispose();}
+  let attempts=0;const failed=createLectureAssembler({cache:new ParserCache(),llm:{async call(){attempts++;throw Object.assign(new Error('length'),{code:'LLM_TRUNCATED'});}}});
+  try{const out=await failed.assemble({tree:fx.tree,blocks:fx.blocks});assert.equal(attempts,1);assert.ok(out.failures.length);}finally{failed.dispose();}
+});
+test('大知识点分请求填充，合回仍是一个知识点，失败片段原文及来源完整保留',async()=>{
+ const blocks=[1,2,3].map(index=>({index,page:index,register:'written',text:`来源${index}。`+'规范正文。'.repeat(650)}));
+ const tree={chapters:[{title:'章',topics:[{title:'同一知识点',blockIndexes:[1,2,3],sourceBlocks:blocks,pptLines:[]}]}]};
+ let calls=0,fail=true;const cache=new ParserCache();const llm={async call({variable}){calls++;const body=variable.split('## 已正式组织的来源正文（核对课件依据后填充，保留推导与条件）：\n')[1].split('\n').slice(1).join('\n').trim();if(body.startsWith('来源2')&&fail)throw Object.assign(new Error('length'),{code:'LLM_TRUNCATED'});return{text:JSON.stringify({chapters:[{c:1,topics:[{t:1,slots:[{kind:'讲解',text:body}]}]}]})};}};
+ const assembler=createLectureAssembler({llm,cache});try{const out=await assembler.assemble({tree,blocks});assert.equal(out.chapters[0].topics.length,1);assert.equal(calls,3);
+ const topic=out.chapters[0].topics[0];assert.equal(topic.register,REGISTER.failed);assert.deepEqual(topic.blocks.map(b=>b.sourceBlockIndexes),[[1],[2],[3]]);
+ assert.deepEqual(topic.blocks.map(b=>b.text),blocks.map(b=>b.text));fail=false;const resumed=await assembler.assemble({tree,blocks});assert.equal(calls,4);assert.equal(resumed.chapters[0].topics[0].register,REGISTER.written);
+ }finally{assembler.dispose();}
+});
+
+test('② 来源本来就是成稿时，原样返回不算「照抄口述」', () => {
+  const tidy = '制度构造了人们在政治、社会或经济方面发生交换的激励结构。';
+  const kept = judgeWritten({ source: tidy, rewritten: tidy, alreadyWritten: true });
+  assert.equal(kept.register, REGISTER.written);
+  assert.deepEqual(kept.notes, []);
+  // 只动标点同样是「本来就不用改」，仍判成稿。
+  assert.equal(judgeWritten({ source: '内存充足时采用随机寻址', rewritten: '内存充足时，采用随机寻址。', alreadyWritten: true }).register, REGISTER.written);
+  // 口述来源的判据一个字都不放松：照抄仍然是草稿。
+  assert.equal(judgeWritten({ source: tidy, rewritten: tidy }).register, REGISTER.draft);
+  // 成稿来源也不许夹课堂称呼或留半截句。
+  assert.equal(judgeWritten({ source: tidy, rewritten: `同学们，${tidy}`, alreadyWritten: true }).register, REGISTER.draft);
+});
+
+test('原样返回也不豁免课堂称呼与半截句', () => {
+  const tidy = '制度构造了人们在政治、社会或经济方面发生交换的激励结构。';
+  assert.equal(judgeWritten({ source: tidy, rewritten: tidy, alreadyWritten: true }).register, REGISTER.written);
+  const addressed = '学习本身需要各位同学的努力。';
+  const verdict = judgeWritten({ source: addressed, rewritten: addressed, alreadyWritten: true });
+  assert.equal(verdict.register, REGISTER.draft);
+  assert.ok(verdict.notes.join().includes('各位同学'));
+});
+
+
+test('assembly reports completed volumes immediately, before slower neighbors finish', async () => {
+  let releaseFirst, reportPartial;
+  const firstGate = new Promise(resolve => { releaseFirst = resolve; });
+  const partial = new Promise(resolve => { reportPartial = resolve; });
+  const llm = fakeLlm({ onCall: async ({ variable }) => {
+    if (parseRequest(variable)[0].t === 1) await firstGate;
+  } });
+  const assembler = createLectureAssembler({ llm, maxTopics: 1, concurrency: 2 });
+  const tree = { chapters: [{ title: '章', topics: [
+    { title: '点一', blockIndexes: [1], pptLines: [] },
+    { title: '点二', blockIndexes: [2], pptLines: [] },
+  ] }] };
+  const events = []; let finished = false;
+  const pending = assembler.assemble({ tree, blocks: [{ index: 1, text: RAW_ASR }, { index: 2, text: RAW_ASR }],
+    onProgress: p => { events.push(p); if (p.done === 1) reportPartial(); },
+  }).then(result => { finished = true; return result; });
+  try {
+    await partial;
+    assert.equal(finished, false);
+    assert.equal(events.at(-1).phase, 'lecture');
+    assert.equal(events.at(-1).done, 1);assert.equal(events.at(-1).total, 2);
+    releaseFirst(); await pending;
+    assert.equal(events.at(-1).done, 2);
+  } finally { releaseFirst(); await pending; assembler.dispose(); }
 });

@@ -27,3 +27,35 @@ test('Markdown body headings survive and split blocks can reference the same ori
  const text=organized().replace('定义正文','### 正文标题\n定义正文\n>>> BLOCK 讲解 | 补充 | ref=c1t1b1 | src=1\n同一原稿的另一部分');const out=mergeReorganization(lecture(),text,record,'x');
  assert.equal(out.lecture.chapters[0].topics[0].blocks.length,2);assert.match(out.lecture.chapters[0].topics[0].blocks[0].text,/### 正文标题/);
 });
+test('例题题干为空但解答有内容时，导出与合回一致（不许自相矛盾地判为空块）', () => {
+  const original = () => ({ title: '课', chapters: [{ no: 1, title: '章', topics: [{ title: '点', sourceBlockIndexes: [1], blocks: [
+    { kind: 'example', title: '例题', stem: '', solution: '整段只有解答的例题。' },
+  ] }] }] });
+  const rec = { blocks: [{ index: 1, page: 1, startMs: 1000, tag: { role: '主线', summary: '例题' } }], outline: [] };
+  const text = exportReorganization(original(), 'x', rec);
+  const out = mergeReorganization(original(), text, rec, 'x');
+  assert.equal(out.lecture.chapters[0].topics[0].blocks[0].solution, '整段只有解答的例题。');
+  // 整块一个字都没有才算空 —— 这条仍必须拒绝。
+  const blank = text.replace('>>> SOLUTION\n整段只有解答的例题。', '>>> SOLUTION\n');
+  assert.throws(() => mergeReorganization(original(), blank, rec, 'x'), { code: 'FORMAT' });
+});
+
+test('终审合回后重新判成稿状态：课堂称呼不会被写成成稿', () => {
+  const original = () => ({ title: '课', chapters: [{ no: 1, title: '章', topics: [
+    { title: '点', draft: '各位同学，我们来看这个式子。', register: 'draft', sourceBlockIndexes: [1], blocks: [{ kind: '讲解', title: '', text: '各位同学，我们来看这个式子。' }] },
+  ] }] });
+  const rec = { blocks: [{ index: 1, page: 1, startMs: 1000, tag: { role: '主线', summary: '点' } }], outline: [] };
+  const out = mergeReorganization(original(), exportReorganization(original(), 'x', rec), rec, 'x');
+  assert.equal(out.lecture.chapters[0].topics[0].register, 'draft');
+  assert.ok(out.lecture.chapters[0].topics[0].notes.some((n) => n.includes('各位同学')));
+});
+
+test('本来就是成稿的知识点，终审原样返回仍是成稿', () => {
+  const original = () => ({ title: '课', chapters: [{ no: 1, title: '章', topics: [
+    { title: '点', draft: '静电场是保守场，环路积分为零。', register: 'written', sourceBlockIndexes: [1], blocks: [{ kind: '讲解', title: '', text: '静电场是保守场，环路积分为零。' }] },
+  ] }] });
+  const rec = { blocks: [{ index: 1, page: 1, startMs: 1000, tag: { role: '主线', summary: '点' } }], outline: [] };
+  const out = mergeReorganization(original(), exportReorganization(original(), 'x', rec), rec, 'x');
+  assert.equal(out.lecture.chapters[0].topics[0].register, 'written');
+  assert.deepEqual(out.lecture.chapters[0].topics[0].notes, []);
+});

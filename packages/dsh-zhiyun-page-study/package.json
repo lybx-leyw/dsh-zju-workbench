@@ -5,10 +5,26 @@
   "private": true,
   "type": "module",
   "main": "./src/index.js",
-  "exports": { ".": "./src/index.js", "./client": "./lib/client.js", "./package.json": "./package.json" },
-  "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web", "external": ["dsh-zhiyun-shell-ui", "dsh-zhiyun-core-player"] }
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
   },
-  "dependencies": { "hls.js": "1.7.3" }
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "dsh-zhiyun-shell-ui",
+        "dsh-zhiyun-core-player",
+        "dsh-zhiyun-core-quiz"
+      ]
+    }
+  },
+  "dependencies": {
+    "hls.js": "1.7.3",
+    "dsh-zhiyun-core-quiz": "0.1.0"
+  }
 }

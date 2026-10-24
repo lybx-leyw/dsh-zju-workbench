@@ -86,11 +86,12 @@ test('改一条可以显式清掉截止时间', () => {
 
 test('勾完成与取消完成：doneAt 要跟着对', () => {
   const base = createLocal({ title: 'x' }, 1792320965000);
-  const done = setDone(base, true, 1792322000000);
+  // `setDone` 返回 `{ item, next }`：`next` 是重复任务的下一次（不重复时为 null）
+  const { item: done } = setDone(base, true, 1792322000000);
   assert.equal(done.done, true);
   assert.equal(done.doneAt, 1792322000);
 
-  const undone = setDone(done, false, 1792323000000);
+  const { item: undone } = setDone(done, false, 1792323000000);
   assert.equal(undone.done, false);
   assert.equal(undone.doneAt, null, '取消完成必须清掉 doneAt —— 否则"做完了吗"有两个答案');
 });

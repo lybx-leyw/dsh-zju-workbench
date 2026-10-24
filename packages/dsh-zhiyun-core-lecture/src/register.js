@@ -61,13 +61,18 @@ function incomplete(s) {
 ///
 /// 返回 `{ register, notes }`：`notes` 是**如实告警**（每一条都指名了判据），
 /// 空数组 = 全部通过。notes 非空时 `register` 一律不是 `written`。
-export function judgeWritten({ source, rewritten } = {}) {
+///
+/// ⚠️ `alreadyWritten`：输入**本来就是成稿**（清洗阶段已整理成书面语）时，
+///    模型原样返回或只动标点，是**做对了**，不是「照抄口述」。
+///    早先不看这个标记，一条已整理好的转录会被判成 `draft`，
+///    「与口述相同」被写进告警——而它其实一个字都不该改。
+export function judgeWritten({ source, rewritten, alreadyWritten = false } = {}) {
   const dst = String(rewritten ?? '').trim();
   if (dst.length === 0) {
     return { register: REGISTER.failed, notes: ['加工结果是空的'] };
   }
   const notes = [];
-  if (same(source, dst)) notes.push('与口述相同');
+  if (!alreadyWritten && same(source, dst)) notes.push('与口述相同');
   for (const mark of kClassroomMarks) {
     if (dst.includes(mark)) notes.push(`含课堂称呼「${mark}」`);
   }

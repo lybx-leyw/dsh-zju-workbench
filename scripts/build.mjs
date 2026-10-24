@@ -47,6 +47,7 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-shell-workbench',
   'dsh-zhiyun-source-netproxy',
   'dsh-zhiyun-source-card',
+  'dsh-zhiyun-core-quiz',
   'dsh-zhiyun-core-study',
   // 回放下面那层「主线/语速/四汇总」由本包算，学习页 external import 它 ——
   // 所以它必须有自己的客户端产物。（远端以旧名 `dsh-zhiyun-player` 加入，

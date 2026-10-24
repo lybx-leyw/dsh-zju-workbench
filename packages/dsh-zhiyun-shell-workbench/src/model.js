@@ -24,6 +24,7 @@ export const NAV = Object.freeze([
   //    原先 tests/profile.test.mjs 用 matchingPages('规划') 断言"只命中问一问"，
   //    那条断言的前提是"还没有规划页"。现在有了，断言随之改成"问一问与规划各命中一次"，
   //    否则等于为了让旧测试好过而给页面起个不含本词的名字，是本末倒置。
+  { id: 'quiz', label: '题库', icon: 'check', hint: '跨课程按知识点出题，新题与复习交错练习' },
   { id: 'planning', label: '规划', icon: 'calendar', hint: '读你自己中转站里推上来的规划与日记' },
   // 「笔记」紧跟「学习」：学完就记是连着发生的两步（整理 → 落成自己的话）。
   // hint 避开「规划」（守卫别名，见上面那条注释）。
@@ -51,7 +52,7 @@ export const panelKey = id => `zhiyun.${id}`;
  * ⚠️ 用 `Object.freeze` 的**清单**而不是给 NAV 加字段：上半组是「版式契约」，
  *    和 `FULL_BLEED_PAGES` 一样集中在这里，一眼能看全导轨长什么样。
  */
-export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'ask', 'study', 'planning', 'notes']);
+export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'ask', 'study', 'quiz', 'planning', 'notes']);
 
 /**
  * **单独钉在导轨最下方**的页：个人。
@@ -88,7 +89,7 @@ export const FULL_BLEED_PAGES = Object.freeze(['notes']);
  * @returns 包名，或 null 表示这一页不属于任何可取消的包。
  */
 export function pageBundle(id) {
-  return id === 'ask' ? null : `dsh-zhiyun-page-${id}`;
+  return id === 'quiz' ? 'dsh-zhiyun-page-study' : id === 'ask' ? null : `dsh-zhiyun-page-${id}`;
 }
 /**
  * 该从侧栏藏起来的页。
