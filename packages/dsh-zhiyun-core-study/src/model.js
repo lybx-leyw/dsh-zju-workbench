@@ -272,6 +272,17 @@ import { createQuestionBankController } from './question-bank-client.js';
       }
     },
     /**
+     * 读一段日期里的课表，只把结果交回去。
+     *
+     * 不写入 `state.schedule`：那一份是今天页用的「今天」。规划页要看截止日
+     * 前后的课，若写进同一份状态，今天页会把别的日子画成今天的课。
+     */
+    async readScheduleWindow(start, end) {
+      if (!state.user) return null;
+      const data = await request("schedule", { start, end });
+      return { items: data?.items ?? [], meta: data?.meta ?? null };
+    },
+    /**
      * 读「此刻正在上的直播」（`live-today`）。
      *
      * 与 `loadSchedule` 同一姿态：失败留在 `liveError`，不写进页面横幅的 `error`

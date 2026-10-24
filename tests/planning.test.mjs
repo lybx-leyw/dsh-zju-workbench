@@ -329,8 +329,10 @@ test('客户端不得把读密钥或 Cookie 写进任何持久化位置', async 
   const client = await readFile(
     new URL('../packages/dsh-zhiyun-page-planning/src/client.jsx', import.meta.url), 'utf8',
   );
+  // 定位便笺只允许经过专用 helper 读取/清除；凭证仍禁止持久化。
+  const withoutFocusReads = client.replace(/(?:readFocus|clearFocus)\(globalThis\.sessionStorage\)/g, '');
   for (const sink of ['localStorage', 'sessionStorage', 'indexedDB', 'document.cookie']) {
-    assert.equal(client.includes(sink), false, `客户端不该用 ${sink} 存凭证`);
+    assert.equal(withoutFocusReads.includes(sink), false, `客户端不该用 ${sink} 存凭证`);
   }
 });
 

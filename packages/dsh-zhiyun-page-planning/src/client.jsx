@@ -26,6 +26,8 @@ import css from './style.css';
 import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel, buildMonthCalendar } from './time.js';
 import { REPEAT_LABEL } from './local.js';
 import { createPetStream } from './pet-stream.js';
+import { hintWindow, scheduleHint } from './schedule-hint.js';
+import { clearFocus, focusDecision, focusElementId, readFocus } from './focus.js';
 import { errorText } from './error.js';
 
 export const name = 'zhiyun-page-planning-client';
@@ -232,6 +234,8 @@ export function Planning({ ctx }) {
    * 不触发任何请求，也不改变谁被算作"待办"。
    */
   const [view, setView] = useState('list');
+  const [loadedAt, setLoadedAt] = useState(0);
+  const pageRef = useRef(null);
   /**
    * 日历当前看的是哪个月（相对本月偏移）。
    *
@@ -275,6 +279,7 @@ export function Planning({ ctx }) {
       setError({ code: 'IPC', message: failure.message });
     } finally {
       setLoading(false);
+      setLoadedAt(Date.now());
     }
   }, [apply]);
 
@@ -712,36 +717,45 @@ export function Planning({ ctx }) {
   }, [state.local]);
 
   /**
-   * 读今天的课表，作为规划的**上下文**。
+   * 读截止日前后的课表，作为规划的**上下文**。
    *
    * 为什么是上下文而不是合并：`zhiyunStudyController` 属于领域包，可能没装、
    * 可能没登录 —— 拿不到就安静地不显示，绝不让这一页因此报错或空掉。
    * 这正是当初决定"两个页面不合并"的理由，这里必须守住。
    *
-   * 数据只用于一件事：把"这天有没有课"标在截止时间旁边，让人在拆规划时看得见
-   * 那天的实际压力。
+   * 不调用 `loadSchedule()`：那一份只服务今天页。这里用 `readScheduleWindow`，
+   * 结果留在本组件，不写回共享状态。每个账号只读一次。
    */
   useEffect(() => {
     const controller = ctx?.get?.('zhiyunStudyController');
-    if (!controller || typeof controller.subscribe !== 'function') return undefined;
-    let loadedUser = null;
-    const read = () => {
+    if (!controller || typeof controller.readScheduleWindow !== 'function') return undefined;
+    let stop = false;
+    let attemptFor;
+    const read = async () => {
+      const id = controller.getSnapshot?.()?.user?.id ?? null;
+      if (attemptFor === id) return;
+      attemptFor = id;
+      if (!id) {
+        if (!stop) setSchedule(null);
+        return;
+      }
       try {
-        const snapshot = controller.getSnapshot?.();
-        // 没登录就没有课表 —— 不是错误，只是没有这条上下文
-        setSchedule(snapshot?.user ? (snapshot.schedule ?? null) : null);
-        const user = snapshot?.user ?? null;
-        if (user !== loadedUser) {
-          loadedUser = user;
-          if (user) Promise.resolve(controller.loadSchedule?.()).catch(() => {});
+        const { from, to } = hintWindow(Date.now());
+        const data = await controller.readScheduleWindow(from, to);
+        if (stop) return;
+        // 没收全就不能说「这天没有课」：缺的那几节会被说成整天没课
+        if (!data || data.meta?.complete !== true) {
+          setSchedule(null);
+          return;
         }
+        setSchedule({ items: data.items ?? [], from, to, complete: true });
       } catch {
-        // 控制器内部状态异常也只是"没有课表"，绝不冒泡成页面错误
-        setSchedule(null);
+        if (!stop) setSchedule(null);
       }
     };
-    read();
-    return controller.subscribe(read);
+    void read();
+    const unsubscribe = typeof controller.subscribe === 'function' ? controller.subscribe(() => { void read(); }) : undefined;
+    return () => { stop = true; unsubscribe?.(); };
   }, [ctx]);
 
   /**
@@ -894,8 +908,39 @@ export function Planning({ ctx }) {
   // 卡片已经并进 todos.rows 之外的 planCards，二者都是"要做的"
   const hasAnything = todos.rows.length > 0 || planCards.length > 0 || state.entries.length > 0 || localRows.length > 0;
 
+  useEffect(() => {
+    const node = pageRef.current;
+    if (!node || typeof IntersectionObserver !== 'function') return undefined;
+    let stop = false;
+    const settle = () => {
+      if (stop) return;
+      const pending = readFocus(globalThis.sessionStorage);
+      if (!pending) return;
+      if (view !== 'list') {
+        setView('list');
+        return;
+      }
+      const id = focusElementId(pending.key);
+      const element = id ? document.getElementById(id) : null;
+      const decision = focusDecision({
+        pending, loading, loadedAt, hasElement: Boolean(element),
+      });
+      if (decision === 'scroll' && element) {
+        element.scrollIntoView({ block: 'center' });
+        clearFocus(globalThis.sessionStorage);
+      } else if (decision === 'drop') {
+        clearFocus(globalThis.sessionStorage);
+      }
+    };
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) settle();
+    });
+    observer.observe(node);
+    return () => { stop = true; observer.disconnect(); };
+  }, [view, loading, loadedAt, state.local, state.todos, state.ticks]);
+
   return (
-    <div className="zpg-page">
+    <div className="zpg-page" ref={pageRef}>
       {/*
         ⚠️ **这里刻意没有大标题。**
 
@@ -1034,7 +1079,7 @@ export function Planning({ ctx }) {
                   />
                 ))}
                 {doneCards.map((row) => (
-                  <CardRow key={row.id} row={row} onToggle={toggleCard} busy={busyId === row.id} />
+                  <CardRow key={row.id} row={row} onToggle={toggleCard} busy={busyId === row.id} schedule={schedule} />
                 ))}
                 {/* 本机勾掉的平台待办：每一行仍带着「平台状态没变」的说明 */}
                 {doneTodos.map((row) => (
@@ -1093,7 +1138,7 @@ export function Planning({ ctx }) {
                             );
                           }
                           if (row.source === 'plan') {
-                            return <CardRow key={row.id} row={row} onToggle={toggleCard} busy={busyId === row.id} />;
+                            return <CardRow key={row.id} row={row} onToggle={toggleCard} busy={busyId === row.id} schedule={schedule} />;
                           }
                           // 学在浙大 / 拼题A：平台数据，只读 + 外链
                           return (
@@ -1102,6 +1147,7 @@ export function Planning({ ctx }) {
                               row={row}
                               onToggle={toggleTodo}
                               busy={busyId === `todo:${row.source}:${row.id}`}
+                              schedule={schedule}
                             />
                           );
                         })}
@@ -1606,30 +1652,6 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
 }
 
 /**
- * 「那天有没有课」的一句话提示。
- *
- * 只回答"有没有、几节"，不做任何建议 —— 我们不知道这件事要花多久，
- * 硬给"你来得及/来不及"是替用户做了一个他不该被代做的判断。
- *
- * @param schedule - 课表（`[{ day, courses }]`）或 null。
- * @param dueLocal - `datetime-local` 的值（`YYYY-MM-DDTHH:mm`，本地时区）。
- * @returns 提示文案，或空串表示无话可说。
- */
-function scheduleHint(schedule, dueLocal) {
-  if (!Array.isArray(schedule) || schedule.length === 0) return '';
-  const at = new Date(dueLocal);
-  if (Number.isNaN(at.getTime())) return '';
-  // 用上海时区取"哪一天"，与页面别处同一口径
-  const day = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(at);
-  const row = schedule.find((item) => item?.day === day);
-  const count = Array.isArray(row?.courses) ? row.courses.length : 0;
-  if (count === 0) return '这天没有课。';
-  return `这天有 ${count} 节课。`;
-}
-
-/**
  * 一条**自己写的**规划。
  *
  * 与 `TodoRow` 的差别是它**可操作**：能勾完成、能改、能删、能让 AI 拆。
@@ -1660,8 +1682,9 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
 
   const splitCount = row.splitInto.length;
 
+  const mark = !row.done ? focusElementId(`local:${row.id}`) : '';
   return (
-    <li>
+    <li id={mark || undefined}>
       <div className={`zpg-item zpg-item-mine ${row.done ? 'zpg-item-done' : ''}`}>
         {editing ? (
           <form className="zpg-edit" onSubmit={save}>
@@ -1852,7 +1875,7 @@ function DetailsBlock({ action, detail }) {
   );
 }
 
-export function CardRow({ row, onToggle, busy }) {
+export function CardRow({ row, onToggle, busy, schedule }) {
   return (
     <li>
       <div className={`zpg-item zpg-item-card ${row.done ? 'zpg-item-done' : ''}`}>
@@ -1885,6 +1908,9 @@ export function CardRow({ row, onToggle, busy }) {
         */}
         {(row.action || row.detail) && !row.done && (
           <DetailsBlock action={row.action} detail={row.detail} />
+        )}
+        {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
+          <p className="zpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
         )}
       </div>
     </li>
@@ -2025,10 +2051,11 @@ function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId, 
  *
  * 平台那边仍然是权威：它说未提交就是未提交。本机勾选只表示"这件事我不需要再被提醒"。
  */
-function TodoRow({ row, onToggle, busy }) {
+function TodoRow({ row, onToggle, busy, schedule }) {
   const kind = KIND[row.kind] ?? KIND_FALLBACK;
+  const mark = !row.done ? focusElementId(`${row.source}:${row.id}`) : '';
   return (
-    <li>
+    <li id={mark || undefined}>
       <div className={`zpg-item zpg-item-todo ${row.done ? 'zpg-item-done' : ''}`}>
         <div className="zpg-summary zpg-summary-static">
           <input
@@ -2065,6 +2092,9 @@ function TodoRow({ row, onToggle, busy }) {
         */}
         {row.detail && !row.done && (
           <DetailsBlock detail={row.detail} />
+        )}
+        {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
+          <p className="zpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
         )}
         {/* 勾掉之后才说这句话：没勾的人不需要读，勾了的人必须知道它的边界。 */}
         {row.done && (
