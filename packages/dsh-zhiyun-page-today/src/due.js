@@ -58,3 +58,24 @@ export function collectDue(local, todos, ticks, nowMs) {
   items.sort((a, b) => a.at - b.at || a.title.localeCompare(b.title, 'zh'));
   return { items: items.slice(0, 20).map(({ at, ...item }) => item), truncated: items.length > 20 };
 }
+
+/**
+ * 规划页那条回环接口的响应形状。
+ *
+ * 客户端拿不到宿主上的 `zhiyunPlanning`。今天页读的是
+ * `GET /_dsh/zhiyun-planning` 的同一份快照：`local`、`todos.{xzzd,pta}`、`ticks`。
+ * 快照里另有一份 `pta` 状态，那不是题集列表，这里不看它。
+ *
+ * @param payload - 接口 JSON，或读失败时的空值。
+ * @param nowMs - 当前毫秒时间戳。
+ * @returns `{ items, truncated }`。
+ */
+export function dueFromSnapshot(payload, nowMs) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { items: [], truncated: false };
+  }
+  const ticks = payload.ticks && typeof payload.ticks === 'object' && !Array.isArray(payload.ticks)
+    ? payload.ticks
+    : {};
+  return collectDue(payload.local, payload.todos, ticks, nowMs);
+}

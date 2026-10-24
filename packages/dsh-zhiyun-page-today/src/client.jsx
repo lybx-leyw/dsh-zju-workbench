@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Icon, Notice, SectionTitle, mountStyle, useStudy } from 'dsh-zhiyun-shell-ui';
 import { clock, projectAgenda } from './agenda.js';
-import { collectDue } from './due.js';
+import { dueFromSnapshot } from './due.js';
 import css from './style.css';
 
 export const name = 'zhiyun-page-today-client';
@@ -13,15 +13,22 @@ export function apply(ctx) {
   ctx.inject(['zhiyunStudyController'], (scope) => {
     scope.slots.inject('zhiyun.today.content', () => scope.slots.register(
       { name: 'zhiyun.today.content', priority: 10 },
-      () => <Today controller={scope.zhiyunStudyController} planning={() => readPlanning(scope)} />,
+      () => <Today controller={scope.zhiyunStudyController} />,
     ));
   });
 }
 
-/** 规划包是可选的。停用、还没配、或取不到时，今天页照常画课表。 */
-function readPlanning(scope) {
-  try { return scope.get('zhiyunPlanning') ?? null; }
-  catch { return null; }
+/**
+ * 规划数据在宿主上，浏览器里的 `ctx.get` 看不到它。
+ * 与规划页用同一条回环接口；路由必须和宿主 `ROUTE_PATH` 一致。
+ * 包没装、接口拒绝、或这一天没有到期的事，都返回 null，今天页不报错。
+ */
+async function readDue(nowMs) {
+  const response = await fetch('/_dsh/zhiyun-planning');
+  if (!response.ok) return null;
+  const payload = await response.json().catch(() => null);
+  const next = dueFromSnapshot(payload, nowMs);
+  return next.items.length ? next : null;
 }
 
 function place(entry) {
@@ -65,7 +72,7 @@ function Row({ entry, onOpen }) {
   </button>;
 }
 
-export function Today({ controller, planning }) {
+export function Today({ controller }) {
   const s = useStudy(controller);
   const introRef = useRef(null);
   const [due, setDue] = useState(null);
@@ -73,34 +80,24 @@ export function Today({ controller, planning }) {
     const node = introRef.current;
     let stop = false;
     const load = async () => {
-      const service = planning?.() ?? null;
-      if (!service) {
-        if (!stop) setDue(null);
-        return;
-      }
       try {
-        const local = typeof service.local === 'function' ? service.local() : [];
-        const ticks = typeof service.ticks === 'function' ? service.ticks() : {};
-        let todos = null;
-        if (typeof service.todos === 'function') {
-          try { todos = await service.todos(); }
-          catch { todos = null; }
-        }
-        if (stop) return;
-        const next = collectDue(local, todos, ticks, Date.now());
-        setDue(next.items.length ? next : null);
+        const next = await readDue(Date.now());
+        if (!stop) setDue(next);
       } catch {
         if (!stop) setDue(null);
       }
     };
-    void load();
-    if (!node || typeof IntersectionObserver !== 'function') return () => { stop = true; };
+    // 页被挪出视口时不请求。用户打开今天页，观察器才会读规划接口。
+    if (!node || typeof IntersectionObserver !== 'function') {
+      void load();
+      return () => { stop = true; };
+    }
     const observer = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting)) void load();
     });
     observer.observe(node);
     return () => { stop = true; observer.disconnect(); };
-  }, [planning]);
+  }, []);
   useEffect(() => {
     if (!s.loading && s.user) {
       void controller.loadSchedule();

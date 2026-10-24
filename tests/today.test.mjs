@@ -7,7 +7,7 @@ import { StudyWorkbench } from '../packages/dsh-zhiyun-core-study/src/workbench.
 import { createStudyController } from '../packages/dsh-zhiyun-core-study/src/model.js';
 import { mountKnowledge } from './fixtures/study-storage.mjs';
 import { clock, projectAgenda } from '../packages/dsh-zhiyun-page-today/src/agenda.js';
-import { collectDue, shanghaiDay } from '../packages/dsh-zhiyun-page-today/src/due.js';
+import { collectDue, dueFromSnapshot, shanghaiDay } from '../packages/dsh-zhiyun-page-today/src/due.js';
 
 const eight = Date.parse('2026-10-14T00:00:00Z');
 const entry = (title, startMs, endMs) => ({
@@ -256,4 +256,12 @@ test('today lists only unfinished items due on the Shanghai calendar day', () =>
   assert.equal(listed.items[2].detail, '线代');
   assert.equal(listed.truncated, false);
   assert.deepEqual(collectDue(null, null, null, now), { items: [], truncated: false });
+  const fromRoute = dueFromSnapshot({
+    local,
+    todos,
+    ticks: { 'xzzd:13': { doneAt: 1 } },
+    pta: { configured: true },
+  }, now);
+  assert.deepEqual(fromRoute.items.map((item) => item.title), ['交实验', '拆出来的', '作业']);
+  assert.deepEqual(dueFromSnapshot(null, now), { items: [], truncated: false });
 });
