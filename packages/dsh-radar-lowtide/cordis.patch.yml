@@ -1,0 +1,20 @@
+# 候选骨架：**未接入 profile** —— 本 patch 只有一条 insert，
+# 把上游 `dsh-lowtide@0.2.8` 挂成一个 loader 条目。
+#
+# ⚠ 这里**故意只复刻上游 patch 的 insert 一条**。上游自带的 `cordis.patch.yml`
+#   除了 insert，还有一整段 `- id: permission`：
+#
+#     它把 `permission` 行**整行替换**（上游自己的注释：a row patch REPLACES the
+#     targeted row's whole config），重新声明 read-only / workspace-write /
+#     danger-full-access 三个基础预设，并**新增三个 `approval: never` 的预设**
+#     （lt-readonly / lt-standard / lt-trusted，「夜跑无人值守」的设计前提）。
+#
+#   `approval: never` 意味着**取消审批闸门**。本仓的沙箱治理、人工复核流程都挂在
+#   那一行上；整包套用等于把闸门拆掉，且当本仓已扩展过预设时会**静默丢失**。
+#   见 README「为什么不能整包套用」与 TODO-1。
+#
+# 评审通过后，若确需无人值守跑批，正确的做法是**在本仓 permission 行里显式追加**
+# 一个具名的、审批策略明确的预设，而不是把上游那一份 permission 块引进来。
+- insert:
+    - id: radar-lowtide
+      name: dsh-radar-lowtide

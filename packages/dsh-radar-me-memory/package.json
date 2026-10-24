@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-me-memory",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 dsh-auto-memory@0.9.0，把「跨会话记忆」以只读台账的形式落到「我的」页（强化式集成，A 类：锁版挂载上游宿主侧 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-auto-memory": "0.9.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

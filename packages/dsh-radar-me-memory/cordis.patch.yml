@@ -1,0 +1,19 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**，不得写入
+# profiles/zhiyun-bench/package.json 的 dsh.profile.bundles。
+#
+# A 类骨架：本包锁版依赖 `dsh-auto-memory@0.9.0`，但这里**只 insert 自己**，
+# 不 insert 上游。原因不在「懒得写」，而在上游的 client 半边会注册两处：
+#
+#   · `main`（key = PANEL_ID）        → 一个**独立顶层页**
+#   · `sidebar.panellist`（order 50） → 一个**新增侧栏项**
+#
+# 二者都直接违反强化式集成的判据①「仍是同一个面板」。而 `dsh` 字段的
+# `client.inject` 是**整包级**的（`dsh-auto-memory` 的 `package.json` 里写死了
+# `platform: web` + 三个 `dsh-client-ui-*` 注入），Loader 按**包**挂客户端，
+# 没有「只挂宿主侧」的开关。
+#
+# ⇒ 所以真正的挂载方式要等评审裁决（见 README「未完成」第 1 条），
+#   本文件**故意只留一行**，不假装已经解决。
+- insert:
+    - id: radar-me-memory
+      name: dsh-radar-me-memory

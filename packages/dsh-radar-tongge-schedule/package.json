@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-tongge-schedule",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】提取同格（DongLanQwQ0/ZJU-Tongge-Schedule，MIT）的 .ics 课表本地解析与撞课/同楼栋判定，用于强化「今天」页的课表投影（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

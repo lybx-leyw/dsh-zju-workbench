@@ -1,0 +1,15 @@
+{
+  "name": "dsh-radar-answer-equiv",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】为「学习」页填空题的作答判定加一层「等价答案」归一（中文数字 / 分数 / 千分位 / 科学计数 / 小数位），强化式集成：同一个判分面板，底层多调一个等价判定",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "decimal.js": "10.6.0"
+  }
+}

@@ -1552,3 +1552,1096 @@
 | Obsidian 图谱插件新仓簇（`elliott-json-park/obsidian-tag-graph`★1、`LowKI2/cortex-graph`★0、`NicoKNL/tasks-map`★54、`sskhekhaliya/obsidian-GraphWay`、`PGD618/my-web`、`Sammie-07/gogo-brain-wiki`、`Pierovercleaver/Notes-Editor-Obsidian`、`batuhan-bas/mufka`★4）、`ElsaTam/obsidian-extended-graph`(★238) | B 其他JS | MIT / `null` / NOASSERTION | 笔记 | 重复无增益 | ⛔ | rejected | 2026-10-18 | 9 条，全为 **Obsidian 插件 / 个人 app / 数字花园模板**，不可嵌入；除 `tasks-map`(任务图) 与 `extended-graph` 外 ★≤4 且多为当周建仓。**建议本轴 3 个月内不再扫 `obsidian graph view` 的 updated 视图** |
 | 自研图渲染簇（`Aoviz-Team/graphs`★18、`i-artist/aoviz`★6、`Biki-dev/OKVE`★1、`inferagraph/core`★2）、薄包装（`plotly/react-cytoscapejs`★534、`plotly/dash-cytoscape`★679） | B 其他JS | MIT / `null` | — | 重复无增益 | ⛔ | rejected | 2026-10-18 | 自研渲染 ★低 / 2022–2024 停更 / `null` 许可证，能力被 cytoscape 完全覆盖；`react-cytoscapejs` 最后 push 2025-01，`cy.mount()` 少一层依赖 |
 | `wallet filter` 前 10 条（`anjulalk/cardstock`、`rzazo24/quill`、`ArmySHan/Trove-Discord-Wallet-Bot`、`MrLouisWright/ioc-sentinel` 等） | — | MIT / `null` | — | 无关 | ⛔ | rejected | 2026-10-18 | **主动探针**：为「网络代理」页的过滤词表找底层。1 次搜索即证明「filter 词表」在 GitHub 上的唯一语义是**加密钱包 / 卡包优惠 / 交易机器人** → 该轴封板 |
+
+## 2026-10-18 · A 组（第二十五轮 · **Markdown 结构判定层 / 目录条 / 语言控制**）
+
+> 同日第 7 轮。脚本判 `same-day(exhausted)`，按先例不重跑已跑组。
+> 15 次搜索（⚠ 超限 5 次，探针失败后未及时止损），0 次 403。
+> 唯一 🟢 是**强化式集成**且判据③**成立**（正则近似 → CommonMark token 判定），本月首条无争议的强化候选。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `markdown-it/markdown-it` | B 其他JS（纯库） | **MIT** ✅ | 笔记 / 论文（`[[双链]]` 预览、页码引用） | **重复且可强化**（判据①②③全成立） | 🟢 | skeleton-created | 2026-10-18 | ★21984，push 2026-10-16，零运行时依赖（argparse/entities/linkify-it/mdurl/punycode.js/uc.micro）。锁版 `markdown-it@14.1.0`。替掉本仓三处「正则猜语法」：`vault#excludedRanges`（缺缩进代码/setext/HTML 块）、`page-notes/client.jsx` L220 右栏正则（连围栏都不排除）、`page-paper/citations.js#protectedRanges`（单行，缺缩进代码/HTML 块）。**验收 = 与现有实现差分零差异**（`tests/vault.test.mjs` 342 行全过）。已出骨架 `dsh-radar-vault-parse`；⚠ 评审须先回答反方案（补正则 vs 接库）；⚠ 推荐走纯库包、删 patch |
+| `a792883583/dsh-chat-toc` | A 原生DSH | MIT ✅ | 学习（长会话阅读） | **全新**（补目录，非强化） | 🟡 | proposed | 2026-10-18 | ★3，push 2026-09-30，`package.json` 实核 `dependencies:{}`、有 `dsh.bundle.patch`、inject `dsh-client-runtime`+`dsh-client-locale`。会话右侧边缘目录条（hover 展开、点击跳转）。与 `miaomiao636/dsh-message-navigator`（★2，功能更全更重）**二选一**，不并列接入 |
+| `miaomiao636/dsh-message-navigator` | A 原生DSH | MIT ✅ | 学习（长会话） | 全新（同域备选） | 🔵 | proposed | 2026-10-18 | ★2，push 2026-09-01，零 deps，inject `dsh-client-ui-layout`+`dsh-client-ui-conversation`。用户消息大纲 + 点击跳转 + 滚动高亮 + 搜索 + 导出大纲 → 能力更全也更容易与宿主会话 UI 打架 |
+| `KannaKuron/dsh-agent-lang` | A 原生DSH | MIT ✅ | 通用（中文输出） | 全新（可选） | 🔵 | proposed | 2026-10-18 | ★1，v0.12.0，inject `dsh-client-locale`+`ui-slots`+`ui-settings`。控制**工具调用描述/思维链语言**。本仓 UI 全中文、模型输出未约束 → 非痛点 |
+| `Ragnoryok1/dsh-client-locale-ru`、`xISPx/dsh-locale-ru`、`linmino/dsh-zh-tw-ui` | A 原生DSH | MIT ✅ | — | 无关 | 🔵 | proposed | 2026-10-18 | 语言包簇（俄/繁中）。与浙大中文用户无关，只作「locale 包怎么写」的范本；繁中包对简体用户无收益 |
+| `gwsbhqt/dsh-insight`、`liuhaolong16/dsh-hot-refresh` | A 原生DSH | MIT | 通用（插件开发） | **重复无增益** | 🔵 | proposed | 2026-10-18 | `insight`★3 只读洞察面板（插件/服务/工具/方法）—— 本仓 `page-plugins` 的 `buildView`+依赖图已覆盖；`hot-refresh`★1 开发期热刷新，`patchReload: live` 已覆盖大半。均属开发者工具，非学生场景 |
+| `A1eksib286/dsh-plugin-mathtype` | A 原生DSH | **NOASSERTION** | — | — | ⚠ 待核 | pending-license | 2026-10-18 | ★0，Python，Word 公式升级为 MathType OLE。许可证无法确认 → **不采用、不摘码**，须人工读 LICENSE |
+| `dakkaboy/dsh-locale-ru` | A 原生DSH | **NOASSERTION** | — | — | ⚠ 待核 | pending-license | 2026-10-18 | ★0，与 `xISPx/dsh-locale-ru`(MIT) 疑似同源复刻 —— **「无许可证 fork」的典型样本**，不采用 |
+| 会话导出簇（`121212165/dsh-plugin-transcript`、`kittimzhe/dsh-session-export`、`DEVbyQIN/dsh-session-md`、`guyusky/dsh-export-plugin`、`huangfuren/dsh-conversation`） | A 原生DSH | MIT | — | **重复无增益** | ⛔ | rejected | 2026-10-18 | 5 条全部 ★0–2。10-17 已判定「导出」轴被「零依赖 + `window.print()`」范式杀穿，无护城河；本轮复核维持 |
+| 粘贴打包簇（`sakuraqqq/dsh-auto-paste`、`X-noesis/dsh-paste-packer`、`XWIDE/dsh-draft-keeper`） | A 原生DSH | MIT | — | **重复无增益** | ⛔ | rejected | 2026-10-18 | ★1–3，改 composer 行为（大段文本转附件/打包卡片/保留粘贴图片）。与本仓「附件 / 草稿」模型重复，且属于**改宿主输入框**的高风险面 |
+| 应用/外壳（`techflag/workdsh`★239、`Kazama-Suichiku/dshcode`★0、`vastsa/PI-Desktop`★6979 **LGPL-3.0**） | A 原生DSH / 应用 | MIT / **LGPL-3.0** | — | 无关 | ⛔ | rejected | 2026-10-18 | `workdsh` 已在册（重复无增益）；`dshcode` 是 Tauri 桌面 fork；`PI-Desktop` 许可证红线 |
+| `clipboard sync plugin harness`（total 0）、`uniclip desktop clipboard`（total 1，0★ Java 2017） | — | — | — | 无关 | ⛔ | rejected | 2026-10-18 | **主动探针**：跨设备剪贴板同步插件在本生态**查无实据**（1 次搜索即废）。该轴与本工作台「跨设备」叙事距离远，**建议封板**。⚠ `uniclip` 一词会误召回本仓已采纳的 `ronkok/Temml` —— 搜索词与仓名不同源，「没搜到」≠「不存在」 |
+
+## 2026-10-18 · 第二十六轮（A 组 · 插件自省 / 依赖图底层轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `antoine-coulon/skott` | B 其他JS | **MIT** ✅ | 通用（插件页/工程可视化） | **重复可强化**（插件页模块图底层） | 🟢 | skeleton-created | 2026-10-18 | ★877，TS/ESM，2026-09-11 push，2022 建仓。一次调用产出模块图 + **循环依赖** + 未解析导入 + 孤儿。`skott@0.35.12` 实核：`exports` 含 `./graph/*`/`./rendering`。**判据③成立**：`page-plugins/src/runtime.js` 只折「运行时包级图」，答不出①文件级环②未加载边③空边。⚠ 依赖重（`@parcel/watcher` 原生 + `typescript` + `effect` + `fp-ts` + `depcheck`）→ **仅宿主侧**；⚠ 粒度死结（运行时/包级 vs 文件系统/文件级）须人工二选一；⚠ `packages/` 已 50 包须收窄 entrypoints。已出骨架 `dsh-radar-plugin-graph` |
+| `tree-freedom/dsh-capability-inspector` | A 原生DSH | **MIT** ✅ | 通用（插件可用性诊断） | **重复可强化**（插件页「工具是否真可用」） | 🟡 | proposed | 2026-10-18 | ★1，2026-08-13 建仓，TS。带 `dsh.bundle.patch`；peer 仅 `cordis` + `dsh-tools`（干净）。DSH Doctor：工具/模型/技能/工作区/会话/插件/MCP 能力矩阵。**与本仓「插件」页只答依赖、不答能力**形成正交补位。★1 过新 → 未出骨架，待人工读源 |
+| `Rex16200513/dsh-lifecycle-inspector` | A 原生DSH | MIT ✅ | 通用 | 全新（effect 泄漏视图） | 🔵 | proposed | 2026-10-18 | ★1，2026-09-13 建仓（1 天）。Cordis Effect 生命周期 / teardown 清理诊断，带 web client 注入。本仓无「插件 effect 是否被 dispose」视图 → 将来做内存泄漏排查时的唯一参考 |
+| `CharlotteN7/dsh-plugin-inspector` | 非 DSH（CLI） | MIT ✅ | 通用（装前审视） | 全新（但非插件形态） | 🔵 | proposed | 2026-10-18 | ★0，`package.json` **无 `dsh` 字段** → 是 CLI 不是 DSH 插件（名字误导）。`js-yaml`+`tar`+`typescript` 读包判意图。只记思路：装前静态读包 |
+| `kjinengineer/decode-deps` | B 其他JS | MIT ✅ | 通用 | 重复（skott 弱化版） | 🔵 | proposed | 2026-10-18 | ★24，2025-02 停更，`d3`+`express`。文件级依赖图可视化；能力被 skott 覆盖，且与「宿主「插件」页」（运行时图）无直接关系 |
+| `giancarloerra/SocratiCode` | B 其他JS | **AGPL-3.0** ⛔ | — | — | ⛔ | rejected | 2026-10-18 | ★3342，本轴 ★ 最高，但 **AGPL-3.0 红线** → 只登记，不摘码 |
+| JVM 依赖图插件簇（`vanniktech/gradle-dependency-graph-generator-plugin`★1627、`sbt/sbt-dependency-graph`★1243、`cashapp/licensee`★756、`ferstl/depgraph-maven-plugin`★607、`savvasdalkitsis/module-dependency-graph`★208、`gradle/github-dependency-graph-gradle-plugin`★96、`dwijnand/sbt-project-graph`★78） | 非 JS 栈 | Apache-2.0 | — | — | ⛔ | rejected | 2026-10-18 | 7 条全为 Gradle/Maven/sbt 生态（Kotlin/Scala/Java/Groovy）。**`plugin dependency graph` 是词面陷阱**：173 条里 JS 栈为 0 |
+| `PaulTaykalo/objc-dependency-visualizer`★1868、`glato/emerge`★1171(Python)、`uysalserkan/dependency-visualizer`、`royvandijk06/luna`、`Archana-m11/Dependency-Vulnerability-Mapper` | 非 JS 栈 / `null` | MIT / `null` | — | — | ⛔ | rejected | 2026-10-18 | Objective-C/Swift、Python、无许可证 |
+| npm 小工具簇（`krishana7911/npm-treehouse`★1、`manuartero/lock-tree`★1、`enesmuzaffer22/npm-dep-visualizer`★1、`louisan42/npm-package-visualizer`★0、`yurukusa/dep-tree`、`efealtiparmakoglu/depgraph`、`NickCirv/dependency-graph`、`sulthonzh/depgraph-viz`、`LeoOfGit/OmniPack`GPL-3.0） | B 其他JS | MIT / `null` / GPL-3.0 | — | 重复无增益 | ⛔ | rejected | 2026-10-18 | 9 条 ★≤3、多为当周建仓；能力被 skott 完全覆盖；`dep-tree`/`redesigned-pancake` 无许可证 |
+| `ianho7/dsh-port-inspector`★2、`liuhange789/data-asset-inspector`★2、`AlloyPlane/dsh-f12-inspector`★1、`eighteentang/dsh-plugin-dev-tools` | A 原生DSH | MIT ✅ | — | 无关 / 重复 | ⛔ | rejected | 2026-10-18 | Windows 端口回溯 / 数据资产合规 30 插件包 / DOM 元素拾取。与学生场景无关，或与 `dsh-radar-plugin-audit`、`compat-vet` 重叠 |
+| 装前审计簇（`taxueseek/dsh-plugin-guard`★1、`kiterunner1/dsh-plugin-audit`★0、`HubaKing/dsh-community-plugins`★5） | A 原生DSH | MIT ✅ | 通用（安全） | **重复无增益** | ⛔ | rejected | 2026-10-18 | 三份装前静态审计实现，与在册 `dsh-radar-plugin-audit` / `dsh-radar-compat-vet` / `rogerdigital/dsh-vet` 功能重合 → **审计轴封板 3 个月** |
+| `ameerthehacker/rustyring`、`h3po/dsh-skill-plugin-lifecycle`、`echo719/dsh-plugin-hub` | — | `null` | — | — | ⛔ | rejected | 2026-10-18 | Rust 循环依赖检测器（无许可证）/ Shell skill（无许可证）/ 纯 HTML 插件导航站（无许可证） |
+
+## 2026-10-19 · 第二十七轮（B 组 · 浙大工具脚本 ↔ 本仓数据层对读轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `DongLanQwQ0/ZJU-Tongge-Schedule` | B 其他JS | **MIT** ✅ | 课表 / 今天 | **重复可强化**（今天页课表投影） | 🟢 | skeleton-created | 2026-10-19 | ★1，2026-10-02 push，零依赖 Node+纯前端。传 .ics → 建群 → 撞课比对；**浏览器本地解析、原文不上传**；重合四级（同教室/同楼栋/同区域/不同区域）。**判据③成立**：本仓 `page-today/src/agenda.js` 只有「上海时区 + 现在/接下来/已结束」，无周次网格、无楼栋距离、无 .ics 互操作。**只取本地解析+冲突判定，群组服务层不取**（工作台无自建后端）。已出骨架 `dsh-radar-tongge-schedule` |
+| `burriedalien666/zju842-practice` | B 其他JS | **MIT** ✅（内容另有 `CONTENT-NOTICE.md` ⚠） | 刷题 / 学习（842 信号与系统·数电） | **重复且可强化**（学习页刷题） | 🟡 | proposed | 2026-10-19 | ★21，2026-10-04 push，Vite+Fastify 本地 App（Win/mac/Android）。2009–25 真题专题刷/整卷/收藏/自评掌握度/答案照片/考点分布。**可借核心=题库版本化**（`library.json` 指针 + `edition-<hex16>` 目录 + `validateLibraryTransition` + `atomicJson`）。⛔ `sharp` 原生 + 题库内容版权独立于代码 → 未出骨架，待人工裁定 |
+| `0x000005/better-zdbk` | B 其他JS | MIT ✅ | 选课 | 全新（本仓无选课面板） | 🔵 | proposed | 2026-10-19 | ★2，660KB 单文件 UserScript，选课页内联化/过滤/快速点选。学期性极强，不做骨架 |
+| `Nanoarcheaum/zju_coursecraft` | B 其他JS | MIT ✅ | 培养方案规划 | 全新（我的课无先修/培养方案） | 🔵 | proposed | 2026-10-19 | ★1，建仓 2 天。带 `academic-curriculum-map.schema.json` + 课程包导入 + 未来规划。**「培养方案/先修关系」是本仓真实空洞**，但过新，只登记 |
+| `xuyicheng-zju/Selection-Assistance` | B 其他JS | Apache-2.0 ✅ | 选课决策 | 全新 | 🔵 | proposed | 2026-10-19 | ★6，TS，无描述，需读源 |
+| `eWloYW8/ZJU-course-material-download` | B 其他JS | MIT ✅ | 课件下载 | **重复无增益** | 🔵 | proposed | 2026-10-19 | ★14，2026-01 后未更新。「无权限课件」下载与 `xzzd.download` 重叠且绕过权限判定，与本仓「按已登录身份正规拉取」冲突，不采用 |
+| `upupming/zju-grs-ics`★8、`FinleyGe/zjut-class-timetable-ics`、`theycallmedern/ZJU-Schedule-Bot`★0 | B 其他JS/TS/Go | `null` / MIT / MIT | 课表导出 | 重复（课表已入 ics 时代） | ⛔ | rejected | 2026-10-19 | 研究生院课表→ics 的两份实现（2022 / 2024，均已停更）。本仓课表已是结构化数据，**入 ics 只是导出格式问题**，不引入新底层 |
+| `lvmiao233/ZJUCompNet`★15、`LBruyne/ZJU-blockchain-course-2023`★5、`LBruyne/ZJU-blockchain-course-2024`★4、`frank-xjh/iZJU-Wiki`★6、`sjyinzju/ZJU-night-scare`★12、`shenluyao/ZJU_zdbk_plan`、`Ltto123/ZJU-low-score-course-selection-helper` | B/— | `null` | 课程资料 | — | ⛔ | rejected | 2026-10-19 | 全部 `null` 许可证：课程实验文档 / 区块链作业 / 国际校区 Wiki / 占位仓。不摘码 |
+| 泛 `course review` 平台簇（`Somnath-Chattaraj/Campus-Chatter`、`KaanAkkok/Opinia`、`aliu5454/CourseRatings`、`mahadaafridi/AntRatings`、`lakyito/course-reviews`、`AlpNuhoglu/Course-Review-Platform`、`kevinpettersson/chalmers-course-reviews`、`fruitlesspeak/CourseHub`、`IshikaSaxena2005/AI-Powered-Education-Insights-Platform`） | B 其他JS | 全部 `null` | — | 无关 | ⛔ | rejected | 2026-10-19 | UBC / UCI / Sabancı / Chalmers / 泛校园社区。**`campus app` 宽词的系统性噪声**：9 条全部无许可证、全部与浙大无关 |
+| 用户名 / `zjut`（浙工大）误报（`mly-zju/simpleKoa`★130、`mly-zju/chat-room`★66、`quark-zju/vscode-line-history`★13、`chenzq-98/zjut-java_web_course_design`、`HouQiming/zju_game_course`） | — | `null` | — | 无关 | ⛔ | rejected | 2026-10-19 | `zju` 出现在 owner 名或 `zjut` 里。⚠ **`zju in:name` 的系统性误报源**，后续需人工过滤 |
+| `PeiPei233/zju-learning-assistant`★526、`Lucent-Snow/zju-scholar`★21、`Mythologyli/zju-connect`★798、`ZJU-Connect-for-Windows`★473、`QSCTech/zjunet`★332、`AoiKJuice/ZJU-Academic`、`ChenyuHeee/Libot`★3、`Ansherly/ZJU-*WebVPN.Csharp` | 非 JS 栈 | MIT / GPL-3.0 / AGPL-3.0 / LGPL-3.0 | 课件/VPN | — | ⛔ | rejected | 2026-10-19 | Rust / Python / Go / C# / Shell。`zju-connect` 为 **AGPL-3.0**、`ZJU-Connect-for-Windows` 为 **LGPL-3.0** → 许可证红线，且本仓 VPN 层已有 `dsh-zhiyun-net-proxy` |
+| `ZJU-FAST-Lab/e2e_opt`★55、`ZJU-OmniAI/LLM_in_Work`★19、`ZJUBCA/zjubca.wallet`★29、`SJoJoK/ZJU_Charger`★16、`TeresaPeng-zju/be-water`★24、`ZHENG28/zjut_LibrarySeatSystem`★7、`Santosh766/Discounted-Price-Prediction`、`codepiper/UniversityNotifications`、`AhmedZ70/UniCentral`、`022003harsh/TechBard`、`Shaamiilll/Skillup-E-learning` | — | 混合 | — | 无关 | ⛔ | rejected | 2026-10-19 | 科研代码 / Office-AI 桥接 / 加密钱包 / 充电桩 / 无关 SaaS。`zju_library_seat` 为 SSM 造假项目 |
+| `Slowist-Lee/website-converter` | B 其他JS | `null` | WebVPN 链接转换 | 重复无增益 | ⛔ | rejected | 2026-10-19 | ★2，WebVPN 代理链接→普通链接。本仓 `dsh-zhiyun-net-proxy` 已在数据出口层处理分域代理，**不需要在渲染层再转换链接**；且无许可证 |
+| `lybx-leyw/dsh-zju-workbench` | — | `null` | — | 自身 | ⛔ | rejected | 2026-10-19 | 本仓自身 |
+
+## 2026-10-19 · 第二十八轮（A 组 · 规划/计划轴 · `dsh-plugin <动词>` 视图）
+
+> 同日第 2 轮（00:00 已跑 B 组第二十七轮）。搜索 10 次，0 次 403。本轮 `NOASSERTION` 0 条。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `KelaoHu/dsh-lowtide` | A 原生DSH | **MIT** ✅（仓库/package.json/npm/元数据四源一致） | 规划 / 时间管理 | **重复可强化**（规划页卡片 → 执行端） | 🟢 | skeleton-created | 2026-10-19 | ★174，2026-10-17 push，**npm `dsh-lowtide@0.2.8` 已发布**（锁版成立）。峰谷价窗口调度 + 四策略 + 待裁定 + 执行报告（实花/已省）。中文文案 383 条。⚠ 上游 `cordis.patch.yml` 的 `permission` 块**整行替换**宿主权限行并加 3 个 `approval: never` 预设 → 骨架**只取 insert**。⚠ `POST /ds-lowtide/tasks` 需默认关闭。已出骨架 `dsh-radar-lowtide` |
+| `zriyox/dsh-goal-scaffold` | A 原生DSH | MIT ✅ | 计划制定 | 重复可强化（规划页缺验收判据） | 🟡 | proposed | 2026-10-19 | ★2，2026-08-15。一句话大需求先拦截 → plan.md（每条带验收判据）+ 轮次上限 goal。**未发布 npm** → 锁版不成立，只能源码级移植。触发靠 `minLength:80` 长度阈值而非任务规模，仅记思路 |
+| `ztl34245881-commits/dsh-task-planner` | A 原生DSH | MIT ✅ | 规划 / 经验复用 | 重复可强化（plans.js 每次从零拆） | 🟡 | proposed | 2026-10-19 | ★3，2026-08-14。`plan_task` 回忆相似旧方案 → 评估 → 拆步，自动落 draft 课。⚠ **仓库仅 5 个文件、无 `src/` 无 `lib/`**，实现缺失、装不上。只记「经验复用」思路 |
+| `viyiviyi/dsh-tree-task-flow` | A 原生DSH | MIT ✅ | 任务拆解 | 重复可强化（卡片层级） | 🔵 | proposed | 2026-10-19 | ★3，2026-10-15。目标→任务→子任务三级树；节点完成时**把执行过程从上下文折叠**（省 token 的巧思）。容器是「对话内任务流」，与规划页卡片不同容器，只取折叠思路 |
+| `weibaohui/dsh-tasks` | A 原生DSH | MIT ✅ | 定时事项 | 全新（本仓无定时任务） | 🔵 | proposed | 2026-10-19 | ★9，2026-10-09。cron 定时 → 新建 agent 会话提交提示词。与 lowtide 同轴不同层（cron vs 价格窗口，无裁定）。lowtide 通过后本条转「重复无增益」 |
+| `godv61/dsh-task-engine` | A 原生DSH | MIT ✅ | 通用（软件工程） | 全新（工程流水线） | 🔵 | proposed | 2026-10-19 | ★9，2026-10-14。任务阶段 + 验证记录 + commit 联动。学生场景弱 |
+| `LeemanCheung/dsh-task-dag` | A 原生DSH | MIT ✅ | 通用 | 全新（无子代理编排） | 🔵 | proposed | 2026-10-19 | ★12，2026-09-26。子代理/工作流执行图 DAG 可视化。与 `dsh-radar-plugin-graph`（模块依赖图）同域不同物 |
+| 看板簇：`cloader/dsh-taskboard`★65、`callmesoul/deepseek-kanban-plugin`★4、`jerryxff26-alt/dsh-delivery-board`★3、`FiretrUCK666/dsh-task-board`★2、`scwlkq/dsh-task-board`★2、`navid-kianfar/dsh-tasks-manager`★2、`Ericwong5021/dsh-kanban`★2、`GPNUdirichlet/dsh-kanban`★1 | A/— | 混合（`callmesoul` 为 `null`） | 多项目管理 | **重复无增益** | ⛔ | rejected | 2026-10-19 | 全部「侧栏 + 多列 + 拖拽」同形态；本仓无多项目看板需求，`shengsheng90/DSH-taskboard`★336 已在册为同域最强 |
+| 状态/通知簇：`p2coder/dsh-task-control`★9、`vlln/dsh-task-status`★8、`PickedAshi/DSH_taskbar_status_display_2.0`★6、`ltao0829/dsh-task-notify`★5、`1514100951/dsh-notify-plugins`★2 | A 原生DSH | MIT / BSD-3 / `null` | 通用 | **重复无增益** | ⛔ | rejected | 2026-10-19 | 暂停/恢复/取消、后台状态条、完成通知，宿主已有；`PickedAshi` 无许可证 |
+| 甘特/todo 簇：`xx529/dsh-task-gantt`★2、`liuyuguo99/dsh-task-todo`★1、`Luke-Yong/dsh-plugin-project-management`★1 | A 原生DSH | MIT ✅ | 规划视图 | 重复无增益（前置条件不成立） | ⛔ | rejected | 2026-10-19 | 甘特需预估工期，本仓卡片只有 `due`，无起点可画 |
+| 合集/技能文本：`kouyichi/dsh-plugins`★2、`ZhQkYu/dsh-token-saver-plugins`★1、`seanrobertwright/Deepseek-Archon-Plugin`★1、`tcflying/else-workflow-plugins`、`ZG2017/dsh-plugin-insight-mode`★1、`bauerelizabeth07139/plan-guardian-skill`、`akeno6388/dsh-plugin-kirara-dev`★1、`lanbaolu/dsh-plugin-standard`、`LeslieWylie/dsh-plugin-release`★2、`dreamtao2199/dsh-plugin-handbook`、`Mian-mian-hub/dsh-devrel-toolkit`、`Klukai-416-Clukay/dsh-skill-curator`、`qgd1850890306-rgb/dsh-todo-checklist`★1、`863683348/dsh-plugin-academic-writing`★3、`863683348/dsh-plugin-local-life`、`RavenWangChina/yuanzhu`(AGPL-3.0)、`Twofruitsgrape/dsh-comsol`(Python) | A/— | 混合（2 条 `null`，1 条 AGPL） | — | 无关/不可评估 | ⛔ | rejected | 2026-10-19 | 多插件合集、纯 skill 文本、非 JS 栈或与「规划」无关；`yuanzhu` 为 **AGPL-3.0** 红线 |
+
+## 2026-10-19 · 第二十九轮（A 组派生 · **中文检索底层轴**）
+
+> 同日第 3 轮（00:00 B 组第二十七轮 / 03:10 A 组第二十八轮）。搜索 15 次，上限 10，**⚠ 超限 5 次**；0 次 403。
+> 本轮 `NOASSERTION` 1 条（`bluelovers/ws-segment`，未采用）。**依据：从本仓空洞出发** ——
+> `dsh-zhiyun-page-study/src/layered-search.js` 自述「匹配是字面（不切词、不算相关度）」。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `xmflswood/pinyin-match` | B 其他JS | **MIT** ✅（仓库/元数据/package.json/npm 四源一致） | 笔记 / 讲义检索 | **重复可强化**（学习页检索换底层） | 🟢 | skeleton-created | 2026-10-19 | ★1072，2025-12-07 push，**npm `pinyin-match@1.2.10`**（锁版成立），**零运行时依赖**。汉字/全拼/首字母/多音字/繁简双字典，`match()` 回**闭区间** `[s,e]|false`。实测本仓 `ddj`/`daodejing`/`lisao`/`ls` 全部 0 命中 → 上游可命中。⚠ **简体入口对纯繁体文本的拼音查询回 false**（须繁体入口懒加载）；⚠ 1440 字块 × 1000 次 = 306ms（Node22）。已出骨架 `dsh-radar-pinyin-match` |
+| `nk2028/opencc-js` | B 其他JS | **MIT AND Apache-2.0** ✅（含 `opencc-data` Apache-2.0） | 古文 / 简繁混排 | 重复可强化（但方式冲突） | 🟡 | proposed | 2026-10-19 | ★361，2026-09-21 push，`1.4.2`。实测 `cn→twp` 词级转换正确（头发→頭髮/里面→裡面/后来→後來）。**本轮不采用**：解决方式要么整库转写（`dist/umd/full.js` **1.1MB**，浏览器端首屏不可接受），要么改写用户输入语义；留待「讲义自带简繁切换」独立需求再评 |
+| `tongwentang/tongwen-core` | B 其他JS | MIT ✅ | 简繁阅读 | 重复可强化（同上） | 🔵 | proposed | 2026-10-19 | ★71，2024-09 push，npm `tongwen-core@4.1.1`（374KB，零依赖）。纯 JS 简繁转换（词库级）。比 opencc-js 小，但仍属「转换」而非「查询侧多一种读法」 |
+| `hotoo/pinyin` | B 其他JS | MIT ✅ | 拼音 | 重复（被 pinyin-match 覆盖） | 🔵 | proposed | 2026-10-19 | ★7830，2026-06 push。汉字→拼音**转换**库（不是检索）。若将来要做「给术语表加注音」可用；检索场景被 pinyin-match 覆盖，**重复无增益** |
+| `Kaifuny/pinyin4js` | B 其他JS | MIT ✅ | 拼音 | 重复无增益 | 🔵 | proposed | 2026-10-19 | ★178，2022-02 push，npm `1.3.18`（931KB）。转换+首字母，但**不支持多音字检索/繁简**，且体积大 |
+| `breezewish/pinyinlite` | B 其他JS | MIT ✅ | 拼音 | 重复无增益 | 🔵 | proposed | 2026-10-19 | ★238，2017 停更。极轻量转换库，无检索能力 |
+| `fengkx/jieba-wasm` | 非 JS 源 | MIT ✅ | 分词 | 全新（本仓无分词） | 🔵 | proposed | 2026-10-19 | ★102，2026-01 push，npm `jieba-wasm@2.4.0`（**15.7MB wasm**）。真正的「先分词再索引 / 相关度」路线；体积与 wasm 加载成本对浏览器首屏不友好，且本仓当前无相关度排序需求 → 只记录 |
+| `messense/jieba-rs` | 非 JS 源（Rust） | MIT ✅ | 分词 | 全新 | 🔵 | proposed | 2026-10-19 | ★986，2026-10-15 push。上游 jieba 的 Rust 实现，是 `jieba-wasm` 的底座。非 JS 栈，仅作技术路线参考 |
+| `bluelovers/ws-segment` | B 其他JS | **`NOASSERTION`** ⚠ | 分词 | — | 🔵 | proposed | 2026-10-19 | ★12，2026-10-14 push。TS 中文分词。**许可证 `NOASSERTION` → 待人工核验，不采用、不摘码** |
+| `maxchang3/web-word-segment` | B 其他JS | MIT ✅ | 中文分词教学 | 无关 | ⛔ | rejected | 2026-10-19 | ★1。一个基于 `jieba-wasm` + `Intl.Segmenter` 的**网页演示**，不是库 |
+| `hermanschaaf/jieba-js`★52 / `shataniya/cncut`★5 / `Superjomn/qlin`★2 / `uranbekanarbaev/pinyin-to-chinese`★0 / `Xiej5645/writerHanzi`★0 | B/— | 混合（多为 `null`） | — | 无关 | ⛔ | rejected | 2026-10-19 | 2013–2014 的 jieba 移植 / 无证小工具 / 拼音→汉字（反向，需求不存在）/ 汉字笔顺练习（与本轮轴无关） |
+| `Xebec33/Mainland_Traditional_Chinese_Converter`★5 / `fartbagxp/home-simplified-to-traditional`★1 / `holsoma/spotify-web-lyrics-trad-simplified`★1 / `brentwong2020/CopyTradify`★0 / `QiyuanLuo233/simplified2traditional`★0 / `LibreService/my_opencc`★13 / `bluelovers/cjk-convert`★14 | B/— | Apache-2.0 / MIT / **AGPL-3.0** / `null` | — | 无关 | ⛔ | rejected | 2026-10-19 | 在线转换小工具、Tampermonkey 脚本、InDesign 脚本；`my_opencc` 为 **AGPL-3.0** 红线；`cjk-convert` 无许可证 |
+| `Yark-yao/Chinese-Stroke-Order-Generator`★50 / `jilldata/hanzi-stroke-data` | B 其他JS | MIT / `null` | 汉字学习 | 无关（本轮轴外） | ⛔ | rejected | 2026-10-19 | 笔顺 GIF 生成器（Puppeteer 依赖）；笔顺数据集无许可证。**轴外误召回** |
+| `edvardsr/cc-cedict`★35 / `polo-language/chinese-dictionary`★3 / `joshchaotang/claude-code-i18n`★37 / `n0/GitHub-Achievement-CLI`★87 / `ffzz/match-name-lambda`★0 | B/— | 混合（2 条 `null`） | — | 无关 | ⛔ | rejected | 2026-10-19 | 英汉词典 / Claude Code 汉化 / GitHub 成就脚本。`fuzzy matching chinese language:typescript`（total 1）与 `traditional simplified chinese language:typescript`（total 44）**前排多为误召回** |
+
+## 2026-10-19 · 第三十轮（C 组 · **答案等价判定轴**）
+
+> 同日第 4 轮（00:00 B / 03:10 A / 06:05 A 派生）。搜索 **10 次**（达上限未超限），0 次 403，**0 条 `NOASSERTION`**。
+> **依据：从本仓空洞出发** —— `dsh-zhiyun-quiz` 的 `QUIZ_AUTOGRADE_VERDICTS` 有 `unknown`（判不了），
+> 但判据只有 `normalizeForTrace()` 的字符串归一；实测 7 类等价写法全部落空。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `MikeMcl/decimal.js` | B 其他JS | **MIT** ✅（metadata/npm/包内 LICENCE 一致） | 填空判分 | **重复可强化**（作答判定换底层，加等价归一） | 🟢 | skeleton-created | 2026-10-19 | ★7267，2026-08-30 push，**npm `decimal.js@10.6.0`**（锁版成立），0 依赖，~284KB。`Decimal#equals` 任意精度 → `1/2` vs `0.5`、`5e3` vs `5000`。已出骨架 `dsh-radar-answer-equiv` |
+| `Achuan-2/chinese_number_to_digits` | B 其他JS | MIT ✅ | 数词→数值 | 重复可强化（但实现有错） | 🔵 | proposed | 2026-10-19 | ★1，4.0KB 单文件、无 ESM、无 npm。**实测 `一千二百万→1002000000`、`十二亿三千四百万→4204000000` 均错**。只作行为观测，不摘码 |
+| `spa5k/chinese-numbers-to-arabic` | B 其他JS | MIT ✅ | 同上 | 重复可强化（但实现有错） | 🔵 | proposed | 2026-10-19 | ★5，npm `2.0.0`（24.7KB，0 依赖）。**实测 `一亿二千万→1000020000000` 错**，与上一行错法方向相反 → 取交集亦不成立 |
+| `lisez/lib-arabic-chinese` | B 其他JS | MIT ✅ | 数字读法 | 方向相反（阿拉伯→中文） | 🔵 | proposed | 2026-10-19 | ★4，npm `2.0.0`（18KB，0 依赖）。单向，判分所需方向相反 |
+| `anton-bot/chinese-numbers-converter.js` | B 其他JS | **Unlicense** ✅ | 数字读法 | 单向且覆盖不全 | 🔵 | proposed | 2026-10-19 | ★24，2020 停更。单向；未覆盖「亿/万」复合读法 |
+| `LiuQixuan/ChineseNumerals`（npm `chinesenum`） | B 其他JS | MIT ✅ | 数词转换 | 声称双向、实测单向 | 🔵 | proposed | 2026-10-19 | npm `1.0.2`，115KB。**实测 `chinanumeralsToNum` 对任意输入抛错**（`Cannot read properties of undefined`）→ 只有 `numToChinanumerals` 可用 |
+| `MikeMcl/decimal.js-light`★410 / `royNiladri/js-big-decimal`★165 / `shinuza/decimal-js`★56 | B 其他JS | 均 MIT ✅ | 数值判定 | 重复无增益（被 decimal.js 覆盖） | 🔵 | proposed | 2026-10-19 | 精度面/API 均弱于 `decimal.js`；若评审嫌 284KB 可改 light，但需重做等值判定 |
+| `Wall-ee/chinese2digits` | 非 JS（Python） | **`null`** ⛔ | 数词→数值 | — | ⛔ | rejected | 2026-10-19 | ★374，描述最贴（含「点二八」「负百分之四十」），但**无许可证** → 只登记「仅供参考」，不摘码不移植 |
+| `HardusLom/UnitLab` | B 其他JS | **`null`** ⛔ | 单位换算 | 轴外 | ⛔ | rejected | 2026-10-19 | ★0。单位换算轴同轮唯一命中，无许可证；且本轮不做单位换算 |
+| 制卡/cloze 簇：`jsoendermann/ClozedForBusiness`(**GPL-3.0**)、`peterjcarroll/ClozeMaker`、`milwrite/cloze-reader`、`quetzalt52/Flashcard-Generator`、`jackson9413/cloze-forge`、`NovaCards/anki-card-cleaner` 等 | — | 混合（GPL / `null` / MIT） | 制卡 | 无关 | ⛔ | rejected | 2026-10-19 | 制卡工具不是判分层；GPL-3.0 红线 |
+| 判分器簇：`qbreader/qb-answer-checker`(JS,`null`)、`Akshint0407/Automated-Answer-Checker`(Py,Apache)、`Junibabng/MyAnswerChecker`(Py,MIT)、`Jay22519/Automatic-Answer-checker-`(Jupyter,`null`)、`arnabm14/Subjective_Answer_Checker`(Py,`null`) 等 | — | 混合 | 判分 | 形态不符 | ⛔ | rejected | 2026-10-19 | quizbowl 答案行判等 / 站内服务，非可复用库；多数非 JS 栈 |
+
+## 2026-10-19 · 第三十一轮（A 组派生 · **渲染底层轴**）
+
+> 同日第 5 轮（00:00 B / 03:10 A / 06:05 A派生 / 09:20 C）。`radar-rotation.mjs` 返回 `same-day(exhausted)` → B，
+> B 组今天已跑过，**不采纳**，改跑从未扫过的**渲染底层轴**（Markdown / 代码高亮 / 数学 / 图表 / HTML 净化）。
+> 搜索 **12 次（⚠ 超限 2 次）**，0 次 403；第 11 次为发现 `dsh-raw-html` 后的 A 类补扫，第 12 次为去重校验。
+> **依据：从本仓空洞出发** —— `dsh-radar-better-markdown/src/index.js` L37 的 TODO（「评估 mermaid + katex + shiki 的体积与首屏影响」）+ `page-notes/src/client.jsx` L23-26（正文渲染交宿主），两条合起来 = 渲染是宿主的事，但**渲染得好不好看无人管**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `highlightjs/highlight.js` | B 其他JS | **BSD-3-Clause** ✅（GitHub metadata + npm `license` 两源一致） | 讲义/论文/笔记里的代码块 | **重复且可强化**（着色层从无到有） | 🟢 | skeleton-created | 2026-10-19 | ★25002，2026-09-06 push，**npm `highlight.js@11.12.0`**（锁版成立），**`dependencies` 为空、无构建步骤**。实测：`lib/core.js` 可直接 import；未 register 的语言 `highlight()` **抛 `Unknown language`**（不会静默猜）；`highlightAuto()` 在 core-only 下**仍返回结果**（只认已注册语言）→ **必须禁用**，否则 C 代码会被着成 python 类名。⚠ 全量 `unpackedSize` 5.50 MB（`es/` 2.7 MB、`styles/` 2.4 MB），**core-only 首屏体积未实测**。已出骨架 `dsh-radar-code-highlight` |
+| `plolpl789/dsh-raw-html` | **A 原生DSH** | MIT ✅ | 对话正文渲染（非笔记） | 重复但**面板不对**（对话流 vs 笔记/讲义） | 🟡 | proposed | 2026-10-19 | ★80，2026-08-28 push，topics `dsh-plugin` 族，`dsh.bundle.patch` + `dsh.client.inject` 齐全。**本轮不接，三门只过一道**：①形态 ✅ ②许可 ✅ ③**锁版 ❌ —— repo `private:true`，npm `dsh-raw-html` 与 `@plolpl789/dsh-raw-html` 均 404**；且 v1 接入依赖 `patch/patch-frontend.cjs`（改宿主渲染），与本仓「不改上游源码」冲突。字体资产 30+ woff2，作为工作台依赖过重。**价值：DSH 生态里唯一现成的「HTML→卡片 + KaTeX + Mermaid」参考实现（只读参考）** |
+| `plolpl789/dsh-raw-html-v2` | A 原生DSH | **`NOASSERTION`** ⚠ | 同上 | 同上 | 🔵 | pending-license | 2026-10-19 | ★74，**2026-10-08 仍活跃**，「官方 Slot API 版、零 bundle 补丁、复用 v1 引擎」——形态上**比 v1 更符合本仓规则**（不需要改宿主）。但 `package.json` 无 `license` 字段 → API 判 `NOASSERTION`，**待人工核验，不采用、不摘码**；且同样 npm 未发布 → 锁版仍不成立 |
+| `serkodev/markdown-exit` | B 其他JS | MIT ✅ | 笔记/论文解析 | 重复可强化（增益有限） | 🔵 | proposed | 2026-10-19 | ★1370，2026-08-24 push，npm `markdown-exit@1.3.0`（164 KB tarball，deps 7 个全纯 JS）。markdown-it 的 TS 重写、**同名 API**，可作已出的 `dsh-radar-vault-parse`（锁 `markdown-it@14.1.0`）的替换备选；无实质增益 → 不改现有骨架 |
+| `comarkdown/comark` | B 其他JS | MIT ✅ | AI 回答流式渲染 | **全新**（本仓无流式 Markdown） | 🔵 | proposed | 2026-10-19 | ★1063，**2026-10-19 当日活跃**。把 Markdown 流式渲染到 React/Vue/Svelte/Angular/终端；与静态笔记渲染正交。若「问一问」要做流式富文本再回看 |
+| `cure53/DOMPurify` | B 其他JS | Apache-2.0 ✅ | — | **全新**（当期无需求） | 🔵 | proposed | 2026-10-19 | ★17472，2026-10-16 push，npm `dompurify@3.4.17`（`(MPL-2.0 OR Apache-2.0)` → 取 Apache 分支）。本仓唯一 `dangerouslySetInnerHTML` 是 `ui-primitives` 的品牌 SVG 常量（非用户内容）→ 无需求。**条件性前置件**：若采纳任何「正文 HTML」通路，必须先上它 |
+| `bevacqua/insane` | B 其他JS | MIT ✅ | — | 重复（DOMPurify 的轻量替代） | 🔵 | proposed | 2026-10-19 | ★483，2024-05 停更。白名单式净化器，无需 DOM；只作记录 |
+| `wooorm/starry-night` | B 其他JS | MIT ✅ | 代码高亮 | 重复（被 highlight.js 覆盖） | 🔵 | proposed | 2026-10-19 | ★1817，2026-08-30 push。GitHub 同款、521 语法，但依赖 `vscode-textmate`（含 oniguruma wasm 风险）；本轮取一取 highlight.js |
+| `mermaid-js/mermaid` | B 其他JS | MIT ✅ | 图表 | **全新**（无需求） | 🔵 | proposed | 2026-10-19 | ★90738，2026-10-19 活跃。npm `mermaid@12.2.0` **`unpackedSize` 122 MB**（d3/cytoscape/elkjs/katex…）→ 首屏绝不可接受；且本仓无「正文图表」需求。**结论：不做**（`better-markdown` TODO 里提到它，可据此关闭该项） |
+| `yuzutech/kroki` | 非 JS 库（Java 服务） | MIT ✅ | 图表 | 全新 | 🔵 | proposed | 2026-10-19 | ★4372。服务端出图（Docker），形态不符 |
+| `syntax-tree/mdast-util-from-markdown` 等 unified 簇 | B 其他JS | MIT ✅ | Markdown 解析 | 重复无增益（比 markdown-it 更重） | 🔵 | proposed | 2026-10-19 | ★294。需 `micromark` + 多个 `mdast-util-*` 串联，体积与依赖数均大于 markdown-it（已登记并出骨架） |
+| `leizongmin/js-xss` | B 其他JS | **`NOASSERTION`** ⚠ | — | 重复（净化） | 🔵 | pending-license | 2026-10-19 | ★5308，2026-05 push，API `NOASSERTION`（LICENSE 非标准文本）→ **待人工核验，不采用**。本轮无净化需求 |
+| `sbfkcel/towxml`★2896 / `zhaoxuhui1122/vue-markdown`★471 / `borismus/markdown-preview`★215 | B/— | 均 **`null`** | — | — | ⛔ | rejected | 2026-10-19 | 小程序渲染库 / 归档的 md 编辑器 / 2016 的 Chrome 扩展。**无许可证**，只登记 |
+| `MarketingPipeline/Markdown-Tag`（GPL-3.0）★460 / `aaronsw/html2text`（GPL-3.0）★2812 / `sbarex/SourceCodeSyntaxHighlight`（GPL-3.0）★4309 / `elvirbrk/NoteHighlight2016`（GPL-2.0）★3929 / `solancer/sarala`（GPL-3.0）★49 | — | **GPL 族** | — | — | ⛔ | rejected | 2026-10-19 | 许可证红线 |
+| `syntaxhighlighter/syntaxhighlighter`★5296（2020 停更、需全局 DOM 注入）/ `720kb/highlighter.js`★379（高亮 DOM 元素非代码）/ `mplewis/src2png`★2177（代码→图片）/ `volca/markdown-preview`★251（扩展） | — | MIT | — | 名不符实 / 过时 | ⛔ | rejected | 2026-10-19 | 「高亮」轴的系统性噪声：多数是**编辑器/扩展/截图工具**，不是可嵌入的着色库 |
+| Markdown 应用簇：`gaowei-space/markdown-blog`(Go)、`assemble/assemble`★4256、`colinhacks/devii`★496、`hexojs/hexo-renderer-markdown-it`★369、`CHENXCHEN/...plus`★122、`links` 类 | — | MIT | — | — | ⛔ | rejected | 2026-10-19 | 是「应用/站点生成器/框架适配器」，不是库 |
+| 图表 agent-skill 簇：`tt-a1i/archify`★85466、`cathrynlavery/diagram-design`★57834、`ahmedkhaleel2004/gitdiagram`★18313、`Agents365-ai/drawio-skill`★10229、`oh-my-mermaid/oh-my-mermaid`★3166、`axtonliu/axton-obsidian-visual-skills`★3653 | — | MIT | — | — | ⛔ | rejected | 2026-10-19 | **全是 agent skill / 站点 / CLI**，非 JS 可嵌入库；`mermaid diagram` 一词前排几乎全被此簇占据 |
+| 非 JS 栈簇：`erweixin/RaTeX`(Rust,`NOASSERTION`)、`PhraseHQ/SwaTex`(Swift)、`lingarajsankaravelu/Katex`(Kotlin,`null`)、`ije/md4w`(Zig)、`CodingSha/SPMathKit`(ObjC)、`zg` 类 | — | 混合 | — | — | ⛔ | rejected | 2026-10-19 | `katex math render` 前列全是各语言重实现，JS 栈只有 `katex` 本体（本仓已有 `dsh-radar-temml` 覆盖公式侧） |
+
+## 2026-10-19 · A 组派生（第三十二轮 · Agent 工作流 / 审查门禁轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `GraySilver/dsh-evolve-modes` | A 原生DSH | **MIT** ✅ | 规划 / 学习工作流 | **重复可强化**（规划页「排一下」+ 独立验收审查） | 🟢 | proposed | 2026-10-19 | ★204，2026-08-16 建 / **2026-09-14 push（已 35 天未动，非活跃）**，TypeScript。npm `@graysilver/dsh-evolve-modes@0.4.1` **已核实可锁版** ✅（MIT，unpacked 499,204 B，运行时依赖仅 `zod`+`@deepseek-ai/schemastery`）。自带 `dsh.bundle.patch` + `dsh.client.inject`（8 个前端包）→ **形态 ✅ / 许可 ✅ / 可锁版 ✅ 三门全过**。内容：可组合的「工作状态（正常/计划）· 思考策略 · 质量门禁（对抗性/验收审查）· 自进化（默认 Propose）」，**质量门禁是独立审查 Agent**。判据③成立：本仓 `dsh-zhiyun-page-planning` 的 `PLAN_PROMPT→readPlanResponse` 是**单次 LLM 调用、无任何审查环节**。**本轮 L2 骨架** `packages/dsh-radar-evolve-modes`。⚠ 三点风险见报告 L-2/L-3：①上游 patch 含 `!!js` 表达式（本仓安全补丁不支持）；②peer 声明 `^0.1.1-rc.2 \|\| ^0.1.2-rc.1` 须与 profile 实际宿主版本交集判定；③**会改全局 Agent 行为**（插输入区 + 写 system prompt section），评审应放最后 |
+| `EricWang1358/dsh-web-studyhub` | A 原生DSH | **MIT** ✅ | 习题 / 间隔复习 | **重复且无增益**（习题簇） | ⛔ | rejected | 2026-10-19 | ★124，2026-09-12 建 / 2026-10-18 push，JavaScript。npm 名实际为 **`@ericwang1358/dsh-daily-flashcard@3.5.5`**（仓库名与包名不一致），但 **npm registry 上不存在该包名**（404）→ **不可锁版**；`dependencies` 含 base-ui / codemirror / katex / pdfjs / dompurify 等 13 项，体积远超本仓任何一个已评估候选。**核心能力 = 资料→题目 + SM-2 间隔复习**：题目侧与 `dsh-zhiyun-quiz` 重复，调度侧是 **SM-2，旧于 FSRS**（已在册 `fsrs-browser`/`ts-fsrs`）→ 三条判据全部不成立。**核心代码闭源**（`lib/` 为构建产物）→ 即便许可 MIT，也属「只能装不能读」。只登记 |
+| `xuanyuanzhifeng/dsh-plugin-agent-workflow` | A 原生DSH | MIT | 通用（工作流） | 重复（与本轮 🟢 同列，簇内落选） | 🔵 | proposed | 2026-10-19 | **非新仓**（2026-10-15 已登记，本轮在 `dsh plugin agent mode` 中再次浮出）。★267、2026-10-12 push。无可核实的功能细节（描述仅一句），不构成对 `dsh-evolve-modes` 的分流 |
+| `sixtysevenlf/dsh-skill-blender-modeling`（`NOASSERTION`）、`cuddly-guacamole/opencode-routing-suite`（`NOASSERTION`）、`PerryLink/dsh-github`（Apache-2.0，CI 工具非教学模式） | A 原生DSH | 混合 | — | 无关 / 待核 | ⚠ 待核 | pending-license | 2026-10-19 | 前两条许可证 **`NOASSERTION`** → 待人工核验、不采用；第三条与本轴（Agent 工作模式）无关，仅记录 |
+| 「安全审查门禁」簇：`ateen18/dsh-plugin-security-review`（`null`）★4、`ShanHaiFish/dsh-plugin-security-review`（MIT）★2、`dushaobindoudou/dsh-plugin-security`（MIT）★2 | A 原生DSH | `null` / MIT | — | **重复无增益**（审计簇第 7/8/9 家） | ⛔ | rejected | 2026-10-19 | 全是「插件**安装**前的供应链安全评审」，与在册 `plugin-audit` / `compat-vet` / `skill-pack-security` 同列；与本轮 `dsh-evolve-modes` 的「**产出**质量审查」**不是同一件事**（前者审包，后者审结果）。首条无许可证为红线 |
+| 「规划文件 / 计划归档」簇：`Asaka-RUM/dsh-planning-with-files`（`NOASSERTION`）★2、`asd176916847/dsh-plan-first-dev`（MIT）★1、`likesrt/dsh-plugin-plan-archive`（`null`）★0、`Dalizi2026/dsh-model-dispatch`（MIT）★12、`lincong1987/dsh-model-switch`（MIT）★10 | A 原生DSH | 混合 | — | **无关 / 重复无增益** | ⛔ | rejected | 2026-10-19 | 前三条是「Manus 式计划文件 / 强制 plan-first / 计划归档」，属 **DSH plan-mode 的周边**，与「学生周计划表」不同物（见本行 🟢 备注的同名不同物问题）；后两条是模型切换，`dsh plugin plan mode` 一词的**系统性噪声**。许可证 `NOASSERTION`/`null` 两条仅登记不摘码 |
+
+## 2026-10-19 · 第三十三轮（B 组 · 校园数据「读后整理层」轴）
+
+> 关键词（10 次，达上限未超限，0 次 403）：`zju lost found`(0)、`zju notice`(1)、`zju calendar`(6)、
+> `zju 失物 OR 招领`(降级作废)、`zju 通知 OR 公告`(降级作废)、`zju bulletin board`(1)、
+> `zju useful scripts`(3)、`zju library`(53)、`zju activity`(2)、`zju grade point`(0)。
+> 补扫（不在 10 次内、仅用于否决 L2）：`keyword extraction rake`(150)、`textrank sentence ranking`(15)。
+> **本轮 0 个 🟢 / 0 个 🟡 / 0 个骨架，未开 PR（门槛未触达）。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Jnove/mentor-agent` | 非 JS（Python） | **`null`** ⛔ | 政策问答 / 通知跟进 | 重复且无增益 | ⛔ | rejected | 2026-10-19 | ★1，2026-07-09 建 / 2026-08-30 push。描述仅一句「帮浙大学生理解政策、跟进最新通知」，无 topics、无可用文档。**无许可证 + 非 JS 栈**，三条判据全不成立 |
+| `5dbwat4/ZJU-live-better` | B 其他JS | **GPL-3.0** ⛔ | 校园生活脚本集 | — | ⛔ | rejected | 2026-10-19（`zju` 批量扫时已在册，本轮 `zju useful scripts` 复出） | ★221，2026-10-07 push。**许可证红线**，不摘码 |
+| `ChenyuHeee/ZJU-live-better` | B 其他JS | GPL-3.0 | — | — | ⛔ | rejected | 2026-10-19 | ★3，上一条的 fork → 去重归一，不再单列评估 |
+| `zhullyb/zjut-useful-scripts` | 非 JS（Shell） | `null` | — | — | ⛔ | rejected | 2026-10-19 | ★0，**浙工大（非浙大）** + 无许可证 |
+| `ZJUZhiyuCai/zju-activity-calendar` | 非 JS（Python） | **`NOASSERTION`** ⚠ | 校园活动 | — | 🔵 | pending-license | 2026-10-19 | ★1，2026-04-26。无描述、无 topics。许可证 **`NOASSERTION` → 待人工核验、不采用**。本轮唯一 `NOASSERTION` 新面孔。`zju activity`(total 2) 的第二条是 2014 年 GPL 仓，已弃 |
+| `Meteors27/ZJU-Calendar-Maker` | 非 JS（Python） | `null` | 课表导出 | 重复且无增益 | ⛔ | rejected | 2026-10-19 | ★19，**2023-03 停更**。ics 导出，与本仓 `dsh-zhiyun-tongge-schedule` / `career-calendar` 重复且无证 |
+| `cmjang/zjut-calendar` | 非 JS | MIT ✅ | — | — | ⛔ | rejected | 2026-10-19 | ★0，2021-10 停更。**浙工大**，非浙大 |
+| `zhpywhatever/ZJU_Calendar` | 非 JS（Python） | `null` | 校历 | — | ⛔ | rejected | 2026-10-19 | ★0，2024-11。无许可证 |
+| `waseem18/node-rake` | B 其他JS | **MIT** ✅ | 笔记 / 讲义（关键词抽取） | **重复且无增益**（实测由「可强化」降级） | ⛔ | rejected | 2026-10-19 | ★103，2023-07-27 push，npm `node-rake@1.0.1`（2018-03 发布，unpacked **12,459 B**，**零运行时依赖** → 可锁版 ✅）。**实测两处硬伤**：① 中文输入直接 `TypeError`（`index.js:75`），根因 `removeStopWords` 的 `\b` 对 CJK 无词边界 + `stopWords.txt` 无中文词；② `index.js:63` 用频率**值**当键（`Object.values(wordFreq).forEach(freq => wordDegree[freq] += …)`），评分被污染。本仓 `layered-search.js` L10 自述「不切词、不算相关度」→ 需求真实，但**此库不是那个更优底层**。若要做，应本仓自写 30 行中文友好切分 |
+
+> **本轴结论**：B 组「校园信息侧」**封板**。10 次搜索换 1 条无许可 Python 仓库；
+> `zju calendar` 6 条、`zju library` 53 条的价值项**全部在册**（多是数据库课设噪声）。
+> **建议 B 组由「每 3 天必跑」降为事件驱动**，额度让给仍在稳定出 🟢 的 A 组。
+> 另：`中文词 + OR` 在 GitHub search 上是**无效组合**（退化回泛 `zju`，且不返回 `total_count`），后续 B 组禁用。
+
+---
+
+## 2026-10-19 · 第三十四轮（A 组派生 · 模型请求管线「往返面」轴）
+
+> 关键词（13 次搜索 ⚠ 超限 3 次，全程 0 次 403）：`dsh plugin model provider`(190)、
+> `dsh plugin provider in:description`(223)、`cordis plugin llm provider`(26)、`dsh plugin fallback`(82)、
+> `dsh plugin usage stats`(55)、`dsh plugin token usage`(193)、`dsh plugin gateway`(102)、
+> `dsh plugin notification`(179)、`dsh plugin mcp`(534)、`deepseek harness plugin in:name`(162)、
+> 补扫 `dsh plugin notification in:description`(74)、`dsh plugin hook in:description`(18)、
+> `dsh plugin permission in:description`(33)、`dsh plugin export in:description`(62)、`dsh plugin desktop in:description`(292)。
+> 约 2,200 条命中 → 未登记 54 条 → 有效 3 条；**🟢1（`dsh-llm-fallbacks`）+ 🟡1（`loongsuite/dsh-plugin`）+ 🔵2 + ⚠1 + ⛔48 簇**。
+> **本轮出骨架** `packages/dsh-radar-llm-fallback`（锁版 `dsh-llm-fallbacks@0.6.7`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `omdsh-dev/dsh-llm-fallbacks` | **A 原生DSH** | **MIT** ✅ | 通用（所有页面共用请求管线） | **重复可强化**（`dsh-llm` 失败路径） | 🟢 | proposed | 2026-10-19 | ★21，2026-10-18 push（活跃），topics `dsh-plugin` 族，`dsh.bundle.patch` + `dsh.client.inject`（6 个前端包）齐全。npm `dsh-llm-fallbacks@0.6.7` **可锁版** ✅（unpacked 905,327 B，dist 696 KB，运行时依赖仅 `use-sync-external-store`）。**三门全过**（形态 / 许可 / 可锁版）。内容：按触发码（`AUTH`/`QUOTA`/`RATE_LIMIT`，可扩 `CONTEXT_WINDOW_EXCEEDED`）沿 fallback 链切换 provider/model + 冷却 + 可选半开恢复；峰谷分时路由；角色化 subagent。**判据③需实测**（本仓无跨 provider 失败转移，但「更优质」未用失败码样本验证）。**本轮 L2 骨架** `packages/dsh-radar-llm-fallback`。⚠ 三点硬风险：**R-1 宿主窗口 `^0.2.1-rc.2` 与本仓 `0.2.0-rc.2`/`0.2.1-alpha.1` 均不相交**（semver prerelease 规则）；R-2 须排在 `dsh-llm-retry` 之后；R-4 npm `package.json` 缺 `license` 字段但 tarball 内有 MIT `LICENSE` |
+| `loongsuite/dsh-plugin` | **A 原生DSH** | **Apache-2.0** ✅ | 通用（运维/可观测） | 全新（本仓无追踪） | 🟡 | proposed | 2026-10-19 | ★29，2026-10-12 push，topics `opentelemetry`/`genai`/`tracing`。npm `@loongsuite/dsh-plugin@0.1.3` 可锁 ✅（unpacked 144,637 B）。把每个 agent turn 变成 GenAI span 树（step / LLM 调用含 TTFT / 工具执行 / token），经 OTLP 导出到 Jaeger / Tempo / Langfuse。**不做骨架的理由**：① 本仓没有后端，OTLP endpoint 是「运维配置」不是「学生功能」，默认开启等于把每位同学的使用数据往外发 → **隐私边界**；② 学生场景契合度低（不是「全新面板」而是「没有任何面板」）；留作「若做导师侧性能诊断」的底层 |
+| `PolinniZhong/dsh-personal-center` | A 原生DSH | MIT ✅ | 个人配置 / 用量 | **重复且无增益**（与在册 `dsh-bottom-info-bar`/`dsh-usage-*` 同列） | 🔵 | proposed | 2026-10-19 | ★118，2026-09-28 push。把它按功能拆开看：Token 用量统计（在册已有 4 家：`dsh-bottom-info-bar`/`dsh-usage-chart`/`dsh-usage-panel`/`dsh-hud`）、成本估算（同上）、自定义指令、**外观全局字号**（本仓「个人」页唯一外观项就是这个）、桌面宠物。**唯独没被覆盖的是「全局字号」与「自定义指令」**，二者都属本仓「个人」页的自有实现（`dsh-zhiyun-page-me`）→ 按「不简单集成重复功能」不接；npm unpacked **8,233,357 B（8.2 MB，多因桌宠素材）**，作为工作台依赖过重 |
+| `0xsline/awesome-deepseek-harness` 等 5 个 awesome 清单 | A 原生DSH（清单） | CC0 / MIT / ⚠`NOASSERTION` | 通用 | 全新（线索源，与在册 `awesome-dsh-plugin` 同列） | 🔵 | proposed | 2026-10-19 | `0xsline/awesome-deepseek-harness` ★1218 CC0 ✅（本轮 `dsh plugin mcp` 第 1 名）；`Zhiyuan-Fan/Awesome-DeepSeek-Harness-Plugins` ★574 MIT ✅；`imsai-sh/awesome-deepseek-harness-plugins` ★300 MIT ✅（自述「11,000+ dsh plugins」的市场）；`Dominic789654/…` ★387 与 `web-casa/…` ★117 为 **`NOASSERTION`** ⚠ 待核。**只作线索源**，不摘内容；★1218 的清单可作为下一次「窄词池」的来源 |
+| `dsh-external/*` 系列（本轮 4 个 URL 实测 **404**）、`graygravity/dsh-notify`（404）、`web-casa/dsh-mcp-manager`（404） | — | — | — | — | ⛔ | rejected | 2026-10-19 | 这些名字来自 `pipetow` / `Tania-X` 等 README 的推荐顺带提法，**仓库实际不存在**（`api.github.com/repos/...` 返回 `Not Found`）→ 「README 里出现的仓库名 ≠ 存在的仓库」，登记一行，避免下轮再核 |
+| 用量统计簇：`lanlandeli/dsh-usage-stats`(⚠`NOASSERTION`,★11)、`AKS1st/model-usage-plugin`、`zhangzheng25/dsh-token-monitor`、`jkStars/dsh-token-usage-stats`、`jianweideng0515-create/dsh-usage-stats`(BSD-3)、`1841220388zzzcccxxx-star/dsh-token-stats`、`Yolotd/dsh-plugin-duwg`、`kindred-7/dsh-usage-stats`(`null`)、`feiyang-dev/dsh-usage-plugin`(★36)、`HaoyueQin/dsh-usage-statistics-panel`(★27)、`AlfredChaos/dsh-usage-panel`、`Max-Samson/dsh-usage-chart`、`a903067276-rgb/dsh-hud` | A 原生DSH | 多数 MIT，1 条 `NOASSERTION`、1 条 `null` | 用量 | **重复无增益**（第 5–17 家） | ⛔ | rejected | 2026-10-19 | 本轮最大的一簇：**13 个新仓做的是同一件事**（token 用量 / 成本 / 热力图 / 图表）。在册已有 4 家 + 本仓「个人」页有外观分区。**该轴已彻底饱和**，建议封板；`lanlandeli` 一条 `NOASSERTION`（无 `license` 字段）单列待核 |
+| Provider/登录簇：`Mars-Sea/dsh-commandcode-provider`(★411)、`cv-superding/dsh-deepseek-web-login`(Apache-2.0,★289)、`Stormycry-cryp/dsh-AuthInOne`(★105)、`mo-n/dsh-provider-qoder`、`wqy8593521/dsh-model-pro`、`tearslee/dsh-workbuddy2api`、`bufeibufei/dsh-openai-codex`、`fan56/dsh-model-sync`(`null`)、`Victor-770/dsh-commandcode-provider`、`viztor/dsh-opencode-patch`、`wingoo/codex-plugin-dsh` | A 原生DSH | 多数 MIT | 通用（接入第三方模型） | **重复无增益 / 不用** | ⛔ | rejected | 2026-10-19 | 全部是「把某个第三方订阅/网页版接成 provider」。**与本仓原则冲突**：① 本仓只用宿主内置 provider，不替用户接入灰色网页登录（ToS 风险）；② 免费额度下的降级策略已由本轮 🟢 覆盖。`dsh-AuthInOne`★105 是同族里唯一做「多 provider 统一登录」的，仍属「换一个登录页」而非强化 |
+| 网关/远端簇：`Clarklevis1995/dsh-mobile`(★568)、`Clarklevis1995/dsh-plugin-mobile-gateway`(★88)、`hytime/dsh-thinking-effort`(★53)、`islibaodong/dsh-login`、`litestartup-com/dsh-api-gateway`、`siegfly/dsh-deepseek-vision`、`clarknu/dsh-gateway`、`CaiZongyuan/dsh-ag-ui`、`yybai25/dsh-ssh-desktop`、`grunmin/dsh-acp-enhanced`、`WDahah/portable-dsh-multi-agent-plugin`、`SeverusZh/dsh-plugin-subagent-director`、`Jonah-Wu23/dsh-agy-safe`、`YFY-AI/dsh-llm-fallback` | A 原生DSH | 多数 MIT | — | 与 web 客户端形态不兼容 / 重复 | ⛔ | rejected | 2026-10-19 | 移动端 / 远程 shell / API 网关 / 协议桥。**本仓是 web 工作台**，这些改的是「怎么连上来」，不是「连上来之后能做什么」。`YFY-AI/dsh-llm-fallback`（★1）是其 `publishConfig.registry = npm.pkg.github.com` → **公网 npm 装不了**，且与本轮 🟢 **名字几乎相同、勿混** |
+| 通知簇：`hikarioyama/Smart-DSH`(`null`,★33)、`ly6170/dsh-messager`、`c-ling/dsh-plugin-notify`、`117BS/dsh-perlica-ding`、`yuxino/dsh-blue-whale-maid`(⚠`NOASSERTION`,★6)、`halosb/dsh-workmate`、`Mars-Sea/dsh-deeppilot`、`ltao0829/dsh-task-notify`(BSD-3)、`pitetow/dsh-notify-on-complete`、`Tania-X/dsh-notify-macos` | A 原生DSH | 多数 MIT | 学习提醒 | **重复无增益**（第 4–12 家） | ⛔ | rejected | 2026-10-19 | 「回合结束 → 桌面/飞书/钉钉/Webhook 推送」。在册已有 3 家，本仓「今天」页已有提醒语义。**该轴饱和**，封板 3 个月；`Smart-DSH`★33 无许可证（`null`）为红线，`dsh-blue-whale-maid` `NOASSERTION` 待核 |
+| 审计/钩子簇：`jkrandom-sudo/dsh-plugin-audit`、`chunfenxiazhi-collab/dsh-stability-audit`、`truelove-dreamer/dsh-plugin-hooks`(`null`)、`wula1223/dsh-plugin-dev`、`rasyidmmz/dsh-ai-memory`、`SeverusZh/dsh-yolo-mode`、`xlxs123/dsh-session-multiselect`、`wingsky-1/dsh-plugin-hub`、`weekitmo/oh-my-dsh-plugins` | A 原生DSH | MIT / `null` | 通用 | **重复无增益** | ⛔ | rejected | 2026-10-19 | 审计/钩子已是在册 `plugin-audit`/`compat-vet`/`upstream-radar` 第 10–12 家；`dsh-yolo-mode`（自动批准沙箱升级）与本仓「学生场景最小权限」原则相反；其余 ★≤5 的清单/模板类。`dsh-plugin-hooks` 无许可证为红线 |
+| `Fayelin12/dsh-office`、`HongMing-Huang/dsh-file-upload`、`cinob/dsh-web-search-multi`、`tuojc/dsh-browser-firefox`、`qphotoai/dsh-computer-use-windows`、`songoao25/dsh-bottom-info-bar`(在册)、`JerryLiu369/agent-web-search`、`wingsky-1/dsh-plugin-hub`、`justhalfbit/dsh-plugin-jev-effort-selector`、`HaoyueQin/dsh-diff-stat`、`yuioi666/dsh-plugin-model-capability`、`a86582751/dsh-nexttavern`(GPL-3.0)、`bwndlct/dsh-session-export`、`yangyongzhen/dsh-session-export`(`null`)、`azure5100/huahua-dsh-record-replay` | A 原生DSH | 混合 | — | 无关 / 已覆盖 | ⛔ | rejected | 2026-10-19 | 单点小工具（上传/搜索/浏览器/截图/差异徽章/模型能力表/会话导出/录播回放）。会话导出与本仓「笔记」重复且无更优底层；`dsh-nexttavern` 为 GPL-3.0 红线 |
+
+> **本轴结论（三条）**：
+> ① **「用量/通知/审计」三个子轴同时饱和**——本轮 54 条新仓里 40 条落在这三簇，且都是「第 N 家」。
+> A 组内卷的主战场已从「新能力」转向「同一能力的复刻」。
+> ② **唯一还空着的是「请求管线本身」**：provider 接入（饱和）、网关（形态不合）、
+> 而**「失败之后按链降级」** 此前从未被登记——本轮 🟢 正是从这个空档出来的，
+> 它也是首条「不面向任何单一页面」的候选（强化的是**所有页面共用的那一层**）。
+> ③ **A 类候选的瓶颈已从「找得到」变为「装得上」**：本轮三门全过的 🟢 死在第四道门
+> （宿主版本窗口），详见报告 §4。
+
+## 2026-10-20 · 第三十五轮（C 组 · **字幕原文层**轴）
+
+> 跨天首轮（本地 `293 % 3 = 2` → C）。**12 次搜索（⚠超限 2 次）、0 次 403**，约 96 条去重命中 → **首次登记 24 条** → 有效 8 条。
+> **🟢1 / 🟡1 / 🔵3 / ⚠1 / ⛔18（含 4 簇）**；骨架 `packages/dsh-radar-media-captions/`。
+> 起点是**读代码得出的三处缺口**（F-1 `join("")` 无分隔 / F-2 无标点恢复 / F-3 `english` 轨从未使用），
+> **不是**凭印象挑的词。详见 `2026-10-20.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `vidstack/captions` | B 其他JS | **MIT** ✅（GitHub + npm 两处一致） | 课堂字幕 / 讲义 / 出题（**原文层**） | **重复可强化**（字幕页 + 终稿原文层） | 🟢 | skeleton-created | 2026-10-20 | ★149，push 2026-09-09。**npm 主包名 `media-captions`**（`vidstack-captions` 404）；`latest=0.0.18`(2023) / **`next=1.0.4`**(2024-07-29)，**必须写死 1.0.4**；零运行时依赖，unpacked 162,428 B，纯 ESM。**不提供中文断句 / 标点恢复 / 浙云 JSON 信道**（见报告 §5 结论①）。已出骨架 `dsh-radar-media-captions` |
+| `gsantiago/subtitle.js` | B 其他JS | **MIT** ✅ | 字幕导入/导出（外挂字幕、复习材料） | 重复可强化（**方向不同**：格式搬运，非句子化） | 🟡 | proposed | 2026-10-20 | ★435，push 2026-01-24。npm `subtitle@4.2.2`（MIT，unpkg 实测）。**能 stringify 回去** —— 本仓缺「导出 .srt/.vtt 给外部工具」通路。4 个运行时依赖，Node stream 风格，浏览器端需包一层 |
+| `plussub/srt-vtt-parser` | B 其他JS | **MIT** ✅ | 字幕解析 | 重复且**无增益**（⊂ 🟢） | 🔵 | proposed | 2026-10-20 | ★31，push 2024-07-29。零依赖 TS 解析器，但 **npm 404（锁版不成立）**、无渲染层、格式面窄于 🟢。第三门不过 |
+| `textlint-rule/sentence-splitter` | B 其他JS | **MIT** ✅ | 笔记 / 讲义断句 | 重复可强化（**但中文不成立**） | 🔵 | proposed | 2026-10-20 | ★138，push 2026-04-02。描述明写 `{Japanese, English}`，中文标点无保证 → 对本仓中文课堂无价值 |
+| `laubonghaudoi/subtitle-editor` | B 其他JS | MIT ✅ | 字幕校对 | 仅参考（形态不合 + **同名不同物**） | 🔵 | proposed | 2026-10-20 | ★57，纯 Web。但 npm `subtitle-editor@1.0.0` 是 **2019 年的另一个包（ISC / Vue2 / webpack2）** → 不可作依赖来源，只可读交互 |
+| `oramasearch/chunker` | B 其他JS | **`NOASSERTION`** ⚠ | 讲义分块 | — | ⚠ 待核 | pending-license | 2026-10-20 | ★33，2024-03 后停更。**待人工核验，不采用、不摘代码** |
+| 字幕编辑器簇：`pepri/subtitles-editor`(`null`,★59)、`hamidb80/subtitle-editor`(MIT,★42)、`the-dissidents/subtle`(**GPL-2.0**,★29)、`drakang4/jamak`(MIT,★19,2020停更)、`moaminsharifi/subtitle-flow`(MIT,★18)、`Ratheshan03/ai-subtitle-editor`(`null`,★15) | B 其他JS | 混合 | 字幕校对 | **重复无增益** | ⛔ | rejected | 2026-10-20 | 6 家全是「载入视频 + 手工改时间轴」的**双语单轨编辑器**，**没有一家做中文句读**；且本仓字幕来自 API、不来自用户上传 .srt → 编辑场景不成立。`subtle` 为 GPL 红线 |
+| 播放器字幕轨簇：`ApayRus/frazy-parser`(MIT,★9)、`XiangnianZhou/neta`(MIT,★1,2020)、`AlexandreMT/subtitling`(`null`)、`Leawind/srt-parser-ts`(**GPL-3.0**)、`pedromsilvapt/subbox`(`null`)、`ShipItAndPray/pretext-captions`(`null`) | B 其他JS | 混合 | 字幕解析 | **重复且无增益** | ⛔ | rejected | 2026-10-20 | 能力 ⊂ `media-captions`；或 ★≤9；或无许可证。`srt-parser-ts` GPL 红线 |
+| 通用断句/分词簇：`sirlancelot/string-segmenter`(`null`)、`chax-at/simple-sentence-splitter`(`null`)、`MarkusBansky/chasm`(GPL-3.0)、`seanghay/split-khmer`(MIT,高棉语)、`nunuhi/sentence-splitter`(`null`)、`stoicaandrei/sentence-splitter`(`null`)、`cli3338198/sentence-splitter`(`null`)、`perezamadorluisenrique-gif/text-format`(MIT,大小写转换) | B 其他JS | 混合 | 笔记断句 | **重复无增益** | ⛔ | rejected | 2026-10-20 | 语言不覆盖中文；或 ★≤2；或无许可证。**`sentence splitter` 前排全是日/高棉/通用分词器 —— 中文断句在 JS 生态为空**（见报告 §5 结论②） |
+| 习题/刷题簇：`ZaneH/piano-trainer`(MIT,★2210)、`drbarzaga/react-dojo`(MIT,★33)、`linkedin-faq/linkedin-quizzes-kodyfire`(MIT,★28)、`magentaqin/quiz-me`(MIT,★17)、`iamgideonidoko/linassess`(MIT,★9)、`blackmouse572/quizler-fe`(`null`)、`SohamXYZDev/openboard`(MIT,★6)、`psatler/quiz-nextjs`(`null`)、`Neerajkr7/cca-foundations-exam-practice`(MIT)、`SnakeEye-sudo/Offline-Exam-Practice`(`null`)、`ayozoo/pdf-quiz-practice`(`null`)、`abdullah-khaled0/PDF-Quiz-Generator-with-AI-and-React`(`null`)、`SakshiBhalla77/Pdf-Quiz`(`null`)、`chanchaldabriya/pdf-quiz-app-client`(`null`)、`DHKLeung/life-in-the-uk-test`(`null`)、`notwld/Lab-Exam-Practice`(`null`)、`notwld/lab-exam-practice-react-dotnet`(`null`)、`Didula-Lakminda/Frontend_Practice_Paper`(`null`) | B 其他JS | 多数 `null` | 刷题 | **重复无增益** | ⛔ | rejected | 2026-10-20 | 本仓 `dsh-zhiyun-quiz` 已有「题形状 + 先筛后出 + 四层质检链 + 去重」，远完整于模板类题库。**`piano-trainer`★2210 是键盘乐器练习，与「刷题」仅字面同词 → star 数在此轴第 4 次被证明不可作判据** |
+| 笔记 OCR 簇：`zeus-12/uxie`(`null`,★197)、`Waqar-743/SnapNote`(`null`)、`NitinN77/Smart-Note-Taker`(`null`)、`benjamintaito/inknote`(MIT)、`Marwan-Alhindi/notaplus`(`null`)、`Nilesh98-codes/note-sync-docs`(`null`)、`mentor98/Smart-AI-Note-Taking-App`(`null`)、`King-fly/note-taker`(`null`)、`mainit-na-tinapay/Rubric`(`null`) | B 其他JS | 多数 `null` | 笔记 OCR | **重复无增益** | ⛔ | rejected | 2026-10-20 | 9 条里 7 条无许可证 → 红线。`inknote` 是 Windows 手写笔应用，形态不合。OCR 通路 2026-10-17 已判「Trans2Former + parser 视觉路径足够」 |
+| 论文阅读簇：`LinzuoZhang/Paper-Lantern`(MIT,★10)、`Tentengg/Paper-Reader`(MIT,★1)、`haunledeshuchang/moyue-reader`(MIT,★1)、`ChangHsiang/PDF-Reader`(MIT,★0)、`GindaChen/scholarly-reader`(MIT,★0)、`martin2026US-lab/paper-space`(MIT,★0)（`zotero-ai-reader` 在册） | B 其他JS | MIT | 论文精读 | **重复无增益** | ⛔ | rejected | 2026-10-20 | 本仓论文页是 `dsh-zhiyun-page-paper` + **锁版上游 `@ggboy123/dsh-paper-reader`** 的完整兼容层（24 路由 + 5 agent 工具 + 选中即译）。这 6 家全是 ★≤10 的独立桌面/扩展应用，**无一家提供可嵌入式解析层** |
+| 课表 ICS 复扫：`marioMLLL/ecnu-timetable-calendar`、`computerfan/XJTLU-Timetable-to-ICS`、`khosbilegt/mq-timetable-exporter`、`RunasSudo/allocics.js`(AGPL-3.0)、`0iy/schulportal-hessen-timetable-export`、`Jay-Nepal/sunway-izone-timetable-export`、`PNRYates/knoxi-calendar`、`JustBrandonLim/timetable-grabber-sit`、`romankurakin/dkuzeit`、`NLion74/ics-webuntis`、`vincentdchan/SCAUCourseExporter`、`GarytheNoob/hku-timetable-exporter`、`sceneeeee/xjtlu-timetable-bookmarklet`、`n0x1d3/curtin-calendar`(GPL-3.0)、`naykakashima/UoDTimetables`、`navlemis/timetablext`、`TeoTzeShuen/timetable-exporter`、`Foahh/tpg-timetable-exporter`、`Ishaan-nasir/SnapCal`、`PardhavMaradani/vit-timetable-export-plugin` | B 其他JS | 混合 | 课表 ICS | **重复无增益** | ⛔ | rejected | 2026-10-20 | 前排 10 条**全部已登记**，剩余 10 条同型且 ★≤4。**课表 ICS 轴维持 2026-10-14 的「饱和」判定** |
+| 非 JS / 形态不合：`cdown/srt`(Python,MIT,★537)、`byroot/pysrt`(Python,**GPL-3.0**,★491)、`finwarman/kcl-timetable`(Python)、`JaciBrunning/ElsieScraper`(Ruby)、`kilohealth/rn-fitness-tracker`(MIT,★126,RN 原生桥) | — | — | — | 技术栈 / 形态不符 | ⛔ | rejected | 2026-10-20 | C 组限定 JS/TS。`rn-fitness-tracker` 是 Google Fit / HealthKit 原生桥，Web 工作台用不上 |
+
+> **本轴结论（三条）**：
+> ① **「格式解析」与「句子化」是两件事** —— `media-captions` 能把 SRT/VTT 拆成 cue，
+> 但**不会**把两个 cue 连成一句、也不补句号。本仓 `join("")` 的缺口**没有任何 JS 库能替我们补**。
+> ② **中文标点恢复在 JS 生态里是空的**：`punctuation restore language:typescript` → **0**、
+> `subtitle segment merge algorithm` → **0**、`subtitle segmentation input:name` → **0**。
+> 三个最贴的词全 0 → 这是**事实空缺**，不是搜索姿势问题。中文语义底层连续第三轴（检索/数词/标点）
+> 都只能自写薄实现。
+> ③ **字幕域能提供的能力只有三样**：格式解析（🟢）、反向序列化（🟡）、双语轨渲染（cue settings）。
+> 其余「编辑器 / 播放器轨 / SRT CLI」全是重复劳动 → **字幕域建议封板 3 个月**，
+> 下轮 C 组转「作答统计可视化」或「错题变体生成」。
+
+## 2026-10-20 · 第三十六轮（A 组派生 · 检索底层轴）
+
+> 关键词（12 次搜索 ⚠ 超限 2 次，全程 0 次 403；另 3 次纯元数据核实已单列）：
+> `dsh-plugin search`(802)、`dsh plugin search`(487)、`cordis plugin search`(80)、`dsh plugin content index`(0)、
+> `dsh plugin knowledge base`(45)、`dsh plugin rag`(37)、`dsh plugin lexical`(5)、`dsh plugin session search`(50)、
+> `cordis plugin full-text search`(2)、`in:name dsh-search`(515)、`dsh plugin pdf extraction`(8)、`dsh plugin layout parser`(1)、
+> `cordis web plugin markdown`(7)。
+> **131 个未登记仓库** → 有效 9 条；**🟢1（`minisearch`，B 类）+ 🟡3 + 🔵4 + ⚠1 + ⛔6 簇**。
+> **本轮出骨架** `packages/dsh-radar-search-rank`（B 类 · 锁版 `minisearch@7.1.2`）。
+> 起点是本仓自述的弱项：`layered-search.js` 第 ⑥ 条「字面、不切词、不算相关度」；
+> 实测另发现 **L-2 沉默失败**：`layers` 传空集 → `empty:true` 零命中且不报错。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `lucaong/minisearch` | **B 其他JS（纯库）** | **MIT** ✅ | 学习页检索 | **重复可强化**（`layered-search.js` 排序层） | 🟢 | proposed | 2026-10-20 | npm `7.1.2` **实查可锁** ✅（`latest` 已 7.2.0；unpacked 820,346 B，含 UMD+ESM+sourcemap，**进 bundle 体积未实测**）；`dependencies: {}` 零传递依赖。能力：字段加权 + 前缀 + 可外接 `tokenize`（中文）+ 打分排序。**判据①②③全成立**：同一检索框 / 同域不同问题（有没有 vs 哪条更贴）/ 新增排序与分词。**边界收窄**：只对页面算好的 `hits` 重排，不增删、不改档位、不改 2×11 维「先筛后扫」。**本轮 L2 骨架** `packages/dsh-radar-search-rank`。风险：R-1 中文分词质量（`Intl.Segmenter` 对「动量守恒定律」的切分需夹具证明）、R-2 体积、R-3 顺序变了但「更好」需差分计数证明 |
+| `linkingoscar/dsh-attachment-formats` | **A 原生DSH** | **Apache-2.0** ✅（含 `NOTICE`） | 讲义/课件附件 → 可检索文本 | 全新（本仓无附件文本抽取） | 🟡 | proposed | 2026-10-20 | ★4，2026-09-30 push。形态 ✅：`dsh.bundle.patch` + `dsh.client.inject: ["slots","sessions"]`，patch **仅一行 insert、无 `!!js`**（第三十二轮的挂载障碍此处不存在）。能力：PDF 文本层、docx/xlsx/pptx→MD、扫描件 OCR、长文档溢出成 index card。**第三门不过**：npm `dsh-attachment-formats` 与 `@linkingoscar/dsh-attachment-formats` **均 Not Found**（`publishConfig.access=public` 但从未 publish）→ 只能 vendored 复制 → **违反「不搬运上游源码」**，故不建骨架。**它的价值是「本仓附件缺口的说明书」**：notes 只存 Markdown、paper 用 iframe 扛 PDF、univer-office 管预览，三路不通且都无法把扫描版讲义变成可检索文本；若要做，**自写**、只参照能力清单 |
+| `PolinniZhong/dsh-session-workbench` | A 原生DSH | MIT ✅ | 会话历史检索 / 召回 | 重复可强化，但**违反判据①** | 🟡 | proposed | 2026-10-20 | ★50，2026-09-28 push，包体 3.4 MB。会话库全文检索 + 召回 + 会话视图（显示/隐藏/拖拽排序）。**本仓没有「会话」页面**，接进来等于新开面板 → 判据①不成立，不出骨架。⚠ 本轮**未实查 npm 可锁版**（只看 `package.json` 推断），下轮以 npm 实查为准 |
+| `omdsh-dev/dsh-kb-sieve` | A 原生DSH | **Apache-2.0** ✅ | 资料库 → 可审计知识包 | 重复无落地增益（学习页已有块级检索） | 🟡 | proposed | 2026-10-20 | ★2，2026-08-12 push。`kb_build`/`kb_query`/`kb_read` 三工具，**纯计算零子代理**；md/txt/docx/pdf → `references/` + SQLite FTS5(BM25, title=10/body=1) + manifest。**第三门不过**：`private: true` + 包名 `@dsh-external/dsh-kb-sieve`，README 自己写的是 `git+https://` 安装 → 不可锁版。⚠ 未实查 npm。**价值**：印证排序层方向——生态里做本地检索的也在用 **FTS5 + BM25 + 字段加权**，与本轮骨架同源 |
+| `Zn-Dk/dsh-session-explorer` | A 原生DSH | MIT ✅ | 会话检索 | 无关（本仓无会话页） | 🔵 | proposed | 2026-10-20 | ★4，2026-09-09。消息级全文检索 + 时间线可视化 |
+| `121212165/dsh-plugin-transcript-search` | A 原生DSH | MIT ✅ | 归档会话检索 | 无关 | 🔵 | proposed | 2026-10-20 | ★1，2026-10-19。读 `dsh-plugin-transcript` 写的 JSONL 侧车；**本仓会话不落 JSONL** |
+| `huangxp12/dsh-plugin-search` | A 原生DSH | MIT ✅ | 「插件」页过滤 | **重复无增益** | 🔵 | proposed | 2026-10-20 | ★1，2026-10-08。给插件页加关键词过滤；本仓插件页已有自建过滤 |
+| `JackAIStudio/dsh-robust-search` | A 原生DSH | MIT ✅ | 会话检索 | 无关，但**可作参照实现** | 🔵 | proposed | 2026-10-20 | ★1，2026-09-15。隔离坏会话日志 + **SQLite FTS5 CJK 分词**。与本轮骨架同思路；不采用（依赖 SQLite，浏览器端跑不了） |
+| `1parado/dsh-deepseek-web-search` | A 原生DSH | **`NOASSERTION`** ⚠ | 联网搜索 | 原则冲突（灰色网页登录） | ⚠ | proposed | 2026-10-20 | ★5，2026-10-17。中文描述：用网页版 DeepSeek 账号做 web_search。**待人工核验许可证，不采用、不摘码** |
+| Web Search provider 簇：`DDDMUC/dsh-free-search`(★501)、`A3Boy/dsh-web-tools`(★36)、`MochiNek0/dsh-web-search-free`(★34)、`anysearch-team/anysearch-dsh`(★559)、`cyijun/dsh-surfing-plugin`、`moguiyu/dsh-tavily`、`rogerdigital/dsh-searxng`、`X-C1811/dsh-web-search-plugin`、`Yuuz12/dsh-tavily`、`bocha-ai/dsh-web-search-bocha`、`gsh150801/dsh-anysearch-plugin`、`Modellix/dsh-modellix`、`SeerableOfficial/dsh-web-search-toggle`、`zHElEARN/dsh-web-search-session-header`(`null`)、`wtoco/dsh-mimo-websearch`(`null`) | A 原生DSH | 多数 MIT，2 条 `null` | 联网搜索 | **重复无增益**（第 4–18 家） | ⛔ | rejected | 2026-10-20 | 宿主已有 `web_search` seam；本仓没有任何「网页搜索」面板。**该轴彻底饱和，建议封板 3 个月**；`wtoco/dsh-mimo-websearch` 与 `zHElEARN/…` 无许可证为红线 |
+| RAG 知识库簇：`xiaoshi7915/dsh-kb-manager`、`AlowEnsoul/dsh-rag-kb`、`YYTbit/dsh-plugin-rag`、`mervyn-teo/dsh-plugin-rag`、`zuijiuyueliang/dsh-plugin-rag`(`null`)、`y7d26/dsh-knowledge`、`NaughtDZ/dsh-knowledge`、`CodfishYao/dsh-knowledge-base-local`、`RonnieGex/dsh-cited`、`wangning19940904/dsh-llm-wiki`、`huangfuren/dsh-outline`、`JoeyTrribbiani/dsh-rag-knowledge`(Python)、`SiqiSun42/dsh-rag-evaluate-plugin`(Python)、`yyang8891/dsh-plugin-kb4rag`、`RogueServitor-495/dsh-plugin-knowledge-base`(`null`)、`ds-customize/dsh-plugin-knowledge-base`(`null`) | A 原生DSH | 多数 MIT，3 条 `null` | 资料库问答 | **重复无增益**（第 3–18 家） | ⛔ | rejected | 2026-10-20 | 均为「导入文档 → 向量化 → 语义检索」。本仓「学习」页已有整理后的块级检索，RAG 是另一条数据路径（需重建索引），且多数绑外部 embedding 服务，与本仓「不引入独立后端」冲突 |
+| 会话检索簇：`TOBYCAI/dsh-sessions-manager`(★30)、`itsyuyi/dsh-workspace-search`、`Tieboyh/dsh-session-search`(`null`)、`dipertq/dsh-session-search`(`null`)、`fuguoqiang-bnu/dsh-plugin-session-search`、`Victue/dsh-session-search`、`2275803244-cpu/dsh-session-search`、`240xu/dsh-session-search`(`NOASSERTION`)、`ewoowe/dsh-session-messages-plugin`、`Sivan757/dsh-plugin-session-fleet`、`kjx-talesofai/dsh-plugin-session-palette`、`MarchLiu/dsh-graft`(`null`) | A 原生DSH | MIT / `null` / 1 `NOASSERTION` | 会话搜索 | 重复无增益 / 无关 | ⛔ | rejected | 2026-10-20 | 12 家做同一件事：在会话日志上做全文检索。**本仓没有会话页面**，无落点；4 家无许可证、1 家 `NOASSERTION` |
+| 记忆簇：`Starry0214/dsh-memory`、`yan5236/dsh-memory`、`Towzai/dsh-memory`、`Frog755/dsh-hybrid-memory`、`AstroLiao/dsh-memory-core`、`boomzikazita/dsh-memory`(Python)、`sglwsjxh/dsh-mem`(**AGPL-3.0**)、`reedflame40224/vcp-memo`(`NOASSERTION`) | A 原生DSH | MIT / AGPL-3.0 / `NOASSERTION` | 记忆 | 重复无增益 | ⛔ | rejected | 2026-10-20 | 跨会话记忆第 4–11 家；AGPL 与 `NOASSERTION` 为红线。同类已在册多轮登记 |
+| 非 JS 栈簇：`vshulcz/deja-vu`(Go,★1252)、`Ikalus1988/MisakaNet`(Python,★544)、`Ariestar/sivtr`(Rust,★257)、`chainbase-labs/Agentkey`(Shell,★665)、`jingchangzhao-gif/dsh-errkb`(Go)、`lawcontinue/dsh-vision-tools`(Python) | — | MIT/Apache-2.0 | — | 技术栈不合 | ⛔ | rejected | 2026-10-20 | skill 限定 JS/TS 技术栈；星数再高也不接（deja-vu ★1252 是 Go 的 agent 记忆） |
+| 界面微调 / 皮肤 / 市场簇：`MichengAI/dsh-codex-ui`(★178)、`hyzyn/dsh-plugin-kit`(★54)、`FSMargoo/dsh-at-file`(★527)、`keman-ai/dsh-skin-market`、`sakka6868/dsh-skin`、`objectivex666/dsh-settings-search`(**GPL-3.0**)、`lov0vo/dsh-composer-autopair`、`daoyu1993-lab/dsh-plugin-type-to-compose`、`imsai-sh/dsh-1024store` | A 原生DSH | MIT / GPL-3.0 | — | 重复无增益 | ⛔ | rejected | 2026-10-20 | 侧栏/皮肤/@文件补全/插件市场第 N 家；`dsh-settings-search` 为 GPL-3.0 红线。`dsh-at-file`★527 是 Codex 风格 @ 补全，本仓 `page-notes` 已有 `[[` 链接补全，重复 |
+| 其余单点小工具：`Tyan66666/billion-context-dsh`、`jermaine123123/agent-context-editor`、`duhu2000/dsh-mcp-connector`、`Mr-remon219/search-boost`、`Lxiayu/DshCockpit`、`Eray114514/dsh-find-plugins`、`taikaikaikai-pixel/dsh-tap`、`everclear077/dsh-progressive-tools`、`ZekaiShi/evo-subagent`、`youdotcom-oss/agent-skills`、`lpeixin/dsh-project-compass`、`Fisfzy/zotero-harvest`、`AbcdefgXW/dsh-toolbox-web`、`Leitarkkk/dsh-research-nudge`、`Pasumao/dsh-plugin-dev-kb`、`chocobo77/dsh-infinite-context`、`shuishuipingan/InkWeaver`(**GPL-3.0**)、`lifensame/dsh-plugin`、`stopchewing/dsh-mcp-view`、`stvlynn/dsh-dify-marketplace`、`meme-dog/dsh-plugin-finder`、`KevinWen7415/dsh-virtual-workspace`、`yancf666/dsh-usage-panel`、`janpauldahlke/dsh-web-missions`、`liuqingman/dsh-hawkeye-scan`、`hrhgit/deepseek-harness-plugin-manager`、`BandieraRosa/dsh-plugin-notion`、`sandbaseai/dsh-kit`(`null`)、`121212165/dsh-plugin-deep-search`、`Lings01/dsh-filepanel-plugin`、`ice5kysl/dsh-workspace-kit`、`honwee/dsh-plugin-mynah`、`fan969690/dsh-desktop-tools`、`xuanyuanluoxue/computer-use-vision`(`NOASSERTION`)、`meliodascz89/dsh-orchestra`、`bloodarea/dsh-knowspace`(`null`)、`feely0208/dsh-content-trust`、`BotonJ/dsh-plugin-sentinel`、`Jeffine322/dsh-tool-pdf`(`null`)、`suomir1995/dsh-link-collect`、`suomir1995/dsh-notes`、`margbug01/dsh-ma-plugins`、`rex178178/dsh-turnbar`、`truelove-dreamer/dsh-plugin-recall`(`null`)、`HIT-HTML/dsh-ENHANCED`、`Kai-ZKH/dsh-branch-tree`、`gaoheng980610/dsh-knowledge-base`、`xzs125/dsh-docs-knowledge`、`nan1010082085/dsh-plugin-ima-sync`、`ralfsqual/dsh-pdf-reader`、`nnma12358/dsh-plugin-win-desktop-kit`、`Qqiutand/dsh-study-reader`、`HaoKuo/dsh-notebook-studio`、`Niobium-41-nb/dsh-html-output`、`Kevoyuan/dsh-skill-fuzzy`(`NOASSERTION`)、`johnhom1024/dsh-ios-input-fix` | A 原生DSH | 混合 | — | 重复 / 无关 / 已覆盖 | ⛔ | rejected | 2026-10-20 | 单点能力（上下文裁剪、MCP 连接器、用量面板、桌面巡检、插件查找、@ 补全、IDE 风格面板…）。在册已有对应项；`dsh-usage-panel` 属已封板的用量轴；`InkWeaver` GPL-3.0、`computer-use-vision`/`dsh-skill-fuzzy` `NOASSERTION`、`bloodarea`/`dsh-kit`/`dsh-tool-pdf`/`dsh-plugin-recall` 无许可证，均为红线 |
+
+> **本轴结论（四条）**：
+> ① **「检索」在 A 组已裂成两半**：搜索侧（web search 15 家 / RAG 16 家 / 会话 12 家）**彻底饱和**；
+> 排序侧（相关度、字段加权、结果重排）**一家都没有**。本仓 `layered-search.js` 374 行里也没有一行排序。
+> ② **本轮最有价值的产出不是候选，是 L-2**：`layers` 传空集 → `empty:true` 零命中且**不报错**。
+> 它现在只被 `study-workspace.jsx` 的 `layers ?? defaultSearchLayers` 侥幸绕过。
+> ③ **「可锁版」这一门又多一种死法**：第三十四轮是宿主版本窗口，本轮是 **npm 声明 `public` 却从未 publish**
+> （`dsh-attachment-formats`）。`private: true`（`dsh-kb-sieve`）、双名 404（`dsh-raw-html`）已是第三、第四种。
+> ④ **B 类替换底层需要一条新判据**：差分测试的断言必须是「命中集合 ⊇ 旧实现」。
+> 拼音（第二十九轮）、高亮（第三十一轮）、排序（本轮）三轮各自独立得到同一结论。
+>
+> ⑤ **与同日第三十五轮（C 组 · 字幕原文层）的关系**：两者都落在「文本怎么进检索」这条链上，但**前后段不同**——
+> C 组修的是**原料**（字幕 `join("")` 无分隔、缺标点），本轮修的是**排序**（命中顺序 = 数组顺序）。
+> 顺序上应先修原料再修排序：没有句子边界的文本，任何相关度打分都只能落在「整块」这一粒度上。
+
+---
+
+## 2026-10-20 · C 组派生（第三十七轮）· **关键路径健全性轴** · 追加
+
+> 关键词：`learned card generation language:javascript`(**0**) / `anki card template language:typescript`(7) /
+> `handwriting math recognition language:javascript`(8) / `onnxruntime-web ocr`(22) / `distractor generation question`(47) /
+> `text diff match patch chinese`(**0**) / `diff-match-patch language:javascript`(56) /
+> `handwritten notes to text language:typescript`(32) / `equation keyboard latex input`(1) /
+> `quiz generator language:typescript stars:>100`(1)。
+> **10 次搜索（达上限未超限）、0 次 403，本轮完整**。约 120 条去重命中 → 首次登记 13 行（含 2 簇）。
+> **🟢1（`ocr-web`，B 类）+ 🔵5 + ⚠2 + ⛔4 簇**；骨架 `packages/dsh-radar-ocr-web`（B 类 · 锁版 `@ocr-web/core@0.2.1`）。
+> 起点是读码发现的两处断环：**F-1 `recordAttempt()` 全仓无调用方**、**F-2 出题原料只能来自已解析的讲义块**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `bent2685/ocr-web` | **B 其他JS（纯库）** | **MIT** ✅（LICENSE 实文首行已核，非仅 API 字段） | 板书/截图/手写 → 出题原料 | **重复可强化**（补 `quizMaterials()` 只能吃讲义块这一缺环） | 🟢 | proposed | 2026-10-20 | ★3 / fork 0，**2026-05-08 push（约 5 个月未更新）**。npm `@ocr-web/core@0.2.1` **实查可锁** ✅（unpacked **256,788 B**）+ `@ocr-web/models-ppocrv5@0.1.1`（**8,007 B**，**只有 jsDelivr URL 常量，不含模型**）+ peer `onnxruntime-web`（unpacked **144,618,540 B**，全后端）。**零运行时依赖**。能力：PP-OCRv5（DBNet 检测 + CRNN/CTC 识别，字典 18,384 字含 CJK）、**Worker 模式**、字节级 `onProgress`、`OcrLine` 带 `points` 四边形 + `score`。**判据①②③全成立**：同一 `quiz-panel` / 同一条「文字→出题」链的相邻环 / 本仓此前**完全没有**这一层。**本轮 L2 骨架** `packages/dsh-radar-ocr-web`。三条风险：R-1 本仓无 wasm 静态管线、R-2 模型默认外联与离线定位冲突、R-5 ★3 且停更 5 个月。⚠ **上游 peer 写 `^1.25.0`，但 npm 上 `1.25.0` 只有 `-dev.*` 预发布**（稳定版自 `1.25.1` 起）→ 骨架锁 `1.25.1` |
+| `JackuB/diff-match-patch` | B 其他JS（纯库） | **Apache-2.0** ✅ | 简答题判分（逐字差异） | 重复可强化，但**当前无消费者** | 🔵 | proposed | 2026-10-20 | ★270，2023-05-18（3 年未更新）。Google `diff-match-patch` 的 npm 封装；逐字 diff，**中文按码点切分，天然可用**。**价值在 F-1 之后**：`attempts` 接上才会需要「答案差在哪」。现在接进来是在空链上加环节 → 不出骨架 |
+| `AnsonLai/docx-redline-js` | B 其他JS | **MIT** ✅ | 讲义修订对比 | 无关（本仓讲义是块结构化，不比 docx） | 🔵 | proposed | 2026-10-20 | ★15，**2026-10-18 push**（活跃）。Host-independent OOXML 引擎，原生修订标记。仅作「版本 diff」思路参考 |
+| `ECuiDev/obsidian-quiz-generator` | B 其他JS | **MIT** ✅ | 从笔记出闪卡 | **重复无增益** | 🔵 | proposed | 2026-10-20 | ★174。多模型（OpenAI/Gemini/Ollama）从笔记生成交互式闪卡 + quiz UI。**形态强耦合 Obsidian**；出题逻辑与本仓 `dsh-zhiyun-quiz` 的「规则门禁 + 自审 + 待审」相比更弱（无来源锚点、无质检链）→ 不采用 |
+| `Gilbetrar/anki-renderer` | B 其他JS | **MIT** ✅ | 卡片模板渲染 | 无关（本仓不导出 Anki 包） | 🔵 | proposed | 2026-10-20 | ★1，2026-06-09。Anki 卡片模板 → WASM 渲染。若本仓未来要「导出到 Anki」才用得上 |
+| `Just-anoob/NotesReader` | B 其他JS | **Apache-2.0** ✅ | 手写笔记 → 文本 | 重复可强化（同 `ocr-web`） | 🔵 | proposed | 2026-10-20 | ★0。AI 笔记编译，**依赖外部视觉模型 API**（非本地推理）→ 与 `ocr-web` 相比多一条数据外发，**故不取**，仅登记 |
+| `MyScript/myscript-math-web` | B 其他JS | **`NOASSERTION`** ⚠ | 手写公式 → LaTeX | 全新（本仓无公式手写输入） | ⚠ | pending-license | 2026-10-20 | ★244，**2021-01-04 停更**。手写数学公式识别（商业 MyScript 引擎的 Web 封装）。**能力对口**（理工科手写推导），但①许可证 `NOASSERTION` ②停更近 6 年 ③实为商业 API 客户端。**待人工核验许可证，不采用、不摘码** |
+| `Fanfulla/OCR-buddy` | B 其他JS | **`NOASSERTION`** ⚠ | 本地 OCR 扩展 | 重复可强化 | ⚠ | pending-license | 2026-10-20 | ★54，2026-09-27。100% 本地 OCR Chrome 扩展（代码/正文/LaTeX 公式）。**能力比 `ocr-web` 更宽**（含公式），但 `NOASSERTION` + 扩展形态难封装。**待人工核验许可证，不采用、不摘码**。若许可证为宽松，**下轮应优先评估它替代 `ocr-web`** |
+| `StabRise/ScaleDP-TS` / `Zapca/Math-Notes` | B 其他JS | **AGPL-3.0** / **GPL-3.0** ⛔ | 浏览器内 PDF 解析 / 手写公式求解 | — | ⛔ | rejected | 2026-10-20 | ★38 / ★0。**许可证红线**，无论能力多对口都不接 |
+| 无许可证单点：`rotkonetworks/ocr.rotko.net`、`anirbandotdev/PrivacyLens`、`Artemiy111/anki-card`、`Zecat/anki-hanzi-quiz`、`justinmeiners/gesture-recognition`、`samirhssn/richmath-input-react` | B 其他JS | **`null`** ⛔ | — | — | ⛔ | rejected | 2026-10-20 | 全部无许可证。注：`rotko.net` 与 `ocr-web` 同为「PP-OCRv5 mobile + onnxruntime-web 浏览器内」，**能力上等价**，仅因无许可证排除 |
+| `distractor generation` 簇：`Yifan-Gao/Distractor-Generation-RACE`(★70)、`harrylclc/LTR-DG`(★28)、`narain280493/Automatic-Question-Generation`(★22)、`DRSY/DGen`(★22)、`umass-ml4ed/prompt_distractor_generation_NAACL`、`ryyrn/Knowledge_Graph_Guided_Distractor_Generation`、`xinzhu-cai/probase-concept-generator`、`obss/disgem`、`FawziElNaggar/Question-MCQ-_Answer_Generation`、`zpqiu/EDGE`(GPL-3.0) | 非 JS / B | 8 条**无许可证**、1 条 `NOASSERTION`、1 条 GPL | 选择题干扰项 | **全新（但技术栈不合）** | ⛔ | rejected | 2026-10-20 | 全部 **Python**（AAAI/EMNLP 论文实现），且 8 条无许可证。本仓 `quiz-panel.jsx` 明确「选择题这一版不出」→ 即便能接也没有落点 |
+| `handwritten notes to text` 簇：`csfahad/writeshift`、`heyaryansingh/type-it-up`、`malikmuhammadsaadshafiq-dev/mvp-handwriting-to-text-scann`、`cryptozues/Handwritten-Text-Digitizer`、`harsh-0712/notes-digitize`、`drealdumore/write-it`、`VanshNagpal10/IntelliDocs` | B 其他JS | **全部 `null`** ⛔ | 手写 → 文本 | 重复可强化 | ⛔ | rejected | 2026-10-20 | 全部是 ChatGPT/Gemini 视觉 API 的套壳 App，**零本地推理**、**零许可证**。与 `ocr-web` 相比多一条「学生手写内容上传给第三方」——对本地化工作台是**负面** |
+
+> **本轴结论（四条）**：
+> ① **本轮最有价值的产出是 F-1，不是候选**：`grep -rn recordAttempt` 全仓**只有 `store.js:604` 定义处一处，无调用方**。
+> `attempts` 轨（错题归因 / 薄弱点统计 / 「近 3 次都错」规则的**唯一**依据）代码全在、测试全过，**却永远没有数据**。
+> `quiz-panel.jsx` 只有采纳/丢弃/移出队列，**没有「作答」**。这条**不需要任何外部库**，不应出骨架、应直接修。
+> ② **C 组的「功能域」方向确实在枯竭，但「链上缺环」方向还没走完**：本轮 10 次搜索只捞出 1 个 🟢，
+> 而读码 10 分钟就找到 2 处断环。**下轮 C 组建议继续用「先读码找断环、再定向搜」的方法**，
+> 而不是继续枚举 `quiz practice` / `flashcard` 这类功能词。
+> ③ **「PP-OCRv5 + onnxruntime-web 浏览器内 OCR」已经是成熟方案**，本轮 22 条命中里有 **3 条**是同一技术栈
+> （`ocr-web` / `rotko.net` / `ScaleDP-TS`），差别只在**许可证**（MIT / 无 / AGPL）。这说明选型不该再纠结
+> 「有没有库」，而是「谁的许可证干净、谁的部署成本低」。
+> ④ **上游 peer 区间可与 npm 现实脱节**：`@ocr-web/core` 写 `onnxruntime-web: ^1.25.0`，
+> 而 npm 上 `1.25.0` **只有 `-dev.*`**。这与第三十四轮「宿主版本窗口」、第三十六轮「声明 public 却从未 publish」
+> 同属「文档/元数据与仓库现实不一致」的第五种形态 —— **锁版前必须 `npm view <pkg> versions` 实查，不能只读 peer 区间**。
+
+---
+
+## 2026-10-20 · 第三十八轮（B 组派生 · 校园数据「抓取后解析层」轴）
+
+> 同日第 4 轮（00:00 C / 03:15 A / 06:00 C）。B 组「校园信息侧」已于 10-19 第三十三轮封板，
+> 本轮改走「**先读码找断环、再定向搜**」：起点是 `packages/dsh-zhiyun-classroom/src/auth.js:27`
+> 的 `executionToken()`（用正则抠 `<input>`）。
+> 关键词（9 次，未超限，0 次 403）：`html parser language:javascript stars:>200`(**18**) /
+> `html query selector language:typescript stars:>50`(**0**) / `deno dom`(81) / `linkedom`(28) /
+> `htmlrewriter`(41) / `cheerio`(5,484) / `html parser`(13,404) / `dom implementation`(4,592) /
+> `css selector engine language:javascript`(58)。
+> 补扫（不计入 10 次）：`html sanitizer language:javascript`(144)、
+> `zju comment scraper javascript`(**0**，A 组探针)。
+> 约 19,000 条命中 → 有效候选 4 条；**🟢1（cheerio/slim）🔵1（DOMPurify）⛔2 簇（10 条）**；
+> 本轮 **0 条 `NOASSERTION`**、**0 个 A 类**。
+> **本轮出骨架** `packages/dsh-radar-dom-parse`（B 类，锁版 `cheerio@1.2.0`，**走 `./slim` 入口**）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `cheeriojs/cheerio` | **B 其他JS（纯库）** | **MIT** ✅ | 教务登录 / 抓取页面解析 | **重复可强化**（`auth.js` 的 `executionToken()`） | 🟢 | proposed | 2026-10-20 | ★30,523，**2026-10-19 push**（活跃）。npm `cheerio@1.2.0` **实查可锁** ✅（`engines: node>=20.18.1`，与本仓 `^22.19.0 \|\| >=24.0.0` 兼容）。**⚠ 必须走 `./slim` 子入口**：包根 `dist/esm/index.js:11` 静态 `import * as undici from 'undici'`（只为 `fromURL()`，Node-only）→ 浏览器构建直接失败。esbuild 实测（minify/ESM/browser）：`./slim` **199,966 B**、包根 **384,451 B**、`linkedom` **275,245 B**。**缺口已实测复现（非推断）**：本仓 `executionToken()` 对 `<input name="execution" value="a>b">` 返回 **`undefined`**（`[^>]*` 用 `>` 界定标签边界，而 `>` 在双引号属性值里合法），→ `submitCasForm()` L72 抛 `AUTH_SHAPE: 登录页缺少 execution` → **登录直接失败**；对 `value="abc&amp;def"` 返回 `"abc&amp;def"`（未解码实体，静默错值）。**判据①②③全成立**。**本轮 L2 骨架** `packages/dsh-radar-dom-parse`。⚠ 三点：R-1 `auth.js` 是已上线代码，替换属回归高风险；R-2 CAS 页由服务端取回，客户端无此 HTML → 若只服务端用则 bundle 里是死代码；R-4 与在册 `dsh-radar-vault-parse`（markdown-it）**不重叠**（输入语言不同） |
+| `cure53/DOMPurify` | B 其他JS（纯库） | **`(MPL-2.0 OR Apache-2.0)`** ✅（按 Apache-2.0 可用） | 富文本 / 不可信 HTML | 无关（本仓目前不拼 HTML） | 🔵 | proposed | 2026-10-20 | ★17,478，2026-10-16 push。**登记理由只有一条**：防止把「上了 cheerio」误读成「可以不做净化」—— **sanitizer 是「把不可信 HTML 变安全」，解析器是「把 HTML 变可查询」，两件事**。本仓 `grep sanitize packages/*/package.json` **零命中**，净化需求目前由「不拼 HTML」这条纪律覆盖 → 本轮无落点。⚠ 若将来接入，须注意它**不是** MPL 单许可（双许可可选 Apache，不触红线） |
+| CF `HTMLRewriter` 绑定簇：`cloudflare/html-rewriter-wasm`(★218, **`null`** ⛔)、`worker-tools/parsed-html-rewriter`(★45)、`ttys026/cfo`(★4)、`akira108/html-rewriter-readability`(★4)、`tldraw/cloudflare-workers-unfurl`(★18) | B 其他JS | 多数 MIT，1 条 `null` | — | 运行时不兼容 | ⛔ | rejected | 2026-10-20 | 全部是 **Cloudflare Workers 专用绑定**（依赖 `HTMLRewriter` 全局或 Workers 运行时）。本仓是 Cordis 宿主 + 浏览器，**跑不了**。`html-rewriter-wasm` ★218 是唯一「wasm 化可移出 Workers」的，但**无许可证** ⛔ |
+| 非 JS 的 HTML 解析器簇：`jhy/jsoup`(★11,411 Java)、`AngleSharp/AngleSharp`(★5,543 C#)、`scinfu/SwiftSoup`(★5,127 Swift)、`psf/requests-html`(★13,805 Python)、`opendataloader-project/opendataloader-pdf`(★29,748 Java) | 非 JS | 多数 MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-20 | skill 限定 JS 技术栈。`opendataloader-pdf` 是 `html parser` 的第 2 名，但它是 **PDF 表格提取**，与本轴（页面表单解析）无关；`requests-html` 停更于 2024-04 |
+| 对照件（**不入册**，防下轮重搜）：`WebReflection/linkedom`(ISC, ★2088, `0.18.13`, bundle 275,245 B, **属性名大小写敏感**)、`fb55/htmlparser2`(MIT, ★4793, 无 CSS 选择器)、`capricorn86/happy-dom`(MIT, ★4709, 含 window 全套、过重)、`fgnass/domino`(BSD-2, ★791)、`parse5@8.0.1`(MIT, cheerio 传递依赖)、`dperini/nwmatcher`/`nwsapi`(MIT, **只做选择器匹配不做解析**) | B 其他JS | 均宽松 ✅ | — | 重复但增益不如 cheerio | 🔵 | — | 2026-10-20 | 六件全部实查 npm 版本与许可，**故意不逐行入册**，仅在此记录选型依据。`linkedom` 是唯一真正的次选（能力等价、体积 +37%、且 `NAME="execution"` 时 `querySelector('input[name=execution]')` 匹配不到，cheerio 能） |
+
+> **本轴结论（四条）**：
+> ① **B 组「找新插件」确已封板（本轮 0 个新 DSH 插件），但「抓取后解析层」有产出** ——
+> 唯一 🟢 是**早就存在**的 cheerio（★30,523），它成为候选**完全是因为先读到了 `auth.js:27` 那段正则**。
+> 与第三十七轮（`recordAttempt` 无调用方）、第三十六轮（`layers` 空集静默）同一模式：
+> **本仓价值洼地在「已有能力的接缝」上，不在「缺一个外部库」上。**
+> ② **「改用解析器」这件事，入口比库重要** —— `cheerio` 包根静态 `import undici`（Node-only，`dist/esm/index.js:11`），
+> `./slim` 不带它、体积从 384 KB 降到 200 KB。**第三门「可锁版」应扩成「包存在 + 从哪个入口进」**：
+> 第三十六轮查「包是否存在」（四种死法），本轮新增第五种 —— **包存在、但默认入口在目标运行时跑不了**。
+> ③ **最有价值的产出仍是缺陷** —— L-1 的 `>` 断点今天没炸（CAS execution 为 `e1s1`），
+> 一旦触发，现象是「登录页缺少 execution」，**看起来像官网改版，实际是本仓正则的假设错了**。
+> 「把上游变化当原因」比任何缺失能力都更难查。修法有两条（换解析器 / 正则改 1 行），**本骨架只是给出选择**。
+> ④ **L-2 `meta.complete` 这条保护目前是空转的** —— `getSchedule()` 走 `result()` 默认 `complete = true`，
+> 课表永远不会是 `null`；因此今天页 `agenda.js:16` 的 `incomplete` 分支**只能由 meta 缺失触发**，从未被真实验证。
+> 不是 bug，但建议加课表分页时同步补 `meta` 断言。
+
+### 2026-10-20 · 第三十九轮（C 组派生 · 复习队列「排序与容量」轴）
+
+> 起点：读码找断环（`acceptedQuiz` 只有字典序 + `slice(0,20)`；`computeBacklog` 零调用方）。
+> 9 次搜索（未超限）、0 次 403；4 个学习语汇词直接返 0（`anki queue sorting` / `review debt` 等）。
+> **无 A 类、无 🟢、0 条 NOASSERTION、未出骨架**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `xiaohajiayou/Leetcode-Mastery-Scheduler` | B 其他JS | MIT（`package.json` 写 ISC，同属白名单） | 刷题/复习 | 重复可强化（学习页·复习队列排序） | 🟡 | proposed | 2026-10-20 | ★543，2026-04 后未动。可移植的**规则**三条：①`reviewService.js:60-95` 按 `getCurrentRetrievability` 升序（最可能忘的排最前）②`utils.js:168-175` 直接用 `ts-fsrs` 的 `forgetting_curve` + `dateDiffInDays`，不自写公式 ③`sort.js` 把「推迟时长」单列一维（正=逾期/负=未到期）。**判 🟡**：非库形态（Chrome 扩展，算法层绑 `store.js`）；自带 `ts-fsrs ^4.7.0` 与本仓 `5.4.2` 撞大版本；`qualityToRating` 用整数 1–4 + `default→Good` 兜底，与本仓字符串枚举 `['again','hard','good','easy']` 及「不许把判不了当某档」纪律冲突。**前提不成立**：`recordAttempt` 仍无调用方 ⇒ 无 `selfRecall` ⇒ 无 `stability` ⇒ 排序空转，故不出骨架 |
+| `luciopaiva/heapify` | B 其他JS | MIT | — | 重复无增益 | 🔵 | rejected | 2026-10-20 | ★743。零依赖优先队列；本仓队列仅 20 条截断，`Array.sort` 足够；只有「答题后增量插队」才需要堆，而本仓尚无答题入口 |
+| `ignlg/heap-js` | B 其他JS | BSD-3-Clause | — | 重复无增益 | 🔵 | rejected | 2026-10-20 | ★167。与 heapify 二选一即可，当前两者都不需要 |
+| `clauderic/dnd-kit` | B 其他JS | MIT | 复习队列手排 | 全新（但与本轮方向相反） | 🔵 | proposed | 2026-10-20 | ★17730，仍活跃（2026-10-15）。`@dnd-kit/core@6.3.1` + `@dnd-kit/sortable@10.0.0`，依赖 `tslib`/`@dnd-kit/utilities`。仅当允许**手动**调序时才用；与「按遗忘曲线自动排」是相反的两种产品判断，先有数据再谈 |
+| 撞车簇：`scheduler`/`knapsack` 前排 | B 其他JS | MIT / `null` / GPL-2.0 混杂 | — | 重复无增益 | ⛔ | rejected | 2026-10-20 | ★774 React 可视化排程、★587 Kettle 调度监控、★344 定时任务、★240 kue-scheduler、★199 Google-Meet 自动上课；knapsack 前排 ★≤6 可视化玩具 → 全是「调度」的另一义项，**建议两词移出 C 组派生词池** |
+
+### 2026-10-20 · 第四十轮（C 组派生 · 笔记库链接解析与图结构轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `remarkjs/remark`（npm `remark-parse@11.0.0`） | B 其他JS | MIT ✅（npm + GitHub 一致） | 笔记/讲义正文结构 | **重复可强化**（「笔记」页反链底座） | 🟢 | skeleton-created | 2026-10-20 | ★9021，push 2026-09-27。产出带类型的 mdast，使「代码块里的 `[[x]]`」能按节点类型排除而非正则猜。⚠ 与 2026-10-19 登记的 `mdast-util-from-markdown`（判 🔵）同族但**换的对象不同**：当时是「替换渲染器」，本轮是「替换『哪段是代码』的判定」。锁版 5 依赖见骨架。已出骨架 `dsh-radar-vault-graph` |
+| `syntax-tree/unist-util-visit`（5.1.0） | B 其他JS | MIT ✅ | 同上（遍历层） | 重复可强化 | 🟢 | proposed | 2026-10-20 | ★360，push 2026-01-22。**实测** `visit(tree,'text',…)` 天然跳过 `inlineCode`/`code`。单包 33,781B。合并进上述骨架，不单独出包 |
+| `graphology`（0.26.0）+ `graphology-communities-louvain`（2.0.2） | B 其他JS | MIT ✅（两包一致） | 笔记结构/学科簇 | **全新**（本仓零图算法） | 🟡 | proposed | 2026-10-20 | 官方 monorepo 仍活跃。**实测**两簇样例社团检测正确。⚠ 只认无向图；社区编号随遍历顺序变，须规范化；`addEdge` 在节点不存在时抛 `NotFoundGraphError`，须先 `mergeNode`。合并进骨架 |
+| `tats-u/markdown-cjk-friendly` | B 其他JS | MIT ✅ | 中文笔记的强调符边界 | 全新（但本仓无渲染入口） | 🔵 | proposed | 2026-10-20 | ★171，push 2026-10-19。**已读其 `specification.md`**：改的是 CommonMark 的 flanking delimiter 定义，不是「中英文加空格」。⚠ 正文由**宿主** `MarkdownText` 渲染（`page-notes/src/client.jsx:26`），本仓接管不了 → 只登记 |
+| `escwxyz/remark-obsidian-callout` | B 其他JS | Apache-2.0 ✅ | 笔记（callout 块） | 重复无增益（无渲染入口） | 🔵 | proposed | 2026-10-20 | ★34，push 2025-09-03。与上条同因作废 |
+| `flowershow/remark-wiki-link` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-20 | ★49，**license 为 null** → 只登记，不摘代码。功能 ⊂ 本仓 `splitWikilink` |
+| `wikibonsai/wikirefs` | B 其他JS | **GPL-3.0** ⛔ | — | — | ⛔ | rejected | 2026-10-20 | ★10。传染性许可，直接排除 |
+| `upphiminn/jLouvain` | B 其他JS | MIT ✅ | 学科聚类 | 重复且无增益 | ⛔ | rejected | 2026-10-20 | ★156，但 **2021 停更**、无图数据结构配套；被 `graphology-communities-louvain@2.0.2` 完全覆盖 |
+| mdast→docx/pdf 簇（`md2docx/mdast2docx` 等 6 个） | B 其他JS | MPL-2.0 ⛔ / 其余 MIT | 讲义导出 | 与「笔记」页无关 | ⛔ | rejected | 2026-10-20 | 全是**导出器**（方向不同的重复劳动）；★ 最高 40 |
+| 图可视化簇（`zakjan/pixi-graph` 等） | B 其他JS | MIT / 多个 null | — | 仅参考 | ⛔ | rejected | 2026-10-20 | `graphology <X>` 搜到的**全是渲染/布局插件**，无一图算法；本轮 53 条命中里 0 条可用 → 「算法层要按 npm 包名找，不能按 GitHub 关键词找」 |
+
+### 2026-10-20 · 第四十一轮（B 组 · 浙大场景 / 中文检索底层轴）
+
+> 关键词：`chinese word segmentation javascript`(3) / `jieba in:name`(753) / `chinese search tokenizer language:typescript`(1) /
+> `bm25 fuzzy search language:javascript`(2) / `segmentit`(9) / `nodejieba`(25) / `chinese segmentation wasm`(4) /
+> `pinyin segmentation language:javascript`(3) / `jieba-wasm`(11) / `chinese full-text search language:javascript`(3)；
+> 补扫 `wasm segmenter japanese language:typescript`(**0**)、`lunr-chinese OR elasticlunr chinese`(**114,160 = 纯 `chinese`，OR 限定符再次丢词**)。
+> **10 次搜索（达上限未超限）、0 次 403，本轮完整**。约 810 条命中 → 首次登记 12 行（含 3 簇）；**🟢1🔵3⛔8 行**；**0 条 `NOASSERTION`**、**0 个 A 类**；
+> 本轮出骨架 `packages/dsh-radar-search-segment`（B 类，锁版 `jieba-wasm@2.4.0`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `fengkx/jieba-wasm`（npm `jieba-wasm@2.4.0`） | B 其他JS（WASM 绑定） | **MIT** ✅（GitHub + npm 一致） | 中文讲义检索 | **重复可强化**（「学习」页检索 `findIn` / 宿主 `knowledge.search`） | 🟢 | skeleton-created | 2026-10-20 | ★102，push 2026-01-27。底层 `messense/jieba-rs`（★986，MIT）。**缺口实测（直接 import 本仓真实 `findIn`）**：`泰勒展开` 对 `泰勒 展开`、`行最简形` 对 `行 最简形` 均返回 `null`，分词后有序词序列命中；对照组 `极值点`/`拉格朗日中值定理` 两侧均命中。**⚠ 缺口不是「词被切开」**（`矩阵的秩`/`行列式` 字面均 true），是**写法不一致**。**⚠ 反例 F-3**：`特征值` 对 `特征 值` 两法皆空（`cut_for_search` 产出 `[特征, 特征值]`）→ 须「主词 + 子词」双轨。**入口差异已实测**：Node 分支 CJS（同步读 wasm，无需 init，且**具名导入会失败**，只能默认导入）；浏览器分支 ESM 且**必须 `await __wbg_init()`**。体积 **wasm gzip 2,815,114 B** + 胶水 2,600 B → **禁止进浏览器 bundle**。**Q-1 阻塞**：`findIn` 是客户端函数，接浏览器就要送 2.8 MB，不接则「学习」页仍不切词 → 评审先裁决走哪侧 |
+| `yanyiwu/nodejieba` | B 其他JS | MIT ✅ | 同上 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★3234，push 2026-10-12（最活跃的 Node 侧 jieba）。**判 🔵 而非 🟢**：原生模块（`node-gyp` 编译），WorkBuddy/DSH 的 electron 与 CI 都要预编译产物；`jieba-wasm` 已能给等价能力且免编译 → 同为 jieba 词典，无理由选重的那个 |
+| `linonetwo/segmentit` | B 其他JS | MIT ✅ | 中文切词 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★322，**push 2023-04-13 已停更 2 年半**。纯 JS（无 wasm）、体积远小于 jieba-wasm，但词典规模与更新频率均劣于 jieba-rs；且依赖 `preval.macro`（Babel 宏，构建链耦合）。**备选**，仅在「拒绝 2.8 MB wasm」时考虑 |
+| `louis-1448-2/obsidian-zh-search` | B 其他JS | MIT ✅ | 中文笔记检索 | **重复可强化**（「笔记」页检索） | 🔵 | proposed | 2026-10-20 | ★0，push 2026-10-19（新仓）。思路与本轮骨架**同构**（中文优先 FTS = 分词 + 索引），但形态是 Obsidian 插件、无独立 npm 包 → 只作**设计参照**，不摘代码 |
+| `AliceLJY/babel-memory` | B 其他JS | MIT ✅ | 中文全文检索预处理 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★0，push 2026-09-05。22 语种 FTS 预处理（CJK/泰语切分 + 多语言停用词）。⚠ 无发布包、无测试可见 → 只登记 |
+| `messense/jieba-rs` | B 其他JS（Rust） | MIT ✅ | — | 上游依赖 | 🔵 | proposed | 2026-10-20 | ★986，push 2026-10-15。**非 JS**，不进集成候选；登记理由：`jieba-wasm` 的**真正的上游**，其更新节奏决定 wasm 版能否跟进 |
+| `maxchang3/web-word-segment` | B 其他JS | MIT ✅ | — | 参考实现 | 🔵 | proposed | 2026-10-20 | ★1，2025-04。`jieba-wasm` + `Intl.Segmenter` 对照 demo，可作**验收基线**（对比「浏览器原生切词」的差距），不入包 |
+| `cxumol/jieba-wasm-html` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-20 | ★33，**2022 停更**。单页 HTML 打包版，无法作为依赖引入；与 `jieba-wasm` 同源 |
+| `hermanschaaf/jieba-js` / `shataniya/cncut` | B 其他JS | **无许可证** ⛔ | — | — | ⛔ | rejected | 2026-10-20 | ★52 / ★5，`license` 均 `null`。只登记，**不摘代码** |
+| `Xmader/gse-wasm` / `FlickerReader/jiebago-wasm-bind` / `Anillc/jieba-wasm` / `shouya/jieba-wasm` | B 其他JS | 多数 `null` ⛔ | — | 重复且无增益 | ⛔ | rejected | 2026-10-20 | 全部 ★≤9、2019–2023 停更、且**多数无许可证**；被 `fengkx/jieba-wasm` 完全覆盖 |
+| 非 JS 的 jieba 移植簇：`fxsjy/jieba`(★35,202 Python)、`huaban/jieba-analysis`(★2,708 Java)、`fukuball/jieba-php`(★1,379)、`anderscui/jieba.NET`(★1,142)、`wangbin/jiebago`(★506，`null`)、`qinwf/jiebaR`(★365 NOASSERTION) | 非 JS | 多数 MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-20 | skill 限定 JS 栈。**这是本轮最值得记的一条**：`jieba in:name` 753 条里 ★ 最高的前 10 全部是非 JS 移植 → **「分词」在 GitHub 上是按语言家族分布的，按关键词找必然先撞到 Python/Java 的原版** |
+| `Superjomn/qlin` / `epiphany131/novel-platform` / `chankamlam/chinese-search` / `ole3021/lunr-chinese` / `yoch/frozenminisearch` / `ammisaidkaidi/smart-hybrid-search` / `Carpathica/SegmentIt` / `uranbekanarbaev/pinyin-to-chinese` 等 | B 其他JS | MIT / `null` 混杂 | — | 无关或体量过小 | ⛔ | rejected | 2026-10-20 | ★0–8；`novel-platform` 是小说站、`SegmentIt` 是图像分割（**同名不同物**，与 `segmentit` 撞名）、`smart-hybrid-search` 面向阿拉伯语、`pinyin-to-chinese` 是输入法方向。`frozenminisearch` 是 `minisearch` 的只读变体（2026-10-20 新建，★1），第三十六轮已锁版 `minisearch@7.1.2` → 无增益 |
+
+## 2026-10-20 · 第四十二轮（A 组 · **持久记忆 / 归属台账轴**）
+
+> **无搜索超限**：8 次（上限 10），0 次 403 → **本轮完整**。约 460 条未登记命中 → 首次登记 14 行。
+> 关键词：`deepseek-harness plugin`(9,720 探针)、`dsh plugin provenance`(15)、`dsh plugin citation`(17)、
+> `cordis plugin telemetry`(4)、`provenance tracking javascript`(4)、`content provenance language:typescript`(82)、
+> `data lineage javascript`(7)、`dsh plugin memory`(430)。
+> **🟢1 / 🟡1 / 🔵4(含 1 结构升级) / ⛔3 簇**；**`NOASSERTION` 2 条待核、无许可证 3 条（均只登记、未摘代码）**。
+> **本轮出骨架** `packages/dsh-radar-me-memory`（A 类 · 锁版 `dsh-auto-memory@0.9.0`）。
+> 两条判据更新：① **A 类第五道门「宿主编译选项」**——`dsh-memory` 的 FTS5 在无该选项的 `node:sqlite` 上
+> **`apply()` 即抛错**；② **`kind:'single'` 槽体系下「外围兼容层」写不出来**——需 UI 的候选只能新开槽。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `AskTheWay/dsh-auto-memory` | **A 原生DSH** | **MIT** ✅（npm + 仓内一致） | 跨会话记忆 → 「我的」页台账 | **重复可强化**（「我的」页仅有设置、零台账） | 🟢 | skeleton-created | 2026-10-20 | ★137，push 2026-10-20，unpacked 164,828 B、**零 dependencies**。`dsh.bundle.patch` ✅ + `client.platform:web`。peer `>=0.1.5-rc.2 <0.3.0` → **与 `hostVersions` 相容**（不卡第三十四轮那道门）。**存储是纯 Markdown，不用 SQLite** → 不踩 FTS5 坑。⚠ **判据①条件性成立**：已读打包 `lib/client.js:1589–1595`，上游注册 `main`（顶层页）+ `sidebar.panellist`（侧栏项）→ 原样挂载即**新增两处入口**；且 `dsh.client` 是整包级、Loader 无「只挂宿主侧」开关。骨架阻塞于 TODO-0（shell 的 `zhiyun.<page>.content` 是 `kind:'single'`，容不下第二个注册者） |
+| `zhan-tz/dsh-plugin-runbook` | A 原生DSH | MIT ✅ | —（科研脚本项目） | 全新，但**不可锁版** | 🟡 | proposed | 2026-10-20 | ★1，push 2026-08-23。`v0.18.0`，`dsh.bundle.patch` ✅、`client.js` **220 KB**。Jupyter 式运行本：稳定脚本 cell + 执行记录 + Evidence 世代 + Git/agent 双作者 + **重跑须确认**。**npm `dsh-plugin-runbook` 404** → A 类「锁版」地基不在；且落 `main` 独立页。可取的只有**规则**（执行记录 / 证据世代 / 重跑确认），不能取 UI → 🟡 待 npm 发布后重评 |
+| `Jesse-njx/dsh-memory` | A 原生DSH | MIT ✅ | 跨会话记忆 | 重复可强化，但**加载即失败** | 🔵 | proposed | 2026-10-20 | ★1，npm `0.1.0` 可锁。`node:sqlite` + **FTS5 虚表 + 触发器**，`memory_search` 把每个 token **逐字引号化**（防 FTS 运算符干扰）写得考究。**实测（§2.1）**：无 FTS5 的 `node:sqlite` 上 `apply()` 抛 `ERR_SQLITE_ERROR: no such module: fts5`，并留下 16 KB 半成品 db → **A 类第五道门**。另：全机一份 `$DSH_HOME/memory/memory.db`，与本仓按账号切分冲突。**只作参照，不集成** |
+| `Phant0Meow/dsh-meow-memory` | A 原生DSH | MIT ✅ | 跨会话记忆 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★**229**（本轴最高），push 2026-10-17。七层 SQLite（soul/user/project/…）。**npm 404** → 无法锁版；且同属 SQLite 依赖组 |
+| `ZSeven-W/dsh-noema` | A 原生DSH | MIT ✅ | 长期记忆 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★129，push 2026-10-06。npm 404 → 无法锁版 |
+| `yj-liuzepeng/dsh-project-brain` | A 原生DSH | MIT ✅ | —（项目级） | 无关 | 🔵 | proposed | 2026-10-20 | ★101，npm `1.3.0` 可锁，但 **unpacked 3.46 MB**；「项目架构分析」面向代码仓，本仓无此对象 |
+| `EternalNight996/memory-eternal` | A 原生DSH | MIT ✅ | 记忆 + 知识卡片 | 重复可强化（边界重叠） | 🔵 | proposed | 2026-10-20 | ★23，npm `0.10.54` 可锁，1.53 MB。对话沉淀知识卡 + 图谱 + 审核/回收。**「知识卡」与知识库边界不清**，且体量大 → 仅登记 |
+| `bonerush/dsh-obsidian-mem` | A 原生DSH | MIT ✅ | 记忆 | 重复可强化 | 🔵 | proposed | 2026-10-20 | ★11。npm 404。Markdown 记忆 + 项目文档，思路与本轮骨架同源 |
+| `poplarity/dsh-science-workbench` | A 原生DSH | MIT ✅ | —（生物信息） | **无关（结论性）** | 🔵 | proposed（**维持**） | 2026-10-17 | **结构升级不成立**：本轮正是「留待功能域轮次」，复核后判 `0.3.1` 内容为 **9 个 `bio_*` 工具 + Jupyter 环境快照**，与课程讲义/习题无交集 → **结案为 🔵，不再挂起**。★11 为「领域对口度」而非通用价值 |
+| `gwsbhqt/dsh-insight` | A 原生DSH | MIT ✅ | —（可观测） | **重复无增益**（维持） | 🔵 | proposed（**维持**） | 2026-10-15 | 第三十二轮已判，本轮复核维持：`page-plugins` 的 `buildView` + 依赖图覆盖其「每个插件来自哪里」 |
+| `121212165/dsh-plugin-token-telemetry` | A 原生DSH | **`null`** ⛔ | — | 与 `dsh-plugin-tool-trace` 重叠 | ⛔ | rejected | 2026-10-20 | ★1，**无许可证** → 只登记，**不摘代码** |
+| `121212165/dsh-plugin-tool-trace` | A 原生DSH | MIT ✅ | — | 用量轴饱和（第三十四轮） | ⛔ | rejected | 2026-10-20 | ★1，逐工具调用时长/参数/返回体 → 与 `dsh-plugin-token-telemetry` 同人同批，且用量轴已饱和 |
+| `liuhange789/data-asset-inspector` / `gulagala001/oh-my-dsh` / `wilburli/onlyMemory-plugin` / `warrenop/open-preset-harness` | A 原生DSH | `null` ×3 / **NOASSERTION** ×1 | — | 无关 | ⛔ | rejected | 2026-10-20 | 三条**无许可证**、一条 **`NOASSERTION` 待核**；数据资产合规模块包与本仓场景无关 → 全部只登记 |
+| `chen731215-dev/dsh-tavern-v2` / `a86582751/dsh-nexttavern` / `Amakurai/dsh-liketavern` | A 原生DSH | **NOASSERTION** / **GPL-3.0** / MIT | — | 无关（角色扮演前端） | ⛔ | rejected | 2026-10-20 | ★56 / ★185 / ★123。前两者为 **NOASSERTION 待核**与 **GPL** → 排除；`liketavern` 虽 MIT，但把 dsh web 改造成 SillyTavern 前端，与学习台无交集 |
+| `provenance` 三词命中的非 DSH 簇：`bengarvey/lineage`(★122) / `aws-solutions-library-samples/guidance-for-media-provenance-with-c2pa-on-aws` / `Security4Media/c2pa-video-player` / `Tybravo/StellarProof` 等 90 余条 | B 其他JS | 多 MIT / 多 `null` | — | 无关 | ⛔ | rejected | 2026-10-20 | **「溯源」在 GitHub 是媒体取证（C2PA）+ 区块链存证的代名词**，`data lineage` 则是族谱/可视化玩具 → 与「文档来自哪段原文」同形不同义。**本轴在开源生态里没有对应物** |
+| `jkStars/dsh-token-usage-stats` / `woosh2010/dsh-usage-dashboard` / `Hjay1101/dsh-plugin-token-usage` / `samecorner/dsh-token-usage` / `lightli369/dsh-llm-usage-stats` / `wellorbetter/dsh-plugin-window-stats` | A 原生DSH | MIT ✅ | — | **重复无增益**（维持第三十四轮） | ⛔ | rejected | 2026-10-20 | ★1–3，六个包做同一件事（token 用量面板）→ 用量轴确认饱和，不再逐条评估 |
+
+### 2026-10-21 · 第四十三轮（A 组 · **计划分解 / 依赖调度轴**）
+
+> 取组：`last_run_at` 为 10-20 21:15 → 跨天重置 → `day_of_year % 3`（294%3=0）→ **A 组**。
+> 与第四十二轮同组但**轴不同**（那轮是持久记忆/归属台账），关键词零重叠。
+> 12 次 API 调用（其中 2 次是 OR 限定符失效后的重试）、**0 次 403**、本轮完整。
+> `dsh plugin` 前两页 60 条里仅 1 条新面孔；**首次登记 3 行，🟢1 / ⛔2**；**0 条 NOASSERTION**；**2 个 A 类**。
+> 骨架 `packages/dsh-radar-agent-teams`（A 类锁版 `@nanmicoder/dsh-agent-teams@0.1.25`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `NanmiCoder/dsh-agent-teams`（npm `@nanmicoder/dsh-agent-teams@0.1.25`） | A 原生DSH | **MIT** ✅（GitHub + npm 一致） | 计划分解 / 执行推进 | **重复且可强化**（「规划」周计划 + 「今天」当日待办） | 🟢 | skeleton-created | 2026-10-21 | ★2299，push 2026-10-18，31 个版本，npm unpacked 3,418,813 B。**A 类三件套齐全**：根有 `cordis.patch.yml`（insert `id: agent-teams`）、`exports` 含 `.`/`./client`、21 项 `@deepseek-ai/dsh-*` peer。**强化点**：本仓计划是**扁平清单**（无 `dependsOn`/无中间状态/无执行者，顺序靠学生自排），上游是**依赖感知任务状态机**（依赖未完成不能认领、空闲成员自动认领、失败尝试可安全接管）——对「读讲义→刷题→订正」这类硬顺序课业是底层实质升级。**版本窗口**：上游推荐 Host `0.2.1-rc.2`；本仓 `runtime.lock.json` `preferredHostVersion=0.2.0-rc.2`，**在上游 peer 窗口内但未跑 `scripts/test-host.mjs`** → 只算「交集非空」，不算「已测」。**⚠ 最大未知（评审第一问）**：上游把 14 个 `agent_teams_*` 工具注册进**共享 `tools` 表**、并往**全局 system prompt** 插 usage；本仓是一整个工作台（「问一问」「笔记」共用），可能诱导模型在日常会话里无端组建团队 → **此条不解决则方案作废**。其余见骨架 TODO 3–9（面板可否不自动注册 / `memberProvider` 默认 `spawn` 需改最省 / 体积 3.26 MB） |
+| `dsh-tauri/deepseek-harness-desktop` | B 其他JS（Tauri 桌面壳） | MIT ✅ | 无（换承载端） | 重复且无增益 | ⛔ | rejected | 2026-10-21 | ★3362，push 2026-10-20，207 fork，「8 MB 安装包 / 免环境」。本仓是 Web 工作台 + profile 形态，**换承载端不增强任何面板**，也不改变任何功能；且非插件包（无 mount 意图）→ 强化式集成三条第 ① 条即不成立 |
+| `dataelement/dsh-desktop` | B 其他JS（桌面壳） | MIT ✅ | 无 | 重复且无增益 | ⛔ | rejected | 2026-10-21 | ★15878，push 2026-10-20。同上；与 `dsh-tauri` 二者择一足够，**本仓两者都不需要** |
+
+### 2026-10-21 · 第四十四轮（C 组 · **复习链闭环 / 复习容量轴**）
+
+> 取组：`last_run_at` 为今天 → 同日续跑。脚本报 `formula(stale-state)`→C，但其 `last_group` 解析失败
+> 且**用了 UTC 日期**（自报「今天=10-20」），建议不可信；本轮轴从读码得出、落在 C 组功能域内，故取 **C**
+> （偏离脚本一次，理由记于 `2026-10-21-r44.md` 抬头）。
+> 11 次搜索（上限 10，1 次为 `stars:>` 归零后的放宽重试）→ **超限 1 次**、0 次 403、本轮完整。
+> 命中约 9,800 条、高度重复 → **首次登记 2 行，🟡1 / 🔵1**（另有 3 条已登记项复核、5 条许可证外单列）。
+> **0 个 🟢、0 个 A 类、未出骨架**——本轮结论是「先闭环再调度」（见报告的 R-1/R-2/R-3）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `femto-fsrs`（npm 包，**无 GitHub 仓**） | B 其他JS（npm） | **MIT** ✅（npm `license`；`repository: null`） | 复习调度 | **重复且无增益**（`ts-fsrs@5.4.2` 已在 `dsh-radar-fsrs-scheduler` 锁版） | 🟡 | proposed（**待复核**） | 2026-10-21 | `femto-fsrs@2.0.0`，**零依赖**，unpacked **18,076 B**（`ts-fsrs` 体积的零头），自称 FSRS 5 最小实现。**判 🟡 不判 🟢 的两条硬理由**：① 本仓已锁 `ts-fsrs`，同功能两套实现为仓规明令禁止（`quiz/src/index.js:26–28`）；② **无 GitHub 仓库** → 无 issue、无可见更新史，答不了「上游还在不在」。保留 🟡 的用途：若将来因**体积**要换浏览器侧调度，它是已核实许可的备选。⚠ **参数集与 FSRS 版本未比对**（是否与 `ts-fsrs 5.4.2` 默认权重等价，本轮**未验证**），报告不声称等价 |
+| `kitschpatrol/yanki-obsidian` | B 其他JS（Obsidian 插件） | **MIT** ✅ | 笔记 → 复习卡 | **无关**（载体是 Anki，本仓无此对象） | 🔵 | proposed | 2026-10-21 | ★197，push 2026-10-16（活跃），topics `anki,flashcards,markdown,obsidian`。把 vault 里**纯 Markdown 写法的闪卡**同步进 Anki。**判 🔵**：其价值在「Markdown 能表达复习卡」这一格式约定，而约定绑死 Anki 侧解析器；本仓产出侧是「LLM 生成 → 质检 → 待审 → 采纳」（`quiz/generate.js`），**换载体等于换掉整个产出侧**，不满足强化式集成第 ① 条。只取其**语法设计参照**（`问题::答案` / `==挖空==`），**不摘代码** |
+| `femto-fsrs` ↔ `open-spaced-repetition/ts-fsrs` | — | MIT / MIT | — | **同功能双实现** | ⛔（合并入上条） | — | 2026-10-21 | 本轮不再为 `ts-fsrs` 单开行（2026-10-14 已登记 🟢 并已出骨架）。此处记录**关系**：`femto-fsrs` 是它的小体积替代，二选一，**不得并存** |
+| `open-spaced-repetition/fsrs.js`（2026-10-14 已判「不登记」） | B 其他JS | MIT | 复习调度 | 重复无增益 | ⛔ | 维持 | 2026-10-21 | 本轮复核：`latest` push **2024-04-10**，停在 FSRS 4 时代，仍在 `ts-fsrs` 之下 → 维持「不登记」 |
+| `@open-spaced-repetition/binding@0.5.0` | B 其他JS（Node/WASI 绑定） | **MIT** ✅ | 复习调度（参数优化） | 与 `ts-fsrs` 同仓、**非独立能力** | 🔵 | proposed（仅备查） | 2026-10-21 | 本轮核实许可为 MIT，`optionalDependencies` 覆盖 **11 个平台**（含 `wasm32-wasi`）、`engines.node >= 20`。用途是 **FSRS Optimizer**（用个人作答史拟合参数），与本仓「学生单用户、样本 <3」现状不匹配 → 只备查。⚠ 「当前平台二进制是否真被 npm 装上」**未实测** |
+| `ankitects/anki` / `andymatuschak/orbit` / `pieralukasz/true-recall` | 非 JS / B | **NOASSERTION** ⚠ | — | — | ⛔ | rejected | 2026-10-21 | ★32,148（Rust）/ ★1,837（TS）/ ★65。**许可证待人工核验，不采用、不摘代码**。`anki` 即便核出 MIT 也是 Rust 栈，不合 skill 的 JS 限定 |
+| `koljapluemer/obsidian-the-queue` / `subconcept-labs/ulangi` / `h16nning/skola` / `debanjandhar12/logseq-anki-sync` | B | **`null`** ⛔ / **GPL-3.0** / **AGPL-3.0** / **AGPL-3.0** | 复习 | — | ⛔ | rejected | 2026-10-21 | 无许可证 1 条、强著佐权 3 条 → **全部只登记、不摘代码**。`skola`（AGPL，★55，本地优先 SRS PWA）形态最贴近「学生自用」，但许可不可用 |
+| `ECuiDev/obsidian-quiz-generator`（2026-10-20 已登记 🔵） | B | MIT ✅ | 从笔记出闪卡 | 重复无增益 | 🔵 | 维持 | 2026-10-21 | 复核：★174，**push 2024-11-13 已停更近 2 年**，30 open issues → 维持 🔵，**不再重评** |
+| `st3v3nmw/obsidian-spaced-repetition`（2026-10-15 已登记 🔵） | B | MIT ✅ | 复习 | 重复可强化 | 🔵 | 维持 | 2026-10-21 | 复核：★2,591，但 **356 open issues**，插件形态强耦合 Obsidian → 维持 🔵（只作线索） |
+| `ctrlaltwill/LearnKit`（2026-10-15 已登记 🟡） | B | MIT ✅ | 复习 / 刷题 | 重复可强化 | 🟡 | 维持 | 2026-10-21 | 复核：★181，push 2026-10-17，仍在活跃。维持「只提取 image-occlusion 思路、不整包集成」 |
+| `open-spaced-repetition/awesome-fsrs` | — | CC0-1.0 ✅ | — | **线索源** | 🔵 | proposed | 2026-10-21 | ★727，push 2026-10-20。FSRS 实现索引（含各语言绑定）→ 与 `awesome-dsh-plugin` 同类，作为**后续查绑定的入口**，不入包 |
+
+#### 本轮无 🟢 的原因（写进登记表以免下轮重犯）
+
+`dsh-zhiyun-quiz` 的复习链在**三处同时断开**：① `reviewQueue` 只按 `status` 过滤，**无 `due`、无排序字段**
+（`store.js:501`，实测队列项无 `due`/`fsrsRating` 字段）；② `recordAttempt` **全仓零调用方**（`store.js:604` 仅定义）——
+`workbench.js:627–630` 的 method 白名单里没有 `quiz-attempt`；③ `openQuizStore`（`workbench.js:376–379`）只 `loadItems`、
+不喂 `attempts`，而 `quiz-generate`/`changeQuiz` 用 `store.snapshot()` **整份覆盖写回** → 实测「保存前 1 条 → 写回 0 条」，
+随后 `masteryOf()` 报「数据不足（做过 0 题）」。**结论：先闭环（R-1/R-2，约 20 行、零新依赖），再接调度（R-3）。**
+
+---
+
+### 第四十五轮 · 2026-10-21 · A 组（检索口径统一轴）
+
+> 搜索 10 次（`dsh plugin quiz/classroom/calendar/kanban/lecture/paper/reading/flashcard/mindmap/tutor`），
+> 约 180 条命中 → **首次登记 8 行（🟡0 🔵5 ⛔3）**；另 3 条 `NOASSERTION` 待核、10 条无许可证、2 条 GPL。
+> **零 🟢，未出 A 类骨架**（本轮 L2 出的是 B 类对照物 `dsh-radar-knowledge-fold`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `MrElysium/dsh-md-quiz` | A 原生DSH | **MIT** ✅ | 复习 / 答题式阅读 | **重复且无增益** | ⛔ | rejected | 2026-10-21 | ★6，push 2026-08-18。5 阶段游戏化循环把任意 Markdown 变答题。本仓 `dsh-zhiyun-quiz` 有 `anchorFromMaterial` 源块锚点 + `sourceRevision` + 规则门禁 + 待审，**该插件无来源锚点、无质检链**，接入等于绕过质检。**npm `dsh-md-quiz` 404**（官方 registry 直查），不可锁版。两条独立理由 |
+| `mrk-king/dsh-paper-reading` | A 原生DSH | **BSD-3-Clause** ✅ | 论文阅读 | **重复且无增益** | ⛔ | rejected | 2026-10-21 | ★0。pdf.js 阅读器 + 按论文记忆问答 + 预设门控。本仓 `dsh-zhiyun-paper` 已锁版 `@ggboy123/dsh-paper-reader@1.3.1` + `pdfjs-dist` → 同一件事的第二套实现。npm `@dsh-external/dsh-paper-reading` 404 |
+| `Madao1210/dsh-deep-reading` | A 原生DSH | **MIT** ✅ | 精读 | **重复且无增益** | ⛔ | rejected | 2026-10-21 | ★3，push 2026-10-10。逐章理解书籍。与已 🟢 的 `PensiveFei/deep-read-summarize`（已出骨架 `dsh-radar-deep-read`，MapReduce + JSON Schema + 解析器层）同域同形态。npm `dsh-deep-reading` 404 |
+| `hzxwonder-dsh-plugins/dsh-plugin-latex` | A 原生DSH | **MIT** ✅ | 论文写作 | **重复可强化（弱）** | 🔵 | proposed | 2026-10-21 | ★0，push 2026-09-27。**句级写作地图**是本仓没有的东西，但整体是「本地 LaTeX 编译 + Overleaf 同步」，本仓论文域为 iframe 承载、无编译链 → 接入等于新起管线。npm `dsh-plugin-latex` 404。**只作需求线索：句级写作地图值得自写** |
+| `jianyuepei/dsh-session-mindmap` | A 原生DSH | **MIT** ✅ | 笔记 | **全新（弱）** | 🔵 | proposed | 2026-10-21 | ★0。会话 → 自包含交互式 HTML 思维导图。本仓「笔记」是 vault 节点结构（`dsh-zhiyun-vault` + `graph` RPC），导出物语义相反。npm `dsh-session-mindmap` 404 |
+| `stuarthu/dsh-chrome` | A 原生DSH | **MIT** ✅ | 通用 | **无关（形态而非能力）** | 🔵 | proposed | 2026-10-21 | ★9。Chrome 侧栏嵌入完整 DSH Web UI + 页面读取 host 插件。**本轮唯一可锁版的 A 类**（`dsh-chrome@0.1.3`/MIT，registry 实测）→ 留作「A 类可锁版」正例 |
+| `haoyanzhang123/dsh-plugin-control-your-schedule` | A 原生DSH | **MIT** ✅ | 日程 / 便签 | **重复可强化（弱）** | 🔵 | proposed | 2026-10-21 | ★3。便签 + 画布 + 日程 + 手写面板四合一。**画布与手写**本仓确无；但 ★3、单作者、HTML 为主、无 issue 史。npm 404 → 不上骨架 |
+| `yihong89/dsh-teacher` | A 原生DSH | **MIT** ✅ | 苏格拉底辅导 | **重复可强化** | 🔵 | proposed | 2026-10-21 | ★3。「知识缺口追踪」与已 🟢 的 `lookatstudy`（BKT 掌握度）同义项 → 重复；保留线索仅因**苏格拉底引导的 prompt 设计**可借鉴。**不摘代码** |
+
+**`NOASSERTION` 待人工核验（不采用）**：
+
+| 仓库 | 备注 |
+| --- | --- |
+| `naodeng/dsh-qa` | ★31，push 2026-10-20，本轮 ★ 最高的新面孔（本地 QA Workbench，零依赖）。**许可证待核**，核前不使用 |
+| `Trouvaille-xx/dsh-StardewValley-UI` | ★1，星露谷主题 UI 包。与本仓无关，但许可证不明 |
+| `zhen-yang-cn/dsh-xmind-mindmap` | ★0，描述自称 **Proprietary**。XMind/Markdown 卡片 + 侧栏 `.xmind` 预览，形态对口但**闭源** → 只登记 |
+
+**无许可证（`null`）⛔ 排除，不摘代码**：`miuzel/dsh-graph`(★24, TS 目标看板)、`callmesoul/deepseek-kanban-plugin`(★4, Vue)、`kouyichi/dsh-plugins`(★2, 自称 31 插件)、`ktao732084-arch/dsh-vibegap`、`ccjlovewsy/dsh-mindmap-live`、`mckenna0625/dsh-langgraph-paper-pipeline`、`gqallen931/paper-gogo-plugin`、`ZEVIN17/PaperViz-dsh`、`LLLin000/paperforge-dsh`、`puremapping/dsh-plugin-reading-pipeline`。
+
+**GPL 红线 ⛔**：`ArisaYamatogi/dsh-lecture-copilot`（**GPL-3.0**，录音+翻译+OneNote 笔记，★4）；`alei37/dsh-cet6-tutor`（AGPL-3.0，2026-10-16 已 ⛔，本轮复现，维持）。
+
+**token 统计族整体 ⛔（不再逐条登记）**：`Hou-DL/dsh-token-pulse`、`skkjkk/dsh-usage-dashboard`、`Fiennes4590/dsh-token-usage-calendar`、`greyhackintoch-dev/dsh-month-tokens`、`KIDLi1412/dsh-token-heatmap`、`xiyi123465/dsh-usage-calendar` —— 六个不同作者做同一件事（本地 token 用量日历/热力图），与本仓任何功能无交集 → **重复且无增益**，只留此一行。
+
+#### 本轮无 🟢 的原因
+
+① **可锁版率崩到 1/7**：8 条新 A 类候选里，官方 registry 直查只有 `dsh-chrome` 存在；
+② **形态对口的三条（`dsh-md-quiz` / `dsh-paper-reading` / `dsh-deep-reading`）全部与已采纳候选同域**，
+接进来就是第二套实现（仓规明令禁止同功能两套）；
+③ 真正的新缺口（**句级写作地图**、**画布/手写**）都只出现在 ★0~★3、单作者、不可锁版的包里
+→ **缺口是真的，但这些包接不进来**，应按「自写」而非「集成」处理。
+
+#### 本轮最有价值的产出：C-1（不需要任何新库）
+
+`dsh-zhiyun-quiz/src/quality.js:166` `normalizeForMatch`（全角折叠 + 小写 + 去空白）与
+`dsh-zhiyun-knowledge/src/service.js:282` `fragment.text.includes(needle)`（裸 includes）**同仓两套口径**。
+→ 修法：`service.js:282` 一行（`fold` 两次），或提为共享工具。**这是第四十二轮 R-1 的第二次独立复现，且落在用户可见的「知识」页检索上。**
+
+#### 方法学修正
+
+`npm view` 走的是腾讯镜像，可能滞后/缺包 → **锁版判定一律以 `https://registry.npmjs.org/<pkg>` 直查为准**。
+
+### 第四十六轮 · 2026-10-21 · A 组（topic 精确检索轴）
+
+> 搜索 8 次（`topic:deepseek-harness-plugin` 835 / `topic:cordis-plugin` 575 / `topic:dsh-plugin` 21197（⚠ 污染） /
+> `topic:dsh-extension` 5 / `topic:dsh-ecosystem` 11 / `topic:dsh-desktop` 181 / 前两者的 `language:javascript` 479、`language:typescript` 281），
+> 263 个唯一仓库 → **首次登记 190 行（🔵146 / ⚠待核17 / ⛔27，零 🟢 零 🟡）**。
+> **零 🟢 → 按技能文档未出「可直接集成」骨架**；L2 出的是 B 类对照物 `dsh-radar-fence-normalize`。
+> 自我纠正：`dream-num/dsh-univer-office` 初判「三门全过的新 A 类」，实查后**本章早已锁版接入并写进 profile** → 改判 ⛔（报告 §二 C-2）。
+> 本轮把「桌面壳 / token 额度族 / IM 网关 / 趣味」四类噪声各归并成一行口径，逐条独立登记但不逐条读码（见报告 §七）。
+
+| 仓库 | 类型 | 许可证 | 星/推送 | 分级 | 状态 | 理由（归并口径或单条理由） |
+| --- | --- | --- | --- | --- | --- | --- |
+| `reactive-resume/reactive-resume` | B 其他JS | MIT | ★44605 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `volcengine/OpenViking` | B 其他JS | AGPL-3.0 | ★40453 / 2026-10-20 | ⛔ | rejected | AGPL-3.0 红线 —— 不摘码 |
+| `esengine/DeepSeek-Reasonix` | B 其他JS | MIT | ★35882 / 2026-10-21 | 🔵 | proposed | 任务编排，与本仓「规划/今天」页同域但方向不同（见 §二 C-1） |
+| `Tencent/WeKnora` | B 其他JS | NOASSERTION | ★34866 / 2026-10-20 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `freestylefly/awesome-gpt-image-2` | B 其他JS | MIT | ★34786 / 2026-10-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `anywhere-labs/dsh-desktop` | A 原生DSH | MIT | ★31997 / 2026-10-20 | 🔵 | proposed | **承载端**（Electron 壳，自身即 Cordis 插件 `dsh-plugin-desktop`，npm 可锁版但停在 2.0.0/2026-08-16，落后仓库 2.0.18）；与学生场景无关，见 §二 C-4 |
+| `Molunerfinn/PicGo` | B 其他JS | MIT | ★27379 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `titanwings/distilly` | B 其他JS | MIT | ★25835 / 2026-10-13 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `nocobase/nocobase` | B 其他JS | NOASSERTION | ★24644 / 2026-10-21 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `walkinglabs/learn-harness-engineering` | A 原生DSH | MIT | ★21033 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `EverMind-AI/EverOS` | B 其他JS | Apache-2.0 | ★13537 / 2026-10-20 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `MemTensor/MemOS` | A 原生DSH | Apache-2.0 | ★11978 / 2026-10-20 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `Tencent/BrowserSkill` | B 其他JS | MIT | ★9287 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `anbeime/skill` | B 其他JS | **无** | ★8414 / 2026-10-20 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `plastic-labs/honcho` | B 其他JS | AGPL-3.0 | ★7712 / 2026-10-20 | ⛔ | rejected | AGPL-3.0 红线 —— 不摘码 |
+| `lingfengQAQ/webnovel-writer` | B 其他JS | GPL-3.0 | ★7578 / 2026-10-19 | ⛔ | rejected | GPL-3.0 红线 —— 不摘码 |
+| `yjh051108/dsh-routing-suite` | A 原生DSH | MIT | ★6991 / 2026-09-18 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `ZSeven-W/openpencil` | B 其他JS | MIT | ★6304 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Q00/ouroboros` | B 其他JS | MIT | ★6253 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `superdesigndev/treg` | B 其他JS | NOASSERTION | ★5899 / 2026-10-20 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `iflytek/skillhub` | B 其他JS | Apache-2.0 | ★5251 / 2026-10-20 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `crafter-station/petdex` | A 原生DSH | MIT | ★4261 / 2026-10-10 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `QingYunA/answer-me-with-html` | B 其他JS | MIT | ★4104 / 2026-10-21 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `xiaobright/dsh-anchored-standard` | A 原生DSH | NOASSERTION | ★3744 / 2026-09-10 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `foryourhealth111-pixel/Vibe-Skills` | B 其他JS | Apache-2.0 | ★3736 / 2026-10-20 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `strukto-ai/mirage` | B 其他JS | Apache-2.0 | ★3699 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `agentscope-ai/ReMe` | B 其他JS | Apache-2.0 | ★3656 / 2026-10-19 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `T-Auto/dsh-ops` | A 原生DSH | NOASSERTION | ★3477 / 2026-10-20 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `edison7009/EchoBird` | B 其他JS | MIT | ★3385 / 2026-10-21 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `chuspeeism/dashi-taskboard` | A 原生DSH | Apache-2.0 | ★3370 / 2026-10-16 | 🔵 | proposed | **任务面板**：★3370、2 万行 `AGENTS.md` 的 agent 派工规程。方向与本仓「规划」页**不同**（它是给 agent 派任务，不是给用户排作业），见 §二 C-1 |
+| `sopaco/deepwiki-rs` | B 其他JS | MIT | ★3136 / 2026-09-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `shaobeichen/dsh-pocket` | A 原生DSH | GPL-2.0 | ★2021 / 2026-10-17 | ⛔ | rejected | GPL-2.0 红线 —— 不摘码 |
+| `myYangyunfan/dsh_desktop` | A 原生DSH | MIT | ★719 / 2026-10-18 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `KimGLee/Cambium` | B 其他JS | NOASSERTION | ★624 / 2026-09-12 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `dream-num/dsh-univer-office` | A 原生DSH | Apache-2.0 | ★574 / 2026-10-08 | ⛔ | rejected | **重复且无增益**：本仓 `packages/dsh-zhiyun-univer-office` 已锁版 `0.3.7` 接入并写进 profile（`6b09396`）。本行动因是「registry 无此名 → 误判为新候选」，见报告 §二 C-2 |
+| `houyanchao/chatgpt-gemini-timeline` | B 其他JS | NOASSERTION | ★469 / 2026-09-27 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `xing-shuyin/pi-web-ui` | B 其他JS | MIT | ★322 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `Fanch-hui/codex-bridge` | A 原生DSH | Apache-2.0 | ★276 / 2026-10-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `MarcoG-h/DSH-Launcher` | A 原生DSH | **无** | ★269 / 2026-09-18 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `Devin-AXIS/jev-dsh-decision` | A 原生DSH | **无** | ★258 / 2026-09-20 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `Astro-Han/pawwork` | A 原生DSH | Apache-2.0 | ★203 / 2026-10-12 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `taxueseek/argo` | B 其他JS | Apache-2.0 | ★203 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Anionex/dsh-turn-rewind` | A 原生DSH | BSD-3-Clause | ★136 / 2026-10-18 | 🔵 | proposed | 会话/工作区回退（BSD-3-Clause）；与本仓无对应面板，但与 `PerryLink/dsh-checkpoint-rewind` 同题，仅登记 |
+| `sjh9714/dsh-win32` | A 原生DSH | MIT | ★133 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WestFox-AwA/dsh-wish-specializer` | A 原生DSH | BSD-3-Clause | ★132 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `fangqian616/consensus-pipeline` | B 其他JS | MIT | ★129 / 2026-10-10 | 🔵 | proposed | 任务编排，与本仓「规划/今天」页同域但方向不同（见 §二 C-1） |
+| `BruzWJ/Liang-Saint-Slider` | A 原生DSH | MIT | ★93 / 2026-08-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `like-study1/Oh-My-DSH` | A 原生DSH | MIT | ★93 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `linhut/gongwen-skill` | A 原生DSH | MIT | ★83 / 2026-10-01 | 🔵 | proposed | Office 文档能力，与本仓文档导入通路相关（见 §二 C-2） |
+| `openma-ai/Martty` | A 原生DSH | MIT | ★80 / 2026-10-17 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WM-CODER/custom-first-control-prompt` | A 原生DSH | MIT | ★75 / 2026-09-01 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Ebony-Vinyl/EAC-design-world` | A 原生DSH | AGPL-3.0 | ★71 / 2026-10-18 | ⛔ | rejected | AGPL-3.0 红线 —— 不摘码 |
+| `Aa728848/dsh-chatgpt-subscription` | A 原生DSH | MIT | ★69 / 2026-10-20 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `eleckoi/ElecKoi` | A 原生DSH | AGPL-3.0 | ★63 / 2026-10-17 | ⛔ | rejected | AGPL-3.0 红线 —— 不摘码 |
+| `zaofan-make/dsh-qqbot` | A 原生DSH | MIT | ★61 / 2026-10-20 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `keleus/deepseek-pet` | A 原生DSH | MIT | ★57 / 2026-10-16 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `LaplaceYoung/oh-my-dsh` | A 原生DSH | **无** | ★57 / 2026-08-15 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `zhuiyueya/dsh-im-gateway` | A 原生DSH | MIT | ★53 / 2026-09-27 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `houyanchao/dsh-timeline` | A 原生DSH | NOASSERTION | ★47 / 2026-08-20 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `openma-ai/deepseek-harness-acp` | A 原生DSH | NOASSERTION | ★45 / 2026-10-19 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `limuyang2/agent-team` | A 原生DSH | MIT | ★43 / 2026-08-26 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `EdgeTypE/dsh-better-deepseek` | A 原生DSH | **无** | ★37 / 2026-08-14 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `kw78/dsh-office-tools` | A 原生DSH | MIT | ★34 / 2026-10-13 | 🔵 | proposed | Office 文档能力，与本仓文档导入通路相关（见 §二 C-2） |
+| `ZRui-C/dsh-computer-use` | A 原生DSH | Apache-2.0 | ★33 / 2026-10-07 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `sikadi233-hub/minecraft-dev` | A 原生DSH | MIT | ★31 / 2026-10-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `omdsh-dev/dsh-advisor` | A 原生DSH | MIT | ★31 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Lzcdebear/better-dsh-session-deletetool` | A 原生DSH | MIT | ★31 / 2026-10-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `fengyungithub/dsh-short-video-studio` | A 原生DSH | Apache-2.0 | ★30 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `GaganSD/pi-extensions` | A 原生DSH | MIT | ★28 / 2026-10-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `PerryLink/dsh-checkpoint-rewind` | A 原生DSH | Apache-2.0 | ★27 / 2026-10-19 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `sugarforever/dsh-lark` | A 原生DSH | MIT | ★26 / 2026-09-07 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `czcdr/dsh-plugin-rea` | A 原生DSH | MIT | ★25 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `rootkiller6788/dsh-launcher` | A 原生DSH | MIT | ★25 / 2026-09-16 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `zaizaizhao/dsh-branchmark` | A 原生DSH | MIT | ★25 / 2026-10-08 | 🔵 | proposed | 任务编排，与本仓「规划/今天」页同域但方向不同（见 §二 C-1） |
+| `cloveric/tarocub` | A 原生DSH | MIT | ★24 / 2026-10-17 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `SpookySandwich/dsh-plugin-message-edit` | A 原生DSH | NOASSERTION | ★23 / 2026-10-05 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `AlliotTech/deepseek-harness-docker` | A 原生DSH | MIT | ★23 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `tomowang/dsh-tui` | A 原生DSH | MIT | ★23 / 2026-10-17 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `plyflai/dsh-ux-plus` | A 原生DSH | MIT | ★22 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `MindLab-Research/dsh-generative-ui` | A 原生DSH | Apache-2.0 | ★22 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `JustGenius-s/DSH-Desktop` | A 原生DSH | MIT | ★22 / 2026-10-11 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `zangxx66/dsh-prompt-setting` | A 原生DSH | MIT | ★21 / 2026-10-17 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `datit309/supergraph` | B 其他JS | MIT | ★21 / 2026-10-17 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `xxxyz/DeepSeekHarness-MCP-Manager` | A 原生DSH | MIT | ★21 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `nullptr-DZF/dsh-academic-research-skills` | A 原生DSH | NOASSERTION | ★21 / 2026-08-27 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `ZK-Andy/dsh-continual-evolve` | A 原生DSH | MIT | ★21 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `JunNanLYS/dsh-layered-memory` | A 原生DSH | MIT | ★20 / 2026-09-07 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `LiuJunheng/DeepSeekHarnessGreen` | A 原生DSH | Apache-2.0 | ★19 / 2026-10-17 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `gulagala001/dsh-intelligent-ui` | A 原生DSH | MIT | ★19 / 2026-10-20 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `Lenonss/DSH_VsCodeMode` | A 原生DSH | MIT | ★19 / 2026-10-19 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WLV-ZEDD/dsh-chatgpt-web` | A 原生DSH | MIT | ★19 / 2026-10-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `v587d/capital-generation` | B 其他JS | MIT | ★18 / 2026-10-20 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `z953218350/dsh-history-tree` | A 原生DSH | MIT | ★17 / 2026-08-31 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Z-6354/dsh-mobile-hanui` | A 原生DSH | MIT | ★17 / 2026-10-05 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `2861292267/DSH-Official-WorkBuddy-Credit-Proxy` | A 原生DSH | MIT | ★17 / 2026-10-19 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `hyqibot/DeepSeek-Harness-Token-Free` | A 原生DSH | NOASSERTION | ★17 / 2026-08-24 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `wlj521/dsh-ui-tweaks` | A 原生DSH | MIT | ★17 / 2026-10-13 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `S3K926/dsh-selfwake` | A 原生DSH | MIT | ★16 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `muyuanjin/dsh-ptc-plus` | A 原生DSH | MIT | ★16 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `MengYuil/dsh-ponytail` | A 原生DSH | MIT | ★16 / 2026-10-17 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `baisama-cloud/dsh-galgame-generator` | A 原生DSH | MIT | ★16 / 2026-09-10 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `Clizo1209/dsh-playwright-browser` | A 原生DSH | MIT | ★16 / 2026-08-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Kaalia0912/dsh-whale-musume-persona` | A 原生DSH | MIT | ★14 / 2026-08-20 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `panzeyu2013/dsh-chamber` | A 原生DSH | MIT | ★14 / 2026-10-19 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WNJXYK/dsh-codex-oauth` | A 原生DSH | MIT | ★14 / 2026-08-15 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `yingjian666/dsh-zh-thinking` | A 原生DSH | MIT | ★14 / 2026-10-01 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `cuddly-guacamole/dsh-auto-approval-llm` | A 原生DSH | BSD-3-Clause | ★14 / 2026-10-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `S3K926/dsh-session-switch` | A 原生DSH | MIT | ★13 / 2026-10-01 | 🔵 | proposed | 记忆层，与本仓 `dsh-zhiyun-me`/记忆页同域，待与已登记记忆簇合并评审 |
+| `MrMu666/dsh-lan-tool` | A 原生DSH | **无** | ★13 / 2026-10-18 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `orrinzeng/dsh-cursor-subscription` | A 原生DSH | MIT | ★13 / 2026-09-30 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `cv-superding/dsh-webin` | A 原生DSH | NOASSERTION | ★12 / 2026-10-16 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `z953218350/dsh-archive-manager` | A 原生DSH | MIT | ★12 / 2026-08-31 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `Innocent-children/TaskBelay` | B 其他JS | Apache-2.0 | ★12 / 2026-10-19 | 🔵 | proposed | 任务编排，与本仓「规划/今天」页同域但方向不同（见 §二 C-1） |
+| `xiaoksio/dsh-solution-explorer` | A 原生DSH | MIT | ★12 / 2026-10-10 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `SpookySandwich/dsh-plugin-smooth-stream` | A 原生DSH | MIT | ★11 / 2026-09-29 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `SheltonLiu-N/nano-cordis` | A 原生DSH | MIT | ★11 / 2026-08-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `yxccai/dsh-desktop` | A 原生DSH | MIT | ★11 / 2026-08-21 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `Minglink/dsh-stream-market` | A 原生DSH | MIT | ★11 / 2026-09-04 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `cryjkd/dsh-clawbot` | A 原生DSH | MIT | ★11 / 2026-09-05 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `TryDing-T/dsh-Plugin--ChineseChess` | A 原生DSH | MIT | ★11 / 2026-09-09 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `xiaozhuyuqing/dsh-repeat-guard` | A 原生DSH | MIT | ★11 / 2026-10-02 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `xiaolinlin360/dsh-supabase` | A 原生DSH | MIT | ★10 / 2026-08-27 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `zxmqq1234/dsh-auto-retry` | A 原生DSH | MIT | ★10 / 2026-10-15 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `jaibhasin/dsh-browser-agent` | A 原生DSH | MIT | ★10 / 2026-10-11 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `TH060419/gatherthread` | A 原生DSH | Apache-2.0 | ★10 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `HakureiMonika/dsh-browser-scope` | A 原生DSH | MIT | ★10 / 2026-09-28 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `yu-wenchao/deepseek-harness-desktop-Install` | A 原生DSH | MIT | ★9 / 2026-08-31 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `dushaobindoudou/dsh-acp` | A 原生DSH | MIT | ★9 / 2026-10-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `walksls/dsh-degeneration-kit` | A 原生DSH | MIT | ★9 / 2026-10-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `bloodtmai-cmyk/dsh-harness-enterprise` | A 原生DSH | MIT | ★9 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Gru110110110/dsh-launcher` | A 原生DSH | NOASSERTION | ★9 / 2026-10-01 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `foolgry/dsh-desktop` | A 原生DSH | **无** | ★9 / 2026-09-22 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `Zoria-Lind/dsh-behavior-enhancer` | A 原生DSH | MIT | ★9 / 2026-10-19 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `peterwangze/dsh-novel-writing` | A 原生DSH | **无** | ★8 / 2026-10-21 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `bloodtmai-cmyk/dsh-ai-hub` | A 原生DSH | MIT | ★8 / 2026-10-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `civaapple-alt/mini-dsh` | A 原生DSH | MIT | ★8 / 2026-08-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `vdnight89/InfiniteDSH` | A 原生DSH | MIT | ★8 / 2026-08-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `haoranwang0921/dsh-session-cleaner` | A 原生DSH | Apache-2.0 | ★8 / 2026-09-05 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `EhsanShahbazii/DeepSeek-Orbit` | B 其他JS | MIT | ★8 / 2026-10-08 | 🔵 | proposed | Office 文档能力，与本仓文档导入通路相关（见 §二 C-2） |
+| `zcx960/deepseek-desktop` | A 原生DSH | MIT | ★8 / 2026-09-18 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `CSlawyer1985/dsh-desktop` | A 原生DSH | MIT | ★7 / 2026-08-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `Lee-Hilex/dsh-mineru` | A 原生DSH | MIT | ★7 / 2026-09-27 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `sixtysevenlf/dsh-opencode-go-monitor` | A 原生DSH | BSD-3-Clause | ★6 / 2026-09-18 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `jasonrale/dsh-archive-manager` | A 原生DSH | MIT | ★6 / 2026-08-17 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Mcd0LUO/dsh-guard-repeat-output` | A 原生DSH | MIT | ★6 / 2026-10-11 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `Loping151/dsh-vibeos` | A 原生DSH | NOASSERTION | ★6 / 2026-10-02 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `sasajun2345/dsh-minigame-plugin` | A 原生DSH | MIT | ★6 / 2026-08-16 | 🔵 | proposed | 趣味/角色扮演，与学生场景无关 |
+| `ruler770525/dsh-anchored-flash` | A 原生DSH | NOASSERTION | ★6 / 2026-08-17 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `wkscc310/dsh-client-ui-cpa-quota` | A 原生DSH | MIT | ★6 / 2026-10-19 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `baisama-cloud/dsh-custom-brand` | A 原生DSH | MIT | ★6 / 2026-10-13 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Bernardxu123/dsh-mobile-gate` | A 原生DSH | MIT | ★6 / 2026-08-14 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `Luaphes/dsh-web-attention-badge` | A 原生DSH | MIT | ★6 / 2026-09-09 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `G0K0U/kvmem-agent-16gb` | A 原生DSH | MIT | ★4 / 2026-09-25 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `WTStarMark/dsh-myskin` | A 原生DSH | MIT | ★4 / 2026-10-06 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `RyanZeeee/dsh-chattree` | A 原生DSH | MIT | ★4 / 2026-09-13 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `iyam-x/iyam-dsh-desktop` | A 原生DSH | MIT | ★4 / 2026-09-28 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `hnmrxz/deepseek-harness-desktop-HarmonyOS` | A 原生DSH | MIT | ★4 / 2026-09-21 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `huyang218/dsh-desktop` | A 原生DSH | MIT | ★3 / 2026-08-26 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `MIHassan3/DSH-Launcher` | A 原生DSH | MIT | ★3 / 2026-10-10 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `gordan-code/dsh-jev-advisor` | A 原生DSH | MIT | ★3 / 2026-10-18 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `xingxingbk-git/dsh-deepseek-chat` | A 原生DSH | **无** | ★3 / 2026-10-17 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `yu-wenchao/dsh-tool-lipsync` | A 原生DSH | MIT | ★3 / 2026-09-05 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `ling-long-ling/dsh-novel-writer` | A 原生DSH | MIT | ★3 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `MoonlitDropOfBlood/DSH-Desktop` | A 原生DSH | MIT | ★3 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `EternalNight996/dsh-desktop` | A 原生DSH | MIT | ★3 / 2026-09-28 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `nguyenduclong-ict/dsh-session-progress` | A 原生DSH | **无** | ★3 / 2026-10-01 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `zwqjoy/AgentCabin` | A 原生DSH | Apache-2.0 | ★3 / 2026-10-06 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `oslook/awesome-dsh-plugins` | A 原生DSH | MIT | ★3 / 2026-08-16 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `LLLike27/One-Time-Link` | B 其他JS | **无** | ★2 / 2026-01-03 | ⛔ | rejected | 无许可证 —— 只登记，不摘码 |
+| `m2lan/dsh-desktop` | A 原生DSH | MIT | ★2 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `clclyzybzjsq/dsh-btw` | A 原生DSH | MIT | ★2 / 2026-09-06 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `qingtan-labs/deepseek-harness-macos` | A 原生DSH | MIT | ★2 / 2026-10-04 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `988hj7tczd-oss/harness-desktop` | A 原生DSH | MIT | ★2 / 2026-08-31 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `jiuge2467/DSH-Desktop` | A 原生DSH | MIT | ★2 / 2026-08-19 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `TinyPandaGame/SpecsRelay-DSH` | A 原生DSH | MIT | ★2 / 2026-09-25 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `twenty-3rd/dsh-skill-switch` | A 原生DSH | MIT | ★2 / 2026-10-07 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `toyvfish/dsh-model-seat` | A 原生DSH | MIT | ★2 / 2026-10-11 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `LBurny/deepseek-harness-desktop-releases` | A 原生DSH | MIT | ★2 / 2026-10-02 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `honghuachen/deepseekharness-desktop` | A 原生DSH | MIT | ★2 / 2026-10-20 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `kirbylynx/deepshell-agent` | A 原生DSH | MIT | ★2 / 2026-09-28 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `canadaeee/dsh-weixin` | A 原生DSH | MIT | ★2 / 2026-08-19 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `Sutera-Diffusus/dsh-statusbar` | A 原生DSH | MIT | ★1 / 2026-08-16 | ⛔ | rejected | **token/额度统计族**（第四十五轮 C-4 已整体 ⛔）或账号桥接，重复且无增益 |
+| `jhckevin/dsh-request-privacy` | A 原生DSH | MIT | ★1 / 2026-09-05 | 🔵 | proposed | 承载端（桌面/启动器/终端壳），非能力；本轮第 4 次确认该簇为 A 组噪声 |
+| `ysyyhhh/agent-ecosystem-observatory` | A 原生DSH | MIT | ★0 / 2026-09-11 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `zielinski2880/argo` | B 其他JS | NOASSERTION | ★0 / 2026-10-17 | ⚠ 待核 | proposed | `NOASSERTION` —— 待人工核 LICENSE 文件，不采用、不摘码 |
+| `canadaeee/dsh-feishu` | A 原生DSH | MIT | ★0 / 2026-08-19 | 🔵 | proposed | IM 网关，学生场景无直接对应；仅作线索 |
+| `shine-yu-student/dsh-calm` | A 原生DSH | MIT | ★0 / 2026-08-14 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `ccr-wer/dsh-dolphin-security` | A 原生DSH | MIT | ★0 / 2026-10-19 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+| `Minglink/dsh-community` | A 原生DSH | MIT | ★0 / 2026-10-18 | 🔵 | proposed | 插件/Skill 市场，与本仓「插件」页同域；仅作线索 |
+| `chenzhi-clude/dsh-hooks-pack` | A 原生DSH | MIT | ★0 / 2026-08-25 | 🔵 | proposed | 与浙大/学生场景无明确交集；仅登记 |
+
+**本轮 `NOASSERTION` 共 17 条、无许可证 11 条、AGPL/GPL 6 条 —— 均按「只登记、不采用、不摘码」处理。**
+
+### 2026-10-21 · 第四十七轮（B 组 · **zdbk 选课增强轴**）
+
+> 9 次搜索，0 次 403。`zju` / `zju course` / `cc98` / `campus app` / `zju language:typescript`
+> 五大轴**连续第 3 轮零增量**；净增量仅来自窄功能词 `zju zdbk`（total 4）。详见 `2026-10-21-r47.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `0x000005/better-zdbk` | B 其他JS | **MIT** ✅ | 选课 / 课表 | **重复且可强化**（今天页课表行的地点语义） | 🟡 | proposed | 2026-10-21 | ★3。单文件油猴脚本（661 KB，`@version 1.2.1`，`@match zdbk.zju.edu.cn/jwglxt/xsxk*`），**建仓与唯一一次 push 同日 2026-09-15**，36 天无动。主功能是整站 UI 改写，**只取「地点字符串 → 校区 + 校区别名」一层**（`isCampusMismatch` + `campusAliases{紫金港:[银泉]}`）。⚠ 别名仅 1 条，对 `东1/西2/段1/蒙民伟楼` 等不含校区名的地点会**系统性误报**，不可照抄。已出骨架 `dsh-radar-campus-zone` |
+
+**本轮 `NOASSERTION` 0 条、无许可证 2 条（`PMUGO50/ZJUGPA`、`shenluyao/ZJU_zdbk_plan`，后者已在册）、GPL 族 4 条（均已在册）**
+—— 均按「只登记、不采用、不摘码」处理。课程资料族与 `campus app` 噪声簇按族处理，不逐条登记。
+
+## 2026-10-22 · B 组（第四十八轮 · 教务服务代号窄词轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `geniucker-dev/zju-learnpilot` | ⛔ 非 JS 栈（Python Skill，`uv run`） | **MIT** ✅ | 智云课堂 / 回放 / 讲师义 | **重复且可强化**（栈不符，不出骨架） | 🔵 | proposed | 2026-10-22 | ★1，建仓 2026-10-04、push 2026-10-20。单文件 `scripts/zju.py`（212 KB）+ `SKILL.md` + 14 个 pytest。**做的是本仓没有的反向链路**：「知识点 → 转写起止时间」「任意 `--at t` 回查窗口内转写 + PPT 候选页 + 音视频分段」「任意时刻取录播真实帧」。谱系：`PeiPei233/zju-learning-assistant`（★532，MIT，Rust）的 Python 重写，**非 JS 包装**；npm `zju` 仅 11 包无一相关（已实查）。只作**设计参考**（`ppt.events` 的 确定/相邻候选/无时间 三分法），**不摘码**。同时暴露本仓缺陷 S-1/S-2/S-3，见当日报告 §3.3 |
+
+**本轮 `NOASSERTION` 0 条**；无许可证 4 条、GPL 族 1 条、WTFPL 1 条 —— **全部已在册**，按「只登记、不采用」处理。
+
+## 2026-10-22 · C 组（第四十九轮 · 知识点归因底层轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `RudrenduPaul/MasteryTrace`（npm `masterytrace-cli`） | B 其他JS（纯库） | **MIT** ✅ | 刷题 → 薄弱点定位 | **重复且可强化** | 🟢 | proposed | 2026-10-22 | ★0，建仓 2026-07-15、push 2026-10-20，npm `0.1.3`（2026-09-25）。**BKT（pInit/pTransit/pSlip/pGuess + 网格拟合）+ 2PL IRT**，TS 源 + 独立 Python 移植。实测 3 次「忘了」→ 后验 0.077→0.064→0.062。`npm i masterytrace-cli@0.1.3` 实测 3 包装好、12 个具名导出。⚠ 依赖 `zod@^4.6.5`（未压缩约 8.1 MB）；★0 单点维护；事件 schema 是「一条事件一个技能」，**一题多点须拆事件**。已出骨架 `dsh-radar-mastery-bkt`（TODO-0 阻塞：`pointIds` 尚未落到题上） |
+| `geekie/irt-js`（npm `irt-js`） | B 其他JS（纯库） | **MIT** ✅ | 刷题 → 能力估计 | 重复可强化（**不推荐**） | 🔵 | proposed | 2026-10-22 | ★16，**push 2019-07-15**，npm `0.2.0` 发布于 **2017-09-15**。只导出 `estimateAbilityEAP` / `itemResponseFunction` / `information`，**不含题目参数估计**（`zeta` 要调用方给）→ 本仓每题作答 1–3 次，估不出参数，等于不可用。零依赖、ES5 CJS 是它唯一的优点 |
+| `laser-institute/knowledge-tracing` | B 其他JS | **MIT** ✅ | 知识追踪 | 重复可强化 | 🔵 | proposed | 2026-10-22 | ★3，push 2026-05-22，但**仓库 107 MB**（数据/论文产物），无 npm 发版 → **不可锁版**，仅作算法线索 |
+| `SottoFM/learning-model` | B 其他JS | **MIT** ✅ | 掌握度 + 练习优先级 | 重复可强化 | 🔵 | proposed | 2026-10-22 | ★0，2026 新建。接口比 MasteryTrace 更贴本仓（贝叶斯掌握度 + 练习优先），但**无发版、仓库小、无测试痕迹** → 只作备选线索 |
+| `pieralukasz/true-recall` | B 其他JS | **`NOASSERTION`** ⚠ | 复习（Obsidian 插件） | 重复无增益 | ⚠ | rejected | 2026-10-22 | ★65，FSRS v6 + AI 出卡。**许可证待人工核验，不采用、不摘码** |
+| `amangupta9560/SUNSTONE-ARENA` / `muhanedalhilal/Massar` / `jas212-on/adaptive-learning-agent` | B | `null` / `null` / **`NOASSERTION`** ⛔ | — | — | ⛔ | rejected | 2026-10-22 | `bkt knowledge tracing language:javascript` 的全部 3 条结果，★≤1、全部无可用许可证 |
+| `quiz analytics dashboard language:typescript` 簇（26 条无许可证 + 2 条 MIT 且互为镜像） | B | 多数 `null` ⛔ | — | — | ⛔ | rejected | 2026-10-22 | 全部是脚手架 / demo / 营销漏斗，**0 条相关**。`krishyadav90/QuiziFy` 与 `marlito0226/Quizfy` 是同一份代码的镜像 |
+| `dfsp-spirit/catjs-irt` | B | **GPL-3.0** ⛔ | 自适应测验 | — | ⛔ | rejected | 2026-10-22 | ★1。CAT 的 JS 实现，强著佐权 → 只登记、不摘码 |
+| `jilljenn/ktm` / `bigdata-ustc/EduKTM` / `thosgt/kt-algos` / `seewoo5/KT` / `THUwangcy/HawkesKT` 等 10 条 | — | MIT / Apache-2.0 | — | — | ⛔ | rejected | 2026-10-22 | **全部 Python / Jupyter**，栈不符（`kt knowledge tracing` ★ 前 10 无一 JS） |
+
+**本轮 `NOASSERTION` 1 条待核**（`true-recall`）；无许可证 / `null` 约 31 条；GPL 1 条 —— 全部**只登记、不采用、不摘码**。
+
+> **读码结论（非候选，但比候选重要）**：
+> ① **撤回第四十四轮 R-2** —— 当前 `workbench.js:375-380` 的 `openQuizStore` **确实** `loadAttempts`，
+> 按原样复刻实跑「落库 3 条 → 再采纳一题」仍为 3 条；该段自 `a66bcda`（2026-10-11）起未变。
+> 当时是只跑 `store` 层「`loadItems`→`snapshot`」推演得出，漏了那行。
+> ② `attributeByPoint` / `masteryOf` / `masteryByPoint`（`store.js:632/678/701`）**全仓零调用、零测试**；
+> `pointIds` **到不了题上**（`makeItem` 不收、`itemToJson` 不序列化、`quizMaterials` 不填）
+> → 归因与掌握度在真实数据上**恒为空**。
+> ③ `byId(a.quizId) === null` 时 `continue`，题被删后作答仍在却**静默归零**
+> （实测 `masteryLabel` = `数据不足（做过 0 题，少于 3 题）`）→ 与「不许静默失败」冲突，
+> 修法是一条 `unattributed: N` 字段。**三条都不需要新依赖；建议先补环，再接 BKT。**
+
+## 2026-10-22 · A 组（第五十轮 · **跨节深链轴**）
+
+> 本轮 0 个 🟢。核心结论写在报告 §2：**「笔记里的跨节链接跳不过去」是写进 README 的显式设计，不是断环**，
+> 且照它跳会 `selectLesson` 清空 `state.content` → 掐断播放。因此本簇**一条 🔴 都不给**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `FuWenLianggit/dsh-session-link` | A 原生DSH | **MIT** ✅ | — | **无关**（对话会话深链，不涉课程节/页码/时间轴） | 🔵 | proposed | 2026-10-22 | ★1，push 2026-08-15，8 KB。npm `dsh-session-link` ✅ 但最新为 **`0.2.5`（10 版）**，仓库 `package.json` 写 `0.1.0` → **声明与发布不一致，锁版须以 npm 为准** |
+| `hd25071/dsh-plugin-conversation-toolkit` | A 原生DSH | **MIT** ✅ | — | **无关**（复制对话为 Markdown / 复制对话深链） | 🔵 | proposed | 2026-10-22 | ★0，push 2026-10-11。npm **404 不可锁版** → 评审若要只能 `file:` 本地挂载 |
+| `ZhijiangTang/dsh-dead-links` | A 原生DSH | **MIT** ✅ | 文档维护 | **看似相关、实则不同义**：只扫 `https?://`（`index.js:20` HEAD→GET），不解析 `zy://` 锚点 | 🔵 | proposed | 2026-10-22 | ★0，push 2026-08-16，12 KB，零依赖。npm `dsh-dead-links@0.1.1` ✅ 可锁版。**本仓锚点校验已有 `parseZySectionUri():197-240` 返回 `BAD_SECTION_LINK`，缺的是消费方** |
+| `gxpppp/dsh-obsidian` | A 原生DSH | MIT ✅（**但包名冒用官方 scope**） | 笔记桥 | **重复无增益**（本仓 `parse/links.js` 的 8 条 wikilink 语义已钉测试，比它完整） | ⛔ | rejected | 2026-10-22 | ★5，push 2026-08-31。包名 `@deepseek-ai/dsh-client-ui-obsidian`，**官方 registry 404** → 无人能证明 scope 归属。**冒用 scope 首筛第二次命中**（第一次为第四十五轮 `OoWJZZoO/dsh-read-image`） |
+| `iamzcr/dsh-obsidian-assistant` | A 原生DSH | **MIT** ✅ | 笔记检索 / 反链 / 图谱 | **重复无增益**：12 个工具全是"读写本地 vault"，**没有本仓缺的那一环** | ⛔ | rejected | 2026-10-22 | ★5，push 2026-08-17。需 Obsidian Local REST API 才有一半能力；本仓笔记域是纯存储 + 已实现的图算法 |
+| `Lion-1209/wiki-web` | B 其他JS | **MIT** ✅ | — | 重复无增益（自托管 wiki 站） | ⛔ | rejected | 2026-10-22 | ★0，push 2026-09-17，64 KB，单 `server.js`。与本仓工作台无接缝 |
+| `wuenna/dsh-obsidian-bridge` | A 原生DSH（名不符实） | **无许可证** ⛔ | — | 只登记，不采用、不摘码 | ⛔ | rejected | 2026-10-22 | ★0，push 2026-09-23。**无 `LICENSE` 文件**；`package.json` 无 `dsh` 字段、npm 404 → **根本不是可挂载的 Cordis 包** |
+| `yh4922/dsh-workspace` | A 原生DSH | **`null`** ⛔ | 远程工作区 | 无关（本仓单机单人） | ⛔ | rejected | 2026-10-22 | ★10，push 2026-10-21，1.5 MB。**仓库无 `LICENSE`，API `license: null`**；`package.json` 自称 MIT **不采信**（发布声明 ≠ 仓库许可）。npm `@yh4922/dsh-workspace@0.12.3` 存在但不采用 |
+| `AKS1st/dock-markdown` | A 原生DSH | **MIT** ✅ | Markdown 查看 | **重复无增益**：依赖 `dock` / `dock-files` 两个**本仓没有**的宿主服务 → 挂上不工作 | ⛔ | rejected | 2026-10-22 | ★3，push 2026-09-11，501 KB。npm `dock-markdown@0.1.2` 可锁版，但依赖面不满足 |
+| `james-yao-xj/dsh-plugin-handout` | A 原生DSH | **MIT** ✅ | 讲义共读 | **重复无增益**（与已 🟡 的 `dsh-zotero`、已登记的 `dsh-paper` 同域） | ⛔ | rejected | 2026-10-22 | ★2，push 2026-10-07 |
+| `henryxiao709/dsh-pdf` | A 原生DSH | **MIT** ✅ | PDF 转文本 | **重复无增益**（`dsh-pdf-reader` / `dsh-document-reader` / `dsh-tool-pdf` 之后第 4 家） | ⛔ | rejected | 2026-10-22 | ★2，push 2026-08-16。`pdfjs-dist` + OCR，与已登记三家同域 |
+| `elegantythos/exam-paper-plugin` | A 原生DSH | **MIT** ✅ | 试卷生成 | 全新（试卷排版）但与本仓「刷题」页无接缝 | 🔵 | proposed | 2026-10-22 | ★1，push 2026-08-19。**Python** → 栈不符，不出骨架 |
+| `wly8691-jpg/knowlp-rag` | A 原生DSH | **MIT** ✅ | 笔记 RAG | 重复无增益 | 🔵 | proposed | 2026-10-22 | ★3，push 2026-10-06。**Python** 主体，只记线索 |
+| `NoLeakMCP`（`ishamishra0408`） | — | **`NOASSERTION`** ⚠ | — | 无关 | ⚠ | rejected | 2026-10-22 | ★1。**许可证待人工核验，不采用、不摘码** |
+| `jackycra/dsh-dead-links` | — | — | — | — | — | rejected | 2026-10-22 | **仓库不存在**：检索结果里出现，但 `GET /repos/jackycra/dsh-dead-links` 返回 404（已删 / 改名）。仅记录，不登记为候选 |
+
+**本轮 `NOASSERTION` 1 条待核**（`NoLeakMCP`）；**无许可证 2 条**（`wuenna/dsh-obsidian-bridge`、`yh4922/dsh-workspace`）；
+**仓库不存在 1 条**（`jackycra/dsh-dead-links`）—— 全部**只登记、不采用、不摘码**。
+
+**npm 可锁版核实（官方 registry 直查）**：8 个包名 **4 `✅` / 4 `❌`**（`dsh-dead-links@0.1.1`、
+`dsh-session-link@0.2.5`、`dock-markdown@0.1.2`、`@yh4922/dsh-workspace@0.12.3` 存在；
+`@deepseek-ai/dsh-client-ui-obsidian` **冒用 scope**、`dsh-plugin-conversation-toolkit`、`dsh-link-plugin`、
+`dsh-obsidian-bridge` 全 404）→ **可锁版率 50%，与第四十五轮 1/7 同量级，建议列为常规核查项。**
+
+> **读码结论（非候选，但比候选重要）**：
+> ① **本轮推翻了一个假设**：`note-links.js:30` 的 `other-section` 分支看似"漏了一个 case"，
+> 但 `page-study/README.md:14` 明写「另一节的链接留在原地并说明跳不过去」，`tests/study.test.mjs:242` 有断言 ——
+> **这是设计决定**。按它跳过去会触发 `selectLesson` 清空 13 个字段（含 `content`），
+> 而视频栏读的正是 `state.content` → **播放中的视频被掐断**。
+> ② 能力其实**在**（`model.js:350-363` 的 `loadRecent` 已有 `loadCourse → selectLesson` 跨课载入先例），
+> **入口不在**（`shell/client.jsx:48` 的 `navigate(id)` 不收参数；全仓页面侧无 `URLSearchParams` 消费），
+> 而**设计上又不希望它发生** → 三者叠加，结论是「**缺口真实、但不该用集成解决**」，若要做需先开壳的入口参数（旁路画中画）。
+> ③ `parseZySectionUri()` 已能报 `BAD_SECTION_LINK`，**缺的是消费方** —— 与第四十九轮"能力已有、出口没有"同一形状，
+> 第三/四十九轮结论第三次复现：**本仓的缺口多数是接线问题，不是依赖问题。**
+> ④ `gxpppp/dsh-obsidian` 代表 **A 类新常态**：形态对、许可证对，但**包名冒用官方 scope**（npm 404）。
+> 建议把「`name` 是否以 `@deepseek-ai/` 开头且 npm 404」列为 A 类**硬性首筛**（已两次独立命中）。
+> ⑤ `yh4922/dsh-workspace` 暴露**许可证判定的一个灰区**：仓库无 `LICENSE`、API `license: null`，但 `package.json` 写 MIT。
+> 本轮按「以仓库为准」判 ⛔ —— **建议把这条写进硬边界，避免下一轮误判。**
+
+## 2026-10-22 · 第五十一轮（检索域派生 · 「近似 / 容错」轴）
+
+> 关键词（**7 次**，0 次 403，本轮完整；`rotation-state.md` 显示今日 ABC 三组均已跑过 → 走派生轴）：
+> `fuzzy search javascript in:name`(2)、`fuzzy match javascript in:name`(**0**)、
+> `fuzzy search language:javascript stars:>50`(23)、`typo tolerant search language:javascript`(20)、
+> `fuse.js alternative`(**0**)；另 2 次纯元数据核实（GitHub `/repos` ×3、npm registry ×3）。
+> **73 条命中 → 首次登记 5 行（其中 1 行是簇）+ 1 行本轮结论**；**🟢1 🔵3 ⛔2 簇**；
+> **0 条 `NOASSERTION`、0 条无许可证、0 条 copyleft**。
+> **本轮出骨架** `packages/dsh-radar-search-fuzzy`（B 类 · 锁版 `fuse.js@7.5.0`）。
+> 起点仍是 `layered-search.js` 第 ⑥ 条自述「字面、不切词、不算相关度」—— 但这次补的是**第四条轴**：
+> 前三条（`search-rank` 排序 / `search-segment` 切词 / `pinyin-match` 读音）都不覆盖「**打错一个字**」。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `krisk/Fuse`（npm `fuse.js@7.5.0`） | **B 其他JS（纯库）** | **Apache-2.0** ✅ | 学习页检索容错 | **重复可强化**（`layered-search.js` 的 `findIn` 判据层） | 🟢 | proposed | 2026-10-22 | ★20,506，push 2026-08-09；npm `7.5.0`（2026-07-13），`dependencies: {}` 零传递依赖，unpacked 417,199 B（**进 bundle 体积未实测**）。能力：bitap 近似匹配 + 回命中区间（**闭区间**）。**判据①②③全成立**：同一检索框 / 同域不同问题（有没有 vs 打错还算不算）/ 新增容错与区间。**实测差分**（8 条语料）：`付里叶` 0→2、`中植定理` 0→1、`离散傅里叶` 0→2；`傅里叶`/`fourier`/`中值定理` 零回归；`量子力学`等 6 条无关词全 0。⚠ **三坑**：R1 命中集合须 ⊇ 旧实现（字面 `indexOf` 不能删）；R2 `minMatchCharLength` **不能固定**（=1 时单字「的」命中 5 条噪声，=2 时「傅利叶」漏掉 → 必须严格→放宽分层扫描）；R3 `matches[].indices` **不保证存在**（多文档实例实测 `undefined`）。⚠ 版本事实：7.5.0 **无** `dist/fuse.min.js`（404），只有 `fuse.mjs`/`fuse.basic.min.mjs`；**只能用 basic 构建**（完整构建的 extended search 会引入 `^ ! ' |` 新语法＝改档位）。⚠ **与 `dsh-radar-pinyin-match` 改同一行 `findIn`** → 须合并裁决，见骨架 README |
+| `farzher/fuzzysort`（npm `4.0.2`） | B 其他JS（纯库） | MIT ✅ | 学习页检索 | 重复可强化，**正交不足** | 🔵 | proposed | 2026-10-22 | ★4,356，push 2026-08-13；`4.0.2`（2026-08-13），零依赖，unpacked 78,875 B。只做**子序列**命中（`fbl` 命中 `foobar`），**没有内建错字容差** —— `傅利叶` 这类替换错直接落空，与本轮要解决的问题正交度不足 → 不出骨架。适合做「命令面板式」前缀缩写检索，本仓无此场景 |
+| `leeoniya/uFuzzy`（npm `@leeoniya/ufuzzy@1.0.19`） | B 其他JS（纯库） | MIT ✅ | 学习页检索 | 重复可强化，**中文增益不成立** | 🔵 | proposed | 2026-10-22 | ★3,038，push 2026-09-08；`1.0.19`（2025-08-22），零依赖，unpacked 134,546 B，iife 仅 8,410 B（**最省**）。**实测中文**：`intraMode:1 + intraIns:1` 下 `付里叶`/`中植定理`/`离散傅里叶` **全部 0 命中**，只有英文 `fourier` 命中 → 中文场景无增益。若将来只做英文/代码符号检索，它比 Fuse 更省，保留为备选 |
+| `bevacqua/fuzzysearch` / `mattyork/fuzzy` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-22 | ★2,741（2023-05 停更）/ ★834（2021-12 停更）。两者都只做**子序列**匹配、无容差、无区间打分；被 `fuzzysort` 完全覆盖，而 `fuzzysort` 本轮也只给 🔵 |
+| `nextapps-de/flexsearch` / `EthanRutherford/fast-fuzzy` / `DumbWareio/DumbPad` | B 其他JS | Apache-2.0 ✅ / ISC ✅ / **GPL-3.0** ⛔ | — | 重复且无增益 | ⛔ | rejected | 2026-10-22 | `flexsearch`★13,809（2026-06 push）是**索引引擎**（自带 tokenizer + 打分），接进来等于把在途的 `search-rank`（minisearch）与 `search-segment`（jieba-wasm）**同时**推翻 —— 换引擎不是强化；`fast-fuzzy`★388 功能被 Fuse 覆盖且不做中文；`DumbPad`★474 是编辑器应用、**GPL-3.0** 红线。另 `javascript-fuzzy-string-search`★0 / `javascript-text-search`★0（`null`）无发布包 |
+| — | — | — | — | — | — | **note** | 2026-10-22 | **本轮结论（读码，与候选无关）**：`layered-search.js` 的 `findIn` 上现已有**四条**在途骨架（`search-rank` 排序 / `search-segment` 切词 / `pinyin-match` 读音 / 本轮 `search-fuzzy` 容错），**四者实现时互斥于同一行代码**。建议评审**合并裁决**：只准一个 → 优先 `pinyin-match`；准多个 → 必须先定义「字面 → 拼音 → 近似」三级链的失败边界，否则会出现**双重猜测**（拼音拆错字、Fuse 再把错字配回去），用户无法判断结果可信度。**未改任何代码**，只记结论 |
+
+## 2026-10-22 · 第五十二轮 · B 组（课程平台媒体 / 生活服务**正交新切片**）· 追加
+
+> 今日已跑 A r50 / B r48 / C r49 / 派生 r51 → 按 README「三组今天都跑过 → 不重跑」，
+> 本轮**不重复任何已跑关键词**，改跑两条此前从未扫过的正交轴。
+> 13 次搜索（⚠ 超限 3 次，报告 §1.1 有说明）；API 全程 200、0 次 403、本轮**完整**。
+> **有效候选 6 条：0 🟢 + 0 🟡 + 3 🔵 + 3 ⛔（族）；无骨架、不开 PR。**
+> （`ChenyuHeee/Libot` 已于 2026-10-16 登记为 🔵，本轮不重复登记；`5dbwat4/login-ZJU`、`PeiPei233/zju-learning-assistant` 等已登记项本轮重扫**评级不变**。）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `xxone111/zju-notes-assistant` | B 其他JS（**Agent Skill**：`SKILL.md` + 10 份 reference + 4 个 Node 脚本） | **MIT** ✅（`LICENSE` 实文已核：`MIT License / Copyright (c) 2026 xxone111`） | 课程笔记 / 转录导出 | **重复且无增益** | ⛔ | rejected | 2026-10-22 | ★4，**2026-10-11 建仓当日推送后未再动**，20 文件 / 136 KB（代码仅 4 脚本）。做「127.0.0.1 网页登录 → 导出智云 ASR 原文 / 课件 PDF / 学在浙大附件 → AI 生成精注或章节笔记」。**逐项对表本仓已全覆盖且更严**：会话管理（`source-classroom`；上游是明文 `~/.zju-notes-assistant/auth.json`）／ASR 逐页转录（`core-parser.transcribeSlides`）／页窗对齐（`fromMs`/`toMs`，且以 PPT 树为骨架）／课件附注（`core-notes.putAsset{page}` + `zy://section` 双链）／附件下载（`source-classroom/src/download.js` 的 Range 续传 + ETag `If-Range` + 并发锁；上游无续传、无锁、无校验）。**强化三判据仅成立 ①**（同一面板），②③ 均不成立 → ⛔。**若产品认定「精注导出成 PDF」是新需求，则应改判 🔵 单列评估**（见报告 §7.2） |
+| └ 其 `references/` 文档 | B 其他JS（文档） | MIT ✅ | 论文/笔记（PDF 回写） | 全新（仅思路） | 🔵 | proposed | 2026-10-22 | 10 份**写给 agent 的操作手册**：`matching.md`（页码匹配的失败模式，含「图片型 PDF 无文字层」）、`pdf-integration.md`（PDF 回写）、`safety.md`（权限边界）。将来做「课件精注 → PDF」时是现成的踩坑清单。**只读思路、不摘代码** |
+| `phillychi3/tronclass-util` | B 其他JS（**Tampermonkey 用户脚本**，vite 打包发 GreasyFork） | MIT（声明） | 课程视频/课件 | 重复（且**合规红线**） | ⛔ | rejected | 2026-10-22 | ★10，2026-07-21。README 自述 8 项功能里 **6 项红线**：快速观看影片、一键完成每周影音教材观看、一键读取投影片、**防止影片焦点侦测（后台播放不中断）**、自动填期末问卷、自动刷课。本仓课堂模块刻意不做自动刷课（`source-classroom` 定位「只读、不做自动登录」）→ 引入即自毁合规基线 |
+| TronClass / 超星**下载器簇**（`YanhuiJessica/TronCUClass`★21 MIT、`BobLiu0518/TronClass-Resource-Download`★11 MIT、`fish-can/TronClass-PDF-Downloader`★39 `null`、`eWloYW8/ZJU-course-material-download`★14 MIT、`eWloYW8/ZJU-course-video-complete`★7 MIT、`ColdThunder11/ChaoXingDownload`★483 GPL-3.0、`RytterMohn/chaoxingDownload`★60 MIT、`iamNCJ/ZJU-Tronclass-Courseware-Downloader`★7 `null`、`Kcalb35/Tronclass-pdf-downloaderforChrome`★9 `null`、`vvirgooo2/Auto-video-tronclass-zju`★8 `null`、`CUC-Life-Hack/tronclass-hack`★9 GPL-3.0） | B 其他JS（浏览器扩展 / 用户脚本） | MIT / `null` / GPL-3.0 | 课件下载 | **重复且无增益** | ⛔ | rejected | 2026-10-22 | 11 条，三条理由任一即足：① 本仓 `download.js` 已有 Range 续传 + ETag + 并发锁，**簇内无一条达标**（判据③不成立）；② 全是扩展/脚本，依赖目标站 DOM，与「服务端取数 + 自绘 UI」正交；③ ★ 最高的几条恰是「下载无权限资源 / 快速完成视频进度」→ 合规红线。**结论：浙大课程平台 JS 生态「高星 = 高违规」** |
+| 刷课 / 答题簇（`zhu-hailin/chaoxing-ai-assistant`★89 MIT、`lyj0309/chaoxing-xuexitong-autoflush`★105 `null`、`SSmJaE/XueXiTongSign_Electron`★76 `null`、`RainySY/chaoxing-xuexitong-autoflush`★68 `null`、`dzj0821/ChaoXingScripts`★68 GPL-3.0、`qcxs/chaoxing`★60 MIT、`pang-qin/chaoxing-toolkit`★57 `null`、`bclswl0827/Fuck-ChaoXing`★54 MIT） | B 其他JS | MIT / `null` / GPL-3.0 | — | 无关（对抗教学考核） | ⛔ | rejected | 2026-10-22 | 8 条，全部为自动刷课 / 章节测验 AI 填答案 / 考试切屏 / 过人脸 / 多设备同签。**不登记细节、不摘任何代码**；本仓明确不做此类功能 |
+| 生活服务轴新仓（`ZHENG28/zjut_LibrarySeatSystem`★7 `null`、`Midoria7/LeggedGymForG1H1`★0 `null`、`Jnove/mentor-agent`★1 `null`、`congee949/EventChain-For-ZJU`★0 `null`、`Lormited/XMU-TronClass-Helper`★6 MIT 他校） | B 其他JS | `null` / MIT | — | — | ⛔ | rejected | 2026-10-22 | 许可证 `null` ×4 + 词面撞车（`zju gym` 命中的是机器人课程项目）+ 他校工具不可直用 |
+| `RinnMoe/TronClassPlusPlus` | B 其他JS（浏览器增强插件） | **NOASSERTION** ⚠ | 课程浏览 | 重复 | ⚠ 待核 | pending-license | 2026-10-22 | ★6，2026-05-23。**许可证无法确认 → 不采用、不摘码**，须人工读 LICENSE 原文。即便核出宽松许可，「课程页增强」也被本仓页面完全覆盖 |
+| （无结果记录）`zju campus secondhand` / `zju 二手` / `zju event` | — | — | 二手 / 活动 | — | — | note | 2026-10-22 | `total_count` 分别为 **0 / 0 / 1**（唯一条 `EventChain-For-ZJU` 是 ★0 / `null` / Go 的「校园 Polymarket」概念）。**生活服务轴封板 3 个月** |
+
+> **本轮方法论结论**：
+> ① **浙大课程平台 JS 生态「高星 = 高违规」** —— `chaoxing javascript` 前 10 条里 ★ 最高的 6 条全是刷课/答题。**按 `stars` 排序会稳定把违规工具排到最前** → 该轴默认改按 `updated`，并在筛选阶段先看 description 有无「刷 / 绕过 / 自动答题 / 无权限」。
+> ② **B 组「可嵌入的 JS 库」存量已在 10-16 扫穿**（`5dbwat4/login-ZJU` 是 10 余轮里唯一 🟢），此后零 🟢；本轮 13 次搜索再次印证。
+> ③ **「一条龙导出」型项目一律判重复无增益**（含 ★532 的 `PeiPei233/zju-learning-assistant`、本轮的 `zju-notes-assistant`）：本仓的优势在「在线解析 + 页窗对齐 + 双链」，不在「批量落盘」。
+
+## 2026-10-23 · C 组（第五十三轮 · **「课表带走」轴**）· 追加
+
+> 跨天首轮，`day_of_year % 3` = `296 % 3` = 2 → **C 组**。8 次搜索（上限 10）、API 全程 200、**0 次 403、本轮完整**。
+> 因 C 组功能域已被 r30–r49 反复扫过，本轮改用 r37 的方法：**先读码找断环、再定向搜**。
+> 读码结论：**iCalendar 序列化在本仓是零实现**（13 个 grep 命中全是 `verticalRule` / `toPhysical` 之类子串误伤），
+> 而课表（`page-today/src/agenda.js` 的 `projectAgenda`）与截止时间（`plans.js` 的 `due` + `time.js` 的 `ZONE`）
+> **数据齐全** → 缺口是「**带得走**」，不是「缺功能」。**首次登记 10 行（含 2 行簇）→ 🟢1 / 🔵2 / ⛔6 / ⚠1。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `adamgibbons/ics` | B 其他JS（纯生成器库） | **ISC** ✅（GitHub `spdx_id` + npm `versions['3.12.1'].license` 两处一致） | 课表 / 作业截止 → 系统日历 | **重复且可强化** → **强化式集成** | 🟢 | proposed | 2026-10-23 | ★787，push **2026-10-01**，npm `ics@3.12.1`（同日发布）✅ 可锁版。`unpackedSize` 72,079 B；esbuild bundle **实测 75 KB**（大头 yup）。依赖 `yup@^1.2.0`/`nanoid@^3.1.23`/`runes2@^1.1.2` **全 MIT**、无 copyleft、无 `node:` 内置依赖 → 可进前端 bundle。**强化三判据全成立**：①同一面板（「规划」页页头一个导出动作，不新增导航）②相似正交（站内「接下来做什么」vs 日历里「看得到」）③本仓 iCalendar **零实现**。**实测三条「不报错的错」**：**R1** 不传 `uid` 时 UID 随机（`aXPsYcWAV4xBuUE_N_2JP`），而课表条目**无稳定 id** → 每导出一次日历多一套重复事件；传 `uid` 后两次逐字相同 → 必须由 `(termKey, courseTitle, startMs)` 确定性派生。**R2** `timezone` 字段**被拒**（`unspecified keys`）→ 无 VTIMEZONE，只能「浮动」或「UTC」，建议 UTC。**R3** 把 `Date(ms).getUTC*()` 当本地时间传 → `DTSTART` **早 8 小时且不报错**。另：多传 `id` → 整条 `ValidationError`（yup `noUnknown`）。**已出骨架 `dsh-radar-ics-export`** |
+| `jens-maus/node-ical` | B 其他JS（解析器） | **Apache-2.0** ✅ | 日历回流（未来） | 全新（但**方向相反**） | 🔵 | proposed | 2026-10-23 | ★173，push 2026-10-19，npm `0.27.3`（2026-10-03）。RFC 5545 **解析** + RRULE 展开。本仓缺的是**生成**不是解析；同批检索另有 `mifi/ical-expander`（MIT，★72，依赖 `ical.js`）亦为解析器，同判。**依赖 `rrule-temporal` + `temporal-polyfill`**，体积远大于 `ics`。仅当将来做「外部日历 → 本仓」回流时才需要，且**必须先有冲突合并策略** |
+| `marioMLLL/ecnu-timetable-calendar` | B 其他JS | **MIT** ✅ | 他校（华东师大）课表导出 | 重复无增益 | 🔵 | proposed | 2026-10-23 | ★8，push 2026-09-22。教务系统 → .ics 的思路可看，但**数据源完全不同**，且导出逻辑只有几十行（`ics` 的薄壳）→ 只作思路参考，不摘码 |
+| `ical-generator@11.1.2`（npm，★ 未统计） | B 其他JS（备选上游） | **MIT** ✅ | 同上 | 强化式集成（**换上游备选**） | 🔵 | proposed | 2026-10-23 | 不单独登记为候选，只在骨架 README 的「拍板项 2」点名：**它支持 `timezone` 参数**，是 R2（时间显示北京时间）的唯一解。代价：bundle 814 KB 源体积。**若产品要求日历里必须显示北京时间，则 `ics` 不满足、需换它** |
+| `NLion74/ics-webuntis` | B 其他JS | **NOASSERTION** ⚠ | 他校课表导出 | — | ⚠ | pending-license | 2026-10-23 | ★11，push 2026-09-14。**许可证待人工核验，不采用、不摘码**；且 WebUntis 数据源不可复用 |
+| `finwarman/kcl-timetable`(★14) / `Treeki/myplace-timetable-export`(★2) / `mcpower/icallate`(★5) | B | `null` ⛔ | 他校 | — | ⛔ | rejected | 2026-10-23 | Python / Ruby / HTML，无许可证。只登记 |
+| 他校课表导出器（`JustBrandonLim/timetable-grabber-sit`★34 MIT、`computerfan/XJTLU-Timetable-to-ICS`★4 MIT、`romankurakin/dkuzeit`★4 MIT、`clemmbn/auriga-extract`★5 MIT） | B | **MIT** ✅ | 他校 | **重复且无增益** | ⛔ | rejected | 2026-10-23 | 许可证没问题，但**数据源不可复用**且导出逻辑极薄（都是 `ics` 的薄壳）→ 判据③不成立 |
+| `icalgen` 簇（`wysie/icalgen`★35、`touch4it/ical-timezones`★11、`chichow5/heuicsgen`★1、`localift/ical-generator`★0、`hkwi/WorkingDays.ics`★0） | B | `null` ×4 / `NOASSERTION` | — | 重复无增益 | ⛔ | rejected | 2026-10-23 | 全部无可用许可证；能力被 `adamgibbons/ics` 完全覆盖 |
+| `tritech/node-icalendar`（★233） | B | **MIT** ✅ | — | 重复无增益 | ⛔ | rejected | 2026-10-23 | **push 2020-02-15**，六年未动；功能被 `ics`（生成）/ `node-ical`（解析）覆盖 |
+| web PDF 批注簇（`techs-targe/pdfmark`★0 MIT、`kimuchi0141/Web-pdf-editor`★0 MIT、`pujunru/PDF-Viewer`★0 `null`、`BhargavBorse/pdf-viewer-with-annotation`★5 `null`、`Comet-Suite/smilo-pdf-viewer`★0 `null`、`gLUK00/OpenMark`★1 MIT） | B | 混杂 | 论文批注 | **重复且无增益** | ⛔ | rejected | 2026-10-23 | ★≤5、多为 demo；本仓「论文」页已有 PDF 阅读器 + 选中即译（`dsh-zhiyun-page-paper`）。**且「批注要不要能带走」本仓尚无明确需求** → 先按兵不动 |
+| 刷题簇（`ceo-0168/life-in-the-uk-practice`★1 MIT、`cLeffNote44/Geo-Locate`★0 MIT、`AKIB-UZ-ZAMAN/Solvix-v2`★0 `null`、`JDenn0514/Dendro`★0 `null`、`renumalu/QuizForge-AI`★1 `null`、`ryanmcgann4/med-qbank`★0 `null`、`Elfi91/Quiz-practice`★0 MIT、`Papaperun/study-quiz-builder`★0 `null`、`tson2809/quiz`★1 `null`） | B | MIT / `null` | 刷题 | **重复且无增益** | ⛔ | rejected | 2026-10-23 | ★≤4 的单人小站 / 单科专用。本仓已有 FSRS 调度（r24）+ BKT 掌握度（r49）→ 三者都不缺 |
+| （无结果记录）`fitness tracker language:typescript` | — | — | 锻炼 | — | — | note | 2026-10-23 | `total_count` = **0**，**第三次零结果**（r35 / r52 / 本轮）。Web 端锻炼追踪**结构性无解**（接触不到 Google Fit / HealthKit，r35 已登记 `rn-fitness-tracker` 为「原生桥，Web 用不上」）→ **建议把「锻炼」移出 C 组默认词池** |
+
+**本轮 `NOASSERTION` 1 条待核**（`NLion74/ics-webuntis`）；**无许可证 8 条**；**0 条 copyleft** —— 只登记、不采用、不摘码。
+
+> **方法论结论（非候选，但比候选重要）**：
+> ① **C 组第四次复现「能力/数据已在、出口没有」**（r37 关键路径 / r49 掌握度 / r50 锚点校验 / 本轮 iCalendar）。
+> 但本轮补了一层**判别线**：缺的是「一行调用」→ 补接线；缺的是「一套规范实现」→ 才接依赖。
+> iCalendar 属后者（RFC 5545 的 75-octet 折行与 `,` `;` `\` 转义不该手写）。**这条判别线防的是把接线问题当依赖问题。**
+> ② **本轮候选的失败模式全是「不报错的错」**：随机 UID（每次导出多一套重复事件）、浮动时间（跨时区错）、
+> `getUTC*` 当本地时间（早 8 小时）—— 三者产出的 `.ics` **语法完全合法**，只在内容上错。
+> → 接入「序列化 / 格式化」类上游时，验收**必须**含两条断言：**同一输入两次输出逐字相同**、**时区往返守恒**。
+> ③ **R1 暴露一个接线缺口**：`stableUid` 需要 `termKey`，而 `projectAgenda` 只输出 `day`、**没有学期标识**。
+> 若决定做，需先在 `dsh-zhiyun-source-campus` 补学期字段 —— **这是接线活，不需要新依赖**。
+> ④ **「限定符别叠加」再被验证两次**（`paper annotation + stars:>30` → 0、`exam dragdrop` → 0）。
+> 建议升级为流程硬性要求：**首个查询一律不加 `stars:` / `language:`**，只在结果里过滤。
+
+## 2026-10-23 · B 组派生（第五十四轮 · **「专注计时底座」轴**）· 追加
+
+> 同日第 2 轮（今日 r53 已跑 C 组）。B 组三组主词（`zju` / `cc98` / `campus app`）已在 r41 / r48 / r51 / r52
+> 连续判枯竭，故本轮不重跑主词，改用 **先读码找断环、再定向搜**：
+> `grep -rniE "pomodoro|番茄|focus session"` 全仓 **0 命中**；本仓「时间」只有 `time.js` 的 `focusOf()`（五档）
+> 与 `focusSummary()`（数三个数）→ **「今天还剩多少整块时间」数据已在、出口没有**。
+> 8 次搜索（上限 10）、API 全程 200、**0 次 403、本轮完整**。**首次登记 11 行（含 3 行簇）→ 🟢1 / 🔵3 / ⛔6 / ⚠1。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `statelyai/xstate` | B 其他JS（纯状态机库，无 patch） | **MIT** ✅（GitHub `spdx_id` + npm `versions['5.33.3'].license` 两处一致） | 专注计时 / 规划页 | **重复且可强化** → **强化式集成** | 🟢 | proposed | 2026-10-23 | ★30,342，push 2026-10-21，npm **`xstate@5.33.3`**（2026-10-17，`dist-tags.latest` 实查）✅ 可锁版。`unpackedSize` **2,313,880 B**；**零运行时依赖**。**强化三判据**：①同一面板（「规划」页摘要条加一个数，不新增导航/插槽）②相似正交（「哪些事在逼近」vs「今天还剩多少整块时间」）③本仓时间逻辑**零离线测试**，上游可整根换时钟。⚠ ③ **仅成立于「可测性」一层**，不声称「接上后体验更好」。**三条实测（本轮最有价值的产出）**：**M3** `after: ({context}) => ({[context.remain]:'x'})` **静默失效**（注入时钟一次未被调用、不抛错不告警；CJS/ESM 各复现一次，与 v5 文档说法不一致）→ 动态时长**只能**用常量对象形式；**M4** `getPersistedSnapshot()` **无 deadline 字段** → 刷新后定时器从头开始；**M5** 暂停期间 `Date.now()` 照走，沿用旧 deadline 会「一恢复就到点」。另 **M6** 上游**确实**会 `clearTimeout`（日志 `set1/clear1/set2`）；**M7** `after` 未 stop 的 actor 会让 Node 进程不退出；**M8** `getSnapshot()` ≠ `getPersistedSnapshot()`（前者不可 JSON 化）；**M9** `@xstate/react@6.1.0` 带两个 peer 依赖，React 19 用 `useSyncExternalStore` 手接即可。**已出骨架 `dsh-radar-focus-machine`** |
+| `super-productivity/super-productivity` | B 其他JS（完整桌面应用） | **MIT** ✅ | 时间盒 / 待办 | 仅供参考（算法） | 🔵 | proposed | 2026-10-23 | ★23,064，push 2026-10-22。Electron + Angular **成品**，自带宿主 → 与「仍是同一个面板」直接冲突。可借的只有时间盒算法（几百行），且与 Angular 状态强耦合 → 不摘码 |
+| `zidoro/pomatez` | B 其他JS（Electron 应用） | **MIT** ✅ | 专注计时 | 重复无增益（**且不可锁版**） | 🔵 | proposed | 2026-10-23 | ★4,913，push 2026-05-19。**npm 上 `pomatez` 404**（本轮实查）→ B 类第二门「可锁版」不过；形态为完整桌面应用 |
+| `afonsopacifer/react-pomodoro` | B 其他JS（单页） | **MIT** ✅ | 专注计时 | **重复且无增益** | 🔵 | proposed | 2026-10-23 | ★398，**push 2023-01-27**（近四年未动）。只有 300 行级 UI，**无状态机可借** → 判据③不成立 |
+| 单页计时器簇（`KeziahMoselle/tempus`★120 MIT·2020、`astroud/pomodoro-react-app`★60 MIT、`luizbatanero/pomodoro-react`★60 `null`、`nmsn/pomo`★50 MIT、`dejwid/react-pomodoro-timer`★32 `null`、`mihajlija/pomodoro`★27 `null`、`mbogdan0/simple-pomodoro`★1 MIT） | B | MIT / `null` | 专注计时 | **重复且无增益** | ⛔ | rejected | 2026-10-23 | **与 r44（2026-10-17「番茄钟类」）同一结论的第二次复现**：计时器本体是 300 行级实现，**不存在「更优底层」** |
+| 嵌入式 / 原生簇（`dryjak/STM32-Pomodoro-Timer`★1 C、`yenuka23/Spidey-Pomodoro-Companion` C++、`PaulRychkov/pomodoro`★0 Go、`sakagenoan-svg/devdroidai-dogfood-focusclock`★0 Kotlin、`872000/focusforge`★0 Swift、`eltech-online/eltech-esp32-desk-timer`★0 C++） | B | MIT / `null` | — | 无关 | ⛔ | rejected | 2026-10-23 | **非 JS 栈**，Web 工作台结构性用不上 |
+| 计时底层陈旧簇（`Pjaerr/PWA-Timer`★30 Unlicense·2018、`daniellmb/perfnow.js`★46 **`null`**·2016、`heycato/Timer.js`★3 `null`·2014、`BinaryMuse/timex`★2 MIT·2016、`Splode/worker-timer-demo`★7 MIT·2020） | B | 混杂 | — | 重复无增益 | ⛔ | rejected | 2026-10-23 | 全部停在 2014–2020；`performance.now` polyfill 在 2026 已无意义（浏览器原生）。2026 年的新包全是 ★0 的 `high-resolution-timer` 变体（疑似模板仓），无一个 ★>0 |
+| Electron 计时器簇（`p32929/PotatoTimer`★6 MIT、`Piotr-Gala/TimeTimer`★0 `null`、`ChristianTedeschini/alura-timer`★0 `null`、`YuBan834/star-focus`★1 MIT、`screamman-ssh/Counties`★1 MIT、`univdev/ww-timer`★1 `null`、`rendfall/test-web-worker-timer`★1 `null`、`alfonso-lopez-dev/chronoMaster-studio`★1 `null`、`heyoboo/web-worker-timer`★0 `null`） | B | MIT / `null` | — | 重复无增益 | ⛔ | rejected | 2026-10-23 | ★≤6，与 `pomatez` 同形（成品应用 / demo），不构成可锁版底层 |
+| `maxbeyer1/pomo` | B | **MPL-2.0** ⛔ | — | — | ⛔ | rejected | 2026-10-23 | ★1，push 2022-06-11。**许可证不在宽松白名单**（MPL-* 明确排除）→ 只登记、不采用、不摘码 |
+| `alexqgon93/ChessClock` / `alfindigital/fokusin` | B | `null` / MIT | — | 无关 | ⛔ | rejected | 2026-10-23 | 均 ★0；前者 Kotlin 无证、后者零依赖单页印尼语番茄钟 → 不可锁版亦无增益 |
+| `normandhoni-cs/blink-eye`（★263） | B | **NOASSERTION** ⚠ | 护眼提醒 | — | ⚠ | pending-license | 2026-10-23 | push 2026-10-17，TS，跨平台护眼/休息提醒（Electron）。**许可证待人工核验，不采用、不摘码**；且形态为成品桌面应用 |
+
+**本轮 `NOASSERTION` 1 条待核**（`normandhoni-cs/blink-eye`）；**无许可证 12 条**；**copyleft 1 条**（`maxbeyer1/pomo` MPL-2.0）—— 只登记、不采用、不摘码。
+
+> **方法论结论（非候选，但比候选重要）**：
+> ① **r53 的判别线要再切一刀**。r53 写的是「缺一行调用 → 补接线；缺一套规范实现 → 接依赖」。
+> 本轮暴露**第三种情况**：**缺的是一层不变量**（「暂停期间时钟不被回溯」）。这时接进来的不是工具函数，而是**一个模型** ——
+> 而模型的价值恰恰在它的**边界**（M3/M4/M5），不在 API。建议写成三条判别线。
+> ② **M3 是「不报错的错」第五次复现**（r50 F-1 / r51 R3 / r53 R1·R2·R3 / 本轮 M3）。
+> 凡引入「调度 / 序列化 / 时钟」类上游，验收**必须**含「同一输入两次结果逐字相同」与「不变量在暂停 / 恢复 / 重载三种转移下守恒」两条断言。
+> ③ **GitHub 上「专注计时」没有可用的底层，只有成品**：★ 高的全是完整应用（★23k / ★4.9k，有宿主不可嵌），
+> ★ 低的全是 2018–2023 的单页 demo，计时底层停在 2014–2016 且多为 `null`。
+> 与 r40（图算法）、r41（中文分词）**第三次同构**：**基础能力在 npm 上，GitHub 只用来发现新包**。本轮真正该锁的是 `xstate`，不是任何 pomodoro 仓库。
+> ④ 流程自查：首轮探针用「手动持有点火函数」的假时钟，把已 `clearTimeout` 的回调又点了一次，误判成「上游没撤销定时器」，
+> 第二轮用真 `setTimeout` 纠正（M6）。**假时钟必须实现「撤销后回调永不再触发」的语义**，否则任何基于假时钟的结论都不可信。
+| `NanmiCoder/dsh-agent-teams` | A 原生DSH | MIT | 规划/今天 | **重复且无增益**（骨架已在） | ⛔ | rejected | 2026-10-23 | ★2366。**已出骨架 `packages/dsh-radar-agent-teams`（2026-10-15）**，本轮仅重跑命中，不构成新候选、不改骨架 |
+| `dsh-market/dsh-market` | A 原生DSH | MIT | 插件 | **重复且无增益**（骨架已在） | ⛔ | rejected | 2026-10-23 | ★8243（骨架出时 ★6494）。**已有 `packages/dsh-radar-dsh-market` + `dsh-radar-market` 两份骨架未裁决**，不再出第三份 |
+| `YELEBAI/dsh-plugin-marketplace` | A 原生DSH | MIT | 插件 | 重复无增益（插件市场第 N 家） | ⛔ | rejected | 2026-10-23 | ★21。npm 0.5.5 / 仓库 0.9.5 **版本错位**，锁版无意义；`dsh.marketplace.profiles` 写死 `["web","desktop"]`，与本仓 `zhiyun-bench` 不匹配 |
+| `kingOfSoySauce/dsh-skin-market` | A 原生DSH | MIT | 通用（主题） | **重复且无增益**（主题域已自建） | ⛔ | rejected | 2026-10-23 | ★247。npm 0.1.67 与仓库一致。主题域累计第 14 条 ⛔；接皮肤市场会再开一个主题源，破坏 paper 包 `frame-theme.js` 的 `--zy-*` 映射 |
+| `zhu1090093659/dsh-skins` | A 原生DSH | BSD-3-Clause（仓库）/ Apache-2.0（npm）**不一致** | 通用（主题） | **重复且无增益**（主题域已自建） | ⛔ | rejected | 2026-10-23 | ★24。npm 名 `@linxin666/dsh-client-ui-skin-center@0.4.8`。**两源许可证不一致须人工核**；按更严者 BSD-3-Clause 仍在白名单，但同属主题域第 15 条 ⛔ |
+| `luobosibing2/dsh-jev-plugin` | A 原生DSH | MIT | 通用（审批/监督门控） | 全新（本仓**零实现**：approval/supervision/interjection 全 0 命中） | ⛔→观察 | proposed | 2026-10-23 | ★196，2026-10-22 仍在推。**`@dsh-jev/plugin` npm 404 未发布** → A 类「锁版引入」不成立，无法出骨架。**一旦发布即升 🟡 复评；在此之前不得摘码**。功能域为本仓真空白 |
+| `maddogfinance/dsh-trading` | A 原生DSH | MIT | 通用（交易研究） | 全新（域外） | ⛔ | rejected | 2026-10-23 | ★41，2026-08-23 最后推送（近 2 月未动）。monorepo；子包 `@dsh-trading/tool-market@0.2.0` 可锁版但根包 `version: null`。**学生场景契合 0**。⚠ 与 `zhu1090093659/dsh-trading` **同名不同仓，勿混** |
+| `FishBottle7/opencode2dsh` | A 原生DSH | MIT | 通用（第三方模型源） | 全新（域外） | ⛔ | rejected | 2026-10-23 | ★330。接 OpenCode Zen 免费模型。与工作台单一 provider 策略冲突，「免费源」类插件生命周期极短 |
+| `yannicksong0106/dsh-550c-boot` | A 原生DSH | MIT | 通用（启动动画） | 重复无增益（外壳启动画面已自建） | ⛔ | rejected | 2026-10-23 | ★178。纯装饰；「首帧由宿主半边注入」会改宿主渲染时序，与本仓外壳 Loading 卡接管冲突 |
+| `YishenTu/claudian` | B 其他 JS | MIT | 笔记（Obsidian） | 重复且无增益（平台错配） | ⛔ | rejected | 2026-10-23 | ★15767（本轮最高星）。**宿主是 Obsidian 不是 DSH**，不可挂载；仅可作「vault 内嵌 AI 协作者」交互参考 |
+| `ZJUSCT/mirror-front` | B 其他 JS | MIT | 无（浙大镜像站前端） | 全新（域外，属 B 组） | ⛔ | rejected | 2026-10-23 | ★36。**DSH 无关**，被 `dsh plugin` 查询误捞。**转交 B 组**：可作「校内服务状态」线索，但与本仓 DSH 集成目标无交集 |
+| `hust-open-atom-club/oh-dsh` | A 原生DSH | MIT（仅 GitHub 元数据，**未核 LICENSE 文件**） | 通用（runtime 分发） | 全新（跨形态） | 🔵 | proposed | 2026-10-23 | ★323。Desktop/Web/TUI 三形态 runtime。**不是插件是宿主分发**，无法挂 `dsh.bundle.patch`。仅作架构参考；引用前须核 LICENSE 文件 |
+| `zhu1090093659/dsh-trading` | A 原生DSH | **NOASSERTION** | 通用（交易终端） | 全新（域外） | ⚠ 待核 | pending-license | 2026-10-23 | ★274。Agent 原生交易终端（Crypto/US/CN/HK）。**许可证待人工核，不采用、不摘码**。⚠ **与 `maddogfinance/dsh-trading`(MIT) 同名不同仓**，最易误判的一对 |
+| `See-Sol-Lab/DeepSeekGUI` | A 原生DSH | **NOASSERTION** | 通用（桌面端） | 全新（桌面端簇本仓不自建） | ⚠ 待核 | pending-license | 2026-10-23 | ★280。桌面 GUI（Git/内置浏览器/记忆）。**许可证待核，不采用**。桌面端簇全线已登记，无集成意图 |
+| `citation-js/citation-js` | B 其他JS | **MIT** ✅（GitHub `spdx_id` / npm 三包 `license` / `LICENSE.md` 三处一致） | 论文（文献条目） | **重复且可强化**（判据①②③全成立：同一抽屉 + 库填充≠库导航 + 本仓零解析能力） | 🟢 | skeleton-created | 2026-10-18 | ★213，push **2026-10-22**。**本轮 r55 由 🟡 升 🟢 并出骨架 `dsh-radar-refs-import`**。升的理由：10-18 判 🟡 是因「要自建整条 UI」=新功能页；本轮只取第一段（粘贴文本→条目列表），出口是**既有** `LibraryPanel.jsx` 的 `uploadPaper()`，引文样式/插引用/文献表**明确排除**（也因此**不引** `plugin-csl`，绕开 `citeproc-js`=NOASSERTION 那个未决点）。锁版 `@citation-js/{core,plugin-bibtex,plugin-ris}@0.9.0`（三包**必须同版本**：core 0.9.0+plugin-bibtex 0.8.4 → `ETARGET`）。实测 M1–M8：BibTeX/RIS/中文/多条目均通（`王, 小明`→`{family:'王',given:'小明'}`）；非法输入抛 `This format is not supported or recognized`（唯一失败信号，因格式靠**内容嗅探**）。⚠ 体积 **698,183 B unpacked（≈682 KB）** 是唯一真成本（对照 r53 `ics` 75 KB），浏览器打包体积**未测**→ 在 `upstream.js` TODO-A-1 出数前**不得**升「已采纳」 |
+| `sunshine-lang/dsh-pdf` | A 原生DSH | **MIT** ✅ | 论文（PDF 文本/元数据） | **重复且无增益** | 🔵 | proposed | 2026-10-23 | ★8，push 2026-09-21，topics 含 `dsh-plugin`。`pdfjs-dist` 取文本/元数据/页范围。本仓 `dsh-zhiyun-host-paper` **已锁版** `pdfjs-dist@6.4.299` 且上游转录链路在用 → 同一件事的第二个封装，**不出骨架**。⚠ npm 端包名未核（本轮搜索次数已用于主候选） |
+| `hash-bang/reflib-ris` | B 其他JS | MIT | 论文（RIS） | 重复无增益（被 citation-js 覆盖） | ⛔ | rejected | 2026-10-23 | ★0，**2021-09 停更**。`ris parser language:javascript`(13) 里唯一有效的纯 RIS 解析器；能力被 `@citation-js/plugin-ris@0.9.0` 完全覆盖 |
+
+## 2026-10-23 · C 组派生（第五十七轮 · **「文献库近邻检索 / 混合检索底座」轴**）· 追加
+
+> 同日第 4 轮（承接 r53 / r54 / r55）。起点是读码：`page-paper` 的「检索」实为**锁版上游**的
+> `search_paper`（本仓只配一个可选「重排端点」，`SettingsSection.jsx:67`），且全仓无**跨文献**检索。
+> 搜索 11 次（⚠ 超限 1 次）、0 次 403。首次登记 11 行（含 3 行簇）→ **🟢1 🟡1 🔵3 ⚠1 ⛔5**。
+> 骨架 `dsh-radar-kb-rag`（**A 类**，锁版 `dsh-kb-rag@1.6.8`）。
+> `Vncntvx/dsh-zotero` 已在册（L126/L344），本轮只补新事实、**不重复登记**：★35→**46**，npm `dsh-zotero@0.13.0`（2026-10-20）已核可锁版。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Breeze136/dsh-kb-rag` | **A 原生DSH** | **MIT** ✅ | 论文（文献库跨篇检索） | **重复可强化**（论文页问答抽屉） | 🟢 | proposed | 2026-10-23 | ★15，建仓 2026-08-16，push 2026-10-22。npm **`dsh-kb-rag@1.6.8`**（2026-10-21，23 版）**可锁版**；679 KB、`dependencies` **空**；**只注册 10 个 model tool + command，无页面/侧栏/slot** → 过「注入面限于本包 ctx」。引擎为进程外 `kb_engine.py`（`sqlite3` + **内存 BM25 CJK + 本地 bge-small 向量** + 可选本地 rerank），工具名 `kb_ingest/kb_search/kb_rag/kb_zotero/kb_dedup/kb_clear/kb_fetch/kb_scope/kb_stats/kb_status`。**判 🟢 的三条**：①仍是同一面板（回答落在已有 `AssistantDrawer`）；②与上游 `search_paper`（单篇内定位）是同一件事的两个粒度，非并行实现；③换了更优检索底座（混合召回 + 章节/页码/DOI 出处 + 本地推理不外发正文）。**前置**：宿主须有 `subprocess` 服务（缺则**静默 return**，见 M2）、需 Python 运行时、会写 `<workspace>/.kb-rag/state.json` 与 `kb.sqlite`（与「笔记库只有 .md」冲突）。⚠ 引擎**未实跑**，检索质量**未测** |
+| `Hongcheng-LI/dsh-zotero` | A 原生DSH | MIT ✅ | 论文（文献库） | 重复可强化 | 🔵 | proposed | 2026-10-23 | ★19，JS，2026-08-15 建仓 / push **2026-10-07**（半月未动）。只做 Zotero 读写工具（搜库、元数据、全文、列条目），**无面板** → 能力被 `dsh-kb-rag`（检索）+ `Vncntvx/dsh-zotero`（面板）夹住 |
+| `peijiping/dsh-plugin-zotero` | A 原生DSH | MIT ✅ | 论文（文献库） | 重复无增益 | 🔵 | proposed | 2026-10-23 | ★6，建仓 2026-10-08，npm `dsh-plugin-zotero@0.1.2` 可锁版。同域第 4 家，描述无差异化 |
+| `nftuoa/dsh-zotero` | A 原生DSH | MIT ✅ | 论文（文献库） | 重复可强化 | 🔵 | proposed | 2026-10-23 | ★0，**当建仓**；topics 含 `deepseek-harness/dsh/pdfjs/plugin/zotero`。「原生 DSH 形态」的正面样本，但 ★0 + 当日建仓 → 不评 🟢。**M1**：它无对应 npm 发布，npm 上的 `dsh-zotero` 属 `Vncntvx` |
+| `toustifer/zotero-dsh`、`toustifer/dsh-zotero` | A 原生DSH | **AGPL-3.0** ⛔ / MIT | — | — | ⛔ | rejected | 2026-10-23 | **同一作者两个仓库同名不同许可**：`zotero-dsh`（★2）AGPL 红线，只可参考**不可摘码**；`dsh-zotero`（★0）MIT 但 ★0。同名消歧的现实样本 |
+| `LiuFangshuo666/DSH-for-Zotero` | A 原生DSH | **NOASSERTION** ⚠ | 论文 | — | ⚠ 待核 | pending-license | 2026-10-23 | ★2，TS，push 2026-10-19。**方向相反**（在 Zotero 里跑 DSH），即便许可清晰也是「另装一个 Zotero 插件」→ **不采用、不摘码**。许可证待核 |
+| `yuzh2001/dsh-zotero`、`Fisfzy/zotero-wave-rag` | A 原生DSH | **`null`（无许可证）** ⛔ | — | — | ⛔ | rejected | 2026-10-23 | 无许可证红线，仅登记，不摘任何代码 |
+| Zotero-DSH 单点工具簇：`evanliu3594/dsh-zotero-plugin`(★0,MIT)、`H-xie/zotero4DSH`(★0,MIT,npm 404)、`careyourcake/dsh-plugin-litsearch-zotero`(★0,MIT)、`JARRY-DJH/zotero-harness-bridge`(★1,MIT,无依赖 MCP)、`NanyuC/dsh-zotero-assistant`(★1,MIT)、`guoxinlu17-cmyk/dsh-bridge`(★1,MIT)、`XZJ-top/dsh-paperforge`(★0,MIT,让 agent 写论文，npm 404)、`anonymous99-Rise/awesome-dsh-zotero`(★1,MIT,清单) | A 原生DSH（混合） | MIT | 论文 | 重复无增益 | ⛔ | rejected | 2026-10-23 | 8 条（含 1 条清单）。★ 全 ≤1；能力被 `dsh-kb-rag` + `Vncntvx/dsh-zotero` 覆盖；`dsh-paperforge` 与产品定位无关 |
+| 复核组：`timetable ics export` 前 10（`JustBrandonLim/timetable-grabber-sit` ★34 MIT、`marioMLLL/ecnu-timetable-calendar` ★8 MIT、`romankurakin/dkuzeit` ★4 MIT、`computerfan/XJTLU-Timetable-to-ICS` ★4 MIT 等）、`paper annotation reader` 27 条、`ocr notes taking` 73 条前端 | B 其他JS | MIT / `null` / NOASSERTION | 课表 / 论文 / 笔记 | 重复无增益 | ⛔ | rejected | 2026-10-23 | 均为**单体 CLI / 浏览器扩展 / 独立桌面应用**，无可嵌入层；`ics` 底座已由 r53 出骨架 `dsh-radar-ics-export`，论文簇 2026-10-20 已整簇判决 → 判决不变，**课表轴 3 个月内不再扫** |
+| 词义污染组：`quiz practice`（★前十 `piano-trainer`★2211、`Major-project-list`★259…）、`fitness tracker`（★前十宽松许可仅 `workout-cool`★8637 且已登记） | B 其他JS | 混合 | — | 无关 | ⛔ | rejected | 2026-10-23 | **`practice` 在 GitHub 第一语义是「乐器练习」** → 该词移出 C 组词池；锻炼轴 ★ 前十 AGPL/GPL/MPL/NOASSERTION 占 9 条 → **封板**（第 3 次），改按 npm 包名搜 |
+
+## 2026-10-24 · A 组（第五十八轮 · **「插件页的『这包从哪来、能做什么』」轴**）· 追加
+
+> 取组：`date +%F` = 2026-10-24，年积日 297，`297 % 3 = 0` → **A 组**（跨天重置，与公式一致；
+> 脚本按 UTC 判成 10-23 → 不采纳，第五次记录该缺陷）。起点是**读码**：`page-plugins` 的行只有
+> 身份/开关/依赖/叶/相位，**没有** version / license / 来源 / 能力；`grep -rniE "spdx|license"
+> packages/dsh-zhiyun-*/src` → **0 条**。
+> 搜索 10 次（**未超限**）、0 次 403、本轮完整。首次登记 8 行（含 2 行簇）→ **🟢1 🟡1 🔵2 ⚠1 ⛔3**。
+> 骨架 `dsh-radar-plugin-ledger`（**A 类**，锁版 `@zseven-w/dsh-harbor@0.1.0-rc.4`）。
+> 已在册本轮只复核、不重复登记：`gwsbhqt/dsh-insight`（维持 ⛔）、`ChaoYuZhang001/dsh-gate`、`PerryLink/dsh-score`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `ZSeven-W/dsh-harbor` | **A 原生DSH** | **MIT** ✅ | 通用（插件台账） | **重复可强化**（插件页） | 🟢 | proposed | 2026-10-24 | ★25，建仓 2026-08-22，push 2026-10-23。npm **`@zseven-w/dsh-harbor@0.1.0-rc.4`** 可锁版（`dist-tags.latest` 就指向 rc 版；`repository.url` 指向本仓库）。1.15 MB、`dependencies` 空、peer 仅 react 18。**宿主 `inject` 只有 `['webServer']`** → 挂 6 条回环路由；客户端只有 1 个 `settings.section`，**无 main 页/无侧栏** → 过「注入面限于本包 ctx」。扫描器 `exports: "./scan"`，`inspectPlugin({dir,name})` + `reconcile()` 是**同步纯函数**（实测 12 ms / 129 ms）。**判 🟢 的三条**：①同一张表的同一行；②结构维（谁依赖谁）vs 能力维（起进程/外发/开路由/读写别人配置）正交；③从「零字段」变成 13 项词表 + `file:line` 证据 + 声明对账。**⚠ 成色折扣**：M3 实测证据会命中**注释行**（`source-campus` 的 `network-egress` 6 条证据全在 `src/egress.js` 注释里、另 18 条省略）→ 「更优」≠「更准」。**⚠ 四个前置**：无 license 维度（自写）；`dsh.capabilities` 是社区公约宿主不读；扫描根 `~/.dsh/profiles` 与本仓 `profiles/` 是否同一处**未核**（TODO-0）；`/updates`、`/preflight*` 两条**会联网** |
+| `feely0208/dsh-license-guard` | A 原生DSH | MIT ✅ | 通用（许可合规） | 重复可强化（**但入口不对**） | 🟡 | proposed | 2026-10-24 | ★1，**Shell**，建仓 2026-10-13 / push 2026-10-22。形态是 **CLI + Agent Skill**：`inject=['skills']`，`apply()` 只注册 `skill/license-guard.md`，缺 `skills` 时 `logger.warn` 后 return（不报错）。规则集 `rules/0{1..5}-*.json`（GPL/弱传染/未知/自许可）**是可复用的数据**，但不导出库 API、不供 UI。→ 它答的是「依赖树的许可」、出口是 **agent 对话**；插件页要的是「每行的许可字段」→ **换的是出口不是底座**，判 🟡 不判 🟢 |
+| `feely0208/dsh-sbom` | A 原生DSH | MIT ✅ | 通用（物料清单） | 重复可强化 | 🔵 | proposed | 2026-10-24 | ★1，**Shell**，2026-10-16 建仓 / 10-21 push。审的是 **SBOM 文件本身**（有没有、全不全、格式对不对、新不新），不是这个工作台的包。全词池 `dsh plugin sbom` **只命中 1 条** ⇒ 该轴在 DSH 生态只有这一个玩具 |
+| `anxinyuanshiyu/dsh-plugin-zh-inventory` | A 原生DSH | ⚠ **npm `license` 为空** | 通用（插件清单中文化） | 重复可强化（插件页） | ⚠ 待核 | pending-license | 2026-10-24 | ★1，`dsh-plugin-zh-inventory@0.2.0` 的 `package.json` **无 `license` 字段**。功能是「给插件列表加中文表签与简述」—— 同一张表，但只做**文案**。**许可证未识别 → 不采用、不摘码** |
+| `AphyTOT/dsh-plugin-preflight` | A 原生DSH | MIT ✅ | 通用（插件开发期） | 重复无增益 | 🔵 | proposed | 2026-10-24 | ★1，**零依赖**。校验的是**插件仓库自己**的 `dsh.bundle` / `cordis.patch.yml` 接线 / client bundle 形状 / peer 范围 → **作者侧发布前自检**，不是用户侧的装后台账。与 `dsh-radar-plugin-audit` 骨架同域 |
+| `Tim-ReJet/dsh-plugin-doctor` | A 原生DSH | MIT ✅ | 通用（插件开发期） | 重复无增益 | 🔵 | proposed | 2026-10-24 | ★0，push 2026-10-04（三周未动）。审「仓库是否符合 dsh-plugin 上架规则」（manifest / bundle 行 / prerelease peer / 仓库年龄 / topic）→ 同为**作者侧上架体检** |
+| `lookingsbfor/dsh-audit`、`dongsheng123132/dsh-license-obligation-proof`、`qingshanjiluo/dsh-security-audit` | A 原生DSH（混合） | MIT ✅ / MIT ✅ / **`null`** ⛔ | 通用 | 重复无增益 | ⛔ | rejected | 2026-10-24 | `dsh-audit`（★1）自称 CLI tool，2026-09-04 后无更新；`license-obligation-proof`（★0）是 MCP/证据链，非本仓形态；`dsh-security-audit`（★0）**无许可证红线**，仅登记 |
+| `Gty2408/dsh-plugin-publish`、`KaramachiA217/dsh-bundle-manager`、`123twtd/dsh-plugin-manager`、`NewBeeJack/dsh-extension-manager` | A 原生DSH | MIT（均在白名单内） | 通用（插件管理） | 重复无增益 | ⛔ | rejected | 2026-10-24 | 四个「插件管理器/发布器」：发布器是**作者侧工具**；其余三个都要**自己的面板**管插件列表 —— 与插件页**同概念双入口**，且本仓 `pluginManager` 已有行级开关。`dsh-bundle-manager` ★1、2026-08-19 后无更新 |
+| 同作者安全 guard 簇：`feely0208/dsh-plugins`（**无许可证**，市场索引，49 插件）、`feely0208/dsh-phishing-guard`（Python）、`feely0208/dsh-secret-scan`、`feely0208/dsh-env-audit` | A 原生DSH（混合） | `null` ⛔ / MIT | 通用（安全） | 全新（安全域，非本仓面板） | 🔵 | proposed | 2026-10-24 | 2026-10-16 同日三连发，★ 均 1。与本仓「插件依赖」页无交集 → 只登记一行备查；`dsh-plugins` 无许可证，**仅作线索源**、不摘码 |
+
+
+## 2026-10-24 · B 组（第五十九轮 · **「笔记 → CC98 写出」轴**）· 追加
+
+> 同日第 2 轮（承接 r58 的 A 组）。取组：今日 A 已跑 → 规则 2 `same-day(unused)`，B(17) < C(19) → **B**。
+> 起点是读码：全仓 UBB 相关只有 `dsh-zhiyun-source-cc98/src/ubb.js`，且只有 `ubbToText`（**读**方向）；
+> `markdownToUbb|toUbb|toUBB` **0 命中**；笔记页 `grep -i cc98` **0 命中** → **有进口、没出口**。
+> 搜索 11 次（⚠ 超限 1 次，见报告 §5）、0 次 403、本轮完整。首次登记 9 行（含 2 行簇）。
+> 骨架 `dsh-radar-cc98-ubb-bridge`（**B 类** · 能力提取 · 零依赖 · 零上游代码）。
+> **自动验收四项全过**：报告/registry ✅；骨架 `json`+`yaml`+`node --check` ✅ 且 `apply()` 抛错 ✅；commit `5f76fec` 已 push 并由 `ls-remote` 验证 ✅；PR 复用滚动 PR #21（head 已前进到 `5f76fec`）✅。
+> 已在册本轮只复核：`baihe26/zju-literature-downloader`（★35，push 10-23，维持 🟡）、
+> `burriedalien666/zju842-practice`（★22，维持 🟡）、`memset0/Learning-at-ZJU-Helper`（★59 但 push 2024-12，维持 🟡）、
+> `upupming/zju-grs-ics`（`null`，维持 ⛔）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `stevenstg/obsidian-cc98-publish` | **B 其他JS** | **MIT** ✅（GitHub `spdx_id` / `package.json.license` / `LICENSE` 三处一致） | 笔记 → 论坛（CC98 写出口） | **重复可强化**（判据①②③全成立） | 🟢 | proposed | 2026-10-24 | ★8，push 2026-10-19。Obsidian 插件（TS），**未发布 npm** → 只能锁 git 提交。核心三层 `md-to-ubb.ts`+`links.ts`+`convert.ts` = 1207 行**零宿主依赖纯函数**，实测可在 `node --experimental-strip-types` 下直接跑；`obsidian` 只出现在 `images.ts`/`settings.ts` 一类外围文件 → **能力提取**（非锁版挂载，`obsidian` 是虚拟模块装不上）。骨架 `dsh-radar-cc98-ubb-bridge` 已出。⚠ 三处存疑：**引用块丢 `[quote]`**、表格原样透传、硬换行原样；⚠ 读/写不对偶（内联代码含 `[b]` 时方括号被剥） |
+| `Coran-tech/cc98-reborn` | B 其他JS | **MIT** ✅（`LICENSE` 1081 B 实读） | 论坛阅读 | **重复无增益** | 🔵 | proposed | 2026-10-24 | ★4，push 2026-10-16，**本簇最活跃**。Chrome/Edge 扩展（`manifest.json`，无 `package.json`）；`src/content.js` **1.1 MB 单文件**、`styles.css` 552 KB → **整站 UI 重构**，与本仓「数据层 + 原生页面」不同构。`markup-converter.js` / `extended-ubb.js` 可**只读借鉴**其方言覆盖面，**不摘码**。另含 `question-service/`（PHP+SQLite）与 `question-mark-sites-source/`（Next.js）两个子项目 |
+| `ZJU-CC98/CC98.Achievement` | B 其他JS | Apache-2.0 ✅ | 论坛 | 全新（域外：成就系统） | 🔵 | proposed | 2026-10-24 | ★1，push 2026-07-20（3 月未动）。与阅读/写作均无关，登记备查 |
+| `shellRaining/cc98` | B 其他JS | **MIT** ✅ | 论坛 | 重复且无增益 | 🔵 | proposed | 2026-10-24 | ★3，建仓 2026-07-08 / push 2026-10-16，18.5 MB。Vue3+Vite+ 第三方整站客户端 → 与「笔记导出」零交集，且是第二个论坛界面 |
+| `EviterLesRoses2/cc98-mcp` | B 其他JS | **MIT** ✅ | 论坛 | **重复且无增益**（与 `dsh-zhiyun-source-cc98` 十方法逐条对应） | ⛔ | rejected | 2026-10-24 | ★4，仅 28 KB，只读 MCP。10 个工具与本仓 `cc98.*` 一一对应；形态是「给别的 Claude 用」而非本仓插件 |
+| `lwsher/CC98_AI_frontend` | B 其他JS | **MIT** ✅ | — | 未知 | ⚠ 待核 | pending-relevance | 2026-10-24 | ★4，2026-08-12 建仓 / push 2026-09-06。**仓库 description 为空**、README 未取到 → **相关度不明**，许可证虽明确但按「阶段 3 第 8 条」不采用、不排期，待人工看一眼 |
+| `zjufishboy/TalkTrue` | B 其他JS | **MIT** ✅ | 选课/评课 | 全新（域外） | 🔵 | proposed | 2026-10-24 | ★3，**2023-01 停更**。「内网版浙大查老师（CC98 言果平台）」，**只有前端**，后端不在仓里 → 不可独立运行 |
+| `biu9/cc98-summary` | B 其他JS | **`null`** ⛔ | 论坛 | — | ⛔ | rejected | 2026-10-24 | ★14（本簇最高星），**无许可证红线**，只登记不摘码；description 为空、2026-04 后未动 |
+| `Slowist-Lee/cc98-highlight` | B 其他JS | MIT ✅ | 论坛 | 重复无增益 | 🔵 | proposed | 2026-10-24 | ★1，2025-07 停更；浏览器端高亮脚本，与数据层无关 |
+| `Aleph-000/cc98-cleaner`、`walavave/CC98-CLI` | B 其他JS | **`null`** ⛔ / MIT ✅ | 论坛 | 重复无增益 | ⛔ / 🔵 | rejected / proposed | 2026-10-24 | `cc98-cleaner` ★4 **无许可证** → 不摘码；`CC98-CLI` ★5 与本仓已登记的 `Lucent-Snow/CC98-CLI`（★19）同型且更小 → 取已在册那条 |
+| `sel-fish/md2ubb`、`varHarrie/md2ubb`、`zjjncsn/markdown-to-ubb` | B 其他JS | MIT / MIT / **`null`** ⛔ | 笔记 → 论坛 | 重复且无增益 | ⛔ | rejected | 2026-10-24 | 同为 Markdown→UBB 但各有一条硬伤：`sel-fish` ★3 是 **Python**（技术栈不符）；`varHarrie` ★2 **2017-04 停更**且不认识 `[size=7]`/`[bili]`/`[upload]`；`zjjncsn` **无许可证**。**同簇归一取一**，取 `obsidian-cc98-publish` |
+| `AsukaSong/react-ubb-editor` | B 其他JS | WTFPL | 论坛 | 重复无增益 | 🔵 | proposed | 2026-10-24 | ★3，**2021-08 停更**。React UBB 编辑器组件；本仓 CC98 只读，不需要第二个编辑器 |
+
+## 2026-10-24 · C 组（第六十轮 · **学习活动的日粒度底色 / 连击**轴）
+
+> 同日第 3 轮。脚本判 `same-day(unused)` → C，与人工一致。**先读码找断环**：`grep -rniE "heatmap|热力|streak|连击|打卡|contribution"` 全仓 **0 命中**，
+> 而 `core-quiz/src/store.js` 的 `attempts`（`makeAttempt` 带 ISO `at`）与 `core-study/src/learning-space.js` 的 `updatedAt` 都已落盘 → **数据在、出口没有**（r53/r54/r59 之后第四次同型）。
+> 12 次搜索（10 主搜 + 2 定向探针，**⚠ 超限 2 次**，理由见报告 §5.1）、0 次 403，本轮完整。有效候选 4 行（簇内合并 12+ 条）；🟢1 + 🔵3 + ⛔4；骨架 `dsh-radar-activity-heatmap`（**B 类**，锁版 `react-activity-calendar@3.2.1`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `grubersjoe/react-activity-calendar` | B 其他JS | **MIT** ✅ | 学习节律（全页底色） | **全新**（补缺视图，**非强化**） | 🟢 | skeleton-created | 2026-10-24 | ★599，TS，push **2026-10-21**。npm `3.2.1` 实核：`peerDependencies` 仅 `react ^18\|\|^19`；`dependencies` = `date-fns@^4.2.1` + `@floating-ui/react@^0.27.19`；`exports` 含独立 `./tooltips.css`；`type: module`。**判据③不成立**：本仓 `grep heatmap/热力/streak` = 0，无被替换的底层 → 这是「无→有」，判 🟢 的理由是「接进来就有东西看、不新增页面/存储/开关」（与 `cytoscape.js`/`temml` 同处置），**定性须人工拍**。⚠ **唯一真成本**：两传递依赖会撞 `scripts/build.mjs` + `tests/build-seeds.test.mjs` 的「零 node_modules 进包」断言 → README 的 TODO-B-1 把「打包策略」写成**阻塞项**（A 全 bundle / B 加 external / C 去 tooltip），出数前不得升「已采纳」。已出骨架 `dsh-radar-activity-heatmap` |
+| `fishdev20/shadcn-heatmap` | B 其他JS | MIT ✅ | 同上 | 重复（簇内落选） | 🔵 | proposed | 2026-10-24 | ★39，push 2026-08-20。**copy-paste 组件**（shadcn 范式：源码搬进你的仓）→ 与本仓「不搬运上游源码」直接相反；主题绑 tailwind/shadcn（本仓是裸 CSS + `shell-ui` 令牌）。仅作配色与交互参考 |
+| `Richardsl/heatmap-calendar-obsidian` | B 其他JS（Obsidian 插件） | **Apache-2.0** ✅ | 笔记（活动日历） | 重复（簇内落选） | 🔵 | proposed | 2026-10-24 | ★961（簇内最高），**但**：Obsidian 插件（`obsidian` 为宿主注入虚拟模块、装不上，r59 已确证该形态）、npm **404**（只以插件形式分发）、push **2025-02-10（20 个月未动）** → 不可嵌入。只借它的分层范式：「数据源 / 配色 / tooltip 文案」三件拆干净 |
+| `pearpages/heatmap`(MIT,★0)、`Sylvo6642/CommitGrid`、`arnabjena007/gitmap`、`n4tly-darkgonet/Bloom`、`mhuzaifa0/HabitTrack`、`Harshil1335/HabitForge` | B 其他JS | MIT 1 条 / `null` 5 条 | — | 重复无增益 | ⛔ | rejected | 2026-10-24 | `github-style contribution heatmap react` 全站仅 **6 条**（产品词极窄）：**5 条 ★0**、4 条无许可证。唯一 MIT 的 `pearpages/heatmap` 亦 ★0 且无发布 → 全部未经使用验证，不能作底座 |
+| 习惯追踪 App 簇：`iotawise`(★263)、`s-petr/longhabit`(★127)、`DoHabit`(**AGPL-3.0**,★63)、`n4ze3m/habit-watcher`(★51)、`takanome-dev/habit-tracker-app`(★48)、`vincenzo-afk/Synapse`(★39)、`hasibhaque07/open-source-habit-tracker-app`(★37) 等 10 条 | B 其他JS | MIT / **AGPL-3.0** | — | 重复无增益 | ⛔ | rejected | 2026-10-24 | `habit tracker react language:typescript`(1584) ★ 头部。**共性硬伤**：每条都自带完整存储层（SQLite / Prisma / Cloudflare D1 / Expo SecureStore）。本仓「今天要做什么」已在 `page-planning`、数据在自己手里 → 接进来 = **第二套待办 + 第二份落盘**，正是强化原则明令禁止的形态。`DoHabit` 另触许可证红线 |
+| 学习统计 / 番茄钟成品：`Hassanmahmood4/StudyPilot`(★23,`null`)、`TheusHen/study-dashboard`(★3)、`hema-code06/Learning_Analytics`、`rabinregmi188/StudyTracker`、`AAAAAshainiya/ielts-study-dashboard` 等 9 条 + `pomodoro statistics react` 前 8 条 | B 其他JS | 多数 `null` / MIT | — | 无关或重复无增益 | ⛔ | rejected | 2026-10-24 | ★ 全 ≤23 且 `null` 居多；`pomodoro statistics react` 前 8 条 **★全 ≤1**。与 r54（专注计时底座）同结论：**这类能力的底层在 npm，GitHub 上只有成品 App** |
+| `mrmagic2020/Wrong-Question-Notebook`(★6)、`helemazuba-boop/Wrong-Question-Notebook`(★2，同名 fork) | B 其他JS | **GPL-3.0** ⛔ | 刷题（错题） | — | ⛔ | rejected | 2026-10-24 | **许可证红线**（fork 同许可，两条都排除）。本轮唯一真做「错题本」的仓，**不得摘取任何代码**，仅作形态参考 |
+| `ninime09/quiz-builder` | B 其他JS | MIT ✅ | 刷题 | 重复无增益 | ⛔ | rejected | 2026-10-24 | ★3，单文件 HTML 生成器（资料 → 自包含离线答题页）。**输出形态与本仓相反**：本仓题库要落 `quiz_*` 三轨道并与复习调度共用，它产出的是"不再回流的文件" |
+| token 用量族（借 `dsh plugin stats` 复核）：`PolinniZhong/dsh-personal-center`(★113,MIT)、`songoao25/dsh-bottom-info-bar`(★51,MIT)、`lanlandeli/dsh-usage-stats`(★11,**NOASSERTION**，在册 ⚠) | A 原生DSH | MIT / NOASSERTION | 通用 | **重复无增益**（第 6 次） | ⛔ | rejected | 2026-10-24 | `dsh plugin stats` 前十里 **6 条**是 token 用量/成本/热力图。注意**名字欺骗性**：`dsh-personal-center` 的 description 自述「Token 用量统计 / 成本估算」、`dsh-usage-stats` 自述「年度活跃热力图」——**"个人中心"/"活跃"在 DSH 生态里≈token 用量**，选型时须读 description 不读名字。10-19 已判该簇 ⛔（13 家），本轮不再逐条登记 |
+
+### 第六十一轮 · 2026-10-24 · A 组
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `chen8923/dsh-task-progress` | A 原生DSH | MIT ✅ | 通用（长任务） | **重复但无增益**（不同面板/不同数据源） | 🔵 | proposed | 2026-10-24 | ★0，push 2026-09-24，零依赖，**可锁版** npm `0.3.0`。给外部脚本开「jsonl 进度文件 → 会话头胶囊 + 右侧栏」的第二通道。强化三判据 ①②③ **全不成立**（它是全局任务面板，讲义的进度是本仓 `assemble()` 自算的），故不出骨架。**可白拿的三条做法**：按卷序报（前缀和）/ 上报节流 250 ms / 超 30 s 无上报补一条「重试中」提示 |
+| `MorixMa/dsh-download-progress` | A 原生DSH | MIT ✅ | 通用（下载） | 无关（会话头插槽） | 🔵 | proposed | 2026-10-24 | ★0，push 2026-10-17。**npm 404 不可锁版**。注册在 `conversation.session.header.utilities`，不在本仓 `zhiyun.*` 插槽体系内。工程完成度最高（`dsh-plugin.json` 逐条声明权限+scope+reason），可作**manifest 范本** |
+| `Asong6824/dsh-llm-rate-limit` | A 原生DSH | MIT ✅ | 通用（LLM 限流） | **可强化但属基础设施层**（非单面板） | 🔵 | proposed | 2026-10-24 | ★2，push 2026-08-20，**可锁版** npm `0.1.1`。provider 级 RPM/TPM + 并发 + FIFO + 429 冷却，进程内状态、不重试。是 `polish.js` 内 `limiter.run` 的上位替代，但接管整进程所有 LLM 调用 → 判据①不成立，属**部署层决策** |
+| `orangeofcarl0-sys/dsh-large-proj-perf` | A 原生DSH | MIT ✅ | 通用（性能） | 重复且无增益 | ⛔ | rejected | 2026-10-24 | ★2，push 2026-10-23，可锁版 npm `1.3.3`。解决**超大会话前端渲染**（fork/projection/chunked materialize），与本轮「LLM 进度」仅共享 `chunked` 一词。本仓学习页 `sessionRows(limit=30)` 无此场景 |
+| `HuanLinOTO/dsh-plugin-yet-another-subagent` | A 原生DSH | **NOASSERTION** ⚠ | 通用（子代理） | — | ⚠ 待核 | proposed | 2026-10-24 | ★18，push 2026-10-18。可配置 subagent profile + 实时进度/子代理树。**许可证待人工核验，不采用、不摘取任何代码** |
+| `Jackson366/dsh-plugin-learning-accelerator` | A 原生DSH | **MIT** ✅（本体）/ ⛔ **上游无 LICENSE** | 刷题 / 复习节奏 | **重复且无增益**（跨页面全局能力，非单面板强化） | 🔵 | proposed | 2026-10-24 | ★0，push 2026-10-21，JavaScript，**零 dependencies**（4 条 `@deepseek-ai/*` peer）。**npm 404 不可锁版**（仓库 `0.2.2`）。把上游 skill `Maolipeng/Learning-Accelerator` 移植为 harness 原生（两条 `systemPrompt` 运行时上下文 + 确定性间隔重复 + 5 个工具）。**⚠ 上游仓库 `LICENSE` = 404 无许可证** → 不得摘取其协议内容。**可白拿两条**：①`systemPrompt` 按需注入（有状态才注入，否则零 token）②`tests/store-equivalence.test.js` 用同一串操作跑 Python/JS 双实现、要求 `state.json` **逐字节相同** —— 本仓 50+ 骨架无一有这层，可作「移植等价性测试」范本 |
+| `windli93/dsh-anki-plugin` | 待判（`language=null`） | **`license=null`** ⚠ | 复习（Anki 形态） | 无法判定（信息不足） | ⚠ 待核 | proposed | 2026-10-24 | ★0。描述仅 `deepseek harness anki plugin`。**npm `dsh-anki-plugin` = 404**。**⚠ 查询中途撞 GitHub API 403，LICENSE/README/提交历史均未核实** —— 故标「待核」而非直接 ⛔。人工 30 秒可结案：看根目录有无 `LICENSE`、`package.json.license`、`cordis.patch.yml` |
+| `leinasi2014/dsh-agent-swarm` | A 原生DSH | MIT ✅（列表页口径） | 规划 / 多 agent | **重复且无增益**（同 `dsh-agent-teams` 域） | ⛔ | rejected | 2026-10-24 | ★2，TypeScript。Durable multi-agent Team orchestration + budgets + memory。与已登记的 `NanmiCoder/dsh-agent-teams`（★2366，**已有骨架 `packages/dsh-radar-agent-teams`**）同能力域，★差三个数量级；且该骨架自身另有未解决阻塞项（全局 `tools` 表 + system prompt 注入）→ 再进同域候选只增评审负担，不构成强化 |
