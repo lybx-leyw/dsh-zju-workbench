@@ -2632,3 +2632,13 @@
 | `mrmagic2020/Wrong-Question-Notebook`(★6)、`helemazuba-boop/Wrong-Question-Notebook`(★2，同名 fork) | B 其他JS | **GPL-3.0** ⛔ | 刷题（错题） | — | ⛔ | rejected | 2026-10-24 | **许可证红线**（fork 同许可，两条都排除）。本轮唯一真做「错题本」的仓，**不得摘取任何代码**，仅作形态参考 |
 | `ninime09/quiz-builder` | B 其他JS | MIT ✅ | 刷题 | 重复无增益 | ⛔ | rejected | 2026-10-24 | ★3，单文件 HTML 生成器（资料 → 自包含离线答题页）。**输出形态与本仓相反**：本仓题库要落 `quiz_*` 三轨道并与复习调度共用，它产出的是"不再回流的文件" |
 | token 用量族（借 `dsh plugin stats` 复核）：`PolinniZhong/dsh-personal-center`(★113,MIT)、`songoao25/dsh-bottom-info-bar`(★51,MIT)、`lanlandeli/dsh-usage-stats`(★11,**NOASSERTION**，在册 ⚠) | A 原生DSH | MIT / NOASSERTION | 通用 | **重复无增益**（第 6 次） | ⛔ | rejected | 2026-10-24 | `dsh plugin stats` 前十里 **6 条**是 token 用量/成本/热力图。注意**名字欺骗性**：`dsh-personal-center` 的 description 自述「Token 用量统计 / 成本估算」、`dsh-usage-stats` 自述「年度活跃热力图」——**"个人中心"/"活跃"在 DSH 生态里≈token 用量**，选型时须读 description 不读名字。10-19 已判该簇 ⛔（13 家），本轮不再逐条登记 |
+
+### 第六十一轮 · 2026-10-24 · A 组
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `chen8923/dsh-task-progress` | A 原生DSH | MIT ✅ | 通用（长任务） | **重复但无增益**（不同面板/不同数据源） | 🔵 | proposed | 2026-10-24 | ★0，push 2026-09-24，零依赖，**可锁版** npm `0.3.0`。给外部脚本开「jsonl 进度文件 → 会话头胶囊 + 右侧栏」的第二通道。强化三判据 ①②③ **全不成立**（它是全局任务面板，讲义的进度是本仓 `assemble()` 自算的），故不出骨架。**可白拿的三条做法**：按卷序报（前缀和）/ 上报节流 250 ms / 超 30 s 无上报补一条「重试中」提示 |
+| `MorixMa/dsh-download-progress` | A 原生DSH | MIT ✅ | 通用（下载） | 无关（会话头插槽） | 🔵 | proposed | 2026-10-24 | ★0，push 2026-10-17。**npm 404 不可锁版**。注册在 `conversation.session.header.utilities`，不在本仓 `zhiyun.*` 插槽体系内。工程完成度最高（`dsh-plugin.json` 逐条声明权限+scope+reason），可作**manifest 范本** |
+| `Asong6824/dsh-llm-rate-limit` | A 原生DSH | MIT ✅ | 通用（LLM 限流） | **可强化但属基础设施层**（非单面板） | 🔵 | proposed | 2026-10-24 | ★2，push 2026-08-20，**可锁版** npm `0.1.1`。provider 级 RPM/TPM + 并发 + FIFO + 429 冷却，进程内状态、不重试。是 `polish.js` 内 `limiter.run` 的上位替代，但接管整进程所有 LLM 调用 → 判据①不成立，属**部署层决策** |
+| `orangeofcarl0-sys/dsh-large-proj-perf` | A 原生DSH | MIT ✅ | 通用（性能） | 重复且无增益 | ⛔ | rejected | 2026-10-24 | ★2，push 2026-10-23，可锁版 npm `1.3.3`。解决**超大会话前端渲染**（fork/projection/chunked materialize），与本轮「LLM 进度」仅共享 `chunked` 一词。本仓学习页 `sessionRows(limit=30)` 无此场景 |
+| `HuanLinOTO/dsh-plugin-yet-another-subagent` | A 原生DSH | **NOASSERTION** ⚠ | 通用（子代理） | — | ⚠ 待核 | proposed | 2026-10-24 | ★18，push 2026-10-18。可配置 subagent profile + 实时进度/子代理树。**许可证待人工核验，不采用、不摘取任何代码** |
