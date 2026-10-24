@@ -52,9 +52,10 @@ node scripts/radar-rotation.mjs --group
 | 项 | 值 |
 | --- | --- |
 | `last_group` | `A` |
-| `last_run_at` | `2026-10-24 15:00` |
-| `group_runs`（累计） | A=32, B=18, C=20 |
-| 上一轮轴名 | 本轮 r59 为「B 组 · 笔记 → CC98 写出轴」（`stevenstg/obsidian-cc98-publish` 判 🟢，**B 类能力提取**、零依赖，骨架 `dsh-radar-cc98-ubb-bridge`；搜索 11 次 ⚠ 超限 1 次）；r58 为「A 组 · 插件页的『这包从哪来、能做什么』轴」（`ZSeven-W/dsh-harbor` 判 🟢，骨架 `dsh-radar-plugin-ledger`，锁版 `@zseven-w/dsh-harbor@0.1.0-rc.4`）；r57 为「C 组派生 · 文献库近邻检索底座轴」（`dsh-kb-rag`） |
+| `last_run_at` | `2026-10-24 18:00` |
+| `group_runs`（累计） | A=33, B=18, C=20 |
+| 今日已跑 | C（r60）· A（r61）· **A（r62）** —— ⚠ 今日 A 跑了两次；r58（A）、r59（B）亦在今天。**下次若仍同日，应优先 C** |
+| 上一轮轴名 | **r62** 为「A 组 · 刷题链路的『去重』与『预算守恒』轴」（**0🟢 0🟡、不出骨架**；`dedupe.js` 生产零调用实测确认、`onProgress` 在出题链路被丢弃、被拒题不耗额度实测否决；搜索 9 次后撞 API 403 → **本轮不完整**）；r61 为「A 组 · 讲义装配的进度与预算轴」（0🟢，F-1 `maxChars` 死参数实测确认）；r59 为「B 组 · 笔记 → CC98 写出轴」（`stevenstg/obsidian-cc98-publish` 判 🟢，骨架 `dsh-radar-cc98-ubb-bridge`）；r58 为「A 组 · 插件页的『这包从哪来、能做什么』轴」（`ZSeven-W/dsh-harbor` 判 🟢，骨架 `dsh-radar-plugin-ledger`）；r57 为「C 组派生 · 文献库近邻检索底座轴」（`dsh-kb-rag`） |
 
 ### 流水
 
