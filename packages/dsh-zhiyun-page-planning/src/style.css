@@ -1,4 +1,4 @@
-/* 「规划」页的样式。
+﻿/* 「规划」页的样式。
  *
  * 三条硬约束，与其它页面包一致： *   1. **所有选择器带 `body[data-zhiyun]` 前缀**（本页类名统一 `zpg-`）。各包样式表是
  *      同特异性的独立 <style>，胜负只看挂载顺序；不加前缀的裸类会与别处撞车，
@@ -362,6 +362,33 @@ body[data-zhiyun] .zpg-planned {
   border: 1px solid var(--zy-accent);
   border-radius: 4px;
   padding: 1px 6px;
+}
+
+/* 重复标记：与「已拆」同档但用虚线，因为它的语义是"还会再来"而不是"已完成拆分" */
+body[data-zhiyun] .zpg-repeat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-muted, #6b6b70);
+  border: 1px dashed color-mix(in srgb, var(--zy-muted, #6b6b70) 55%, transparent);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* 重复选择器：两个 select 并排，宽度按内容而不是撑满，避免把面板拉得很宽 */
+body[data-zhiyun] .zpg-repeat-row { display: flex; gap: 8px; flex-wrap: wrap; }
+body[data-zhiyun] .zpg-repeat select {
+  font: inherit;
+  padding: 5px 8px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-bg);
+  color: var(--zy-ink);
+}
+body[data-zhiyun] .zpg-repeat select:focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 1px;
 }
 
 /* 拆出的卡片：整块比原文更实（实线框 + 稍亮底），因为它是"要做的事" */
@@ -881,4 +908,182 @@ body[data-zhiyun] .zpg-composer-panel {
   background: var(--zy-surface);
   box-shadow: 0 16px 48px color-mix(in srgb, #000 22%, transparent);
   margin: 0;
+}
+
+/* ══════════════════════════════════════════ pet：右下角的对话角色 */
+
+/* 收起态：一个圆脸。用固定定位贴右下角，但不挡住页脚文字 */
+body[data-zhiyun] .zpg-pet-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+  background: var(--zy-surface);
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+body[data-zhiyun] .zpg-pet-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 28px color-mix(in srgb, #000 22%, transparent); }
+body[data-zhiyun] .zpg-pet-fab:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 3px; }
+
+/* 那张脸：两个眼睛就够，不要画五官 —— 越简单越不像 bug 越可爱 */
+body[data-zhiyun] .zpg-pet-face {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+body[data-zhiyun] .zpg-pet-eye {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--zy-accent);
+  /* 轻微的高光，让它看起来有神 */
+  box-shadow: inset 0 -1px 1px color-mix(in srgb, #000 25%, transparent);
+}
+body[data-zhiyun] .zpg-pet-face-sm .zpg-pet-eye { width: 5px; height: 5px; }
+
+/* 展开态：一个固定尺寸的气泡，贴右下角 */
+body[data-zhiyun] .zpg-pet {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 41;
+  width: min(360px, calc(100vw - 48px));
+  max-height: min(480px, calc(100vh - 120px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--zy-line);
+  border-radius: 14px;
+  background: var(--zy-surface);
+  box-shadow: 0 20px 56px color-mix(in srgb, #000 26%, transparent);
+  overflow: hidden;
+}
+
+body[data-zhiyun] .zpg-pet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--zy-line);
+  background: color-mix(in srgb, var(--zy-accent) 5%, var(--zy-surface));
+}
+body[data-zhiyun] .zpg-pet-name { font-weight: 600; font-size: var(--zy-fs-sm); }
+body[data-zhiyun] .zpg-pet-hint {
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-muted, #6b6b70);
+  margin-left: auto;
+}
+body[data-zhiyun] .zpg-pet-close {
+  border: 0;
+  background: transparent;
+  color: var(--zy-muted, #6b6b70);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+body[data-zhiyun] .zpg-pet-close:hover { background: var(--zy-line); }
+
+body[data-zhiyun] .zpg-pet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 120px;
+}
+
+body[data-zhiyun] .zpg-pet-hello {
+  margin: 0;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-muted, #6b6b70);
+  line-height: 1.6;
+}
+
+/* 气泡：用户靠右、助手靠左，这是聊天最基本的空间语义 */
+body[data-zhiyun] .zpg-pet-msg {
+  margin: 0;
+  max-width: 85%;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: var(--zy-fs-sm);
+  line-height: 1.55;
+  word-break: break-word;
+}
+body[data-zhiyun] .zpg-pet-msg-user {
+  align-self: flex-end;
+  background: var(--zy-accent);
+  color: #fff;
+  border-bottom-right-radius: 3px;
+}
+body[data-zhiyun] .zpg-pet-msg-assistant {
+  align-self: flex-start;
+  background: var(--zy-line);
+  border-bottom-left-radius: 3px;
+}
+body[data-zhiyun] .zpg-pet-thinking { opacity: .55; letter-spacing: 2px; }
+
+/* 确认卡：把模型的理解摊开，而不是只说"记好了" */
+body[data-zhiyun] .zpg-pet-draft {
+  align-self: stretch;
+  border: 1px solid color-mix(in srgb, var(--zy-accent) 45%, var(--zy-line));
+  border-radius: 10px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--zy-accent) 4%, var(--zy-surface));
+}
+body[data-zhiyun] .zpg-pet-draft-title {
+  margin: 0 0 6px;
+  font-weight: 600;
+  font-size: var(--zy-fs-sm);
+}
+body[data-zhiyun] .zpg-pet-draft-meta {
+  margin: 0 0 8px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: var(--zy-fs-meta);
+}
+body[data-zhiyun] .zpg-pet-draft-meta div { display: flex; gap: 4px; }
+body[data-zhiyun] .zpg-pet-draft-meta dt { color: var(--zy-muted, #6b6b70); margin: 0; }
+body[data-zhiyun] .zpg-pet-draft-meta dd { margin: 0; }
+body[data-zhiyun] .zpg-pet-draft-actions { display: flex; gap: 8px; }
+body[data-zhiyun] .zpg-pet-draft-actions button { min-height: 30px; font-size: var(--zy-fs-meta); }
+
+body[data-zhiyun] .zpg-pet-error {
+  margin: 0;
+  font-size: var(--zy-fs-meta);
+  color: #c0392b;
+}
+
+body[data-zhiyun] .zpg-pet-input {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zpg-pet-input input {
+  flex: 1;
+  font: inherit;
+  padding: 7px 10px;
+  border: 1px solid var(--zy-line);
+  border-radius: 8px;
+  background: var(--zy-bg);
+  color: var(--zy-ink);
+}
+body[data-zhiyun] .zpg-pet-input input:focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 1px;
+}
+body[data-zhiyun] .zpg-pet-input button { min-height: 32px; }
+
+/* 窄屏：贴边一点，别把内容挤没 */
+@media (max-width: 560px) {
+  body[data-zhiyun] .zpg-pet-fab { right: 14px; bottom: 14px; }
+  body[data-zhiyun] .zpg-pet { right: 14px; bottom: 14px; width: calc(100vw - 28px); }
 }

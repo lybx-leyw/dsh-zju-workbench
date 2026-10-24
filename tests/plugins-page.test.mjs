@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 插件依赖图的折叠规则。
  *
  * 这里钉的都是「错了会让人取消掉不该取消的包」的那几条：叶的判定、插槽边、两棵树的硬边，
@@ -87,11 +87,11 @@ test('readPlane：内核服务的提供者不属任何条目，但不算「等�
   //    「等待依赖」。判据必须是 fiber 自己 store 里有没有那一项。
   const fiber = { inject: { loader: null, profileContext: null }, store: { loader: {}, profileContext: {} }, parent: null };
   const read = readPlane({
-    entries: [{ options: { name: 'dsh-zhiyun-core-final-pass' }, fiber }],
+    entries: [{ options: { name: 'dsh-zhiyun-core-vault' }, fiber }],
     runtimes: [{ fibers: [fiber] }],
     store: {}, // 内核服务不在 reflect 的条目归属表里
   });
-  const row = read.rows.find(item => item.name === 'dsh-zhiyun-core-final-pass');
+  const row = read.rows.find(item => item.name === 'dsh-zhiyun-core-vault');
   assert.deepEqual(row.requires, ['loader', 'profileContext']);
   assert.deepEqual(row.unresolved, [], 'store 里有的就不算在等');
   assert.equal(read.providers.size, 0, '归不到包的服务不进连边表');

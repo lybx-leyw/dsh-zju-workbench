@@ -7,7 +7,7 @@
  * 「记录真的按宿主 schema 存进了宿主看管的介质」「坏记录在读取边界如实被拒」
  * 「卸载后域真的被释放」这三条**全都验不到** —— 它们恰恰是宿主的行为。
  * 所以这里从 `.runtime/dsh-<版本>/node_modules` 加载真实的 cordis / dsh-storage /
- * dsh-storage-json / dsh-storage-domain，与 `tests/final-pass.test.mjs`、
+ * dsh-storage-json / dsh-storage-domain，与 `tests/study.test.mjs`、
  * `tests/classroom-cordis.test.mjs` 同一套做法。
  *
  * 测试里直接读写介质文件**只为**制造坏数据与核对落盘证据（产品代码一行文件 IO

@@ -793,3 +793,29 @@ function topicOf(n, warnings) {
   }
   return makeTopic(t, n.seg.fromPage, n.seg.toPage, Object.freeze([...n.seg.lines]), Object.freeze([...n.blocks]));
 }
+/** 将解析器的层级树投影为讲义槽位，保留切分片段的正文与原始来源。 */
+export function normalizeLectureTree(tree) {
+  if (!tree || tree.kind !== 'title') return tree;
+  const collect = (node, titles = []) => {
+    const names = node.kind === 'title' ? [...titles, node.title] : titles;
+    if (node.semanticTopic) {
+      const leaves = (n) => n.kind === 'leaf' ? [n] : (n.children ?? []).flatMap(leaves);
+      return collect({ kind: 'leaf', id: node.title, semanticTitle: node.title, blocks: leaves(node).flatMap(n => n.blocks ?? []) }, names);
+    }
+    if (node.kind !== 'leaf') return (node.children ?? []).flatMap(child => collect(child, names));
+    const sourceBlocks = (node.blocks ?? []).map(block => ({
+      ...block,
+      text: typeof block.text === 'string' ? block.text : (block.sentences ?? []).map(s => s.text ?? '').join(''),
+      summary: block.tag?.summary ?? block.summary ?? '',
+    }));
+    const pages = sourceBlocks.map(b => b.page).filter(Number.isFinite);
+    const title = node.semanticTitle || sourceBlocks.map(b => b.summary).find(Boolean) || names.at(-1) || node.id;
+    const evidence = [...new Map(sourceBlocks.flatMap(b => b.slideEvidence ?? []).map(p => [p.page,p])).values()];
+    return [{ title, blockIndexes: [...new Set(sourceBlocks.map(b => b.index))], sourceBlocks,
+      fromPage: pages.length ? Math.min(...pages) : null,
+      toPage: pages.length ? Math.max(...pages) : null, pptLines: [], slideEvidence: evidence, sourceLeafId: node.id }];
+  };
+  const branches = (tree.children ?? []).some(n => n.kind === 'title') ? tree.children : [tree];
+  return { chapters: branches.map(node => ({ title: node.title || tree.title, topics: collect(node) })),
+    warnings: [], treeSource: 'reconstructed' };
+}

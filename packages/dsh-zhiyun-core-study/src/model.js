@@ -1,5 +1,6 @@
-export function createStudyController(call, navigation) {
-  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null, live: null, liveBusy: false, liveError: null, liveStreams: null, liveToday: null, liveTodayLoading: false };
+import { createQuestionBankController } from './question-bank-client.js';
+﻿export function createStudyController(call, navigation) {
+  let state = { loading: true, user: null, courses: [], lessons: [], course: null, lesson: null, content: null, result: null, job: null, activeJob: null, jobs: [], queueOpen: false, error: null, busy: false, sectionLoading: false, contentLoading: false, coursesMeta: null, lessonsMeta: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, lecturePhase: null, polishBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null, live: null, liveBusy: false, liveError: null, liveStreams: null, liveToday: null, liveTodayLoading: false };
   const listeners = new Set(), lifetime = new AbortController();
   let closed = false, selection = 0, account = 0, timer = null, polling = false, scheduleTicket = 0, corpusTicket = 0, recentTicket = 0, reviewTicket = 0, liveTodayTicket = 0, liveStreamsTicket = 0;
   const lessonLoads = new Map();
@@ -11,6 +12,7 @@ export function createStudyController(call, navigation) {
   async function request(method, payload = {}) {
     return call(method, payload, lifetime.signal);
   }
+  const questionBank = createQuestionBankController(request,navigation);
   const currentKey = () => state.lesson ? { courseId: state.course.id, subId: state.lesson.subId } : null;
   /**
    * 从「今天的直播列表」里挑出与某节课对应的一条，作为 `state.live`。
@@ -30,14 +32,15 @@ export function createStudyController(call, navigation) {
     return list.find((item) => String(item?.courseId ?? "") === String(courseId) && String(item?.subId ?? "") === String(subId)) ?? null;
   };
   async function refresh() {
+    questionBank.reset();
     const epoch = ++account;
     selection++;
     lessonLoads.clear();
-    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null, live: null, liveBusy: false, liveError: null, liveStreams: null, liveToday: null, liveTodayLoading: false });
+    update({ loading: true, error: null, course: null, lesson: null, result: null, content: null, lessons: [], courses: [], job: null, activeJob: null, jobs: [], queueOpen: false, lessonsByCourse: {}, lessonMetaByCourse: {}, lessonHiddenByCourse: {}, loadingCourses: {}, sectionStates: {}, expandedCourses: {}, lecture: null, lectureBusy: false, lecturePhase: null, polishBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, schedule: null, scheduleMeta: null, scheduleLoading: false, scheduleError: null, corpusHits: null, corpusQuery: "", corpusBusy: false, corpusError: null, recent: null, recentLoading: false, recentError: null, review: null, reviewTruncated: false, reviewLoading: false, reviewError: null, focusTab: null, live: null, liveBusy: false, liveError: null, liveStreams: null, liveToday: null, liveTodayLoading: false });
     try {
       const initial = await request("state");
       if (epoch !== account || closed) return;
-      update({ user: initial.user, activeJob: initial.jobs[0] ?? null });
+      update({ user: initial.user, jobs: initial.jobs, activeJob: initial.jobs.find(j => j.state === 'running') ?? null });
       if (initial.jobs.length) schedule();
       if (initial.user) {
         const courses = await request("courses");
@@ -115,7 +118,7 @@ export function createStudyController(call, navigation) {
     // 切节次时把上一节的直播信息一起清干净：`live` 是按 courseId/subId 派生的，
     // 而刚点开的这一节还不知道有没有直播。清空之后 `loadLiveToday()` 会重新派生；
     // 留着旧值的话，界面会在新一节的标题下显示上一节的机位。
-    update({ course, lesson, lessons: state.lessonsByCourse[String(course.id)] ?? state.lessons, lessonsMeta: state.lessonMetaByCourse[String(course.id)] ?? state.lessonsMeta, content: null, result: null, lecture: null, lectureBusy: false, finalPassBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, job: null, error: null, contentLoading: true, live: liveOf(state.liveToday, course.id, lesson.subId), liveStreams: null, liveBusy: false, liveError: null });
+    update({ course, lesson, lessons: state.lessonsByCourse[String(course.id)] ?? state.lessons, lessonsMeta: state.lessonMetaByCourse[String(course.id)] ?? state.lessonsMeta, content: null, result: null, lecture: null, lectureBusy: false, lecturePhase: null, polishBusy: false, quiz: null, quizBusy: false, note: null, noteBusy: false, noteWired: true, busy: false, job: null, error: null, contentLoading: true, live: liveOf(state.liveToday, course.id, lesson.subId), liveStreams: null, liveBusy: false, liveError: null });
     const outcomes = await Promise.allSettled([request("content", key), request("result", key), request("quiz", key), request("note", key)]);
     if (ticket !== selection || closed) return;
     const [content, result, quiz, note] = outcomes;
@@ -140,28 +143,36 @@ export function createStudyController(call, navigation) {
     if (!closed) timer = setTimeout(poll, 800);
   }
   async function poll() {
-    if (closed || polling || !state.activeJob) return;
+    if (closed || polling) { if (!closed) schedule(); return; }
     polling = true;
-    const epoch = account, active = state.activeJob;
+    const epoch = account, ticket = selection;
     try {
-      let data = await request("result", { courseId: active.courseId, subId: active.subId, includeResult: false });
-      if (data.job?.state !== "running") data = await request("result", { courseId: active.courseId, subId: active.subId });
+      const data = await request('queue');
       if (epoch !== account || closed) return;
-      const key = currentKey(), selected = key?.courseId === active.courseId && key?.subId === active.subId;
-      const sectionKey = `${active.courseId}:${active.subId}`;
-      update({ ...selected ? { job: data.job, result: data.result ?? state.result, ...(data.result ? { lecture: data.result.lecture ?? null } : {}) } : {}, activeJob: data.job?.state === "running" ? data.job : null, sectionStates: { ...state.sectionStates, [sectionKey]: { parsed: Boolean(data.hasResult ?? data.result), resultStatus: data.resultStatus ?? data.result?.status ?? null, job: data.job ?? null } } });
-      if (data.job?.error) update({ error: data.job.error.message });
-      if (data.job?.state === "running") schedule();
-    } catch (e) {
-      if (epoch === account) {
-        update({ error: e.message });
-        schedule();
+      const jobs = data.jobs ?? [], key = currentKey();
+      const selectedJob = jobs.find(j => String(j.courseId) === String(key?.courseId) && String(j.subId) === String(key?.subId));
+      const previous = state.jobs.find(j => j.id === selectedJob?.id);
+      const sectionStates = { ...state.sectionStates };
+      for (const job of jobs) {
+        const sectionKey = job.courseId + ':' + job.subId;
+        sectionStates[sectionKey] = { ...sectionStates[sectionKey], job, ...(['ready', 'partial'].includes(job.state) ? { parsed: true, resultStatus: job.state } : {}) };
       }
-    } finally {
-      polling = false;
-    }
+      update({ jobs, activeJob: jobs.find(j => j.state === 'running') ?? null, sectionStates,
+        ...(selectedJob ? { job: selectedJob } : {}) });
+      if (selectedJob && !['queued', 'running'].includes(selectedJob.state) && (previous?.state !== selectedJob.state || previous?.id !== selectedJob.id)) {
+        const result = await request('result', key);
+        if (epoch === account && ticket === selection && !closed) {
+          update({ result: result.result ?? state.result, ...(result.result ? { lecture: result.result.lecture ?? null } : {}) });
+        }
+      }
+      if (jobs.some(j => ['queued', 'running'].includes(j.state))) schedule();
+    } catch (e) {
+      if (epoch === account && !closed) { update({ error: e.message }); schedule(); }
+    } finally { polling = false; }
   }
+
   return {
+    questionBank,
     getSnapshot: () => state,
     subscribe: (l) => {
       listeners.add(l);
@@ -434,10 +445,10 @@ export function createStudyController(call, navigation) {
       const epoch = account;
       update({ busy: true, error: null });
       try {
-        const job = await request("start", { ...key, context: `${state.course.title} · ${state.lesson.title}` });
+        const job = await request("start", { ...key, context: `${key.courseId}-${key.subId}`, courseTitle: state.course?.title, lessonTitle: state.lesson?.title });
         if (epoch === account) {
           const selected = key.courseId === state.course?.id && key.subId === state.lesson?.subId;
-          update({ ...(selected ? { job } : {}), activeJob: job });
+          update({ ...(selected ? { job } : {}), queueOpen: true, activeJob: job.state === 'running' ? job : state.activeJob, jobs: [...state.jobs.filter(row => row.id !== job.id && !(row.courseId === job.courseId && row.subId === job.subId)), job] });
           const sectionKey = `${key.courseId}:${key.subId}`;
           update({ sectionStates: { ...state.sectionStates, [sectionKey]: { ...state.sectionStates[sectionKey], ...(selected ? { parsed: Boolean(state.result), resultStatus: state.result?.status ?? null } : {}), job } } });
           schedule();
@@ -448,41 +459,27 @@ export function createStudyController(call, navigation) {
         update({ busy: false });
       }
     },
-    async cancel() {
-      if (!state.activeJob) return;
+    setQueueOpen(open) { update({ queueOpen: open }); },
+    async openTask(job) {
+      const course = state.courses.find(row => String(row.id) === String(job.courseId));
+      if (!course) return;
+      try {
+        const loaded = await loadCourse(course);
+        const lesson = loaded?.items?.find(row => String(row.subId) === String(job.subId));
+        if (lesson) { await selectLesson(lesson, course); navigation?.navigate?.("study"); update({ queueOpen: false }); }
+      } catch (e) { update({ error: e.message }); }
+    },
+    async cancel(job = state.activeJob) {
+      if (!job) return;
       update({ busy: true });
       try {
-        await request("cancel", { courseId: state.activeJob.courseId, subId: state.activeJob.subId });
+        await request("cancel", { courseId: job.courseId, subId: job.subId });
         await poll();
       } catch (e) {
         update({ error: e.message });
       } finally {
         update({ busy: false });
       }
-    },
-    /**
-     * 生成讲义（习坎装配）。与解析**分开**是有意的：解析是「把课听成字」，
-     * 讲义是「把字整理成可读的稿」——后者要再看一遍模型，用户可能只想先解析。
-     */
-    async assembleLecture() {
-      const key = currentKey(); if (!key) return;
-      const ticket = selection, epoch = account;
-      update({ busy: true, error: null, lectureBusy: true });
-      try {
-        const lecture = await request("lecture", { ...key, context: [state.course?.title, state.lesson?.title].filter(Boolean).join(" · ") });
-        if (ticket === selection && epoch === account) update({ lecture, result: { ...state.result, lecture, lectureHistory: [], canRestoreLecture: false } });
-      } catch (e) { if (ticket === selection && epoch === account) update({ error: e.message }); }
-      finally { if (ticket === selection && epoch === account) update({ busy: false, lectureBusy: false }); }
-    },
-    async finalPass() {
-      const key = currentKey(); if (!key) return;
-      const ticket = selection, epoch = account;
-      update({ busy: true, error: null, finalPassBusy: true });
-      try {
-        const out = await request("final-pass", key);
-        if (ticket === selection && epoch === account) update({ lecture: out.lecture, result: { ...state.result, lecture: out.lecture, canRestoreLecture: true } });
-      } catch (e) { if (ticket === selection && epoch === account) update({ error: e.message }); }
-      finally { if (ticket === selection && epoch === account) update({ busy: false, finalPassBusy: false }); }
     },
     async generateQuiz(input) {
       const key = currentKey(); if (!key) return;
@@ -519,16 +516,8 @@ export function createStudyController(call, navigation) {
         return null;
       } finally { if (ticket === selection && epoch === account) update({ noteBusy: false }); }
     },
-    async restoreLecture() {
-      const key = currentKey(); if (!key) return;
-      const ticket = selection, epoch = account; update({ busy: true, error: null });
-      try {
-        const out = await request('lecture-restore', key);
-        if (ticket === selection && epoch === account) update({ lecture: out.lecture, result: { ...state.result, lecture: out.lecture, canRestoreLecture: out.historyCount > 0 } });
-      } catch (e) { if (ticket === selection && epoch === account) update({ error: e.message }); }
-      finally { if (ticket === selection && epoch === account) update({ busy: false }); }
-    },
     dispose() {
+      questionBank.dispose();
       closed = true;
       selection++;
       account++;

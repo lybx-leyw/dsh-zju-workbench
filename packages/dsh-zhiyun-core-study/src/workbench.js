@@ -1,12 +1,14 @@
+import { QuestionBank } from './question-bank.js';
+import { normalizeWorkers } from 'dsh-zhiyun-core-parser/worker-pool';
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
-import { exportReorganization, mergeReorganization } from "dsh-zhiyun-core-lecture/agent-text";
 import { QUIZ_TYPES } from "dsh-zhiyun-core-quiz/model";
 import { QUIZ_MATERIAL_SELECTIONS, makeSourceMaterial } from "dsh-zhiyun-core-quiz/generate";
 import { createQuizStore } from "dsh-zhiyun-core-quiz/store";
 import { hasContent, pageLink, parseZySectionUri, timeLink } from "dsh-zhiyun-core-notes/note";
 import { writeFileAtomic } from "@deepseek-ai/dsh-atomic-write";
+import { GENERATION_VERSION } from 'dsh-zhiyun-core-lecture';
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 const fault = (code, message) => Object.assign(new Error(message), { code });
 const identifier = (value) => {
@@ -61,7 +63,7 @@ const relayStream = (stream) => {
 const relayDropped = (item) => ({ key: item?.key ?? "extra", label: item?.label ?? null, type: item?.type ?? "unknown" });
 
 // The parser's final transcript is immutable input to the separately versioned handout.
-export const finalVersion = record => digest(JSON.stringify([record.sourceId, record.pages, record.sentences, record.unassignedSentences, record.blocks, record.spine, record.outline]));
+export const finalVersion = record => digest(JSON.stringify([record.sourceId, record.pages, record.sentences, record.unassignedSentences, record.blocks, record.spine, record.outline, record.tree, record.semanticPlan]));
 const identity = key => { const [accountId, courseId, subId] = key.split(":"); return { accountId, courseId, subId }; };
 const faultMessages = {
   NOT_WIRED: "所需加工插件未启用，请检查插件配置。", FORMAT: "终审稿格式无法读取，已保留上一版讲义。",
@@ -70,6 +72,9 @@ const faultMessages = {
   NO_PROVIDER: "终审所需的宿主子 Agent 服务不可用。", AGENT_START_FAILED: "终审 Agent 启动失败，请检查宿主模型和预设。",
   NO_MAIN: "本节没有可用的主线块，请先完成终稿标注。", NO_TOPICS: "未从课件中提取出可写成讲义的知识点。",
   SLIDE_READ_FAILED: "课件图片尚未成功解析。请重新整理这节课，再生成讲义。",
+  CHECKPOINT_VERSION: "该批次的出题版本已更新，请新建批次；已有题目仍然保留。",
+  BANK_PERSIST: "题目未能写入，已保存的历史题仍然保留，请刷新题库后重试。",
+  NO_QUESTIONS: "当前模式没有可练习的题目，请调整范围或先生成新题。",
   NOT_FOUND: "找不到这道题，它可能已被丢弃。",
   PERSIST: "笔记没有写入，请重试。",
   RECENT: "上次打开的位置读不出来，原文件已保留。",
@@ -90,7 +95,7 @@ export const publicError = (error) => ({ code: error.code ?? "FAILED", message: 
   BUSY: "已有加工任务正在运行，请等待完成或先取消。"
 }[error.code] ?? "操作未完成，请重试。" });
 export class StudyWorkbench {
-  constructor({ classroom, parser, llm, directory, lecture, finalPass, quiz, notes, knowledge }) {
+  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge }) {
     this.classroom = classroom;
     this.parser = parser;
     this.llm = llm;
@@ -99,13 +104,12 @@ export class StudyWorkbench {
     this.knowledge = knowledge;
     this.mutations = new Map();
     this.migrations = new Map();
-    // 讲义装配与无曰终审**惰性取用**（传进来的是取值函数，不是服务实例）。
+    // 讲义装配**惰性取用**（传进来的是取值函数，不是服务实例）。
     //
     // ⚠️ 不写进插件的 `inject` 是有意的：`inject` 是**硬依赖** —— 任一被停用
-    //    都会让整个学习面板 pending（连解析都用不了）。这两个是可选的加工步骤，
-    //    缺了应当只让「讲义 / 终审」这两个动作如实报未接入，而不是把页面拖死。
+    //    都会让整个学习面板 pending（连解析都用不了）。讲义是可选的加工步骤，
+    //    缺了应当只让「生成讲义」如实报未接入，而不是把页面拖死。
     this.lectureOf = lecture ?? (() => undefined);
-    this.finalPassOf = finalPass ?? (() => undefined);
     // 出题与节笔记同样是可选加工：停用其中一个只让对应动作报未接入。
     // 出题的题库不使用插件上的单例 store（那个 store 跨节共享、且不落盘），
     // 每次按本节记录自建一份，再把快照写回知识库。
@@ -116,15 +120,24 @@ export class StudyWorkbench {
     this.accountBusy = false;
     this.controllers = new Set();
     this.recentQueue = Promise.resolve();
+    this.workerSelection = null;
+    this.configBusy = false;
+    this.questionBank = new QuestionBank(this);
     this.ready = this.loadRoutes();
   }
   async loadRoutes() {
     try {
       const r = JSON.parse(await readFile(path.join(this.directory, "models.json"), "utf8"));
-      this.parser.llm.routes = this.cleanRoutes(r);
+      if (Array.isArray(r.workers)) this.workerSelection = normalizeWorkers(r.workers);
+      else this.parser.llm.routes = this.cleanRoutes(r);
     } catch (e) {
       if (e.code !== "ENOENT" && !(e instanceof SyntaxError)) throw e;
     }
+  }
+  effectiveWorkers() {
+    if (this.workerSelection) return this.workerSelection.map(entry => ({ ...entry }));
+    const selected = this.parser.llm.routes?.vision ?? this.parser.llm.routes?.text ?? this.parser.llm.selection?.();
+    return selected?.provider && selected?.model ? [{ provider: selected.provider, model: selected.model, workers: this.parser.concurrency ?? 3 }] : [];
   }
   cleanRoutes(routes = {}) {
     const out = {};
@@ -215,7 +228,7 @@ export class StudyWorkbench {
   }
   async result(key) {
     const current = await this.knowledge.get(identity(key));
-    if (current) return structuredClone(current);
+    if (current) return structuredClone({ ...current, lecture: current.lecture?.generationVersion === GENERATION_VERSION ? current.lecture : null, lectureHistory: [] });
     if (this.migrations.has(key)) return this.migrations.get(key);
     const migration = this.migrate(key); this.migrations.set(key, migration);
     try { return await migration; } finally { this.migrations.delete(key); }
@@ -227,11 +240,11 @@ export class StudyWorkbench {
     try { old = JSON.parse(await readFile(this.file(key), "utf8")); }
     catch (e) { if (e.code === "ENOENT") return null; if (e instanceof SyntaxError) throw fault("CORRUPT", "旧产物 JSON 损坏"); throw e; }
     if (old.schema !== 1 || !Array.isArray(old.blocks)) throw fault("CORRUPT", "旧产物格式无效");
-    const { finalPass: legacyReview, ...record } = old;
+    // 旧记录里的 `finalPass`（已废弃的自由发挥终审）直接丢弃：那条路已经不存在，
+    // 它留下的文本没有结构，合不回讲义。
+    const { finalPass: _legacyReview, ...record } = old;
     record.sourceVersion = finalVersion(record);
-    if (record.lecture) record.lecture = { ...record.lecture, sourceVersion: record.sourceVersion,
-      revision: digest(JSON.stringify(record.lecture)), review: null,
-      warnings: [...(record.lecture.warnings ?? []), ...(legacyReview ? ["旧终审文本未合回结构，请重新终审讲义。"] : [])] };
+    record.lecture = null; record.lectureHistory = [];
     // A concurrent migration may have already populated the domain.
     if (!await this.knowledge.get(identity(key))) await this.knowledge.put({ ...record, ...identity(key) });
     return structuredClone(await this.knowledge.get(identity(key)));
@@ -248,14 +261,15 @@ export class StudyWorkbench {
     try { return await entry.done; } finally { if (this.mutations.get(key) === entry) this.mutations.delete(key); }
   }
   view(job) {
-    return job ? { id: job.id, courseId: job.courseId, subId: job.subId, state: job.state, progress: job.progress, error: job.error ?? null } : null;
+    return job ? { id: job.id, courseId: job.courseId, subId: job.subId, courseTitle: job.courseTitle, lessonTitle: job.lessonTitle, queuedAt: job.queuedAt, state: job.state, progress: job.progress, workers: job.workerPool?.snapshot ?? [], concurrency: job.workerPool?.concurrency ?? (job.selection?.length ? job.selection.reduce((sum, row) => sum + row.workers, 0) : this.parser.concurrency ?? 3), startedAt: job.startedAt, elapsedMs: job.startedAt ? (job.finishedAt ?? Date.now()) - job.startedAt : 0, error: job.error ?? null } : null;
   }
   async account(action, credentials, signal) {
     if (this.accountBusy) throw fault("ACCOUNT_BUSY", "账号正在切换");
     this.accountBusy = true;
     try {
-      for (const job of this.jobs.values()) if (job.state === "running") job.controller.abort();
+      for (const job of this.jobs.values()) if (["running", "queued"].includes(job.state)) job.controller.abort();
       for (const op of this.mutations.values()) op.controller.abort();
+      await this.questionBank.stopAll();
       await Promise.allSettled([...this.jobs.values()].map(j => j.done).concat([...this.mutations.values()].map(op => op.done)));
       if (action === "logout") {
         await this.classroom.logout();
@@ -268,95 +282,99 @@ export class StudyWorkbench {
       this.accountBusy = false;
     }
   }
-  async start(courseId, subId, context) {
+  async start(courseId, subId, context, labels = {}) {
     await this.ready;
+    if (this.configBusy) throw fault("BUSY", "请等待生成配置保存完成");
     const user = await this.user(), key = this.key(user, courseId, subId), existing = this.jobs.get(key);
-    if (existing?.state === "running") return this.view(existing);
-    if ([...this.jobs.values()].some((j) => j.state === "running")) throw fault("BUSY", "请先等待或取消当前解析");
+    if (this.configBusy) throw fault("BUSY", "请等待生成配置保存完成");
+    if (this.closed) throw fault("DISPOSED", "服务已关闭");
+    if (this.accountBusy) throw fault("ACCOUNT_BUSY", "账号正在切换");
+    if (["running", "queued"].includes(existing?.state)) return this.view(existing);
     if (this.mutations.has(key)) throw fault("BUSY", "这一节已有加工任务");
     const controller = new AbortController();
-    const job = { id: randomUUID(), courseId, subId, state: "running", progress: { phase: "source", done: 0, total: 0 }, controller, userId: user.id };
+    const predecessors = [...this.jobs.values()].filter(j => ['running', 'queued'].includes(j.state)).map(j => j.done);
+    const job = { id: randomUUID(), courseId, subId, state: predecessors.length ? 'queued' : 'running',
+      queuedAt: Date.now(), startedAt: predecessors.length ? null : Date.now(),
+      courseTitle: String(labels.courseTitle ?? courseId).slice(0, 500), lessonTitle: String(labels.lessonTitle ?? subId).slice(0, 500),
+      selection: this.effectiveWorkers().map(row => ({ ...row })), progress: { phase: 'source', done: 0, total: 0 }, controller, userId: user.id };
+    this.jobs.delete(key);
     this.jobs.set(key, job);
     job.done = (async () => {
+      let runParser, runLecture;
       try {
+        if (predecessors.length) {
+          // Cancellation must release a queued job immediately, even if its predecessor is still busy.
+          await new Promise(resolve => {
+            const aborted = () => resolve();
+            controller.signal.addEventListener('abort', aborted, { once: true });
+            Promise.allSettled(predecessors).then(resolve).finally(() => controller.signal.removeEventListener('abort', aborted));
+          });
+        }
+        controller.signal.throwIfAborted();
+        job.state = 'running'; job.startedAt ??= Date.now();
         await this.mutate(key, controller.signal, async signal => {
-        const result = await this.parser.parseClassroom(courseId, subId, { context: typeof context === "string" ? context.slice(0, 500) : `${courseId} · ${subId}`, signal, onProgress: (p) => job.progress = p });
+        let lecture = this.lectureOf();
+        if (!lecture?.generate) throw fault("NOT_WIRED", "讲义生成未接入");
+        const workers = job.selection;
+        if (workers.length) {
+          if (!this.parser.createRun || !lecture.createRun) throw fault('NOT_WIRED', '生成 worker 池未接入');
+          runParser = this.parser.createRun({ workers });
+          runLecture = lecture.createRun({ llm: runParser.llm, concurrency: runParser.concurrency });
+          lecture = runLecture; job.workerPool = runParser.llm;
+        }
+        await this.questionBank.archive(user,signal);
+        const stages = {};
+        const onProgress = p => {
+          const phase = p.phase === 'done' ? 'rebuild' : p.phase;
+          const rank = { source: 0, slides: 0, subtitles: 0, faithful: 1, mix: 1, outline: 2, merge: 3, rebuild: 4, lecture: 5, polish: 6 };
+          for (const previous of Object.values(stages)) {
+            if (rank[previous.phase] < rank[phase] && !previous.finishedAt) {
+              previous.finishedAt = Date.now(); previous.elapsedMs = previous.finishedAt - previous.startedAt;
+            }
+          }
+          const previous = stages[phase];
+          const startedAt = previous?.startedAt ?? Date.now();
+          const elapsedMs = Date.now() - startedAt;
+          const done = p.done ?? p.completed ?? previous?.done ?? 0;
+          const progress = { phase, startedAt, elapsedMs, done, failed: p.failed ?? previous?.failed ?? 0, total: p.total ?? previous?.total ?? 0,
+            perMinute: elapsedMs > 0 ? done * 60000 / elapsedMs : 0 };
+          if (progress.total > 0 && done >= progress.total) progress.finishedAt = Date.now();
+          stages[phase] = progress;
+          job.progress = { ...progress, stages: Object.values(stages) };
+        };
+        onProgress({ phase: 'source', done: 0 });
+        const title = String(context ?? `${courseId}-${subId}`).slice(0, 500);
+        const result = await (runParser ?? this.parser).parseClassroom(courseId, subId, { context: title, signal, onProgress });
         signal.throwIfAborted();
-        const sourceVersion = finalVersion(result), previous = await this.result(key);
-        // Equal transcript preserves its derived handout. A changed transcript
-        // explicitly invalidates the handout and review; no stale final-pass text.
-        const keep = previous?.sourceVersion === sourceVersion;
-        await this.save(key, { ...result, sourceVersion, title: typeof context === "string" ? context : result.sourceId,
-          lecture: keep ? previous.lecture ?? null : null, knowledgeTree: keep ? previous.knowledgeTree ?? null : null,
-          lectureHistory: keep ? previous.lectureHistory ?? [] : [],
-          quiz: keep ? previous.quiz ?? null : null });
-        job.state = result.status === "ready" ? "ready" : "partial";
+        const sourceVersion = finalVersion(result);
+        await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, lecture: null, knowledgeTree: result.tree,
+          lectureHistory: [], quiz: null });
+        const generated = await lecture.generate({ record: result, title, signal, onProgress,
+          onAssembled: async assembled => {
+            signal.throwIfAborted();
+            await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, knowledgeTree: result.tree, lectureHistory: [], quiz: null,
+              lecture: { schema: 1, title, chapters: assembled.chapters, generationVersion: GENERATION_VERSION, sourceVersion,
+                revision: randomUUID(), warnings: assembled.warnings ?? [], failures: assembled.failures ?? [],
+                polish: { complete: false, failures: [], warnings: ['终审尚未完成'] } } });
+          },
+        });
+        signal.throwIfAborted();
+        await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, knowledgeTree: result.tree,
+          lecture: { ...generated.lecture, sourceVersion, revision: randomUUID(), at: new Date().toISOString() },
+          lectureHistory: [], quiz: null });
+        job.state = result.status === "ready" && generated.polished.complete !== false && !generated.assembled.failures?.length ? "ready" : "partial";
+        job.finishedAt = Date.now();
+
         });
       } catch (error) {
         job.state = controller.signal.aborted ? "cancelled" : "failed";
         job.error = publicError(error);
+        job.finishedAt = Date.now();
+      } finally {
+        runLecture?.dispose(); runParser?.dispose();
       }
     })();
     return this.view(job);
-  }
-  /**
-   * 把一节**已经解析过**的产物装配成讲义，并落进同一份记录里。
-   *
-   * # 为什么讲义是「投影」，不原地改树
-   *
-   * 知识树是空间性的课程图谱（后续出题、复习、知识树视图都建在它上面），
-   * 而讲义只是「这次课讲到了哪几块」的一次投影。所以这里每次都用
-   * `buildTree` **重建**一棵树再交给装配器，而不是把上一版的树读回来改 ——
-   * 原地改树等于把「这次有没有讲到」写回地图，App 侧已经写错过一次。
-   */
-  async assembleLecture(key, payload, signal) {
-    return this.mutate(key, signal, async signal => {
-      const lecture = this.lectureOf();
-      if (!lecture?.assemble || !lecture?.buildTree) throw fault("NOT_WIRED", "讲义装配未接入");
-      const stored = await this.result(key);
-      if (!stored) throw fault("INPUT", "请先生成终稿");
-      // App uses pageText for its knowledge tree, not visual description.
-      const slides = stored.pages.filter(p => p.transcription?.pageText?.trim())
-        .map(p => ({ page: p.page, text: p.transcription.pageText }));
-      if (!slides.length && stored.pages.some(p => !p.transcription)) throw fault("SLIDE_READ_FAILED", "课件图片尚未成功解析");
-      const selected = stored.blocks.filter(b => b.tag?.role === "主线");
-      if (!selected.length) throw fault("NO_MAIN", "本节没有主线块");
-      const excluded = stored.blocks.length - selected.length;
-      const blocks = selected.map(b => ({ index: b.index, page: b.page,
-        text: b.sentences.map(s => s.text).join(""), summary: b.tag?.summary ?? "", startMs: b.startMs ?? null }));
-      const tree = lecture.buildTree({ slides, blocks, outline: stored.outline ?? [] });
-      const title = typeof payload.context === "string" ? payload.context.slice(0, 500) : String(stored.title ?? stored.sourceId ?? "");
-      const out = await lecture.assemble({ tree, blocks, context: title, signal });
-      signal.throwIfAborted();
-      if (!out.chapters.length) throw fault("NO_TOPICS", "没有可用讲义知识点");
-      const generated = { schema: 1, title, chapters: out.chapters,
-        warnings: [...(tree.warnings ?? []), ...(out.warnings ?? []), ...(excluded ? [`已排除 ${excluded} 个支线或未标注块；终稿保留全部内容。`] : [])],
-        failures: out.failures, sourceVersion: stored.sourceVersion, revision: randomUUID(), review: null, at: new Date().toISOString() };
-      await this.save(key, { ...stored, lectureHistory: [], knowledgeTree: { ...tree, sourceVersion: stored.sourceVersion }, lecture: generated });
-      return generated;
-    });
-  }
-  async finalPass(key, payload, signal) {
-    return this.mutate(key, signal, async signal => {
-      const pass = this.finalPassOf();
-      if (!pass?.run) throw fault("NOT_WIRED", "讲义终审未接入");
-      const stored = await this.result(key), lecture = stored?.lecture;
-      if (!lecture?.chapters?.length) throw fault("INPUT", "请先生成讲义");
-      // Use the account-scoped key, not caller-provided ids, for sandbox files.
-      const sectionId = digest(key);
-      const before = exportReorganization(lecture, sectionId, stored);
-      const out = await pass.run({ text: before, sectionId, signal });
-      signal.throwIfAborted();
-      const merged = mergeReorganization(lecture, out.text, stored, sectionId);
-      const reviewed = { ...merged.lecture, revision: randomUUID(), review: {
-        schema: 2, sourceVersion: stored.sourceVersion, baseRevision: lecture.revision, coverage: merged.coverage,
-        text: out.text, unchanged: out.unchanged, updatedTopics: merged.updated,
-        childEvents: out.childEvents ?? null, at: new Date().toISOString(),
-      } };
-      // Parser pages, sentences, timestamps, roles and block indexes are untouched.
-      await this.save(key, { ...stored, lectureHistory: [...(stored.lectureHistory ?? []), lecture].slice(-3), lecture: reviewed });
-      return { lecture: reviewed, unchanged: out.unchanged };
-    });
   }
   quizView(store, extra = {}) {
     const pub = (item) => ({
@@ -547,37 +565,47 @@ export class StudyWorkbench {
       source: out?.source ?? "live",
     };
   }
-  async restoreLecture(key, signal) {
-    return this.mutate(key, signal, async () => {
-      const stored = await this.result(key), history = [...(stored?.lectureHistory ?? [])];
-      const lecture = history.pop();
-      if (!lecture || lecture.sourceVersion !== stored.sourceVersion) throw fault("INPUT", "没有可恢复的同版本讲义");
-      await this.save(key, { ...stored, lecture, lectureHistory: history });
-      return { lecture, historyCount: history.length };
-    });
-  }
   async dispatch(method, payload = {}, signal) {
     if (this.closed) throw fault("DISPOSED", "服务已关闭");
     await this.ready;
     signal?.throwIfAborted();
-    if (method === "state") {
+    if (method === "state" || method === "queue") {
       const user2 = await this.classroom.getCurrentUser();
-      return { user: user2, jobs: [...this.jobs.values()].filter((j) => j.state === "running" && j.userId === user2?.id).map((j) => this.view(j)) };
+      return { user: user2, jobs: [...this.jobs.values()].filter((j) => j.userId === user2?.id).map((j) => this.view(j)) };
     }
     if (method === "login" || method === "logout") return this.account(method, payload, signal);
     if (method === "models") {
-      const catalog = await Promise.all(this.llm.listProviders().map(async (p) => ({ id: p.id, name: p.name, models: await this.llm.listModels(p.id) })));
-      return { catalog, routes: this.parser.llm.routes };
+      const catalog = await Promise.all(this.llm.listProviders().map(async provider => ({
+        id: provider.id, name: provider.name,
+        models: (await this.llm.listModels(provider.id).catch(() => [])).map(model => ({ id: model.id, name: model.name, inputModalities: model.inputModalities ?? [] })),
+      })));
+      return { catalog, routes: this.parser.llm.routes, workers: this.effectiveWorkers() };
     }
     if (method === "models-save") {
-      if (this.mutations.size) throw fault("BUSY", "加工完成后才能切换模型");
-      const routes = this.cleanRoutes(payload.routes);
-      for (const r of Object.values(routes)) await this.llm.resolveModelInfo(r.provider, r.model, signal);
-      await this.atomic(path.join(this.directory, "models.json"), routes);
-      this.parser.llm.routes = routes;
-      return { routes };
+      if (this.configBusy || this.mutations.size || [...this.jobs.values()].some(job => ['running', 'queued'].includes(job.state))) throw fault("BUSY", "加工完成后才能修改生成配置");
+      this.configBusy = true;
+      try {
+        if (payload.workers !== undefined) {
+          const workers = normalizeWorkers(payload.workers);
+          const configured = new Set(this.llm.listProviders().map(provider => provider.id));
+          for (const entry of workers) {
+            if (!configured.has(entry.provider)) throw fault('INPUT', '供应商尚未配置');
+            await this.llm.resolveModelInfo(entry.provider, entry.model, signal);
+          }
+          signal?.throwIfAborted();
+          await this.atomic(path.join(this.directory, 'models.json'), { schema: 1, workers });
+          this.workerSelection = workers;
+          return { workers, concurrency: workers.reduce((sum, entry) => sum + entry.workers, 0) };
+        }
+        const routes = this.cleanRoutes(payload.routes);
+        for (const route of Object.values(routes)) await this.llm.resolveModelInfo(route.provider, route.model, signal);
+        await this.atomic(path.join(this.directory, 'models.json'), routes);
+        this.parser.llm.routes = routes; this.workerSelection = null;
+        return { routes };
+      } finally { this.configBusy = false; }
     }
     const user = await this.user();
+    if (method.startsWith("bank-")) return this.questionBank.invoke(method,payload,user,signal);
     if (method === "courses") return this.classroom.listCourses({ signal });
     // 直播三条**必须排在下面 `const courseId = identifier(payload.courseId)` 之前**：
     // 那句是给「每一条都要一门课」的节次级方法准备的，而 `live-today` / `live-day`
@@ -622,9 +650,6 @@ export class StudyWorkbench {
       const stored = await this.result(key);
       return { result: payload.includeResult === false ? null : stored, hasResult: Boolean(stored), resultStatus: stored?.status ?? null, job: this.view(this.jobs.get(key)) };
     }
-    if (method === "lecture") return this.assembleLecture(key, payload, signal);
-    if (method === "final-pass") return this.finalPass(key, payload, signal);
-    if (method === "lecture-restore") return this.restoreLecture(key, signal);
     if (method === "quiz") return this.quizState(key);
     if (method === "quiz-generate") return this.generateQuiz(key, payload, signal);
     if (method === "quiz-adopt") return this.changeQuiz(key, payload.id, "adopt", signal);
@@ -632,10 +657,10 @@ export class StudyWorkbench {
     if (method === "note") return this.readNote(user, courseId, subId);
     if (method === "note-save") return this.saveNote(user, courseId, subId, payload);
     if (method === "note-link-text") return this.linkText(user, payload);
-    if (method === "start") return this.start(courseId, subId, payload.context);
+    if (method === "start") return this.start(courseId, subId, payload.context, payload);
     if (method === "cancel") {
       const job = this.jobs.get(key);
-      if (job?.state === "running") {
+      if (["running", "queued"].includes(job?.state)) {
         job.controller.abort();
         await job.done;
       }
@@ -654,6 +679,7 @@ export class StudyWorkbench {
   }
   async dispose() {
     this.closed = true;
+    await this.questionBank.stopAll();
     for (const c of this.controllers) c.abort();
     for (const job of this.jobs.values()) job.controller.abort();
     for (const op of this.mutations.values()) op.controller.abort();

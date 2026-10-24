@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { generateLecture } from '../packages/dsh-zhiyun-core-lecture/src/generate.js';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -18,7 +19,7 @@ import {computeSectionStats,toSeekBar} from '../packages/dsh-zhiyun-core-player/
 async function fixture(directory){
   const host=await mountKnowledge(directory); let user={id:'1',name:'Alice'};
   const result={schema:1,status:'ready',blocks:[],sourceId:'fixture',pages:[],sentences:[],unassignedSentences:[],spine:'',outline:[],vocabulary:[],warnings:[],fetchedAt:new Date().toISOString()};
-  const service=new StudyWorkbench({directory,knowledge:host.service,llm:{listProviders:()=>[],resolveModelInfo:async()=>({})},classroom:{getCurrentUser:async()=>user,login:async credentials=>{user={id:credentials.username};return{user};},logout:async()=>{user=null;},listCourses:async()=>({items:[],meta:{complete:true}})},parser:{llm:{routes:{}},parseClassroom:async()=>result}});
+  const service=new StudyWorkbench({lecture:()=>({generate:async()=>({assembled:{failures:[]},polished:{complete:true},lecture:{schema:1,chapters:[],generationVersion:'architecture-v4'}})}),directory,knowledge:host.service,llm:{listProviders:()=>[],resolveModelInfo:async()=>({})},classroom:{getCurrentUser:async()=>user,login:async credentials=>{user={id:credentials.username};return{user};},logout:async()=>{user=null;},listCourses:async()=>({items:[],meta:{complete:true}})},parser:{llm:{routes:{}},parseClassroom:async()=>result}});
   const dispose=service.dispose.bind(service);service.dispose=async()=>{await dispose();await host.dispose();};return service;
 }
 
@@ -33,7 +34,7 @@ test('cancel retains earlier result, failed replacement does not overwrite it, d
   const key={courseId:'10',subId:'20'};await service.start('10','20');await [...service.jobs.values()][0].done;
   service.parser.parseClassroom=async(_c,_s,{signal})=>new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));
   const active=await service.invoke('start',key);assert.equal((await service.invoke('start',key)).id,active.id);
-  await assert.rejects(service.start('11','21'),{code:'BUSY'});await service.invoke('cancel',key);
+  const queued=await service.start('11','21');assert.equal(queued.state,'queued');await service.invoke('cancel',{courseId:'11',subId:'21'});await service.invoke('cancel',key);
   assert.equal((await service.invoke('result',key)).job.state,'cancelled');assert.equal((await service.invoke('result',key)).result.status,'ready');
   service.parser.parseClassroom=async()=>{throw Object.assign(new Error('SECRET password or provider response'),{code:'CONFIG'});};await service.invoke('start',key);await [...service.jobs.values()][0].done;
   const data=await service.invoke('result',key);assert.equal(data.job.state,'failed');assert.ok(!JSON.stringify(data).includes('SECRET'));assert.equal(data.result.status,'ready');
@@ -57,126 +58,102 @@ test('section result still loads if classroom content fetch fails; layered searc
   assert.equal(searchLesson(result,{query:'密度'}).empty,false);assert.equal(searchLesson(result,{}).empty,true);
   controller.dispose();
 });
-// ── 讲义装配与无曰终审的接线（工具写好了必须真的有人用）───────────────
-const wiredFixture=async(directory,{lecture=true,finalPass=true}={})=>{const base=await fixture(directory);
-  const parsed={schema:1,status:'ready',sourceId:'c1 · s2',blocks:[{index:1,page:1,sentenceFrom:1,sentenceTo:1,bridge:'',sentences:[{text:'老师原话',startMs:1000,endMs:2000,page:1}],tag:{role:'主线',facets:[],summary:'概述'},startMs:1000}],
+// ── 讲义装配与全文润色的接线（工具写好了必须真的有人用）─────────────────
+const wiredFixture=async(directory,{lecture=true,polish=true}={})=>{const base=await fixture(directory);
+  const parsed={schema:2,status:'ready',sourceId:'c1 · s2',blocks:[{index:1,page:1,sentenceFrom:1,sentenceTo:1,bridge:'',sentences:[{text:'老师原话',startMs:1000,endMs:2000,page:1}],tag:{role:'主线',facets:[],summary:'概述'},startMs:1000}],
     pages:[{page:1,transcription:{pageText:'知识点一',pageVisual:'一张图'}}],outline:[],sentences:[],unassignedSentences:[],failedPages:[],warnings:[],vocabulary:[],spine:'',fetchedAt:new Date().toISOString()};
   base.parser.parseClassroom=async()=>parsed;
   base.lectureOf=()=>lecture?{buildTree:({slides,blocks,outline})=>({chapters:[{title:'第一章',topics:[{title:'知识点一',blockIndexes:[1],fromPage:1,toPage:1,pptLines:['知识点一']}]}],_in:{slides,blocks,outline}}),
-    assemble:async({tree,blocks,context,signal})=>{signal?.throwIfAborted();if(!tree||!blocks.length)throw new Error('输入不完整');return{chapters:[{no:1,title:'第一章',topics:[{title:'知识点一',sourceBlockIndexes:[1],passages:[{text:'写成的正文'}],anchor:{page:1,tSec:1},register:'written'}]}],failures:[],warnings:[]};}}:undefined;
-  base.finalPassOf=()=>finalPass?{run:async({text,sectionId,signal})=>{signal?.throwIfAborted();if(!text.includes('写成的正文'))throw new Error('终审没拿到讲义正文');if(!/^[\w.-]+$/.test(sectionId))throw new Error('节 id 不合法');return{text:`${text}\n\n（终审整理过）`,unchanged:false,childEvents:3};}}:undefined;
+    assemble:async({tree,blocks,context,signal})=>{signal?.throwIfAborted();if(!tree||!blocks.length)throw new Error('输入不完整');return{chapters:[{no:1,title:'第一章',topics:[{title:'知识点一',sourceBlockIndexes:[1],passages:[{text:'写成的正文'}],anchor:{page:1,tSec:1},register:'written'}]}],failures:[],warnings:[]};},
+    // 润色：**只改写法**。这里返回一份结构不变、正文润过的讲义，并按真实接口
+    // 交回 {lecture, text, unchanged, changes}。
+    polish:async({lecture,record,sectionId,signal})=>{signal?.throwIfAborted();
+      if(!lecture?.chapters?.length)throw new Error('润色需要讲义');
+      if(!/^[\w.-]+$/.test(sectionId))throw new Error('节 id 不合法');
+      const chapters=lecture.chapters.map((c,ci)=>({...c,topics:c.topics.map((t,ti)=>({...t,
+        passages:(t.passages??[]).map(p=>({...p,text:`${p.text}（润色过）`}))}))}));
+      return{lecture:{...lecture,chapters},text:'#!section stub',unchanged:false,
+        changes:[{kind:'added-or-rewritten',text:'术语统一'}],coverage:null};}}:undefined;
+  const source=base.parser.parseClassroom;
+  base.parser.parseClassroom=async(...args)=>{
+    const r=await source(...args);
+    return {...r,tree:{kind:'title',title:'第一章',children:[{kind:'leaf',id:'point',blocks:r.blocks}]}};
+  };
+  const resolve=base.lectureOf;
+  base.lectureOf=()=>{const service=resolve();return service?{...service,generate:input=>generateLecture({...input,service})}:undefined;};
   return base;};
-test('reorganized handout persists a bounded previous version; restore keeps transcript and original PPT tree',async()=>{
- const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-restore-'));const s=await wiredFixture(dir);const key={courseId:'10',subId:'20'};
+test('one job parses, assembles and reviews; old generation endpoints are removed',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-unified-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
  try{
-  await s.invoke('start',key);await [...s.jobs.values()][0].done;await s.invoke('lecture',key);
-  const before=(await s.invoke('result',key)).result;
-  s.finalPassOf=()=>({run:async({sectionId})=>({text:`#!section ${sectionId} 课\n##!topic 1 1 | 重组知识点 | 章=新章\n>>> BLOCK 定义 | 新标题 | ref=c1t1b1 | src=1\n写成的正文`,unchanged:false})});
-  await s.invoke('final-pass',key);const after=(await s.invoke('result',key)).result;
-  assert.equal(after.lecture.chapters[0].title,'新章');assert.equal(after.lecture.review.schema,2);
-  assert.equal(after.lectureHistory.length,1);assert.deepEqual(after.blocks,before.blocks);assert.deepEqual(after.knowledgeTree,before.knowledgeTree);
-  const restored=await s.invoke('lecture-restore',key);assert.deepEqual(restored.lecture,before.lecture);assert.equal(restored.historyCount,0);
-  await assert.rejects(s.invoke('lecture-restore',key),{code:'INPUT'});
+  const job=await s.invoke('start',key);assert.equal(job.state,'running');await [...s.jobs.values()][0].done;
+  const data=await s.invoke('result',key);
+  assert.equal(data.job.state,'ready');assert.equal(data.result.lecture.generationVersion,'architecture-v4');
+  assert.match(data.result.lecture.chapters[0].topics[0].passages[0].text,/润色过/);
+  assert.equal(data.result.lecture.polish.complete,true);assert.equal(data.result.lectureHistory.length,0);
+  assert.equal(data.result.knowledgeTree.kind,'title');
+  for(const method of ['lecture','lecture-polish','lecture-restore'])await assert.rejects(s.invoke(method,key),{code:'INPUT'});
  }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
 });
-test('lecture assembly and final pass are actually wired into the workbench',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-wired-'));const service=await wiredFixture(dir);try{
-  const key={courseId:'10',subId:'20'};await service.invoke('start',key);await [...service.jobs.values()][0].done;
-  const built=await service.invoke('lecture',{...key,context:'c1 · s2'});assert.equal(built.chapters[0].topics[0].passages[0].text,'写成的正文');
-  // 讲义与解析产物**同一条记录**：重开服务后仍在，且终审能用它。
-  assert.ok((await service.invoke('result',key)).result.lecture.chapters.length===1);
-  const passed=await service.invoke('final-pass',{...key});assert.equal(passed.unchanged,false);assert.ok(passed.lecture.chapters[0].topics[0].passages[0].text.includes('终审整理过'));
-  assert.equal((await service.invoke('result',key)).result.lecture.review.childEvents,3);
-}finally{await service.dispose();await rm(dir,{recursive:true,force:true});}});
 
-test('missing slide transcriptions report the source failure before attempting handout generation',async()=>{
- const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-no-slides-'));const s=await wiredFixture(dir);const key={courseId:'10',subId:'20'};
+test('generation exposes actual concurrent phase counts and partial review state',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-progress-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
  try{
-  const parse=s.parser.parseClassroom;
-  s.parser.parseClassroom=async()=>{const result=await parse();result.pages[0].transcription=null;result.pages[0].failure='URL';return result;};
-  const original=s.lectureOf();s.lectureOf=()=>({...original,buildTree:()=>assert.fail('invalid source must stop before building a tree'),assemble:()=>assert.fail('do not consume model calls without slide text')});
+  const original=s.lectureOf();s.lectureOf=()=>({...original,generate:async input=>{
+    input.onProgress({phase:'faithful',done:1,total:4});input.onProgress({phase:'mix',done:1,total:3});input.onProgress({phase:'faithful',done:2,total:4});
+    const result=await original.generate(input);return {...result,polished:{...result.polished,complete:false},lecture:{...result.lecture,polish:{complete:false,failures:[{topic:'点'}]}}};
+  }});
+  await s.invoke('start',key);await [...s.jobs.values()][0].done;const data=await s.invoke('result',key);
+  assert.equal(data.job.state,'partial');assert.equal(data.result.lecture.polish.complete,false);
+  const phases=new Map(data.job.progress.stages.map(p=>[p.phase,p]));
+  assert.equal(phases.get('faithful').done,2);assert.equal(phases.get('mix').done,1);
+  assert.ok(data.job.elapsedMs>=0);assert.ok(phases.has('polish'));
+ }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
+});
+
+test('cancel during generation aborts the entire job and retains parsed resource',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-cancel-generation-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
+ try{
+  let entered;const started=new Promise(r=>entered=r);
+  s.lectureOf=()=>({generate:async({signal})=>{entered();await new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));}});
+  await s.invoke('start',key);await started;await s.invoke('cancel',key);
+  const data=await s.invoke('result',key);assert.equal(data.job.state,'cancelled');assert.ok(data.result.blocks.length);assert.equal(data.result.lecture,null);
+ }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
+});
+
+test('old stored handouts are hidden and a new run replaces them',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-v4-only-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
+ try{
   await s.invoke('start',key);await [...s.jobs.values()][0].done;
-  const before=(await s.invoke('result',key)).result;
-  await assert.rejects(s.invoke('lecture',key),{code:'SLIDE_READ_FAILED'});
-  assert.match(publicError({code:'SLIDE_READ_FAILED'}).message,/重新整理/);
-  assert.deepEqual((await s.invoke('result',key)).result,before);
+  const id=s.key({id:'1'},'10','20');const data=await s.result(id);
+  await s.save(id,{...data,lecture:{schema:1,chapters:[{title:'旧讲义',topics:[]}]}});
+  assert.equal((await s.invoke('result',key)).result.lecture,null);
+  await s.invoke('start',key);await [...s.jobs.values()][0].done;
+  assert.equal((await s.invoke('result',key)).result.lecture.generationVersion,'architecture-v4');
  }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
 });
-test('missing optional services fail loudly by name instead of silently doing nothing',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-nowired-'));const service=await wiredFixture(dir,{lecture:false,finalPass:false});try{
-  const key={courseId:'10',subId:'20'};await service.invoke('start',key);await [...service.jobs.values()][0].done;
-  await assert.rejects(service.invoke('lecture',key),{code:'NOT_WIRED'});
-  // 终审先要求有讲义 —— 没讲义时的失败必须说清「先做什么」，不是笼统报错。
-  await assert.rejects(service.invoke('final-pass',key),{code:'NOT_WIRED'});
-}finally{await service.dispose();await rm(dir,{recursive:true,force:true});}});
-test('final pass refuses to run before a lecture exists',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-nofinal-')) ;const service=await wiredFixture(dir,{lecture:true,finalPass:true});try{
-  const key={courseId:'10',subId:'20'};await service.invoke('start',key);await [...service.jobs.values()][0].done;
-  await assert.rejects(service.invoke('final-pass',key),{code:'INPUT'});
-}finally{await service.dispose();await rm(dir,{recursive:true,force:true});}});
 
-test('handout uses only mainline and page text, persists tree, and review never mutates final transcript',async()=>{
-  const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-semantics-'));const s=await wiredFixture(dir);const key={courseId:'10',subId:'20'};
-  try{
-    const parse=s.parser.parseClassroom;s.parser.parseClassroom=async()=>{const r=await parse();r.blocks.push({...r.blocks[0],index:2,tag:{role:'支线',facets:[],summary:'旁支'},sentences:[{text:'不进讲义',page:1,startMs:2000,endMs:3000}]});return r;};
-    const original=s.lectureOf();s.lectureOf=()=>({...original,buildTree:input=>{assert.equal(input.blocks.length,1);assert.equal(input.slides[0].text,'知识点一');return original.buildTree(input);}});
-    await s.invoke('start',key);await [...s.jobs.values()][0].done;
-    const before=await s.invoke('result',key);await s.invoke('lecture',key);await s.invoke('final-pass',key);
-    const after=(await s.invoke('result',key)).result;
-    assert.deepEqual(after.blocks,before.result.blocks);assert.deepEqual(after.pages,before.result.pages);assert.ok(after.knowledgeTree.chapters.length);
-    assert.match(after.lecture.review.text,/^#!section /);assert.ok(after.lecture.chapters[0].topics[0].passages[0].text.includes('终审整理过'));
-    await s.invoke('lecture',key);assert.equal((await s.invoke('result',key)).result.lecture.review,null);
-    s.parser.parseClassroom=async()=>{const r=await parse();r.blocks[0].sentences[0].text='新版终稿';return r;};
-    await s.invoke('start',key);await [...s.jobs.values()][0].done;assert.equal((await s.invoke('result',key)).result.lecture,null);
-  }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
+test('controller starts one background generation and never sends separate handout operations',async()=>{
+ const calls=[];const c=createStudyController(async(method)=>{calls.push(method);
+  if(method==='start')return {id:'job',courseId:'10',subId:'20',state:'running',progress:{phase:'source'}};
+  if(method==='result')return {result:null,job:null};if(method==='content')return {slides:{items:[],meta:{}},subtitles:{items:[],meta:{}}};
+  return {items:[],meta:{complete:true}};
+ },{navigate(){}});
+ try{await c.selectLesson({subId:'20'},{id:'10',title:'课'});await c.start();
+  assert.equal(calls.filter(x=>x==='start').length,1);assert.equal(c.getSnapshot().activeJob.id,'job');
+  assert.ok(!calls.some(x=>x==='lecture'||x==='lecture-polish'));assert.equal(c.composeReadingLecture,undefined);
+ }finally{c.dispose();}
 });
-
-test('same-section writes cannot race; malformed review preserves the existing handout',async()=>{
-  const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-write-race-'));const s=await wiredFixture(dir);const key={courseId:'10',subId:'20'};
-  try{
-    await s.invoke('start',key);await [...s.jobs.values()][0].done;await s.invoke('lecture',key);
-    const before=(await s.invoke('result',key)).result;let release,entered;const started=new Promise(r=>entered=r);
-    s.finalPassOf=()=>({run:async()=>{entered();await new Promise(r=>release=r);return{text:'invalid markdown',unchanged:false};}});
-    const running=s.invoke('final-pass',key);await started;
-    await assert.rejects(s.invoke('lecture',key),{code:'BUSY'});await assert.rejects(s.invoke('start',key),{code:'BUSY'});
-    release();await assert.rejects(running,{code:'FORMAT'});assert.deepEqual((await s.invoke('result',key)).result,before);
-  }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
-});
-
-test('legacy final transcript migrates once into host storage; old review is not mistaken for structured handout',async()=>{
-  const {mkdir,writeFile,readFile}=await import('node:fs/promises');
-  const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-migrate-'));const s=await wiredFixture(dir);const args={courseId:'10',subId:'20'};
-  try{
-    const legacy=await s.parser.parseClassroom();legacy.finalPass={text:'旧文本',childEvents:3};legacy.lecture={chapters:[{title:'旧讲义',topics:[]}],warnings:[]};
-    const key=s.key({id:'1'},'10','20'),file=s.file(key);await mkdir(path.dirname(file),{recursive:true});await writeFile(file,JSON.stringify(legacy));
-    const results=await Promise.all([s.invoke('result',args),s.invoke('result',args)]);
-    assert.ok(results[0].result.sourceVersion);assert.equal(results[0].result.lecture.review,null);assert.ok(results[0].result.lecture.warnings.some(w=>w.includes('旧终审')));
-    assert.equal(s.knowledge.size,1);assert.deepEqual(JSON.parse(await readFile(file,'utf8')),legacy);
-    await s.invoke('login',{username:'2',password:'fixture'});assert.equal((await s.invoke('result',args)).result,null);
-  }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
-});
-
-test('account switch cancels in-flight handout before committing and selection change discards late UI handout',async()=>{
-  const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-account-op-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
-  try{
-    await s.invoke('start',key);await [...s.jobs.values()][0].done;const old=s.lectureOf();let entered;const started=new Promise(r=>entered=r);
-    s.lectureOf=()=>({...old,assemble:async({signal})=>{entered();return new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));}});
-    const op=s.invoke('lecture',key);const rejection=assert.rejects(op);await started;await s.invoke('login',{username:'2',password:'fixture'});await rejection;
-    assert.equal((await s.invoke('result',key)).result,null);assert.equal(s.knowledge.get({accountId:'1',...key}).lecture,null);
-  }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
-  let finish;const pending=new Promise(r=>finish=r);const course={id:'10',title:'课'},a={subId:'20'},b={subId:'21'};
-  const c=createStudyController(async(method,payload)=>{if(method==='lecture')return pending;if(method==='result')return {result:{schema:1,blocks:[],lecture:null}};if(method==='content')return {slides:{items:[]},subtitles:{items:[]}};return {items:[],meta:{complete:true}};},{navigate(){}});
-  await c.selectLesson(a,course);const generating=c.assembleLecture();await c.selectLesson(b,course);finish({chapters:[{title:'来自上一节'}]});await generating;assert.equal(c.getSnapshot().lecture,null);c.dispose();
-});
-
 
 test('knowledge search distinguishes immutable final transcript from current reviewed handout and never trusts a caller account',async()=>{
   const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-layer-search-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
   try{
-    await s.invoke('start',key);await [...s.jobs.values()][0].done;await s.invoke('lecture',key);
+    await s.invoke('start',key);await [...s.jobs.values()][0].done;
     assert.equal((await s.invoke('search',{query:'老师原话',layer:'final'})).length,1);
     assert.equal((await s.invoke('search',{query:'写成的正文',layer:'final'})).length,0);
     let hits=await s.invoke('search',{query:'写成的正文',layer:'lecture'});assert.equal(hits[0].matches[0].field,'lecture');assert.equal(hits[0].matches[0].page,1);
-    await s.invoke('final-pass',key);hits=await s.invoke('search',{query:'终审整理过',layer:'lecture'});assert.equal(hits.length,1);
-    assert.equal((await s.invoke('search',{query:'终审整理过',layer:'final'})).length,0);
-    await s.invoke('login',{username:'2',password:'fixture'});assert.deepEqual(await s.invoke('search',{accountId:'1',query:'终审整理过',layer:'all'}),[]);
+    hits=await s.invoke('search',{query:'润色过',layer:'lecture'});assert.equal(hits.length,1);
+    assert.equal((await s.invoke('search',{query:'润色过',layer:'final'})).length,0);
+    await s.invoke('login',{username:'2',password:'fixture'});assert.deepEqual(await s.invoke('search',{accountId:'1',query:'润色过',layer:'all'}),[]);
   }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
 });
 
@@ -344,4 +321,110 @@ test('section facts say unknown instead of zero when speed and mainline share ca
   assert.equal(two.find((fact) => fact.label === '主线占比').value, '100%');
   assert.equal(two.find((fact) => fact.label === '例题').value, '1');
   assert.equal(two.find((fact) => fact.label === '知识点数').value, '2');
+});
+
+
+test('provider/model/worker configuration persists sanitized quotas and creates one shared pool for the complete job',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-provider-workers-'));const s=await fixture(dir),key={courseId:'10',subId:'20'};
+ try{
+  s.llm.listProviders=()=>[{id:'a',name:'A'},{id:'b',name:'B'}];
+  s.llm.listModels=async()=>[{id:'model',name:'Model',inputModalities:['text','image'],apiKey:'PRIVATE'}];
+  const entries=[{provider:'a',model:'model',workers:2,apiKey:'PRIVATE'},{provider:'b',model:'model',workers:3}];
+  const saved=await s.invoke('models-save',{workers:entries});assert.equal(saved.concurrency,5);
+  const clean=entries.map(({provider,model,workers})=>({provider,model,workers}));assert.deepEqual(saved.workers,clean);
+  const {readFile}=await import('node:fs/promises');assert.ok(!(await readFile(path.join(dir,'models.json'),'utf8')).includes('PRIVATE'));
+  const settings=await s.invoke('models',{});assert.deepEqual(settings.workers,clean);assert.ok(!JSON.stringify(settings).includes('PRIVATE'));
+  await assert.rejects(s.invoke('models-save',{workers:[{provider:'unknown',model:'x',workers:1}]}),{code:'INPUT'});
+  const pool={concurrency:5,snapshot:clean};let parserDisposed=0,lectureDisposed=0;
+  s.parser.createRun=({workers})=>{assert.deepEqual(workers,clean);return {llm:pool,concurrency:5,parseClassroom:s.parser.parseClassroom,dispose:()=>parserDisposed++};};
+  const root=s.lectureOf();s.lectureOf=()=>({...root,createRun:options=>{assert.equal(options.llm,pool);assert.equal(options.concurrency,5);return {...root,dispose:()=>lectureDisposed++};}});
+  await s.invoke('start',key);await [...s.jobs.values()][0].done;
+  const data=await s.invoke('result',key);assert.equal(data.job.state,'ready');assert.equal(data.job.concurrency,5);assert.deepEqual(data.job.workers,clean);
+  assert.equal(parserDisposed,1);assert.equal(lectureDisposed,1);
+  const reopened=await fixture(dir);try{await reopened.ready;assert.deepEqual(reopened.effectiveWorkers(),clean);}finally{await reopened.dispose();}
+ }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
+});
+
+test('FIFO generation queue skips cancelled entries, deduplicates and continues after failure', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-queue-')), service = await fixture(dir);
+  const started = [], releases = new Map();
+  const parsed = await service.parser.parseClassroom();
+  service.parser.parseClassroom = async (_course, subId, { signal }) => {
+    started.push(subId);
+    await new Promise((resolve, reject) => {
+      releases.set(subId, resolve);
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+    });
+    signal.throwIfAborted();
+    if (subId === '21') throw new Error('synthetic failure');
+    return parsed;
+  };
+  try {
+    const a = await service.start('10', '20', undefined, { courseTitle: '合成课程', lessonTitle: '第一节' });
+    const b = await service.start('10', '21');
+    const skipped = await service.start('11', '22');
+    const c = await service.start('12', '23');
+    assert.equal((await service.start('10', '21')).id, b.id);
+    assert.equal(a.state, 'running'); assert.equal(b.state, 'queued'); assert.equal(c.state, 'queued');
+    assert.deepEqual(started, ['20']);
+    const queue = await service.invoke('queue');
+    assert.equal(queue.jobs.length, 4); assert.equal(queue.jobs[0].courseTitle, '合成课程');
+    assert.equal(queue.jobs[1].elapsedMs, 0); assert.equal(queue.jobs[1].startedAt, null);
+    const removed = await service.invoke('cancel', { courseId: '11', subId: '22' });
+    assert.equal(removed.id, skipped.id); assert.equal(removed.state, 'cancelled');
+    assert.deepEqual(started, ['20'], 'removing a waiting job never lets its successor run early');
+    releases.get('20')(); await [...service.jobs.values()][0].done;
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(started, ['20', '21']);
+    releases.get('21')(); await [...service.jobs.values()][1].done;
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(started, ['20', '21', '23']);
+    releases.get('23')(); await [...service.jobs.values()][3].done;
+    assert.deepEqual((await service.invoke('queue')).jobs.map(job => job.state), ['ready', 'failed', 'cancelled', 'ready']);
+  } finally { await service.dispose(); await rm(dir, { recursive: true, force: true }); }
+});
+
+test('logout cancels running and waiting jobs without starting another classroom', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-queue-account-')), service = await fixture(dir);
+  let calls = 0;
+  service.parser.parseClassroom = async (_course, _sub, { signal }) => {
+    calls++;
+    await new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+  };
+  try {
+    await service.start('10', '20'); await service.start('11', '21');
+    await service.invoke('logout');
+    assert.equal(calls, 1);
+    assert.deepEqual([...service.jobs.values()].map(job => job.state), ['cancelled', 'cancelled']);
+    assert.deepEqual((await service.invoke('queue')).jobs, []);
+  } finally { await service.dispose(); await rm(dir, { recursive: true, force: true }); }
+});
+
+test('controller tracks the whole queue and refreshes a selected completed classroom while the next one runs', async () => {
+  const result = { status: 'ready', lecture: { chapters: [], generationVersion: 'architecture-v4' } };
+  const jobs = [
+    { id: 'first', courseId: '10', subId: '20', state: 'running' },
+    { id: 'second', courseId: '11', subId: '21', state: 'queued' },
+  ];
+  const controller = createStudyController(async (method, payload) => {
+    if (method === 'state') return { user: { id: 'fixture' }, jobs };
+    if (method === 'queue') return { jobs: [{ ...jobs[0], state: 'ready' }, { ...jobs[1], state: 'running' }] };
+    if (method === 'courses') return { items: [{ id: '10', title: '第一门' }, { id: '11', title: '第二门' }], meta: {} };
+    if (method === 'lessons') return { items: [{ subId: '20', isPlayable: true }], meta: {} };
+    if (method === 'result') return { result: controller.getSnapshot().jobs[0]?.state === 'ready' ? result : null, job: jobs[0] };
+    return {};
+  }, { navigate() {} });
+  try {
+    await controller.refresh(); await controller.selectCourse({ id: '10' }); await controller.selectLesson({ subId: '20' });
+    assert.equal(controller.getSnapshot().jobs.length, 2);
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => { unsubscribe(); reject(new Error('queue poll did not publish the selected result')); }, 3000);
+      const unsubscribe = controller.subscribe(() => {
+        if (controller.getSnapshot().lecture === result.lecture) { clearTimeout(timeout); unsubscribe(); resolve(); }
+      });
+    });
+    assert.equal(controller.getSnapshot().job.state, 'ready');
+    assert.equal(controller.getSnapshot().activeJob.id, 'second');
+    assert.equal(controller.getSnapshot().sectionStates['11:21'].job.state, 'running');
+  } finally { controller.dispose(); }
 });

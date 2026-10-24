@@ -34,6 +34,7 @@ export const DOMAIN_NAME = 'zhiyun_knowledge';
 export const DOMAIN_VERSION = 1;
 /** 唯一的表名。 */
 export const LECTURES_TABLE = 'lectures';
+export const QUESTION_BANK_TABLE = 'question_banks';
 
 /** 记录格式代际：与解析器产物里的 `schema: 1` 同源，用于将来识别旧记录。 */
 export const RECORD_SCHEMA = 1;
@@ -139,13 +140,25 @@ export function createLectureSpec(host) {
   const cached = specCache.get(host);
   if (cached !== undefined) return cached;
   const { defineDomain, domainTable, z } = host;
+  const attempt = z.looseObject({id:z.string().min(1),response:z.string(),at:z.string().min(1)});
+  const question = z.looseObject({id:z.string().min(1),courseId:z.string().min(1),subId:z.string().min(1),pointId:z.string().min(1),pointTitle:z.string().min(1),
+    courseTitle:z.string(),lessonTitle:z.string(),type:z.enum(['mcq','cloze','trueFalse','shortAnswer','caseStudy']),stem:z.string().min(1),answer:z.string().min(1),
+    status:z.enum(['proposed','accepted','rejected']),choices:z.array(z.object({label:z.string(),text:z.string()})),attempts:z.array(attempt)});
+  const session = z.looseObject({id:z.string().min(1),mode:z.enum(['new','review','mixed']),questionIds:z.array(z.string()),answers:z.array(attempt),createdAt:z.string()});
+  const checkpointTask=z.looseObject({questionIds:z.array(z.string()),drafts:z.array(z.unknown()).nullable(),candidates:z.array(z.unknown()).nullable().optional(),cursor:z.number().int().nonnegative(),attempts:z.number().int().nonnegative(),error:z.string().nullable(),state:z.enum(['pending','running','failed','completed'])});
+  const point=z.looseObject({id:z.string().min(1),title:z.string(),courseId:z.string(),subId:z.string(),text:z.string(),blockIndexes:z.array(z.number().int())});
+  const plan=z.looseObject({mode:z.enum(['uniform','random']),count:z.number().int().min(1).max(100),totalPoints:z.number().int().positive(),coveredPoints:z.number().int().nonnegative(),maxCoverage:z.number().int().positive(),tasks:z.array(z.looseObject({point,type:z.enum(['mcq','cloze','trueFalse','shortAnswer']),strategy:z.enum(['recall','understand','apply','explore']).optional(),count:z.number().int().positive()}))});
+  const checkpoint=z.looseObject({version:z.string().min(1),planKey:z.string().min(1),phase:z.string(),currentTask:z.number().int().nullable(),rewrites:z.record(z.string(),z.array(z.string())),tasks:z.array(checkpointTask)});
   const spec = defineDomain({
     name: DOMAIN_NAME,
     version: DOMAIN_VERSION,
     // 不声明 global：格式版本已由 `version` 这一个地方说了算，再加一个全局槽
     // 就是把同一件事说两遍（本仓禁止的"同一件事两份实现"），而词表属于解析器包
     // （它自己落在 profile 的 data/zhiyun-parser/ 下），不该在知识库里再存一份。
-    tables: { [LECTURES_TABLE]: domainTable(lectureSchema(z)) },
+    tables: { [LECTURES_TABLE]: domainTable(lectureSchema(z)),
+      [QUESTION_BANK_TABLE]: domainTable(z.object({ accountId:z.string().min(1), questions:z.array(question), sessions:z.array(session),
+        conceptCache:z.record(z.string(),z.looseObject({version:z.string(),materialKey:z.string(),pointKey:z.string(),createdAt:z.string(),concepts:z.array(z.looseObject({id:z.string(),statement:z.string(),basis:z.string(),blanks:z.array(z.looseObject({id:z.string(),start:z.number().int().nonnegative(),text:z.string(),aliases:z.array(z.string())}))}))})).optional(),
+        generationJobs:z.array(z.looseObject({id:z.string().min(1),state:z.enum(['queued','running','paused','partial','completed','failed']),createdAt:z.string(),updatedAt:z.string(),elapsedMs:z.number().nonnegative(),plan,checkpoint,problems:z.array(z.string())})).optional() })) },
   });
   specCache.set(host, spec);
   return spec;

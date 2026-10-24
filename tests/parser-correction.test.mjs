@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { buildCleanSentences, templates, parseBlockDrafts, coverage } from '../packages/dsh-zhiyun-core-parser/src/core.js';
+import { buildCleanSentences, templates, parseBlockDrafts, coverage, correctionRetryHint } from '../packages/dsh-zhiyun-core-parser/src/core.js';
+import { blockCleanStatus, runMixUnit } from '../packages/dsh-zhiyun-core-parser/src/mix-unit.js';
 import { correctionComparison } from '../packages/dsh-zhiyun-core-parser/src/correction-policy.js';
 import { ParserCache } from '../packages/dsh-zhiyun-core-parser/src/cache.js';
 import { mixRequest } from '../packages/dsh-zhiyun-core-parser/src/prompts.js';
@@ -12,6 +13,13 @@ import { mountHost, lesson } from './fixtures/parser/host.mjs';
 
 const clean = (original, corrected) => buildCleanSentences(
   [{ text: original, page: 29, startMs: 1000, endMs: 2000 }], `## 逐块标注\n1. 正文：${corrected}`);
+
+test('纠错重试必须返回完整页，不能用局部补丁替换完整的分块和纠正', () => {
+  const hint = correctionRetryHint([{ index: 0, original: '电视', attempted: '电势', reason: '预算' }], 1);
+  assert.match(hint, /这一页完整/);
+  assert.match(hint, /替换上一轮整份/);
+  assert.doesNotMatch(hint, /其余条目不必重复/);
+});
 
 test('format-only corrections cost zero while retaining model typography and provenance', () => {
   const original = '“Ｒ₂ − Ｒ₁”，面积Ｒ²。';
@@ -123,4 +131,64 @@ test('legacy successful cache is revalidated and migrated; invalid cache still r
     assert.equal(repaired.status, 'ready');
     assert.equal(host.requests.length, calls + 1);
   } finally { await host?.dispose(); await rm(dir, { recursive: true, force: true }); }
+});
+
+function memoryCache() {
+  const stored = new Map();
+  return {
+    key() { return 'mix-key'; },
+    async get(key) { return stored.has(key) ? { key, raw: stored.get(key) } : null; },
+    async put(key, raw) { stored.set(key, raw); },
+  };
+}
+
+const guardLines = [
+  { startMs: 0, endMs: 1, text: '电视。', sourceIndex: 0 },
+  { startMs: 1, endMs: 2, text: '甲乙丙丁戊', sourceIndex: 1 },
+];
+const guardRaw = `## 逐块标注
+1. 正文：电势。
+2. 正文：天地玄黄宇
+块 1-2
+## 块标记
+${JSON.stringify({ tags: [{ index: 1, role: '主线', facets: ['概念'], summary: '电势' }] })}`;
+
+test('annotation shells do not consume the edit budget, and unrelated rewrites still revert', () => {
+  const wrapped = clean('对这个新设学堂，', '第151句：对这个新式学堂，');
+  assert.equal(wrapped.rejected.length, 0);
+  assert.equal(wrapped.sentences[0].text, '对这个新式学堂，');
+  const arrow = clean('属于不义，', '属于不义，→ 属于不易，');
+  assert.equal(arrow.rejected.length, 0);
+  assert.equal(arrow.sentences[0].text, '属于不易，');
+  const numbered = buildCleanSentences(
+    [{ text: '不识字才是正常的。', page: 1, startMs: 0, endMs: 1 }],
+    '## 逐块标注\n1. 正文：65. 从新中国成立');
+  assert.equal(numbered.sentences[0].text, '不识字才是正常的。');
+  assert.equal(numbered.rejected.length, 1);
+  const decimal = clean('三点五', '3.5%');
+  assert.equal(decimal.sentences[0].text, '三点五');
+  assert.equal(decimal.rejected[0].attempted, '3.5%');
+});
+
+test('one over-limit sentence reverts alone and the page is cached without a second call', async () => {
+  const calls = [];
+  const cache = memoryCache();
+  const llm = { async call() { calls.push(1); return { text: guardRaw }; } };
+  const limiter = { async run(task) { return task(); } };
+  const run = () => runMixUnit({ lines: guardLines, page: 1, unitId: 'page:1', parts: { constant: 'c', variable: 'v' },
+    route: 'r', llm, cache, limiter, vocabulary: [{ name: '概念' }], events: [] });
+  const out = await run();
+  assert.equal(out.failure, null);
+  assert.equal(out.cleanComplete, true);
+  assert.equal(out.sentences[0].text, '电势。');
+  assert.equal(out.sentences[0].cleanStatus, 'reviewed');
+  assert.equal(out.sentences[1].text, '甲乙丙丁戊');
+  assert.equal(out.sentences[1].cleanStatus, 'reverted');
+  assert.equal(out.rejected.length, 1);
+  assert.equal(blockCleanStatus(out.sentences), 'reviewed');
+  assert.equal(calls.length, 1);
+  const again = await run();
+  assert.equal(calls.length, 1);
+  assert.equal(again.sentences[0].text, '电势。');
+  assert.equal(again.sentences[1].cleanStatus, 'reverted');
 });

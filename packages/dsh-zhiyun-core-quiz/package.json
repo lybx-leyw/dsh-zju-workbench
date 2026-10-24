@@ -13,7 +13,17 @@
     "./dedupe": "./src/dedupe.js",
     "./lecture": "./src/lecture.js",
     "./store": "./src/store.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./points": "./src/points.js",
+    "./knowledge-points": "./src/knowledge-points.js",
+    "./client": "./lib/client.js"
   },
-  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  }
 }

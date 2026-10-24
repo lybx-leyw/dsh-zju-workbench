@@ -525,12 +525,11 @@ try {
     checks.push('Independent business plugin injects the classroom source from the product profile');
     assert.ok(hostLog.includes('ZHIYUN_PARSER_HOST_READY'), 'Business plugin injected the parser in this host');
     checks.push('Independent business plugin injects the parser backed by host LLM and attachments');
-    // 讲义装配与无曰终审也必须在**真实宿主**里激活过：单测用的是假 ctx，
+    // 讲义装配（含习坎的全文润色）也必须在**真实宿主**里激活过：单测用的是假 ctx，
     // 而 `inject` 了一个不存在的服务只有在真宿主里才表现为永远 pending。
     assert.ok(hostLog.includes('ZHIYUN_LECTURE_HOST_READY'), 'Lecture assembler activated in this host');
-    assert.ok(hostLog.includes('ZHIYUN_FINAL_PASS_HOST_READY'), 'Final-pass agent service activated on the host agent runtime');
     assert.ok(hostLog.includes('ZHIYUN_STORE_HOST_READY'), 'Quiz, notes and knowledge services activated from the product profile');
-    checks.push('Lecture assembler and agent-runtime final pass activate from the product profile');
+    checks.push('Lecture assembler (incl. full-text polish) activates from the product profile');
     checks.push('Quiz, notes and knowledge storage services activate from the product profile');
   }
   const hostVersion = runtime?.version ?? lock.hostVersions.join(' / ');

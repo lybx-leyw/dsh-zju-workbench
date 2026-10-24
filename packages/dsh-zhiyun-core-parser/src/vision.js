@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+﻿import sharp from 'sharp';
 import { faithful, stripFences } from './core.js';
 import { faithfulRequest } from './prompts.js';
 import { hash } from './cache.js';
@@ -68,9 +68,62 @@ export async function composeSlides(images, signal) {
 /** A bounded group keeps both source image memory and request concurrency bounded.
  * Return one result per input page; a damaged image never poisons its neighbors.
  */
-export async function transcribeSlides(parser, slides, route, context, signal, events, warnings) {
+/**
+ * 转写一批页。
+ *
+ * @param {Function} [onPage] 每页**一完成就回调** `({ index, page, transcription, imageFailure })`。
+ *
+ * # 为什么需要这个回调
+ *
+ * 这个函数是"整批返回"的：调用方要等 `await transcribeSlides(...)` 把这一批
+ * 全部做完才拿得到结果。对功能没影响，但对**观测**影响很大：
+ *
+ *   · 真实链路里 vision 与 mix 是并行的（vision 生产、mix 消费同一个队列）；
+ *   · 但事件如果在"每批完成时"才发，画面上就会变成
+ *     「先一串 vision、再一串 mix」—— 那是**假的串行**，
+ *     因为它只在批次边界上采样，抹掉了批内的逐页推进。
+ *
+ * 有了 `onPage`，上层能在**每一页真的读完的那一刻**收到事件，
+ * 于是它与 mix 的消费事件自然交错 —— 那才是真实时序。
+ */
+export async function transcribeSlides(parser, slides, route, context, signal, events, warnings, onPage) {
   const results = new Array(slides.length), pending = [];
-  const recordFailure = (index, error) => { results[index] = { transcription: null, imageFailure: error.code ?? 'IMAGE' }; };
+  /* 每页结果写入后立刻上报（如果调用方要了回调）。
+   * 统一从这里出口，避免"某一处忘了报"导致事件流缺页。 */
+  const report = (index) => {
+    if (typeof onPage !== 'function') return;
+    const r = results[index];
+    try {
+      onPage({
+        index,
+        page: slides[index]?.page ?? null,
+        transcription: r?.transcription ?? null,
+        imageFailure: r?.imageFailure ?? null,
+        /* ⚠️ 上游原文也要带出去。
+         * 失败页的 `results[index]` 里存了 `failureDetail`（服务端那句话），
+         * 上层报错时要拿它当"服务端原文"。早先只传 `imageFailure`（错误码），
+         * 于是上层只能写一句没有依据的猜测。 */
+        failureDetail: r?.failureDetail ?? null,
+      });
+    } catch { /* 观测回调不许影响解析 */ }
+  };
+  /**
+   * 记一页的失败。
+   *
+   * ⚠️ **除了错误码，还要留下上游原文**（`failureDetail`）。
+   * 早先只存 `error.code`（`LLM_FAILED`），把服务端那句真正有用的话丢了；
+   * 上层只能写"检查视觉模型是否支持图片"这种猜测，而真实原因可能完全不同
+   *（实跑踩过：模型其实支持图片，真正的原因是别的）。
+   * 摘要取前 300 字：错误信息可能带整个请求体回显。
+   */
+  const recordFailure = (index, error) => {
+    results[index] = {
+      transcription: null,
+      imageFailure: error.code ?? 'IMAGE',
+      failureDetail: String(error?.details?.causeMessage ?? error?.message ?? '') .slice(0, 300) || null,
+    };
+    report(index);
+  };
   const cancelled = error => { if (signal.aborted || error.code === 'CANCELLED') throw error; };
   for (const [index, slide] of slides.entries()) {
     signal.throwIfAborted();
@@ -88,6 +141,7 @@ export async function transcribeSlides(parser, slides, route, context, signal, e
       const cached = single?.raw?.trim() ? single : batchParsed?.pageText && batchParsed.pageVisual && batchParsed.listedTerms ? batch : null;
       if (cached) {
         results[index] = { transcription: faithful(cached.raw), imageFailure: null };
+        report(index);
         events.push({ stage: 'faithful', cached: true, pages: [slide.page], mode: cached === single ? 'single' : 'collage' });
       } else pending.push({ index, page: slide.page, ...image, parts, singleKey, batchKey });
     } catch (error) { cancelled(error); recordFailure(index, error); }
@@ -109,6 +163,7 @@ export async function transcribeSlides(parser, slides, route, context, signal, e
         if (transcription) {
           await parser.cache.put(item.batchKey, transcription.raw);
           results[item.index] = { transcription, imageFailure: null };
+      report(item.index);
         } else remaining.push(item);
       }
       if (remaining.length) warnings.push(`拼图转述缺少完整页面 ${remaining.map(p => p.page).join('、')}，已改用单图补发`);
@@ -130,6 +185,7 @@ export async function transcribeSlides(parser, slides, route, context, signal, e
       signal.throwIfAborted();
       await parser.cache.put(item.singleKey, transcription.raw);
       results[item.index] = { transcription, imageFailure: null };
+      report(item.index);
     } catch (error) { cancelled(error); recordFailure(item.index, error); }
   }
   return results;

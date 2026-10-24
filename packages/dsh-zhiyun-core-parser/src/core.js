@@ -54,21 +54,35 @@ export function editDistance(a, b, limit = Infinity) {
   }
   return previous[b.length];
 }
+/** 模型常把句号或「原文→改写」写进正文。先剥掉这层外壳，再量编辑限额。 */
+export function peelCorrectionAnnotation(original, attempted, sentenceNumber) {
+  let text = String(attempted ?? '').trim();
+  text = text.replace(/^第\d+句\s*[:：]\s*/u, '');
+  const numbered = text.match(/^(\d{1,3})\s*[.、．]\s+(\S[\s\S]*)$/u);
+  if (numbered && Number(numbered[1]) === sentenceNumber) text = numbered[2].trim();
+  const aside = value => correctionComparison(value).replace(/[，,]/gu, '');
+  const arrow = text.split(/\s*(?:→|->|=>)\s/u);
+  if (arrow.length === 2 && aside(arrow[0]) === aside(original)) text = arrow[1].trim();
+  const colon = text.split(/[:：]/u);
+  if (colon.length === 2 && aside(colon[0]) === aside(original)) text = colon[1].trim();
+  return text || String(attempted ?? '').trim();
+}
 export function buildCleanSentences(rawLines, response) {
   const edits = parseCleanLines(response), rejected = [], bridges = [];
   const sentences = rawLines.map((line, index) => {
     const edit = edits.get(index + 1); bridges.push(edit?.bridge ?? '');
     let text = line.text, correctionDistance = 0;
     if (edit?.correctedText != null) {
-      const original = correctionComparison(line.text), attempted = correctionComparison(edit.correctedText);
+      const peeled = peelCorrectionAnnotation(line.text, edit.correctedText, index + 1);
+      const original = correctionComparison(line.text), attempted = correctionComparison(peeled);
       const limit = Math.min(correctionPolicy.maxEditDistance, Math.max(1, Math.floor(original.length * correctionPolicy.maxEditRatio)));
       const distance = editDistance(original, attempted, limit);
-      if (distance <= limit) { text = edit.correctedText; correctionDistance = distance; }
+      if (distance <= limit) { text = peeled; correctionDistance = distance; }
       else {
         // 退回提示要说清「改了多少字」，所以这里记**未截断**的真实距离
         // （上面的 distance 提前退出，超过上限就停）。
         rejected.push({
-          index, original: line.text, attempted: edit.correctedText, limit,
+          index, original: line.text, attempted: peeled, limit,
           editDistance: editDistance(original, attempted),
           rawEditDistance: editDistance(line.text, edit.correctedText),
           reason: `排除格式差异后改动超过本句上限 ${limit} 字（原文 ${original.length} 字 × ${correctionPolicy.maxEditRatio * 100}%，最多 ${correctionPolicy.maxEditDistance} 字）`,
@@ -99,7 +113,42 @@ export function coverage(drafts, count) {
   if (expected !== count + 1) issues.push({ expected, count });
   return { ok: issues.length === 0, issues };
 }
-export function anchor(slides, subtitles) {
+/**
+ * 把字幕按**页时间锚点**分配进各页窗口。
+ *
+ * # 为什么最后一页的窗口必须有上限
+ *
+ * 早先的实现里，`ends[i]` 取"下一个锚点"，而**最后一页没有下一个锚点**，
+ * 于是它的窗口一路开到课末。这在"每页都翻"的课上没问题，但真课里有另一种
+ * 结构极端的课型 —— **前面放几页 PPT，后面讲两小时不看屏**：
+ *
+ * ```
+ * 0 ────── 334 秒 ─────────────────────────── 2.5 小时
+ *   [8 页 PPT，32 句]        [纯讲授，3235 句，占 99%]
+ * ```
+ *
+ * 这时最后一页的窗口会把整节 99% 的讲话吞进去，然后：
+ *   ① **语义错位**：拿一页 883 字的页面转述去"纠正"144 分钟的讲话 ——
+ *      参照物跟内容毫无关系，比不纠正更糟，会引入臆造；
+ *   ② **必然失败**：3200 句塞进一次 mix 调用，超出上下文或输出预算。
+ *
+ * 所以给"没有下一个锚点"的页设窗口上限 `maxWindowMs`（默认 10 分钟）：超出
+ * 上限的字幕**不归属任何页**，进 `unassigned`。而产品对 `unassigned` 的既定
+ * 语义正好就是这里需要的 ——
+ *
+ *   「老师真说过的话，进句子层原样保留，但**不造块、不清洗**，
+ *     因为没有图可以对照纠错。」
+ *
+ * 换句话说：**没有 PPT 的段落，本来就不该走 vision 与 mix。** 这个上限不是
+ * 在"猜时间"，而是把"一页 PPT 撑不起两小时"这个常识写进规则。
+ *
+ * ⚠️ 只对 `ends[i] === null` 的页生效。中间那些页的窗口由下一页锚点界定，
+ *    多长都是真实的（老师确实在这一页停了那么久），不裁剪。
+ *
+ * @param {object} [options]
+ * @param {number} [options.maxWindowMs] 单页时间窗上限，默认 10 分钟；传 0 关闭上限。
+ */
+export function anchor(slides, subtitles, { maxWindowMs = 10 * 60 * 1000 } = {}) {
   const ordered = subtitles.map((line, sourceIndex) => ({ ...line, sourceIndex })).sort((a, b) => a.startMs - b.startMs || a.sourceIndex - b.sourceIndex);
   if (!slides.length) return { windows: [], unassigned: ordered, warnings: [] };
   const anchors = slides.map(s => s.createdSec > 0 ? s.createdSec * 1000 : null);
@@ -117,16 +166,28 @@ export function anchor(slides, subtitles) {
     ends[i] = anchors.slice(i + 1).find(a => a !== null) ?? null;
     if (anchors[i] === null && ends[i] === null) { starts[i] = null; warnings.push(`第 ${slides[i].page} 页没有可确定的时间窗`); }
   }
+  /** 这一页的窗口是否被封顶（只有"没有下一个锚点"的页会）。 */
+  const capOf = i => (ends[i] === null && starts[i] !== null && maxWindowMs > 0) ? starts[i] + maxWindowMs : null;
   let cursor = 0;
   for (let i = 0; i < slides.length; i++) {
+    const cap = capOf(i);
     while (cursor < ordered.length) {
       const line = ordered[cursor];
       if (line.startMs < (starts[i] ?? -1)) { buckets[i].push(line); cursor++; continue; }
       if (ends[i] !== null && line.startMs >= ends[i]) break;
+      if (cap !== null && line.startMs >= cap) break;
       buckets[i].push(line); cursor++;
     }
   }
-  const unassigned = ordered.slice(cursor); if (unassigned.length) warnings.push(`${unassigned.length} 句字幕未分配，已保留`);
+  const unassigned = ordered.slice(cursor);
+  // 分别报"窗口封顶"与"本来就没落页"——它们是两件事，混成一条会看不出原因
+  const cappedCount = buckets.length && capOf(buckets.length - 1) !== null ? unassigned.length : 0;
+  if (cappedCount) {
+    warnings.push(`最后一页之后还有 ${cappedCount} 句超出单页时间窗上限（${Math.round(maxWindowMs / 60000)} 分钟），`
+      + '按「没有课件对照」的时间段清洗、分块与标记，保留仅语音转录的依据类型。');
+  } else if (unassigned.length) {
+    warnings.push(`${unassigned.length} 句字幕未分配，已保留`);
+  }
   return { windows: buckets.map((lines, i) => ({ lines, fromMs: starts[i] ?? lines[0]?.startMs ?? null, toMs: starts[i] === null && ends[i] === null ? null : ends[i] ?? lastEnd(lines) })), unassigned, warnings };
 }
 export function glossary(pages, minCount = 2, fallback = true) {
@@ -144,9 +205,25 @@ export function glossary(pages, minCount = 2, fallback = true) {
   return { minCount, extracted, terms: extracted.filter(t => t.count >= minCount && !templates.stopwords.includes(t.text)) };
 }
 export function role(value) { const v = String(value ?? '').trim().toLowerCase(); return /主线/.test(v) || ['main','mainline'].includes(v) ? '主线' : /支线|旁支/.test(v) || ['branch','side'].includes(v) ? '支线' : null; }
+/**
+ * 模型常把 LaTeX 直接写进 JSON 字符串（`\sigma`、`\varepsilon`）。
+ * 这些不是合法转义，`JSON.parse` 会把整张答题卡丢成 null，
+ * 于是本页每一句都被记成无法核验。先按严格 JSON 解析；
+ * 只有失败时才把非法转义补成两个反斜杠，合法的 `\"`、`\\`、`\n`、`\uXXXX` 不动。
+ */
+export function parseJsonObject(text) {
+  const body = String(text ?? '');
+  const start = body.indexOf('{');
+  const end = body.lastIndexOf('}');
+  if (start < 0 || end < start) return null;
+  const slice = body.slice(start, end + 1);
+  try { return JSON.parse(slice); } catch { /* 非法转义时再修一次 */ }
+  const relaxed = slice.replace(/\\(?:u(?![0-9a-fA-F]{4})|[^"\\/bfnrtu])/g, match => `\\${match}`);
+  try { return JSON.parse(relaxed); } catch { return null; }
+}
 export function parseTags(raw, vocabulary = templates.vocabulary.map(v => ({ ...v }))) {
-  const text = stripFences(raw); let root;
-  try { root = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); } catch { return null; }
+  const text = stripFences(raw);
+  const root = parseJsonObject(text);
   if (!root || typeof root !== 'object' || Array.isArray(root)) return null;
   const added = [], rejected = [], tags = [];
   for (const item of Array.isArray(root.tags) ? root.tags : []) {
@@ -190,7 +267,7 @@ export function correctionRetryHint(rejected, round) {
   if (!rejected?.length) return '';
   const lines = [`你上一轮的纠错有 ${rejected.length} 条未通过校验${round == null ? '' : `（第 ${round} 轮）`}：`, ''];
   for (const r of rejected) lines.push(`· 第 ${r.index + 1} 句 原文「${r.original}」→ 你的修改「${r.attempted}」被拒（${r.reason ?? '未通过护栏'}）。`);
-  lines.push('', '请只重新给出**这些条目**的纠正（其余条目不必重复）。', '依据课件和上下文复核听写、术语和公式；保留原意与句子对应，不要为控制字数而留下有依据可改的错误。', '确实不用改的条目**直接不写**（不写 = 不改，这是合法的）。');
+  lines.push('', '请返回这一页完整的「逐块标注」结果，包含覆盖全部句子的块区间，以及所有仍需采纳的逐句纠正；本轮会替换上一轮整份结果，不能只返回被拒条目，也不能写「其余不变」。', '依据课件和上下文复核听写、术语和公式；保留原意与句子对应，不要为控制字数而留下有依据可改的错误。', '确实不用改的句子可以不列逐句纠正，但仍须落在完整分块区间内。');
   return lines.join('\n');
 }
 export function coverageRetryHint(cov, sentenceCount, round) {

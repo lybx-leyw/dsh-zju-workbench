@@ -76,13 +76,28 @@ if (isDirectRun()) {
   if (result.repaired) {
     console.error('Electron 发行目录原先是 Low 完整性，已调整为 Medium。否则 Chromium 沙箱会在应用代码运行前崩溃。');
   }
+  /**
+   * 参数的顺序是有讲究的：**Chromium 的开关必须排在 app 路径之前**。
+   *
+   * Electron 把 argv 切成两段：`--` 开头的归 Chromium，第一个非开关的
+   * 参数被当成 app 路径，**它之后的所有东西都原样交给应用，不再被 Electron 解析**。
+   *
+   * 早先写成 `args.push(appRoot, ...process.argv.slice(2))`，于是
+   * `npm run desktop -- --remote-debugging-port=9222` 之类的开关全部落到
+   * app 路径后面 —— 端口永远不开、日志也不给，排查时完全看不见渲染进程的错误。
+   * 代价是那段时间只能靠截图和进程连接数反推，绕了很多弯路。
+   */
   const args = [];
   if (!result.sandbox) {
     console.error('无法把 Electron 发行目录调到 Medium 完整性，退回 --no-sandbox 启动。渲染进程将没有操作系统沙箱。');
     if (result.detail) console.error(result.detail);
     args.push('--no-sandbox');
   }
-  args.push(appRoot, ...process.argv.slice(2));
+  // 用户传的开关全部前置；剩下的非开关参数仍按原样跟在 app 路径之后。
+  const passthrough = process.argv.slice(2);
+  const flags = passthrough.filter((item) => item.startsWith('--'));
+  const rest = passthrough.filter((item) => !item.startsWith('--'));
+  args.push(...flags, appRoot, ...rest);
   // 壳里的宿主必须用这个 node，不能用 Electron 自带的那个。见 boot.js 的 hostLaunch。
   const child = spawn(exe, args, {
     cwd: appRoot,

@@ -13,11 +13,14 @@
  * **限定结构**才堵住它：内容必须分布到树上每个节点的位置上，
  * 一整段照抄**放不进任何一个节点**。
  *
- * # ⚠️ 只做一级加工
+ * # ⚠️ 两级都在本包内，且第二级**不是**自由发挥
  *
- * 用户明确选择「只做一级：习坎」。本包不含第二级终审（那是 `dsh-zhiyun-core-final-pass`
- * 的活，且跑在宿主 agent 运行时上）。留着不调用就是「新旧并存」，
- * 两条路会在半年内无声漂开。
+ * 一级 `assemble`：按树的节点位置填正文（口语 → 书面）。
+ * 二级 `polish`：全文润色 —— 只改写法、不改事实的六项规整。
+ *
+ * 曾经有过第三种做法：把整份讲义交给一个子 agent（`dsh-zhiyun-core-final-pass`）
+ * **自由重组**。那条路已经整包删除 —— 它把前面所有步骤当成草稿、让最后一步
+ * 重新发挥，结构会被打散、改动无法归因。`polish` 是有边界的那一版。
  *
  * # 失败一律降级，不抛
  *
@@ -29,8 +32,11 @@
  */
 
 import { LectureError } from './errors.js';
+import { applyPolishPatch, PATCH_INSTRUCTION, polishPatchWarnings, polishContexts } from './polish-patch.js';
+import { polishScoped } from './polish-scoped.js';
 import { judgeWritten, REGISTER } from './register.js';
-import { tidySlideHeading } from './tree.js';
+import { withDerivation } from './derivation.js';
+import { tidySlideHeading, normalizeLectureTree } from './tree.js';
 
 // ═══════════════════════════════════════════════════════════════
 // 常量
@@ -195,6 +201,144 @@ export const kWrittenStripWords = [
 
 /** 加工后口语词命中的**最大保留比例**（相对原话）。这条判据**只报不拦**。 */
 export const kPolishMaxFillerKeep = 0.34;
+
+// ═══════════════════════════════════════════════════════════════
+// 全文润色（习坎的最后一步）
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * 润色的**六件事**，每件都是"规整"而不是"再写一遍"。
+ *
+ * 这份清单是这一步的**全部职责**：多一件就越界（变成自由发挥），
+ * 少一件就留缝（分段写必然留下的不一致）。顺序也有用 ——
+ * 它是提示词里的执行顺序，也是改动摘要的归类依据。
+ */
+export const kPolishItems = Object.freeze([
+  { key: 'term', name: '术语统一',
+    why: '分段写必然漂：同一概念在 A 段叫「样本点」、B 段叫「样本点集合」。',
+    how: '以全篇出现最多的写法为准，其余逐处替换；不改变含义。' },
+  { key: 'number', name: '编号连续',
+    why: '片段各自编号，拼起来会出现 1、2、3 后又从 1 开始。',
+    how: '按最终树形重排为 1 / 1.1 / 1.1.1，正文里的"第一点"同步改。' },
+  { key: 'symbol', name: '符号统一',
+    why: '同一门课里 P(A|B) 与 P(A∣B)、全角半角混用。',
+    how: '统一到全篇口径；公式本身不动。' },
+  { key: 'ref', name: '交叉引用可解析',
+    why: '逐知识点写作会写出"见下节"这种没有落点的话。',
+    how: '把指代换成真实的节点标题；指不到的直接删掉这句指代。' },
+  { key: 'attach', name: '依附内容复位',
+    why: '例题被并进正文中间，读起来像定理的延续。',
+    how: '把例题/案例挪回宿主知识点之后，作为独立段落。' },
+  { key: 'fact', name: '事实校验',
+    why: '润色最容易顺手"补一句"，那是最危险的失真。',
+    how: '逐句比对上游正文，任何原文没有的论断一律回退。' },
+]);
+
+/** 名字数组（进度与摘要用）。 */
+export const POLISH_ITEM_NAMES = Object.freeze(kPolishItems.map((i) => i.name));
+
+/**
+ * **全文润色的系统提示词**。
+ *
+ * # 只写"合格的长什么样"，不写禁令
+ *
+ * 实测过：「不要……」句式会被读成「那就别动」。所以这里正面写清
+ * 一份**润色后**的讲义应该具备什么性质，而不是列一堆"不许"。
+ *
+ * # 结构与来源是**硬的**
+ *
+ * `#!` / `##!topic` / `>>> BLOCK` / `ref=` / `src=` 是程序读回来的锚点，
+ * 改了就没法合回。这一段必须是禁令 —— 它是格式契约，不是写作偏好。
+ */
+export const kLecturePolishSystemPrompt = `你是给一份**已经成稿的讲义**做最后一遍通读的编辑。
+
+这份讲义由多个知识点**分别写成**再拼起来，正文仍需逐段核查，
+尤其留意：同一个概念前后叫法不一、编号各写各的、符号口径不一、
+"见下节"这种指代没有落点、例题被并进了正文中间。
+
+# 你要做的只有一件事：把缝磨平
+
+按下面六项逐项通读全篇。**只改写法，不改事实**：
+
+1. **术语统一** —— 同一个概念全篇用同一个词；先确认概念相同，不按出现次数混同不同定义。
+2. **编号连续** —— 层级编号全篇连续（1 / 1.1 / 1.1.1），不重复、不跳号。
+3. **符号统一** —— 同一符号全篇同一写法（全角半角、竖线形状、上下标）。
+4. **交叉引用可解析** —— "见下节""前面说过"这类指代换成真实的节点标题；
+   指不到落点的，删掉这句指代。
+5. **依附内容复位** —— 例题、案例属于它挂靠的知识点，应作为独立段落排在
+   该知识点正文之后，不要混在定义或推导中间。
+6. **事实校验** —— 逐句对照原文。**任何原文没有的论断一律不加**。
+
+# 合格的润色结果长什么样
+
+· 读起来像**一个人从头写到尾**的一份讲义，而不是几段各自成文的拼接。
+· 每一个概念、每一条公式、每一个数字，都**在原文里找得到**。
+· 层级、编号、符号在全篇范围内自洽。
+· 比原文更整齐，但**不比原文多任何信息**。
+
+# 格式契约（这些行一个字都不许改）
+
+· 以 \`#!\` 开头的行、\`##!topic\` 行、\`>>> BLOCK\` 行、\`>>> SOLUTION\` 行
+  —— 原样保留，包括其中的 \`ref=\` 与 \`src=\` 编号。
+· 每个 BLOCK 的正文要保留在它自己的 BLOCK 下面，不要跨 BLOCK 搬内容；
+  例题的解答放在 \`>>> SOLUTION\` 之后。
+· 可以调整 BLOCK 内部的行文与分段，**不要增删 BLOCK**。
+
+# 输出
+
+只输出必要的局部修改，具体 JSON 补丁协议见后文。不要重发全文。`;
+
+/** 把待润色全文包成一次请求的变量段。 */
+/**
+ * 拼润色请求的变量段。
+ *
+ * @param {string} text 经 `exportReorganization` 导出的讲义全文。
+ * @param {{retryReason?:string}} [options]
+ *   `retryReason` 是上一次合回被拒的**具体原因**（如"课节标识改变"）。
+ *   重试时必须把它原样告诉模型 —— 不带原因的重试等于让它再猜一次，
+ *   大概率还是错在同一个地方。
+ */
+export function buildPolishVariable(text, { retryReason = '' } = {}) {
+  const parts = [
+    '【待润色的讲义全文】',
+    '（下面每一行都是原稿。`#!` 开头的行是协议行，`##!topic` 是知识点，`>>> BLOCK` 是正文块。）',
+  ];
+  if (String(retryReason ?? '').trim()) {
+    parts.push(
+      '',
+      '【上一次的输出没通过校验，请只修正下面这一点，其余保持原样】',
+      String(retryReason).trim(),
+      '⚠️ 特别注意：`#!` / `##!topic` / `>>> BLOCK` 这些**协议行必须逐行原样保留** ——'
+      + '只返回正文局部补丁，不要重发协议行，不得修改标题与来源编号。',
+    );
+  }
+  parts.push('', text.trim());
+  return parts.join('\n');
+}
+
+/**
+ * 把"润色前后"的差异归成**可读的改动清单**。
+ *
+ * ⚠️ 刻意只做**行级**对照：这一步允许改的是行文，不是结构。
+ *    所以"哪些行变了"就已经够定位，逐字 diff 反而会淹没真正要看的东西。
+ *    返回值同时是 UI 的"改动 N 处"与回退审阅的依据。
+ */
+export function describePolishChanges(before, after) {
+  const norm = (s) => String(s ?? '').split(/\r?\n/).map((l) => l.trimEnd());
+  const a = norm(before), b = norm(after);
+  const changes = [];
+  const key = (l) => l.trim();
+  const beforeCount = new Map();
+  for (const l of a) { const k = key(l); if (k) beforeCount.set(k, (beforeCount.get(k) ?? 0) + 1); }
+  for (const l of b) {
+    const k = key(l);
+    if (!k || k.startsWith('#!') || k.startsWith('##!topic') || k.startsWith('>>>')) continue;
+    const left = beforeCount.get(k) ?? 0;
+    if (left > 0) { beforeCount.set(k, left - 1); continue; }
+    changes.push({ kind: 'added-or-rewritten', text: l.slice(0, 200) });
+  }
+  return changes.slice(0, 200);
+}
 
 /** 长度上限的比例（相对原稿的**内容字数**）。超上限**会回退**。 */
 export const kPolishLengthRatio = 1.6;
@@ -492,7 +636,13 @@ export function buildLecturePolishBody(inputs, { title = '', glossary = '' } = {
       parts.push('## 课件线索（只用来核对术语，不写入正文）：');
       for (const l of clues) parts.push(`- ${l}`);
     }
-    parts.push('## 老师讲的话（口语，要整理的就是它）：');
+    if (it.slideEvidence?.length) {
+      parts.push('## 原始课件依据（核对题设、公式、符号定义与适用条件，不能把不同题设合并）：');
+      for (const page of it.slideEvidence) parts.push(`【P${page.page}】\n${page.text}`);
+      parts.push('正文与课件冲突时以明确题设和公式为依据；不能仅统一符号外形而改变物理量。无充分依据的矛盾明确标为待核实。');
+    }
+    parts.push(it.sourceRegister === REGISTER.written ? '## 已正式组织的来源正文（核对课件依据后填充，保留推导与条件）：' : '## 老师讲的话（口语，要整理的就是它）：');
+    if (it.partCount > 1) parts.push(`本知识点正文第 ${it.partIndex + 1}/${it.partCount} 部分。本次只组织此部分，不概述整个知识点，不重复其他部分；知识点归属保持不变。`);
     parts.push(it.text.trim());
     parts.push('');
   }
@@ -769,12 +919,12 @@ class Limiter {
  * @param {string} [options.route] 原样透传给 llm.call 的路由（模型由集成层解析）。
  * @param {number} [options.maxTopics] / [options.maxChars] 切卷上限（默认与 App 同值）。
  */
-export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics, maxChars } = {}) {
+export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics, maxChars, cache } = {}) {
   if (!llm || typeof llm.call !== 'function') {
     throw new LectureError('CONFIG', '讲义加工需要注入 llm（形如 { call({stage,route,constant,variable,signal}) }）');
   }
-  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 16) {
-    throw new LectureError('CONFIG', '讲义加工并发须为 1–16');
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 512) {
+    throw new LectureError('CONFIG', '讲义加工并发须为 1–512');
   }
   const limiter = new Limiter(concurrency);
   const controllers = new Set();
@@ -793,6 +943,7 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
    * @returns {Promise<{chapters:Array, failures:string[], calls:Array, warnings:string[]}>}
    */
   async function assemble({ tree, blocks = [], context = '', signal, onProgress } = {}) {
+    tree = normalizeLectureTree(tree);
     if (closed) throw new LectureError('DISPOSED', '讲义加工器已关闭');
     if (!tree || !Array.isArray(tree.chapters)) {
       throw new LectureError('INPUT', '讲义加工需要一棵知识树（buildLectureTree 的产物）');
@@ -818,22 +969,27 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
         const chapter = tree.chapters[ci];
         for (let ti = 0; ti < chapter.topics.length; ti++) {
           const topic = chapter.topics[ti];
-          const own = topic.blockIndexes.map((i) => byIndex.get(i)).filter(Boolean);
+          const own = topic.sourceBlocks ?? topic.blockIndexes.map((i) => byIndex.get(i)).filter(Boolean);
           // 没讲到 / 没有块的节点不进讲义 —— 讲义是阅读产物，是树的**投影**。
           if (own.length === 0) { skippedNoBlocks++; continue; }
           const { text, missing } = draftBodyOf(own, warnings);
           // 真空才跳过（不是「没整理」，是「没内容」）。
           if (text === '') { skippedNoText++; continue; }
-          inputs.push({
-            chapterNo: ci + 1,
-            topicNo: ti + 1,
-            chapterIndex: ci,
-            topicIndex: ti,
-            title: topic.title,
-            pptLines: topic.pptLines ?? [],
-            text,
-            missing,
-          });
+          const groups = []; let group = [], chars = 0;
+          for (const block of own) {
+            const size = String(block.text ?? block.summary ?? '').length;
+            if (group.length && chars + size > 6000) { groups.push(group); group = []; chars = 0; }
+            group.push(block); chars += size;
+          }
+          if (group.length) groups.push(group);
+          for (const [partIndex, part] of groups.entries()) {
+            const body = groups.length === 1 ? {text, missing} : draftBodyOf(part, warnings);
+            inputs.push({ chapterNo: ci + 1, topicNo: ti + 1, chapterIndex: ci, topicIndex: ti,
+              title: topic.title, pptLines: topic.pptLines ?? [], slideEvidence: topic.slideEvidence ?? [],
+              text: body.text, missing: body.missing, sourceBlockIndexes: [...new Set(part.map(b=>b.index))],
+              partIndex, partCount: groups.length,
+              sourceRegister: part.every(b => b.register === 'written') ? REGISTER.written : REGISTER.draft });
+          }
         }
       }
       if (skippedNoBlocks > 0) {
@@ -853,7 +1009,7 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
       }
 
       // ── ③ 习坎：一卷一次调用 ─────────────────────────────────
-      const chunks = chunkLectureForPolish(inputs, {
+      const chunks = inputs.some(it=>it.partCount>1) ? inputs.map(it=>[it]) : chunkLectureForPolish(inputs, {
         maxTopics: maxTopics ?? kMaxTopicsPerCall,
         maxChars: maxChars ?? kMaxLectureCharsPerCall,
       });
@@ -866,6 +1022,8 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
       //    不这么写的话，`failures` 的次序会随完成顺序漂移 —— 而它是给用户
       //    看的「哪一段没写成稿」，同一份输入每次给出不同次序的告警会让人
       //    以为「这次又出了别的问题」。并发是**吞吐**的手段，不是语义。
+      let completedTopics = 0;
+      onProgress?.({ phase: 'lecture', done: 0, total: inputs.length });
       const perChunk = await Promise.all(chunks.map(async (chunk, ci) => {
         combined.throwIfAborted();
         const where = multi ? `（第 ${ci + 1}/${chunks.length} 卷）` : '';
@@ -875,16 +1033,30 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
         // 静默收下会污染别卷的正文（那一卷可能还没跑）。
         const source = new Map(chunk.map((it) => [`${it.chapterNo}/${it.topicNo}`, it.text]));
         const body = buildLecturePolishBody(chunk, { title, glossary });
+        const cacheRoute = cache ? route ?? await llm.resolve?.(combined) : route;
+        const cacheKey = cache?.key('lecture-assemble-v1', [cacheRoute, kLectureWrittenSystemPrompt, body]);
 
         // ⚠️ 「调用失败」与「调用了但回包读不懂」是**两件事**，calls 与 lastError
         //    分开记：前者是网络/额度，后者是模型跑偏。混成一条会让用户查错方向。
         let raw = '';
+        if (cacheKey) {
+          const saved = await cache.get(cacheKey);
+          if (saved?.raw) {
+            try {
+              const parsed = parseLecturePolishResponse(saved.raw);
+              if (parsed.length === source.size && [...source.keys()].every(key => parsed.filter(r => `${r.chapterNo}/${r.topicNo}` === key).length === 1)) {
+                raw = saved.raw; calls2.push({stage:kStage,cached:true});
+              }
+            } catch { /* Invalid cache entries are recomputed. */ }
+          }
+        }
         let lastError = null;
         const maxAttempts = 2;
         for (let attempt = 1; attempt <= maxAttempts && raw.trim() === ''; attempt++) {
           combined.throwIfAborted();
           let text = null;
           try {
+            if (chunk.some(it=>it.text.length>12000)) throw new LectureError('INPUT_TOO_LARGE', '来源单块超过安全输出窗口，需在资源阶段修正块边界');
             const response = await limiter.run(() => llm.call({
               stage: kStage,
               route,
@@ -918,6 +1090,7 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
                 error: { code: error?.code ?? 'LLM_FAILED', message: errText(error) },
               });
             }
+            if (['LLM_TRUNCATED', 'TRUNCATED', 'INPUT_TOO_LARGE'].includes(error?.code)) break;
           }
         }
         if (raw.trim() === '') {
@@ -955,6 +1128,7 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
             // 缩水与口语词**只报告**（★ 长度分不开「杂音」与「知识」，
             // 不可靠的判据不能驱动自动回退）。
             const srcText = source.get(key) ?? '';
+            const sourceRegister = chunk.find(input => `${input.chapterNo}/${input.topicNo}` === key)?.sourceRegister;
             const cleaned = cleanResult(r);
             const tooLong = checkPolishLength({ source: srcText, rewritten: cleaned.body });
             if (tooLong !== null) {
@@ -970,11 +1144,22 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
             if (shrink !== null) {
               fail2.push(`${kStageName}${where}知识点 ${key} ${shrink}（已采纳，供参考）`);
             }
-            const loud = checkPolishFiller({ source: srcText, rewritten: cleaned.body });
+            const loud = sourceRegister === REGISTER.written ? null : checkPolishFiller({ source: srcText, rewritten: cleaned.body });
             if (loud !== null) {
               fail2.push(`${kStageName}${where}知识点 ${key} ${loud}（已采纳，供参考）`);
             }
-            const verdict = judgeWritten({ source: srcText, rewritten: cleaned.body });
+            /* 输入的来源本身是不是成稿：一问两处都要用 ——
+             * ① 判「照抄口述」时，来源已是成稿就不该判它在照抄；
+             * ② 判断这次到底有没有加工时，同理。
+             * 早先逐块看了 `part.every(b => b.register === 'written')`，但这条
+             * 转录块的 `register` 是 mix 阶段写上的、且 41 条里 40 条是 worn，
+             * 于是「已整理好的转录」被当成口述，原样返回就被判成「与口述相同」。
+             *
+             * 原样返回也要走一遍判据：`alreadyWritten` 只免掉「照抄口述」这一条，
+             * 课堂称呼、说半截的句子照样要判。早先这里短路成 written，
+             * 「学习本身需要各位同学的努力」这种残留就这样混进了成稿。 */
+            const fromWritten = sourceRegister === REGISTER.written;
+            const verdict = withDerivation(judgeWritten({ source: srcText, rewritten: cleaned.body, alreadyWritten: fromWritten }), cleaned.body);
             const notes = [...verdict.notes, ...[loud, shrink].filter(Boolean)];
             const register = (verdict.register === REGISTER.written && loud === null)
               ? REGISTER.written : REGISTER.draft;
@@ -1017,6 +1202,9 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
         for (const it of chunk) {
           writeBack(inputs, it, picked.get(`${it.chapterNo}/${it.topicNo}`));
         }
+        if (cacheKey && raw && !fail2.length) await cache.put(cacheKey, raw);
+        completedTopics += chunk.length;
+        onProgress?.({ phase: 'lecture', done: completedTopics, total: inputs.length, chunk: ci + 1 });
         return { fail2, calls2, chunk };
       }));
 
@@ -1025,19 +1213,6 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
         failures.push(...r.fail2);
         calls.push(...r.calls2);
       }
-      // 进度**按分卷顺序**报（前缀和），不按完成顺序：并发下完成顺序本来
-      // 就不等于输入顺序，拿它当进度会让进度条来回跳。
-      let seenTopics = 0;
-      for (const r of perChunk) {
-        seenTopics += r.chunk.length;
-        for (const it of r.chunk) {
-          onProgress?.({
-            phase: 'polish', done: seenTopics, total: inputs.length,
-            chapterNo: it.chapterNo, topicNo: it.topicNo,
-          });
-        }
-      }
-
       combined.throwIfAborted();
       return { chapters: buildFilledChapters(tree, inputs, blocks), failures, calls, warnings };
     } catch (error) {
@@ -1057,8 +1232,131 @@ export function createLectureAssembler({ llm, concurrency = 3, route, maxTopics,
     limiter.dispose();
   }
 
+  /**
+   * **习坎的最后一步：全文润色（无损规整）**。
+   *
+   * # 与旧「无曰终审」的根本差别
+   *
+   * 旧实现在这一步把整份讲义交给一个子 agent **自由整理**：它自己决定改写什么、
+   * 怎么分段、要不要加内容。那等于把前面所有步骤当成草稿，让最后一步重新发挥 ——
+   * 结构可能被打散，改动无法归因，前几步的价值被这一步掩盖。
+   *
+   * 现在这一步的契约有且只有一条：**只改写法，不改事实**。
+   * 它做的是六件可验收的规整（术语统一 / 编号连续 / 符号统一 / 交叉引用可解析 /
+   * 依附内容复位 / 事实校验），**不产生任何新内容**。
+   * 合回仍然走 `mergeReorganization`，所以「原稿块全覆盖、例题结构不丢」这些
+   * 硬约束一条都不放松 —— 规整失败就整份退回，不会留下半份。
+   *
+   * @param {{lecture:object, text:string, signal?:AbortSignal,
+   *          merge:(text:string)=>object, onProgress?:Function}} input
+   *   `text` 是由调用方用 `exportReorganization` 导出的待润色全文；
+   *   `merge` 是同一个 codec 的合回函数（保持读写同源，避免两处各写一遍）。
+   */
+  async function polish({ lecture, text, signal, merge, onProgress, cache, cacheRoute, allowPartial=false } = {}) {
+    if (closed) throw new LectureError('DISPOSED', '讲义加工器已关闭');
+    if (!lecture?.chapters?.length) throw new LectureError('INPUT', '全文润色需要一份已生成的讲义');
+    if (typeof text !== 'string' || !text.trim()) throw new LectureError('INPUT', '全文润色需要待润色的讲义全文');
+    if (typeof merge !== 'function') throw new LectureError('INPUT', '全文润色需要合回函数（exportReorganization 的同源 codec）');
+
+    const controller = new AbortController();
+    controllers.add(controller);
+    const combined = signal ? AbortSignal.any([controller.signal, signal]) : controller.signal;
+    const calls = [];
+    try {
+      combined.throwIfAborted();
+      const contexts=polishContexts(text);
+      onProgress?.({ phase: 'polish', done: 0, total: contexts.length });
+      if(contexts.length>1 || allowPartial){
+        const result=await polishScoped({contexts,text,llm,limiter,route,
+          constant:kLecturePolishSystemPrompt+'\n\n'+PATCH_INSTRUCTION,
+          buildVariable:buildPolishVariable,signal:combined,cache,cacheRoute,calls,onProgress,allowPartial});
+        const merged=merge(result.text);
+        return {...result,unchanged:result.text===text,changes:describePolishChanges(text,result.text),calls,coverage:merged?.coverage??null};
+      }
+
+      /* ── 合回失败要**带原因重试一次** ────────────────────────────
+       *
+       * `mergeReorganization` 的校验是硬约束（原稿块全覆盖、例题结构不丢…），
+       * 一条不满足就整份拒绝。这是对的 —— 但它拒绝的是**格式偏差**，不是内容错：
+       * 真实模型输出几千行协议文本时，漏掉一行 `#!section`、少写一个块头、
+       * 或者把某个 `ref=` 写错，都是**常见**的（实测十来种偏差里，
+       * 「删掉 #! 注释行」→ 课节标识改变、「删块头」→ 遗漏 N 个原稿块）。
+       *
+       * 早先这里只调一次 `merge`，一次不过就整份作废，用户看到 `FORMAT`
+       * 却不知道错在哪一行、也没机会让模型改。这是产品侧的缺口，不是模型不听话。
+       *
+       * 现在：第一次失败 → 把**具体的拒绝原因**喂回模型重发一次 → 仍失败才退回。
+       * 只重试一次：如果原因是"模型根本不适合做这件事"，多试无益；
+       * 而"漏了一行标题"这种，一次明确提示通常就够。
+       */
+      const maxAttempts = 2;
+      let lastFormatError = null;
+      let returned = '';
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        combined.throwIfAborted();
+        const variable = attempt === 1
+          ? buildPolishVariable(text)
+          : buildPolishVariable(text, {
+            /* 重试时把上一次的拒绝原因原样告诉它 —— 这是**唯一**能让模型改对的信息。
+             * 不带原因的重试等于让它再猜一次，大概率还是错。 */
+            retryReason: lastFormatError?.message ?? '',
+          });
+        const response = await limiter.run(() => llm.call({
+          stage: 'lecture-polish',
+          route,
+          constant: kLecturePolishSystemPrompt + '\n\n' + PATCH_INSTRUCTION,
+          variable,
+          signal: combined,
+        }), combined);
+        calls.push({ stage: 'lecture-polish', attempt, usage: response?.usage ?? null });
+        combined.throwIfAborted();
+
+        returned = String(response?.text ?? '');
+        // 一个字都没动 → 如实返回 unchanged（这是事实，不是失败）。
+        if (returned.trim() === text.trim()) {
+          return { text, unchanged: true, changes: [], warnings: [], calls };
+        }
+        try {
+          const reviewWarnings = polishPatchWarnings(returned);
+          returned = applyPolishPatch(text, returned);
+          // 合回：硬约束全在 merge 里，失败就带原因重来一次（见上）。
+          const merged = merge(returned);
+          return {
+            text: returned,
+            unchanged: returned === text,
+            changes: describePolishChanges(text, returned),
+            warnings: reviewWarnings,
+            calls,
+            coverage: merged?.coverage ?? null,
+          };
+        } catch (error) {
+          // 只有**格式类**失败值得重试；其它（CANCELLED / INPUT 等）直接抛。
+          if (error?.code !== 'FORMAT') throw error;
+          lastFormatError = error;
+          if (attempt < maxAttempts) {
+            onProgress?.({ phase: 'polish', done: 0, total: POLISH_ITEM_NAMES.length, retry: attempt });
+          }
+        }
+      }
+      /* 两次都过不了 merge → 整份退回（不留半份），但**把原因写清楚**：
+       * 用户据此能判断是"模型这次没守住格式"还是"讲义本身有问题"。 */
+      throw Object.assign(
+        new LectureError('FORMAT', `全文润色两次都没通过合回校验：${lastFormatError?.message ?? ''}`
+          + '（这是格式偏差，不是内容错误；讲义已保留润色前的版本）'),
+        { cause: lastFormatError },
+      );
+    } catch (error) {
+      if (error instanceof LectureError) throw error;
+      if (combined.aborted || error?.name === 'AbortError') throw cancelled();
+      throw error;
+    } finally {
+      controllers.delete(controller);
+    }
+  }
+
   return {
     assemble,
+    polish,
     dispose,
     /** 只读快照：集成层与测试用它核对并发上限。 */
     get concurrency() { return concurrency; },
@@ -1112,17 +1410,27 @@ function draftBodyOf(own, warnings) {
  *    原地改树 = 把「这次有没有讲到」写回地图，那是 App 侧已经写错过一次的地方。
  */
 function buildFilledChapters(tree, inputs, blocks) {
-  const byKey = new Map(inputs.map((it) => [`${it.chapterNo}/${it.topicNo}`, it]));
+  const byKey = new Map();
+  for (const input of inputs) {
+    const key = input.chapterNo + '/' + input.topicNo;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key).push(input);
+  }
   const blockByIndex = new Map((blocks ?? []).map((b) => [b.index, b]));
   const chapters = [];
   for (let ci = 0; ci < tree.chapters.length; ci++) {
     const chapter = tree.chapters[ci];
     const topics = [];
     for (let ti = 0; ti < chapter.topics.length; ti++) {
-      const it = byKey.get(`${ci + 1}/${ti + 1}`);
-      if (!it) continue;
+      const pieces = byKey.get(`${ci + 1}/${ti + 1}`);
+      if (!pieces) continue;
+      const it = pieces.length === 1 ? pieces[0] : {...pieces[0], text:pieces.map(p=>p.text).join('\n\n'), filled:{
+        passages:pieces.flatMap(p=>p.filled?.passages ?? [{text:p.text,label:''}]),
+        blocks:pieces.flatMap(p=>p.filled?.blocks?.length ? p.filled.blocks : [{kind:parseBlockKind('讲解'),text:p.text,sourceBlockIndexes:p.sourceBlockIndexes}]),
+        register:pieces.every(p=>p.filled?.register===REGISTER.written)?REGISTER.written:REGISTER.failed,
+        notes:pieces.flatMap(p=>p.filled?.notes??[])}};
       const topic = chapter.topics[ti];
-      const own = topic.blockIndexes.map((i) => blockByIndex.get(i)).filter(Boolean);
+      const own = topic.sourceBlocks ?? topic.blockIndexes.map((i) => blockByIndex.get(i)).filter(Boolean);
       const filled = it.filled ?? null;
       topics.push({
         title: topic.title,
@@ -1136,7 +1444,7 @@ function buildFilledChapters(tree, inputs, blocks) {
         /** 正文。未填充 / 填充失败时逐字等于 `draft`。 */
         passages: filled ? filled.passages.map((p) => ({ ...p })) : [{ text: it.text, label: '' }],
         blocks: filled ? filled.blocks.map((b) => ({ ...b })) : [],
-        register: filled ? filled.register : REGISTER.draft,
+        register: filled ? filled.register : it.sourceRegister ?? REGISTER.draft,
         notes: filled ? [...filled.notes] : [],
         /** 这一段的起点锚点（「一键回家」用）：页号 + 秒数。 */
         anchor: {
@@ -1165,9 +1473,7 @@ function buildFilledChapters(tree, inputs, blocks) {
 
 /** 把一次产出的结果记到它的输入槽位上（`inputs` 就是被填充的清单）。 */
 function writeBack(inputs, it, hit) {
-  const slot = inputs.find(
-    (x) => x.chapterNo === it.chapterNo && x.topicNo === it.topicNo,
-  );
+  const slot = inputs.includes(it) ? it : null;
   if (!slot) return;
   if (!hit) {
     // 失败：**保留上一版正文**（= 老师原话），并如实标成没写成稿。
@@ -1179,5 +1485,5 @@ function writeBack(inputs, it, hit) {
     };
     return;
   }
-  slot.filled = hit;
+  slot.filled = {...hit, blocks:hit.blocks.map(b=>({...b,sourceBlockIndexes:it.sourceBlockIndexes??b.sourceBlockIndexes}))};
 }

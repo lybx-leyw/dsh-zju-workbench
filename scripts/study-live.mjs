@@ -1,4 +1,4 @@
-// Explicit live acceptance: genuine classroom data and native DSH LLM/agents.
+﻿// Explicit live acceptance: genuine classroom data and native DSH LLM/agents.
 // Secrets stay in the launching environment and login request, never artifacts.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -32,7 +32,6 @@ const patch = [
   { id: 'llm-pi-ai', config: { providers: routes } },
   { id: 'agent-default-model', config: { provider: 'zhiyun-live-agent', model: env.ZHIYUN_AGENT_MODEL || env.FUSION_TEXT_MODEL, reasoningEffort: 'off' } },
   { id: 'zhiyun-parser', config: { concurrency: 3, vision: { provider: 'zhiyun-live-vision', model: env.FUSION_VISION_MODEL }, text: { provider: 'zhiyun-live-text', model: env.FUSION_TEXT_MODEL } } },
-  { id: 'zhiyun-final-pass', config: { permissionPreset: 'workspace-write', timeoutMs: 1800000 } },
 ];
 await writeFile(path.join(runtime.profile, 'cordis.patch.yml'), yaml.dump(patch));
 let server, browser, page, hostLog = '', url;
@@ -109,13 +108,13 @@ try {
   else {
     if (!result.lecture || args.includes('--regenerate')) { log('Generating handout with native host LLM…'); await rpc('lecture', { ...key, context: report.lesson.title }); }
     result = (await rpc('result', key)).result;
-    if (!result.lecture.review) await writeFile(path.join(dir, 'lecture-before-review.json'), JSON.stringify(result.lecture, null, 2));
+    if (!result.lecture.polish) await writeFile(path.join(dir, 'lecture-before-polish.json'), JSON.stringify(result.lecture, null, 2));
     const sourceBefore = JSON.stringify([result.pages, result.sentences, result.blocks]);
-    if (option('--stage') !== 'lecture' && (!result.lecture.review || args.includes('--review'))) { log('Reviewing handout with native DSH agents/subagents…'); await rpc('final-pass', key); }
+    if (option('--stage') !== 'lecture' && (!result.lecture.polish || args.includes('--polish'))) { log('Polishing the whole handout (lossless)…'); await rpc('lecture-polish', key); }
     result = (await rpc('result', key)).result;
     if (JSON.stringify([result.pages, result.sentences, result.blocks]) !== sourceBefore) throw new Error('Handout processing modified final transcript');
     await writeFile(path.join(dir, 'lecture.json'), JSON.stringify(result.lecture, null, 2));
-    report.handout = { chapters: result.lecture.chapters.length, topics: result.lecture.chapters.flatMap(c => c.topics).length, failures: result.lecture.failures, reviewed: !!result.lecture.review, reviewUnchanged: result.lecture.review?.unchanged };
+    report.handout = { chapters: result.lecture.chapters.length, topics: result.lecture.chapters.flatMap(c => c.topics).length, failures: result.lecture.failures, polished: !!result.lecture.polish, polishUnchanged: result.lecture.polish?.unchanged };
     log(`Handout: ${JSON.stringify(report.handout)}`);
     const restoredRevision = result.lecture.revision;
     const topic = result.lecture.chapters.flatMap(c => c.topics)[0];
@@ -123,12 +122,12 @@ try {
     if (!hits.some(h => h.subId === key.subId && h.matches.some(m => m.field === 'lecture'))) throw new Error('Persisted handout search failed');
     await page.reload({ waitUntil: 'domcontentloaded' }); await settle();
     if ((await rpc('result', key)).result.lecture.revision !== restoredRevision) throw new Error('Reload changed handout revision');
-    report.checks.push('Current persisted handout searchable independently; reload retains reviewed revision');
+    report.checks.push('Current persisted handout searchable independently; reload retains polished revision');
     const nav = name => page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name, exact: true });
     await nav('学习').click();
     await page.locator('.zs-course-toggle').filter({ hasText: selected.course.title }).first().click();
     await page.getByRole('button', { name: new RegExp(selected.lesson.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).last().click();
-    await page.getByRole('tab', { name: '讲义', exact: true }).click();
+    await page.getByRole('tab', { name: '阅读讲义', exact: true }).click();
     await page.locator('.zs-handout-topic').first().waitFor({ timeout: 30000 });
     await page.screenshot({ path: path.join(dir, 'handout.png'), fullPage: true });
     await page.locator('.zs-source-anchor').first().click(); await page.locator('.zs-block').first().waitFor();
