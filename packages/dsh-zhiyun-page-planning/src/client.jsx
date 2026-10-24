@@ -25,6 +25,7 @@ import css from './style.css';
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
 import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel, buildMonthCalendar } from './time.js';
 import { hintWindow, scheduleHint } from './schedule-hint.js';
+import { clearFocus, focusDecision, focusElementId, readFocus } from './focus.js';
 import { errorText } from './error.js';
 
 export const name = 'zhiyun-page-planning-client';
@@ -231,6 +232,8 @@ export function Planning({ ctx }) {
    * 不触发任何请求，也不改变谁被算作"待办"。
    */
   const [view, setView] = useState('list');
+  const [loadedAt, setLoadedAt] = useState(0);
+  const pageRef = useRef(null);
   /**
    * 日历当前看的是哪个月（相对本月偏移）。
    *
@@ -274,6 +277,7 @@ export function Planning({ ctx }) {
       setError({ code: 'IPC', message: failure.message });
     } finally {
       setLoading(false);
+      setLoadedAt(Date.now());
     }
   }, [apply]);
 
@@ -860,8 +864,39 @@ export function Planning({ ctx }) {
   // 卡片已经并进 todos.rows 之外的 planCards，二者都是"要做的"
   const hasAnything = todos.rows.length > 0 || planCards.length > 0 || state.entries.length > 0 || localRows.length > 0;
 
+  useEffect(() => {
+    const node = pageRef.current;
+    if (!node || typeof IntersectionObserver !== 'function') return undefined;
+    let stop = false;
+    const settle = () => {
+      if (stop) return;
+      const pending = readFocus(globalThis.sessionStorage);
+      if (!pending) return;
+      if (view !== 'list') {
+        setView('list');
+        return;
+      }
+      const id = focusElementId(pending.key);
+      const element = id ? document.getElementById(id) : null;
+      const decision = focusDecision({
+        pending, loading, loadedAt, hasElement: Boolean(element),
+      });
+      if (decision === 'scroll' && element) {
+        element.scrollIntoView({ block: 'center' });
+        clearFocus(globalThis.sessionStorage);
+      } else if (decision === 'drop') {
+        clearFocus(globalThis.sessionStorage);
+      }
+    };
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) settle();
+    });
+    observer.observe(node);
+    return () => { stop = true; observer.disconnect(); };
+  }, [view, loading, loadedAt, state.local, state.todos, state.ticks]);
+
   return (
-    <div className="zpg-page">
+    <div className="zpg-page" ref={pageRef}>
       {/*
         ⚠️ **这里刻意没有大标题。**
 
@@ -1544,8 +1579,9 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
 
   const splitCount = row.splitInto.length;
 
+  const mark = !row.done ? focusElementId(`local:${row.id}`) : '';
   return (
-    <li>
+    <li id={mark || undefined}>
       <div className={`zpg-item zpg-item-mine ${row.done ? 'zpg-item-done' : ''}`}>
         {editing ? (
           <form className="zpg-edit" onSubmit={save}>
@@ -1900,8 +1936,9 @@ function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId, 
  */
 function TodoRow({ row, onToggle, busy, schedule }) {
   const kind = KIND[row.kind] ?? KIND_FALLBACK;
+  const mark = !row.done ? focusElementId(`${row.source}:${row.id}`) : '';
   return (
-    <li>
+    <li id={mark || undefined}>
       <div className={`zpg-item zpg-item-todo ${row.done ? 'zpg-item-done' : ''}`}>
         <div className="zpg-summary zpg-summary-static">
           <input
