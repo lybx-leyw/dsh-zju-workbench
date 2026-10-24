@@ -7,6 +7,7 @@ import { StudyWorkbench } from '../packages/dsh-zhiyun-core-study/src/workbench.
 import { createStudyController } from '../packages/dsh-zhiyun-core-study/src/model.js';
 import { mountKnowledge } from './fixtures/study-storage.mjs';
 import { clock, projectAgenda } from '../packages/dsh-zhiyun-page-today/src/agenda.js';
+import { collectDue, dueFromSnapshot, shanghaiDay } from '../packages/dsh-zhiyun-page-today/src/due.js';
 
 const eight = Date.parse('2026-10-14T00:00:00Z');
 const entry = (title, startMs, endMs) => ({
@@ -227,4 +228,40 @@ test('opening an accepted question lands on that lesson and a miss stays off the
   } finally {
     controller.dispose();
   }
+});
+
+test('today lists only unfinished items due on the Shanghai calendar day', () => {
+  const now = Date.parse('2026-10-23T16:30:00.000Z');
+  assert.equal(shanghaiDay(now), '2026-10-24');
+  const local = [
+    { id: 'p0', title: '昨晚', due: '2026-10-23T15:30:00.000Z', done: false },
+    { id: 'p1', title: '交实验', due: '2026-10-23T16:40:00.000Z', done: false },
+    { id: 'p2', title: '明天的', due: '2026-10-24T16:00:00.000Z', done: false },
+    { id: 'p3', title: '做完了', due: '2026-10-23T18:00:00.000Z', done: true },
+    { id: 'p4', title: '没写日期', due: null, done: false },
+    { id: 'p5', title: '原文', due: '2026-10-23T17:00:00.000Z', done: false, splitInto: ['p6'] },
+    { id: 'p6', title: '拆出来的', due: '2026-10-23T17:10:00.000Z', done: false },
+    { id: 'p7', title: '日期坏了', due: '明天', done: false },
+  ];
+  const todos = {
+    xzzd: { ok: true, rows: [
+      { id: '12', title: '作业', due: '2026-10-24T01:00:00.000Z', detail: '线代' },
+      { id: '13', title: '不再提醒', due: '2026-10-24T02:00:00.000Z' },
+    ] },
+    pta: { ok: false, rows: [{ id: '9', title: '不该出现', due: '2026-10-24T03:00:00.000Z', detail: '未结束' }] },
+  };
+  const listed = collectDue(local, todos, { 'xzzd:13': { doneAt: 1 } }, now);
+  assert.deepEqual(listed.items.map((item) => item.title), ['交实验', '拆出来的', '作业']);
+  assert.equal(listed.items[2].label, '学在浙大');
+  assert.equal(listed.items[2].detail, '线代');
+  assert.equal(listed.truncated, false);
+  assert.deepEqual(collectDue(null, null, null, now), { items: [], truncated: false });
+  const fromRoute = dueFromSnapshot({
+    local,
+    todos,
+    ticks: { 'xzzd:13': { doneAt: 1 } },
+    pta: { configured: true },
+  }, now);
+  assert.deepEqual(fromRoute.items.map((item) => item.title), ['交实验', '拆出来的', '作业']);
+  assert.deepEqual(dueFromSnapshot(null, now), { items: [], truncated: false });
 });
