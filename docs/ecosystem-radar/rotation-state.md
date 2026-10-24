@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `A` |
-| `last_run_at` | `2026-10-24 18:00` |
-| `group_runs`（累计） | A=33, B=18, C=20 |
+| `last_group` | `B` |
+| `last_run_at` | `2026-10-25 03:00` |
+| `group_runs`（累计） | A=33, B=19, C=20 |
 | 今日已跑 | C（r60）· A（r61）· **A（r62）** —— ⚠ 今日 A 跑了两次；r58（A）、r59（B）亦在今天。**下次若仍同日，应优先 C** |
 | 上一轮轴名 | **r62** 为「A 组 · 刷题链路的『去重』与『预算守恒』轴」（**0🟢 0🟡、不出骨架**；`dedupe.js` 生产零调用实测确认、`onProgress` 在出题链路被丢弃、被拒题不耗额度实测否决；搜索 9 次后撞 API 403 → **本轮不完整**）；r61 为「A 组 · 讲义装配的进度与预算轴」（0🟢，F-1 `maxChars` 死参数实测确认）；r59 为「B 组 · 笔记 → CC98 写出轴」（`stevenstg/obsidian-cc98-publish` 判 🟢，骨架 `dsh-radar-cc98-ubb-bridge`）；r58 为「A 组 · 插件页的『这包从哪来、能做什么』轴」（`ZSeven-W/dsh-harbor` 判 🟢，骨架 `dsh-radar-plugin-ledger`）；r57 为「C 组派生 · 文献库近邻检索底座轴」（`dsh-kb-rag`） |
 
@@ -133,6 +133,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-24 06:30 | B | B组第五十九轮（同日第 2 轮；今日 r58 已跑 A → 规则 2 `same-day(unused)`，B=17 < C=19 → **B**）。**「笔记 → CC98 写出」轴**（先读码找断环、再定向搜）：全仓 UBB 相关只有 `dsh-zhiyun-source-cc98/src/ubb.js` 且只有 `ubbToText`（读方向）、`markdownToUbb|toUbb|toUBB` **0 命中**、笔记页 `grep -i cc98` **0 命中** → **有进口、没出口**。关键词 `zju`(5643)/`zju language:javascript`(401)/`zju language:typescript`(163)/`zju course language:javascript`(41)/`zju course language:typescript`(39)/`cc98 language:javascript`(41)/`campus app language:javascript`(2437)/`cc98 language:typescript`(28)/`markdown to ubb`(4)/`ubb language:typescript`(115)/`zju campus language:javascript`(5) → **11 次搜索（⚠ 超限 1 次）、0 次 403、本轮完整**。**首次登记 9 行（含 2 簇）：🟢1 🔵3 ⚠2 ⛔2**；骨架 `dsh-radar-cc98-ubb-bridge`（**B 类**，**零依赖**、零上游代码、`apply()` 抛错）。新结论：① **M1 推翻了开工预设** —— 上游是 Obsidian 插件，`obsidian` 是宿主注入的**虚拟模块**、装不上 → **锁版挂载物理上不成立**，只能「能力提取」；② **M2/M3 说明能力提取不是低配**：`md-to-ubb.ts → links.ts → convert.ts` 是**单向纯函数链**（1207 行），只改两处相对 import 的扩展名即可在 `node --experimental-strip-types` 下零安装跑通，`obsidian` 只出现在 `images.ts`/`settings.ts` 外围；③ **M4 三处「按 Obsidian 成立、按 CC98 存疑」**：引用块**不输出 `[quote]`**、表格原样透传、硬换行原样保留 → 不能对外宣称「复制出去就对了」；④ **M5 读/写不对偶**（内联代码含 `[b]x[/b]` 往返后被剥成 `x`）→ 须补守卫测试；⑤ **B 组词池收敛**：`campus app`（2437 条 100% 无关）、`ubb`（撞罗马尼亚 UBB 大学，>80% 无关）、`zju` 主词（前 15 条全部在册）三个词**停用**，B 组起点改为「读码找出口词」（本轮即 `markdown to ubb`，全站只有 4 条）；⑥ **同簇归一**：`md2ubb` 另三家（Python / 2017 停更 / `null`）各有一条硬伤，取 `obsidian-cc98-publish`。 |
 | 2026-10-24 04:06 | C | activity heatmap calendar language:typescript / streak calculation language:typescript / github-style contribution heatmap react / habit tracker react language:typescript / study progress visualization dashboard / dsh plugin stats |
 | 2026-10-24 15:00 | A | 自动记录 |
+| 2026-10-25 03:00 | B | r63 B组：zju/cc98/浙江大学/学在浙大/智云课堂 等 11 次；9 行登记；骨架 dsh-radar-slide-dedup |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
