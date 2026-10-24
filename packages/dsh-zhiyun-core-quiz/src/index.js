@@ -29,6 +29,7 @@
  * 若集成层要用别的适配器，`config.llm` 可以直接注入一个同形状的对象。
  */
 
+import { createPointQuizGenerator } from './points.js';
 import { QuizError } from './quality.js';
 import { createQuizGenerator } from './generate.js';
 import { createQuizStore } from './store.js';
@@ -84,9 +85,21 @@ export async function apply(ctx, config = {}) {
   // 领域服务：**不落盘**，集成层用宿主的存储服务接手持久化。
   const store = createQuizStore({ now: config.now });
 
+  const pointLifetime = new AbortController();
+  const pointGenerator = createPointQuizGenerator({search:async(request,signal)=>{
+    const web=config.web??ctx.web;
+    if(!web?.search)throw new QuizError('WEB_UNAVAILABLE','请先在设置中配置联网搜索供应商');
+    return web.search(request,signal);
+  },call:async request=>{
+    const signal=AbortSignal.any([pointLifetime.signal, ...(request.signal ? [request.signal] : [])]);
+    signal.throwIfAborted();
+    const resolved=await resolveRoute(signal);
+    return llm.call({...request,signal,route:request.route ?? resolved});
+  }});
   const service = {
     generate: generator.generate,
-    dispose: generator.dispose,
+    generatePoints: input => pointGenerator({...input,signal:AbortSignal.any([pointLifetime.signal,...(input.signal ? [input.signal] : [])])}),
+    dispose: () => { pointLifetime.abort(); generator.dispose(); },
     /** 题库领域服务（题目 / 作答 / 额度台账的形状与判定）。 */
     store,
     get concurrency() { return generator.concurrency; },
@@ -98,6 +111,7 @@ export async function apply(ctx, config = {}) {
   return () => {
     // ⚠️ 先中断在飞的请求，再摘服务：反过来会让刚被调用的 generate 在
     //    服务已消失之后还往模型端点发请求（白花钱，而且没人收结果）。
+    pointLifetime.abort();
     generator.dispose();
     if (typeof removeService === 'function') removeService();
   };

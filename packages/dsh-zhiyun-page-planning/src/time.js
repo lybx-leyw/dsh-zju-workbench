@@ -171,6 +171,53 @@ export function nextWeekday(now, weekday = 1) {
   return atShanghai(now, { dayOffset: delta, hour: 9 });
 }
 
+/* ══════════════════════════════════════════ 给模型的日期对照表 */
+
+/** 周几的中文名（0=周日，与 `getUTCDay` 一致）。 */
+const WEEKDAY_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+/**
+ * 生成「今天 + 未来两周」的日期对照表，喂给模型换算相对时间。
+ *
+ * # 为什么不让模型自己算
+ *
+ * 模型不知道今天几号，也不知道"下周三"到底是哪天。把未来两周每天列出来
+ * （含**中文周几**和**相对说法**），它只需要做「查表」而不是「日期算术」——
+ * 后者的出错率高得多，而且错了没有任何迹象。
+ *
+ * 相对说法（"明天""后天""下周三"）写在 `label` 里，让模型能直接对号入座；
+ * `date` 是它要填进 `due` 的值。
+ *
+ * @param now - 当前毫秒时间戳。
+ * @param options.days - 往后看几天（默认 14，覆盖"下下周"）。
+ * @returns `[{ date, weekday, label }]`，第 0 项永远是今天。
+ */
+export function dateTable(now = Date.now(), { days = 14 } = {}) {
+  const rows = [];
+  for (let offset = 0; offset <= days; offset += 1) {
+    const at = atShanghai(now, { dayOffset: offset, hour: 0 });
+    // ⚠️ 不能用 `getUTCDay()`：`atShanghai(.., hour:0)` 返回的 UTC 时刻落在
+    //    **前一天 16:00**，取 UTC 星期会整体差一天（周三被算成周二）。
+    //    必须按上海时区取年/月/日/周几，四个分量同一口径。
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: ZONE, year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short',
+    }).formatToParts(new Date(at));
+    const grab = (type) => parts.find((p) => p.type === type)?.value;
+    const date = `${grab('year')}-${grab('month')}-${grab('day')}`;
+    const DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const weekday = WEEKDAY_CN[DOW[grab('weekday')] ?? 0] ?? '';
+    // 相对说法：前三天单独命名，之后按"下周X"给 —— 这是学生最常用的口径
+    let label;
+    if (offset === 0) label = '今天';
+    else if (offset === 1) label = '明天';
+    else if (offset === 2) label = '后天';
+    else if (offset <= 7) label = `${offset} 天后`;
+    else label = `下${weekday}`;
+    rows.push({ date, weekday, label });
+  }
+  return rows;
+}
+
 /* ══════════════════════════════════════════ 周历的分格 */
 
 /**

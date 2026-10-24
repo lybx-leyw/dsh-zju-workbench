@@ -23,7 +23,10 @@ export const sourceBundles = (await readdir(path.join(root, 'packages'), { withF
  * 整个 profile 起不来（拆包真机上踩过）。这里刻意**不用前缀猜测**：
  * 同前缀但没登记的条目可能来自别的分支或用户自己链进来的包，一律不动。
  */
-export const retiredBundles = ['dsh-zhiyun-pro-ui', 'dsh-zhiyun-study', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-player'];
+export const retiredBundles = ['dsh-zhiyun-pro-ui', 'dsh-zhiyun-study', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-player',
+  // 「无曰终审」整包删除（自由发挥那一步被并入习坎的全文润色）。
+  // 老 profile 里还挂着这一行的话 Loader 解不开，整个 profile 起不来。
+  'dsh-zhiyun-core-final-pass'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
 /** 校验一个候选安装目录：六个宿主包版本一致、在清单内，Cordis 大版本匹配。 */
 async function readHost(app) {

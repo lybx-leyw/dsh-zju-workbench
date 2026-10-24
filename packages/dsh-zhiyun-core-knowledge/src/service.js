@@ -26,7 +26,7 @@
  * 以 `invalid-record` 如实报出来（本包不吞这个错，见 index.js）。
  */
 import { KnowledgeError } from './errors.js';
-import { LECTURES_TABLE, RECORD_SCHEMA, identityPart, keyOf } from './domain.js';
+import { QUESTION_BANK_TABLE, LECTURES_TABLE, RECORD_SCHEMA, identityPart, keyOf } from './domain.js';
 
 /** 检索命中的字段名（如实说明命中的是**哪一块的哪个字段**，不做无关的"相关度"）。 */
 export const MATCH_FIELDS = ['sentence', 'summary', 'bridge'];
@@ -68,6 +68,7 @@ function summarize(key, record) {
  */
 export function createKnowledgeService({ domain, spec }) {
   const table = domain.table(LECTURES_TABLE);
+  const banks = domain.table(QUESTION_BANK_TABLE);
   const schema = spec.tables[LECTURES_TABLE].valueSchema;
   let closed = false;
 
@@ -146,6 +147,21 @@ export function createKnowledgeService({ domain, spec }) {
   }
 
   return {
+    listByAccount({ accountId } = {}) {
+      assertOpen(); const account = identityPart(accountId, 'accountId');
+      return [...table.entries()].filter(([key]) => key.startsWith(account + ':')).map(([key, record]) => structuredClone(assertKeyMatchesRecord(key, record)));
+    },
+    questionBank(accountId) {
+      assertOpen(); const account = identityPart(accountId, 'accountId'), bank = banks.get(account);
+      if (bank && bank.accountId !== account) throw new KnowledgeError('CORRUPT', '题库账号与存储键不一致');
+      return structuredClone(bank ?? {accountId:account, questions:[], sessions:[]});
+    },
+    async saveQuestionBank(bank) {
+      assertOpen(); const account = identityPart(bank.accountId, 'accountId');
+      const parsed = spec.tables[QUESTION_BANK_TABLE].valueSchema.safeParse(bank);
+      if (!parsed.success) throw new KnowledgeError('INVALID_RECORD', '题库格式无效');
+      await banks.put(account, parsed.data);
+    },
     /** 域与表的诊断信息（集成层可据此确认用的是哪个后端、哪张表）。 */
     get domainName() { return domain.name; },
     get tableName() { return LECTURES_TABLE; },

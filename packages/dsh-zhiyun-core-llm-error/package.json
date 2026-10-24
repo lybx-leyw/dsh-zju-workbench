@@ -1,0 +1,16 @@
+{
+  "name": "dsh-zhiyun-core-llm-error",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DeepSeek 官方接口的错误分类与处置策略：把 7 个官方错误码与未单列的失败面归成「先修 / 降并发退避 / 谨慎重试 / 客户端侧」四种动作（纯函数、零网络、零 UI）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./classify": "./src/classify.js",
+    "./policy": "./src/policy.js",
+    "./watchdog": "./src/watchdog.js",
+    "./errors": "./src/errors.js",
+    "./package.json": "./package.json"
+  }
+}

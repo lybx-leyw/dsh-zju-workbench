@@ -2,6 +2,8 @@ node_modules/
 .ref/
 .ref_book2skill/
 .ref-codex-ui/
+.ref_ppt2note/
+.ref_course2md/
 .runtime/
 artifacts/
 .backup/
@@ -28,3 +30,9 @@ deploy/*/data/
 .audit/
 # .codebuddy 是 agent 的本地记忆（与会话过程），与 .workbuddy 同类，不进公开仓库。
 .codebuddy/
+
+# Local lecture exports and one-off debugging/rewriting scripts can contain classroom data.
+/docs/v01.md
+/docs/v02.md
+/tmp-*.cjs
+/tmp-*.mjs

@@ -28,7 +28,7 @@ import { ParserError } from './errors.js';
 export const REASONING_EFFORT_PATTERN = /^[a-z][a-z0-9_-]{0,31}$/i;
 
 const STAGE_FIELDS = new Set(['maxTokens', 'reasoningEffort']);
-export const ACCEL_STAGES = ['faithful', 'mix', 'tags', 'outline'];
+export const ACCEL_STAGES = ['faithful', 'mix', 'tags', 'merge', 'outline'];
 const ACCEL_FIELDS = new Set(['escalation', ...ACCEL_STAGES]);
 /** 升档的默认倍数与硬顶（与 Dart `FusionAccelConfig` 同值）。 */
 export const DEFAULT_ESCALATION_FACTOR = 2;

@@ -1,0 +1,13 @@
+{
+  "name": "dsh-zhiyun-host-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "局域网桥与规划快照：把本机规划数据整理成手机能读的 JSON。尚未挂进 profile。",
+  "main": "./src/server.js",
+  "exports": {
+    ".": "./src/server.js",
+    "./snapshot": "./src/snapshot.js",
+    "./package.json": "./package.json"
+  }
+}

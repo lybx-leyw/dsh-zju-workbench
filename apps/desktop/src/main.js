@@ -1,4 +1,4 @@
-// 智云 Pro 桌面壳 —— **只是快捷入口**。
+﻿// 智云 Pro 桌面壳 —— **只是快捷入口**。
 //
 // 它只做两件事：起一个 DSH 实例、把它开在窗口里。
 //   · 不打包、不安装 dsh、不生成 .exe；
@@ -22,11 +22,12 @@
 //    本包是 `"type": "module"`，所以用 createRequire 而不是把文件改成 .cjs。
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, shell, dialog } = require('electron');
 import { appendFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startHost } from './boot.js';
+import { createLecturePdfHandler } from './lecture-pdf.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -99,7 +100,54 @@ async function boot() {
   // token 是短时凭据：日志里抹掉，别把可用地址留在磁盘上。
   log(`实例地址 ${host.url.replace(/token=[^\s&]+/, 'token=***')}`);
   publish({ phase: 'ready', hint: `宿主 ${host.runtime.app}` });
+  await purgeStaleAuthCookies();
   win.loadURL(host.url).catch((error) => publish({ phase: 'error', detail: `打不开实例地址：${error.message}`, hint: '' }));
+}
+
+/**
+ * 清掉**上一次启动**留下的鉴权 cookie。
+ *
+ * # 为什么必须清
+ *
+ * 宿主的鉴权方式是「一次性 token → 换一个 `dsh-auth-<随机串>` cookie」。
+ * 那个 cookie **没有过期时间、也从不被回收**，而桌面壳每次启动都会生成
+ * 一个**新 token**（端口也是随机的）。于是每启动一次就多一个 cookie，
+ * 全部堆在同一个 origin（`127.0.0.1`）下。
+ *
+ * 实测：攒到 70 个时，请求头超过 16KB，宿主直接回 **431
+ * Request Header Fields Too Large** —— 而且返回的是**空 body**
+ * （`<html><head></head><body></body></html>`），前端一个 script 都加载不了。
+ * 在用户眼里就是"一打开就白屏"，但进程、端口、日志全都正常。
+ *
+ * # 为什么在 `loadURL` 之前清
+ *
+ * cookie 是随请求发的。必须在新 token 换 cookie **之前**把旧的清掉，
+ * 否则这一次请求就已经带着超长的头了。
+ *
+ * 只清 `dsh-auth-` 前缀的：那是宿主专用的鉴权 cookie，清掉不影响任何
+ * 用户态数据（规划、笔记都存在 profile 目录里，与 cookie 无关）。
+ */
+async function purgeStaleAuthCookies() {
+  try {
+    const cookies = await win.webContents.session.cookies.get({});
+    const stale = cookies.filter((item) => item.name.startsWith('dsh-auth-'));
+    if (stale.length === 0) return;
+    // 逐个删除：`remove` 要完整的 URL + 名字。
+    // 单个删不掉不要紧（可能已被别处删了），但要**数一下**，别声称清了却没清。
+    const results = await Promise.all(stale.map((item) => win.webContents.session.cookies.remove(
+      `http://${item.domain.replace(/^\./, '')}${item.path ?? '/'}`,
+      item.name,
+    ).then(() => true).catch(() => false)));
+    const done = results.filter(Boolean).length;
+    if (done === stale.length) {
+      log(`已清理 ${done} 个上次启动留下的鉴权 cookie`);
+    } else {
+      log(`清理旧鉴权 cookie：${done}/${stale.length} 成功（其余可能已失效，不影响启动）`);
+    }
+  } catch (error) {
+    // 清不掉不该拦住启动：431 是"头太大"，不是"不能工作"的致命错误
+    log(`清理旧鉴权 cookie 失败（不影响启动）：${error?.message ?? error}`);
+  }
 }
 
 function createWindow() {
@@ -122,17 +170,77 @@ function createWindow() {
     },
   });
   win.once('ready-to-show', () => win.show());
+  /**
+   * 兜底：加载页一加载完就把它显示出来。
+   *
+   * # 为什么不能只等 `ready-to-show`
+   *
+   * `ready-to-show` 只保证在**首次渲染**时触发一次，而这个窗口会导航两次：
+   * 先 `loadFile(launcher.html)`（我们自己的"正在启动"页），拿到宿主地址后再
+   * `loadURL(host.url)` 换成真实页面。两次导航夹在一起，那个事件可能落在尴尬
+   * 的位置上，甚至不再触发。
+   *
+   * 实测后果：窗口保持 `show: false` 的初始状态 —— 位置 (-16000, -16000)、
+   * 尺寸 157×25、`IsWindowVisible` 为 false。用户看到的是"一打开就白屏"，
+   * 而实际上窗口**从来没有被显示过**。
+   *
+   * 加载页本身就是内容，让它一加载完就可见，用户至少能看到"正在启动…"，
+   * 而不是一个不存在的窗口。之后的 `loadURL` 是在已可见的窗口里换内容，
+   * 不再依赖任何事件。
+   */
+  win.webContents.once('did-finish-load', () => {
+    if (!win.isDestroyed() && !win.isVisible()) win.show();
+  });
   win.on('closed', () => { win = null; });
   if (SMOKE) {
-    win.webContents.once('did-finish-load', async () => {
-      const url = win.webContents.getURL().replace(/token=[^\s&]+/, 'token=***');
+    /**
+     * ⚠️ 三条都要满足，少一条就会误判：
+     *
+     * 1. **用 `on` 而不是 `once`** —— 这个窗口会加载两次：先 `launcher.html`
+     *    （file:），再换成宿主地址（http:）。早先用 `once` 会在加载页那次就触发，
+     *    smoke 永远看到 `file:` 并报 FAIL。
+     * 2. **不能要求 URL 里带 token** —— 宿主的鉴权握手会 `302` 到**不带 token**
+     *    的干净地址（实测最终停在 `http://127.0.0.1:<port>/`）。早先按
+     *    `/token=/` 过滤，结果把真正加载成功的那一次**全过滤掉了**，
+     *    日志里连 smoke 行都不出现，比报 FAIL 更难查。
+     * 3. **等正文真的出现** —— 这才是"进去了"的证据。只看 `did-finish-load`
+     *    不够：它可能在首屏渲染前触发，那一刻 `visible` 还是 false、
+     *    `document.title` 也还是宿主的默认标题。
+     */
+    let settled = false;
+    win.webContents.on('did-finish-load', async () => {
+      if (settled) return;
+      const current = win.webContents.getURL();
+      // 加载页（file:）不算，只认 http(s) 的产品页
+      if (!/^https?:\/\/(127\.0\.0\.1|localhost)/i.test(current)) return;
+
+      // 轮询等正文出现（最多 15 秒），而不是盲等一拍
+      let textLength = 0;
+      for (let i = 0; i < 30; i += 1) {
+        textLength = await win.webContents
+          .executeJavaScript('(document.body && document.body.innerText ? document.body.innerText : "").length')
+          .catch(() => 0);
+        if (textLength > 0) break;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      if (settled) return;
+      settled = true;
+
+      const url = current.replace(/token=[^\s&]+/, 'token=***');
       const title = await win.webContents.executeJavaScript('document.title').catch(() => '');
-      // 落到 file: 说明还停在我们自己的加载页 —— 那是"没进去"，不是成功。
-      const landed = !win.webContents.getURL().startsWith('file:');
-      log(`smoke ${landed ? 'OK' : 'FAIL'} url=${url} title=${title}`);
+      /**
+       * 窗口到底有没有显示出来。
+       *
+       * ⚠️ 这一条以前**没被检查**，于是「窗口从不显示」被当成了"白屏"报上来，
+       *    排查绕了一大圈才在窗口位置上发现问题。smoke 的意义就是**一次运行
+       *    就能看出坏没坏**，所以它必须同时回答"进去了没有"和"看得见没有"。
+       */
+      const visible = win.isVisible();
+      const ok = visible && textLength > 0;
+      log(`smoke ${ok ? 'OK' : 'FAIL'} url=${url} title=${title} visible=${visible} text=${textLength}`);
       quitting = true;
       stopHost();
-      app.exit(landed ? 0 : 1);
+      app.exit(ok ? 0 : 1);
     });
   }
   // 页面里的外链交给系统浏览器，不要在窗口里开新窗。
@@ -165,6 +273,7 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
     ipcMain.on('launcher:retry', () => { void boot(); });
     ipcMain.handle('launcher:snapshot', () => state);
+    ipcMain.handle('lecture:pdf-save', createLecturePdfHandler({getWindow:()=>win,getHostUrl:()=>host?.url,dialog,downloads:()=>app.getPath('downloads')}));
     void boot();
   });
 

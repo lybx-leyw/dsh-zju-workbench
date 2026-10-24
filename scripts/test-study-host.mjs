@@ -26,16 +26,15 @@ try{
   const closeLogin=async()=>{await page.getByRole('button',{name:'关闭',exact:true}).click();await page.getByRole('dialog',{name:'登录智云课堂'}).waitFor({state:'hidden'});};
   const signInClassroom=async()=>{await openLogin();await page.getByLabel('浙大账号',{exact:true}).fill('fixture-account');await page.getByLabel('密码',{exact:true}).fill('fixture-password');await page.getByRole('button',{name:'连接课堂',exact:true}).click();await page.getByText('已连接 · 测试同学',{exact:true}).waitFor();await closeLogin();};
   await nav('学习').click();await signInClassroom();checks.push('Personal login connects authenticated classroom service without browser persistence of credentials');
-  // 「我的课」「看课」已经并入**学习页**：课程目录是左栏，播放是正文区的一栏
-  // （`zs-content-switch` 的「视频」）。所以这里不再有跨页跳转 —— 一门课、一节回放、
-  // 终稿、字幕、课件全在同一页里切换，节次上下文不会在跳转中丢。
+  // 「我的课」「看课」已经并入**学习页**：课程目录是左栏，顶栏只剩「视频」和「知识点」。
+  // 课件与字幕跟在视频里，终稿在知识点里。同一页切换，节次上下文不会在跳转中丢。
   await nav('学习').click();await expandCourse();
   assert.equal(await page.getByRole('button',{name:/第三节 · 尚未发布/}).count(),0,'未发布的节次不该出现在课程树里');assert.equal(await page.locator('.zs-tree-lesson').count(),2);assert.equal((await page.locator('.zs-course-toggle').filter({hasText:'概率论与数理统计'}).locator('.zs-course-count').innerText()).trim(),'2','计数按可回放的节次算，而不是课程表槽位');checks.push('Course tree hides sessions that cannot be replayed and counts only replayable ones');
   await page.getByRole('button',{name:/第一节 · 概率密度函数/}).click();await page.getByRole('button',{name:'整理这节课',exact:true}).waitFor({state:'visible'});await page.getByRole('button',{name:'整理这节课',exact:true}).click();await page.getByRole('button',{name:'取消',exact:true}).click();await page.getByRole('button',{name:'取消',exact:true}).waitFor({state:'hidden'});checks.push('Course tree selection starts a cancellable parser job through native RPC');
   await page.getByRole('button',{name:'整理这节课',exact:true}).click();await page.getByText('学习资料已整理',{exact:true}).waitFor({timeout:30000});await page.getByText('旧四史',{exact:true}).waitFor();assert.equal(await page.locator('.zs-block').count(),1);checks.push('Actual host LLM and attachments produce corrected, timestamped study blocks');
   await page.getByRole('searchbox',{name:'查找解析正文'}).fill('不存在的内容');await page.getByText('没有匹配的内容。',{exact:true}).waitFor();await page.getByRole('searchbox',{name:'查找解析正文'}).fill('');
-  await page.getByRole('tab',{name:'字幕',exact:true}).click();await page.getByText('旧事史',{exact:true}).waitFor();await page.getByRole('tab',{name:'PPT',exact:true}).click();await page.locator('.zs-slide').waitFor();await page.waitForFunction(()=>document.querySelector('.zs-slide')?.naturalWidth===1);checks.push('Search, raw subtitles and PPT use real result/source DTOs');
-  await page.getByRole('tab',{name:'终稿',exact:true}).click();await page.mouse.move(1400,70);
+  await page.getByRole('tab',{name:'视频',exact:true}).click();await page.getByText('旧事史',{exact:true}).waitFor();await page.locator('.zs-video-slide').waitFor();await page.waitForFunction(()=>document.querySelector('.zs-video-slide')?.naturalWidth===1);checks.push('Search, raw subtitles and PPT use real result/source DTOs');
+  await page.getByRole('tab',{name:'知识点',exact:true}).click();await page.mouse.move(1400,70);
   assert.notEqual(await page.getByRole('button',{name:/重新整理/}).evaluate(b=>getComputedStyle(b).backgroundColor),'rgba(0, 0, 0, 0)','primary action keeps its own background despite host resets');
   await page.screenshot({path:path.join(artifacts,`study-${runtime.version}.png`),fullPage:true});
   await page.getByRole('button',{name:'切换明暗',exact:true}).click();await page.screenshot({path:path.join(artifacts,`study-dark-${runtime.version}.png`),fullPage:true});await page.getByRole('button',{name:'切换明暗',exact:true}).click();

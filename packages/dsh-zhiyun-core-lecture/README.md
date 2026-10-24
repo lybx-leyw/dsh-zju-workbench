@@ -57,3 +57,9 @@ node --test tests/lecture.test.mjs
 
 单文件覆盖：树、验收、填充、解析容错、prompt 冻结、真实 Cordis 宿主挂载 / 隔离 / 卸载释放、
 零宿主依赖扫描、Dart golden 差分。
+
+## v4 共享生成入口
+
+产品集成与 bench 均调用 `zhiyunLecture.generate({ record, title, signal, onProgress, onAssembled })`。它要求解析器的重构树，统一主线输入映射，顺序执行现有装配和逐点终审；返回 `{ assembled, polished, lecture }`。`onAssembled` 可保存成稿检查点；进度按实际完成分卷/知识点报告。提示词、分组和验收算法继续由原模块负责。
+
+`createRun({ llm, concurrency })` 为一次生成建立隔离实例，可与解析器共享多供应商 worker 池；成稿和终审使用传入的总 worker 数，不另设较低并发上限。
