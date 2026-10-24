@@ -1,8 +1,9 @@
 // 预加载：把主进程的启动状态递给加载页。
 //
 // ⚠️ 必须是 CommonJS（`.cjs`）：窗口开了 `sandbox: true`，沙箱下的 preload 不能用 ESM。
-// 这里只暴露**读状态**与**重试**两件事 —— 壳是快捷入口，不给页面任何额外能力。
+// 只暴露启动状态、重试和用户主动选择位置的 PDF 保存，不提供任意文件读写。
 const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('lecturePdf', {save:filename=>ipcRenderer.invoke('lecture:pdf-save',filename)});
 
 contextBridge.exposeInMainWorld('launcher', {
   /** 拿一份当前状态（页面可能在状态推送之后才加载完）。 */

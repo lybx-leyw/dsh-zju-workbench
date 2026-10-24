@@ -1,9 +1,6 @@
 import React from 'react';
-import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-const labels = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
-const kinds = { elaboration: ['讲解', 'explain'], definition: ['定义', 'definition'], procedure: ['步骤', 'procedure'], example: ['例题', 'example'], note: ['说明', 'note'] };
-const blocksOf = t => t.blocks?.length ? t.blocks : (t.passages ?? []).map(p => ({text:p.text,kind:Object.keys(kinds).find(k=>kinds[k][0]===p.label) ?? 'elaboration'}));
-const kindOf = b => b.kind?.wire ?? b.kind ?? 'elaboration';
+import {blocksOf,kindOf,kinds,LectureBlockBody} from './lecture-content.jsx';
+import {LectureExportButton} from './lecture-export.jsx';
 
 export function LectureReader({ state, controller, onSource, focus, scope = null }) {
   const lecture = state.lecture;
@@ -52,6 +49,7 @@ export function LectureReader({ state, controller, onSource, focus, scope = null
       <div className="zs-handout-meta"><strong>{lecture ? `${chapters.length} 章 · ${topics.length} 个知识点` : '阅读讲义'}</strong>
         <small>{lecture?.polish?.complete === false ? '部分终审未完成，请留意正文提示' : '按章节阅读 · 保留课堂来源'}</small>
       </div>
+      {topics.length>0&&<LectureExportButton state={state}/>}
     </div>
     {!topics.length ? <div className="zs-content-empty"><strong>这节课还没有生成讲义</strong><small>点击上方「生成讲义」，可查看各阶段进度。</small></div> : !shown.length ? <div className="zs-content-empty"><strong>阅读讲义里没有这一段</strong><small>可以改看整节，或重新生成阅读讲义。</small></div> : <>
       <div className="zs-handout-body" data-toc={tocOpen ? 'open' : 'closed'}>
@@ -61,7 +59,7 @@ export function LectureReader({ state, controller, onSource, focus, scope = null
         {t.register!=='written'&&<p className="zs-draft-label">本知识点保留课堂原话，尚未写成书面稿。</p>}
         {blocksOf(t).map((b,bi)=>{const kind=kindOf(b),[label,tone]=kinds[kind]??kinds.elaboration;return <section className={`zs-handout-block zs-handout-block--${tone}`} id={idOf(ci,ti,bi)} data-handout-location key={bi}>
           <div className="zs-handout-kind"><span>{label}</span>{b.title&&<strong>{b.title}</strong>}{b.sourceBlockIndexes?.length>0&&<button className="zs-text zs-block-source" onClick={()=>onSource(b)}>来源 ↗</button>}</div>
-          {kind==='example'?<><div className="zs-example-label">题干</div><MarkdownText text={b.stem??''} labels={labels}/>{b.solution?.trim()?<details className="zs-example-solution"><summary>查看解答</summary><MarkdownText text={b.solution} labels={labels}/></details>:<small className="zs-muted">课堂未提供解答</small>}</>:<MarkdownText text={b.text??b.displayText??''} labels={labels}/>}
+          <LectureBlockBody block={b}/>
         </section>;})}
       </article>)}</section>)}
       </div>

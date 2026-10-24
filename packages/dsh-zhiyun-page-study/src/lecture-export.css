@@ -1,0 +1,51 @@
+#zs-lecture-export{position:absolute;left:-100000px;top:0;width:178mm;pointer-events:none;background:#fff;color:#172c27}
+#zs-lecture-export .zs-pdf{font:11pt/1.85 "Microsoft YaHei","Noto Sans CJK SC",sans-serif;background:#fff;color:#172c27;text-align:left;overflow-wrap:anywhere}
+#zs-lecture-export h1,#zs-lecture-export h2,#zs-lecture-export h3,#zs-lecture-export h4{color:#172c27;font-weight:600;line-height:1.45;break-after:avoid-page}
+#zs-lecture-export h1{font-size:25pt;margin:12pt 0}
+#zs-lecture-export h2{font-size:19pt;margin:0 0 20pt}
+#zs-lecture-export h3{font-size:14pt;margin:24pt 0 6pt}
+#zs-lecture-export h4{font-size:10pt;margin:18pt 0 6pt;color:#45675a}
+#zs-lecture-export p{margin:7pt 0;orphans:3;widows:3}
+#zs-lecture-export a{color:inherit;text-decoration:none}
+#zs-lecture-export button{display:none!important}
+#zs-lecture-export img,#zs-lecture-export svg{max-width:100%;height:auto}
+#zs-lecture-export table{width:100%;border-collapse:collapse;font-size:9pt;table-layout:auto}
+#zs-lecture-export th,#zs-lecture-export td{border:1px solid #cfdad4;padding:6pt;overflow-wrap:anywhere}
+#zs-lecture-export thead{display:table-header-group}
+#zs-lecture-export tr,#zs-lecture-export img{break-inside:avoid}
+#zs-lecture-export pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:9pt;background:#f2f5f1!important;color:#172c27!important;border:1px solid #d5dfd8;padding:10pt}
+#zs-lecture-export blockquote{margin:10pt 0;padding-left:12pt;border-left:2pt solid #a6bfb2;color:#45675a}
+#zs-lecture-export .katex-display{overflow:visible;max-width:100%;font-size:.95em;break-inside:avoid}
+#zs-lecture-export .zs-pdf-title{padding:14mm 0 10mm;border-bottom:2pt solid #326452}
+#zs-lecture-export .zs-pdf-title>span,#zs-lecture-export .zs-pdf-map-sheet header>span{font-size:9pt;letter-spacing:.1em;color:#45675a}
+#zs-lecture-export .zs-pdf-title small,#zs-lecture-export .zs-pdf-source{font-size:9pt;color:#647b70}
+#zs-lecture-export .zs-pdf-warning{font-size:9pt;color:#765a28;border-left:2pt solid #d5bd8a;padding-left:9pt}
+#zs-lecture-export .zs-pdf-contents{margin:10mm 0}
+#zs-lecture-export .zs-pdf-contents ol{padding-left:18pt;font-size:10pt}
+#zs-lecture-export .zs-pdf-contents>ol>li{margin:8pt 0}
+#zs-lecture-export .zs-pdf-chapter{break-before:page;padding-top:4mm}
+#zs-lecture-export .zs-pdf-chapter h2 small{display:block;font-size:9pt;font-weight:400;color:#647b70;margin-bottom:9pt}
+#zs-lecture-export .zs-pdf-block{margin:14pt 0}
+#zs-lecture-export .zs-example-label{font-size:9pt;color:#647b70;margin:10pt 0 4pt}
+#zs-lecture-export .zs-pdf-map-sheet{break-before:page;padding-top:8mm}
+#zs-lecture-export .zs-pdf-map-sheet header{margin-bottom:9mm}
+#zs-lecture-export .zs-pdf-map-sheet header h2{font-size:18pt;margin:8pt 0}
+#zs-lecture-export .zs-pdf-map-sheet header p{font-size:9pt;color:#647b70}
+#zs-lecture-export .zs-pdf-map-chapter{break-inside:avoid}
+#zs-lecture-export .zs-pdf-map-chapter+.zs-pdf-map-chapter{margin-top:9mm}
+#zs-lecture-export .zs-pdf-map-root{padding:12pt 15pt;border:1.2pt solid #326452;border-radius:5pt;font-size:13pt;background:#edf3ef;break-after:avoid}
+#zs-lecture-export .zs-pdf-map-branches{list-style:none;padding:0 0 0 24pt;margin:0 0 0 16pt;border-left:1pt solid #a4bbaf}
+#zs-lecture-export .zs-pdf-map-branches li{position:relative;display:flex;gap:12pt;align-items:baseline;border:1pt solid #cddbd3;border-radius:4pt;padding:10pt 12pt;margin:12pt 0;break-inside:avoid;min-height:40pt}
+#zs-lecture-export .zs-pdf-map-branches li:before{content:"";position:absolute;left:-25pt;top:20pt;width:24pt;border-top:1pt solid #a4bbaf}
+#zs-lecture-export .zs-pdf-map-branches li span{font-size:9pt;color:#647b70}
+#zs-lecture-export .zs-pdf-map-branches li strong{font-size:11pt;font-weight:500}
+#zs-lecture-export .zs-pdf-review{break-before:page}
+@media print{
+  @page{size:A4;margin:18mm 16mm}
+  html,body{height:auto!important;min-height:0!important;overflow:visible!important;background:white!important;color:#172c27!important;margin:0!important;padding:0!important}
+  body>*:not(#zs-lecture-export){display:none!important}
+  #zs-lecture-export{position:static!important;width:auto!important;pointer-events:auto;overflow:visible!important}
+  #zs-lecture-export *{box-sizing:border-box;print-color-adjust:exact;-webkit-print-color-adjust:exact;text-shadow:none!important;box-shadow:none!important}
+  #zs-lecture-export .zs-pdf{color-scheme:light;--foreground:#172c27;--background:#fff;max-width:none!important}
+  #zs-lecture-export [class*="overflow"]{overflow:visible!important;max-height:none!important}
+}

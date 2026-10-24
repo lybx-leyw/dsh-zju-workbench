@@ -353,7 +353,7 @@ body[data-zhiyun] .zs-layer-note { display:flex; flex-wrap:wrap; gap:10px; color
 body[data-zhiyun] .zs-handout { width:100%; min-width:0; max-width:1200px; margin-inline:auto; container:handout / inline-size; --zs-reader-link:var(--zy-accent); }
 body[data-zhiyun][data-ds-dark-theme] .zs-handout { --zs-reader-link:#a4c8fa; }
 body[data-zhiyun] .zs-handout .zs-text { color:var(--zs-reader-link); }
-body[data-zhiyun] .zs-handout-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:52px; padding:4px 0 18px; border-bottom:1px solid var(--zy-line); }
+body[data-zhiyun] .zs-handout-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; min-height:52px; padding:4px 0 18px; border-bottom:1px solid var(--zy-line); }
 body[data-zhiyun] .zs-handout-meta { display:flex; align-items:baseline; justify-content:flex-end; flex-wrap:wrap; gap:6px 14px; color:var(--zy-muted); text-align:right; }
 body[data-zhiyun] .zs-handout-meta strong { font-size:13px; font-weight:500; }
 body[data-zhiyun] .zs-handout-meta small { font-size:12px; }
@@ -836,3 +836,6 @@ body[data-zhiyun] .zs-bank-filters select { min-width:130px; max-width:100%; pad
 body[data-zhiyun] .zs-bank-field textarea { box-sizing:border-box; width:100%; padding:12px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-text); font:inherit; line-height:1.8; resize:vertical; }
 body[data-zhiyun] .zs-bank-self-grade { display:flex; flex-wrap:wrap; gap:8px; }
 body[data-zhiyun] .zs-bank-feedback p, body[data-zhiyun] .zs-bank-question-body p { white-space:pre-wrap; overflow-wrap:anywhere; }
+body[data-zhiyun] .zs-handout-export { display:flex; flex-direction:column; align-items:flex-end; gap:5px; margin-left:auto; max-width:300px; }
+body[data-zhiyun] .zs-handout-export button { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:12px; }
+body[data-zhiyun] .zs-handout-export small { color:var(--zy-muted); font-size:11px; line-height:1.6; text-align:right; }

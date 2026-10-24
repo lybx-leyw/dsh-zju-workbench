@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,symlink} from 'node:fs/promises';
 import path from 'node:path';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
 import {chromium} from 'playwright';
 import {initialize,runHost,root} from './profile.mjs';
 const artifacts=path.join(root,'artifacts/study');await mkdir(artifacts,{recursive:true});
@@ -177,6 +179,26 @@ try{
   await page.screenshot({path:path.join(artifacts,'branch-board.png'),fullPage:true});
   await page.getByRole('tab',{name:'知识点',exact:true}).click();
   const reader=page.locator('.zs-handout'),paper=reader.locator('.zs-handout-main');
+  // Export uses its own full-document render, including solutions hidden in the reader.
+  await page.evaluate(()=>{window.lecturePdf={save:filename=>new Promise(resolve=>{window.__pdfFilename=filename;window.__pdfResolve=resolve;window.__pdfReady=true;})};});
+  await reader.getByRole('button',{name:'导出 PDF',exact:true}).click();
+  await page.waitForFunction(()=>window.__pdfReady===true);
+  assert.match(await page.evaluate(()=>window.__pdfFilename),/\.pdf$/);
+  assert.equal(await page.locator('#zs-lecture-export .zs-pdf-chapter').count(),2);
+  assert.match(await page.locator('#zs-lecture-export').innerText(),/知识图谱/);
+  assert.match(await page.locator('#zs-lecture-export').innerText(),/因此概率为 1\/2/);
+  await page.emulateMedia({media:'print'});
+  assert.equal(await page.locator('.zs-study-layout').isVisible(),false,'application chrome is excluded from the PDF');
+  const pdfFile=path.join(artifacts,'lecture-and-graph.pdf');
+  const pdf=await page.pdf({path:pdfFile,format:'A4',preferCSSPageSize:true,printBackground:true});assert.ok(pdf.subarray(0,5).toString()==='%PDF-');
+  try{
+    const {stdout}=await promisify(execFile)('pdftotext',['-enc','UTF-8',pdfFile,'-']);
+    assert.match(stdout,/知识图谱/);assert.match(stdout,/分布的应用/);assert.match(stdout,/均匀分布下/);assert.ok(!stdout.includes('全局题库'));
+    await promisify(execFile)('pdftoppm',['-f','1','-l','8','-scale-to','1200','-png',pdfFile,path.join(artifacts,'lecture-pdf-page')]);
+  }catch(error){if(error.code!=='ENOENT')throw error;}
+  await page.emulateMedia({media:'screen'});await page.evaluate(()=>window.__pdfResolve({canceled:false}));
+  await page.locator('#zs-lecture-export').waitFor({state:'detached'});
+  assert.equal(await paper.isVisible(),true,'normal reading is restored after PDF export');
   await paper.getByRole('heading',{name:'随机变量与概率分布',exact:true}).waitFor();
   assert.equal(await page.getByRole('navigation',{name:'讲义目录',exact:true}).count(),1);
   const typography=await paper.locator('.zs-handout-block p').first().evaluate(el=>({font:parseFloat(getComputedStyle(el).fontSize),line:parseFloat(getComputedStyle(el).lineHeight)}));

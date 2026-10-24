@@ -22,11 +22,12 @@
 //    本包是 `"type": "module"`，所以用 createRequire 而不是把文件改成 .cjs。
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, shell, dialog } = require('electron');
 import { appendFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startHost } from './boot.js';
+import { createLecturePdfHandler } from './lecture-pdf.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -272,6 +273,7 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
     ipcMain.on('launcher:retry', () => { void boot(); });
     ipcMain.handle('launcher:snapshot', () => state);
+    ipcMain.handle('lecture:pdf-save', createLecturePdfHandler({getWindow:()=>win,getHostUrl:()=>host?.url,dialog,downloads:()=>app.getPath('downloads')}));
     void boot();
   });
 
