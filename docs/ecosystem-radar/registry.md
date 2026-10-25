@@ -2723,3 +2723,25 @@
 | `Microqian2th/dsh-codex-effort-slider` | A 原生DSH | **MIT** ✅ | 推理等级滑条（UI） | 无增益 | 🔵 | proposed | 2026-10-25 | ★205、JS、push 2026-10-18。纯 UI 外观件，**不产生能力**；登记以示已扫过 |
 | `howmp/dsh-pentest` | A 原生DSH | **无许可证** ⛔ | 渗透测试模式 | 无关 | ⛔ | rejected | 2026-10-25 | ★608、JS、push 2026-10-09、`license: null`。功能域无关 + 无证，两条都不过 |
 | `csyangwen/dsh-memory-evolve` | A 原生DSH | **MIT** ✅ | 跨会话长期记忆 + 技能自进化 | 与 `dsh-memory-toolkit`/`me-memory` **重复** | 🔵 | proposed | 2026-10-25 | ★441、JS、push 2026-09-29。五轨记忆 + git 分支感知 + 四轨待办 —— 与本仓「记忆」链路及「今天」页的待办**双域重叠** |
+
+---
+
+### 第六十九轮 · 2026-10-25 · B 组派生 · 轴「月历分格：先证伪自己的缺陷报告，再评估替换方案」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `fullcalendar/fullcalendar` | B 其他JS | **MIT** ✅（npm `license` / GitHub `spdx_id` / 包内 `LICENSE.txt` 三处一致） | 规划页月历网格 | **重复且可强化** | 🟢 | proposed | 2026-10-25 | ★20,719 / fork 3,717 / push 2026-10-16。**锁 `5.11.5` 不是 latest**：v7 `7.1.3` 解包 **4.1 MB** 且依赖 `preact`+`@full-ui/headless-calendar`，v5.11.5 **零依赖、1.5 MB、UMD**。esbuild 实测 **JS 77.7 KB + CSS 10.0 KB（gzip）**。⚠ **判 🟢 的理由本轮被削弱**：`buildMonthCalendar()` 实测 **2020–2030 共 132 个月 + 264 次翻月全对**（`dowOf(firstAt)` 与 `dowOf(firstUtc)` 在 `Asia/Shanghai` 下恒等）→ 本包**修不了任何缺陷**，只提供「同一口径的第二份实现」。骨架 `dsh-radar-fc-month`，README 首屏要求「**先补 12 行性质断言，再决定要不要 77 KB**」，并新增 **H-0**「是否还需要外部兜底」 |
+| `bigcalendar/react-big-calendar` | B 其他JS | **MIT** ✅ | 月/周/日视图 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★8,766、push 2026-06-01（**五个月未动**）、解包 **103 MB**。React 组件、**不导出「只算格子」的纯函数** → 与 🟢 同一件事的更大方案 |
+| `ggaabe/rrule-temporal` | B 其他JS | **MIT** ✅ | 重复规则展开 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★118、npm `rrule-temporal@2.2.8`（2026-10-01）、1.8 MB。RRULE→Temporal 区间展开。本仓**没有 RRULE 概念**（`{every,unit,anchor}`），接进来 = 第二套重复规则模型；真正的落点是 r66 的 `MAGMA27/dsh-calendar` |
+| `elastic/rrule-es` | B 其他JS | **Apache-2.0** ✅ | 同上 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★20、141 KB、push 2025-11-20。同域更小实现，同上理由 |
+| `rrulenet/core` | B 其他JS | **MIT** ✅ | 同上 | 重复且无增益 | ⛔ | rejected | 2026-10-25 | ★0 / fork 0 / 2026-10-20 建仓。topics 齐全但零使用者；又一套 recurrence engine |
+| `fullcalendar/temporal-polyfill` | B 其他JS | **`license: null`** ⛔ | 日期运算底层 | — | ⛔ | rejected | 2026-10-25 | ★783、push 2026-10-13、9.1 MB。**无许可证 → 硬门槛排除、不摘码**。⚠ 若真需要 Temporal，用 npm `temporal-polyfill@1.0.6`（**MIT**，esbuild 实测 gzip **19.8 KB**），不要这个无证 fork |
+| `INTECH-Software-House/chronera-js` | B 其他JS | **Apache-2.0** ✅ | 日期/时区工具箱 | 无关（全域重叠） | ⛔ | rejected | 2026-10-25 | ★3、2026-10-19 建仓。「date/time/calendar/era/locale/timezone toolkit」—— 本仓 `time.js` 已把时区归日/周界/月历全做了，且它新到无人验证 |
+| `jkbrzt/rrule` | B 其他JS | **`NOASSERTION`** ⚠ | 重复规则 | — | ⚠ 待核 | pending-license | 2026-10-25 | ★3,748、push 2024-06-27（停更）。rrule 主仓，但 `LICENSE` 是长期双许可、GitHub 判 NOASSERTION → **许可证待人工核验，不采用、不摘取任何代码** |
+
+> **流程注记（本轮最重要的一条，建议写进 skill）**：本轮第一版报告据「手抄算式复算」判
+> `buildMonthCalendar()` **漏格**，并已写进骨架 README；后来**改为直接 import 本仓模块实跑**，
+> 132 个月全对 → **整条结论撤回**。翻车原因两次：① 手抄上海日归日时按宿主时区近似；
+> ② `Intl.DateTimeFormat('en-US', { dateStyle, weekday })` 在 Node 22.13 **抛
+> `TypeError: Invalid option : option`**，改完又让 `weekday` 被静默忽略。
+> → **规则：任何「本仓行为」的断言必须 import 实跑；复算只能解释，不能下判断。**
