@@ -2814,3 +2814,29 @@
 > `dsh-math-tex` 用 oracle 判红字并**重排段落级结构**——后者对**对话流**是对的，对**笔记库**会拆段落。
 > ⑥ **未出骨架**：五条门（🟢 / 许可 / 可锁版 / 不改上游 / 宿主窗口一致）只过两条，硬出即再造一个
 > `dsh-radar-credit-audit-vendor@1.7.0` 式占位依赖。
+
+---
+
+## 2026-10-26 · B 组（浙大场景）· 派生轴「拼题A 做题进度」· r72
+
+> 关键词：`pintia in:name` / `pintia language:typescript` / `pintia language:javascript` / `pintia language:python` /
+> `online judge submit language:javascript` / `zju cc98 language:typescript` / `zju webvpn language:javascript` /
+> `competitive programming judge sandbox language:javascript` 等 14 次（#4 传输截断）。**0 次 403，本轮完整。**
+> 许可证以 GitHub API `license.spdx_id` 为准，`vscode-pintia` 另通读 `LICENSE` 全文。
+> 本轮首次登记 **10 行** → 🟢 0 / 🟡 1 / 🔵 4 / ⚠ 1 / ⛔ 4（⚠ 那条同时满足「无许可证 → ⛔」，列上按 ⚠ 待核保留，实际已排除）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `jinzcdev/vscode-pintia` | B 其他JS（VS Code 扩展，TS） | **MIT** ✅（仓库根 `LICENSE` 1,073 B **全文读过**，`Copyright (c) 2022-present jinzcdev`，标准 MIT 无附加；`package.json.license` 同口径） | 刷题（拼题A 做题进度 / 提交 / 评测结果 / 答题计时） | **重复且可强化** | 🟡 | proposed | 2026-10-26 | ★36 / fork 2 / 27,410 KB / `0.11.0`（`preview:true`），建仓 2022-04-19、push 2026-10-24。**不可锁版**：`registry.npmjs.org/vscode-pintia` → **HTTP 404 `{"error":"Not found"}`**；且 `engines.vscode ^1.66.0`、`main: ./out/extension`、业务层深耦合 `vscode.*` → 只能「借语义自写」。**判据①✅**：落点是既有 `ptaRead` 动作面（`campus/src/index.js:583`）与规划页既有拼题A 行（`page-planning/src/index.js:534-548`），不新增面板。**判据②✅**：现有答「哪些题集没截止」，新增答「这套题做了几道」。**判据③⚠ 部分成立**（有本仓没有的三态口径/提交链路/轮询语义，但调不到它的实现）→ **因此判 🟡 不判 🟢**。**三处交叉核对**（TS/Python/本仓）在**读侧**逐字一致（`problemSetProblem` / `problemSetProblems` / `/exam-problem-status`）→ 读侧协议可信；**写侧只有两个别人的实现跑过** → 要用必须真机验证。骨架 `packages/dsh-radar-pta-progress`（B 类，`dependencies` 空） |
+| `jinzcdev/pintia-solutions` | B 其他JS | MIT ✅ | 刷题 | 重复且无增益（内容库） | 🔵 | proposed | 2026-10-26 | 本轮再访，**维持 r39 的 🔵 不改判**（PTA 700+ 题解，C++，不可机器消费）。登记以免重扫 |
+| `lj200612/pintia-problemset-toolkit` | B 其他JS（Python CLI + WebUI） | **MIT** ✅ | 刷题 / 题库导出 | 仅供参考（**交叉核对物**） | 🔵 | proposed | 2026-10-26 | ★0 / 186 KB / push 2026-08-03。**非 JS，不进集成候选**，但它在本轮承担了一个不可替代的角色：**第三方独立实现**，用来交叉核对本仓的协议假设。三条贡献：①`problemSetProblem` 键与本仓逐字一致；②「缺字段」的确只应视为未作答；③ 它**另有一个**状态端点 `GET /api/exams/{examID}/problem-sets/{psID}/problem-status`（本仓与 vscode-pintia 都用 `/exam-problem-status`）→ **两套端点是否等价本轮未核**（TODO-4），不据此判本仓读法有误 |
+| `Dichgrem/Pintia_to_md` | B 其他JS（油猴脚本 + TS） | MIT ✅ | 题库导出 Markdown | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★2 / 8.6 MB（大头是截图）/ push 2026-04-11。`src/pintia-api.ts` 3.5 KB + `src/export-selected.ts` 10 KB。**增益核算**：本仓 `pta.problem()` 已返回完整题面（含 LaTeX，支持 offset 分页），导出成 Markdown 的核心是「题面 → md」，本仓 `core-parser` 已有 md 管线 → 只剩一个 `fetch` 循环，自写约 20 行。**判据③不成立** |
+| `qixuancao/pintiaskillmcp` | B 其他JS（Agent Skill） | **MIT** ✅ | 刷题（AI 助教） | 仅供参考（**伦理边界范本**） | 🔵 | proposed | 2026-10-26 | ★0 / 20 KB / push 2026-04-24。名字带 `mcp` 但仓库里是 `.agents/skills/pintia-learning-assistant/`（SKILL.md + 3 个 reference md），**没有 server 代码**。唯一实质内容是 `references/safety-boundaries.md`：「*No bypassing authentication, captchas, or rate limits. No exam cheating workflows. No unattended bulk submission. Never expose cookie/token/password in output.*」→ 本轮把它当作**提交链路的伦理基线**写进骨架 TODO-3 |
+| `bzjdtc/pintia_paste` | B 其他JS（油猴脚本） | MIT ✅ | 刷题 | **无关**（绕过平台限制） | ⛔ | rejected | 2026-10-26 | ★10 / 19 KB。把代码粘进 PTA 答题框以绕过粘贴限制。**本仓不做这类事**：其一它绕的是平台限制，其二 19 KB 无可复用层 |
+| `LuBanQAQ/pintia-script` | B 其他JS（油猴脚本） | MIT ✅ | 刷题 | **无关**（绕过平台限制） | ⛔ | rejected | 2026-10-26 | ★7 / **8 KB** / push 2025-11-25。同上，体量过小 |
+| `HZ-Abox/pta-auto-submit` | B 其他JS（Agent Skill） | MIT ✅ | 刷题 | **无关**（伦理红线） | ⛔ | rejected | 2026-10-26 | ★2 / 33 KB / push 2026-07-07。自述「**自动登录，抓题、解题、提交，一条龙跑完一套试卷**」。与 `qixuancao` 的边界文件**正相反** → 即使 MIT 也**不采纳、不借鉴**：自动解题 + 批量代交正是本仓明确不做的事 |
+| `gautammehendale/codearena` | B 其他JS（MERN 全栈） | MIT ✅ | 判题 | **无关**（自建平台） | ⛔ | rejected | 2026-10-26 | ★0 / 276 KB。自建 OJ 平台（自带题库 + Docker 判题）。**不是可嵌入层**，且方向相反（我们要接**别人的**题库，不是另建一个） |
+| `diredocks/pintia-mcp` | B 其他JS（MCP server，TS） | **无许可证**（`license: null`） | — | — | ⚠ | rejected | 2026-10-26 | ★0 / 217 KB / **archived=true**（2025-10-02 归档）。无许可证 + 已归档 → **⛔ 排除，不摘任何代码**。列在 ⚠ 位是为留下「曾评估过」的痕迹 |
+
+> **本轮已登记再访（不改判）**：`Slowist-Lee/website-converter`（⛔，无许可证）、`3-Tian/zju-paper-fetcher`（🔵）、
+> `baihe26/zju-literature-downloader`（🟡，★35 push 10-23 仍在维护）。
