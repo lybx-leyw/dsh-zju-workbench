@@ -229,6 +229,70 @@ export function advanceBy(iso, repeat) {
 }
 
 /**
+ * 按月推进时**要落在哪一天**。
+ *
+ * # 为什么不能直接用「上一条的日号」
+ *
+ * 普通条目上「日号」是用户自己选的（每月 31 日交材料）。但夹住之后
+ * 2 月只有 28 日，**再往下推就一路是 28 日** —— 实测
+ * `1/31 → 2/28 → 3/28 → 4/28 …`，永远回不到 31 日。
+ * 这不是"夹住"的本意：用户要的是「每月最后一天」这一档，不是「跌到 28 就锁死」。
+ *
+ * 所以第一次夹住时把**原始日号**记在条目上；以后每次都从那个日号重新夹。
+ * 没夹住（目标月有这一天）就不记，行为与从前完全一致。
+ *
+ * @param item - 现有条目。
+ * @returns 1–31 的原始日号；没有记录时返回 null。
+ */
+export function originalDayOf(item) {
+  const stored = Number(item?.repeatDay);
+  if (Number.isInteger(stored) && stored >= 1 && stored <= 31) return stored;
+  return null;
+}
+
+/** 按天/月推进时用的起点日号：有历史原日号就沿用它。 */
+function anchorDayNumber(baseIso, item) {
+  const at = Date.parse(baseIso);
+  if (Number.isNaN(at)) return null;
+  return originalDayOf(item) ?? new Date(at).getUTCDate();
+}
+
+/**
+ * 把一个「年 / 月（0 起）」往后推 N 个月。
+ *
+ * 与 `advanceBy` 里那段不同：这里只算**目标是哪个月**，不带走日号 ——
+ * 日号由调用方按「原日号 vs 月末」自己夹。
+ */
+function addMonths(year, month, delta) {
+  const zero = year * 12 + month + delta;
+  return { y: Math.floor(zero / 12), m: ((zero % 12) + 12) % 12 };
+}
+
+/** 「原始日号」的字段名，写进条目，跟着一直往下传。 */
+export const REPEAT_DAY_FIELD = 'repeatDay';
+
+/**
+ * 算下一条该带的原始日号。
+ *
+ * - 非按月：返回 `undefined`（不带这个字段）；
+ * - 按月且目标月**放不下**原日号：返回原日号，让它一路夹下去；
+ * - 按月且目标月放得下：返回 `undefined` —— 日号已经回到原位，不需要再记。
+ *
+ * @param item - 现有条目（本条的 `due` 是**起点**）。
+ * @param due - 推进后的 `due`。
+ * @param unit - 周期单位。
+ * @returns 要写进 `repeatDay` 的值，或 undefined 表示不写。
+ */
+function carriedDay(item, due, unit) {
+  if (unit !== 'month') return undefined;
+  const at = Date.parse(due);
+  if (Number.isNaN(at)) return undefined;
+  const original = anchorDayNumber(item.due, item);
+  if (original === null) return undefined;
+  return new Date(at).getUTCDate() === original ? undefined : original;
+}
+
+/**
  * 勾完成之后该生成的下一次。
  *
  * # 锚点决定从哪算
@@ -247,10 +311,27 @@ export function advanceBy(iso, repeat) {
  */
 export function nextOccurrence(item, now = Date.now()) {
   if (!item?.repeat) return null;
-  const { anchor } = item.repeat;
+  const { anchor, unit } = item.repeat;
   const base = anchor === 'done' ? new Date(now).toISOString() : item.due;
   if (!base) return null;
-  return advanceBy(base, item.repeat);
+  const at = Date.parse(base);
+  if (Number.isNaN(at)) return null;
+
+  // 按月推进**直接算目标月**，而不是"先夹住再推"：
+  // 先夹住会把 2 月的 28 当成起点，于是 3 月得到 28 —— 日号从此塌下去。
+  // 目标月由 `addMonths` 算出，日号取「原日号」与「目标月长」的较小者。
+  const original = anchorDayNumber(base, item);
+  if (unit !== 'month' || original === null) return advanceBy(base, item.repeat);
+
+  const head = new Date(at);
+  const step = Number(item.repeat.every) || 1;
+  const target = addMonths(head.getUTCFullYear(), head.getUTCMonth(), step);
+  const lastOfTarget = new Date(Date.UTC(target.y, target.m + 1, 0)).getUTCDate();
+  const day = Math.min(original, lastOfTarget);
+  return new Date(Date.UTC(
+    target.y, target.m, day,
+    head.getUTCHours(), head.getUTCMinutes(), head.getUTCSeconds(), head.getUTCMilliseconds(),
+  )).toISOString();
 }
 
 /**
@@ -375,6 +456,8 @@ export function setDone(current, done, now = Date.now()) {
   if (done && !wasDone) {
     const at = nextOccurrence(current, now);
     if (at) {
+      const origin = current.repeatFrom ?? current.id;
+      const day = carriedDay(current, at, current.repeat?.unit);
       next = {
         ...current,
         id: newId(now),
@@ -384,8 +467,68 @@ export function setDone(current, done, now = Date.now()) {
         createdAt: seconds,
         updatedAt: seconds,
         splitInto: [],
+        // 同一条重复的每一代都指回**第一代**，撤销勾选时据此收回多出来的副本
+        repeatFrom: origin,
       };
+      if (day === undefined) delete next.repeatDay;
+      else next.repeatDay = day;
     }
   }
   return { item, next };
+}
+
+/**
+ * 撤销完成时，**因为这次完成而多出来的副本**。
+ *
+ * ⚠️ 排查记录（留给下一轮，别再重走）：上一版把"收不到"归因于 `node -e` 的对象比较行为，
+ * 那是错的。真因是**判定顺序**：取消勾选会清掉 `doneAt`，于是"勾错原始那条"与
+ * "勾错副本"留下的条目**完全同形**，只能靠 `due` 区分；而当时的判据先比 `due`
+ * 再比 `id`，在"被撤的就是原始那条"这条真实路径上等于拿自己和比自己，恒不成立。
+ * 教训：跨对象的行为断言一律落到 `tests/` 里跑，别用 `-e` 或 `/tmp` 脚本下结论。
+ *
+ * # 为什么需要它
+ *
+ * 勾完成会顺带生成下一条（见 `setDone`）。用户点错了再取消勾选时，下一条
+ * 没人收 —— 于是列表里出现**两条同一截止日、id 不同、都未完成**的副本；
+ * 再勾一次又多一条。这不是算法算错，是"生成"没有对应的"收回"。
+ *
+ * # 收哪一条
+ *
+ * 只收**当前这条自己生成的那一代**：同一条链、`due` 更晚、还没被勾过。
+ * 不做更聪明的推测：用户可能已经给下一条改过标题，那就当他认领了，不动。
+ *
+ * # 判定顺序里有两个坑（都是实跑踩出来的）
+ *
+ * 1. **先判 `id` 再判 `due`**。取消勾选后列表里通常会同时存在「原来那条（已完成）」
+ *    和「刚生成的那条（刚被取消勾选）」。前者的 `due` **比后者早**，所以"更晚"
+ *    天然把它挡掉；但真实的撤销路径里，被撤的那条往往本来就是当前这条 ——
+ *    若先按 `due` 判，会用"自己"去比"自己"，`at > mine` 恒为假，一条都收不到。
+ * 2. **`due` 相等的一律不收**。同一条截止日上的两条副本是**症状**，不是可收的对象：
+ *    收掉它等于随机删掉用户的一条待办。真正该收的是"往后挪的那一代"。
+ *
+ * @param items - 全量条目。
+ * @param current - 刚被取消勾选的这条。
+ * @returns 要删掉的条目 id 数组（可能为空）。
+ */
+export function recallGenerated(items, current) {
+  if (!current?.repeat) return [];
+  const origin = current.repeatFrom ?? current.id;
+  const mine = Date.parse(current.due);
+  if (Number.isNaN(mine)) return [];
+  const out = [];
+  for (const row of items ?? []) {
+    if (!row) continue;
+    if (row.id === current.id) continue;                   // 不可能是"自己生成的自己"
+    if ((row.repeatFrom ?? row.id) !== origin) continue;   // 别的重复链
+    if (!row.repeat) continue;
+    if (row.done || row.doneAt) continue;                  // 已经被做过的不收回
+    if (Array.isArray(row.splitInto) && row.splitInto.length > 0) continue;
+    const at = Date.parse(row.due);
+    if (Number.isNaN(at) || at <= mine) continue;          // 只收往后挪的那一代
+    out.push(row);
+  }
+  if (out.length <= 1) return out.map((row) => row.id);
+  out.sort((a, b) => Number(a.createdAt ?? 0) - Number(b.createdAt ?? 0)
+    || String(a.id).localeCompare(String(b.id)));
+  return [out[0].id];
 }

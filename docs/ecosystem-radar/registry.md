@@ -2745,3 +2745,43 @@
 > ② `Intl.DateTimeFormat('en-US', { dateStyle, weekday })` 在 Node 22.13 **抛
 > `TypeError: Invalid option : option`**，改完又让 `weekday` 被静默忽略。
 > → **规则：任何「本仓行为」的断言必须 import 实跑；复算只能解释，不能下判断。**
+
+---
+
+### 第七十轮 · 2026-10-26 · C 组派生 · 轴「重复规则的第二套口径：跳月 vs 夹月末」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `nradawg/rrule-expand` | B 其他JS（零依赖 TS） | **MIT** ✅（`LICENSE` 1,068 B 逐字读过，`Copyright (c) 2026 Nick Raddon`，无附加限制；`package.json` `license: MIT` 同口径） | 重复任务展开（规划页底座） | **重复且可强化**（强化点是记账口径，不是展开） | 🟡 | proposed | 2026-10-26 | ★0 / fork 0 / 33 KB / push 2026-08-20 / topics `icalendar`·`recurrence`·`rfc5545`·`typescript`·`zero-dependencies`。**npm 双路径均 404**（`rrule-expand` 与 `@nradawg/rrule-expand`）→ **不可锁版**、只能源码移植 → 按 §4.1 **不出骨架**。esbuild 实测 **14,756 B raw / 5,857 B gzip**。**实跑**（clone→`tsc`→调用）：`FREQ=MONTHLY` 从 1/31 起给 `01-31 03-31 05-31 07-31 08-31 10-31` —— **跳过 2 月不夹月末**，源码注释明说是避开「billing bug」；`WKST` 与 RFC 5545 自带例子逐条对上（`WKST=MO` → 8/10、8/24；`WKST=SU` → 8/17、8/31）；无 `COUNT`/`UNTIL` 且不给 `limit` 时**拒绝猜**（抛错）。**语义与本仓冲突**：本仓「每月 31 日」意图是**夹月末**（`1/31→2/28→3/31`，本轮 F-1 已修成此语义），它选**跳月** —— 两者各对，但「月报」≠「扣款」。✅ 只借它的三处**记账口径**（原日号携带 / 链回第一代 / 无 `limit` 不猜），⚠ 这三处本仓已用 ~60 行自建（`repeatDay` / `repeatFrom` / `nextOccurrence` 返回 null），故它的价值是**给 F-1 的决定提供反面先例**，不是提供实现。判 🟡 非 🟢：锁版门不过；判 🟡 非 🔵：唯一把「跳月 vs 夹月末」当**显式设计决策**写进注释的实现 |
+| `jkbrzt/rrule` | B 其他JS | **`NOASSERTION`** ⚠ | 重复规则 | — | ⚠ 待核 | pending-license | 2026-10-26 | ★3,748、push 2024-06-27（停更近两年）。rrule 主仓，`LICENSE` 为长期双许可 → GitHub 判 NOASSERTION。**许可证待人工核验，不采用、不摘取任何代码**。r69 亦命中同仓（`:2740`），本轮由 `rrule recurrence typescript` 二次命中，判决不变 |
+| `kanunnykov/rrule-by-pattern` | B 其他JS | **`NOASSERTION`** ⚠ | 重复规则（模式串，非 RRULE） | — | ⚠ 待核 | pending-license | 2026-10-26 | 展开输入是自定义模式串而非 RFC 5545，接入等于第二套规则语法 → 即便许可核清也只是 🔵。**不摘码** |
+| `martinhipp/rrule` | B 其他JS | **MIT** ✅ | 重复规则 | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★1、211 KB。rrule 的一份拷贝/精简，无独立口径 —— 与本仓 `{every,unit,anchor}` 三字段模型不可互换（它是完整 RRULE 语法） |
+| `rrulenet/rrule` | B 其他JS | **MIT** ✅ | 重复规则 | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★3、零依赖引擎。同域第三份实现。⚠ 与 `rrulenet/core`（r69 已登 ⛔，`registry.md:2737`）**同组织不同仓**，勿混 |
+| `lsndr/rrule-rust` | B 其他JS | **MIT** ✅ | 重复规则 | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★44，rust 核心 + wasm 绑定。本仓**无 wasm 工具链**，且 DSH 插件侧加载 `.wasm` 未验证过 → 接入成本远高于 60 行自建 |
+| `GhostPawJS/questlog` | B 其他JS | **MIT** ✅ | 任务管理（MCP + SQLite） | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★1、1,666 KB。MCP 服务 + SQLite 任务库，形态是「独立数据源」；本仓规划页已有 `local.json` + `entries.json` 两套存储，**再加一套 = 第三个真源**。另：`node:sqlite` 在无 FTS5 构建上出过事（见 `Jesse-njx/dsh-memory` 的 A 类第五道门） |
+| `Hukutus/todo-calendar` | B 其他JS | **MIT** ✅ | 待办 + 月历 | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★0。todo + 日历视图，**无重复规则**；月历部分与 `buildMonthCalendar()` 同域（r69 已证 132/132 全对） |
+| `benginN/caltask` | B 其他JS | **MIT** ✅ | 日历任务 | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★54。同上，无重复规则实现 |
+| `careilly/obsidian-rrule` | B 其他JS | **无许可证** ⛔ | Obsidian 插件内 RRULE | 无法判定 | ⛔ | rejected | 2026-10-26 | ★0、2023-07-17 停更、`license: null`。两条都不过（无证 + Obsidian 插件形态不可复用到 DSH 插件侧） |
+| `Roughbot/RRule-with-timezone` | B 其他JS | **无许可证** ⛔ | 带时区的 RRULE | — | ⛔ | rejected | 2026-10-26 | ★0、`license: null`。⚠ 反向印证：**"带时区"正是本仓 F-3 撤回的那条线** —— 存储 ISO 里没有设备时区信息，加了 `TZID` 也只在"发生时刻"层面正确，解决不了「写入时按谁的表」 |
+| `Aschenbath/Sysiphus` | B 其他JS | **MIT** ✅ | 待办 | 无关 | ⛔ | rejected | 2026-10-26 | ★7、5 年未动。纯 UI demo，无可嵌入逻辑 |
+| `zainali297/todo-app` | B 其他JS | **MIT** ✅ | 待办 CRUD | 无关 | ⛔ | rejected | 2026-10-26 | ★1。CRUD 练习项目 |
+| `Boisti13/project-manager` | B 其他JS | **MIT** ✅ | 项目管理 CRUD | 无关 | ⛔ | rejected | 2026-10-26 | ★1。同上 |
+| `hadi-es/todo-app-recurring` | B 其他JS | **MIT** ✅ | 重复待办 | 重复且无增益 | ⛔ | rejected | 2026-10-26 | ★0。**名字里有 `recurring`，代码里没有重复规则实现**（只有一次性 `due`）→ 只能当"这个词被滥用"的证据。⚠ 方法论：`in:name` 类关键词必须开仓验证，别信名字 |
+| `Matt-Vance/todo-list-app` | B 其他JS | **无许可证** ⛔ | 待办 CRUD | 无关 | ⛔ | rejected | 2026-10-26 | ★0、`license: null` |
+| `Arik2097/todo-api` | B 其他JS | **无许可证** ⛔ | 待办 API | 无关 | ⛔ | rejected | 2026-10-26 | ★0、`license: null` |
+
+> **流程注记（本轮最重要）**：本轮实质产出**全在本仓**，且其中两条是**我自己先判错、再撤回**。
+> ① **F-1 已修**：`1/31 → 2/28 → 3/28 → 4/28 …` 实跑复现 → 根因**不是 `advanceBy`**（夹月末是定义），
+> 而是"把夹过的结果当下一次起点"这一**用法**；改为 `nextOccurrence` 直接算目标月 + `repeatDay` 携带原日号，
+> 8 代实测 `[28,31,30,31,30,31,31,30]`。并**专门写一条测试钉住 `advanceBy` 的旧行为**，防止下轮有人把定义当缺陷改掉。
+> ② **F-2 已修**：r66 记的「勾→撤→再勾出两条副本」实跑复现（`同 due 副本数 2`）→ 加 `repeatFrom`（**恒指第一代**）
+> + `recallGenerated` 在同一次 `save()` 内收回，store / client / `local-done` 路由三处接线。判定顺序踩坑 40 分钟：
+> 取消勾选清掉 `doneAt` 后「勾错原始那条」与「勾错副本」**完全同形**，第一版先比 `due` 等于拿自己比自己，恒收不到；
+> 改「先判 `id`、`due` 相等一律不收」后通过。**同 `due` 副本是症状不是可收对象** —— 收它等于随机删用户待办。
+> ③ **F-3 撤回**：v1 判据（钟点漂移）双向误判、v2 判据（分钟一致性）实跑 5 个时区**全部存出 `:59` → 零判别力**，
+> `due-shape.js` 已删除，只留一条测试记录"为什么撤"；真解是写入侧钉 `+08:00`（TODO-1）。
+> ④ **测试**：`planning-repeat-chain` + `planning-repeat` + `planning-local` 共 **64 条全绿**；全量测试因
+> `dsh-radar-credit-audit-vendor@1.7.0`（npm 404）装不上而跑不了 —— 用 `git stash` 撤掉本轮改动重跑，
+> 剩余 9 条失败**一条不少在原地**，确认是环境性。⑤ **脚本日期仍错**：`radar-rotation.mjs` 用 UTC 取「今天」，
+> 此刻报 `2026-10-25 / same-day(exhausted)`，真日期是 **10-26（年积日 299 → C）**；两条路径都算 C **纯属巧合**。
+> 该缺陷在 `rotation-state.md` 已记 3 次仍未修 → **本轮人工按真日期取组**，修法见 TODO-0（1 行）。

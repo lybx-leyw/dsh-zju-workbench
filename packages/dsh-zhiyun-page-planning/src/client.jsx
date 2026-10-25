@@ -485,6 +485,16 @@ export function Planning({ ctx }) {
       const payload = await settings('local-done', { id: row.id, done: nextDone });
       if (payload?.ok === false) throw new Error(errorText(payload.error, 200));
       const created = payload?.next ?? null;
+      // 取消勾选时服务端会**收回**上次顺带生成的那一代（`recalled`）：
+      // 不跟着从列表里去掉，同一截止日就会出现两条副本，再勾一次又多一条。
+      const recalled = Array.isArray(payload?.recalled) ? payload.recalled : [];
+      if (recalled.length > 0) {
+        const drop = new Set(recalled.map(String));
+        setState((current) => ({
+          ...current,
+          local: (current.local ?? []).filter((item) => !drop.has(String(item.id))),
+        }));
+      }
       if (created) {
         setState((current) => ({
           ...current,
@@ -492,6 +502,8 @@ export function Planning({ ctx }) {
         }));
         const when = created.due ? whenIso(created.due) : null;
         setPlanMsg({ kind: 'ok', text: `这条会重复，下一次${when ? `排在 ${when}` : '已生成'}` });
+      } else if (recalled.length > 0) {
+        setPlanMsg({ kind: 'ok', text: `已取消完成，顺手收回了上次生成的下一次（${recalled.length} 条）` });
       }
     } catch (failure) {
       setState((current) => ({ ...current, local: before }));

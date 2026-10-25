@@ -250,3 +250,32 @@ test('本地规划不写进 entries.json（那是别人的内容的缓存，只�
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test('勾完成 → 取消：store 里那条派生副本真的被收回（端到端，不看返回值）', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'plan-local-recall-'));
+  const file = path.join(dir, 'local.json');
+  try {
+    const store = new LocalPlanStore(file);
+    const base = store.create({
+      title: '交月报', due: '2026-01-31T15:59:00.000Z',
+      repeat: { every: 1, unit: 'month', anchor: 'due' },
+    });
+
+    const r1 = store.setDone(base.id, true);
+    assert.ok(r1.next, '重复条目勾完成要生成下一次');
+    assert.equal(store.list().length, 2);
+
+    const r2 = store.setDone(base.id, false);
+    assert.deepEqual(r2.recalled, [r1.next.id], '取消勾选要收回它生成的那一代');
+    const rows = store.list();
+    assert.equal(rows.length, 1, '列表里只剩被撤销的那条，不是 2 条副本');
+    assert.equal(rows[0].id, base.id);
+    assert.equal(rows[0].done, false);
+
+    // 落盘也要是真删 —— 只改内存的话，重开页面副本又回来了
+    const reopened = new LocalPlanStore(file);
+    assert.equal(reopened.list().length, 1, '重新读盘后仍然只有一条');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
