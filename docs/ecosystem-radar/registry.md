@@ -2667,3 +2667,18 @@
 | `ADSR1042/Lazuli` | B 其他JS（浏览器插件） | **GPL-3.0** ⛔ | 选课助手 + 老师评分 | — | ⛔ | rejected | 2026-10-25 | ★50，push 2025-06-20。**许可证红线**，只登记不摘码。功能域与已登记的 `mycoursereviews` 重合 |
 | `PeiPei233/zju-score-push-template` | B 其他JS | **`license: null`** ⛔ | 成绩更新推送（钉钉） | — | ⛔ | rejected | 2026-10-25 | ★26，push 2024-06-26。无证 + 停更 16 个月 |
 | `Colamentos2023/ZJU_NewScoreGetter`（★2）、`YooLc/zju-score-monitor`（★2，MIT 但 2023 停更） | B 其他JS（Python） | **`null`** ⛔ / MIT | 成绩爬取 / 钉钉机器人 | 重复无增益 | ⛔ | rejected | 2026-10-25 | 「成绩出分推送」本轮**再次**四次撞到无证或停更（10-16 已有 `zjuGradeMonitor`、`ZJU-GRADES` 两条同因出局）→ 该能力在 GitHub 上只有个人爬虫、无可复用底座，**建议封板 3 个月** |
+
+### 第六十五轮 · 2026-10-25 · C 组 · 轴「时间预算：截止时间是点，还是块」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `SifisoScS/scheduler` | B 其他JS（TS 值对象库） | **MIT** ✅（spdx MIT；`LICENSE` 1,066 B；`package.json.license=MIT`） | 截止时间 / 周期计数 | **重复且可强化**（但增益不足） | 🟡 | proposed | 2026-10-25 | ★0，建仓 2026-10，push 2026-10-13，**npm 404（`registry.npmjs.org/@sifiso-guy%2Fscheduler` → Not Found）**。源码 13.1 KB 全文通读：只导出 `Deadline` + `Interval` + 两行 `validate`，是**值对象层不是调度器**。增益核算：本包需要 5 个语义，上游只覆盖 2 个（`msUntil` / `countBetween`），二者自写共约 7 行 → 判据③只部分成立，故 **🟡 不是 🟢**。硬约束：`new Deadline(null)` 抛错（本仓 `due:null` 是常态）、`everyMs` 只能等距（课表 13 节次有 3 种间隔 {50,70,105}）、`occurrencesBetween` 物化且上限 1000。骨架 `packages/dsh-radar-deadline-budget`，TODO-0（npm 404：等发布/vendor/自写 三选一）为阻塞项 |
+| `yhwlwl/study-planner` | B 其他JS（React+PWA，TS） | **AGPL-3.0** ⛔ | 学习计划排期 / schedule repair | 重复（排程引擎） | ⛔ | rejected | 2026-10-25 | ★7/4 fork，push 2026-08-22，`src/lib/planner.ts` 160 KB + `conflicts.ts` 18.8 KB + `versions.ts` 7.5 KB，topics 含 `constraint-scheduling`/`schedule-repair`/`minimal-disturbance`。**`LICENSE` 34,022 B 全文 AGPL-3.0**（首行写明 AGPLv3-or-later）→ 许可证红线，**只作需求证据、零代码摘取**。需求证据价值高：它证明「改计划要尽量少改（minimal disturbance）+ 先出候选再应用（preview before apply）」是真实产品需求，而本仓 `plans.js`/`pet.js` 无此概念。→ 该能力**只能自建**（§7-4） |
+| `a2105z/Chronos` | B 其他JS（Python） | MIT ✅ | 约束感知时间块排程 | 无关 | ⛔ | rejected | 2026-10-25 | ★0，push 2026-08-19。**Python，非 JS 栈**（能力描述「schedules tasks under availability and hard constraints」有价值，但栈不符） |
+| `KarimBk7/ReflowTask` | B 其他JS（Java） | MIT ✅ | 错过时间块自动重排 | 无关 | ⛔ | rejected | 2026-10-25 | ★0，push 2026-09-29。**Java，非 JS 栈**。能力描述「missed blocks are replanned automatically」与上一条同域 |
+| `pchinso/time-blocks-app` | B 其他JS（TS） | **`license: null`** ⛔ | 10 分钟粒度时间块 | — | ⛔ | rejected | 2026-10-25 | ★0，push 2026-01-07，仓库 82 KB。无证出局 |
+| `nishit546/OpenPrep-AI` | B 其他JS（JS/React） | MIT ✅ | 考试备考工作区 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★20（本轮最高）、push 2026-10-24（活跃）、20.9 MB。形态是**一整个备考工作区**（笔记解析 + PYQ + 自动排程 + Quiz），与本仓「学习/论文/今天/规划」四页**全域重叠** → 接它 = 第三套实现。不留模块 |
+| `itssourov13/study-planner-apk` | B 其他JS（RN/Expo） | MIT ✅ | 离线学习计划 App | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★3，push 2026-07-16。RN 整包 App，无可嵌入模块 |
+| `TiagoSBittencourt/Smart-Schedule` | B 其他JS（TS 全栈） | MIT ✅ | 生成周学习计划 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★3，push 2025-07-22。全栈 Web（含后端），与本仓「数据不出本机」相悖 |
+| `nizarmah/calendar-javascript-lib` | B 其他JS（JS） | MIT ✅ | 日历/事件库 | 重复且无增益 | 🔵 | proposed | 2026-10-25 | ★70（本轮第二高），但 **push 2021-02-20（5 年 8 个月停更）**，且本仓 `buildMonthCalendar` 已自写日历视图 |
+| `ramya0715/Student_Study_Planner` | B 其他JS（JS） | **`license: null`** ⛔ | 学习计划 | — | ⛔ | rejected | 2026-10-25 | ★70、push 2026-01-22，但 **无描述 + 无证**。本轮「★ 高 ≠ 可接」第二样本（第一是 r64 `Learning-at-ZJU-Helper` ★59 停更 23 个月） |
