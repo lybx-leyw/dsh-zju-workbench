@@ -1,0 +1,26 @@
+# 候选骨架：**未接入 profile**。
+#
+# 本档只有一条 insert，把锁版的 `@magma27/dsh-calendar@0.1.7` 挂成一个可
+# **单独挂起**的对照条目，便于评审时做「挂上 / 摘掉」差分。
+#
+# ⚠ 三条必须先读（否则会误以为本包只是一个「日历插件」）：
+#
+#   ① 上游是**双面插件**（node half + `dsh.client`），它会自己注册
+#      `shell.overlay`（全宽日历浮层）、`sidebar.footer.action`（侧栏底部的「日历」按钮）
+#      与 `settings.plugins.tab`（自己的设置卡）。
+#      → 本包的意图是**只取它的 `core/repeat.ts`**（纯函数，250 行），
+#        但只要这份 patch 生效，上面三处 UI 就会一起出现。见 README「判据 ①」。
+#        因此本 entry **不得**直接进入 `profiles/zhiyun-bench`，只能作为对照条目单独挂起。
+#
+#   ② 上游 patch 原文的 id 是 `ui-calendar`；本档用 `radar-repeat-law` 是**故意改名**：
+#      两个 id 同时存在会得到**两份**日历浮层。评审若不打算做差分，删掉本文件即可。
+#
+#   ③ 真正的落点不在 patch 里，而在 `packages/dsh-zhiyun-page-planning`：
+#      `src/local.js` 的 `advanceBy()` / `nextOccurrence()` / `setDone()`。
+#      见 README「接入点」与 `src/index.js` 的 TODO-1..TODO-4。
+- insert:
+    - id: radar-repeat-law
+      name: dsh-radar-repeat-law
+      config:
+        # 只有把这一项设成 true 才允许把上游的 UI 面一起挂上（默认 false = 只作对照）。
+        mountUpstreamUi: false
