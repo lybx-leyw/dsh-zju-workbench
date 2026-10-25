@@ -2706,3 +2706,20 @@
 | `Gvrzizo/lazy-tui` | B 其他JS | **无许可证** ⛔ | LAZY CLI 的 TUI 前端 | 无关 | ⛔ | rejected | 2026-10-25 | ★7，**C++**，`license: null`。两条硬门槛同时不过（非 JS 栈 + 无许可）。另：`language` 字段必须在 `repos/{owner}/{repo}` 详情里读，搜索结果页看不出来 |
 | `Light-zju/Zju-AI-Homework` | B 其他JS（实为 Python） | **MIT** ✅ | 2025 秋 AI 课程大作业答案 | 无关 | ⛔ | rejected | 2026-10-25 | ★80，push 2025-11-28。**是作业答案不是工具**，与本仓无功能关系；且「学生作业答案」进工作台有学术诚信风险，建议连线索都不留 |
 | `KqSMea8/zjuGradeMonitor` | B 其他JS（实为 Python） | **无许可证** ⛔ | 教务网成绩监控 | 重复且无增益 | ⛔ | rejected | 2026-10-25 | ★0，push 2019-01-25，7 年前的脚本。成绩读取已被 `dsh-zhiyun-source-zdbk` 覆盖 |
+
+---
+
+### 第六十八轮 · 2026-10-25 · A 组 · 轴「间隔重复的两处空转：`dueAt` 无人写、调度面无插座」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `omdsh-dev/DSH-better-sidebar` | A 原生DSH（**待核**：未见 `dsh.bundle.patch`） | **MIT** ✅ | 通用底座（侧栏宿主，第三方注册页面） | **全新**（侧栏宿主层） | 🟢 | proposed | 2026-10-25 | ★4,526（本轮最高）、push 2026-10-24、TS、7.6 MB、topics 含 `dsh-plugin`。价值是**被硬依赖**：`tyfforu/dsh-flashcard` 的 `cordis.patch.yml` 明写「must be installed and enabled in the same profile」，`inject` 三个 `@deepseek-ai/dsh-client-*`。⚠ **本轮未读其 `package.json`/patch/npm 元数据** → 可锁版性未核、A 类归属待核。⚠ **不出骨架**：需 `react@18` + client 注入，与本仓 `dsh-zhiyun-shell-workbench` 侧栏**只能二选一**（架构决策）。**不出骨架** |
+| `863683348/dsh-plugin-education` | A 原生DSH（`dsh.bundle.patch` 已核） | **MIT** ✅ | 备课/出题/闪卡/量规 | **重复且无增益** | 🔵 | proposed | 2026-10-25 | ★0、JS、npm `dsh-plugin-education@0.3.2` **存在**（可锁版 ✅）。它的 quiz 是「出题语料脚手架」而**无锚点**（本仓 `QUIZ_TYPES` 四型 + `blockIndex`/`page`/`atSec` 三点回链）→ 第二套互不连通的题模型。**M-2 风险**：仓库根提交了 4 个 `.npm-cache-pub*` 目录（`_cacache`/`_logs`），锁版会拖入缓存体积 |
+| `tyfforu/dsh-flashcard` | A 原生DSH（`dsh.bundle.patch` 已核） | **MIT** ✅ | 复习（右栏闪卡） | **重复且无增益** | ⛔ | rejected | 2026-10-15 | **维持原判（10-15 已登记），本轮补两条硬理由**：① `npm view dsh-flashcard` → **E404**（不可锁版，只能源码移植）；② 卡模型（自建 SM-2 卡）与 `dsh-zhiyun-core-quiz` 的 `QUIZ_TYPES` **不互通**，连「接进 `fsrsRating`」这一步都做不到。原 ⛔ 理由「SM-2 旧于 FSRS」较弱，本轮被这两条替代 |
+| `windli93/dsh-anki-plugin` | A 原生DSH（仅描述，无码） | **`license: null`** ⛔ | 复习 | 无法判定 | ⛔ | rejected | 2026-10-25 | ★0、**`size: 0 KB`**、`language: null`、`created` 与 `pushed` 同为 `2026-09-02T08:14`、描述 4 词 → **空仓库**。登记一行以免重扫 |
+| `ysr666/dsh-vision-router` | A 原生DSH | **MIT** ✅ | 截图/手写/公式识别 | 与 `modlens`/`dsh-ocr-web` **重复** | 🔵 | proposed | 2026-10-25 | ★1,174、JS、push 2026-10-24。独有形态是**「无 key 免费视觉链 + 多模型路由」**→ 增益在成本/可用性而非能力；与本仓「数据不出本机」（`host-office` 本地 OCR）相冲突，属产品决策 → 建议人工裁决 |
+| `Han-1413141/dsh-cost-meter` | A 原生DSH | **MIT** ✅ | 用量/成本/预算 | 与 `dsh-context`/`context-dashboard` **重复** | 🔵 | proposed | 2026-10-25 | ★524、JS、push 2026-10-25（最活跃）。会话与模型成本、token、预算、余额 —— 本仓 `context-dashboard` 已覆盖 |
+| `e2mcc/dsh-popout-sidebar` | A 原生DSH | **MIT** ✅ | 侧栏弹出到独立标签页 | 无增益（形态，非功能） | 🔵 | proposed | 2026-10-25 | ★205、JS、push 2026-10-10。多显示器使用场景，与浙大/考试/刷题/笔记/论文/锻炼**均无关**；仅登记 |
+| `Microqian2th/dsh-codex-effort-slider` | A 原生DSH | **MIT** ✅ | 推理等级滑条（UI） | 无增益 | 🔵 | proposed | 2026-10-25 | ★205、JS、push 2026-10-18。纯 UI 外观件，**不产生能力**；登记以示已扫过 |
+| `howmp/dsh-pentest` | A 原生DSH | **无许可证** ⛔ | 渗透测试模式 | 无关 | ⛔ | rejected | 2026-10-25 | ★608、JS、push 2026-10-09、`license: null`。功能域无关 + 无证，两条都不过 |
+| `csyangwen/dsh-memory-evolve` | A 原生DSH | **MIT** ✅ | 跨会话长期记忆 + 技能自进化 | 与 `dsh-memory-toolkit`/`me-memory` **重复** | 🔵 | proposed | 2026-10-25 | ★441、JS、push 2026-09-29。五轨记忆 + git 分支感知 + 四轨待办 —— 与本仓「记忆」链路及「今天」页的待办**双域重叠** |
