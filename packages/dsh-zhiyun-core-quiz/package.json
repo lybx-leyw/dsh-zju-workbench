@@ -16,6 +16,7 @@
     "./package.json": "./package.json",
     "./points": "./src/points.js",
     "./knowledge-points": "./src/knowledge-points.js",
+    "./upstream": "./src/upstream.js",
     "./client": "./lib/client.js"
   },
   "dsh": {

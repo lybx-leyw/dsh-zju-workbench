@@ -8,6 +8,7 @@
 
 ## 仅参考，未引入实现
 
+- [DeepTutor](https://github.com/HKUDS/DeepTutor) · Apache-2.0 · 参考提交 `a31d82624c27d75f4e771d4fcb78dce16470b383`。**源码快照已 vendor 进本仓**（逐字节未改，见「含实现移植」一节），此处保留早期仅作评估时的阅读记录：已阅读许可证、出题流水线、阅读测验扩展、配套提示词与测试及依赖声明，用于评估将讲义终稿作为输入的上游引擎接入边界。
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) · MIT · 参考提交 `5badb15009ae1756c3afe0ae0cef1faafc290ccc`。本项目的运行宿主：阅读其源码与文档以了解 Cordis 插件写法、宿主 API 与客户端启动图谱（种子词表等常量对照自其源码），未复制其实现；运行时以 npm 依赖形式引入。
 - [DSH Codex UI](https://github.com/MichengAI/dsh-codex-ui) · Apache-2.0 · 参考提交 `ff42c6f9296ee7022ab2e919f849ecd05d4df63e`。参考其 manifest、浏览器 factory 装配、插槽所有权与宿主验证方式。没有引入该插件的业务或界面实现。
 
@@ -56,6 +57,12 @@
   | 智云 `zhiyun` | [dsh-zhiyun-source-classroom](packages/dsh-zhiyun-source-classroom/)（原生重写） |
 
   各包的 README 记录了各自的改动与取舍；原移植说明见 git 历史（`dsh-zhiyun-source-omni/ATTRIBUTION.md`）。
+
+- [DeepTutor](https://github.com/HKUDS/DeepTutor) · **Apache-2.0** · 快照提交 `a31d82624c27d75f4e771d4fcb78dce16470b383`（版本 `1.6.15`）。
+  上游控制台/服务端的**完整源码快照** vendor 在 [dsh-zhiyun-host-deeptutor/vendor/deeptutor/](packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/)，
+  逐字节未改（含其自身 LICENSE 与 THIRD_PARTY_NOTICES.md）。本仓对上游的唯一「改动」是运行时的
+  monkeypatch 与 `DEEPTUTOR_HOME` 环境变量重定向，均落在包自己的 `python/` 与 `src/` 下，不改 vendor。
+  获取方式、归档校验值、分发时排除哪些非运行目录，见该包 [ATTRIBUTION.md](packages/dsh-zhiyun-host-deeptutor/ATTRIBUTION.md)。
 
 ## 协议实现说明（无第三方代码引入）
 

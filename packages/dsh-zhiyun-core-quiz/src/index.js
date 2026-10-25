@@ -33,6 +33,7 @@ import { createPointQuizGenerator } from './points.js';
 import { QuizError } from './quality.js';
 import { createQuizGenerator } from './generate.js';
 import { createQuizStore } from './store.js';
+import { checkCandidate, createUpstreamQuizEngine } from './upstream.js';
 
 export const name = 'zhiyun-quiz';
 
@@ -100,6 +101,29 @@ export async function apply(ctx, config = {}) {
     generate: generator.generate,
     generatePoints: input => pointGenerator({...input,signal:AbortSignal.any([pointLifetime.signal,...(input.signal ? [input.signal] : [])])}),
     dispose: () => { pointLifetime.abort(); generator.dispose(); },
+    /**
+     * 构造一个**上游候选生成引擎**（DeepTutor 主出题流水线）。
+     *
+     * ⚠️ `zhiyunDeepTutor` **不进 `inject`**：它是可选增强服务，装没装 Python、
+     * 配没配模型都可能是「没有」。声明成必需依赖会让本插件在没装上游的机器上
+     * 一直 pending —— 那样连本包自己的出题路径都用不了，这正是「可选」不该有的代价。
+     * 所以这里用 `ctx.get` 惰性取，且允许调用方直接注入（便于测试与替换）。
+     *
+     * 拿不到服务时**抛 CONFIG 并说清楚缺什么**，而不是返回一个会在 generate 时
+     * 才炸的壳 —— 早失败的那一侧永远更好定位。
+     */
+    createUpstreamEngine(options = {}) {
+      const tutor = options.tutor ?? (typeof ctx.get === 'function' ? ctx.get('zhiyunDeepTutor') : undefined)
+        ?? ctx.zhiyunDeepTutor;
+      if (!tutor) {
+        throw new QuizError('CONFIG',
+          '这台机器上没有上游出题服务（ctx.zhiyunDeepTutor）：dsh-zhiyun-host-deeptutor 未安装或未启动。'
+          + '本包自己的出题路径不受影响，可以继续用 generate / generatePoints');
+      }
+      return createUpstreamQuizEngine({ ...options, tutor, now: options.now ?? config.now, logger: options.logger ?? ctx.logger });
+    },
+    /** 校验一条上游候选题目能否进本包流程（供集成层在落库前自检）。 */
+    checkUpstreamCandidate: checkCandidate,
     /** 题库领域服务（题目 / 作答 / 额度台账的形状与判定）。 */
     store,
     get concurrency() { return generator.concurrency; },

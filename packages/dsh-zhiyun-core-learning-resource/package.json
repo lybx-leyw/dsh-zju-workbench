@@ -1,0 +1,23 @@
+{
+  "name": "dsh-zhiyun-core-learning-resource",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "智云 Pro 标准学习资源层：schema v1 校验、规范哈希（contentHash / revision）、章节-知识点-块投影与来源锚点反查（零 UI、零落盘）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./hash": "./src/hash.js",
+    "./validate": "./src/validate.js",
+    "./project": "./src/project.js",
+    "./anchors": "./src/anchors.js",
+    "./sources": "./src/sources.js",
+    "./schema/learning-resource.v1.json": "./schema/learning-resource.v1.json",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

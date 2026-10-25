@@ -1,0 +1,31 @@
+{
+  "name": "dsh-zhiyun-host-deeptutor",
+  "version": "0.1.0",
+  "description": "智云 Pro 的 DeepTutor 上游服务宿主：锁版源码快照、Python 运行时桥、能力五态目录与模型/配额桥；业务包只调用 ctx.zhiyunDeepTutor",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./protocol": "./src/protocol.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "files": [
+    "src/",
+    "python/",
+    "patches/",
+    "docs/",
+    "vendor/deeptutor/",
+    "upstream.lock.json",
+    "distribution.json",
+    "cordis.patch.yml",
+    "README.md",
+    "ATTRIBUTION.md"
+  ],
+  "scripts": {
+    "selftest": "node ../../scripts/deeptutor_bridge_selftest.mjs"
+  }
+}

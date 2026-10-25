@@ -1,0 +1,36 @@
+{
+  "upstream": {
+    "name": "DeepTutor",
+    "repository": "https://github.com/HKUDS/DeepTutor",
+    "commit": "a31d82624c27d75f4e771d4fcb78dce16470b383",
+    "version": "1.6.15",
+    "license": "Apache-2.0",
+    "licenseFile": "vendor/deeptutor/LICENSE",
+    "thirdPartyNotices": "vendor/deeptutor/THIRD_PARTY_NOTICES.md",
+    "archive": {
+      "kind": "codeload-tarball",
+      "sha256": "bb9b1281afccf632a4f51f1d834233051970b44143967fa206e24314ff457830"
+    },
+    "vendoredAt": "2026-10-25",
+    "vendorPath": "vendor/deeptutor"
+  },
+  "python": {
+    "requires": ">=3.11,<3.15",
+    "preferred": "3.11",
+    "requirementsFile": "vendor/deeptutor/requirements/server.txt",
+    "extrasInstalled": ["server"],
+    "extrasDeferred": ["math-animator", "partners", "matrix", "rag-rerank", "video-learning", "parse"]
+  },
+  "bridge": {
+    "protocolVersion": 1,
+    "transport": "ndjson-stdio",
+    "pythonEntry": "python/deeptutor_bridge.py"
+  },
+  "capabilities": {
+    "default": "chat",
+    "firstProductFeature": "deep_question",
+    "priorityP0": ["deep_question"],
+    "priorityP1": ["chat", "ask_questions", "deep_solve", "visualize", "immersive_reading", "course_study"],
+    "priorityP2": ["deep_research", "math_animator", "audio_overview"]
+  }
+}
