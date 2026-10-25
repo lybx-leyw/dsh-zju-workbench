@@ -2785,3 +2785,32 @@
 > 剩余 9 条失败**一条不少在原地**，确认是环境性。⑤ **脚本日期仍错**：`radar-rotation.mjs` 用 UTC 取「今天」，
 > 此刻报 `2026-10-25 / same-day(exhausted)`，真日期是 **10-26（年积日 299 → C）**；两条路径都算 C **纯属巧合**。
 > 该缺陷在 `rotation-state.md` 已记 3 次仍未修 → **本轮人工按真日期取组**，修法见 TODO-0（1 行）。
+
+---
+
+### 第七十一轮 · 2026-10-26 · A 组 · 轴「公式取串：写完整的 `$$` 为什么会被吞」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `TianzeLuo/dsh-tex-block-normalizer` | A 原生DSH（`dsh.bundle.patch` 已核；`dsh.client.external: [@deepseek-ai/dsh-client-ui-primitives]`） | **MIT** ✅（`LICENSE` 1,078 B 逐字读过，`Copyright (c) 2026 s11phere`，无附加限制；`package.json` `license: MIT` 同口径） | 笔记 / 讲义 / 论文（含数学的一切实体正文） | **重复且可强化**（强化点在**取串**，不在渲染） | 🟡 | proposed | 2026-10-26 | ★1 / fork 0 / 40 KB / JS / push 2026-09-27。**不可锁版**：`package.json` **`private: true`** + `npm view` **E404** → 只能源码移植 → 按 §4.1 **不出骨架**。**机制**：不碰解析器，只在 `props.text` 进解析器前把 `$$` 搬到各自独占一行（`normalize.js` 135 行纯函数，`client.js` 258 行 patch `MarkdownText` 的 memo 内层函数）。**本轮实跑复现（用其从 `0.1.7-rc.1` 逐字提取的 `cjkFriendlyStrong()`+`mathCompatibility()` 拼同一管线）**：五种 `$$` 形状中 ① 围栏 ✅ ② 单行 ✅ ③ 开独占/闭粘连 → value 吞掉后文段落并报 KaTeX ERR ④ **开粘连/闭独占 → `value=""` 而 `meta="E = mc^2"`，公式整条消失且 `failures=0`（假通过）** ⑤ Pandoc → 丢首行 + 吞掉 `## 标题` 与后文 → **修复后 failures 1→0、`heading`/`paragraph` 节点恢复**；同一管线在「像人写的笔记」（3 个 `$$` + 代码块 + 双链 + 列表）上 failures 1→0、nodes 2→3；**幂等**；代码块内 `$$`、`[[双链]]`、`#期末`、未闭合块**均未被误伤**；上游自带测试 `normalize` 11/11 + `client` 10/10 全绿。**判 🟡 非 🟢 三条**：① 锁版门不过；② 集成方式是**改宿主组件对象**（`component.type=`），依赖 memo/未冻结/同实例三条非契约事实（失配则静默 no-op）；③ 分析对象 **`0.1.7-rc.1` ≠ 本仓 `0.2.0-rc.2`**，宿主是否已修**未验证**（TODO-4）。**与 `better-markdown`（换渲染器）正交，不构成 r19 的「二选一」** |
+| `EnhydraLutristus/dsh-math-tex` | A 原生DSH（`dsh.bundle.patch` 已核；`dsh.compatibility.dshReleases: {"0.2.0-rc.2":"compatible"}`） | **MIT** ✅（`LICENSE` MIT + `Copyright (c) 2026 dsh-math-tex contributors`） | 笔记 / 讲义 / 论文 | 重复且无增益（对**笔记库**而言） | 🔵 | proposed | 2026-10-26 | ★0 / 1,727 KB / push 2026-10-23（本轮最活跃）/ `private` 未设但 **npm E404**。**host 侧**方案：`systemPrompt.section` 事前规则 + **`llm/stream` waterfall** 事后兜底（改写在落盘前，屏幕与记录同时修好），`lib/` 共 2,671 行，自称 706 条断言。**实跑**（装 `katex@0.16.47` 作 oracle）：Pandoc 与丢首行两种**修对了**；但 ① **段落中间的 `$$` 会被提升成块级** → `推导如下：$$∫…$$` 变成三个段落，`[[双链]]` 与其前的引导句被拆开（对笔记库是副作用）；② **代码围栏里的 `$$` 识别为 0 个区域**（与 tex-block-normalizer 的保守取向相反）；③ 无 katex 时 `inspect` **一律返回 `verdict:'ok'`**（"oracle unavailable"）→ 误配即假通过。适合**对话流**而非**笔记/讲义正文** |
+| `thomasly/dsh-markdown-preview` | A 原生DSH | **MIT** ✅ | 输入框上方的实时预览 | 重复且**面板不对** | ⛔ | rejected | 2026-10-26 | ★1、npm `dsh-markdown-preview@0.4.0` **可锁版 ✅**（本轮唯一）。但它是 **composer slot 的预览面板**，不是笔记/讲义/论文的正文渲染面 → 落在已饱和的「呈现」轴且面板不对，不构成强化 |
+| `WuShichao/dsh-ipynb-preview` | A 原生DSH | **MIT** ✅ | 实验课 / 数据分析 notebook | **全新**（本仓无 notebook 形态） | 🔵 | proposed | 2026-10-26 | ★1、npm `dsh-ipynb-preview@0.2.0` **可锁版 ✅**。渲染 `.ipynb`（语法高亮 + 离线 LaTeX）。学生场景真实，但属**新面板**而非强化既有面板；且本仓「学习/笔记」链路无 notebook 概念 → 只登记 |
+| `xiaxi626/dsh-math-input` | A 原生DSH | **MIT** ✅ | 手写公式录入 | 无接缝 | ⛔ | rejected | 2026-10-26 | ★0、npm **E404**。手写笔迹 → ONNX（束搜索）→ LaTeX，零 token。需客户端 ONNX 运行时；与「输入」页无对应物 → 成本远超收益 |
+| `A1eksib286/dsh-plugin-mathtype` | A 原生DSH | **`NOASSERTION`** ⚠ | Word 公式 → MathType OLE | 无关 | ⚠ 待核 | pending-license | 2026-10-26 | ★0 / Python / push 2026-10-25。**许可证待人工核验，不采用、不摘取任何代码**；且 Word/OLE 与本仓技术栈无关，即便核清也只是 ⛔ |
+| `OrinVoss/dsh-math-team` | A 原生DSH | **MIT** ✅ | 数学建模竞赛 | 无关 | ⛔ | rejected | 2026-10-26 | ★7 / Python / 1,941 KB。两个 role agent 预设（建模 / 论文），**与公式渲染无关** —— 是 `math` 关键词的歧义来源，登记以免下轮重复评估 |
+
+> **流程注记（本轮最重要）**：① **A 组主词已封板（r68），本轮改走「连接面派生轴」**——起点是 r19 的一行旧结论
+> 「本仓无公式渲染器，`$k_1$` 原样交给宿主 `MarkdownText`」。本轮把它拆成两个问题：**ⅰ 能不能渲染**（能，宿主自带 KaTeX）
+> 与 **ⅱ 写完整的会不会被吃**（会，且吃掉的是后文）。r19 只看了 ⅰ，故把 Temml 判成「无 → 有」。**ⅱ 才是真缺口**。
+> ② **形状 4 是本轮最有价值的一条**：`value=""` + `meta="E = mc^2"` + **`failures=0`** —— 公式整条消失，而只查
+> 「KaTeX 抛没抛错」的验收全都判通过。**「渲染成功」≠「渲染出来的东西对」**，与 r69「单测全绿 ≠ 用户看到的对」同族，
+> 但这次连**异常都没有**。
+> ③ **上游自述 ≠ 已验证**：上游 `limitations.md` 说未闭合 `$$`「保持原样」，实测是**把后文一起吞进公式且不报错**
+> —— 因果描述比源码保守。**凡「无害地保留」这类断言必须自己跑一遍**。
+> ④ **`math` / `formula` 在 A 组是脏词**（召回数学建模、Kimi API）；**`katex` / `tex` 才干净**，且两者第 6、7 次搜索都只剩
+> 1 条 → **该轴已见底**，建议下轮不再扫。
+> ⑤ **两个候选都去修同一件事，但取向相反**：`tex-block-normalizer` 只动行首 `$$`（代码块/引用块/未闭合全不碰），
+> `dsh-math-tex` 用 oracle 判红字并**重排段落级结构**——后者对**对话流**是对的，对**笔记库**会拆段落。
+> ⑥ **未出骨架**：五条门（🟢 / 许可 / 可锁版 / 不改上游 / 宿主窗口一致）只过两条，硬出即再造一个
+> `dsh-radar-credit-audit-vendor@1.7.0` 式占位依赖。
