@@ -2912,3 +2912,20 @@
 > | **P1** | `import { RRule } from 'rrule'` 在 ESM 下**加载期崩** | `rrule@2.8.1` 无 `exports` 字段，只有 CJS `main`；本仓全是 `"type":"module"` |
 > | **P1** | RRULE 在**本仓课表**上只覆盖「无空洞」的组 | 9 条（含 1 次调课）分组后 `COUNT`=4/4/**1**，条数守恒、语义不守恒；停课不连续时 `COUNT` 无法表达 → 必须 `contiguous()` 才放行 |
 > | **校准** | `dsh-radar-ics-export` 中「再加 RRULE 会重复生成」的理由需补 | 真正的风险是 RFC 5545 下「独立 DTSTART + RRULE」被当作序列起点，即**同日出现「N 条」与「1 条带 RRULE」**。本轮**未改**该包 |
+
+<!-- r75 · 2026-10-26 · C 组 · 轴「笔记页过滤框只比 path，正文零参与」 -->
+
+| `lucaong/minisearch` | B 其他JS（纯库） | MIT ✅ | 笔记·全文检索 | **重复且可强化**（笔记页 `buildRows()` 过滤框） | 🟡 | proposed | 2026-10-26 | ⚠ **非重复登记**：2026-10-20 登记的是它在「学习」页 `layered-search.js` 上的**重排**用途（骨架 `dsh-radar-search-rank`，锁 7.1.2）。本轮是**「笔记」页** `page-notes/src/client.jsx` 的**召回**用途（另一个面板 / 另一条代码路径 / 另一种职责：从零算命中集）。npm `minisearch@7.2.0` MIT，`dependencies: {}`。实测：默认分词对中文**完全无效**（查「动量」→0 条），必须外接 `Intl.Segmenter('zh')`；接后 `弹道学`→`弹道\|学` 过度切分产生假阳性且 `AND` 兜不住，必须加原文子串复核。本包锁 **7.2.0**（与 search-rank 的 7.1.2 不一致 → 打包去重与体积待实测）。骨架 `packages/dsh-radar-note-search` |
+| `nextapps-de/flexsearch` | B 其他JS（纯库） | Apache-2.0 ✅ | 笔记·全文检索 | 重复且无增益（引擎已由 minisearch 占位） | ⛔ | rejected | 2026-10-26 | ★13811。功能与 minisearch 重叠，本仓 `dsh-radar-search-rank` 已选定 minisearch 作检索底层；同一功能域再引入第二个引擎 = 两套并行实现，按「强化式集成」原则拒绝（与 2026-10-22 判断一致，本轮在「笔记页」上下文复核后维持） |
+| `scambier/obsidian-omnisearch` | B 其他JS（Obsidian 插件） | **GPL-3.0** ⛔ | 笔记·检索 | — | ⛔ | rejected | 2026-10-26 | ★2180（活跃 2026-10-24）。功能对口（Obsidian 全文检索），但 **GPL-3.0 红线** + 依赖 `obsidian` 运行时插件 API，形态亦不符。**不得摘取任何代码**，仅登记参考 |
+| `FlokeStudio/glyph-sO` | B 其他JS（Obsidian 插件） | **GPL-3.0** ⛔ | 笔记·检索 | — | ⛔ | rejected | 2026-10-26 | ★1。Obsidian 全文检索插件 + 片段预览。GPL 红线 + 插件形态，仅登记 |
+| `vaniwiki/obsidian-search-highlight` | B 其他JS（Obsidian 插件） | **无许可证** ⛔ | 笔记·检索 | — | ⛔ | rejected | 2026-10-26 | ★0。`[[page?s=词]]` 语法高亮链接页。**无许可证 → 只登记，不得摘取任何代码** |
+| `nanthansr/second-brain-mcp` | B 其他JS（MCP 服务） | MIT ✅ | 笔记·检索 | 形态不符（MCP server，非可嵌入库） | 🔵 | proposed | 2026-10-26 | ★1（2026-08-27）。只读 MCP server，索引优先检索 + 原子笔记。**是服务而非库**，无法嵌入笔记页客户端；其「索引优先」思路可参考 |
+
+> **r75 负面结论（不登记仓库，记于此供后续轮次复用）**：双链解析方向（`obsidian wikilink parser` 等 3 次搜索）
+> 全部跑空 —— 最高 ★36 且为 Go，其余 ★0–7。本仓 `createResolver()` 三级解析（精确路径 → 同目录 → 全库唯一 basename）
+> 在「几千篇」量级上已是合理实现，**不建议**为此引入任何外部依赖。
+>
+> **r75 本仓线索（非外部候选）**：`vault-index.js` 的 `buildIndex()` 已产出 `unresolved`（含 `missing`/`ambiguous`）
+> 与 `orphans`，`host.js` 已暴露 `case 'unresolved'` / `case 'orphans'`，`describe` 已统计 `unresolvedCount`/`orphanCount`，
+> 但 `page-notes/src/client.jsx` **一次都没调用**。数据与服务面就绪、仅缺 UI —— 属本仓缺口，非候选。
