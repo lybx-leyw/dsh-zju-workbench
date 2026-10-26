@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-note-search-tokenizer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】为 minisearch 补一个中文分词器：CJK 按 bigram 切、拉丁按词切，让「笔记」页检索命中「字符中间」的写法（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./tokenizer": "./src/tokenizer.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "minisearch": "7.2.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

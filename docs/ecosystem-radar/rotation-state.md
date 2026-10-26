@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `C` |
-| `last_run_at` | `2026-10-26 15:00` |
-| `group_runs`（累计） | A=36, B=24, C=24 |
+| `last_group` | `A` |
+| `last_run_at` | `2026-10-26 18:01` |
+| `group_runs`（累计） | A=37, B=24, C=24 |
 | 今日已跑（10-26） | **C（r70）、A（r71）、B（r72）** —— r72 取 B：同日规则下仅剩 B 未跑，按组序取 B（脚本给 `B（formula(new-day)）` 但理由是**日期错**：它按 UTC 认为是 10-25，见 TODO-0）。**C（r70）、A（r71）** —— r71 取 A 的理由：同日规则下 A/B 未跑，按技能文档组序 A→B→C 取 A（**未采信** 脚本的 `same-day` 建议，其「今天」按 UTC 取日，见 TODO-0）。**C（r70，换轴·重复规则第二套口径）** —— 跨天第一轮，**纯正取组，未违反同日规则**。⚠ 脚本当时按 UTC 报 `2026-10-25 / same-day(exhausted)`，真日期为 **2026-10-26（年积日 299，`299 % 3 = 2` → C）**；两条路径都给出 C 属**巧合**，本轮以真日期为准 |
 | 本轮轴名（r73，最新） | **C 组 · 「题库练习链：一道题从组卷→作答→记录的字段丢到什么程度」**。⚠ **搜索 0 次**（C 组已跑 22 轮、登记 1,283 仓库、主词见底/判污染），改走「先读码找断环」——按技能文档失败处理表，**本轮标注「不完整」**。**实质产出全在本仓**（Node 22.13.0 直接 import `dsh-zju` core-quiz 源码实跑；`npm ci` 仍被 `dsh-radar-credit-audit-vendor@1.7.0` registry 404 卡死）：① **F-1 任何一道题都读不回 store**（`model.js:531` `type:item.type.code` 而 `makeItem` 不规范化 → 落盘 `type:undefined` → `loadItems` **`loaded:0`**，只留 `notes` 字符串，**无异常**）；② **F-2 `type` 两形态并存**（`points.js:189` 字符串 / `model.js:379` 对象原样存），消费方 `question-bank.js:204,207` 按代号 `===` → 简答题被当填空判、前端题型筛选全失效（判 P1，未确证占比）；③ **F-3 知识点 id 嵌 `revision`**，而 `revision` 每次生成都是 `randomUUID()`（`workbench.js:356/363`）→ 同一份讲义一次成稿内 id 变 2 次；④ **F-4 按已勾选知识点练习筛出 `[]`**，是 F-3 的下游（非参数解构）；⑤ **T-1 测试替身误导**（`tests/point-question-bank.test.mjs:74` 只测生成链，从未把生成的题交给 `itemToJson→itemFromJson`）。**撤回两条自造假结论**：`loadItems` 返回值误读、「planPractice 平铺传参」误判。**关键校准**：修 F-3 不能直接换 `sourceVersion` —— `finalVersion` 含 `semanticPlan`（`workbench.js:66`），实测「仅重出讲义」也会变 → 正解是语义身份 `contentHash([courseId,subId,blockIndexes])`。候选 **5 行**：🔵3 ⚠1 ⛔1，**🟢0 🟡0 → 不出骨架**（四条断链全部零依赖 1+1+0+3 行，不再往 `dsh-radar-mastery-bkt` 同一断点叠第四个骨架）。 |
 | 上一轮轴名（r72） | **B 组 · 「拼题A 做题进度：读侧口径错、写侧整条不存在」**。**实质产出全在本仓**（沙箱实跑，注入假 `fetch`，与 `tests/campus.test.mjs` 的 `makeTransport` 同构）：① **F-1 `progress()` 分母错** —— `pta.js:480` 用「状态行数」当题数，喂 `[ACCEPTED, WRONG_ANSWER, PROBLEM_NO_SUBMISSION, {无字段}]` → `{total:4, accepted:1, byStatus:{…,'UNKNOWN':1}}`；`PROBLEM_NO_SUBMISSION` 与缺字段都被算进 total，而 `problemSet()` 从未核对 `problem-summaries` 合计；② **F-2 三种「读不到」三个形状** —— 状态端点 403 → `progress()` 抛 FORBIDDEN、`problems()` 返回 `[['1',null],['2',null]]`（与「没做过」同形）；空响应 → `null`；注释写着「不当成未做」，实现却落成 `null`（r67 F-3 同族）；③ **F-3 零消费方（第四例）** —— `grep -rn "pta=" packages/*/src --include=*.jsx` → **0 处**，`problemSet/problems/problem/progress` 四个动作无出口；④ **F-4 写侧整条空白** —— `/submissions`、`/last-submissions`、`createProblemSetExam` 全仓 0 命中，`/exams` 的 3 处命中**全在注释里**；⑤ **三处交叉核对**（`vscode-pintia` TS / `pintia-problemset-toolkit` Python / 本仓）在**读侧**逐字一致（`problemSetProblem`/`problemSetProblems`/`/exam-problem-status`）→ 读侧协议可信；写侧只有别人的实现跑过 → 要用必须真机验。候选 **10 行**：🟢0 🟡1（`jinzcdev/vscode-pintia`，MIT，npm **404** 不可锁版、判据③**只部分成立** → 判 🟡 不判 🟢）🔵4 ⚠1 ⛔4（含伦理红线 `HZ-Abox/pta-auto-submit`「一条龙跑完一套试卷」）；**骨架 1 个** `packages/dsh-radar-pta-progress`（B 类，`dependencies` 空，`apply()` 抛错，README 首屏标「未评审·未接入」）。⚠ 未做：**未真机验证**任何 PTA 端点（无账号）、**未核两套状态端点是否等价**（TODO-4）、**未渲染**（无 DOM）、`npm install` 仍被 `dsh-radar-credit-audit-vendor@1.7.0`（`npm view` 复验仍 404）卡死；⚠ 搜索 **14 次**（#4 传输截断），如实标注已超「≤10 次」软上限，本轮后 B 组回封板。 |
@@ -150,6 +150,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-26 09:40 | C | 自动记录 |
 | 2026-10-26 12:30 | B | zju / zju course / cc98 / zju language:javascript / zju language:typescript / campus app / 学在浙大 / 智云课堂 / zju stars:>20 language:javascript / zju topic:zju |
 | 2026-10-26 15:00 | C | 自动记录 |
+| 2026-10-26 18:01 | A | 自动记录 |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑

@@ -2929,3 +2929,38 @@
 > **r75 本仓线索（非外部候选）**：`vault-index.js` 的 `buildIndex()` 已产出 `unresolved`（含 `missing`/`ambiguous`）
 > 与 `orphans`，`host.js` 已暴露 `case 'unresolved'` / `case 'orphans'`，`describe` 已统计 `unresolvedCount`/`orphanCount`，
 > 但 `page-notes/src/client.jsx` **一次都没调用**。数据与服务面就绪、仅缺 UI —— 属本仓缺口，非候选。
+
+---
+
+## 2026-10-26 · A 组派生轴「笔记页检索的分词层」· 第七十六轮 · r76
+
+> 关键词：`minisearch chinese tokenizer` / `chinese word segmentation language:javascript stars:>200` /
+> `cjk tokenizer search language:typescript` / `full text search javascript stars:>1000` / `fuzzy search chinese` /
+> `intl segmenter polyfill` / `n-gram index javascript search` / `elasticlunr` / `@orama/orama tokenizer` /
+> `nextapps flexsearch language:javascript` 共 **10 次**。**0 次 403，本轮完整。**
+> 许可证以 `npm view <pkg> license`（实装）+ GitHub API `license.spdx_id` 双口径核对。
+> 首次登记 **9 行** → 🟢 0 / 🟡 2（含 1 条三度登记） / 🔵 3 / ⚠ 1 / ⛔ 4。
+> 骨架 **1 个**：`packages/dsh-radar-note-search-tokenizer`（B 类，锁 `minisearch@7.2.0`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `lucaong/minisearch`（**分词用途**） | B 其他JS（纯库） | **MIT** ✅ | 笔记·库内检索 | 重复且可强化（笔记页 `buildRows()` 的**分词层**） | 🟡 | proposed | 2026-10-26 | **第三次登记、第三种用途**（r36 学习页重排 7.1.2 / r76 笔记页正文召回 7.2.0 / 本轮 `tokenize` 钩子）。实测上游默认 `tokenize` 只按空白标点切 → 中文 `佩亚诺`（标题中间）**`prefix:true` 也是 0 命中**。`dependencies: {}`。⚠ 与 `note-search` 同面板两级须合并评审；bigram 口径有假阳性（未加原文复核不能上线）；与 `search-rank` 的 7.1.2 冲突 |
+| `nextapps-de/flexsearch` | B 其他JS | Apache-2.0 ✅ | 笔记·库内检索 | 重复且无增益 | ⛔ | 再访维持（第 3 次） | 2026-10-26 | **首次实跑** `0.8.212`：默认 `Index` 中文 0 命中，`tokenize:'full'` 才命中 → 中文能力不比 minisearch 好，换引擎即推翻在途方案 |
+| `@orama/orama` | B 其他JS（检索库） | Apache-2.0 ✅ | 笔记·库内检索 | 重复且无增益 | ⛔ | rejected | 2026-10-26 | 实装 `3.1.18`：`fulltext`/默认中文 **全 0**；`hybrid` **抛异常**。要用得外接 embedding |
+| `orama`（同名不同物） | — | Apache-2.0（图表库） | — | 无关 | ⛔ | rejected | 2026-10-26 | `npm i orama` 装进来的是 **D3 图表库**（`Chart`/`Axis`/`Bars`…），最后发布 2018-08-31。登记防下轮按名字误装 |
+| `yanyiwu/nodejieba` | B 其他JS（C++ 绑定） | **MIT** ✅ | 中文分词 | 重复且无增益（相对 bigram） | ⛔ | rejected | 2026-10-26 | ★8.7k，需 `node-gyp` + ~50 MB 词典；Web 工作台 + Electron 两端打包成本远超收益 |
+| `zhangfisher/segmentit` | B 其他JS | **MIT** ✅ | 中文分词 | 重复且可强化（**未验证**） | 🔵 | proposed | 2026-10-26 | 纯 JS 分词，无原生依赖。**未实跑**，留作下轮与 bigram 做 A/B 的候选 |
+| `joe-re/jieba-wasm` | B 其他JS（WASM） | **MIT** ✅ | 中文分词 | 与 `dsh-radar-search-segment` 同目标 | 🔵 | proposed | 2026-10-26 | 只确认许可证；不新增骨架（避免同域第三个） |
+| `elasticlunr-js/elasticlunr` | B 其他JS | **MIT** ✅ | 笔记·检索 | 重复且无增益 | ⛔ | rejected | 2026-10-26 | ★4.4k，2019 后基本停更，能力被 minisearch 覆盖且同样无中文分词 |
+| `buhichan/asdf`（近名小仓） | B 其他JS | **`NOASSERTION`** ⚠ | — | — | ⚠ | pending-license | 2026-10-26 | `LICENSE` 非标准文本 → **待人工核验，不采用、不摘码** |
+
+> **本轮方法论（写给下一轮）**：
+> ① **「库支持某功能」≠「库对该语言的该功能有效」**。minisearch 文档写明了 `tokenize` 可外接，看起来像「中文只要传个分词器」——
+>    但默认分词对中文是 **0 命中**，而不是「命中得少」。**必须拿中文语料实跑一遍**，空白语料永远测不出来。
+> ② **`prefix:true` 是陷阱**：它让人以为「中文也能用了」（`数学`、`泰勒` 确实从 0 变 2），但它只覆盖**token 开头**。
+>    标题中间的字（`佩亚诺`）依然 0。**「参数能救」的直觉在这里是错的。**
+> ③ **npm 名字 ≠ GitHub 名字**：`orama`（图表库）vs `@orama/orama`（检索库）；`nextapps-de-flexsearch` **不存在**。
+>    两个坑都只有 `npm i` 才知道 —— **凡是准备锁版的包，先真的装一次**。
+> ④ **本轮发现仓库自带的 `tests/radar-packages.test.mjs` 在 `radar` 上 42 条失败**（历史骨架），
+>    而前几轮的「自动验收」只做 `json.load` / `yaml.safe_load` 两条**语法级**检查 —— **语法通过 ≠ 合规**。
+>    骨架模板缺 `cordis.patch.yml`、README 顶部缺声明，语法检查一律放行。建议后续验收直接跑该测试并只断言**本轮新增目录**的断言全绿。
