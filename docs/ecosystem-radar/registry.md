@@ -2840,3 +2840,39 @@
 
 > **本轮已登记再访（不改判）**：`Slowist-Lee/website-converter`（⛔，无许可证）、`3-Tian/zju-paper-fetcher`（🔵）、
 > `baihe26/zju-literature-downloader`（🟡，★35 push 10-23 仍在维护）。
+
+---
+
+## 2026-10-26 · C 组（学生功能域）· 轴「题库练习链」· r73
+
+> 关键词：**0 次 GitHub 搜索**（C 组已跑 22 轮、登记 1,283 个仓库、主词均已见底或判污染；改用 r37/r66/r70
+> 的「先读码找断环」方法）。**本轮搜索环节未执行 → 标注「本轮不完整」**。
+> 首次登记 **5 行** → 🟢 0 / 🟡 0 / 🔵 3 / ⚠ 1 / ⛔ 1。**不出骨架**（无 🟢）。
+> **实质产出全在本仓**：题库练习链 4 条断链 + 1 条测试误导，全部沙箱实跑（Node 22.13.0，直接 import
+> `dsh-zhiyun-core-quiz` 源码；`npm ci` 因 `dsh-radar-credit-audit-vendor@1.7.0` registry 404 而失败）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `unjs/ohash` | B 其他JS（零依赖 TS） | **MIT** ✅ | — | 仅供参考（id 设计参照，不接入） | 🔵 | proposed | 2026-10-26 | **非搜索结果**，是已知实现，本轮用来对照 F-3。契约是「同一语义输入 → 同一 id」；本仓知识点 id 含 `revision`（每次生成随机 UUID，`workbench.js:356/363`）→ 输入不唯一 → id 必然漂移。**本仓不需要引入**：`concepts.js` 已有 `contentHash`，改成 `digest([courseId,subId,blockIndexes])` 即可，零依赖 → 判据③不成立，故 🔵 非 🟢 |
+| `Rich-Harris/devalue` | B 其他JS | **MIT** ✅ | — | 仅供参考（序列化契约参照） | 🔵 | proposed | 2026-10-26 | 对照 F-1：它把「序列化→反序列化**往返相等**」当作**库的对外承诺**。本仓 `itemToJson`/`itemFromJson` 也是这样一对，但 `quality.js:458` 的 `jsonRoundTrip` 只是**质检的一条检查项**，不在写路径上 → 往返相等应当作为写路径准入条件。零代码摘取 |
+| `SifisoScS/scheduler` | B 其他JS | MIT ✅ | 截止时间 | 重复可强化（增益不足） | 🔵 | **再访，不改判**（原 🟡，`registry.md:2674`） | 2026-10-25 | 本轮当 F-3 的**概念参照**：`Interval.countBetween` 把「区间」与「时刻」拆成两个值对象，**标识不掺时间**；本仓反例是把随时变 `revision` 混进标识 |
+| 「稳定 id」同名/近名条目（`uuid-stable` 一类） | B 其他JS | **`NOASSERTION`** ⚠ | — | — | ⚠ | pending-license | 2026-10-26 | 核「内容寻址 id」时命中的近名条目，`LICENSE` 非标准文本 → **待人工核验，不采用、不摘码**。登记以免下轮重扫 |
+| `google/closure-library` | B 其他JS | **Apache-2.0** ✅ | — | **无关**（词面撞车） | ⛔ | rejected | 2026-10-26 | 想找现成「稳定标识」实现，`goog.Uri#getDomain` 只做 URL 归一，不管实体标识 → 与「知识点 id 该不该含 revision」不同域。留痕防重撞 |
+
+> **本轮读码确证（不是候选，是本仓缺陷，明细见 `2026-10-26-r73.md` §2–§3）**：
+>
+> | # | 断链 | 位置 | 实跑结论 |
+> | --- | --- | --- | --- |
+> | **F-1** | **任何一道题都读不回 store** | `model.js:531` `type: item.type.code`，而 `makeItem` 不规范化 `type`（`model.js:379-412`） | 传代号 `'cloze'` → 落盘 `type: undefined` → `itemFromJson` 返回 `null` → `loadItems` **`loaded: 0`**，只留一条 `notes` 字符串。**无异常** |
+> | **F-2** | `type` **两种形状并存**，消费方按代号比对 | `points.js:189`（字符串）/ `question-bank.js:52`（`codeOf`）/ `model.js:379`（对象原样存）；消费方 `question-bank.js:204,207` | 若为对象：**简答题走填空精确比对（恒判错）且跳过自评校验**；前端 `QUESTION_TYPES[q.type]` 全失效。**判 P1 非 P0**：本轮未确证真实库中对象形态的占比 |
+> | **F-3** | 知识点 `pointId` 嵌 `revision`，而 `revision` **每次生成都是 `randomUUID()`** | `knowledge-points.js:27` + `workbench.js:356/363` | 同一份讲义一次成稿内 id 变 **2 次**（`v28 → uuid → 另一个 uuid`）。⚠ **校准**：不能简单换 `sourceVersion` —— `finalVersion` 含 `semanticPlan`（`workbench.js:66`），实测「仅重出讲义」时它**也会变**。正解是**语义身份** `contentHash([courseId,subId,blockIndexes])` |
+> | **F-4** | 「已勾选知识点」练习筛出 `[]` | `question-bank.js:191` | **F-3 的下游**，非参数解构问题（本轮第一版判错，已撤回）。全量 `mixed` 练习仍有 2 道可用 |
+> | **T-1** | 生成链与序列化链**各自有测、中间没测** | `tests/point-question-bank.test.mjs:74` vs `quality.js:458` | 测试断言 `type` 是字符串（对生成链成立），但从未把生成的题交给 `itemToJson→itemFromJson` 走一遍 → F-1 漏网。与 r66 F-2 同族但更隐蔽 |
+>
+> **本轮撤回的两条**（自己造的错，留痕）：① 误把 `loadItems` 返回的 `{loaded, notes}` 当数字 →
+> 错判「吞掉作答记录」，实际 `loadAttempts` 返回 3 条、**无误**；② 误判 F-4 是 `planPractice` 平铺传参，
+> 实际 payload 是对象、解构正常。
+>
+> **不出骨架的理由**：四条断链**全部零依赖**（1+1+0+3 行）；此时引入 BKT/FSRS/内容寻址库，
+> 等于在「读不回的数据」上算得更精确 —— `dsh-radar-mastery-bkt` 的 `TODO-0` 已阻塞四十四轮，
+> **不再往同一断点叠第四个骨架**。
