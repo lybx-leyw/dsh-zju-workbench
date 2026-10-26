@@ -2995,3 +2995,25 @@
 >    **后者更危险**：它让「装配成功」与「数据全丢」长得一模一样。
 > ④ **npm 库的「能装」≠「能锁版薄封装」**：`yanki` 装得上、跑得通、渲染对，
 >    但 54 个直接依赖 + 261 包 + 72 MB，已经超出「薄封装」的定义。**先 `npm i` 量体积，再谈集成。**
+
+## 第七十八轮（2026-10-27 · A 组 · 轴「勾选状态的所有权：同一份 ticks.json 被两个实例各写各的」）
+
+> 搜索 **5 次**（0 次 403，**完整**）。首次登记 **2 行** → 🟢 0 / 🟡 1 / 🔵 1 / ⚠ 0 / ⛔ 0。**A 类 2 个**。
+> 骨架 **0 个**：无 🟢；唯一 🟡（插件门控）压在「插件页 profile 写入归谁」这个**权责问题**上，不宜当天出骨架。
+> 本仓实测三条：P-1 两个 `TickStore` 实例并存时 `save()` **整份覆盖** → 先勾的那条被抹掉（**已修 + 4 条回归测试**）；
+> P-2 今天页 `Boolean(ticks[key])` 按值的真值判勾 → 脏值让交掉的作业复活（**已修**）；
+> P-3 `prune()` 全仓零调用方（**只记录未修**，需动 `index.js` 取数流程）。详见 `2026-10-27.md` §3。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Noob-stupid/dsh-plugin-gating-hub` | **A 原生DSH** | **MIT** ✅ | 通用（装/升插件不搞挂工作台） | **重复且可强化**（插件页：`dsh-zhiyun-page-plugins` + `dsh-radar-plugin-audit` / `-plugin-ledger` / `-plugin-score` / `-compat-vet`） | 🟡 | proposed | 2026-10-27 | ★113，2026-10-26。`@noob-stupid/dsh-plugin-console` **0.5.92**，**零运行时依赖**，自带 `dsh.bundle.patch`+`cordis.patch.yml`（完整插件，非库）。升级前契约预检 / 回滚点 / 失败自动回滚 / **有证据才自动禁用** = 本仓没有的一层。**降 🟡 的原因**：它要接管 profile 写入，与本仓插件页**同时写 profile** → 先定「唯一写入者」再谈锁版挂载 |
+| `kenz1117/dsh-engram` | **A 原生DSH** | **MIT** ✅ | 笔记 / 论文 / 问一问 | **重复且无增益** | 🔵 | proposed | 2026-10-27 | ★38，2026-10-25。`@kenz1117/dsh-engram` **0.11.0**，22 个窄工具，SQLite FTS5 + 本地向量 + SM-2 + 证据门。五条能力本仓**全有且更细**（`me-memory`/`session-notebook`/`note-search*`/`kb-rag`/`knowledge-graph`/`fsrs-scheduler`）；唯一增量 `@huggingface/transformers` 正是最重的体积项。**不接** |
+
+> **本轮方法论（写给下一轮）**：
+> ① **A 组主词已见底**：`deepseek-harness plugin` / `cordis plugin` / `dsh plugin` 三次搜索首屏共 30 条，
+>    未登记仅 3 个（其中 1 个是本仓已建骨架的 `dsh-context`）。新增全部来自**中词** `dsh-market`。
+>    下一轮 A 组改用中词：`dsh-plugin upgrade` / `dsh plugin rollback` / `dsh plugin profile lock`。
+> ② **「同一份小 JSON、两个写入者」是本仓一类系统性隐患**，`ticks.json` 只是第一个被撞上的。
+>    凡是「宿主进程写、页面只读」的状态文件，都要问一句：**重启时的两个进程会不会互相覆盖？**
+> ③ **判「有没有」不要判「值是不是真」**：`Boolean(obj[key])` 在值恒为对象时看起来没问题，
+>    但脏值会静默翻转语义。存"键在即事实"的表，一律 `hasOwnProperty`。
