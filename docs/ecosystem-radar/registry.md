@@ -2876,3 +2876,39 @@
 > **不出骨架的理由**：四条断链**全部零依赖**（1+1+0+3 行）；此时引入 BKT/FSRS/内容寻址库，
 > 等于在「读不回的数据」上算得更精确 —— `dsh-radar-mastery-bkt` 的 `TODO-0` 已阻塞四十四轮，
 > **不再往同一断点叠第四个骨架**。
+
+---
+
+## 2026-10-26 · B 组（浙大场景）· 第七十四轮 · 轴「课表导出成日历：RRULE 的前提成不成立」
+
+> 关键词 10 次（上限）、0 次 403、**本轮完整**。首次登记 **14 行** → 🟡 1 / 🔵 2 / ⛔ 11。
+> `zju stars:>20 language:javascript` **total=7 且全部已登记** → B 组在 `language:` 限定下**实证见底**，
+> 下轮应改跑 `topic:`。`campus app`（20 条全为海外就业门户）与 `智云课堂`（含大量政治宣传仓库）**判词面污染，建议移出词池**。
+> **本轮 `NOASSERTION` 待核 0 个**：`zju` 语系许可证两极化 —— 要么 `null`（无 LICENSE 文件），要么干净 MIT/Apache。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `jakubroztocil/rrule` | B 其他JS | **BSD-3-Clause** ✅ | 课表 / 截止时间导出日历 | **重复且可强化**（`dsh-radar-ics-export`） | 🟡 | proposed | 2026-10-26 | ★3.4k，锁版 `rrule@2.8.1`（2023-11-10 后未发新版，**行为冻结恰合锁版要求**）。bundle 后 **51.9 KB**，传递依赖仅 `tslib`(0BSD)。**已出骨架 `dsh-radar-ics-rrule`**。三条实测坑：①`import { RRule }` 在 ESM 下加载期崩（CJS 无 `exports`）；②`getDay()` 整数透传 `byweekday` **整体错一天且不报错**；③`COUNT` 表达不了不连续停课 → 组内须严格每 7 天一条才可转 RRULE |
+| `Phil-Fan/awesome-zju-tools` | B 其他JS | **CC0-1.0** ✅ | 浙大工具合集（线索源） | 全新（线索源） | 🔵 | proposed | 2026-10-26 | ★242，2026-10-15 仍在推。作为线索源翻检：条目与其他轮次高度重叠，**未带出新的 🟢** |
+| `burriedalien666/zju842-practice` | B 其他JS | MIT ✅ | 842 专业课题库 | 重复可强化（`core-quiz`） | 🔵 | proposed | 2026-10-26 | ★23，2026-10-25 仍在推。本地题库 + 答案照片 + 逐轮记录；算法层无更优实现，不构成强化 |
+| `EviterLesRoses2/vibe-learning-in-zju` | B 其他JS | **无许可证** ⛔ | 学在浙大待办 / 课表 / 转录 / 作业提交 | 重复且无增益 | ⛔ | rejected | 2026-10-26 | ★8，单文件 36 KB MCP。API `license:null` + 根目录**无 LICENSE 文件**（已逐项核 contents）。**不得摘码**。README 所称「courses 与 cmc 两套站点各走一次 CAS」本仓 `source-campus/src/index.js:408-419` 已记过，无增量 |
+| `upupming/zju-grs-ics` | B 其他JS | **无许可证** ⛔ | 浙大研究生课表 → ics | 重复且无增益 | ⛔ | rejected | 2026-10-26 | ★8，2022-09 停更。与本轮轴同名但无许可，只可作线索 |
+| `5dbwat4/zjuphylab.ics` | B 其他JS | **LGPL-2.1** ⛔ | 物理实验课表 → ics | 重复且无增益 | ⛔ | rejected | 2026-10-26 | ★4。LGPL 红线，只可参考不摘码 |
+| `ZJU-AIRA/awesome-zju-opensource` | B 其他JS | **无许可证** ⛔ | 浙大开源聚合（线索源） | 全新（线索源） | ⛔ | rejected | 2026-10-26 | ★8。线索价值高但无许可；仅抄仓库名清单不涉代码，已据此核查 3 仓，未发现新的宽松许可项 |
+| `Ltto123/zju-guide` | B 其他JS | **无许可证** ⛔ | 课程学习路径共建 | 全新 | ⛔ | rejected | 2026-10-26 | ★4，Next.js + Prisma 全栈，无 LICENSE |
+| `DemoHn/cc98-node-api`、`FrazierLei/cc98-drawcard`、`6769/MyNewCC98`、`ZJU-CC98/Share` | B 其他JS | **全部无许可证** ⛔ | CC98 周边 | 重复且无增益（`source-cc98` 已覆盖） | ⛔ | rejected | 2026-10-26 | 4 仓合并一行。最早的 `cc98-node-api` 停在 2014 |
+| `Fafa-DL/2021-ZJU-Machine-Learning`、`RyanFcr/ZJU_Course`、`Yva1nne/ZJU_Course`、`LBruyne/ZJU-SE-CourseMaterial`、`lhmd/ZJU-course`、`zyxNova/ZJU-CKCMix-CS-Course-Material`、`HobbitQia/ZJU-Courses-Resources`、`IMMORTAL23/ZJU-Course_info`、`jiangshibiao/Course-Review`、`haochengxia/ZJU-CS-3_1`、`yujincheng08/ZJU-UGCourse`、`smd1121/zju-course`、`euphoniumm/isee-zju`、`yinze00/ZJU-OPT` | B 其他JS | **全部无许可证** ⛔ | 课程资料 | — | ⛔ | rejected | 2026-10-26 | 14 仓合并一行（与 `QSCTech/zju-icicles` 同性质：**内容版权**，只作线索）。`Yva1nne/ZJU_Course` 自述「请遵守版权与学术诚信」，进一步确认非代码许可 |
+| `LBruyne/blockchain-course-demos`、`ZJUSCT/www.zjusct.io`、`konicyQWQ/jobse-fe`、`Ray8mu34/ZJUAAA_Web`、`Winfred666/ZJU_multimedia` | B 其他JS | **全部无许可证** ⛔ | 课程 / 社团站点 | — | ⛔ | rejected | 2026-10-26 | 5 仓合并一行 |
+| `ADSR1042/ZJU_VocabBoost`、`tangjinzhou/PAT`、`QSCTech/ZJUintl-gRPC`、`73-SEVENTYTHREE/B-S-`、`ryf1123/Oasis-in-the-Sky`、`chenzq-98/zjut-java_web_course_design-SoftwareTestSystem`、`zyayoung/ego-planner-web-control`、`ZJUDDP2015/ZJU_APRS_2015` | B 其他JS | **全部无许可证** ⛔ | 课程作业 / 实验 | — | ⛔ | rejected | 2026-10-26 | 8 仓合并一行，技术栈与本仓无关 |
+| `huiihao/ZJU-daka` | B 其他JS | MIT ✅ | 每日打卡 | **无关** | ⛔ | rejected | 2026-10-26 | ★11。打卡流程已下线，功能不适用（非许可问题） |
+| `destoryD/chaoxing-api`、`HualuozhE/YunKeTangZhiHuiZhiJiao-Crack`、`hzlgames/zju-autosign` | B 其他JS | MIT ✅ / GPL-3.0 ⛔ | 网课刷课 / 自动签到 | — | ⛔ | rejected | 2026-10-26 | **原则性排除**（违反平台规则），即使 MIT 也不采用 |
+| `prakharepo/campus_placement_app` 等 20 个 `campus app` 结果 | B 其他JS | MIT / 无 | 印度 / 菲律宾 / 美国高校就业门户 | — | ⛔ | rejected | 2026-10-26 | **词面污染**：英文 `campus app` 指「校园招聘门户」。与 `fitness tracker` 同族，**建议移出词池** |
+
+> **本轮读码产出**（不是候选，是校准；明细见 `2026-10-26-r74.md` §3）：
+>
+> | # | 校准点 | 实跑结论 |
+> | --- | --- | --- |
+> | **P0** | `rrule` 的 weekday 枚举与 `Date#getDay()` **差一位** | `getDay()`=3（周三）透传 → `BYDAY=TH` → 展开 **周四**。不报错不告警。必须用 `RRule.WE` 一类枚举 |
+> | **P1** | `import { RRule } from 'rrule'` 在 ESM 下**加载期崩** | `rrule@2.8.1` 无 `exports` 字段，只有 CJS `main`；本仓全是 `"type":"module"` |
+> | **P1** | RRULE 在**本仓课表**上只覆盖「无空洞」的组 | 9 条（含 1 次调课）分组后 `COUNT`=4/4/**1**，条数守恒、语义不守恒；停课不连续时 `COUNT` 无法表达 → 必须 `contiguous()` 才放行 |
+> | **校准** | `dsh-radar-ics-export` 中「再加 RRULE 会重复生成」的理由需补 | 真正的风险是 RFC 5545 下「独立 DTSTART + RRULE」被当作序列起点，即**同日出现「N 条」与「1 条带 RRULE」**。本轮**未改**该包 |
