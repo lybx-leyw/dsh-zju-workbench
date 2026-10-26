@@ -2964,3 +2964,34 @@
 > ④ **本轮发现仓库自带的 `tests/radar-packages.test.mjs` 在 `radar` 上 42 条失败**（历史骨架），
 >    而前几轮的「自动验收」只做 `json.load` / `yaml.safe_load` 两条**语法级**检查 —— **语法通过 ≠ 合规**。
 >    骨架模板缺 `cordis.patch.yml`、README 顶部缺声明，语法检查一律放行。建议后续验收直接跑该测试并只断言**本轮新增目录**的断言全绿。
+
+---
+
+## 第七十七轮（2026-10-26 · C 组 · 轴「错题重练：记录、归因、入口三层全断」）
+
+> 搜索 **7 次**（0 次 403，**完整**）。首次登记 **9 行** → 🟢 0 / 🟡 1 / 🔵 5 / ⚠ 1 / ⛔ 2。**A 类 0 个**（C 组关键词不含 DSH 类词；A 组 3 小时前由 r76 扫过）。
+> 骨架 **0 个**：无 🟢；唯一 🟡 实装验证后主动放弃（§4）。
+> 本仓实测三条：F-1 两条 attempts 轨形状不一致（`study` 写 `verdict/questionId`，`quiz` 读 `autoVerdict/quizId` → 装载抛错或静默归零）；F-2 `review` 模式只判「做过」不判「错过」；F-3 归因结果零调用方。详见 `2026-10-26-r77.md` §3。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `kitschpatrol/yanki` | B 其他JS（TS 库+CLI） | **MIT** ✅ | 笔记→复习卡 | 重复且可强化（**收窄后**：仅「导出到 Anki」渲染层） | 🟡 | proposed | 2026-10-26 | ★61，2026-10-16，`yanki@3.2.1` **实装验证**：`~~x~~`→`{{c1::x}}`、`$x$`→`\(x\)`、选择题→Basic 前后卡 **均可**；但 **54 个直接依赖 / 261 个安装包 / node_modules 72 MB**，`engines` 要 Node ≥22.18，`getNoteFromMarkdown(markdown, options)` **参数顺序反直觉**，`deckName` 恒空。**不解错题重练**，仅作 FSRS 骨架之后的可选下游 |
+| `rzhang569/study-guide` | B 其他JS（Agent Skill） | **MIT** ✅ | 期末复习 | 全新（**形态**可借） | 🔵 | proposed | 2026-10-26 | ★1，2026-10-22。HTML 产物：引用式笔记 + 每选项解释 + 计时模拟考 + **错题本** + 进度驱动练习。**是提示词不是库**，无可锁版代码；「每选项解释」本仓 `quality.js` 已覆盖 |
+| `wencharmwang/study-mistake-notebook` | B 其他JS（Agent Skill） | **MIT** ✅ | 错题 | 全新（**错因记录**可借） | 🔵 | proposed | 2026-10-26 | ★0，2026-07-28，Python。**「保留可检索的多轮错题记录」= 本仓真正缺的那一维**。只借数据设计，不摘码 |
+| `Fundaments-Work/Lemma` | B 其他JS（Obsidian 插件） | **MIT** ✅ | 闪卡 FSRS-5 | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★2，2026-10-22。纯 Markdown 卡片 + CouchDB 同步。**调度层与 `dsh-radar-fsrs-scheduler` 同算法**，且强耦合 Obsidian 宿主 |
+| `zhaoqianbiao/ElectronicCorrectionNotebook` | B 其他JS（C# WinForm） | **MIT** ✅ | 错题本 | 重复且可强化（**非 JS，不可封装**） | 🔵 | proposed | 2026-10-26 | ★78，2025-10-14。**本轮唯一真做对了「错题本」的成熟项目**，但 C# 桌面应用，无库无 API → 仅形态参考 |
+| `nianhua666/ncre-practice-desktop` | B 其他JS（Python） | **MIT** ✅ | 错题本/刷题 | 重复且可强化（**非 JS**） | 🔵 | proposed | 2026-10-26 | ★0，2026-03-20。「错题本 + AI 判分 + 按错题练」形态完整，但 Python Tkinter 桌面，不可复用 |
+| `orange233-g/aixue` | B 其他JS（TS/Capacitor） | **MIT** ✅ | 出题+复习 | 重复且无增益 | 🔵 | proposed | 2026-10-26 | ★0，2026-10-22。完整 App 非库；出题能力本仓 `core-quiz/generate.js` 已更细（含可溯源校验） |
+| `ObsidianToAnki/Obsidian_to_Anki` | B 其他JS（Python） | **GPL-3.0** ⛔ | Markdown→Anki | — | ⛔ | rejected | 2026-10-26 | ★2049，2024-06-16。**许可证红线**，与 `yanki` 同向且更弱（Python 脚本） |
+| `Congmoow/QuestPilot` | B 其他JS（TS 桌面） | **`NOASSERTION`** ⚠ | 题库管理 | — | ⚠ | pending-license | 2026-10-26 | ★2，TS 桌面应用。**待人工核验，不采用、不摘码** |
+
+> **本轮方法论（写给下一轮）**：
+> ① **C 组「刷题」主词已见底**：7 次搜索里 5 次的返回**要么 ★<5、要么许可证 `null`**。
+>    中文词（`错题 spaced`）**total 0** —— GitHub 检索对中文仓库名/描述覆盖极差，别再指望中文主词。
+> ② **「错题重练」缺的不是算法，是「错因」这一维数据**。外部库（Markdown 闪卡 / 错题本 App / Agent Skill）
+>    **全都不提供它**。这意味着：**该自己长，不该靠集成** —— 这是第一次出现「本仓该写代码而不是接库」的结论。
+> ③ **验收要区分「抛错」与「静默归零」**：`loadAttempts` 对缺 `autoVerdict` **抛**（诚实），
+>    但对缺 `quizId` 静默 `String(??'')` → `attributeByPoint()` 返回 `{}` 且 `loadAttempts` 返回 `1`。
+>    **后者更危险**：它让「装配成功」与「数据全丢」长得一模一样。
+> ④ **npm 库的「能装」≠「能锁版薄封装」**：`yanki` 装得上、跑得通、渲染对，
+>    但 54 个直接依赖 + 261 包 + 72 MB，已经超出「薄封装」的定义。**先 `npm i` 量体积，再谈集成。**
