@@ -105,6 +105,7 @@ export function apply(ctx, config = {}) {
     logger,
     validate: (bundle) => learningResource().validate(bundle),
     contentHash: (value) => learningResource().contentHash(value),
+    project: bundle => learningResource().project(bundle),
   });
   const runStore = createRunStore({ runsDir, logger });
 

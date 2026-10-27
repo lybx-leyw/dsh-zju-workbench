@@ -168,7 +168,7 @@ async function readSnapshotFile(snapshotPath) {
  * @param contentHash **必填**：`(bundle) => 'sha256:…'`
  * @param logger 可选：`{debug,info,warn,error}`
  */
-export function createResourceRegistry({ dataDir, validate, contentHash, logger = {} } = {}) {
+export function createResourceRegistry({ dataDir, validate, contentHash, project=null, logger = {} } = {}) {
   // 三个构造期事实缺失都没法兜底：猜一个数据目录或猜一份校验实现，
   // 换来的只会是"资源没了 / 校验没生效"这类极难排查的现象。
   if (typeof dataDir !== 'string' || dataDir === '') {
@@ -293,6 +293,14 @@ export function createResourceRegistry({ dataDir, validate, contentHash, logger 
     /** 取句柄（内存，同步）。找不到返回 null。 */
     get(handleId) {
       return handles.get(String(handleId ?? '')) ?? null;
+    },
+
+    async payload(handleId){
+      const handle=handles.get(String(handleId??''));
+      if(!handle)throw new DeepTutorError('E_RESOURCE_INVALID','资源句柄已失效，请重新读取讲义');
+      const bundle=await readSnapshotFile(handle.snapshotPath);
+      if(!bundle||!validate(bundle).valid)throw new DeepTutorError('E_RESOURCE_INVALID','讲义快照缺失或损坏');
+      return {...toUpstreamResourcePayload(handle,bundle,{projection:project?.(bundle)}),accountScope:bundle.accountScope};
     },
 
     /** 读快照正文。句柄丢了 / 文件坏了都返回 null，不抛。 */

@@ -17,12 +17,19 @@
 
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm,mkdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+
+// Keep cross-process fixtures in a shared writable directory. On Windows the
+// system temp directory may grant Node access without granting the Python child.
+async function pythonHome(prefix){
+  const base=fileURLToPath(new URL('../artifacts/deeptutor-tests/',import.meta.url));
+  await mkdir(base,{recursive:true});return mkdtemp(join(base,prefix));
+}
 
 import {
   CALLBACKS,
@@ -558,7 +565,7 @@ test('真实桥：起 Python 子进程完成 ping / status / capabilities', asyn
   if (!python) return t.skip('没有可用解释器，跳过桥端到端');
   if (!existsSync(BRIDGE_SCRIPT)) assert.fail(`桥脚本缺失：${BRIDGE_SCRIPT}`);
 
-  const home = await mkdtemp(join(tmpdir(), 'zhiyun-deeptutor-home-'));
+  const home = await pythonHome('home-');
   const warnings = [];
   const bridge = new PythonBridge({
     rootDir: PACKAGE_DIR,
@@ -572,7 +579,8 @@ test('真实桥：起 Python 子进程完成 ping / status / capabilities', asyn
     requestTimeoutMs: 180_000,
   });
   try {
-    await bridge.start();
+    const simultaneous=await Promise.all([bridge.request(METHODS.ping,{}),bridge.request(METHODS.ping,{})]);
+    assert.equal(simultaneous.length,2,'并发的首次请求共享同一次进程启动');
     assert.equal(bridge.state(), 'ready');
     assert.ok(['pipe', 'files'].includes(bridge.transportKind), `未知传输：${bridge.transportKind}`);
     assert.equal(bridge.protocolVersion, PROTOCOL_VERSION);
@@ -635,7 +643,7 @@ test('真实桥：带 llm 快照的 turn.start 能起来（不塞上游 llm_sele
   if (!python) return t.skip('没有可用解释器，跳过');
   if (!existsSync(BRIDGE_SCRIPT)) assert.fail(`桥脚本缺失：${BRIDGE_SCRIPT}`);
 
-  const home = await mkdtemp(join(tmpdir(), 'zhiyun-deeptutor-llm-'));
+  const home = await pythonHome('llm-');
   const bridge = new PythonBridge({
     rootDir: PACKAGE_DIR,
     pythonPath: python,

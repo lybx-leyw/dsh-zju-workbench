@@ -620,6 +620,9 @@ export function createService({
     });
 
     const runId = run.record.runId;
+    // Upstream may finish the question before its background title callback.
+    // Keep this run's dispatcher until service disposal so late calls still
+    // share the selected worker pool instead of silently escaping its quota.
     const envelope = {
       runId,
       capability: run.record.capability,
@@ -628,9 +631,12 @@ export function createService({
       usage: run.usage,
       error: run.error,
       fingerprint: run.record.fingerprint,
+      upstreamCommit:run.record.upstreamCommit??null,
       finishedAt: Date.now(),
+      resourceRevision:run.record.resourceRevisions?.[0]?.revision??null,
+      ...(status===RUN_STATUS.succeeded&&producesQuestions(run.record.capability)?adaptQuizPayload(run,run.result):{}),
     };
-    runStoreRef?.writeResult?.(runId, envelope)?.catch?.(() => {});
+    run.persistence=Promise.resolve(runStoreRef?.writeResult?.(runId,envelope)).catch(error=>{run.persistenceError=error;});
     if (usage) runStoreRef?.writeUsage?.(runId, usage)?.catch?.(() => {});
     runStoreRef?.close?.(runId);
 
@@ -703,13 +709,17 @@ export function createService({
       strategy: strategy ?? null,
       questionHistoryVersion: questionHistoryVersion ?? null,
       requestDigest: sha256(canonicalJson({ capability: record.capability, input: record.input })),
+      execution:record.execution??null,
+      scope:record.quota.scope,
+      options:record.options??{},
+      mode:record.mode,
     };
     return { fingerprint: sha256(canonicalJson(input)), input };
   }
 
   async function lookupCachedRun(fingerprint) {
     const known = fingerprintIndex.get(fingerprint);
-    if (!known) return null;
+    if (!known){const stored=await runStoreRef?.findCompleted?.(fingerprint);return stored?{record:{runId:stored.runId,capability:stored.capability,fingerprint},result:stored.result,usage:stored.usage}:null;}
     const run = runs.get(known);
     if (run?.settled && run.status === RUN_STATUS.succeeded) {
       return {
@@ -757,9 +767,11 @@ export function createService({
     scope = null,
     method = METHODS.turnStart,
     upstreamParams = {},
+    modelDispatch = null,
     mode = RUN_MODES.upstreamNative,
     requireCapability = true,
   }) {
+    if(typeof bridge?.state==='function'&&bridge.state()==='starting')await bridge.start?.();
     assertUsable();
     if (ready) await Promise.resolve(ready).catch(() => {});
 
@@ -787,6 +799,16 @@ export function createService({
     }
 
     const handles = normalizeHandles(resourceHandles);
+    const payloads=[];
+    if(resourcesRef?.payload)for(const handle of handles){
+      const payload=await resourcesRef.payload(handle.handleId);
+      const account=payload.accountScope?.accountId;
+      if(account&&String(scope??'')!==String(account))throw new DeepTutorError('E_RESOURCE_INVALID','讲义资源不属于当前账号');
+      if(payload.revision!==handle.revision||payload.resourceId!==handle.resourceId)throw new DeepTutorError('E_RESOURCE_INVALID','讲义资源版本或身份不匹配');
+      payloads.push(payload);
+    }
+    const effectiveParams={...upstreamParams};
+    if(payloads.length){effectiveParams.resources=payloads;if(isRecord(effectiveParams.request))effectiveParams.request={...effectiveParams.request,resources:payloads};}
     const llm = snapshotLlm(llmBridgeRef, settings, options);
     const record = {
       runId: newRunId(),
@@ -796,6 +818,9 @@ export function createService({
       input: input ?? null,
       llm,
       fingerprint: '',
+      options:structuredClone(options),
+      execution:{...effectiveParams,...(isRecord(effectiveParams.request)?{request:{...effectiveParams.request,resources:handles.map(({resourceId,revision})=>({resourceId,revision}))}}:{}),resources:handles.map(({resourceId,revision})=>({resourceId,revision}))},
+      resourceAnchors:payloads.flatMap(payload=>Object.values(payload.anchorIndex??{}).map(anchor=>({...anchor,resourceId:payload.resourceId,revision:payload.revision}))),
       quota: {
         workers: positiveInteger(options.workers ?? settings.workers, 1),
         scope: text(scope) || text(settings.defaultScope) || 'default',
@@ -804,6 +829,7 @@ export function createService({
     };
 
     const lock = await readUpstreamLock(logger);
+    record.upstreamCommit=lock.commit;
     const strategy = options.strategy ?? (isRecord(input) ? input.strategy : null) ?? null;
     const questionHistoryVersion = options.questionHistoryVersion
       ?? (isRecord(input) ? input.questionHistoryVersion : null)
@@ -835,11 +861,12 @@ export function createService({
 
     const run = createRunState(record, { method });
     runs.set(record.runId, run);
+    llmBridgeRef?.registerRun?.(record.runId,options.workerSelection??[{provider:llm.provider,model:llm.model,workers:record.quota.workers}],modelDispatch);
 
     await runStoreRef?.writeRequest?.(record.runId, {
       runId: record.runId,
       record,
-      upstream: { method, params: upstreamParams },
+      upstream: { method, params: effectiveParams },
     })?.catch?.(() => {});
 
     if (typeof bridge?.request !== 'function') {
@@ -853,7 +880,7 @@ export function createService({
     }
 
     try {
-      const response = await bridge.request(method, { runId: record.runId, ...upstreamParams }, {
+      const response = await bridge.request(method, { runId: record.runId, ...effectiveParams, llm:{...llm,accountScope:record.quota.scope} }, {
         signal: run.controller.signal,
       });
       run.turnId = text(response?.turnId) || null;
@@ -883,7 +910,7 @@ export function createService({
       capabilityResult: payload,
       runId: run.record.runId,
       resourceRevision: run.record.resourceRevisions?.[0]?.revision ?? null,
-      resourceAnchors: [],
+      resourceAnchors: run.record.resourceAnchors??[],
     });
     run.adapted = adapted;
     for (const entry of adapted.diagnostics) recordDiagnostic(run, { ...entry, runId: run.record.runId });
@@ -1018,7 +1045,7 @@ export function createService({
       sessionId: text(request.sessionId) || text(options.sessionId) || null,
       workspaceId: text(request.workspaceId) || text(options.workspaceId) || null,
       language: text(request.language) || text(options.language) || null,
-      config: isRecord(options.config) ? options.config : (isRecord(input) ? input : {}),
+      config: isRecord(options.config) ? options.config : (isRecord(input?.config) ? input.config : {}),
       llm: snapshotLlm(llmBridgeRef, settings, options),
       resources: handles,
     };
@@ -1030,6 +1057,7 @@ export function createService({
       scope: request.scope,
       method: METHODS.turnStart,
       upstreamParams,
+      modelDispatch:request.modelDispatch,
       requireCapability: true,
     });
   }
@@ -1080,6 +1108,7 @@ export function createService({
     const run = runs.get(key);
     if (!run) return { cancelled: false };
     if (run.settled) return { cancelled: false, status: run.status };
+    llmBridgeRef?.cancelRun?.(key);
 
     try {
       run.controller.abort();
@@ -1144,14 +1173,17 @@ export function createService({
           usage: stored.usage ?? null,
           error: stored.error ?? null,
           fingerprint: stored.fingerprint ?? null,
-          resourceRevision: null,
-          diagnostics: [],
-          questions: undefined,
+          upstreamCommit:stored.upstreamCommit??null,
+          resourceRevision: stored.resourceRevision??null,
+          diagnostics: stored.diagnostics??[],
+          questions: stored.questions,
         };
       }
       throw new DeepTutorError('E_PROTOCOL', `未知的 runId：${key}`, { runId: key });
     }
     const final = await run.done.promise;
+    await run.persistence;
+    if(run.persistenceError)throw new DeepTutorError('E_INTERNAL','上游结果未能保存到磁盘，请检查可用空间后重试');
     const out = {
       runId: key,
       capability: run.record.capability,
@@ -1160,6 +1192,7 @@ export function createService({
       usage: final.usage,
       error: final.error,
       fingerprint: final.fingerprint,
+      upstreamCommit:run.record.upstreamCommit??null,
       resourceRevision: final.resourceRevision,
       diagnostics: [],
     };
@@ -1186,6 +1219,7 @@ export function createService({
       scope: request.scope,
       method: METHODS.quizGenerate,
       upstreamParams: { request: quizRequest },
+      modelDispatch:request.modelDispatch,
       requireCapability: true,
     });
 
@@ -1331,6 +1365,7 @@ export function createService({
       }
 
       // 3) 依次释放协作者；任何一个失败都不影响其它协作者的清理。
+      await Promise.allSettled([...runs.values()].map(run=>run.persistence));
       const cleanups = [
         ['能力目录', () => catalogRef?.dispose?.()],
         ['资源注册表', () => resourcesRef?.dispose?.()],

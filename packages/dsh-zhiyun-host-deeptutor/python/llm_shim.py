@@ -93,6 +93,7 @@ NO_SELECTION_MESSAGE = (
 )
 
 SELECTION_FIELDS: tuple[str, ...] = (
+    "runId",
     "provider",
     "model",
     "temperature",
@@ -191,7 +192,11 @@ def build_messages(
             if not isinstance(item, dict):
                 continue
             role = _text(item.get("role")) or "user"
-            out.append({"role": role, "content": item.get("content")})
+            row = {"role": role, "content": item.get("content")}
+            for key in ("tool_calls", "tool_call_id", "callId", "name"):
+                if key in item:
+                    row[key] = item[key]
+            out.append(row)
         return out
     built: list[dict[str, Any]] = []
     if system_prompt:
@@ -262,6 +267,7 @@ def build_params(
         timeout_ms = int(float(timeout_seconds) * 1000) if timeout_seconds else None
 
     params: dict[str, Any] = {
+        "runId": snapshot.get("runId"),
         "model": bridge_model,
         "provider": None,
         "messages": build_messages(prompt, system_prompt, messages),
@@ -280,6 +286,12 @@ def build_params(
     tools = kwargs.pop("tools", None)
     if tools is not None:
         params["tools"] = tools
+    tool_choice = kwargs.pop("tool_choice", None)
+    if tool_choice is not None:
+        params["toolChoice"] = tool_choice
+    wire = {key: kwargs.pop(key) for key in ("seed", "top_p", "presence_penalty", "frequency_penalty") if key in kwargs}
+    if wire:
+        params["wireOptions"] = wire
     if timeout_ms is not None:
         params["timeoutMs"] = int(timeout_ms)
     # 其余上游专有 kwargs（max_retries / retry_delay / exponential_backoff /
@@ -733,7 +745,7 @@ class _FakeAsyncStream:
 def _attach_tool_ids(built: Any, original: Any) -> None:
     """给 ``role=tool`` 的消息补上 ``callId``。
 
-    ``build_params`` 只保留 role/content，而宿主 ``toHostMessages`` 靠
+    宿主 ``toHostMessages`` 靠
     ``message.callId || message.tool_call_id`` 把工具结果与那次调用对上。对不上
     就等于把工具结果变成一条普通用户发言 —— 模型会以为自己没调过工具。
     """
@@ -1105,6 +1117,13 @@ def _selftest() -> int:
     serialized = repr(params)
     check("api_key 不出现在桥参数里", "should-not-leak" not in serialized, serialized[:200])
     check("base_url 不出现在桥参数里", "should-not-leak.example" not in serialized, serialized[:200])
+    tool_history = [
+        {"role": "assistant", "content": None, "tool_calls": [{"id": "call_pair", "type": "function", "function": {"name": "lookup", "arguments": "{}"}}]},
+        {"role": "tool", "content": "result", "tool_call_id": "call_pair"},
+    ]
+    paired = build_params(prompt="", messages=tool_history)["messages"]
+    check("工具历史保留 assistant 调用", paired[0].get("tool_calls") == tool_history[0]["tool_calls"], str(paired))
+    check("工具历史保留结果关联 ID", paired[1].get("tool_call_id") == "call_pair", str(paired))
 
     # 上游要求一个宿主没有的模型时：不上桥，降级为 upstreamModel 诊断字段。
     foreign = build_params(prompt="x", model="upstream-only-model")

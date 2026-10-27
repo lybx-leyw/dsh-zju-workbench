@@ -1250,7 +1250,7 @@ export class PythonBridge extends EventEmitter {
     if (typeof method !== 'string' || !METHOD_VALUES.has(method)) {
       throw new DeepTutorError('E_PROTOCOL', `未登记的桥方法：${String(method)}`, { method: String(method) });
     }
-    if (!this._transport && (this._state === 'idle' || this._state === 'stopped')) {
+    if (!this._transport && (this._state === 'idle' || this._state === 'stopped' || this._state === 'starting')) {
       await this.start();
     }
     if (!this._transport) throw new DeepTutorError('E_BRIDGE_UNAVAILABLE', 'Python 桥不可用（子进程未启动）');

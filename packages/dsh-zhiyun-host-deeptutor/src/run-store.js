@@ -1,5 +1,6 @@
 import { createWriteStream } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile,rename } from 'node:fs/promises';
+import {randomUUID,createHash} from 'node:crypto';
 import { join } from 'node:path';
 
 /**
@@ -18,6 +19,8 @@ import { join } from 'node:path';
 export function createRunStore({ runsDir, logger = {} }) {
   /** @type {Map<string, {dir: string, events: ReturnType<typeof createWriteStream>|null, diagnostics: ReturnType<typeof createWriteStream>|null}>} */
   const open = new Map();
+  const cachePath=fingerprint=>join(runsDir,'cache',createHash('sha256').update(fingerprint).digest('hex')+'.json');
+  async function atomic(file,value){const temp=file+'.'+randomUUID()+'.tmp';await writeFile(temp,stableJson(value),'utf8');await rename(temp,file);}
 
   function warn(message, detail) {
     logger.warn?.(message, detail);
@@ -77,10 +80,16 @@ export function createRunStore({ runsDir, logger = {} }) {
     async writeResult(runId, result) {
       try {
         const state = await ensureDir(runId);
-        await writeFile(join(state.dir, 'result.json'), stableJson(result), 'utf8');
+        await atomic(join(state.dir,'result.json'),result);
+        if(result.status==='succeeded'&&result.fingerprint){await mkdir(join(runsDir,'cache'),{recursive:true});await atomic(cachePath(result.fingerprint),{runId,fingerprint:result.fingerprint});}
       } catch (error) {
         warn('写结果失败', error?.message ?? String(error));
+        throw error;
       }
+    },
+
+    async findCompleted(fingerprint){
+      try{const entry=JSON.parse(await readFile(cachePath(fingerprint),'utf8'));if(!/^[\w-]+$/.test(entry.runId))return null;const result=await this.readResult(entry.runId);return result?.status==='succeeded'&&result.fingerprint===fingerprint?result:null;}catch{return null;}
     },
 
     async writeUsage(runId, usage) {

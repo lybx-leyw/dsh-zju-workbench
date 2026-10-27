@@ -36,6 +36,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { CALLBACKS, DeepTutorError, NOTIFICATIONS } from './protocol.js';
+import {withWireOptions} from './wire-options.js';
 
 /** 上游调用未显式给 model 时，回落到 selection 里的一次调用最多等多久。 */
 const DEFAULT_LLM_TIMEOUT_MS = 900_000;
@@ -131,6 +132,10 @@ export function toHostMessages(messages, { provider = 'zhiyun-deeptutor', model 
       if (part === null || part === undefined) continue;
       if (typeof part === 'string' && part === '') continue;
       content.push(toContentBlock(part, images, `${messageIndex}:${partIndex}`));
+    }
+    if(role==='assistant')for(const call of message.tool_calls??[]){
+      if(!call?.id||!call?.function?.name)throw new DeepTutorError('E_PROTOCOL','工具调用历史缺少 ID 或函数名');
+      content.push({type:'tool-call',id:call.id,name:call.function.name,arguments:typeof call.function.arguments==='string'?call.function.arguments:JSON.stringify(call.function.arguments??{})});
     }
     if (content.length === 0) content.push({ type: 'text', text: '' });
 
@@ -273,6 +278,27 @@ export function createLlmBridge({
   timeoutMs = DEFAULT_LLM_TIMEOUT_MS,
 } = {}) {
   const log = makeLogger(logger);
+  const activeRequests=new Map();
+  const slots=new Map();
+  const runLimits=new Map();
+  const runDispatch=new Map();
+  const cancelledRuns=new Set();
+  const waiters=new Set();
+  const notify=()=>{for(const wake of [...waiters])wake();};
+  async function acquire(route,params,signal){
+    const key=route.provider;
+    const configured=runLimits.get(params.runId)?.find(row=>row.provider===route.provider&&row.model===route.model);
+    const limit=configured?.workers??1;
+    while((slots.get(key)??0)>=limit){
+      signal.throwIfAborted();
+      await new Promise((resolve,reject)=>{const finish=()=>{waiters.delete(wake);signal.removeEventListener('abort',abort);resolve();},wake=()=>finish(),abort=()=>{waiters.delete(wake);reject(signal.reason);};waiters.add(wake);signal.addEventListener('abort',abort,{once:true});});
+    }
+    signal.throwIfAborted();slots.set(key,(slots.get(key)??0)+1);
+    let lease;
+    try{lease=await take(quota)?.acquire?.({...params,provider:route.provider,model:route.model,signal});if(lease?.granted===false)throw new DeepTutorError('E_QUOTA','模型配额尚不可用');}
+    catch(error){slots.set(key,slots.get(key)-1);notify();throw error;}
+    return async()=>{try{await take(quota)?.release?.({...params,provider:route.provider,model:route.model,lease});}finally{slots.set(key,Math.max(0,(slots.get(key)??1)-1));notify();}};
+  }
   const readSelection = typeof getSelection === 'function' ? getSelection
     : typeof selection === 'function' ? selection
       : () => null;
@@ -458,6 +484,8 @@ export function createLlmBridge({
 
   /** `llm.stream` / `llm.complete` 的公共实现：准备消息 → 调宿主 → 聚合。 */
   async function callModel(params, { signal } = {}) {
+    const dispatch=runDispatch.get(params.runId);
+    if(dispatch&&!params.__dispatched)return dispatch(route=>callModel({...params,provider:route.provider,model:route.model,__dispatched:true},{signal}),signal);
     const service = requireLlm();
     const route = await resolveRoute(service, params, signal);
     // 注意命名：别写成 `const attachments = take(attachments)` —— 那会命中暂时性死区，
@@ -473,12 +501,13 @@ export function createLlmBridge({
     if (messages.length === 0) {
       throw new DeepTutorError('E_PROTOCOL', 'llm 请求里没有任何可用消息', { provider: route.provider });
     }
-    return streamOnce(service, route, {
+    const release=await acquire(route,params,signal);
+    try{return await withWireOptions(params,()=>streamOnce(service, route, {
       ...params,
       __messages: messages,
       __system: system,
       __tools: toToolSchemas(params.tools, log),
-    }, { signal });
+    }, { signal }));}finally{await release();}
   }
 
   /** 配额桥：没有配额服务时按"永不受限"答复，而不是让上游出题卡死。 */
@@ -513,6 +542,8 @@ export function createLlmBridge({
     const input = isRecord(params) ? params : {};
     const timeout = Number(input.timeoutMs) > 0 ? Number(input.timeoutMs) : Number(timeoutMs) || DEFAULT_LLM_TIMEOUT_MS;
     const controller = new AbortController();
+    if(cancelledRuns.has(input.runId))throw new DeepTutorError('E_CANCELLED','该运行已取消');
+    const requestId=randomUUID();activeRequests.set(requestId,{runId:input.runId,controller});
     const timer = setTimeout(() => controller.abort(new Error(`模型调用超过 ${timeout}ms`)), timeout);
     if (typeof timer.unref === 'function') timer.unref();
     try {
@@ -527,6 +558,7 @@ export function createLlmBridge({
       });
       return result;
     } catch (error) {
+      if(cancelledRuns.has(input.runId)||disposed)throw new DeepTutorError('E_CANCELLED','运行已取消，模型调用已停止');
       if (controller.signal.aborted && !(error instanceof DeepTutorError)) {
         throw new DeepTutorError('E_TIMEOUT', `模型调用超过 ${timeout}ms 未完成`, { method: name });
       }
@@ -538,6 +570,7 @@ export function createLlmBridge({
         });
     } finally {
       clearTimeout(timer);
+      activeRequests.delete(requestId);
     }
   }
 
@@ -595,6 +628,8 @@ export function createLlmBridge({
 
   async function dispose() {
     disposed = true;
+    for(const {controller} of activeRequests.values())controller.abort(new DeepTutorError('E_CANCELLED','模型桥已关闭'));
+    notify();
     for (const disposer of [...disposers]) {
       try {
         disposer();
@@ -603,6 +638,7 @@ export function createLlmBridge({
       }
     }
     disposers.clear();
+    runDispatch.clear();runLimits.clear();cancelledRuns.clear();
   }
 
   return {
@@ -614,6 +650,9 @@ export function createLlmBridge({
     attachTo,
     onNotification,
     info,
+    registerRun(runId,workers=[],dispatch=null){cancelledRuns.delete(runId);runLimits.set(runId,workers.map(row=>({...row})));if(dispatch)runDispatch.set(runId,dispatch);},
+    cancelRun(runId){cancelledRuns.add(runId);for(const request of activeRequests.values())if(request.runId===runId)request.controller.abort(new DeepTutorError('E_CANCELLED','运行已取消'));notify();},
+    finishRun(runId){runLimits.delete(runId);runDispatch.delete(runId);},
     dispose,
   };
 }
