@@ -16,8 +16,10 @@
 装的时候要联网拉、装出来的内容随远端默认分支漂移、以及离线/受限网络环境直接装不上。
 vendor 一份快照进仓库，把「我们到底在跑哪一版上游」变成一个可审计的、和代码一起 review 的事实。
 
-代价是仓库体积。处理方式是 `distribution.json`：仓库里留全量便于审计与复现，
-打包分发时排除开发截图、上游前端源码、上游测试与文档 —— Python 运行只需要
+快照本身**不进仓库**（见 `.gitignore`）：`npm run vendor:fetch` 按上表的提交与归档校验值重新拉回，
+所以「我们到底在跑哪一版」仍由锁文件保证，而不是靠把 60 MB 塞进提交历史。
+
+打包分发时再由 `distribution.json` 排除开发截图、上游前端源码、上游测试与文档 —— Python 运行只需要
 `deeptutor/`、`deeptutor_cli/`、`requirements/`、`pyproject.toml`、`LICENSE`、
 `THIRD_PARTY_NOTICES.md`。
 
@@ -56,9 +58,9 @@ vendor 一份快照进仓库，把「我们到底在跑哪一版上游」变成�
 
 ## 升级流程
 
-1. 取新的上游归档，核对 `sha256`。
-2. 替换 `vendor/deeptutor/`（整目录换，不要就地改）。
-3. 更新 `upstream.lock.json` 的 commit / version / archive.sha256。
+1. 取新的上游提交号与归档 `sha256`。
+2. 更新 `upstream.lock.json` 的 commit / version / archive.sha256（`npm run vendor:fetch -- --check` 会告出本地快照与锁是否对得上）。
+3. `npm run vendor:fetch -- --force --only deeptutor` 整目录重拉（不要就地改）。
 4. 若 `patches/` 里有补丁，逐个 `git apply --check` 重放。
 5. 跑 `tests/deeptutor-bridge.test.mjs` 与 `node scripts/deeptutor_bridge_selftest.mjs`。
 6. 用一条真实用例跑通出题，确认事件映射表仍然覆盖全部上游事件类型

@@ -75,8 +75,11 @@ git --version
 ```bash
 npm install --prefix .runtime/dsh-0.2.0-rc.2 @deepseek-ai/dsh@0.2.0-rc.2
 npm ci
+npm run vendor:fetch
 npm run dev
 ```
+
+`npm run vendor:fetch` 把 `vendor/` 下的上游源码快照拉回来。这些目录**不进仓库**（见 [.gitignore](../../.gitignore)），脚本按 `upstream.lock.json` / `vendor.lock.json` 里锁定的提交与 SHA-256 下载校验后才落盘；已经拉过的会直接跳过，重拉加 `--force`，只校验本地副本（不联网）加 `--check`。它只影响 DeepTutor 出题引擎和外部评测器，不装也能构建、启动其余功能。
 
 安装命令使用 [runtime.lock.json](../../runtime.lock.json) 中的 `preferredHostVersion`，当前为 `0.2.0-rc.2`；不要改用 `@latest`，也不要省略 `--prefix`，它用于将宿主依赖安装到独立目录。Windows 默认位置已有受支持的 DSH Desktop 时，可跳过第一条命令；其他位置的宿主需按 1.3 显式指定。
 
@@ -107,6 +110,7 @@ npm run desktop
 | 查看合并后的插件配置 | 构建完成后执行 `npm run profile:dump` |
 | 更换启动端口 | `npm start -- --port 3081` |
 | 提示缺少客户端产物 | 运行 `npm run dev`，先构建再启动 |
+| 提示找不到 DeepTutor 上游源码，或 vendor 目录是空的 | 运行 `npm run vendor:fetch` |
 | 用窗口打开工作台 | 首次 `npm --prefix apps/desktop install`，之后 `npm run desktop`。先确认 `npm start` 能起来 |
 | 窗口提示实例退出（退出码 1） | 关掉窗口后重新执行 `npm run desktop`，让它使用当前终端的 Node。先用 `npm start` 确认命令行本身能起来 |
 | 提示宿主缺失或版本不匹配 | 按 1.2 安装，并检查是否设置了指向其他宿主的环境变量 |

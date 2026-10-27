@@ -59,10 +59,17 @@
   各包的 README 记录了各自的改动与取舍；原移植说明见 git 历史（`dsh-zhiyun-source-omni/ATTRIBUTION.md`）。
 
 - [DeepTutor](https://github.com/HKUDS/DeepTutor) · **Apache-2.0** · 快照提交 `a31d82624c27d75f4e771d4fcb78dce16470b383`（版本 `1.6.15`）。
-  上游控制台/服务端的**完整源码快照** vendor 在 [dsh-zhiyun-host-deeptutor/vendor/deeptutor/](packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/)，
+  上游控制台/服务端的**完整源码快照** vendor 在 `packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/`
+  （该目录不进仓库，按 [upstream.lock.json](packages/dsh-zhiyun-host-deeptutor/upstream.lock.json) 执行 `npm run vendor:fetch` 拉回），
   逐字节未改（含其自身 LICENSE 与 THIRD_PARTY_NOTICES.md）。本仓对上游的唯一「改动」是运行时的
   monkeypatch 与 `DEEPTUTOR_HOME` 环境变量重定向，均落在包自己的 `python/` 与 `src/` 下，不改 vendor。
   获取方式、归档校验值、分发时排除哪些非运行目录，见该包 [ATTRIBUTION.md](packages/dsh-zhiyun-host-deeptutor/ATTRIBUTION.md)。
+
+- core-quiz 的可选 DeepTutor 通用出题指引改写自上述 Apache-2.0 快照的出题能力提示词，映射与改动说明见 [core-quiz/ATTRIBUTION.md](packages/dsh-zhiyun-core-quiz/ATTRIBUTION.md)。
+- 独立 Quiz 架构实验借鉴 DeepTutor 的素材探索、明确蓝图和单题生成边界，改写范围与来源见 [实验说明](scripts/quiz_bench/experimental/ATTRIBUTION.md)；实验不接入 App，不修改原包配置或 vendor。
+- 该实验的 [r2 候选](scripts/quiz_bench/experimental-r2/README.md) 继续保留上述来源归属，独立盲解、标签置换与匹配契约为本仓实现；r1 源码已按摘要冻结，两候选均不接入产品。
+
+- [BenchMarker](https://github.com/nbalepur/BenchMarker) · **MIT** · 提交 `bcd34a531e7c15c6416732ff465f99129783cc6f`。独立 quiz bench vendor 原生的选择题编写缺陷、猜题捷径评分器及完整 prompt 子集，逐字节保留；范围、许可证、桥接与异常处理说明见 [外部评分器归属](scripts/quiz_bench/evaluators/ATTRIBUTION.md)。仅用于离线准备和显式运行的外部评测，不接入产品生成内核。
 
 ## 协议实现说明（无第三方代码引入）
 

@@ -36,3 +36,9 @@ deploy/*/data/
 /docs/v02.md
 /tmp-*.cjs
 /tmp-*.mjs
+
+# 上游源码快照：体积大（DeepTutor 一份就 60 MB）、有自己的许可与发行节奏，跟着
+# 我们的提交走只会拖垮 clone 与 review。统一不进仓库 —— 需要时按锁文件拉回：
+#   npm run vendor:fetch        （校验 upstream.lock.json / vendor.lock.json 的
+#   npm run vendor:fetch -- --check   提交与 SHA-256 后落盘）
+vendor/

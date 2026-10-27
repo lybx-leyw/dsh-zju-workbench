@@ -8,6 +8,7 @@
 - 上游版本：`1.6.15`（`vendor/deeptutor/deeptutor/__version__.py`）
 - 获取方式：GitHub codeload 归档（`git clone` 在本机多次超时），
   归档 SHA-256 `bb9b1281afccf632a4f51f1d834233051970b44143967fa206e24314ff457830`。
+  快照不进仓库，用 `npm run vendor:fetch` 按 `upstream.lock.json` 的提交与归档校验值拉回。
 - 快照位置：`vendor/deeptutor/`，3875 个文件、约 60.8 MB，逐字节保留上游原样（含其自身
   `.gitignore`、`pyproject.toml`、`THIRD_PARTY_NOTICES.md`）。
 
@@ -34,8 +35,9 @@
 
 ## 分发
 
-`vendor/deeptutor/` 全量留在仓库里（便于审计与复现），但打包分发时按 `distribution.json`
-排除非运行内容：开发截图（`assets/`，25 MB）、上游前端源码（`web/`，15.8 MB）、
+`vendor/deeptutor/` 不进仓库（60 MB 的快照留在提交历史里只会拖垮 clone），可复现性由
+`upstream.lock.json` 的提交与归档 SHA-256 保证，任何时候都能用 `npm run vendor:fetch` 拉回同一份。
+打包分发时按 `distribution.json` 排除非运行内容：开发截图（`assets/`，25 MB）、上游前端源码（`web/`，15.8 MB）、
 上游测试（`tests/`）、开发文档与示例脚本。Python 运行只需要
 `deeptutor/`、`deeptutor_cli/`、`requirements/`、`pyproject.toml`、`LICENSE`、
 `THIRD_PARTY_NOTICES.md`。

@@ -11,9 +11,10 @@
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
+    "vendor:fetch": "node scripts/fetch-vendor.mjs",
     "bench:quiz": "node scripts/quiz_bench/bench.mjs",
-    "test:quiz-bench": "node --test tests/quiz-bench.test.mjs",
-    "test:deeptutor": "node --test tests/deeptutor-host.test.mjs tests/deeptutor-bridge.test.mjs tests/deeptutor-service.test.mjs",
+    "test:quiz-bench": "node --test tests/quiz-bench.test.mjs tests/quiz-accounting-guidance.test.mjs",
+    "test:deeptutor": "node --test tests/deeptutor-host.test.mjs tests/deeptutor-bridge.test.mjs tests/deeptutor-service.test.mjs tests/deeptutor-integration.test.mjs tests/learning-resource.test.mjs tests/quiz-upstream.test.mjs",
     "test:deeptutor:selftest": "node scripts/deeptutor_bridge_selftest.mjs",
     "profile:init": "node scripts/profile.mjs init",
     "profile:check": "node scripts/profile.mjs check",
