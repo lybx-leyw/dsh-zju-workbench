@@ -13,6 +13,7 @@ import {
   dayOfYear,
   formulaGroup,
   parseDay,
+  nowStamp,
   pickGroup,
   readState,
   writeState,
@@ -211,6 +212,150 @@ test('writeState 写入后能读回，且累计次数递增', () => {
     // 写入后「今天」= 10-15，而 last_run_at 也是 10-15 → 必须走同日分支，不重复取 B
     const picked = pickGroup(back, parseDay('2026-10-15'));
     assert.notEqual(picked.group, 'B');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ── 时区口径（r87）────────────────────────────────────────────────────────
+//
+// 缺陷：`--commit` 不传 `--at` 时用 `new Date().toISOString()` 取「现在」，
+// 那是 **UTC** 时刻写进 `last_run_at`，可同一行的日期又被当作**上海日**来比。
+// 两者在 UTC+8 的 00:00–08:00 恰好差一天：
+//
+//   上海 2026-10-28 00:00  →  写入 `2026-10-27 16:00`  →  下一次跑时「今天」= 10-28，
+//   last_run_at 的日期 = 10-27  →  判「跨天」→ 按公式重取组，**当日去重被绕过**。
+//
+// 这个窗口正好覆盖每 3 小时一轮的凌晨场次（00:00 / 03:00 / 06:00）。
+
+test('nowStamp 按固定 +08:00 取「现在」，不随宿主 TZ 漂移', () => {
+  // 上海 2026-10-28 00:00 == UTC 2026-10-27 16:00
+  const utc = Date.UTC(2026, 9, 27, 16, 0);
+  assert.equal(nowStamp(utc), '2026-10-28 00:00');
+  // 跨年边界：上海 2027-01-01 07:59 == UTC 2026-12-31 23:59
+  assert.equal(nowStamp(Date.UTC(2026, 11, 31, 23, 59)), '2027-01-01 07:59');
+});
+
+test('nowStamp 不受 process.env.TZ 影响（宿主时区无关）', () => {
+  const prev = process.env.TZ;
+  const utc = Date.UTC(2026, 9, 27, 16, 0);
+  try {
+    for (const tz of ['UTC', 'America/New_York', 'Asia/Shanghai', 'Pacific/Kiritimati']) {
+      process.env.TZ = tz;
+      assert.equal(nowStamp(utc), '2026-10-28 00:00', `TZ=${tz} 时 nowStamp 漂了`);
+    }
+  } finally {
+    if (prev === undefined) delete process.env.TZ;
+    else process.env.TZ = prev;
+  }
+});
+
+test('回归：上海 00:30 跑完 → 同日再跑必须走「同日」分支，不得回落公式', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'radar-rotation-'));
+  const file = join(dir, 'rotation-state.md');
+  try {
+    writeFileSync(file, [
+      '| 项 | 值 |',
+      '| --- | --- |',
+      '| `last_group` | `C` |',
+      '| `last_run_at` | `2026-10-27 21:00` |',
+      '| `group_runs`（累计） | A=1, B=1, C=1 |',
+      '',
+    ].join('\n'), 'utf8');
+
+    // 上海 2026-10-28 00:30（= UTC 2026-10-27 16:30）跑 B
+    writeState({ group: 'B', at: nowStamp(Date.UTC(2026, 9, 27, 16, 30)), note: '凌晨场' }, file);
+    const back = readState(file);
+    assert.equal(back.lastRunDay, '2026-10-28', 'last_run_at 必须记上海日，而不是 UTC 日');
+
+    // 同一天 03:00 再跑：今天 = 10-28，必须识别出 B 今天已跑过
+    const picked = pickGroup(back, parseDay('2026-10-28'));
+    assert.notEqual(picked.rule, 'formula(new-day)', '凌晨场被误判成跨天 → 当日去重失效');
+    assert.ok(picked.ranToday.includes('B'), `ranToday 应含 B，实际 ${picked.ranToday.join(',')}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('writeState 默认时间戳走 +08:00（不传 --at 时）', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'radar-rotation-'));
+  const file = join(dir, 'rotation-state.md');
+  try {
+    writeFileSync(file, [
+      '| 项 | 值 |',
+      '| --- | --- |',
+      '| `last_group` | `A` |',
+      '| `last_run_at` | `2026-10-27 09:00` |',
+      '| `group_runs`（累计） | A=1, B=0, C=0 |',
+      '',
+    ].join('\n'), 'utf8');
+    const saved = writeState({ group: 'A' }, file);
+    // 与「现在」的上海时刻相比，允许 2 分钟（跑测试本身耗时）
+    const expected = nowStamp(Date.now());
+    const toMin = (s) => Date.parse(`${s.replace(' ', 'T')}:00Z`);
+    assert.ok(Math.abs(toMin(saved.at) - toMin(expected)) <= 2 * 60 * 1000,
+      `默认时间戳不是上海时刻：${saved.at} vs ${expected}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('回归：CLI 的「今天」取上海日，不是 UTC 日', async () => {
+  // 子进程里把 TZ 设成 UTC 也要拿到上海日（不靠宿主 TZ）
+  const { execFileSync } = await import('node:child_process');
+  // 不用 `--json`：它把 `state.raw`（整份状态文件）也序列化进去，体积大且脆。
+  // 这里只断言「今天」那一行 —— 正是本次要修的字段。
+  const out = execFileSync(process.execPath, ['scripts/radar-rotation.mjs'], {
+    env: { ...process.env, TZ: 'UTC' }, encoding: 'utf8',
+  });
+  const line = out.split('\n').find((l) => l.startsWith('今天'));
+  assert.ok(line, 'CLI 未输出「今天」行');
+  assert.ok(line.includes(nowStamp().slice(0, 10)), `CLI 的今天不是上海日：${line}`);
+});
+
+test('last_run_at 晚于今天 → 视为脏状态，回落公式（不拿不可能的未来日期做去重基准）', () => {
+  const today = parseDay('2026-10-27');
+  const picked = pickGroup(stateOf({ lastGroup: 'C', lastRunDay: '2026-10-28' }), today);
+  assert.equal(picked.rule, 'formula(future-state)');
+  assert.equal(picked.group, formulaGroup(today));
+});
+
+test('回归（写侧）：说明表里恰好含一个反引号时刻时，writeState 仍只改「## 状态」节', () => {
+  // 2026-10-28 实跑踩到：说明表第 2 行是 ``| `last_run_at` | `2026-10-28 00:05` | …|``，
+  // 全文 replace() 先在说明行命中 → last_group 改了、last_run_at 与 group_runs 没改。
+  const dir = mkdtempSync(join(tmpdir(), 'radar-rotation-'));
+  const file = join(dir, 'rotation-state.md');
+  try {
+    writeFileSync(file, [
+      '## 状态字段',
+      '',
+      '| 字段 | 含义 |',
+      '| --- | --- |',
+      '| `last_group` | 最近一次跑的组（`A` / `B` / `C`） |',
+      '| `last_run_at` | `2026-10-28 00:05` |',
+      '| `group_runs` | 各组历史累计运行次数 |',
+      '',
+      '## 状态',
+      '',
+      '| 项 | 值 |',
+      '| --- | --- |',
+      '| `last_group` | `C` |',
+      '| `last_run_at` | `2026-10-27 22:35` |',
+      '| `group_runs`（累计） | A=1, B=1, C=1 |',
+      '',
+    ].join('\n'), 'utf8');
+
+    writeState({ group: 'B', at: '2026-10-28 00:05', note: 't' }, file);
+    const back = readState(file);
+    assert.equal(back.lastGroup, 'B');
+    assert.equal(back.lastRunAt, '2026-10-28 00:05', 'last_run_at 必须写进取值行');
+    assert.equal(back.groupRuns.B, 2, 'group_runs 必须跟着 +1');
+
+    const text = readFileSync(file, 'utf8');
+    const explainRow = text.split('\n').find((l) => l.startsWith('| `last_run_at` | `2026-10-28 00:05` |'));
+    assert.ok(explainRow, '说明表那一行不应被改写（它本来就长这样）');
+    // 说明表里「最近一次跑的组」那条必须是原样
+    assert.ok(text.includes('| `last_group` | 最近一次跑的组（`A` / `B` / `C`） |'), '说明表被写了取值');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

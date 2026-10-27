@@ -3231,3 +3231,28 @@
 > `LICENSE_LIBERATION`（GPL-2.0 + 字体例外）是 pdf.js **官方发行版的标配**，
 > 意味着**任何**自带 pdf.js 的候选都会踩到它 → 建议单独立一条判定口径
 > （「字体作为渲染资源不构成衍生」是否成立），而不是每次临场决定。
+
+## 2026-10-28 · 第八十七轮（B 组 · 轴「登录链的上游替换 + 会议/期刊判定的真实输入」）
+
+> 真日期 **2026-10-28**（年积日 301，`301%3=1` → **B**）。搜索 **10 次**（达上限未超限），0 次 403，**本轮完整**。
+> 新面孔 **4 行**（🟡1 🔵2 ⛔1，**🟢 0**）；在册复核 **4 条**（全部维持）。
+> **骨架 1 个**：`packages/radar/dsh-radar-zju-login`（B 类，锁版 `login-zju@1.0.9`）。
+> **实质产出**：`scripts/radar-rotation.mjs` 时区缺陷已修（上海 00:00–08:00 场次绕过当日去重），测试 14 → **18**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `holly1226/zotero-venue-tagger` | B 其他JS（Zotero 10 插件 `bootstrap.js` 1281 行 + Node/Python 脚本） | **MIT** ✅（`LICENSE` 首行 `Copyright (c) 2026`，GitHub `spdx_id` 一致） | 论文（会议/期刊分级） | **重复且可强化**（形态受限 → 不出码） | 🟡 | proposed | 2026-10-28 | ★35，push **2026-10-17**（11 天未动）。51 条规则（`rule_set=zju-design-2021_ccf-hci-2022`）+ DOI→轨道纠正表。**本仓空洞是真的**：`page-paper/src/library.js:52` 的文献只是 `{topic,name,pdfPath}`，全仓 grep `venue`/`ccf`/`影响因子` **零命中**（唯一「会议」在 `core-lecture/tree.js:119` 是腾讯会议）。**但实测三条硬约束**：① 输入字段不存在 —— `venue_text()` 只读 `publicationTitle/proceedingsTitle/conferenceName/series/bookTitle/pages`，本仓 item 喂进去 `match=null`（空串），只有把 `name` 当 `publicationTitle` 才命中；② 学科只覆盖 HCI/普适计算（OSDI/SIGCOMM/INFOCOM/JMLR **0 命中**）；③ `npm view zotero-venue-tagger` **404**、无 `package.json` → **不可锁版**。→ 判据①③均不成立，**不出骨架**。**只带走思想**：`references/policy.md` 四条口径（非全文轨道不给评级 / ZJU 直取优先、CCF 仅兜底 / EA·Companion·Workshop 单独成标签 / 列表必须版本化）——将来自建分级时照此写规则，**不搬它这 51 条** |
+| `ZJU-CC98/CC98-TeacherEvaluationSystem` | B（名不副实：**C# / ASP.NET Core**） | Apache-2.0 ✅（`LICENSE` 全文） | 选课 / 评课 | 全新但**技术栈不符** | 🔵 | proposed | 2026-10-28 | ★1，push **2020-03**（6 年未动）。GitHub 标 `JavaScript` 只因 `wwwroot/js/site.js` 一个模板脚本；实质是 `CC98.TeacherEvaluationSystem.sln` + EF Core（`Data/{Teacher,Department,Vote,Mark}.cs` + `Migrations/`）。**不可作 JS 依赖**；唯一价值是「评课数据模型」的四张表 + `Department`→`DepartmentParent` 自引用可作只读参考。与在册 `zjufishboy/TalkTrue`（★3，只有前端）同簇，本条补上缺失的后端形态 |
+| `WestQuake/zju-reveal-md-template` | B 其他JS（Node 脚本 + `reveal-md`） | **`null`（模板自身无 LICENSE；`.vendor/reveal-md/` 自带的是上游 MIT 副本）** ⛔ | 课程展示 / 答辩 | 无关 | ⛔ | rejected | 2026-10-28 | ★4，push 2026-09-23。浙大幻灯片模板；无许可证 → **不摘码**。且本仓 `page-study/src/lecture-export.jsx` 已有讲义导出，模板类不构成底层增强 |
+| `zju plugin language:typescript` 查询本身 | — | — | — | — | **total=0** | — | 2026-10-28 | **结构性负结果**：浙大生态**不存在**「DSH 插件」层 → B 组永远挖不到 A 类候选。建议 B 组后续**不再尝试** `plugin` 类词，改「每 3 天一轮、只走 `created:>` 增量轴」 |
+| `Coran-tech/cc98-reborn`（复核） | B 其他JS | MIT ✅ | 论坛 | 重复且无增益（**维持**） | 🔵 | proposed | 2026-10-24 | 本轮浅克隆核了 API 面，补齐一手资料：收藏分组 `GET /me/favorite-topic-group`；收藏列表 `GET /topic/me/favorite?from=&size=&order=2&groupid=`，**上游页大小 11、游标步长 10**（多取一条 lookahead）。本仓 `source-cc98` 的 10 个只读方法**没有收藏**，但「给反馈页接 CC98」不是当前需求 → 仍判重复无增益 |
+| `5dbwat4/login-ZJU`（复核 → 出骨架） | B 其他JS | **MIT** ✅ | 账号/登录（全场景前置） | **重复可强化**（判据②**仅部分成立**） | 🟢 | skeleton-created | 2026-10-16 | 骨架 `packages/radar/dsh-radar-zju-login`。npm `login-zju@1.0.9`（2026-07-03）**真·可锁版**：`deps` 仅 `nanoid`、`peer`/`engines` 空、MIT 三处一致、导出 12 个服务。**三条待决**：① 上游 README「上次成功时间」最新 **2026/4/14**（6 个月未真机复验）；② **上游无 WebVPN** → `source-netproxy` 不可撤（`describeCoverage()` 输出 `overlap=classroom,courses` / `uncovered=xzzd,pta,card,netproxy`）；③ 上游只收明文 `new ZJUAM(u,p)`，本仓账号加密落盘 → 需评审批准或否决。README 首屏把判据②写成「⚠ 部分成立」并附「若答否 → 撤销」表 |
+| `memset0/Learning-at-ZJU-Helper`（复核） | B 其他JS | MIT ✅ | 学在浙大/智云课堂 | 重复且无增益（**维持 🔵**） | 🔵 | proposed | 2026-10-16 | ★**60**（较 r85 的 59 +1），但 push 仍 **2024-12-05**，停更 22 个月 |
+| `burriedalien666/zju842-practice`（复核） | B 其他JS | MIT ✅ | 刷题 | 重复且可强化（**维持 🟡**） | 🟡 | proposed | 2026-10-19 | ★23，push 2026-10-25（仍活跃）。题库版本化（`library.json` 指针 + `edition-<hex16>`）仍是可借点 |
+
+> **本轮方法论（可复用）**：
+> ① **「上游有一份规则库」≠「它对本仓可用」** —— 用之前先把它**喂本仓的真实 item 形状**跑一遍（本轮 `match=null`）。
+> 凡是 `venue_text`/`match_rule` 这类**按字段名取值**的实现，都要先查「本仓到底有没有那个字段」。
+> ② **`total=0` 有时是结论而不是失败**：`zju plugin` = 0 直接证明「B 组挖不到 A 类」是结构性的。
+> ③ **判据② 只判「部分成立」时也要照常出骨架，但必须把「哪一部分不成立」写在 README 第一屏**，
+> 并附「若答否 → 撤销」——否则评审完没人回来把结论写回去（r86 的三条坑至今悬着）。
