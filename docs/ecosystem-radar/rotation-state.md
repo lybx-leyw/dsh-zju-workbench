@@ -161,7 +161,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-26 21:05 | C | 自动记录 |
 | 2026-10-26 16:03 | A | deepseek-harness plugin / cordis plugin / dsh plugin / dsh-market / dsh-desktop |
 | 2026-10-27 01:15 | B | zju language:javascript / zju course / cc98 / campus app zhejiang / zju timetable / zju grades api / zju language:typescript / pintia OR pta / zju wechat / zju created>2026-08-01 / zju library seat / zju exam score query |
-| 2026-10-27 10:14 | A | dsh plugin host / plugin peer dependency / dsh plugin compatibility / cordis plugin version |
+| 2026-10-27 10:14 | A | **r84**：`dsh plugin host` 462 / `plugin peer dependency` 16 / `dsh plugin compatibility` 73 / `cordis plugin version` 21（4 次搜索，**未达上限**，0 次 403）。首次登记 7 行（🔵4 ⛔3）＋**在册结案 1 行**（`dsh-plugins/dsh-loader` 的 `NOASSERTION` 通读为 **LGPL-3.0** → ⛔）。**0🟢 0🟡、无骨架**。实质产出全在本仓：`scripts/radar-host-window.mjs` + 13 条单测 + 6 次真实 `npm install` 校准。**新结论**：① **M-3 宿主是两个互斥快照**（`dsh-tools@0.2.1-alpha.1` 把同代包 peer 写成精确版本，混搭即 `ERESOLVE`，3 组实测）→ 「宿主版本窗口」这个说法本身有误导，**升级宿主 = 整组重锁**；② **M-4 11 个可判骨架里 0 个同时满足两个快照**（5 只对 rc / 1 只对 alpha / 6 两个都不对），且 `DRIFT` 应读作「只能挂在一个快照上」而非缺陷；③ **M-1 自查纠正**：首版把 `@deepseek-ai/cordis`（4.x 框架层）当宿主比，13 个包全判 ❌ —— **按前缀收 peer 是错的，宿主只认 `@deepseek-ai/dsh-*`**；④ **M-2 判锁版不判 latest**（`panda-calendar` 锁 1.2.4 无 peer、latest 1.2.5 有四条），这是 r46「可锁 ≠ 锁到最新」的第四种形态；⑤ `plugin peer dependency` 是**死词**（16 条里 14 条是 webpack/vite 插件）→ 该子轴封板 3 个月；⑥ `NOASSERTION` 挂了 12 天的 `dsh-loader` 核完是 LGPL → **`NOASSERTION` 必须当天读 LICENSE**。⚠ 探针自己错了 6 次（`ETARGET` 误判为「放行」、latest/锁版混用）→ 固化教训：**「放行」必须是「真的装上了」，不是「没看到那个错」**。⚠ 自动验收四项全过；**未新建 PR**（PR #21 已在跟踪 `radar`），已更新标题与正文至 head `588436a` |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
