@@ -3140,3 +3140,36 @@
 > `feature flag dependency graph language:typescript` **0** / `vscode extension manifest parser language:typescript` **0**），
 > 8 次 0 次 403，**完整**；首屏 45 个未登记 `owner/repo`，与在册去重后 **3 个新面孔 + 1 个在册交叉核对**。
 > **实质产出全在本仓**：`scripts/radar-provider-liveness.mjs`（新检查器）+ `tests/radar-provider-liveness.test.mjs`（7 条，含阳性变异）。
+
+## 第八十四轮（2026-10-27 · A 组 · 轴「这个锁版，到底能挂在哪个宿主上」）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `LouisHaoL/dsh-timer-agent` | **A 原生DSH** | **MIT** ✅ | 通用（今天/规划页的「到时提醒」） | **重复且可强化**（页面内只有计时，无宿主常驻 ticker） | 🔵 | proposed | 2026-10-27 | ★13，TS，2026-10-09。`dsh-timer-agent@0.8.0` 未发 npm（**双名 404**）→ A 类锁版不成立。**形态最值得注意**：自报 `dsh.compatibility.dshReleases = {"0.2.0-rc.2":"compatible"}`，peer 全对 rc 快照。三条强化判据都成立，唯锁版不成立 → 观察，不判 🟢 |
+| `skyjjgw/dsh-version-guard` | **A 原生DSH** | **MIT** ✅ | 通用（插件崩了能回退） | 重复且无增益（`undo-savepoint`/`upgrader`/`version-guard` 同列） | 🔵 | proposed | 2026-10-27 | ★1，JS，2026-10-20。`cordis.patch.yml` + PowerShell 脱离 DSH 进程回滚。**不新增第四家同列候选** |
+| `hytime/dsh-thinking-effort` | **A 原生DSH** | **MIT** ✅ | 通用 | 重复且无增益（本仓不设模型档位面板） | 🔵 | proposed | 2026-10-27 | ★57，2026-10-2x。推理档位默认值 + 协议适配，能力落在宿主设置里 |
+| `Player-MINEPIG/dsh-tavern` | **A 原生DSH** | **MIT** ✅ | 无 | 重复且无增益 | ⛔ | rejected | 2026-10-27 | ★25。对接 SillyTavern 的分支/角色玩法；**第二套会话执行机制**，触碰「不做第二套启动器」 |
+| `luowang-ui/dsh-purge-plus` | **A 原生DSH** | **MIT** ✅ | 无 | 重复且无增益 | ⛔ | rejected | 2026-10-27 | ★58。**破限插件**：卸掉宿主提示词限制与审批拦截，与本仓安全补丁方向相反 |
+| `lehhair/dsh-diff-viewer` | **A 原生DSH** | **`null`** ⛔ | 通用 | — | ⛔ | rejected | 2026-10-27 | ★25，JS，2026-10-19。根目录**无 LICENSE**、API `license: null` → 按硬边界只登记不采用、**不得摘码** |
+| `CREAIT-nl/dsh-plugins` | **A 原生DSH（多包）** | **MIT** ✅ | 通用 | 重复且无增益（调研/按模型路由） | 🔵 | proposed | 2026-10-27 | ★6。一仓多插件（deep research preset / per-model 路由），能力域与本仓页面无交集 |
+| `dsh-plugins/dsh-loader` | **A 原生DSH** | **LGPL-3.0** ⛔ | — | — | ⛔ | **rejected（结案）** | 2026-10-15 | **在册项结案**：原记 `NOASSERTION`/⚠ 待核，本轮通读 `LICENSE` 全文为 **GNU LGPL v3**（GitHub 认不出该变体才报 NOASSERTION）。copyleft → 排除，**不得摘取任何代码**。★2，TS。挂了 12 天的「待核」，核完是 LGPL |
+| `ben-lau/deps-conflict-resolver` | B（非 DSH） | **MIT** ✅ | 通用（构建期） | 重复且无增益（解决依赖冲突，非 peer 版本窗口） | ⛔ | rejected | 2026-10-27 | ★2，TS，npm `1.1.0`（`semver`+`yaml`）。webpack/vite 插件，解决的是「别名消解冲突」，与本轮「宿主快照对不对得上」是两件事 |
+
+> **本轮口径**：A 组 4 次搜索（`dsh plugin host` 462 / `plugin peer dependency` 16 / `dsh plugin compatibility` 73 /
+> `cordis plugin version` 21），4 次 0 次 403，**完整**（未达上限，未为凑额度加搜）。
+> 首屏 26 个未登记 `owner/repo`，其中 19 个是前两词的同集重叠或纯噪声（14 条是 webpack/vite 的 peer 冲突插件）；
+> **首次登记 7 行 + 在册结案 1 行**。🟢 0 / 🟡 0 / 🔵 4 / ⛔ 4（含 1 条 LGPL 结案）。
+>
+> **实质产出全在本仓**：`scripts/radar-host-window.mjs`（新检查器，宿主层/框架层/锁版三层分离）+
+> `tests/radar-host-window.test.mjs`（**13 条**，含框架层、预发布区间、交集、`UNKNOWN≠DRIFT` 四组边界）+
+> **6 次真实 `npm install` 校准**（双向：过/不过各一组，另两对共存性）。
+>
+> **核心结论（M-3）**：宿主不是「版本窗口」而是**两个互斥快照** —— `dsh-tools@0.2.1-alpha.1` 把同代包 peer 写成
+> **精确版本**，混搭两个快照直接 `ERESOLVE`（3 组实测）。由此 M-4：**11 个可判骨架里 0 个同时满足两个快照**
+> （5 只对 rc / 1 只对 alpha / 6 两个都不对）。`preferredHostVersion = 0.2.0-rc.2` 不变的前提下，
+> 「只对 alpha」的 `tool-plus` 现在装不上，而宿主换代会让「只对 rc」的 5 个当场失效 ——
+> **这张表是换代前必须重算的，不是缺陷清单**。
+>
+> **自我纠正 2 处**：M-1 首版把 `@deepseek-ai/cordis`（4.x，框架层）当宿主比，13 个包全判 ❌（已分离）；
+> M-2 首版拿 `dist-tags.latest` 的 peer 去评锁版（`dsh-panda-calendar` 锁 1.2.4 无 peer、latest 1.2.5 有四条），
+> 凭空造出一个不相容（已改为按 `包@锁版` 取 manifest）。探针另错 6 次（`ETARGET` 误判为放行、latest/锁版混用）。

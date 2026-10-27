@@ -127,3 +127,70 @@ node scripts/radar-inject-audit.mjs --all       # 连普通 npm 库一起列（�
 
 - **一个包都没真正挂进宿主跑过**：本层只判声明，不判「声明全了是否真能跑」。
 - **`--all` 里的 38 个普通 npm 库判为 N/A**：它们没有 `dsh` 字段，天然不适用，不代表「已验过」。
+
+---
+
+## 第三轮体检（r84 · 2026-10-27）· 窗口层
+
+前两层只问「装得上吗」「声明了吗」。这一层问一个更尴尬的问题：
+**你锁的那个版本，对着哪个宿主是成立的？**
+
+| 层 | 问的问题 | 检查器 | 本轮结论 |
+| --- | --- | --- | --- |
+| 结构 | 有没有锁版、漏声明 | `radar-baseline-check.mjs --offline` | 67/67 合法 |
+| 存在 | 依赖在 npm 上存在吗 | `radar-baseline-check.mjs` | 59/60，1 条 E404（L-15） |
+| 声明 | inject 有 peer 背书吗 | `radar-inject-audit.mjs` | 14/21 无背书 |
+| 共存 | 能不能装进同一棵树 | `--holdout` | 43 对不相容 |
+| **窗口** | **锁版对得上哪个宿主** | **`radar-host-window.mjs`** | **0 个同时满足两个宿主**；5 只对 rc、1 只对 alpha、6 两个都不对 |
+
+### 为什么这一层不能由前四层替代
+
+`npm install` 只验**这一次**的树。而骨架要跟着宿主**换代**，换代时：
+
+1. `dsh-better-markdown@0.1.2` 的 peer `>=0.1.0-rc.5` 在 `0.2.0-rc.2` 下就**已经**不成立了
+   （预发布版被区间排除），可它照样躺在 `packages/` 里，`--offline` 也是绿的；
+2. r80 的 `--holdout` 只做**两两**共存，看不见「单个包对单个宿主」成不成立。
+
+### 宿主是快照，不是版本窗口（M-3）
+
+`@deepseek-ai/dsh-tools@0.2.1-alpha.1` 把同代包的 peer 写成**精确版本**：
+
+```json
+{ "@deepseek-ai/dsh-llm": "0.2.1-alpha.1", "@deepseek-ai/dsh-agent": "0.2.1-alpha.1", … }
+```
+
+`0.2.0-rc.2` 同理。实测三组：
+
+| 依赖 | 结果 | 装出来 |
+| --- | --- | --- |
+| 只钉 `tools@0.2.0-rc.2` | 放行 | 同代包全 `0.2.0-rc.2` |
+| 只钉 `tools@0.2.1-alpha.1` | 放行 | 同代包全 `0.2.1-alpha.1` |
+| `tools@0.2.0-rc.2` + `llm@0.2.1-alpha.1` | **`ERESOLVE`** | — |
+
+所以 `runtime.lock.json` 里的两个版本是**两个互斥的完整宿主快照**。骨架的锁版清单与快照绑定：
+**升级宿主 = 这一批上游包整组重锁**，不是改一行。
+
+### 怎么用
+
+```bash
+npm install --prefix /tmp/radar-deps --no-save semver@7.7.3   # 本仓 npm ci 失败（L-15），semver 放仓库外
+RADAR_SEMVER_DIR=/tmp/radar-deps node scripts/radar-host-window.mjs --drift-only
+```
+
+退出码：有 `DRIFT` → 1；`UNKNOWN`（取不到元数据 / 无 semver）不置失败。
+**但现在 11 个必然红，不要直接当门禁** —— 跟声明层一样，先出报告。
+
+### 读法（重要，别读错）
+
+`DRIFT` ≠ 坏了。它读作「**这个骨架只能挂在一个快照上**」：
+
+- 只对 `0.2.0-rc.2` 的 5 个：`preferredHostVersion` 就是 rc → **当前可挂**；
+- 只对 `0.2.1-alpha.1` 的 1 个（`tool-plus`）：**现在装不上**，要等首选宿主换代；
+- 两个都不对的 6 个：锁版时对得上，上游之后改了 peer → **重选版本，不是重选候选**。
+
+### 边界（没做到的地方）
+
+- **只判「装得上 + peer 对得上」**，不判运行时不缺服务（仍是声明层的边界）。
+- **6 个「都不对」没逐个查上游新版本**：只给了处置顺序，没给具体版本号。
+- **`semver` 不在本仓依赖里**：靠 `RADAR_SEMVER_DIR` 从仓库外取；没取到就全判 `UNKNOWN`（不猜）。
+- 本层**不覆盖 `dsh-zhiyun-*` / 宿主自有包**，只看 `packages/dsh-radar-*`。

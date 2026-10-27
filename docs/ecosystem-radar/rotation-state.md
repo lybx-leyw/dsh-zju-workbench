@@ -52,8 +52,8 @@ node scripts/radar-rotation.mjs --group
 | 项 | 值 |
 | --- | --- |
 | `last_group` | `A` |
-| `last_run_at` | `2026-10-27 15:00` | 真日期 **2026-10-27 / 年积日 300 / `300%3=0` → A**。r83 取 **A**（与公式一致）：今日三组均已跑过（r78–r82），脚本按「当日已尽、取跑得最少」给 B，但 **C 组词池 r82 已判结构性耗尽、B 组 r72 已回封板**，故跑 A 的**另一类中词**（生态侧名词），与 r78/r79/r80 的关键词**无一重复**。TODO-0（脚本按 UTC 写日期）**第 7 次仍在** |
-| `group_runs`（累计） | A=40, B=25, C=26 |
+| `last_run_at` | `2026-10-27 10:14` | 真日期 **2026-10-27 / 年积日 300 / `300%3=0` → A**。r83 取 **A**（与公式一致）：今日三组均已跑过（r78–r82），脚本按「当日已尽、取跑得最少」给 B，但 **C 组词池 r82 已判结构性耗尽、B 组 r72 已回封板**，故跑 A 的**另一类中词**（生态侧名词），与 r78/r79/r80 的关键词**无一重复**。TODO-0（脚本按 UTC 写日期）**第 7 次仍在** |
+| `group_runs`（累计） | A=41, B=25, C=26 |
 | 今日已跑（2026-10-27） | **A（r78/r79/r80）、B（r81）、C（r82）、A（r83）** —— 三组今日均已跑过；r83 取 A 的理由见 `last_run_at` 一行 |
 | 本轮轴名（r83，最新） | **A 组·中词（生态侧名词）· 「被关掉的包还在替别人顶着服务」** —— 搜索 **8 次**（`dsh plugin manager` 350 / `dsh plugin graph` 99 / `plugin marketplace deepseek` 103 / `tauri plugin marketplace` 5 / `tauri plugin registry` 1 / 后 3 次 `language:typescript` 限定全 **0**），0 次 403，**完整**（首屏未登记 36 条 → 3 个新面孔 + 1 在册交叉核对：🟡1 🔵1 ⛔2，🟢0）。**骨架 0 新建**（唯一 🟡 不可整包挂载：`insert id: plugin-manager` 抢位 + 作者自述已停维护 + 写权冲突）。**实质产出全在本仓**：`scripts/radar-provider-liveness.mjs` + `tests/radar-provider-liveness.test.mjs`（7/7，含阴性变异体「对开关透明则转绿」），判定 **`LIVENESS_ERODES`** —— 关掉 `core-study` 后 `core-parser` 由「被 1 个包依赖」变成**叶 + 可取消**；4 条边因关包消失、3 个包全部受影响；页面文案还会写「不依赖本工作台的任何其他包」。**与 r79 F-1 同族、不同层**（r79 是上游提供者被丢，本轮是**下游消费者**被丢 → 图的两端都能静默消失）。方法论：① **生态侧名词的见底方式与功能词不同**（不是搜不到，是「搜到的全是同一层、且六成在册」）→ 建议「插件管理/市场/目录」整层封板；② 三次 `total=0` **未按文档放宽**（放宽只能得到 r58/r79 已判 90% 噪声的词），理由写在报告 §2；③ **又一次「判据零判别力」**：空基线的边集差分恒为空 → 第一版测试「清空必须判 ERODES」实跑得到 STABLE，已改为如实记录盲区 + `main()` 加「基线为空即 exit 2」守卫。 |
 | 上一轮轴名（r82） | **C 组 · 「复习模式到底复习了什么」** —— 搜索 **10 次**（`timetable ics export` / `paper annotation reader` / `ocr notes taking` / `quiz practice` / `fitness tracker` / `spaced repetition` / `markdown note graph` / `quiz practice language:javascript` / `paper annotation language:typescript` / `ocr notes taking` 复跑 1 次），0 次 403，**完整**（首屏未登记 199 条 → 只留 4 行：🔵2 ⛔2，🟢0 🟡0）。**骨架 0 新建**。**实质产出**：`scripts/radar-review-route.mjs` 黑盒实测 `review` 模式错题占比 **50.3%**（阈值 85%，200 次×10 题）= 与随机不可区分 → `ROUTE_MISSING`；对照实现 100% 通过（阴性对照）；`tests/radar-review-route.test.mjs` 5/5。这是 r77 源码推断的**黑盒确证**。方法论：**C 组默认词池已结构性耗尽**（二十余轮后宽松许可+JS 栈交集为 0），建议「锻炼」正式移出词池（第 4 次同结论），并改用「本仓已有数据 → 上层没接」为主轴。另记：`countsAsWrong` 用对象恒等比较，复制 `{code,label}` 会让错题统计**静默归零**（本轮踩到）。 |
@@ -161,6 +161,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-26 21:05 | C | 自动记录 |
 | 2026-10-26 16:03 | A | deepseek-harness plugin / cordis plugin / dsh plugin / dsh-market / dsh-desktop |
 | 2026-10-27 01:15 | B | zju language:javascript / zju course / cc98 / campus app zhejiang / zju timetable / zju grades api / zju language:typescript / pintia OR pta / zju wechat / zju created>2026-08-01 / zju library seat / zju exam score query |
+| 2026-10-27 10:14 | A | dsh plugin host / plugin peer dependency / dsh plugin compatibility / cordis plugin version |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
