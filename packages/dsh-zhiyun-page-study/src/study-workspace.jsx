@@ -422,10 +422,12 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
     setQuery(""); setRole(""); setFacets([]); setOptionsOpen(false); setLectureFocus(null); setScreen("replay"); setVideoSeek(null);
     const focus = state.focusTab;
     const openQuiz = focus?.tab === "出题" && String(focus.courseId) === String(state.course?.id) && String(focus.subId) === String(state.lesson?.subId);
+    const openSource=focus?.tab==='题目来源'&&String(focus.courseId)===String(state.course?.id)&&String(focus.subId)===String(state.lesson?.subId);
     // 有回放的节次默认停在「视频」。没有回放就停在知识点。
     // 从今天页点一道已采纳的题进来，直接打开这一节的出题，不再单开一栏。
-    setEntry(openQuiz ? { kind: "quiz" } : null);
-    setTab(openQuiz || !state.lesson?.videoUrl ? "知识点" : "视频");
+    setEntry(openSource?{kind:'read',chapterNo:focus.chapterNo,topicNo:focus.topicNo}:openQuiz ? { kind: "quiz" } : null);
+    if(openSource)setLectureFocus({chapterNo:focus.chapterNo,topicNo:focus.topicNo,nonce:Date.now()});
+    setTab(openSource || openQuiz || !state.lesson?.videoUrl ? "知识点" : "视频");
   }, [state.lesson?.id, state.course?.id, state.focusTab]);
   // 浮窗是「选项」的住处，点外面或按 Esc 就收；它只覆盖在自己那一角，不接管正文的点击。
   useEffect(() => {

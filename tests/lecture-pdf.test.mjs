@@ -8,10 +8,11 @@ function fixture({canceled=false,ready=true}={}){
   const dialog={showSaveDialog:async(_win,options)=>{calls.push(['dialog',options]);return {canceled,filePath:'chosen.pdf'};}};
   return {calls,win,dialog,event:{sender,senderFrame:frame},handler:createLecturePdfHandler({getWindow:()=>win,getHostUrl:()=> 'http://127.0.0.1:8000/?token=fixture',dialog,downloads:()=>'.',write:async(file,bytes)=>calls.push(['write',file,bytes.toString()])})};
 }
-test('large graph exports every node in ordered readable continuation sheets',()=>{
+test('large graph preserves every node and numbering on one landscape sheet',()=>{
   const topics=Array.from({length:25},(_,i)=>({title:`点 ${i}`})),sheets=graphSheets([{title:'章',topics}]),parts=sheets.flatMap(s=>s.chapters);
-  assert.deepEqual(parts.map(p=>p.topics.length),[8,8,8,1]);assert.deepEqual(parts.flatMap(p=>p.topics),topics);
-  assert.deepEqual(parts.map(p=>[p.part,p.total]),[[1,4],[2,4],[3,4],[4,4]]);assert.deepEqual(parts.map(p=>p.offset),[0,8,16,24]);
+  assert.equal(sheets.length,1);assert.equal(sheets[0].columns.length,2);
+  assert.deepEqual(parts.flatMap(p=>p.topics),topics);
+  assert.deepEqual(parts.map(p=>[p.part,p.total,p.offset]),[[1,4,0],[2,4,7],[3,4,14],[4,4,21]]);
   assert.ok(!/[<>:"/\\|?*]/.test(pdfFilename('A/B','C:D')));assert.ok(pdfFilename('','').endsWith('.pdf'));
 });
 test('small chapters share a graph page instead of each taking an almost empty one',()=>{
@@ -19,7 +20,12 @@ test('small chapters share a graph page instead of each taking an almost empty o
   assert.equal(sheets.length,1);assert.deepEqual(sheets[0].chapters.map(c=>c.title),['甲','乙']);
   assert.deepEqual(sheets[0].chapters.map(c=>c.topics.length),[2,1]);
   const many=Array.from({length:6},(_,i)=>({title:`章 ${i}`,topics:Array.from({length:3},(_,j)=>({title:`点 ${j}`}))}));
-  assert.equal(graphSheets(many).length,3,'three chapter roots do not fit on one A4 text column');
+  assert.equal(graphSheets(many).length,1);
+  assert.deepEqual(graphSheets([]),[]);
+  const large=Array.from({length:80},(_,i)=>({title:`很长的知识点标题，用于验证换行和完整保留 ${i}`}));
+  const sheet=graphSheets([{title:'大型章节',topics:large}])[0];
+  assert.equal(sheet.columns.length,4);assert.deepEqual(sheet.chapters.flatMap(c=>c.topics),large);
+  assert.deepEqual(new Set(sheet.columns.flat()),new Set(sheet.chapters));
 });
 test('native PDF export requires same app origin and main frame before opening a dialog',async()=>{
   const f=fixture();assert.ok((await f.handler({...f.event,senderFrame:{}},'讲义.pdf')).error);assert.equal(f.calls.length,0);

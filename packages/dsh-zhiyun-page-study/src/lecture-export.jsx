@@ -17,10 +17,12 @@ export function LecturePdfDocument({snapshot,onReady}) {
       {topic.register!=='written'&&<p className="zs-pdf-warning">本知识点保留课堂原话，尚未写成书面稿。</p>}
       {blocksOf(topic).map((block,bi)=><section className="zs-pdf-block" key={bi}><h4>{kinds[kindOf(block)]?.[0]??'讲解'}{block.title?` · ${block.title}`:''}</h4><LectureBlockBody block={block} expanded/></section>)}
     </article>)}</section>)}</main>
-    {sheets.map((sheet,index)=><section className="zs-pdf-map-sheet" id={index===0?'pdf-graph':undefined} key={index}><header><span>知识图谱{sheets.length>1?` · ${index+1}/${sheets.length}`:''}</span><h2>{course||lesson||'课堂知识'}</h2><p>章节 → 知识点 · 沿用应用中的层级关系</p></header>
-      {sheet.chapters.map((part,pi)=><div className="zs-pdf-map-chapter" key={pi}><div className="zs-pdf-map-root">{part.chapterIndex+1}. {part.title}{part.total>1?` · ${part.part}/${part.total}`:''}</div><ol className="zs-pdf-map-branches">{part.topics.map((topic,ti)=><li key={ti}><span>{String(part.offset+ti+1).padStart(2,'0')}</span><strong>{topic.title}</strong></li>)}</ol></div>)}
-    </section>)}
     {!!lecture.polish?.warnings?.length&&<section className="zs-pdf-review"><h2>待复核提示</h2>{lecture.polish.warnings.map((warning,i)=><p key={i}>{warning}</p>)}</section>}
+    {sheets.map((sheet,index)=><section className="zs-pdf-map-sheet" id="pdf-graph" key={index}><header><span>知识图谱</span><h2>{course||lesson||'课堂知识'}</h2><p>章节 → 知识点 · 沿用应用中的层级关系</p></header>
+      <div className="zs-pdf-map-viewport"><div className="zs-pdf-map-grid" style={{gridTemplateColumns:`repeat(${sheet.columns.length},minmax(0,1fr))`}}>
+        {sheet.columns.map((column,col)=><div className="zs-pdf-map-column" key={col}>{column.map((part,pi)=><div className="zs-pdf-map-chapter" key={pi}><div className="zs-pdf-map-root">{part.chapterIndex+1}. {part.title}{part.total>1?` · ${part.part}/${part.total}`:''}</div><ol className="zs-pdf-map-branches">{part.topics.map((topic,ti)=><li key={ti}><span>{String(part.offset+ti+1).padStart(2,'0')}</span><strong>{topic.title}</strong></li>)}</ol></div>)}</div>)}
+      </div></div>
+    </section>)}
   </div>;
 }
 
@@ -35,6 +37,24 @@ async function waitForContent(element) {
   });
   await Promise.race([Promise.all([document.fonts?.ready,...[...element.querySelectorAll('img')].map(image=>image.decode())]),new Promise((_,reject)=>setTimeout(()=>reject(new Error('字体或图片未能加载，请稍后重试')),15000))]);
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  // Measure at the landscape page width after fonts settle; fit all nodes without clipping.
+  for(const viewport of element.querySelectorAll('.zs-pdf-map-viewport')){
+    const grid=viewport.firstElementChild;
+    let scale=1;
+    if(grid.scrollHeight>viewport.clientHeight){
+      // Reflow at a wider logical width while shrinking, so the map still uses
+      // the full landscape sheet instead of becoming a tiny strip in its centre.
+      let low=0,high=1;
+      for(let i=0;i<12;i++){
+        const candidate=(low+high)/2;
+        grid.style.width=`${100/candidate}%`;
+        if(grid.scrollHeight*candidate<=viewport.clientHeight-1)low=candidate;else high=candidate;
+      }
+      scale=low||high;
+    }
+    grid.style.width=`${100/scale}%`;
+    grid.style.transform=`scale(${scale})`;
+  }
 }
 
 export async function exportLecturePdf(state) {

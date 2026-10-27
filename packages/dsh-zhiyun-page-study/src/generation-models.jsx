@@ -1,7 +1,8 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 
 /** Model credentials stay in host settings. This form only edits identifiers/quotas. */
-export function GenerationModels({ controller, disabled = false, requiresVision = false, generationDisabled = false, onGenerate, label = '生成讲义' }) {
+export function GenerationModels({ controller, disabled = false, requiresVision = false, generationDisabled = false, onGenerate, label = '生成讲义',purpose='lecture' }) {
+  const quiz=purpose==='quiz';
   const [catalog, setCatalog] = useState([]), [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(true), [loaded, setLoaded] = useState(false), [dirty, setDirty] = useState(false);
   const [error, setError] = useState(''), [expanded, setExpanded] = useState(false);
@@ -34,12 +35,12 @@ export function GenerationModels({ controller, disabled = false, requiresVision 
     live.current = true;
     void load();
     return () => { live.current = false; };
-  }, [controller]);
+  }, [controller,purpose]);
   useEffect(positionPanel, [catalog, rows, busy, error]);
   async function load() {
     setBusy(true); setError('');
     try {
-      const data = await controller.request('models');
+      const data = await controller.request('models',{purpose});
       if (!live.current) return;
       setCatalog(data.catalog); setRows(data.workers ?? []); setDirty(false); setLoaded(true);
     } catch (failure) { if (live.current) { setError(failure.message); } }
@@ -57,16 +58,17 @@ export function GenerationModels({ controller, disabled = false, requiresVision 
   async function save() {
     setBusy(true); setError('');
     try {
-      const data = await controller.request('models-save', { workers: rows });
+      const data = await controller.request('models-save', { workers: rows,purpose });
       if (live.current) { setRows(data.workers); setDirty(false); panel.current.hidePopover(); trigger.current.focus(); }
     } catch (failure) { if (live.current) setError(failure.message); }
     finally { if (live.current) setBusy(false); }
   }
   const pending = busy || !loaded || dirty || !valid || (requiresVision && !visual);
-  return <div className="zs-generation-models">
+  return <div className="zs-generation-models" data-purpose={purpose}>
     <div className="zs-generation-split">
-      <button type="button" className="zs-primary zs-generate-action" disabled={generationDisabled || pending} title={pending ? '请先在右侧展开并应用生成配置' : `${rows.length} 个供应商 · ${total} workers`} onClick={() => { panel.current.hidePopover(); onGenerate(); }}>{label}</button>
-      <button type="button" className="zs-primary zs-generate-options" ref={trigger} aria-label="讲义生成配置" aria-haspopup="dialog" aria-expanded={expanded} aria-controls={panelId} title="选择供应商、模型和 worker" onClick={openConfig}>
+      <button type="button" className="zs-primary zs-generate-action" disabled={generationDisabled || pending} title={pending ? '请先在右侧展开并应用生成配置' : `${rows.length} 个供应商 · ${total} workers`} onClick={() => { panel.current.hidePopover(); onGenerate(rows.map(row=>({...row}))); }}>{label}</button>
+      <button type="button" className="zs-primary zs-generate-options" ref={trigger} aria-label={quiz?'出题生成配置':'讲义生成配置'} aria-haspopup="dialog" aria-expanded={expanded} aria-controls={panelId} title="选择供应商、模型和 worker" onClick={openConfig}>
+        {quiz&&<span>配置 · {total} workers</span>}
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m5 7 5 5 5-5"/></svg>
         {(dirty || error || (loaded && !valid)) && <i className="zs-config-pending" aria-hidden="true"/>}
       </button>
@@ -76,7 +78,7 @@ export function GenerationModels({ controller, disabled = false, requiresVision 
         <button type="button" className="zs-config-close" aria-label="关闭生成配置" onClick={() => { panel.current.hidePopover(); trigger.current.focus(); }}>×</button>
       </div>
       <div className="zs-generation-models-content">
-      <p>选择设置中已配置的供应商。每个 worker 同时处理一个请求，识别、清洗、成稿和终审共用配额。</p>
+      <p>{quiz?'选择设置中已配置的供应商。共享考点准备后，每个 worker 负责一道题，同一知识点也可并发；全部挂账后统一查重整改，各阶段共用供应商配额。':'选择设置中已配置的供应商。每个 worker 同时处理一个请求，识别、清洗、成稿和终审共用配额。'}</p>
       <fieldset disabled={disabled || busy}>
         <legend className="zs-models-sr-only">生成供应商、模型和 worker 配额</legend>
         {catalog.map(provider => {
@@ -97,14 +99,14 @@ export function GenerationModels({ controller, disabled = false, requiresVision 
         </div>)}
       </fieldset>
       {loaded && !catalog.length && <p>还没有可用供应商，请先在设置中添加。</p>}
-      <div className="zs-generation-models-footer"><div><strong>总并发 {total}</strong><span>{rows.length ? `${rows.map(row => Number(row.workers) || 0).join(' + ')} = ${total} workers` : '尚未选择'} · 课件识别可用 {visual}</span></div>
-        <button type="button" className="zs-button" disabled={disabled || busy} onClick={load}>刷新供应商</button>
-        <button type="button" className="zs-primary" disabled={disabled || busy || !dirty || !valid} onClick={save}>{busy ? '读取 / 保存中…' : '应用配置'}</button>
-      </div>
-      {rows.length > 0 && !visual && <p className="zs-models-hint">当前模型都不支持图片；包含课件的课堂需要至少选择一个支持图片的模型。</p>}
+      {!quiz&&rows.length > 0 && !visual && <p className="zs-models-hint">当前模型都不支持图片；包含课件的课堂需要至少选择一个支持图片的模型。</p>}
       {disabled && <p className="zs-models-hint">本次生成使用启动时的配置，结束后可调整。</p>}
       {error && <p role="alert" className="zs-models-error">{error}</p>}
     </div>
+      <div className="zs-generation-models-footer"><div><strong>总并发 {total}</strong><span>{rows.length ? `${rows.map(row => Number(row.workers) || 0).join(' + ')} = ${total} workers` : '尚未选择'}{!quiz&&` · 课件识别可用 ${visual}`}</span></div>
+        <button type="button" className="zs-button" disabled={disabled || busy} onClick={load}>刷新供应商</button>
+        <button type="button" className="zs-primary" disabled={disabled || busy || !dirty || !valid} onClick={save}>{busy ? '读取 / 保存中…' : '应用配置'}</button>
+      </div>
     </div>
   </div>;
 }

@@ -185,6 +185,7 @@ try{
   await page.waitForFunction(()=>window.__pdfReady===true);
   assert.match(await page.evaluate(()=>window.__pdfFilename),/\.pdf$/);
   assert.equal(await page.locator('#zs-lecture-export .zs-pdf-chapter').count(),2);
+  assert.equal(await page.locator('#zs-lecture-export .zs-pdf-map-sheet').count(),1);
   assert.match(await page.locator('#zs-lecture-export').innerText(),/知识图谱/);
   assert.match(await page.locator('#zs-lecture-export').innerText(),/因此概率为 1\/2/);
   await page.emulateMedia({media:'print'});
@@ -194,7 +195,48 @@ try{
   try{
     const {stdout}=await promisify(execFile)('pdftotext',['-enc','UTF-8',pdfFile,'-']);
     assert.match(stdout,/知识图谱/);assert.match(stdout,/分布的应用/);assert.match(stdout,/均匀分布下/);assert.ok(!stdout.includes('全局题库'));
+    const {stdout:info}=await promisify(execFile)('pdfinfo',['-f','1','-l','100',pdfFile]);
+    const sizes=[...info.matchAll(/Page\s+\d+ size:\s+([\d.]+) x ([\d.]+)/g)].map(m=>[Number(m[1]),Number(m[2])]);
+    assert.ok(sizes.length>=2,'PDF reports each physical page');
+    assert.ok(sizes.slice(0,-1).every(([w,h])=>w<h),'body pages retain portrait orientation');
+    assert.ok(sizes.at(-1)[0]>sizes.at(-1)[1],'the final graph page is landscape');
+    const pages=stdout.split('\f').filter(p=>p.trim());
+    assert.match(pages.at(-1),/知识图谱/);assert.match(pages.at(-1),/分布函数的基本性质/);
     await promisify(execFile)('pdftoppm',['-f','1','-l','8','-scale-to','1200','-png',pdfFile,path.join(artifacts,'lecture-pdf-page')]);
+  }catch(error){if(error.code!=='ENOENT')throw error;}
+  await page.emulateMedia({media:'screen'});await page.evaluate(()=>window.__pdfResolve({canceled:false}));
+  await page.locator('#zs-lecture-export').waitFor({state:'detached'});
+  // Feed a larger synthetic snapshot through the actual export renderer and fitting pass.
+  await page.evaluate(()=>{
+    window.__pdfReady=false;
+    const clone=window.structuredClone;
+    window.structuredClone=function(value,...args){
+      const result=clone(value,...args);
+      if(value?.lecture&&Array.isArray(value.graph)){
+        window.structuredClone=clone;
+        result.graph=Array.from({length:5},(_,c)=>({title:`布局测试章节 ${c+1}`,topics:Array.from({length:16},(_,t)=>({title:`节点 ${c+1}-${t+1}：较长的知识点标题，用于检查多列换行和完整排版`}))}));
+        result.lecture.polish={warnings:['测试提示应放在图谱之前']};
+      }
+      return result;
+    };
+  });
+  await reader.getByRole('button',{name:'导出 PDF',exact:true}).click();
+  await page.waitForFunction(()=>window.__pdfReady===true);
+  assert.equal(await page.locator('.zs-pdf-map-branches li').count(),80);
+  const fits=await page.locator('.zs-pdf-map-viewport').evaluate(viewport=>{
+    const box=viewport.getBoundingClientRect(),grid=viewport.firstElementChild.getBoundingClientRect();
+    return grid.top>=box.top-1&&grid.bottom<=box.bottom+1&&grid.left>=box.left-1&&grid.right<=box.right+1&&grid.width>=box.width*.98;
+  });
+  assert.ok(fits,'all 80 graph nodes fit inside the final page area');
+  await page.emulateMedia({media:'print'});
+  const largePdfFile=path.join(artifacts,'lecture-large-graph.pdf');
+  await page.pdf({path:largePdfFile,format:'A4',preferCSSPageSize:true,printBackground:true});
+  try{
+    const {stdout}=await promisify(execFile)('pdftotext',['-enc','UTF-8',largePdfFile,'-']);
+    const pages=stdout.split('\f').filter(p=>p.trim()),last=pages.at(-1);
+    assert.ok(!last.includes('测试提示应放在图谱之前'));
+    for(let c=1;c<=5;c++)for(let t=1;t<=16;t++)assert.ok(last.includes(`节点 ${c}-${t}：`),`node ${c}-${t} stays on the final page`);
+    await promisify(execFile)('pdftoppm',['-f',String(pages.length),'-singlefile','-scale-to','1600','-png',largePdfFile,path.join(artifacts,'lecture-large-graph')]);
   }catch(error){if(error.code!=='ENOENT')throw error;}
   await page.emulateMedia({media:'screen'});await page.evaluate(()=>window.__pdfResolve({canceled:false}));
   await page.locator('#zs-lecture-export').waitFor({state:'detached'});
@@ -240,15 +282,39 @@ try{
   assert.equal(await page.locator('.zs-bank-scope').count(),0,'point-level entry is scoped rather than asking for raw blocks');
   await page.getByRole('button',{name:'打开全局题库',exact:true}).click();
   await page.getByRole('region',{name:'全局题库',exact:true}).waitFor();
+  assert.equal(await page.locator('.zs-bank-page h1').count(),0,'the bank does not repeat a page title');
+  // 知识点树不在主体里常驻：按钮打开浮窗，选完关掉。
+  assert.equal(await page.getByRole('button',{name:'全选当前列表',exact:true}).isVisible().catch(()=>false),false,'scope tree stays closed until the trigger is pressed');
+  await page.getByRole('button',{name:'选择知识点',exact:true}).click();
+  await page.getByRole('dialog',{name:'知识点范围',exact:true}).waitFor();
   await page.getByRole('button',{name:'全选当前列表',exact:true}).waitFor();
   assert.equal(await page.locator('.zs-bank-lesson').count(),2,'bank includes both generated classrooms');
+  const scopeCourse=await page.locator('.zs-bank-course > summary > input').first().boundingBox(),scopeLesson=await page.locator('.zs-bank-lesson > summary > input').first().boundingBox(),scopePoint=await page.locator('.zs-scope-point > input').first().boundingBox();
+  assert.ok(Math.abs(scopeLesson.x-scopeCourse.x-16)<2&&Math.abs(scopePoint.x-scopeLesson.x-16)<2,'course, lesson and point checkboxes follow aligned 16px indents');
   await page.getByRole('button',{name:'全选当前列表',exact:true}).click();
+  await page.screenshot({path:path.join(artifacts,'question-point-selector.png'),fullPage:true});
+  await page.screenshot({path:path.join(artifacts,'question-bank-scope-popover.png'),fullPage:true});
+  await page.getByRole('button',{name:'完成选择',exact:true}).click();
+  assert.equal(await page.getByRole('dialog',{name:'知识点范围',exact:true}).isVisible(),false);
+  const quizConfig=page.locator('.zs-generation-models[data-purpose=quiz]');
+  await quizConfig.getByRole('button',{name:'出题生成配置',exact:true}).click();
+  await quizConfig.getByLabel('study-fixture 模型',{exact:true}).selectOption('text');
+  await quizConfig.getByLabel('study-fixture worker 数',{exact:true}).fill('1');
+  await quizConfig.getByLabel('study-second 模型',{exact:true}).selectOption('text');
+  await quizConfig.getByLabel('study-second worker 数',{exact:true}).fill('2');
+  assert.ok((await quizConfig.getByLabel('study-second worker 数',{exact:true}).boundingBox()).width>=70,'worker quota is a readable input, not a squeezed sliver');
+  await page.screenshot({path:path.join(artifacts,'question-worker-settings.png'),fullPage:true});
+  await quizConfig.getByRole('button',{name:'应用配置',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('[data-purpose=quiz] .zs-generate-action')?.title.includes('3 workers'));
+  assert.match(await page.locator('.zs-bank-scope-button').innerText(),/已选 \d+/);
   await page.screenshot({path:path.join(artifacts,'question-bank-compose.png'),fullPage:true});
   await page.getByRole('spinbutton',{name:'总题数',exact:true}).fill('4');
+  const initialTypes=page.getByRole('group',{name:'题型',exact:true});
+  await initialTypes.getByRole('checkbox',{name:'填空题',exact:true}).uncheck();
   await page.getByRole('button',{name:'按知识点生成题目',exact:true}).click();
   await page.getByRole('region',{name:'出题进度',exact:true}).waitFor();
   await page.getByRole('progressbar',{name:'出题完成进度',exact:true}).waitFor();
-  await page.locator('.zs-qgen-cache').filter({hasText:'已整理 1 个知识点'}).waitFor();
+  await page.locator('.zs-qgen-cache').filter({hasText:/已整理 [1-9] 个知识点/}).waitFor();
   await page.screenshot({path:path.join(artifacts,'question-generation-progress.png'),fullPage:true});
   await page.getByRole('button',{name:'暂停出题',exact:true}).click();
   await page.getByRole('button',{name:'继续出题',exact:true}).waitFor();
@@ -263,6 +329,10 @@ try{
   await page.getByRole('button',{name:'历史题库 · 4',exact:true}).click();
   assert.equal(await page.locator('.zs-bank-question').count(),4,'generated questions persist in global history');
   await page.screenshot({path:path.join(artifacts,'question-bank-history.png'),fullPage:true});
+  const curatable=page.locator('.zs-bank-question').filter({has:page.getByRole('button',{name:'停用此挖空位置',exact:true,includeHidden:true})}).first();
+  await curatable.locator('summary').first().click();
+  await curatable.getByRole('button',{name:'停用此挖空位置',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'已停用此挖空位置'}).waitFor();
   await page.getByRole('button',{name:'练习',exact:true}).click();
   await page.getByRole('spinbutton',{name:'练习题数',exact:true}).fill('4');
   await page.getByRole('button',{name:'开始练习',exact:true}).click();
@@ -315,6 +385,18 @@ try{
   await page.getByRole('button',{name:'部分掌握',exact:true}).click();
   await page.getByText('自评已记录',{exact:true}).waitFor();
   await page.screenshot({path:path.join(artifacts,'question-short-answer-self-review.png'),fullPage:true});
+  await page.getByRole('button',{name:/^历史题库/}).click();
+  const activeCount=await page.locator('.zs-bank-active-questions .zs-bank-question').count();assert.ok(activeCount>0);
+  await page.route('**/api/zhiyun-study',async route=>{let method;try{method=route.request().postDataJSON()?.payload?.method;}catch{}if(method==='bank-discard')await new Promise(resolve=>setTimeout(resolve,1500));await route.continue();});
+  await page.getByRole('checkbox',{name:'全选当前题目',exact:true}).check();
+  await page.getByRole('button',{name:'批量弃用',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelectorAll('.zs-bank-active-questions .zs-bank-question').length===0,null,{timeout:700});
+  assert.equal(await page.locator('.zs-bank-archive').getAttribute('open'),null,'discarded questions are immediately moved to a collapsed archive');
+  await page.getByRole('status').filter({hasText:`已弃用 ${activeCount} 道题`}).waitFor();await page.unroute('**/api/zhiyun-study');
+  await page.locator('.zs-bank-archive > summary').click();
+  assert.ok(await page.locator('.zs-bank-archive .zs-bank-question').count()>=activeCount);
+  await page.screenshot({path:path.join(artifacts,'question-bank-bulk-archive.png'),fullPage:true});
+  await page.locator('.zs-bank-archive > summary').click();
   await page.setViewportSize({width:650,height:900});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:path.join(artifacts,'question-bank-narrow.png'),fullPage:true});

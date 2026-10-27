@@ -27,21 +27,25 @@
 #zs-lecture-export .zs-pdf-chapter h2 small{display:block;font-size:9pt;font-weight:400;color:#647b70;margin-bottom:9pt}
 #zs-lecture-export .zs-pdf-block{margin:14pt 0}
 #zs-lecture-export .zs-example-label{font-size:9pt;color:#647b70;margin:10pt 0 4pt}
-#zs-lecture-export .zs-pdf-map-sheet{break-before:page;padding-top:8mm}
-#zs-lecture-export .zs-pdf-map-sheet header{margin-bottom:9mm}
-#zs-lecture-export .zs-pdf-map-sheet header h2{font-size:18pt;margin:8pt 0}
-#zs-lecture-export .zs-pdf-map-sheet header p{font-size:9pt;color:#647b70}
+#zs-lecture-export .zs-pdf-map-sheet{page:lecture-map;break-before:page;width:269mm;height:180mm;padding:0;overflow:visible}
+#zs-lecture-export .zs-pdf-map-sheet header{height:30mm;margin:0}
+#zs-lecture-export .zs-pdf-map-sheet header h2{font-size:18pt;margin:5pt 0}
+#zs-lecture-export .zs-pdf-map-sheet header p{font-size:9pt;color:#647b70;margin:3pt 0}
+#zs-lecture-export .zs-pdf-map-viewport{position:relative;height:150mm;width:100%;overflow:hidden;contain:layout paint}
+#zs-lecture-export .zs-pdf-map-grid{position:absolute;top:0;left:0;width:100%;display:grid;gap:8mm;align-items:start;transform-origin:top left}
+#zs-lecture-export .zs-pdf-map-column{min-width:0}
 #zs-lecture-export .zs-pdf-map-chapter{break-inside:avoid}
-#zs-lecture-export .zs-pdf-map-chapter+.zs-pdf-map-chapter{margin-top:9mm}
-#zs-lecture-export .zs-pdf-map-root{padding:12pt 15pt;border:1.2pt solid #326452;border-radius:5pt;font-size:13pt;background:#edf3ef;break-after:avoid}
-#zs-lecture-export .zs-pdf-map-branches{list-style:none;padding:0 0 0 24pt;margin:0 0 0 16pt;border-left:1pt solid #a4bbaf}
-#zs-lecture-export .zs-pdf-map-branches li{position:relative;display:flex;gap:12pt;align-items:baseline;border:1pt solid #cddbd3;border-radius:4pt;padding:10pt 12pt;margin:12pt 0;break-inside:avoid;min-height:40pt}
-#zs-lecture-export .zs-pdf-map-branches li:before{content:"";position:absolute;left:-25pt;top:20pt;width:24pt;border-top:1pt solid #a4bbaf}
-#zs-lecture-export .zs-pdf-map-branches li span{font-size:9pt;color:#647b70}
-#zs-lecture-export .zs-pdf-map-branches li strong{font-size:11pt;font-weight:500}
+#zs-lecture-export .zs-pdf-map-chapter+.zs-pdf-map-chapter{margin-top:5mm}
+#zs-lecture-export .zs-pdf-map-root{padding:6pt 8pt;border:1.2pt solid #326452;border-radius:5pt;font-size:11pt;line-height:1.5;background:#edf3ef;break-after:avoid}
+#zs-lecture-export .zs-pdf-map-branches{list-style:none;padding:0 0 0 10pt;margin:0 0 0 8pt;border-left:1pt solid #a4bbaf}
+#zs-lecture-export .zs-pdf-map-branches li{position:relative;display:flex;gap:6pt;align-items:baseline;border:1pt solid #cddbd3;border-radius:4pt;padding:5pt 7pt;margin:6pt 0;break-inside:avoid;line-height:1.5}
+#zs-lecture-export .zs-pdf-map-branches li:before{content:"";position:absolute;left:-11pt;top:12pt;width:10pt;border-top:1pt solid #a4bbaf}
+#zs-lecture-export .zs-pdf-map-branches li span{font-size:8pt;color:#647b70;flex-shrink:0}
+#zs-lecture-export .zs-pdf-map-branches li strong{font-size:10pt;font-weight:500}
 #zs-lecture-export .zs-pdf-review{break-before:page}
 @media print{
   @page{size:A4;margin:18mm 16mm}
+  @page lecture-map{size:A4 landscape;margin:12mm 14mm}
   html,body{height:auto!important;min-height:0!important;overflow:visible!important;background:white!important;color:#172c27!important;margin:0!important;padding:0!important}
   body>*:not(#zs-lecture-export){display:none!important}
   #zs-lecture-export{position:static!important;width:auto!important;pointer-events:auto;overflow:visible!important}

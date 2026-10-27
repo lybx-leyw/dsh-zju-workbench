@@ -1,31 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { QUESTION_TYPES, QUESTION_STRATEGIES } from 'dsh-zhiyun-core-quiz';
-
-const labels={running:'正在出题',paused:'已暂停',partial:'部分完成',failed:'出题中断',completed:'出题完成'};
-const duration=ms=>{const seconds=Math.max(0,Math.floor(ms/1000));return seconds<60?`${seconds} 秒`:`${Math.floor(seconds/60)} 分 ${seconds%60} 秒`;};
-const typeLabel=type=>QUESTION_TYPES[type]??type;
-export function QuestionGenerationProgress({ bank, state }) {
-  const run=state.run,[now,setNow]=useState(Date.now());
-  const running=run?.state==='running';
-  useEffect(()=>{if(!running)return;const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[running,run?.id]);
-  if(!run)return null;
-  const elapsed=run.elapsedMs+(running?Math.max(0,now-(run.observedAt??now)):0),percent=Math.min(100,Math.floor(run.done*100/Math.max(1,run.total)));
-  const task=run.tasks[run.currentTask];
-  const phases={queued:'等待开始',rewriting:'建立概念与挖空底稿',rewritten:'底稿已保存',searching:'检索应用背景与数据',searched:'检索来源已保存',reviewing:'复核答案与考查角度',generating:`生成${task?typeLabel(task.type):'题目'}`,cached:'复用已保存的步骤',validating:'核对题目与原文依据',saving:'保存题目与断点','task-completed':'继续下一个出题步骤','task-failed':'当前步骤待重试',completed:'本批题目已保存',partial:'可重试未完成部分',paused:'断点已保存，随时继续'};
-  const completed=run.tasks.filter(task=>task.done>=task.total).length;
-  return <section className="zs-qgen" aria-label="出题进度" data-state={run.state}>
-    <header className="zs-qgen-heading"><div><span className="zs-qgen-status"><i aria-hidden="true"/>{labels[run.state]??run.state}</span><strong>{run.done}<small> / {run.total} 道已保存</small></strong></div>
-      {running?<button type="button" className="zs-button" disabled={state.busy} onClick={()=>bank.pause()}>暂停出题</button>
-        :run.remaining>0&&run.resumable!==false&&<button type="button" className="zs-button" disabled={state.busy} onClick={()=>bank.resume(run.id)}>{run.state==='paused'?'继续出题':'重试未完成'}</button>}
-    </header>
-    <div className="zs-qgen-bar"><progress value={run.done} max={Math.max(1,run.total)} aria-label="出题完成进度"/><span>{percent}%</span></div>
-    <div className="zs-qgen-current" role="status"><span>{running?phases[run.phase]??'正在处理':run.state==='completed'?phases.completed:run.state==='paused'?phases.paused:'已保存的题目不会丢失'}</span>{running&&task&&<strong title={task.title}>{task.title} · {QUESTION_STRATEGIES[task.strategy]?.label} · {typeLabel(task.type)}</strong>}</div>
-    <dl className="zs-qgen-metrics"><div><dt>用时</dt><dd>{duration(elapsed)}</dd></div><div><dt>待完成</dt><dd>{run.remaining} 道</dd></div><div><dt>速度</dt><dd>{run.done>0&&elapsed>0?`${(run.done*60000/elapsed).toFixed(1)} 题/分`:'等待首题'}</dd></div></dl>
-    {running&&run.etaMs!=null&&<p className="zs-qgen-eta">预计剩余约 {duration(run.etaMs)}，随实际生成速度更新</p>}
-    <p className="zs-qgen-cache"><span aria-hidden="true">✓</span> 断点已保存 · 已整理 {run.cachedRewrites} 个知识点{run.cachedDrafts>0?` · ${run.cachedDrafts} 道草稿可继续核对`:''}{run.reusedRewrites+run.reusedDrafts>0?` · 本次复用 ${run.reusedRewrites+run.reusedDrafts} 项缓存`:''}</p>
-    <details className="zs-qgen-tasks"><summary>知识点、策略与题型<span>{completed} / {run.tasks.length} 项完成</span></summary><ol>{run.tasks.map((task,index)=><li key={index} data-state={task.done>=task.total?'completed':task.state}><div><strong title={task.title}>{task.title}</strong><span>{QUESTION_STRATEGIES[task.strategy]?.label} · {typeLabel(task.type)}{running&&run.currentTask===index?' · 处理中':task.error?' · 待重试':''}</span></div><span>{task.done} / {task.total}</span></li>)}</ol></details>
-    {run.problems.length>0&&<details className="zs-qgen-problems"><summary>查看未完成原因 · {run.problems.length}</summary>{run.problems.map((problem,index)=><p key={index}>{problem}</p>)}</details>}
-    <small className="zs-qgen-version">{run.resumable===false?'该批次使用旧出题架构；已保存的题目仍在题库中，请创建新批次。':'恢复时沿用本批次的知识点资料和分配方案。'}</small>
-    {state.runs.length>1&&<label className="zs-qgen-history">出题批次<select aria-label="查看出题批次" value={run.id} disabled={running||state.busy} onChange={event=>bank.selectRun(event.target.value)}>{[...state.runs].reverse().map(item=><option key={item.id} value={item.id}>{new Date(item.createdAt).toLocaleString()} · {item.done}/{item.total} · {labels[item.state]??item.state}</option>)}</select></label>}
-  </section>;
+import React,{useEffect,useState} from 'react';
+import {QUESTION_TYPES,QUESTION_STRATEGIES} from 'dsh-zhiyun-core-quiz';
+const labels={running:'正在出题',paused:'已暂停',partial:'部分完成',failed:'出题中断',completed:'批次已完成'};
+const duration=ms=>{const n=Math.max(0,Math.floor(ms/1000));return n<60?`${n} 秒`:`${Math.floor(n/60)} 分 ${n%60} 秒`;};
+const defaultStages=['规划考点','单题并发','题目挂账','批量查重','统一整改'];
+const phases={queued:'等待开始',rewriting:'整理原文与考点',rewritten:'考点底稿已保存','auditing-facts':'核对原子考点','checking-source':'检查来源与条件分支','point-prepared':'知识点准备完成','question-plan-saved':'每道题的目标已分配',generating:'worker 正在生成单题',reviewing:'核对单题答案与依据',validating:'校验题目',saving:'题目正在挂账',rectifying:'对照本批题目与历史题', 'rectify-batching':'分批核对语义重复',repairing:'根据查重原因重写题目',rectified:'查重整改已保存','rectify-pending':'有题目待复核',partial:'已保存断点，可继续处理'};
+export function QuestionGenerationProgress({bank,state}){
+ const run=state.run,[now,setNow]=useState(Date.now()),running=run?.state==='running';
+ useEffect(()=>{if(!running)return;const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[running,run?.id]);
+ if(!run)return null;
+ const treeEngine=run.plan.engine==='r3-v9',native=run.plan.engine==='deeptutor-native',direct=treeEngine||native;
+ const stages=native?['查阅讲义','原生规划','原生出题','保存题库']:treeEngine?['提取树上考法','分配考法与变体','单题生成与复核','保存题库']:defaultStages;
+ const elapsed=run.elapsedMs+(running?Math.max(0,now-(run.observedAt??now)):0),summary=run.rectify??{},phase=run.phase??'',percent=Math.min(100,Math.floor(run.done*100/Math.max(1,run.total)));
+ const index=run.state==='completed'?stages.length:native?(phase==='saving'?3:phase==='native-planning'?1:phase==='native-quizzing'?2:0):treeEngine?(phase==='saving'?3:phase==='r3-generating'?2:phase==='r3-reserving'?1:0):/repair|rectified/.test(phase)?4:/rectif/.test(phase)?3:run.done>0?2:/generat|reviewing|validating|question-plan/.test(phase)?1:0;
+ const tree=new Map();for(const [i,task]of run.tasks.entries()){const key=task.pointId??task.title;if(!tree.has(key))tree.set(key,{title:task.title,course:task.courseTitle,lesson:task.lessonTitle,items:[]});tree.get(key).items.push({...task,index:i});}
+ const active=run.activeTasks?.length??0;
+ return <section className="zs-qgen" aria-label="出题进度" data-state={run.state}>
+  <header className="zs-qgen-heading"><div><span className="zs-qgen-status"><i aria-hidden="true"/>{labels[run.state]??run.state}</span><strong>{summary.admitted??0}<small> 道可用 / 计划 {run.total} 道</small></strong></div>{running?<button type="button" className="zs-button" disabled={state.busy} onClick={()=>bank.pause()}>暂停出题</button>:(run.state==='paused'||run.remaining>0||['needs-review','needs-repair'].includes(summary.state))&&run.resumable!==false&&<button type="button" className="zs-button" disabled={state.busy} onClick={()=>bank.resume(run.id)}>{run.state==='paused'?'继续出题':'重试未完成'}</button>}</header>
+  <ol className="zs-quiz-stages" aria-label="出题流程">{stages.map((label,i)=><li key={label} data-state={i<index?'done':i===index?'active':'pending'} aria-current={i===index?'step':undefined}><span>{i<index?'✓':i+1}</span><b>{label}</b></li>)}</ol>
+  <div className="zs-qgen-current" role="status"><span>{running?({'r3-compiling':'沿知识图谱提取考法，标题节点会读取子树正文与页详情','r3-reserving':'分配已有考法及变体','r3-generating':'并发生成并逐题复核','native-exploring':'DeepTutor 正在查阅讲义','native-planning':'DeepTutor 正在规划题目','native-quizzing':'DeepTutor 正在生成原生题目'})[phase]??phases[phase]??'正在处理':run.state==='paused'?'断点已保存，随时继续':summary.state==='needs-review'?'语义查重尚未完成，相关题目待复核':summary.state==='needs-repair'?'重复题任务已保留，继续整改可生成替代题':'已保存本批题目和处理记录'}</span></div>
+  {direct&&<p className="zs-bank-explanation">{run.engineLabel??(native?'DeepTutor 直调':'r3 v9（实验）')}{native&&run.upstream?` · ${({exploring:'查阅讲义',planning:'规划题目',quizzing:'生成题目'})[run.upstream.stage]??'正在处理'}`:''}</p>}
+  {run.plan.engine==='deeptutor'&&<p className="zs-bank-explanation">DeepTutor · 独立题目并行{run.upstream?` · 上游阶段：${({exploring:'查阅讲义与探索',planning:'规划题目',quizzing:'生成题目'})[run.upstream.stage]??run.upstream.stage}`:''}</p>}
+  <div className="zs-qgen-bar"><progress value={run.done} max={Math.max(1,run.total)} aria-label="题目挂账进度"/><span>{percent}%</span></div>
+  <dl className="zs-qgen-metrics"><div><dt>已保存</dt><dd>{summary.total??run.done} 道</dd></div><div><dt>可用草稿</dt><dd>{summary.admitted??0} 道</dd></div><div><dt>{direct?'待生成':'待复核 / 待整改'}</dt><dd>{direct?`${run.total-run.done} 道`:`${summary.pending??0} / ${summary.repairPending??0}`}</dd></div></dl>
+  <div className="zs-quiz-throughput"><span>用时 {duration(elapsed)}</span><span>{elapsed&&run.done?`${(run.done*60000/elapsed).toFixed(1)} 题/分`:'等待首题'}</span><span>{active} 题处理中 · {run.concurrency??1} workers</span></div>
+  <details className="zs-quiz-workers"><summary>供应商与 worker 配额<span>总并发 {run.concurrency??1}</span></summary>{run.workers?.map(row=><div className="zs-quiz-worker-row" key={row.provider}><div><strong>{row.provider}</strong><small>{row.model}</small></div><span>{row.active??0} / {row.workers} 使用中</span><small>完成 {row.completed??0}</small></div>)}</details>
+  <p className="zs-qgen-cache">✓ 断点已保存 · {treeEngine?`已提取 ${run.compiledNodes??0} 个节点的考法`:native?`已缓存 ${run.cachedBatches??0} 个原生批次`:`已整理 ${run.cachedRewrites} 个知识点`}{summary.rewritten?` · 已归档 ${summary.rewritten} 次整改底稿`:''}{run.cachedDrafts>0?` · ${run.cachedDrafts} 道草稿可继续`:''}</p>
+  <details className="zs-qgen-tasks"><summary>考点任务树<span>{run.done} / {run.total} 已挂账</span></summary><div className="zs-quiz-task-tree">{[...tree].map(([key,point])=><details className="zs-quiz-point" key={key} open><summary><span>{point.title}</span><small>{point.items.filter(t=>t.done).length}/{point.items.length}</small></summary><p>{point.course} / {point.lesson}</p><ol>{point.items.map(t=><li key={t.index} data-state={t.state}><span className="zs-ticket-state" aria-label={t.state}>{t.done?'✓':run.activeTasks?.includes(t.index)?'◌':'·'}</span><div><strong title={t.focus}>{t.focus??t.title}</strong><span>{QUESTION_STRATEGIES[t.strategy]?.label} · {QUESTION_TYPES[t.type]}{t.repair?' · 整改重写':''}</span></div><span>{t.done?'已挂账':run.activeTasks?.includes(t.index)?'处理中':t.error?'待处理':'等待'}</span></li>)}</ol></details>)}</div></details>
+  {run.problems.length>0&&<details className="zs-qgen-problems"><summary>处理记录 · {run.problems.length}</summary>{run.problems.map((p,i)=><p key={i}>{p}</p>)}</details>}
+  <small className="zs-qgen-version">{run.resumable===false?'该批次使用旧架构，请另建批次。':treeEngine?'沿原知识图谱树复用考法，实例化和复核均保留断点。':native?'使用 DeepTutor 原生规划与出题；已完成批次和草稿保留。':'题目先挂账，再结合历史题统一整改；重复任务持续保留，通过复核后进入练习。'}</small>
+  {state.runs.length>1&&<label className="zs-qgen-history">出题批次<select aria-label="查看出题批次" value={run.id} disabled={running||state.busy} onChange={e=>bank.selectRun(e.target.value)}>{[...state.runs].reverse().map(r=><option key={r.id} value={r.id}>{new Date(r.createdAt).toLocaleString()} · {r.rectify?.admitted??0} 道可用 · {labels[r.state]??r.state}</option>)}</select></label>}
+ </section>;
 }
