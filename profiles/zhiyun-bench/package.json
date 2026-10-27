@@ -36,6 +36,7 @@
         "dsh-zhiyun-host-paper",
         "dsh-zhiyun-page-paper",
         "dsh-zhiyun-page-plugins",
+        "dsh-zhiyun-page-docs",
         "dsh-zhiyun-page-feedback"
       ],
       "patchReload": "live"

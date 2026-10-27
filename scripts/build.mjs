@@ -61,6 +61,7 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-page-paper',
   'dsh-zhiyun-page-plugins',
   'dsh-zhiyun-page-feedback',
+  'dsh-zhiyun-page-docs',
 ];
 
 /**
@@ -88,7 +89,11 @@ export async function buildClientPackage(name, options = {}) {
     target: 'es2022',
     jsx: 'automatic',
     external: [...HOST_SEEDS, ...declared],
-    loader: { '.css': 'text', '.svg': 'text' },
+    // `.md` 进 text loader：文档页把 `src/docs/*.md` 当字符串打进 bundle
+    //（见 dsh-zhiyun-page-docs）。esbuild 默认不认识 .md，不配这一行会在构建时
+    // 直接报 "No loader is configured for .md files"。用 text 而不是自己写插件，
+    // 是因为正文只需要原文，不需要在构建期解析。
+    loader: { '.css': 'text', '.svg': 'text', '.md': 'text' },
     define: { 'process.env.NODE_ENV': '"production"', __ZHIYUN_PROFILE__: JSON.stringify(lock.profile) },
     // banner 的 id 必须等于包名：客户端模块表按 stripClientSuffix(id) 建行，
     // 而启动图谱的行 id 是宿主 Loader 条目的 name。

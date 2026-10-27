@@ -1,0 +1,19 @@
+{
+  "name": "dsh-zhiyun-page-docs",
+  "version": "0.1.0",
+  "description": "智云 Pro「文档」页：内置 markdown 的开发与协作文档，左侧目录 + 右侧页内目录 + 上下篇翻页",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./manifest": "./src/docs-manifest.js",
+    "./outline": "./src/outline.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "external": ["dsh-zhiyun-shell-ui"] }
+  }
+}
