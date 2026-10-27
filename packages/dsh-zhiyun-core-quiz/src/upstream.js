@@ -180,7 +180,7 @@ export function createUpstreamQuizEngine({
       // 消费事件流：只把**上游真的发出来的**事件转成进度。
       for await (const event of tutor.runs.events({ runId })) {
         signal?.throwIfAborted();
-        if (event?.kind === 'progress' || event?.kind === 'stage') {
+        if (event?.kind === 'progress' || event?.kind === 'stage' || event?.kind === 'stage-start' || event?.kind === 'stage-end') {
           onProgress?.({
             phase: event.stage ?? event.kind,
             // 上游给了 counts 才用它；没给就只报阶段名，**不编造 done/total**。
@@ -193,6 +193,7 @@ export function createUpstreamQuizEngine({
 
       const result = await tutor.runs.result(runId);
       if (!result) throw new QuizError('UPSTREAM', '上游 run 结束但没有结果');
+      if(result.status&&result.status!=='succeeded')throw new QuizError('UPSTREAM',result.error?.message??`上游运行以 ${result.status} 结束`);
 
       const candidates = Array.isArray(result.questions) ? result.questions : [];
       const accepted = [];

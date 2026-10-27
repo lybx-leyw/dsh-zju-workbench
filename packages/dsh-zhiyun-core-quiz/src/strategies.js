@@ -1,7 +1,7 @@
 /** Shared vocabulary for planning, generation and the client. */
 export const QUESTION_TYPES = Object.freeze({cloze:'填空题',mcq:'选择题',trueFalse:'判断题',shortAnswer:'简答题'});
 export const QUESTION_STRATEGIES = Object.freeze({
-  recall:{label:'基础巩固',description:'复用概念底稿，练定义、公式与记忆',types:['cloze','mcq','trueFalse','shortAnswer']},
+  recall:{label:'基础巩固',description:'补足遗漏考点，练定义、公式与记忆',types:['cloze','mcq','trueFalse','shortAnswer']},
   understand:{label:'理解拓展',description:'补足条件、边界、关系与易混点',types:['mcq','trueFalse','cloze','shortAnswer']},
   apply:{label:'应用变式',description:'围绕母题改变数字、场景与约束',types:['shortAnswer','mcq','cloze']},
   explore:{label:'综合探究',description:'尝试新的分析路径与实验设计',types:['shortAnswer','mcq']},
