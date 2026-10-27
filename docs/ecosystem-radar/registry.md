@@ -3199,3 +3199,35 @@
 >
 > **B 组封板建议**：11 次搜索中 **7 次 total_count=0**，`zju thesis language:javascript` / `language:typescript` **均为 0** → 论文域无 JS 项目。
 > `zju` 存量已挖尽（registry 1415 行），建议 3 个月内不再重扫常规词库，仅保留 `zju created:>YYYY-MM-DD` 增量轴。
+
+---
+
+## r86 · 2026-10-27（C 组 · 轴「论文库从哪来」）
+
+> 搜索 7 次（≤10）、0 次 403、**完整**。新面孔 **7 行**（🔵6 / ⛔2）。
+> **1 行在册复核升级：`nftuoa/dsh-zotero` 🔵 → 🟢**（L2560），理由：4 天内由「★0 + 当日建仓 + 无 npm」
+> 变为「**有 GitHub Release v1.0.1 + 打好的 tgz 可锁版 + 标准 A 类形态**」。
+> 骨架 `dsh-radar-zotero-bridge`（A 类，锁版 `@local/dsh-zotero@1.0.1`，强化式集成）。
+> **两条硬坑已写进骨架待决清单**：① 上游 `vendor/pdfjs/standard_fonts/LICENSE_LIBERATION` = GPL-2.0 字体例外（嵌套一票否决）；② 包名 `@local/` 永不发 npm，依赖须改 tarball。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `nftuoa/dsh-zotero`（复核升级，见 L2560） | A 原生DSH | **MIT** ✅ | 论文（文献库来源） | **重复可强化**（论文页·只借 `/zotero/*` 路由，弃其客户端） | **🟢** | proposed | 2026-10-27 | 复核打穿 L2560 的两条挡板：**① 已有 Release `v1.0.1` + `dsh-zotero-1.0.1.tgz`（2026-10-23T12:52Z，4.26 MB）→ 可锁版，M1 作废**；② 形态已确认为标准 A 类（`dsh.bundle.patch` + `cordis.patch.yml`，`insert id: zotero`）。**结构两意外**：(a) `dependencies`/`peerDependencies` **全空**、`lib/` 无任何 `@deepseek-ai/*` → 「锁版 DSH 包」不适用，能锁的只有它自己；(b) 自带 `vendor/`（pdf.js+KaTeX+字体，3.7 MB），**7 项宽松 ✅、`standard_fonts/LICENSE_LIBERATION` = GPL-2.0+字体例外 ⛔**。**与现有功能**：本仓 page-paper 的库是上游自建，`grep -i zotero` 在 page-paper/host-paper **零命中** → Zotero 原生高亮/子笔记回写是完全缺失来源；但**客户端抢 `sidebar.panellist`+`slots.register`** = 第二套布局主张，故必须弃客户端、只借路由。骨架 `packages/radar/dsh-radar-zotero-bridge`（依赖写法故意留缺陷待评审） |
+| `GindaChen/scholarly-reader` | B 其他JS | **MIT** ✅ | 论文批注 | 重复且无增益 | 🔵 | proposed | 2026-10-27 | ★0，单 HTML 页，arXiv 导入 + 可变批注 + 数学渲染。push **2026-03-02**（7 个月未动）；无模块边界可摘 |
+| `ChangHsiang/PDF-Reader` | B 其他JS | **MIT** ✅ | 论文批注 | 重复且无增益 | 🔵 | proposed | 2026-10-27 | ★1，Chrome/Edge 扩展（标注 + 文献卡片 + 划词翻译），push 2026-10-19。**强耦合 `chrome.*`**，与 iframe 路线不兼容 |
+| `AJboos/paper-loom` | B 其他JS | **MIT** ✅ | 论文精读 | 重复且无增益 | 🔵 | proposed | 2026-10-27 | ★1，Windows 桌面 AI 阅读器（翻译/双语/批注/问答）。与在册 `Paper-Lantern` 同质，★1 |
+| `martin2026us-lab/paper-space` | B 其他JS | **MIT** ✅ | 论文精读 | 重复且无增益 | 🔵 | proposed | 2026-10-27 | ★1，本地优先 AI 阅读工作台。与上条同族，无差异点 |
+| `haunledeshuchang/moyue-reader` | B 其他JS | **MIT** ✅ | 无（电子书阅读） | 无关 | 🔵 | proposed | 2026-10-27 | ★1，Windows EPUB/PDF/TXT/MOBI 双页阅读器。非论文域，不构成强化 |
+| `guillermoscript/calistenia-app` | B 其他JS | **MIT** ✅ | 锻炼 | 全新（本仓无锻炼面板） | 🔵 | proposed | 2026-10-27 | ★9，TS，2026-10-25 活跃，PocketBase 自托管 + AI 教练。**完整产品形态**（RN Expo + Web PWA），非可嵌入底层 → 强化式第③条不成立 |
+| `Scyyyy4/quizdesk` | B 其他JS | **`null`（无许可证）** ⛔ | 刷题 | 重复且无增益 | ⛔ | rejected | 2026-10-27 | ★3，TS。Word 导入 + 练习 + 错题本，与题库页同域；**无许可证红线，不摘码** |
+| `ayozoo/pdf-quiz-practice` | B 其他JS | **`null`（无许可证）** ⛔ | 刷题 | 重复且无增益 | ⛔ | rejected | 2026-10-27 | ★7，TS，React19+NestJS+SQLite。PDF 试题按正则模板自动拆分 —— 思路可参考，**无许可证，不摘任何代码** |
+
+> **本轮方法论（可复用）**：**「★0 + 当日建仓」是一条会过期的理由。**
+> L2560 当时判 🔵 完全正确，但它的两个挡板（★ 与「无 npm」）在 4 天内**都可以被独立证据推翻** ——
+> 本轮推翻的是后者（有 Release + tgz）。→ 凡以「太新 / 没发布 / 还没动静」为由压级的条目，
+> 应在 `备注` 里写清**哪条证据能让它翻案**，否则它会在 registry 里沉底，永远不再被复核。
+>
+> **嵌套许可证的新样本**：这是本仓第一次遇到「上游 A 类包自带 pdf.js vendor」。
+> `LICENSE_LIBERATION`（GPL-2.0 + 字体例外）是 pdf.js **官方发行版的标配**，
+> 意味着**任何**自带 pdf.js 的候选都会踩到它 → 建议单独立一条判定口径
+> （「字体作为渲染资源不构成衍生」是否成立），而不是每次临场决定。
