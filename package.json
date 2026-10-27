@@ -12,6 +12,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "vendor:fetch": "node scripts/fetch-vendor.mjs",
+    "vendor:check": "node scripts/fetch-vendor.mjs --check",
     "bench:quiz": "node scripts/quiz_bench/bench.mjs",
     "test:quiz-bench": "node --test tests/quiz-bench.test.mjs tests/quiz-accounting-guidance.test.mjs",
     "test:deeptutor": "node --test tests/deeptutor-host.test.mjs tests/deeptutor-bridge.test.mjs tests/deeptutor-service.test.mjs tests/deeptutor-integration.test.mjs tests/learning-resource.test.mjs tests/quiz-upstream.test.mjs",

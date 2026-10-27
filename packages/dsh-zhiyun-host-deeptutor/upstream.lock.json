@@ -9,7 +9,12 @@
     "thirdPartyNotices": "vendor/deeptutor/THIRD_PARTY_NOTICES.md",
     "archive": {
       "kind": "codeload-tarball",
-      "sha256": "bb9b1281afccf632a4f51f1d834233051970b44143967fa206e24314ff457830"
+      "sha256": "bb9b1281afccf632a4f51f1d834233051970b44143967fa206e24314ff457830",
+      "tree": {
+        "algorithm": "sha256-lines-v1",
+        "files": 3875,
+        "digest": "ee9362e6a4dd911ca09fa9f79d8ba38c0080b23048392a2b7230b71354db0ec5"
+      }
     },
     "vendoredAt": "2026-10-25",
     "vendorPath": "vendor/deeptutor"
