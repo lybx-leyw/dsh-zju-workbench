@@ -51,9 +51,9 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `A` |
-| `last_run_at` | `2026-10-27 06:00` | ⚠ 与 r78 同一缺陷：脚本按沙箱本地日期写 `2026-10-26 19:0x`，真日期 **2026-10-27 / 年积日 300 / `300%3=0` → A**；本轮以任务时间为准，TODO-0 **第 5 次**仍在） |
-| `group_runs`（累计） | A=39, B=24, C=25 |
+| `last_group` | `B` |
+| `last_run_at` | `2026-10-27 01:15` | ⚠ 与 r78 同一缺陷：脚本按沙箱本地日期写 `2026-10-26 19:0x`，真日期 **2026-10-27 / 年积日 300 / `300%3=0` → A**；本轮以任务时间为准，TODO-0 **第 5 次**仍在） |
+| `group_runs`（累计） | A=39, B=25, C=25 |
 | 今日已跑（10-26） | **C（r70）、A（r71）、B（r72）** —— r72 取 B：同日规则下仅剩 B 未跑，按组序取 B（脚本给 `B（formula(new-day)）` 但理由是**日期错**：它按 UTC 认为是 10-25，见 TODO-0）。**C（r70）、A（r71）** —— r71 取 A 的理由：同日规则下 A/B 未跑，按技能文档组序 A→B→C 取 A（**未采信** 脚本的 `same-day` 建议，其「今天」按 UTC 取日，见 TODO-0）。**C（r70，换轴·重复规则第二套口径）** —— 跨天第一轮，**纯正取组，未违反同日规则**。⚠ 脚本当时按 UTC 报 `2026-10-25 / same-day(exhausted)`，真日期为 **2026-10-26（年积日 299，`299 % 3 = 2` → C）**；两条路径都给出 C 属**巧合**，本轮以真日期为准 |
 | 本轮轴名（r80，最新） | **A 组（变体词：插件页 / 市场 / 面板）· 「锁版到底能不能装」——61 条锁版依赖，60 条存在、43 对不相容**。搜索 **9 次**（`dsh plugin dependency graph` / `dsh plugin marketplace ui` / `dsh plugin search install` / `dsh plugin settings panel` / `deepseek harness plugin ui` / `deepseek harness plugin theme` / `deepseek harness plugin side panel` / `deepseek harness plugin panel widget` / `dsh plugin conflict resolver`），0 次 403，**完整**（上限 10 未达）。首次登记 **5 行** → 🟢0 🟡2 🔵2 ⛔1（**全 A 类**）；**骨架 0 新建**（🟢 已积压 58 行、67 个骨架仅 18 行标 skeleton-created —— 缺的不是候选，是已有的都没验过能不能装）。**实质产出**：新增 `scripts/radar-baseline-check.mjs`（结构/存在/新鲜/共存静态/共存实测 共 5 层）+ `tests/radar-baseline-check.test.mjs`（9 条，**9/9 通过**）+ `docs/ecosystem-radar/skeleton-baseline.md`。**F-1 `dsh-radar-credit-audit-vendor@1.7.0` 在 npm 上不存在**（腾讯镜像 + 官方源各测一次；上游 `Kepler16f/zju-kezhou` 亦无 npm 包）→ 这是 **L-15 的唯一根因，首次定位到具体条目**。F-2 61 条锁版中 60 条存在、**0 条**落后 latest（17 条锁的正是最新）。F-3 **43 对**上游包无法被 npm 装进同一棵树（`--holdout` 实测）。F-4 静态「peer 区间相交」只报 3 对、实测 43 对 → **漏报 93%**（约束落在不同宿主子包：`lookatstudy`→`dsh-tools`、`better-markdown`→`client-locale`）。F-5「两两能装 ≠ 三个能装」（`kb-rag`+`agent-teams` ✅、`agent-teams`+`auto-memory` ✅，三者 ✗）。修了检查器自身两处缺陷：`||` 分支被当单一区间（`^0.1.x \|\| ^0.1.y` 上界算成 1.0）、不可解析分支被静默丢弃（「未知」误判「不相交」）。方法论：**A 组主词/中词/变体词三类都见底**（本轮命中率 0.55 个/次，r79 中词 3.1 个/次）→ 下一轮 A 组**不要再换词，换轴**；**「锁版」是承诺不是写法**，`"x.y.z"` 只保证字符串精确，必须另有 registry 存在性 + npm 可装性两步。 |
 | 上一轮轴名（r79） | **A 组（中词）· 「插件页说它是叶，它却在等一个上游服务」**。搜索 **10 次**（全中词：`dsh plugin rollback` / `dsh plugin upgrade` / `dsh plugin profile lock` / `dsh plugin dependency conflict` / `deepseek-harness plugin compatibility` / `dsh plugin update manager` / `dsh plugin snapshot` / `dsh plugin version pin` / `dsh plugin disable conflict` / `dsh plugin lockfile`），0 次 403，**完整**。首次登记 **15 行** → 🟢0 🟡3 🔵8 ⚠1 ⛔3（**全 A 类**）；**骨架 0 新建**、**改写 1 个旧骨架** `dsh-radar-plugin-graph`（去掉 `inject:['slots']` —— 实跑证明插槽图方向是「外壳 ← 页面」、页面**不提供** `slots` 服务，该 inject 恒等不到东西）。**本仓实测**：F-1 如上（**已改**）；F-3 上游提供者被 `addEdge` 的 `inScope` 静默丢弃 → `deps=[]`/`leaf`/`cancellable`、页面却写「不依赖本工作台的任何其他包」（**已钉 2 条测试，待产品决定是否显示上游节点**）；F-4 环内 `layerViolations` 只报 1 条（定义问题 + 并排展示误导，**已钉测试**）。`tests/plugins-page.test.mjs` **16/16 通过**（新增 2 条）。方法论：**中词密度比主词高一个数量级**（10 次中词 → 31 新面孔；r78 的 5 次主词仅 3 个），但中词必须「名词+名词」，`plugin + lockfile` 立刻泛化；**「自带 `dsh.bundle.patch` ⇒ 完整插件 ⇒ 只能 🟡」正在成为主要降级理由**（`gating-hub`/`update-checker`/`undo-savepoint` 三连）；三次撞同一堵墙：**「插件页的写入口归谁」**。 |
@@ -158,6 +158,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-26 18:01 | A | 自动记录 |
 | 2026-10-26 21:05 | C | 自动记录 |
 | 2026-10-26 16:03 | A | deepseek-harness plugin / cordis plugin / dsh plugin / dsh-market / dsh-desktop |
+| 2026-10-27 01:15 | B | zju language:javascript / zju course / cc98 / campus app zhejiang / zju timetable / zju grades api / zju language:typescript / pintia OR pta / zju wechat / zju created>2026-08-01 / zju library seat / zju exam score query |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑

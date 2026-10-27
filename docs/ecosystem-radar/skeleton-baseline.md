@@ -73,3 +73,57 @@ node scripts/radar-baseline-check.mjs --holdout
   所以存在层用「逐条查 registry」代替整装。
 - **`--holdout` 用 `--dry-run`**：只验解析，不验构建与运行时 —— 装得上 ≠ 跑得起来。
 - 71 个 `dsh-zhiyun-*` / 宿主自有包不在本检查范围（它们不是候选骨架）。
+
+---
+
+## 第二轮体检（r81 · 2026-10-27）· 声明层
+
+r80 验的是**存在层**（依赖在 npm 上有吗）与**共存层**（能不能装进同一棵树）。
+本层补的是中间那段空白：**包说自己要 inject 什么，有没有如实声明。**
+
+| 层 | 问的问题 | 检查器 | 本轮结论 |
+| --- | --- | --- | --- |
+| 结构 | 有没有锁版、漏声明 | `radar-baseline-check.mjs --offline` | 67 个骨架 JSON 全合法 |
+| 存在 | 依赖在 npm 上存在吗 | `radar-baseline-check.mjs` | 59/60 存在，1 条 E404（**仍未修**） |
+| **声明** | **inject 的宿主服务有 peer 背书吗** | **`radar-inject-audit.mjs`** | **14/21 无背书，16 个服务无人声明** |
+| 共存 | 能不能装进同一棵树 | `--holdout` | 43 对不相容 |
+
+### 为什么声明层比存在层更重要
+
+存在层只回答「装得上」。但 `dsh.client.inject: ['@deepseek-ai/dsh-client-ui-slots']`
+这种写法，npm **不会**因为它没进 `peerDependencies` 而报错 —— 装得很顺利，
+直到运行时 `ctx` 里没有 `slots` 这个服务（r79 的 F-1 就是这么来的）。
+
+### 本轮得到的清单
+
+- **14 个包** inject 了未声明的宿主服务；最极端的 `@magma27/dsh-calendar@0.1.7` 是 **7 条 inject / 1 条 peer**，
+  而那唯一一条 peer（`@deepseek-ai/schemastery`）与 inject 完全不相交 —— 等于**一条都没声明**。
+- **16 个宿主服务**被引用却无人声明：`dsh-client-ui-settings`(7)、`dsh-client-locale`(7)、
+  `dsh-client-ui-conversation`(7)、`dsh-client-connection`(4)、`dsh-client-runtime`(4)、
+  `dsh-client-ui-slots`(3)、`dsh-client-ui-renderer`(3)、`dsh-client-ui-sidebar-right`(3)，
+  以及 `dsh-client-ui-workspace`(2)、`dsh-client-ui-primitives`(2)、
+  `dsh-api-remotes`、`dsh-api-session-controller`、`dsh-client-ui-session`、
+  `dsh-client-ui-layout`、`dsh-client-ui-sidebar`、`dsh-client-ui-theme`（各 1）。
+
+### 用法
+
+```bash
+node scripts/radar-inject-audit.mjs              # 骨架锁版引入的全部上游包
+node scripts/radar-inject-audit.mjs --json      # 机器可读，便于聚合
+node scripts/radar-inject-audit.mjs dsh-context-lens   # 只查一个
+node scripts/radar-inject-audit.mjs --all       # 连普通 npm 库一起列（含 N/A）
+```
+
+退出码：有 `INJECT_UNDECLARED` 时为 1。**但现在 14 个必然红，不建议直接当 PR 门禁** ——
+先只产出报告，等数字压下去再转硬门禁。
+
+### 建议的处置（不是去催上游）
+
+在骨架里补一份 `host-requirements.json`，把「我 inject 了哪些宿主服务、需要什么代际」
+从上游的 inject 列表里**抽取并写死**，再让 `radar-baseline-check.mjs` 在锁版时对照。
+这比改上游现实，也比「靠人读 README 记」可靠。
+
+### 边界（没做到的地方）
+
+- **一个包都没真正挂进宿主跑过**：本层只判声明，不判「声明全了是否真能跑」。
+- **`--all` 里的 38 个普通 npm 库判为 N/A**：它们没有 `dsh` 字段，天然不适用，不代表「已验过」。
