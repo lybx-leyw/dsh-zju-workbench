@@ -36,6 +36,7 @@ function writeLast(value) {
 export function Paper({ controller }) {
   const [paper, setPaper] = useState(readLast);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [cornellOpen, setCornellOpen] = useState(false);
   const [selection, setSelection] = useState(null);
   const [jump, setJump] = useState(null); // { page, q, key }
   const [meta, setMeta] = useState(null);
@@ -124,6 +125,10 @@ export function Paper({ controller }) {
   return <div className={`zp-page${drawerOpen ? ' is-drawer-open' : ''}`}>
     <div className="zp-main">
       <div className="zp-bar">
+        <button type="button" className="zp-cornell-toggle" aria-expanded={cornellOpen}
+          onClick={() => setCornellOpen((value) => !value)} title="展开或收起康奈尔笔记">
+          {cornellOpen ? '‹' : '›'} 康奈尔笔记
+        </button>
         <LibraryPanel current={paper} onPick={pick}/>
         <span className="zp-bar-meta">{pages}{transcribed ? ' · 已转录' : ''}</span>
         <div className="zp-bar-actions">
@@ -142,6 +147,8 @@ export function Paper({ controller }) {
       {transcript?.error && <div className="zp-bar-error">{transcript.error}</div>}
 
       <ReaderFrame
+        key={JSON.stringify([paper.topic, paper.name])}
+        cornellOpen={cornellOpen}
         topic={paper.topic}
         name={paper.name}
         page={jump?.page}

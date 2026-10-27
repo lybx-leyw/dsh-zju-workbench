@@ -9,6 +9,7 @@ import {
   unionRect,
 } from './selection-text.js';
 import { frameThemeCss, readThemeTokens } from './frame-theme.js';
+import { attachCornellNotes } from './cornell-notes.js';
 
 /**
  * 左侧的 PDF 阅读区：同源 iframe 承载上游阅读器 + 一层「选中英文 → 悬停即译」的桥。
@@ -36,7 +37,7 @@ import { frameThemeCss, readThemeTokens } from './frame-theme.js';
 const POPOVER_GAP = 8;
 const POPOVER_WIDTH = 344;
 
-export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskAbout, registerApi }) {
+export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskAbout, registerApi, cornellOpen }) {
   const frameRef = useRef(null);
   const hostRef = useRef(null);
   const popRef = useRef(null);
@@ -50,6 +51,11 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
   const [ready, setReady] = useState(false);
   const [failure, setFailure] = useState(null);
   const [pop, setPop] = useState(null);
+  const cornellOpenRef = useRef(cornellOpen);
+  cornellOpenRef.current = cornellOpen;
+  useEffect(() => {
+    frameRef.current?.contentDocument?.documentElement.classList.toggle('zp-cornell-visible', cornellOpen);
+  }, [cornellOpen, ready]);
 
   const url = useMemo(() => readerUrl(topic, name, { page, q }), [topic, name, page, q]);
 
@@ -114,6 +120,7 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
     if (!frame) return undefined;
     let doc = null;
     let cancelled = false;
+    let detachNotes = null;
 
     const readSelection = () => {
       const selection = doc.defaultView.getSelection();
@@ -166,6 +173,9 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
       if (cancelled) return;
       doc = frame.contentDocument;
       if (!doc) { setFailure('阅读器加载失败：拿不到同源文档（iframe 被跨域隔离了？）'); return; }
+      detachNotes?.();
+      detachNotes = attachCornellNotes(doc, { topic, name });
+      doc.documentElement.classList.toggle('zp-cornell-visible', cornellOpenRef.current);
       try {
         // 主题 + 藏掉「已经搬到本壳」的控件：只注入一张样式表，不碰上游脚本。
         const style = doc.createElement('style');
@@ -192,6 +202,7 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
 
     return () => {
       cancelled = true;
+      detachNotes?.();
       frame.removeEventListener('load', onLoad);
       frame.removeEventListener('error', onError);
       if (doc) {
