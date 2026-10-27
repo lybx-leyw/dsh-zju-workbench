@@ -95,7 +95,7 @@ export const publicError = (error) => ({ code: error.code ?? "FAILED", message: 
   BUSY: "已有加工任务正在运行，请等待完成或先取消。"
 }[error.code] ?? "操作未完成，请重试。" });
 export class StudyWorkbench {
-  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge }) {
+  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge, deeptutor, learningResource }) {
     this.classroom = classroom;
     this.parser = parser;
     this.llm = llm;
@@ -114,6 +114,8 @@ export class StudyWorkbench {
     // 出题的题库不使用插件上的单例 store（那个 store 跨节共享、且不落盘），
     // 每次按本节记录自建一份，再把快照写回知识库。
     this.quizOf = quiz ?? (() => undefined);
+    this.deepTutorOf = deeptutor ?? (() => undefined);
+    this.learningResourceOf = learningResource ?? (() => undefined);
     this.notesOf = notes ?? (() => undefined);
     this.jobs = new Map();
     this.closed = false;
@@ -121,9 +123,10 @@ export class StudyWorkbench {
     this.controllers = new Set();
     this.recentQueue = Promise.resolve();
     this.workerSelection = null;
+    this.quizWorkerSelection = null;
     this.configBusy = false;
     this.questionBank = new QuestionBank(this);
-    this.ready = this.loadRoutes();
+    this.ready = Promise.all([this.loadRoutes(),this.loadQuizWorkers()]);
   }
   async loadRoutes() {
     try {
@@ -134,9 +137,14 @@ export class StudyWorkbench {
       if (e.code !== "ENOENT" && !(e instanceof SyntaxError)) throw e;
     }
   }
-  effectiveWorkers() {
+  async loadQuizWorkers() {
+    try{this.quizWorkerSelection=normalizeWorkers(JSON.parse(await readFile(path.join(this.directory,'quiz-models.json'),'utf8')).workers);}
+    catch(e){if(e.code!=='ENOENT'&&!(e instanceof SyntaxError))throw e;}
+  }
+  effectiveWorkers(purpose='lecture') {
+    if(purpose==='quiz'&&this.quizWorkerSelection)return this.quizWorkerSelection.map(entry=>({...entry}));
     if (this.workerSelection) return this.workerSelection.map(entry => ({ ...entry }));
-    const selected = this.parser.llm.routes?.vision ?? this.parser.llm.routes?.text ?? this.parser.llm.selection?.();
+    const selected = (purpose==='quiz'?this.parser.llm.routes?.text:null)??this.parser.llm.routes?.vision ?? this.parser.llm.routes?.text ?? this.parser.llm.selection?.();
     return selected?.provider && selected?.model ? [{ provider: selected.provider, model: selected.model, workers: this.parser.concurrency ?? 3 }] : [];
   }
   cleanRoutes(routes = {}) {
@@ -579,10 +587,11 @@ export class StudyWorkbench {
         id: provider.id, name: provider.name,
         models: (await this.llm.listModels(provider.id).catch(() => [])).map(model => ({ id: model.id, name: model.name, inputModalities: model.inputModalities ?? [] })),
       })));
-      return { catalog, routes: this.parser.llm.routes, workers: this.effectiveWorkers() };
+      return { catalog, routes: this.parser.llm.routes, workers: this.effectiveWorkers(payload.purpose) };
     }
     if (method === "models-save") {
-      if (this.configBusy || this.mutations.size || [...this.jobs.values()].some(job => ['running', 'queued'].includes(job.state))) throw fault("BUSY", "加工完成后才能修改生成配置");
+      const quiz=payload.purpose==='quiz';
+      if (this.configBusy || (quiz?[...this.questionBank.runs.values()].some(run=>!run.finished)||this.questionBank.starting.size:this.mutations.size || [...this.jobs.values()].some(job => ['running', 'queued'].includes(job.state)))) throw fault("BUSY", quiz?'请先暂停出题，再修改出题配置':"加工完成后才能修改生成配置");
       this.configBusy = true;
       try {
         if (payload.workers !== undefined) {
@@ -593,8 +602,8 @@ export class StudyWorkbench {
             await this.llm.resolveModelInfo(entry.provider, entry.model, signal);
           }
           signal?.throwIfAborted();
-          await this.atomic(path.join(this.directory, 'models.json'), { schema: 1, workers });
-          this.workerSelection = workers;
+          await this.atomic(path.join(this.directory, quiz?'quiz-models.json':'models.json'), { schema: 1, workers });
+          if(quiz)this.quizWorkerSelection=workers;else this.workerSelection = workers;
           return { workers, concurrency: workers.reduce((sum, entry) => sum + entry.workers, 0) };
         }
         const routes = this.cleanRoutes(payload.routes);

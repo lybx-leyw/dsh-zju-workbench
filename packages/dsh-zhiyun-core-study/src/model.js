@@ -12,7 +12,14 @@ import { createQuestionBankController } from './question-bank-client.js';
   async function request(method, payload = {}) {
     return call(method, payload, lifetime.signal);
   }
-  const questionBank = createQuestionBankController(request,navigation);
+  const questionBank = createQuestionBankController(request,{...navigation,openSource:async(question,point)=>{
+    const course=state.courses.find(c=>String(c.id)===String(question.courseId))??{id:question.courseId,title:question.courseTitle};
+    const loaded=await loadCourse(course);
+    const lesson=(loaded?.items??[]).find(l=>String(l.subId)===String(question.subId))??{subId:question.subId,title:question.lessonTitle};
+    await selectLesson(lesson,course);
+    update({focusTab:{tab:'题目来源',courseId:String(course.id),subId:String(lesson.subId),chapterNo:point.chapterIndex+1,topicNo:point.topicIndex+1}});
+    navigation?.navigate?.('study');
+  }});
   const currentKey = () => state.lesson ? { courseId: state.course.id, subId: state.lesson.subId } : null;
   /**
    * 从「今天的直播列表」里挑出与某节课对应的一条，作为 `state.live`。

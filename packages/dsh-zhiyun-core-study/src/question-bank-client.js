@@ -1,9 +1,10 @@
 /** Long-lived client state and polling; neither depends on the visible page. */
 export function createQuestionBankController(request,navigation) {
   const initial=()=>({loading:false,loaded:false,busy:false,points:[],questions:[],sessions:[],picked:[],error:null,notice:null,plan:null,practice:null,answers:{},run:null,runs:[]});
-  let state=initial(),epoch=0,loading=null,disposed=false,timer=null,polling=false;
+  let state=initial(),epoch=0,loading=null,disposed=false,timer=null,polling=false,discardQueue=Promise.resolve();
+  const discardOverlay=new Map();
   const listeners=new Set();
-  const update=patch=>{if(disposed)return;state={...state,...patch};for(const listener of listeners)listener();};
+  const update=patch=>{if(disposed)return;if(patch.questions){const questions=patch.questions.map(q=>discardOverlay.has(q.id)?{...q,status:'rejected',discardReason:'user'}:q),active=questions.filter(q=>q.status!=='rejected');patch={...patch,questions,coverage:{...(patch.coverage??state.coverage),questions:active.length,points:new Set(active.map(q=>q.pointKey??q.pointId)).size,concepts:new Set(active.map(q=>q.conceptId).filter(Boolean)).size,angles:new Set(active.filter(q=>q.angle).map(q=>JSON.stringify([q.pointKey??q.pointId,q.angle]))).size,families:new Set(active.map(q=>q.familyId).filter(Boolean)).size}};}state={...state,...patch};for(const listener of listeners)listener();};
   const schedule=()=>{clearTimeout(timer);if(!disposed)timer=setTimeout(poll,650);};
   async function poll(){
     if(disposed||!state.run||state.run.state!=='running')return;
@@ -24,7 +25,7 @@ export function createQuestionBankController(request,navigation) {
   const controller={
     getSnapshot:()=>state,
     subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},
-    reset(){epoch++;clearTimeout(timer);loading=null;state=initial();for(const listener of listeners)listener();},
+    reset(){epoch++;discardOverlay.clear();discardQueue=Promise.resolve();clearTimeout(timer);loading=null;state=initial();for(const listener of listeners)listener();},
     async load(force=false){
       if(loading)return loading;if(state.busy || state.loaded && !force)return;
       const ticket=epoch;update({loading:true,error:null});
@@ -33,7 +34,7 @@ export function createQuestionBankController(request,navigation) {
           const [catalog,bank]=await Promise.all([request('bank-catalog'),request('bank-load')]);
           if(ticket===epoch){
             const run=bank.run?.state==='running'?bank.run:bank.runs?.find(run=>run.id===state.run?.id)??bank.run;
-            update({points:catalog.points,...bank,run,picked:state.picked.filter(id=>catalog.points.some(p=>p.id===id)),loaded:true});
+            update({points:catalog.points,engines:catalog.engines??[],...bank,run,picked:state.picked.filter(id=>catalog.points.some(p=>p.id===id)),loaded:true});
             if(run?.state==='running')schedule();
           }
         }catch(error){if(ticket===epoch)update({error:error.message});}
@@ -61,8 +62,26 @@ export function createQuestionBankController(request,navigation) {
       const questions=state.questions.map(q=>q.id===questionId?{...q,attempts:[...(q.attempts??[]),data.attempt]}:q);
       update({answers:{...state.answers,[questionId]:data},questions});
     });},
-    discard(questionId){return controller.action('bank-discard',{questionId},data=>update({questions:data.questions,sessions:data.sessions}));},
+    discard(questionId){return controller.discardMany([questionId]);},
+    discardMany(questionIds){
+      const ticket=epoch,ids=[...new Set(questionIds)].filter(id=>state.questions.some(q=>q.id===id&&q.status!=='rejected'));
+      if(!ids.length)return Promise.resolve(null);
+      const before=new Map(state.questions.filter(q=>ids.includes(q.id)).map(q=>[q.id,{status:q.status,discardReason:q.discardReason}]));
+      ids.forEach(id=>discardOverlay.set(id,{pending:true}));
+      update({questions:state.questions,discardRevision:(state.discardRevision??0)+1,error:null,notice:`已移至已弃用 · ${ids.length} 道，正在保存…`});
+      const work=discardQueue.then(async()=>{
+        if(ticket!==epoch||disposed)return null;
+        try{const data=await request('bank-discard',{questionIds:ids});if(ticket!==epoch||disposed)return null;
+          ids.forEach(id=>discardOverlay.set(id,{pending:false}));update({questions:data.questions,sessions:data.sessions,notice:`已弃用 ${ids.length} 道题`});return data;
+        }catch(error){if(ticket===epoch&&!disposed){ids.forEach(id=>discardOverlay.delete(id));update({questions:state.questions.map(q=>before.has(q.id)?{...q,...before.get(q.id)}:q),notice:null,error:'弃用未保存，已恢复：'+error.message});}return null;}
+      });discardQueue=work.catch(()=>{});return work;
+    },
+    blockPosition(question){return controller.action('bank-curate',{materialKey:question.materialKey,type:'block-position',conceptId:question.conceptId,blankId:question.blankId},()=>update({notice:'已停用此挖空位置，后续出题将跳过；历史题目保留。'}));},
     finish(){update({practice:null,answers:{}});},
+    async openSource(question){
+      try{await controller.load(true);const point=state.points.find(p=>p.id===question.pointId);if(!point)throw new Error('讲义已换版或不可用，请查看题目中保存的原文依据。');await navigation?.openSource?.(question,point);}
+      catch(error){update({error:error.message});}
+    },
     async open(scope){
       await controller.load(true);
       if(scope)controller.pick(state.points.filter(p=>String(p.courseId)===String(scope.courseId)&&String(p.subId)===String(scope.subId)
