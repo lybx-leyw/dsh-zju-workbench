@@ -3295,3 +3295,30 @@
 - `packages/radar/dsh-radar-ocr-web/src/index.js:74` 写「`recordAttempt` 定义处一处」——**结论对、路径错**：
   正确路径是 `packages/dsh-zhiyun-core-quiz/src/store.js:608`（不是 `dsh-zhiyun-quiz`，行号已漂移）。
   下轮若要复核「作答通路是否接通」，请按正确路径 grep。
+
+### r89 · 2026-10-28 06:05 · A 组「插件市场的『谁来担保』」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `dsh-research/dsh-research` | A 原生DSH | MIT | 论文/文献/写作 | 重复可强化（插件页） | 🟢 | skeleton-created | 2026-10-28 | ★10，push 2026-10-21。LICENSE 实文 `MIT / (c) 2025 ai4scholar`；npm `latest=0.4.4` 单 tag、**零运行时依赖**、`dsh.bundle.patch` 齐。**是叠在通用市场之上的限定目录**（上游自述：官方市场装得下所有，但答不了「哪些是我的」）→ 不是 `dsh-market` 的替代。已出骨架 `dsh-radar-research-market`，锁 `0.4.4` |
+| `bruc3van/safer-dsh-market` | A 原生DSH | MIT | 通用 | 重复可强化（插件页·审核维度） | 🟡 | proposed | 2026-10-28 | ★9，push 2026-10-22。通用市场 + **装后只读 AI 审查** —— 本仓插件页**无审核维度**，是真空白。但索引来自第三方域名 `bruc3van.com`，且上游自承「事后审查挡不住安装期执行」→ 作「审核 UI 参考实现」，不做锁版依赖 |
+| `Sivan757/dsh-agent-plugins-market` | A 原生DSH | MIT | 通用（技能/MCP） | 重复可强化（技能簇） | 🟡 | proposed | 2026-10-28 | ★17，push 2026-10-27。skills / subagent / MCP / LSP 四合一管理器，**原地读** Claude Code·Codex·Cursor 布局、不转格式不复制。本仓有 `host-deeptutor` 与 MCP 路径 → 技能簇若要开轴的首选。★17 偏小、14 MB，本轮不动 |
+| `liangmianya/dsh-synapse` | A 原生DSH | MIT | 通用（会话分支） | 重复且可强化（**形态待定**） | 🔵 | proposed | 2026-10-28 | **★598，本轮最值得记但判不了的一条**。会话地图/分支画布，保留 DSH 原生 fork 为唯一事实源；本仓「问一问」线性无分支视图 → 形态上真空白。**但 `files` 只发 `index.js`/`client.js`/`app.js`，画布实现全内嵌 `app.js`，无可独立复用包** → 「锁版挂载 + 外围兼容层」拿不到东西。整套挂载=替换「问一问」交互（超出强化边界），摘代码=违反「不搬运源码」。**需人工拍板** |
+| `web-casa/DeepSeek-Harness-Desktop` | A 原生DSH | MIT | — | 无关（宿主壳） | 🔵 | proposed | 2026-10-28 | ★124。Windows/macOS 打包，本仓是 profile 插件仓，不涉及 |
+| `qufei1993/dsh-desktop` | A 原生DSH | MIT | — | 无关（宿主壳） | 🔵 | proposed | 2026-10-28 | ★56。同上的社区桌面客户端 |
+| `FlashingChen/dsh-desktop-hub` | A 原生DSH | MIT | 通用 | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★62。Electron 多 Tab 管 Harness/Plugin/MCP/Skills。本仓插件页在仓内，不靠外部控制台 |
+| `pingfanfan/hello-dsh` | A 原生DSH | MIT | 通用 | 无关（教程） | 🔵 | proposed | 2026-10-28 | ★104。22 个中文技能实例的**教程**，作 `docs/` 写作参考，不集成 |
+| `Devin-AXIS/deepseek-design` | A 原生DSH | **NOASSERTION** ⚠ | 通用（PPT） | 待核 | ⛔ | pending-license | 2026-10-28 | **★1607，本轮最高星**。可编辑设计系统 + 模板市场。许可证待人工核验，**不采用、不摘任何代码** |
+| 通用市场 / 皮肤 / 桌面壳簇：`acryldev/store`(★10)、`DSH-PackForge/dsh-pack-market`(★10 CC0)、`w2112515/dsh-plugin-marketplace`(★17)、`springbrand-lab/dsh-plugin-market`(★9)、`keman-ai/dsh-skin-market`(★9)、`AIcivilization/dsh-vps`(★10)、`arcships/rutis`(★160 **Rust**)、`youdotcom-oss/agent-skills`(★97)、`wh000wh000/awesome-claude-mods`(**NOASSERTION**) | A 原生DSH | MIT / CC0 / NOASSERTION | — | 重复无增益 / 非 JS 栈 | ⛔ | rejected | 2026-10-28 | 市场簇已判 ⛔ 六条在册，这批是第 7 个及以后；`rutis` 为 Rust（非 JS 栈）；`awesome-claude-mods` 许可证待核。**本轮起市场类去重改判据：先问「是通用目录还是限定目录」「是否要求另一个市场存在」「安装通路是否自建」** |
+| 许可证红线簇：`liguobao/ds-harness-remote`(**null**,★898)、`urzeye/ophel`(**GPL-3.0**,★1003)、`polang233/dsh-plugin-index`(**GPL-3.0**)、`losebird/dsh-plugin-market`(**null**)、`dsh-plugins/dsh-launcher`(**null**)、`2439816947/DSH-Desktop`(**null**)、`xingj404-lab/dsh-desktop`(**null**) | A 原生DSH | null / GPL-3.0 | — | — | ⛔ | rejected | 2026-10-28 | 6 条 `null` + 2 条 GPL-3.0。**星级与许可证质量零相关**：★1003 与 ★898 全在这一簇 |
+| 桌面旁挂簇：`Clarklevis1995/dsh-mobile`(★666 Kotlin)、`cocode-agency/cocode`(★166)、`MichengAI/dsh-codex-desktop`(★124)、`bruc3van/dsh-desktop`(★93)、`ningbainb/deepseek-harness-desktop`(★875)、`liyupi/dsh-kun-like-pet`(★110)、`xiaoshihou514/dsh-desktop-pet`(★59)、`chromoany/dsh-notify-me`(★69)、`Phant0Meow/dsh-meow-smooth`(★65)、`AnacondaKC/dsh-stock-market`(★20) | A 原生DSH | 多为 MIT | — | 重复无增益 | ⛔ | rejected | 2026-10-28 | 与 32 个 `dsh-zhiyun-*` 包无功能交集：宿主壳 / 终端侧外挂 / 皮肤。桌宠类本仓 `page-planning` 已有 pet（七条 `planning-pet*.test.mjs` 在册），换宠物属皮肤不是生态 |
+| `zenstory-ai/oh-story-dsh` | A 原生DSH | MIT | 无关（网文） | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★629。小说/短剧/游戏/视频解说四个工作台，与浙大·考试·论文场景无交集 |
+| `yexi-by/dsh-unrestricted` | A 原生DSH | MIT | — | — | ⛔ | rejected | 2026-10-28 | ★714。提示词破限插件。**不登记为候选、不集成**：与雷达用途无关且方向不当 |
+
+**r89 判据订正（重要）**
+
+- r88 把 `dsh-research` 记为「第四个插件市场 → ⛔」，**判据错了**：它是**向通用市场请求目录的叠加层**，
+  不是替代品。市场类候选的正确判据见上表「通用市场簇」备注。结论：`dsh-radar-market`（`dshmarket@1.66.21`）
+  与 `dsh-radar-research-market`（`dsh-research@0.4.4`）**可共存，但只能有一个 `allowInstall` 开着**。
+- `dsh-synapse` 的方法层教训：**高星候选先看 `files` 字段**。它只发 3 个 js、画布全内嵌 → 锁版挂载路线直接出局，
+  一个字段省掉一次误判。
