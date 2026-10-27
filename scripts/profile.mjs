@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, access, symlink, realpath, lstat, rm, readdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, access, symlink, realpath, rm, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -88,9 +88,14 @@ export async function locateHost(env = process.env) {
  */
 async function linkDirectory(target, link, { adopt = false } = {}) {
   if (await exists(link)) {
-    if (path.resolve(await realpath(link)).toLowerCase() === path.resolve(await realpath(target)).toLowerCase()) return 'same';
-    const stats = await lstat(link);
-    if (!adopt || !stats.isSymbolicLink()) throw new Error(`已有路径指向其他位置，未覆盖：${link}`);
+    const here = path.resolve(await realpath(link));
+    if (here.toLowerCase() === path.resolve(await realpath(target)).toLowerCase()) return 'same';
+    // 判断「这是链接还是用户自己放的实体目录」**不能**用 `lstat().isSymbolicLink()`：
+    // Windows 的 junction 在那里报 `isDirectory()===true` / `isSymbolicLink()===false`，
+    // 于是本脚本自己建的链接会被误判成实体目录，换宿主时永远改指不了。
+    // 可靠判据是路径本身：实体目录的 realpath 就是它自己，链接的 realpath 指向别处。
+    const isLink = here.toLowerCase() !== path.resolve(link).toLowerCase();
+    if (!adopt || !isLink) throw new Error(`已有路径指向其他位置，未覆盖：${link}`);
     await rm(link, { recursive: true, force: true });
     await symlink(target, link, process.platform === 'win32' ? 'junction' : 'dir');
     return 'repointed';
