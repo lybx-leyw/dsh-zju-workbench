@@ -3173,3 +3173,29 @@
 > **自我纠正 2 处**：M-1 首版把 `@deepseek-ai/cordis`（4.x，框架层）当宿主比，13 个包全判 ❌（已分离）；
 > M-2 首版拿 `dist-tags.latest` 的 peer 去评锁版（`dsh-panda-calendar` 锁 1.2.4 无 peer、latest 1.2.5 有四条），
 > 凭空造出一个不相容（已改为按 `包@锁版` 取 manifest）。探针另错 6 次（`ETARGET` 误判为放行、latest/锁版混用）。
+
+## 2026-10-27 · B 组（浙大场景 · **论文模板 / 许可证嵌套**轴）· 第八十五轮 · 追加
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Shuenhoy/modern-zju-thesis` | B 其他JS（Typst） | MIT（根 LICENSE）**但含 CPAL-1.0/AGPL-1.0** | 论文（排版） | 重复且无增益 | ⛔ | rejected | 2026-10-27 | ★107，push 2026-05-13。浙大 Typst 学位论文模板（本科 CS + 研究生通用），`assets/gb-t-7714-2015-numeric-bilingual-title-case.csl` + 封面/中英标题页/声明页齐全。**排除理由（三层嵌套）**：参考文献页 `pages/bibliography.typ` 仅 8 行，实现全在 `utils/citext/`（嵌套副本，`README` 明写 copied from `Shuenhoy/citext`）；其 `dist/third-party-licenses.txt` 12 条依赖里 **`citeproc@2.4.63` = `CPAL-1.0 OR AGPL-1.0`**，不在宽松白名单 → 按硬边界**不得摘取任何代码**。⚠ **版式部分（cover/title/decl/style）确为 MIT 且不经过 citext**，若将来立项「论文排版」面板可单独评估，但属**新面板**（生产 vs 本仓 page-paper 的消费），不构成强化式集成 |
+| `Shuenhoy/citext` | B 其他JS（Typst） | 声明 MIT（`typst.toml` `license = "MIT"`）**实际含 CPAL-1.0/AGPL-1.0** | 论文（引用格式） | 重复且无增益 | ⛔ | rejected | 2026-10-27 | ★6，push 2026-03-17。用 `@citation-js` + `citeproc`（WASM/QuickJS）让 Typst 支持 CSL-M 与双语参考文献。**声明与实际不符**：`typst.toml` 写 MIT，`dist/third-party-licenses.txt` 里 `citeproc@2.4.63` 为 `CPAL-1.0 OR AGPL-1.0`。**这是 r55 `dsh-radar-refs-import` 那条「绕开 `citeproc`/NOASSERTION」策略的硬证据**：此路确实绕不过去，需在本仓做 CSL 输出则落点必是 citeproc → 应保持「明确不做引文样式输出」 |
+| `cyc-987/zju-isee-bachelor-thesis-template` | B 其他JS（TeX） | **GPL-3.0** | 论文 | 无关 | ⛔ | rejected | 2026-10-27 | ★16。ZJU ISEE 本科论文 LaTeX 模板。GPL-3.0 不在宽松白名单 |
+| `cyc-987/zju-isee3in1-bachelor-thesis-template` | B 其他JS（TeX） | **GPL-3.0** | 论文 | 无关 | ⛔ | rejected | 2026-10-27 | ★11。同作者第二套（isee3in1.cls，含文献综述）。GPL-3.0 |
+| `szcf-weiya/zju-thesis` | B 其他JS（TeX） | **LPPL-1.3c** | 论文 | 无关 | ⛔ | rejected | 2026-10-27 | ★19。ZJU 本科论文 TeX 模板。LPPL-1.3c 不在宽松白名单（LaTeX 项目文档许可，常被误认为宽松） |
+| `ZhenHuangLab/ZJU-CAB-thesis-zotero-csl` | B 其他JS（CSL） | **NOASSERTION** → 核为 **CC BY-SA 衍生** | 论文（引用样式） | 全新（极窄） | ⛔ | rejected | 2026-10-27 | ★3。浙大农学院本科毕设 Zotero 引用样式，「**修改自 415zhejiang-university.csl**」= CSL 官方样式库的衍生作品（上游默认 CC BY-SA 3.0）→ 须继承 CC BY-SA，**不在白名单（仅收 CC0-1.0）**。**当日核清，不拖过夜**；排除理由不是"没写许可"而是"派生自何处" |
+| `Magnetization/zju-thesis-QA` | — | **null** | — | — | ⛔ | rejected | 2026-10-27 | ★24 但 **license=null**、无 description、2019-06 最后 push。`null` 直接排除，不展开评估 |
+| `denil1111/ZJU-Thesis-Template-for-Mac` | B 其他JS（TeX） | MIT | 论文（Mac 适配） | 无关 | 🔵 | proposed | 2026-10-27 | ★27，**最后 push 2017-03-27（9 年未更新）**。Mac 字体适配说明仍有史料价值，但学校格式早已变更，不可作为格式依据 |
+| `kaitokuroba7/zju-eng-master-thesis-template` | B 其他JS（TeX） | MIT | 论文（工程师学院） | 无关 | 🔵 | proposed | 2026-10-27 | ★10，2026-04 新建。**仅覆盖工程师学院一个学院**，样本太窄；格式细节可作 `zjuthesis` 的补充参照 |
+| `corenel/zju-thesis` | B 其他JS（TeX） | MIT | 论文 | 无关 | 🔵 | proposed | 2026-10-27 | ★7，2020 最后 push。研究生 LaTeX 模板，已被在册 `TheNetAdmin/zjuthesis`（★3795）覆盖 |
+| `charlie1587/zju-cst-thesis-template` | B 其他JS（TeX） | MIT | 论文（软件学院） | 无关 | 🔵 | proposed | 2026-10-27 | ★2，2026-07 新建，"out-of-the-box" 软院模板，宣称适配最新格式要求；★过低、未经校验，仅作参照 |
+
+> **本轮 0 行 🟢 / 0 行 🟡、0 个骨架。** 论文模板域三条强化式判据（同一面板 / 功能正交 / 更优底层）**全部不成立**：
+> 模板是**生产**（出 .pdf 终稿），本仓 `dsh-zhiyun-page-paper` 是**消费**（读 / 存 / 标），不属同一面板；
+> 唯一像"更优底层"的引用排版实现被 §许可证链条否决。
+>
+> **方法层产出（可复用）**：许可证审计须三层 —— ①GitHub `spdx_id` ②`LICENSE` 首行 / 包清单 `license` ③**嵌套副本的 `dist/third-party-licenses.txt`**。
+> 本轮 `modern-zju-thesis` 是「①② 全绿、③ 一票否决」的典型：12 条依赖里 11 条合规，仅 `citeproc` 一条 CPAL/AGPL，但 CSL 能力**只**由它提供。
+>
+> **B 组封板建议**：11 次搜索中 **7 次 total_count=0**，`zju thesis language:javascript` / `language:typescript` **均为 0** → 论文域无 JS 项目。
+> `zju` 存量已挖尽（registry 1415 行），建议 3 个月内不再重扫常规词库，仅保留 `zju created:>YYYY-MM-DD` 增量轴。
