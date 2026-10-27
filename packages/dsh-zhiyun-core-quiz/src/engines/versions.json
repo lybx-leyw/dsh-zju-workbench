@@ -1,0 +1,61 @@
+{
+  "description": "Measured kernels promoted with import-path changes only; no bench/fixture or filesystem code is imported by product.",
+  "kernels": {
+    "r1": {
+      "points.mjs": {
+        "measuredSha256": "d3e3e1f30609994a118762ba205a4c448624f035ae6eeea4082b52d97a2d30ec",
+        "promotedSha256": "68d63426844628da4f58bb27aae6e20f27a95ed8725a7dac30ca6491daf5261d"
+      },
+      "policy.mjs": {
+        "measuredSha256": "65b8bacc4b7d418fc8967b06dd791a3535928b3fd85b44db70bf6b61c0bbebe8",
+        "promotedSha256": "3066a5fb6aca25688c957cd2579cf3b1658bfb753781679d63443bb966d1c98f"
+      },
+      "source.mjs": {
+        "measuredSha256": "1c33bc3fa1ab6ba5fc7194e4a0351700f2d84b985d5c0101a45d69487a46e9dd",
+        "promotedSha256": "53f0da36e36c7608c0c8fd7e9f39a1df3a0d1c91d42dbc3bd4d5bff66a1ecb45"
+      },
+      "blueprint.mjs": {
+        "measuredSha256": "3106bf28ec99415aceccc1a23fc4bb34a110c975a3ae800cad8ed96d189d54d1",
+        "promotedSha256": "ff51e280d41aa3ecfad3fb2cbe484b22a5ed5ff07e4185cc84d8565a1ca4635e"
+      },
+      "rectification.mjs": {
+        "measuredSha256": "89d2e40f4afba64a1ee450821a2b3cbff49f6d751d2e74e5d06f509a690da447",
+        "promotedSha256": "37a26002ba5def8eccc884c93a2150190dd255abe69406285bed52562597ab4c"
+      }
+    },
+    "r3-v9": {
+      "common.mjs": {
+        "measuredSha256": "ddec3066a2d27b3550807fe06bb968c90eb3f406a8cfd409f9bb773b73d4fc65",
+        "promotedSha256": "6ac87fa74474f95d77fef5fc9e3cb7481007ae4b18b00ba3b81c7b26aeab5db0"
+      },
+      "compiler.mjs": {
+        "measuredSha256": "02d9c2204355b461bd96cd2ce497cb9ffa68df89b9c48451aec32912dae03fb3",
+        "promotedSha256": "ff83efb08e4cdd8c4f6ac48c82998a709122c7eb42b11d994c09ebd4941aa68b"
+      },
+      "expansion.mjs": {
+        "measuredSha256": "094182a9281a27c3bc118ea97a819ac6b74104a228eaedc308f2c5eb2172799a",
+        "promotedSha256": "094182a9281a27c3bc118ea97a819ac6b74104a228eaedc308f2c5eb2172799a"
+      },
+      "generator.mjs": {
+        "measuredSha256": "dea5bf3755844a5807120ee5b771985550bd24deea2657cab8b9fbc65a124c6e",
+        "promotedSha256": "90fa300ba37eed9ca2ea02d85165f8d33358c28e1e3a9e71222965808a2ab30e"
+      },
+      "graph.mjs": {
+        "measuredSha256": "264f82f6b209cfc7ee9ea2cdfd67b1ea58bdf648af6b26fbbcf56ae3e069b375",
+        "promotedSha256": "a5b60f63e85b1393b1018b667477789ea8ff175d33fecf1c43b8e3c8103b24e4"
+      },
+      "scheduler.mjs": {
+        "measuredSha256": "612b8b74de1844803a50d37f44cf421523732a550457c984f5c2d78f9c271917",
+        "promotedSha256": "2b16f9c43bbb61caffb0272867143f896b8121583116ac60f915dee800bced9f"
+      },
+      "tools.mjs": {
+        "measuredSha256": "15e441bd9c8063aea0c6eda293278fb266c2d8d66fb5ee4fa39e3b58dc2831c8",
+        "promotedSha256": "15e441bd9c8063aea0c6eda293278fb266c2d8d66fb5ee4fa39e3b58dc2831c8"
+      },
+      "tree.mjs": {
+        "measuredSha256": "23beb2f3263c6983d7b398e7f1a236860a54266910ef679e2d614de83080bb01",
+        "promotedSha256": "23beb2f3263c6983d7b398e7f1a236860a54266910ef679e2d614de83080bb01"
+      }
+    }
+  }
+}

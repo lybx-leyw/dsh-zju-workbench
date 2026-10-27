@@ -34,6 +34,12 @@ async function bareSpecifiers(entry) {
     const key = path.resolve(file);
     if (seen.has(key)) continue;
     seen.add(key);
+    // 只解析真正的 JS 模块。别的扩展名（`.css`、`.svg`、`.md`）是构建期的
+    // 文本资源，不是模块：把它们的**正文**当源码扫，会得到不存在的 import ——
+    // 文档页把 markdown 内置进 bundle（`'.md': 'text'`），而文档里的代码示例
+    // 恰好就写着 `import x from '../packages/...'`，一旦被当成真的相对 import
+    // 去读，就会在读一个根本不存在的路径时抛 ENOENT。
+    if (!/\.(?:[cm]?js|[jt]sx?)$/.test(key)) continue;
     const source = await readFile(key, 'utf8');
     const lines = source.split(/\r?\n/);
     for (let i = 0; i < lines.length; i++) {

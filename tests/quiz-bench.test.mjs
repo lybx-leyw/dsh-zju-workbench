@@ -10,6 +10,7 @@ import {measure,applyReview,reviewTemplate,trialSummary} from '../scripts/quiz_b
 import {readLog} from '../scripts/knowledge_tree_bench/log.mjs';
 import {startServer} from '../scripts/quiz_bench/bench.mjs';
 import {modelCall} from '../scripts/quiz_bench/bridge.mjs';
+import {applyCorrections,evidenceOf,seedOf} from '../scripts/quiz_bench/evidence.mjs';
 import http from 'node:http';
 
 const defaults={fixture:true,counts:[3],batches:2,repeats:1,strategies:['recall'],types:['cloze']};
@@ -40,6 +41,26 @@ test('missing independent gold is unknown; system concept coverage is never pres
   const points=datasetFrom(fixture).points;
   const m=measure({points,questions:[],conceptCache:{}});assert.equal(m.reference.available,false);assert.equal(m.reference.questionCoverage,undefined);assert.equal(m.internalConceptCoverage.rate,null);
 });
+test('curated artifacts trace exact source, preserve originals and feed a separately labeled warm trial',()=>temporary(async dir=>{
+  const cold=await runQuizBench({...defaults,batches:1,outDir:path.join(dir,'cold')});
+  const panel=evidenceOf(cold)[0],fact=panel.facts[0];
+  assert.equal(panel.source.slice(fact.evidence.start,fact.evidence.end),fact.evidence.quote);
+  const operation={cellIndex:panel.cellIndex,materialKey:panel.materialKey,type:'block-position',...fact.positions[0]};
+  const curated=applyCorrections(cold,{datasetHash:cold.datasetHash,operations:[operation]});
+  assert.equal(cold.cells[0].conceptCache[panel.materialKey].factLedger.operations.length,0);
+  assert.equal(curated.cells[0].conceptCache[panel.materialKey].factLedger.operations.length,1);
+  const seed=seedOf(curated,0),warm=await runQuizBench({...defaults,recallMode:'variant',batches:1,seedArtifact:seed,outDir:path.join(dir,'warm')});
+  assert.equal(warm.cacheMode,'warm');assert.equal(warm.cells[0].seedQuestions.length,3);
+  assert.ok(warm.cells[0].calls.every(c=>c.stage==='quiz-rectify'),'existing history and manually blocked positions cannot be bypassed by a new benchmark run');
+  assert.ok(warm.cells[0].questions.every(q=>!seed.questions.some(old=>old.blankId===q.blankId&&old.type===q.type)&&q.blankId!==operation.blankId));assert.ok(warm.seedHash);
+  await assert.rejects(runQuizBench({...defaults,seedArtifact:{...seed,kernelHash:'wrong'},outDir:path.join(dir,'invalid')}),/不匹配/);
+}));
+test('human quality is measured without gold and unknown judgments never count as verified questions',()=>{
+  const points=[{id:'p',text:'这是一条完整的合成来源。'}],q={id:'q',pointId:'p',type:'cloze',stem:'合成题',basis:points[0].text};
+  const m=review=>measure({points,questions:[q],conceptCache:{},calls:[{ms:1}],review});
+  assert.equal(m({questions:[{questionId:'q',reviewed:true,correct:true}]}).humanQuality.verified,0);
+  assert.equal(m({questions:[{questionId:'q',reviewed:true,correct:true,answerable:true,uniqueAnswer:true,meaningfulBlank:true,leaked:false}]}).humanQuality.callsPerVerified,1);
+});
 
 test('growth and duplicate metrics distinguish existing families from new concepts',()=>{
   const points=[{id:'p',text:'完整的课堂原文依据。'}],base={pointId:'p',pointKey:'p',basis:points[0].text,conceptId:'c',familyId:'family',angle:'定义',stem:'什么是概率？',strategy:'recall'};
@@ -50,11 +71,24 @@ test('growth and duplicate metrics distinguish existing families from new concep
 test('real plugin runs cold trials independently, reuses cache within batches and writes replayable evidence',()=>temporary(async dir=>{
   const report=await runQuizBench({...defaults,repeats:2,outDir:dir});
   assert.equal(report.cells.length,2);assert.ok(report.cells.every(c=>c.batches.length===2));
-  assert.equal(report.cells[0].calls.length,3);assert.equal(report.cells[1].calls.length,3,'independent trials do not share a warm concept cache');
-  assert.equal(report.cells[0].batches[1].metrics.calls.count,0);
+  assert.equal(report.cells[0].calls.length,13);assert.equal(report.cells[1].calls.length,13,'independent trials do not share a warm concept/fact audit cache');
+  assert.equal(report.cells[0].calls.filter(c=>c.stage==='quiz-rewrite').length,3,'initial extraction is reused');
+  assert.equal(report.cells[0].batches[1].metrics.completion.addedConcepts,1,'continuous generation discovers the omitted second statement');
   assert.equal(report.trials[0].trials,2);assert.equal(report.trials[0].pointCoverage.mean,1);
   const log=await readLog(path.join(dir,'events.jsonl'));assert.equal(log.broken,0);assert.ok(log.records.some(r=>r.kind==='artifact'&&r.act==='model'));assert.equal(log.records.at(-1).what,'end');
   assert.ok((await fs.readFile(path.join(dir,'report.md'),'utf8')).includes('无法判定'));
+  const full=await runQuizBench({...defaults,auditPolicy:'full',outDir:path.join(dir,'full-control')});
+  assert.equal(full.cells[0].calls.length,19);assert.equal(full.cells[0].questions.length,report.cells[0].questions.length,'lower call count must preserve this synthetic trial yield');
+}));
+
+test('bench exposes complete versus variant control and measures new library content separately from question coverage',()=>temporary(async dir=>{
+  const complete=await runQuizBench({...defaults,outDir:path.join(dir,'complete')});
+  const variant=await runQuizBench({...defaults,recallMode:'variant',outDir:path.join(dir,'variant')});
+  assert.equal(complete.cells[0].metrics.completion.addedConcepts,1);assert.equal(variant.cells[0].metrics.completion.addedConcepts,0);
+  assert.equal(Object.values(complete.cells[0].conceptCache).flatMap(c=>c.concepts).length,4);
+  assert.equal(Object.values(variant.cells[0].conceptCache).flatMap(c=>c.concepts).length,3);
+  assert.ok(!variant.cells[0].calls.some(c=>c.stage.startsWith('quiz-concept-complete')));
+  assert.notEqual(complete.fingerprint,variant.fingerprint);
 }));
 
 test('budget interruption resumes durable plans and concepts without redoing completed calls',()=>temporary(async dir=>{

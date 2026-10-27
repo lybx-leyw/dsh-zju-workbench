@@ -7,6 +7,7 @@ import {knowledgeChapters,knowledgePoints,planPointQuestions,planPractice,create
 import {StudyWorkbench} from '../packages/dsh-zhiyun-core-study/src/workbench.js';
 import {mountKnowledge} from './fixtures/study-storage.mjs';
 import {parseConcepts,conceptCacheKey,nearDuplicate} from '../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {syntheticFactAudit,syntheticSourceCheck,syntheticProofReview} from '../scripts/quiz_bench/fixture.mjs';
 
 const text='随机事件发生可能性的度量称为概率，概率的取值在零和一之间。';
 const record=(courseId='10',subId='20',accountId='fixture')=>({accountId,courseId,subId,sourceId:`source-${courseId}-${subId}`,schema:2,status:'ready',fetchedAt:'2026-01-01T00:00:00Z',sourceVersion:'source-v1',
@@ -49,11 +50,16 @@ test('mixed practice alternates unseen and attempted questions without duplicate
 });
 let sequence=0;
 const fakeCall=async request=>{
+  if(request.stage==='quiz-rectify')return{text:'{"duplicateIndexes":[]}'};
+  if(request.stage==='quiz-source-check')return syntheticSourceCheck();
+  if(request.stage==='quiz-source-proof-review')return syntheticProofReview(JSON.parse(request.variable));
+  if(request.stage==='quiz-concept-complete')return{text:JSON.stringify({concepts:[]})};
   if(request.stage==='quiz-rewrite')return{text:JSON.stringify({concepts:[{statement:text,blanks:['随机事件','可能性','概率','零','一','度量','取值','发生'].map(value=>({text:value,start:text.indexOf(value)}))}]})};
   const input=JSON.parse(request.variable);
-  if(request.stage==='quiz-point-review')return{text:JSON.stringify({verdicts:input.items.map((_,index)=>({index,valid:true,novel:true}))})};
+  if(request.stage==='quiz-fact-audit')return syntheticFactAudit(input);
+  if(request.stage==='quiz-point-review')return{text:JSON.stringify({verdicts:input.items.map((_,index)=>({index,valid:true,novel:true,targetMatched:true}))})};
   const candidates=input.concepts.flatMap(c=>c.blanks.map(blank=>({concept:c,blank}))).filter(({blank})=>!input.history.usedPositions.some(item=>item.blankId===blank.id&&item.type===input.type));
-  return{text:JSON.stringify({items:Array.from({length:input.count},(_,i)=>({type:input.type,conceptId:candidates[i%candidates.length].concept.id,blankId:candidates[i%candidates.length].blank.id,angle:`记忆：${candidates[i%candidates.length].blank.text}`,
+  return{text:JSON.stringify({items:Array.from({length:input.count},(_,i)=>({targetId:input.targets?.[i]?.id,type:input.type,conceptId:candidates[i%candidates.length].concept.id,blankId:candidates[i%candidates.length].blank.id,angle:`记忆：${candidates[i%candidates.length].blank.text}`,
     stem:input.type==='mcq'?`在所述定义中，哪一项是随机事件可能性的度量？编号${sequence++}`:`所述度量称为{{c1::概率}}。编号${sequence++}`,
     answer:input.type==='mcq'?'A':'概率',basis:input.source.slice(0,15),explanation:'依据材料中的定义。',
     choices:input.type==='mcq'?[{label:'A',text:'概率'},{label:'B',text:'方差'},{label:'C',text:'样本量'},{label:'D',text:'频数'}]:[]}))})};
@@ -95,7 +101,16 @@ test('global bank spans courses, preserves questions across regeneration and res
     assert.equal((await service.invoke('bank-load')).questions.find(item=>item.id===q.id).attempts.length,1);
     assert.equal((await service.invoke('bank-practice',{mode:'review',count:2})).available,1);
     await host.service.put({...record(),lecture:null,quiz:null});assert.equal((await service.invoke('bank-load')).questions.length,4);
+    const cloze=(await service.invoke('bank-load')).questions.find(q=>q.type==='cloze');
+    await service.invoke('bank-curate',{materialKey:cloze.materialKey,type:'block-position',conceptId:cloze.conceptId,blankId:cloze.blankId});
     await service.dispose();await host.dispose();await open();assert.equal((await service.invoke('bank-load')).questions.length,4);
+    assert.equal(host.service.questionBank(String(user.id)).conceptCache[cloze.materialKey].factLedger.blockedPositions.length,1,'manual repair survives host restart');
+    await host.service.put(record(cloze.courseId,cloze.subId));
+    await host.service.put(record(cloze.courseId,cloze.subId));
+    const retry=await service.invoke('bank-generate',{pointIds:[cloze.pointId],mode:'uniform',count:1,types:['cloze'],recallMode:'variant'});
+    await service.questionBank.runs.get(String(user.id)).done;
+    const newQuestions=(await service.invoke('bank-load')).questions.filter(q=>!practice.questions.some(old=>old.id===q.id));
+    assert.ok(newQuestions.every(q=>q.blankId!==cloze.blankId),'new drafts cannot bypass a manually blocked position');
     user={id:'other'};assert.equal((await service.invoke('bank-load')).questions.length,0);assert.equal((await service.invoke('bank-catalog')).points.length,0);
     await assert.rejects(service.invoke('bank-answer',{sessionId:practice.session.id,questionId:q.id,response}),{code:'NOT_FOUND'});
   }finally{await service?.dispose();await host?.dispose();await rm(directory,{recursive:true,force:true});}
@@ -130,23 +145,26 @@ test('checkpoint resume reuses rewrite and unprocessed drafts without repeating 
   await assert.rejects(generate({plan,signal:controller.signal,onCheckpoint:value=>{checkpoint=structuredClone(value);},onQuestion:(q,value)=>{
     saved.push(q);checkpoint=structuredClone(value);controller.abort();
   }}));
-  assert.equal(saved.length,1);assert.ok(checkpoint.tasks[0].drafts.length>checkpoint.tasks[0].cursor);
+  assert.equal(saved.length,1);assert.equal(checkpoint.tasks.filter(t=>!t.questionIds.length).length,3);assert.ok(checkpoint.tasks.every(t=>t.assignment));
   const result=await generate({plan,checkpoint,existingStems:saved.map(q=>q.stem),onQuestion:q=>saved.push(q)});
   assert.equal(result.produced,4);assert.equal(result.newlyProduced,3);assert.equal(new Set(saved.map(q=>q.id)).size,4);
   assert.equal(calls.filter(stage=>stage==='quiz-rewrite').length,1);
   assert.equal(calls.filter(stage=>stage==='quiz-point-cloze').length,0,'cached concept blanks are rendered without a model call');
-  assert.equal(calls.filter(stage=>stage==='quiz-point-mcq').length,1);
-  assert.ok(result.checkpoint.reusedDrafts>0);
+  assert.equal(calls.filter(stage=>stage==='quiz-point-mcq').length,2,'each mcq is an independent work item');
+  assert.ok(result.checkpoint.reusedRewrites>0);
   await assert.rejects(generate({plan:{...plan,tasks:plan.tasks.map(t=>({...t,count:t.count+1}))},checkpoint,onQuestion:()=>{}}),{code:'CHECKPOINT_VERSION'});
 });
 
 test('a failed question write resumes from the persisted draft cursor, without another model call',async()=>{
-  const [point]=knowledgePoints(record()),plan=planPointQuestions([point],{count:1,types:['mcq']});let checkpoint,calls=0;
-  const generate=createPointQuizGenerator({call:async request=>{calls++;return fakeCall(request);}});
+  const [point]=knowledgePoints(record()),plan=planPointQuestions([point],{count:1,types:['mcq']});let checkpoint,calls=[];
+  const generate=createPointQuizGenerator({call:async request=>{calls.push(request.stage);return fakeCall(request);}});
   await assert.rejects(generate({plan,onCheckpoint:value=>{checkpoint=structuredClone(value);},onQuestion:()=>{throw new Error('disk unavailable');}}),{code:'PERSIST'});
   assert.equal(checkpoint.tasks[0].cursor,0);assert.equal(checkpoint.tasks[0].questionIds.length,0);
-  const before=calls,saved=[];const result=await generate({plan,checkpoint,onQuestion:q=>saved.push(q)});
-  assert.equal(calls,before);assert.equal(result.produced,1);assert.equal(saved.length,1);
+  const generation=stage=>stage!=='quiz-rectify',before=calls.filter(generation).length,saved=[];
+  const result=await generate({plan,checkpoint,onQuestion:q=>saved.push(q)});
+  // 断点续跑只补写这一道题，不重跑任何生成/复核调用；统一整改是全部挂账之后的新步骤，不计在内。
+  assert.equal(calls.filter(generation).length,before);
+  assert.equal(result.produced,1);assert.equal(saved.length,1);
 });
 
 test('background progress remains readable, pauses durably and resumes the identical random plan after host restart',async()=>{
@@ -197,20 +215,21 @@ test('retry fills only failed allocations and leaves completed question ids unch
     const {points}=await service.invoke('bank-catalog');
     const started=await service.invoke('bank-generate',{pointIds:points.map(p=>p.id),mode:'uniform',count:4,types:['mcq']});
     await service.questionBank.runs.get(String(user.id)).done;
-    const partial=await service.invoke('bank-progress',{runId:started.run.id});assert.equal(partial.run.state,'partial');assert.equal(partial.run.done,2);
+    const partial=await service.invoke('bank-progress',{runId:started.run.id});assert.equal(partial.run.state,'partial');assert.equal(partial.run.done,3,'one failed worker affects only one question');
     const previous=(await service.invoke('bank-load')).questions.map(q=>q.id);
     await service.invoke('bank-resume',{runId:started.run.id});await service.questionBank.runs.get(String(user.id)).done;
     const finished=await service.invoke('bank-progress',{runId:started.run.id});assert.equal(finished.run.state,'completed');assert.equal(finished.run.done,4);
     const questions=(await service.invoke('bank-load')).questions;
     assert.ok(previous.every(id=>questions.some(q=>q.id===id)));assert.equal(new Set(questions.map(q=>q.id)).size,4);
-    assert.equal(calls.filter(stage=>stage==='quiz-rewrite').length,2);
-    assert.equal(calls.filter(stage=>stage==='quiz-point-mcq').length,3,'one failed call and two successful allocations, without replaying the completed allocation');
+    assert.equal(calls.filter(stage=>stage==='quiz-rewrite').length,1,'identical extraction requests across courses reuse the saved response');
+    assert.equal(calls.filter(stage=>stage==='quiz-point-mcq').length,5,'one failed call and four successful single-question calls, without replaying completed questions');
   }finally{await service.dispose();await host.dispose();await rm(directory,{recursive:true,force:true});}
 });
 
 const allStrategies=['recall','understand','apply','explore'];
 const advancedCall=async request=>{
-  if(['quiz-rewrite','quiz-point-review'].includes(request.stage))return fakeCall(request);
+  if(request.stage==='quiz-rectify')return fakeCall(request);
+  if(['quiz-rewrite','quiz-point-review','quiz-fact-audit','quiz-source-check','quiz-source-proof-review'].includes(request.stage)||request.stage.startsWith('quiz-concept-'))return fakeCall(request);
   const input=JSON.parse(request.variable),concept=input.concepts[0];
   return {text:JSON.stringify({items:Array.from({length:input.count},(_,i)=>{
     const serial=sequence++,parent=input.history.examples.find(q=>q.solutionPath);
@@ -246,29 +265,96 @@ test('concept identity follows material, validates original statements and exact
 test('recall cloze reuses cached concepts across batches, never repeats a blank and reports exhaustion',async()=>{
   const [point]=knowledgePoints(record()),cache={},history=[],calls=[];
   const generate=createPointQuizGenerator({call:async request=>{calls.push(request.stage);return fakeCall(request);}});
-  const plan=planPointQuestions([point],{count:2,types:['cloze']});
+  const plan=planPointQuestions([point],{count:2,types:['cloze'],recallMode:'variant'});
   for(let i=0;i<6;i++){
     const result=await generate({plan,conceptCache:cache,existingQuestions:history,existingStems:history.map(q=>q.stem),onConcept:(key,value)=>{cache[key]=value;},onQuestion:q=>history.push(q)});
     if(i===5)assert.ok(result.problems.some(problem=>problem.includes('挖空位置已用完')));
   }
-  assert.equal(calls.length,1,'only the initial concept extraction calls a model');
+  // 变式模式允许重考同一挖空位置，但题干不同 —— 只有底稿提取与考点审查会调模型，每样一次。
+  assert.equal(calls.filter(stage=>stage!=='quiz-rectify').length,2,'initial extraction and focused fact audit are cached across variant batches');
   assert.equal(new Set(history.map(q=>q.blankId)).size,history.length);
-  assert.ok(history.every(q=>q.familyId===q.conceptId));
+  assert.ok(history.every(q=>q.familyId===q.factId));
 });
 
-test('orthogonal generation receives covered angles and rejects paraphrases even when review says novel',async()=>{
-  const [point]=knowledgePoints(record()),history=[];let context;
+test('all question types are staged before batch comparison and duplicates receive a replacement',async()=>{
+  const [point]=knowledgePoints(record()),history=[],staged=[];let context,rectified=[];
   const generate=createPointQuizGenerator({call:async request=>{
     if(request.stage.startsWith('quiz-point-')&&request.stage!=='quiz-point-review')context=JSON.parse(request.variable);
     const response=await advancedCall(request);
-    if(context&&request.stage!=='quiz-point-review'&&request.stage!=='quiz-rewrite'&&history.length){const parsed=JSON.parse(response.text);parsed.items[0].angle=history[0].angle;return {text:JSON.stringify(parsed)};}
+    // 第二批复用第一批的考查角度，模型复核仍说 novel —— 本地那一关必须自己判出来。
+    if(context&&request.stage.startsWith('quiz-point-')&&request.stage!=='quiz-point-review'&&history.length){const parsed=JSON.parse(response.text);parsed.items[0].angle=history[0].angle;return {text:JSON.stringify(parsed)};}
     return response;
   }});
   const plan=planPointQuestions([point],{count:1,types:['shortAnswer'],strategies:[{id:'understand',weight:1}]});
-  assert.equal((await generate({plan,onQuestion:q=>history.push(q)})).produced,1);
-  const result=await generate({plan,existingQuestions:history,existingStems:history.map(q=>q.stem),onQuestion:()=>assert.fail('covered angle must not be admitted')});
-  assert.equal(result.produced,0);assert.ok(context.history.covered.includes(history[0].angle));
+  const first=await generate({plan,onQuestion:q=>history.push(q)});
+  assert.equal(first.produced,1);assert.equal(first.admitted,1);assert.equal(first.rectify.state,'completed');
+  assert.ok(context.history.covered.length===0,'the first batch has no history to avoid');
+  // 第二道题照样先挂账（写进题库），整改阶段才被判掉 —— 这正是「先挂账、最后统一整改」。
+  const second=await generate({plan,existingQuestions:history,existingStems:history.map(q=>q.stem),
+    onQuestion:q=>{staged.push(q);history.push(q);},onRectify:result=>{rectified.push(...result.rejected);}});
+  assert.equal(staged.length,2,'a duplicate is staged, then receives one bounded repair attempt');
+  assert.equal(second.produced,1);assert.equal(second.rectify.rejected,1);assert.equal(second.admitted,1);
+  assert.equal(staged[0].status,'rejected');
+  assert.ok(rectified.some(row=>row.id===staged[0].id&&row.stage==='local'));
+  assert.ok(context.history.covered.includes(history[0].angle));
+  assert.ok(second.problems.some(problem=>problem.includes('作答任务过近')));
   assert.ok(nearDuplicate('随机事件发生的可能性如何用概率来度量？','随机事件发生的可能性如何用概率来度量。'));
+});
+
+test('host archives duplicate drafts and completes their tickets with usable replacements',async()=>{
+  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-bank-rectify-')),host=await mountKnowledge(directory),user={id:'fixture'};
+  // 两道题都挂账，但考查角度相同 —— 本地那一关在最后统一整改时才判掉第二道。
+  const sameAngle=async request=>{
+    if(request.stage!=='quiz-point-shortAnswer')return advancedCall(request);
+    const input=JSON.parse(request.variable),concept=input.concepts[0];
+    return {text:JSON.stringify({items:Array.from({length:input.count},(_,i)=>({conceptId:concept.id,blankId:concept.blanks[i%concept.blanks.length].id,
+      angle:'同一个考查角度',solutionPath:`依据概率公理建立事件关系 ${i}`,stem:`分析给定事件的可能性并说明推理依据 ${sequence++}`,
+      answer:'概率是随机事件可能性的度量。',basis:input.source.slice(0,15),explanation:'直接对照概率定义。',rubric:['说明度量对象'],choices:[]}))})};
+  };
+  const service=new StudyWorkbench({directory,knowledge:host.service,classroom:{getCurrentUser:async()=>user,listCourses:async()=>({items:[]})},
+    parser:{llm:{routes:{}}},llm:{},quiz:()=>({generatePoints:createPointQuizGenerator({call:sameAngle})})});
+  try{
+    await host.service.put(record());
+    const {points}=await service.invoke('bank-catalog');
+    const started=await service.invoke('bank-generate',{pointIds:[points[0].id],count:2,types:['shortAnswer'],strategies:[{id:'understand',weight:1}]});
+    await service.questionBank.runs.get(String(user.id)).done;
+    const run=(await service.invoke('bank-progress',{runId:started.run.id})).run;
+    assert.equal(run.state,'completed');assert.equal(run.done,2,'both drafts were staged before dedupe');
+    assert.equal(run.rectify.state,'completed');assert.equal(run.rectify.total,3);assert.equal(run.rectify.rejected,1);assert.equal(run.rectify.admitted,2);
+    const questions=(await service.invoke('bank-load')).questions;
+    assert.equal(questions.length,3,'original and repaired duplicates stay in the bank so both decisions are traceable');
+    assert.equal(questions.filter(q=>q.status==='rejected').length,1);
+    assert.equal(questions.filter(q=>q.status==='proposed').length,2);
+    assert.ok(questions.some(q=>q.status==='rejected'&&q.rectifyReason.includes('作答任务')));
+    assert.equal((await service.invoke('bank-practice',{mode:'new',count:10})).available,2,'practice includes the replacement and never offers the archived version');
+  }finally{await service.dispose();await host.dispose();await rm(directory,{recursive:true,force:true});}
+});
+
+test('confirmed duplicates stay repairable while unreadable semantic verdicts remain pending',async()=>{
+  const [point]=knowledgePoints(record()),plan=planPointQuestions([point],{count:2,types:['shortAnswer'],strategies:[{id:'understand',weight:1}]});
+  for(const reply of [{text:JSON.stringify({duplicateIndexes:[1]})},{text:'not json'}]){
+    const saved=[];let staged=0;
+    const generate=createPointQuizGenerator({call:async request=>{
+      if(request.stage==='quiz-rectify')return reply;
+      const response=await advancedCall(request);
+      // 两道题题干要真的不同，否则本地那一关先判掉，模型那一关就没什么可判了。
+      if(request.stage==='quiz-point-shortAnswer'){
+        const parsed=JSON.parse(response.text);
+        parsed.items.forEach(item=>{item.stem=JSON.parse(request.variable).questionTask.ordinal===2?'请说明样本空间与随机事件之间的区别':'随机事件发生的可能性如何用概率来度量';});
+        return {text:JSON.stringify(parsed)};
+      }
+      return response;
+    }});
+    const result=await generate({plan,onQuestion:q=>{staged++;saved.push(q);}});
+    assert.equal(staged,reply.text.startsWith('not json')?2:5,'confirmed duplicates receive bounded, resumable repair rounds');
+    assert.equal(result.rectify.batches,1);assert.equal(result.rectify.modelChecked,2);
+    if(reply.text.startsWith('not json')){
+      assert.equal(result.rectify.rejected,0,'an unreadable verdict drops nothing');
+      assert.equal(result.rectify.state,'needs-review');assert.ok(result.rectify.problems>0);assert.ok(result.problems.some(problem=>problem.includes('语义查重未完成')));
+    }else{
+      assert.equal(result.rectify.state,'needs-repair');assert.equal(result.checkpoint.phase,'partial');assert.equal(result.rectify.rejected,4);assert.equal(saved[1].status,'rejected');assert.equal(saved[0].status,'proposed');
+    }
+  }
 });
 
 test('application variants retain parent and family, and independent review can reject an answer',async()=>{
@@ -331,5 +417,38 @@ test('global bank persists concept caches and records short answers as explicit 
     const grade=await service.invoke('bank-answer',{...payload,selfVerdict:'partial'});assert.equal(grade.attempt.verdict,'partial');assert.equal(grade.attempt.grading,'self');
     await service.dispose();await host.dispose();await open();
     assert.equal((await service.invoke('bank-load')).questions.find(q=>q.id===payload.questionId).attempts[0].grading,'self');
+  }finally{await service?.dispose();await host?.dispose();await rm(directory,{recursive:true,force:true});}
+});
+
+test('incremental recall completion survives real host storage and preserves old question links after restart',async()=>{
+  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-recall-completion-'));let host,service;const user={id:'fixture'},calls=[];
+  const open=async()=>{
+    host=await mountKnowledge(directory);
+    const call=async request=>{
+      calls.push(request.stage);
+      if(request.stage==='quiz-fact-audit')return syntheticFactAudit(JSON.parse(request.variable));
+      if(request.stage==='quiz-source-check')return syntheticSourceCheck();
+      if(request.stage==='quiz-source-proof-review')return syntheticProofReview(JSON.parse(request.variable));
+      if(request.stage==='quiz-rewrite')return {text:JSON.stringify({concepts:[{statement:text,blanks:[{text:'随机事件',start:0}]}]})};
+      if(request.stage==='quiz-concept-complete')return {text:JSON.stringify({concepts:[{statement:text,blanks:[{text:'取值',start:text.indexOf('取值')}]}]})};
+      if(request.stage==='quiz-concept-complete-review')return {text:JSON.stringify({verdicts:[{candidateId:'c1',valid:true,novel:true}]})};
+      throw Error('unexpected model call '+request.stage);
+    };
+    service=new StudyWorkbench({directory,knowledge:host.service,classroom:{getCurrentUser:async()=>user,listCourses:async()=>({items:[]})},parser:{llm:{routes:{}}},llm:{},quiz:()=>({generatePoints:createPointQuizGenerator({call})})});
+  };
+  try{
+    await open();await host.service.put(record());const {points}=await service.invoke('bank-catalog');
+    const settings={pointIds:[points[0].id],count:1,types:['cloze']};
+    await service.invoke('bank-generate',settings);await service.questionBank.runs.get(user.id).done;
+    const original=(await service.invoke('bank-load')).questions[0];assert.equal(original.answer,'随机事件');
+    await service.dispose();await host.dispose();await open();
+    const started=await service.invoke('bank-generate',settings);await service.questionBank.runs.get(user.id).done;
+    const progress=(await service.invoke('bank-progress',{runId:started.run.id})).run;
+    assert.equal(progress.done,1);assert.equal(progress.completion.addedConcepts,0);assert.equal(progress.completion.addedPositions,1);
+    await service.dispose();await host.dispose();await open();
+    const bank=await service.invoke('bank-load'),cache=host.service.questionBank(user.id).conceptCache;
+    assert.equal(bank.questions.length,2);assert.equal(bank.questions[0].id,original.id);assert.equal(bank.questions[1].answer,'取值');
+    assert.equal(bank.questions[0].conceptId,bank.questions[1].conceptId);assert.equal(Object.values(cache)[0].concepts[0].blanks.length,2);
+    assert.equal(calls.filter(s=>s==='quiz-rewrite').length,1);
   }finally{await service?.dispose();await host?.dispose();await rm(directory,{recursive:true,force:true});}
 });

@@ -8,6 +8,13 @@
  * 题干规范化之后完全一样的，本地直接丢掉。
  * 换了说法、仍在考同一件事的，交给模型标下标，解析在 `parseQuizDedupeIndexes`。
  *
+ * # 两道关：先挂账，最后统一整改
+ *
+ * 出题**不再**边出边判重边入库。所有题型先挂账（挂账时只是 `status='proposed'` 的待定稿），
+ * 全部出完之后再跑一次 `reviewQuizBatch`：本地精确/角度/考点重复先就地判掉，
+ * 再分块请模型判语义重复。理由是多条车道并行出题时，先入库的那道题在别人跑的时候
+ * 还看不见 —— 边出边查重会把跨车道的重复题留在库里。挂账之后统一查重才看得全。
+ *
  * # 为什么本地那一层是「确定」的
  *
  * `quizStemKey` 只做「去空白 + 忽略大小写」—— 它**不做同义判断**。
@@ -144,6 +151,59 @@ export function parseQuizDedupeIndexes(raw, freshCount) {
     indexes.add(n);
   }
   return { indexes, problem: null };
+}
+
+/**
+ * 统一整改时一次送给模型多少道新题。与 `kQuizDedupeMaxExisting` 一起卡住请求体大小。
+ */
+export const kQuizDedupeMaxFresh = 20;
+
+/**
+ * 送模型判语义重复的提示词。
+ *
+ * 与 `quizDedupePrompt` 的区别只有最后一句：`llm` 只有「文本进、文本出」一个口子，
+ * 走不了工具调用，所以必须把输出格式写成 JSON —— 复用 `parseQuizDedupeIndexes` 去读。
+ */
+export function quizRectifyPrompt() {
+  return `${quizDedupePrompt()}
+
+这一次不走工具调用。只输出 JSON：{"duplicateIndexes":[...]}，下标对应「新出的题」列表，从 0 开始；没有重复就给空数组。`;
+}
+
+/**
+ * 统一整改的本地那一关：在**发模型之前**先把确定重复的题判掉。
+ *
+ * 判据交给调用方（`isDuplicate`）—— 因为不同策略的「重复」不是一回事：
+ * 记忆题撞的是挖空位置，理解/拓展题撞的是考查角度和题干相似度。
+ * 这个函数只负责两件**确定**的事：空题干、题干规范化后完全相同，以及把
+ * 「本批之内互相重复」也判出来（`seen` 边判边加，所以后一道会撞上前一道）。
+ *
+ * ⚠️ 这里**不做**同义判断 —— 同义判断的假阳性会直接丢掉一道题，
+ * 而「换了说法仍在考同一件事」需要判断力，那是模型的活（`quizRectifyPrompt`）。
+ *
+ * @param {{existing?: Array, staged: Array, stemOf?: (item:any)=>string,
+ *   isDuplicate?: (item:any, stemKey:string, seenStems:Set<string>)=>string|null}} options
+ * @returns {{kept: Array, decisions: Array<{item:any,status:'rejected',reason:string,stage:'local'}>, notes: string[]}}
+ */
+export function reviewQuizBatch({ existing = [], staged, stemOf = item => item.stem, isDuplicate = null, onKeep = null }) {
+  const seenStems = new Set(existing.map(item => quizStemKey(stemOf(item))));
+  const kept = [], decisions = [], notes = [];
+  for (const item of staged) {
+    const stem = String(stemOf(item) ?? '').trim();
+    const stemKey = quizStemKey(stem);
+    const reason = stemKey === ''
+      ? '一道题没有题干'
+      : (isDuplicate ? isDuplicate(item, stemKey, seenStems) : seenStems.has(stemKey) ? '题干与已有题完全相同' : null);
+    if (reason) {
+      decisions.push({ item, status: 'rejected', reason, stage: 'local' });
+      notes.push(`统一整改判掉一道题：${reason}`);
+      continue;
+    }
+    seenStems.add(stemKey);
+    kept.push(item);
+    onKeep?.(item);
+  }
+  return { kept, decisions, notes };
 }
 
 /**

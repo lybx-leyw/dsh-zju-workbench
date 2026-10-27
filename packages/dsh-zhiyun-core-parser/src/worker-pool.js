@@ -48,8 +48,15 @@ export class WorkerPoolLlm {
     request.signal?.throwIfAborted();
     const vision = Boolean(request.image);
     if (vision && !this.entries.some(entry => entry.vision)) throw new ParserError('VISION_MODEL', '所选模型不支持图片');
+    return this.enqueue(request,vision);
+  }
+  async execute(work,{signal}={}){
+    await this.prepare(signal);signal?.throwIfAborted();
+    return this.enqueue({signal},false,work);
+  }
+  enqueue(request,vision,work=null){
     return new Promise((resolve, reject) => {
-      const item = { request, vision, resolve, reject };
+      const item = { request, vision, work, resolve, reject };
       item.cancel = () => {
         const index = this.queue.indexOf(item);
         if (index >= 0) this.queue.splice(index, 1);
@@ -77,7 +84,7 @@ export class WorkerPoolLlm {
       if (item.request.route?.maxTokens !== undefined) route.maxTokens = item.request.route.maxTokens;
       Promise.resolve().then(() => {
         item.request.signal?.throwIfAborted();
-        return this.base.call({ ...item.request, route });
+        return item.work?item.work(route):this.base.call({ ...item.request, route });
       }).then(result => { entry.completed++; item.resolve(result); }, error => { entry.failed++; item.reject(error); })
         .finally(() => { entry.active--; this.drain(); });
     }

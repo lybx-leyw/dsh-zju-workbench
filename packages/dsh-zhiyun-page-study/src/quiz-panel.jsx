@@ -1,5 +1,6 @@
 import React, { useSyncExternalStore } from 'react';
-import { PointQuizComposer, QuestionHistory } from './question-bank.jsx';
+import { PointQuizComposer } from './question-bank.jsx';
+import { QuestionHistory } from './question-history.jsx';
 
 /** Point-level entry uses exactly the same planner and durable bank as the global page. */
 export function QuizPanel({state,controller,onlyBlocks=null,pointTitle=null,pointId=null}) {

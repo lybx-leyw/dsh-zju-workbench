@@ -1,0 +1,491 @@
+/* packages/dsh-zhiyun-page-docs/src/style.css
+ *
+ * 「文档」页的样式。类一律带 `zyd-` 前缀，状态类跟在_prefix 之后组合
+ * （`.zyd-toc-link` + `.zyd-toc-active`），**不去改外壳的 `.zy-*`** —— 各包的样式表
+ * 是同特异性的独立 <style>，胜负只看挂载顺序，裸类名会撞车
+ * （scripts/check-css-order.mjs 拦的正是这一类）。
+ *
+ * 颜色只取壳的 --zy-* 变量，不引入新色板，明暗两套自动跟随。
+ *
+ * # 这一页在 FULL_BLEED_PAGES 里
+ *
+ * `.zy-content-flush` 是列向 flex、`height:100%`、没有版心与内边距，所以根容器写
+ * `flex:1; min-height:0` 就能吃满内容区。滚动**只在正文那一栏里**发生（`.zyd-main`），
+ * 左目录与右目录各自固定 —— 这是三栏布局的基本要求，也是"整页不纵向滚动"的来源。
+ *
+ * # 为什么排版覆盖写在 `.zyd-md` 下面而不是跟着宿主的 `.markdown`
+ *
+ * 宿主用 CSS Modules：`.markdown` 在产物里是 `_markdown_1ypvv_5` 这种哈希，跟着它写
+ * 规则会在下一次宿主改哈希时**静默失效**（page-paper 真踩过：字号一直没生效，肉眼
+ * 只觉得"有点大"）。宿主给 body 变体也不写 `data-markdown-variant`（那个属性只在
+ * compact 变体上出现），所以唯一稳的把手是**我们自己容器类下的后代选择器**：
+ * `.zyd-md > div` 就是那个渲染器根元素。
+ *
+ * 宿主的默认值（h1–h3 上下 32/16px、p 16px、列表 16px + 18px 缩进、行内代码 0.875em）
+ * 是给聊天宽度调的，在文档站里太松，下面逐个收紧。
+ */
+
+/* 根容器：三栏 + 上方的分区 tab。 */
+body[data-zhiyun] .zyd {
+  display: flex;
+  flex-direction: column;
+  /* 父级 `.zy-content-flush` 是列向 flex，`flex:1` 让整页吃满内容区高度。 */
+  flex: 1;
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------------ 分区 tab */
+
+body[data-zhiyun] .zyd-sections {
+  display: flex;
+  gap: 22px;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--zy-line);
+  /* 不随内容滚动：tab 是"我在哪一片"的定位器，滚走了就失去意义。 */
+  flex: none;
+}
+
+body[data-zhiyun] .zyd-section {
+  position: relative;
+  padding: 13px 0 11px;
+  font-size: 12.5px;
+  color: var(--zy-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* 选中态靠**底部实线与字色**两条通道，不只靠颜色 —— 只靠颜色在暗色主题下
+   蓝字与灰字的对比度会掉到难以分辨。 */
+body[data-zhiyun] .zyd-section[aria-selected='true'] {
+  color: var(--zy-text);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--zy-accent);
+}
+
+body[data-zhiyun] .zyd-section:hover {
+  color: var(--zy-text);
+}
+
+/* ------------------------------------------------------------------ 三栏 */
+
+body[data-zhiyun] .zyd-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  /* 兜底：三栏都有最小宽度，窗口极窄时总宽会超出容器 —— 与其让它横向溢出到窗口外，
+     不如裁掉（正文仍可滚动，是可恢复的）。 */
+  overflow: hidden;
+}
+
+/* 左目录 */
+body[data-zhiyun] .zyd-nav {
+  flex: none;
+  width: 196px;
+  padding: 16px 10px 24px 20px;
+  overflow-y: auto;
+  border-right: 1px solid var(--zy-line);
+}
+
+body[data-zhiyun] .zyd-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 0 8px;
+  height: 28px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-bg);
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zyd-filter input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--zy-text);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+/* 分区之间留空隙。注意这里**不能**把 `body[data-zhiyun]` 塞在中间：
+   `body[data-zhiyun] .zyd-group + body[data-zhiyun] .zyd-group` 的意思是
+   "`.zyd-group` 后面跟着一个 `body[data-zhiyun]`"，body 不是 .zyd-group 的兄弟，
+   这条永远不命中 —— 而且它不会报错，页面只是"分区之间没缝"。 */
+body[data-zhiyun] .zyd-group + .zyd-group {
+  margin-top: 16px;
+}
+
+body[data-zhiyun] .zyd-group-title {
+  margin: 0 0 6px;
+  padding-left: 8px;
+  font-size: 11px;
+  color: var(--zy-muted);
+  letter-spacing: 0.4px;
+}
+
+body[data-zhiyun] .zyd-link {
+  display: block;
+  width: 100%;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--zy-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zyd-link:hover {
+  background: var(--zy-hover);
+  color: var(--zy-text);
+}
+
+/* 当前页：底色 + 字重 + 左侧短竖线。三条通道，去掉任何一条在某个主题下都会变糊。 */
+body[data-zhiyun] .zyd-link[aria-current='page'] {
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--zy-accent);
+}
+
+body[data-zhiyun] .zyd-nav-empty {
+  margin: 12px 8px 0;
+  font-size: 11.5px;
+  color: var(--zy-muted);
+}
+
+/* 正文栏：**整页唯一的滚动容器**。 */
+body[data-zhiyun] .zyd-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+body[data-zhiyun] .zyd-article {
+  /* 版心封顶并居中（readable line length，与笔记页同一个理由：面板铺开了，
+     但正文行宽不能跟着铺开，否则宽屏上每行长得读不下去）。 */
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 30px 40px 44px;
+}
+
+/* 右页内目录 */
+body[data-zhiyun] .zyd-toc {
+  flex: none;
+  width: 186px;
+  padding: 30px 20px 24px 8px;
+  overflow-y: auto;
+  border-left: 1px solid var(--zy-line);
+}
+
+body[data-zhiyun] .zyd-toc-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--zy-muted);
+  letter-spacing: 0.4px;
+}
+
+body[data-zhiyun] .zyd-toc-link {
+  display: block;
+  width: 100%;
+  padding: 3px 8px;
+  border: none;
+  background: none;
+  color: var(--zy-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* 三级标题缩进一格，让目录的层次和正文对得上。 */
+body[data-zhiyun] .zyd-toc-link[data-depth='3'] {
+  padding-left: 20px;
+  font-size: 11.5px;
+}
+
+body[data-zhiyun] .zyd-toc-link:hover {
+  color: var(--zy-text);
+}
+
+/* 「复制本页」摆在目录末尾，与目录之间用一条细线分开 —— 它是操作，不是一节。 */
+body[data-zhiyun] .zyd-copy {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 6px 8px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: none;
+  color: var(--zy-secondary);
+  font-size: 11.5px;
+  text-align: center;
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zyd-copy:hover {
+  border-color: var(--zy-accent);
+  color: var(--zy-accent);
+}
+
+/* 当前小节：字色 + 左侧竖线。没有底色 —— 目录条数少，底色会显得跳。 */
+body[data-zhiyun] .zyd-toc-active {
+  color: var(--zy-accent);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--zy-accent);
+}
+
+/* ------------------------------------------------------------------ 页头 */
+
+body[data-zhiyun] .zyd-crumb {
+  margin: 0 0 10px;
+  font-size: 11px;
+  color: var(--zy-accent);
+  letter-spacing: 0.4px;
+}
+
+body[data-zhiyun] .zyd-head h1 {
+  margin: 0 0 10px;
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zyd-summary {
+  margin: 0;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--zy-line);
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--zy-secondary);
+}
+
+/* ------------------------------------------------------------------ 正文排版 */
+
+/* 收紧宿主默认值。选择器走「自有容器类 → 渲染器根 div」，
+   既不受 .markdown 哈希影响，也不会与笔记页/反馈页的同名后代选择器争
+   （它们的主体类名是 zs-nt-* / zfb-*，tokens 无交集）。 */
+body[data-zhiyun] .zyd-md > div {
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zyd-md > div h2 {
+  margin: 30px 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.2px;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zyd-md > div h3 {
+  margin: 24px 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--zy-text);
+}
+
+/* h4 往下在文档里用得很少，宿主那套 16px 上下边距在这里偏松，同步收一档。 */
+body[data-zhiyun] .zyd-md > div h4 {
+  margin: 20px 0 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zyd-md > div p {
+  margin: 12px 0;
+}
+
+body[data-zhiyun] .zyd-md > div :where(ul, ol) {
+  margin: 12px 0;
+  padding-left: 22px;
+}
+
+/* 列表项之间留一点缝，但不给每个 `li` 都加 —— 嵌套列表会因此越缩越空。 */
+body[data-zhiyun] .zyd-md > div li:not(:first-child) {
+  margin-top: 5px;
+}
+
+body[data-zhiyun] .zyd-md > div li > p {
+  margin: 6px 0;
+}
+
+body[data-zhiyun] .zyd-md > div a {
+  color: var(--zy-accent);
+  text-decoration: none;
+  /* 下划线只在悬停时出现：文档正文里链接密集，常驻下划线会把行面切得很碎。 */
+  border-bottom: 1px solid color-mix(in srgb, var(--zy-accent) 34%, transparent);
+}
+
+body[data-zhiyun] .zyd-md > div a:hover {
+  border-bottom-color: var(--zy-accent);
+}
+
+/* 行内代码：宿主默认是 `display:inline-flex` + 0.875em，在 13.5px 正文里只剩 11.8px，
+   中文注释读起来太挤。这里抬到 0.92em 并去掉默认的下边框粗细差异。 */
+body[data-zhiyun] .zyd-md > div :not(pre) > code {
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-color: var(--zy-line);
+  background-color: var(--zy-soft);
+  color: var(--zy-text);
+}
+
+/* 代码块横向滚，不撑宽整篇。 */
+body[data-zhiyun] .zyd-md > div pre {
+  margin: 14px 0;
+  border: 1px solid var(--zy-line);
+  border-radius: 7px;
+  background: var(--zy-surface);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* 表格：窄表铺满、宽表内部横向滚动（宿主已用 .tableScroll 包好了外层）。 */
+body[data-zhiyun] .zyd-md > div table {
+  font-size: 12.5px;
+}
+
+body[data-zhiyun] .zyd-md > div th {
+  color: var(--zy-secondary);
+  font-weight: 600;
+}
+
+body[data-zhiyun] .zyd-md > div blockquote {
+  margin: 14px 0;
+  padding: 2px 0 2px 14px;
+  border-left: 2px solid var(--zy-line);
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] .zyd-md > div hr {
+  margin: 26px 0;
+  background: var(--zy-line);
+}
+
+body[data-zhiyun] .zyd-md > div img {
+  max-width: 100%;
+}
+
+body[data-zhiyun] .zyd-md > div > :first-child {
+  margin-top: 0;
+}
+
+body[data-zhiyun] .zyd-md > div > :last-child {
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------ 翻页与页脚 */
+
+body[data-zhiyun] .zyd-pager {
+  display: flex;
+  gap: 16px;
+  margin-top: 34px;
+  padding-top: 20px;
+  border-top: 1px solid var(--zy-line);
+}
+
+/* 两侧等分；某一侧没有上一篇时用空 span 占位，保持"下一篇靠右"这个位置不变。 */
+body[data-zhiyun] .zyd-pager > * {
+  flex: 1;
+  min-width: 0;
+}
+
+body[data-zhiyun] .zyd-pager-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  border: 1px solid var(--zy-line);
+  border-radius: 8px;
+  background: var(--zy-surface);
+  cursor: pointer;
+  text-align: left;
+}
+
+body[data-zhiyun] .zyd-pager-item:hover {
+  border-color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zyd-pager-next {
+  text-align: right;
+}
+
+body[data-zhiyun] .zyd-pager-dir {
+  font-size: 11px;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zyd-pager-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--zy-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 摘写说明。字号压到 11px 但**不压颜色**：它是"这份不是原文"的提醒，
+   读不清等于没有。 */
+body[data-zhiyun] .zyd-source {
+  margin: 22px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] .zyd-source code {
+  font-size: 11px;
+}
+
+/* ------------------------------------------------------------------ 窄屏 */
+
+/* 三条压缩，按"先让位、再缩、最后取消"的顺序：
+   1. 右目录先让位（它是最可选的：没有它仍能读）；
+   2. 左目录变窄；
+   3. 分区 tab 与正文内边距收紧。
+
+   ⚠️ 这几条必须写在各自的基规则**之后**，否则就是死规则 ——
+      scripts/check-css-order.mjs 的「同包内 @media 倒序」检查会报出来。
+      历史事故：两个 @media 被整块留在共享原语包里（那个包永远最先挂载），
+      窄屏覆盖全部失效。 */
+@media (max-width: 1100px) {
+  body[data-zhiyun] .zyd-toc {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  body[data-zhiyun] .zyd-nav {
+    width: 152px;
+    padding-left: 14px;
+  }
+  body[data-zhiyun] .zyd-article {
+    padding: 24px 24px 36px;
+  }
+}
+
+@media (max-width: 640px) {
+  body[data-zhiyun] .zyd-sections {
+    padding: 0 16px;
+    gap: 16px;
+  }
+  /* 极窄时左目录让位，正文吃满 —— 这时读正文比在目录里挑更重要。 */
+  body[data-zhiyun] .zyd-nav {
+    display: none;
+  }
+  body[data-zhiyun] .zyd-article {
+    padding: 20px 16px 32px;
+  }
+}

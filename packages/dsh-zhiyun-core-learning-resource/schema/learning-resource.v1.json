@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zhiyun.local/schema/learning-resource.v1.json",
+  "title": "Zhiyun standard learning resource (v1)",
+  "description": "智云标准学习资源投影。DeepTutor 以该结构作为高质量资源输入。字段定义见 packages/dsh-zhiyun-host-deeptutor/docs/contracts.md §6。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "resourceId",
+    "accountScope",
+    "courseId",
+    "revision",
+    "contentHash",
+    "generatedAt",
+    "title",
+    "language",
+    "contentType",
+    "chapters",
+    "sourceAnchors",
+    "warnings",
+    "reviewStatus"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "resourceId": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "accountScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accountId"],
+      "properties": {
+        "accountId": { "type": "string", "minLength": 1 },
+        "workspaceId": { "type": ["string", "null"] }
+      }
+    },
+    "courseId": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "subId": { "type": ["string", "null"], "maxLength": 200 },
+    "revision": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "contentHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "language": { "type": "string", "minLength": 1, "maxLength": 40 },
+    "contentType": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "chapters": { "type": "array", "items": { "$ref": "#/$defs/chapter" } },
+    "selectedTopicIds": { "type": "array", "items": { "type": "string" } },
+    "selectedRanges": { "type": "array", "items": { "$ref": "#/$defs/range" } },
+    "sourceAnchors": { "type": "array", "items": { "$ref": "#/$defs/anchor" } },
+    "warnings": { "type": "array", "items": { "$ref": "#/$defs/warning" } },
+    "sourceConfidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "reviewStatus": { "enum": ["draft", "reviewed", "approved"] }
+  },
+  "$defs": {
+    "chapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "topics"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "topics": { "type": "array", "items": { "$ref": "#/$defs/topic" } }
+      }
+    },
+    "topic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "blocks"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
+        "blocks": { "type": "array", "items": { "$ref": "#/$defs/block" } }
+      }
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": ["paragraph", "list", "table", "image", "code", "formula", "question", "callout"]
+        },
+        "text": { "type": "string" },
+        "assetRef": { "type": ["string", "null"] },
+        "anchorIds": { "type": "array", "items": { "type": "string" } },
+        "meta": { "type": "object" }
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topicId"],
+      "properties": {
+        "topicId": { "type": "string", "minLength": 1 },
+        "blockIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anchorId", "origin"],
+      "properties": {
+        "anchorId": { "type": "string", "minLength": 1 },
+        "topicId": { "type": ["string", "null"] },
+        "blockId": { "type": ["string", "null"] },
+        "page": { "type": ["integer", "null"], "minimum": 0 },
+        "timeRange": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["startMs", "endMs"],
+          "properties": {
+            "startMs": { "type": "number", "minimum": 0 },
+            "endMs": { "type": "number", "minimum": 0 }
+          }
+        },
+        "assetRef": { "type": ["string", "null"] },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "origin": { "enum": ["transcript", "slide", "manual", "upstream"] }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string" },
+        "anchorId": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

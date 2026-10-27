@@ -1,0 +1,3 @@
+# Compiled Python embeds local absolute filenames.
+__pycache__/
+*.pyc

@@ -10,6 +10,16 @@
 
 /* ------------------------------------------------------------------ 页骨架 */
 
+body[data-zhiyun] .zp-cornell-toggle {
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: var(--zy-surface);
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 /*
  * 这一页要铺满：阅读器不该被壳默认的 980px 阅读宽度和 43px 内边距框住。
  *

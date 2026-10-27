@@ -30,9 +30,11 @@
  */
 
 import { createPointQuizGenerator } from './points.js';
+import {createR1Generator} from './engines.js';
 import { QuizError } from './quality.js';
 import { createQuizGenerator } from './generate.js';
 import { createQuizStore } from './store.js';
+import { checkCandidate, createUpstreamQuizEngine } from './upstream.js';
 
 export const name = 'zhiyun-quiz';
 
@@ -63,7 +65,7 @@ export async function apply(ctx, config = {}) {
   const resolveRoute = async (signal) => {
     if (route !== undefined) return route;
     if (typeof llm.resolve !== 'function') return undefined;
-    resolving ??= llm.resolve(signal)
+    resolving ??= llm.resolve(signal,{vision:false})
       .then((routes) => { route = routes?.text ?? routes?.vision; return route; })
       .finally(() => { resolving = null; });
     return resolving;
@@ -86,20 +88,63 @@ export async function apply(ctx, config = {}) {
   const store = createQuizStore({ now: config.now });
 
   const pointLifetime = new AbortController();
-  const pointGenerator = createPointQuizGenerator({search:async(request,signal)=>{
+  const search=async(request,signal)=>{
     const web=config.web??ctx.web;
     if(!web?.search)throw new QuizError('WEB_UNAVAILABLE','请先在设置中配置联网搜索供应商');
     return web.search(request,signal);
-  },call:async request=>{
+  };
+  const pointCall=async request=>{
     const signal=AbortSignal.any([pointLifetime.signal, ...(request.signal ? [request.signal] : [])]);
     signal.throwIfAborted();
     const resolved=await resolveRoute(signal);
     return llm.call({...request,signal,route:request.route ?? resolved});
-  }});
+  };
+  const pointGenerator=createPointQuizGenerator({search,guidance:config.pointGuidance??null,call:pointCall});
+  const r1Generator=createR1Generator({search,call:pointCall});
   const service = {
     generate: generator.generate,
     generatePoints: input => pointGenerator({...input,signal:AbortSignal.any([pointLifetime.signal,...(input.signal ? [input.signal] : [])])}),
+    generateR1Points: input => r1Generator({...input,signal:AbortSignal.any([pointLifetime.signal,...(input.signal ? [input.signal] : [])])}),
+    /**
+     * 一次出题批次独占一个 worker 池。
+     *
+     * ⚠️ 池**由集成层构造后注入**（`{call,concurrency,snapshot}`），本包不自己 new：
+     * 本包零依赖（`tests/quiz.test.mjs` 有断言钉住），而 worker 池住在解析器包里。
+     * 由宿主构造也符合本包一贯的分工 —— 配额 / 选哪些供应商是宿主的知识。
+     */
+    createRun({pool,candidateCall,engine='local'}={}) {
+      if(!['local','deeptutor','r1'].includes(engine))throw new QuizError('CONFIG','该引擎需由学习资源集成层创建运行');
+      if(!pool||typeof pool.call!=='function'||!Number.isInteger(pool.concurrency)||pool.concurrency<1)
+        throw new QuizError('CONFIG','出题 worker 池需要由集成层构造并注入（{call,concurrency,snapshot}）');
+      const lifetime=new AbortController();
+      const generate=(engine==='r1'?createR1Generator:createPointQuizGenerator)({search,guidance:config.pointGuidance??null,call:request=>candidateCall&&/^quiz-point-(mcq|trueFalse|shortAnswer|cloze)$/.test(request.stage)?candidateCall(request):pool.call(request),concurrency:pool.concurrency});
+      return {generatePoints:input=>generate({...input,signal:AbortSignal.any([pointLifetime.signal,lifetime.signal,...(input.signal?[input.signal]:[])])}),
+        concurrency:pool.concurrency,get workers(){return pool.snapshot;},dispose:()=>lifetime.abort()};
+    },
     dispose: () => { pointLifetime.abort(); generator.dispose(); },
+    /**
+     * 构造一个**上游候选生成引擎**（DeepTutor 主出题流水线）。
+     *
+     * ⚠️ `zhiyunDeepTutor` **不进 `inject`**：它是可选增强服务，装没装 Python、
+     * 配没配模型都可能是「没有」。声明成必需依赖会让本插件在没装上游的机器上
+     * 一直 pending —— 那样连本包自己的出题路径都用不了，这正是「可选」不该有的代价。
+     * 所以这里用 `ctx.get` 惰性取，且允许调用方直接注入（便于测试与替换）。
+     *
+     * 拿不到服务时**抛 CONFIG 并说清楚缺什么**，而不是返回一个会在 generate 时
+     * 才炸的壳 —— 早失败的那一侧永远更好定位。
+     */
+    createUpstreamEngine(options = {}) {
+      const tutor = options.tutor ?? (typeof ctx.get === 'function' ? ctx.get('zhiyunDeepTutor') : undefined)
+        ?? ctx.zhiyunDeepTutor;
+      if (!tutor) {
+        throw new QuizError('CONFIG',
+          '这台机器上没有上游出题服务（ctx.zhiyunDeepTutor）：dsh-zhiyun-host-deeptutor 未安装或未启动。'
+          + '本包自己的出题路径不受影响，可以继续用 generate / generatePoints');
+      }
+      return createUpstreamQuizEngine({ ...options, tutor, now: options.now ?? config.now, logger: options.logger ?? ctx.logger });
+    },
+    /** 校验一条上游候选题目能否进本包流程（供集成层在落库前自检）。 */
+    checkUpstreamCandidate: checkCandidate,
     /** 题库领域服务（题目 / 作答 / 额度台账的形状与判定）。 */
     store,
     get concurrency() { return generator.concurrency; },
