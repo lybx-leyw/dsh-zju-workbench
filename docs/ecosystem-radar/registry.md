@@ -3125,3 +3125,18 @@
 > **本轮实质产出不在登记表**：「复习」错题路由检查器 `scripts/radar-review-route.mjs`
 > 实测 `review` 模式错题占比 **50.3%**（等价随机），与 r77 的源码推断一致且已黑盒复现；
 > 5 条单测含**阴性对照**。明细见 `2026-10-27-r82.md` §3–§4。
+
+### 第八十三轮（2026-10-27 · A 组·中词「dsh plugin manager / dsh plugin graph / plugin marketplace deepseek」· 轴「被关掉的包还在替别人顶着服务」）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `LX2000WASD/dsh-web-plugin-manager` | A 原生DSH（`dsh.bundle.patch` + `dsh.client`，宿主+浏览器双面） | **MIT** ✅（`LICENSE` 1,067 B 逐字读过，`Copyright (c) 2026 LX2000WASD`，无附加限制；GitHub `spdx_id` 与 npm `license` 同口径） | 通用（插件管理） | **重复且可强化**（强化点在**「谁在等谁」的可用性分析**，不在启停） | 🟡 | proposed | 2026-10-27 | ★66 / TS / 2.1 MB / push 2026-09-20。**npm `dsh-web-plugin-manager@0.6.3` 可锁版** ✅。**判 🟡 不是 🟢 的三条**：① `cordis.patch.yml` 直接 `insert id: plugin-manager` 并 `disabled: true` 遮蔽官方 `ui-settings-plugin-inventory` → 与宿主同名行/同名服务**抢位**，r79 记过的「一行 id 撞车 → profile 起不来」同族风险；② 作者 README 首屏自述**已停维护**、DSH ≥ `0.1.6-alpha.2` 会 `duplicate loader entry id: plugin-manager` 直接启动失败（本仓宿主 `0.2.0-rc.2`，**未实测**）；③ 它整套写权（安装/卸载/profile 写）与本仓「profile 唯一写入者」权责冲突，**不能整包挂载**。**可摘的能力只有一层**：`src/analyze.ts`（39 KB）的 `disabled-dependency` 判定 —— 把「行被关掉」并入图，并对每个下游给一条 `enable-entry` 修复动作；`src/guard.ts` 的「按 shell 段判裸 CLI 变更」思路。**与 r79 F-1 / r82 的 `dependents` 口径直接相关**：本轮的 F-1 正是「关了之后图未更新」。后继为 `LX2000WASD/dsh-plugin-manager-companion`（★7，MIT，npm `0.1.4`，**未评估**，见报告 §5 待办） |
+| `hikariming/dshfind` | A 原生DSH（插件市场 / 学习站） | **无许可证**（GitHub `license: null`，`spdx_id` 缺失）⛔ | 通用 | 重复且无增益 | ⛔ | rejected | 2026-10-27 | ★331 / TS / 26 MB / push 2026-10-27（当日）。**`license: null` → 按硬边界只登记、不采用、不摘任何代码**。形态为「DSH 原理教程 + 插件市场」，与在册 `dsh-market`（★9151）/ `imsai-sh/awesome-deepseek-harness-plugins`（★329）同一能力，**无更优底层** |
+| `thomasguillot/fettlr` | B 其他JS（Rust 宿主 + React/TS 前端） | **MIT** ✅ | 通用（插件管理） | 重复且无增益 | ⛔ | rejected | 2026-10-27 | ★0 / 993 KB / push 2026-10-24。**它是 Claude Code 的 skill/子代理/插件/MCP 桌面管理器，不是 DSH 插件**（`topics` 全为 `claude-code-*`）；且主体是 Rust/Tauri，B 类要求 JS 栈。**「插件市场形态」已由在册 `dsh-market`/`dsh-web` 覆盖，无增益** |
+| `xiajiajun516/dsh-config-manager` | A 原生DSH | MIT | 通用（配置备份） | 已有（备份/迁移） | 🔵 | proposed | 2026-10-27 | **已在册（第 80 轮登记）**，本轮仅作**交叉核对物**：它在同一生态内提供「导出/导入/迁移 profile 配置」，可佐证「profile 目录是可整体搬迁的工件」这一前提；**不重复登记为候选**，此处一行仅为追溯来源 |
+
+> **本轮口径**：A 组中词 8 次搜索（`dsh plugin manager` 350 / `dsh plugin graph` 99 / `plugin marketplace deepseek` 103 /
+> `tauri plugin marketplace` 5 / `tauri plugin registry` 1 / `extension registry plugin manager language:typescript` **0** /
+> `feature flag dependency graph language:typescript` **0** / `vscode extension manifest parser language:typescript` **0**），
+> 8 次 0 次 403，**完整**；首屏 45 个未登记 `owner/repo`，与在册去重后 **3 个新面孔 + 1 个在册交叉核对**。
+> **实质产出全在本仓**：`scripts/radar-provider-liveness.mjs`（新检查器）+ `tests/radar-provider-liveness.test.mjs`（7 条，含阳性变异）。
