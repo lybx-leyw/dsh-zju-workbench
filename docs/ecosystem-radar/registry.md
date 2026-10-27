@@ -3256,3 +3256,42 @@
 > ② **`total=0` 有时是结论而不是失败**：`zju plugin` = 0 直接证明「B 组挖不到 A 类」是结构性的。
 > ③ **判据② 只判「部分成立」时也要照常出骨架，但必须把「哪一部分不成立」写在 README 第一屏**，
 > 并附「若答否 → 撤销」——否则评审完没人回来把结论写回去（r86 的三条坑至今悬着）。
+
+## 2026-10-28 · r88 · C 组（轴「**复习队列的时间维度**」）· 追加
+
+> 搜索 10 次，0 次 403。🟢 新增 **0**；1 条在册项实质复核（`ts-fsrs`）。
+> 骨架 1 个：`packages/radar/dsh-radar-review-due`（B 类，锁版 `ts-fsrs@5.4.2`，**实跑通过**）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Sthabiso10/recall-srs` | B 其他JS | MIT | 复习调度 | 重复可强化（学习·题库复习队列） | 🔵 | proposed | 2026-10-28 | ★1 / TS / push 2026-09-26。**形态最对口**（headless FSRS + React），但 ★1 无 release → 不足以锁版；调度层同源 `ts-fsrs`，不重复造。仅记线索 |
+| `Sandaliy/Neuron` | B 其他JS | MIT | 复习排期 | 重复可强化（学习·排期） | 🔵 | proposed | 2026-10-28 | ★1 / TS / push 2026-10-16。「排时间不排卡片数」的思路值得抄（本仓正缺时间维度），项目本身不可依赖 |
+| `elianiva/nook` | B 其他JS | MIT | 闪卡 | 重复可强化（复习） | 🔵 | proposed | 2026-10-28 | ★5 / TS / push 2026-10-23。完整 SRS app，无可摘模块边界 |
+| `kylianmarceau/qard-obsidian` | B 其他JS | MIT | 闪卡 | 重复无增益 ⛔ | 🔵 | proposed | 2026-10-28 | ★6。Obsidian 插件，强耦合宿主（同 r85/r86 对 Obsidian 系一贯判断） |
+| `Nina-noSchool/ByeByeBaGu` | B 其他JS | MIT | 面试八股 | 重复无增益 ⛔ | 🔵 | proposed | 2026-10-28 | ★3 / HTML。Markdown 题源 + FSRS，与本仓题库同构到「重写一遍更便宜」 |
+| `Emadab/Synapse` | B 其他JS | MIT | 闪卡 | 重复无增益 ⛔ | 🔵 | proposed | 2026-10-28 | ★7，但 **Rust**，非 JS 栈 → 硬规则出局 |
+| `klutometis/srs-mcp` | B 其他JS | MIT | 复习 | 无关 | 🔵 | proposed | 2026-10-28 | ★2 / Python。MCP server；本仓已有 deeptutor MCP 路径，不另起 |
+| `vincenzo-afk/PenFlow` | B 其他JS | **null** ⛔ | 手写笔记 | 重复无增益 ⛔ | ⛔ | rejected | 2026-10-28 | ★25 / TS。**无许可证** → 不采用、不摘码。手写笔记域与 `dsh-radar-ocr-web` 重叠 |
+| `JudgePeach/math-question-bank` | B 其他JS | **AGPL-3.0** ⛔ | 题库 | 重复且可强化 | ⛔ | rejected | 2026-10-28 | ★357 / push 2026-10-27（高活跃）。AGPL 一票否决。**仅作设计参考**：本地题库 + LaTeX 实时渲染 + OCR 公式识别三段式，不摘任何代码 |
+| `mengxi-ream/read-frog` | B 其他JS | **GPL-3.0** ⛔ | 语言学习 | — | ⛔ | rejected | 2026-10-28 | ★10202，搜索中最高星。GPL 一票否决，**不入候选池** |
+| `designfuchen/word-atlas` | B 其他JS | **NOASSERTION** | 词汇 | — | 🔵 | proposed | 2026-10-28 | ★2422。许可证 NOASSERTION → **待人工核验，不采用** |
+| `masaok/metastack` | B 其他JS | MIT | 刷题 | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★2 / TS。系统设计面试闪卡；已在上轮 `spaced repetition` 搜索中错失去重，本轮补记 |
+| `MHK-ctrl/notesnap` | B 其他JS | MIT | 笔记 | 重复可强化（OCR） | 🔵 | proposed | 2026-10-28 | ★1。「拍照→可编辑文本」，与 `dsh-radar-ocr-web` 同域但 ★1，仅线索 |
+| `suburb6/StudySky` | B 其他JS | **AGPL-3.0** ⛔ | 课表/笔记 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★5。自托管学生工作台（课表+笔记+任务）；AGPL 一票否决 |
+| `heig-tin-info/heig-quiz` | B 其他JS | **null** ⛔ | 刷题 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★7。无许可证 |
+| `stella-wood/tijian-quiz` | B 其他JS | MIT | 刷题 | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★2。TXT/Markdown 本地刷题；与本仓题库同域，★2 无增益 |
+| `hyggg222/ise-quiz-drill` | B 其他JS | **null** ⛔ | 刷题 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★5。还原某课程 quiz 界面的刷题器；无许可证 |
+| `Trotter84/web-quiz-project` | B 其他JS | **null** ⛔ | 刷题 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★4。课程作业项目；无许可证 |
+| `HadiYoussef2005/LeetLeitner` | B 其他JS | **null** ⛔ | 刷题 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★2。LeetCode + Leitner；无许可证 |
+
+### 在册项复核（不改行，只记结论）
+
+| 仓库 | 原判定 | 复核结论 | 依据 |
+| --- | --- | --- | --- |
+| `open-spaced-repetition/ts-fsrs` | 🟢（2026-10-14，「已出骨架 dsh-radar-fsrs-scheduler」） | **🟢 维持，但「已出骨架」须降级为「骨架为占位」** | npm `latest` 仍 `5.4.2`（`6.0.0-beta.15` 为 beta）→ 锁版正确；★835；MIT 实文已读。**骨架 `src/index.js` 只有 `export const name` + TODO，无任何可执行代码**，14 天零进展 |
+
+### 本轮钉住的旧断言修正
+
+- `packages/radar/dsh-radar-ocr-web/src/index.js:74` 写「`recordAttempt` 定义处一处」——**结论对、路径错**：
+  正确路径是 `packages/dsh-zhiyun-core-quiz/src/store.js:608`（不是 `dsh-zhiyun-quiz`，行号已漂移）。
+  下轮若要复核「作答通路是否接通」，请按正确路径 grep。
