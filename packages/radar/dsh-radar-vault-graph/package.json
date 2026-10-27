@@ -1,0 +1,24 @@
+{
+  "name": "dsh-radar-vault-graph",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 remark-parse@11.0.0 + unist-util-visit@5.1.0 + graphology@0.26.0 + graphology-communities-louvain@2.0.2，把「笔记」页反向链接的计算底座从「全篇正则扫 [[...]]」换成「mdast 节点遍历 + 图算法」：代码块里的 [[x]] 不再算链接、`[[a]]与[[b]]` 不再粘连、未建笔记显示为虚拟节点（强化式集成，B 类能力提取 + 封装）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "graphology": "0.26.0",
+    "graphology-communities-louvain": "2.0.2",
+    "remark-parse": "11.0.0",
+    "unified": "11.0.5",
+    "unist-util-visit": "5.1.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

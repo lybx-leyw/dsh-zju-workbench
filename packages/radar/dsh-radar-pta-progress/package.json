@@ -1,0 +1,19 @@
+{
+  "name": "dsh-radar-pta-progress",
+  "version": "0.0.0-radar",
+  "private": true,
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】拼题A 做题进度的「口径修复 + 提交链路参考」：修正本仓 progress() 把已通过算成未通过的显示口径，并把上游 vscode-pintia 已验证过的提交/轮询语义固化成窄接口。强化式集成，不是第二套 PTA 客户端。",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --check src/upstream.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=22"
+  }
+}

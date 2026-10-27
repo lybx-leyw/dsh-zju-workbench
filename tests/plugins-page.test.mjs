@@ -323,3 +323,54 @@ test('接线：每个有客户端半边的包都进了构建清单、profile 与
   }
   assert.deepEqual(missing, [], `接线不完整：\n${missing.join('\n')}`);
 });
+
+/**
+ * r79：两处「看图的人会被误导」的折叠缺陷 —— 钉住现状，不是为了修，而是为了不让它悄悄变样。
+ *
+ * 为什么先钉而不先修：两处的正确形态都需要产品决定（见 docs/ecosystem-radar/2026-10-27-r79.md §5）：
+ *   F-3 上游提供者要不要显示？F-4 环里的层序违例要不要全列出来？
+ * 在没有决定之前动 `buildView`，会让页面上的文案与数字在无人察觉时改变。
+ */
+test('F-3 · 服务由上游包提供时，行上显示「不依赖任何包」而开关仍可点 —— 现状钉死', () => {
+  // 真实形状：`dsh-zhiyun-core-notes` 真的 inject 了宿主提供的服务（如 office / vault），
+  // 而提供者不在 `dsh-zhiyun-` 前缀内 → addEdge 因 !inScope.has(to) 直接丢弃。
+  const view = buildView({
+    bundles: [bundle('dsh-zhiyun-core-notes')],
+    modules: [],
+    host: { rows: [{ name: 'dsh-zhiyun-core-notes', requires: ['hostOffice'], unresolved: [] }], providers: [['hostOffice', '@deepseek-ai/dsh-host-office']] },
+    client: { rows: [], providers: [] },
+    plugins: [plugin('dsh-zhiyun-core-notes')],
+    slots: [],
+    fiberNames: new Map(),
+  });
+  const row = view.rows[0];
+  // 现状：服务确实「已解析」（不在 waiting），但边被丢掉 → deps 为空、leaf 为真、可取消。
+  assert.deepEqual(row.waiting, [], '服务有提供者，所以不显示「等待」');
+  assert.deepEqual(row.deps, [], '提供者在范围外 → 边被静默丢弃');
+  assert.equal(row.leaf, true);
+  assert.equal(row.cancellable, true, '面板此时显示「不依赖本工作台的任何其他包」，并允许取消');
+  // 若将来改成「显示上游提供者」，这里会红 —— 那时请同步改 Panel 文案与 §5 的结论。
+});
+
+test('F-4 · 环里的两条边只有一条进 layerViolations —— 取决于 Set 的插入顺序', () => {
+  const names = ['dsh-zhiyun-a', 'dsh-zhiyun-b'];
+  const view = buildView({
+    bundles: names.map(name => bundle(name)),
+    // 层序：a 在前、b 在后 → a→b 是违例；b→a 不是违例。但两者构成环。
+    modules: [
+      { id: 'dsh-zhiyun-a', inject: ['dsh-zhiyun-b'], external: [] },
+      { id: 'dsh-zhiyun-b', inject: ['dsh-zhiyun-a'], external: [] },
+    ],
+    host: { rows: [], providers: [] },
+    client: { rows: [], providers: [] },
+    plugins: names.map(name => plugin(name)),
+    slots: [],
+    fiberNames: new Map(),
+  });
+  assert.deepEqual(view.cycles, [['dsh-zhiyun-a', 'dsh-zhiyun-b']], '环是被认出来的');
+  const edges = Object.fromEntries(view.rows.map(row => [row.name, row.deps]));
+  assert.deepEqual(edges['dsh-zhiyun-b'], ['dsh-zhiyun-a'], 'b→a 这条边确实在图里');
+  // 但 layerIndex(a)=0 < layerIndex(b)=1 → 「依赖排在消费者之后」对 b→a 不成立，
+  // 于是环里只报一条。页面文案说「环内无法定先后」，而这一栏仍按层序只报一边。
+  assert.deepEqual(view.layerViolations, [{ dependent: 'dsh-zhiyun-a', dependency: 'dsh-zhiyun-b' }]);
+});

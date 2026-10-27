@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-deadline-budget",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】把「截止时间」当成有长度的时间块（Deadline + Interval），给「规划」页摘要条补上「本周还剩多少条、压不压得住」——本仓现有 focusSummary 只数 3 天内的条数，且与本仓 urgencyOf 口径不一致",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

@@ -1,0 +1,11 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**，不得写入
+# profiles/zhiyun-bench/package.json 的 dsh.profile.bundles。
+#
+# B 类骨架：不引上游 DSH 插件，只是一个**能力封装层**。上游 `jieba-wasm` 是普通
+# npm 依赖（含 4.0 MB 的 .wasm），不进 Loader，因此这里只有一行 insert。
+#
+# 挂载后它只 `provide('radarSearchSegment')`；页面侧是否调用由**评审后**的改造决定
+# （本骨架不改 `dsh-zhiyun-page-study/src/layered-search.js` 一行代码）。
+- insert:
+    - id: radar-search-segment
+      name: dsh-radar-search-segment

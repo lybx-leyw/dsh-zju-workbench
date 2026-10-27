@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-dom-parse",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 cheerio@1.2.0（经 ./slim 入口，不含 undici），把「智云课堂」登录页 CAS 表单与课表页的「正则抠标签」换成 HTML 级解析 —— 强化式集成（B 类能力提取 + 封装），不改上游源码、不改现有页面语义",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "cheerio": "1.2.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

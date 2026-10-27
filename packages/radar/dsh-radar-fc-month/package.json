@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-fc-month",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 fullcalendar@5.11.5（MIT，零依赖 UMD 构建），把「规划」页月历的日期网格（含跨月那几格）交给成熟实现；本仓的 buildMonthCalendar 留作对照与回退。强化式集成：同一个面板、同一件事，只换底层网格计算",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "fullcalendar": "5.11.5"
+  }
+}

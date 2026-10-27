@@ -28,7 +28,7 @@ import {
   DEDUPE_PREFIX, LEGACY_DEDUPE_PREFIX, entryPrefix, legacyEntryPrefix, contentDigest,
 } from './entries.js';
 import {
-  createLocal, createSplit, localError, patchLocal, setDone as setDoneLocal,
+  createLocal, createSplit, localError, patchLocal, recallGenerated, setDone as setDoneLocal,
 } from './local.js';
 import { TickStore, tickKey } from './ticks.js';
 import { URGENCY, urgencyOf, dateTable } from './time.js';
@@ -404,8 +404,15 @@ export class LocalPlanStore {
     const { item, next } = setDoneLocal(current, done, this.now());
     this.items = this.items.map((row) => (row.id === id ? item : row));
     if (next) this.items.push(next);
+    // 取消勾选：把「这次完成」顺带生成的那一代收回来，否则同一截止日会出现两条副本。
+    // 与生成放在同一次 save 里 —— 分开写会留下"勾了但没收回"的中间状态。
+    const recalled = !done ? recallGenerated(this.items, item) : [];
+    if (recalled.length > 0) {
+      const drop = new Set(recalled);
+      this.items = this.items.filter((row) => !drop.has(row.id));
+    }
     this.save();
-    return { item, next };
+    return { item, next, recalled };
   }
 
   /** 删除。真删，不是打标记 —— 用户按的是「删掉」。 */
@@ -1233,7 +1240,8 @@ export function createHandler({
           }
           // 把 `next` 一起回给客户端：页面要立刻显示"下一次是几号"，
           // 否则用户勾完只看到这一条消失，会以为重复功能没生效。
-          sendJson(res, 200, { ok: true, item: result.item, next: result.next });
+          // `recalled` 是取消勾选时收回的副本 id，页面要同步从列表里去掉。
+          sendJson(res, 200, { ok: true, item: result.item, next: result.next, recalled: result.recalled ?? [] });
           return;
         }
 

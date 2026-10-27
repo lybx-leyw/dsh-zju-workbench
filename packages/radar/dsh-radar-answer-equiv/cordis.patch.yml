@@ -1,0 +1,12 @@
+# 候选骨架：**未接入 profile** —— 本 patch 只有一条 insert，
+# 把本包的判定服务挂成一个 loader 条目，供评审时单独做「挂上 / 摘掉」的对照实验。
+#
+# 与 A 类（原生 DSH 插件包）不同，本包消费的上游 `decimal.js` 是一个**纯数值库**，
+# 没有 `dsh.bundle.patch`、不注册路由、不挂插槽。所以本包**没有** `dsh.bundle.patch`，
+# 这条 insert 也**不是必须的**：真正的接入点是「学习」页的作答判定
+# （`packages/dsh-zhiyun-quiz/src/store.js` 的 `autoVerdict` 生产方）。
+#
+# 评审通过后应删除本文件，改为在 `dsh-zhiyun-quiz` 的依赖里锁版引入。
+- insert:
+    - id: radar-answer-equiv
+      name: dsh-radar-answer-equiv

@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-kb-rag",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 dsh-kb-rag@1.6.8，把「跨文献混合检索（BM25 + 本地向量）带出处」接进论文阅读页的问答抽屉，强化现有 search_paper（单篇内定位）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-kb-rag": "1.6.8"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

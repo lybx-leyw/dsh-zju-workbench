@@ -29,6 +29,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 /** 允许勾选的来源。别的来源（中转站、自己的规划）各有各的存储，不走这里。 */
 export const TICK_SOURCES = Object.freeze(['xzzd', 'pta']);
@@ -58,34 +59,87 @@ export function tickKey(source, id) {
  * 顺带清理：平台那边已经不存在的条目，键会一直留着。`prune` 由调用方在拿到
  * 最新列表后调用 —— 不清理的话文件会慢慢积累已删除作业的残影。
  */
+/**
+ * 本进程的实例标识。`randomUUID()` 每次构造都换，那样「同进程重开同一个文件」
+ * 会被自己当成另一个实例、把自己的勾当成别人的 —— 所以进程内只取一次。
+ */
+const PROCESS_OWNER = randomUUID();
+
 export class TickStore {
   /**
    * @param file - `ticks.json` 路径。
    * @param now - 注入当前时间（测试用）。
+   * @param owner - 实例标识。**同一进程内默认稳定**（一个窗口 = 一个实例）：
+   *   同一个 `ticks.json` 在本进程里被重新打开时，仍认出自己的勾；
+   *   测试可传定值。
    */
-  constructor(file, now = () => Date.now()) {
+  constructor(file, now = () => Date.now(), owner = PROCESS_OWNER) {
     this.file = file;
     this.now = now;
+    this.owner = String(owner);
+    /** 磁盘上**被别的实例**勾掉的键。只读：不显示、不写回、不在本进程里翻转。 */
+    this.foreign = new Set();
     this.ticks = {};
     this.load();
   }
 
+  /**
+   * 从磁盘读回勾选表，并分出「自己的」与「别人的」。
+   *
+   * 归不到 `this.owner` 的记录一律进 `foreign`：它们属于另一个正在运行的实例
+   * （典型场景是「设置 → 重启实例」后新旧两个进程并存的一小段时间，或两个窗口）。
+   */
   load() {
+    let raw = {};
     try {
-      const parsed = JSON.parse(readFileSync(this.file, 'utf8'));
-      this.ticks = normalizeTicks(parsed?.ticks);
+      raw = JSON.parse(readFileSync(this.file, 'utf8'))?.ticks;
     } catch {
       // 不存在 / 坏了都退回空表：一处勾选不值得让整页起不来
-      this.ticks = {};
+      raw = {};
     }
-    return this.ticks;
+    this.ticks = normalizeTicks(raw);
+    this.foreign = new Set();
+    const all = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+    for (const key of Object.keys(this.ticks)) {
+      // 脏记录（值不是对象）没有 owner 可言，按自己的旧格式收下，不因此丢失勾选
+      const owner = all[key] && typeof all[key] === 'object' ? recordOwner(all[key]) : null;
+      if (owner === null || owner === this.owner) {
+        // 迁移：旧格式（只有 `{ doneAt }`）当作本实例的记录收下，下次落盘时补上 owner
+        this.ticks[key] = { doneAt: this.ticks[key].doneAt, owner: this.owner };
+        continue;
+      }
+      delete this.ticks[key];
+      this.foreign.add(key);
+    }
+    return this.all();
   }
 
-  /** 落盘。先写临时文件再 rename，断电不会留下半个 JSON。 */
+  /**
+   * 落盘。先写临时文件再 rename，断电不会留下半个 JSON。
+   *
+   * 写的是「磁盘上别人的记录 ∪ 自己的记录」：另一个活着的实例刚写下的那些照单保留，
+   * 本实例只覆盖自己名下的键 —— 不拿构造时的旧快照整份覆盖磁盘。
+   * 这也让 `foreign` 不必事先 `absorb` 就能被保住：别的实例写下的增量不会丢。
+   */
   save() {
     mkdirSync(dirname(this.file), { recursive: true });
+    // 只读一次磁盘；读不到就是"别人已经不在"，foreign 只是少写几条，下次 load 会补回来
+    let disk = {};
+    try {
+      disk = JSON.parse(readFileSync(this.file, 'utf8'))?.ticks ?? {};
+    } catch {
+      disk = {};
+    }
+    if (!disk || typeof disk !== 'object' || Array.isArray(disk)) disk = {};
+    const merged = {};
+    // 增量合并：磁盘上**不是本实例**的那部分照单留下（别处勾的 + 别处取消的都已经反映在盘上）
+    for (const [key, value] of Object.entries(disk)) {
+      const owner = value && typeof value === 'object' ? recordOwner(value) : null;
+      if (owner !== null && owner !== this.owner) merged[key] = value;
+    }
+    Object.assign(merged, this.ticks);
     const tmp = `${this.file}.tmp`;
-    writeFileSync(tmp, `${JSON.stringify({ ticks: this.ticks }, null, 2)}\n`, 'utf8');
+    writeFileSync(tmp, `${JSON.stringify({ ticks: merged }, null, 2)}\n`, 'utf8');
     renameSync(tmp, this.file);
   }
 
@@ -106,15 +160,76 @@ export class TickStore {
   setDone(source, id, done) {
     const key = tickKey(source, id);
     if (!key) return null;
-    if (done) this.ticks[key] = { doneAt: Math.floor(this.now() / 1000) };
+    if (done) this.ticks[key] = { doneAt: Math.floor(this.now() / 1000), owner: this.owner };
     else delete this.ticks[key];
+    // 本实例明确取消了这条：它不再是"别人的"，save 时也就不该被写回
+    this.foreign.delete(key);
     this.save();
     return { key, done: Boolean(done) };
   }
 
-  /** 全部勾选（给页面渲染用）。 */
+  /**
+   * 某一条在**别的实例**那边是否被勾掉。页面用它把这些行置灰，而不是假装没勾。
+   *
+   * @param source - 来源。
+   * @param id - 平台 id。
+   */
+  isDoneElsewhere(source, id) {
+    const key = tickKey(source, id);
+    return key ? this.foreign.has(key) : false;
+  }
+
+  /**
+   * 把磁盘上新出现的「别人的」勾选并进来（不重读自己的那份）。
+   *
+   * 只往 `foreign` 加，不改 `ticks` —— 本实例自己勾的以内存为准。
+   *
+   * @returns 新并入的键。
+   */
+  absorbForeign() {
+    let all = {};
+    try {
+      all = JSON.parse(readFileSync(this.file, 'utf8'))?.ticks ?? {};
+    } catch {
+      return [];
+    }
+    if (!all || typeof all !== 'object' || Array.isArray(all)) return [];
+    const added = [];
+    for (const [key, value] of Object.entries(all)) {
+      if (this.ticks[key]) continue;
+      const owner = recordOwner(value);
+      if (owner === null || owner === this.owner) continue;
+      if (this.foreign.has(key)) continue;
+      this.foreign.add(key);
+      added.push(key);
+    }
+    return added;
+  }
+
+  /**
+   * 这一条**在谁那儿**被勾了。
+   *
+   * @param source - 来源。
+   * @param id - 平台 id。
+   * @returns `'mine'` / `'elsewhere'` / `'none'`。
+   */
+  statusFor(source, id) {
+    const key = tickKey(source, id);
+    if (!key) return 'none';
+    if (this.ticks[key]) return 'mine';
+    return this.foreign.has(key) ? 'elsewhere' : 'none';
+  }
+
+  /**
+   * 全部勾选（给页面渲染用）。
+   *
+   * 含**别的实例**勾的那几条，值形如 `{ doneAt: null, owner: <别人> }` —— 页面据此
+   * 把它们也置灰（否则用户会看到「我明明勾过，怎么又活了」）。
+   */
   all() {
-    return this.ticks;
+    const out = { ...this.ticks };
+    for (const key of this.foreign) if (!out[key]) out[key] = { doneAt: null, owner: null };
+    return out;
   }
 
   /**
@@ -141,6 +256,18 @@ export class TickStore {
 }
 
 /**
+ * 从一条记录里取 owner。
+ *
+ * @param value - 磁盘上的一条记录。
+ * @returns owner 字符串；`null` 表示旧格式（没有 owner 字段，按本实例收下）。
+ */
+export function recordOwner(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const owner = typeof value.owner === 'string' ? value.owner.trim() : '';
+  return owner || null;
+}
+
+/**
  * 规整从磁盘读回的勾选表。
  *
  * 只保留形状对的记录：手改坏了某一条不该让整份表消失，也不该让一条脏数据
@@ -161,7 +288,10 @@ export function normalizeTicks(raw) {
     // 注意 `{ doneAt: null }` 是**合法**的（时间未知但确实勾了），别把两者混为一谈。
     if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
     const doneAt = Number(value.doneAt);
-    out[key] = { doneAt: Number.isFinite(doneAt) && doneAt > 0 ? doneAt : null };
+    out[key] = {
+      doneAt: Number.isFinite(doneAt) && doneAt > 0 ? doneAt : null,
+      owner: recordOwner(value),
+    };
   }
   return out;
 }

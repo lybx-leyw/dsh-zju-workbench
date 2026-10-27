@@ -1,0 +1,15 @@
+# ═══════════════════════════════════════════════════════════════
+# 候选骨架 —— 未评审、未接入 profile、不可直接使用。
+# 本文件存在的意义：证明本包「如果」被接进 profile，注入面是什么样子。
+#
+# ⚠ 评审通过前，请勿把 `dsh-radar-fence-normalize` 写进
+#   profiles/zhiyun-bench/package.json 的 dsh.profile.bundles。
+#
+# ⚠ B 类骨架本来不需要 patch（能力提取，不做注入）。
+#   这里仍然给出 patch，是因为 `src/index.js` 的 `apply()` 是**故意抛错**的占位：
+#   若有人真的把本包接进 profile，挂载会立刻失败并打印原因，而不是静默成功。
+#   —— 这是「宁可当场炸，也不要以为它生效了」。
+# ═══════════════════════════════════════════════════════════════
+- insert:
+    - id: radar-fence-normalize
+      name: dsh-radar-fence-normalize

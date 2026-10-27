@@ -1,0 +1,19 @@
+# 候选骨架：**未接入 profile**。
+#
+# 本档只有一条 insert，把 `@sifiso-guy/scheduler@0.1.0` 的两个原语挂成一个可
+# **单独挂起**的对照条目，便于评审时做「挂上 / 摘掉」差分。
+#
+# 与 A 类（原生 DSH 插件包）不同，`@sifiso-guy/scheduler` 是一个**纯值对象库**：
+# 没有 `dsh.bundle.patch`、不注册路由、不挂插槽，因此本包**真正的接入点不在 patch 里**。
+# 落点只有一处：`packages/dsh-zhiyun-page-planning/src/time.js` 的 `focusSummary()`
+# 与同文件里的 `focusOf()`（见 README「接入点」）。
+#
+# 评审通过后应删除本文件，改为在 `dsh-zhiyun-page-planning` 的依赖里锁版引入
+# —— 与 `dsh-zhiyun-host-paper` 锁 `@ggboy123/dsh-paper-reader@1.3.1` 同一套做法。
+#
+# ⚠ 注意：`dependencies` 目前是**空的**。`@sifiso-guy/scheduler` 在 npm 上是 404
+#    （本轮实测，见 README「已实测的硬约束」R1），锁版引入的前提尚未成立。
+#    这是**故意留空**，不是为了让人现在就能装上。
+- insert:
+    - id: radar-deadline-budget
+      name: dsh-radar-deadline-budget

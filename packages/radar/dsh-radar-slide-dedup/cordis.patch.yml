@@ -1,0 +1,3 @@
+- insert:
+    - id: radar-slide-dedup
+      name: dsh-radar-slide-dedup

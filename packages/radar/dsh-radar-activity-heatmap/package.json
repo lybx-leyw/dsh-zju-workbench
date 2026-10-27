@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-activity-heatmap",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 react-activity-calendar，把「今天做过多少题、哪些天打开过学习空间」画成一张按天排的日历格（全新补缺视图，非强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "react-activity-calendar": "3.2.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

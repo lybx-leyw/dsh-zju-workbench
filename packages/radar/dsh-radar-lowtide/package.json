@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-lowtide",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版挂载上游 dsh-lowtide 0.2.8，把「规划」页的卡片接到执行端（峰谷价窗口 + 待裁定 + 执行报告），强化式集成",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-lowtide": "0.2.8"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

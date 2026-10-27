@@ -1,0 +1,21 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 形态说明（与 A 类骨架不同，请评审先看这一条）：
+#   上游 `@ocr-web/core` 是一个**纯库**（B 类），没有 `dsh.bundle.patch`、
+#   不认识 cordis，因此**没有「上游 patch」可以照抄或封装**。
+#   本包自己就是那个「外围兼容层」：它把上游的 `OcrEngine` / `OcrEngineWorker`
+#   包成宿主的一个服务，再插入 profile。
+#
+# 为什么仍然只写一行 insert、用**本仓 id**：
+#   1. 本仓规定候选包一律 `dsh-radar-` 前缀、用本仓 id 插入；
+#   2. profile 里只多一行 —— 回滚只需删这一行，不需要动任何既有 bundle；
+#   3. 与本仓页面插件（`dsh-zhiyun-page-*`）的 id 命名不冲突。
+#
+# ⚠ 评审前请确认两件事（见 README §风险）：
+#   R-1 `onnxruntime-web` 的 `*.wasm` 必须由宿主**静态托管**在已知路径，
+#       本仓当前的静态资源管线**没有**这条路径 → 这是本骨架最大的落地障碍。
+#   R-2 模型文件（约几十 MB）默认从 jsDelivr 拉取，**首次使用即外联**
+#       → 与「离线可用」的产品定位冲突，须人工拍板是「内置」还是「按需下载」。
+- insert:
+    - id: radar-ocr-web
+      name: dsh-radar-ocr-web

@@ -529,3 +529,85 @@ test('网关条目（entries）在结构上没有任何写入口', async () => {
   assert.equal(typeof store.absorb, 'function', 'absorb 是唯一写入口（合并入站）');
   assert.equal(typeof store.list, 'function');
 });
+
+/* ────────────────────────────────────── 两个实例共用一份 ticks.json */
+
+/**
+ * 2026-10-27 实测复现的丢数据：A 勾了作业，B（持有构造时的快照）随后勾另一条，
+ * 落盘时把 A 的键整份覆盖掉 —— 用户的勾选在自己的页面上凭空消失。
+ */
+test('两个实例并存时，各自勾的都要留在磁盘上', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'plan-ticks-'));
+  const file = path.join(dir, 'ticks.json');
+  try {
+    const a = new TickStore(file, () => 1_793_000_000_000, 'inst-a');
+    const b = new TickStore(file, () => 1_793_000_000_000, 'inst-b');
+    a.setDone('xzzd', 48213, true);
+    b.setDone('pta', 1042, true);
+
+    const disk = JSON.parse(await readFile(file, 'utf8')).ticks;
+    assert.ok(disk['xzzd:48213'], 'A 勾的那条不能被 B 的落盘覆盖掉');
+    assert.ok(disk['pta:1042'], 'B 勾的那条也要在');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('重启后认回自己的勾选；别人勾的那条算 elsewhere', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'plan-ticks-'));
+  const file = path.join(dir, 'ticks.json');
+  try {
+    const a = new TickStore(file, () => 1_793_000_000_000, 'inst-a');
+    a.setDone('xzzd', 1, true);
+    new TickStore(file, () => 1_793_000_000_000, 'inst-b').setDone('pta', 2, true);
+
+    const again = new TickStore(file, () => 1_793_000_000_000, 'inst-a');
+    assert.equal(again.statusFor('xzzd', 1), 'mine');
+    assert.equal(again.statusFor('pta', 2), 'elsewhere');
+    assert.equal(again.isDoneElsewhere('pta', 2), true, '页面上要知道这条是别处勾的');
+    assert.equal(again.isDone('xzzd', 1), true);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('没有 owner 的旧格式记录按自己的收下，不丢勾选', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'plan-ticks-'));
+  const file = path.join(dir, 'ticks.json');
+  try {
+    await writeFile(file, JSON.stringify({ ticks: { 'xzzd:7': { doneAt: 1793000000 } } }), 'utf8');
+    const store = new TickStore(file, () => 1_793_000_000_000, 'inst-a');
+    assert.equal(store.isDone('xzzd', 7), true, '升级不应该把老勾选变成别人的');
+    store.setDone('pta', 8, true);
+    const disk = JSON.parse(await readFile(file, 'utf8')).ticks;
+    assert.ok(disk['xzzd:7'], '旧记录要原样留在磁盘上');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('「今天到期」按「键在即勾」判：脏值不能让一条勾掉的作业复活', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'plan-ticks-'));
+  const file = path.join(dir, 'ticks.json');
+  try {
+    await writeFile(file, JSON.stringify({
+      ticks: { 'xzzd:1': false, 'xzzd:2': { doneAt: 1793000000 } },
+    }), 'utf8');
+    const { dueFromSnapshot } = await import('../packages/dsh-zhiyun-page-today/src/due.js');
+    const now = Date.parse('2026-10-27T10:00:00+08:00');
+    const due = dueFromSnapshot({
+      local: [],
+      todos: {
+        xzzd: { ok: true, rows: [
+          { id: 1, title: 'A', due: '2026-10-27T23:00:00+08:00' },
+          { id: 2, title: 'B', due: '2026-10-27T23:00:00+08:00' },
+        ] },
+        pta: { ok: true, rows: [] },
+      },
+      ticks: JSON.parse(await readFile(file, 'utf8')).ticks,
+    }, now);
+    assert.deepEqual(due.items.map((row) => row.title), [], '勾掉的两条都不该出现在今天到期里');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
