@@ -10,14 +10,18 @@ import { contentHash } from '../../packages/dsh-zhiyun-core-quiz/src/concepts.js
 import { planPointQuestions,QUESTION_STRATEGIES,QUESTION_TYPES,newPointCheckpoint,POINT_QUIZ_CACHE_VERSION } from '../../packages/dsh-zhiyun-core-quiz/src/points.js';
 import { resolveConfig } from '../knowledge_tree_bench/defaults.mjs';
 import { createWriter,readLog } from '../knowledge_tree_bench/log.mjs';
+import {persistWithRetry,storageCode} from '../../packages/dsh-zhiyun-core-quiz/src/durability.js';
+import {conceptCacheKey,pointIdentity} from '../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
 
-export const defaultOptions={counts:[10],batches:3,repeats:1,strategies:['recall','understand'],types:['cloze'],mode:'uniform',difficulty:'basic',seed:42,maxCalls:120};
+export const defaultOptions={counts:[10],batches:3,repeats:1,strategies:['recall','understand'],types:['cloze'],mode:'uniform',difficulty:'basic',recallMode:'complete',auditPolicy:'focused',seed:42,maxCalls:120};
 export function optionsOf(raw={}) {
   const config={...defaultOptions,...raw};
   for(const [key,max] of [['batches',10],['repeats',5],['maxCalls',1000]])if(!Number.isInteger(config[key])||config[key]<1||config[key]>max)throw new Error(`${key} 须为 1–${max} 的整数`);
   if(!Array.isArray(config.counts)||!config.counts.length||config.counts.length>4||config.counts.some(n=>!Number.isInteger(n)||n<1||n>100)||new Set(config.counts).size!==config.counts.length)throw new Error('题数梯度须为 1–4 个互不相同的 1–100 整数');
   for(const [key,registry] of [['strategies',QUESTION_STRATEGIES],['types',QUESTION_TYPES]])if(!Array.isArray(config[key])||!config[key].length||new Set(config[key]).size!==config[key].length||config[key].some(id=>!Object.hasOwn(registry,id)))throw new Error(`${key} 选择无效`);
   if(!['uniform','random'].includes(config.mode)||!['basic','advanced','challenge'].includes(config.difficulty)||!Number.isInteger(config.seed))throw new Error('分配、难度或种子无效');
+  if(!['complete','variant'].includes(config.recallMode))throw new Error('基础巩固目标无效');
+  if(!['focused','full'].includes(config.auditPolicy))throw new Error('考点审查策略无效');
   const scenarios=config.strategies.flatMap(strategy=>config.types.filter(type=>QUESTION_STRATEGIES[strategy].types.includes(type)).map(type=>({strategy,type})));
   if(config.strategies.some(strategy=>!scenarios.some(s=>s.strategy===strategy)))throw new Error('某个策略没有兼容的题型，请补选选择题或简答题');
   if(scenarios.length*config.counts.length*config.repeats*config.batches>200)throw new Error('评测矩阵超过 200 批，请减少组合或批次');
@@ -28,8 +32,9 @@ export function seeded(seed) {
   return ()=>{state+=0x6D2B79F5;let n=state;n=Math.imul(n^n>>>15,n|1);n^=n+Math.imul(n^n>>>7,n|61);return ((n^n>>>14)>>>0)/4294967296;};
 }
 export async function atomicJson(file,value) {
-  await fs.mkdir(path.dirname(file),{recursive:true});const temp=file+'.tmp';
-  await fs.writeFile(temp,JSON.stringify(value,null,2),'utf8');await fs.rename(temp,file);
+  await fs.mkdir(path.dirname(file),{recursive:true});const temp=file+'.'+randomUUID()+'.tmp';
+  try{await fs.writeFile(temp,JSON.stringify(value,null,2),'utf8');await persistWithRetry(()=>fs.rename(temp,file));}
+  finally{await fs.rm(temp,{force:true}).catch(()=>{});}
 }
 const emit=value=>process.stdout.write(`@@EV@@${JSON.stringify(value)}\n`);
 
@@ -43,13 +48,22 @@ export async function runQuizBench(raw,{call:injected,signal,onEvent=()=>{},outD
   if(raw.gold)dataset.gold=raw.gold;
   if(raw.pointIds?.length)dataset.points=dataset.points.filter(p=>raw.pointIds.includes(p.id));
   if(!dataset.points.length)throw new Error('未选择可评测知识点');
-  const kernelHash=await contentHash(await Promise.all(['index.js','points.js','concepts.js','strategies.js','knowledge-points.js','generate.js','quality.js'].map(file=>fs.readFile(new URL('../../packages/dsh-zhiyun-core-quiz/src/'+file,import.meta.url),'utf8'))));
-  const datasetHash=await contentHash(dataset.points),fingerprint=await contentHash([datasetHash,kernelHash,config.counts,config.batches,config.repeats,config.scenarios,config.mode,config.difficulty,config.seed,provider,model]);
+  const kernelHash=await contentHash(await Promise.all(['index.js','points.js','concepts.js','completion.js','facts.js','ledger.js','blueprint.js','rectification.js','durability.js','strategies.js','knowledge-points.js','generate.js','quality.js'].map(file=>fs.readFile(new URL('../../packages/dsh-zhiyun-core-quiz/src/'+file,import.meta.url),'utf8'))));
+  const datasetHash=await contentHash(dataset.points),seed=raw.seedArtifact??null;
+  if(seed){
+    if(seed.version!==1||seed.datasetHash!==datasetHash||seed.kernelHash!==kernelHash||!seed.conceptCache||!Array.isArray(seed.questions))throw new Error('复用底稿与资料或内核版本不匹配，请重新导出');
+    for(const [key,entry]of Object.entries(seed.conceptCache)){
+      const point=dataset.points.find(p=>pointIdentity(p)===entry.pointKey);
+      if(!point||key!==entry.materialKey||key!==await conceptCacheKey(point))throw new Error('复用底稿的资料身份无效');
+    }
+  }
+  const seedHash=seed?await contentHash(seed):null;
+  const fingerprint=await contentHash([datasetHash,kernelHash,seedHash,config.auditPolicy,config.counts,config.batches,config.repeats,config.scenarios,config.mode,config.difficulty,config.recallMode,config.seed,provider,model]);
   const directory=path.resolve(outDir??path.join('artifacts','quiz-bench',randomUUID()));await fs.mkdir(directory,{recursive:true});
   let state;
   if(raw.resume){state=JSON.parse(await fs.readFile(path.join(directory,'state.json'),'utf8'));if(state.fingerprint!==fingerprint)throw new Error('恢复配置或资料已变化，请使用原配置或另建一次评测');}
   else {try{await fs.access(path.join(directory,'state.json'));throw new Error('输出目录已有评测，请使用 --resume 或新目录');}catch(error){if(error.code!=='ENOENT')throw error;}}
-  state??={version:1,fingerprint,datasetHash,kernelHash,kernelVersion:POINT_QUIZ_CACHE_VERSION,title:dataset.title,provider,model,config,points:dataset.points,gold:dataset.gold??null,startedAt:new Date().toISOString(),cells:[],status:'running'};
+  state??={version:1,fingerprint,datasetHash,kernelHash,kernelVersion:POINT_QUIZ_CACHE_VERSION,title:dataset.title,provider,model,config,seedArtifact:seed,seedHash,cacheMode:seed?'warm':'cold',points:dataset.points,gold:dataset.gold??null,startedAt:new Date().toISOString(),cells:[],status:'running'};
   const previous=await readLog(path.join(directory,'events.jsonl'));
   if(previous.broken||previous.records.some((row,index)=>row.seq!==index+1))throw new Error('原日志存在坏行或序号缺口，请保留现场并另建评测');
   const writer=createWriter(path.join(directory,'events.jsonl'),{initialSeq:previous.records.at(-1)?.seq??0});
@@ -59,15 +73,22 @@ export async function runQuizBench(raw,{call:injected,signal,onEvent=()=>{},outD
   const controller=new AbortController(),combined=signal?AbortSignal.any([controller.signal,signal]):controller.signal;
   let current=null,currentBatch=0,executionCalls=0,mounted;
   const actual=injected??(raw.fixture?fixtureCall():modelCall(resolveConfig(raw)));
+  const responseKey=request=>JSON.stringify([current.id,currentBatch,request.stage,request.constant,request.variable]);
+  const responses=new Map(previous.records.filter(r=>r.act==='model').map(r=>[JSON.stringify([r.cell,r.batch,r.stage,r.data.constant,r.data.variable]),{text:r.data.text,usage:r.data.usage}]));
   const call=async request=>{
+    const key=responseKey(request);
+    if(responses.has(key)){await record('call-reused',{cell:current.id,batch:currentBatch,stage:request.stage});return structuredClone(responses.get(key));}
     if(executionCalls>=config.maxCalls){controller.abort(new Error('达到本次启动的模型调用上限，断点已保留'));combined.throwIfAborted();}
-    executionCalls++;const started=Date.now(),entry={id:randomUUID(),stage:request.stage,batch:currentBatch,status:'running',ms:0,inputTokens:null,outputTokens:null};
-    current.calls.push(entry);await save();await record('call-start',{cell:current.id,batch:currentBatch,stage:request.stage});
+    const started=Date.now(),entry={id:randomUUID(),stage:request.stage,batch:currentBatch,status:'preparing',ms:0,inputTokens:null,outputTokens:null};
+    current.calls.push(entry);await save();await record('call-start',{cell:current.id,batch:currentBatch,stage:request.stage,id:entry.id});
+    executionCalls++;entry.status='running';
     try{
       const result=await actual({...request,signal:AbortSignal.any([combined,AbortSignal.timeout(240000)])});
       entry.ms=Date.now()-started;entry.inputTokens=result.usage?.prompt_tokens??result.usage?.inputTokens??null;entry.outputTokens=result.usage?.completion_tokens??result.usage?.outputTokens??null;
       entry.status='completed';
-      await writer.artifact({act:'model',cell:current.id,batch:currentBatch,stage:request.stage,data:{constant:request.constant,variable:request.variable,text:result.text??result,usage:result.usage??null}});
+      await writer.artifact({act:'model',callId:entry.id,cell:current.id,batch:currentBatch,stage:request.stage,data:{constant:request.constant,variable:request.variable,text:result.text??result,usage:result.usage??null}});
+      if(writer.failures.count)throw new Error('模型回包日志写入失败');
+      responses.set(key,structuredClone(result));
       return result;
     }catch(error){entry.ms=Date.now()-started;entry.status='failed';entry.error=scrub(error.message);throw error;}
     finally{await save();await record('call-end',{cell:current.id,batch:currentBatch,...entry});}
@@ -79,29 +100,37 @@ export async function runQuizBench(raw,{call:injected,signal,onEvent=()=>{},outD
     for(const {strategy,type} of config.scenarios)for(const count of config.counts)for(let trial=1;trial<=config.repeats;trial++){
       const id=`${strategy}-${type}-${count}-${trial}`;
       current=state.cells.find(c=>c.id===id);
-      if(!current){current={id,strategy,type,count,trial,conceptCache:{},questions:[],calls:[],batches:[],jobs:{}};state.cells.push(current);}
+      if(!current){current={id,strategy,type,count,trial,conceptCache:structuredClone(seed?.conceptCache??{}),seedQuestions:structuredClone(seed?.questions??[]),questions:[],calls:[],batches:[],jobs:{}};state.cells.push(current);}
       for(let batch=1;batch<=config.batches;batch++){
         currentBatch=batch;combined.throwIfAborted();
         if(current.batches.some(row=>row.batch===batch))continue;
-        const job=current.jobs[batch]??={plan:planPointQuestions(dataset.points,{count,mode:config.mode,types:[type],strategies:[{id:strategy,weight:1}],difficulty:config.difficulty},seeded(config.seed+trial*1009+batch*9176)),checkpoint:null};
+        const job=current.jobs[batch]??={plan:planPointQuestions(dataset.points,{count,mode:config.mode,types:[type],strategies:[{id:strategy,weight:1}],difficulty:config.difficulty,recallMode:config.recallMode,auditPolicy:config.auditPolicy},seeded(config.seed+trial*1009+batch*9176)),checkpoint:null};
         job.checkpoint??=newPointCheckpoint(job.plan);await save();
         await record('batch-start',{cell:id,batch,strategy,type,count});
         const started=Date.now();
-        const result=await mounted.generatePoints({plan:job.plan,checkpoint:job.checkpoint,signal:combined,conceptCache:current.conceptCache,existingQuestions:current.questions,existingStems:current.questions.map(q=>q.stem),
+        const history=[...(current.seedQuestions??[]),...current.questions];
+        const result=await mounted.generatePoints({plan:job.plan,checkpoint:job.checkpoint,signal:combined,conceptCache:current.conceptCache,existingQuestions:history,existingStems:history.map(q=>q.stem),
           onConcept:async(key,entry)=>{current.conceptCache[key]=entry;await save();await writer.artifact({act:'concept',cell:id,batch,data:entry});},
           onCheckpoint:async checkpoint=>{job.checkpoint=checkpoint;await save();await record('phase',{cell:id,batch,phase:checkpoint.phase,done:checkpoint.tasks.reduce((n,t)=>n+t.questionIds.length,0),total:count});},
-          onQuestion:async(question,checkpoint)=>{current.questions.push({...question,batch});job.checkpoint=checkpoint;await save();await record('question',{cell:id,batch,data:question});}});
-        const snapshot=structuredClone(current.conceptCache),questions=current.questions.filter(q=>q.batch===batch),prior=current.questions.filter(q=>q.batch<batch);
-        const metrics=measure({points:dataset.points,questions,prior,conceptCache:snapshot,calls:current.calls.filter(c=>c.batch===batch),gold:state.gold});
-        current.batches.push({batch,ms:Date.now()-started,requested:count,produced:result.produced,problems:result.problems,conceptCache:snapshot,metrics});
+          onQuestion:async(question,checkpoint)=>{if(!current.questions.some(q=>q.id===question.id))current.questions.push({...question,batch});job.checkpoint=checkpoint;await save();await record('question',{cell:id,batch,data:question});},
+          onRectify:async({rejected,admitted=[],pending=[],checkpoint})=>{
+            for(const row of rejected){const q=current.questions.find(q=>q.id===row.id);if(q)Object.assign(q,{status:'rejected',reviewState:'rejected',rectifyReason:row.reason});}
+            for(const id of admitted){const q=current.questions.find(q=>q.id===id);if(q&&q.status!=='rejected')q.reviewState='ready';}
+            for(const id of pending){const q=current.questions.find(q=>q.id===id);if(q&&q.status!=='rejected')q.reviewState='needs-review';}
+            if(checkpoint)job.checkpoint=checkpoint;await save();await record('rectify',{cell:id,batch,rejected,admitted,pending});
+          }});
+        const snapshot=structuredClone(current.conceptCache),questions=current.questions.filter(q=>q.batch===batch),prior=[...(current.seedQuestions??[]),...current.questions.filter(q=>q.batch<batch)];
+        const completions=Object.values(job.checkpoint.completions??{});
+        const metrics=measure({points:dataset.points,questions,prior,conceptCache:snapshot,calls:current.calls.filter(c=>c.batch===batch),gold:state.gold,completions});
+        current.batches.push({batch,ms:Date.now()-started,requested:count,produced:result.produced,problems:result.problems,conceptCache:snapshot,completions,metrics});
         await save();await record('batch-end',{cell:id,batch,metrics,problems:result.problems});
       }
     }
     state.status=state.cells.some(c=>c.batches.some(b=>b.produced<b.requested))?'partial':'completed';
-  }catch(error){state.status=combined.aborted?'interrupted':'failed';state.error=scrub(combined.aborted?combined.reason?.message??error.message:error.message);await record('error',{message:state.error});}
+  }catch(error){state.status=combined.aborted?'interrupted':'failed';state.error=scrub(combined.aborted?combined.reason?.message??error.message:error.message);state.errorCode=storageCode(error);await record('error',{message:state.error,code:state.errorCode});}
   finally{
     state.updatedAt=new Date().toISOString();
-    for(const cell of state.cells)cell.metrics=measure({points:dataset.points,questions:cell.questions,conceptCache:cell.conceptCache,calls:cell.calls,gold:state.gold});
+    for(const cell of state.cells)cell.metrics=measure({points:dataset.points,questions:cell.questions,prior:cell.seedQuestions??[],conceptCache:cell.conceptCache,calls:cell.calls,gold:state.gold,completions:Object.values(cell.jobs).flatMap(j=>Object.values(j.checkpoint?.completions??{}))});
     state.trials=trialSummary(state.cells);
     await save();await atomicJson(path.join(directory,'report.json'),state);await fs.writeFile(path.join(directory,'report.md'),markdownReport(state));
     await writer.meta({what:'end',status:state.status,at:state.updatedAt});await writer.close();await mounted?.dispose();

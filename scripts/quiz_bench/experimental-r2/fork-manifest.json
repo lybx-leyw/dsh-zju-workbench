@@ -1,0 +1,5 @@
+{
+  "origin": "packages/dsh-zhiyun-core-quiz/src/points.js",
+  "sha256": "722c2ea583f2b24468fc0012d26acec817d6565328586193aae3a6cbce857e84",
+  "purpose": "isolated research snapshot; no production configuration or source changes"
+}

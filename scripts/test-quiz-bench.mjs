@@ -18,6 +18,17 @@ try{
   assert.equal(await page.locator('#summary-rows tr').count(),2);
   assert.match(await page.locator('#summary').innerText(),/合成桩/);
   assert.match(await page.locator('#summary-rows').innerText(),/无法判定/);
+  await page.locator('#evidence .evidence-card').first().waitFor();
+  await page.locator('#evidence .evidence-card > summary').first().click();
+  await page.locator('#evidence .locate').first().click();
+  assert.ok((await page.locator('#evidence mark').innerText()).length>=8);
+  await page.locator('#evidence .block-position').first().click();
+  await page.waitForFunction(()=>document.getElementById('evidence').innerText.includes('修订记录 · 1'));
+  const currentId=await page.locator('#runs').inputValue();
+  await page.reload();await page.locator('#runs option').nth(1).waitFor({state:'attached'});await page.locator('#runs').selectOption(currentId);
+  await page.waitForFunction(()=>document.getElementById('evidence')?.innerText.includes('修订记录 · 1'));
+  await page.locator('.undo-curation').click();
+  await page.waitForFunction(()=>document.getElementById('evidence').innerText.includes('修订记录 · 0'));
   await page.locator('.cell').first().locator('summary').first().click();
   await page.screenshot({path:path.join(artifacts,'report.png'),fullPage:true});
   await page.locator('#cursor').fill('1');assert.ok((await page.locator('#event').innerText()).length>10);
@@ -29,7 +40,13 @@ try{
   await page.reload();await page.locator('#runs option').nth(1).waitFor({state:'attached'});
   const id=await page.locator('#runs option').nth(1).getAttribute('value');await page.locator('#runs').selectOption(id);await page.locator('#results').waitFor();
   assert.match(await page.locator('#summary-rows').innerText(),/100.0%/);
+  await page.locator('.export-seed').waitFor();
+  const seedDownload=page.waitForEvent('download');await page.locator('.export-seed').click();const seedFile=await seedDownload;
+  await page.locator('#seed-file').setInputFiles(await seedFile.path());
+  await page.locator('#counts').fill('1');await page.locator('#batches').fill('1');await page.locator('#recallMode').selectOption('variant');
+  await page.getByRole('button',{name:'开始评测',exact:true}).click();
+  await page.waitForFunction(()=>document.getElementById('summary').innerText.includes('热启动')&&!document.getElementById('start').disabled);
   await page.setViewportSize({width:650,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:path.join(artifacts,'narrow.png'),fullPage:true});
-  assert.deepEqual(errors,[]);console.log('PASS quiz bench: product-backed synthetic run, report, replay, human review import, refresh and narrow layout; no paid calls');
+  assert.deepEqual(errors,[]);console.log('PASS quiz bench: synthetic generation, source highlighting, durable position correction and undo, human review, replay and narrow layout; no paid calls');
 }finally{await browser?.close();await runtime.close();}

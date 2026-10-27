@@ -10,15 +10,16 @@ import { readLog } from '../knowledge_tree_bench/log.mjs';
 import { prefill } from '../knowledge_tree_bench/defaults.mjs';
 import { QUESTION_STRATEGIES,QUESTION_TYPES } from '../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
 import { applyReview,reviewTemplate,markdownReport,measure,trialSummary } from './metrics.mjs';
+import {applyCorrections,evidenceOf,seedOf} from './evidence.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(here,'../..');
 const sourceDefault=path.join(root,'scripts/knowledge_tree_bench/data/.logs');
-const files={'/ui/app.mjs':['ui/app.mjs','text/javascript'],'/ui/style.css':['ui/style.css','text/css']};
+const files={'/ui/app.mjs':['ui/app.mjs','text/javascript'],'/ui/evidence.mjs':['ui/evidence.mjs','text/javascript'],'/ui/style.css':['ui/style.css','text/css']};
 const idOk=id=>/^[\w-]{1,100}$/.test(id??'');
 const send=(res,status,value,type='application/json')=>{res.writeHead(status,{'content-type':type+'; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer'});res.end(type==='application/json'?JSON.stringify(value):value);};
 async function bodyOf(req){let text='';for await(const chunk of req){text+=chunk;if(Buffer.byteLength(text)>24*1024*1024)throw new Error('导入资料超过 24 MB');}return JSON.parse(text||'{}');}
 export async function startServer({port=0,outDir=path.join(root,'artifacts/quiz-bench'),sourceDir=sourceDefault,run=runQuizBench}={}) {
-  const token=randomBytes(24).toString('hex');let active=null;
+  const token=randomBytes(24).toString('hex');let active=null,curation=Promise.resolve();
   await fs.mkdir(outDir,{recursive:true});
   const reportOf=async id=>{
     if(!idOk(id))throw new Error('评测标识无效');
@@ -28,9 +29,10 @@ export async function startServer({port=0,outDir=path.join(root,'artifacts/quiz-
       if(error.code!=='ENOENT')throw error;
       report=JSON.parse(await fs.readFile(path.join(outDir,id,'state.json'),'utf8'));
       report.status=active?.id===id?'running':'interrupted';
-      for(const cell of report.cells)cell.metrics=measure({points:report.points,questions:cell.questions,conceptCache:cell.conceptCache,calls:cell.calls,gold:report.gold});
+      for(const cell of report.cells)cell.metrics=measure({points:report.points,questions:cell.questions,conceptCache:cell.conceptCache,calls:cell.calls,gold:report.gold,completions:Object.values(cell.jobs??{}).flatMap(j=>Object.values(j.checkpoint?.completions??{}))});
       report.trials=trialSummary(report.cells);
     }
+    try{report=applyCorrections(report,JSON.parse(await fs.readFile(path.join(outDir,id,'corrections.json'),'utf8')));}catch(error){if(error.code!=='ENOENT')throw error;}
     try{return applyReview(report,JSON.parse(await fs.readFile(path.join(outDir,id,'review.json'),'utf8')));}catch(error){if(error.code!=='ENOENT')throw error;}
     return report;
   };
@@ -65,6 +67,20 @@ export async function startServer({port=0,outDir=path.join(root,'artifacts/quiz-
       }
       const id=url.searchParams.get('id');
       if(url.pathname==='/api/report'&&req.method==='GET')return send(res,200,await reportOf(id));
+      if(url.pathname==='/api/evidence'&&req.method==='GET')return send(res,200,evidenceOf(await reportOf(id)));
+      if(url.pathname==='/api/seed'&&req.method==='GET')return send(res,200,seedOf(await reportOf(id),Number(url.searchParams.get('cell'))));
+      if(url.pathname==='/api/curate'&&req.method==='POST'){
+        const payload=await bodyOf(req);
+        const work=curation.catch(()=>{}).then(async()=>{
+          if(active?.id===payload.id)throw new Error('请先停止评测，再修订考点账本');
+          const report=await reportOf(payload.id),operations=[...(report.corrections?.operations??[])];
+          if(payload.undo)operations.pop();else {
+            applyCorrections(report,{datasetHash:report.datasetHash,operations:[payload.operation]});operations.push(payload.operation);
+          }
+          await atomicJson(path.join(outDir,payload.id,'corrections.json'),{datasetHash:report.datasetHash,operations});
+          return reportOf(payload.id);
+        });curation=work;return send(res,200,await work);
+      }
       if(url.pathname==='/api/review-template'&&req.method==='GET')return send(res,200,reviewTemplate(await reportOf(id)));
       if(url.pathname==='/api/log'&&req.method==='GET'){
         if(!idOk(id))throw new Error('评测标识无效');const log=await readLog(path.join(outDir,id,'events.jsonl'));
@@ -88,7 +104,7 @@ export async function startServer({port=0,outDir=path.join(root,'artifacts/quiz-
         event({kind:'run',id});
         try{
           let config=payload;
-          if(payload.resumeId){const state=JSON.parse(await fs.readFile(path.join(outDir,id,'state.json'),'utf8'));config={...state.config,dataset:{title:state.title,points:state.points,gold:state.gold},fixture:state.model==='fixture',model:state.model,baseUrl:state.provider,...payload,resume:true};}
+          if(payload.resumeId){const state=JSON.parse(await fs.readFile(path.join(outDir,id,'state.json'),'utf8'));config={...state.config,seedArtifact:state.seedArtifact,dataset:{title:state.title,points:state.points,gold:state.gold},fixture:state.model==='fixture',model:state.model,baseUrl:state.provider,...payload,resume:true};}
           else if(payload.sourceId){if(path.basename(payload.sourceId)!==payload.sourceId||!payload.sourceId.endsWith('.jsonl'))throw new Error('讲义来源无效');config={...payload,dataset:fromLectureLog((await readLog(path.join(sourceDir,payload.sourceId))).records,payload.sourceId.slice(0,-6))};}
           await run(config,{outDir:path.join(outDir,id),signal:controller.signal,onEvent:event});
         }catch(error){let message=String(error.message);if(payload.apiKey)message=message.split(payload.apiKey).join('[REDACTED]');event({kind:'error',message:message.slice(0,600)});}

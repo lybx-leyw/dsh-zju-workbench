@@ -1,0 +1,5 @@
+# Only dependencies needed by the two vendored scorer entry points.
+# Version is the exact version declared in upstream pyproject.toml.
+inspect-ai==0.3.132
+# Compatible API transport; use the already-tested host SDK version.
+openai==2.54.0
