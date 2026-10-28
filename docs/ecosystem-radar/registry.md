@@ -3326,3 +3326,39 @@
   与 `dsh-radar-research-market`（`dsh-research@0.4.4`）**可共存，但只能有一个 `allowInstall` 开着**。
 - `dsh-synapse` 的方法层教训：**高星候选先看 `files` 字段**。它只发 3 个 js、画布全内嵌 → 锁版挂载路线直接出局，
   一个字段省掉一次误判。
+
+### r90 · 2026-10-28 09:10 · C 组「双语字幕那条轨，一直都在」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `rockbenben/subtitle-translator` | B 其他JS | MIT | 课堂字幕 / 讲义原文层 | 重复可强化 | 🟡 | proposed | 2026-10-28 | ★1181，TS，push 2026-10-20，5.5 MB。核心设计（README 首句）：「**时间码在本地剥离，只把台词发给引擎**」—— 正是本仓缺的层。**但根包是 Next.js App**（deps 含 next/antd/deepl-node，**无 main/exports**）→ 不可 `npm i` 锁版；有价值处 `src/app/lib/translation/formats/subtitle.ts` **1525 行 83 KB、仅 1 个仓内 import**（`@/app/utils/textUtils` 的 `splitBySpaces`）→ 移植 ∝ 抄源码。`pipeline.ts`(91KB)/`registry.ts`(**245KB**) 是 27 家 LLM 适配矩阵，**与 DSH 模型层完全重复** ⛔。只取**方法**：`detectSubtitleFormat → filterSubLines(记物理行号) → assembleSubtitle(原位回填)`，即 F-1/F-2 修复该用的结构。**教训：高星 + 单一巨型源文件 → 先看有无 `main`/`exports`**（与 r89 `dsh-synapse` 看 `files` 同类） |
+| `Genei-Ltd/jssbd` | B 其他JS | MIT | 讲座 / 字幕断句 | 重复可强化（F-2 邻近） | 🔵 | proposed | 2026-10-28 | ★**0**，TS，2026-09 建仓。pySBD 的 JS 移植，**零依赖**、`exports` 双格式齐。**npm 包名 `@coloop-ai/jssbd@0.1.0`，registry 返回 `Not found`** → 不可锁版；★0 无外部使用。只作「断句规则从哪借」的线索；本仓 F-2 的信号（停顿 / 翻页 / section）已足够，不必引入 |
+| `plutado/0-0` | B 其他JS | MIT | 课堂回放 / 时间轴 | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★0，2026-10-21 建仓。零依赖 Web Component（视频 + 定时转写 + 章节卡）。**未发布 npm**（`0-0` 无 `dist-tags`）。功能面 ⊂ `core-player` + `page-study` → 边缘重复 |
+| `eatgrass/obsidian-lyrics` | B 其他JS | MIT | 音频 / 逐行高亮 | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★37，2024-02 后未动。Obsidian 插件（运行时依赖 `obsidian`），**只处理 LRC 歌词**，非字幕 → 对象不同，无增益 |
+| `hockyy/miteiru` | B 其他JS | **NOASSERTION** ⚠ | 外语视频学习 | 待核 | ⛔ | pending-license | 2026-10-28 | ★120，push 2026-10-26。日/粤/越语点击查词播放器。**许可证待人工核验 → 不采用、不摘任何代码** |
+| `CK-Explorer/DuoSubs` | B 其他JS | Apache-2.0 | 双语字幕合并 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★15，**Python**（语义对齐 + 合并）→ 非 JS 栈 |
+| `NLINEA/SubDuet` | B 其他JS | MIT | 双语字幕 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★94，**Python**，面向 Plex/Jellyfin 落盘 → 非 JS 栈、非 Web 形态 |
+| `jasperchou57/subtitleops` | B 其他JS | **NOASSERTION** ⚠ | 字幕格式转换 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★0 在线工具站。能力 ⊂ 在册 `vidstack/captions`（media-captions），且许可证不明 |
+| `begin0808/LiveCaption_Global`、`begin0808/LiveCaption` | B 其他JS | **`null`** ⛔ | 实时双语字幕 | — | ⛔ | rejected | 2026-10-28 | ★40 / ★102，实时 ASR + 翻译。**无许可证** → 仅线索；且实时识别是另一条路（本仓走存档回放） |
+
+**r90 审计结论：`english` 字段断链（可复现）**
+
+- 断言复核：`grep -rn '\.english\b' packages/ --include=*.js | grep -v node_modules` → **仅 1 条**，
+  且是 radar 骨架自己的注释（`dsh-radar-media-captions/src/index.js:30`）。**确认 `english` 无任何读者**。
+- 生产端：`packages/dsh-zhiyun-source-classroom/src/models.js:63` `subtitle()` 返回
+  `{startMs, endMs, text, english}`，`english` 取自浙云 API 的 **`TransText`**（自带中英对照列）。
+- **顺序修正（本轮增量）**：F-1（`workbench.js` 的 `join("")` 无分隔）**必须先修**，再上双语；
+  否则双语只是把「无分隔的中文」复制成两份。F-2 断句信号（`endMs→startMs` 停顿 /
+  `slide.startMs` 翻页 / section 时间链）**已在手，无需引入上游**。
+- ⚠ 边界：`grep` 未覆盖 `apps/` 与 `deploy/`；且**未验证 `TransText` 在所有课程上非空**
+  （上游字段存在 ≠ 每节课都有英文）。**若多数为空，应从 `subtitle()` 返回值里删掉该字段，而不是为它建 UI。**
+
+**r90 方法沉淀**
+
+- **「窄词 total=1~5」同样没有信息量**：第 5/6/9 次搜索 total 分别 1/1/1，剩下来的是 ★0 新仓或非 JS。
+  建议把放宽门槛从「=0」改为「**< 5 且前排无 JS 库**」；若放宽后**只会回到已扫过的宽词**，
+  应**显式放弃并写明理由**（本轮即如此，非疏漏）。
+- **「字幕」方向记已见底**（`subtitle aligner` 109 / `bilingual subtitles` 422 前排几乎全为 Python 或独立 App；
+  JS 生态无第二个可锁版字幕库）。下轮若跑 C 组，改「考试 / 刷题」或「锻炼」侧。
+- **同日第 4 轮（00/03/06/09）第二次撞上 `same-day(exhausted)`**：该分支只报「三组都跑过」，
+  不给「哪组最早 / 哪组还有未挖关键词」→ 建议 `radar-rotation.mjs` 加 `--why`。本轮人工取 **C**。
