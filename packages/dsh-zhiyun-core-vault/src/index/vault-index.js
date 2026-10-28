@@ -133,6 +133,12 @@ export function buildIndex(notes) {
     const title = titleOf(path);
 
     const outlinks = [];
+    // 同一篇里连到同一目标的次数。`[[a]]` 写两遍是**同一段关系**，不是两条边 ——
+    // 但用户确实可能重复写，计数要留着（`weight`），只是不能让 `inDegree` 翻倍。
+    // （原实现直接把每条 wikilink 推进 `edges`，于是 `inDegree` 记成 2，
+    //   画出来的图边数比实际关系多。这条来自生态雷达 r40 的 `vault-graph` 候选
+    //   所记的 F-4；其余 F-1/F-2/F-3 实测均不成立，未采纳。）
+    const seenTargets = new Map();
     for (const link of wikilinks) {
       // `[[#小节]]`（空目标）是**本文内跳转**，不是跨笔记链接。
       // 它不该进未解析清单 —— 那是用户自己文内的锚点，本来就没有对应的笔记文件。
@@ -154,10 +160,22 @@ export function buildIndex(notes) {
         continue;
       }
       outlinks.push({ target, heading: link.heading, blockId: link.blockId, alias: link.alias });
-      edges.push({ from: path, to: target, kind: 'link' });
+      // 折叠重边：同一 (from, target) 只留一条边，重复次数记在 `weight`。
+      // `heading` / `blockId` 不同仍是同一条关系（都指向这篇笔记），不拆边。
+      const prev = seenTargets.get(target);
+      if (prev) {
+        prev.weight += 1;
+        continue;
+      }
+      const edge = { from: path, to: target, kind: 'link', weight: 1 };
+      seenTargets.set(target, edge);
+      edges.push(edge);
     }
 
     // 嵌入也连边，但标成另一种 kind：图谱要能区分"引用"与"把内容搬过来"。
+    // 嵌入是**独立的一种关系**，不与上面的 `link` 折叠：一篇既 `[[a]]` 又 `![[a]]`
+    // 确实表达了两种意图。只有同为 embed 的重复才折叠。
+    const seenEmbeds = new Map();
     for (const embed of embeds) {
       const target = resolver.resolve(embed.target, path);
       if (target === null) {
@@ -172,7 +190,14 @@ export function buildIndex(notes) {
         });
         continue;
       }
-      edges.push({ from: path, to: target, kind: 'embed' });
+      const prev = seenEmbeds.get(target);
+      if (prev) {
+        prev.weight += 1;
+        continue;
+      }
+      const edge = { from: path, to: target, kind: 'embed', weight: 1 };
+      seenEmbeds.set(target, edge);
+      edges.push(edge);
     }
 
     notesMap.set(path, { path, title, outlinks, tags: noteTags.map((t) => t.tag) });
@@ -206,13 +231,19 @@ export function buildIndex(notes) {
   for (const arr of backlinks.values()) arr.sort((a, b) => a.from.localeCompare(b.from));
 
   const graph = {
-    nodes: [...notesMap.values()].map((n) => ({
-      id: n.path,
-      title: n.title,
-      inDegree: (backlinks.get(n.path) ?? []).length,
-      outDegree: n.outlinks.length,
-      tags: n.tags,
-    })),
+    nodes: [...notesMap.values()].map((n) => {
+      // 出入度按**折叠后**的关系数算，不按书写次数：`[[a]]` 写两遍仍是一条关系。
+      // `backlinks` 保持逐次记录（面板要显示「a 在第 3 行提到我」），故单独去重。
+      const inTargets = new Set((backlinks.get(n.path) ?? []).map((b) => b.from));
+      const outTargets = new Set(n.outlinks.map((o) => o.target));
+      return {
+        id: n.path,
+        title: n.title,
+        inDegree: inTargets.size,
+        outDegree: outTargets.size,
+        tags: n.tags,
+      };
+    }),
     edges,
   };
 
