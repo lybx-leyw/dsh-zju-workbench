@@ -236,6 +236,8 @@ scripts/OWNERS                              Owner: @bob, @carol + Open
 
 本项目的功能单位是插件包（`packages/dsh-zhiyun-*`），不是往某个大插件里塞代码。贡献一个新功能，就是提供一个包，或改动已有的包；改动某一页时只动对应的包（各包职责见 [README](../../README.md) 与包内的 `README.md`）。
 
+> `packages/radar/` 下的 `dsh-radar-*` 是生态雷达的**候选骨架**，不是正式包，不参与构建与 profile。把骨架变成正式包（以及不转正时怎么处置）按 [RADAR.md](./RADAR.md) 执行；其中**保守废弃原则**要求：只有能力全部被提取或用户明确要求才删骨架，仅提取部分能力时只标记、不删除。
+
 **插件包怎么写没有额外规定，参考现成实现即可**：
 
 - `.ref/`（DeepSeek Harness）与 `.ref-codex-ui/` 里有大量插件包与 profile 组合的实例：包清单、宿主半边、浏览器半边、插槽注册都能找到对应的写法（获取方式见 1.4）。
