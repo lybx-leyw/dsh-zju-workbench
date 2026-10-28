@@ -1,0 +1,14 @@
+{
+  "name": "dsh-radar-week-parser",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】课表周次归一化（周次字符串→周次数组、第 1 周周一反推），为「导出 .ics」补上缺失的周次语义（强化式集成，须与 dsh-radar-ics-export / dsh-radar-ics-rrule 串联）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {}
+}

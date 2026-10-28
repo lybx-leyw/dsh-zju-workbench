@@ -3488,3 +3488,42 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `nextapps-de/flexsearch` | 第 3 次复核（笔记正文语境） | **维持 ⛔**。2026-10-26 已实跑 `0.8.212`：默认 `Index` 中文 0 命中、`tokenize:'full'` 才命中。换引擎会同时推翻 `search-rank`（minisearch）与 `search-segment`（jieba-wasm）两条在途线 |
 | `fengkx/jieba-wasm` | 与笔记正文的关系 | **维持 🔵，但补一条正向关系**：与 `dsh-radar-note-fulltext` 是**互补**而非替代 —— 若要「高数」能搜「高等数学」，应在骨架**之上**拼 jieba 分词，不是换索引引擎 |
 | `hotoo/pinyin` / `Kaifuny/pinyin4js` / `breezewish/pinyinlite` / `yanyiwu/nodejieba` | 笔记正文语境 | 均维持原级，无新证据 |
+
+### r96 · 2026-10-29 03（C 组 · 课表周次语义）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `wowhao333/shou-graduate-calendar-exporter` | B 其他JS（MV3 扩展 + 油猴） | **MIT** ✅（LICENSE 首行实核） | 课表导出 | **重复且可强化** | 🟢 | skeleton-created | 2026-10-29 | 2026-10-29 | ★0，v0.1.1，push 2026-09-20，37 KB，纯 ESM。**只借 `core/schedule.js` 的两个纯函数**：`parseWeeks()` 中文周次表达式解析（`1-8,10-16周(单)`）+ `inferWeekOneMonday()` 投票反推第 1 周周一。**不借** `exporters.js`（75B 折行 / 手写 VTIMEZONE / stableUid 本仓均已测更优）。上游单双周判定 `含单?1:含双?0` 有**静默丢课**缺陷，本仓须修正 → `dsh-radar-week-parser` |
+| `khosbilegt/mq-timetable-exporter` | B 其他JS（MV3 扩展） | **MIT** ✅（LICENSE 实核） | 课表导出 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★2，push 2026-01-21。单校硬编码（Macquarie），逻辑即「抓 DOM → 拼 ICS 字符串」，无可借底层、无解析层。与 `ics-export` 完全同构 |
+| `nsamarin/Timetable2Calendar` | B 其他JS（Express） | Apache-2.0 | 课表导出 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★0，2017 停更。MyEd 单校 + Express 服务端形态，仓库 9 年未动。同构无增益 |
+| `RunasSudo/allocics.js` | B 其他JS | **AGPL-3.0** ⛔ | 课表导出 | — | 排除 | rejected | 2026-10-29 | — | ★2。Allocate+ 单校导出。**AGPL 不在白名单，不摘任何代码，只登记** |
+| `parthbuilds-community/FitMart` | B 其他JS（MERN） | MIT | 无（健身器材**电商**） | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★383（本轮最高星）。但它是**电商平台**（Razorpay 支付 + 管理后台），语义与「锻炼记录」无关。判据①「同一面板」不成立 |
+| `joshhedstrom/healthTracker` | B 其他JS | MIT | 锻炼记录 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★60，2020 停更。本仓**无锻炼面板**，判据①不成立；MERN 全栈适配成本 >> 收益 |
+| `Open-Code-Crafters/FitFlex` | B 其他JS | MIT | 锻炼记录 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★54，push 2024-11。同上，减重计划静态内容站，无算法可借 |
+| `kritika27/fitness-tracker-mern-stack-app` | B 其他JS（MERN） | Apache-2.0 | 锻炼记录 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★34，2023 停更。典型课程作业，CRUD 无底层 |
+| `youngbryanyu/titan-health-app` | B 其他JS | MIT | 锻炼记录 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★20，push 2026-02。**核心价值绑定 Purdue 食堂菜单 API**，对浙大零迁移可能 |
+| `TraceApps/lifttrace` | B 其他JS | **AGPL-3.0** ⛔ | 锻炼记录 | — | 排除 | rejected | 2026-10-29 | — | ★121，push 2026-10-28（活跃）。「本地优先 + 无遥测 + 单容器」思路可读 README 借鉴，**代码一律不摘** |
+| `sb-decoder/inquizzitive` | B 其他JS（React + Supabase + Gemini） | MIT | 刷题 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★22，push 2025-10。依赖 **Supabase 服务端 + Gemini API**，与本地优先冲突；复习算法不如本仓已有 FSRS / BKT 系列 |
+| `MaitisamY/flashcard-quiz` | B 其他JS（Vite） | MIT | 刷题/闪卡 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★8，2024。无间隔重复算法的一次性闪卡，**不如** `fsrs-browser` / `fsrs-scheduler` |
+| `nosadaniel/kcna_cert_demo_quiz` | B 其他JS | MIT | 考试刷题 | 题目无关 | 🔵 | proposed | 2026-10-29 | — | ★16，push 2025-07。K8s 认证题库 + 随机抽题。**无可复用判题/推荐算法**，仅题库数据 |
+| `pnguyen72/1712quiz` | B 其他JS | MIT | 考试刷题 | 题目无关 | 🔵 | proposed | 2026-10-29 | — | ★12。单门课（COMP 1712）练习站，无算法 |
+| `zghanw/aws-ai-business-strategist` | B 其他JS | MIT | 考试刷题 | 题目无关 | 🔵 | proposed | 2026-10-29 | — | ★12，push 2026-10。AWS 认证 340 题 + 计时模考。有「域权重」思路可读，代码无增益 |
+| `CuriousHack/altquiz` | B 其他JS | MIT | 考试刷题 | 题目无关 | 🔵 | proposed | 2026-10-29 | — | ★6。AltSchool 入学测，无算法 |
+| `vihaan-that/NoteThat` | B 其他JS（iOS 原生） | MIT | 笔记 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★2，push 2025-07。**iOS 原生 App**，JS 侧仅占位。形态不符 |
+| `cubetastic33/sakubun` | B 其他JS | **GPL-3.0** ⛔ | 日语刷题 | — | 排除 | rejected | 2026-10-29 | — | ★41。GPL 不在白名单，只登记 |
+| `benfngu/chimpread` | B 其他JS（macOS 原生） | **AGPL-3.0** ⛔ | 论文阅读 | — | 排除 | rejected | 2026-10-29 | — | ★0，push 2026-10。macOS 原生论文阅读器（annotation + Zotero 迁移），形态不符 + AGPL |
+| `TranHuuDat2004/aptis-practice` | B 其他JS | **`NOASSERTION`** ⚠ | 考试刷题 | — | ⚠ 待核 | pending-license | 2026-10-29 | — | ★27，push 2026-05。**待人工核验，不采用、不摘任何代码** |
+
+> **r96 无许可证排除清单（22 个，`license: null`，一律 ⛔ 只登记不入表）**：
+> `jonniechow/RogueStockBot`、`LorenKociko/CCNA-Practice`、`dharanishselvarajsumathi/FIT_TRACKER`、
+> `joce1ynn/fitness-tracker-MERN`、`vaibhav-mougha/WEFIT`、`Jones-6199/NutriFlow`、
+> `rajashree27/MyFitnessPal-Clone`、`romarioraffington/react-native-fitness`、
+> `linkedin-faq/quizzes-practice-app`、`kodekloudhub/yaml-quiz`、`349aditya/quiz-web-app`、
+> `JMADA257/JS-Quiz`、`techntv/ielts`、`Pkorirdarius/Medical_reminder_App-Medisauti`、
+> `thegempire/WhatINoted`、`ReesMcD/OCR-Note-App`、`suyuhao1206/zhike-notes-core`、
+> `navlemis/timetablext`、`TeoTzeShuen/timetable-exporter`、`Jay-Nepal/sunway-izone-timetable-export`、
+> `umaidsiddiqui10/dayplan`、`PNRYates/knoxi-calendar`、`JimmyBlackley/sols-calendar`、
+> `SparksFlash/study-routine`、`geo1337/webunits-to-ics-extension`、`KohTongLiang/note-taking-with-OCR`、
+> `Hexotrion/OCR-NoteKeeper`、`Kruthi-choudary/Notifyy-ai`、`aranyoray/VideoGrabTranscriptCopier`、
+> `jogarbaut/mern-keeper`、`PardhavMaradani/vit-timetable-export-plugin`。
+> **注意**：`timetable ics export` 15 个结果里 **11 个无许可证** —— 课表导出是「功能对口但许可证全裸」的高发区。
