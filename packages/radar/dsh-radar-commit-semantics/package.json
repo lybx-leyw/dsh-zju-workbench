@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-commit-semantics",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 tiny-conventional-commits-parser（conventional commit 解析），把「一行裸提交信息」变成带 type/scope/breaking/引用 的结构化语义，供插件页发布记录与基线告警共用",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "tiny-conventional-commits-parser": "0.1.0"
+  }
+}

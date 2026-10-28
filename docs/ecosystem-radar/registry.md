@@ -3527,3 +3527,48 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 > `Hexotrion/OCR-NoteKeeper`、`Kruthi-choudary/Notifyy-ai`、`aranyoray/VideoGrabTranscriptCopier`、
 > `jogarbaut/mern-keeper`、`PardhavMaradani/vit-timetable-export-plugin`。
 > **注意**：`timetable ics export` 15 个结果里 **11 个无许可证** —— 课表导出是「功能对口但许可证全裸」的高发区。
+
+## 2026-10-29 · r97 · B 组（开发者向词面 · 轴「**提交信息里的语义 —— 本仓在发布链路上没有解析器**」）· 追加
+
+> **取组**：`scripts/radar-rotation.mjs` 实跑 → `same-day(unused)` → **B**。
+> 但 B 组老四词在 r93 已逐页验证见底，故改用 **B 组 · 开发者向词面**（工程语义），组名仍记 B。
+> **轴怎么来的**：不是从关键词倒推 —— 先 `grep -rniE "conventional|BREAKING CHANGE|breaking "`
+> 在 `packages/dsh-zhiyun-*` 与 `scripts/` 下命中 **0**，确认「提交信息」这条链在本仓是纯文本。
+> **搜索 6 次**（未达上限 10），0 次 403，**完整**。新面孔 **16 行**（🟡3 / 🔵9 / ⛔4），
+> 另 3 个 GPL 系仓库只在 §备注清单留痕、不入正表。**`NOASSERTION` 0 个**。
+> **本轮骨架** `packages/radar/dsh-radar-commit-semantics`（B 类 · 锁版 `tiny-conventional-commits-parser@0.1.0` · **强化式集成**，但判据③只在「改正上游一处错误」上成立 → 候选本身 🟡）。
+>
+> **为什么最高★的五个全被否**：`qoomon`(646,GPL) / `semantic-release/github`(542) / `commit-analyzer`(446) /
+> `release-notes-generator`(368) / `semantic-release/changelog`(341) —— 后四个是**发版流水线的插件**，
+> 本仓无 `semantic-release`，判据①「同一面板」不成立。**★ 数与可集成性本轮呈负相关。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `northword/tiny-conventional-commits-parser` | B 其他JS（TS） | **MIT** ✅ | 开发/发布（插件作者看发布记录） | **重复可强化** | 🟡 | skeleton-created | 2026-10-29 | 2026-10-29 | ★2，push 2026-09-05，npm **`0.1.0` 可锁**，`src/` 4 文件 **5.2 KB**，**零传递依赖**，ESM-only（`exports["."]`→`dist/index.mjs`）。**沙箱实测上游 `src/parse.ts` 两个正则**（Node 22.13.0）：①`我顺手 fix 了导出: 这个真绝`→**null**（中文前导字符挡掉，「无行首锚会误命中」的担心**不成立**）；②`Fix: 大写仍命中`→`type:'Fix'` **类型未归一**；③`BreakingRE=/breaking[ -]changes?:/i` 对正文 `本提交不构成 breaking change:` 与 `Body mentions breaking-change:` 均 **true** → **否定句/随口提及被判成破坏性变更**；④引用去重只按 `value` → 两个循环顺序反过来，`(#128)` 变成 `{type:'issue'}`。**⑤ 未验证格**：「插件页发布记录 / 基线告警」是否真的展示提交语义（若否，判据②不成立 → 应作废） |
+| `luxass/commit-parser` | B 其他JS（TS） | **MIT** ✅ | 开发/发布 | 重复可强化 | 🟡 | proposed | 2026-10-29 | — | ★1，push 2026-10-28（活跃）。功能与上者重叠、额外提 metadata（type/scope/breaking/refs）。**无 npm 版本**（未发布）→ 不可锁版，只能读规格 |
+| `denosaurs/commit` | B 其他JS（**Deno 原生**） | **MIT** ✅ | 开发/发布 | 重复可强化 | 🟡 | proposed | 2026-10-29 | — | ★10，push 2025-11。**无 `package.json`**（Deno 优先），无法作为 Node 依赖锁版；conventional commits 规范的参考实现之一，只作规格来源 |
+| `semantic-release/commit-analyzer` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★446，push 2026-10-28。**`semantic-release` 的 `analyzeCommits` 插件**，本仓无该宿主 → 判据①不成立 |
+| `semantic-release/release-notes-generator` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★368。同上；拖 `conventional-changelog-angular/writer` + `conventional-commits-filter/parser` 一串依赖 |
+| `semantic-release/changelog` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★341。同上（写 CHANGELOG 文件，本仓不需要） |
+| `semantic-release/github` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★542（本轮最高★）。发布 GitHub Release + 评论 PR，与本仓无关 |
+| `momocow/semantic-release-gitmoji` | B 其他JS | MIT ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★101。gitmoji→semver 的**映射表**可读，但仍是发版插件，不属本仓链路 |
+| `nytimes/Chronicler` | B 其他JS | Apache-2.0 ✅ | 开发/发布 | 重复且无增益 | 🔵 | proposed | 2026-10-29 | — | ★162，push 2026-04。「更好的写 release notes 的方式」是**编辑器/工作流**形态，非库；理念（按用户视角分层）可读 |
+| `arthur-ai/louisa` | B 其他JS | MIT ✅ | — | 重复且无增益 | 🔵 | proposed | 2026-10-29 | — | ★6，push 2026-10-28。`private:true` 的 **Vercel webhook 服务**，依赖 `@anthropic-ai/sdk` + OpenTelemetry；形态与「本地优先」冲突 |
+| `PKief/changelog-machine` | B 其他JS（TS） | MIT ✅ | — | 重复且无增益 | 🔵 | proposed | 2026-10-29 | — | ★3，push 2026-10-27。CLI 工具，无库导出面 |
+| `urielabin/changelog-forge` | B 其他JS（TS） | MIT ✅ | — | 重复且无增益 | 🔵 | proposed | 2026-10-29 | — | ★0，push 2026-07。输出 MD/JSON/HTML，同上 |
+| `david-engelmann/logsmith` | B 其他JS（TS） | MIT ✅ | — | 重复且无增益 | 🔵 | proposed | 2026-10-29 | — | ★0，push 2026-08。同上 |
+| `FerrowAI/conventional-changelog-lite` | B 其他JS（TS） | MIT ✅ | — | 重复且无增益 | 🔵 | proposed | 2026-10-29 | — | ★0，push 2026-08。**零依赖**、同款「解析 + 建议 semver bump」，但 ★0 无任何验证面 |
+| `commenthol/conv-changelog` | B 其他JS | MIT ✅ | — | 重复且无增益 | 🔵 | proposed | 2026-10-29 | — | ★0，2023-12 停更 |
+| `jefflinse/pr-semver-bump` | B 其他JS（GitHub Action） | MIT ✅ | — | 重复且无增益 | 🔵 | proposed | 2026-10-29 | — | ★28，push 2026-06。Action 而非库 |
+
+> **本轮许可证不达标留痕（3 个，一律 ⛔ 只登记、不摘任何代码）**：
+> `qoomon/git-conventional-commits`（**GPL-3.0**，★646 —— 全体最高★，功能最对口，但许可证直接排除）、
+> `Automattic/semantic-release-version-bump`（**GPL-2.0**，★4）、
+> `enshittification/inevitable-semantic-release-version-bump-backup`（**GPL-2.0**，★0）。
+>
+> **同轮发现的工具缺陷（记在此处备查，未改代码）**：`scripts/radar-rotation.mjs` 在 06:00 一轮报
+> `last_run_at=2026-10-29 00:15`，而 r96（03 时段）确实推过（提交 `d302743`，03:03）——
+> **r96 的状态写回没落地**；同时脚本在 CST 06:05 仍把今天判成「只跑过 C」。
+> **两个缺陷方向相反、恰好互相抵消**，输出「看起来对」。只修其中任一个，输出仍会是 B，
+> 但依据将从「错误抵消」变成「真实状态」—— 不能因为现在结果对就认为脚本是对的。建议加断言：`last_run_at` 日期 ≠ 最新报告日期 → 直接退出。
+> 详见 `2026-10-29-06.md` §6。
