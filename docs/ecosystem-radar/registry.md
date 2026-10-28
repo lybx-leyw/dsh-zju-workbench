@@ -3460,3 +3460,31 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `xueelf/dsh-plugin-danmu` | A 原生DSH | **MIT** ✅ | —（弹幕入会话） | 全新 | 🔵 | proposed | 2026-10-28 | ★0，push 2026-10-27（很新）。251 KB，把 B 站弹幕实时插入 agent 上下文。既非学生刚需也非本仓方向 → 登记观察，待有真实使用场景再评 |
 | `null119/dsh-persona-manage` | A 原生DSH | **MIT** ✅ | — | 重复且无增益 | ⛔ | rejected | 2026-10-28 | ★6。改的是**部署级 system prompt**，与宿主设置里已有的 persona 层重叠；本仓无同类面板，谈不上「同一面板强化」→ 重复且无增益。另：改部署级 prompt 属越权面 |
 | `TaurusWood/dsh-plugin-appshot` | A 原生DSH | **MIT** ✅ | — | 全新但无关 | ⛔ | rejected | 2026-10-28 | ★5，仓库 **18.9 MB**（含截图产物）的「工具模板」，功能是截屏。体积说明没做产物治理，功能与学生场景无关 |
+
+## 2026-10-29 · r95 · C 组（轴「**笔记的全文检索：找得到 ≠ 排得准**」）· 追加
+
+> **取组**：`scripts/radar-rotation.mjs` 实跑 → `formula(new-day)` → **C**（2026-10-29，积日 302，`302%3=2`）。
+> 上一轮 r94 为 A 组，跨天走规则 1，两者不冲突。
+> **轴怎么来的**：不是从关键词池照抄 —— 先看本仓检索面已有 4 个骨架（`search-rank` / `search-segment` /
+> `note-search` / `search-fuzzy`），发现**没有一个作用于笔记正文**，于是拿「笔记全文」当轴去搜。
+> **搜索 8 次**（未达上限 10），0 次 403，**完整**。新面孔 7 行（🟢1 / 🔵4 / ⛔2），另 1 行 `NOASSERTION` 单列。
+> **本轮骨架** `packages/radar/dsh-radar-note-fulltext`（B 类 · 锁版 `clientside-search@1.8.1` · 强化式集成）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `kyr0/clientside-search` | B 其他JS（纯库） | **MIT** ✅（`/license` 1,069 B 实核） | 笔记·正文检索 | **重复且可强化**（`page-notes` 的 `buildRows()` 只看路径） | 🟢 | skeleton-created | 2026-10-29 | 2026-10-29 | ★12，push **2023-07-21**（近三年未更新 = R-1）。npm **`clientside-search@1.8.1` 可锁**，`dependencies` **不存在**（零依赖），ESM 23,338 B + `en.esm.js` 14,042 B。**缺口实测**：`client.jsx:128-131` 只 `.includes(path)`；`vault-index.js:203` 的 `notesMap.set` 不含正文；`core-knowledge.search()` 是别的域 → 本仓**零**笔记正文索引。**E-1** `new SearchEngine(undefined)` **抛 TypeError**（读 `stopwords`），必须显式传语言包；**E-2** 语言包**无中文**，`en.tokenizer('守恒')→['守恒']` 整串一个 token、`isLogograhic` undefined → 无分词；**E-3** 子串命中成立（`行最简形`/`行 最简形` 均中）；**E-4 ⚠ 最关键**：`score` 是单查询 **min-max 归一化**，两篇等长文档 `1.000/1.000`、一短一长也 `1.000/1.000` → **只命中文档之间排序不可信**，**判据③仅部分成立**；**E-5** 2000 篇×600 字建索引 286 ms、查询 0.1–0.6 ms、`hydrateState` 1.49 MB / 反序列化 375 ms。R-4 客户端逐篇 `notes('read')` = N 次 IPC（TODO-0 裁决）；R-5 `id` 是**内容哈希**，改一字换 id + 6 个失效入口（TODO-4）。**不塞进 `search-rank`**：后者边界写死「只对已算好的 hits 重排，不增删」。骨架 `dsh-radar-note-fulltext` |
+| `JohnXu22786/semantic-search` | A 原生DSH | **MIT** ✅（1,068 B 实核） | 代码检索（**非**笔记） | 全新（对象不同：代码≠笔记） | 🔵 | proposed | 2026-10-29 | — | ★2，push 2026-10-24（当日活跃），topics `deepseek-harness`/`dsh-plugin`，223 KB。fragment 级 + 符号感知索引、lexical embedding 或 OpenAI 兼容端点、hybrid vector+BM25。**压级理由**：学生主线是笔记/论文/课表/刷题，**在工作台里读代码库**不是学生场景；且与本轮轴（笔记正文）不是同一对象。若将来该需求成立，应开 A 组单独复核（并核 `inject` 面） |
+| `tobi/qmd` | B 其他JS（**CLI**） | **MIT** ✅（1,072 B 实核） | 知识库检索 | 全新（**形态不符**） | 🔵 | proposed | 2026-10-29 | — | **★30,712 —— 本轮最高星**，push 2026-10-15，8.7 MB。方向最对（本地全文 + 语义）。**但 npm `2.8.3` 依赖含 `node-llama-cpp@3.20` / `better-sqlite3@^13` / `sqlite-vec@0.1.9` / `@modelcontextprotocol/server@2.0`** → 原生模块 + 本地模型 + **CLI 形态**，DSH 前端无法直用。**价值在路线**（本地向量 + 关键词混合 + 本地模型），不在直接集成 |
+| `fergiemcdowall/search-index` | B 其他JS（纯库） | **MIT** ✅（1,077 B 实核） | 笔记·全文检索 | 重复且无增益（引擎位已由 minisearch 占） | 🔵 | proposed | 2026-10-29 | — | ★1,423，push 2026-10-28（很活跃），仓库 **22.3 MB**（多包 monorepo）。卖点「persistent + network resilient」都要**自带存储层**（LevelDB/framework）→ 笔记库在宿主域里，多一套落盘 = 第二真源；与 `dsh-radar-search-rank` 的 minisearch 位置重叠且更重 |
+| `s2b-dev/smart-second-brain` | B 其他JS（Obsidian 插件） | **MIT** ✅（1,102 B 实核） | 笔记检索 + 知识图谱 | 重复且可强化 | 🔵 | proposed | 2026-10-29 | — | ★1,326，push 2026-10-13。**`npm view @s2b-dev/smart-second-brain` → E404**（未发布）→ **不可锁版 = 硬阻塞**（与本 skill「不搬运上游源码」冲突）。仓库 11.3 MB，依赖 `obsidian` 运行时，抽取成本高于收益 |
+| `flowing-abyss/obsidian-hybrid-search` | B 其他JS（Obsidian 插件） | **MIT** ✅（1,070 B 实核） | 笔记混合检索 | 重复且可强化 | ⛔ | rejected | 2026-10-29 | — | ★115，push 2026-10-26，仓库 **51,546 KB（51.5 MB）**，含 SQLite + 向量 + MCP server。Obsidian 插件形态 + 51 MB → 抽取成本远超收益，按「重复且无增益」拒绝 |
+| `qawatake/obsidian-core-search-assistant-plugin` | B 其他JS（Obsidian 插件） | **MIT** ✅（1,065 B 实核） | 笔记搜索 UI | 重复且无增益 | ⛔ | rejected | 2026-10-29 | — | ★126，push 2026-10-24。给 Obsidian **内置搜索**加键盘界面 / 卡片预览 / 更大预览 —— **纯 UI 增强，无索引、无检索算法**；本仓笔记页也不是 Obsidian 内置搜索，没东西可对齐 |
+| `brianpetro/obsidian-smart-connections` | B 其他JS（Obsidian 插件） | **`NOASSERTION`** ⚠ | 笔记关联推荐 | — | ⚠ 待核 | pending-license | 2026-10-29 | — | ★5,524，push 2026-10-10。**待人工核验，不采用、不摘任何代码**。功能（写作时推荐相关笔记与摘录）与本轮轴相邻但不同（是**推荐**不是**检索**） |
+
+### r95 在册复核（不新增，仅记结论）
+
+| 仓库 | 复核焦点 | 结论 |
+| --- | --- | --- |
+| `nextapps-de/flexsearch` | 第 3 次复核（笔记正文语境） | **维持 ⛔**。2026-10-26 已实跑 `0.8.212`：默认 `Index` 中文 0 命中、`tokenize:'full'` 才命中。换引擎会同时推翻 `search-rank`（minisearch）与 `search-segment`（jieba-wasm）两条在途线 |
+| `fengkx/jieba-wasm` | 与笔记正文的关系 | **维持 🔵，但补一条正向关系**：与 `dsh-radar-note-fulltext` 是**互补**而非替代 —— 若要「高数」能搜「高等数学」，应在骨架**之上**拼 jieba 分词，不是换索引引擎 |
+| `hotoo/pinyin` / `Kaifuny/pinyin4js` / `breezewish/pinyinlite` / `yanyiwu/nodejieba` | 笔记正文语境 | 均维持原级，无新证据 |

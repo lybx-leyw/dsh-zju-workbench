@@ -1,0 +1,12 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**，不得写入
+# profiles/zhiyun-bench/package.json 的 dsh.profile.bundles。
+#
+# B 类骨架：本包不引上游 DSH 插件，只是一个**能力封装层**（把 clientside-search 的
+# 索引/打分管到「笔记」页的目录过滤上）。挂载后它只 `provide` 一个服务
+# `radarNoteFulltext`，页面侧是否调用由**评审后**的改造决定（本骨架不改任何现有页面）。
+#
+# 与 A 类骨架的差别：这里 `insert` 的是本包自己，`name` 就是 npm 包名；
+# 上游 `clientside-search` 是普通 npm 依赖，不进 Loader，因此这里**没有**第二行 insert。
+- insert:
+    - id: radar-note-fulltext
+      name: dsh-radar-note-fulltext
