@@ -44,6 +44,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
+// 图谱渲染是独立包（`dsh-zhiyun-graph-render`，整包移植自雷达候选 note-graph）：
+// 页面只负责把 vault 的 graph 读数递进去，不背 cytoscape 这份依赖。
+import { NoteGraph, css as graphCss } from 'dsh-zhiyun-graph-render';
 import css from './style.css';
 
 export const name = 'zhiyun-page-notes-client';
@@ -166,6 +169,9 @@ function ancestorsOf(rel) {
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunNotesPageStyle', css, label: 'zhiyun: notes page styles' });
+  // 图谱的样式随包走（`dsh-zhiyun-graph-render` 导出自己的 css），
+  // 页面只负责在同一个 ctx 里挂上 —— 样式归属跟着组件走，不散落在页面里。
+  mountStyle(ctx, { attribute: 'zhiyunGraphRenderStyle', css: graphCss, label: 'zhiyun: graph render styles' });
   ctx.slots.inject('zhiyun.notes.content', () => ctx.slots.register(
     { name: 'zhiyun.notes.content', priority: 10 },
     NotesLibrary,
@@ -216,7 +222,7 @@ function TabStrip({ tabs, active, onPick, onClose, onCreate }) {
 }
 
 /** 右栏：这篇笔记的操作 + 反链 / 出链 / 标签。 */
-function NoteRelations({ name, markdown, backlinks, tags, onOpen, onRename, onRemove, busy }) {
+function NoteRelations({ name, markdown, backlinks, tags, graph, onOpen, onRename, onRemove, busy }) {
   const parse = useMemo(() => {
     const links = [...String(markdown).matchAll(/\[\[([^\]\n]+)\]\]/g)]
       .map((m) => m[1].split('|')[0].split('#')[0].trim())
@@ -255,6 +261,8 @@ function NoteRelations({ name, markdown, backlinks, tags, onOpen, onRename, onRe
           <button type="button" className="zs-nt-ref" onClick={() => onOpen(b.from.replace(/\.md$/i, ''))}>{b.fromTitle}</button>
         </li>)}</ul>}
     </section>
+
+    <NoteGraph graph={graph} current={name ? `${name}.md` : ''} onOpen={(p) => onOpen(p.replace(/\.md$/i, ''))} />
 
     <section>
       <h3>指向 <span>{parse.links.length}</span></h3>
@@ -312,6 +320,8 @@ export function NotesLibrary() {
   const [notice, setNotice] = useState(null);
   const [backlinks, setBacklinks] = useState([]);
   const [allTags, setAllTags] = useState([]);
+  // 全库链接图。`null` = 索引器没给，`{nodes:[],edges:[]}` = 真的没有笔记。
+  const [graph, setGraph] = useState(null);
   const [history, setHistory] = useState({ stack: [], cursor: -1 });
   const [dragging, setDragging] = useState(null);
   const filterRef = useRef(null);
@@ -335,18 +345,22 @@ export function NotesLibrary() {
 
   /** 刷新右栏（反链 / 标签来自索引器；索引器缺席时只是空着）。 */
   const refreshSide = useCallback(async (name) => {
-    if (!name) { setBacklinks([]); setAllTags([]); return; }
+    if (!name) { setBacklinks([]); setAllTags([]); setGraph(null); return; }
     try {
-      const [links, tags] = await Promise.all([
+      const [links, tags, graph] = await Promise.all([
         vault('backlinks', { path: `${name}.md` }),
         vault('tags'),
+        // 图谱是**全库**的，不随当前笔记变；`null` 表示索引器没给出（不是「没有图」）。
+        vault('graph').catch(() => null),
       ]);
       setBacklinks(Array.isArray(links) ? links : []);
       setAllTags(Array.isArray(tags) ? tags.slice(0, 30) : []);
+      setGraph(graph && typeof graph === 'object' ? graph : null);
     } catch {
       // 索引器不可用时右侧留空，不打扰用户 —— 正文本身还能读写。
       setBacklinks([]);
       setAllTags([]);
+      setGraph(null);
     }
   }, []);
 
@@ -715,7 +729,7 @@ export function NotesLibrary() {
               <button type="button" className="zs-nt-stat" onClick={() => setRightOpen(true)}>{backlinks.length} 条反向链接</button>
               <span className="zs-nt-stat">{countWords(draft)} 个词</span>
               <span className="zs-nt-stat">{draft.length} 个字符</span>
-              <span className="zs-nt-stat">{countLinks(draft)} 条链接 · {countTags(draft)} 个标签</span>
+              <button type="button" className="zs-nt-stat" onClick={() => setRightOpen(true)}>{countLinks(draft)} 条链接 · {countTags(draft)} 个标签</button>
             </> : <span className="zs-nt-stat">{entries.filter((e) => e.type === 'note').length} 篇笔记</span>}
           </span>
         </div>
@@ -726,6 +740,7 @@ export function NotesLibrary() {
         markdown={draft}
         backlinks={backlinks}
         tags={allTags}
+        graph={graph}
         onOpen={(p) => void openNote(p)}
         onRename={rename}
         onRemove={remove}

@@ -2,11 +2,46 @@
 //
 // 页面不认识任何服务：图与写动作都由 store 通过插槽 inject 递进来（`{ store }`），
 // 组件只读快照、只调回调。样式用本包自己的 `zpl-` 前缀，不去改外壳的 `.zy-*`。
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Icon, Notice, SectionTitle, useStore } from 'dsh-zhiyun-shell-ui';
+import { createLedger, summarize } from './usage.js';
 
-/** 一行左侧的状态点：已启用 / 已取消 / 等待依赖。 */
-function StateDot({ row }) {
+/** 使用账本在 localStorage 里的键。改名等于重置统计，所以带版本号。 */
+const USAGE_KEY = 'zhiyun-plugin-usage-v1';
+
+/**
+ * 读本地使用账本，按 `view.rows` 的安装清单补齐「一次都没用过」的条目。
+ *
+ * 为什么用 localStorage 而不是宿主存储：这一页的 store 只读依赖图，没有写通道；
+ * 使用计数是**本机偏好**类数据（和 `AssistantDrawer` 的抽屉宽度同类），
+ * 换台机器重新计也无所谓，不值得为它加一条跨宿主写入。
+ *
+ * @param {object[]} rows - `view.rows`。
+ * @returns {object[]} `summarize()` 的结果。
+ */
+function useUsageRows(rows) {
+  const known = useMemo(() => rows.map(row => `plugin:${row.name}`), [rows]);
+  return useMemo(() => {
+    let parsed = { entries: [] };
+    try {
+      // 隐私模式下 localStorage 会抛，整段当空账本处理。
+      parsed = JSON.parse(globalThis.localStorage?.getItem(USAGE_KEY) ?? '{"entries":[]}');
+    } catch { /* 空账本 */ }
+
+    const ledger = createLedger();
+    for (const entry of Array.isArray(parsed?.entries) ? parsed.entries : []) {
+      // 回放时只恢复 count/lastUsed，不重复累加。
+      if (!entry?.key) continue;
+      ledger.items.set(entry.key, {
+        key: entry.key, kind: entry.kind ?? '', name: entry.name ?? '',
+        count: Number(entry.count) || 0, lastUsed: Number.isFinite(entry.lastUsed) ? entry.lastUsed : null,
+      });
+    }
+    return summarize(ledger, { known });
+  }, [known]);
+}
+
+/** 一行左侧的状态点：已启用 / 已取消 / 等待依赖。 */function StateDot({ row }) {
   const state = !row.enabled ? 'off' : row.waiting.length > 0 || row.phase === 'pending' ? 'wait' : 'on';
   const label = state === 'on' ? '已启用' : state === 'off' ? '已取消' : '等待依赖';
   return <span className={`zpl-dot zpl-dot-${state}`} title={label} aria-label={label}/>;
@@ -73,6 +108,9 @@ export function Panel({ store }) {
   const leaves = view.rows.filter(row => row.leaf);
   const inner = view.rows.filter(row => !row.leaf);
   const cancellable = leaves.filter(row => row.cancellable);
+  // 「吃灰」：能力提取自雷达候选 dsh-radar-knowledge-graph（见 usage.js 的说明）。
+  // 只读本地账本，不发任何请求 —— 没有记录就是「还没用过」，不是「加载失败」。
+  const usage = useUsageRows(view.rows);
 
   return <section className="zp">
     <header className="zpl-head">
@@ -104,6 +142,14 @@ export function Panel({ store }) {
 
     <SectionTitle aside="被别的包依赖 —— 取消会让它们进入「等待依赖」">支撑包</SectionTitle>
     <ul className="zpl-list">{inner.map(row => <Row key={row.name} row={row} busy={state.busy} onToggle={(entryId, on) => { void store.setPluginEnabled(entryId, on); }}/>)}</ul>
+
+    <SectionTitle aside="按使用计数排 —— 一次没用过的在最前">吃灰</SectionTitle>
+    {usage.filter(entry => entry.state !== 'active').length === 0
+      ? <p className="zpl-muted">每个包都被用过。本机还没有使用记录时，这里会全部显示「没用过」。</p>
+      : <ul className="zpl-list">{usage.filter(entry => entry.state !== 'active').map(entry => <li key={entry.key} className="zpl-row">
+        <span className="zpl-name">{entry.name.replace(/^dsh-zhiyun-/, '')}</span>
+        <span className="zpl-muted">{entry.state === 'never' ? '没用过' : `上次 ${new Date(entry.lastUsed).toLocaleDateString()} · ${entry.count} 次`}</span>
+      </li>)}</ul>}
 
     <details className="zpl-details" open={open} onToggle={event => setOpen(event.currentTarget.open)}>
       <summary>这个工作台的层序与依赖序并不总是一致（{view.layerViolations.length} 处）</summary>

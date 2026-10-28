@@ -86,6 +86,9 @@ test('每个客户端包的裸模块 import 都被 HOST_SEEDS 或本包的 dsh.c
     const bare = await bareSpecifiers(`${root}packages/${name}/src/client.jsx`);
     for (const [specifier, at] of bare) {
       checked += 1;
+      // 第三条路：**有意内联**的第三方依赖。它不该进 external（没人提供），
+      // 所以必须在 INTENTIONALLY_BUNDLED 里点名 —— 白名单是显式豁免，不是默认放行。
+      if (specifier in INTENTIONALLY_BUNDLED) continue;
       if (!declared.has(specifier)) failures.push(`${name}: ${at} import '${specifier}'，既不是宿主种子词也没写进 dsh.client.external`);
     }
   }
@@ -115,6 +118,15 @@ const INTENTIONALLY_BUNDLED = {
   // esbuild 在 CJS 下不做代码分割，所以「按需加载」只能靠选最小构建产物，
   // 体积（~363 KB）已被显式接受。它必须进产出，否则直播直接不可用。
   'hls.js': 'page-study：HLS 直播播放器，按设计内联（见 src/hls.js 体积权衡）',
+  // 图谱渲染层（graph-render）：cytoscape 与它的布局扩展 fcose 是**纯库**，
+  // 没有别的包会需要它们、也没有运行时要共享的实例状态，所以不进 external 面、
+  // 直接打进自己的 lib/client.js。反过来，如果把 cytoscape 写进 external 却
+  // 没有任何客户端包提供它，图谱会在运行时静默不显示。
+  'cytoscape': 'graph-render：纯绘图库，无共享实例需求，按设计内联进自己的 bundle',
+  'cytoscape-fcose': 'graph-render：cytoscape 的 fcose 布局扩展，随宿主库一起内联',
+  // fcose 自身的传递依赖（只在布局计算里用，不进 API）。
+  'cose-base': 'graph-render：fcose 的布局基元，随 fcose 内联',
+  'layout-base': 'graph-render：fcose 的布局基元，随 fcose 内联',
 };
 
 test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的文件（有意内联的除外）', async () => {
