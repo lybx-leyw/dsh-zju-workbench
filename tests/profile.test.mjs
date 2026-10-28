@@ -20,6 +20,10 @@ test('被取消的页从侧栏与跳转里一起消失（两处必须同一份�
   // 「问一问」是宿主原生会话，没有承载包 —— 永远在，也不该被包状态影响。
   assert.equal(pageBundle('ask'), null);
   assert.equal(pageBundle('paper'), 'dsh-zhiyun-page-paper');
+  // 「题库」曾经是寄居在学习页里的一个 tab，`pageBundle` 给它开了特例把包名指到
+  // `dsh-zhiyun-page-study`。拆成独立包之后特例去掉 —— 这条断言就是那个特例的
+  // 纪念碑：谁再把它改回指向学习页，这里立刻红（包被取消时藏页与跳转都靠这条）。
+  assert.equal(pageBundle('quiz'), 'dsh-zhiyun-page-quiz');
 
   // 论文页的包被取消。
   const enabled = new Map([['dsh-zhiyun-page-paper', false], ['dsh-zhiyun-page-today', true]]);
@@ -90,7 +94,7 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   // 这份清单是 profile 的**期望形态**：新增本仓 bundle 时要在这里补一项。
   // 下面那条循环（`sourceBundles`）保证每个包都有目录链接，但「清单里有没有它」
   // 只能靠这份逐字期望 —— 漏写不会报错，会让 profile 少挂一个包。
-  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell-workbench', 'dsh-zhiyun-shell-ui', 'dsh-zhiyun-source-netproxy', 'dsh-zhiyun-source-card', 'dsh-zhiyun-source-campus', 'dsh-zhiyun-source-zdbk', 'dsh-zhiyun-source-cc98', 'dsh-zhiyun-source-xxt', 'dsh-zhiyun-host-office', 'dsh-zhiyun-host-deeptutor', 'dsh-zhiyun-source-classroom', 'dsh-zhiyun-core-parser', 'dsh-zhiyun-core-study', 'dsh-zhiyun-core-lecture',  'dsh-zhiyun-core-quiz', 'dsh-zhiyun-core-notes', 'dsh-zhiyun-core-vault', 'dsh-zhiyun-core-player', 'dsh-zhiyun-core-knowledge', 'dsh-zhiyun-core-learning-resource', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-planning', 'dsh-zhiyun-page-me', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-host-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-docs', 'dsh-zhiyun-page-feedback']);
+  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell-workbench', 'dsh-zhiyun-shell-ui', 'dsh-zhiyun-source-netproxy', 'dsh-zhiyun-source-card', 'dsh-zhiyun-source-campus', 'dsh-zhiyun-source-zdbk', 'dsh-zhiyun-source-cc98', 'dsh-zhiyun-source-xxt', 'dsh-zhiyun-host-office', 'dsh-zhiyun-host-deeptutor', 'dsh-zhiyun-source-classroom', 'dsh-zhiyun-core-parser', 'dsh-zhiyun-core-study', 'dsh-zhiyun-core-lecture',  'dsh-zhiyun-core-quiz', 'dsh-zhiyun-core-notes', 'dsh-zhiyun-core-vault', 'dsh-zhiyun-core-player', 'dsh-zhiyun-core-knowledge', 'dsh-zhiyun-core-learning-resource', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-quiz', 'dsh-zhiyun-page-planning', 'dsh-zhiyun-page-me', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-host-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-docs', 'dsh-zhiyun-page-feedback']);
   // 每个本仓包都要有 profile 里的目录链接 —— 漏一个的表现是「启动了但那一页空白」。
   for (const name of sourceBundles) {
     assert.equal(await realpath(path.join(first.profile, 'node_modules', name)), await realpath(path.join(root, 'packages', name)), `${name} 缺 profile 链接`);

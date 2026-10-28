@@ -1,7 +1,7 @@
 import { knowledgeChapters } from 'dsh-zhiyun-core-quiz';
 import React, { useEffect, useState } from "react";
 import { LectureReader } from "./lecture-reader.jsx";
-import { QuizPanel } from "./quiz-panel.jsx";
+import { QuizPanel } from "dsh-zhiyun-page-quiz";
 import { NotePanel } from "./note-panel.jsx";
 import { time } from "./format.js";
 

@@ -98,7 +98,7 @@ export const FULL_BLEED_PAGES = Object.freeze(['notes', 'docs']);
  * @returns 包名，或 null 表示这一页不属于任何可取消的包。
  */
 export function pageBundle(id) {
-  return id === 'quiz' ? 'dsh-zhiyun-page-study' : id === 'ask' ? null : `dsh-zhiyun-page-${id}`;
+  return id === 'ask' ? null : `dsh-zhiyun-page-${id}`;
 }
 /**
  * 该从侧栏藏起来的页。

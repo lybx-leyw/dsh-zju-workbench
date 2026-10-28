@@ -3,8 +3,9 @@
 // 领域状态（取数、任务、持久化）在 dsh-zhiyun-core-study 提供的 `zhiyunStudyController`
 // 服务里；本包只负责渲染与交互，以及「这一页特有的检索与格式化」。
 import React from 'react';
-import { QuestionBankPage } from './question-bank.jsx';
-import { GenerationModels } from './generation-models.jsx';
+// 题库页已经独立成 `dsh-zhiyun-page-quiz`：本页只保留「知识点上用同一套出题器」的那块面板，
+// 以及讲义生成要用的模型选择器。依赖方向单向（study → quiz），不会成环。
+import { GenerationModels } from 'dsh-zhiyun-page-quiz';
 import { Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
 import { StudyWorkspace } from './study-workspace.jsx';
 import css from './style.css';
@@ -19,7 +20,6 @@ export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunStudyVideoStyle', css: videoCss, label: 'zhiyun: study video pane styles' });
   // 惰性取领域状态：停用状态包时这一页只是空着（壳显示占位），不会把整个前端拖成 pending。
   ctx.inject(['zhiyunStudyController'], (scope) => {
-    scope.slots.inject('zhiyun.quiz.content', () => scope.slots.register({name:'zhiyun.quiz.content'}, () => <QuestionBankPage controller={scope.zhiyunStudyController}/>));
     scope.slots.inject('zhiyun.study.content', () => scope.slots.register(
       { name: 'zhiyun.study.content' },
       () => <Study controller={scope.zhiyunStudyController} />,

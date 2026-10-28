@@ -55,6 +55,7 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-core-player',
   'dsh-zhiyun-page-today',
   'dsh-zhiyun-page-study',
+  'dsh-zhiyun-page-quiz',
   'dsh-zhiyun-page-planning',
   'dsh-zhiyun-page-me',
   'dsh-zhiyun-page-notes',
