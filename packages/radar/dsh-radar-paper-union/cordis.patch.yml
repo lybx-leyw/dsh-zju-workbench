@@ -1,0 +1,9 @@
+# 候选骨架：insert 本包自己的 entry。
+#
+# ⚠ 刻意**不**复用上游 dsh-ai-library 的 cordis.patch.yml ——
+# 上游那条 patch 会把整包挂上（客户端注入 sidebar.panellist 一个「资料馆」面板
+# + 24 条 /api/ai-library/* 路由 + 一键安装/自更新），与本仓「仍是同一个面板」冲突。
+# 本包只挂自己，上游只作为一个**被 import 的库**存在。
+- insert:
+    - id: radar-paper-union
+      name: dsh-radar-paper-union

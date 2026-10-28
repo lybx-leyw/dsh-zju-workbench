@@ -3398,3 +3398,38 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
   而偏移正是本候选的主要卖点。只报「能修」不报「修完丢什么」= 没测。
 - **B 组封板应看「轴」不看「组」**。r87 的「B 挖不到 A 类是结构性的」是**类型**结论，不是**轴**结论。
   B 组未碰过的轴：CC98 渲染（本轮）、图书馆/借阅、统一身份**服务端**（非登录）。
+
+## 2026-10-28 · r92 · A 组（轴「**论文页的检索半径：单篇 / 文献库 / 全网**」）· 追加
+
+> 同日第 6 轮（今日 B r87 / C r88 / A r89 / C r90 / B r91 → A 最少，取 **A**；脚本判 `same-day(exhausted)→B` **未采纳**）。
+> 搜索 **10 次**（达上限未超限）、0 次 403、**完整**。首屏 40 条中 24 个未登记 → 本表登记 8 行（🟢1 / 🔵5 / ⛔2）。
+> 起点是 r57 的遗留证据（「`search_paper` 是上游的、全仓无跨文献检索」）—— 本轮补第三段半径：**全网**。
+> **主候选实测**：`lib/paper.js` 原样 import，20 次 `searchPapers()` + 17 次单端点探针。
+> 三条硬结论：① `auto` 只走 **5 源**（`openaire/inspire/zenodo/hal/datacite` 是死代码，`paper.js:333`）；② arXiv 构造 `all:"整句"` 会**超时或 200 空**（去引号才有结果，中文恒 0）；③ `auto` 合并是**按源轮转、无相关性排序**。
+> 详见 `docs/ecosystem-radar/2026-10-28-15.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Instant-KING/dsh-ai-library` | A 原生DSH | **MIT** ✅（GitHub `spdx_id` / `package.json` / `LICENSE` 三处一致） | 论文（**全网**检索） | **重复且可强化**（论文页检索半径第三段：现有=单篇内 / r57 kb-rag=库内 / 本包=全网） | 🟢 | skeleton-created | 2026-10-28 | **2026-10-28** | ★9，JS，建仓 2026-10-18 / push 2026-10-20。npm **`dsh-ai-library@0.3.39`**（2026-10-19，8 版）可锁版；**`dependencies` 为空**，但 `vendor/` 随包分发 pdf.js 4.10.38/three.js（版本不在依赖图）。**⚠ 仓库 tag `0.3.54` ≠ npm `0.3.39`**（`lib/paper.js` 两者逐字节相同，399 行）。**整包 ⛔ 不可挂**：客户端注入 `sidebar.panellist`（`client.js:5088`）= 第二个资料库面板 + `/install`、`/update` 在 Web 端装包与 `git pull`。**只借用 `lib/paper.js` 的 `searchPapers()`** → 骨架 `dsh-radar-paper-union`。实测：auto 实走 5 源；arXiv 多词查询不可靠（12 词 11 成 1 超时，spaced repetition memory 5 次里 2 超时 3 空）；中文查询能出结果但**无相关性排序** |
+| `memorax-ai/dsh-harmony` | A 原生DSH | MIT | 通用 | 全新（运行时补丁） | 🔵 | proposed | 2026-10-28 | | ★20，TS，push **2026-10-28**（当日活跃）。运行时 patch/replace/decorate DSH 插件 —— 与本仓「不改上游源码 + 锁版兼容层」原则同向，可作**方法论**参考；本仓不需要（已有 `dsh-zhiyun-host-paper` 式兼容层）。⚠ npm 包名/版本本轮未核 |
+| `MaRi23333/dsh-subagent-library` | A 原生DSH | MIT | 通用 | 重复无增益 | 🔵 | proposed | 2026-10-28 | | ★6。具名子代理名册（`list_subagents` / `delegate`）。本仓已登记 `dsh-radar-agent-teams` 与多家 subagent 插件 → 只登记 |
+| `huaizhuanghub/dsh-persona-dafeiyu` | A 原生DSH | MIT | 通用（人设） | 全新但域外 | 🔵 | proposed | 2026-10-28 | | ★62。Persona 库（内置人设 + 导入 + 免重启切换）。智云工作台不使用 persona，域外。**与 `dsh-ai-library` 的「大肥鱼」同属一个非正式命名簇**，注意别混淆 |
+| `Frog755/dsh-prompt-vault` | A 原生DSH | MIT | 写作/提示词 | 重复无增益 | 🔵 | proposed | 2026-10-28 | | ★5。输入框上方的提示词库按钮。A 组 prompt/模板轴已登记过多家（`121212165/dsh-plugin-prompt-vault`、`qifenglun1/dsh-plugin-prompt`、`JnmLee/dsh-plugin-prompt-studio` 等）→ 只登记 |
+| `DEVbyQIN/dsh-plugin-kit` | A 原生DSH | MIT | 通用（开发工具链） | 重复无增益 | 🔵 | proposed | 2026-10-28 | | ★3。插件脚手架 + 仓库模板。**与在册 `hyzyn/dsh-plugin-kit`（Apache-2.0，★58）同名不同仓** —— 「同名消歧」第 2 例（第 1 例见 2026-10-23 `dsh-zotero` 行） |
+| `domitor-syh/dsh-ui-skin-switcher` 等 `dsh plugin seat` 12 条 | A 原生DSH | MIT / `null` 混合 | — | 重复无增益 | ⛔ | rejected | 2026-10-28 | | 全部是「composer 模型选择器 / 推理强度滑杆」的第 N 个实现（`dsh-model-seat` 在册 L2306、`provider-badge`、`reasoning-slider`、`effort-switcher`、`model-picker-search`…）。本仓 `dsh-radar-evolve-modes` 已覆盖 → 簇登记一行，不逐个开行 |
+| `Parker-xia/dsh-research-refs`、`leexrisy/dsh-plugin-medical-literature` | A 原生DSH | MIT | 论文（引用格式 / 医学检索） | 重复无增益 | ⛔ | rejected | 2026-10-28 | | 前者被已采纳的 `citation-js`（🟢，骨架 `dsh-radar-refs-import`）完全覆盖；后者只覆盖 PubMed，与在册 `aiyacharley/dsh-pubmed`（Apache-2.0，25 工具）重复且更窄 |
+
+**r92 复核（在册，不重复登记）**：`1-CellBio/dsh-okf`（L402，本轮复现仍 `license: null` → ⛔ 不摘码）、
+`evanfang0054/dsh-tailscale-console`（L572）、`toyvfish/dsh-model-seat`（L2306）、`Flan246/dsh-lit-search`（L283）、
+`zhaoxuejie/dsh-plugin-academic-paper`（L136）、`zoujialin1997/free-academic-search`（L137）。
+
+**r92 方法沉淀**
+
+- **「导出的常量」≠「运行时走的路」**：`FREE_SOURCES` 10 个、`AUTO_SET` 5 个，同一个文件相隔 300 行。
+  凡「N 源并发」的宣传，**去找那个数组字面量**，别信导出名与 README。
+- **源的失败有三种形状**：抛错 / 超时 / **200 但空**。第三种最危险。判据：同一查询**放宽超时**复打，
+  若 200 且 0 条 ⇒ 是查询构造问题（本轮 `all:"整句"`），不是网络问题。
+- **A 类候选按「entry」判，不按「包」判**：同包整挂 ⛔（第二个面板 + Web 端装包）、只 import 一个纯函数 🟢。
+- **npm 版本 ≠ 仓库 tag**：`0.3.39` vs `0.3.54`。「可锁版」要落到**文件粒度**（本轮：`lib/paper.js` 逐字节相同）。
+- **词面见底 ≠ 轴见底**：5 次 `total=0`（`borrow`/`due date`/`library seat`/`reading list`/`loan`）说明「图书馆借阅」词面为空；
+  但「检索半径」轴上仍有未挖的一段（引文网络 / 引文追踪）。
