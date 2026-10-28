@@ -57,6 +57,9 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-page-study',
   'dsh-zhiyun-page-planning',
   'dsh-zhiyun-page-me',
+  // 图谱渲染层：「笔记」页 external import 它（整包移植自雷达候选 note-graph），
+  // 所以它必须有自己的客户端产物 —— 否则外部化后运行时谁都提供不了这个模块。
+  'dsh-zhiyun-graph-render',
   'dsh-zhiyun-page-notes',
   'dsh-zhiyun-page-paper',
   'dsh-zhiyun-page-plugins',

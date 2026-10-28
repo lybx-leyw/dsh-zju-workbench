@@ -1,0 +1,9 @@
+# dsh bundle patch：把笔记链接图的渲染层插进 profile 的层栈。
+#
+# 本包是**纯渲染库**：没有数据源、不读磁盘、不发请求。
+# 输入是调用方递来的 `{nodes, edges}`（源自 `dsh-zhiyun-core-vault` 的 `graph` 读数），
+# 输出是一个 React 组件。因此它的「插入」只是让打包器与解析器认到这个包，
+# 不在运行时提供任何服务。
+- insert:
+    - id: zhiyun-graph-render
+      name: dsh-zhiyun-graph-render

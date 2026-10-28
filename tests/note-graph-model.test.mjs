@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 import {
   toElements, layoutFor, ringPositions, graphStyles, GRAPH_LAYOUT_LIMIT,
-} from '../packages/dsh-zhiyun-page-notes/src/graph/model.js';
+} from '../packages/dsh-zhiyun-graph-render/src/model.js';
 
 const sample = {
   nodes: [

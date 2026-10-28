@@ -17,12 +17,9 @@
     "client": {
       "platform": "web",
       "external": [
-        "dsh-zhiyun-shell-ui"
+        "dsh-zhiyun-shell-ui",
+        "dsh-zhiyun-graph-render"
       ]
     }
-  },
-  "dependencies": {
-    "cytoscape": "3.34.4",
-    "cytoscape-fcose": "2.2.0"
   }
 }

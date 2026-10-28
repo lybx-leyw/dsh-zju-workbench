@@ -44,7 +44,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
-import { NoteGraph } from './graph/NoteGraph.jsx';
+// 图谱渲染是独立包（`dsh-zhiyun-graph-render`，整包移植自雷达候选 note-graph）：
+// 页面只负责把 vault 的 graph 读数递进去，不背 cytoscape 这份依赖。
+import { NoteGraph, css as graphCss } from 'dsh-zhiyun-graph-render';
 import css from './style.css';
 
 export const name = 'zhiyun-page-notes-client';
@@ -167,6 +169,9 @@ function ancestorsOf(rel) {
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunNotesPageStyle', css, label: 'zhiyun: notes page styles' });
+  // 图谱的样式随包走（`dsh-zhiyun-graph-render` 导出自己的 css），
+  // 页面只负责在同一个 ctx 里挂上 —— 样式归属跟着组件走，不散落在页面里。
+  mountStyle(ctx, { attribute: 'zhiyunGraphRenderStyle', css: graphCss, label: 'zhiyun: graph render styles' });
   ctx.slots.inject('zhiyun.notes.content', () => ctx.slots.register(
     { name: 'zhiyun.notes.content', priority: 10 },
     NotesLibrary,
