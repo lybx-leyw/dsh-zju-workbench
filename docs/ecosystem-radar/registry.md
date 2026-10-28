@@ -3362,3 +3362,39 @@
   JS 生态无第二个可锁版字幕库）。下轮若跑 C 组，改「考试 / 刷题」或「锻炼」侧。
 - **同日第 4 轮（00/03/06/09）第二次撞上 `same-day(exhausted)`**：该分支只报「三组都跑过」，
   不给「哪组最早 / 哪组还有未挖关键词」→ 建议 `radar-rotation.mjs` 加 `--why`。本轮人工取 **C**。
+
+### r91 · 2026-10-28 12:05 · B 组「CC98 正文的读侧：纯文本化的天花板」
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `JiLiZART/BBob` | B 其他JS | MIT | CC98 正文 / 帖子阅读 | 重复可强化 | 🟡 | proposed | 2026-10-28 | ★200 / fork 23 / TS / push **2026-10-26** / 6.0 MB / 2018-06 建仓 / 未归档。npm **只有 `@bbob/*` 子包，裸 `bbob` 不存在**；`@bbob/core`+`@bbob/preset-html5` 均 4.4.1，实测 6 包 462 KB、4 秒装完、lockfile 精确。**能力**：实测能认 CC98 全方言（`[upload=2]`/`[ac01]`/`[bili]`/两层 `[quote]`），且每个 tag 节点带 `start:{from,to}` **原文字符偏移** —— 这两项本仓 `ubbToText` 结构上给不出（string 契约）。**硬伤**：`[code]` 默认把 `[b]` 当真标签 → 会改坏技术版正文；`contextFreeTags:['code']` 能修语义但**废掉块内偏移** → 必须与本仓正则缝合（骨架 TODO-C1）。**风险**：6 个包 `dependencies` 全是 `"*"`，只锁顶层锁不住 → 骨架把 6 个版本全写死。骨架 `packages/radar/dsh-radar-bbob` |
+| `seven-317/Tronclass-API` | B 其他JS | MIT | 学在浙大 / 课件 | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★7 / TS / push 2026-06-13。TronClass LMS 的 Node/TS 封装。本仓 `dsh-zhiyun-source-classroom` 已直连，再套一层 SDK 只是多一跳 → 仅留作「上游接口变了吗」的对照 |
+| `YuJun-BO2/tronclass-cli-ts` | B 其他JS | Apache-2.0 | 学在浙大 / CLI | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★1 / TS / push 2026-06-10。CLI 形态（非插件），能力 ⊂ `source-classroom` |
+| `svenslaggare/BBCodeParser` | B 其他JS | MIT | 论坛正文 | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★34 / TS / **push 2018-10-27（8 年未动）** / 67 KB。纯 BB 解析：**不给偏移、不认 CC98 方言**（`[ac01]`/`[upload=2]`/`[bili]` 均不认）→ 三项能力全面弱于 BBob，同赛道不重复引入 |
+| `eWloYW8/ZJU-course-video-complete` | B 其他JS | MIT | 课程视频进度 | — | ⛔ | rejected | 2026-10-28 | ★7 / 21 KB / **archived=true**。脚本刷观看进度 → **违学术诚信**，不采用不借鉴 |
+| `jjdlink/ZJU-course-selection` | B 其他JS | **GPL-3.0** ⛔ | 选课 | — | ⛔ | rejected | 2026-10-28 | ★4 / push 2026-08-18。**GPL 在禁线**，不摘任何代码 |
+| `Deturium/YAUC` | B 其他JS | **`null`** ⛔ | CC98 UBB 渲染 | — | ⛔ | rejected | 2026-10-28 | ★5 / TS / 2019 后未动 / **无许可证**。名字最对口（"Yet Another UBB for CC98"）但不可用，仅线索 |
+| `zmmbreeze/UBBParser`、`kodango/cc98`、`JiepengLab/CC98-Calculation`、`iamNCJ/ZJU-Tronclass-Courseware-Downloader`、`haoqunjiang/cc98-userscripts` | B 其他JS | 混杂（见备注） | — | — | ⛔ | rejected | 2026-10-28 | 五行合并：`UBBParser` ★27 **`null`+2012**；`kodango/cc98` ★7 **`null`+2012**；`CC98-Calculation` ★2 **`null`**；`Courseware-Downloader` ★7 **`null`+archived**；`cc98-userscripts` ★3 MIT 但 **archived+2017**（DOM 选择器已过期）→ 全部不采用 |
+
+**r91 实测记录（可复现，供评审引用）**
+
+```bash
+npm install @bbob/core@4.4.1 @bbob/preset-html5@4.4.1     # 6 packages, 4s
+node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('[code]if [b]x[/b] > 1[/code]')))"
+# → [{"tag":"code","content":["if"," ",{"tag":"b","content":["x"],...}," ",">"," ","1"],...}]  ← [b] 被当真标签
+node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('[code]if [b]x[/b] > 1[/code]',{contextFreeTags:['code']})))"
+# → content:["if"," ","[","b]x","[","/b]"," ",">"," ","1"]  ← 语义修好，块内偏移失效
+```
+
+**r91 方法沉淀**
+
+- **「依赖里全是 `*`」是一个必须先查的字段**。查法是装完后逐个读 `node_modules/<pkg>/package.json` 的
+  `dependencies`，**不是**看 npmjs 的 `latest`。与 r89「先看 `files`」、r90「先看有无 `main`/`exports`」同类：
+  一个字段省掉一次误判。
+- **探针要专测「库作者没为自己的场景设计的那块」**。BBob 的用例全在标准 BBCode 上，
+  `[code]` 里放标签这种论坛脏数据不会出现在它的测试里 —— 而 CC98 技术版**全是这种数据**。
+  凡「通用格式解析库」进论坛场景，**`[code]` / 嵌套引用 / 无闭合标签**三件套必测。
+- **「修复选项」必须同时记它的代价**。`contextFreeTags` 修好语义但废掉块内偏移，
+  而偏移正是本候选的主要卖点。只报「能修」不报「修完丢什么」= 没测。
+- **B 组封板应看「轴」不看「组」**。r87 的「B 挖不到 A 类是结构性的」是**类型**结论，不是**轴**结论。
+  B 组未碰过的轴：CC98 渲染（本轮）、图书馆/借阅、统一身份**服务端**（非登录）。
