@@ -656,32 +656,3 @@ body[data-zhiyun] .zs-nt-note-ok {
   }
 }
 
-/* ── 链接图谱（移植自雷达候选 dsh-radar-note-graph）────────────────────
-   右栏只有 250px 左右，所以画布高度固定，不再随节点数伸缩：
-   图是「看一眼结构」用的，不是主视图。 */
-body[data-zhiyun] .zs-nt-graph {
-  border-top: 1px solid var(--zy-border, #e4e4e4);
-  padding-top: 12px;
-}
-body[data-zhiyun] .zs-nt-graph-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-body[data-zhiyun] .zs-nt-graph-head strong {
-  font-size: 12px;
-}
-body[data-zhiyun] .zs-nt-graph-head .zs-muted {
-  font-size: 11px;
-}
-body[data-zhiyun] .zs-nt-graph-canvas {
-  width: 100%;
-  height: 220px;
-  border: 1px solid var(--zy-border, #e4e4e4);
-  border-radius: 8px;
-  /* cytoscape 会往这里塞 canvas；不设 overflow 时缩放会溢出到隔壁面板 */
-  overflow: hidden;
-  background: var(--zy-surface, #fff);
-}
