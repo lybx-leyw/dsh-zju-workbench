@@ -3433,3 +3433,18 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 - **npm 版本 ≠ 仓库 tag**：`0.3.39` vs `0.3.54`。「可锁版」要落到**文件粒度**（本轮：`lib/paper.js` 逐字节相同）。
 - **词面见底 ≠ 轴见底**：5 次 `total=0`（`borrow`/`due date`/`library seat`/`reading list`/`loan`）说明「图书馆借阅」词面为空；
   但「检索半径」轴上仍有未挖的一段（引文网络 / 引文追踪）。
+
+---
+
+### r93（2026-10-28-18）· B 组复核：**0 新候选**
+
+**B 组本轮命中 32 个仓库，全文 grep 逐条核实：全部已在册**（`zju` 5,645 条首页 20 / `cc98` 206 条首页 20 / `cc98 language:typescript` 28 条整页 /
+`zju language:javascript` 408 条首页 20 / `zju language:typescript` 163 条首页 20 / `campus app language:javascript` 2,471 条首页 20）。
+`intl zju` 与 `zju grade` 两个查询 **`total_count=0`**。**不新增登记行**，仅记录复核与新判级变化：
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `PeiPei233/zju-learning-assistant` | B 其他JS（实为 **Rust**） | **MIT** ✅（LICENSE 1065B，`/repos/…/license` 实核） | 课件下载 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★540，本轮 B 组最高星。**语言不可直用**（Rust），功能被 `dsh-zhiyun-classroom` 内建下载完全覆盖，**强化判据③（更优底层可调用）不成立** |
+| `baihe26/zju-literature-downloader` | B 其他JS（实为 **agent skill 描述**） | **MIT** ✅（1065B 实核） | 论文 PDF 获取 | 重复无增益 | ⛔ | rejected | 2026-10-28 | ★35。**不是库**，是给 Claude/Codex 用的 skill；本仓论文页已有 PDF 通路 |
+| `Phil-Fan/awesome-zju-tools` | B 其他JS（**清单/MDX**） | **CC0-1.0** ✅（6477B 实核） | 浙大工具索引 | 全新但**非代码** | 🔵 | proposed | 2026-10-28 | ★244。价值在**线索**：应作为**下一轮 B 组的种子词**（收录项逐条转成关键词），不是集成对象 |
+| `burriedalien666/zju842-practice` | B 其他JS（桌面应用） | **MIT** ✅（1072B 实核） | 刷题（842 专业课） | 重复无增益 | 🔵 | proposed | 2026-10-28 | ★23，push 2026-10-25 活跃。按章节/整卷练习 + 答案照片 + 逐轮记录。本仓 `core-quiz` + `dsh-radar-score-practice` 已覆盖；为**本地桌面应用，无 JS 库可借** |

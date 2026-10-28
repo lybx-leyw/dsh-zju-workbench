@@ -1,3 +1,5 @@
+# dsh-radar-knowledge-graph（候选骨架：**未评审、未接入 profile、不可直接使用**）
+
 > 🅿️ **部分提取，保留待后续**（2026-10-28，branch `vault-integrate`）：
 > **本候选的核心前提经实测不成立** —— 见下方「订正」。仅「使用计数」一项被提取。
 > **本包不删除**，按 `docs/contributing/RADAR.md` 3.2 保守废弃原则保留（其 TODO 仍可作为「若上游换实现」的参考）。
