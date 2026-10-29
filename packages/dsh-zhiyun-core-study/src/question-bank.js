@@ -1,14 +1,55 @@
 import { itemFromJson, itemToJson } from 'dsh-zhiyun-core-quiz/model';
 import { randomUUID } from 'node:crypto';
 import {createDeepTutorCandidateCall} from './deeptutor-quiz.js';
-import {createTreeQuizRun,createNativeQuizRun,selectedQuizGraph} from './quiz-engine-runtime.js';
-import {QUIZ_ENGINES,planEngineQuestions,newEngineCheckpoint,canResumeEngine,engineComplete,isNativeEngine,engineLabel} from 'dsh-zhiyun-core-quiz/engines';
+import {createTreeQuizRun,createNativeQuizRun,selectedQuizGraph,bankQuestion as bankNormalize} from './quiz-engine-runtime.js';
+import {QUIZ_ENGINES,engineEntries,registeredEngines,planEngineQuestions,newEngineCheckpoint,canResumeEngine,engineComplete,isNativeEngine,engineLabel,isBuiltinEngine} from 'dsh-zhiyun-core-quiz/engines';
 import {normalizeWorkers,WorkerPoolLlm} from 'dsh-zhiyun-core-parser/worker-pool';
 import { knowledgePoints, planPractice, checkpointCount,activeFacts,resolveFactId,curateFacts,rectifySummary } from 'dsh-zhiyun-core-quiz/points';
 
 const fault = (code,message) => Object.assign(new Error(message),{code});
 const codeOf = value => typeof value === 'string' ? value : value?.code;
 const normalize = value => String(value ?? '').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
+
+/**
+ * 批次失败 → 给用户看的处理记录。
+ *
+ * 为什么不能直接显示 `error.message`：错误码（`E_DEPS_MISSING` / `E_CAPABILITY_UNAVAILABLE`）
+ * 是给程序分支用的，而用户需要的是「下一步做什么」。两张都要，所以先给一句人话
+ * （按 code 查表，认不出就退回原文），再附上原始码与原文供排查。
+ *
+ * 为什么必须带原文：`deeptutor-native` 那几次失败只活了 259–901ms，`phase` 还停在
+ * `queued`，说明死在 `tutor.runs.start()` 之前。如果只写一句「未完成」，那个
+ * "到底是 Python 没装、依赖缺失、还是能力未就绪"的关键区分就永久丢了。
+ */
+const BATCH_FAILURE_HINTS={
+  E_DISABLED:'DeepTutor 宿主服务未启用，请在插件设置中开启 zhiyun-deeptutor',
+  E_PYTHON_MISSING:'没有可用的 Python 3.11–3.14 解释器，请安装或在设置中指定路径',
+  E_PYTHON_VERSION:'Python 版本不受支持，需要 3.11–3.14',
+  E_DEPS_MISSING:'DeepTutor 运行依赖未安装（vendor/deeptutor/requirements/server.txt）',
+  E_BRIDGE_UNAVAILABLE:'DeepTutor 的 Python 桥未就绪，请重启工作台或等待自动恢复',
+  E_CAPABILITY_UNAVAILABLE:'DeepTutor 缺少所需能力，未装好或未开放',
+  E_RESOURCE_INVALID:'讲义资源未通过校验，请重新读取讲义后再出题',
+  NOT_WIRED:'所选出题引擎尚未接入本机服务',
+  INPUT:'出题参数不完整（例如没有选择供应商与并发数）',
+  BUSY:'已有出题批次在运行，请先暂停',
+  SOURCE_TREE:'所选知识点缺少知识图谱树，请先完成讲义',
+  CAPACITY:'可用考法与变体槽位不足，无法凑足计划题数',
+  PROTOCOL:'模型未能按要求提交工具参数，修复预算已用完',
+  TRANSPORT:'模型接口多次失败（网络/限流/服务端故障）',
+  PERSIST:'题目或断点保存失败',
+  TRUNCATED:'模型输出被预算截断，工具调用无法安全执行',
+};
+export function batchProblems(error,aborted){
+  if(aborted)return ['已暂停，已保存的题目和断点仍然保留。'];
+  if(!error)return [];
+  const code=codeOf(error),message=String(error?.message??'').trim();
+  const hint=code?BATCH_FAILURE_HINTS[code]:'';
+  // 有 hint 时它已经消化了原因，只在原文带来**额外**信息时才附上（避免"依赖未安装（依赖未安装：…）"）。
+  const detail=[hint&&message&&!message.startsWith(hint.slice(0,8))?message:'',code?`错误码 ${code}`:''].filter(Boolean).join('；');
+  if(!hint)return [detail?`${message||'出题中断'}（${detail}）`:`${message||'出题中断'}。`];
+  return [detail?`${hint}（${detail}）`:`${hint}。`];
+}
+
 const coverageOf=bank=>{
   const questions=bank.questions.filter(q=>q.status!=='rejected');
   return {questions:questions.length,points:new Set(questions.map(q=>q.pointKey??q.pointId)).size,
@@ -87,7 +128,7 @@ export class QuestionBank {
     const canonical=q=>resolveFactId(entries.find(e=>e.materialKey===q.materialKey)??{},q.factId);
     const covered=new Set(this.baseBank(user).questions.filter(q=>q.status!=='rejected'&&['recall','understand'].includes(q.strategy)&&facts.has(canonical(q))).map(canonical));
     const native=isNativeEngine(job.plan.engine),rectify=native?{state:job.checkpoint.engineState.complete?'completed':state==='running'?'running':'pending',admitted:done,total:done,pending:0,repairPending:0,rewritten:0}:rectifySummary(job.checkpoint);
-    return {id:job.id,state,resumable:canResumeEngine(job),phase:state==='paused'?'paused':job.checkpoint.phase,done,total:job.plan.count,remaining:job.plan.count-done,engineLabel:engineLabel(job.plan.engine),
+    return {id:job.id,state,resumable:canResumeEngine(job),phase:state==='paused'?'paused':job.checkpoint.phase,done,total:job.plan.count,remaining:Math.max(0,job.plan.count-rectify.admitted),engineLabel:engineLabel(job.plan.engine),
       createdAt:job.createdAt,updatedAt:job.updatedAt,observedAt:Date.now(),elapsedMs,perMinute:elapsedMs>0?done*60000/elapsedMs:0,
       etaMs:done>=2 && done<job.plan.count ? elapsedMs/done*(job.plan.count-done):null,
       upstream:active?runtime.upstream??null:null,currentTask:job.checkpoint.currentTask,plan:publicPlan(job.plan),problems:job.problems??[],
@@ -103,7 +144,7 @@ export class QuestionBank {
       // 统一整改：最后一步把本次挂账的题和题库原有题放在一起查重，判掉的题仍留在题库里（status='rejected'）。
       rectify,
       tasks:job.plan.tasks.map((task,index)=>{const step=job.checkpoint.tasks[index],needsRepair=step.questionIds.some(id=>job.checkpoint.rectify?.decisions?.[id]);return {ticketId:step.assignment?.id??`question-${index+1}`,focus:step.assignment?.focus??step.focus,angle:step.assignment?.angle??step.angle,phase:step.phase,pointId:task.point.id,courseId:task.point.courseId,subId:task.point.subId,lessonTitle:task.point.lessonTitle,conceptId:step.assignment?.conceptId,repair:step.repair?.round??0,title:task.point.title,courseTitle:task.point.courseTitle,type:step.repair?.type??task.type,strategy:task.strategy,total:task.count,
-        done:needsRepair?0:step.questionIds.length,state:needsRepair?'needs-repair':step.questionIds.length>=task.count?'completed':step.state,error:step.error};})};
+        done:needsRepair?0:step.questionIds.length,state:needsRepair?'needs-repair':step.questionIds.length>=task.count?'completed':step.state,error:step.error,...(step.actualTask??{})};})};
   }
   status(user,id=null) {
     const bank=this.baseBank(user),runtime=this.runs.get(String(user.id));
@@ -168,12 +209,20 @@ export class QuestionBank {
       let result,error;
       try{
         const bank=this.bank(user);
-        if(['deeptutor','deeptutor-native','r3-v9'].includes(job.plan.engine)&&!job.workers?.length)throw fault('INPUT','请选择出题使用的供应商、模型和 worker 数');
+        // 需要 worker 池的引擎：`deeptutor`（历史候选路径）+ 原生引擎 + 任何声明 native 的注册引擎。
+        // ⚠️ 必须显式保留 `deeptutor`：它走的是候选生成路径，`isNativeEngine` 对它为假，
+        //    但旧白名单里一直有它。只靠 isNativeEngine 会把它漏掉，于是用户可以不带
+        //    worker 发起一个必然缺池的批次。
+        if((job.plan.engine==='deeptutor'||isNativeEngine(job.plan.engine))&&!job.workers?.length)throw fault('INPUT','请选择出题使用的供应商、模型和 worker 数');
         const pool=job.workers?.length?new WorkerPoolLlm({base:this.owner.parser.llm,entries:job.workers}):null;
         const candidateCall=job.plan.engine==='deeptutor'?createDeepTutorCandidateCall({tutor:this.owner.deepTutorOf?.(),resources:this.owner.learningResourceOf?.(),pool,scope:key,
           points:job.plan.tasks.map(task=>task.point),onProgress:({pointId,event})=>{if(['exploring','planning','quizzing'].includes(event.stage))runtime.upstream={pointId,stage:event.stage,at:Date.now()};}}):null;
         runtime.generator=job.plan.engine==='r3-v9'?createTreeQuizRun({pool,records:this.records(user),graph:job.plan.sourceGraph,cache:[...bank.generationJobs].reverse().find(row=>row.id!==job.id&&row.plan.engine==='r3-v9'&&row.checkpoint.engineState?.compileCache)?.checkpoint.engineState}):
           job.plan.engine==='deeptutor-native'?createNativeQuizRun({pool,tutor:this.owner.deepTutorOf(),resources:this.owner.learningResourceOf(),scope:key,onProgress:({pointId,event})=>{runtime.upstream={pointId,stage:event.stage,at:Date.now()};}}):
+          // 外部引擎（如 dsh-zhiyun-quiz-lab 的 r4-lab）：查注册表，拿到工厂就交给它。
+          // hosts 只含计算资源，落库仍由本文件的 onCheckpoint / onQuestion 完成。
+          !isBuiltinEngine(job.plan.engine)&&registeredEngines().some(row=>row.id===job.plan.engine)?
+            registeredEngines().find(row=>row.id===job.plan.engine).createRun({pool,records:this.records(user),graph:job.plan.sourceGraph,concurrency:pool?.concurrency,bankQuestion:bankNormalize}):
           pool?generator.createRun({pool,candidateCall,engine:job.plan.engine}):job.plan.engine==='r1'?{generatePoints:generator.generateR1Points}:generator;
         if(typeof runtime.generator.generatePoints!=='function')throw fault('NOT_WIRED','所选出题引擎尚未就绪');
         result=await runtime.generator.generatePoints({plan:job.plan,checkpoint:job.checkpoint,signal:runtime.controller.signal,
@@ -201,8 +250,12 @@ export class QuestionBank {
       try{
         await this.transaction(user,null,async bank=>{
           const stored=bank.generationJobs.find(row=>row.id===job.id);if(!stored)return;
-          stored.state=runtime.controller.signal.aborted?'paused':error?'failed':engineComplete(stored)?'completed':'partial';
-          stored.problems=result?.problems??(error?['出题已暂停或未完成，已保存的题目和断点仍然保留。']:[]);
+          const aborted=runtime.controller.signal.aborted;
+          stored.state=aborted?'paused':error?'failed':engineComplete(stored)?'completed':'partial';
+          // 真实错误必须上屏。旧写法 `result?.problems ?? [一句通用话术]` 把 error 整个吞掉：
+          // 用户只看到「出题已暂停或未完成」，而真正的原因（能力未就绪 / 上游崩溃 / 未选供应商）
+          // 只活在内存里，随进程消失。deeptutor-native 那几次 259ms 失败就是这样查不出原因的。
+          stored.problems=result?.problems??batchProblems(error,aborted);
           stored.elapsedMs=runtime.baseElapsed+Date.now()-runtime.startedAt;stored.updatedAt=new Date().toISOString();
           stored.workerStats=runtime.generator?.workers??[];
           if(stored.state==='paused')stored.checkpoint.phase='paused';
@@ -223,12 +276,32 @@ export class QuestionBank {
     await Promise.allSettled([...this.writes.values()]);
   }
   async save(bank) { await this.owner.knowledge.saveQuestionBank(bank); }
+  /**
+   * 出题引擎是否真的能用。
+   *
+   * ⚠️ 旧实现只判「服务对象在不在」（`Boolean(deepTutorOf?.() && learningResourceOf?.())`），
+   * 于是 Python 没装、依赖缺失、桥崩溃时按钮**照旧可点**，`· 未就绪` 永远不会出现；
+   * 用户点下去，等一会儿，拿到的是一句被吞掉的错误。这里改为向宿主问一次运行状态，
+   * 并把不可用的原因一并带出去 —— 界面能写原因，用户才知道该去装什么。
+   */
+  async engineCatalog(){
+    let ready=false,reason='';
+    if(this.owner.deepTutorOf?.()&&this.owner.learningResourceOf?.()){
+      try{
+        const status=await this.owner.deepTutorOf().status();
+        // 宿主用 warnings 说明为何不可用（未装 Python / 依赖缺失 / 桥崩溃…）。
+        ready=status?.state==='ready';
+        if(!ready)reason=(status?.warnings??[])[0]??`DeepTutor 状态为 ${status?.state??'未知'}`;
+      }catch(error){reason=error?.message??'DeepTutor 状态未知';}
+    }else reason='DeepTutor 服务未安装';
+    return engineEntries().map(row=>({...row,available:row.id!=='deeptutor-native'||ready,...(row.id==='deeptutor-native'&&reason?{reason}:{})}));
+  }
   async invoke(method,payload,user,signal) {
     if(method==='bank-progress')return this.status(user,payload.runId);
     if(method==='bank-pause')return this.pause(user,payload.runId);
     if(method==='bank-resume')return this.start(payload,user,signal,true);
     if(method==='bank-generate')return this.start(payload,user,signal);
-    if (method==='bank-catalog') return {points:(await this.catalog(user,signal)).map(({text,...point})=>point),defaultEngine:'r1',engines:QUIZ_ENGINES.map(row=>({...row,available:row.id!=='deeptutor-native'||Boolean(this.owner.deepTutorOf?.()&&this.owner.learningResourceOf?.())}))};
+    if (method==='bank-catalog') return {points:(await this.catalog(user,signal)).map(({text,...point})=>point),defaultEngine:'r1',engines:await this.engineCatalog()};
     return this.transaction(user,signal,async(bank,signal)=>{
       if (method==='bank-load') {
         if (bank.questions.length!==this.owner.knowledge.questionBank(String(user.id)).questions.length) await this.save(bank);

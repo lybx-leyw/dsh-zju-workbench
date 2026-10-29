@@ -1,18 +1,18 @@
 {
-  "description": "Measured kernels promoted with import-path changes only; no bench/fixture or filesystem code is imported by product.",
+  "description": "Measured kernels promoted with import-path changes; r3-v9 ships the bench's default verified-asset pipeline (capsules + blind solve); r1 adds versioned self-contained question and learning-value review safeguards.",
   "kernels": {
     "r1": {
       "points.mjs": {
         "measuredSha256": "d3e3e1f30609994a118762ba205a4c448624f035ae6eeea4082b52d97a2d30ec",
-        "promotedSha256": "68d63426844628da4f58bb27aae6e20f27a95ed8725a7dac30ca6491daf5261d"
+        "promotedSha256": "9716313cfad0227d7992cd0fa34030170b16d05facf48bc55686dd249f6610a1"
       },
       "policy.mjs": {
         "measuredSha256": "65b8bacc4b7d418fc8967b06dd791a3535928b3fd85b44db70bf6b61c0bbebe8",
-        "promotedSha256": "3066a5fb6aca25688c957cd2579cf3b1658bfb753781679d63443bb966d1c98f"
+        "promotedSha256": "1a065d11cd9188ca983f72cb15e736d53a698d6acdc82a4fde38b471aa4855cd"
       },
       "source.mjs": {
         "measuredSha256": "1c33bc3fa1ab6ba5fc7194e4a0351700f2d84b985d5c0101a45d69487a46e9dd",
-        "promotedSha256": "53f0da36e36c7608c0c8fd7e9f39a1df3a0d1c91d42dbc3bd4d5bff66a1ecb45"
+        "promotedSha256": "96b28a21acf5d247a1a355849fd0ddca0fc0f743048f2a6a525ac8ae1fa977da"
       },
       "blueprint.mjs": {
         "measuredSha256": "3106bf28ec99415aceccc1a23fc4bb34a110c975a3ae800cad8ed96d189d54d1",
@@ -37,8 +37,8 @@
         "promotedSha256": "094182a9281a27c3bc118ea97a819ac6b74104a228eaedc308f2c5eb2172799a"
       },
       "generator.mjs": {
-        "measuredSha256": "dea5bf3755844a5807120ee5b771985550bd24deea2657cab8b9fbc65a124c6e",
-        "promotedSha256": "90fa300ba37eed9ca2ea02d85165f8d33358c28e1e3a9e71222965808a2ab30e"
+        "measuredSha256": "d4c327dcc814af8b8a2b0973980cfc230b5eb61ec8bdb6893ebe019f42b69c02",
+        "promotedSha256": "4ae4967e7d4c8a1210b950e5d3c1814b14a23d825c9eb11778b6f5a1766cfade"
       },
       "graph.mjs": {
         "measuredSha256": "264f82f6b209cfc7ee9ea2cdfd67b1ea58bdf648af6b26fbbcf56ae3e069b375",
@@ -49,12 +49,16 @@
         "promotedSha256": "2b16f9c43bbb61caffb0272867143f896b8121583116ac60f915dee800bced9f"
       },
       "tools.mjs": {
-        "measuredSha256": "15e441bd9c8063aea0c6eda293278fb266c2d8d66fb5ee4fa39e3b58dc2831c8",
-        "promotedSha256": "15e441bd9c8063aea0c6eda293278fb266c2d8d66fb5ee4fa39e3b58dc2831c8"
+        "measuredSha256": "6ab89d52dd61d23feb6763f3433c92ece116f20d8c845c2fafc0794ff8e8806c",
+        "promotedSha256": "6ab89d52dd61d23feb6763f3433c92ece116f20d8c845c2fafc0794ff8e8806c"
       },
       "tree.mjs": {
         "measuredSha256": "23beb2f3263c6983d7b398e7f1a236860a54266910ef679e2d614de83080bb01",
         "promotedSha256": "23beb2f3263c6983d7b398e7f1a236860a54266910ef679e2d614de83080bb01"
+      },
+      "capsules.mjs": {
+        "measuredSha256": "c7f7728ea792344b9afa6b71e4d8281d113083cc5d783d51bbd8f420b8ac1fae",
+        "promotedSha256": "c7f7728ea792344b9afa6b71e4d8281d113083cc5d783d51bbd8f420b8ac1fae"
       }
     }
   }

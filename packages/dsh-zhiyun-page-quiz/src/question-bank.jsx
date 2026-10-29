@@ -11,6 +11,8 @@ const questionText = question => question.stem.replace(/\{\{c\d+::[^}]*\}\}/g,'_
 const typeName = type => QUESTION_TYPES[type] ?? type;
 const strategyName=id=>QUESTION_STRATEGIES[id]?.label??'历史题目';
 
+const engineName=item=>item?.label??({'r1':'r1（推荐）','r3-v9':'r3 v9（实验）','deeptutor-native':'DeepTutor 直调'})[item?.id]??'出题模式';
+
 export function QuestionBankPage({ controller }) {
   const study=useStudy(controller),bank=controller.questionBank,state=useBank(bank);
   const [tab,setTab]=useState('出题');
@@ -28,20 +30,23 @@ export function QuestionBankPage({ controller }) {
     <section className="zs-qz-gate"><p>登录后才能读取课程知识点与历史题目。</p></section>
   </div>;
   const tabs=[['出题','新题'],['练习','组卷'],['历史题库',String(state.questions.length)]];
-  const stats=state.coverage?[['题目',state.coverage.questions],['知识点',state.coverage.points],['概念',state.coverage.concepts],['考查角度',state.coverage.angles]]:null;
+  const stats=state.coverage?[['题目',state.coverage.questions],['知识点',state.coverage.points],['概念',state.coverage.concepts],['考察角度',state.coverage.angles]]:null;
   return <div className="zs-qz-page" data-page="quiz">
     <header className="zs-qz-header">
       <div className="zs-qz-header-text">
         <span className="zs-qz-eyebrow">题库</span>
         <h1>按知识点出题，按知识点复习</h1>
-        <p>跨课程挑知识点生成新题，再按新题与旧题的比例组卷练习。题目以草稿保存，练习前可对照讲义核验。</p>
       </div>
       <div className="zs-qz-header-actions">
         <button className="zs-button" disabled={state.busy||state.loading} onClick={()=>bank.load(true)}>刷新题库</button>
       </div>
     </header>
-    {stats&&<dl className="zs-qz-stats">{stats.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
-    <nav className="zs-qz-tabs" aria-label="题库功能">{tabs.map(([label,meta])=><button type="button" aria-pressed={tab===label} key={label} onClick={()=>setTab(label)}>{label}<b>{meta}</b></button>)}</nav>
+    {/* 分段导航与统计并成一行：旧的「页头 + 统计卡 + 导航」三段占了首屏 200px，
+        而这一页真正要看的是一屏内的出题设置。统计收成导航右端的一串读数。 */}
+    <div className="zs-qz-toolbar">
+      <nav className="zs-qz-tabs" aria-label="题库功能">{tabs.map(([label,meta])=><button type="button" aria-pressed={tab===label} key={label} onClick={()=>setTab(label)}>{label}<b>{meta}</b></button>)}</nav>
+      {stats&&<dl className="zs-qz-stats">{stats.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
+    </div>
     {state.loading&&<p className="zs-muted zs-qz-loading">正在读取知识点与历史题目…</p>}
     {state.error&&<p role="alert" className="zs-qz-error">{state.error}</p>}
     {state.notice&&<p role="status" className="zs-qz-notice">{state.notice}</p>}
@@ -51,21 +56,38 @@ export function QuestionBankPage({ controller }) {
   </div>;
 }
 
+/**
+ * 出题设置：一屏读完。
+ *
+ * 旧版把 17 个控件竖着排成一张长卡（策略说明 4 张 200 字卡片、三段说明文字、
+ * 两个折叠区、进度卡也塞在同一列里），1440×900 下要滚两屏才看得见生成按钮。
+ * 现在按「一行一个决策」排：知识点 / 策略 / 题型各一行 inline chip，
+ * 三个数字类字段并成一行，低频项收进「更多设置」浮窗，生成按钮固定在设置卡底部。
+ * 进度不再占设置列，改到右栏常驻（没有批次时显示空态卡，而不是整块空白）。
+ */
 export function PointQuizComposer({ controller, scope=null }) {
   const bank=controller.questionBank,state=useBank(bank),generating=state.run?.state==='running';
   const [count,setCount]=useState(10),[mode,setMode]=useState('uniform'),[types,setTypes]=useState(['mcq','cloze']),[query,setQuery]=useState('');
   const [strategies,setStrategies]=useState([{id:'recall',weight:1}]),[difficulty,setDifficulty]=useState('basic'),[source,setSource]=useState('course');
   const [recallMode,setRecallMode]=useState('complete'),[engine,setEngine]=useState('r1'),[ideaScope,setIdeaScope]=useState('all');
   const drawer=useRef(null),drawerTrigger=useRef(null),drawerId=useId(),[drawerOpen,setDrawerOpen]=useState(false);
+  const more=useRef(null),moreTrigger=useRef(null),moreId=useId(),[moreOpen,setMoreOpen]=useState(false);
   useEffect(()=>{const element=drawer.current;if(!element)return;const toggle=e=>setDrawerOpen(e.newState==='open');element.addEventListener('toggle',toggle);return()=>element.removeEventListener('toggle',toggle);},[Boolean(scope)]);
+  useEffect(()=>{const element=more.current;if(!element)return;const toggle=e=>setMoreOpen(e.newState==='open');element.addEventListener('toggle',toggle);return()=>element.removeEventListener('toggle',toggle);},[]);
   const closeDrawer=()=>{drawer.current?.hidePopover();drawerTrigger.current?.focus();};
+  const closeMore=()=>{more.current?.hidePopover();moreTrigger.current?.focus();};
   useEffect(()=>{void bank.load(true);},[bank]);
   useEffect(()=>{
     if(!state.run)return;
     setCount(state.run.total);setMode(state.run.plan.mode);
     setTypes(state.run.plan.types??[...new Set(state.run.plan.allocation.map(task=>task.type))]);
     setStrategies(state.run.plan.strategies??[{id:'recall',weight:1}]);setDifficulty(state.run.plan.difficulty??'basic');setSource(state.run.plan.source??'course');
-    setRecallMode(state.run.plan.recallMode??'complete');setEngine(['r1','r3-v9','deeptutor-native'].includes(state.run.plan.engine)?state.run.plan.engine:'r1');
+    // 恢复一次出题设置时，引擎要**原样保留**，不能静默回落成 r1：
+    // 一个已被卸载的引擎（比如关掉实验室后的 r4-lab）如果被当成 r1，
+    // 用户会按 r1 的断点语义去续跑一份 r4 的断点，语义完全对不上。
+    // 查不到目录时保留原值，由下方的 chosenEngine / blockers 说明它为什么不可用。
+    setRecallMode(state.run.plan.recallMode??'complete');
+    setEngine(state.run.plan.engine??'r1');
     setIdeaScope(state.run.plan.ideaScope??'all');
     if(!scope&&state.run.plan.pointIds)bank.pick(state.run.plan.pointIds.filter(id=>state.points.some(point=>point.id===id)));
   },[state.run?.id]);
@@ -79,54 +101,96 @@ export function PointQuizComposer({ controller, scope=null }) {
   const toggle=(ids,checked)=>bank.pick(checked?[...new Set([...selected,...ids])]:selected.filter(id=>!ids.includes(id)));
   const mismatched=strategies.filter(row=>!types.some(type=>QUESTION_STRATEGIES[row.id].types.includes(type)));
   const engines=state.engines?.length?state.engines:[{id:'r1',label:'r1（推荐）',description:'知识点规划、并发生成，结合历史题统一复核与整改。'},{id:'r3-v9',label:'r3 v9（实验）',description:'沿知识图谱树提取、复用考法，再生成题目。'},{id:'deeptutor-native',label:'DeepTutor 直调',description:'由 DeepTutor 原生链路规划并生成。'}];
-  const chosenEngine=engines.find(row=>row.id===engine),courseOnly=['r3-v9','deeptutor-native'].includes(engine);
-  const valid=chosenEngine?.available!==false&&Number.isInteger(count)&&count>=1&&count<=100&&selected.length>0&&types.length>0&&strategies.length>0&&strategies.every(row=>Number.isFinite(row.weight)&&row.weight>0&&row.weight<=100)&&!mismatched.length;
+  const chosenEngine=engines.find(row=>row.id===engine);
+  // 资料来源限制改由目录自己声明（`source:'course'`）：注册进来的引擎不必再改这里的白名单。
+  const courseOnly=chosenEngine?.source==='course'||['r3-v9','deeptutor-native'].includes(engine);
+  // 目录里没有这个引擎 = 提供它的包已被卸载。此时不能当成「可用」，
+  // 也不能当成 r1 —— 要明确说「已卸载」，并禁止用它发起新批次。
+  const engineUnloaded=!chosenEngine;
+  const engineReady=chosenEngine?.available!==false&&!engineUnloaded;
+  const countReady=Number.isInteger(count)&&count>=1&&count<=100;
+  const weightsReady=strategies.every(row=>Number.isFinite(row.weight)&&row.weight>0&&row.weight<=100);
+  const valid=engineReady&&countReady&&selected.length>0&&types.length>0&&strategies.length>0&&weightsReady&&!mismatched.length;
+  // 7 项合取里「哪一项不满足」必须说出来：旧版只有生成按钮变灰 + hover title，
+  // 而「右侧展开配置」在单列布局下还是错的方向。
+  const blockers=[];
+  if(!selected.length)blockers.push('先选知识点：点下面「选择知识点」勾一门课里的考点。');
+  if(!types.length)blockers.push('至少选一个题型。');
+  if(!strategies.length)blockers.push('至少选一个出题策略。');
+  if(!countReady)blockers.push('总题数要在 1 到 100 之间。');
+  if(!weightsReady)blockers.push('策略比例要在 1 到 100 之间。');
+  if(mismatched.length)blockers.push(`${mismatched.map(row=>strategyName(row.id)).join('、')}没有可选题型，加选「选择题」或「简答题」。`);
+  if(!engineReady)blockers.push(engineUnloaded
+    ?`出题引擎「${engine}」已卸载（提供它的插件被关掉了）。已生成的题目仍可查看，但不能用它发起新批次；请在上方切换出题模式。`
+    :`${engineName(chosenEngine)}当前不可用，请在上方切换出题模式。`);
   const allocation=valid?allocateStrategies(count,strategies):[];
+  const covered=mode==='uniform'?Math.min(count,Math.max(selected.length,0)):Math.min(count,Math.max(1,Math.floor(selected.length*2/3)));
   const updateStrategy=(id,checked)=>setStrategies(current=>checked?[...current,{id,weight:1}]:current.filter(row=>row.id!==id));
   const preset=id=>{setStrategies(STRATEGY_PRESETS[id].strategies.map(row=>({...row})));setTypes([...STRATEGY_PRESETS[id].types]);};
-  return <div className="zs-qz-composer" data-drawer={!scope||undefined}>
-    {!scope&&<section id={drawerId} ref={drawer} popover="auto" role="dialog" aria-label="知识点范围" className="zs-qz-scope zs-qz-scope-drawer"><div className="zs-qz-section-title"><div><h2>选择课程与知识点</h2><span>已选 {selected.length} 个知识点</span></div><button type="button" className="zs-button" aria-label="关闭知识点选择" onClick={closeDrawer}>×</button></div>
+  const advanced=source!=='course'||recallMode!=='complete'||strategies.length>1;
+  return <div className="zs-qz-composer" data-embedded={scope?'true':undefined}>
+    {!scope&&<section id={drawerId} ref={drawer} popover="auto" role="dialog" aria-label="选择知识点" className="zs-qz-scope zs-qz-scope-drawer"><div className="zs-qz-section-title"><div><h2>选择课程与知识点</h2><span>已选 {selected.length} 个知识点</span></div><button type="button" className="zs-button" aria-label="关闭知识点选择" onClick={closeDrawer}>×</button></div>
       <input type="search" className="zs-qz-search" aria-label="查找课程或知识点" placeholder="查找课程、节次或知识点" value={query} onChange={event=>setQuery(event.target.value)}/>
       {matches.length>0&&<div className="zs-qz-scope-actions"><button type="button" className="zs-text" disabled={state.busy||generating} onClick={()=>toggle(matches.map(p=>p.id),true)}>全选当前列表</button><button type="button" className="zs-text" disabled={state.busy||generating} onClick={()=>bank.pick([])}>清空选择</button></div>}
-      {[...groups].map(([id,course])=><details className="zs-qz-course" key={id} open><summary className="zs-qz-scope-row"><span className="zs-qz-scope-chevron" aria-hidden="true">›</span><input aria-label={`选择课程 ${course.title}`} type="checkbox" disabled={state.busy||generating} checked={course.ids.every(id=>selected.includes(id))} onClick={e=>e.stopPropagation()} onChange={e=>toggle(course.ids,e.target.checked)}/><span className="zs-qz-scope-title">{course.title}</span><small>{course.ids.length}</small></summary>
-        {[...course.lessons].map(([lessonId,lesson])=><details className="zs-qz-lesson" key={lessonId} open><summary className="zs-qz-scope-row"><span className="zs-qz-scope-chevron" aria-hidden="true">›</span><input aria-label={`选择节次 ${lesson.title}`} type="checkbox" disabled={state.busy||generating} checked={lesson.points.every(p=>selected.includes(p.id))} onClick={e=>e.stopPropagation()} onChange={e=>toggle(lesson.points.map(p=>p.id),e.target.checked)}/><span className="zs-qz-scope-title">{lesson.title}</span><small>{lesson.points.length}</small></summary><div>{lesson.points.map(point=><label className="zs-qz-scope-row zs-qz-scope-point" key={point.id}><span aria-hidden="true"/><input type="checkbox" disabled={state.busy||generating} checked={selected.includes(point.id)} onChange={e=>toggle([point.id],e.target.checked)}/><span className="zs-qz-scope-title">{point.title}</span><span/></label>)}</div></details>)}
+      {[...groups].map(([id,course])=><details className="zs-qz-course" key={id} open><summary className="zs-qz-scope-row"><span className="zs-qz-scope-chevron" aria-hidden="true">›</span><input aria-label={`选择课程 ${course.title}`} type="checkbox" disabled={state.busy||generating} checked={course.ids.every(id=>selected.includes(id))} onClick={e=>e.stopPropagation()} onKeyDown={e=>e.stopPropagation()} onChange={e=>toggle(course.ids,e.target.checked)}/><span className="zs-qz-scope-title">{course.title}</span><small>{course.ids.length}</small></summary>
+        {[...course.lessons].map(([lessonId,lesson])=><details className="zs-qz-lesson" key={lessonId} open><summary className="zs-qz-scope-row"><span className="zs-qz-scope-chevron" aria-hidden="true">›</span><input aria-label={`选择节次 ${lesson.title}`} type="checkbox" disabled={state.busy||generating} checked={lesson.points.every(p=>selected.includes(p.id))} onClick={e=>e.stopPropagation()} onKeyDown={e=>e.stopPropagation()} onChange={e=>toggle(lesson.points.map(p=>p.id),e.target.checked)}/><span className="zs-qz-scope-title">{lesson.title}</span><small>{lesson.points.length}</small></summary><div>{lesson.points.map(point=><label className="zs-qz-scope-row zs-qz-scope-point" key={point.id}><span aria-hidden="true"/><input type="checkbox" disabled={state.busy||generating} checked={selected.includes(point.id)} onChange={e=>toggle([point.id],e.target.checked)}/><span className="zs-qz-scope-title">{point.title}</span><span/></label>)}</div></details>)}
       </details>)}
       {!state.loading&&!points.length&&<p className="zs-muted">还没有可出题的知识点。先在学习页生成讲义。</p>}
       {points.length>0&&!matches.length&&<p className="zs-muted">没有匹配的课程或知识点。</p>}
       <footer className="zs-qz-scope-drawer-footer"><span>已选 {selected.length} 个知识点</span><button type="button" className="zs-primary" onClick={closeDrawer}>完成选择</button></footer>
     </section>}
-    <section className="zs-qz-settings"><div className="zs-qz-composer-heading"><h2>{scope?'这个知识点的出题设置':'出题设置'}</h2>{!scope&&<button type="button" className="zs-button zs-qz-scope-button" ref={drawerTrigger} aria-label="选择知识点" aria-expanded={drawerOpen} aria-controls={drawerId} aria-haspopup="dialog" onClick={()=>drawer.current.togglePopover()}><span aria-hidden="true">☷</span> 选择知识点 <small>{selected.length?`已选 ${selected.length}`:'未选择'}</small></button>}</div>
-      <QuestionGenerationProgress bank={bank} state={state}/>
-      <details className="zs-qz-gen-settings" data-has-run={Boolean(state.run)} open={!state.run||state.run.state==='completed'||state.run.resumable===false}><summary>新批次出题设置</summary>
-      {scope&&<p className="zs-muted">{points.map(point=>point.title).join('、') || '没有找到可出题的知识点，请先完成讲义。'}</p>}
-      <fieldset className="zs-qz-strategy-picker" disabled={state.busy||state.loading||generating}><legend>出题策略 <small>可组合</small></legend>
-        <div className="zs-qz-strategy-presets">{Object.entries(STRATEGY_PRESETS).map(([id,item])=><button type="button" className="zs-button" key={id} onClick={()=>preset(id)}>{item.label}</button>)}</div>
-        <div className="zs-qz-strategy-grid">{Object.entries(QUESTION_STRATEGIES).map(([id,item])=><label className="zs-qz-strategy-option" data-selected={strategies.some(row=>row.id===id)} key={id}><input type="checkbox" checked={strategies.some(row=>row.id===id)} onChange={event=>updateStrategy(id,event.target.checked)}/><span><strong>{item.label}</strong><small>{item.description}</small></span></label>)}</div>
-      </fieldset>
-      <fieldset disabled={state.busy||state.loading||generating}><legend>题型</legend>{Object.entries(QUESTION_TYPES).map(([type,label])=><label key={type}><input type="checkbox" checked={types.includes(type)} onChange={event=>setTypes(current=>event.target.checked?[...current,type]:current.filter(t=>t!==type))}/>{label}</label>)}</fieldset>
-      {mismatched.length>0&&<p role="alert" className="zs-qz-error">{mismatched.map(row=>strategyName(row.id)).join('、')}没有匹配题型，请选择简答题或选择题。</p>}
-      <div className="zs-qz-allocation-fields"><label className="zs-qz-field">知识点分配<select aria-label="出题方式" value={mode} disabled={state.busy||generating} onChange={event=>setMode(event.target.value)}><option value="uniform">全面均匀</option><option value="random">随机抽样</option></select></label>
-      <label className="zs-qz-field">总题数<input aria-label="总题数" type="number" min="1" max="100" value={count} disabled={state.busy||generating} onChange={event=>setCount(Number(event.target.value))}/></label>
+    <section className="zs-qz-setup">
+      <div className="zs-qz-setup-head"><h2>{scope?'这个知识点的出题设置':'出题设置'}</h2><p className="zs-qz-setup-sub">{scope?(points.map(point=>point.title).join('、')||'没有找到可出题的知识点，请先完成讲义。'):(selected.length?`已选 ${selected.length} 个知识点`:'还没有选择知识点')}</p></div>
+      <div className="zs-qz-row">
+        <span className="zs-qz-row-label">出题模式</span>
+        <div className="zs-qz-chips" role="group" aria-label="出题模式">{engines.map(item=><button type="button" className="zs-qz-preset" key={item.id} aria-pressed={engine===item.id} title={item.available===false?`${item.description}${item.reason?` · ${item.reason}`:' 服务未就绪'}`:item.description} disabled={state.busy||state.loading||generating||item.available===false} onClick={()=>{setEngine(item.id);if(item.id!=='r1')setSource('course');}}>{engineName(item)}{item.available===false?' · 未就绪':''}</button>)}</div>
       </div>
-      <p className="zs-qz-explanation">{!selected.length?'先选择知识点。':mode==='random'?`最多覆盖 ${Math.max(1,Math.floor(selected.length*2/3))} / ${selected.length} 个知识点，允许重复考点，避免重复题干。`:`${selected.length} 个知识点，每点约 ${Math.floor(count/selected.length)} 道，剩余 ${count%selected.length} 道随机均摊。各点题数最多相差一道。`}</p>
-      {mode==='uniform'&&count<selected.length&&<p className="zs-qz-explanation">总题数少于知识点数，本次无法覆盖全部知识点。</p>}
-      <details className="zs-qz-strategy-advanced"><summary>比例、难度与资料来源</summary>
-        {!courseOnly&&strategies.some(s=>s.id==='recall')&&<label className="zs-qz-field">基础巩固目标<select aria-label="基础巩固目标" value={recallMode} disabled={state.busy||generating} onChange={event=>setRecallMode(event.target.value)}><option value="complete">补全考点优先</option><option value="variant">仅底稿变体</option></select><small className="zs-qz-explanation">补全会结合完整讲义与同类历史题查漏，新增考点先核对再入库；变体直接复用底稿。</small></label>}
-        {strategies.length>1&&<div className="zs-qz-strategy-weights">{strategies.map(row=><label key={row.id}>{strategyName(row.id)}<input type="number" aria-label={`${strategyName(row.id)}权重`} min="1" max="100" disabled={state.busy||generating} value={row.weight} onChange={event=>setStrategies(current=>current.map(item=>item.id===row.id?{...item,weight:Number(event.target.value)}:item))}/></label>)}</div>}
-        <label className="zs-qz-field">难度<select value={difficulty} disabled={state.busy||generating||engine==='r3-v9'} onChange={event=>setDifficulty(event.target.value)}><option value="basic">基础</option><option value="advanced">进阶</option><option value="challenge">挑战</option></select>{engine==='r3-v9'&&<small>沿用树上考法的认知难度。</small>}</label>
-        <label className="zs-qz-field">资料来源<select value={source} disabled={state.busy||generating||courseOnly} onChange={event=>setSource(event.target.value)}><option value="course">课内资料</option><option value="web">应用类题目补充联网资料</option></select></label>
-        {source==='web'&&<p className="zs-qz-explanation">应用变式与综合探究会检索案例并保存引用，使用设置中的搜索供应商；解题所需知识仍限定在课内。</p>}
-      </details>
-      {valid&&<div className="zs-qz-strategy-preview" aria-label="出题分配预览"><strong>本批 {count} 道</strong><div>{allocation.map(row=><span key={row.id}>{strategyName(row.id)} <b>{row.count}</b></span>)}</div><small>{mode==='uniform'?`预计覆盖 ${Math.min(count,selected.length)} / ${selected.length} 个知识点`:`最多覆盖 ${Math.min(count,Math.max(1,Math.floor(selected.length*2/3)))} / ${selected.length} 个知识点`} · 同批避免重复题目</small></div>}
-      <label className="zs-qz-field">出题引擎<select aria-label="出题引擎" value={engine} disabled={state.busy||generating} onChange={e=>{setEngine(e.target.value);if(e.target.value!=='r1')setSource('course');}}>{engines.map(item=><option key={item.id} value={item.id} disabled={item.available===false}>{item.label}{item.available===false?' · 服务未就绪':''}</option>)}</select><small>{chosenEngine?.description}</small></label>
-      {engine==='r3-v9'&&<label className="zs-qz-field">考法范围<select aria-label="考法范围" value={ideaScope} disabled={state.busy||generating} onChange={e=>setIdeaScope(e.target.value)}><option value="all">局部与跨考点</option><option value="local">单个知识点</option><option value="cross">跨考点综合</option></select><small>先按知识点分配题目；标题节点的综合题保留所有涉及知识点。范围内无可靠考法时保留缺额。</small></label>}
-      <GenerationModels controller={controller} purpose="quiz" disabled={state.busy||generating} generationDisabled={!valid||state.busy||state.loading||generating} onGenerate={workers=>bank.generate({pointIds:selected,count,mode,types,strategies,difficulty,source,recallMode,workers,engine,ideaScope})} label={generating?'正在出题':state.busy?'正在处理…':'按知识点生成题目'}/>
-      <p className="zs-qz-explanation">{engine==='r3-v9'?'考法按讲义版本缓存；已有知识点会复用，新增题目仍逐题复核。':engine==='deeptutor-native'?'原生批次结果会保存到题库；已完成批次可复用，未完成批次重试时继续补足。':'优先复用考点底稿，可考位置不足时会如实提示。'} 题目以草稿保存，练习前可对照讲义检查。</p>
-      {state.plan&&<p className="zs-qz-explanation">最近出题：计划 {state.plan.requested} 道，覆盖 {state.plan.coveredPoints} / {state.plan.totalPoints} 个知识点。</p>}
-      </details>
-      {scope&&state.error&&<p role="alert" className="zs-qz-error">{state.error}</p>}
-      {scope&&state.notice&&<p role="status" className="zs-qz-notice">{state.notice}</p>}
+      {/* 未就绪的原因必须写出来：只把按钮变灰，用户不知道要去装 Python、补依赖，还是重启工作台。 */}
+      {!engineReady&&chosenEngine?.reason&&<p className="zs-qz-explanation" role="status">{engineName(chosenEngine)}不可用：{chosenEngine.reason}</p>}
+      {!scope&&<div className="zs-qz-row" data-required={!selected.length}>
+        <span className="zs-qz-row-label">知识点</span>
+        <button type="button" className="zs-qz-scope-chip" ref={drawerTrigger} data-empty={!selected.length} aria-label="选择知识点" aria-expanded={drawerOpen} aria-controls={drawerId} aria-haspopup="dialog" onClick={()=>drawer.current.togglePopover()}>
+          <span aria-hidden="true">☷</span>{selected.length?`已选 ${selected.length} 个知识点`:'选择知识点（必选）'}<i aria-hidden="true">›</i>
+        </button>
+      </div>}
+      <div className="zs-qz-row">
+        <span className="zs-qz-row-label">出题策略</span>
+        <div className="zs-qz-chips" role="group" aria-label="出题策略">
+          {Object.entries(STRATEGY_PRESETS).map(([id,item])=><button type="button" className="zs-qz-preset" key={id} disabled={state.busy||state.loading||generating} onClick={()=>preset(id)}>{item.label}</button>)}
+          <span className="zs-qz-chips-sep" aria-hidden="true"/>
+          {Object.entries(QUESTION_STRATEGIES).map(([id,item])=><label className="zs-qz-chip" data-on={strategies.some(row=>row.id===id)} title={item.description} key={id}><input type="checkbox" disabled={state.busy||state.loading||generating} checked={strategies.some(row=>row.id===id)} onChange={event=>updateStrategy(id,event.target.checked)}/><span>{item.label}</span></label>)}
+        </div>
+      </div>
+      <div className="zs-qz-row">
+        <span className="zs-qz-row-label">题型</span>
+        <div className="zs-qz-chips" role="group" aria-label="题型">{Object.entries(QUESTION_TYPES).map(([type,label])=><label className="zs-qz-chip" data-on={types.includes(type)} key={type}><input type="checkbox" disabled={state.busy||state.loading||generating} checked={types.includes(type)} onChange={event=>setTypes(current=>event.target.checked?[...current,type]:current.filter(t=>t!==type))}/><span>{label}</span></label>)}</div>
+      </div>
+      <div className="zs-qz-fields">
+        <label className="zs-qz-field">题数<input aria-label="总题数" type="number" min="1" max="100" value={count} disabled={state.busy||generating} onChange={event=>setCount(Number(event.target.value))}/></label>
+        <label className="zs-qz-field">分配方式<select aria-label="分配方式" value={mode} disabled={state.busy||generating} onChange={event=>setMode(event.target.value)}><option value="uniform">均匀覆盖</option><option value="random">随机抽样</option></select></label>
+        <label className="zs-qz-field">难度<select aria-label="难度" value={difficulty} disabled={state.busy||generating||engine==='r3-v9'} onChange={event=>setDifficulty(event.target.value)}><option value="basic">基础</option><option value="advanced">进阶</option><option value="challenge">挑战</option></select></label>
+        <button type="button" className="zs-qz-more-trigger" ref={moreTrigger} data-active={advanced||undefined} aria-expanded={moreOpen} aria-controls={moreId} aria-haspopup="dialog" onClick={()=>more.current.togglePopover()}>更多设置{advanced&&<i aria-hidden="true"/>}</button>
+      </div>
+      <div className="zs-qz-setup-foot">
+        <p className="zs-qz-hint" data-blocked={blockers.length>0||undefined}>
+          {blockers.length?blockers[0]:<>{count} 道 · {courseOnly?`所选 ${selected.length} 个知识点 · ${engine==='r3-v9'?'树上考法统一分配':'上游整批规划'}`:`覆盖 ${covered} / ${selected.length} 个知识点`}{!courseOnly&&allocation.length>1&&<> · {allocation.map(row=><span key={row.id}>{strategyName(row.id)} <b>{row.count}</b> </span>)}</>}</>}
+        </p>
+        <GenerationModels controller={controller} purpose="quiz" disabled={state.busy||generating} generationDisabled={!valid||state.busy||state.loading||generating} onGenerate={workers=>bank.generate({pointIds:selected,count,mode,types,strategies,difficulty,source,recallMode,workers:workers?.length?workers:undefined,engine,ideaScope})} label={generating?'正在出题':state.busy?'正在处理…':'生成题目'}/>
+      </div>
+      <div id={moreId} ref={more} popover="auto" role="dialog" aria-label="更多出题设置" className="zs-qz-more">
+        <div className="zs-qz-more-head"><strong>更多设置</strong><button type="button" className="zs-config-close" aria-label="关闭更多设置" onClick={closeMore}>×</button></div>
+        <div className="zs-qz-more-body">
+          {engine==='r3-v9'&&<label className="zs-qz-field">考法范围<select aria-label="考法范围" value={ideaScope} disabled={state.busy||generating} onChange={e=>setIdeaScope(e.target.value)}><option value="all">局部与跨考点</option><option value="local">单个知识点</option><option value="cross">跨考点综合</option></select><small className="zs-qz-explanation">标题节点的综合题会保留它涉及的全部知识点；范围内没有可靠考法时保留缺额。</small></label>}
+          <label className="zs-qz-field">资料来源<select aria-label="资料来源" value={source} disabled={state.busy||generating||courseOnly} onChange={event=>setSource(event.target.value)}><option value="course">课内资料</option><option value="web">课内 + 联网案例</option></select>{courseOnly&&<small className="zs-qz-explanation">当前引擎只用课内讲义。</small>}</label>
+          {!courseOnly&&strategies.some(s=>s.id==='recall')&&<label className="zs-qz-field">基础巩固怎么补<select aria-label="基础巩固怎么补" value={recallMode} disabled={state.busy||generating} onChange={event=>setRecallMode(event.target.value)}><option value="complete">先补缺失的考点</option><option value="variant">只用已有底稿变体</option></select><small className="zs-qz-explanation">补全模式会对照完整讲义与同类历史题查漏，新考点先核对再入库。</small></label>}
+          {!courseOnly&&strategies.length>1&&<div className="zs-qz-weights" role="group" aria-label="策略比例">{strategies.map(row=><label key={row.id}>{strategyName(row.id)}<input type="number" aria-label={`${strategyName(row.id)}比例`} min="1" max="100" disabled={state.busy||generating} value={row.weight} onChange={event=>setStrategies(current=>current.map(item=>item.id===row.id?{...item,weight:Number(event.target.value)}:item))}/></label>)}</div>}
+          <p className="zs-qz-explanation">{mode==='uniform'?`均匀覆盖：${selected.length} 个知识点各约 ${selected.length?Math.floor(count/selected.length):0} 道，余数随机均摊，各点最多差一道。`:`随机抽样：最多覆盖 ${Math.max(1,Math.floor(selected.length*2/3))} / ${selected.length} 个知识点，允许重复考点、避免重复题干。`}{mode==='uniform'&&count<selected.length?' 本次题数少于知识点数，覆盖不全。':''}</p>
+          {mismatched.length>0&&<p role="alert" className="zs-qz-error">{mismatched.map(row=>strategyName(row.id)).join('、')}没有匹配题型，请加选「选择题」或「简答题」。</p>}
+        </div>
+        <div className="zs-qz-more-foot"><span>改完直接生效</span><button type="button" className="zs-primary" onClick={closeMore}>完成</button></div>
+      </div>
     </section>
+    <aside className="zs-qz-aside"><QuestionGenerationProgress bank={bank} state={state}/></aside>
   </div>;
 }
 
@@ -138,7 +202,9 @@ function Practice({ bank,state }) {
   return <section className="zs-qz-practice"><h2>开始一组练习</h2><p className="zs-muted">未做过 {fresh} 道 · 做过 {old} 道</p>
     <label className="zs-qz-field">练习方式<select aria-label="练习方式" value={mode} onChange={event=>setMode(event.target.value)}><option value="new">未做题</option><option value="review">复习已做题</option><option value="mixed">新旧交错</option></select></label>
     {mode==='mixed'&&<label className="zs-qz-field">未做题比例 · {ratio}%<input aria-label="未做题比例" type="range" min="0" max="100" step="10" value={ratio} onChange={event=>setRatio(Number(event.target.value))}/></label>}
-    <label className="zs-qz-field">范围<select aria-label="练习范围" value={scope} onChange={event=>setScope(event.target.value)}><option value="all">整个题库</option><option value="selected">出题页已勾选的知识点</option></select></label>
+    {/* 范围里的「已勾选知识点」是跨 Tab 依赖：出题页没勾时这里没有可选内容，
+        旧的写法是照样可选、点了才发现组不出卷。现在直接把数量写在选项上并禁用空选项。 */}
+    <label className="zs-qz-field">范围<select aria-label="练习范围" value={scope} onChange={event=>setScope(event.target.value)}><option value="all">整个题库</option><option value="selected" disabled={!state.picked.length}>出题页勾选的知识点（{state.picked.length}）</option></select></label>
     <label className="zs-qz-field">练习题数<input aria-label="练习题数" type="number" min="1" max="100" value={count} onChange={event=>setCount(Number(event.target.value))}/></label>
     <div className="zs-qz-filters"><label>出题策略<select aria-label="练习出题策略" value={strategy} onChange={event=>setStrategy(event.target.value)}><option value="all">全部策略</option>{Object.entries(QUESTION_STRATEGIES).map(([id,item])=><option value={id} key={id}>{item.label}</option>)}</select></label><label>题型<select aria-label="练习题型" value={type} onChange={event=>setType(event.target.value)}><option value="all">全部题型</option>{Object.entries(QUESTION_TYPES).map(([id,label])=><option value={id} key={id}>{label}</option>)}</select></label></div>
     <button className="zs-primary" disabled={state.busy||!Number.isInteger(count)||count<1||count>100||scope==='selected'&&!state.picked.length} onClick={()=>bank.practice({mode,count,...mode==='mixed'?{freshRatio:ratio/100}:{},...scope==='selected'?{pointIds:state.picked}:{},...strategy!=='all'?{strategies:[strategy]}:{},...type!=='all'?{types:[type]}:{}})}>开始练习</button>

@@ -13,7 +13,7 @@ import {withDeepTutorGuidance} from '../../deeptutor-guidance.js';
 
 const fail = message => { throw new QuizError('INPUT', message); };
 // v5 separates shared point preparation, reserved single-question work, and final rectification.
-export const POINT_QUIZ_CACHE_VERSION = 'point-quiz-lab-v2';
+export const POINT_QUIZ_CACHE_VERSION = 'point-quiz-r1-self-contained-v3';
 export { QUESTION_STRATEGIES, QUESTION_TYPES, STRATEGY_PRESETS } from '../../strategies.js';
 export { knowledgePoints, knowledgeChapters } from '../../knowledge-points.js';
 export {activeFacts,curateFacts,resolveFactId} from '../../ledger.js';
@@ -165,6 +165,15 @@ export function createPointQuizGenerator({call,search=null,id=()=>crypto.randomU
     };
     const saved=checkpoint?structuredClone(checkpoint):newPointCheckpoint(plan);
     if(saved.version!==POINT_QUIZ_CACHE_VERSION||saved.planKey!==planKey(plan)||saved.tasks.length!==plan.tasks.length)throw new QuizError('CHECKPOINT_VERSION','出题断点与当前资料不一致');
+    // A failed attempt is a request for new work, while a paused attempt resumes
+    // its durable draft. Keep published questions and prepared source material.
+    if(checkpoint&&saved.tasks.some(step=>step.state==='failed')){
+      saved.retryEpoch=(saved.retryEpoch??0)+1;
+      for(const step of saved.tasks)if(step.state==='failed'){
+        step.retryFeedback=[step.error,step.failure?.message,...(step.drafts??[]).map(row=>row._rejection)].filter(Boolean);
+        step.drafts=null;step.candidates=null;step.cursor=0;step.error=null;step.failure=null;step.state='pending';
+      }
+    }
     const questions=[],problems=[],seen=new Set(existingStems.map(normalizedText));
     const history=[...existingQuestions];saved.concepts??={};saved.web??={};saved.completions??={};saved.audits??={};saved.responses??={};
     saved.reusedRewrites=0;saved.reusedDrafts=0;saved.questions??={};
@@ -178,7 +187,7 @@ export function createPointQuizGenerator({call,search=null,id=()=>crypto.randomU
     const requestModel=async(request,index)=>{
       request=withDeepTutorGuidance(request,guidance);
       signal?.throwIfAborted();
-      const key=await contentHash([request.stage,request.constant,request.variable,request.cacheEpoch??0]);
+      const key=await contentHash([request.stage,request.constant,request.variable,request.cacheEpoch??0,saved.retryEpoch??0,/^quiz-point-(mcq|cloze|trueFalse|shortAnswer|review)$/.test(request.stage)?saved.tasks[index]?.attempts??0:0]);
       if(Object.hasOwn(saved.responses,key)){saved.reusedDrafts++;return structuredClone(saved.responses[key]);}
       const result=await invoke(request);saved.responses[key]=structuredClone(result);
       await emit('model-saved',index);return result;
@@ -252,7 +261,7 @@ export function createPointQuizGenerator({call,search=null,id=()=>crypto.randomU
               await emit('targets-saved',index);
               const raw=await call({stage:`quiz-point-${type}`,constant:generationPrompt(strategy,type),
                 variable:JSON.stringify({title:point.title,type,strategy,difficulty:plan.difficulty,count:Math.min(remaining,slots?.length??remaining),questionTask:step.assignment,concepts,targets:step.targets,source:point.text,sourceConflicts:entry.factAudit.conflicts,
-                  external:saved.web[rewriteKey]?.sources??[],history:step.repair?{...historyContext(step.repair.history,strategy),all:step.repair.history}:strategy==='recall'?{covered:[],usedPositions:[],examples:[]}:historyContext(existingQuestions.filter(q=>q.pointKey===pointKey||q.pointId===point.id),strategy),avoidStems:step.repair?step.repair.history.map(q=>q.stem):strategy==='recall'?[]:existingStems.slice(-100)}),signal});
+                  retryFeedback:step.retryFeedback??[],external:saved.web[rewriteKey]?.sources??[],history:step.repair?{...historyContext(step.repair.history,strategy),all:step.repair.history}:strategy==='recall'?{covered:[],usedPositions:[],examples:[]}:historyContext(existingQuestions.filter(q=>q.pointKey===pointKey||q.pointId===point.id),strategy),avoidStems:step.repair?step.repair.history.map(q=>q.stem):strategy==='recall'?[]:existingStems.slice(-100)}),signal});
               step.candidates=parseGenerationResponse(raw.text??raw,{where:'knowledge-point'}).map(row=>{
                 if(strategy!=='recall')return row;
                 const target=step.targets.find(t=>t.id===row.targetId);
@@ -282,6 +291,7 @@ export function createPointQuizGenerator({call,search=null,id=()=>crypto.randomU
           // 是否和别的题重复（含已有题、含本次其它车道）一律留到整改阶段判 ——
           // 这里判的话，别的车道还没挂账时看到的题库是不全的。
           if(draft.error||metadata.error){
+            step.retryFeedback=[...(step.retryFeedback??[]),draft.error??metadata.error].slice(-8);
             step.cursor++;problems.push(`${point.title}：${draft.error??metadata.error}，未保存`);await emit('validating',index);continue;
           }
           const question={id:id(),courseId:point.courseId,subId:point.subId,courseTitle:point.courseTitle,lessonTitle:point.lessonTitle,

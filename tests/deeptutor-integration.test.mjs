@@ -23,6 +23,16 @@ test('assistant tool calls remain paired with tool results in host history',()=>
   assert.equal(messages[1].source.callId,'c1');
 });
 
+test('model callbacks use their registered run selection without a global default model',async()=>{
+ let route;
+ const bridge=createLlmBridge({llm:{resolveModelInfo:async()=>({}),prepareCall:async config=>{route=config;return {config,async *stream(){yield {type:'text-delta',text:'synthetic'};}};}}});
+ bridge.registerRun('selected-run',[{provider:'selected-provider',model:'selected-model',workers:1}]);
+ try{
+  await bridge.handleRequest('llm.complete',{runId:'selected-run',model:'selected-model',provider:null,messages:[{role:'user',content:'synthetic'}]});
+  assert.equal(route.provider,'selected-provider');assert.equal(route.model,'selected-model');
+ }finally{await bridge.dispose();}
+});
+
 test('Python history normalization, Node model bridge and HTTP transport preserve a complete tool round trip',async t=>{
   const python=fileURLToPath(new URL('../.runtime/deeptutor-py311/Scripts/python.exe',import.meta.url));
   if(!existsSync(python))return t.skip('需要受管 Python 3.11 解释器');

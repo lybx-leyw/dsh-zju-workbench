@@ -18,6 +18,16 @@
     "./knowledge-points": "./src/knowledge-points.js",
     "./upstream": "./src/upstream.js",
     "./engines": "./src/engines.js",
+    "./engine-registry": "./src/engine-registry.js",
+    "./concepts": "./src/concepts.js",
+    "./strategies": "./src/strategies.js",
+    "./engines/r3-v9/common": "./src/engines/r3-v9/common.mjs",
+    "./engines/r3-v9/tree": "./src/engines/r3-v9/tree.mjs",
+    "./engines/r3-v9/graph": "./src/engines/r3-v9/graph.mjs",
+    "./engines/r3-v9/tools": "./src/engines/r3-v9/tools.mjs",
+    "./engines/r3-v9/generator": "./src/engines/r3-v9/generator.mjs",
+    "./engines/r3-v9/scheduler": "./src/engines/r3-v9/scheduler.mjs",
+    "./engines/r3-v9/compiler": "./src/engines/r3-v9/compiler.mjs",
     "./client": "./lib/client.js"
   },
   "dsh": {
