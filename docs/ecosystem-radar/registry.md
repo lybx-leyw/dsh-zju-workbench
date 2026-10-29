@@ -3693,3 +3693,55 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 > 本就没有该文件** → 本轮 7 个合法 B 类包被误报「patch 非法」。
 > **修正口径**：先读 `package.json` → `dsh.bundle.patch`，**有才校验**；无则记 B 类、跳过。
 > 按修正口径本轮复验：**A 类 68 / B 类 10，缺失 0、非法 0**。真正失败项 **0**。
+
+---
+
+## 2026-10-29 · r101 · A 组（DSH 插件生态 · 原五词 + 「雷达/更新/用量」三探针）· 追加
+
+> **取组**：`scripts/radar-rotation.mjs` → `same-day(exhausted)` → C，**未采纳**（C 组原五词已于 r100 封板）；
+> 今日 A 组尚未在本轮跑过，且 A 为最高优先 → 取 **A**。**搜索 10 次**（5 主 + 5 探针，达上限），0 次 403，**完整**。
+> 去重口径：对 registry 全文做 `owner/repo` **归一化匹配**（小写、去反引号、整串子串），本轮 66 个去重后 44 在册 —— **无 r100 那类假新面孔**。
+> 未登记 22 个 → 🟢1 / 🔵4 / ⛔17；`NOASSERTION` 新增 1；**骨架 1**（`dsh-radar-skill-stats`）。
+
+### r101 🟢（骨架来源）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `chen-zz20/dsh-skill-stats` | **A 原生DSH** | **MIT** ✅ | 通用（工作台自维护） | **重复且可强化**（插件页 `dsh-zhiyun-page-plugins/src/usage.js` 吃灰账本） | 🟢 | skeleton-created | 2026-10-29 | 2026-10-29 | 本轮经**只读社区镜像** `omdsh-dev/dsh-skill-stats` 发现，README 指明主仓为 `chen-zz20/dsh-skill-stats` → **以主仓登记**。上游 `@dsh-external/dsh-skill-stats@0.1.0`（**`private: true`**，不在公共 npm）：`dsh.bundle.patch` + `client.inject(client-runtime)` + `platform: web`；依赖 `@deepseek-ai/dsh-home-paths@^0.1.0-rc.6`（**`^` 在 rc 段**）。三判据实证：**`recordUse()` 全仓生产零调用**、`USAGE_KEY` 无任何 `setItem` → 现有「吃灰清单」**线上恒为全部 never**；上游给的是会话日志回放 + 实时 `tool/call` 订阅 + 增量缓存 + 已删除标记 + **空快照不当成 0**。骨架 `packages/radar/dsh-radar-skill-stats`（**不挂上游侧栏页**，只取 `?scope=current` 计数）。**第一道门是分发方式（private 包怎么锁版），不是代码** |
+
+### r101 🔵（仅作参考）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `MicroMilo/upstream-radar` | A 原生DSH | **Apache-2.0** ✅ | 通用 | 重复且无增益（**已有骨架** `dsh-radar-upstream-radar`） | 🔵 | proposed | 2026-10-29（复核，原登记 2026-10-27） | 本轮复核 `0.45.0`：**零运行时依赖**、`cordis.patch.yml` 仍为 `id: upstream-radar / name: 'upstream-radar/dsh'` 标准 bundle 形状、★10、push 2026-10-16 → **未漂移，维持 🔵**（「真装真跑」需一次性 CI，属骨架评审范畴） |
+| `AdamPlatin123/dsh-plugin-radar` | **B 其他JS**（Python） | **MIT** ✅ | 通用（工具，不集成） | 全新（同类工具） | 🔵 | proposed | 2026-10-29 | ★1,487，push **2026-10-29**（日更），topics 含 `ecosystem-radar` / `plugin-registry` / `continuous-validation`。**与本事同型**，但**语言 Python、且自身是完整产品** → 不集成；仅作 registry 组织方式的对照 |
+| `Equinox7379/dsh-update-radar` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-10-29 | ★0，建 2026-08-14 后**无推送**。只比对「已装插件 vs git upstream」，比在册 `upstream-radar` / `compat-vet` 都薄 |
+| `omdsh-dev/dsh-skill-stats` | — | MIT ✅ | — | 同上 | 🔵 | proposed | 2026-10-29 | **只读社区镜像**（`★1`）。真值以主仓 `chen-zz20/dsh-skill-stats` 为准；镜像本身不另出骨架 |
+
+### r101 ⛔（重复无增益 / 许可证红线 / 无关）
+
+> **用量与热力图簇（第 18–34 家）**：`283Gawin/dsh-heatmap`★5、`bennett-dsh/dsh-plugin-usage`★4、`mrwisdon/dsh-tianyicui-monitor`★2、`nobodyhere34/dsh-usage-calls`★2、`F1shn/dsh-token-stats`★1、`gamelongtim-ux/dsh-usage-dashboard`★1、`lovedheart/dsh-plugin-token-usage`★1、`kolawong/dsh-plugin-usage-stats`★0、`bzhao0110/dsh-usage-dashboard`★0、`TsukiNullNeko/dsh-ui-usage-stats`★0 | A 原生DSH | 全 **MIT** ✅ | — | **重复无增益** | ⛔ | rejected | 2026-10-29 | 该轴已于 **2026-10-19** 判「彻底饱和、建议封板」（在册 17 家 + 骨架 `dsh-radar-activity-heatmap` 已锁 `react-activity-calendar@3.2.1`）。10 个新仓全部 ★0–5，其中 8 个近三月停更 |
+> **同簇许可证红线**：`Zhang6177/dsh-token-usage-board`★2 | A 原生DSH | **NOASSERTION** ⚠ | — | 重复无增益 | ⚠ 待核 | pending-license | 2026-10-29 | token 热力图 + active-day streak + 模型 breakdown。**无许可证 → 不采用、不摘码**
+> **「XX-radar」名字撞车（非集成形态）**：`hi-fangj/dsh-models-radar`★3、`Kaixxrua/dsh-aigc-radar`★3（`description` 空）、`bioogo/free-api-radar`★1、`renzheng0415/dsh-quota-radar`★1、`JJhaojie/dsh-information-radar`★1、`songrui111/dsh-publisher-radar`★1 | A 原生DSH | 全 **MIT** ✅ | — | 无关 / 无场景 | ⛔ | rejected | 2026-10-29 | 前五个与本仓无关（余额额度属「provider 接入层」，registry 已判只作线索）；`dsh-publisher-radar` 面向**插件发行方**的市场空白分析，本仓不是发行方 |
+> **「XX-radar」许可证红线**：`reddapidev/dsh-reddit-radar`★1、`jonah791/dsh-freelance-radar`★1、`jonah791/dsh-earn-radar`★1 | A 原生DSH | 全 **`null`** ⛔ | — | 无关 | ⛔ | rejected | 2026-10-29 | 无许可证红线；且均为「外部机会 / 兼职 / 赚钱」雷达，与学生场景无关
+
+### r101 顺带发现（与雷达无关的缺陷，留档）
+
+> **`packages/dsh-zhiyun-page-plugins/src/usage.js` 的计数账本在生产代码里永不写入。**
+> ```
+> $ grep -rn "recordUse" packages/ scripts/ tests/ | grep -v packages/radar/
+> packages/dsh-zhiyun-page-plugins/src/usage.js:53   ← 只有定义
+> （其余全部在 tests/plugin-usage.test.mjs）
+> $ grep -rn "USAGE_KEY" packages/ | grep -v radar
+> packages/dsh-zhiyun-page-plugins/src/Panel.jsx:10   ← 定义
+> packages/dsh-zhiyun-page-plugins/src/Panel.jsx:28   ← 只有 getItem
+> ```
+> `summarize()` 的 `known` 循环会把每一项填成 `count: 0` → **线上「吃灰清单」恒为「全部 never」**。
+> 该账本是能力提取自 `dsh-radar-knowledge-graph` 的产物。**这是一条可与雷达解耦、独立修复的 bug**（报告 §6 建议 2）。
+
+### r101 复核：`dsh-radar-activity-heatmap` 定性不变
+
+> 2026-10-24 该骨架判「全新（补缺视图），非强化式集成」，依据是「本仓无 heatmap 命中」。
+> 本轮发现更准确的口径是：本仓**有**计数账本（`usage.js`，热力图的输入），但**它的数据源是空的**。
+> 因此「强化」对本轮 🟢 项成立（上游给**计数**），对热力图骨架**仍不成立**（它要的是**作图**底层）。
+> **结论：热力图骨架定性维持「全新」，不改。**
