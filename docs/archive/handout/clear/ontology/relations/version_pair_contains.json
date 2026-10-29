@@ -1,0 +1,8 @@
+{
+  "check": "每个 v<N> 目录同时有 md 与 baseline.json",
+  "domain": "version_pair",
+  "id": "version_pair_contains",
+  "kind": "defines",
+  "label": "版本对含基线与讲义",
+  "range": "archive_dir"
+}

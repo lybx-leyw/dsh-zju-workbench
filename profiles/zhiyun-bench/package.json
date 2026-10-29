@@ -26,7 +26,9 @@
         "dsh-zhiyun-core-notes",
         "dsh-zhiyun-core-vault",
         "dsh-zhiyun-core-player",
+        "dsh-zhiyun-core-playback",
         "dsh-zhiyun-core-knowledge",
+        "dsh-zhiyun-core-handout",
         "dsh-zhiyun-core-learning-resource",
         "dsh-zhiyun-page-today",
         "dsh-zhiyun-page-study",
@@ -39,7 +41,8 @@
         "dsh-zhiyun-page-paper",
         "dsh-zhiyun-page-plugins",
         "dsh-zhiyun-page-docs",
-        "dsh-zhiyun-page-feedback"
+        "dsh-zhiyun-page-feedback",
+        "dsh-zhiyun-quiz-lab"
       ],
       "patchReload": "live"
     }

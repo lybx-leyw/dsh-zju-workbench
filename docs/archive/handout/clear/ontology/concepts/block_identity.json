@@ -1,0 +1,6 @@
+{
+  "gloss": "结构锁定时块的身份由位置决定（章序号/知识点序号/块序号）。",
+  "id": "block_identity",
+  "kind": "phenomenon",
+  "label": "块身份"
+}

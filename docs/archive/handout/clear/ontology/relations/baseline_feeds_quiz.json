@@ -1,0 +1,8 @@
+{
+  "check": "knowledge-points 的章节来源不受用户 md 改动影响",
+  "domain": "lecture_baseline",
+  "id": "baseline_feeds_quiz",
+  "kind": "affects",
+  "label": "基线供出题与知识点导航",
+  "range": "lecture_baseline"
+}
