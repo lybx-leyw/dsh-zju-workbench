@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-mcp-manager",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 dsh-mcp-manager（MCP 服务器管理：stdio/SSE/HTTP + OAuth），为本工作台补上唯一缺失的工具来源通道（全新，非强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-mcp-manager": "0.6.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

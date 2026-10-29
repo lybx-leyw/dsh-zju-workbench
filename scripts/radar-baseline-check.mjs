@@ -34,23 +34,40 @@ const flags = new Set(process.argv.slice(2))
 const offline = flags.has('--offline')
 const asJson = flags.has('--json')
 
-/** 读取所有候选骨架的 package.json */
+/**
+ * 读取所有候选骨架的 package.json
+ *
+ * 扫描位置：`packages/` 与 `packages/radar/`。雷达骨架自 2026-10-28 起统一收进
+ * `packages/radar/`（`packages/` 根不得有平铺雷达包），但历史上曾在根。
+ * 只扫根会让本脚本在面对「0 骨架」时**静默通过**——这种假阳性比报错更危险，
+ * 故两个位置都扫，根下的平铺骨架额外记一条 error。
+ */
 export async function listSkeletons(root = ROOT) {
-  const dir = path.join(root, 'packages')
-  const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
+  const roots = [path.join(root, 'packages'), path.join(root, 'packages', 'radar')]
   const out = []
-  for (const e of entries) {
-    if (!e.isDirectory() || !e.name.startsWith(PKG_GLOB_PREFIX)) continue
-    const pkgPath = path.join(dir, e.name, 'package.json')
-    let pkg
-    try {
-      pkg = JSON.parse(await readFile(pkgPath, 'utf8'))
-    } catch (err) {
-      out.push({ name: e.name, dir: e.name, error: `package.json 不可解析：${err.message}` })
-      continue
+  for (const [index, dir] of roots.entries()) {
+    const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
+    for (const e of entries) {
+      if (!e.isDirectory() || !e.name.startsWith(PKG_GLOB_PREFIX)) continue
+      // index === 0 即包直接位于 packages/ 根下 → 违反「雷达包必须进 packages/radar/」
+      const misplaced = index === 0
+      const dirName = misplaced ? e.name : path.join('radar', e.name)
+      const pkgPath = path.join(dir, e.name, 'package.json')
+      let pkg
+      try {
+        pkg = JSON.parse(await readFile(pkgPath, 'utf8'))
+      } catch (err) {
+        out.push({
+          name: e.name,
+          dir: dirName,
+          misplaced,
+          error: `package.json 不可解析：${err.message}`,
+        })
+        continue
+      }
+      const readme = await readFile(path.join(dir, e.name, 'README.md'), 'utf8').catch(() => '')
+      out.push({ name: e.name, dir: dirName, misplaced, pkg, readme })
     }
-    const readme = await readFile(path.join(dir, e.name, 'README.md'), 'utf8').catch(() => '')
-    out.push({ name: e.name, dir: e.name, pkg, readme })
   }
   return out
 }
@@ -62,6 +79,14 @@ export function checkStatic(skeletons) {
     if (s.error) {
       findings.push({ level: 'error', code: 'PKG_INVALID', package: s.name, message: s.error })
       continue
+    }
+    if (s.misplaced) {
+      findings.push({
+        level: 'error',
+        code: 'MISPLACED_PACKAGE',
+        package: s.name,
+        message: '雷达骨架必须放在 packages/radar/ 下，packages/ 根不得平铺 dsh-radar-*',
+      })
     }
     for (const [dep, spec] of Object.entries(s.pkg.dependencies || {})) {
       if (!EXACT.test(spec)) {

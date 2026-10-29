@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-note-fulltext",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 clientside-search@1.8.1，给「笔记」页的目录过滤补一层正文全文索引（现在只匹配路径），属强化式集成（B 类能力提取 + 封装）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "clientside-search": "1.8.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
