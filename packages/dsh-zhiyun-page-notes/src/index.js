@@ -413,6 +413,17 @@ export async function apply(ctx, config = {}) {
        *
        * 递归删是不可逆的，所以：只认库里解析出来的绝对路径，且绝不允许删库根
        * （`remove('')` 会被 `safePath` 挡成 null）。
+       *
+       * ⚠️ 四种形状都要认，不能只试 `.md`：
+       *   - **文件夹**（无扩展名目录）→ 递归删；
+       *   - **笔记**：`tree` 给的 `path` **不带 `.md`**，要补上；
+       *   - **附件**：`tree` 给的 `path` 是**带扩展名的完整相对路径**（`截图.png`）。
+       *     曾经这里只会试 `<path>.md`，于是选中附件按删除返回 `removed:false`，
+       *     界面上什么都不发生 —— 而树里附件是一等公民，是可选中、可拖动的行。
+       *   - 名字里本来就有 `.md` 的（`a.md` 笔记）：补后缀会变成 `a.md.md`，
+       *     所以"带 .md 的候选"也要试一次。
+       *
+       * 返回值多给一个 `kind`，让调用方能说清"删掉的是文件夹还是文件"。
        */
       case 'remove': {
         const rel = safePath(args.path ?? args.name);
@@ -420,15 +431,26 @@ export async function apply(ctx, config = {}) {
         const abs = resolveIn(rel);
         const info = await statOrNull(abs);
         if (info?.isDirectory()) {
+          // 报告删掉了多少个文件：文件夹删除是这一页唯一会**连带**破坏内容的动作，
+          // 调用方要能把它如实说出来（"已删除「理学」（含 3 篇笔记）"）。
+          const contained = await walk(rel);
           await rm(abs, { recursive: true, force: true });
           await refreshIndex();
-          return { removed: true };
+          return { removed: true, kind: 'folder', contained: contained.filter(e => e.type !== 'folder').length };
         }
-        const file = `${abs}${NOTES_EXT}`;
-        if (!(await exists(file))) return { removed: false };
-        await rm(file);
-        await refreshIndex();
-        return { removed: true };
+        if (info?.isFile()) {
+          await rm(abs, { force: true });
+          await refreshIndex();
+          return { removed: true, kind: extensionOf(rel) === 'md' ? 'note' : 'attachment' };
+        }
+        // 没有实体目录命中：笔记的 path 不带 `.md`，逐个候选试。
+        for (const candidate of [`${abs}${NOTES_EXT}`, abs]) {
+          if (!(await exists(candidate))) continue;
+          await rm(candidate);
+          await refreshIndex();
+          return { removed: true, kind: 'note' };
+        }
+        return { removed: false };
       }
 
       /** 移动/改名一条路径。笔记改名会改写全库链接；文件夹移动只动磁盘。 */
