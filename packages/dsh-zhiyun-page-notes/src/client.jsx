@@ -66,6 +66,15 @@ const AUTOSAVE_MS = 800;
 /** 历史栈上限：够来回找，又不会把内存当日记本。 */
 const HISTORY_LIMIT = 60;
 
+/**
+ * 两次滚动键间隔小于这个值，就算"连续操作"，走 `instant` 而不是 `smooth`。
+ *
+ * 为什么需要：`smooth` 的缓动动画约 300ms，而键盘重复约 30 次/秒。若每次都从
+ * 当前位置重新起动画，按住不放反而几乎不动（实测 1.2 秒只走了一次的量）。
+ * 350ms 比一次缓动略长，刚好覆盖"上一段动画还没结束就来了下一次"。
+ */
+const REPEAT_WINDOW_MS = 350;
+
 /** 一次同源 RPC。两个路由的信封形状相同（`{type,rpcId,payload}`）。 */
 async function rpc(route, method, args, signal) {
   const response = await fetch(route, {
@@ -179,11 +188,11 @@ export function apply(ctx) {
 }
 
 /** 文件树的一行。`dropTarget` 让文件夹既是行也是拖放目标。 */
-function TreeRow({ row, current, expanded, onOpen, onToggle, onDropOn, onDragStart, dragging }) {
+function TreeRow({ row, current, cursor, expanded, onOpen, onToggle, onDropOn, onDragStart, dragging }) {
   const isFolder = row.type === 'folder';
   const isOpen = isFolder && expanded.has(row.path);
   return <li
-    className={`zs-nt-row${row.path === current ? ' is-current' : ''}${isOpen ? ' is-expanded' : ''}${dragging === row.path ? ' is-dragging' : ''}`}
+    className={`zs-nt-row${row.path === current ? ' is-current' : ''}${row.path === cursor ? ' is-cursor' : ''}${isOpen ? ' is-expanded' : ''}${dragging === row.path ? ' is-dragging' : ''}`}
     style={{ '--zs-nt-depth': String(row.depth) }}
     draggable
     onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', row.path); onDragStart(row.path); }}
@@ -195,6 +204,11 @@ function TreeRow({ row, current, expanded, onOpen, onToggle, onDropOn, onDragSta
       type="button"
       className="zs-nt-rowbtn"
       title={row.path}
+      /* 键盘删除的落点：keydown 处理里靠 `data-path` 认出"焦点落在哪一行"。
+         比维护一个 `selected` state 更贴合真实操作 —— 行的焦点**就是**选中，
+         而且点击行本来就会让它获得焦点（按钮天然可聚焦）。 */
+      data-path={row.path}
+      data-kind={row.type}
       onClick={() => (isFolder ? onToggle(row.path) : onOpen(row.path))}
     >
       <span className="zs-nt-caret">{isFolder ? <Icon name="chevron" size={13} /> : null}</span>
@@ -329,7 +343,47 @@ export function NotesLibrary() {
   const [graph, setGraph] = useState(null);
   const [history, setHistory] = useState({ stack: [], cursor: -1 });
   const [dragging, setDragging] = useState(null);
+  /**
+   * 待确认删除的那一条（`{ path, kind }`）；`null` = 没有。
+   *
+   * 删除在这里**不可撤销**（没有回收站），所以键盘删除要求一次就地确认。
+   * 不做成 `window.confirm`：这个仓库统一用页面内的确认，规划页的 `confirming`
+   * 就是同一做法 —— 系统弹窗在 Electron 里会被窗口样式割裂，而且无法本地化。
+   */
+  const [pendingDelete, setPendingDelete] = useState(null);
+  /**
+   * 树上"当前游标"所在的行（用于 ↑/↓ 移动）。
+   *
+   * 为什么不用浏览器焦点：真机实测点完树行 `activeElement` 是 `BODY`、
+   * `focusin` 日志为空 —— 宿主把焦点拿走了，行按钮根本留不住焦点。
+   * 所以"选中哪一行"这件事必须由我们自己持有，并且在界面上**看得见**
+   * （`.is-cursor` 高亮），否则按了 ↑/↓ 用户毫无反馈。
+   */
+  const [treeCursor, setTreeCursorPath] = useState(null);
   const filterRef = useRef(null);
+  /** 正文滚动容器（`.zs-nt-scroll`）。阅读态与编辑态共用这一个，翻页键的目标就是它。 */
+  const scrollRef = useRef(null);
+  /** 本页根节点：document 级键盘处理器靠它判断"我还在不在页面上"。 */
+  const rootRef = useRef(null);
+  /**
+   * 最近一次交互过的树行路径（`null` = 不在树上）。
+   *
+   * ⚠️ 为什么不用 `document.activeElement` 判断"用户在树上"：真机实测不成立。
+   *    点完树行 `activeElement` 是 `BODY`、`focusin` 日志为空 —— 宿主把焦点收走了，
+   *    树行根本留不住焦点。任何以焦点为前提的键盘分派在真机上都是死的。
+   *    改成记录"用户最后一次用鼠标落在哪一行"，点正文时清掉。
+   *
+   * 同时存一份 state（`treeCursor`）用于**可见高亮**：只记 ref 的话，按 ↑/↓
+   * 移动了也没有任何视觉反馈，用户会以为键没反应。
+   */
+  const treeCursorRef = useRef(null);
+  /**
+   * 上一次滚动键的时间戳与方向（用于判断"这是不是连续操作"）。
+   *
+   * 存在 ref 里而不是 state：它只影响下一帧的滚动行为，不该触发重渲染 ——
+   * 每按一次方向键就重渲染一次整页，代价远大于收益。
+   */
+  const lastScroll = useRef(null);
   // 用 ref 存"最后一次发出的正文"：定时器回调里读 state 会拿到闭包里的旧值。
   const pending = useRef(null);
   const saveTimer = useRef(null);
@@ -578,18 +632,48 @@ export function NotesLibrary() {
     }
   };
 
+  /**
+   * 删掉一条路径（笔记 / 附件 / 文件夹）。
+   *
+   * ⚠️ 「删掉的不该被自动保存救回来」这条对**文件夹**同样成立，而且更危险：
+   *    删一个文件夹时，里面的笔记可能在别的标签页开着，`pending.current` 里还挂着
+   *    它们某一次的正文。旧代码只挡 `pending.path === path`（笔记自身路径），
+   *    于是 800ms 后那次挂起的保存把 `理学/概率论` 又一个字不差地写回磁盘 ——
+   *    连同刚刚被递归删掉的文件夹一起**整棵复活**。这是实测出来的形状，不是推测：
+   *    探针里 `remove('理学')` 返回 `removed:true`、树变空，随后自动保存让
+   *    `folder:理学, note:理学/概率论` 原样回来。
+   *
+   *    所以这里按**前缀**判断：被删路径是 `p` 本身，或它下面的任何一条（`p/...`），
+   *    都要从挂起任务与标签页里清掉。
+   *
+   * @param path - `tree` 给的路径：笔记不带 `.md`，附件与文件夹是完整相对路径。
+   */
   const remove = async (path) => {
     setBusy(true);
     setNotice(null);
+    // 这次删除会波及哪些路径：自己 + 它下面的一切。
+    const covers = (other) => other === path || other.startsWith(`${path}/`);
     try {
-      // 删掉的文件不该再由自动保存救回来：先把挂起的任务摘掉。
-      if (pending.current?.path === path) pending.current = null;
-      await notes('remove', { path });
-      setTabs((ts) => ts.filter((t) => t.path !== path));
-      setActive((cur) => (cur === path ? null : cur));
+      if (pending.current !== null && covers(pending.current.path)) {
+        pending.current = null;
+        if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+      }
+      const result = await notes('remove', { path });
+      if (result?.removed !== true) {
+        // 后端说没删到东西：如实说出来，而不是报一个假的成功。
+        setNotice({ tone: 'bad', text: `没有删除任何东西：「${baseOf(path)}」可能已经不在了。` });
+        await refreshTree();
+        return;
+      }
+      setTabs((ts) => ts.filter((t) => !covers(t.path)));
+      setActive((cur) => (cur !== null && covers(cur) ? null : cur));
       await refreshTree();
-      await refreshSide(null);
-      setNotice({ tone: 'ok', text: `已删除「${baseOf(path)}」。` });
+      if (active !== null && covers(active)) await refreshSide(null);
+      // 删文件夹要说清连带了什么 —— 这是这一页唯一会顺手删掉别的文件的动作。
+      const extra = result.kind === 'folder' && Number(result.contained) > 0
+        ? `（含 ${result.contained} 个文件）`
+        : '';
+      setNotice({ tone: 'ok', text: `已删除「${baseOf(path)}」${extra}。` });
     } catch (error) {
       setNotice({ tone: 'bad', text: `删除失败：${error.message}` });
     } finally {
@@ -612,6 +696,207 @@ export function NotesLibrary() {
     });
   };
 
+  /**
+   * PageUp / PageDown / ↑ / ↓ 的四个键：滚**当前打开的笔记**。
+   *
+   * # 实测出来的三条事实（决定了这份实现的形状）
+   *
+   * 1. **不能指望浏览器原生滚动**。正文是 `.zs-nt-scroll`，它没有焦点时浏览器
+   *    对 `PageDown` 毫无反应（实测焦点在 `<body>` 上按 PageDown，`scrollTop`
+   *    仍是 0）。所以必须自己 `scrollBy`。
+   * 2. **焦点在树行上时，这四个键归树**（B 方案）。否则用户在树里按 `↓` 想选下一篇，
+   *    正文却滚走了 —— 那正是要避免的错位。
+   * 3. **焦点在 `textarea` 里必须放行**。编辑态正文是一个**会自己滚**的 textarea
+   *    （实测 `scrollHeight 5888 > clientHeight 420`，按 PageDown 滚的是它自己），
+   *    而且 `↑/↓` 在那里是移动光标。接管它等于把人家的输入框变砖。
+   *
+   * # 为什么是"滚一个视口的 85%"
+   *
+   * `PageDown` 的语义是"翻一页但要保留衔接"。整屏滚动会丢掉上一页最后一行，
+   * 读者会失去位置感；少滚一行又显得没翻动。85% 是阅读器里常见的折中。
+   *
+   * @param event - keydown 事件。
+   * @returns 是否接管了这次按键。
+   */
+  const handleScrollKeys = (event) => {
+    const { key } = event;
+    if (key !== 'PageDown' && key !== 'PageUp' && key !== 'ArrowDown' && key !== 'ArrowUp') return false;
+    if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return false;
+    const target = event.target;
+    if (!(target instanceof Element)) return false;
+    // 输入区一律放行：原因见上面第 3 条（textarea 自己会滚，↑/↓ 是移光标）。
+    if (target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return false;
+
+    const isPage = key === 'PageDown' || key === 'PageUp';
+    const step = key === 'PageDown' || key === 'ArrowDown' ? 1 : -1;
+
+    // 焦点在树行上：↑/↓ 移焦点，PageUp/PageDown 交给树自己原生滚（A 的结论）。
+    //
+    // ⚠️ 真机上**不能只靠 `event.target`**：实测点完树行再点正文之后，
+    //    `document.activeElement` 会是宿主的正文标题 `H2`，甚至是 `BODY`，
+    //    树行永远不是 keydown 的 target。若只认 target，B 方案（树上 ↑/↓ 选笔记）
+    //    在真机上等于不存在。所以补一条：**最近一次在树里按过方向键**也算在树上，
+    //    由 `treeCursor`（ref）记住，任何一次点击正文/别处都会清掉它。
+    const rowFromTarget = target.closest('.zs-nt-rowbtn[data-path]');
+    const row = rowFromTarget ?? (treeCursorRef.current !== null
+      ? rootRef.current?.querySelector(`.zs-nt-rowbtn[data-path="${CSS.escape(treeCursorRef.current)}"]`) ?? null
+      : null);
+    if (row !== null) {
+      if (isPage) return false;           // 让浏览器滚树容器本身
+      const root = row.closest('.zs-nt');
+      if (root === null) return false;
+      const buttons = [...root.querySelectorAll('.zs-nt-rowbtn[data-path]')];
+      const at = buttons.indexOf(row);
+      const next = at < 0 ? undefined : buttons[at + step];
+      // 移得动就接管；移不动（已到头）也不拦，保持"没反应"的一致观感。
+      if (next === undefined) return false;
+      const nextPath = next.dataset.path ?? null;
+      // 亮点跟着走：真机上焦点留不住，这份 state 才是用户**看得见**的"选中"。
+      setTreeCursorPath(nextPath);
+      treeCursorRef.current = nextPath;
+      // 顺手尽力把焦点也放上去（普通浏览器上有效；真机上无效也不影响功能）。
+      next.focus?.();
+      event.preventDefault();
+      return true;
+    }
+
+    const scroller = scrollRef.current;
+    if (scroller === null) return false;
+    // ↑/↓ 一次一行不够明确（行高随排版变），按"约三行"的量滚，读长文才跟得上。
+    const lineStep = Math.round(parseFloat(getComputedStyle(scroller).lineHeight) || 24) * 3;
+    const amount = isPage ? Math.round(scroller.clientHeight * 0.85) * step : lineStep * step;
+
+    // ⚠️ 连续快速按键时**必须**用 `instant`，不能用 `smooth`。
+    //
+    // 实测（真机）：一次 `↓` 滚 63px 是舒服的，但——
+    //   - 连按 10 次只走了 130px（应为 ≈630）；
+    //   - 按住 1.2 秒只走了 63px，等于一次按键。
+    // 原因是 `behavior:'smooth'` 会起一个约 300ms 的缓动动画，而键盘重复约 30 次/秒；
+    // 每次新的 `scrollBy` 都**取消上一次动画、从当前（几乎没动的）位置重新加速**，
+    // 于是按住不放反而几乎不动 —— 用户观感就是"长按变缓了"。
+    //
+    // 两条判据，任一条成立就走 `instant`：
+    //   1. `event.repeat`：浏览器对"这次是长按自动重复"的权威回答；
+    //   2. 同方向上一个滚动键发生在 `REPEAT_WINDOW_MS` 内：连敲（每次 repeat 都是
+    //      false）同样会互相取消，这条把它们也归为"连续操作"。
+    // 单次点按仍走 smooth，保留"轻轻一按、平滑一屏"的手感。
+    const now = Date.now();
+    const prev = lastScroll.current;
+    const sameDirection = prev !== null && prev.key === key;
+    const rapid = prev !== null && now - prev.at <= REPEAT_WINDOW_MS;
+    const instant = event.repeat || (sameDirection && rapid);
+    lastScroll.current = { key, at: now };
+    scroller.scrollBy({ top: amount, behavior: instant ? 'instant' : 'smooth' });
+    event.preventDefault();
+    return true;
+  };
+
+  /**
+   * Delete / Backspace：删**文件树里焦点所在的那一行**。
+   *
+   * # 为什么作用对象是"焦点行"而不是"当前打开的笔记"
+   *
+   * 删除是这一页唯一不可逆的动作。删"你刚用手指点的那个东西"是可预期的；
+   * 删"你碰巧打开着的那一篇"则要用户在动手前先确认一次自己开着什么，误触代价高
+   * 得多。而且行本身就是 `<button>`，点击即获得焦点 —— 不需要另造一个 `selected`
+   * 状态，真正的选择就是焦点。
+   *
+   * # 为什么挂在容器上而不是 `document`
+   *
+   * 宿主里同时只有一个页面在挂载，但 `document` 上的监听在整个会话期间都可能活着
+   * （effect 的清理时机不受本页控制），把别处的 Delete 也吃掉就成了全局副作用。
+   * 挂在本页容器上，事件只在本页内的按键冒泡过来时才触发。
+   *
+   * # 三条豁免
+   *
+   * 1. **焦点在输入框/正文里**：那是改字符，不是删笔记 —— 直接放行（不 `preventDefault`）。
+   *    笔记正文就是 `textarea`，这一条是绝对前提。
+   * 2. **有修饰键**：`Ctrl/⌘+Backspace` 在输入框里是"删到行首"，别抢。
+   * 3. **焦点不在树行上**：没有明确对象就不猜，什么都不做。
+   */
+  const onKeyDownCapture = (event) => {
+    // 确认条挂着时，Esc 先撤掉它 —— 这是"我按错了"最自然的反应。
+    if (event.key === 'Escape' && pendingDelete !== null) {
+      event.stopPropagation();
+      setPendingDelete(null);
+      return;
+    }
+    // 滚动键先跑：它自己有完整的豁免判断，接管了就到此为止。
+    if (handleScrollKeys(event)) return;
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    // 豁免：正在输入的地方。`isContentEditable` 覆盖将来换成富文本编辑器的情况。
+    if (target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return;
+    const row = target.closest('.zs-nt-rowbtn[data-path]');
+    if (row === null) return;
+    const path = row.dataset.path;
+    if (!path) return;
+    // 真的接管了这次按键才 preventDefault：否则浏览器层面会把它当成"返回"之类。
+    event.preventDefault();
+    setPendingDelete({ path, kind: row.dataset.kind ?? 'note' });
+  };
+
+  /**
+   * 把键盘处理器挂到 `document` 上，**且只在本页确实存在时生效**。
+   *
+   * # 为什么不能挂在页面根节点上（实测）
+   *
+   * 读笔记时用户点的是正文，而正文不可聚焦 —— 于是 `activeElement` 落回 `<body>`。
+   * 探针实测：此时按键只在 `document` 上收到，挂在 `<section>` 上的监听**一次都收不到**
+   * （`<body>` 是 `<section>` 的祖先，事件不向下冒泡）。
+   * 也就是说"挂在容器上"对滚动键是死的，只有焦点恰好在页内某个可聚焦元素上才有效。
+   *
+   * # 挂 `document` 之后怎么不越界
+   *
+   * 1. 用 `rootRef` 记本页根节点：卸载时置空，处理器立刻失效；
+   * 2. 每次按键都问一句"焦点/事件目标是不是在本页里"。焦点在 `body` 上时用
+   *    `document.contains(root)` 判"本页还在不在"—— 宿主同一时刻只挂一个页面，
+   *    所以"本页存在"就等于"用户正在看这一页"。
+   */
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const root = rootRef.current;
+      if (root === null) return;
+      // ⚠️ 判"这一页是不是当前页"，**不能**只看 `root.contains(target)`。
+      //
+      // 真机实测：读笔记时 `activeElement` 是正文渲染出来的 `H2`（宿主 MarkdownText
+      // 产出的标题），而 `root.contains(h2) === false` —— 那个 h2 与我们的 `<section>`
+      // 不在同一棵子树里（宿主把正文切进了自己的容器）。于是"目标在我这棵树里"
+      // 的判断对最常见的场景**恒为假**，handler 静默返回，按键全哑。
+      //
+      // 改成三层：
+      //   1. 目标落在本页内部（树行、按钮、过滤框）→ 是本页；
+      //   2. 目标落在正文滚动容器里，或就是它的后代 → 是本页；
+      //   3. 其余情况（焦点在 h2、body、宿主容器上）→ 只要**本页此刻可见**就算本页。
+      //      宿主同一时刻只挂一个页面，可见就等于用户正在看。
+      const target = event.target;
+      const scroller = scrollRef.current;
+      const inRoot = target instanceof Node && root.contains(target);
+      const inScroller = scroller !== null && target instanceof Node && scroller.contains(target);
+      const visible = root.isConnected && root.getClientRects().length > 0;
+      if (!inRoot && !inScroller && !visible) return;
+      onKeyDownCapture(event);
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    // 记录"用户把注意力放在哪一行"：mouse 落在树行上 → 记下；落在正文/别处 → 清掉。
+    // 用 pointerdown 而不是 click：click 发生时焦点可能已经被宿主挪走了。
+    const onPointerDown = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const row = target.closest('.zs-nt-rowbtn[data-path]');
+      const path = row === null ? null : (row.dataset.path ?? null);
+      treeCursorRef.current = path;
+      setTreeCursorPath(path);
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.removeEventListener('pointerdown', onPointerDown, true);
+    };
+  });
+
   if (phase === 'loading') return <section className="zs-nt"><p className="zs-muted">正在读取笔记库…</p></section>;
   if (phase === 'error') {
     return <section className="zs-nt">
@@ -623,7 +908,7 @@ export function NotesLibrary() {
   const draft = activeTab?.draft ?? '';
   const folderOfActive = activeTab ? dirOf(activeTab.path) : '';
 
-  return <section className="zs-nt">
+  return <section className="zs-nt" ref={rootRef}>
     <div className="zs-nt-work">
       {/* ribbon：最左的窄图标列 */}
       <nav className="zs-nt-ribbon" aria-label="笔记库操作">
@@ -651,6 +936,27 @@ export function NotesLibrary() {
           aria-label="过滤笔记"
           onChange={(e) => setFilter(e.target.value)}
         />
+        {/* 键盘删除的确认条：就地出现在文件树顶部，贴着被操作的对象。
+            删除没有回收站，所以这一步不省；但也不弹系统窗 —— 见 `pendingDelete` 的说明。 */}
+        {pendingDelete !== null && <div className="zs-nt-confirm" role="alertdialog" aria-label="确认删除">
+          <p>
+            删除「{baseOf(pendingDelete.path)}」
+            {pendingDelete.kind === 'folder' ? '（含整个文件夹）' : ''}？删掉就找不回来了。
+          </p>
+          <div className="zs-nt-confirm-actions">
+            <button
+              type="button"
+              className="zs-button zs-nt-danger"
+              disabled={busy}
+              onClick={() => {
+                const target = pendingDelete.path;
+                setPendingDelete(null);
+                void remove(target);
+              }}
+            >确认删除</button>
+            <button type="button" className="zs-button" onClick={() => setPendingDelete(null)}>取消</button>
+          </div>
+        </div>}
         {entries.length === 0
           ? <p className="zs-muted zs-nt-hint">还没有笔记。点 ＋ 开始写第一篇。</p>
           : rows.length === 0
@@ -664,6 +970,7 @@ export function NotesLibrary() {
                 key={row.path}
                 row={row}
                 current={active}
+                cursor={treeCursor}
                 expanded={expanded}
                 onOpen={(p) => void openNote(p)}
                 onToggle={toggleFolder}
@@ -708,7 +1015,7 @@ export function NotesLibrary() {
               </span>
             </div>
 
-            <div className="zs-nt-scroll">
+            <div className="zs-nt-scroll" ref={scrollRef}>
               <h1 className="zs-nt-title">{baseOf(activeTab.path)}</h1>
               {preview
                 ? <div className="zs-nt-preview-body">

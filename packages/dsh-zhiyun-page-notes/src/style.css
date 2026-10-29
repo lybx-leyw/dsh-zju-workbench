@@ -145,6 +145,39 @@ body[data-zhiyun] .zs-nt-hint {
   font-size: 12.5px;
   line-height: 1.8;
 }
+/* 键盘删除的就地确认条。用左侧粗边框而不是整块红底：这是确认，不是出错；
+   红色留给"真的会出事"的那个按钮（`.zs-nt-confirm .zs-button.zs-nt-danger`）。 */
+body[data-zhiyun] .zs-nt-confirm {
+  margin: 8px 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--zy-line);
+  border-left: 3px solid #e05252;
+  border-radius: 8px;
+  background: var(--zy-hover);
+}
+body[data-zhiyun] .zs-nt-confirm p {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+body[data-zhiyun] .zs-nt-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+/* ⚠️ 不在这里改 `.zs-button` 的 padding：那条规则属于 `dsh-zhiyun-shell-ui`
+   （`body[data-zhiyun] .zs-button`），两个包争同一属性同一个元素的同一个值，
+   胜负就只看样式表的挂载顺序 —— `tests/css-order.test.mjs` 会直接判红。
+   确认条只需要"窄一点"，用 `align-self` + 让按钮自己按内容撑开即可。 */
+/* 确认条里的危险按钮要能一眼认出来：边框、文字都走红，但不用填充红底
+   —— 填充红底在暗色主题下会压过整页的层级。 */
+body[data-zhiyun] .zs-nt-confirm-actions .zs-nt-danger {
+  border-color: #e05252;
+  color: #e05252;
+}
+body[data-zhiyun] .zs-nt-confirm-actions .zs-nt-danger:hover:not(:disabled) {
+  background: #e05252;
+  color: #fff;
+}
 body[data-zhiyun] .zs-nt-tree {
   list-style: none;
   margin: 0;
@@ -174,6 +207,20 @@ body[data-zhiyun] .zs-nt-rowbtn:hover {
 body[data-zhiyun] .zs-nt-row.is-current > .zs-nt-rowbtn {
   background: var(--zy-soft);
   color: var(--zy-accent);
+}
+/* ↑/↓ 在树上移动时的"游标"。
+ *
+ * ⚠️ 这条样式是**功能必需**，不是装饰：真机上树行拿不到焦点
+ *    （实测点完树行 `activeElement` 仍是 `BODY`，`focusin` 日志为空），
+ *    所以浏览器不会给任何焦点环。没有这条高亮，用户按 ↑/↓ 会以为键没反应。 */
+body[data-zhiyun] .zs-nt-row.is-cursor > .zs-nt-rowbtn {
+  box-shadow: inset 2px 0 0 var(--zy-accent);
+  background: var(--zy-hover);
+}
+/* 同时是当前打开的笔记时，游标要压过 is-current 的底色。 */
+body[data-zhiyun] .zs-nt-row.is-current.is-cursor > .zs-nt-rowbtn {
+  background: var(--zy-soft);
+  box-shadow: inset 2px 0 0 var(--zy-accent);
 }
 /* 正在被拖的那一行淡下去：拖动时用户需要知道"我拿起来的是哪一个"。 */
 body[data-zhiyun] .zs-nt-row.is-dragging > .zs-nt-rowbtn {

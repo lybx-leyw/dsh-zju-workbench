@@ -137,8 +137,8 @@ test('宿主半边：写读往返 + 列表 + 删除（真落盘到临时目录�
     const parentFiles = await readdir(dir);
     assert.ok(!parentFiles.includes('escape.md'), '不得写到 notes/ 之外');
 
-    // 删除
-    assert.deepEqual(await svc.remove('概率论笔记'), { removed: true });
+    // 删除（笔记：`kind` 用来让界面区分"删了篇笔记"与"删了个附件"）
+    assert.deepEqual(await svc.remove('概率论笔记'), { removed: true, kind: 'note' });
     assert.equal(await svc.read('概率论笔记'), null, '读不到已删除的笔记');
     // 删掉「概率论笔记」后还剩两篇：序号版「概率论笔记 2」与穿越被中和出的「escape」。
     // （写这条时先写成 1 —— 忘了上面那次 `write('../../escape')` 也真落了一篇。
@@ -280,6 +280,18 @@ test('宿主半边：文件夹的建 / 列 / 移 / 删，以及嵌套路径下�
     assert.equal(attachment.path, '理学/截图.png');
     assert.equal(attachment.ext, 'png');
 
+    // ── 附件必须能被删掉 ──────────────────────────────────────────────
+    // ⚠️ 这条钉的是一个真实漏洞：`remove` 只会试 `<path>.md`，而 `tree` 给附件的
+    //    `path` 是**带扩展名的完整路径**（`理学/截图.png`），于是补成
+    //    `理学/截图.png.md` 一定不存在 → 返回 `removed:false`。用户在树里选中
+    //    附件按删除，界面上什么都不会发生。
+    //    附件在文件树里是一等公民（可选中、可拖动），删不掉是硬缺陷。
+    assert.deepEqual(await svc.remove('理学/截图.png'), { removed: true, kind: 'attachment' });
+    assert.equal(await exists(path.join(dir, 'notes', '理学', '截图.png')), false, '附件字节要真从磁盘消失');
+    assert.equal((await svc.tree()).some((e) => e.type === 'attachment'), false, '树里也不该再有它');
+    // 删一个本来就不存在的东西：如实返回 false，不谎报成功
+    assert.deepEqual(await svc.remove('理学/从来没有过.png'), { removed: false });
+
     // ── 嵌套路径下的双链：索引器要能按「同目录优先」解析 ──
     const pushIndex = async () => {
       const all = await svc.tree();
@@ -315,8 +327,12 @@ test('宿主半边：文件夹的建 / 列 / 移 / 删，以及嵌套路径下�
     await svc.create('占位', '已存在');
     await assert.rejects(svc.move('中心极限定理', '理学/概率论'), /已经有/);
 
-    // 删文件夹 = 连同里面的东西
-    assert.deepEqual(await svc.remove('理学'), { removed: true });
+    // 删文件夹 = 连同里面的东西。
+    // 返回值带 `kind` 与 `contained`：文件夹删除会**连带**删掉别的文件，调用方
+    // （笔记页的删除确认条）要能如实说出"含几个文件"，不能只是报一个 true。
+    // `contained` 只数文件（笔记 + 附件），不含子文件夹本身 —— 此刻 `理学` 里
+    // 剩 `大数定律.md`（`概率论.md` 与截图已在上面两段各自删掉/移走）。
+    assert.deepEqual(await svc.remove('理学'), { removed: true, kind: 'folder', contained: 1 });
     assert.equal(await svc.read('理学/概率论'), null);
     assert.equal(await exists(path.join(dir, 'notes', '理学')), false, '目录本身也要没了');
 
