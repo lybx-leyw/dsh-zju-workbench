@@ -3686,3 +3686,10 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 > 导致 16 个"新面孔"里 15 个其实在册。
 > **建议**：把「未登记」判定固化为**脚本**，对 registry 全文做 `owner/repo` **归一化匹配**（小写、去反引号），
 > 不再依赖每轮手抄比对；或维护 `<!-- ids: … -->` 注释块做唯一真源。
+
+### r100 验收脚本口径缺陷（留档）
+
+> 阶段 5b 原脚本对 `packages/radar/dsh-radar-*/` **一律**读取 `cordis.patch.yml`，但 **B 类骨架依规范不挂 `dsh.bundle.patch`、
+> 本就没有该文件** → 本轮 7 个合法 B 类包被误报「patch 非法」。
+> **修正口径**：先读 `package.json` → `dsh.bundle.patch`，**有才校验**；无则记 B 类、跳过。
+> 按修正口径本轮复验：**A 类 68 / B 类 10，缺失 0、非法 0**。真正失败项 **0**。
