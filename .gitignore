@@ -42,3 +42,6 @@ deploy/*/data/
 #   npm run vendor:fetch        （校验 upstream.lock.json / vendor.lock.json 的
 #   npm run vendor:fetch -- --check   提交与 SHA-256 后落盘）
 vendor/
+
+# Local research library (publisher PDFs and reading notes).
+/.refers/
