@@ -347,7 +347,8 @@ export function createLlmBridge({
 
   /** 组装一次请求的 call config：显式参数优先，其次 selection，最后模型自身的适配默认。 */
   async function resolveRoute(service, params, signal) {
-    const snapshot = selection_() ?? {};
+    const workers = runLimits.get(params.runId);
+    const snapshot = workers?.find(row=>(!params.model||row.model===params.model)&&(!params.provider||row.provider===params.provider)) ?? workers?.[0] ?? selection_() ?? {};
     const provider = textOf(params.provider || snapshot.provider || '');
     const model = textOf(params.model || snapshot.model || '');
     if (!provider || !model) {

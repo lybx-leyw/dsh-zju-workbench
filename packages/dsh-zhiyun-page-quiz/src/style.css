@@ -1,0 +1,1481 @@
+/* ---------------------------------------------------------------------------
+ * 题库页样式（v2，整份重写）
+ *
+ * 为什么这么排：
+ *   1. 一屏读完。页头压到 96px 以内（小标签与标题同行、说明一行），出题设置
+ *      改成「行内 label + chip」，不用大卡片式选项；1440×900 下从页头到生成
+ *      按钮底边 ≤ 700px，出题时不需要上下滚动。
+ *   2. 行内配置。知识点、策略、题型、题数一行一组，选中态只看 chip 的边色与
+ *      底色，眼睛从左扫到右就知道这批会出什么。
+ *   3. 状态齐全。禁用、焦点、原生控件三条状态在文件后半段统一兜底，不再依赖
+ *      壳的 .zs-study 作用域碰巧命中。
+ *
+ * 硬约束（来自本包样式审计，改动时请一并保持）：
+ *   - 字号只用壳的 --zy-fs-* 阶梯（最小 11px），不写死 px；行高只用 1 / 1.25 /
+ *     1.5 / 1.6 四档。
+ *   - 间距只用 --zy-space-* 或 4 的倍数（1px 描边线、2px 状态点、对勾笔画这类
+ *     图标几何不在此列）。
+ *   - 圆角只有 6px / 10px / 999px 三档；颜色只取 --zy-*，需要浓淡时用
+ *     color-mix(in srgb, var(--zy-xxx) N%, var(--zy-yyy))，不写死任何色值。
+ *   - 每个选择器只出现一次，不再「先写一版、末尾再覆盖一版」。
+ *   - 只保留 JSX 真正渲染的类名，不留死规则。
+ * ------------------------------------------------------------------------- */
+
+/* ── 根与配色 ─────────────────────────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) {
+  max-width: 900px;
+  color: var(--zy-text);
+  font-size: var(--zy-fs-base);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] .zs-qz-page { margin: 0 auto; padding: var(--zy-space-1) 0 var(--zy-space-12); }
+
+/* 壳的主题由 data-ds-dark-theme 显式驱动（不是系统偏好），这里跟它对齐，
+ * 否则浅色主题 + 深色系统时，原生下拉面板、滚动条会被系统画成深色。 */
+body[data-zhiyun]:not([data-ds-dark-theme]) :is(.zs-qz-page, .zs-qz) { color-scheme: light; }
+body[data-zhiyun][data-ds-dark-theme] :is(.zs-qz-page, .zs-qz) { color-scheme: dark; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(h1, h2) {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+}
+
+/* ── 原生控件：一律交给 CSS 自绘 ────────────────────────────────────────
+ * 旧版只有 progress 做了 appearance:none，13 个 select / 4 个 number /
+ * 2 个 search / 全部 checkbox 都是系统绘制 —— 暗色主题下是浅色方块，紧挨着
+ * .zs-button 的圆角卡片，一眼就是拼起来的。 */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(select, textarea),
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input:is([type="text"], [type="number"], [type="search"]),
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input:not([type]) {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px var(--zy-space-3);
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background-color: var(--zy-surface);
+  color: var(--zy-text);
+  font: inherit;
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(select, textarea, input):hover { border-color: color-mix(in srgb, var(--zy-accent) 35%, var(--zy-line)); }
+
+/* 下拉箭头用两层 45° 渐变的边画，颜色跟 --zy-muted 走，深浅主题自动换。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) select {
+  padding-right: var(--zy-space-8);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--zy-muted) 50%),
+    linear-gradient(135deg, var(--zy-muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% + 1px), calc(100% - 12px) calc(50% + 1px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="search"]::-webkit-search-cancel-button { appearance: none; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="number"]::-webkit-inner-spin-button,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="number"]::-webkit-outer-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="number"] { font-variant-numeric: tabular-nums; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) textarea {
+  min-height: 96px;
+  padding: var(--zy-space-2) var(--zy-space-3);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(input[type="checkbox"], input[type="radio"]) {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background-color: var(--zy-surface);
+  accent-color: var(--zy-accent);
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="radio"] { border-radius: 999px; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(input[type="checkbox"], input[type="radio"]):checked {
+  border-color: var(--zy-accent);
+  background-color: var(--zy-accent);
+}
+
+/* 对勾用 --zy-bg 画：浅色主题是白钩压深蓝，深色主题是深钩压浅蓝，两边都够对比。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 5px;
+  height: 9px;
+  border: solid var(--zy-bg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(input[type="checkbox"]:indeterminate, input[type="radio"]:checked)::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 10px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--zy-bg);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="checkbox"]:indeterminate { border-color: var(--zy-accent); background-color: var(--zy-accent); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="radio"]:checked::after { left: 3px; top: 3px; width: 8px; height: 8px; border-radius: 999px; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 999px; background: var(--zy-line); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="range"]::-webkit-slider-thumb { appearance: none; width: 16px; height: 16px; margin-top: -6px; border: 0; border-radius: 999px; background: var(--zy-accent); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="range"]::-moz-range-track { height: 4px; border-radius: 999px; background: var(--zy-line); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 999px; background: var(--zy-accent); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) progress {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--zy-hover);
+  overflow: hidden;
+}
+
+/* ── 页头：两行读完这一页是干什么的 ───────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--zy-space-4);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-header-text {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "eyebrow title"
+    "desc    desc";
+  align-items: baseline;
+  column-gap: var(--zy-space-2);
+  row-gap: var(--zy-space-1);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-eyebrow {
+  grid-area: eyebrow;
+  align-self: center;
+  justify-self: start;
+  padding: 0 var(--zy-space-2);
+  border-radius: 999px;
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+  font-size: var(--zy-fs-meta);
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-header-text h1 { grid-area: title; font-size: var(--zy-fs-lg); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-header-text p {
+  grid-area: desc;
+  margin: 0;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-header-actions { display: flex; align-items: center; gap: var(--zy-space-2); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--zy-space-4);
+  margin: var(--zy-space-1) 0 0;
+  padding: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stats > div { display: flex; align-items: baseline; gap: var(--zy-space-1); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stats dt { color: var(--zy-muted); font-size: var(--zy-fs-meta); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stats dd { margin: 0; font-size: var(--zy-fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gate {
+  margin: var(--zy-space-4) 0 0;
+  padding: var(--zy-space-4);
+  border: 1px dashed var(--zy-line);
+  border-radius: 10px;
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+}
+
+/* ── 分段导航 ─────────────────────────────────────────────────────────── */
+
+/* 导航与统计共处一条横线：左 tab、右读数，窄屏各自换行，不再多占一段垂直空间。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-2) var(--zy-space-4);
+  margin-top: var(--zy-space-1);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--zy-space-1);
+  margin-top: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-tabs > button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--zy-space-1);
+  height: 24px;
+  padding: 0 var(--zy-space-3);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: var(--zy-fs-sm);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-tabs > button:hover { background: var(--zy-hover); color: var(--zy-text); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-tabs > button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--zy-accent) 35%, var(--zy-line));
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-tabs > button > b {
+  padding: 0 var(--zy-space-1);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--zy-line) 70%, transparent);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-tabs > button[aria-pressed="true"] > b {
+  background: color-mix(in srgb, var(--zy-accent) 18%, transparent);
+  color: var(--zy-accent);
+}
+
+/* ── 加载 / 错误 / 提示 ───────────────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-loading { margin: var(--zy-space-3) 0 0; font-size: var(--zy-fs-sm); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-error {
+  margin: var(--zy-space-3) 0 0;
+  padding: var(--zy-space-2) var(--zy-space-3);
+  border: 1px solid color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--zy-accent) 8%, var(--zy-surface));
+  color: var(--zy-text);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-notice {
+  margin: var(--zy-space-3) 0 0;
+  padding: var(--zy-space-2) var(--zy-space-3);
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-soft);
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* ── 出题器：左侧设置、右侧进度 ───────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: var(--zy-space-6);
+  margin-top: var(--zy-space-4);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer[data-embedded="true"] {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--zy-space-4);
+}
+
+/* 设置卡：纵向只有 5 段，整卡高度可控。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zy-space-3);
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-setup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-3);
+  min-height: 28px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-setup-head h2 { font-size: var(--zy-fs-md); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-setup-sub { color: var(--zy-muted); font-size: var(--zy-fs-sm); }
+
+/* 知识点选择入口：一枚 chip，未选时虚线，已选时实线 + 计数。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--zy-space-1);
+  max-width: 260px;
+  height: 28px;
+  padding: 0 var(--zy-space-3);
+  border: 1px solid var(--zy-line);
+  border-radius: 999px;
+  background: var(--zy-surface);
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-chip:hover {
+  border-color: color-mix(in srgb, var(--zy-accent) 45%, var(--zy-line));
+  background: var(--zy-hover);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-chip[data-empty="true"] { border-style: dashed; color: var(--zy-muted); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-chip > span { color: var(--zy-accent); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-chip > i { font-style: normal; color: var(--zy-muted); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-chip > em { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
+
+/* 行内配置行：label 定宽 + chip 横排。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-row {
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-3);
+  min-height: 32px;
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-row-label {
+  flex: none;
+  width: 56px;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-chips {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--zy-space-1);
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-preset, .zs-qz-chip) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--zy-space-1);
+  height: 28px;
+  padding: 0 var(--zy-space-3);
+  border: 1px solid var(--zy-line);
+  border-radius: 999px;
+  background: var(--zy-surface);
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: var(--zy-fs-sm);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-chip { cursor: pointer; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-preset:hover,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-chip:hover {
+  border-color: color-mix(in srgb, var(--zy-accent) 45%, var(--zy-line));
+  background: var(--zy-hover);
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-preset[aria-pressed="true"],
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-chip[data-on="true"] {
+  border-color: var(--zy-accent);
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-chip > input[type="checkbox"] { width: 14px; height: 14px; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-chips-sep { flex: none; width: 1px; height: 16px; background: var(--zy-line); }
+
+/* 三个字段 + 更多设置入口同一行。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: var(--zy-space-3);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-field {
+  display: grid;
+  gap: var(--zy-space-1);
+  min-width: 0;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-field > select,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-field > input,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-field > textarea { width: 100%; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-field > small:not(.zs-qz-explanation) { color: var(--zy-muted); font-size: var(--zy-fs-meta); line-height: 1.5; }
+
+/* 说明文字：比字段名大一号、比正文淡一级 —— 读得下去，但不与字段本身抢注意力。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-explanation {
+  margin: 0;
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-more-trigger {
+  align-self: end;
+  height: 32px;
+  padding: 0 var(--zy-space-3);
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: var(--zy-fs-sm);
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-more-trigger:hover { background: var(--zy-hover); color: var(--zy-text); }
+
+/* 生成按钮那一条：左边说清为什么还不能点，右边是主按钮。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-setup-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-3);
+  padding-top: var(--zy-space-3);
+  border-top: 1px solid var(--zy-line);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-hint {
+  margin: 0;
+  min-width: 0;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-hint[data-blocked="true"] { color: color-mix(in srgb, var(--zy-accent) 55%, var(--zy-text)); }
+
+/* ── 右栏：出题进度卡 ─────────────────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-aside {
+  display: grid;
+  gap: var(--zy-space-3);
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen {
+  display: grid;
+  gap: var(--zy-space-3);
+  min-width: 0;
+  padding: var(--zy-space-4);
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+  font-size: var(--zy-fs-sm);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen[data-state="failed"] { border-color: color-mix(in srgb, var(--zy-accent) 45%, var(--zy-line)); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-2);
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-heading > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-1) var(--zy-space-3);
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--zy-space-1);
+  min-width: 0;
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-status > i {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--zy-muted);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen[data-state="running"] .zs-qz-gen-status > i {
+  background: var(--zy-accent);
+  animation: zs-qz-dot-pulse 1.6s ease-in-out infinite;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen[data-state="paused"] .zs-qz-gen-status > i { background: transparent; box-shadow: inset 0 0 0 2px var(--zy-muted); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen[data-state="completed"] .zs-qz-gen-status > i { background: var(--zy-accent); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen[data-state="partial"] .zs-qz-gen-status > i { background: var(--zy-secondary); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen[data-state="failed"] .zs-qz-gen-status > i { background: var(--zy-text); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-heading strong {
+  font-size: var(--zy-fs-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-heading strong > small {
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  font-weight: 400;
+}
+
+/* 五段流程：号码在上、阶段名在下的竖排小砖 —— 窄到 46px 也不会一字一行。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--zy-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages > li {
+  display: grid;
+  justify-items: center;
+  gap: var(--zy-space-1);
+  padding-top: var(--zy-space-1);
+  border-top: 2px solid var(--zy-line);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+  text-align: center;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages > li > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--zy-hover);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages > li > b { font-weight: 500; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages > li[data-state="done"] { border-top-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line)); color: var(--zy-secondary); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages > li[data-state="done"] > span { background: color-mix(in srgb, var(--zy-accent) 16%, var(--zy-surface)); color: var(--zy-accent); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages > li[data-state="active"] { border-top-color: var(--zy-accent); color: var(--zy-text); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages > li[data-state="active"] > span { background: var(--zy-accent); color: var(--zy-bg); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stages > li[data-state="active"] > b { font-weight: 600; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-current {
+  margin: 0;
+  padding: var(--zy-space-2);
+  border-radius: 6px;
+  background: var(--zy-hover);
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--zy-space-2);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-bar > progress { width: 100%; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-bar > progress::-webkit-progress-bar { background: var(--zy-hover); border-radius: 999px; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-bar > progress::-webkit-progress-value { background: var(--zy-accent); border-radius: 999px; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-bar > progress::-moz-progress-bar { background: var(--zy-accent); border-radius: 999px; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-bar > span { color: var(--zy-secondary); font-size: var(--zy-fs-meta); font-variant-numeric: tabular-nums; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--zy-space-2);
+  margin: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-metrics > div { display: grid; gap: var(--zy-space-1); min-width: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-metrics dt { color: var(--zy-muted); font-size: var(--zy-fs-meta); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-metrics dd { margin: 0; font-size: var(--zy-fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-throughput {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--zy-space-3);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 折叠区共用一套头：字色、行高、右侧计数，箭头自己画（默认三角在深色主题下发灰）。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-gen-tasks, .zs-qz-workers, .zs-qz-gen-problems, .zs-qz-point) > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-2);
+  min-height: 32px;
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-gen-tasks, .zs-qz-workers, .zs-qz-gen-problems, .zs-qz-point) > summary::-webkit-details-marker { display: none; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-gen-tasks, .zs-qz-workers, .zs-qz-gen-problems, .zs-qz-point) > summary:hover { color: var(--zy-text); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-gen-tasks, .zs-qz-workers) > summary > span,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > summary > small {
+  flex: none;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-gen-tasks, .zs-qz-workers, .zs-qz-gen-problems) {
+  border-top: 1px solid var(--zy-line);
+  padding-top: var(--zy-space-1);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-task-tree { display: grid; gap: var(--zy-space-2); padding-top: var(--zy-space-1); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point {
+  min-width: 0;
+  padding-left: var(--zy-space-2);
+  border-left: 2px solid var(--zy-line);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > summary { color: var(--zy-text); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > summary > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > p { margin: var(--zy-space-1) 0 0; color: var(--zy-muted); font-size: var(--zy-fs-meta); line-height: 1.5; overflow-wrap: anywhere; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > ol {
+  display: grid;
+  gap: var(--zy-space-1);
+  margin: var(--zy-space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > ol > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--zy-space-2);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > ol > li > div { display: grid; min-width: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > ol > li > div > strong { color: var(--zy-secondary); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > ol > li > span:last-child { color: var(--zy-muted); font-size: var(--zy-fs-meta); white-space: nowrap; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-ticket-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--zy-hover);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-point > ol > li[data-state="done"] .zs-qz-ticket-state {
+  background: color-mix(in srgb, var(--zy-accent) 16%, var(--zy-surface));
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-worker-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--zy-space-2);
+  padding: var(--zy-space-1) 0;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-worker-row > div { display: grid; min-width: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-worker-row strong { color: var(--zy-secondary); font-size: var(--zy-fs-sm); font-weight: 600; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-worker-row small { color: var(--zy-muted); font-size: var(--zy-fs-meta); overflow-wrap: anywhere; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-problems > p {
+  margin: var(--zy-space-1) 0;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-history { display: grid; gap: var(--zy-space-1); color: var(--zy-muted); font-size: var(--zy-fs-meta); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-cache {
+  margin: 0;
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-version {
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-empty {
+  justify-items: center;
+  margin: 0;
+  padding: var(--zy-space-6);
+  border: 1px dashed var(--zy-line);
+  border-radius: 10px;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  text-align: center;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-empty-mark {
+  color: var(--zy-accent);
+  font-size: var(--zy-fs-display);
+  line-height: 1;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-empty > h3 { color: var(--zy-text); font-size: var(--zy-fs-md); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-empty > p { margin: 0; max-width: 34em; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-empty-steps {
+  display: grid;
+  gap: var(--zy-space-1);
+  justify-items: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-empty-steps > li {
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-2);
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-gen-empty-steps > li > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--zy-hover);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 知识点抽屉（popover）────────────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-drawer {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(640px, calc(100dvh - 64px));
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  overflow: auto;
+  box-shadow: 0 24px 64px -32px color-mix(in srgb, var(--zy-text) 55%, transparent);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-drawer::backdrop { background: color-mix(in srgb, var(--zy-text) 30%, transparent); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope:not([popover]),
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope:popover-open {
+  display: grid;
+  gap: var(--zy-space-3);
+  padding: var(--zy-space-4);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-3);
+  min-height: 28px;
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-section-title > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--zy-space-2); min-width: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-section-title h2 { font-size: var(--zy-fs-md); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-section-title > span,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-section-title > div > span { color: var(--zy-muted); font-size: var(--zy-fs-meta); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-section-title > p { margin: 0; color: var(--zy-muted); font-size: var(--zy-fs-sm); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-actions { display: flex; flex-wrap: wrap; gap: var(--zy-space-3); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-course, .zs-qz-lesson) {
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+  overflow: hidden;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-row {
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-2);
+  min-height: 32px;
+  padding: var(--zy-space-1) var(--zy-space-3);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-row::-webkit-details-marker { display: none; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-course > .zs-qz-scope-row:hover,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-lesson > .zs-qz-scope-row:hover { background: var(--zy-hover); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-chevron {
+  flex: none;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-base);
+  line-height: 1;
+  transition: transform .15s ease;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-course, .zs-qz-lesson)[open] > .zs-qz-scope-row > .zs-qz-scope-chevron { transform: rotate(90deg); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--zy-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-row > small { flex: none; color: var(--zy-muted); font-size: var(--zy-fs-meta); font-variant-numeric: tabular-nums; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-point { padding-left: var(--zy-space-6); color: var(--zy-secondary); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-point > span[aria-hidden] { flex: none; width: 16px; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-scope-drawer-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-3);
+  margin: 0 calc(var(--zy-space-4) * -1) calc(var(--zy-space-4) * -1);
+  padding: var(--zy-space-3) var(--zy-space-4);
+  border-top: 1px solid var(--zy-line);
+  background: var(--zy-surface);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-sm);
+}
+
+/* ── 更多设置浮窗（popover）──────────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-more {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(560px, calc(100dvh - 64px));
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  overflow: auto;
+  box-shadow: 0 24px 64px -32px color-mix(in srgb, var(--zy-text) 55%, transparent);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-more::backdrop { background: color-mix(in srgb, var(--zy-text) 30%, transparent); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-more-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zy-space-3);
+  padding: var(--zy-space-3) var(--zy-space-4);
+  border-bottom: 1px solid var(--zy-line);
+  font-size: var(--zy-fs-md);
+  font-weight: 600;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-more-body { display: grid; gap: var(--zy-space-3); padding: var(--zy-space-4); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-more-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--zy-space-2);
+  padding: var(--zy-space-3) var(--zy-space-4);
+  border-top: 1px solid var(--zy-line);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-weights { display: grid; gap: var(--zy-space-2); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-weights > label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px;
+  align-items: center;
+  gap: var(--zy-space-2);
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+}
+
+/* ── 生成配置（GenerationModels，类名保持原样）────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-models {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--zy-space-1);
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-split { display: inline-flex; align-items: stretch; gap: var(--zy-space-1); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generate-action { border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generate-options {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--zy-space-1);
+  padding: 0 var(--zy-space-3);
+  border-radius: 6px;
+  font-size: var(--zy-fs-sm);
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-config-pending {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--zy-accent);
+  box-shadow: 0 0 0 2px var(--zy-surface);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-blocked { margin: 0; color: var(--zy-muted); font-size: var(--zy-fs-meta); line-height: 1.5; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-config-panel {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(560px, calc(100dvh - 32px));
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  font-size: var(--zy-fs-sm);
+  overflow: auto;
+  box-shadow: 0 24px 64px -32px color-mix(in srgb, var(--zy-text) 55%, transparent);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-config-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--zy-space-3);
+  padding: var(--zy-space-3) var(--zy-space-4);
+  border-bottom: 1px solid var(--zy-line);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-config-heading > div { display: grid; gap: var(--zy-space-1); min-width: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-config-heading strong { font-size: var(--zy-fs-md); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-config-heading span { color: var(--zy-muted); font-size: var(--zy-fs-meta); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-config-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-md);
+  line-height: 1;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-config-close:hover { background: var(--zy-hover); color: var(--zy-text); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-models-content { display: grid; gap: var(--zy-space-3); padding: var(--zy-space-4); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-models-content > p { margin: 0; color: var(--zy-muted); font-size: var(--zy-fs-sm); line-height: 1.5; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 112px;
+  align-items: center;
+  gap: var(--zy-space-3);
+  padding: var(--zy-space-2) 0;
+  border-top: 1px solid var(--zy-line);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-row:first-of-type { border-top: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-row[data-selected="true"] { background: color-mix(in srgb, var(--zy-accent) 6%, transparent); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-check {
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-2);
+  min-width: 0;
+  font-size: var(--zy-fs-sm);
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-check > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-provider-model, .zs-provider-workers) {
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-2);
+  min-width: 0;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-provider-model, .zs-provider-workers) > span { flex: none; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-model > select { flex: 1 1 auto; min-width: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-workers > input { flex: none; width: 64px; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-unavailable {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-2);
+  color: color-mix(in srgb, var(--zy-accent) 60%, var(--zy-text));
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-models-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-2);
+  padding: var(--zy-space-3) var(--zy-space-4);
+  border-top: 1px solid var(--zy-line);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-models-footer > div { display: grid; flex: 1 1 auto; gap: var(--zy-space-1); min-width: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-models-footer strong { font-size: var(--zy-fs-sm); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-models-footer span { color: var(--zy-muted); font-size: var(--zy-fs-meta); overflow-wrap: anywhere; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-models-hint { margin: 0; color: var(--zy-muted); font-size: var(--zy-fs-meta); line-height: 1.5; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-models-error { margin: 0; color: color-mix(in srgb, var(--zy-accent) 60%, var(--zy-text)); font-size: var(--zy-fs-meta); line-height: 1.5; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-models-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── 练习 / 历史题库 ─────────────────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-practice, .zs-qz-history) {
+  display: grid;
+  gap: var(--zy-space-3);
+  margin-top: var(--zy-space-4);
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-practice > h2 { font-size: var(--zy-fs-md); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-practice > p { margin: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-practice > form { display: grid; gap: var(--zy-space-3); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) fieldset { display: grid; gap: var(--zy-space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) legend { padding: 0; color: var(--zy-muted); font-size: var(--zy-fs-meta); }
+
+/* 搜索框是输入框不是卡片：占满一行但不超过 320px，左边对齐，避免在 grid 里被拉成通栏。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-search {
+  justify-self: start;
+  width: 100%;
+  max-width: 320px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-filters { display: flex; flex-wrap: wrap; align-items: end; gap: var(--zy-space-2); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-filters > label {
+  display: grid;
+  gap: var(--zy-space-1);
+  min-width: 0;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stem {
+  margin: var(--zy-space-3) 0;
+  font-family: Georgia, 'Songti SC', 'Microsoft YaHei UI', serif;
+  font-size: var(--zy-fs-lg);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-choice {
+  display: flex;
+  align-items: baseline;
+  gap: var(--zy-space-2);
+  margin: var(--zy-space-1) 0;
+  padding: var(--zy-space-2) var(--zy-space-3);
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: var(--zy-surface);
+  font-size: var(--zy-fs-base);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-choice:hover {
+  border-color: color-mix(in srgb, var(--zy-accent) 45%, var(--zy-line));
+  background: var(--zy-hover);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-choice:has(input:checked) { border-color: var(--zy-accent); background: var(--zy-soft); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-feedback {
+  display: grid;
+  gap: var(--zy-space-2);
+  padding: var(--zy-space-3);
+  border: 1px solid var(--zy-line);
+  border-left: 2px solid var(--zy-accent);
+  border-radius: 6px;
+  background: var(--zy-soft);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.6;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-feedback > p, .zs-qz-feedback > ul) { margin: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-feedback > ul { padding-left: var(--zy-space-4); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-feedback > div, .zs-qz-self-grade) { display: flex; flex-wrap: wrap; gap: var(--zy-space-2); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--zy-space-3);
+  padding: var(--zy-space-2) 0;
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-bulk > label { display: flex; align-items: center; gap: var(--zy-space-1); cursor: pointer; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-active-questions { display: grid; gap: var(--zy-space-1); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--zy-space-2);
+  padding: var(--zy-space-1) 0;
+  border-radius: 6px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question-row[data-selected] { background: color-mix(in srgb, var(--zy-accent) 6%, transparent); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-select {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--zy-space-1);
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question {
+  min-width: 0;
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+  transition: border-color .15s ease;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question:hover { border-color: color-mix(in srgb, var(--zy-accent) 35%, var(--zy-line)); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-2);
+  padding: var(--zy-space-2) var(--zy-space-3);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question > summary::-webkit-details-marker { display: none; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question > summary > strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question > summary > span:last-child { flex: none; color: var(--zy-muted); font-size: var(--zy-fs-meta); white-space: nowrap; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-type {
+  flex: none;
+  padding: 0 var(--zy-space-2);
+  border: 1px solid var(--zy-line);
+  border-radius: 999px;
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question-body {
+  display: grid;
+  gap: var(--zy-space-2);
+  padding: var(--zy-space-3);
+  border-top: 1px solid var(--zy-line);
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question-body > p { margin: 0; }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question-body > ul { margin: 0; padding-left: var(--zy-space-4); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question-body blockquote {
+  margin: 0;
+  padding: var(--zy-space-2) var(--zy-space-3);
+  border-left: 2px solid var(--zy-line);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-sm);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-question-body a { color: var(--zy-accent); }
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-actions { display: flex; flex-wrap: wrap; gap: var(--zy-space-2); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-rejection {
+  margin: 0;
+  padding: var(--zy-space-1) var(--zy-space-2);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--zy-accent) 8%, transparent);
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-meta);
+  line-height: 1.5;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-archive { border-top: 1px solid var(--zy-line); padding-top: var(--zy-space-1); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-archive > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--zy-space-2);
+  min-height: 32px;
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-archive > summary::-webkit-details-marker { display: none; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-archive > summary > b {
+  padding: 0 var(--zy-space-1);
+  border-radius: 999px;
+  background: var(--zy-hover);
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-archive > summary > small { margin-left: auto; color: var(--zy-muted); font-size: var(--zy-fs-meta); }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-empty {
+  margin: var(--zy-space-4) 0;
+  padding: var(--zy-space-6);
+  border: 1px dashed var(--zy-line);
+  border-radius: 10px;
+  color: var(--zy-muted);
+  font-size: var(--zy-fs-sm);
+  text-align: center;
+}
+
+/* ── 状态兜底：焦点 / 禁用 ─────────────────────────────────────────────
+ * 旧版全包只有 1 条 :focus-visible，37 个 disabled 按钮一个禁用样式都没有；
+ * 而壳的禁用规则只覆盖 .zs-study / .zs-account，题库页根本不在其中。
+ * 这一段放在所有组件规则之后，保证不被覆盖。 */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(button, input, select, textarea, summary, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 2px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(button, input, select, textarea):disabled,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) [aria-disabled="true"] {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* chip / 抽屉行是 label 包复选框：只给 input 变淡，用户看不出这一整块已经点不动。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-chip, .zs-qz-scope-row):has(> input:disabled) {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* fieldset 禁用时整块淡一次，内部控件不再各自变淡（否则叠成看不清）。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) fieldset:disabled { opacity: .7; }
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) fieldset:disabled :is(button, input, select, textarea) {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+@keyframes zs-qz-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .35; }
+}
+
+/* ── 断点 ───────────────────────────────────────────────────────────────
+ * 1920 / 1440 两栏（setup 1fr + aside 340px）；1200 以下 aside 收到 320px；
+ * 980 以下堆成单栏（aside 落到 setup 下方）；760 以下 chip 换行、字段单列。 */
+
+@media (max-width: 1200px) {
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+
+@media (max-width: 980px) {
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--zy-space-4);
+  }
+}
+
+@media (max-width: 760px) {
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) { padding-bottom: var(--zy-space-8); }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-header { grid-template-columns: minmax(0, 1fr); }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-tabs > button { height: 32px; }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-setup { padding: var(--zy-space-4); }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-row { flex-wrap: wrap; min-height: 0; }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-row-label { width: 100%; }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-fields { grid-template-columns: minmax(0, 1fr); }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-setup-foot { flex-wrap: wrap; }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-split { display: flex; width: 100%; }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-generation-split > button { flex: 1; }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-row { grid-template-columns: minmax(0, 1fr); }
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-provider-workers > input { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) *,
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) *::before,
+  body[data-zhiyun] :is(.zs-qz-page, .zs-qz) *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

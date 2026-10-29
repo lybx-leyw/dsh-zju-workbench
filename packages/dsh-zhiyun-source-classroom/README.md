@@ -31,11 +31,40 @@ try {
 | `listLessons(courseId,{onlyPlayable=true,signal})` | 节次及资源；false 保留不可播放状态 |
 | `getSlides(courseId,subId,{signal,onProgress})` | PPT 帧及完整性元数据 |
 | `getSubtitles(courseId,subId,{signal,onProgress})` | 按开始时间排序的字幕 |
-| `getLessonContent(courseId,subId,options)` | 并行获取 slides/subtitles，保留各自元数据 |
+| `getLessonContent(courseId,subId,options)` | 并行获取 slides/subtitles，保留各自元数据；挂了课件缓存时每页多一个 `cacheKey`（命中再多 `cacheUrl`），并在后台预取 |
+| `attachSlideCache(cache)` | 挂上课件缓存（可选）；不挂时行为与加缓存前完全一致 |
+| `prefetchSlides(courseId,subId,options)` | 显式等待一节课的课件补齐；未挂缓存时返回 `cached:false` |
 | `getSchedule({start,end,userId,signal})` | 课表；默认上海今天，最多 31 天 |
 | `downloadResource({url,destination,signal,onProgress,maxBytes,timeoutMs})` | 流式下载；默认 20 分钟，目标须为绝对路径 |
 | `downloadSlides(courseId,subId,{directory,concurrency=6,signal,onProgress})` | 图片下载结果逐页汇总，最多 8 并发 |
 | `dispose()` | 取消请求、关闭客户端、等待会话写入 |
+
+## 课件缓存（`/zhiyun-slides`）
+
+翻页卡顿的根因是**每翻一页都是一次带签名 URL 的网络往返**。`src/slide-cache.js` 是决策层（纯函数），`src/slide-store.js` 是文件层与路由，两者合起来把课件帧落到本地磁盘。
+
+**只缓存 PPT，不缓存视频。** 视频是 HLS 分片长连接，要落几个 GB、还要处理 Range 与分片失效；PPT 是 100–300 KB 的 jpg，收益立竿见影。
+
+三层分工，写错任何一层都会表现为「缓存好像没生效」：
+
+| 关注点 | 位置 | 关键约束 |
+| --- | --- | --- |
+| 要不要下 / 叫什么 / 淘汰谁 | `slide-cache.js` | 键是**剥掉 query 的** `origin+pathname` 摘要 —— 智云图片带时效签名，拿完整 URL 当键等于每次刷新全量重下 |
+| 索引、原子落盘、路由 | `slide-store.js` | 索引写临时文件再 `rename`；写一半的 JSON 会让整份缓存判为损坏而归零 |
+| 何时补缓存 | `source.js` 的 `prefetchInBackground` | **读完再补**、不 await、按节去重、不跟调用方 signal |
+
+目录布局与容量：默认 `<profile>/data/zhiyun-classroom/slides/`，`index.json` + `<页序>-<键前 12 位>.jpg`，上限 2 GB（约 100 节课），按 `usedAt` 做 LRU。淘汰按最近使用而不是最早创建 —— 否则用户最常看的那门课会被新看的挤掉。
+
+失败一律降级：索引读不出、目录建不了、某页下失败，都只是「这次没缓存到」，不阻塞读课件。`getLessonContent` 未命中时**不带** `cacheUrl`，前端回退原始签名地址。
+
+路由的安全姿态与直播转发**不同**，所以是独立前缀：
+
+- 直播转发是「代你去 `*.zju.edu.cn` 取任意 URL」（防 SSRF）；
+- 这里是「只给你我磁盘上已有的字节」（防路径穿越）。
+
+挡穿越靠两道：键必须是 32 位十六进制；索引里的 `file` 必须是单段文件名（`isSlideFileName`，同时挡 `..`、`/`、`\` 与 `C:` 盘符相对路径）。前缀判断用**原始** pathname —— `new URL` 会把 `..` 折掉，先规范化再判前缀等于让穿越静默变成「另一个路由」。
+
+`GET /zhiyun-slides/status` 报出 `{files, bytes, quotaBytes}` 供设置页显示。响应带 `Cache-Control: private, no-cache` + `ETag`（键+大小）：本地一次 304 只有零点几毫秒，换来的是「课件重传后不会永久显示旧图」。
 
 ## 直播（`source.live`）
 

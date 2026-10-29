@@ -1,0 +1,6 @@
+{
+  "gloss": "knowledgePoints() 从基线还原出来的一条知识点（pointId、title、正文）；出题与知识点导航都读它，不读用户 md。",
+  "id": "knowledge_point",
+  "kind": "category",
+  "label": "知识点（出题用）"
+}

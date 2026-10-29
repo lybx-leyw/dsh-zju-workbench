@@ -1,0 +1,26 @@
+{
+  "name": "dsh-zhiyun-graph-render",
+  "version": "0.1.0",
+  "description": "笔记链接图的渲染层：把 dsh-zhiyun-core-vault 算好的 {nodes,edges} 画成可交互的画布（cytoscape + fcose）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": []
+    }
+  },
+  "dependencies": {
+    "cytoscape": "3.34.4",
+    "cytoscape-fcose": "2.2.0"
+  }
+}

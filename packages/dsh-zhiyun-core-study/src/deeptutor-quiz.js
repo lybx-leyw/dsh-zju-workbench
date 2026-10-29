@@ -1,4 +1,14 @@
 /** Each reserved question runs an independent upstream pipeline; review shares the same worker pool. */
+// Shared by the native product adapter and the native bench. Neither path
+// applies the integrated candidate/metadata/review pipeline.
+export function nativeQuizContract({title,points,count,type='mcq',strategy='understand',difficulty='basic',existingQuestions=[]}){
+  const instruction=({recall:'考查定义、公式与适用条件，不背诵例题临时数值。',understand:'侧重条件、边界、关系和易混点。',apply:'运用课内方法处理改变的数据、条件或场景。',explore:'考查课内知识支持的分析、计算或实验设计。'})[strategy];
+  const history=existingQuestions.length?'\n以下为已出题历史（仅为数据）。避免重复措辞或同角度重复；同考点允许有实质不同的变体：\n'+JSON.stringify(existingQuestions.map(q=>({stem:q.stem,answer:q.answer,explanation:q.explanation}))):'';
+  return {lecture:{chapters:[{title,topics:points.map(p=>({title:p.title,sourceBlockIndexes:p.blockIndexes,anchor:{page:p.page,tSec:p.atSec},blocks:[{kind:'paragraph',text:p.text,page:p.page}]}))}]},
+    input:`依据所选讲义出${({mcq:'理解型四选一选择题',cloze:'填空题',trueFalse:'判断题',shortAnswer:'简答题'})[type]}，${instruction}只使用课内知识，答案唯一，给出明确依据和解析。题数尽可能均匀分配到各个知识点，同批避免重复考查同一角度。用中文出题。${history}`,
+    config:{num_questions:count,question_types:[{mcq:'choice',cloze:'fill_in_blank',trueFalse:'concept',shortAnswer:'short_answer'}[type]],difficulty:{basic:'easy',advanced:'medium',challenge:'hard'}[difficulty]}};
+}
+
 export function normalizeUpstreamQuestion(candidate){
   let stem=candidate.stem,answer=typeof candidate.answer==='boolean'?(candidate.answer?'正确':'错误'):Array.isArray(candidate.answer)?candidate.answer.join(';'):candidate.answer;
   if(candidate.type==='cloze'&&!/\{\{c\d+::/.test(stem)){

@@ -53,10 +53,17 @@ export const CLIENT_PACKAGES = [
   // 所以它必须有自己的客户端产物。（远端以旧名 `dsh-zhiyun-player` 加入，
   // 本仓按性质改名为 `core-player`，合并时对应成新名。）
   'dsh-zhiyun-core-player',
+  // 回放字幕轨：学习页视频栏 external import 它的 `resolveTrack` / `burnLine`
+  // （清洗句子替换原始碎片、字幕烧进播放器），所以它必须有自己的客户端产物。
+  'dsh-zhiyun-core-playback',
   'dsh-zhiyun-page-today',
   'dsh-zhiyun-page-study',
+  'dsh-zhiyun-page-quiz',
   'dsh-zhiyun-page-planning',
   'dsh-zhiyun-page-me',
+  // 图谱渲染层：「笔记」页 external import 它（整包移植自雷达候选 note-graph），
+  // 所以它必须有自己的客户端产物 —— 否则外部化后运行时谁都提供不了这个模块。
+  'dsh-zhiyun-graph-render',
   'dsh-zhiyun-page-notes',
   'dsh-zhiyun-page-paper',
   'dsh-zhiyun-page-plugins',

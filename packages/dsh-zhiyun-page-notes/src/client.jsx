@@ -44,6 +44,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
+// 图谱渲染是独立包（`dsh-zhiyun-graph-render`，整包移植自雷达候选 note-graph）：
+// 页面只负责把 vault 的 graph 读数递进去，不背 cytoscape 这份依赖。
+import { NoteGraph, css as graphCss } from 'dsh-zhiyun-graph-render';
 import css from './style.css';
 
 export const name = 'zhiyun-page-notes-client';
@@ -166,6 +169,9 @@ function ancestorsOf(rel) {
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunNotesPageStyle', css, label: 'zhiyun: notes page styles' });
+  // 图谱的样式随包走（`dsh-zhiyun-graph-render` 导出自己的 css），
+  // 页面只负责在同一个 ctx 里挂上 —— 样式归属跟着组件走，不散落在页面里。
+  mountStyle(ctx, { attribute: 'zhiyunGraphRenderStyle', css: graphCss, label: 'zhiyun: graph render styles' });
   ctx.slots.inject('zhiyun.notes.content', () => ctx.slots.register(
     { name: 'zhiyun.notes.content', priority: 10 },
     NotesLibrary,
@@ -216,7 +222,7 @@ function TabStrip({ tabs, active, onPick, onClose, onCreate }) {
 }
 
 /** 右栏：这篇笔记的操作 + 反链 / 出链 / 标签。 */
-function NoteRelations({ name, markdown, backlinks, tags, onOpen, onRename, onRemove, busy }) {
+function NoteRelations({ name, markdown, backlinks, tags, graph, onOpen, onRename, onRemove, busy }) {
   const parse = useMemo(() => {
     const links = [...String(markdown).matchAll(/\[\[([^\]\n]+)\]\]/g)]
       .map((m) => m[1].split('|')[0].split('#')[0].trim())
@@ -255,6 +261,8 @@ function NoteRelations({ name, markdown, backlinks, tags, onOpen, onRename, onRe
           <button type="button" className="zs-nt-ref" onClick={() => onOpen(b.from.replace(/\.md$/i, ''))}>{b.fromTitle}</button>
         </li>)}</ul>}
     </section>
+
+    <NoteGraph graph={graph} current={name ? `${name}.md` : ''} onOpen={(p) => onOpen(p.replace(/\.md$/i, ''))} />
 
     <section>
       <h3>指向 <span>{parse.links.length}</span></h3>
@@ -306,12 +314,19 @@ export function NotesLibrary() {
   //    再常驻一列 250px 会把正文挤到读不下去（实测状态栏都换行了）。
   //    Obsidian 的右栏同样是默认收起的。开关在 ribbon 上，状态栏的反链数也能叫出来。
   const [rightOpen, setRightOpen] = useState(false);
-  const [preview, setPreview] = useState(false);
+  // 阅读态是**默认**：笔记大多是拿来读的，而 Markdown 源码对读者不友好。
+  // 想写就按工具栏那个「编辑」。
+  //
+  // ⚠️ 例外只有一个：**新建笔记**后自动切到编辑态（见 createNote）。否则用户
+  //    新建完看到的是一句「（空笔记）」，还得自己再点一次「编辑」才能开始写。
+  const [preview, setPreview] = useState(true);
   const [filter, setFilter] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [backlinks, setBacklinks] = useState([]);
   const [allTags, setAllTags] = useState([]);
+  // 全库链接图。`null` = 索引器没给，`{nodes:[],edges:[]}` = 真的没有笔记。
+  const [graph, setGraph] = useState(null);
   const [history, setHistory] = useState({ stack: [], cursor: -1 });
   const [dragging, setDragging] = useState(null);
   const filterRef = useRef(null);
@@ -335,18 +350,22 @@ export function NotesLibrary() {
 
   /** 刷新右栏（反链 / 标签来自索引器；索引器缺席时只是空着）。 */
   const refreshSide = useCallback(async (name) => {
-    if (!name) { setBacklinks([]); setAllTags([]); return; }
+    if (!name) { setBacklinks([]); setAllTags([]); setGraph(null); return; }
     try {
-      const [links, tags] = await Promise.all([
+      const [links, tags, graph] = await Promise.all([
         vault('backlinks', { path: `${name}.md` }),
         vault('tags'),
+        // 图谱是**全库**的，不随当前笔记变；`null` 表示索引器没给出（不是「没有图」）。
+        vault('graph').catch(() => null),
       ]);
       setBacklinks(Array.isArray(links) ? links : []);
       setAllTags(Array.isArray(tags) ? tags.slice(0, 30) : []);
+      setGraph(graph && typeof graph === 'object' ? graph : null);
     } catch {
       // 索引器不可用时右侧留空，不打扰用户 —— 正文本身还能读写。
       setBacklinks([]);
       setAllTags([]);
+      setGraph(null);
     }
   }, []);
 
@@ -491,6 +510,8 @@ export function NotesLibrary() {
       const made = await notes('create', { title: '新笔记', folder });
       await refreshTree();
       await openNote(made.name);
+      // 新建是为了写，不是为了读：直接进编辑态，省掉一次「点编辑」。
+      setPreview(false);
     } catch (error) {
       setNotice({ tone: 'bad', text: `新建失败：${error.message}` });
     } finally {
@@ -693,7 +714,13 @@ export function NotesLibrary() {
                 ? <div className="zs-nt-preview-body">
                   {draft.trim() === ''
                     ? <p className="zs-muted">（空笔记）</p>
-                    : <MarkdownText text={draft} labels={MARKDOWN_LABELS} variant="compact" />}
+                    // ⚠️ 不要传 `variant="compact"`。那个变体是给**聊天里夹一段短
+                    //    Markdown** 用的：字号压到 13px/20px、正文用三级灰、而且
+                    //    `.compact :is(h1..h6){font:inherit}` 会把标题压平、
+                    //    `p/ul/ol/blockquote` 的 margin 收到 4px。用在整页长文上就是
+                    //    「又小又挤、标题不起作用」，这是这页此前显得简陋的根因。
+                    //    笔记正文要的是长文排版，用默认变体 + 本页的 .zs-nt-preview-body。
+                    : <MarkdownText text={draft} labels={MARKDOWN_LABELS} />}
                 </div>
                 : <textarea
                   className="zs-nt-input"
@@ -715,7 +742,7 @@ export function NotesLibrary() {
               <button type="button" className="zs-nt-stat" onClick={() => setRightOpen(true)}>{backlinks.length} 条反向链接</button>
               <span className="zs-nt-stat">{countWords(draft)} 个词</span>
               <span className="zs-nt-stat">{draft.length} 个字符</span>
-              <span className="zs-nt-stat">{countLinks(draft)} 条链接 · {countTags(draft)} 个标签</span>
+              <button type="button" className="zs-nt-stat" onClick={() => setRightOpen(true)}>{countLinks(draft)} 条链接 · {countTags(draft)} 个标签</button>
             </> : <span className="zs-nt-stat">{entries.filter((e) => e.type === 'note').length} 篇笔记</span>}
           </span>
         </div>
@@ -726,6 +753,7 @@ export function NotesLibrary() {
         markdown={draft}
         backlinks={backlinks}
         tags={allTags}
+        graph={graph}
         onOpen={(p) => void openNote(p)}
         onRename={rename}
         onRemove={remove}

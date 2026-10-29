@@ -1,3 +1,17 @@
+> 🅿️ **部分提取，保留待后续**（2026-10-28，branch `vault-integrate`）：F-4（重边折叠）已进
+> `dsh-zhiyun-core-vault`；其余能力未做。**本包不删除**，按 `docs/contributing/RADAR.md` 3.2 保守废弃原则保留。
+
+## 能力清单
+
+| # | 能力 | 状态 | 去向 |
+| --- | --- | --- | --- |
+| F-1 | 相邻链接 `[[A]]与 [[B]]` 不漏第二个 | **作废** | 实测本仓解析器已正确（`parseNoteLinks` 返回两条），候选所记为误报。已在 `tests/vault.test.mjs` 加测试钉住 |
+| F-2 | 代码块 / 行内代码里的 `[[x]]` 不算链接 | **作废** | 实测已正确排除（三种围栏形态均返回空） |
+| F-3 | 未建笔记用虚拟节点表示 | **作废** | 本仓已把未解析按 `reason: missing/ambiguous` 记进 `unresolved`，不产生伪节点 |
+| F-4 | 同一对笔记连两次产生两条重边 | **已提取** | `dsh-zhiyun-core-vault/src/index/vault-index.js`：边折叠 + `weight` + 出入度按关系数算。测试见 `tests/vault.test.mjs` |
+| F-5 | 社区 / 枢纽 / 桥（graphology-louvain 聚类） | **未做** | — |
+| — | 用 mdast 替换正则抽 `[[...]]` | **不做** | 本仓 `parse/links.js` 已按 Obsidian 语义逐条实现并钉了 11 条测试；换 mdast 得不到净收益，反而丢失 `%%注释%%` 等已知边界的处理共识 |
+
 # dsh-radar-vault-graph
 
 > **候选骨架：未评审、未接入 profile、不可直接使用。**

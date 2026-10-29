@@ -1,0 +1,6 @@
+# 出题实验室的加载入口：把本包插进 profile 的插件列表。
+# 卸载方式与其它包一致 —— 在「插件」页关掉这一行即可，写进的是用户自己的
+# cordis.patch.yml，不会被 scripts/profile.mjs 的初始化撤销。
+- insert:
+    - id: zhiyun-quiz-lab
+      name: dsh-zhiyun-quiz-lab

@@ -1,3 +1,32 @@
+> 🅿️ **部分提取，保留待后续**（2026-10-28，branch `vault-integrate`）：
+> **本候选的核心前提经实测不成立** —— 见下方「订正」。仅「使用计数」一项被提取。
+> **本包不删除**，按 `docs/contributing/RADAR.md` 3.2 保守废弃原则保留（其 TODO 仍可作为「若上游换实现」的参考）。
+
+## ⚠️ 订正：上游不是笔记语义图
+
+本 README 下方把 `dsh-knowledge-graph@0.1.3` 描述为「笔记的语义图 / documentId / LLM 抽取 / SQLite」。
+实测该版本：
+
+```text
+package.json description: 可视化插件/技能/工具、依赖关系与使用统计
+grep -ci 'note|语义|semantic|vault' lib/client.js  →  0
+```
+
+它是**插件生态**的可视化（装了哪些插件、`peerDependencies` 关系、每轮工具调用轨迹），
+与笔记/语义图无关。下面 TODO-1…TODO-6 全部建立在这个错误前提上（路径↔documentId 映射、
+抽取产物写库、SQLite 豁免…），**一条都不成立**，不实施。
+
+## 能力清单
+
+| # | 能力 | 状态 | 去向 |
+| --- | --- | --- | --- |
+| 1 | 工具/插件**使用计数 + 上次使用时间**（判「吃灰」） | **已提取** | `dsh-zhiyun-page-plugins/src/usage.js`（纯函数：`recordUse` / `staleness` / `summarize`），接入 `Panel.jsx` 的「吃灰」区块。测试 `tests/plugin-usage.test.mjs` |
+| 2 | 插件依赖边（读 `peerDependencies`） | **不做** | 本仓「插件」页已有**运行时**口径（`readPlane` 读 Loader/fiber/reflect），比静态声明更准 |
+| 3 | 插件 / 技能 / 工具枚举成图 | **作废** | 本仓 `buildView` 已产出 `rows`，无新增信息 |
+| 4 | 每轮思考与工具调用轨迹回放 | **未做** | 需要订阅宿主会话事件；本仓**无任何 `ctx.on` / 会话事件订阅**，通路未验证，不硬接 |
+| 5 | 笔记语义图（README 原文所述） | **作废** | 上游没有这个能力，前提错误 |
+| 6 | 整页工作台 UI | **不做** | 违反「仍是同一个面板」 |
+
 # dsh-radar-knowledge-graph
 
 > ## ⚠️ 候选骨架：**未评审、未接入 profile、不可直接使用**

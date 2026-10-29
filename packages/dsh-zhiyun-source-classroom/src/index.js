@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { ClassroomSource } from './source.js';
 import { STREAM_ROUTE_PREFIX, createStreamHandler } from './stream.js';
+import { SLIDE_ROUTE_PREFIX, SlideCache, createSlideHandler } from './slide-store.js';
 // 「只在还没有凭据时回填」走共享层，不再自己实现一遍"读—判断—写"。
 // 跨包依赖走 package.json 的 dependencies + 包名（本仓惯例，见
 // dsh-zhiyun-core-study → lecture/quiz/notes），不用相对路径。
@@ -98,6 +99,35 @@ export async function apply(ctx, config = {}) {
   const logout = source.logout.bind(source);
   source.logout = async () => { await connection.suspend(); return logout(); };
   ctx.provide('zhiyunClassroom', source);
+
+  /**
+   * 课件图片缓存。
+   *
+   * 解决的是用户报的「翻页经常卡顿」—— 每翻一页都是一次带签名 URL 的网络往返。
+   * 缓存到本地后，翻页变成磁盘读取。
+   *
+   * 三个刻意的取舍：
+   *
+   *   - **只缓存 PPT，不缓存视频**。视频是 HLS 分片长连接，要落几个 GB 还要处理
+   *     Range 与分片失效；PPT 是几百 KB 的 jpg，收益立竿见影。投入产出差一个数量级。
+   *   - **默认开启**。用户要的正是"不卡"，把它做成需要先点开关才能生效，
+   *     等于让默认体验保持卡顿。上限 2 GB，回收按最近使用，看得最勤的课留得最久。
+   *   - **失败一律降级**。索引读不出、目录建不了、某页下失败 —— 全都只是"这次
+   *     没缓存到"，绝不阻塞读课件。
+   */
+  const cacheDir = path.join(ctx.profileContext.dir, 'data', 'zhiyun-classroom', 'slides');
+  const slideCache = config.slideCache === false
+    ? null
+    : new SlideCache({
+      directory: config.cacheDirectory ? path.resolve(config.cacheDirectory) : cacheDir,
+      // 复用 transport 的下载器：断点续传、ETag、原子落盘都已经在里面，
+      // 这里再写一遍只会得到一套更差的实现。
+      download: options => source.downloadResource(options),
+      quotaBytes: config.cacheQuotaBytes,
+      log: message => ctx.logger?.debug?.(message),
+    });
+  if (slideCache) source.attachSlideCache(slideCache);
+
   // 直播流必须经过本机转发：浏览器直接吃智云 CDN 会同时撞上三件事 ——
   // CDN 校验 Referer、m3u8 里的分片是相对地址且带鉴权参数、以及跨域。
   // 这一层只做「拉取 + 改写 + 转发」，不碰登录态（凭据留在 transport 里）。
@@ -106,6 +136,7 @@ export async function apply(ctx, config = {}) {
   //   仍然必须能用。回放/解析/课表不依赖转发端点，把它们绑在一起会让
   //   「直播装不上」升级成「整个课堂页打不开」—— 降级而不是连带失败。
   let removeRoutes = null;
+  let removeSlideRoute = null;
   if (typeof ctx.inject === 'function') {
     removeRoutes = ctx.inject(['webServer'], (scope) => scope.effect(() => {
       const handler = createStreamHandler({ log: event => ctx.logger?.debug?.(`zhiyun: live ${JSON.stringify(event)}`) });
@@ -113,11 +144,27 @@ export async function apply(ctx, config = {}) {
       ctx.logger?.info?.(`zhiyun: 直播流转发 ${STREAM_ROUTE_PREFIX}`);
       return dispose;
     }, 'zhiyun: live stream relay'));
+    // 课件图单独一个前缀：它的威胁模型是"只发磁盘上已有的字节"，
+    // 和直播转发的"代你去白名单域名取任意 URL"完全不同，不能混在一个前缀里。
+    if (slideCache) {
+      removeSlideRoute = ctx.inject(['webServer'], (scope) => scope.effect(() => {
+        const handler = createSlideHandler(slideCache, { log: event => ctx.logger?.debug?.(`zhiyun: slide ${JSON.stringify(event)}`) });
+        const dispose = scope.webServer.register({ kind: 'prefix', path: SLIDE_ROUTE_PREFIX, handler });
+        ctx.logger?.info?.(`zhiyun: 课件缓存 ${SLIDE_ROUTE_PREFIX}`);
+        return dispose;
+      }, 'zhiyun: slide cache route'));
+    }
   } else {
     ctx.logger?.debug?.('zhiyun: 没有 ctx.inject，跳过直播流转发端点');
   }
   // Mounting is offline. The first state request restores the saved account.
   return async () => {
-    try { await removeRoutes?.(); } finally { await source.dispose(); await localNet?.close(); }
+    try {
+      await removeSlideRoute?.();
+      await removeRoutes?.();
+    } finally {
+      await source.dispose();
+      await localNet?.close();
+    }
   };
 }

@@ -1,0 +1,8 @@
+{
+  "check": "归档里的 md 不进 readAll 的索引输入，但仍在 tree 的条目里",
+  "domain": "archive_dir",
+  "id": "archive_excluded_from_index",
+  "kind": "affects",
+  "label": "归档不进索引但仍可见",
+  "range": "vault_note"
+}

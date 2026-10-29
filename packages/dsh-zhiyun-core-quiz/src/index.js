@@ -30,7 +30,7 @@
  */
 
 import { createPointQuizGenerator } from './points.js';
-import {createR1Generator} from './engines.js';
+import {createR1Generator,engineVersion,engineEntries,registerEngine,registeredEngines} from './engines.js';
 import { QuizError } from './quality.js';
 import { createQuizGenerator } from './generate.js';
 import { createQuizStore } from './store.js';
@@ -147,6 +147,22 @@ export async function apply(ctx, config = {}) {
     checkUpstreamCandidate: checkCandidate,
     /** 题库领域服务（题目 / 作答 / 额度台账的形状与判定）。 */
     store,
+    /**
+     * 引擎注册表。
+     *
+     * 交给外部包（`dsh-zhiyun-quiz-lab`）的唯一动作是 `register`。
+     * 真相住在 `engine-registry.js` 的模块级表里 —— 因为
+     * `planEngineQuestions` / `canResumeEngine` 是同步纯函数，读不到 `ctx`。
+     * 挂在既有 `zhiyunQuiz` 服务上、而不是另开一个服务名是有意的：
+     * 第二个 `provide` 会让只把首个值赋给变量的测试替身静默拿到错误那个，
+     * 而失败现场（`service.generateR1Points is not a function`）离真正原因很远。
+     */
+    engines: {
+      register: registerEngine,
+      list: () => registeredEngines().map(({ createRun, ...row }) => row),
+      versionOf: engineVersion,
+      entries: engineEntries,
+    },
     get concurrency() { return generator.concurrency; },
     get active() { return generator.active; },
     get closed() { return generator.closed; },

@@ -1,0 +1,10 @@
+{
+  "basis": "知识库 lectures 表里一条 record.lecture",
+  "id": "lecture-baseline-record",
+  "label": "某次生成留下的 AI 基线",
+  "provenance": {
+    "kind": "named",
+    "ref": "packages/dsh-zhiyun-core-knowledge/src/knowledge-points.js"
+  },
+  "type": "lecture_baseline"
+}

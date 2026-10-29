@@ -1,0 +1,42 @@
+{
+  "id": "n-u-0bqpu5",
+  "kind": "unresolved",
+  "status": "explained",
+  "statement": "当前版本的归档 md 是陈旧占位符：正文活在 live 路径 `课程/节次.md`，归档里 `v<N>/讲义.md` 只在它不再是当前版本时才被写。后果是——若用户从没点过重新生成、也没点过回退，某个版本的归档目录里那份 md 就是生成当时的 AI 稿，而不是用户此刻手里的样子；两次 swap 之后它会被收尾内容覆盖（把用户的字存下来，代价是覆盖一份可从基线重建的 AI 稿）。我原以为「回退 = swap」是纯交换、磁盘一个字节不变，实测不成立：换来的不变量是「live 精确复原 + 每份内容要么还在、要么能从保留的基线重建」，不是逐字节相同。",
+  "touches": [
+    "version_pair",
+    "archive_dir"
+  ],
+  "evidence": [],
+  "about": [
+    "archive-root",
+    "version_pair",
+    "archive_dir",
+    "handout",
+    "lecture_baseline",
+    "vault_note",
+    "block_identity"
+  ],
+  "scope": {
+    "conditions": {
+      "仓库": "zhiyun-pro-js",
+      "profile": "zhiyun-bench",
+      "讲义版本": "architecture-v4"
+    },
+    "ranges": {}
+  },
+  "resolution": {
+    "outcome": "explained",
+    "reason": "改成「归档只装已结束的版本」后占位副本不再存在：planRegenerate 不再给新版本写归档 md，只写 live md 与 v<N>/基线.json；当前版本的正文只有 live 一处，等它结束（重新生成换版或 swap）时由 planDeactivate 从 live 写一次。由此换来的不变量是「swap 后 live 精确复原 + 每份被覆盖的干净 AI 稿都能从保留的基线重建」，而不是「磁盘逐字节回到原状」——后者在「当前版本正文只活在 live」这个前提下一开始就不该被当作判据。tests/handout-version.test.mjs 已有两条断言分别钉住：当前版本不在归档里留占位 md、以及每一版的 AI 稿可从其基线重建。",
+    "by": null
+  },
+  "source": {
+    "session": "session-8eac317d-9c03-40a0-9d23-a9b424f23d61",
+    "goal": "g-mvt12jsjhc9t",
+    "anomaly": "u-0bqpu5",
+    "by": "model"
+  },
+  "review": null,
+  "at": 1793247572264,
+  "updated": 1793253080810
+}

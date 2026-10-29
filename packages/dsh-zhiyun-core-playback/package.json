@@ -1,0 +1,20 @@
+{
+  "name": "dsh-zhiyun-core-playback",
+  "version": "0.1.0",
+  "description": "回放观感增强：字幕/课件的三态时间对齐契约，与离线 Δ 探针。纯逻辑，零 IO、零网络",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./alignment": "./src/alignment.js",
+    "./transcript": "./src/transcript.js",
+    "./probe": "./src/probe.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web" }
+  }
+}

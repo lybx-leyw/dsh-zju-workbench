@@ -1,4 +1,6 @@
 const count=value=>Number.isInteger(value)&&value>=0?value:null;
+/** Receipts can be fewer than attempts; length is not a safe resumed index. */
+export const attemptOffset=(receipts=[],events=[])=>Math.max(0,...receipts.map(r=>count(r.index)??0),...events.map(e=>count(e.index)??0));
 /** Cache/reasoning counts are subsets, never additional tokens. Unknown bills stay unknown. */
 export function tokenLedger(receipts,{attempts=receipts.length}={}){
   const ledger={attempts,receipts:receipts.length,usageReceipts:0,inputTokensKnown:0,outputTokensKnown:0,totalTokensKnown:0,cacheHitInputTokensKnown:0,cacheMissInputTokensKnown:0,reasoningOutputTokensKnown:0,cacheUnknownReceipts:0,derivedTotalReceipts:0,totalMismatchReceipts:0};

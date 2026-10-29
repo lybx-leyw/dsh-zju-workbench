@@ -1,0 +1,6 @@
+{
+  "gloss": "按节一份的 Markdown 文件，落在笔记库里；用户在这里读和改讲义正文。",
+  "id": "handout",
+  "kind": "category",
+  "label": "讲义（用户读的那一份）"
+}

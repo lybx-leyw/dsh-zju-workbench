@@ -1,0 +1,10 @@
+{
+  "basis": "markdownToChapters 的返回值：章/知识点/块三层",
+  "id": "handout-decoded-chapters",
+  "label": "讲义 md 解码所得的章节树",
+  "provenance": {
+    "kind": "named",
+    "ref": "packages/dsh-zhiyun-core-handout/src/codec.js"
+  },
+  "type": "handout"
+}

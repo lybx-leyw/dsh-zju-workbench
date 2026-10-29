@@ -1,0 +1,28 @@
+{
+  "name": "dsh-zhiyun-page-quiz",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "题库页：跨课程按知识点出题、练习与历史题目管理。",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "dsh-zhiyun-shell-ui",
+        "dsh-zhiyun-core-quiz"
+      ]
+    }
+  },
+  "dependencies": {
+    "dsh-zhiyun-core-quiz": "0.1.0"
+  }
+}

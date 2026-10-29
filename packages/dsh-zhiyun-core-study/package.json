@@ -10,7 +10,7 @@
     "bundle": { "patch": "./cordis.patch.yml" },
     "client": { "platform": "web", "inject": ["@deepseek-ai/dsh-client-connection"] }
   },
-  "dependencies": { "dsh-zhiyun-core-parser": "0.1.0", "dsh-zhiyun-core-lecture": "0.1.0", "dsh-zhiyun-core-quiz": "0.1.0", "dsh-zhiyun-core-notes": "0.1.0" },
+  "dependencies": { "dsh-zhiyun-core-parser": "0.1.0", "dsh-zhiyun-core-lecture": "0.1.0", "dsh-zhiyun-core-quiz": "0.1.0", "dsh-zhiyun-core-notes": "0.1.0", "dsh-zhiyun-core-llm-error": "0.1.0" },
   "peerDependencies": { "@deepseek-ai/dsh-atomic-write": "0.2.0-rc.2" },
   "peerDependenciesMeta": { "@deepseek-ai/dsh-atomic-write": { "optional": true } }
 }

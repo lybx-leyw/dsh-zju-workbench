@@ -1,0 +1,5 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+# insert id 与上游包名错开，避免与 dsh-radar-fsrs-scheduler 同槽位互抢。
+- insert:
+    - id: radar-review-due
+      name: dsh-radar-review-due
