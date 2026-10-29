@@ -3572,3 +3572,30 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 > **两个缺陷方向相反、恰好互相抵消**，输出「看起来对」。只修其中任一个，输出仍会是 B，
 > 但依据将从「错误抵消」变成「真实状态」—— 不能因为现在结果对就认为脚本是对的。建议加断言：`last_run_at` 日期 ≠ 最新报告日期 → 直接退出。
 > 详见 `2026-10-29-06.md` §6。
+
+## 2026-10-29 · r98 · A 组（插件生态 · 前排见底，翻到 ★10–35 层）· 追加
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `aqiu817/dsh-llm-agentrouter` | A 原生DSH | MIT | 工具（模型来源） | **重复可强化** | 🟢 | proposed | 2026-10-29 | ★35，零依赖，100 KB，`2.6.1`。`override: llm-pi-ai` 声明一条 `agentrouter` 路由；出站围栏改写 `.internal` 哨兵主机 + 换 UA + 补工具 schema。骨架 `dsh-radar-agent-router` 锁版 2.6.1（未接入 profile） |
+| `7dgroup-ai/dsh-skill-7d-code-reviewer` | A 原生DSH | MIT | 无（代码审查） | 全新 | 🔵 | watch | 2026-10-29 | ★12，3.9 MB。`ctx.skills` 注册 `7d-code-reviewer` 技能，五步流程 + 三级分级 + HTML 报告。合规但非学习场景，不集成 |
+| `w2112515/dsh-plugin-development` | A 原生DSH | MIT | 无（插件作者） | 全新 | 🔵 | watch | 2026-10-29 | ★11，44 KB。插件开发 Agent Skill + 可选 bundle 适配器。与本仓 `docs/` 方向相反 |
+| `tianbuyu-wwx/dsh-hermes-link` | A 原生DSH | MIT | 无 | 全新 | 🔵 | watch | 2026-10-29 | ★9，1.5 MB，37 个测试脚本。Hermes Agent ↔ DSH 双向桥（session mirror/outbox/遥测）。本仓无 Hermes 侧，接入即空转 |
+| `xiaoxianyu-office/dsh-router-flash` | A 原生DSH | MIT | 无 | 全新 | 🔵 | watch | 2026-10-29 | ★13，17 KB。V4 Flash 神模式 agent preset **分发包**，与 `zhiyun-bench` preset 策略重复 |
+| `Ephemeral-AI-Lab/mayfly` | A 原生DSH | MIT | — | — | ⛔ | rejected | 2026-10-29 | ★22，16 MB。**终端 UI** bundle；本仓是 web 面板，判据①「同一面板」不成立 |
+| `adwmc/helm-d` | A 原生DSH | MIT | — | — | ⛔ | rejected | 2026-10-29 | ★829（本轮最高），`language: Python`，topics 含 `jailbreak`/`reverse-eng`。功能域与本仓（教学/学习）零交集，且非 JS 栈 |
+
+> **r98 已登记故跳过（18 个，去重命中）**：`deepseek-ai/deepseek-harness`、`Ebony-Vinyl/dsh-our-free-model`、
+> `awesome-dsh-plugin/awesome-dsh-plugin`、`YishenTu/claudian`、`zhu1090093659/dsh-web`、
+> `dsh-market/dsh-market`、`Devin-AXIS/iPolloWork`、`MeteorNOX/DeepSeek-Balance-Whale-Widget`、
+> `ccch1mneyyy/dsh-TUI`、`liustack/modlens`、`cordiverse/cordis`、`liustack/modsearch`、
+> `FishBottle7/opencode2dsh`、`cv-superding/dsh-deepseek-web-login`、`shengsheng90/DSH-taskboard`、
+> `dhicoc/dsh-reverse-skill`、`bowenliang123/dsh-context`、`whiteguo233/OpenBiliClaw`
+> —— 另有 `dsh-market` 词面 8 个、`dsh-desktop` 词面 8 个、`cordis bundle` 词面 3 个也已登记（`kingOfSoySauce/dsh-skin-market`、
+> `bradeGithub/DSH-Plugins-Marketplace`、`2BingLing/dsh-market`、`Noob-stupid/dsh-plugin-gating-hub`、
+> `yi-yezhiqiu/dsh-prompt-market`、`Sanqi-normal/dsh-webui-market-plugin`、`polang233/dsh-plugin-index`、
+> `2026heshao/dsh-armory`、`anywhere-labs/dsh-desktop`、`dataelement/dsh-desktop`、
+> `dsh-tauri/deepseek-harness-desktop`、`Ebony-Vinyl/EAC-Desktop`、`myYangyunfan/dsh_desktop`、
+> `vibeinging/dsh-desktop`、`xing-shuyin/pi-web-ui`、`mrpulor-gh/nuphus-mcp`、
+> `hust-open-atom-club/oh-dsh`、`PerryLink/dsh-plugin-guide`、`PerryLink/dsh-test-drive`）。
+> **本轮无 `NOASSERTION`、无 `license: null` 条目。**
