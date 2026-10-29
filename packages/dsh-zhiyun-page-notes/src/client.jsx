@@ -314,7 +314,12 @@ export function NotesLibrary() {
   //    再常驻一列 250px 会把正文挤到读不下去（实测状态栏都换行了）。
   //    Obsidian 的右栏同样是默认收起的。开关在 ribbon 上，状态栏的反链数也能叫出来。
   const [rightOpen, setRightOpen] = useState(false);
-  const [preview, setPreview] = useState(false);
+  // 阅读态是**默认**：笔记大多是拿来读的，而 Markdown 源码对读者不友好。
+  // 想写就按工具栏那个「编辑」。
+  //
+  // ⚠️ 例外只有一个：**新建笔记**后自动切到编辑态（见 createNote）。否则用户
+  //    新建完看到的是一句「（空笔记）」，还得自己再点一次「编辑」才能开始写。
+  const [preview, setPreview] = useState(true);
   const [filter, setFilter] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -505,6 +510,8 @@ export function NotesLibrary() {
       const made = await notes('create', { title: '新笔记', folder });
       await refreshTree();
       await openNote(made.name);
+      // 新建是为了写，不是为了读：直接进编辑态，省掉一次「点编辑」。
+      setPreview(false);
     } catch (error) {
       setNotice({ tone: 'bad', text: `新建失败：${error.message}` });
     } finally {
@@ -707,7 +714,13 @@ export function NotesLibrary() {
                 ? <div className="zs-nt-preview-body">
                   {draft.trim() === ''
                     ? <p className="zs-muted">（空笔记）</p>
-                    : <MarkdownText text={draft} labels={MARKDOWN_LABELS} variant="compact" />}
+                    // ⚠️ 不要传 `variant="compact"`。那个变体是给**聊天里夹一段短
+                    //    Markdown** 用的：字号压到 13px/20px、正文用三级灰、而且
+                    //    `.compact :is(h1..h6){font:inherit}` 会把标题压平、
+                    //    `p/ul/ol/blockquote` 的 margin 收到 4px。用在整页长文上就是
+                    //    「又小又挤、标题不起作用」，这是这页此前显得简陋的根因。
+                    //    笔记正文要的是长文排版，用默认变体 + 本页的 .zs-nt-preview-body。
+                    : <MarkdownText text={draft} labels={MARKDOWN_LABELS} />}
                 </div>
                 : <textarea
                   className="zs-nt-input"

@@ -442,9 +442,135 @@ body[data-zhiyun] .zs-nt-input:focus-visible {
 body[data-zhiyun] .zs-nt-input::placeholder {
   color: var(--zy-muted);
 }
+/* 阅读态正文。
+ *
+ * 宿主 `MarkdownText` 自带一套排版基线，但它服务的是**助手消息**（14px/24px）。
+ * 笔记页是长文阅读，需要更大的字、更松的行距。
+ *
+ * ⚠️ 字号与行高必须写在**根节点自身上**，不能只写在 `.zs-nt-preview-body` 上：
+ *    宿主根节点的 `.markdown{ font: var(--dsw-font-markdown-base) }` 是 `font` 简写，
+ *    会把自己重置成 14px/24px，父元素的 font-size 继承不进去。根节点类名是
+ *    CSS Modules 哈希过的，选不到，所以用「预览体的直接子元素」定位它 ——
+ *    那个 div 是 `MarkdownText` 唯一的直接子元素。
+ *
+ * ⚠️ 只作用于 `.zs-nt-preview-body` 的后代，**不碰宿主包本身**：同一个组件也被
+ *    论文页与讲义阅读器使用，改它的模块样式会波及那两处。
+ */
 body[data-zhiyun] .zs-nt-preview-body {
   font-size: 15.5px;
-  line-height: 1.9;
+  line-height: 1.85;
+  color: var(--zy-text);
+  /* 中文长文：字间距给一点点，避免小字号挤成一坨。 */
+  letter-spacing: .01em;
+}
+/* 根节点：把被 `font:` 简写重置掉的字号/行距改回来。 */
+body[data-zhiyun] .zs-nt-preview-body > div {
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-nt-preview-body > :first-child,
+body[data-zhiyun] .zs-nt-preview-body > div > :first-child {
+  margin-top: 0;
+}
+body[data-zhiyun] .zs-nt-preview-body p {
+  margin: 0 0 1.05em;
+}
+body[data-zhiyun] .zs-nt-preview-body h1,
+body[data-zhiyun] .zs-nt-preview-body h2,
+body[data-zhiyun] .zs-nt-preview-body h3,
+body[data-zhiyun] .zs-nt-preview-body h4 {
+  color: var(--zy-text);
+  font-weight: 600;
+  /* 宿主对标题用的是 `font:` **简写**（含行高），所以这里必须把行高一起写死，
+     只给 font-size 会留下简写里的旧行高，标题会显得上下留白不均。 */
+  line-height: 1.4;
+  margin: 1.9em 0 .6em;
+}
+body[data-zhiyun] .zs-nt-preview-body h1 { font-size: 1.62em; }
+body[data-zhiyun] .zs-nt-preview-body h2 { font-size: 1.34em; }
+body[data-zhiyun] .zs-nt-preview-body h3 { font-size: 1.14em; }
+body[data-zhiyun] .zs-nt-preview-body h4 { font-size: 1em; color: var(--zy-secondary); }
+/* 二级标题下压一条细线：长文里最容易用来扫读的锚点。 */
+body[data-zhiyun] .zs-nt-preview-body h2 {
+  padding-bottom: .34em;
+  border-bottom: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zs-nt-preview-body ul,
+body[data-zhiyun] .zs-nt-preview-body ol {
+  margin: 0 0 1.05em;
+  padding-left: 1.45em;
+}
+body[data-zhiyun] .zs-nt-preview-body li {
+  margin: .3em 0;
+}
+/* 嵌套列表不要再多一层缩进，长文里会一路缩到右边去。 */
+body[data-zhiyun] .zs-nt-preview-body li > ul,
+body[data-zhiyun] .zs-nt-preview-body li > ol {
+  margin: .3em 0 .3em;
+}
+body[data-zhiyun] .zs-nt-preview-body blockquote {
+  margin: 1.2em 0;
+  padding: .1em 0 .1em 1em;
+  border-left: 3px solid var(--zy-line);
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-nt-preview-body blockquote p:last-child {
+  margin-bottom: 0;
+}
+body[data-zhiyun] .zs-nt-preview-body a {
+  color: var(--zy-accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--zy-accent) 35%, transparent);
+}
+body[data-zhiyun] .zs-nt-preview-body a:hover {
+  border-bottom-color: var(--zy-accent);
+}
+/* 行内代码与代码块：区分「引用一个词」和「贴一段代码」。 */
+body[data-zhiyun] .zs-nt-preview-body code {
+  padding: .16em .38em;
+  border-radius: 5px;
+  background: var(--zy-soft);
+  font-size: .92em;
+}
+body[data-zhiyun] .zs-nt-preview-body pre {
+  margin: 1.2em 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--zy-soft);
+  overflow-x: auto;
+  line-height: 1.65;
+}
+body[data-zhiyun] .zs-nt-preview-body pre code {
+  padding: 0;
+  background: transparent;
+  font-size: .9em;
+}
+body[data-zhiyun] .zs-nt-preview-body hr {
+  margin: 2em 0;
+  border: 0;
+  border-top: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zs-nt-preview-body table {
+  width: 100%;
+  margin: 1.2em 0;
+  border-collapse: collapse;
+  font-size: .95em;
+}
+body[data-zhiyun] .zs-nt-preview-body th,
+body[data-zhiyun] .zs-nt-preview-body td {
+  padding: 8px 12px;
+  border: 1px solid var(--zy-line);
+  text-align: left;
+}
+body[data-zhiyun] .zs-nt-preview-body th {
+  background: var(--zy-soft);
+  font-weight: 600;
+}
+body[data-zhiyun] .zs-nt-preview-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 body[data-zhiyun] .zs-nt-empty {
   flex: 1;
