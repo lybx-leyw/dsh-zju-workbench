@@ -1,0 +1,11 @@
+# dsh bundle patch：把讲义导出层插进 profile 的层栈。
+#
+# ⚠️ bundle 列在 `dsh.profile.bundles` 里**并不会自动加载** —— 它必须在自己的
+# patch 里把自己 insert 进去（见 tests/univer-office.test.mjs 记的那个真机缺陷）。
+#
+# 本包只提供宿主服务（`zhiyunHandout`）：
+#   - 经注入的笔记服务写文件，自己不碰 node:fs；
+#   - 只做「导出当前讲义」这一件事，不参与生成、没有版本与回退。
+- insert:
+    - id: zhiyun-core-handout
+      name: dsh-zhiyun-core-handout
