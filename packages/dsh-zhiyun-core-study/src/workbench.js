@@ -11,10 +11,22 @@ import { writeFileAtomic } from "@deepseek-ai/dsh-atomic-write";
 import { GENERATION_VERSION } from 'dsh-zhiyun-core-lecture';
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 const fault = (code, message) => Object.assign(new Error(message), { code });
+// ⚠️ 文案里带上收到的值：`INPUT` 在 publicError 里被统一翻成「输入信息无效。」，
+//    那条通用文案会让「客户端传错了字段」看起来和「用户点错了」一模一样。
+//    这里至少把实际收到的值留在日志侧可查。
 const identifier = (value) => {
-  if (typeof value !== "string" || !/^\d{1,20}$/.test(value)) throw fault("INPUT", "课程或节次编号无效");
+  if (typeof value !== "string" || !/^\d{1,20}$/.test(value)) throw fault("INPUT", `课程或节次编号无效（收到 ${JSON.stringify(value)}）`);
   return value;
 };
+
+/**
+ * 取一个「非空字符串」，否则给 null。
+ *
+ * 用于 `a ?? b` 这类回落链：`??` 只挡 `null`/`undefined`，挡不住空字符串。
+ * 而记录里的 `courseTitle` 恰恰可能是 `""`（客户端 `course.title ?? ""` 传过空串），
+ * 那时 `??` 会保留空串，一路走到笔记库才在 `segment()` 里炸成「课程名不能为空」。
+ */
+const nonEmpty = (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : null);
 // 与课堂包 `models.date` 同一条规则：只认 YYYY-MM-DD，并且拒掉 `2026-02-31`
 // 这种「格式对、日子不存在」的日期（`Date.parse` 会把它悄悄滚到三月）。
 //
@@ -95,7 +107,7 @@ export const publicError = (error) => ({ code: error.code ?? "FAILED", message: 
   BUSY: "已有加工任务正在运行，请等待完成或先取消。"
 }[error.code] ?? "操作未完成，请重试。" });
 export class StudyWorkbench {
-  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge, deeptutor, learningResource }) {
+  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge, deeptutor, learningResource, handout }) {
     this.classroom = classroom;
     this.parser = parser;
     this.llm = llm;
@@ -117,6 +129,8 @@ export class StudyWorkbench {
     this.deepTutorOf = deeptutor ?? (() => undefined);
     this.learningResourceOf = learningResource ?? (() => undefined);
     this.notesOf = notes ?? (() => undefined);
+    // 讲义导出同样是可选附加能力：它缺席时只让「导出到笔记库」如实报未接入。
+    this.handoutOf = handout ?? (() => undefined);
     this.jobs = new Map();
     this.closed = false;
     this.accountBusy = false;
@@ -303,7 +317,12 @@ export class StudyWorkbench {
     const predecessors = [...this.jobs.values()].filter(j => ['running', 'queued'].includes(j.state)).map(j => j.done);
     const job = { id: randomUUID(), courseId, subId, state: predecessors.length ? 'queued' : 'running',
       queuedAt: Date.now(), startedAt: predecessors.length ? null : Date.now(),
-      courseTitle: String(labels.courseTitle ?? courseId).slice(0, 500), lessonTitle: String(labels.lessonTitle ?? subId).slice(0, 500),
+      // ⚠️ 用 `nonEmpty` 而不是 `??`：上游 `models.course` 的 `str()` 在标题缺失时
+      //    返回**空字符串**而不是 null，而 `'' ?? courseId` 仍然是 `''`。
+      //    空串会被一路存进记录，最后在笔记库的 `segment()` 里炸成「课程名不能为空」，
+      //    或者退化成用编号当标题。这里就把它挡掉。
+      courseTitle: String(nonEmpty(labels.courseTitle) ?? courseId).slice(0, 500),
+      lessonTitle: String(nonEmpty(labels.lessonTitle) ?? subId).slice(0, 500),
       selection: this.effectiveWorkers().map(row => ({ ...row })), progress: { phase: 'source', done: 0, total: 0 }, controller, userId: user.id };
     this.jobs.delete(key);
     this.jobs.set(key, job);
@@ -514,6 +533,58 @@ export class StudyWorkbench {
       throw fault(error.code === "PERSIST" ? "PERSIST" : (error.code || "FAILED"), error.message);
     }
   }
+  /**
+   * 把这一节的当前讲义导出成笔记库里的一份 md。
+   *
+   * 三条刻意的边界（与 `dsh-zhiyun-core-handout` 的 README 一致）：
+   *
+   * 1. **单向**：只写笔记库，不读回来。讲义的真源始终是 `record.lecture`，
+   *    学习页显示、检索、出题全部继续读它，与这次导出无关。
+   * 2. **不覆盖**：重名时由导出层加「（2）」后缀。用户可能已经在上次导出的
+   *    那份上手写了很久，盖掉等于删他的工作。
+   * 3. **不改记录**：导出不写 `record`，不碰 `lecture`、不碰 `quiz`。
+   *    所以它失败也不会影响这一节的任何既有状态。
+   *
+   * ⚠️ 讲义导出服务是**惰性**取的，缺席时如实报未接入（`NOT_WIRED`），
+   *    而不是把学习面板拖成 pending。
+   */
+  async exportHandout(key, payload) {
+    const service = this.handoutOf();
+    if (!service) throw fault("NOT_WIRED", "讲义导出未接入：缺少讲义导出服务");
+    const stored = await this.result(key);
+    const lecture = stored?.lecture;
+    // `NO_TOPICS` 而不是 `INPUT`：`publicError` 把 `INPUT` 一律翻成「输入信息无效。」，
+    // 那句话会把真实原因（这节课根本没生成过讲义）盖掉，用户看到只会以为是操作错了。
+    if (!lecture || !Array.isArray(lecture.chapters) || lecture.chapters.length === 0) {
+      throw fault("NO_TOPICS", "这节课还没有生成讲义");
+    }
+    try {
+      // 课程名 / 节次名优先取**调用方当下**传来的标题。
+      //
+      // ⚠️ 记录里的 `courseTitle` 可能是空串：上游 `models.course` 的 `str()` 在标题
+      //    缺失时返回 `''` 而不是 null，而 `start()` 当年的 `labels.courseTitle ?? courseId`
+      //    挡不住空串，于是空串被存进了记录。老记录没法回头修，而学习页此刻手上
+      //    一定有真实标题（它正显示在界面上），所以以调用方为准、记录只作兜底。
+      const courseTitle = nonEmpty(payload?.courseTitle) ?? nonEmpty(stored.courseTitle) ?? nonEmpty(stored.courseId);
+      // ⚠️ 不要用 `stored.title`：它等于生成时的 `context`（`${courseId}-${subId}`），
+      //    是给解析器用的技术标识，不是人能读的标题。
+      const lessonTitle = nonEmpty(payload?.lessonTitle) ?? nonEmpty(stored.lessonTitle) ?? nonEmpty(stored.subId);
+      return await service.exportLecture({
+        courseTitle,
+        lessonTitle,
+        // 学期是笔记库里的第一层文件夹。它只来自调用方 —— 记录上没有这个字段，
+        // 早期生成的记录更不可能有，所以缺失就只是少一层目录。
+        termName: nonEmpty(payload?.termName),
+        chapters: lecture.chapters,
+        title: nonEmpty(payload?.lessonTitle) ?? nonEmpty(lecture.title) ?? lessonTitle,
+      });
+    } catch (error) {
+      if (error.code === "NOT_WIRED") throw error;
+      // 保留导出层自己的错误码（`NO_CHAPTERS` 等），只有未知错误才降级成 FAILED。
+      throw fault(error.code === "NO_CHAPTERS" ? "NO_TOPICS" : (error.code || "FAILED"), error.message);
+    }
+  }
+
   linkText(user, payload) {
     const ids = this.noteIds(user, identifier(payload.courseId), identifier(payload.subId));
     try {
@@ -665,6 +736,13 @@ export class StudyWorkbench {
     if (method === "quiz-discard") return this.changeQuiz(key, payload.id, "discard", signal);
     if (method === "note") return this.readNote(user, courseId, subId);
     if (method === "note-save") return this.saveNote(user, courseId, subId, payload);
+    // 把当前讲义导出成笔记库里的一份 md。
+    //
+    // ⚠️ 这是**单向**动作：只写笔记库，不读回来、也不参与生成。
+    //    重名由导出层加「（2）」后缀处理，不覆盖用户已有的笔记。
+    //    讲义导出服务（`zhiyunHandout`）是**惰性**取的：它缺席时这件事只是不可用，
+    //    不该把整个学习面板拖成 pending（同 `lectureOf` 那条注释的理由）。
+    if (method === "handout-export") return this.exportHandout(key, payload);
     if (method === "note-link-text") return this.linkText(user, payload);
     if (method === "start") return this.start(courseId, subId, payload.context, payload);
     if (method === "cancel") {

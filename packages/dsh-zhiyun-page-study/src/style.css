@@ -1,4 +1,4 @@
-﻿/* packages/dsh-zhiyun-page-study/src/style.css
+/* packages/dsh-zhiyun-page-study/src/style.css
  *
  * 由 packages/dsh-zhiyun-study/src/style.css 按「哪个包真的用到这个类」机械切分而来，
  * 规则文本逐字未改（顺序保持原文件中的相对顺序）。.zy-* 与宿主外观无关的
@@ -680,3 +680,10 @@ body[data-zhiyun] .zs-branch-card > summary:hover { background:var(--zy-hover); 
 body[data-zhiyun] .zs-handout-export { display:flex; flex-direction:column; align-items:flex-end; gap:5px; margin-left:auto; max-width:300px; }
 body[data-zhiyun] .zs-handout-export button { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:12px; }
 body[data-zhiyun] .zs-handout-export small { color:var(--zy-muted); font-size:11px; line-height:1.6; text-align:right; }
+
+/* 「导出到笔记库」(handout-export.jsx)：与上面的「导出 PDF」并列在同一个工具栏，
+   但产物去向完全不同（写进笔记库的 md vs 打印成 PDF）。
+   它不抢 margin-left:auto —— 那是 PDF 按钮用来把整组推到右边的。 */
+body[data-zhiyun] .zs-handout-note-export { display:flex; flex-direction:column; align-items:flex-end; gap:5px; max-width:300px; }
+body[data-zhiyun] .zs-handout-note-export button { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:12px; }
+body[data-zhiyun] .zs-handout-note-export small { color:var(--zy-muted); font-size:11px; line-height:1.6; text-align:right; }

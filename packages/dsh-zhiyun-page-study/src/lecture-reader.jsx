@@ -1,6 +1,7 @@
 import React from 'react';
 import {blocksOf,kindOf,kinds,LectureBlockBody} from './lecture-content.jsx';
 import {LectureExportButton} from './lecture-export.jsx';
+import {HandoutExportButton} from './handout-export.jsx';
 
 export function LectureReader({ state, controller, onSource, focus, scope = null }) {
   const lecture = state.lecture;
@@ -50,6 +51,7 @@ export function LectureReader({ state, controller, onSource, focus, scope = null
         <small>{lecture?.polish?.complete === false ? '部分终审未完成，请留意正文提示' : '按章节阅读 · 保留课堂来源'}</small>
       </div>
       {topics.length>0&&<LectureExportButton state={state}/>}
+      {topics.length>0&&<HandoutExportButton controller={controller} state={state}/>}
     </div>
     {!topics.length ? <div className="zs-content-empty"><strong>这节课还没有生成讲义</strong><small>点击上方「生成讲义」，可查看各阶段进度。</small></div> : !shown.length ? <div className="zs-content-empty"><strong>阅读讲义里没有这一段</strong><small>可以改看整节，或重新生成阅读讲义。</small></div> : <>
       <div className="zs-handout-body" data-toc={tocOpen ? 'open' : 'closed'}>
