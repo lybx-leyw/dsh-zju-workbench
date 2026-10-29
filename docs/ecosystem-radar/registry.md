@@ -3632,3 +3632,57 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 > `Zarad0X/openclaw-zju-skills`、`kaixuanwang2003/zju-welcome`、`NoughtQ/notebook`、`vsloong/Sunshine`、
 > `oddfar/campus-example`、`thu-info-community/thu-info-app`、`Ansherly/CC98-Ocean`、`lwsher/CC98_AI_frontend`。
 > **本轮无 `NOASSERTION` 条目；`license: null` 5 条（均为 ★≤5 或纯 Python，无提取风险）。**
+
+## 2026-10-29 · r100 · C 组（原五词逐词复核）· 追加
+
+> **取组**：`scripts/radar-rotation.mjs` → `same-day(exhausted)` → **C**（今日 A/B/C 均已跑，取累计最少）。
+> **轴**：**不做新轴，回到 C 组原五词做验收性复核** —— 验证 r96 §6 提出的「C 组已扫穿」判断。
+> **搜索 5 次**（五词全部加 `language:javascript`），0 次 403，**完整**；50 个结果去重后 **34 个逐字命中**。
+> **净新增候选 0**；`NOASSERTION` 新增 0；**骨架 0**。
+
+### r100 唯一新面孔（误命中，仅登记）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `demands/node-iced` | ⛔ 非相关 | **`null`** ⛔ | — | 无关 | ⛔ | rejected | 2026-10-29 | 301 → 实为 `hazeledmands/node-iced`（**AWS Glacier 备份脚本**，★1，push **2014-01-29**，`lib/` 仅两个文件 653 B）。由 `XJTLU-Timetable-to-ICS` 的 `ics-js` 依赖顺藤查到 npm `iced`，**与 iCalendar 毫无关系，纯名字撞车**。不采用、不摘代码 |
+
+### r100 复核结论（15 个「假新面孔」= 登记口径差异，全部维持原判）
+
+> 下列 15 个在搜索去重时未逐字命中，但**均已在册**（簇行 / 无许可证清单行）。逐条比对后**无一改判**。
+
+| 仓库 | 在册位置 | 原级别 | 复核 |
+| --- | --- | --- | --- |
+| `computerfan/XJTLU-Timetable-to-ICS` | L1013 单行（另 L2477 整簇 ⛔） | 🔵 | **维持 🔵**。★4，MIT，单校（西交利物浦）命令行；仅作 ICS 导出范式参考。另查其 `lib/timetableParser.js` 为 cheerio 写死的 `.maintable/.gridcell/.R4` 单校 DOM 选择器，**无通用「周次串 → 周数组」抽象可借**（本仓已有 `dsh-radar-ics-rrule` / `week-parser`） |
+| `LinzuoZhang/Paper-Lantern` | L32 单行（另 L1798 论文簇 ⛔） | 🔵（整簇 ⛔） | **维持**。★11，MIT；`plugins/paper-lantern-research-mcp` 是 **MCP server**，**不是** `dsh.bundle.patch` / `cordis.patch.yml` 意义上的 DSH 插件 → **不构成 A 类** |
+| `Tentengg/Paper-Reader` | L1798 论文簇 | ⛔ | 维持（Electron 桌面应用，无嵌入式解析层） |
+| `ChangHsiang/PDF-Reader` | L1798 论文簇 | ⛔ | 维持（Chrome 扩展形态） |
+| `vihaan-that/NoteThat` | L3512 单行 | ⛔ | 维持（iOS 原生，JS 侧仅占位） |
+| `thegempire/WhatINoted` | L3523 无证清单 | ⛔ | 维持（`null`，2018 停更） |
+| `ReesMcD/OCR-Note-App` | L3523 无证清单 | ⛔ | 维持（`null`，2018） |
+| `KohTongLiang/note-taking-with-OCR` | L3526 无证清单 | ⛔ | 维持（`null`） |
+| `Hexotrion/OCR-NoteKeeper` | L3527 无证清单 | ⛔ | 维持（`null`） |
+| `Kruthi-choudary/Notifyy-ai` | L3527 无证清单 | ⛔ | 维持（`null`） |
+| `aranyoray/VideoGrabTranscriptCopier` | L3527 无证清单 | ⛔ | 维持（`null`） |
+| `Pkorirdarius/Medical_reminder_App-Medisauti` | L3522 无证清单 | ⛔ | 维持（`null`，且是医疗提醒 App，非锻炼） |
+| `jonniechow/RogueStockBot` | L3518 无证清单 | ⛔ | 维持（`null`，健身**器材库存**监控，非锻炼） |
+| `dharanishselvarajsumathi/FIT_TRACKER` | L3518 无证清单 | ⛔ | 维持（`null`） |
+| `joce1ynn/fitness-tracker-MERN` | L3519 无证清单 | ⛔ | 维持（`null`） |
+
+### r100 ICS 底层复核（批量跳过：其余 34 个逐字命中的不做复核）
+
+| 仓库 | 复核焦点 | 结论 |
+| --- | --- | --- |
+| `adamgibbons/ics` | 是否仍在、锁版是否漂移 | **维持 🟢**（L2471）。`packages/radar/dsh-radar-ics-export/package.json` 仍为 `"ics": "3.12.1"`（无 `^`），未漂移 |
+| `tritech/node-icalendar` | 有无更新 | **维持 ⛔**（L2479），push 仍为 2020-02-15 |
+| `wysie/icalgen` / `touch4it/ical-timezones` / `chichow5/heuicsgen` / `localift/ical-generator` / `hkwi/WorkingDays.ics` | 许可证 | **维持 ⛔**（L2478），仍全为 `null`/`NOASSERTION` |
+
+> **架构确认**：`grep -rn "BEGIN:VCALENDAR" packages/` → **0 命中**。本仓没有第二套手写 ICS 生成器，
+> 能力唯一入口即骨架 `dsh-radar-ics-export`（锁版 `ics@3.12.1`），无「重复实现」技术债。
+
+### r100 去重口径缺陷（留档，供下一轮修）
+
+> 本仓 registry 有**三种**登记形态：①单行表 `| owner/repo | …`、②**簇行**（一行列多个仓库）、③**无许可证排除清单**（`> ` 引用列举）。
+> 本轮去重时，②③里的仓库因**登记名与 GitHub 返回名不一致**（簇行写简称、清单行混入别的 owner 名）而漏判，
+> 导致 16 个"新面孔"里 15 个其实在册。
+> **建议**：把「未登记」判定固化为**脚本**，对 registry 全文做 `owner/repo` **归一化匹配**（小写、去反引号），
+> 不再依赖每轮手抄比对；或维护 `<!-- ids: … -->` 注释块做唯一真源。
