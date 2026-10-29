@@ -9,6 +9,10 @@ import { createLedger, summarize } from './usage.js';
 /** 使用账本在 localStorage 里的键。改名等于重置统计，所以带版本号。 */
 const USAGE_KEY = 'zhiyun-plugin-usage-v1';
 
+/** 「还没有图」时喂给 `useUsageRows` 的空清单。必须是模块级常量：每次渲染新建数组会让
+ *  `useMemo` 的依赖每次都不相等，白白重算。 */
+const NO_ROWS = Object.freeze([]);
+
 /**
  * 读本地使用账本，按 `view.rows` 的安装清单补齐「一次都没用过」的条目。
  *
@@ -94,6 +98,17 @@ export function Panel({ store }) {
   // 页面第一次真的挂上时才去读图：没人打开这一页就不花那次跨宿主往返。
   useEffect(() => { store.ensure(); }, [store]);
   const view = state.view;
+  // ⚠️ 这个 hook 必须在**所有提前 return 之前**调用。
+  //
+  // 这一页会先渲染「正在读取这个工作台的依赖关系…」（`view === null`，在下面那两个
+  // return 处就退出了），读到图之后同一个组件再渲染正文。而 `useUsageRows` 原先写在
+  // 两个 return 之后 —— 于是第 1 次渲染 3 个 hook、第 2 次渲染 5 个，React 直接抛
+  // 「Rendered more hooks than during the previous render.」，宿主 slot 的错误边界
+  // 把整页换成空节点：侧栏点「插件」看起来就是**这一页打不开**。
+  //
+  // 代价是加载态也会读一次本机账本（一次 `localStorage.getItem` + 纯函数排序），
+  // 与一次跨宿主往返相比可以忽略；拿 view 的空清单兜底即可。
+  const usage = useUsageRows(view?.rows ?? NO_ROWS);
 
   if (state.status === 'loading' || state.status === 'idle') {
     return <section className="zp"><SectionTitle>插件依赖</SectionTitle><p className="zpl-muted">正在读取这个工作台的依赖关系…</p></section>;
@@ -110,7 +125,7 @@ export function Panel({ store }) {
   const cancellable = leaves.filter(row => row.cancellable);
   // 「吃灰」：能力提取自雷达候选 dsh-radar-knowledge-graph（见 usage.js 的说明）。
   // 只读本地账本，不发任何请求 —— 没有记录就是「还没用过」，不是「加载失败」。
-  const usage = useUsageRows(view.rows);
+  // `usage` 在上面（提前 return 之前）已经算好，这里只是用它。
 
   return <section className="zp">
     <header className="zpl-head">
