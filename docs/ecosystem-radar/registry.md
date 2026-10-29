@@ -3599,3 +3599,36 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 > `vibeinging/dsh-desktop`、`xing-shuyin/pi-web-ui`、`mrpulor-gh/nuphus-mcp`、
 > `hust-open-atom-club/oh-dsh`、`PerryLink/dsh-plugin-guide`、`PerryLink/dsh-test-drive`）。
 > **本轮无 `NOASSERTION`、无 `license: null` 条目。**
+
+## 2026-10-29 · r99 · B 组（浙大场景 · 轴「**CC98 正文：纯文本 vs 保结构 Markdown**」）· 追加
+
+> 同日第 3 轮（今日 A r98 / C r96 → B 未跑，`same-day(unused)` 取 **B**）。
+> 搜索 **6 次**（`zju`、`zju course`、`cc98`、`campus app` + 2 次活跃度补搜）、0 次 403、**完整**。
+> **B 组前排彻底见底**：`zju` 前 15 名 11 个已登记、`cc98` 前 15 名 12 个已登记；新增量只在 ★≤5 长尾与 Awesome 二手线索里。
+> 9 个新候选 **8 个卡许可证**（2 个非白名单：CC-BY-SA-4.0 / LGPL-2.1；6 个无许可证）→ 只有 1 个 🟢。
+> 轴的价值来自 `dsh-zhiyun-source-cc98/src/ubb.js` 的 `ubbToText()`：该函数**只出纯文本**，图片→`[图片: u]`、引用→`> [引用]`、链接→`text (x)`，翻页与引用楼层的**链接关系已不可回溯** —— 这正是「同一面板、同一件事、换更高保真底层」的空位。
+> 详见 `docs/ecosystem-radar/2026-10-29-12.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `amiongogo/cc98-vscode` | **B 其他JS**（TS） | **MIT** ✅（`spdx_id` + 根 `LICENSE` 实文 1060 B 双证） | CC98 阅读 → 笔记 | **重复可强化**（判据①②③全成立） | 🟢 | skeleton-created | 2026-10-29 | 2026-10-29 | ★1，2026-07-27 push，97 KB。VS Code 扩展，直调 CC98 开放 API，帖子以 `cc98:` 只读 **Markdown 文档**打开，标题/版面/引用楼层/翻页皆为可点链接；`documents.ts`+`navigation.ts` 建文档图，`webvpn.ts` 单独校验 ticket 与路由 Cookie。**`vscode` 是虚拟模块装不上 → 只能能力提取，不可锁版**。骨架 `dsh-radar-cc98-md-render` 已出 |
+| `shellRaining/awesome-cc98` | B 其他JS（TS） | **MIT** ✅（`LICENSE`；数据另有 `LICENSE-DATA`） | CC98 生态目录 | 全新（**线索源**） | 🔵 | proposed | 2026-10-29 | | ★2，2026-07-29 建、07-30 停。按「当前可用/浏览器编辑器终端/预览实验/官方参考」四段分类，每条含**核验日期 + 许可证**，质量高于 `awesome-dsh-plugin`。本轮 `cc98-vscode` 与 `mise42/cc98-web-rewrite` 均由此清单挖出 |
+| `amiongogo/cc98-wps-table-disguise` | B 其他JS（用户脚本） | **`null`** ⛔（GitHub API 无 license；`awesome-cc98` 清单标 MIT —— **以 API 为准**） | CC98 摸鱼伪装 | 重复且无增益 | 🔵 | pending-license | 2026-10-29 | | ★5。把帖子页伪装成 WPS 表格。与任何面板都不构成强化关系；与 `cc98-vscode` 同一作者「季风」，许可证状态却不同 → 两者代码**不得混用** |
+| `mise42/cc98-web-rewrite` | B 其他JS（TS/React19） | **`null`** ⛔ | CC98 Web 重写 | 全新但不可用 | ⛔ | pending-license | 2026-10-29 | | ★0，32 MB，**源码在库但无许可证**。技术栈最贴（React19 + TanStack Router + Vite + Vitest + Playwright）。**发 issue 问授权前不得碰其代码**；放开即可升 A 级 |
+| `Vita0818/CC98-macOSDesktop` | B 其他JS（TS+Tauri） | **`null`** ⛔ | CC98 客户端 | 重复且无增益 | ⛔ | rejected | 2026-10-29 | | ★3，2026-09 建。Tauri 桌面壳，与本仓「页面内增强」路线正交；且无许可证 |
+| `Xecades/CC98-Watchdog` | ⛔ 非 JS | **`null`** ⛔ | CC98 帖订阅 | 重复 | ⛔ | rejected | 2026-10-29 | | ★3，Python。单贴监控 → 钉钉推送；本仓通知链路已覆盖 |
+| `ZhangTianxi05/cc98deepresearch` | ⛔ 非 JS | **`null`** ⛔ | CC98 深研 | 重复 | ⛔ | rejected | 2026-10-29 | | ★5，2026-04 建后无动静，无描述 |
+| `SubConv/ZJU-Rule` | ⛔ 非 JS | **CC-BY-SA-4.0** ⛔ | 校内分流规则 | 无关 | ⛔ | rejected | 2026-10-29 | | ★125 / 33 fork，2026-09-28 活跃。`Acl/`+`Clash/` 规则文本 + Python 生成脚本，无 JS。CC-BY-SA 属传染性条款且非代码许可 |
+| `Xecades/zju-ical-py` | ⛔ 非 JS | **LGPL-2.1** ⛔ | 课表 → iCal | 重复且无增益 | ⛔ | rejected | 2026-10-29 | | ★40。`zju-ical` 的 Python 重构；iCal 本仓已有 `ics-export`/`ics-rrule` |
+
+> **r99 已登记故跳过（去重命中，B 组四个词面）**：`QSCTech/zju-icicles`、`TheNetAdmin/zjuthesis`、`yunwei37/ZJU-CS-GIS-ClassNotes`、
+> `Mythologyli/zju-connect`、`ZJU-Turing/TuringCourses`、`PeiPei233/zju-learning-assistant`、`IsshikiHugh/zju-cs-asio`、
+> `QSCTech/zjunet`、`ZJU-CC98/Forum`、`ZJU-CC98/CC98-PWA`、`ZJU-CC98/CC98-V4`、`Ansherly/CC98-Desktop`、
+> `Lucent-Snow/CC98-CLI`、`walavave/CC98-CLI`、`antct/cc98-mirror`、`YangShu233-Snow/cc98-live-better`、
+> `biu9/cc98-summary`、`inuEbisu/CC98Autosign`、`Anchorite-no/cc98-autosign-fast`、`Coran-tech/cc98-reborn`、
+> `shellRaining/cc98`、`Aleph-000/cc98-cleaner`、`EviterLesRoses2/cc98-mcp`、`stevenstg/obsidian-cc98-publish`、
+> `Phil-Fan/awesome-zju-tools`、`5dbwat4/ZJU-live-better`、`YangShu233-Snow/Learning_at_ZJU_third_client`、
+> `ZJUSCT/mirror-front`、`baihe26/zju-literature-downloader`、`holly1226/zotero-venue-tagger`、
+> `Zarad0X/openclaw-zju-skills`、`kaixuanwang2003/zju-welcome`、`NoughtQ/notebook`、`vsloong/Sunshine`、
+> `oddfar/campus-example`、`thu-info-community/thu-info-app`、`Ansherly/CC98-Ocean`、`lwsher/CC98_AI_frontend`。
+> **本轮无 `NOASSERTION` 条目；`license: null` 5 条（均为 ★≤5 或纯 Python，无提取风险）。**
