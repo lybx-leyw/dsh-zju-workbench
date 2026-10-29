@@ -79,6 +79,53 @@ try {
   await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
   await page.locator('.zy-page[data-page=me]').waitFor();
   await page.screenshot({ path: path.join(out, 'me.png'), fullPage: true });
+  // 题库页从未进过视觉验收：脚本原本只拍 today/ask/me，而这一页恰好是被反馈
+  // 「丑且不友好」的地方，没有图也没有读数，问题只能等用户来报。这里补三档
+  // 宽度（1440/1100/900）的整页图，并在 1440 那档把「出题设置一屏读完」的几何
+  // 读成一行一字段的读数，回归时直接比数字，不靠肉眼。
+  const quizEntry = page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '题库', exact: true });
+  const quizReady = await (async () => {
+    if (!(await quizEntry.isVisible().catch(() => false))) return false;
+    try {
+      await quizEntry.click();
+      await page.locator('.zy-page[data-page=quiz]').waitFor({ timeout: 30000 });
+      return true;
+    } catch (error) {
+      console.log('题库页没打开，跳过 quiz 截图：' + error.message);
+      return false;
+    }
+  })();
+  if (quizReady) {
+    for (const [width, file] of [[1440, 'quiz-1440'], [1100, 'quiz-1100'], [900, 'quiz-900']]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: path.join(out, file + '.png'), fullPage: true });
+      if (width !== 1440) continue;
+      const quiz = await page.evaluate(() => {
+        const pageBox = document.querySelector('.zs-qz-page');
+        const setupBox = document.querySelector('.zs-qz-setup')?.getBoundingClientRect();
+        const footBox = document.querySelector('.zs-qz-setup-foot')?.getBoundingClientRect();
+        return {
+          pageScrollHeight: pageBox ? Math.round(pageBox.scrollHeight) : -1,
+          pageClientHeight: pageBox ? Math.round(pageBox.clientHeight) : -1,
+          setupHeight: setupBox ? Math.round(setupBox.height) : -1,
+          setupFootBottom: footBox ? Math.round(footBox.bottom) : -1,
+          docScrollHeight: Math.round(document.documentElement.scrollHeight),
+          winInnerHeight: Math.round(window.innerHeight),
+          pageScrolls: document.documentElement.scrollHeight > window.innerHeight,
+        };
+      });
+      quiz.genEmptyShown = await page.locator('.zs-qz-gen-empty').isVisible().catch(() => false);
+      console.log('题库读数(page-scrollHeight)=' + quiz.pageScrollHeight);
+      console.log('题库读数(page-clientHeight)=' + quiz.pageClientHeight);
+      console.log('题库读数(setup-height)=' + quiz.setupHeight);
+      console.log('题库读数(setup-foot-bottom)=' + quiz.setupFootBottom);
+      console.log('题库读数(doc-scrollHeight)=' + quiz.docScrollHeight);
+      console.log('题库读数(win-innerHeight)=' + quiz.winInnerHeight);
+      console.log('题库读数(页面纵向滚动)=' + (quiz.pageScrolls ? '有' : '无'));
+      console.log('题库读数(空态卡渲染)=' + (quiz.genEmptyShown ? '有' : '无'));
+    }
+  }
   await page.setViewportSize({ width: 760, height: 900 });
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
   await page.locator('.zy-topbar').waitFor();

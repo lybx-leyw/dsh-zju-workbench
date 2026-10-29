@@ -55,6 +55,12 @@ export class ClassroomSource {
     // 回放回答「已完成的那节课有什么」，直播回答「此刻在播什么」，语义不该混。
     this.live = new LiveSource({ transport: this.transport });
     this.maxPages = maxPages; this.pageSize = pageSize; this.ready = this.transport.session.load();
+    /** 课件缓存（可选，见 `attachSlideCache`）。 */
+    this.slideCache = null;
+    /** 进行中的预取：`Map<lessonKey, Promise>`，用来避免同一节课重复下载。 */
+    this.prefetching = new Map();
+    /** 预取自己的中止控制器集合，`dispose` 时一次性取消。 */
+    this.prefetchAbort = new Set();
     // 登录成功后的回调。用于把账号与会话交给**宿主凭据服务**，
     // 让 dsh-zhiyun-source-omni 不必再要一次同样的账号（见 index.js 的装配）。
     // 失败不影响登录本身 —— 课堂能用了，只是别的包还读不到。
@@ -370,7 +376,47 @@ export class ClassroomSource {
 
   async getLessonContent(courseId, subId, options = {}) {
     const [slides, subtitles] = await Promise.all([this.getSlides(courseId, subId, options), this.getSubtitles(courseId, subId, options)]);
-    return { sourceId: models.lessonKey(courseId, subId), courseId: String(courseId), subId: String(subId), slides, subtitles,
+    /**
+     * 给课件页补上缓存地址。
+     *
+     * 命中时多一个 `cacheUrl`（本机 `/zhiyun-slides/<key>`），前端优先用它 —— 
+     * 那是磁盘读取，翻页不再吃一次带签名的网络往返。未命中的页**没有**这个字段，
+     * 前端回退到 `imageUrl`（原始签名地址），所以这条路径在缓存空着时行为和以前
+     * 完全一致。
+     *
+     * 同时给每一页带上 `cacheKey`：它是"这张图的身份"（剥掉签名后的 URL 摘要），
+     * 前端拿它去请求预取，不必自己算一遍摘要、也不必知道剥签名的规则。
+     *
+     * 补字段失败（索引损坏等）时**原样返回** —— 逐页补是加速手段，
+     * 不能因为它把"打开一节课"变成报错。
+     */
+    let decorated = slides;
+    if (this.slideCache) {
+      try {
+        decorated = { ...slides, items: await this.slideCache.decorate(slides.items) };
+      } catch (error) {
+        this.transport.log?.(`[zhiyun-classroom] 课件缓存信息补全失败，改用原始地址：${error?.message ?? error}`);
+      }
+    }
+    /**
+     * 后台把这一节的课件补齐。
+     *
+     * # 为什么是"读完再补"而不是"读之前先补"
+     *
+     * 先补等于让用户对着空屏等 83 页下载完 —— 缓存是加速手段，不能变成前置门禁。
+     * 现在这样：第一次打开照旧用网络图（有图可看），补完之后**同一节课的后续
+     * 翻页**全部走本地。用户真正感知到的改善发生在第二次打开和之后的每一次翻页。
+     *
+     * 三个必须的约束：
+     *
+     *   - **不 await**，失败只记日志：补不齐是常态（网络抖动），不该冒泡成"读课件失败"。
+     *   - **按节去重**：`prefetching` 里已有这个 key 就不再发 —— 翻页、切栏、重渲染
+     *     都会重复调 `getLessonContent`，不去重就是一节课下十几遍。
+     *   - **不跟调用方的 signal**：那个 signal 是"这次读请求"的，读完就该结束了，
+     *     拿它去中断预取会让每次只补到一半。
+     */
+    this.prefetchInBackground(courseId, subId, slides.items);
+    return { sourceId: models.lessonKey(courseId, subId), courseId: String(courseId), subId: String(subId), slides: decorated, subtitles,
       slidesProcessingSuspected: subtitles.items.length > 50 && slides.items.length <= 2 };
   }
   async getSchedule({ start = models.shanghaiDate(), end = start, userId, signal } = {}) {
@@ -387,6 +433,70 @@ export class ClassroomSource {
     return result(items);
   }
   async downloadResource(options) { await this.ready; return download(this.transport, options); }
+
+  /**
+   * 挂上课件缓存。
+   *
+   * 注入而不是构造时必填：缓存是**可选加速**，没有它回放和解析必须照常能用。
+   * 一旦挂上，`getLessonContent` 就会给每一页补 `cacheKey` / `cacheUrl`，
+   * 前端据此优先走本地文件、未命中再退回原始签名地址。
+   *
+   * @param {import('./slide-store.js').SlideCache} cache
+   */
+  attachSlideCache(cache) {
+    this.slideCache = cache ?? null;
+    return this;
+  }
+
+  /**
+   * 后台补齐一节课件（去重、不抛错、不阻塞）。
+   *
+   * @param {string} courseId
+   * @param {string} subId
+   * @param {Array<object>} slides - 已经拿到的课件页，直接复用，不再请求一次列表。
+   */
+  prefetchInBackground(courseId, subId, slides) {
+    if (!this.slideCache) return null;
+    if (!Array.isArray(slides) || slides.length === 0) return null;
+    const key = models.lessonKey(courseId, subId);
+    const pending = this.prefetching.get(key);
+    if (pending) return pending;
+    // 预取用的是**自己的** controller：调用方读到内容就返回了，
+    // 生命周期与预取无关（`dispose` 会一次性取消全部）。
+    const controller = new AbortController();
+    this.prefetchAbort.add(controller);
+    const task = (async () => {
+      try {
+        const result = await this.slideCache.ensureSlides(slides, { signal: controller.signal });
+        this.transport.log?.(`[zhiyun-classroom] 课件缓存 ${key}：新增 ${result.downloaded}，命中 ${result.skipped}，失败 ${result.failed}`);
+        return result;
+      } catch (error) {
+        this.transport.log?.(`[zhiyun-classroom] 课件缓存 ${key} 中断：${error?.message ?? error}`);
+        return null;
+      } finally {
+        this.prefetchAbort.delete(controller);
+        this.prefetching.delete(key);
+      }
+    })();
+    this.prefetching.set(key, task);
+    return task;
+  }
+
+  /**
+   * 把一节课的课件页**预取**进缓存。
+   *
+   * 与 `getLessonContent` 分开，是因为两者节奏不同：读页面要立刻返回（先给
+   * 原始 URL 让它马上有图可看），预取可以慢慢在后台把剩下的页补齐 ——
+   * 用户真正翻到那一页时，图已经在磁盘上了。
+   *
+   * @returns `{ downloaded, skipped, failed, total }`；没有缓存时全为 0。
+   */
+  async prefetchSlides(courseId, subId, { signal, onProgress } = {}) {
+    if (!this.slideCache) return { downloaded: 0, skipped: 0, failed: 0, total: 0, cached: false };
+    const slides = await this.getSlides(courseId, subId, { signal });
+    return { ...await this.slideCache.ensureSlides(slides.items, { signal, onProgress }), cached: true };
+  }
+
   async downloadSlides(courseId, subId, { directory, concurrency = 6, signal, onProgress } = {}) {
     if (!path.isAbsolute(directory ?? '')) throw new TypeError('图片目录须为绝对路径');
     if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 8) throw new TypeError('图片并发须为 1–8');
@@ -406,5 +516,24 @@ export class ClassroomSource {
     if (signal?.aborted || this.transport.closed) throw new ClassroomError('CANCELLED', '图片下载已取消');
     return { results, succeeded: results.filter(r => r.ok).length, failed: results.filter(r => !r.ok).length, sourceMeta: slides.meta };
   }
-  async dispose() { this.transport.close(); await this.ready; await this.transport.session.pending; }
+  async dispose() {
+    /**
+     * 先掐掉预取，并**等它们真的收手**。
+     *
+     * 只 `abort()` 不 `await` 是不够的：`abort` 只是把信号翻成 aborted，正在写
+     * 磁盘的那一次 `writeFile` 还会继续跑完。宿主退出后这些写操作会落在已被删除
+     * 的目录上（`ENOTEMPTY` / `ENOENT` 噪声），更糟的是它们持有 transport ——
+     * 下面 `transport.close()` 会把正在进行的请求打断成错误日志。
+     *
+     * `allSettled` 而不是 `all`：某个预取自己炸掉不该阻止退出。
+     */
+    const pending = [...this.prefetching.values()];
+    for (const controller of this.prefetchAbort) controller.abort();
+    this.prefetchAbort.clear();
+    this.prefetching.clear();
+    await Promise.allSettled(pending);
+    this.transport.close();
+    await this.ready;
+    await this.transport.session.pending;
+  }
 }

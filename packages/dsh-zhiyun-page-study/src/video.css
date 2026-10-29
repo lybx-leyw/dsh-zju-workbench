@@ -111,6 +111,12 @@ body[data-zhiyun] .zs-video:not([data-main]) .zs-video-transcript {
   grid-column: 2;
   grid-row: 1 / span 2;
 }
+/* 知识面板在「没有回放」时也要显式占右列两行 —— 理由同上：自动排布会把它
+   塞进第一行（`minmax(0, auto)`），而知识点列表没有天然高度上限，会把整栏顶长。 */
+body[data-zhiyun] .zs-video:not([data-main]) .zs-topic-track {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
 
 /* ── 视频 ──────────────────────────────────────────────────────── */
 body[data-zhiyun] .zs-video-stage-video {
@@ -119,6 +125,1005 @@ body[data-zhiyun] .zs-video-stage-video {
   align-items: stretch;
   justify-content: center;
   background: #000;
+}
+/* 视频单独一层：给"烧上去的字幕"一个**相对画面**的定位上下文。
+ *
+ * 为什么需要它：舞台底部还有内容条（`.zs-video-rail`）。若把字幕直接放在舞台里
+ * 用 `bottom` 定位，它会落在内容条上 —— 之前真的发生过（字幕压在蓝色分段条上）。
+ *
+ * 它不改变 `<video>` 的挂载与尺寸：视频仍是这一层的 `flex: 1` 子元素，
+ * 原生 `controls` 一个字节都没动。 */
+body[data-zhiyun] .zs-video-frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background: #000;
+}
+/* ── 知识点轨道（右栏）───────────────────────────────────────────
+ *
+ * 替代原来的字幕列表。字幕已经烧在画面底部，右栏列一遍是同一份信息的
+ * 第二个副本；而"现在讲到哪、接下来是什么"只有知识点能回答。
+ *
+ * 纵向排布而不是力导向图：视频只有一条时间线，**顺序本身**就是最重要的信息。
+ * 力导向会把顺序打乱，在 300px 宽的右栏里也只会缩成一团。
+ */
+body[data-zhiyun] .zs-topic-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+  overflow: hidden;
+  /* ⚠️ 和 `.zs-video-transcript` 一样**不写 grid 定位**，交给自动排布。
+   *
+   * 我最初写死 `grid-row: 1 / span 2`，结果把右上角的 PPT 小窗整个盖住了
+   * （用户实测："右上角 PPT 被遮盖"）。原因是网格是：
+   *
+   *   左列两行 = 主视图（视频或 PPT）   右列第一行 = 小窗   右列第二行 = 侧栏
+   *
+   * 写死跨两行就吃掉了小窗那一格。字幕面板从来都是靠自动排布落在右列剩余的
+   * 那一行里（`grid-row: 1 / span 2` 只出现在「没有回放」的分支），
+   * 这里跟随同样的规则最稳：**不写定位**，需要特殊处理的只有没回放与窄屏。
+   *
+   * `min-height: 0` 是网格里的必需品（默认 `auto` 会让块拒绝收缩）。 */
+  min-width: 0;
+}
+body[data-zhiyun] .zs-topic-track-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--zy-line);
+  font-size: 11.5px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-topic-track-head small {
+  color: var(--zy-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+/* 「回到当前」：脱离视频时才出现，用主色标出它是可用的动作。 */
+body[data-zhiyun] .zs-topic-follow {
+  flex: none;
+  padding: 1px 7px;
+  border: 1px solid var(--zy-accent);
+  border-radius: 5px;
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-topic-follow:hover {
+  background: var(--zy-accent);
+  color: #fff;
+}
+/* 章节切换条：章名居中、两侧箭头各占 24px。
+   只在多于一章时渲染（单章的课给它只会多两个灰按钮）。 */
+body[data-zhiyun] .zs-topic-chapters {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-bottom: 1px solid var(--zy-line);
+  background: color-mix(in srgb, var(--zy-soft) 55%, transparent);
+}
+body[data-zhiyun] .zs-topic-chapter-step {
+  flex: none;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--zy-line);
+  border-radius: 5px;
+  background: var(--zy-surface);
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-topic-chapter-step:hover:not(:disabled) {
+  border-color: var(--zy-accent);
+  color: var(--zy-accent);
+}
+body[data-zhiyun] .zs-topic-chapter-step:disabled {
+  opacity: .35;
+  cursor: default;
+}
+body[data-zhiyun] .zs-topic-chapter-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--zy-text);
+}
+body[data-zhiyun] .zs-topic-chapter-no {
+  color: var(--zy-muted);
+  font-variant-numeric: tabular-nums;
+}
+/* 空档/首尾的说明。只在需要澄清时出现，常态不占位置。 */
+body[data-zhiyun] .zs-topic-track-note {
+  flex: none;
+  margin: 0;
+  padding: 6px 11px;
+  border-bottom: 1px solid var(--zy-line);
+  background: var(--zy-soft);
+  color: var(--zy-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+body[data-zhiyun] .zs-topic-track-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+/* 折叠提示：「还有 N 个」。灰、小、居中 —— 它是边界，不是内容。 */
+body[data-zhiyun] .zs-topic-track-more {
+  margin: 2px 0;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-topic-track-empty {
+  margin: 0;
+  padding: 18px 12px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--zy-muted);
+}
+
+/* 一个知识点节点。整块可点 —— 目标是"跳过去"，不是"选中"。 */
+body[data-zhiyun] .zs-topic-node {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 11px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  color: var(--zy-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-topic-node:hover {
+  background: var(--zy-hover);
+}
+/* 圆点：轨道感的来源。竖线由相邻节点的圆点连成的视觉暗示，不额外画线。 */
+body[data-zhiyun] .zs-topic-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  border-radius: 50%;
+  border: 1.5px solid var(--zy-line);
+  background: var(--zy-surface);
+}
+body[data-zhiyun] .zs-topic-node[data-state="past"] .zs-topic-dot {
+  background: var(--zy-muted);
+  border-color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-topic-node[data-state="current"] .zs-topic-dot {
+  background: var(--zy-accent);
+  border-color: var(--zy-accent);
+  /* 当前节点外圈放大：它要能在快速滚动的一列里被一眼抓住。 */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--zy-accent) 22%, transparent);
+}
+body[data-zhiyun] .zs-topic-node[data-state="next"] .zs-topic-dot {
+  border-color: var(--zy-accent);
+}
+body[data-zhiyun] .zs-topic-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+body[data-zhiyun] .zs-topic-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.5;
+}
+body[data-zhiyun] .zs-topic-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-topic-meta time {
+  font-variant-numeric: tabular-nums;
+}
+/* 状态标签：已讲/现在/接下来。当前那个用主色，其余灰。 */
+body[data-zhiyun] .zs-topic-state {
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zs-topic-node[data-state="current"] .zs-topic-state {
+  color: var(--zy-accent);
+  font-weight: 600;
+}
+/* 当前节点整行加重：圆点 + 底色的双重标记，扫视时更容易定位。 */
+body[data-zhiyun] .zs-topic-node[data-state="current"] {
+  border-left-color: var(--zy-accent);
+  background: var(--zy-soft);
+}
+body[data-zhiyun] .zs-topic-node[data-state="current"] .zs-topic-title {
+  font-weight: 600;
+}
+/* 已讲过的整体退一档：它们在视觉上应该"过去"了。 */
+body[data-zhiyun] .zs-topic-node[data-state="past"] .zs-topic-title {
+  color: var(--zy-secondary);
+}
+/* 空档里当前节点其实还没开始 —— 用虚线感的圆点提示。 */
+body[data-zhiyun] .zs-topic-node[data-state="current"]:not([data-inview]) .zs-topic-dot {
+  background: var(--zy-surface);
+  border-color: var(--zy-accent);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+/* 右栏切换钮：浮在轨道右上角。
+   它是"次要出口"，不该和知识点的标题行争位置。 */
+body[data-zhiyun] .zs-side-switch {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  justify-self: end;
+  margin: 8px 10px 0 0;
+  z-index: 3;
+  padding: 1px 7px;
+  border: 1px solid var(--zy-line);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--zy-surface) 90%, transparent);
+  color: var(--zy-secondary);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-side-switch:hover {
+  border-color: var(--zy-accent);
+  color: var(--zy-accent);
+  background: var(--zy-surface);
+}
+
+/* ── 当前知识点（画面顶部）───────────────────────────────────────
+ *
+ * 知识点是**比主线/支线高一级**的结构（来自讲义的知识树，不是终稿的
+ * `tag.role`）。所以它在画面上的位置也更高：顶部显示层级，底部显示正在讲的话。
+ *
+ * 空隙（老师停顿、翻页）时不渲染 —— 假装还在讲某个知识点比空着更误导。
+ *
+ * `right: 48px` 是给右上角的全屏按钮让位，否则文字会压到按钮底下。
+ */
+body[data-zhiyun] .zs-video-topic {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  right: 48px;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  padding: 4px 10px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, .58);
+  pointer-events: none;
+}
+/* 章：更小更淡 —— 它是"上下文"，不是此刻的主角。 */
+body[data-zhiyun] .zs-video-topic-chapter {
+  flex: none;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: rgba(255, 255, 255, .62);
+}
+/* 知识点：主信息。 */
+body[data-zhiyun] .zs-video-topic-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+/* 全屏下放大一号：画面大了，字号不跟上就等于看不清。 */
+body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-topic {
+  top: 16px;
+  left: 20px;
+  right: 60px;
+  padding: 6px 14px;
+}
+body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-topic-title {
+  font-size: 17px;
+}
+body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-topic-chapter {
+  font-size: 13px;
+}
+/* 窄屏：章太长会挤掉知识点，只留知识点本身。 */
+@media (max-width: 720px) {
+  body[data-zhiyun] .zs-video-topic-chapter { display: none; }
+}
+
+/* 烧在画面底部的字幕。
+ *
+ * `bottom: 60px` 是为了**避开原生控制条**（Chrome 的播放控件约占画面底部 48px）：
+ * 落得太低会直接压在进度条上。
+ *
+ * 用 `position: absolute` 而不是占 flex 高度：占高度会改变 `object-fit: contain`
+ * 的可视区，字幕出现/消失时画面会跳。 */
+body[data-zhiyun] .zs-video-burn {
+  position: absolute;
+  left: 50%;
+  bottom: 60px;
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: min(92%, 900px);
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, .74);
+  pointer-events: none;
+  text-align: center;
+}
+body[data-zhiyun] .zs-video-burn-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #fff;
+  text-wrap: balance;
+}
+/* 当前句已说完、下一句还没开始（空档）：继续挂着上一句，但明显收一档。
+   直接闪成空白会让用户以为字幕坏了。 */
+body[data-zhiyun] .zs-video-burn[data-gap="true"] {
+  background: rgba(0, 0, 0, .42);
+}
+body[data-zhiyun] .zs-video-burn[data-gap="true"] .zs-video-burn-text {
+  color: rgba(255, 255, 255, .6);
+}
+/* 全屏按钮。
+ *
+ * 为什么要有它：原生控制条那个全屏按钮全屏的是 `<video>` 自己，字幕层是它的
+ * 兄弟节点，**全屏后不显示**（用户实测：全屏看不到字幕）。所以原生按钮被
+ * `controlsList="nofullscreen"` 去掉了，改由这个按钮全屏「视频 + 字幕」这一层。
+ *
+ * 放右上角：底部是原生控制条，右上不打架。默认半透明，悬停/聚焦才实。 */
+body[data-zhiyun] .zs-video-fullscreen {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .48);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .55;
+  transition: opacity .15s ease;
+}
+body[data-zhiyun] .zs-video-frame:hover .zs-video-fullscreen,
+body[data-zhiyun] .zs-video-fullscreen:focus-visible {
+  opacity: 1;
+}
+body[data-zhiyun] .zs-video-fullscreen:focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 1px;
+}
+/* 全屏态：全屏的是 **`.zs-video-grid`**（整个舞台），不是只含画面的 frame。
+ *
+ * 为什么改：只全屏 `frame` 会把 PPT 小窗排除在外 —— 全屏后想切课件必须退出
+ * 全屏（用户实测："上课爽全屏能自由切 PPT，我们不行"）。全屏整个网格之后，
+ * 视频、PPT、知识点条、互换钮、控制条全都在屏幕里，全屏内可照常「⇄」切换。
+ *
+ * `:fullscreen` 的 UA 样式会把它变成固定定位并铺满屏幕，这里补背景与内边距。
+ *
+ * ⚠️ **不在这里写 `grid-template-columns`**：列宽由「单画面 / 分屏」两种状态
+ * 各自决定（分屏时还是用户拖出来的连续值，走内联样式）。在这里写死会覆盖
+ * 内联的 `gridTemplateColumns` —— 症状是"拖分隔条没反应"。
+ */
+body[data-zhiyun] .zs-video-grid:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  /* 全屏时贴边，不留页面内边距 —— 画面能多大就多大。 */
+  padding: 0;
+  gap: 8px;
+  background: #000;
+}
+body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-burn {
+  /* 全屏下画面高得多，控制条也更高，字幕再抬一点。 */
+  bottom: 84px;
+  max-width: min(80%, 1100px);
+}
+body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-burn-text {
+  font-size: 20px;
+}
+body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-fullscreen {
+  /* 全屏下这个按钮仍然要能点（退出去）。 */
+  top: 14px;
+  right: 14px;
+}
+
+/* ── 全屏：单画面（默认）────────────────────────────────────────
+ *
+ * 用户明确定的规则：**全屏默认只显示视频与字幕**，PPT 与知识点都不显示。
+ * 分屏由控制条上的按钮按需触发（见下面的分屏段）。
+ *
+ * 实现方式：**不改 DOM**（`<video>` 一卸载就断声音、丢 currentTime），
+ * 而是把非主视图的格子 `display: none`，让主视图独占整个网格。
+ */
+body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-grid {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-stage-video {
+  grid-column: 1;
+  grid-row: 1;
+}
+/* 单画面：课件舞台、侧栏、切换钮、互换钮全部退场。 */
+body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-stage-ppt,
+body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-topic-track,
+body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-transcript,
+body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-side-switch,
+body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-swap {
+  display: none;
+}
+
+/* ── 全屏：分屏 ────────────────────────────────────────────────
+ *
+ * 列宽由 JS 内联 `grid-template-columns` 给出（用户拖出来的连续值）。
+ * 这里只定行结构：视频独占两行，右栏上下分 PPT 与知识点。
+ *
+ *   左：视频（跨两行）        右：PPT（高度自适应）
+ *                                知识点（吃掉剩余）
+ *
+ * 「PPT 优先满足大小」是这套网格的自然结果：PPT 在自己的 `aspect-ratio`
+ * 下要多大给多大，知识点吃剩下的 —— 剩多少不足 120px 时 JS 会整块隐藏。
+ */
+body[data-zhiyun] .zs-video[data-split="on"] .zs-video-grid {
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+}
+body[data-zhiyun] .zs-video[data-split="on"] .zs-video-stage-video {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+body[data-zhiyun] .zs-video[data-split="on"] .zs-video-stage-ppt {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+}
+body[data-zhiyun] .zs-video[data-split="on"] .zs-topic-track,
+body[data-zhiyun] .zs-video[data-split="on"] .zs-video-transcript {
+  grid-column: 2;
+  grid-row: 2;
+}
+body[data-zhiyun] .zs-video[data-split="on"] .zs-side-switch {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  justify-self: end;
+}
+/* 分屏时互换钮没有位置（两栏各有明确用途），藏掉避免误点。 */
+body[data-zhiyun] .zs-video[data-split="on"] .zs-video-swap {
+  display: none;
+}
+/* 知识点高度不足时（JS 量出 < 120px 加这个属性）整块隐藏。
+   为什么不用纯 CSS：高度取决于课件图片的宽高比，CSS 表达不了
+   "剩余不足就整块消失"，而 `auto` 塌陷会留下边框与内边距的残影。 */
+body[data-zhiyun] .zs-video[data-split="on"][data-topic-hidden="on"] .zs-topic-track,
+body[data-zhiyun] .zs-video[data-split="on"][data-topic-hidden="on"] .zs-video-transcript {
+  display: none;
+}
+
+/* 分隔条：8px 宽的可拖区域，压在左右两栏交界处。
+   只有中间 2px 可见 —— 太粗会显得像个"框"，太细又抓不住。 */
+body[data-zhiyun] .zs-split-handle {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  justify-self: end;
+  position: relative;
+  width: 8px;
+  margin-right: -4px;
+  z-index: 5;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+}
+body[data-zhiyun] .zs-split-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: rgba(255, 255, 255, .18);
+  transition: background .15s ease;
+}
+body[data-zhiyun] .zs-split-handle:hover::after,
+body[data-zhiyun] .zs-split-handle:focus-visible::after {
+  background: var(--zy-accent);
+}
+body[data-zhiyun] .zs-split-handle:focus-visible {
+  outline: none;
+}
+
+/* ── 全屏：控制条悬停才出现 ────────────────────────────────────
+ *
+ * 影院模式下画面要干净，控制条平时隐藏、指针移到画面上才淡入。
+ *
+ * ⚠️ 触屏没有 hover —— 所以 `:focus-within` 也要唤醒它。
+ * 不做这条的话，平板上永远调不出控制条。
+ */
+body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-mc {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-video-frame:hover .zs-mc,
+body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-mc:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* 全屏下字幕高度：控制条隐藏时不必躲，出现时为它让位（中间值两者都照顾）。 */
+body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-video-burn {
+  bottom: 56px;
+}
+
+/* ── 自绘控制条：一条轨道，既是播放进度也是内容结构 ──────────────
+ *
+ * 原生控制在 shadow DOM 里无法注入节点，`::-webkit-media-controls-*` 只能改样式，
+ * 所以要"进度条本身就是内容图"只能自绘。回退开关在 `video-panel.jsx` 的
+ * `USE_CUSTOM_CONTROLS`（改成 false 即回到原生控制条）。
+ *
+ * 压在画面底部，**不自动隐藏** —— 它承载的是内容结构，隐藏等于看课时看不到
+ * 这节课讲了什么。只在指针移出画面后降不透明度。 */
+body[data-zhiyun] .zs-mc {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  /* 两行：轨道独占一行拉满，按钮在下面一行。 */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px 8px;
+  /* 底部渐变：压在亮画面下也能读清，又不整块遮住画面。 */
+  background: linear-gradient(to top, rgba(0, 0, 0, .76), rgba(0, 0, 0, 0));
+  transition: opacity .18s ease;
+}
+body[data-zhiyun] .zs-mc-trackrow {
+  display: flex;
+  width: 100%;
+}
+body[data-zhiyun] .zs-mc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+/* 把右侧那组按钮推到右边 */
+body[data-zhiyun] .zs-mc-spacer {
+  flex: 1;
+  min-width: 0;
+}
+body[data-zhiyun] .zs-video-frame:not(:hover) .zs-mc {
+  /* 淡一点但**不消失**：上面有内容结构。 */
+  opacity: .74;
+}
+body[data-zhiyun] .zs-mc-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-mc-btn:hover { background: rgba(255, 255, 255, .16); }
+body[data-zhiyun] .zs-mc-btn:focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 1px;
+}
+body[data-zhiyun] .zs-mc-play { min-width: 30px; font-size: 13px; }
+body[data-zhiyun] .zs-mc-rate {
+  min-width: 38px;
+  font-variant-numeric: tabular-nums;
+}
+/* 自由速度模式：「慢 / 快」两个按钮拼成一组。
+ *
+ * 这两个按钮上**没有数字** —— 设计意图是让用户靠"加速还是减速"调节，而不是
+ * 盯着 1.5x 去凑。所以样式上也别做成"数值显示"的样子：两者紧邻、同宽、
+ * 无间隙，读作一个加减控件。
+ *
+ * 到边界时按钮 `disabled` 变灰 —— 这是不暴露数值的前提下唯一能给的反馈。 */
+body[data-zhiyun] .zs-mc-speed {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+body[data-zhiyun] .zs-mc-speed-btn {
+  min-width: 24px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 5px;
+}
+body[data-zhiyun] .zs-mc-speed-btn:disabled {
+  opacity: .3;
+  cursor: default;
+}
+body[data-zhiyun] .zs-mc-speed-btn:disabled:hover {
+  background: transparent;
+}
+/* 倍率本体：夹在「−」「＋」之间，点它切换显示/隐藏。 *
+ * `min-width` 固定宽度是必须的：否则从 `1.3x` 切到隐藏占位 `·` 时宽度变化，
+ * 整组按钮会横向跳一下 —— 而鼠标正停在这一组上。
+ *
+ * 隐藏态用一个中性点 `·` 而不是留空：留空会让「−」「＋」贴在一起，看着像少了
+ * 一个按钮；点号明确表示"这里有个东西，只是不显示数字"。 */
+body[data-zhiyun] .zs-mc-rateview {
+  min-width: 40px;
+  padding: 0 2px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+body[data-zhiyun] .zs-mc-rateview[data-visible="false"] {
+  color: rgba(255, 255, 255, .42);
+  font-size: 15px;
+  line-height: 1;
+}
+/* 非原速时给一点提示色：这样隐藏数字后仍能看出"现在不是原速"。
+   这是"藏起数字"与"知道自己正在变速"之间的折中 —— 只给颜色，不给数值。 */
+body[data-zhiyun] .zs-mc-rateview[data-visible="false"][data-away="true"] {
+  color: color-mix(in srgb, var(--zy-action) 42%, #fff);
+}
+body[data-zhiyun] .zs-mc-time {
+  flex: none;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, .82);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body[data-zhiyun] .zs-mc-time strong { color: #fff; font-weight: 600; }
+body[data-zhiyun] .zs-mc-dim { color: rgba(255, 255, 255, .5); }
+/* 当前段概述："这段在讲什么"。它是**内容**不是图例，所以在按钮行给它位置；
+   窄屏省略，不和按钮抢空间。 */
+body[data-zhiyun] .zs-mc-now {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, .8);
+}
+/* 预计还要看多久。
+ *
+ * 它是**估算**，所以视觉上也要弱于时间码：时间码是事实（`strong` + 白色），
+ * 这个是推算（更小、更淡）。让两者看起来一样重会让人误以为精度相同。
+ *
+ * `flex: none` + `nowrap`：这行字的长度会随数字变化（"23 分钟" → "1 小时 5 分"），
+ * 不让它压缩或换行，否则整行按钮会跟着抖动。 */
+body[data-zhiyun] .zs-mc-eta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, .62);
+  white-space: nowrap;
+}
+/* 「省了多久」：只在真的省下 1 分钟以上时出现。
+   用主色而不是白色 —— 它是收益，不该和"还剩多久"混成一句话。 */
+body[data-zhiyun] .zs-mc-saved {
+  padding: 0 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--zy-action) 34%, transparent);
+  color: #fff;
+  font-size: 10.5px;
+}
+/* 图例：用的就是轨道上那两种实际观感（实心蓝 / 深色白描边），不是抽象色点。
+   没有它，"深色块 = 支线"只能靠猜，而主次正是这段 UI 的核心信息。 */
+body[data-zhiyun] .zs-mc-legend {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, .72);
+  white-space: nowrap;
+}
+body[data-zhiyun] .zs-mc-legend i {
+  display: inline-block;
+  width: 12px;
+  border-radius: 2px;
+}
+/* 图例按**实际线宽**画：主线 8px、支线 5px。
+   图例和轨道长得一样，用户才能对上号。 */
+body[data-zhiyun] .zs-mc-legend i[data-role="main"] {
+  height: 8px;
+  background: color-mix(in srgb, var(--zy-action) 46%, #a8ccff);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
+  margin-left: 2px;
+}
+body[data-zhiyun] .zs-mc-legend i[data-role="branch"] {
+  height: 5px;
+  background: rgba(8, 12, 18, .42);
+  margin-left: 8px;
+}
+
+/* 轨道本体：**整行宽 + 加高**。
+ *
+ * 宽度决定"一分钟的支线有几个像素"，高度决定"色线看不看得见"。
+ * 两者都放大，主支线才真的读得出来 —— 原来 5px 的槽里画 2px 的线，
+ * 在 100 分钟的课上几乎分辨不了。
+ */
+body[data-zhiyun] .zs-mc-track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  cursor: pointer;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+}
+/* 底槽：8px 高（原 5px） */
+body[data-zhiyun] .zs-mc-track::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .24);
+}
+body[data-zhiyun] .zs-mc-track:focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+body[data-zhiyun] .zs-mc-buffered,
+body[data-zhiyun] .zs-mc-voice,
+body[data-zhiyun] .zs-mc-seg,
+body[data-zhiyun] .zs-mc-played,
+body[data-zhiyun] .zs-mc-skip,
+body[data-zhiyun] .zs-mc-thumb {
+  position: absolute;
+  top: 50%;
+  pointer-events: none;
+  /* ⚠️ 显式分层，**不能靠 DOM 顺序**。
+   *
+   * 用户实测过：深蓝/深色的分段被上面那层半透明白"盖住"，整条看起来是一根
+   * 均匀的灰杠。DOM 顺序在理论上够用，但只要任何一层被新增、被条件渲染、
+   * 或被别的规则改了定位，顺序就悄悄变了 —— 而症状是"颜色不对"，很难归因。
+   *
+   * 层序（小的在下面）：
+   *   0 底槽（::before，不参与）  1 缓冲  2 说话带  3 已播放
+   *   4 **内容分段（主线/支线）**  5 跳过斜纹  6 播放头
+   *
+   * 分段排在"已播放"之上：进度是叠在内容上的，不能让进度把内容洗掉。 */
+  z-index: 1;
+}
+body[data-zhiyun] .zs-mc-buffered { z-index: 1; }
+body[data-zhiyun] .zs-mc-voice { z-index: 2; }
+body[data-zhiyun] .zs-mc-played { z-index: 3; }
+body[data-zhiyun] .zs-mc-seg { z-index: 4; }
+body[data-zhiyun] .zs-mc-skip { z-index: 5; }
+body[data-zhiyun] .zs-mc-thumb { z-index: 6; }
+body[data-zhiyun] .zs-mc-buffered {
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .30);
+}
+/* 说话带：更亮的一层。时间不可信的段（尾噪 / 插值）压淡。
+   ⚠️ 这一层原先是 .55，会把下面的分段"洗白"——分段才是主角，它只是背景分布。 */
+body[data-zhiyun] .zs-mc-voice {
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+  /* ⚠️ 原先是 .55：在深色画面上会叠出 rgb(168) 的一片灰，把分段整个洗掉
+     （用户实测：整条只剩一根灰杠）。说话带只是"哪里有人在讲"的**背景分布**，
+     分段才是主角，所以压到 .16。 */
+  background: rgba(255, 255, 255, .16);
+}
+body[data-zhiyun] .zs-mc-voice[data-state="located_only"] {
+  background: rgba(255, 255, 255, .09);
+}
+/* 内容分段：**主线是主角，支线后退**。
+ *
+ * 上一版把支线做成"近黑 + 白描边"，它是整条轨道对比最强的元素 —— 结果视觉重心
+ * 跑到支线上去了（用户原话：感觉像在突出支线）。这一版用**线宽 + 色度**双维度拉层级：
+ *
+ * | 角色 | 高度 | 色 | 观感 |
+ * |---|---|---|---|
+ * | 主线 | 8px（满槽） | 提亮的蓝 | 最亮最饱和，第一眼看到的是它 |
+ * | 支线 | 5px | 半透明深色（**无亮边**） | 明显矮一截，不抢眼但仍可辨 |
+ * | 未标注 | 3px | 极淡白 | 几乎只是背景纹理 |
+ *
+ * 线宽本身就是层级信号：粗的比细的"重"。比单纯调色更稳，换主题也不会散。
+ */
+body[data-zhiyun] .zs-mc-seg {
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+}
+body[data-zhiyun] .zs-mc-seg[data-role="main"] {
+  /* 提亮：`--zy-action` 在深色模式下是 #245fa9，压在深色画面上偏暗；
+     混一点浅蓝让它在两种主题下都够亮、够饱和。 */
+  background: color-mix(in srgb, var(--zy-action) 46%, #a8ccff);
+  /* 一道弱内描边把主线从槽里"托"起来；**不做发光** —— 发光会和播放头抢。 */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
+}
+body[data-zhiyun] .zs-mc-seg[data-role="branch"] {
+  /* 半透明深色、**不加亮边**：读作"压低的一段"，不是"被挖掉的洞"。
+     高度与不透明度都低于主线，视线自然先落在主线上。 */
+  height: 5px;
+  margin-top: -2.5px;
+  background: rgba(8, 12, 18, .42);
+}
+/* 未标注：更矮更淡 —— 它既不是主线也不是支线。 */
+body[data-zhiyun] .zs-mc-seg[data-role="none"] {
+  height: 3px;
+  margin-top: -1.5px;
+  background: rgba(255, 255, 255, .12);
+}
+/* 已播放：半透明 —— 让下面的分段仍然可见。进度不是"盖住内容"。 */
+/* 已播放：**中性白**，不是蓝色。
+ *
+ * 原来用的是主色的浅化版（蓝）—— 那和"主线分段"是同一个色系，播过一段就把
+ * 主线染成了另一个蓝，两种语义糊在一起。改成低不透明度的白：叠加在底槽上
+ * 只是"更亮"，不引入新色相，分段仍然一眼可辨。 */
+body[data-zhiyun] .zs-mc-played {
+  left: 0;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .2);
+}
+body[data-zhiyun] .zs-mc-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+  pointer-events: none;
+}
+body[data-zhiyun] .zs-mc-vol {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+/* 「跳支线」开关：开启时高亮，关闭时与普通按钮同款。
+   只在真的有支线时渲染（没有就点了没反应，比没有更差）。 */
+body[data-zhiyun] .zs-mc-skip-toggle {
+  flex: none;
+  padding: 0 7px;
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+body[data-zhiyun] .zs-mc-skip-toggle[data-on="true"] {
+  background: color-mix(in srgb, var(--zy-action) 78%, transparent);
+  color: #fff;
+}
+body[data-zhiyun] .zs-mc-skip-toggle[data-on="true"]:hover {
+  background: color-mix(in srgb, var(--zy-action) 92%, transparent);
+}
+/* 「均速」开关：与「跳支线」同款，靠 `data-on` 区分开启态。
+   开启后倍率标签显示的是**此刻**的实际倍率（`data-auto` 加标记色），
+   否则用户会奇怪"我设了 2x 怎么在 1.15x"。 */
+body[data-zhiyun] .zs-mc-uniform-toggle {
+  flex: none;
+  padding: 0 7px;
+  font-size: 11px;
+}
+body[data-zhiyun] .zs-mc-uniform-toggle[data-on="true"] {
+  background: color-mix(in srgb, var(--zy-secondary) 62%, transparent);
+  color: #fff;
+}
+body[data-zhiyun] .zs-mc-uniform-toggle[data-on="true"]:hover {
+  background: color-mix(in srgb, var(--zy-secondary) 78%, transparent);
+}
+/* 均速模式下的倍率标签：用次要色标出来，说明它不是用户直接设的那个数。 */
+body[data-zhiyun] .zs-mc-rateview[data-auto="true"] {
+  color: color-mix(in srgb, var(--zy-secondary) 34%, #fff);
+}
+/* 均速模式下的平均速度小字。
+ *
+ * 存在的理由：主数字（瞬时倍率）会随语速在 1.0–2.6 之间浮动，按 Q/S 时
+ * 根本看不出平均值调到多少 —— 而平均值才是用户设的那个数。
+ *
+ * 视觉上明确弱于主数字：更小、更淡、不加边框。它是**参照**，不是读数。
+ * `flex: none` + `nowrap`：数字从 `1x` 变 `1.3x` 时不能压缩，否则整行会跳。 */
+body[data-zhiyun] .zs-mc-avg {
+  flex: none;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, .5);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* 被"叉掉"的支线：斜纹覆盖。
+   为什么是斜纹而不是只变淡 —— 变淡和"时间不可信"（`located_only`）的样式
+   太像，两者语义完全不同，混在一起会让人读不出区别。 */
+body[data-zhiyun] .zs-mc-skip {
+  position: absolute;
+  top: 50%;
+  /* 与支线同高（5px）：斜纹只该盖住支线，不该盖到更高的主线上。 */
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 2px;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, .92) 0 1px,
+    transparent 1px 4px
+  );
+  /* 半透明：让下面的支线仍然隐约可见，而不是完全盖成一条白杠。 */
+  opacity: .85;
+}
+body[data-zhiyun] .zs-mc-volume {
+  width: 52px;
+  height: 3px;
+  margin: 0;
+  accent-color: var(--zy-action);
+  cursor: pointer;
+}
+/* 自绘模式下字幕要抬到控制条之上（控制条约 38px 高）。
+   用 `[data-controls="custom"]` 而不是 `:has()`：后者在旧 Chromium 上不支持，
+   而这里只是定位问题，不值得为它冒兼容风险。
+
+   ⚠️ 全屏那条的祖先选择器是 **grid**（全屏目标换了），不是 frame ——
+   `frame` 在全屏时只是 grid 内部的普通子元素，`:fullscreen` 不再命中它。 */
+body[data-zhiyun] .zs-video-frame[data-controls="custom"] .zs-video-burn {
+  bottom: 78px;
+}
+body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-frame[data-controls="custom"] .zs-video-burn {
+  bottom: 92px;
+}
+/* 窄屏：音量滑块让位，否则轨道被挤没 */
+@media (max-width: 720px) {
+  body[data-zhiyun] .zs-mc-volume { display: none; }
+  body[data-zhiyun] .zs-mc-time .zs-mc-dim { display: none; }
+  /* 窄屏没有余量放"这段在讲什么"，让轨道优先。 */
+  body[data-zhiyun] .zs-mc-now { display: none; }
+  body[data-zhiyun] .zs-mc-legend { display: none; }
+  /* 窄屏放不下估算，让轨道优先。 */
+  body[data-zhiyun] .zs-mc-eta { display: none; }
 }
 /* 没有回放时这里根本没有舞台 —— 那句提醒是一条 `.zs-video-notice`（见下），
    不再是一张卡面，所以原先 `.is-empty` 的一整套退色样式随之删除。 */
@@ -285,6 +1290,30 @@ body[data-zhiyun] .zs-video-pin {
   font-size: 11px;
   color: var(--zy-muted);
 }
+/* 「回到当前页」：用户翻到别的课件页、脱离视频跟随时出现。 */
+body[data-zhiyun] .zs-video-follow {
+  flex: none;
+  margin-left: 4px;
+  padding: 1px 7px;
+  border: 1px solid var(--zy-accent);
+  border-radius: 5px;
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-video-follow:hover {
+  background: var(--zy-accent);
+  color: #fff;
+}
+/* 脱离态：课件图略微变暗 + 虚线内描边。
+   为什么要有视觉提示：只有那个小按钮在说"你已经不在当前页了"时，用户
+   很容易忘了自己翻走过 —— 看到进度条在走、课件却不动，会以为卡了。 */
+body[data-zhiyun] .zs-video-slide[data-detached="true"] {
+  opacity: .88;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--zy-accent) 55%, transparent);
+}
 body[data-zhiyun] .zs-video-step {
   flex: none;
   display: grid;
@@ -363,6 +1392,78 @@ body[data-zhiyun] .zs-video-swap:hover {
 body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt .zs-video-slide {
   border-radius: 10px;
   background: var(--zy-surface);
+}
+/* 小窗的翻页控件：贴在图片下沿。
+ *
+ * 为什么小窗也要翻页：默认布局是视频作主视图、课件缩在小窗，而翻页按钮
+ * 原先只在"课件作主视图"时渲染 —— 于是最常见的布局下根本翻不了课件
+ * （用户报的"ppt 还不行"）。
+ *
+ * 小窗只有约 220×124，所以控件做得很小：两个箭头 + 需要时才出现的「回到当前」。
+ * 悬停才显示，不挡画面。 */
+body[data-zhiyun] .zs-video-mini-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 3px 4px;
+  background: linear-gradient(to top, rgba(0, 0, 0, .62), rgba(0, 0, 0, 0));
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+/* 悬停课件舞台才出现；有「回到当前」时**常驻** ——
+   那个按钮是"你已脱离视频"的唯一提示，藏起来等于没提示。
+   用 `data-detached` 而不是 `:has()`：后者在旧 Chromium 上不支持，
+   而这条正好是「脱离态必须可见」的关键提示，不能赌兼容。 */
+body[data-zhiyun] .zs-video-stage-ppt:hover .zs-video-mini-bar,
+body[data-zhiyun] .zs-video-mini-bar[data-detached="true"] {
+  opacity: 1;
+}
+body[data-zhiyun] .zs-video-mini-step {
+  flex: none;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .3);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, .5);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-video-mini-step:hover:not(:disabled) {
+  border-color: var(--zy-accent);
+  background: var(--zy-accent);
+}
+body[data-zhiyun] .zs-video-mini-step:disabled {
+  opacity: .35;
+  cursor: default;
+}
+body[data-zhiyun] .zs-video-mini-follow {
+  flex: none;
+  padding: 0 6px;
+  height: 20px;
+  border: 1px solid var(--zy-accent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--zy-accent) 80%, transparent);
+  color: #fff;
+  font: inherit;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+body[data-zhiyun] .zs-video-mini-follow:hover {
+  background: var(--zy-accent);
 }
 
 /* ── 字幕（右下）─────────────────────────────────────────────── */
@@ -504,6 +1605,34 @@ body[data-zhiyun] .zs-video-line.is-active {
 body[data-zhiyun] .zs-video-line.is-active time {
   color: var(--zy-accent);
 }
+/* 时间不可信的行：仍然显示（用户要看原文），但退一档并划掉时间戳。
+   不退的话，用户会以为这一句的时间是准的 —— 尾噪条跨几十分钟、
+   插值句的秒数是算出来的，两者都不该看起来和正常句一样。 */
+body[data-zhiyun] .zs-video-line.is-dim {
+  opacity: .55;
+}
+body[data-zhiyun] .zs-video-line.is-dim time {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--zy-muted) 60%, transparent);
+}
+/* 字幕轨来源标签：清洗后 / 原始碎片。
+   两者内容长得几乎一样，但可信度完全不同，必须能一眼分清。 */
+body[data-zhiyun] .zs-video-track-kind {
+  flex: none;
+  /* 标题行是 `space-between`。新加这一项后若不吸收空隙，四个元素会被均匀摊开
+     （「字幕」「条数」「清洗后」「收起」各占一角）。让它吃掉空隙、紧贴左边那一组。 */
+  margin-right: auto;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--zy-secondary);
+  background: color-mix(in srgb, var(--zy-muted) 18%, transparent);
+}
+body[data-zhiyun] .zs-video-track-kind[data-kind="cleaned"] {
+  color: var(--zy-action);
+  background: color-mix(in srgb, var(--zy-action) 14%, transparent);
+}
 
 body[data-zhiyun] .zs-video-loading {
   display: flex;
@@ -538,6 +1667,22 @@ body[data-zhiyun] .zs-video-loading {
     grid-row: 1;
   }
   body[data-zhiyun] .zs-video-transcript {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  /* 知识面板跟随字幕：这个断点下主视图只占第一行，侧栏整幅横跨第二行。
+     不写这一条会走自动排布，被塞进右列 —— 而右列在这一段已经不存在了，
+     它会被排进隐式列，整页横向溢出。 */
+  body[data-zhiyun] .zs-topic-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  body[data-zhiyun] .zs-video:not([data-main]) .zs-topic-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  /* 侧栏切换钮跟着换到右下 —— 面板横跨整行后，右上角是主视图了。 */
+  body[data-zhiyun] .zs-side-switch {
     grid-column: 1 / -1;
     grid-row: 2;
   }
@@ -623,5 +1768,23 @@ body[data-zhiyun] .zs-video-loading {
   body[data-zhiyun] .zs-video-swap {
     grid-column: 1;
     grid-row: 2;
+  }
+  /* 知识面板在窄屏落到第三行（与字幕同位），并限高 —— 否则几十个知识点
+     会把整页拉得很长，滚到视频要滑好几屏。 */
+  body[data-zhiyun] .zs-topic-track {
+    grid-column: 1;
+    grid-row: 3;
+    max-height: 40vh;
+  }
+  body[data-zhiyun] .zs-video:not([data-main]) .zs-topic-track {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  /* 切换钮在窄屏挪到第三行右上（面板顶部右侧）。 */
+  body[data-zhiyun] .zs-side-switch {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: start;
+    justify-self: end;
   }
 }

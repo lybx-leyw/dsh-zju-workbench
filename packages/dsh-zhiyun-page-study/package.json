@@ -19,6 +19,7 @@
       "external": [
         "dsh-zhiyun-shell-ui",
         "dsh-zhiyun-core-player",
+        "dsh-zhiyun-core-playback",
         "dsh-zhiyun-core-quiz",
         "dsh-zhiyun-page-quiz"
       ]
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "hls.js": "1.7.3",
+    "dsh-zhiyun-core-playback": "0.1.0",
     "dsh-zhiyun-core-quiz": "0.1.0",
     "dsh-zhiyun-page-quiz": "0.1.0"
   }
