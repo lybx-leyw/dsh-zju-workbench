@@ -3832,3 +3832,24 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `seed-forge/harness-ai-kit` | B 其他JS | **Apache-2.0** ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r112。★25，**Python 技术栈**（不合 JS 限定）；「42 skills + 5 CLI」的 agent 资产打包器。pushed 2026-08-31（2 个月未动） |
 | `inthepond/ff-toolkit` | B 其他JS | **MIT** ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r112。★8，**Python** FFmpeg 工具包（CLI + MCP server），与学习六域无关，纯词面噪声 |
 | `ben4202121/buddybridge` | B 其他JS | **MIT** ✅ | 笔记（Obsidian） | 重复且无增益 | ⛔ | rejected | 2026-10-30 | r112。★8，建仓 2026-06-14、pushed 2026-10-25。**Obsidian 插件**（在笔记库里跟 WorkBuddy/CodeBuddy CLI 聊天）。与 `dsh-radar-bbob` 同形态但目标是 Obsidian，本仓不消费该插件格式 |
+
+## r113 · 2026-10-30-18 · A 组 · 新轴：学术技能 / 引文核验
+
+> 搜索 9 次（五词 + `skill`/`note` 四补充词面），0 次 403，**完整**。
+> 174 去重 → 53 未登记 → 二次过滤留 12 行（🟢0 🔵5 ⛔7，含 4 行簇合并）。**本轮骨架 0**（无 🟢）。
+> 五词首屏 130 条刷新后**仅 4 个新面孔且 0 个相关** → 判 **A 组五词封板**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `wp-a/nature-academic-search` | B 其他JS（实为 **Python**） | MIT ✅ | 论文 / 文献综述 | **重复且可强化**（但不可锁定） | 🔵 | proposed | 2026-10-30 | r113。★362，7 源去重（CrossRef/PubMed/arXiv/OpenAlex/EuropePMC/S2/CTgov），`verification.py` 做**字段级四态核验**（verified/mismatch/not_found/manual_needed）、`graph.py` 上下引文图谱、`citation.py` RIS/BibTeX 导出。**本仓 `page-paper/src/citations.js`(143 行) 只做页码跳转，`bibliograph\|reference` 零命中 → 引文核验是真空缺**。**但 Python + MCP stdio，本仓纯 JS 零 Python → 只记口径不集成**。口径见报告 §4.2 |
+| `wp-a/dsh-academic-paper-search` | A 原生DSH（桥接壳） | MIT ✅ | 论文 / 文献 | 重复且可强化（壳可锁、心不可锁） | 🔵 | proposed | 2026-10-30 | r113。★4，建仓与 pushed **同为 2026-08-29 → 建仓即停更**。`index.js` **仅 323 B**（`apply(){}` 空实现），真正贡献全在 `cordis.patch.yml`：insert `@deepseek-ai/dsh-mcp-client`，`command: uvx`、`--from nature-academic-search==0.3.0`。**三重阻塞**：① npm **404 锁不了版** ② 需 Python+uvx ③ 需 5 个外部 API key。**不出骨架** |
+| `vinvcn/mattpocock-skills-zh-CN` | 技能包（含 dsh-plugin） | MIT ✅ | 无关（通用工程技能） | 重复且无增益 | 🔵 | proposed | 2026-10-30 | r113。**★5417 本轮最高**。Matt Pocock 技能简体中文本地化（人工审核每次更新）。dsh 侧 `@vinvcn/dsh-mattpocock-skills-zh@1.3.1` **可锁**（单依赖 `yaml`、262,873 B、repo 回指本仓 ✅），实现为单文件 `ctx.skills.registerProvider()`、`RANK=600`、`source:'bundled'`、无 UI。**同源已在册两家**（`gongyijie85/mattpocock-skills-dsh-zh` ★6、`mattpocock-skills-dsh` ★19）→ 本家记为该簇主流水线，簇整体不取 |
+| `wpsnote/wpsnote-skills` | 技能包（官方） | MIT ✅ | 笔记 | **不同面板** | 🔵 | proposed | 2026-10-30 | r113。★184，WPS 笔记官方 30+ Skill + `wpsnote-cli` + MCP Server，声明兼容 DSH/WorkBuddy。**不取的理由是数据模型**：本仓笔记是 `core-notes` **节笔记**（markdown + `zy://section/` 锚点 + `zy-asset://` 图片，落盘经 `ctx.storage`），WPS 笔记是**外部云笔记库** → 接进来只能是并排第二个入口，违反判据① |
+| `cheshireez/dsh-skill-hub` | A 原生DSH | MIT ✅ | 无关（技能管理） | 重复且无增益 | 🔵 | proposed | 2026-10-30 | r113。★36，TS，`0.3.30`，push 2026-10-29，带 patch + `client.platform:web`，npm 可锁。功能扎实（技能浏览/启停 + **安装前审计拦隐藏字符与管道执行** + GitHub 市场 commit 钉住 + 跨 agent 导入 + 回收站）。**技能管理簇第 12 家**（在册已有 `MichengAI/dsh-skills-manager` ★409、`Fishquito7/dsh-skill-mcp-panel` ★197 等 10+），且本仓无「技能管理」面板 |
+| `omdsh-dev/dsh-mnemon` | A 原生DSH | MIT ✅ | 通用（记忆） | 重复且无增益 | ⛔ | rejected | 2026-10-30 | r113。★**786**、TS、push 2026-10-29，质量本轮最高一档（分层记忆 + 记忆系统页 + 实体图谱 + 可组合 provider + 8 后端 + ZIP 备份）。**排除**：① 记忆簇在册 **11+ 家**、已出 2 个骨架（`dsh-radar-me-memory`、`dsh-radar-mneme`）② **自带整套 UI 页**（Memory System / Project Documents / Memory Spaces / Plugins 组合器）→ 违反判据① ③ r112 已把记忆域交给 `slow-stack/mneme`（4 路召回） |
+| `XiaoMaColtAI/math-modeling-skill` | 技能包 | **无许可证** ⛔ | 数学建模竞赛 | — | ⛔ | rejected | 2026-10-30 | r113。★**1892**、Python、push 2026-10-29，`license.spdx_id = null` → **只登记、不采用、不摘任何代码**。内容（CUMCM/MCM 三阶段工作流 + 算法库 + 论文模板）贴合竞赛域但许可红线优先。**建议列入「许可待核」观察名单**，补 LICENSE 后可一轮内复评 |
+| `RealSeaberry/AutoMCM-Pro` | 技能包 | MIT ✅ | 数学建模竞赛 | 无关 | ⛔ | rejected | 2026-10-30 | r113。★258，Python，全栈数模 Skill（GitOps + 强制代码自证）。与在册 `OrinVoss/dsh-math-team`、`Aampidy/dsh-mcmp` 同簇，本仓**无数模竞赛面板** |
+| `hyhmrright/brooks-lint` / `Unclecheng-li/DeepSec` / `EverMind-AI/SkillCorpus` | B 其他JS | 均 MIT/Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r113 合并。代码质量评审 Skills（★1552）/ AI 安全审计平台（★499）/ SKILL.md 语料检索-评估（★694）。三者均为**跨工具通用研发件**，非 DSH 插件、非学生场景 → 词面噪声 |
+| `Awesome-AI-Pedia/Awesome-AI-Pedia` / `sandbaseai/sandbase-skills` / `lencx/skills` / `FeatherHunter/dsh-mattpocock-skills-deck` | 清单/技能包 | 均宽松 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r113 合并。AI 资源百科（★510）/ 88 研究-营销 Skill（★203）/ 经验转执行（★196）/ mattpocock 27 技能 deck（★264）。**清单类第 5–8 家**（在册已有 3 家），仅作线索源 |
+| `IvenKooLab/desktop-pet` / `BlockchainLabs/SaluS` | B | MIT / **无** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r113 合并。3D 桌宠（★174，**Python**，与 DSH 无关）/ 2019 年 ICO 仓（★25，`null`，**词面误召回**） |
+| `WZZNNE/DSH-CyberWorkStation` | A 原生DSH | **`NOASSERTION`** ⚠ | 无 | 无关 | ⛔ | pending-license | 2026-10-30 | r113。★24，TS。一键整合包（赛博朋克启动器 + SillyTavern 级控制台 + 8 插件）。许可不可识别 → **待人工核验，不采用** |

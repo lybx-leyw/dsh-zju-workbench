@@ -192,6 +192,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-30 09:00 | A | r110 pushed:> 活跃轴 |
 | 2026-10-30 12:05 | A | **r111 · 轴：npm registry（GitHub 六词见底后换源）**。脚本判 `same-day(exhausted)`，未采纳：GitHub 端 `cordis plugin` / `topic:dsh-plugin` / `pushed:>10-27` 三次首屏**全部在册（100%）**。GitHub 搜索 8/10 次、npm 3 次，0 次 403 **完整**；未登记 26 → 留档 **17 行**（🟢2 / 🔵5 / ⛔10），`NOASSERTION` 1。**骨架 1** `packages/radar/dsh-radar-diff-approval`（A 类，锁 `dsh-diff-approval@0.36.1`，**强化式集成**：论文/页面写入的整稿替换 → 逐块 diff+Keep/Revert）。**关键实证**：`dsh-diff-approval` ★15、建仓 2026-08-16、npm 6 个版本，**GitHub 六词检索从未出现**，只在 npm `/-/v1/search` 捞到 → **npm registry 是本轮唯一有边际增益的轴**。另：`KERBALMans/dsh-modpack` 虽 🟢 但 **npm 包指向他仓（`M1r0er`，0.2.1 vs 仓内 0.9.1）→ 锁不了版，不出骨架**。整理改动 0（幂等）。**建议**：把 npm 轴固化为 D 组；A 组 `cordis plugin`/`topic:dsh-plugin` 正式封板 |
 | 2026-10-30 15:00 | A | 自动记录 |
+| 2026-10-30 18:00 | A | r113 · 轴：**学术技能 / 引文核验**（`303%3=0` 指向 A，与 A 今日已跑 4 轮无冲突，直接采用）。五词 5 次 + `skill`/`note` 补充 4 次，共 9/10，0 次 403 **完整**。174 去重 → 53 未登记 → 留档 12 行（🟢0 / 🔵5 / ⛔7，含 4 簇）。**骨架 0**（无 🟢）。**关键实证**：五词首屏 130 条仅 4 新面孔且 0 相关 → **判 A 组五词封板**；补充 `skill`/`note` 词面捞出整条学术链 `wp-a/nature-academic-search` ★362 → `wp-a/dsh-academic-paper-search`（JS 壳仅 323 B、npm 404、运行时需 Python+uvx）→ **可借鉴不可锁版**，记入报告 §4.2 的字段级四态核验口径。另证本仓 `page-paper/src/citations.js`(143 行) 只做页码跳转、`bibliograph\|reference` 零命中 → **引文核验是真空缺**。整理改动 0（幂等）。**建议**：A 组改走新词面/npm 源；记忆簇正式封板 |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑
