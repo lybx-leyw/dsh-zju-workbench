@@ -1,0 +1,17 @@
+{
+  "_note": "用真实解析产物（新中国史 7 个知识点）跑 r4/r1 对照。每点 1 题 = 6 个独立蓝图单元，可测跨单元并行。concurrencies 跑 [1,2,4] 三档看并发收益。",
+  "kind": "development",
+  "arms": ["r1", "r4"],
+  "concurrencies": [1, 2, 4],
+  "batches": [3],
+  "maxCalls": 120,
+  "requestTimeoutMs": 240000,
+  "wallBudgetMs": 2400000,
+  "cases": [
+    {
+      "id": "hist-1",
+      "kind": "authored",
+      "source": "artifacts/parse-real/87882-1973145/graph.json"
+    }
+  ]
+}

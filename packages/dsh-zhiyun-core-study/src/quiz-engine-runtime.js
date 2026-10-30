@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {graphFromRecord,inspectGraph,compileIdeas,createScheduler,reserveWithExpansion,createQuestionGenerator,createToolTransport,createCapsuleStore,contentHash,pointIdentity} from 'dsh-zhiyun-core-quiz/engines';
 import {classifyError} from 'dsh-zhiyun-core-llm-error';
 import {normalizeUpstreamQuestion,nativeQuizContract} from './deeptutor-quiz.js';
+import {createCoreQuestionBackend} from './core-question-backend.js';
 
 const fault=(code,message)=>Object.assign(Error(message),{code});
 const serial=()=>{let pending=Promise.resolve();return work=>{const next=pending.then(work);pending=next.catch(()=>{});return next;};};
@@ -133,7 +134,39 @@ function runtimeState(input){
   return {get saved(){return saved;},change:work=>commit(async()=>{
     const next=structuredClone(saved),question=await work(next);
     try{if(question)await input.onQuestion(question,next);else await input.onCheckpoint(next);}
-    catch(cause){throw fault('PERSIST','题目或断点保存失败');}
+    catch(cause){
+      // 保留 cause：只抛一句「保存失败」时，真实原因（序列化失败？schema 不合格？
+      // 磁盘满？）全被丢掉，界面上只有 PERSIST 这个码，排查要从头猜。
+      //
+      // ⚠️ 不能只依赖 cause.message：实测有些抛出路径的 message 是空串
+      // （比如 zod 校验失败被再包一层、或 AbortError），于是 detail 拼出来是空的，
+      // 界面上又变成「保存失败」四个字——2026-10-31 第二次真机就是这样。
+      // 所以要退到 name / code / 甚至 JSON 片段，保证一定带得出可辨识信息。
+      const describe = value => {
+        if (!value) return '';
+        const parts = [];
+        if (value.name && value.name !== 'Error') parts.push(value.name);
+        if (value.code) parts.push('code=' + value.code);
+        const msg = String(value.message ?? '').trim();
+        if (msg) parts.push(msg);
+        // 兜底：用 JSON 片段，至少能看出是哪个对象/哪类值
+        if (!parts.length) {
+          try {
+            const text = JSON.stringify(value);
+            if (text && text !== '{}') parts.push(text.slice(0, 200));
+          } catch {
+            parts.push(String(value).slice(0, 200));
+          }
+        }
+        return parts.join(' | ');
+      };
+      const detail = describe(cause);
+      const error = fault('PERSIST', detail
+        ? '题目或断点保存失败：' + detail
+        : '题目或断点保存失败（存储层未给出原因；检查 bank schema 与磁盘）');
+      error.cause = cause;
+      throw error;
+    }
     saved=next;return question;
   })};
 }
@@ -202,8 +235,41 @@ export function createTreeQuizRun({pool,records,graph:frozenGraph=null,cache=nul
   }};
 }
 
+/**
+ * 原生出题批次的后端选择。
+ *
+ * # 为什么做成开关而不是直接替换
+ *
+ * 重构版（core-question）已经通过质量对照：writing 0.972 / shortcuts 0.933，
+ * 基线是 0.940 / 0.933。但它是一条全新的实现，出问题时需要能在一处切回去。
+ * 开关放在这里而不是环境变量，是因为它必须进版本控制 —— 否则「线上跑的是
+ * 哪条链」会变成一件查不清的事。
+ *
+ * # 为什么调用方一行不用改
+ *
+ * `createNativeQuizRun` 只通过 tutor 的 6 个方法访问上游。重构版的适配层
+ * （core-question-backend.js）把同样的 6 个方法做成同形，于是题型校验、
+ * 断点续跑、题库落盘、知识点归属全部沿用既有逻辑。
+ *
+ * 回退方式：把下面这行改成 'deeptutor'，其余不动。
+ */
+export const NATIVE_BACKEND = 'core-question';
+
+/**
+ * 按 NATIVE_BACKEND 取实际要用的 tutor 后端。
+ *
+ * `input.backend` 可以显式覆盖：单测需要同时验证两条链的行为，
+ * 而那些断言写的是 vendor 的请求形状（`starts[0].options.mode` 之类），
+ * 在重构版下本来就不该成立。给测试一个显式开关，比让测试去猜当前常量是什么可靠。
+ */
+function resolveTutor(tutor, factory, override = undefined) {
+  const wanted = override ?? NATIVE_BACKEND;
+  if (wanted !== 'core-question') return tutor;
+  return factory?.() ?? tutor;
+}
+
 /** Genuine native batches. No local author, metadata LLM, review or rectification is invoked. */
-export function createNativeQuizRun({pool,tutor,resources,scope,onProgress}){
+export function createNativeQuizRun({pool,tutor,resources,scope,onProgress,backend:backendOverride}){
   const lifetime=new AbortController();
   return {get workers(){return pool.snapshot;},dispose:()=>lifetime.abort(),async generatePoints(input){
     const signal=AbortSignal.any([lifetime.signal,...(input.signal?[input.signal]:[])]),state=runtimeState(input),problems=[];
@@ -211,6 +277,37 @@ export function createNativeQuizRun({pool,tutor,resources,scope,onProgress}){
     for(const [index,task]of input.plan.tasks.entries())if(state.saved.tasks[index].questionIds.length<task.count){
       const key=JSON.stringify([task.type,task.strategy]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push({index,task});
     }
+    // 按 NATIVE_BACKEND 决定走 vendor 还是重构版。只在函数入口解析一次，
+    // 循环里不再判断 —— 一批题中途换后端会让断点语义对不上。
+    //
+    // 凭证不自己读环境变量：产品已经把 provider/model/凭证收在 worker pool 里，
+    // 另开一条读取路径会让「界面选的模型」和「实际调用的模型」可能不是同一个。
+    // 这里只把 pool 的第一条路由交给后端，凭证由 pool 内部的 llm 服务提供。
+    const backend=resolveTutor(tutor,()=>{
+      const made=createCoreQuestionBackend({
+        pool,
+        // 关键：把现成的 pooledToolCall 传进去。
+        // 它封了并发调度、source 归因、finish 失败转异常、传输重试 ——
+        // 自己拼 prepareCall 会把这些全丢掉（2026-10-31 真机事故）。
+        pooledCall:pool?pooledToolCall(pool):null,
+        llmService:pool?.base?.llm??null,
+      });
+      // 资源登记沿用宿主的：bundle 由宿主 fromLecture 造出，
+      // schema 校验与快照落盘都在那边，本层只读不重建。
+      // 注入给后端的必须是**带 attach 的实例**（tutor.resources），
+      // 不是调用方传进来的 `resources` —— 后者只有 fromLecture。
+      // 之前这里注错了，导致 backend.resources 返回一个没有 attach 的对象，
+      // `??` 兜底也就不再触发，最终报成「resRegistry.attach is not a function」。
+      made.__setHostResources?.(tutor?.resources ?? resources);
+      return made;
+    },backendOverride);
+    // 资源登记必须用**真正提供 attach 的那个实例**。
+    //
+    // 调用方传进来的 `resources` 只有 `fromLecture`（负责把讲义投影成 bundle）；
+    // `attach` / `release` 在 tutor.resources 上 —— 两者职责不同，不能混。
+    // 重构版本层不带自己的登记处，所以它透传的也是 tutor.resources。
+    // 兜底顺序：后端自带的 → tutor 的 → 调用方传的（测试里可能只给后者）。
+    const resRegistry=backend.resources??tutor.resources??resources;
     for(const [key,rows]of groups){
       signal.throwIfAborted();const {point,type,strategy}=rows[0].task;
       const allRows=input.plan.tasks.map((task,index)=>({task,index})).filter(r=>JSON.stringify([r.task.type,r.task.strategy])===key);
@@ -218,25 +315,48 @@ export function createNativeQuizRun({pool,tutor,resources,scope,onProgress}){
       const title=points.length===1?point.title:'所选讲义';
       const contract=nativeQuizContract({title,points,count:allRows.reduce((n,r)=>n+r.task.count,0),type,strategy,difficulty:input.plan.difficulty,existingQuestions:(input.existingQuestions??[]).filter(q=>points.some(p=>p.id===q.pointId))});
       const bundle=resources.fromLecture({resourceId:`quiz-native:${input.runId??'batch'}:${key}`,accountScope:{accountId:String(scope)},courseId:point.courseId,subId:point.subId,title,lecture:contract.lecture});
-      const handle=await tutor.resources.attach(bundle);let runId;
-      const cancel=()=>{if(runId)void tutor.runs.cancel(runId).catch(()=>{});};
+      const handle=await resRegistry.attach(bundle);let runId;
+      // 重构版后端只从 start(resourceHandles) 拿到 handleId，拿不到 bundle 正文。
+      // 这里在 attach 成功之后补记一句 —— 校验顺序不变，只是附加一条只读信息。
+      backend.rememberBundle?.(handle.handleId,bundle);
+      const cancel=()=>{if(runId)void backend.runs.cancel(runId).catch(()=>{});};
       try{
         const requested=allRows.reduce((n,r)=>n+r.task.count,0);
         let candidates=state.saved.engineState.batches?.[key]?.questions;
         if(!candidates||candidates.length<requested){
           const previous=candidates??[];
-          const started=await tutor.runs.start({capability:'deep_question',language:'zh',scope:String(scope),resourceHandles:[handle],
+          const started=await backend.runs.start({capability:'deep_question',language:'zh',scope:String(scope),resourceHandles:[handle],
             input:contract.input,
             options:{mode:'upstream-native',workers:pool.concurrency,workerSelection:pool.snapshot.map(({provider,model,workers})=>({provider,model,workers})),llm:{provider:pool.snapshot[0].provider,model:pool.snapshot[0].model},
               config:{...contract.config,num_questions:requested-previous.length}},modelDispatch:(work,signal)=>pool.execute(work,{signal})});
           runId=started.runId;signal.addEventListener('abort',cancel,{once:true});if(signal.aborted){cancel();signal.throwIfAborted();}
           await state.change(s=>{s.phase='native-exploring';for(const row of rows)s.tasks[row.index].state='running';});
-          for await(const event of tutor.runs.events({runId})){signal.throwIfAborted();onProgress?.({pointId:point.id,event});await state.change(s=>{s.phase='native-'+(['exploring','planning','quizzing'].includes(event.stage)?event.stage:'quizzing');});}
-          const result=await tutor.runs.result(runId);if(result.status!=='succeeded')throw fault(result.error?.kind??'UPSTREAM',result.error?.message??'DeepTutor 生成失败');
+          for await(const event of backend.runs.events({runId})){signal.throwIfAborted();onProgress?.({pointId:point.id,event});await state.change(s=>{s.phase='native-'+(['exploring','planning','quizzing'].includes(event.stage)?event.stage:'quizzing');});}
+          const result=await backend.runs.result(runId);if(result.status!=='succeeded')throw fault(result.error?.kind??'UPSTREAM',result.error?.message??'DeepTutor 生成失败');
           const accepted=[];
           for(const candidate of result.questions??[]){
-            try{accepted.push({...validateNativeQuestion(normalizeUpstreamQuestion(candidate),type),id:randomUUID(),upstreamRunId:runId,upstreamCommit:result.upstreamCommit});}
-            catch(error){problems.push(error.message);}
+            try{
+              const normalized=normalizeUpstreamQuestion(candidate);
+              validateNativeQuestion(normalized,type);
+              // 这里就要补齐知识点归属，不能只塞 id。
+              //
+              // accepted 会被写进 engineState.batches（第 342 行），而 checkpoint
+              // 是要过 bank schema 的：questions[i] 要求 courseId/subId/pointId/
+              // pointTitle/courseTitle/lessonTitle 都是非空字符串。
+              //
+              // 2026-10-31 的 INVALID_RECORD 就是这样来的：这里只加了三个字段，
+              // 于是 questions.47.courseId 等全部是 undefined，整批保存被拒。
+              // 而这些字段本来就能从 plan.tasks 的 point 拿到 —— 不是缺失，是没填。
+              const owner=points.find(p=>p.title===normalized.topic)??point;
+              const banked=bankQuestion(normalized,{...rows[0].task,point:owner},{
+                engine:'deeptutor-native',mode:'upstream-native',runId,upstreamCommit:result.upstreamCommit,
+                resourceRevision:handle.revision,
+              });
+              // 保留上游给的考点描述；它与知识点标题不同，是有信息量的
+              if(normalized.topic&&owner?.title&&normalized.topic!==owner.title)banked.topicHint=normalized.topic;
+              banked.sourcePointIds=points.map(p=>p.id);
+              accepted.push(banked);
+            }catch(error){problems.push(error.message);}
           }
           candidates=[...previous,...accepted].slice(0,requested);
           await state.change(s=>{s.engineState.batches??={};s.engineState.batches[key]={questions:candidates,runId};});
@@ -244,16 +364,34 @@ export function createNativeQuizRun({pool,tutor,resources,scope,onProgress}){
         let cursor=0;
         // Saved candidates include already-published rows; publishing is idempotent after restart.
         for(const row of allRows)for(let i=0;i<row.task.count;i++){
-          const raw=candidates[cursor++];if(!raw)break;validateNativeQuestion(raw,type);
+          const raw=candidates[cursor++];if(!raw)break;
+          // 候选可能在上一段就已经 bankQuestion 过（新产出的那些）。
+          // 对它们只需校验，不能再包一次 —— 否则 id/provenance 会被覆盖，
+          // 断点续跑时「已发布的题」判定也会失效。
+          const alreadyBanked=raw.courseId!==undefined&&raw.pointId!==undefined;
+          if(!alreadyBanked)validateNativeQuestion(raw,type);
           if(state.saved.tasks[row.index].questionIds.includes(raw.id))continue;
-          const actual=points.length===1?points[0]:points.find(p=>p.title===raw.topic);
-          const q=bankQuestion(raw,{...row.task,point:actual??row.task.point},{engine:'deeptutor-native',mode:'upstream-native',runId:raw.upstreamRunId,upstreamCommit:raw.upstreamCommit,resourceRevision:handle.revision});
+          const q=alreadyBanked
+            ?raw
+            :bankQuestion(raw,{...row.task,point:points.find(p=>p.title===raw.topic)??row.task.point},
+              {engine:'deeptutor-native',mode:'upstream-native',runId:raw.upstreamRunId,upstreamCommit:raw.upstreamCommit,resourceRevision:handle.revision});
           q.sourcePointIds=points.map(p=>p.id);
-          if(!actual){q.pointId=null;q.pointKey=null;q.pointTitle=raw.topic??'所选讲义（上游未标注具体知识点）';}
           await state.change(s=>{s.tasks[row.index].questionIds.push(q.id);s.tasks[row.index].actualTask={pointId:q.pointId,title:q.pointTitle};s.questions??={};s.questions[q.id]=q;s.tasks[row.index].state=s.tasks[row.index].questionIds.length===row.task.count?'completed':'pending';s.phase='saving';return q;});
         }
         if(candidates.length<allRows.reduce((n,r)=>n+r.task.count,0))problems.push(`${point.title}：上游未生成足额题目`);
-      }finally{signal.removeEventListener('abort',cancel);await tutor.resources.release(handle.handleId);}
+      }catch(error){
+        // 重构版是进程内调用，失败不会像子进程那样留下 stderr。
+        // 如果这里直接往外抛，上层只会看到「0 道可用」，用户完全不知道
+        // 为什么 4 秒就结束 —— 2026-10-31 的真实反馈就是这种。
+        //
+        // 但要分清两类：
+        //   存储/持久化失败（PERSIST）→ 必须继续抛。吞掉它会让用户以为
+        //     「这批没出题」，实际是题目生成了但没存进去，重跑还会再花一次钱。
+        //   生成失败 → 记进 problems 并在界面上展示，不让整批因为一组而全灭。
+        if(error?.code==='PERSIST')throw error;
+        problems.push(`${point.title}：${error?.message??'出题失败'}`);
+        if(error?.code)problems.push(`错误码：${error.code}`);
+      }finally{signal.removeEventListener('abort',cancel);backend.forgetBundle?.(handle.handleId);await resRegistry.release(handle.handleId);}
     }
     await state.change(s=>{s.engineState.complete=s.tasks.every((t,i)=>t.questionIds.length===input.plan.tasks[i].count);s.phase=s.engineState.complete?'completed':'partial';});
     return {checkpoint:state.saved,produced:state.saved.tasks.reduce((n,t)=>n+t.questionIds.length,0),problems};

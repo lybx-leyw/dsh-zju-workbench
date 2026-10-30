@@ -5,7 +5,7 @@ import {createQuestionGenerator} from './generator.mjs';
 import {buildBlueprint,assessmentReport} from './blueprint.mjs';
 import {compileDemand} from './compiler.mjs';
 
-export const VERSION='r4-demand-v3';
+export const VERSION='r4-demand-v4';
 
 /** Allocate concrete work before any idea exploration or model call. */
 export function planDemands({graph,pointIds,count,compositeCount=0,...options}){
@@ -43,6 +43,8 @@ export async function runR4({graph,pointIds,count,compositeCount=0,types=['mcq']
  const settled=await Promise.allSettled(demands.map(async demand=>{
   const selection={types:[demand.type],strategies:[demand.strategy],attributeIds:demand.attributeIds,pointIds:demand.pointIds,maxPerFamily};
   const key=await contentHash([demand.kind,demand.graph,selection,maxPerFamily]),nativeRequestId=await contentHash([requestId,key]);
+  // 声明在 try 外面：catch 里也要用它把「为什么不足」写进结果。
+  let explorationFilter=null;
   try{
    let library,scheduler,plan,expansions=0;
    for(;;){
@@ -53,7 +55,21 @@ export async function runR4({graph,pointIds,count,compositeCount=0,types=['mcq']
      library.stats={...library.stats,modelCalls:0,reusedNodes:1};
     }else{
      library=await compileDemand({graph:demand.graph,selection,neededCount:demand.count,expand:expansions>0,call:sharedCall,cache:saved.explorations[key]?.compileCache,concurrency,signal,onProgress,onCheckpoint:compileCache=>change(s=>{s.explorations[key]={...s.explorations[key],kind:demand.kind,pointIds:demand.pointIds,ownerId:demand.ownerId,compileCache,status:'exploring',complete:false};})});
-     library.root.ideas=library.root.ideas.filter(idea=>idea.strategy===demand.strategy&&idea.types.includes(demand.type)&&demand.attributeIds.every(id=>idea.itemModel.attributes.some(a=>a.id===id)));
+     // ToS 的「内容 × 认知」是双轴约束。编译阶段已经把 selection 传给模型，
+     // 但模型未必照做；这里的过滤是最后一道闸。旧实现静默丢弃，报告只会说
+     // 「容量不足」，看不出其实是被 strategy/type 筛掉的（实测：缓存里 1 条
+     // explore 考法、请求 understand，产出 0 而报告无任何提示）。
+     // 现在逐条记账，把「被谁筛掉」写进 exploration 供报告诊断。
+     const allIdeas=library.root.ideas,before=allIdeas.length;
+     const rejected=[];
+     library.root.ideas=allIdeas.filter(idea=>{
+      const wrongStrategy=idea.strategy!==demand.strategy;
+      const wrongType=!idea.types.includes(demand.type);
+      const missingAttribute=!demand.attributeIds.every(id=>idea.itemModel.attributes.some(a=>a.id===id));
+      if(wrongStrategy||wrongType||missingAttribute)rejected.push({ideaKey:idea.key,ideaId:idea.id,strategy:idea.strategy,types:idea.types,why:[wrongStrategy?'strategy':null,wrongType?'type':null,missingAttribute?'attribute':null].filter(Boolean)});
+      return !(wrongStrategy||wrongType||missingAttribute);
+     });
+     explorationFilter={cellId:demand.id,requested:{strategy:demand.strategy,type:demand.type,attributeIds:demand.attributeIds},compiled:before,kept:library.root.ideas.length,rejected,expansion:expansions};
      library.key=await contentHash([library.key,library.root.ideas.map(i=>i.id)]);
     }
     const externalFamilyCounts=()=>{const counts={};for(const [id,e]of Object.entries(saved.explorations))if(id!==key)for(const p of Object.values(e.ledger?.plans??{}))for(const t of p.tickets)counts[t.familyId]=(counts[t.familyId]??0)+1;return counts;};
@@ -63,8 +79,15 @@ export async function runR4({graph,pointIds,count,compositeCount=0,types=['mcq']
    }
    const result=await createQuestionGenerator({library,scheduler,call:sharedCall,concurrency,onProgress,blueprintCellId:demand.id})(plan.id,{signal});
    await change(s=>{s.explorations[key]={...s.explorations[key],status:result.state==='completed'?'explored':'needs-repair',complete:false};});
-   return {kind:demand.kind,pointIds:demand.pointIds,blueprintCellId:demand.id,requested:demand.count,...result,compileStats:library.stats,expansions};
-  }catch(error){if(signal.aborted||error.code==='PERSIST')throw error;const questions=(saved.explorations[key]?.ledger?.plans?.[nativeRequestId]?.tickets??[]).filter(t=>t.state==='ready').map(t=>t.question);await change(s=>{s.explorations[key]={...s.explorations[key],status:error.code==='CAPACITY'?'needs-expansion':'needs-repair',complete:false,error:error.message};});return {kind:demand.kind,pointIds:demand.pointIds,blueprintCellId:demand.id,requested:demand.count,produced:questions.length,questions,error:error.message};}
+   return {kind:demand.kind,pointIds:demand.pointIds,blueprintCellId:demand.id,requested:demand.count,...result,compileStats:library.stats,expansions,explorationFilter};
+  }catch(error){
+   if(signal.aborted||error.code==='PERSIST')throw error;
+   const questions=(saved.explorations[key]?.ledger?.plans?.[nativeRequestId]?.tickets??[]).filter(t=>t.state==='ready').map(t=>t.question);
+   await change(s=>{s.explorations[key]={...s.explorations[key],status:error.code==='CAPACITY'?'needs-expansion':'needs-repair',complete:false,error:error.message};});
+   // 失败路径同样要带上过滤记账：容量不足最常见的原因就是「编译出来了但被筛掉」，
+   // 只回一句「槽位不足」等于让读报告的人去猜（实测：1 条 explore 对 understand，产出 0）。
+   return {kind:demand.kind,pointIds:demand.pointIds,blueprintCellId:demand.id,requested:demand.count,produced:questions.length,questions,error:error.message,explorationFilter};
+  }
  }));
  const failed=settled.find(r=>r.status==='rejected');if(failed)throw failed.reason;
  const results=settled.map(r=>r.value),produced=results.reduce((n,r)=>n+r.produced,0);

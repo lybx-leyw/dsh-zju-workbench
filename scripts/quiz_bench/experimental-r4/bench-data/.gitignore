@@ -1,0 +1,38 @@
+# bench data：由**产品已定稿产物**转换来的标准图谱（多学科题集底料）。
+#
+# 两条生成路径，都**纯本地读文件、不调用模型、不产生费用**：
+#
+# ## ① 笔记库讲义 md（推荐，质量最好）
+#
+#     node scripts/quiz_bench/experimental-r4/vault-data.mjs --all
+#
+# 来源：`npm run desktop` 起的 App，在学习页点「导出讲义到笔记库」写出的文件。
+#   根目录 = `{profileContext.dir}/data/zhiyun-vault-notes`
+#   本机即  `.runtime/home/profiles/zhiyun-bench/data/zhiyun-vault-notes`
+#   路径规则 = `{学期}/{课程名}/{节次名}.md`（见 core-handout 的 `currentNotePath`）
+#
+# 结构：`## 章` → `### 知识点` → `#### 讲解|说明|定义|例题` → 正文。
+# 一个 `###` 知识点 = 一个叶节点，章作为 title 层保留，r4 才能出跨知识点综合题。
+#
+# ⚠️ 别和这两处混淆：
+#   - `%APPDATA%/com.zhiyun/zhiyun_pro/zhiyun/notebooks/` 是 App 的**手写笔记本**
+#     （`.ink` 笔迹），不在这条链路上；
+#   - 同目录 `knowledge/<courseId>_<subId>/` 是**讲义原始记录**（slides/blocks/subtitles），
+#     还没走完讲义定稿，正文是课堂原话。
+
+# ## ② 讲义记录（备选，覆盖更广但正文是课堂口语）
+#
+#     node scripts/quiz_bench/experimental-r4/bench-data.mjs --all
+#
+# 读 `%APPDATA%/com.zhiyun/zhiyun_pro/zhiyun/knowledge/<courseId>_<subId>/` 的
+# `slides.json`（含 outline）、`blocks.json`、`subtitles.json`，
+# 按 outline 的「块范围 → 知识点标题」切分，正文取主线块的字幕原句。
+
+# ## 为什么不入库
+#
+# 1. 内容是**真实课堂**（老师的课件转述与课堂原话），仓库是公开的；
+# 2. 单课程 50–200KB，全部约数 MB，进 git 会让 clone 变重，且 diff 全是生成物。
+#
+# ⚠️ 只忽略内容，不忽略这个 .gitignore 与两个生成脚本。
+*
+!.gitignore

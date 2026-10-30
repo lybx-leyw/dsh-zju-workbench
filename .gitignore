@@ -45,3 +45,14 @@ vendor/
 
 # Local research library (publisher PDFs and reading notes).
 /.refers/
+
+# Benchmark 参考实现：从上游 clone 下来做对比/贡献参考，各自有独立许可与
+# 发行节奏，不跟本仓提交走（会拖垮 clone 与 review）。需要时按需重新 clone。
+/benchmark_refers/
+
+# 归档区：存放已停止参与构建、但保留可还原性的东西（见 archive/README.md）。
+# 里面是上游 vendor 源码（76 MB / 3800+ 文件），只在本机保留，不进仓库。
+# 需要还原时按 archive/README.md 的步骤从本机把它移回去。
+/archive/*/
+# 归档说明本身要进仓库 —— 它是「为什么归档、怎么还原」的唯一记录。
+!/archive/README.md

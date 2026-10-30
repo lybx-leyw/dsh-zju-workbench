@@ -131,6 +131,8 @@ export async function apply(ctx, config = {}) {
       connection: scope.connection,
       getTranslator,
       sessionAdmin,
+      // `/api/tree` 与 `/api/ref` 要读论文库目录；传下去而不是让 routes.js 自己猜。
+      dataDir,
       describe: () => {
         const live = getTranslator();
         status.translate = { available: Boolean(live), stats: live ? live.stats : null };

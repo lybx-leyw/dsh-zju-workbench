@@ -4,10 +4,14 @@ import * as r1 from './engines/r1/points.mjs';
 import {
   registerEngine, registeredEngines, engineVersionOf, engineEntries, isBuiltinEngine,
   isNativeRegistered, sourceOf, _bindBuiltinCatalog, _bindR1Version, _bindLocalVersion,
+  isSelectableEngine, selectableEngines, DEFAULT_ENGINE,
 } from './engine-registry.js';
 
 export const QUIZ_ENGINES=Object.freeze([
-  {id:'r1',label:'r1（推荐）',description:'知识点规划、单题并发，结合历史题统一复核与整改。'},
+  // 标签不再称 r1「推荐」：默认引擎已是 DeepTutor 直调。
+  // 但 r1 仍保留为可选项 —— 它是唯一不依赖 DeepTutor 上游的本地引擎，
+  // 上游不可用时它是用户唯一还能出题的路。
+  {id:'r1',label:'r1（本地）',description:'知识点规划、单题并发，结合历史题统一复核与整改；不依赖 DeepTutor 上游。'},
   {id:'r3-v9',label:'r3 v9（实验）',description:'沿知识图谱树提取并复用考法，再生成、复核题目。'},
   {id:'deeptutor-native',label:'DeepTutor 直调',description:'由 DeepTutor 原生链路规划并生成，不叠加本地出题流水线。'},
 ]);
@@ -34,9 +38,9 @@ export const engineVersion=engine=>engineVersionOf(engine);
 export const isNativeEngine=engine=>isNativeRegistered(engine);
 export const engineLabel=engine=>engineEntries().find(row=>row.id===engine)?.label??`已卸载的出题引擎：${engine}`;
 /** 目录 = 内建三条 + 已注册项。未安装 lab 包时长度恒为 3。 */
-export {QUIZ_ENGINES as BUILTIN_ENGINES,engineEntries,registeredEngines,registerEngine};
+export {QUIZ_ENGINES as BUILTIN_ENGINES,engineEntries,registeredEngines,registerEngine,isSelectableEngine,selectableEngines,DEFAULT_ENGINE};
 export function planEngineQuestions(points,input,random){
-  const engine=input.engine??'local';
+  const engine=input.engine??DEFAULT_ENGINE;
   if(engineVersionOf(engine)===null)throw Object.assign(Error('出题引擎无效'),{code:'INPUT'});
   // 注册项可以自己声明能用的资料源；未声明时沿用 native 推导。
   const declared=sourceOf(engine);

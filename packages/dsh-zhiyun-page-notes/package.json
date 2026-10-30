@@ -21,5 +21,8 @@
         "dsh-zhiyun-graph-render"
       ]
     }
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.4.299"
   }
 }

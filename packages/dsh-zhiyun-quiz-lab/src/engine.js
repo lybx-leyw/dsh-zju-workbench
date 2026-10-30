@@ -16,9 +16,10 @@
  */
 
 import {runR4, VERSION as KERNEL_VERSION} from './kernel/run.mjs';
+import {graphFromRecord, inspectGraph} from 'dsh-zhiyun-core-quiz/engines';
 
 /** 产品侧断点版本。与内核内部的 `r4-demand-v3` 是两个不同层次，见 checkpoint.js。 */
-export const CHECKPOINT_VERSION = 'point-quiz-r4-lab-demand-v3';
+export const CHECKPOINT_VERSION = 'point-quiz-r4-lab-demand-v4';
 
 export const LAB_ENGINE = Object.freeze({
   id: 'r4-lab',
@@ -64,6 +65,61 @@ export function toR4Config({plan, graph, runId, checkpoint, maxCalls, compositeC
  * 通过 `input.onCheckpoint / onQuestion` 完成 —— 与 `createTreeQuizRun` 同构。
  * 这条边界是刻意的：lab 写坏的最坏结果是「这一批失败」，而不是「题库写脏」。
  */
+/**
+ * 取本次要用的知识图谱树。
+ *
+ * # 为什么必须自己建，而不是等 `input.graph`
+ *
+ * 产品的 `launch()` 只在 `engine==='r3-v9'` 时算 `plan.sourceGraph`
+ * （`question-bank.js` 那句 `if (plan.engine==='r3-v9') plan.sourceGraph = …`），
+ * 于是 lab 通过 `hosts.graph` 拿到的是 `undefined`，而 `generatePoints(input)`
+ * 也不带 `graph`。直接用会让 `planDemands` 在 `undefined.root` 上炸，
+ * 报错还是「Cannot read properties of undefined」这种查不到源头的话。
+ *
+ * 所以按「调用方显式给的 → 宿主注入的 → 用 records 现建」三级回退。
+ * 第三级复用 core-quiz 公开导出的 `graphFromRecord`，不自己重写图谱构造；
+ * `selectedQuizGraph` 没有公开导出，因此这里独立实现同样的「按点裁剪」语义。
+ */
+export function resolveGraph({graph, records, points}) {
+  if (graph?.root) return graph;
+  const selected = new Map(points.map(point => [String(point.id), point]));
+  const trees = [], sources = [];
+  for (const record of records ?? []) {
+    const relevant = points.filter(point => String(point.courseId) === String(record.courseId)
+      && String(point.subId) === String(record.subId));
+    if (!relevant.length) continue;
+    let source;
+    try { source = graphFromRecord(record); }
+    catch (cause) { throw fault('SOURCE_TREE', `知识点所在讲义无法还原知识图谱树：${cause.message}`); }
+    const prune = node => {
+      if (!node.children.length) {
+        const point = selected.get(String(node.point?.id));
+        return point ? {...node, point: {...node.point, ...point}} : null;
+      }
+      const children = node.children.map(prune).filter(Boolean);
+      return children.length ? {...node, children} : null;
+    };
+    const root = prune(source.root);
+    if (root) { trees.push(root); sources.push({...source, root}); }
+  }
+  if (!trees.length) throw fault('SOURCE_TREE', 'r4 lab 需要已有知识图谱树与讲义定稿，请先完成讲义');
+  const merged = {id: 'quiz-selected-tree', source: 'reconstructed-tree', root: {id: 'quiz-selection', title: '所选讲义', kind: 'collection', children: trees}};
+  const found = new Set([...inspectGraph(merged).leaves.values()].map(node => String(node.point?.id)));
+  const missing = points.filter(point => !found.has(String(point.id)));
+  if (missing.length) throw fault('SOURCE_TREE', `部分知识点无法绑定原知识图谱树，请刷新知识点：${missing.map(point => point.id).join('、')}`);
+  return sources.length === 1 ? sources[0] : merged;
+}
+
+/** 图谱节点 id → 知识点 id。r4 的 `coveredNodeIds` 存的是前者，产品要的是后者。 */
+export function nodePointMap(graph) {
+  const map = new Map();
+  if (!graph?.root) return map;
+  for (const node of inspectGraph(graph).nodes.values()) {
+    if (node.point?.id) map.set(node.nodeId ?? node.id, node.point.id);
+  }
+  return map;
+}
+
 export function createLabRun(hosts = {}) {
   const lifetime = new AbortController();
   let disposed = false;
@@ -75,6 +131,10 @@ export function createLabRun(hosts = {}) {
       const signal = AbortSignal.any([lifetime.signal, ...(input.signal ? [input.signal] : [])]);
       const call = hosts.pool ? request => hosts.pool.call(request) : input.call;
       if (typeof call !== 'function') throw fault('CONFIG', 'r4 lab 需要 worker 池或一个 call 实现');
+      // 图谱必须在这里落下：缺了它 r4 连需求都规划不出来，早失败好过 undefined.root。
+      const points = [...new Map((input.plan?.tasks ?? []).map(task => [task.point?.id, task.point]).filter(([id]) => id)).values()];
+      const graph = resolveGraph({graph: input.graph ?? hosts.graph, records: hosts.records, points});
+      input = {...input, graph};
 
       // 已落库的题 id：用来在补发 onQuestion 时去重，也让重复恢复不重复入库。
       const delivered = new Set((input.checkpoint?.tasks ?? []).flatMap(task => task.questionIds ?? []));
@@ -111,7 +171,7 @@ export function createLabRun(hosts = {}) {
         for (const question of cell.questions ?? []) {
           if (delivered.has(question.id)) continue;
           delivered.add(question.id);
-          const banked = toBankQuestion(question, input, hosts);
+          const banked = toBankQuestion(question, input, hosts, graph);
           productCheckpoint = recordQuestion(productCheckpoint, banked);
           await input.onQuestion(banked, productCheckpoint);
         }
@@ -120,6 +180,12 @@ export function createLabRun(hosts = {}) {
         if (cell.error) problems.push(cell.error);
         for (const pending of cell.pending ?? []) if (pending.reason) problems.push(pending.reason);
       }
+      // 产品用「本批是否足额 + phase==='completed'」来收尾（canResumeEngine 之后那两处判据）。
+      // 缺了这一步，一批已经出满的题仍会被钉在 partial，UI 永远显示未完成。
+      const complete = productCheckpoint.tasks.every(task => (task.questionIds ?? []).length >= (task.plannedCount ?? 0));
+      productCheckpoint.engineState = {...productCheckpoint.engineState, complete};
+      productCheckpoint.phase = complete ? 'completed' : 'partial';
+      await input.onCheckpoint(productCheckpoint);
       return {admitted: delivered.size - new Set((input.checkpoint?.tasks ?? []).flatMap(t => t.questionIds ?? [])).size, problems, checkpoint: productCheckpoint};
     },
   };
@@ -163,6 +229,19 @@ export function recordQuestion(checkpoint, question) {
   if (!slot.questionIds.includes(question.id)) slot.questionIds.push(question.id);
   slot.state = 'completed';
   slot.error = null;
+  // 产品在 view() 里用 `actualTask` 覆盖任务行的显示名（question-bank.js 那句 `...step.actualTask??{}`）。
+  // 不写它，进度条上每个任务都会显示计划里的原知识点，看不出这题实际考的是哪个点
+  // —— 综合题尤其明显：它覆盖多个点，显示成第一个点等于报错。
+  slot.actualTask = {
+    pointId: question.pointId,
+    title: question.pointTitle ?? question.pointId,
+    courseId: question.courseId,
+    subId: question.subId,
+    courseTitle: question.courseTitle,
+    lessonTitle: question.lessonTitle,
+    type: question.type,
+    strategy: question.strategy,
+  };
   next.questions[question.id] = question;
   return next;
 }
@@ -176,27 +255,47 @@ export function recordQuestion(checkpoint, question) {
  * 未注入时（纯单测）退回一个最小形状，并在 provenance 里留下 `normalizer`
  * 标出「这条没有经过产品规整」。
  */
-export function toBankQuestion(question, input, hosts) {
+/**
+ * r4 的 `coveredNodeIds` 是**图谱节点 id**，`task.point.id` 是**知识点 id**，
+ * 两个 id 空间不同，直接 `includes` 永远不成立。必须经由图谱把节点 id 翻回知识点 id。
+ *
+ * 没有图谱时（纯单测）无法翻译，原样返回；翻译不了的 id 也原样保留 ——
+ * 节点 id 是 JSON 字符串、知识点 id 是冒号串，两者不会误撞，保留比静默丢弃安全。
+ */
+export function coveredPoints(question, graph) {
+  const ids = question.coveredNodeIds ?? [];
+  if (!graph?.root) return [...ids];
+  const map = nodePointMap(graph);
+  return [...new Set(ids.map(id => map.get(id) ?? id))];
+}
+
+export function toBankQuestion(question, input, hosts, graph) {
   const tasks = input.plan?.tasks ?? [];
-  const index = tasks.findIndex(task => (task.point?.id && (question.coveredNodeIds ?? []).includes(task.point.id)) || task.point?.id === input.plan?.tasks?.[0]?.point?.id);
+  const covered = coveredPoints(question, graph);
+  // 只在「这题实际覆盖的点」里找归属；找不到再退回第一个任务。
+  // 旧写法用 `|| task.point?.id === tasks[0]?.point?.id` 兜底，而那条对第 0 项恒真，
+  // 于是任何题都被判给第一个知识点 —— 综合题会把 b 的推理记到 a 名下。
+  const index = tasks.findIndex(task => task.point?.id && covered.includes(task.point.id));
   const task = tasks[index >= 0 ? index : 0] ?? {point: {}, type: question.type, strategy: question.strategy};
   const provenance = {engine: LAB_ENGINE.id, kernel: KERNEL_VERSION, familyId: question.familyId, ideaId: question.ideaId, libraryKey: question.libraryKey, revision: question.revision};
+  // 归属点以图谱为准；没有图谱（纯单测）时才回落到任务声明的点。
+  const point = covered.length ? {...task.point, id: covered[0]} : task.point;
   if (typeof hosts.bankQuestion === 'function') {
-    const banked = hosts.bankQuestion(question, {...task, type: question.type, strategy: question.strategy}, provenance);
-    return {...banked, coveredPointIds: question.coveredNodeIds ?? []};
+    const banked = hosts.bankQuestion(question, {...task, point, type: question.type, strategy: question.strategy}, provenance);
+    return {...banked, coveredPointIds: covered};
   }
   return {
     ...question,
     type: question.type ?? task.type,
     strategy: question.strategy ?? task.strategy,
-    pointId: task.point?.id,
+    pointId: point?.id,
     pointKey: undefined,
     status: 'proposed',
     reviewState: 'ready',
     choices: question.choices ?? [],
     attempts: [],
     provenance: {...provenance, normalizer: 'lab-minimal'},
-    coveredPointIds: question.coveredNodeIds ?? [],
+    coveredPointIds: covered,
     createdAt: new Date().toISOString(),
   };
 }

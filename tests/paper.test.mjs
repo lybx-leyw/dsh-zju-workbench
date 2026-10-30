@@ -1307,10 +1307,21 @@ test('接线：/resume 面板挂进抽屉，删除走本包归档路由，且不
   // 面板自己抢焦点：↑↓/Enter/Delete 要在它身上生效，而不是在输入框里。
   assert.match(palette, /tabIndex=\{-1\}[\s\S]*?ref=\{boxRef\}/);
   assert.match(palette, /boxRef\.current\?\.focus\(\)/);
-  // 往上翻历史时不该被强制拽回底部：贴底只在「离底不到一屏半」时发生。
-  assert.match(drawer, /list\.clientHeight \* 1\.5/);
-  // 换会话要强制到底（用户抱怨的正是切回旧会话停在最上面）。
-  assert.match(drawer, /\}, \[state\.sessionId, open\]\)/);
+  // 往上翻历史时不该被强制拽回底部。
+  //
+  // ⚠️ 判据**改过**：原来钉的是「离底不到一屏半才贴底」（`clientHeight * 1.5`），
+  //    而那正是 bug 本身 —— 展开时内容为空、历史随后一次性到达，那一刻
+  //    `away` 等于全部历史高度，历史一多就被误判成"用户在回看"而不贴底。
+  //    现在改成「用户真的手动滚动过才不贴」，所以断言改为钉这个状态位。
+  assert.match(drawer, /userScrolledRef\.current = away > 4/,
+    '只有用户真的滚动（离底超过 4px）才标记为"翻过"');
+  // 程序性滚动不能把自己标成"用户翻过"，否则一次自动贴底之后就再也不贴了。
+  assert.match(drawer, /programmaticRef\.current = true/, '程序贴底要打标记');
+  assert.match(drawer, /if \(programmaticRef\.current\) \{ programmaticRef\.current = false; return; \}/,
+    '滚动监听要跳过自己触发的那一次');
+  // 换会话 / 展开 / 换论文都要强制到底（用户抱怨的正是切回旧会话停在最上面）。
+  assert.match(drawer, /\}, \[open, state\.sessionId, topic, name, scrollToBottom\]\)/,
+    '展开/换会话/换论文时要强制贴底并重置"翻过"标记');
 
   // 「删除」必须是本包的归档路由：上游那条只允许归档空白会话。
   assert.match(palette, /archiveSessionById/);

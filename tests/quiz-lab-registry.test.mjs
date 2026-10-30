@@ -11,6 +11,7 @@ import {
   QUIZ_ENGINES, BUILTIN_ENGINES, engineEntries, registerEngine, registeredEngines,
   engineVersion, engineLabel, isNativeEngine, canResumeEngine, planEngineQuestions,
   newEngineCheckpoint, engineComplete, isBuiltinEngine,
+  selectableEngines, isSelectableEngine, DEFAULT_ENGINE,
 } from '../packages/dsh-zhiyun-core-quiz/src/engines.js';
 import {_resetEngineRegistry} from '../packages/dsh-zhiyun-core-quiz/src/engine-registry.js';
 
@@ -23,9 +24,13 @@ const fake = (extra = {}) => ({
 
 test('未注册任何引擎时，目录与三个判据都与改动前逐字一致', () => {
   assert.deepEqual(engineEntries().map(x => x.id), ['r1', 'r3-v9', 'deeptutor-native']);
+  // 能力目录三条全在（老断点要靠它查版本号），但只有 r1 与 DeepTutor 能新建批次。
+  assert.deepEqual(selectableEngines().map(x => x.id), ['r1', 'deeptutor-native']);
+  assert.equal(isSelectableEngine('r3-v9'), false);
+  assert.equal(DEFAULT_ENGINE, 'deeptutor-native');
   assert.equal(engineEntries().length, QUIZ_ENGINES.length);
   assert.equal(BUILTIN_ENGINES, QUIZ_ENGINES);
-  assert.deepEqual(QUIZ_ENGINES.map(x => x.label), ['r1（推荐）', 'r3 v9（实验）', 'DeepTutor 直调']);
+  assert.deepEqual(QUIZ_ENGINES.map(x => x.label), ['r1（本地）', 'r3 v9（实验）', 'DeepTutor 直调']);
   // 内建引擎的版本号必须非空 —— 否则恢复判定会把它们一起判死。
   for (const engine of ['r1', 'r3-v9', 'deeptutor-native']) assert.ok(engineVersion(engine), engine);
   for (const engine of ['local', 'deeptutor']) assert.ok(engineVersion(engine), engine);

@@ -1,0 +1,70 @@
+// 「课堂」页样式：内容区被一个占满的 iframe 接管。
+//
+// 版式契约与「笔记」「文档」一致 —— 这一页属于 **FULL_BLEED_PAGES**：
+// 不套 `.zy-content` 的 980px 版心与文章式内边距，整页自己负责滚动。
+//
+// 理由和笔记页相同：`.zy-content` 是给**文章型**页面用的。课堂是一个应用面板，
+// 被塞进 980px 版心后上游的编辑器/播放器会被挤成一条，且 `.zy-content` 高度由
+// 内容决定，iframe 的 `height:100%` 会解析成 auto，变成一张浮在滚动容器里的小卡片。
+
+.zmc-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #fff;
+}
+
+.zmc-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  /* 上游自己有完整的滚动体系；再套一层滚动会出现双滚动条。 */
+  display: block;
+}
+
+/* 上游未就绪时的占位：仍按课堂页的留白，但**不**继承内容区的段落样式。 */
+.zmc-empty {
+  margin: auto;
+  max-width: 44rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.zmc-empty h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.zmc-empty p {
+  margin: 0 0 0.5rem;
+  line-height: 1.7;
+}
+
+.zmc-hint {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.04);
+  word-break: break-word;
+}
+
+.zmc-muted {
+  font-size: 0.8125rem;
+  opacity: 0.6;
+}
+
+.zmc-error {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

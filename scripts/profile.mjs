@@ -196,6 +196,10 @@ export function runHost(runtime, args, { pipe = false } = {}) {
 export async function missingClientBundles() {
   const missing = [];
   for (const name of sourceBundles) {
+    // 带 `DETACHED.md` 的包是「已完工、但决定暂不接进 profile」的：它不参与构建，
+    // 也就不会产出 lib/client.js。要求它有产物只会让 `npm start` 直接起不来。
+    // 见各包的 DETACHED.md。
+    if (await exists(path.join(root, 'packages', name, 'DETACHED.md'))) continue;
     const manifest = JSON.parse(await readFile(path.join(root, 'packages', name, 'package.json'), 'utf8'));
     if (manifest.dsh?.client === undefined) continue;
     if (!await exists(path.join(root, 'packages', name, 'lib/client.js'))) missing.push(name);
