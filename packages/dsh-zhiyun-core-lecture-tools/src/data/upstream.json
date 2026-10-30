@@ -1,0 +1,393 @@
+{
+  "_source": "packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/tools/builtin/__init__.py + tools/prompting/hints/{en,zh}/*.yaml",
+  "_regenerate": "python tools/gen-lecture-tool-data.py",
+  "schemas": {
+    "rag": {
+      "type": "function",
+      "function": {
+        "name": "rag",
+        "description": "Retrieve relevant passages from one of the knowledge bases the user attached to this turn. Call once per knowledge base you want to consult; the system runs them in parallel.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search query."
+            },
+            "kb_name": {
+              "type": "string",
+              "description": "Knowledge base to search. Must be one of the attached knowledge bases."
+            },
+            "source_path": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Exact document path from kb_files for visual/page inspection; prevents substitution across sources."
+            },
+            "asset_id": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Exact immutable source visual ID to inspect again on a follow-up."
+            },
+            "figure": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Exact figure/table label, e.g. Figure 3.2 or 图3.2. Ambiguous references require source/page selection."
+            },
+            "page": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "description": "One-based PDF page for vector diagrams, sparse captions, tables or missing crops. Requires source_path.",
+              "minimum": 1
+            },
+            "region": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "description": "Optional PDF crop [x0,y0,x1,y1] normalized to 0..1; retains original layout at higher detail. Omitted or null means the full page.",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "source_hash": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Source document ID from an earlier citation; rejects changed source-page references."
+            },
+            "presentation": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "In Guided Learning, inspect (default) keeps source evidence private. Use teaching only to intentionally show an exact source view while explaining it; reveal requests a source view after answering. The server checks pending questions and records assistance. Preparation never displays a page automatically.",
+              "enum": [
+                "inspect",
+                "teaching",
+                "reveal",
+                null
+              ]
+            }
+          },
+          "required": [
+            "query",
+            "kb_name"
+          ]
+        }
+      }
+    },
+    "kb_files": {
+      "type": "function",
+      "function": {
+        "name": "kb_files",
+        "description": "List the documents stored in one of the knowledge bases attached to this turn, with the total count. Use this — never rag — for questions about how many files a knowledge base holds, what its files are called, or whether a particular file is in it.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "kb_name": {
+              "type": "string",
+              "description": "Knowledge base to inspect. Must be one of the attached knowledge bases."
+            },
+            "pattern": {
+              "type": "string",
+              "description": "Optional name filter: a glob such as '*.pdf', or a case-insensitive substring. Omit to list everything."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Optional maximum number of documents to list (default 200, max 1000)."
+            }
+          },
+          "required": [
+            "kb_name"
+          ]
+        }
+      }
+    },
+    "read_source": {
+      "type": "function",
+      "function": {
+        "name": "read_source",
+        "description": "Load the full text of one attached source by id. Use ONLY when the preview shown in the Attached Sources manifest is insufficient to answer the user's question. The id must be copied verbatim from the manifest — do not invent ids. Do not call this on every source 'just in case'.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "source_id": {
+              "type": "string",
+              "description": "The source identifier from the Attached Sources manifest. Begins with one of: nb- (notebook record), bk- (book reference), rd- (reading unit), hs- (history session), qb- (question-bank entry), at- (document attachment)."
+            }
+          },
+          "required": [
+            "source_id"
+          ]
+        }
+      }
+    },
+    "question_bank": {
+      "type": "function",
+      "function": {
+        "name": "question_bank",
+        "description": "Read, organise, and record the learner's question bank — the graded quiz questions saved under Learning Space → Question Bank. This is where wrong answers and quiz history live; it is NOT the notebook (`write_note`). Use it whenever the learner asks to review, group, file, or tidy their questions or mistakes, or when they own up to a mistake worth keeping. action='overview' for counts + existing categories; action='list' to see entries (each prefixed with its id); action='record' to save one wrong question from this conversation into the bank the learner reviews (add `category` to file it in the same call); action='organize' to file entry_ids into a category by name (the category is created if it does not exist); action='unfile' to remove them; action='bookmark' to star or unstar them.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "description": "'overview' (counts + categories, needs nothing else), 'list', 'record', 'organize', 'unfile', or 'bookmark'.",
+              "enum": [
+                "overview",
+                "list",
+                "organize",
+                "unfile",
+                "bookmark",
+                "record"
+              ]
+            },
+            "question": {
+              "type": "string",
+              "description": "For action='record'. The problem itself, as close to the learner's wording or photo as possible. Recording the same question again updates the existing entry."
+            },
+            "user_answer": {
+              "type": "string",
+              "description": "For action='record'. What the learner answered, if they attempted it."
+            },
+            "correct_answer": {
+              "type": "string",
+              "description": "For action='record'. The correct answer, if known."
+            },
+            "explanation": {
+              "type": "string",
+              "description": "For action='record'. Why the correct answer is right — the coaching the learner just received, condensed."
+            },
+            "is_correct": {
+              "type": "boolean",
+              "description": "For action='record'. Whether the learner answered correctly. Default false — a recorded mistake."
+            },
+            "filter": {
+              "type": "string",
+              "description": "For action='list'. 'wrong' = answered incorrectly, 'uncategorized' = not filed anywhere yet (the triage inbox), 'bookmarked', or 'all'. Default 'all'.",
+              "enum": [
+                "all",
+                "wrong",
+                "bookmarked",
+                "uncategorized"
+              ]
+            },
+            "category": {
+              "type": "string",
+              "description": "Category name. Required for 'organize' / 'unfile'; optional on 'list' to look inside one category and on 'record' to file the new entry in the same call. 'organize' and 'record' create the category when it is new."
+            },
+            "search": {
+              "type": "string",
+              "description": "For action='list'. Free-text match over question and answers."
+            },
+            "entry_ids": {
+              "type": "array",
+              "description": "Entry ids to act on, from a `list` call (the number in [brackets]). Required for 'organize' / 'unfile' / 'bookmark'.",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "bookmarked": {
+              "type": "boolean",
+              "description": "For action='bookmark'. true to star, false to unstar. Default true."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "For action='list'. Max entries to return (default 20, max 100)."
+            }
+          },
+          "required": [
+            "action"
+          ]
+        }
+      }
+    }
+  },
+  "hints": {
+    "rag": {
+      "en": {
+        "short_description": "Retrieve relevant passages from one of the attached knowledge bases.",
+        "when_to_use": "Use when the answer is likely covered by the attached knowledge bases — definitions, formulas, concepts, or textbook explanations.",
+        "input_format": "{\"query\": \"non-empty natural-language query\", \"kb_name\": \"one of the attached knowledge base names\"}.",
+        "guideline": "Prefer RAG before external search for course material. For concept discovery, query in the source language too when needed. For an exact figure, use figure plus source_path from kb_files; for a vector diagram, sparse caption, table or unreadable labels use source_path/page and optionally region=[x0,y0,x1,y1] normalized to 0..1. Reuse asset_id or source_hash from a citation for follow-ups; retrieve actual pixels again before detailed visual claims. Compare two sources with separate bounded calls.",
+        "note": "The query must be non-empty. Keep figure/table numbers and source boundaries exact. Ambiguity, missing pixels, unsupported pages or conflicting evidence require source selection, page inspection or abstention; never substitute a related figure. Distinguish visible observations, caption-only interpretation and general background. A citation and original image must support each source-specific claim.",
+        "phase": "exploration"
+      },
+      "zh": {
+        "short_description": "在用户挂载的某个知识库中检索相关内容。",
+        "when_to_use": "当答案大概率来自用户挂载的知识库（定义、公式、概念解释、教材内容）时使用。",
+        "input_format": "{\"query\": \"非空自然语言查询\", \"kb_name\": \"挂载的某个知识库名称\"}。",
+        "guideline": "课程材料优先检索知识库；概念检索必要时也用来源语言查询。精确图号用 figure 和 kb_files 中的 source_path；矢量图、稀疏图注、表格或模糊标签用 source_path/page，必要时用归一化区域 region=[x0,y0,x1,y1]。追问沿用引用的 asset_id 或 source_hash，并重新读取实际像素后再作详细视觉判断。比较两份材料时分别调用，保持图片预算有界。",
+        "note": "query 不能为空。保持图表编号和来源边界准确；歧义、缺失像素、不支持的页面或冲突证据应要求选择来源、检查页面或明确保留判断，不能替换成相似图。区分可见观察、仅基于图注的解释和一般背景知识；来源特定结论必须展示可核对的原图与位置。",
+        "phase": "exploration"
+      }
+    },
+    "kb_files": {
+      "en": {
+        "short_description": "List the documents an attached knowledge base holds, with the total count.",
+        "when_to_use": "Use for questions about the knowledge base itself rather than its content — how many files it holds, what they are called, whether a particular document is in it, or what was uploaded.",
+        "input_format": "{\"kb_name\": \"one of the attached knowledge base names\", \"pattern\": \"optional glob like '*.pdf' or a substring\", \"limit\": \"optional maximum to list\"}.",
+        "guideline": "Never answer a counting or file-existence question from rag passages — retrieval only shows what a search matched and says nothing about the size of the collection. The system prompt's knowledge base inventory already covers the counts; call this tool for the full list or to filter by name.",
+        "note": "Counts come from the files stored in the knowledge base. A knowledge base whose index is not ready still lists its documents, and a knowledge base hosted on a remote server cannot list them at all — report either fact as given.",
+        "phase": "exploration"
+      },
+      "zh": {
+        "short_description": "列出用户挂载的某个知识库中的文档清单与总数。",
+        "when_to_use": "当问题问的是知识库本身而不是其内容时使用——有多少个文件、文件都叫什么、某个文档在不在里面、上传了些什么。",
+        "input_format": "{\"kb_name\": \"挂载的某个知识库名称\", \"pattern\": \"可选，'*.pdf' 这样的通配符或一段文件名\", \"limit\": \"可选，最多列出多少个\"}。",
+        "guideline": "绝不能用 rag 检索到的片段回答数量或某文件是否存在的问题——检索只反映某次搜索命中的内容，说明不了整个知识库有多大。系统提示里的知识库清单已经给出了数量；需要完整清单或按名称筛选时才调用本工具。",
+        "note": "数量来自知识库中实际存放的文件。索引未就绪的知识库依然能列出文档；由远端服务器托管的知识库则无法列出——两种情况都据实说明。",
+        "phase": "exploration"
+      }
+    },
+    "read_source": {
+      "en": {
+        "short_description": "Load the full text of an attached source (notebook record, book pages, history session, question-bank entry, document attachment) by its manifest id.",
+        "when_to_use": "Call ONLY when the preview shown in the \"Attached Sources\" manifest is not enough to answer the user's question. Do not re-fetch sources whose preview already covers the question.",
+        "input_format": "{\"source_id\": \"the exact id from the manifest (e.g. nb-... / bk-... / hs-... / qb-... / at-...)\"}.",
+        "guideline": "Copy source_id verbatim from the manifest — never invent or guess one. Load one source per call; issue separate calls if multiple sources are needed.",
+        "note": "When no source is attached, this tool will not appear; do not ask the user to clarify \"which material\".",
+        "phase": "exploration"
+      },
+      "zh": {
+        "short_description": "按 id 加载已挂载来源（笔记、书页、历史会话、题库条目、附件）的完整文本。",
+        "when_to_use": "仅当上方 \"Attached Sources\" 清单中某条目的 preview 不足以回答用户问题时才调用；preview 已经包含的内容不要重复调。",
+        "input_format": "{\"source_id\": \"清单中给出的精确 id（如 nb-... / bk-... / hs-... / qb-... / at-...）\"}。",
+        "guideline": "source_id 必须照搬清单原文，绝不拼造。一次只能取一个来源，多个来源相关时按需多次调用。",
+        "note": "如果用户根本没挂任何来源，本工具不会出现；不要凭空询问\"哪份资料\"。",
+        "phase": "exploration"
+      }
+    },
+    "question_bank": {
+      "en": {
+        "short_description": "Read and organise the learner's question bank — the graded quiz questions under Learning Space → Question Bank. NOT the notebook.",
+        "when_to_use": "Whenever the learner talks about their questions, wrong answers, mistakes, or a question set / 题库: reviewing them, grouping them, filing them into a set, or tidying them up. Start with action='overview' (counts + existing category names), then action='list' to get entry ids, then action='organize' to file those ids under a category name. Do NOT reach for `write_note` for this — a note is prose, the bank is graded questions, and filing mistakes into a notebook is the wrong store.",
+        "input_format": "overview: {\"action\": \"overview\"}. list: {\"action\": \"list\", \"filter\": \"wrong\" | \"uncategorized\" | \"bookmarked\" | \"all\", \"category\": optional name, \"search\": optional text, \"limit\": optional}. organize / unfile: {\"action\": \"organize\", \"entry_ids\": [12, 15], \"category\": \"Calculus mistakes\"}. bookmark: {\"action\": \"bookmark\", \"entry_ids\": [12], \"bookmarked\": true}.",
+        "guideline": "`entry_ids` are the numbers shown in [brackets] by a `list` call — never invent them, always list first. `organize` creates the category when the name is new, so a learner asking to file mistakes into a brand-new set is ONE organize call, not a create-then-file. Reuse an existing category name verbatim when one already fits (overview lists them) instead of making a near-duplicate. filter='uncategorized' is the triage inbox — the right starting point for 'tidy up my question bank'.",
+        "note": "Auto-mounted only when the bank actually has entries. Changes are live: the learner sees them immediately under Learning Space → Question Bank. Report what actually happened — the result says how many were filed and whether a new category was created.",
+        "phase": "synthesis"
+      },
+      "zh": {
+        "short_description": "查看和整理用户的题库——即「学习空间 → 题库」里已作答的题目。注意：这不是笔记本。",
+        "when_to_use": "只要用户提到自己的题目、错题、题库、想复习/归类/整理它们，就用这个工具。标准顺序：先 action='overview'（拿到统计和已有的分类名），再 action='list' 拿到题目 id，最后 action='organize' 把这些 id 归入某个分类。这种需求绝不要用 `write_note`——笔记本存的是文字记录，题库存的是带答案的题目，把错题写进笔记本是存错了地方。",
+        "input_format": "overview: {\"action\": \"overview\"}。list: {\"action\": \"list\", \"filter\": \"wrong\" | \"uncategorized\" | \"bookmarked\" | \"all\", \"category\": 可选分类名, \"search\": 可选关键词, \"limit\": 可选}。organize / unfile: {\"action\": \"organize\", \"entry_ids\": [12, 15], \"category\": \"微积分错题\"}。bookmark: {\"action\": \"bookmark\", \"entry_ids\": [12], \"bookmarked\": true}。",
+        "guideline": "`entry_ids` 是 `list` 输出中方括号里的数字——不要凭空编造，一定先 list 再操作。`organize` 在分类名不存在时会自动新建，所以「把错题归到我新建的 X 题库」是一次 organize 调用就能完成，不需要先建后归。已有分类能对上就原样复用（overview 会列出来），不要造出近似重名的分类。filter='uncategorized' 是尚未归类的待整理区，用户说「帮我整理题库」时从这里入手。",
+        "note": "题库里没有任何题目时此工具不会出现。改动即时生效，用户在「学习空间 → 题库」里立刻能看到。结果里会说明实际归入了几道、是否新建了分类——如实转述，不要夸大。",
+        "phase": "synthesis"
+      }
+    }
+  },
+  "manifestText": {
+    "report": {
+      "en": {
+        "heading": "Knowledge base \"{name}\"{qualifier}: {total} document{plural}.",
+        "empty": "Knowledge base \"{name}\"{qualifier} holds no documents.",
+        "unavailable": "Knowledge base \"{name}\": {reason}",
+        "matched": "Matching \"{pattern}\": {count}.",
+        "no_match": "No document name matches \"{pattern}\".",
+        "omitted": "Showing the first {shown}; {omitted} more not listed (narrow with pattern, or raise limit)."
+      },
+      "zh": {
+        "heading": "知识库「{name}」{qualifier}共 {total} 个文档。",
+        "empty": "知识库「{name}」{qualifier}暂无文档。",
+        "unavailable": "知识库「{name}」：{reason}",
+        "matched": "匹配「{pattern}」的有 {count} 个。",
+        "no_match": "没有文档名匹配「{pattern}」。",
+        "omitted": "以下列出前 {shown} 个，另有 {omitted} 个未列出（可用 pattern 缩小范围或提高 limit）。"
+      }
+    },
+    "note": {
+      "en": {
+        "header": "[Knowledge Base Inventory]\nWhat the attached knowledge bases actually contain, read from the knowledge bases themselves.",
+        "empty": "no documents yet",
+        "total": "{count} document{plural}",
+        "omitted": "and {count} more, use kb_files for the full list",
+        "authority": "Answer questions about document counts, file names, and whether a given file is present from this inventory — it is authoritative. Retrieved passages only show what a search happened to match and must never be used to infer how many documents a knowledge base holds or whether one exists in it. Call kb_files for the full list or to filter by name."
+      },
+      "zh": {
+        "header": "[知识库清单]\n以下是已挂载知识库的真实文档构成，直接读取自各知识库本身。",
+        "empty": "暂无文档",
+        "total": "共 {count} 个文档",
+        "omitted": "另有 {count} 个未列出，可用 kb_files 查看完整清单",
+        "authority": "回答文档数量、文件名、某个文件是否存在这类问题时，一律以本清单为准，它是权威事实。检索到的片段只代表某次搜索命中的内容，绝不能用来推断知识库有多少文档、或某个文档是否存在。需要完整清单或按名称筛选时，调用 kb_files。"
+      }
+    },
+    "statusLabels": {
+      "en": {
+        "ready": "index ready",
+        "needs_reindex": "needs reindexing, retrieval may be incomplete",
+        "processing": "still indexing, retrieval may be incomplete",
+        "initializing": "still indexing, retrieval may be incomplete",
+        "error": "indexing failed, retrieval may be unavailable"
+      },
+      "zh": {
+        "ready": "索引就绪",
+        "needs_reindex": "需要重建索引，检索结果可能不完整",
+        "processing": "正在索引，检索结果可能不完整",
+        "initializing": "正在索引，检索结果可能不完整",
+        "error": "索引失败，检索可能不可用"
+      }
+    },
+    "unavailableLabels": {
+      "en": {
+        "remote": "Hosted on a remote server; its document list cannot be read.",
+        "agent": "A connected agent, not a document collection.",
+        "missing": "Its document folder cannot be read right now — it may still be under construction, or be an external folder that has moved."
+      },
+      "zh": {
+        "remote": "由远端服务器托管，无法读取文档清单。",
+        "agent": "是连接的智能体，不是文档集合。",
+        "missing": "当前读不到它的文档目录——可能仍在创建中，也可能是外部文件夹已移动。"
+      }
+    },
+    "limits": {
+      "default": 200,
+      "max": 1000,
+      "note": 20
+    },
+    "unavailableCodes": {
+      "remote": "remote",
+      "agent": "agent",
+      "missing": "missing"
+    }
+  },
+  "questionBank": {
+    "actions": [
+      "overview",
+      "list",
+      "organize",
+      "unfile",
+      "bookmark",
+      "record"
+    ],
+    "filters": [
+      "all",
+      "wrong",
+      "bookmarked",
+      "uncategorized"
+    ],
+    "limits": {
+      "defaultList": 20,
+      "maxList": 100,
+      "maxEntryIds": 200,
+      "maxQuestionPreview": 160,
+      "maxAnswerPreview": 60,
+      "maxCategoryName": 100,
+      "maxRecordQuestion": 4000,
+      "maxRecordField": 2000
+    }
+  }
+}

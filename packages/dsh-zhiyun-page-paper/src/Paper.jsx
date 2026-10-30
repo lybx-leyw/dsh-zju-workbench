@@ -20,6 +20,17 @@ import { RenameDialog } from './RenameDialog.jsx';
 
 const LAST_KEY = 'zhiyun.paper.last';
 
+/**
+ * 库根上传的兜底专题。
+ *
+ * 上游的上传路由**必须**有一个非空的 `topic`（`x-dpr-topic`），而「没有打开任何
+ * 文献」时页面上并没有"当前文件夹"。不兜底的话，空库第一次导入会直接 400 ——
+ * 也就是说**新用户永远传不进第一篇论文**。
+ *
+ * 取名不带下划线/特殊字符：它会成为一个真实的磁盘目录名，用户还会在树上看到它。
+ */
+const DEFAULT_TOPIC = '未分类';
+
 function readLast() {
   try {
     const raw = globalThis.localStorage?.getItem(LAST_KEY);
@@ -224,18 +235,32 @@ export function Paper({ controller }) {
    * 上游的 topic 只能是单段目录名，所以深层路径要先经 `/api/ref` 编码 ——
    * 编码规则只在宿主侧一份，页面不复刻。
    *
-   * @param files - `FileList`。
+   * ⚠️ **上游不接受空 topic**：`host.js` 那条上传路由见到
+   * `!topic.trim()` 就回 400「缺少 x-dpr-topic / x-dpr-name 头」。
+   * 而「没打开任何文献」（空库第一次导入就是这种状态）时，当前文件夹正是空的 ——
+   * 照直发过去必然失败。所以根目录上传要落进一个**兜底专题**（`DEFAULT_TOPIC`），
+   * 它在树上就是一个普通文件夹，用户能看见、能改名、能往里再传。
+   *
+   * @param files - `FileList`（已经从 input 快照成数组，见 `paperFileInput`）。
    */
   const uploadPapers = useCallback(async (files) => {
-    const list = [...(files ?? [])].filter((f) => f.name.toLowerCase().endsWith('.pdf'));
-    if (list.length === 0) { setTreeError('只支持 PDF 文件'); return; }
+    const candidates = [...(files ?? [])];
+    const list = candidates.filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+    if (list.length === 0) {
+      // 说清楚**是什么文件**被挡下了，否则用户拿着一个 PDF 看到「只支持 PDF」只会更困惑。
+      const names = candidates.map((f) => f.name);
+      setTreeError(names.length === 0
+        ? '没有选到文件，请重新选择 PDF。'
+        : `只能导入 PDF，这些文件不是：${names.join('、')}`);
+      return;
+    }
     setTreeBusy(true);
     setTreeError(null);
     try {
       for (const file of list) {
-        // 传到「当前打开文献所在的文件夹」；没有打开的就放库根。
+        // 传到「当前打开文献所在的文件夹」；没有打开的就落进兜底专题。
         const folder = paper ? decodeTopic(paper.topic) : '';
-        let topic = '';
+        let topic = DEFAULT_TOPIC;
         if (folder !== '') {
           const response = await fetch(`/zhiyun-paper/api/ref?path=${encodeURIComponent(`${folder}/x.pdf`)}`);
           const ref = await response.json().catch(() => null);
@@ -558,7 +583,16 @@ export function Paper({ controller }) {
   </aside>;
 
   // 隐藏的文件选择器：栏头「导入 PDF」的唯一落点。
-  // 选完清空 value，否则同一个文件第二次选不会触发 onChange。
+  //
+  // ⚠️ 顺序不能反：**先快照成真数组，再清空 `value`**。
+  //    `input.files` 是**活**的 `FileList`，与那个 input 的选中态是同一个对象；
+  //    `value = ''` 会把选中态清掉，于是已经拿到手里的那份 `FileList` 也**当场变成空的**
+  //    （实测：清空前后 `length` 由 1 变 0，`files === input.files` 恒为真）。
+  //    先清空再交给上传函数时，上传函数里 `[...files].filter(是 PDF)` 得到空数组，
+  //    用户看到的就是「明明选了 PDF，却提示只支持 PDF 文件」。
+  //    快照出来的 `File` 对象本身不受清空影响，字节照样读得到。
+  //
+  // 清空 `value` 这一步仍然要保留：否则同一个文件第二次选不会触发 `onChange`。
   const paperFileInput = <input
     ref={paperInputRef}
     type="file"
@@ -566,7 +600,7 @@ export function Paper({ controller }) {
     multiple
     hidden
     onChange={(event) => {
-      const files = event.target.files;
+      const files = [...event.target.files];
       event.target.value = '';
       void uploadPapers(files);
     }}

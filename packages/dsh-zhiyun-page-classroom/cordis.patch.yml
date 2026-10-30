@@ -1,0 +1,10 @@
+# 把「课堂」页插进 profile 的层栈。
+#
+# 本包只是**呈现**：上游 OpenMAIC 的进程托管在 dsh-zhiyun-host-openmaic，
+# 页面用同源 iframe 把整站嵌进内容区。
+#
+# 依赖 ctx.zhiyunOpenMAIC，但**不写进 inject**：宿主缺席时页面只是显示
+# 「上游未就绪」并给出安装指引，而不是让整页 pending。
+- insert:
+    - id: zhiyun-page-classroom
+      name: dsh-zhiyun-page-classroom

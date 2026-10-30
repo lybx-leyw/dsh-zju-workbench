@@ -1,0 +1,24 @@
+{
+  "name": "dsh-zhiyun-host-openmaic",
+  "version": "0.1.0",
+  "description": "智云 Pro 的 OpenMAIC 上游服务宿主：锁版源码快照 + 子进程托管（Next.js 常驻服务 + PostgreSQL）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "files": [
+    "src/",
+    "docs/",
+    "vendor/openmaic/",
+    "upstream.lock.json",
+    "cordis.patch.yml",
+    "README.md",
+    "ATTRIBUTION.md"
+  ]
+}

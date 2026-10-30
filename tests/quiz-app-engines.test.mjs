@@ -13,6 +13,7 @@ import {createTreeQuizRun,createNativeQuizRun,selectedQuizGraph,pooledToolCall} 
 import {StudyWorkbench} from '../packages/dsh-zhiyun-core-study/src/workbench.js';
 import {QuestionBank,batchProblems} from '../packages/dsh-zhiyun-core-study/src/question-bank.js';
 import {mountKnowledge} from './fixtures/study-storage.mjs';
+import {quizFakeModel} from './fixtures/quiz-fake-model.mjs';
 import {fixture,fixtureCall} from '../scripts/quiz_bench/fixture.mjs';
 
 function record(){
@@ -122,7 +123,8 @@ function nativeFixture({shortFirst=false}={}){
 }
 
 test('App exposes precisely the three requested choices and distinct resumable checkpoint identities',()=>{
- assert.deepEqual(QUIZ_ENGINES.map(x=>x.label),['r1（推荐）','r3 v9（实验）','DeepTutor 直调']);
+ // 三条内建引擎仍在能力目录里（旧断点要靠版本号恢复）；「能选哪些」由 selectableEngines 决定。
+ assert.deepEqual(QUIZ_ENGINES.map(x=>x.label),['r1（本地）','r3 v9（实验）','DeepTutor 直调']);
  for(const row of QUIZ_ENGINES){const plan=planFor(row.id),checkpoint=newEngineCheckpoint(plan);assert.equal(canResumeEngine({plan,checkpoint}),true);assert.equal(engineComplete({plan,checkpoint}),false);assert.equal(canResumeEngine({plan:{...plan,engine:'local'},checkpoint}),false);}
  assert.throws(()=>planFor('invented'),{code:'INPUT'});
  assert.throws(()=>planEngineQuestions(knowledgePoints(record()),{engine:'r3-v9',count:1,source:'web'}),/课内/);
@@ -229,29 +231,39 @@ test('batch failures keep the real cause instead of collapsing into one generic 
  assert.deepEqual(batchProblems(null,false),[]);
 });
 
-test('deeptutor-native is reported unavailable with a reason when the host is not ready',async()=>{
- // 旧实现只判「服务对象在不在」，Python/依赖缺失时按钮照旧可点，用户等一场空。
- const make=({state,warnings=[],throwStatus=null,present=true})=>{
+test('native engine readiness tracks the backend that will actually run',async()=>{
+ // 这条测试锁住一次真实事故（2026-10-31）：重构版（纯 JS、零第三方依赖）
+ // 已经接管出题，但就绪判定仍问 vendor 的 status()，于是界面上显示
+ // 「DeepTutor 直调 · 未就绪 / No module named 'pydantic'」——
+ // 报的是一个和当前实现毫无关系的原因，用户以为按钮坏了。
+ //
+ // 现在的规则：判定必须跟着 NATIVE_BACKEND 走。
+ //   core-question → 只要模型可用就算就绪（不看 Python）
+ //   deeptutor     → 仍按宿主 status() 判（保留原语义，回退时不丢保护）
+ const make=({state,warnings=[],throwStatus=null,present=true,routes={}})=>{
   const bank=Object.create(QuestionBank.prototype);
-  bank.owner={learningResourceOf:()=>({}),deepTutorOf:()=>present?{status:async()=>{if(throwStatus)throw throwStatus;return {state,warnings};}}:undefined};
+  bank.owner={learningResourceOf:()=>({}),deepTutorOf:()=>present?{status:async()=>{if(throwStatus)throw throwStatus;return {state,warnings};}}:undefined,
+   parser:{llm:{routes}},effectiveWorkers:()=>[]};
   return bank;
  };
- const ready=await make({state:'ready'}).engineCatalog();
- assert.equal(ready.find(r=>r.id==='deeptutor-native').available,true);
- const depsMissing=await make({state:'deps-missing',warnings:['上游依赖未就绪：请安装 deeptutor 的运行依赖']}).engineCatalog();
- const row=depsMissing.find(r=>r.id==='deeptutor-native');
- assert.equal(row.available,false,'依赖缺失时必须显示未就绪');
- assert.match(row.reason,/依赖未就绪/,'未就绪的原因必须传到界面');
- const absent=await make({present:false}).engineCatalog();
- assert.equal(absent.find(r=>r.id==='deeptutor-native').available,false);
- assert.match(absent.find(r=>r.id==='deeptutor-native').reason,/未安装/);
- // 非 native 引擎不受 DeepTutor 状态影响。
- assert.ok(depsMissing.filter(r=>r.id!=='deeptutor-native').every(r=>r.available));
+
+ // 重构版：宿主完全没装也不影响就绪 —— 它不需要 Python。
+ const noHost=await make({present:false,routes:{text:{provider:'p',model:'m'}}}).engineCatalog();
+ assert.equal(noHost.find(r=>r.id==='deeptutor-native').available,true,
+  'core-question 后端不需要 DeepTutor 宿主，未装也必须可用');
+ // 重构版：真正缺的是模型 —— 没配模型才拦。
+ const noModel=await make({present:false,routes:{}}).engineCatalog();
+ const blocked=noModel.find(r=>r.id==='deeptutor-native');
+ assert.equal(blocked.available,false,'没有可用模型时必须拦下');
+ assert.match(blocked.reason,/模型/,'原因要指向真正缺的东西');
+
+ // 非 native 引擎不受影响。
+ assert.ok(noHost.filter(r=>r.id!=='deeptutor-native').every(r=>r.available));
 });
 
 test('DeepTutor selection uses genuine native mode and saved candidates resume without local author/review calls',async()=>{
  const model=toolModel(),native=nativeFixture(),plan=planFor('deeptutor-native',1),box={};
- const run=createNativeQuizRun({...native,pool:model.pool,scope:'fixture'});
+ const run=createNativeQuizRun({...native,backend:'deeptutor',pool:model.pool,scope:'fixture'});
  await assert.rejects(run.generatePoints({plan,existingQuestions:[],checkpoint:newEngineCheckpoint(plan),onCheckpoint:async cp=>{box.saved=structuredClone(cp);},onQuestion:async()=>{throw Error('write failed');}}),{code:'PERSIST'});
  assert.equal(native.starts.length,1);assert.equal(native.starts[0].options.mode,'upstream-native');assert.equal(native.starts[0].options.workerSelection.length,2);assert.equal(model.calls.length,0);
  await run.generatePoints({plan,existingQuestions:[],checkpoint:box.saved,...callbacks(box)});
@@ -260,7 +272,7 @@ test('DeepTutor selection uses genuine native mode and saved candidates resume w
 
 test('native planning receives the full selected material in one batch rather than one run per point',async()=>{
  const model=toolModel(),native=nativeFixture(),plan=planFor('deeptutor-native',2),box={},bundles=[];
- const run=createNativeQuizRun({...native,resources:{fromLecture:input=>{bundles.push(input);return input;}},pool:model.pool,scope:'fixture'});
+ const run=createNativeQuizRun({...native,backend:'deeptutor',resources:{fromLecture:input=>{bundles.push(input);return input;}},pool:model.pool,scope:'fixture'});
  const result=await run.generatePoints({plan,existingQuestions:[],checkpoint:newEngineCheckpoint(plan),...callbacks(box)});
  assert.equal(result.produced,2);assert.equal(native.starts.length,1);assert.equal(native.starts[0].options.config.num_questions,2);
  assert.equal(bundles[0].lecture.chapters[0].topics.length,2);
@@ -268,7 +280,7 @@ test('native planning receives the full selected material in one batch rather th
 });
 test('native partial batches retain questions and only request the missing count on retry',async()=>{
  const model=toolModel(),native=nativeFixture({shortFirst:true}),point=knowledgePoints(record())[0],plan=planEngineQuestions([point],{engine:'deeptutor-native',count:2,types:['mcq'],strategies:[{id:'understand',weight:1}]}),box={};
- const run=createNativeQuizRun({...native,pool:model.pool,scope:'fixture'});
+ const run=createNativeQuizRun({...native,backend:'deeptutor',pool:model.pool,scope:'fixture'});
  const first=await run.generatePoints({plan,existingQuestions:[],checkpoint:newEngineCheckpoint(plan),...callbacks(box)});assert.equal(first.produced,1);assert.ok(first.problems.length);
  await run.generatePoints({plan,existingQuestions:box.questions,checkpoint:box.saved,...callbacks(box)});
  assert.equal(native.starts.length,2);assert.equal(native.starts[1].options.config.num_questions,1);assert.equal(box.questions.length,2);assert.equal(new Set(box.questions.map(q=>q.id)).size,2);
@@ -276,11 +288,39 @@ test('native partial batches retain questions and only request the missing count
 test('real host storage persists the selected native engine, progress, questions and checkpoint after restart',async()=>{
  const dir=await fs.mkdtemp(path.join(os.tmpdir(),'quiz-app-native-'));let host,workbench;
  const model=toolModel(),native=nativeFixture();
- const open=async()=>{host=await mountKnowledge(dir);workbench=new StudyWorkbench({directory:dir,knowledge:host.service,classroom:{getCurrentUser:async()=>({id:'fixture'}),listCourses:async()=>({items:[]})},parser:{llm:{...model.pool.base,routes:{}}},llm:{},quiz:()=>({generatePoints:()=>{throw Error('Must not invoke local generator');},createRun:()=>{throw Error('Must not invoke integrated wrapper');}}),deeptutor:()=>native.tutor,learningResource:()=>native.resources});await workbench.ready;};
- try{await open();await host.service.put(record());const catalog=await workbench.invoke('bank-catalog');assert.equal(catalog.defaultEngine,'r1');assert.equal(catalog.engines.length,3);
+ // 出题假模型：重构版按「阶段」而不是「工具名」消费模型输出，
+ // 所以不能用 r3 的 toolModel。这里挂在 parser.llm.llm 上 ——
+ // 适配层从 pool.base.llm 取它，与生产环境同一条路径，只是实例不同。
+ const quizFake=quizFakeModel({templates:1});
+ const open=async()=>{host=await mountKnowledge(dir);workbench=new StudyWorkbench({directory:dir,knowledge:host.service,classroom:{getCurrentUser:async()=>({id:'fixture'}),listCourses:async()=>({items:[]})},parser:{llm:{...model.pool.base,llm:quizFake,routes:{}}},llm:{},quiz:()=>({generatePoints:()=>{throw Error('Must not invoke local generator');},createRun:()=>{throw Error('Must not invoke integrated wrapper');}}),deeptutor:()=>native.tutor,learningResource:()=>native.resources});await workbench.ready;};
+ try{await open();await host.service.put(record());const catalog=await workbench.invoke('bank-catalog');
+  // 默认引擎是 DeepTutor 直调；r1 作为唯一不依赖上游的本地引擎保留可选。
+  // r3 v9 与各实验引擎已收起来：不再出现在下拉里。
+  assert.equal(catalog.defaultEngine,'deeptutor-native');
+  assert.deepEqual(catalog.engines.map(row=>row.id),['r1','deeptutor-native']);
+  // 收起来的引擎仍在能力目录里（老断点要靠它查版本号），只是不再可新建。
   const started=await workbench.invoke('bank-generate',{engine:'deeptutor-native',pointIds:[catalog.points[0].id],count:1,types:['mcq'],strategies:[{id:'understand',weight:1}],workers:[{provider:'p1',model:'m1',workers:1}]});
   await workbench.questionBank.runs.get('fixture').done;
-  const bank=await workbench.invoke('bank-load');assert.equal(bank.run.state,'completed');assert.equal(bank.run.plan.engine,'deeptutor-native');assert.equal(bank.questions[0].generationEngine,'deeptutor-native');assert.equal(bank.questions[0].pointId,catalog.points[0].id);
+  const bank=await workbench.invoke('bank-load');
+  assert.equal(bank.run.state,'completed');assert.equal(bank.run.plan.engine,'deeptutor-native');assert.equal(bank.questions[0].generationEngine,'deeptutor-native');assert.equal(bank.questions[0].pointId,catalog.points[0].id);
   await workbench.dispose();await host.dispose();await open();const restored=await workbench.invoke('bank-progress',{runId:started.run.id});assert.equal(restored.run.resumable,true);assert.equal(restored.run.done,1);assert.equal(restored.run.state,'completed');
  }finally{await workbench?.dispose();await host?.dispose();assert.ok(dir.startsWith(path.join(os.tmpdir(),'quiz-app-native-')));await fs.rm(dir,{recursive:true,force:true});}
+});
+
+test('retired engines can no longer start a batch, but their checkpoints stay readable',async()=>{
+ // 「不再受理新批次」和「从没存在过」是两件事。若把收起来的引擎真的从目录里删掉，
+ // engineVersionOf 会返回 null，用户手上没跑完的批次就永久不可恢复。
+ // 目前收起来的是 r3 v9（以及任何注册进来的实验引擎）；r1 必须保持可新建，
+ // 因为它是 DeepTutor 上游不可用时唯一的本地退路。
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'quiz-app-retired-'));let host,workbench;
+ const model=toolModel(),native=nativeFixture();
+ try{
+  host=await mountKnowledge(dir);
+  workbench=new StudyWorkbench({directory:dir,knowledge:host.service,classroom:{getCurrentUser:async()=>({id:'fixture'}),listCourses:async()=>({items:[]})},parser:{llm:{...model.pool.base,routes:{}}},llm:{},quiz:()=>({generatePoints:()=>{throw Error('Must not invoke local generator');},createRun:()=>{throw Error('Must not invoke integrated wrapper');}}),deeptutor:()=>native.tutor,learningResource:()=>native.resources});
+  await workbench.ready;await host.service.put(record());
+  const catalog=await workbench.invoke('bank-catalog');
+  await assert.rejects(workbench.invoke('bank-generate',{engine:'r3-v9',pointIds:[catalog.points[0].id],count:1,types:['mcq'],strategies:[{id:'understand',weight:1}]}),/已停用/);
+  // r1 仍在可选集合里 —— 上一条断言若把它一起禁掉，就等于把可用性押在单一外部依赖上。
+  assert.ok(catalog.engines.some(row=>row.id==='r1'));
+ }finally{await workbench?.dispose();await host?.dispose();await fs.rm(dir,{recursive:true,force:true});}
 });

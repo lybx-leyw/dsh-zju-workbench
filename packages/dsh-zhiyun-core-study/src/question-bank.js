@@ -1,8 +1,8 @@
 import { itemFromJson, itemToJson } from 'dsh-zhiyun-core-quiz/model';
 import { randomUUID } from 'node:crypto';
 import {createDeepTutorCandidateCall} from './deeptutor-quiz.js';
-import {createTreeQuizRun,createNativeQuizRun,selectedQuizGraph,bankQuestion as bankNormalize} from './quiz-engine-runtime.js';
-import {QUIZ_ENGINES,engineEntries,registeredEngines,planEngineQuestions,newEngineCheckpoint,canResumeEngine,engineComplete,isNativeEngine,engineLabel,isBuiltinEngine} from 'dsh-zhiyun-core-quiz/engines';
+import {createTreeQuizRun,createNativeQuizRun,selectedQuizGraph,bankQuestion as bankNormalize,NATIVE_BACKEND} from './quiz-engine-runtime.js';
+import {QUIZ_ENGINES,engineEntries,selectableEngines,isSelectableEngine,DEFAULT_ENGINE,registeredEngines,planEngineQuestions,newEngineCheckpoint,canResumeEngine,engineComplete,isNativeEngine,engineLabel,isBuiltinEngine} from 'dsh-zhiyun-core-quiz/engines';
 import {normalizeWorkers,WorkerPoolLlm} from 'dsh-zhiyun-core-parser/worker-pool';
 import { knowledgePoints, planPractice, checkpointCount,activeFacts,resolveFactId,curateFacts,rectifySummary } from 'dsh-zhiyun-core-quiz/points';
 
@@ -44,8 +44,20 @@ export function batchProblems(error,aborted){
   if(!error)return [];
   const code=codeOf(error),message=String(error?.message??'').trim();
   const hint=code?BATCH_FAILURE_HINTS[code]:'';
-  // 有 hint 时它已经消化了原因，只在原文带来**额外**信息时才附上（避免"依赖未安装（依赖未安装：…）"）。
-  const detail=[hint&&message&&!message.startsWith(hint.slice(0,8))?message:'',code?`错误码 ${code}`:''].filter(Boolean).join('；');
+  // 有 hint 时它已经消化了原因，只在原文带来**额外**信息时才附上
+  // （避免「依赖未安装（依赖未安装：…）」这种重复）。
+  //
+  // ⚠️ 判断「是否带来额外信息」不能用 startsWith(hint.slice(0,8))：
+  // 保存失败的 message 形如「题目或断点保存失败：<真实原因>」，
+  // 前 8 个字恰好与 hint 相同，于是真实原因被判定为「没有额外信息」而丢弃 ——
+  // 2026-10-31 连续两次真机都只看到「题目或断点保存失败（错误码 PERSIST）」，
+  // 真实原因明明在 message 里却被这一行吞了。
+  //
+  // 正确判据：去掉 hint 前缀后的**剩余部分**是否非空。
+  const remainder = hint && message && message.startsWith(hint)
+    ? message.slice(hint.length).replace(/^[：:，,。\s]+/, '').trim()
+    : message;
+  const detail=[hint?remainder:message,code?`错误码 ${code}`:''].filter(Boolean).join('；');
   if(!hint)return [detail?`${message||'出题中断'}（${detail}）`:`${message||'出题中断'}。`];
   return [detail?`${hint}（${detail}）`:`${hint}。`];
 }
@@ -166,8 +178,15 @@ export class QuestionBank {
         if(!Array.isArray(payload.pointIds)||!payload.pointIds.length||payload.pointIds.length>1000||new Set(payload.pointIds).size!==payload.pointIds.length)throw fault('INPUT','请选择知识点');
         const catalog=await this.catalog(user,signal),points=payload.pointIds.map(id=>catalog.find(p=>p.id===id));
         if(points.some(point=>!point))throw fault('INPUT','知识点已更新，请刷新选择');
-        if(['deeptutor','deeptutor-native'].includes(payload.engine)&&(!this.owner.deepTutorOf?.()||!this.owner.learningResourceOf?.()))throw fault('NOT_WIRED','DeepTutor 服务未就绪');
-        plan=planEngineQuestions(points,payload);
+        // 收起来的引擎只保留「读旧断点」的能力，新批次在这里拦下。
+        // 闸放在产品边界而不是内核 planEngineQuestions：内核是纯规划函数，
+        // r1/r3 的算法自身仍需要能被规划、被测试；把「产品是否还开放它」
+        // 塞进内核会让算法失去可测性，也会让旧断点的语义变得含混。
+        if(payload.engine!==undefined&&!isSelectableEngine(payload.engine))throw fault('INPUT','该出题引擎已停用，请改用 DeepTutor 直调');
+        // 预检也要跟实际后端一致：走重构版时不依赖 DeepTutor 服务，
+        // 拿它当门槛会让「Python 没装 pydantic」这种事挡住一个纯 JS 实现。
+        if(['deeptutor','deeptutor-native'].includes(payload.engine)&&NATIVE_BACKEND!=='core-question'&&(!this.owner.deepTutorOf?.()||!this.owner.learningResourceOf?.()))throw fault('NOT_WIRED','DeepTutor 服务未就绪');
+        plan=planEngineQuestions(points,{...payload,engine:payload.engine??DEFAULT_ENGINE});
         if(plan.engine==='r3-v9')plan.sourceGraph=selectedQuizGraph(this.records(user),plan.mode==='random'?[...new Map(plan.tasks.map(t=>[t.point.id,t.point])).values()]:points);
       }
       if(String((await this.owner.user()).id)!==key)throw fault('SESSION_EXPIRED','账号已切换');
@@ -286,7 +305,24 @@ export class QuestionBank {
    */
   async engineCatalog(){
     let ready=false,reason='';
-    if(this.owner.deepTutorOf?.()&&this.owner.learningResourceOf?.()){
+    // 就绪判定必须跟着**实际会用哪个后端**走。
+    //
+    // 重构版（core-question）是纯 JS、零第三方依赖，只需要模型可用；
+    // 它根本不会去起 Python 子进程。若这里仍拿 vendor 的 status() 当门槛，
+    // 用户会看到「DeepTutor 直调 · 未就绪 / No module named 'pydantic'」——
+    // 报的是一个跟当前实现毫无关系的原因（2026-10-31 实测就是这个现象）。
+    if(NATIVE_BACKEND==='core-question'){
+      // 只要宿主能拿到模型路由就算就绪；拿不到才拦。
+      const selection=this.owner.effectiveWorkers?.('quiz')??[];
+      if(selection.length){
+        ready=true;
+      }else{
+        const routes=this.owner.parser?.llm?.routes??{};
+        const fallback=routes.text??routes.vision??null;
+        if(fallback?.provider&&fallback?.model)ready=true;
+        else reason='未选择出题模型，请先在「生成模型」里选一个';
+      }
+    }else if(this.owner.deepTutorOf?.()&&this.owner.learningResourceOf?.()){
       try{
         const status=await this.owner.deepTutorOf().status();
         // 宿主用 warnings 说明为何不可用（未装 Python / 依赖缺失 / 桥崩溃…）。
@@ -294,14 +330,16 @@ export class QuestionBank {
         if(!ready)reason=(status?.warnings??[])[0]??`DeepTutor 状态为 ${status?.state??'未知'}`;
       }catch(error){reason=error?.message??'DeepTutor 状态未知';}
     }else reason='DeepTutor 服务未安装';
-    return engineEntries().map(row=>({...row,available:row.id!=='deeptutor-native'||ready,...(row.id==='deeptutor-native'&&reason?{reason}:{})}));
+    // 只列出**仍可发起新批次**的引擎。收起来的那些仍在 engineEntries() 里
+    // （老断点要靠它查版本号），但不该出现在新建下拉里。
+    return selectableEngines().map(row=>({...row,available:row.id!=='deeptutor-native'||ready,...(row.id==='deeptutor-native'&&reason?{reason}:{})}));
   }
   async invoke(method,payload,user,signal) {
     if(method==='bank-progress')return this.status(user,payload.runId);
     if(method==='bank-pause')return this.pause(user,payload.runId);
     if(method==='bank-resume')return this.start(payload,user,signal,true);
     if(method==='bank-generate')return this.start(payload,user,signal);
-    if (method==='bank-catalog') return {points:(await this.catalog(user,signal)).map(({text,...point})=>point),defaultEngine:'r1',engines:await this.engineCatalog()};
+    if (method==='bank-catalog') return {points:(await this.catalog(user,signal)).map(({text,...point})=>point),defaultEngine:DEFAULT_ENGINE,engines:await this.engineCatalog()};
     return this.transaction(user,signal,async(bank,signal)=>{
       if (method==='bank-load') {
         if (bank.questions.length!==this.owner.knowledge.questionBank(String(user.id)).questions.length) await this.save(bank);

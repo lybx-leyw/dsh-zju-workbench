@@ -1,0 +1,100 @@
+{
+  "questionBank": {
+    "overview": {
+      "ok": true,
+      "text": "Question bank: 3 questions (1 answered wrong, 1 bookmarked, 1 not filed in any category).\nCategories: 力学基础 (2)\n\nNext: `list` the entries you want (filter='wrong' or 'uncategorized'), then `organize` them into a category by name.",
+      "error": ""
+    },
+    "overview_empty": {
+      "ok": true,
+      "text": "The question bank is empty — the learner has not answered any quiz questions yet.",
+      "error": ""
+    },
+    "list_all": {
+      "ok": true,
+      "text": "Question bank — all (3 of 3):\n\n- [1] ✓ ★ 牛顿第二定律 F=ma 中 a 表示什么？\n    answered: 加速度 | correct: 加速度\n    filed in: 力学基础\n- [2] ✗ 动量守恒的成立条件是什么？长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长…\n    answered: — | correct: 系统所受合外力为零\n    filed in: (nothing yet)\n- [3] ✓ 角动量守恒的判据？\n    answered: 合外力矩为零 | correct: 合外力矩为零\n    filed in: 力学基础\n\nThe number in [brackets] is the entry id — pass those ids to `organize` to file them into a category.",
+      "error": ""
+    },
+    "list_wrong": {
+      "ok": true,
+      "text": "Question bank — wrong (1 of 1):\n\n- [2] ✗ 动量守恒的成立条件是什么？长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长…\n    answered: — | correct: 系统所受合外力为零\n    filed in: (nothing yet)\n\nThe number in [brackets] is the entry id — pass those ids to `organize` to file them into a category.",
+      "error": ""
+    },
+    "list_uncategorized": {
+      "ok": true,
+      "text": "Question bank — uncategorized (1 of 1):\n\n- [2] ✗ 动量守恒的成立条件是什么？长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长…\n    answered: — | correct: 系统所受合外力为零\n    filed in: (nothing yet)\n\nThe number in [brackets] is the entry id — pass those ids to `organize` to file them into a category.",
+      "error": ""
+    },
+    "list_bookmarked": {
+      "ok": true,
+      "text": "Question bank — bookmarked (1 of 1):\n\n- [1] ✓ ★ 牛顿第二定律 F=ma 中 a 表示什么？\n    answered: 加速度 | correct: 加速度\n    filed in: 力学基础\n\nThe number in [brackets] is the entry id — pass those ids to `organize` to file them into a category.",
+      "error": ""
+    },
+    "list_category": {
+      "ok": true,
+      "text": "Question bank — all in category '力学基础' (2 of 2):\n\n- [1] ✓ ★ 牛顿第二定律 F=ma 中 a 表示什么？\n    answered: 加速度 | correct: 加速度\n    filed in: 力学基础\n- [3] ✓ 角动量守恒的判据？\n    answered: 合外力矩为零 | correct: 合外力矩为零\n    filed in: 力学基础\n\nThe number in [brackets] is the entry id — pass those ids to `organize` to file them into a category.",
+      "error": ""
+    },
+    "list_search": {
+      "ok": true,
+      "text": "Question bank — all matching '动量' (2 of 2):\n\n- [2] ✗ 动量守恒的成立条件是什么？长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长…\n    answered: — | correct: 系统所受合外力为零\n    filed in: (nothing yet)\n- [3] ✓ 角动量守恒的判据？\n    answered: 合外力矩为零 | correct: 合外力矩为零\n    filed in: 力学基础\n\nThe number in [brackets] is the entry id — pass those ids to `organize` to file them into a category.",
+      "error": ""
+    },
+    "list_limit": {
+      "ok": true,
+      "text": "Question bank — all (1 of 3):\n\n- [1] ✓ ★ 牛顿第二定律 F=ma 中 a 表示什么？\n    answered: 加速度 | correct: 加速度\n    filed in: 力学基础\n\n... 2 more; raise `limit` or narrow with `search`.\n\nThe number in [brackets] is the entry id — pass those ids to `organize` to file them into a category.",
+      "error": ""
+    },
+    "list_bad_filter": {
+      "ok": false,
+      "text": "",
+      "error": "Unknown filter 'nope'. Use one of: all, wrong, bookmarked, uncategorized."
+    },
+    "list_missing_category": {
+      "ok": false,
+      "text": "",
+      "error": "No category named '不存在'. Existing: 力学基础 (2)."
+    },
+    "bad_action": {
+      "ok": false,
+      "text": "",
+      "error": "Unknown action 'nope'. Use one of: overview, list, organize, unfile, bookmark, record."
+    }
+  },
+  "kbFiles": {
+    "all_en": "Knowledge base \"lecture\": 3 documents.\n1. 第一章 力学/牛顿第二定律\n2. 第一章 力学/动量守恒\n3. 第二章 电磁学/库仑定律 (1.2 KB)",
+    "pattern_en": "Knowledge base \"lecture\": 3 documents.\nMatching \"库仑*\": 1.\n1. 第二章 电磁学/库仑定律 (1.2 KB)",
+    "no_match_en": "Knowledge base \"lecture\": 3 documents.\nNo document name matches \"不存在\".",
+    "omitted_en": "Knowledge base \"lecture\": 3 documents.\nShowing the first 1; 2 more not listed (narrow with pattern, or raise limit).\n1. 第一章 力学/牛顿第二定律",
+    "empty_en": "Knowledge base \"lecture\" holds no documents.",
+    "unavailable_en": "Knowledge base \"lecture\": Its document folder cannot be read right now — it may still be under construction, or be an external folder that has moved.",
+    "all_zh": "知识库「lecture」共 3 个文档。\n1. 第一章 力学/牛顿第二定律\n2. 第一章 力学/动量守恒\n3. 第二章 电磁学/库仑定律 (1.2 KB)",
+    "pattern_zh": "知识库「lecture」共 3 个文档。\n匹配「库仑*」的有 1 个。\n1. 第二章 电磁学/库仑定律 (1.2 KB)",
+    "no_match_zh": "知识库「lecture」共 3 个文档。\n没有文档名匹配「不存在」。",
+    "omitted_zh": "知识库「lecture」共 3 个文档。\n以下列出前 1 个，另有 2 个未列出（可用 pattern 缩小范围或提高 limit）。\n1. 第一章 力学/牛顿第二定律",
+    "empty_zh": "知识库「lecture」暂无文档。",
+    "unavailable_zh": "知识库「lecture」：当前读不到它的文档目录——可能仍在创建中，也可能是外部文件夹已移动。"
+  },
+  "readSource": {
+    "single_auto_id": {
+      "success": true,
+      "content": "只有一份来源的正文"
+    },
+    "multiple_missing_id": {
+      "success": false,
+      "content": "Error: source_id is required when multiple sources are available."
+    },
+    "unknown_id": {
+      "success": false,
+      "content": "Error: unknown source_id 't9-9'. Valid ids for this turn: t1-1, t1-2."
+    },
+    "no_sources": {
+      "success": false,
+      "content": "Error: no attached sources are available for this turn."
+    },
+    "hit": {
+      "success": true,
+      "content": "第二份"
+    }
+  }
+}

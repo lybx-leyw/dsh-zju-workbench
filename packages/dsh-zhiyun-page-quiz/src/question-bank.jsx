@@ -11,7 +11,8 @@ const questionText = question => question.stem.replace(/\{\{c\d+::[^}]*\}\}/g,'_
 const typeName = type => QUESTION_TYPES[type] ?? type;
 const strategyName=id=>QUESTION_STRATEGIES[id]?.label??'历史题目';
 
-const engineName=item=>item?.label??({'r1':'r1（推荐）','r3-v9':'r3 v9（实验）','deeptutor-native':'DeepTutor 直调'})[item?.id]??'出题模式';
+// 旧批次可能带着已停用的引擎名，仍要能显示成人话（历史记录要读得懂）。
+const engineName=item=>item?.label??({'r1':'r1（推荐）','r3-v9':'r3 v9（实验）','deeptutor-native':'DeepTutor 直调','r4-lab':'r4 实验室'})[item?.id]??'出题模式';
 
 export function QuestionBankPage({ controller }) {
   const study=useStudy(controller),bank=controller.questionBank,state=useBank(bank);
@@ -69,7 +70,9 @@ export function PointQuizComposer({ controller, scope=null }) {
   const bank=controller.questionBank,state=useBank(bank),generating=state.run?.state==='running';
   const [count,setCount]=useState(10),[mode,setMode]=useState('uniform'),[types,setTypes]=useState(['mcq','cloze']),[query,setQuery]=useState('');
   const [strategies,setStrategies]=useState([{id:'recall',weight:1}]),[difficulty,setDifficulty]=useState('basic'),[source,setSource]=useState('course');
-  const [recallMode,setRecallMode]=useState('complete'),[engine,setEngine]=useState('r1'),[ideaScope,setIdeaScope]=useState('all');
+  // 新建批次默认 DeepTutor：这是当前唯一还开放选择的出题引擎。
+  // 恢复旧批次时下面会用 plan.engine 覆盖它，不会把 r1 的断点当成本引擎的续跑。
+  const [recallMode,setRecallMode]=useState('complete'),[engine,setEngine]=useState('deeptutor-native'),[ideaScope,setIdeaScope]=useState('all');
   const drawer=useRef(null),drawerTrigger=useRef(null),drawerId=useId(),[drawerOpen,setDrawerOpen]=useState(false);
   const more=useRef(null),moreTrigger=useRef(null),moreId=useId(),[moreOpen,setMoreOpen]=useState(false);
   useEffect(()=>{const element=drawer.current;if(!element)return;const toggle=e=>setDrawerOpen(e.newState==='open');element.addEventListener('toggle',toggle);return()=>element.removeEventListener('toggle',toggle);},[Boolean(scope)]);
@@ -87,7 +90,7 @@ export function PointQuizComposer({ controller, scope=null }) {
     // 用户会按 r1 的断点语义去续跑一份 r4 的断点，语义完全对不上。
     // 查不到目录时保留原值，由下方的 chosenEngine / blockers 说明它为什么不可用。
     setRecallMode(state.run.plan.recallMode??'complete');
-    setEngine(state.run.plan.engine??'r1');
+    setEngine(state.run.plan.engine??'deeptutor-native');
     setIdeaScope(state.run.plan.ideaScope??'all');
     if(!scope&&state.run.plan.pointIds)bank.pick(state.run.plan.pointIds.filter(id=>state.points.some(point=>point.id===id)));
   },[state.run?.id]);
@@ -100,13 +103,22 @@ export function PointQuizComposer({ controller, scope=null }) {
     if(!course.lessons.has(point.subId))course.lessons.set(point.subId,{title:point.lessonTitle,points:[]});course.lessons.get(point.subId).points.push(point);}
   const toggle=(ids,checked)=>bank.pick(checked?[...new Set([...selected,...ids])]:selected.filter(id=>!ids.includes(id)));
   const mismatched=strategies.filter(row=>!types.some(type=>QUESTION_STRATEGIES[row.id].types.includes(type)));
-  const engines=state.engines?.length?state.engines:[{id:'r1',label:'r1（推荐）',description:'知识点规划、并发生成，结合历史题统一复核与整改。'},{id:'r3-v9',label:'r3 v9（实验）',description:'沿知识图谱树提取、复用考法，再生成题目。'},{id:'deeptutor-native',label:'DeepTutor 直调',description:'由 DeepTutor 原生链路规划并生成。'}];
+  // 目录加载失败时的兜底：只列当前开放的引擎，顺序与目录一致。
+  // 保留 r1 是因为它是唯一不依赖 DeepTutor 上游的本地引擎 ——
+  // 兜底场景（目录都读不到）恰恰最可能是上游有问题，这时更需要 r1。
+  const engines=state.engines?.length?state.engines:[
+    {id:'deeptutor-native',label:'DeepTutor 直调',description:'由 DeepTutor 原生链路规划并生成。'},
+    {id:'r1',label:'r1（本地）',description:'知识点规划、单题并发，结合历史题统一复核与整改；不依赖 DeepTutor 上游。'},
+  ];
   const chosenEngine=engines.find(row=>row.id===engine);
   // 资料来源限制改由目录自己声明（`source:'course'`）：注册进来的引擎不必再改这里的白名单。
   const courseOnly=chosenEngine?.source==='course'||['r3-v9','deeptutor-native'].includes(engine);
-  // 目录里没有这个引擎 = 提供它的包已被卸载。此时不能当成「可用」，
-  // 也不能当成 r1 —— 要明确说「已卸载」，并禁止用它发起新批次。
+  // 目录里没有这个引擎，有两种完全不同的原因，不能都说成「已卸载」：
+  //   1) 提供它的插件被关掉了 —— 用户可以去插件页打开；
+  //   2) 产品已把它从可选项里收起来 —— 打开插件也没用，只能换引擎。
+  // 对用户来说下一步动作不同，所以提示必须分开写。
   const engineUnloaded=!chosenEngine;
+  const engineRetired=engineUnloaded&&['r1','r3-v9','r4-lab'].includes(engine);
   const engineReady=chosenEngine?.available!==false&&!engineUnloaded;
   const countReady=Number.isInteger(count)&&count>=1&&count<=100;
   const weightsReady=strategies.every(row=>Number.isFinite(row.weight)&&row.weight>0&&row.weight<=100);
@@ -120,7 +132,9 @@ export function PointQuizComposer({ controller, scope=null }) {
   if(!countReady)blockers.push('总题数要在 1 到 100 之间。');
   if(!weightsReady)blockers.push('策略比例要在 1 到 100 之间。');
   if(mismatched.length)blockers.push(`${mismatched.map(row=>strategyName(row.id)).join('、')}没有可选题型，加选「选择题」或「简答题」。`);
-  if(!engineReady)blockers.push(engineUnloaded
+  if(!engineReady)blockers.push(engineRetired
+    ?`出题引擎「${engine}」已停用，不再受理新批次。已生成的题目仍可查看、已跑的断点仍可续跑；要再出一批请改用 DeepTutor 直调。`
+    :engineUnloaded
     ?`出题引擎「${engine}」已卸载（提供它的插件被关掉了）。已生成的题目仍可查看，但不能用它发起新批次；请在上方切换出题模式。`
     :`${engineName(chosenEngine)}当前不可用，请在上方切换出题模式。`);
   const allocation=valid?allocateStrategies(count,strategies):[];

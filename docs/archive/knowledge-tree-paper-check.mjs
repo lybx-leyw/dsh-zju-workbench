@@ -6,8 +6,8 @@
 import assert from 'node:assert/strict';
 import {
   buildTreeFromBlocks, leavesOf, sieveBlocks,
-} from '../packages/dsh-zhiyun-core-parser/src/tree.js';
-import { parseSemanticPlan } from '../packages/dsh-zhiyun-core-parser/src/semantic-plan.js';
+} from '../../packages/dsh-zhiyun-core-parser/src/tree.js';
+import { parseSemanticPlan } from '../../packages/dsh-zhiyun-core-parser/src/semantic-plan.js';
 
 const initialSeed = 20261030;
 let seed = initialSeed;
