@@ -7,9 +7,11 @@ import {compileDemand} from '../scripts/quiz_bench/experimental-r4/compiler.mjs'
 import {createScheduler} from '../scripts/quiz_bench/experimental-r4/scheduler.mjs';
 
 const args=()=>({graph:graph(),pointIds:['a'],count:1,requestId:'model-test'});
+let mutateSeq=0;
 const mutate=(base,stage,change)=>async request=>{
  const raw=await base.call(request);
- if(request.stage===stage)for(const tool of raw.toolCalls){const value=JSON.parse(tool.arguments);change(value);tool.arguments=JSON.stringify(value);}
+ const seq=request.stage===stage?++mutateSeq:0;
+ if(request.stage===stage)for(const tool of raw.toolCalls){const value=JSON.parse(tool.arguments);change(value,seq);tool.arguments=JSON.stringify(value);}
  return raw;
 };
 
@@ -50,7 +52,9 @@ test('valid-looking author cannot override a missing-premise independent verdict
 });
 
 test('removing visible instance data cannot be repaired by hidden author parameters',async()=>{
- const m=model(),r=await runR4({...args(),call:mutate(m,'r3-instantiate',v=>{v.items[0].stem='教材的这道例题中，所求结果为多少？';})});
+ // 变异要保留 attempt 标识，否则每稿都变成同一句话，会先撞上「返工稿不得逐字重复」那道闸，
+ // 就测不到本用例真正关心的「缺题设」判定。
+ const m=model(),r=await runR4({...args(),call:mutate(m,'r3-instantiate',(v,i)=>{v.items[0].stem='教材的这道例题中，所求结果为多少？（试'+i+'）';})});
  assert.equal(r.produced,0);assert.match(r.results[0].pending[0].reason,/题面未给出/);
 });
 test('declared M attributes cannot be copied over an actual Q mismatch',async()=>{
@@ -139,9 +143,50 @@ test('numeric short-answer contradictions and absent explicit consistency verdic
  }
 });
 
-test('duplicate variant parameter sets are rejected before instantiation',async()=>{
+test('duplicate variant parameter sets are dropped without killing the whole idea',async()=>{
+ // 旧行为：一条变体不合法就把整条考法连 base 一起作废。
+ // 实测（run-1/run-2 两轮 5 门课）prob 与 psyexp 每次都因此少预留一个槽位：
+ // 请求 3 只拿到 2 个 ticket，而 base 实例本来完全合法。变体的价值是「多一个实例」，
+ // 不该有权力否掉整条考法 —— 现在只丢掉坏的那条并记账。
  const m=model(),call=async request=>{const raw=await m.call(request);if(request.stage.endsWith('-ideas'))for(const t of raw.toolCalls)if(t.name==='submit_idea'){const v=JSON.parse(t.arguments);v.variants.push({...v.variants[0],key:'another-name',instruction:'使用完全相同的数值但换一个变体编号'});t.arguments=JSON.stringify(v);}return raw;};
- const result=await runR4({...args(),call});assert.equal(result.produced,0);assert.match(result.results[0].error,/变体参数重复/);assert.equal(m.calls.some(c=>c.stage==='r3-instantiate'),false);
+ const r=await runR4({...args(),call});
+ assert.equal(r.produced,1,'坏变体不该连坐 base 实例');
+ const idea=Object.values(r.checkpoint.explorations)[0].ledger.libraries[Object.keys(Object.values(r.checkpoint.explorations)[0].ledger.libraries)[0]].root.ideas[0];
+ assert.ok(idea.droppedVariants?.some(e=>/变体参数重复/.test(e)),'被丢弃的变体必须留痕，不能静默消失');
+ assert.equal(idea.variants.filter(v=>v.key==='another-name').length,0,'重复参数的变体不得进入槽位');
+});
+
+test('an idea whose every variant is invalid is still rejected outright',async()=>{
+ // 保留旧闸的本质：如果作者一条合法变体都写不出来，说明没理解变体要求，值得让他返工。
+ const m=model(),call=async request=>{const raw=await m.call(request);if(request.stage.endsWith('-ideas'))for(const t of raw.toolCalls)if(t.name==='submit_idea'){const v=JSON.parse(t.arguments);v.variants=[{key:'same-as-base',instruction:'再次声明与基础实例完全相同的参数',parameters:{}},{key:'also-base',instruction:'换一个编号但仍然给出基础参数',parameters:{}}];t.arguments=JSON.stringify(v);}return raw;};
+ const r=await runR4({...args(),call});assert.equal(r.produced,0);assert.match(r.results[0].error,/变体校验失败/);
+});
+
+test('no-variable concept idea keeps its base instance even when the model still writes variants',async()=>{
+ // 契约原本自相矛盾：「概念辨析可用 variables=[]」+「每个变体至少改变一个参数」。
+ // 变量表为空时任何变体都不可能改变参数，模型按前一条写概念题、又按后一条硬塞变体，
+ // 于是整条考法被判「变体校验失败」连 base 一起作废（实测 psyexp node0 的 ideas 变成 []，
+ // 请求 3 题只预留出 2 个槽位）。这里在编译层锁定：无变量时变体按不适用丢弃，考法必须存活。
+ const m=model(),call=async request=>{const raw=await m.call(request);
+  if(request.stage.endsWith('-ideas'))for(const t of raw.toolCalls)if(t.name==='submit_idea'){
+   const v=JSON.parse(t.arguments);
+   v.itemModel.variables=[];v.itemModel.baseParameters={};v.itemModel.numeric=null;
+   for(const e of v.itemModel.errorModels)e.expression=null;
+   v.itemModel.attributes=[{id:'judge',label:'条件判断',pointIds:['a']}];
+   v.itemModel.solutionSteps=[{action:'依据条件作出判断',attributeId:'judge',basisIndexes:[0]}];
+   for(const e of v.itemModel.errorModels)e.attributeIds=['judge'];
+   v.types=['trueFalse'];
+   v.variants=[{key:'wording',instruction:'只改表述不改参数',parameters:{}}];
+   t.arguments=JSON.stringify(v);
+  }
+  return raw;};
+ // 根节点本身就是叶子：只有这样才能走到 leaf-ideas 分支，直接产出本节点考法。
+ const single={id:'solo',root:{id:'a',title:'a',text:'单节完整定义与边界。',pages:[],point:{id:'a'},children:[]}};
+ const compiled=await compileDemand({graph:single,selection:{pointIds:['a'],types:['trueFalse'],strategies:['understand']},neededCount:1,call});
+ assert.equal(compiled.root.ideas.length,1,'无变量概念考法不能被变体规则连坐');
+ const idea=compiled.root.ideas[0];
+ assert.deepEqual(idea.variants.map(v=>v.key),['base'],'无变量时只保留 base 实例');
+ assert.ok(idea.droppedVariants?.length,'被丢弃的变体必须留痕');
 });
 
 test('renaming an existing variant cannot reserve the same parameter instance again',async()=>{

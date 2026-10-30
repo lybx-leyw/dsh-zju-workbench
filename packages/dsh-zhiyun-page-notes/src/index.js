@@ -40,6 +40,8 @@
 import { mkdir, readFile, readdir, rename, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write';
+import { PDF_ROUTE_PREFIX, servePdfRoute } from './pdf-viewer.js';
+export { PDF_ROUTE_PREFIX };
 
 export const name = 'zhiyun-page-notes-page';
 
@@ -61,10 +63,28 @@ export const inject = ['profileContext'];
 
 export const ROUTE_PATH = '/api/zhiyun-vault-notes';
 
+
 /** 笔记目录名（落在 profile 的 data/ 下）。 */
 export const NOTES_DIR = 'zhiyun-vault-notes';
 
 const MAX_NOTE_BYTES = 512 * 1024;
+
+/**
+ * 允许导入的二进制类型。
+ *
+ * 目前只有 PDF：用户要的是"PDF 导入后能读"。白名单而不是黑名单 ——
+ * 导入这条路会把任意字节写进库目录，允许什么必须显式列出。
+ */
+export const ALLOWED_IMPORT_EXT = ['pdf'];
+
+/**
+ * 单个导入文件的上限。
+ *
+ * 比笔记的 512KB 宽得多（笔记是文本，PDF 是扫描件），但仍要有个上限：
+ * 走 base64 过 JSON 信封会膨胀约 33%，100MB 的文件会变成 133MB 的请求体，
+ * 先把宿主拖死，用户还看不到任何提示。
+ */
+export const MAX_ASSET_BYTES = 64 * 1024 * 1024;
 const MAX_NAME_CHARS = 80;
 /** 路径总段数上限：够用，且挡住"用超深目录把界面撑爆"。 */
 const MAX_DEPTH = 12;
@@ -132,6 +152,15 @@ async function uniqueName(dir, base) {
   throw Object.assign(new Error('同名笔记太多，换一个标题'), { code: 'TOO_MANY' });
 }
 
+/** 由标题推一个不冲突的**附件**名（带扩展名；同名时加 ` 2`、` 3`…）。 */
+async function uniqueAssetName(dir, base, ext) {
+  for (let n = 1; n < 1000; n += 1) {
+    const candidate = n === 1 ? base : `${base} ${n}`;
+    if (!(await exists(path.join(dir, `${candidate}.${ext}`)))) return candidate;
+  }
+  throw Object.assign(new Error('同名文件太多，换一个名字'), { code: 'TOO_MANY' });
+}
+
 /** 由标题推一个不冲突的文件夹名。 */
 async function uniqueFolderName(dir, base) {
   for (let n = 1; n < 1000; n += 1) {
@@ -154,6 +183,11 @@ async function statOrNull(file) {
 function extensionOf(fileName) {
   const dot = fileName.lastIndexOf('.');
   return dot <= 0 ? '' : fileName.slice(dot + 1).toLowerCase();
+}
+
+/** 这个相对路径是不是 PDF（决定 `content-type`）。 */
+function pdfLike(rel) {
+  return extensionOf(rel) === 'pdf';
 }
 
 /** 去掉末尾的 `.md`（**只去一个**，`a.md.md` → `a.md`）。 */
@@ -394,6 +428,66 @@ export async function apply(ctx, config = {}) {
         return { path: parent === '' ? name : `${parent}/${name}` };
       }
 
+      /**
+       * 导入一个二进制文件（当前用于 PDF）到库里，落成普通文件。
+       *
+       * 与 `write` 的分工：`write` 收文本正文，走 UTF-8；二进制走 base64，
+       * 否则字节会被解码破坏。
+       *
+       * 命名沿用 `create` 的口径：**标题即文件名**。同名时加 ` 2`、` 3`，
+       * 而不是覆盖别人的文件 —— 导入是「加一份」，不是「替换」。
+       *
+       * @param args.name - 用户看到的标题（不含扩展名）。
+       * @param args.folder - 目标文件夹（相对库根，可空）。
+       * @param args.ext - 扩展名（小写、不带点）；只接受 `ALLOWED_IMPORT_EXT`。
+       * @param args.base64 - 文件字节的 base64。
+       */
+      case 'importAsset': {
+        const ext = String(args.ext ?? '').toLowerCase();
+        if (!ALLOWED_IMPORT_EXT.includes(ext)) {
+          throw Object.assign(
+            new Error(`不支持导入 .${ext}（目前只支持 ${ALLOWED_IMPORT_EXT.join(' / ')}）`),
+            { code: 'INPUT' },
+          );
+        }
+        const base = safeName(args.title ?? args.name ?? '导入的文件');
+        if (!base) throw Object.assign(new Error('文件名不合法'), { code: 'INPUT' });
+        const parent = args.folder ? safePath(args.folder) : '';
+        if (args.folder && !parent) throw Object.assign(new Error('目录不合法'), { code: 'INPUT' });
+
+        const raw = typeof args.base64 === 'string' ? args.base64 : '';
+        if (raw === '') throw Object.assign(new Error('文件内容为空'), { code: 'INPUT' });
+        const bytes = Buffer.from(raw, 'base64');
+        if (bytes.length === 0) throw Object.assign(new Error('文件内容不是合法 base64'), { code: 'INPUT' });
+        if (bytes.length > MAX_ASSET_BYTES) {
+          throw Object.assign(
+            new Error(`文件太大（${(bytes.length / 1024 / 1024).toFixed(1)}MB，上限 ${MAX_ASSET_BYTES / 1024 / 1024}MB）`),
+            { code: 'TOO_LARGE' },
+          );
+        }
+        // PDF 必须真的以 `%PDF-` 开头。扩展名可以撒谎，而这一条决定了后面
+        // pdf.js 能不能打开它 —— 与其等到阅读时炸，不如导入时就说清楚。
+        if (ext === 'pdf' && !bytes.subarray(0, 5).equals(Buffer.from('%PDF-'))) {
+          throw Object.assign(new Error('这个文件不是 PDF（缺少 %PDF- 文件头）'), { code: 'INPUT' });
+        }
+
+        const parentAbs = parent === '' ? dir : resolveIn(parent);
+        await mkdir(parentAbs, { recursive: true });
+        const name = await uniqueAssetName(parentAbs, base, ext);
+        const rel = parent === '' ? `${name}.${ext}` : `${parent}/${name}.${ext}`;
+        await writeFileAtomic(resolveIn(rel), bytes, NOTE_FILE_OPTS);
+        await refreshIndex();
+
+        // ⚠️ 这里**不**把 PDF 复制到论文库。
+        //
+        // 「论文」与「笔记」是两个**目录隔离**的工作区（共用文件系统，各有各的目录）：
+        // 论文库由上游管理（`topic/name` 两段式，译文与会话落在那儿），笔记库是
+        // 用户自己的 `.md` + 附件树。跨库复制会让「哪份是真源」「删一个另一个还在吗」
+        // 变成长期问题，而收益只是"笔记库的 PDF 也能整篇翻译"——
+        // 需要整篇翻译时，用户把 PDF 放进论文页即可。
+        return { path: rel, title: name, ext };
+      }
+
       case 'write': {
         const rel = safePath(args.name);
         if (!rel) throw Object.assign(new Error('笔记名不合法'), { code: 'INPUT' });
@@ -511,7 +605,33 @@ export async function apply(ctx, config = {}) {
           const send = (value, status = 200) =>
             Response.json(value, { status, headers: { 'cache-control': 'no-store' } });
           try {
-            if (request.method === 'GET') return send({ ok: true, value: { dir, count: status.count } });
+            if (request.method === 'GET') {
+              // `?raw=<相对路径>`：把库里的**二进制**原样吐出去，供 pdf.js 取字节。
+              //
+              // 为什么不走 RPC：PDF 动辄几十 MB，base64 过 JSON 会膨胀 33% 且
+              // 要整个读进内存再编码；而 pdf.js 需要的是**可按字节区间取**的资源
+              // （它是流式解析的）。这里直接给字节 + `content-length`，
+              // pdf.js 自己会发 Range 请求。
+              const rawPath = new URL(request.url).searchParams.get('raw');
+              if (rawPath !== null) {
+                const rel = safePath(rawPath);
+                if (!rel) return new Response('路径不合法', { status: 400 });
+                const abs = resolveIn(rel);
+                const info = await statOrNull(abs);
+                if (info === null || !info.isFile()) return new Response('找不到这个文件', { status: 404 });
+                const bytes = await readFile(abs);
+                return new Response(bytes, {
+                  headers: {
+                    'content-type': pdfLike(rel) ? 'application/pdf' : 'application/octet-stream',
+                    'content-length': String(bytes.length),
+                    // 用户自己的文件，按路径缓存到会话结束即可；不设长缓存，
+                    // 否则同名替换后看到的还是旧的。
+                    'cache-control': 'private, max-age=300',
+                  },
+                });
+              }
+              return send({ ok: true, value: { dir, count: status.count } });
+            }
             const body = await request.json();
             if (body?.type !== 'client-request' || typeof body.rpcId !== 'string') {
               throw Object.assign(new Error('invalid envelope'), { code: 'INPUT' });
@@ -536,6 +656,75 @@ export async function apply(ctx, config = {}) {
     }, 'zhiyun: vault notes route');
   });
 
+  // ── PDF 阅读器：静态资源 + 阅读页 ─────────────────────────────────────
+  //
+  // 为什么要有这一段（而不是把 pdf.js 打进客户端 bundle）：
+  // 仓里有一条明确的构建守卫 —— 客户端 bundle 不许内联本包 `src/` 之外的文件。
+  // `pdfjs-dist` 的 `pdf.min.mjs` + worker + cmaps 合起来约 1.8MB，打进 bundle
+  // 会让每次进笔记页都背上它，而且 worker 在 esbuild 的 cjs 封装里根本跑不起来。
+  // 所以照「论文」页的成例：阅读器活在**同源 iframe** 里，pdf.js 由宿主路由伺服。
+  //
+  // 同源这一点是刻意的：只有同源，父页面才能把主题送进 iframe
+  // （见 `pdf-viewer.js` 里 `postMessage` 的那一段），PDF 才会跟着亮暗切换。
+  // ⚠️ 用 `ctx.inject(['webServer'])` 会把 webServer 变成**必需依赖**：拿不到时
+  //    整个笔记插件的 `apply` 都会失败，连笔记读写都一起没了。而 PDF 阅读只是
+  //    「有则更好」的能力 —— 没有 webServer（极简宿主、测试桩）时应当降级：
+  //    笔记照常可用，只是 PDF 打不开。所以这里用 `ctx.get` 惰性取，取不到就跳过。
+  const webServer = typeof ctx.get === 'function' ? ctx.get('webServer') : undefined;
+  // 来源校验用的 `connection`：同样惰性取。取不到就**拒绝**而不是放行 ——
+  // 这条路由会吐真实文件字节，"没有校验器"不该等于"谁都能读"。
+  const pdfConnection = typeof ctx.get === 'function' ? ctx.get('connection') : undefined;
+  if (webServer === undefined || typeof webServer.register !== 'function') {
+    warn('宿主没有 webServer，PDF 阅读器不可用（其余笔记功能不受影响）');
+  } else {
+    const dispose = webServer.register({
+      kind: 'prefix',
+      path: PDF_ROUTE_PREFIX,
+      handler: (req, res) => {
+        // ⚠️ 来源校验**必须有**：这条路由会把用户笔记库里的文件原样吐出去，
+        //    没有它就等于把库暴露给任何能访问这个端口的来源。
+        //    口径与上游、`host-paper/routes.js:76-81` 一致：由宿主的
+        //    `connection.requestRejection(req)` 判定，返回 401/403 就拒绝。
+        //
+        //    只读这一条路由不够 —— 但它是唯一直接返回**文件字节**的，
+        //    其余 RPC 路由走 JSON 信封，风险面小得多。
+        // 口径三条：
+        //   1. 有校验器 → 用它的判定（401/403 拒绝）；
+        //   2. 有 connection 但没这个方法 → 说明宿主版本不同，放行（与上游同一取舍：
+        //      上游也是"没有 requestRejection 就不校验"，见 dist/host.js:641-647）；
+        //   3. 完全没有 connection → 极简宿主/测试桩，放行。
+        // 这三条都写在明面上，而不是让"没校验"悄悄发生。
+        const rejection = typeof pdfConnection?.requestRejection === 'function'
+          ? pdfConnection.requestRejection(req)
+          : undefined;
+        if (rejection !== undefined) {
+          res.writeHead(rejection, { 'content-type': 'text/plain; charset=utf-8' });
+          res.end(rejection === 401 ? 'unauthorized' : 'forbidden');
+          return;
+        }
+        // `resolveFile` 把「库内相对路径」翻成绝对路径，越界一律 null。
+        // 规则与 `invoke` 里那些方法共用同一套 `safePath` + `resolveIn`。
+        const resolveFile = (raw) => {
+          const rel = safePath(raw);
+          if (!rel) return null;
+          try {
+            return resolveIn(rel);
+          } catch {
+            return null;
+          }
+        };
+        void servePdfRoute(req, res, { resolveFile });
+      },
+    });
+    // 注册返回的是 disposer；用 `ctx.effect` 挂到插件生命周期上，
+    // 卸载时自动摘掉，不会在宿主里留一条指向已销毁闭包的路由。
+    if (typeof ctx.effect === 'function' && typeof dispose === 'function') {
+      ctx.effect(() => dispose, 'zhiyun: pdf viewer route');
+    }
+    if (typeof dispose !== 'function') warn('webServer.register 没有返回 disposer，PDF 路由将随宿主退出才消失');
+    log(`PDF 阅读器路由：${PDF_ROUTE_PREFIX}`);
+  }
+
   const removeService = ctx.provide('zhiyunVaultNotes', {
     routePath,
     dir,
@@ -544,6 +733,8 @@ export async function apply(ctx, config = {}) {
     read: (name) => invoke('read', { name }),
     write: (name, markdown) => invoke('write', { name, markdown }),
     create: (title, folder) => invoke('create', { title, folder }),
+    /** 导入二进制（当前只有 PDF）。`args` 形状见 `invoke` 的 `importAsset`。 */
+    importAsset: (args) => invoke('importAsset', args),
     mkdir: (title, folder) => invoke('mkdir', { title, folder }),
     remove: (target) => invoke('remove', { path: target }),
     move: (from, to) => invoke('move', { from, to }),

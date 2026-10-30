@@ -52,6 +52,212 @@ body[data-zhiyun] .zp-page {
   background: var(--zy-bg);
 }
 
+/* 论文库的文件树（左侧栏）。
+ *
+ * ⚠️ 这一套是**照抄笔记库那棵树**（`dsh-zhiyun-page-notes/src/style.css` 的
+ *    `.zs-nt-*` 一节）的量感与交互，不是自己另发明一套：
+ *    - 缩进 `4px + depth * 15px`、行内 gap 7px、行高 5px/8px 内边距；
+ *    - 折叠箭头随展开旋转 90°；
+ *    - 文件夹图标与文献图标**分色**（文件夹 secondary、文献 muted）；
+ *    - 当前行 `--zy-soft` 底 + `--zy-accent` 字。
+ *    第一版自己写了另一套（gap 5px、缩进 13px、无箭头旋转、图标同色），
+ *    结果和笔记库并排一看就"不像同一个产品"。
+ *
+ * 类名前缀仍用 `zp-tree-*`：两边是不同的包，跨包共享选择器会让改一边影响另一边
+ * （`tests/css-order.test.mjs` 也会因"跨包同属性竞争"判红）。 */
+body[data-zhiyun] .zp-tree-pane {
+  /* `0 1 264px` 而不是 `flex:none`：两侧面板必须能让位给正文。
+   * 笔记库那边踩过这个坑（写死 264px 后窄窗口把正文挤到 298px）。 */
+  flex: 0 1 264px;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px 8px;
+  background: var(--zy-sidebar);
+  border-right: 1px solid var(--zy-line);
+}
+/* 收起后的窄条。
+ *
+ * ⚠️ 收起**不能**把整栏拔掉：那样按钮也跟着消失，用户就再也叫不回来了。
+ * 这里缩到 28px，只留一个展开按钮 —— 位置不变，肌肉记忆还在。 */
+body[data-zhiyun] .zp-tree-pane.is-collapsed {
+  flex: 0 0 28px;
+  min-width: 28px;
+  align-items: center;
+  padding: 10px 3px;
+}
+body[data-zhiyun] .zp-tree-toggle {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  color: var(--zy-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+body[data-zhiyun] .zp-tree-toggle:hover { background: var(--zy-hover); color: var(--zy-accent); }
+
+/* 栏头：与笔记库同一排 26×26 图标按钮（新建 / 新建文件夹 / 全部折叠 / 收起）。
+ * 尺寸、圆角、hover 色全部照 .zs-nt-explorer-head。 */
+body[data-zhiyun] .zp-tree-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 2px;
+}
+body[data-zhiyun] .zp-tree-head button {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-secondary);
+  cursor: pointer;
+}
+body[data-zhiyun] .zp-tree-head button:hover { background: var(--zy-hover); color: var(--zy-text); }
+body[data-zhiyun] .zp-tree-head button:disabled { opacity: .45; cursor: default; }
+/* 过滤框：与笔记库同一个位置（栏头下方）与同一套观感。 */
+/* 键盘游标：Delete / F2 作用在这一行上。
+ *
+ * ⚠️ 与笔记库同一条理由：真机上树行拿不到焦点（宿主把焦点收走了），
+ * 浏览器不会给任何焦点环。没有这条高亮，按 Delete/F2 用户看不到作用对象。 */
+body[data-zhiyun] .zp-tree-row.is-cursor > .zp-tree-btn {
+  box-shadow: inset 2px 0 0 var(--zy-accent);
+  background: var(--zy-hover);
+}
+body[data-zhiyun] .zp-tree-row.is-current.is-cursor > .zp-tree-btn {
+  background: var(--zy-soft);
+  box-shadow: inset 2px 0 0 var(--zy-accent);
+}
+/* 删除确认条：就地出现在树上方。 */
+body[data-zhiyun] .zp-tree-confirm {
+  flex: none;
+  margin: 0 2px 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--zy-line);
+  border-left: 3px solid #e05252;
+  border-radius: 7px;
+  background: var(--zy-surface);
+}
+body[data-zhiyun] .zp-tree-confirm p { margin: 0 0 7px; font-size: 12.5px; line-height: 1.6; }
+body[data-zhiyun] .zp-tree-confirm-actions { display: flex; gap: 7px; }
+body[data-zhiyun] .zp-tree-confirm-actions button {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 3px 10px;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-text);
+  cursor: pointer;
+}
+body[data-zhiyun] .zp-tree-confirm-actions button:hover:not(:disabled) { border-color: var(--zy-secondary); }
+body[data-zhiyun] .zp-tree-confirm-actions .zp-tree-danger { border-color: #e05252; color: #e05252; }
+body[data-zhiyun] .zp-tree-confirm-actions .zp-tree-danger:hover:not(:disabled) { background: #e05252; color: #fff; }
+
+body[data-zhiyun] .zp-tree-filter {
+  flex: none;
+  margin: 0 2px;
+  padding: 5px 8px;
+  border: 1px solid var(--zy-line);
+  border-radius: 7px;
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  font: inherit;
+  font-size: 12.5px;
+}
+body[data-zhiyun] .zp-tree-filter:focus-visible { outline: 2px solid var(--zy-accent); outline-offset: 0; }
+
+body[data-zhiyun] .zp-tree { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+body[data-zhiyun] .zp-tree-title {
+  flex: none;
+  font-size: 11px;
+  letter-spacing: .14em;
+  color: var(--zy-muted);
+  padding: 0 2px;
+}
+body[data-zhiyun] .zp-tree-head { flex: none; }
+body[data-zhiyun] .zp-tree-add {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--zy-secondary);
+  background: transparent;
+  border: 1px dashed var(--zy-line);
+  border-radius: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+body[data-zhiyun] .zp-tree-add:hover:not(:disabled) { color: var(--zy-accent); border-color: var(--zy-accent); }
+body[data-zhiyun] .zp-tree-add:disabled { opacity: .5; cursor: default; }
+body[data-zhiyun] .zp-tree-hint { margin: 4px 2px; font-size: 12px; line-height: 1.7; color: var(--zy-muted); }
+body[data-zhiyun] .zp-tree-error { margin: 4px 2px; font-size: 12px; color: #e05252; }
+body[data-zhiyun] .zp-tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+body[data-zhiyun] .zp-tree-row { --zp-depth: 0; }
+body[data-zhiyun] .zp-tree-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  /* 缩进按层级 —— 树的"多级"全靠这一条，数值与笔记库一致。 */
+  padding: 5px 8px 5px calc(4px + var(--zp-depth) * 15px);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  /* 与笔记库那棵树严格一致（13.5px）。差 0.5px 时行高会差 1px，
+   * 两棵树并排看就是"不齐"。 */
+  font-size: 13.5px;
+  text-align: left;
+  color: var(--zy-text);
+  cursor: pointer;
+}
+body[data-zhiyun] .zp-tree-btn:hover { background: var(--zy-hover); }
+body[data-zhiyun] .zp-tree-row.is-current > .zp-tree-btn {
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+}
+body[data-zhiyun] .zp-tree-caret {
+  flex: none;
+  width: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .zp-tree-caret svg { transition: transform .12s ease; }
+body[data-zhiyun] .zp-tree-row.is-expanded > .zp-tree-btn .zp-tree-caret svg { transform: rotate(90deg); }
+body[data-zhiyun] .zp-tree-icon { flex: none; display: inline-flex; color: var(--zy-muted); }
+body[data-zhiyun] .zp-tree-icon.is-folder { color: var(--zy-secondary); }
+body[data-zhiyun] .zp-tree-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-zhiyun] .zp-tree-row.is-expanded > .zp-tree-btn .zp-tree-name { font-weight: 500; }
+
 body[data-zhiyun] .zp-main {
   flex: 1;
   min-width: 0;
@@ -1081,4 +1287,64 @@ body[data-zhiyun] .zp-resume-notice {
     width: 100%;
     margin-left: 0;
   }
+}
+
+/* 重命名对话框。
+ *
+ * ⚠️ 这一套样式**不在工作台的层叠上下文里** —— 组件 portal 到 `document.body`，
+ * 所以：
+ *   1. `z-index` 要自己抬到工作台之上（宿主弹层用 ~1000 量级）；
+ *   2. 字体不能继承 `.zy-page` 的设定，要自己写一遍；
+ *   3. 仍沿用 `--zy-*` 变量（它们定义在 `body[data-zhiyun]` 上，portal 出去的
+ *      节点仍是 body 的后代，变量照样继承得到）。
+ * 之所以必须 portal：工作台内部常年被宿主的 `inert` 容器包着，输入框拿不到焦点。
+ */
+.zp-rename-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .32);
+  font-family: system-ui, "Microsoft YaHei UI", sans-serif;
+}
+.zp-rename-box {
+  min-width: 320px;
+  max-width: 480px;
+  padding: 16px 18px;
+  border: 1px solid var(--zy-line, #d7dee9);
+  border-radius: 12px;
+  background: var(--zy-surface, #fff);
+  color: var(--zy-text, #252a30);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .28);
+}
+.zp-rename-title { margin: 0 0 12px; font-size: 13px; font-weight: 600; }
+.zp-rename-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--zy-line, #d7dee9);
+  border-radius: 8px;
+  background: var(--zy-bg, #f7f7f5);
+  color: inherit;
+  font: inherit;
+  font-size: 13.5px;
+}
+.zp-rename-input:focus-visible { outline: 2px solid var(--zy-accent, #00479d); outline-offset: 0; }
+.zp-rename-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.zp-rename-actions button {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 5px 14px;
+  border: 1px solid var(--zy-line, #d7dee9);
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.zp-rename-actions button:hover { border-color: var(--zy-secondary, #666b72); }
+.zp-rename-actions .zp-rename-primary {
+  border-color: var(--zy-accent, #00479d);
+  background: var(--zy-accent, #00479d);
+  color: #fff;
 }

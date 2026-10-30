@@ -11,12 +11,13 @@
     "./package.json": "./package.json"
   },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" }
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   },
   "files": [
     "src/",
     "python/",
-    "patches/",
     "docs/",
     "vendor/deeptutor/",
     "upstream.lock.json",

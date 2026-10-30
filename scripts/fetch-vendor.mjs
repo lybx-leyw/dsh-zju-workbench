@@ -26,7 +26,7 @@
  * 半份快照，也不会动到原有的那份。
  */
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync, chmodSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync, chmodSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
@@ -49,6 +49,22 @@ const SOURCES = [
     lock: 'scripts/quiz_bench/evaluators/vendor.lock.json',
     dest: 'scripts/quiz_bench/evaluators/vendor/benchmarker',
     timeoutMs: 180_000,
+  },
+  {
+    /**
+     * OpenMAIC（THU-MAIC）：整个 Next.js 应用原样 vendor，由 dsh-zhiyun-host-openmaic
+     * 作为独立进程托管，页面以同源 iframe 呈现 —— 功能无损的前提就是不裁剪它的源码。
+     *
+     * 归档 91 MB，实测大陆网络 200 s 上下，留足余量。
+     */
+    id: 'openmaic',
+    kind: 'archive',
+    lock: 'packages/dsh-zhiyun-host-openmaic/upstream.lock.json',
+    dest: 'packages/dsh-zhiyun-host-openmaic/vendor/openmaic',
+    timeoutMs: 900_000,
+    /** 版本号的唯一真源：解包后与锁文件比对。 */
+    versionFile: 'package.json',
+    versionField: 'version',
   },
 ];
 
@@ -235,12 +251,28 @@ function hasFiles(relPath) {
 }
 
 /** 半份快照比没有快照更糟，所以换入前先落临时目录。 */
+/**
+ * 换入暂存树；**目录重命名不行时退回逐文件复制**。
+ *
+ * 为什么要这条退路：Windows 上 `rename()` 一个已经解好几千个文件、路径还接近
+ * MAX_PATH 的目录，实测会抛 `EPERM`（杀毒/索引器此刻正持有其中某个句柄）。
+ * 而这份暂存树**刚刚通过归档哈希与树摘要两道校验**，只因一次重命名失败就整份丢弃、
+ * 让用户再下 90 MB，是不划算的。复制慢、但同样能完成换入。
+ */
 function swapIn(source, stageRel, destRel) {
   const retired = `${destRel}.fetch-old`;
   rmSync(abs(retired), { recursive: true, force: true });
   if (existsSync(abs(destRel))) renameSync(abs(destRel), abs(retired));
   try {
-    renameSync(abs(stageRel), abs(destRel));
+    try {
+      renameSync(abs(stageRel), abs(destRel));
+    } catch (error) {
+      if (!['EPERM', 'EXDEV', 'EBUSY', 'EACCES'].includes(error?.code)) throw error;
+      log(source, `目录重命名被拒（${error.code}），改为逐文件复制换入`);
+      mkdirSync(abs(destRel), { recursive: true });
+      cpSync(abs(stageRel), abs(destRel), { recursive: true, force: true, verbatimSymlinks: true });
+      rmSync(abs(stageRel), { recursive: true, force: true });
+    }
   } catch (error) {
     if (existsSync(abs(retired))) renameSync(abs(retired), abs(destRel));
     throw error;
@@ -428,6 +460,28 @@ function extractTar(buffer, { destRel, strip }) {
 
 // ---------------------------------------------------------------- 各来源
 
+/**
+ * 上游用 `package.json` 声明版本时，核对「锁文件写的那一版」与「解出来的那一版」。
+ *
+ * DeepTutor 用 `__version__.py`，OpenMAIC 用 `package.json` —— 两种都要能核，
+ * 否则换一个上游就得复制一遍 `fetchDeeptutor`。没声明版本的上游直接跳过。
+ */
+function verifyDeclaredVersion(source, rootRel, expectedVersion) {
+  if (!source.versionFile || !expectedVersion) return;
+  const file = abs(`${rootRel}/${source.versionFile}`);
+  if (!existsSync(file)) return;
+  let declared;
+  try {
+    const parsed = JSON.parse(readFileSync(file, 'utf8'));
+    declared = source.versionField ? parsed?.[source.versionField] : parsed?.version;
+  } catch {
+    return;
+  }
+  if (declared && declared !== expectedVersion) {
+    throw new Error(`版本不符：锁文件写 ${expectedVersion}，快照里是 ${declared}`);
+  }
+}
+
 async function fetchDeeptutor(source) {
   const lock = readJson(source.lock);
   const upstream = lock.upstream ?? {};
@@ -459,6 +513,8 @@ async function fetchDeeptutor(source) {
       throw new Error(`版本不符：锁文件写 ${upstream.version}，快照里是 ${declared}`);
     }
   }
+
+  verifyDeclaredVersion(source, stageRel, upstream.version);
 
   // 归档哈希只证明「tarball 是那一份」；解包器自己也要自证没写错内容。
   const expectedTree = upstream.archive?.tree;
@@ -598,6 +654,8 @@ async function main() {
     } catch (error) {
       failures += 1;
       explainNetworkFailure(source.id, error);
+      // 只清「没被换进去」的暂存树。已经 `swapIn` 成功的话，那份树已经在正式路径下
+      // 了，这里删的是不存在的 `.fetch-tmp`，无副作用。
       rmSync(abs(`${source.dest}.fetch-tmp`), { recursive: true, force: true });
     }
   }

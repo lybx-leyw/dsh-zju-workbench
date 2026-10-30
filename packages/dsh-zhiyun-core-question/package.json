@@ -1,0 +1,28 @@
+{
+  "name": "dsh-zhiyun-core-question",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "智云 Pro 出题流水线：explore → plan → quiz → repair（纯 JS，llm 与 tool 由集成层注入，不真调网络）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./pipeline": "./src/pipeline.js",
+    "./plan": "./src/plan.js",
+    "./quiz-payload": "./src/quiz-payload.js",
+    "./types": "./src/types.js",
+    "./render": "./src/render.js",
+    "./json": "./src/json.js",
+    "./i18n": "./src/i18n.js",
+    "./labeled-step": "./src/labeled-step.js",
+    "./product-questions": "./src/product-questions.js",
+    "./deps": "./src/deps.js",
+    "./prompts": "./src/prompts/index.js",
+    "./prompts-en": "./src/prompts-en/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-zhiyun-core-tool": "0.1.0",
+    "dsh-zhiyun-core-llm": "0.1.0"
+  }
+}

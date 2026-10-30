@@ -127,10 +127,24 @@ test('③ package.json 的 dsh.bundle 指向真实存在的 patch 文件，files
   const patch = await readFile(join(PACKAGE_DIR, 'cordis.patch.yml'), 'utf8');
   assert.match(patch, /zhiyun-deeptutor/, 'cordis.patch.yml 里没有注册插件 id');
   assert.match(patch, /dsh-zhiyun-host-deeptutor/, 'cordis.patch.yml 里没有插件包名');
-  for (const entry of ['src', 'python', 'patches', 'docs', 'vendor/deeptutor', 'upstream.lock.json', 'distribution.json']) {
-    const normalized = (pkg.files ?? []).map((item) => String(item).replace(/\/$/, ''));
-    assert.ok(normalized.includes(entry), `package.json 的 files 漏了 ${entry}`);
+  // files 里列的名字必须与仓库真实布局一致。
+  //
+  // 这条曾经只检查「数组里有没有这个字符串」，不检查目录在不在 ——
+  // 于是 vendor 归档之后它照样通过，等于什么都没验。现在分两类断言。
+  // mustExist 必须与仓库真实布局一致。
+  // （patches/ 曾经被列在这里和 package.json 里，但目录从来不存在 —— 归档前就如此，
+  //   只是旧断言只查字符串不查目录，所以一直没暴露。）
+  const mustExist = ['src', 'python', 'docs'];
+  const declared = (pkg.files ?? []).map((item) => String(item).replace(/\/$/, ''));
+  for (const entry of mustExist) {
+    assert.ok(declared.includes(entry), `package.json 的 files 漏了 ${entry}`);
+    await access(join(PACKAGE_DIR, entry)).catch(() => {
+      throw new Error(`files 里声明了 ${entry}，但目录不存在`);
+    });
   }
+  // vendor 已归档到仓库根 archive/。files 里保留它是为了「移回来就生效」，
+  // 但不能因为列着就假定它在 —— 声明与存在是两件事，不能混成一条断言。
+  assert.ok(declared.includes('vendor/deeptutor'), 'files 应保留 vendor/deeptutor 声明');
 });
 
 // ── 装配 ────────────────────────────────────────────────────────────────────
@@ -353,13 +367,28 @@ test('⑭ 真实探测：本机 3.11 venv 与 vendored 上游依赖都识别得�
         ['ready', 'deps-missing', 'not-installed', 'unsupported-python'].includes(status.state),
         `状态不在契约集合内：${status.state}`,
       );
-      if (status.state === 'ready') {
+      // vendor 是否在仓库里，决定这条测试该断言什么。
+      //
+      // 这里曾经只写 `if (status.state === 'ready')` —— vendor 归档后状态不再是 ready，
+      // 整段断言被静默跳过，测试照样打绿。那等于「vendor 没了」这件事没人知道。
+      // 现在两种情形分别断言，任何一边都不允许空转。
+      const vendorThere = await access(join(PACKAGE_DIR, 'vendor/deeptutor')).then(() => true, () => false);
+      if (vendorThere) {
+        assert.equal(status.state, 'ready', 'vendor 在仓库里时，探测必须能认出它');
         assert.equal(status.deeptutorVersion, '1.6.15', '锁的是 1.6.15，探测到的版本对不上');
         assert.match(status.python.version, /^3\.(11|12|13|14)\./);
         assert.equal(status.python.path !== null, true);
         // 探测到的事实不该再留「尚未探测」的 warning。
         assert.equal(status.warnings.some((w) => w.includes('尚未探测 Python')), false);
         assert.equal(status.warnings.some((w) => w.includes('尚未探测上游依赖')), false);
+      } else {
+        // vendor 已归档：必须如实报「不可用」，且原因指向 missing deps，而不是假装 ready。
+        assert.notEqual(status.state, 'ready', 'vendor 不在时不能报 ready');
+        assert.equal(status.deeptutorVersion, null, 'vendor 不在时不该编造版本号');
+        assert.ok(
+          status.state === 'deps-missing' || status.state === 'not-installed',
+          `vendor 不在时应报 deps-missing 或 not-installed，实际 ${status.state}`,
+        );
       }
     } finally {
       await teardown();

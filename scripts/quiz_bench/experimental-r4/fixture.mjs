@@ -4,10 +4,15 @@ const leaf=id=>({id,title:id,text:`知识点${id}的完整定义与边界。第�
 export const graph=()=>({id:'synthetic',root:{id:'root',title:'同一章节',children:[leaf('a'),leaf('b'),leaf('c')]}});
 const tool=(name,value)=>({id:crypto.randomUUID(),name,arguments:JSON.stringify(value)});
 export function model({legacy=false,expandModels=false}={}){
- const calls=[];return {calls,call:async request=>{
+ const calls=[];
+ let lastSubtree=null;return {calls,call:async request=>{
   const d=JSON.parse(request.variable);calls.push({stage:request.stage,input:d});
   if(request.stage.endsWith('-ideas')){
-   const n=d.subtree,refs=n.children.length?n.children.map((c,i)=>({path:[i],source:'lecture',part:0})):[{path:[],source:'lecture',part:0}];
+   // 后续轮次不再重发全文（compiler 的 materialRef 优化），此时沿用首轮那份子树。
+   // 真实模型能看到 toolHistory 里的上一轮，fixture 只需要能继续产出合规考法即可。
+   const n=d.subtree??lastSubtree??{title:'example',children:[]};
+   if(d.subtree)lastSubtree=d.subtree;
+   const refs=n.children.length?n.children.map((c,i)=>({path:[i],source:'lecture',part:0})):[{path:[],source:'lecture',part:0}];
    const key=expandModels&&d.expanding?'task-'+d.acceptedKeys.length:'task';
    const idea={key,focus:n.title+'的条件判定'+key,target:n.title+'需要推出的条件关系'+key,operation:'根据条件作判断',strategy:'understand',types:['mcq'],conditions:['保持原条件'],basis:refs,answerPoints:refs.map((r,i)=>({text:'由对应证据推出条件',basisIndexes:[i]})),variants:[{key:'second',instruction:'改变数值后重新推导所求总量',parameters:{x:8,y:2}}],relation:n.children.length?{kind:'compare',explanation:'两分支共同决定一个判断',needs:n.children.map((c,i)=>({child:i,target:c.title+'中的必要推理',basisIndexes:[i]}))}:null};
    if(!legacy){
@@ -30,7 +35,11 @@ export function model({legacy=false,expandModels=false}={}){
    const parameters={...d.idea.itemModel.baseParameters,...d.variant.parameters},x=parameters.x,y=parameters.y;
    const itemModel=d.idea.itemModel,product=itemModel.numeric?.answer.op==='multiply',answer=product?x*y:x+y;
    const errors=itemModel.errorModels,values=[evaluate(errors[0].expression,parameters),answer,evaluate(errors[1].expression,parameters),evaluate(errors[2].expression,parameters)];
-   const q={stem:d.idea.focus+'：给定x='+x+'，y='+y+'，求x'+(product?'*':'+')+'y。',answer:d.type==='mcq'?'B':String(answer),choices:d.type==='mcq'?values.map((v,i)=>({label:'ABCD'[i],text:String(v)})):[],explanation:'使用给定条件运算得到'+answer+'。',rubric:['使用所有条件完成指定运算'],parameters,distractors:d.type==='mcq'?['A','C','D'].map((label,i)=>({label,errorId:errors[i].id})):[]};
+   // 返工时必须真的改点东西：新加的「返工稿不得与历史稿逐字相同」会拦下完全重复的稿，
+  // 而 fixture 原本每次都返回同一份，等于让所有返工路径都撞上那道闸。
+  // 这里把 attempt 写进题干，模拟「作者针对反馈做了实质修改」。
+  const attemptTag=d.attempt>1?'（第'+d.attempt+'次修订）':'';
+   const q={stem:d.idea.focus+'：给定x='+x+'，y='+y+'，求x'+(product?'*':'+')+'y。'+attemptTag,answer:d.type==='mcq'?'B':String(answer),choices:d.type==='mcq'?values.map((v,i)=>({label:'ABCD'[i],text:String(v)})):[],explanation:'使用给定条件运算得到'+answer+'。',rubric:['使用所有条件完成指定运算'],parameters,distractors:d.type==='mcq'?['A','C','D'].map((label,i)=>({label,errorId:errors[i].id})):[]};
    if(d.type==='cloze')q.stem+='结果为{{c1::'+answer+'}}。';
    if(d.type==='trueFalse'){q.stem+='结果为'+answer+'，此判断是否正确？';q.answer='正确';}
    return {toolCalls:[tool('submit_question',{items:[q]})]};
@@ -43,7 +52,7 @@ export function model({legacy=false,expandModels=false}={}){
    const correct=Object.keys(optionTruth).filter(label=>optionTruth[label]);
    return {toolCalls:[tool('submit_solution',{valid:d.type!=='mcq'||correct.length===1,selfContained:true,answer:d.type==='mcq'?correct.join(',')||'无正确选项':d.type==='trueFalse'?'正确':String(answer),explanation:'由题面给定数值独立完成指定运算。',reason:'题面给出了全部条件',optionTruth})]};
   }
-  if(request.stage==='r3-validate-instance')return {toolCalls:[tool('submit_review',{valid:true,assetMatched:true,variantMatched:true,reason:'任务匹配',independentMatched:true,independentReason:'独立计算与作者答案一致',optionTruth:{A:false,B:true,C:false,D:false},selfContained:true,learningValue:true,parametersMatched:true,operationMatched:true,attributeChecks:d.idea.itemModel.attributes.map(a=>({id:a.id,required:true,promptQuote:d.item.stem,reason:'给定条件参与本题计算'})),evidenceChecks:d.idea.itemModel.evidenceRules.map((rule,ruleIndex)=>({ruleIndex,observable:true,promptQuote:d.item.stem,reason:'题目和评分点要求显式使用条件并完成运算'})),distractorChecks:d.item.distractors.map(e=>({...e,errorMatched:true,reason:'按此错误操作得到该选项'})),...(d.idea.relation?{branchChecks:d.idea.relation.needs.map(n=>({child:n.child,promptQuote:d.item.stem,necessary:true,givenAway:false,reason:'共同依赖'}))}:{})})]};
+  if(request.stage==='r3-validate-instance')return {toolCalls:[tool('submit_review',{valid:true,assetMatched:true,variantMatched:true,reason:'任务匹配',independentMatched:true,independentReason:'独立计算与作者答案一致',optionTruth:{A:false,B:true,C:false,D:false},selfContained:true,learningValue:true,parametersMatched:true,operationMatched:true,attributeChecks:d.idea.itemModel.attributes.map(a=>({id:a.id,required:true,promptQuote:d.item.stem,reason:'给定条件参与本题计算'})),evidenceChecks:d.idea.itemModel.evidenceRules.map((rule,ruleIndex)=>({ruleIndex,observable:true,promptQuote:d.item.stem,reason:'题目和评分点要求显式使用条件并完成运算'})),preconditionChecks:d.idea.itemModel.preconditions.map((rule,index)=>({index,satisfied:true,promptQuote:d.item.stem,reason:'题面已给出该前提'})),distractorChecks:d.item.distractors.map(e=>({...e,errorMatched:true,reason:'按此错误操作得到该选项'})),...(d.idea.relation?{branchChecks:d.idea.relation.needs.map(n=>({child:n.child,promptQuote:d.item.stem,necessary:true,givenAway:false,reason:'共同依赖'}))}:{})})]};
   if(request.stage==='r3-critical-audit')return {toolCalls:[tool('submit_audit',{explanationValid:true,unsupportedClaims:[],reason:'推理成立',joint:true,neededChildren:d.requiredChildren,jointPromptQuote:d.item.stem,leakedTarget:false})]};
   throw Error('unexpected stage '+request.stage);
  }};

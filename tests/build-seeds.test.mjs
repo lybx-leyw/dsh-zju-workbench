@@ -61,6 +61,11 @@ test('每个有 src/client.jsx 的包都在 CLIENT_PACKAGES 里', async () => {
   // 这份清单是手工维护的，漏一个不会报错：Loader 照旧解析宿主半边，
   // 但那个包没有 lib/client.js，页面渲染成空白占位 —— 排查成本极高。
   // 「规划」页第一次构建时正是漏在这里，所以补一条会红的断言。
+  //
+  // ⚠️ `DETACHED.md` 是「包已完工、但决定暂不接进 profile」的显式标记：
+  //    没有它，把一页从产品里摘下来就只能靠删包或删 client.jsx，
+  //    而那两样都会毁掉本来可以随时接回去的实现。见到标记就跳过，
+  //    接回去时删掉标记、补一行 CLIENT_PACKAGES —— 见各包的 DETACHED.md。
   const { readdir } = await import('node:fs/promises');
   const entries = await readdir(`${root}packages`, { withFileTypes: true });
   const missing = [];
@@ -72,7 +77,10 @@ test('每个有 src/client.jsx 的包都在 CLIENT_PACKAGES 里', async () => {
     } catch {
       hasClient = false;
     }
-    if (hasClient && !CLIENT_PACKAGES.includes(entry.name)) missing.push(entry.name);
+    if (!hasClient) continue;
+    const detached = await readFile(`${root}packages/${entry.name}/DETACHED.md`, 'utf8').then(() => true, () => false);
+    if (detached) continue;
+    if (!CLIENT_PACKAGES.includes(entry.name)) missing.push(entry.name);
   }
   assert.deepEqual(missing, [], `这些包有 client.jsx 却不在 CLIENT_PACKAGES 里：${missing.join(', ')}`);
 });

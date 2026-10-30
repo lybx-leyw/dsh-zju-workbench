@@ -104,10 +104,37 @@ let localVersionImpl = null;
 export function _bindLocalVersion(read) { localVersionImpl = read; }
 const resolveLocalVersion = () => localVersionImpl?.() ?? null;
 
-/** 全部引擎目录：内建在前，注册项按注册顺序追加。未装 lab 时恒等于三条。 */
+/**
+ * 全部引擎目录：内建在前，注册项按注册顺序追加。未装 lab 时恒等于三条。
+ *
+ * ⚠️ 这是**能力目录**，不是**可选项**。已经收起来的引擎仍然要在这里，
+ * 否则老断点会连版本号都查不到（`engineVersionOf` 返回 null ⇒ 一律不可恢复），
+ * 用户手上没跑完的批次就永久废了。要问「界面上能选哪些」请用 `selectableEngines`。
+ */
 export function engineEntries() {
   return [...BUILTIN_CATALOG_READER(), ...registeredEngines().map(({ createRun, ...row }) => row)];
 }
+
+/**
+ * 产品当前**允许发起新批次**的引擎。
+ *
+ * 与 `engineEntries` 分开是有意的：收起来的引擎（r1 / r3 v9 / 各实验引擎）
+ * 依然登记在册，老断点照常可读、可续跑、可查看，只是不再出现在新建下拉里。
+ * 一个引擎「不该再被选」和「从没存在过」是两件事，混成一个会让存量数据变成孤儿。
+ */
+const SELECTABLE = Object.freeze(['deeptutor-native', 'r1']);
+export const isSelectableEngine = engine => SELECTABLE.includes(engine);
+export function selectableEngines() {
+  return engineEntries().filter(row => isSelectableEngine(row.id));
+}
+/**
+ * 新建批次的默认引擎。
+ *
+ * 保留 r1 不是怀旧：它是唯一一条**不依赖 DeepTutor 上游**的本地引擎。
+ * 若把可选集合收窄成 DeepTutor 一条，上游没装、依赖缺失或子进程崩掉时，
+ * 用户就连一道题都出不了 —— 把可用性押在单一外部依赖上不是收敛，是单点。
+ */
+export const DEFAULT_ENGINE = 'deeptutor-native';
 
 /**
  * `QUIZ_ENGINES` 的读取器由 `engines.js` 注入。

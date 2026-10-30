@@ -45,6 +45,21 @@ Writing flaws requires **19 model calls per question** before retries; shortcuts
 
 - `results.json` checkpoints each returned question, native per-rule decisions and explanations. `calls.jsonl` records start events, completions, stop reasons and usage; `request-events.json` and `summary.json` record actual wall time and known/unknown tokens. Match start and terminal records by index rather than counting JSONL lines as requests. Cache/reasoning subsets are not added again. All attempted calls, including failed ones, are counted; missing usage remains unknown.
 - The upstream writing scorer initializes an exhausted parse to `pass`; the shortcut scorer can also return a passing value after invalid responses. We preserve the native result as `upstreamValue` but expose `status: error, value: null` for those cases. Incomplete runs exit nonzero and show missing/error counts next to any mean, so partial results are not complete benchmark wins.
+
+### Reading `Error in shortcut scorer - choices-only accuracy: Invalid \escape`
+
+This stderr line is **expected output, not a crash**, and it is worth knowing how to read it before quoting a `shortcuts` mean.
+
+**Trigger.** The shortcut scorer asks the judge to infer the original question from the answer choices alone, and parses its reply with `json.loads`. Chinese course questions carry LaTeX, and the judge sometimes re-emits it under a different delimiter — writing `\(R_H\)` where the source used `$R_H$`. `\(` is not a legal JSON escape, so parsing fails with `Invalid \escape: line N column M`. Seen in a 15-question run on 2026-10-30 (physics/Hall coefficient); the byte sequence `\(` appeared in **no** input layer — not the generated questions, not the baseline questions, not the lecture text, not the prompt templates in either the JS rewrite or the vendored upstream YAML. It originates in the judge's own output.
+
+**Upstream behaviour.** `scorers/shortcut_scorer.py` retries up to `num_attempts` (default 3) per question, so a single bad JSON reply costs one extra call and usually recovers. In the run above: 16 choices-only calls for 15 questions, 15 results — one retry, no lost question.
+
+**What protects the mean.** `benchmarker.py:guarded_score` marks a shortcut score invalid when `answer` is not a single letter, when `inferred_question` is empty, or when the explanation is the exhausted-parse sentinel; those rows become `status: error, value: null` and are excluded from `meanAmongCompleted` rather than counted as a passing value. So an exhausted parse cannot inflate `shortcuts`.
+
+**What it does not tell you.** A `shortcuts` score of `0` means the judge *did* recover the topic from the choices alone — that is a genuine item-design finding, unrelated to `\escape`. Keep the two apart: an `Invalid \escape` line is a transient judge-format issue, while `choices_only_success: 1` on a low-scoring item is real signal about distractor quality.
+
+**We do not patch the scorer for this.** Making `json.loads` tolerant of stray backslashes would change the measuring instrument, and a re-scored baseline could no longer be compared with historical runs. The error is documented here instead; when a run shows it, check `calls.jsonl` count vs `results.json` count to confirm whether it cost a retry or (rarely) a dropped question.
+
 - These are item-writing and shortcut metrics. They do not establish lecture coverage, inter-question diversity, explanation correctness, or world-factual correctness. The original prompts do not receive the lecture or explanation. Keep Codex/manual review and historical deduplication results alongside them.
 - Scores from a different judge model or Chinese course data do not reproduce the paper's reported validation performance. This integration first verifies source/protocol behavior; it does not claim a real-model quality evaluation has already happened.
 

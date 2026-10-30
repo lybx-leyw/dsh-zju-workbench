@@ -159,7 +159,22 @@ export function createKnowledgeService({ domain, spec }) {
     async saveQuestionBank(bank) {
       assertOpen(); const account = identityPart(bank.accountId, 'accountId');
       const parsed = spec.tables[QUESTION_BANK_TABLE].valueSchema.safeParse(bank);
-      if (!parsed.success) throw new KnowledgeError('INVALID_RECORD', '题库格式无效');
+      // 把 zod 的具体 issue 带出去。
+      //
+      // 只抛一句「题库格式无效」时，排查方只能拿着整份 bank 反复试 ——
+      // 2026-10-31 就为了这一句话试了六轮 schema 假设，全错。
+      // zod 的 issue 已经明确说了「哪个路径、期望什么、实际收到什么」，
+      // 不把它带出来等于把最有用的证据丢了。
+      if (!parsed.success) {
+        const issues = (parsed.error?.issues ?? []).slice(0, 6).map(issue => {
+          const path = Array.isArray(issue.path) && issue.path.length ? issue.path.join('.') : '(root)';
+          return `${path}: ${issue.message}`;
+        });
+        const detail = issues.length ? `题库格式无效（${issues.join('；')}）` : '题库格式无效';
+        const error = new KnowledgeError('INVALID_RECORD', detail);
+        error.issues = parsed.error?.issues ?? [];
+        throw error;
+      }
       await banks.put(account, parsed.data);
     },
     /** 域与表的诊断信息（集成层可据此确认用的是哪个后端、哪张表）。 */

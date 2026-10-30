@@ -36,13 +36,34 @@ model.errorModels.items.properties.expression={anyOf:[{type:'null'},...expressio
 model.variables.items.properties.name={...string,maxLength:40,description:'稳定变量名，支持中文/其他字母开头，后接字母、数字或下划线，最多40字。'};
 const item=TOOLS.submit_question.parameters.properties.items.items;
 item.properties.parameters=parameters;item.properties.distractors=array(object({label:string,errorId:string}));item.required.push('parameters','distractors');
+// 返工时的硬约束：上一轮审核点名的必改位置。可以不填（首次出题），填了就要真的改到。
+item.properties.mustFix={anyOf:[{type:'null'},{type:'string'}]};
 Object.assign(TOOLS.submit_review.parameters.properties,{selfContained:bool,learningValue:bool,parametersMatched:bool,operationMatched:bool,attributeChecks:array(object({id:string,required:bool,promptQuote:string,reason:string})),distractorChecks:array(object({label:string,errorId:string,errorMatched:bool,reason:string}))});
 TOOLS.submit_review.parameters.required.push('selfContained','learningValue','parametersMatched','operationMatched','attributeChecks','distractorChecks');
 TOOLS.submit_review.parameters.properties.evidenceChecks=array(object({ruleIndex:{type:'integer'},observable:bool,promptQuote:string,reason:string}));
 TOOLS.submit_review.parameters.required.push('evidenceChecks');
+// 前提核验：题模的 preconditions 逐条要求审核指回学生可见题面。
+// 缺这个字段，preconditions 就只是「写了一句没人查」的装饰。
+TOOLS.submit_review.parameters.properties.preconditionChecks=array(object({index:{type:'integer'},satisfied:bool,promptQuote:string,reason:string}));
+TOOLS.submit_review.parameters.required.push('preconditionChecks');
 Object.assign(TOOLS.submit_review.parameters.properties,{independentMatched:bool,independentReason:string});
 TOOLS.submit_review.parameters.required.push('independentMatched','independentReason');
-TOOLS.submit_solution={name:'submit_solution',description:'只看题面独立作答；不查看作者答案、解析与题模。',parameters:object({valid:bool,selfContained:bool,answer:string,explanation:string,reason:string,optionTruth:{type:'object'}},['valid','selfContained','answer','explanation','reason'])};
+// 缺陷清单：审核判 false 时必须说清「改哪里、改什么」，返工才有落脚点。
+// 实测过一次三稿都没动被点名的那一项 —— 旧版只给自由文本，模型自己猜错了位置。
+// target 用选项标签 A–D 或 stem/explanation/rubric，让返工能精确指向学生可见的某一处。
+TOOLS.submit_review.parameters.properties.defects=array(object({
+  target:{type:'string'},
+  kind:{type:'string',enum:['ambiguous','not-unique','wrong','not-self-contained','leaked','weak-distractor','other']},
+  detail:string,
+}));
+TOOLS.submit_solution={name:'submit_solution',description:'只看题面独立作答；不查看作者答案、解析与题模。',parameters:object({valid:bool,selfContained:bool,answer:string,explanation:string,reason:string,optionTruth:{type:'object'},
+ // 盲解同时报「题目本身有毛病」。盲解是最便宜的一步（实测约 1.9k token，审核约 5.5k），
+ // 让它顺手标记歧义/多解，就能在付审核那份钱之前把问题拦下来。
+ // 实测那次 D 项歧义，盲解其实看得出（它选了 B 也说明了理由），却没有任何字段能表达，
+ // 只能等最贵的审核发现。
+ ambiguity:{type:'string',enum:['none','another-option-also-true','option-unclear','question-ambiguous']},
+ ambiguityDetail:{type:'string'}
+},['valid','selfContained','answer','explanation','reason'])};
 
 export const toolRequest=(name,request,binding)=>{
  const tool=structuredClone(TOOLS[name]);
@@ -68,7 +89,7 @@ export function toolArguments(raw,name){
   const stripped=structuredClone(value);
   if(name==='submit_idea'){if(!value.itemModel)throw Error('考法必须包含显式题模');delete stripped.itemModel;}
   if(name==='submit_question')for(const row of stripped.items??[]){delete row.parameters;delete row.distractors;}
-  if(name==='submit_review')for(const key of ['selfContained','learningValue','parametersMatched','operationMatched','attributeChecks','distractorChecks','evidenceChecks','independentMatched','independentReason'])delete stripped[key];
+  if(name==='submit_review')for(const key of ['selfContained','learningValue','parametersMatched','operationMatched','attributeChecks','distractorChecks','evidenceChecks','preconditionChecks','defects','independentMatched','independentReason'])delete stripped[key];
   base.toolArguments({toolCalls:[{...raw.toolCalls[0],arguments:JSON.stringify(stripped)}]},name);
  }
  return value;

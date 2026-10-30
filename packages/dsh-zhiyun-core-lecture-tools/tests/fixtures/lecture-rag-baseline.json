@@ -1,0 +1,94 @@
+{
+  "selectors": {
+    "clean": {
+      "source_path": null,
+      "asset_id": null,
+      "figure": null,
+      "page": null,
+      "region": null,
+      "source_hash": null
+    },
+    "page_ok": {
+      "source_path": null,
+      "asset_id": null,
+      "figure": null,
+      "page": 3,
+      "region": null,
+      "source_hash": null
+    },
+    "page_bool": "Invalid page True: PDF pages are one-based integers. Resend with an integer page >= 1, or null to omit the page.",
+    "page_zero": "Invalid page 0: PDF pages are one-based. Resend with a page >= 1, or null to omit the page.",
+    "page_float": "Invalid page 2.5: PDF pages are one-based integers. Resend with an integer page >= 1, or null to omit the page.",
+    "page_negative": "Invalid page -1: PDF pages are one-based. Resend with a page >= 1, or null to omit the page.",
+    "region_empty": {
+      "source_path": null,
+      "asset_id": null,
+      "figure": null,
+      "page": null,
+      "region": null,
+      "source_hash": null
+    },
+    "region_ok": {
+      "source_path": null,
+      "asset_id": null,
+      "figure": null,
+      "page": null,
+      "region": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "source_hash": null
+    },
+    "region_bad_len": "Invalid region [0, 0, 1]: a crop must be four finite numbers [x0, y0, x1, y1] within 0..1. Resend with a valid crop, or null to inspect the full page.",
+    "region_out_of_range": "Invalid region [0, 0, 1, 1.5]: a crop must be four finite numbers [x0, y0, x1, y1] within 0..1. Resend with a valid crop, or null to inspect the full page.",
+    "region_bool": "Invalid region [0, 0, 1, True]: a crop must be four finite numbers [x0, y0, x1, y1] within 0..1. Resend with a valid crop, or null to inspect the full page.",
+    "region_string": "Invalid region ['0', '0', '1', '1']: a crop must be four finite numbers [x0, y0, x1, y1] within 0..1. Resend with a valid crop, or null to inspect the full page."
+  },
+  "limits": {
+    "default_missing": 200,
+    "default_zero": 200,
+    "default_negative": 200,
+    "default_garbage": 200,
+    "clamp": 1000,
+    "passthrough": 7,
+    "string_number": 42
+  },
+  "filters": {
+    "": [
+      "第一章 力学/牛顿第二定律",
+      "第一章 力学/动量守恒",
+      "第二章 电磁学/库仑定律",
+      "README.pdf",
+      "notes/MixedCase.PDF",
+      "a/b/c.txt"
+    ],
+    "力学": [
+      "第一章 力学/牛顿第二定律",
+      "第一章 力学/动量守恒"
+    ],
+    "*.pdf": [
+      "README.pdf",
+      "notes/MixedCase.PDF"
+    ],
+    "*.PDF": [
+      "README.pdf",
+      "notes/MixedCase.PDF"
+    ],
+    "库仑*": [
+      "第二章 电磁学/库仑定律"
+    ],
+    "?": [],
+    "notes/*": [
+      "notes/MixedCase.PDF"
+    ],
+    "*/*.pdf": [
+      "notes/MixedCase.PDF"
+    ],
+    "nomatch": [],
+    "[ab]*": [
+      "a/b/c.txt"
+    ]
+  }
+}

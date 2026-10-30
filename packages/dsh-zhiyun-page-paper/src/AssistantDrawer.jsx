@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Icon, useStore } from 'dsh-zhiyun-shell-ui';
 import { MarkdownDelegateProvider, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { ask, newSession } from './library.js';
@@ -103,18 +103,84 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
   // 这不是猜的：能往上翻说明用户正在回看历史，此时把他拽回底部是打断。
   // 换会话 / 首屏时 `scrollTop` 是 0，距底必然大于阈值 —— 所以那两个时刻要
   // 单独强制贴底，否则「切回旧会话默认停在最上面」正是用户抱怨的那个问题。
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-    list.scrollTop = list.scrollHeight;
-  }, [state.sessionId, open]);
+  /**
+   * 新消息来时贴底 —— 但**只在用户没有主动往上翻的时候**。
+   *
+   * # 旧实现的 bug
+   *
+   * 判据是「当前离底部是否小于 1.5 屏」。可展开抽屉时内容还是空的
+   * （`scrollTop=0`、`maxScroll=0`），历史消息随后**一次性到达**；
+   * 那一刻 `away` 等于**全部历史的高度**，历史一多就远超 1.5 屏，
+   * 于是被误判成「用户正在回看历史」而不贴底 —— 这正是
+   * 「打开后停在最上面」的来源。
+   *
+   * # 现在的判据
+   *
+   * 用 `userScrolledRef` 记「用户是否真的手动滚动过」：
+   *   - 只有 `scroll` 事件（且不是我们程序改的）才置 true；
+   *   - 展开/换会话/切换时清零 —— 那是新上下文，应当重新贴底。
+   * 于是「一次都没滚过」的初始状态永远贴底，而用户回看历史时也不会被拽走。
+   */
+  const userScrolledRef = useRef(false);
+  // 「这一次 scroll 是我们自己改的」标记。程序改 `scrollTop` 同样会触发 scroll 事件，
+  // 不区分的话，一次自动贴底就会被当成"用户往上翻了"，从此再也不贴底（更难查）。
+  const programmaticRef = useRef(false);
 
+  /**
+   * 贴底。
+   *
+   * ⚠️ 两点讲究：
+   *   1. 打「程序发起」标记 —— 否则自己触发的 scroll 事件会被监听器当成
+   *      "用户往上翻了"，从此再也不贴底（这个坑很难查）。
+   *   2. **连做两帧**。消息密集到达时，第一次赋值那一刻 `scrollHeight` 可能
+   *      还没反映刚渲染的内容（浏览器尚未 reflow），于是只滚到"上一版的底部"，
+   *      差出几十像素。下一帧再补一次就稳定贴底。
+   */
+  const scrollToBottom = useCallback((list) => {
+    if (list === null) return;
+    programmaticRef.current = true;
+    list.scrollTop = list.scrollHeight;
+    requestAnimationFrame(() => {
+      if (!list.isConnected) return;
+      programmaticRef.current = true;
+      list.scrollTop = list.scrollHeight;
+    });
+  }, []);
+
+  // 新消息 / 流式文本增长：只要用户没翻过，就贴底。
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (list === null) return;
+    if (userScrolledRef.current) return;
+    scrollToBottom(list);
+  }, [state.messages.length, state.live?.text, scrollToBottom]);
+
+  // 展开 / 换会话 / 首屏：**强制**贴底（用户的「打开后停在最上面」正是这里）。
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (list === null) return;
+    userScrolledRef.current = false;
+    scrollToBottom(list);
+  }, [open, state.sessionId, topic, name, scrollToBottom]);
+
+  // 只有真正的用户滚动才置位。`programmaticRef` 由上面的 `scrollToBottom` 标记。
   useEffect(() => {
     const list = listRef.current;
-    if (!list) return;
-    const away = list.scrollHeight - list.scrollTop - list.clientHeight;
-    if (away < list.clientHeight * 1.5) list.scrollTop = list.scrollHeight;
-  }, [state.messages.length, state.live?.text]);
+    if (list === null) return undefined;
+    const onScroll = () => {
+      if (programmaticRef.current) { programmaticRef.current = false; return; }
+      const away = list.scrollHeight - list.scrollTop - list.clientHeight;
+      // 贴着底不算「往上翻」：内容变长时浏览器会自动微调 scrollTop。
+      userScrolledRef.current = away > 4;
+    };
+    list.addEventListener('scroll', onScroll, { passive: true });
+    return () => list.removeEventListener('scroll', onScroll);
+  }, [open, state.sessionId]);
+
+  // 展开 / 换会话 / 换论文：重置「用户翻过」的标记，让下一次消息到达时重新贴底。
+  useEffect(() => {
+    userScrolledRef.current = false;
+  }, [open, state.sessionId, topic, name]);
 
   const submit = useCallback(async (event) => {
     event?.preventDefault?.();

@@ -28,7 +28,14 @@ export function assessmentReport(blueprint,results){
  const questions=results.flatMap(r=>r.questions??[]),families=new Set(questions.map(q=>q.familyId));
  const M=new Map(),Q=[];
  for(const q of questions){M.set(q.familyId,{familyId:q.familyId,attributes:q.diagnostic.modelAttributes,status:'design-hypothesis'});Q.push({questionId:q.id,familyId:q.familyId,attributes:q.diagnostic.actualAttributes,status:q.diagnostic.status});}
- const cells=blueprint.cells.map(c=>{const qs=questions.filter(q=>q.blueprintCellId===c.id);return {id:c.id,pointIds:c.pointIds,kind:c.kind,type:c.type,strategy:c.strategy,requested:c.count,usable:qs.length,missing:Math.max(0,c.count-qs.length),families:new Set(qs.map(q=>q.familyId)).size};});
+ const cells=blueprint.cells.map(c=>{
+  const qs=questions.filter(q=>q.blueprintCellId===c.id);
+  // 缺口要说清「为什么缺」。旧报告只有 missing 一个数字，读的人分不清是
+  // 模型没编出来、还是编出来了但被 strategy/type 筛掉（实测出现过后者）。
+  const filter=(results??[]).find(r=>r.blueprintCellId===c.id)?.explorationFilter??null;
+  return {id:c.id,pointIds:c.pointIds,kind:c.kind,type:c.type,strategy:c.strategy,requested:c.count,usable:qs.length,missing:Math.max(0,c.count-qs.length),families:new Set(qs.map(q=>q.familyId)).size,
+   ...(filter?{filter:{compiled:filter.compiled,kept:filter.kept,rejected:filter.rejected.length,rejectedDetail:filter.rejected.map(r=>({why:r.why,strategy:r.strategy}))}}:{})};
+ });
  const attributes=[...new Map(questions.flatMap(q=>q.attributeCatalog).map(a=>[a.id,a])).values()];
  return {purpose:blueprint.purpose,instances:questions.length,modelFamilies:families.size,familyIdentity:'structural-unvalidated',coverageStatus:'batch-only',attributes,cells,M:[...M.values()],Q,psychometricValidation:{calibrated:false,difficulty:null,discrimination:null,studentMastery:null},treeComplete:false};
 }
