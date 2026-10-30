@@ -3940,3 +3940,61 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `open-spaced-repetition/srs-benchmark` | B 其他（Jupyter） | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★282、push 2026-10-24。评测集，无工程代码 |
 | `reuseman/flashcards-obsidian` | B 其他（TS） | MIT ✅（形态不符） | 复习 | **重复且无增益** | ⛔ | rejected | 2026-10-31 | — | r116。★1112、push 2026-10-21。**Anki/Obsidian 双宿主强耦合**，不可移植；调度层已被 `ts-fsrs` 骨架覆盖 |
 | `sizwinz/StudySage-Offline-Online-AI-Note-Assistant` | B 其他（**Python**） | MIT ✅（形态不符） | 笔记 / OCR / 出题 | **重复且无增益** | ⛔ | rejected | 2026-10-31 | — | r116。★12、push 2026-07-05。**Python 桌面/终端 GUI**，非 JS 栈不可复用；OCR + 出题 + 摘要三个能力本仓均已有对应包 |
+| `tt-a1i/archify` | B 其他JS | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★91661、JS、Apache-2.0 ✅。**通用 agent skill**（Claude Code/Codex），非 DSH 插件，非 JS 项目集成对象 |
+| `hyhmrright/brooks-lint` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1552、**HTML**，MIT ✅。6 个代码质量 Agent Skills，非 JS 插件形态 |
+| `liguobao/ds-harness-remote` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1043、TS、**无许可证**。P2P 端到端加密远程访问，形态亦不合 |
+| `urzeye/ophel` | B 其他JS | **GPL-3.0** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1006、TS、**GPL-3.0** ⛔。跨平台 AI 对话整理为工作流，非 DSH 插件 |
+| `ningbainb/deepseek-harness-desktop` | A 原生DSH | BSD-3-Clause ✅ | 无关（桌面发行） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★883、JS、BSD-3-Clause ✅。Windows 客户端/安装器，本仓为 Web 工作台，形态不合 |
+| `countbot-ai/CountBot` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★783、**Python**、MIT ✅。AI Agent，非 JS 栈 |
+| `Clarklevis1995/dsh-mobile` | A 原生DSH | MIT ✅ | 无关（移动端） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★697、**Kotlin**、MIT ✅。原生 Android 端 + mobile-gateway，非 JS 栈亦非本仓形态 |
+| `EverMind-AI/SkillCorpus` | B 其他JS | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★694、**Python**、Apache-2.0 ✅。SKILL.md 语料基础设施，非 JS |
+| `6shenhonghong9/dsh-startup-screen` | A 原生DSH | MIT ✅ | 无关（皮肤） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★652、JS、MIT ✅。开屏动画，纯观感 |
+| `oxbshw/watch-skill` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★538、**Python**、MIT ✅。视频/音频/屏幕转结构化结果，非 JS |
+| `Awesome-AI-Pedia/Awesome-AI-Pedia` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★510、TS、MIT ✅。AI 资源百科，非插件、无可挂载能力 |
+| `Unclecheng-li/DeepSec` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★499、**Python**、MIT ✅。AI 安全攻防平台，无关 |
+| `MichengAI/dsh-skills-manager` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。— |
+| `FeatherHunter/dsh-mattpocock-skills-deck` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★264、TS、MIT ✅。内置 27 个第三方技能包，技能域重复无增益 |
+| `PerryLink/dsh-industry-research` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★215、TS、Apache-2.0 ✅。行业研究域包，非浙大/考试/刷题/笔记/论文/锻炼场景 |
+| `sandbaseai/sandbase-skills` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★203、**Python**、Apache-2.0 ✅。88 个 Agent Skills 包，非 JS |
+| `lencx/skills` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★196、**Shell**、MIT ✅。经验转可复用执行，非 JS |
+| `polang233/dsh-plugin-index` | A 原生DSH（描述指向） | **GPL-3.0** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★100、HTML、**GPL-3.0** ⛔。社区插件索引/市场，与本仓插件页重复 |
+| `extracurricular-ai/dsh-filesnap` | A 原生DSH | Apache-2.0 ✅ | 通用（回退） | 重复且无增益（回退域饱和） | 🔵 | proposed | 2026-10-31 | — | r117。★46、TS、Apache-2.0。**已核验** patch 存在。对话+改动文件一起 rewind/redo，无需 git。registry 已有 `SiriLee/dsh-rewind` / `Anionex/dsh-turn-rewind` / `dsh-checkpoint-rewind` |
+| `left0ver/dsh-file-review` | A 原生DSH | MIT ✅ | 通用（改动审查） | 全新（无落点面板） | 🔵 | proposed | 2026-10-31 | — | r117。★43、TS、MIT。**已核验** `dsh.bundle.patch: ./cordis.patch.yml`。agent 改完文件即时审 diff（依赖 `diff`），可配合 dsh-better-sidebar。本仓无「改动审查」面 → 不满足「同一面板」，条件性 🟡：若插件页加「最近改动」子视图则锁版挂载 |
+| `Chael-Chael/dsh-reference-anything` | A 原生DSH | MIT ✅ | 无关（@ 引用菜单） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★23、TS、MIT ✅。统一 @ 菜单引用命令/技能/文件/agent |
+| `joejojoking-cloud/dsh-file-explorer` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★21、TS、**无许可证**。文件树 + 预览 + 面板内编辑，IDE 域重复 |
+| `cherrchen/dsh-plugin-multi-root-workspace` | A 原生DSH | MIT ✅ | 无关（多根工作区） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★16、TS、MIT ✅。多文件夹 workspace，本仓单仓结构不需要 |
+| `chengzhi43/dsh-file` | A 原生DSH | MIT ✅ | 无关（编辑器） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★9、TS、MIT ✅。VS Code 风格文件管理器 |
+| `2768651338/dsh-plugin-manager` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★9、JS、MIT ✅。插件管家（设置页一键启停 + 备注），市场域饱和 |
+| `AlexPeng07/dsh-custom-plugin` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★9、TS、Apache-2.0 ✅。增强插件大杂烩（天气特效/时间线/提示词库/Mermaid/余额） |
+| `meto-ventus/dsh-ventus-plugins` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★9、JS、**无许可证**。11 插件整合包（主题/热力图/侧栏） |
+| `HaoyanZhang123/dsh-plugin-control-your-schedule` | A 原生DSH | MIT ✅ | 学习 / 今天 | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★9、**HTML**、MIT ✅。便签/画布/日程/绘制面板，本仓已有「今天」页与日历 |
+| `lhmd/dsh-director-toolkit` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★9、JS、MIT ✅。3D 艺术家工具包，无关 |
+| `panqing0313/dsh-plugin-weixin` | A 原生DSH（描述指向） | **NOASSERTION** ⚠ | 无 | 无关 | ⛔ | pending-license | 2026-10-31 | — | r117。★8、JS、**NOASSERTION** ⚠。微信 iLink 通道插件，待人工核验；形态亦不合 |
+| `better-er/dsh-classic-coding` | A 原生DSH | MIT ✅ | 无关（编辑器） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★7、TS、MIT ✅。右侧栏 Monaco 打开工作区文件，等同于 dsh-explorer 域 |
+| `xiaomengxinbb/dsh-qq-bridge` | A 原生DSH | Apache-2.0 ✅ | 无关（IM 桥） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★7、TS、Apache-2.0 ✅。QQ 私聊/群聊双向桥，与学习面板无关 |
+| `jinsiyu/dsh-code-server-app` | A 原生DSH | MIT ✅ | 无关（编辑器） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★7、JS、MIT ✅。打包安装 code-server（VSCode 网页版），重依赖、IDE 形态 |
+| `maike-china/rejection-check` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★7、JS、MIT ✅。标书废标项检查，无关 |
+| `Nexus-Aethra/Nexus-Terminal` | A 原生DSH | MIT ✅ | 无关（终端工作台） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★7、TS、MIT ✅。终端优先的 AI 工作台（dshell），形态与本仓面板制不符 |
+| `EternalNight996/dsh-ui-agents-pixe` | A 原生DSH | MIT ✅ | 无关（皮肤） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★6、JS、MIT ✅。「工作角色」页签 + 像素办公室浮层（508 张角色卡），观感类 |
+| `WJZ-P/dsh-attachments` | A 原生DSH | MIT ✅ | 通用（拖拽） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★6、JS、MIT ✅。图片/文件拖入 DSH |
+| `cholf5/dsh-plugin-file-actions` | A 原生DSH | MIT ✅ | 无关（文件卡动作） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★6、JS、MIT ✅。文件卡片复制路径/编辑器打开/终端运行 |
+| `Kr-ATG/dsh-chat-plus` | A 原生DSH | MIT ✅ | 通用（对话增强） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★6、JS、MIT ✅。零改源码的对话增强大杂烩（执行大盘/卡片/@程序），无可单一强化的底层 |
+| `1byteone/dsh-plugin-dev-tutorial` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★5、**无许可证**。教程文档，非代码 |
+| `MonshinYu/dsh-bun-compat-patch` | A 原生DSH | MIT ✅ | 无关（运行时兼容） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★4、TS、MIT ✅。在 Bundle 1.3.14 上跑 DSH，本仓已有运行时锁 |
+| `Jockjrop/dsh-usage-stats` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★3、JS、Apache-2.0 ✅（形态重复）。用量统计（热力图/24h token），registry 已判「用量簇 19 条 → 簇内取一」 |
+| `ymck-x/dsh-plugin-index` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★3、**Python**。插件索引（按 bundle.patch 判真伪），市场域重复 |
+| `PPawnsir/dsh-notes-plugin` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★3、JS、**无许可证**。空描述，笔记插件 |
+| `Jesse-njx/dsh-voice` | A 原生DSH | MIT ✅ | 无关（语音） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★3、TS、MIT ✅。语音输入/朗读，本仓无语音场景 |
+| `zhangguitao666/meeting-suite` | A 原生DSH | MIT ✅ | 无关（会议纪要） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★3、JS、MIT ✅。任务日历 + 会议纪要转写，非学习域 |
+| `greyoak111/siyuan-codex-bridge` | A 原生DSH | MIT ✅ | 无关（笔记桥） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★3、JS、MIT ✅。思源笔记官方 MCP 桥，本仓用自有 vault |
+| `xine2009cn/dsh-branch-inbox-guard` | A 原生DSH | MIT ✅ | 无关（分支队列） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★2、JS、MIT ✅。修 fork 子会话继承父队列提示词的问题，属 DSH 内部行为修补 |
+| `iptton-ai/dsh-plugin-session-notes` | A 原生DSH | MIT ✅ | 笔记（对话便签） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★2、JS、MIT ✅。对话内便签高亮标注（dynamic Cordis plugin），笔记域已饱和 |
+| `cultureshocked/dsh-source-notebook` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★2、JS、**无许可证**。RAG 学术笔记本 |
+| `luxiwusuobuneng/dsh-plugin-context-manager` | A 原生DSH | MIT ✅ | 通用（上下文） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★2、JS、MIT ✅。逐轮记录 + 优先级注入记忆。registry 已有 `bowenliang123/dsh-context`(★3900) 等同域 |
+| `misterbig5222-oss/dsh-highlighter` | A 原生DSH | MIT ✅ | 笔记（高亮标注） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★2、**PowerShell**、MIT ✅。8 色高亮 + 标签，与上行同域 |
+| `jihaoran222/dsh-violet-heart` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★2、JS、MIT ✅。文本过滤（术语泄漏防护），无关 |
+| `wangzhanchao883/dsh-screenshot-capture` | A 原生DSH | MIT ✅ | 无关（截图→Obsidian） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★2、JS、MIT ✅。浮动窗截图 + Obsidian 笔记，本仓不接 Obsidian |
+| `mattcarvercom/dsh-no-phone-home` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、JS、MIT ✅。关闭遥测的 patch-only bundle，非功能集成 |
+| `JasperGuWP/dsh-plugin-schemes` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、**PowerShell**、MIT ✅。插件开发规范文档 |
+| `DarrenIce/dsh-notes-plugin` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、TS、**无许可证**。笔记插件 |
+| `Rikinshah787/dsh-plugins` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、JS、MIT ✅。web_fetch 阅读器 + 快记，无单一可强化点 |
