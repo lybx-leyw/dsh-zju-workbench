@@ -21,6 +21,7 @@
  */
 
 import { PaperError, paperErrorStatus } from './errors.js';
+import { readPaperTree, upstreamRefFor } from './paper-tree.js';
 
 /** 本包自有路由前缀。页面侧的同名常量在 `dsh-zhiyun-page-paper/src/library.js`。 */
 export const PAPER_ROUTE_PREFIX = '/zhiyun-paper';
@@ -69,8 +70,9 @@ function asPaperError(err) {
  *   都不该拦住宿主启动。
  * @param options.describe - 产出 `/api/status` 的负载（上游挂载状态、版本核对结果、缓存统计）。
  */
-export function createPaperHandler({ connection, getTranslator, sessionAdmin = null, describe }) {
-  const deps = { getTranslator, sessionAdmin, describe };
+export function createPaperHandler({ connection, getTranslator, sessionAdmin = null, describe, dataDir }) {
+  // `dataDir` 要传给 dispatch：`/api/tree` 与 `/api/ref` 读论文库目录。
+  const deps = { getTranslator, sessionAdmin, describe, dataDir };
 
   return function handler(req, res) {
     const rejection = typeof connection?.requestRejection === 'function'
@@ -94,10 +96,37 @@ export function createPaperHandler({ connection, getTranslator, sessionAdmin = n
   };
 }
 
-async function dispatch(req, res, url, sub, { getTranslator, sessionAdmin, describe }) {
+async function dispatch(req, res, url, sub, { getTranslator, sessionAdmin, describe, dataDir }) {
   if (sub === '/api/status') {
     if (req.method !== 'GET') return sendMethodNotAllowed(res, 'GET');
     return sendJson(res, 200, describe());
+  }
+
+  // 论文库的**多级文件树**（本包自有，不走上游）。
+  //
+  // 为什么需要：上游只认 `topic/name` 两段式，它的 `/api/library` 是扁平表，
+  // 看不出 `理学/力学/讲义.pdf` 这个层级。这里直接读盘并按编码规则还原层级，
+  // 让论文页能有和笔记库一样的多级树。
+  if (sub === '/api/tree') {
+    if (req.method !== 'GET') return sendMethodNotAllowed(res, 'GET');
+    if (typeof dataDir !== 'string' || dataDir === '') {
+      throw new PaperError('NO_DATA_DIR', '论文库目录没有配置');
+    }
+    return sendJson(res, 200, { entries: await readPaperTree(dataDir) });
+  }
+
+  /**
+   * 路径 → 上游坐标（`{topic, name}`）。
+   *
+   * 树上的深层路径不能直接交给上游，必须先编码成单段 topic。把这件事放在宿主侧，
+   * 页面上就不用重复实现一遍编码规则 —— 两边各写一份迟早漂移，而漂移的结果是
+   * 「点开一篇论文却打开了别的」。
+   */
+  if (sub === '/api/ref') {
+    if (req.method !== 'GET') return sendMethodNotAllowed(res, 'GET');
+    const rel = url.searchParams.get('path') ?? '';
+    if (rel === '') throw new PaperError('INPUT', '缺少 path');
+    return sendJson(res, 200, upstreamRefFor(rel));
   }
 
   if (sub === '/api/translate') {

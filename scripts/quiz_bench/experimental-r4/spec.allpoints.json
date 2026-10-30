@@ -1,0 +1,17 @@
+{
+  "_note": "count=7 覆盖全部 7 个知识点（含此前从未用到的 kp-3 人才争夺、kp-4 民国学术、kp-5 读书无用论、kp-6 读书价值）。用于验证：同质化是否主要来自之前只取前 3 个重复切片。",
+  "kind": "development",
+  "arms": ["r4"],
+  "concurrencies": [2],
+  "batches": [7],
+  "maxCalls": 140,
+  "requestTimeoutMs": 240000,
+  "wallBudgetMs": 2400000,
+  "cases": [
+    {
+      "id": "hist-1",
+      "kind": "authored",
+      "source": "artifacts/parse-real/87882-1973145/graph.json"
+    }
+  ]
+}

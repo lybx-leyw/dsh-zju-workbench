@@ -442,6 +442,21 @@ body[data-zhiyun] .zs-nt-mode.is-on {
   color: var(--zy-accent);
 }
 
+
+/* PDF 标签页的正文：iframe 撑满正文列。
+ *
+ * 不套 `.zs-nt-scroll`：那个容器是给**文本正文**用的（有自己的 padding 与纵向
+ * flex），而 PDF 阅读器要自己管滚动 —— 嵌套两层滚动条会让滚轮行为变得不可预测。
+ * 这里让它直接吃满 `.zs-nt-main` 剩下的高度。 */
+body[data-zhiyun] .zs-nt-pdf {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: 0;
+  display: block;
+  background: var(--zy-bg);
+}
+
 /* 正文列：封顶 + 居中。面板铺开了，但读到第 100 个字时眼睛要能回来。 */
 body[data-zhiyun] .zs-nt-scroll {
   flex: 1;

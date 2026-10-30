@@ -14,11 +14,12 @@ import assert from 'node:assert/strict';
 import {model, graph} from '../packages/dsh-zhiyun-quiz-lab/src/kernel/fixture.mjs';
 import {
   LAB_ENGINE, CHECKPOINT_VERSION, createLabRun, toR4Config, patchCheckpoint,
-  recordQuestion, toBankQuestion,
+  recordQuestion, toBankQuestion, resolveGraph, coveredPoints,
 } from '../packages/dsh-zhiyun-quiz-lab/src/engine.js';
 import {canResumeLab, resumeRefusal, LAB_CHECKPOINT_VERSION} from '../packages/dsh-zhiyun-quiz-lab/src/checkpoint.js';
 import {apply, name as labName, inject} from '../packages/dsh-zhiyun-quiz-lab/src/index.js';
-import {engineEntries, engineVersion, registerEngine} from '../packages/dsh-zhiyun-core-quiz/src/engines.js';
+import {engineEntries, engineVersion, registerEngine, engineComplete, newEngineCheckpoint} from '../packages/dsh-zhiyun-core-quiz/src/engines.js';
+import {knowledgePoints} from '../packages/dsh-zhiyun-core-quiz/src/knowledge-points.js';
 
 const point = id => ({id, title: id, text: `知识点${id}`, courseId: 'c', subId: 's', courseTitle: 'C', lessonTitle: 'S', blockIndexes: [0], page: 1, atSec: 0});
 const plan = (count = 1) => ({count, types: ['mcq'], strategies: [{id: 'understand'}], mode: 'practice', tasks: [{point: point('a'), count, type: 'mcq', strategy: 'understand'}]});
@@ -163,4 +164,86 @@ test('lab 的 apply 注册引擎，返回的注销函数把它摘掉', () => {
 
 test('core-quiz 没有暴露注册表时，apply 明确报错而不是静默不挂', () => {
   assert.throws(() => apply({zhiyunQuiz: {}}), /没有暴露引擎注册表/);
+});
+
+// ── 以下三条钉的是「测试形状必须等于产品形状」这个教训 ──
+// 产品 launch() 只在 engine==='r3-v9' 时算 plan.sourceGraph，而 generatePoints 的入参
+// 里没有 graph。上面那批用例全部自己塞了 graph，所以三条真实故障都躲过了测试。
+
+/** 造一条能过 graphFromRecord 的宿主记录（结构与 knowledgePoints 的预期一致）。 */
+const record = (titles = ['a']) => ({
+  courseId: 'c', subId: 's',
+  blocks: titles.map((title, index) => ({index, page: 1, text: `知识点${title}的定义与边界`, tag: {role: '主线'}})),
+  lecture: {generationVersion: 'architecture-v4', revision: 'r1', chapters: [{topics: titles.map(title => ({title, blocks: [{type: 'text', text: `知识点${title}的定义与边界`}]}))}]},
+  tree: {title: '根', children: titles.map((title, index) => ({kind: 'leaf', title, blocks: [{index}]}))},
+});
+
+test('产品不传 graph 时用 hosts.records 现建图谱，不炸成 undefined.root', async () => {
+  const host = record(['a']);
+  const fake = model();
+  const run = createLabRun({pool: {call: fake.call, concurrency: 2, snapshot: []}, records: [host]});
+  const points = knowledgePoints(host);
+  const emitted = [];
+  const result = await run.generatePoints({
+    plan: {count: 1, types: ['mcq'], strategies: [{id: 'understand'}], mode: 'practice',
+      tasks: [{point: points[0], count: 1, type: 'mcq', strategy: 'understand'}]},
+    runId: 'no-graph', onCheckpoint: async () => {}, onQuestion: async q => emitted.push(q),
+  });
+  assert.equal(result.admitted, 1);
+  assert.equal(emitted.length, 1);
+  // 归属点必须还是那个知识点，而不是被翻成图谱节点 id。
+  assert.equal(emitted[0].pointId, points[0].id);
+});
+
+test('三条图谱来源按 input.graph → hosts.graph → records 依次回退，都没有则明确早失败', async () => {
+  const point = id => ({id, title: `知识点${id}`, text: 'x', courseId: 'c', subId: 's'});
+  const makePlan = () => ({count: 1, types: ['mcq'], strategies: [{id: 'understand'}], mode: 'practice',
+    tasks: [{point: point('a'), count: 1, type: 'mcq', strategy: 'understand'}]});
+  const base = () => ({pool: {call: model().call, concurrency: 2, snapshot: []}});
+  for (const [label, hosts, extra] of [
+    ['input.graph', base(), {graph: graph()}],
+    ['hosts.graph', {...base(), graph: graph()}, {}],
+  ]) {
+    const run = createLabRun(hosts);
+    const result = await run.generatePoints({...extra, plan: makePlan(), runId: label, onCheckpoint: async () => {}, onQuestion: async () => {}});
+    assert.equal(result.admitted, 1, label);
+  }
+  // 一处图谱来源都没有：必须是可读的 SOURCE_TREE，而不是 Cannot read properties of undefined。
+  await assert.rejects(
+    createLabRun(base()).generatePoints({plan: makePlan(), runId: 'none', onCheckpoint: async () => {}, onQuestion: async () => {}}),
+    {code: 'SOURCE_TREE'},
+  );
+});
+
+test('出满一批后 engineState.complete 与 phase 都被写对，否则产品永远显示未完成', async () => {
+  const off = registerEngine({...LAB_ENGINE, createRun: () => ({})});
+  try {
+    const host = record(['a']), points = knowledgePoints(host);
+    const plan = {count: 1, types: ['mcq'], strategies: [{id: 'understand'}], mode: 'practice',
+      tasks: [{point: points[0], count: 1, type: 'mcq', strategy: 'understand'}], engine: 'r4-lab'};
+    const run = createLabRun({pool: {call: model().call, concurrency: 2, snapshot: []}, records: [host]});
+    const result = await run.generatePoints({plan, checkpoint: newEngineCheckpoint(plan), runId: 'complete',
+      onCheckpoint: async () => {}, onQuestion: async () => {}});
+    assert.equal(result.checkpoint.engineState.complete, true);
+    assert.equal(result.checkpoint.phase, 'completed');
+    // 产品就是靠这两个字段判定收尾的（question-bank.js 的 stored.state 那一行）。
+    assert.equal(engineComplete({plan, checkpoint: result.checkpoint}), true);
+    // actualTask 供 view() 覆盖任务行显示名，缺了它综合题会显示成第一个点。
+    assert.equal(result.checkpoint.tasks[0].actualTask.pointId, points[0].id);
+  } finally { off(); }
+});
+
+test('题目归属用图谱把节点 id 翻回知识点 id，不再恒判给第一个任务', async () => {
+  const host = record(['a', 'b']), points = knowledgePoints(host);
+  const resolved = resolveGraph({records: [host], points});
+  const nodes = [];
+  const walk = node => node.children.length ? node.children.forEach(walk) : nodes.push([node.id, node.point.id]);
+  walk(resolved.root);
+  // 只覆盖 b 的题必须归到 b，而不是因为「等于第一个任务」被归到 a。
+  assert.deepEqual(coveredPoints({coveredNodeIds: [nodes[1][0]]}, resolved), [points[1].id]);
+  // 综合题同时在两个节点上，两个点都要列出。
+  assert.deepEqual(coveredPoints({coveredNodeIds: [nodes[0][0], nodes[1][0]]}, resolved), [points[0].id, points[1].id]);
+  const banked = toBankQuestion({id: 'q2', type: 'mcq', coveredNodeIds: [nodes[1][0]]},
+    {plan: {tasks: points.map((point, i) => ({point, count: 1, type: 'mcq', strategy: 'understand'}))}}, {}, resolved);
+  assert.equal(banked.pointId, points[1].id);
 });

@@ -1,0 +1,16 @@
+{
+  "kind": "development",
+  "arms": ["native"],
+  "concurrencies": [1],
+  "batches": [2],
+  "maxCalls": 60,
+  "requestTimeoutMs": 240000,
+  "wallBudgetMs": 900000,
+  "cases": [
+    {
+      "id": "prob-1",
+      "kind": "authored",
+      "source": "artifacts/quiz-r4-real/prob-1-graph.json"
+    }
+  ]
+}

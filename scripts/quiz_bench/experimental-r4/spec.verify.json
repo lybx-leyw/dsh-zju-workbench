@@ -1,0 +1,17 @@
+{
+  "_note": "一次实跑同时验证 P0（返工反馈结构化 / 重复稿拦截）与 P1（盲解歧义前置拦截 / 材料去重）四项改动。arms 含 native 以补齐三臂对照。batches 为 [2,2]：cold 出 2 题、warm 再出 2 题，同时测缓存复用与续跑。",
+  "kind": "development",
+  "arms": ["r1", "r4"],
+  "concurrencies": [1],
+  "batches": [2, 2],
+  "maxCalls": 70,
+  "requestTimeoutMs": 240000,
+  "wallBudgetMs": 1200000,
+  "cases": [
+    {
+      "id": "prob-1",
+      "kind": "authored",
+      "source": "artifacts/quiz-r4-real/prob-1-graph.json"
+    }
+  ]
+}

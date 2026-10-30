@@ -62,6 +62,13 @@ const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' 
 
 const NOTES_ROUTE = '/api/zhiyun-vault-notes';
 const VAULT_ROUTE = '/api/zhiyun-vault';
+/**
+ * PDF 阅读器的同源地址（宿主路由，见 `src/pdf-viewer.js`）。
+ *
+ * 阅读器是 iframe 而不是本 bundle 里的组件：pdf.js 的 worker 必须是独立脚本，
+ * 而本包客户端有「不许内联 src/ 之外文件」的构建守卫。同源则是为了把主题送进去。
+ */
+const PDF_VIEWER_PREFIX = '/zhiyun-vault-pdf/';
 const AUTOSAVE_MS = 800;
 /** 历史栈上限：够来回找，又不会把内存当日记本。 */
 const HISTORY_LIMIT = 60;
@@ -121,6 +128,42 @@ function dirOf(rel) {
 function baseOf(rel) {
   const slash = String(rel).lastIndexOf('/');
   return slash === -1 ? String(rel) : String(rel).slice(slash + 1);
+}
+/** 去掉末尾扩展名（`a/b.pdf` → `a/b`）。标签标题用它，与笔记的「标题即文件名」一致。 */
+function stripExt(rel) {
+  const text = String(rel);
+  const dot = text.lastIndexOf('.');
+  const slash = text.lastIndexOf('/');
+  return dot <= slash ? text : text.slice(0, dot);
+}
+
+/** 这条路径是不是 PDF（决定标签页渲染 iframe 还是编辑器）。 */
+function isPdfPath(rel) {
+  return /\.pdf$/i.test(String(rel));
+}
+
+/**
+ * 把 `File` 读成 base64（不带 data URL 前缀）。
+ *
+ * 用 `FileReader` 而不是 `arrayBuffer()` + 手写编码：后者要处理分块（几十 MB 的
+ * PDF 一次性 `String.fromCharCode.apply` 会爆调用栈），而 `FileReader` 是浏览器
+ * 原生实现，不需要我们操心。
+ *
+ * @param file - `File`。
+ * @returns base64 字符串。
+ */
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error('读取文件失败'));
+    reader.onload = () => {
+      const text = String(reader.result ?? '');
+      // `readAsDataURL` 给的是 `data:application/pdf;base64,XXXX`，只要逗号之后那段。
+      const comma = text.indexOf(',');
+      resolve(comma === -1 ? text : text.slice(comma + 1));
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 /**
@@ -221,6 +264,62 @@ function TreeRow({ row, current, cursor, expanded, onOpen, onToggle, onDropOn, o
   </li>;
 }
 
+/**
+ * PDF 标签页的正文：一个同源 iframe，指向宿主的 PDF 阅读器路由。
+ *
+ * # 为什么是 iframe
+ *
+ * 见 `pdf-viewer.js` 顶部：pdf.js 的 worker 必须是独立脚本，而客户端 bundle
+ * 不许内联本包 `src/` 之外的文件。iframe 同时解决这两件事，并且**同源** ——
+ * 只有同源才能把主题 `postMessage` 进去，PDF 才会跟着亮暗切换。
+ *
+ * # 主题同步
+ *
+ * 外层 `body[data-ds-dark-theme]` 是宿主的暗色开关（`shell-workbench` 在用它）。
+ * 这里用 `MutationObserver` 盯着它，变了就通知 iframe；加载完成时也补发一次，
+ * 否则首帧会停在 iframe 自己猜的颜色上。
+ *
+ * @param page - 库内相对路径（含 `.pdf`）。
+ * @param title - 标签标题（不含扩展名）。
+ */
+function PdfViewer({ page, title }) {
+  const frameRef = useRef(null);
+  const src = `${PDF_VIEWER_PREFIX}?path=${encodeURIComponent(page)}`;
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (frame === null) return undefined;
+    const readTheme = () => (document.body.dataset.dsDarkTheme !== undefined
+      || document.body.classList.contains('data-ds-dark-theme')
+      ? 'dark'
+      : 'light');
+    const push = () => {
+      // `contentWindow` 在同源下拿得到；拿不到说明被隔离了，那就只能维持默认。
+      frame.contentWindow?.postMessage({ type: 'zhiyun-pdf-theme', theme: readTheme() }, '*');
+    };
+    // 加载完成时补发（iframe 自己解析完才有 listener）。
+    frame.addEventListener('load', push);
+    // 宿主切主题时同步。观察 `data-ds-dark-theme` 与 class 两种写法。
+    const observer = new MutationObserver(push);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-ds-dark-theme', 'class'] });
+    push();
+    return () => {
+      frame.removeEventListener('load', push);
+      observer.disconnect();
+    };
+  }, [src]);
+
+  return <iframe
+    ref={frameRef}
+    className="zs-nt-pdf"
+    src={src}
+    title={title}
+    /* 同源（要读写主题），但不要给它 `allow-same-origin` 之外的权限。 */
+    sandbox="allow-same-origin allow-scripts allow-downloads"
+  />;
+}
+
+/** 标签页条。每一页带自己的 ×；右侧的 ＋ 新建一篇。 */
 /** 标签页条。每一页带自己的 ×；右侧的 ＋ 新建一篇。 */
 function TabStrip({ tabs, active, onPick, onClose, onCreate }) {
   return <div className="zs-nt-tabs" role="tablist">
@@ -365,6 +464,8 @@ export function NotesLibrary() {
   const scrollRef = useRef(null);
   /** 本页根节点：document 级键盘处理器靠它判断"我还在不在页面上"。 */
   const rootRef = useRef(null);
+  /** 隐藏的 `<input type="file">`：导入 PDF 的入口。 */
+  const pdfInputRef = useRef(null);
   /**
    * 最近一次交互过的树行路径（`null` = 不在树上）。
    *
@@ -468,10 +569,20 @@ export function NotesLibrary() {
 
     setBusy(true);
     try {
+      // PDF 走另一条路：它不是文本，没有 `read` 可读，也不需要草稿与自动保存。
+      // 标签项用 `kind` 区分，正文区据此决定渲染 iframe 还是编辑区。
+      if (isPdfPath(path)) {
+        setTabs((ts) => (ts.some((t) => t.path === path) ? ts : [...ts, {
+          path, title: stripExt(baseOf(path)), kind: 'pdf', draft: '', dirty: false, savedAt: null,
+        }]));
+        // PDF 不进反链/图谱（索引器只认 .md），右栏如实留空。
+        await refreshSide(null);
+        return;
+      }
       const found = await notes('read', { name: path });
       if (!found) { setNotice({ tone: 'bad', text: `没有名为「${baseOf(path)}」的笔记。` }); return; }
       setTabs((ts) => (ts.some((t) => t.path === path) ? ts : [...ts, {
-        path, title: baseOf(path), draft: found.markdown, dirty: false, savedAt: null,
+        path, title: baseOf(path), kind: 'note', draft: found.markdown, dirty: false, savedAt: null,
       }]));
       await refreshSide(path);
     } catch (error) {
@@ -568,6 +679,53 @@ export function NotesLibrary() {
       setPreview(false);
     } catch (error) {
       setNotice({ tone: 'bad', text: `新建失败：${error.message}` });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * 导入 PDF 到库里（落在当前笔记所在的文件夹）。
+   *
+   * # 为什么用 `<input type="file">` 而不是拖拽
+   *
+   * 拖拽在这个页面上已经有含义了 —— 拖动树行到文件夹是「移动」。再让「拖文件进来」
+   * 也触发导入，两种拖放会互相干扰（用户拖一张 PDF 到树上是想移动还是想导入？）。
+   * 文件选择器语义单一，也不会误伤现有交互。
+   *
+   * # 为什么读成 base64 走 RPC
+   *
+   * 宿主的路由只给了「按 JSON 信封收发」的通道（`connection.fetch.register`），
+   * 没有 multipart 解析。PDF 走 base64 会膨胀约 33%，但换来的是：不需要在宿主侧
+   * 写一个 multipart 解析器，也没有临时文件要清理。上限 64MB 由宿主再挡一次。
+   *
+   * @param file - `File`（来自 `<input type="file">`）。
+   * @param folder - 目标文件夹（相对库根，可空）。
+   */
+  const importPdf = async (file, folder = '') => {
+    if (!file) return;
+    const ext = (file.name.split('.').pop() ?? '').toLowerCase();
+    if (ext !== 'pdf') {
+      setNotice({ tone: 'bad', text: `只能导入 PDF，这个文件是 .${ext}。` });
+      return;
+    }
+    setBusy(true);
+    setNotice({ tone: 'ok', text: `正在导入「${file.name}」…` });
+    try {
+      const base64 = await fileToBase64(file);
+      const made = await notes('importAsset', {
+        // 标题取文件名去掉扩展名 —— 与「标题即文件名」一致。
+        title: stripExt(file.name),
+        folder,
+        ext: 'pdf',
+        base64,
+      });
+      await refreshTree();
+      // 导入完直接打开，用户不用再去树上找一遍。
+      await openNote(made.path);
+      setNotice({ tone: 'ok', text: `已导入「${made.title}」。` });
+    } catch (error) {
+      setNotice({ tone: 'bad', text: `导入失败：${error.message}` });
     } finally {
       setBusy(false);
     }
@@ -915,10 +1073,24 @@ export function NotesLibrary() {
         <button type="button" title="文件树" aria-pressed={explorerOpen} className={explorerOpen ? 'is-on' : ''} onClick={() => setExplorerOpen((v) => !v)}><Icon name="collapse" size={16} /></button>
         <button type="button" title="新建笔记" disabled={busy} onClick={() => void createNote(folderOfActive)}><Icon name="plus" size={16} /></button>
         <button type="button" title="新建文件夹" disabled={busy} onClick={() => void createFolder(folderOfActive)}><Icon name="folderPlus" size={16} /></button>
+        <button type="button" title="导入 PDF" disabled={busy} onClick={() => pdfInputRef.current?.click()}><Icon name="paper" size={16} /></button>
         <button type="button" title="过滤笔记" onClick={() => { setExplorerOpen(true); filterRef.current?.focus(); }}><Icon name="search" size={16} /></button>
         <span className="zs-nt-ribbon-gap" />
         <button type="button" title="右栏" aria-pressed={rightOpen} className={rightOpen ? 'is-on' : ''} onClick={() => setRightOpen((v) => !v)}><Icon name="panelRight" size={16} /></button>
       </nav>
+      {/* 隐藏的文件选择器：导入 PDF 的唯一入口（见 importPdf 里为什么不用拖拽）。
+          选完立刻清空 value，否则同一个文件第二次选不会触发 onChange。 */}
+      <input
+        ref={pdfInputRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0] ?? null;
+          event.target.value = '';
+          if (file !== null) void importPdf(file, folderOfActive);
+        }}
+      />
 
       {explorerOpen && <aside className="zs-nt-explorer" aria-label="文件树">
         <div className="zs-nt-explorer-head">
@@ -1004,18 +1176,22 @@ export function NotesLibrary() {
                 <strong>{baseOf(activeTab.path)}</strong>
               </span>
               <span className="zs-nt-crumbs-right">
-                {activeTab.dirty
-                  ? <span className="zs-nt-saving">未保存…</span>
-                  : activeTab.savedAt
-                    ? <span className="zs-nt-saving">已保存 {new Date(activeTab.savedAt).toLocaleTimeString('zh-CN', { hour12: false })}</span>
-                    : null}
-                <button type="button" className={`zs-nt-mode${preview ? ' is-on' : ''}`} aria-pressed={preview} onClick={() => setPreview((v) => !v)}>
-                  {preview ? '编辑' : '阅读'}
-                </button>
+                {activeTab.kind === 'pdf' ? <span className="zs-nt-saving">只读 · PDF</span> : <>
+                  {activeTab.dirty
+                    ? <span className="zs-nt-saving">未保存…</span>
+                    : activeTab.savedAt
+                      ? <span className="zs-nt-saving">已保存 {new Date(activeTab.savedAt).toLocaleTimeString('zh-CN', { hour12: false })}</span>
+                      : null}
+                  <button type="button" className={`zs-nt-mode${preview ? ' is-on' : ''}`} aria-pressed={preview} onClick={() => setPreview((v) => !v)}>
+                    {preview ? '编辑' : '阅读'}
+                  </button>
+                </>}
               </span>
             </div>
 
-            <div className="zs-nt-scroll" ref={scrollRef}>
+            {activeTab.kind === 'pdf'
+              ? <PdfViewer page={activeTab.path} title={activeTab.title}/>
+              : <div className="zs-nt-scroll" ref={scrollRef}>
               <h1 className="zs-nt-title">{baseOf(activeTab.path)}</h1>
               {preview
                 ? <div className="zs-nt-preview-body">
@@ -1037,7 +1213,7 @@ export function NotesLibrary() {
                   onChange={(e) => edit(e.target.value)}
                   placeholder={'写点什么。用 [[另一篇笔记]] 连过去，#标签 归类。'}
                 />}
-            </div>
+              </div>}
           </>}
 
         <div className="zs-nt-status">
