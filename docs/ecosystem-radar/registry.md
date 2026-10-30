@@ -3913,3 +3913,30 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `frank-xjh/iZJU-Wiki` | B 其他（TS，国际校区 Wiki） | **null** ⛔ | 国际校区信息 | 全新但无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★6、push 2025-09-15。静态 Wiki，体量过小 |
 | `sjyinzju/ZJU-night-scare` | B 其他（TS） | **null** ⛔ | 无 | 全新但无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★12、push 2026-10-07。描述仅「浙大夜惊魂」，无实质内容 |
 | `memset0/Learning-at-ZJU-Helper`（**结论更正** 🔵 → 🟡） | B 其他JS（userscript + webpack） | **MIT** ✅ | 学在浙大 **courses 域**（作业成绩/考试） | **重复且可强化**（`source-campus` 缺口） | 🟡 | proposed | 2026-10-16 | — | **r115 更正**。前三行（2026-10-16 🟡 / 10-25 🔵 / 10-30 维持 🔵）未覆盖其 `src/plugins/score-finder`：直读 `courses.zju.edu.cn/api/course/{id}/activity-reads-for-user`、`.../homework-scores`、`.../exams`。而 `dsh-zhiyun-source-campus/src/index.js:188` 自述登录域**不含 `courses.zju.edu.cn`**（全包 grep 零命中）→ **「学在浙大」本仓只做了 classroom，没做 courses**，属真实缺口而非重复。判 🟡 而非 🟢：强化路径只能走「给 `source-campus` 补域 + 两个读口」，判据③「多调了更优质实现」不成立（上游是浏览器同源 cookie 的 userscript，本仓在 host 侧）；「新建成绩页」则判据①❌ → 自行否决。**本轮因此不出骨架**。下轮 A 组应找可锁版的 `courses` 客户端 |
+
+## 2026-10-31 · C 组（r116）· 追加 22 行（SRS 子域饱和，0 🟢）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `kirilxd/claude-tutor` | B 其他JS（Claude Code 插件） | **MIT** ✅ | 复习 / 刷题 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★144、push 2026-07-20。学计划 + 自适应测验 + **SM-2** + Web 看板；形态为 Claude Code 的 `skills/commands/hooks`，**与 DSH 插件模型不同构**。SM-2 旧于 FSRS，已被 `dsh-radar-fsrs-scheduler` 覆盖 → 判据③不成立。仅作「计划→测验→看板」产品形态线索 |
+| `lo-tp/sm2-plus` | B 其他JS | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★54、push 2019-01-29。SM-2 的 JS 改良版，算法层级已被 FSRS 超越 |
+| `yodaiken/dolphinsr` | B 其他JS | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★78、push 2017-04-14。纯 SM-2，长期停更 |
+| `open-spaced-repetition/free-spaced-repetition-scheduler` | B 其他（FSRS 规范文档仓） | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★731。**FSRS 的规范/文档仓**，`ts-fsrs` 即其实现 → 只作调参说明书，无代码可摘 |
+| `maimemo/SSP-MMC` | B 其他（Python 论文代码） | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★226、push 2025-11-28。墨墨 KDD'22 的 SSP-MMC，**FSRS 源于其 DHP 模型** → 祖先而非更优；非 JS |
+| `Human-Centric-Machine-Learning/memorize` | B 其他（Jupyter） | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★190、push 2023-01-10。PNAS 半衰期回归论文代码，纯学术不可工程化 |
+| `eannchen/leetsolv` | B 其他（**Go** CLI） | **MIT** ✅ | 刷题（DSA） | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★133、push 2026-07-17。定制 SM-2 + **熟悉度/重要性/推理三维**。唯一增益思路是「刷题难度感知进调度」，**Go 栈不可复用**、算法仍旧于 FSRS → 仅记思路 |
+| `zagortenay333/cronomix` | B 其他JS（GNOME Shell 扩展） | **MIT** ✅ | 计时 + 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★657、push 2026-04-20。番茄钟 + 待办 + 时间追踪 + 闪卡合一，**强耦合 GNOME Shell 宿主**不可移植；「计时器与复习同面板」已由「今天」页 + `focus-machine` 覆盖。番茄钟类历史已记 rejected（第 N 轮），本条因「带 SRS」单列 |
+| `tristcoil/hanabira.org` | B 其他（NextJS + MongoDB 全栈） | **MIT** ✅ | 语言学习（日韩） | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★430、push 2025-03-26。2339 文件重型平台（YouTube 沉浸 / 分词 / SRS / 挖词）。**日韩语言学习域与本仓浙大课程正交**，体量与部署成本不成比例 |
+| `CaviraOSS/PageLM` | B 其他（TS 教育平台） | **NOASSERTION** ⚠ | 学习（NotebookLM 类） | 重复且无增益 | 🔵 | pending-license | 2026-10-31 | — | r116。★2053、push 2026-10-29。**许可证无法识别 → 不采用、不摘代码**；且形态为完整平台，非可移植模块 |
+| `baobabKoodaa/cloudbite` | B 其他JS | **NOASSERTION** ⚠ | 复习 | 重复且无增益 | 🔵 | pending-license | 2026-10-31 | — | r116。★116、push 2021-10-11。云学习 SRS 小站，长期停更；**许可证待核验** |
+| `hwgilbert16/scholarsome` | B 其他（TS 闪卡） | **AGPL-3.0** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★792、push 2026-06-24。AGPL 传染，不进白名单 |
+| `endurain-project/endurain` | B 其他（Python 健身） | **AGPL-3.0** ⛔ | 锻炼 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★2350、push 2026-10-30。自托管健身追踪，AGPL |
+| `thyagoluciano/sm2` | B 其他（Dart） | **GPL-3.0** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★265。GPL + SM-2 已过时 |
+| `shashankssp12/NPTEL-MCQ-Memorizer` | B 其他（TS） | **null** ⛔ | 刷题（印度 NPTEL） | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★17、push 2025-05-18。无许可证；场景正交 |
+| `akrivka/roamsr` | B 其他JS | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★97、push 2024-10-30。**Roam Research 插件**，强耦合宿主 + 无许可证 |
+| `ryjm/srrs` | B 其他JS | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★50、push 2026-10-19。**Urbit 平台** SRS，无许可证 |
+| `joedel/spaced-repetition` | B 其他JS | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★111、push 2020-09-06。2013 年老仓，无许可证 |
+| `gtim/chessdriller` | B 其他JS（Svelte） | **null** ⛔ | 刷题（国际象棋） | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★64、push 2025-12-02、**archived**。无许可证，场景正交 |
+| `open-spaced-repetition/srs-benchmark` | B 其他（Jupyter） | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★282、push 2026-10-24。评测集，无工程代码 |
+| `reuseman/flashcards-obsidian` | B 其他（TS） | MIT ✅（形态不符） | 复习 | **重复且无增益** | ⛔ | rejected | 2026-10-31 | — | r116。★1112、push 2026-10-21。**Anki/Obsidian 双宿主强耦合**，不可移植；调度层已被 `ts-fsrs` 骨架覆盖 |
+| `sizwinz/StudySage-Offline-Online-AI-Note-Assistant` | B 其他（**Python**） | MIT ✅（形态不符） | 笔记 / OCR / 出题 | **重复且无增益** | ⛔ | rejected | 2026-10-31 | — | r116。★12、push 2026-07-05。**Python 桌面/终端 GUI**，非 JS 栈不可复用；OCR + 出题 + 摘要三个能力本仓均已有对应包 |
