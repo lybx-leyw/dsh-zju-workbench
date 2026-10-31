@@ -3998,3 +3998,41 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `JasperGuWP/dsh-plugin-schemes` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、**PowerShell**、MIT ✅。插件开发规范文档 |
 | `DarrenIce/dsh-notes-plugin` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、TS、**无许可证**。笔记插件 |
 | `Rikinshah787/dsh-plugins` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、JS、MIT ✅。web_fetch 阅读器 + 快记，无单一可强化点 |
+
+---
+
+## 2026-10-31 · 能力域轴 r118（闪卡/间隔重复 · 代码题库 · 公式/图表 · 白板画布）· 追加
+
+> 关键词：`dsh plugin flashcard`(5)、`dsh plugin srs`(0)、`dsh plugin spaced repetition`(5)、`dsh plugin cs61b`(0)、
+> `dsh plugin code question bank`(0)、`cordis plugin flashcard`(2)、`dsh plugin formula`(6)、`dsh plugin ink`(12)、
+> `dsh plugin whiteboard`(4)、`dsh plugin diagram`(37，取 Top15)。搜索 **10 次 = 上限**，0 次 403、0 次超时，**本轮完整**。
+> 取组依据：`node scripts/radar-rotation.mjs` 报「今日 A/B/C 均已跑过，不建议再跑」⇒ 改用**历史未使用的能力域切片**
+> （registry 2026-10-15 A 组「能力域细分」为同一做法）。原始去重后 46 条，registry 比对后 **25 条新命中**，
+> 相关性二次过滤后登记 **24 行**（`amumulam/dsh-tldraw-canvas` 已于 r112 登记，本轮重复命中不重复登记）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `zhang-guo-wen/dsh-whiteboard` | A 原生DSH | Apache-2.0 ✅ | 笔记/论文/草稿 | **重复可强化**（笔记·论文页注解层） | 🟢 | skeleton-created | 2026-10-31 | 2026-10-31 | r118。★1、JS、Apache-2.0 ✅，`npm view` 核 `@guowenzhang/dsh-whiteboard@0.4.0` **可锁版**；`dsh.bundle.patch` 实测存在。`.drawio` 开放格式画布，**只挂宿主半边**（客户端会自建左侧导航）。**已出骨架 `dsh-radar-whiteboard`** |
+| `zhang-guo-wen/dsh-drawioedit` | A 原生DSH | Apache-2.0 ✅ | 笔记/论文（编辑器） | 重复可强化（上文白板之**编辑器依赖**） | 🟡 | proposed | 2026-10-31 | — | r118。★2、JS。`@guowenzhang/dsh-drawioedit@1.2.1` 已核可锁版；是 whiteboard 的 `peerDependencies`，**必须同轮挂载，不单独集成** |
+| `Aik358/dsh-auto-memory` | A 原生DSH | BSD-3-Clause ✅ | 通用（记忆层） | 全新（本仓无自动记忆） | 🔵 | proposed | 2026-10-31 | — | r118。**★170（本轮最高）**、JS、BSD-3-Clause ✅；`@a9i5k4/dsh-auto-memory@3.3.17` 已核可锁版。三层自动巩固 + 回答前召回。**记忆簇已十余条**（registry 有 memgas/knowledge/memory-toolkit 等），簇内不重复取 |
+| `pioneer666-user/specdev-workbench` | A 原生DSH | MIT ✅ | 学习（流程图） | 重复可强化（知识页·图谱） | 🔵 | proposed | 2026-10-31 | — | r118。★5、JS。Archify 业务流程图目录 + Git 附注标签版本阅读。**依赖 Archify 外部件**，且图表簇已饱和 |
+| `Medesol/dsh-kimi-formula` | A 原生DSH | MIT ✅ | 通用（检索） | 重复且无增益（检索/provider 簇） | 🔵 | proposed | 2026-10-31 | — | r118。★3、JS。Kimi Formula API 的 `web_search` + 10 个工具。**只是模型 provider 接入**，与 modsearch 等同域 |
+| `xianglifei/fx-tui` | A 原生DSH | MIT ✅ | 无 | 无关（TUI 形态） | 🔵 | proposed | 2026-10-31 | — | r118。★2、TS。Ink/React 终端 UI bundle。本仓是 **Web 工作台**，形态不合 |
+| `qianshe/dsh-assistant-optimization` | A 原生DSH | MIT ✅ | 学习（渲染） | 重复且无增益（渲染增强簇） | 🔵 | proposed | 2026-10-31 | — | r118。★2、JS。折叠误渲染的 thinking 块 + 行内 Mermaid。**渲染器层**，本仓 Markdown 渲染链已内建，无增量 |
+| `iceBear662/dsh-vision-edge-doubao` | A 原生DSH | MIT ✅ | 论文（识图） | 重复可强化（视觉簇） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。Edge + 豆包网页版识图免 Key，含数学建模图专项。**视觉簇已取 `modlens`**，本条保留线索 |
+| `kouyichi/dsh-tui-app` | A 原生DSH | **null** ⛔ | 无 | 无关（TUI） | ⛔ | rejected | 2026-10-31 | — | r118。★1、JS、**无许可证**。Ink 终端 UI。只登记，不摘代码 |
+| `xp266/dsh-tui` | A 原生DSH | MIT ✅ | 无 | 无关（TUI） | 🔵 | proposed | 2026-10-31 | — | r118。★1、TS。ink 终端 UI |
+| `little-greenbean/dsh-tui` | A 原生DSH | MIT ✅ | 无 | 无关（TUI） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。Claude-CLI 风格终端聊天 |
+| `binduqvq/dsh-client-ui-deep-sea` | A 原生DSH | MIT ✅ | 无 | 无关（主题皮肤） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。WebGL2 水墨水面主题。**主题域本仓自建**，registry 已有 Star dew 等，皮肤簇饱和 |
+| `erzhe-lume/dsh-tool-diagram` | A 原生DSH | MIT ✅ | 学习（作图） | 重复可强化（图表/自检） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。 DiagramKit：量真实字宽、查溢出/重叠/穿框，返回「图 + 可执行修法」。**唯一带"自检"的角度**，若将来笔记里出图可用作底层校验 |
+| `timedomain1/dsh-mermaid-renderer` | A 原生DSH | MIT ✅ | 学习（渲染） | 重复且无增益（Mermaid 簇） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。可重复缩放 + 全屏 + 美化默认值。**Mermaid 渲染簇本轮 3 条**，无增益 |
+| `SmileBuild/dsh-planchart` | A 原生DSH | MIT ✅ | 学习（计划） | 重复可强化（今天/规划页） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。agent 把项目计划发成侧栏步骤 + 中间框架图。**规划页已有**，图形态可参考 |
+| `yichangyaoyue/dsh-client-ui-mermaid` | A 原生DSH | MIT ✅ | 学习（渲染） | 重复且无增益（Mermaid 簇） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。Mermaid 围栏代码块 → SVG。Mermaid 簇第三 |
+| `anklecrusher/dsh-formula-mathtype` | A 原生DSH（描述指向） | **null** ⛔ | 论文（公式） | 无关（Office OLE） | ⛔ | rejected | 2026-10-31 | — | r118。★0、**Python**、无许可证。公式截图 → SimpleTex OCR → Word/PPT 的 MathType OLE。非 JS 栈 + 无许可 |
+| `RoacherM/trajecable-plugin` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关（用量 HUD） | ⛔ | rejected | 2026-10-31 | — | r118。★0、JS、无许可证。coding agent 竞速日记 + token/s HUD。用量簇已判无增益 |
+| `czkssg/dsh-math-calculator` | B 其他JS | MIT ✅ | 学习（计算/符号） | 全新（本仓无符号计算） | 🔵 | proposed | 2026-10-31 | — | r118。★0、TS。64 位 BigNumber、符号微积分、线代、统计、ODE、单位换算。**仓库根无 package.json**（子目录布局），锁版前需再核；「题库」域可用作判分底层，但 ★0 过冷 |
+| `APX103/dsh-plugin-inkstone` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关（描述为空） | 🔵 | proposed | 2026-10-31 | — | r118。★0、JS、**描述为空**，无法判定相关性；`ink` 关键词误命中（"inkstone" 并非 Ink 栈） |
+| `w-j-y-wjy/awesome-dsh-plugin-fork` | B 非插件 | **null** ⛔ | 无 | 无关（清单 fork） | ⛔ | rejected | 2026-10-31 | — | r118。★0、无语言、无许可证。awesome 清单 fork，非代码项目 |
+| `zhx-xi/dsh-inkflow` | A 原生DSH | MIT ✅ | 无（小说创作） | 无关（长篇写作） | 🔵 | proposed | 2026-10-31 | — | r118。★0、TS。长篇小说创作全流程。与 `InkWeaver` 同域，非学生场景 |
+| `yaotongsb/dsh-phosphor` | A 原生DSH | MIT ✅ | 无 | 无关（TUI） | 🔵 | proposed | 2026-10-31 | — | r118。★0、TS。Matrix 风格全屏 TUI |
+| `shuishuipingan/InkWeaver` | A 原生DSH | **GPL-3.0** ⛔ | 无（小说创作） | 无关 | ⛔ | rejected | 2026-10-31 | — | r118。★3、TS 主题、自述「经过验证的 DSH 插件」。**GPL 红线**（且 npm 名 `inkweaver` 未出现在 DSH 生态白名单），只登记不摘代码 |
