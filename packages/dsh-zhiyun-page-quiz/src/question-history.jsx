@@ -1,4 +1,4 @@
-﻿import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
+import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {QUESTION_STRATEGIES,QUESTION_TYPES} from 'dsh-zhiyun-core-quiz';
 const text=q=>q.stem.replace(/\{\{c\d+::[^}]*\}\}/g,'____');
 function Check({mixed=false,...props}){const ref=useRef(null);useEffect(()=>{if(ref.current)ref.current.indeterminate=mixed;},[mixed]);return <input ref={ref} type="checkbox" {...props}/>;}
@@ -7,7 +7,7 @@ function Question({q,bank,questions,state,selected,toggle,archived=false}){
     {!archived&&<label className="zs-qz-select"><Check aria-label={`选择题目 ${text(q).slice(0,45)}`} checked={selected} onChange={toggle}/></label>}
     <details className="zs-qz-question"><summary><span className="zs-qz-type">{QUESTION_TYPES[q.type]??q.type}</span><strong>{text(q)}</strong><span>{archived?'已弃用':q.reviewState==='pending'?'待统一查重':q.reviewState==='needs-review'?'待复核':q.attempts?.length?`做过 ${q.attempts.length} 次`:'未做过'}</span></summary>
       <div className="zs-qz-question-body"><p className="zs-muted">{q.courseTitle} / {q.lessonTitle} / {q.pointTitle}</p>
-        {q.choices?.map(c=><p key={c.label}>{c.label}. {c.text}</p>)}<p>答案：{q.answer}</p>{q.explanation&&<p>{q.explanation}</p>}{q.basis&&<blockquote>原文依据：{q.basis}</blockquote>}
+        {q.choices?.map(c=><p key={c.label}>{c.label}. {c.text}</p>)}<p>答案：{q.answer}</p>{q.explanation&&<p>{q.explanation}</p>}{q.basis&&<details className="zs-qz-basis"><summary>原文依据</summary><p>{q.basis}</p></details>}
         {q.strategy&&<p className="zs-muted">{QUESTION_STRATEGIES[q.strategy]?.label} · {q.angle}</p>}
         {q.rectifyReason&&<p className="zs-qz-rejection">查重记录：{q.rectifyReason}</p>}
         {q.discardReason==='user'&&<p className="zs-muted">由你弃用 · 历史作答记录已保留</p>}
@@ -27,14 +27,51 @@ function Question({q,bank,questions,state,selected,toggle,archived=false}){
 export function QuestionHistory({bank,questions,state:provided}){
   const snapshot=useSyncExternalStore(bank.subscribe,bank.getSnapshot,bank.getSnapshot),state=provided??snapshot;
   const [query,setQuery]=useState(''),[strategy,setStrategy]=useState('all'),[type,setType]=useState('all'),[picked,setPicked]=useState(new Set());
+  // 导出是异步落盘，需要自己的忙碌态与结果提示 —— 不能复用弃用的乐观更新，
+  // 因为导出失败时没有「回滚」可做，只能如实告诉用户没写进去。
+  const [exporting,setExporting]=useState(false),[exportNote,setExportNote]=useState(''),[exportError,setExportError]=useState(''),[exportFiles,setExportFiles]=useState([]);
   const matches=q=>(strategy==='all'||q.strategy===strategy)&&(type==='all'||q.type===type)&&[q.stem,q.pointTitle,q.courseTitle,q.lessonTitle].join(' ').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
   const active=questions.filter(q=>q.status!=='rejected'),visible=active.filter(matches),archived=questions.filter(q=>q.status==='rejected').filter(matches),selected=active.filter(q=>picked.has(q.id)).map(q=>q.id),all=visible.length>0&&visible.every(q=>picked.has(q.id));
   const toggle=id=>setPicked(current=>{const next=new Set(current);next.has(id)?next.delete(id):next.add(id);return next;});
   const selectAll=()=>setPicked(current=>{const next=new Set(current);for(const q of visible)all?next.delete(q.id):next.add(q.id);return next;});
+
+  /**
+   * 导出选中的题目到笔记库。
+   *
+   * 只导出**选中**的题：筛选（知识点 / 策略 / 题型 / 搜索）已经在界面上做完，
+   * 用户按筛选结果勾选，导出就跟着勾选走。不再给「导出当前筛选结果」第二条路径 ——
+   * 两个入口会让人分不清「我导的到底是哪些」。
+   */
+  const exportPicked=async()=>{
+    if(!selected.length||exporting)return;
+    setExporting(true);setExportNote('');setExportError('');setExportFiles([]);
+    try{
+      const data=await bank.exportQuestions(selected);
+      if(!data)return;                      // 失败已在 client 层给出原因
+      // 按来源节次拆分时可能写多份文件：报清楚「写了几个节次、分别落到哪里」，
+      // 只说「已导出 8 道」会让用户不知道东西分散在几个地方。
+      if(Array.isArray(data.files)&&data.files.length){
+        setExportFiles(data.files);
+        setExportNote(`已按节次导出 ${data.count} 道，共 ${data.files.length} 份：`);
+      }else{
+        const where=data.folder?`${data.folder}/${data.name}`:data.name;
+        setExportNote(`已导出 ${data.count} 道（${data.groups} 个知识点）到笔记：${where}${data.deduped?'（重名，已加后缀）':''}`);
+      }
+    }catch(error){
+      setExportError(error?.message??'导出失败');
+    }finally{
+      setExporting(false);
+    }
+  };
+
   return <section className="zs-qz-history"><div className="zs-qz-section-title"><h2>历史题目</h2><span>{active.length} 道在用 · {questions.length-active.length} 道已弃用</span></div>
     <input className="zs-qz-search" type="search" aria-label="搜索历史题目" placeholder="搜索题目、知识点或课程" value={query} onChange={e=>setQuery(e.target.value)}/>
     <div className="zs-qz-filters"><select aria-label="筛选出题策略" value={strategy} onChange={e=>setStrategy(e.target.value)}><option value="all">全部策略</option>{Object.entries(QUESTION_STRATEGIES).map(([id,s])=><option key={id} value={id}>{s.label}</option>)}</select><select aria-label="筛选题型" value={type} onChange={e=>setType(e.target.value)}><option value="all">全部题型</option>{Object.entries(QUESTION_TYPES).map(([id,s])=><option key={id} value={id}>{s}</option>)}</select></div>
-    <div className="zs-qz-bulk" role="toolbar" aria-label="批量管理题目"><label><Check aria-label="全选当前题目" checked={all} mixed={!all&&visible.some(q=>picked.has(q.id))} onChange={selectAll}/>全选当前结果</label><span>已选 {selected.length} 道</span><button type="button" className="zs-text" disabled={!selected.length} onClick={()=>setPicked(new Set())}>清空选择</button><button type="button" className="zs-button" disabled={!selected.length} onClick={()=>{bank.discardMany(selected);setPicked(new Set());}}>批量弃用</button></div>
+    <div className="zs-qz-bulk" role="toolbar" aria-label="批量管理题目"><label><Check aria-label="全选当前题目" checked={all} mixed={!all&&visible.some(q=>picked.has(q.id))} onChange={selectAll}/>全选当前结果</label><span>已选 {selected.length} 道</span><button type="button" className="zs-text" disabled={!selected.length} onClick={()=>setPicked(new Set())}>清空选择</button><button type="button" className="zs-button" disabled={!selected.length||exporting} onClick={exportPicked}>{exporting?'正在导出…':'导出到笔记库'}</button><button type="button" className="zs-button" disabled={!selected.length} onClick={()=>{bank.discardMany(selected);setPicked(new Set());}}>批量弃用</button></div>
+    {(exportNote||exportError)&&<div className="zs-qz-notice" role="status" data-tone={exportError?'error':'ok'}>
+      <p>{exportError||exportNote}</p>
+      {exportFiles.length>0&&<ul className="zs-qz-export-files">{exportFiles.map(f=><li key={f.path}><b>{f.lessonTitle}</b><span>{f.count} 道</span><code>{f.folder?`${f.folder}/${f.name}`:f.name}</code>{f.deduped&&<small>重名，已加后缀</small>}</li>)}</ul>}
+    </div>}
     <div className="zs-qz-active-questions">{visible.map(q=><Question key={q.id} q={q} bank={bank} questions={questions} state={state} selected={picked.has(q.id)} toggle={()=>toggle(q.id)}/>)}</div>
     {!visible.length&&<p className="zs-qz-empty">{active.length?'没有匹配的在用题目。':'暂无在用题目，先选择知识点生成一批。'}</p>}
     <details className="zs-qz-archive" key={state.discardRevision??0}><summary><span>已弃用</span><b>{archived.length}</b><small>保留题目与处理记录</small></summary>{archived.map(q=><Question key={q.id} q={q} bank={bank} questions={questions} state={state} archived/>)}</details>
