@@ -1,0 +1,19 @@
+{
+  "name": "dsh-radar-cc98-img-upload",
+  "version": "0.0.0-radar",
+  "private": true,
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】把笔记页本地图片（zy-asset://）推到 CC98 的图片上传通道：补上 dsh-zhiyun-source-cc98 十个只读 API 之外的唯一写入面。强化式集成，不是第二套 CC98 客户端。",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check": "node --check src/index.js && node --check src/upstream.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=22"
+  }
+}

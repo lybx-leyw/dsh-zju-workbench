@@ -4112,3 +4112,22 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `lengrufeng2008/dsh-trading-floor` | A 原生DSH | MIT ✅ | 通用（会话读数） | **重复且无增益**（相对 plugin-caps 账本） | 🔵 | proposed | 2026-11-01 | — | r123。★0、JS、建仓与 push 同周。只读会话台：active book / token mix / context / **tool time** / idle-rate spend。「tool time」与 `plugin-caps` 账本同格但**无跨插件归因**；「idle-rate spend」属用量簇（在册 23+ 条已饱和）。按本轮收紧口径（<48h ∧ ★0）+ 无增益 → 只登记 |
 | `adithyanraj03/dsh-graft-plugin` | A 原生DSH | MIT ✅ | **课设 / 课程项目**（读别人的代码） | **条件性可强化，但落点面板不存在** | 🔵 | proposed | 2026-11-01 | — | r123。★4、JS、`0.3.3`、push 2026-10-31。实核 `dsh.bundle.patch` + `dsh.client.inject: ["@deepseek-ai/dsh-api-remotes"]`。上游 graft(MIT, trailhq)：符号级代码图（每符号 `file:line` 跨度 + 谁调谁）+ 5 工具（`graft_ask`/`grep`/`callers`/`skeleton`/`map`，**全部 exec 到 `graft` CLI**，需 `npm i -g @nanonets/graft`，pnpm 10+ 默认拦 postinstall），可视化落右侧栏。与本仓 `dsh-radar-plugin-graph`（注册图）、插件页（依赖图）**都不是同一张图**。**不判 🟡**：本仓没有「代码/仓库」面板，三条件第①条不成立；若评审新增「代码」页则应重评 🟡。⚠ 外部 CLI 硬依赖与本仓「不改平台工具链」相冲 |
 | `YurinKonstantin/dsh-rustore` | A 原生DSH | MIT ✅ | —（应用商店发布） | 无关 | ⛔ | rejected | 2026-11-01 | — | r123。★0、54 KB、建仓=push=2026-10-31。RuStore 发布 API 的 DSH 封装（草稿/上传/审核/灰度），需第三方商店凭据。与学习工作台、浙大场景均正交。只作「插件如何包一个外部发布 API」的范本留痕 |
+
+---
+
+## 2026-11-01 · 上传/写入通道轴 r124（**B 组补跑** · zju / zju course / cc98 / campus app / timetable ics export，均带 `pushed:>…`）· 追加
+
+> 搜索 **10 次 / 上限 10**，0 次 403，**搜索面完整**。原始约 215 条、未登记约 180、相关性过滤后留档 **5 行**（🟢1 / 🟡1 / 🔵2 / ⛔1）。
+> **取组**：`radar-rotation` → `本轮该跑 B（same-day(unused)）`；r123 已记「B 组欠一轮」，本轮补。B 组五词**本轮全部跑到**。
+> **词面校准**：`campus app language:javascript`（93 条）**零条浙大相关**，该词在 B 组**建议弃用**；
+> `zju`（92 条）里可称「工具」的 ≤10 条，约 70% 为 `null` 许可证的博客/课设/主页。
+> **`dsh zju` 交叉词仅 2 条**（本仓 + `chenqianyu486-sys/dsh-zju-lecture-note`）⇒ B 组的长期价值在「浙大平台的协议事实」，不在「现成插件」。
+> **本轮轴线**：本仓在浙大平台上**全是只读**（`source-cc98` 十个读、零个写；`core-notes` 图片只有本地 `zy-asset://`）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Cedar17/cc98-img-upload` | B 其他JS（Python 脚本，**能力提取**） | Apache-2.0 ✅ | **笔记 → CC98 发帖**（校内唯一论坛） | **重复可强化**（同一面板=笔记页图片；同一功能=图变成能贴出去的图；底层多调了更优实现=CC98 服务端 `/file` 上传） | 🟢 | skeleton-created | 2026-11-01 | 2026-11-01 | r124。★2、40 KB、建仓 2026-10-29、push 10-30、单文件 `cc98_img_upload.py` 10826 B。**协议已实核**：`POST https://api.cc98.org/file`，multipart 字段名 `files`、`data={"contentType":"multipart/form-data"}`，返回服务端图片 id；403 等 1s **仅重试当前图一次**，任一图失败**不输出正文**（防半张贴），**已上传不可撤回**（重跑会重传）。**判据核对**：`grep upload` 在 `dsh-zhiyun-source-cc98/src` **零命中** ⇒ 判据③成立；token 走本仓 `token.js`（上游的账号密码 `getpass` 流**必须砍掉**）；Markdown 图片定位用本仓 `core-notes/src/note.js:281` 的 `zy-asset://` 扫描，**不搬上游 Python**。骨架 `packages/radar/dsh-radar-cc98-img-upload`（**B 类 · deps 为空**）。**TODO**：上传失败时是否允许「本地占位 + 稍后重传」（当前按上游口径整篇不输出） |
+| `leshanlaoying/zju-data-structures-pta` | B 其他JS（VitePress 静态站，非库） | MIT ✅ | **陈越《数据结构》PTA 习题**（必修门槛课） | **重复可强化，但落点不同面板**（`pta-progress` 在课程/学习面，题面属练习面） | 🟡 | proposed | 2026-11-01 | — | r124。★0、33 KB、建仓 2026-10-26、push 同日（**<48h ∧ ★0**，按收紧口径**不判 🟢**）。核对：`dsh-radar-pta-progress` 三处落点（`progress()` / `problems().myStatus` 三态 / 提交链路缺口 F-4）**都不含题面**、且自陈「提交链路本仓完全不存在」—— 补的正是「这道题问了什么」。**不能当主源**：只覆盖一门课，且真源应为 PTA `GET /problem/{id}`，本站只是**离线副本**（价值在 RVPN 掉线也能看题）。**回看条件**：出 `v*` Release 或覆盖到 2 门以上浙大课 |
+| `backfired-www/word-memorizer` | B 其他JS（纯前端 HTML/JS） | **null** ⛔ | 大英默写 / 背单词 | **重复且无增益**（判定与调度均已覆盖） | 🔵 | proposed | 2026-11-01 | — | r124。★1、166 KB、建仓 2026-10-30、push 10-31。**无许可证 → 不得摘取任何代码**。评分面本仓已有 `cloze`/`shortAnswer` + `fsrs-scheduler`（锁 FSRS）+ `answer-equiv` 骨架；唯一可看是「整句隐去、逐词揭晓」的 reveal 节奏，属 UI 细节，**只作人的灵感，不进骨架** |
+| `HeinzBundschuh/timeless` | B 其他JS（单 HTML 文件） | MIT ✅ | 通用（日历/时间表） | **重复且无增益** | 🔵 | proposed | 2026-11-01 | — | r124。★1、1029 KB、建仓 2026-10-21、push 10-22（**低活跃**）。本仓已有 `panda-calendar` / `cjk-calendar` / `ics-rrule` / `week-parser` 四条时间轴骨架，再加一条只增噪。仅留「离线优先、零依赖、单文件可分发」的形态参照 |
+| `Xiaoc712/cijian-zju-dictation` | B 其他JS（小程序 + Windows App） | **null** ⛔ | 大英默写（浙大） | **重复且无增益**（且与在册条**同上游派生**） | ⛔ | rejected | 2026-11-01 | — | r124。★1、1.8 MB、建仓=push 2026-10-31。描述自陈「基于 Lucent_Snow 原项目改进」⇒ 同上游派生；`null` 许可证。留行防下轮再被「大英默写」吸引 |
