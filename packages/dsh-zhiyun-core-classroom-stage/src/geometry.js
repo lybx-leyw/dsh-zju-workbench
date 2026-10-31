@@ -22,7 +22,14 @@
  * 源：ref/OpenMAIC/lib/whiteboard/legacy-shape.ts:1-12
  */
 
-import { validateShapeGeometry } from '../vendor/geometry/index.js';
+// 走包依赖，不走相对路径。
+//
+// 原来写的是 `../vendor/geometry/index.js` —— 那是**本包**的 vendor 目录，
+// 而 stage 包里根本没有 vendor（vendor 在隔壁 dsh-zhiyun-classroom-geometry）。
+// 于是 esbuild 报 Could not resolve，整个构建挂住。
+// 上面那段注释本来就写着「几何内核一律走 dsh-zhiyun-classroom-geometry」，
+// 这里按注释的本意改成包名。
+import { validateShapeGeometry } from 'dsh-zhiyun-classroom-geometry';
 import { STAGE_ERROR_CODES, StageActionError } from './errors.js';
 
 /** 形状名 → viewBox 1000×1000 里的路径。逐字照搬上游常量。 */

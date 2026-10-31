@@ -13,12 +13,12 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, readdir, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-vault/', import.meta.url);
-const INDEX_URL = pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'index.js')).href;
+const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
 const plugin = await import(INDEX_URL);
-const adapterModule = await import(pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'adapter.js')).href);
+const adapterModule = await import(pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'adapter.js')).href);
 
 /** 最小 Cordis 假 ctx（照 tests/classroom-host.test.mjs 的写法）。 */
 function makeCtx(profileDir) {

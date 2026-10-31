@@ -13,11 +13,11 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
-const MEDIA_URL = pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'services', 'media.js')).href;
-const ERRORS_URL = pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'errors.js')).href;
+const MEDIA_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'services', 'media.js')).href;
+const ERRORS_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'errors.js')).href;
 const { mountMedia } = await import(MEDIA_URL);
 const { ClassroomError } = await import(ERRORS_URL);
 

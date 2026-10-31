@@ -10,11 +10,11 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
-const SRC = (name) => pathToFileURL(join(PACKAGE_DIR.pathname, 'src', name)).href;
+const SRC = (name) => pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', name)).href;
 
 const { createClassroomService, inspectShape } = await import(SRC('service.js'));
 const { mountGeneration, isEventStream, openRunStreamsOf } = await import(

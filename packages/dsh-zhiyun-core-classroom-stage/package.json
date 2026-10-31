@@ -35,5 +35,8 @@
     "react": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "dsh-zhiyun-classroom-geometry": "0.1.0"
   }
 }
