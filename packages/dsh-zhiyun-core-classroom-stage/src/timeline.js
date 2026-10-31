@@ -24,6 +24,8 @@
  * 源：ref/OpenMAIC/lib/action/engine.ts:314-339（效果自动清除）
  */
 
+import { estimateSpeechDurationMs } from 'dsh-zhiyun-core-classroom-timing';
+export { estimateSpeechDurationMs } from 'dsh-zhiyun-core-classroom-timing';
 import { applyRecord, emptyStageState } from './ledger.js';
 
 /** spotlight / laser 在被自动清除前停留的时长。 */
@@ -67,29 +69,7 @@ export function wbClearMs(elementCount) {
   return Math.min(380 + elementCount * 55, 1400);
 }
 
-const CJK_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/g;
-const CJK_RATIO_THRESHOLD = 0.3;
-const MIN_READING_MS = 2000;
-const CJK_MS_PER_CHAR = 150;
-const NON_CJK_MS_PER_WORD = 240;
 
-/**
- * 没有预生成音频时的朗读时长估算（CJK 按字、其余按词，2s 起，再除以语速）。
- *
- * @param {string} text
- * @param {{speed?: number}} [options]
- * @returns {number}
- */
-export function estimateSpeechDurationMs(text, options = {}) {
-  const speed = Number(options.speed) > 0 ? Number(options.speed) : 1;
-  const source = String(text ?? '');
-  const cjkCount = (source.match(CJK_REGEX) || []).length;
-  const isCJK = cjkCount > source.length * CJK_RATIO_THRESHOLD;
-  const rawMs = isCJK
-    ? Math.max(MIN_READING_MS, source.length * CJK_MS_PER_CHAR)
-    : Math.max(MIN_READING_MS, source.split(/\s+/).filter(Boolean).length * NON_CJK_MS_PER_WORD);
-  return rawMs / speed;
-}
 
 /**
  * 一条动作占用的时长。
@@ -197,9 +177,15 @@ export function buildTimeline(records, options = {}) {
   }];
 
   list.forEach((record, index) => {
-    const action = record && typeof record.payload === 'object' && record.payload !== null
+    // 与 ledger.js 的 applyRecord 一致：既认账本记录（动作在 payload 里），
+    // 也认生成侧动作（字段在顶层）。否则 scene.actions 传进来时每条都被
+    // 读成 {}，时长恒为 0、效果全部 skipped。
+    const action = typeof record?.payload === "object" && record.payload !== null
       ? record.payload
-      : {};
+      : (() => {
+        const { seq: _seq, runId: _runId, at: _at, ...rest } = record ?? {};
+        return rest;
+      })();
     const startAt = at;
     const duration = actionDurationMs(action, state, { speed });
     const next = applyRecord(state, record);

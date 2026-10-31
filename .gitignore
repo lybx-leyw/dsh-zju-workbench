@@ -75,3 +75,6 @@ vendor/
 
 # 渲染一致性校验的临时产物目录（每次跑会重新生成）。
 /.verify-render-*/
+
+# 测试用的临时产物（ail-teaching 的 esbuild 输出等）
+.tmp/

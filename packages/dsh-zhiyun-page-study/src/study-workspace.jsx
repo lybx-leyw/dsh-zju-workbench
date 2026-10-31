@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { GenerationQueue } from './generation-queue.jsx';
 import { useStudy } from 'dsh-zhiyun-shell-ui';
 import { VideoPanel } from "./video-panel.jsx";
+import { AiTeaching } from './ai-teaching.jsx';
 import { BranchBoard } from './branch-board.jsx';
 import { KnowledgeBoard, entryForBlock } from "./knowledge-board.jsx";
 import { HlsVideo } from "./hls-video.jsx";
@@ -219,7 +220,7 @@ function AdvancedSearchPanel({ state, mode, setMode, role, setRole, facets, setF
 // 整组只留当前选中的那一个在 Tab 序列里（tabIndex=0），其余是 -1。
 // 顶栏只有两档。课件和字幕是视频栏里的开关，终稿、讲义、笔记和题
 // 收进知识点。直播不占这一排：它从左侧「正在直播」进来，落在视频栏的直播画面上。
-const contentTabs = ["视频", "知识点", "支线黑板"];
+const contentTabs = ["视频", "知识点", "支线黑板", "AI教学"];
 
 function ContentTabs({ tab, setTab }) {
   const items = React.useRef([]);
@@ -559,6 +560,8 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
                   ? <VideoPanel state={state} seek={videoSeek} />
                   : tab === "支线黑板"
                     ? <BranchBoard key={state.lesson?.id} result={state.result} onOpenVideo={openVideoAt} focus={entry} />
+                    : tab === "AI教学"
+                    ? <AiTeaching state={state} controller={controller} />
                     : <KnowledgeBoard key={state.lesson?.id} state={state} controller={controller} Notice={Notice} slides={slides} subtitles={subtitles} entry={entry} onEntry={setEntry} onOpenVideo={openVideoAt} onLocate={locateMedia} focus={lectureFocus} visibleBlocks={blocks} searching={searching} keywordSearch={keywordSearch} hitCount={outcome.hits.length} />}
               </div>}
             </section>

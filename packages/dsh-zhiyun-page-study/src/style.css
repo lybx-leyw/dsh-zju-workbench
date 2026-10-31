@@ -301,6 +301,68 @@ body[data-zhiyun] .zs-mobile-tree-toggle { display:none; }
    页面包等 zhiyunStudyController 才挂、排在后 —— 留在那边就必输，覆盖永远不生效
    （曾真实回归：≤760 时 .zs-heading 还是 24px/26px 而非 18px/23px）。
    跟着基规则搬到本包后，位置与原 dsh-zhiyun-study/style.css 一致：在下面 980/720 两块之前。 */
+
+/* ── AI 教学栏 ─────────────────────────────────────────────────────────────
+ * 一次一页的课件浏览：页头（章节 + 知识点标题 + 翻页）、进度条、要点列表、正文。
+ * 与「知识点」栏的区别是**节奏**：那边是长文自己滚，这边是一页一停。
+ *
+ * 版心收窄到 760px：课件页是「读一段」而不是「扫一屏」，
+ * 行宽超过 80 字符眼睛要回扫，反而更慢。
+ */
+.zs-ai-teach { display: flex; flex-direction: column; gap: var(--zy-space-4); max-width: 760px; margin: 0 auto; padding: var(--zy-space-5) 0 var(--zy-space-6); }
+
+/* 页头：左标题右翻页，标题先换行也不能把按钮挤没 */
+.zs-ai-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--zy-space-4); }
+.zs-ai-head > div:first-child { min-width: 0; }
+.zs-ai-head h2 { margin: var(--zy-space-1) 0 0; font-size: 20px; font-weight: 600; line-height: 1.4; letter-spacing: -0.2px; }
+.zs-ai-nav { display: flex; align-items: center; gap: var(--zy-space-2); flex-shrink: 0; }
+.zs-ai-count { font-size: 12px; color: var(--zy-muted); font-variant-numeric: tabular-nums; min-width: 56px; text-align: center; }
+
+/* 进度条：2px 足够，太粗会抢标题的视觉重量 */
+.zs-ai-progress { height: 2px; border-radius: 999px; background: var(--zy-line); overflow: hidden; }
+.zs-ai-progress > i { display: block; height: 100%; background: var(--zy-accent); transition: width 220ms cubic-bezier(0.2, 0, 0, 1); }
+
+/* 要点：左侧细线 + 略大字号，一眼能看出这是「这一页要记的三件事」 */
+.zs-ai-points { margin: 0; padding: 0 0 0 var(--zy-space-3); list-style: none; border-left: 2px solid color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line)); display: flex; flex-direction: column; gap: 6px; }
+.zs-ai-points li { font-size: 13px; line-height: 1.65; color: var(--zy-secondary); }
+
+/* 正文：行高 1.8 比默认松 —— 这是要逐段读的内容，不是扫一眼的列表 */
+.zs-ai-body { font-size: 14px; line-height: 1.8; color: var(--zy-text); }
+.zs-ai-body p { margin: 0 0 var(--zy-space-3); }
+.zs-ai-body p:last-child { margin-bottom: 0; }
+
+/* 页脚：次要动作沉到左边，主动作在右 */
+.zs-ai-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--zy-space-3); padding-top: var(--zy-space-3); border-top: 1px solid var(--zy-line); }
+.zs-ai-foot .zs-primary { min-width: 96px; justify-content: center; }
+
+/* 空态：讲义还没生成时给出去哪里的指引，而不是一句「暂无数据」 */
+.zs-ai-empty { padding: var(--zy-space-6) var(--zy-space-4); text-align: center; border: 1px dashed var(--zy-line); border-radius: 10px; }
+.zs-ai-empty strong { display: block; font-size: 14px; margin-bottom: var(--zy-space-2); }
+.zs-ai-empty p { margin: 0; font-size: 12px; color: var(--zy-muted); line-height: 1.7; }
+
+
+.zs-ai-err { color: var(--zy-danger, #c0392b); }
+
+
+/* 课件页：居中、留白、带一圈很淡的边界，让它看起来像「一页」而不是一块内容。
+ * 阴影不用 color-mix（本仓的构建链对它支持不稳），用 rgba。
+ */
+.zs-ai-slide { display: flex; justify-content: center; padding: var(--zy-space-3); background: var(--zy-surface); border: 1px solid var(--zy-line); border-radius: 10px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); overflow: auto; }
+
+/* 讲课稿：左细线 + 略浅的文字色，视觉上从属于课件页，不抢版面 */
+.zs-ai-speech { padding: var(--zy-space-3) 0 0 var(--zy-space-3); border-left: 2px solid var(--zy-line); }
+.zs-ai-speech-label { display: block; font-size: 11px; color: var(--zy-muted); margin-bottom: 6px; letter-spacing: 0.5px; }
+.zs-ai-speech p { margin: 0 0 var(--zy-space-2); font-size: 13px; line-height: 1.75; color: var(--zy-secondary); }
+.zs-ai-speech p:last-child { margin-bottom: 0; }
+
+
+/* 起始页：只给一个入口和一个原因。没有降级内容，所以这里就是整栏的全部。 */
+.zs-ai-start { display: flex; flex-direction: column; align-items: flex-start; gap: var(--zy-space-2); padding: var(--zy-space-5) var(--zy-space-4); border: 1px dashed var(--zy-line); border-radius: 10px; }
+.zs-ai-start strong { font-size: 14px; }
+.zs-ai-start p { margin: 0; font-size: 12px; color: var(--zy-muted); line-height: 1.7; max-width: 52ch; }
+.zs-ai-start-actions { display: flex; align-items: center; gap: var(--zy-space-3); margin-top: var(--zy-space-2); }
+.zs-ai-err { color: var(--zy-danger, #c0392b); }
+
 @media (max-width: 1050px) {
   body[data-zhiyun] .zs-workbench {
     grid-template-columns: 210px minmax(0, 1fr);

@@ -499,6 +499,34 @@ import { createQuestionBankController } from './question-bank-client.js';
         update({ busy: false });
       }
     },
+    /**
+     * 讲义终稿 → AI 课件。
+     *
+     * 必须带上 `courseId` / `subId`：宿主侧 `dispatch` 第一行就是
+     * `identifier(payload.subId)`，缺了会直接报「课程或节次编号无效」。
+     * `quiz-generate` 用的是同一个模式（`{ ...key, ...input }`）。
+     *
+     * 与 quiz 的区别：这里**不吞异常** —— 生成失败要让调用方（AI 教学栏）
+     * 拿到真实原因并显示出来，而不是变成 `state.error` 里一条泛泛的提示。
+     */
+    async generateTeaching(input = {}) {
+      const key = currentKey();
+      if (!key) throw new Error('请先选择一节课');
+      const ticket = selection;
+      try {
+        const result = await request("teach-generate", { ...key, ...input });
+        if (ticket !== selection) return null;
+        return result;
+      } catch (e) {
+        if (ticket !== selection) return null;
+        throw e;
+      }
+    },
+
+    /** 查一次备课进度（配合 generateTeaching 的两段式）。 */
+    async pollTeaching(runId) {
+      return request("teach-poll", { runId });
+    },
     async generateQuiz(input) {
       const key = currentKey(); if (!key) return;
       const ticket = selection, epoch = account;

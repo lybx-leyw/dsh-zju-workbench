@@ -45,6 +45,7 @@ import { normalizeBrief, assertStageId } from './brief.js';
 import { ClassroomGenerateError, describeError } from './errors.js';
 import { createEventLog, PHASES, makeEvent } from './events.js';
 import { resolveLlm } from './llm.js';
+import { createHostLlmTransport } from './host-llm.js';
 import { runPipeline } from './pipeline.js';
 
 export const name = 'zhiyun-classroom-generate';
@@ -87,6 +88,24 @@ export function apply(ctx, config = {}) {
   };
 
   const studio = pick('zhiyunClassroomStudio');
+  // 宿主 llm 是**首选**：本仓的解析/讲义/出题都走它，课堂生成也该走它。
+  // 只有宿主没给的时候才退回 studio 的模型清单（那条路依赖课堂登录态）。
+  // 取宿主 llm 要用 `ctx.get`：Cordis 里直接读属性会抛
+  // `cannot get property "llm" without inject`（必须先声明依赖）。
+  //
+  // ⚠️ **不**把 `llm` 写进 `inject`：那会变成硬依赖，宿主没提供 llm 时
+  //    整个课堂生成包会 pending —— 连「未接入」都报不出来。
+  //    这里用 try 包住，取不到就当没有，让 resolveLlm 回落到 studio。
+  //
+  // 用 `ctx.get` 而不是 `pick()`：`pick()` 会吞掉异常并打 warn，
+  // 而这条路径是「正常可能缺失」的，不该在日志里制造噪音。
+  let hostSvc = null;
+  try {
+    hostSvc = ctx?.get?.('llm') ?? null;
+  } catch {
+    hostSvc = null;
+  }
+  const hostLlm = config.llm ?? createHostLlmTransport(hostSvc);
   const ports = {
     agent: pick('zhiyunClassroomAgent'),
     pbl: pick('zhiyunClassroomPbl'),
@@ -104,7 +123,7 @@ export function apply(ctx, config = {}) {
 
   let service;
   try {
-    service = createGenerateService({ studio, ports, llm: config.llm ?? null, log });
+    service = createGenerateService({ studio, ports, llm: hostLlm, log });
   } catch (error) {
     // 构造本身不该失败；真失败了也要让 profile 活着。
     log.error('课堂生成服务构造失败', error?.message ?? error);
@@ -135,7 +154,7 @@ export function apply(ctx, config = {}) {
     log.warn('注册 dispose 钩子失败（已忽略）', error?.message ?? error);
   }
 
-  log.info(`课堂生成就绪：vault=${ports.vault ? 'injected' : 'missing'}，llm=${config.llm ? 'injected' : 'from-studio'}`);
+  log.info(`课堂生成就绪：vault=${ports.vault ? 'injected' : 'missing'}，llm=${hostLlm ? (config.llm ? 'injected' : 'from-host') : 'none'}`);
 
   return () => {
     try {
@@ -256,9 +275,21 @@ export function createGenerateService({ studio, ports, llm, log }) {
     }
   }
 
-  /** 公开视图：不含 controller / log / outputs 这些内部件。 */
+  /**
+   * 公开视图：不含 controller / log / outputs 这些内部件。
+   *
+   * ⚠️ 例外：run 结束后带上 `scenes`。
+   *
+   * 原本这里什么都不带，而 `run-done` 事件也只有摘要（sceneCount / skipped），
+   * 于是**消费者拿不到真正的课件数据** —— 只能看到「生成了 N 页」，
+   * 却拿不到那 N 页的元素与口播稿。AI 教学栏因此永远拿到空列表（报 EMPTY）。
+   *
+   * scenes 是这条管线的最终产物，和 status 一样属于「调用方必须能看到」的东西。
+   * 只带它一个，其余内部件（controller/abort、log、每段的中间产物）仍不外露。
+   */
   function snapshot(record) {
     if (!record) return null;
+    const scenesOutput = record.outputs.get('scenes');
     return {
       runId: record.runId,
       stageId: record.stageId,
@@ -266,10 +297,16 @@ export function createGenerateService({ studio, ports, llm, log }) {
       startedAt: record.startedAt,
       endedAt: record.endedAt,
       error: record.error,
+      // 正在跑哪一段 —— 轮询进度要显示它。没有它只能看到「哪些完成了」，
+      // 于是整段 outline 期间界面都停在「正在规划」，看起来像卡住。
+      phase: record.currentPhase ?? null,
+      // 已完成产出的场景数（scenes 阶段整批结束时才有 outputs，所以中途靠这个）
+      readyScenes: record.readyScenes ?? 0,
       phases: [...PHASES].map((phase) => ({
         phase,
         done: record.outputs.has(phase),
       })),
+      ...(scenesOutput ? { scenes: scenesOutput.scenes ?? [], skipped: scenesOutput.skipped ?? [] } : {}),
     };
   }
 

@@ -93,8 +93,20 @@ export async function runPipeline(job) {
   const signal = record.controller.signal;
 
   let currentPhase = firstPendingPhase(record.outputs);
+  // 把「当前阶段」也写进 record：`run-error` 要用它定位失败在哪一段，
+  // 而轮询进度时要显示「正在规划讲课顺序 / 正在生成每页内容」。
+  // 只做局部变量的话，外部只能看到「哪些阶段完成了」，看不到「正在做哪一段」。
+  record.currentPhase = currentPhase;
 
-  const emit = (phase, kind, payload, sceneId) => record.log.push(makeEvent({
+  const emit = (phase, kind, payload, sceneId) => {
+    // 场景级进度：每产出一页就 +1。
+    //
+    // `scenes` 阶段是**整批返回**的（produceScenes 跑完才有 outputs），
+    // 所以只靠 `record.outputs` 的话，整段期间外部看到的「已备好」永远是 0 ——
+    // 用户盯着一个不动的数字，跟卡死没区别。事件流里有 `scene-ready`，
+    // 在这里累计，轮询就能显示真实进度。
+    if (kind === 'scene-ready') record.readyScenes = (record.readyScenes ?? 0) + 1;
+    return record.log.push(makeEvent({
     runId,
     phase,
     kind,
@@ -102,6 +114,7 @@ export async function runPipeline(job) {
     payload,
     ts: ports.now(),
   }));
+  };
 
   try {
     // ── 第 0 段（可选）：上传的讲义 → 一段可以进 prompt 的文本 ────────────
@@ -110,6 +123,7 @@ export async function runPipeline(job) {
     // 下面这块一行都不执行，事件序列与「四段管线」逐事件一致（既有用例不受影响）。
     if (needsMaterialPhase(record) && !record.outputs.has(MATERIAL_PHASE)) {
       currentPhase = MATERIAL_PHASE;
+      record.currentPhase = currentPhase;
       emit(MATERIAL_PHASE, 'phase-start', {
         phase: MATERIAL_PHASE,
         index: -1,          // 前置段：不在 PHASES 里，页面按「准备」而不是「第 5 步」显示
@@ -146,6 +160,7 @@ export async function runPipeline(job) {
       if (signal.aborted) throw cancelled(phase, runId);
 
       currentPhase = phase;
+      record.currentPhase = currentPhase;
       emit(phase, 'phase-start', { phase, index: PHASES.indexOf(phase), total: PHASES.length });
 
       const output = await raceAbort(

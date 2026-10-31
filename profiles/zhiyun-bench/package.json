@@ -51,9 +51,7 @@
         "dsh-zhiyun-core-classroom-agent",
         "dsh-zhiyun-core-classroom-generate",
         "dsh-zhiyun-core-classroom-export",
-        "dsh-zhiyun-core-classroom-stage",
-        "dsh-zhiyun-page-classroom-build",
-        "dsh-zhiyun-page-classroom-play"
+        "dsh-zhiyun-page-classroom-build"
       ],
       "patchReload": "live"
     }
