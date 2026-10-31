@@ -1,0 +1,39 @@
+{
+  "name": "dsh-zhiyun-core-classroom-stage",
+  "version": "0.1.0",
+  "description": "智云 Pro「课堂舞台」领域包：把 OpenMAIC 的 lib/{whiteboard,interactive,action,playback,adaptive} 的舞台执行侧搬成 ctx.zhiyunClassroomStage(dispatch/ledger/reset) 与客户端 <ClassroomStage>（按时间轴重放动作）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./ledger": "./src/ledger.js",
+    "./timeline": "./src/timeline.js",
+    "./geometry": "./src/geometry.js",
+    "./client": "./src/client.jsx",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "dsh-zhiyun-classroom-renderer"
+      ]
+    }
+  },
+  "files": [
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}

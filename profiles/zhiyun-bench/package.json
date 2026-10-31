@@ -42,7 +42,18 @@
         "dsh-zhiyun-page-plugins",
         "dsh-zhiyun-page-docs",
         "dsh-zhiyun-page-feedback",
-        "dsh-zhiyun-quiz-lab"
+        "dsh-zhiyun-quiz-lab",
+        "dsh-zhiyun-classroom-renderer",
+        "dsh-zhiyun-host-classroom",
+        "dsh-zhiyun-core-classroom-vault",
+        "dsh-zhiyun-core-classroom-media",
+        "dsh-zhiyun-core-classroom-pbl",
+        "dsh-zhiyun-core-classroom-agent",
+        "dsh-zhiyun-core-classroom-generate",
+        "dsh-zhiyun-core-classroom-export",
+        "dsh-zhiyun-core-classroom-stage",
+        "dsh-zhiyun-page-classroom-build",
+        "dsh-zhiyun-page-classroom-play"
       ],
       "patchReload": "live"
     }

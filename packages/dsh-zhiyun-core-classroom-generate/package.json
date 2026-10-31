@@ -1,0 +1,25 @@
+{
+  "name": "dsh-zhiyun-core-classroom-generate",
+  "version": "0.1.0",
+  "description": "智云 Pro「互动课堂」生成管线：把 brief 跑成完整课堂文档（outline → scenes → media → finalize 四段，逐段落盘、可断点续跑），挂成 ctx.zhiyunClassroomGenerate",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./brief": "./src/brief.js",
+    "./events": "./src/events.js",
+    "./llm": "./src/llm.js",
+    "./pipeline": "./src/pipeline.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "src/",
+    "cordis.patch.yml"
+  ]
+}

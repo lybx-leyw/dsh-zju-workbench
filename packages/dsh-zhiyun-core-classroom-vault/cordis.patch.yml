@@ -1,0 +1,10 @@
+# bundle 行 id 生成规则是「包名去掉 dsh- 前缀」（scripts/test-host.mjs:90-93），
+# 即 `zhiyun-core-classroom-vault`。本包在规范 §3 的包谱里叫
+# `dsh-zhiyun-core-classroom-vault`，仓里约定 bundle id 用短名
+# `zhiyun-classroom-vault`，与它提供的服务名 `zhiyunClassroomVault` 对齐。
+#
+# 不与 `zhiyun-classroom-studio`（host-classroom）/ `zhiyun-classroom`
+# （source-classroom）撞 id：本包是**领域层**，只被宿主/页面按服务名消费。
+- insert:
+    - id: zhiyun-classroom-vault
+      name: dsh-zhiyun-core-classroom-vault

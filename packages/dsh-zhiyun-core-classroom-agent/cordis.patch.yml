@@ -1,0 +1,10 @@
+# dsh bundle patch：把课堂智能体编排层插进 profile 的层栈。
+#
+# 与其它领域包一致：bundle 列在 `dsh.profile.bundles` 里不会自动加载，
+# 必须在自己的 patch 里 insert（见 tests/univer-office.test.mjs 记的那个真机缺陷）。
+#
+# 本包只消费宿主服务 `zhiyunClassroomStudio`，自己不碰网络、不 new 客户端；
+# 上游缺失时 `apply()` 照常返回，`status().state` 显示 `degraded`。
+- insert:
+    - id: zhiyun-classroom-agent
+      name: dsh-zhiyun-core-classroom-agent

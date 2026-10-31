@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sidebar, Page, AskChrome, AskMenuButton, PersonalSettingsBridge } from './components.jsx';
-import { NAV, activePage, hiddenPageIds, pageBundle, panelKey, visiblePages } from './model.js';
+import { NAV, activePage, hiddenPageIds, pageBundle, pageSlot, panelKey, visiblePages } from './model.js';
 import { adaptSettingsSurface } from './settings-adapter.js';
 import css from './style.css';
 
@@ -140,7 +140,9 @@ function applyUI(ctx) {
     for (const page of NAV.filter(item => item.id !== 'ask')) {
       yield ctx.slots.register({
         name: 'main', key: panelKey(page.id),
-        children: { [`zhiyun.${page.id}.content`]: { kind: 'single', scope: 'root' }, ...(page.id === 'me' ? { 'zhiyun.me.network': { kind: 'single', scope: 'root' } } : {}) },
+        // 内容插槽名从 NAV 取（`pageSlot`）：「课堂」的两页注册的是
+        // `zhiyun.classroom.play` / `zhiyun.classroom.build`，不跟 id 推导。
+        children: { [pageSlot(page)]: { kind: 'single', scope: 'root' }, ...(page.id === 'me' ? { 'zhiyun.me.network': { kind: 'single', scope: 'root' } } : {}) },
         inject: () => ({ controller, page: page.id }),
       }, Page);
     }

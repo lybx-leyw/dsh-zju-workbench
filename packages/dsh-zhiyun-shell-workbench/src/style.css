@@ -247,6 +247,13 @@ body[data-zhiyun][data-ds-dark-theme] .zy-drawer-error,body[data-zhiyun][data-ds
  * height:100% 能解析，是因为 `.zy-scroll` 在 `.zy-page` 这个列向 flex 里 flex:1，
  * 高度是确定的。于是面板填满整个内容区，滚动交给页面内部的分区。 */
 .zy-content.zy-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0;}
+/* 二级入口（`NAV` 的 `parent`）：主线页里通往子页的一行按钮，以及子页的回程。
+ * 两者都排在内容之前、只有一行高，不抢页面自己的版式 —— 子页本身是完整页面，
+ * 壳只负责给出「进去」和「回来」两个动作。 */
+.zy-page-subnav{display:flex;align-items:center;gap:8px;margin:0 0 22px;}
+.zy-page-subnav button,.zy-page-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:1;padding:7px 13px;border:1px solid var(--zy-line);border-radius:999px;background:var(--zy-surface);color:var(--zy-secondary);}
+.zy-page-subnav button:hover,.zy-page-back:hover{color:var(--zy-text);border-color:var(--zy-accent);}
+.zy-page-back{margin:0 0 16px;padding-left:10px;}
 .zy-intro {display:flex;justify-content:space-between;align-items:center;margin-bottom:34px;gap:24px;}.zy-eyebrow{font-size:11px;color:var(--zy-accent);letter-spacing:1.2px;}.zy-intro h1{font-size:24px;font-weight:500;line-height:1.4;letter-spacing:-.7px;margin:9px 0 9px;}.zy-intro p{font-size:12px;color:var(--zy-secondary);margin:0;}.zy-intro>svg,.zy-date-icon{color:var(--zy-accent);opacity:.65;}.zy-date-icon{margin-right:12px;}
 .zy-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 12px;}.zy-section-title h2{font-size:13px;font-weight:600;margin:0;}.zy-section-title>span{font-size:11px;color:var(--zy-muted);}
 .zy-now {border:1px solid color-mix(in srgb,var(--zy-accent) 13%,var(--zy-line));border-left:3px solid var(--zy-accent);background:var(--zy-soft);border-radius:9px;padding:21px 24px 19px;}.zy-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--zy-accent);}.zy-pill>span{width:5px;height:5px;border-radius:50%;background:var(--zy-accent);}.zy-now h2{font-size:19px;letter-spacing:-.3px;font-weight:500;margin:11px 0 5px;}.zy-now p{font-size:11px;color:var(--zy-secondary);margin:0 0 15px;}

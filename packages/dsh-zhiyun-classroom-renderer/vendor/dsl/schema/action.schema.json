@@ -1,0 +1,1013 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/Action",
+  "definitions": {
+    "Action": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SpotlightAction"
+        },
+        {
+          "$ref": "#/definitions/LaserAction"
+        },
+        {
+          "$ref": "#/definitions/PlayVideoAction"
+        },
+        {
+          "$ref": "#/definitions/SpeechAction"
+        },
+        {
+          "$ref": "#/definitions/WbOpenAction"
+        },
+        {
+          "$ref": "#/definitions/WbDrawTextAction"
+        },
+        {
+          "$ref": "#/definitions/WbDrawShapeAction"
+        },
+        {
+          "$ref": "#/definitions/WbDrawChartAction"
+        },
+        {
+          "$ref": "#/definitions/WbDrawLatexAction"
+        },
+        {
+          "$ref": "#/definitions/WbDrawTableAction"
+        },
+        {
+          "$ref": "#/definitions/WbDrawLineAction"
+        },
+        {
+          "$ref": "#/definitions/WbClearAction"
+        },
+        {
+          "$ref": "#/definitions/WbDeleteAction"
+        },
+        {
+          "$ref": "#/definitions/WbCloseAction"
+        },
+        {
+          "$ref": "#/definitions/WbDrawCodeAction"
+        },
+        {
+          "$ref": "#/definitions/WbEditCodeAction"
+        },
+        {
+          "$ref": "#/definitions/DiscussionAction"
+        },
+        {
+          "$ref": "#/definitions/WidgetHighlightAction"
+        },
+        {
+          "$ref": "#/definitions/WidgetSetStateAction"
+        },
+        {
+          "$ref": "#/definitions/WidgetAnnotationAction"
+        },
+        {
+          "$ref": "#/definitions/WidgetRevealAction"
+        }
+      ]
+    },
+    "SpotlightAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "spotlight"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "dimOpacity": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "elementId",
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Spotlight — focus on a single element, dim everything else"
+    },
+    "LaserAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "laser"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "elementId",
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Laser — point at an element with a laser effect"
+    },
+    "PlayVideoAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "play_video"
+        },
+        "elementId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "elementId",
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Play video — start playback of a video element on the slide"
+    },
+    "SpeechAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "speech"
+        },
+        "text": {
+          "type": "string"
+        },
+        "audioId": {
+          "$ref": "#/definitions/AssetRef",
+          "description": "An asset reference for narration audio. Documents converted by the app-side reference converter (#1007 part 2, step c) hold allocated asset ids here. Unconverted legacy documents may still carry TTS-derived ids until they are opened and converted; such values are foreign to the asset pool and resolve through the app's legacy read fallbacks."
+        },
+        "audioInvalidated": {
+          "type": "boolean",
+          "description": "Prevent legacy derived-id fallback after an edit invalidates old narration."
+        },
+        "voice": {
+          "type": "string"
+        },
+        "speed": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Speech — teacher narration (wait for TTS to finish)"
+    },
+    "AssetRef": {
+      "type": "string",
+      "description": "A stable, backend-agnostic handle to a stored asset: an identifier the provider **allocated** at `put` time, opaque to everyone else. A plain string so it embeds cleanly in DSL documents (e.g. `PPTImageElement.src`, `PPTVideoElement.mediaRef`).\n\nAllocated, not derived: a ref says nothing about the bytes behind it. That is what lets a richer implementation regenerate or replace those bytes without invalidating a single document pointing at the ref, and lets one set of bytes carry several refs with different metadata. A provider may still store identical bytes once internally, but that is a property of its storage layer, not of the ref.\n\nThe ref domain is unconstrained: any string may be handed to `resolve` or `remove`, and a ref the provider never issued is simply one that resolves to nothing."
+    },
+    "WbOpenAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_open"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Open whiteboard (wait for animation)"
+    },
+    "WbDrawTextAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_draw_text"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "fontSize": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "content",
+        "id",
+        "type",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Draw text on whiteboard (wait for render)"
+    },
+    "WbDrawShapeAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_draw_shape"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "shape": {
+          "type": "string",
+          "enum": [
+            "rectangle",
+            "circle",
+            "triangle"
+          ]
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "fillColor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "height",
+        "id",
+        "shape",
+        "type",
+        "width",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Draw shape on whiteboard (wait for render)"
+    },
+    "WbDrawChartAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_draw_chart"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "chartType": {
+          "type": "string",
+          "enum": [
+            "bar",
+            "column",
+            "line",
+            "pie",
+            "ring",
+            "area",
+            "radar",
+            "scatter"
+          ]
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "labels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "legends": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "series": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "required": [
+            "labels",
+            "legends",
+            "series"
+          ],
+          "additionalProperties": false
+        },
+        "themeColors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "chartType",
+        "data",
+        "height",
+        "id",
+        "type",
+        "width",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Draw chart on whiteboard (wait for render)"
+    },
+    "WbDrawLatexAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_draw_latex"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "latex": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "latex",
+        "type",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Draw LaTeX formula on whiteboard (wait for render)"
+    },
+    "WbDrawTableAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_draw_table"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "outline": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "number"
+            },
+            "style": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "width",
+            "style",
+            "color"
+          ],
+          "additionalProperties": false
+        },
+        "theme": {
+          "type": "object",
+          "properties": {
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "color"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "data",
+        "height",
+        "id",
+        "type",
+        "width",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Draw table on whiteboard (wait for render)"
+    },
+    "WbDrawLineAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_draw_line"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "startX": {
+          "type": "number"
+        },
+        "startY": {
+          "type": "number"
+        },
+        "endX": {
+          "type": "number"
+        },
+        "endY": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "style": {
+          "type": "string",
+          "enum": [
+            "solid",
+            "dashed"
+          ]
+        },
+        "points": {
+          "anyOf": [
+            {
+              "type": "array",
+              "minItems": 2,
+              "items": [
+                {
+                  "type": "string",
+                  "const": ""
+                },
+                {
+                  "type": "string",
+                  "const": "arrow"
+                }
+              ],
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "minItems": 2,
+              "items": [
+                {
+                  "type": "string",
+                  "const": "arrow"
+                },
+                {
+                  "type": "string",
+                  "const": ""
+                }
+              ],
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "const": "arrow"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "const": ""
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        }
+      },
+      "required": [
+        "endX",
+        "endY",
+        "id",
+        "startX",
+        "startY",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Draw line/arrow on whiteboard (wait for render)"
+    },
+    "WbClearAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_clear"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Clear all whiteboard elements"
+    },
+    "WbDeleteAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_delete"
+        },
+        "elementId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "elementId",
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Delete a specific whiteboard element by ID"
+    },
+    "WbCloseAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_close"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Close whiteboard (wait for animation)"
+    },
+    "WbDrawCodeAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_draw_code"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "fileName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "id",
+        "language",
+        "type",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "description": "Draw code block on whiteboard (wait for typing animation)"
+    },
+    "WbEditCodeAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "wb_edit_code"
+        },
+        "elementId": {
+          "type": "string"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "insert_after",
+            "insert_before",
+            "delete_lines",
+            "replace_lines"
+          ]
+        },
+        "lineId": {
+          "type": "string"
+        },
+        "lineIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "elementId",
+        "id",
+        "operation",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Edit code block on whiteboard (line-level operations)"
+    },
+    "DiscussionAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "discussion"
+        },
+        "topic": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "agentId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "topic",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Discussion — trigger a roundtable discussion"
+    },
+    "WidgetHighlightAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "widget_highlight"
+        },
+        "target": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Widget Highlight — highlight an element in a widget iframe"
+    },
+    "WidgetSetStateAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "widget_setState"
+        },
+        "state": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "state",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Widget SetState — set widget state (e.g., simulation variables)"
+    },
+    "WidgetAnnotationAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "widget_annotation"
+        },
+        "target": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Widget Annotation — add floating annotation to an element"
+    },
+    "WidgetRevealAction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "widget_reveal"
+        },
+        "target": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "Widget Reveal — reveal hidden content in widget"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "dsh-zhiyun-page-classroom-play",
+  "version": "0.1.0",
+  "description": "智云 Pro「课堂播放」页：场景进度条 + 舞台 + 控制条，按场景类型分派 slide/quiz/interactive/pbl（页面插件）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "external": [
+        "dsh-zhiyun-shell-ui",
+        "dsh-zhiyun-classroom-renderer",
+        "dsh-zhiyun-core-classroom-stage"
+      ]
+    }
+  },
+  "files": [
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}
