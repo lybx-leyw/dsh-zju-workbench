@@ -527,6 +527,23 @@ import { createQuestionBankController } from './question-bank-client.js';
     async pollTeaching(runId) {
       return request("teach-poll", { runId });
     },
+
+    /** 把一次备课导出成 PPTX。返回 { fileName, base64 }，由界面转 Blob 下载。 */
+    async exportTeaching(runId) {
+      return request("teach-export", { runId });
+    },
+
+    /** 断点续作：接着没跑完的备课继续（已完成段不重跑）。 */
+    async resumeTeaching(runId) {
+      return request("teach-resume", { runId });
+    },
+
+    /** 加载这一节已保存的备课（重启 / 刷新后靠它秒开）。 */
+    async loadTeaching() {
+      const key = currentKey();
+      if (!key) return { pages: [], saved: false };
+      return request("teach-load", key);
+    },
     async generateQuiz(input) {
       const key = currentKey(); if (!key) return;
       const ticket = selection, epoch = account;

@@ -207,6 +207,33 @@ function buildRows(entries, expanded, filter) {
   return rows;
 }
 
+/**
+ * 区间选择：从锚点到游标之间的**可见行**（含两端）。
+ *
+ * # 为什么按"可见行的下标"算，而不是按路径排序算
+ *
+ * 树是折叠的、过滤时还会退化成扁平命中列表。用户眼里的"这一段"永远是**屏幕上
+ * 连着的那几行**，而不是文件系统里的字典序。折叠一个文件夹后，它里面那些行
+ * 从屏幕上消失了 —— 用路径序算出来的区间会把看不见的行也框进去，用户按
+ * Delete 就删掉了他根本没看见的东西。这是这一页唯一不可逆的动作，不能这么猜。
+ *
+ * 锚点或游标已经不在可见行里（被折叠/被过滤掉）时返回空：宁可"选择消失了"，
+ * 也不要悄悄留一个指向不可见行的选择。
+ *
+ * @param paths - 当前可见行的路径，**按屏幕顺序**。
+ * @param anchor - 选区锚点（第一次按 Shift+↑/↓ 时游标所在的行）。
+ * @param cursor - 游标所在的行。
+ * @returns 选中行的路径数组（按屏幕顺序）；两端任一不可见时为空。
+ */
+function selectionRange(paths, anchor, cursor) {
+  if (anchor === null || cursor === null) return [];
+  const from = paths.indexOf(anchor);
+  const to = paths.indexOf(cursor);
+  if (from < 0 || to < 0) return [];
+  const [lo, hi] = from <= to ? [from, to] : [to, from];
+  return paths.slice(lo, hi + 1);
+}
+
 /** 一个条目的祖先目录链（用于"打开笔记时自动展开它所在的目录"）。 */
 function ancestorsOf(rel) {
   const parts = String(rel).split('/').slice(0, -1);
@@ -231,11 +258,11 @@ export function apply(ctx) {
 }
 
 /** 文件树的一行。`dropTarget` 让文件夹既是行也是拖放目标。 */
-function TreeRow({ row, current, cursor, expanded, onOpen, onToggle, onDropOn, onDragStart, dragging }) {
+function TreeRow({ row, current, cursor, selected, expanded, onOpen, onToggle, onDropOn, onDragStart, dragging }) {
   const isFolder = row.type === 'folder';
   const isOpen = isFolder && expanded.has(row.path);
   return <li
-    className={`zs-nt-row${row.path === current ? ' is-current' : ''}${row.path === cursor ? ' is-cursor' : ''}${isOpen ? ' is-expanded' : ''}${dragging === row.path ? ' is-dragging' : ''}`}
+    className={`zs-nt-row${row.path === current ? ' is-current' : ''}${row.path === cursor ? ' is-cursor' : ''}${selected ? ' is-selected' : ''}${isOpen ? ' is-expanded' : ''}${dragging === row.path ? ' is-dragging' : ''}`}
     style={{ '--zs-nt-depth': String(row.depth) }}
     draggable
     onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', row.path); onDragStart(row.path); }}
@@ -443,11 +470,15 @@ export function NotesLibrary() {
   const [history, setHistory] = useState({ stack: [], cursor: -1 });
   const [dragging, setDragging] = useState(null);
   /**
-   * 待确认删除的那一条（`{ path, kind }`）；`null` = 没有。
+   * 待确认删除的条目（`{ items: [{ path, kind }] }`）；`null` = 没有。
    *
    * 删除在这里**不可撤销**（没有回收站），所以键盘删除要求一次就地确认。
    * 不做成 `window.confirm`：这个仓库统一用页面内的确认，规划页的 `confirming`
    * 就是同一做法 —— 系统弹窗在 Electron 里会被窗口样式割裂，而且无法本地化。
+   *
+   * ⚠️ 从单条改成了 `items` 数组（批量删除）：单条就是长度为 1 的数组。
+   *    保留一种形状而不是"单条一套、批量一套"，是为了让确认条与 `removePaths`
+   *    只有一条代码路径 —— 两条路径迟早会有一条漏掉某次清理（标签页/挂起保存）。
    */
   const [pendingDelete, setPendingDelete] = useState(null);
   /**
@@ -459,6 +490,15 @@ export function NotesLibrary() {
    * （`.is-cursor` 高亮），否则按了 ↑/↓ 用户毫无反馈。
    */
   const [treeCursor, setTreeCursorPath] = useState(null);
+  /**
+   * 区间选择的**锚点**（第一次按 Shift+↑/↓ 时游标所在的行）；`null` = 没有选择。
+   *
+   * 选择 = 锚点到游标之间那段**可见行**，由 `selectionRange()` 现算，不另存一份
+   * 路径数组。这样折叠一个文件夹、或者输入过滤词让行变少了，选择会自动跟着
+   * 屏幕上的东西收缩 —— 不会留下一个指向"已经看不见的行"的选择，然后被 Delete
+   * 删掉用户根本没看见的内容。
+   */
+  const [selectionAnchor, setSelectionAnchor] = useState(null);
   const filterRef = useRef(null);
   /** 正文滚动容器（`.zs-nt-scroll`）。阅读态与编辑态共用这一个，翻页键的目标就是它。 */
   const scrollRef = useRef(null);
@@ -491,6 +531,23 @@ export function NotesLibrary() {
 
   const activeTab = tabs.find((t) => t.path === active) ?? null;
   const rows = useMemo(() => buildRows(entries, expanded, filter), [entries, expanded, filter]);
+  /**
+   * 当前可见行的路径，**按屏幕顺序**（`rows` 就是树的渲染顺序）。
+   *
+   * 区间选择靠它算下标，所以它必须是渲染顺序而不是文件系统顺序 ——
+   * 理由见 `selectionRange()`。
+   */
+  const rowPaths = useMemo(() => rows.map((row) => row.path), [rows]);
+  /**
+   * 选中的路径集合（用于给行加 `is-selected`）。
+   *
+   * 派生而不是独立 state：选择的**唯一真源**是「锚点 + 游标 + 可见行」这三样，
+   * 再存一份数组就会有"两者不同步"的可能（折叠文件夹之后最常见）。
+   */
+  const selectedPaths = useMemo(
+    () => new Set(selectionRange(rowPaths, selectionAnchor, treeCursor)),
+    [rowPaths, selectionAnchor, treeCursor],
+  );
   const canBack = history.cursor > 0;
   const canForward = history.cursor >= 0 && history.cursor < history.stack.length - 1;
 
@@ -791,7 +848,7 @@ export function NotesLibrary() {
   };
 
   /**
-   * 删掉一条路径（笔记 / 附件 / 文件夹）。
+   * 删掉一组路径（笔记 / 附件 / 文件夹），一条 RPC 走完。
    *
    * ⚠️ 「删掉的不该被自动保存救回来」这条对**文件夹**同样成立，而且更危险：
    *    删一个文件夹时，里面的笔记可能在别的标签页开着，`pending.current` 里还挂着
@@ -802,42 +859,86 @@ export function NotesLibrary() {
    *    `folder:理学, note:理学/概率论` 原样回来。
    *
    *    所以这里按**前缀**判断：被删路径是 `p` 本身，或它下面的任何一条（`p/...`），
-   *    都要从挂起任务与标签页里清掉。
+   *    都要从挂起任务与标签页里清掉。批量删除时这个判断必须对**每一条**都成立 ——
+   *    "选了文件夹又选了它里面的笔记"正是批量选择最容易产生的形状。
    *
-   * @param path - `tree` 给的路径：笔记不带 `.md`，附件与文件夹是完整相对路径。
+   * # 为什么批量走一个 RPC（`removeMany`）而不是循环调 `remove`
+   *
+   * 宿主半边的每个写操作结尾都会 `refreshIndex()`（重读全库 + 推给索引器）。
+   * 循环 N 次就是 N 遍全库重读：删 30 篇笔记会让界面卡住好几秒，而中间任何一次
+   * 失败还会留下"删了一半、索引只更新了一半"的状态。`removeMany` 在服务端
+   * 按父目录优先的顺序删完，最后只刷一次索引 —— 这既快，也让失败面收敛到一处。
+   *
+   * @param paths - `tree` 给的路径数组：笔记不带 `.md`，附件与文件夹是完整相对路径。
    */
-  const remove = async (path) => {
+  const removePaths = async (paths) => {
+    const list = [...new Set(paths.filter(Boolean))];
+    if (list.length === 0) return;
     setBusy(true);
     setNotice(null);
-    // 这次删除会波及哪些路径：自己 + 它下面的一切。
-    const covers = (other) => other === path || other.startsWith(`${path}/`);
+    // 这次删除会波及哪些路径：任一条路径本身，或它下面的一切。
+    const covers = (other) => list.some((path) => other === path || other.startsWith(`${path}/`));
     try {
       if (pending.current !== null && covers(pending.current.path)) {
         pending.current = null;
         if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
       }
-      const result = await notes('remove', { path });
-      if (result?.removed !== true) {
+      // 单条也走同一个方法：两条路径（单条 / 批量）迟早会有一条漏掉某次清理。
+      const result = await notes('removeMany', { paths: list });
+      const removed = Array.isArray(result?.removed) ? result.removed : [];
+      if (removed.length === 0) {
         // 后端说没删到东西：如实说出来，而不是报一个假的成功。
-        setNotice({ tone: 'bad', text: `没有删除任何东西：「${baseOf(path)}」可能已经不在了。` });
+        setNotice({
+          tone: 'bad',
+          text: list.length === 1
+            ? `没有删除任何东西：「${baseOf(list[0])}」可能已经不在了。`
+            : `没有删除任何东西：这 ${list.length} 条可能都已经不在了。`,
+        });
         await refreshTree();
         return;
       }
       setTabs((ts) => ts.filter((t) => !covers(t.path)));
       setActive((cur) => (cur !== null && covers(cur) ? null : cur));
+      // 选择跟着内容一起消失：删完还留着指向已不存在路径的高亮，会让下一次
+      // Delete 对着空气弹确认条。
+      setSelectionAnchor(null);
+      treeCursorRef.current = null;
+      setTreeCursorPath(null);
       await refreshTree();
       if (active !== null && covers(active)) await refreshSide(null);
       // 删文件夹要说清连带了什么 —— 这是这一页唯一会顺手删掉别的文件的动作。
-      const extra = result.kind === 'folder' && Number(result.contained) > 0
-        ? `（含 ${result.contained} 个文件）`
-        : '';
-      setNotice({ tone: 'ok', text: `已删除「${baseOf(path)}」${extra}。` });
+      // 批量时把连带数**加起来**，一次说清楚。
+      const contained = removed.reduce((sum, item) => sum + (Number(item.contained) || 0), 0);
+      const extra = contained > 0 ? `（含 ${contained} 个文件）` : '';
+      const title = removed.length === 1 ? `「${baseOf(removed[0].path)}」` : ` ${removed.length} 条`;
+      // ⚠️ 有东西**没删掉**时必须说出来。批量删除最容易骗人的地方就是：
+      //    用户框了 12 行、界面回一句"已删除 12 条"，而实际只删掉 9 条。
+      //    `missing`（磁盘上本来就没了）与 `skipped`（已被删掉的父文件夹一起带走）
+      //    是两种不同的"没有单独删"，分开说 —— 后者的内容确实没了，不是失败。
+      const missing = Array.isArray(result?.missing) ? result.missing.length : 0;
+      const skipped = Array.isArray(result?.skipped) ? result.skipped.length : 0;
+      // ⚠️ 这个数组**不能**叫 `notes`：本函数上面还要调 `notes('removeMany', …)`
+      //    那个 RPC 助手（模块级 const）。同名 `const` 会把整个块里的 `notes`
+      //    拖进暂时性死区，RPC 调用当场 ReferenceError。
+      const remarks = [];
+      if (skipped > 0) remarks.push(`另 ${skipped} 项随文件夹一并删除`);
+      if (missing > 0) remarks.push(`${missing} 条已经不在，跳过`);
+      const tail = remarks.length > 0 ? `；${remarks.join('，')}` : '';
+      setNotice({ tone: 'ok', text: `已删除${title}${extra}${tail}。` });
     } catch (error) {
       setNotice({ tone: 'bad', text: `删除失败：${error.message}` });
     } finally {
       setBusy(false);
     }
   };
+
+  /**
+   * 删掉一条路径。右栏的「删除这篇笔记」与结题用的确认条都走它 ——
+   * 保留这个单条入口是为了让调用点读起来仍然是"删这一篇"，而不是"删一个数组"。
+   *
+   * @param path - `tree` 给的路径：笔记不带 `.md`，附件与文件夹是完整相对路径。
+   */
+  const remove = (path) => removePaths([path]);
 
   const walkHistory = async (step) => {
     const next = history.cursor + step;
@@ -855,7 +956,7 @@ export function NotesLibrary() {
   };
 
   /**
-   * PageUp / PageDown / ↑ / ↓ 的四个键：滚**当前打开的笔记**。
+   * PageUp / PageDown / ↑ / ↓ 的四个键：滚**当前打开的笔记**，以及在树上移动/扩选。
    *
    * # 实测出来的三条事实（决定了这份实现的形状）
    *
@@ -868,6 +969,19 @@ export function NotesLibrary() {
    *    （实测 `scrollHeight 5888 > clientHeight 420`，按 PageDown 滚的是它自己），
    *    而且 `↑/↓` 在那里是移动光标。接管它等于把人家的输入框变砖。
    *
+   * # Shift + ↑/↓ = 区间选择（批量选择）
+   *
+   * 语义照抄所有文件管理器：**Shift 决定"这一段从哪到哪"，游标到哪，选择就到哪。**
+   * 细节三条，都是为了"选择永远等于屏幕上看得见的那一段"：
+   *
+   *   1. 第一次按下时把**当时的游标**记为锚点；之后每按一次只移动游标，区间由
+   *      `selectionRange()` 用「锚点 → 游标」现算。所以往回按会让区间收缩，
+   *      而不是再造一段新的选择（那会变成"越缩越大"的怪行为）。
+   *   2. 不带 Shift 的 ↑/↓ 把选择塌缩掉（锚点清空）—— 与资源管理器一致：
+   *      松手后随便移动，选择就没了。
+   *   3. **只在树上生效**。焦点在正文 textarea 里时 Shift+↓ 必须是"选正文文字"，
+   *      抢过来等于把用户最常用的选区操作弄坏。
+   *
    * # 为什么是"滚一个视口的 85%"
    *
    * `PageDown` 的语义是"翻一页但要保留衔接"。整屏滚动会丢掉上一页最后一行，
@@ -879,7 +993,7 @@ export function NotesLibrary() {
   const handleScrollKeys = (event) => {
     const { key } = event;
     if (key !== 'PageDown' && key !== 'PageUp' && key !== 'ArrowDown' && key !== 'ArrowUp') return false;
-    if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return false;
+    if (event.ctrlKey || event.metaKey || event.altKey) return false;
     const target = event.target;
     if (!(target instanceof Element)) return false;
     // 输入区一律放行：原因见上面第 3 条（textarea 自己会滚，↑/↓ 是移光标）。
@@ -912,11 +1026,23 @@ export function NotesLibrary() {
       // 亮点跟着走：真机上焦点留不住，这份 state 才是用户**看得见**的"选中"。
       setTreeCursorPath(nextPath);
       treeCursorRef.current = nextPath;
+      if (event.shiftKey) {
+        // 锚点只在**第一次**按住 Shift 时定下来：之后的移动都是"扩/缩这段"。
+        // 用函数式更新读当前值，避免闭包里拿到过期的锚点。
+        setSelectionAnchor((anchor) => anchor ?? (row.dataset.path ?? null));
+      } else {
+        // 不带 Shift 的移动 = 放弃选择。
+        setSelectionAnchor(null);
+      }
       // 顺手尽力把焦点也放上去（普通浏览器上有效；真机上无效也不影响功能）。
       next.focus?.();
       event.preventDefault();
       return true;
     }
+
+    // 不在树上：Shift 的翻页/滚动组合不接管（Shift+↑/↓ 在这里没有"选择"可做，
+    // Shift+PageUp/PageDown 是浏览器的"选择到页首/页尾"，不该被这里吃掉）。
+    if (event.shiftKey) return false;
 
     const scroller = scrollRef.current;
     if (scroller === null) return false;
@@ -950,14 +1076,20 @@ export function NotesLibrary() {
   };
 
   /**
-   * Delete / Backspace：删**文件树里焦点所在的那一行**。
+   * Delete / Backspace：删**文件树里选中的那些行**。
    *
-   * # 为什么作用对象是"焦点行"而不是"当前打开的笔记"
+   * # 为什么作用对象是"树上的选中行"而不是"当前打开的笔记"
    *
    * 删除是这一页唯一不可逆的动作。删"你刚用手指点的那个东西"是可预期的；
    * 删"你碰巧打开着的那一篇"则要用户在动手前先确认一次自己开着什么，误触代价高
    * 得多。而且行本身就是 `<button>`，点击即获得焦点 —— 不需要另造一个 `selected`
    * 状态，真正的选择就是焦点。
+   *
+   * # 批量：有区间选择时删整段
+   *
+   * 按住 Shift 用 ↑/↓ 扩出来的那一段（`selectedPaths`）就是这一键的作用对象；
+   * 没有区间选择时，退化成"删游标那一条"（原有行为，不能因为加了批量就把它弄坏）。
+   * 两种情况都只**弹确认条**，不直接删 —— 见下面那条。
    *
    * # 为什么挂在容器上而不是 `document`
    *
@@ -970,13 +1102,20 @@ export function NotesLibrary() {
    * 1. **焦点在输入框/正文里**：那是改字符，不是删笔记 —— 直接放行（不 `preventDefault`）。
    *    笔记正文就是 `textarea`，这一条是绝对前提。
    * 2. **有修饰键**：`Ctrl/⌘+Backspace` 在输入框里是"删到行首"，别抢。
-   * 3. **焦点不在树行上**：没有明确对象就不猜，什么都不做。
+   * 3. **焦点不在树上**：没有明确对象就不猜，什么都不做。
    */
   const onKeyDownCapture = (event) => {
     // 确认条挂着时，Esc 先撤掉它 —— 这是"我按错了"最自然的反应。
     if (event.key === 'Escape' && pendingDelete !== null) {
       event.stopPropagation();
       setPendingDelete(null);
+      return;
+    }
+    // Esc 撤掉区间选择（不撤游标：游标是"我在哪一行"，选择是"这一段"，
+    // 用户按 Esc 想放弃的通常是后者）。
+    if (event.key === 'Escape' && selectionAnchor !== null) {
+      event.stopPropagation();
+      setSelectionAnchor(null);
       return;
     }
     // 滚动键先跑：它自己有完整的豁免判断，接管了就到此为止。
@@ -987,13 +1126,31 @@ export function NotesLibrary() {
     if (!(target instanceof Element)) return;
     // 豁免：正在输入的地方。`isContentEditable` 覆盖将来换成富文本编辑器的情况。
     if (target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return;
+    // ⚠️ 有区间选择时**不要求**焦点落在树行上。
+    //
+    //    原因与 ↑/↓ 的 B 方案同源：真机上焦点根本留不住（点完树行 activeElement
+    //    仍是 BODY）。若这里坚持 `target.closest('.zs-nt-rowbtn')`，用户在树上
+    //    Shift+↓ 选了三行、然后按 Delete —— 事件目标是 BODY，于是什么都没发生。
+    //    选择本身（`.is-selected` 高亮 + 计数）就是"用户在树上"的证据，够了。
     const row = target.closest('.zs-nt-rowbtn[data-path]');
+    const selected = [...selectedPaths];
+    if (selected.length > 0) {
+      event.preventDefault();
+      setPendingDelete({
+        // kind 在批量时也逐行带上：确认条要说清"其中 N 个文件夹"。
+        items: selected.map((path) => ({
+          path,
+          kind: rows.find((r) => r.path === path)?.type ?? 'note',
+        })),
+      });
+      return;
+    }
     if (row === null) return;
     const path = row.dataset.path;
     if (!path) return;
     // 真的接管了这次按键才 preventDefault：否则浏览器层面会把它当成"返回"之类。
     event.preventDefault();
-    setPendingDelete({ path, kind: row.dataset.kind ?? 'note' });
+    setPendingDelete({ items: [{ path, kind: row.dataset.kind ?? 'note' }] });
   };
 
   /**
@@ -1043,15 +1200,51 @@ export function NotesLibrary() {
     const onPointerDown = (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
+      // 确认条 / 选中计数条上的点击**不是"用户换了一行"**，而是在操作当前这段
+      // 选择本身，所以不重置游标。
+      if (target.closest('.zs-nt-confirm, .zs-nt-selection')) return;
       const row = target.closest('.zs-nt-rowbtn[data-path]');
       const path = row === null ? null : (row.dataset.path ?? null);
       treeCursorRef.current = path;
       setTreeCursorPath(path);
+      // ⚠️ 这里**只**更新游标，**不**清区间选择 —— 清理挪到下面的 `click` 里。
+      //
+      //    这不是洁癖，是一个实测出来的功能失效，而且它有**两种**可感知的形状：
+      //
+      //      选中 3 条后点「确认删除」→ 第一下没反应，要点两下；
+      //      选中 3 条后点树上的另一篇 → 第一下打不开，要点两下（6 行里 5 行中招）。
+      //
+      //    两者的因果链同一条：pointerdown 是**按下**，而清掉锚点会让计数条
+      //    （`.zs-nt-selection`）当场卸载 → 它下面的整个文件树上移一行 / 确认条
+      //    上移约 48px → 手指抬起时**按钮和行都已经不在原来的坐标上了** → 浏览器
+      //    合成的 click 命中的是移动后顶上来的另一个元素 → 原来那个元素的 onClick
+      //    一次都没跑。用户看到的就是"点了没反应"。
+      //
+      //    改到 `click` 里清，按下与抬起之间布局不动，click 一定命中按下的那个元素；
+      //    等它跑完再收掉计数条。语义没变：仍然是"点一下就是重新开始"，只是把
+      //    清理放在了这次点击**完成之后**。
+      //
+      //    源码级正则守卫抓不到这一类缺陷（`tests/notes-keyboard-delete.test.mjs`
+      //    就是正则级的），只有真浏览器按一次才看得见 —— 回归防线在
+      //    `tests/notes-batch-select.test.mjs`。
     };
     document.addEventListener('pointerdown', onPointerDown, true);
+    // 点击**完成之后**才收掉区间选择（理由见上面 onPointerDown 的长注释）。
+    // 跳过确认条：点「取消」是"反悔这次删除"，不是"放弃这段选择"——
+    // 把选择也清掉的话，用户再按一次 Delete 什么都不弹，得从头 Shift+↓ 一遍。
+    const onClick = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest('.zs-nt-confirm')) return;
+      // 计数条自己的按钮会清（`取消选择`）；点条上的文字也不该把它收掉。
+      if (target.closest('.zs-nt-selection')) return;
+      setSelectionAnchor(null);
+    };
+    document.addEventListener('click', onClick);
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
       document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('click', onClick);
     };
   });
 
@@ -1108,24 +1301,45 @@ export function NotesLibrary() {
           aria-label="过滤笔记"
           onChange={(e) => setFilter(e.target.value)}
         />
+        {/* 选了多行时说清"选中几条"，并给一个不用键盘也能退出选择的口子。
+            为什么必须是**看得见的**一行：Shift+↑/↓ 不像拖拽那样有连续的视觉反馈，
+            用户框了几行只能靠数高亮块；行数一多就数不清了，而下一步就是不可逆删除。
+            单行时不显示 —— 那是普通游标，不算"批量"。 */}
+        {selectedPaths.size > 1 && <div className="zs-nt-selection" role="status">
+          <span>已选中 {selectedPaths.size} 条</span>
+          <button type="button" onClick={() => setSelectionAnchor(null)}>取消选择</button>
+        </div>}
         {/* 键盘删除的确认条：就地出现在文件树顶部，贴着被操作的对象。
-            删除没有回收站，所以这一步不省；但也不弹系统窗 —— 见 `pendingDelete` 的说明。 */}
+            删除没有回收站，所以这一步不省；但也不弹系统窗 —— 见 `pendingDelete` 的说明。
+            批量时把"几条 / 其中几个文件夹"一次说清：用户按的是 Shift+↑/↓，
+            眼睛未必数过自己框了几行。 */}
         {pendingDelete !== null && <div className="zs-nt-confirm" role="alertdialog" aria-label="确认删除">
           <p>
-            删除「{baseOf(pendingDelete.path)}」
-            {pendingDelete.kind === 'folder' ? '（含整个文件夹）' : ''}？删掉就找不回来了。
+            {pendingDelete.items.length === 1
+              ? <>删除「{baseOf(pendingDelete.items[0].path)}」
+                {pendingDelete.items[0].kind === 'folder' ? '（含整个文件夹）' : ''}？删掉就找不回来了。</>
+              : <>删除这 {pendingDelete.items.length} 条
+                {pendingDelete.items.some((item) => item.kind === 'folder') ? '（其中含整个文件夹）' : ''}
+                ？删掉就找不回来了。</>}
           </p>
+          {/* 批量时列个缩略清单：只有一条时不需要（标题已经说清了）。 */}
+          {pendingDelete.items.length > 1 && <ul className="zs-nt-confirm-list">
+            {pendingDelete.items.slice(0, 6).map((item) => <li key={item.path}>
+              {baseOf(item.path)}{item.kind === 'folder' ? '/' : ''}
+            </li>)}
+            {pendingDelete.items.length > 6 ? <li className="zs-muted">…还有 {pendingDelete.items.length - 6} 条</li> : null}
+          </ul>}
           <div className="zs-nt-confirm-actions">
             <button
               type="button"
               className="zs-button zs-nt-danger"
               disabled={busy}
               onClick={() => {
-                const target = pendingDelete.path;
+                const targets = pendingDelete.items.map((item) => item.path);
                 setPendingDelete(null);
-                void remove(target);
+                void removePaths(targets);
               }}
-            >确认删除</button>
+            >{pendingDelete.items.length === 1 ? '确认删除' : `确认删除这 ${pendingDelete.items.length} 条`}</button>
             <button type="button" className="zs-button" onClick={() => setPendingDelete(null)}>取消</button>
           </div>
         </div>}
@@ -1143,6 +1357,7 @@ export function NotesLibrary() {
                 row={row}
                 current={active}
                 cursor={treeCursor}
+                selected={selectedPaths.has(row.path)}
                 expanded={expanded}
                 onOpen={(p) => void openNote(p)}
                 onToggle={toggleFolder}

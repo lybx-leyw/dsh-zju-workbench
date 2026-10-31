@@ -1,5 +1,9 @@
+import { renderSlideChapter } from 'dsh-zhiyun-core-classroom-generate/html-shell';
+
 /**
- * 「AI 教学」：把讲义交给**课堂生成管线**，产出真正可以讲的课件。
+ * 「AI 教学」：默认将讲义送入 HTML 理解讲解分支，不生成 TTS 或图片。
+ * 每章依次做理解障碍预判、视觉分镜、HTML；章节间有界并发。
+ * 下文 canvas 说明保留用于兼容历史课件存档。
  *
  * # 为什么不是自己拼 prompt
  *
@@ -35,8 +39,12 @@
  *
  * brief 的形状由 `normalizeBrief` 定（requirement 必填，其余可选）。
  * 从讲义提炼而不是让用户再填一遍：他已经有终稿了。
+ *
+ * @param {object} lecture 讲义终稿
+ * @param {object|null} [knowledgeTree] 知识树
+ * @param {{ chapterConcurrency?: number }} [options] 章节并发（界面可选；不传用默认 3）
  */
-export function briefFromLecture(lecture) {
+export function briefFromLecture(lecture, knowledgeTree = null, options = {}) {
   const chapters = Array.isArray(lecture?.chapters) ? lecture.chapters : [];
   const topicTitles = [];
   const goals = [];
@@ -54,11 +62,40 @@ export function briefFromLecture(lecture) {
   return {
     requirement: `按讲义顺序讲清楚这一节，覆盖：${topicTitles.slice(0, 10).join('、') || topic}`,
     topic,
+    outputFormat: 'html',
     description: `共 ${chapters.length} 章、${topicTitles.length} 个知识点`,
     goals: goals.slice(0, 8),
+    // 摘要只负责描述任务；完整终稿和树是生成依据，不能拿摘要替代正文。
+    sourceText: sourceFromLecture(lecture, Infinity),
+    knowledgeTree,
+    // 章节并发：界面可调；不传时写默认 3。这里显式给出而不是留 undefined ——
+    // brief 自身要能说明它打算并发几章，读代码/看日志时不必再翻 normalizeBrief。
+    chapterConcurrency: options.chapterConcurrency ?? 3,
+    chapters: chapters.map((chapter, index) => ({
+      id: `chapter-${index + 1}`,
+      title: String(chapter?.title ?? '').trim() || `第 ${index + 1} 章`,
+      sourceText: sourceFromLecture({ chapters: [chapter] }, Infinity),
+      knowledgeTree: chapterTree(knowledgeTree, chapter, index),
+    })),
     // 讲义本身就是素材：这一节的目标是「讲一遍」，不额外要求互动与测验
     interactive: false,
     assess: false,
+  };
+}
+
+/** 优先按章节标题匹配原树，避免单纯依赖数组位置误配；缺树时保留终稿槽位。 */
+function chapterTree(tree, chapter, index) {
+  const branches = Array.isArray(tree?.chapters) ? tree.chapters
+    : tree?.kind === 'title' ? ((tree.children ?? []).some((n) => n.kind === 'title') ? tree.children : [tree])
+    : [];
+  const title = String(chapter?.title ?? '').trim();
+  const matched = title ? branches.find((node) => String(node?.title ?? '').trim() === title) : null;
+  if (matched) return matched;
+  // 只有无标题章节才允许按位置兜底。标题不一致不把别章的原始正文混进来。
+  if (!title && branches[index]) return branches[index];
+  return {
+    title: title || `第 ${index + 1} 章`,
+    topics: (chapter?.topics ?? []).map((topic) => ({ title: topic?.title ?? '', sourceLeafId: topic?.sourceLeafId })),
   };
 }
 
@@ -103,6 +140,48 @@ export function sourceFromLecture(lecture, limit = 12000) {
  * 只取 slide 类：`canvas` 就是渲染层的输入（`elements` + `viewportSize` + `theme`）。
  * quiz / pbl 这类暂不展示 —— 这一节的目标是把课讲完，练习不是必需。
  */
+/**
+ * 章节数据 → 可在学习页展示的文档。
+ *
+ * # 为什么优先用 `slides` 重新渲染，而不是直接用存下来的 `html`
+ *
+ * `chapter.html` 是**生成当时**那份外壳的产物，会随排版一起被冻结在 vault 里。
+ * 版式改进之后（例如从「上下」改成「左右」两栏），已经跑完的课如果直接回放
+ * 旧 `html`，用户看到的仍是旧排版 —— 而他并不会为此重新跑一遍模型。
+ *
+ * 所以有 `slides` 就**现场重渲染**：数据结构没变，只是换了一层外壳。
+ * 拿不到 `slides`（更早的存档）时才退回 `chapter.html`，保证老数据仍能打开。
+ */
+export function pagesFromHtmlChapters(chapters) {
+  const list = Array.isArray(chapters) ? chapters : [];
+  return list
+    .filter(chapter => (typeof chapter?.html === 'string' && chapter.html.trim()) || Array.isArray(chapter?.slides))
+    .map((chapter, index) => {
+      const title = chapter.title || `第 ${index + 1} 章`;
+      const html = renderChapterHtml(chapter, title);
+      return html ? { id: chapter.chapterId ?? `chapter-${index + 1}`, title, html,
+        analysis: chapter.analysis, storyboard: chapter.storyboard, points: [] } : null;
+    })
+    .filter(Boolean);
+}
+
+/**
+ * 用当前的排版外壳重渲染一章；没有 `slides` 时退回存档里的 `html`。
+ *
+ * `strictFontSize: false` 是必须的：字号下限是**生成期**质量门，
+ * 历史数据里有 22/23px 的标签，用新门卡旧数据只会让课程打不开。
+ *
+ * 渲染失败（数据被手工改坏等）时同样退回旧 `html` —— 宁可显示旧排版，
+ * 也不要因为一次重渲染异常让整节课打不开。
+ */
+function renderChapterHtml(chapter, title) {
+  if (Array.isArray(chapter?.slides) && chapter.slides.length) {
+    try {
+      return renderSlideChapter({ title, topic: chapter.topic ?? '', slides: chapter.slides, strictFontSize: false });
+    } catch { /* 退回存档 html */ }
+  }
+  return typeof chapter?.html === 'string' && chapter.html.trim() ? chapter.html : null;
+}
 export function pagesFromScenes(scenes) {
   const list = Array.isArray(scenes) ? scenes : [];
   return list
@@ -184,6 +263,11 @@ export async function runGeneration({ generate, brief, stageId, provider, model 
   //    拿到空数组，报「这一节没有生成出可讲的课件页」（EMPTY）。
   //    真正的产物在 run 快照的 `scenes` 字段上（见 generate 包的 snapshot）。
   const run = typeof generate.get === 'function' ? await generate.get(runId) : null;
+  if (run?.outputFormat === 'html') {
+    const pages = pagesFromHtmlChapters(run.htmlChapters);
+    if (!pages.length) throw Object.assign(new Error('没有完整生成的 HTML 章节'), { code: 'EMPTY' });
+    return { runId, pages, skipped: [] };
+  }
   const scenes = Array.isArray(run?.scenes) ? run.scenes : [];
   const skipped = Array.isArray(run?.skipped) ? run.skipped : [];
 
@@ -243,7 +327,7 @@ function textOf(block) {
  * 这不改管线的执行方式（它本来就是异步跑、事件流可回放），
  * 只是把「等」从一次长请求摊成多次短请求。
  */
-export async function startGeneration({ generate, brief, stageId, provider, model }) {
+export async function startGeneration({ generate, brief, stageId, provider, model, llmPool }) {
   if (!generate?.start) {
     throw Object.assign(new Error('课堂生成服务未接入'), { code: 'NOT_WIRED' });
   }
@@ -251,6 +335,8 @@ export async function startGeneration({ generate, brief, stageId, provider, mode
   if (stageId) opts.stageId = stageId;
   if (provider) opts.provider = provider;
   if (model) opts.model = model;
+  // 池子（{ execute, concurrency }）：有它时章节并发 = 总并发，由池子决定。
+  if (llmPool) opts.llmPool = llmPool;
 
   const started = await generate.start(brief, opts);
   const runId = started?.runId;
@@ -290,7 +376,8 @@ export async function pollGeneration({ generate, runId }) {
   }
 
   if (status === 'done') {
-    const pages = pagesFromScenes(scenes);
+    const pages = run.outputFormat === 'html'
+      ? pagesFromHtmlChapters(run.htmlChapters) : pagesFromScenes(scenes);
     if (!pages.length) {
       const first = skipped[0];
       const cause = first?.message ? `：${first.message}` : '';
@@ -312,7 +399,17 @@ export async function pollGeneration({ generate, runId }) {
     status: 'running',
     // scenes 在跑的过程中也会逐步出现，所以「已备好」可以直接报真实页数
     ready: run.readyScenes ?? scenes.length,
-    total: null, // 管线的总数只有 outline 跑完才知道，前端显示「N 页」即可
+    total: run.totalScenes ?? null,
+    chapterTotal: run.chapterTotal ?? 0,
+    chaptersDone: run.chaptersDone ?? 0,
+    // HTML 分支：章内是串行的多页生成，必须把「这一章做到第几页、哪一步」透出来，
+    // 否则轮询只能看到「已完成 N 章」，整段时间界面没有变化。
+    ...(run.outputFormat === 'html' ? {
+      outputFormat: 'html',
+      slidesDone: run.slidesDone ?? 0,
+      chapterProgress: Array.isArray(run.chapterProgress) ? run.chapterProgress : [],
+      startedAt: run.startedAt ?? null,
+    } : {}),
     phase: run.phase ?? donePhases.at(-1) ?? 'outline',
     phasesDone: donePhases,
   };

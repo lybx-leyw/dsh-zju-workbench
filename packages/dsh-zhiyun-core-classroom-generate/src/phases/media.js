@@ -72,8 +72,10 @@ export async function produceMedia({ outlines, scenes, media, vault, stageId, em
 
     try {
       const output = await producer(item, { stageId, signal });
-      const bytes = toBytes(output);
-      if (!bytes) throw new Error('媒体端口没有返回字节');
+      let bytes = toBytes(output, item.mediaType);
+      // 端口给了远程 URL：自己下载（带字节上限），不要把它当图片字节。
+      if (bytes?.url) bytes = await downloadMedia(bytes.url, item.mediaType, signal);
+      if (!bytes || !bytes.data) throw new Error('媒体端口没有返回字节');
 
       const asset = await vault.assets.put({
         stageId,
@@ -139,17 +141,24 @@ export function collectMediaItems(outlines, scenes) {
   });
 
   for (const scene of scenes) {
-    const speech = (scene.actions ?? []).find((action) => action.type === 'speech' && action.text);
-    if (!speech) continue;
-    items.push({
-      mediaType: 'audio',
-      sceneId: scene.id,
-      sceneIndex: scene.order,
-      elementId: `${scene.id}-speech-1`,
-      prompt: speech.text,
-      text: speech.text,
-      actionId: speech.id,
-    });
+    // 配音要覆盖**每一条** speech：actions 段产出的旁白是多条（上游 5-10 段），
+    // 原先用 `.find` 只取第一条，其余旁白就没有音频 —— 播到那里会静默跳读。
+    const speeches = (scene.actions ?? []).filter((action) => action.type === 'speech' && action.text);
+    for (const [speechIndex, speech] of speeches.entries()) {
+      items.push({
+        mediaType: 'audio',
+        sceneId: scene.id,
+        sceneIndex: scene.order,
+        // 用 action.id 做键（唯一），不再硬编码 `-speech-1`：
+        // buildScene 的回退路径确实叫 `-speech-1`，但 actions 段的产物叫
+        // `-text-<n>`；硬编码会让后者全部对不上，配音就永远挂不上去。
+        elementId: speech.id,
+        prompt: speech.text,
+        text: speech.text,
+        actionId: speech.id,
+        speechIndex,
+      });
+    }
   }
 
   return items;
@@ -164,15 +173,95 @@ function pickProducer(media, mediaType) {
   return typeof media.generate === 'function' ? media.generate : null;
 }
 
-function toBytes(output) {
+/**
+ * 字节上限（照上游 `lib/media/bounded-download.ts:11-12`）。
+ * 配图 20 MiB；视频 200 MiB。超限直接失败，不把超大响应读进内存。
+ */
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
+
+function byteCapOf(mediaType) {
+  return mediaType === 'video' ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+}
+
+/**
+ * 把端口的各种返回形态统一成 `{data, mime}`。
+ *
+ * 支持的形态（按顺序判定）：
+ * - `Uint8Array` / `Buffer`
+ * - `{data|bytes|base64, mime?}`
+ * - `data:` URL（解码）
+ * - `http(s)://` URL（交给调用方下载，带字节上限）
+ *
+ * ⚠️ **不再把任意字符串当原始字节**。原先那条分支会把"服务返回了一个 URL"
+ * 静默写成一段 URL 文本当成图片 —— 产出坏资产且不报错。URL 只能走下载，
+ * 下载有上限、失败会报错。
+ */
+function toBytes(output, mediaType = 'image') {
   if (!output) return null;
-  if (output instanceof Uint8Array) return { data: output, mime: 'application/octet-stream' };
-  if (typeof output === 'string') return { data: output, mime: 'application/octet-stream' };
-  if (typeof output === 'object' && (output.data ?? output.bytes)) {
+  const cap = byteCapOf(mediaType);
+
+  if (output instanceof Uint8Array) {
+    if (output.byteLength > cap) {
+      throw Object.assign(new Error(`媒体超过字节上限（${output.byteLength} > ${cap}）`), {
+        code: 'E_MEDIA_TOO_LARGE',
+      });
+    }
+    return { data: output, mime: 'application/octet-stream' };
+  }
+
+  if (typeof output === 'string') {
+    const dataUrl = /^data:([^;,]+)?(;base64)?,(.*)$/s.exec(output);
+    if (dataUrl) {
+      const mime = dataUrl[1] || 'application/octet-stream';
+      const payload = dataUrl[3] ?? '';
+      const data = dataUrl[2] ? Buffer.from(payload, 'base64') : Buffer.from(decodeURIComponent(payload));
+      if (data.byteLength > cap) {
+        throw Object.assign(new Error(`媒体超过字节上限（${data.byteLength} > ${cap}）`), {
+          code: 'E_MEDIA_TOO_LARGE',
+        });
+      }
+      return { data, mime };
+    }
+    if (/^https?:\/\//i.test(output)) return { url: output };
+    throw Object.assign(new Error('媒体端口返回了无法识别的字符串（既不是 data: 也不是 http URL）'), {
+      code: 'E_MEDIA_BAD_OUTPUT',
+    });
+  }
+
+  if (typeof output === 'object') {
+    if (output.url && !output.data && !output.bytes && !output.base64) return { url: String(output.url) };
+    let data = output.data ?? output.bytes;
+    if (!data && typeof output.base64 === 'string') data = Buffer.from(output.base64, 'base64');
+    if (!data) return null;
+    if (data instanceof Uint8Array && data.byteLength > cap) {
+      throw Object.assign(new Error(`媒体超过字节上限（${data.byteLength} > ${cap}）`), {
+        code: 'E_MEDIA_TOO_LARGE',
+      });
+    }
     return {
-      data: output.data ?? output.bytes,
+      data,
       mime: typeof output.mime === 'string' ? output.mime : 'application/octet-stream',
     };
   }
   return null;
+}
+
+/** 远程媒体下载（带字节上限）。上游走 `readResponseBodyWithLimit`。 */
+async function downloadMedia(url, mediaType, signal) {
+  const cap = byteCapOf(mediaType);
+  const response = await fetch(url, { signal });
+  if (!response.ok) {
+    throw Object.assign(new Error(`媒体下载失败：HTTP ${response.status}`), {
+      code: 'E_MEDIA_DOWNLOAD_FAILED',
+    });
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (buffer.byteLength > cap) {
+    throw Object.assign(new Error(`媒体超过字节上限（${buffer.byteLength} > ${cap}）`), {
+      code: 'E_MEDIA_TOO_LARGE',
+    });
+  }
+  const mime = response.headers.get('content-type')?.split(';')[0]?.trim() || 'application/octet-stream';
+  return { data: buffer, mime };
 }

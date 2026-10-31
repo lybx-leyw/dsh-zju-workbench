@@ -35,6 +35,33 @@ export function pickFallbackType(allowedTypes) {
 }
 
 /**
+ * 从 `topic` 里剥出「该题归属的知识点」前缀。
+ *
+ * # 为什么要走 topic 前缀，而不是加一个独立字段
+ *
+ * plan 的回复是模型自由写的 JSON，多一个字段就多一个它可能漏掉、写错、或
+ * 在 ``PLAN`` 协议下被截断的地方。而 `topic` 是**本来就必须有**的字段 ——
+ * 把 pid 塞在它的前缀里，模型少写一个字段的失败模式就变成「前缀缺失」，
+ * 那正好是我们想区分出来的信号：**缺前缀 = 出处未知**，不是猜一个。
+ *
+ * 前缀格式 `[pid=t1-1] 具体角度`，与 user 消息里给出的清单逐字一致。
+ * 剥不掉时 `pointId` 为 `null`，`topic` 保持原样 —— 绝不编一个 id。
+ */
+const POINT_PREFIX = /^\s*\[pid=([^\]]*)\]\s*/i;
+
+export function splitTopicPoint(topic) {
+  const raw = String(topic ?? '').trim();
+  const match = raw.match(POINT_PREFIX);
+  if (!match) return { pointId: null, topic: raw };
+  const pointId = match[1].trim();
+  const rest = raw.slice(match[0].length).trim();
+  // pid 为空、或前缀后面什么都没有，都算「没写清」：此时整段仍当 topic 用，
+  // 但出处为 null。宁可题目归到未分组，也不要它带着一个空 id 冒充已知出处。
+  if (!pointId || !rest) return { pointId: null, topic: rest || raw };
+  return { pointId, topic: rest };
+}
+
+/**
  * 上游 `_parse_plan`（808-871）。
  *
  * @param {string} raw            PLAN 标签之后的正文
@@ -66,7 +93,10 @@ export function parsePlan(raw, { requested = 1, allowedTypes = [], targetDifficu
   const seenTopics = new Set();
   for (const item of rawItems) {
     if (item === null || typeof item !== 'object' || Array.isArray(item)) continue;
-    const topic = String(item.topic || item.concentration || '').trim();
+    // 去重按**剥掉前缀之后**的正文：两个 template 写同一个角度、只是 pid 不同，
+    // 仍然是重复题。反过来，同一知识点下的不同角度应当保留 —— 所以不能连 pid 一起比。
+    const parsed = splitTopicPoint(String(item.topic || item.concentration || ''));
+    const topic = parsed.topic;
     if (!topic) continue;
     if (seenTopics.has(topic.toLowerCase())) continue;
     seenTopics.add(topic.toLowerCase());
@@ -81,6 +111,8 @@ export function parsePlan(raw, { requested = 1, allowedTypes = [], targetDifficu
     templates.push({
       question_id: `q_${templates.length + 1}`,
       topic,
+      // 出处：模型回传的知识点 id；没写或写坏时为 null（= 未分组），不猜。
+      pointId: parsed.pointId,
       question_type: qtype,
       difficulty: diff,
       source: 'custom',

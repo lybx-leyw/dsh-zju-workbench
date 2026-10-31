@@ -31,7 +31,7 @@ export function detectStage(messages) {
 
 const wrap = label => '``' + label + '``';
 
-export function quizFakeModel({ templates = 1 } = {}) {
+export function quizFakeModel({ templates = 1, pointId = null } = {}) {
   const calls = [];
   return {
     calls,
@@ -46,11 +46,14 @@ export function quizFakeModel({ templates = 1 } = {}) {
           calls.push({ stage });
           let body;
           if (stage === 'plan') {
+            // `pointId` 给了就用 `[pid=…]` 前缀回传出处（真实模型按 buildUserMessage
+            // 里的约定这样写）；不给就**故意不写前缀** —— 那代表「出处未知」，
+            // 下游应当把它归到未分组，而不是猜成第一个知识点。
             body = wrap('PLAN') + JSON.stringify({
               analysis: '基础概念辨析，单选题更合适。',
               templates: Array.from({ length: templates }, (_, i) => ({
                 question_id: `q_${i + 1}`,
-                topic: `知识点${i + 1}的核心概念`,
+                topic: pointId ? `[pid=${pointId}] 知识点${i + 1}的核心概念` : `知识点${i + 1}的核心概念`,
                 question_type: 'choice',
                 difficulty: 'easy',
               })),

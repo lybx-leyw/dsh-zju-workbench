@@ -344,6 +344,35 @@ test('provider/model/worker configuration persists sanitized quotas and creates 
   const reopened=await fixture(dir);try{await reopened.ready;assert.deepEqual(reopened.effectiveWorkers(),clean);}finally{await reopened.dispose();}
  }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
 });
+test('模型目录按供应商缓存在进程内，只有刷新或新供应商才重新发现',async()=>{
+ const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-catalog-cache-'));const s=await fixture(dir);const calls=[];
+ try{
+  await s.ready;                                            // 先让预热跑完（此时没有供应商），再装计数桩
+  s.llm.listProviders=()=>[{id:'a',name:'A'},{id:'b',name:'B'}];
+  s.llm.listModels=async provider=>{calls.push(provider);return [{id:'model',name:'Model',inputModalities:['text'],apiKey:'PRIVATE'}];};
+  const first=await s.invoke('models',{});
+  assert.deepEqual(first.catalog.map(provider=>provider.id),['a','b']);
+  assert.deepEqual(calls.sort(),['a','b']);
+  const again=await s.invoke('models',{});                  // 第二次进页：命中缓存，不再发现
+  assert.deepEqual(calls.sort(),['a','b']);
+  assert.ok(!JSON.stringify(again).includes('PRIVATE'),'缓存里留下了模型凭据');
+  calls.length=0;
+  await s.invoke('models',{refresh:true});                  // 浮窗的「刷新供应商」绕过缓存
+  assert.deepEqual(calls.sort(),['a','b']);
+  calls.length=0;
+  s.llm.listProviders=()=>[{id:'a',name:'A'},{id:'b',name:'B'},{id:'c',name:'C'}];
+  const added=await s.invoke('models',{});                  // 设置里新加的供应商不在缓存键里
+  assert.deepEqual(calls,['c']);
+  assert.deepEqual(added.catalog.map(provider=>provider.id),['a','b','c']);
+  calls.length=0;
+  s.llm.listProviders=()=>[{id:'d',name:'D'}];
+  s.llm.listModels=async provider=>{calls.push(provider);throw new Error('offline');};
+  const offline=await s.invoke('models',{});
+  assert.deepEqual(offline.catalog,[{id:'d',name:'D',models:[]}]);
+  await s.invoke('models',{});                              // 失败不缓存：下次还会再试
+  assert.deepEqual(calls,['d','d']);
+ }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
+});
 
 test('FIFO generation queue skips cancelled entries, deduplicates and continues after failure', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-queue-')), service = await fixture(dir);

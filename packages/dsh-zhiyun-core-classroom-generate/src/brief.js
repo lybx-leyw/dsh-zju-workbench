@@ -37,6 +37,19 @@ export function normalizeBrief(raw) {
   return Object.freeze({
     requirement,
     topic,
+    outputFormat: source.outputFormat === 'html' ? 'html' : 'canvas',
+    sourceText: typeof source.sourceText === 'string' ? source.sourceText : '',
+    knowledgeTree: source.knowledgeTree ?? undefined,
+    chapters: Array.isArray(source.chapters) ? source.chapters.map((chapter, index) => {
+      if (!chapter || typeof chapter !== 'object' || typeof chapter.sourceText !== 'string' || !chapter.sourceText.trim()) {
+        throw new ClassroomGenerateError('E_INVALID_INPUT', `章节 ${index + 1} 缺少 sourceText`, { field: 'chapters' });
+      }
+      return { id: asText(chapter.id) || `chapter-${index + 1}`, title: asText(chapter.title) || `第 ${index + 1} 章`, sourceText: chapter.sourceText, knowledgeTree: chapter.knowledgeTree };
+    }) : undefined,
+    // 章节并发：只保证「是正整数」，不设人为上限。
+    // 真实上限由章节数决定（worker 数 = min(并发, 章节数)），所以「不限制」不会
+    // 凭空开出多余 worker；写死 4 反而会让 10 章的课时白白串行。
+    chapterConcurrency: chapterConcurrencyOf(source.chapterConcurrency),
     description: asText(source.description),
     goals: asStringList(source.goals),
     interactive: source.interactive === true,
@@ -74,6 +87,28 @@ export function assertStageId(stageId) {
     });
   }
   return id;
+}
+
+/**
+ * 章节并发的归一化：**只保底，不封顶**。
+ *
+ * 为什么去掉旧版的 `Math.min(4, ...)`：章节数是天然的并发上限
+ * （`generateHtmlChapters` 起的是 `min(limit, chapters.length)` 个 worker），
+ * 所以「不限制」并不会多开请求；而写死 4 会让 10 章的课时被迫串行，
+ * 用户没有别的办法调快。真正的成本风险交给用户在界面上自己决定。
+ *
+ * 非法值（非数字、NaN、0、负数、小数）一律回默认 3 —— 静默按 1 跑会让
+ * 用户以为配置没生效。
+ *
+ * @param {unknown} value brief 里的 `chapterConcurrency`
+ * @returns {number} ≥1 的整数
+ */
+function chapterConcurrencyOf(value) {
+  const DEFAULT = 3;
+  if (value === undefined || value === null || value === '') return DEFAULT;
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 1) return DEFAULT;
+  return Math.floor(number);
 }
 
 function asText(value) {

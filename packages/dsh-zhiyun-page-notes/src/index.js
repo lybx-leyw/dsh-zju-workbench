@@ -207,6 +207,16 @@ function dirOf(rel) {
   return slash === -1 ? '' : rel.slice(0, slash);
 }
 
+/**
+ * 相对路径的**段数**（`a` → 1，`a/b/c` → 3）。
+ *
+ * 批量删除要按它升序处理：父目录先删，子项才可能被判成"已被覆盖"。
+ * 只看 `/` 的个数，因为 `safePath()` 吐出来的一定是规范化后的 `a/b` 形式。
+ */
+function depthOf(rel) {
+  return rel.split('/').length;
+}
+
 export async function apply(ctx, config = {}) {
   const log = (message) => {
     const line = `[zhiyun-page-notes] ${message}`;
@@ -338,6 +348,66 @@ export async function apply(ctx, config = {}) {
     await writeFileAtomic(toAbs, await readFile(fromAbs, 'utf8'), NOTE_FILE_OPTS);
     await rm(fromAbs);
     return { rewrote: changes.length };
+  }
+
+  /**
+   * 刷新索引并返回**空对象**，好让 `case 'remove'` 一行写完
+   * （`{ ...removeOne(...), ...refreshIndexOnce() }` 保持返回形状不变）。
+   *
+   * 为什么要这个形状：`remove` 的返回值是被既有测试与页面钉死的
+   * `{ removed, kind, contained? }` / `{ removed:false }`，一个字都不能多。
+   * 用展开合并可以把"刷新索引"这个副作用放在返回值之外，而不用把整个
+   * `case` 改写成"先 await 删、再 await 刷、最后拼返回值"三段。
+   */
+  async function refreshIndexOnce() {
+    await refreshIndex();
+    return {};
+  }
+
+  /**
+   * 删除一条路径（**不刷新索引**）：文件夹连同里面的东西，笔记只删那一个文件。
+   *
+   * 递归删是不可逆的，所以：只认库里解析出来的绝对路径，且绝不允许删库根
+   * （`remove('')` 会被 `safePath` 挡成 null）。
+   *
+   * ⚠️ 四种形状都要认，不能只试 `.md`：
+   *   - **文件夹**（无扩展名目录）→ 递归删；
+   *   - **笔记**：`tree` 给的 `path` **不带 `.md`**，要补上；
+   *   - **附件**：`tree` 给的 `path` 是**带扩展名的完整相对路径**（`截图.png`）。
+   *     曾经这里只会试 `<path>.md`，于是选中附件按删除返回 `removed:false`，
+   *     界面上什么都不发生 —— 而树里附件是一等公民，是可选中、可拖动的行。
+   *   - 名字里本来就有 `.md` 的（`a.md` 笔记）：补后缀会变成 `a.md.md`，
+   *     所以"带 .md 的候选"也要试一次。
+   *
+   * 返回值多给一个 `kind`，让调用方能说清"删掉的是文件夹还是文件"。
+   * 不刷索引是**刻意的**：批量删除要在最后只刷一次（见 `case 'removeMany'`），
+   * 所以这里必须把"删"与"刷"拆开，索引刷新由调用方决定刷几次。
+   *
+   * @returns {Promise<{removed: boolean, kind?: 'note'|'attachment'|'folder', contained?: number}>}
+   */
+  async function removeOne(args = {}) {
+    const rel = safePath(args.path ?? args.name);
+    if (!rel) throw Object.assign(new Error('路径不合法'), { code: 'INPUT' });
+    const abs = resolveIn(rel);
+    const info = await statOrNull(abs);
+    if (info?.isDirectory()) {
+      // 报告删掉了多少个文件：文件夹删除是这一页唯一会**连带**破坏内容的动作，
+      // 调用方要能把它如实说出来（"已删除「理学」（含 3 篇笔记）"）。
+      const contained = await walk(rel);
+      await rm(abs, { recursive: true, force: true });
+      return { removed: true, kind: 'folder', contained: contained.filter(e => e.type !== 'folder').length };
+    }
+    if (info?.isFile()) {
+      await rm(abs, { force: true });
+      return { removed: true, kind: extensionOf(rel) === 'md' ? 'note' : 'attachment' };
+    }
+    // 没有实体目录命中：笔记的 path 不带 `.md`，逐个候选试。
+    for (const candidate of [`${abs}${NOTES_EXT}`, abs]) {
+      if (!(await exists(candidate))) continue;
+      await rm(candidate);
+      return { removed: true, kind: 'note' };
+    }
+    return { removed: false };
   }
 
   /** 页面可调的方法。写操作之后一律刷新索引，避免反链滞后一次。 */
@@ -503,48 +573,119 @@ export async function apply(ctx, config = {}) {
       }
 
       /**
-       * 删除一条路径：文件夹**连同里面的东西**，笔记只删那一个文件。
+       * 删除一条路径。行为见 `removeOne()`，区别只有一点：**这里会刷新索引**。
        *
-       * 递归删是不可逆的，所以：只认库里解析出来的绝对路径，且绝不允许删库根
-       * （`remove('')` 会被 `safePath` 挡成 null）。
-       *
-       * ⚠️ 四种形状都要认，不能只试 `.md`：
-       *   - **文件夹**（无扩展名目录）→ 递归删；
-       *   - **笔记**：`tree` 给的 `path` **不带 `.md`**，要补上；
-       *   - **附件**：`tree` 给的 `path` 是**带扩展名的完整相对路径**（`截图.png`）。
-       *     曾经这里只会试 `<path>.md`，于是选中附件按删除返回 `removed:false`，
-       *     界面上什么都不发生 —— 而树里附件是一等公民，是可选中、可拖动的行。
-       *   - 名字里本来就有 `.md` 的（`a.md` 笔记）：补后缀会变成 `a.md.md`，
-       *     所以"带 .md 的候选"也要试一次。
-       *
-       * 返回值多给一个 `kind`，让调用方能说清"删掉的是文件夹还是文件"。
+       * 单条删除的调用方（HTTP 路由、宿主侧 `svc.remove`）只关心"删掉了吗"，
+       * 让它自己记得刷索引等于把一条隐式契约交给每个调用点；由这一层统一负责，
+       * 调用点就永远不必想索引这件事。
        */
-      case 'remove': {
-        const rel = safePath(args.path ?? args.name);
-        if (!rel) throw Object.assign(new Error('路径不合法'), { code: 'INPUT' });
-        const abs = resolveIn(rel);
-        const info = await statOrNull(abs);
-        if (info?.isDirectory()) {
-          // 报告删掉了多少个文件：文件夹删除是这一页唯一会**连带**破坏内容的动作，
-          // 调用方要能把它如实说出来（"已删除「理学」（含 3 篇笔记）"）。
-          const contained = await walk(rel);
-          await rm(abs, { recursive: true, force: true });
-          await refreshIndex();
-          return { removed: true, kind: 'folder', contained: contained.filter(e => e.type !== 'folder').length };
+      case 'remove':
+        return { ...(await removeOne(args)), ...(await refreshIndexOnce()) };
+
+      /**
+       * 批量删除：一次 RPC 删多条路径，**索引只刷一次**。
+       *
+       * 为什么要有它（而不是让页面连发 N 次 `remove`）：
+       * 每次 `remove` 都会 `refreshIndex()` —— 那是"把全库 Markdown 重读一遍再推给
+       * 索引器"。删 20 篇就是 20 次全库重读，几十毫秒 × 20 的卡顿，而且中间每一次
+       * 都让索引短暂看到"删了一半"的状态。批量删除在语义上也是**一个**动作。
+       *
+       * 入参 `args.paths`（字符串数组），返回形状见本条末尾的注释块。
+       */
+      case 'removeMany': {
+        const raw = Array.isArray(args.paths) ? args.paths : [];
+
+        // 1) 逐条过 `safePath()`。剥光（`''`、`..`、纯非法字符）的路径**不报错**，
+        //    进 `invalid` 如实回报 —— 批量操作用户选了几十行，其中一条不合法就
+        //    整批失败，等于让用户自己去找是哪一条；而静默跳过又会让"删了 20 个"
+        //    的实际结果和界面说的不一致。列出来是唯一诚实的选择。
+        /** @type {string[]} */
+        const invalid = [];
+        /** @type {string[]} */
+        const wanted = [];
+        for (const item of raw) {
+          const rel = typeof item === 'string' ? safePath(item) : null;
+          if (!rel) {
+            // 非字符串也给原值的一条记录（`null` 会出现在这里），让调用方能数出少了谁。
+            invalid.push(item === null || item === undefined ? '' : String(item));
+            continue;
+          }
+          wanted.push(rel);
         }
-        if (info?.isFile()) {
-          await rm(abs, { force: true });
-          await refreshIndex();
-          return { removed: true, kind: extensionOf(rel) === 'md' ? 'note' : 'attachment' };
+
+        // 2) 去重。界面上的选区可能因为拖拽/多选而带上同一路径两次，重复删第二次
+        //    只会得到 `removed:false`，然后被错报进 missing。
+        const unique = [...new Set(wanted)];
+
+        // 3) 按段数升序（父目录先删）。这一步是 covered 判断能成立的前提：
+        //    选了「理学」又选了「理学/概率论」时，先删「理学」整个目录，
+        //    后者的路径就被前者的删除覆盖了。顺序反过来会先删子项、
+        //    再从父目录的 `contained` 里少算 —— 更糟的是报一堆假的 missing。
+        unique.sort((a, b) => depthOf(a) - depthOf(b));
+
+        /** 已被前面（更上层）删掉的目录覆盖的路径。 */
+        const covered = [];
+        /** 真正删掉的条目：`{ path, kind, contained? }`，与 `removeOne` 的 kind 同义。 */
+        const removed = [];
+        /** 磁盘上本来就不存在的路径 —— 不是错误，用户可能看到的是过期列表。 */
+        const missing = [];
+
+        // 被删掉的文件夹覆盖的路径前缀：`理学` 记成 `理学/`（带斜杠）。
+        //
+        // ⚠️ 带斜杠是关键：不带的话 `理学` 会把 `理学 2` 也判成"已被覆盖"
+        //    （字符串前缀而已），于是另一个真存在的文件夹被静默跳过。带上斜杠后
+        //    `理学 2` 与 `理学/` 不匹配，仍然照常走删除；而 `理学/概率论` 匹配。
+        /** @type {string[]} */
+        const coveredRoots = [];
+
+        for (const rel of unique) {
+          const coveredBy = coveredRoots.find((prefix) => `${rel}/`.startsWith(prefix));
+          if (coveredBy) {
+            covered.push(rel);
+            continue;
+          }
+          const result = await removeOne({ path: rel });
+          if (result.removed === false) {
+            missing.push(rel);
+            continue;
+          }
+          removed.push({
+            path: rel,
+            kind: result.kind,
+            // 只有文件夹带 `contained`：字段存在与否本身就是"这是不是连带删除"的信号，
+            // 给文件补一个 `contained: 0` 会让调用方分不清"文件夹里是空的"和"这是个文件"。
+            ...(result.kind === 'folder' ? { contained: result.contained } : {}),
+          });
+          // 只有**文件夹**才登记覆盖前缀。删掉一个文件（`a.md`）不该让 `a.md/x` 之类
+          // 被跳过 —— 那种路径只可能来自过期列表，应该如实进 missing。
+          if (result.kind === 'folder') coveredRoots.push(`${rel}/`);
         }
-        // 没有实体目录命中：笔记的 path 不带 `.md`，逐个候选试。
-        for (const candidate of [`${abs}${NOTES_EXT}`, abs]) {
-          if (!(await exists(candidate))) continue;
-          await rm(candidate);
-          await refreshIndex();
-          return { removed: true, kind: 'note' };
-        }
-        return { removed: false };
+
+        // 4) 索引只在这里刷一次（哪怕一条都没删成功也刷：那也是一次合法的"确认现状"，
+        //    且让「空数组」这种调用得到一个确定的返回值而不是什么都不做的特例）。
+        await refreshIndexOnce();
+
+        /**
+         * 返回形状（字段名即语义，调用方按它拼确认文案）：
+         *   - `removed`：`[{ path, kind, contained? }]` —— 真正删掉的条目。
+         *     `path` 是**用户给的、经 `safePath` 规范化后的相对路径**（笔记不带 `.md`，
+         *     与 `tree()` 的口径一致）；`kind` 取 `'note' | 'attachment' | 'folder'`；
+         *     `contained` 仅文件夹有，是**连带删掉的文件数**（不含子文件夹本身）。
+         *   - `missing`：`string[]` —— 磁盘上不存在的路径（原本就没了 / 过期列表）。
+         *   - `skipped`：`string[]` —— 结构上被跳过、即"被前面删掉的父目录覆盖"的路径。
+         *     单独列出而不是混进 `removed`：它们不是这次删的（删它们的是父目录），
+         *     混进去会让 `removed.length` 多算。
+         *   - `invalid`：`string[]` —— 连 `safePath` 都过不了的输入（剥光 / 非字符串）。
+         *   - `coveredCount`：`skipped.length` 的别名。页面原先只有这个计数要显示
+         *     （"另外 N 项已随文件夹一起删除"），留着它免得调用方自己 `length`。
+         */
+        return {
+          removed,
+          missing,
+          skipped: covered,
+          invalid,
+          coveredCount: covered.length,
+        };
       }
 
       /** 移动/改名一条路径。笔记改名会改写全库链接；文件夹移动只动磁盘。 */
@@ -737,6 +878,13 @@ export async function apply(ctx, config = {}) {
     importAsset: (args) => invoke('importAsset', args),
     mkdir: (title, folder) => invoke('mkdir', { title, folder }),
     remove: (target) => invoke('remove', { path: target }),
+    /**
+     * 批量删除（一次 RPC、索引只刷一遍）。返回形状见 `invoke` 的 `case 'removeMany'`。
+     *
+     * ⚠️ 刻意**不**把入参摊成可变参数（`removeMany(...paths)`）：页面手里是一个
+     * 数组，摊开会让"传错一个对象"这种错误变成静默的空操作。
+     */
+    removeMany: (paths) => invoke('removeMany', { paths }),
     move: (from, to) => invoke('move', { from, to }),
     // ⚠️ 服务面上的方法与 `invoke` 的方法表必须**一一对应**。
     //    这条最初漏了 `rename`（HTTP 路由能调、宿主侧调不到），

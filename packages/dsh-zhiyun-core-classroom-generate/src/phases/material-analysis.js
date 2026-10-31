@@ -15,10 +15,68 @@ export const MATERIAL_PHASE = 'material-analysis';
  * 「讲义太长，后 30% 没进模型」。字数而不是字节 —— 模型按 token 计费，
  * 中文一字约 1 token，字节数对中文是 3 倍噪音。
  */
-export const MATERIAL_TEXT_LIMIT = 240_000;
+export const MATERIAL_TEXT_LIMIT = 50_000;
 
-/** 上游 `MAX_CLASSROOM_MATERIALS`：一次最多挂几份。 */
-export const MAX_MATERIALS = 8;
+/** 上游 `MAX_CLASSROOM_MATERIALS`：一次最多挂几份（`lib/document/bundle.ts:4`）。 */
+export const MAX_MATERIALS = 5;
+
+/** 上游 `MAX_DOCUMENT_BUNDLE_BYTES`：多份材料合计上限 150 MiB（`bundle.ts:5`）。 */
+export const MAX_MATERIAL_BYTES = 150 * 1024 * 1024;
+
+/**
+ * 公平分配文本预算（上游 `lib/document/bundle.ts:72-109` 的 `allocateDocumentTextBudgets`）。
+ *
+ * # 为什么不能贪心
+ *
+ * 原实现是「先到先得」：`take = min(len, budget)`。后果是第一份大讲义可以吃掉
+ * 全部预算，后面几份被压成 **0 字**，而 `materials[]` 里仍然记一条
+ * `{chars: 0}` 的"成功"—— 用户完全看不出第二份讲义根本没进 prompt。
+ *
+ * 上游的做法是两轮：
+ * 1. 保底：每份先拿 `min(len, maxChars * 0.4 / n)`，保证小文件不会被大文件饿死；
+ * 2. 回填：把剩余预算按各份"还缺多少"的比例分下去。
+ *
+ * @param {number[]} lengths 各份材料的全文长度
+ * @param {number} maxChars  总预算
+ * @returns {number[]} 每份应分配的字符数
+ */
+export function allocateMaterialBudgets(lengths, maxChars) {
+  const count = lengths.length;
+  if (count === 0) return [];
+  if (count === 1) return [Math.min(lengths[0], maxChars)];
+
+  const budgets = new Array(count).fill(0);
+  const floorPerDoc = Math.floor((maxChars * 0.4) / count);
+  let remaining = maxChars;
+
+  for (let i = 0; i < count; i += 1) {
+    const take = Math.min(lengths[i], floorPerDoc, remaining);
+    budgets[i] = take;
+    remaining -= take;
+  }
+
+  for (let round = 0; round < 4 && remaining > 0; round += 1) {
+    const deficits = lengths.map((len, i) => Math.max(0, len - budgets[i]));
+    const totalDeficit = deficits.reduce((sum, value) => sum + value, 0);
+    if (totalDeficit === 0) break;
+    let handedOut = 0;
+    for (let i = 0; i < count; i += 1) {
+      if (deficits[i] === 0) continue;
+      const share = Math.min(
+        deficits[i],
+        Math.floor((remaining * deficits[i]) / totalDeficit),
+        remaining - handedOut,
+      );
+      if (share <= 0) continue;
+      budgets[i] += share;
+      handedOut += share;
+    }
+    if (handedOut === 0) break;
+    remaining -= handedOut;
+  }
+
+  return budgets;
+}
 
 /**
  * 第 0 段（可选）：上传的讲义 → 一段可以塞进 prompt 的文本。
@@ -95,8 +153,9 @@ export async function produceMaterialAnalysis({
   const materials = [];
   const failures = [];
   const sections = [];
-  let budget = MATERIAL_TEXT_LIMIT;
   let truncated = false;
+  // 第一趟只解析，不算预算 —— 预算要等所有份的全文长度都知道后才能公平分配。
+  const parsedDocs = [];
 
   for (const [index, materialId] of picked.entries()) {
     if (signal?.aborted) break;
@@ -141,34 +200,13 @@ export async function produceMaterialAnalysis({
         });
       }
 
-      // 预算按字分配：先到先得，后一份可能被截成 0 —— 那就是真的没进 prompt，
-      // 所以在 `materials[].chars` 里如实写 0，而不是把它记成成功。
-      const take = Math.max(0, Math.min(full.length, budget));
-      budget -= take;
-      const slice = full.slice(0, take);
-      const dropped = take < full.length;
-      if (dropped) truncated = true;
-
-      if (take > 0) sections.push(`### 讲义 ${sections.length + 1}：${name}\n${slice}`);
-
-      materials.push({
+      // 先收起来，预算等第一趟结束后统一公平分配。
+      parsedDocs.push({
         materialId,
         name,
         mime: entry.mime ?? null,
-        chars: take,
-        totalChars: full.length,
-        truncated: dropped,
+        full,
         provider: parsed.provider ?? null,
-      });
-
-      emit(phase, 'phase-progress', {
-        step: 'material',
-        status: 'ok',
-        materialId,
-        name,
-        chars: take,
-        totalChars: full.length,
-        truncated: dropped,
       });
     } catch (error) {
       const info = describeError(error, 'E_MATERIAL_UNAVAILABLE');
@@ -182,13 +220,53 @@ export async function produceMaterialAnalysis({
     }
   }
 
+  // ── 预算公平分配（上游 allocateDocumentTextBudgets 的两轮算法）──
+  // 第一趟已经拿到所有份的全文长度，这里一次性算好每份该拿多少。
+  const budgets = allocateMaterialBudgets(
+    parsedDocs.map((doc) => doc.full.length),
+    MATERIAL_TEXT_LIMIT,
+  );
+  let used = 0;
+  parsedDocs.forEach((doc, i) => {
+    const take = budgets[i] ?? 0;
+    const slice = doc.full.slice(0, take);
+    const dropped = take < doc.full.length;
+    if (dropped) truncated = true;
+    used += take;
+
+    if (take > 0) sections.push(`### 讲义 ${sections.length + 1}：${doc.name}\n${slice}`);
+
+    materials.push({
+      materialId: doc.materialId,
+      name: doc.name,
+      mime: doc.mime,
+      chars: take,
+      totalChars: doc.full.length,
+      truncated: dropped,
+      provider: doc.provider,
+    });
+
+    emit(phase, 'phase-progress', {
+      step: 'material',
+      status: take > 0 ? 'ok' : 'failed',
+      materialId: doc.materialId,
+      name: doc.name,
+      chars: take,
+      totalChars: doc.full.length,
+      truncated: dropped,
+      // take === 0 是"真没进 prompt"，必须如实报成失败，
+      // 不能像原来那样记一条 {chars:0} 的"成功"。
+      ...(take === 0 ? { code: 'E_MATERIAL_BUDGET_EXHAUSTED', message: '预算耗尽，这份讲义未进入 prompt' } : {}),
+    });
+  });
+
   // 用户取消：把「没读的部分」如实说清楚，别伪装成全部读完。
   if (signal?.aborted) {
     return {
       materials,
       failures,
       text: sections.join('\n\n'),
-      chars: MATERIAL_TEXT_LIMIT - budget,
+      chars: used,
       truncated,
       cancelled: true,
     };
@@ -206,7 +284,7 @@ export async function produceMaterialAnalysis({
     materials,
     failures,
     text: sections.join('\n\n'),
-    chars: MATERIAL_TEXT_LIMIT - budget,
+    chars: used,
     truncated,
   };
 }

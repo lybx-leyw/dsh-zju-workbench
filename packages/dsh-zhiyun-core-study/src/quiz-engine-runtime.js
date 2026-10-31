@@ -170,6 +170,68 @@ function runtimeState(input){
     saved=next;return question;
   })};
 }
+/**
+ * 未确认出处时写进题库的占位标识。
+ *
+ * # 为什么必须有占位，而不能把字段留空
+ *
+ * 知识库的 schema 要求 `courseId/subId/pointId/pointTitle` 都是
+ * `z.string().min(1)`（见 `core-knowledge/src/domain.js` 的 question 定义）。
+ * 留空 = 整批保存被拒（INVALID_RECORD），用户拿到的是一句与真实原因无关的报错。
+ *
+ * # 为什么不能拿第一个知识点充数
+ *
+ * 那正是这次事故本身：认不出的题被盖上第一门课的标签，导出时忠实地把它们
+ * 写进那一节的笔记里，看上去「分类完成」，实际是把错误固化下来。
+ * 显式占位让「不知道」在数据里保持是「不知道」——导出时它会单独成桶。
+ */
+const UNRESOLVED_COURSE_ID='__unresolved__';
+const UNRESOLVED_SUB_ID='__unresolved__';
+const UNRESOLVED_TITLE='【未分组】';
+
+/**
+ * 把上游回传的知识点 id 解析成真实的知识点对象。
+ *
+ * # 为什么要处理 `t1-2` 这种投影 id
+ *
+ * 发给模型的讲义是经 `resources.fromLecture()` 投影过的，那一层按
+ * 「结构位置」重写 topic id（`t{章}-{节}`，见 core-learning-resource 的文件头第 2 条），
+ * 目的是让同一份内容两次投影得到同一批 id。真实知识点 id（`课程:节次:版本:章:节`）
+ * 在投影里**不存在**，所以模型只可能回传投影 id —— 除非调用方自己塞了真实 id。
+ *
+ * 于是这里两路都认：先按真实 id 精确查；查不到再按投影 id 反解出它在
+ * `points` 里的位置。两条路都对不上就返回 null（= 未确认），**绝不猜**。
+ */
+export function resolvePointById(rawId,points){
+  const id=String(rawId??'').trim();
+  if(!id||!Array.isArray(points)||!points.length)return null;
+  const exact=points.find(point=>String(point?.id??'')===id);
+  if(exact)return exact;
+  // 投影 id：t{章}-{节}，章与节都从 1 开始。points 的顺序就是投影的顺序
+  // （nativeQuizContract 按 points 原序造 topics），所以第 n 个 topic = points[n-1]。
+  const projected=/^t(\d+)-(\d+)$/.exec(id);
+  if(!projected)return null;
+  const chapter=Number(projected[1]),topic=Number(projected[2]);
+  if(chapter!==1)return null;            // 只投影了一章（所选讲义合成单章）
+  const index=topic-1;
+  return Number.isInteger(index)&&index>=0&&index<points.length?points[index]:null;
+}
+
+/** 构造一条「出处未确认」的题：字段仍是合法字符串，但明确不代表任何课程。 */
+function unresolvedQuestion(raw,provenance){
+  return {...raw,id:raw.id??randomUUID(),type:raw.type??'shortAnswer',
+    courseId:UNRESOLVED_COURSE_ID,subId:UNRESOLVED_SUB_ID,
+    pointId:`${UNRESOLVED_COURSE_ID}:${UNRESOLVED_SUB_ID}:${raw.id??'q'}`,
+    pointKey:null,pointTitle:UNRESOLVED_TITLE,courseTitle:UNRESOLVED_TITLE,lessonTitle:UNRESOLVED_TITLE,
+    termName:'',blockIndex:0,page:null,atSec:null,sourceBlockIndexes:[],
+    strategy:raw.strategy??null,status:'proposed',reviewState:'needs-source',
+    choices:raw.choices??[],attempts:[],
+    basis:typeof raw.basis==='string'?raw.basis:null,sourceEvidence:undefined,
+    // 这条标记让导出、UI 与排查都能一眼看出「这题的出处是丢了，不是没有」。
+    provenanceUnresolved:true,
+    provenance,createdAt:new Date().toISOString()};
+}
+
 function bankQuestion(raw,task,provenance){
   const p=task.point;
   return {...raw,id:raw.id??randomUUID(),type:raw.type??task.type,courseId:p.courseId,subId:p.subId,pointId:p.id,pointKey:pointIdentity(p),
@@ -342,20 +404,28 @@ export function createNativeQuizRun({pool,tutor,resources,scope,onProgress,backe
             try{
               const normalized=normalizeUpstreamQuestion(candidate);
               validateNativeQuestion(normalized,type);
-              // 这里就要补齐知识点归属，不能只塞 id。
+              // 出处只认**模型回传的知识点 id**，不认标题。
               //
-              // accepted 会被写进 engineState.batches（第 342 行），而 checkpoint
-              // 是要过 bank schema 的：questions[i] 要求 courseId/subId/pointId/
-              // pointTitle/courseTitle/lessonTitle 都是非空字符串。
+              // 旧写法是 `points.find(p=>p.title===normalized.topic) ?? point`：
+              // topic 是模型自己写的一句话（「左偏堆的动机与取舍」），几乎不可能
+              // 逐字等于知识点标题（「左偏堆」），于是每一道题都落到 `point`
+              // —— 那正是这一组的**第一个**知识点。跨课程混批时，12 道来自不同
+              // 科目的题于是全部被盖上第一门课的 courseId/lessonTitle，
+              // 导出时又忠实地按这个标签分组，看上去「按节次分好了」。
               //
-              // 2026-10-31 的 INVALID_RECORD 就是这样来的：这里只加了三个字段，
-              // 于是 questions.47.courseId 等全部是 undefined，整批保存被拒。
-              // 而这些字段本来就能从 plan.tasks 的 point 拿到 —— 不是缺失，是没填。
-              const owner=points.find(p=>p.title===normalized.topic)??point;
-              const banked=bankQuestion(normalized,{...rows[0].task,point:owner},{
-                engine:'deeptutor-native',mode:'upstream-native',runId,upstreamCommit:result.upstreamCommit,
-                resourceRevision:handle.revision,
-              });
+              // 认不出就如实标未确认：宁可让用户看到【未分组】，
+              // 也不要给他一份分类正确、内容是错的笔记。
+              const owner=resolvePointById(normalized.pointId,points);
+              const banked=owner
+                ?bankQuestion(normalized,{...rows[0].task,point:owner},{
+                  engine:'deeptutor-native',mode:'upstream-native',runId,upstreamCommit:result.upstreamCommit,
+                  resourceRevision:handle.revision,
+                })
+                :unresolvedQuestion(normalized,{
+                  engine:'deeptutor-native',mode:'upstream-native',runId,upstreamCommit:result.upstreamCommit,
+                  resourceRevision:handle.revision,unresolvedReason:normalized.pointId?'unknown-point-id':'no-point-id',
+                  reportedPointId:normalized.pointId??null,
+                });
               // 保留上游给的考点描述；它与知识点标题不同，是有信息量的
               if(normalized.topic&&owner?.title&&normalized.topic!==owner.title)banked.topicHint=normalized.topic;
               banked.sourcePointIds=points.map(p=>p.id);
@@ -377,8 +447,16 @@ export function createNativeQuizRun({pool,tutor,resources,scope,onProgress,backe
           if(state.saved.tasks[row.index].questionIds.includes(raw.id))continue;
           const q=alreadyBanked
             ?raw
-            :bankQuestion(raw,{...row.task,point:points.find(p=>p.title===raw.topic)??row.task.point},
-              {engine:'deeptutor-native',mode:'upstream-native',runId:raw.upstreamRunId,upstreamCommit:raw.upstreamCommit,resourceRevision:handle.revision});
+            :(()=>{
+              // 同一条规则：按回传的 id 认出处，认不出就标未确认。
+              // 这里曾经是 `points.find(p=>p.title===raw.topic)??row.task.point`，
+              // 与上面那处一样，会把题静默记到这一行的知识点名下。
+              const owner=resolvePointById(raw.pointId,points);
+              const provenance={engine:'deeptutor-native',mode:'upstream-native',runId:raw.upstreamRunId,upstreamCommit:raw.upstreamCommit,resourceRevision:handle.revision};
+              return owner
+                ?bankQuestion(raw,{...row.task,point:owner},provenance)
+                :unresolvedQuestion(raw,{...provenance,unresolvedReason:raw.pointId?'unknown-point-id':'no-point-id',reportedPointId:raw.pointId??null});
+            })();
           q.sourcePointIds=points.map(p=>p.id);
           await state.change(s=>{s.tasks[row.index].questionIds.push(q.id);s.tasks[row.index].actualTask={pointId:q.pointId,title:q.pointTitle};s.questions??={};s.questions[q.id]=q;s.tasks[row.index].state=s.tasks[row.index].questionIds.length===row.task.count?'completed':'pending';s.phase='saving';return q;});
         }

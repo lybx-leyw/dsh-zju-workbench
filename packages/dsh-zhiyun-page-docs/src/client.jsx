@@ -36,6 +36,7 @@ import { Empty, Icon, mountStyle } from 'dsh-zhiyun-shell-ui';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { DEFAULT_PAGE, SECTIONS } from './docs-manifest.js';
 import { contentOf } from './docs-content.js';
+import { isInstantScroll, scrollAmount, scrollIntent } from './keys.js';
 import { filterPages, flattenPages, neighbors, scanHeadings, stripHeading1 } from './outline.js';
 import css from './style.css';
 
@@ -77,6 +78,51 @@ const DEFAULT_SOURCE = '摘写自仓库文档，原文见 docs/contributing/；�
  */
 const HEADING_SELECTOR = '.zyd-md h2, .zyd-md h3';
 
+/**
+ * 量一次「这次按键该滚多少」所需的两个尺寸。
+ *
+ * `height` 取滚动容器自己的 `clientHeight`（就是"一屏"）。
+ * `lineHeight` 必须从**正文块**上量：`.zyd-main` 自己不设行高，它继承到的是
+ * `normal`（`parseFloat` 得 `NaN`）；真正的行高写在 `.zyd-md > div` 上
+ * （`style.css` 的 1.85）。量错对象会让 ↑/↓ 每次只走 `FALLBACK_LINE_HEIGHT`
+ * 兜底值 —— 不报错、只是"按了几乎不动"。
+ *
+ * 正文为空（`Empty` 空态）时没有 `.zyd-md`，此时返回 `NaN` 让纯函数层退回兜底值。
+ *
+ * @param scroller - `.zyd-main` 那个元素。
+ * @returns `{ height, lineHeight }`，交给 `scrollAmount`。
+ */
+function measureScroll(scroller) {
+  const block = scroller.querySelector('.zyd-md > div');
+  return {
+    height: scroller.clientHeight,
+    lineHeight: block === null ? Number.NaN : Number.parseFloat(getComputedStyle(block).lineHeight),
+  };
+}
+
+/**
+ * 宿主是否开着一个**模态**对话框（`:modal`）。
+ *
+ * 用 `:modal` 而不是 `[role="dialog"]`：宿主里有些非模态浮层（生成长面板、任务队列）
+ * 也带 `role="dialog"`，它们**不**该拦键盘 —— 那些浮层开着时用户仍需要在正文里读。
+ * `:modal` 只命中 `showModal()` / `alert()` 这类真正夺走交互的对话框。
+ *
+ * 宿主那两个会用到：Ctrl+K 的「跳转到」、账号浮层（`components.jsx` 里都是
+ * `dialog.current.showModal()`）。它们开着时按键归它们，这一页不抢。
+ *
+ * 老浏览器没有 `:modal` 支持时会抛 —— 那时按"没有模态框"处理，退回本页自己滚，
+ * 与加这个判据之前的行为一致，不会更差。
+ *
+ * @returns 是否有模态对话框开着。
+ */
+function hasModalDialog() {
+  try {
+    return document.querySelector('dialog:modal') !== null;
+  } catch {
+    return false;
+  }
+}
+
 export function Docs() {
   const [pageId, setPageId] = useState(DEFAULT_PAGE);
   const [query, setQuery] = useState('');
@@ -96,6 +142,19 @@ export function Docs() {
    * 那时位置判据重新说了算。平滑滚动的动画不会触发这些事件，所以不会被误清。
    */
   const pinned = useRef(null);
+  /**
+   * 本页根节点。键盘处理器靠它判"是不是本页"（见下面那条 effect）。
+   *
+   * ⚠️ 别在 effect 的清理函数里把它置空 —— 严格模式下会「挂载 → 清理 → 再挂载」，
+   *    ref 不会跟着重新赋值，置空之后处理器就永远拿不到根节点。详见那条 effect 的注释。
+   */
+  const rootRef = useRef(null);
+  /**
+   * 上一次滚动键：`{ key, at }`，给 `isInstantScroll` 判"是不是连按"。
+   *
+   * 用 ref 而不是 state：它只在两次按键之间传递，改它不该引起重渲染。
+   */
+  const lastScroll = useRef(null);
 
   const current = FLAT.find(page => page.id === pageId) ?? FLAT[0];
 
@@ -225,7 +284,118 @@ export function Docs() {
     }, () => {});
   };
 
-  return <div className="zyd">
+  /**
+   * PageUp / PageDown / ↑ / ↓：滚正文。
+   *
+   * # 为什么必须自己接管（真机实测）
+   *
+   * 改这一版之前先量过现状（1200×700，三栏铺开，`maxScroll=3168`）：
+   *
+   *   · 焦点在 `<body>`（点过正文之后就是这样）：Chrome **原生就会滚**
+   *     `.zyd-main`（PageDown 576px、↓ 40px）。所以"完全没反应"并不是全貌。
+   *   · 焦点在一个**按钮**上（点过左侧目录、页内目录之后就是这样）：
+   *     `scrollTop` **一动不动**（实测连按两个键仍是 0）。而"点目录跳到某篇、
+   *     某节，然后接着往下读"正是这一页最常走的路径 —— 用户遇到的"不支持"
+   *     就是这个。原生之所以不滚：按钮所在的 `.zyd-nav` 没有溢出，再往外
+   *     `html/body` 是 `overflow:hidden`，浏览器找不到可滚的东西。
+   *   · 焦点在筛选框里：↑/↓ 归输入框，**不能碰**（见下面第 1 条豁免）。
+   *
+   * 于是判据只能自己写：**四个键一律滚正文**。
+   *
+   * # 为什么不照抄笔记库的「焦点在树上时 ↑/↓ 移游标」
+   *
+   * 笔记库那么做是对的：它的树是**文件管理器**，行上有改名/删除这类
+   * "先选中、后操作"的动作，方向键在那里天然属于树。这一页的左目录只是
+   * "这一篇 ↔ 那一篇"的跳转按钮，点一下就换篇，没有"选中态"可言；
+   * 若再给它加一套方向键游标，用户点完目录随手按 ↓ 想继续读，只会看到
+   * 高亮在目录里挪、正文纹丝不动 —— 那正是他要报的 bug。右目录更不能加：
+   * 它的高亮由滚动位置算出来（`.zyd-toc-active`），再加一个游标高亮会在
+   * 同一栏里打架。
+   *
+   * # 输入区豁免（只有这一条）
+   *
+   * 筛选框是 `<input type="search">`：那里 ↑/↓ 是光标、PageUp/PageDown 有
+   * 原生含义（部分浏览器在 search 上翻候选）。接管它等于把输入框变砖。
+   *
+   * @param event - keydown 事件。
+   * @returns 是否接管了这次按键。
+   */
+  const handleScrollKeys = event => {
+    const intent = scrollIntent(event.key, {
+      ctrl: event.ctrlKey,
+      meta: event.metaKey,
+      alt: event.altKey,
+      shift: event.shiftKey,
+      composing: event.isComposing === true,
+    });
+    if (intent === null) return false;
+
+    const target = event.target;
+    if (!(target instanceof Element)) return false;
+    if (target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return false;
+
+    const scroller = scrollRef.current;
+    if (scroller === null) return false;
+    // 量不出高度时什么都不做：在 0 高的容器上 `scrollBy` 也是 0，
+    // 但那时不该 `preventDefault` 掉一个本来交给浏览器的键。
+    const amount = scrollAmount(intent, measureScroll(scroller));
+    if (amount === 0) return false;
+
+    const now = Date.now();
+    const instant = isInstantScroll(lastScroll.current, event.key, now, event.repeat);
+    lastScroll.current = { key: event.key, at: now };
+
+    // 键盘滚动是**人的动作**：解掉"点目录钉住"的那一条，让位置判据重新说话。
+    // 不写这一句的话，点完目录再按 ↓，右目录高亮会一直停在点过的那一节。
+    pinned.current = null;
+    scroller.scrollBy({ top: amount, behavior: instant ? 'instant' : 'smooth' });
+    event.preventDefault();
+    return true;
+  };
+
+  /**
+   * 把键盘处理器挂到 `document` 上，且只在本页确实存在时生效。
+   *
+   * # 为什么不能挂在页面根节点上（笔记页同款实测结论）
+   *
+   * 读文档时用户点的是正文，而正文不可聚焦 —— `activeElement` 落回 `<body>`，
+   * 而 `<body>` 是本页根节点的**祖先**，事件不向下冒泡，挂在根节点上的监听
+   * 一次都收不到。必须挂 `document`。
+   *
+   * # 挂 `document` 之后怎么不越界
+   *
+   *   1. 清理函数把监听摘掉 —— 这是主闸门；
+   *   2. 每次按键再问一句"是不是本页"：目标落在本页内 → 是；或者**本页此刻可见** → 也算
+   *      （宿主同一时刻只挂一个页面，可见就等于用户正在看它。焦点在 `<body>`、
+   *      在宿主容器上时只能靠这一条）。
+   *
+   * ⚠️ **不要在清理函数里把 `rootRef.current` 置空**。听起来更保险，实际会挖一个坑：
+   *    React 严格模式下 effect 会「挂载 → 清理 → 再挂载」，而 ref 不会跟着重新赋值，
+   *    清理里置空之后就永远是 `null`，上面那句 `if (root === null) return` 会让
+   *    键盘在整个页面生命周期里彻底失效。ref 由 React 自己管，我们不碰。
+   *
+   * 依赖数组留空：处理器只读写 ref，捕到第一次渲染的闭包就够；每次渲染重挂一遍
+   * 反而会让"按住不放"中途断掉监听。
+   */
+  useEffect(() => {
+    const onKeyDown = event => {
+      const root = rootRef.current;
+      if (root === null) return;
+      const target = event.target;
+      const inRoot = target instanceof Node && root.contains(target);
+      const visible = root.isConnected && root.getClientRects().length > 0;
+      if (!inRoot && !visible) return;
+      // 宿主开着一个**模态**对话框（Ctrl+K 的「跳转到」、账号浮层）时，按键归它。
+      // 这两个都是 `showModal()` 打开的：此时用户看的是对话框而不是这一页，
+      // 让他按 ↓ 把背后的文档滚走，只会让人以为"在选下一页"。
+      if (hasModalDialog()) return;
+      handleScrollKeys(event);
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, []);
+
+  return <div className="zyd" ref={rootRef}>
     {/* 分区 tab。与左侧目录是两种粒度：这里是"哪一片"，左边是"哪一篇"。 */}
     <div className="zyd-sections" role="tablist" aria-label="文档分区">
       {SECTIONS.map(item => {

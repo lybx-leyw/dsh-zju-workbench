@@ -7,6 +7,14 @@ import { NAV, FULL_BLEED_PAGES, RAIL_DEFAULT, RAIL_ACCOUNT, activePage, matching
 const PINNED_KEY = 'zhiyun.rail.pinned';
 
 /**
+ * 会话抽屉的宽度（px）。
+ *
+ * 这一份是**唯一真源**：`.zy-drawer` 的 `width` 由 CSS 变量 `--zy-drawer-width` 取值
+ * （见 style.css），`AskChrome` 也用它给问一问那一列让位。改宽度只改这里。
+ */
+const DRAWER_WIDTH = 304;
+
+/**
  * 读用户固定到导轨下半组的页。
  *
  * ⚠️ 导轨**上半组**（`RAIL_DEFAULT`）是不可撤销的，所以这里存的是**下半组**的清单 ——
@@ -402,43 +410,80 @@ export function Page({ page, controller, renderSlot }) {
  * 「问一问」面板的盒子：侧栏右边那一列（宿主的中间栏）。
  * 汉堡和抽屉都锚在它的左上角，而不是视口的左上角 —— Windows 标题栏会把这一列往下推，
  * 锚在视口上按钮就会漂进标题栏。
+ *
+ * 顺带把那个**面板元素自己**也返回出来：抽屉要「挤压」它（给它让出宽度），
+ * 而不是浮在它上面。面板的类名是宿主 CSS-module 的哈希（`pI_x6G_centerCol`），
+ * 拿不稳，所以只能走这条和在 `measure` 里一样的 DOM 结构关系去找。
+ * @returns `{ box, panel }`：面板盒尺寸 + 面板元素（找不到时为 null）。
  */
-function useAskPanelBox() {
+function useAskPanel() {
   const [box, setBox] = useState({ left: 0, top: 0, width: 0, height: 0, radius: '0px' });
+  const [panel, setPanel] = useState(null);
   useLayoutEffect(() => {
-    const measure = () => {
+    const findPanel = () => {
       const sidebar = document.querySelector('.zy-sidebar');
       // 侧栏根节点外面可能还有插槽包一层。顺着父级走到网格那一格，它的下一个兄弟才是问一问所在的中间栏。
       let column = sidebar;
       while (column?.parentElement && getComputedStyle(column.parentElement).display !== 'grid') column = column.parentElement;
-      const panel = column?.nextElementSibling ?? sidebar?.parentElement?.nextElementSibling;
-      if (!(panel instanceof HTMLElement)) {
-        const edge = sidebar ? Math.round(sidebar.getBoundingClientRect().right) : 0;
+      const next = column?.nextElementSibling ?? sidebar?.parentElement?.nextElementSibling;
+      return { sidebar, column, next: next instanceof HTMLElement ? next : null };
+    };
+    const measure = () => {
+      const { sidebar, next } = findPanel();
+      setPanel(next);
+      // 抽屉的锚点用**侧栏右缘**，不用面板左缘：面板打开时会被挤到右边
+      // （见 useSqueezePanel），拿它当锚点会让抽屉跟着漂，跟着漂又推得更远 —— 正反馈。
+      // 侧栏不会被挤，它的右缘就是「问一问这一列原来从哪开始」，也正是抽屉该贴的地方。
+      const edge = sidebar ? Math.round(sidebar.getBoundingClientRect().right) : 0;
+      if (next === null) {
         setBox({ left: edge, top: 0, width: Math.max(0, window.innerWidth - edge), height: window.innerHeight, radius: '0px' });
         return;
       }
-      const rect = panel.getBoundingClientRect();
+      const rect = next.getBoundingClientRect();
       setBox({
-        left: Math.round(rect.left),
+        left: edge,
         top: Math.round(rect.top),
-        width: Math.round(rect.width),
+        width: Math.max(0, Math.round(window.innerWidth - edge)),
         height: Math.round(rect.height),
-        radius: getComputedStyle(panel).borderTopLeftRadius || '0px',
+        radius: getComputedStyle(next).borderTopLeftRadius || '0px',
       });
     };
     measure();
-    const sidebar = document.querySelector('.zy-sidebar');
-    let column = sidebar;
-    while (column?.parentElement && getComputedStyle(column.parentElement).display !== 'grid') column = column.parentElement;
-    const panel = column?.nextElementSibling;
+    const { sidebar, column, next } = findPanel();
     const observer = new ResizeObserver(measure);
     if (sidebar) observer.observe(sidebar);
     if (column instanceof HTMLElement && column !== sidebar) observer.observe(column);
-    if (panel instanceof HTMLElement) observer.observe(panel);
+    // 刻意**不**观察面板（`next`）：它会被挤压改变宽度，观察它就会和挤压形成回环。
+    if (next !== null) observer.observe(next.parentElement ?? next);
     window.addEventListener('resize', measure);
     return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
   }, []);
-  return box;
+  return { box, panel };
+}
+
+/**
+ * 打开抽屉时给问一问那一列让出宽度 —— 真正的「挤压」，而不是浮在它上面盖住。
+ *
+ * 抽屉挂在 `shell.overlay`（`position:fixed`），天然是浮层；要让内容**让位**，
+ * 只能改面板自身的布局。宿主这一列是网格里的一格，`width` 由网格算，所以
+ * 加 `margin-left` 会把内容整体右推、同时收窄可用宽度，效果就是被挤到一边。
+ *
+ * 还原时**逐条**恢复原先的内联值（而不是一律清空）：面板上本来可能就有别的内联样式。
+ * @param panel - 问一问那一列的元素，或 null。
+ * @param open - 抽屉是否打开。
+ * @param width - 让出的宽度（px）。
+ */
+function useSqueezePanel(panel, open, width) {
+  useLayoutEffect(() => {
+    if (panel === null) return undefined;
+    const before = { marginLeft: panel.style.marginLeft, transition: panel.style.transition };
+    panel.style.transition = 'margin-left .24s cubic-bezier(.2,0,0,1)';
+    panel.style.marginLeft = open ? `${width}px` : '';
+    return () => {
+      panel.style.marginLeft = before.marginLeft;
+      panel.style.transition = before.transition;
+    };
+  }, [panel, open, width]);
 }
 
 /** 当前会话：0.2 里「主面板在看哪个会话」由 uiWorkspace.selection 持久化。 */
@@ -456,21 +501,32 @@ function useCurrentSession(uiWorkspace, sessions) {
 /**
  * 问一问会话头的 leading：跟会话名排在同一行，标题在它右边，不再盖住名字。
  * 挂在宿主的 `conversation.header.leading`（这一列在会话名之前，问一问才挂载）。
+ *
+ * 图标用 `panelRight`（带分割线的矩形，宿主侧栏的面板开关就是它），不用汉堡：
+ * 汉堡在这个产品里表示「更多/菜单」，而这里开的是**一块固定的侧面板**。
  */
 export function AskMenuButton({ drawer }) {
   const open = useSyncExternalStore(drawer.subscribe, drawer.getSnapshot, drawer.getSnapshot);
-  return <button type="button" className="zy-topbar zy-topbar-menu" aria-expanded={open} aria-controls="zy-session-drawer" aria-label="会话" title="会话" onClick={() => drawer.toggle()}><span className="zy-topbar-glyph"><Icon name="menu" size={18}/></span></button>;
+  return <button type="button" className="zy-topbar zy-topbar-menu" aria-expanded={open} aria-controls="zy-session-drawer" aria-label="会话" title={open ? '收起会话面板' : '展开会话面板'} onClick={() => drawer.toggle()}><span className="zy-topbar-glyph"><Icon name="panelRight" size={18}/></span></button>;
 }
 
 /**
  * 会话抽屉挂在 `shell.overlay`，只在问一问显示。开关是会话头里的 {@link AskMenuButton}。
+ *
+ * `renderSlot` 与 `nativeBrowser` 都是框架/注入面给下来的：前者由**我们这条
+ * `shell.overlay` 注册**的 `children` 声明授权（`sidebar.workspaces`），后者是
+ * 「宿主浏览器到底有没有注册进来」的 uSES store。两者一起决定抽屉里渲染哪一份列表。
  */
-export function AskChrome({ drawer, sessions, workspaces, uiWorkspace, usePanelInfo, getLearningSpace }) {
+export function AskChrome({ drawer, sessions, workspaces, uiWorkspace, usePanelInfo, getLearningSpace, renderSlot, nativeBrowser }) {
   const active = activePage(usePanelInfo(info => info.activePanelId));
-  const box = useAskPanelBox();
+  const { box, panel } = useAskPanel();
   const open = useSyncExternalStore(drawer.subscribe, drawer.getSnapshot, drawer.getSnapshot);
-  if (active !== 'ask') return null;
-  return <SessionDrawer open={open} box={box} drawer={drawer} sessions={sessions} workspaces={workspaces} uiWorkspace={uiWorkspace} getLearningSpace={getLearningSpace}/>;
+  const isAsk = active === 'ask';
+  // 抽屉是这一列里的常驻面板：打开时把内容**挤**到右边（见 useSqueezePanel），
+  // 不是盖在上面。宽度与 CSS 里 `.zy-drawer` 的 304px 同源。
+  useSqueezePanel(isAsk ? panel : null, isAsk && open, DRAWER_WIDTH);
+  if (!isAsk) return null;
+  return <SessionDrawer open={open} box={box} drawer={drawer} sessions={sessions} workspaces={workspaces} uiWorkspace={uiWorkspace} getLearningSpace={getLearningSpace} renderSlot={renderSlot} nativeBrowser={nativeBrowser}/>;
 }
 
 /**
@@ -483,7 +539,7 @@ export function AskChrome({ drawer, sessions, workspaces, uiWorkspace, usePanelI
  * 菜单是「归档」：宿主没有删除接口，归档会把这条从列表里拿掉（登记槽还在，设置里可以恢复）。
  * 正在看的那条被归档后，不要马上再开一条空白会话，否则只是历史没了、壳还在。
  */
-export function SessionDrawer({ open, box, sessions, workspaces, uiWorkspace, drawer, getLearningSpace }) {
+export function SessionDrawer({ open, box, sessions, workspaces, uiWorkspace, drawer, getLearningSpace, renderSlot, nativeBrowser }) {
   const [menu, setMenu] = useState(null);
   const [renaming, setRenaming] = useState(null);
   const [draft, setDraft] = useState('');
@@ -491,13 +547,27 @@ export function SessionDrawer({ open, box, sessions, workspaces, uiWorkspace, dr
   const drawerRef = useRef(null);
   const sessionList = useStore(sessions.list);
   const workspaceList = useStore(workspaces.list);
+  // 宿主的浏览器是否已注册进来（uSES：订阅那份布尔，见 client.jsx 的 presence store）。
+  // `nativeBrowser` 缺席（老组合 / 注入面没有它）时按「没有」处理，直接走自写列表。
+  const hasNative = useSyncExternalStore(
+    nativeBrowser?.subscribe ?? (() => () => {}),
+    nativeBrowser?.getSnapshot ?? (() => false),
+    () => false,
+  );
   const { sessionId } = useCurrentSession(uiWorkspace, sessions);
   useEffect(() => {
     if (!open) { setMenu(null); setRenaming(null); setError(''); return; }
-    const onKey = event => { if (event.key === 'Escape') { if (menu) setMenu(null); else drawer.close(); } };
+    const onKey = event => {
+      if (event.key !== 'Escape') return;
+      // 常驻抽屉**没有**「Esc 关掉」：它是固定区域，不该被一个用来清搜索/关菜单的键带走。
+      // 原生浏览器自己的控件（搜索框、菜单、对话框）会自行处理 Esc，这里不必管；
+      // 自写列表这边只在 Esc 时收起「更多」菜单。
+      // 关抽屉只有一条路：会话头那颗汉堡再点一次。
+      if (!hasNative && menu) setMenu(null);
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [open, menu, drawer]);
+  }, [open, menu, drawer, hasNative]);
   useEffect(() => {
     if (!menu) return;
     const onPointer = event => {
@@ -513,11 +583,16 @@ export function SessionDrawer({ open, box, sessions, workspaces, uiWorkspace, dr
   // 它没有激活时这里拿不到服务，抽屉就只显示空列表 —— 导航与页面都还在。
   const learningSpace = getLearningSpace?.();
   const space = learningSpace?.pickLearningWorkspace(workspaceList.items, learningSpace.title);
-  if (space === undefined || box.height === 0) return null;
-  const rows = learningSpace.sessionRows(space, sessionList, 60, workspaceList.archivedSessionIds);
+  if (box.height === 0) return null;
+  // 原生分支不需要「学习空间」这个前提：它自己列所有工作区。自写列表才需要。
+  const native = hasNative === true && typeof renderSlot === 'function';
+  if (!native && space === undefined) return null;
+  const rows = native ? [] : learningSpace.sessionRows(space, sessionList, 60, workspaceList.archivedSessionIds);
   const menuRow = menu === null ? undefined : rows.find(row => row.id === menu.id);
-  const startNew = () => { setError(''); drawer.close(); uiWorkspace.startSession(space.workspaceId); };
-  const openSession = id => { setError(''); drawer.close(); uiWorkspace.openSession(id); };
+  /* 常驻抽屉：打开会话 / 新建会话**不关抽屉**。它是一块固定的区域，
+     用户在这里挑会话，挑完接着看，抽屉不跟着消失（临时浮窗时代才需要顺手关掉）。 */
+  const startNew = () => { setError(''); if (space !== undefined) uiWorkspace.startSession(space.workspaceId); };
+  const openSession = id => { setError(''); uiWorkspace.openSession(id); };
   const archiveRow = id => {
     setMenu(null);
     const current = String(id) === String(sessionId);
@@ -547,29 +622,50 @@ export function SessionDrawer({ open, box, sessions, workspaces, uiWorkspace, dr
     setMenu({ id, top, left });
   };
   return <div className="zy-drawer-layer" data-open={open} style={{ left: box.left, top: box.top, width: box.width, height: box.height, borderTopLeftRadius: box.radius }}>
-    <div className="zy-drawer-scrim" data-open={open} onClick={() => drawer.close()}/>
+    {/* 常驻侧栏：没有遮罩，点别处不收走。会话头那颗汉堡负责开合，
+        抽屉自己的标题栏里还有一个「收起」按钮 —— 抽屉盖住的是这一列的内容，
+        用户在里面翻会话时不该被迫回到顶端去找那颗汉堡。 */}
     <aside className="zy-drawer" id="zy-session-drawer" ref={drawerRef} data-open={open} aria-hidden={!open} aria-label="会话">
-      <header className="zy-drawer-head">
+      {/* 原生分支把自己的一整套（标题、搜索、视图选项、新建会话/工作区、
+          分组树、归档筛选、对话框）都渲染在自己那棵树里，所以外面的自写头
+          不能出现 —— 两个「新建会话」按钮会打架，标题也会重复一次。
+          自写头只服务于退路列表。 */}
+      {!native && <header className="zy-drawer-head">
         <strong>会话</strong>
         <button className="zy-drawer-add" title="新建会话" aria-label="新建会话" onClick={startNew}><Icon name="plus" size={18}/></button>
-      </header>
-      <div className="zy-drawer-list" role="list" onScroll={() => setMenu(null)}>
-        {error && <p className="zy-drawer-error" role="alert">{error}</p>}
-        {rows.length === 0 && <div className="zy-drawer-empty"><Icon name="chat" size={22}/><p>还没有会话</p></div>}
-        {rows.map(row => <div key={row.id} role="listitem" className={`zy-drawer-row${String(row.id) === String(sessionId) ? ' is-current' : ''}`}>
-          {renaming === row.id
-            ? <input className="zy-drawer-input" autoFocus aria-label="会话名称" value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') commitRename(row.id); if (event.key === 'Escape') setRenaming(null); }} onBlur={() => commitRename(row.id)}/>
-            : <button className="zy-drawer-open" title={row.title || '新会话'} onClick={() => openSession(row.id)}>
-                <Icon name="chat" size={18}/>
-                <span className="zy-drawer-text">
-                  <span className={`zy-drawer-name${row.title ? '' : ' is-blank'}`}>{row.title || '新会话'}</span>
-                  <small className="zy-drawer-meta">{learningSpace.relativeLabel(row.updatedAt) || '暂无消息'}</small>
-                </span>
-              </button>}
-          <button className="zy-drawer-more" type="button" aria-expanded={menu?.id === row.id} aria-haspopup="menu" title="更多" aria-label="更多操作" onClick={event => toggleMenu(event, row.id)}><Icon name="more" size={16}/></button>
-        </div>)}
-      </div>
-      {menuRow && <div className="zy-drawer-menu" style={{ top: menu.top, left: menu.left }} role="menu">
+      </header>}
+      {native
+        ? <div className="zy-drawer-native">
+            {/* 宿主的浏览器没有「收起抽屉」这个概念（它本来住在侧栏里，靠侧栏开关收），
+                所以收起按钮由我们在它上面加一条窄栏。`aria-label` 与汉堡的「会话」
+                区分开，避免两个同名按钮。 */}
+            <div className="zy-drawer-native-bar">
+              <span className="zy-drawer-native-title">会话</span>
+              {/* 与会话头那颗是**同一个图标语言**（`panelRight`，宿主侧栏的面板开关）：
+                  抽屉收起的动作就是那块面板关掉，图标指向与展开一致，不换图形。 */}
+              <button type="button" className="zy-drawer-collapse" title="收起会话面板" aria-label="收起会话面板" onClick={() => drawer.close()}>
+                <Icon name="panelRight" size={16}/>
+              </button>
+            </div>
+            {renderSlot('sidebar.workspaces', { wide: true, expandSidebar: () => {} })}
+          </div>
+        : <div className="zy-drawer-list" role="list" onScroll={() => setMenu(null)}>
+            {error && <p className="zy-drawer-error" role="alert">{error}</p>}
+            {rows.length === 0 && <div className="zy-drawer-empty"><Icon name="chat" size={22}/><p>还没有会话</p></div>}
+            {rows.map(row => <div key={row.id} role="listitem" className={`zy-drawer-row${String(row.id) === String(sessionId) ? ' is-current' : ''}`}>
+              {renaming === row.id
+                ? <input className="zy-drawer-input" autoFocus aria-label="会话名称" value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') commitRename(row.id); if (event.key === 'Escape') setRenaming(null); }} onBlur={() => commitRename(row.id)}/>
+                : <button className="zy-drawer-open" title={row.title || '新会话'} onClick={() => openSession(row.id)}>
+                    <Icon name="chat" size={18}/>
+                    <span className="zy-drawer-text">
+                      <span className={`zy-drawer-name${row.title ? '' : ' is-blank'}`}>{row.title || '新会话'}</span>
+                      <small className="zy-drawer-meta">{learningSpace.relativeLabel(row.updatedAt) || '暂无消息'}</small>
+                    </span>
+                  </button>}
+              <button className="zy-drawer-more" type="button" aria-expanded={menu?.id === row.id} aria-haspopup="menu" title="更多" aria-label="更多操作" onClick={event => toggleMenu(event, row.id)}><Icon name="more" size={16}/></button>
+            </div>)}
+          </div>}
+      {!native && menuRow && <div className="zy-drawer-menu" style={{ top: menu.top, left: menu.left }} role="menu">
         {sessions.binding(menuRow.id) !== undefined && <button type="button" role="menuitem" onClick={() => { setMenu(null); setRenaming(menuRow.id); setDraft(menuRow.title); }}>重命名</button>}
         <button type="button" role="menuitem" className="is-danger" onClick={() => archiveRow(menuRow.id)}>归档</button>
       </div>}

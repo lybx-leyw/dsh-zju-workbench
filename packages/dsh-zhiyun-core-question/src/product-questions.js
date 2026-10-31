@@ -67,6 +67,9 @@ export function toProductQuestion(qa) {
     answer,
     explanation: qa.explanation,
     topic: qa.topic ?? '',
+    // 出处：plan 阶段回传的知识点 id（或 null）。**必须原样带到产品侧** ——
+    // 运行时靠它把题绑回真实的 courseId/subId，而不是拿 topic 去猜标题。
+    pointId: qa.pointId ?? null,
     difficulty: qa.difficulty ?? '',
     questionId: qa.question_id,
     /** 上游是否自报缺陷（`metadata.issues`）。产品质检可据此决定是否复核。 */

@@ -80,8 +80,8 @@ test('splitByLesson 按题目自己的 termName 分组（一次导出可能跨�
   const { splitByLesson } = await load('packages/dsh-zhiyun-core-study/src/quiz-export.js');
   const docs = splitByLesson({
     questions: [
-      { courseTitle: '甲课', lessonTitle: '第一节', termName: '2026 秋', pointTitle: 'p', stem: 'x', answer: 'y' },
-      { courseTitle: '乙课', lessonTitle: '第二节', termName: '2027 春', pointTitle: 'p', stem: 'x', answer: 'y' },
+      { courseTitle: '甲课', courseId: 'c-甲', subId: 's-1', lessonTitle: '第一节', termName: '2026 秋', pointTitle: 'p', stem: 'x', answer: 'y' },
+      { courseTitle: '乙课', courseId: 'c-乙', subId: 's-2', lessonTitle: '第二节', termName: '2027 春', pointTitle: 'p', stem: 'x', answer: 'y' },
     ],
   });
   assert.equal(docs.length, 2);
@@ -92,7 +92,7 @@ test('splitByLesson 按题目自己的 termName 分组（一次导出可能跨�
 test('调用方传入的 termName 作为兜底（题目完全没有时才用）', async () => {
   const { splitByLesson } = await load('packages/dsh-zhiyun-core-study/src/quiz-export.js');
   const docs = splitByLesson({
-    questions: [{ courseTitle: '甲课', lessonTitle: '第一节', pointTitle: 'p', stem: 'x', answer: 'y' }],
+    questions: [{ courseTitle: '甲课', courseId: 'c-甲', subId: 's-1', lessonTitle: '第一节', pointTitle: 'p', stem: 'x', answer: 'y' }],
     termName: '2026 秋',
   });
   assert.equal(docs[0].termName, '2026 秋', '题目没有时用调用方的');
@@ -101,7 +101,7 @@ test('调用方传入的 termName 作为兜底（题目完全没有时才用）'
 test('题目自带 termName 时优先于调用方', async () => {
   const { splitByLesson } = await load('packages/dsh-zhiyun-core-study/src/quiz-export.js');
   const docs = splitByLesson({
-    questions: [{ courseTitle: '甲课', lessonTitle: '第一节', termName: '题目自带', pointTitle: 'p', stem: 'x', answer: 'y' }],
+    questions: [{ courseTitle: '甲课', courseId: 'c-甲', subId: 's-1', lessonTitle: '第一节', termName: '题目自带', pointTitle: 'p', stem: 'x', answer: 'y' }],
     termName: '调用方给的',
   });
   assert.equal(docs[0].termName, '题目自带', '题目自带更可信');

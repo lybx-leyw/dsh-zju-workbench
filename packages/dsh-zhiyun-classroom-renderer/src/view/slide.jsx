@@ -74,7 +74,14 @@ export function ClassroomSlide({ slide, width = 800 }) {
               left: num(element.left) * scale,
               top: num(element.top) * scale,
               width: Math.max(1, num(element.width) * scale),
-              height: Math.max(1, num(element.height) * scale),
+              // 文字用 minHeight：内容长了允许往下撑开，不被齐头裁掉。
+              // shape/image 仍然用固定 height —— 它们的尺寸就是图形本身。
+              // 文字与公式用 minHeight：它们的高度由内容（字体度量 / KaTeX 排版）
+              // 决定，模型给的格子只是估计值，硬约束会把内容裁掉。
+              // shape / image 仍用固定 height —— 它们的尺寸就是图形本身。
+              ...(element.type === 'text' || element.type === 'latex'
+                ? { minHeight: Math.max(1, num(element.height) * scale) }
+                : { height: Math.max(1, num(element.height) * scale) }),
               // 元素自己按缩放后的尺寸排版，所以字号也要跟着缩放
               fontSize: num(element.fontSize, 18) * scale,
             }}
@@ -115,15 +122,39 @@ function renderElement(element) {
  * 用 `dangerouslySetInnerHTML` 是必要的：内容来自我们的模型 + 我们自己的 prompt 约束，
  * 不来自任意用户输入；而把它解析成 React 节点需要额外一个 HTML 解析器，不值得。
  */
+/**
+ * 文本。
+ *
+ * # 高度是「最小高度」，不是硬约束
+ *
+ * 模型给的 `height` 是它估的排版格子。实测它经常**刚好等于** `fontSize × 1.5`
+ * —— 例如标题 `fontSize:28 / height:42`，28×1.5 = 42，零余量。
+ * 这时只要字体回退、加粗、或者浏览器行高度量与模型假设的差哪怕 1px，
+ * 文字就会被 `overflow:hidden` 齐刷刷裁掉上半截 —— 表现是「标题被切一半」，
+ * 而且元素坐标完全正确，很难看出是高度问题。
+ *
+ * 所以：
+ *   - 行高默认降到 1.35（中文安全值），给字体度量留余量
+ *   - `minHeight` 取代 `height`：内容真的长了就往下撑，不裁
+ *   - 不设 `overflow:hidden`：宁可压到下一行一点点，也不让标题断头
+ *
+ * 外层 wrapper 同样用 `minHeight`，否则内层撑开了外层还是裁。
+ */
 function renderText(element) {
   const style = {
     width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-    lineHeight: element.lineHeight ?? 1.5,
+    minHeight: '100%',
+    // 行高不写死 1.5：中文字体的 ascent/descent 与西文不同，
+    // 1.5 在「高度刚好等于 font×1.5」的格子里必然卡死。
+    lineHeight: element.lineHeight ?? 1.35,
     fontWeight: element.fontWeight ?? 'normal',
     textAlign: element.textAlign ?? 'left',
     color: element.color ?? 'inherit',
+    // 保留换行与连续空格：模型给的 content 里可能有 <br> 与缩进
+    whiteSpace: 'pre-wrap',
+    overflowWrap: 'break-word',
+    // 块级子元素（<p>）默认有 margin，会把内容顶出格子
+    // 这里用 CSS 变量式写法不合适，交给 style.css 的 .zyc-slide p 规则
   };
   const html = typeof element.content === 'string' ? element.content : '';
   return <div style={style} dangerouslySetInnerHTML={{ __html: html }} />;
@@ -212,7 +243,15 @@ function renderLatex(element) {
   } catch {
     html = escapeHtml(String(source));
   }
-  return <div style={{ width: '100%', height: '100%', overflow: 'hidden' }} dangerouslySetInnerHTML={{ __html: html }} />;
+  // 与文字同一条理由：`height` 是模型估的格子，公式的实际行高由 KaTeX 决定。
+  // 硬设 height + overflow:hidden 会把多行公式（矩阵、分段函数、长分式）
+  // 齐头裁掉 —— 实测「qE + qv×B」需要 102px 而格子只给 55px。
+  return (
+    <div
+      style={{ width: '100%', minHeight: '100%', display: 'flex', alignItems: 'center' }}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 }
 
 /** 数字兜底：NaN / undefined / 字符串数字都收。 */

@@ -6,8 +6,9 @@
 
 import { ClassroomGenerateError, describeError } from '../errors.js';
 import { tryParseJsonObject } from '../json.js';
+import { parseSceneActions } from '../actions.js';
 import { buildScene, parseSceneResponse } from '../scene.js';
-import { buildScenePrompt } from '../prompts.js';
+import { buildActionsPrompt, buildScenePrompt } from '../prompts.js';
 
 /**
  * 第 2 段：大纲 → 逐场景内容（含口播）。
@@ -113,6 +114,8 @@ async function produceScene({ outline, brief, llm, pbl, stageId, index, total, p
     allTitles: undefined,
     previousSpeeches,
     languageDirective: brief.languageDirective,
+    sourceText: brief.sourceText,
+    knowledgeTree: brief.knowledgeTree,
   });
 
   let raw;
@@ -154,10 +157,22 @@ async function produceScene({ outline, brief, llm, pbl, stageId, index, total, p
     );
   }
 
+  // ── 第二次调用：actions 段（上游的 content → actions 两步）──
+  //
+  // 为什么必须分开：上游把「画面上有什么」与「怎么讲」切成两次调用。
+  // 合在一起时，模型在同一口气里既要设计版面、又要组织讲解，结果是
+  //   - 只有一条 speech（没有聚焦、没有节拍）
+  //   - quiz 场景里容易在发卷前泄题（它刚写完 answer/analysis）
+  // 拆开后，actions 段能**看到 content 的元素清单**，才能产出合法的 elementId。
+  const actions = await produceActions({
+    outline, content: parsed.content, sceneId, index, total, brief, previousSpeeches, llm, signal,
+  });
+
   const scene = buildScene({
     outline,
     content: parsed.content,
     speech: parsed.speech,
+    actions,
     stageId,
     sceneId,
     now,
@@ -174,6 +189,59 @@ function sceneIdOf(outline, index) {
   const ordinal = Number.isFinite(order) && order > 0 ? order : index + 1;
   return `scene-${ordinal}`;
 }
+
+/**
+ * actions 段：给已生成的 content 编排教学动作。
+ *
+ * 对应上游 `generateSceneActions`（`scene-generator.ts`）这一步。
+ *
+ * # 失败策略：降级而不是整页报废
+ *
+ * 上游在 actions 模板不可用时会用 `generateDefaultSlideActions` 之类的**确定性默认动作**
+ * 兜底，而不是让整页失败 —— 因为页面内容已经生成好了，不能因为"怎么讲"没安排好就全丢。
+ * 这里照办：actions 调用或解析失败 → 退化成"一条 speech = content 阶段给的 speech"。
+ *
+ * @returns {Promise<object[]>} 动作列表（永不为 null；最差是空数组）
+ */
+async function produceActions({ outline, content, sceneId, index, total, brief, previousSpeeches, llm, signal }) {
+  const elementIds = Array.isArray(content?.canvas?.elements)
+    ? content.canvas.elements.map((element) => element.id)
+    : [];
+
+  const { system, prompt } = buildActionsPrompt(outline, content, {
+    index,
+    total,
+    languageDirective: brief.languageDirective,
+    courseContext: previousSpeeches?.length
+      ? `上一页讲的是：${previousSpeeches.join(' ').slice(-150)}`
+      : undefined,
+  });
+
+  let raw;
+  try {
+    raw = await llm.call({
+      stage: 'scene-actions',
+      sceneType: outline.type,
+      sceneId,
+      system,
+      prompt,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: prompt },
+      ],
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    // 旁白编排失败不该毁掉整页：返回空数组，调用方会退回单条 speech。
+    return [];
+  }
+
+  const parsed = parseSceneActions(raw, { sceneId, sceneType: outline.type, elementIds });
+  if (!parsed) return [];
+  return parsed.actions;
+}
+
 
 /**
  * PBL 项目内容：先 `pbl.plan`（走模型的多阶段 Planner），失败退回
@@ -210,7 +278,7 @@ async function buildPblProject({ outline, brief, pbl }) {
 
 /** pbl 的口播：一次小调用；失败就是没有口播（不阻塞场景）。 */
 async function pblSpeech({ outline, brief, llm, signal }) {
-  const { system, prompt } = buildScenePrompt(outline, { index: 0, total: 1, courseTitle: brief.topic });
+  const { system, prompt } = buildScenePrompt(outline, { index: 0, total: 1, courseTitle: brief.topic, sourceText: brief.sourceText, knowledgeTree: brief.knowledgeTree });
   try {
     const raw = await llm.call({
       stage: 'scene',
