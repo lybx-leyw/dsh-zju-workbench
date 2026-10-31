@@ -190,6 +190,14 @@ import { createQuestionBankController } from './question-bank-client.js';
     loadCourse,
     selectCourse,
     selectLesson,
+    async openCourseGraphEntry(course, lesson, entry) {
+      const ticket = selection + 1, epoch = account;
+      await selectLesson(lesson, course);
+      if (closed || account !== epoch || selection !== ticket) return false;
+      if (!state.result) throw new Error('这节课的解析结果暂时无法读取，请刷新图谱后重试。');
+      update({ focusTab: { tab: '课程图谱定位', courseId: String(course.id), subId: String(lesson.subId), entry, nonce: Date.now() } });
+      return true;
+    },
     /**
      * 展开 / 收起某门课。展开状态放在控制器里，与 `course`/`lesson` 同寿命：
      * 组件自己的 `useState` 会随左侧导航切换而卸载丢失，于是切走再回来时

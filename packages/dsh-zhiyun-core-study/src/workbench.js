@@ -1,4 +1,5 @@
 import { QuestionBank } from './question-bank.js';
+import { knowledgeChapters } from 'dsh-zhiyun-core-quiz/knowledge-points';
 import { normalizeWorkers } from 'dsh-zhiyun-core-parser/worker-pool';
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -984,6 +985,21 @@ export class StudyWorkbench {
 
     const courseId = identifier(payload.courseId);
     if (method === "lessons") return this.classroom.listLessons(courseId, { onlyPlayable: false, signal });
+    if (method === "course-graph") {
+      const lessons = await this.classroom.listLessons(courseId, { onlyPlayable: false, signal });
+      const items = [];
+      for (const lesson of lessons.items) {
+        signal?.throwIfAborted();
+        const stored = await this.result(this.key(user, courseId, lesson.subId ?? lesson.id));
+        // Use the exact projection used by KnowledgeBoard so chapter/topic jump
+        // indexes remain identical, including points filtered from the raw parser tree.
+        const chapters = knowledgeChapters(stored);
+        if (chapters.length) items.push({ lesson, chapters });
+      }
+      signal?.throwIfAborted();
+      // Do not send the stored record (transcripts, pages, lecture, quiz) for an overview.
+      return { items };
+    }
     // 批量解析状态：界面展开一门课时要知道每个节次有没有已存产物，逐节
     // 发 `result` 等于 O(节数) 次往返（线性代数 31、大学写作 61）。这里
     // 一次问完整门课，宿主侧只是查本地存储。单个坏编号跳过即可，不该让
