@@ -1,5 +1,6 @@
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {QUESTION_STRATEGIES,QUESTION_TYPES} from 'dsh-zhiyun-core-quiz';
+import {ExportPdfButton} from './question-export.jsx';
 const text=q=>q.stem.replace(/\{\{c\d+::[^}]*\}\}/g,'____');
 function Check({mixed=false,...props}){const ref=useRef(null);useEffect(()=>{if(ref.current)ref.current.indeterminate=mixed;},[mixed]);return <input ref={ref} type="checkbox" {...props}/>;}
 function Question({q,bank,questions,state,selected,toggle,archived=false}){
@@ -32,6 +33,10 @@ export function QuestionHistory({bank,questions,state:provided}){
   const [exporting,setExporting]=useState(false),[exportNote,setExportNote]=useState(''),[exportError,setExportError]=useState(''),[exportFiles,setExportFiles]=useState([]);
   const matches=q=>(strategy==='all'||q.strategy===strategy)&&(type==='all'||q.type===type)&&[q.stem,q.pointTitle,q.courseTitle,q.lessonTitle].join(' ').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
   const active=questions.filter(q=>q.status!=='rejected'),visible=active.filter(matches),archived=questions.filter(q=>q.status==='rejected').filter(matches),selected=active.filter(q=>picked.has(q.id)).map(q=>q.id),all=visible.length>0&&visible.every(q=>picked.has(q.id));
+  // PDF 导出要的是**题目对象**，不只是 id：排版需要题干、选项、解析、课程与节次。
+  // 复用 `active` 的顺序（= 列表里的顺序），卷子题号才与用户看到的一致；
+  // 已弃用的一律剔掉，与服务端 `bank-export` 的口径相同。
+  const selectedQuestions=active.filter(q=>picked.has(q.id));
   const toggle=id=>setPicked(current=>{const next=new Set(current);next.has(id)?next.delete(id):next.add(id);return next;});
   const selectAll=()=>setPicked(current=>{const next=new Set(current);for(const q of visible)all?next.delete(q.id):next.add(q.id);return next;});
 
@@ -64,10 +69,20 @@ export function QuestionHistory({bank,questions,state:provided}){
     }
   };
 
+  /**
+   * PDF 导出与「导出到笔记库」共用同一个提示位。
+   *
+   * 两者不会同时进行（各自都有忙碌态、互斥在导出层），所以没必要并排两行提示 ——
+   * 一上一下两条「已导出…」反而让人分不清刚按下的是哪个按钮。
+   * `exportFiles` 是笔记导出的多份清单，PDF 只有一份，进入时先清空。
+   */
+  const pdfDone=message=>{setExportError('');setExportFiles([]);setExportNote(message);};
+  const pdfError=message=>{setExportNote('');setExportFiles([]);setExportError(message);};
+
   return <section className="zs-qz-history"><div className="zs-qz-section-title"><h2>历史题目</h2><span>{active.length} 道在用 · {questions.length-active.length} 道已弃用</span></div>
     <input className="zs-qz-search" type="search" aria-label="搜索历史题目" placeholder="搜索题目、知识点或课程" value={query} onChange={e=>setQuery(e.target.value)}/>
     <div className="zs-qz-filters"><select aria-label="筛选出题策略" value={strategy} onChange={e=>setStrategy(e.target.value)}><option value="all">全部策略</option>{Object.entries(QUESTION_STRATEGIES).map(([id,s])=><option key={id} value={id}>{s.label}</option>)}</select><select aria-label="筛选题型" value={type} onChange={e=>setType(e.target.value)}><option value="all">全部题型</option>{Object.entries(QUESTION_TYPES).map(([id,s])=><option key={id} value={id}>{s}</option>)}</select></div>
-    <div className="zs-qz-bulk" role="toolbar" aria-label="批量管理题目"><label><Check aria-label="全选当前题目" checked={all} mixed={!all&&visible.some(q=>picked.has(q.id))} onChange={selectAll}/>全选当前结果</label><span>已选 {selected.length} 道</span><button type="button" className="zs-text" disabled={!selected.length} onClick={()=>setPicked(new Set())}>清空选择</button><button type="button" className="zs-button" disabled={!selected.length||exporting} onClick={exportPicked}>{exporting?'正在导出…':'导出到笔记库'}</button><button type="button" className="zs-button" disabled={!selected.length} onClick={()=>{bank.discardMany(selected);setPicked(new Set());}}>批量弃用</button></div>
+    <div className="zs-qz-bulk" role="toolbar" aria-label="批量管理题目"><label><Check aria-label="全选当前题目" checked={all} mixed={!all&&visible.some(q=>picked.has(q.id))} onChange={selectAll}/>全选当前结果</label><span>已选 {selected.length} 道</span><button type="button" className="zs-text" disabled={!selected.length} onClick={()=>setPicked(new Set())}>清空选择</button><button type="button" className="zs-button" disabled={!selected.length||exporting} onClick={exportPicked}>{exporting?'正在导出…':'导出到笔记库'}</button><ExportPdfButton questions={selectedQuestions} disabled={exporting} onDone={pdfDone} onError={pdfError}/><button type="button" className="zs-button" disabled={!selected.length} onClick={()=>{bank.discardMany(selected);setPicked(new Set());}}>批量弃用</button></div>
     {(exportNote||exportError)&&<div className="zs-qz-notice" role="status" data-tone={exportError?'error':'ok'}>
       <p>{exportError||exportNote}</p>
       {exportFiles.length>0&&<ul className="zs-qz-export-files">{exportFiles.map(f=><li key={f.path}><b>{f.lessonTitle}</b><span>{f.count} 道</span><code>{f.folder?`${f.folder}/${f.name}`:f.name}</code>{f.deduped&&<small>重名，已加后缀</small>}</li>)}</ul>}

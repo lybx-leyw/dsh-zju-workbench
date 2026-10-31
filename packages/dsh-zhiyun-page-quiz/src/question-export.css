@@ -1,0 +1,262 @@
+/* ---------------------------------------------------------------------------
+ * 题库「导出 PDF」的纸面样式。
+ *
+ * 与问卷库页面的 style.css **分开**：这一张是打印纸面，选择器全部以
+ * `#zs-quiz-export` 开头，只在导出文档挂载期间存在（以 <style> 内联进文档，
+ * 见 question-export.jsx）。理由与讲义导出（page-study/src/lecture-export.css）一致：
+ * 屏幕样式跟着页面走、纸面样式跟着文档走，关掉导出就整份消失，不会留下 `@media print`
+ * 干扰正常打印。
+ *
+ * 为什么每个选择器都带 `#zs-quiz-export` 前缀：`npm run check:css` 会把不同包里
+ * 「同特异性、能命中同一元素、同属性不同值」的规则报成「靠挂载顺序决胜」。讲义导出那
+ * 张表用的是 `#zs-lecture-export`，只要这边的每条规则都被自己的 id 锚住，两张表就永远
+ * 不会争同一个元素。裸的 `body > *` 只保留一条 hide 规则，两个 id 互不相同因而不冲突。
+ * ------------------------------------------------------------------------- */
+
+#zs-quiz-export {
+  position: absolute;
+  left: -100000px;
+  top: 0;
+  width: 178mm;
+  pointer-events: none;
+  background: #fff;
+  color: #172c27;
+}
+
+#zs-quiz-export .zs-pdf-quiz {
+  font: 11pt/1.8 "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  background: #fff;
+  color: #172c27;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+#zs-quiz-export h1,
+#zs-quiz-export h2,
+#zs-quiz-export h3,
+#zs-quiz-export h4 {
+  color: #172c27;
+  font-weight: 600;
+  line-height: 1.45;
+  break-after: avoid-page;
+}
+
+#zs-quiz-export .zs-pdf-cover {
+  padding: 12mm 0 8mm;
+  border-bottom: 2pt solid #326452;
+}
+
+#zs-quiz-export .zs-pdf-cover > span {
+  font-size: 9pt;
+  letter-spacing: .1em;
+  color: #45675a;
+}
+
+#zs-quiz-export .zs-pdf-cover h1 {
+  margin: 6pt 0;
+  font-size: 23pt;
+}
+
+#zs-quiz-export .zs-pdf-cover small,
+#zs-quiz-export .zs-pdf-courses,
+#zs-quiz-export .zs-pdf-breakdown {
+  font-size: 9pt;
+  color: #647b70;
+  margin: 3pt 0;
+}
+
+#zs-quiz-export .zs-pdf-section {
+  break-before: page;
+  padding-top: 3mm;
+}
+
+#zs-quiz-export .zs-pdf-section h2 {
+  margin: 0 0 12pt;
+  font-size: 17pt;
+}
+
+#zs-quiz-export .zs-pdf-section h2 small,
+#zs-quiz-export .zs-pdf-q-type {
+  display: block;
+  font-size: 9pt;
+  font-weight: 400;
+  color: #647b70;
+  margin-bottom: 3pt;
+}
+
+#zs-quiz-export .zs-pdf-point h3 {
+  margin: 16pt 0 6pt;
+  font-size: 12.5pt;
+  color: #326452;
+}
+
+/* 每道题整体不跨页：题干被页脚切断、选项翻到下一页会让打印件很难做。
+   题干特别长的极端情况下允许内部断开，所以用 auto 兜底而不是硬 avoid。 */
+#zs-quiz-export .zs-pdf-q {
+  margin: 10pt 0 14pt;
+  break-inside: auto;
+  orphans: 2;
+  widows: 2;
+}
+
+#zs-quiz-export .zs-pdf-q h4 {
+  display: flex;
+  align-items: baseline;
+  gap: 8pt;
+  margin: 0 0 4pt;
+}
+
+#zs-quiz-export .zs-pdf-q-no {
+  min-width: 18pt;
+  font-size: 11pt;
+  color: #326452;
+}
+
+#zs-quiz-export .zs-pdf-q-type {
+  margin: 0;
+}
+
+#zs-quiz-export .zs-pdf-stem {
+  margin: 0 0 4pt;
+}
+
+#zs-quiz-export .zs-pdf-stem p,
+#zs-quiz-export .zs-pdf-choice-text p,
+#zs-quiz-export .zs-pdf-answer p,
+#zs-quiz-export .zs-pdf-explanation p {
+  margin: 3pt 0;
+}
+
+#zs-quiz-export .zs-pdf-choices {
+  margin: 3pt 0 0;
+  padding-left: 18pt;
+  list-style: none;
+}
+
+#zs-quiz-export .zs-pdf-choices li {
+  display: flex;
+  gap: 6pt;
+  align-items: baseline;
+  margin: 2pt 0;
+  break-inside: avoid;
+}
+
+#zs-quiz-export .zs-pdf-choices b {
+  min-width: 12pt;
+  font-weight: 600;
+}
+
+/* 简答题留出书写空间：打印出来是要手写的，紧贴下一题等于没地方答。 */
+#zs-quiz-export .zs-pdf-answer-space {
+  height: 26mm;
+  margin: 4pt 0 0;
+  border-bottom: 1pt dashed #cfdad4;
+}
+
+#zs-quiz-export .zs-pdf-answers {
+  break-before: page;
+  padding-top: 3mm;
+}
+
+#zs-quiz-export .zs-pdf-answers > h2 {
+  margin: 0 0 12pt;
+  padding-bottom: 6pt;
+  border-bottom: 1.2pt solid #326452;
+  font-size: 17pt;
+}
+
+#zs-quiz-export .zs-pdf-answer-section h3 {
+  margin: 14pt 0 4pt;
+  font-size: 11pt;
+  color: #45675a;
+}
+
+#zs-quiz-export .zs-pdf-a {
+  margin: 8pt 0;
+  break-inside: avoid;
+}
+
+#zs-quiz-export .zs-pdf-a h4 {
+  display: flex;
+  align-items: baseline;
+  gap: 8pt;
+  margin: 0 0 2pt;
+}
+
+#zs-quiz-export .zs-pdf-answer {
+  margin: 2pt 0;
+  font-weight: 600;
+}
+
+#zs-quiz-export .zs-pdf-answer-empty {
+  font-weight: 400;
+  color: #765a28;
+}
+
+#zs-quiz-export .zs-pdf-rubric,
+#zs-quiz-export .zs-pdf-explanation {
+  margin: 3pt 0;
+  font-size: 10pt;
+  color: #45675a;
+}
+
+#zs-quiz-export .zs-pdf-rubric {
+  padding-left: 18pt;
+}
+
+#zs-quiz-export .zs-pdf-flag {
+  margin: 3pt 0;
+  padding-left: 8pt;
+  font-size: 9pt;
+  color: #765a28;
+  border-left: 2pt solid #d5bd8a;
+}
+
+#zs-quiz-export .katex-display {
+  overflow: visible;
+  max-width: 100%;
+  font-size: .95em;
+  break-inside: avoid;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+
+  /* 用 `:has(#zs-quiz-export)` 而不是裸的 html/body：这两条只在**本题库导出文档存在时**
+     生效，特异性地带上了 id，于是与讲义导出（`page-study/src/lecture-export.css` 的裸
+     `html,body`）不会构成「同特异性、同属性、不同值」的竞争 —— 那正是 `check:css` 会
+     判红、并且实际只靠挂载顺序决胜的形状。语义上也更准确：打印一个普通页面时这两条
+     规则根本不该命中。 */
+  html:has(#zs-quiz-export),
+  body:has(#zs-quiz-export) {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+    color: #172c27 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body > *:not(#zs-quiz-export) {
+    display: none !important;
+  }
+
+  #zs-quiz-export {
+    position: static !important;
+    width: auto !important;
+    pointer-events: auto;
+    overflow: visible !important;
+  }
+
+  #zs-quiz-export * {
+    box-sizing: border-box;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+}

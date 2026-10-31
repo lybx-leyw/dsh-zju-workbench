@@ -27,7 +27,7 @@ import { appendFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startHost } from './boot.js';
-import { createLecturePdfHandler } from './lecture-pdf.js';
+import { createLecturePdfHandler, createPdfExportHandler } from './pdf-export.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -273,6 +273,10 @@ if (!app.requestSingleInstanceLock()) {
     createWindow();
     ipcMain.on('launcher:retry', () => { void boot(); });
     ipcMain.handle('launcher:snapshot', () => state);
+    // 讲义与题库共用同一个处理器：同源、主框架、忙碌互斥、路径净化只维护一份。
+    // 旧的 `lecture:pdf-save` 保留给已发布的壳与旧前端（它固定 kind=lecture）。
+    const pdfExport = createPdfExportHandler({getWindow:()=>win,getHostUrl:()=>host?.url,dialog,downloads:()=>app.getPath('downloads')});
+    ipcMain.handle('zhiyun:pdf-save', pdfExport);
     ipcMain.handle('lecture:pdf-save', createLecturePdfHandler({getWindow:()=>win,getHostUrl:()=>host?.url,dialog,downloads:()=>app.getPath('downloads')}));
     void boot();
   });
