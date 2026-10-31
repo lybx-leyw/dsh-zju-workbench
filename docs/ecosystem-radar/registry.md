@@ -4088,3 +4088,27 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `Anchorite-no/campus-agent` | B 其他JS（Electron） | **null** ⛔ | 浙大 / 学习核心 | 重复且无增益（**外壳主张冲突**） | ⛔ | rejected | 2026-11-01 | — | r122。★0、建仓 2026-10-31、**50 MB**、描述「自写 Electron 壳 + 校园界面包 + ZJU / Learning core，引擎用 DeepSeek Harness」—— **同宿主、同场景，最像本仓的一个**。但 `license: null` 且「自写壳」与本仓 `dsh-zhiyun-shell-workbench` + `dsh-zhiyun-shell-ui` 抢外壳主张。**只作需求对照** |
 | `iridescent2026/zju-campus-safety-agent` | B 其他JS | **null** ⛔ | 校园安全（非学习） | 不在本仓方向内 | ⛔ | rejected | 2026-11-01 | — | r122。★0、push 2026-10-21、21 MB。浙大校园安全数字孪生（参赛作品）。方向在「平安校园」，与学习工作台正交；`null` 许可证 |
 | `jadeocr/jadeocr` | B 其他JS | MIT ✅ | 日语汉字（可迁移：**中文手写识别**） | 重复可强化（手写通道） | 🔵 | proposed | 2026-11-01 | — | r122。★30。闪卡本体无增益（本仓 `dsh-radar-fsrs-scheduler` 已锁 FSRS）；值钱的是 **handwriting recognition for CJK** —— 纸质笔记进笔记页的潜在补通道。但场景是**日语汉字教学**，中文手写模型未必通用 → 仅线索 |
+
+---
+
+## 2026-11-01 · 插件本体能力核对轴 r123（A 组时间窗 · deepseek-harness / cordis plugin / dsh plugin / dsh-market / dsh-desktop）· 追加
+
+> 关键词（A 组 + `pushed:` 时间窗）：`deepseek-harness pushed:>2026-10-30`（1982）、`cordis plugin pushed:>2026-10-29`（176）、
+> `dsh plugin pushed:>2026-10-30`（844）、`dsh-market pushed:>2026-10-25`（129）、`dsh-desktop pushed:>2026-10-28`（255）。
+> **搜索 5 次 / 上限 10**；0 次 403 于搜索，元数据批次触到 60/h 限额（未丢失已得数据），**搜索面完整**。
+> 取组说明：脚本按 `same-day(unused)` 给 B，本轮**按 A 组最高优先 + r122 校准结论**改跑 A 时间窗；**B 组欠一轮**，下一轮补。
+> 原始去重 122、未登记 91、相关性过滤后留档 **4 行**（🟡1 / 🔵2 / ⛔1）。
+> **本轮自我修正**：`dsh-armory` 的「使用账本」原判为空白，写骨架时核对发现本仓
+> `packages/dsh-zhiyun-page-plugins/src/usage.js` 早已有 `count`/`lastUsed`/`STALE_DAYS=30`
+> （r112 从 `dsh-knowledge-graph` 提取）⇒ 判据③不成立，**🟢 降 🟡**，骨架收窄为纯能力清单。
+> 下轮口径：**出骨架前必须先 `grep` 目标面板 `src/`**。**90 条未登记但未成行**的原因见报告 §3：
+> 62 条是「插件市场索引」（词面被噪声淹没：`dsh-market`/`dsh-desktop` 首屏几乎全为 format 1 索引与 marketplace），
+> 19 条 `null` 许可证，5 条目录站（在册已有 3 个，不再逐条登记），其余为当天新建的 ★0 单文件炒作仓。
+> **本轮口径收紧**：建仓 < 48h ∧ ★0 ∧ 无 Release ⇒ 不判 🟢/🟡（只登记）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `2026heshao/dsh-armory` | A 原生DSH | MIT ✅ | 工作台可用性（插件页「它提供了什么」） | **重复可强化，但判据③不成立**（本仓 `page-plugins/src/usage.js` 已覆盖使用账本 ⇒ 只剩一张静态能力清单） | 🟡 | skeleton-created | 2026-11-01 | 2026-11-01 | r123（**自我修正**：起骨架时误判「使用账本」为空白，实为 r112 已从 `dsh-knowledge-graph` 提取，见 `page-plugins/src/usage.js` 文件头）⇒ **不应按「强化」批准**。★62、JS、14.0 MB、建仓 2026-10-10、push 2026-10-31、npm `dsh-armory@2.4.7`。实核 `dsh.bundle.patch: ./cordis.patch.yml`、`peer @deepseek-ai/cordis ~4.0.2`、其余 peer 全 `>=0.1.5-rc.1`（与本仓版本带相容）。补的格：`dsh-zhiyun-page-plugins` 只答「关掉谁会不会连坐」（模块边/拓扑序/两棵树的硬边），**不答「这个插件提供什么」**——上游的 `src/usage.js` 给 `tool × 调用次数 × 累计毫秒 × 失败次数` 账本 + 每个已装插件的工具名/命令名/槽位清单。**整包不可挂**：它是一体看板（MCP 管理 + Skill 市场 + WorkBuddy expert + 六档主题 + MCP OAuth 授权），挂上会在插件页旁多出自己的面板（违反「同一面板」），且与在册 `dsh-radar-mcp-manager` 职责重叠 ⇒ 骨架**只取契约、`dependencies` 为空**。骨架 `packages/radar/dsh-radar-plugin-caps`。**TODO-0 阻塞**：能力清单读宿主 `manifest`（零成本、只有 patch 行名）还是扫每个包的 `package.json`+patch（准确、需新开 `/api/zhiyun-plugin-caps`），以及是否与 `/api/zhiyun-plugins` 撞缓存 |
+| `lengrufeng2008/dsh-trading-floor` | A 原生DSH | MIT ✅ | 通用（会话读数） | **重复且无增益**（相对 plugin-caps 账本） | 🔵 | proposed | 2026-11-01 | — | r123。★0、JS、建仓与 push 同周。只读会话台：active book / token mix / context / **tool time** / idle-rate spend。「tool time」与 `plugin-caps` 账本同格但**无跨插件归因**；「idle-rate spend」属用量簇（在册 23+ 条已饱和）。按本轮收紧口径（<48h ∧ ★0）+ 无增益 → 只登记 |
+| `adithyanraj03/dsh-graft-plugin` | A 原生DSH | MIT ✅ | **课设 / 课程项目**（读别人的代码） | **条件性可强化，但落点面板不存在** | 🔵 | proposed | 2026-11-01 | — | r123。★4、JS、`0.3.3`、push 2026-10-31。实核 `dsh.bundle.patch` + `dsh.client.inject: ["@deepseek-ai/dsh-api-remotes"]`。上游 graft(MIT, trailhq)：符号级代码图（每符号 `file:line` 跨度 + 谁调谁）+ 5 工具（`graft_ask`/`grep`/`callers`/`skeleton`/`map`，**全部 exec 到 `graft` CLI**，需 `npm i -g @nanonets/graft`，pnpm 10+ 默认拦 postinstall），可视化落右侧栏。与本仓 `dsh-radar-plugin-graph`（注册图）、插件页（依赖图）**都不是同一张图**。**不判 🟡**：本仓没有「代码/仓库」面板，三条件第①条不成立；若评审新增「代码」页则应重评 🟡。⚠ 外部 CLI 硬依赖与本仓「不改平台工具链」相冲 |
+| `YurinKonstantin/dsh-rustore` | A 原生DSH | MIT ✅ | —（应用商店发布） | 无关 | ⛔ | rejected | 2026-11-01 | — | r123。★0、54 KB、建仓=push=2026-10-31。RuStore 发布 API 的 DSH 封装（草稿/上传/审核/灰度），需第三方商店凭据。与学习工作台、浙大场景均正交。只作「插件如何包一个外部发布 API」的范本留痕 |

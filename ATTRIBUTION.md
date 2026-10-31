@@ -23,6 +23,8 @@
 - [dsh-paper-reader](https://github.com/GGboya/dsh-paper-reader) · MIT · 版本 `1.3.1`（精确锁定，见 `packages/dsh-zhiyun-host-paper/src/upstream.js`）。「论文阅读」栏目在 `packages/dsh-zhiyun-host-paper/` 里以子插件方式挂载它的宿主半边（HTTP 路由与 agent 工具），客户端界面由 `dsh-zhiyun-page-paper` 重写。锁版与改写理由见该包 README。
 
 ## 候选骨架引用的第三方插件（**尚未接入、未评审**）
+- [dsh-armory](https://github.com/2026heshao/dsh-armory) · **MIT** ✅（GitHub API `license.spdx_id` 实核）· ★62 · npm `dsh-armory@2.4.7`（**未锁版**）。DeepSeek Harness 的一体化管理看板（MCP / Skills / Experts / 插件 / 工具账本 / 四大市场）。**已阅读**其 `README.md`（中文）、`package.json` 全文、`cordis.patch.yml` 与 `peerDependencies` 段。用途：`packages/radar/dsh-radar-plugin-caps`（候选骨架）的**能力契约来源** —— 每个已装插件「注册了哪些工具 / 命令 / 槽位」以及 `tool × 调用次数 × 累计毫秒 × 失败次数` 的折叠口径。**未复制其任何源码**：骨架 `src/` 只有注释与 TODO，`dependencies` 为空。⚠ **不可锁版挂载**：上游是一体看板，`cordis.patch.yml` 只插一行，挂上即在插件页**旁边**再开一块自己的面板（违反「仍是同一个面板」），并与在册 `dsh-radar-mcp-manager` 同域；另含 MCP OAuth 授权（凭据面）。⚠ 骨架已**自我降级**：其「使用账本」与本仓 `packages/dsh-zhiyun-page-plugins/src/usage.js`（r112 自 `dsh-knowledge-graph` 提取的 `count`/`lastUsed`/`STALE_DAYS=30`）重复 ⇒ 判据③不成立，骨架只保留静态能力清单。
+
 
 以下条目由「生态雷达」任务登记。它们出现在 `packages/dsh-radar-*/` 的**候选骨架**里，
 **未写入 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`，不会在运行时挂载**。
