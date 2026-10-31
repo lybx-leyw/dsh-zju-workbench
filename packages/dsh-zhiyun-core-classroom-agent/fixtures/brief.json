@@ -1,0 +1,15 @@
+{
+  "courseId": "zyc-fixture-photosynthesis",
+  "topic": "光合作用",
+  "description": "高一生物必修一：从光反应到暗反应的完整链路",
+  "audience": "高一",
+  "goals": [
+    "理解光反应与暗反应的分工",
+    "能用总反应式描述过程",
+    "解释光照强度对速率的影响"
+  ],
+  "interactive": true,
+  "assess": true,
+  "project": false,
+  "sessionType": "qa"
+}

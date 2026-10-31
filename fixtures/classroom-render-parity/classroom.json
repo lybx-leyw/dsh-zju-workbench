@@ -1,0 +1,274 @@
+{
+  "stage": {
+    "id": "stage-render-parity",
+    "name": "渲染一致性语料：<Light> & \"Life\"",
+    "description": "Render-parity fixture: one scene of each kind (slide / quiz / interactive / pbl) plus a second slide, kept minimal and stable.",
+    "style": "professional",
+    "language": "zh-CN",
+    "createdAt": 1700000000000,
+    "updatedAt": 1700000000000
+  },
+  "scenes": [
+    {
+      "id": "scene-slide-overview",
+      "stageId": "stage-render-parity",
+      "type": "slide",
+      "title": "光合作用总览",
+      "order": 0,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "slide-overview",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": ["#16a34a", "#0ea5e9", "#f59e0b", "#ef4444", "#6366f1"],
+            "fontColor": "#1f2937",
+            "fontName": "Arial"
+          },
+          "background": { "type": "solid", "color": "#f8fafc" },
+          "elements": [
+            {
+              "type": "text",
+              "id": "title",
+              "left": 60,
+              "top": 36,
+              "width": 880,
+              "height": 70,
+              "rotate": 0,
+              "content": "<p><strong><span style=\"font-size: 36px;\">光合作用总览</span></strong></p>",
+              "defaultFontName": "Arial",
+              "defaultColor": "#14532d"
+            },
+            {
+              "type": "text",
+              "id": "body",
+              "left": 60,
+              "top": 140,
+              "width": 470,
+              "height": 260,
+              "rotate": 0,
+              "content": "<ul><li><p>把光能转成化学能。</p></li><li><p>原料：二氧化碳与水。</p></li><li><p>产物：葡萄糖与氧气。</p></li></ul>",
+              "defaultFontName": "Arial",
+              "defaultColor": "#334155"
+            },
+            {
+              "type": "chart",
+              "id": "chart",
+              "left": 560,
+              "top": 140,
+              "width": 380,
+              "height": 220,
+              "rotate": 0,
+              "chartType": "bar",
+              "data": {
+                "labels": ["弱光", "中等", "强光"],
+                "legends": ["速率"],
+                "series": [[18, 52, 84]]
+              },
+              "themeColors": ["#16a34a"]
+            },
+            {
+              "type": "latex",
+              "id": "formula",
+              "left": 60,
+              "top": 420,
+              "width": 420,
+              "height": 60,
+              "rotate": 0,
+              "latex": "6CO_2+6H_2O\\rightarrow C_6H_{12}O_6+6O_2",
+              "color": "#0f172a"
+            }
+          ]
+        }
+      },
+      "actions": [
+        { "id": "speech-overview", "type": "speech", "text": "先看整体。" }
+      ]
+    },
+    {
+      "id": "scene-quiz",
+      "stageId": "stage-render-parity",
+      "type": "quiz",
+      "title": "随堂检测",
+      "order": 1,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "光合作用发生在细胞的哪个结构？",
+            "options": [
+              { "value": "A", "label": "线粒体" },
+              { "value": "B", "label": "叶绿体" },
+              { "value": "C", "label": "细胞核" }
+            ],
+            "answer": ["B"],
+            "analysis": "叶绿体里有叶绿素。",
+            "hasAnswer": true,
+            "points": 1
+          },
+          {
+            "id": "q2",
+            "type": "multiple",
+            "question": "下列哪些是光合作用的原料？ </script><!-- 不是标记 -->",
+            "options": [
+              { "value": "A", "label": "二氧化碳" },
+              { "value": "B", "label": "氧气" },
+              { "value": "C", "label": "水" }
+            ],
+            "answer": ["A", "C"],
+            "analysis": "二氧化碳和水是原料。",
+            "hasAnswer": true,
+            "points": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-interactive",
+      "stageId": "stage-render-parity",
+      "type": "interactive",
+      "title": "光照强度实验",
+      "order": 2,
+      "content": {
+        "type": "interactive",
+        "html": "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>光照实验</title><style>body{margin:0;font-family:sans-serif}#rate{font-weight:700}</style></head>\n<body><h1>光照强度实验</h1><input id=\"light\" type=\"range\" min=\"0\" max=\"100\" value=\"40\"><p>速率：<span id=\"rate\">40</span></p><p id=\"note\">拖动滑块改变光照。</p>\n<script>document.getElementById('light').addEventListener('input', function () { document.getElementById('rate').textContent = String(this.value); });</script>\n</body></html>"
+      }
+    },
+    {
+      "id": "scene-pbl",
+      "stageId": "stage-render-parity",
+      "type": "pbl",
+      "title": "设计一间温室",
+      "order": 3,
+      "content": {
+        "type": "pbl",
+        "projectV2": {
+          "uiPhase": "hero",
+          "title": "为学校设计一间温室",
+          "description": "在预算内让植物长得更好。",
+          "learningObjective": "用光合作用的限制因素指导一次真实设计。",
+          "tags": ["biology"],
+          "language": "zh-CN",
+          "proficiency": "beginner",
+          "status": "active",
+          "scenario": {
+            "setting": "学校想给科学社建一间温室。",
+            "goal": "拿出一份校长能批准的方案。",
+            "learnerRole": "主设计师",
+            "characters": [
+              { "id": "c1", "name": "李校长", "persona": "很在意预算" }
+            ]
+          },
+          "roles": [{ "id": "r1", "type": "instructor", "name": "教练" }],
+          "milestones": [
+            {
+              "id": "m1",
+              "title": "查清限制因素",
+              "description": "找出室内影响生长的条件。",
+              "status": "active",
+              "order": 0,
+              "microtasks": [
+                {
+                  "id": "t1",
+                  "title": "列出影响因素",
+                  "description": "光照、二氧化碳、温度、水。",
+                  "status": "todo",
+                  "assignee": "user",
+                  "hints": [],
+                  "order": 0
+                }
+              ]
+            },
+            {
+              "id": "m2",
+              "title": "画出方案草图",
+              "status": "locked",
+              "order": 1,
+              "microtasks": []
+            }
+          ],
+          "submissions": [],
+          "evaluations": [],
+          "threads": [],
+          "engagementEvents": [],
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z"
+        }
+      }
+    },
+    {
+      "id": "scene-slide-summary",
+      "stageId": "stage-render-parity",
+      "type": "slide",
+      "title": "课堂小结",
+      "order": 4,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "slide-summary",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": ["#16a34a", "#0ea5e9"],
+            "fontColor": "#1f2937",
+            "fontName": "Arial"
+          },
+          "background": { "type": "solid", "color": "#ffffff" },
+          "elements": [
+            {
+              "type": "text",
+              "id": "title2",
+              "left": 60,
+              "top": 40,
+              "width": 880,
+              "height": 64,
+              "rotate": 0,
+              "content": "<p><strong>课堂小\u200b结</strong></p>",
+              "defaultFontName": "Arial",
+              "defaultColor": "#0f172a"
+            },
+            {
+              "type": "text",
+              "id": "takeaway",
+              "left": 60,
+              "top": 130,
+              "width": 880,
+              "height": 120,
+              "rotate": 0,
+              "content": "<p>一句话：光 & 水 → 糖 + 氧。</p><p>下一节：限制因素。</p>",
+              "defaultFontName": "Arial",
+              "defaultColor": "#334155"
+            },
+            {
+              "type": "table",
+              "id": "tbl",
+              "left": 60,
+              "top": 280,
+              "width": 640,
+              "height": 160,
+              "rotate": 0,
+              "outline": { "style": "solid", "width": 1, "color": "#cbd5e1" },
+              "theme": { "color": "#0f172a", "rowHeader": "#e2e8f0", "colHeader": "#e2e8f0" },
+              "colWidths": [0.5, 0.5],
+              "data": [
+                [
+                  { "id": "c11", "text": "条件", "colspan": 1, "rowspan": 1 },
+                  { "id": "c12", "text": "影响", "colspan": 1, "rowspan": 1 }
+                ],
+                [
+                  { "id": "c21", "text": "光照", "colspan": 1, "rowspan": 1 },
+                  { "id": "c22", "text": "越强越快（有上限）", "colspan": 1, "rowspan": 1 }
+                ]
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

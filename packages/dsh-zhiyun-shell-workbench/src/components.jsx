@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Empty, Icon, Mark, StudentAvatar, useStore } from 'dsh-zhiyun-shell-ui';
-import { NAV, FULL_BLEED_PAGES, RAIL_DEFAULT, RAIL_ACCOUNT, activePage, matchingPages, visiblePages } from './model.js';
+import { NAV, FULL_BLEED_PAGES, RAIL_DEFAULT, RAIL_ACCOUNT, activePage, matchingPages, pageSlot, visiblePages } from './model.js';
 
 /** 导轨**下半组**（分隔线下方）固定了哪些页，记在 localStorage。 */
 const PINNED_KEY = 'zhiyun.rail.pinned';
@@ -375,6 +375,11 @@ export function Page({ page, controller, renderSlot }) {
   // 应用型页面（笔记页的编辑器）不套版心：980px 上限 + 文章式内边距会把
   // 多栏面板挤成一张小卡片。见 model.js 的 FULL_BLEED_PAGES。
   const contentClass = FULL_BLEED_PAGES.includes(page) ? 'zy-content zy-content-flush' : 'zy-content';
+  // 二级入口（`parent`）与回程：都是 NAV 里的字段，不另立清单 ——
+  // 「课堂 → 生成」是子页，子页在导轨与 Ctrl+K 里都不出现（`sidebar: false`），
+  // 所以它的唯一入口是主线页里这一行按钮，回程也必须由这里给（否则只能靠导轨离开）。
+  const children = NAV.filter(entry => entry.parent === page);
+  const parent = item?.parent ? NAV.find(entry => entry.id === item.parent) : undefined;
   return <div className="zy-page" data-page={page}>
     {/* skip link 的落点（见 Sidebar 里那个 `#zy-main`）。
         `tabIndex={-1}` 不是为了进 Tab 序列，而是让锚点跳转能把焦点**移进**这个容器：
@@ -383,7 +388,13 @@ export function Page({ page, controller, renderSlot }) {
         正文里的第一个可聚焦元素，而不是又退回这里。
         id 不会重复：七个页面各注册一个 `main` 面板，宿主按 `entryKey` 只挂当前那一个
         （见 client.jsx 的 `ctx.slots.register({ name: 'main', key: … })`）。 */}
-    <main className="zy-scroll" id="zy-main" tabIndex={-1}><div className={contentClass}>{renderSlot(`zhiyun.${page}.content`, { controller, renderSlot }, { fallback: React.createElement(missing) })}</div></main>
+    <main className="zy-scroll" id="zy-main" tabIndex={-1}><div className={contentClass}>
+      {parent && <button type="button" className="zy-page-back" onClick={() => controller.navigate(parent.id)}><Icon name="arrowLeft" size={14}/>{parent.label}</button>}
+      {children.length > 0 && <div className="zy-page-subnav" role="group" aria-label={`${item.label}的更多入口`}>
+        {children.map(child => <button type="button" key={child.id} onClick={() => controller.navigate(child.id)}>{child.label}<Icon name="arrow" size={14}/></button>)}
+      </div>}
+      {renderSlot(pageSlot(item ?? { id: page }), { controller, renderSlot }, { fallback: React.createElement(missing) })}
+    </div></main>
   </div>;
 }
 

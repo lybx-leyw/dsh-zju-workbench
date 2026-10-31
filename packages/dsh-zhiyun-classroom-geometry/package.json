@@ -1,0 +1,24 @@
+{
+  "name": "dsh-zhiyun-classroom-geometry",
+  "version": "0.1.0",
+  "description": "课堂几何内核包：上游 @openmaic/geometry 0.1.0 的构建产物原样 vendored（纯 SVG path / 形状几何校验 + 形状文字回退），本包不 fork 逻辑",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./vendor/geometry/index.d.ts",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/",
+    "vendor/geometry/",
+    "ATTRIBUTION.md"
+  ],
+  "sideEffects": false,
+  "dependencies": {
+    "entities": "6.0.1",
+    "svg-pathdata": "8.0.0",
+    "tinycolor2": "1.6.0"
+  }
+}

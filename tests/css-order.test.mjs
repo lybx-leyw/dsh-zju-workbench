@@ -55,7 +55,15 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     // 字典序：`page-*` < `shell-*` < `source-*`，所以 page 系列在最前，
     // 而 `dsh-zhiyun-source-card` 必须排在 `dsh-zhiyun-source-netproxy` **之前**。
     // `graph-render` 在 `page-*` 之前：字典序 `dsh-zhiyun-g…` < `dsh-zhiyun-p…`。
+    // `dsh-zhiyun-c…` 全在 `dsh-zhiyun-g…` 之前：课堂的内核与舞台。
+    // 它们的类名一律 `zyc-` 前缀，且 renderer 的 Tailwind 4 输出 `@scope` 到
+    // `.zyc-root`（见 docs/architecture/classroom-port.md 第 5 节），
+    // 与工作台的 `zy-` 不共享任何选择器，所以只登记、不参与竞争判定。
+    'dsh-zhiyun-classroom-renderer',
+    'dsh-zhiyun-core-classroom-stage',
     'dsh-zhiyun-graph-render',
+    'dsh-zhiyun-page-classroom-build',
+    'dsh-zhiyun-page-classroom-play',
     'dsh-zhiyun-page-docs',
     'dsh-zhiyun-page-feedback',
     'dsh-zhiyun-page-me',

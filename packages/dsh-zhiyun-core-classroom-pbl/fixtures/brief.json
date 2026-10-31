@@ -1,0 +1,22 @@
+{
+  "id": "outline_pbl_campus_market",
+  "order": 3,
+  "topic": "为校园二手交易平台设计一份定价与推荐方案",
+  "description": "学习者在真实的小样本交易数据上完成清洗、定价策略与推荐理由，最终交付一份能被同学直接采纳的方案简报。",
+  "targetSkills": ["数据清洗", "定价策略", "论证与取舍"],
+  "milestoneCount": 4,
+  "languageDirective": "中文为主，英文技术术语保留原文",
+  "language": "zh-CN",
+  "courseContext": {
+    "languageDirective": "中文为主，英文技术术语保留原文",
+    "allOutlines": [
+      { "id": "outline_ppt_1", "order": 0, "type": "slide", "title": "二手交易的市场结构", "description": "供需、信息不对称与成交流程" },
+      { "id": "outline_quiz_1", "order": 1, "type": "quiz", "title": "定价基础小测", "description": "成本加成与锚定效应" },
+      { "id": "outline_pbl_campus_market", "order": 3, "type": "pbl", "title": "校园二手交易平台定价方案" }
+    ]
+  },
+  "user": {
+    "nickname": "小林",
+    "bio": "大二学生，学过一点 Excel，没做过完整的数据分析项目"
+  }
+}
