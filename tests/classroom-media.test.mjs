@@ -12,13 +12,13 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 import { cp, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-media/', import.meta.url);
-const INDEX_URL = pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'index.js')).href;
+const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
 const REPO_ROOT = new URL('..', import.meta.url).pathname;
 const plugin = await import(INDEX_URL);
 
@@ -287,7 +287,7 @@ test('parsePdf() 用 unpdf 解析真实 PDF（本地、无网络）', async () =
 test('parsePdf() 在没有 unpdf 的环境里返回 E_DEPENDENCY_MISSING', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'zyc-media-nodeps-'));
   try {
-    await cp(join(PACKAGE_DIR.pathname, 'src'), join(dir, 'src'), { recursive: true });
+    await cp(join(fileURLToPath(PACKAGE_DIR), 'src'), join(dir, 'src'), { recursive: true });
     const isolated = await import(pathToFileURL(join(dir, 'src', 'pdf', 'parse.js')).href);
     const result = await isolated.parsePDF(
       {},
@@ -316,7 +316,7 @@ test('parsePdf() 拒绝空 buffer', async () => {
 test('timeline() 按 WAV 头排时间轴，并对非 WAV 片段保留"时长未知"', async () => {
   // 24 kHz / mono / 16-bit：1 秒 = 48000 字节 PCM。
   const { pcmS16leMonoToWav } = await import(
-    pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'audio', 'wav.js')).href
+    pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'audio', 'wav.js')).href
   );
   const oneSecond = Buffer.from(pcmS16leMonoToWav(Buffer.alloc(48_000), 24_000));
   const { media } = await mount();

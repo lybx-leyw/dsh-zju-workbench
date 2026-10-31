@@ -22,7 +22,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "dsh-zhiyun-core-tool": "0.1.0",
-    "dsh-zhiyun-core-llm": "0.1.0"
+    "dsh-zhiyun-core-question-stream": "0.1.0",
+    "dsh-zhiyun-core-tool": "0.1.0"
   }
 }

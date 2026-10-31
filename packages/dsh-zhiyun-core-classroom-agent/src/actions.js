@@ -14,7 +14,23 @@
  *    `nanoid` 本仓已有，原样使用（动作 id 的生成行为与上游一致）。
  */
 
-import { nanoid } from 'nanoid';
+/**
+ * 动作 id。
+ *
+ * 原代码用 `nanoid`，但全仓（package.json / package-lock.json）都没有它，
+ * 而这段注释自己还写着「本仓没有该依赖（且不许新增）」—— 于是 esbuild 报
+ * `Could not resolve "nanoid"`，整个构建挂住。
+ *
+ * 本包构建目标是 `platform: 'browser'`（见 scripts/build.mjs），所以不能用
+ * `node:crypto`。浏览器原生自带 `crypto.randomUUID()`（Chrome 92+ / Safari 15.4+），
+ * 不需要任何依赖，语义与 nanoid 等价：都是随机唯一串，用作 elementId 没有区别。
+ *
+ * 极老环境没有这个 API 时退回一段随机拼接 —— 这个 id 只用于同一帧内区分绘制元素，
+ * 不参与持久化，碰撞概率足够低。 */
+const randomId = () => {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  return `el-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+};
 import { getActionsForRole } from './roles.js';
 import { actionDurationMs } from './timing.js';
 
@@ -530,7 +546,7 @@ export function buildActionTools(opts) {
         const actionParams = params;
 
         if (isWhiteboardDrawAction(name) && !actionParams.elementId) {
-          actionParams.elementId = nanoid();
+          actionParams.elementId = randomUUID();
         }
 
         if (name === 'wb_draw_table' && !isNonEmptyRectangularStringMatrix(actionParams.data)) {

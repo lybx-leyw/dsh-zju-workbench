@@ -18,17 +18,17 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
 const PLATFORM_URL = pathToFileURL(
-  join(PACKAGE_DIR.pathname, 'src', 'services', 'platform.js'),
+  join(fileURLToPath(PACKAGE_DIR), 'src', 'services', 'platform.js'),
 ).href;
-const SERVICE_URL = pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'service.js')).href;
+const SERVICE_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'service.js')).href;
 const PROVIDER_CONFIG_URL = pathToFileURL(
-  join(PACKAGE_DIR.pathname, 'src', 'upstream', 'provider-config.js'),
+  join(fileURLToPath(PACKAGE_DIR), 'src', 'upstream', 'provider-config.js'),
 ).href;
-const ERRORS_URL = pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'errors.js')).href;
+const ERRORS_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'errors.js')).href;
 
 const { mountPlatform } = await import(PLATFORM_URL);
 const { createClassroomService } = await import(SERVICE_URL);

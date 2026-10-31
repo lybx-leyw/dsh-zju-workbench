@@ -32,6 +32,9 @@ export async function apply(ctx) {
     lecture: () => ctx.get("zhiyunLecture"),
     quiz: () => ctx.get("zhiyunQuiz"), notes: () => ctx.get("zhiyunNotes"),
     deeptutor: () => ctx.get("zhiyunDeepTutor"), learningResource: () => ctx.get("zhiyunLearningResource"),
+    // 课堂生成：AI 备课（outline + scenes 两段管线）。惰性取 —— 它缺席时
+    // 只让「AI 教学」栏报未接入，不拖垮学习面板（同 lecture 那条注释的理由）。
+    generate: () => ctx.get("zhiyunClassroomGenerate"),
     // 讲义导出到笔记库：可选附加能力，同上面几条一样惰性取。
     handout: () => ctx.get("zhiyunHandout") });
   await workbench.ready;
@@ -43,7 +46,7 @@ export async function apply(ctx) {
       if (message?.type !== "client-request" || message.method !== "zhiyun-study" || typeof message.rpcId !== "string" || message.rpcId.length > 200) throw Object.assign(new Error("invalid envelope"), { code: "INPUT" });
       rpcId = message.rpcId;
       const { method, args } = message.payload ?? {};
-      if (!["bank-progress", "bank-pause", "bank-resume", "bank-catalog", "bank-load", "bank-generate", "bank-practice", "bank-answer", "bank-discard", "bank-export", "bank-curate", "state", "queue", "login", "logout", "courses", "schedule", "recent", "recent-save", "review", "lessons", "content", "result", "results", "start", "cancel", "models", "models-save", "search", "quiz", "quiz-generate", "quiz-adopt", "quiz-discard", "note", "note-save", "note-link", "note-link-text", "handout-export", "live-today", "live-day", "live-streams"].includes(method) || args === null || typeof args !== "object" || Array.isArray(args)) throw Object.assign(new Error("unknown"), { code: "INPUT" });
+      if (!["bank-progress", "bank-pause", "bank-resume", "bank-catalog", "bank-load", "bank-generate", "bank-practice", "bank-answer", "bank-discard", "bank-export", "bank-curate", "state", "queue", "login", "logout", "courses", "schedule", "recent", "recent-save", "review", "lessons", "content", "result", "results", "start", "cancel", "models", "models-save", "search", "quiz", "quiz-generate", "quiz-adopt", "quiz-discard", "note", "note-save", "note-link", "note-link-text", "handout-export", "teach-generate", "teach-poll", "live-today", "live-day", "live-streams"].includes(method) || args === null || typeof args !== "object" || Array.isArray(args)) throw Object.assign(new Error("unknown"), { code: "INPUT" });
       result = { ok: true, value: await workbench.invoke(method, args, request.signal) };
     } catch (error) {
       result = { ok: false, error: { ...publicError(error), details: {} } };

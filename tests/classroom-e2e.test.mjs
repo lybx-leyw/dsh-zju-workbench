@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readdir, stat, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = new URL('../', import.meta.url);
 
@@ -167,7 +167,7 @@ test('课堂链路：brief → 生成 → 落盘 → 读回 → 导出 HTML/PPTX
   // 真 Cordis 会等 host 就位再 apply generate；vault / media 等只看 profileContext，
   // 先起得来。host 自己的 ports 是惰性 getter，所以它先于/后于领域包都能装配。
   const mount = async (packageName, config = {}) => {
-    const url = pathToFileURL(join(ROOT.pathname, 'packages', packageName, 'src', 'index.js')).href;
+    const url = pathToFileURL(join(fileURLToPath(ROOT), 'packages', packageName, 'src', 'index.js')).href;
     const plugin = await import(url);
     const dispose = plugin.apply(ctx, config);
     assert.equal(typeof dispose, 'function', `${packageName} 必须返回 disposer`);
@@ -274,7 +274,7 @@ test('课堂链路：brief → 生成 → 落盘 → 读回 → 导出 HTML/PPTX
   // 「传入讲义让 AI 照着讲」的唯一判据不是「上传接口返回 201」，而是
   // **模型收到的 prompt 里真的有讲义文字**。中间隔了三层（字节落盘 → unpdf 抽取 →
   // prompt 拼接），任何一层断了这里都会红。
-  const lecture = await readFile(join(ROOT.pathname, 'fixtures', 'classroom-material', 'lecture-fourier.pdf'));
+  const lecture = await readFile(join(fileURLToPath(ROOT), 'fixtures', 'classroom-material', 'lecture-fourier.pdf'));
   const upload = await studio.materials.create({
     buffer: lecture,
     filename: 'lecture-fourier.pdf',

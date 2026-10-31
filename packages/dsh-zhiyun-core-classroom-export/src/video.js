@@ -23,23 +23,14 @@
  * 一个停顿时长。字幕是"每个非空 speech 一条"，时间轴是全局 wall-clock。
  */
 
-/** 源：timing.ts:113-130 —— 无 TTS 音频时的朗读时长估算。 */
-const CJK_REGEX = /[\u4e00-\u9fff\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/g;
-const CJK_RATIO_THRESHOLD = 0.3;
-const MIN_READING_MS = 2000;
-const CJK_MS_PER_CHAR = 150;
-const NON_CJK_MS_PER_WORD = 240;
-
-export function estimateSpeechDurationMs(text, options = {}) {
-  const speed = options.speed ?? 1;
-  const source = String(text ?? '');
-  const cjkCount = (source.match(CJK_REGEX) || []).length;
-  const isCJK = cjkCount > source.length * CJK_RATIO_THRESHOLD;
-  const rawMs = isCJK
-    ? Math.max(MIN_READING_MS, source.length * CJK_MS_PER_CHAR)
-    : Math.max(MIN_READING_MS, source.split(/\s+/).filter(Boolean).length * NON_CJK_MS_PER_WORD);
-  return rawMs / speed;
-}
+/**
+ * 朗读时长估算：**从舞台包复用，不在这里重写一份**。
+ *
+ * 三处（stage/timeline、export/video、agent/timing）原本各抄一份实现与
+ * 常量表，数值恰好一致只是巧合 —— 任何一处被单独调整，导出视频的音轨
+ * 就会与播放器静默漂开。舞台的时间轴是唯一真源，从它导入。
+ */
+export { estimateSpeechDurationMs } from 'dsh-zhiyun-core-classroom-timing';
 
 /** 源：timeline.ts（EFFECT_AUTO_CLEAR_MS 一类的即发即忘动作，不推进游标）。 */
 const FIRE_AND_FORGET = new Set([

@@ -66,21 +66,13 @@ const CJK_MS_PER_CHAR = 150;
 const NON_CJK_MS_PER_WORD = 240;
 
 /**
- * Estimate how long narration takes to "speak" when no pre-generated audio is
- * available (TTS disabled).
+ * 朗读时长估算：**从舞台包复用，不在这里重写一份**。
  *
- * @param {string} text
- * @param {{ speed?: number }} [opts]
+ * 三处（stage/timeline、export/video、agent/timing）原本各抄一份实现与
+ * 常量表，数值恰好一致只是巧合 —— 任何一处被单独调整，导出视频的音轨
+ * 就会与播放器静默漂开。舞台的时间轴是唯一真源，从它导入。
  */
-export function estimateSpeechDurationMs(text, opts) {
-  const speed = opts?.speed ?? 1;
-  const cjkCount = (text.match(CJK_REGEX) || []).length;
-  const isCJK = cjkCount > text.length * CJK_RATIO_THRESHOLD;
-  const rawMs = isCJK
-    ? Math.max(MIN_READING_MS, text.length * CJK_MS_PER_CHAR)
-    : Math.max(MIN_READING_MS, text.split(/\s+/).filter(Boolean).length * NON_CJK_MS_PER_WORD);
-  return rawMs / speed;
-}
+export { estimateSpeechDurationMs } from 'dsh-zhiyun-core-classroom-timing';
 
 /**
  * 单个动作的阻塞时长（与 `lib/action/engine.ts` 的 `delay(...)` 调用点一一对应）。

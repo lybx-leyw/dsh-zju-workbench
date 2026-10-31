@@ -14,9 +14,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const REPO_ROOT = new URL('..', import.meta.url).pathname;
+// Windows 上 URL.pathname 是 "/C:/Users/..."，带前导斜杠 + 盘符，
+// 直接拼进 fs 路径会变成重复盘符。fileURLToPath 会正确处理。
+const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 const src = (packageName, file) =>
   pathToFileURL(join(REPO_ROOT, 'packages', packageName, 'src', file)).href;

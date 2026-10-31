@@ -21,14 +21,16 @@
         "dsh-zhiyun-core-player",
         "dsh-zhiyun-core-playback",
         "dsh-zhiyun-core-quiz",
-        "dsh-zhiyun-page-quiz"
+        "dsh-zhiyun-page-quiz",
+        "dsh-zhiyun-classroom-renderer"
       ]
     }
   },
   "dependencies": {
-    "hls.js": "1.7.3",
+    "dsh-zhiyun-classroom-renderer": "0.1.0",
     "dsh-zhiyun-core-playback": "0.1.0",
     "dsh-zhiyun-core-quiz": "0.1.0",
-    "dsh-zhiyun-page-quiz": "0.1.0"
+    "dsh-zhiyun-page-quiz": "0.1.0",
+    "hls.js": "1.7.3"
   }
 }

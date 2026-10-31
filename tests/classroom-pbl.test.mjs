@@ -14,11 +14,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-pbl/', import.meta.url);
-const plugin = await import(pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'index.js')).href);
+const plugin = await import(pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href);
 const BRIEF = JSON.parse(
   await readFile(new URL('../packages/dsh-zhiyun-core-classroom-pbl/fixtures/brief.json', import.meta.url), 'utf8'),
 );

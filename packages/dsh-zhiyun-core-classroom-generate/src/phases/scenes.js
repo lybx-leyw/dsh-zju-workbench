@@ -41,11 +41,30 @@ export async function produceScenes({ outlines, brief, llm, pbl, stageId, emit, 
     const sceneId = sceneIdOf(outline, index);
     emit(phase, 'phase-progress', { index, total, step: 'content', sceneId, sceneType: outline.type });
 
-    const produced = await produceScene({ outline, brief, llm, pbl, stageId, index, total, previousSpeeches, signal, now });
+    // 单场景失败不终止整条管线（与上游并行模式的取舍一致），但**必须留下原因**。
+    //
+    // 原实现把异常整个吞成了 `reason: 'scene-content-unavailable'`，于是
+    // 「9 个场景全跳过」这种全线失败在调用方看来只是一句「产出为空」，
+    // 真实原因（模型没配？JSON 解析不出？某页超长？）一个字都没有 ——
+    // 排查时只能靠猜。这里把 message 与 code 记进 skipped。
+    let produced = null;
+    let skipReason = null;
+    try {
+      produced = await produceScene({ outline, brief, llm, pbl, stageId, index, total, previousSpeeches, signal, now });
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      const described = describeError(error);
+      skipReason = {
+        index,
+        outlineId: outline.id,
+        title: outline.title,
+        reason: described.code ?? 'scene-content-unavailable',
+        message: described.message ?? String(error),
+      };
+    }
+
     if (!produced) {
-      // 与上游并行模式的取舍一致：单场景内容失败**不终止整条管线**，
-      // 记进 skipped 并继续 —— 页面拿到的是「这一页缺了」，不是「整堂课没了」。
-      skipped.push({ index, outlineId: outline.id, reason: 'scene-content-unavailable' });
+      skipped.push(skipReason ?? { index, outlineId: outline.id, reason: 'scene-content-unavailable' });
       emit(phase, 'phase-progress', { index, total, step: 'content', status: 'skipped', sceneId, sceneType: outline.type });
       continue;
     }
@@ -120,7 +139,20 @@ async function produceScene({ outline, brief, llm, pbl, stageId, index, total, p
   }
 
   const parsed = parseSceneResponse(raw, outline, { sceneIndex: index, stageId });
-  if (!parsed) return null;
+  if (!parsed) {
+    // 解析失败**不是异常**，所以之前悄悄返回 null，上层只能看到「跳过」。
+    // 这里是全线失败时最重要的信息：模型到底回了什么。
+    // 抛出去让 produceScenes 记进 skipped（带 message），不要静默。
+    throw new ClassroomGenerateError(
+      'E_UPSTREAM_ERROR',
+      `场景「${outline.title}」的内容无法解析（模型返回 ${String(raw ?? '').length} 字符）`,
+      {
+        phase: 'scenes', index, sceneId, sceneType: outline.type,
+        // 只留开头，避免把整段模型输出塞进错误体
+        rawHead: String(raw ?? '').slice(0, 400),
+      },
+    );
+  }
 
   const scene = buildScene({
     outline,

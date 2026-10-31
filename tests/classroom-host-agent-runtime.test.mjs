@@ -12,10 +12,10 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
-const moduleUrl = (rel) => pathToFileURL(join(PACKAGE_DIR.pathname, rel)).href;
+const moduleUrl = (rel) => pathToFileURL(join(fileURLToPath(PACKAGE_DIR), rel)).href;
 
 const { mountAgentRuntime, queryWhiteboardVisibility, PENDING_VISIBILITY_KEY } =
   await import(moduleUrl('src/services/agent-runtime.js'));

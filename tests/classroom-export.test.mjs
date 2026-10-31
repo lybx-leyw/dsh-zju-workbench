@@ -16,7 +16,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 import JSZip from 'jszip';
 
@@ -28,7 +28,7 @@ import {
 } from './fixtures/classroom-standalone.mjs';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-export/', import.meta.url);
-const INDEX_URL = pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'index.js')).href;
+const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
 const plugin = await import(INDEX_URL);
 
 // ── 装置 ────────────────────────────────────────────────────────────────────

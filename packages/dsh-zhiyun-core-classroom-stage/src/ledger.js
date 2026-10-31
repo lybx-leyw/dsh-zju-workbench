@@ -582,11 +582,31 @@ function cloneState(state) {
  * @param {{seq: number, payload: object}} record
  * @returns {object}
  */
+
+/**
+ * 从一条记录里取出「动作」。
+ *
+ * 两种形状都要认：
+ *   账本记录（dispatch 产出）{seq,id,runId,type,payload,at} —— 动作在 payload 里
+ *   生成侧动作（generate/scene.js 的 buildScene）{id,type,text} —— 字段在顶层
+ *
+ * 播放页把 scene.actions 直接当账本传进 <ClassroomStage>（见
+ * page-classroom-play/src/client.jsx 的 ledgerOf），所以第二种形状会进来。
+ * 只认 payload 会让这些记录全读成 {}：时长恒 0、效果全 skipped，且不报错。
+ */
+function actionOf(record) {
+  if (!record || typeof record !== "object") return {};
+  if (typeof record.payload === "object" && record.payload !== null) {
+    return record.payload;
+  }
+  // 生成侧形状：顶层字段就是动作内容。剥掉账本簿记键。
+  const { seq: _seq, runId: _runId, at: _at, ...rest } = record;
+  return rest;
+}
+
 export function applyRecord(state, record) {
   const next = cloneState(state);
-  const action = record && typeof record.payload === 'object' && record.payload !== null
-    ? record.payload
-    : {};
+  const action = actionOf(record);
   let outcome;
   try {
     outcome = applyAction(next, action, { seq: Number(record?.seq) || 0 });
