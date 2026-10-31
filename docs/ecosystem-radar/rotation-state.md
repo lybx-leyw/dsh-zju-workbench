@@ -51,11 +51,11 @@ node scripts/radar-rotation.mjs --group
 
 | 项 | 值 |
 | --- | --- |
-| `last_group` | `A` | **r119 取 A**（脚本给 `same-day(exhausted)→C`，**未采纳**：C 组五词 r100 已逐词复核、r102 又跑过 B 组 CC98 写出口轴，同日再跑 C 是纯重复；A 为最高优先且今日仅 1 次）。轴：**输入通道 —— 本仓所有「外部材料进来」的入口都停在文件上**（讲义 PDF / 课表 JSON / 题库 API），没有文件形态的板书、投屏、课堂小测只能手打 → 10 次搜索（含 `pushed:>10-25` 时间窗探针），100 条原始去重、**21 条未登记全部留档**（🟢1/🔵13/⛔7），`NOASSERTION` **0**、`null` 1。**骨架 1** `packages/radar/dsh-radar-orb`（A 类，锁 `dsh-orb@0.2.0`，MIT，★293，**强化式集成**：今天页问一问 + 课堂页讲义工具栏加「截一段屏」，不新增导航/页面；拒绝上游 `preset-computer-use` 与 `./client` 两个面）。**校准**：`topic:dsh-plugin` 已被污染（7791 条 Top15 零 DSH 仓）；`"deepseek-harness"` 引号短语仍是唯一稳定词面；4 天时间窗无关率偏高（原始去重 100 里 9 条 ★>5000 无关）；Cordis 生态正扩散到 Rust/C#/Dart，`cordis` 单词面有效产出率下降。**建议**：A 组去 `cordis` 单词面、时间窗收窄到 3 天；「输入通道」低速巡检（3 天仅 1 条 🟢） |
+| `last_group` | `C` | **r119 取 A**（脚本给 `same-day(exhausted)→C`，**未采纳**：C 组五词 r100 已逐词复核、r102 又跑过 B 组 CC98 写出口轴，同日再跑 C 是纯重复；A 为最高优先且今日仅 1 次）。轴：**输入通道 —— 本仓所有「外部材料进来」的入口都停在文件上**（讲义 PDF / 课表 JSON / 题库 API），没有文件形态的板书、投屏、课堂小测只能手打 → 10 次搜索（含 `pushed:>10-25` 时间窗探针），100 条原始去重、**21 条未登记全部留档**（🟢1/🔵13/⛔7），`NOASSERTION` **0**、`null` 1。**骨架 1** `packages/radar/dsh-radar-orb`（A 类，锁 `dsh-orb@0.2.0`，MIT，★293，**强化式集成**：今天页问一问 + 课堂页讲义工具栏加「截一段屏」，不新增导航/页面；拒绝上游 `preset-computer-use` 与 `./client` 两个面）。**校准**：`topic:dsh-plugin` 已被污染（7791 条 Top15 零 DSH 仓）；`"deepseek-harness"` 引号短语仍是唯一稳定词面；4 天时间窗无关率偏高（原始去重 100 里 9 条 ★>5000 无关）；Cordis 生态正扩散到 Rust/C#/Dart，`cordis` 单词面有效产出率下降。**建议**：A 组去 `cordis` 单词面、时间窗收窄到 3 天；「输入通道」低速巡检（3 天仅 1 条 🟢） |
 | `last_group(旧)` | `C` | r94 取 **A**（脚本给 `same-day(exhausted)→B`，**未采纳**：B 组 r93 当日刚以「搜索面是否见底」为轴跑过，再跑 B 是纯重复；A 为最高优先组且今日仅 2 次） |
-| `last_run_at` | `2026-10-31 12:05` | r119（A 组 · 输入通道轴，搜索 10 次用满，骨架 `dsh-radar-orb` 新建，整理改动 0）／上一轮 r118（能力域轴 · 白板画布，骨架 `dsh-radar-whiteboard`）／r102（B 组 · CC98 写出口轴，骨架 0 新建）。⚠ 历史记录：r96（03 时段）写回曾漏落地，两缺陷恰好抵消，已记入 registry 与 `2026-10-29-06.md` §6，未改脚本
+| `last_run_at` | `2026-10-31 15:07` | r119（A 组 · 输入通道轴，搜索 10 次用满，骨架 `dsh-radar-orb` 新建，整理改动 0）／上一轮 r118（能力域轴 · 白板画布，骨架 `dsh-radar-whiteboard`）／r102（B 组 · CC98 写出口轴，骨架 0 新建）。⚠ 历史记录：r96（03 时段）写回曾漏落地，两缺陷恰好抵消，已记入 registry 与 `2026-10-29-06.md` §6，未改脚本
 | `last_run_at(旧)` | `2026-10-29 00:15` | r94（2026-10-28 21:01 CST，积日 301，`301%3=1`→B，**未采纳公式组**）。今日实况 **B(r87 00:00) / C(r88 03:00) / A(r89 06:00) / C(r90 09:10) / B(r91 12:05) / A(r92 15:05) / B(r93 18:01)** → B 已 3 次，取 **A**。轴：**MCP：本工作台唯一没有的工具来源通道**（从「本仓 34 个包的工具面列全、缺哪一类」倒推关键词） |
-| `group_runs`（累计） | A=52, B=35, C=34 |
+| `group_runs`（累计） | A=52, B=35, C=35 |
 | 本轮轴名（r119，最新） | **输入通道轴（屏幕一帧 → 会话附件）** —— 见上文 `last_group`。**骨架 1** `dsh-radar-orb` |
 | 上一轮轴名（r118） | **能力域轴（闪卡/间隔重复 · 代码题库 · 公式/图表 · 白板画布）** —— 脚本报「今日 A/B/C 均已跑过」，沿用 registry 2026-10-15「能力域细分」做法改跑**历史未使用的能力域切片**。10 次搜索用满，0 次 403，**完整**。原始去重 46、未登记 25、留档 **24 行**（🟢1 / 🟡1 / 🔵17 / ⛔5），`NOASSERTION` **0**。**骨架 1** `packages/radar/dsh-radar-whiteboard`（A 类，锁 `@guowenzhang/dsh-whiteboard@0.4.0` + `@guowenzhang/dsh-drawioedit@1.2.1`，**强化式集成**：笔记/论文页内嵌画布，不新增导航）。**校准**：`dsh plugin srs` / `dsh plugin cs61b` / `dsh plugin code question bank` 三词 **total=0**（闪卡与代码题库在 DSH 生态里尚不存在，是真空缺而非词面问题）。**建议**：`rotation-state` 的三组之外固化为 **D 组（能力域轴）**，词池按「能力域」而非固定五词。 |
 | 本轮轴名（r111，最新） | **npm registry 轴** —— GitHub 六词（`cordis plugin` / `topic:dsh-plugin` / `pushed:>10-27`）首屏已 **100% 在册**，改查 npm `/-/v1/search?text=deepseek-harness plugin` 并以 `links.repository` 反查 GitHub。GitHub 8/10 次 + npm 3 次，0 次 403，**完整**。未登记 26 → 留档 **17 行**（🟢2 / 🔵5 / ⛔10），`NOASSERTION` 1（`dsh-theme-clove` / `dsh-plugin-startup-animation`）。**骨架 1** `packages/radar/dsh-radar-diff-approval`（A 类，锁 `dsh-diff-approval@0.36.1`，**强化式集成**）。**核心发现**：npm 端 `dsh-diff-approval`(★15/8 月建仓/6 个发布版本)、`dsh-balance`(★26)、`Flow2Spec`(★8)、`tracescope`(★3) **四个 GitHub 检索从未出现过的插件**；而 GitHub 端本轮新面孔 9 个里 7 个是 ★≤6 的两天内新仓。**建议固化 npm 为 D 组**。**校准**：`mathml latex render language:javascript` → `total_count = 4`（词面本身的问题，非限定符叠加）。**不出骨架的教训**：`KERBALMans/dsh-modpack` 判 🟢 却 **npm 包指向 `M1r0er/dsh-modpack@0.2.1`（仓内 0.9.1）** → 锁版即错锁，宁缺勿滥 |
@@ -201,6 +201,7 @@ node scripts/radar-rotation.mjs --group
 | 2026-10-31 06:10 | A | 自动记录 |
 | 2026-10-31 09:20 | B | 自动记录 |
 | 2026-10-31 12:05 | A | 自动记录 |
+| 2026-10-31 15:07 | C | timetable ics export / paper annotation reader / ocr notes taking / quiz practice / fitness tracker |
 
 
 > **⚠ 漂移已回填（2026-10-15 12:00 本轮处理）**：此前 B 组于当日 00:18 实跑

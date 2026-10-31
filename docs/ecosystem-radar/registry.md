@@ -4057,3 +4057,22 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `inso1337/revl` | B（Python） | **AGPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★8，Python |
 | `cordisx/cordisx` | B 其他JS | **AGPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★5，TS，Codex Desktop 插件宿主 |
 | `ShirazuNagisa/DSH-Mizar` | A 原生DSH | **GPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★6，TS。远程监控 DSH agent，Cordis 插件 |
+
+---
+
+## 2026-10-31 · 学生功能域轴 r120（课表/论文批注/OCR 笔记/刷题/锻炼）· 追加
+
+> 关键词（C 组）：`timetable ics export`、`paper annotation reader`、`ocr notes taking`、`quiz practice`、`fitness tracker`。
+> 首次 5 次加 `language:javascript`，得 18/10/11/2673/13523；再放宽 5 次（去掉语言限定、`per_page=20`），
+> 补充到 59/30/74/8830/48036。**搜索 10 次 = 上限**，0 次 403、0 次超时，**本轮完整**。
+> 取组依据：`node scripts/radar-rotation.mjs` → `same-day(exhausted)`（今日 A/B/C 均已跑过）⇒ 按 README 规则取
+> 「今天跑得最少」的 C 组（A=52/B=35/C=34），并同时放宽检索以降低与 r94/r112 的重复率。
+> 首轮 25 条宽松许可候选，**24 条已在册**；放宽后新面孔 30 条，**去重后仅 4 条新候选**，相关性过滤后登记 **4 行**。
+> 说明：C 组关键词池已高度饱和 —— 2026-10 已扫多轮，头部结果基本被登记完毕，本轮新候选全部为 ★≤25 的小仓库。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `piggymon907/codex-paper-reader-skill` | B 其他JS（Python+静态 HTML） | MIT ✅ | 论文（精读/证据锚点） | **重复可强化**（论文页·回答落点 页→块/句；`supports`/`does_not_support`/`limitations` 三维为全新） | 🟢 | skeleton-created | 2026-10-31 | 2026-10-31 | r120。★0，Python+JS，push 2026-08-21，release `2.7.1`。`assets/reader/reader.js` 52.7 KB + `references/data-contract.md` 给出坐标契约（PDF point 左上原点、多 `bboxes`、`visual_bbox`）与构建身份四项文本质量计数。**不可锁版**（无 npm 包、无 `package.json`，抽取层是 Python）⇒ 只取契约。⚠ 第一道闸门：上游 `/paper-reader/` 是否给「每页位图 + 块级 bbox」**未核实**。骨架 `packages/radar/dsh-radar-paper-evidence` |
+| `BurntRoses/paper-notebook` | B 其他JS | MIT ✅ | 论文（结构化学习笔记） | **重复可强化**（论文页+笔记页） | 🔵 | proposed | 2026-10-31 | — | r120。★1、TS、push 2026-10-31、建仓 2026-10-23；**仓 627 MB**（`public/promo/` 内含 11.7 MB `product-film-music.wav` 与 4 个宣传片 mp4，合计约 30 MB 仅宣传物料）。633 条目中 35 个测试、26 个 tools。能力与 `dsh-radar-paper-evidence` 高度重叠但更重，**不拟再生成骨架**；其中「离线 HTML 导出」可作 `paper-evidence` 的补充思路 |
+| `Ellie-eng-sketch/smartstudy-AI` | B 其他JS（描述指向） | MIT ✅ | 泛学生（录课/OCR 笔记） | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r120。★1、**无语言**（GitHub 不识别，仓 26 KB）、建仓与 push 同为 2026-06-06。描述吹得很大（录课+笔记+OCR+学习助手），但 26 KB 装不下任何实现 ⇒ 判**空壳**，仅登记不作候选。与 `dsh-zhiyun-core-lecture` / `core-notes` / `dsh-radar-ocr-web` 重叠且无增益 |
+| `MohgaNabil/deutsch-lernpaket` | B 其他JS（HTML） | MIT ✅ | **非本仓场景**（德语 B2 练习） | 无关 | ⛔ | rejected | 2026-10-31 | — | r120。★25、HTML、80 KB、push 2026-09-06。三个 Claude Skill：德语 B2 每周练习（对话/测验/翻译）。形态（Skill 打包考试练习）值得借鉴，但**语种不可迁移**，与浙大学生场景无关 |
