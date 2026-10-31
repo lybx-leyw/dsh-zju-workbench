@@ -27,5 +27,8 @@
     "src/",
     "fixtures/",
     "cordis.patch.yml"
-  ]
+  ],
+  "dependencies": {
+    "dsh-zhiyun-core-classroom-timing": "0.1.0"
+  }
 }

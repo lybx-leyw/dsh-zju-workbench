@@ -38,10 +38,45 @@ export const DEFAULT_LANGUAGE_DIRECTIVE = 'Teach in the language that matches th
  * @returns {Promise<{providerId: string|null, model: string|null, call: Function}>}
  */
 export async function resolveLlm({ studio = null, llm = null, provider, model } = {}) {
+  // ── 优先用**本仓**注入的 llm ────────────────────────────────────────
+  //
+  // 课堂生成最初只能向 `zhiyunClassroomStudio.providers.list()`（上游浙大
+  // 服务端）要「用哪个模型」。那条路依赖课堂登录态：登录失效时清单为空，
+  // 「AI 备课」就整个不可用 —— 而本仓的 `ctx.llm` 明明好好的。
+  //
+  // 解析、讲义、出题三条链路都走 `ctx.llm`，课堂生成没有理由绕出去问别人。
+  // 所以：只要注入了宿主 llm，就直接用它，不看 studio。
+  const hostTransport = normalizeTransport(llm);
+  if (hostTransport) {
+    const direct = {
+      providerId: provider ?? null,
+      model: model ?? null,
+      async call(request = {}) {
+        try {
+          const text = await hostTransport({
+            ...request,
+            provider: request.provider ?? provider,
+            model: request.model ?? model ?? undefined,
+          });
+          return typeof text === 'string' ? text : String(text ?? '');
+        } catch (error) {
+          if (error instanceof ClassroomGenerateError) throw error;
+          throw new ClassroomGenerateError(
+            'E_UPSTREAM_ERROR',
+            `模型调用失败：${messageOf(error)}`,
+            { stage: request.stage, providerId: provider ?? null, model: model ?? null, cause: messageOf(error) },
+          );
+        }
+      },
+    };
+    return direct;
+  }
+
+  // ── 其次才是 studio（宿主没有注入 llm 时） ──────────────────────────
   if (!studio || typeof studio.providers?.list !== 'function') {
     throw new ClassroomGenerateError(
       'E_MISSING_SERVICE',
-      '课堂生成需要 zhiyunClassroomStudio.providers（模型清单由宿主解析）',
+      '课堂生成需要一个模型通道：既没有注入宿主 llm，也没有 zhiyunClassroomStudio.providers',
       { service: 'zhiyunClassroomStudio' },
     );
   }
@@ -66,7 +101,7 @@ export async function resolveLlm({ studio = null, llm = null, provider, model } 
   if (!picked) {
     throw new ClassroomGenerateError(
       'E_NO_LLM_PROVIDER',
-      '服务端没有配置任何对话模型 provider（providers.list() 为空）',
+      '没有可用的对话模型：宿主没有注入 llm，服务端的 provider 清单也是空的',
       { providers: Object.keys(providers) },
     );
   }

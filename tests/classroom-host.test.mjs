@@ -17,11 +17,14 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
 const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
-const INDEX_URL = pathToFileURL(join(PACKAGE_DIR.pathname, 'src', 'index.js')).href;
+// Windows 上 `URL.pathname` 是 "/C:/Users/..."，直接丢给 pathToFileURL 会拼成
+// "file:///C:/C:/Users/..."（盘符重复），导入必然失败。
+// 先用 fileURLToPath 转成真正的本地路径再拼。
+const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
 const plugin = await import(INDEX_URL);
 
 // ── 测试装置 ────────────────────────────────────────────────────────────────

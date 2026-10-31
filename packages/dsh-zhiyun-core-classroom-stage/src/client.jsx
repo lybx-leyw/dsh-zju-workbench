@@ -39,7 +39,13 @@ import { buildTimeline } from './timeline.js';
 
 // 插件面：本包不注册页面/插槽，但客户端 Loader 会把 profile 里登记的每个 client
 // 条目当插件装配，因此保留 object 形态的 `apply`（与 renderer 包同形状）。
-export const name = 'zhiyun-classroom-stage';
+// 插件 name 必须与包名一致的下划线化形式 —— 宿主用它作为插件 id 去匹配
+// profile 里的 bundle 条目（`dsh-zhiyun-core-classroom-stage`）。
+//
+// 原来写的是 'zhiyun-classroom-stage'（少了 core 段），于是加载成功、注册成功，
+// 但宿主找不到同名的 fiber，状态判为 failed，整个工作台停在
+// 「HARNESS / Failed to load plugins」。这类错配不会在构建期暴露。
+export const name = 'zhiyun-core-classroom-stage';
 export const inject = [];
 export function apply() {}
 

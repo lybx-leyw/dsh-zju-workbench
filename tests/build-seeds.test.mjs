@@ -18,6 +18,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildClientPackage, CLIENT_PACKAGES, HOST_SEEDS } from '../scripts/build.mjs';
@@ -41,15 +42,22 @@ async function bareSpecifiers(entry) {
     // 去读，就会在读一个根本不存在的路径时抛 ENOENT。
     if (!/\.(?:[cm]?js|[jt]sx?)$/.test(key)) continue;
     const source = await readFile(key, 'utf8');
-    const lines = source.split(/\r?\n/);
-    for (let i = 0; i < lines.length; i++) {
-      const match = /(?:^|\s)(?:import|export)[^'"\n]*?from\s+['"]([^'"]+)['"]/.exec(lines[i]);
-      if (match === null) continue;
-      const specifier = match[1];
-      if (specifier.startsWith('.')) {
+    // 扫 import / export-from 的模块名。
+    //
+    // ⚠️ 不能在行数组上逐行匹配：`import {\n  a,\n  b,\n} from "./x.js"`
+    // 这种多行写法仓库里很常见（ledger.js 导入 geometry 就是），逐行正则扫不到，
+    // 后续文件便不会被跟进 —— 可达性分析悄悄断链，
+    // 于是「external 过期」那条断言会把**真的依赖**误报成过期声明。
+    const importRe = /(?:^|\s)(?:import|export)\s[^'"]*?from\s+['"]([^'"]+)['"]/g;
+    let m;
+    while ((m = importRe.exec(source)) !== null) {
+      const specifier = m[1];
+      if (specifier.startsWith(".")) {
         queue.push(path.resolve(path.dirname(key), specifier));
-      } else if (!specifier.startsWith('node:')) {
-        const at = `${path.relative(root, key)}:${i + 1}`;
+      } else if (!specifier.startsWith("node:")) {
+        // 行号 = 匹配位置之前的换行数 + 1
+        const line = source.slice(0, m.index).split("\n").length;
+        const at = path.relative(root, key) + ":" + line;
         if (!bare.has(specifier)) bare.set(specifier, at);
       }
     }
@@ -141,12 +149,37 @@ const INTENTIONALLY_BUNDLED = {
   // classroom-agent 的运行时会话 id 用 nanoid 生成。它是纯函数库（无实例状态、
   // 无 IO、体积 ~100B），没有跨包共享实例的需求，按设计随包内联。
   'nanoid': 'classroom-agent：纯函数 id 生成器，无共享实例需求，内联进 bundle',
+  // 构建期内核（dsl / geometry）：**没有客户端半边**，按设计被使用者内联。
+  //
+  // 它们不在 CLIENT_PACKAGES、没有 src/client.jsx、没有 lib/client.js ——
+  // 所以**不能**写进 dsh.client.external（那等于说「运行时由别的包提供」，
+  // 而浏览器里没人提供，makeRequire 会直接抛错、页面白屏）。
+  // classroom-port.md:106 原话就是 dsl「被 renderer 内联，不是插件」。
+  //
+  // 跨包内联同理：classroom-agent / classroom-stage / classroom-renderer
+  // 各自把用到的内核打进自己的 bundle，不做运行时共享。
+  'dsh-zhiyun-classroom-dsl': 'classroom 内核：无客户端半边，按设计被使用者内联',
+  'dsh-zhiyun-classroom-geometry': 'classroom 内核：无客户端半边，按设计被使用者内联',
+  // 朗读时长估算：纯函数、零依赖、无 React 无 IO。
+  // 从 classroom-stage（客户端包）下沉到这里，就是为了让服务端包
+  // （export / agent）能内联它而不越过「客户端包不该被内联」的边界。
+  'dsh-zhiyun-core-classroom-timing': 'classroom-timing：纯函数时长估算，被 stage/export/agent 内联共用',
   // classroom-geometry 的三个纯依赖：SVG path 解析、HTML 实体解码、颜色换算。
   // 都是无状态纯函数，classroom-stage 与 classroom-renderer 各自内联一份，
   // 没有跨包共享实例的需求（几何计算输入输出都是 JSON，不存在对象身份比较）。
   'svg-pathdata': 'classroom-geometry：纯 path 解析，随几何内核内联',
   'entities': 'classroom-geometry：纯实体解码，随几何内核内联',
   'tinycolor2': 'classroom-geometry：纯颜色换算，随几何内核内联',
+  // classroom-renderer 的 vendor 内核（上游 dist 原样拷贝）import 的第三方库。
+  // 它们**不能**写进 dsh.client.external：external 意味着「运行时由别的包提供」，
+  // 而这几个库没有任何客户端包会提供它们 —— 写进 external 只会在浏览器里
+  // 报「未注册的模块」，页面静默白屏（与 graph-render 的 cytoscape 同一个坑）。
+  // 所以按设计内联：各自打进 classroom-renderer 的 bundle。
+  'katex': 'classroom-renderer：数学公式渲染，随 vendor 内核内联',
+  'clsx': 'classroom-renderer：className 拼接，纯函数内联',
+  'tailwind-merge': 'classroom-renderer：className 去重，纯函数内联',
+  'motion/react': 'classroom-renderer：过渡动画，随 vendor 内核内联',
+  'lucide-react': 'classroom-renderer：图标组件，随 vendor 内核内联',
 };
 
 test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的文件（有意内联的除外）', async () => {
@@ -162,8 +195,51 @@ test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的�
     // vendor/ 是锁版快照（见 docs/architecture/classroom-port.md 第 2 节通道 1）：
     // 它属于本包、要被打进本包产物，判据是「不能被别的包 import」，不是「必须在 src/ 下」。
     const own = path.resolve(root, 'packages', name) + path.sep;
+    // 构建期内核（dsl / geometry）属于「被内联的 workspace 包」，不是外来文件。
+    //
+    // 它们没有客户端半边（src/client.jsx 与 lib/client.js 都不存在、
+    // 也不在 CLIENT_PACKAGES），所以**不能**写进 dsh.client.external ——
+    // external 意味着「运行时由别的包提供」，而浏览器里没人提供它，
+    // makeRequire 找不到会直接抛错，页面白屏。
+    // classroom-port.md:106 本来就写明 dsl「被 renderer 内联，不是插件」。
+    //
+    // 所以判据从「本包目录」放宽到「本包目录 ∪ workspace 内核包」：
+    // 内联 workspace 内的构建期内核是设计，不是 external 漏项。
+    // 判据放宽：**非客户端**的 workspace 包可以被内联。
+    //
+    // 这批 classroom 包之间有构建期依赖：
+    //   agent  → 复用 stage 的 timeline/ledger/geometry（纯函数，不 import React）
+    //   stage  → 复用 geometry/dsl 内核
+    //   renderer → 复用 dsl/geometry 内核
+    // 它们都**没有客户端半边**（不在 CLIENT_PACKAGES、没有 lib/client.js），
+    // 所以不能写进 dsh.client.external（那等于说「运行时由别的包提供」，
+    // 而浏览器里没人提供 → makeRequire 抛错 → 静默白屏）。
+    //
+    // ⚠️ 但**客户端包之间**互相内联必须继续拦住 —— 见上面第 187 行那段注释
+    //    说的「别的 workspace 包仍必须拦住，那才是真正的边界泄漏」。
+    //    客户端包有 lib/client.js，运行时由 Loader 提供，应当走 external；
+    //    若它被内联进别人的 bundle，就会产出一份**独立副本** ——
+    //    两份模块状态不共享（signals、缓存、事件总线全断），而且体积翻倍。
+    const clientPkgs = new Set(CLIENT_PACKAGES);
+    const workspacePkgs = new Set(
+      readdirSync(path.join(root, 'packages'), { withFileTypes: true })
+        .filter((e) => e.isDirectory())
+        .map((e) => e.name),
+    );
+
     const foreign = inputs.filter((p) => {
       if (p.startsWith(own)) return false;
+      // 本仓**非客户端** workspace 包的文件：构建期内核按设计内联，不算外来。
+      //
+      // 客户端包（在 CLIENT_PACKAGES 里、有 lib/client.js）不放行 ——
+      // 它们运行时由 Loader 提供，被内联会产生不共享状态的独立副本。
+      // 这条收紧是有意的：放宽能救 classroom 的内核内联，但不能顺手
+      // 把「客户端包互相内联」这个真正的边界泄漏也放过去。
+      const rel = path.relative(path.join(root, 'packages'), p);
+      if (!rel.startsWith('..')) {
+        const pkgName = rel.split(path.sep)[0];
+        if (workspacePkgs.has(pkgName) && !clientPkgs.has(pkgName)) return false;
+      }
       const bundled = /[\\/]node_modules[\\/]([^\\/]+)(?:[\\/]|$)/.exec(p);
       if (bundled === null) return true;
       if (bundlesDeps) return false;

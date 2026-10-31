@@ -1,0 +1,16 @@
+{
+  "name": "dsh-zhiyun-core-classroom-timing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "课堂系列的时长常量与朗读估算：纯函数、零依赖，被舞台/导出/agent 共用",
+  "main": "./src/timing.js",
+  "exports": {
+    ".": "./src/timing.js",
+    "./timing": "./src/timing.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/"
+  ]
+}

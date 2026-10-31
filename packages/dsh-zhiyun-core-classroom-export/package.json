@@ -18,7 +18,9 @@
     "./package.json": "./package.json"
   },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" }
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   },
   "files": [
     "src/",
@@ -26,5 +28,8 @@
     "cordis.patch.yml",
     "README.md",
     "ATTRIBUTION.md"
-  ]
+  ],
+  "dependencies": {
+    "dsh-zhiyun-core-classroom-timing": "0.1.0"
+  }
 }

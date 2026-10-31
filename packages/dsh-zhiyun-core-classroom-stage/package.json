@@ -10,8 +10,9 @@
     "./ledger": "./src/ledger.js",
     "./timeline": "./src/timeline.js",
     "./geometry": "./src/geometry.js",
-    "./client": "./src/client.jsx",
-    "./package.json": "./package.json"
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./timing": "./src/timing.js"
   },
   "dsh": {
     "bundle": {
@@ -35,5 +36,9 @@
     "react": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "dsh-zhiyun-classroom-geometry": "0.1.0",
+    "dsh-zhiyun-core-classroom-timing": "0.1.0"
   }
 }

@@ -1409,10 +1409,9 @@ body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-empty {
  * 而壳的禁用规则只覆盖 .zs-study / .zs-account，题库页根本不在其中。
  * 这一段放在所有组件规则之后，保证不被覆盖。 */
 
-body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(button, input, select, textarea, summary, a, [tabindex]):focus-visible {
-  outline: 2px solid var(--zy-accent);
-  outline-offset: 2px;
-}
+/* 焦点环统一由壳提供（见 shell-workbench 的 `body[data-zhiyun] :is(button, a, [tabindex], summary):focus-visible`
+   与输入框那条）。这里不再重复声明 —— 两处都写、特异性相同时，
+   胜负只能靠样式表挂载顺序，那是隐患而不是保障。 */
 
 body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(button, input, select, textarea):disabled,
 body[data-zhiyun] :is(.zs-qz-page, .zs-qz) [aria-disabled="true"] {

@@ -7,26 +7,12 @@
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
+    "./view": "./src/view/slide.jsx",
     "./client": "./lib/client.js",
-    "./fonts.css": "./vendor/renderer/fonts.css",
-    "./elements": {
-      "types": "./vendor/renderer/elements/index.d.ts",
-      "default": "./vendor/renderer/elements/index.js"
-    },
-    "./types": {
-      "types": "./vendor/renderer/types/index.d.ts",
-      "default": "./vendor/renderer/types/index.js"
-    },
-    "./snapshot": {
-      "types": "./vendor/renderer/snapshot/index.d.ts",
-      "default": "./vendor/renderer/snapshot/index.js"
-    },
     "./package.json": "./package.json"
   },
   "files": [
     "src/",
-    "vendor/renderer/",
-    "ATTRIBUTION.md",
     "cordis.patch.yml"
   ],
   "sideEffects": false,
@@ -35,7 +21,6 @@
       "platform": "web",
       "external": [
         "react",
-        "react-dom",
         "react/jsx-runtime"
       ],
       "bundlesDependencies": true
@@ -45,18 +30,9 @@
     }
   },
   "dependencies": {
-    "@openmaic/dsl": "file:../dsh-zhiyun-classroom-dsl",
-    "@openmaic/geometry": "file:../dsh-zhiyun-classroom-geometry",
-    "clsx": "2.1.1",
-    "echarts": "6.0.0",
-    "html-to-image": "1.11.13",
-    "html2canvas-pro": "2.0.4",
-    "katex": "0.16.38",
-    "lucide-react": "0.562.0",
-    "motion": "12.35.2",
-    "shiki": "3.23.0",
-    "tailwind-merge": "3.5.0",
-    "tinycolor2": "1.6.0"
+    "dsh-zhiyun-classroom-dsl": "0.1.0",
+    "dsh-zhiyun-classroom-geometry": "0.1.0",
+    "katex": "0.16.38"
   },
   "peerDependencies": {
     "react": ">=18",

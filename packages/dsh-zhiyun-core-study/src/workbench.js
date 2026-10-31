@@ -9,6 +9,7 @@ import { createQuizStore } from "dsh-zhiyun-core-quiz/store";
 import { hasContent, pageLink, parseZySectionUri, timeLink } from "dsh-zhiyun-core-notes/note";
 import { writeFileAtomic } from "@deepseek-ai/dsh-atomic-write";
 import { GENERATION_VERSION } from 'dsh-zhiyun-core-lecture';
+import { briefFromLecture, startGeneration, pollGeneration } from './ai-teaching-generate.js';
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 const fault = (code, message) => Object.assign(new Error(message), { code });
 // ⚠️ 文案里带上收到的值：`INPUT` 在 publicError 里被统一翻成「输入信息无效。」，
@@ -105,7 +106,12 @@ const faultMessages = {
  * 这是本项目第三次修同类问题（前两次是 PERSIST 的 cause、batchProblems 的 detail）
  * —— 规则统一成：**能给出具体原因就不要用泛化文案盖掉它**。
  */
-const KEEPS_OWN_MESSAGE = new Set(["INPUT", "NOT_FOUND", "NOT_WIRED"]);
+// 这些错误码的 message 是**我们自己写的、用户看得懂的话**，必须原样透出。
+//
+// 反例：`LLM` 曾不在这个集合里，于是 `publicError` 把它替换成
+// 「操作未完成，请重试。」—— 真正的失败原因（模型超时？没配模型？只回了半截？）
+// 全被吞掉，用户和我都无从判断。凡是「原因本身就有信息量」的码都该在这里。
+const KEEPS_OWN_MESSAGE = new Set(["INPUT", "NOT_FOUND", "NOT_WIRED", "LLM", "EMPTY", "CANCELLED"]);
 
 export const publicError = (error) => ({ code: error.code ?? "FAILED", message: {
   ...faultMessages,
@@ -125,7 +131,7 @@ export const publicError = (error) => ({ code: error.code ?? "FAILED", message: 
   ? { message: String(error.message).trim() }
   : {}) });
 export class StudyWorkbench {
-  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge, deeptutor, learningResource, handout }) {
+  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge, deeptutor, learningResource, handout, generate }) {
     this.classroom = classroom;
     this.parser = parser;
     this.llm = llm;
@@ -140,6 +146,10 @@ export class StudyWorkbench {
     //    都会让整个学习面板 pending（连解析都用不了）。讲义是可选的加工步骤，
     //    缺了应当只让「生成讲义」如实报未接入，而不是把页面拖死。
     this.lectureOf = lecture ?? (() => undefined);
+    // 课堂生成服务同样惰性取。它提供 outline/scenes 两段管线（决定讲课顺序、
+    // 逐页产出 canvas 元素与口播稿）—— 那是「AI 备课」的真身，
+    // 不在学习包里重写一份 prompt。
+    this.generateOf = generate ?? (() => undefined);
     // 出题与节笔记同样是可选加工：停用其中一个只让对应动作报未接入。
     // 出题的题库不使用插件上的单例 store（那个 store 跨节共享、且不落盘），
     // 每次按本节记录自建一份，再把快照写回知识库。
@@ -472,6 +482,77 @@ export class StudyWorkbench {
     catch { throw fault("CORRUPT", "已有题目无法读取"); }
     return this.quizView(opened.store, { loadNotes: opened.loaded.notes ?? [] });
   }
+  /**
+   * 讲义终稿 → AI 课件页。
+   *
+   * 与 `generateQuiz` 同一套约束：要先生成终稿、走 `mutate` 串行化、
+   * 用 `fault` 报可读的错误码。区别是它**不落盘** ——
+   * 课件页是「这一节的呈现方式」，不是新的学习产物，
+   * 存下来反而会在讲义更新后变成过期副本。
+   *
+   * 模型信息从 `payload` 来（界面把当前选的 provider/model 带上）。
+   * 没给就用 `this.model`；再没有就如实报「没有可用模型」。
+   */
+  /**
+   * 讲义终稿 → AI 课件（走课堂生成管线）。
+   *
+   * 与 `generateQuiz` 同一套约束：要先生成终稿、用 `fault` 报可读错误码。
+   * 区别是它**不落盘** —— 课件是「这一节怎么讲」，讲义改了旧课件就该作废，
+   * 存下来只会让人看到过期内容。
+   *
+   * 课堂生成服务**惰性取**：它缺席时只让这一栏如实报「未接入」，
+   * 不把整个学习面板拖成 pending（同 `lectureOf` 的理由）。
+   */
+  /**
+   * 启动 AI 备课，立刻返回 runId。
+   *
+   * 一次备课要跑 9 个场景、3-5 分钟，同步等会撞浏览器/网关超时。
+   * 所以拆成 start + poll，界面每 1.5 秒问一次进度（见 `teachPoll`）。
+   */
+  async generateTeaching(key, payload, signal) {
+    const stored = await this.result(key);
+    if (!stored?.lecture) throw fault("INPUT", "请先生成讲义终稿，再来上这一课");
+
+    const generate = this.generateOf();
+    if (!generate) throw fault("NOT_WIRED", "课堂生成未接入");
+
+    // 与讲义/出题同一个模型，行为才一致
+    const worker = this.effectiveWorkers()[0] ?? null;
+
+    try {
+      return await startGeneration({
+        generate,
+        brief: briefFromLecture(stored.lecture),
+        stageId: payload?.stageId,
+        provider: payload?.provider ?? worker?.provider,
+        model: payload?.model ?? worker?.model,
+      });
+    } catch (error) {
+      if (signal?.aborted) throw fault("CANCELLED", "已取消");
+      const code = error?.code === "NOT_WIRED" || error?.code === "EMPTY" ? error.code : "LLM";
+      throw fault(code, error?.message || "启动备课失败");
+    }
+  }
+
+  /** 查一次备课进度。run 跑完时返回 `{ status: 'done', pages }`。 */
+  async teachPoll(payload, signal) {
+    const generate = this.generateOf();
+    if (!generate) throw fault("NOT_WIRED", "课堂生成未接入");
+    const runId = String(payload?.runId ?? "").trim();
+    if (!runId) throw fault("INPUT", "缺少 runId");
+
+    try {
+      const result = await pollGeneration({ generate, runId });
+      signal?.throwIfAborted();
+      return result;
+    } catch (error) {
+      if (signal?.aborted) throw fault("CANCELLED", "已取消");
+      const code = error?.code === "NOT_WIRED" || error?.code === "EMPTY"
+        || error?.code === "NOT_FOUND" || error?.code === "CANCELLED" ? error.code : "LLM";
+      throw fault(code, error?.message || "查询备课进度失败");
+    }
+  }
+
   async generateQuiz(key, payload, signal) {
     const quiz = this.quizOf();
     if (typeof quiz?.generate !== "function") throw fault("NOT_WIRED", "出题未接入");
@@ -725,6 +806,11 @@ export class StudyWorkbench {
       if (typeof payload.href !== "string" || payload.href.length > 2000) throw fault("INPUT", "链接无效");
       return { target: parseZySectionUri(payload.href) };
     }
+    // `teach-poll` 只按 runId 查，不涉及某一节课 —— 必须在解析 courseId/subId
+    // **之前**返回。它下面那行 `identifier(payload.courseId)` 会对 undefined
+    // 抛「课程或节次编号无效」，而轮询本来就不该重复带课程信息。
+    if (method === "teach-poll") return this.teachPoll(payload, signal);
+
     const courseId = identifier(payload.courseId);
     if (method === "lessons") return this.classroom.listLessons(courseId, { onlyPlayable: false, signal });
     // 批量解析状态：界面展开一门课时要知道每个节次有没有已存产物，逐节
@@ -760,6 +846,7 @@ export class StudyWorkbench {
     //    重名由导出层加「（2）」后缀处理，不覆盖用户已有的笔记。
     //    讲义导出服务（`zhiyunHandout`）是**惰性**取的：它缺席时这件事只是不可用，
     //    不该把整个学习面板拖成 pending（同 `lectureOf` 那条注释的理由）。
+    if (method === "teach-generate") return this.generateTeaching(key, payload, signal);
     if (method === "handout-export") return this.exportHandout(key, payload);
     if (method === "note-link-text") return this.linkText(user, payload);
     if (method === "start") return this.start(courseId, subId, payload.context, payload);
