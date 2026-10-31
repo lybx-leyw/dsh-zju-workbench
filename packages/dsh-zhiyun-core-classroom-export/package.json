@@ -1,0 +1,30 @@
+{
+  "name": "dsh-zhiyun-core-classroom-export",
+  "version": "0.1.0",
+  "description": "智云 Pro「互动课堂」导出层：PPTX（含 MathML→OMML、富文本、占位页）/ 单文件 HTML（样式字体脚本内联、srcset）/ ZIP / 视频时间轴，源头 lib/export 与 lib/video-export*",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./manifest": "./src/manifest.js",
+    "./assets": "./src/assets.js",
+    "./pptx": "./src/pptx/deck.js",
+    "./html": "./src/standalone/build.js",
+    "./assemble": "./src/standalone/assemble.js",
+    "./inline-assets": "./src/inline/inline-assets.js",
+    "./video": "./src/video.js",
+    "./zip": "./src/zip/stored-zip.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "files": [
+    "src/",
+    "vendor/",
+    "cordis.patch.yml",
+    "README.md",
+    "ATTRIBUTION.md"
+  ]
+}

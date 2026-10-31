@@ -1,0 +1,16 @@
+# dsh bundle patch：把「课堂舞台」插进 profile 的层栈。
+#
+# 与其它领域包一致：bundle 列在 `dsh.profile.bundles` 里不会自动加载，
+# 必须在自己的 patch 里 insert（见 tests/univer-office.test.mjs 记的那个真机缺陷）。
+#
+# 本包不消费任何上游服务、不碰网络：账本在内存里，客户端半边由播放页装配。
+# 因此即使宿主什么都没装，`apply()` 也照常返回，`ctx.zhiyunClassroomStage`
+# 依然可用（只是账本是空的）。
+#
+# 注意：`scripts/build.mjs` 的 `CLIENT_PACKAGES` 目前**没有**登记本包
+# （本轮交付的硬约束是「不改 build.mjs」）。因此 `src/client.jsx` 现在只能被
+# 直接 import（测试就是这么做的），宿主还不会产出 `lib/client.js`。
+# 解除约束后补一行登记即可，无需改本文件。
+- insert:
+    - id: zhiyun-classroom-stage
+      name: dsh-zhiyun-core-classroom-stage

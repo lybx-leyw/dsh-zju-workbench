@@ -1,0 +1,19 @@
+{
+  "name": "dsh-zhiyun-classroom-dsl",
+  "version": "0.1.0",
+  "description": "课堂 DSL 内核包：上游 @openmaic/dsl 0.12.0 的构建产物原样 vendored（类型 + JSON Schema + 纯校验器 + 版本/迁移助手），本包不 fork 逻辑",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./vendor/dsl/index.d.ts",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/",
+    "vendor/dsl/",
+    "ATTRIBUTION.md"
+  ],
+  "sideEffects": false
+}

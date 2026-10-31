@@ -314,12 +314,30 @@ test('接线：每个有客户端半边的包都进了构建清单、profile 与
       missing.push(`${name}: 声明了 dsh.client 但 exports 里没有 "./client"（宿主会拒启）`);
     }
   }
-  // 页面包额外要求：NAV 里必须有一项与它的 `zhiyun.<id>.content` 插槽对应。
+  // 页面包额外要求：NAV 里必须有一项**声明了这个插槽**。
+  //
+  // 早先这条是从 `zhiyun.<id>.content` 反推页面 id 的，默认所有页面都按页面 id 命名
+  // 插槽。课堂两页不这么叫（`zhiyun.classroom.play` / `.build`，一个页面 id 对应
+  // 两个页面），于是这条守卫会误判。改成「以 NAV 里显式写的 `slot:` 为准」：
+  // 不是放宽，而是更严 —— 它要求 NAV 真的把插槽名写出来，而不是靠推导。
+  const navSlots = new Set([...nav.matchAll(/slot: '([^']+)'/g)].map((match) => match[1]));
+  assert.ok(navSlots.size > 0, '外壳 NAV 里没有解析到任何 slot: 声明，扫描器可能失效');
+  const navIds = new Set([...nav.matchAll(/id: '([^']+)'/g)].map((match) => match[1]));
+  assert.ok(navIds.size > 0, '外壳 NAV 里没有解析到任何 id: 声明，扫描器可能失效');
+
   for (const name of clientPackages.filter(item => item.startsWith('dsh-zhiyun-page-'))) {
-    const entry = read(`packages/${name}/src/client.jsx`);
-    const slot = /'zhiyun\.([a-z]+)\.content'/.exec(entry);
-    if (slot === null) { missing.push(`${name}: 没有注册 zhiyun.<page>.content 插槽`); continue; }
-    if (!new RegExp(`id: '${slot[1]}'`).test(nav)) missing.push(`${name}: 外壳 NAV 里没有 id: '${slot[1]}' 这一项`);
+    const clientEntry = read(`packages/${name}/src/client.jsx`);
+    const indexEntry = read(`packages/${name}/src/index.js`);
+    const declared = /SLOT_NAME\s*=\s*'([^']+)'/.exec(indexEntry)
+      ?? /'(zhiyun\.[a-z0-9]+(?:\.[a-z0-9]+)+)'/.exec(clientEntry);
+    if (declared === null) { missing.push(`${name}: 没有注册任何 zhiyun.*.* 插槽`); continue; }
+    const slot = declared[1];
+    // 两种接线都算数：NAV 显式写了 `slot:`（课堂两页，一个 id 对两个页面），
+    // 或插槽名按 `zhiyun.<navId>.content` 约定推导（其余页面）。
+    const pageId = slot.split('.')[1];
+    if (!navSlots.has(slot) && !navIds.has(pageId)) {
+      missing.push(`${name}: 注册的插槽 ${slot} 在 NAV 里既没有 slot: 声明，也没有 id: '${pageId}' 这一页`);
+    }
   }
   assert.deepEqual(missing, [], `接线不完整：\n${missing.join('\n')}`);
 });

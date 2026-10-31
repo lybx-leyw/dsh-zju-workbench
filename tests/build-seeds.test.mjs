@@ -113,6 +113,9 @@ test('本包的 dsh.client.external 声明的每个包都真的被 import 了（
     if (declared.length === 0) continue;
     const bare = await bareSpecifiers(`${root}packages/${name}/src/client.jsx`);
     for (const specifier of declared) {
+      // 宿主种子词由浏览器侧注入，源码里本来就不会出现 import（JSX 自动运行时、
+      // vendor 预构建产物都是这种情况）。判定「过期」只对第三方库有意义。
+      if (HOST_SEEDS.includes(specifier)) continue;
       if (!bare.has(specifier)) stale.push(`${name}: dsh.client.external 声明了 '${specifier}' 但源码里没人 import`);
     }
   }
@@ -135,17 +138,35 @@ const INTENTIONALLY_BUNDLED = {
   // fcose 自身的传递依赖（只在布局计算里用，不进 API）。
   'cose-base': 'graph-render：fcose 的布局基元，随 fcose 内联',
   'layout-base': 'graph-render：fcose 的布局基元，随 fcose 内联',
+  // classroom-agent 的运行时会话 id 用 nanoid 生成。它是纯函数库（无实例状态、
+  // 无 IO、体积 ~100B），没有跨包共享实例的需求，按设计随包内联。
+  'nanoid': 'classroom-agent：纯函数 id 生成器，无共享实例需求，内联进 bundle',
+  // classroom-geometry 的三个纯依赖：SVG path 解析、HTML 实体解码、颜色换算。
+  // 都是无状态纯函数，classroom-stage 与 classroom-renderer 各自内联一份，
+  // 没有跨包共享实例的需求（几何计算输入输出都是 JSON，不存在对象身份比较）。
+  'svg-pathdata': 'classroom-geometry：纯 path 解析，随几何内核内联',
+  'entities': 'classroom-geometry：纯实体解码，随几何内核内联',
+  'tinycolor2': 'classroom-geometry：纯颜色换算，随几何内核内联',
 };
 
 test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的文件（有意内联的除外）', async () => {
   for (const name of CLIENT_PACKAGES) {
+    const manifest = JSON.parse(await readFile(`${root}packages/${name}/package.json`, 'utf8'));
+    // vendor 型包（见 docs/architecture/classroom-port.md）：整棵依赖树按设计内联，
+    // 逐个列进 INTENTIONALLY_BUNDLED 没有意义 —— 它会有几十个传递依赖。
+    // 但「别的 workspace 包」仍必须拦住：那才是真正的边界泄漏。
+    const bundlesDeps = manifest.dsh?.client?.bundlesDependencies === true;
     const { result } = await buildClientPackage(name, { write: false, metafile: true });
     const inputs = Object.keys(result.metafile.inputs).map((p) => path.resolve(root, p));
-    const own = path.resolve(root, 'packages', name, 'src') + path.sep;
+    // 「本包自己的文件」= 本包目录下的任何文件，不只是 src/。
+    // vendor/ 是锁版快照（见 docs/architecture/classroom-port.md 第 2 节通道 1）：
+    // 它属于本包、要被打进本包产物，判据是「不能被别的包 import」，不是「必须在 src/ 下」。
+    const own = path.resolve(root, 'packages', name) + path.sep;
     const foreign = inputs.filter((p) => {
       if (p.startsWith(own)) return false;
       const bundled = /[\\/]node_modules[\\/]([^\\/]+)(?:[\\/]|$)/.exec(p);
       if (bundled === null) return true;
+      if (bundlesDeps) return false;
       // scoped 包（@scope/name）取两段
       const base = bundled[1].startsWith('@') ? `${bundled[1]}/${p.split(bundled[1])[1].split(/[\\/]/)[1]}` : bundled[1];
       return !(base in INTENTIONALLY_BUNDLED);

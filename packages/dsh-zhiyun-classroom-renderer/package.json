@@ -1,0 +1,73 @@
+{
+  "name": "dsh-zhiyun-classroom-renderer",
+  "version": "0.1.0",
+  "description": "课堂渲染层：上游 @openmaic/renderer 0.2.0 的构建产物原样 vendored（PPTist 风格 Slide JSON 的只读画布），附带浏览器半边产物 lib/client.js",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./fonts.css": "./vendor/renderer/fonts.css",
+    "./elements": {
+      "types": "./vendor/renderer/elements/index.d.ts",
+      "default": "./vendor/renderer/elements/index.js"
+    },
+    "./types": {
+      "types": "./vendor/renderer/types/index.d.ts",
+      "default": "./vendor/renderer/types/index.js"
+    },
+    "./snapshot": {
+      "types": "./vendor/renderer/snapshot/index.d.ts",
+      "default": "./vendor/renderer/snapshot/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/",
+    "vendor/renderer/",
+    "ATTRIBUTION.md",
+    "cordis.patch.yml"
+  ],
+  "sideEffects": false,
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "external": [
+        "react",
+        "react-dom",
+        "react/jsx-runtime"
+      ],
+      "bundlesDependencies": true
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@openmaic/dsl": "file:../dsh-zhiyun-classroom-dsl",
+    "@openmaic/geometry": "file:../dsh-zhiyun-classroom-geometry",
+    "clsx": "2.1.1",
+    "echarts": "6.0.0",
+    "html-to-image": "1.11.13",
+    "html2canvas-pro": "2.0.4",
+    "katex": "0.16.38",
+    "lucide-react": "0.562.0",
+    "motion": "12.35.2",
+    "shiki": "3.23.0",
+    "tailwind-merge": "3.5.0",
+    "tinycolor2": "1.6.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  }
+}

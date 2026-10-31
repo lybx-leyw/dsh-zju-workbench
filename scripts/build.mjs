@@ -47,6 +47,10 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-shell-workbench',
   'dsh-zhiyun-source-netproxy',
   'dsh-zhiyun-source-card',
+  'dsh-zhiyun-page-classroom-build',
+  'dsh-zhiyun-page-classroom-play',
+  'dsh-zhiyun-core-classroom-agent',
+  'dsh-zhiyun-core-classroom-stage',
   'dsh-zhiyun-core-quiz',
   'dsh-zhiyun-core-study',
   // 回放下面那层「主线/语速/四汇总」由本包算，学习页 external import 它 ——
@@ -69,6 +73,10 @@ export const CLIENT_PACKAGES = [
   'dsh-zhiyun-page-plugins',
   'dsh-zhiyun-page-feedback',
   'dsh-zhiyun-page-docs',
+  // 课堂渲染层（L0 内核）：上游 `@openmaic/renderer` 的 vendor 封装。渲染树交给
+  // esbuild 原样打包（motion / echarts / shiki / katex 内联，只有 react 三件套
+  // external），所以它必须有自己的客户端产物 —— 播放页与构建页都 import 它。
+  'dsh-zhiyun-classroom-renderer',
 ];
 
 /**

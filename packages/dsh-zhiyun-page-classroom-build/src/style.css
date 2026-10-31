@@ -1,0 +1,544 @@
+/* packages/dsh-zhiyun-page-classroom-build/src/style.css
+ *
+ * 全部选择器以 `.zyc-build-` 开头；颜色只取外壳的 `--zy-*` 变量，明暗两套自动跟。
+ * 本包是独立的一张 <style>（mountStyle 追加），不假设别的页面包先挂载。
+ */
+
+body[data-zhiyun] .zyc-build {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 8px 0 40px;
+  color: var(--zy-text, inherit);
+}
+
+body[data-zhiyun] .zyc-build-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+body[data-zhiyun] .zyc-build-title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 650;
+}
+
+body[data-zhiyun] .zyc-build-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--zy-muted, #6b7280);
+}
+
+body[data-zhiyun] .zyc-build-steps {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+body[data-zhiyun] .zyc-build-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--zy-line, #e5e7eb);
+  border-radius: 10px;
+  background: var(--zy-surface, transparent);
+  font-size: 12px;
+  color: var(--zy-muted, #6b7280);
+}
+
+body[data-zhiyun] .zyc-build-step-current {
+  border-color: var(--zy-accent, #2563eb);
+  color: var(--zy-text, inherit);
+  box-shadow: 0 0 0 1px var(--zy-accent, #2563eb) inset;
+}
+
+body[data-zhiyun] .zyc-build-step-done {
+  color: var(--zy-accent, #2563eb);
+}
+
+body[data-zhiyun] .zyc-build-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--zy-soft, rgba(37, 99, 235, 0.12));
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+body[data-zhiyun] .zyc-build-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zyc-build-step-text small {
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+body[data-zhiyun] .zyc-build-panel {
+  border: 1px solid var(--zy-line, #e5e7eb);
+  border-radius: 14px;
+  background: var(--zy-surface, transparent);
+  padding: 22px 24px;
+}
+
+body[data-zhiyun] .zyc-build-panel-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 620;
+}
+
+body[data-zhiyun] .zyc-build-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+body[data-zhiyun] .zyc-build-count {
+  font-size: 12px;
+  color: var(--zy-muted, #6b7280);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] .zyc-build-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+body[data-zhiyun] .zyc-build-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--zy-muted, #6b7280);
+}
+
+body[data-zhiyun] .zyc-build-label em {
+  font-style: normal;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+body[data-zhiyun] .zyc-build-input,
+body[data-zhiyun] .zyc-build-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--zy-line, #e5e7eb);
+  border-radius: 8px;
+  background: var(--zy-bg, #fff);
+  color: var(--zy-text, inherit);
+  font: inherit;
+  font-size: 14px;
+}
+
+body[data-zhiyun] .zyc-build-input:focus,
+body[data-zhiyun] .zyc-build-select:focus,
+body[data-zhiyun] .zyc-build-upload:focus-within {
+  outline: 2px solid var(--zy-accent, #2563eb);
+  outline-offset: 1px;
+}
+
+body[data-zhiyun] .zyc-build-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--zy-muted, #6b7280);
+}
+
+body[data-zhiyun] .zyc-build-upload {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 1px dashed var(--zy-line, #d1d5db);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--zy-muted, #6b7280);
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zyc-build-upload:hover {
+  border-color: var(--zy-accent, #2563eb);
+  color: var(--zy-accent, #2563eb);
+}
+
+body[data-zhiyun] .zyc-build-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+body[data-zhiyun] .zyc-build-attachment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--zy-line, #e5e7eb);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+body[data-zhiyun] .zyc-build-attachment-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zyc-build-attachment-size {
+  margin-left: auto;
+  color: var(--zy-muted, #6b7280);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 附件状态徽标：上传中 / 已就绪 / 上传失败 —— 三种状态各有自己的颜色，
+   失败时下面的 hint 还会补齐原因。 */
+body[data-zhiyun] .zyc-build-attachment-status {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  background: var(--zy-fill, #f3f4f6);
+  color: var(--zy-muted, #6b7280);
+}
+
+body[data-zhiyun] .zyc-build-attachment-ready {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--zy-accent, #2563eb);
+}
+
+body[data-zhiyun] .zyc-build-attachment-failed {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+body[data-zhiyun] .zyc-build-hint-warn {
+  color: #dc2626;
+}
+
+/* 生成完成后的收尾：一句说明 + 「去播放」。按钮靠右，与底部动作条同一视觉重量。 */
+body[data-zhiyun] .zyc-build-done {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+body[data-zhiyun] .zyc-build-done .zyc-build-hint {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+body[data-zhiyun] .zyc-build-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--zy-accent, #2563eb);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zyc-build-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--zy-line, #e5e7eb);
+}
+
+body[data-zhiyun] .zyc-build-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+body[data-zhiyun] .zyc-build-runid {
+  font-size: 11px;
+  color: var(--zy-muted, #6b7280);
+  font-variant-numeric: tabular-nums;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zyc-build-primary,
+body[data-zhiyun] .zyc-build-ghost,
+body[data-zhiyun] .zyc-build-danger {
+  border-radius: 8px;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zyc-build-primary {
+  border: 1px solid var(--zy-accent, #2563eb);
+  background: var(--zy-accent, #2563eb);
+  color: #fff;
+}
+
+body[data-zhiyun] .zyc-build-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+body[data-zhiyun] .zyc-build-ghost {
+  border: 1px solid var(--zy-line, #e5e7eb);
+  background: transparent;
+  color: var(--zy-text, inherit);
+}
+
+body[data-zhiyun] .zyc-build-danger {
+  border: 1px solid var(--zy-danger, #dc2626);
+  background: transparent;
+  color: var(--zy-danger, #dc2626);
+}
+
+body[data-zhiyun] .zyc-build-outline-list,
+body[data-zhiyun] .zyc-build-scenes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+body[data-zhiyun] .zyc-build-outline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--zy-line, #e5e7eb);
+  border-radius: 10px;
+  background: var(--zy-bg, transparent);
+}
+
+body[data-zhiyun] .zyc-build-outline-row-dragging {
+  opacity: 0.5;
+}
+
+body[data-zhiyun] .zyc-build-drag {
+  flex: 0 0 auto;
+  padding: 4px 2px;
+  color: var(--zy-muted, #9ca3af);
+  cursor: grab;
+  letter-spacing: -3px;
+  user-select: none;
+}
+
+body[data-zhiyun] .zyc-build-outline-order,
+body[data-zhiyun] .zyc-build-scene-order {
+  flex: 0 0 20px;
+  font-size: 12px;
+  color: var(--zy-muted, #6b7280);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] .zyc-build-outline-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body[data-zhiyun] .zyc-build-outline-type {
+  flex: 0 0 96px;
+  width: 96px;
+}
+
+body[data-zhiyun] .zyc-build-order {
+  display: flex;
+  gap: 2px;
+}
+
+body[data-zhiyun] .zyc-build-icon {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--zy-muted, #6b7280);
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+body[data-zhiyun] .zyc-build-icon:hover:not(:disabled) {
+  border-color: var(--zy-line, #e5e7eb);
+  color: var(--zy-text, inherit);
+}
+
+body[data-zhiyun] .zyc-build-icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+body[data-zhiyun] .zyc-build-remove:hover:not(:disabled) {
+  color: var(--zy-danger, #dc2626);
+}
+
+body[data-zhiyun] .zyc-build-outline-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+body[data-zhiyun] .zyc-build-empty {
+  margin: 16px 0 0;
+  padding: 18px;
+  border: 1px dashed var(--zy-line, #d1d5db);
+  border-radius: 10px;
+  color: var(--zy-muted, #6b7280);
+  font-size: 13px;
+  text-align: center;
+}
+
+body[data-zhiyun] .zyc-build-error {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--zy-danger, #dc2626);
+  border-radius: 8px;
+  color: var(--zy-danger, #dc2626);
+  font-size: 13px;
+}
+
+body[data-zhiyun] .zyc-build-error small {
+  font-size: 11px;
+  opacity: 0.7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+body[data-zhiyun] .zyc-build-scene {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--zy-line, #e5e7eb);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+body[data-zhiyun] .zyc-build-scene-running {
+  border-color: var(--zy-accent, #2563eb);
+}
+
+body[data-zhiyun] .zyc-build-scene-done {
+  opacity: 0.85;
+}
+
+body[data-zhiyun] .zyc-build-scene-failed {
+  border-color: var(--zy-danger, #dc2626);
+}
+
+body[data-zhiyun] .zyc-build-scene-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zyc-build-badge {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--zy-soft, rgba(37, 99, 235, 0.12));
+  color: var(--zy-accent, #2563eb);
+  font-size: 11px;
+}
+
+body[data-zhiyun] .zyc-build-badge-quiz {
+  background: rgba(217, 119, 6, 0.14);
+  color: #b45309;
+}
+
+body[data-zhiyun] .zyc-build-badge-interactive {
+  background: rgba(5, 150, 105, 0.14);
+  color: #047857;
+}
+
+body[data-zhiyun] .zyc-build-badge-pbl {
+  background: rgba(124, 58, 237, 0.14);
+  color: #6d28d9;
+}
+
+body[data-zhiyun] .zyc-build-scene-status {
+  flex: 0 0 64px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--zy-muted, #6b7280);
+}
+
+body[data-zhiyun] .zyc-build-scene-running .zyc-build-scene-status {
+  color: var(--zy-accent, #2563eb);
+}
+
+body[data-zhiyun] .zyc-build-scene-failed .zyc-build-scene-status {
+  color: var(--zy-danger, #dc2626);
+}
+
+@media (max-width: 760px) {
+  body[data-zhiyun] .zyc-build-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  body[data-zhiyun] .zyc-build-steps {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  body[data-zhiyun] .zyc-build-step-text small {
+    display: none;
+  }
+
+  body[data-zhiyun] .zyc-build-panel {
+    padding: 18px 16px;
+  }
+
+  body[data-zhiyun] .zyc-build-outline-row {
+    flex-wrap: wrap;
+  }
+
+  body[data-zhiyun] .zyc-build-outline-title {
+    flex-basis: calc(100% - 100px);
+  }
+
+  body[data-zhiyun] .zyc-build-outline-type {
+    flex-basis: 82px;
+  }
+
+  body[data-zhiyun] .zyc-build-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
