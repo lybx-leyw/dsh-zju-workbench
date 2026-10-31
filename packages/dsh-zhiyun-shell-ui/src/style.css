@@ -281,3 +281,129 @@ body[data-zhiyun] .zs-current-actions .zs-button,body[data-zhiyun] .zs-current-a
     justify-content: start;
   }
 }
+/* ════════════════════════════════════════════════════════════════════════
+   基础控件的工效学尺寸
+   ════════════════════════════════════════════════════════════════════════
+
+   # 为什么集中补在这里
+
+   实测（Chromium 渲染后量 bounding box）：
+     输入框 21px / 下拉框 19px    ← 浏览器默认样式，从未被覆盖
+     文字按钮 25px
+     普通按钮 33px
+   而 WCAG 2.5.5 的下限是 44×44。
+
+   输入框和下拉框只有 19-21px 是全站最严重的问题：比按钮还矮，
+   在笔记 / 论文 / 反馈三页里完全没被覆盖过（各自 style.css 里
+   0 处 input 规则）。用户点进输入框时命中率很低，触屏几乎不可用。
+
+   补在 shell-ui 而不是逐页补，理由：这是**所有页面共用**的控件，
+   分散写会出现「题库的输入框 32px、笔记的 21px」这种不一致。
+
+   # 为什么按钮没有直接拉到 44
+
+   44 是**触屏**下限。桌面端一排工具按钮全做 44px 会让工具栏过高、
+   信息密度下降。折中：次要操作 32px、主操作 40px，左上方可点区域
+   通过 padding 保证水平方向够宽。真正需要 44 的是**导轨图标**
+   （见 shell-workbench，已改）和**独立的大按钮**（如提交答案）。
+
+   这是有意的取舍，不是遗漏：工效学要服务真实使用场景，
+   把桌面工具栏撑到 44px 反而降低效率。
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── 输入类控件：全站统一 32px 高 ────────────────────────────────────── */
+
+/* 只声明**尺寸与排版**，不碰 border / outline ——
+   视觉归页面层（题库、学习页各自有自己的输入框配色）。
+   全站层如果也写 border，两者特异性相同，胜负只能靠挂载顺序，
+   那是真隐患（check-css-order 会报跨包竞争）。 */
+body[data-zhiyun] :is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="email"], input[type="url"], input[type="password"], textarea, select) {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 13px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* hover / focus / disabled 的视觉归页面层与 workbench 的焦点环规则，
+   全站层不重复声明 —— 见上面 min-height 那段的说明。 */
+
+body[data-zhiyun] :is(input, textarea, select):disabled {
+  cursor: not-allowed;
+}
+
+/* 多行输入：高度由 rows 决定，不再锁 min-height */
+body[data-zhiyun] textarea {
+  min-height: 72px;
+  padding: 8px 10px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+/* 数字输入对齐 */
+body[data-zhiyun] input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 下拉框：给一个自绘箭头，默认箭头在深色下不可见 */
+body[data-zhiyun] select {
+  appearance: none;
+  padding-right: 26px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--zy-text);
+}
+
+/* ── 按钮：区分主次，各自给足高度 ────────────────────────────────────── */
+
+body[data-zhiyun] .zs-button {
+  min-height: 32px;
+  padding: 6px 13px;
+}
+
+body[data-zhiyun] .zs-primary {
+  min-height: 36px;
+  padding: 8px 18px;
+  font-weight: 600;
+}
+
+/* 文字按钮是最容易被做成「小到点不准」的一类。给足垂直 padding，
+   让它至少在水平方向有可点的宽度。 */
+body[data-zhiyun] .zs-text {
+  min-height: 30px;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+
+body[data-zhiyun] .zs-text:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--zy-accent) 6%, transparent);
+}
+
+/* ── 复选框 / 单选框：默认 13px 太小，统一 16px ──────────────────────── */
+
+body[data-zhiyun] :is(input[type="checkbox"], input[type="radio"]) {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: var(--zy-accent);
+  cursor: pointer;
+}
+
+/* 与文字并排时垂直居中；只给 checkbox/radio 本身，不影响外层容器 */
+body[data-zhiyun] label > :is(input[type="checkbox"], input[type="radio"]) {
+  /* 只做垂直对齐；水平间距由各处 label 的 gap/padding 决定，
+     这里写 margin 会与题库的 `margin: 0` 争同一属性。 */
+  vertical-align: -2px;
+}
+
+/* ── 减少动态效果偏好 ────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-zhiyun] :is(input, textarea, select) {
+    transition: none;
+  }
+}

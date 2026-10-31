@@ -24,7 +24,25 @@ body[data-zhiyun][data-ds-dark-theme] {
  *    实测（同尺寸对照：加不加 appearance 都按圆角命中）证明不成立。真正的原因是
  *    宿主继承下来的 `corner-shape`，见下面 `.zy-rail-avatar` 那一段。 */
 .zy-sidebar button,.zy-page button:where(:not(.zy-settings-body *)),.zy-search-dialog button {font:inherit;cursor:pointer;border:0;color:inherit;background:transparent;appearance:none;}
-.zy-sidebar button:focus-visible,.zy-page button:focus-visible,.zy-search-dialog button:focus-visible {outline:2px solid var(--zy-accent);outline-offset:3px;}
+/* 焦点环：不能只覆盖 button。
+ *
+ * 页面里大量可聚焦元素不是 <button> —— 链接（a）、输入框、可聚焦的容器
+ * （[tabindex]）、<summary>（折叠区标题）。只给 button 写焦点样式，
+ * 键盘用户在这几类元素上就看不见自己停在哪，等于键盘导航断掉。
+ *
+ * 用 `:is()` 把清单集中在一处，新增可聚焦元素时只改这一行。 */
+.zy-sidebar :is(button, a, [tabindex]):focus-visible,
+.zy-page :is(button, a, [tabindex], summary):focus-visible,
+.zy-search-dialog :is(button, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 3px;
+}
+
+/* 输入类控件用更贴边的焦点环：外扩 3px 会和相邻标签重叠 */
+.zy-page :is(input, textarea, select):focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 1px;
+}
 .zy-sidebar svg,.zy-page svg {flex-shrink:0;}
 /* 侧栏 = **一条导轨**（只有图标，不允许展开）。
  *
@@ -74,11 +92,11 @@ body[data-zhiyun] span:has(.zy-hero-brand) + span {display:none;}
 .zy-mark-large {width:68px;height:56px;}.zy-mark-large svg{width:68px;height:56px;}
 .zy-mark-compact{width:32px;height:38px;}.zy-mark-compact svg{width:30px;height:36px;}
 .zy-sidebar .zy-mark{width:36px;height:30px;}.zy-sidebar .zy-mark svg{width:36px;height:30px;}
-.zy-sidebar .zy-mark-compact{width:26px;height:30px;}.zy-sidebar .zy-mark-compact svg{width:24px;height:30px;}
-.zy-rail {flex:0 0 55px;display:flex;flex-direction:column;align-items:center;padding:12px 0 10px;overflow:visible;}
+.zy-sidebar .zy-mark-compact{width:30px;height:34px;}.zy-sidebar .zy-mark-compact svg{width:28px;height:34px;}
+.zy-rail {/* 取 55px 而不是列宽 56px：既填满宿主那一列，又不因列宽变化让图标位移。   44px 的按钮在 55px 内还有左右各 5.5px 余量，不算挤。 */flex:0 0 55px;display:flex;flex-direction:column;align-items:center;padding:12px 0 10px;overflow:visible;}
 /* 品牌下面是导航，没有「跳转到」按钮 —— 那一项只有 Ctrl+K（见 components.jsx）。 */
-.zy-rail-brand {display:grid;place-items:center;width:34px;height:34px;margin-bottom:12px;}
-.zy-rail-nav {display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;}
+.zy-rail-brand {display:grid;place-items:center;width:40px;height:40px;border-radius:10px;margin-bottom:14px;}
+.zy-rail-nav {display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;}
 /* ── ⚠️ 为什么导轨里的规则都写成 `.zy-sidebar …`（两个选择器）──────────────
  *
  * 样式表开头有一条按钮重置：`.zy-sidebar button {font:inherit;cursor:pointer;
@@ -90,13 +108,13 @@ body[data-zhiyun] span:has(.zy-hero-brand) + span {display:none;}
  * 报 `rgba(0,0,0,0)`），看起来就像"这个头像没有背景色"。加一个 `.zy-sidebar`
  * 前缀把它抬到 `(0,2,0)` 即可 —— 名字比 `body[data-zhiyun]` 前缀短，
  * 而且本来就在侧栏里。 */
-.zy-sidebar .zy-rail-item {position:relative;display:grid;place-items:center;width:34px;height:34px;border-radius:7px;color:var(--zy-secondary);}
-.zy-rail-item svg {width:16px;height:16px;}
+.zy-sidebar .zy-rail-item {/* 44×44 是 WCAG 2.5.5 / Apple HIG 的最小点击目标。   原来是 34×34（低于下限 23%），鼠标要精准对位，触屏基本点不准。 */position:relative;display:grid;place-items:center;width:44px;height:44px;border-radius:9px;color:var(--zy-secondary);}
+.zy-rail-item svg {width:20px;height:20px;}
 .zy-rail-item:hover {background:var(--zy-hover);}
 .zy-sidebar .zy-rail-item.is-active {color:var(--zy-accent);background:color-mix(in srgb,var(--zy-soft) 65%,var(--zy-sidebar));}
 /* 导轨底部的全局控件（settings 槽 / 扩展入口 / 明暗 / 头像） */
-.zy-sidebar-bottom {margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;padding-top:10px;}
-.zy-rail-actions {display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;}
+.zy-sidebar-bottom {margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;padding-top:12px;}
+.zy-rail-actions {display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;}
 /* 「个人」的头像：圆形，钉在导轨**最下方**（全局控件之后）。
  * 它不是一个功能图标而是一个"人"—— 用头像既表明是谁，也把账号入口与上面那排
  * 页面图标分开。
