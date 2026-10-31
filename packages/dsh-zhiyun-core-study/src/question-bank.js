@@ -4,11 +4,14 @@ import {createDeepTutorCandidateCall} from './deeptutor-quiz.js';
 import {createTreeQuizRun,createNativeQuizRun,selectedQuizGraph,bankQuestion as bankNormalize,NATIVE_BACKEND} from './quiz-engine-runtime.js';
 import {QUIZ_ENGINES,engineEntries,selectableEngines,isSelectableEngine,DEFAULT_ENGINE,registeredEngines,planEngineQuestions,newEngineCheckpoint,canResumeEngine,engineComplete,isNativeEngine,engineLabel,isBuiltinEngine} from 'dsh-zhiyun-core-quiz/engines';
 import {normalizeWorkers,WorkerPoolLlm} from 'dsh-zhiyun-core-parser/worker-pool';
+// 判分：客观题精确匹配、主观题请模型给一句评价（详见 grading.js 顶部表格）
+import {matchExact,needsModel,judgeWithModel,buildAttempt,createJudgeLlm} from './grading.js';
+// 题目导出到笔记库：只做 Markdown 编码，落盘复用 core-handout 的 exportMarkdown
+import {splitByLesson} from './quiz-export.js';
 import { knowledgePoints, planPractice, checkpointCount,activeFacts,resolveFactId,curateFacts,rectifySummary } from 'dsh-zhiyun-core-quiz/points';
 
 const fault = (code,message) => Object.assign(new Error(message),{code});
 const codeOf = value => typeof value === 'string' ? value : value?.code;
-const normalize = value => String(value ?? '').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
 
 /**
  * 批次失败 → 给用户看的处理记录。
@@ -82,6 +85,10 @@ export class QuestionBank {
     let courses=[];
     try { courses=(await this.owner.classroom.listCourses({signal})).items ?? []; } catch { /* Stored records remain usable while course metadata is unavailable. */ }
     const courseNames=new Map(courses.map(course=>[String(course.id),course.title]));
+    // 学期也要带出去：笔记库的目录是「学期 / 课程 / 节次」，
+    // 少这一层会让题库导出的文件落到与讲义不同的位置，同一门课出现两个文件夹。
+    // 讲义导出（handout-export）一直传的是 course.termName，题目导出必须对齐。
+    const courseTerms=new Map(courses.map(course=>[String(course.id),course.termName??'']));
     const lessonNames=new Map(),courseIds=[...new Set(records.map(record=>record.courseId))];
     if(typeof this.owner.classroom.listLessons==='function')for(let i=0;i<courseIds.length;i+=6){
       await Promise.allSettled(courseIds.slice(i,i+6).map(async courseId=>{
@@ -91,6 +98,7 @@ export class QuestionBank {
       signal?.throwIfAborted();
     }
     return records.flatMap(record=>knowledgePoints({...record,courseTitle:courseNames.get(record.courseId) ?? record.courseTitle ?? record.courseId,
+      termName:courseTerms.get(record.courseId) ?? '',
       lessonTitle:lessonNames.get(record.courseId+':'+record.subId) ?? record.lessonTitle ?? record.title ?? record.subId}));
   }
   baseBank(user) {
@@ -358,17 +366,40 @@ export class QuestionBank {
         const session=bank.sessions.find(s=>s.id===payload.sessionId),question=bank.questions.find(q=>q.id===payload.questionId);
         if (!session || !question || !session.questionIds.includes(question.id)) throw fault('NOT_FOUND','找不到本次练习的题目');
         const previous=session.answers.find(a=>a.questionId===question.id);
-        if (previous) return {attempt:previous,answer:question.answer,explanation:question.explanation,basis:question.basis};
+        // 重放同一条作答时，把当时那条评价一起还回去 —— 否则刷新页面后评价就消失了。
+        if (previous) return {attempt:previous,answer:question.answer,explanation:question.explanation,basis:question.basis,rubric:question.rubric??[]};
         if (typeof payload.response!=='string' || payload.response.length>5000) throw fault('INPUT','作答内容无效');
-        const blanks=[...question.stem.matchAll(/\{\{c\d+::([^}:]+)(?:::[^}]+)?\}\}/g)].map(m=>m[1]);
-        const actual=question.type==='mcq' ? question.answer : blanks.length ? blanks.join(';') : question.answer;
-        const response=payload.response.replace(/[；|]/g,';');
-        const correct=[actual,...(question.acceptedAnswers??[])].some(answer=>normalize(response)===normalize(answer));
-        if(question.type==='shortAnswer'&&!['correct','incorrect','partial'].includes(payload.selfVerdict))throw fault('INPUT','请对照参考答案选择自评结果');
-        const attempt={id:randomUUID(),questionId:question.id,sessionId:session.id,response:payload.response,verdict:question.type==='shortAnswer'?payload.selfVerdict:correct?'correct':'incorrect',grading:question.type==='shortAnswer'?'self':'exact',at:new Date().toISOString()};
+
+        // 判分三档（详见 grading.js 顶部表格）：
+        //   客观题  → 精确匹配，不问模型
+        //   填空题  → 先精确匹配，不中再问模型（同义词/近似也算对）
+        //   简答题  → 由模型判定并给一句评价
+        const exact = matchExact(question, payload.response);
+        let judged = null;
+        if (!exact.matched && needsModel(question)) {
+          const selection = this.owner.effectiveWorkers?.('quiz') ?? [];
+          // 判分是增强而非必需：没配模型就降级成中性评价，不让作答写不进去。
+          const judge = selection.length
+            ? createJudgeLlm(new WorkerPoolLlm({ base: this.owner.parser.llm, entries: selection }), selection[0])
+            : null;
+          if (judge) {
+            judged = await judgeWithModel({
+              llm: judge,
+              question,
+              response: payload.response,
+              expected: exact.answer,
+            });
+          }
+        }
+
+        const built = buildAttempt({ question, response: payload.response, judged, matched: exact.matched });
+
+        const attempt={id:randomUUID(),questionId:question.id,sessionId:session.id,response:payload.response,
+          verdict:built.verdict,grading:built.grading,comment:built.comment,at:new Date().toISOString()};
         (question.attempts??=[]).push(attempt);session.answers.push(attempt);
         if (session.answers.length===session.questionIds.length) session.finishedAt=new Date().toISOString();
         await this.save(bank);
+        // 解析与原文依据始终返回，不因判定结果而隐藏。
         return {attempt,answer:question.answer,explanation:question.explanation,basis:question.basis,rubric:question.rubric??[]};
       }
       if (method==='bank-discard') {
@@ -377,6 +408,85 @@ export class QuestionBank {
         const questions=ids.map(id=>bank.questions.find(q=>q.id===id));if(questions.some(q=>!q))throw fault('NOT_FOUND','部分题目已不存在，请刷新');
         const at=new Date().toISOString();for(const q of questions){q.status='rejected';q.discardedAt=at;q.discardReason='user';}
         await this.save(bank);return {questions:bank.questions,sessions:bank.sessions};
+      }
+      if (method==='bank-export') {
+        // 导出的是**调用方选中的题目**，不是整个题库。
+        // 筛选（按知识点、按策略、按题型）已经在界面上做完，这里只认 id 列表，
+        // 避免「界面筛出 5 道、导出却给了 47 道」这种不一致。
+        const ids = payload.questionIds;
+        if (!Array.isArray(ids) || !ids.length || ids.length > 5000 || ids.some(id => typeof id !== 'string') || new Set(ids).size !== ids.length) {
+          throw fault('INPUT', '请选择要导出的题目');
+        }
+        // 按传入顺序取题，顺序由界面决定（用户看到的列表顺序）
+        const byId = new Map(bank.questions.map(q => [q.id, q]));
+        const missing = ids.filter(id => !byId.has(id));
+        if (missing.length) throw fault('NOT_FOUND', '部分题目已不存在，请刷新题库');
+        // 已弃用的题不导出：用户刚把它们移出题库，再导到笔记里是反着来。
+        const picked = ids.map(id => byId.get(id)).filter(q => q.status !== 'rejected');
+        if (!picked.length) throw fault('INPUT', '选中的题目都已弃用，没有可导出的内容');
+
+        const service = this.owner.handoutOf?.();
+        if (!service?.exportMarkdown) throw fault('NOT_WIRED', '笔记库未接入：缺少导出服务');
+
+        // 学期兜底：老题目生成时没有存 termName（那时还没这个字段），
+        // 而笔记库目录是「学期 / 课程 / 节次」—— 缺这一层，同一门课的
+        // 题库导出会落在与讲义不同的位置，用户看到两个同名文件夹。
+        //
+        // 所以导出时按 courseId 回查一次课堂服务补上。查不到就留空，
+        // 只是少一层目录，不编造一个假的学期名。
+        const needTerm = picked.some(q => !String(q.termName ?? '').trim());
+        let termByCourse = new Map();
+        if (needTerm && typeof this.owner.classroom?.listCourses === 'function') {
+          try {
+            const listed = (await this.owner.classroom.listCourses({ signal }))?.items ?? [];
+            termByCourse = new Map(listed.map(c => [String(c.id), String(c.termName ?? '').trim()]));
+          } catch { /* 拿不到就留空，不阻塞导出 */ }
+        }
+        const enriched = picked.map(q => ({
+          ...q,
+          termName: String(q.termName ?? '').trim() || termByCourse.get(String(q.courseId)) || '',
+        }));
+
+        // 按来源节次拆成多份文档：笔记库本身按 课程/节次 组织目录，
+        // 导出件跟着走，用户才能按「这周上到哪一节」找回来。
+        // 只有一个节次时不拆 —— 拆出来的文件与自己那份一样，只多一层跳转。
+        const docs = splitByLesson({
+          questions: enriched,
+          termName: typeof payload.termName === 'string' ? payload.termName : '',
+          title: typeof payload.title === 'string' ? payload.title : '',
+        });
+        if (!docs.length) throw fault('INPUT', '没有可导出的内容');
+
+        // 逐个落盘。任一份失败就中断并报出来 —— 静默跳过会让用户以为全都导好了，
+        // 而笔记库里其实缺了几节。
+        const written = [];
+        for (const doc of docs) {
+          const result = await service.exportMarkdown({
+            courseTitle: doc.courseTitle,
+            lessonTitle: doc.lessonTitle,
+            termName: doc.termName,
+            markdown: doc.markdown,
+          });
+          written.push({ ...result, lessonTitle: doc.lessonTitle, courseTitle: doc.courseTitle, count: doc.count, groups: doc.groups });
+        }
+
+        // 汇总：一条成功时报路径，多条时报清单，界面按有没有 `files` 决定怎么显示
+        const total = written.reduce((n, row) => n + row.count, 0);
+        if (written.length === 1) {
+          return { ...written[0], count: total };
+        }
+        return {
+          count: total,
+          files: written.map(row => ({
+            path: row.path,
+            name: row.name,
+            folder: row.folder,
+            deduped: row.deduped,
+            lessonTitle: row.lessonTitle,
+            count: row.count,
+          })),
+          lessons: written.length,
+        };
       }
       if(method==='bank-curate'){
         if(this.starting.has(String(user.id))||this.runs.get(String(user.id))&&!this.runs.get(String(user.id)).finished)throw fault('BUSY','请先暂停出题，再修订考点');

@@ -91,6 +91,22 @@ const faultMessages = {
   PERSIST: "笔记没有写入，请重试。",
   RECENT: "上次打开的位置读不出来，原文件已保留。",
 };
+/**
+ * 把内部错误翻成用户能读的一句话。
+ *
+ * # 为什么可能优先用 error.message
+ *
+ * 有些 code 的**具体原因只能由调用方给**，同一 code 在不同方法下完全不同：
+ *   `INPUT` —— 出题时是「参数不完整」，导出时可能是「没选择题目」，
+ *              答题时可能是「作答超长」。这里若一律翻成「输入信息无效。」，
+ *              用户永远不知道自己哪一步错了。
+ *
+ * 所以这些 code 优先保留服务端原文；没有原文时才用兜底文案。
+ * 这是本项目第三次修同类问题（前两次是 PERSIST 的 cause、batchProblems 的 detail）
+ * —— 规则统一成：**能给出具体原因就不要用泛化文案盖掉它**。
+ */
+const KEEPS_OWN_MESSAGE = new Set(["INPUT", "NOT_FOUND", "NOT_WIRED"]);
+
 export const publicError = (error) => ({ code: error.code ?? "FAILED", message: {
   ...faultMessages,
   VISION_MODEL: "请选择支持图片的视觉模型，再开始解析。",
@@ -105,7 +121,9 @@ export const publicError = (error) => ({ code: error.code ?? "FAILED", message: 
   CREDENTIALS: "请输入浙大账号和密码。",
   ACCOUNT_BUSY: "账号正在切换，请稍候。",
   BUSY: "已有加工任务正在运行，请等待完成或先取消。"
-}[error.code] ?? "操作未完成，请重试。" });
+}[error.code] ?? "操作未完成，请重试。", ...(KEEPS_OWN_MESSAGE.has(error.code) && String(error.message ?? "").trim()
+  ? { message: String(error.message).trim() }
+  : {}) });
 export class StudyWorkbench {
   constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge, deeptutor, learningResource, handout }) {
     this.classroom = classroom;

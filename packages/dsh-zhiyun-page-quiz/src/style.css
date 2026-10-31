@@ -1439,6 +1439,727 @@ body[data-zhiyun] :is(.zs-qz-page, .zs-qz) fieldset:disabled :is(button, input, 
   50% { opacity: .35; }
 }
 
+
+/* ════════════════════════════════════════════════════════════════════════
+   出题台（新题页）—— 通栏 Inspector 布局
+   ════════════════════════════════════════════════════════════════════════
+
+   # 为什么不做卡片
+
+   第一版做成「卡片 + 圆角 + 双层阴影」，用户反馈：整个全屏内容被约束到
+   一小块区域。这是对的 —— 桌面应用里一张悬浮卡片，等于把自己缩成网页预览框。
+
+   通栏排布解决三件事：
+     1. 视觉上占满可用宽度，不再像「嵌在页面里的表单」
+     2. 标签左置 + 控件右置，横向用满、纵向压短（同时满足「不许滚动」）
+     3. 分区靠 1px 头发线，不靠背景块 —— 信息密度高的专业工具普遍这么做
+
+   # 结构
+
+     出题设置                            2 道 · 16 个知识点
+     ─────────────────────────────────────────────────────
+     知识点   [ 已选 16 个知识点                        › ]
+     ─────────────────────────────────────────────────────
+     出题模式 ( r1 ) ( DeepTutor 直调 )
+     ─────────────────────────────────────────────────────
+     出题策略 (背知识)(练应用)(综合自测) │ (基础)(拓展)(变式)
+     ─────────────────────────────────────────────────────
+     题型     (填空题)(选择题)(判断题)(简答题)
+     ─────────────────────────────────────────────────────
+     题数 [2] 分配 [均匀覆盖] 难度 [基础]      更多设置 ›
+     ─────────────────────────────────────────────────────
+                                       [ 生成 2 道题目 ]
+
+   所有尺寸基于 --zy-* token；字号不低于 11px（项目规范下限，见 workbench 注释）。
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── 主容器：去掉一切「卡片」痕迹 ──────────────────────────────────── */
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup {
+  /* 透明底、无边框、无圆角、无阴影 —— 直接坐在页面背景上 */
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 第一版顶部那道渐变强调线随卡片一起去掉 */
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup::before {
+  content: none;
+}
+
+/* ── 标题区：一行标题 + 右侧摘要 ──────────────────────────────────── */
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 14px;
+  margin: 0;
+  border-bottom: 1px solid var(--zy-line);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup-sub {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--zy-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 分区行：标签左置、控件右置，中间头发线 ────────────────────────── */
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  /* 通栏分隔：细分隔线比背景块干净，深浅色下也一致 */
+  border-bottom: 1px solid color-mix(in srgb, var(--zy-line) 55%, transparent);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-row:last-of-type {
+  border-bottom: 0;
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-row-label {
+  align-self: center;
+  width: auto;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 500;
+  /* 标签是字段名，不做大写化 —— 中文大写变换无意义 */
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--zy-muted);
+}
+
+/* 必选标记：紧跟标签的小徽标 */
+body[data-zhiyun] .zs-qz-composer .zs-qz-row[data-required] > .zs-qz-row-label::after {
+  content: '必选';
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--zy-accent) 80%, var(--zy-text));
+  background: color-mix(in srgb, var(--zy-accent) 9%, transparent);
+  border-radius: 3px;
+}
+
+/* ── 知识点：输入框式通栏，不用「大卡片」 ──────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer .zs-qz-scope-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: stretch;
+  width: 100%;
+  max-width: none;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--zy-text);
+  background: var(--zy-surface);
+  border: 1px solid var(--zy-line);
+  border-radius: 8px;
+  transition:
+    border-color 150ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer .zs-qz-scope-chip:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--zy-accent) 45%, var(--zy-line));
+  background: color-mix(in srgb, var(--zy-accent) 3%, var(--zy-surface));
+}
+
+/* 未选：虚线提示「待填写」 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer .zs-qz-scope-chip[data-empty] {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--zy-accent) 38%, var(--zy-line));
+  color: color-mix(in srgb, var(--zy-accent) 72%, var(--zy-text));
+}
+
+/* 已选：左侧 2px 竖条作为「已填充」信号（比 3px 克制） */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer .zs-qz-scope-chip:not([data-empty]) {
+  border-left: 2px solid var(--zy-accent);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-scope-chip > i {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 15px;
+  color: var(--zy-muted);
+  transition: transform 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-scope-chip:hover > i {
+  transform: translateX(2px);
+  color: var(--zy-accent);
+}
+
+/* ── 选项：紧凑胶囊，靠填充区分选中 ────────────────────────────────── */
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+body[data-zhiyun] .zs-qz-composer :is(.zs-qz-preset, .zs-qz-chip) {
+  position: relative;
+  min-height: 30px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--zy-line);
+  background: transparent;
+  color: var(--zy-secondary);
+  cursor: pointer;
+  transition:
+    border-color 140ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 140ms cubic-bezier(0.2, 0, 0, 1),
+    color 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+body[data-zhiyun] .zs-qz-composer :is(.zs-qz-preset, .zs-qz-chip):hover:not(:disabled) {
+  color: var(--zy-text);
+  border-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+  background: color-mix(in srgb, var(--zy-accent) 4%, transparent);
+}
+
+/* 选中：实心强调色。这是全页少数使用强调色填充的地方 */
+body[data-zhiyun] .zs-qz-composer .zs-qz-chip[data-on],
+body[data-zhiyun] .zs-qz-composer .zs-qz-preset[aria-pressed='true'] {
+  color: #fff;
+  font-weight: 600;
+  background: var(--zy-accent);
+  border-color: var(--zy-accent);
+}
+
+body[data-zhiyun][data-ds-dark-theme] .zs-qz-composer .zs-qz-chip[data-on],
+body[data-zhiyun][data-ds-dark-theme] .zs-qz-composer .zs-qz-preset[aria-pressed='true'] {
+  /* 深色下强调色是浅蓝，白字对比不足 —— 改深色文字 */
+  color: #10141a;
+}
+
+body[data-zhiyun] .zs-qz-composer :is(.zs-qz-preset, .zs-qz-chip):disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* chip 上的原生 checkbox 由 label 承担点击，隐藏但保留键盘可达 */
+body[data-zhiyun] .zs-qz-composer .zs-qz-chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-chip:has(input:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--zy-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* 「│」分隔：策略预设与具体策略之间 */
+body[data-zhiyun] .zs-qz-composer .zs-qz-chips-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  background: color-mix(in srgb, var(--zy-line) 80%, transparent);
+}
+
+/* ── 数值行：左侧对齐标签列，右侧四段 ──────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer .zs-qz-fields {
+  display: grid;
+  grid-template-columns: 76px repeat(3, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--zy-line) 55%, transparent);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--zy-muted);
+  white-space: nowrap;
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-field input,
+body[data-zhiyun] .zs-qz-composer .zs-qz-field select {
+  height: 30px;
+  min-height: 30px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--zy-text);
+  background: var(--zy-surface);
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  padding: 0 9px;
+  transition: border-color 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-field input[type='number'] {
+  width: 60px;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-field :is(input, select):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line));
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-more-trigger {
+  justify-self: end;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--zy-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-more-trigger:hover {
+  background: color-mix(in srgb, var(--zy-accent) 6%, transparent);
+  border-color: var(--zy-line);
+}
+
+/* ── 底部：摘要 + 主 CTA ───────────────────────────────────────────── */
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup-foot {
+  display: grid;
+  /* 单列，让 CTA 能真正撑满 */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 0;
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--zy-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-hint[data-blocked] {
+  padding-left: 10px;
+  border-left: 2px solid color-mix(in srgb, var(--zy-accent) 55%, var(--zy-line));
+  color: color-mix(in srgb, var(--zy-accent) 78%, var(--zy-text));
+}
+
+/* 主操作：全宽、足够高、只有它带强调色阴影 */
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup-foot > .zs-primary,
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-composer .zs-qz-setup-foot > .zs-primary {
+  display: flex;
+  justify-self: stretch;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  min-height: 44px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px -4px color-mix(in srgb, var(--zy-accent) 55%, transparent);
+  transition:
+    transform 140ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup-foot > .zs-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 18px -5px color-mix(in srgb, var(--zy-accent) 60%, transparent);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup-foot > .zs-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+body[data-zhiyun] .zs-qz-composer .zs-qz-setup-foot .zs-primary:disabled {
+  transform: none;
+  box-shadow: none;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   题目里的 LaTeX 公式排版
+   ════════════════════════════════════════════════════════════════════════
+   题干 / 选项 / 答案 / 解析都走宿主的 MarkdownText（内含 KaTeX）。
+   这里只做三件事，不重复定义 KaTeX 自身的字体与间距：
+
+     1. 块级公式（$$...$$）超宽时横向滚动，不撑破卡片
+     2. 行内公式与正文基线对齐，避免上下跳动
+     3. 题干字号更大，公式跟着放大 —— 需要显式覆盖 KaTeX 的默认 em 尺寸
+
+   注意：不要在这里改 .katex 的 font-size。KaTeX 内部用 em 相对排版，
+   改外层字号它自然缩放；直接改 .katex 会让分子分母错位。
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* 块级公式：宽了就滚动，别把整页撑出横向滚动条 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-stem, .zs-qz-answer, .zs-qz-explanation, .zs-qz-choice-text) .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 6px;
+  /* 滚动时给一点呼吸，避免恰好切在字符上 */
+  scrollbar-width: thin;
+}
+
+/* 行内公式：与中文正文对齐。KaTeX 默认按数学轴对齐，混排中文时略高 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) :is(.zs-qz-stem, .zs-qz-answer, .zs-qz-explanation, .zs-qz-choice-text) .katex {
+  font-size: 1.06em;
+}
+
+/* 题干：块级元素之间的间距由 MarkdownText 产出，这里收紧一点更像试卷 */
+/* 只收紧题干里由 MarkdownText 产出的段落与无序列表。
+   刻意不含 ol —— page-docs 的全局 ol 规则也用 margin，同特异性会打架，
+   胜负只能靠挂载顺序，那是隐患。题干预设里没有有序列表，不需要覆盖它。 */
+body[data-zhiyun] .zs-qz-page .zs-qz-stem > p,
+body[data-zhiyun] .zs-qz-page .zs-qz-stem > ul,
+body[data-zhiyun] .zs-qz .zs-qz-stem > p,
+body[data-zhiyun] .zs-qz .zs-qz-stem > ul {
+  margin: 0 0 8px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stem > :last-child {
+  margin-bottom: 0;
+}
+
+/* 题干里的代码片段：题目偶尔带变量名，别用大色块 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-stem code {
+  font-size: 0.92em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--zy-line) 45%, transparent);
+}
+
+/* 选项里的富文本块：不换行时保持单行，长公式才折行 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-choice-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-choice-text > p {
+  margin: 0;
+}
+
+/* 选项字母：等宽数字宽度，A/B/C/D 竖排对齐 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-choice-label {
+  flex: 0 0 auto;
+  min-width: 1.1em;
+  font-weight: 600;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-choice:has(input:checked) .zs-qz-choice-label {
+  color: var(--zy-accent);
+}
+
+/* 答案区：标签与内容分开，内容可能是公式块 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-answer {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-answer > span {
+  flex: 0 0 auto;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-muted);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-answer > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-answer p {
+  margin: 0;
+}
+
+/* 解析：比答案弱一档，避免抢焦点 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-explanation {
+  color: var(--zy-secondary);
+  font-size: var(--zy-fs-sm);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-explanation p {
+  margin: 0 0 6px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-explanation > :last-child {
+  margin-bottom: 0;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+   判分反馈：一句评价 + 始终展示的解析
+   ════════════════════════════════════════════════════════════════════════
+   评价的视觉只做一件事：让用户一眼看出「对 / 部分对 / 不对」，
+   但不用刺眼的红绿 —— 学习场景里被判错的挫败感会被颜色放大。
+   改用左侧 3px 竖条 + 文案，颜色克制。
+   ──────────────────────────────────────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-comment {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0 10px 12px;
+  border-left: 3px solid var(--zy-line);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-comment strong {
+  font-size: var(--zy-fs-base);
+  font-weight: 600;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-comment p {
+  margin: 0;
+  font-size: var(--zy-fs-sm);
+  line-height: 1.6;
+  color: var(--zy-secondary);
+}
+
+/* 判对：强调色竖条。不用绿色 —— 与整页蓝灰调不冲突，也更克制 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-feedback[data-verdict='correct'] .zs-qz-comment {
+  border-left-color: var(--zy-accent);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-feedback[data-verdict='correct'] .zs-qz-comment strong {
+  color: var(--zy-accent);
+}
+
+/* 部分对：淡化的强调色，表示「方向对但不完整」 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-feedback[data-verdict='partial'] .zs-qz-comment {
+  border-left-color: color-mix(in srgb, var(--zy-accent) 45%, var(--zy-line));
+}
+
+/* 判错：用中性灰而非红色。教学场景不该用颜色加重挫败 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-feedback[data-verdict='incorrect'] .zs-qz-comment {
+  border-left-color: var(--zy-muted);
+}
+
+/* 反馈区整体：评价与解析之间留一道分隔 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-feedback {
+  display: grid;
+  gap: 10px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-feedback > .zs-qz-answer {
+  padding-top: 2px;
+}
+
+
+/* ── 练习中的题目级操作（跳过 / 弃用）──────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-practice-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* 「弃用」是破坏性动作：与普通文字按钮拉开区分，但不做成红色大按钮 ——
+   它在练习流里是次要动作，过度强调会诱导误点。 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-practice-actions .zs-text[data-tone='danger']:hover:not(:disabled) {
+  color: color-mix(in srgb, #c2410c 75%, var(--zy-text));
+  background: color-mix(in srgb, #c2410c 7%, transparent);
+}
+
+body[data-zhiyun][data-ds-dark-theme] :is(.zs-qz-page, .zs-qz) .zs-qz-practice-actions .zs-text[data-tone='danger']:hover:not(:disabled) {
+  color: #fdba74;
+  background: color-mix(in srgb, #fdba74 10%, transparent);
+}
+
+/* 操作后的临时提示（已跳过 N 道 / 已弃用）*/
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-notice {
+  margin: 0;
+  padding: 7px 12px;
+  font-size: var(--zy-fs-sm);
+  color: var(--zy-secondary);
+  background: color-mix(in srgb, var(--zy-line) 26%, transparent);
+  border-radius: 7px;
+}
+
+/* 章节标题行：题数与操作按钮分开，窄屏自动换行不挤压 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-practice > .zs-qz-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+
+/* ── 原文依据：默认收起的证据区 ─────────────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis {
+  border-top: 1px solid color-mix(in srgb, var(--zy-line) 55%, transparent);
+  padding-top: 8px;
+}
+
+/* summary 的默认三角标记在深色下颜色不跟随，自己画一个 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 2px 4px 2px 0;
+  font-size: var(--zy-fs-meta);
+  color: var(--zy-muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  border-radius: 4px;
+  transition: color 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 自绘的展开箭头：收起时指向右，展开时向下 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis > summary::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 4px solid currentColor;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  transition: transform 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis > summary:hover {
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis > summary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--zy-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* 展开后的内容：左侧一道细线表示这是引用来的证据，不是我们的结论 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis > :not(summary) {
+  margin: 6px 0 0;
+  padding: 6px 0 0 12px;
+  border-left: 2px solid color-mix(in srgb, var(--zy-line) 75%, transparent);
+  font-size: var(--zy-fs-sm);
+  line-height: 1.65;
+  color: var(--zy-secondary);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis > :not(summary) p {
+  margin: 0 0 6px;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-basis > :not(summary) > :last-child {
+  margin-bottom: 0;
+}
+
+
+/* 提示条的错误态：与「已跳过 N 道」这类中性提示区分开 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-notice[data-tone='error'] {
+  color: color-mix(in srgb, #b91c1c 82%, var(--zy-text));
+  background: color-mix(in srgb, #b91c1c 8%, transparent);
+  border-left: 2px solid color-mix(in srgb, #b91c1c 55%, transparent);
+}
+
+body[data-zhiyun][data-ds-dark-theme] :is(.zs-qz-page, .zs-qz) .zs-qz-notice[data-tone='error'] {
+  color: #fca5a5;
+  background: color-mix(in srgb, #fca5a5 12%, transparent);
+  border-left-color: color-mix(in srgb, #fca5a5 45%, transparent);
+}
+
+/* 导出成功是「完成了某件事」，用强调色左侧线而不是绿色 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-notice[data-tone='ok'] {
+  border-left: 2px solid color-mix(in srgb, var(--zy-accent) 55%, transparent);
+  color: var(--zy-secondary);
+}
+
+
+/* ── 导出结果：按节次拆分时的文件清单 ───────────────────────────────── */
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-notice p {
+  margin: 0;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-export-files {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: var(--zy-fs-meta);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-export-files li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-export-files b {
+  font-weight: 600;
+  color: var(--zy-text);
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-export-files span {
+  color: var(--zy-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 路径用等宽字体：用户可能要照着在笔记库里找 */
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-export-files code {
+  font-family: var(--zy-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.95em;
+  color: var(--zy-secondary);
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--zy-line) 40%, transparent);
+  word-break: break-all;
+}
+
+body[data-zhiyun] :is(.zs-qz-page, .zs-qz) .zs-qz-export-files small {
+  color: var(--zy-muted);
+  font-size: 0.92em;
+}
+
+
 /* ── 断点 ───────────────────────────────────────────────────────────────
  * 1920 / 1440 两栏（setup 1fr + aside 340px）；1200 以下 aside 收到 320px；
  * 980 以下堆成单栏（aside 落到 setup 下方）；760 以下 chip 换行、字段单列。 */
