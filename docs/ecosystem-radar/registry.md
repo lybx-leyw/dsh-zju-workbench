@@ -4036,3 +4036,24 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `zhx-xi/dsh-inkflow` | A 原生DSH | MIT ✅ | 无（小说创作） | 无关（长篇写作） | 🔵 | proposed | 2026-10-31 | — | r118。★0、TS。长篇小说创作全流程。与 `InkWeaver` 同域，非学生场景 |
 | `yaotongsb/dsh-phosphor` | A 原生DSH | MIT ✅ | 无 | 无关（TUI） | 🔵 | proposed | 2026-10-31 | — | r118。★0、TS。Matrix 风格全屏 TUI |
 | `shuishuipingan/InkWeaver` | A 原生DSH | **GPL-3.0** ⛔ | 无（小说创作） | 无关 | ⛔ | rejected | 2026-10-31 | — | r118。★3、TS 主题、自述「经过验证的 DSH 插件」。**GPL 红线**（且 npm 名 `inkweaver` 未出现在 DSH 生态白名单），只登记不摘代码 |
+| `mini-yifan/dsh-orb-cordis` | A 原生DSH | **MIT** ✅ | 课堂/投屏板书、任意窗口取一帧 | **重复可强化**（今天页问一问 + 课堂页讲义工具栏，同一面板加输入通道） | 🟢 | skeleton-created | 2026-10-31 | 2026-10-31 | r119。★293，TS，push 2026-10-26，pnpm monorepo 7 子包；`packages/bundle` 有 `dsh.bundle.patch`。npm `dsh-orb@0.2.0` 实核 MIT 与仓库版本一致。**三条边界**：不引 `preset-computer-use`（=新建 agent 模式）、不引 `./client`（=桌面悬浮球第三外壳）、截图不落本仓目录。硬风险：deps 钉死 `cordis@4.0.4` + `schemastery@3.18.4`。骨架 `dsh-radar-orb` |
+| `KannaKuron/dsh-ptc-cordis-preset` | A 原生DSH | MIT | 编码工具编排（非学生） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★8，JS，push 2026-10-30。`dsh.bundle.patch` + `client.inject` 齐全（`ui-slots`/`ui-settings`/`locale`）。面向 Code Mode 编码编排，非学习场景；与在册 `muyuanjin/dsh-ptc-plus` 同域 |
+| `AnonyJcy/dsh-j-space` | A 原生DSH | MIT | 深层推理（非学生刚需） | 无关（推理路由） | 🔵 | proposed | 2026-10-31 | — | r119。★6，**Python 主体**，push 2026-10-28。推理路由 + 持久控制器；与在册 `modlens`/`modsearch` 同「模型侧」簇，且非 JS 栈 |
+| `ddtcorex/maestro-skills` | A 原生DSH | MIT | 企业开发（Govard/Magento/Laravel） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★5，TS，push 2026-10-27 |
+| `acrylblends/acrylblends` | A 原生DSH | MIT | 通用（框架抽取） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★12，TS，push 2026-10-31。「从 Cordis 抽取的 agent 框架」，与宿主自身重叠 |
+| `rohitg00/agentmemory` | B 其他JS | Apache-2.0 | 通用 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r119。★30039，TS，push 2026-10-29。记忆簇在册已十余条（memgas/knowledge/memory-toolkit/continual-harness 等），且为 MCP 服务非 DSH 包 |
+| `colbymchenry/codegraph` | B 其他JS | MIT | 代码理解（非学生刚需） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★76023，TS，push 2026-10-31。已预索引代码图谱；与在册 `CC19990113/dsh-plugin-codegraph` 同域，且本仓不读代码库 |
+| `serhii-londar/open-source-mac-os-apps` | B 其他JS | CC0-1.0 | — | 线索源 | 🔵 | proposed | 2026-10-31 | — | r119。★51139。Awesome 清单，非集成对象 |
+| `rohitg00/ai-engineering-from-scratch` | B（Python） | MIT | 学习（教程） | 线索源 | 🔵 | proposed | 2026-10-31 | — | r119。★75758，Python。教程型仓库，非插件 |
+| `backnotprop/plannotator` | B 其他JS | Apache-2.0 | 计划/代码评审（弱） | 重复且无增益（本仓无计划评审面板） | 🔵 | proposed | 2026-10-31 | — | r119。★9787，TS，push 2026-10-31。可视化批注 agent 计划与 diff；本仓无「计划评审」面板 ⇒ 判据①不成立 |
+| `JimLiu/baoyu-design` | B 其他JS | MIT | 非学生场景（设计） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★5520，JS。本地跑 Claude Design 为 Agent Skill |
+| `Chinesezjc/CordisClaw` | A 原生DSH | **null** ⛔ | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★68，**Rust**，无许可证。双红线（许可证 + 技术栈） |
+| `dirmacs/ares` | A 原生DSH | MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★18，**Rust** Cordis runtime |
+| `gentt1024/Cordis.NET` | A 原生DSH | MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★11，**C#** 移植 |
+| `Fi2zz/conatus` | A 原生DSH | MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★6，**Dart** 实现 |
+| `loopx-project/loopx` | B（Python） | Apache-2.0 | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★6489，Python 语义控制面 |
+| `xerj-org/xerj` | B（Rust） | Apache-2.0 | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★17768，Rust 搜索/MCP |
+| `voyager-crew/voyager` | B 其他JS | **GPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★20505，TS。Gemini/AI Studio/DeepSeek 增强套件 |
+| `inso1337/revl` | B（Python） | **AGPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★8，Python |
+| `cordisx/cordisx` | B 其他JS | **AGPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★5，TS，Codex Desktop 插件宿主 |
+| `ShirazuNagisa/DSH-Mizar` | A 原生DSH | **GPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★6，TS。远程监控 DSH agent，Cordis 插件 |
