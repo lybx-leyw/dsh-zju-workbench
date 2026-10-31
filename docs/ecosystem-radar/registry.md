@@ -3745,3 +3745,370 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 > 本轮发现更准确的口径是：本仓**有**计数账本（`usage.js`，热力图的输入），但**它的数据源是空的**。
 > 因此「强化」对本轮 🟢 项成立（上游给**计数**），对热力图骨架**仍不成立**（它要的是**作图**底层）。
 > **结论：热力图骨架定性维持「全新」，不改。**
+| `LLLLKKKK/cc98-ATautocomplete-plugin` | B 其他JS | **`null`** ⛔ | 校园论坛（AT 补全） | 重复无增益（本仓无 AT 补全需求） | 🔵 | rejected | 2026-10-29 | ★0，`language: null`。`cc98 plugin` 探针（total=3）的唯一新面孔。**无许可证 → 不采用、不摘代码**，仅留痕「CC98 的 AT 补全层已有第三方做过一朵」。未评估技术栈 |
+| `zjutjh/zjut-icicles` | B 其他JS | **`null`** ⛔ | 课程资料 | 重复无增益 | ⛔ | rejected | 2026-10-29 | ★789，2026-10-29 push。**浙江工业大学**课程攻略共享计划（非浙大）+ **无许可证**，双杀。与 `QSCTech/zju-icicles` 同形态（内容版权库） |
+| `ZJU-Turing/TuringCourses` | B 其他JS | **`NOASSERTION`** ⚠ | 课程资料 | 重复无增益 | ⛔ | rejected | 2026-10-29 | ★810，2026-09-19。浙大图灵班课程学习指南（Markdown，内容库非代码）。**`NOASSERTION` 待人工核验、不采用**；即便核验通过也是内容版权库，不可摘代码 |
+| `DevSujal/campus-complaints-experience-and-feedback-webApp-backend` | B 其他JS | **`null`** ⛔ | — | — | ⛔ | rejected | 2026-10-29 | ★7，2025-06-23。无许可证 + 非浙大场景 + 「campus app」词面误命中。同簇 `Uni-Event`/`Pronto`/`CampusConnect` 等海外高校通用工具一并按簇合并，不单列 |
+| `stevenstg/obsidian-cc98-publish` | **B 其他JS** | **MIT** ✅ | 笔记 → 论坛（CC98 写出口） | **重复可强化**（判据①②③全成立） | 🟢 | skeleton-created | 2026-10-24 | **2026-10-29 r102 实测升级（第二份留痕，首份见 L2609）**：★8，push 2026-10-19，`LICENSE` 1082 B。`tsc` 编译后用 Node 22.13.1 交叉验证本仓 `ubb.js`，得 **4 条缺陷**：①**F-4 UBB 字面量零转义原样透传**（`发帖时用 [b]粗体[/b]` → 输出逐字相同 → 本仓 `ubbToText` 回读丢 9/27 字；判 UBB 为格式而非文本）→ **长度守卫仅 3/5 判别力（`a[0]` 漏检）**，不能当正确性证明；②F-1 frontmatter 被降级成虚线代码块；③F-2 `FIRST_H1_RE` 无 `m` 标志 → 前置 frontmatter 时标题**恒空**（须先 `stripFrontmatter`）；④F-3 代码块降级为 `----------` 虚线而非 `[code]`。对照：本仓 README 7,518 B 真实文档回写 **`**`/`![]`/反引号残留全 0**，缺陷只在边界。**骨架已存在** `dsh-radar-cc98-ubb-bridge`（2026-10-24），本轮**不重复生成**；建议评审补阻塞 TODO-7（字面量转义）/ TODO-8（剥离顺序） |
+| `bertholomus/dsh-public-plugins` | **A 原生DSH** | **MIT** ✅ | 到期提醒（子插件 `notifications`） | **重复可强化**（判据①②③全成立） | 🟢 | skeleton-created | 2026-10-30 | r107。★4，2026-10-23 建仓 / 2026-10-29 push。monorepo，`plugins/` 下 16 个子插件，均自带 `dsh.bundle.patch` + `dsh.client`。**只取 `notifications` 子插件**：本仓有到期判定（`page-planning/src/time.js:113` 只算未完成；`ticks.js` 持久化「不需要再被提醒了」）但全仓 `new Notification`/`requestPermission` **0 处** → 零送达。**只挂宿主半边**（上游 `dsh.client.inject` 含 `dsh-client-ui-settings`，会抢设置分组）。**⚠ 阻塞：npm `dsh-plugin-notifications` → 404，未发版**。骨架 `packages/radar/dsh-radar-zone-notify`（2026-10-30）。同仓 `calendar`(CalDAV) 判**重复且无增益**（会新建第二日历面板，判据①不成立）；`recall` 与 `me-memory`/`knowledge-*` 同域判重复无增益；`coordinator`/`decisions`/`discord`/`agent-terminals`/`wallpaper` 与本仓无对应面板 |
+| `Fanch-hui/dsh-plugin-chatgpt-siwc` | B 其他JS（DSH 插件形态） | **MIT** ✅ | — | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★5，2026-10-27。把 ChatGPT 订阅（Sign in with ChatGPT）接成 DSH 的 LLM 通道。本仓已有 `dsh-radar-llm-fallback` 与 provider 侧能力，换 provider 是**横向替换**不是强化底层，判据②不成立。仅登记 |
+| `CC19990113/dsh-plugin-soul` | B 其他JS（DSH 插件形态） | **MIT** ✅ | — | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★5，2026-10-26。git 版本化的 persona 文件每轮注入 + 受控自编辑。与本仓 `dsh-radar-me-memory` 同域，且「人格文件」非学生场景功能。仅登记 |
+| `InariNGT-Ofiicial/dsh-plugin-updates` | B 其他JS（DSH 插件形态） | **MIT** ✅ | — | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★19，2026-10-22。连接原 GitHub 仓库、每 24h 检查并自动更新插件 + 备份回退。**安全面需警惕**（自动拉上游代码进 profile），且本仓 profile 由人管。仅登记，**不建议**接入 |
+| `HaoyanZhang123/dsh-plugin-control-your-capture` | A 原生DSH | **MIT** ✅ | 网课/讲义截图（弱） | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★5，2026-10-26，1.1 MB，带 `cordis.patch.yml` + `skill/` + `locale/`。按**物理像素**截屏（非 CSS 像素）。本仓无截图面板，且这不是「强化某个既有面板」，判据①不成立。仅登记 |
+| `pht88888888/dsh-jiuling-remote-plugins` | A 原生DSH | **MIT** ✅ | — | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★7，2026-10-24，**无 description、无 topics**，601 KB。信息不足 + 与本仓无交集，无法评估契合度。仅登记 |
+| `seaison/dsh-plugin-eva-theme` | A 原生DSH | **`NOASSERTION`** ⚠ | — | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★32，2026-10-23，21.9 MB。EVA 主题插件（明日香/绫波丽配色、启动语音、时钟、音乐播放器）。**`NOASSERTION` 待人工核验、不采用、不摘代码**；且 EVA 角色/语音素材本身有第三方著作权，**即便许可证核验通过素材亦不可搬运** |
+| `jiuyou-7411/dsh-rea-plugin` | A 原生DSH | **`NOASSERTION`** ⚠ | — | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★4，2026-10-21，2.8 MB。REA 逆向工作台（220 个逆向工具、纯中文界面、frida/ghidra/jadx）。**`NOASSERTION` 待人工核验、不采用**；且「逆向工作台」不属本仓校园场景边界 |
+| `KardDev/dsh-plugins` | A 原生DSH | **`null`** ⛔ | — | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★**636**（本轮最高星），2026-10-21，5.5 MB，**无 description、无 topics、无 LICENSE**。**无许可证 → 不采用、不摘代码**。仅留线索：A 组里「插件合集型仓库」涨星最快，日后只可作**目录**参考、不可作**代码源** |
+| `zaofan-make/dsh-qqbot-plugins` | A 原生DSH | **`null`** ⛔ | — | 重复且无增益 | 🔵 | rejected | 2026-10-30 | r107。★4，2026-10-24，5.3 MB。DSH QQ 机器人插件市场索引（extension packs）。**无许可证 → 不采用**；且 QQ 机器人不在本仓场景内 |
+| `nftuoa/dsh-zotero`（**跨组浮现**，C 组词面） | A 原生DSH | **MIT** ✅ | 论文（文献库） | 重复可强化 | **🟢** | proposed | 2026-10-23 | r108。C 组 `paper annotation reader` 首屏第 10 条命中，**非新候选**（A 组口径 2026-10-27 已升 🟢，骨架 `dsh-radar-zotero-bridge` 已存在，锁 `1.0.1`）。本轮实核无漂移：★0、`pushed_at` 2026-10-23、最新 Release 仍 `v1.0.1`。**新发现**：`files` 仅 `lib/assets/vendor`、无 `src`/无 `build` 脚本 → **「源码即产物」**（`lib/client.js` 单文件 152 KB）→ **只能锁 tarball、不能锁 git 引用**；做兼容层时**勿改 `client.js`**，走既定路线「弃其客户端、只借 `/zotero/*` 路由」 |
+| C 组五词复扫（`timetable ics export` 18 / `paper annotation reader` 10 / `ocr notes taking` 11 / `quiz practice` 2,673 / `fitness tracker` 13,512，均 `language:javascript`） | B 其他JS | 混合 | 课表/论文/笔记/刷题/锻炼 | 重复无增益 | ⛔ | rejected | 2026-10-30 | r108。首屏合计 **51 条 `owner/repo` 逐条比对 registry → 未登记 0 条**（radar 运行以来 C 组首次零新增）→ **C 组判「饱和」，暂停 3 个月**。典型：课表 10 条全是单校「抓 DOM→拼 ICS」薄壳（`ecnu`★8 MIT / `XJTLU`★4 MIT / `mq`★2 MIT / `allocics.js` **AGPL-3.0**）；论文 9 条 B 类全是 Electron/扩展/桌面单体（`Paper-Lantern`★11 MIT、`chimpread` **AGPL-3.0**）；OCR 仅 `zhaouv/vscode-markdown-draw`★39 Apache-2.0（绘图非 OCR）；刷题全是单证备考整站；锻炼高星全 **AGPL-3.0**（`openGym`★17,283、`lifttrace`★122）。下一轮 C 组若仍有预算应改探新词（`zju library seat`/`exam countdown`/`pomodoro stats`），勿复跑本五词 |
+
+## 2026-10-30 · r109 · B 组（新轴「`created:>` 增量轴」）· 追加
+
+> 轴说明：不是 B 组老四词（已验底），而是 `zju created:>2026-09-20`（316 条，首屏 30+15）与
+> `cc98 created:>2026-08-01`（25 条，首屏 15）。未登记 29 条，二次过滤后留 9 行。
+> 搜索 7 次，0 次 403，完整。详见 `docs/ecosystem-radar/2026-10-30-06.md`。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Vita0818/CC98-SearchPro` | **B 其他JS**（TS；非 DSH 插件） | **MIT** ✅ | CC98 找讨论（选课/保研/实习） | **重复可强化**（判据①②③全成立） | 🟢 | skeleton-created | 2026-10-30 | 2026-10-30 | r109。★0，2026-10-23，1,366 行 TS，`dist/` 已编译。**本仓 `source-cc98/src/reads.js:175` 的 `search()` 只有「1 次请求 + 服务端顺序透传」**：无本地排序、无正文核对、无命中片段、无日期/版面筛选。上游补的正是这一段：**最多 4 路查询变体**（整串+分词+汉字二元切片）→ **5 档证据分级**（exact-title 1000 / exact-content 900 / all-words-title 700 / all-words-content 500 / weak 100）→ **首帖正文核对**（5/12/24 条预算）→ **220 字命中片段**。**只借两个纯函数模块** `dist/search/rank.js`、`dist/text.js`；**不起 MCP 子进程**（入口 `runtime/server.mjs` 是 esbuild 打包的 stdio server，会带进 `@modelcontextprotocol/sdk@1.32.1`+`zod@4.6.5`）。**⚠ npm 未登记**（`registry.npmjs.org/cc98-searchpro` → Not found）→ 必须锁 release tarball `v0.1.0`（335,626 B，tag `bf05535`）。**⚠ 阻塞**：上游用 `searchText(readableText(...))` 投影首帖 UBB，与 r91 实测的 F-4「UBB 字面量原样透传」叠加会产生**字面量假阳性** → 评审默认只对 `contentType===1` 做正文核对。**未做线上抽样**（匿名调 `api.cc98.org` 三次均不通，沙箱不在校园网） |
+| `wuideas/dsh-cc98-duty` | **A 原生DSH** | **MIT** ✅ | CC98 看帖/发帖 | 读侧**重复且无增益** / 写侧触及红线 | 🔵 | rejected | 2026-10-30 | — | r109。★0，2026-10-21。**形态完全合格**：`dsh.bundle.patch → ./cordis.patch.yml`、`dsh.client.inject`、`insert id: cc98-duty` 与 `export const name` 对齐、`engines.dsh >=0.1.7-rc.1`。但两条独立不接理由：①**读侧更弱**——14 个工具（8 读 + 3 写 + 3 元），`搜帖` 只是转发 `/topic/search`，比本仓 `search()` 还薄（本仓另有 `next_from`/`topic()` 楼层分页/`notifications()`）；②**写侧开的是本仓刻意关掉的口子**——`source-cc98/src/client.js` 文件头明写「公开面只有 GET……调用方拿不到改论坛状态的入口」，它有发帖/回帖/评论 3 个写工具，且安全模型（`writeEnabled` 默认 false + 确认词 + `dutyReadOnly`）是**插件自己**的。**留痕**：将来若开写侧，抄它的闸门设计、不抄代码。作者 README 自述不再维护 |
+| `Coran-tech/cc98-reborn-iOS` | B 其他JS | MIT ✅ | CC98 客户端 | 重复无增益 | 🔵 | rejected | 2026-10-30 | — | r109。★0，2026-10-24。实为 React Native / iOS，**移动端原生形态**借不到 JS 底层。与 `awmleer/zju-library`(r33)、`PeiPei233/zju-learning-assistant`(r99) 同型。仅登记 |
+| `aNewfolder/zcode-skills` | B 其他JS（Python） | MIT ✅ | 课件下载/实验报告 | 重复无增益 | 🔵 | rejected | 2026-10-30 | — | r109。★0，2026-10-01。「AI 助手 skills 合集」（超星课件下载、实验报告、问卷星、邮箱草稿、图床上传）。**非 JS 栈**，且课件下载被 `dsh-zhiyun-source-classroom` 覆盖。仅登记 |
+| `AoiKJuice/ZJU-All-in-One` | B 其他JS（TS/Electron） | **`null`** ⛔ | 学业信息聚合 | 重复无增益 | ⛔ | rejected | 2026-10-30 | — | r109。★0，2026-10-24 建 / 2026-10-27 push，9.4 MB，`electron.vite.config.ts` + `src/`。增量轴里**形态最像**的一个，但**无 LICENSE → 不采用、不摘代码**。且「学业信息聚合」= 本仓 `today`+`study`+`me` 三页之和，属整站重做 |
+| `d32gang-steel/zju-cli` | B 其他JS | **`null`** ⛔ | 学在浙大 / 计网作业 | 重复无增益 | ⛔ | rejected | 2026-10-30 | — | r109。★1，**建仓与 push 同一分钟**（2026-10-28T17:49→17:53，4 分钟窗口），实质草稿（两目录 + `MANUAL.md`）。能力（登录/DDL/课件/成绩/公告）逐条被 `source-classroom`/`source-zdbk` 覆盖。无许可证 |
+| `gabrielcnog/we-zjuers` | B 其他JS | **`NOASSERTION`** ⚠ | 校园社交 | 无对应面板 | ⛔ | rejected | 2026-10-30 | — | r109。★0，2026-10-26。`LICENSE` 存在但 SPDX 无法识别 → **待人工核验、不采用、不摘代码**。且「浙大学生社交平台」不在本仓场景边界 |
+| `MKL537999/ZJU-blockchain-course-lfr` + 同簇 | B 其他JS | **`null`** ⛔ | 课程作业 | — | ⛔ | rejected | 2026-10-30 | — | r109。同名成簇（`Chinese-Journal-of-Law/MiniDEX-ZJU-Blockchain-2026-3230106207-`、`Chenyyyyyy666/ZJU-Software-Requirements-Engineering-Project` 等），均为**课程作业提交**，非产品。按簇合并一行 |
+| `firefelixfu026/CC98AI-PLUS` | B 其他JS（前后端） | **MIT** ✅ | CC98 AI 搜索 + 订阅 | **重复且无增益（形态冲突）** | ⛔ | rejected | 2026-10-30 | — | r109。★0，2026-10-04，50.6 MB（`backend/` Python + `frontend/` 扩展 + `deploy/`）。MIT 白名单，但**卖的不是本仓的缺口**：它做「LLM 总结 + 服务端订阅扫描」（本仓 `knowledge` 侧 + `zone-notify` 已有），**没有**本地证据分级排序。形态也冲突：Python 常驻服务 + 全站扫帖（自述 28 次请求硬上限、每 5 帖休 10 秒），与本地优先的 DSH 宿主不合 |
+| `ForeverHYX/ZJU-gdty-fake-run`（★10）/ `zhangchengyue0/ZJU-fake-run-android`（★3） | — | **`null`** ⛔ | 校园跑 | — | ⛔ | rejected | 2026-10-30 | — | r109。**协议级伪造校园跑**（token 抓取续期、校内道路轨迹合成；Android 版逆向 sign/timestamp 与加密）。无许可证 + **伪造体测数据属学术诚信红线**，明确不进候选池。仅在增量轴里留痕「40 天新增里涨星最快的是这一类」 |
+| `Xinzhe99/zju-autologin` / `Daydreammer123/zju-network-auto-reconnect` / `yhf216/ZJU-AC` | — | MIT / `null` / `null` | 校园网登录 | 重复无增益 | ⛔ | rejected | 2026-10-30 | — | r109。**Python**（PyQt6 托盘 / Windows 原生 / TronClass 自动签到）。语言不可直用；登录链本仓已有 `dsh-radar-zju-login`（骨架，`login-zju@1.0.9`）。`ZJU-AC` 的「自动签到」另触诚信红线 |
+| 增量轴负结果（`zju created:>2026-09-20` 余下 280+ 条） | — | 混合 | 课程作业/实验室主页/iGEM wiki | — | ⛔ | rejected | 2026-10-30 | — | r109。**结构性负结果**：40 天窗口 316 个 `zju` 仓库，JS/TS 栈仅 **4** 个（`ZJU-All-in-One`/`zju-cli`/`ZJU-blockchain-course-lfr`/`we-zjuers`），其中 **3 个无有效许可证**。方法结论：**增量轴只看「语言 + 许可证」两列**，首屏未登记数不代表信号 |
+| `chriswang/dsh-conversation-tree` | A 原生DSH | **MIT** ✅ | 会话组织（学习/论文/刷题分类） | **全新**（本仓无会话树能力） | 🟢 | **skeleton** | 2026-10-30 | — | r110。★0，2026-10-27 建仓，`dsh.bundle.patch` + `dsh.client.platform=web`，**零运行时依赖**，npm `0.1.2` 可解析（仓库 `package.json` 已到 0.1.3 未发）。tarball `package/LICENSE` 实文 = MIT / Copyright (c) 2026 chriswang。骨架 `packages/radar/dsh-radar-conversation-tree/`。**三条评审风险**：① 左侧带槽位靠 `html[data-dsh-band-owner]` 协商，**两个带插件必冲突**；② 依赖 4 处产品公开 DOM 约定，产品改结构即降级「暂不可用」；③ `map_delete_nodes` 可删子树，需过工具权限约定。**强化接缝**：上游检索自述「不支持模糊/分词/拼音」，正好对上本仓 `search-fuzzy`/`search-segment`/`pinyin-match`，但注入点在 Host 半身**未验证**，无干净注入点则放弃强化 |
+| `puppetcat-fire/dsh-plugin-dreaming` | A 原生DSH | **MIT** ✅ | 技能质量自省（对应用学习页「哪些技能真有用」） | **重复可强化**（`skill-stats` 只计数、无「实际贡献度」） | 🟡 | proposed | 2026-10-30 | — | r110。★0，2026-10-20 建仓，`dsh.bundle.patch` + `dsh.client.inject: ['@deepseek-ai/dsh-client-ui-settings']`，零运行时依赖，**但 npm 上不存在**（`registry.npmjs.org/dsh-plugin-dreaming` → latest `None`）→ 只能走 release tarball / git，成本高于收益。它做「度量技能真实贡献 → 使用前注入实测真相 → 夜间改写技能描述（带备份与回滚）」，比 `dsh-radar-skill-stats`（只统计 `skill` 工具调用次数）多一层**会改文件**的能力 —— 后者是本仓明确不碰的边界。**下轮若上 npm 再评** |
+| `jjjjjjjjnnjnn/dsh-triage` | B 其他JS（实为只占位） | **MIT** ⚠ | 插件诊断 | **重复且无增益** | ⛔ | rejected | 2026-10-30 | — | r110。★0，2026-10-26。**名不副实**：仓库名 `dsh-triage`、描述称「插件分诊台 / 兼容性判断层」，但 `package.json` 的 `name` 是 **`dsh-addition`**、`version 0.1.0`、**无 `dsh.bundle.patch`、无 `dsh.client`** → 不是可挂载插件。同品类（插件消失原因 / 候选是否存活）本仓已有 `dsh-radar-compat-vet`（`dsh-compat-vet@0.3.2`，运行时探测 + 实测校准）+ `plugin-audit` + `plugin-score` 三件，覆盖更全 |
+| `yulimfish/oh-my-dsh` | A 原生DSH | **MIT** ✅ | 编排（与学习场景正交） | — | 🔵 | proposed | 2026-10-30 | — | r110。★0，2026-10-29 建仓（1 天）。`dsh.bundle.patch` 有、`dsh.client` **无** → 纯 Host 侧编排插件。依赖 4 个且版本钉死（`@deepseek-ai/schemastery ~3.18.5`/`picomatch 4.0.7`/`yaml 2.8.2`/`zod 4.6.5`）。「Oh My OpenCode 风格的多 agent 编排」与本仓 `agent-router`/`agent-teams` 同域，**无强学生场景**；建仓 1 天、★0，仅留档 |
+| `chriswang/dsh-plugins-index` | B 其他JS | **`null`** ⛔ | 插件市场索引 | — | ⛔ | rejected | 2026-10-30 | — | r110。`license: None`、`language: None`（纯静态 JSON + Pages）。仅为 `conversation-tree` 的分发索引（`chriswang.github.io/dsh-plugins-index/index.json`），无代码价值。市场类本仓已有 `dsh-radar-market`/`dsh-radar-dsh-market` |
+| `jasonguide/dsh-plugins-hub` | B 其他JS | **MIT** ⚠ | 插件中心 | 重复无增益 | ⛔ | rejected | 2026-10-30 | — | r110。★0。`package.json` 无 `name`/`version`/`license`/`dsh` 字段（实查内容为 `null` 值）→ **不是可发布包**。同为插件中心，本仓已有 `dsh-radar-market` 等 6 个市场类包 |
+| `xushilianzhuren/dsh-*`（rea-kit / chat-export / first-principles / bili2text 4 个同簇） | B 其他JS | **`null`** ⛔ | 方法论 / 会话导出 / B站转文字 | — | ⛔ | rejected | 2026-10-30 | — | r110。同一 owner 2026-10-30 一天连开 4 个，**全部无许可证**（GitHub `license: None`、`package.json` 无 `license`）→ 只登记不采用。内容为「方法论提示词 + 命令链」（REA 逆向 / 第一性原理 / yt-dlp+whisper 链），无代码可集成 |
+| `Anarrogantcat/dsh-identity` / `unfar/dsh-chat-plugin` / `overact/dsh-statusline-plus` / `zeroed-07/dsh-memory-guard` / `Wang1462604987/dsh-wsl-sidebar` / `cuteG41cute/dsh-desktop` / `verneuil/dsh-opencode-go-usage` / `Clukay-Fun/dsh-gpt-link` | A 原生DSH（多为） | 均 **MIT** ✅ | 身份 / 跨机聊天 / 状态栏 / 内存监护 / WSL / 桌面壳 / 余额 | — | 🔵 | proposed | 2026-10-30 | — | r110。均为 2026-10-29~30 **新建**、★≤5 的个人插件，**与学习/考试/论文/笔记/锻炼六域零交集**，且体量不足以判断质量。按「热度未起，下一轮再看」留档，不逐个展开 |
+
+## r111 · 2026-10-30-12 · npm registry 轴（GitHub 六词见底后换源）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `9087/dsh-diff-approval` | A 原生DSH | **MIT** ✅ | 论文/报告/页面草稿的改写审批 | **重复可强化**（论文页·页面页写入） | 🟢 | proposed | 2026-10-30 | r111。★15，建仓 2026-08-16、pushed 2026-10-28，npm `0.36.1`（6 个发布版本）。`dsh.bundle.patch` + `dsh.client.platform=web`；6 运行时依赖（diff/shiki/@shikijs/langs/marked/dompurify/@deepseek-ai/dsh-home-paths）+ peer react^18.2、cordis>=4.0.1；**解包 ≈20MB**。**上游自带 bundle layer → 与本包 patch 不可同挂**。已出骨架 `packages/radar/dsh-radar-diff-approval/`。**GitHub 检索从未出现过，只在 npm 端捞到** |
+| `KERBALMans/dsh-modpack` | A 原生DSH | **MIT** ✅ | 插件环境迁移（整合包） | 全新 | 🟢 | proposed（**不出骨架**） | 2026-10-30 | r111。★4，建仓 2026-10-28（4 天）。勾选已装插件 → 导出 `.dshmodpack.json`（不含代码）→ 导入一键装回。**硬伤：npm `dsh-modpack@0.2.1` 的 repository 指向 `M1r0er/dsh-modpack`，仓内却是 `0.9.1` → 锁版会锁到别家代码**。等重发 npm 或改名后再评 |
+| `M1r0er/dsh-modpack` | A 原生DSH | **MIT** ✅ | 插件打包导出 | 全新 | 🔵 | proposed | 2026-10-30 | r111。★0，建仓 2026-10-18、pushed 2026-10-20。npm `dsh-modpack@0.2.1` 的实际归属仓（见上一行）。PCL 式导出 `.dshpack.zip` + 一键安装命令串。★0 且半个月未动，仅留档 |
+| `sflaer/dsh-telegram-relay` / `Bosaiting/dsh-process-tree` / `Kxiaoguai3/dsh-visual-safety-control` / `a961282799-crypto/dsh-island` / `bin-Deng-666/wechat-persona` | A 原生DSH（全部） | 均 **MIT** ✅ | 无（非学习六域） | 全新 | 🔵 | proposed | 2026-10-30 | r111。5 个 **★≤6、建仓 2026-10-26~10-30** 的个人插件：Telegram 转发 / 进程树可视化 / Win 桌面控制（`qingying012/dsh-desktop-control` 的 fork，**安全面需单独评审策略**）/ 桌面灵动岛 / 微信通道。按「热度未起」合并留档。证明「承载端插件」这一簇仍在长 |
+| `crazywoola/dsh-balance` | A 原生DSH | **MIT** ✅ | 无（用量统计） | 全新 | 🔵 | proposed | 2026-10-30 | r111，**npm 端捞到**。★26，建仓 2026-08-14、pushed 2026-10-25。多提供方余额 + 用量统计（星期×24 小时打卡图）。有发布历史，但与学习六域无关 |
+| `TACONailoong/dsh-plugin-smart-config` | A 原生DSH | **MIT** ✅ | 无（模型参数配置） | 全新 | 🔵 | proposed | 2026-10-30 | r111，**npm 端捞到**。★1，建仓 2026-09-23、pushed 2026-10-09。从 ZCode 移植的模型智能配置与参数自适应。★1 且 3 周未动，留档 |
+| `double-coding-lab/Flow2Spec-DeepSeek-Harness` | A 原生DSH | **MIT** ✅ | 无（规格驱动开发） | 全新 | 🔵 | proposed | 2026-10-30 | r111，**npm 端捞到**（`@double-coding/flow2spec-deepseek-harness@1.4.4`）。★8，建仓 2026-08-17、pushed 2026-10-19。规格驱动工作流 + 项目知识路由；与 `dsh-radar-kb-rag` 域相近但方法是「规格」，非检索 |
+| `rebornace/dsh-tracescope` | A 原生DSH | **MIT** ✅ | 无（研发工具） | 全新 | 🔵 | proposed | 2026-10-30 | r111，**npm 端捞到**（`@rebornace/dsh-tracescope@0.3.5`）。★3，建仓 2026-09-17、pushed 2026-10-17。Git diff 影响清单 + Figma/蓝湖稿静态 UI 差异 + 崩溃分析，能力经 MCP 复用。研发侧工具，与学习六域无关 |
+| `WSK-build/awesome-dsh-mobile-plugins` | B 其他JS | **CC0-1.0** ✅ | 无 | 重复且无增益（索引类） | ⛔ | rejected | 2026-10-30 | r111。★1、pushed 2026-10-12。仅 45 条移动端插件索引（npm `dsh-mobile-plugin-catalog`），索引价值已被在册的 `awesome-dsh-plugin/awesome-dsh-plugin`（7557 条）覆盖 |
+| `forget6610/dsh-theme-clove` / `WWFZS/dsh-plugin-startup-animation` | A 原生DSH（全部） | **`NOASSERTION`** ⚠ | 无（主题/开机动画） | 全新 | ⛔ | rejected | 2026-10-30 | r111。★8 / ★4，建仓 2026-10-26~29。**无 SPDX 可识别许可** → 只登记、不采用、不摘取任何代码 |
+| `young-steveo/bottlejs` / `zazoomauro/node-dependency-injection` | B 其他JS | 均 **MIT** ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r111。通用 DI 容器（★1302 / ★298），**与 cordis 服务定位器模型无关**，接入等于重写插件模型。仅因「dependency injection」词面命中，属噪声 |
+| `Papooch/nestjs-cls` / `supabase/server` / `Agent-Threat-Rule/agent-threat-rules` / `dimk90/pi-context-view` / `coderhammer/backhooks` | B 其他JS | 均 **MIT** ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r111。NestJS 异步上下文 / Supabase 服务端工具 / AI agent 威胁检测规则集 / Pi 扩展 / 2023 停更的 DI 库。**均非 DSH 插件、非学习域**，纯词面噪声 |
+| `chialab/math-api` | B 其他JS | **MIT** ✅ | 论文（公式渲染） | **重复且无增益** | ⛔ | rejected | 2026-10-30 | r111。★44，2022-12 停更的 MathJax 服务端 API。本仓已有 `dsh-radar-temml`（`temml` 锁版）覆盖同一需求，且无需起服务 |
+| `zuhairhalawa/studyai` | B 其他JS | **MIT** ✅ | 论文/刷题/复习 | **重复且无增益** | ⛔ | rejected | 2026-10-30 | r111。★247，建仓 2026-10-18、pushed 2026-10-24。本地优先学习平台（PPT 讲义 + 间隔复习 + 考试 + Gemini 导师）。调度层是 FSRS，已被 `dsh-radar-fsrs-scheduler`（`ts-fsrs@5.4.2`）与 `dsh-radar-fsrs-browser` 覆盖；且是**完整独立应用非可嵌入库**，接入等于重写 |
+| `bjsi/incremental-writing` / `repeat-space/anki-apkg-export` | B 其他JS | 均 **MIT** ✅ | 笔记 / 复习 | 重复且无增益 | ⛔ | rejected | 2026-10-30 | r111。前者 ★209 但 **2022-08 停更**的 Obsidian 增量写作插件；后者 ★182 的 Anki apkg 导出器，本仓 `dsh-radar-review-due` 不消费 apkg 格式 |
+
+## r112 · 2026-10-30-15 · A 组 · 新轴：发布通道 / 开发者工具面
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `slow-stack/mneme` | A 原生DSH | **MIT** ✅ | 笔记/复习/论文（跨会话学习记忆） | **重复可强化**（「我的」页记忆台账的召回层） | 🟢 | skeleton-created | 2026-10-30 | r112。★199、fork 22，建仓 2026-08-13、pushed 2026-10-29。npm `@modusensus/dsh-mneme@0.9.5`（**repository 指向本仓，latest 与仓内 version 逐字符相同 → 可锁版**，r111 `dsh-modpack` 教训的正面对照）。**三条判据全绿**：同一面板（无新 UI）／同一问题两面（字面 vs 语义）／底层更优（**4 路召回** + **CJK bigram BM25** `K1=1.5 b=0.75` + **查询自适应阈值**，`src/` 合计 30,843 行）。已出骨架 `packages/radar/dsh-radar-mneme/`。**6 条阻塞风险**：① `dsh-better-sidebar` 硬 peer 依赖（本仓 35+ 包**无一**声明，未装则 entry 挂起）② 体积 7,710,271 B／396 文件，本地推理闭包自述 ≈393 MB／49 包 ③ 上游自带 `cordis.patch.yml`，与本包 patch **不可同挂** ④ 要求 Node 24+ ⑤ 记忆含作息/成绩/健康，须按敏感度过滤 ⑥ 工具名未实取 |
+| `dshplugin/dsh-plugin-hub` | A 原生DSH | **MIT** ✅ | 无（插件市场） | **重复且无增益** ⛔ | 🔵 | rejected | 2026-10-30 | r112。**本轮最高星新面孔 ★398**、fork 27，建仓 2026-08-20、pushed 2026-10-28。自述「内置在 Harness 设置→插件中心，10000+ 人工精选」。本仓已有 **4 个**市场包（`dsh-market` / `dsh-web` / `dsh-radar-market` / `dsh-radar-dsh-market`），第 5 个纯重复。**建议封板：不得再候** |
+| `pax-beehive/dsh-hub-cli` | A 原生DSH | **MIT** ✅ | 无（发布链路） | 全新 | 🔵 | proposed | 2026-10-30 | r112。★276，建仓 2026-08-25、pushed 2026-10-20。CLI + schemas + resolver + agent tools（`search`/`resolve`/`install`），是 `dsh-plugin-hub` 的**开发者面**。本仓无此层，但不影响学生使用 |
+| `jimoto-no-llm/rustdsh` | B 其他JS | **MIT** ✅ | 无 | 全新 | 🔵 | proposed | 2026-10-30 | r112。★100、fork 10，建仓 2026-10-04、pushed 2026-10-29。Rust 启动器 + Claude Code/Codex 迁移向导 + token 优化。**改的是启动方式，不是面板** |
+| `nicremo/dsh-cli` | A 原生DSH | **MIT** ✅ | 无 | 全新 | 🔵 | proposed | 2026-10-30 | r112。★20、fork 3，建仓 2026-10-07、**pushed 2026-10-09（3 周未动）**。让 Claude Code / Codex / OpenCode / Pi 并行跑 dsh 会话 |
+| `UNLINEARITY/dsh-code` | A 原生DSH | **MIT** ✅ | 无 | 全新 | 🔵 | proposed | 2026-10-30 | r112。★44，建仓 2026-08-14、pushed 2026-10-28。终端 coding 界面（特殊模式 / 插件 / 内核全能力）。**与 `dsh-tui/dsh-tui`、在册 `ccch1mneyyy/dsh-TUI`、`tomowang/dsh-tui` 同簇**，后续合并为一簇判断「有无 GUI 化」 |
+| `PerryLink/dsh-lsp-actions` | A 原生DSH | **Apache-2.0** ✅ | 无（代码编辑） | 全新 | 🔵 | proposed | 2026-10-30 | r112。★34，建仓 2026-08-13、pushed 2026-10-27。LSP 动作面：诊断 / 格式化 / 补全 / code action / 符号。研发工具，与学习六域无关 |
+| `kenryu42/cc-safety-net` / `xiufengsun/TokenTracker` / `jiweiyeah/Skills-Manager` | B 其他JS | 均 **MIT** ✅ | 无 | 无关 | 🔵 | proposed | 2026-10-30 | r112，三行合并。★1853 / ★2153 / ★1046（**本轮最高星三连，但均非 DSH 插件**）：agent 命令预执行守卫 / 31 款工具 token 用量统计 / 桌面技能管理器（同步 32 个工具）。TokenTracker 与在册 `crazywoola/dsh-balance` 重叠（后者 DSH 原生）。**高星不构成理由** |
+| `chaos-03x/dsh-agy` / `amlyczz/dsh-agy-link` | A 原生DSH | 均 **MIT** ✅ | 无（模型接入） | 全新 | 🔵 | proposed | 2026-10-30 | r112，两行合并。★62 / ★136，建仓 2026-08-14 / 08-19，pushed 2026-10-24 / **10-30**。**同一上游（Google Antigravity）的两个接入插件**：OAuth 多账号池 + 429 轮转 vs 流式 CLI 直连。在册已有 `wnjxyk/dsh-codex-oauth` 等一簇 |
+| `kurerere/dsh-plugin-whiteboard` / `amumulam/dsh-tldraw-canvas` | A 原生DSH | 均 **MIT** ✅ | 无（右栏画布） | 全新 | 🔵 | proposed | 2026-10-30 | r112，两行合并。**均 ★0、建仓 2026-10-28/29（1–2 天）**：右栏 AI 白板 / 每会话 tldraw v1 画布。方向「右栏画布」是本仓没有的，但当前无采纳价值，合并留档 |
+| `yequ172672/dsh-codex-subscription` | A 原生DSH | **无许可证** ⛔ | 无 | 全新 | ⛔ | rejected | 2026-10-30 | r112。★24，`license.spdx_id = null`。复用 Codex CLI 本地登录订阅凭证接 ChatGPT 模型。**只登记、不采用、不摘任何代码** |
+| `openma-ai/backchat` / `xiongjiamu/dsh-atomgit` | B / A | **无许可证** ⛔ | 无 | 全新 | ⛔ | rejected | 2026-10-30 | r112。★11 / ★6，均 `null`。本地 ACP 桌面工作台（DeepSeek Harness / Claude Code / Codex …）／AtomGit 插件包。**不摘代码** |
+| `dsh-tui/dsh-tui` | A 原生DSH | **`NOASSERTION`** ⚠ | 无 | 全新 | ⛔ | rejected | 2026-10-30 | r112。★44。**建仓 2026-08-13、pushed 也是 2026-08-13 → 建仓当天即停更**，且许可不可识别 → 不采用。与 `UNLINEARITY/dsh-code` 同簇（后者仍在动、MIT） |
+| `seed-forge/harness-ai-kit` | B 其他JS | **Apache-2.0** ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r112。★25，**Python 技术栈**（不合 JS 限定）；「42 skills + 5 CLI」的 agent 资产打包器。pushed 2026-08-31（2 个月未动） |
+| `inthepond/ff-toolkit` | B 其他JS | **MIT** ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r112。★8，**Python** FFmpeg 工具包（CLI + MCP server），与学习六域无关，纯词面噪声 |
+| `ben4202121/buddybridge` | B 其他JS | **MIT** ✅ | 笔记（Obsidian） | 重复且无增益 | ⛔ | rejected | 2026-10-30 | r112。★8，建仓 2026-06-14、pushed 2026-10-25。**Obsidian 插件**（在笔记库里跟 WorkBuddy/CodeBuddy CLI 聊天）。与 `dsh-radar-bbob` 同形态但目标是 Obsidian，本仓不消费该插件格式 |
+
+## r113 · 2026-10-30-18 · A 组 · 新轴：学术技能 / 引文核验
+
+> 搜索 9 次（五词 + `skill`/`note` 四补充词面），0 次 403，**完整**。
+> 174 去重 → 53 未登记 → 二次过滤留 12 行（🟢0 🔵5 ⛔7，含 4 行簇合并）。**本轮骨架 0**（无 🟢）。
+> 五词首屏 130 条刷新后**仅 4 个新面孔且 0 个相关** → 判 **A 组五词封板**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `wp-a/nature-academic-search` | B 其他JS（实为 **Python**） | MIT ✅ | 论文 / 文献综述 | **重复且可强化**（但不可锁定） | 🔵 | proposed | 2026-10-30 | r113。★362，7 源去重（CrossRef/PubMed/arXiv/OpenAlex/EuropePMC/S2/CTgov），`verification.py` 做**字段级四态核验**（verified/mismatch/not_found/manual_needed）、`graph.py` 上下引文图谱、`citation.py` RIS/BibTeX 导出。**本仓 `page-paper/src/citations.js`(143 行) 只做页码跳转，`bibliograph\|reference` 零命中 → 引文核验是真空缺**。**但 Python + MCP stdio，本仓纯 JS 零 Python → 只记口径不集成**。口径见报告 §4.2 |
+| `wp-a/dsh-academic-paper-search` | A 原生DSH（桥接壳） | MIT ✅ | 论文 / 文献 | 重复且可强化（壳可锁、心不可锁） | 🔵 | proposed | 2026-10-30 | r113。★4，建仓与 pushed **同为 2026-08-29 → 建仓即停更**。`index.js` **仅 323 B**（`apply(){}` 空实现），真正贡献全在 `cordis.patch.yml`：insert `@deepseek-ai/dsh-mcp-client`，`command: uvx`、`--from nature-academic-search==0.3.0`。**三重阻塞**：① npm **404 锁不了版** ② 需 Python+uvx ③ 需 5 个外部 API key。**不出骨架** |
+| `vinvcn/mattpocock-skills-zh-CN` | 技能包（含 dsh-plugin） | MIT ✅ | 无关（通用工程技能） | 重复且无增益 | 🔵 | proposed | 2026-10-30 | r113。**★5417 本轮最高**。Matt Pocock 技能简体中文本地化（人工审核每次更新）。dsh 侧 `@vinvcn/dsh-mattpocock-skills-zh@1.3.1` **可锁**（单依赖 `yaml`、262,873 B、repo 回指本仓 ✅），实现为单文件 `ctx.skills.registerProvider()`、`RANK=600`、`source:'bundled'`、无 UI。**同源已在册两家**（`gongyijie85/mattpocock-skills-dsh-zh` ★6、`mattpocock-skills-dsh` ★19）→ 本家记为该簇主流水线，簇整体不取 |
+| `wpsnote/wpsnote-skills` | 技能包（官方） | MIT ✅ | 笔记 | **不同面板** | 🔵 | proposed | 2026-10-30 | r113。★184，WPS 笔记官方 30+ Skill + `wpsnote-cli` + MCP Server，声明兼容 DSH/WorkBuddy。**不取的理由是数据模型**：本仓笔记是 `core-notes` **节笔记**（markdown + `zy://section/` 锚点 + `zy-asset://` 图片，落盘经 `ctx.storage`），WPS 笔记是**外部云笔记库** → 接进来只能是并排第二个入口，违反判据① |
+| `cheshireez/dsh-skill-hub` | A 原生DSH | MIT ✅ | 无关（技能管理） | 重复且无增益 | 🔵 | proposed | 2026-10-30 | r113。★36，TS，`0.3.30`，push 2026-10-29，带 patch + `client.platform:web`，npm 可锁。功能扎实（技能浏览/启停 + **安装前审计拦隐藏字符与管道执行** + GitHub 市场 commit 钉住 + 跨 agent 导入 + 回收站）。**技能管理簇第 12 家**（在册已有 `MichengAI/dsh-skills-manager` ★409、`Fishquito7/dsh-skill-mcp-panel` ★197 等 10+），且本仓无「技能管理」面板 |
+| `omdsh-dev/dsh-mnemon` | A 原生DSH | MIT ✅ | 通用（记忆） | 重复且无增益 | ⛔ | rejected | 2026-10-30 | r113。★**786**、TS、push 2026-10-29，质量本轮最高一档（分层记忆 + 记忆系统页 + 实体图谱 + 可组合 provider + 8 后端 + ZIP 备份）。**排除**：① 记忆簇在册 **11+ 家**、已出 2 个骨架（`dsh-radar-me-memory`、`dsh-radar-mneme`）② **自带整套 UI 页**（Memory System / Project Documents / Memory Spaces / Plugins 组合器）→ 违反判据① ③ r112 已把记忆域交给 `slow-stack/mneme`（4 路召回） |
+| `XiaoMaColtAI/math-modeling-skill` | 技能包 | **无许可证** ⛔ | 数学建模竞赛 | — | ⛔ | rejected | 2026-10-30 | r113。★**1892**、Python、push 2026-10-29，`license.spdx_id = null` → **只登记、不采用、不摘任何代码**。内容（CUMCM/MCM 三阶段工作流 + 算法库 + 论文模板）贴合竞赛域但许可红线优先。**建议列入「许可待核」观察名单**，补 LICENSE 后可一轮内复评 |
+| `RealSeaberry/AutoMCM-Pro` | 技能包 | MIT ✅ | 数学建模竞赛 | 无关 | ⛔ | rejected | 2026-10-30 | r113。★258，Python，全栈数模 Skill（GitOps + 强制代码自证）。与在册 `OrinVoss/dsh-math-team`、`Aampidy/dsh-mcmp` 同簇，本仓**无数模竞赛面板** |
+| `hyhmrright/brooks-lint` / `Unclecheng-li/DeepSec` / `EverMind-AI/SkillCorpus` | B 其他JS | 均 MIT/Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r113 合并。代码质量评审 Skills（★1552）/ AI 安全审计平台（★499）/ SKILL.md 语料检索-评估（★694）。三者均为**跨工具通用研发件**，非 DSH 插件、非学生场景 → 词面噪声 |
+| `Awesome-AI-Pedia/Awesome-AI-Pedia` / `sandbaseai/sandbase-skills` / `lencx/skills` / `FeatherHunter/dsh-mattpocock-skills-deck` | 清单/技能包 | 均宽松 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r113 合并。AI 资源百科（★510）/ 88 研究-营销 Skill（★203）/ 经验转执行（★196）/ mattpocock 27 技能 deck（★264）。**清单类第 5–8 家**（在册已有 3 家），仅作线索源 |
+| `IvenKooLab/desktop-pet` / `BlockchainLabs/SaluS` | B | MIT / **无** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-30 | r113 合并。3D 桌宠（★174，**Python**，与 DSH 无关）/ 2019 年 ICO 仓（★25，`null`，**词面误召回**） |
+| `WZZNNE/DSH-CyberWorkStation` | A 原生DSH | **`NOASSERTION`** ⚠ | 无 | 无关 | ⛔ | pending-license | 2026-10-30 | r113。★24，TS。一键整合包（赛博朋克启动器 + SillyTavern 级控制台 + 8 插件）。许可不可识别 → **待人工核验，不采用** |
+| `farion1231/cc-switch` | B 其他（Rust 桌面，跨 harness 切换器） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★150329、Rust、push 2026-10-30。A cross-platform desktop All-in-One assistant for Claude Code, Codex, OpenCode,DeepSeek Harness and more. Only official website: ccswitch.io  |
+| `1Panel-dev/1Panel` | B 其他（Go，运维面板） | GPL-3.0 ⛔ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★37314、Go、push 2026-10-30。🔥 1Panel is a modern, open-source Linux server management panel and a lightweight AI management platform.  |
+| `YuJunZhiXue/dsh-purge` | A 原生DSH（破限） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★13627、JavaScript、push 2026-10-30。DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词；默认提示词面向国模「小码酱」。Jailbreak for every model — swap prompts per model. 求 Star 收藏 ⭐ 如要二开，请查看署名要求部分  |
+| `Fei2411/DS-Bot` | A 原生DSH（bot 团队） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★4609、JavaScript、push 2026-10-29。A team of long-lived bots for DeepSeek Harness, with main bots, bot-to-bot messages and group chats.  |
+| `spacering-net/codeg` | B 其他（Rust，多 harness 聚合） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★4215、Rust、push 2026-10-30。Collaborative multi-agent AI coding workspace: aggregate sessions from Claude Code, Codex, OpenCode, Pi, Grok Build, etc. Desktop app, self-hosted ser  |
+| `elysia395/dsh-wallpaper-engine` | A 原生DSH | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★4052、JavaScript、push 2026-10-28。把本机 Wallpaper Engine 的壁纸搬进 DSH 网页界面：场景壁纸由内置 MIT 开源引擎 WebWallGL 实时 WebGL 渲染（粒子 / puppet 骨骼 / SceneScript / 音频反应 / 鼠标交互），失败自动降级内嵌 MP4 与场景静态帧；Web 壁纸严格沙箱   |
+| `HarnessRouter/harnessrouter` | B 其他（Python，路由服务端） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★3787、Python、push 2026-10-30。HarnessRouter Community Edition: the self-hosted, Apache-2.0 edition of the unified interface for agent harnesses. Run Codex, Claude Code, Hermes, PI,  |
+| `Minglink/dsh-infinite-gen-5` | A 原生DSH（逆向工具） | NOASSERTION ⚠ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★3708、JavaScript、push 2026-10-26。DeepSeek v4.1 flash 逆向工具（无限五代）     求 Star 收藏 ⭐欢迎大家提交项目的改进  |
+| `kingcharleslzy-ai/dsh-purge` | A 原生DSH（破限社区版） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★3543、JavaScript、push 2026-10-30。dsh-purge Community · DeepSeek Harness 社区维护版：宿主兼容、状态诊断、提示词管理、更新与本机备份回滚。基于小杨 / YuJunZhiXue 的 dsh-purge。  |
+| `ranxianglei/billion-context` | A 原生DSH（上下文压缩插件） | NOASSERTION ⚠ | 通用 | 全新（上下文压缩） | 🔵 | proposed | 2026-10-30 | — | r114。★3424、TypeScript、push 2026-10-30。A context-compression plugin for month-long single sessions (billions of tokens) ,small context windows (a 100K context is enough) and token savings (  |
+| `GCWing/OpenBitFun` | B 其他（Rust 桌面） | MIT ✅ | 通用 | 全新但无增益 | 🔵 | proposed | 2026-10-30 | — | r114。★3397、Rust、push 2026-10-30。OpenBitFun combines a high-performance agent runtime written in Rust with a polished desktop application. It pairs the depth of a Code Agent with open  |
+| `Derpyu520/qq-bridge` | A 原生DSH（QQ 桥） | NOASSERTION ⚠ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★3327、JavaScript、push 2026-10-30。Bridge between QQ (SnowLuma OneBot v11) and DeepSeek Harness agents: social simulation, safe MCP tools, slang learning and more.  |
+| `Prism-Shadow/penguin-harness` | B 其他（TS，RSI 平台） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★3070、TypeScript、push 2026-10-30。🐧 Unified and Stable RSI Platform  |
+| `Small-tailqwq/dsh-deep-whale` | A 原生DSH（皮肤） | NOASSERTION ⚠ | 非学生 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★2973、TypeScript、push 2026-10-27。Whale Girl skin series for DeepSeek Harness. 适用于 DeepSeek Harness 的，鲸鱼娘系列皮肤。  |
+| `Tiger3807861189/J-Space-Cognition-Suite` | B 其他（Python，推理期控制套件） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★2960、Python、push 2026-09-14。J-Space Cognition Suite — a model-agnostic inference-time control suite for deep reasoning, long-horizon work, verification, and recovery. Based on An  |
+| `xmanrui/dsh-im` | A 原生DSH（IM 桥） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★2821、JavaScript、push 2026-10-30。通过扫码或机器人凭据把IM机器人接入DeepSeek Harness（支持飞书、微信、钉钉、企业微信、QQ、Slack、Telegram、Discord和WhatsApp）。 Connect IM bots to DeepSeek Harness via QR code or credentials  |
+| `zilliztech/memsearch` | B 其他（Python，Milvus 检索，DSH 侧为 MCP） | MIT ✅ | 笔记 | 重复且无增益 | 🔵 | proposed | 2026-10-30 | — | r114。★2809、Python、push 2026-10-27。A persistent, unified memory layer for all your AI agents (e.g. Claude Code, Codex, DSH), backed by Markdown and Milvus.  |
+| `mmparko/dsh-purge` | A 原生DSH（破限镜像） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★2726、JavaScript、push 2026-10-13。DeepSeek Harness 破甲 (mirror of YuJunZhiXue/dsh-purge) — 上游即将删库，此为本仓库全量镜像：含全部分支/73 个 tag/完整提交历史。原作者署名与二开要求见 README 署名章节。  |
+| `DSH-APP/DSHA` | B 其他（Java/Android 承载端） | MIT ✅ | ? | ? | 🔵 | proposed | 2026-10-30 | — | r114。★2658、Java、push 2026-10-30。免 ROOT 免 Termux，在手机上跑 DeepSeek Harness。完整 Ubuntu 环境 + proroot 零 ptrace 开销 · AI 输出实时上屏 · ADB 直连 · 数据不丢  |
+| `zhuyansen/new-term-radar` | B 其他（Python，AI 术语日报） | MIT ✅ | 非学生 | 全新但无增益 | 🔵 | proposed | 2026-10-30 | — | r114。★1976、Python、push 2026-10-28。Daily radar for new AI terms: names of new models, products and repos, caught on X, Hugging Face, GitHub and sitemaps before keyword tools list them.  |
+| `AMAP-ML/LongHorizon-Harness` | B 其他（Python，computer-use） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★1791、Python、push 2026-10-21。The long-horizon computer-use harness. Run AI agents across desktop apps and the CLI for extended periods while preserving task state and making relia  |
+| `ccch1mneyyy/dsh-Go` | B 其他（Dart 承载端） | AGPL-3.0 ⛔ | 承载端 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★1784、Dart、push 2026-10-30。dsh-go — DeepSeek Harness 装进口袋：手机本机运行，也能遥控你的电脑。  |
+| `platonai/Browser4` | B 其他（Kotlin，浏览器引擎） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★1171、Kotlin、push 2026-10-30。Browser4 — an AI-native browser engine for autonomous agents, intelligent extraction, and large-scale web automation.  |
+| `paean-ai/deeptide` | B 其他（Rust/Swift，macOS agent） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★1107、Rust、push 2026-08-22。Built by DeepSeek, for DeepSeek — a Swift-native macOS coding agent  |
+| `tong-io/tongflow` | B 其他（TS，GenAI 平台） | AGPL-3.0 ⛔ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★1048、TypeScript、push 2026-10-28。Modality-First GenAI Platform  |
+| `Tiger3807861189/GLM-5.3-Flash-J-Space-Capability-Realization-Report` | B 其他（报告仓库，无代码） | NOASSERTION ⚠ | 非学生 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★1017、—、push 2026-09-05。GLM-5.3-Flash × J-Space capability realization — benchmark presentation of the J-Space Cognition Suite  |
+| `qiz029/dscode` | B 其他（JS 编码 harness） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★999、JavaScript、push 2026-10-28。A DeepSeek coding agent harness: persistent shell, Ultra subagents, auto approval, Chrome MCP and session telemetry  |
+| `freestylefly/wesight` | B 其他（TS 桌面工作区） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★964、TypeScript、push 2026-10-01。Open-source desktop AI agent workspace with one-click Claude Code, Codex, OpenClaw, Hermes Agent setup and custom LLM model routing.  |
+| `shanliuling/dsh-image-gen` | A 原生DSH | Apache-2.0 ✅ | 非学生 | 全新但无增益 | 🔵 | proposed | 2026-10-30 | — | r114。★947、TypeScript、push 2026-10-28。 可在对话内生成、编辑、对比图像；内置 500 + 提示词、图库、多模型工作流，支持 ComfyUI。AI image studio for DeepSeek Harness — generate, edit & compare images in chat, with 500+ prompts,   |
+| `omdsh-dev/dsh-browser` | A 原生DSH（浏览器侧栏扩展） | MIT ✅ | 通用 | 全新但无增益 | 🔵 | proposed | 2026-10-30 | — | r114。★945、TypeScript、push 2026-10-01。Chrome sidebar extension that lets DeepSeek Harness operate your browser directly, no vision capabilities required. 一款 Chrome 侧边栏扩展程序，可让 DeepSeek Harn  |
+| `z91772524-ai/pojia-next` | B 其他（Python 提示词替换） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★943、Python、push 2026-10-29。十五个 AI 客户端的内置提示词一键替换：双击即用、可自证、改前备份、一键还原。v8.26：一键破甲全程托管（自动结束进程+注入+自动拉起）、注入步骤实时提示、写后自检回滚、托盘常驻。免装 Python 单文件 exe，完全免费开源。  |
+| `ZiChuanLan/agent-purge` | B 其他（JS 多客户端提示词注入） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★904、JavaScript、push 2026-10-30。One persona, many coding agents. Replace or inject system prompts across codex, claude, opencode, grok, omp, hermes, pi, zcode - with a local web cons  |
+| `LiPu-jpg/Openwrite` | A 原生DSH（小说创作插件） | Apache-2.0 ✅ | 非学生 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★903、TypeScript、push 2026-10-28。dsh-Openwrite：OpenWrite 的 DeepSeek Harness 小说创作插件，含统一创作 Agent、90 个小说工具、原生工作台与标准审稿 DAG  |
+| `beiyege-01/dsh-voice-ai-girlfriend` | A 原生DSH | NOASSERTION ⚠ | 非学生 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★833、TypeScript、push 2026-10-24。语音 AI 女友（Voice AI girlfriend for DeepSeek Harness）：Whisper 语音输入 + Qwen3-TTS 声音克隆 + 句子级流式朗读 + 数字人动画窗。插话/排队双模式，说话即打断。  |
+| `Aisland-SJL/dsh-worktable` | A 原生DSH | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★817、JavaScript、push 2026-10-27。🖥️ Agent-project workbench for DeepSeek Harness — sidebar app drawer + dockable split workspace + a live control room watching every project.  |
+| `agents-universe/agents-universe` | B 其他（Python） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★781、Python、push 2026-10-29。不是问答机器人，而是能真正干活的数字分身。共享智能体，共享项目上下文，让项目所有成员一起协同工作。同时智能体会像人一样通过资料或者工作抽象和总结经验到项目上下文中  |
+| `tommy0103/obelisk` | B 其他（JS 会话索引） | AGPL-3.0 ⛔ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★706、JavaScript、push 2026-10-30。Every past session, subagent, and workflow -- queryable by your agent, browsable by you  |
+| `fufankeji/deepseek-harness-studio` | B 其他（TS 桌面端） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★705、TypeScript、push 2026-09-01。DeepSeek Harness 零代码桌面端｜一键启动，支持 Windows 与 macOS；内置插件发现、热点插件推送、一键安装与管理、AI 智能推荐和视觉增强。  |
+| `Nagi-ovo/dsh-ads` | A 原生DSH | BSD-3-Clause ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★703、TypeScript、push 2026-10-20。把 DSH 变成 2005 年门户网站｜Parody ads, fake games, and popups for the DSH Web UI  |
+| `saya-ch/dsh-mobile` | B 其他（TS 承载端插件 + App） | Apache-2.0 ✅ | 承载端 | 全新但无增益 | 🔵 | proposed | 2026-10-30 | — | r114。★684、TypeScript、push 2026-10-30。DeepSeek Harness 的安全移动访问插件与 Android App，支持局域网和多种远程通道、iPhone/iPad 主屏幕 Web App 与网页推送，并提供移动界面适配、设备管理和自定义扩展。  |
+| `Clearailhc/clearai-dsh` | A 原生DSH（`dsh.bundle.patch` 已核） | Apache-2.0 ✅ | 笔记/论文 | 重复且无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★680、JavaScript、push 2026-10-24。ClearAI：以本体为纲的原生 DSH 插件 —— 经证据核验的研究长成可浏览的领域本体。 · ClearAI: an ontology-first DSH agent preset — evidence-checked research that grows into a domain onto  |
+| `ccch1mneyyy/working-activity` | A 原生DSH | MIT ✅ | 非学生 | 全新但无增益 | 🔵 | proposed | 2026-10-30 | — | r114。★666、TypeScript、push 2026-10-18。Lively Working-line extension for pi CLI and DSH  |
+| `adoresever/graph-memory`（npm `graph-memory`） | A 原生DSH（`dsh.bundle.patch` 已核：仓库 `1.6.0-beta.17`；**npm `1.5.8` 无 `dsh` 字段**） | **MIT** ✅（GitHub `spdx_id`；npm 包 `license` 字段为 `null`，但 tarball 内含 `LICENSE`） | 笔记 / 知识库 | **重复且无增益（记忆簇）** | ⛔ | rejected | 2026-10-30 | — | r114。★663、TS、push 2026-10-01。**唯一通过许可+锁版门的新面孔**，但仍排除：按 skill 判据①「仍是同一个面板」——它是 **81.5 KB 的 `dsh.ts`**（含完整图谱 UI 页）、`inject` = `tools,llm,systemPrompt,agentLoop,agents,sessions,credentials,tokenMeter` 八个宿主服务，并向「每轮已提交 turn」注入**从对话里用 OpenAI 抽取出来的实体图**；而本仓「笔记」页的图是**双链结构边**（`[[双链]]` 是权威真源）、「记忆」不在独立面板而在页内区块。接进来 = 新增第二套记忆页 → 判据①不成立。**另两条硬事实**：① npm `graph-memory@1.5.8` 的 `main` 指向 `index.ts`（TS 源码包），锁版需宿主支持 `--experimental-strip-types`；② 依赖 `@photostructure/sqlite@^1.0.0`（原生预编译二进制，仅 darwin/linux/win32 × x64/arm64）。**与 r113 `dsh-mnemon` 同一结论，记忆簇第 4 次封板** |
+| `firstintent/ccteam` | B 其他（Rust，多 agent 编排） | MIT ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★640、Rust、push 2026-10-21。ccteam turns the coding agents you already run (Claude Code, Codex, Grok, DeepSeek Harness, Kimi, Pi) into one team — any session can spawn, dispatch,  |
+| `sandbaseai/sandbase-harness` | B 其他（TS，agent 运行时） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★637、TypeScript、push 2026-10-18。Local-first, self-hosted AI agent runtime and MCP bridge with sandboxed sessions, memory, credentials, audit/replay, and a local Console.  |
+| `emo-xiaoyu/harness-mix` | B 其他（TS，描述为空） | Apache-2.0 ✅ | 通用 | 全新但无增益 | ⛔ | rejected | 2026-10-30 | — | r114。★620、TypeScript、push 2026-10-14。  |
+| `fyjgtddco/DSH-SW-and-CAD` | B 其他（Python 预设模式） | MIT ✅ | 非学生 | 全新但无增益 | 🔵 | proposed | 2026-10-30 | — | r114。★37、Python、push 2026-10-30。核弹，椅子，瘫坐！DSH新预设模式“工程模式”，只需要你说出“请帮我完成一个机械臂”，你的AI模型靠内部的工作流，按照要求完成对应机械的设计，完全实现“AI设计机械，无需人工干预”的场景！(测试版本：SW ：2025   DSH:0.2.1 rc3 ）  |
+| `RyanFcr/ZJU_Course` | B 其他（HTML 课程归档） | **null** ⛔ | 课程资料 | 重复且无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★192、push 2024-02-29。`zju course` 前 12 名**全部无许可证**，本行是其中最高星。纯资料仓库，无可编程资产 |
+| `Yva1nne/ZJU_Course` | B 其他（C，信电课程归档） | **null** ⛔ | 课程资料 | 重复且无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★124、push 2026-08-10。topics 自述 `academic-integrity`，属个人课程归档 |
+| `LBruyne/ZJU-SE-CourseMaterial` | B 其他（HTML） | **null** ⛔ | 课程资料 | 重复且无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★109、push 2021-08-03（5 年未动） |
+| `Clapeysron/Mycraft` | B 其他（C++，图形学大作业） | **null** ⛔ | 无 | 全新但无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★109、push 2018-01-17。Minecraft clone，非 JS、与学习流零交集 |
+| `lhmd/ZJU-course` | B 其他（C） | **null** ⛔ | 课程资料 | 重复且无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★95、push 2024-12-16 |
+| `zyxNova/ZJU-CKCMix-CS-Course-Material` | B 其他（CSS） | **null** ⛔ | 课程资料 | 重复且无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★92、push 2023-02-26。CKC 混合班课程归档 |
+| `HobbitQia/ZJU-Courses-Resources` | B 其他（HTML） | **null** ⛔ | 课程资料 | 重复且无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★85、push 2024-01-28。仓库描述为空 |
+| `IMMORTAL23/ZJU-Course_info` | B 其他（C，信安） | **null** ⛔ | 课程资料 | 重复且无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★73、push 2021-03-21 |
+| `jiangshibiao/Course-Review` | B 其他（Jupyter 复习笔记） | **null** ⛔ | 课程复习 | 重复且无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★63、push 2020-06-30。非 JS，且本仓「笔记」页已有复习流 |
+| `SJoJoK/ZJU_Charger` | B 其他JS（校区充电桩） | **null** ⛔ | 校园生活（非六域） | 全新但无增益 | 🔵 | proposed | 2026-10-31 | — | r115。★16、push 2024-10-08。**形态与本仓 `source-*` 同构**（轮询外部接口→空闲/占用状态→推送），是本轮 12 条里唯一有真实「外部数据→本地状态」逻辑的；但无许可证（不得摘取代码）、★16、且「充电桩」与六域零交集 → 判据①不成立。只登记一行 |
+| `frank-xjh/iZJU-Wiki` | B 其他（TS，国际校区 Wiki） | **null** ⛔ | 国际校区信息 | 全新但无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★6、push 2025-09-15。静态 Wiki，体量过小 |
+| `sjyinzju/ZJU-night-scare` | B 其他（TS） | **null** ⛔ | 无 | 全新但无增益 | ⛔ | rejected | 2026-10-31 | — | r115。★12、push 2026-10-07。描述仅「浙大夜惊魂」，无实质内容 |
+| `memset0/Learning-at-ZJU-Helper`（**结论更正** 🔵 → 🟡） | B 其他JS（userscript + webpack） | **MIT** ✅ | 学在浙大 **courses 域**（作业成绩/考试） | **重复且可强化**（`source-campus` 缺口） | 🟡 | proposed | 2026-10-16 | — | **r115 更正**。前三行（2026-10-16 🟡 / 10-25 🔵 / 10-30 维持 🔵）未覆盖其 `src/plugins/score-finder`：直读 `courses.zju.edu.cn/api/course/{id}/activity-reads-for-user`、`.../homework-scores`、`.../exams`。而 `dsh-zhiyun-source-campus/src/index.js:188` 自述登录域**不含 `courses.zju.edu.cn`**（全包 grep 零命中）→ **「学在浙大」本仓只做了 classroom，没做 courses**，属真实缺口而非重复。判 🟡 而非 🟢：强化路径只能走「给 `source-campus` 补域 + 两个读口」，判据③「多调了更优质实现」不成立（上游是浏览器同源 cookie 的 userscript，本仓在 host 侧）；「新建成绩页」则判据①❌ → 自行否决。**本轮因此不出骨架**。下轮 A 组应找可锁版的 `courses` 客户端 |
+
+## 2026-10-31 · C 组（r116）· 追加 22 行（SRS 子域饱和，0 🟢）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `kirilxd/claude-tutor` | B 其他JS（Claude Code 插件） | **MIT** ✅ | 复习 / 刷题 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★144、push 2026-07-20。学计划 + 自适应测验 + **SM-2** + Web 看板；形态为 Claude Code 的 `skills/commands/hooks`，**与 DSH 插件模型不同构**。SM-2 旧于 FSRS，已被 `dsh-radar-fsrs-scheduler` 覆盖 → 判据③不成立。仅作「计划→测验→看板」产品形态线索 |
+| `lo-tp/sm2-plus` | B 其他JS | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★54、push 2019-01-29。SM-2 的 JS 改良版，算法层级已被 FSRS 超越 |
+| `yodaiken/dolphinsr` | B 其他JS | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★78、push 2017-04-14。纯 SM-2，长期停更 |
+| `open-spaced-repetition/free-spaced-repetition-scheduler` | B 其他（FSRS 规范文档仓） | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★731。**FSRS 的规范/文档仓**，`ts-fsrs` 即其实现 → 只作调参说明书，无代码可摘 |
+| `maimemo/SSP-MMC` | B 其他（Python 论文代码） | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★226、push 2025-11-28。墨墨 KDD'22 的 SSP-MMC，**FSRS 源于其 DHP 模型** → 祖先而非更优；非 JS |
+| `Human-Centric-Machine-Learning/memorize` | B 其他（Jupyter） | **MIT** ✅ | 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★190、push 2023-01-10。PNAS 半衰期回归论文代码，纯学术不可工程化 |
+| `eannchen/leetsolv` | B 其他（**Go** CLI） | **MIT** ✅ | 刷题（DSA） | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★133、push 2026-07-17。定制 SM-2 + **熟悉度/重要性/推理三维**。唯一增益思路是「刷题难度感知进调度」，**Go 栈不可复用**、算法仍旧于 FSRS → 仅记思路 |
+| `zagortenay333/cronomix` | B 其他JS（GNOME Shell 扩展） | **MIT** ✅ | 计时 + 复习 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★657、push 2026-04-20。番茄钟 + 待办 + 时间追踪 + 闪卡合一，**强耦合 GNOME Shell 宿主**不可移植；「计时器与复习同面板」已由「今天」页 + `focus-machine` 覆盖。番茄钟类历史已记 rejected（第 N 轮），本条因「带 SRS」单列 |
+| `tristcoil/hanabira.org` | B 其他（NextJS + MongoDB 全栈） | **MIT** ✅ | 语言学习（日韩） | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r116。★430、push 2025-03-26。2339 文件重型平台（YouTube 沉浸 / 分词 / SRS / 挖词）。**日韩语言学习域与本仓浙大课程正交**，体量与部署成本不成比例 |
+| `CaviraOSS/PageLM` | B 其他（TS 教育平台） | **NOASSERTION** ⚠ | 学习（NotebookLM 类） | 重复且无增益 | 🔵 | pending-license | 2026-10-31 | — | r116。★2053、push 2026-10-29。**许可证无法识别 → 不采用、不摘代码**；且形态为完整平台，非可移植模块 |
+| `baobabKoodaa/cloudbite` | B 其他JS | **NOASSERTION** ⚠ | 复习 | 重复且无增益 | 🔵 | pending-license | 2026-10-31 | — | r116。★116、push 2021-10-11。云学习 SRS 小站，长期停更；**许可证待核验** |
+| `hwgilbert16/scholarsome` | B 其他（TS 闪卡） | **AGPL-3.0** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★792、push 2026-06-24。AGPL 传染，不进白名单 |
+| `endurain-project/endurain` | B 其他（Python 健身） | **AGPL-3.0** ⛔ | 锻炼 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★2350、push 2026-10-30。自托管健身追踪，AGPL |
+| `thyagoluciano/sm2` | B 其他（Dart） | **GPL-3.0** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★265。GPL + SM-2 已过时 |
+| `shashankssp12/NPTEL-MCQ-Memorizer` | B 其他（TS） | **null** ⛔ | 刷题（印度 NPTEL） | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★17、push 2025-05-18。无许可证；场景正交 |
+| `akrivka/roamsr` | B 其他JS | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★97、push 2024-10-30。**Roam Research 插件**，强耦合宿主 + 无许可证 |
+| `ryjm/srrs` | B 其他JS | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★50、push 2026-10-19。**Urbit 平台** SRS，无许可证 |
+| `joedel/spaced-repetition` | B 其他JS | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★111、push 2020-09-06。2013 年老仓，无许可证 |
+| `gtim/chessdriller` | B 其他JS（Svelte） | **null** ⛔ | 刷题（国际象棋） | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★64、push 2025-12-02、**archived**。无许可证，场景正交 |
+| `open-spaced-repetition/srs-benchmark` | B 其他（Jupyter） | **null** ⛔ | 复习 | 排除 | ⛔ | rejected | 2026-10-31 | — | r116。★282、push 2026-10-24。评测集，无工程代码 |
+| `reuseman/flashcards-obsidian` | B 其他（TS） | MIT ✅（形态不符） | 复习 | **重复且无增益** | ⛔ | rejected | 2026-10-31 | — | r116。★1112、push 2026-10-21。**Anki/Obsidian 双宿主强耦合**，不可移植；调度层已被 `ts-fsrs` 骨架覆盖 |
+| `sizwinz/StudySage-Offline-Online-AI-Note-Assistant` | B 其他（**Python**） | MIT ✅（形态不符） | 笔记 / OCR / 出题 | **重复且无增益** | ⛔ | rejected | 2026-10-31 | — | r116。★12、push 2026-07-05。**Python 桌面/终端 GUI**，非 JS 栈不可复用；OCR + 出题 + 摘要三个能力本仓均已有对应包 |
+| `tt-a1i/archify` | B 其他JS | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★91661、JS、Apache-2.0 ✅。**通用 agent skill**（Claude Code/Codex），非 DSH 插件，非 JS 项目集成对象 |
+| `hyhmrright/brooks-lint` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1552、**HTML**，MIT ✅。6 个代码质量 Agent Skills，非 JS 插件形态 |
+| `liguobao/ds-harness-remote` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1043、TS、**无许可证**。P2P 端到端加密远程访问，形态亦不合 |
+| `urzeye/ophel` | B 其他JS | **GPL-3.0** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1006、TS、**GPL-3.0** ⛔。跨平台 AI 对话整理为工作流，非 DSH 插件 |
+| `ningbainb/deepseek-harness-desktop` | A 原生DSH | BSD-3-Clause ✅ | 无关（桌面发行） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★883、JS、BSD-3-Clause ✅。Windows 客户端/安装器，本仓为 Web 工作台，形态不合 |
+| `countbot-ai/CountBot` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★783、**Python**、MIT ✅。AI Agent，非 JS 栈 |
+| `Clarklevis1995/dsh-mobile` | A 原生DSH | MIT ✅ | 无关（移动端） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★697、**Kotlin**、MIT ✅。原生 Android 端 + mobile-gateway，非 JS 栈亦非本仓形态 |
+| `EverMind-AI/SkillCorpus` | B 其他JS | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★694、**Python**、Apache-2.0 ✅。SKILL.md 语料基础设施，非 JS |
+| `6shenhonghong9/dsh-startup-screen` | A 原生DSH | MIT ✅ | 无关（皮肤） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★652、JS、MIT ✅。开屏动画，纯观感 |
+| `oxbshw/watch-skill` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★538、**Python**、MIT ✅。视频/音频/屏幕转结构化结果，非 JS |
+| `Awesome-AI-Pedia/Awesome-AI-Pedia` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★510、TS、MIT ✅。AI 资源百科，非插件、无可挂载能力 |
+| `Unclecheng-li/DeepSec` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★499、**Python**、MIT ✅。AI 安全攻防平台，无关 |
+| `MichengAI/dsh-skills-manager` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。— |
+| `FeatherHunter/dsh-mattpocock-skills-deck` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★264、TS、MIT ✅。内置 27 个第三方技能包，技能域重复无增益 |
+| `PerryLink/dsh-industry-research` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★215、TS、Apache-2.0 ✅。行业研究域包，非浙大/考试/刷题/笔记/论文/锻炼场景 |
+| `sandbaseai/sandbase-skills` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★203、**Python**、Apache-2.0 ✅。88 个 Agent Skills 包，非 JS |
+| `lencx/skills` | B 其他JS | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★196、**Shell**、MIT ✅。经验转可复用执行，非 JS |
+| `polang233/dsh-plugin-index` | A 原生DSH（描述指向） | **GPL-3.0** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★100、HTML、**GPL-3.0** ⛔。社区插件索引/市场，与本仓插件页重复 |
+| `extracurricular-ai/dsh-filesnap` | A 原生DSH | Apache-2.0 ✅ | 通用（回退） | 重复且无增益（回退域饱和） | 🔵 | proposed | 2026-10-31 | — | r117。★46、TS、Apache-2.0。**已核验** patch 存在。对话+改动文件一起 rewind/redo，无需 git。registry 已有 `SiriLee/dsh-rewind` / `Anionex/dsh-turn-rewind` / `dsh-checkpoint-rewind` |
+| `left0ver/dsh-file-review` | A 原生DSH | MIT ✅ | 通用（改动审查） | 全新（无落点面板） | 🔵 | proposed | 2026-10-31 | — | r117。★43、TS、MIT。**已核验** `dsh.bundle.patch: ./cordis.patch.yml`。agent 改完文件即时审 diff（依赖 `diff`），可配合 dsh-better-sidebar。本仓无「改动审查」面 → 不满足「同一面板」，条件性 🟡：若插件页加「最近改动」子视图则锁版挂载 |
+| `Chael-Chael/dsh-reference-anything` | A 原生DSH | MIT ✅ | 无关（@ 引用菜单） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★23、TS、MIT ✅。统一 @ 菜单引用命令/技能/文件/agent |
+| `joejojoking-cloud/dsh-file-explorer` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★21、TS、**无许可证**。文件树 + 预览 + 面板内编辑，IDE 域重复 |
+| `cherrchen/dsh-plugin-multi-root-workspace` | A 原生DSH | MIT ✅ | 无关（多根工作区） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★16、TS、MIT ✅。多文件夹 workspace，本仓单仓结构不需要 |
+| `chengzhi43/dsh-file` | A 原生DSH | MIT ✅ | 无关（编辑器） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★9、TS、MIT ✅。VS Code 风格文件管理器 |
+| `2768651338/dsh-plugin-manager` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★9、JS、MIT ✅。插件管家（设置页一键启停 + 备注），市场域饱和 |
+| `AlexPeng07/dsh-custom-plugin` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★9、TS、Apache-2.0 ✅。增强插件大杂烩（天气特效/时间线/提示词库/Mermaid/余额） |
+| `meto-ventus/dsh-ventus-plugins` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★9、JS、**无许可证**。11 插件整合包（主题/热力图/侧栏） |
+| `HaoyanZhang123/dsh-plugin-control-your-schedule` | A 原生DSH | MIT ✅ | 学习 / 今天 | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★9、**HTML**、MIT ✅。便签/画布/日程/绘制面板，本仓已有「今天」页与日历 |
+| `lhmd/dsh-director-toolkit` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★9、JS、MIT ✅。3D 艺术家工具包，无关 |
+| `panqing0313/dsh-plugin-weixin` | A 原生DSH（描述指向） | **NOASSERTION** ⚠ | 无 | 无关 | ⛔ | pending-license | 2026-10-31 | — | r117。★8、JS、**NOASSERTION** ⚠。微信 iLink 通道插件，待人工核验；形态亦不合 |
+| `better-er/dsh-classic-coding` | A 原生DSH | MIT ✅ | 无关（编辑器） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★7、TS、MIT ✅。右侧栏 Monaco 打开工作区文件，等同于 dsh-explorer 域 |
+| `xiaomengxinbb/dsh-qq-bridge` | A 原生DSH | Apache-2.0 ✅ | 无关（IM 桥） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★7、TS、Apache-2.0 ✅。QQ 私聊/群聊双向桥，与学习面板无关 |
+| `jinsiyu/dsh-code-server-app` | A 原生DSH | MIT ✅ | 无关（编辑器） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★7、JS、MIT ✅。打包安装 code-server（VSCode 网页版），重依赖、IDE 形态 |
+| `maike-china/rejection-check` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★7、JS、MIT ✅。标书废标项检查，无关 |
+| `Nexus-Aethra/Nexus-Terminal` | A 原生DSH | MIT ✅ | 无关（终端工作台） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★7、TS、MIT ✅。终端优先的 AI 工作台（dshell），形态与本仓面板制不符 |
+| `EternalNight996/dsh-ui-agents-pixe` | A 原生DSH | MIT ✅ | 无关（皮肤） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★6、JS、MIT ✅。「工作角色」页签 + 像素办公室浮层（508 张角色卡），观感类 |
+| `WJZ-P/dsh-attachments` | A 原生DSH | MIT ✅ | 通用（拖拽） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★6、JS、MIT ✅。图片/文件拖入 DSH |
+| `cholf5/dsh-plugin-file-actions` | A 原生DSH | MIT ✅ | 无关（文件卡动作） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★6、JS、MIT ✅。文件卡片复制路径/编辑器打开/终端运行 |
+| `Kr-ATG/dsh-chat-plus` | A 原生DSH | MIT ✅ | 通用（对话增强） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★6、JS、MIT ✅。零改源码的对话增强大杂烩（执行大盘/卡片/@程序），无可单一强化的底层 |
+| `1byteone/dsh-plugin-dev-tutorial` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★5、**无许可证**。教程文档，非代码 |
+| `MonshinYu/dsh-bun-compat-patch` | A 原生DSH | MIT ✅ | 无关（运行时兼容） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★4、TS、MIT ✅。在 Bundle 1.3.14 上跑 DSH，本仓已有运行时锁 |
+| `Jockjrop/dsh-usage-stats` | A 原生DSH（描述指向） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★3、JS、Apache-2.0 ✅（形态重复）。用量统计（热力图/24h token），registry 已判「用量簇 19 条 → 簇内取一」 |
+| `ymck-x/dsh-plugin-index` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★3、**Python**。插件索引（按 bundle.patch 判真伪），市场域重复 |
+| `PPawnsir/dsh-notes-plugin` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★3、JS、**无许可证**。空描述，笔记插件 |
+| `Jesse-njx/dsh-voice` | A 原生DSH | MIT ✅ | 无关（语音） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★3、TS、MIT ✅。语音输入/朗读，本仓无语音场景 |
+| `zhangguitao666/meeting-suite` | A 原生DSH | MIT ✅ | 无关（会议纪要） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★3、JS、MIT ✅。任务日历 + 会议纪要转写，非学习域 |
+| `greyoak111/siyuan-codex-bridge` | A 原生DSH | MIT ✅ | 无关（笔记桥） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★3、JS、MIT ✅。思源笔记官方 MCP 桥，本仓用自有 vault |
+| `xine2009cn/dsh-branch-inbox-guard` | A 原生DSH | MIT ✅ | 无关（分支队列） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★2、JS、MIT ✅。修 fork 子会话继承父队列提示词的问题，属 DSH 内部行为修补 |
+| `iptton-ai/dsh-plugin-session-notes` | A 原生DSH | MIT ✅ | 笔记（对话便签） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★2、JS、MIT ✅。对话内便签高亮标注（dynamic Cordis plugin），笔记域已饱和 |
+| `cultureshocked/dsh-source-notebook` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★2、JS、**无许可证**。RAG 学术笔记本 |
+| `luxiwusuobuneng/dsh-plugin-context-manager` | A 原生DSH | MIT ✅ | 通用（上下文） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★2、JS、MIT ✅。逐轮记录 + 优先级注入记忆。registry 已有 `bowenliang123/dsh-context`(★3900) 等同域 |
+| `misterbig5222-oss/dsh-highlighter` | A 原生DSH | MIT ✅ | 笔记（高亮标注） | 重复且无增益 | 🔵 | proposed | 2026-10-31 | — | r117。★2、**PowerShell**、MIT ✅。8 色高亮 + 标签，与上行同域 |
+| `jihaoran222/dsh-violet-heart` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★2、JS、MIT ✅。文本过滤（术语泄漏防护），无关 |
+| `wangzhanchao883/dsh-screenshot-capture` | A 原生DSH | MIT ✅ | 无关（截图→Obsidian） | 无关 | 🔵 | proposed | 2026-10-31 | — | r117。★2、JS、MIT ✅。浮动窗截图 + Obsidian 笔记，本仓不接 Obsidian |
+| `mattcarvercom/dsh-no-phone-home` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、JS、MIT ✅。关闭遥测的 patch-only bundle，非功能集成 |
+| `JasperGuWP/dsh-plugin-schemes` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、**PowerShell**、MIT ✅。插件开发规范文档 |
+| `DarrenIce/dsh-notes-plugin` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、TS、**无许可证**。笔记插件 |
+| `Rikinshah787/dsh-plugins` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-10-31 | — | r117。★1、JS、MIT ✅。web_fetch 阅读器 + 快记，无单一可强化点 |
+
+---
+
+## 2026-10-31 · 能力域轴 r118（闪卡/间隔重复 · 代码题库 · 公式/图表 · 白板画布）· 追加
+
+> 关键词：`dsh plugin flashcard`(5)、`dsh plugin srs`(0)、`dsh plugin spaced repetition`(5)、`dsh plugin cs61b`(0)、
+> `dsh plugin code question bank`(0)、`cordis plugin flashcard`(2)、`dsh plugin formula`(6)、`dsh plugin ink`(12)、
+> `dsh plugin whiteboard`(4)、`dsh plugin diagram`(37，取 Top15)。搜索 **10 次 = 上限**，0 次 403、0 次超时，**本轮完整**。
+> 取组依据：`node scripts/radar-rotation.mjs` 报「今日 A/B/C 均已跑过，不建议再跑」⇒ 改用**历史未使用的能力域切片**
+> （registry 2026-10-15 A 组「能力域细分」为同一做法）。原始去重后 46 条，registry 比对后 **25 条新命中**，
+> 相关性二次过滤后登记 **24 行**（`amumulam/dsh-tldraw-canvas` 已于 r112 登记，本轮重复命中不重复登记）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `zhang-guo-wen/dsh-whiteboard` | A 原生DSH | Apache-2.0 ✅ | 笔记/论文/草稿 | **重复可强化**（笔记·论文页注解层） | 🟢 | skeleton-created | 2026-10-31 | 2026-10-31 | r118。★1、JS、Apache-2.0 ✅，`npm view` 核 `@guowenzhang/dsh-whiteboard@0.4.0` **可锁版**；`dsh.bundle.patch` 实测存在。`.drawio` 开放格式画布，**只挂宿主半边**（客户端会自建左侧导航）。**已出骨架 `dsh-radar-whiteboard`** |
+| `zhang-guo-wen/dsh-drawioedit` | A 原生DSH | Apache-2.0 ✅ | 笔记/论文（编辑器） | 重复可强化（上文白板之**编辑器依赖**） | 🟡 | proposed | 2026-10-31 | — | r118。★2、JS。`@guowenzhang/dsh-drawioedit@1.2.1` 已核可锁版；是 whiteboard 的 `peerDependencies`，**必须同轮挂载，不单独集成** |
+| `Aik358/dsh-auto-memory` | A 原生DSH | BSD-3-Clause ✅ | 通用（记忆层） | 全新（本仓无自动记忆） | 🔵 | proposed | 2026-10-31 | — | r118。**★170（本轮最高）**、JS、BSD-3-Clause ✅；`@a9i5k4/dsh-auto-memory@3.3.17` 已核可锁版。三层自动巩固 + 回答前召回。**记忆簇已十余条**（registry 有 memgas/knowledge/memory-toolkit 等），簇内不重复取 |
+| `pioneer666-user/specdev-workbench` | A 原生DSH | MIT ✅ | 学习（流程图） | 重复可强化（知识页·图谱） | 🔵 | proposed | 2026-10-31 | — | r118。★5、JS。Archify 业务流程图目录 + Git 附注标签版本阅读。**依赖 Archify 外部件**，且图表簇已饱和 |
+| `Medesol/dsh-kimi-formula` | A 原生DSH | MIT ✅ | 通用（检索） | 重复且无增益（检索/provider 簇） | 🔵 | proposed | 2026-10-31 | — | r118。★3、JS。Kimi Formula API 的 `web_search` + 10 个工具。**只是模型 provider 接入**，与 modsearch 等同域 |
+| `xianglifei/fx-tui` | A 原生DSH | MIT ✅ | 无 | 无关（TUI 形态） | 🔵 | proposed | 2026-10-31 | — | r118。★2、TS。Ink/React 终端 UI bundle。本仓是 **Web 工作台**，形态不合 |
+| `qianshe/dsh-assistant-optimization` | A 原生DSH | MIT ✅ | 学习（渲染） | 重复且无增益（渲染增强簇） | 🔵 | proposed | 2026-10-31 | — | r118。★2、JS。折叠误渲染的 thinking 块 + 行内 Mermaid。**渲染器层**，本仓 Markdown 渲染链已内建，无增量 |
+| `iceBear662/dsh-vision-edge-doubao` | A 原生DSH | MIT ✅ | 论文（识图） | 重复可强化（视觉簇） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。Edge + 豆包网页版识图免 Key，含数学建模图专项。**视觉簇已取 `modlens`**，本条保留线索 |
+| `kouyichi/dsh-tui-app` | A 原生DSH | **null** ⛔ | 无 | 无关（TUI） | ⛔ | rejected | 2026-10-31 | — | r118。★1、JS、**无许可证**。Ink 终端 UI。只登记，不摘代码 |
+| `xp266/dsh-tui` | A 原生DSH | MIT ✅ | 无 | 无关（TUI） | 🔵 | proposed | 2026-10-31 | — | r118。★1、TS。ink 终端 UI |
+| `little-greenbean/dsh-tui` | A 原生DSH | MIT ✅ | 无 | 无关（TUI） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。Claude-CLI 风格终端聊天 |
+| `binduqvq/dsh-client-ui-deep-sea` | A 原生DSH | MIT ✅ | 无 | 无关（主题皮肤） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。WebGL2 水墨水面主题。**主题域本仓自建**，registry 已有 Star dew 等，皮肤簇饱和 |
+| `erzhe-lume/dsh-tool-diagram` | A 原生DSH | MIT ✅ | 学习（作图） | 重复可强化（图表/自检） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。 DiagramKit：量真实字宽、查溢出/重叠/穿框，返回「图 + 可执行修法」。**唯一带"自检"的角度**，若将来笔记里出图可用作底层校验 |
+| `timedomain1/dsh-mermaid-renderer` | A 原生DSH | MIT ✅ | 学习（渲染） | 重复且无增益（Mermaid 簇） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。可重复缩放 + 全屏 + 美化默认值。**Mermaid 渲染簇本轮 3 条**，无增益 |
+| `SmileBuild/dsh-planchart` | A 原生DSH | MIT ✅ | 学习（计划） | 重复可强化（今天/规划页） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。agent 把项目计划发成侧栏步骤 + 中间框架图。**规划页已有**，图形态可参考 |
+| `yichangyaoyue/dsh-client-ui-mermaid` | A 原生DSH | MIT ✅ | 学习（渲染） | 重复且无增益（Mermaid 簇） | 🔵 | proposed | 2026-10-31 | — | r118。★1、JS。Mermaid 围栏代码块 → SVG。Mermaid 簇第三 |
+| `anklecrusher/dsh-formula-mathtype` | A 原生DSH（描述指向） | **null** ⛔ | 论文（公式） | 无关（Office OLE） | ⛔ | rejected | 2026-10-31 | — | r118。★0、**Python**、无许可证。公式截图 → SimpleTex OCR → Word/PPT 的 MathType OLE。非 JS 栈 + 无许可 |
+| `RoacherM/trajecable-plugin` | A 原生DSH（描述指向） | **null** ⛔ | 无 | 无关（用量 HUD） | ⛔ | rejected | 2026-10-31 | — | r118。★0、JS、无许可证。coding agent 竞速日记 + token/s HUD。用量簇已判无增益 |
+| `czkssg/dsh-math-calculator` | B 其他JS | MIT ✅ | 学习（计算/符号） | 全新（本仓无符号计算） | 🔵 | proposed | 2026-10-31 | — | r118。★0、TS。64 位 BigNumber、符号微积分、线代、统计、ODE、单位换算。**仓库根无 package.json**（子目录布局），锁版前需再核；「题库」域可用作判分底层，但 ★0 过冷 |
+| `APX103/dsh-plugin-inkstone` | A 原生DSH（描述指向） | MIT ✅ | 无 | 无关（描述为空） | 🔵 | proposed | 2026-10-31 | — | r118。★0、JS、**描述为空**，无法判定相关性；`ink` 关键词误命中（"inkstone" 并非 Ink 栈） |
+| `w-j-y-wjy/awesome-dsh-plugin-fork` | B 非插件 | **null** ⛔ | 无 | 无关（清单 fork） | ⛔ | rejected | 2026-10-31 | — | r118。★0、无语言、无许可证。awesome 清单 fork，非代码项目 |
+| `zhx-xi/dsh-inkflow` | A 原生DSH | MIT ✅ | 无（小说创作） | 无关（长篇写作） | 🔵 | proposed | 2026-10-31 | — | r118。★0、TS。长篇小说创作全流程。与 `InkWeaver` 同域，非学生场景 |
+| `yaotongsb/dsh-phosphor` | A 原生DSH | MIT ✅ | 无 | 无关（TUI） | 🔵 | proposed | 2026-10-31 | — | r118。★0、TS。Matrix 风格全屏 TUI |
+| `shuishuipingan/InkWeaver` | A 原生DSH | **GPL-3.0** ⛔ | 无（小说创作） | 无关 | ⛔ | rejected | 2026-10-31 | — | r118。★3、TS 主题、自述「经过验证的 DSH 插件」。**GPL 红线**（且 npm 名 `inkweaver` 未出现在 DSH 生态白名单），只登记不摘代码 |
+| `mini-yifan/dsh-orb-cordis` | A 原生DSH | **MIT** ✅ | 课堂/投屏板书、任意窗口取一帧 | **重复可强化**（今天页问一问 + 课堂页讲义工具栏，同一面板加输入通道） | 🟢 | skeleton-created | 2026-10-31 | 2026-10-31 | r119。★293，TS，push 2026-10-26，pnpm monorepo 7 子包；`packages/bundle` 有 `dsh.bundle.patch`。npm `dsh-orb@0.2.0` 实核 MIT 与仓库版本一致。**三条边界**：不引 `preset-computer-use`（=新建 agent 模式）、不引 `./client`（=桌面悬浮球第三外壳）、截图不落本仓目录。硬风险：deps 钉死 `cordis@4.0.4` + `schemastery@3.18.4`。骨架 `dsh-radar-orb` |
+| `KannaKuron/dsh-ptc-cordis-preset` | A 原生DSH | MIT | 编码工具编排（非学生） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★8，JS，push 2026-10-30。`dsh.bundle.patch` + `client.inject` 齐全（`ui-slots`/`ui-settings`/`locale`）。面向 Code Mode 编码编排，非学习场景；与在册 `muyuanjin/dsh-ptc-plus` 同域 |
+| `AnonyJcy/dsh-j-space` | A 原生DSH | MIT | 深层推理（非学生刚需） | 无关（推理路由） | 🔵 | proposed | 2026-10-31 | — | r119。★6，**Python 主体**，push 2026-10-28。推理路由 + 持久控制器；与在册 `modlens`/`modsearch` 同「模型侧」簇，且非 JS 栈 |
+| `ddtcorex/maestro-skills` | A 原生DSH | MIT | 企业开发（Govard/Magento/Laravel） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★5，TS，push 2026-10-27 |
+| `acrylblends/acrylblends` | A 原生DSH | MIT | 通用（框架抽取） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★12，TS，push 2026-10-31。「从 Cordis 抽取的 agent 框架」，与宿主自身重叠 |
+| `rohitg00/agentmemory` | B 其他JS | Apache-2.0 | 通用 | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r119。★30039，TS，push 2026-10-29。记忆簇在册已十余条（memgas/knowledge/memory-toolkit/continual-harness 等），且为 MCP 服务非 DSH 包 |
+| `colbymchenry/codegraph` | B 其他JS | MIT | 代码理解（非学生刚需） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★76023，TS，push 2026-10-31。已预索引代码图谱；与在册 `CC19990113/dsh-plugin-codegraph` 同域，且本仓不读代码库 |
+| `serhii-londar/open-source-mac-os-apps` | B 其他JS | CC0-1.0 | — | 线索源 | 🔵 | proposed | 2026-10-31 | — | r119。★51139。Awesome 清单，非集成对象 |
+| `rohitg00/ai-engineering-from-scratch` | B（Python） | MIT | 学习（教程） | 线索源 | 🔵 | proposed | 2026-10-31 | — | r119。★75758，Python。教程型仓库，非插件 |
+| `backnotprop/plannotator` | B 其他JS | Apache-2.0 | 计划/代码评审（弱） | 重复且无增益（本仓无计划评审面板） | 🔵 | proposed | 2026-10-31 | — | r119。★9787，TS，push 2026-10-31。可视化批注 agent 计划与 diff；本仓无「计划评审」面板 ⇒ 判据①不成立 |
+| `JimLiu/baoyu-design` | B 其他JS | MIT | 非学生场景（设计） | 无关 | 🔵 | proposed | 2026-10-31 | — | r119。★5520，JS。本地跑 Claude Design 为 Agent Skill |
+| `Chinesezjc/CordisClaw` | A 原生DSH | **null** ⛔ | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★68，**Rust**，无许可证。双红线（许可证 + 技术栈） |
+| `dirmacs/ares` | A 原生DSH | MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★18，**Rust** Cordis runtime |
+| `gentt1024/Cordis.NET` | A 原生DSH | MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★11，**C#** 移植 |
+| `Fi2zz/conatus` | A 原生DSH | MIT | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★6，**Dart** 实现 |
+| `loopx-project/loopx` | B（Python） | Apache-2.0 | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★6489，Python 语义控制面 |
+| `xerj-org/xerj` | B（Rust） | Apache-2.0 | — | 技术栈不合 | ⛔ | rejected | 2026-10-31 | — | r119。★17768，Rust 搜索/MCP |
+| `voyager-crew/voyager` | B 其他JS | **GPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★20505，TS。Gemini/AI Studio/DeepSeek 增强套件 |
+| `inso1337/revl` | B（Python） | **AGPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★8，Python |
+| `cordisx/cordisx` | B 其他JS | **AGPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★5，TS，Codex Desktop 插件宿主 |
+| `ShirazuNagisa/DSH-Mizar` | A 原生DSH | **GPL-3.0** ⛔ | — | 许可证红线 | ⛔ | rejected | 2026-10-31 | — | r119。★6，TS。远程监控 DSH agent，Cordis 插件 |
+
+---
+
+## 2026-10-31 · 学生功能域轴 r120（课表/论文批注/OCR 笔记/刷题/锻炼）· 追加
+
+> 关键词（C 组）：`timetable ics export`、`paper annotation reader`、`ocr notes taking`、`quiz practice`、`fitness tracker`。
+> 首次 5 次加 `language:javascript`，得 18/10/11/2673/13523；再放宽 5 次（去掉语言限定、`per_page=20`），
+> 补充到 59/30/74/8830/48036。**搜索 10 次 = 上限**，0 次 403、0 次超时，**本轮完整**。
+> 取组依据：`node scripts/radar-rotation.mjs` → `same-day(exhausted)`（今日 A/B/C 均已跑过）⇒ 按 README 规则取
+> 「今天跑得最少」的 C 组（A=52/B=35/C=34），并同时放宽检索以降低与 r94/r112 的重复率。
+> 首轮 25 条宽松许可候选，**24 条已在册**；放宽后新面孔 30 条，**去重后仅 4 条新候选**，相关性过滤后登记 **4 行**。
+> 说明：C 组关键词池已高度饱和 —— 2026-10 已扫多轮，头部结果基本被登记完毕，本轮新候选全部为 ★≤25 的小仓库。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `piggymon907/codex-paper-reader-skill` | B 其他JS（Python+静态 HTML） | MIT ✅ | 论文（精读/证据锚点） | **重复可强化**（论文页·回答落点 页→块/句；`supports`/`does_not_support`/`limitations` 三维为全新） | 🟢 | skeleton-created | 2026-10-31 | 2026-10-31 | r120。★0，Python+JS，push 2026-08-21，release `2.7.1`。`assets/reader/reader.js` 52.7 KB + `references/data-contract.md` 给出坐标契约（PDF point 左上原点、多 `bboxes`、`visual_bbox`）与构建身份四项文本质量计数。**不可锁版**（无 npm 包、无 `package.json`，抽取层是 Python）⇒ 只取契约。⚠ 第一道闸门：上游 `/paper-reader/` 是否给「每页位图 + 块级 bbox」**未核实**。骨架 `packages/radar/dsh-radar-paper-evidence` |
+| `BurntRoses/paper-notebook` | B 其他JS | MIT ✅ | 论文（结构化学习笔记） | **重复可强化**（论文页+笔记页） | 🔵 | proposed | 2026-10-31 | — | r120。★1、TS、push 2026-10-31、建仓 2026-10-23；**仓 627 MB**（`public/promo/` 内含 11.7 MB `product-film-music.wav` 与 4 个宣传片 mp4，合计约 30 MB 仅宣传物料）。633 条目中 35 个测试、26 个 tools。能力与 `dsh-radar-paper-evidence` 高度重叠但更重，**不拟再生成骨架**；其中「离线 HTML 导出」可作 `paper-evidence` 的补充思路 |
+| `Ellie-eng-sketch/smartstudy-AI` | B 其他JS（描述指向） | MIT ✅ | 泛学生（录课/OCR 笔记） | **重复且无增益** | 🔵 | proposed | 2026-10-31 | — | r120。★1、**无语言**（GitHub 不识别，仓 26 KB）、建仓与 push 同为 2026-06-06。描述吹得很大（录课+笔记+OCR+学习助手），但 26 KB 装不下任何实现 ⇒ 判**空壳**，仅登记不作候选。与 `dsh-zhiyun-core-lecture` / `core-notes` / `dsh-radar-ocr-web` 重叠且无增益 |
+| `MohgaNabil/deutsch-lernpaket` | B 其他JS（HTML） | MIT ✅ | **非本仓场景**（德语 B2 练习） | 无关 | ⛔ | rejected | 2026-10-31 | — | r120。★25、HTML、80 KB、push 2026-09-06。三个 Claude Skill：德语 B2 每周练习（对话/测验/翻译）。形态（Skill 打包考试练习）值得借鉴，但**语种不可迁移**，与浙大学生场景无关 |
+| `khalidhasan11/campuskit` | B 其他JS（React+Capacitor+TS） | MIT ✅ | 出勤余量（还能缺几次）+ 课表 + CGPA | **重复可强化**（今天页「下一节」卡加一行余量；本仓出勤业务命中 0） | 🟢 | skeleton-created | 2026-10-31 | 2026-10-31 | r121。★2、建仓 2026-10-25、push 2026-10-26、990 KB。**只借口径不借实现**：`Present/Late/Absent/Excused` 语义（Late 计入、Excused 剔出分母）+ 每门课自带 `requiredPercentage` 值得借；但实测 `computeAttendanceMetrics()` 的 `safeMisses` **返回小数**（A=31,T=40,p=75 → 1.3333；A=41,T=50 → 4.6666），27,990 用例对线性真值逐一比对后确认根因是 `r=p/10000` 浮点除法 → 数值一律整数重算（`attended*10000 >= p*total`），**未摘代码**。骨架 `packages/radar/dsh-radar-attendance`（纯库，无 patch，`dependencies` 空）。**TODO-0 阻塞**：出勤数据从哪来（zdbk 四接口无出勤、xxt 明确不做签到） |
+| `afnan-nex/Lectura` | B 其他JS（React Native） | MIT ✅ | 出勤 + 课表 + **OCR 课表扫描** | 重复可强化（出勤同 campuskit 格；OCR 可补「接口拿不到课表」） | 🟢 | proposed | 2026-10-31 | — | r121。★3、push 2026-08-31、1.3 MB。**与 campuskit 同格**，本期骨架名额给了 campuskit（纯库更轻）。RN App 与本仓零共享 → 不整包；`safe-bunk` 公式已被 campuskit 覆盖。值钱的是 `ocr-scanner` topic：课表截图导入是 zdbk 直读之外的补通道，评审 `dsh-radar-attendance` 时一并考虑 |
+| `ThorJS24/BunkMate-Pro` | B 其他JS（Electron+React+TS） | MIT ✅ | 出勤 + 课表 + 考试倒计时 | 重复可强化（同 2.1 格） | 🔵 | proposed | 2026-10-31 | — | r121。★3、3.6 MB（drizzle + electron 打包）。核心仍是同一套 safe-bunk 数学；exams/reminders 两页本仓今天页+规划页已覆盖 → **无增益**，仅登记。与 campuskit/Lectura 共同证明「出勤余量」是**被反复实现三次**的小需求 —— 需求真实，但整包引入哪个都不划算 |
+| `GDSC-ESTIN/checkin-system` | B 其他JS（Express+React） | MIT ✅ | **教师侧**扫码签到（非学生场景） | **不在本仓方向内**（若接入即"帮老师点名"） | 🔵 | proposed | 2026-10-31 | — | r121。★24（四个候选中最高），但 push 停在 2024-04-25、两年半未动。形态是「生成二维码 + nodemailer 邮件 + 扫码端」，**方向相反**：学生工作台接到它上面就变成代点名，`dsh-zhiyun-source-xxt` 已把「不替用户签到」写成产品口径 → **不得越过**。登记留痕专用：★ 最高 ≠ 方向对，避免下轮又被 ★ 吸引回来 |
+| `TiredAsFuck/attendance-tracker` | B 其他JS（单文件 HTML PWA） | MIT ✅ | 出勤（波斯历） | **重复且无增益** | ⛔ | rejected | 2026-10-31 | — | r121。★1、建仓=push=2026-09-30、268 KB。唯一比 BunkMate 多的是 `sw.js` 离线缓存 —— 本仓是本地工作台，不靠 SW；**波斯（Jalali）历法写死**不可迁移 |
+| `intl-cjk-calendar`（**标准库能力，非仓库**） | B 其他（ECMA-402 / 宿主 ICU） | 不适用（无代码摘取） | 课表 / 放假调课 / 跨年期末 | **重复可强化**（今天页日期行 + 一段农历刻度） | **🟢** | skeleton-created | 2026-11-01 | 2026-11-01 | r122。C 组本轮无 🟢 仓库，骨架名额给了标准库能力。**实测**：Node 22.13 / ICU 76.1 下 `new Intl.DateTimeFormat('zh-CN',{calendar:'chinese',timeZone:'Asia/Shanghai'})` 直接给 `month=九月, day=23` → `九月廿三`；`2026-01-01 → 十一月十三`、`2026-02-17 → 正月初一`。**三坑**：① `format()` 混 `literal` 分隔符必须用 `formatToParts`；② `relatedYear` **不是**农历年（2026-01-01 给 2025），干支读 `yearName`；③ 语言标签 `zh-CN-...-u-ca-chinese` 会 `RangeError`，只能 `zh-CN` + `calendar` 选项。**零依赖、< 100 行，替代 1900–2100 打包位表**。闰月**未验**（TODO）。骨架 `packages/radar/dsh-radar-cjk-calendar`（`dependencies` 空）。**TODO-0 阻塞**：渲染点定在今天页哪一行 / 跟随哪个时间源 —— 若评审判「内联即可」则删包 |
+| `Weihao654/dsh-workflow` | A 原生DSH | MIT ✅ | 通用（工作流） | 重复可强化（**期限未到**） | 🔵 | proposed | 2026-11-01 | — | r122。★0、建仓 2026-10-31T13:35Z、push 同日 16:02Z（**建仓 2.5h**）、222 KB、有 `dsh` 字段。**无 Release / 无 npm → 无版本可锁**，与 `nftuoa/dsh-zotero` 首登同一挡板。「plan→work→code→work→review→work→plan 轮次状态机」；同域在册已有 3 条（`xiaoso456/dsh-workflow-lite` / `GZX2211/dsh-Visual-Workflow` / `xuanyuanzhifeng/dsh-plugin-agent-workflow`）。**回看条件**：出 `v0.x` Release 且 ★>5 |
+| `yffo/dsh-operator` | A 原生DSH | MIT ✅ | 通用（GUI 操作） | **重复且无增益** | ⛔ | rejected | 2026-11-01 | — | r122。★0、建仓 2026-10-31、212 KB、`0.8.0`。**拒绝三理由**：① 自陈 `NOTICE`「原名 dsh-orb-computer-use，能力层裁剪自 `dsh-orb` v0.2.0 的 `dist/computer-use`，删掉 `orb-host`/`ui-settings-orb`/`preset-computer-use` 三行」—— **与本仓 r119 `dsh-radar-orb` 同上游、同一次裁剪**，纯重复；② `lib/computer-use/libmacos-sck-capture.dylib` 为**预编译二进制**，不可审计且只认 macOS；③ 把 orb 的 GUI 面上限放大到 13 工具 + 后台 `code_agent`，超出「输入通道」一格。留行防下轮再被「现成裁剪版」吸引 |
+| `solopole/dsh-prompt-picker` | A 原生DSH | **null** ⛔ | 通用（提示词） | 重复可强化（形态线索） | 🔵 | proposed | 2026-11-01 | — | r122。★0、建仓 2026-10-30、165 KB。**无许可证 → 不得摘取任何代码**。仅登记形态：输入框一枚图标 → 多选 system-prompt 注入，**每行可限定作用域 `both/main/sub`**（比本仓现有注入更细）。实现不看 |
+| `Anchorite-no/campus-agent` | B 其他JS（Electron） | **null** ⛔ | 浙大 / 学习核心 | 重复且无增益（**外壳主张冲突**） | ⛔ | rejected | 2026-11-01 | — | r122。★0、建仓 2026-10-31、**50 MB**、描述「自写 Electron 壳 + 校园界面包 + ZJU / Learning core，引擎用 DeepSeek Harness」—— **同宿主、同场景，最像本仓的一个**。但 `license: null` 且「自写壳」与本仓 `dsh-zhiyun-shell-workbench` + `dsh-zhiyun-shell-ui` 抢外壳主张。**只作需求对照** |
+| `iridescent2026/zju-campus-safety-agent` | B 其他JS | **null** ⛔ | 校园安全（非学习） | 不在本仓方向内 | ⛔ | rejected | 2026-11-01 | — | r122。★0、push 2026-10-21、21 MB。浙大校园安全数字孪生（参赛作品）。方向在「平安校园」，与学习工作台正交；`null` 许可证 |
+| `jadeocr/jadeocr` | B 其他JS | MIT ✅ | 日语汉字（可迁移：**中文手写识别**） | 重复可强化（手写通道） | 🔵 | proposed | 2026-11-01 | — | r122。★30。闪卡本体无增益（本仓 `dsh-radar-fsrs-scheduler` 已锁 FSRS）；值钱的是 **handwriting recognition for CJK** —— 纸质笔记进笔记页的潜在补通道。但场景是**日语汉字教学**，中文手写模型未必通用 → 仅线索 |
+
+---
+
+## 2026-11-01 · 插件本体能力核对轴 r123（A 组时间窗 · deepseek-harness / cordis plugin / dsh plugin / dsh-market / dsh-desktop）· 追加
+
+> 关键词（A 组 + `pushed:` 时间窗）：`deepseek-harness pushed:>2026-10-30`（1982）、`cordis plugin pushed:>2026-10-29`（176）、
+> `dsh plugin pushed:>2026-10-30`（844）、`dsh-market pushed:>2026-10-25`（129）、`dsh-desktop pushed:>2026-10-28`（255）。
+> **搜索 5 次 / 上限 10**；0 次 403 于搜索，元数据批次触到 60/h 限额（未丢失已得数据），**搜索面完整**。
+> 取组说明：脚本按 `same-day(unused)` 给 B，本轮**按 A 组最高优先 + r122 校准结论**改跑 A 时间窗；**B 组欠一轮**，下一轮补。
+> 原始去重 122、未登记 91、相关性过滤后留档 **4 行**（🟡1 / 🔵2 / ⛔1）。
+> **本轮自我修正**：`dsh-armory` 的「使用账本」原判为空白，写骨架时核对发现本仓
+> `packages/dsh-zhiyun-page-plugins/src/usage.js` 早已有 `count`/`lastUsed`/`STALE_DAYS=30`
+> （r112 从 `dsh-knowledge-graph` 提取）⇒ 判据③不成立，**🟢 降 🟡**，骨架收窄为纯能力清单。
+> 下轮口径：**出骨架前必须先 `grep` 目标面板 `src/`**。**90 条未登记但未成行**的原因见报告 §3：
+> 62 条是「插件市场索引」（词面被噪声淹没：`dsh-market`/`dsh-desktop` 首屏几乎全为 format 1 索引与 marketplace），
+> 19 条 `null` 许可证，5 条目录站（在册已有 3 个，不再逐条登记），其余为当天新建的 ★0 单文件炒作仓。
+> **本轮口径收紧**：建仓 < 48h ∧ ★0 ∧ 无 Release ⇒ 不判 🟢/🟡（只登记）。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `2026heshao/dsh-armory` | A 原生DSH | MIT ✅ | 工作台可用性（插件页「它提供了什么」） | **重复可强化，但判据③不成立**（本仓 `page-plugins/src/usage.js` 已覆盖使用账本 ⇒ 只剩一张静态能力清单） | 🟡 | skeleton-created | 2026-11-01 | 2026-11-01 | r123（**自我修正**：起骨架时误判「使用账本」为空白，实为 r112 已从 `dsh-knowledge-graph` 提取，见 `page-plugins/src/usage.js` 文件头）⇒ **不应按「强化」批准**。★62、JS、14.0 MB、建仓 2026-10-10、push 2026-10-31、npm `dsh-armory@2.4.7`。实核 `dsh.bundle.patch: ./cordis.patch.yml`、`peer @deepseek-ai/cordis ~4.0.2`、其余 peer 全 `>=0.1.5-rc.1`（与本仓版本带相容）。补的格：`dsh-zhiyun-page-plugins` 只答「关掉谁会不会连坐」（模块边/拓扑序/两棵树的硬边），**不答「这个插件提供什么」**——上游的 `src/usage.js` 给 `tool × 调用次数 × 累计毫秒 × 失败次数` 账本 + 每个已装插件的工具名/命令名/槽位清单。**整包不可挂**：它是一体看板（MCP 管理 + Skill 市场 + WorkBuddy expert + 六档主题 + MCP OAuth 授权），挂上会在插件页旁多出自己的面板（违反「同一面板」），且与在册 `dsh-radar-mcp-manager` 职责重叠 ⇒ 骨架**只取契约、`dependencies` 为空**。骨架 `packages/radar/dsh-radar-plugin-caps`。**TODO-0 阻塞**：能力清单读宿主 `manifest`（零成本、只有 patch 行名）还是扫每个包的 `package.json`+patch（准确、需新开 `/api/zhiyun-plugin-caps`），以及是否与 `/api/zhiyun-plugins` 撞缓存 |
+| `lengrufeng2008/dsh-trading-floor` | A 原生DSH | MIT ✅ | 通用（会话读数） | **重复且无增益**（相对 plugin-caps 账本） | 🔵 | proposed | 2026-11-01 | — | r123。★0、JS、建仓与 push 同周。只读会话台：active book / token mix / context / **tool time** / idle-rate spend。「tool time」与 `plugin-caps` 账本同格但**无跨插件归因**；「idle-rate spend」属用量簇（在册 23+ 条已饱和）。按本轮收紧口径（<48h ∧ ★0）+ 无增益 → 只登记 |
+| `adithyanraj03/dsh-graft-plugin` | A 原生DSH | MIT ✅ | **课设 / 课程项目**（读别人的代码） | **条件性可强化，但落点面板不存在** | 🔵 | proposed | 2026-11-01 | — | r123。★4、JS、`0.3.3`、push 2026-10-31。实核 `dsh.bundle.patch` + `dsh.client.inject: ["@deepseek-ai/dsh-api-remotes"]`。上游 graft(MIT, trailhq)：符号级代码图（每符号 `file:line` 跨度 + 谁调谁）+ 5 工具（`graft_ask`/`grep`/`callers`/`skeleton`/`map`，**全部 exec 到 `graft` CLI**，需 `npm i -g @nanonets/graft`，pnpm 10+ 默认拦 postinstall），可视化落右侧栏。与本仓 `dsh-radar-plugin-graph`（注册图）、插件页（依赖图）**都不是同一张图**。**不判 🟡**：本仓没有「代码/仓库」面板，三条件第①条不成立；若评审新增「代码」页则应重评 🟡。⚠ 外部 CLI 硬依赖与本仓「不改平台工具链」相冲 |
+| `YurinKonstantin/dsh-rustore` | A 原生DSH | MIT ✅ | —（应用商店发布） | 无关 | ⛔ | rejected | 2026-11-01 | — | r123。★0、54 KB、建仓=push=2026-10-31。RuStore 发布 API 的 DSH 封装（草稿/上传/审核/灰度），需第三方商店凭据。与学习工作台、浙大场景均正交。只作「插件如何包一个外部发布 API」的范本留痕 |

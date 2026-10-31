@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-mneme",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 @modusensus/dsh-mneme@0.9.5，把「跨会话学习记忆」的召回轴（CJK bigram BM25 + 实体图 + 查询自适应阈值）作为「我的」页记忆台账的下层实现（强化式集成，A 类：锁版挂载上游 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@modusensus/dsh-mneme": "0.9.5"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

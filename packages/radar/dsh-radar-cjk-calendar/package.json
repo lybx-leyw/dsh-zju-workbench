@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-cjk-calendar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】把「农历 / 节气 / 周次」接进今天页已有的日期行：公历只是本仓唯一的时间刻度，农历只是同一行上的另一套刻度（强化式集成，零运行时依赖）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-orb",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版挂载上游 dsh-orb@0.2.0，把「任意窗口截图 → 进一次会话」接进今天页/课堂页的既有入口（同一面板，底层换更优实现）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-orb": "0.2.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

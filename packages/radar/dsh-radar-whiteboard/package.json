@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-whiteboard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版挂载上游 @guowenzhang/dsh-whiteboard@0.4.0，为「笔记」与「论文」页补上 .drawio 白板注解层（同一面板内嵌，不新增导航项）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@guowenzhang/dsh-whiteboard": "0.4.0",
+    "@guowenzhang/dsh-drawioedit": "1.2.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
