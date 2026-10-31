@@ -3,11 +3,71 @@ export {QuestionHistory} from './question-history.jsx';
 import { QuestionGenerationProgress } from './question-generation-progress.jsx';
 import {GenerationModels} from './generation-models.jsx';
 import React, { useEffect, useState, useSyncExternalStore,useRef,useId } from 'react';
+import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { useStudy } from 'dsh-zhiyun-shell-ui';
 import { QUESTION_STRATEGIES, QUESTION_TYPES, STRATEGY_PRESETS, allocateStrategies } from 'dsh-zhiyun-core-quiz';
 
 const useBank = bank => useSyncExternalStore(bank.subscribe,bank.getSnapshot,bank.getSnapshot);
+
+/**
+ * 题干里的挖空标记渲染成横线。
+ *
+ * 只替换 `{{c1::答案}}` 这一层，**不碰 $...$ / $$...$$** ——
+ * 公式交给下游的 MarkdownText（它内部带 KaTeX）处理。
+ */
 const questionText = question => question.stem.replace(/\{\{c\d+::[^}]*\}\}/g,'____');
+
+/**
+ * 宿主 Markdown 渲染器的文案。
+ *
+ * 必须是**模块级常量**：`MarkdownText` 按 `labels` 的**身份**缓存组件表，
+ * 每次渲染新建一个字面量会让它反复重建（`page-docs` / `page-feedback` 同样写法）。
+ */
+const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
+
+/**
+ * 渲染可能含 LaTeX 的题目文本。
+ *
+ * # 为什么走 MarkdownText 而不是自己拼 KaTeX
+ *
+ * 宿主的 `MarkdownText` 内部已接 KaTeX（`renderTexToReact` -> `katex.renderToString`），
+ * 并自带 `katex/dist/katex.min.css`。学习页、文档页、反馈页都用它 ——
+ * 自己再接一份会出现「同一份公式在刷题页和学习页字号不一致」，
+ * 也要为一次渲染再引一遍 0.18.x 的样式与字体。
+ *
+ * # 分隔符不需要自己转换
+ *
+ * 读宿主的解析器实现可以确认，它原生支持四种写法：
+ *   行内 `$x$`         —— mathText 的常规 marker
+ *   块级 `$$x$$`       —— mathFlow 的 marker
+ *   行内 反斜杠括号写法 —— mathText 分支显式检查了 backslash + leftParenthesis
+ *   块级 反斜杠方括号写法 —— 同一分支的方括号变体
+ *
+ * 所以这里不做任何替换。早先版本把反斜杠括号写法改写成 `$...$`，
+ * 那是在没读实现的情况下、按「KaTeX 通常只认 $」的假设写的 —— 多余，
+ * 而且正文里若出现真正的转义序列还会改错。
+ */
+
+/** 原样返回：保留这个落点，将来真需要归一化时只改这里。 */
+function mathText(value) {
+  return typeof value === 'string' ? value : '';
+}
+
+/**
+ * 题干 / 选项 / 答案 / 解析的统一渲染入口。
+ *
+ * `inline` 为真时用于选项与行内答案（不产生块级元素），否则用于题干与解析。
+ * 空文本返回 null，避免留下一个空段落撑高度。
+ */
+function RichText({ text, className, inline = false }) {
+  const normalized = mathText(text);
+  if (!normalized.trim()) return null;
+  // MarkdownText 产出的是块元素；选项那种需要行内流的地方用 div 包一层即可（浏览器允许）。
+  return <div className={className} data-math="1">
+    <MarkdownText text={normalized} labels={MARKDOWN_LABELS} />
+  </div>;
+}
+
 const typeName = type => QUESTION_TYPES[type] ?? type;
 const strategyName=id=>QUESTION_STRATEGIES[id]?.label??'历史题目';
 
@@ -30,7 +90,16 @@ export function QuestionBankPage({ controller }) {
     </header>
     <section className="zs-qz-gate"><p>登录后才能读取课程知识点与历史题目。</p></section>
   </div>;
-  const tabs=[['出题','新题'],['练习','组卷'],['历史题库',String(state.questions.length)]];
+  // 「历史题库」角标只数在用的题。
+  //
+  // 原来取 state.questions.length —— 那是**原始数组，含已弃用**；
+  // 而右侧统计里的「题目」取 coverage.questions（后端已过滤 rejected）。
+  // 两个口径并列显示，用户会看到「历史题库 53」和「题目 9」打架。
+  // 弃用是用户主动做的决定，不该继续占据题量读数。
+  //
+  // 注意不能改 state.questions 本身：历史题库页要用它分「在用 / 已弃用」两栏。
+  const activeCount = state.questions.filter(q => q.status !== 'rejected').length;
+  const tabs=[['出题','新题'],['练习','组卷'],['历史题库',String(activeCount)]];
   const stats=state.coverage?[['题目',state.coverage.questions],['知识点',state.coverage.points],['概念',state.coverage.concepts],['考察角度',state.coverage.angles]]:null;
   return <div className="zs-qz-page" data-page="quiz">
     <header className="zs-qz-header">
@@ -225,20 +294,120 @@ function Practice({ bank,state }) {
     <p className="zs-qz-explanation">从已有题库组卷，不自动生成。交错模式按比例抽取未做题与已做题；某类不足时用另一类补齐。简答题对照评分要点自评。</p>
   </section>;
 }
+/**
+ * 判分结果的标题文案。
+ *
+ * 三档 grading 的来源见 core-study/grading.js：
+ *   exact —— 系统精确匹配（选择题、判断题、命中标准答案的填空）
+ *   llm   —— 模型判定（简答题，以及未命中的填空题）
+ *   self  —— 模型不可用时的降级（如实说「未能自动评判」，不假装判了对错）
+ */
+const verdictLabel = attempt => {
+  if (attempt?.grading === 'self') return '未能自动评判';
+  if (attempt?.verdict === 'correct') return '回答正确';
+  if (attempt?.verdict === 'partial') return '部分正确';
+  return '需要再看一次';
+};
+
 function PracticeSession({ bank,state }) {
-  const [index,setIndex]=useState(0),[response,setResponse]=useState(''),[revealed,setRevealed]=useState(false);
-  const question=state.practice.questions[index],grade=state.answers[question.id];
-  return <section className="zs-qz-practice"><div className="zs-qz-section-title"><h2>第 {index+1} / {state.practice.questions.length} 题 · {typeName(question.type)}</h2><button className="zs-text" onClick={()=>bank.finish()}>结束本次练习</button></div>
-    <p className="zs-muted">{question.courseTitle} / {question.pointTitle}</p><p className="zs-qz-stem">{questionText(question)}</p>
+  // 本次练习里被「跳过 / 弃用」拿掉的题。
+  //
+  // 为什么不改 state.practice.questions 本身：那份数据带着 sessionId，
+  // 是后端发下来的会话快照。就地改它会让「下一题」的索引用到错误的数组，
+  // 也会在刷新后被还原成没跳过 —— 用户会以为自己的操作丢了。
+  // 用一份本地移除集合，只影响这次渲染。
+  const [removed,setRemoved]=useState(()=>new Set());
+  const [index,setIndex]=useState(0),[response,setResponse]=useState('');
+  const [notice,setNotice]=useState('');
+
+  const all=state.practice.questions;
+  // 实际还留在队列里的题：跳过的和弃用的都不再出现
+  const queue=all.filter(q=>!removed.has(q.id));
+  const question=queue[Math.min(index,Math.max(0,queue.length-1))];
+  const grade=question?state.answers[question.id]:null;
+
+  if(!question) return <section className="zs-qz-practice">
+    <div className="zs-qz-section-title"><h2>本次练习已结束</h2></div>
+    <p className="zs-muted">共 {all.length} 道，跳过或弃用 {removed.size} 道。</p>
+    <div><button className="zs-primary" onClick={()=>bank.finish()}>完成练习</button></div>
+  </section>;
+
+  const advance=()=>{
+    // 当前题若被移除，索引不动（后面那道自动补位）；否则前进一位
+    setResponse('');
+    setNotice('');
+    if(index+1>=queue.length) return bank.finish();
+    setIndex(index+1);
+  };
+
+  /**
+   * 跳过：只在「解析出来前」可用。
+   *
+   * 语义是「这次不想做这道」，不是「这题有问题」—— 所以不写 attempt、
+   * 不判分、不改题目状态。下次练习它还会出现。
+   * 解析已经出来后不给跳：那时这道题的信息已经看过了，
+   * 再跳过会让练习记录与实际掌握情况脱节。
+   */
+  const skip=()=>{
+    setRemoved(current=>new Set(current).add(question.id));
+    setNotice(`已跳过 1 道；共跳过 ${removed.size+1} 道。`);
+    setResponse('');
+  };
+
+  /**
+   * 弃用：任何阶段都可用（解析前 / 解析后）。
+   *
+   * 这是对题目本身的判断（内容有问题、重复、太难…），所以走 bank.discard
+   * 把题目标记为 rejected，并从本次练习里一起拿掉。
+   * 弃用是持久操作，失败时 bank 那层会回滚并给出提示，这里不重复处理。
+   */
+  const discard=async()=>{
+    const done=await bank.discard(question.id);
+    if(!done) return;                 // 失败已在 bank 层提示并回滚
+    setRemoved(current=>new Set(current).add(question.id));
+    setResponse('');
+    setNotice('已弃用 1 道题，不会再出现在练习里。');
+  };
+
+  const subjective=question.type==='shortAnswer';
+  return <section className="zs-qz-practice">
+    <div className="zs-qz-section-title">
+      <h2>第 {Math.min(index+1,queue.length)} / {queue.length} 题 · {typeName(question.type)}</h2>
+      <div className="zs-qz-practice-actions">
+        {/* 跳过只在解析出来前可用 */}
+        {!grade&&<button type="button" className="zs-text" disabled={state.busy} onClick={skip}>跳过本题</button>}
+        {/* 弃用任何时候都可用 */}
+        <button type="button" className="zs-text" data-tone="danger" disabled={state.busy} onClick={discard}>弃用本题</button>
+        <button type="button" className="zs-text" onClick={()=>bank.finish()}>结束本次练习</button>
+      </div>
+    </div>
+    {notice&&<p className="zs-qz-notice" role="status">{notice}</p>}
+    <p className="zs-muted">{question.courseTitle} / {question.pointTitle}</p><RichText className="zs-qz-stem" text={questionText(question)}/>
     {question.requiresSourceReview&&<p className="zs-muted">资料有尚未确认的提示，请结合原文核对参考答案。</p>}
-    <form onSubmit={event=>{event.preventDefault();if(question.type==='shortAnswer')setRevealed(true);else void bank.answer(question.id,response);}}>
-      {['mcq','trueFalse'].includes(question.type)?<fieldset disabled={Boolean(grade)||state.busy}><legend>选择答案</legend>{(question.type==='mcq'?question.choices:[{label:'正确',text:''},{label:'错误',text:''}]).map(choice=><label className="zs-qz-choice" key={choice.label}><input type="radio" name={question.id} value={choice.label} checked={response===choice.label} onChange={event=>setResponse(event.target.value)}/>{choice.label}{choice.text?`. ${choice.text}`:''}</label>)}</fieldset>
-        :question.type==='shortAnswer'?<label className="zs-qz-field">你的解答<textarea aria-label="你的解答" rows="6" maxLength="5000" disabled={Boolean(grade)||revealed||state.busy} value={response} onChange={event=>setResponse(event.target.value)} placeholder="写出推理、计算过程或实验方案"/></label>
+    <form onSubmit={event=>{event.preventDefault();void bank.answer(question.id,response);}}>
+      {['mcq','trueFalse'].includes(question.type)?<fieldset disabled={Boolean(grade)||state.busy}><legend>选择答案</legend>{(question.type==='mcq'?question.choices:[{label:'正确',text:''},{label:'错误',text:''}]).map(choice=><label className="zs-qz-choice" key={choice.label}><input type="radio" name={question.id} value={choice.label} checked={response===choice.label} onChange={event=>setResponse(event.target.value)}/><b className="zs-qz-choice-label">{choice.label}</b><RichText className="zs-qz-choice-text" inline text={choice.text}/></label>)}</fieldset>
+        :subjective?<label className="zs-qz-field">你的解答<textarea aria-label="你的解答" rows="6" maxLength="5000" disabled={Boolean(grade)||state.busy} value={response} onChange={event=>setResponse(event.target.value)} placeholder="写出推理、计算过程或实验方案"/></label>
         :<label className="zs-qz-field">填写答案<input aria-label="填写答案" disabled={Boolean(grade)||state.busy} value={response} onChange={event=>setResponse(event.target.value)} placeholder="多个空用分号分隔"/></label>}
-      {!grade&&!revealed&&<button className="zs-primary" disabled={state.busy||!response.trim()}>{question.type==='shortAnswer'?'对照参考答案':'提交答案'}</button>}
+      {!grade&&<button className="zs-primary" disabled={state.busy||!response.trim()}>{state.busy?(subjective?'正在评判…':'提交中…'):'提交答案'}</button>}
     </form>
-    {revealed&&!grade&&<div className="zs-qz-feedback"><strong>参考答案 · 请按要点评价自己的解答</strong><p>{question.answer}</p>{question.explanation&&<p>{question.explanation}</p>}<ul>{question.rubric?.map((item,i)=><li key={i}>{item}</li>)}</ul><div className="zs-qz-self-grade">{[['correct','掌握了'],['partial','部分掌握'],['incorrect','需要复习']].map(([value,label])=><button type="button" className="zs-button" disabled={state.busy} key={value} onClick={()=>bank.answer(question.id,response,value)}>{label}</button>)}</div></div>}
-    {grade&&<div className="zs-qz-feedback"><strong>{grade.attempt.grading==='self'?'自评已记录':grade.attempt.verdict==='correct'?'回答正确':'对照答案，再巩固一次'}</strong>{grade.attempt.grading==='self'&&<p>本次自评：{({correct:'掌握了',partial:'部分掌握',incorrect:'需要复习'})[grade.attempt.verdict]}</p>}<p>答案：{grade.answer}</p>{grade.explanation&&<p>{grade.explanation}</p>}{question.rubric?.length>0&&<ul>{question.rubric.map((item,i)=><li key={i}>{item}</li>)}</ul>}{grade.basis&&<blockquote>原文依据：{grade.basis}</blockquote>}{question.type==='cloze'&&<small>填空按标准答案和已知同义表达比对，其余表达可对照自行判断。</small>}
-      <div><button className="zs-primary" onClick={()=>{if(index+1<state.practice.questions.length){setIndex(index+1);setResponse('');setRevealed(false);}else bank.finish();}}>{index+1<state.practice.questions.length?'下一题':'完成练习'}</button></div></div>}
+    {grade&&<div className="zs-qz-feedback" data-verdict={grade.attempt.verdict}>
+      {/* 一句评价：客观题是固定文案，主观题来自模型（grading.js 组装） */}
+      <div className="zs-qz-comment">
+        <strong>{verdictLabel(grade.attempt)}</strong>
+        {grade.attempt.comment&&<p>{grade.attempt.comment}</p>}
+      </div>
+      {/* 解析与原文依据始终展示 —— 答错要看，答对也值得确认依据 */}
+      <div className="zs-qz-answer"><span>答案</span><RichText text={grade.answer}/></div>
+      {grade.explanation&&<RichText className="zs-qz-explanation" text={grade.explanation}/>}
+      {question.rubric?.length>0&&<ul>{question.rubric.map((item,i)=><li key={i}>{item}</li>)}</ul>}
+      {/* 原文依据默认收起：它是「核对用的证据」，不是每次作答都要读的主信息。
+          展开后仍可对照讲义原文，但默认不占解析的注意力。 */}
+      {grade.basis&&<details className="zs-qz-basis">
+        <summary>原文依据</summary>
+        <RichText text={grade.basis}/>
+      </details>}
+      {question.type==='cloze'&&<small>填空已按标准答案与同义表达比对；仍有疑问可对照上方解析。</small>}
+      <div><button className="zs-primary" onClick={advance}>{index+1<queue.length?'下一题':'完成练习'}</button></div>
+    </div>}
   </section>;
 }

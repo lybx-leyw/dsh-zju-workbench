@@ -174,6 +174,10 @@ function bankQuestion(raw,task,provenance){
   const p=task.point;
   return {...raw,id:raw.id??randomUUID(),type:raw.type??task.type,courseId:p.courseId,subId:p.subId,pointId:p.id,pointKey:pointIdentity(p),
     pointTitle:p.title,courseTitle:p.courseTitle??p.courseId,lessonTitle:p.lessonTitle??p.subId,
+    // 学期也存进题目：笔记库目录是「学期 / 课程 / 节次」，缺这一层会让
+    // 题库导出的文件落到与讲义不同的位置 —— 同一门课出现两个文件夹。
+    // 生成时记下来最可靠；导出时再去查课堂服务可能拿到不同的值（或拿不到）。
+    termName:p.termName??'',
     blockIndex:p.blockIndexes[0]??0,page:p.page,atSec:p.atSec,sourceBlockIndexes:p.blockIndexes,
     strategy:task.strategy,status:'proposed',reviewState:provenance.engine==='deeptutor-native'?'upstream':'ready',choices:raw.choices??[],attempts:[],
     basis:typeof raw.basis==='string'?raw.basis:p.text,sourceEvidence:typeof raw.basis==='string'?undefined:raw.basis,

@@ -38,7 +38,8 @@
     "classroom:parity": "node scripts/classroom-parity.mjs",
     "classroom:live-probe": "node scripts/classroom-live-probe.mjs",
     "test:host": "node scripts/test-host.mjs",
-    "test:desktop": "node scripts/test-desktop.mjs"
+    "test:desktop": "node scripts/test-desktop.mjs",
+    "classroom:golden-parity": "node scripts/classroom-golden-parity.mjs"
   },
   "devDependencies": {
     "@deepseek-ai/dsh-atomic-write": "^0.2.0-rc.2",

@@ -1,0 +1,25 @@
+{
+  "name": "dsh-zhiyun-page-classroom-build",
+  "version": "0.1.0",
+  "description": "智云 Pro「生成课堂」页：brief → 可编辑大纲 → 流式生成进度（页面插件）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./progress": "./src/progress.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "dsh-zhiyun-shell-ui"
+      ]
+    }
+  }
+}

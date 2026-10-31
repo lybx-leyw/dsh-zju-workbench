@@ -56,3 +56,22 @@ vendor/
 /archive/*/
 # 归档说明本身要进仓库 —— 它是「为什么归档、怎么还原」的唯一记录。
 !/archive/README.md
+
+# 上游对照快照：OpenMAIC 全量源码（2.9 GB / 760k 行），本地只作移植对照，
+# 见 docs/architecture/classroom-port.md。需要时重新 clone 到 ref/。
+/ref/
+
+# 课堂移植把上游内核（dsl / geometry / renderer）vendor 进了包内，与根 `vendor/`
+# 的「不进仓库」策略相反：这几个包没有上游 lock 文件可回放，体积也只 3.5 MB，
+# 打包进仓库才能让 clone 后直接跑测试。unpdf 同理（PDF 文本抽取的唯一本地方案）。
+!packages/dsh-zhiyun-classroom-dsl/vendor/
+!packages/dsh-zhiyun-classroom-dsl/vendor/**
+!packages/dsh-zhiyun-classroom-geometry/vendor/
+!packages/dsh-zhiyun-classroom-geometry/vendor/**
+!packages/dsh-zhiyun-classroom-renderer/vendor/
+!packages/dsh-zhiyun-classroom-renderer/vendor/**
+!packages/dsh-zhiyun-core-classroom-media/vendor/
+!packages/dsh-zhiyun-core-classroom-media/vendor/**
+
+# 渲染一致性校验的临时产物目录（每次跑会重新生成）。
+/.verify-render-*/

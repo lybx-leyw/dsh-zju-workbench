@@ -1,0 +1,213 @@
+/*
+ * 「课堂播放」页的样式（规范 §5）。
+ *
+ * 选择器一律 `.zyc-play-` 前缀：与外壳的 `.zy-`、渲染层的 `.zyc-`、舞台的
+ * `.zyc-stage-` 都不相交，因此不靠挂载顺序决胜。基规则在上、@media 覆盖在下。
+ */
+
+.zyc-play {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  min-height: 420px;
+}
+
+/* ---------------------------------------------------------------- 头部与进度 */
+
+.zyc-play-head { display: flex; flex-direction: column; gap: 10px; }
+.zyc-play-heading { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.zyc-play-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--zy-muted, #8a8a8a);
+}
+.zyc-play-title { margin: 0; font-size: 18px; font-weight: 600; color: var(--zy-text, #1a1a1a); }
+.zyc-play-meta {
+  margin: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--zy-secondary, #6b6b6b);
+}
+
+.zyc-play-progress { display: flex; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.zyc-play-progress-item { flex: 1 1 0; min-width: 10px; }
+.zyc-play-progress-seg {
+  display: block;
+  width: 100%;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--zy-line, #e3e3e3);
+  cursor: pointer;
+}
+/* 进度条只高亮当前一场：类型只给当前那一段上色，避免整条看起来「都放过了」。 */
+.zyc-play-progress-fill { display: block; height: 100%; border-radius: inherit; }
+.zyc-play-progress-seg[data-active="true"] .zyc-play-progress-fill { background: var(--zy-accent, #2b6cb0); }
+.zyc-play-progress-seg[data-active="true"][data-type="interactive"] .zyc-play-progress-fill { background: #4f9d69; }
+.zyc-play-progress-seg[data-active="true"][data-type="pbl"] .zyc-play-progress-fill { background: #b07a2b; }
+
+/* ---------------------------------------------------------------- 舞台 */
+
+.zyc-play-body { display: flex; align-items: center; justify-content: center; min-height: 260px; }
+.zyc-play-scene { display: flex; justify-content: center; width: 100%; }
+.zyc-play-scene--quiz,
+.zyc-play-scene--pbl { justify-content: stretch; }
+.zyc-play-canvas {
+  max-width: 100%;
+  border: 1px solid var(--zy-line, #e3e3e3);
+  border-radius: 10px;
+  overflow: auto;
+  background: var(--zy-surface, #fff);
+}
+
+.zyc-play-placeholder {
+  width: 100%;
+  border: 1px dashed var(--zy-line, #e3e3e3);
+  border-radius: 10px;
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--zy-secondary, #6b6b6b);
+}
+.zyc-play-placeholder strong { display: block; font-size: 14px; font-weight: 500; color: var(--zy-text, #1a1a1a); }
+.zyc-play-placeholder p { margin: 6px 0 0; font-size: 12px; }
+.zyc-play-note { margin: 8px 0 0; font-size: 12px; color: var(--zy-muted, #8a8a8a); }
+
+/* ---------------------------------------------------------------- quiz */
+
+.zyc-play-quiz { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 640px; }
+.zyc-play-quiz-card {
+  border: 1px solid var(--zy-line, #e3e3e3);
+  border-radius: 10px;
+  padding: 18px 20px;
+  background: var(--zy-surface, #fff);
+}
+.zyc-play-quiz-stem {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--zy-text, #1a1a1a);
+}
+.zyc-play-quiz-index {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--zy-soft, #f4f4f4);
+  font-size: 11px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--zy-secondary, #6b6b6b);
+}
+.zyc-play-options { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.zyc-play-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--zy-line, #e3e3e3);
+  border-radius: 8px;
+  background: var(--zy-surface, #fff);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.zyc-play-option:disabled { cursor: default; }
+.zyc-play-option[data-state="correct"] { border-color: #4f9d69; background: rgba(79, 157, 105, 0.08); }
+.zyc-play-option[data-state="wrong"] { border-color: #c05656; background: rgba(192, 86, 86, 0.08); }
+.zyc-play-option-mark {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--zy-soft, #f4f4f4);
+  font-size: 11px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--zy-secondary, #6b6b6b);
+}
+.zyc-play-option-text { font-size: 13px; line-height: 1.5; }
+.zyc-play-feedback {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--zy-secondary, #6b6b6b);
+}
+.zyc-play-feedback[data-correct="true"] { color: #3d7a52; }
+.zyc-play-feedback[data-correct="false"] { color: #a34545; }
+.zyc-play-explain { display: block; margin-top: 6px; color: var(--zy-secondary, #6b6b6b); }
+
+/* ---------------------------------------------------------------- interactive */
+
+.zyc-play-interactive { width: 100%; }
+.zyc-play-frame {
+  display: block;
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid var(--zy-line, #e3e3e3);
+  border-radius: 10px;
+  background: var(--zy-surface, #fff);
+}
+
+/* ---------------------------------------------------------------- pbl */
+
+.zyc-play-pbl { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; width: 100%; }
+.zyc-play-briefing,
+.zyc-play-deliverables {
+  border: 1px solid var(--zy-line, #e3e3e3);
+  border-radius: 10px;
+  padding: 16px 18px;
+  background: var(--zy-surface, #fff);
+}
+.zyc-play-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--zy-muted, #8a8a8a);
+}
+.zyc-play-briefing h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.zyc-play-briefing p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--zy-secondary, #6b6b6b); }
+.zyc-play-deliverable-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.zyc-play-deliverable label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; cursor: pointer; }
+.zyc-play-deliverable input { margin: 3px 0 0; }
+
+/* ---------------------------------------------------------------- 控制条 */
+
+.zyc-play-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--zy-line, #e3e3e3);
+}
+.zyc-play-bar-group { display: flex; align-items: center; gap: 8px; }
+.zyc-play-button {
+  padding: 7px 14px;
+  border: 1px solid var(--zy-line, #e3e3e3);
+  border-radius: 7px;
+  background: var(--zy-surface, #fff);
+  color: var(--zy-text, #1a1a1a);
+  font-size: 12px;
+  cursor: pointer;
+}
+.zyc-play-button:hover:not(:disabled) { background: var(--zy-hover, #f4f4f4); }
+.zyc-play-button:disabled { color: var(--zy-muted, #c0c0c0); cursor: not-allowed; }
+.zyc-play-button[aria-pressed="true"] { border-color: var(--zy-accent, #2b6cb0); color: var(--zy-accent, #2b6cb0); }
+
+.zyc-play[data-fullscreen="true"] {
+  padding: 24px;
+  background: var(--zy-surface, #fff);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+@media (max-width: 760px) {
+  .zyc-play-pbl { grid-template-columns: minmax(0, 1fr); }
+  .zyc-play-heading { gap: 6px; }
+  .zyc-play-bar { flex-wrap: wrap; }
+}

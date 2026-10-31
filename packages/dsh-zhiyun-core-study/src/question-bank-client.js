@@ -77,6 +77,28 @@ export function createQuestionBankController(request,navigation) {
       });discardQueue=work.catch(()=>{});return work;
     },
     blockPosition(question){return controller.action('bank-curate',{materialKey:question.materialKey,type:'block-position',conceptId:question.conceptId,blankId:question.blankId},()=>update({notice:'已停用此挖空位置，后续出题将跳过；历史题目保留。'}));},
+    /**
+     * 把选中的题目导出到笔记库。
+     *
+     * 与 `discardMany` 的差别：导出**不**做乐观更新 —— 它不改本地题目状态，
+     * 只产生一个外部副作用（往笔记库写文件）。失败时没有可回滚的东西，
+     * 所以这里直接抛给调用方，由界面如实显示。
+     *
+     * @param {string[]} questionIds 用户勾选的题目
+     * @returns {Promise<{path:string,name:string,folder:string,deduped:boolean,count:number,groups:number}|null>}
+     */
+    async exportQuestions(questionIds){
+      const ids=[...new Set(Array.isArray(questionIds)?questionIds:[])].filter(id=>typeof id==='string');
+      if(!ids.length)return null;
+      try{
+        const data=await request('bank-export',{questionIds:ids});
+        return data;
+      }catch(error){
+        // 导出失败不写进 state.error：那个位置是给「题库加载失败」用的，
+        // 混在一起会让用户以为整个题库不可用。由调用方在局部提示。
+        throw error;
+      }
+    },
     finish(){update({practice:null,answers:{}});},
     async openSource(question){
       try{await controller.load(true);const point=state.points.find(p=>p.id===question.pointId);if(!point)throw new Error('讲义已换版或不可用，请查看题目中保存的原文依据。');await navigation?.openSource?.(question,point);}

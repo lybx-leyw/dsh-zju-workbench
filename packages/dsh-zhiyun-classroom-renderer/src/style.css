@@ -1,0 +1,20 @@
+/*
+ * 课堂渲染层的样式边界（规范第 5 节）。
+ *
+ * 渲染树来自上游，它发出的是 Tailwind 4 任意值类名；这里的职责只有一条：
+ * 把渲染层**圈**在 `.zyc-root` 里，让上游的 reset 与工具类不落到工作台外壳上。
+ * 因此本文件只写几何与隔离相关的几条规则，不重定义上游的观感。
+ *
+ * 真正的 Tailwind 4 编译（含 `@scope (.zyc-root) { … }`）属于页面装配层的事，
+ * esbuild 侧把 `.css` 当 text 打进 bundle（见 `scripts/build.mjs` 的 loader 表），
+ * 由宿主侧统一注入，构建期不做 CSS 处理。
+ */
+.zyc-root {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.zyc-classroom-slide {
+  contain: layout paint;
+}
