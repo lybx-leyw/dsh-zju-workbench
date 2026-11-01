@@ -4256,3 +4256,27 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 **词面校准（写回关键词池）**：`fitness tracker`(13,532) 与 `quiz practice`(599) 在 `sort=updated` 轴是**噪声发生器**（前 10 名 ★≥1 的不到 5 条，多为新建练手仓 + `null` 许可）→ **降频到每 3 轮一次，强制叠加 `stars:>50`**。`timetable ics export`(12) / `paper annotation reader`(10) **池子已萎缩** → 降频到每 6 轮一次。`spaced repetition flashcard stars:>100`(7 条中 5 条在册) → 仅保留作「老仓是否复活」监测。
 
 **授权与验收**：搜索 **6/10**（未 403）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **0 个**（2 条新候选均 🔵，不满足 🟢 门槛；且待评审骨架已积压 3 份，按「同一接缝不放两个半成品」本轮做减法）。
+
+## r130 · 2026-11-02-00 · A 组（新轴：「任务结束 ≠ 进度推进」—— 通知层是「会话事件搬运」还是「判定源」）
+
+> 轮换器 `day_of_year % 3`：2026-11-02 为第 **306** 天，`306 % 3 = 0` → **A 组**（跨天重置命中规则 1）。
+> 搜索 **7/10**：`deepseek-harness plugin`=11,586 · `cordis plugin`=2,190 · `dsh plugin`=15,213 · `dsh-market`=376 ·
+> `dsh-desktop`=2,397 · `"deepseek-harness" pushed:>2026-10-30`=3,107 · `dsh plugin reminder`=50。0 次 403，**完整**。
+> 原始去重 **200** → 未登记 **21** → 留档 **4 行**（🔵3 / ⛔1），`NOASSERTION` **2**、`null` **2**。**0 🟢、0 骨架。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `chromoany/dsh-notify-me` | A 原生DSH | MIT ✅ | 中（离开页面时「需要你操作 / 回复完成」提醒） | **重复但接不了这条线**（判据②③均不成立） | 🔵 | proposed | 2026-11-02 | ★81、v**1.17.0**、npm **可 install**（`dsh-notify-me@1.17.0`，5 个连续版本，modified 2026-10-28）、`dependencies: null`、peer 仅 `dsh-client-locale` 带窗口、兼容矩阵含 `0.2.0-rc.2/0.2.1-rc.2` —— **质量属 A 组第一梯队，但接不了 `dsh-radar-zone-notify` 的活**：①它自带「设置→通知提醒」分组（同 r106 拒绝理由）；②它推的是**会话事件**（`turn/end`、`approval/asked`），待办到期时**没有任何会话在跑**→不响；③**没有对外出口**——`lib/client.js` 公开面只有 `version/setConfig/resetConfig/test/decide/testExternal/debug`，`showToast/deliver` 全在闭包里，`onEvent` 是消费方向不是发送方向，宿主 `lib/index.js` 只导出 `FOCUS_ROUTE/name/VERSION/apply`、无 `ctx.provide`。**可复用而不摘码的只有两条工程口径**：`hostFallback.pageLeaseMs`+health 探针（≈ `zone-notify` TODO-4 的重复投递）、`credentialsFile`（chmod 600、不进 patch 层）。**不替换骨架、不并列接入。** |
+| `Phant0Meow/dsh-meow-smooth` | A 原生DSH | MIT ✅ | 中弱（手机端手感 + 通知） | **重复且无增益（形态冲突）** | 🔵 | proposed | 2026-11-02 | ★67、`meow-smooth@0.8.1`、`dsh.bundle.patch`+`dsh.client`(web)。80% 内容是**宿主外壳交互层**（边缘手势抽屉/返回手势/输入框折叠/按钮行不换行）→ 判据①不成立，属「两套布局主张并存」；另 `web-push@^3.6.7` 非锁版 + `prepare` 现场构建 → 锁版成本高。将来做「手机端可用性」轴时其**手势清单**可当需求表。 |
+| `losebird/dsh-plugin-market` | A 原生DSH（插件市场） | **null** ⛔ | 无 | 重复且无增益 | ⛔ | rejected | 2026-11-02 | ★23。插件市场层已封板（r78/r111，本轮 `dsh-market`+`dsh-desktop` 首屏 60/60 在册，第三次同结论）。无许可证，不摘任何代码。 |
+| `dsh-plugins/dsh-launcher` | B 其他（Rust 桌面启动器） | **null** ⛔ | 无 | 无交集 | ⛔ | rejected | 2026-11-02 | ★76。多版本/多实例启动器＝换宿主壳，不是面板能力；无许可证。 |
+
+**本轮 ⚠ NOASSERTION（单列，不采用、不摘代码）**：`Devin-AXIS/iPolloWork`(★7,344，企业级 local-first 多引擎 Agent 工作台) · `Devin-AXIS/deepseek-design`(★1,668，DSH 可编辑设计系统/PPT)。同作者同问题，能力方向均不在本轴，**不建议优先分配人工核验工时**。
+
+**本轮未留档但相关的未登记仓（21 − 4 = 17，仅留痕）**：`wh000wh000/awesome-claude-mods`(★235 NOASSERTION、Python、Claude Code 索引，非 DSH) · `arcships/rutis`(★160 MIT、Rust 插件运行时，非 JS 栈) · `liyupi/dsh-kun-like-pet`(★112 MIT 桌宠) · `jiweiyeah/Skills-Manager`(★1,048 MIT Tauri 桌面 App，`private:true` 无 npm 包、换宿主壳) · `MichengAI/dsh-codex-desktop`(★126 Apache-2.0) · `bruc3van/dsh-desktop`(★96 MIT) · `2439816947/DSH-Desktop`(★73 null) · `xiaoshihou514/dsh-desktop-pet`(★61 MIT) · `w2112515/dsh-plugin-marketplace`(★17 MIT) · `acryldev/store`(★10 MIT) · `DSH-PackForge/dsh-pack-market`(★10 CC0-1.0) · `springbrand-lab/dsh-plugin-market`(★10 MIT) · `AIcivilization/dsh-vps`(★11 MIT，VPS 部署网关) · `AnacondaKC/dsh-stock-market`(★20 BSD-3，玩笑仓) · `BlockchainLabs/SaluS`(★26 null，2021 年基金项目，词面误命中) · `youdotcom-oss/agent-skills`(★98 MIT，You.com skills) · `qgd1850890306-rgb/dsh-todo-checklist`(★2 MIT，划词待办+到期提醒，与本仓规划页重叠但 ★2 且功能面无增益)。**`dsh plugin reminder` 首屏其余 29 条**（`dsh-kegel`/`dsh-water-reminder`/`dsh-health-reminder`×3/`dsh-stand-reminder`/`dsh-warm-reminder`/`dsh-life-reminder`/`dsh-attention-notifier`/`dsh-clock`/`dsh-task-reminder`/`dsh-notify-reminder`/`dsh-unfocus-reminder`/`dsh-schedule-tab`/`dsh-study-daily`/`dsh-gap-feed`/`dsh-tool-tariff`/`dsh-token-planner`/`dsh-standing-rules`/`dsh-repetition-reminder`/`dsh-prevent-scd`/`dsh-0-tools`/`StardewValley-UI`/`dshgirl-starter`/`dsh-plugin-*`×2）★0–11，均为**单功能提醒练手仓**（喝水/久坐/护眼/凯格尔/every-commit/完成音效），**无一提供第三方通知出口**，与本仓「待办到期」无判定交集 → 整批留痕不登记。
+
+**词面校准（写回关键词池）**：① A 组主词**已彻底饱和** —— 5 词 × 30 = 150 条里 ★≥100 的新面孔只有 2 个且均非 DSH 插件；② **`dsh plugin reminder`(50) 被「健康提醒」练手仓稀释**（50 条中 31 在册/无关），**降为每 6 轮一次，不再作 DSH 插件主词**；③ `pushed:>10-30` + 引号短语(3,107) 首屏 30 条 19 在册、首位全是 ★10k+ 通用工具 → 保留但**只作老仓复活探针**；④ **「插件市场 / 插件管理器 / 桌面壳」三层正式封板**（第三次同结论，后续直接 ⛔/🔵 不再逐条过判据）。
+
+**对 `dsh-radar-zone-notify` 的建议**（本轮唯一可执行产出，未改代码）：① 锁版阻塞（`dsh-plugin-notifications` npm 仍 404）**不应**用 `dsh-notify-me` 顶替——它接不了「与对话无关的待办到期」；正解是等上游发版或锁 git 引用 + 本地 build；② 补 TODO-4 时照抄租约思路（`pageLeaseMs` + health 探针）解决页面/宿主重复投递；③ 评审第一问应是「待办到期时用户多半在不在页面前」——若多半在，应优先做页内角标（0 依赖）而非系统通知。
+
+**授权与验收**：搜索 **7/10**（未 403，完整）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **0 个**（无 🟢，且同一接缝不并列两个半成品）· 报告 `docs/ecosystem-radar/2026-11-02-00.md`。
