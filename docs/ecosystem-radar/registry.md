@@ -4293,6 +4293,30 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `moqinghua2020/dsh-plugin-patrol` | A 原生DSH | **NOASSERTION** ⚠ | 弱 | 重复可强化（插件健康巡检） | 🔵 | pending-license | 2026-11-02 | — | ★0、2026-11-01。自述「6 项健康巡检 + 设置页面板 + 2 工具，三值不塌缩：unknown 不算 ok」—— **工程口径（三值健康度）值得本仓「插件审计」类骨架借鉴**，但无许可证，**不采用、不摘码** |
 | `KannaKuron/dsh-gitbash-shell` | B 其他JS | MIT | 无 | 无交集 | ⛔ | rejected | 2026-11-02 | — | ★41。Windows 专用 Git Bash 执行器（替代 pwsh），平台绑定 + 与本仓 web 面板零交集 |
 | `Anchorite-no/zju-skill-public` | B 其他JS（Agent skills） | **GPL-3.0** ⛔ | 中（浙大能力包） | 全新（线索） | ⛔ | rejected | 2026-11-02 | — | ★14、**2026-11-01 新建**，描述自述「ZJU Skill public edition preparation; capabilities under review」→ **空壳**。GPL 不在宽松白名单，不摘任何代码。只作「Agent 该有哪些浙大能力」的需求线索（对照已登记的 `Zarad0X/openclaw-zju-skills`，MIT 但同为本生态外） |
+| `marioMLLL/ecnu-timetable-calendar` | B 其他JS | MIT | 课表 | 重复可强化（课表·导出日历时序） | 🟢 | skeleton-created | 2026-11-02 | ★8，2026-09-22 推。华师大 MV3 扩展，`private:true` 不可锁版 → **B 类源码级借鉴**。`lib/schedule-core.js` 的 `parseWeekSpec()` 周次语义（连续周/逗号/单双周/`第X周`前缀/`～`归一）比现值更全；`popup.js` 的 `VALARM`+`VTIMEZONE` 写法可对照。**骨架** `packages/radar/dsh-radar-timetable-calendar/` |
+| `khosbilegt/mq-timetable-exporter` | B 其他JS | MIT | 课表 | 重复且无增益 | ⛔ | rejected | 2026-11-02 | ★2，2026-01 推。麦考瑞大学门户 `.ics` 导出，DOM 抓取强绑校方页面，无通用底层可提取 |
+| `kilohealth/rn-fitness-tracker` | B 其他JS | MIT | 锻炼 | 全新（无锻炼面板） | 🔵 | proposed | 2026-11-02 | ★126，2024-05 停更。**React Native 原生桥**（Google Fit / HealthKit），Web 端无法调用 → 只记作「若未来做移动端」的线索 |
+| `Cawlumm/lyftr` | B 其他JS | MIT | 锻炼 | 全新（无锻炼面板） | 🔵 | proposed | 2026-11-02 | ★362，2026-10-31 活跃。自托管训练追踪（React+Go+SQLite+Docker），完整独立平台，非强化式集成 |
+| `hasaneyldrm/logpress-public` | B 其他JS | MIT | 锻炼 | 全新（无锻炼面板） | 🔵 | proposed | 2026-11-02 | ★290，2026-07 推。React Native + Supabase，AI 健身评分（OpenAI），移动端离线 demo |
+| `bandinopla/skill-assessments-quizzes` | B 其他JS | MIT | 刷题 | 重复且无增益 | ⛔ | rejected | 2026-11-02 | ★14，2024-01 停更。面经答题 Web App，题库为面试题，与 `dsh-zhiyun-quiz` 重合且无更优底层 |
+| `LorenKociko/CCNA-Practice` | B 其他JS | 无许可证 | 刷题 | — | ⛔ | rejected | 2026-11-02 | ★75。CCNA 认证题库，**无许可证**，仅作线索 |
+| `linkedin-faq/quizzes-practice-app` | B 其他JS | 无许可证 | 刷题 | — | ⛔ | rejected | 2026-11-02 | ★10，无许可证，仅作线索 |
+| `kodekloudhub/yaml-quiz` | B 其他JS | 无许可证 | 刷题 | — | ⛔ | rejected | 2026-11-02 | ★6，YAML 测验，无许可证，仅作线索 |
+| `349aditya/quiz-web-app` | B 其他JS | 无许可证 | 刷题 | — | ⛔ | rejected | 2026-11-02 | ★6，无许可证，仅作线索 |
+| `JMADA257/JS-Quiz` | B 其他JS | 无许可证 | 刷题 | — | ⛔ | rejected | 2026-11-02 | ★6，JS 语法测验，无许可证，仅作线索 |
+| `techntv/ielts` | B 其他JS | 无许可证 | 刷题（雅思） | — | ⛔ | rejected | 2026-11-02 | ★5，无许可证，仅作线索 |
+| `WhyAsh5114/MyFit` | B 其他JS | AGPL-3.0 | 锻炼 | 全新（无锻炼面板） | ⛔ | rejected | 2026-11-02 | ★142。**AGPL 强传染**，白名单外，不采用 |
+| `femiaf13/manatee-fitness` | B 其他JS | AGPL-3.0 | 锻炼 | 全新（无锻炼面板） | ⛔ | rejected | 2026-11-02 | ★48。**AGPL**，白名单外，不采用 |
+| `SuryaThejas-07/Virtual_Fitness_Trainer` | B 其他JS | 无许可证 | 锻炼 | — | ⛔ | rejected | 2026-11-02 | ★39，无许可证，仅作线索 |
+| `Devam338/fit_forge` | B 其他JS | 无许可证 | 锻炼 | — | ⛔ | rejected | 2026-11-02 | ★38，无许可证，仅作线索 |
+| `JaciBrunning/ElsieScraper` | B 其他JS | 无许可证 | — | 无关 | ⛔ | rejected | 2026-11-02 | ★5，**Ruby** 非 JS 栈，无许可证 |
+| `Treeki/myplace-timetable-export` | B 其他JS | 无许可证 | — | 无关 | ⛔ | rejected | 2026-11-02 | ★2，**Python** 非 JS 栈，无许可证 |
+| `jaidenlabelle/algonquin-timetable-to-ics` | B 其他JS | 无许可证 | — | 无关 | ⛔ | rejected | 2026-11-02 | ★2，**Python** 非 JS 栈，无许可证 |
+| `WoodyABCD/CityU-timetable-to-ics-exporter` | B 其他JS | 无许可证 | — | 无关 | ⛔ | rejected | 2026-11-02 | ★2，**Java** 非 JS 栈，无许可证 |
+| `NitinN77/Smart-Note-Taker` | B 其他JS | 无许可证 | 笔记 | — | ⛔ | rejected | 2026-11-02 | ★2，无许可证，仅作线索 |
+| `mainit-na-tinapay/Rubric` | B 其他JS | 无许可证 | 笔记 | — | ⛔ | rejected | 2026-11-02 | ★1，无许可证，仅作线索 |
+| `benjamintaito/inknote` | B 其他JS | MIT | 笔记 | 重复且无增益 | ⛔ | rejected | 2026-11-02 | ★0。手写笔记 App 脚手架（Next.js+Convex），与 `dsh-zhiyun-notes` 重合且无更优底层 |
+| `Marwan-Alhindi/notaplus` `Nilesh98-codes/note-sync-docs` `mentor98/Smart-AI-Note-Taking-App` `King-fly/note-taker` `shfuerte79-web/ideas-from-ai-*` | B 其他JS | 无许可证 | 笔记 | — | ⛔ | rejected | 2026-11-02 | ★0–1，均无许可证；其中 `shfuerte79-web` 两条为同名生成式脚手架，无实质内容 |
 
 **本轮 ⚠ NOASSERTION（单列，不采用、不摘代码）**：`moqinghua2020/dsh-plugin-patrol`(★0，DSH 插件健康巡检) · `kialajin-l/DSH_Plus`(★0，个人插件合集)。
 
