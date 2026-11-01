@@ -251,5 +251,5 @@ test('角色只有 user / assistant 两种，其它一律当 assistant', () => {
 test('常量合理', () => {
   assert.equal(MAX_HISTORY, 8);
   assert.ok(MAX_MESSAGE >= 500);
-  assert.deepEqual([...ACTIONS], ['ask', 'create', 'chat']);
+  assert.deepEqual([...ACTIONS], ['ask', 'create', 'chat', 'schedule']);
 });
