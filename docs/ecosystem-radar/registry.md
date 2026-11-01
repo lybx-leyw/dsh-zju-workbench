@@ -4206,3 +4206,28 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 **词面校准（写回关键词池）**：`zju food canteen`=**0** / `zju bus shuttle`=**0** / `zju grade gpa`=**0** → **三个词面应移出池子**（浙大生活服务方向 GitHub 基本无项目，充电桩是唯一例外且 GPL）；`campus app zju`=**2** → B 组原池 `campus app` 近乎无效，改用 `zju + <具体场景>`；**`zju dsh`=2 精度最高，建议固定占 1 次配额**。
 
 **授权与验收**：搜索 **10/10**（未 403）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **1 个**（`dsh-radar-lecture-note-lint`）。
+
+## r128 · 2026-11-01-18 · A 组（换轴：`cordis plugin language:typescript` + `sort=updated`）
+
+> **轮换器判 `same-day(exhausted)`** —— 今天 A/B/C 已各跑一轮，本轮**主动换到 A 并换搜索轴**：
+> 不再按 `sort=stars`（三个主词前 30 名里 21 条未登记，但全是已判 ⛔ 的老簇），
+> 改按 **`sort=updated` 看 24h 内新推仓**。**词面实测**：`deepseek-harness plugin`=11,547、
+> `cordis plugin`=2,185、`dsh plugin`=15,159、`dsh-market`=375、`dsh-desktop`=2,392（前五词全部饱和）；
+> **`cordis plugin language:typescript sort=updated`=604 → 40 条里 26 条未登记，信噪比最高**。
+> 3 条 A 类新候选（2 🟢 / 1 🟡），老簇 19 条复核后维持 ⛔。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `PerryLink/dsh-data-quality` | **A 原生DSH**（`dsh.bundle.patch` → `cordis.patch.yml`，id `dsh-data-quality`；`exports` 只有 `.`，**无前端半边**） | **Apache-2.0** ✅（GitHub metadata / `LICENSE` 首行 / npm `license` 三源一致） | 中强（课程数据 / 实验数据 / 问卷数据的**确定性**梳理与引用核查） | **重复且可强化**：同一面板=学习页材料卡 + 测验质检链；同一功能=「这段数字/引用可不可信」；多出的底层=`verifyCitations` 的**相对容差** + 定位符行走 + 四态，替换 `core-quiz/src/points.js:144` 的 `source.snippet.includes(quote)` 字符串判据 | 🟢 | skeleton-created | 2026-11-01 | 2026-11-01 | r128。★54、push 2026-11-01、98 版、npm unpacked **927,706 B**、唯一依赖 `zod@4.4.3`、`0.3.24`。**无前端半边 → 不需 iframe**（比 agent-teams 轻一个数量级）。peer 7 项，宿主区间含本仓 `0.2.0-rc.2`。**风险**：①`allowedExtensions` 只认 `.csv/.tsv/.json/.jsonl` —— **`.md`/`.docx` 材料它读不了**，评审须裁定「只对表格类生效」还是改自实现 ②三个工具注册进**全局 tools registry**，笔记/论文会话里模型可能误调 `data_clean` 改文件 → 可能须装载后摘掉 ③`workspaceRoot` 默认空 = **进程启动目录**，必须改为会话工作区 |
+| `MichaelShii/dsh-plugin-teamflow` | **A 原生DSH**（`cordis.patch.yml` + `dsh.client` 前端半边，宿主层写 `$DSH_HOME/teamflow`） | **MIT** ✅（GitHub / npm / 仓库 LICENSE 一致） | 中（研发流水线，非学生专有） | **重复且可强化 —— 但与在册的 `dsh-radar-agent-teams` 是同一个接缝**（规划页 / 今天页的多 Agent 分解与依赖调度） | 🟢 | watch | 2026-11-01 | — | r128。★18、push **2026-11-01（今日）**、npm unpacked **1,301,592 B**、`0.3.3`。**本轮不生成骨架**：①配额已给 `data-quality`（许可证最硬、体积最小、修的是确定性缺陷）②同一接缝不能放两个半成品，`agent-teams` 骨架尚未评审。**若 `agent-teams` 被驳回，本条是首选替代**（比它小 2 MB、不往全局 system prompt 注入多 Agent 提示） |
+| `FiretrUCK666/dsh-task-board` | **A 原生DSH**（`cordis.patch.yml` 注册**五条**行，每行一个开关） | **MIT** ✅ | 中（待办/看板，通用） | **重复且无增益**：「五列看板 + 侧边栏入口 + SSE 跨设备同步」= 今天页 + 规划页已有的待办表与日程 | 🟡 | rejected | 2026-11-01 | — | r128。★3、`1.3.40`、npm unpacked **12,467,098 B（≈11.9 MB）**。技术上可移植，但**11.9 MB 换不来新能力**；不生成骨架 |
+
+**本轮 ⚠ NOASSERTION（单列，不采用、不摘代码）**：`wh000wh000/awesome-claude-mods`（★233，Claude Code 的 awesome 索引，**非 DSH 插件**）· `pihme/fregoli`（★1，Cordis 插件式可重写 web 应用）。
+
+**老簇复核（19 条未登记，维持 2026-10-28 的 ⛔ 判定）**：`cocode-agency/cocode`(★167，DSH **发行版**：Electron GUI+TUI+host-supervisor，换的是宿主壳不是面板能力) · `arcships/rutis`(★160 MIT，Cordis 生命周期模型的 **Rust 重实现**，含 `crates/rutis-dsh`；非 JS 栈，接进来=两个运行时并存) · `w2112515/dsh-plugin-marketplace`(★17) / `springbrand-lab/dsh-plugin-market`(★10)（同类市场，已由 `dsh-radar-market`/`dsh-radar-dsh-market`/`dsh-radar-dsh-web` 三骨架占位且待做减法） · `DSH-PackForge/dsh-pack-market`(CC0) / `acryldev/store` / `AIcivilization/dsh-vps` / `MichengAI/dsh-codex-desktop` / `bruc3van/dsh-desktop` / `liyupi/dsh-kun-like-pet` / `xiaoshihou514/dsh-desktop-pet` / `chromoany/dsh-notify-me` / `Phant0Meow/dsh-meow-smooth` / `AnacondaKC/dsh-stock-market`（市场/桌面壳/桌宠/通知，与 32 个核心包无功能交集）。**结论：A 组 `sort=stars` 轴已无新信息，后续固定用 `sort=updated`。**
+
+**本轮排除（不登记，仅留痕）**：`8b-is/deepsiper-enthea`(★0 fork)、`topce/pizx`(★5 zx fork)、`Rain13Sad/bcf-mnemovault`(★5)、`PerryLink/dsh-plugin-kit`(★2 工具库)、`SAXEM1997/dsh-cherry-bridge`(★3)、`gamelongtim-ux/dsh-workflow-runner`(★0)、`zyn19940107/dsh-refine-loop`(★0)、`harrylabsj/kiwi`(★21 A2A 商务)、`ziphao2010/ArQQbot`/`arqqbot-plugin-hello`(★0)、`hrhgit/deepseek-harness-plugin-manager`(★1)、`KeepLost/harniverse`(★1)、`9931666/dsh-plugin-roundtable`(★13)、`erishen/resolve-studio`(★0)、`terry2010/dsh-rss-news-daily`(★1)、`Yeswater/ruobai-harness`(★2)、`Arborsm/dsh-remember`(★2)、`viztor/dsh-opencode-patch`(★8)、`tang19-chao/dsh-plugin-evo-harness`(★2)、`TGYD-helige/dsh-plugins`(★3)、`longyi-0x0/dsh-profile-switcher`(★0)、`Alm-Allen/dsh-chat-ux`(★8)、`2439816947/DSH-Desktop`(None)、`dsh-plugins/dsh-launcher`(None)、`losebird/dsh-plugin-market`(None)、`BlockchainLabs/SaluS`(None，金融无关仓)。
+
+**词面校准（写回关键词池）**：**A 组主词改 `sort=updated`**（stars 轴已饱和）；`cordis plugin language:typescript` + `sort=updated` 作为固定轴（604 条，信噪比最高）；`dsh-market`(375) / `dsh-desktop`(2392) **降频**（市场簇与桌面壳簇均已判 ⛔）。
+
+**授权与验收**：搜索 **6/10**（未 403）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **1 个**（`dsh-radar-data-quality`）。
