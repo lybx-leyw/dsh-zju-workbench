@@ -29,7 +29,13 @@ import { RESUME_COMMAND_TEXT, isResumeCommand } from './resume.js';
 
 const WIDTH_KEY = 'zhiyun.paper.drawer';
 const MIN_WIDTH = 300;
-const MAX_WIDTH = 720;
+/**
+ * 没有宽度上限：读长答案、对照原文时常常需要把抽屉拖得很宽。
+ *
+ * 唯一还剩下的约束来自窗口本身 —— 拖动时按 `window.innerWidth` 实时夹住，
+ * 否则抽屉会比页面还宽、把整页顶出横向滚动条。这不是产品限制，是布局的物理边界；
+ * 换一台更大的显示器，能拖出来的宽度自然更大。
+ */
 const DEFAULT_WIDTH = 392;
 
 /**
@@ -42,10 +48,30 @@ const DEFAULT_WIDTH = 392;
  */
 const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
 
+/**
+ * 当前窗口允许的最大宽度。
+ *
+ * 「宽度不限制」= 不设产品上限，只保留一个物理边界：抽屉再宽也不能超过窗口本身。
+ * 留一点余量给阅读区，否则抽屉独占整屏、正文彻底看不见，拖动就没法再拖回来了。
+ *
+ * @returns 可拖到的最大像素宽度；取不到窗口尺寸时给一个足够大的值。
+ */
+function maxWidth() {
+  const available = Number(globalThis.innerWidth);
+  return Number.isFinite(available) && available > MIN_WIDTH
+    ? Math.max(MIN_WIDTH, available - 80)
+    : MIN_WIDTH;
+}
+
+/** 把外部写入的宽度夹回合法区间。没有产品上限，只挡窗口尺寸。 */
+function clampWidth(value) {
+  return Math.min(maxWidth(), Math.max(MIN_WIDTH, Math.round(value)));
+}
+
 function readStoredWidth() {
   try {
     const stored = Number(globalThis.localStorage?.getItem(WIDTH_KEY));
-    return Number.isFinite(stored) && stored >= MIN_WIDTH && stored <= MAX_WIDTH ? stored : DEFAULT_WIDTH;
+    return Number.isFinite(stored) && stored >= MIN_WIDTH ? clampWidth(stored) : DEFAULT_WIDTH;
   } catch {
     return DEFAULT_WIDTH;
   }
@@ -72,6 +98,7 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
   const [notice, pushNotice] = useTransientMessage();
   const listRef = useRef(null);
   const inputRef = useRef(null);
+  const drawerRef = useRef(null);
 
   // 换论文就要换 feed（会话 id 是按文献生成的）。
   const feed = useMemo(() => createSessionFeed({ topic, name }), [topic, name]);
@@ -231,23 +258,76 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
     pushNotice(`已切到会话 ${row.n}`);
   }, [feed, pushNotice]);
 
+  /**
+   * 拖动分隔条调整宽度。
+   *
+   * # 为什么拖动期间**不** setWidth
+   *
+   * 旧实现在每个 mousemove 里 `setWidth(...)`：一帧一次 React 重渲染 →
+   * 整页 flex 重新布局 → 中间的 PDF **iframe 跟着重排**。iframe 里的内容
+   * 重排是同步的、且不便宜，鼠标稍微动快一点就掉帧；而每一个 delta 又都要
+   * 重新跑一遍整棵抽屉的渲染树，于是「拖抽屉」变成「拖整个 app」。用户看到
+   * 的正是阅读器中缝连续漂移 + 整页卡顿。
+   *
+   * 现在拖动只改 **CSS 变量**（浏览器合成层里做，不触发布局递归、不渲染 React），
+   * 松手时才 `setWidth` 提交一次，让 React 状态与 DOM 对齐。
+   *
+   * 宽度落在 `--zp-drawer-width` 上，抽屉的宽由 CSS 用它计算（见 style.css），
+   * 所以拖动过程中的视觉反馈依旧是实时的。
+   */
   const startResize = useCallback((event) => {
+    if (event.button !== undefined && event.button !== 0) return;
     event.preventDefault();
     const startX = event.clientX;
     const startWidth = width;
+    const root = drawerRef.current;
+    if (root === null) return;
+    // 拖动期间把指针关在窗口内：越过 iframe 时 pointermove 会被 iframe 吃掉，
+    // 表现是「拖到正文上就不动了」。capture 之后事件一直属于本窗口。
+    const pointer = event.currentTarget;
+    try { pointer.setPointerCapture?.(event.pointerId); } catch { /* 合成事件没有活跃指针，忽略 */ }
+
+    let frame = 0;
+    let pending = startWidth;
+    const paint = () => {
+      frame = 0;
+      // 只写变量：不 setState、不触发 React 渲染。
+      root.style.setProperty('--zp-drawer-width', `${pending}px`);
+    };
     const move = (moveEvent) => {
-      // 抽屉在右侧：往左拖 = 变宽。
-      const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + (startX - moveEvent.clientX)));
-      setWidth(next);
+      // 抽屉在右侧：往左拖 = 变宽。上限只由窗口宽度决定。
+      pending = clampWidth(startWidth + (startX - moveEvent.clientX));
+      // 一帧最多画一次：mousemove 在部分设备上比屏幕刷新快得多。
+      if (frame === 0) frame = requestAnimationFrame(paint);
     };
-    const up = () => {
-      document.removeEventListener('mousemove', move);
-      document.removeEventListener('mouseup', up);
-      try { globalThis.localStorage?.setItem(WIDTH_KEY, String(width)); } catch { /* 隐私模式就算了 */ }
+    const finish = () => {
+      if (frame !== 0) cancelAnimationFrame(frame);
+      frame = 0;
+      try { pointer.releasePointerCapture?.(event.pointerId); } catch { /* 指针已释放 */ }
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', finish);
+      document.removeEventListener('pointercancel', finish);
+      document.body.classList.remove('zp-resizing');
+      root.style.removeProperty('--zp-drawer-width');
+      // 只在真的动过时才提交，避免一次单击也触发整棵树的重新渲染。
+      if (pending !== startWidth) setWidth(pending);
     };
-    document.addEventListener('mousemove', move);
-    document.addEventListener('mouseup', up);
+    // 拖动期间禁掉文本选择，否则鼠标划过正文会选中一整片字。
+    document.body.classList.add('zp-resizing');
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', finish);
+    document.addEventListener('pointercancel', finish);
   }, [width]);
+
+  // 双击分隔条：回到默认宽度（拖太宽之后不必一点点往回找）。
+  const resetWidth = useCallback(() => setWidth(DEFAULT_WIDTH), []);
+
+  // 窗口变窄时把超出的宽度收回来，避免整页出现横向滚动条。
+  useEffect(() => {
+    const onWindowResize = () => setWidth((current) => clampWidth(current));
+    globalThis.addEventListener?.('resize', onWindowResize);
+    return () => globalThis.removeEventListener?.('resize', onWindowResize);
+  }, []);
 
   // 记住拖动结束时的宽度（`startResize` 的闭包读不到最新的 width）。
   useEffect(() => {
@@ -259,8 +339,9 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
 
   const messages = state.messages;
   const live = state.live;
-  return <aside className={`zp-drawer${open ? ' is-open' : ''}`} style={open ? { width } : undefined} aria-label="论文 AI 助手" aria-hidden={!open}>
-    <div className="zp-drawer-resize" role="separator" aria-orientation="vertical" aria-label="调整助手宽度" onMouseDown={startResize}/>
+  return <aside ref={drawerRef} className={`zp-drawer${open ? ' is-open' : ''}`} style={open ? { '--zp-drawer-width': `${width}px` } : undefined} aria-label="论文 AI 助手" aria-hidden={!open}>
+    <div className="zp-drawer-resize" role="separator" aria-orientation="vertical" aria-label="调整助手宽度"
+      title="拖动调整宽度，双击恢复默认" onPointerDown={startResize} onDoubleClick={resetWidth}/>
     <header className="zp-drawer-head">
       <button type="button" className="zp-drawer-toggle" aria-label={open ? '收起 AI 助手' : '展开 AI 助手'} title={open ? '收起 AI 助手' : '展开 AI 助手'} onClick={onToggle}><Icon name={open ? 'chevron' : 'chat'} size={17}/></button>
       {open && <>
