@@ -29,8 +29,14 @@
  * 三处（stage/timeline、export/video、agent/timing）原本各抄一份实现与
  * 常量表，数值恰好一致只是巧合 —— 任何一处被单独调整，导出视频的音轨
  * 就会与播放器静默漂开。舞台的时间轴是唯一真源，从它导入。
+ *
+ * ⚠️ 必须同时 re-export 与本地导入：只要 `export { x } from '...'` 这一种写法，
+ * 本模块内部就**引用不到** `x`，调用处会抛 `ReferenceError`。
+ * 这个模块内部（buildVideoTimeline）确实要用它。
  */
-export { estimateSpeechDurationMs } from 'dsh-zhiyun-core-classroom-timing';
+import { estimateSpeechDurationMs } from 'dsh-zhiyun-core-classroom-timing';
+
+export { estimateSpeechDurationMs };
 
 /** 源：timeline.ts（EFFECT_AUTO_CLEAR_MS 一类的即发即忘动作，不推进游标）。 */
 const FIRE_AND_FORGET = new Set([

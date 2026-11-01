@@ -48,6 +48,17 @@ fs.writeFileSync(rendererStub, [
   "});",
 ].join('\n'));
 
+// 学习页从 page-quiz 取配置面板（供应商+worker）。测试里换成桩：
+// 真身会把整个题库页拖进来，这里只需要它被渲染出来。
+const quizStub = path.join(dir, 'quiz.mjs');
+fs.writeFileSync(quizStub, [
+  "import React from 'react';",
+  "export const GenerationModels = (props) => React.createElement('div', {",
+  "  'data-generation-models': '1',",
+  "  'data-purpose': props.purpose,",
+  "}, props.label);",
+].join('\n'));
+
 const esbuild = await import('esbuild');
 await esbuild.build({
   entryPoints: [path.join(ROOT, 'packages/dsh-zhiyun-page-study/src/ai-teaching.jsx')],
@@ -59,6 +70,7 @@ await esbuild.build({
   alias: {
     '@deepseek-ai/dsh-client-ui-primitives': stub,
     'dsh-zhiyun-classroom-renderer': rendererStub,
+    'dsh-zhiyun-page-quiz': quizStub,
   },
   jsx: 'automatic',
   logLevel: 'silent',

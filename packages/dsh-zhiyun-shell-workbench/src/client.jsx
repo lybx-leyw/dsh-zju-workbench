@@ -126,11 +126,27 @@ function applyUI(ctx) {
     inject: () => ({ drawer }),
   }, AskMenuButton));
   // 抽屉挂在 `shell.overlay`（整层 absolute）。`shell.leading` 只在 macOS 且侧栏收起时挂载。
+  //
+  // ⚠️ 这里**声明** `sidebar.workspaces`，是整套接法的关键。
+  //    宿主的工作区/会话浏览器（`dsh-client-ui-workspace`）用
+  //    `ctx.slots.inject('sidebar.workspaces', () => ctx.slots.register({...}, WorkspaceBrowser))`
+  //    把自己挂上去 —— 也就是说它**需要一个别人先声明的槽**，自己不声明。
+  //    官方那条声明在宿主 `ui-sidebar` 里，而本 bundle 的 cordis.patch.yml 把 `ui-sidebar`
+  //    停用了（产品自带导轨替换它）。于是这个槽在本组合里**根本没有声明者**，
+  //    宿主的注入永不触发，我们也就拿不到那个组件（上一版实验「抽屉空白」的真因）。
+  //
+  //    我们自己声明它、并在抽屉里 `renderSlot` 出来，得到的是**宿主原样的浏览器**：
+  //    搜索、按工作区分组、排序、新建会话/工作区、行内重命名、置顶、分支、归档、
+  //    归档筛选，连它的 inject 面和视图 store 都是宿主自己那份，一个都不用我们伪造。
+  //
+  //    子槽（`…directoryFlow` / `…session.menu.item` / `…session.row.action` /
+  //    `sidebar.session.row.*`）由宿主那条注册自己声明，不归我们管。
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'zhiyun-ask-chrome',
     order: 10,
-    inject: () => ({ drawer, sessions: ctx.sessions, workspaces: ctx.workspaces, uiWorkspace: ctx.uiWorkspace, getLearningSpace: () => ctx.get('zhiyunLearningSpace') }),
+    children: { 'sidebar.workspaces': { kind: 'single', scope: 'root' } },
+    inject: () => ({ drawer, sessions: ctx.sessions, workspaces: ctx.workspaces, uiWorkspace: ctx.uiWorkspace, getLearningSpace: () => ctx.get('zhiyunLearningSpace'), nativeBrowser: createNativeBrowserPresence(ctx) }),
   }, AskChrome));
   ctx.slots.inject('main', function* () {
     // 七个页面面板都照常注册，**不**因为「某一页被取消」而撤掉注册：
@@ -150,6 +166,34 @@ function applyUI(ctx) {
     controller.navigate('today');
   });
   ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark', priority: -10 }, () => <div className="zy-hero-brand"><span>海纳江河，启真厚德</span></div>));
+}
+
+/**
+ * 宿主的工作区/会话浏览器**有没有真的注册进来**。
+ *
+ * 我们只负责声明槽（见 `applyUI` 里 `shell.overlay` 那段注释），真正往里注册的是
+ * 宿主 `dsh-client-ui-workspace` 自己。它是个可选的同组合件：某个部署里它没被启用
+ * （或其 `inject` 依赖缺席而 pending）时，槽一直空着。抽屉据此决定是渲染原生浏览器
+ * 还是退回自写列表 —— **不能**把「槽空着」渲染成一片空白，那正是上次的失败形态。
+ *
+ * uSES 口径：`getSnapshot` 必须返回稳定值，所以这里存布尔、由槽事件推着改。
+ * @param ctx - 客户端插件上下文。
+ * @returns `{ subscribe, getSnapshot }`。
+ */
+function createNativeBrowserPresence(ctx) {
+  let present = ctx.slots.entries('sidebar.workspaces').length > 0;
+  const listeners = new Set();
+  const read = () => {
+    const next = ctx.slots.entries('sidebar.workspaces').length > 0;
+    if (next === present) return;
+    present = next;
+    for (const listener of [...listeners]) listener();
+  };
+  ctx.effect(() => ctx.slots.subscribe('sidebar.workspaces', read), 'zhiyun: native browser presence');
+  return {
+    subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
+    getSnapshot: () => present,
+  };
 }
 
 /**

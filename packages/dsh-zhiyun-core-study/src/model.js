@@ -190,6 +190,14 @@ import { createQuestionBankController } from './question-bank-client.js';
     loadCourse,
     selectCourse,
     selectLesson,
+    async openCourseGraphEntry(course, lesson, entry) {
+      const ticket = selection + 1, epoch = account;
+      await selectLesson(lesson, course);
+      if (closed || account !== epoch || selection !== ticket) return false;
+      if (!state.result) throw new Error('这节课的解析结果暂时无法读取，请刷新图谱后重试。');
+      update({ focusTab: { tab: '课程图谱定位', courseId: String(course.id), subId: String(lesson.subId), entry, nonce: Date.now() } });
+      return true;
+    },
     /**
      * 展开 / 收起某门课。展开状态放在控制器里，与 `course`/`lesson` 同寿命：
      * 组件自己的 `useState` 会随左侧导航切换而卸载丢失，于是切走再回来时
@@ -526,6 +534,23 @@ import { createQuestionBankController } from './question-bank-client.js';
     /** 查一次备课进度（配合 generateTeaching 的两段式）。 */
     async pollTeaching(runId) {
       return request("teach-poll", { runId });
+    },
+
+    /** 把一次备课导出成 PPTX。返回 { fileName, base64 }，由界面转 Blob 下载。 */
+    async exportTeaching(runId) {
+      return request("teach-export", { runId });
+    },
+
+    /** 断点续作：接着没跑完的备课继续（已完成段不重跑）。 */
+    async resumeTeaching(runId) {
+      return request("teach-resume", { runId });
+    },
+
+    /** 加载这一节已保存的备课（重启 / 刷新后靠它秒开）。 */
+    async loadTeaching() {
+      const key = currentKey();
+      if (!key) return { pages: [], saved: false };
+      return request("teach-load", key);
     },
     async generateQuiz(input) {
       const key = currentKey(); if (!key) return;

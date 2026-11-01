@@ -1,4 +1,5 @@
 import { QuestionBank } from './question-bank.js';
+import { knowledgeChapters } from 'dsh-zhiyun-core-quiz/knowledge-points';
 import { normalizeWorkers } from 'dsh-zhiyun-core-parser/worker-pool';
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -9,7 +10,7 @@ import { createQuizStore } from "dsh-zhiyun-core-quiz/store";
 import { hasContent, pageLink, parseZySectionUri, timeLink } from "dsh-zhiyun-core-notes/note";
 import { writeFileAtomic } from "@deepseek-ai/dsh-atomic-write";
 import { GENERATION_VERSION } from 'dsh-zhiyun-core-lecture';
-import { briefFromLecture, startGeneration, pollGeneration } from './ai-teaching-generate.js';
+import { briefFromLecture, startGeneration, pollGeneration, pagesFromScenes, pagesFromHtmlChapters } from './ai-teaching-generate.js';
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 const fault = (code, message) => Object.assign(new Error(message), { code });
 // ⚠️ 文案里带上收到的值：`INPUT` 在 publicError 里被统一翻成「输入信息无效。」，
@@ -74,6 +75,10 @@ const relayStream = (stream) => {
 // dropped 里只剩「哪几路没被采用」的安全元数据：key / label / type 够界面说明情况，
 // host 是 CDN 主机名，客户端用不到，白白送进 DOM 也没有收益。
 const relayDropped = (item) => ({ key: item?.key ?? "extra", label: item?.label ?? null, type: item?.type ?? "unknown" });
+// 供应商目录（供应商 → 模型）在同一个进程里几乎不变，而发现一次可能要走网络
+// （账号型供应商要先换票）。页面每次进来都会问一遍，不缓存就是白等。
+// 5 分钟足够挡住「来回切页」，设置里新加的供应商不在缓存键里，仍会当场发现。
+const MODEL_CATALOG_TTL_MS = 5 * 60 * 1000;
 
 // The parser's final transcript is immutable input to the separately versioned handout.
 export const finalVersion = record => digest(JSON.stringify([record.sourceId, record.pages, record.sentences, record.unassignedSentences, record.blocks, record.spine, record.outline, record.tree, record.semanticPlan]));
@@ -131,7 +136,7 @@ export const publicError = (error) => ({ code: error.code ?? "FAILED", message: 
   ? { message: String(error.message).trim() }
   : {}) });
 export class StudyWorkbench {
-  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge, deeptutor, learningResource, handout, generate }) {
+  constructor({ classroom, parser, llm, directory, lecture, quiz, notes, knowledge, deeptutor, learningResource, handout, generate, export: exporter, vault }) {
     this.classroom = classroom;
     this.parser = parser;
     this.llm = llm;
@@ -150,6 +155,8 @@ export class StudyWorkbench {
     // 逐页产出 canvas 元素与口播稿）—— 那是「AI 备课」的真身，
     // 不在学习包里重写一份 prompt。
     this.generateOf = generate ?? (() => undefined);
+    this.exportOf = exporter ?? (() => undefined);
+    this.vaultOf = vault ?? (() => undefined);
     // 出题与节笔记同样是可选加工：停用其中一个只让对应动作报未接入。
     // 出题的题库不使用插件上的单例 store（那个 store 跨节共享、且不落盘），
     // 每次按本节记录自建一份，再把快照写回知识库。
@@ -167,8 +174,14 @@ export class StudyWorkbench {
     this.workerSelection = null;
     this.quizWorkerSelection = null;
     this.configBusy = false;
+    this.teachingWorkerSelection = null;
     this.questionBank = new QuestionBank(this);
-    this.ready = Promise.all([this.loadRoutes(),this.loadQuizWorkers()]);
+    this.catalogCache = new Map();
+    this.catalogInflight = new Map();
+    this.ready = Promise.all([this.loadRoutes(),this.loadQuizWorkers(),this.loadTeachingWorkers()]);
+    // 预热供应商目录：学习页/刷题页一打开就要它，放在这里先跑，用户真点到
+    // 「生成」时通常已经就绪。失败无所谓，真用到时 `modelCatalog` 会再试。
+    this.ready.then(() => this.modelCatalog()).catch(() => {});
   }
   async loadRoutes() {
     try {
@@ -183,11 +196,58 @@ export class StudyWorkbench {
     try{this.quizWorkerSelection=normalizeWorkers(JSON.parse(await readFile(path.join(this.directory,'quiz-models.json'),'utf8')).workers);}
     catch(e){if(e.code!=='ENOENT'&&!(e instanceof SyntaxError))throw e;}
   }
+  async loadTeachingWorkers() {
+    try{this.teachingWorkerSelection=normalizeWorkers(JSON.parse(await readFile(path.join(this.directory,'teaching-models.json'),'utf8')).workers);}
+    catch(e){if(e.code!=='ENOENT'&&!(e instanceof SyntaxError))throw e;}
+  }
   effectiveWorkers(purpose='lecture') {
     if(purpose==='quiz'&&this.quizWorkerSelection)return this.quizWorkerSelection.map(entry=>({...entry}));
+    // 「AI 教学」可以单独配一套供应商与配额；没配过就回落到讲义那套，
+    // 与 quiz 的回退顺序一致（用户没特意配就不该多出一层「未配置」）。
+    const scoped = purpose==='teaching' ? this.teachingWorkerSelection : null;
+    if (scoped) return scoped.map(entry => ({ ...entry }));
     if (this.workerSelection) return this.workerSelection.map(entry => ({ ...entry }));
     const selected = (purpose==='quiz'?this.parser.llm.routes?.text:null)??this.parser.llm.routes?.vision ?? this.parser.llm.routes?.text ?? this.parser.llm.selection?.();
     return selected?.provider && selected?.model ? [{ provider: selected.provider, model: selected.model, workers: this.parser.concurrency ?? 3 }] : [];
+  }
+  /**
+   * 宿主模型目录：`[{ id, name, models: [{ id, name, inputModalities }] }]`。
+   *
+   * 只留界面用得上的字段 —— `listModels` 的返回值里可能带着凭据（测试就专门
+   * 塞了一个 `apiKey` 进目录来盯这件事），缓存里也只存这份**脱敏后**的样子。
+   *
+   * 缓存按供应商各自计时：`listProviders()` 很便宜，每次都问；只有某个供应商
+   * 的模型列表过期/没缓存时才去发现，且同一供应商的并发请求共用一次发现。
+   * `refresh` 由配置浮窗的「刷新供应商」传入，跳过缓存重问一遍。
+   *
+   * 发现失败时回落到上一次成功的结果（没有才给空列表）：一次网络抖动不该让
+   * 界面突然显示「模型列表暂不可用」，也不该把失败缓存下来。
+   */
+  async modelCatalog({ refresh = false } = {}) {
+    const now = Date.now();
+    return Promise.all(this.llm.listProviders().map(async (provider) => {
+      const cached = this.catalogCache.get(provider.id);
+      let models;
+      if (!refresh && cached && now - cached.at < MODEL_CATALOG_TTL_MS) {
+        models = cached.models;
+      } else {
+        let pending = this.catalogInflight.get(provider.id);
+        if (!pending) {
+          pending = Promise.resolve().then(() => this.llm.listModels(provider.id))
+            .then((list) => list.map((model) => ({ id: model.id, name: model.name, inputModalities: model.inputModalities ?? [] })))
+            .finally(() => this.catalogInflight.delete(provider.id));
+          this.catalogInflight.set(provider.id, pending);
+        }
+        try {
+          models = await pending;
+          // 空列表不缓存：多半是供应商还没配好凭据，配好后要能立刻看到模型。
+          if (models.length) this.catalogCache.set(provider.id, { at: Date.now(), models });
+        } catch {
+          models = cached?.models ?? [];
+        }
+      }
+      return { id: provider.id, name: provider.name, models };
+    }));
   }
   cleanRoutes(routes = {}) {
     const out = {};
@@ -316,6 +376,8 @@ export class StudyWorkbench {
   async account(action, credentials, signal) {
     if (this.accountBusy) throw fault("ACCOUNT_BUSY", "账号正在切换");
     this.accountBusy = true;
+    // 换账号可能改变「哪些供应商此刻可用、能列出哪些模型」，目录缓存作废。
+    this.catalogCache.clear();
     try {
       for (const job of this.jobs.values()) if (["running", "queued"].includes(job.state)) job.controller.abort();
       for (const op of this.mutations.values()) op.controller.abort();
@@ -486,9 +548,8 @@ export class StudyWorkbench {
    * 讲义终稿 → AI 课件页。
    *
    * 与 `generateQuiz` 同一套约束：要先生成终稿、走 `mutate` 串行化、
-   * 用 `fault` 报可读的错误码。区别是它**不落盘** ——
-   * 课件页是「这一节的呈现方式」，不是新的学习产物，
-   * 存下来反而会在讲义更新后变成过期副本。
+   * 用 `fault` 报可读的错误码。课件由课堂 vault 保存，学习侧只保存关联索引；
+   * 索引记录讲义摘要，讲义变化后旧课件不再自动加载。
    *
    * 模型信息从 `payload` 来（界面把当前选的 provider/model 带上）。
    * 没给就用 `this.model`；再没有就如实报「没有可用模型」。
@@ -497,8 +558,7 @@ export class StudyWorkbench {
    * 讲义终稿 → AI 课件（走课堂生成管线）。
    *
    * 与 `generateQuiz` 同一套约束：要先生成终稿、用 `fault` 报可读错误码。
-   * 区别是它**不落盘** —— 课件是「这一节怎么讲」，讲义改了旧课件就该作废，
-   * 存下来只会让人看到过期内容。
+   * 课件保存于课堂 vault；学习侧用讲义摘要校验关联，避免展示过期课件。
    *
    * 课堂生成服务**惰性取**：它缺席时只让这一栏如实报「未接入」，
    * 不把整个学习面板拖成 pending（同 `lectureOf` 的理由）。
@@ -520,18 +580,126 @@ export class StudyWorkbench {
     const worker = this.effectiveWorkers()[0] ?? null;
 
     try {
-      return await startGeneration({
+      const stageId = `study-${digest(key)}`;
+      // 章节并发由「供应商 + 每供应商 worker 数」的池子决定（总并发 = Σ workers）。
+      // 这里造一个池子交给生成服务，而不是传一个裸数字 —— 那会绕过池子的
+      // 负载均衡与配额，还得让用户理解两个不同的并发概念。
+      const workers = this.effectiveWorkers('teaching');
+      let llmPool = null;
+      if (workers.length) {
+        if (typeof this.parser?.createRun === 'function') {
+          llmPool = this.parser.createRun({ workers }).llm;
+        } else {
+          // 池子接不上时**不能假装配额生效**：退回单槽模型，并如实说明
+          // 「本次不做配额调度」。直接报错会让备课完全不可用，那是更差的结果。
+          this.logger?.warn?.('生成 worker 池未接入：本次备课按单槽模型运行，章节并发不受管理');
+        }
+      }
+      const started = await startGeneration({
         generate,
-        brief: briefFromLecture(stored.lecture),
-        stageId: payload?.stageId,
+        brief: briefFromLecture(stored.lecture, stored.knowledgeTree ?? stored.tree ?? null),
+        stageId,
+        llmPool,
         provider: payload?.provider ?? worker?.provider,
         model: payload?.model ?? worker?.model,
       });
+      // Small ownership/index records only; scenes remain in the classroom vault.
+      const index = { ...identity(key), runId: started.runId, stageId,
+        lectureDigest: digest(JSON.stringify(stored.lecture)) };
+      await this.atomic(this.teachingIndex('run', started.runId), index);
+      await this.atomic(this.teachingIndex('lesson', key), index);
+      return { ...started, stageId };
     } catch (error) {
       if (signal?.aborted) throw fault("CANCELLED", "已取消");
       const code = error?.code === "NOT_WIRED" || error?.code === "EMPTY" ? error.code : "LLM";
       throw fault(code, error?.message || "启动备课失败");
     }
+  }
+
+  teachingIndex(kind, id) {
+    return path.join(this.directory, 'teaching', `${kind}-${digest(String(id))}.json`);
+  }
+
+  async readTeachingIndex(kind, id) {
+    try { return JSON.parse(await readFile(this.teachingIndex(kind, id), 'utf8')); }
+    catch (error) { if (error.code === 'ENOENT') return null; throw fault('CORRUPT', '备课索引无法读取'); }
+  }
+
+  async teachingRun(payload, user) {
+    const runId = nonEmpty(payload?.runId);
+    if (!runId) throw fault('INPUT', '缺少 runId');
+    const index = await this.readTeachingIndex('run', runId);
+    if (!index || index.accountId !== String(user.id)) throw fault('NOT_FOUND', '找不到这次备课');
+    const generate = this.generateOf();
+    const live = await generate?.get?.(runId);
+    const vault = this.vaultOf();
+    const saved = live ? null : await vault?.runs?.get?.(runId);
+    if (!live && !saved) throw fault('NOT_FOUND', '找不到这次备课');
+    return { index, live, saved, generate, vault };
+  }
+
+  async teachingScenes(run) {
+    // 固定 stage 可能还存着上一次课件，失败/进行中的新 run 不能借它冒充成功。
+    if (run.live ? run.live.status !== 'done' : run.saved?.state !== 'completed') return [];
+    if (Array.isArray(run.live?.scenes) && run.live.scenes.length) return run.live.scenes;
+    const steps = await run.vault?.runs?.steps?.(run.index.runId) ?? [];
+    const scenes = steps.find(step => step.id === 'scenes')?.output?.scenes;
+    if (Array.isArray(scenes) && scenes.length) return scenes;
+    try {
+      const doc = await run.vault?.classroom?.load?.(run.index.stageId);
+      return (doc?.stageMeta?.runId ?? doc?.outline?.producerRef) === run.index.runId ? doc.scenes ?? [] : [];
+    }
+    catch (error) { if (error.code === 'E_NOT_FOUND') return []; throw error; }
+  }
+
+  async exportTeaching(payload, user, signal) {
+    const exporter = this.exportOf();
+    if (!exporter?.pptx) throw fault('NOT_WIRED', '课堂导出服务未接入');
+    const run = await this.teachingRun(payload, user);
+    const scenes = await this.teachingScenes(run);
+    if (!pagesFromScenes(scenes).length) throw fault('EMPTY', '这次备课没有可导出的课件页');
+    signal?.throwIfAborted();
+    let document = null;
+    try { document = await run.vault?.classroom?.load?.(run.index.stageId); }
+    catch (error) { if (error.code !== 'E_NOT_FOUND') throw error; }
+    const report = await exporter.pptx({
+      stage: document?.stage ?? { id: run.index.stageId, name: '课堂课件' },
+      assets: document?.assets,
+      scenes,
+    }, { report: true });
+    signal?.throwIfAborted();
+    const buffer = Buffer.isBuffer(report) ? report : report?.buffer;
+    if (!Buffer.isBuffer(buffer)) throw fault('LLM', '导出服务未返回 PPTX 文件');
+    return { fileName: report.fileName ?? 'classroom.pptx', base64: buffer.toString('base64') };
+  }
+
+  async resumeTeaching(payload, user, signal) {
+    const run = await this.teachingRun(payload, user);
+    if (!run.generate?.resume) throw fault('NOT_WIRED', '课堂生成服务未接入');
+    // The generation service can resume only records it has hydrated in memory.
+    if (!run.live) throw fault('NOT_FOUND', '这次备课已存盘，但生成服务不能跨重启续跑，请重新备课');
+    signal?.throwIfAborted();
+    return run.generate.resume(run.index.runId);
+  }
+
+  async loadTeaching(key, user, signal) {
+    const index = await this.readTeachingIndex('lesson', key);
+    if (!index) return { pages: [], saved: false };
+    const stored = await this.result(key);
+    if (!stored?.lecture || index.lectureDigest !== digest(JSON.stringify(stored.lecture))) {
+      return { pages: [], saved: false };
+    }
+    const run = await this.teachingRun({ runId: index.runId }, user);
+    let htmlChapters = run.live?.htmlChapters;
+    if (!run.live && run.saved?.state === 'completed') {
+      const steps = await run.vault?.runs?.steps?.(index.runId) ?? [];
+      htmlChapters = steps.find(step => step.id === 'html')?.output?.chapters;
+    }
+    const pages = htmlChapters?.length ? pagesFromHtmlChapters(htmlChapters)
+      : pagesFromScenes(await this.teachingScenes(run));
+    signal?.throwIfAborted();
+    return { pages, saved: pages.length > 0, runId: index.runId, stageId: index.stageId,
+      status: run.live?.status ?? run.saved?.state, resumable: Boolean(run.live && run.generate?.resume) };
   }
 
   /** 查一次备课进度。run 跑完时返回 `{ status: 'done', pages }`。 */
@@ -753,10 +921,7 @@ export class StudyWorkbench {
     }
     if (method === "login" || method === "logout") return this.account(method, payload, signal);
     if (method === "models") {
-      const catalog = await Promise.all(this.llm.listProviders().map(async provider => ({
-        id: provider.id, name: provider.name,
-        models: (await this.llm.listModels(provider.id).catch(() => [])).map(model => ({ id: model.id, name: model.name, inputModalities: model.inputModalities ?? [] })),
-      })));
+      const catalog = await this.modelCatalog({ refresh: payload.refresh === true });
       return { catalog, routes: this.parser.llm.routes, workers: this.effectiveWorkers(payload.purpose) };
     }
     if (method === "models-save") {
@@ -772,8 +937,13 @@ export class StudyWorkbench {
             await this.llm.resolveModelInfo(entry.provider, entry.model, signal);
           }
           signal?.throwIfAborted();
-          await this.atomic(path.join(this.directory, quiz?'quiz-models.json':'models.json'), { schema: 1, workers });
-          if(quiz)this.quizWorkerSelection=workers;else this.workerSelection = workers;
+          // 三套配额各存一份：解析/讲义（models.json）、出题（quiz-models.json）、
+          // AI 教学（teaching-models.json）。共用一份会让「备课调快」意外改到解析速度。
+          const file = quiz ? 'quiz-models.json' : payload.purpose === 'teaching' ? 'teaching-models.json' : 'models.json';
+          await this.atomic(path.join(this.directory, file), { schema: 1, workers });
+          if(quiz)this.quizWorkerSelection=workers;
+          else if(payload.purpose === 'teaching')this.teachingWorkerSelection=workers;
+          else this.workerSelection = workers;
           return { workers, concurrency: workers.reduce((sum, entry) => sum + entry.workers, 0) };
         }
         const routes = this.cleanRoutes(payload.routes);
@@ -810,9 +980,26 @@ export class StudyWorkbench {
     // **之前**返回。它下面那行 `identifier(payload.courseId)` 会对 undefined
     // 抛「课程或节次编号无效」，而轮询本来就不该重复带课程信息。
     if (method === "teach-poll") return this.teachPoll(payload, signal);
+    if (method === "teach-export") return this.exportTeaching(payload, user, signal);
+    if (method === "teach-resume") return this.resumeTeaching(payload, user, signal);
 
     const courseId = identifier(payload.courseId);
     if (method === "lessons") return this.classroom.listLessons(courseId, { onlyPlayable: false, signal });
+    if (method === "course-graph") {
+      const lessons = await this.classroom.listLessons(courseId, { onlyPlayable: false, signal });
+      const items = [];
+      for (const lesson of lessons.items) {
+        signal?.throwIfAborted();
+        const stored = await this.result(this.key(user, courseId, lesson.subId ?? lesson.id));
+        // Use the exact projection used by KnowledgeBoard so chapter/topic jump
+        // indexes remain identical, including points filtered from the raw parser tree.
+        const chapters = knowledgeChapters(stored);
+        if (chapters.length) items.push({ lesson, chapters });
+      }
+      signal?.throwIfAborted();
+      // Do not send the stored record (transcripts, pages, lecture, quiz) for an overview.
+      return { items };
+    }
     // 批量解析状态：界面展开一门课时要知道每个节次有没有已存产物，逐节
     // 发 `result` 等于 O(节数) 次往返（线性代数 31、大学写作 61）。这里
     // 一次问完整门课，宿主侧只是查本地存储。单个坏编号跳过即可，不该让
@@ -847,6 +1034,7 @@ export class StudyWorkbench {
     //    讲义导出服务（`zhiyunHandout`）是**惰性**取的：它缺席时这件事只是不可用，
     //    不该把整个学习面板拖成 pending（同 `lectureOf` 那条注释的理由）。
     if (method === "teach-generate") return this.generateTeaching(key, payload, signal);
+    if (method === "teach-load") return this.loadTeaching(key, user, signal);
     if (method === "handout-export") return this.exportHandout(key, payload);
     if (method === "note-link-text") return this.linkText(user, payload);
     if (method === "start") return this.start(courseId, subId, payload.context, payload);

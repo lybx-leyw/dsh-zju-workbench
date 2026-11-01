@@ -22,11 +22,30 @@
  * 填回元素/口播动作 —— 上游 `placeHeldMedia` 的同一件事（media.ts:1107-1140）。
  */
 
-export async function produceFinalize({ outlines, scenes, mediaResults, brief, stageId, runId, vault, emit, phase = 'finalize', now = () => Date.now() }) {
+export async function produceFinalize({ outlines, scenes, mediaResults, brief, stageId, runId, vault, emit, phase = 'finalize', skipped, now = () => Date.now() }) {
   const timestamp = now();
   const withMedia = applyMedia(scenes, mediaResults ?? []);
 
-  emit(phase, 'phase-progress', { step: 'save', stageId, scenes: withMedia.length });
+  // ── 残课不得标记为完成 ──
+  //
+  // 上游的做法：所有场景都跑完后，如果其中有失败的，run 停在该场景并置 `paused`
+  // （`run/engine.ts:1788-1796`）—— 用户可以 Retry 那一页，而不是拿到一份残课。
+  //
+  // 本仓 scenes 段单页失败只记 `skipped` 继续（这是合理的并行取舍），但原先
+  // `finalize` **无条件**写 `generationComplete: true`：9 页里失败 5 页，课堂照样
+  // 被标成"生成完成"，用户以为课备好了。这里把完成标志条件化：
+  // 只有「没有任何场景被跳过」才算真正完成；否则如实标 incomplete，
+  // 并把缺失名单带出去，让调用方提示与重试。
+  const skippedList = Array.isArray(skipped) ? skipped : [];
+  const complete = skippedList.length === 0;
+
+  emit(phase, 'phase-progress', {
+    step: 'save',
+    stageId,
+    scenes: withMedia.length,
+    skipped: skippedList.length,
+    complete,
+  });
 
   const doc = {
     id: stageId,
@@ -43,7 +62,8 @@ export async function produceFinalize({ outlines, scenes, mediaResults, brief, s
       outlines,
       requirement: brief.requirement,
       languageDirective: brief.languageDirective ?? '',
-      generationComplete: true,
+      // ⚠️ 条件化：有场景缺失时不得声称完成（上游在首个失败场景 pause 而非报完成）。
+      generationComplete: complete,
       // 上游用 `producer: 'server-job'` 标记「这份文档由后台任务产出，浏览器不要再往里写」。
       producer: 'server-job',
       producerRef: runId,
@@ -55,6 +75,16 @@ export async function produceFinalize({ outlines, scenes, mediaResults, brief, s
       courseId: brief.courseId ?? null,
       sceneCount: withMedia.length,
       generatedAt: timestamp,
+      // 缺页清单：宿主据此提示「还有 N 页没生成」并提供重试入口。
+      ...(complete
+        ? {}
+        : {
+          incompleteScenes: skippedList.map((item) => ({
+            index: item.index,
+            title: item.title ?? '',
+            reason: item.reason ?? '',
+          })),
+        }),
     },
   };
 

@@ -198,10 +198,24 @@ function canonicalizeCountKeys(raw) {
 export function buildUserMessage(lecture, { count, type, difficulty }) {
   const chapters = Array.isArray(lecture?.chapters) ? lecture.chapters : [];
   const titles = [];
+  // 知识点清单：`[pid=<id>] <标题>`。**id 必须原样出现在 user 消息里**，
+  // 否则模型没有可回的锚点，题目的出处就只能靠标题去猜 —— 而标题是模型
+  // 自己写的自由文本，猜不中时会把跨课程混批的题全部盖成第一门课。
+  //
+  // 这里只放 id 与标题，不放正文：plan 阶段本来就拿不到讲义正文（它读探索轨迹），
+  // 把正文塞进来会挤掉轨迹的预算，也会诱导模型绕过探索直接抄。
+  const pointLines = [];
   for (const chapter of chapters) {
     const chapterTitle = text(chapter?.title).trim();
     const topics = Array.isArray(chapter?.topics) ? chapter.topics : [];
-    const topicTitles = topics.map((topic) => text(topic?.title).trim()).filter(Boolean);
+    const topicTitles = [];
+    for (const topic of topics) {
+      const topicTitle = text(topic?.title).trim();
+      if (topicTitle) topicTitles.push(topicTitle);
+      const pid = text(topic?.id).trim();
+      if (!pid || !topicTitle) continue;
+      pointLines.push(chapterTitle ? `- [pid=${pid}] ${chapterTitle} / ${topicTitle}` : `- [pid=${pid}] ${topicTitle}`);
+    }
     if (chapterTitle && topicTitles.length) titles.push(`${chapterTitle}（${topicTitles.join('、')}）`);
     else if (chapterTitle) titles.push(chapterTitle);
     else titles.push(...topicTitles);
@@ -209,7 +223,12 @@ export function buildUserMessage(lecture, { count, type, difficulty }) {
   const scope = titles.length ? titles.join('；') : '所附讲义';
   const typeHint = type ? `题型：${type}；` : '';
   const difficultyHint = difficulty ? `难度：${difficulty}；` : '';
-  return `请依据所附讲义出 ${count} 道题。${typeHint}${difficultyHint}覆盖范围：${scope}。只使用讲义内的知识，不要引入外部资料。`;
+  const pointBlock = pointLines.length
+    ? '\n\n可选知识点（每题的 topic 必须**原样以其中某个 [pid=...] 前缀开头**，后接你要考的具体角度；'
+      + 'pid 必须逐字照抄，不要改写、不要漏写。若确有题目不属于任何一个知识点，就省略前缀而不是编一个 pid）：\n'
+      + pointLines.join('\n')
+    : '';
+  return `请依据所附讲义出 ${count} 道题。${typeHint}${difficultyHint}覆盖范围：${scope}。只使用讲义内的知识，不要引入外部资料。${pointBlock}`;
 }
 
 /** 工具清单的提示词渲染（上游 `_tool_list_text`，1714-1720）。 */

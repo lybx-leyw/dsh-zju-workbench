@@ -311,6 +311,15 @@ body[data-zhiyun] .zs-mobile-tree-toggle { display:none; }
  */
 .zs-ai-teach { display: flex; flex-direction: column; gap: var(--zy-space-4); max-width: 760px; margin: 0 auto; padding: var(--zy-space-5) 0 var(--zy-space-6); }
 
+/* 章节 HTML 自带左右两栏（固定 PPT + 滚动讲解）。它按**自己的视口宽度**决定排版：
+   小于 900px 就堆叠成「上 PPT / 下讲解」—— 这正是曾经「改了没效果」的原因：
+   父容器 max-width:760px 让 iframe 永远只有 760px，永远走堆叠分支。
+   所以承载它的容器必须放开到可用宽度。 */
+.zs-ai-teach:has(.zs-ai-slide-frame) { max-width: none; width: 100%; }
+.zs-ai-slide-frame { width: 100%; display: flex; flex-direction: column; gap: var(--zy-space-2); }
+.zs-ai-slide-frame > iframe { width: 100%; height: min(78vh, 900px); min-height: 520px; border: 0; border-radius: 12px; background: #e7e3d9; }
+@media (max-width: 900px) { .zs-ai-slide-frame > iframe { height: 82vh; min-height: 540px; } }
+
 /* 页头：左标题右翻页，标题先换行也不能把按钮挤没 */
 .zs-ai-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--zy-space-4); }
 .zs-ai-head > div:first-child { min-width: 0; }
@@ -321,6 +330,10 @@ body[data-zhiyun] .zs-mobile-tree-toggle { display:none; }
 /* 进度条：2px 足够，太粗会抢标题的视觉重量 */
 .zs-ai-progress { height: 2px; border-radius: 999px; background: var(--zy-line); overflow: hidden; }
 .zs-ai-progress > i { display: block; height: 100%; background: var(--zy-accent); transition: width 220ms cubic-bezier(0.2, 0, 0, 1); }
+
+/* 章内页进度：比章节进度粗一点、用虚线感区分 —— 它表示的是「这一章读到第几页」 */
+.zs-ai-deck-progress { height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--zy-accent) 14%, var(--zy-line)); overflow: hidden; }
+.zs-ai-deck-progress > i { display: block; height: 100%; background: var(--zy-accent); opacity: 0.75; transition: width 180ms cubic-bezier(0.2, 0, 0, 1); }
 
 /* 要点：左侧细线 + 略大字号，一眼能看出这是「这一页要记的三件事」 */
 .zs-ai-points { margin: 0; padding: 0 0 0 var(--zy-space-3); list-style: none; border-left: 2px solid color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line)); display: flex; flex-direction: column; gap: 6px; }
@@ -362,6 +375,49 @@ body[data-zhiyun] .zs-mobile-tree-toggle { display:none; }
 .zs-ai-start p { margin: 0; font-size: 12px; color: var(--zy-muted); line-height: 1.7; max-width: 52ch; }
 .zs-ai-start-actions { display: flex; align-items: center; gap: var(--zy-space-3); margin-top: var(--zy-space-2); }
 .zs-ai-err { color: var(--zy-danger, #c0392b); }
+
+/* ── 备课进度面板：总进度 + 每章三步骤 ─────────────────────────────
+   一章内部是串行的三段（预判障碍 → 设计分镜 → 逐页出图），耗时主要在最后一段。
+   只显示「已完成 N 章」时，整章跑完之前数字不动，用户会以为卡住了。 */
+.zs-teach-progress { display: flex; flex-direction: column; gap: var(--zy-space-3); width: 100%; max-width: 52ch; margin-top: var(--zy-space-3); padding: var(--zy-space-3) var(--zy-space-4); border: 1px solid var(--zy-line); border-radius: 10px; background: color-mix(in srgb, var(--zy-accent) 3%, var(--zy-surface)); }
+
+.zs-teach-progress-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--zy-space-3); }
+.zs-teach-progress-head > div { display: grid; gap: 2px; min-width: 0; }
+.zs-teach-progress-head strong { font-size: 13px; font-weight: 600; }
+.zs-teach-progress-head span { color: var(--zy-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.zs-teach-percent { flex: none; color: var(--zy-accent); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* 总进度条：6px，比页头那根 2px 的章节条更重 —— 它是这一屏的主进度 */
+.zs-teach-bar { height: 6px; border-radius: 999px; background: var(--zy-line); overflow: hidden; }
+.zs-teach-bar > i { display: block; height: 100%; border-radius: 999px; background: var(--zy-accent); transition: width 320ms cubic-bezier(0.2, 0, 0, 1); }
+
+.zs-teach-chapter-list, .zs-teach-steps { list-style: none; margin: 0; padding: 0; }
+.zs-teach-chapter-list { display: flex; flex-direction: column; gap: var(--zy-space-3); }
+
+.zs-teach-chapter-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--zy-space-3); margin-bottom: 6px; }
+.zs-teach-chapter-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--zy-secondary); }
+.zs-teach-chapter-meta { flex: none; font-size: 11px; color: var(--zy-muted); font-variant-numeric: tabular-nums; }
+.zs-teach-chapter-list > li[data-status="done"] .zs-teach-chapter-meta { color: var(--zy-accent); }
+
+/* 三步骤：横向紧凑排列，用点 + 文字表达状态，不占纵向空间 */
+.zs-teach-steps { display: flex; flex-wrap: wrap; gap: 4px var(--zy-space-3); }
+.zs-teach-steps > li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--zy-muted); }
+.zs-teach-steps > li > i { flex: none; width: 6px; height: 6px; border-radius: 999px; border: 1px solid currentColor; background: transparent; }
+.zs-teach-steps > li[data-state="active"] { color: var(--zy-accent); font-weight: 600; }
+.zs-teach-steps > li[data-state="active"] > i { border-color: var(--zy-accent); background: var(--zy-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--zy-accent) 22%, transparent); animation: zs-teach-pulse 1.6s ease-in-out infinite; }
+.zs-teach-steps > li[data-state="done"] { color: var(--zy-secondary); }
+.zs-teach-steps > li[data-state="done"] > i { border-color: var(--zy-accent); background: var(--zy-accent); opacity: 0.55; }
+.zs-teach-steps-standalone { margin-top: var(--zy-space-2); }
+
+@keyframes zs-teach-pulse { 0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--zy-accent) 22%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--zy-accent) 10%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .zs-teach-steps > li[data-state="active"] > i { animation: none; } }
+
+/* 只给读屏的补充说明（「进行中 / 未开始」） */
+.zs-teach-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+
+
+.zs-ai-foot-left { display: flex; align-items: center; gap: var(--zy-space-3); }
 
 @media (max-width: 1050px) {
   body[data-zhiyun] .zs-workbench {

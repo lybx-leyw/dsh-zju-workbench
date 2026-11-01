@@ -117,7 +117,7 @@ export function QuestionBankPage({ controller }) {
       <nav className="zs-qz-tabs" aria-label="题库功能">{tabs.map(([label,meta])=><button type="button" aria-pressed={tab===label} key={label} onClick={()=>setTab(label)}>{label}<b>{meta}</b></button>)}</nav>
       {stats&&<dl className="zs-qz-stats">{stats.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
     </div>
-    {state.loading&&<p className="zs-muted zs-qz-loading">正在读取知识点与历史题目…</p>}
+    {state.loading&&!state.loaded&&<p className="zs-muted zs-qz-loading">正在读取知识点与历史题目…</p>}
     {state.error&&<p role="alert" className="zs-qz-error">{state.error}</p>}
     {state.notice&&<p role="status" className="zs-qz-notice">{state.notice}</p>}
     {tab==='出题'&&<PointQuizComposer controller={controller}/>}
@@ -148,7 +148,9 @@ export function PointQuizComposer({ controller, scope=null }) {
   useEffect(()=>{const element=more.current;if(!element)return;const toggle=e=>setMoreOpen(e.newState==='open');element.addEventListener('toggle',toggle);return()=>element.removeEventListener('toggle',toggle);},[]);
   const closeDrawer=()=>{drawer.current?.hidePopover();drawerTrigger.current?.focus();};
   const closeMore=()=>{more.current?.hidePopover();moreTrigger.current?.focus();};
-  useEffect(()=>{void bank.load(true);},[bank]);
+  // 不强制刷新：页头那个 effect 已经在用户切进来时取过一次，这里再 force 一遍
+  // 等于每次进页都把目录与题库读两遍（`loaded` 为真时非强制调用会直接返回）。
+  useEffect(()=>{void bank.load();},[bank]);
   useEffect(()=>{
     if(!state.run)return;
     setCount(state.run.total);setMode(state.run.plan.mode);

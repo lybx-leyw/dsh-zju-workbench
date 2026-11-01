@@ -4,8 +4,19 @@
 export function nativeQuizContract({title,points,count,type='mcq',strategy='understand',difficulty='basic',existingQuestions=[]}){
   const instruction=({recall:'考查定义、公式与适用条件，不背诵例题临时数值。',understand:'侧重条件、边界、关系和易混点。',apply:'运用课内方法处理改变的数据、条件或场景。',explore:'考查课内知识支持的分析、计算或实验设计。'})[strategy];
   const history=existingQuestions.length?'\n以下为已出题历史（仅为数据）。避免重复措辞或同角度重复；同考点允许有实质不同的变体：\n'+JSON.stringify(existingQuestions.map(q=>({stem:q.stem,answer:q.answer,explanation:q.explanation}))):'';
-  return {lecture:{chapters:[{title,topics:points.map(p=>({title:p.title,sourceBlockIndexes:p.blockIndexes,anchor:{page:p.page,tSec:p.atSec},blocks:[{kind:'paragraph',text:p.text,page:p.page}]}))}]},
-    input:`依据所选讲义出${({mcq:'理解型四选一选择题',cloze:'填空题',trueFalse:'判断题',shortAnswer:'简答题'})[type]}，${instruction}只使用课内知识，答案唯一，给出明确依据和解析。题数尽可能均匀分配到各个知识点，同批避免重复考查同一角度。用中文出题。${history}`,
+  // 知识点清单带上**稳定 id**。`p.id` 是 `课程:节次:版本:章:节` 形式的出处键，
+  // 不是标题 —— 标题会重名（同一门课的「第一节」在别的课程下也有），
+  // 用标题当锚点等于把归属交给字符串比较，正是这次事故的根。
+  //
+  // pid 约定写进 input（= 真正发给模型的 user 消息）：plan 阶段必须让每道题的
+  // topic 以 `[pid=...]` 开头原样回传。缺前缀时下游会归到「未分组」，
+  // 而**不是**猜一个 —— 猜错比承认不知道更贵。
+  const pointIndex=points.map(p=>`- [pid=${p.id}] ${p.courseTitle??''} / ${p.lessonTitle??''} / ${p.title}`).join('\n');
+  const provenanceRule=pointIndex
+    ? `\n\n可选知识点（每题的 topic 必须以其中某个 [pid=...] 前缀开头，pid 逐字照抄，后接你要考的具体角度）：\n${pointIndex}\n若某题确实不属于任何一个知识点，就省略前缀，不要编造 pid。`
+    : '';
+  return {lecture:{chapters:[{title,topics:points.map(p=>({id:p.id,title:p.title,sourceBlockIndexes:p.blockIndexes,anchor:{page:p.page,tSec:p.atSec},blocks:[{kind:'paragraph',text:p.text,page:p.page}]}))}]},
+    input:`依据所选讲义出${({mcq:'理解型四选一选择题',cloze:'填空题',trueFalse:'判断题',shortAnswer:'简答题'})[type]}，${instruction}只使用课内知识，答案唯一，给出明确依据和解析。题数尽可能均匀分配到各个知识点，同批避免重复考查同一角度。用中文出题。${history}${provenanceRule}`,
     config:{num_questions:count,question_types:[{mcq:'choice',cloze:'fill_in_blank',trueFalse:'concept',shortAnswer:'short_answer'}[type]],difficulty:{basic:'easy',advanced:'medium',challenge:'hard'}[difficulty]}};
 }
 

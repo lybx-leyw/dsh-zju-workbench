@@ -47,6 +47,8 @@ const Q = (over = {}) => ({
   explanation: '解析内容',
   choices: [{label: 'A', text: '选项甲'}, {label: 'B', text: '选项乙'}],
   courseTitle: '概率论与数理统计',
+  courseId: 'course-1',
+  subId: 'sub-3',
   lessonTitle: '第 3 节 条件概率',
   pointTitle: '条件概率的定义',
   status: 'accepted',
@@ -60,7 +62,7 @@ test('按 课程/节次 → 知识点 分组，题号在整份文档上连续', 
     Q({pointTitle: '定义'}),
     Q({pointTitle: '定义'}),
     Q({pointTitle: '全概率公式'}),
-    Q({lessonTitle: '第 4 节 贝叶斯', pointTitle: '贝叶斯公式'}),
+    Q({lessonTitle: '第 4 节 贝叶斯', subId: 'sub-4', pointTitle: '贝叶斯公式'}),
   ]);
 
   assert.equal(outline.total, 4);
@@ -90,11 +92,13 @@ test('已弃用的题不进卷子；全是弃用题时得到空文档', () => {
   assert.equal(buildQuizPdfOutline(null).total, 0);
 });
 
-test('缺课程/节次时归到「未标注」，题不会静默消失', () => {
-  const outline = buildQuizPdfOutline([Q({courseTitle: '', lessonTitle: '', pointTitle: ''})]);
-  assert.equal(outline.total, 1);
+test('缺课程/节次时归到【未分组】，题不会静默消失、也不并进别的课', () => {
+  const outline = buildQuizPdfOutline([Q({courseTitle: '', courseId: '', subId: '', lessonTitle: '', pointTitle: ''})]);
+  assert.equal(outline.total, 1, '出处缺失不等于丢题');
   assert.equal(outline.sections.length, 1);
-  assert.equal(outline.sections[0].courseTitle, '');
+  assert.equal(outline.sections[0].unresolved, true);
+  assert.equal(outline.sections[0].courseTitle, '【未分组】');
+  assert.equal(outline.sections[0].lessonTitle, '【未分组】');
   assert.equal(outline.sections[0].points[0].title, '未标注知识点');
 });
 

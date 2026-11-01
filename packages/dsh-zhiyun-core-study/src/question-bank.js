@@ -80,26 +80,20 @@ const publicPlan = plan => ({engine:plan.engine??'local',ideaScope:plan.ideaScop
 export class QuestionBank {
   constructor(owner) { this.owner=owner; this.runs=new Map(); this.writes=new Map(); this.starting=new Set(); }
   records(user) { return this.owner.knowledge.listByAccount({accountId:String(user.id)}); }
-  async catalog(user,signal) {
-    const records=this.records(user);
-    let courses=[];
-    try { courses=(await this.owner.classroom.listCourses({signal})).items ?? []; } catch { /* Stored records remain usable while course metadata is unavailable. */ }
-    const courseNames=new Map(courses.map(course=>[String(course.id),course.title]));
-    // 学期也要带出去：笔记库的目录是「学期 / 课程 / 节次」，
-    // 少这一层会让题库导出的文件落到与讲义不同的位置，同一门课出现两个文件夹。
-    // 讲义导出（handout-export）一直传的是 course.termName，题目导出必须对齐。
-    const courseTerms=new Map(courses.map(course=>[String(course.id),course.termName??'']));
-    const lessonNames=new Map(),courseIds=[...new Set(records.map(record=>record.courseId))];
-    if(typeof this.owner.classroom.listLessons==='function')for(let i=0;i<courseIds.length;i+=6){
-      await Promise.allSettled(courseIds.slice(i,i+6).map(async courseId=>{
-        const lessons=await this.owner.classroom.listLessons(courseId,{onlyPlayable:false,signal});
-        for(const lesson of lessons.items ?? [])lessonNames.set(courseId+':'+lesson.subId,lesson.title);
-      }));
-      signal?.throwIfAborted();
-    }
-    return records.flatMap(record=>knowledgePoints({...record,courseTitle:courseNames.get(record.courseId) ?? record.courseTitle ?? record.courseId,
-      termName:courseTerms.get(record.courseId) ?? '',
-      lessonTitle:lessonNames.get(record.courseId+':'+record.subId) ?? record.lessonTitle ?? record.title ?? record.subId}));
+  /**
+   * 知识点目录：**只从本机已存的讲义记录推导**，不打课堂服务。
+   *
+   * 以前每次进刷题页都会 `listCourses`（智云课堂分页接口）+ 为每个已存节次
+   * `listLessons`（每个节次一次请求）—— 知识点与题目都在本地，这几跳纯属白等，
+   * 而且首屏就卡在「正在读取知识点与历史题目…」上。
+   *
+   * 那两次外呼只为了补课程名、学期名、节次名；本地记录里本来就有
+   * （`record.courseTitle` / `termName` / `lessonTitle` / `title`），缺了也按 id 显示。
+   * 唯一需要外呼的时机是**导出**，而且只有老题目缺学期时才会去补
+   * （见 `invoke('bank-export')` 的学期兜底）。
+   */
+  async catalog(user) {
+    return this.records(user).flatMap(record=>knowledgePoints(record));
   }
   baseBank(user) {
     const bank=this.owner.knowledge.questionBank(String(user.id));bank.generationJobs??=[];bank.conceptCache??={};return bank;
@@ -184,7 +178,7 @@ export class QuestionBank {
       let plan;
       if(!resume){
         if(!Array.isArray(payload.pointIds)||!payload.pointIds.length||payload.pointIds.length>1000||new Set(payload.pointIds).size!==payload.pointIds.length)throw fault('INPUT','请选择知识点');
-        const catalog=await this.catalog(user,signal),points=payload.pointIds.map(id=>catalog.find(p=>p.id===id));
+        const catalog=await this.catalog(user),points=payload.pointIds.map(id=>catalog.find(p=>p.id===id));
         if(points.some(point=>!point))throw fault('INPUT','知识点已更新，请刷新选择');
         // 收起来的引擎只保留「读旧断点」的能力，新批次在这里拦下。
         // 闸放在产品边界而不是内核 planEngineQuestions：内核是纯规划函数，
@@ -347,7 +341,7 @@ export class QuestionBank {
     if(method==='bank-pause')return this.pause(user,payload.runId);
     if(method==='bank-resume')return this.start(payload,user,signal,true);
     if(method==='bank-generate')return this.start(payload,user,signal);
-    if (method==='bank-catalog') return {points:(await this.catalog(user,signal)).map(({text,...point})=>point),defaultEngine:DEFAULT_ENGINE,engines:await this.engineCatalog()};
+    if (method==='bank-catalog') return {points:(await this.catalog(user)).map(({text,...point})=>point),defaultEngine:DEFAULT_ENGINE,engines:await this.engineCatalog()};
     return this.transaction(user,signal,async(bank,signal)=>{
       if (method==='bank-load') {
         if (bank.questions.length!==this.owner.knowledge.questionBank(String(user.id)).questions.length) await this.save(bank);
@@ -467,7 +461,9 @@ export class QuestionBank {
             termName: doc.termName,
             markdown: doc.markdown,
           });
-          written.push({ ...result, lessonTitle: doc.lessonTitle, courseTitle: doc.courseTitle, count: doc.count, groups: doc.groups });
+          written.push({ ...result, lessonTitle: doc.lessonTitle, courseTitle: doc.courseTitle, count: doc.count, groups: doc.groups,
+            // 未分组那份要能被界面认出来：用户看到它才不会以为「导出漏了几道」。
+            unresolved: doc.unresolved === true });
         }
 
         // 汇总：一条成功时报路径，多条时报清单，界面按有没有 `files` 决定怎么显示

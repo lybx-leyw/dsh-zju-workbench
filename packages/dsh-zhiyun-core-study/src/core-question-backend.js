@@ -507,7 +507,22 @@ export function createCoreQuestionBackend({ pool = null, llmService = null, mode
                 // 只透传上游认识的三个 stage，其余丢弃 —— 界面按这三键查表。
                 if (STAGES.has(stage)) push({ stage });
               },
-              config: { language: 'zh', questionTypes: [chainType] },
+              config: {
+                language: 'zh',
+                questionTypes: [chainType],
+                // 调用方（nativeQuizContract）拼的那段话必须真的用上。
+                //
+                // 旧写法把 contract.input 传到这里后**被整个丢掉**：runDeepQuestion
+                // 只收到了 lecture/count/type/difficulty，于是它退回 buildUserMessage
+                // 自己现拼一句。而 contract.input 里写着「题数尽可能均匀分配到各个
+                // 知识点」——那句话一丢，跨课程混批时模型就没有任何线索去分配归属。
+                //
+                // 传原文而不是改写一遍：上游那句提示是产品对题目的正式要求，
+                // 在本层"翻译"成另一句话只会让两边漂移。
+                ...(typeof input?.content === 'string' && input.content.trim()
+                  ? { userMessage: input.content }
+                  : {}),
+              },
             });
 
             result = {
@@ -522,6 +537,10 @@ export function createCoreQuestionBackend({ pool = null, llmService = null, mode
                 explanation: q.explanation ?? '',
                 options: Object.fromEntries((q.choices ?? []).map(c => [c.label, c.text])),
                 topic: q.topic ?? '',
+                // 出处一路带到这里，运行时才可能按 id 绑定。
+                // 之前这里只映射到 topic 就停了，下游只剩「标题」这一个可比的字符串，
+                // 于是它只好拿标题去猜 —— 猜不中就落到第一个知识点。
+                pointId: q.pointId ?? null,
                 difficulty: q.difficulty ?? 'easy',
               })),
             };

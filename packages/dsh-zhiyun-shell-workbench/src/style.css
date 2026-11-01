@@ -9,6 +9,9 @@ body[data-zhiyun] {
   /* 间距阶梯（P2）：4px 基准，新代码优先使用；存量逐步迁移，不强制重排。 */
   --zy-space-1:4px;--zy-space-2:8px;--zy-space-3:12px;--zy-space-4:16px;--zy-space-6:24px;--zy-space-8:32px;--zy-space-12:48px;--zy-space-16:64px;
   --zy-font:'Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
+  /* 会话抽屉宽度。JS 侧的同名真源在 components.jsx 的 DRAWER_WIDTH（两边必须一致：
+     抽屉多宽，问一问那一列就要让出多宽，否则「挤压」会错位）。 */
+  --zy-drawer-width:304px;
   --dsw-font-family:var(--zy-font);
   --dsw-alias-button-info-fill:var(--zy-action);--dsw-alias-button-info-hover:var(--zy-action-hover);
 }
@@ -191,15 +194,15 @@ body[data-zhiyun] .zy-topbar {position:relative;z-index:1;box-sizing:border-box;
 .zy-topbar[aria-expanded=true] {color:var(--zy-accent);}
 .zy-topbar:focus-visible {outline:2px solid var(--zy-accent);outline-offset:2px;}
 .zy-topbar svg {flex-shrink:0;}
-/* 抽屉层只盖问一问这一列：滑出被裁在列内，遮罩也不会灰到导航栏或标题栏。
-   宿主把 overlay 的直接子元素设成可点击，这里用更高优先级把它关掉，只在打开时把遮罩和抽屉打开。 */
+/* 抽屉层只盖问一问这一列。
+   抽屉是**常驻**侧栏而不是临时浮窗：没有遮罩，打开时把这一列右侧盖住、关掉时滑回左侧。
+   宿主把 overlay 的直接子元素设成可点击，这里保持「层本身不吃点击」(pointer-events:none)
+   以免挡住下面的会话面板；只有抽屉本体在打开时接管指针。 */
 body[data-zhiyun] .zy-drawer-layer {position:fixed;z-index:40;overflow:hidden;pointer-events:none;}
-body[data-zhiyun] .zy-drawer-layer[data-open=true] .zy-drawer-scrim,
 body[data-zhiyun] .zy-drawer-layer[data-open=true] .zy-drawer {pointer-events:auto;}
-.zy-drawer-scrim {position:absolute;inset:0;background:color-mix(in srgb,#1a2820 28%,transparent);opacity:0;transition:opacity .2s ease;}
-body[data-zhiyun][data-ds-dark-theme] .zy-drawer-scrim {background:color-mix(in srgb,#000 48%,transparent);}
-.zy-drawer-scrim[data-open=true] {opacity:1;}
-.zy-drawer {position:absolute;top:0;bottom:0;left:0;display:flex;flex-direction:column;width:304px;max-width:84%;background:var(--zy-surface);border-right:1px solid var(--zy-line);box-shadow:12px 0 36px color-mix(in srgb,#0b1410 10%,transparent);transform:translateX(-100%);visibility:hidden;transition:transform .24s cubic-bezier(.2,0,0,1),visibility .24s;font-family:var(--zy-font);font-size:14px;line-height:1.45;color:var(--zy-text);font-synthesis:none;}
+/* 抽屉本体：贴左缘、整高、自己一条滚动区。没有 box-shadow —— 它不是浮起来的窗口，
+   而是这一列里的固定面板，靠一条分割线与正文分开就够了。 */
+.zy-drawer {position:absolute;top:0;bottom:0;left:0;display:flex;flex-direction:column;width:var(--zy-drawer-width,304px);max-width:84%;background:var(--zy-surface);border-right:1px solid var(--zy-line);transform:translateX(-100%);visibility:hidden;transition:transform .24s cubic-bezier(.2,0,0,1),visibility .24s;font-family:var(--zy-font);font-size:14px;line-height:1.45;color:var(--zy-text);font-synthesis:none;}
 .zy-drawer[data-open=true] {transform:none;visibility:visible;}
 .zy-drawer *,.zy-drawer *:before,.zy-drawer *:after {box-sizing:border-box;}
 .zy-drawer button {font:inherit;cursor:pointer;border:0;background:transparent;color:inherit;}
@@ -235,8 +238,23 @@ body[data-zhiyun][data-ds-dark-theme] .zy-drawer-scrim {background:color-mix(in 
 .zy-drawer-menu button.is-danger {color:#9a4038!important;}
 .zy-drawer-menu button.is-danger:hover {background:color-mix(in srgb,#9a4038 8%,var(--zy-surface))!important;}
 .zy-drawer-input {flex:1;min-width:0;margin:6px 4px;padding:7px 10px;font:inherit;font-size:13.5px;color:var(--zy-text);border:1px solid var(--zy-accent);border-radius:8px;background:var(--zy-bg);outline:none;}
+/* 原生工作区/会话浏览器的落点。
+   宿主的浏览器根是 `flex:1;display:flex;flex-direction:column;min-height:0`
+   （见 ui-workspace 的 `.bhn1Oq_root`），它需要**一个高度确定、纵向可收缩**的父级
+   才能把内部列表滚起来。抽屉本身是 `display:flex;flex-direction:column`，
+   这里再把这一层接上：占满剩余高度、`min-height:0` 让内部滚动生效。 */
+.zy-drawer-native {flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+/* 收起按钮那一条窄栏。宿主的浏览器没有「收起抽屉」这个概念，所以由我们补一条：
+   没有它的话，用户在抽屉里滚到下面时只能回顶部去找会话头那颗汉堡。 */
+.zy-drawer-native-bar {display:flex;align-items:center;gap:8px;flex-shrink:0;height:44px;padding:0 8px 0 12px;border-bottom:1px solid var(--zy-line);}
+.zy-drawer-native-title {font-size:13px;font-weight:600;letter-spacing:.2px;}
+.zy-drawer-collapse {display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin-left:auto;border-radius:8px;color:var(--zy-secondary)!important;}
+.zy-drawer-collapse:hover {background:var(--zy-hover)!important;color:var(--zy-text)!important;}
+/* 宿主浏览器的那棵树是按宿主侧栏（56px 缩进 + 自己的一份内边距）排的；
+   抽屉左边已经贴着面板边缘，补齐一点左右内边距让行与抽屉边缘不粘连。 */
+.zy-drawer-native > * {padding-left:8px;padding-right:8px;}
 body[data-zhiyun][data-ds-dark-theme] .zy-drawer-error,body[data-zhiyun][data-ds-dark-theme] .zy-drawer-menu button.is-danger {color:#e7a29c;}
-@media(prefers-reduced-motion:reduce){.zy-drawer,.zy-drawer-scrim{transition:none;}}
+@media(prefers-reduced-motion:reduce){.zy-drawer{transition:none;}}
 .zy-native-settings{min-height:32px;padding:0 4px;}
 .zy-page {display:flex;flex-direction:column;height:100%;min-width:0;background:var(--zy-bg);}
 .zy-scroll{flex:1;overflow:auto;min-height:0;}.zy-content{max-width:980px;margin:0 auto;padding:43px 48px 28px;}

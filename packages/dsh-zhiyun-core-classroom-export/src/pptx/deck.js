@@ -52,14 +52,26 @@ const require = createRequire(import.meta.url);
 const DEFAULT_FONT_SIZE = 16;
 const DEFAULT_FONT_FAMILY = 'Microsoft YaHei';
 
-/** pptxgenjs 以 CJS 分发（`exports.require`）；按需加载，缺了就在调用时报错。 */
+/**
+ * pptxgenjs 以 CJS 分发；按需加载，缺了就在调用时报错。
+ *
+ * 原来这里 `require('../../vendor/pptxgen.cjs')` —— 那个 vendor 文件在仓库里
+ * **根本不存在**（远端就没提供），于是 PPT 导出永远报
+ * `Cannot find module '../../vendor/pptxgen.cjs'`，整个导出能力形同不存在。
+ *
+ * 改为直接依赖 npm 上的 `pptxgenjs`（公开包，已写进 package.json 的 dependencies）。
+ * 这样 `npm install` 之后就一定拿得到，不再依赖一个手工塞进来的二进制。
+ */
 let PptxGenJS;
 function loadPptxGenJS() {
   if (!PptxGenJS) {
-    PptxGenJS = require('../../vendor/pptxgen.cjs');
-    if (typeof PptxGenJS !== 'function') {
-      throw new Error('pptxgenjs vendor 入口不是构造函数（vendor/pptxgen.cjs）');
+    const mod = require('pptxgenjs');
+    // CJS 默认导出可能是 `mod` 本身，也可能挂在 `mod.default`
+    const Ctor = typeof mod === 'function' ? mod : mod?.default;
+    if (typeof Ctor !== 'function') {
+      throw new Error('pptxgenjs 入口不是构造函数（检查 node_modules/pptxgenjs 是否完整）');
     }
+    PptxGenJS = Ctor;
   }
   return PptxGenJS;
 }
@@ -473,6 +485,44 @@ export async function buildPptxBuffer(slides, slideScenes, ratios, options = {})
             if (linkOption) imageOptions.hyperlink = linkOption;
           }
           pptxSlide.addImage(imageOptions);
+        } else if (!Array.isArray(el.viewBox) || typeof el.path !== 'string') {
+          // ── 抽象形状的兜底 ──────────────────────────────────────────
+          //
+          // 上游的 shape 是「SVG path + viewBox」（PPTist 的表示法）。
+          // 而课堂生成侧产出的是**抽象形状**：`{ shape: 'roundRect', fill, radius }`，
+          // 没有 path 也没有 viewBox。
+          //
+          // 原代码直接读 `el.viewBox[0]`，遇到抽象形状就抛
+          // `Cannot read properties of undefined (reading '0')` ——
+          // 整个 PPT 导出在这一步崩掉，一页都出不来。
+          //
+          // 这里按形状名映射成 pptxgenjs 的内置形状：颜色、位置、尺寸都保留，
+          // 只是圆角/圆形这类细节用最接近的预设。宁可近似，不能崩。
+          const preset = pptxPresetFor(el);
+          const shapeOptions = {
+            x: el.left / ratioPx2Inch,
+            y: el.top / ratioPx2Inch,
+            w: el.width / ratioPx2Inch,
+            h: el.height / ratioPx2Inch,
+            fill: {
+              color: formatColor(el.fill ?? 'transparent').color,
+              transparency: (1 - (el.opacity === undefined ? 1 : el.opacity)) * 100,
+            },
+          };
+          const lineColor = formatColor(el.stroke ?? el.borderColor ?? 'transparent');
+          if (lineColor.alpha > 0 && (el.strokeWidth ?? el.borderWidth)) {
+            shapeOptions.line = {
+              color: lineColor.color,
+              width: (el.strokeWidth ?? el.borderWidth) / ratioPx2Pt,
+            };
+          }
+          if (el.rotate) shapeOptions.rotate = el.rotate;
+          pptxSlide.addShape(preset, shapeOptions);
+
+          // 抽象形状上的文字（与下面的文字分支同逻辑，避免重复一段就抽成小函数）
+          if (el.text) {
+            addShapeText(pptxSlide, el, ratioPx2Pt, slideNumbers);
+          }
         } else {
           const scale = { x: el.width / el.viewBox[0], y: el.height / el.viewBox[1] };
           const rawPoints = toPoints(el.path);
@@ -869,4 +919,39 @@ function guessImageMime(url) {
   const path = url.split(/[?#]/)[0] ?? '';
   const extension = path.slice(path.lastIndexOf('.') + 1).toLowerCase();
   return IMAGE_MIME[extension] ?? 'application/octet-stream';
+}
+
+/**
+ * 抽象形状名 → pptxgenjs 内置形状名。
+ *
+ * 课堂生成侧用的名字（`shape: 'roundRect' | 'circle' | ...`）与 pptxgenjs 的
+ * 预设名不完全一致；认不出的统一按矩形处理 —— 位置和颜色仍然正确。
+ */
+function pptxPresetFor(el) {
+  const name = String(el.shape ?? el.form ?? el.type ?? '').toLowerCase();
+  if (name.includes('circle') || name.includes('ellipse') || name === 'oval') return 'ellipse';
+  if (name.includes('round')) return 'roundRect';
+  if (name.includes('triangle')) return 'triangle';
+  if (name.includes('diamond')) return 'diamond';
+  if (name.includes('line')) return 'line';
+  return 'rect';
+}
+
+/** 往一个已加的形状上补文字。抽出来是因为抽象形状与路径形状都要做这件事。 */
+function addShapeText(pptxSlide, el, ratioPx2Pt, slideNumbers) {
+  const textProps = formatHTML(el.text.content ?? '', ratioPx2Pt);
+  const textOptions = {
+    x: el.left / ratioPx2Pt,
+    y: el.top / ratioPx2Pt,
+    w: el.width / ratioPx2Pt,
+    h: el.height / ratioPx2Pt,
+    fontSize: DEFAULT_FONT_SIZE / ratioPx2Pt,
+    fontFace: DEFAULT_FONT_FAMILY,
+    color: '#000000',
+    valign: el.text.align,
+  };
+  if (el.rotate) textOptions.rotate = el.rotate;
+  if (el.text.defaultColor) textOptions.color = formatColor(el.text.defaultColor).color;
+  if (el.text.defaultFontName) textOptions.fontFace = el.text.defaultFontName;
+  pptxSlide.addText(textProps, textOptions);
 }

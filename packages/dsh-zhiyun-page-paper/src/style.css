@@ -265,12 +265,44 @@ body[data-zhiyun] .zp-main {
   flex-direction: column;
 }
 
-/* 空态（还没挑论文） */
+/* 空态（还没打开文献）：照学习页的起始页排 —— motto + 一句大标题 + 一行副文。
+ *
+ * 它必须顶替 `.zp-main` 的位置：`.zp-main` 是 `flex: 1; min-width: 0`，抽屉
+ * （46px ↔ 392px，且可拖宽）和文件树（264px，可收起、可被挤窄）都是会变的兄弟，
+ * 空态若不定宽，可用宽度就只由那几行字决定 —— 版心贴着树边，抽屉开合也不跟着动。
+ * 居中写在这里（而不是交给子组件），因为这一块自己就是那一栏的全部内容。 */
 body[data-zhiyun] .zp-landing {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  padding: 42px;
+  text-align: center;
+}
+
+body[data-zhiyun] .zp-landing-motto {
+  font-family: "Songti SC", "SimSun", serif;
+  font-size: 20px;
+  letter-spacing: .12em;
+  color: var(--zy-accent);
+}
+
+body[data-zhiyun] .zp-landing h1 {
+  max-width: 560px;
+  margin: 17px 0 8px;
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -.02em;
+}
+
+body[data-zhiyun] .zp-landing > p {
+  max-width: 510px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--zy-secondary);
 }
 
 body[data-zhiyun] .zp-landing-actions {

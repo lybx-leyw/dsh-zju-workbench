@@ -10,6 +10,7 @@
     "./brief": "./src/brief.js",
     "./events": "./src/events.js",
     "./llm": "./src/llm.js",
+    "./html-shell": "./src/html-slide-shell.js",
     "./pipeline": "./src/pipeline.js",
     "./package.json": "./package.json"
   },
@@ -17,6 +18,9 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "dependencies": {
+    "playwright": "1.56.1"
   },
   "files": [
     "src/",

@@ -11,6 +11,8 @@ import React, { useEffect, useId, useRef, useState } from 'react';
  *    一下模型列表都会触发，未保存的改动直接丢失，没有任何提示。
  * 3. 打开浮窗时把焦点移进去、关闭时还给触发器，键盘用户不用重新找位置。
  * 4. 术语改成中文：`workers` 上屏为「并发」，「a + b = N workers」改成「3 + 3 = 6 路并发」。
+ * 5. **读供应商目录不拦生成**。目录发现可能要走网络（账号型供应商要先换票），
+ *    而生成在没显式配 workers 时由服务端回落默认路由 —— 白等它只会让主按钮灰几秒。
  */
 export function GenerationModels({ controller, disabled = false, requiresVision = false, generationDisabled = false, onGenerate, label = '生成讲义',purpose='lecture' }) {
   const quiz=purpose==='quiz';
@@ -41,7 +43,8 @@ export function GenerationModels({ controller, disabled = false, requiresVision 
     return () => { element.removeEventListener('toggle', toggled); window.removeEventListener('resize', positionPanel); };
   }, []);
   // 「配了一半」才算没准备好：一行都没配时交给服务端回落，这是这个按钮过去一直灰着的根因。
-  const rowsUsable = rows.length === 0 || (rows.length <= 16 && rows.every(row => Number.isInteger(row.workers) && row.workers >= 1 && row.workers <= 32
+  // 目录还没读回来时也无法判断，先按可用处理（`loaded` 为真后才校验）。
+  const rowsUsable = rows.length === 0 || !loaded || (rows.length <= 16 && rows.every(row => Number.isInteger(row.workers) && row.workers >= 1 && row.workers <= 32
     && catalog.some(provider => provider.id === row.provider && provider.models.some(model => model.id === row.model))));
   const total = rows.reduce((sum, row) => sum + (Number(row.workers) || 0), 0);
   const visual = rows.reduce((sum, row) => sum + (catalog.find(provider => provider.id === row.provider)?.models
@@ -52,10 +55,10 @@ export function GenerationModels({ controller, disabled = false, requiresVision 
     return () => { live.current = false; };
   }, [controller,purpose]);
   useEffect(positionPanel, [catalog, rows, busy, error]);
-  async function load() {
+  async function load(refresh=false) {
     setBusy(true); setError('');
     try {
-      const data = await controller.request('models',{purpose});
+      const data = await controller.request('models',refresh?{purpose,refresh:true}:{purpose});
       if (!live.current) return;
       setCatalog(data.catalog); setRows(data.workers ?? []); setDirty(false); setLoaded(true);
     } catch (failure) { if (live.current) { setError(failure.message); } }
@@ -78,16 +81,18 @@ export function GenerationModels({ controller, disabled = false, requiresVision 
     } catch (failure) { if (live.current) setError(failure.message); }
     finally { if (live.current) setBusy(false); }
   }
-  const reason = busy ? '正在读取供应商配置…'
-    : !loaded ? (error ? '供应商配置读取失败' : '正在读取供应商配置…')
-    : dirty ? '配置改动尚未应用，点浮窗里的「应用配置」。'
-    : !rowsUsable ? '有供应商缺少模型或并发数，打开配置补全后再生成。'
-    : requiresVision && !visual ? '课件包含图片，需要至少一个支持图片的模型。'
+  // 目录只是「配置浮窗里要列的东西」，不是生成的前提：没显式配 workers 时
+  // 服务端会回落默认路由。所以读目录期间**不拦生成** —— 以前每次进页都要先等
+  // 一轮供应商发现（账号型供应商还得换票），主按钮就一直是灰的。读失败同理：
+  // 浮窗里会写出来并给「刷新供应商」，但同样不该堵住主按钮。
+  const reason = dirty ? '配置改动尚未应用，点浮窗里的「应用配置」。'
+    : loaded && !rowsUsable ? '有供应商缺少模型或并发数，打开配置补全后再生成。'
+    : requiresVision && loaded && !visual ? '课件包含图片，需要至少一个支持图片的模型。'
     : '';
   const pending = Boolean(reason);
   return <div className="zs-generation-models" data-purpose={purpose}>
     <div className="zs-generation-split">
-      <button type="button" className="zs-primary zs-generate-action" disabled={generationDisabled || pending} title={pending ? reason : (rows.length ? `${rows.length} 个供应商 · ${total} 路并发` : '使用默认模型配置')} onClick={() => { panel.current.hidePopover(); onGenerate(rows.map(row=>({...row}))); }}>{label}</button>
+      <button type="button" className="zs-primary zs-generate-action" disabled={generationDisabled || pending} title={pending ? reason : busy ? '正在读取供应商配置…' : (rows.length ? `${rows.length} 个供应商 · ${total} 路并发` : '使用默认模型配置')} onClick={() => { panel.current.hidePopover(); onGenerate(rows.map(row=>({...row}))); }}>{label}</button>
       <button type="button" className="zs-primary zs-generate-options" ref={trigger} aria-label={quiz?'出题使用的供应商与并发':'讲义使用的供应商与并发'} aria-haspopup="dialog" aria-expanded={expanded} aria-controls={panelId} title="选择供应商、模型与并发数" onClick={openConfig}>
         {quiz&&<span>{rows.length?`${total} 路并发`:'用默认模型'}</span>}
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m5 7 5 5 5-5"/></svg>
@@ -126,7 +131,7 @@ export function GenerationModels({ controller, disabled = false, requiresVision 
       {error && <p role="alert" className="zs-models-error">{error}</p>}
     </div>
       <div className="zs-generation-models-footer"><div><strong>总并发 {total}</strong><span>{rows.length ? `${rows.map(row => Number(row.workers) || 0).join(' + ')} = ${total} 路` : '未指定，用默认模型'}{!quiz&&` · 可处理图片的并发 ${visual}`}</span></div>
-        <button type="button" className="zs-button" disabled={disabled || busy} onClick={load}>刷新供应商</button>
+        <button type="button" className="zs-button" disabled={disabled || busy} onClick={() => load(true)}>刷新供应商</button>
         <button type="button" className="zs-primary" disabled={disabled || busy || !dirty || !rowsUsable} onClick={save}>{busy ? '读取 / 保存中…' : '应用配置'}</button>
       </div>
     </div>

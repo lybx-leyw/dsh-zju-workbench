@@ -8,6 +8,8 @@ import { PHASES, makeEvent } from './events.js';
 import { produceMaterialAnalysis, MATERIAL_PHASE } from './phases/material-analysis.js';
 import { produceOutline } from './phases/outline.js';
 import { produceScenes } from './phases/scenes.js';
+import { produceChapters } from './phases/chapters.js';
+import { generateHtmlChapters } from './html-deck.js';
 import { produceMedia } from './phases/media.js';
 import { produceFinalize } from './phases/finalize.js';
 
@@ -69,6 +71,8 @@ const PRODUCERS = {
     outlines: job.outputs.get('outline')?.outlines ?? [],
     scenes: job.outputs.get('scenes')?.scenes ?? [],
     mediaResults: job.outputs.get('media')?.results ?? [],
+    // 把 scenes 段的缺页清单传下去：finalize 据此决定敢不敢标 generationComplete。
+    skipped: job.outputs.get('scenes')?.skipped ?? [],
     brief: job.brief,
     stageId: job.stageId,
     runId: job.runId,
@@ -117,6 +121,66 @@ export async function runPipeline(job) {
   };
 
   try {
+    // HTML-first is a separate product: never enter canvas actions/media/TTS phases.
+    if (brief.outputFormat === 'html') {
+      currentPhase = 'scenes';
+      record.currentPhase = 'understanding';
+      const chapters = brief.chapters?.length ? brief.chapters : [
+        { id: 'chapter-1', title: brief.topic, sourceText: brief.sourceText },
+      ];
+      if (!record.outputs.has('html')) {
+        const result = await raceAbort(generateHtmlChapters({
+          chapters, topic: brief.topic, llm: job.llm, signal,
+          concurrency: brief.chapterConcurrency, completed: record.outputs,
+          validateOutput: ports.validateHtml,
+          onProgress: (progress) => {
+            record.currentPhase = progress.stage ?? 'scenes';
+            // 页级进度必须进快照：轮询只看 get(runId)，事件流不参与。
+            // 只在 emit 里推进度的话，页面永远停在「已完成 0/6 章」。
+            if (Number.isInteger(progress.chapterIndex)) {
+              const slot = `html-progress-${progress.chapterIndex}`;
+              const previous = record.pageProgress?.[slot] ?? { slidesDone: 0, sceneTotal: null };
+              record.pageProgress = {
+                ...record.pageProgress,
+                [slot]: {
+                  chapterId: progress.chapterId,
+                  chapterTitle: progress.chapterTitle ?? previous.chapterTitle ?? null,
+                  chapterIndex: progress.chapterIndex,
+                  slidesDone: Number.isInteger(progress.slidesDone) ? progress.slidesDone : previous.slidesDone,
+                  sceneIndex: Number.isInteger(progress.sceneIndex) ? progress.sceneIndex : previous.sceneIndex ?? 0,
+                  sceneTotal: Number.isInteger(progress.sceneTotal) ? progress.sceneTotal : previous.sceneTotal,
+                  stage: progress.stage ?? previous.stage,
+                },
+              };
+            }
+            emit('scenes', 'phase-progress', progress);
+          },
+          checkpoint: async (key, output) => {
+            if (signal.aborted) throw cancelled('scenes', runId);
+            await job.checkpoint(key, output);
+            if (signal.aborted) throw cancelled('scenes', runId);
+            record.outputs.set(key, output);
+          },
+          // 逐页落盘：一章要画 5-10 页，每页都是一次完整模型调用。
+          // 只存整章的话，第 8 页失败会让前 7 页一起作废，续跑等于从头再来。
+          checkpointPartial: async (key, partial) => {
+            if (signal.aborted) throw cancelled('scenes', runId);
+            await job.checkpoint(key, partial);
+            if (signal.aborted) throw cancelled('scenes', runId);
+            record.outputs.set(key, partial);
+          },
+        }), signal, 'scenes', runId);
+        if (signal.aborted) throw cancelled('scenes', runId);
+        await job.checkpoint('html', { chapters: result });
+        if (signal.aborted) throw cancelled('scenes', runId);
+        record.outputs.set('html', { chapters: result });
+      }
+      record.status = 'done';
+      record.currentPhase = 'finalize';
+      emit('finalize', 'run-done', { runId, stageId, format: 'html',
+        chapterCount: record.outputs.get('html').chapters.length, generated: 0, skipped: 0 });
+      return;
+    }
     // ── 第 0 段（可选）：上传的讲义 → 一段可以进 prompt 的文本 ────────────
     //
     // 上游 `plan.ts:44-55`：只有 `input.materialIds` 非空才插这一步。没有讲义时
@@ -153,6 +217,21 @@ export async function runPipeline(job) {
         chars: output.chars,
         truncated: output.truncated,
       });
+    }
+
+    if (brief.chapters?.length && (!record.outputs.has('outline') || !record.outputs.has('scenes'))) {
+      currentPhase = 'scenes';
+      record.currentPhase = currentPhase;
+      record.readyScenes = brief.chapters.reduce((n, _, index) => n + (record.outputs.get(`chapter-${index + 1}`)?.scenes?.scenes?.length ?? 0), 0);
+      emit('outline', 'phase-start', { phase: 'outline', chapters: brief.chapters.length, total: PHASES.length });
+      const merged = await raceAbort(produceChapters({ record, ports, llm: job.llm, checkpoint: job.checkpoint, emit }), signal, 'scenes', runId);
+      for (const phase of ['outline', 'scenes']) {
+        if (signal.aborted) throw cancelled(phase, runId);
+        await job.checkpoint(phase, merged[phase]);
+        if (signal.aborted) throw cancelled(phase, runId);
+        record.outputs.set(phase, merged[phase]);
+        emit(phase, 'phase-done', summarize(phase, merged[phase]));
+      }
     }
 
     for (const phase of PHASES) {
@@ -199,7 +278,7 @@ export async function runPipeline(job) {
       ...(material ? { materials: material.materials.length, materialChars: material.chars } : {}),
     });
   } catch (error) {
-    const isCancelled = error instanceof ClassroomGenerateError && error.code === 'E_CANCELLED';
+    const isCancelled = signal.aborted || (error instanceof ClassroomGenerateError && error.code === 'E_CANCELLED');
     record.status = isCancelled ? 'cancelled' : 'failed';
     record.error = describeError(error);
     emit(currentPhase ?? 'finalize', 'run-error', {

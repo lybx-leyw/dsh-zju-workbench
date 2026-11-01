@@ -113,12 +113,15 @@ test('provider failures arrive as finish blocks and are retried rather than sile
  assert.equal(recovered.toolCalls.length,1,'重试后拿到的真实结果必须照常返回');
 });
 
-function nativeFixture({shortFirst=false}={}){
+function nativeFixture({shortFirst=false,pointIds=null}={}){
  const starts=[],released=[],cancelled=[];let sequence=0;
  const tutor={resources:{attach:async()=>({handleId:'resource',revision:'rev'}),release:async id=>released.push(id)},runs:{
   start:async request=>{starts.push(request);await request.modelDispatch(async route=>{assert.ok(['p1','p2'].includes(route.provider));return {};});return {runId:'run-'+(++sequence)};},
   async *events(){yield {stage:'exploring'};yield {stage:'planning'};yield {stage:'quizzing'};},
-  result:async id=>{const request=starts[Number(id.split('-')[1])-1],count=request.options.config.num_questions-(shortFirst&&id==='run-1'?1:0);return {status:'succeeded',upstreamCommit:'fixture-commit',questions:Array.from({length:count},(_,i)=>({type:'mcq',stem:`原生题目 ${id}-${i}`,answer:'A',options:{A:'选项甲',B:'选项乙',C:'选项丙',D:'选项丁'},explanation:'原生参考解释。'}))};},cancel:async id=>cancelled.push(id)}};
+  // 出处按真实契约回传：`pointId` 是模型在 plan 阶段回的 `[pid=…]`。
+  // 省略 `pointIds` 时不回传（= 出处未知），用来验证「未分组」那条路；
+  // 给了就按题序轮流分配，让「跨课程混批各归各位」可以被断言。
+  result:async id=>{const request=starts[Number(id.split('-')[1])-1],count=request.options.config.num_questions-(shortFirst&&id==='run-1'?1:0);return {status:'succeeded',upstreamCommit:'fixture-commit',questions:Array.from({length:count},(_,i)=>({type:'mcq',stem:`原生题目 ${id}-${i}`,answer:'A',options:{A:'选项甲',B:'选项乙',C:'选项丙',D:'选项丁'},explanation:'原生参考解释。',...(pointIds?{pointId:pointIds[i%pointIds.length]}:{})}))};},cancel:async id=>cancelled.push(id)}};
  return {tutor,starts,released,cancelled,resources:{fromLecture:input=>input}};
 }
 
@@ -262,12 +265,60 @@ test('native engine readiness tracks the backend that will actually run',async()
 });
 
 test('DeepTutor selection uses genuine native mode and saved candidates resume without local author/review calls',async()=>{
- const model=toolModel(),native=nativeFixture(),plan=planFor('deeptutor-native',1),box={};
+ const model=toolModel(),native=nativeFixture({pointIds:['t1-1']}),plan=planFor('deeptutor-native',1),box={};
  const run=createNativeQuizRun({...native,backend:'deeptutor',pool:model.pool,scope:'fixture'});
  await assert.rejects(run.generatePoints({plan,existingQuestions:[],checkpoint:newEngineCheckpoint(plan),onCheckpoint:async cp=>{box.saved=structuredClone(cp);},onQuestion:async()=>{throw Error('write failed');}}),{code:'PERSIST'});
  assert.equal(native.starts.length,1);assert.equal(native.starts[0].options.mode,'upstream-native');assert.equal(native.starts[0].options.workerSelection.length,2);assert.equal(model.calls.length,0);
  await run.generatePoints({plan,existingQuestions:[],checkpoint:box.saved,...callbacks(box)});
  assert.equal(native.starts.length,1);assert.equal(box.questions.length,1);assert.equal(box.questions[0].provenance.mode,'upstream-native');assert.equal(box.questions[0].reviewState,'upstream');assert.equal(native.released.length,2);
+});
+
+/**
+ * 上游不回出处时，题必须进「未分组」，而不是被塞给这一组的第一个知识点。
+ *
+ * 这条锁的是本次事故的直接后门：旧实现是
+ * `points.find(p=>p.title===topic) ?? point`，而 `point` 是**第一个**知识点，
+ * 于是跨课程混批的题全部被盖上第一门课的标签，导出时又按标签分组，
+ * 看上去「按节次分好了」。
+ *
+ * 断言落在三处：题没有被丢掉（produced 仍足额）、它明确带 `provenanceUnresolved`、
+ * 且它的课程/节次不是任何真实课程（占位符），所以导出无法把它混进某一节。
+ */
+test('native questions without a reported point id land in 未分组 instead of the first point',async()=>{
+ const model=toolModel(),native=nativeFixture(),plan=planFor('deeptutor-native',1),box={};
+ const run=createNativeQuizRun({...native,backend:'deeptutor',pool:model.pool,scope:'fixture'});
+ const result=await run.generatePoints({plan,existingQuestions:[],checkpoint:newEngineCheckpoint(plan),...callbacks(box)});
+ assert.equal(result.produced,1,'出处未知不等于丢题');
+ const question=box.questions[0];
+ assert.equal(question.provenanceUnresolved,true,'必须显式标记出处未确认');
+ assert.equal(question.courseTitle,'【未分组】');
+ assert.equal(question.lessonTitle,'【未分组】');
+ assert.notEqual(question.pointId,plan.tasks[0].point.id,'绝不能落回第一个知识点');
+ assert.equal(question.provenance.unresolvedReason,'no-point-id');
+});
+
+/**
+ * 跨课程混批：每道题按回传的 id 各归各的课程，不是全归第一个。
+ *
+ * 用两个**不同课程、不同节次、且知识点标题完全不同**的点，让旧实现
+ * （按标题匹配）必然失败：题目里根本没写那些标题。
+ */
+test('mixed-subject batch binds each question to its own course and lesson by reported id',async()=>{
+ // 两个来自不同课程的知识点：id 不同、课程不同、节次不同、标题也不同。
+ const pointA={id:'phys:s1:r:0:0',courseId:'phys',subId:'s1',courseTitle:'大学物理（乙）Ⅱ',lessonTitle:'2026-10-08第6-8节',termName:'2026 秋',chapterTitle:'章',title:'电阻率与温度特性',revision:'r',blockIndexes:[1],page:1,atSec:1,text:'物理原文'};
+ const pointB={id:'cs:s9:r:0:0',courseId:'cs',subId:'s9',courseTitle:'数据结构',lessonTitle:'2025-03-01第3-5节',termName:'2026 春',chapterTitle:'章',title:'左偏堆',revision:'r',blockIndexes:[2],page:2,atSec:2,text:'数据结构原文'};
+ const plan=planEngineQuestions([pointA,pointB],{engine:'deeptutor-native',count:2,types:['mcq'],strategies:[{id:'understand',weight:1}],mode:'uniform',source:'course'});
+ // 投影 id：t1-1 = 第 1 个知识点，t1-2 = 第 2 个。
+ const model=toolModel(),native=nativeFixture({pointIds:['t1-2','t1-1']}),box={};
+ const run=createNativeQuizRun({...native,backend:'deeptutor',pool:model.pool,scope:'fixture'});
+ await run.generatePoints({plan,existingQuestions:[],checkpoint:newEngineCheckpoint(plan),...callbacks(box)});
+ const [first,second]=box.questions;
+ assert.equal(first.courseId,'cs','第一题回的是 t1-2，应当归数据结构');
+ assert.equal(first.lessonTitle,'2025-03-01第3-5节');
+ assert.equal(second.courseId,'phys','第二题回的是 t1-1，应当归大学物理');
+ assert.equal(second.lessonTitle,'2026-10-08第6-8节');
+ assert.notEqual(first.termName,second.termName,'不同学期的课不能被抹成同一个学期');
+ assert.ok(!first.provenanceUnresolved&&!second.provenanceUnresolved);
 });
 
 test('native planning receives the full selected material in one batch rather than one run per point',async()=>{
@@ -291,7 +342,12 @@ test('real host storage persists the selected native engine, progress, questions
  // 出题假模型：重构版按「阶段」而不是「工具名」消费模型输出，
  // 所以不能用 r3 的 toolModel。这里挂在 parser.llm.llm 上 ——
  // 适配层从 pool.base.llm 取它，与生产环境同一条路径，只是实例不同。
- const quizFake=quizFakeModel({templates:1});
+ //
+ // ⚠️ `pointId:'t1-1'` 不是装饰：知识点归属**只认模型回传的 id**。
+ // 不给它时题会被标成「出处未确认」（这正是下面那条 ungrouped 测试锁的行为），
+ // 于是这里那条 `bank.questions[0].pointId === catalog.points[0].id` 必然失败。
+ // 假模型必须按真实契约回复，否则测的是一条现实中不存在的上游。
+ const quizFake=quizFakeModel({templates:1,pointId:'t1-1'});
  const open=async()=>{host=await mountKnowledge(dir);workbench=new StudyWorkbench({directory:dir,knowledge:host.service,classroom:{getCurrentUser:async()=>({id:'fixture'}),listCourses:async()=>({items:[]})},parser:{llm:{...model.pool.base,llm:quizFake,routes:{}}},llm:{},quiz:()=>({generatePoints:()=>{throw Error('Must not invoke local generator');},createRun:()=>{throw Error('Must not invoke integrated wrapper');}}),deeptutor:()=>native.tutor,learningResource:()=>native.resources});await workbench.ready;};
  try{await open();await host.service.put(record());const catalog=await workbench.invoke('bank-catalog');
   // 默认引擎是 DeepTutor 直调；r1 作为唯一不依赖上游的本地引擎保留可选。
