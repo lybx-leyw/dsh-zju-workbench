@@ -33,6 +33,7 @@ import {
 import { TickStore, tickKey } from './ticks.js';
 import { ScheduleStore } from './schedule.js';
 import { taskKeyFor } from './agenda.js';
+import { buildPlanningFacts, answerScheduleStatus } from './pet-context.js';
 export { ScheduleStore } from './schedule.js';
 import { URGENCY, urgencyOf, dateTable } from './time.js';
 import {
@@ -763,7 +764,7 @@ async function readJsonBody(req, limit = 32 * 1024) {
  *   savePtaCookie, ptaStatus, plan }`。
  */
 export function createHandler({
-  getConfig, saveConfig: save, store, local, splitLocal, tickStore, scheduleStore,
+  getConfig, saveConfig: save, store, local, splitLocal, tickStore, scheduleStore, getScheduleContext,
   fetchRemote, loadTodos, savePtaCookie, ptaStatus, plan,
   /**
    * pet 的对话实现。
@@ -1038,16 +1039,24 @@ export function createHandler({
     const body = await readJsonBody(req);
 
     // Schedule writes are local-only: never fetch remote tasks to validate taskKey.
-    if (action === 'schedule-save' || action === 'schedule-remove') {
+    if (action === 'schedule-save' || action === 'schedule-remove' || action === 'schedule-save-batch') {
       if (!scheduleStore) {
         sendJson(res, 400, { error: '日程存储未启用' });
         return;
       }
       try {
         if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('请求体不是合法 JSON 对象');
-        if (action === 'schedule-save') scheduleStore.save(body);
+        let saved;
+        if (action === 'schedule-save-batch') {
+          if (typeof getScheduleContext !== 'function' || !Array.isArray(body.items) || !body.items.length || body.items.length > 20) throw Object.assign(new Error('批量草案无效，请重新生成'), { code: 'INVALID_SCHEDULE' });
+          const context = await getScheduleContext();
+          const checked = resolveScheduleReply({ action: 'schedule', say: '待确认', draft: { slots: body.items } }, context);
+          if (checked.action !== 'schedule') throw Object.assign(new Error(checked.say), { code: 'INVALID_SCHEDULE' });
+          const items = checked.draft.slots.map((item, index) => ({ ...item, ...(item.id ? { expected: body.items[index].expected } : {}) }));
+          saved = scheduleStore.saveMany(items, { requireExpected: true });
+        } else if (action === 'schedule-save') saved = [scheduleStore.save(body)];
         else scheduleStore.remove(body.id);
-        sendJson(res, 200, { ok: true, schedule: scheduleStore.all() });
+        sendJson(res, 200, { ok: true, schedule: scheduleStore.all(), ...(action === 'schedule-save-batch' ? { saved } : {}) });
       } catch (error) {
         sendJson(res, error?.code === 'INVALID_SCHEDULE' || !error?.code ? 400 : 500,
           { error: error?.code === 'INVALID_SCHEDULE' ? error.message : '日程写入失败，请检查本机存储后重试' });
@@ -1665,7 +1674,12 @@ export async function apply(ctx, config = {}) {
       for (const row of platform?.[source]?.rows ?? []) tasks.push({ ...row,
         taskKey: taskKeyFor({ ...row, source }), done: Boolean(row.done || ticks.all()[`${source}:${row.id}`]) });
     }
-    return { tasks: tasks.map(({ taskKey, title, due, done }) => ({ taskKey, title, due: due ?? null, done: Boolean(done) })), slots: schedules.all() };
+    const projected = tasks.map(({ taskKey, title, due, done }) => ({ taskKey, title, due: due ?? null, done: Boolean(done) }));
+    const slots = schedules.all();
+    const facts = buildPlanningFacts({ tasks: projected, slots,
+      sources: { local: { ok: true }, plans: { ok: true }, xzzd: { ok: platform?.xzzd?.ok === true }, pta: { ok: platform?.pta?.ok === true } },
+      events: schedules.recentEvents(), now: Date.now() });
+    return { tasks: projected, slots, facts };
   };
 
   const petChat = async (message, { history = [], signal } = {}) => {
@@ -1691,7 +1705,7 @@ export async function apply(ctx, config = {}) {
     const calendar = dateTable(now, { days: 14 });
     const today = calendar[0];
 
-    // 当前未完成的事：只给摘要，最多 20 条
+    // 完整事实：任务、已排安排、未排清单、来源完整性与近期确认记录。
     const context = await petContext();
     signal?.throwIfAborted();
     const pending = context.tasks.filter(item => !item.done);
@@ -1700,7 +1714,7 @@ export async function apply(ctx, config = {}) {
       today: today.date,
       weekday: today.weekday,
       calendar,
-      pending, slots: context.slots, now: new Date(now).toISOString(),
+      pending, slots: context.slots, facts: context.facts, now: new Date(now).toISOString(),
     });
 
     // 历史裁剪后再序列化：模型看得懂 JSON 数组，且顺序明确
@@ -1725,9 +1739,11 @@ export async function apply(ctx, config = {}) {
     const raw = typeof response?.text === 'string' ? response.text : '';
     const reply = readPetResponse(raw);
     signal?.throwIfAborted();
-    const checked = reply.action === 'schedule' ? resolveScheduleReply(reply, await petContext()) : reply;
+    const checked = reply.action === 'schedule' ? resolveScheduleReply(reply, context) : reply;
     signal?.throwIfAborted();
-    return { ...checked, model: route?.model ?? null };
+    // Precise inventory questions are answered from facts, never from model memory.
+    const status = reply.action === 'chat' ? answerScheduleStatus(text, context.facts) : null;
+    return { ...(status ?? checked), model: route?.model ?? null };
   };
 
   /**
@@ -1784,7 +1800,7 @@ export async function apply(ctx, config = {}) {
     signal?.throwIfAborted();
     const pending = context.tasks.filter(item => !item.done);
 
-    const prompt = createPetPrompt({ today: today.date, weekday: today.weekday, calendar, pending, slots: context.slots, now: new Date(now).toISOString() });
+    const prompt = createPetPrompt({ today: today.date, weekday: today.weekday, calendar, pending, slots: context.slots, facts: context.facts, now: new Date(now).toISOString() });
     const turns = trimHistory(history);
     const variable = turns.length === 0
       ? text
@@ -1813,9 +1829,10 @@ export async function apply(ctx, config = {}) {
       draft: payload?.draft ?? null,
     });
     signal?.throwIfAborted();
-    const checked = reply.action === 'schedule' ? resolveScheduleReply(reply, await petContext()) : reply;
+    const checked = reply.action === 'schedule' ? resolveScheduleReply(reply, context) : reply;
     signal?.throwIfAborted();
-    return { ...checked, model: route?.model ?? null };
+    const status = reply.action === 'chat' ? answerScheduleStatus(text, context.facts) : null;
+    return { ...(status ?? checked), model: route?.model ?? null };
   };
 
   /**
@@ -2031,6 +2048,7 @@ export async function apply(ctx, config = {}) {
         splitLocal: splitLocalPlan,
         tickStore: ticks,
         scheduleStore: schedules,
+        getScheduleContext: petContext,
         log,
         fetchRemote: (cfg) => pullEntries(cfg, config.fetch ?? fetch),
         loadTodos,

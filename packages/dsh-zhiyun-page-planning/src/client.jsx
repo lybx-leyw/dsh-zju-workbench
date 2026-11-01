@@ -29,7 +29,7 @@ import css from './style.css';
 import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel, buildMonthCalendar } from './time.js';
 import { REPEAT_LABEL } from './local.js';
 import { createPetStream } from './pet-stream.js';
-import { resolveScheduleReply } from './pet.js';
+import { resolveScheduleReply, scheduleDraftItems } from './pet.js';
 import { hintWindow, scheduleHint } from './schedule-hint.js';
 import { clearFocus, focusDecision, focusElementId, readFocus } from './focus.js';
 import { errorText } from './error.js';
@@ -258,7 +258,7 @@ export function Planning({ ctx }) {
     });
   }, []);
   const saveSchedule = useCallback(async input => {
-    updateSchedule(await settings('schedule-save', input));
+    updateSchedule(await settings(Array.isArray(input?.items) ? 'schedule-save-batch' : 'schedule-save', input));
   }, [updateSchedule]);
   const removeSchedule = useCallback(async id => {
     updateSchedule(await settings('schedule-remove', { id }));
@@ -1280,9 +1280,13 @@ export function Planning({ ctx }) {
         onSchedule={async draft => {
           const checked = resolveScheduleReply({ action: 'schedule', say: '待确认', draft }, { tasks: scheduleTasks, slots: state.schedule ?? [] });
           if (checked.action !== 'schedule') throw new Error(checked.say);
-          const { taskKey, title, start, end, id } = checked.draft;
-          await saveSchedule({ taskKey, title, start, end, ...(id ? { id } : {}) });
-          setScheduleWeek(weekStart(start));
+          const items = scheduleDraftItems(checked.draft);
+          const payload = items.length > 1
+            ? { items: items.map(item => ({ taskKey: item.taskKey, title: item.title, start: item.start, end: item.end, ...(item.id ? { id: item.id, expected: item.expected } : {}) })) }
+            : { taskKey: items[0].taskKey, title: items[0].title, start: items[0].start, end: items[0].end };
+          if (items.length === 1 && items[0].id) payload.id = items[0].id;
+          await saveSchedule(payload);
+          setScheduleWeek(weekStart(items[0].start));
           setView('schedule');
         }} />
     </div>
@@ -2669,7 +2673,8 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
       if (typeof onSchedule !== 'function') throw new Error('日程保存暂不可用');
       await onSchedule(schedulePreview.draft);
       setPendingSchedule(null);
-      setMessages(current => [...current, { role: 'assistant', text: `已保存日程：${schedulePreview.draft.title}，${whenIso(schedulePreview.draft.start)} — ${whenIso(schedulePreview.draft.end)}。DDL 未改变。` }]);
+      setMessages(current => [...current, { role: 'assistant', text: `已保存日程（DDL 未改变）：${scheduleDraftItems(schedulePreview.draft)
+        .map(item => `${item.title} ${whenIso(item.start)}—${whenIso(item.end)}`).join('；')}` }]);
     } catch (failure) { setError(failure.message); }
     finally { scheduleSaving.current = false; setSending(false); }
   };
@@ -2728,12 +2733,15 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
       ))}
 
       {pendingSchedule && <div className="zpg-pet-draft" aria-label="日程草案">
-        <p className="zpg-pet-draft-title">{pendingSchedule.id ? '调整日程' : '新增日程'} · {schedulePreview?.draft?.title ?? pendingSchedule.title}</p>
-        {pendingSchedule.id && slots.find(slot => slot.id === pendingSchedule.id) && <p>原安排：{whenIso(slots.find(slot => slot.id === pendingSchedule.id).start)} — {whenIso(slots.find(slot => slot.id === pendingSchedule.id).end)}</p>}
-        <dl className="zpg-pet-draft-meta">
-          <div><dt>开始</dt><dd>{whenIso(pendingSchedule.start)}（上海时间）</dd></div>
-          <div><dt>结束</dt><dd>{whenIso(pendingSchedule.end)}（上海时间）</dd></div>
-        </dl>
+        <p className="zpg-pet-draft-title">{scheduleDraftItems(pendingSchedule).some(item => item.id) ? '调整日程' : '新增日程'}</p>
+        <ol className="zpg-pet-draft-meta">
+          {scheduleDraftItems(pendingSchedule).map((item, index) => <li key={`${item.id ?? item.taskKey}-${index}`}>
+            <strong>{schedulePreview?.draft && Array.isArray(schedulePreview.draft.slots) ? schedulePreview.draft.slots[index]?.title : schedulePreview?.draft?.title ?? item.title}</strong>
+            {' '}{whenIso(item.start)} — {whenIso(item.end)}（上海时间）
+            {item.id && slots.find(slot => slot.id === item.id) && <small>（原：{whenIso(slots.find(slot => slot.id === item.id).start)} — {whenIso(slots.find(slot => slot.id === item.id).end)}）</small>}
+          </li>)}
+        </ol>
+        {pendingSchedule.assumptions?.length > 0 && <p>假设：{pendingSchedule.assumptions.join('；')}</p>}
         <p>仅修改执行时间，不改变 DDL。确认前不会保存。</p>
         {schedulePreview?.action !== 'schedule' && <p role="alert">{schedulePreview?.say}</p>}
         {(schedulePreview?.warnings ?? []).map((warning, i) => <p className="zpg-schedule-warning" key={i}>{warning}</p>)}

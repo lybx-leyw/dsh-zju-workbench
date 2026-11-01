@@ -50,6 +50,7 @@ export class ScheduleStore {
   constructor(file) {
     this.file = file;
     this.slots = [];
+    this.events = [];
     let parsed;
     try { parsed = JSON.parse(readFileSync(file, 'utf8')); }
     catch (error) { if (error.code === 'ENOENT') return; throw error; }
@@ -61,37 +62,59 @@ export class ScheduleStore {
       ids.add(slot.id);
       return slot;
     });
+    this.events = Array.isArray(parsed.events) ? parsed.events.slice(-30).filter(event => event && typeof event.at === 'string' && ['created', 'updated', 'removed'].includes(event.action)) : [];
   }
 
   all() { return this.slots.map((slot) => ({ ...slot })); }
 
-  commit(slots) {
+  recentEvents() { return structuredClone(this.events); }
+
+  commit(slots, events = this.events) {
     mkdirSync(dirname(this.file), { recursive: true });
     const tmp = `${this.file}.${randomUUID()}.tmp`;
     try {
-      writeFileSync(tmp, `${JSON.stringify({ slots }, null, 2)}\n`, 'utf8');
+      writeFileSync(tmp, `${JSON.stringify({ slots, events: events.slice(-30) }, null, 2)}\n`, 'utf8');
       renameSync(tmp, this.file);
     } finally { rmSync(tmp, { force: true }); }
     // Failed writes must not change the in-memory truth either.
     this.slots = slots;
+    this.events = events.slice(-30);
   }
 
-  save(input) {
-    const id = input?.id === undefined ? randomUUID() : text(input.id, 'id', 128);
-    const slot = slotOf(input, id);
-    const index = this.slots.findIndex((item) => item.id === id);
-    if (input.id !== undefined && index < 0) invalid('日程不存在');
-    if (index < 0 && this.slots.length >= MAX_SCHEDULE_SLOTS) invalid('日程数量已达上限');
-    const next = this.all();
-    if (index < 0) next.push(slot);
-    else next[index] = slot;
-    this.commit(next);
-    return { ...slot };
+  save(input) { return this.saveMany([input])[0]; }
+
+  /** Validate the entire proposal before one atomic write; no partial multi-task saves. */
+  saveMany(inputs, { requireExpected = false } = {}) {
+    if (!Array.isArray(inputs) || !inputs.length || inputs.length > 20) invalid('一次确认须包含 1–20 个时间段');
+    const next = this.all(), changed = [], events = this.recentEvents(), seen = new Set();
+    for (const input of inputs) {
+      const id = input?.id === undefined ? randomUUID() : text(input.id, 'id', 128);
+      if (seen.has(id)) invalid('同一草案不能重复修改同一时间块');
+      seen.add(id);
+      const slot = slotOf(input, id);
+      const index = next.findIndex(item => item.id === id), before = index < 0 ? null : next[index];
+      if (input.id !== undefined && !before) invalid('日程不存在，请重新查询');
+      if (before && before.taskKey !== slot.taskKey) invalid('不能把已有时间块改挂到另一任务');
+      if (before && (requireExpected || input.expected)) {
+        if (!input.expected || input.expected.start !== before.start || input.expected.end !== before.end) invalid('该日程已变化，请重新生成草案后确认');
+      }
+      if (!before && next.length >= MAX_SCHEDULE_SLOTS) invalid('日程数量已达上限');
+      if (index < 0) next.push(slot); else next[index] = slot;
+      changed.push({ ...slot });
+      events.push({ id: slot.id, at: new Date().toISOString(), action: before ? 'updated' : 'created', taskKey: slot.taskKey, title: slot.title,
+        before: before ? { start: before.start, end: before.end } : null, after: { start: slot.start, end: slot.end } });
+    }
+    this.commit(next, events);
+    return changed;
   }
 
   remove(id) {
     text(id, 'id', 128);
     const next = this.slots.filter((slot) => slot.id !== id);
-    if (next.length !== this.slots.length) this.commit(next);
+    if (next.length !== this.slots.length) {
+      const before = this.slots.find(slot => slot.id === id);
+      this.commit(next, [...this.events, { id, at: new Date().toISOString(), action: 'removed', taskKey: before.taskKey, title: before.title,
+        before: { start: before.start, end: before.end }, after: null }]);
+    }
   }
 }

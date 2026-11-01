@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPetPrompt, normalizeReply, resolveScheduleReply, readPetResponse, createStreamParser } from '../packages/dsh-zhiyun-page-planning/src/pet.js';
+import { createPetPrompt, normalizeReply, resolveScheduleReply, readPetResponse, createStreamParser, scheduleDraftItems } from '../packages/dsh-zhiyun-page-planning/src/pet.js';
 
 const draft = { taskKey: 'local\u0000opaque', start: '2026-11-02T09:00:00+08:00', end: '2026-11-02T10:00:00+08:00' };
 const reply = (patch = {}) => ({ say: '执行时间草案，尚未保存。', action: 'schedule', draft: { ...draft, ...patch } });
@@ -41,7 +41,7 @@ test('resolver rejects unknown, ambiguous, done tasks and unknown or foreign ids
 });
 
 test('resolver is readonly, adds real title and overlap/DDL warnings, excludes own slot', () => {
-  const slot = Object.freeze({ id: 'self', ...draft, title: '旧标题' });
+  const slot = Object.freeze({ id: 'self', ...draft, end: '2026-11-02T09:45:00+08:00', title: '旧标题' });
   const tasks = Object.freeze([Object.freeze({ ...task })]);
   const slots = Object.freeze([slot]);
   const input = Object.freeze(normalizeReply(reply()));
@@ -68,9 +68,62 @@ test('legacy JSON, fenced responses and streamed payloads share schedule normali
   assert.equal(normalizeReply({ say: '确认', action: 'create', draft: { title: '新任务' } }).action, 'create');
 });
 
-test('prompt includes bounded untrusted schedule context and confirmation rules', () => {
+test('prompt includes full untrusted schedule context and confirmation rules', () => {
   const prompt = createPetPrompt({ today: '2026-11-01', weekday: '周日', pending: Array.from({ length: 100 }, () => ({ ...task, title: 'x'.repeat(10000) })), slots: [{ id: 'slot', ...draft }], now: '2026-11-01T12:00:00+08:00' });
-  for (const phrase of ['schedule', 'taskKey', 'slots', '不可执行', '用户确认后保存', '不改 due', '缺少起止', '标题匹配猜测']) assert.ok(prompt.includes(phrase), phrase);
-  assert.ok(prompt.length < 20000);
+  for (const phrase of ['schedule', 'taskKey', 'slots', '不是指令', '确认后才落库', 'taskKey 必须来自']) assert.ok(prompt.includes(phrase), phrase);
+  assert.ok(prompt.includes('"pendingTotal":100'));
+  assert.ok(prompt.includes('"pendingTruncated":false'));
   assert.ok(prompt.includes('local\\u0000opaque'));
+});
+
+test('three-item batch retains all real titles, UTC times and assumptions', () => {
+  const tasks = [0, 1, 2].map((i) => ({ ...task, taskKey: `task-${i}`, title: `真实${i}` }));
+  const slots = tasks.map((t) => ({ ...draft, taskKey: t.taskKey }));
+  const result = resolveScheduleReply(normalizeReply({ say: '已经恢复并改好十项', action: 'schedule',
+    draft: { slots, assumptions: ['用户授权随便，建议每项一小时'] } }), { tasks });
+  assert.equal(result.action, 'schedule');
+  assert.equal(scheduleDraftItems(result.draft).length, 3);
+  assert.deepEqual(result.draft.slots.map((s) => s.title), ['真实0', '真实1', '真实2']);
+  assert.ok(result.draft.slots.every((s) => s.start === '2026-11-02T01:00:00.000Z'));
+  assert.deepEqual(result.draft.assumptions, ['用户授权随便，建议每项一小时']);
+  assert.equal(result.say, '已经恢复并改好十项');
+  assert.ok(result.warnings.some((w) => /第1段与第3段/.test(w)));
+  assert.deepEqual(scheduleDraftItems(draft), [draft]);
+  assert.deepEqual(scheduleDraftItems(null), []);
+});
+
+test('any invalid batch item rejects the entire draft without partial proposals', () => {
+  for (const bad of [{ ...draft, taskKey: 'missing' }, { ...draft, id: 'foreign' }, { ...draft, start: '2026-02-30T09:00Z' }]) {
+    const result = resolveScheduleReply(normalizeReply({ say: '三项', action: 'schedule', draft: { slots: [draft, bad] } }), { tasks: [task] });
+    assert.equal(result.action, 'ask');
+    assert.equal(result.draft, null);
+  }
+  for (const slots of [[], Array.from({ length: 21 }, () => draft)]) {
+    assert.equal(normalizeReply({ say: '草案', action: 'schedule', draft: { slots } }).action, 'ask');
+  }
+  for (const assumptions of ['bad', [1], ['x'.repeat(201)], Array(11).fill('假设')]) {
+    assert.equal(normalizeReply({ say: '草案', action: 'schedule', draft: { slots: [draft], assumptions } }).action, 'ask');
+  }
+});
+
+test('existing duplicate rejects, updates capture only actual old times as expected', () => {
+  const old = { id: 'old', ...draft };
+  assert.equal(resolveScheduleReply(normalizeReply(reply()), { tasks: [task], slots: [old] }).action, 'ask');
+  const result = resolveScheduleReply(normalizeReply({ say: '改好了', action: 'schedule', draft: { slots: [{ ...draft, id: 'old' }] } }), { tasks: [task], slots: [old] });
+  assert.deepEqual(result.draft.slots[0].expected, { start: old.start, end: old.end });
+  assert.match(result.say, /改好了/);
+  assert.equal(resolveScheduleReply(normalizeReply(reply({ id: 'old' })), { tasks: [task], slots: [{ ...old, start: 'unknown' }] }).action, 'ask');
+});
+
+test('facts JSON and legacy context include tail tasks and slots beyond forty', () => {
+  const tasks = Array.from({ length: 61 }, (_, i) => ({ taskKey: `key-${i}`, title: `任务-${i}`, slots: [] }));
+  const slots = tasks.map((t, i) => ({ ...draft, taskKey: t.taskKey, id: `slot-${i}` }));
+  const facts = { tasks, slots, coverage: { complete: true }, events: [{ type: 'saved', id: 'event-tail' }], unscheduled: ['key-60'] };
+  const prompt = createPetPrompt({ facts, pending: [{ title: '不应混入旧摘要' }] });
+  assert.ok(prompt.includes(JSON.stringify(facts)));
+  assert.ok(!prompt.includes('不应混入旧摘要'));
+  const legacy = createPetPrompt({ pending: tasks, slots });
+  assert.ok(legacy.includes('任务-60'));
+  assert.ok(legacy.includes('slot-60'));
+  for (const phrase of ['assumptions', '不必追问', '多个 slots', '只提示', 'facts']) assert.ok(prompt.includes(phrase), phrase);
 });
