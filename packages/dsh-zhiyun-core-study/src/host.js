@@ -7,6 +7,7 @@
 // 2. 学习工作台：把课程/解析/持久化编排挂成 `zhiyunStudy` 服务 + /api/zhiyun-study。
 import { mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { registerStudyMaterialTools } from './material-tools.js';
 import { StudyWorkbench, publicError } from "./workbench.js";
 import { LEARNING_SPACE_DIR, LEARNING_SPACE_TITLE } from './learning-space.js';
 
@@ -43,6 +44,8 @@ export async function apply(ctx) {
     handout: () => ctx.get("zhiyunHandout") });
   await workbench.ready;
   ctx.provide("zhiyunStudy", workbench);
+  // Optional host capability: study remains usable when the chat tool registry is disabled.
+  registerStudyMaterialTools(ctx, workbench);
   const remove = ctx.connection.fetch.register({ path: "/api/zhiyun-study", methods: ["POST"], requestBody: "buffered", fetch: async (request) => {
     let rpcId = "invalid-request", result;
     try {
