@@ -1,29 +1,20 @@
 /* 网络代理面板的样式。
  *
- * # 为什么这个文件这么短（先读这段再改）
+ * 本面板是宿主原生设置浮窗里的一个分区（`settings.section`）：浮窗提供标题、分区切换
+ * 与滚动容器，本文件只负责面板内部 —— 代理条目的排布、规则的「域名 → 目标」一行、
+ * 以及几个状态读数。**不要**在这里重画边框、圆角或折叠交互：那会和浮窗外壳重复。
  *
- * 面板的**外框与折叠交互不属于本包**：它复用壳的 `<details class="zy-settings-group">`
- * + `<summary>` + `<div class="zy-settings-body">`（见 client.jsx 的 frame()），
- * 于是这块的边框、圆角、图标块、标题/描述排布、右端 chevron 与它的旋转、summary 下的
- * 分隔线**全部**由 `dsh-zhiyun-shell/src/style.css` 提供 —— 与「个人」页上其余设置组
- * 逐像素同源，壳调尺寸/换主题时这里自动跟随。
- *
- * 按钮同理走 ui-primitives 的 `.zs-button` / `.zs-primary`（不在本文件里重写），
- * 输入框则沿用本页既有的观感（边框/圆角/内边距取自 `.zs-account input` 那一组）。
- *
- * ⇒ 所以这里只写**这张面板独有**的东西：代理条目的内部排布、规则的「域名 → 目标」
- *   一行、以及几个状态读数。任何一句「把边框/按钮/标题再画一遍」都是重复，会导致
- *   同一个界面有两套真源 —— 那正是这一版要修掉的问题。
- *
- * 前缀 `znp-` 只为本包选择器服务：跨包改 `.zy-*` 会波及另外几页，且同特异性规则
- * 谁生效只看挂载顺序，是这个仓库 `npm run check:css` 专门在拦的隐患。
- * 颜色一律取壳里的 `--zy-*` 变量，明暗两套主题自动跟随。
+ * 按钮走 ui-primitives 的 `.zs-button` / `.zs-primary`；颜色一律取壳的 `--zy-*` 变量，
+ * 明暗两套主题自动跟随。前缀 `znp-` 只为本包选择器服务。
  */
 
-/* 折叠组展开后的纵向节奏。用 gap 而不是给每个子块加 margin：
-   子块会随用户增删代理而增减，margin 的首尾会多出一截空隙。 */
-body[data-zhiyun] .znp { margin-top: 12px; }
-body[data-zhiyun] .znp-stack {
+body[data-zhiyun] .znp-summary {
+  margin: 0 0 14px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--zy-muted);
+}
+body[data-zhiyun] .znp-body {
   display: flex;
   flex-direction: column;
   gap: 18px;

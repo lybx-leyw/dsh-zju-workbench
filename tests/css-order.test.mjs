@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 样式归属守卫：各包样式表之间不许有「靠挂载顺序决胜」的层叠依赖。
  *
  * 为什么值得一条常驻测试：每个包的 style.css 是各自 mountStyle 追加的一张独立
@@ -66,7 +66,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'dsh-zhiyun-page-classroom-play',
     'dsh-zhiyun-page-docs',
     'dsh-zhiyun-page-feedback',
-    'dsh-zhiyun-page-me',
+    'dsh-zhiyun-settings-account',
     'dsh-zhiyun-page-notes',
     'dsh-zhiyun-page-paper',
     'dsh-zhiyun-page-planning',
@@ -74,6 +74,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'dsh-zhiyun-page-quiz',
     'dsh-zhiyun-page-study',
     'dsh-zhiyun-page-today',
+    'dsh-zhiyun-shell-bridge',
     'dsh-zhiyun-shell-ui',
     'dsh-zhiyun-shell-workbench',
     'dsh-zhiyun-source-card',
@@ -272,3 +273,4 @@ test('退出码：有问题返回 1，没问题返回 0', () => {
   ]));
   assert.equal(report(dirty, { log: () => {}, error: () => {} }), 1);
 });
+

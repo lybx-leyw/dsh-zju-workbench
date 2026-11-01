@@ -1,4 +1,4 @@
-import test from 'node:test';
+﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile, realpath, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -94,12 +94,36 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   // 这份清单是 profile 的**期望形态**：新增本仓 bundle 时要在这里补一项。
   // 下面那条循环（`sourceBundles`）保证每个包都有目录链接，但「清单里有没有它」
   // 只能靠这份逐字期望 —— 漏写不会报错，会让 profile 少挂一个包。
-  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell-workbench', 'dsh-zhiyun-shell-ui', 'dsh-zhiyun-source-netproxy', 'dsh-zhiyun-source-card', 'dsh-zhiyun-source-campus', 'dsh-zhiyun-source-zdbk', 'dsh-zhiyun-source-cc98', 'dsh-zhiyun-source-xxt', 'dsh-zhiyun-host-office', 'dsh-zhiyun-host-deeptutor', 'dsh-zhiyun-source-classroom', 'dsh-zhiyun-core-parser', 'dsh-zhiyun-core-study', 'dsh-zhiyun-core-lecture', 'dsh-zhiyun-core-quiz', 'dsh-zhiyun-core-notes', 'dsh-zhiyun-core-vault', 'dsh-zhiyun-core-player', 'dsh-zhiyun-core-playback', 'dsh-zhiyun-core-knowledge', 'dsh-zhiyun-core-handout', 'dsh-zhiyun-core-learning-resource', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-quiz', 'dsh-zhiyun-page-planning', 'dsh-zhiyun-page-me', 'dsh-zhiyun-graph-render', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-host-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-docs', 'dsh-zhiyun-page-feedback', 'dsh-zhiyun-quiz-lab', 'dsh-zhiyun-classroom-renderer', 'dsh-zhiyun-host-classroom', 'dsh-zhiyun-core-classroom-vault', 'dsh-zhiyun-core-classroom-media', 'dsh-zhiyun-core-classroom-pbl', 'dsh-zhiyun-core-classroom-agent', 'dsh-zhiyun-core-classroom-generate', 'dsh-zhiyun-core-classroom-export', 'dsh-zhiyun-page-classroom-build']);
+  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell-workbench', 'dsh-zhiyun-shell-bridge', 'dsh-zhiyun-shell-ui', 'dsh-zhiyun-source-netproxy', 'dsh-zhiyun-source-card', 'dsh-zhiyun-source-campus', 'dsh-zhiyun-source-zdbk', 'dsh-zhiyun-source-cc98', 'dsh-zhiyun-source-xxt', 'dsh-zhiyun-host-office', 'dsh-zhiyun-host-deeptutor', 'dsh-zhiyun-source-classroom', 'dsh-zhiyun-core-parser', 'dsh-zhiyun-core-study', 'dsh-zhiyun-core-lecture', 'dsh-zhiyun-core-quiz', 'dsh-zhiyun-core-notes', 'dsh-zhiyun-core-vault', 'dsh-zhiyun-core-player', 'dsh-zhiyun-core-playback', 'dsh-zhiyun-core-knowledge', 'dsh-zhiyun-core-handout', 'dsh-zhiyun-core-learning-resource', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-quiz', 'dsh-zhiyun-page-planning', 'dsh-zhiyun-settings-account', 'dsh-zhiyun-graph-render', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-host-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-docs', 'dsh-zhiyun-page-feedback', 'dsh-zhiyun-quiz-lab', 'dsh-zhiyun-classroom-renderer', 'dsh-zhiyun-host-classroom', 'dsh-zhiyun-core-classroom-vault', 'dsh-zhiyun-core-classroom-media', 'dsh-zhiyun-core-classroom-pbl', 'dsh-zhiyun-core-classroom-agent', 'dsh-zhiyun-core-classroom-generate', 'dsh-zhiyun-core-classroom-export', 'dsh-zhiyun-page-classroom-build']);
   // 每个本仓包都要有 profile 里的目录链接 —— 漏一个的表现是「启动了但那一页空白」。
   for (const name of sourceBundles) {
     assert.equal(await realpath(path.join(first.profile, 'node_modules', name)), await realpath(path.join(root, 'packages', name)), `${name} 缺 profile 链接`);
   }
 });
+test('existing profiles add the bridge once without altering user bundles or overlays', async t => {
+  const parent = path.join(root, '.runtime', 'tests');
+  await mkdir(parent, { recursive: true });
+  const home = await mkdtemp(path.join(parent, 'bridge-upgrade-'));
+  t.after(() => rm(home, { recursive: true, force: true }));
+  const runtime = await initialize({ home });
+  const file = path.join(runtime.profile, 'package.json');
+  const manifest = JSON.parse(await readFile(file, 'utf8'));
+  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(name => name !== 'dsh-zhiyun-shell-bridge');
+  manifest.dsh.profile.bundles.push('user-owned-plugin');
+  manifest.custom = { keep: true };
+  await writeFile(file, JSON.stringify(manifest));
+  const patch = path.join(runtime.profile, 'cordis.patch.yml');
+  await writeFile(patch, '# user bridge overrides\n[]\n');
+  await initialize({ home });
+  await initialize({ home });
+  const upgraded = JSON.parse(await readFile(file, 'utf8'));
+  assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, 'dsh-zhiyun-shell-bridge']);
+  assert.deepEqual(upgraded.custom, manifest.custom);
+  assert.equal(await readFile(patch, 'utf8'), '# user bridge overrides\n[]\n');
+  assert.equal(await realpath(path.join(runtime.profile, 'node_modules', 'dsh-zhiyun-shell-bridge')),
+    await realpath(path.join(root, 'packages', 'dsh-zhiyun-shell-bridge')));
+});
+
 test('foreign profile is refused without overwriting its manifest', async () => {
   const parent = path.join(root, '.runtime', 'tests');
   await mkdir(parent, { recursive: true });

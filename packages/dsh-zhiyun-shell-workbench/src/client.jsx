@@ -1,7 +1,9 @@
 import React from 'react';
-import { Sidebar, Page, AskChrome, AskMenuButton, PersonalSettingsBridge } from './components.jsx';
-import { NAV, activePage, hiddenPageIds, pageBundle, pageSlot, panelKey, visiblePages } from './model.js';
+import { Sidebar, Page, NativeSettingsHost } from './components.jsx';
+import { NAV, hiddenPageIds, pageSlot } from './model.js';
 import { adaptSettingsSurface } from './settings-adapter.js';
+import { createSettingsOpener } from './settings-opener.js';
+import { createLearningSpaceBinding } from './learning-binding.js';
 import css from './style.css';
 
 export const name = 'zhiyun-shell-client';
@@ -15,15 +17,13 @@ export const name = 'zhiyun-shell-client';
  * 一起 mount），而它在 dsh-web-app 里；所以「有 remote」与「有 pluginManager」是同一件事，
  * 不会多出连坐面。真正要防的是**读不到就降级**，那由 hiddenPageIds 的空集语义负责。
  */
-export const inject = ['slots', 'layout', 'theme', 'uiWorkspace', 'workspaces', 'sessions', 'remote'];
+export const inject = ['slots', 'layout', 'theme', 'uiWorkspace', 'workspaces', 'sessions', 'remote', 'zhiyunWorkbench'];
 export function apply(ctx) {
   try { return applyUI(ctx); }
   catch (error) { console.error('zhiyun UI activation:', error); throw error; }
 }
 function applyUI(ctx) {
-  /** 当前选中的产品页；「问一问」是唯一需要自动绑工作区的那一页。 */
-  let active = 'today';
-  const drawer = createSessionDrawer();
+  const workbench = ctx.zhiyunWorkbench;
   /**
    * 哪些页的包被取消了。
    *
@@ -43,36 +43,31 @@ function applyUI(ctx) {
   const account = createToggleStore();
   // binding 必须先于 controller 建立：controller.navigate 立刻就会用到它，
   // 而别的插件在自己的 apply 里调 zhiyunNavigation.navigate 也可能早于下面几行执行。
-  const binding = createLearningSpaceBinding(ctx, () => active === 'ask', drawer);
+  const binding = createLearningSpaceBinding(ctx, () => workbench.getSnapshot().activePage === 'ask');
+  // 设置 = 宿主原生浮窗。只把它的 store 动作接到壳上，导轨按钮与账号菜单共用这一入口。
+  const settings = createSettingsOpener();
   const controller = {
     navigate(id) {
       if (!NAV.some(item => item.id === id)) throw new Error(`Unknown Zhiyun page: ${id}`);
-      active = id;
-      // 抽屉属于问一问：离开这一页就交还右侧轨道。
-      if (id !== 'ask') {
-        drawer.close();
-        binding.reset();
-      }
-      ctx.layout.selectPanel(id === 'ask' ? null : panelKey(id));
-      if (id === 'ask') {
-        drawer.releaseEmptySession();
-        binding.attempt();
-      }
+      workbench.selectPage(id);
+      // 外层页面切换不修改 DSH 内层的面板选择。
+      if (id === 'ask') binding.enter();
+      else binding.reset();
     },
     toggleSidebar: () => ctx.layout.toggleSidebar(),
     toggleTheme: () => ctx.theme.setTheme(ctx.theme.getTheme().active.colorScheme === 'dark' ? 'light' : 'dark'),
+    /** 打开原生设置浮窗。宿主未提供设置面时明确报错，不静默无响应。 */
+    openSettings: () => { if (!settings.open()) console.error('zhiyun: native settings surface is unavailable'); },
     /** 打开/关闭账号面板。页面里的登录入口调它（见 createToggleStore 的说明）。 */
     openAccount: () => account.open(),
     closeAccount: () => account.close(),
   };
-  ctx.effect(() => drawer.close, 'zhiyun: sessions drawer');
   ctx.effect(() => () => hidden.dispose(), 'zhiyun: hidden pages store');
   // 正停在的那一页被取消了：回「今天」，别把用户留在一个已经没有入口的页上。
   ctx.effect(() => hidden.subscribe(() => {
     const gone = hidden.getSnapshot();
     if (gone.size === 0) return;
-    const showing = ctx.layout.panelInfo.getSnapshot().activePanelId;
-    const page = activePage(showing, NAV);
+    const page = workbench.getSnapshot().activePage;
     if (page !== null && gone.has(page)) controller.navigate('today');
   }), 'zhiyun: leave a cancelled page');
   ctx.effect(() => {
@@ -96,104 +91,34 @@ function applyUI(ctx) {
     '--dsw-alias-button-info-fill': { light: '#00479d', dark: '#245fa9' },
     '--dsw-alias-button-info-hover': { light: '#003b83', dark: '#2b70c3' },
   }), 'zhiyun: reversible native theme layer');
-  ctx.slots.inject('sidebar', () => ctx.slots.register({
-    name: 'sidebar', priority: -10,
-    children: {
-      'sidebar.brand.mark': { kind: 'single', scope: 'root' },
-      'sidebar.brand.name': { kind: 'single', scope: 'root' },
-      'sidebar.panellist': { kind: 'list', scope: 'root' },
-      // ⚠️ 刻意**不声明** `sidebar.workspaces`：那是宿主的多项目工作区浏览器
-      //    （带工作区切换），与本工作台的单一学习空间不是一回事。不声明 = 它不挂载。
-      'sidebar.settings': { kind: 'single', scope: 'root' },
-      'sidebar.footer.action': { kind: 'list', scope: 'root' },
-      // 账号面板里的登录表单。**内容由页面包提供**（`zhiyun-page-me` 注册），
-      // 壳只负责"什么时候把它显示出来"—— 壳不认识智云课堂的账号协议。
-      'sidebar.account.signin': { kind: 'single', scope: 'root' },
-    },
-    inject: () => ({ controller, hidden, account }),
+  ctx.slots.inject('zhiyun.shell.navigation', () => ctx.slots.register({
+    name: 'zhiyun.shell.navigation',
+    children: { 'sidebar.account.signin': { kind: 'single', scope: 'root' } },
+    inject: () => ({ controller, hidden, account, collapsed: true }),
   }, Sidebar));
-  // DSH 0.2 gives child-slot ownership exclusively to the original entry.
-  // Adapt its component in place so forms retain that authorization, store,
-  // onboarding and plugin registrations; restore it on bundle disposal.
+  // 设置 = 宿主原生浮窗。这里只把它的 store 动作接到壳上：
+  // 导轨「设置」按钮与账号菜单调同一个入口，不再跳「个人」页。
   ctx.effect(() => adaptSettingsSurface(ctx.slots, NativeSettings =>
-    props => <PersonalSettingsBridge {...props} controller={controller} NativeSettings={NativeSettings}/>
-  ), 'zhiyun: reversible settings surface adapter');
-  // 汉堡放进会话头的 leading：那一列在会话名之前，标题会自己让开。
-  // 不能用固定定位盖在面板角上，否则会压住会话名（宿主标题行就从这里开始）。
-  ctx.slots.inject('conversation.header.leading', () => ctx.slots.register({
-    name: 'conversation.header.leading',
-    priority: -10,
-    inject: () => ({ drawer }),
-  }, AskMenuButton));
-  // 抽屉挂在 `shell.overlay`（整层 absolute）。`shell.leading` 只在 macOS 且侧栏收起时挂载。
-  //
-  // ⚠️ 这里**声明** `sidebar.workspaces`，是整套接法的关键。
-  //    宿主的工作区/会话浏览器（`dsh-client-ui-workspace`）用
-  //    `ctx.slots.inject('sidebar.workspaces', () => ctx.slots.register({...}, WorkspaceBrowser))`
-  //    把自己挂上去 —— 也就是说它**需要一个别人先声明的槽**，自己不声明。
-  //    官方那条声明在宿主 `ui-sidebar` 里，而本 bundle 的 cordis.patch.yml 把 `ui-sidebar`
-  //    停用了（产品自带导轨替换它）。于是这个槽在本组合里**根本没有声明者**，
-  //    宿主的注入永不触发，我们也就拿不到那个组件（上一版实验「抽屉空白」的真因）。
-  //
-  //    我们自己声明它、并在抽屉里 `renderSlot` 出来，得到的是**宿主原样的浏览器**：
-  //    搜索、按工作区分组、排序、新建会话/工作区、行内重命名、置顶、分支、归档、
-  //    归档筛选，连它的 inject 面和视图 store 都是宿主自己那份，一个都不用我们伪造。
-  //
-  //    子槽（`…directoryFlow` / `…session.menu.item` / `…session.row.action` /
-  //    `sidebar.session.row.*`）由宿主那条注册自己声明，不归我们管。
-  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
-    name: 'shell.overlay',
-    id: 'zhiyun-ask-chrome',
-    order: 10,
-    children: { 'sidebar.workspaces': { kind: 'single', scope: 'root' } },
-    inject: () => ({ drawer, sessions: ctx.sessions, workspaces: ctx.workspaces, uiWorkspace: ctx.uiWorkspace, getLearningSpace: () => ctx.get('zhiyunLearningSpace'), nativeBrowser: createNativeBrowserPresence(ctx) }),
-  }, AskChrome));
-  ctx.slots.inject('main', function* () {
-    // 七个页面面板都照常注册，**不**因为「某一页被取消」而撤掉注册：
+    props => <NativeSettingsHost {...props} NativeSettings={NativeSettings} onActions={settings.attach}/>
+  ), 'zhiyun: native settings surface');
+  // Native sidebar, workspace browser, header and plugin panels stay inside ask.
+  ctx.slots.inject('zhiyun.shell.page', function* () {
+    // 产品页面面板都照常注册，**不**因为「某一页被取消」而撤掉注册：
     // 撤注册要在远程事件回来的异步时点调 `ctx.slots.register`，那时 shell 自己的 fiber
     // 未必还在有效的 effect 作用域里（会撞 INACTIVE_EFFECT），时序很难守。
     // 取消的效果落在**呈现**上（侧栏与跳转不列它），见 components.jsx 的 Sidebar/SearchDialog。
     for (const page of NAV.filter(item => item.id !== 'ask')) {
       yield ctx.slots.register({
-        name: 'main', key: panelKey(page.id),
+        name: 'zhiyun.shell.page', key: page.id,
         // 内容插槽名从 NAV 取（`pageSlot`）：「课堂」的两页注册的是
         // `zhiyun.classroom.play` / `zhiyun.classroom.build`，不跟 id 推导。
-        children: { [pageSlot(page)]: { kind: 'single', scope: 'root' }, ...(page.id === 'me' ? { 'zhiyun.me.network': { kind: 'single', scope: 'root' } } : {}) },
+        children: { [pageSlot(page)]: { kind: 'single', scope: 'root' } },
         inject: () => ({ controller, page: page.id }),
       }, Page);
     }
     // Startup selects Today only after all pages have been registered.
     controller.navigate('today');
   });
-  ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark', priority: -10 }, () => <div className="zy-hero-brand"><span>海纳江河，启真厚德</span></div>));
-}
-
-/**
- * 宿主的工作区/会话浏览器**有没有真的注册进来**。
- *
- * 我们只负责声明槽（见 `applyUI` 里 `shell.overlay` 那段注释），真正往里注册的是
- * 宿主 `dsh-client-ui-workspace` 自己。它是个可选的同组合件：某个部署里它没被启用
- * （或其 `inject` 依赖缺席而 pending）时，槽一直空着。抽屉据此决定是渲染原生浏览器
- * 还是退回自写列表 —— **不能**把「槽空着」渲染成一片空白，那正是上次的失败形态。
- *
- * uSES 口径：`getSnapshot` 必须返回稳定值，所以这里存布尔、由槽事件推着改。
- * @param ctx - 客户端插件上下文。
- * @returns `{ subscribe, getSnapshot }`。
- */
-function createNativeBrowserPresence(ctx) {
-  let present = ctx.slots.entries('sidebar.workspaces').length > 0;
-  const listeners = new Set();
-  const read = () => {
-    const next = ctx.slots.entries('sidebar.workspaces').length > 0;
-    if (next === present) return;
-    present = next;
-    for (const listener of [...listeners]) listener();
-  };
-  ctx.effect(() => ctx.slots.subscribe('sidebar.workspaces', read), 'zhiyun: native browser presence');
-  return {
-    subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
-    getSnapshot: () => present,
-  };
 }
 
 /**
@@ -275,84 +200,5 @@ function createHiddenPages(ctx) {
     getSnapshot: () => snapshot,
     refresh,
     dispose() { disposed = true; listeners.clear(); },
-  };
-}
-
-/**
- * 历史会话抽屉的开合状态。
- *
- * 抽屉渲染在「问一问」面板上（见 components.jsx 的 AskChrome）：会话头 leading 里的汉堡
- * 点开后，从面板左缘拉出整高抽屉。不是宿主右栏。
- *
- * 为什么不用宿主布局的右侧轨道（`ctx.layout.openRightbar`）：
- * 那条轨道归宿主的右栏插件（文档/文件/终端分页）所有，它的呈现同步会把轨道关回去，
- * 我们打开会被立刻关掉；而停用那个插件又会让 9 个客户端插件（chat/skill/plan/…）
- * 因缺少 `sidebarRight` 服务而无法激活，整个前端起不来（实测）。
- * 所以我们不去抢那条轨道。
- */
-function createSessionDrawer() {
-  let shown = false;
-  // 用户刚归档了正在看的那条：先别自动补一条新壳。补上的话，历史清了，列表里还是有一条会话。
-  let skipAutoSession = false;
-  const listeners = new Set();
-  const emit = () => { for (const listener of listeners) listener(); };
-  return {
-    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
-    getSnapshot: () => shown,
-    toggle() { shown = !shown; emit(); },
-    close() { if (!shown) return; shown = false; emit(); },
-    holdEmptySession() { skipAutoSession = true; },
-    releaseEmptySession() { skipAutoSession = false; },
-    shouldSkipAutoSession: () => skipAutoSession,
-  };
-}
-
-/**
- * 「问一问」固定绑到本工作台的学习空间。
- *
- * 只有三个条件同时成立才动作：这一页正是问一问、当前没有已打开的会话、
- * 工作区列表里能**确定地**认出学习空间（见 `pickLearningWorkspace`）。
- *
- * 为什么不怕攒出一堆空会话：宿主的 `connectWorkspace` 会先找该目录下已有的空白会话
- * 并复用它，只在一条都没有时才新建。已经打开的会话绝不顶掉 —— 这里只填「什么都没有」的空档。
- * 抽屉刚归档了正在看的那条时先停一下：这时候补一条，历史清了，列表里马上又有壳。
- * 再次进入问一问会放开，仍按原来的规则填空档。
- *
- * ⚠️「当前有没有会话」在 0.2 不能读 `sessions.list.getSnapshot().current`：
- *    那个字段已经不存在了（旧版有），读它恒为 undefined ⇒ 每次进问一问都重新绑一次。
- *    现在读宿主自己持久化的「主面板在看哪个会话」（`uiWorkspace.selection`，
- *    也就是 localStorage 里的 `dsh.sessions.current`）。取不到就当作没有，
- *    退回原来的行为（不会更糟）；`?.` 保证宿主哪天换形状也不会把插件带崩。
- */
-function createLearningSpaceBinding(ctx, isAskActive, drawer) {
-  let pending = false;
-  const openSessionId = () => ctx.uiWorkspace?.selection?.getSnapshot?.()?.sessionId;
-  const attempt = () => {
-    if (pending || !isAskActive() || drawer.shouldSkipAutoSession()) return;
-    const workspace = ctx.workspaces.list.getSnapshot();
-    const session = ctx.sessions.list.getSnapshot();
-    if (workspace.phase !== 'ready' || session.phase !== 'ready') return;
-    if (openSessionId() !== undefined) return;
-    // 学习空间的定义（标题、怎么认）归领域状态包，壳按服务取，不复制第二份字面量。
-    const learningSpace = ctx.get('zhiyunLearningSpace');
-    const target = learningSpace?.pickLearningWorkspace(workspace.items, learningSpace.title);
-    if (target === undefined) return;
-    // 挂起一直留到主面板真的打开一条会话。列表一更新就放开的话，下一次 attempt
-    // 会把这次还没走完的导航取消掉，然后自己再来一次，空档里会打成循环。
-    pending = true;
-    ctx.uiWorkspace.startSession(target.workspaceId);
-  };
-  ctx.effect(() => {
-    const selection = ctx.uiWorkspace?.selection;
-    if (selection == null || typeof selection.subscribe !== 'function') return undefined;
-    return selection.subscribe(() => {
-      if (openSessionId() !== undefined) pending = false;
-    });
-  }, 'zhiyun: bind learning space (selection)');
-  ctx.effect(() => ctx.workspaces.list.subscribe(attempt), 'zhiyun: bind learning space (workspaces)');
-  ctx.effect(() => ctx.sessions.list.subscribe(attempt), 'zhiyun: bind learning space (sessions)');
-  return {
-    attempt,
-    reset() { pending = false; },
   };
 }
