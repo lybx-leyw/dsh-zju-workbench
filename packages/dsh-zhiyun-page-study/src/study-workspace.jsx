@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { GenerationQueue } from './generation-queue.jsx';
+import { CourseGraph } from './course-graph.jsx';
 import { useStudy } from 'dsh-zhiyun-shell-ui';
 import { VideoPanel } from "./video-panel.jsx";
 import { AiTeaching } from './ai-teaching.jsx';
@@ -137,7 +138,7 @@ function LiveNowFold({ state, controller, onPick }) {
   </section>;
 }
 
-function CourseTree({ state, controller, onOpenHit, onPickLive, collapsed, onToggle }) {
+function CourseTree({ state, controller, onOpenHit, onPickLive, onCourseGraph, onPickLesson, collapsed, onToggle }) {
   const [query, setQuery] = useState("");
   const courses = state.courses.filter((course) => `${course.title} ${course.teacher ?? ""} ${course.termName ?? ""}`.toLowerCase().includes(query.trim().toLowerCase()));
   // ⚠️ `aria-expanded` 不能挂在这个 aside 上：它只对可交互角色有效，挂在 aside / generic
@@ -167,11 +168,11 @@ function CourseTree({ state, controller, onOpenHit, onPickLive, collapsed, onTog
         const count = meta ? lessons.length : null;
         return <section className={`zs-course-group${isOpen ? " is-open" : ""}`} key={id}>
           <button className="zs-course-toggle" aria-expanded={isOpen} onClick={() => controller.toggleCourse(course)}><span className="zs-chevron" aria-hidden="true">{isOpen ? "⌄" : "›"}</span><span className="zs-course-name"><strong>{course.title}</strong><small>{course.termName ?? course.teacher ?? "课程"}</small></span>{count !== null && <span className="zs-course-count">{count}</span>}</button>
-          {isOpen && <div className="zs-tree-lessons">{loading && !lessons.length ? <p className="zs-tree-hint">正在读取节次…</p> : lessons.map((lesson) => {
+          {isOpen && <div className="zs-tree-lessons"><button type="button" className="zs-tree-lesson" onClick={() => onCourseGraph(course)}>课程知识图谱总览 ↗</button>{loading && !lessons.length ? <p className="zs-tree-hint">正在读取节次…</p> : lessons.map((lesson) => {
             const key = `${id}:${lesson.subId}`, status = state.sectionStates[key], selected = state.course?.id === course.id && state.lesson?.id === lesson.id;
             const job = status?.job ?? (state.activeJob?.courseId === course.id && state.activeJob?.subId === lesson.subId ? state.activeJob : null);
             const label = job?.state === "queued" ? "排队中" : job?.state === "running" ? "生成中" : status?.parsed ? status.resultStatus === "ready" ? "已整理" : "待完善" : status ? "待整理" : "课堂资料";
-            return <button className={`zs-tree-lesson${selected ? " is-selected" : ""}`} key={lesson.id} aria-current={selected ? "page" : undefined} onClick={() => void controller.selectLesson(lesson, course)}>
+            return <button className={`zs-tree-lesson${selected ? " is-selected" : ""}`} key={lesson.id} aria-current={selected ? "page" : undefined} onClick={() => { onPickLesson(); void controller.selectLesson(lesson, course); }}>
               <span className={`zs-state-dot${job?.state === "running" ? " is-running" : status?.parsed ? " is-ready" : ""}`} aria-hidden="true" />
               <span className="zs-tree-lesson-copy"><strong>{lesson.title}</strong><small>{lessonWhen(lesson.startAt)}</small></span><span className="zs-state-label">{label}</span>
             </button>;
@@ -403,6 +404,8 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
   // 且取流失败时会被控制器清成 null —— 标题与时段那时就只剩这份副本还记得。
   // 它也不该进 `state`：选直播**不改变选中节次**（回放与直播是两条通路），
   // 所以 `course`/`lesson` 不该跟着动，而 `livePick` 正是「我在看直播」这件事的住址。
+  const [graphCourseId, setGraphCourseId] = useState(null);
+  const courseGraphOpen = graphCourseId != null && String(graphCourseId) === String(state.course?.id);
   const liveOn = LIVE_UI_ENABLED && screen === "live";
   /**
    * 点左侧「正在直播」里的某一场。
@@ -426,9 +429,10 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
     const openSource=focus?.tab==='题目来源'&&String(focus.courseId)===String(state.course?.id)&&String(focus.subId)===String(state.lesson?.subId);
     // 有回放的节次默认停在「视频」。没有回放就停在知识点。
     // 从今天页点一道已采纳的题进来，直接打开这一节的出题，不再单开一栏。
-    setEntry(openSource?{kind:'read',chapterNo:focus.chapterNo,topicNo:focus.topicNo}:openQuiz ? { kind: "quiz" } : null);
+    const openGraph = focus?.tab === '课程图谱定位' && String(focus.courseId) === String(state.course?.id) && String(focus.subId) === String(state.lesson?.subId);
+    setEntry(openGraph ? focus.entry : openSource?{kind:'read',chapterNo:focus.chapterNo,topicNo:focus.topicNo}:openQuiz ? { kind: "quiz" } : null);
     if(openSource)setLectureFocus({chapterNo:focus.chapterNo,topicNo:focus.topicNo,nonce:Date.now()});
-    setTab(openSource || openQuiz || !state.lesson?.videoUrl ? "知识点" : "视频");
+    setTab(openGraph || openSource || openQuiz || !state.lesson?.videoUrl ? "知识点" : "视频");
   }, [state.lesson?.id, state.course?.id, state.focusTab]);
   // 浮窗是「选项」的住处，点外面或按 Esc 就收；它只覆盖在自己那一角，不接管正文的点击。
   useEffect(() => {
@@ -512,14 +516,15 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
     <div className="zs-workbench-shell">
       <button className="zs-mobile-tree-toggle" aria-expanded={mobileTree} onClick={() => setMobileTree((value) => !value)}><span>课程目录</span><span>{state.course?.title ?? "选择一门课程"}</span><span aria-hidden="true">{mobileTree ? "⌃" : "⌄"}</span></button>
       <div className={`zs-workbench${mobileTree ? " is-tree-open" : ""}${treeCollapsed ? " is-tree-collapsed" : ""}`}>
-        <CourseTree state={state} controller={controller} collapsed={treeCollapsed} onToggle={() => setTreeCollapsed((value) => !value)} onPickLive={openLive} onOpenHit={async (row) => { const opened = await controller.openCorpusHit(row); if (opened) setQuery(state.corpusQuery || ""); }} />
+        <CourseTree state={state} controller={controller} onPickLesson={() => setGraphCourseId(null)} onCourseGraph={(course) => { setGraphCourseId(String(course.id)); setMobileTree(false); if (String(state.course?.id) !== String(course.id)) void controller.selectCourse(course); }} collapsed={treeCollapsed} onToggle={() => setTreeCollapsed((value) => !value)} onPickLive={openLive} onOpenHit={async (row) => { const opened = await controller.openCorpusHit(row); if (opened) setQuery(state.corpusQuery || ""); }} />
         <main className="zs-reader">
           <Notice>{state.error}</Notice>
+          {state.course && <div className="zs-course-graph-entry"><span>{state.course.title}</span><button type="button" className="zs-button" aria-pressed={courseGraphOpen} onClick={() => setGraphCourseId(courseGraphOpen ? null : String(state.course.id))}>课程知识图谱总览</button></div>}
           {/* 直播分支排在「没有节次」之前：点了直播但还没选节次时，用户要的是直播，
               不是那张「从一节课开始」的引导页 —— 后者会让人以为点击没生效。
               只看 `tab`、不看 `livePick`：`livePick` 是页面重挂载（切走再回来、
               刷新）时会丢的组件内状态，而「我在直播栏」这件事不该跟着它一起丢。 */}
-          {!state.lesson && liveOn ? liveOnly : !state.lesson ? <div className="zs-reader-empty"><span className="zs-motto-text">海纳江河，启真厚德</span><h1>从一节课开始，搭建自己的知识脉络。</h1><p>展开左侧课程，选择一节课堂。课件、字幕和解析内容会在这里自然汇合。</p><div className="zs-empty-hint"><span>01</span><div><strong>选择课程与节次</strong><small>课程资料会按课堂归档</small></div><span>02</span><div><strong>阅读与整理</strong><small>在同一处查看课件、字幕与讲义</small></div></div></div> : <>
+          {courseGraphOpen ? <CourseGraph key={state.course.id} course={state.course} controller={controller} onClose={() => setGraphCourseId(null)} /> : !state.lesson && liveOn ? liveOnly : !state.lesson ? <div className="zs-reader-empty"><span className="zs-motto-text">海纳江河，启真厚德</span><h1>从一节课开始，搭建自己的知识脉络。</h1><p>展开左侧课程，选择一节课堂。课件、字幕和解析内容会在这里自然汇合。</p><div className="zs-empty-hint"><span>01</span><div><strong>选择课程与节次</strong><small>课程资料会按课堂归档</small></div><span>02</span><div><strong>阅读与整理</strong><small>在同一处查看课件、字幕与讲义</small></div></div></div> : <>
             <header className="zs-current-section">
               <div className="zs-breadcrumb-row">
                 <div className="zs-breadcrumb"><span>{state.course?.title}</span><span aria-hidden="true">/</span><span>{state.lesson.title}</span></div>

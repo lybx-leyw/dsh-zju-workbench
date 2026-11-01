@@ -70,13 +70,40 @@ test('删除确认条：默认不删，必须先确认，Esc 可撤', async () =
   const source = await readFile(path.join(root, 'packages/dsh-zhiyun-page-notes/src/client.jsx'), 'utf8');
 
   // 按键只负责**弹确认**，不直接删 —— 这是"不可撤销动作要一次确认"的落点。
+  //
+  // ⚠️ 这条从 `setPendingDelete({ path, ... })` 改成了 `{ items: [...] }`：加了
+  //    Shift+↑/↓ 区间批量删除之后，确认条要能描述"这一堆"，单条就是长度为 1 的数组。
+  //    刻意只保留一种形状 —— 单条一套、批量一套的话，两条代码路径迟早有一条
+  //    漏掉某次清理（标签页 / 挂起保存），而那正是"删掉的被自动保存复活"的来源。
   const handler = source.slice(source.indexOf('const onKeyDownCapture'));
   const body = handler.slice(0, handler.indexOf('if (phase === '));
-  assert.match(body, /setPendingDelete\(\{ path/, '按键应当先设 pendingDelete');
-  assert.doesNotMatch(body, /remove\(/, '按键处理器里不该直接调 remove —— 那等于跳过确认');
+  assert.match(body, /setPendingDelete\(\{\s*items:/, '按键应当先设 pendingDelete.items');
+  assert.doesNotMatch(body, /removePaths\(/, '按键处理器里不该直接调 removePaths —— 那等于跳过确认');
+  assert.doesNotMatch(body, /await remove/, '按键处理器里不该直接删');
 
   // Esc 撤掉确认条。
   assert.match(body, /event\.key === 'Escape'/, 'Esc 要能取消待确认的删除');
+
+  // 区间选择也归 Esc 撤（否则用户按错一次只能靠再点一下鼠标才能退出选择）。
+  assert.match(body, /setSelectionAnchor\(null\)/, 'Esc 要能撤掉区间选择');
+});
+
+test('批量删除：作用对象是区间选择，且不要求焦点落在树行上', async () => {
+  const source = await readFile(path.join(root, 'packages/dsh-zhiyun-page-notes/src/client.jsx'), 'utf8');
+  const handler = source.slice(source.indexOf('const onKeyDownCapture'));
+  const body = handler.slice(0, handler.indexOf('if (phase === '));
+
+  // ⚠️ 有选择时**不能**坚持"焦点必须在树行上"。
+  //
+  //    与 ↑/↓ 的 B 方案同源：真机上点完树行 `activeElement` 仍是 `BODY`，
+  //    事件目标也就不是树行。若这里先 `closest('.zs-nt-rowbtn')` 再判断选择，
+  //    用户 Shift+↓ 选了三行再按 Delete 会**什么都不发生** —— 一个看起来
+  //    "实现了但按下去没反应"的功能。
+  const selectedAt = body.indexOf('const selected = [...selectedPaths]');
+  const guardAt = body.indexOf('if (row === null) return');
+  assert.ok(selectedAt >= 0, '必须从 selectedPaths 取批量选择');
+  assert.ok(guardAt > selectedAt, '"焦点在树行上"的判断必须排在选择之后，否则批量删除在真机上哑掉');
+  assert.match(body, /selected\.length > 0/, '有选择时走批量分支');
 });
 
 test('删除会清掉子路径的挂起保存（删文件夹不会被自动保存复活）', async () => {
@@ -85,8 +112,16 @@ test('删除会清掉子路径的挂起保存（删文件夹不会被自动保�
   // ⚠️ 这条钉的是实测到的形状：删文件夹时，里面有笔记在别的标签页开着，
   //    `pending.current` 还挂着它的正文；800ms 后自动保存把它写回去，
   //    连同刚删掉的文件夹整棵复活。所以判断必须是**前缀**，不只是相等。
-  assert.match(source, /const covers = \(other\) => other === path \|\| other\.startsWith\(`\$\{path\}\/`\)/,
+  //
+  // ⚠️ 批量删除之后，`remove` 变成了 `removePaths([path])` 的一层薄包装，
+  //    前缀判断要落在 `removePaths` 里、并且对**每一条**路径都成立 ——
+  //    "选了文件夹又选了它里面的笔记"正是区间选择最容易产生的形状。
+  const at = source.indexOf('const removePaths');
+  assert.ok(at >= 0, '找不到 removePaths');
+  const body = source.slice(at, source.indexOf('const remove =', at));
+  assert.match(body, /other === path \|\| other\.startsWith\(`\$\{path\}\/`\)/,
     '必须按前缀判断受影响的路径');
-  assert.match(source, /covers\(pending\.current\.path\)/, '挂起的保存要按前缀清理');
-  assert.match(source, /covers\(t\.path\)/, '标签页要按前缀清理');
+  assert.match(body, /covers\(pending\.current\.path\)/, '挂起的保存要按前缀清理');
+  assert.match(body, /covers\(t\.path\)/, '标签页要按前缀清理');
+  assert.match(body, /const covers = \(other\) => list\.some/, '前缀判断要对整批路径逐条成立');
 });

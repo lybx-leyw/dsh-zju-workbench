@@ -149,6 +149,15 @@ test('未配置供应商时不再把生成按钮永久变灰', () => {
   assert.ok(/workers\?\.length\?workers:undefined/.test(models + read(BANK)), '出题调用仍在传空 workers 数组：服务端会用 [] 覆盖掉默认配置');
 });
 
+test('供应商目录还没读回来时不拦生成', () => {
+  const models = read(MODELS);
+  // 目录发现可能要走网络（账号型供应商要先换票），而生成在没配 workers 时
+  // 由服务端回落默认路由。把「读取中」当禁用理由，等于每次进页白灰几秒。
+  assert.ok(!/const reason = busy \?/.test(models), MODELS + ' 仍把「目录读取中」当成禁用理由：主按钮会跟着供应商发现一起卡住');
+  // 目录为空时不能校验已配置的模型，否则会把刚配好的行误判成「缺少模型」。
+  assert.ok(/loaded && !rowsUsable/.test(models), MODELS + ' 没等目录就校验模型有效性：目录未就绪时主按钮会被误拦');
+});
+
 test('生成配置浮窗不会「随便滚一下就关掉」', () => {
   const models = read(MODELS);
   assert.ok(models.length > 1000, MODELS + ' 读不到内容');

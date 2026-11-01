@@ -8,6 +8,9 @@
 
 ## 仅参考，未引入实现
 
+- [html-ppt-skill](https://github.com/lewislulu/html-ppt-skill) · MIT（已核对根 LICENSE）。章节 HTML 原型参考其主题令牌、视觉布局与静态网页交付思路；未复制模板、脚本、提示词或素材，实现由本仓独立编写。
+- [html-in-PPT](https://github.com/Silhouette-my/html-in-PPT) · 未发现许可证，仅参考 HTML 优先与渐进展示思路，未复制或分发其实现。
+
 - r4 实验参考 ToS、Problem Posing、AIG Item Model、CDA 与 ECD 文献中的设计思路，独立实现蓝图、约束题模与证据审核；未复制论文代码、提示词或长段正文。书目、具体借鉴与限制见 [r4 文献依据](scripts/quiz_bench/experimental-r4/REFERENCES.md)，论文全文仅保留于本地忽略目录。
 
 - [DeepTutor](https://github.com/HKUDS/DeepTutor) · Apache-2.0 · 参考提交 `a31d82624c27d75f4e771d4fcb78dce16470b383`。**源码快照已 vendor 进本仓**（逐字节未改，见「含实现移植」一节），此处保留早期仅作评估时的阅读记录：已阅读许可证、出题流水线、阅读测验扩展、配套提示词与测试及依赖声明，用于评估将讲义终稿作为输入的上游引擎接入边界。
@@ -63,6 +66,35 @@
 
 ## 含实现移植
 
+
+- [OpenMAIC](https://github.com/THU-MAIC/OpenMAIC) · **MIT**（根 `LICENSE` 实文已核，Copyright (c) 2026 THU-MAIC）。
+  课堂域（`packages/dsh-zhiyun-*classroom*`）整体移植自上游，是**本仓最大的一处第三方来源**。
+  上游本身是完整的 Next.js 应用，这里按层拆成本仓的 Cordis 插件：
+
+  | 包 | 与上游的关系 | 本包 `ATTRIBUTION.md` |
+  | --- | --- | --- |
+  | [dsh-zhiyun-classroom-dsl](packages/dsh-zhiyun-classroom-dsl/) | `vendor/dsl/` 为上游 `@openmaic/dsl` `dist/` 的**逐字节副本**（含其 LICENSE） | [链接](packages/dsh-zhiyun-classroom-dsl/ATTRIBUTION.md) |
+  | [dsh-zhiyun-classroom-geometry](packages/dsh-zhiyun-classroom-geometry/) | `vendor/geometry/` 为上游 `@openmaic/geometry` `dist/` 的**逐字节副本**（含其 LICENSE） | [链接](packages/dsh-zhiyun-classroom-geometry/ATTRIBUTION.md) |
+  | [dsh-zhiyun-core-classroom-export](packages/dsh-zhiyun-core-classroom-export/) | `src/` 按上游 TS **逐函数重写**；`vendor/pptxgen.cjs` 为逐字节副本 | [链接](packages/dsh-zhiyun-core-classroom-export/ATTRIBUTION.md) |
+  | [dsh-zhiyun-core-classroom-generate](packages/dsh-zhiyun-core-classroom-generate/) | 生成管线按上游 TS 重写（每文件头标 `// 源：…:<行范围>`），提示词中文重写 | [链接](packages/dsh-zhiyun-core-classroom-generate/ATTRIBUTION.md) |
+  | [dsh-zhiyun-core-classroom-media](packages/dsh-zhiyun-core-classroom-media/) | 媒体车道重写；`vendor/unpdf/` 为第三方 PDF 解析库副本 | [链接](packages/dsh-zhiyun-core-classroom-media/ATTRIBUTION.md) |
+  | [dsh-zhiyun-core-classroom-agent](packages/dsh-zhiyun-core-classroom-agent/) | 多智能体层重写 | [链接](packages/dsh-zhiyun-core-classroom-agent/ATTRIBUTION.md) |
+  | [dsh-zhiyun-core-classroom-pbl](packages/dsh-zhiyun-core-classroom-pbl/) | PBL 场景层重写 | [链接](packages/dsh-zhiyun-core-classroom-pbl/ATTRIBUTION.md) |
+  | [dsh-zhiyun-core-classroom-stage](packages/dsh-zhiyun-core-classroom-stage/) | 舞台/文档层重写 | [链接](packages/dsh-zhiyun-core-classroom-stage/ATTRIBUTION.md) |
+  | [dsh-zhiyun-core-classroom-vault](packages/dsh-zhiyun-core-classroom-vault/) | 持久化层重写 | [链接](packages/dsh-zhiyun-core-classroom-vault/ATTRIBUTION.md) |
+  | [dsh-zhiyun-classroom-renderer](packages/dsh-zhiyun-classroom-renderer/) | 曾 vendor `@openmaic/renderer`，**2026-10-31 已改为本仓自研**（仅沿用其设计） | [链接](packages/dsh-zhiyun-classroom-renderer/ATTRIBUTION.md) |
+  | [dsh-zhiyun-host-classroom](packages/dsh-zhiyun-host-classroom/) | 宿主托管层 | [链接](packages/dsh-zhiyun-host-classroom/ATTRIBUTION.md) |
+  | [dsh-zhiyun-host-openmaic](packages/dsh-zhiyun-host-openmaic/) | 整体 vendor 上游应用（不随仓库分发，按锁文件拉回） | [链接](packages/dsh-zhiyun-host-openmaic/ATTRIBUTION.md) |
+
+  ⚠ **两个上游提交**：生成/导出等 `lib/` 层对照的是
+  `03dee2bb4e1bf2e3296ad05ca1f78ce863452921`（v1.3.0）；`@openmaic/{dsl,geometry,renderer}`
+  三个工作区包 vendor 的是 `0ae3215e965412b8ee536feaa5d98f75b7a70923`。两者不是同一提交，
+  升级时须分别核对。
+
+  ⚠ **许可证例外**：上游根 MIT **不覆盖**其工作区包 `packages/mathml2omml`
+  （[fiduswriter/mathml2omml](https://github.com/fiduswriter/mathml2omml)，**LGPL-3.0-or-later**）。
+  本仓**未使用**该包，OMML 映射为自写实现（见 export 包 `ATTRIBUTION.md`）。
+
 - [ZJU-Omni](https://github.com/Vita0818/ZJU-Omni) · **MIT** · 移植提交 `192d1015a53a7b09f23ae143d56686c8fbf706af`。
   移植其**数据层**（教务课表/成绩/考试、学在浙大、CC98、拼题A 的接口适配）做成数据包而非 AI 工具。
   原落地包 `dsh-zhiyun-source-omni` 已于 2026-10-20 按平台拆分为本仓原生实现：
@@ -99,3 +131,18 @@ SOCKS5（RFC 1928 / RFC 1929）的客户端握手。这两者是**公开的协�
 思路，与 [dsh-net-proxy](https://github.com/mafeis/dsh-net-proxy)（MIT）所解决的
 问题相邻（都涉及本地中继与代理转发），阅读其源码有助于理解该问题域；本包的实现
 是独立编写的，未移植其代码，也未将其列为运行时依赖。
+
+## 关于「临时实现」与致谢
+
+本仓部分第三方代码是**临时**引入的 —— 例如 `packages/dsh-zhiyun-classroom-dsl/vendor/` 与
+`packages/dsh-zhiyun-classroom-geometry/vendor/` 是上游构建产物的逐字节副本，计划在后续迭代中
+被本仓自研实现替换。**临时不等于不重要，也不等于将来会抹掉来源**：
+
+- 只要这份代码还在仓库里，它就**完整受其原协议约束**，本文件与包级 `ATTRIBUTION.md` 的记录
+  就必须与它同时存在；
+- 替换掉它时，对应的归属条目**不会直接删掉**，而是改为「曾 vendor，现已自研」并保留上游项目、
+  提交号与致谢 —— 设计的沿用同样是受益，理应记录；
+- 反过来，「计划替换」也**不构成**任何简化归属说明的理由：当前状态是什么就写什么。
+
+**对所有被参考、被移植、被临时 vendor 的项目，在此致谢。** 本仓是站在这些工作上做出来的；
+如果哪一条归属写错了、漏了、或者写得不够，欢迎指出，我们会改。

@@ -159,6 +159,13 @@ export function payloadToQaPair(template, payload, { issues = [] } = {}) {
     options: options !== null && typeof options === 'object' && !Array.isArray(options) ? options : null,
     topic: template.topic,
     difficulty: template.difficulty,
+    // 出处跟着 template 走，**不跟模型在 quiz 阶段的自由发挥走**。
+    //
+    // plan 阶段已经把「这题考哪个知识点」定下来了（并且模型回过一个 pid）。
+    // quiz 阶段若允许它再改一次，就会出现「plan 说考 A、题实际考 B」而归属仍记 A
+    // —— 那正是这次要消灭的那类静默错配。null 同样要如实传出去：它代表
+    // 「plan 就没写明出处」，下游据此归到未分组，而不是猜第一个知识点。
+    pointId: template.pointId ?? null,
     metadata: issues.length ? { issues } : {},
   };
 }

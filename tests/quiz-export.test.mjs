@@ -180,7 +180,22 @@ test('导出结果如实显示落到哪个路径，重名要说出来', () => {
 
 import { splitByLesson } from '../packages/dsh-zhiyun-core-study/src/quiz-export.js';
 
-const L = (lesson, course = '概率论', over = {}) => Q({ lessonTitle: lesson, courseTitle: course, ...over });
+/**
+ * 造一道题。
+ *
+ * ⚠️ `courseId`/`subId` 现在**必须给**：分组认的是出处 id，不是名字。
+ * 只给名字的题会被当成「出处未确认」进【未分组】—— 那正是产品要的行为，
+ * 但它会让「按节次拆分」这一组断言全部失效，所以这里默认给齐。
+ *
+ * 需要验证未分组的用例直接传 `courseId: ''`。
+ */
+const L = (lesson, course = '概率论', over = {}) => Q({
+  lessonTitle: lesson,
+  courseTitle: course,
+  courseId: `course-${course}`,
+  subId: `sub-${lesson}`,
+  ...over,
+});
 
 test('多个节次时拆成多份文档', () => {
   const docs = splitByLesson({
@@ -215,10 +230,13 @@ test('文档标题带课程名（单看「第3-5节」不知道是哪门课）',
   }
 });
 
-test('节次缺失时归到「未标注节次」，不让题静默消失', () => {
-  const docs = splitByLesson({ questions: [Q({ lessonTitle: '' }), L('第一节')] });
-  assert.equal(docs.length, 2);
-  assert.ok(docs.some(d => d.lessonTitle === 'quiz-未标注节次'), '缺失要有可读的兜底名（带前缀）');
+test('出处缺失时归到【未分组】，不让题静默消失、也不并进别的课', () => {
+  const docs = splitByLesson({ questions: [Q({ lessonTitle: '', courseId: '', subId: '' }), L('第一节')] });
+  assert.equal(docs.length, 2, '出处缺失的题要单独成一份，不能并进「第一节」');
+  const orphan = docs.find(d => d.unresolved);
+  assert.ok(orphan, '要有明确的未分组那份');
+  assert.equal(orphan.lessonTitle, '【未分组】', '未分组要有可读的名字，而不是空串或假节次名');
+  assert.notEqual(orphan.lessonTitle, 'quiz-第一节', '不能被当成一个正常节次');
   const total = docs.reduce((n, d) => n + d.count, 0);
   assert.equal(total, 2, '题目总数不能少');
 });
@@ -265,9 +283,10 @@ test('前缀只加在节次层，学期与课程层保持一致', () => {
   assert.equal(d.lessonTitle, 'quiz-第一节', '只给节次层加');
 });
 
-test('节次缺失时的兜底名也带前缀', () => {
-  const docs = splitByLesson({ questions: [Q({ lessonTitle: '' })] });
-  assert.equal(docs[0].lessonTitle, 'quiz-未标注节次');
+test('未分组那份不加 quiz- 前缀（它不是一个正常节次）', () => {
+  const docs = splitByLesson({ questions: [Q({ lessonTitle: '', courseId: '', subId: '' })] });
+  assert.equal(docs[0].lessonTitle, '【未分组】');
+  assert.ok(!docs[0].lessonTitle.startsWith('quiz-'), '加了前缀会让它看起来像一个正常节次名');
 });
 
 test('文档标题标明「练习题」，不只靠路径区分', () => {

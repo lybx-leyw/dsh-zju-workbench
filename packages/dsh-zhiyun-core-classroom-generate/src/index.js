@@ -42,11 +42,14 @@
 import { randomUUID } from 'node:crypto';
 
 import { normalizeBrief, assertStageId } from './brief.js';
-import { ClassroomGenerateError, describeError } from './errors.js';
+import { ClassroomGenerateError, describeError, cancelled } from './errors.js';
 import { createEventLog, PHASES, makeEvent } from './events.js';
 import { resolveLlm } from './llm.js';
 import { createHostLlmTransport } from './host-llm.js';
+import { adaptMediaService } from './media-port.js';
+import { adaptPoolTransport } from './llm-pool.js';
 import { runPipeline } from './pipeline.js';
+import { validateHtmlWithBrowser } from './html-slide-audit.js';
 
 export const name = 'zhiyun-classroom-generate';
 
@@ -109,8 +112,14 @@ export function apply(ctx, config = {}) {
   const ports = {
     agent: pick('zhiyunClassroomAgent'),
     pbl: pick('zhiyunClassroomPbl'),
-    media: pick('zhiyunClassroomMedia'),
+    // ⚠️ 媒体必须过适配层。`zhiyunClassroomMedia` 的接口是
+    // `tts(text, voice)` / `image(prompt, options)` 且返回 `{ok, base64|bytes}`，
+    // 而 `phases/media.js` 的端口契约是 `speech({text})` / `image({prompt})` 且要
+    // `Buffer|{data,mime}`。直接把服务当端口传进去，图片会 100% 失败、配音会 100% 跳过
+    // （详见 `media-port.js` 头注释）。这里只做形状对齐，不改服务本身。
+    media: config.media ?? adaptMediaService(pick('zhiyunClassroomMedia')),
     vault: pick('zhiyunClassroomVault'),
+    validateHtml: config.validateHtml ?? validateHtmlWithBrowser,
     now: typeof config.now === 'function' ? config.now : () => Date.now(),
   };
 
@@ -220,10 +229,12 @@ export function createGenerateService({ studio, ports, llm, log }) {
 
   /** 段产物 → vault 的 checkpoint。失败只 warn：落盘坏了不能让 run 直接崩。 */
   async function checkpoint(record, phase, output) {
+    if (record.controller.signal.aborted) throw cancelled(phase, record.runId);
     if (!ports.vault?.runs?.putStep) return;
     try {
       await ports.vault.runs.putStep(record.runId, phase, output);
     } catch (error) {
+      if (phase.startsWith('chapter-') || phase.startsWith('html')) throw error;
       log.warn(`run ${record.runId} 的 ${phase} 段落盘失败（继续跑）`, error?.message ?? error);
     }
   }
@@ -302,13 +313,91 @@ export function createGenerateService({ studio, ports, llm, log }) {
       phase: record.currentPhase ?? null,
       // 已完成产出的场景数（scenes 阶段整批结束时才有 outputs，所以中途靠这个）
       readyScenes: record.readyScenes ?? 0,
+      ...(record.brief.chapters?.length ? {
+        chapterTotal: record.brief.chapters.length,
+        chaptersDone: record.brief.chapters.filter((_, index) => record.outputs.has(`chapter-${index + 1}`)).length,
+        totalScenes: record.outputs.get('outline')?.outlines?.length ?? null,
+      } : {}),
       phases: [...PHASES].map((phase) => ({
         phase,
         done: record.outputs.has(phase),
       })),
+      ...(record.brief.outputFormat === 'html' ? {
+        outputFormat: 'html',
+        htmlChapters: record.outputs.get('html')?.chapters ?? [],
+        chapterTotal: record.brief.chapters?.length || 1,
+        chaptersDone: (record.brief.chapters?.length ? record.brief.chapters : [null])
+          .filter((_, index) => record.outputs.has(`html-chapter-${index + 1}`)).length,
+        // 逐章页级进度：HTML 分支一章要串行生成多页，只报「已完成 N 章」会让整段时间
+        // 看起来没动（实测用户以为卡住）。这里给出每章已完成的页数、当前分镜序号与总页数。
+        chapterProgress: buildChapterProgress(record, record.brief.chapters?.length || 1),
+        slidesDone: totalSlidesDone(record),
+      } : {}),
       ...(scenesOutput ? { scenes: scenesOutput.scenes ?? [], skipped: scenesOutput.skipped ?? [] } : {}),
     };
   }
+
+/**
+ * 每章的页级进度快照。
+ *
+ * `record.pageProgress` 由 pipeline 的 onProgress 累积（键 `html-progress-<index>`）。
+ * 已 checkpoint 的章直接报它的最终页数；正在跑的章报当前已落定页数与分镜进度；
+ * **还没轮到的章也列出来**（status='pending'）—— 界面要把整章清单画成三步骤，
+ * 少一行会让人以为「只备这几章」。
+ */
+function buildChapterProgress(record, chapterTotal) {
+  const list = [];
+  const chapters = record.brief.chapters;
+  for (let index = 0; index < chapterTotal; index++) {
+    const done = record.outputs.get(`html-chapter-${index + 1}`);
+    const partial = record.outputs.get(`html-chapter-${index + 1}-partial`);
+    const live = record.pageProgress?.[`html-progress-${index}`];
+    const title = done?.title ?? partial?.title ?? live?.chapterTitle ?? chapters?.[index]?.title ?? null;
+    if (done) {
+      list.push({ chapterIndex: index, chapterId: done.chapterId, title,
+        slidesDone: done.slides?.length ?? 0, scenesTotal: done.storyboard?.scenes?.length ?? null,
+        status: 'done' });
+      continue;
+    }
+    // 上次中断时已落盘的页数：续跑时界面一打开就该显示真实进度，
+    // 而不是从 0 重新数（否则用户会以为上次的成果全丢了）。
+    const savedPages = Array.isArray(partial?.slidesByScene)
+      ? partial.slidesByScene.reduce((sum, pages) => sum + (Array.isArray(pages) ? pages.length : 0), 0)
+      : 0;
+    // 已完成的分镜数 = slidesByScene 里非 null 的槽位。它比页数更接近「读完几页」。
+    const savedScenes = Array.isArray(partial?.slidesByScene)
+      ? partial.slidesByScene.filter(pages => Array.isArray(pages) && pages.length).length : 0;
+    const scenesTotal = partial?.storyboard?.scenes?.length ?? live?.sceneTotal ?? null;
+    if (live) {
+      list.push({ chapterIndex: index, chapterId: live.chapterId ?? partial?.chapterId, title,
+        slidesDone: Math.max(live.slidesDone ?? 0, savedPages),
+        sceneIndex: Math.max(live.sceneIndex ?? 0, savedScenes), scenesTotal: scenesTotal ?? live.sceneTotal ?? null,
+        stage: live.stage ?? null, status: 'running' });
+    } else if (savedPages) {
+      list.push({ chapterIndex: index, chapterId: partial.chapterId, title, slidesDone: savedPages,
+        sceneIndex: savedScenes, scenesTotal, resumed: true, status: 'running' });
+    } else {
+      list.push({ chapterIndex: index, chapterId: chapters?.[index]?.id ?? `chapter-${index + 1}`, title,
+        slidesDone: 0, scenesTotal: null, status: 'pending' });
+    }
+  }
+  return list;
+}
+
+function totalSlidesDone(record) {
+  let total = 0;
+  for (let index = 0; index < (record.brief.chapters?.length || 1); index++) {
+    const done = record.outputs.get(`html-chapter-${index + 1}`);
+    if (done) { total += done.slides?.length ?? 0; continue; }
+    // 未完成的章：取「已落盘的页」与「本次已画的页」中较大的那个 ——
+    // 续跑开场时前者更大，重画过程中后者才追上来。两者都是真实数字，取大不会虚报。
+    const partial = record.outputs.get(`html-chapter-${index + 1}-partial`);
+    const saved = Array.isArray(partial?.slidesByScene)
+      ? partial.slidesByScene.reduce((sum, pages) => sum + (Array.isArray(pages) ? pages.length : 0), 0) : 0;
+    total += Math.max(saved, record.pageProgress?.[`html-progress-${index}`]?.slidesDone ?? 0);
+  }
+  return total;
+}
 
   /** 把失败写成「一条 run-error + 关闭日志」，交给调用方决定是否 rethrow。 */
   function fail(record, error) {
@@ -335,12 +424,22 @@ export function createGenerateService({ studio, ports, llm, log }) {
       .then(async () => {
         // 模型槽解析放在异步里：解析失败要变成一条 run-error 事件，而不是让
         // start() 直接抛 —— 上游也是「run 建好之后才因为没模型失败」。
-        const resolved = await resolveLlm({
-          studio,
-          llm,
-          provider: record.provider,
-          model: record.model,
-        });
+        // 有池子就让它接管调度：provider/model 由池子按配额分。
+        // 没池子时沿用旧的单槽解析（保持既有调用方与历史行为）。
+        // 注意用本函数收到的 `llm`（宿主窄通道），不是 apply() 里的 hostLlm。
+        const channel = llm;
+        const resolved = record.llmPool && typeof channel?.call === 'function'
+          ? adaptPoolTransport(record.llmPool, async (request) => channel.call(request))
+          : await resolveLlm({
+            studio,
+            llm,
+            provider: record.provider,
+            model: record.model,
+          });
+        // 池子的总并发就是章节并发的上限：不再让调用方另设一个数字。
+        if (resolved?.concurrency && record.brief.outputFormat === 'html') {
+          record.brief = Object.freeze({ ...record.brief, chapterConcurrency: resolved.concurrency });
+        }
         // 先落一行 `generating`：宿主 GET /generation-runs/[id] 立刻能查到。
         await persistRun(record);
         await runPipeline({
@@ -383,6 +482,9 @@ export function createGenerateService({ studio, ports, llm, log }) {
       const record = newRecord({ runId, brief, stageId });
       record.provider = opts.provider;
       record.model = opts.model;
+      // 调用方可以按次传入一个 LLM 池子（{ execute, concurrency }）。
+      // 池子优先于单 provider/model：由它决定分给哪个供应商、以及总并发。
+      record.llmPool = opts.llmPool ?? null;
       runs.set(runId, record);
 
       launch(record);

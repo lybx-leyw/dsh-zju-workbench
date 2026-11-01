@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenMAIC 上游功能地图 · 九个功能与三道门</title>
+<style>
+:root{
+  --paper:#f5f2e9;--panel:#fcfaf4;--ink:#222b27;--muted:#70776e;--line:#dcded2;--line-soft:#e8e7dc;
+  --green:#35705a;--green-soft:#e5eee4;--green-line:#a9c2ae;
+  --orange:#ad542f;--orange-soft:#f6e7da;--orange-line:#e0b394;
+  --blue:#3d6480;--blue-soft:#e6edf2;--blue-line:#a4bccb;
+  --grey:#6f7570;--grey-soft:#edede6;
+  --sans:"Microsoft YaHei UI","PingFang SC","Segoe UI",system-ui,sans-serif;
+  --serif:"Source Han Serif SC","Songti SC","STSong",Georgia,serif;
+  --mono:"Cascadia Code",Consolas,"SFMono-Regular",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.7 var(--sans)}
+code{font:12px/1.5 var(--mono);background:#eceade;border:1px solid var(--line-soft);border-radius:3px;padding:0 4px;overflow-wrap:anywhere}
+.page{max-width:1180px;margin:auto;padding:30px 34px 60px}
+
+/* hero */
+.eyebrow{display:flex;align-items:center;gap:14px;color:var(--green);font:11px var(--mono);letter-spacing:.14em}
+.eyebrow .mark{display:inline-grid;place-items:center;width:26px;height:26px;background:var(--ink);color:var(--paper);font-size:12px;letter-spacing:0}
+.eyebrow .rule{height:1px;flex:1;background:var(--line)}
+header.hero{margin:26px 0 20px}
+header.hero h1{font:normal clamp(28px,3.4vw,46px)/1.3 var(--serif);letter-spacing:.02em;margin:0}
+header.hero h1 em{color:var(--green);font-style:normal}
+.lede{margin:12px 0 0;max-width:820px;color:#4d554e;font-size:14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:16px;font:11px/1.8 var(--mono);color:var(--muted)}
+.meta b{font-weight:400;color:var(--ink)}
+
+/* legend */
+.legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:22px 0 8px}
+.legend .card{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:11px 13px}
+.legend .card h3{margin:0 0 4px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+.legend .card p{margin:0;font-size:11px;line-height:1.75;color:var(--muted)}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.sw-human{background:var(--orange)}.sw-sys{background:var(--green)}.sw-llm{background:var(--blue)}.sw-ext{background:var(--grey)}
+
+/* toc */
+.toc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:14px 0 6px}
+.toc a{display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;transition:border-color .15s,transform .15s}
+.toc a:hover{border-color:var(--green-line);transform:translateY(-1px)}
+.toc .n{font:10px var(--mono);color:var(--orange)}
+.toc .t{display:block;font-size:12px;font-weight:600;margin-top:2px;line-height:1.5}
+.toc .s{display:block;font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
+
+/* jump to diagram-first page */
+.jump{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0 2px;padding:13px 16px;background:var(--ink);color:var(--paper);border-radius:8px;text-decoration:none;transition:background .15s}
+.jump:hover{background:#2f3b35}
+.jump .k{font:10px var(--mono);letter-spacing:.14em;opacity:.62}
+.jump b{font-size:13px;font-weight:600}
+.jump .g{margin-left:auto;font:11px var(--mono);border:1px solid rgba(245,242,233,.32);border-radius:999px;padding:3px 11px;white-space:nowrap}
+@media(max-width:560px){.jump .g{margin-left:0}}
+
+/* section */
+section.feature{margin-top:34px;padding-top:26px;border-top:1px solid var(--line)}
+.f-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:6px}
+.f-num{flex-shrink:0;display:grid;place-items:center;width:42px;height:42px;border-radius:8px;background:var(--ink);color:var(--paper);font:13px var(--mono)}
+.f-title{flex:1;min-width:0}
+.f-title h2{margin:0;font:normal 25px/1.35 var(--serif)}
+.f-title p{margin:5px 0 0;font-size:12.5px;color:var(--muted)}
+.io{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 16px}
+.io span{font-size:11px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 10px;color:#4d554e}
+.io span b{font-weight:600;color:var(--green)}
+
+/* flow */
+.flow{list-style:none;margin:0;padding:0 0 0 22px;position:relative}
+.flow::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:linear-gradient(var(--line),var(--line))}
+.flow>li{position:relative;margin:0 0 12px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:12px 14px}
+.flow>li::before{content:"";position:absolute;left:-20px;top:20px;width:11px;height:11px;border-radius:50%;background:var(--paper);border:2px solid var(--green-line)}
+.flow>li.human::before{border-color:var(--orange)}
+.flow>li.llm::before{border-color:var(--blue)}
+.flow>li.ext::before{border-color:#9aa09a}
+.flow>li.pair::before{border-color:var(--ink)}
+.step-top{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.step-no{font:10px var(--mono);color:var(--muted);letter-spacing:.06em}
+.step-title{font-size:13.5px;font-weight:600}
+.step-path{font:10.5px var(--mono);color:var(--muted);margin-left:auto}
+.flow p{margin:5px 0 0;font-size:12.5px;color:#48504a;line-height:1.8}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.b{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;line-height:1.6;border-radius:4px;padding:2px 8px;border:1px solid transparent;white-space:normal}
+.b i{font-style:normal;font:9.5px var(--mono);letter-spacing:.06em}
+.b.human{background:var(--orange-soft);border-color:var(--orange-line);color:#7d3b1f}
+.b.sys{background:var(--green-soft);border-color:var(--green-line);color:#2b5d49}
+.b.llm{background:var(--blue-soft);border-color:var(--blue-line);color:#2f536b}
+.b.ext{background:var(--grey-soft);border-color:#c9cdc6;color:#565d57}
+
+/* branch */
+.branch{margin:8px 0 0 4px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.branch .opt{border:1px dashed var(--line);border-radius:6px;padding:8px 10px;background:#faf8f1}
+.branch .opt b{display:block;font:11px var(--mono);color:var(--orange);margin-bottom:2px}
+.branch .opt span{font-size:11.5px;color:#4d554e}
+.note{margin-top:9px;font-size:11.5px;line-height:1.8;color:var(--muted);border-left:2px solid var(--line);padding-left:10px}
+.note b{color:var(--ink);font-weight:600}
+
+/* gate table */
+.gates{width:100%;border-collapse:collapse;margin-top:14px;font-size:11.5px;background:var(--panel);border:1px solid var(--line);border-radius:7px;overflow:hidden;display:table}
+.gates caption{caption-side:top;text-align:left;font-size:11px;color:var(--muted);padding:0 0 6px;letter-spacing:.04em}
+.gates th,.gates td{text-align:left;vertical-align:top;padding:8px 10px;border-top:1px solid var(--line-soft)}
+.gates thead th{background:#efeee4;font-weight:600;font-size:11px;color:#454d47;border-top:0}
+.gates td:first-child{font-weight:600;color:var(--ink)}
+.gates .tag{display:inline-block;font-size:10px;border-radius:3px;padding:0 6px;line-height:1.7;white-space:nowrap}
+.tag.human{background:var(--orange-soft);color:#7d3b1f;border:1px solid var(--orange-line)}
+.tag.sys{background:var(--green-soft);color:#2b5d49;border:1px solid var(--green-line)}
+.tag.llm{background:var(--blue-soft);color:#2f536b;border:1px solid var(--blue-line)}
+.tag.ext{background:var(--grey-soft);color:#565d57;border:1px solid #c9cdc6}
+
+/* matrix */
+.matrix-wrap{overflow-x:auto;margin-top:12px}
+.matrix{width:100%;min-width:900px;border-collapse:collapse;font-size:11px;background:var(--panel);border:1px solid var(--line)}
+.matrix th,.matrix td{border:1px solid var(--line-soft);padding:7px 9px;text-align:left;vertical-align:top}
+.matrix thead th{background:#efeee4;font-size:10.5px}
+.matrix tbody th{font-weight:600;width:26%}
+.matrix .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.matrix .d-human{background:var(--orange)}.matrix .d-sys{background:var(--green)}.matrix .d-llm{background:var(--blue)}.matrix .d-none{background:#d5d8d0}
+
+/* file map */
+.files{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 22px;margin-top:12px}
+.files div{font-size:11.5px;display:flex;gap:8px;align-items:baseline;border-bottom:1px dotted var(--line-soft);padding:5px 0}
+.files b{flex-shrink:0;font-weight:600;font-size:11px;color:var(--green);width:86px}
+.files code{background:none;border:0;padding:0;font-size:11px;color:#4d554e}
+
+footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:10.5px;color:var(--muted)}
+
+@media(max-width:960px){
+  .page{padding:22px 18px 44px}
+  .legend,.toc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .files{grid-template-columns:1fr}
+  .step-path{margin-left:0;width:100%}
+}
+@media(max-width:620px){
+  .legend,.toc{grid-template-columns:1fr}
+  .branch{grid-template-columns:1fr}
+  .f-head{gap:11px}
+  .f-num{width:36px;height:36px}
+  .f-title h2{font-size:21px}
+}
+@media print{
+  body{background:#fff}
+  .toc,.legend{display:none}
+  section.feature{break-inside:avoid}
+  .flow>li{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<main class="page">
+
+  <div class="eyebrow">
+    <span class="mark" aria-hidden="true">M</span>
+    <span>UPSTREAM MAP / THU-MAIC OPENMAIC</span>
+    <span class="rule"></span>
+    <span>v1.3.0</span>
+  </div>
+
+  <header class="hero">
+    <h1>OpenMAIC 是 <em>一条生产线</em>、<em>一间教室</em>，<br>外加 <em>一套能写课的工具</em>。</h1>
+    <p class="lede">
+      本页按「用户能做的事」把上游拆成 9 个功能。每个功能给出一条工作流，并在每一步标注它属于哪类门控：
+      人在回路里拍板（人类门控）、确定性代码检查（系统门控）、还是由模型判断/打分（LLM 门控）。
+      外部模型服务单独标灰，避免把「调了模型」误读成「模型在把关」。
+      本版补充了并发与超时预算、运行期资源边界、以及「文档说 vs 代码实际」的冲突清单。
+    </p>
+    <div class="meta">
+      <span>快照 <b>packages/dsh-zhiyun-host-openmaic/vendor/openmaic</b></span>
+      <span>commit <b>03dee2b</b> · tag <b>1.3.0</b></span>
+      <span>规模 <b>82 个 API 路由 · 926 个 lib 文件 · 389 个组件</b></span>
+      <span>根协议 <b>MIT</b> · <b>mathml2omml</b> 例外 LGPL-3.0-or-later</span>
+      <span>架构 <b>Next.js 16 常驻服务 + PostgreSQL</b></span>
+    </div>
+  </header>
+
+  <a class="jump" href="openmaic-workflow.html">
+    <span class="k">DIAGRAM FIRST</span>
+    <b>先看工作流图：一张总览泳道 + 三张分图，每张图下面按节点详解“谁把关、失败会怎样”</b>
+    <span class="g">打开图示版 →</span>
+  </a>
+
+  <div class="legend" aria-label="门控图例">
+    <div class="card"><h3><i class="swatch sw-human"></i>人类门控</h3><p>必须有人看到并做决定：确认大纲、发布课程、学生答题/提交。人可以改内容后再放行。</p></div>
+    <div class="card"><h3><i class="swatch sw-sys"></i>系统门控</h3><p>确定性代码判定：schema 校验、解析修复、字数/场景数上限、权限、并发与重试策略、评分阈值。</p></div>
+    <div class="card"><h3><i class="swatch sw-llm"></i>LLM 门控</h3><p>由模型判断/打分/选路：判分、PBL 评价、导演决定谁发言、大纲决定场景类型。</p></div>
+    <div class="card"><h3><i class="swatch sw-ext"></i>外部服务</h3><p>模型供应商、PDF 抽取器、TTS/图像/视频、渲染容器。它们执行任务，不替产品做准入判断。</p></div>
+  </div>
+
+  <nav class="toc" aria-label="功能目录">
+    <a href="#f1"><span class="n">F1</span><span class="t">课堂生成</span><span class="s">主题/材料 → 大纲 → 场景 → 整课</span></a>
+    <a href="#f2"><span class="n">F2</span><span class="t">深度交互模式</span><span class="s">可操作的 HTML 课堂组件</span></a>
+    <a href="#f3"><span class="n">F3</span><span class="t">播放与多智能体</span><span class="s">回放引擎 + Pi 导演现场对话</span></a>
+    <a href="#f4"><span class="n">F4</span><span class="t">测验与判分</span><span class="s">客观题本地判、简答题模型判</span></a>
+    <a href="#f5"><span class="n">F5</span><span class="t">PBL 项目制学习</span><span class="s">规划 → 导师 → 角色扮演 → 评价</span></a>
+    <a href="#f6"><span class="n">F6</span><span class="t">Agent 工作台</span><span class="s">用工具直接读写课程文档</span></a>
+    <a href="#f7"><span class="n">F7</span><span class="t">导出与分享</span><span class="s">PPTX / 离线 HTML / ZIP / MP4</span></a>
+    <a href="#f8"><span class="n">F8</span><span class="t">材料与知识库</span><span class="s">抽取、切片、检索、视觉图</span></a>
+    <a href="#f9"><span class="n">F9</span><span class="t">外部智能体接入</span><span class="s">SKILL.md 技能包 + 对话式生成</span></a>
+    <a href="#misread"><span class="n">!</span><span class="t">容易误读</span><span class="s">文档与代码冲突 · 缺省降级</span></a>
+    <a href="#repo"><span class="n">↺</span><span class="t">本仓现状</span><span class="s">13 个领域包取代整站托管</span></a>
+    <a href="#files"><span class="n">⌘</span><span class="t">代码地图</span><span class="s">按功能找入口</span></a>
+  </nav>
+
+  <!-- ================= F1 ================= -->
+  <section class="feature" id="f1">
+    <div class="f-head">
+      <div class="f-num">F1</div>
+      <div class="f-title">
+        <h2>课堂生成：两阶段流水线，跑在服务端</h2>
+        <p>给一句学习需求，或再附上 PDF / 文档材料，产出一门可播放的完整课堂。提交后是异步任务：关掉标签页也继续跑。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> requirement · materialIds · interactive · taskEngine · agents · outlineReview · voice</span>
+      <span><b>输出</b> Stage 文档：场景 + 动作 + 讲解 + 媒体 + 完成标记</span>
+    </div>
+
+    <ol class="flow">
+      <li>
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">受理：建一个 generation run</span><span class="step-path">app/api/generate-classroom/route.ts</span></div>
+        <p>先解析 owner（cookie 身份），再校验请求体、所需模型槽位、每 owner 的活跃任务数，最后入队。</p>
+        <div class="badges">
+          <span class="b sys"><i>SYS</i>body schema · 模型槽位齐备（400）</span>
+          <span class="b sys"><i>SYS</i>并发配额：每 owner 活跃 2 / 排队等确认 10 / 每进程 4；超限 429 ACTIVE_RUN_LIMIT</span>
+          <span class="b sys"><i>SYS</i>宿主可插 authorizeStart 钩子，在入队前拒绝</span>
+        </div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">材料分析（有 materialIds 时才跑）</span><span class="step-path">lib/server/generation/steps/material-analysis.ts</span></div>
+        <p>调文档抽取器拿到正文与图片；图片按上限进入视觉提示。生成流水线只选<b>一个</b>抽取器（首选用首选，否则取首个同时支持该 MIME 与所需能力的），都不支持则整步失败；Pro 会话的抽取才按候选顺序逐个试。</p>
+        <div class="badges">
+          <span class="b ext"><i>EXT</i>PDF / 音视频抽取器</span>
+          <span class="b sys"><i>SYS</i>MIME 与抽取格式校验；视觉图 15s 预算、连续 3 次失败熔断并降级</span>
+        </div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">研究（webSearch 槽位可用时才跑）</span><span class="step-path">lib/server/generation/steps/research.ts</span></div>
+        <p>先用小模型把需求改写成检索式，再搜索，把结果格式化成大纲提示的上下文。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>检索式改写</span>
+          <span class="b ext"><i>EXT</i>搜索服务</span>
+          <span class="b sys"><i>SYS</i>无槽位则整步跳过并记“什么都没做”，计划不漂移</span>
+        </div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">大纲：流式生成场景计划</span><span class="step-path">lib/server/generation/steps/outline.ts</span></div>
+        <p>模型边写边流；每场标出类型（slide / quiz / interactive / pbl）、要点、时长、媒体请求。交互模式与职业任务引擎各有独立提示模板。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>决定场景数量、类型搭配、每页要点</span>
+          <span class="b sys"><i>SYS</i>增量括号扫描器边流边解析（大纲不走 JSON 修复）· 512KB 缓冲上限 · 最多 100 场 · 结构归一化</span>
+          <span class="b sys"><i>SYS</i>同模型重试 2 次，再切 fallback 模型 1 次，每次重试都发事件</span>
+          <span class="b sys"><i>SYS</i>content-filter 安全拒绝：不重试、也不切 fallback，直接停</span>
+        </div>
+      </li>
+      <li class="human">
+        <div class="step-top"><span class="step-no">05</span><span class="step-title">大纲确认：唯一必过的人类门</span><span class="step-path">POST /generation-runs/:id/confirm-outline · hold-outline</span></div>
+        <p>大纲落盘后，run 主动释放 worker 等确认。人可以原样放行，也可以改完再放行（改过则 revision+1）；确认后 run 才继续。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>确认 / 编辑后确认</span>
+          <span class="b sys"><i>SYS</i>revision 不匹配 409 · 命令幂等（commandId）· 确认后重新计入并发额度</span>
+        </div>
+        <div class="branch">
+          <div class="opt"><b>wait</b><span>一直等人确认。设置项“总是审大纲”打开时用它；<code>input.ts</code> 的 schema 缺省也是它，但真实入口很少走到。</span></div>
+          <div class="opt"><b>countdown</b><span>就绪后等 2500ms 自动确认。默认产品路径（reviewOutlineEnabled 默认 false）；期间点开审阅会 hold 住。</span></div>
+          <div class="opt"><b>auto</b><span>生成大纲的同一次提交里直接确认，不等人。批量/脚本入口用。</span></div>
+        </div>
+        <div class="note">这三档是<b>同一个门</b>的三种开法，不是三道门。只有 <code>auto</code> 会让人彻底离场。</div>
+        <div class="note">生成期课程对其它写者只读；<b>标题为空的场景会挡住“确认并生成”</b>。未产出课程前可 discard，重复 discard 或该 run 已有课程时返回 409。</div>
+        <div class="note"><b>三种默认值互相矛盾</b>：浏览器默认 <code>countdown</code>（2.5s 自确认），显式开关才变 <code>wait</code>，无头生成 API 强制 <code>auto</code>；<code>input.ts</code> 里写的缺省 <code>wait</code> 几乎没有真实调用方。文档里“除非 auto 否则永远等人”是过期表述。</div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">06</span><span class="step-title">智能体阵容：教师 + 助教 + 学生</span><span class="step-path">lib/server/generation/steps/agent-profiles.ts</span></div>
+        <p>按课名与大纲生成人设、头像、音色绑定；教师优先使用学习者选的旁白音色。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>人设与分工</span>
+          <span class="b sys"><i>SYS</i>质量判定：≥2 个 agent、恰好 1 个 teacher、JSON 可解析</span>
+          <span class="b sys"><i>SYS</i>不合格或生成失败 → 静默回落内置预设（run 不暂停，事件流也看不到）</span>
+        </div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">07</span><span class="step-title">逐场景三段：内容 → 动作 → 讲解</span><span class="step-path">steps/scene-content.ts · scene-actions.ts · narration.ts</span></div>
+        <p>每个场景按大纲顺序跑三步；旁白生成与“把场景追加进课程”在同一次提交里完成，所以断点不会留下半个场景。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>内容与动作脚本（文本即讲解词，动作即聚光灯/白板/讨论…）</span>
+          <span class="b sys"><i>SYS</i>内容解析失败返回 null → 重试：首场景 2 次，其余 5 次；再失败 run 暂停在该步</span>
+          <span class="b sys"><i>SYS</i>动作走 jsonrepair/partial-json，并按场景类型做 action allowlist（如测验只允许 text）</span>
+          <span class="b sys"><i>SYS</i>整场装配失败 = assembly-failed；写库前 validateAppScene 再校验一次</span>
+          <span class="b ext"><i>EXT</i>服务端 TTS：长句切分，克隆音色不可用时回落</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">08</span><span class="step-title">媒体支线：与场景并发生成</span><span class="step-path">lib/server/generation/run/media.ts</span></div>
+        <p>大纲里的图片/视频请求按 elementId 去重后进独立泳道。媒体失败不暂停 run；放置进场景最多重试 3 次。</p>
+        <div class="badges">
+          <span class="b ext"><i>EXT</i>图像 / 视频生成服务</span>
+          <span class="b sys"><i>SYS</i>永久失败码不提供 Retry；配额满单独说明但可重试上传</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">09</span><span class="step-title">完成与发布</span><span class="step-path">stages/[id]/generation-complete · publish</span></div>
+        <p>生成完成只表示文档齐了；对外可见是另一个动作，需要真实账号与 course:publish 角色。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>点发布；匿名 owner 一律拒绝</span>
+          <span class="b sys"><i>SYS</i>角色校验 · 租约/心跳/接管保证多进程只有一个 worker 写</span>
+        </div>
+      </li>
+    </ol>
+
+    <table class="gates">
+      <caption>失败与重试语义（决定“卡住时会发生什么”）</caption>
+      <thead><tr><th>情形</th><th>类别</th><th>行为</th></tr></thead>
+      <tbody>
+        <tr><td>408 / 409 / 425 / 429</td><td><span class="tag sys">系统</span></td><td>按指数退避重试，带抖动；上限可配</td></tr>
+        <tr><td>400 / 401 / 403 / 404 / 422</td><td><span class="tag sys">系统</span></td><td>不重试，直接判定该步失败</td></tr>
+        <tr><td>步内重试耗尽</td><td><span class="tag sys">系统</span></td><td>run 暂停在该步；Retry 命令从该步继续，已完成检查点不重算</td></tr>
+        <tr><td>worker 进程死亡</td><td><span class="tag sys">系统</span></td><td>租约过期被其他进程接管；接管次数超限则暂停</td></tr>
+        <tr><td>媒体永久失败</td><td><span class="tag sys">系统</span></td><td>不暂停整条 run，场景保留失败元素并说明原因</td></tr>
+      </tbody>
+    </table>
+
+    <table class="gates">
+      <caption>每步超时预算（deadline.ts；超时按该步失败处理，可从检查点 Retry）</caption>
+      <thead><tr><th>步骤</th><th>预算</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>材料分析 / 研究 / 大纲 / 场景内容</td><td><span class="tag sys">各 300s</span></td><td>四段主链路的单步上限</td></tr>
+        <tr><td>场景动作</td><td><span class="tag sys">60s</span></td><td>动作脚本通常比正文短，预算更紧</td></tr>
+        <tr><td>旁白片段</td><td><span class="tag sys">30s</span></td><td>按片段计；TTS 慢不该拖住整场</td></tr>
+      </tbody>
+    </table>
+    <div class="note">并发与超时只决定「何时算失败」，不提高生成质量；重试是<b>再问一次</b>，不是审校。</div>
+  </section>
+
+  <!-- ================= F2 ================= -->
+  <section class="feature" id="f2">
+    <div class="f-head">
+      <div class="f-num">F2</div>
+      <div class="f-title">
+        <h2>深度交互模式：让课堂变成可操作页面</h2>
+        <p>生成阶段打开 interactive 后，大纲会把一部分场景规划成交互组件，产物是一段自带样式的 HTML，而不是幻灯片。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> 主题 + interactive: true</span>
+      <span><b>输出</b> interactive 场景：html / widgetConfig + 动作脚本</span>
+    </div>
+
+    <ol class="flow">
+      <li class="llm">
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">大纲选型：哪些页做交互、做哪一种</span><span class="step-path">packages/@openmaic/generation/src/outline-types.ts</span></div>
+        <p>模型在大纲里给出 <code>widgetType</code> 与结构提示（图类型、语言、游戏类型、3D 对象、步骤与成功标准等）。DSL 里共 6 类：simulation / diagram / code / game / visualization3d / procedural-skill。其中 <code>procedural-skill</code> 只挂在 taskEngine 模式，普通交互模式不接收。</p>
+        <div class="badges"><span class="b llm"><i>LLM</i>决定是否交互、交互形态与参数</span></div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">内容生成：按组件类型选模板产出 HTML</span><span class="step-path">packages/@openmaic/generation/templates/*-content</span></div>
+        <p>每种组件有自己的 system/user 模板，输出完整 HTML（含脚本、样式），再配上交互动作脚本（高亮、设状态、标注、揭示）。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>页面结构、交互逻辑、视觉呈现</span>
+          <span class="b sys"><i>SYS</i>动作 allowlist：widget_highlight / setState / annotation / reveal</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">脚本语法门：唯一对 HTML 的硬检查</span><span class="step-path">src/interactive-script-validator.ts</span></div>
+        <p>用 parse5 找出可执行的 classic script，逐段交给 <code>node:vm</code> 编译，语法错误即拒绝。template 内的脚本不算可执行。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>只验语法，不验语义（不会跑页面、不会点按钮）</span></div>
+        <div class="note">这里要说清楚：<b>交互逻辑是否正确，没有程序门控</b>。语法过关就入库，功能对不对由生成质量承担。</div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">后处理：依赖重写与数学公式注入</span><span class="step-path">src/interactive-post-processor.ts</span></div>
+        <p>把 CDN 依赖改写到 pin 住的版本；页面确实含数学时才注入 KaTeX（样式、库、auto-render），不含数学就不注入。导出离线包时，外部资源可内联为 data URI。</p>
+        <div class="badges">
+          <span class="b sys"><i>SYS</i>版本兼容规则、未识别 URL 原样保留、重复处理幂等</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">05</span><span class="step-title">课堂里运行：沙箱 iframe + 观察桥</span><span class="step-path">lib/interactive/observation-bridge.ts</span></div>
+        <p>组件在沙箱里跑；学生的操作状态可被教师智能体读到（作为现场依据），教师也能反向操作页面——高亮关键区、设条件、给提示。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>学生动手探索</span>
+          <span class="b llm"><i>LLM</i>教师根据观察决定引导动作</span>
+          <span class="b sys"><i>SYS</i>沙箱 <code>allow-scripts allow-forms allow-popups</code>，<b>故意不给 allow-same-origin</b></span>
+          <span class="b sys"><i>SYS</i>观察回传上限 32 KiB / 深度 64 / 800ms；超限返回 too-large，不抛错</span>
+          <span class="b sys"><i>SYS</i>iframe 池按 LRU 保留 3 个，当前场景不淘汰</span>
+        </div>
+        <div class="note">这些是<b>运行期资源边界</b>，不是功能正确性校验；交互页只在生成期编译脚本，运行期没有「点一遍验一遍」的门。</div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= F3 ================= -->
+  <section class="feature" id="f3">
+    <div class="f-head">
+      <div class="f-num">F3</div>
+      <div class="f-title">
+        <h2>播放与多智能体现场互动</h2>
+        <p>一门课不是视频，而是一串动作。回放引擎按序执行；遇到讨论就切到 live，由服务端导演循环组织智能体现场说话。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> Scene.actions（21 种动作）· 学生提问/打断</span>
+      <span><b>输出</b> 语音、聚光灯、激光笔、白板、讨论、组件操作</span>
+    </div>
+
+    <ol class="flow">
+      <li>
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">状态机：idle → playing ⇄ paused，讨论时进 live</span><span class="step-path">lib/playback/engine.ts</span></div>
+        <p>动作原样执行，没有中间编译层。暂停、续播、结束讨论、用户打断都在这一个状态机里收敛。</p>
+        <div class="badges"><span class="b human"><i>HUMAN</i>播放/暂停/跳转/打断</span></div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">动作执行器</span><span class="step-path">lib/action/engine.ts · dsl/src/action.ts</span></div>
+        <p>21 种动作：speech、spotlight、laser、play_video、12 种白板动作（开 / 画 / 清 / 删 / 关）、discussion、4 种组件操作。</p>
+        <div class="badges">
+          <span class="b sys"><i>SYS</i>跳转限制：视频/讨论/组件操作属于“不可安全跳转”动作，只能从可重建前缀跳</span>
+          <span class="b sys"><i>SYS</i>FIRE_AND_FORGET：spotlight / laser 不阻塞游标，5s 后自动清除</span>
+          <span class="b sys"><i>SYS</i>讨论卡延迟 3s 出现，再倒计时 5s 自动跳过；视频等待硬上限 5 分钟</span>
+          <span class="b sys"><i>SYS</i>纯播放段零 LLM 调用（讨论 / 提问切 live 后才调模型）；时长常量与导出器共用 <code>lib/choreography/timing.ts</code></span>
+          <span class="b ext"><i>EXT</i>TTS 音频 / 视频 / 白板渲染</span>
+        </div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">讨论触发 → Pi 导演循环</span><span class="step-path">lib/chat/pi/director-loop.ts · app/api/chat/pi</span></div>
+        <p>讨论动作把课堂切进 live。服务端一个导演智能体只拿 4 个工具循环：<code>read_scene</code>、<code>call_agent</code>、<code>cue_user</code>、<code>close_session</code>；板书、查网页等能力由被叫到的智能体在子回合里执行。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>谁先说、叫不叫学生、何时收尾</span>
+          <span class="b sys"><i>SYS</i>工具白名单 4 项；<code>call_agent</code> 的 agentId 必须存在</span>
+          <span class="b sys"><i>SYS</i><code>close_session</code> 需已有可见发言；<code>cue_user</code> 需已有实质教学回合且会话未关</span>
+          <span class="b sys"><i>SYS</i>会话类型只有 qa / discussion / lecture；没有独立“圆桌辩论”循环</span>
+        </div>
+        <div class="note">这一层是<b>真正的 LLM 门控</b>：课堂的节奏不预设，由导演每轮判断。代价是同一门课两次播放的对话不会一样。</div>
+        <div class="note">两个终局工具互斥：本回合只要 <code>sessionClosed</code> 或 <code>userCued</code> 成立就结束，后续工具调用不再发生。</div>
+      </li>
+      <li class="human">
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">学生提问 / 举手</span><span class="step-path">components/chat · live</span></div>
+        <p>学生随时提问，教师用幻灯片、图表或白板回答；也可以被点名。学生是这条链路里的人类门控——他不问，这一段就不发生。</p>
+        <div class="badges"><span class="b human"><i>HUMAN</i>提问、举手、退出讨论</span></div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= F4 ================= -->
+  <section class="feature" id="f4">
+    <div class="f-head">
+      <div class="f-num">F4</div>
+      <div class="f-title">
+        <h2>测验：客观题本地判，简答题模型判</h2>
+        <p>测验是场景类型之一。题量、难度、题型在生成大纲时就定好，播放时讲一段开场白，然后交给学生作答。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> quizConfig：题量 · 难度 · 题型</span>
+      <span><b>输出</b> 分数、逐题结果、评语、交卷后的对话</span>
+    </div>
+
+    <ol class="flow">
+      <li class="llm">
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">出题与开场动作</span><span class="step-path">templates/quiz-content · quiz-actions</span></div>
+        <p>模型按大纲出单选/多选/简答；动作模板被明确限制为只能输出 text，禁止在动作里塞 discussion。</p>
+        <div class="badges"><span class="b llm"><i>LLM</i>题干、选项、答案、评分要点</span><span class="b sys"><i>SYS</i>动作 allowlist 只放行 text</span></div>
+      </li>
+      <li class="human">
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">学生作答</span><span class="step-path">lib/quiz/persistence.ts</span></div>
+        <p>答案按 owner 持久化；未作答的选择题仍然是选择题，不会被改道去 AI 判分。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>选择与提交</span>
+          <span class="b sys"><i>SYS</i>还有题未作答时，交卷按钮保持禁用（allAnswered）</span>
+          <span class="b sys"><i>SYS</i>答题阶段只前进不回退：draft → submitted → reviewed</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">单选题 / 多选题：确定性判分</span><span class="step-path">lib/quiz/grading.ts</span></div>
+        <p>多选按集合相等比较；持久化的答案键按“值或唯一标签”精确对齐，不做大小写、空白、Unicode 归一化。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>精确匹配；歧义键保持未解析而不是猜</span></div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">简答题：模型判分</span><span class="step-path">POST /api/quiz-grade</span></div>
+        <p>把题干、满分、评分要点、学生答案交给模型，要求只回 JSON：<code>{score, comment}</code>。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>分数与评语</span>
+          <span class="b sys"><i>SYS</i>points 必须为正数；分数 clamp 到 [0, points] 并取整</span>
+          <span class="b sys"><i>SYS</i>解析 / 网络 / 模型失败 → 兜底给 50% 分，不让判分卡住课堂</span>
+          <span class="b sys"><i>SYS</i>前端判定“答对”的阈值是 ≥80%，不是满分</span>
+        </div>
+        <div class="note">这是<b>典型的 LLM 门控</b>：判对判错由模型决定，系统只保证输入合法、输出可解析。没有二次复核；离线 HTML 只判客观题，简答题不判分。</div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">05</span><span class="step-title">交卷后的讲评对话</span><span class="step-path">lib/chat/quiz-results-for-store-state.ts · Pi 导演</span></div>
+        <p>学生交卷后由平台单独触发一段对话，把逐题结果作为现场依据交给教师智能体；它不是预生成动作的一部分。</p>
+        <div class="badges"><span class="b llm"><i>LLM</i>讲评重点与追问</span><span class="b sys"><i>SYS</i>结果注入有超时与失败降级，不阻塞课堂</span></div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= F5 ================= -->
+  <section class="feature" id="f5">
+    <div class="f-head">
+      <div class="f-num">F5</div>
+      <div class="f-title">
+        <h2>PBL v2：项目制学习是一条闭环</h2>
+        <p>PBL 场景不是一页内容，而是一个小型项目空间：规划里程碑与微任务，导师陪跑，必要时进入角色扮演，最后逐级评价。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> 项目主题 + 场景大纲 + 学习者状态</span>
+      <span><b>输出</b> PBLProjectV2：里程碑 / 微任务 / 对话 / 评价 / 能力读数</span>
+    </div>
+
+    <ol class="flow">
+      <li class="llm">
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">规划：一次调用生成整个项目骨架</span><span class="step-path">lib/pbl/v2/agents/planner.ts · prompts-pbl/</span></div>
+        <p>生成里程碑、微任务、角色、场景阶段（scenarioStage）与交付物；宿主可注入 agentic fallback，供应商选择仍归调用方。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>项目结构与任务粒度</span>
+          <span class="b sys"><i>SYS</i>最多 80 个规划步；必须调用 mark_design_complete 才停</span>
+          <span class="b sys"><i>SYS</i>写库前跑 plannerCompletionGaps 校验</span>
+        </div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">导师回合：新任务激活时导师先开口</span><span class="step-path">POST /pbl/v2/open-task · /instructor（SSE）</span></div>
+        <p>greeting / setup 阶段无需学生先说话；instructing 阶段回应学生。服务端无状态：客户端带整份项目，服务端回 project_patch。</p>
+        <div class="badges"><span class="b llm"><i>LLM</i>讲解、追问、给脚手架</span><span class="b sys"><i>SYS</i>按当前里程碑决定暴露哪些工具</span></div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">角色扮演模拟器（仅 scenario 项目）</span><span class="step-path">POST /pbl/v2/simulator</span></div>
+        <p>只有在 <code>scenarioStage === 'roleplay'</code> 的里程碑才允许进入；否则直接报错。角色第一句可主动开场。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>阶段不匹配即拒绝</span><span class="b llm"><i>LLM</i>角色台词与情境推进</span></div>
+      </li>
+      <li class="human">
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">学生完成任务并提交</span><span class="step-path">components/scene-renderers/pbl</span></div>
+        <p>按微任务的交付物要求提交。是否完成不由学生自己宣布，进入评价。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>实际动手与提交；Done / Continue 也必须由学生点击</span>
+          <span class="b sys"><i>SYS</i>完成请求必须带 <code>pendingTaskCompletion</code> 事件；缺附件按 not_found 处理</span>
+        </div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">05</span><span class="step-title">三级评价：任务 / 里程碑 / 总结</span><span class="step-path">POST /pbl/v2/evaluate · agents/evaluator.ts</span></div>
+        <p>同一入口按 kind 分流。评价结果以 project_patch 回写：任务评价进对话卡片，里程碑评价带交接，最终评价进完成页。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>打分与诊断</span>
+          <span class="b sys"><i>SYS</i>任务通过阈值 60 分（taskEvaluationCanComplete），未达阈值不能标记完成</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">06</span><span class="step-title">内核读数：进度、熟练度、投入度</span><span class="step-path">src/pbl/operations/kernel/*</span></div>
+        <p>每次运行时事件都会更新这三类读数，它们是确定性的状态推进，供后续导师回合与评价使用。</p>
+        <div class="badges">
+          <span class="b sys"><i>SYS</i>事件重放幂等、读数可复算</span>
+          <span class="b sys"><i>SYS</i>内核推进全程零 LLM 调用</span>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= F6 ================= -->
+  <section class="feature" id="f6">
+    <div class="f-head">
+      <div class="f-num">F6</div>
+      <div class="f-title">
+        <h2>Agent 工作台：让智能体直接写课</h2>
+        <p>除了“填表生成”，上游还有一条 Pro 路径：服务端 agent 会话拿着课程文档工具，边聊边改，改的是真实的 Stage 文档。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> 对话 + 当前课程上下文</span>
+      <span><b>输出</b> 新建/改写/补音频/导 PPTX 的课程</span>
+    </div>
+
+    <ol class="flow">
+      <li class="llm">
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">工具集：读、写、生成、媒体、预览</span><span class="step-path">lib/server/agent-runtime/course-tools.ts</span></div>
+        <p>读：read_stage / grep_stage / list_scenes / read_stage_outline；写：create_stage / patch_stage / rename_stage / duplicate_scene；生成：generate_scene / generate_actions；音频与页序：generate_tts / edit_deck；导入：import_pptx；媒体：generate_image / generate_video；还有场景预览。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>自己决定调用顺序与改哪一页</span>
+          <span class="b sys"><i>SYS</i>单次工具调用默认 10 分钟；generate_scene / actions / extract_material 15 分钟，超时变结构化错误</span>
+          <span class="b sys"><i>SYS</i>上传上限 50 MiB（文档与图片同额）</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">写入串行化：防止并发写互相覆盖</span><span class="step-path">lib/agent-runtime/stage-writer-tools.ts</span></div>
+        <p>“写课程”的工具被标成串行执行；同一批里只要有写工具，整批排队。读工具不带写归属，避免误伤用户未保存的编辑。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>writer 名单单一事实源 · 串行调度 · owner 作用域写入</span></div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">DSL 兼容提示：教模型用当前工具名</span><span class="step-path">dsl-tools.ts · DSL_TOOLS_PROMPT</span></div>
+        <p>历史对话里可能出现过已退役的编辑器名字；提示层统一纠正，避免模型调用不存在的工具。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>工具名白名单与提示同步</span></div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">实时同步：课程版本变了就推</span><span class="step-path">GET /stages/:id/freshness（SSE）</span></div>
+        <p>工作台按 revision 拉 manifest，只重取变化的场景；流断了也只是延迟变大，低频轮询仍会收敛。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>纯优化通道，按设计可降级</span></div>
+      </li>
+      <li class="human">
+        <div class="step-top"><span class="step-no">05</span><span class="step-title">人类的介入点在哪</span><span class="step-path">skills/openmaic/SKILL.md · UI</span></div>
+        <p>产品里<b>没有逐工具审批</b>（代码里没有 permission/approval 门）。人类门控靠三层：对话里看结果再要求改；技能 SOP 要求在改状态前先问；发布仍要账号与角色。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>看结果、提修改、决定发布</span>
+          <span class="b sys"><i>SYS</i>SOP 是提示词约束，不是代码强制——这点必须说清</span>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= F7 ================= -->
+  <section class="feature" id="f7">
+    <div class="f-head">
+      <div class="f-num">F7</div>
+      <div class="f-title">
+        <h2>导出与分享：四种容器，一个渲染服务</h2>
+        <p>课程可以变成可编辑 PPT、一次性拷走的离线网页、完整备份包，或者一段 MP4。选择权在人，转换本身是确定性的。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> 课程文档 + 媒体</span>
+      <span><b>输出</b> .pptx / 资源包 / 离线 .html / .maic.zip / .mp4</span>
+    </div>
+
+    <ol class="flow">
+      <li class="human">
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">选导出形态</span><span class="step-path">components · use-export-*</span></div>
+        <p>PPTX、教学资源包、离线 HTML（可选含旁白）、课堂 ZIP。超过 400MB 的课只能导出 ZIP。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>选格式与选项</span>
+          <span class="b sys"><i>SYS</i>总闸：没有未完成/失败的大纲，且每条媒体任务都是 done 或 failed</span>
+          <span class="b sys"><i>SYS</i>体积上限决定可用格式（离线 HTML 100 MiB 告警 / 400 MiB 硬上限）</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">PPTX：可编辑 + 占位页</span><span class="step-path">lib/export/use-export-pptx.ts · latex-to-omml.ts</span></div>
+        <p>幻灯片元素转成可编辑形状与文本；公式走 LaTeX → OMML；交互/测验/PBL 保留为原位占位页，带“在线打开”按钮与二维码。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>元素类型逐类映射；无法映射的降级为占位而不是丢页</span></div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">离线 HTML：一个文件播完整课</span><span class="step-path">lib/export/standalone-html</span></div>
+        <p>旁白、聚光灯、激光笔、视频、测验、交互全带上；KaTeX / Three.js / 字体等外部依赖内联为 data URI，断网也能播。抓不到的资源保留原 URL。</p>
+        <div class="badges">
+          <span class="b sys"><i>SYS</i>资源清单逐项内联；单资产 8 MiB、3 次重试（只重试 429/5xx，404/403 立即放弃）</span>
+          <span class="b sys"><i>SYS</i>CSP 默认 <code>default-src 'none'</code>，离线页不能外联</span>
+          <span class="b sys"><i>SYS</i>失败项记录并降级，不阻断整包</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">ZIP：备份与迁移</span><span class="step-path">lib/export/classroom-zip-*</span></div>
+        <p>课程结构 + 媒体一起打包；导入时先把音频、图片、视频、封面写回服务器资源池，再存课程，所以别的浏览器也能读。</p>
+        <div class="badges">
+          <span class="b sys"><i>SYS</i>导入先落资源池再落文档，避免指向本地缓存</span>
+          <span class="b sys"><i>SYS</i>条目数上限 · 单条与总解压上限 · 路径穿越拒绝</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">05</span><span class="step-title">MP4：可选渲染服务</span><span class="step-path">render-service/ · /api/export-video/*</span></div>
+        <p>浏览器先把课堂编译成自包含 Hyperframes 工程 ZIP，渲染服务用无头 Chromium 逐帧抓、FFmpeg 编码。没配服务就退化为下载工程 ZIP。</p>
+        <div class="badges">
+          <span class="b ext"><i>EXT</i>Chromium + FFmpeg 容器</span>
+          <span class="b sys"><i>SYS</i>能力探测未就绪则菜单不展示 MP4；任务按 owner 绑定，换 owner 一律 404</span>
+          <span class="b sys"><i>SYS</i>成片以 300 MiB 流式回传，不先在内存里拼整段</span>
+          <span class="b human"><i>HUMAN</i>提交渲染并等待</span>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= F8 ================= -->
+  <section class="feature" id="f8">
+    <div class="f-head">
+      <div class="f-num">F8</div>
+      <div class="f-title">
+        <h2>材料与知识库：把 PDF 变成可用的上下文</h2>
+        <p>上传的材料先落所有者资产池，再按类型抽取正文和图片；正文可切片入检索索引，图片按视觉优先级进入提示。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> PDF / DOCX / PPTX / 音视频 / 图片</span>
+      <span><b>输出</b> 正文、图片、切片、检索命中</span>
+    </div>
+
+    <ol class="flow">
+      <li class="human">
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">上传与归属</span><span class="step-path">app/api/materials/*</span></div>
+        <p>材料属于 owner，生成 run 与上传者必须是同一个 owner；匿名模式要复用同一个 cookie 罐。同一 owner 重复上传相同字节时，会复用已完成的抽取结果。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>选择文件</span>
+          <span class="b sys"><i>SYS</i>MIME / 体积 / owner 围栏</span>
+          <span class="b sys"><i>SYS</i>配额：最多 100 个文件 / 2 GiB，单文件 50 MiB</span>
+          <span class="b sys"><i>SYS</i>按 sha256 复用抽取结果，但只在同一 owner 内</span>
+        </div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">抽取：按 MIME 与能力选定抽取器</span><span class="step-path">lib/document/extractors/registry.ts</span></div>
+        <p>生成流水线只选<b>一个</b>抽取器：有首选用首选，否则取第一个同时支持该 MIME 与所需能力的；都不支持则该步失败。音视频走语音识别。Pro 会话的材料抽取是另一条路径，会按候选顺序逐个试。</p>
+        <div class="badges">
+          <span class="b ext"><i>EXT</i>抽取器 / ASR</span>
+          <span class="b sys"><i>SYS</i>MIME + capabilities 匹配；需服务但未配置则明确拒绝</span>
+          <span class="b sys"><i>SYS</i>外部抽取器回传的图片只允许白名单域（阿里云 OSS），防 SSRF</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">视觉图筛选</span><span class="step-path">lib/server/generation/vision-images.ts</span></div>
+        <p>按文档顺序与视觉优先级取图，最多 MAX_VISION_IMAGES；解析预算 15 秒，连续 3 次不可解析就停，带着已解析的继续。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>预算 + 熔断，宁可降级不失败</span></div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">切片与索引</span><span class="step-path">lib/rag/chunking · providers</span></div>
+        <p>真实产品路径里<b>没有向量检索</b>：检索是字面匹配扫描，命中带来源定位。仓库里的 <code>lib/rag/</code>（切片 / 词法索引）只有测试引用，是死代码，不要把它当成在线知识库。</p>
+        <div class="badges">
+          <span class="b sys"><i>SYS</i>字面匹配 + 来源定位；没有 embedding / 向量库</span>
+          <span class="b sys"><i>SYS</i><code>lib/rag/</code> 仅测试引用，未接入运行时</span>
+          <span class="b llm"><i>LLM</i>阅读检索命中并写进讲解</span>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ================= F9 ================= -->
+  <section class="feature" id="f9">
+    <div class="f-head">
+      <div class="f-num">F9</div>
+      <div class="f-title">
+        <h2>外部智能体接入：把生成流水线装进 IDE / 聊天软件</h2>
+        <p>仓库自带标准 <code>SKILL.md</code> 技能包，可被 OpenClaw、Codex、DeepSeek、WorkBuddy 等加载。你在飞书 / Slack / Telegram 或 IDE 里说想学什么，它就跑完整条生成流水线，把课堂链接发回来。</p>
+      </div>
+    </div>
+    <div class="io">
+      <span><b>输入</b> 自然语言需求 · 运行模式 · 环境与密钥</span>
+      <span><b>输出</b> 课堂链接 / 本地部署实例</span>
+    </div>
+
+    <ol class="flow">
+      <li class="human">
+        <div class="step-top"><span class="step-no">01</span><span class="step-title">选模式：托管 / 本地 / 二次开发</span><span class="step-path">skills/openmaic/SKILL.md</span></div>
+        <p>技能先问清你要哪一种；托管模式要用访问码，访问码由你自己申请并写进配置，技能不代填。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>选模式、自己申请访问码</span>
+          <span class="b sys"><i>SYS</i>托管模式每天 10 次生成配额，403 即配额耗尽</span>
+        </div>
+      </li>
+      <li class="human">
+        <div class="step-top"><span class="step-no">02</span><span class="step-title">准备环境：每一步先确认</span><span class="step-path">skills/openmaic/SKILL.md</span></div>
+        <p>clone、装依赖、起数据库、配 key。会改变状态的命令先征求同意；你已明确说“帮我生成”时，提交阶段不再二次确认。</p>
+        <div class="badges">
+          <span class="b human"><i>HUMAN</i>逐步确认；不把 API key 贴进聊天，也不代写进配置文件</span>
+          <span class="b sys"><i>SYS</i>没有 <code>DATABASE_URL</code> 直接拒绝启动（退出码 1），不降级</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">03</span><span class="step-title">启动校验：配置错就当场失败</span><span class="step-path">lib/config · 启动流程</span></div>
+        <p>无效配置不让进程带病启动，而是指出具体字段，避免留下一个“每个请求都 500”的服务。</p>
+        <div class="badges"><span class="b sys"><i>SYS</i>启动即校验，错字段直接报出来</span></div>
+      </li>
+      <li class="llm">
+        <div class="step-top"><span class="step-no">04</span><span class="step-title">提交生成并轮询进度</span><span class="step-path">POST /api/generate-classroom · 轮询</span></div>
+        <p>异步任务提交后轮询进度，完成后回链。选哪套主题技能、页面怎么排、旁白怎么写，都是模型判断。</p>
+        <div class="badges">
+          <span class="b llm"><i>LLM</i>主题技能选择、版式、旁白</span>
+          <span class="b sys"><i>SYS</i>24 个 agent-runtime 技能中，9 个带 <code>outline-constraints.json</code>，把硬约束下沉成代码检查器</span>
+          <span class="b sys"><i>SYS</i>用户自建技能被包进不可伪造的低优先级围栏，不能覆盖 system / developer 与工具白名单</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-top"><span class="step-no">05</span><span class="step-title">交付链接</span><span class="step-path">—</span></div>
+        <p>把课程链接（或本地实例地址）发回对话。导出与发布仍走 F7 / F1 的同一套门控。</p>
+      </li>
+    </ol>
+
+    <table class="gates">
+      <caption>技能包分组（<code>skills/agent-runtime</code>，共 24 个；另加 <code>skills/openmaic</code> 的入口 SOP）</caption>
+      <thead><tr><th>组</th><th>技能</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td>地板</td><td><code>stage-design</code></td><td>单节课堂如何定案、工具调用顺序、完成判据</td></tr>
+        <tr><td>表达层</td><td><code>slide-craft</code> · <code>slide-dsl</code> · <code>stage-dsl</code></td><td>版式法则、slide JSON 字段手册、课堂文档结构地图</td></tr>
+        <tr><td>深度与求真</td><td><code>deep-interactive</code> · <code>deep-research</code> · <code>fact-check</code></td><td>动手课 / 时效性调研（claim→source 台账）/ 交付前查幻觉</td></tr>
+        <tr><td>教学法</td><td><code>lecture-style</code> · <code>workshop-style</code> · <code>feynman-learning</code></td><td>大师讲授 / 互动工作坊 / 费曼循环</td></tr>
+        <tr><td>课程设计</td><td><code>curriculum-planner</code> · <code>spiral-curriculum</code> · <code>understanding-by-design</code> · <code>zone-of-proximal-development</code></td><td>系列课排期 / 螺旋课程 / UbD 逆向设计 / 最近发展区习题课</td></tr>
+        <tr><td>场景扩展</td><td><code>k12-core-literacy-planning</code> · <code>social-emotional-learning</code> · <code>vocational</code></td><td>K12 核心素养 / SEL 平行目标 / 职业实训任务引擎</td></tr>
+        <tr><td>文档操作</td><td><code>pptx-import</code> · <code>pro-editing</code> · <code>page-clone</code></td><td>PPTX 追加导入 / 已有课程外科手术式修改 / 单页克隆</td></tr>
+        <tr><td>风格与元学习</td><td><code>style-clone</code> · <code>teacher-style-clone</code> · <code>learning-to-learn</code> · <code>build-personal-skill</code></td><td>视觉复刻 / 从录像抽讲法 / 学习策略 / 从历史提炼专属技能</td></tr>
+      </tbody>
+    </table>
+
+    <table class="gates">
+      <caption>这一层谁在把关</caption>
+      <thead><tr><th>门控</th><th>落点</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag human">人类</span></td><td>选模式、逐步确认环境、自己提供密钥与访问码；已明确要求生成时，提交不再二次确认。</td></tr>
+        <tr><td><span class="tag sys">系统</span></td><td>启动校验失败即退出（没有 <code>DATABASE_URL</code> 退出码 1）· 技能 ZIP 防炸弹与路径 / id 安全化 · 用户技能低优先级围栏 · 托管每天 10 次配额 · 9 个约束检查器。</td></tr>
+        <tr><td><span class="tag llm">LLM</span></td><td>选技能、排页、写旁白由模型判断；但 9 个技能的硬约束由 <code>checkOutlineAgainstSkill</code> / <code>checkScenesAgainstSkill</code> 兜底，不靠模型自评。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">这里的「技能」是提示词约定，不是权限系统：除了 9 个约束检查器，其余质量要求仍靠模型执行。别把 SKILL.md 里的“必须先确认”当成代码强制。</div>
+  </section>
+
+  <!-- ================= matrix ================= -->
+  <section class="feature" id="matrix">
+    <div class="f-head">
+      <div class="f-num">Σ</div>
+      <div class="f-title">
+        <h2>横向对照：每类门控到底出现在哪</h2>
+        <p>把 9 个功能压成一张表，看“人类 / 系统 / LLM”各自的职责边界。</p>
+      </div>
+    </div>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <thead>
+          <tr><th>门控</th><th>F1 生成</th><th>F2 交互</th><th>F3 播放</th><th>F4 测验</th><th>F5 PBL</th><th>F6 工作台</th><th>F7 导出</th><th>F8 材料</th><th>F9 外部接入</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th><span class="dot d-human"></span>人类门控</th>
+            <td>确认/编辑大纲；发布</td><td>学生操作</td><td>播放控制、提问</td><td>作答</td><td>提交任务</td><td>看结果提修改；SOP 确认</td><td>选格式</td><td>上传</td><td>选模式；逐步确认环境</td>
+          </tr>
+          <tr>
+            <th><span class="dot d-sys"></span>系统门控</th>
+            <td>schema、归一化、上限、重试、租约</td><td>脚本语法、依赖重写</td><td>动作 allowlist、跳转限制、时长常量</td><td>客观题精确匹配、80% 阈值</td><td>角色扮演阶段校验、60 分阈值</td><td>写入串行、owner 作用域、工具超时</td><td>体积上限、owner 作业、能力探测</td><td>MIME、预算、熔断、配额</td><td>启动校验、技能围栏、配额</td>
+          </tr>
+          <tr>
+            <th><span class="dot d-llm"></span>LLM 门控</th>
+            <td>大纲规划、内容/动作生成</td><td>组件形态与交互逻辑（无运行期验证）</td><td>导演决定发言与收尾</td><td>简答判分、讲评</td><td>规划、导师、评价</td><td>决定改哪一页、调用哪些工具</td><td>无</td><td>抽取器可能本身是模型；阅读命中</td><td>选技能、排页、旁白</td>
+          </tr>
+          <tr>
+            <th><span class="dot d-none"></span>无门控</th>
+            <td colspan="2">交互页功能正确性、生成内容的学科正确性</td>
+            <td>—</td><td>简答题无二次复核</td><td>—</td><td>无逐工具审批</td><td>渲染画面与真机差异</td><td>—</td><td>无逐工具审批；SOP 非强制</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      最值得注意的空白是<b>“内容正确性”没有门</b>：生成链路只保证结构合法、可播放，不保证讲得对。
+      如果要给课堂加质量门，最自然的位置是 F1 的<b>大纲确认</b>（人已经在那里）和 F4/F5 的<b>评分结果</b>（模型已经在打分），而不是在场景生成后加一道额外的程序校验。
+    </div>
+  </section>
+
+  <!-- ================= misread ================= -->
+  <section class="feature" id="misread">
+    <div class="f-head">
+      <div class="f-num">!</div>
+      <div class="f-title">
+        <h2>容易误读：文档说过的，代码不一定这么做</h2>
+        <p>下面这些点最容易把「设计意图」当成「运行时事实」。冲突处以代码为准。</p>
+      </div>
+    </div>
+
+    <table class="gates">
+      <caption>文档 / 直觉 vs 代码实际</caption>
+      <thead><tr><th style="width:36%">看起来是这样</th><th>代码里其实这样</th></tr></thead>
+      <tbody>
+        <tr><td>“大纲永远等确认，除非 auto”</td><td>还有第三种 <code>countdown</code>（2.5s 自确认），而且<b>浏览器默认就走它</b>；无头 API 又强制 <code>auto</code></td></tr>
+        <tr><td>“两阶段流水线：大纲 → 场景”</td><td>4 段 + 每场景 3 步 + 媒体旁路（材料分析 → 调研 → 大纲 → 花名册 → 逐场景 content / actions / narration）</td></tr>
+        <tr><td>“会做 JSON 修复”</td><td>大纲流<b>不走</b> JSON 修复，而是手写括号扫描器增量解析；修复只用于场景内容 / quiz / PBL</td></tr>
+        <tr><td>“Roundtable Debate：多智能体辩论”</td><td>不存在独立辩论类型；SessionType 只有 qa / discussion / lecture</td></tr>
+        <tr><td>“多智能体主动发起讨论”</td><td>讨论是生成期写进场景的动作，到点弹卡；不是智能体自己决定发起</td></tr>
+        <tr><td>“离线 HTML 只有聚光灯和激光”</td><td>还有 4 种 <code>widget_*</code> 动作；但<b>白板动作被显式丢弃</b>，简答题不判分</td></tr>
+        <tr><td>“自带知识库 / RAG”</td><td><code>lib/rag/</code> 是死代码（只有测试引用）；真实检索是字面匹配扫描，没有向量检索</td></tr>
+        <tr><td>“400 MB 阈值”</td><td>是单文件硬上限（超了自动转 ZIP）；另有 100 MiB 仅告警；ZIP 内页面再 400 MiB，归档上限另算</td></tr>
+        <tr><td>技能数 “25+”</td><td><code>agent-runtime</code> 24 个 + <code>skills/openmaic</code> 1 个 = 25</td></tr>
+      </tbody>
+    </table>
+
+    <table class="gates">
+      <caption>依赖可选服务时的降级（“缺了会怎样”比“支持什么”更能说明边界）</caption>
+      <thead><tr><th style="width:30%">缺什么</th><th>会发生什么</th></tr></thead>
+      <tbody>
+        <tr><td>PostgreSQL</td><td>服务端直接拒绝启动（退出码 1），<b>不降级</b></td></tr>
+        <tr><td>TTS 槽位</td><td>没有旁白音频；播放退化为浏览器 TTS 或按字数估算阅读时长</td></tr>
+        <tr><td>webSearch 槽位</td><td><code>web_search</code> 工具<b>根本不存在</b>（比“存在但报错”更难误读）；research 步骤直接跳过</td></tr>
+        <tr><td>document 槽位</td><td>只剩内置自包含解析（纯文本 / unpdf）；Office 与图片类 MIME 从“可解析”列表消失</td></tr>
+        <tr><td>image / video 槽位</td><td>对应媒体条目记为 skipped，<b>不影响整堂课完成</b>，只进 warning 计数</td></tr>
+        <tr><td>RENDER_SERVICE_URL</td><td>视频导出 501，UI 只给「下载 ZIP 本地渲染」</td></tr>
+        <tr><td>ASSET_S3_BUCKET</td><td>媒体字节回落到 PostgreSQL bytea</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">把这些放在一起看：<b>“能不能跑”是硬前置</b>（没有库就不启动），<b>“跑得好不好”是软降级</b>（没 TTS / 没媒体照样出课）。这也是上游把 server-first 当硬约束、而本仓移植后可以去掉 PostgreSQL 的原因。</div>
+  </section>
+
+  <!-- ================= repo ================= -->
+  <section class="feature" id="repo">
+    <div class="f-head">
+      <div class="f-num">↺</div>
+      <div class="f-title">
+        <h2>本仓现状：整站托管退场，功能拆成 13 个领域包</h2>
+        <p>F1–F9 描述的是<b>上游原版</b>。本仓已改走逐层重写，不再托管第二个 Next 进程。</p>
+      </div>
+    </div>
+    <p>依据：<code>packages/dsh-zhiyun-host-openmaic/DETACHED.md</code> 标注暂不接进 profile；课堂能力由 13 个 <code>dsh-zhiyun-*classroom*</code> 领域包承接；vendor 树已在 <code>39c4c01</code> 从 git 移除（本地仍可能残留未跟踪副本）。</p>
+    <div class="files">
+      <div><b>生成</b><code>core-classroom-generate</code></div>
+      <div><b>舞台</b><code>core-classroom-stage</code></div>
+      <div><b>智能体</b><code>core-classroom-agent</code></div>
+      <div><b>导出</b><code>core-classroom-export</code></div>
+      <div><b>媒体</b><code>core-classroom-media</code></div>
+      <div><b>PBL</b><code>core-classroom-pbl</code></div>
+      <div><b>时长</b><code>core-classroom-timing</code></div>
+      <div><b>持久化</b><code>core-classroom-vault</code></div>
+      <div><b>DSL 三层</b><code>classroom-dsl / -geometry / -renderer</code></div>
+      <div><b>页面</b><code>page-classroom-build / -play</code></div>
+    </div>
+    <div class="note">移植后的关键差异：LLM 调用改走宿主 <code>ctx.llm</code>；持久化落本地文件，不再需要 PostgreSQL；CSP / iframe / 端口探测 / 子进程生命周期整套前置消失。阅读 F1–F9 时请区分「上游怎么做」与「本仓改成了什么」。</div>
+  </section>
+
+  <!-- ================= files ================= -->
+  <section class="feature" id="files">
+    <div class="f-head">
+      <div class="f-num">⌘</div>
+      <div class="f-title">
+        <h2>代码地图：想细看时从这里进</h2>
+        <p>路径均相对 <code>packages/dsh-zhiyun-host-openmaic/vendor/openmaic/</code>。</p>
+      </div>
+    </div>
+    <div class="files">
+      <div><b>生成计划</b><code>lib/server/generation/run/plan.ts</code></div>
+      <div><b>生成引擎</b><code>lib/server/generation/run/engine.ts</code></div>
+      <div><b>运行队列</b><code>lib/server/generation/run/runner.ts</code></div>
+      <div><b>大纲确认</b><code>lib/server/generation/run/store.ts</code></div>
+      <div><b>重试常量</b><code>lib/server/generation/run/retry.ts</code></div>
+      <div><b>大纲归一化</b><code>lib/server/generation/outline-schema.ts</code></div>
+      <div><b>场景写库校验</b><code>lib/document-store/validators.ts</code></div>
+      <div><b>交互脚本门</b><code>packages/@openmaic/generation/src/interactive-script-validator.ts</code></div>
+      <div><b>交互后处理</b><code>packages/@openmaic/generation/src/interactive-post-processor.ts</code></div>
+      <div><b>动作与 DSL</b><code>packages/@openmaic/dsl/src/action.ts</code></div>
+      <div><b>回放状态机</b><code>lib/playback/engine.ts</code></div>
+      <div><b>导演循环</b><code>lib/chat/pi/director-loop.ts</code></div>
+      <div><b>测验判分</b><code>lib/quiz/grading.ts</code></div>
+      <div><b>简答判分</b><code>app/api/quiz-grade/route.ts</code></div>
+      <div><b>PBL 评价</b><code>lib/pbl/v2/agents/evaluator.ts</code></div>
+      <div><b>PBL 内核</b><code>packages/@openmaic/generation/src/pbl/operations/kernel/</code></div>
+      <div><b>Agent 工具</b><code>lib/server/agent-runtime/course-tools.ts</code></div>
+      <div><b>写工具名单</b><code>lib/agent-runtime/stage-writer-tools.ts</code></div>
+      <div><b>PPTX 导出</b><code>lib/export/use-export-pptx.ts</code></div>
+      <div><b>离线 HTML</b><code>lib/export/standalone-html/</code></div>
+      <div><b>渲染服务</b><code>render-service/</code></div>
+      <div><b>材料抽取</b><code>lib/document/</code></div>
+      <div><b>材料配额</b><code>lib/server/agent-runtime/config.ts</code></div>
+      <div><b>RAG（仅测试）</b><code>lib/rag/</code></div>
+      <div><b>时长常量</b><code>lib/choreography/timing.ts</code></div>
+      <div><b>观察上限</b><code>lib/interactive/observation.ts</code></div>
+      <div><b>技能 SOP</b><code>skills/openmaic/SKILL.md</code></div>
+      <div><b>技能围栏</b><code>lib/server/agent-runtime/skills.ts</code></div>
+      <div><b>技能包</b><code>skills/agent-runtime/</code></div>
+      <div><b>离线 CSP</b><code>lib/export/standalone-html/assemble.ts</code></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>依据本地快照 v1.3.0（commit 03dee2b）逐文件核对；本版补充交叉引用 <code>artifacts/openmaic-survey/</code> 的核对稿，并在有冲突时回代码复核。未运行上游服务，因此“运行时行为”以代码注释与状态机为准。</span>
+    <span>OpenMAIC · THU-MAIC · MIT（mathml2omml 为 LGPL-3.0-or-later）</span>
+  </footer>
+
+</main>
+</body>
+</html>

@@ -345,3 +345,213 @@ test('宿主半边：文件夹的建 / 列 / 移 / 删，以及嵌套路径下�
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test('宿主半边：批量删除（removeMany）一次 RPC 删多条，索引只刷一次', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'vault-removemany-'));
+  try {
+    const mod = await import('../packages/dsh-zhiyun-page-notes/src/index.js');
+    const vaultMod = await import('../packages/dsh-zhiyun-core-vault/src/host.js');
+    const services = {};
+    const provided = {};
+
+    // 真索引器在场：最后那条"删完反链里不再有它"靠它验，而不是靠桩。
+    await vaultMod.apply({
+      profileContext: { dir: path.join(dir, 'profile') },
+      logger: { info: () => {}, warn: () => {} },
+      inject: (deps, cb) => cb({ connection: { fetch: { register: () => () => {} } }, effect: (fn) => { const d = fn(); return () => { if (typeof d === 'function') d(); }; } }),
+      provide: (n, v) => { services[n] = v; return () => {}; },
+      get: (n) => services[n],
+    }, {});
+
+    // ⚠️ 这里把 `setNotes` 包一层计数，专门钉"索引只刷一次"。
+    //
+    //    为什么非钉不可：这条 RPC 存在的**全部理由**就是省掉 N 次全库重读。
+    //    只断言"文件删掉了"的话，一个内部逐条 `refreshIndex()` 的实现也能全绿 ——
+    //    但它把批量删除的意义丢掉了（20 篇 = 20 次全库 Markdown 重读）。
+    //    计数是最便宜的不变量。
+    const vault = services.zhiyunVault;
+    let setNotesCalls = 0;
+    /** 最近一次推给索引器的 payload —— 用来断言"刷的那一次内容是对的"。 */
+    let lastPushed = null;
+    const countingVault = {
+      ...vault,
+      setNotes: (next) => { setNotesCalls += 1; lastPushed = next; return vault.setNotes(next); },
+    };
+
+    await mod.apply({
+      profileContext: { dir: path.join(dir, 'profile') },
+      logger: { info: () => {}, warn: () => {} },
+      inject: (deps, cb) => cb({ connection: { fetch: { register: () => () => {} } }, effect: (fn) => { const d = fn(); return () => { if (typeof d === 'function') d(); }; } }),
+      provide: (n, v) => { provided[n] = v; return () => {}; },
+      get: (n) => (n === 'zhiyunVault' ? countingVault : services[n]),
+    }, { dir: path.join(dir, 'notes') });
+    const svc = provided.zhiyunVaultNotes;
+    const notesDir = path.join(dir, 'notes');
+
+    // ── 布置：三篇笔记 + 一个附件 + 一个装了文件的文件夹 + 一个"名字撞前缀"的文件夹 ──
+    await svc.create('甲');
+    await svc.create('乙');
+    await svc.create('丙');
+    await svc.write('甲', '见 [[乙]]');
+    await svc.write('乙', '乙的正文');
+    await svc.write('丙', '丙的正文');
+    await writeFile(path.join(notesDir, '截图.png'), 'not really a png');
+    await svc.mkdir('理学');
+    await svc.create('概率论', '理学');
+    await svc.create('大数定律', '理学');
+    // ⚠️ `理学 2` 是刻意布的陷阱：它和 `理学` 共享字符串前缀。
+    //    覆盖判断若写成裸 `startsWith('理学')`，它就会被误判成"已被覆盖"而静默跳过。
+    await svc.mkdir('理学 2');
+    await svc.create('占位', '理学 2');
+
+    // 让索引先看到全量（`write`/`create` 自己会刷，这里只是把计数清零，让断言只
+    // 统计 `removeMany` 那一次）。
+    const pushIndex = async () => {
+      const all = await svc.tree();
+      const payload = [];
+      for (const entry of all.filter((e) => e.type === 'note')) {
+        payload.push({ path: `${entry.path}.md`, markdown: (await svc.read(entry.path)).markdown });
+      }
+      await vault.setNotes(payload);
+    };
+    await pushIndex();
+    setNotesCalls = 0;
+
+    // ── 1) 多篇笔记 + 附件 + 文件夹（含文件），外加一条不存在的路径 ──
+    //
+    // 混进 missing 的那条必须"不抛错"：用户看到的列表可能是过期的，选中一行
+    // 时它已经被别处删掉了。整批失败会让用户无法删除**其他**选中的项。
+    const result = await svc.removeMany([
+      '甲',
+      '乙',
+      '截图.png',
+      '理学',
+      '从来不存在',
+      '也不存在.png',
+    ]);
+
+    // 磁盘上真的没了（这是最硬的一条：返回值可以撒谎，文件系统不行）
+    assert.equal(await exists(path.join(notesDir, '甲.md')), false, '甲.md 应真的不存在');
+    assert.equal(await exists(path.join(notesDir, '乙.md')), false, '乙.md 应真的不存在');
+    assert.equal(await exists(path.join(notesDir, '截图.png')), false, '附件字节应真的消失');
+    assert.equal(await exists(path.join(notesDir, '理学')), false, '文件夹本身应真的消失');
+    // 没被选中的东西必须还在（批量删除最怕的就是多删）
+    assert.equal(await exists(path.join(notesDir, '丙.md')), true, '没选中的丙不该被删');
+    assert.equal(await exists(path.join(notesDir, '理学 2')), true, '前缀相同的另一个文件夹不该被误删');
+
+    // `removed` 里每条的 kind 都要对，文件夹要带 contained
+    const byPath = new Map(result.removed.map((item) => [item.path, item]));
+    assert.deepEqual(byPath.get('甲'), { path: '甲', kind: 'note' });
+    assert.deepEqual(byPath.get('乙'), { path: '乙', kind: 'note' });
+    assert.deepEqual(byPath.get('截图.png'), { path: '截图.png', kind: 'attachment' });
+    assert.deepEqual(
+      byPath.get('理学'),
+      { path: '理学', kind: 'folder', contained: 2 },
+      `文件夹应带连带文件数（概率论 + 大数定律），实际 ${JSON.stringify(byPath.get('理学'))}`,
+    );
+    assert.equal(result.removed.length, 4, `removed 应正好 4 条，实际 ${JSON.stringify(result.removed)}`);
+
+    // 不存在的进 missing，不进 removed，也不抛错
+    assert.deepEqual(result.missing.sort(), ['从来不存在', '也不存在.png'].sort());
+    assert.equal(result.coveredCount, 0);
+
+    // ── 2) 索引只刷了一次，且那一次的内容就是删除后的状态 ──
+    //
+    // 只数次数不够：一个"刷得次数对、但刷的是删除前快照"的实现同样能全绿，
+    // 而那种实现会让反链停留在已删笔记上。所以顺便钉 payload。
+    assert.equal(setNotesCalls, 1, `removeMany 应只推一次索引，实际 ${setNotesCalls} 次`);
+    assert.ok(Array.isArray(lastPushed), '推给索引器的应是笔记数组');
+    const pushedPaths = lastPushed.map((n) => n.path).sort();
+    assert.deepEqual(
+      pushedPaths,
+      ['丙.md', '理学 2/占位.md'].sort(),
+      `索引里应只剩没被删的笔记，实际 ${JSON.stringify(pushedPaths)}`,
+    );
+
+    // 删完以后反链里不该再有被删的笔记（索引真的更新了，不是停留在旧快照）
+    const indexAfter = services.zhiyunVault.index();
+    assert.equal(
+      indexAfter.backlinks.get('乙.md'),
+      undefined,
+      `乙.md 已删，不该还留在反链表里：${JSON.stringify([...indexAfter.backlinks.keys()])}`,
+    );
+    assert.equal(indexAfter.notes.has('乙.md'), false, '乙.md 不该还在索引里');
+
+    // ── 3) 同时选「文件夹 + 它里面的笔记」→ 子项进 covered，不重复删 ──
+    //
+    // 这正是"按段数升序处理"的理由：父目录先删，子项才不会在父目录消失后
+    // 变成一堆假的 missing。
+    await svc.mkdir('学业');
+    await svc.create('线代', '学业');
+    await svc.write('学业/线代', '正文');
+    setNotesCalls = 0;
+
+    const covered = await svc.removeMany(['学业/线代', '学业']);
+    assert.deepEqual(
+      covered.removed,
+      [{ path: '学业', kind: 'folder', contained: 1 }],
+      `只应真正删掉父文件夹一条，实际 ${JSON.stringify(covered.removed)}`,
+    );
+    assert.deepEqual(covered.skipped, ['学业/线代'], '子项应被父目录覆盖而跳过');
+    assert.equal(covered.coveredCount, 1, 'coveredCount 应与 skipped 一致');
+    assert.deepEqual(covered.missing, [], '覆盖不算失败，不该进 missing');
+    assert.equal(await exists(path.join(notesDir, '学业')), false, '父文件夹应真的消失');
+    assert.equal(setNotesCalls, 1, '同一批仍只刷一次索引');
+
+    // 子项写在父项**前面**也必须是同一结果 —— 顺序由服务端按段数定，不由调用方定。
+    await svc.mkdir('学业');
+    await svc.create('线代', '学业');
+    setNotesCalls = 0;
+    const reversed = await svc.removeMany(['学业/线代', '学业']);
+    assert.deepEqual(reversed.skipped, ['学业/线代'], '入参顺序不该影响覆盖判断');
+    assert.equal(reversed.removed.length, 1);
+    assert.equal(setNotesCalls, 1);
+
+    // ── 3b) 前缀陷阱的正向回归：`理学 2` 与 `理学` 同批时都要真的被删 ──
+    //
+    // 上面对 `理学 2` 的断言只证明"它没被顺手删掉"，而它当时**不在入参里** ——
+    // 覆盖判断写错成裸 `startsWith('理学')` 也照样通过。这里把两者放进**同一批**：
+    // 正确实现删两条；错误实现会把 `理学 2` 判成"已被 理学 覆盖"而静默留下它
+    // （用户选中了两个文件夹，只删掉一个，且界面还报告成功）。
+    await svc.mkdir('理学');
+    await svc.create('概率论', '理学');
+    await svc.mkdir('理学 2');
+    await svc.create('占位', '理学 2');
+    setNotesCalls = 0;
+    const siblings = await svc.removeMany(['理学', '理学 2']);
+    assert.deepEqual(
+      siblings.removed.map((item) => item.path).sort(),
+      ['理学', '理学 2'].sort(),
+      `两个文件夹都该被删，实际 ${JSON.stringify(siblings.removed)}`,
+    );
+    assert.deepEqual(siblings.skipped, [], '`理学 2` 不该被 `理学` 覆盖');
+    assert.equal(await exists(path.join(notesDir, '理学')), false);
+    assert.equal(await exists(path.join(notesDir, '理学 2')), false, '前缀相同的另一个文件夹必须真的消失');
+    assert.equal(setNotesCalls, 1);
+
+    // ── 4) 去重：同一路径给两次只删一次，且不产生假 missing ──
+    await svc.create('丁');
+    setNotesCalls = 0;
+    const dedup = await svc.removeMany(['丁', '丁']);
+    assert.deepEqual(dedup.removed, [{ path: '丁', kind: 'note' }]);
+    assert.deepEqual(dedup.missing, [], '重复的那次不该被错报成 missing');
+    assert.equal(setNotesCalls, 1);
+
+    // ── 5) 空数组 → 空结果、不报错、仍然给出确定形状 ──
+    const empty = await svc.removeMany([]);
+    assert.deepEqual(empty, { removed: [], missing: [], skipped: [], invalid: [], coveredCount: 0 });
+    // 非数组同样降级成空批次，而不是把 `undefined.paths` 当异常扔给页面
+    assert.deepEqual(await svc.removeMany(undefined), { removed: [], missing: [], skipped: [], invalid: [], coveredCount: 0 });
+
+    // ── 6) 剥光的路径进 invalid，不抛错、不影响同批其他条目 ──
+    await svc.create('戊');
+    const withInvalid = await svc.removeMany(['..', '', '戊']);
+    assert.equal(withInvalid.invalid.length, 2, `'..' 与 '' 都应进 invalid，实际 ${JSON.stringify(withInvalid.invalid)}`);
+    assert.deepEqual(withInvalid.removed, [{ path: '戊', kind: 'note' }], '合法的那条照常删掉');
+    // 且没有因为 `..` 而删到库外
+    assert.equal(await exists(path.join(notesDir, '戊.md')), false);
+    assert.equal(await exists(path.join(dir, '戊.md')), false, '绝不越出库目录');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

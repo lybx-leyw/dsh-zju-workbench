@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Empty, Icon } from 'dsh-zhiyun-shell-ui';
+import { Icon } from 'dsh-zhiyun-shell-ui';
 import { AssistantDrawer } from './AssistantDrawer.jsx';
 import { ReaderFrame } from './ReaderFrame.jsx';
 import { createTopic, loadPaper, loadTranslateState, transcribePaper, translateSelection, uploadPaper } from './library.js';
@@ -611,12 +611,16 @@ export function Paper({ controller }) {
       {treePane}
       {paperFileInput}
       {renameDialog}
+      {/* 空态也要摆上抽屉：和阅读态同样的三栏，版心才会跟着抽屉开合重新居中。 */}
       <div className="zp-landing">
-        <Empty icon="paper" title="还没有打开文献">
-          {/* 入口统一在左边栏头（＋ 导入 PDF），这里只指路，不再放第二个上传按钮。 */}
-          <p>左边栏头点 ＋ 导入 PDF。选中英文会自动翻译，右侧抽屉可以就着这一段提问。</p>
-        </Empty>
+        <span className="zp-landing-motto">惟学无际，际于天地</span>
+        <h1>从一篇文献开始，把读过的都留下来。</h1>
+        <p>左边栏头点 ＋ 导入 PDF。选中英文会自动翻译，右侧抽屉可以就着这一段提问。</p>
       </div>
+      <AssistantDrawer
+        open={drawerOpen}
+        onToggle={() => setDrawerOpen((value) => !value)}
+      />
     </div>;
   }
 

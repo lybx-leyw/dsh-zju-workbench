@@ -10,7 +10,10 @@ import {parseConcepts,conceptCacheKey,nearDuplicate} from '../packages/dsh-zhiyu
 import {syntheticFactAudit,syntheticSourceCheck,syntheticProofReview} from '../scripts/quiz_bench/fixture.mjs';
 
 const text='随机事件发生可能性的度量称为概率，概率的取值在零和一之间。';
+// 课程名 / 节次名跟着记录走（解析任务落盘时就有），目录不再为此回查课堂服务。
+const titles={'10':'甲课程','11':'乙课程'};
 const record=(courseId='10',subId='20',accountId='fixture')=>({accountId,courseId,subId,sourceId:`source-${courseId}-${subId}`,schema:2,status:'ready',fetchedAt:'2026-01-01T00:00:00Z',sourceVersion:'source-v1',
+  courseTitle:titles[courseId]??courseId,lessonTitle:`节次 ${subId}`,
   sentences:[],blocks:[{index:1,page:1,sentenceFrom:1,sentenceTo:1,startMs:1000,bridge:'',tag:{role:'主线',summary:'概率',facets:['定义']},sentences:[{startMs:1000,endMs:2000,text}]}],
   spine:'',outline:[],warnings:[],vocabulary:[],pages:[],unassignedSentences:[],failedPages:[],
   semanticPlan:[{title:'第一章',topics:[{title:'概率定义',from:1,to:1}]}],
@@ -84,7 +87,10 @@ test('global bank spans courses, preserves questions across regeneration and res
   const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-point-bank-'));let host,service,user={id:'fixture'};
   const open=async()=>{
     host=await mountKnowledge(directory);
-    service=new StudyWorkbench({directory,knowledge:host.service,classroom:{getCurrentUser:async()=>user,listCourses:async()=>({items:[{id:'10',title:'甲课程'},{id:'11',title:'乙课程'}]})},
+    // 目录必须**纯本地**：课堂接口一旦被碰就抛，用来锁住「进刷题页不打网络」。
+    service=new StudyWorkbench({directory,knowledge:host.service,classroom:{getCurrentUser:async()=>user,
+      listCourses:async()=>{throw new Error('bank-catalog 不该回查课堂服务');},
+      listLessons:async()=>{throw new Error('bank-catalog 不该回查课堂节次');}},
       parser:{llm:{routes:{}}},llm:{},quiz:()=>({generatePoints:createPointQuizGenerator({call:fakeCall})})});await service.ready;
   };
   try{

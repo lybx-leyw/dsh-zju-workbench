@@ -43,6 +43,14 @@ export function quizPdfFilename(questions, date = new Date()) {
 }
 
 /**
+ * 出处无法确认的题在卷面上归到这一段。
+ *
+ * 与笔记导出的 `UNRESOLVED_LABEL`、题库里的占位名说同一句话 —— 三处必须一致，
+ * 否则同一条数据在三个地方看起来像三批不同的题。
+ */
+export const UNRESOLVED_SECTION_LABEL = '【未分组】';
+
+/**
  * 把选中的题目编成「卷面 + 卷末答案」两段结构。
  *
  * # 分两层：课程/节次 → 知识点
@@ -50,6 +58,15 @@ export function quizPdfFilename(questions, date = new Date()) {
  * 纸面卷子按「哪门课、哪一节」分段，用户才能把一叠打印件按课次分开；知识点作为
  * 第二层，因为出题本来就是围着知识点转的（同 `quiz-export.js` 里 Markdown 导出的
  * 心智模型）。只有一层的话，跨课程批量导出会糊成一张没有边界的清单。
+ *
+ * # 分组认 id，不认名字
+ *
+ * 键是 `courseId/subId`，不是 `courseTitle/lessonTitle`。按名字分组会把
+ * 「同名但不同节次」合并成一段 —— 同一门课在不同学期都可能有一个「第3-5节」，
+ * 那份卷子于是把两节课的题排在一起，而卷面上看不出任何异常。
+ *
+ * 出处缺失的题单独成段（【未分组】），绝不并入第一门课：那会让一份看起来
+ * 分好类的卷子实际混着别的科目。
  *
  * # 编号是**全文连续**的
  *
@@ -73,12 +90,21 @@ export function buildQuizPdfOutline(questions) {
   const pointByKey = new Map();
 
   for (const question of list) {
+    const courseId = String(question.courseId ?? '').trim();
+    const subId = String(question.subId ?? '').trim();
     const courseTitle = String(question.courseTitle ?? '').trim();
     const lessonTitle = String(question.lessonTitle ?? '').trim();
-    const sectionKey = `${courseTitle}\u0000${lessonTitle}`;
+    const unresolved = question.provenanceUnresolved === true || !courseId || !subId;
+    const sectionKey = unresolved ? 'unresolved' : `${courseId}\u0000${subId}`;
     let section = sectionByKey.get(sectionKey);
     if (!section) {
-      section = { key: sectionKey, courseTitle, lessonTitle, points: [] };
+      section = {
+        key: sectionKey,
+        unresolved,
+        courseTitle: unresolved ? UNRESOLVED_SECTION_LABEL : courseTitle,
+        lessonTitle: unresolved ? UNRESOLVED_SECTION_LABEL : lessonTitle,
+        points: [],
+      };
       sectionByKey.set(sectionKey, section);
       sections.push(section);
     }

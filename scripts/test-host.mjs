@@ -364,39 +364,74 @@ try {
   assert.ok((await page.locator('body').innerText()).includes(LEARNING_SPACE_TITLE), 'the fixed learning space is selected');
   await page.screenshot({ path: path.join(evidence, 'ask.png'), fullPage: true });
   checks.push('Ask binds the fixed learning space instead of asking to choose a workspace');
-  // 会话管理在「问一问」的版面上：侧栏不再挂宿主的工作区浏览器（没有工作区切换）。
-  assert.equal(await page.locator('[data-slot="sidebar.workspaces"]').count(), 0, 'the host workspace browser must not be mounted');
+  // 会话管理在「问一问」的版面上：侧栏本体不挂宿主的工作区浏览器（导轨里没有工作区切换），
+  // 那一套只出现在抽屉里 —— 抽屉才是它的宿主（见 shell-workbench 的 AskChrome）。
+  assert.equal(await page.locator('.zy-sidebar [data-slot="sidebar.workspaces"]').count(), 0, 'the sidebar rail must not mount the workspace browser');
   const sidebarText = await page.locator('.zy-sidebar').innerText();
   assert.equal(sidebarText.includes('工作区'), false, 'the sidebar must not offer workspace switching');
   assert.equal(sidebarText.includes('会话记录'), false, 'the sidebar must not host the session list');
   await page.locator('.zy-topbar').waitFor();
-  // 会话抽屉 = 对齐 app 的**左侧整高抽屉**：贴问一问面板左缘、整高、有遮罩、Esc/遮罩可关。
+  // 会话抽屉 = 贴在问一问面板左缘的**常驻整高侧栏**，并且是**挤压**内容而不是盖住它：
+  // 打开时那一列要右移、变窄；无遮罩；打开会话/点别处都不收回。
   const sidebarRight = await page.locator('.zy-sidebar').evaluate(node => Math.round(node.getBoundingClientRect().right));
   const viewport = page.viewportSize();
+  // 挤压前后都量一次「问一问那一列」的位置与宽度（结构关系与外壳里 useAskPanel 一致）。
+  const panelMetrics = () => page.evaluate(() => {
+    const sidebar = document.querySelector('.zy-sidebar');
+    let column = sidebar;
+    while (column?.parentElement && getComputedStyle(column.parentElement).display !== 'grid') column = column.parentElement;
+    const panel = column?.nextElementSibling;
+    const rect = panel?.getBoundingClientRect();
+    return rect === undefined ? null : { left: Math.round(rect.left), width: Math.round(rect.width) };
+  });
+  const panelBefore = await panelMetrics();
   await page.locator('.zy-topbar-menu').click();
   const drawer = page.locator('.zy-drawer');
   await drawer.waitFor();
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(600);
   const drawerBox = await drawer.boundingBox();
   assert.equal(await drawer.getAttribute('data-open'), 'true', 'the top-left hamburger opens the drawer');
   assert.ok(drawerBox.height >= viewport.height * 0.95, `the drawer must span the full height (${Math.round(drawerBox.height)} of ${viewport.height})`);
   assert.ok(Math.abs(drawerBox.x - sidebarRight) <= 2, `the drawer must start at the Ask panel's left edge (x=${Math.round(drawerBox.x)}, sidebar right=${sidebarRight})`);
   assert.ok(drawerBox.width >= 280, `the drawer must keep the Material width (${Math.round(drawerBox.width)}px)`);
-  assert.equal(await page.locator('.zy-drawer-scrim[data-open=true]').count(), 1, 'an open drawer carries its scrim');
-  // 当前会话必须**恰好**标记一行：0.2 把 `current` 从 session controller 移走了，
-  // 早先这里读它，结果高亮永远不亮（也不再有「当前」这个概念可用）。
-  assert.equal(await page.locator('.zy-drawer-row.is-current').count(), 1, 'exactly one row is the current session');
-  assert.equal(await page.locator('.zy-drawer-head').count(), 1, 'the drawer carries its own header');
+  // 常驻栏不是浮窗：没有遮罩。
+  assert.equal(await page.locator('.zy-drawer-scrim').count(), 0, 'a persistent drawer carries no scrim');
+  // **挤压**而不是覆盖：那一列整体右移，且收窄的量约等于抽屉宽度。
+  const panelAfter = await panelMetrics();
+  assert.ok(panelAfter.left >= panelBefore.left + drawerBox.width - 8, `the Ask column is pushed right (${panelBefore.left} -> ${panelAfter.left})`);
+  assert.ok(panelAfter.width <= panelBefore.width - drawerBox.width + 8, `the Ask column narrows by the drawer width (${panelBefore.width} -> ${panelAfter.width})`);
+  // 抽屉里装的是**宿主原样的**工作区/会话浏览器：本包声明 `sidebar.workspaces` 槽，
+  // 宿主 ui-workspace 自己注册进来（ui-sidebar 停用后，那是唯一还在的声明者路线）。
+  // 按可见能力断言，不绑 DOM 类名 —— 宿主换类名不该让这条测试误报。
+  assert.equal(await page.locator('.zy-drawer [data-slot="sidebar.workspaces"]').count(), 1, 'the drawer renders the host workspace browser');
+  const nativeBox = await page.locator('.zy-drawer-native').boundingBox();
+  assert.ok(nativeBox !== null && nativeBox.height >= viewport.height * 0.85, `the native browser fills the drawer (height=${Math.round(nativeBox?.height ?? 0)})`);
+  const browserText = await page.locator('.zy-drawer-native').innerText();
+  assert.ok(browserText.includes('工作区'), 'the native browser shows its workspace section');
+  for (const control of ['搜索会话', '视图选项', '添加工作区']) {
+    assert.ok(await page.locator(`.zy-drawer-native [aria-label="${control}"]`).count() > 0, `the native browser offers «${control}»`);
+  }
+  assert.ok(await page.locator('.zy-drawer-native [aria-label*="新建会话"]').count() > 0, 'the native browser offers per-workspace New Session');
   await page.screenshot({ path: path.join(evidence, 'ask-sessions.png'), fullPage: true });
+  // 常驻：Esc 不关，点别处也不关。
   await page.keyboard.press('Escape');
-  await drawer.waitFor({ state: 'hidden' });
-  assert.equal(await page.locator('.zy-drawer-scrim[data-open=true]').count(), 0, 'Esc closes the drawer and its scrim');
-  await page.locator('.zy-topbar-menu').click();
-  await drawer.waitFor();
   await page.waitForTimeout(300);
-  await page.locator('.zy-drawer-scrim').click({ position: { x: 500, y: 400 } });
-  await drawer.waitFor({ state: 'hidden' });
-  checks.push('Session management is a full-height left drawer attached to the Ask panel');
+  assert.equal(await drawer.getAttribute('data-open'), 'true', 'Escape must not dismiss the persistent drawer');
+  await page.locator('.zy-drawer-native [aria-label="搜索会话"]').first().click();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  assert.equal(await drawer.getAttribute('data-open'), 'true', 'Escape inside the native search must not dismiss the drawer');
+  // 抽屉自己有一颗「收起」按钮（舱内可关，不必回顶部找汉堡），且收起后那一列复原。
+  const collapse = page.locator('.zy-drawer-collapse');
+  assert.equal(await collapse.count(), 1, 'the drawer offers its own collapse control');
+  assert.equal(await collapse.getAttribute('aria-label'), '收起会话面板');
+  await collapse.click();
+  await page.waitForTimeout(500);
+  assert.equal(await drawer.getAttribute('data-open'), 'false', 'the collapse control closes the drawer');
+  const panelRestored = await panelMetrics();
+  assert.ok(Math.abs(panelRestored.left - panelBefore.left) <= 2, `the Ask column springs back (${panelRestored.left} vs ${panelBefore.left})`);
+  checks.push('Session management is a persistent, content-squeezing left drawer hosting the host workspace browser');
   await page.getByRole('button', { name: '账号', exact: true }).click();
   await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
   const settings = page.locator('.zy-settings-group');
