@@ -8,6 +8,8 @@
 
 ## 仅参考，未引入实现
 
+- 学习资料工具接入对照已安装 `@deepseek-ai/dsh-tools@0.2.0-rc.2` 的公开类型声明（MIT，已核对宿主 LICENSE），独立实现 `tools.register`、canonical output 与取消信号适配，未复制实现。
+
 - [html-ppt-skill](https://github.com/lewislulu/html-ppt-skill) · MIT（已核对根 LICENSE）。章节 HTML 原型参考其主题令牌、视觉布局与静态网页交付思路；未复制模板、脚本、提示词或素材，实现由本仓独立编写。
 - [html-in-PPT](https://github.com/Silhouette-my/html-in-PPT) · 未发现许可证，仅参考 HTML 优先与渐进展示思路，未复制或分发其实现。
 
