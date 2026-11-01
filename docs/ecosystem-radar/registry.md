@@ -4163,3 +4163,24 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 > + `[ \t]{15,}` + `unicodedata.category=='C'`）。**沙箱实跑**：正常→clean；零宽→`['zero-width','nonprintable=1']`；
 > 长空格→`['long-space']`；控制符→`['nonprintable=2']`。**两个毛病**：①零宽本身是非打印字符，**重复报警**；
 > ②只检 JD **不检简历**。修法已写进骨架 TODO-5。
+
+## r126 · 2026-11-01-12 · A 组（横切）· **新轴：「卷面 → 错题本」**
+
+> **本轮是 A 组而非轮换器给的 B 组**（轮换器判 `same-day(exhausted)`，今天三组已跑满）。
+> 依据「A 组最高优先」补跑，但**换了搜索轴**：`sort=updated` 看新仓 +
+> **中文学生向词面**（错题/笔记/复习/学习），与 09:16 的 C 组（职业与去向）零重叠。
+> **词面校准**：`dsh plugin 复习` **=1**（唯一命中已登记 → 挖尽）；
+> `dsh plugin 错题` **=6 命中 2 新** → **建议固定**；`zju dsh plugin` **=0**（本仓专属词面仍为空）。
+> 5 条新登记，全部 registry 新面孔。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `suanmingxing/dsh-ai-mistake-book` | **A 原生DSH**（`dsh.bundle.patch` → `cordis.patch.yml`，id `ai-mistake-book`） | **MIT** ✅（实读 LICENSE 首行） | 强（扫描试卷 / 手写笔记 → 错题卡片） | **全新**（不是强化：现有 `core-quiz` 的错题归因只认 `attempts`=**系统自己出的题**，卷面错进不来；`grep -rl "ocr\|OCR"` 3 处全是 bilibili/课堂视频，**无卷面通路**） | 🟢 | skeleton-created | 2026-11-01 | 2026-11-01 | r126。★1、95 文件 1.15 MB、JS、`0.3.2`、建仓 2026-10-17。400 dpi 光栅化→按题号逐题提取（题干/作答/划改/页边演算/知识点/**错因**/难度）→确认后归档 `library/<学科>/<卷子>/cards/*.md`→重建 `index.md`。**独有**：笔迹颜色筛选、OMML 原生公式导出 PDF、回收站、会话可追溯。**与 OCR 簇正交**（`picturereader`/`dsh-ocr-plugin`/`dsh-tool-ocr` 只做「图→文」，本条做「文→可复习结构」）。**风险**：①硬依赖视觉模型（启动即校验，好）②`engines.dsh >= 0.2.1-rc.2` 需对齐 ③**`node_modules/` 随仓提交 —— 不整包 vendor** ④npm 无发布只能 tag 锁 |
+| `yiyunet/dsh-learn-skills` | A 原生DSH（topics: `dsh-plugin`/`agent-preset`） | MIT ✅ | 强（学习） | **重复可强化**（同一面板=学习页知识卡片流；同一功能=「材料→知识」；多出的=**六级漏斗 + 审核入库 + 体系体检**，本仓 `core-knowledge` 无「体检」概念） | 🟡 | proposed | 2026-11-01 | — | r126。JS 727 KB、★1、建仓 2026-09-28。**只建议接「体系体检」单点**（找长期未被引用/互相矛盾的卡片），**不接**输入区常驻 UI（会与外壳抢位置）。需先读源码确认体检是否绑死自身存储 |
+| `kirikoo1127/dsh-learning-flow` | A 原生DSH | MIT ✅ | 中 | **重复可强化（弱）**（「研修中心」6 角色编排与 `core-classroom-agent` 课堂生成**同构**） | 🟡 | proposed | 2026-11-01 | — | r126。TS 91 KB、★1、建仓 2026-08-31、**零依赖**。价值在**角色间交接契约**的写法（纯 TS 零依赖），不在 6 角色本身；收益不明显，倾向降 🔵 |
+| `Max-Loo/dsh-learn-plugin` | A 原生DSH | MIT ✅ | 中 | **重复**（学习规划方向），增益**无法从元数据判定** | 🔵 | proposed | 2026-11-01 | — | r126。TS 1.0 MB、★0、建仓 2026-10-20。描述仅「在 DSH 中借助 AI 进行系统性学习」，机制不明；**不进骨架** |
+| `coner13/dsh-hippocampus` | A 原生DSH | MIT ✅ | 弱-中（跨会话记忆，非学生专有） | **重复可强化（待验）**（已有 `kenz1117/dsh-engram` 22 工具+FTS5、`bowenliang123/dsh-context` 看板；本条差异点=**「会变淡」的遗忘衰减**，与 `dsh-radar-fsrs-scheduler` 同族数学） | 🔵 | proposed | 2026-11-01 | — | r126。JS 105 KB、★6、建仓 2026-10-31（很新）。可作**衰减函数参考实现**，但非学生场景，优先级低于学习向 |
+
+**本轮排除（不登记，仅留痕）**：`hy-sde/dsh-plugins`/`guraul/self-dsh-plugins`/`apopov-app/dsh-plugins`/`quark-zju/dsh-plugins`/`xushilianzhuren/*`（`license: None` ⛔）· `hy-sde/dsh-av`/`kp-z/dsh-git-graph`/`2BingLing/dsh-market`（`NOASSERTION` ⚠）· `polang233/dsh-plugin-index`（GPL-3.0 ⛔）· `dsh-market`/`dsh-plugin-hub`/`DSH-Plugins-Marketplace`（已登记，市场簇饱和，重复无增益）· `deepseek-harness-java/*`（Java 非 JS + 无许可证）。
+
+**授权与验收**：搜索 **10/10**（未 403）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **1 个**。
