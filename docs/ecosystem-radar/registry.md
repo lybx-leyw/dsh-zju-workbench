@@ -4280,3 +4280,26 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 **对 `dsh-radar-zone-notify` 的建议**（本轮唯一可执行产出，未改代码）：① 锁版阻塞（`dsh-plugin-notifications` npm 仍 404）**不应**用 `dsh-notify-me` 顶替——它接不了「与对话无关的待办到期」；正解是等上游发版或锁 git 引用 + 本地 build；② 补 TODO-4 时照抄租约思路（`pageLeaseMs` + health 探针）解决页面/宿主重复投递；③ 评审第一问应是「待办到期时用户多半在不在页面前」——若多半在，应优先做页内角标（0 依赖）而非系统通知。
 
 **授权与验收**：搜索 **7/10**（未 403，完整）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **0 个**（无 🟢，且同一接缝不并列两个半成品）· 报告 `docs/ecosystem-radar/2026-11-02-00.md`。
+
+---
+
+### r131 · 2026-11-02 03 时 · B 组（浙大场景）+ A 组「按时间排序」补扫
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `yi-yezhiqiu/dsh-prompt-market` | A 原生DSH | MIT ✅（npm + 仓库两处一致） | 中（常用指令一键复用） | **重复且可强化**（判据③依据：本仓输入框提示词层是**真空**） | 🟢 | skeleton-created | 2026-10-15 | 2026-11-02 | ★109（原 ★76）。**r98 曾随「插件市场簇」整批封板，从未单独评估能力**，本轮重过判据。`0.1.3`：`dependencies: []`、**无 `prepare`**、无 peer → 三门全过（可锁版）。槽位 `conversation.input.left` + `.overlay`（order 80），本仓**0 占用**（grep 确认）。判据③核实：`grep -rniE "prompt ?(template\|library\|preset\|注入)" packages/dsh-zhiyun-*/src` 命中 7 处**全是出题流水线**（`classroom-generate/prompts.js`、`lecture-tools/prompt-hints.js`），与用户提示词词面相同域不同。骨架 `packages/radar/dsh-radar-prompt-shelf`。**⚠ 三条前置未解**：①纯本机模式（上游 catalog 默认含远端源 + `api.github.com` base64 兜底，`localOnlySupport()` 现恒 false）；②配置通道（`config: {}` 但 `apply` 空）；③槽位为何为空（没人做 or 宿主不给） |
+| `FeatherHunter/dsh-prompt` | A 原生DSH | MIT ✅ | 中（同上） | **重复可强化，但与上行同槽位二选一** | 🔵 | proposed | 2026-11-02 | — | ★92、`0.4.40`、**活跃**（push 2026-11-01，40+ 版本）、`dsh.bundle.patch` + `conversation.input.left/.overlay` + `shell.overlay` + `settings.section`。功能强于上行（预制+自定义模板、`/prompt` 联想、悬浮卡）。**但锁不住**：`prepare: npm run build`（装包即构建）+ `dependencies` 含私有 `dsh-log@^0.3.4`（**非锁版**）+ `lib/client.js` 1,017,637 B。对外出口 `globalThis.__dshPromptSetRemote` **只管 UI 偏好、与提示词无关**。**不并列接入**（两枚按钮抢同一槽位） |
+| `yamingmou/dsh-log-contract` | B 其他JS（CLI 库） | MIT ✅ | 弱（会话日志自检） | 全新（运维向，无面板） | 🔵 | proposed | 2026-11-02 | — | ★2、`0.3.30`、`dependencies: []`、peer `@deepseek-ai/dsh-session ^0.1.0-rc.7 \|\| ^0.1.5-rc.1 \|\| ^0.2.0-rc.1`（与本仓 `0.2.0-rc.2` **交集非空**）。**无 `dsh.bundle.patch` → 不是面板插件**，`exports` 有 `./contracts`/`./prewrite`，只能当 CLI（`bin/dsh-log-contract.mjs`）或预写校验用。只登记，不接 |
+| `moqinghua2020/dsh-plugin-patrol` | A 原生DSH | **NOASSERTION** ⚠ | 弱 | 重复可强化（插件健康巡检） | 🔵 | pending-license | 2026-11-02 | — | ★0、2026-11-01。自述「6 项健康巡检 + 设置页面板 + 2 工具，三值不塌缩：unknown 不算 ok」—— **工程口径（三值健康度）值得本仓「插件审计」类骨架借鉴**，但无许可证，**不采用、不摘码** |
+| `KannaKuron/dsh-gitbash-shell` | B 其他JS | MIT | 无 | 无交集 | ⛔ | rejected | 2026-11-02 | — | ★41。Windows 专用 Git Bash 执行器（替代 pwsh），平台绑定 + 与本仓 web 面板零交集 |
+| `Anchorite-no/zju-skill-public` | B 其他JS（Agent skills） | **GPL-3.0** ⛔ | 中（浙大能力包） | 全新（线索） | ⛔ | rejected | 2026-11-02 | — | ★14、**2026-11-01 新建**，描述自述「ZJU Skill public edition preparation; capabilities under review」→ **空壳**。GPL 不在宽松白名单，不摘任何代码。只作「Agent 该有哪些浙大能力」的需求线索（对照已登记的 `Zarad0X/openclaw-zju-skills`，MIT 但同为本生态外） |
+
+**本轮 ⚠ NOASSERTION（单列，不采用、不摘代码）**：`moqinghua2020/dsh-plugin-patrol`(★0，DSH 插件健康巡检) · `kialajin-l/DSH_Plus`(★0，个人插件合集)。
+
+**B 组词面结论（写回关键词池）**：4 主词去重 **118** 条、未登记 **46**，其中课程资料库 15（**全部无许可证**）、课设/作业 6（GPL 或无关）、**非浙大的通用 campus 模板 28**、CC98 无证小工具 3。⇒ ① **`campus app` 从池中删除**（2,491 条首屏无一条与中国校园相关）；② **`zju course` 退役**（与 r130 同结论：全是资料库）；③ B 组改以 **`zju language:typescript`** 为主词（39 条、工具密度显著更高，本轮 12 条已登记、仅 4 条新且均为 ★0–1）。
+
+**A 组探针修正（写回关键词池，本轮最重要发现）**：r130「A 组主词已饱和」**只对 stars 排序成立**。改用 **`q=dsh in:name&sort=updated`（57,553 条，取首屏 40）→ 40 条里 34 条未登记**，且 `pushed_at=2026-11-01` 占绝大多数 —— 每夜有十几个 ★0–3 新插件，按 stars 排序永远排不进前 30。⇒ **A 组主探针改为 `dsh in:name sort=updated` 首屏 40（1 次搜索换 34 个新面孔）**，高星词搜索降级为「老仓复活探针」（每 3–6 轮一次）。
+
+**本轮新面孔中与学习/上下文相关但因 ★0–3 且功能单薄未逐条登记的**（留痕）：`regrevia/dsh-vantage`(★1 MIT，只读任务总览) · `rongyishuaige7/dsh-stats`(★2 MIT，Token 消耗看板) · `spartawhy117/dsh-token-dash`(★0 MIT，底栏 Token 看板) · `yamingmou/dsh-log-contract`(★2，已登记) · `TLEWA/dsh-sidebar-row-menu`(★1 MIT) · `tunaflsh/dsh-glob-replace`(★0 Apache-2.0，全局检索替换) · `AdamPlatin123/dsh-orchestra`(★0 Apache-2.0，多 Agent 编排) · `ouzx6696-cmyk/dsh-zhizhang`(★0 null，拆书+灵感+写作) · `aichixiaojuzi/dsh-model-quick-switch`(★0 MIT) · `huashaoya/dsh-enhance`(★0 MIT，聚合插件包) · `ArtomYuan/dsh-caduceus`(★0 MIT，飞书壳) · `mjw0531/dsh-ai-studio`(★0 MIT) · `ukit-2/dsh-music-player-bili`(★0 MIT) · `LeeRolling/dsh-boot-suite`(★28 MIT，开机动画，与学习无关) · `xisnn/dsh-outpost`(★8 MIT，非官方移动端) · `citrusli2026/dsh-desktop`(★18 MIT，Electron 壳，**桌面壳层已封板**) · `chnjames/dsh-plugin-market`(★7 null，**插件市场层已封板**) · `MYCF711/dsh-session-superagent`(★0 MIT，盯仓库唤醒会话) · `vinayakv22/paperclip-adapter-dsh`、`danielyongzx1/dsh-clanker-bridge`、`KonnectSuite/dsh-aryacode-polish`、`LeiYuXingZhou/dsh-preview-extra`、`skunpoj/dsh_setup`、`Minecraftmoyu/jiuhu-dsh`、`tenkrol/dsh_locale_ru`、`xqz0405/dsh-qq-memory`、`Dfg2218/dsh-board`、`cyt20070605-cloud/DSH-wiki`、`kizaki-R/Antigravity-Next-for-DSH`、`Britneycode/dsh-fish-soul`(null)（★0–1，无学生场景或功能单薄）。
+
+**授权与验收**：搜索 **7/10**（未 403，完整）· 仓库整理 **0 迁移 / 0 测试删除**（基线干净）· 骨架 **1 个**（`packages/radar/dsh-radar-prompt-shelf`）· 报告 `docs/ecosystem-radar/2026-11-02-03.md`。
