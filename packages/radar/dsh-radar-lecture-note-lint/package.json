@@ -1,0 +1,23 @@
+{
+  "name": "dsh-radar-lecture-note-lint",
+  "version": "0.0.0-radar",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】强化式集成：给智云讲义装配链补一层「渲染前静态校验」（表格裸竖线/公式未闭合/\\frac 缺花括号/单行 details 等 11 条规则）。借鉴 chenqianyu486-sys/dsh-zju-lecture-note（MIT）的 note_lint 规则，用 JS 重写，代码不直接引入。",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check": "node --check src/index.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

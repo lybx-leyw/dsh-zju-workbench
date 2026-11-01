@@ -4184,3 +4184,25 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 **本轮排除（不登记，仅留痕）**：`hy-sde/dsh-plugins`/`guraul/self-dsh-plugins`/`apopov-app/dsh-plugins`/`quark-zju/dsh-plugins`/`xushilianzhuren/*`（`license: None` ⛔）· `hy-sde/dsh-av`/`kp-z/dsh-git-graph`/`2BingLing/dsh-market`（`NOASSERTION` ⚠）· `polang233/dsh-plugin-index`（GPL-3.0 ⛔）· `dsh-market`/`dsh-plugin-hub`/`DSH-Plugins-Marketplace`（已登记，市场簇饱和，重复无增益）· `deepseek-harness-java/*`（Java 非 JS + 无许可证）。
 
 **授权与验收**：搜索 **10/10**（未 403）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **1 个**。
+
+---
+
+## r127 · 2026-11-01-15 · B 组（换轴：`zju + language` 交叉 / 生活服务词面 / `zju dsh`）
+
+> **轮换器判 `same-day(exhausted)`** —— 今天 A/B/C 已跑满，按规则取「今天最少跑过的组」，
+> 本轮跑 B 但**换搜索轴**：不再用 `zju`/`cc98` 平面词（registry 已 94 条浙大系、簇接近饱和），
+> 改打 **`zju + language:` 交叉 + 校园生活服务词面（充电桩/食堂/校车/选课/查老师）**。
+> **词面实测**：`zju food canteen`=**0**、`zju bus shuttle`=**0**、`zju grade gpa`=**0**、
+> `zju dsh`=**2**（本仓 + 1 新插件，精度最高）、`campus app zju`=**2**。
+> 1 条 🟢（A 类）+ 1 条 ⛔（GPL），其余全部已登记。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `chenqianyu486-sys/dsh-zju-lecture-note` | **A 原生DSH**（`dsh.bundle.patch` → `cordis.patch.yml`，id `dsh-zju-lecture-note`） | **MIT** ✅（API 报 `NOASSERTION`，**实读 LICENSE 首行 `MIT License`**、26 行、双 Copyright `chenqianyu486` + `zju-lecture-summerizer- contributors`；`package.json.license="MIT"`） | 强（智云回放 → 可复习讲义） | **重复且可强化（只取一块）**：7 工具里 6 个本仓**已有等价实现**（`source-classroom` 链接/字幕/PPT、`core-parser` 课件、回放直链），整包挂载=⛔重复无增益；**唯一增量=`zju_check_note` 的 11 条讲义渲染规则**，本仓 `register.js` 只管书面语、`grep 'table_bare_pipe\|frac_no_brace\|inline_math_unclosed\|details_single_line' packages/` **零命中** | 🟢 | skeleton-created | 2026-11-01 | 2026-11-01 | r127。★0、508 KB、建仓 2026-10-30、**今日仍在推**。JS 桥 653 行 + Python 核心 2,204 行 + MCP 118 行。**不锁版挂载、不引 npm、不复制 Python 源**，按 CONTRIBUTING 3.3 只借鉴 `note_lint.py` 规则 → JS 重写为 `dsh-radar-lecture-note-lint`。**风险**：①Python 运行时与本仓 JS 主导栈不一致（重写规避）②`zju_read_browser_cookie` 读 Edge 凭据与本仓「浙大一卡通会话」路线冲突，**不纳入**③★0 三天新仓，规则未长期检验 → 建议先上 8 条 `error` 级 |
+| `ZJU-Charger/ZJU-Charger` | B 其他JS（实为 Python FastAPI + 前端） | **GPL-3.0** ⛔ | 强（查空闲充电桩） | 全新（本仓无充电桩面板） | ⛔ | rejected | 2026-11-01 | — | r127。★**90**（校内真需求）、16 MB、2025-11-24 建仓、2026-03-11 后**半年未动**。**GPL-3.0 硬门槛排除，不摘任何代码**；`backend-cloudflare` 同许可。将来若做此面板应**直接调学校公开接口**，不读此仓实现 |
+
+**本轮排除（不登记，仅留痕）**：`AoiKJuice/ZJU-All-in-One`/`hz9404807-ctrl/zju-campus-guide`/`ZJU-Charger/zju-charger-frontend`/`EveSunMaple/zju-charger-app`/`SJoJoK/ZJU_Charger`/`zju-pil-lab.github.io`（`None`）· `macanine/zju-english-dictation`（GPL-3.0）· `zzzzym7018/dsh-fudan-status-wallpaper`/`Jiangweidajiduibudui/zju-course-assistant`（`NOASSERTION`）· **`chalaoshi` 全家桶**（`zjuchalaoshi/chalaoshi` ★182 `None`、`ssaichixbg/chalaoshi` ★84 `None`、`Lvshujun0918/chalaoshi` `None`、`co-knight/Chalaoshipy` GPL-3.0 —— **查老师方向无一可合法使用，建议词面整簇降权**）· 重复命中不重登记：`birchtree2/zju-grad-course-helper`（⛔）· `kenqia/zju-forum-search`/`macanine/zju-english-helper`（无许可 ⛔）· `Coran-tech/cc98-reborn`（🔵 两轮复核一致）· `Vita0818/CC98-SearchPro`（🟡）· `wuideas/dsh-cc98-duty`/`firefelixfu026/CC98AI-PLUS`（rejected）· `yuanstarstar/dsh-bit-login`/`LaoGordon/dsh-literature-search`/`Xinzhe99/zju-autologin`/`Jnove/ZJUCoursetrace`（已登记）。
+
+**词面校准（写回关键词池）**：`zju food canteen`=**0** / `zju bus shuttle`=**0** / `zju grade gpa`=**0** → **三个词面应移出池子**（浙大生活服务方向 GitHub 基本无项目，充电桩是唯一例外且 GPL）；`campus app zju`=**2** → B 组原池 `campus app` 近乎无效，改用 `zju + <具体场景>`；**`zju dsh`=2 精度最高，建议固定占 1 次配额**。
+
+**授权与验收**：搜索 **10/10**（未 403）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **1 个**（`dsh-radar-lecture-note-lint`）。
