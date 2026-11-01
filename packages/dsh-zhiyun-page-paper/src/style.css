@@ -694,7 +694,8 @@ body[data-zhiyun] .zp-drawer {
 }
 
 body[data-zhiyun] .zp-drawer.is-open {
-  width: 392px;
+  /* 拖动时 JS 只改写这个变量，不触发 React 渲染与整页重排。 */
+  width: var(--zp-drawer-width, 392px);
 }
 
 body[data-zhiyun] .zp-drawer-resize {
@@ -705,6 +706,32 @@ body[data-zhiyun] .zp-drawer-resize {
   width: 5px;
   cursor: col-resize;
   z-index: 2;
+  /* 宽度不设上限，但可拖区域要够宽好抓：hover/focus 时给一条可见的高亮线。 */
+  touch-action: none;
+}
+
+body[data-zhiyun] .zp-drawer-resize:hover,
+body[data-zhiyun] .zp-drawer-resize:active {
+  background: var(--zy-accent-line, var(--zy-line));
+}
+
+/* 拖动期间：禁掉文本选择，并给整页一个统一手势，避免划过正文时选中一整片字。
+ * 同时切断阅读器对指针的接收 —— 指标一旦移进 PDF iframe，父页面就收不到
+ * pointermove，「拖到正文上就不动了」。 */
+body.zp-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+body.zp-resizing .zp-frame,
+body.zp-resizing .zp-reader {
+  pointer-events: none;
+}
+
+/* 拖动时把阅读器的布局影响圈在内部：抽屉变宽只需重算这一栏的外框，
+ * 不必把 iframe 里整棵文档树跟着重排一遍（那是漂移与掉帧的主要来源）。 */
+body.zp-resizing .zp-reader {
+  contain: layout paint;
 }
 
 body[data-zhiyun] .zp-drawer:not(.is-open) .zp-drawer-resize {
@@ -1305,8 +1332,13 @@ body[data-zhiyun] .zp-resume-notice {
 }
 
 @media (max-width: 760px) {
+  /* 窄屏抽屉独占全宽，此时拖动没有意义（也没有余量），直接盖掉自定义宽度。 */
   body[data-zhiyun] .zp-drawer.is-open {
     width: 100%;
+  }
+
+  body[data-zhiyun] .zp-drawer-resize {
+    display: none;
   }
 
   body[data-zhiyun] .zp-bar {
