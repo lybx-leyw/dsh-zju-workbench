@@ -1,18 +1,9 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useRef, useState } from 'react';
 import { Empty, Icon, Mark, StudentAvatar, useStore } from 'dsh-zhiyun-shell-ui';
-import { NAV, FULL_BLEED_PAGES, RAIL_DEFAULT, RAIL_ACCOUNT, activePage, matchingPages, pageSlot, visiblePages } from './model.js';
+import { NAV, FULL_BLEED_PAGES, RAIL_DEFAULT, RAIL_ACCOUNT, matchingPages, pageSlot, visiblePages } from './model.js';
 
 /** 导轨**下半组**（分隔线下方）固定了哪些页，记在 localStorage。 */
 const PINNED_KEY = 'zhiyun.rail.pinned';
-
-/**
- * 会话抽屉的宽度（px）。
- *
- * 这一份是**唯一真源**：`.zy-drawer` 的 `width` 由 CSS 变量 `--zy-drawer-width` 取值
- * （见 style.css），`AskChrome` 也用它给问一问那一列让位。改宽度只改这里。
- */
-const DRAWER_WIDTH = 304;
 
 /**
  * 读用户固定到导轨下半组的页。
@@ -28,8 +19,9 @@ function readPinned() {
     const raw = globalThis.localStorage?.getItem(PINNED_KEY);
     const parsed = raw === null || raw === undefined ? null : JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.every((id) => typeof id === 'string')) {
-      // 上半组与「个人」（头像那一格）都不参与固定/取消固定，一并滤掉。
-      return parsed.filter((id) => !RAIL_DEFAULT.includes(id) && id !== RAIL_ACCOUNT);
+      // 上半组不参与固定/取消固定，一并滤掉。`RAIL_ACCOUNT` 不再是页面，
+      // 但老用户的 localStorage 里可能还留着 `'me'` 这类已删除的页 id，一并清掉。
+      return parsed.filter((id) => !RAIL_DEFAULT.includes(id) && id !== RAIL_ACCOUNT && id !== 'me');
     }
   } catch { /* 坏 JSON / 无痕模式：当作没设过 */ }
   return [];
@@ -55,8 +47,7 @@ export function SearchDialog({ controller, open, onClose, pages }) {
   </dialog>;
 }
 
-export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidden, account }) {
-  const active = activePage(usePanelInfo(info => info.activePanelId));
+export function Sidebar({ collapsed, controller, renderSlot, activePage: active, hidden, account }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [tip, setTip] = useState(null);
   // 导轨上固定了哪些页（用户可以改，见 readPinned）。
@@ -73,14 +64,15 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidde
   const accountDialog = useRef(null);
   // 被取消的页不在侧栏、也不在跳转搜索里 —— 两处必须用同一份清单，否则会出现
   // 「侧栏看不到，但 Ctrl+K 能跳过去」的半坏状态。
-  const pages = visiblePages(useStore(hidden));
-  useEffect(() => {
+  const pages = visiblePages(useStore(hidden));  useEffect(() => {
     function key(event) {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setSearchOpen(value => !value); }
+      if (active !== 'ask' && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault(); event.stopImmediatePropagation(); setSearchOpen(value => !value);
+      }
     }
-    document.addEventListener('keydown', key);
-    return () => document.removeEventListener('keydown', key);
-  }, []);
+    document.addEventListener('keydown', key, true);
+    return () => document.removeEventListener('keydown', key, true);
+  }, [active]);
 
   // 面板打开时：点外面或按 Esc 关掉。两个监听都挂在 document 上 —— 面板与触发器
   // 都在 document 流之外（fixed），只能这样判。
@@ -141,9 +133,7 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidde
   const primaryPages = pages.filter((page) => RAIL_DEFAULT.includes(page.id));
   const extraPages = pages.filter((page) => pinned.includes(page.id));
   /** 可管理的页 = 既不在上半组、也不是头像那一格：菜单里只列它们。 */
-  const manageablePages = pages.filter((page) => !RAIL_DEFAULT.includes(page.id) && page.id !== RAIL_ACCOUNT);
-  /** 头像那一格对应的页（被取消时不显示）。 */
-  const accountPage = pages.find((page) => page.id === RAIL_ACCOUNT) ?? null;
+  const manageablePages = pages.filter((page) => !RAIL_DEFAULT.includes(page.id));
 
   /**
    * ⚠️ **侧栏不允许展开**（当前的产品决定）：这一列只有图标，名字靠悬停浮出。
@@ -232,32 +222,27 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidde
         ><Icon name={item.icon}/></button>)}
       </nav>
       <div className="zy-sidebar-bottom">
-        {/* ⚠️ 类名保持 `zy-settings-host`：样式表里有一条 `.zy-settings-host{display:none}`
-            刻意把**原生**设置面板藏在侧栏（可见的设置面归「个人」页）。
-            这里换个名字就会让它重新露出来。 */}
-        <div className="zy-settings-host">{renderSlot('sidebar.settings', { wide: false })}</div>
-        {/* 扩展入口（`sidebar.footer.action`）保留挂载点：仓库里现在没有包注册它，
-            渲染出来是空的；留着是为了将来有人注册时不至于**静默**丢掉。 */}
-        <div className="zy-rail-actions">{renderSlot('sidebar.footer.action', { wide: false })}</div>
+        {/* Native settings/footer slots remain owned by the native sidebar in ask. */}
         {/* 明暗开关原先在页头上，页头去掉后它是唯一入口，挪到这里 ——
             全局控件放在全局导航里。aria-label 保持「切换明暗」不变：
             已有脚本与肌肉记忆都按这个名字找它。 */}
         <button className="zy-rail-item" title="切换明暗" aria-label="切换明暗" onClick={controller.toggleTheme} {...tipProps('切换明暗')}><Icon name="moon"/></button>
-        {/* 个人：**最下方**，圆形头像。
+        {/* 账号：**最下方**，圆形头像。
             它不是图标而是"人"—— 用头像既表明是谁，也把账号入口与功能图标分开；
             所以位置固定在最底，和最上面那排页面图标不是一组。
-            点它是**浮出账号面板**（登录 / 设置），不再直接跳页：个人页是设置面，
-            而这里最常用的动作是登录，先问一句更省事。停在个人页时头像仍高亮。 */}
-        {accountPage && <button
+            它是**账号入口而不是页面**：点开浮出账号面板（登录 / 设置）。
+            早先这里是一个叫「个人」的页，那一页删掉之后头像不再跳页 ——
+            它承载的两块内容都进了原生设置（「账号与数据」分区）。 */}
+        <button
           type="button"
-          className={`zy-rail-avatar${menu?.kind === 'account' || active === accountPage.id ? ' is-active' : ''}`}
+          className={`zy-rail-avatar${menu?.kind === 'account' ? ' is-active' : ''}`}
           aria-label="账号"
           aria-expanded={menu?.kind === 'account'}
           aria-haspopup="menu"
           title="账号"
-          onClick={togglePanel('account', 4)}
+          onClick={togglePanel('account', 3)}
           {...tipProps('账号')}
-        ><StudentAvatar size={18}/></button>}
+        ><StudentAvatar size={18}/></button>
       </div>
     </aside>
 
@@ -287,12 +272,12 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidde
 
     {/* 账号面板：头像点开的那一层。
         结构照 ChatGPT 的账号菜单：先一行身份（头像 + 名字 + 一句说明），
-        再一行「登录」开对话框、一行「设置」进个人页。
+        再「登录 / 设置」两行。设置打开的是**宿主原生浮窗**，「账号与数据」是它里面的一个分区。
 
         ⚠️ 身份那一行是**静态**的（「智云课堂 / 浙大统一身份认证」），不显示
         "已连接 · 某某"。壳没有账号状态可用：那属于领域（`zhiyunStudyController`），
         而壳刻意不认识领域包 —— 一旦读它，「停用学习核心」会连坐把导航也拖垮。
-        真实状态在对话框里（那段内容由页面包提供，它本来就拿着领域控制器）。 */}
+        真实状态在对话框里（那段内容由本工作台的账号包提供）。 */}
     {menu?.kind === 'account' && <div className="zy-rail-menu zy-account-menu" role="menu" aria-label="账号" style={{ top: `${menu.top}px`, left: `${menu.left}px` }}>
       <div className="zy-account-head">
         <span className="zy-account-face"><StudentAvatar size={20}/></span>
@@ -306,7 +291,7 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidde
         </button>
       </div>
       <div className="zy-rail-menu-row">
-        <button type="button" role="menuitem" tabIndex={-1} className="zy-rail-menu-open" onClick={() => { setMenu(null); controller.navigate('me'); }}>
+        <button type="button" role="menuitem" tabIndex={-1} className="zy-rail-menu-open" onClick={() => { setMenu(null); controller.openSettings(); }}>
           <Icon name="gear" size={17}/>设置
         </button>
       </div>
@@ -339,29 +324,18 @@ export function Sidebar({ collapsed, controller, renderSlot, usePanelInfo, hidde
   </div>;
 }
 
-/** Keep the native shell alive for onboarding, recovery and shortcuts; its
- * section renderers move into Personal without copying their forms or data. */
-export function PersonalSettingsBridge(props) {
-  const { NativeSettings, useSections, renderSlot, actions, controller } = props;
-  const sections = useSections(rows => rows);
-  const shell = props.useStore(state => state);
-  const [target, setTarget] = useState(null);
-  useEffect(() => {
-    const find = () => setTarget(document.getElementById('zy-personal-settings'));
-    find();
-    const observer = new MutationObserver(find);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, []);
-  useEffect(() => {
-    if (!shell.open) return;
-    controller.navigate('me');
-    actions.close();
-  }, [shell.open, controller, actions]);
-  return <><NativeSettings {...props}/>{target && createPortal(<div className="zy-settings-groups">{sections.map(section => <details className="zy-settings-group" key={section.id} data-settings-section={section.id}>
-    <summary><span className="zy-settings-icon"><Icon name={/model|provider|agent/.test(section.id) ? 'chat' : /permission/.test(section.id) ? 'check' : /plugin|module/.test(section.id) ? 'layers' : 'user'}/></span><span><strong>{section.id === 'models' ? 'AI 服务' : section.id === 'plugins' ? '功能与插件' : section.id === 'agent-presets' ? 'AI 使用偏好' : section.label}</strong><small>{/model|provider/.test(section.id) ? '配置问一问使用的 AI 服务' : /permission/.test(section.id) ? '管理 AI 可以执行的操作' : /plugin|module/.test(section.id) ? '管理学习空间的扩展能力' : /agent/.test(section.id) ? '选择模型、工具与权限的组合' : '调整应用与使用偏好'}</small></span><Icon name="chevron" size={16}/></summary>
-    <div className="zy-settings-body">{renderSlot('settings.section', { close: actions.close }, { only: section.id })}{section.id === 'general' && <div className="zy-settings-document">{renderSlot('settings.action', {})}</div>}</div>
-  </details>)}</div>, target)}</>;
+/**
+ * 原生设置面板的宿主。
+ *
+ * 设置**就是**宿主那个浮窗：`settings.section` / `settings.action` 全都是它的子槽位，
+ * 浮窗本身由它自己 portal 到 `body`。这里只把它的 store 动作交给壳（导轨「设置」
+ * 按钮与账号菜单都用同一个入口），**不复制任何分组或表单**，插件的
+ * `settings.section` 注册零改动。
+ */
+export function NativeSettingsHost({ NativeSettings, onActions, ...props }) {
+  const { actions } = props;
+  useEffect(() => { onActions(actions); }, [actions, onActions]);
+  return <NativeSettings {...props}/>;
 }
 export function Page({ page, controller, renderSlot }) {
   const item = NAV.find(item => item.id === page);
@@ -369,9 +343,9 @@ export function Page({ page, controller, renderSlot }) {
   // 所以这里的 fallback 不是「页面」而是「这个页面包没装」的占位 ——
   // 壳在场时导航、主题都照常可用。
   const missing = () => <Empty title={`${item.label}暂时不可用`}>这个页面由独立的插件包提供，当前未启用。</Empty>;
-  // 页面契约仍由壳定义：`controller`（导航/主题）与 `renderSlot`（渲染它自己的子插槽，
-  // 比如个人页里的 `zhiyun.me.account`）作为 owner props 交给页面组件 ——
-  // owner props 在宿主渲染顺序里最后展开，页面不必知道这些服务从哪来。
+  // 页面契约仍由壳定义：`controller`（导航/主题）与 `renderSlot`（渲染它自己的子插槽）
+  // 作为 owner props 交给页面组件 —— owner props 在宿主渲染顺序里最后展开，
+  // 页面不必知道这些服务从哪来。
   //
   // ⚠️ 这里**没有页头**。原先每条页面上方都有一条 69px 的横条，写着页面名、
   //    日期、明暗开关与「问一问」。它扛的四件事里两件是冗余的：
@@ -394,8 +368,7 @@ export function Page({ page, controller, renderSlot }) {
         不写的话浏览器只滚动、焦点还留在链接上，再按一次 Tab 又从头绕回导轨。
         `-1` 同时保证它自己不出现在 Tab 序列里 —— 跳过导航之后，下一个 Tab 应该落到
         正文里的第一个可聚焦元素，而不是又退回这里。
-        id 不会重复：七个页面各注册一个 `main` 面板，宿主按 `entryKey` 只挂当前那一个
-        （见 client.jsx 的 `ctx.slots.register({ name: 'main', key: … })`）。 */}
+        id 不会重复：产品页面注册到 `zhiyun.shell.page`，桥接按 `entryKey` 只挂当前一页。 */}
     <main className="zy-scroll" id="zy-main" tabIndex={-1}><div className={contentClass}>
       {parent && <button type="button" className="zy-page-back" onClick={() => controller.navigate(parent.id)}><Icon name="arrowLeft" size={14}/>{parent.label}</button>}
       {children.length > 0 && <div className="zy-page-subnav" role="group" aria-label={`${item.label}的更多入口`}>
@@ -405,272 +378,3 @@ export function Page({ page, controller, renderSlot }) {
     </div></main>
   </div>;
 }
-
-/**
- * 「问一问」面板的盒子：侧栏右边那一列（宿主的中间栏）。
- * 汉堡和抽屉都锚在它的左上角，而不是视口的左上角 —— Windows 标题栏会把这一列往下推，
- * 锚在视口上按钮就会漂进标题栏。
- *
- * 顺带把那个**面板元素自己**也返回出来：抽屉要「挤压」它（给它让出宽度），
- * 而不是浮在它上面。面板的类名是宿主 CSS-module 的哈希（`pI_x6G_centerCol`），
- * 拿不稳，所以只能走这条和在 `measure` 里一样的 DOM 结构关系去找。
- * @returns `{ box, panel }`：面板盒尺寸 + 面板元素（找不到时为 null）。
- */
-function useAskPanel() {
-  const [box, setBox] = useState({ left: 0, top: 0, width: 0, height: 0, radius: '0px' });
-  const [panel, setPanel] = useState(null);
-  useLayoutEffect(() => {
-    const findPanel = () => {
-      const sidebar = document.querySelector('.zy-sidebar');
-      // 侧栏根节点外面可能还有插槽包一层。顺着父级走到网格那一格，它的下一个兄弟才是问一问所在的中间栏。
-      let column = sidebar;
-      while (column?.parentElement && getComputedStyle(column.parentElement).display !== 'grid') column = column.parentElement;
-      const next = column?.nextElementSibling ?? sidebar?.parentElement?.nextElementSibling;
-      return { sidebar, column, next: next instanceof HTMLElement ? next : null };
-    };
-    const measure = () => {
-      const { sidebar, next } = findPanel();
-      setPanel(next);
-      // 抽屉的锚点用**侧栏右缘**，不用面板左缘：面板打开时会被挤到右边
-      // （见 useSqueezePanel），拿它当锚点会让抽屉跟着漂，跟着漂又推得更远 —— 正反馈。
-      // 侧栏不会被挤，它的右缘就是「问一问这一列原来从哪开始」，也正是抽屉该贴的地方。
-      const edge = sidebar ? Math.round(sidebar.getBoundingClientRect().right) : 0;
-      if (next === null) {
-        setBox({ left: edge, top: 0, width: Math.max(0, window.innerWidth - edge), height: window.innerHeight, radius: '0px' });
-        return;
-      }
-      const rect = next.getBoundingClientRect();
-      setBox({
-        left: edge,
-        top: Math.round(rect.top),
-        width: Math.max(0, Math.round(window.innerWidth - edge)),
-        height: Math.round(rect.height),
-        radius: getComputedStyle(next).borderTopLeftRadius || '0px',
-      });
-    };
-    measure();
-    const { sidebar, column, next } = findPanel();
-    const observer = new ResizeObserver(measure);
-    if (sidebar) observer.observe(sidebar);
-    if (column instanceof HTMLElement && column !== sidebar) observer.observe(column);
-    // 刻意**不**观察面板（`next`）：它会被挤压改变宽度，观察它就会和挤压形成回环。
-    if (next !== null) observer.observe(next.parentElement ?? next);
-    window.addEventListener('resize', measure);
-    return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
-  }, []);
-  return { box, panel };
-}
-
-/**
- * 打开抽屉时给问一问那一列让出宽度 —— 真正的「挤压」，而不是浮在它上面盖住。
- *
- * 抽屉挂在 `shell.overlay`（`position:fixed`），天然是浮层；要让内容**让位**，
- * 只能改面板自身的布局。宿主这一列是网格里的一格，`width` 由网格算，所以
- * 加 `margin-left` 会把内容整体右推、同时收窄可用宽度，效果就是被挤到一边。
- *
- * 还原时**逐条**恢复原先的内联值（而不是一律清空）：面板上本来可能就有别的内联样式。
- * @param panel - 问一问那一列的元素，或 null。
- * @param open - 抽屉是否打开。
- * @param width - 让出的宽度（px）。
- */
-function useSqueezePanel(panel, open, width) {
-  useLayoutEffect(() => {
-    if (panel === null) return undefined;
-    const before = { marginLeft: panel.style.marginLeft, transition: panel.style.transition };
-    panel.style.transition = 'margin-left .24s cubic-bezier(.2,0,0,1)';
-    panel.style.marginLeft = open ? `${width}px` : '';
-    return () => {
-      panel.style.marginLeft = before.marginLeft;
-      panel.style.transition = before.transition;
-    };
-  }, [panel, open, width]);
-}
-
-/** 当前会话：0.2 里「主面板在看哪个会话」由 uiWorkspace.selection 持久化。 */
-function useCurrentSession(uiWorkspace, sessions) {
-  const sessionId = useSyncExternalStore(
-    listener => uiWorkspace.selection?.subscribe(listener) ?? (() => {}),
-    () => uiWorkspace.selection?.getSnapshot?.()?.sessionId,
-    () => undefined,
-  );
-  const sessionList = useStore(sessions.list);
-  const summary = sessionId === undefined ? undefined : sessionList.byId?.[sessionId];
-  return { sessionId, title: summary === undefined || summary.blank === true ? '' : (summary.displayTitle ?? '') };
-}
-
-/**
- * 问一问会话头的 leading：跟会话名排在同一行，标题在它右边，不再盖住名字。
- * 挂在宿主的 `conversation.header.leading`（这一列在会话名之前，问一问才挂载）。
- *
- * 图标用 `panelRight`（带分割线的矩形，宿主侧栏的面板开关就是它），不用汉堡：
- * 汉堡在这个产品里表示「更多/菜单」，而这里开的是**一块固定的侧面板**。
- */
-export function AskMenuButton({ drawer }) {
-  const open = useSyncExternalStore(drawer.subscribe, drawer.getSnapshot, drawer.getSnapshot);
-  return <button type="button" className="zy-topbar zy-topbar-menu" aria-expanded={open} aria-controls="zy-session-drawer" aria-label="会话" title={open ? '收起会话面板' : '展开会话面板'} onClick={() => drawer.toggle()}><span className="zy-topbar-glyph"><Icon name="panelRight" size={18}/></span></button>;
-}
-
-/**
- * 会话抽屉挂在 `shell.overlay`，只在问一问显示。开关是会话头里的 {@link AskMenuButton}。
- *
- * `renderSlot` 与 `nativeBrowser` 都是框架/注入面给下来的：前者由**我们这条
- * `shell.overlay` 注册**的 `children` 声明授权（`sidebar.workspaces`），后者是
- * 「宿主浏览器到底有没有注册进来」的 uSES store。两者一起决定抽屉里渲染哪一份列表。
- */
-export function AskChrome({ drawer, sessions, workspaces, uiWorkspace, usePanelInfo, getLearningSpace, renderSlot, nativeBrowser }) {
-  const active = activePage(usePanelInfo(info => info.activePanelId));
-  const { box, panel } = useAskPanel();
-  const open = useSyncExternalStore(drawer.subscribe, drawer.getSnapshot, drawer.getSnapshot);
-  const isAsk = active === 'ask';
-  // 抽屉是这一列里的常驻面板：打开时把内容**挤**到右边（见 useSqueezePanel），
-  // 不是盖在上面。宽度与 CSS 里 `.zy-drawer` 的 304px 同源。
-  useSqueezePanel(isAsk ? panel : null, isAsk && open, DRAWER_WIDTH);
-  if (!isAsk) return null;
-  return <SessionDrawer open={open} box={box} drawer={drawer} sessions={sessions} workspaces={workspaces} uiWorkspace={uiWorkspace} getLearningSpace={getLearningSpace} renderSlot={renderSlot} nativeBrowser={nativeBrowser}/>;
-}
-
-/**
- * 会话抽屉：贴着问一问面板的左缘，拉出这一列的整高。
- *
- * 顶栏是「会话」和新建。遮罩只盖这一列，滑出动画也被这一列裁住，不会扫过导航栏。
- * 开关不浮在这一层上：它在会话头的 leading 里，和会话名并排。
- *
- * 说明位置放的是相对时间而不是「N 条消息」（宿主的列表投影没有条数）。
- * 菜单是「归档」：宿主没有删除接口，归档会把这条从列表里拿掉（登记槽还在，设置里可以恢复）。
- * 正在看的那条被归档后，不要马上再开一条空白会话，否则只是历史没了、壳还在。
- */
-export function SessionDrawer({ open, box, sessions, workspaces, uiWorkspace, drawer, getLearningSpace, renderSlot, nativeBrowser }) {
-  const [menu, setMenu] = useState(null);
-  const [renaming, setRenaming] = useState(null);
-  const [draft, setDraft] = useState('');
-  const [error, setError] = useState('');
-  const drawerRef = useRef(null);
-  const sessionList = useStore(sessions.list);
-  const workspaceList = useStore(workspaces.list);
-  // 宿主的浏览器是否已注册进来（uSES：订阅那份布尔，见 client.jsx 的 presence store）。
-  // `nativeBrowser` 缺席（老组合 / 注入面没有它）时按「没有」处理，直接走自写列表。
-  const hasNative = useSyncExternalStore(
-    nativeBrowser?.subscribe ?? (() => () => {}),
-    nativeBrowser?.getSnapshot ?? (() => false),
-    () => false,
-  );
-  const { sessionId } = useCurrentSession(uiWorkspace, sessions);
-  useEffect(() => {
-    if (!open) { setMenu(null); setRenaming(null); setError(''); return; }
-    const onKey = event => {
-      if (event.key !== 'Escape') return;
-      // 常驻抽屉**没有**「Esc 关掉」：它是固定区域，不该被一个用来清搜索/关菜单的键带走。
-      // 原生浏览器自己的控件（搜索框、菜单、对话框）会自行处理 Esc，这里不必管；
-      // 自写列表这边只在 Esc 时收起「更多」菜单。
-      // 关抽屉只有一条路：会话头那颗汉堡再点一次。
-      if (!hasNative && menu) setMenu(null);
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, menu, drawer, hasNative]);
-  useEffect(() => {
-    if (!menu) return;
-    const onPointer = event => {
-      const target = event.target;
-      if (target instanceof Element && target.closest('.zy-drawer-menu, .zy-drawer-more')) return;
-      setMenu(null);
-    };
-    document.addEventListener('pointerdown', onPointer);
-    return () => document.removeEventListener('pointerdown', onPointer);
-  }, [menu]);
-  // 所有 hook 都在此之上；下面只做纯计算，早期 return 不再改变 hook 数量。
-  // 「哪个工作区是这个学习空间」由领域状态包（dsh-zhiyun-core-study）回答：
-  // 它没有激活时这里拿不到服务，抽屉就只显示空列表 —— 导航与页面都还在。
-  const learningSpace = getLearningSpace?.();
-  const space = learningSpace?.pickLearningWorkspace(workspaceList.items, learningSpace.title);
-  if (box.height === 0) return null;
-  // 原生分支不需要「学习空间」这个前提：它自己列所有工作区。自写列表才需要。
-  const native = hasNative === true && typeof renderSlot === 'function';
-  if (!native && space === undefined) return null;
-  const rows = native ? [] : learningSpace.sessionRows(space, sessionList, 60, workspaceList.archivedSessionIds);
-  const menuRow = menu === null ? undefined : rows.find(row => row.id === menu.id);
-  /* 常驻抽屉：打开会话 / 新建会话**不关抽屉**。它是一块固定的区域，
-     用户在这里挑会话，挑完接着看，抽屉不跟着消失（临时浮窗时代才需要顺手关掉）。 */
-  const startNew = () => { setError(''); if (space !== undefined) uiWorkspace.startSession(space.workspaceId); };
-  const openSession = id => { setError(''); uiWorkspace.openSession(id); };
-  const archiveRow = id => {
-    setMenu(null);
-    const current = String(id) === String(sessionId);
-    if (current) drawer.holdEmptySession();
-    Promise.resolve(uiWorkspace.archiveSession(id)).catch(() => {
-      if (current) drawer.releaseEmptySession();
-      setError('归档失败');
-    });
-  };
-  const commitRename = async id => {
-    const title = draft.trim();
-    setRenaming(null);
-    const binding = sessions.binding(id);
-    if (binding === undefined || title === '') return;
-    const result = await binding.session.rename(title);
-    if (result !== undefined && result.ok === false) setError(result.error?.message ?? '重命名失败');
-  };
-  const toggleMenu = (event, id) => {
-    if (menu?.id === id) { setMenu(null); return; }
-    const button = event.currentTarget.getBoundingClientRect();
-    const host = drawerRef.current?.getBoundingClientRect();
-    if (!host) return;
-    const width = 148;
-    const height = 84;
-    const top = host.bottom - button.bottom < height + 8 ? button.top - host.top - height - 4 : button.bottom - host.top + 4;
-    const left = Math.min(Math.max(8, button.right - host.left - width), Math.max(8, host.width - width - 8));
-    setMenu({ id, top, left });
-  };
-  return <div className="zy-drawer-layer" data-open={open} style={{ left: box.left, top: box.top, width: box.width, height: box.height, borderTopLeftRadius: box.radius }}>
-    {/* 常驻侧栏：没有遮罩，点别处不收走。会话头那颗汉堡负责开合，
-        抽屉自己的标题栏里还有一个「收起」按钮 —— 抽屉盖住的是这一列的内容，
-        用户在里面翻会话时不该被迫回到顶端去找那颗汉堡。 */}
-    <aside className="zy-drawer" id="zy-session-drawer" ref={drawerRef} data-open={open} aria-hidden={!open} aria-label="会话">
-      {/* 原生分支把自己的一整套（标题、搜索、视图选项、新建会话/工作区、
-          分组树、归档筛选、对话框）都渲染在自己那棵树里，所以外面的自写头
-          不能出现 —— 两个「新建会话」按钮会打架，标题也会重复一次。
-          自写头只服务于退路列表。 */}
-      {!native && <header className="zy-drawer-head">
-        <strong>会话</strong>
-        <button className="zy-drawer-add" title="新建会话" aria-label="新建会话" onClick={startNew}><Icon name="plus" size={18}/></button>
-      </header>}
-      {native
-        ? <div className="zy-drawer-native">
-            {/* 宿主的浏览器没有「收起抽屉」这个概念（它本来住在侧栏里，靠侧栏开关收），
-                所以收起按钮由我们在它上面加一条窄栏。`aria-label` 与汉堡的「会话」
-                区分开，避免两个同名按钮。 */}
-            <div className="zy-drawer-native-bar">
-              <span className="zy-drawer-native-title">会话</span>
-              {/* 与会话头那颗是**同一个图标语言**（`panelRight`，宿主侧栏的面板开关）：
-                  抽屉收起的动作就是那块面板关掉，图标指向与展开一致，不换图形。 */}
-              <button type="button" className="zy-drawer-collapse" title="收起会话面板" aria-label="收起会话面板" onClick={() => drawer.close()}>
-                <Icon name="panelRight" size={16}/>
-              </button>
-            </div>
-            {renderSlot('sidebar.workspaces', { wide: true, expandSidebar: () => {} })}
-          </div>
-        : <div className="zy-drawer-list" role="list" onScroll={() => setMenu(null)}>
-            {error && <p className="zy-drawer-error" role="alert">{error}</p>}
-            {rows.length === 0 && <div className="zy-drawer-empty"><Icon name="chat" size={22}/><p>还没有会话</p></div>}
-            {rows.map(row => <div key={row.id} role="listitem" className={`zy-drawer-row${String(row.id) === String(sessionId) ? ' is-current' : ''}`}>
-              {renaming === row.id
-                ? <input className="zy-drawer-input" autoFocus aria-label="会话名称" value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') commitRename(row.id); if (event.key === 'Escape') setRenaming(null); }} onBlur={() => commitRename(row.id)}/>
-                : <button className="zy-drawer-open" title={row.title || '新会话'} onClick={() => openSession(row.id)}>
-                    <Icon name="chat" size={18}/>
-                    <span className="zy-drawer-text">
-                      <span className={`zy-drawer-name${row.title ? '' : ' is-blank'}`}>{row.title || '新会话'}</span>
-                      <small className="zy-drawer-meta">{learningSpace.relativeLabel(row.updatedAt) || '暂无消息'}</small>
-                    </span>
-                  </button>}
-              <button className="zy-drawer-more" type="button" aria-expanded={menu?.id === row.id} aria-haspopup="menu" title="更多" aria-label="更多操作" onClick={event => toggleMenu(event, row.id)}><Icon name="more" size={16}/></button>
-            </div>)}
-          </div>}
-      {!native && menuRow && <div className="zy-drawer-menu" style={{ top: menu.top, left: menu.left }} role="menu">
-        {sessions.binding(menuRow.id) !== undefined && <button type="button" role="menuitem" onClick={() => { setMenu(null); setRenaming(menuRow.id); setDraft(menuRow.title); }}>重命名</button>}
-        <button type="button" role="menuitem" className="is-danger" onClick={() => archiveRow(menuRow.id)}>归档</button>
-      </div>}
-    </aside>
-  </div>;
-}
-
-

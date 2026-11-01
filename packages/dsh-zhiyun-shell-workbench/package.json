@@ -11,6 +11,7 @@
     "client": {
       "platform": "web",
       "inject": [
+        "dsh-zhiyun-shell-bridge",
         "@deepseek-ai/dsh-client-ui-layout",
         "@deepseek-ai/dsh-client-ui-workspace",
         "@deepseek-ai/dsh-client-ui-theme",

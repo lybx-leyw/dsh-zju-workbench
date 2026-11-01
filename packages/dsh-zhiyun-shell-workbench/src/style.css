@@ -11,22 +11,20 @@ body[data-zhiyun] {
   --zy-font:'Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
   /* 会话抽屉宽度。JS 侧的同名真源在 components.jsx 的 DRAWER_WIDTH（两边必须一致：
      抽屉多宽，问一问那一列就要让出多宽，否则「挤压」会错位）。 */
-  --zy-drawer-width:304px;
   --dsw-font-family:var(--zy-font);
   --dsw-alias-button-info-fill:var(--zy-action);--dsw-alias-button-info-hover:var(--zy-action-hover);
 }
 body[data-zhiyun][data-ds-dark-theme] {
   --zy-bg:#191c20;--zy-surface:#22262b;--zy-sidebar:#15181c;--zy-text:#e8ebee;--zy-secondary:#afb6bf;--zy-muted:#9099a4;--zy-line:#363b43;--zy-accent:#94bdf4;--zy-soft:#25344a;--zy-hover:#2b3440;--zy-brand:#94bdf4;--zy-brand-soft:#25344a;--zy-action:#245fa9;--zy-action-hover:#2b70c3;
 }
-.zy-sidebar,.zy-page,.zy-search-dialog,.zy-hero-brand { font-family:var(--zy-font);color:var(--zy-text);font-size:13px;line-height:1.6;font-synthesis:none; }
 .zy-sidebar,.zy-page,.zy-search-dialog,.zy-sidebar *,.zy-page *,.zy-search-dialog * {box-sizing:border-box;}
 /* `appearance:none` 是按钮的常规重置：让平台的原生绘制（边框、圆角、底色）不参与，
- * 只用我们写的样式。仓库里 `.zy-topbar` 早就单独加了这一条，这一层重置一直漏着。
+ * 只用我们写的样式。
  *
  * ⚠️ 别把它当成"圆角不生效"的解 —— 排查头像那个超椭圆问题时我一度这么以为，
  *    实测（同尺寸对照：加不加 appearance 都按圆角命中）证明不成立。真正的原因是
  *    宿主继承下来的 `corner-shape`，见下面 `.zy-rail-avatar` 那一段。 */
-.zy-sidebar button,.zy-page button:where(:not(.zy-settings-body *)),.zy-search-dialog button {font:inherit;cursor:pointer;border:0;color:inherit;background:transparent;appearance:none;}
+.zy-sidebar button,.zy-page button,.zy-search-dialog button {font:inherit;cursor:pointer;border:0;color:inherit;background:transparent;appearance:none;}
 /* 焦点环：不能只覆盖 button。
  *
  * 页面里大量可聚焦元素不是 <button> —— 链接（a）、输入框、可聚焦的容器
@@ -89,7 +87,6 @@ body[data-zhiyun] .zy-skip-link {
 body[data-zhiyun] .zy-skip-link:focus,
 body[data-zhiyun] .zy-skip-link:focus-visible {left:var(--zy-space-2);outline:2px solid var(--zy-accent);outline-offset:2px;}
 /* The motto replaces the native hero brand title. */
-body[data-zhiyun] span:has(.zy-hero-brand) + span {display:none;}
 .zy-mark {display:inline-flex;align-items:center;justify-content:center;width:44px;height:38px;color:var(--zy-brand);flex-shrink:0;}
 .zy-mark svg {width:44px;height:36px;}
 .zy-mark-large {width:68px;height:56px;}.zy-mark-large svg{width:68px;height:56px;}
@@ -186,76 +183,6 @@ body[data-zhiyun] span:has(.zy-hero-brand) + span {display:none;}
  * 单类选择器的 `color` 会输给重置的 `color:inherit`（见导轨那一段的说明）。 */
 .zy-sidebar .zy-account-dialog-close {display:grid;place-items:center;width:28px;height:28px;border-radius:7px;color:var(--zy-secondary);}
 .zy-sidebar .zy-account-dialog-close:hover {background:var(--zy-hover);color:var(--zy-text);}
-/* 「问一问」的会话入口：坐在宿主会话头的 leading 列里，和会话名同一行。
-   28px 对齐标题行（30px），右边留一点空，标题从按钮之后开始，不会叠在图标上。 */
-body[data-zhiyun] .zy-topbar {position:relative;z-index:1;box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;margin:0 8px 0 0;padding:0;border:0;border-radius:8px;background:transparent;color:var(--zy-text);cursor:pointer;font-family:var(--zy-font);line-height:0;appearance:none;}
-.zy-topbar-glyph {display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;}
-.zy-topbar:hover .zy-topbar-glyph,.zy-topbar:focus-visible .zy-topbar-glyph {background:var(--zy-hover);}
-.zy-topbar[aria-expanded=true] {color:var(--zy-accent);}
-.zy-topbar:focus-visible {outline:2px solid var(--zy-accent);outline-offset:2px;}
-.zy-topbar svg {flex-shrink:0;}
-/* 抽屉层只盖问一问这一列。
-   抽屉是**常驻**侧栏而不是临时浮窗：没有遮罩，打开时把这一列右侧盖住、关掉时滑回左侧。
-   宿主把 overlay 的直接子元素设成可点击，这里保持「层本身不吃点击」(pointer-events:none)
-   以免挡住下面的会话面板；只有抽屉本体在打开时接管指针。 */
-body[data-zhiyun] .zy-drawer-layer {position:fixed;z-index:40;overflow:hidden;pointer-events:none;}
-body[data-zhiyun] .zy-drawer-layer[data-open=true] .zy-drawer {pointer-events:auto;}
-/* 抽屉本体：贴左缘、整高、自己一条滚动区。没有 box-shadow —— 它不是浮起来的窗口，
-   而是这一列里的固定面板，靠一条分割线与正文分开就够了。 */
-.zy-drawer {position:absolute;top:0;bottom:0;left:0;display:flex;flex-direction:column;width:var(--zy-drawer-width,304px);max-width:84%;background:var(--zy-surface);border-right:1px solid var(--zy-line);transform:translateX(-100%);visibility:hidden;transition:transform .24s cubic-bezier(.2,0,0,1),visibility .24s;font-family:var(--zy-font);font-size:14px;line-height:1.45;color:var(--zy-text);font-synthesis:none;}
-.zy-drawer[data-open=true] {transform:none;visibility:visible;}
-.zy-drawer *,.zy-drawer *:before,.zy-drawer *:after {box-sizing:border-box;}
-.zy-drawer button {font:inherit;cursor:pointer;border:0;background:transparent;color:inherit;}
-.zy-drawer button:focus-visible {outline:2px solid var(--zy-accent);outline-offset:2px;}
-.zy-drawer svg {flex-shrink:0;}
-.zy-drawer-head {display:flex;align-items:center;gap:8px;flex-shrink:0;height:52px;padding:0 8px 0 16px;border-bottom:1px solid var(--zy-line);}
-.zy-drawer-head strong {font-size:15px;font-weight:600;letter-spacing:.2px;}
-.zy-drawer-add {display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin-left:auto;border-radius:10px;color:var(--zy-secondary)!important;}
-.zy-drawer-add:hover {background:var(--zy-hover)!important;color:var(--zy-accent)!important;}
-.zy-drawer-list {flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;padding:8px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--zy-line) transparent;}
-.zy-drawer-empty {margin:auto;padding:48px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;color:var(--zy-secondary);}
-.zy-drawer-empty p {margin:0;font-size:13px;}
-.zy-drawer-empty svg {opacity:.7;}
-.zy-drawer-error {margin:0 0 8px;padding:8px 10px;font-size:12px;color:#9a4038;background:color-mix(in srgb,#9a4038 8%,var(--zy-surface));border-radius:8px;}
-.zy-drawer-row {display:flex;align-items:center;gap:2px;flex-shrink:0;border-radius:8px;padding:2px 2px 2px 4px;}
-.zy-drawer-row:hover {background:var(--zy-hover);}
-.zy-drawer-row.is-current {background:var(--zy-soft);}
-.zy-drawer-row.is-current:hover {background:color-mix(in srgb,var(--zy-accent) 14%,var(--zy-surface));}
-.zy-drawer-open {display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:8px 6px!important;text-align:left;border-radius:8px;}
-.zy-drawer-open>svg {color:var(--zy-muted);}
-.zy-drawer-row.is-current .zy-drawer-open>svg,.zy-drawer-row.is-current .zy-drawer-name {color:var(--zy-accent);}
-.zy-drawer-text {display:flex;flex-direction:column;min-width:0;gap:1px;}
-.zy-drawer-name {font-size:13.5px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.zy-drawer-row.is-current .zy-drawer-name {font-weight:600;}
-.zy-drawer-name.is-blank {color:var(--zy-secondary);font-weight:500;}
-.zy-drawer-meta {font-size:11px;line-height:1.3;font-variant-numeric:tabular-nums;color:var(--zy-muted);}
-.zy-drawer-more {display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;border-radius:8px;color:var(--zy-secondary)!important;opacity:0;}
-.zy-drawer-row:hover .zy-drawer-more,.zy-drawer-row:focus-within .zy-drawer-more,.zy-drawer-row.is-current .zy-drawer-more,.zy-drawer-more[aria-expanded=true] {opacity:1;}
-.zy-drawer-more:hover,.zy-drawer-more[aria-expanded=true] {background:var(--zy-surface)!important;color:var(--zy-text)!important;}
-.zy-drawer-menu {position:absolute;z-index:2;display:flex;flex-direction:column;gap:2px;width:148px;padding:4px;background:var(--zy-surface);border:1px solid var(--zy-line);border-radius:10px;box-shadow:0 10px 28px color-mix(in srgb,#0b1410 16%,transparent);}
-.zy-drawer-menu button {padding:8px 10px!important;border-radius:7px;font-size:13px!important;text-align:left;color:var(--zy-text)!important;}
-.zy-drawer-menu button:hover {background:var(--zy-hover)!important;}
-.zy-drawer-menu button.is-danger {color:#9a4038!important;}
-.zy-drawer-menu button.is-danger:hover {background:color-mix(in srgb,#9a4038 8%,var(--zy-surface))!important;}
-.zy-drawer-input {flex:1;min-width:0;margin:6px 4px;padding:7px 10px;font:inherit;font-size:13.5px;color:var(--zy-text);border:1px solid var(--zy-accent);border-radius:8px;background:var(--zy-bg);outline:none;}
-/* 原生工作区/会话浏览器的落点。
-   宿主的浏览器根是 `flex:1;display:flex;flex-direction:column;min-height:0`
-   （见 ui-workspace 的 `.bhn1Oq_root`），它需要**一个高度确定、纵向可收缩**的父级
-   才能把内部列表滚起来。抽屉本身是 `display:flex;flex-direction:column`，
-   这里再把这一层接上：占满剩余高度、`min-height:0` 让内部滚动生效。 */
-.zy-drawer-native {flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-/* 收起按钮那一条窄栏。宿主的浏览器没有「收起抽屉」这个概念，所以由我们补一条：
-   没有它的话，用户在抽屉里滚到下面时只能回顶部去找会话头那颗汉堡。 */
-.zy-drawer-native-bar {display:flex;align-items:center;gap:8px;flex-shrink:0;height:44px;padding:0 8px 0 12px;border-bottom:1px solid var(--zy-line);}
-.zy-drawer-native-title {font-size:13px;font-weight:600;letter-spacing:.2px;}
-.zy-drawer-collapse {display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin-left:auto;border-radius:8px;color:var(--zy-secondary)!important;}
-.zy-drawer-collapse:hover {background:var(--zy-hover)!important;color:var(--zy-text)!important;}
-/* 宿主浏览器的那棵树是按宿主侧栏（56px 缩进 + 自己的一份内边距）排的；
-   抽屉左边已经贴着面板边缘，补齐一点左右内边距让行与抽屉边缘不粘连。 */
-.zy-drawer-native > * {padding-left:8px;padding-right:8px;}
-body[data-zhiyun][data-ds-dark-theme] .zy-drawer-error,body[data-zhiyun][data-ds-dark-theme] .zy-drawer-menu button.is-danger {color:#e7a29c;}
-@media(prefers-reduced-motion:reduce){.zy-drawer{transition:none;}}
-.zy-native-settings{min-height:32px;padding:0 4px;}
 .zy-page {display:flex;flex-direction:column;height:100%;min-width:0;background:var(--zy-bg);}
 .zy-scroll{flex:1;overflow:auto;min-height:0;}.zy-content{max-width:980px;margin:0 auto;padding:43px 48px 28px;}
 /* 整幅铺开的应用型页面（见 model.js 的 FULL_BLEED_PAGES）。
@@ -282,42 +209,21 @@ body[data-zhiyun][data-ds-dark-theme] .zy-drawer-error,body[data-zhiyun][data-ds
 .zy-quiet-footer {font-size:11px;text-align:center;color:var(--zy-muted);padding-top:32px;letter-spacing:.4px;}.zy-card{border:1px solid var(--zy-line);border-radius:10px;background:var(--zy-surface);}.zy-empty{min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:48px 28px;text-align:center;}.zy-empty-icon{width:68px;height:68px;display:grid;place-items:center;border-radius:20px;background:var(--zy-sidebar);color:var(--zy-accent);margin-bottom:20px;}.zy-empty h3{font-size:16px;font-weight:500;margin:0 0 9px;}.zy-empty p{font-size:12px;color:var(--zy-secondary);max-width:350px;margin:0;line-height:1.9;}
 .zy-inline-note {display:flex;align-items:center;gap:12px;color:var(--zy-secondary);margin-top:23px;font-size:11px;}.zy-inline-note p{flex:1;}.zy-tabs{display:flex;gap:25px;border-bottom:1px solid var(--zy-line);margin-bottom:22px;}.zy-tabs button{padding:10px 3px 12px;color:var(--zy-secondary);position:relative;}.zy-tabs button[aria-selected=true]{color:var(--zy-accent);font-weight:600;}.zy-tabs button[aria-selected=true]:after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--zy-accent);}
 .zy-person-card{display:flex;align-items:center;gap:17px;border-bottom:1px solid var(--zy-line);padding:10px 0 30px;margin-bottom:32px;}.zy-person-card h2{font-size:17px;font-weight:500;margin:0 0 4px;}.zy-person-card p{color:var(--zy-secondary);margin:0;font-size:11px;}.zy-tag{margin-left:auto;color:var(--zy-accent);font-size:11px;background:var(--zy-soft);padding:4px 9px;border-radius:5px;}.zy-preferences{padding:0 22px;}.zy-preferences>div{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:21px 0;}.zy-preferences>div+div{border-top:1px solid var(--zy-line);}.zy-preferences strong{display:block;font-size:12px;font-weight:500;}.zy-preferences small{display:block;color:var(--zy-secondary);font-size:11px;margin-top:5px;}.zy-stat-empty{display:flex;align-items:center;gap:12px;color:var(--zy-muted);padding:17px 22px;margin-top:22px;font-size:11px;}
-.zy-search-dialog{border:1px solid var(--zy-line);border-radius:12px;width:min(520px,calc(100vw - 32px));background:var(--zy-surface);padding:0;margin:15vh auto auto;box-shadow:0 20px 70px #0002;}.zy-search-dialog::backdrop{background:#15281f55;backdrop-filter:blur(3px);}.zy-search-input{padding:17px 20px;display:flex;gap:13px;align-items:center;border-bottom:1px solid var(--zy-line);}.zy-search-input input{border:0;outline:0;min-width:0;flex:1;background:transparent;color:var(--zy-text);font:inherit;}.zy-search-input kbd{font:11px inherit;border:1px solid var(--zy-line);border-radius:4px;padding:2px 5px;}.zy-search-results{padding:9px;}.zy-search-results>button{display:flex;align-items:center;gap:15px;width:100%;text-align:left;padding:11px;border-radius:7px;}.zy-search-results>button:hover{background:var(--zy-hover);}.zy-search-results>button>span{flex:1;}.zy-search-results small{display:block;font-size:11px;color:var(--zy-secondary);margin-top:3px;}.zy-search-results>p{color:var(--zy-muted);padding:25px;text-align:center;}.zy-hero-brand{display:flex;align-items:center;justify-content:center;gap:14px;}.zy-hero-brand>span:last-child{font-size:25px;font-weight:500;}.zy-hero-brand small{display:block;font-size:12px;color:var(--zy-secondary);margin-top:3px;}
 @media(max-width:1050px){.zy-content{padding:32px 28px;}.zy-agenda-grid{gap:14px;}.zy-empty-row{padding:16px 12px;}}
 @media(max-width:650px){.zy-content{padding:25px 19px;}.zy-intro h1{font-size:21px;}.zy-agenda-grid{grid-template-columns:1fr;gap:0;margin-bottom:20px;}.zy-resume{flex-wrap:wrap;padding:17px;}.zy-resume>.zy-secondary{margin-left:61px;}.zy-now{padding:18px;}.zy-person-card{flex-wrap:wrap;}.zy-tag{margin-left:0;}.zy-preferences{padding:0 15px;}.zy-intro>svg,.zy-date-icon{display:none;}}
 @media(prefers-reduced-motion:no-preference){.zy-content{animation:zy-enter 180ms ease-out;}@keyframes zy-enter{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}}
 
-/* Personal owns the visible settings surface; native modal portals remain
-   available for first-run setup and connection recovery. */
-.zy-settings-host{display:none;}
+/* 个人页卡片：设置本身是宿主原生浮窗（与 DSH 一致），这里只留空间与偏好。 */
 .zy-person-card{border:1px solid var(--zy-line);border-radius:12px;background:var(--zy-surface);padding:24px;margin-bottom:28px;}
 .zy-person-card h2{font-weight:600;font-size:16px;}
-.zy-settings-groups{display:grid;gap:12px;margin-top:12px;}
-.zy-settings-group{border:1px solid var(--zy-line);border-radius:10px;background:var(--zy-surface);overflow:hidden;}
-.zy-settings-group>summary{list-style:none;display:flex;align-items:center;gap:14px;padding:19px 22px;cursor:pointer;}
-.zy-settings-group>summary::-webkit-details-marker{display:none;}
-.zy-settings-group>summary:hover{background:var(--zy-hover);}
-.zy-settings-group>summary:focus-visible{outline:2px solid var(--zy-accent);outline-offset:-3px;}
-.zy-settings-group>summary>span:nth-child(2){flex:1;min-width:0;}
-.zy-settings-group strong{font-weight:600;font-size:13px;}
-.zy-settings-group summary small{display:block;color:var(--zy-secondary);font-size:11px;margin-top:3px;}
-.zy-settings-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--zy-sidebar);color:var(--zy-accent);}
-.zy-settings-group[open]>summary>svg{transform:rotate(90deg);}
-.zy-settings-group[open]>summary{border-bottom:1px solid var(--zy-line);}
-.zy-settings-body{padding:22px;min-width:0;overflow-wrap:anywhere;}
-.zy-settings-body>div{max-width:none;}
-.zy-settings-document{display:flex;justify-content:flex-end;gap:8px;padding-top:18px;}
 .zy-eyebrow{color:var(--zy-secondary);font-size:11px;letter-spacing:.5px;}
 .zy-intro h1{font-weight:600;letter-spacing:-.5px;}
 .zy-intro p{font-size:13px;line-height:1.8;}
 .zy-intro>svg,.zy-date-icon{color:var(--zy-muted);opacity:.55;}
 .zy-person-card p{font-size:12px;}
 .zy-tag{background:var(--zy-sidebar);color:var(--zy-secondary);border:1px solid var(--zy-line);font-size:11px;}
-.zy-settings-group summary small,.zy-preferences small{font-size:12px;line-height:1.6;}
 .zy-now{background:var(--zy-surface);border-color:var(--zy-line);border-left-color:var(--zy-accent);}
 .zy-now h2{font-weight:600;}.zy-now p{font-size:12px;line-height:1.8;}
-.zy-hero-brand>span:last-child{font-family:'Songti SC','STSong','SimSun',serif;font-size:clamp(22px,2.1vw,28px);font-weight:400;letter-spacing:.12em;line-height:1.65;color:var(--zy-secondary);text-align:center;text-wrap:balance;}
-.zy-personal-note{margin:22px 0 0;font-size:11px;text-align:center;color:var(--zy-muted);}
 .zy-page button,.zy-rail-item{transition:background-color 120ms ease,color 120ms ease;}
-@media(max-width:650px){.zy-person-card{padding:18px;}.zy-settings-group>summary{padding:16px;gap:11px;}.zy-settings-body{padding:16px;}}
+@media(max-width:650px){.zy-person-card{padding:18px;}}
 @media(prefers-reduced-motion:reduce){.zy-page button,.zy-rail-item{transition:none;}}

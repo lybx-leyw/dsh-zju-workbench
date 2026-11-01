@@ -1,4 +1,4 @@
-# dsh-zhiyun-shell-workbench
+﻿# dsh-zhiyun-shell-workbench
 
 智云 Pro 的界面外壳插件：侧栏、页框架、主题层、导航服务与插槽契约。当前验证宿主为 `0.2.0-rc.2`。宿主提供 React 和全部 DSH 客户端服务；不要再打包一份 React。
 
@@ -9,18 +9,17 @@
 > 导航因此只剩 `study` 一个入口，`dsh-zhiyun-page-courses` / `-player` 两个包已删除
 > （列在 `scripts/profile.mjs` 的 `retiredBundles` 里，老 profile 会在初始化时被清掉）。
 
-构建：在仓库根运行 `npm run build`。本地 profile 通过目录链接加载 `lib/`，修改源文件后需重新构建，DSH 的客户端更新机制会更新页面。
+构建：在仓库根运行 `npm run build`。本地 profile 通过目录链接加载 `lib/`；修改源文件后需重新构建，涉及布局桥接的启用、停用和升级后须完整刷新页面。
 
 ## 页面插槽
 
-外壳在 `main` 插槽里为 `NAV` 的每一页声明一个 **root / single** 内容插槽（声明即认领，页面包只注册内容，不重复声明 `children`）：
+外壳在桥接插件的 `zhiyun.shell.page` 插槽里为 `NAV` 的每一页声明一个 **root / single** 内容插槽（声明即认领，页面包只注册内容，不重复声明 `children`）：
 
 | 插槽 | 内容位置 |
 | --- | --- |
 | `zhiyun.today.content` | 今天页正文 |
 | `zhiyun.paper.content` | 论文阅读页正文 |
 | `zhiyun.study.content` | 学习页正文（课程目录 + 回放 + 整理，全在这一页） |
-| `zhiyun.me.content` | 个人页正文 |
 | `zhiyun.plugins.content` | 插件依赖页正文 |
 | `zhiyun.feedback.content` | 反馈页正文 |
 
@@ -28,14 +27,15 @@
 
 | 插槽 | 内容位置 |
 | --- | --- |
-| `sidebar.settings` | 宿主的原生设置面（**被 CSS 刻意隐藏**，可见的设置面归「个人」页） |
-| `sidebar.footer.action` | 导轨底部扩展入口（当前无人注册） |
-| `sidebar.account.signin` | **账号对话框里的登录表单**（头像 → 登录） |
+| `sidebar.account.signin` | **账号对话框正文**（头像 → 登录） |
 
-> 「个人」不在导轨的页面图标里：它是导轨**最下方那格圆形头像**。点头像浮出账号面板
-> （身份 + 登录 + 设置），面板里点「设置」才进个人页。登录表单由 `dsh-zhiyun-page-me`
-> 注册进 `sidebar.account.signin`，**不在个人页正文上** —— 登录是应用级动作，
-> 入口在头像那一层，也因此不会因为「个人」页被停用而消失。
+> 导轨**最下方那格圆形头像不是页面**：点它浮出账号菜单（登录 / 设置）。设置打开的是
+> **宿主原生浮窗**（与 DSH 一致），「账号与数据」是它里面的一个分区。
+> 登录对话框正文由 `dsh-zhiyun-settings-account` 注册进 `sidebar.account.signin` ——
+> 登录是应用级动作，入口因此在头像那一层，不会因为任何页面被停用而消失。
+>
+> 这里曾经有一页「个人」（`dsh-zhiyun-page-me`）：它只为承载账号与设置，页面已删除，
+> 内容并入原生设置。`NAV` 里不再有 `me`。
 
 页面包在客户端导出 `inject: ['slots']`，然后：
 
@@ -47,7 +47,7 @@ export function apply(ctx) {
   );
 }
 
-// 还要领域状态（学习 / 个人）：先等 controller 到位，再注册插槽
+// 还要领域状态（学习）：先等 controller 到位，再注册插槽
 export function apply(ctx) {
   ctx.inject(['zhiyunStudyController'], (scope) => {
     scope.slots.inject('zhiyun.study.content', () =>
@@ -58,9 +58,9 @@ export function apply(ctx) {
 }
 ```
 
-页面组件同时从渲染参数里拿到外壳注入的 `controller`（`navigate / toggleSidebar / toggleTheme`）和 `renderSlot`。`ctx.slots.inject` 在声明已存在时立即执行，声明后到也会补执行，外壳卸载时贡献随之撤销（连同 `ctx.inject` 的作用域一起）。
+页面组件同时从渲染参数里拿到外壳注入的 `controller`（`navigate / toggleTheme / openSettings / openAccount / toggleSidebar`）和 `renderSlot`。`ctx.slots.inject` 在声明已存在时立即执行，声明后到也会补执行，外壳卸载时贡献随之撤销（连同 `ctx.inject` 的作用域一起）。`openSettings()` 打开宿主原生设置浮窗；原生设置项缺失时打印错误而不是静默无响应。
 
-`controller.navigate(id)` 支持 `today / paper / ask / study / me / plugins / feedback`，`ask` 进入现有 DSH 会话。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。
+`controller.navigate(id)` 支持 `NAV` 中的页面 ID，`ask` 显示原生 DSH 工作区并保留其当前面板；不会强制将外部插件页面切回聊天。仅在聊天面板缺少会话时，显式进入 ask 才尝试绑定学习空间。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。外层 `Ctrl+K` 页面搜索仅在业务页面生效；ask 内将该组合键交还原生 DSH。
 
 ## 取消一页之后
 
@@ -79,20 +79,23 @@ export function apply(ctx) {
 | 服务 | 用途 |
 | --- | --- |
 | `zhiyunStudyController` | 账号、课程树、讲义与习题的状态机（页面包用 `ctx.inject(['zhiyunStudyController'], …)` 取） |
-| `zhiyunLearningSpace` | 学习空间的识别与会话行投影（外壳的会话抽屉用 `ctx.get('zhiyunLearningSpace')`） |
+| `zhiyunLearningSpace` | 学习空间的识别（显式进入 ask 的空聊天面板时用 `ctx.get('zhiyunLearningSpace')`） |
 
-两侧都不写进 `inject`：页面包用 `ctx.inject(['zhiyunStudyController'], …)` 等它到位再注册插槽，外壳用 `ctx.get('zhiyunLearningSpace')` 直接取。领域包缺失或未激活时降级（会话抽屉空列表、页面显示未连接），不会连坐成 pending。
+两侧都不写进 `inject`：页面包用 `ctx.inject(['zhiyunStudyController'], …)` 等它到位再注册插槽，外壳用 `ctx.get('zhiyunLearningSpace')` 直接取。领域包缺失或未激活时不自动绑定学习空间，原生工作区浏览器仍可使用，不会使整个外壳 pending。
 
 ## 生命周期与兼容
 
-`cordis.patch.yml` 禁用官方 `ui-sidebar`，本插件声明同一组侧栏扩展点，保留原生设置与会话入口。右侧栏**不能停用**：宿主的文档/文件/终端分页等 9 个客户端插件都注入 `sidebarRight`，停用它会让整个前端启动失败。
+profile 同时加载本包与 `dsh-zhiyun-shell-bridge` 两个 bundle，各自提供自己的组合条目；不再停用官方 `ui-sidebar`。本包只注册智云导航与业务页面槽位；原生侧栏、页面、会话入口和右侧栏在 ask 内保持完整。参见 [桥接插件](../dsh-zhiyun-shell-bridge/README.md)。普通外部页面继续使用原生导航协议，不会自动进入智云主导航。
 
 主题通过 `theme.overrideTokens('dsh-zhiyun-shell-workbench', …)` 层叠，卸载后撤销。业务内容插槽在外壳卸载时消失，依赖插件应使用 `slots.inject` 随其声明生命周期装卸。
 
-停用外壳时应在 profile patch 中同时设置 `zhiyun-shell.disabled: true` 和 `ui-sidebar.disabled: false`。移除整个 bundle 后其侧栏覆盖自然失效。
+恢复原生界面时同时停用 `zhiyun-shell` 和 `zhiyun-shell-bridge`，然后完整刷新；原生侧栏无需额外启用。已有机器本地 patch 如果单独停用了 `ui-sidebar`，需移除那条覆盖。
+
+设置**就是**宿主原生浮窗，与 DSH 本体一致：外壳只把原生 `sidebar.settings` 注册项的 store 动作接到导轨「设置」与账号菜单上，不复制分组、不另做一套界面。插件的 `settings.section` 注册零改动。注意它属于应用级浮层，portal 到 `body`，因此不受 ask 容器裁剪 —— 这是与原生 DSH 一致的行为。
 
 共享的图标、品牌标记、空态与分区标题来自 `dsh-zhiyun-shell-ui`（`dsh.client.external` 里声明，esbuild 里 external）。
 
-`src/style.css` 里的 `.zy-*` 与旧外壳逐字一致（74 个类），另有 4 个无前缀状态类 `is-active` / `is-blank` / `is-current` / `is-danger`（`is-active` 只出现在 `.zy-nav button.is-active`，`.is-blank` 只出现在 `.zy-drawer-name.is-blank` 等，均带宿主前缀限定）。它们与 `dsh-zhiyun-page-study` 的 `.zs-asset-card.is-active`、`.zs-handout-drawer button.is-active` **属性不相交**，当前不会互相覆盖；但无前缀类名本身是跨包共享的命名空间，将来若要给壳侧 `.is-active` 增加属性，先确认不与页面包的声明撞同名属性。
+`src/style.css` 只保留智云导航与业务页面需要的 `.zy-*` 规则；原生工作区、原生侧栏、原生设置外观与浮层一律沿用宿主样式，不在这里覆盖。无前缀状态类（`is-active` 等）是跨包共享命名空间：给壳侧同名类新增属性前，先确认不与页面包的声明撞同名属性。
 
-兼容范围当前仅包含锁定版本；没有承诺与最新版 DSH 或任意第三方 UI 同时工作。
+兼容范围仅包含锁定版本，不承诺与任意未来 DSH 或任意第三方 UI 同时工作。普通插件是否可用取决于它使用的槽位与服务是否仍在原生工作区内；本包不再逐个适配插件。README 中的 `NAV` 页面 ID 与 `zhiyunNavigation` 契约保持不变，页面包无需因本次布局拆分而修改。
+
