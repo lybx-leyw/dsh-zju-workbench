@@ -4231,3 +4231,28 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 **词面校准（写回关键词池）**：**A 组主词改 `sort=updated`**（stars 轴已饱和）；`cordis plugin language:typescript` + `sort=updated` 作为固定轴（604 条，信噪比最高）；`dsh-market`(375) / `dsh-desktop`(2392) **降频**（市场簇与桌面壳簇均已判 ⛔）。
 
 **授权与验收**：搜索 **6/10**（未 403）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **1 个**（`dsh-radar-data-quality`）。
+
+## r129 · 2026-11-01-21 · C 组（换轴：`sort=updated` + `language:` 限定）
+
+> 轮换器 `day_of_year % 3`：2026-11-01 为第 **305** 天，`305 % 3 = 2` → **C 组**。
+> 历史 C 组以 `sort=stars` 为主，本轮统一改 **`sort=updated`** 看「近期仍在动的」仓。
+> 搜索 **6/10**：`timetable ics export`=12 · `quiz practice`=599 · `paper annotation reader`=10 ·
+> `fitness tracker`=13,532 · `ocr notes stars:>100`=4 · `spaced repetition flashcard stars:>100`=7。
+> **2 条新候选，均为 B 类 MIT，均 🔵 rejected（0 🟢、0 骨架）。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Nexus-JPF/note-companion` | **B 其他JS**（Obsidian 插件，pnpm monorepo，无 DSH patch） | **MIT** ✅（GitHub metadata + 根 LICENSE） | 中强（音频/YouTube 转写 → 「收件箱」自动归类） | **重复且无增益 ⛔**：独立 Obsidian 侧栏 + 自成一套「AI 自动打标签/建议文件夹」组织学，与工作台「笔记捕获 + 全文检索 + kb-rag」**不是同一个面板**，且两套目录约定互相打架 | 🔵 | rejected | 2026-11-01 | — | r129。★874、fork 119、push **2026-11-01（当日）**、仓库 **≈220 MB**、`packages/plugin` 子包 **34 个运行时依赖**（Radix×8 / Tiptap×5 / `@ai-sdk/react`）、强绑 Obsidian `App/Vault/WorkspaceLeaf` **不是可独立锁版的纯库**。强化三判据：①❌ ②⚠ ③⚠（唯转写链路略优，但换不来 220 MB + 34 依赖）→ 不集成。**留线索**：若做「课录音→文本」，另找纯转写库（whisper 系 / 云 STT SDK） |
+| `quizmill/quizmill` | **B 其他JS**（Next.js 题库引擎 + CLI，无 DSH patch） | **MIT** ✅（GitHub metadata + 根 LICENSE） | **强**：`new/validate/run/build/bundle` 把一目录 JSON 题库 → 可安装离线刷题 App；练习偏未做题 + 错题循环重问 | **重复且可强化**（判据②③✅、①❌）：会话策略层与 `mistake-book` / `fsrs-scheduler` / `score-practice` 正交 | 🔵 | rejected | 2026-11-01 | — | r129。**★2 / fork 0 / issue 15 / `0.0.0-dev` / `node>=26`**（尚未收敛，非「更优底层」）；仓库 ≈30.6 MB，`next@16.4.3 · react@19.3.0 · zod@4.6.7`；交付物是**独立 Next.js App**（只能 iframe 承载，题号/错题册与练习页不同步）。**不采理由**：真正有价值的是**策略**不是代码 —— 几十行可自写。**带走设计点**：练习会话应两段式队列 ①主队列按「未见过>答错>答对」加权抽样 ②错题子队列答对前不下线、答对后隔 N 题复现一次。现有 `mistake-book` 骨架只有「记录」无「重问闭环」，评审时补此点 |
+
+**本轮 ⚠ NOASSERTION（单列，不采用、不摘代码）**：`NLion74/ics-webuntis`（★11，WebUntis 课表转 ICS 轻服务，`spdx_id` 识别失败，需人工核验 `LICENSE` 原文）。
+
+**本轮 ⛔ 强 copyleft**：`n0x1d3/curtin-calendar`(GPL-3.0)、`ozephyr-ctrl/csv-quiz-practice`(GPL-3.0)、`MRndy1/figurequiz`(AGPL-3.0)、`wayneschuller/strengthjourneys`(AGPL-3.0)。
+
+**本轮 ⛔ `null` 许可（不登记，仅留痕）**：`Foahh/tpg-timetable-exporter`、`Ishaan-nasir/SnapCal`、`glv3r/Schedulr`、`naykakashima/UoDTimetables`、`gold-dragon11/Quiz-Platform`、`MahendarSura/devmavox`、`ArnaudAzenui/QuizTrick`、`Mottalib-10M/australiacitizenshipquiz.com`、`ramkargwal/Raman-Quiz-Challenge`、`ziakkar/happ`、`jigyasha1234/Health-And-Fitness-Tracker`、`ChutchawanGit/research-paper-workspace`、`bruce2431/Pj13-PaperReader`、`devaniketh/Refract`、`romit-23/research-reader`、`juliesm/split-screen-annotations`、`frianasoa/Ze-Notes`、`zeus-12/uxie`。
+
+**本轮 ⛔ 许可合格但无交集/无增益**：`AyushCodes247/NotesGenius`(★0 MIT)、`armanalis/italiarena`(★1 MIT)、`narainkarthikv/fitprogressr`(★4 MIT)、`sceneeee/xjtlu-timetable-bookmarklet`(★0 MIT)、`GarytheNoob/hku-timetable-exporter`(★0 MIT)、`hermes98761234/shift-scheduler`(★0 MIT)、`zixun-ai/obsidian-paper-reader`(★0 MIT)、`youzi258/Scholia`(★0 MIT)、`eclaire-labs/eclaire`(★926 MIT)。
+
+**词面校准（写回关键词池）**：`fitness tracker`(13,532) 与 `quiz practice`(599) 在 `sort=updated` 轴是**噪声发生器**（前 10 名 ★≥1 的不到 5 条，多为新建练手仓 + `null` 许可）→ **降频到每 3 轮一次，强制叠加 `stars:>50`**。`timetable ics export`(12) / `paper annotation reader`(10) **池子已萎缩** → 降频到每 6 轮一次。`spaced repetition flashcard stars:>100`(7 条中 5 条在册) → 仅保留作「老仓是否复活」监测。
+
+**授权与验收**：搜索 **6/10**（未 403）· 仓库整理 **0 迁移 / 0 测试删除**（基线已干净）· 骨架 **0 个**（2 条新候选均 🔵，不满足 🟢 门槛；且待评审骨架已积压 3 份，按「同一接缝不放两个半成品」本轮做减法）。
