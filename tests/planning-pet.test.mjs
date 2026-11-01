@@ -38,16 +38,12 @@ test('提示词必须交代三种动作各自什么时候用', () => {
   }
 });
 
-test('提示词要举「什么算 ask、什么算 create」的例子（这是最容易错的地方）', () => {
+test('提示词保持精简：不靠长例子和禁令堆砌行为约束', () => {
   const prompt = createPetPrompt({ today: '2026-10-21', weekday: '周三', calendar, pending: [] });
-  assert.match(prompt, /下周有个作业/, '要给"信息不足"的例子');
-  assert.match(prompt, /下周三交第三章作业/, '要给"信息够了"的例子');
-});
-
-test('提示词要禁止凭学期进度猜日期', () => {
-  const prompt = createPetPrompt({ today: '2026-10-21', weekday: '周三', calendar, pending: [] });
-  assert.match(prompt, /绝对禁止/);
-  assert.match(prompt, /推测/);
+  // 用户确认后才落库，这是唯一必须写死的边界；其余交给模型自行判断。
+  assert.match(prompt, /确认后才落库/);
+  assert.ok(prompt.length < 2500, `提示词过长会挤压模型的判断空间：${prompt.length}`);
+  assert.doesNotMatch(prompt, /绝对禁止|说话方式|一两句话/);
 });
 
 test('没有待办时明确说"没有"，不要留空（留空模型会自己编）', () => {
@@ -66,11 +62,11 @@ test('有待办时要列出来（用户会问"我今天有什么事"）', () => 
   assert.match(prompt, /2026-10-28/);
 });
 
-test('待办最多只列 20 条（防止提示词膨胀）', () => {
+test('待办事实全量传入，不再截断为20条', () => {
   const many = Array.from({ length: 50 }, (_, i) => ({ title: `事${i}`, due: null }));
   const prompt = createPetPrompt({ today: '2026-10-21', weekday: '周三', calendar, pending: many });
   assert.match(prompt, /事19/);
-  assert.equal(prompt.includes('事20'), false, '第 21 条起不该出现');
+  assert.ok(prompt.includes('事49'), '末尾任务也必须出现');
 });
 
 test('没日期的事要标明"没定日期"', () => {
@@ -251,5 +247,5 @@ test('角色只有 user / assistant 两种，其它一律当 assistant', () => {
 test('常量合理', () => {
   assert.equal(MAX_HISTORY, 8);
   assert.ok(MAX_MESSAGE >= 500);
-  assert.deepEqual([...ACTIONS], ['ask', 'create', 'chat']);
+  assert.deepEqual([...ACTIONS], ['ask', 'create', 'chat', 'schedule']);
 });

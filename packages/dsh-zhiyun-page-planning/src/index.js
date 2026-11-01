@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 规划页的**宿主半边**：四个数据源的聚合。
  *
  * # 这一页的数据模型
@@ -31,12 +31,16 @@ import {
   createLocal, createSplit, localError, patchLocal, recallGenerated, setDone as setDoneLocal,
 } from './local.js';
 import { TickStore, tickKey } from './ticks.js';
+import { ScheduleStore } from './schedule.js';
+import { taskKeyFor } from './agenda.js';
+import { buildPlanningFacts, answerScheduleStatus } from './pet-context.js';
+export { ScheduleStore } from './schedule.js';
 import { URGENCY, urgencyOf, dateTable } from './time.js';
 import {
   PlanStore, PLAN_PROMPT, pickPending, planError, parsePlanJson, planTitle, readPlanResponse, toPlanInput,
 } from './plans.js';
 import {
-  MAX_MESSAGE, createPetPrompt, createStreamParser, normalizeReply, readPetResponse, trimHistory,
+  MAX_MESSAGE, createPetPrompt, createStreamParser, normalizeReply, readPetResponse, resolveScheduleReply, trimHistory,
 } from './pet.js';
 
 // 重新导出：既有调用方与测试按这个包名导入它们
@@ -753,12 +757,14 @@ async function readJsonBody(req, limit = 32 * 1024) {
  *   POST ?local-update  改一条（只改传了的字段）
  *   POST ?local-done    勾选 / 取消完成
  *   POST ?local-remove  删除一条
+ *   POST ?schedule-save    { taskKey, title, start, end, id? } 新建 / 更新执行时间块
+ *   POST ?schedule-remove  { id } 删除时间块（两者均回 { ok: true, schedule: slots }）
  *
  * @param options - `{ getConfig, saveConfig, store, local, fetchRemote, loadTodos,
  *   savePtaCookie, ptaStatus, plan }`。
  */
 export function createHandler({
-  getConfig, saveConfig: save, store, local, splitLocal, tickStore,
+  getConfig, saveConfig: save, store, local, splitLocal, tickStore, scheduleStore, getScheduleContext,
   fetchRemote, loadTodos, savePtaCookie, ptaStatus, plan,
   /**
    * pet 的对话实现。
@@ -912,6 +918,7 @@ export function createHandler({
       // 平台待办上的本机勾选：`xzzd:123` → `{ doneAt }`。
       // 页面据此把"我已处理"的条目标掉 —— 这是**本机的标记**，不是平台的完成状态。
       ticks: tickStore ? tickStore.all() : {},
+      schedule: scheduleStore ? scheduleStore.all() : [],
     };
   };
 
@@ -980,6 +987,7 @@ export function createHandler({
         ...cached.value,
         local: local ? local.list() : [],
         ticks: tickStore ? tickStore.all() : {},
+        schedule: scheduleStore ? scheduleStore.all() : [],
         plans: plan ? plan.list() : {},
         plannedKeys: plan ? plan.plannedKeys() : [],
         entries: store.list(),
@@ -1029,6 +1037,32 @@ export function createHandler({
     }
 
     const body = await readJsonBody(req);
+
+    // Schedule writes are local-only: never fetch remote tasks to validate taskKey.
+    if (action === 'schedule-save' || action === 'schedule-remove' || action === 'schedule-save-batch') {
+      if (!scheduleStore) {
+        sendJson(res, 400, { error: '日程存储未启用' });
+        return;
+      }
+      try {
+        if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('请求体不是合法 JSON 对象');
+        let saved;
+        if (action === 'schedule-save-batch') {
+          if (typeof getScheduleContext !== 'function' || !Array.isArray(body.items) || !body.items.length || body.items.length > 20) throw Object.assign(new Error('批量草案无效，请重新生成'), { code: 'INVALID_SCHEDULE' });
+          const context = await getScheduleContext();
+          const checked = resolveScheduleReply({ action: 'schedule', say: '待确认', draft: { slots: body.items } }, context);
+          if (checked.action !== 'schedule') throw Object.assign(new Error(checked.say), { code: 'INVALID_SCHEDULE' });
+          const items = checked.draft.slots.map((item, index) => ({ ...item, ...(item.id ? { expected: body.items[index].expected } : {}) }));
+          saved = scheduleStore.saveMany(items, { requireExpected: true });
+        } else if (action === 'schedule-save') saved = [scheduleStore.save(body)];
+        else scheduleStore.remove(body.id);
+        sendJson(res, 200, { ok: true, schedule: scheduleStore.all(), ...(action === 'schedule-save-batch' ? { saved } : {}) });
+      } catch (error) {
+        sendJson(res, error?.code === 'INVALID_SCHEDULE' || !error?.code ? 400 : 500,
+          { error: error?.code === 'INVALID_SCHEDULE' ? error.message : '日程写入失败，请检查本机存储后重试' });
+      }
+      return;
+    }
 
     // ── 拼题A Cookie：与域名同一条路由，但各存各的 ──────────────────
     if (action === 'pta') {
@@ -1444,6 +1478,7 @@ export async function apply(ctx, config = {}) {
   // 既不是别人的内容缓存，也不是用户写的条目，而是"我认为这件事不用再提醒了"。
   const ticksFile = config.ticksFile ?? path.join(dataDir, 'ticks.json');
   const ticks = new TickStore(ticksFile, () => Date.now());
+  const schedules = new ScheduleStore(path.join(dataDir, 'schedule.json'));
 
   /**
    * 上次成功快照的**本地副本**。
@@ -1629,6 +1664,24 @@ export async function apply(ctx, config = {}) {
    * @param options.signal - 中止信号。
    * @returns `{ say, action, draft, notes, model }`。
    */
+  const petContext = async () => {
+    const platform = await loadTodos();
+    const tasks = mine.list().map(item => ({ ...item, taskKey: `local:${item.id}` }));
+    for (const [prefix, plan] of Object.entries(plans.all())) {
+      (plan.cards ?? []).forEach((card, index) => tasks.push({ ...card, taskKey: taskKeyFor({ source: 'plan', prefix, index }) }));
+    }
+    for (const source of ['xzzd', 'pta']) {
+      for (const row of platform?.[source]?.rows ?? []) tasks.push({ ...row,
+        taskKey: taskKeyFor({ ...row, source }), done: Boolean(row.done || ticks.all()[`${source}:${row.id}`]) });
+    }
+    const projected = tasks.map(({ taskKey, title, due, done }) => ({ taskKey, title, due: due ?? null, done: Boolean(done) }));
+    const slots = schedules.all();
+    const facts = buildPlanningFacts({ tasks: projected, slots,
+      sources: { local: { ok: true }, plans: { ok: true }, xzzd: { ok: platform?.xzzd?.ok === true }, pta: { ok: platform?.pta?.ok === true } },
+      events: schedules.recentEvents(), now: Date.now() });
+    return { tasks: projected, slots, facts };
+  };
+
   const petChat = async (message, { history = [], signal } = {}) => {
     const text = typeof message === 'string' ? message.trim() : '';
     if (!text) throw planError('INVALID_INPUT', '说点什么吧');
@@ -1652,16 +1705,16 @@ export async function apply(ctx, config = {}) {
     const calendar = dateTable(now, { days: 14 });
     const today = calendar[0];
 
-    // 当前未完成的事：只给摘要，最多 20 条
-    const pending = mine.list()
-      .filter((item) => !item.done)
-      .map((item) => ({ title: item.title, due: item.due ?? null }));
+    // 完整事实：任务、已排安排、未排清单、来源完整性与近期确认记录。
+    const context = await petContext();
+    signal?.throwIfAborted();
+    const pending = context.tasks.filter(item => !item.done);
 
     const prompt = createPetPrompt({
       today: today.date,
       weekday: today.weekday,
       calendar,
-      pending,
+      pending, slots: context.slots, facts: context.facts, now: new Date(now).toISOString(),
     });
 
     // 历史裁剪后再序列化：模型看得懂 JSON 数组，且顺序明确
@@ -1685,7 +1738,12 @@ export async function apply(ctx, config = {}) {
 
     const raw = typeof response?.text === 'string' ? response.text : '';
     const reply = readPetResponse(raw);
-    return { ...reply, model: route?.model ?? null };
+    signal?.throwIfAborted();
+    const checked = reply.action === 'schedule' ? resolveScheduleReply(reply, context) : reply;
+    signal?.throwIfAborted();
+    // Precise inventory questions are answered from facts, never from model memory.
+    const status = reply.action === 'chat' ? answerScheduleStatus(text, context.facts) : null;
+    return { ...(status ?? checked), model: route?.model ?? null };
   };
 
   /**
@@ -1738,11 +1796,11 @@ export async function apply(ctx, config = {}) {
     const now = Date.now();
     const calendar = dateTable(now, { days: 14 });
     const today = calendar[0];
-    const pending = mine.list()
-      .filter((item) => !item.done)
-      .map((item) => ({ title: item.title, due: item.due ?? null }));
+    const context = await petContext();
+    signal?.throwIfAborted();
+    const pending = context.tasks.filter(item => !item.done);
 
-    const prompt = createPetPrompt({ today: today.date, weekday: today.weekday, calendar, pending });
+    const prompt = createPetPrompt({ today: today.date, weekday: today.weekday, calendar, pending, slots: context.slots, facts: context.facts, now: new Date(now).toISOString() });
     const turns = trimHistory(history);
     const variable = turns.length === 0
       ? text
@@ -1770,7 +1828,11 @@ export async function apply(ctx, config = {}) {
       action: payload?.action,
       draft: payload?.draft ?? null,
     });
-    return { ...reply, model: route?.model ?? null };
+    signal?.throwIfAborted();
+    const checked = reply.action === 'schedule' ? resolveScheduleReply(reply, context) : reply;
+    signal?.throwIfAborted();
+    const status = reply.action === 'chat' ? answerScheduleStatus(text, context.facts) : null;
+    return { ...(status ?? checked), model: route?.model ?? null };
   };
 
   /**
@@ -1985,6 +2047,8 @@ export async function apply(ctx, config = {}) {
         local: mine,
         splitLocal: splitLocalPlan,
         tickStore: ticks,
+        scheduleStore: schedules,
+        getScheduleContext: petContext,
         log,
         fetchRemote: (cfg) => pullEntries(cfg, config.fetch ?? fetch),
         loadTodos,

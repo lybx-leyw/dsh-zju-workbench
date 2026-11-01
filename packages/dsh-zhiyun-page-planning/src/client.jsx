@@ -18,7 +18,10 @@
 // # 版式依据
 //
 // 人体工效学 skill 的条款在 `style.css` 里逐条标注。
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ScheduleView } from './schedule-view.jsx';
+import { taskKeyFor, weekStart } from './agenda.js';
+import scheduleCss from './schedule.css';
 import { Empty, Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
@@ -26,6 +29,7 @@ import css from './style.css';
 import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel, buildMonthCalendar } from './time.js';
 import { REPEAT_LABEL } from './local.js';
 import { createPetStream } from './pet-stream.js';
+import { resolveScheduleReply, scheduleDraftItems } from './pet.js';
 import { hintWindow, scheduleHint } from './schedule-hint.js';
 import { clearFocus, focusDecision, focusElementId, readFocus } from './focus.js';
 import { errorText } from './error.js';
@@ -121,7 +125,7 @@ function countdown(iso, now = Date.now()) {
 /** 同一分类内的分组键：条目按天，待办按紧迫度（见 `time.js`）。 */
 
 export function apply(ctx) {
-  mountStyle(ctx, { attribute: 'zhiyunPlanningStyle', css, label: 'zhiyun: planning styles' });
+  mountStyle(ctx, { attribute: 'zhiyunPlanningStyle', css: `${css}\n${scheduleCss}`, label: 'zhiyun: planning styles' });
   ctx.slots.inject('zhiyun.planning.content', () => ctx.slots.register(
     { name: 'zhiyun.planning.content' },
     // 把 ctx 传进去只为**惰性取** `zhiyunStudyController`（课表上下文）。
@@ -199,7 +203,14 @@ const EMPTY_SNAPSHOT = {
  */
 let lastSnapshot = null;
 
-/** 页面正文。 */
+/** Shared by DDL rows in both list and month views; absent outside the planning page. */
+const ScheduleAction = createContext(null);
+function ScheduleButton({ row }) {
+  const action = useContext(ScheduleAction);
+  if (!action || row.done) return null;
+  return <button type="button" className="zpg-link" onClick={() => action(row)} aria-label={`为「${row.title}」安排时间`}>安排时间</button>;
+}
+
 export function Planning({ ctx }) {
   /**
    * 有缓存时**直接以缓存作为初始状态**，并把 `loading` 初始为 false。
@@ -228,12 +239,30 @@ export function Planning({ ctx }) {
   // 课表上下文：读不到就不显示，绝不因此让页面报错
   const [schedule, setSchedule] = useState(null);
   /**
-   * 视图：列表 / 日历。
-   *
-   * 默认列表。日历是**同一批数据的另一种呈现**，不是另一个数据源 —— 所以切换
-   * 不触发任何请求，也不改变谁被算作"待办"。
+   * DDL 列表 / DDL 月历：同一批任务的截止时间。
+   * 日程表：关联任务的独立执行时间段，不从 due 推测。切换视图不发请求。
    */
   const [view, setView] = useState('list');
+  const [selectedTaskKey, setSelectedTaskKey] = useState('');
+  const [scheduleWeek, setScheduleWeek] = useState(() => weekStart());
+  const openSchedule = useCallback(row => {
+    setSelectedTaskKey(taskKeyFor(row));
+    setView('schedule');
+  }, []);
+  const updateSchedule = useCallback(payload => {
+    if (payload?.ok === false || !Array.isArray(payload?.schedule)) throw new Error(errorText(payload?.error ?? '日程保存失败', 200));
+    setState(current => {
+      const next = { ...current, schedule: payload.schedule ?? [] };
+      lastSnapshot = next;
+      return next;
+    });
+  }, []);
+  const saveSchedule = useCallback(async input => {
+    updateSchedule(await settings(Array.isArray(input?.items) ? 'schedule-save-batch' : 'schedule-save', input));
+  }, [updateSchedule]);
+  const removeSchedule = useCallback(async id => {
+    updateSchedule(await settings('schedule-remove', { id }));
+  }, [updateSchedule]);
   const [loadedAt, setLoadedAt] = useState(0);
   const pageRef = useRef(null);
   /**
@@ -254,6 +283,7 @@ export function Planning({ ctx }) {
       plans: payload.plans ?? {},
       local: Array.isArray(payload.local) ? payload.local : [],
       ticks: payload.ticks && typeof payload.ticks === 'object' ? payload.ticks : {},
+      schedule: Array.isArray(payload.schedule) ? payload.schedule : [],
     };
     setState(next);
     // 记下来供**下次挂载**直接用（见 `lastSnapshot` 的说明）。只存成功读到的。
@@ -919,6 +949,9 @@ export function Planning({ ctx }) {
 
   // 卡片已经并进 todos.rows 之外的 planCards，二者都是"要做的"
   const hasAnything = todos.rows.length > 0 || planCards.length > 0 || state.entries.length > 0 || localRows.length > 0;
+  const scheduleTasks = useMemo(() => [...localRows, ...planCards, ...todos.rows].map(row => ({
+    taskKey: taskKeyFor(row), title: row.title, due: row.due, done: Boolean(row.done),
+  })), [localRows, planCards, todos.rows]);
 
   useEffect(() => {
     const node = pageRef.current;
@@ -952,6 +985,7 @@ export function Planning({ ctx }) {
   }, [view, loading, loadedAt, state.local, state.todos, state.ticks]);
 
   return (
+    <ScheduleAction.Provider value={openSchedule}>
     <div className="zpg-page" ref={pageRef}>
       {/*
         ⚠️ **这里刻意没有大标题。**
@@ -976,7 +1010,7 @@ export function Planning({ ctx }) {
               aria-pressed={view === 'list'}
               onClick={() => setView('list')}
             >
-              列表
+              DDL 列表
             </button>
             <button
               type="button"
@@ -984,8 +1018,10 @@ export function Planning({ ctx }) {
               aria-pressed={view === 'calendar'}
               onClick={() => setView('calendar')}
             >
-              日历
+              DDL 月历
             </button>
+            <button type="button" className={view === 'schedule' ? 'zpg-view-on' : ''}
+              aria-pressed={view === 'schedule'} onClick={() => setView('schedule')}>日程表</button>
           </span>
           <button
             type="button"
@@ -1051,9 +1087,10 @@ export function Planning({ ctx }) {
             只显示**非零**的项 —— 一屏全是 0 的卡片既占地方又没信息。
             点一下滚到对应分组，是"结论 + 入口"而不仅是个数字。
           */}
-          <FocusBar focus={focus} />
+          {view !== 'schedule' && <FocusBar focus={focus} />}
+          {view !== 'schedule' && <p className="zpg-foot">DDL 记录最晚何时交；点击任务的「安排时间」，把准备执行的时间段放进日程表。</p>}
 
-          {!hasAnything && !error && (
+          {view !== 'schedule' && !hasAnything && !error && (
             <Empty icon="calendar" title="还没有内容">
               上面写一条规划就能开始；也可以在「个人 → 设置 → 规划数据源」配好数据源，
               让待办与中转站的内容也出现在这里。
@@ -1069,7 +1106,7 @@ export function Planning({ ctx }) {
 
             用原生 `<details>`：键盘可用、无需 JS 状态、默认收起。
           */}
-          {(doneMine.length > 0 || doneCards.length > 0 || doneTodos.length > 0) && (
+          {view !== 'schedule' && (doneMine.length > 0 || doneCards.length > 0 || doneTodos.length > 0) && (
             <details className="zpg-done-fold">
               <summary>
                 <Icon name="check" size={15} />
@@ -1106,7 +1143,11 @@ export function Planning({ ctx }) {
             </details>
           )}
 
-          {view === 'calendar' ? (
+          {view === 'schedule' ? (
+            <ScheduleView tasks={scheduleTasks} slots={state.schedule ?? []} onSave={saveSchedule}
+              onRemove={removeSchedule} selectedTaskKey={selectedTaskKey} onSelectTask={setSelectedTaskKey}
+              weekAnchor={scheduleWeek} onWeekChange={setScheduleWeek} />
+          ) : view === 'calendar' ? (
             <CalendarView
               calendar={calendar}
               onToggle={toggleCard}
@@ -1235,8 +1276,21 @@ export function Planning({ ctx }) {
         它是这一页的一部分，离开这一页就该消失 —— 全局悬浮要改 shell 包，
         而且一个在「设置」页插嘴的助手是打扰。
       */}
-      <PlanningPet onCreated={adoptCreated} />
+      <PlanningPet onCreated={adoptCreated} tasks={scheduleTasks} slots={state.schedule ?? []}
+        onSchedule={async draft => {
+          const checked = resolveScheduleReply({ action: 'schedule', say: '待确认', draft }, { tasks: scheduleTasks, slots: state.schedule ?? [] });
+          if (checked.action !== 'schedule') throw new Error(checked.say);
+          const items = scheduleDraftItems(checked.draft);
+          const payload = items.length > 1
+            ? { items: items.map(item => ({ taskKey: item.taskKey, title: item.title, start: item.start, end: item.end, ...(item.id ? { id: item.id, expected: item.expected } : {}) })) }
+            : { taskKey: items[0].taskKey, title: items[0].title, start: items[0].start, end: items[0].end };
+          if (items.length === 1 && items[0].id) payload.id = items[0].id;
+          await saveSchedule(payload);
+          setScheduleWeek(weekStart(items[0].start));
+          setView('schedule');
+        }} />
     </div>
+    </ScheduleAction.Provider>
   );
 }
 
@@ -1789,6 +1843,7 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
             )}
 
             <div className="zpg-row-actions">
+              <ScheduleButton row={row} />
               {/* 让 AI 拆这一条 —— 这一页最有用的动作，所以放在第一个 */}
               <button type="button" className="zpg-link" onClick={() => onSplit(row)} disabled={busy}>
                 <Icon name="bulb" size={13} />
@@ -1924,6 +1979,7 @@ export function CardRow({ row, onToggle, busy, schedule }) {
         {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
           <p className="zpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
         )}
+        <ScheduleButton row={row} />
       </div>
     </li>
   );
@@ -2108,6 +2164,7 @@ function TodoRow({ row, onToggle, busy, schedule }) {
         {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
           <p className="zpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
         )}
+        <ScheduleButton row={row} />
         {/* 勾掉之后才说这句话：没勾的人不需要读，勾了的人必须知道它的边界。 */}
         {row.done && (
           <p className="zpg-row-hint">
@@ -2458,7 +2515,7 @@ function describeRelaySummary(payload) {
  * 3. **`create` 只出卡，不落库**。卡片上有一个「好」按钮，那一刻才真的写。
  *    这是 AI 相关功能共同的一条底线：AI 记错了必须有人拦。
  */
-function PlanningPet({ onCreated }) {
+function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
@@ -2466,14 +2523,17 @@ function PlanningPet({ onCreated }) {
   const [error, setError] = useState(null);
   // 待确认的那条草案（同一时刻只留一条：连着说两件事要分开确认）
   const [pendingDraft, setPendingDraft] = useState(null);
+  const [pendingSchedule, setPendingSchedule] = useState(null);
+  const schedulePreview = pendingSchedule ? resolveScheduleReply({ action: 'schedule', say: '待确认', draft: pendingSchedule }, { tasks, slots }) : null;
   const listRef = useRef(null);
   const inputRef = useRef(null);
+  const scheduleSaving = useRef(false);
 
   // 有新消息时滚到底部 —— 聊天气泡里"看不到最新那条"是最基本的问题
   useEffect(() => {
     const node = listRef.current;
     if (node) node.scrollTop = node.scrollHeight;
-  }, [messages, pendingDraft, open]);
+  }, [messages, pendingDraft, pendingSchedule, open]);
 
   // 打开时聚焦输入框，省掉一次点击
   useEffect(() => {
@@ -2509,6 +2569,9 @@ function PlanningPet({ onCreated }) {
     if (!said || sending) return;
     setText('');
     setError(null);
+    // A new request supersedes the previous unconfirmed proposal.
+    setPendingDraft(null);
+    setPendingSchedule(null);
     const history = messages.slice(-8);
     // 用户那句 + 一个待填充的助手气泡（用 index 定位，避免和已有气泡混淆）
     setMessages((current) => [...current, { role: 'user', text: said }, { role: 'assistant', text: '' }]);
@@ -2529,6 +2592,7 @@ function PlanningPet({ onCreated }) {
       const finalSay = typeof payload?.say === 'string' && payload.say ? payload.say : typed;
       patchAssistant(finalSay);
       if (payload?.action === 'create' && payload?.draft) setPendingDraft(payload.draft);
+      if (payload?.action === 'schedule' && payload?.draft) setPendingSchedule(payload.draft);
       if (Array.isArray(payload?.notes) && payload.notes.length > 0) setError(payload.notes.join('；'));
     };
 
@@ -2601,6 +2665,20 @@ function PlanningPet({ onCreated }) {
     }
   };
 
+  const confirmSchedule = async () => {
+    if (sending || scheduleSaving.current || !pendingSchedule || schedulePreview?.action !== 'schedule') return;
+    scheduleSaving.current = true;
+    setSending(true); setError(null);
+    try {
+      if (typeof onSchedule !== 'function') throw new Error('日程保存暂不可用');
+      await onSchedule(schedulePreview.draft);
+      setPendingSchedule(null);
+      setMessages(current => [...current, { role: 'assistant', text: `已保存日程（DDL 未改变）：${scheduleDraftItems(schedulePreview.draft)
+        .map(item => `${item.title} ${whenIso(item.start)}—${whenIso(item.end)}`).join('；')}` }]);
+    } catch (failure) { setError(failure.message); }
+    finally { scheduleSaving.current = false; setSending(false); }
+  };
+
   if (!open) {
     return <button
       type="button"
@@ -2636,7 +2714,7 @@ function PlanningPet({ onCreated }) {
     <div className="zpg-pet-body" ref={listRef}>
       {messages.length === 0 && (
         <p className="zpg-pet-hello">
-          有什么要记的？直接说就行，比如「下周三交第三章作业」。
+          可以记 DDL，也能安排日程，比如「把高数作业安排到明晚 7—9 点」。AI 先出草案，你确认后才保存。
         </p>
       )}
 
@@ -2653,6 +2731,25 @@ function PlanningPet({ onCreated }) {
           {item.text || (item.role === 'assistant' ? '…' : '')}
         </p>
       ))}
+
+      {pendingSchedule && <div className="zpg-pet-draft" aria-label="日程草案">
+        <p className="zpg-pet-draft-title">{scheduleDraftItems(pendingSchedule).some(item => item.id) ? '调整日程' : '新增日程'}</p>
+        <ol className="zpg-pet-draft-meta">
+          {scheduleDraftItems(pendingSchedule).map((item, index) => <li key={`${item.id ?? item.taskKey}-${index}`}>
+            <strong>{schedulePreview?.draft && Array.isArray(schedulePreview.draft.slots) ? schedulePreview.draft.slots[index]?.title : schedulePreview?.draft?.title ?? item.title}</strong>
+            {' '}{whenIso(item.start)} — {whenIso(item.end)}（上海时间）
+            {item.id && slots.find(slot => slot.id === item.id) && <small>（原：{whenIso(slots.find(slot => slot.id === item.id).start)} — {whenIso(slots.find(slot => slot.id === item.id).end)}）</small>}
+          </li>)}
+        </ol>
+        {pendingSchedule.assumptions?.length > 0 && <p>假设：{pendingSchedule.assumptions.join('；')}</p>}
+        <p>仅修改执行时间，不改变 DDL。确认前不会保存。</p>
+        {schedulePreview?.action !== 'schedule' && <p role="alert">{schedulePreview?.say}</p>}
+        {(schedulePreview?.warnings ?? []).map((warning, i) => <p className="zpg-schedule-warning" key={i}>{warning}</p>)}
+        <div className="zpg-pet-draft-actions">
+          <button type="button" className="zy-primary" onClick={confirmSchedule} disabled={sending || schedulePreview?.action !== 'schedule'}>确认保存日程</button>
+          <button type="button" className="zy-secondary" disabled={sending} onClick={() => setPendingSchedule(null)}>取消日程草案</button>
+        </div>
+      </div>}
 
       {/* 确认卡：把模型的理解**摊开**给人看，而不是只报一句"记好了" */}
       {pendingDraft && (
