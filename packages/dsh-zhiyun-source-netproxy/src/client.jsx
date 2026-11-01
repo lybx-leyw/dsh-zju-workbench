@@ -1,4 +1,4 @@
-// 「个人 → 网络代理」面板：把分域路由表摆成可编辑的形状。
+﻿// 「个人 → 网络代理」面板：把分域路由表摆成可编辑的形状。
 //
 // 面板**不判断路由，也不复刻校验**：域名怎么匹配、配置算不算合法，真源都在宿主半边的
 // `src/config.js`（`normalize` / `matchesHost`）。这里只做三件事 —— 读出当前配置、
@@ -8,20 +8,14 @@
 // 写操作必须带 `x-zhiyun-net-proxy` 头：宿主用它挡 CSRF（跨站发不出自定义头，硬带上
 // 就会触发本路由不响应的预检）。漏了它每次保存都是 403。
 //
-// # 外观为什么不自己画（这一段决定了整个面板的形状）
+// # 外观为什么自己只画内容（这一段决定了整个面板的形状）
 //
-// 「个人」页上其余的设置项都是宿主设置桥（`PersonalSettingsBridge`）渲染的
-// `<details class="zy-settings-group">` + `<summary>` —— **默认折叠**，靠 shell 的
-// `.zy-settings-group` / `.zy-settings-body` 两条公共类出形状（图标块、标题、描述、
-// 右端 chevron、展开时 chevron 旋转、summary 下的分隔线）。
+// 本面板现在是宿主**原生设置浮窗**里的一个分区（注册 `settings.section`，与「论文阅读」
+// 等同一套导航与滚动外壳）。浮窗自己负责标题、分区切换与滚动，所以这里只排内容：
+// 把边框、圆角、折叠交互再画一遍会出现「浮窗里套一张折叠卡」。
 //
-// 本面板早先自己画了一张常开的卡片：于是它是这一页上**唯一不折叠**的设置项，还多出
-// 一层边框（卡片套卡片）。现在改成**复用同一对公共类**，与原生设置组逐像素同源 ——
-// 既拿到折叠交互，也不必再维护第二套视觉。壳换主题/调尺寸时本面板自动跟随，
-// 因为那些像素根本不属于本包。
-//
-// 折叠状态下靠 summary 的描述行自述状态（「已接管流量 · 1 个代理 · 1 条规则」），
-// 所以收起来也不会看不出现在生效的是什么。
+// 折叠状态下那行自述读数（「已接管流量 · 1 个代理 · 1 条规则」）保留为面板顶部一行，
+// 收起时它仍是唯一能看见的结论。
 import React, { useEffect, useState } from 'react';
 import { Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
@@ -33,8 +27,10 @@ export const inject = ['slots'];
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunNetProxyStyle', css, label: 'zhiyun: net proxy styles' });
-  ctx.slots.inject('zhiyun.me.network', () => ctx.slots.register(
-    { name: 'zhiyun.me.network' },
+  // 设置是宿主原生浮窗（`settings.section` 的子槽位），所以面板直接进那里，
+  // 与「论文阅读」等设置项同一套导航与折叠外壳 —— 本包不另建入口。
+  ctx.slots.inject('settings.section', () => ctx.slots.register(
+    { name: 'settings.section', id: 'net-proxy', order: 20, label: () => '网络代理' },
     NetworkProxy,
   ));
 }
@@ -267,23 +263,19 @@ export function NetworkProxy() {
       dirty ? '有未保存的改动' : null,
     ].filter(Boolean).join(' · ');
 
-  // summary 与 body 的类名都取自壳（`.zy-settings-group` / `.zy-settings-body`）：
-  // 与这一页上其余的设置组同源，折叠交互与视觉因此天然一致，本包一像素都不复刻。
-  const frame = (body) => <details className="zy-settings-group znp">
-    <summary>
-      <span className="zy-settings-icon"><Icon name="graph"/></span>
-      <span><strong>网络代理</strong><small>{summaryText}</small></span>
-      <Icon name="chevron" size={16}/>
-    </summary>
-    <div className="zy-settings-body">{body}</div>
-  </details>;
+  // 设置分区已经有原生浮窗提供的导航与滚动外壳，这里只排本面板自己的内容：
+  // 再套一层折叠组会变成「浮窗里套一张折叠卡」。摘要读数改成面板顶部一行。
+  const frame = body => <div className="znp">
+    <p className="znp-summary">{summaryText}</p>
+    <div className="znp-body">{body}</div>
+  </div>;
 
   if (phase !== 'ready') {
-    return frame(<div className="znp-stack">
+    return frame(<>
       <p className="znp-muted">{phase === 'loading' ? '正在读取代理配置…' : '读不到代理配置。'}</p>
       <Notice>{notice?.text}</Notice>
       {phase === 'error' && <div><button type="button" className="zs-button" onClick={() => void load()}>重新读取</button></div>}
-    </div>);
+    </>);
   }
 
   const targetOptions = <>
@@ -293,7 +285,7 @@ export function NetworkProxy() {
     </option>)}
   </>;
 
-  return frame(<div className="znp-stack">
+  return frame(<>
     <label className="znp-switch">
       <input
         type="checkbox"
@@ -464,5 +456,5 @@ export function NetworkProxy() {
     </div>
     <Notice>{notice?.tone === 'bad' ? notice.text : ''}</Notice>
     {notice?.tone === 'ok' && <p className="znp-note-ok">{notice.text}</p>}
-  </div>);
+  </>);
 }

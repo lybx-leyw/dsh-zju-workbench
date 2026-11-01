@@ -24,6 +24,10 @@ export const sourceBundles = (await readdir(path.join(root, 'packages'), { withF
  * 同前缀但没登记的条目可能来自别的分支或用户自己链进来的包，一律不动。
  */
 export const retiredBundles = ['dsh-zhiyun-pro-ui', 'dsh-zhiyun-study', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-player',
+  // 「个人」页整包删除：它的两块内容各自有了归属 —— 登录对话框与「账号与数据」
+  // 设置分区进了 `dsh-zhiyun-settings-account`。老 profile 里还挂着这一行的话
+  // Loader 解不开，整个 profile 起不来。
+  'dsh-zhiyun-page-me',
   // 「无曰终审」整包删除（自由发挥那一步被并入习坎的全文润色）。
   // 老 profile 里还挂着这一行的话 Loader 解不开，整个 profile 起不来。
   'dsh-zhiyun-core-final-pass'];

@@ -101,13 +101,13 @@ test('fiberNameIndex：只收有 Loader 条目的 fiber，未命名的不进表'
   const index = fiberNameIndex([
     { options: { name: 'dsh-zhiyun-shell-workbench' }, fiber: { runtime: { name: 'zhiyun-shell-client' } } },
     // 没有 runtime.name 的（如 `ctx.inject` 生出的子 fiber）靠 fiber.name 兜底。
-    { options: { name: 'dsh-zhiyun-page-me' }, fiber: { name: 'zhiyun-page-me-client' } },
+    { options: { name: 'dsh-zhiyun-settings-account' }, fiber: { name: 'zhiyun-settings-account-client' } },
     // 根 fiber 的兜底名是 'root'，不能进表（否则会把不相干的声明算到某个包上）。
     { options: { name: 'dsh-zhiyun-core-notes' }, fiber: { name: 'root' } },
     { options: { name: 'dsh-zhiyun-core-quiz' } },
   ]);
   assert.equal(index.get('zhiyun-shell-client'), 'dsh-zhiyun-shell-workbench');
-  assert.equal(index.get('zhiyun-page-me-client'), 'dsh-zhiyun-page-me');
+  assert.equal(index.get('zhiyun-settings-account-client'), 'dsh-zhiyun-settings-account');
   assert.equal(index.has('root'), false);
   assert.equal(index.size, 2);
 });
@@ -207,17 +207,17 @@ test('关闭中的包不能勾；只读包不能勾；只统计本仓前缀', ()
   const view = buildView({
     bundles: [
       bundle('dsh-zhiyun-page-today'),
-      bundle('dsh-zhiyun-page-me'),
+      bundle('dsh-zhiyun-settings-account'),
       bundle('dsh-zhiyun-page-study'),
       // `removable: false` 说的是「不能 pnpm remove」，不是「不能停用」——不能拿它当闸门。
       bundle('dsh-zhiyun-page-paper', { removable: false }),
       bundle('dsh-zhiyun-page-notes'),
       bundle('@deepseek-ai/dsh-client-ui-layout'),
     ],
-    // 行级开关的真源：`page-me` 已经被用户关掉了，`page-study` 是只读的。
+    // 行级开关的真源：`account` 已经被用户关掉了，`page-study` 是只读的。
     plugins: [
       plugin('dsh-zhiyun-page-today'), plugin('dsh-zhiyun-page-paper'),
-      plugin('dsh-zhiyun-page-me', { enabled: false }),
+      plugin('dsh-zhiyun-settings-account', { enabled: false }),
       plugin('dsh-zhiyun-page-study', { readOnlyReason: 'management-required' }),
     ],
     modules: [], host: plane([]), client: plane([]), slots: [],
@@ -225,19 +225,19 @@ test('关闭中的包不能勾；只读包不能勾；只统计本仓前缀', ()
   // 四个之间没有任何边，于是平局按 profile 层序落地（不是字母序）——「依赖在前」定不下来的
   // 部分才交给层序，这样图不会因为一次重建就换个排布。
   assert.deepEqual(view.rows.map(row => row.name), [
-    'dsh-zhiyun-page-today', 'dsh-zhiyun-page-me', 'dsh-zhiyun-page-study',
+    'dsh-zhiyun-page-today', 'dsh-zhiyun-settings-account', 'dsh-zhiyun-page-study',
     'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-notes',
   ], '上游包不进图，剩下的按层序');
   const cancellable = new Set(view.cancellable);
   assert.ok(cancellable.has('dsh-zhiyun-page-today'));
   assert.ok(cancellable.has('dsh-zhiyun-page-paper'), 'profile 依赖照样能停用（removable 不是闸门）');
-  assert.ok(!cancellable.has('dsh-zhiyun-page-me'), '已经关掉的不该再给「取消」');
+  assert.ok(!cancellable.has('dsh-zhiyun-settings-account'), '已经关掉的不该再给「取消」');
   assert.ok(!cancellable.has('dsh-zhiyun-page-study'), '只读的不该给勾选框');
   assert.ok(!cancellable.has('dsh-zhiyun-page-notes'), '没有 Loader 条目的行没有句柄，不能给勾选框');
 
   const byName = Object.fromEntries(view.rows.map(row => [row.name, row]));
-  assert.equal(byName['dsh-zhiyun-page-me'].enabled, false, '行级开关决定这一行的状态');
-  assert.equal(byName['dsh-zhiyun-page-me'].entryId, 'entry:dsh-zhiyun-page-me', '关掉的包也要留着句柄才能再打开');
+  assert.equal(byName['dsh-zhiyun-settings-account'].enabled, false, '行级开关决定这一行的状态');
+  assert.equal(byName['dsh-zhiyun-settings-account'].entryId, 'entry:dsh-zhiyun-settings-account', '关掉的包也要留着句柄才能再打开');
   assert.equal(byName['dsh-zhiyun-page-today'].entryId, 'entry:dsh-zhiyun-page-today', '写动作要的是行句柄');
   assert.equal(byName['dsh-zhiyun-page-study'].readOnlyReason, 'management-required', '只读原因来自行');
 });
