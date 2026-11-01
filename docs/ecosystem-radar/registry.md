@@ -4131,3 +4131,35 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `backfired-www/word-memorizer` | B 其他JS（纯前端 HTML/JS） | **null** ⛔ | 大英默写 / 背单词 | **重复且无增益**（判定与调度均已覆盖） | 🔵 | proposed | 2026-11-01 | — | r124。★1、166 KB、建仓 2026-10-30、push 10-31。**无许可证 → 不得摘取任何代码**。评分面本仓已有 `cloze`/`shortAnswer` + `fsrs-scheduler`（锁 FSRS）+ `answer-equiv` 骨架；唯一可看是「整句隐去、逐词揭晓」的 reveal 节奏，属 UI 细节，**只作人的灵感，不进骨架** |
 | `HeinzBundschuh/timeless` | B 其他JS（单 HTML 文件） | MIT ✅ | 通用（日历/时间表） | **重复且无增益** | 🔵 | proposed | 2026-11-01 | — | r124。★1、1029 KB、建仓 2026-10-21、push 10-22（**低活跃**）。本仓已有 `panda-calendar` / `cjk-calendar` / `ics-rrule` / `week-parser` 四条时间轴骨架，再加一条只增噪。仅留「离线优先、零依赖、单文件可分发」的形态参照 |
 | `Xiaoc712/cijian-zju-dictation` | B 其他JS（小程序 + Windows App） | **null** ⛔ | 大英默写（浙大） | **重复且无增益**（且与在册条**同上游派生**） | ⛔ | rejected | 2026-11-01 | — | r124。★1、1.8 MB、建仓=push 2026-10-31。描述自陈「基于 Lucent_Snow 原项目改进」⇒ 同上游派生；`null` 许可证。留行防下轮再被「大英默写」吸引 |
+
+---
+
+## r125 · 2026-11-01-09 · C 组 · **新轴：「职业与去向」**
+
+> **轴线成立，而且是本仓最大的一块空白**：`grep -rl "保研\|推免"` 与 `grep -rl "实习\|招聘\|简历"`
+> 在 `packages/*/src` 下**双双 0 命中**；`packages/*/package.json` 里**无任何 docx 读取库**
+> （只有 `pdfjs-dist`，且只用于「看」PDF）。12 页 / 59 主包里，「这个人要去哪」一格都没有。
+> 本轮 4 条候选**全部是 registry 新面孔**（此前 `grep -c` 均为 0）。
+> **词面校准**：`campus recruitment jobs crawler` **0**、`xlsx resume parser browser` **0** → 弃用；
+> **`dsh plugin resume job`（total=4）命中 2 个原生 DSH 插件，是本轴唯一高价值交叉词**；
+> `job application tracker self-hosted`(ts) 67 条 / 5 个可用 → 建议固定。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `GOOGUO2333/dsh-job-hunting` | **A 原生DSH**（`dsh.bundle.patch` → `cordis.patch.yml`） | **MIT** ✅ | 求职/去向（暑期实习、秋招、毕业季） | **重复可强化**（同一面板=规划页条目行；同一功能=「明天做什么」→「我的简历对这份 JD 差在哪」；底层多调了更优质实现=①零依赖 docx 解析 ②PDF ToUnicode CMap ③简历打分+桥接岗） | 🟢 | skeleton-created | 2026-11-01 | 2026-11-01 | r125。★0、76 KB、JS、**零第三方依赖**、建仓=push 2026-10-30、`1.2.2`、**npm 无发布**（只能按 git tag/目录锁）。三工具 `job_search`/`career_plan`/`career_interview`。**判据③全过（沙箱实跑）**：docx→`"张三 · 浙江大学\n熟悉 TypeScript 与 Python\n"`；CMap **数组式** `<4E13><4E15>[张 三 李]` 正确得 `4E13=张 4E14=三 4E15=李`（逆序处理，先用空格抹掉数组式再跑递增式，避免 `<hex><hex><hex>` 被误读成区间）；递增式 `10=李 11=杏 12=材`；多字体按 `/Fx n Tf` 跟踪不串字。`careers.js` 自陈 pure functions（no network/no Cordis）。**隐私红线**：`job_search` 会把简历事实拼进 `ctx.web` 检索词、并绕过 `HTTP_PROXY` 直连 → 骨架 TODO-1/TODO-B 规定外发白名单只有 `cities`+技能标签。骨架 `packages/radar/dsh-radar-job-hunting`（**A 类 · deps 锁版 `1.2.2`，不用 `^`**，含 ATTRIBUTION）。**TODO**：TODO-0 落哪个页（否决即删目录）、TODO-2 只读 vs 可写、TODO-4 `CAREERS` 是社招口径需换成在校生版 |
+| `Gsync/jobsync` | B 其他JS（Next.js + Prisma 整站，`private`） | **MIT** ✅ | 求职（看板 + ATS） | **重复可强化（落点不同面板）** | 🟡 | proposed | 2026-11-01 | — | r125。**★1481**、19 184 KB、TS、建仓 2024-05-21、push **2026-10-30**（活跃）、**有 Release `v1.2.0`** 但 **npm 空 + `private:true` → 不可 lockfile 装**。topics 含 `ats`/`resume-review`/`job-match`/`ollama`/`mcp`。**为什么不是 🟢**：整站挂上来=新建一整套面板，判据①不成立；可复用部分只是一个**几十行契约**（`SCORES: match=<0-100> recommendation=<strong\|good\|partial\|weak>` 首行 + 评分带 80/65/50/35 + **流式半行遮罩** + 数字贪婪匹配后 clamp），按 r65 增益核算只能到 🟡。且与上行同域、增量只剩这一条 → **不单独出骨架**，改为把口径内联进 `dsh-radar-job-hunting` 的 TODO-3 |
+| `1bailan/dsh-plugin-boss-zhipin` | **A 原生DSH**（只注册 skill `boss-zhipin-deliver`） | **MIT** ✅ | 求职（BOSS直聘） | **重复且无增益** ⛔（本仓不适用） | 🔵 | proposed | 2026-11-01 | — | r125。★0、120 KB、**Python 内核 + PowerShell**、建仓=push 2026-10-27。**三条独立拒绝理由**：①强外部依赖 **Kimi WebBridge**（`127.0.0.1:10086`）+ 已登录 BOSS 账号，本仓无此通道；②它是**自动投递**（关键词进化→批量加载→逐条决策→投递），本仓对学生平台**一律只读**；③README 自陈 daemon 启停要写 `~/.kimi-webbridge` PID/日志，**会被 `workspace-write` 沙箱拒**，要求升到 `danger-full-access` → 不可接受。**唯一价值**是它自设的伦理红线措辞（不绕验证码/风控/上限、不批量、不留常驻进程），已被本包骨架 README 采用其精神。另：其 README 自陈上游是 WorkBuddy `boss-zhipin-assistant` v5.9 改写 |
+| `DaKheera47/job-ops` | B 其他JS（TS · Next.js + Docker） | **NOASSERTION** ⚠（GitHub 识别 `Other`） | 求职（含 `sponsorship` 签证赞助 topic，外企/出国向） | 重复可强化（待许可证明确后再评） | 🔵 | pending-license | 2026-11-01 | — | r125。**★4088（本轴最高星，约 jobsync 的 2.8 倍）**、9 480 KB、建仓 2025-12-11、push 2026-10-30。**硬门槛卡住**：`NOASSERTION` → 本轮**不采用、不摘码**。**回看条件**：若 LICENSE 改为明确 SPDX（MIT/Apache-2.0 等），它会是本轴**最强** B 类候选，届时**优先于 `jobsync` 重评** |
+
+> **本轴一个必须记下的模式：简历方向星数最高的三个全是 GPL/AGPL。**
+> `Renovamen/oh-my-cv` ★1105 **GPL-3.0** ⛔；`junian/markdown-resume` ★714 **AGPL-3.0** ⛔；
+> `EmaSuriano/astro-resume` ★88 `null` ⛔；`cosen1024/resume-builder-skill` ★49 `NOASSERTION` ⚠。
+> → 本轴**不要指望**「高星 + 宽松」的简历生成器，绕开的正确办法是**自建 Markdown → DOCX 渲染**
+> （可复刻 `core-classroom-export` 的 PPTX 链路思路），而不是接一个高星项目。
+>
+> **另存一条形态参考（不单独占行）**：`resume-llm/resume-ai`（★394 · **MIT** ✅ · JS · 1 626 KB · push 2026-09-21）
+> 做「Kanban + 按 JD 生成简历 + Pandoc 导 PDF/DOCX」，但已被 `dsh-job-hunting` 全面覆盖（原生 DSH、零依赖、可锁版），
+> 故判 **被覆盖、不登记为候选**。唯一独有的价值是 `_detect_hidden_content()`（零宽 `U+200B/200C/200D/2060/FEFF/00AD`
+> + `[ \t]{15,}` + `unicodedata.category=='C'`）。**沙箱实跑**：正常→clean；零宽→`['zero-width','nonprintable=1']`；
+> 长空格→`['long-space']`；控制符→`['nonprintable=2']`。**两个毛病**：①零宽本身是非打印字符，**重复报警**；
+> ②只检 JD **不检简历**。修法已写进骨架 TODO-5。

@@ -1,0 +1,21 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+#
+# A 类 · 锁版挂载。上游 `GOOGUO2333/dsh-job-hunting`（MIT，v1.2.2）是**原生 DSH 插件包**
+# （`package.json` 有 `dsh.bundle.patch` → `./cordis.patch.yml`），按「锁版挂载 + 外围兼容层」
+# 引入：`package.json.dependencies` 写死 `1.2.2`（**不用 `^`**），本包**不改上游一行源码**。
+#
+# ⚠ 上游 npm 无发布（`registry.npmjs.org/dsh-plugin-job-hunting` 空），只能按 git tag 锁：
+#   评审通过后由 lockfile 走 `github:GOOGUO2333/dsh-job-hunting#1.2.2`，
+#   或 vendor 到 `vendor/` 后按目录锁（与 `dsh-zhiyun-paper` 同法）。**两种都要人工定。**
+#
+# 本包相对上游的增量（= 判据③「多调了更优质实现」的落点）：
+#   ① 简历解析留在**本机**（上游的 `job_search` 会把简历事实拼进 `ctx.web` 检索词，
+#      见 README「隐私红线」）；
+#   ② 匹配结果加**机器可读首行** `SCORES: match=… recommendation=…`
+#      （口径借自 `Gsync/jobsync` MIT v1.2.0，非复制其代码）；
+#   ③ 简历侧也做隐藏字符检测（上游与 `resume-llm/resume-ai` 都只检 JD）。
+#
+# insert id 带 radar- 前缀，与其它 radar 骨架错开；**不挂上游自带的 `test/` 与 locale 之外的东西**。
+- insert:
+    - id: radar-job-hunting
+      name: dsh-radar-job-hunting
