@@ -4388,3 +4388,25 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `SZoloth/margin` | B 其他JS | None | 阅读批注 | 无关 | ⛔ | rejected | 2026-11-02 | — | ★2。无许可证；本仓论文页已有批注 |
 | `dog-last/MarkPDF` | B 其他JS | MIT | PDF 批注 | 重复且无增益 | 🔵 | proposed | 2026-11-02 | — | ★4。与论文页既有批注重复 |
 | `binarynonsense/comic-book-reader` | B 其他JS | NOASSERTION | 阅读 | 无关 | ⚠ 待核 | pending-license | 2026-11-02 | — | ★431。ACBR 桌面壳 + 许可证不明 |
+| `gvvg5272-code/cc98-material-search` | B 其他JS | MIT | CC98资料检索 | 重复可强化（CC98搜索） | 🟢 | skeleton-created | 2026-11-03 | 2026-11-03 | ★1。v0.1.0。结果分拣+多楼层附件发现，`cc98.search` 现在只做标题匹配；附件是 Markdown 链接非 UBB |
+| `YuumaKobayashi/CC98-markdown-editor-20261022` | B 其他JS | Apache-2.0 | CC98 | 重复且无增益 | 🔵 | proposed | 2026-11-03 | — | ★0。实为 ZJU-CC98/Forum 备份镜像（172MB），与 `cc98-md-render` 重复，只作接口线索 |
+| `Jiangweidajiduibudui/zju-course-assistant` | B 其他JS | NOASSERTION | 未知 | 未知 | ⚠ 待核 | pending-license | 2026-11-03 | — | ★0。无描述，许可证不明，不采用 |
+| `Anchorite-no/dsh-zju-assistant` | A 原生DSH | GPL-3.0 | 浙大All-in-One | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★70。npm `dsh-zju-assistant`，DSH插件，2026-11-02活跃。GPL-3.0 不得摘码；仅作能力清单线索 |
+| `m15147908866-source/zju-bidding` | B 其他JS | None | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。桥牌叫牌练习 PWA，无许可证 |
+| `careful44444-lab/zju-remake` | B 其他JS | None | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。紫金港改造小游戏，无许可证 |
+| `Hui-Shang-942/cc98-digest` | B 其他JS | None | CC98资料 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★0。Python 多关键词订阅，无许可证，弱于 cc98-material-search |
+| `gabrielcnog/we-zjuers` | B 其他JS | NOASSERTION | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。社交平台 side project |
+| `zju-pil-lab/dllm-reading-map` | B 其他JS | MIT | 论文 | 无关 | 🔵 | proposed | 2026-11-03 | — | ★3。论文清单（非阅读器），无接口可接 |
+| `zju-pil-lab/diffusion-flow-reading-map` | B 其他JS | MIT | 论文 | 无关 | 🔵 | proposed | 2026-11-03 | — | ★0。同上，另一份清单 |
+| `NoughtQ/pixelverse` | B 其他JS | MIT | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。系统软件设计课作业（像素画编辑器） |
+| `NoughtQ/image-compressor` | B 其他JS | None | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。多媒体课作业，无许可证 |
+| `Leager-zju/TortoiseSVN-in-VSCode` | B 其他JS | MIT | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★1。VS Code SVN 扩展，栈不交 |
+| `Aaron-Cui-ZJU/vscode-systemverilog` | B 其他JS | Apache-2.0 | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★1。VS Code 语法高亮，无关 |
+| `EeeMaoY/MyChat` | B 其他JS | None | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。计网课期末项目，无许可证 |
+| `Ray8mu34/ZJUAAA_Web` | B 其他JS | None | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★4。社团官网，无许可证 |
+| `ZJU-ECLab/ZJU-ECLab.github.io` | B 其他JS | None | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★4。实验室主页，无许可证 |
+| `ifrc-zju/ifrc-zju.github.io` | B 其他JS | None | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★1。社团主页，无许可证 |
+| `MKL537999/ZJU-blockchain-course-lfr` | B 其他JS | None | 课程资料 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。区块链课资料归档，无许可证 |
+| `LBruyne/ZJU-blockchain-course-2026` | B 其他JS | None | 课程资料 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。同上，另一学生 |
+| `yangkao/-Self-use-only-zjuers.com---ui-remake` | B 其他JS | GPL-3.0 | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。自用 UI 美化，GPL |
+| `miralemzhang/Foundation_of_Big_Data_Design_FinalProject_zju-course-advisor` | B 其他JS | None | 选课 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。大数据课期末项目，无许可证 |
