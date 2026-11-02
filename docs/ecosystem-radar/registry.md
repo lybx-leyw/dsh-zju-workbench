@@ -4345,3 +4345,33 @@ node -e "const{parse}=require('@bbob/parser');console.log(JSON.stringify(parse('
 | `cuteG41cute/dsh-desktop` `karoc/dsh-desktop` `Eternalloveone/dsh-palm` `msz-legend/dsh-mobile-bridge` | A 原生DSH | MIT / Apache-2.0 | 无 | 无交集 | ⛔ | rejected | 2026-11-02 | — | **桌面壳 / 移动端第 4 次封板**：不是面板能力；且移动端与 Web 面板并发两套入口 |
 
 **r131（2026-11-02 · 09 时段 · A 组 · 绘制通道轴）补记**：搜索 **10 次**（其中 3 次网络超时无返回，实得 7 次有效），0 次 403。原始去重约 **150**、未登记 **20**、留档 **16 行**（🟢1 / 🟡2 / 🔵7 / ⛔16 合并成 6 行）。`NOASSERTION` **3**、`null` **4**。**骨架 1** `packages/radar/dsh-radar-sketchpad/`（A 类，锁 `dsh-sketchpad@0.1.1`，**强化式集成 · 判据③半成立**）。**本轴最重要的一条**：`dsh sketch` / `dsh canvas` 这类**小词**是本轮唯一有效词面；`dsh plugin quiz OR flashcard OR …` 被 `plugin` 泛词稀释（12,008 条，前 30 几乎全在册）。**词面校准**：A 组五主词按 stars 排序**连续第 6 轮零新面孔** → 正式降为「每 3 轮一次的复活探针」。**拒录记要**：`Amadeus2027/dsh-sketch-reference` 判 🟡 而非 🟢 —— 仓库 10,884 KB + `build/*.mjs` 生成 client bundle ⇒ **锁不了版**（同 r111 `M1r0er/dsh-modpack` 的教训：宁缺勿滥）。**去重记要**：`dsh-radar-whiteboard` 与本轮骨架是同一块画布的两个候选，评审须二选一。
+
+## r132 · 2026-11-02-15 · B 组（浙大场景）+ A 组 `dsh in:name sort=updated` 增量 · 追加
+
+> **取组**：`radar-rotation` → `same-day(exhausted)` 给 **B**（今日 A/B/C 已各跑满一轮）。搜索 **8/10**（1 次超时计无效，未触 403，完整）。
+> 原始去重 **84** → 未登记 **7** → 留档 **4 行**（🟡1 / 🔵3 / ⛔3 组合行）。**骨架 0**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `amd47802574/dsh-session-fulltext-search` | A 原生DSH | **MIT** ✅（`spdx_id` + 仓内 `LICENSE` 1,068 B 一致） | **强**（会话正文检索：翻旧课、找「上次那道积分」） | **全新**（本仓零会话正文检索；`note-search*`/`note-fulltext` 只覆盖笔记域） | 🟡 | proposed | 2026-11-02 | — | ★0，2026-11-02 建仓当日、`0.2.1`、`dependencies` 不存在、4 文件 ≈18 KB ⇒ **可锁版**。**判据③不成立，撞 A 类第五道门**：`node -e "CREATE VIRTUAL TABLE … USING fts5"` → **`no such module: fts5`**（node v22.13.1 实测），与 r83 `Jesse-njx/dsh-memory` 同坑；上游两层（FTS5 后端 + 同索引 LIKE 兜底）同时失效。**带走两条事实**：① 宿主 `@deepseek-ai/dsh-session-query-sqlite` 出厂 `openAt: never`，本仓 profile bundle 栈**无覆盖行** ⇒ 侧边栏放大镜**只搜标题/工作区名**；② CJK 正解是 trigram/bigram/子串，`unicode61` 把 `已保研至福州大学` 当单 token。**不出骨架** |
+| `NinjaSln-labs/dsh-knowledge-sqlite` | A 原生DSH | MIT ✅ | 笔记/论文（跨会话知识） | **重复且无增益** | 🔵 | proposed | 2026-11-02 | — | ★1、`0.1.10`、457 KB、2026-09-03 建。`ctx.knowledge` 服务 + `knowledge_*` 工具 + **FTS5 trigram** 中文子串 + L1 查询扩展。本仓 `note-search*`/`kb-rag`/`knowledge-graph`/`fsrs` 已覆盖更细；**同撞 FTS5 门**。**只取 trigram 选型**，不接 |
+| `snow-The/dsh-alexlib` | A 原生DSH | MIT ✅ | 论文（OCR 语料 CJK 检索） | 重复可强化，同撞 FTS5 | 🔵 | proposed | 2026-11-02 | — | ★0。**CJK bigram** FTS5 over OCR 语料 —— 是「高数→高等数学」这类**部分匹配**的正解，强于 `clientside-search`（无中文分词，见 `dsh-radar-note-fulltext` E-2）。**留作该骨架的切分器候选**，不单独出包 |
+| `cpamukcu/piegl-study-agency` | B 其他JS | **null** ⛔ | 中（课程/DDL/备课本地工作区） | — | ⛔ | rejected | 2026-11-02 | — | ★0、无许可证 → **只作线索、不摘码**。产品口径（本地优先 + 课程/DDL/备课三栏）与本仓 `today`/`planning` 同构，仅参考 |
+| `Rehtt/dsh-plugins` `brickhu/dsh-plugins` `wkin-t/dsh-plugins` | A 原生DSH | MIT / **null** ×2 | 无 | 无交集 | ⛔ | rejected | 2026-11-02 | — | ★0「自用插件仓库」合集，**非单包、无 npm 版本 ⇒ 锁不了版**；`wkin-t` 的危险命令拦截与宿主权限层重复 |
+| `doraasn/dsh-cloud-sync` | A 原生DSH | MIT ✅ | 无 | 无交集 | ⛔ | rejected | 2026-11-02 | — | ★0。技能/插件/配置/凭据备份到自备 WebDAV —— 不是面板能力，且需外部凭据 |
+| `c4i890/dsh-wetflow` `ft5191306/DSH-CFHKoptimizer` `damon2012/dsh-superagent-test` `fongap-labs/dsh-plugin` `czc-unac/CVE-dsh-agent` | A/B | Apache-2.0 / **null** ×3 / MIT | 无 | 无交集 | ⛔ | rejected | 2026-11-02 | — | ★0–3。生物科研 / CFHK 优化 / 测试仓 / 空仓 / CVE 智能体，全部非学生域 |
+| `macanine/zju-xiqian-game` `Ray8mu34/ZJUAAA_Web` `EeeMaoY/MyChat` `Chinese-Journal-of-Law/MiniDEX-ZJU-Blockchain-2026-3230106207-` `Gvrzizo/ZJU-BC-Pokechain` `amyrath/portfolio-zju` `zju-pil-lab/zju-pil-lab.github.io` | B 其他JS | **null** ×6 / MIT ×1 | 无 | 无交集 | ⛔ | rejected | 2026-11-02 | — | 课程作业 / 实验室官网 / 个人主页 / 区块链演示 —— `zju language:typescript` 的**长尾噪声** |
+
+**⚠ NOASSERTION（单列，不采用、不摘码）**：本轮 **0 条**（`dsh in:name` 与 `dsh cjk` 首屏均无）。
+
+**B 组词面结论（写回关键词池）**：`zju language:typescript`（167 条，按 updated）首屏 15 条中 **9 已登记**，新 6 条全是课程网站/课设/个人页；
+`zju grade`（10 条）**8 无证 + 2 GPL，全为 2019–2025 成绩爬取脚本** ⇒ **该词面判死、移出池子**（与 r127 的 `zju food/bus/gpa` 同命：B 组「生活/成绩」分支在 GitHub 上基本无项目）。
+B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议降为每 3 轮一次**。
+
+**A 组词面结论（写回）**：`session-query-sqlite`（59 条）这类**宿主内部包名不能当探针**——被 sqlmap / Termux / 课程仓库正文稀释，零命中；
+`dsh cjk`（36 条，sort=updated）是**小而准**的新词面，建议留池占每轮 1 次配额（本轮 12 条里捞出 1 条真相关）。
+`dsh session search`（173 条）前 15 **全部在册或无关** ⇒ **会话管理器层第 3 次封板**（前面已封：插件市场、桌面壳/移动端、MCP 管理器）。
+
+**本轮最重要发现（写进评审须知）**：**「查不到旧会话」不是缺插件，是缺一行配置。**
+宿主 `@deepseek-ai/dsh-session-query-sqlite` 出厂 `openAt: never`，本仓 `profiles/zhiyun-bench/package.json` 的 `bundles`（47 条）中**无任何 `session-query-sqlite` 覆盖行**。
+⇒ 若要开正文搜索，先确认真实宿主 `node:sqlite` 是否带 FTS5；带则加配置白拿，不带则走纯客户端（同 `note-fulltext`），**不要引入第三方插件**。
