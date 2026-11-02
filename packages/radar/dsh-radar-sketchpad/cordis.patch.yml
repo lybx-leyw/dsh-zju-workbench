@@ -1,0 +1,15 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+#
+# A 类：锁版挂载上游 dsh-sketchpad@0.1.1（MIT，npm 已发布，零运行时依赖，
+# 唯一 peer 是宿主的 @deepseek-ai/cordis）。上游本身不动一行源码。
+#
+# 上游自己带了一份 cordis.patch.yml（insert id = dsh-sketchpad）。本包**不再**把
+# 上游那条原样搬进来：上游的入口是「输入框 + 菜单 / 右侧栏标签页」，而本仓要的是
+# 「课堂页里画一段」。两处同时挂 = 输入框多两个画板按钮抢同一槽位。
+# 评审通过后，要么用 `slot.override` 把上游入口重定向进课堂页，要么只借
+# `lib/client.js` 的笔画/压感实现、由本包自己注册课堂页内的画布 —— 届时再改本文件。
+#
+# insert id 带 radar- 前缀，与其它 radar 骨架错开。
+- insert:
+    - id: radar-sketchpad
+      name: dsh-radar-sketchpad
