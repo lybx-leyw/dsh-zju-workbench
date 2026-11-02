@@ -4410,3 +4410,31 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `LBruyne/ZJU-blockchain-course-2026` | B 其他JS | None | 课程资料 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。同上，另一学生 |
 | `yangkao/-Self-use-only-zjuers.com---ui-remake` | B 其他JS | GPL-3.0 | 无关 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。自用 UI 美化，GPL |
 | `miralemzhang/Foundation_of_Big_Data_Design_FinalProject_zju-course-advisor` | B 其他JS | None | 选课 | 无关 | ⛔ | rejected | 2026-11-03 | — | ★0。大数据课期末项目，无许可证 |
+| `GooDAnDReaDY/dsh-plugin-notify` | A 原生DSH | MIT | 待办到点提醒 | 重复可强化 | 🟢 | skeleton-created | 2026-11-03 | 2026-11-03 | ★ | 骨架 dsh-radar-notify-push 锁 0.4.8（npm latest 与仓 HEAD 一致）；Web Push 可关标签页送达 + IM Webhook；实测 +33 包/12MB；tools.register 零命中⇒无对外发送面 |
+| `linksdeact-sys/dsh-tab-status-dot` | A 原生DSH | MIT | 会话状态角标 | 重复可强化 | 🟡 | proposed | 2026-11-03 | — | ★ | 只改 favicon 不碰 <title>，1s 轮询+visibilitychange 补偿后台节流；npm @pxy/… 404 ⇒ 锁不了版，需 git 引用或移植 507 行 DOM 逻辑 |
+| `unifilitence/dsh-notify-say` | A 原生DSH | MIT | 任务完成语音提醒 | 重复可强化 | 🟡 | proposed | 2026-11-03 | — | ★ | npm 0.5.3/54 版；核心是 Windows TTS(SAPI/VOICEVOX)，本仓 macOS/Electron 不适配；仅借 idle gate 口径 |
+| `ztllll/dsh-push-notify` | A 原生DSH | MIT | 手机推送 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | Bark+ntfy 纯 fetch 零依赖形态最合本仓，但 npm 1.0.1 由 faruzanCN 发布、其仓 HEAD 与 npm 包字节不一致(16933 vs 15224) ⇒ 锁版即错锁 |
+| `Fledage/dsh-running-task-badge` | A 原生DSH | MIT | 运行中计数 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | — | ★ | npm 404；能力被 dsh-plugin-notify 覆盖 |
+| `andreagosto/dsh-tab-watchdog` | A 原生DSH | MIT | 标签页闪烁 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | — | ★ | npm 404；同上 |
+| `miao-ge/dsh-project-tabs` | A 原生DSH | MIT | 窗口标签页 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | — | ★ | 标题栏项目标签页＝新面板，判据①不成立 |
+| `ChuxueTeam/dshOwnerCaller` | A 原生DSH | MIT | 回电脑前提示 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | — | ★ | 响到亲手关掉的强制弹窗，与本仓不打扰取向相悖 |
+| `LongFuXiaoFeng/dsh-task-reminder` | A 原生DSH | MIT | 任务完成提示音 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 回合结束叮一声，同质 |
+| `Smallballoons01/dsh-water-reminder` | A 原生DSH | MIT | 无关（饮水） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 健康提醒场景越界；npm 404 |
+| `bc04bc/dsh-notify-reminder` | A 原生DSH | MIT | 任务完成 toast | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 Windows toast |
+| `chancoki/dsh-completion-reminder` | A 原生DSH | None | 任务完成通知 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | license=null，无许可证；同质 |
+| `rain-joke-debug/dsh-chime` | A 原生DSH | MIT | 提醒音 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质提示音 |
+| `Windwind110/task-reminder` | A 原生DSH | MIT | 后台提醒 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 Windows toast |
+| `liujianqiao701/dsh-ask-notify` | A 原生DSH | MIT | 等待回答提醒 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质；npm 1.0.4 但能力被覆盖 |
+| `wangzhanchao883/dsh-no-long-sit` | A 原生DSH | MIT | 无关（久坐） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 健康提醒场景越界 |
+| `Dax233/dsh-desktop-notify` | A 原生DSH | MIT | 任务完成 toast | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
+| `Vinci-217/dsh-desktop-notify` | A 原生DSH | MIT | 任务完成 toast | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
+| `crazy-L118/dsh-desktop-notify` | A 原生DSH | MIT | 任务完成 toast | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
+| `Dawn388887/dsh-notify` | A 原生DSH | MIT | 桌面+远程通知 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
+| `Favio8/dsh-plugin-task-notify` | A 原生DSH | MIT | 任务完成通知 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
+| `jqstrong/dsh-done-notify` | A 原生DSH | MIT | 任务完成通知 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
+| `Timur-Ziyangareev/desktop-notify` | A 原生DSH | MIT | 任务完成 toast | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
+| `hoyin-law/dsh-notify-plus` | A 原生DSH | MIT | 上下文丰富通知 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质；仅借「标题取会话名」口径 |
+| `iuuuuuuuu/dsh-tauri-notify-webhook` | A 原生DSH | MIT | 邮件/pushplus 转发 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | Tauri 专用，本仓 Electron 壳 |
+| `zzzzzz66666-a/dsh-plugin-mail-notify` | A 原生DSH | MIT | 邮件通知 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 需回复邮件控制 agent，权限面过大 |
+| `ddxl123/dsh-notify-long` | A 原生DSH | MIT | 桌面+邮件提醒 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
+| `BotHarness/DeepSeekBot` | A 原生DSH | MIT | 无关（bot 平台） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | ★547 但为 Discord/GrokBot 类整体产品，非插件形态 |
