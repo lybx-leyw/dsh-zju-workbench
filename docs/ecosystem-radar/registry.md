@@ -4375,3 +4375,16 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 **本轮最重要发现（写进评审须知）**：**「查不到旧会话」不是缺插件，是缺一行配置。**
 宿主 `@deepseek-ai/dsh-session-query-sqlite` 出厂 `openAt: never`，本仓 `profiles/zhiyun-bench/package.json` 的 `bundles`（47 条）中**无任何 `session-query-sqlite` 覆盖行**。
 ⇒ 若要开正文搜索，先确认真实宿主 `node:sqlite` 是否带 FTS5；带则加配置白拿，不带则走纯客户端（同 `note-fulltext`），**不要引入第三方插件**。
+| `johnfactotum/foliate-js` | B 其他JS | MIT | 阅读（电子书/成书格式） | 全新（格式补齐：同面板内补 EPUB，判据③半成立） | 🟢 | skeleton-created | 2026-11-02 | 2026-11-02 | ★1146。npm `foliate-js@1.0.1` 单版本可锁、仅 1 运行时依赖、476KB、解压已 vendor 进包。骨架 `dsh-radar-foliate-reader`（落笔记页既有 iframe 阅读器）。**风险：上游自述 API 不稳定** |
+| `koodo-reader/koodo-reader` | B 其他JS | **AGPL-3.0** | 阅读 | 重复且无增益 | ⛔ | rejected | 2026-11-02 | — | ★28698，许可证硬门槛出局，**不得摘取任何代码** |
+| `satorumurmur/bibi` | B 其他JS | MIT | 阅读 | 重复且无增益 | 🟡 | proposed | 2026-11-02 | — | ★917。npm 无同名包（实测 404）⇒ 锁不了版；能力被 foliate-js 覆盖 |
+| `futurepress/epubjs-reader` | B 其他JS | MIT | 阅读 | 重复且无增益 | 🔵 | proposed | 2026-11-02 | — | ★472。是 epub.js 的示例页，不是库 |
+| `Janglee123/eplee` | B 其他JS | MIT | 阅读 | 无关 | 🔵 | proposed | 2026-11-02 | — | ★364。Electron 桌面壳，与本仓形态不符 |
+| `blaine/rePublish` | B 其他JS | NOASSERTION | 阅读 | 无关 | ⚠ 待核 | pending-license | 2026-11-02 | — | ★217。许可证不明，不采用 |
+| `laurent22/joplin` | B 其他JS | NOASSERTION | 笔记/同步 | 重复且无增益 | ⚠ 待核 | pending-license | 2026-11-02 | — | ★56986。本仓笔记为自有 vault，引入即重复 |
+| `remotely-save/remotely-save` | B 其他JS | NOASSERTION | 笔记/同步 | 重复且无增益 | ⚠ 待核 | pending-license | 2026-11-02 | — | ★8291。WebDAV 同步，本仓无「云同步」需求 |
+| `codedogQBY/ReadAny` | B 其他JS | NOASSERTION | 阅读/RAG | 重复且无增益 | ⚠ 待核 | pending-license | 2026-11-02 | — | ★2921。语义检索 + RAG，与 `core-knowledge` 重复 |
+| `thejacedev/Noteriv` | B 其他JS | MIT | 笔记 | 重复且无增益 | ⛔ | rejected | 2026-11-02 | — | ★107。markdown 编辑器 + 图谱，本仓笔记页已覆盖 |
+| `SZoloth/margin` | B 其他JS | None | 阅读批注 | 无关 | ⛔ | rejected | 2026-11-02 | — | ★2。无许可证；本仓论文页已有批注 |
+| `dog-last/MarkPDF` | B 其他JS | MIT | PDF 批注 | 重复且无增益 | 🔵 | proposed | 2026-11-02 | — | ★4。与论文页既有批注重复 |
+| `binarynonsense/comic-book-reader` | B 其他JS | NOASSERTION | 阅读 | 无关 | ⚠ 待核 | pending-license | 2026-11-02 | — | ★431。ACBR 桌面壳 + 许可证不明 |

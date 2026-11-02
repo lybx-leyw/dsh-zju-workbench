@@ -1,0 +1,5 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+# 见 README.md 的「风险」一节：上游 foliate-js 自述 API 不稳定。
+- insert:
+    - id: radar-foliate-reader
+      name: dsh-radar-foliate-reader
