@@ -4438,3 +4438,6 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `zzzzzz66666-a/dsh-plugin-mail-notify` | A 原生DSH | MIT | 邮件通知 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 需回复邮件控制 agent，权限面过大 |
 | `ddxl123/dsh-notify-long` | A 原生DSH | MIT | 桌面+邮件提醒 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | 同质 |
 | `BotHarness/DeepSeekBot` | A 原生DSH | MIT | 无关（bot 平台） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★ | ★547 但为 Discord/GrokBot 类整体产品，非插件形态 |
+| `Open-Source-Uniandes/Aula-Finder` | B 其他JS | MIT | 课表 / 空教室 | **重复可强化**（课表面板 · 教室维度） | 🟢 | skeleton-created | 2026-11-03 | 2026-11-03 | ★11，Next.js16+TS，2026-08-31 push，未发 npm。**教室四态**（可用/占用/**课间<10min**/受限）+ 闭馆三段闸（运营时段→节假日→事件）。本仓教室维度为**零**。⛔ 不取他校 `data/*.json` 与 GH Actions 管道。**前置**：zdbk 课表是否带教室/楼栋字段（与 `tongge-schedule` 第 62 行同一项）。已出骨架 `dsh-radar-room-occupancy` |
+| `DHBWLoerrach/CampusApp` | B 其他JS | MIT | 无关（德国高校 App） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★12，React Native + Expo，面向德国巴登-符腾堡州立双元制大学。**整体产品形态**（食堂/新闻/校园卡），无单一可提取的优质底层；唯一可能沾边的「食堂菜单」不在本仓功能域内 |
+| `Longhorn-Developers/UT-Dining` | B 其他JS | MIT | 无关（UT 餐饮） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★14，德克萨斯大学奥斯汀分校食堂 App。场景越界（餐饮），且数据强绑他校 |

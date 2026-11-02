@@ -1,0 +1,19 @@
+{
+  "name": "dsh-radar-room-occupancy",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】借鉴 Aula-Finder 的「教室占用状态机（可用/占用/课间切换/受限）+ 校历闭馆判定」，为课表面板补上教室维度（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
