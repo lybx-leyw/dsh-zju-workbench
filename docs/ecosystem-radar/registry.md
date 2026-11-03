@@ -4716,3 +4716,66 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `Codingendless/dsh-prevent-scd` | A 原生DSH | MIT ✅ | 健康 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，深夜/久坐宠物提醒；同上 |
 | `mikufan39/dsh-mikufan` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，会话清理 + 启动页 + 局域网代理；功能簇，无与本仓正交的单点 |
 | `FlyingFreeOwl/dshgirl-starter` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，新人整合 starter（人格 + 若干插件）；功能簇 |
+
+## 2026-11-04 00 · C 组（第一百三十五轮 · **「参考文献著录」轴**）· 追加
+
+> 同一轮：11 次搜索（⚠ 超限 1 次，见 §7）；0 次 403；**完整**。去重 194 → 未登记 **124**，
+> 登记 **18 行**（🟡1 / 🔵7 / ⚠3 / ⛔7），另 **在册复核 2 行**。`NOASSERTION` 3、`null` 4。
+> **骨架 1** `packages/radar/dsh-radar-gbt7714-cite`（B 类，锁 `citeproc@2.4.63` +
+> `@retorquere/bibtex-parser@13.0.11`，**强化式集成、判据③带许可前提**）。
+>
+> 轴：**本仓能读到「第 12 页」，读不出「…[J]. 计算机学报, 2023, 46(5): 1023-1038.」**。
+> 实测 `grep -rniE "GB/?T ?7714|参考文献" packages/dsh-zhiyun-*/src` **0 命中**，
+> `csl|citeproc` 在两个 `package.json` **0 命中**；唯一叫 `citations.js` 的模块做的事是
+> 把「第 12 页」改写成可点击链接 —— **页码引用 ≠ 书目著录**。
+>
+> **本轮最重要的三条实测**（评审直接引用，不必重跑）：
+> ① `type:'article'` 会被国标样式判为**预印本**输出 **`[A/OL]//…`**（样式第 131 行注释），
+>    且**不报错** → 必须写 `article-journal`；
+> ② `@retorquere/bibtex-parser` 把 `pages` 归一化成 **en-dash `–`**，而样式
+>    `page-range-format="expanded"` 只认 `-` → 不换会渲染成 `1023-1038 → 023-1038`；
+> ③ **中英混排**：该样式**固定输出「等」**，英文条目也写成 `LEE Z, SMITH J A, BROWN M, 等`
+>    —— 样式第 433 行注释自己写明「取消注释可开启 CSL-M 多语言」，即**有意默认关闭**。
+>    试过 `language:'en'` / `default-locale` / `Engine(...,'en-US')` / `<layout locale="en">`
+>    **四条全无效**（最后一条直接 citeproc-js 崩）→ 只能在**条目级**另作分流。
+>
+> **词面校准**：① C 组五个默认词（课表/批注/OCR/刷题/锻炼）**已枯竭** —— 新面孔 83 个里
+> 91% 是练手仓或他校专用，`fitness tracker` 正式建议移出（第 5 次同结论）；
+> ② **`GB/T 7714` 是本轮唯一有效词**（141 条，★≥50 有 8 个且全部直接相关），
+> 建议固化为 C 组常驻词并派生 `citeproc` / `bibtex parser` 下钻；
+> ③ 规律：C 组的**功能名词**枯竭，而**中文规范名词**（国标编号、学位论文规范）仍是活水
+> —— 后者不是「做 App」而是「做规则」。
+>
+> **与 2026-10-27 结论的边界划分**：那轮对 `citext`/`modern-zju-thesis` 判 ⛔（「应明确不做
+> 引文样式输出」），理由是**落点在 Typst 模板**（已在生产整份论文，加 CSL 只是模板更全 → 判据②不成立）。
+> 本轮落点是**笔记正文**（零文献能力 → 判据②成立）。**许可风险未变**，所以本骨架标 **🟡**
+> 并把 CPAL 裁定权交回评审，而非自判 🟢。若评审否决 `citeproc`，出路是「自研 GB/T 7714 子集
+> （6 类文献，约 400 行）」，解析一半仍可用干净的 `@retorquere/bibtex-parser`（MIT/ISC）。
+
+| `akopdev/obsidian-bibtex-manager` | B 其他JS | **MIT** ✅ | 论文（参考文献） | **重复且可强化**（笔记页正文；判据①②成立、③带许可前提） | 🟡 | proposed | 2026-11-04 | — | ★87，TS，2026-08-16 推送。**同形态成功解**：Obsidian 插件，依赖 `@retorquere/bibtex-parser@^7` + **`citeproc@^2.4.63`** → 「笔记 + BibTeX → CSL 参考文献表」确实可成。不可搬：宿主是 Obsidian（`obsidian` 为 peer/dev 依赖）；其 CSL 落点仍是 citeproc → 同一许可问题。仅作架构参照：把「解析器」与「CSL 引擎」拆成两个依赖，若走自研子集可只留前一半。骨架 `dsh-radar-gbt7714-cite` 参考其形态 |
+| `retorquere/bibtex-parser` | B 其他JS | **MIT** ✅（GitHub `spdx_id`；npm `license` 为 `ISC`，两者均在白名单） | 论文（文献解析） | **重复且可强化**（本仓零 BibTeX 解析） | 🔵 | proposed | 2026-11-04 | — | ★31，TS+WASM，**2026-11-02 推送**（本轮最新）。Zotero Better BibTeX 的导入解析器。⚠ 实跑踩坑：① `type:module` 且入口是 **WASM**，Node 侧须 `init({module_or_path: <bytes>})`，默认 `fetch` 在 Node 里 `fetch failed`；② 条目字段名是 **`type`** 不是 `entryType`；③ `pages` 被**归一化成 en-dash `–`**，与 CSL `page-range-format="expanded"`（只认 `-`）冲突 → 直接渲染出 `023-1038`；④ 默认导出与 `./js` 子路径是两套实现。已锁版进骨架 `dsh-radar-gbt7714-cite` |
+| `YDX-2147483647/gb7714-bench` | B 其他JS | **MIT** ✅ | 论文（参考文献） | 全新（**测试基准**，非功能） | 🔵 | proposed | 2026-11-04 | — | ★4，TS，2026-10-30。用 Zotero 中文 CSL 开发组测试文献集比对十余种 GB/T 7714 引擎。**评审必跑**：本轮实测该样式在英文条目上输出「LEE Z, SMITH J A, BROWN M, **等**」（样式第 433 行有意关闭 CSL-M 多语言）→ 用此基准量化误判率再定路线 |
+| `zotero/citeproc-js-server` | B 其他JS | **NOASSERTION** ⚠ | 论文（CSL 服务化） | 全新（形态不符） | ⚠ 待核 | pending-license | 2026-11-04 | — | ★68，JS，2026-02-14。Zotero 官方 citeproc 服务端包装。NOASSERTION 与 `Juris-M/citeproc-js` 同源（CPAL/AGPL 双许可混合）。需 node 服务常驻，与插件形态不符；**不采用、不摘码** |
+| `lgc0208/reference_format_generation` | B 其他JS | Apache-2.0 ✅ | 论文（参考文献） | 重复且可强化 | 🔵 | proposed | 2026-11-04 | — | ★23，JS，**2022-06 停更**。纯前端表单 → GB/T 7714-2015 / IEEE 条目文本。规则**硬编码**、无 CSL、不处理作者缩写与中英混排 → 只能当「输出形态的参考样例」 |
+| `JunhuiJi/Chinese-Std-GB-T-7714-2005-numeric-Chinese` | B 其他JS | **NOASSERTION** ⚠ | 论文（参考文献） | 重复无增益 | ⚠ 待核 | pending-license | 2026-11-04 | — | ★24，**2019-03 停更**，语言标注为空。**2005 版** CSL，已被 2015 版取代；不采用 |
+| `Hisn00w/Paper-Citation` | B 其他JS | **NOASSERTION** ⚠ | 论文（引用检索） | — | ⚠ 待核 | pending-license | 2026-11-04 | — | ★12，语言标注为空，2026-02-28。语义检索 + 期刊匹配 Skill；许可证待人工核验，**不看细节、不采用** |
+| `fiduswriter/citeproc-plus` | B 其他JS | **LGPL-3.0** ⛔ | 论文（CSL） | 重复无增益 | ⛔ | rejected | 2026-11-04 | — | ★6。citeproc + 样式打包，解的就是「citeproc 要自己配样式」这个麻烦。**LGPL 不在宽松白名单** → 不摘码 |
+| `zepinglee/gbt7714-bibtex-style` | B 其他JS | **LPPL-1.3c** ⛔ | 论文（参考文献） | 重复且可强化 | ⛔ | rejected | 2026-11-04 | — | ★1431（本轮最高星），BibTeX Style，2026-09-27。**白名单外**（LaTeX Project Public License）。且是 `.bst`，本仓无 LaTeX 链路 → 两条都不过 |
+| `hushidong/biblatex-gb7714-2015` | B 其他JS | **`null`** ⛔ | 论文（参考文献） | 重复且可强化 | ⛔ | rejected | 2026-11-04 | — | ★872，TeX，2026-07-21。**无许可证**；仓库 195 MB（自带整套标准文档与示例 PDF）；同样是 LaTeX 链路 |
+| `z0gSh1u/GBReference` | B 其他JS | **`null`** ⛔ | 论文（参考文献） | 重复且可强化 | ⛔ | rejected | 2026-11-04 | — | ★10，JS，2026-01-31。硬编码模板生成 GB/T 7714-2015 引用列表；**无许可证** → 不摘码 |
+| `northword/zotero-format-metadata` | B 其他JS | **AGPL-3.0** ⛔ | 论文（元数据） | 重复且可强化 | ⛔ | rejected | 2026-11-04 | — | ★1078，TS，2026-11-01。Zotero 元数据 linter（标签式规则表）。白名单外 → **不摘码**；其「规则清单」可按文字借鉴，但须逐条自行重写 |
+| `yanlin-cheng/skill-thesis-writer` | B 其他JS | **MulanPSL-2.0** ⛔ | 论文（毕业论文） | 重复无增益 | ⛔ | rejected | 2026-11-04 | — | ★214，**Python**（非 JS 栈），2026-04-13。论文写作 Skill（含 GB/T 7714-2015）。Mulan PSL 虽为中国本土宽松许可，仍**不在本任务白名单** → 不采用 |
+| `ORCID/orcid-js` | B 其他JS | **`null`** ⛔ | 论文（文献） | — | ⛔ | rejected | 2026-11-04 | — | ★25，JS，**2017 停更**。ORCID 客户端 + CSL 参考文献列表生成；**无许可证** |
+| `zhumunan6-jpg/paper-shelf` | B 其他JS | **`null`** ⛔ | 论文（阅读器） | 重复无增益 | ⛔ | rejected | 2026-11-04 | — | ★0，JS，**当日建仓**（2026-11-02）。本地优先论文阅读器；无许可证；本仓论文页已锁版上游阅读器 |
+| `cookjohn/zotero-mcp` | B 其他JS | **MIT** ✅ | 论文（文献） | 重复且可强化 | 🔵 | proposed | 2026-11-04 | — | ★1260，TS。Zotero ↔ MCP 桥。**接法应走 r94 的 `dsh-radar-mcp-manager`（MCP 通道）而不是单仓适配** —— 单仓适配等于为 Zotero 造第三个入口 |
+| `citation-js/citation-js` | B 其他JS | **MIT** ✅ | 论文（文献条目） | **重复且可强化** | 🔵 | skeleton-created | 2026-10-18 | — | **在册复核，维持原判**（2026-10-18 起）：已是 `dsh-radar-refs-import`。本轮补充：它把 BibTeX → CSL-**JSON** 做好了，但**不排版** —— 排版落在 `@citation-js/plugin-csl`，最终仍调 citeproc。⇒ 想「只要解析」用它；想「出国标条目文本」绕不开 citeproc |
+| `larsgw/citation.js` | B 其他JS | **MIT** ✅ | 论文（引文） | 重复无增益 | 🔵 | rejected | 2026-10-18 | — | **在册复核**：citation-js 前身，本轮以 `citation-js` 关键词复扫出本体仓（★241，2026-09-18 推送，**仍活跃**）。维持 ⛔：被 citation-js 完全覆盖 |
+| `JustBrandonLim/timetable-grabber-sit` | B 其他JS | MIT | 课表 | 重复且无增益 | ⛔ | rejected | 2026-11-04 | — | ★34，TS，2023-08-30，**已 archived**。SIT（新加坡）专用课表抓取；本仓 `dsh-radar-ics-export` 已覆盖同轴 |
+| `marioMLLL/ecnu-timetable-calendar` | B 其他JS | MIT | 课表 | 重复且无增益 | 🔵 | rejected | 2026-11-04 | — | ★8，JS，2026-09-22。ECNU 课表 → 日历；高校专用，与浙大字段结构不同，无正交点 |
+| `GarytheNoob/hku-timetable-exporter` | B 其他JS | MIT | 课表 | 重复且无增益 | 🔵 | rejected | 2026-11-04 | — | ★0，TS，2026-01-29。中国香港 HKU SIS 页 → ICS 的 Chrome 扩展；数据源与本仓无关 |
+| `HeinzBundschuh/timeless` | B 其他JS | MIT | 课表 | 重复且无增益 | 🔵 | rejected | 2026-11-04 | — | ★1，HTML，2026-10-22。单文件离线日历/课表/日程本 —— 形态是「替代品」而非「增强层」，判据①不成立 |
+| `DevLifts/fit-cli` | B 其他JS | MIT | 锻炼 | — | ⛔ | rejected | 2026-11-04 | — | ★15，JS，**2021-11 停更**。CLI 健身记录；本仓**无锻炼面板**（此为第 5 次同结论），且 CLI 形态不可嵌入 |
+| `andreped/IronFlow` | B 其他JS | MIT | 锻炼 | — | ⛔ | rejected | 2026-11-04 | — | ★16，JS，2026-07-09。跨平台移动端力量训练追踪；非 Web 可嵌入组件 |
+| `minnukota381/Fitness-Tracking-App-UI-React` | B 其他JS | MIT | 锻炼 | — | ⛔ | rejected | 2026-11-04 | — | ★18，JS。纯 UI 模板，无数据模型；同轴无增益 |
+| `magentaqin/quiz-me` | B 其他JS | MIT | 刷题 | 重复无增益 | 🔵 | rejected | 2026-11-04 | — | ★17，TS。Next 全栈刷题站，无法拆出与本仓题库正交的组件 |
+| `drbarzaga/react-dojo` | B 其他JS | MIT | 刷题 | 重复无增益 | 🔵 | rejected | 2026-11-04 | — | ★34，TS。React「读-改-跑」教程，是**课程**不是题库；与 `dsh-zhiyun-core-quiz` 无交集 |
