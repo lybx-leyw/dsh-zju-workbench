@@ -4558,3 +4558,19 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `Kanjo-Elkamira-Ndi/YouthTrend` | B 其他JS | MIT | 无关（校园内容平台） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | 20★，非洲某校校园内容平台。场景无关 |
 | `pitroldev/ao-uerj-mobile-ts` | B 其他JS | GPL-3.0 ⛔ | 无关（他校） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | 12★，巴西州立大学 App。**GPL 红线** + 他校 |
 | `claudiiafg/MapConU` | B 其他JS | **null** ⛔ | 无关（室内导航） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | 9★，康考迪亚校区室内外导航。无许可证 + 场景无关 |
+| `cakeni/CourseSchedule` | B 其他JS | MIT ✅ | 课表/学期管理 | 重复且可强化（技术栈不符） | 🔵 | proposed | 2026-11-03 | — | ★81，**Kotlin/Android**，2026-11-03 推送（该簇最活跃），28 MB，topics 含 `xlsx`。自述「**教务网页 + Excel 导入**」—— 与本仓「周视图只能排 DDL、不装课表」的缺口同构；但 Kotlin 不可作 JS 依赖 ⇒ **只读导入策略、不摘码**。见 `2026-11-03-12.md` §4 |
+| `qiqqqqq517/shangkeschedule` | B 其他JS | Apache-2.0 ✅ | 课表 | 重复且无增益 | 🔵 | proposed | 2026-11-03 | — | ★35，Kotlin Multiplatform + Compose，2026-11-02 推送，25 MB。许可证合规但**非 JS 技术栈** + 无增强点 |
+| `lingion/sleepy` | B 其他JS | GPL-3.0 ⛔ | 课表 | — | ⛔ | rejected | 2026-11-03 | — | ★85，Kotlin/Android，164 MB。**GPL 红线** |
+| `shuakami/timetable` | B 其他JS | GPL-3.0 ⛔ | 课表 | — | ⛔ | rejected | 2026-11-03 | — | ★17，**TypeScript**（本组唯一 JS 课表）但 **GPL-3.0** ⇒ 不可摘码，仅登记。勿因「是 TS」而误采 |
+| `Jursin/Schedule-Vela` | B 其他JS | GPL-3.0 ⛔ | 课表（快应用） | — | ⛔ | rejected | 2026-11-03 | — | ★15，小米 Vela OS 快应用，硬件形态越界 + GPL |
+| `sasaju/NormalSchedule` | B 其他JS | Apache-2.0 ✅ | 河北大学课表 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★19，Kotlin，**2023-12 停更近 3 年**，228 MB，他校 |
+| `maoxig/nonebot-plugin-ai-timetable` | B 其他JS | MIT ✅ | 课表订阅/查询 | 重复且无增益 | 🔵 | proposed | 2026-11-03 | — | ★14，**Python** nonebot2 插件，2025-08 推送。价值仅在「一键导入小爱课程表」的**导入格式约定**，可作 §4 自建时的参照 |
+| `vvbbnn00/USST-Lecture-Table-Calendar` | B 其他JS | MIT ✅ | 上理课表 | 重复且无增益 | 🔵 | proposed | 2026-11-03 | — | ★14，JavaScript，2025-06 后作者自述「已完成学业，停止更新」。他校 + 停更 |
+| `isnine/HutHelper` | B 其他JS | **NOASSERTION** ⚠ | 湖南工大校园助手 | 重复且无增益 | 🔵 | proposed | 2026-11-03 | — | ★172，Objective-C，2022-03 停更，**691 MB**。⚠ **无明确许可证 → 仅线索、不碰代码** |
+| `GentleCP/UCAS-Helper` | B 其他JS | GPL-3.0 ⛔ | 国科大校园网/资源 | — | ⛔ | rejected | 2026-11-03 | — | ★150，Python，2022-05 停更。**GPL 红线** + 含「自动评教」→ 命中本仓已定高风险排除项 |
+| `shuhongfan/Student_management_system` | B 其他JS | **null** ⛔ | 教务管理系统 | — | ⛔ | rejected | 2026-11-03 | — | ★120，Java/SpringBoot 课表查询系统。**无许可证** + 服务端重形态 |
+| `Pedroj-64/inklus` | B 其他JS | GPL-3.0 ⛔ | 手写笔记 | — | ⛔ | rejected | 2026-11-03 | — | ★8，Dart/Flutter 手写 App。**GPL 红线** + 形态越界 |
+| `ZaneH/piano-trainer` | B 其他JS | MIT | 无关（钢琴练习） | — | ⛔ | rejected | 2026-11-03 | — | ★2215，**钢琴音阶练习器**，因 `quiz practice` 词义漂移命中。噪声，下轮跳过 |
+| `Shsjid/scale-forge` | B 其他JS | **null** ⛔ | 无关（钢琴练习） | — | ⛔ | rejected | 2026-11-03 | — | ★53，AI 钢琴 MIDI 练习器，2026 新建刷星仓。无许可证 + 噪声 |
+| `harisprimewellmedsolutions-cloud/midi-scale-mastery` | B 其他JS | **null** ⛔ | 无关（钢琴练习） | — | ⛔ | rejected | 2026-11-03 | — | ★55，同上簇。**账号名即推广信号**，无许可证 |
+| `ManojKumarPatnaik/Major-project-list` | B 其他JS | MIT | 无关（清单） | — | ⛔ | rejected | 2026-11-03 | — | ★261，练手项目清单，非软件 |
