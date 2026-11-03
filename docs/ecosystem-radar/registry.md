@@ -4574,3 +4574,76 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `Shsjid/scale-forge` | B 其他JS | **null** ⛔ | 无关（钢琴练习） | — | ⛔ | rejected | 2026-11-03 | — | ★53，AI 钢琴 MIDI 练习器，2026 新建刷星仓。无许可证 + 噪声 |
 | `harisprimewellmedsolutions-cloud/midi-scale-mastery` | B 其他JS | **null** ⛔ | 无关（钢琴练习） | — | ⛔ | rejected | 2026-11-03 | — | ★55，同上簇。**账号名即推广信号**，无许可证 |
 | `ManojKumarPatnaik/Major-project-list` | B 其他JS | MIT | 无关（清单） | — | ⛔ | rejected | 2026-11-03 | — | ★261，练手项目清单，非软件 |
+
+| `oionus/CC98-CLI` | B 其他JS（**锁版 npm**） | MIT ✅（GitHub `/license` + 根 LICENSE 1060 B + npm manifest 三处互证） | CC98 阅读（校外可达） | **重复且可强化**（仅「会话状态机」成立；URL 改写**无增益**） | 🟢 | skeleton-created | 2026-11-03 | 2026-11-03 | ★5，2026-09-02 推，**`@walavave/cc98-cli@0.4.1` 已发 npm、零运行时依赖**。`WebVpnService` 提供 (a)「非登录页被 302 到登录页 ⇒ 过期」判定 (b) 三段式登录 `needCaptcha/needConfirm` (c) 网关凭据分家——本仓 `source-campus/webvpn/` 有协议无策略、且 **cc98 链未接线**。⚠ 反方：若判该状态机属 net-proxy 职责则应删包 → 改「重复且无增益」。⚠ 与已登记 `Lucent-Snow/CC98-CLI` **同源归一并应标 superseded**；⚠ 发布方 `oionus`(GitHub)/`@walavave`(npm) 身份未独立验证 |
+| `yinze00/ZJU-OPT` | B 其他JS | Apache-2.0 ✅ | 光电课程资料 | — | ⛔ | rejected | 2026-11-03 | — | ★214，课程资料库（C 语言），非软件项目；无集成面 |
+| `ruofan-hu/ZJU-CS` | B 其他JS | **null** ⛔ | 混合班 CS 资料 | — | ⛔ | rejected | 2026-11-03 | — | ★172，课程资料整理（Jupyter），**无许可证** → 不碰代码 |
+| `aphasiayc/px4ctrl` | B 其他JS | GPL-3.0 ⛔ | 无关（无人机） | — | ⛔ | rejected | 2026-11-03 | — | ★168，Fast-Drone-250 的分叉，**GPL 红线** + 技术栈越界 |
+| `AFutureD/ZJU_CS_PEE` | B 其他JS | **null** ⛔ | CS 课程资料 | — | ⛔ | rejected | 2026-11-03 | — | ★166，无描述、2019 停更、**无许可证** |
+| `zju-cst-fellow/zju-cst-fellow` | B 其他JS | **null** ⛔ | 软院院友通讯录 | — | ⛔ | rejected | 2026-11-03 | — | ★148，HTML 静态页，非软件；**无许可证** |
+| `Panda-handsome/The-answer-of-DATABASE-SYSTEM-CONCEPTS-Seventh-Edition` | B 其他JS | **null** ⛔ | 数据库教材答案 | — | ⛔ | rejected | 2026-11-03 | — | ★138，教材答案整理，非软件；**无许可证** |
+| `toooooodo/ZJU-SE-Notes` | B 其他JS | **null** ⛔ | 软工复习笔记 | — | ⛔ | rejected | 2026-11-03 | — | ★135，笔记仓库，2019 停更，**无许可证** |
+| `sgermosen/tSocialNetworkMvc` | B 其他JS | MIT ✅ | 通用社交模板 | — | ⛔ | rejected | 2026-11-03 | — | ★86，C# MVC 社交网络模板，与浙大无关 |
+| `aishnacodes/Geolocation-ARCore` | B 其他JS | **null** ⛔ | AR 定位 | — | ⛔ | rejected | 2026-11-03 | — | ★83，Java ARCore 模板，2017，**无许可证** |
+| `TUM-Dev/campus_flutter` | B 其他JS | GPL-3.0 ⛔ | 慕尼黑工大校园 App | — | ⛔ | rejected | 2026-11-03 | — | ★80，**GPL 红线** + 他校 + 移动形态 |
+| `Anjiefan/flutter_campus_social_app` | B 其他JS | **null** ⛔ | 校园社交 | — | ⛔ | rejected | 2026-11-03 | — | ★65，Dart 校园社交 App，2019，**无许可证** |
+| `haochengxia/ZJU-CS-3_1` | B 其他JS | **null** ⛔ | 大三课设 | — | ⛔ | rejected | 2026-11-03 | — | ★61，Java 课设代码，**无许可证** |
+| `BMS-2021/MiniSQL` | B 其他JS | GPL-3.0 ⛔ | 数据库大作业 | — | ⛔ | rejected | 2026-11-03 | — | ★61，**GPL 红线** + 课程作业 |
+| `229394/CollegeIdleApp` | B 其他JS | **null** ⛔ | 校园二手 | — | ⛔ | rejected | 2026-11-03 | — | ★61，Java Android，2021，**无许可证** |
+| `UCSD/campus-mobile` | B 其他JS | MIT ✅ | UCSD 校园 App | — | ⛔ | rejected | 2026-11-03 | — | ★59，他校（UCSD）+ Dart 移动形态，与浙大场景无关 |
+| `yujincheng08/ZJU-UGCourse` | B 其他JS | **null** ⛔ | 课程资料 | — | ⛔ | rejected | 2026-11-03 | — | ★58，Jupyter 课程笔记，**无许可证** |
+| `smd1121/zju-course` | B 其他JS | **null** ⛔ | 信安课程资料 | — | ⛔ | rejected | 2026-11-03 | — | ★56，C 课程代码，**无许可证** |
+| `euphoniumm/isee-zju` | B 其他JS | **null** ⛔ | 信电课程数据 | — | ⛔ | rejected | 2026-11-03 | — | ★48，Python 课程数据处理，**无许可证** |
+| `oddfar/uni-app_campus_web` | B 其他JS | MIT ✅ | 校园信息墙/表白墙 | — | ⛔ | rejected | 2026-11-03 | — | ★48，Vue/uni-app，功能域（墙/表白）与本仓无关 |
+| `HouQiming/zju_game_course` | B 其他JS | **null** ⛔ | 游戏课教学材料 | — | ⛔ | rejected | 2026-11-03 | — | ★44，**JS 但 2016 年 + 无许可证**，教学材料非工具 |
+| `roshankumar0036singh/Uni-Event` | B 其他JS | MIT ✅ | 校园活动平台 | — | ⛔ | rejected | 2026-11-03 | — | ★44，JS 但 React Native 活动管理，与浙大无关；2026-11 新仓 |
+| `RalXYZ/cc99` | B 其他JS | GPL-3.0 ⛔ | 编译原理大作业 | — | ⛔ | rejected | 2026-11-03 | — | ★42，Rust 编译器课程作业，**GPL 红线** |
+| `huivy/Campus-transaction` | B 其他JS | **null** ⛔ | 校园二手 | — | ⛔ | rejected | 2026-11-03 | — | ★42，Android 二手交易，2020，**无许可证** |
+| `Krish-Parekh/JobSpot-Admin` | B 其他JS | **null** ⛔ | 就业管理 | — | ⛔ | rejected | 2026-11-03 | — | ★42，Kotlin，印度院校 TPO，**无许可证** |
+| `BibApp/BibApp` | B 其他JS | **NOASSERTION** ⚠ | 校园科研网关 | — | 🔵 | proposed | 2026-11-03 | — | ★41，★41，Ruby，2015 停更。⚠ **许可证未识别** → 待人工核验、不采用、不碰代码 |
+| `Frankgu3528/ZJU_Stat_Courses` | B 其他JS | **null** ⛔ | 统计课程资料 | — | ⛔ | rejected | 2026-11-03 | — | ★40，HTML 资料库，**无许可证** |
+| `YJJfish/C-Compiler` | B 其他JS | **null** ⛔ | 编译原理大作业 | — | ⛔ | rejected | 2026-11-03 | — | ★39，C++ 课程作业，**无许可证** |
+| `harshavardhan98/Zinger-Seller-App` | B 其他JS | MIT ✅ | 无关（餐饮） | — | ⛔ | rejected | 2026-11-03 | — | ★35，Kotlin 餐饮商家端，噪声 |
+| `hongxin/CGCourse-2018` | B 其他JS | **null** ⛔ | 图形学作业 | — | ⛔ | rejected | 2026-11-03 | — | ★34，2018 课程代码，**无许可证** |
+| `JinggHS/ZJU-ISEE-Courses-ChaoS` | B 其他JS | **null** ⛔ | 电子科学课程资料 | — | ⛔ | rejected | 2026-11-03 | — | ★34，★34，**2026-09 仍活跃**但**无许可证** → 只登记 |
+| `lucky-bai/WATisRain` | B 其他JS | MIT ✅ | 滑铁卢雨天路线 | — | ⛔ | rejected | 2026-11-03 | — | ★33，Java，他校，与浙大无关 |
+| `Clapeysron/MobileCraft` | B 其他JS | **null** ⛔ | 无关（iOS 移植） | — | ⛔ | rejected | 2026-11-03 | — | ★31，Minecraft 克隆移植，**无许可证** + 形态越界 |
+| `sheilaCat/campus` | B 其他JS | **null** ⛔ | 校园掌上通 | — | ⛔ | rejected | 2026-11-03 | — | ★31，2015 混合 App，**无许可证** |
+| `crux-bphc/CMS-Android` | B 其他JS | MIT ✅ | BITS 的 Moodle | — | ⛔ | rejected | 2026-11-03 | — | ★31，Kotlin，他校 Moodle 客户端 |
+| `dotnet-campus/dotnetCampus.ApplicationStartupManager` | B 其他JS | **null** ⛔ | 无关（.NET 启动器） | — | ⛔ | rejected | 2026-11-03 | — | ★30，C# 通用组件，**无许可证**；`campus` 仅为组织名 |
+| `j-yi-11/ZJU-Hardware-Course-Labs` | B 其他JS | **null** ⛔ | 硬件课实验 | — | ⛔ | rejected | 2026-11-03 | — | ★29，实验报告仓，**无许可证** |
+| `ZJUBCA/zjubca.wallet` | B 其他JS | GPL-3.0 ⛔ | 加密钱包 | — | ⛔ | rejected | 2026-11-03 | — | ★29，**GPL 红线** + 加密钱包形态（合规风险） |
+| `Kukukukiki192/ZJUT-SE` | B 其他JS | **null** ⛔ | 浙工大软工资料 | — | ⛔ | rejected | 2026-11-03 | — | ★23，**他校**（浙工大）+ 课程资料 + **无许可证** |
+| `zyayoung/ego-planner-web-control` | B 其他JS | **null** ⛔ | 无关（无人机控制） | — | ⛔ | rejected | 2026-11-03 | — | ★17，浏览器控制无人机，**无许可证** |
+| `tangjinzhou/PAT` | B 其他JS | **null** ⛔ | 刷题（PAT） | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★16，★16 但 **2015 年**、**无许可证**、纯题解集合；本仓刷题侧已有 |
+| `chenzq-98/zjut-java_web_course_design-SoftwareTestSystem` | B 其他JS | **null** ⛔ | 浙工大课设 | — | ⛔ | rejected | 2026-11-03 | — | ★15，他校课程设计，**无许可证** |
+| `ZJUSCT/www.zjusct.io` | B 其他JS | **null** ⛔ | 社团官网 | — | ⛔ | rejected | 2026-11-03 | — | ★15，文档/博客站，非功能组件，**无许可证** |
+| `73-SEVENTYTHREE/B-S-` | B 其他JS | **null** ⛔ | B/S 课设 | — | ⛔ | rejected | 2026-11-03 | — | ★13，课程大作业，**无许可证** |
+| `QSCTech/ZJUintl-gRPC` | B 其他JS | **null** ⛔ | 国际校区 gRPC | — | ⛔ | rejected | 2026-11-03 | — | ★13，2019 停更，**无许可证**，服务端形态 |
+| `FrazierLei/cc98-drawcard` | B 其他JS | **null** ⛔ | CC98 抽卡 | — | ⛔ | rejected | 2026-11-03 | — | ★10，CC98 娱乐脚本，**无许可证** + 2021 停更 |
+| `ZJUDDP2015/ZJU_APRS_2015` | B 其他JS | WTFPL ⚠ | 无关（APRS 无线电） | — | ⛔ | rejected | 2026-11-03 | — | ★10，WTFPL **不在白名单枚举**，且为 2018 课程项目 |
+| `konicyQWQ/jobse-fe` | B 其他JS | **null** ⛔ | 招聘信息聚合 | — | ⛔ | rejected | 2026-11-03 | — | ★10，2021 课程项目，**无许可证** |
+| `6769/MyNewCC98` | B 其他JS | **null** ⛔ | CC98 客户端 | — | ⛔ | rejected | 2026-11-03 | — | ★8，Java 实验性客户端，2018，**无许可证** |
+| `ryf1123/Oasis-in-the-Sky` | B 其他JS | **null** ⛔ | 图形学作业 | — | ⛔ | rejected | 2026-11-03 | — | ★8，2019 课程项目，**无许可证** |
+| `vvirgooo2/Auto-video-tronclass-zju` | B 其他JS | **null** ⛔ | 学在浙大刷课 | — | ⛔ | rejected | 2026-11-03 | — | ★8，**无许可证** + 「自动刷课」命中本仓已定**高风险排除项** |
+| `dreamem0ra1n/ISYS` | B 其他JS | **null** ⛔ | 信安课程资源站 | — | ⛔ | rejected | 2026-11-03 | — | ★8，**无许可证**，课程资源站，非工具 |
+| `kodango/cc98` | B 其他JS | **null** ⛔ | CC98 脚本 | — | ⛔ | rejected | 2026-11-03 | — | ★7，UserScript，**2012 年**，**无许可证** |
+| `ZJU-CC98/Share` | B 其他JS | Apache-2.0 ✅ | CC98 分享 | — | ⛔ | rejected | 2026-11-03 | — | ★7，C#，2017 停更，非 JS 技术栈 |
+| `kaluojushi/zju-health-report` | B 其他JS | MIT ✅ | 健康打卡 | 重复且无增益 | 🔵 | proposed | 2026-11-03 | — | ★7，★7/69 fork，**作者自标 `[项目过期]`**，2023-01 停更。打卡类已判高风险 |
+| `iamNCJ/ZJU-Tronclass-Courseware-Downloader` | B 其他JS | **null** ⛔ | 学在浙大课件下载 | — | ⛔ | rejected | 2026-11-03 | — | ★7，**无许可证** + 2020 停更 + 批量下载属高风险 |
+| `Deturium/ZJUxk` | B 其他JS | **null** ⛔ | 选课插件 | — | ⛔ | rejected | 2026-11-03 | — | ★7，**无许可证** + 2018 停更 + 选课自动化属高风险 |
+| `zenith-shadow-x/ZJU-Learning-Reminder` | B 其他JS | MIT ✅ | 学习提醒 | 重复且无增益 | 🔵 | proposed | 2026-11-03 | — | ★7，★7，**17 KB、建仓当日一次提交即成**（2026-04-28），**无 description**；体量不足以构成上游 |
+| `ZHENG28/zjut_LibrarySeatSystem` | B 其他JS | **null** ⛔ | 图书馆座位 | — | ⛔ | rejected | 2026-11-03 | — | ★7，他校（浙工大）+ SSM 服务端 + **无许可证** |
+| `flankerhqd/cc98-worm` | B 其他JS | **null** ⛔ | — | — | ⛔ | rejected | 2026-11-03 | — | ★6，**XSS 蠕虫**（2012-12-31），安全红线 + 无许可证 |
+| `Yutyrannus/CC98.u` | B 其他JS | MIT ✅ | CC98 移动端 | 重复且无增益 | 🔵 | proposed | 2026-11-03 | — | ★5，★5，CSS 语言，**2016 年** ionic 1.x。形态越界（移动 App）+ 年代过远 |
+| `amiongo/cc98-wps-table-disguise` | B 其他JS | **null** ⛔ | CC98 摸鱼 | — | ⛔ | rejected | 2026-11-03 | — | ★5，无描述、无语言、**无许可证**；「伪装 WPS 表格」属规避行为 |
+| `LBruyne/ZJU-blockchain-course-2023` | B 其他JS | **null** ⛔ | 区块链课作业 | — | ⛔ | rejected | 2026-11-03 | — | ★5，课程作业材料，**无许可证** |
+| `AKonjac0/crawler-spider-cc98` | B 其他JS | **null** ⛔ | CC98 爬虫 | — | ⛔ | rejected | 2026-11-03 | — | ★4，Python 爬虫，**无许可证**；本仓已有只读 API 通路 |
+| `Ansherly/CC98-Ocean` | B 其他JS | **null** ⛔ | CC98 移动端 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | — | ★4，★4，Dart/Flutter，**2026-10 仍活跃**但**无许可证** + 53 MB |
+| `LBruyne/ZJU-blockchain-course-2024` | B 其他JS | **null** ⛔ | 区块链课作业 | — | ⛔ | rejected | 2026-11-03 | — | ★4，课程作业材料，**无许可证** |
+| `Winfred666/ZJU_multimedia` | B 其他JS | **null** ⛔ | 多媒体课项目 | — | ⛔ | rejected | 2026-11-03 | — | ★4，vue3 视频滤镜课设，**无许可证** |
+| `LBruyne/ZJU-blockchain-course-2022` | B 其他JS | **null** ⛔ | 区块链课作业 | — | ⛔ | rejected | 2026-11-03 | — | ★3，课程作业材料，**无许可证** |
+| `shengyuzhang/AI4GC-ZJU` | B 其他JS | **null** ⛔ | 实验室官网 | — | ⛔ | rejected | 2026-11-03 | — | ★3，官网，非组件，**无许可证** |
+| `yzyDavid/bs-frontend` | B 其他JS | **null** ⛔ | 背单词课设 | — | ⛔ | rejected | 2026-11-03 | — | ★3，2018 课程项目前端，**无许可证** |
+| `yzyDavid/cg-project` | B 其他JS | MIT ✅ | 图形学课设 | — | ⛔ | rejected | 2026-11-03 | — | ★3，2018 课程项目，体量/形态均不成立 |
+| `xfh12345/ZJU_Block_study` | B 其他JS | **null** ⛔ | 区块链投票 | — | ⛔ | rejected | 2026-11-03 | — | ★3，2022 课程项目，**无许可证** |
