@@ -4647,3 +4647,72 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `yzyDavid/bs-frontend` | B 其他JS | **null** ⛔ | 背单词课设 | — | ⛔ | rejected | 2026-11-03 | — | ★3，2018 课程项目前端，**无许可证** |
 | `yzyDavid/cg-project` | B 其他JS | MIT ✅ | 图形学课设 | — | ⛔ | rejected | 2026-11-03 | — | ★3，2018 课程项目，体量/形态均不成立 |
 | `xfh12345/ZJU_Block_study` | B 其他JS | **null** ⛔ | 区块链投票 | — | ⛔ | rejected | 2026-11-03 | — | ★3，2022 课程项目，**无许可证** |
+| `Milkdown/milkdown` | B 其他JS | MIT ✅ | 笔记/论文 | **重复可强化**（笔记编辑态 textarea → WYSIWYG） | 🟢 | skeleton-created | 2026-11-03 | ★12040，TS，`@milkdown/kit@7.23.0`；实测 156 包**全部锁 7.23.0**、零 React 依赖；**仓库 HEAD 不能当锁版凭据 → 以 npm dist-tags 为准**。往返实测：代码围栏/有序列表/标题/引用 **IDENTICAL**；但 `[[wiki]]`→`\[\[线性代数]]`、4 空行→1 空行、行尾两空格→`\`、frontmatter **被解析成 `## tags: [a]`**（本仓笔记大量使用 `[[反链]]` 与 `#标签`）⇒ 必须先做「双斜杠正则缝合」再上，见 `2026-11-03-21.md` |
+| `ProseMirror/prosemirror` | B 其他JS | MIT ✅ | 笔记 | 重复且无增益（Milkdown 的底层，直接用等于自己写编辑器） | ⛔ | rejected | 2026-11-03 | ★8693，JS，2026-04 后无推送；直接用需自行拼 schema/inputrules，适配成本远高于 Milkdown |
+| `JiHong88/suneditor` | B 其他JS | MIT ✅ | 笔记 | 重复且无增益（HTML 编辑器，本仓正文契约是 Markdown 文本） | ⛔ | rejected | 2026-11-03 | ★2029，JS，零运行时依赖；输出 HTML 不进 Markdown 保存链，⇄ 转换要额外写一层 |
+| `outline/rich-markdown-editor` | B 其他JS | BSD-3-Clause ✅ | 笔记 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | ★2936，**2022-01 停更**；React 组件形态与本仓无 React 依赖判定冲突，且上游已弃 |
+| `nextcloud/text` | B 其他JS | AGPL-3.0 ⛔ | 协作笔记 | — | ⛔ | rejected | 2026-11-03 | ★665，AGPL 硬排除，**不摘码** |
+| `DayuanJiang/next-ai-draw-io` | B 其他JS | Apache-2.0 ✅ | 图表 | 重复且无增益（本仓课堂舞台已有 ECharts + drawio 面） | ⛔ | rejected | 2026-11-03 | ★36541，TS；场景是「对话改 drawio」，本仓无该面板 |
+| `Roland0511/dsh-marktext` | A 原生DSH | MIT ✅ | 笔记 | **重复且无增益**（同一面板取向，但落在「右侧栏」，非笔记页） | 🔵 | rejected | 2026-11-03 | ★56，JS，2026-11-03 仍在推；Muya（MarkText）WYSIWYG；新仓无 npm 发布 → 锁不了版。若将来要「右栏写作」另议 |
+| `MarchLiu/dsh-rich-editor` | A 原生DSH | MIT ✅ | 笔记 | 重复且无增益（composer 区富文本笔记本，非笔记页） | 🔵 | rejected | 2026-11-03 | ★2，TS；面板不是 `page-notes` ⇒ 判据①不成立 |
+| `yadnuses/dsh-md-editor` | A 原生DSH | MIT ✅ | 笔记 | 重复且无增益（右栏 Markdown 源码编辑） | 🔵 | rejected | 2026-11-03 | ★2，JS，「点哪改哪、源码零漂移」；**不引入结构化模型**，恰好是本轮要绕开的形态 |
+| `sevenhsu7/dsh-codex-like-markdown` | A 原生DSH | MIT ✅ | 笔记 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，右栏渲染态就地编辑；同上，非笔记页 |
+| `hh719509125/dsh-preview-editor` | A 原生DSH | MIT ✅ | 笔记 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★5，JS，右栏原位编辑 + `Ctrl+S` + 冲突保护；**「行尾逐字节保留」这条口径值得抄**，不摘码 |
+| `lalilulelo3/dsh-md-composer` | A 原生DSH | MIT ✅ | 笔记 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，Vditor 浮层在 composer 上；面板不符 |
+| `XieZongChen/dsh-md-notes` | A 原生DSH | MIT ✅ | 笔记 | **重复且无增益**（自己起一套 MD 笔记管理，与本仓 `page-notes` 正面重复） | ⛔ | rejected | 2026-11-03 | ★15，TS，2026-09-24；正是「不得简单集成重复功能」的典型 |
+| `AKS1st/dock-markdown` | A 原生DSH | MIT ✅ | 文档查看 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★3，JS，依赖 `dock` 基座 ⇒ 引入即牵进整套工作台外壳 |
+| `AKS1st/dock-editor` | A 原生DSH | MIT ✅ | 文档编辑 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★3，JS，同上，绑 `dock` |
+| `AKS1st/dock` | A 原生DSH | MIT ✅ | 工作台外壳 | 重复且无增益（本仓已有 shell-workbench） | ⛔ | rejected | 2026-11-03 | ★10，TS；VSCode 风格外壳，与 `dsh-zhiyun-shell-*` 正面冲突 |
+| `Lenonss/DSH_VsCodeMode` | A 原生DSH | MIT ✅ | 编程 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★24，TS，Monaco + diff review；本仓无 IDE 面板 |
+| `Dpf555/dsh-workbench` | A 原生DSH | MIT ✅ | 编程 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★5，JS，Explorer + Monaco，同上 |
+| `JiayuuWang/dsh-files-panel` | A 原生DSH | MIT ✅ | 文件浏览 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★3，TS，web GUI 文件面板 |
+| `xusuyang030218/dsh-preview-ui` | A 原生DSH | MIT ✅ | 文件预览 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，文件树 + 多格式预览 |
+| `yueyexiayu/dsh-bianji` | A 原生DSH | MIT ✅ | 文件编辑 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，桌面工作区文件编辑器 |
+| `MathieuPortmann/dsh-edit-panel` | A 原生DSH | MIT ✅ | 写作 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，AI 逐段写文件到侧栏；形态是「AI 写」，非「人写」 |
+| `Witherwithwinter/DSH-Codinput` | A 原生DSH | MIT ✅ | 对话输入 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★13，TS，把聊天输入框换成编辑器式面板；不改笔记 |
+| `yumiao-dev/dsh-chat-thinking-editor` | A 原生DSH | MIT ✅ | 对话修订 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★9，TS，编辑 AI 消息正文与 thinking；场景越界 |
+| `jyXR0042/dsh-message-editor` | A 原生DSH | MIT ✅ | 对话修订 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★2，JS，就地改自己的消息；同上 |
+| `ClickPM/dsh-acp-interactive` | A 原生DSH | MIT ✅ | 编程 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★87，TS，面向 Zed/ACP 客户端；本仓无该出口 |
+| `klarkxy/dsh-editor` | A 原生DSH | **NOASSERTION** ⚠ | 写作 | — | 🔵 | pending-license | 2026-11-03 | ★16，TS，桌面写作应用（稿纸编辑 + AI 辅助）；**许可证待人工核验，不采用** |
+| `LiangshouX/dsh-ide-workbench` | A 原生DSH | **null** ⛔ | 编程 | — | ⛔ | rejected | 2026-11-03 | ★3，JS，JetBrains 风格 IDE；**无许可证** |
+| `lihaiyang/dsh-editor-plugin` | A 原生DSH | **null** ⛔ | 文档编辑 | — | ⛔ | rejected | 2026-11-03 | ★0，JS，侧栏加编辑按钮；**无许可证** |
+| `ahaSHIRO/ets-highlight-rich-copy` | A 原生DSH | **null** ⛔ | 复制 | — | ⛔ | rejected | 2026-11-03 | ★0，JS，ArkTS 高亮 + 富文本复制；**无许可证**，且场景窄 |
+| `54xkeee/dsh-anchored-standard-plus` | A 原生DSH | **NOASSERTION** ⚠ | 模型调优 | — | ⛔ | pending-license | 2026-11-03 | ★3，JS，agent preset 修正「降智」；与本轮轴无关，且许可证待核 |
+| `clclyzybzjsq/dsh-collab-score-based-on-mscore` | A 原生DSH | **NOASSERTION** ⚠ | 音乐 | — | ⛔ | pending-license | 2026-11-03 | ★3，C++（非 JS 栈），MuseScore wasm 演示；双料排除 |
+| `Alice-Marx/dsh-model-router` | A 原生DSH | MIT ✅ | 通用 | 全新（模型路由），但与本轮轴无关 | 🔵 | rejected | 2026-11-03 | ★667，JS，Model Router + GALGame；**留档待后续「模型层」轴** |
+| `ai-yukin/dsh-0-tools` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★11，JS，「四个永久免费模型一键配置」工具集；无能力增量 |
+| `Ratevoid/dsh-aseprite` | A 原生DSH | MIT ✅ | 像素画 | 重复且无增益（本仓 `sketchpad`/`whiteboard` 已覆盖绘制面） | 🔵 | rejected | 2026-11-03 | ★9，JS，Aseprite 兼容像素编辑器；场景窄且非学习 |
+| `SamyiHu/dsh-visio` | A 原生DSH | MIT ✅ | 图表 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★2，Python（非 JS 栈）+ vsdx 预览；双料排除 |
+| `Natsubrei/dsh-comfyui-panel` | A 原生DSH | MIT ✅ | 图像生成 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★2，JS，ComfyUI 内嵌；本仓无该面板、非学习场景 |
+| `zhibailu/dsh-vsc` | A 原生DSH | MIT ✅ | 编程 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★2，HTML，在 VS Code 里跑 DSH；方向相反 |
+| `jerryhu/seekdock` | A 原生DSH | MIT ✅ | 编程 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★3，TS，DSH 的 VS Code 助手；同上 |
+| `Edison-A-N/dsh-remote-editor` | A 原生DSH | MIT ✅ | 编程 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，用本地 Cursor/VS Code 打开工作区；无面板 |
+| `MaRi23333/dsh-agent-instructions-editor` | A 原生DSH | MIT ✅ | 配置 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，TS，编辑 AGENTS.md 全局/项目指令；settings 面已有 |
+| `dongfangxy/dsh-agents-md-settings` | A 原生DSH | MIT ✅ | 配置 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，Settings 里打开 AGENTS.md；同上，且与上条重叠 |
+| `gh503/dsh-prism-theme` | A 原生DSH | MIT ✅ | 主题 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，主题 + 实时主题编辑器；审美类，非学习 |
+| `z953218350/dsh-np-ppt` | A 原生DSH | MIT ✅ | 汇报 | **重复且无增益**（本仓 `classroom-*` 已有 PPTX 导出与舞台） | ⛔ | rejected | 2026-11-03 | ★4，JS；PPTD DSL + 自带编辑器，与课堂链路正面重复 |
+| `Fromlan/dsh-godot-tool` | A 原生DSH | MIT ✅ | 游戏开发 | — | 🔵 | rejected | 2026-11-03 | ★3，TS，驱动 Godot 编辑器；场景越界 |
+| `PerryLink/dsh-lsp-actions` | A 原生DSH | Apache-2.0 ✅ | 编程 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★37，TS，LSP 诊断/格式化；本仓无代码面板 |
+| `13162563982/dsh-token-planner` | A 原生DSH | MIT ✅ | 成本 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★2，TS，峰谷计费/预算提醒；与既有 `dsh-radar-deadline-budget` 同轴 |
+| `omdsh-dev/dsh-tool-tariff` | A 原生DSH | MIT ✅ | 成本 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，峰谷电价 + 余额徽章；同上 |
+| `OwlNjust/deepseek-balance-dsh` | A 原生DSH | MIT ✅ | 成本 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，余额/用量悬浮件；同上 |
+| `pystay/dsh-study-daily` | A 原生DSH | MIT ✅ | 学习看板 | **重复且无增益**（本仓 `page-today` + `core-study` 已覆盖） | ⛔ | rejected | 2026-11-03 | ★1，JS，每日专注统计 + 科技新闻 + 学习提醒 |
+| `FEITENG-0828/dsh-standing-rules` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，把 AGENTS.md 规则附到每条用户消息前；无视觉面板 |
+| `faukwaa/dsh-gap-feed` | A 原生DSH | MIT ✅ | 资讯 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，TS，思考期间插热点；与 `zone-notify` 轴重叠（r130 已判该轴不可顶替） |
+| `liren2272-hue/dsh-attention-notifier` | A 原生DSH | MIT ✅ | 通知 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，阻塞/结束提醒；r130 已封板该轴 |
+| `catsenior507/dsh-clock` | A 原生DSH | MIT ✅ | 时间 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，TS，闹钟唤醒指定会话；与 `cjk-calendar`/`timetable` 轴重叠 |
+| `X0Ken/dsh-repetition-reminder` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，检测 `finish_reason` 重复并续写；无面板 |
+| `egsfggr22222/plugin-for-dsh-Custom-Actions` | A 原生DSH | MIT ✅ | 快捷键 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，自定义键位 + 完成提醒；同上 |
+| `AAAsangyu/dsh-unfocus-reminder` | A 原生DSH | MIT ✅ | 通知 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，任务栏徽章提醒；同上 |
+| `Alamanes/dsh-dignity-guard` | A 原生DSH | MIT ✅ | 通用 | — | 🔵 | rejected | 2026-11-03 | ★2，JS，人格化「尊严守卫」；非功能面，无增量 |
+| `TardisBooo/tigang-plugin` | A 原生DSH | MIT ✅ | 健康 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | ★2，JS，git commit 触发凯格尔提醒；与本仓学习场景无关 |
+| `jueshali/dsh-plugin-kegel` | A 原生DSH | MIT ✅ | 健康 | 重复且无增益 | ⛔ | rejected | 2026-11-03 | ★1，JS，同轴重复 |
+| `sorawithcat/dsh-health-reminder` | A 原生DSH | BSD-3-Clause ✅ | 健康 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，喝水/护眼提醒；健康提醒轴已在 r130 判饱和 |
+| `sunnycreate/dsh-plugin-stand-reminder` | A 原生DSH | MIT ✅ | 健康 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，久坐提醒；同上 |
+| `CUI198-INBOX/dsh-plugin-walk-reminder` | A 原生DSH | MIT ✅ | 健康 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，散步提醒；同上 |
+| `QQuqu1999/dsh-plugin-health-reminder` | A 原生DSH | **null** ⛔ | 健康 | — | ⛔ | rejected | 2026-11-03 | ★0，JS，**无许可证**；同轴重复 |
+| `WaylanPunch/dsh-life-reminder` | A 原生DSH | MIT ✅ | 健康 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，生活提醒；同上 |
+| `tianhanly/dsh-warm-reminder` | A 原生DSH | MIT ✅ | 健康 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★0，JS，时长检测提醒；同上 |
+| `Codingendless/dsh-prevent-scd` | A 原生DSH | MIT ✅ | 健康 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，深夜/久坐宠物提醒；同上 |
+| `mikufan39/dsh-mikufan` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，会话清理 + 启动页 + 局域网代理；功能簇，无与本仓正交的单点 |
+| `FlyingFreeOwl/dshgirl-starter` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | rejected | 2026-11-03 | ★1，JS，新人整合 starter（人格 + 若干插件）；功能簇 |
