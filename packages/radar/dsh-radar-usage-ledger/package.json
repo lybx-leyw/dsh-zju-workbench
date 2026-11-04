@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-usage-ledger",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 @ychris12138/dsh-usage-stats（MIT，原生 DSH Web 插件），把「跨会话的 token 用量 / 余额 / 订阅配额」这本账接进本仓已有的计量点，落在设置页（强化式集成，A 类锁版挂载 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@ychris12138/dsh-usage-stats": "0.3.7"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

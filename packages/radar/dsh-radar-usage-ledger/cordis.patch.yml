@@ -1,0 +1,20 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 与上游 `@ychris12138/dsh-usage-stats@0.3.7` 自带的 `cordis.patch.yml` 的关系：
+#   上游那份只有一行 insert（`id: usage-stats` / `name: "@ychris12138/dsh-usage-stats"`），
+#   **没有** `!!js` 表达式，因此结构上与本仓的安全补丁兼容。
+#   即便如此，本骨架仍**不直接复用上游那份 patch**，理由有二：
+#     1. 本仓规定候选包一律 `dsh-radar-` 前缀、用**本仓 id** 插入，
+#        以免日后与上游自己的 profile 条目撞 id；
+#     2. 由 `src/index.js` 在运行时显式 `import('@ychris12138/dsh-usage-stats')` 并调用
+#        上游 `apply(ctx)`，上游因此成为**本包的依赖**而不是「并列的另一个 bundle」——
+#        这样 profile 里只多一行，回滚只需删这一行。
+#
+# ⚠ 评审时必须一并确认的宿主侧前提（见 README §风险 R-1）：
+#   上游 `package.json` 的 `dsh.client.inject` 声明了
+#   `['@deepseek-ai/dsh-client-locale', '@deepseek-ai/dsh-client-ui-primitives']`，
+#   这两个包来自 `@deepseek-ai/dsh-base` / `dsh-web-app`。
+#   若宿主侧未提供，上游的 Web 半部会**静默不挂载**（宿主侧 API 仍在、面板却不见）。
+- insert:
+    - id: radar-usage-ledger
+      name: dsh-radar-usage-ledger
