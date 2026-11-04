@@ -3,7 +3,7 @@
 > **候选骨架：未评审、未接入 profile、不可直接使用。**
 > `src/index.js` 的 `apply()` 只打一行日志，`loadUpstream()` 永远返回
 > `{ ok: false, error: 'candidate skeleton: not implemented' }`。
-> 本包**没有**被写进 `profiles/zhiyun-bench/package.json`，也不会自动加载。
+> 本包**没有**被写进 `profiles/zju-workbench/package.json`，也不会自动加载。
 
 **集成性质：强化式集成（不是全新功能）。**
 
@@ -69,7 +69,7 @@
 
 ## 不做什么
 
-- 不写入 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。
+- 不写入 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。
 - 不改规划页落盘格式（只允许**追加**字段）。
 - 不默认打开质量门禁、不默认打开自动 reuse/takeover。
 - 不把 `.agent-teams/` 会话状态写进笔记库或计划表。

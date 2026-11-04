@@ -1,7 +1,6 @@
-.zy-workbench-frame{display:grid;grid-template-columns:56px minmax(0,1fr);width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;background:var(--zy-bg,var(--dsw-alias-bg-base))}
-.zy-workbench-navigation,.zy-workbench-body,.zy-workbench-product{min-width:0;min-height:0;height:100%}
-.zy-workbench-body{position:relative;overflow:hidden}
-.zy-workbench-product{overflow:hidden}
-.zy-workbench-native{position:absolute;inset:0;overflow:hidden;isolation:isolate;contain:layout paint;transform:translateZ(0)}
-.zy-workbench-native>div{height:100%;min-height:0}
-.zy-workbench-product[hidden],.zy-workbench-native[hidden]{display:none!important}
+/* 智云只补一条背景：布局本身由 dsh-pages 按 `zy-workbench` 前缀生成。
+ *
+ * 这条必须留在本仓 —— 它用的是智云的主题变量（`--zy-bg`），属于产品外观，
+ * 通用包不该认识它。布局规则的唯一来源在 `packages/dsh-pages/src/style.css`，
+ * 这里再写一遍就会有两份真源。 */
+.zy-workbench-frame{background:var(--zy-bg,var(--dsw-alias-bg-base))}

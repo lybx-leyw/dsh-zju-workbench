@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 样式归属守卫：各包样式表之间不许有「靠挂载顺序决胜」的层叠依赖。
  *
  * 为什么值得一条常驻测试：每个包的 style.css 是各自 mountStyle 追加的一张独立
@@ -59,6 +59,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     // 它们的类名一律 `zyc-` 前缀，且 renderer 的 Tailwind 4 输出 `@scope` 到
     // `.zyc-root`（见 docs/architecture/classroom-port.md 第 5 节），
     // 与工作台的 `zy-` 不共享任何选择器，所以只登记、不参与竞争判定。
+    // dsh-pages owns component-scoped styles; its retired adapter stylesheet was removed.
     'dsh-zhiyun-classroom-renderer',
     'dsh-zhiyun-core-classroom-stage',
     'dsh-zhiyun-graph-render',
@@ -66,7 +67,6 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'dsh-zhiyun-page-classroom-play',
     'dsh-zhiyun-page-docs',
     'dsh-zhiyun-page-feedback',
-    'dsh-zhiyun-settings-account',
     'dsh-zhiyun-page-notes',
     'dsh-zhiyun-page-paper',
     'dsh-zhiyun-page-planning',
@@ -74,6 +74,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'dsh-zhiyun-page-quiz',
     'dsh-zhiyun-page-study',
     'dsh-zhiyun-page-today',
+    'dsh-zhiyun-settings-account',
     'dsh-zhiyun-shell-bridge',
     'dsh-zhiyun-shell-ui',
     'dsh-zhiyun-shell-workbench',
@@ -273,4 +274,5 @@ test('退出码：有问题返回 1，没问题返回 0', () => {
   ]));
   assert.equal(report(dirty, { log: () => {}, error: () => {} }), 1);
 });
+
 

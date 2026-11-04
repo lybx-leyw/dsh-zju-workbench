@@ -95,7 +95,7 @@
 
 ## 未接入声明
 
-- ❌ **未**写入 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`
+- ❌ **未**写入 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`
 - ❌ 未在真实环境挂载
 - ❌ 未落实任何业务逻辑（`src/index.js` 为空实现）
 - ❌ 未代理上游的 repair / upgrade 写入口（本包设计上不代理）

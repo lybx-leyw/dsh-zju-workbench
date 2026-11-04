@@ -2,7 +2,7 @@
 
 > ⚠️ **候选骨架：未评审、未接入 profile、不可直接使用。**
 > 由「DSH 生态雷达」自动生成（2026-10-16）。采用前请**重写**并走正常包流程。
-> **不得**写进 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。
+> **不得**写进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。
 
 ## 上游
 

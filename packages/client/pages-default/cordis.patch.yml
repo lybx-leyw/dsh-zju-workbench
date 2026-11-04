@@ -1,0 +1,8 @@
+# dsh bundle patch: insert the ZJU page-shell defaults.
+#
+# The bundle name is the npm package name, which is NOT the directory name:
+# the package lives in `packages/client/pages-default/` but publishes as
+# `@lybx-leyw/dsh-zju-pages-default`.
+- insert:
+    - id: zju-pages-default
+      name: "@lybx-leyw/dsh-zju-pages-default"

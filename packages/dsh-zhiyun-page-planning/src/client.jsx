@@ -22,7 +22,7 @@ import React, { createContext, useContext, useCallback, useEffect, useMemo, useR
 import { ScheduleView } from './schedule-view.jsx';
 import { taskKeyFor, weekStart } from './agenda.js';
 import scheduleCss from './schedule.css';
-import { Empty, Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Empty, Icon, Notice, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
@@ -126,13 +126,14 @@ function countdown(iso, now = Date.now()) {
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunPlanningStyle', css: `${css}\n${scheduleCss}`, label: 'zhiyun: planning styles' });
-  ctx.slots.inject('zhiyun.planning.content', () => ctx.slots.register(
-    { name: 'zhiyun.planning.content' },
-    // 把 ctx 传进去只为**惰性取** `zhiyunStudyController`（课表上下文）。
-    // 不在 `apply` 时取：那个控制器由领域包的客户端半边提供，而本页在它停用时
-    // 也要能打开（这是当初决定不与「今天」合并的核心理由）。
-    () => <Planning ctx={ctx} />,
-  ));
+  // 直接注册给页面壳的 `page.content`（keyed）。
+  // 把 ctx 传进去只为**惰性取** `zhiyunStudyController`（课表上下文）；不在 apply 时取，
+  // 因为那个控制器由领域包的客户端半边提供，而本页在它停用时也要能打开。
+  registerPageContent(ctx, {
+    id: 'planning',
+    label: '规划',
+    render: () => <Planning ctx={ctx} />,
+  });
   // 设置集中在「个人 → 设置」：壳里的 PersonalSettingsBridge 会把所有
   // settings.section 按 order 摊成折叠分组，所以这里零改壳。
   //

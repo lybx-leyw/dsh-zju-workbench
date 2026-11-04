@@ -77,7 +77,7 @@
 5. **下载落点**：`cc98_download` 默认写 `~/Downloads/cc98`，与本仓「数据落 profile 数据目录」不符，
    须改写到 profile 数据目录且**用户显式触发**。
 6. **凭据**：四个环境变量**不得**落文件，须走本仓 `dsh-zhiyun-source-omni/src/core/keychain.ts` 的凭据库。
-7. **不接入 profile。** 绝不写入 `profiles/zhiyun-bench/package.json`。
+7. **不接入 profile。** 绝不写入 `profiles/zju-workbench/package.json`。
 
 ## 下一步
 

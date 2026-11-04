@@ -16,7 +16,7 @@
 
 > **候选骨架：未评审、未接入 profile、不可直接使用。**
 > 由「DSH 生态雷达」自动生成（2026-10-20 · 第四十轮）。仅供人工评估；
-> 真要采用须重写并走正常包流程。**不得**写入 `profiles/zhiyun-bench/package.json`。
+> 真要采用须重写并走正常包流程。**不得**写入 `profiles/zju-workbench/package.json`。
 
 ## 一句话
 

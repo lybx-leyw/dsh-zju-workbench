@@ -5,7 +5,7 @@
 > 本目录由 `dsh-ecosystem-radar` 自动生成，**仅用于人工评审**。
 > 这不是一个可用的插件：`src/index.js` 的 `apply()` / `recurrenceRuleFor()`
 > 与 `src/upstream.js` 的 `loadUpstream()` / `weekdayOf()` / `contiguous()` 都直接抛错或返回占位值。
-> **请勿**把它加入任何 profile（`profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`），
+> **请勿**把它加入任何 profile（`profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`），
 > **请勿**在真实环境挂载。评审通过后才可继续实现；驳回则整目录删除。
 
 ---
@@ -101,4 +101,4 @@
 | 报告 | `docs/ecosystem-radar/2026-10-26-r74.md` |
 | 登记表 | `docs/ecosystem-radar/registry.md`（2026-10-26 · B 组 · r74 段） |
 | Owner | `shared`（未触碰他人 `OWNERS`） |
-| 是否接入 profile | **否**（`profiles/zhiyun-bench/package.json` 未改） |
+| 是否接入 profile | **否**（`profiles/zju-workbench/package.json` 未改） |

@@ -35,29 +35,28 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 
 /* ────────────────────────────── 插件面 ────────────────────────────── */
 
-test('宿主半边是空壳，客户端把页面注册进 zhiyun.classroom.build', () => {
+test('宿主半边是空壳，客户端把页面注册进页面壳的 page.content', () => {
   assert.equal(hostName, 'zhiyun-page-classroom-build');
+  // 迁移后不再有 `zhiyun.classroom.build` 子槽：内容注册到页面壳的 `page.content`，
+  // key 是本页 id。`SLOT_NAME` 仍作为本包对外的标识保留。
   assert.equal(SLOT_NAME, 'zhiyun.classroom.build');
 
-  let injected = null;
   let registered = null;
-  const scope = {
-    slots: {
-      inject(name, callback) {
-        injected = name;
-        callback();
-      },
-      register(descriptor, component) {
-        registered = { descriptor, component };
-      },
-    },
+  const scope = { slots: {
+    inject(_name, callback) { callback(); },
+    register(descriptor, component) { registered = { descriptor, component }; },
+  } };
+  const pageShell = { config: { pageSlot: 'page.content' } };
+  const registerPageContent = (ctx, spec) => {
+    ctx.slots.inject(pageShell.config.pageSlot, () => ctx.slots.register(
+      { name: pageShell.config.pageSlot, key: spec.id }, () => spec.render({}),
+    ));
   };
   const Page = () => null;
-  registerSlot(scope, Page);
+  registerSlot({ ...scope, pages: pageShell }, registerPageContent, Page);
 
-  assert.equal(injected, SLOT_NAME);
-  assert.equal(registered.descriptor.name, SLOT_NAME);
-  assert.equal(registered.component, Page);
+  assert.equal(registered.descriptor.name, 'page.content');
+  assert.equal(registered.descriptor.key, 'classroom-build');
 });
 
 /* ────────────────────────────── 归约 ────────────────────────────── */
@@ -221,7 +220,8 @@ async function loadClient(suffix = '') {
         setup(builder) {
           builder.onResolve({ filter: /^dsh-zhiyun-shell-ui$/ }, () => ({ path: 'stub', namespace: 'stub' }));
           builder.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
-            contents: 'export const mountStyle = () => {};',
+            // 页面自注册助手：本测试只关心「组件能渲染」，注册动作由外壳承担。
+            contents: 'export const mountStyle = () => {};\nexport const registerPageContent = () => {};',
             loader: 'js',
             resolveDir: root,
           }));

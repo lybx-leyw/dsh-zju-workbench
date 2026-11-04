@@ -82,7 +82,7 @@ export function apply(ctx) {
 漏任何一处的表现都不是"这里立刻红"，而是**真机上那一页空白**：
 
 1. `scripts/build.mjs` 的 `CLIENT_PACKAGES` —— 漏了就没有 `lib/client.js`，模块表缺行
-2. `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles` —— 漏了 Loader 不装载它
+2. `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles` —— 漏了 Loader 不装载它
 3. 外壳的 `NAV`（`packages/dsh-zhiyun-shell-workbench/src/model.js`）—— 漏了没有入口，
    页面注册了也没人打开
 4. `package.json` 的 `exports["./client"]` —— 漏了宿主拒启整个工作台

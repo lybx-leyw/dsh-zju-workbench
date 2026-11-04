@@ -129,7 +129,7 @@ lockfile / CI / 启动脚本）→ 自选 Node 与执行 profile → 在**一次
 
 ## 未接入声明
 
-- ❌ **未**写入 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`
+- ❌ **未**写入 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`
 - ❌ 未在真实环境挂载
 - ❌ 未落实任何业务逻辑（`src/index.js` 为空实现，`readCompatProfile()` 直接抛错）
 - ❌ 未代理上游任何写入口

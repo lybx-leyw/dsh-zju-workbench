@@ -1,6 +1,6 @@
 > ⚠️ **候选骨架：未评审、未接入 profile、不可直接使用。**
 >
-> 本包由「生态雷达」自动生成，**未经过人工评审**，**未接入** `profiles/zhiyun-bench/package.json`
+> 本包由「生态雷达」自动生成，**未经过人工评审**，**未接入** `profiles/zju-workbench/package.json`
 > 的 `dsh.profile.bundles`。`src/index.js` 只有占位与 TODO，**没有可用实现**。
 > 接入前必须先由人完成下面「接入前必须先做的事」一节的检查。
 

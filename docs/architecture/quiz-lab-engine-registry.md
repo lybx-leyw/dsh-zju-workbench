@@ -9,7 +9,7 @@
 |---|---|---|
 | Q1 | r4 内核放在哪 | 内核留在 lab 包内；`versions.json` 不登记 r4；r1/r3 不起任何变化 |
 | Q2 | lab 交给注册表什么 | 完整工厂 + 自带 `checkpointVersion`；dispatch 改为查表；落库权留在 core-study |
-| Q3 | lab 是否进模板 | 进 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`，默认挂载 |
+| Q3 | lab 是否进模板 | 进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`，默认挂载 |
 | Q4 | lab 卸载后已生成的题 | 显式标记「已卸载的出题引擎」，可读、不可续跑；**不**静默回落成 r1 |
 
 Q4 未经你明确表态，此处按推荐项采纳。若你不认同，只需改第 6 节一处。
@@ -125,7 +125,7 @@ export {pooledToolCall, runtimeState, serial, fault, bankQuestion}
 | `core-study/src/question-bank.js:213-218` | switch 改为 `registry.get(engine)?.createRun(hosts)`，三条内建分支原样保留为兜底 | 中；必须逐字保留 r3 分支 |
 | `core-study/src/question-bank.js:289` | `QUIZ_ENGINES` → `engineEntries()` | 低 |
 | `page-quiz/src/question-bank.jsx:85,96,97` | 白名单改查目录；`courseOnly` 改用 `item.source` | 中；三处同一函数内 |
-| `profiles/zhiyun-bench/package.json` | `bundles` 追加 `dsh-zhiyun-quiz-lab` | 低 |
+| `profiles/zju-workbench/package.json` | `bundles` 追加 `dsh-zhiyun-quiz-lab` | 低 |
 
 ### 不动
 
@@ -249,7 +249,7 @@ export function apply(ctx) {
    `generatePoints` 就抛 `NOT_WIRED` 的实现）。验收：目录里出现第四个、
    点下去得到明确错误而不是空白。这一步把接线风险与算法风险分开。
 3. **内核迁入 + 适配层**：按 3.5 做，补 core-quiz exports。验收：lab 自己的一批能跑通。
-4. **进模板挂载**：改 `profiles/zhiyun-bench/package.json`。
+4. **进模板挂载**：改 `profiles/zju-workbench/package.json`。
    验收：`npm start` 后插件页可见、可关、关掉后引擎按钮消失。
 5. **Q4 接线**：`question-bank.jsx:85` 改为「查目录，查不到就保留原值并标 unloaded」；
    `engineLabel` 的兜底从 `历史出题批次` 改为 `已卸载的出题引擎：<id>`。

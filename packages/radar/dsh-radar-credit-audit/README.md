@@ -126,7 +126,7 @@ MIT License … 标准 MIT 正文（逐字，无改动）……
 - ❌ 不重复算 GPA（仍由 `gpaOf()` 负责）。
 - ❌ 不做培养方案 PDF OCR（那是 TODO-4 (iii) 的独立工作）。
 - ❌ 不调 LLM（引擎是确定性的；解释性文字由调用方决定要不要加）。
-- ❌ **未接入 `profiles/zhiyun-bench/package.json`**，也不会接入。
+- ❌ **未接入 `profiles/zju-workbench/package.json`**，也不会接入。
 
 ---
 

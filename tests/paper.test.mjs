@@ -1331,7 +1331,7 @@ test('接线：/resume 面板挂进抽屉，删除走本包归档路由，且不
 
 
 test('接线：两个新包都已进 profile 与构建清单', () => {
-  const profile = readJson('profiles/zhiyun-bench/package.json');
+  const profile = readJson('profiles/zju-workbench/package.json');
   assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-host-paper'));
   assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-page-paper'));
 

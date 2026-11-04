@@ -63,7 +63,7 @@
  *       本仓 `omni` 已有「两步确认」的写路径，重复造写入口是风险不是功能。
  *   [ ] **下载类工具**：`cc98_download` 默认写 `~/Downloads/cc98` —— 与本仓「数据落 profile 数据目录」
  *       的约定不符，须改写到 profile 数据目录，且须用户显式触发。
- *   [ ] **不接入 profile。** 绝不写入 `profiles/zhiyun-bench/package.json`。
+ *   [ ] **不接入 profile。** 绝不写入 `profiles/zju-workbench/package.json`。
  */
 
 export const name = 'dsh-radar-cc98-sdk';

@@ -10,7 +10,7 @@
 // 的地方，不能因为别的包停用、或某个服务没就绪而一起消失。收件服务连不上时页面显示成
 // 空社区并**明确说明是连不上**，而不是装作"还没有人提过"。
 import React, { useEffect, useState } from 'react';
-import { Empty, Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Empty, Icon, Notice, SectionTitle, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import {
   ago, checkComment, checkIssue, LIMITS, loadIssues, localName, orderIssues,
@@ -24,10 +24,13 @@ export const inject = ['slots'];
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunFeedbackStyle', css, label: 'zhiyun: feedback page styles' });
-  ctx.slots.inject('zhiyun.feedback.content', () => ctx.slots.register(
-    { name: 'zhiyun.feedback.content' },
-    Feedback,
-  ));
+  // 直接注册给页面壳的 `page.content`（keyed）：页面不再依赖外壳为它声明子槽。
+  // 本页没有领域服务依赖，所以不需要额外的 `ctx.inject(...)` 惰性门。
+  registerPageContent(ctx, {
+    id: 'feedback',
+    label: '反馈',
+    render: () => <Feedback/>,
+  });
 }
 
 /** 状态标签。 */

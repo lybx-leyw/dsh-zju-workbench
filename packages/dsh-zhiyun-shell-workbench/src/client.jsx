@@ -1,5 +1,7 @@
 import React from 'react';
-import { Sidebar, Page, NativeSettingsHost } from './components.jsx';
+import { Icon } from 'dsh-zhiyun-shell-ui';
+import { Page, NativeSettingsHost } from './components.jsx';
+import { SearchOverlay } from './search.jsx';
 import { NAV, hiddenPageIds, pageSlot } from './model.js';
 import { adaptSettingsSurface } from './settings-adapter.js';
 import { createSettingsOpener } from './settings-opener.js';
@@ -17,13 +19,12 @@ export const name = 'zhiyun-shell-client';
  * 一起 mount），而它在 dsh-web-app 里；所以「有 remote」与「有 pluginManager」是同一件事，
  * 不会多出连坐面。真正要防的是**读不到就降级**，那由 hiddenPageIds 的空集语义负责。
  */
-export const inject = ['slots', 'layout', 'theme', 'uiWorkspace', 'workspaces', 'sessions', 'remote', 'zhiyunWorkbench'];
+export const inject = ['slots', 'layout', 'theme', 'uiWorkspace', 'workspaces', 'sessions', 'remote'];
 export function apply(ctx) {
   try { return applyUI(ctx); }
   catch (error) { console.error('zhiyun UI activation:', error); throw error; }
 }
 function applyUI(ctx) {
-  const workbench = ctx.zhiyunWorkbench;
   /**
    * 哪些页的包被取消了。
    *
@@ -43,16 +44,30 @@ function applyUI(ctx) {
   const account = createToggleStore();
   // binding 必须先于 controller 建立：controller.navigate 立刻就会用到它，
   // 而别的插件在自己的 apply 里调 zhiyunNavigation.navigate 也可能早于下面几行执行。
-  const binding = createLearningSpaceBinding(ctx, () => workbench.getSnapshot().activePage === 'ask');
-  // 设置 = 宿主原生浮窗。只把它的 store 动作接到壳上，导轨按钮与账号菜单共用这一入口。
+  const binding = createLearningSpaceBinding(ctx, () => false);
+  // 设置 = 宿主原生浮窗。只把它的 store 动作接到壳上。
   const settings = createSettingsOpener();
+  /** 页面壳服务；惰性取，缺席时导航退化成 no-op 而不是把整个外壳拖成 pending。 */
+  const pages = () => ctx.get('pages');
+  /**
+   * 原生工作台那一页的 id。
+   *
+   * 它不是产品页（不在 `NAV` 里），但页面里仍然需要「回到工作台」这个动作 ——
+   * 例如论文页的「问一问」按钮。取页面壳配置里的 `homePage`，而不是写死字符串：
+   * 换产品词汇表时这里要跟着走。
+   */
+  const homePage = () => pages()?.config.homePage ?? 'home';
   const controller = {
     navigate(id) {
-      if (!NAV.some(item => item.id === id)) throw new Error(`Unknown Zhiyun page: ${id}`);
-      workbench.selectPage(id);
+      // `homePage` 是页面壳的首页（原生工作台），它是合法目标但不在 NAV 里。
+      if (id !== homePage() && !NAV.some(item => item.id === id)) {
+        throw new Error(`Unknown Zhiyun page: ${id}`);
+      }
+      // 页面选择由页面壳统一持有（它才是唯一真源）；这里不再维护第二份。
+      const shell = pages();
+      if (shell !== undefined) shell.selectPage(id);
       // 外层页面切换不修改 DSH 内层的面板选择。
-      if (id === 'ask') binding.enter();
-      else binding.reset();
+      binding.reset();
     },
     toggleSidebar: () => ctx.layout.toggleSidebar(),
     toggleTheme: () => ctx.theme.setTheme(ctx.theme.getTheme().active.colorScheme === 'dark' ? 'light' : 'dark'),
@@ -67,8 +82,8 @@ function applyUI(ctx) {
   ctx.effect(() => hidden.subscribe(() => {
     const gone = hidden.getSnapshot();
     if (gone.size === 0) return;
-    const page = workbench.getSnapshot().activePage;
-    if (page !== null && gone.has(page)) controller.navigate('today');
+    const active = pages()?.getSnapshot().activePage;
+    if (typeof active === 'string' && gone.has(active)) controller.navigate('today');
   }), 'zhiyun: leave a cancelled page');
   ctx.effect(() => {
     const style = document.createElement('style');
@@ -91,30 +106,36 @@ function applyUI(ctx) {
     '--dsw-alias-button-info-fill': { light: '#00479d', dark: '#245fa9' },
     '--dsw-alias-button-info-hover': { light: '#003b83', dark: '#2b70c3' },
   }), 'zhiyun: reversible native theme layer');
-  ctx.slots.inject('zhiyun.shell.navigation', () => ctx.slots.register({
-    name: 'zhiyun.shell.navigation',
-    children: { 'sidebar.account.signin': { kind: 'single', scope: 'root' } },
-    inject: () => ({ controller, hidden, account, collapsed: true }),
-  }, Sidebar));
-  // 设置 = 宿主原生浮窗。这里只把它的 store 动作接到壳上：
-  // 导轨「设置」按钮与账号菜单调同一个入口，不再跳「个人」页。
+  // 搜索浮窗：保留 Ctrl+K，但不占导航栏（导航由页面壳的导轨提供）。
+  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+    name: 'shell.overlay', id: 'zhiyun.search',
+    inject: () => ({ controller, hidden }),
+  }, SearchOverlay));
+  // 设置 = 宿主原生浮窗。账号与明暗都走原生设置，这里不再造侧栏入口。
   ctx.effect(() => adaptSettingsSurface(ctx.slots, NativeSettings =>
     props => <NativeSettingsHost {...props} NativeSettings={NativeSettings} onActions={settings.attach}/>
   ), 'zhiyun: native settings surface');
-  // Native sidebar, workspace browser, header and plugin panels stay inside ask.
-  ctx.slots.inject('zhiyun.shell.page', function* () {
-    // 产品页面面板都照常注册，**不**因为「某一页被取消」而撤掉注册：
-    // 撤注册要在远程事件回来的异步时点调 `ctx.slots.register`，那时 shell 自己的 fiber
-    // 未必还在有效的 effect 作用域里（会撞 INACTIVE_EFFECT），时序很难守。
-    // 取消的效果落在**呈现**上（侧栏与跳转不列它），见 components.jsx 的 Sidebar/SearchDialog。
-    for (const page of NAV.filter(item => item.id !== 'ask')) {
-      yield ctx.slots.register({
-        name: 'zhiyun.shell.page', key: page.id,
-        // 内容插槽名从 NAV 取（`pageSlot`）：「课堂」的两页注册的是
-        // `zhiyun.classroom.play` / `zhiyun.classroom.build`，不跟 id 推导。
-        children: { [pageSlot(page)]: { kind: 'single', scope: 'root' } },
-        inject: () => ({ controller, page: page.id }),
-      }, Page);
+  // 产品页面：**只注册导航元数据**。
+  //
+  // 内容现在由各页面包自己注册进 `page.content`（见 `shell-ui` 的
+  // `registerPageContent`），外壳不再代为声明 `zhiyun.<id>.content` 子槽 —— 两边都
+  // 注册同一个 key 会直接抛错，而且「内容归页面包所有」才是迁移后的正确归属。
+  //
+  // 惰性取 `pages`：页面壳可能晚于本包挂载，而这里不能把 `pages` 写进 inject，
+  // 否则页面壳缺席时整个外壳一起 pending。
+  ctx.inject(['pages'], scope => {
+    const shell = scope.pages;
+    for (const page of NAV) {
+      // 图标由页面自己声明：页面壳不再提供任何默认图标或占位图形。
+      // `icon` 是组件（这里用 shell-ui 的 Icon 包一层），`glyph` 留给没有图标库的包。
+      scope.effect(() => shell.registerPage({
+        id: page.id,
+        label: page.label,
+        ...(page.icon ? { icon: () => <Icon name={page.icon}/> } : {}),
+        order: NAV.indexOf(page),
+        // 子页（`sidebar: false`）不占导轨，收进回收组由用户自行固定。
+        ...(page.sidebar === false ? { region: 'overflow' } : {}),
+      }));
     }
     // Startup selects Today only after all pages have been registered.
     controller.navigate('today');

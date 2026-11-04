@@ -1,24 +1,29 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile, realpath, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { initialize, locateHost, root, lock, exists, hostArgs, sourceBundles, retiredBundles } from '../scripts/profile.mjs';
+import { ownPackages } from '../scripts/workspace-packages.mjs';
 import { activePage, matchingPages, beijingDate, hiddenPageIds, pageBundle, visiblePages, NAV } from '../packages/dsh-zhiyun-shell-workbench/src/model.js';
 
 test('navigation preserves native conversation and ignores foreign panel ids', () => {
-  assert.equal(activePage(null), 'ask');
+  // 原生会话面板不再是产品页：原生工作台已是页面壳的首页（`home`），
+  // 所以导轨上不高亮任何产品页 —— 返回 null 而不是硬塞一个页 id。
+  assert.equal(activePage(null), null);
+  assert.equal(activePage('conversation'), null);
   assert.equal(activePage('zhiyun.today'), 'today');
   assert.equal(activePage('other-plugin'), null);
-  // 原先断言「搜『规划』只命中问一问」，前提是那时还没有规划页。现在有了，
-  // 于是这条改成"两页各命中一次"——继续钉住"搜索不能漏掉承接该词的页面"，
-  // 而不是反过来逼着页面不许叫自己该叫的名字。
-  assert.deepEqual(matchingPages('规划').map(page => page.id), ['ask', 'planning']);
+  // 「规划」只命中真实存在的那一页：「问一问」已删除，不再参与搜索。
+  assert.deepEqual(matchingPages('规划').map(page => page.id), ['planning']);
   assert.equal(matchingPages('未知页面').length, 0);
+  assert.equal(NAV.some(page => page.id === 'ask'), false, '原生工作台不再是产品页');
 });
 
 test('被取消的页从侧栏与跳转里一起消失（两处必须同一份清单）', () => {
-  // 「问一问」是宿主原生会话，没有承载包 —— 永远在，也不该被包状态影响。
-  assert.equal(pageBundle('ask'), null);
+  // 原生工作台已不是产品页（它是页面壳的首页），所以这里不再有「永远在」的特例：
+  // 每个 NAV 页都推导得出承载包。
+  assert.equal(NAV.some(page => page.id === 'ask'), false);
+  assert.equal(pageBundle('today'), 'dsh-zhiyun-page-today');
   assert.equal(pageBundle('paper'), 'dsh-zhiyun-page-paper');
   // 「题库」曾经是寄居在学习页里的一个 tab，`pageBundle` 给它开了特例把包名指到
   // `dsh-zhiyun-page-study`。拆成独立包之后特例去掉 —— 这条断言就是那个特例的
@@ -79,7 +84,11 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   const home = await mkdtemp(path.join(parent, 'profile-'));
   const first = await initialize({ home });
   const patch = path.join(first.profile, 'cordis.patch.yml');
+  // 本仓 bundle 的配置层（`- id: dsh-pages` 那段）由模板合并进 live patch，
+  // 用户自己写的那一段原样保留 —— 所以期望是「用户段 + 本仓段」，不是原样不动。
   const custom = '# user overlay\n[]\n';
+  const expectedPatch = custom + '- id: dsh-pages\n  config:\n    homePage: home\n    managerPage: pages\n'
+    + '    pageSlot: page.content\n    classPrefix: zy-workbench\n    defaultRailWidth: 51\n';
   await writeFile(patch, custom);
   await writeFile(path.join(home, 'user-note.txt'), 'keep my notes');
   const manifest = path.join(first.profile, 'package.json');
@@ -87,17 +96,20 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   data.description = 'user customization';
   await writeFile(manifest, JSON.stringify(data));
   await initialize({ home });
-  assert.equal(await readFile(patch, 'utf8'), custom);
+  assert.equal(await readFile(patch, 'utf8'), expectedPatch, '用户覆盖与本仓配置层共存');
   assert.equal(await readFile(path.join(home, 'user-note.txt'), 'utf8'), 'keep my notes');
   assert.equal(JSON.parse(await readFile(manifest, 'utf8')).description, 'user customization');
   assert.equal(await realpath(path.join(first.profile, 'node_modules', 'dsh-zhiyun-shell-workbench')), await realpath(path.join(root, 'packages/dsh-zhiyun-shell-workbench')));
   // 这份清单是 profile 的**期望形态**：新增本仓 bundle 时要在这里补一项。
   // 下面那条循环（`sourceBundles`）保证每个包都有目录链接，但「清单里有没有它」
   // 只能靠这份逐字期望 —— 漏写不会报错，会让 profile 少挂一个包。
-  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', 'dsh-zhiyun-shell-workbench', 'dsh-zhiyun-shell-bridge', 'dsh-zhiyun-shell-ui', 'dsh-zhiyun-source-netproxy', 'dsh-zhiyun-source-card', 'dsh-zhiyun-source-campus', 'dsh-zhiyun-source-zdbk', 'dsh-zhiyun-source-cc98', 'dsh-zhiyun-source-xxt', 'dsh-zhiyun-host-office', 'dsh-zhiyun-host-deeptutor', 'dsh-zhiyun-source-classroom', 'dsh-zhiyun-core-parser', 'dsh-zhiyun-core-study', 'dsh-zhiyun-core-lecture', 'dsh-zhiyun-core-quiz', 'dsh-zhiyun-core-notes', 'dsh-zhiyun-core-vault', 'dsh-zhiyun-core-player', 'dsh-zhiyun-core-playback', 'dsh-zhiyun-core-knowledge', 'dsh-zhiyun-core-handout', 'dsh-zhiyun-core-learning-resource', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-quiz', 'dsh-zhiyun-page-planning', 'dsh-zhiyun-settings-account', 'dsh-zhiyun-graph-render', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-host-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-docs', 'dsh-zhiyun-page-feedback', 'dsh-zhiyun-quiz-lab', 'dsh-zhiyun-classroom-renderer', 'dsh-zhiyun-host-classroom', 'dsh-zhiyun-core-classroom-vault', 'dsh-zhiyun-core-classroom-media', 'dsh-zhiyun-core-classroom-pbl', 'dsh-zhiyun-core-classroom-agent', 'dsh-zhiyun-core-classroom-generate', 'dsh-zhiyun-core-classroom-export', 'dsh-zhiyun-page-classroom-build']);
+  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', '@lybx-leyw/dsh-pages', 'dsh-zhiyun-shell-workbench', 'dsh-zhiyun-shell-bridge', 'dsh-zhiyun-shell-ui', 'dsh-zhiyun-source-netproxy', 'dsh-zhiyun-source-card', 'dsh-zhiyun-source-campus', 'dsh-zhiyun-source-zdbk', 'dsh-zhiyun-source-cc98', 'dsh-zhiyun-source-xxt', 'dsh-zhiyun-host-office', 'dsh-zhiyun-host-deeptutor', 'dsh-zhiyun-source-classroom', 'dsh-zhiyun-core-parser', 'dsh-zhiyun-core-study', 'dsh-zhiyun-core-lecture', 'dsh-zhiyun-core-quiz', 'dsh-zhiyun-core-notes', 'dsh-zhiyun-core-vault', 'dsh-zhiyun-core-player', 'dsh-zhiyun-core-playback', 'dsh-zhiyun-core-knowledge', 'dsh-zhiyun-core-handout', 'dsh-zhiyun-core-learning-resource', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-quiz', 'dsh-zhiyun-page-planning', 'dsh-zhiyun-settings-account', 'dsh-zhiyun-graph-render', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-host-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-docs', 'dsh-zhiyun-page-feedback', 'dsh-zhiyun-quiz-lab', 'dsh-zhiyun-classroom-renderer', 'dsh-zhiyun-host-classroom', 'dsh-zhiyun-core-classroom-vault', 'dsh-zhiyun-core-classroom-media', 'dsh-zhiyun-core-classroom-pbl', 'dsh-zhiyun-core-classroom-agent', 'dsh-zhiyun-core-classroom-generate', 'dsh-zhiyun-core-classroom-export', 'dsh-zhiyun-page-classroom-build', '@lybx-leyw/dsh-zju-pages-default', 'dsh-zhiyun-core-classroom-stage', 'dsh-zhiyun-host-openmaic', 'dsh-zhiyun-page-classroom', 'dsh-zhiyun-page-classroom-play']);
   // 每个本仓包都要有 profile 里的目录链接 —— 漏一个的表现是「启动了但那一页空白」。
-  for (const name of sourceBundles) {
-    assert.equal(await realpath(path.join(first.profile, 'node_modules', name)), await realpath(path.join(root, 'packages', name)), `${name} 缺 profile 链接`);
+  // 包目录既可能平铺也可能在分组目录下（`packages/client/pages-default/`），
+  // 所以按 manifest.name 反查真实目录，不拼路径。
+  for (const { manifest, path: dir } of await ownPackages(path.join(root, 'packages'))) {
+    const name = manifest.name;
+    assert.equal(await realpath(path.join(first.profile, 'node_modules', name)), await realpath(dir), `${name} 缺 profile 链接`);
   }
 });
 test('existing profiles add the bridge once without altering user bundles or overlays', async t => {
@@ -113,13 +125,17 @@ test('existing profiles add the bridge once without altering user bundles or ove
   manifest.custom = { keep: true };
   await writeFile(file, JSON.stringify(manifest));
   const patch = path.join(runtime.profile, 'cordis.patch.yml');
-  await writeFile(patch, '# user bridge overrides\n[]\n');
+  const userPatch = '# user bridge overrides\n[]\n';
+  await writeFile(patch, userPatch);
   await initialize({ home });
   await initialize({ home });
   const upgraded = JSON.parse(await readFile(file, 'utf8'));
   assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, 'dsh-zhiyun-shell-bridge']);
   assert.deepEqual(upgraded.custom, manifest.custom);
-  assert.equal(await readFile(patch, 'utf8'), '# user bridge overrides\n[]\n');
+  // 用户段不动，本仓配置层被合并进来（且重复初始化不会叠第二份）。
+  const merged = await readFile(patch, 'utf8');
+  assert.ok(merged.startsWith(userPatch), '用户覆盖必须原样保留在最前');
+  assert.equal(merged.split('- id: dsh-pages').length - 1, 1, '本仓配置层只应出现一次');
   assert.equal(await realpath(path.join(runtime.profile, 'node_modules', 'dsh-zhiyun-shell-bridge')),
     await realpath(path.join(root, 'packages', 'dsh-zhiyun-shell-bridge')));
 });
@@ -144,7 +160,8 @@ test('existing product profile upgrades the parser bundle while preserving overl
   await writeFile(file,JSON.stringify(manifest)); await initialize({home});
   const upgraded = JSON.parse(await readFile(file,'utf8')); assert.deepEqual(upgraded.custom,manifest.custom);
   assert.deepEqual(upgraded.dsh.profile.bundles,[...manifest.dsh.profile.bundles,'dsh-zhiyun-core-parser','dsh-zhiyun-core-lecture','dsh-zhiyun-core-quiz','dsh-zhiyun-core-notes','dsh-zhiyun-core-knowledge']);
-  assert.equal(await readFile(overlay,'utf8'),'# preserve my routes\n[]\n');
+  // 用户段保留，本仓配置层合并进来。
+  assert.ok((await readFile(overlay,'utf8')).startsWith('# preserve my routes\n[]\n'));
   assert.equal(await realpath(path.join(runtime.profile,'node_modules/dsh-zhiyun-core-parser')),await realpath(path.join(root,'packages/dsh-zhiyun-core-parser')));
   assert.equal(await realpath(path.join(runtime.profile,'node_modules/dsh-zhiyun-core-lecture')),await realpath(path.join(root,'packages/dsh-zhiyun-core-lecture')));
 });
@@ -162,7 +179,8 @@ test('existing product profile adds the source bundle without replacing user set
   const actual = JSON.parse(await readFile(file, 'utf8'));
   assert.equal(actual.description, 'keep custom description');
   assert.deepEqual(actual.dsh.profile.bundles, [...manifest.dsh.profile.bundles, 'dsh-zhiyun-source-classroom']);
-  assert.equal(await readFile(patch, 'utf8'), '# custom overrides\n[]\n');
+  // 用户段保留，本仓配置层合并进来。
+  assert.ok((await readFile(patch, 'utf8')).startsWith('# custom overrides\n[]\n'));
 });
 test('改名/拆包后，profile 里指向已不存在的本仓包会被移除', async () => {
   // ⚠️ 这条钉的是拆包真机踩过的坑：`dsh-zhiyun-pro-ui` 改名成 `dsh-zhiyun-shell-workbench` 之后，
@@ -247,3 +265,4 @@ test('启动参数里同名参数只出现一次（显式 --port 优先，不再
   // 额外参数原样带上，且位置在端口之后。
   assert.deepEqual(hostArgs(['--verbose'], '3081'), ['--no-open', '--port', '3081', '--verbose']);
 });
+

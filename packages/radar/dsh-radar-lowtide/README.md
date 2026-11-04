@@ -87,6 +87,6 @@
 ## 污染防护
 
 - 前缀 `dsh-radar-`，与 `packages/` 下既有 54 个包不重名（生成前已 `git ls-files packages/` 查重）。
-- **未修改** `profiles/zhiyun-bench/package.json`。
+- **未修改** `profiles/zju-workbench/package.json`。
 - **未摘取上游任何源码**；`src/` 全部为占位。
 - `OWNERS`：`Owner: shared`。

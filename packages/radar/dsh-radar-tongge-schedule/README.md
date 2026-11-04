@@ -67,6 +67,6 @@
 
 ## 本包不做什么
 
-- 不写入 `profiles/zhiyun-bench/package.json`（候选包**不接入 profile**）。
+- 不写入 `profiles/zju-workbench/package.json`（候选包**不接入 profile**）。
 - 不改任何上游源码。
 - 不接管「今天」页的既有投影 —— 现在的 `agenda.js` 仍是唯一真源，本包是**候选替换层**。

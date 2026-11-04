@@ -86,7 +86,7 @@
  *
  *   - ❌ 不新增导航项；
  *   - ❌ 不改 `dsh-zhiyun-core-parser`；
- *   - ❌ 不写入 `profiles/zhiyun-bench/package.json`；
+ *   - ❌ 不写入 `profiles/zju-workbench/package.json`；
  *   - ❌ 不搬运上游参考仓库的源码（见根 ATTRIBUTION.md）；
  *   - ❌ 不读别人的凭证文件（上游自己的 `credential.json` 与本包无关）。
  */

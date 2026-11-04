@@ -1,92 +1,43 @@
-import React, { useSyncExternalStore } from 'react';
-import { createPortal } from 'react-dom';
-import { adaptNativeRoot, createWorkbenchState } from './state.js';
+/**
+ * 智云桥接 = 产品外观层。
+ *
+ * 页面外壳（导轨 + 页面管理 + 原生工作台作为首页）由 profile 直接挂载的
+ * `@lybx-leyw/dsh-pages` 提供。本包**不**再安装它 —— 那会让 `pages` 服务被注册两次
+ * （`service "pages" has been registered`），整条 entry 启动失败、导轨根本不渲染。
+ *
+ * 本包只做两件与产品有关、页面壳不该知道的事：
+ *
+ *   1. 挂产品外观：背景取智云主题变量；
+ *   2. 把原生首页那句 slogan 换成智云文案（见 `hero-copy.js`）。
+ *
+ * 页面壳的配置（槽名、首页 key、管理器 key）写在 profile 的 `cordis.patch.yml` 里 ——
+ * 那是「怎么装配」的问题，属于 profile 而不是插件代码。
+ */
+import { installHeroCopy } from './hero-copy.js';
 import css from './style.css';
 
 export const name = 'zhiyun-shell-bridge-client';
-export const inject = ['slots', 'layout', 'uiWorkspace'];
 
-/** The native root remains mounted, retaining plugin and conversation view state. */
-function WorkbenchFrame({ NativeRoot, nativeProps, workbench }) {
-  const { activePage } = useSyncExternalStore(workbench.subscribe, workbench.getSnapshot);
-  const ask = activePage === 'ask';
-  return <div className="zy-workbench-frame" data-workbench-page={activePage}>
-    <div className="zy-workbench-navigation" ref={workbench.attachNavigation}/>
-    <div className="zy-workbench-body">
-      <div className="zy-workbench-product" hidden={ask} ref={workbench.attachPage}/>
-      <div className="zy-workbench-native" hidden={!ask} inert={!ask ? '' : undefined} aria-label="问一问 · DSH 工作区">
-        <NativeRoot {...nativeProps}/>
-      </div>
-    </div>
-  </div>;
-}
+/**
+ * 只声明本包真正用到的服务。
+ *
+ * 页面壳需要 `slots` / `locale`，但它由 profile 自己挂载，依赖由它自己声明；
+ * 这里声明了反而会掩盖「谁装的页面壳」这件事。
+ */
+export const inject = [];
 
-/** This entry owns only new product slots; native children retain their owner. */
-function WorkbenchOutlets({ renderSlot, workbench }) {
-  const { activePage, navigationHost, pageHost } = useSyncExternalStore(workbench.subscribe, workbench.getSnapshot);
-  return <>
-    {navigationHost && createPortal(renderSlot('zhiyun.shell.navigation', { activePage }), navigationHost)}
-    {pageHost && activePage !== 'ask' && createPortal(renderSlot('zhiyun.shell.page', {}, { entryKey: activePage }), pageHost)}
-  </>;
-}
-
+/**
+ * @param ctx - 客户端上下文。
+ */
 export function apply(ctx) {
-  const workbench = createWorkbenchState();
-  ctx.effect(() => ctx.reflect.provide('zhiyunWorkbench', workbench), 'zhiyun: outer workbench navigation');
-  // Panel/session restores during boot must not override the product's start page;
-  // only a user action makes a later native navigation reveal the workbench.
-  let armed = false;
-  ctx.effect(() => {
-    const arm = () => { armed = true; };
-    document.addEventListener('pointerdown', arm, true);
-    document.addEventListener('keydown', arm, true);
-    return () => {
-      document.removeEventListener('pointerdown', arm, true);
-      document.removeEventListener('keydown', arm, true);
-    };
-  }, 'zhiyun: arm native navigation reveal');
-  // Native navigation (including global commands) reveals ask rather than updating
-  // an invisible panel. Geometry/theme updates must not steal product navigation.
-  ctx.effect(() => {
-    let panel = ctx.layout.panelInfo.getSnapshot().activePanelId;
-    return ctx.layout.panelInfo.subscribe(() => {
-      const next = ctx.layout.panelInfo.getSnapshot().activePanelId;
-      if (next === panel) return;
-      panel = next;
-      if (armed) workbench.selectPage('ask');
-    });
-  }, 'zhiyun: reveal native panel navigation');
-  ctx.effect(() => {
-    const selection = ctx.uiWorkspace.selection;
-    let sessionId = selection.getSnapshot().sessionId;
-    return selection.subscribe(() => {
-      const next = selection.getSnapshot().sessionId;
-      const changed = sessionId !== undefined && next !== undefined && next !== sessionId;
-      sessionId = next;
-      if (changed && armed) workbench.selectPage('ask');
-    });
-  }, 'zhiyun: reveal native session navigation');
+  // 产品外观：背景取智云主题变量。布局规则的唯一来源在 dsh-pages。
   ctx.effect(() => {
     const style = document.createElement('style');
     style.dataset.zhiyunBridge = 'true';
     style.textContent = css;
     document.head.append(style);
     return () => style.remove();
-  }, 'zhiyun: workbench layout styles');
-  // shell.overlay stays mounted even when its native DOM ancestor is hidden.
-  // Portals place only product content outside it; native overlays stay inside ask.
-  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
-    name: 'shell.overlay', id: 'zhiyun-workbench-outlets', order: 0,
-    children: {
-      'zhiyun.shell.navigation': { kind: 'single', scope: 'root' },
-      'zhiyun.shell.page': { kind: 'keyed', scope: 'root' },
-    },
-    inject: () => ({ workbench }),
-  }, WorkbenchOutlets));
-  ctx.effect(() => adaptNativeRoot(ctx.slots, NativeRoot => {
-    // Stable identity for this root registration: outer navigation never remounts DSH.
-    return function BridgedRoot(nativeProps) {
-      return <WorkbenchFrame NativeRoot={NativeRoot} nativeProps={nativeProps} workbench={workbench}/>;
-    };
-  }), 'zhiyun: reversible native root adapter');
+  }, 'zhiyun: workbench frame background');
+
+  installHeroCopy(ctx);
 }

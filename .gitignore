@@ -13,6 +13,9 @@ artifacts/
 .temp_env
 *.dpapi
 packages/*/lib/
+# 分组目录下的包（如 packages/client/pages-default）是两层，上面那条 `packages/*/lib/`
+# 匹配不到它们的构建产物。产物由 `npm run build` 重新生成，一律不进仓库。
+packages/*/*/lib/
 # Python 的字节码缓存：本仓有 Python 工具（deploy/ 的收件服务、robot/ 的机器人），
 # 跑一次就会在同级生成 __pycache__，且里面的 .pyc 会记录**本地绝对路径**。
 __pycache__/
@@ -61,6 +64,12 @@ vendor/
 # 见 docs/architecture/classroom-port.md。需要时重新 clone 到 ref/。
 /ref/
 
+# Cordis 框架上游源码快照（github.com/cordiverse/cordis，MIT，Copyright Shigma）。
+# 与上面的 `vendor/`、`/ref/`、`.ref/` 同类：上游有独立许可与发行节奏，体积也不小，
+# 跟着我们的提交走只会拖垮 clone 与 review。本地按需下载解压，不进仓库。
+# 注意：这是**解压得到的快照，没有 git 历史**；要查变更来源得另外 clone。
+/.ref-cordis/
+
 # 课堂移植把上游内核（dsl / geometry / renderer）vendor 进了包内，与根 `vendor/`
 # 的「不进仓库」策略相反：这几个包没有上游 lock 文件可回放，体积也只 3.5 MB，
 # 打包进仓库才能让 clone 后直接跑测试。unpdf 同理（PDF 文本抽取的唯一本地方案）。
@@ -75,6 +84,10 @@ vendor/
 
 # 渲染一致性校验的临时产物目录（每次跑会重新生成）。
 /.verify-render-*/
+
+# 本地手改 profile 清单时留下的临时副本（如 `package.json.bak`）：它只是某次
+# 改名前后的本机备份，不是模板也不是文档，进仓库只会让人不知道哪份是真的。
+profiles/*/package.json.bak
 
 # 测试用的临时产物（ail-teaching 的 esbuild 输出等）
 .tmp/

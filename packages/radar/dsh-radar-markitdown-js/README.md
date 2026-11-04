@@ -139,6 +139,6 @@ packages/dsh-radar-markitdown-js/
 
 - ✅ 锁版（写死 `0.0.14`，**不用 `^`**）引入上游
 - ✅ **绝不修改上游源码**
-- ✅ **未**写入 `profiles/zhiyun-bench/package.json`（候选包不接进 profile）
+- ✅ **未**写入 `profiles/zju-workbench/package.json`（候选包不接进 profile）
 - ✅ `OWNERS` 为 `shared`（**不碰他人 OWNERS**）
 - ✅ 无 ATTRIBUTION.md —— 本骨架**未借鉴任何第三方代码**，仅引用公开的许可证与版本信息
