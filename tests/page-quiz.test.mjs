@@ -35,16 +35,16 @@ test('包声明与接线清单四处对齐', async () => {
     'scripts/build.mjs 的 CLIENT_PACKAGES 里没有本包 —— 那条注释说的就是这件事：漏了不会报错，只会白屏');
 
   const profile = JSON.parse(await readFile(
-    join(root, 'profiles', 'zhiyun-bench', 'package.json'), 'utf8'));
+    join(root, 'profiles', 'zju-workbench', 'package.json'), 'utf8'));
   assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-page-quiz'),
-    'profiles/zhiyun-bench/package.json 的 bundles 里没有本包');
+    'profiles/zju-workbench/package.json 的 bundles 里没有本包');
 });
 
-test('client.jsx 用的插槽名与 NAV 里的 id 一致', async () => {
+test('client.jsx 注册的页面 id 与 NAV 里的 id 一致', async () => {
   const client = await readFile(join(pkg, 'src', 'client.jsx'), 'utf8');
-  // plugins-page.test.mjs 用 /'zhiyun\.([a-z]+)\.content'/ 扫这个字面量，只认小写字母。
-  assert.match(client, /'zhiyun\.([a-z]+)\.content'/);
-  const id = /'zhiyun\.([a-z]+)\.content'/.exec(client)[1];
+  // 迁移后页面自己注册 `page.content`，key 就是页面 id（不再有 `zhiyun.<id>.content`）。
+  assert.match(client, /id: '([a-z]+)'/);
+  const id = /id: '([a-z]+)'/.exec(client)[1];
   assert.equal(id, 'quiz');
 
   const model = await readFile(
@@ -54,6 +54,8 @@ test('client.jsx 用的插槽名与 NAV 里的 id 一致', async () => {
   const fullBleed = /FULL_BLEED_PAGES = Object\.freeze\(\[([^\]]*)\]/.exec(model);
   assert.ok(fullBleed, 'model.js 里找不到 FULL_BLEED_PAGES');
   assert.ok(!fullBleed[1].includes("'quiz'"), '题库页不该进 FULL_BLEED_PAGES');
+  // 页面自己注册时必须与外壳的版式契约一致，否则版心会分叉。
+  assert.ok(!/fullBleed: true/.test(client), '题库页不应声明 fullBleed');
 });
 
 test('两个页面包之间只有一条单向依赖：study → quiz', async () => {
@@ -84,13 +86,14 @@ test('两个页面包之间只有一条单向依赖：study → quiz', async () 
 });
 
 test('学习页不再自己注册题库内容槽', async () => {
-  // 拆分前 `zhiyun.quiz.content` 由 page-study 注册；现在由题库包注册。
-  // 两边都注册的话 `kind:'single'` 的槽会被抢占，表现是「点进去看运气」。
+  // 迁移到 dsh-pages 后，每个页面包各自把内容注册到页面壳的 `page.content`
+  // （key 是自己的页面 id），不再有 `zhiyun.<id>.content` 这层子槽。
+  // 这条守卫的**本意**仍在：题库只能有一个注册者。
   const studyClient = await readFile(
     join(root, 'packages', 'dsh-zhiyun-page-study', 'src', 'client.jsx'), 'utf8');
-  assert.ok(!studyClient.includes("'zhiyun.quiz.content'"),
-    '学习页还在注册 zhiyun.quiz.content，会和题库包抢同一个 single 槽');
+  assert.ok(!studyClient.includes("id: 'quiz'"),
+    '学习页也在注册 quiz 页内容，会和题库包抢同一个 key');
 
   const quizClient = await readFile(join(pkg, 'src', 'client.jsx'), 'utf8');
-  assert.ok(quizClient.includes("'zhiyun.quiz.content'"));
+  assert.ok(quizClient.includes("id: 'quiz'"));
 });

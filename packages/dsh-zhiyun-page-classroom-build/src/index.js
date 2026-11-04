@@ -21,10 +21,9 @@
  *
  * # 插槽名
  *
- * `zhiyun.classroom.build`。注意外壳当前渲染的是 `zhiyun.<page>.content`
- * （`shell-workbench/src/components.jsx:386`），而 NAV 里还没有 `classroom-build` 这一页；
- * 也就是说本包注册的插槽要等外壳加页面 + NAV 条目之后才会被渲染。那部分在壳里，
- * **不在本包范围**，README「边界」一节写明了这一点。
+ * 迁移到 `@lybx-leyw/dsh-pages` 后，「生成」页与其它页面一样：内容注册到页面壳
+ * 拥有的 `page.content`，key 是本页 id（`classroom-build`）。`SLOT_NAME` 保留为
+ * 本包对外的标识（README 与测试引用它），但**不再**用它注册槽。
  */
 
 export const name = 'zhiyun-page-classroom-build';
@@ -36,20 +35,22 @@ export const SLOT_NAME = 'zhiyun.classroom.build';
 export const SLOT_PRIORITY = 10;
 
 /**
- * 把页面组件注册进插槽。
+ * 把页面组件注册进页面壳的内容槽。
  *
- * 抽在这里而不是在 client.jsx 里内联 `ctx.slots.inject(...)`：插槽名是跨包契约，
- * 测试要断言、外壳将来要对接，集中一处比复制字符串可靠。
+ * 抽在这里而不是在 client.jsx 里内联：页面 id 是跨包契约（README 与测试引用它），
+ * 集中一处比复制字符串可靠。
  *
- * @param {object} scope 浏览器侧 Cordis 上下文（需已 inject `slots`）
+ * 依赖 `shell-ui` 的 `registerPageContent`，但本文件同时被**宿主半边**加载 ——
+ * 那里没有 React/DOM，所以只能做转发，不能直接 import 客户端模块。实际绑定在
+ * `client.jsx` 里完成。
+ *
+ * @param {object} scope 浏览器侧 Cordis 上下文
+ * @param {Function} register 由 client 传入的 `registerPageContent`
  * @param {Function} component React 组件
  * @returns {void}
  */
-export function registerSlot(scope, component) {
-  scope.slots.inject(SLOT_NAME, () => scope.slots.register(
-    { name: SLOT_NAME, priority: SLOT_PRIORITY },
-    component,
-  ));
+export function registerSlot(scope, register, component) {
+  register(scope, { id: 'classroom-build', label: '生成', render: () => component() });
 }
 
 /**

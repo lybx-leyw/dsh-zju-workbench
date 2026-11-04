@@ -83,5 +83,5 @@
 ## 接入时必须遵守
 
 1. **不改 `findIn`**：它是纯函数、4 处调用、有既有用例。字面命中必须仍然排最前。
-2. **不改 `profiles/zhiyun-bench/package.json`**。
+2. **不改 `profiles/zju-workbench/package.json`**。
 3. **验收判据**：`Σ 新命中 ⊇ Σ 旧命中`，新增命中逐条可解释；解释不了就回退。

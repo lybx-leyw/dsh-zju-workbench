@@ -151,6 +151,6 @@
 ## 污染防护
 
 - 前缀 `dsh-radar-`，`git ls-files packages/ | grep pinyin` = **0 命中**（生成前已查重）。
-- **未修改** `profiles/zhiyun-bench/package.json`。
+- **未修改** `profiles/zju-workbench/package.json`。
 - **未摘取上游任何源码**：`src/` 全部为占位与 TODO；`tmp/` 下的实测是**临时运行**，未入库。
 - `OWNERS`：`Owner: shared`。

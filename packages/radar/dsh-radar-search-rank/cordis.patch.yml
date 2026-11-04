@@ -1,5 +1,5 @@
 # 候选骨架的挂载补丁 —— **未评审、未接入 profile**，不得写入
-# profiles/zhiyun-bench/package.json 的 dsh.profile.bundles。
+# profiles/zju-workbench/package.json 的 dsh.profile.bundles。
 #
 # B 类骨架：本包不引上游 DSH 插件，只是一个**能力封装层**（把 minisearch 的索引/排序
 # 接到「学习」页的 layered-search.js 上）。挂载后它只 `provide` 一个服务

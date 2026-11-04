@@ -97,7 +97,7 @@
 
 ## 红线
 
-- 本骨架**只放 `packages/`**，**未**写入 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。
+- 本骨架**只放 `packages/`**，**未**写入 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。
 - **未搬运上游源码**：本目录零代码，`dependencies` 为空。
 - 若评审通过并移植：必须保留上游版权声明、在移植文件头注明「来源仓库 + 提交 SHA」，
   并把 `ATTRIBUTION.md` 里本条目从「候选」上移到「含实现移植」。

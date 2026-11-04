@@ -3,7 +3,7 @@
 > ## ⚠️ 候选骨架：**未评审、未接入 profile、不可直接使用**
 >
 > 本包由「生态雷达」自动生成，只是一份**待人工审查的骨架**。
-> 它**没有**被写进 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`，
+> 它**没有**被写进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`，
 > 因此**不会**在运行时挂载。`src/index.js` 只打一行日志、不注册任何路由 / 设置分节，
 > `src/upstream.js` 的 `loadUpstream()` 直接返回失败 —— 这是故意的。
 

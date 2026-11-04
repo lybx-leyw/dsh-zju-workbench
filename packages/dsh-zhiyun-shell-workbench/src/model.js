@@ -5,9 +5,10 @@ export const NAV = Object.freeze([
   { id: 'today', label: '今天', icon: 'calendarToday', hint: '从今天开始，按自己的节奏学习' },
   // 紧挨「今天」：两者都是「读材料」的入口，用户找论文时先看课程再看文献是自然顺序。
   // hint 里刻意不出现「规划」——tests/profile.test.mjs 用 matchingPages('规划') 断言
-  // 搜索只命中「问一问」，那是一条守卫别名的测试，别让新页面污染它。
+  // 搜索命中的页面集合，那是一条守卫别名的测试，别让新页面污染它。
   { id: 'paper', label: '论文', icon: 'paper', hint: '打开本地 PDF，选中英文即可翻译并提问' },
-  { id: 'ask', label: '问一问', icon: 'askBubble', hint: '和 AI 一起理解、思考与规划' },
+  // 「问一问」已删除：原生 DSH 工作台现在是页面壳的**首页**（home），
+  // 不需要产品再包一层 `ask` 页。原生会话/工作区状态不受影响。
   // 「学习」= 课程目录 + 回放 + 整理，**一页**。
   //
   // 这里曾经是三页：「我的课」（只列课程与节次）、「看课」（回放的视频/课件/字幕）、
@@ -71,7 +72,7 @@ export const panelKey = id => `zhiyun.${id}`;
  * ⚠️ 用 `Object.freeze` 的**清单**而不是给 NAV 加字段：上半组是「版式契约」，
  *    和 `FULL_BLEED_PAGES` 一样集中在这里，一眼能看全导轨长什么样。
  */
-export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'ask', 'study', 'classroom', 'quiz', 'planning', 'notes']);
+export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'study', 'classroom', 'quiz', 'planning', 'notes']);
 
 /**
  * 导轨最下方那一格：**账号入口**，不是一个页面。
@@ -139,7 +140,6 @@ const PAGE_BUNDLES = Object.freeze({
  * @returns 包名，或 null 表示这一页不属于任何可取消的包。
  */
 export function pageBundle(id) {
-  if (id === 'ask') return null;
   return PAGE_BUNDLES[id] ?? `dsh-zhiyun-page-${id}`;
 }
 /**
@@ -182,7 +182,8 @@ export function activePage(panel, pages = NAV) {
   // ⚠️ 这里**不**过滤 `sidebar: false`：子页也要能被认出来。
   // 过滤了的话，停在子页时 `activePage` 返回 null，侧栏会把「问一问」当成
   // 当前页高亮，而主面板其实在别处 —— 两处说的不是同一件事。
-  if (panel == null || panel === 'conversation') return 'ask';
+  // 原生会话面板不是任何产品页（它属于页面壳的首页），返回 null 让导航不高亮。
+  if (panel == null || panel === 'conversation') return null;
   return pages.find(page => panelKey(page.id) === panel)?.id ?? null;
 }
 export function matchingPages(query, pages = NAV) {

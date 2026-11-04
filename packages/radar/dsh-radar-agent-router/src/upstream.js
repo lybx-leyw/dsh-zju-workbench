@@ -41,7 +41,7 @@ export const UPSTREAM_PEER_SCHEMASTERY = '*';
 /**
  * 上游会**覆盖宿主 `llm-pi-ai` 行的 `providers`** —— 这是本骨架最大的风险面。
  *
- * 本仓 profile 目前没有自己的 `llm-pi-ai` 覆盖层（`profiles/zhiyun-bench/package.json`
+ * 本仓 profile 目前没有自己的 `llm-pi-ai` 覆盖层（`profiles/zju-workbench/package.json`
  * 的 `bundles` 里没有相关行），所以冲突面暂时为零；但一旦以后为了别的 provider
  * 在 profile 里也覆盖 `providers`，**两处覆盖会互相整段顶掉**（上游 README 自己
  * 记录了这件事，并用 `lib/route.js` 做「路由自愈」）。

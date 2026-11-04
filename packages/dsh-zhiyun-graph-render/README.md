@@ -38,7 +38,7 @@ import { NoteGraph, css } from 'dsh-zhiyun-graph-render';
 | --- | --- |
 | 消费方的 `dsh.client.external` | 让 esbuild 外部化本包，而不是把 cytoscape 一起内联进去 |
 | `scripts/build.mjs` 的 `CLIENT_PACKAGES` | 本包才会有 `lib/client.js` |
-| `profiles/zhiyun-bench/package.json` 的 `bundles` | Loader 才会加载本包 |
+| `profiles/zju-workbench/package.json` 的 `bundles` | Loader 才会加载本包 |
 
 本包自身的 `dsh.client.external` 是**空的**：cytoscape 与 fcose 没有共享实例需求，
 随包内联即可；写进 external 却没人提供，运行时会 `require` 失败。

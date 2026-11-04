@@ -27,7 +27,7 @@
  *      接它 = 接一套**别人定的词表**，词表一变，本仓界面文案就得跟着改 ⇒
  *      `CAPABILITY_IDS_SNAPSHOT` 把词表**快照**在本地，另加运行时核对。
  *   f. **`discoverInstalls()` 以 `~/.dsh/profiles`（或 `$DSH_HOME/profiles`）为根**，
- *      而本仓的 profile 在**仓库内**的 `profiles/zhiyun-bench/` ⇒ TODO-0：
+ *      而本仓的 profile 在**仓库内**的 `profiles/zju-workbench/` ⇒ TODO-0：
  *      两者是不是同一处？不是的话扫描结果**恒为空且不报错**。
  */
 

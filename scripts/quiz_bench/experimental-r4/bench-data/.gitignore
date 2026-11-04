@@ -8,7 +8,7 @@
 #
 # 来源：`npm run desktop` 起的 App，在学习页点「导出讲义到笔记库」写出的文件。
 #   根目录 = `{profileContext.dir}/data/zhiyun-vault-notes`
-#   本机即  `.runtime/home/profiles/zhiyun-bench/data/zhiyun-vault-notes`
+#   本机即  `.runtime/home/profiles/zju-workbench/data/zhiyun-vault-notes`
 #   路径规则 = `{学期}/{课程名}/{节次名}.md`（见 core-handout 的 `currentNotePath`）
 #
 # 结构：`## 章` → `### 知识点` → `#### 讲解|说明|定义|例题` → 正文。

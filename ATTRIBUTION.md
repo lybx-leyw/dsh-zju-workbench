@@ -34,7 +34,7 @@
 
 
 以下条目由「生态雷达」任务登记。它们出现在 `packages/dsh-radar-*/` 的**候选骨架**里，
-**未写入 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`，不会在运行时挂载**。
+**未写入 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`，不会在运行时挂载**。
 列在此处的目的是：**已阅读其源码/文档**，需按 CONTRIBUTING 3.3 留痕。
 若评审后决定接入，应把条目**上移**到「运行时依赖的第三方插件」一节。
 

@@ -58,7 +58,7 @@
  *   [ ] **不做的事**：不加页面、不加插槽、不写数据库、不发网络请求。
  *       本包**只**导出纯函数（`parseIcs` / `expandWeek` / `overlap` / `proximity`），
  *       由「今天」页自己决定怎么画。
- *   [ ] **不接入 profile。** 绝不写入 `profiles/zhiyun-bench/package.json`。
+ *   [ ] **不接入 profile。** 绝不写入 `profiles/zju-workbench/package.json`。
  */
 
 export const name = 'dsh-radar-tongge-schedule';

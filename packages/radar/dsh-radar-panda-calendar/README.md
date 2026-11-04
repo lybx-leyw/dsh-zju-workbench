@@ -94,7 +94,7 @@
 6. **注入点须核对。** 上游声明 4 个 `inject` 点（runtime / locale / ui-slots / ui-conversation），
    其中 `ui-slots` 是本仓多个 `dsh-zhiyun-page-*` 共用的挂载点，**须逐一确认不争抢**。
 
-7. **不接入 profile。** 绝不写入 `profiles/zhiyun-bench/package.json`。
+7. **不接入 profile。** 绝不写入 `profiles/zju-workbench/package.json`。
 
 ## 下一步
 

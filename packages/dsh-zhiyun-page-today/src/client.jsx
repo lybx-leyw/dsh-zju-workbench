@@ -1,6 +1,6 @@
 // 「今天」页：课表、已采纳的题、上次打开的那一节，以及今天到期还没勾掉的事。
 import React, { useEffect, useRef, useState } from 'react';
-import { Icon, Notice, SectionTitle, mountStyle, useStudy } from 'dsh-zhiyun-shell-ui';
+import { Icon, Notice, SectionTitle, mountStyle, registerPageContent, useStudy } from 'dsh-zhiyun-shell-ui';
 import { clock, projectAgenda } from './agenda.js';
 import { dueFromSnapshot } from './due.js';
 import { writeFocus } from './focus.js';
@@ -10,12 +10,13 @@ export const name = 'zhiyun-page-today-client';
 export const inject = ['slots'];
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunTodayStyle', css, label: 'zhiyun: today page styles' });
-  // 惰性取学习控制器：停用领域包时这一页不注册，外壳显示占位，不把整个前端拖成 pending。
+  // 惰性取学习控制器：停用领域包时这一页不注册，页面壳显示占位，不把整个前端拖成 pending。
   ctx.inject(['zhiyunStudyController'], (scope) => {
-    scope.slots.inject('zhiyun.today.content', () => scope.slots.register(
-      { name: 'zhiyun.today.content', priority: 10 },
-      () => <Today controller={scope.zhiyunStudyController} />,
-    ));
+    registerPageContent(scope, {
+      id: 'today',
+      label: '今天',
+      render: () => <Today controller={scope.zhiyunStudyController} />,
+    });
   });
 }
 

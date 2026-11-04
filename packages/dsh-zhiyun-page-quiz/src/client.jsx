@@ -9,19 +9,20 @@
 // 学习页的那张样式表里。
 import React from 'react';
 import { QuestionBankPage } from './question-bank.jsx';
-import { mountStyle } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 
 export const name = 'zhiyun-page-quiz-client';
 export const inject = ['slots'];
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunQuizStyle', css, label: 'zhiyun: quiz page styles' });
-  // 惰性取领域状态：停用状态包时这一页只是空着（壳显示占位），不会把整个前端拖成 pending。
+  // 惰性取领域状态：停用状态包时这一页只是空着，不会把整个前端拖成 pending。
   ctx.inject(['zhiyunStudyController'], (scope) => {
-    scope.slots.inject('zhiyun.quiz.content', () => scope.slots.register(
-      { name: 'zhiyun.quiz.content' },
-      () => <QuestionBankPage controller={scope.zhiyunStudyController} />,
-    ));
+    registerPageContent(scope, {
+      id: 'quiz',
+      label: '题库',
+      render: () => <QuestionBankPage controller={scope.zhiyunStudyController} />,
+    });
   });
 }
 

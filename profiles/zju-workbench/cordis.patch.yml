@@ -1,0 +1,25 @@
+# 本仓 profile 的产品装配层（patch）。
+#
+# 这里只写「**怎么装配**」，不写产品逻辑：
+#   - `@lybx-leyw/dsh-pages` 由 `dsh.profile.bundles` 挂载（见 package.json）；
+#   - 它的词汇表属于智云产品配置，所以在这一层给它 config，而不是改 npm 包默认值。
+#
+# 为什么配置放在 profile 而不是桥接包代码里：页面壳是**通用插件**，同一份 profile 里
+# 谁装它、用什么槽名都是装配决定。写在代码里会变成「同一个包只能有一种配置」，
+# 也会让「桥接包重复安装页面壳」这种错误重新变得可能（真机踩过：
+# `service "pages" has been registered at <dsh-pages-client>`）。
+#
+# 槽名契约（页面包与外壳共用，改一个要动一圈包）：
+#   pageSlot —— 页面内容槽。必须落在 `page.` 命名空间下，否则会被页面壳拒绝。
+#   homePage —— 原生 DSH 工作台那一页的 key（不再是产品页，不再有 `ask`）。
+#   managerPage —— 页面管理页的 key，与产品自己的「插件」页（`plugins`）区分开。
+#   defaultRailWidth —— 产品自己的导航栏默认宽度（51）：既是启动宽度，也是
+#     「恢复默认宽度」回到的那个值。写在这里而不是只靠客户端事后 setRailWidth，
+#     否则会出现「首次 51、点恢复默认又变 64」的不一致。
+- id: dsh-pages
+  config:
+    homePage: home
+    managerPage: pages
+    pageSlot: page.content
+    classPrefix: zy-workbench
+    defaultRailWidth: 51

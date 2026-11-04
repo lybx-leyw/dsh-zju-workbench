@@ -31,6 +31,10 @@ const SHELL_STUB = `
   import React from "react";
   export const mountStyle = () => {};
   export const Icon = () => React.createElement("i");
+  // 页面自注册助手：本测试只关心「内容能渲染」，注册动作由外壳承担，这里做空实现。
+  export const registerPageContent = (_ctx, spec) => {
+    globalThis.__registered = spec;
+  };
 `;
 
 /** 渲染层桩：只留一个能被舞台认出的组件。 */

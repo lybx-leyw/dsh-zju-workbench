@@ -13,7 +13,7 @@
 # 上游 patch 顶部的排序约束仍然成立，评审时必须连同本包一起看：
 #   > the profile must list the llm-retry bundle BEFORE dsh-llm-fallbacks
 #   > （可重试失败先交给 llm-retry，重试耗尽后本插件才介入）
-#   本仓 profile `zhiyun-bench` 的 bundles 里 **没有**显式的 `dsh-llm-retry` 行，
+#   本仓 profile `zju-workbench` 的 bundles 里 **没有**显式的 `dsh-llm-retry` 行，
 #   它来自 `@deepseek-ai/dsh-base`。接入前必须先在宿主侧确认 base 已含 retry，
 #   且其 `agent/request-error` 监听先于本包生效（见 README §风险 R-2）。
 - insert:

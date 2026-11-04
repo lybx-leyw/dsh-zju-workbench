@@ -5,7 +5,7 @@
 > 本目录由 `dsh-ecosystem-radar` 自动生成，**仅用于人工评审**。
 > 这不是一个可用的插件：`src/index.js` 的 `apply()` 与 `src/upstream.js` 的 `loadUpstream()`
 > 都直接抛错或返回占位值。
-> **请勿**把它加入任何 profile（`profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`），
+> **请勿**把它加入任何 profile（`profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`），
 > **请勿**在真实环境挂载。评审通过后才可继续实现；驳回则整目录删除。
 
 ---

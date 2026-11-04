@@ -1,6 +1,6 @@
 > ⚠️ **候选骨架：未评审、未接入 profile、不可直接使用。**
 >
-> 本包由每日「生态雷达」自动生成，**未经过人工评审**，**未接入** `profiles/zhiyun-bench/package.json`
+> 本包由每日「生态雷达」自动生成，**未经过人工评审**，**未接入** `profiles/zju-workbench/package.json`
 > 的 `dsh.profile.bundles`。`src/index.js` 只有占位与 TODO，**没有可用实现**。
 > 接入前必须先由人完成「接入前必须先做的事」一节的各项前置工作。
 >
@@ -95,7 +95,7 @@ components and helpers for dsh web plugins."*，即**给 dsh web 插件用的共
    `tests/paper.test.mjs` 成例），跑通 `npm test` 与 `npm run test:host`，并在真实宿主里
    确认**没有**抢占 settings 分组与外壳布局。
 
-**以上全部完成后**，才由人决定是否把 `dsh-radar-dsh-web` 加进 `profiles/zhiyun-bench/package.json`
+**以上全部完成后**，才由人决定是否把 `dsh-radar-dsh-web` 加进 `profiles/zju-workbench/package.json`
 的 `dsh.profile.bundles`（依据 [CONTRIBUTING 3.1](../../docs/contributing/CONTRIBUTING.md)：
 profile 中任何一条 Loader 条目解析失败，起不来的是**整个工作台**）。
 

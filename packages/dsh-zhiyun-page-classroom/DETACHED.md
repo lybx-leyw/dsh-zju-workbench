@@ -11,7 +11,7 @@
 3. `packages/dsh-zhiyun-shell-workbench/src/model.js`：`NAV` 加
    `{ id: 'classroom', label: '课堂', icon: 'cap', hint: '…' }`，
    `RAIL_DEFAULT` 与 `FULL_BLEED_PAGES` 各加 `'classroom'`；
-4. `profiles/zhiyun-bench/package.json` 的 bundles 加
+4. `profiles/zju-workbench/package.json` 的 bundles 加
    `dsh-zhiyun-host-openmaic`、`dsh-zhiyun-page-classroom`（**按本仓既有顺序**，
    放在 `page-docs` 之后、`page-feedback` 之前）；
 5. `tests/profile.test.mjs:97` 与 `tests/css-order.test.mjs` 的清单各补一行。

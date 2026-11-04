@@ -88,7 +88,7 @@
  *
  *   ❌ 不引入上游 npm 包（上游**未发布**）；❌ **不复制上游源码**
  *      （上游是 Python，复制过来也无法运行，且违反"不搬运源码"边界）；
- *   ❌ 不改他人 OWNERS；❌ 不写入 `profiles/zhiyun-bench/package.json`。
+ *   ❌ 不改他人 OWNERS；❌ 不写入 `profiles/zju-workbench/package.json`。
  *   ✅ 仅提取**设计**：① `slides_grounded.json` 的证据模型；
  *      ② 课件页 ↔ 语音段的对齐思路；③ 双向同步的呈现结构。
  *   ✅ 由本包 `cordis.patch.yml` 挂入 DSH 运行时；

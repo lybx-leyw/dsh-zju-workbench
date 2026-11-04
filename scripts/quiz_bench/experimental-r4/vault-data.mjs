@@ -3,7 +3,7 @@
  *
  * 来源：`npm run desktop` 起的 App，学习页「导出讲义到笔记库」写出的文件。
  *   根目录 = `{profileContext.dir}/data/zhiyun-vault-notes`
- *           即 `.runtime/home/profiles/zhiyun-bench/data/zhiyun-vault-notes`
+ *           即 `.runtime/home/profiles/zju-workbench/data/zhiyun-vault-notes`
  *   路径规则（core-handout `currentNotePath`）= `{学期}/{课程名}/{节次名}.md`
  *
  * 为什么用它、而不是 `com.zhiyun/zhiyun_pro`：那是 App 的**手写笔记本**
@@ -15,7 +15,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const VAULT = path.resolve('.runtime/home/profiles/zhiyun-bench/data/zhiyun-vault-notes');
+const VAULT = path.resolve('.runtime/home/profiles/zju-workbench/data/zhiyun-vault-notes');
 const OUT_ROOT = path.resolve('scripts/quiz_bench/experimental-r4/bench-data');
 
 /** 递归列出所有 .md（跳过 PDF 之类的附件）。 */

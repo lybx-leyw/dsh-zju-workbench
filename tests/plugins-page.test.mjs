@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 插件依赖图的折叠规则。
  *
  * 这里钉的都是「错了会让人取消掉不该取消的包」的那几条：叶的判定、插槽边、两棵树的硬边，
@@ -286,7 +286,7 @@ test('前缀可换：本仓默认只看 dsh-zhiyun-', () => {
  * 加一个客户端包要动四处手写清单，漏任何一处的表现都不是「这里立刻红」，而是
  * 「真机上那一页空白」或「端到端 60 秒超时」：
  *   1. `scripts/build.mjs` 的 CLIENT_PACKAGES —— 漏了就没有 lib/client.js，模块表缺行；
- *   2. `profiles/zhiyun-bench/package.json` 的 bundles —— 漏了 Loader 不装载它；
+ *   2. `profiles/zju-workbench/package.json` 的 bundles —— 漏了 Loader 不装载它；
  *   3. 外壳 NAV —— 漏了没有入口（页面注册了也没人打开）；
  *   4. `scripts/test-host.mjs` 的整体停用清单 —— 那条已经从 CLIENT_PACKAGES 推导了。
  */
@@ -299,12 +299,12 @@ test('接线：每个有客户端半边的包都进了构建清单、profile 与
   assert.ok(clientPackages.length >= 8, `只扫到 ${clientPackages.length} 个客户端包，扫描器可能失效`);
 
   const build = read('scripts/build.mjs');
-  const bundles = JSON.parse(read('profiles/zhiyun-bench/package.json')).dsh.profile.bundles;
+  const bundles = JSON.parse(read('profiles/zju-workbench/package.json')).dsh.profile.bundles;
   const nav = read('packages/dsh-zhiyun-shell-workbench/src/model.js');
   const missing = [];
   for (const name of clientPackages) {
     if (!new RegExp(`'${name}'`).test(build)) missing.push(`${name}: 不在 scripts/build.mjs 的 CLIENT_PACKAGES`);
-    if (!bundles.includes(name)) missing.push(`${name}: 不在 profiles/zhiyun-bench 的 bundles`);
+    if (!bundles.includes(name)) missing.push(`${name}: 不在 profiles/zju-workbench 的 bundles`);
     // 声明了 `dsh.client` 就**必须**有 `./client` 出口 —— 否则宿主组装客户端模块表时
     // 直接抛「declares dsh.client but exports no "./client" bundle」并**拒启整个工作台**。
     // 这条是实测踩出来的：新建页面包时漏了 `"./client": "./lib/client.js"`，
@@ -314,29 +314,33 @@ test('接线：每个有客户端半边的包都进了构建清单、profile 与
       missing.push(`${name}: 声明了 dsh.client 但 exports 里没有 "./client"（宿主会拒启）`);
     }
   }
-  // 页面包额外要求：NAV 里必须有一项**声明了这个插槽**。
+  // 页面包额外要求：它注册的页面 id 必须出现在外壳 NAV 里。
   //
-  // 早先这条是从 `zhiyun.<id>.content` 反推页面 id 的，默认所有页面都按页面 id 命名
-  // 插槽。课堂两页不这么叫（`zhiyun.classroom.play` / `.build`，一个页面 id 对应
-  // 两个页面），于是这条守卫会误判。改成「以 NAV 里显式写的 `slot:` 为准」：
-  // 不是放宽，而是更严 —— 它要求 NAV 真的把插槽名写出来，而不是靠推导。
-  const navSlots = new Set([...nav.matchAll(/slot: '([^']+)'/g)].map((match) => match[1]));
-  assert.ok(navSlots.size > 0, '外壳 NAV 里没有解析到任何 slot: 声明，扫描器可能失效');
+  // 迁移到 dsh-pages 后不再有 `zhiyun.<id>.content` 子槽：每个页面包自己把内容注册到
+  // 页面壳的 `page.content`，key 就是页面 id。于是这条判据从「解析插槽名」变成
+  // 「解析页面包注册的 id」—— 语义没变（漏了就没有入口），而且更直接。
   const navIds = new Set([...nav.matchAll(/id: '([^']+)'/g)].map((match) => match[1]));
   assert.ok(navIds.size > 0, '外壳 NAV 里没有解析到任何 id: 声明，扫描器可能失效');
 
   for (const name of clientPackages.filter(item => item.startsWith('dsh-zhiyun-page-'))) {
+    // `DETACHED.md` 的包已完工但暂不接入 profile，不参与接线检查（与上面两条一致）。
+    if (existsSync(path.join(root, 'packages', name, 'DETACHED.md'))) continue;
     const clientEntry = read(`packages/${name}/src/client.jsx`);
-    const indexEntry = read(`packages/${name}/src/index.js`);
-    const declared = /SLOT_NAME\s*=\s*'([^']+)'/.exec(indexEntry)
-      ?? /'(zhiyun\.[a-z0-9]+(?:\.[a-z0-9]+)+)'/.exec(clientEntry);
-    if (declared === null) { missing.push(`${name}: 没有注册任何 zhiyun.*.* 插槽`); continue; }
-    const slot = declared[1];
-    // 两种接线都算数：NAV 显式写了 `slot:`（课堂两页，一个 id 对两个页面），
-    // 或插槽名按 `zhiyun.<navId>.content` 约定推导（其余页面）。
-    const pageId = slot.split('.')[1];
-    if (!navSlots.has(slot) && !navIds.has(pageId)) {
-      missing.push(`${name}: 注册的插槽 ${slot} 在 NAV 里既没有 slot: 声明，也没有 id: '${pageId}' 这一页`);
+    // 「课堂」这一页的内容由 play 包提供（`page-classroom` 的 iframe 从未被渲染过），
+    // 所以 `page-classroom` 本身不注册 `page.content` —— 那会与 play 抢同一个 key。
+    if (name === 'dsh-zhiyun-page-classroom') continue;
+    // 页面自己注册时写 `registerPageContent(ctx, { id: '<pageId>' ... })`；
+    // 「生成」页把注册动作转给了 `registerSlot` 里的 helper，那里也走同一个入口。
+    const viaHelper = /id: '([^']+)', label:/.exec(read(`packages/${name}/src/index.js`));
+    const declared = /registerPageContent\([\s\S]{0,300}?id: '([^']+)'/.exec(clientEntry)
+      ?? viaHelper;
+    if (declared === null) {
+      missing.push(`${name}: 没有用 registerPageContent 注册页面内容`);
+      continue;
+    }
+    const pageId = declared[1];
+    if (!navIds.has(pageId)) {
+      missing.push(`${name}: 注册的页面 id '${pageId}' 不在外壳 NAV 里`);
     }
   }
   assert.deepEqual(missing, [], `接线不完整：\n${missing.join('\n')}`);

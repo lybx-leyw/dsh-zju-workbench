@@ -6,7 +6,7 @@ import React from 'react';
 // 题库页已经独立成 `dsh-zhiyun-page-quiz`：本页只保留「知识点上用同一套出题器」的那块面板，
 // 以及讲义生成要用的模型选择器。依赖方向单向（study → quiz），不会成环。
 import { GenerationModels } from 'dsh-zhiyun-page-quiz';
-import { Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Notice, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import { StudyWorkspace } from './study-workspace.jsx';
 import css from './style.css';
 // 视频栏是第二套样式（`zs-video-*`）：它有自己的网格与窄屏断点，不跟正文共用规则。
@@ -20,12 +20,14 @@ export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunStudyStyle', css, label: 'zhiyun: study page styles' });
   mountStyle(ctx, { attribute: 'zhiyunStudyVideoStyle', css: videoCss, label: 'zhiyun: study video pane styles' });
   mountStyle(ctx, { attribute: 'zhiyunStudyCourseGraphStyle', css: courseGraphCss, label: 'zhiyun: course graph styles' });
-  // 惰性取领域状态：停用状态包时这一页只是空着（壳显示占位），不会把整个前端拖成 pending。
+  // 惰性取领域状态：停用状态包时这一页只是空着（页面壳显示占位），不会把整个前端拖成 pending。
   ctx.inject(['zhiyunStudyController'], (scope) => {
-    scope.slots.inject('zhiyun.study.content', () => scope.slots.register(
-      { name: 'zhiyun.study.content' },
-      () => <Study controller={scope.zhiyunStudyController} />,
-    ));
+    registerPageContent(scope, {
+      id: 'study',
+      label: '学习',
+      // 版式与迁移前一致：`FULL_BLEED_PAGES` 只有 notes / docs，学习页仍走文章版心。
+      render: () => <Study controller={scope.zhiyunStudyController} />,
+    });
   });
 }
 

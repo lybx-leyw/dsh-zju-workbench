@@ -5,7 +5,7 @@
 > 本目录由 `dsh-ecosystem-radar` 自动生成（**2026-10-29 · r97 · 06 时 · B 组**），
 > **仅用于人工评审**。`src/index.js` 的 `apply()` 被调用即抛错，
 > `src/upstream.js` 的三个 TODO 全部只有规格、没有实现。
-> 本包**没有**写进 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。
+> 本包**没有**写进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。
 
 **类型：B 类（其他 JS 项目）。** 无 `cordis.patch.yml`、不 insert、不注册路由 ——
 它是一组纯函数，不是插件；`apply()` 只为「误挂载时立刻失败」而存在。

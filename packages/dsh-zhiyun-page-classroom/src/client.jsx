@@ -20,7 +20,7 @@
 // 所以状态的读取与起停一律走宿主注册的同源路由 `/zhiyun-openmaic/*`
 // （见 host 包的 `src/routes.js`）。
 import React from 'react';
-import { mountStyle } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 
 export const name = 'zhiyun-page-classroom-client';
@@ -47,12 +47,17 @@ async function call(path, method = 'GET') {
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunClassroomStyle', css, label: 'zhiyun: classroom page styles' });
 
-  // 插槽**无条件**注册：即便宿主包缺席，这一页也要自己说清楚缺什么，
-  // 而不是留给壳的通用占位「这个页面由独立的插件包提供，当前未启用」。
-  ctx.slots.inject('zhiyun.classroom.content', () => ctx.slots.register(
-    { name: 'zhiyun.classroom.content' },
-    () => <ClassroomPage />,
-  ));
+  // 「课堂」页的内容由 `dsh-zhiyun-page-classroom-play` 注册（它依赖
+  // `zhiyunClassroomStudio`）。本包只提供**兜底**：那个领域服务没就绪时，
+  // play 包不会注册任何内容，页面就成了空白 —— 而空白是最难归因的一种失败。
+  //
+  // 兜底优先级低（40）：play 包就绪时用的是默认优先级，会盖住这里。
+  registerPageContent(ctx, {
+    id: 'classroom',
+    label: '课堂',
+    priority: 40,
+    render: () => <ClassroomPage />,
+  });
 }
 
 /** 上游没就绪时的说明文案：按状态给出**可执行**的下一步，而不是一句「不可用」。 */

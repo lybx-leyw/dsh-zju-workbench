@@ -326,17 +326,16 @@ test('包声明与接线清单四处对齐', async () => {
     'scripts/build.mjs 的 loader 表里没有 .md —— 正文会被当成无法识别的文件类型');
 
   const profile = JSON.parse(await readFile(
-    join(root, 'profiles', 'zhiyun-bench', 'package.json'), 'utf8'));
+    join(root, 'profiles', 'zju-workbench', 'package.json'), 'utf8'));
   assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-page-docs'),
-    'profiles/zhiyun-bench/package.json 的 bundles 里没有本包');
+    'profiles/zju-workbench/package.json 的 bundles 里没有本包');
 });
 
-test('client.jsx 用的插槽名与 NAV 里的 id 一致', async () => {
+test('client.jsx 注册的页面 id 与 NAV 里的 id 一致', async () => {
   const client = await readFile(join(pkg, 'src', 'client.jsx'), 'utf8');
-  // plugins-page.test.mjs 用 /'zhiyun\.([a-z]+)\.content'/ 扫这个字面量，
-  // 只认小写字母 —— 所以这里也按那个形状断言。
-  assert.match(client, /'zhiyun\.([a-z]+)\.content'/);
-  const id = /'zhiyun\.([a-z]+)\.content'/.exec(client)[1];
+  // 迁移后页面自己注册 `page.content`，key 就是页面 id（不再有 `zhiyun.<id>.content`）。
+  assert.match(client, /id: '([a-z]+)'/);
+  const id = /id: '([a-z]+)'/.exec(client)[1];
   assert.equal(id, 'docs');
 
   const model = await readFile(
@@ -344,4 +343,6 @@ test('client.jsx 用的插槽名与 NAV 里的 id 一致', async () => {
   assert.ok(model.includes(`id: '${id}'`), `model.js 的 NAV 里没有 id: '${id}'`);
   // 整幅铺开的页要进 FULL_BLEED_PAGES，否则会套上 980px 版心，三栏被挤成一条缝。
   assert.match(model, /FULL_BLEED_PAGES = Object\.freeze\(\[[^\]]*'docs'/);
+  // 页面自己注册时也必须声明 fullBleed，否则版式与 NAV 的契约分叉。
+  assert.match(client, /fullBleed: true/);
 });

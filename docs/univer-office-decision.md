@@ -79,7 +79,7 @@ npm `dsh-univer-office@0.3.7`）—— **Univer 官方为 DeepSeek Harness 出�
 ### 曾经想走的捷径，以及它为什么走不通
 
 我最初打算**不建包装层**：把 `dsh-univer-office` 直接写进
-`profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`，再把它装成 profile 的依赖。
+`profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`，再把它装成 profile 的依赖。
 **这条路会打死整个工作台。** 原因是 `scripts/profile.mjs:125` 的模板校验：
 
 > `if (!sourceBundles.includes(bundle) …) throw new Error('profile 缺少 …，请检查自己的配置；初始化不会重写配置。')`

@@ -43,7 +43,7 @@
 // 把用户删掉的内容又救回来。
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-import { Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Icon, Notice, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 // 图谱渲染是独立包（`dsh-zhiyun-graph-render`，整包移植自雷达候选 note-graph）：
 // 页面只负责把 vault 的 graph 读数递进去，不背 cytoscape 这份依赖。
 import { NoteGraph, css as graphCss } from 'dsh-zhiyun-graph-render';
@@ -251,10 +251,12 @@ export function apply(ctx) {
   // 图谱的样式随包走（`dsh-zhiyun-graph-render` 导出自己的 css），
   // 页面只负责在同一个 ctx 里挂上 —— 样式归属跟着组件走，不散落在页面里。
   mountStyle(ctx, { attribute: 'zhiyunGraphRenderStyle', css: graphCss, label: 'zhiyun: graph render styles' });
-  ctx.slots.inject('zhiyun.notes.content', () => ctx.slots.register(
-    { name: 'zhiyun.notes.content', priority: 10 },
-    NotesLibrary,
-  ));
+    registerPageContent(ctx, {
+    id: 'notes',
+    label: '笔记',
+    fullBleed: true,
+    render: () => <NotesLibrary/>,
+  });
 }
 
 /** 文件树的一行。`dropTarget` 让文件夹既是行也是拖放目标。 */
