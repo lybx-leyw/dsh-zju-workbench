@@ -4869,3 +4869,27 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 > `Azzygoatcoder/agent-useful-skills`(Python monorepo) · `Jegozhou/dsh-plugin-bidkit`(招投标) · `LLYlab/DLT`(成本) ·
 > `wj2514939573-ui/dsh-text-master`(润色) · `Three-summers/dsh_plugin_latex`(**无许可证**) · `LuoTaiyu/Latex_plugin`(**无许可证**) ·
 > `yangyongzhen/dsh-session-export`(**无许可证**) · `lwklbb/DSH-SessionGraph`(会话，非笔记)。
+
+<!-- 第七十四轮 · 2026-11-05-06 · C 组 · 轴「GPA 的分学期：算好了却没人画」· 搜索 13 次(⚠超 3)· 0 次限额 · 留档 14 行(🟢0 🟡2 🔵2 ⛔10) · 骨架 0 -->
+
+| `DucTapCodeDao/HUST-GPA-CPA-Calculator-Extension` | B 其他JS（浏览器扩展） | **MIT** ✅（`THIRD_PARTY_LICENSES.md` 列 jsPDF/autotable=MIT、SheetJS=Apache-2.0、Noto Sans 字体） | 成绩 / GPA / CPA | **重复且可强化（受限）** | 🟡 | proposed | 2026-11-05 | ★12，push 2026-08-31。**唯一与本仓同形的一条**：`content.js` 读 HUST 教务 DOM → 算 GPA/CPA。但它是 **DOM 抓取**，本仓 `source-zdbk/src/reads.js` 是**接口直出且已分学期** → 强化三判据的③（更优底层）**不成立**；唯一可借的是 `CPA`（累计绩点）这一**口径命名**，本仓由 `semesters[]` 累加即可得，无需集成。不生成骨架（会造空壳包） |
+| `sndnyang/superbGPACalculator` | B 其他JS（单页 HTML） | **MIT** ✅ | 成绩 / GPA | **重复且无增益** | ⛔ | rejected | 2026-11-05 | ★48，push 2025-03-09。`static/js/function.js:212-244` 有 7 套换算表（含 4.3 制 `[4.3,4.0,3.7,3.3,3.0,2.7,2.3]`），但产品形态是「手敲 4 门课出个数」；无教务接口、无学期维度、jQuery 1.8.2 + `.gif` 皮肤。本仓三档并存更强 |
+| `thelittlewonder/gpacalculator` | B 其他JS | **MIT** ✅ | 成绩 / GPA | 重复且无增益 | ⛔ | rejected | 2026-11-05 | ★41，**push 2022-12**。IIITA 课程表硬编码 |
+| `IshanHansaka/fit-gpa-calculator` | B 其他JS | **Apache-2.0** ✅ | 成绩 / GPA | 重复且无增益 | ⛔ | rejected | 2026-11-05 | ★12，push 2026-11-04（新但无新东西）。Next.js 单院系计算器 |
+| `martian56/ufazien` | B 其他JS | **MIT** ✅ | 成绩 / GPA | 重复且无增益 | ⛔ | rejected | 2026-11-05 | ★15，5.4 MB「学生平台」大杂烩（GPA+博客+共享屏幕+模拟游戏），topics 自陈 `campus-simulator` |
+| `chamaneth/UOM-BIT-GPA-` | B 其他JS | **MIT** ✅ | 成绩 / GPA | 重复且无增益 | ⛔ | rejected | 2026-11-05 | ★3，斯里兰卡某院专用，topics 含 `portfolio` |
+| `7xuanlu/ncu-gpa-calculator` | B 其他JS（扩展） | **Apache-2.0** ✅ | 成绩 / GPA | 重复且无增益 | ⛔ | rejected | 2026-11-05 | ★9，**push 2023-03**。台湾中央大学专用 |
+| `whaliendev/WHU-GPA-helperX` | B 其他JS | **GPL-3.0** ⛔ | 成绩 / GPA | — | ⛔ | rejected | 2026-11-05 | ★71，武汉大学新教务成绩助手，**形态最接近**（读教务成绩→算绩点）但 **GPL-3.0** 白名单外，**不摘任何代码** |
+| `UseBetterCanvas/bettercanvas` | B 其他JS | **AGPL-3.0** ⛔ | 成绩 / GPA | — | ⛔ | rejected | 2026-11-05 | ★255，Canvas LMS 增强；AGPL |
+| `alokverma18/GPA-Calculator` | B 其他JS（Python） | **GPL-3.0** ⛔ | 成绩 / GPA | — | ⛔ | rejected | 2026-11-05 | ★101，Python + GPL 双重排除 |
+| `hadi4172/signets-plugin` | B 其他JS（扩展） | **MPL-2.0** ⛔ | 成绩 / GPA | — | ⛔ | rejected | 2026-11-05 | ★11，白名单外 |
+| `M1ck4/pdfmd` | B 其他JS | **MIT** ✅ | 讲义 / 论文 → 笔记 | **重复且可强化** | 🔵 | proposed | 2026-11-05 | ★305，智能 PDF→Markdown（标题识别/自动分节）。本仓 `core-parser` 已覆盖讲义解析 → 判据③需先证明强于现有 pipeline，本轮**未验证**，仅留档待复核 |
+| `MuhametSmaili/note-it` | B 其他JS（扩展） | **Apache-2.0** ✅ | OCR 笔记 | 重复且无增益 | ⛔ | rejected | 2026-11-05 | ★42，浏览器扩展里的 Tesseract 套壳；`dsh-radar-ocr-web` 已在册 |
+| `geniucker-dev/zju-learnpilot` | B 其他JS（Python CLI + Agent Skill） | **MIT** ✅ | 浙大课堂 / 转写 / 录播 | **重复且无增益** | ⛔ | rejected | 2026-11-05 | ★1，push 2026-11-02。**语言不符**（Python，需 `uv` 外部运行时，非 JS 栈且违背「无外部进程」）；能力面（学在浙大 + 智云课堂 + 转写 + 录像取帧）与本仓 `source-classroom`/`core-player` **完全重叠**。唯一可读的是 `SKILL.md` 的**证据纪律**（引用须带课程/堂次/转写起止/PDF 页码；不得仅因文件存在就声称已读），可作 `host-*` 提示词参照，不构成集成 |
+
+> **本轮未逐条登记的 26 项**（★≤9 的课程作业、copyleft、他校专用脚本）：
+> `gpa calculator` 族 ★0–9 共 22 个（`3bbaas`/`uttamsaha`×2/`neicore`/`Faraaz2633`/`zaryabnaqvi`/`MrDino-Tz`/`Niox1337`/`AbhiramVSA`/`viiccwen`/`m3hu1`/`DailyPotato`(**GPL-3.0**)…）·
+> `fitness tracker` ★≥539 的 6 条 **全为 copyleft**（`DuarteSantos8/openGym` AGPL-3.0 ★19314 · `wger-project/wger` AGPL-3.0 ★7231 · `CodeWithCJ/SparkyFitness` NOASSERTION ★6699 · `simonoppowa/OpenNutriTracker` GPL-3.0 ★2806 · `endurain-project/endurain` AGPL-3.0 ★2365 · `thomaschampagne/elevate` MPL-2.0 ★1469；★8662 的 `Snouzy/workout-cool` 为 MIT 但健身域与本仓零交集）·
+> `timetable ics export` 首屏 10 条 **全为他校专用抓取脚本**（SIT/KCL/ECNU/ISAE/Curtin/XJTLU/Strathclyde…，其中 `finwarman/kcl-timetable`、`mcpower/icallate`、`JaciBrunning/ElsieScraper`、`Treeki/myplace-timetable-export` **无许可证**）·
+> `5.0 4.3 gpa conversion` → **total 0**（重要负结果，见报告 §四③）·
+> `ZJU GPA` 5 条中 3 无证 / 1 GPL-3.0（`STDquantum/ZJU_GPA_Seeker`）/ 浙工大 3 条（`zjut-postgraduate-gpa-computing`、`sqroc/GPA-ZJUT-`、已在册 `Frontlook/ZJUT-GPA-calculator`）。
