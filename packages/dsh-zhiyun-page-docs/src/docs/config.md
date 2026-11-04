@@ -44,7 +44,7 @@ npm start
    不进仓库。
 3. **整页空白、终端有插件加载失败** → 大概率是某个包声明了 `dsh.client` 却没有
    `exports["./client"]`。这种情况宿主会**拒启整个工作台**，不是只挂掉那一页。
-   往 `profiles/zhiyun-bench/package.json` 里临时删掉那一项就能起来。
+   往 `profiles/zju-workbench/package.json` 里临时删掉那一项就能起来。
 4. **某一页显示"当前未启用"** → 那是外壳的 fallback：这一页的包被取消了，或者没进 profile。
    用 `npm run profile:dump` 看合并后的配置。
 5. **窗口提示实例退出（退出码 1）** → 关掉窗口，回到能 `npm start` 成功的终端重开桌面壳。

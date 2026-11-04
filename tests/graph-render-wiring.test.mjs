@@ -139,7 +139,7 @@ test('页面 dsh.client.external 里写着 graph-render，渲染包也在 CLIENT
       'graph-render 不在 CLIENT_PACKAGES 里 —— 它不会有 lib/client.js，外部化后运行时解不到');
   }
 
-  const profile = JSON.parse(await readFile(`${root}profiles/zhiyun-bench/package.json`, 'utf8'));
+  const profile = JSON.parse(await readFile(`${root}profiles/zju-workbench/package.json`, 'utf8'));
   const bundles = profile.dsh?.profile?.bundles ?? [];
   assert.ok(bundles.includes('dsh-zhiyun-graph-render'),
     'graph-render 不在 profile 的 bundles 里 —— Loader 不会加载它，图谱静默不显示');

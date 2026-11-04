@@ -1,7 +1,7 @@
 # dsh-radar-plugin-graph
 
 > **候选骨架：未评审、未接入 profile、不可直接使用。**
-> 本包由「生态雷达」自动生成，**没有**被 `profiles/zhiyun-bench/package.json` 引用，
+> 本包由「生态雷达」自动生成，**没有**被 `profiles/zju-workbench/package.json` 引用，
 > 也没有通过任何人工评审。评审结论出来之前，**不得**把它加进 `dsh.profile.bundles`。
 
 > **2026-10-27 r79 修正（本骨架曾有一处会静默空转的接线）**：

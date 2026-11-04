@@ -51,6 +51,6 @@
 ## 明确不做
 
 - ❌ 不写测试（radar 包规定）
-- ❌ 不写入 `profiles/zhiyun-bench/package.json`
+- ❌ 不写入 `profiles/zju-workbench/package.json`
 - ❌ 不搬运上游源码
 - ❌ 不做写操作（回复 / 点赞 / 收藏）—— 写的方向归 `cc98-ubb-bridge`

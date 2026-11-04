@@ -68,7 +68,7 @@
    > 若评审认为「剥不掉上游 SM-2」，则本骨架与 `fsrs-scheduler` **二选一**，
    > 倾向保留 `fsrs-scheduler`（FSRS 优于 SM-2），本骨架删除。
 
-4. **不接入 profile。** 绝不写入 `profiles/zhiyun-bench/package.json`。
+4. **不接入 profile。** 绝不写入 `profiles/zju-workbench/package.json`。
 5. **注入点须核对。** 上游声明 `dsh.client.inject = ['slots','workspaces','sessions','locale']`，
    其中 `slots` 是本仓多个 `dsh-zhiyun-page-*` 共用的挂载点，**须逐一确认不争抢**。
 6. **学生数据边界。** 掌握度属学情数据，落盘须遵守本仓「账号 + 课程 + 节次」

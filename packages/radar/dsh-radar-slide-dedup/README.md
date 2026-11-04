@@ -156,7 +156,7 @@ if (await isSameImage(lastUrl, currentUrl)) continue;   // ← 只看上一张
 
 ## 红线
 
-- 本骨架**只放 `packages/`**，**未**写入 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。
+- 本骨架**只放 `packages/`**，**未**写入 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。
 - **未搬运上游源码**：本目录零代码，`dependencies` 为空。上游**无许可证**，任何移植都不可接受。
 - 若评审通过并实现：本包为**自建实现**，无需在 `ATTRIBUTION.md` 的「含实现移植」登记；
   但须保留「判据形状参考自 ZYNotes」的留痕（已写入根 `ATTRIBUTION.md` 的「仅参考」一节）。

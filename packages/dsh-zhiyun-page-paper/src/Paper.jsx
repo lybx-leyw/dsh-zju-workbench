@@ -647,7 +647,7 @@ export function Paper({ controller }) {
           <button type="button" className={drawerOpen ? 'is-primary' : undefined} onClick={() => setDrawerOpen((value) => !value)} title="展开或收起 AI 助手">
             <Icon name="chat" size={15}/>AI 助手
           </button>
-          {controller && <button type="button" onClick={() => controller.navigate('ask')} title="去「问一问」继续这段对话">
+          {controller && <button type="button" onClick={() => controller.navigate('home')} title="回到原生工作台继续这段对话">
             <Icon name="arrow" size={15}/>问一问
           </button>}
         </div>

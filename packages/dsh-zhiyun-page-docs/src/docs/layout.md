@@ -41,7 +41,7 @@ packages/dsh-zhiyun-page-docs/
 
 ## `profiles/`
 
-`profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles` 是**装载清单**，
+`profiles/zju-workbench/package.json` 的 `dsh.profile.bundles` 是**装载清单**，
 顺序即装载顺序。它决定"这个工作台由哪些包组成"，也是唯一能一键停用某个功能的地方。
 
 新包要进这个数组才会被真正的宿主装载 —— 只放在 `packages/` 下等于没接。

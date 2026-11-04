@@ -22,6 +22,10 @@ export function apply(ctx) {
 //    界面上凭空少一片。这个坑真踩过：新加的 `StudentAvatar` 漏在了这里。
 //    `tests/ui-primitives.test.mjs` 会比对两个文件的导出名，防止再漏。
 export const { Icon, Mark, Empty, SectionTitle, Notice, StudentAvatar, useStore, useStudy, mountStyle } = primitives;
+// 页面框：页面包自己注册 `page.content` 时用它把内容包成「一页」，从而不依赖外壳。
+export { PageFrame } from './page-frame.jsx';
+// 页面自注册助手：一步完成「包框 + 注册到页面壳的内容槽」。
+export { registerPageContent } from './page-registration.jsx';
 
 // ⚠️ 这里**不能**写 `export default primitives`。
 //

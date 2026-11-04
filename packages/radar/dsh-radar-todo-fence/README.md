@@ -49,4 +49,4 @@
 ## 不做
 
 - 不搬 `zju.py` 任何代码；不内置登录；不改 `fast/slow` 默认值（产品决策）。
-- 不接 `profiles/zhiyun-bench/package.json`（候选包一律不接 profile）。
+- 不接 `profiles/zju-workbench/package.json`（候选包一律不接 profile）。

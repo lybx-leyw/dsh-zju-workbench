@@ -6,7 +6,7 @@
 ## 1. 目标与判据
 
 **目标**：把 `ref/OpenMAIC`（v1.3.0，759,784 行 TS/TSX）整体移植成本仓的插件包群，
-运行在 `zhiyun-bench` profile 里，功能与观感与原版一致。
+运行在 `zju-workbench` profile 里，功能与观感与原版一致。
 
 **不是**：不是包一层 iframe、不是起一个 sidecar 进程、不是只挑子系统做样板。
 
@@ -95,7 +95,7 @@ ctx.zhiyunClassroomStudio.providers.list() / .set(key, cfg)
 
 ## 8. 落地状态（2026-10-31 收口）
 
-口径：**profile 登记** = `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles` 里有一行；
+口径：**profile 登记** = `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles` 里有一行；
 **构建登记** = `scripts/build.mjs` 的 `CLIENT_PACKAGES` 里有一行（有 `src/client.jsx` 的包才需要）；
 **导航入口** = 外壳 `NAV`/`RAIL_DEFAULT` 里有可点到的入口。
 

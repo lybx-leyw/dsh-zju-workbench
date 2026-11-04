@@ -71,7 +71,7 @@
 
 - **不修改上游任何源码**（上游的 `cordis.patch.yml` 原样保留、不编辑）。
 - **不消费上游的 `./client`**：论文页已有一套文献库 UI，再来一套就是「一个面板两个入口」。
-- **不改 `profiles/zhiyun-bench/package.json`**。
+- **不改 `profiles/zju-workbench/package.json`**。
 - 不写任何检索逻辑（`apply()` 直接抛错）。
 
 ---

@@ -5,7 +5,7 @@
 > 本目录目前只有 `package.json`、`OWNERS`、`src/index.js`（只有注释）、
 > `src/upstream.js`（锁版凭据）与本 README。`apply()` 里没有任何行为。
 > 它**没有** `cordis.patch.yml`，因此不会被当作 bundle 层加载；
-> 也**没有**写进 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。
+> 也**没有**写进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。
 
 ---
 
@@ -507,7 +507,7 @@ const ends[i] = anchors.slice(i + 1).find(a => a !== null) ?? null;   // 下一�
 
 - ❌ 不新增导航项
 - ❌ 不改 `dsh-zhiyun-core-parser`
-- ❌ 不写进 `profiles/zhiyun-bench/package.json`
+- ❌ 不写进 `profiles/zju-workbench/package.json`
 - ❌ 不搬运 `.refers/bili-2-ppt/` 的源码
 - ❌ 不读别人的凭证文件（`$DSH_HOME/bili-watch/credential.json` 是上游的，不是我们的）
 

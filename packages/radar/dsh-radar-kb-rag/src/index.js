@@ -35,7 +35,7 @@
  * ── TODO 一览（全部是评审要先拍板的，不是「怎么写代码」）───────────
  *
  *   TODO-0【阻塞】宿主 profile 是否有 `subprocess` 服务？
- *         检查方式：跑一次 `dsh-kb-rag-install --profile zhiyun-bench --dry-run`
+ *         检查方式：跑一次 `dsh-kb-rag-install --profile zju-workbench --dry-run`
  *         看它准备写什么（本轮**未执行**，因为它会改 profile）。
  *         - 有 → 继续 TODO-1。
  *         - 没有 → **不要接这个包**；上游 `apply()` 会在 `console.error` 后 return，

@@ -434,4 +434,6 @@ export function ClassroomStage({
   );
 }
 
-export default ClassroomStage;
+// Loader unwraps `default` before the named plugin face. A component default
+// would be invoked as apply(ctx), outside React, and fail at its first hook.
+// Consumers already import ClassroomStage by name; keep the plugin namespace.

@@ -98,5 +98,5 @@ packages/dsh-radar-mycoursereviews/
 └── OWNERS            # Owner: shared
 ```
 
-> **未接入**：本包**不在** `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles` 中，
+> **未接入**：本包**不在** `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles` 中，
 > 且**不得**被自动接入。接入须经人工评审 + 单独 PR。

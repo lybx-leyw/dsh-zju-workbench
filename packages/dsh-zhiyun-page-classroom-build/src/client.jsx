@@ -23,7 +23,7 @@
  * 显示「课堂服务未就绪」，页面本身仍然站得住。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { mountStyle } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import { registerSlot } from './index.js';
 import {
   ATTACHMENT_STATUS,
@@ -60,7 +60,7 @@ export function apply(ctx) {
     css,
     label: 'zhiyun: classroom build styles',
   });
-  registerSlot(ctx, () => <ClassroomBuild ctx={ctx} />);
+  registerSlot(ctx, registerPageContent, () => <ClassroomBuild ctx={ctx} />);
 }
 
 const STEPS = Object.freeze([

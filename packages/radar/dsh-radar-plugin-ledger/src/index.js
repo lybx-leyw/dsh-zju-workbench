@@ -43,7 +43,7 @@
  *
  *   TODO-0【阻塞】扫描根对不上。
  *         上游 `discoverInstalls()` 以 `$DSH_HOME/profiles`（默认 `~/.dsh/profiles`）为根，
- *         本仓 profile 在**仓库内**的 `profiles/zhiyun-bench/`。
+ *         本仓 profile 在**仓库内**的 `profiles/zju-workbench/`。
  *         核实方式：在真机上跑 `scan({ root: <本仓 profiles 目录> })`，看 `plugins` 是否非空。
  *         - 非空 → 继续。
  *         - 空 → **不要接这个包**；它会返回一张空表，而「插件」页照常打开。

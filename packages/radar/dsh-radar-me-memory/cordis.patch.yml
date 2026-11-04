@@ -1,5 +1,5 @@
 # 候选骨架的挂载补丁 —— **未评审、未接入 profile**，不得写入
-# profiles/zhiyun-bench/package.json 的 dsh.profile.bundles。
+# profiles/zju-workbench/package.json 的 dsh.profile.bundles。
 #
 # A 类骨架：本包锁版依赖 `dsh-auto-memory@0.9.0`，但这里**只 insert 自己**，
 # 不 insert 上游。原因不在「懒得写」，而在上游的 client 半边会注册两处：

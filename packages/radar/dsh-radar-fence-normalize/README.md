@@ -1,7 +1,7 @@
 # dsh-radar-fence-normalize
 
 > **候选骨架：未评审、未接入 profile、不可直接使用。**
-> 本包**没有**被写进 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`；
+> 本包**没有**被写进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`；
 > `apply()` 故意抛错，挂载即失败。它随 `radar` 分支交付，供人工 review 后决定
 > 「采纳 / 废弃 / 改成两行改动」。
 

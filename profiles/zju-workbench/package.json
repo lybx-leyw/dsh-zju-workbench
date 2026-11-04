@@ -1,5 +1,5 @@
 {
-  "name": "zhiyun-bench-profile",
+  "name": "zju-workbench-profile",
   "version": "0.1.0",
   "private": true,
   "description": "智云 Pro 的独立 DSH 工作台配置",
@@ -8,6 +8,7 @@
       "bundles": [
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
+        "@lybx-leyw/dsh-pages",
         "dsh-zhiyun-shell-workbench",
         "dsh-zhiyun-shell-bridge",
         "dsh-zhiyun-shell-ui",
@@ -52,7 +53,12 @@
         "dsh-zhiyun-core-classroom-agent",
         "dsh-zhiyun-core-classroom-generate",
         "dsh-zhiyun-core-classroom-export",
-        "dsh-zhiyun-page-classroom-build"
+        "dsh-zhiyun-page-classroom-build",
+        "@lybx-leyw/dsh-zju-pages-default",
+        "dsh-zhiyun-core-classroom-stage",
+        "dsh-zhiyun-host-openmaic",
+        "dsh-zhiyun-page-classroom",
+        "dsh-zhiyun-page-classroom-play"
       ],
       "patchReload": "live"
     }

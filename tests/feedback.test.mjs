@@ -358,8 +358,11 @@ test('相对时间只给量级，注入 now 才可测', () => {
 
 /* ────────────────────────────────────────────────── 接线 */
 
-test('接线：注册了 zhiyun.feedback.content 插槽', () => {
-  assert.match(source, /'zhiyun\.feedback\.content'/, '页面必须注册 zhiyun.feedback.content 插槽');
+test('接线：把反馈页注册进页面壳的 page.content', () => {
+  // 迁移后不再有 `zhiyun.feedback.content` 子槽：内容包括 key 由页面包自己交给
+  // 页面壳（`registerPageContent`）。这条仍钉住「反馈页必须自己注册内容」。
+  assert.match(source, /registerPageContent\(/, '页面必须自己注册内容');
+  assert.match(source, /id: 'feedback'/, '注册的 key 必须是 feedback');
   assert.match(readFileSync(`${root}packages/dsh-zhiyun-shell-workbench/src/model.js`, 'utf8'), /id: 'feedback'/, '外壳 NAV 里必须有 id: feedback');
 });
 

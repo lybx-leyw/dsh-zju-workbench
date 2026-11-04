@@ -5,7 +5,7 @@
 > 本包由「生态雷达」自动生成，仅用于**给人工评审提供讨论载体**。
 > 它**不是实现** —— `src/index.js` 只有占位与 TODO，`apply()` 刻意留空。
 > **在评审通过之前，任何场景都不应从本包引入能力，也不得把它写进
-> `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。**
+> `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。**
 > 评审驳回则整个包删除。
 
 ---
@@ -105,7 +105,7 @@
 - ❌ **不搬运上游 Python 源码**（在本仓无法运行，且违反"不搬运源码"边界）；
 - ❌ 不引入上游 npm 包（上游**未发布**）；
 - ❌ **不新增导航项** —— 这是"仍是同一个面板"的前提，破了就不叫强化式集成；
-- ❌ 不写入 `profiles/zhiyun-bench/package.json`；
+- ❌ 不写入 `profiles/zju-workbench/package.json`；
 - ❌ 不改任何既有 `OWNERS`；
 - ❌ 不把对齐结果当作准确讲义直接产出；
 - ❌ 不在未确认数据策略前，把课堂音视频送出去。

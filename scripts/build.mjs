@@ -1,7 +1,8 @@
 import { build } from 'esbuild';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, access } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ownPackageDirs } from './workspace-packages.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 // The profile name shown in the sidebar comes from the lock file, so the label
@@ -43,11 +44,15 @@ export const HOST_SEEDS = [
  *    `tests/build-seeds.test.mjs` 有一条断言在盯着「有 client.jsx 的包是否都在这里」。
  */
 export const CLIENT_PACKAGES = [
+  // 产品级的 dsh-pages 默认值校准（51px 导航宽度）。目录名是 `pages-default`，
+  // 发布名是 `@lybx-leyw/dsh-zju-pages-default`，所以这里写**目录名**。
+  'pages-default',
   'dsh-zhiyun-shell-ui',
   'dsh-zhiyun-shell-workbench',
   'dsh-zhiyun-shell-bridge',
   'dsh-zhiyun-source-netproxy',
   'dsh-zhiyun-source-card',
+  'dsh-zhiyun-page-classroom',
   'dsh-zhiyun-page-classroom-build',
   'dsh-zhiyun-page-classroom-play',
   'dsh-zhiyun-core-classroom-agent',
@@ -90,15 +95,90 @@ export const CLIENT_PACKAGES = [
  * @param options - `write`（默认 true）、`metafile`（默认 false）。
  * @returns 该包的 external 声明与 esbuild 结果。
  */
+/**
+ * 找出包内 vendored 源码的根目录（`packages/<name>/vendor/<x>/`），没有则返回 null。
+ *
+ * 目前没有包使用这种形态：「页面壳」`@lybx-leyw/dsh-pages` 已改为锁版本的 npm
+ * 依赖，源码与产物都在 node_modules 里，本仓不再保留副本。保留这个探测是为了
+ * 让「有人又放了一份 vendor 客户端源码」时被显式发现，而不是静默不构建。
+ *
+ * 判定只看目录结构，不看 package.json 字段：一个包最多有一份 vendored 源码，
+ * 多于一份属于配置错误，直接报错而不是猜。
+ *
+ * @param pkg - 包目录（以 `/` 结尾）。
+ * @returns vendored 源码根目录（以 `/` 结尾），或 null。
+ */
+async function findVendoredSource(pkg) {
+  const vendorRoot = `${pkg}vendor/`;
+  let entries;
+  try {
+    entries = await readdir(vendorRoot, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  const candidates = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    try {
+      await access(`${vendorRoot}${entry.name}/src/client.jsx`);
+      candidates.push(`${vendorRoot}${entry.name}/`);
+    } catch { /* not a vendored client package */ }
+  }
+  if (candidates.length > 1) {
+    throw new Error(`${pkg}vendor/ 下有多个客户端源码目录：${candidates.join(', ')}。一个包只应 vendor 一份。`);
+  }
+  return candidates[0] ?? null;
+}
+
+/**
+ * 包的客户端源码根目录，以 `/` 结尾；没有客户端入口则返回 null。
+ *
+ * 导出它，是因为 `tests/build-seeds.test.mjs` 需要判断「这个包有没有客户端半边」。
+ * 让测试复用这同一份解析，避免两处各自硬编码路径后漂移。
+ *
+ * 包既可能平铺（`packages/<name>/`），也可能在分组目录下
+ * （`packages/client/<name>/`），所以按目录名反查真实路径，不拼字符串。
+ *
+ * @param name - 包目录名。
+ * @returns 源码根目录（以 `/` 结尾），或 null。
+ */
+export async function clientSourceRoot(name) {
+  const pkg = await packageDir(name);
+  if (pkg === undefined) return null;
+  const vendored = await findVendoredSource(pkg);
+  if (vendored !== null) throw new Error(`${name} 使用了 vendor 客户端源码（${vendored}），当前不支持：请改为 npm 依赖。`);
+  try {
+    await access(`${pkg}src/client.jsx`);
+    return pkg;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 一个包目录的绝对路径（以 `/` 结尾），按目录名在 `packages/` 与一层分组目录里查找。
+ *
+ * @param name - 包目录名。
+ * @returns 路径，或 undefined。
+ */
+export async function packageDir(name) {
+  const dir = (await ownPackageDirs(`${root}packages`)).find(candidate => path.basename(candidate) === name);
+  return dir === undefined ? undefined : `${dir.replaceAll('\\', '/')}/`;
+}
+
 export async function buildClientPackage(name, options = {}) {
-  const pkg = `${root}packages/${name}/`;
+  const pkg = await packageDir(name);
+  if (pkg === undefined) throw new Error(`buildClientPackage: no package directory named "${name}"`);
   const manifest = JSON.parse(await readFile(`${pkg}package.json`, 'utf8'));
   // 单一真源：跨包 import 的 external 面写在 package.json 的 dsh.client.external，
   // 构建直接照用 —— 两处各写一份迟早漂移（漂移的后果是运行时 require 打不进模块表）。
   const declared = manifest.dsh?.client?.external ?? [];
+  // 产物一律写本包 lib/：源码只有 `packages/<name>/src/` 一种形态（见 clientSourceRoot）。
+  const sourceRoot = pkg;
+  const outRoot = pkg;
   const result = await build({
-    entryPoints: [`${pkg}src/client.jsx`],
-    outfile: `${pkg}lib/client.js`,
+    entryPoints: [`${sourceRoot}src/client.jsx`],
+    outfile: `${outRoot}lib/client.js`,
     bundle: true,
     format: 'cjs',
     platform: 'browser',
@@ -111,9 +191,12 @@ export async function buildClientPackage(name, options = {}) {
     // 是因为正文只需要原文，不需要在构建期解析。
     loader: { '.css': 'text', '.svg': 'text', '.md': 'text' },
     define: { 'process.env.NODE_ENV': '"production"', __ZHIYUN_PROFILE__: JSON.stringify(lock.profile) },
-    // banner 的 id 必须等于包名：客户端模块表按 stripClientSuffix(id) 建行，
-    // 而启动图谱的行 id 是宿主 Loader 条目的 name。
-    banner: { js: `window.__ModuleLoader__.load({id:"${name}",factory:(require)=>{var module={exports:{}};var exports=module.exports;` },
+    // banner 的 id 必须等于**包名**（manifest.name），不是目录名：客户端模块表按
+    // `stripClientSuffix(id)` 建行，而启动图谱的行 id 是宿主 Loader 条目的 name ——
+    // 那个 name 来自 profile bundles 里的 npm 包名。目录名可以不同（例如
+    // `packages/client/pages-default/` 发布为 `@lybx-leyw/dsh-zju-pages-default`），
+    // 两者混用会让模块表建不出该行，页面静默空白。
+    banner: { js: `window.__ModuleLoader__.load({id:"${manifest.name}",factory:(require)=>{var module={exports:{}};var exports=module.exports;` },
     footer: { js: 'return module.exports;}});' },
     write: options.write !== false,
     metafile: options.metafile === true,
@@ -128,3 +211,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   }
   console.log('Client bundles built. React and the host seed words are provided by DSH.');
 }
+

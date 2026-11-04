@@ -5,7 +5,7 @@
 > 本目录由 `dsh-ecosystem-radar` 自动生成，**仅用于人工评审**。
 > 这不是一个可用的插件：`src/index.js` 的 `apply()` 被调用即抛错，
 > `src/upstream.js` 的三个函数全部 `throw`。
-> 评审通过前**不得**加入 `profiles/zhiyun-bench` 的 `dsh.bundle` 清单。
+> 评审通过前**不得**加入 `profiles/zju-workbench` 的 `dsh.bundle` 清单。
 
 ---
 

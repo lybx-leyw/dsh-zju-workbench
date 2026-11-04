@@ -67,7 +67,7 @@
    接它 = 接一套**别人定的词表**；本包把词表**快照**在 `CAPABILITY_IDS_SNAPSHOT`，
    并在运行时比对，词表一变就报，而不是界面上悄悄少一行。
 4. **扫描根可能对不上。** `discoverInstalls()` 以 `~/.dsh/profiles`（或 `$DSH_HOME/profiles`）为根，
-   本仓 profile 在**仓库内**的 `profiles/zhiyun-bench/`。对不上 ⇒ 返回**空表且不报错**（TODO-0，阻塞）。
+   本仓 profile 在**仓库内**的 `profiles/zju-workbench/`。对不上 ⇒ 返回**空表且不报错**（TODO-0，阻塞）。
 
 ---
 
@@ -109,4 +109,4 @@ node -e "import('./package/src/scan/index.mjs').then(m=>{
 - **不新建页面**：不注册 `main`、不加侧栏项、不改 `NAV`（`dsh-zhiyun-shell-workbench/src/model.js`）。
 - **不消费上游的 `./client`**（`settings.section`）。
 - **不改上游源码**：上游 `cordis.patch.yml` 原样保留，本包 patch 只插本包。
-- **不碰 profile**：绝不写 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。
+- **不碰 profile**：绝不写 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。

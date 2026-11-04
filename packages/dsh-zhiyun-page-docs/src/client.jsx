@@ -32,7 +32,7 @@
 //      降级成纯文本 —— 所以页内目录不能靠锚点，只能按"第几个标题"滚动。
 //   2. 宿主的 `.markdown` 类名在产物里是哈希过的，跟着它写样式会静默失效。
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Empty, Icon, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Empty, Icon, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { DEFAULT_PAGE, SECTIONS } from './docs-manifest.js';
 import { contentOf } from './docs-content.js';
@@ -46,10 +46,14 @@ export const inject = ['slots'];
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunDocsStyle', css, label: 'zhiyun: docs page styles' });
-  ctx.slots.inject('zhiyun.docs.content', () => ctx.slots.register(
-    { name: 'zhiyun.docs.content' },
-    Docs,
-  ));
+  // 直接注册给页面壳的 `page.content`（keyed），不再依赖外壳为它声明子槽。
+  registerPageContent(ctx, {
+    id: 'docs',
+    label: '文档',
+    // 文档页是「应用型」版式：分区栏 + 目录 + 正文各自滚动，不套 980px 版心。
+    fullBleed: true,
+    render: () => <Docs/>,
+  });
 }
 
 /**

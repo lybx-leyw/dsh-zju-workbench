@@ -8,10 +8,9 @@
 // 静态渲染安全：本文件没有任何模块级浏览器 API。全屏与朗读只在事件/副作用里碰
 // `document` / `speechSynthesis`，所以 `renderToStaticMarkup` 下与 Node 测试里都能渲染。
 import React, { useEffect, useRef, useState } from 'react';
-import { mountStyle } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import { ClassroomStage } from 'dsh-zhiyun-core-classroom-stage';
 import { ClassroomSlide } from 'dsh-zhiyun-classroom-renderer';
-import { SLOT_NAME, SLOT_PRIORITY } from './index.js';
 import css from './style.css';
 
 // 插件面：与 page-today 同形状 —— 声明 slots，惰性取课堂服务。
@@ -23,12 +22,16 @@ export function apply(ctx) {
     css,
     label: 'zhiyun: classroom play page styles',
   });
-  // 惰性取课堂服务：领域包停用时这一页不注册，外壳显示占位，不会把整个前端拖成 pending。
+  // 惰性取课堂服务：领域包停用时这一页不注册，页面壳显示占位，不会把整个前端拖成 pending。
+  //
+  // 注册目标是页面壳的 `page.content`（keyed，`classroom`）—— 它就是「课堂」那一页的
+  // 内容来源。在此之前外壳渲染的是 `zhiyun.classroom.play`，迁移后两者是同一位。
   ctx.inject(['zhiyunClassroomStudio'], (scope) => {
-    scope.slots.inject(SLOT_NAME, () => scope.slots.register(
-      { name: SLOT_NAME, priority: SLOT_PRIORITY },
-      (props = {}) => <ClassroomPlay studio={scope.zhiyunClassroomStudio} {...props} />,
-    ));
+    registerPageContent(scope, {
+      id: 'classroom',
+      label: '课堂',
+      render: () => <ClassroomPlay studio={scope.zhiyunClassroomStudio} />,
+    });
   });
 }
 
@@ -518,4 +521,5 @@ export function ClassroomPlay({
   </section>;
 }
 
-export default ClassroomPlay;
+// Loader unwraps `default` before the named plugin face. Keep ClassroomPlay
+// named so activation calls apply(ctx), never the component and its hooks.

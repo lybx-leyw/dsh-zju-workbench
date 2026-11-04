@@ -105,7 +105,7 @@ npm run vendor:fetch -- --mirror none
 
 安装命令使用 [runtime.lock.json](../../runtime.lock.json) 中的 `preferredHostVersion`，当前为 `0.2.0-rc.2`；不要改用 `@latest`，也不要省略 `--prefix`，它用于将宿主依赖安装到独立目录。Windows 默认位置已有受支持的 DSH Desktop 时，可跳过第一条命令；其他位置的宿主需按 1.3 显式指定。
 
-启动脚本会检查宿主版本、连接本仓库插件，并初始化独立的 `zhiyun-bench` profile，无需手动注入。终端会打印实际使用的宿主、profile、数据目录和访问地址。
+启动脚本会检查宿主版本、连接本仓库插件，并初始化独立的 `zju-workbench` profile，无需手动注入。终端会打印实际使用的宿主、profile、数据目录和访问地址。
 
 **启动成功的标志**：打开终端输出的完整地址（含临时访问令牌），能进入「今天」并看到五项导航：今天、我的课、问一问、学习、个人。默认端口为 `3091`；使用 AI 功能还需在设置中配置模型。
 
@@ -247,7 +247,7 @@ scripts/OWNERS                              Owner: @bob, @carol + Open
 
 ### 3.1 不要接入会让整个 profile 起不来的包
 
-profile 中任何一条 Loader 条目解析失败，起不来的都是**整个工作台**，而不是那一个包：其他人拉取后连界面都进不去。因此没把握的插件包不要写进 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`，留在 `packages/` 下即可。
+profile 中任何一条 Loader 条目解析失败，起不来的都是**整个工作台**，而不是那一个包：其他人拉取后连界面都进不去。因此没把握的插件包不要写进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`，留在 `packages/` 下即可。
 
 开发期间当然可以接进去验证，提交前把不稳定的条目去掉。这条针对的是新引入、来源不确定的包，不针对仓库里已有的本地包。
 

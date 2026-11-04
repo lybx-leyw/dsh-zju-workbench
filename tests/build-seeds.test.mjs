@@ -21,7 +21,8 @@ import { readFile } from 'node:fs/promises';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildClientPackage, CLIENT_PACKAGES, HOST_SEEDS } from '../scripts/build.mjs';
+import { buildClientPackage, clientSourceRoot, packageDir, CLIENT_PACKAGES, HOST_SEEDS } from '../scripts/build.mjs';
+import { isIsolated } from '../scripts/workspace-packages.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -78,7 +79,11 @@ test('每个有 src/client.jsx 的包都在 CLIENT_PACKAGES 里', async () => {
   const entries = await readdir(`${root}packages`, { withFileTypes: true });
   const missing = [];
   for (const entry of entries) {
-    if (!entry.isDirectory() || !entry.name.startsWith('dsh-')) continue;
+    // 判据是「有 manifest 的包目录」，不是包名前缀 —— 包名不再强制
+    // `dsh-zhiyun-`，`dsh-radar-*` 则是隔离区，不参与产品客户端构建。
+    if (!entry.isDirectory() || isIsolated(entry.name)) continue;
+    const hasManifest = await readFile(`${root}packages/${entry.name}/package.json`, 'utf8').then(() => true, () => false);
+    if (!hasManifest) continue;
     let hasClient = true;
     try {
       await readFile(`${root}packages/${entry.name}/src/client.jsx`, 'utf8');
@@ -97,9 +102,11 @@ test('每个客户端包的裸模块 import 都被 HOST_SEEDS 或本包的 dsh.c
   const failures = [];
   let checked = 0;
   for (const name of CLIENT_PACKAGES) {
-    const manifest = JSON.parse(await readFile(`${root}packages/${name}/package.json`, 'utf8'));
+    const manifest = JSON.parse(await readFile(path.join(await packageDir(name), 'package.json'), 'utf8'));
     const declared = new Set([...HOST_SEEDS, ...(manifest.dsh?.client?.external ?? [])]);
-    const bare = await bareSpecifiers(`${root}packages/${name}/src/client.jsx`);
+    const sourceRoot = await clientSourceRoot(name);
+    if (sourceRoot === null) continue;
+    const bare = await bareSpecifiers(`${sourceRoot}src/client.jsx`);
     for (const [specifier, at] of bare) {
       checked += 1;
       // 第三条路：**有意内联**的第三方依赖。它不该进 external（没人提供），
@@ -116,10 +123,12 @@ test('每个客户端包的裸模块 import 都被 HOST_SEEDS 或本包的 dsh.c
 test('本包的 dsh.client.external 声明的每个包都真的被 import 了（没有过期声明）', async () => {
   const stale = [];
   for (const name of CLIENT_PACKAGES) {
-    const manifest = JSON.parse(await readFile(`${root}packages/${name}/package.json`, 'utf8'));
+    const manifest = JSON.parse(await readFile(path.join(await packageDir(name), 'package.json'), 'utf8'));
     const declared = manifest.dsh?.client?.external ?? [];
     if (declared.length === 0) continue;
-    const bare = await bareSpecifiers(`${root}packages/${name}/src/client.jsx`);
+    const sourceRoot = await clientSourceRoot(name);
+    if (sourceRoot === null) continue;
+    const bare = await bareSpecifiers(`${sourceRoot}src/client.jsx`);
     for (const specifier of declared) {
       // 宿主种子词由浏览器侧注入，源码里本来就不会出现 import（JSX 自动运行时、
       // vendor 预构建产物都是这种情况）。判定「过期」只对第三方库有意义。
@@ -184,7 +193,7 @@ const INTENTIONALLY_BUNDLED = {
 
 test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的文件（有意内联的除外）', async () => {
   for (const name of CLIENT_PACKAGES) {
-    const manifest = JSON.parse(await readFile(`${root}packages/${name}/package.json`, 'utf8'));
+    const manifest = JSON.parse(await readFile(path.join(await packageDir(name), 'package.json'), 'utf8'));
     // vendor 型包（见 docs/architecture/classroom-port.md）：整棵依赖树按设计内联，
     // 逐个列进 INTENTIONALLY_BUNDLED 没有意义 —— 它会有几十个传递依赖。
     // 但「别的 workspace 包」仍必须拦住：那才是真正的边界泄漏。
@@ -194,7 +203,7 @@ test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的�
     // 「本包自己的文件」= 本包目录下的任何文件，不只是 src/。
     // vendor/ 是锁版快照（见 docs/architecture/classroom-port.md 第 2 节通道 1）：
     // 它属于本包、要被打进本包产物，判据是「不能被别的包 import」，不是「必须在 src/ 下」。
-    const own = path.resolve(root, 'packages', name) + path.sep;
+    const own = path.resolve(await packageDir(name)) + path.sep;
     // 构建期内核（dsl / geometry）属于「被内联的 workspace 包」，不是外来文件。
     //
     // 它们没有客户端半边（src/client.jsx 与 lib/client.js 都不存在、

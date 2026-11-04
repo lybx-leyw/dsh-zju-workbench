@@ -104,4 +104,4 @@
 
 - 上游 MIT，本包**不搬运任何上游源码**，只通过 `import` 调用其公开入口（`.` 与 `./worker`）。
 - 本包 `OWNERS`: `shared`。
-- 未接入 `profiles/zhiyun-bench/package.json`，**不是** profile bundle。
+- 未接入 `profiles/zju-workbench/package.json`，**不是** profile bundle。
