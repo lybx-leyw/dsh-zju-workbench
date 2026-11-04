@@ -1,0 +1,8 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+# 见 README.md 的「三条必须先解决的保真度缺口」一节。
+#
+# 说明：本包是 B 类（纯渲染/序列化库），上游 marked / highlight.js 都不是 DSH 插件，
+# 因此 `insert` 的 name 指向本包自己，由本包在外围接入「笔记」页的导出入口。
+- insert:
+    - id: radar-notes-portable
+      name: dsh-radar-notes-portable

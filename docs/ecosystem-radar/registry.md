@@ -4841,3 +4841,31 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 
 > **本轮 0 骨架的理由**：14 个新候选里，与现有十二个面板同域的数量是 **0** ⇒ 不存在满足
 > 「同一面板 + 功能相似正交 + 底层更优」三判据的对象。按「L2 每轮最多 1 个」取 0，不凑数。
+
+---
+
+## 2026-11-05 · A 组（原生 DSH 插件生态 · 「带走」轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `AnakinCao/dsh-md-export` | A 原生DSH | MIT ✅ | 笔记 | 重复可强化 | 🟡 | proposed | 2026-11-05 | 在册复核**下调 🟢→🟡**：npm `dsh-md-export` **404**、GitHub `version 0.1.0` 无 deps/peers ⇒ **无法锁版**。形态是 `dsh-better-sidebar` 工具栏按钮，导出 = HTML(mermaid 内联) + **浏览器打印对话框** PDF。只作**思路参照**，不摘码不锁版 |
+| `Qingzhu093/dsh-latex-studio` | A 原生DSH | MIT ✅ | 论文 | 全新 | 🔵 | proposed | 2026-11-05 | ★2，`0.4.4`，npm 有发布、`dsh.bundle.patch` 齐全、零 `dependencies`、peer `@deepseek-ai/cordis ~4.0.4`＋`dsh-tools ^0.2.0-rc.2`。依赖 **MiKTeX 外部安装** ⇒ 属「宿主外进程」，不进 profile；只借「编译闸 + 缺陷账本」的思路 |
+| `jiaoqsh/dsh-document` | A 原生DSH | MIT ✅ | 论文/讲义 | 全新（读方向） | 🔵 | proposed | 2026-11-05 | npm **`@jiaoqsh/dsh-document@0.1.3`**，deps `@firecrawl/anydoc 0.1.9` + `pdf-inspector-wasm 1.14.2`（**写死版本**）；peer `dsh-fs/dsh-tools/dsh-system-prompt >=0.1.0-rc.6 <0.3.0`。方向是**读** docx/pdf→md，与本仓「写出去」互补；无对应面板 ⇒ 🔵 |
+| `rong-coder/dsh-office-tool` | A 原生DSH | MIT ✅ | 公文/作业 | 全新 | ⛔ | rejected | 2026-11-05 | ★7。能 create/read/edit docx·xlsx·pptx，但 ① 写文件靠 **OfficeCLI 外部二进制** ② peer 含 `dsh-better-sidebar ^0.12.2` + `react 18`（与宿主快照混搭风险，见 r84）③ npm **404** 无法锁版 ⇒ 排除 |
+| `HuanLinOTO/dsh-plugin-better-sidebar-plugin-office` | A 原生DSH | **NOASSERTION** ⚠ | 通用 | 全新 | ⛔ | rejected | 2026-11-05 | ★63。侧栏 Office 三件套**预览**（.docx/.xlsx/.pptx），2026-09-03 后停更。许可证不明 ⇒ 只登记、**不摘码** |
+| `elegymythos/exam-paper-plugin` | A 原生DSH | MIT ✅ | 刷题 | 重复可强化 | ⛔ | rejected | 2026-11-05 | ★1。Word/PDF 题目 → **带书写空隙的可打印试卷(.docx)**，场景最贴本仓 `page-quiz`（现只有浏览器打印 PDF）。但实现为 **Python** ⇒ 跨语言无可锁 JS 上游。**版式参数留作线索** |
+| `wjx-ai/dsh-docx-from-images` | A 原生DSH | MIT ✅ | 笔记 | 全新 | ⛔ | rejected | 2026-11-05 | ★0，2026-11-02 建。截图→排版 Word，**Python**（`python-docx` 类），非 JS 栈 ⇒ 排除 |
+| `FelixJiashengFu/dsh-pdf-atelier` | A 原生DSH | MIT ✅ | 论文 | 重复无增益 | ⛔ | rejected | 2026-11-05 | ★1，2026-11-01 建，`language: CSS`。艺术化 PDF（配色/字体/封面）—— 与本仓「导出不糊」的正交性弱，属**重复且无增益** |
+| `HuanLinOTO/dsh-plugin-mineru` | A 原生DSH | **NOASSERTION** ⚠ | 论文 | 全新（读方向） | ⛔ | rejected | 2026-11-05 | ★51，MinerU 解析 PDF/图片/DOCX→md/JSON。许可证不明 + 依赖外部 MinerU 服务 ⇒ 只登记 |
+| `James-Yao-xj/dsh-plugin-goodtypst` | A 原生DSH | MIT ✅ | 论文 | 全新 | 🔵 | proposed | 2026-11-05 | ★3，`dsh plugin typst` 唯一结果。Typst 编译进会话；需外部 `typst` 二进制 ⇒ 🔵 |
+
+> **本轮 1 个 🟢**：`AnakinCao/dsh-md-export` 因 npm 缺失**降为 🟡**，故严格意义上本轮**无 🟢**；
+> 上述 🟡 是「唯一在做本仓缺口那件事」的候选，骨架因此选 **B 类自建**（`marked` + `highlight.js`），
+> 不锁任何 A 类不可锁版的上游。
+>
+> **本轮的「不登记」清单**（看过 description/语言/topics 后判无关或非 JS，避免 registry 变垃圾桶）：
+> `Tianbuyu-wwx/DSH-FormatForge`(Python) · `didclawapp-ai/DSH-Office` · `hzxwonder-dsh-plugins/dsh-plugin-latex`(已在册 🔵) ·
+> `lwklbb/DSH-SessionGraph` · `Nothree-code/folder-tree-sh` · `YOLO-gif-cc/jiajiao-tutor-plugin`(**无许可证**) ·
+> `Azzygoatcoder/agent-useful-skills`(Python monorepo) · `Jegozhou/dsh-plugin-bidkit`(招投标) · `LLYlab/DLT`(成本) ·
+> `wj2514939573-ui/dsh-text-master`(润色) · `Three-summers/dsh_plugin_latex`(**无许可证**) · `LuoTaiyu/Latex_plugin`(**无许可证**) ·
+> `yangyongzhen/dsh-session-export`(**无许可证**) · `lwklbb/DSH-SessionGraph`(会话，非笔记)。
