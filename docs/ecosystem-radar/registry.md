@@ -4813,3 +4813,31 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `greatwallisme/dougong` | B 其他JS（Rust） | **null** ⛔ | 通用 | 框架层 | ⛔ | rejected | 2026-11-04 | — | ★1。cordis 组合内核的 Rust 实现；**非 JS 技术栈 + 无许可证** |
 | `zippleyastronaut/deepseek-pricing` / `ybbms777/deepseek-pricing-panel` | B 其他JS（HTML） | **null** ⛔ | 通用 | 重复无增益 | ⛔ | rejected | 2026-11-04 | — | 单文件 DeepSeek 峰谷价面板，无许可证、非 DSH 插件、非 JS 工程。**证明「峰谷价面板」连非插件生态也在造** |
 | 复核组：`dsh-desktop` 误召回簇（约 45 条合并） | B 其他JS | 多为 AGPL / null | 与 DSH 无关 | — | ⛔ | rejected | 2026-11-04 | — | 代表：`windingwind/zotero-better-notes`(★8410,AGPL)、`l0o0/jasminum`(AGPL)、`ethanwillis/zotero-scihub`(AGPL)、`dvanoni/notero`(MIT)。**`dsh-desktop` 一词召回面已 60% 无关（Zotero/fitness/OCaml 练手仓）** ⇒ 建议下一轮该词降级为「仅线索」 |
+
+### 2026-11-05-00 · A 组主词复查（14 个新候选，全部 ⛔/🔵，0 骨架）
+
+> **轮次背景**：`day_of_year % 3 = 0` → A 组。5 大词首屏 50 条 → 未登记 19 条 → 去重 14 个仓。
+> **本轮判定轴**：A 组大词的增量**已全部落在「承载端 / 分发 / 身份」三层**，无一条落在本仓十二个面板上。
+> **缺口轴校准（写回词池）**：`pdf annotate highlight` / `latex cite bibtex` / `ocr handwriting` 三词 `total_count = 0`；
+> `spaced repetition anki` 与 `flashcard review` 各仅 1 条且是同一个在册仓 `tyfforu/dsh-flashcard`（★0，2026-08-22 停更）
+> ⇒ **「学习向 DSH 插件」已确认见底，不再投搜索预算**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Noob-stupid/dsh-plugin-gating-hub` | A 原生DSH | **MIT** ✅ | 通用（装/升插件不搞挂工作台） | **重复且可强化**（插件页；与在册 `dsh-radar-compat-vet` 不同格：它管「升级动作」、compat-vet 管「加载判定」） | 🟡 | proposed | 2026-11-05 | **已知第 4 次回访**（10-18 / 10-27 各一次）。本轮核实到 `@noob-stupid/dsh-plugin-console` 已从 **0.5.92 → 0.5.108**（16 个小版本），`dependencies` 仍为 **`{}`** 零依赖、`client.inject` 仅三个官方 client 包、`platform=web`、patch 单行 insert。**仍不出骨架**：与 10-27 同因 —— 它要接管 profile 写入，本仓插件页开关走 `remote.pluginManager.setPluginEnabled`（写用户 overlay）⇒ **先裁决「唯一写入者」**。裁决为「插件页独占」时锁版成本很低 |
+| `ccch1mneyyy/dsh-TUI` | A 原生DSH | MIT ✅ | 通用 | 无关（另一种入口形态，非 Web 面板能力） | 🔵 | proposed | 2026-11-05 | 已知回访。★6,869。**本轮新增关键事实**：仓库 `package.json` 名是 **`@deepseek-harness-tui/dsh-tui@0.18.0`**，与 npm 上的 `dsh-tui@0.2.19`（无 `dsh` 字段、`deps: ink+react`）**不是同一个包** ⇒ 将来若锁版**不能按仓库名猜包名**。`cordis.patch.yml` 25,422 B 且含 `!!js` 标签（按 `@deepseek-ai/dsh-system-prompt` 版本在 `persona`/`personaPrefix` 间分支） |
+| `whiteguo233/OpenBiliClaw` | A 原生DSH（描述指向） | MIT ✅ | 无（内容发现） | 无关 | 🔵 | proposed | 2026-11-05 | 已知回访。★3,678（原 3,435）。**Python** 跨平台内容发现 Agent ⇒ 不满足 B 类 JS 栈门槛。不进候选池 |
+| `Ebony-Vinyl/dsh-our-free-model` | A 原生DSH | MIT ✅ | 通用 | 无关（第三方模型源） | ⛔ | rejected | 2026-11-05 | ★**60,461**（本轮第二高星）。免登录免费模型接入。与工作台单一 provider 策略冲突；同 `FishBottle7/opencode2dsh` 轴，该轴「免费源生命周期极短」判定未变 |
+| `FishBottle7/opencode2dsh` | A 原生DSH | MIT ✅ | 通用 | 无关 | ⛔ | rejected | 2026-11-05 | 已知回访，原判 ⛔。★387（原 330），无新能力 |
+| `kingOfSoySauce/dsh-skin-market` | A 原生DSH | MIT ✅ | 通用（主题） | **重复且无增益** | ⛔ | rejected | 2026-11-05 | 已知回访。★302。主题域第 15 条。本仓 `frame-theme.js` 的 `--zy-*` 映射是权威主题源，再开主题市场会破坏它 |
+| `bradeGithub/DSH-Plugins-Marketplace` | A 原生DSH | MIT ✅ | 通用（市场） | **重复且无增益** | ⛔ | rejected | 2026-11-05 | 已知回访。★201。插件市场第 7 次确认 |
+| `2BingLing/dsh-market` | A 原生DSH | **NOASSERTION** ⚠ | 通用（市场） | **重复且无增益** | ⛔ | rejected | 2026-11-05 | ★191，称收录 6000+ 插件。**双红线**：许可证待核 + 市场簇封板。不摘任何代码 |
+| `Sanqi-normal/dsh-webui-market-plugin` | A 原生DSH | MIT ✅ | 通用（市场） | **重复且无增益** | ⛔ | rejected | 2026-11-05 | 已知回访。★103，**2026-08-22 后停更**。插件市场第 8 次确认 |
+| `Ebony-Vinyl/EAC-Desktop` | A 原生DSH | MIT ✅ | 通用 | 无关（桌面壳） | ⛔ | rejected | 2026-11-05 | 已知回访。★2,366。桌面壳第 5 次封板 |
+| `myYangyunfan/dsh_desktop` | A 原生DSH | MIT ✅ | 通用 | 无关（桌面壳） | ⛔ | rejected | 2026-11-05 | 已知回访。★742。桌面壳第 6 次封板 |
+| `YishenTu/claudian` | B 其他JS | MIT ✅ | 笔记 | **重复且无增益（平台错配）** | ⛔ | rejected | 2026-11-05 | 已知回访。★**15,907**（本轮最高星）。宿主是 **Obsidian** 不是 DSH，不可挂载；「vault 内嵌 AI 协作者」交互已在 10-23 登记为参考，无新信息 |
+| `Devin-AXIS/iPolloWork` | A 原生DSH | **NOASSERTION** ⚠ | 通用 | 无关 | ⛔ | rejected | 2026-11-05 | 已知回访。★7,375，企业级 local-first 多引擎 Agent 工作台。同作者 `Devin-AXIS/deepseek-design` 同问题。**不建议分配人工核验工时** |
+| `MeteorNOX/DeepSeek-Balance-Whale-Widget` | A 原生DSH | MIT ✅ | 通用 | 无关（余额挂件） | ⛔ | rejected | 2026-11-05 | 已知回访。★6,855，**2026-10-11 后停更**。形态与本仓面板无关 |
+
+> **本轮 0 骨架的理由**：14 个新候选里，与现有十二个面板同域的数量是 **0** ⇒ 不存在满足
+> 「同一面板 + 功能相似正交 + 底层更优」三判据的对象。按「L2 每轮最多 1 个」取 0，不凑数。
