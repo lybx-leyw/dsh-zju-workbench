@@ -4920,3 +4920,33 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 > **流程校准**：`zju 刷题 OR 题库 language:typescript` / `zju 教务 OR 选课 language:typescript` / `zju libseat OR 座位预约 language:javascript`
 > 三次查询的 `OR` 与中文词被 GitHub **静默丢弃**，返回与 `zju language:typescript`(169) / `zju language:javascript`(415) **完全相同**的集合。
 > → B/C 组**禁用 `OR` 与中文关键词**，一查一词 + 一个 `language:`。
+
+### 2026-11-05-18 · B 组（浙大场景 · 通知「读到 → 送到」断链轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `bertholomus/dsh-public-plugins`（**`notifications` 子插件，复核**） | A 原生DSH（**上游 npm 仍 404**） | **MIT** ⚠（仓库字段；本轮未读 `LICENSE` 实文） | 到期提醒 / 通知送达 | **重复且可强化** | 🟢 | skeleton-created（**维持**） | 2026-10-30 | r107 已出骨架 `dsh-radar-zone-notify`（A 类·送达执行器）。本轮复核 `dsh-plugin-notifications` **仍 404** → 该骨架继续锁不住版。**派生新骨架** `dsh-radar-notify-capability`（B 类·判定层，`dependencies` 空、**零锁版**），不重复生成去重器 |
+| `thu-info-community/thu-info-app` | B 其他JS（RN/TS，**同侪校**） | **`NOASSERTION`** ⚠ | 校园信息聚合（清华） | 待核（暂不定） | ⚠ | pending-license | 2026-11-05 | ★240，push **2026-11-05 当日**，B 组最活跃同侪校标杆。`courseReminder`/`thu-info-notifier` 子包把「课表 → 本地通知」做成完整链，是判定层的形态参考 → **不摘码**，须人工核许可证 |
+| `ZJU-CC98/CC98.Achievement` | B 其他JS（官方组织） | **Apache-2.0** ✅ | CC98 互动激励 | **重复且无增益** | 🔵 | proposed | 2026-11-05 | ★1，push 2026-07-20。成就/积分系统；本仓 `source-cc98` 无用户侧经济面板，接入=新增加游戏化面板，判据①不成立 |
+| `ZJU-CC98/CC98-TeacherEvaluationSystem` | B 其他JS（官方组织） | **Apache-2.0** ✅ | 查老师/评教 | **重复且无增益** | 🔵 | proposed | 2026-11-05 | ★1，push 2020-03-19（停更 6 年）。查老师方向在册已多条，`chalaoshi` 全簇无宽松许可 → 无新增价值 |
+| `Slowist-Lee/cc98-highlight`（复核） | B 其他JS | MIT ✅ | 论坛高亮 | 重复且无增益 | 🔵 | proposed（**维持**） | 2026-10-24 | ★1，`cc98 language:javascript` 再次命中，状态不变 |
+| `Ansherly/ZJU-New-WebVPN.Csharp` | B 其他（**C#**） | MIT ✅ | WebVPN 封装 | 与 JS 栈不兼容 | ⛔ | rejected | 2026-11-05 | ★1，push 2025-10-23。**非 JS**，按核心策略排除；WebVPN 已有 `dsh-radar-cc98-webvpn` |
+| `Ansherly/ZJU-WebVPN.Csharp` | B 其他（**C#**） | MIT ✅ | WebVPN 封装 | 与 JS 栈不兼容 | ⛔ | rejected | 2026-11-05 | ★0。同上 |
+| `ZHENG28/zjut_LibrarySeatSystem` | B 其他JS | **无许可证** ⛔ | 图书馆座位（**浙工大**） | 无关 | ⛔ | rejected | 2026-11-05 | ★7，2023-03-16 停更。既非浙大又无证 |
+
+> **本轴新增事实（写进 registry 供后续轮次复用）**：
+> ① cc98 `notifications()`（`source-cc98/src/reads.js:366`，含 `/me/unread-count`）与 xxt `notices()`（`source-xxt/src/reads.js:348`）**在 `packages/` 内 0 个调用方**；
+> ② 全仓无通知/收件箱面板，`new Notification`/`requestPermission` **0 处**；
+> ③ **通知方向已有两个执行器骨架（`zone-notify`、`notify-push`）都因 `dsh-plugin-notifications` npm 404 起不来** → **在判定层（`notify-capability`）评审通过前，不得再出第三个通知骨架**；
+> ④ 已出骨架 `dsh-radar-notify-capability`（B 类，零锁版，三级降级链：Web Push → Notification API → 页面内角标），核心待决 `TODO-2`「谁负责轮询」。
+
+> **本轮未逐条登记**：海外校园 App 5 条（`Longhorn-Developers/Mobilize` null、`opencodeiiita/SnapMap` null、`pclubiitk/Campus-Discuss-App` null、`FGA0138-MDS-Ajax/2024.2-Wunjo` MIT ★8、`PlugImt/transat-app` MIT ★8 —— 与六域零交集）·
+> 课设作业仓 4 条（`LBruyne/ZJU-blockchain-course-2025`、`denis-lu/ZJU-blockchain-course-2025`、`CherryMay5/ZJU-blockchain-course-2025`、`antuer/ZJU-blockchain-course-2025`，**全部 `license: null`**）·
+> 研究组/个人网站 2 条（`Yuh1n/wei-fluid-mechanics-lab` null、`yczju/lab_website` GPL-3.0）·
+> `ss2d22/LiAiMedChat`（null ★1，医学生聊天，与六域零交集）—— 「zju course」老结论第 6 次复现。
+
+> **流程校准（本轮实测）**：
+> ① `cc98 highlight userscript userstyle` → **total 0**。三词叠加过窄；查 cc98 前端方向**只需 `cc98 language:javascript`**（42 条覆盖 15 年）。
+> ② `zju webvpn` 7 条中 **5 条为非 JS（Python / C# ×2 / Go）** → WebVPN 方向已耗尽，建议词面降权。
+> ③ `campus app language:typescript` 1,627 条，前 15 条**全部为海外校园 App**，第 6 次确认该词面在浙大场景无用。
+> ④ **同侪校标杆 `thu-info-app` 的做法是「课表 → 本地通知」**，不是「再做一个校园 App 壳」——这是本轮换轴的直接依据。

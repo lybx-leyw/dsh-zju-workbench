@@ -1,0 +1,3 @@
+- insert:
+    - id: radar-notify-capability
+      name: dsh-radar-notify-capability
