@@ -4965,3 +4965,17 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 
 > 本轮另见 4 条与本任务无关的大型 JS 项目（`morluto/rea` ★432908、`nexu-io/open-design` ★106052、`ruvnet/ruflo` ★80951、`alchaincyf/*` ★37574/★28764），与 DSH 生态、浙大场景均无交集 → 不登记。
 > `awesome-claude-mods` 的 `NOASSERTION` 是本轮唯一待核项；按规矩**只登记、不采用、不摘码**。
+
+### 2026-11-06 00:00（B 组 · 浙大场景）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `neoVqs88/ZJUersTodayRecipe` | B 其他JS | **MIT** ✅ | 食堂 / 三餐 / 今天 | **重复可强化**（今天页饭点卡片） | 🟢 | skeleton-created | 2026-11-06 | 2026-11-06 | ★0，push 2026-09-08。微信小程序「zjuer 今天吃什么」，包名 `zjuer-eat-what@1.0.0`。**判据③成立**：本仓 `page-today/src/agenda.js` 只有时段切分 + 占位提醒，全仓 `grep canteen\|食堂` 零实现。**只取** `data/` 玉泉基础目录 + `services/` 纯函数推荐；**不取** `cloudfunctions/`（微信云开发写库）、`pages/`/`components/`/`behaviors/`（小程序绑定层）、`project.config.json`（含云环境 ID）—— 本仓无自建后端。已出骨架 `dsh-radar-canteen-pick` |
+| `5nix/zjut-grad-schedule` | B 其他JS | **MIT** ✅ | 课表 ICS | **重复且无增益**（课表 ICS 簇） | 🔵 | proposed | 2026-11-06 | | ★1，push 2026-10-11。**浙工大（ZJUT）研究生**教务导出器，非浙大；核心是「登录教务 → 订阅链接」服务端链路。本仓已有 `dsh-radar-ics-export`/`dsh-radar-ics-rrule`/`dsh-radar-timetable-calendar`，且 registry 多条「各校课表→ICS」已判 ⛔（前置 F-001 未就绪）。不出骨架 |
+| `haoqunjiang/cc98-userscripts` | B 其他JS | **MIT** ✅ | CC98 论坛 | **重复且无增益**（反向退化） | 🔵 | proposed | 2026-11-06 | | ★3，**push 2017-06-05**，README 自述「暂时停止更新」。6 个 Tampermonkey 脚本（黑名单/发米/抢楼/快速回复/水楼统计/ID 备注），全是 CC98 网页 DOM 注入时代产物，对 v4 已失效；本仓 `source-cc98` 走 API 且已有 8 个 `dsh-radar-cc98-*` 骨架。不出骨架 |
+| `DongLanQwQ0/ZJU-Tongge-Schedule-Android` | B 其他JS | MIT | 浙大课表 | — | ⛔ | rejected | 2026-11-06 | | **重复登记**：与在册 `DongLanQwQ0/ZJU-Tongge-Schedule` 同一仓库（owner 大小写差异），后者已 `skeleton-created` |
+
+> **本轮方法论记录**：GitHub 搜索 API 对 owner 大小写不敏感，但本地 registry 去重为字符串比对 → 本轮已按 `lower()` 归一化，`ZJU-Tongge-Schedule-Android` 实际为同名仓库，未产生重复骨架。
+> **未登记**（宽松许可但无关）：`FGA0138-MDS-Ajax/2024.2-Wunjo`（MIT，巴西 UnB 校区 RN 辅导 App）、`PlugImt/transat-app`（MIT，法国 IMT Atlantique 校区 RN App）—— 非浙大、非中文场景，无交集。
+> **⛔ 无证/GPL 24 个**（节选）：`Phemon/ZJU_Intl_ScheduleToICS`(GPL-3.0) ⛔；`Longhorn-Developers/Mobilize`、`opencodeiiita/SnapMap`、`pclubiitk/Campus-Discuss-App`、`foggywillow/cc98-userjs`、`JiepengLab/CC98-Calculation`、`GhostFlying/cc98_notification_chrome`、`hharryz/BibiPrice`、`cj8086/ICS2022`、`ZJU-CC98/Chat`、`LBruyne/ZJU-blockchain-course-2025`、`Winfred666/zjudblab5-book-system` 等，均无许可证 → 只作线索，不摘码。**本轮 `NOASSERTION` 为 0**。
+> **B 组关键词池已见底**：registry 已登记 zju/cc98/campus 相关 260+ 仓库，本轮 30 个新候选中仅 4 个相关。建议下版换池（`tronclass`/`zdbk`/`xzzd`/`pta zju`/npm `zju` 维度）。
