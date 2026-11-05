@@ -4950,3 +4950,18 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 > ② `zju webvpn` 7 条中 **5 条为非 JS（Python / C# ×2 / Go）** → WebVPN 方向已耗尽，建议词面降权。
 > ③ `campus app language:typescript` 1,627 条，前 15 条**全部为海外校园 App**，第 6 次确认该词面在浙大场景无用。
 > ④ **同侪校标杆 `thu-info-app` 的做法是「课表 → 本地通知」**，不是「再做一个校园 App 壳」——这是本轮换轴的直接依据。
+
+### 2026-11-05-21 · A 组（原生 DSH 插件生态 · 版本约束轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `GlariaLuminous/dsh-plugin-health-check` | A 原生DSH | **MIT** ✅ | 通用（插件体检） | **重复且可强化**（插件页「版本」维） | 🟢 | skeleton-created | 2026-11-05 | ★1，103 KB，push 2026-10-27。**npm 404 → 不可锁版**（`registry.npmjs.org/dsh-plugin-health-check` 连试 5 次均 Not found），故骨架 `packages/radar/dsh-radar-api-drift` `dependencies` 为空、零摘码。检查项 profile/bundle/patch/**版本兼容**/MCP 冲突；本包只取「版本兼容」一格，其余与审计簇重叠。**判 🟢 但标「判据③待评审」**：若判定「本仓 30 行纯函数即可」→ 降无增益、整目录删、形状内联进 `page-plugins` |
+| `hezhongtang/dsh-update-copilot` | A 原生DSH | **MIT** ✅ | 通用（运维 / 更新） | **重复且可强化**（插件页） | 🟡 | proposed | 2026-11-05 | ★1，1.1 MB，建仓 2026-08-15，push 2026-09-30。**A 组本轮最完整的一个**：本体/bundle/插件全量版本雷达 + 兼容闸门 + 补丁名体检 + 更新后探测 + 历史回滚，带 `dsh.client.inject`。与 `dsh-radar-api-drift` **相似正交**（它做「执行更新」，骨架只做「读约束」）；若评审选它 → 本条轴整并入，不再单做。未出骨架：★1 且无 npm 实查，先登记 |
+| `lengrufeng2008/dsh-plugin-doctor` | A 原生DSH | **MIT** ✅ | 通用（插件审计） | 重复且**无增益**（审计簇） | 🔵 | proposed | 2026-11-05 | ★0，11 KB，建仓 2026-11-01，push 同日。只查缺依赖 / 缺 bundle patch / patch id-name 重复 → 与 `dsh-radar-plugin-audit`、`C6Lactide/dsh-plugin-doctor` 几乎同义，审计簇取一即止 |
+| `hhse/dsh-plugin-entry-sync` | A 原生DSH（**实为 Agent Skill**） | **MIT** ✅ | 通用（运维） | 重复且**无增益** | 🔵 | proposed | 2026-11-05 | ★1，51 KB，建仓 2026-11-02。把 client entry（侧栏/市场/开屏）从 web profile 迁到 desktop —— 本仓只有 `profiles/zju-workbench` 一份 profile，无迁移需求 |
+| `dshplugin/dsh-plugin-hub` | A 原生DSH | **MIT** ✅ | 通用（插件市场） | **重复且无增益**（市场已三家） | ⛔ | rejected | 2026-11-05 | ★463，push 2026-11-05。与在册 `dsh-market/dsh-market`、`zhu1090093659/dsh-web`、`bradeGithub/DSH-Plugins-Marketplace` 同功能；第四个市场不满足「同一面板 + 正交」两条 |
+| `MonshinYu/dsh-bun-compat-patch` | A 原生DSH | **MIT** ✅ | 通用 | 无关（运行时层） | 🔵 | proposed | 2026-11-05 | ★4，建仓 2026-09-02。Bun 上跑 DSH 的 Node API 兼容层；本仓 `engines.node ^22.19 \|\| >=24`，不涉及 Bun |
+| `wh000wh000/awesome-claude-mods` | —（线索源） | **`NOASSERTION`** ⚠ | — | — | ⚠ | pending-license | 2026-11-05 | ★269，Python，push 2026-10-17。Claude Code mods / hooks 证据分级索引，**非 DSH**、语言不符；许可证不明 → 只作关键词线索，**不采用、不摘码** |
+
+> 本轮另见 4 条与本任务无关的大型 JS 项目（`morluto/rea` ★432908、`nexu-io/open-design` ★106052、`ruvnet/ruflo` ★80951、`alchaincyf/*` ★37574/★28764），与 DSH 生态、浙大场景均无交集 → 不登记。
+> `awesome-claude-mods` 的 `NOASSERTION` 是本轮唯一待核项；按规矩**只登记、不采用、不摘码**。
