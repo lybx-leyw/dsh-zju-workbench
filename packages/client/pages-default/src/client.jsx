@@ -37,6 +37,7 @@ import { installRailIconArtwork } from './rail-icons.js';
 import { suppressNativeBrand } from './brand.js';
 import { installCollapseIntoWhale } from './rail-action.jsx';
 import { installManagerStyle } from './manager-style.js';
+import { installSettingsRailEntry } from './settings-entry-style.js';
 
 /** 产品希望的导航栏默认宽度（像素）。 */
 export const DEFAULT_RAIL_WIDTH = 51;
@@ -132,6 +133,12 @@ export function apply(ctx) {
   // 「页面管理」页的视觉整理是**纯样式覆盖**，与任何服务无关：页面壳自己就带
   // `data-pages-manager` 锚点。不写进 inject 依赖里，页面壳缺席时它也不该连坐。
   ctx.effect(() => installManagerStyle(), 'zju: manager page style');
+  // 设置入口搬进导轨底部：几何**全部来自 pages 服务**（导轨宽度、位置、bottom 组项数），
+  // 不再去量 DOM —— 那既依赖渲染时机，也是在反推页面壳自己已经知道的事实。
+  // 服务缺席时静默不做事，不影响别的功能。
+  ctx.inject(['pages'], scope => {
+    scope.effect(() => installSettingsRailEntry({ pages: scope.pages }), 'zju: settings entry in rail');
+  });
   // 原生品牌行与页面壳**无关**：它由宿主侧栏自己的槽位渲染。放在同一个 effect 里会让
   // 「页面壳升级换 API」连坐掉整个品牌处理，所以两者各管各的。
   ctx.inject(['slots'], scope => {
