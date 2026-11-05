@@ -5005,3 +5005,54 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 > **图表域结论**：本仓**确无图表能力**（`classroom-renderer` 仅 `katex`，`slide.jsx:7` 明确排除 chart）。在册 `lxfu1/dsh-plugin-chart`(AntV 独立面板) 与 `Max-Samson/dsh-usage-chart`(用量) 均不满足判据①/场景。`JanEickholt/dsh-chart` 是首个同时满足「A 类 + 聊天内联 + 可给既有统计供数」的候选 → 🟢。
 > **⛔ 无证/GPL**：`frostming/dsh-hongguo`(无证)、`ccch1mneyyy/dsh-go-market`(AGPL-3.0)、`lsz-asd/dsh-plugin-session-delete`(无证)、`Tokeii0/dsh-lovelyaudit`(无证)、`dougen/dsh-deepseek-usage`(无证)、`ChenJun25/dsh-console-plugin`(无证) —— 只作线索，不摘码。
 > **⚠ `NOASSERTION`**：`louke6572/dsh-Dfy`、`HuanLinOTO/dsh-plugin-ya-workspace-sidebar` —— 待人工核验，不采用。
+
+---
+
+## 2026-11-06 · B 组（浙大场景）· 论文阅读的行内标记轴
+
+> 取组：**同日不重跑**。脚本给 `same-day(unused)→C`，**未采纳**（C 组 r139 03:00 刚跑完，
+> 同日再跑是纯重复）；取今日未跑的 **B**（积日 `310%3=1` 亦为 B）。
+> 搜索 **10/10 用满**，0 次 403，**完整**。去重 42 → 已登记 9 → 未登记 **33** → 登记 **13 行**。
+> 骨架 **1**：`packages/radar/dsh-radar-pdf-anchor`（B 类，零依赖，判据③**半成立**）。
+> 轴：**读的时候能不能在原文上留痕** —— 本仓论文页唯一的选区出口是悬停翻译
+> （`ReaderFrame.jsx:133-155`），康奈尔旁注只存 `{page,y,text}`（`cornell-notes.js:5`），行内高亮为 0。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `PhysicalAI-0/dsh-paperforge` | **A 原生DSH** | **MIT** ✅ | 论文（划词高亮/框选截图/专属会话） | **重复且无增益** | ⛔ | rejected | 2026-11-06 | ★3，push 2026-09-29（建仓 22 分钟即最后推送）。本轮**质量最高**的一件：`dsh.bundle.patch` 齐全、两栏阅读布局、六色划词高亮、每篇论文一个专属会话、Markdown 块级编辑。**判据①不成立** —— 自带论文库侧栏 + 会话面板 + 笔记栏，是**第二个论文工作区**，挂上去等于两个论文页并存。**也不能锁版**：`main: lib/index.js` 未发 npm（`npm view dsh-paperforge`→404），只能 `github:` 装；`lib/client.js` 93 KB 单文件 bundle 无法按面板裁切。**可取的只有算法口径**（`lineRects()` `:417-452` 逐行 rect 合并、`referenceBox()` `:409-414` 以画布为基准盒）。**它自己的坑**：只存页内归一化 rect、**无字符区间** ⇒ 不能重锚定，缩放后 subpixel 误差累积会漂 → 本骨架必须补字符区间。**另建议读它的 `AGENTS.md`**（作者写了 DSH 硬约束与踩坑，比代码稀缺）。**非同名仓**：`XZJ-top/dsh-paperforge` 是另一件（让 agent 写论文），已在册 |
+| `hjjye/dsh-annotate` | **A 原生DSH** | **MIT** ✅ | 通用（会话批注） | **重复且无增益** | ⛔ | rejected | 2026-11-06 | ★1。Codex 风格：框选**会话/代码**文字 → 气泡批注 → `/noteN` 序列化进消息。批注对象是聊天文本，**不落在 PDF 阅读器**；本仓论文页的助手抽屉已有等价引用能力 |
+| `alaliqing/dsh-annotate` | **A 原生DSH** | **MIT** ✅ | 无关（UI 评审） | 无关 | ⛔ | rejected | 2026-11-06 | ★7，npm `0.1.15` 已发。可视化评审面板：指向本地 dev server 的元素点选 + 备注 → 交给编码 agent。与学习工作台无交集 |
+| `wangwei-wade/dsh-quote-annotate` | **A 原生DSH** | **无许可证** ⛔ | 通用（会话引用） | **重复且无增益** | ⛔ | rejected | 2026-11-06 | ★6。会话选区引用 + 锚点 chip（点回原文/悬停预览）。**无 license 字段** → 只作线索不摘码；且批注对象是会话而非 PDF |
+| `Sunday2Mo/dsh-file-quote` | **A 原生DSH** | **MIT** ✅ | 通用（文件引用） | **重复且无增益** | 🔵 | proposed | 2026-11-06 | ★2。基于 `better-sidebar` 的划选引用：引用块带**文件路径 + 行区间**、双端折叠、点击跳回。**可借鉴「行区间」这一口径**（与本轴同构），但对象是文本文件不是 PDF，不接 |
+| `uugvkbvkdjbsdbvwxxl/dsh-plugin-web-annotate` | **A 原生DSH** | **MIT** ✅ | 无关（浏览器元素） | 无关 | 🔵 | proposed | 2026-11-06 | ★2。在内置浏览器里标注页面元素 → 带入对话。与论文阅读正交 |
+| `starash07/dsh-plugin-annotate` | **A 原生DSH** | **MIT** ✅ | 通用（会话引用） | **重复且无增益** | ⛔ | rejected | 2026-11-06 | ★0。Codex 风格选区引用（桌面 cli），能力等同 `hjjye` 且更弱 |
+| `mar1259/dsh-plugin-codex-annotate` | **A 原生DSH** | **MIT** ✅ | 通用（会话引用） | **重复且无增益** | ⛔ | rejected | 2026-11-06 | ★0。同上（Web UI 版）。注：本轴内 `dsh plugin annotate` 29 条里 **9/10 是会话/元素批注**，**零个**落在 PDF 阅读器 |
+| `zouyuanqing/dsh-vision-primitives` | **A 原生DSH** | **MIT** ✅ | 无关（视觉推理） | 无关 | 🔵 | proposed | 2026-11-06 | ★2。Set-of-Mark 编号网格 + 确定性像素坐标数学 + 局部无损放大 + VEP 证据协议。闭集坐标层，与「文本行」不同层；可作为将来「框选区域→坐标」的参考 |
+| `AngelosZou/dsh-pdf-reader` | **A 原生DSH** | **MIT** ✅ | 论文（VLM 读图） | **重复且无增益** | 🔵 | proposed | 2026-11-06 | ★7。Python，内容感知的 PDF 视觉阅读（走视觉模型读页面位图）。与本仓「复用上游 PDF.js 文本层」路线正交 —— 走这条路等于放弃文本层坐标 |
+| `poco-ai/agentero-dsh-plugin` | **A 原生DSH** | **无许可证** ⛔ | 论文（文献库） | — | ⛔ | rejected | 2026-11-06 | ★19。科研文献库：搜论文、带出处、审批入库、笔记线索交同会话其他插件。**无 license 字段** → 只作线索。价值在于「★19 说明文献库在生态里已有玩家」，与 `dsh-kb-rag` 域重叠 |
+| `Laomai-codefee/inklayer-react` | **B 其他JS** | **MIT** ✅ | 论文批注 | **重复且无增益** | ⛔ | rejected | 2026-11-06 | ★40，npm `1.2.3`。**自带 PDF viewer**（自述「A PDF viewer and annotation SDK」），锁 `pdfjs-dist ~4.3.136`，另拖 14 个依赖（konva/exceljs/pdf-lib/radix）。本仓锁 `pdfjs-dist 6.4.299` ⇒ 同页两份 PDF.js，文本层 rect 基准不同。**不是可挂的高亮层** |
+| `Laomai-codefee/inklayer-vue` | **B 其他JS** | **MIT** ✅ | 论文批注 | **重复且无增益** | ⛔ | rejected | 2026-11-06 | ★21。同上，Vue3 版且本仓是 React |
+| `miracleflow/react-pdf-highlighter` | **B 其他JS** | **MIT** ✅ | 论文批注 | **重复且无增益** | ⛔ | rejected | 2026-11-06 | ★10。与在册 `agentcooper/react-pdf-highlighter`（2026-10-14 登记，🟡）**同一上游的 fork**，**簇内取一**，fork 不重复登记。注：本轮复核了原版 npm —— `latest = 8.0.0-rc.0`（RC）、`7.0.0` 稳定，两个版本线都硬锁 `pdfjs-dist 4.4.168`，与本仓 `6.4.299` 冲突，**原版那条 🟡 建议维持「不锁版、只取算法」** |
+| `Fundaments-Work/Theorem` · `GitCoder052023/PidifyJs` | B 其他JS | **MIT** ✅ | 论文阅读 | **重复且无增益** | 🔵 | proposed | 2026-11-06 | 合并行（★16 / ★3）。前者是全功能本地阅读器（EPUB+PDF+标注存储），后者自带 viewer 组件库。均不满足判据①，仅作「标注存储格式」参考 |
+| `ug911/simple-pdf-annotator` · `Mane087/pdf-reader` · `tashreefshareef/amplenote-pdf-annotator` | B 其他JS | **Apache-2.0 / MIT** ✅ | 论文批注 | **重复且无增益** | 🔵 | proposed | 2026-11-06 | 合并行（★1 / ★0 / ★1）。均为完整小应用（服务端存储 / 本地阅读器 / Amplenote 插件），★≤1，只看 schema 与「标注↔笔记」双向链接做法 |
+| `Arty2001/echopdfreact` | B 其他JS | **MIT** ✅ | 论文阅读（可访问性） | **重复且无增益** | 🔵 | proposed | 2026-11-06 | ★0。**重建** pdf.js 文本层以做词级可访问性 —— 与本仓「复用上游文本层」路线**相反**，仅作记录 |
+| `agentcooper/pdf-annotation-service` · `ChaoxuWei/pdfjs-annotation` · `thasneem9/pdf-highlighter` · `faith250/researchpaprereadingdoc` · `Asin-Junior-Honore/DOCCANVAS` · `fahahahad-dev/E-LIBRARY` · `rajv2er/omninote` · `dean9703111/pdf-editor` | B 其他JS | **无许可证** ⛔ | 论文批注 | — | ⛔ | rejected | 2026-11-06 | 合并行（★34/8/4/2/2/0/1/5）。**全部无 license 字段** → 只作线索，不摘码。其中 `agentcooper/pdf-annotation-service`（★34，客户端+服务把高亮烧进 PDF）值得**看一眼设计**，但不摘码 |
+| `aidenlx/zotlit` · `zhongyangchuwu/Zotero-Neo` | B 其他JS | **AGPL-3.0** ⛔ | 论文（Zotero） | — | ⛔ | rejected | 2026-11-06 | ★1055 / ★1。AGPL 不在宽松白名单 → 只登记。`zotlit`（Obsidian 里的 Zotero 研究台）是本轴 ★ 最高的件，能力也最对口，**但许可证一票否决** |
+| `robert-z-lehr/PDF-LR-Annotator` | B 其他JS | **GPL-3.0** ⛔ | 论文批注 | — | ⛔ | rejected | 2026-11-06 | ★0。GPL 不在白名单 |
+| `dakl/papershelf` · `ChaitanyaK77/CogNote` · `iambishwaa/annotate-pdf-bishwaa` · `laxmimerit/pdf-pen-annotator` | B 其他JS | **MIT / Apache-2.0** ✅ | 无关 | 无关 | ⛔ | rejected | 2026-11-06 | 合并行（★2/2/2/0）。分别是 macOS 桌面应用、桌面钢笔标注、Obsidian 插件、手绘笔迹层 —— 平台或层次不符 |
+
+> **本轮词面校准（B 组，第三次同结论）**：
+> ① `zju pdf reader` → **`total = 0`**；`pdf text highlight selection language:typescript` → **`total = 0`**
+> ⇒ B 组「`zju` + 通用功能名」已见底（前两次：r136 `zju course conflicts`=0 / `zju updated:>2026-10-01`=0）。
+> ② **有效词面是「库名/数据结构名」**：`pdf annotation highlight language:javascript`(58) 与
+> `pdf highlighter react`(215) 一击命中领域头部；`pdfjs annotation highlight`(13) 13 条全部小而正、无噪声。
+> ③ `dsh plugin annotate`(29) **9/10 是「会话/元素批注」，零个落在 PDF 阅读器** ⇒
+> DSH 生态的「批注」= 会话批注；**论文行内标记这一格在原生生态里是空的**（与 r134「编辑器一格是空的」同型结论）。
+> ④ `language:typescript` 限定符对本轴有害：`pdf text highlight selection language:typescript`=0，去掉后 `pdf highlighter react` 直接出 `react-pdf-highlighter`(★1414)。
+>
+> **数据来源强度口径（沿用 r139 并扩展一条）**：
+> r139「候选的数据来源弱于本仓即 ⛔」；本轮补一条 **「候选自带 viewer 而本仓已有 viewer 时，不论 annotations 多强一律 ⛔」**
+> —— `inklayer-react`(★40) 与 `react-pdf-highlighter`(★1414) 均因此 ⛔，这是本轴 **★ 最高的两个许可证合格件**。
+>
+> **去重口径**：沿用 2026-11-06-03 轮的全文正则 `([A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+)` + 精确比对（4300 个名字）。
+> 本轮用它抓到 `agentcooper/react-pdf-highlighter` 已在册 —— 若按表格首列提取会漏（该行在第 24 行、格式正常，属人为疏漏而非脚本缺陷，仍建议沿用全文正则）。
