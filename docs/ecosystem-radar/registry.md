@@ -4893,3 +4893,30 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 > `timetable ics export` 首屏 10 条 **全为他校专用抓取脚本**（SIT/KCL/ECNU/ISAE/Curtin/XJTLU/Strathclyde…，其中 `finwarman/kcl-timetable`、`mcpower/icallate`、`JaciBrunning/ElsieScraper`、`Treeki/myplace-timetable-export` **无许可证**）·
 > `5.0 4.3 gpa conversion` → **total 0**（重要负结果，见报告 §四③）·
 > `ZJU GPA` 5 条中 3 无证 / 1 GPL-3.0（`STDquantum/ZJU_GPA_Seeker`）/ 浙工大 3 条（`zjut-postgraduate-gpa-computing`、`sqroc/GPA-ZJUT-`、已在册 `Frontlook/ZJUT-GPA-calculator`）。
+
+<!-- 第八十轮 · 2026-11-05-15 · B 组 · 轴「CC98 读得进来，但表达力丢在纯文本里」· 搜索 10 次 · 403×0 · 骨架 1（cc98-ubb-ast） -->
+
+### 2026-11-05-15 · B 组（浙大场景 · CC98 正文表达力轴）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `CoolSpring8/griseous` | B 其他JS（TS/React/Vite） | **MIT** ✅（`LICENSE` 实文已读：`MIT License / Copyright (c) 2021 CoolSpring8`，`spdx_id` 一致） | CC98 论坛阅读 | **重复且可强化** | 🟢 | skeleton-created | 2026-11-05 | ★1，**push 2022-07-07（停更 4 年）**。价值**不在客户端**（形态不要），在 `src/utils/Ubb.ts` 213 行 / 25+ 标签的 CC98 方言映射表（`[img=1]`→`isHiding`、`[size]` 夹到 7 并 `n/3+0.5rem`、`quote`→`blockquote`），首行注明出自 `ZJU-CC98/Forum/.../UbbCodeExtension.tsx`。另 `boardInfoJson.ts` 14 KB 版块 id→名全表。骨架 `packages/radar/dsh-radar-cc98-ubb-ast`（**B 类**，不取客户端代码） |
+| `Lucent-Snow/CC98-CLI` | B 其他JS（TS CLI/TUI） | **MIT** ✅（`spdx_id`） | CC98 终端阅读 | **重复且无增益**（形态错配） | 🔵 | proposed | 2026-11-05 | ★20，push 2026-08-05。与 `source-cc98` 同为 API 客户端，入口是 CLI/TUI，**无 Web 面板可挂载面** |
+| `EviterLesRoses2/cc98-mcp` | B 其他JS（MCP server） | **MIT** ✅（`spdx_id`） | CC98 检索/聚合 | **重复且无增益**（进程外） | 🔵 | proposed | 2026-11-05 | ★4，push 2026-06-12，**只读** search/read/aggregate。MCP 形态需独立进程，违背"无外部进程"约束 |
+| `eWloYW8/ZJU-course-material-download` | B 其他JS（userscript） | **MIT** ✅（`spdx_id`） | 学在浙大课件 | **重复且无增益** | ⛔ | rejected | 2026-11-05 | ★14，push 2026-01-24。**「下载无权限课件」= 绕开教师访问限制**，与许可证无关一律 ⛔；`source-classroom` 已覆盖合规课件面 |
+| `eWloYW8/ZJU-course-video-complete` | B 其他JS（userscript） | **MIT** ✅（`spdx_id`） | 学在浙大视频 | **重复且无增益** | ⛔ | rejected | 2026-11-05 | ★7，push 2026-01-24。**伪造观看进度 = 伪造学习行为**，一律 ⛔ |
+| `Anchorite-no/dsh-zju-assistant` | **A 原生DSH**（npm `dsh-zju-assistant`） | **GPL-3.0** ⛔ | 浙大一站式 AI 助手 | —（许可证红线） | ⛔ | rejected | 2026-11-05 | ★71、push **2026-11-04（当日活跃）**，是近 20 轮**最贴合的原生 DSH 浙大插件**；**GPL-3.0 → 不摘任何代码**。建议人工接触作者争取宽松许可，若成功应重评为 A 类最高优先 |
+| `Anchorite-no/zju-skill-public` | A 原生DSH（skill） | **GPL-3.0** ⛔ | 浙大能力集 | —（许可证红线） | ⛔ | rejected | 2026-11-05 | ★36，push 2026-11-02。同作者同问题 |
+| `SJoJoK/ZJU_Charger`（复核） | B 其他JS | **无许可证** ⛔ | 充电桩 | 重复且无增益 | ⛔ | rejected（**维持**） | 2026-10-31 | ★16，2024-10-08 停更。本轮 `zju libseat` 复查再命中，状态不变 |
+
+> **本轴新增事实（写进 registry 供后续轮次复用）**：
+> ① 本仓读侧 `dsh-zhiyun-source-cc98/src/ubb.js` **仅 78 行**、`grep -c 'tag|case'` = **0**，即**零标签分派**；
+> ② cc98 渲染类骨架现有三层：`dsh-radar-bbob`（解析器）→ `dsh-radar-cc98-md-render` / `dsh-radar-cc98-ubb-ast`（**读·标签语义**）→ `dsh-radar-cc98-ubb-bridge`（**写**回 UBB）。后续**不再生成**第五个 cc98 渲染包，除非上游带来本仓结构上给不出的新维度；
+> ③ **★1 也能是 🟢**：判定取决于「许可证 × 形态 × 与本仓的差集」，不是 ★。
+
+> **本轮未逐条登记**：海外校园 App 7 条（`placement-portal-application`/`Maintenance-App`/`weixiao`/`Pronto`/`Fit-Meets`/`ionic-engcomp-app`/`3D-Campus-application-and-development`，均与六域零交集，多为 `null`）·
+> 课程资料库 3 条（`ZJU-Turing/TuringCourses` **NOASSERTION** ★811、`RyanFcr/ZJU_Course` null、`Yva1nne/ZJU_Course` null）—— 「zju course」老结论第 5 次复现。
+
+> **流程校准**：`zju 刷题 OR 题库 language:typescript` / `zju 教务 OR 选课 language:typescript` / `zju libseat OR 座位预约 language:javascript`
+> 三次查询的 `OR` 与中文词被 GitHub **静默丢弃**，返回与 `zju language:typescript`(169) / `zju language:javascript`(415) **完全相同**的集合。
+> → B/C 组**禁用 `OR` 与中文关键词**，一查一词 + 一个 `language:`。
