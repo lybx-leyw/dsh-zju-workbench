@@ -4979,3 +4979,29 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 > **未登记**（宽松许可但无关）：`FGA0138-MDS-Ajax/2024.2-Wunjo`（MIT，巴西 UnB 校区 RN 辅导 App）、`PlugImt/transat-app`（MIT，法国 IMT Atlantique 校区 RN App）—— 非浙大、非中文场景，无交集。
 > **⛔ 无证/GPL 24 个**（节选）：`Phemon/ZJU_Intl_ScheduleToICS`(GPL-3.0) ⛔；`Longhorn-Developers/Mobilize`、`opencodeiiita/SnapMap`、`pclubiitk/Campus-Discuss-App`、`foggywillow/cc98-userjs`、`JiepengLab/CC98-Calculation`、`GhostFlying/cc98_notification_chrome`、`hharryz/BibiPrice`、`cj8086/ICS2022`、`ZJU-CC98/Chat`、`LBruyne/ZJU-blockchain-course-2025`、`Winfred666/zjudblab5-book-system` 等，均无许可证 → 只作线索，不摘码。**本轮 `NOASSERTION` 为 0**。
 > **B 组关键词池已见底**：registry 已登记 zju/cc98/campus 相关 260+ 仓库，本轮 30 个新候选中仅 4 个相关。建议下版换池（`tronclass`/`zdbk`/`xzzd`/`pta zju`/npm `zju` 维度）。
+
+## 2026-11-06 · A 组（DSH 插件生态 · 深夜轮）
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `JanEickholt/dsh-chart` | **A 原生DSH** | **MIT** ✅ | 学习（正确率/掌握度） | **重复可强化**（题库统计，判据①②③全成立） | 🟢 | skeleton-created | 2026-11-06 | 2026-11-06 | ★0，push 2026-10-29。npm `dsh-chart@0.5.0`（历史 0.1/0.2/0.5），解压 **23,264 B**，`dependencies` 空，`peerDependencies` 仅 `@deepseek-ai/dsh-tools:"*"`。**标准 A 类**：自带 `dsh.bundle.patch` → `insert:[{id:chart,name:dsh-chart}]`，`dsh.client.platform="web"`。宿主半注册 `show_chart` 工具（pie/bar/line，`MAX_POINTS=100`），客户端半用 recharts 内联渲染并挂 `tool.call.toolview` + `conversation.chat.turnTail`。**判据③成立**：本仓 `classroom-renderer` deps 只有 `katex@0.16.38`，`view/slide.jsx:7` 自述只做 4 类元素（chart 被显式排除），`page-quiz/src/question-history.jsx:20` 只有逐条文本、无正确率趋势，`core-study/src/grading.js` 不做跨次聚合 —— 全仓零图表库。已出骨架 `dsh-radar-study-chart`。**⚠ 阻塞**：面板内嵌不在上游 slot 范围（只有聊天工具行与回合末尾） |
+| `ouli-1242/dsh-plugin-tool-management` | **A 原生DSH** | **MIT** ✅ | 通用（设置面板） | **重复可强化**（设置页 MCP/技能/记忆聚合，半成立） | 🟡 | proposed | 2026-11-06 | | ★42，push 2026-11-05（活跃）。TS。一个设置面板统一管 MCP / 技能 / 记忆 / 子智能体 / 提示词 / 归档会话，可存「场景」一键切换整套环境。**MCP 段已饱和**：本仓已有骨架 `dsh-radar-mcp-manager`，另有在册 `appthin/dsh-mcp-manager-plus` 等。**唯一未覆盖的是「场景（profile 组合）一键切换」** —— 但本仓已有 `profiles/zju-workbench` 静态 profile 机制，再接一层运行期切场景会与 profile 冲突（判据①不成立）。不出骨架 |
+| `appthin/dsh-mcp-manager-plus` | **A 原生DSH** | **MIT** ✅ | 通用（设置面板） | **重复且无增益**（MCP 管理簇） | ⛔ | rejected | 2026-11-06 | | ★23，push 2026-10-15。设置页左侧边栏加「MCP 管理」页。与本仓骨架 `dsh-radar-mcp-manager` 同域同形态，**簇内取一** |
+| `KannaKuron/dsh-better-workspace` | **A 原生DSH** | **MIT** ✅ | 通用（会话组织） | **重复且无增益**（工作区树） | ⛔ | rejected | 2026-11-06 | | ★31，push 2026-11-05（活跃）。侧栏层级工作区树：标题含 `/` 自动成虚拟文件夹 + 新建工作区加「父分组」弹窗。本仓**不接管会话/工作区树**（`packages/client/` 归上游 `dsh-pages`），且这与「浙大学习工作台」面板制无关。registry 已登记 workspace/sidebar 相关 25+ 条，该轴饱和 |
+| `easychen/dsh-workspace-recent-sort` | **A 原生DSH** | **MIT** ✅ | 通用（会话组织） | **重复且无增益** | ⛔ | rejected | 2026-11-06 | | ★9，push 2026-11-02，npm 已发版。最近工作区排序 + 紧凑会话 + 运行中任务可见 + 滚动定位。同属「工作区树/侧栏」轴，理由同上 |
+| `siberiah2o/dsh-plugin-terminal` | **A 原生DSH** | **MIT** ✅ | 通用（终端） | **重复且无增益** | ⛔ | rejected | 2026-11-06 | | ★7，push 2026-08-19。DSH Web GUI 底部终端面板。本仓无终端面板需求（学习工作台面无此场景），且 registry 已有终端类判定 |
+| `gameswu/dsh-plugin-vscode-sidebar` | **A 原生DSH** | **MIT** ✅ | 通用（侧栏外观） | **重复且无增益** | ⛔ | rejected | 2026-11-06 | | ★7，push 2026-09-16。TS，VSCode 风格侧栏。纯外观替换，与工作台面板制冲突 |
+| `Xiaofei-fei/dsh-prompt-history` | **A 原生DSH** | **MIT** ✅ | 通用（输入增强） | **重复且无增益** | 🔵 | proposed | 2026-11-06 | | ★11，TS。终端式 composer：↑/↓ 历史、前缀搜索、Ctrl+R。本仓无自定义 composer（归上游 `dsh-pages`），接入需改宿主输入框 → 成本高于收益 |
+| `YTxue/dsh-skill-manager-ytxue` | **A 原生DSH** | **MIT** ✅ | 通用（技能管理） | **重复且无增益** | 🔵 | proposed | 2026-11-06 | | ★13。设置侧栏的技能管理器（列出/启停/按文件夹批量）。本仓 radar 包**不接 profile**，技能开关不属工作台职责 |
+| `cholf5/dsh-plugin-job-panel` | **A 原生DSH** | **MIT** ✅ | 通用（任务面板） | **重复且无增益** | 🔵 | proposed | 2026-11-06 | | ★9。右侧栏 job 面板。与 `siberiah2o` 同属「侧栏工具面板」簇 |
+| `mengqi1436/dsh-db-tool` | **A 原生DSH** | **Apache-2.0** ✅ | 无关 | 无关 | 🔵 | proposed | 2026-11-06 | | ★7，TS。对话式数据库管理（8 种库、按项目授权）。本仓无 DB 面板，学生场景无交集 |
+| `mabw/dsh-plugins` | A 原生DSH | **MIT** ✅ | 通用（卡片渲染） | **重复且无增益**（与 `dsh-chart` 同域但更弱） | 🔵 | proposed | 2026-11-06 | | ★0，push 2026-08-17（近 3 月未动）。monorepo，`aui-render`（交互表格/图表/JSON 卡片 + 预填表单）+ `assistant-launcher`。图表能力弱于已选 `JanEickholt/dsh-chart`（后者有校验权威 + 双主题调色板 + npm 发版），**同域取一** |
+| `frostming/dsh-hongguo` | A 原生DSH | **无许可证** ⛔ | 无关（短剧） | 无关 | ⛔ | rejected | 2026-11-06 | | ★126。侧栏看短剧。**无 license 字段** → 只作线索，不摘码 |
+| `ccch1mneyyy/dsh-go-market` | A 原生DSH | **AGPL-3.0** ⛔ | 无关（插件市场） | 无关 | ⛔ | rejected | 2026-11-06 | | ★16。DSH Go 插件目录 + 锁版 + 风险检查。**AGPL 不在宽松白名单** → 只登记 |
+| `louke6572/dsh-Dfy` | A 原生DSH | **NOASSERTION** ⚠ | 无关 | 无关 | 🔵 | proposed | 2026-11-06 | | ★88。all-in-one：余额鲸鱼挂件 + 106 片段透明动画等。**许可证待人工核验，不采用** |
+
+> **本轮方法论**：A 组 5 个主词首屏 **150 条中仅 3 条未登记**（`deepseek-harness plugin` 30/30、`dsh plugin` 30/30 全在册）—— **A 组主词已再次确认封板**，与 2026-11-03 结论一致。产出全部来自**窄词**（`dsh plugin sidebar` 796 → 18 新、`dsh plugin panel` 587 → 9 新、`dsh plugin chart render` 8 → 6 新、`dsh plugin ui component` 6 → 5 新）。
+> **去重口径修正**：前几轮脚本按「单元格首列」提取已登记仓库，因仓库名被反引号包裹导致 4255 条里只认出 2470 条，一度出现「30/30 全是新候选」的假象。本轮改为全文正则 `([A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+)` + `lower()` 归一化，**建议后续脚本沿用**。
+> **图表域结论**：本仓**确无图表能力**（`classroom-renderer` 仅 `katex`，`slide.jsx:7` 明确排除 chart）。在册 `lxfu1/dsh-plugin-chart`(AntV 独立面板) 与 `Max-Samson/dsh-usage-chart`(用量) 均不满足判据①/场景。`JanEickholt/dsh-chart` 是首个同时满足「A 类 + 聊天内联 + 可给既有统计供数」的候选 → 🟢。
+> **⛔ 无证/GPL**：`frostming/dsh-hongguo`(无证)、`ccch1mneyyy/dsh-go-market`(AGPL-3.0)、`lsz-asd/dsh-plugin-session-delete`(无证)、`Tokeii0/dsh-lovelyaudit`(无证)、`dougen/dsh-deepseek-usage`(无证)、`ChenJun25/dsh-console-plugin`(无证) —— 只作线索，不摘码。
+> **⚠ `NOASSERTION`**：`louke6572/dsh-Dfy`、`HuanLinOTO/dsh-plugin-ya-workspace-sidebar` —— 待人工核验，不采用。
