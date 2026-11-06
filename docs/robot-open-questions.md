@@ -107,3 +107,21 @@
 - **相关位置**：`deploy/relay-service/`（`server.py` / `Dockerfile` / `ms_deploy.json` / `README.md`）；
   对应文档 `docs/modelscope-as-cloud-server.md`（第 4 节「部署细节（照做版）」是现成的手工步骤）；
   消费端 `packages/dsh-zhiyun-page-planning/src/index.js`。
+
+## 2026-11-06 · F-005 后续 snapshotFresh 中 entries / config 的取值时机
+
+- **诉求**：非用户新诉求，是本轮解开 robot 与 main 长期合并冲突（10-24 起连续两周同一组两文件）
+  时**被放弃的唯一细节**，按既定方案落成待决策条目：`packages/dsh-zhiyun-page-planning/src/index.js`
+  取 main 全量重写版（robot 旧补丁的三路并发诉求已被上游 `Promise.allSettled` 达成且更完整），
+  旧补丁随之整体废弃。
+- **为何复杂/宽泛**：robot 当时的补丁特意把 `entries` / `config` 的取值放在 `sync` **之前**，
+  理由是：若在 `sync` 之后取，本次同步新增的条目会**同时**出现在返回的 `entries` 列表和
+  `remote.added` 计数里，等于重复呈现；main 现在的 `snapshotFresh()` 是在 `Promise.allSettled`
+  三路并发结束后、于 `return` 字面量里取 `entries: store.list()` / `config: mask(getConfig())`，
+  即 `sync` **之后**取。改哪种是语义取舍，且该文件属主干，robot 分支不越界代改。
+- **待开发者决策**：
+  1. 在 main 上把 `entries` / `config` 的取值挪到 `sync` 之前（恢复 robot 补丁的语义，避免重复计入）；
+  2. 维持现状，但在 `snapshotFresh()` 里加注释写明「`sync` 之后取值是有意为之」及理由；
+  3. 若取值时机确实影响，改为在返回体里区分「同步前快照」与「本次新增」两个字段。
+- **相关位置**：`packages/dsh-zhiyun-page-planning/src/index.js`（`snapshotFresh()`，约 859 行起）；
+  历史补丁见 robot 分支被废弃的 F-005 改动（`git log --follow` 可查）。
