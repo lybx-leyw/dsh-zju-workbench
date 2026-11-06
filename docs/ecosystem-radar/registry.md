@@ -5136,3 +5136,24 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | `TwinsEarth/dsh-fang` | A 原生DSH | **AGPL-3.0** ⛔ | — | 无关 | ⛔ | rejected | 2026-11-07 | ★1。dsh-Web「瓮城」隔离区。**AGPL 红线，不摘任何代码** |
 | （不登记，仅计数）`null` 许可证 5 条 | A 原生DSH | `null` ⛔ | — | — | ⛔ | rejected | 2026-11-07 | — | `akshayDev17/quiz-app`、`rifqilubis/korean-quiz-deepseek-harness-version`、`zlk555/abies-tmjx`、`xbsheng/deepseek-harness-tutorial`、`xiaoshancha/deepseek-harness-tutorial`。均无许可证 |
 | （封板 / 饱和记录）A 组「横切面八探针」全线落空 | — | — | SRS/白板/笔记/测验/论文/教学/压缩 | — | — | note | 2026-11-07 | — | **8 条定向探针（SRS 6/whiteboard 7/note 144/quiz 12/paper 133/mistake 8/tutor 48/review-due **0**）共 0 个 🟢**。**结构性推论：A 组的瓶颈已从「找不到」变为「找到了也没地方放」** —— 本仓 121 个 radar 包已覆盖 DSH 生态绝大多数能力面，新候选几乎必然在判据①（第二面板）或②（平行实现）上失败。**判据③（底层明显更优）是唯一出路**。**建议：A 组主词 + `topic:dsh-plugin` 双入口降为每 3 轮一次的探针**（本轮 49 新面孔 → 13 登记行 → 0 骨架，信噪比 < 1/4）；下一轮转 B 组，走 `zju language:{js,ts} pushed:>` 按 updated 排序的切面（r133 实测效率为主词 10 倍以上） |
+
+## r143 · 2026-11-07-06 · C 组（学生功能域 · **「课表后半段」轴**）
+
+> 取组说明：`radar-rotation.mjs` → `same-day(unused)`，今日已跑 A（03:00），本轮取 **C**；与公式 `311%3=2` 一致。
+> 入口：5 条主词（`timetable ics export` ×2 / `paper annotation reader` / `ocr notes taking` / `quiz practice` / `fitness tracker`）+ **1 条补充探针 `timetable pwa`** = **8 次搜索**、0 次 403。
+> **主词全线饱和，唯一产出入口是补充探针** —— 与 r142「A 组横切面饱和」同构。**7 新候选 / 🟢 2 / 骨架 2**。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `CPLADRAGON/nus-vacansee` | B 其他JS | **MIT** ✅ | 课表/教室占用 | **重复且可强化** | 🟢 | proposed | 2026-11-07 | ★1，19.9 MB，Next.js 16 站点（`private`、无 npm ⇒ **不可锁版**）。**本仓课表侧真空白 = 「周次轴」**：`dsh-radar-ics-rrule` 自述「本仓课表条目没有周次 / 节次号，调课会让分组碎裂」。上游 `src/lib/nusmods.ts` 把 `weeks` 的**四种编码**（数组 / 闭区间 / 区间+列表 / 区间+间隔）收敛到绝对周号 ✅ 判据③成立。**⚠ 不照抄其时区**：毫秒直减在 UTC+8 的 23:00 后偏一天。→ 骨架 `dsh-radar-timetable-week-axis`（B 类，`dependencies: {}`） |
+| `hermes98761234/shift-scheduler` | A 原生DSH | **MIT** ✅ | 课表/排程 | **重复且可强化** | 🟢 | proposed | 2026-11-07 | ★0，488 KB，Vite+React+独立 `src/lib/`（DSATUR + 回溯 + 退火 + `solver.worker.ts`），**2026-10-09 单次推送后未动**、**未发 npm ⇒ 不可锁版**。价值不在「再排一次」，而在**「排不下时说明哪条规则打架」** —— 在册排课候选全是贪心，这是真空白。**锁它依赖的 `yalps@0.6.4`（MIT，240 KB，仅 `heap@^0.2.7`）**，沙箱实跑 `solve()` → `status/result/variables` ✅ → 骨架 `dsh-radar-plan-solver`（A 类） |
+| `irkvuz/schedule` | B 其他JS | **MIT** ✅ | 课表 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★13，**52.8 MB**（体积大头是演示数据），建 2018、推送 2026-10-27（活跃）。**单一学校教务适配**（BSU），无通用算法；与在册 `ecnu-timetable-calendar` 同格。本仓已有 5 个课表骨架（`timetable-calendar`/`week-parser`/`tongge-schedule`/`ics-export`/`ics-rrule`） |
+| `FREExuanwei/unilife-hub` | B 其他JS | **无（null）** ⛔ | 课表/任务/考试/番茄钟 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★1，4.4 MB，local-first PWA，**建后 3 天即停**。功能面与本仓「今天/规划/学习」+`focus-machine`+`deadline-budget` 逐项重合。**无许可证 ⇒ 不摘任何代码** |
+| `ADA-quart/ITDC` | B 其他JS | **`NOASSERTION`** ⚠ → 原文为 **PolyForm Noncommercial 1.0.0** | 课表/待办/排程 | 重复且无增益 | ⚠ | pending-license | 2026-11-07 | ★8，17 MB，React+Capacitor，成都理工。**API 报 NOASSERTION，读 `LICENSE` 原文确认为 PolyForm Noncommercial**（非白名单、明确禁商用）⇒ **不采用、不摘代码**。仅可借鉴无版权的**产品思路**（四象限待办 + LLM 排程）。若将来借鉴须在 ATTRIBUTION 注明 |
+| `marvus-creator/Kairo` | B 其他JS | **无（null）** ⛔ | 课表/计划/SRS/计时 | 重复且无增益（**四重**） | 🔵 | proposed | 2026-11-07 | ★1，233 KB，**单日推送后停更**。课表引擎 + 学习计划 + My Day + SRS 与 `timetable-calendar`/`planning`/`fsrs-scheduler` **四重**重合。**无许可证 ⇒ 不摘任何代码** |
+| `smafnan/getitdone` | B 其他JS | **MIT** ✅ | 日程排程 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★1，1.6 MB，**2 天即停**。「一天串成一条链」被 `page-planning` 时间轴 + `deadline-budget` 覆盖；多出的 Capacitor/Electron/Supabase 三套壳**与本仓架构相反**（profile bundle 不打包壳） |
+| （封板记录）`quiz practice` 2,695 仓 | — | — | 测验 | — | — | note | 2026-11-07 | — | 前 15 名**全是证书备考站**（CCNA/AWS/KCNA/IELTS/面试），无「面向课程测验的引擎」。**该词已失真**，建议停用；引擎层已被 `quiz`/`quiz-lab`/`score-practice` 覆盖 |
+| （封板记录）`paper annotation reader` 10 仓 | — | — | 论文 | — | — | note | 2026-11-07 | — | 10 个里 9 个是 AI 论文阅读器（翻译/双语对照/问答），`nftuoa/dsh-zotero` 已在册，余下 1 个 `benfngu/chimpread` 为 **AGPL-3.0** ⛔。**文献簇封板**（延续 r142） |
+| （封板记录）`fitness tracker` 6,259 仓 | — | — | 锻炼 | — | — | note | 2026-11-07 | — | 前 15 名在册 4 个（`workout-cool`/`lyftr`/`gymcoach`/`Fitness-OS`），其余为 RN/Capacitor 移动壳。**锻炼簇封板**（自 r135）；`activity-heatmap` 已够 |
+| （封板记录）`ocr notes taking` 12 仓 | — | — | 笔记 | — | — | note | 2026-11-07 | — | 11 个无许可证；唯一 MIT 的 `MuhametSmaili/note-it` 已在册。**OCR 簇封板**（`ocr-web` 在册） |
+| （结构性推论）C 组主词边际收益归零 | — | — | — | — | — | note | 2026-11-07 | — | **本轮 7 个新面孔里 5 个来自补充探针 `timetable pwa`**，5 条主词仅贡献 2 个（且均为 🔵）。与 r142 的 A 组结论同构：**「主词检索的边际收益已归零」**。**建议 C 组下次把主词降为探针，主入口改 `topic:student,university,timetable language:{typescript} pushed:>` 按 updated 排序**（对齐 r133 对 B 组的处置） |

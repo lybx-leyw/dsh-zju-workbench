@@ -1,0 +1,4 @@
+# 候选骨架，未评审。插入项在此处声明；挂载由评审后的 profile 决定。
+- insert:
+    - id: radar-timetable-week-axis
+      name: dsh-radar-timetable-week-axis
