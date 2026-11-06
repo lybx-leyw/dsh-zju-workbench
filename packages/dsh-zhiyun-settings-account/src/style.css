@@ -3,7 +3,7 @@
  * 只画「账号与数据」设置分区里的卡片，以及登录对话框里的账号说明。
  * 设置浮窗的标题、分区切换、滚动容器都属于宿主，这里复刻它们就是重复。
  *
- * ⚠️ `.zs-account` 的按钮/输入框基规则在 `dsh-zhiyun-shell-ui`，本文件只补页面级排版。
+ * ⚠️ `.zs-account` 的按钮/输入框基规则在 `@lybx-leyw/dsh-zju-ui-shared`，本文件只补页面级排版。
  */
 
 body[data-zhiyun] .zs-account p {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Icon } from 'dsh-zhiyun-shell-ui';
+import { Icon } from '@lybx-leyw/dsh-zju-ui-shared';
 import { AssistantDrawer } from './AssistantDrawer.jsx';
 import { ReaderFrame } from './ReaderFrame.jsx';
 import { createTopic, loadPaper, loadTranslateState, transcribePaper, translateSelection, uploadPaper } from './library.js';

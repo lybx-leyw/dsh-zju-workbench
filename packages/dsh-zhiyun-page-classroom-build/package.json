@@ -18,7 +18,7 @@
     "client": {
       "platform": "web",
       "external": [
-        "dsh-zhiyun-shell-ui"
+        "@lybx-leyw/dsh-zju-ui-shared"
       ]
     }
   }

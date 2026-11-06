@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Icon } from 'dsh-zhiyun-shell-ui';
+import { Icon } from '@lybx-leyw/dsh-zju-ui-shared';
 import { archiveSessionById, listSessions, loadSessionLabels } from './library.js';
 import { buildRows, indexAfterRemove, initialIndex, moveIndex, rowText, sessionCode } from './resume.js';
 

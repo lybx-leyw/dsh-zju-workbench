@@ -39,7 +39,12 @@ export const retiredBundles = ['dsh-pages', 'dsh-zhiyun-pro-ui', 'dsh-zhiyun-stu
   'dsh-zhiyun-page-me',
   // 「无曰终审」整包删除（自由发挥那一步被并入习坎的全文润色）。
   // 老 profile 里还挂着这一行的话 Loader 解不开，整个 profile 起不来。
-  'dsh-zhiyun-core-final-pass'];
+  'dsh-zhiyun-core-final-pass',
+  // 共享 UI 原语改名并移入 `packages/client/ui-shared/`：
+  // `dsh-zhiyun-shell-ui` → `@lybx-leyw/dsh-zju-ui-shared`。老 profile 里留着旧名时
+  // Loader 解析不到该 bundle，整个 profile 起不来；`profile:init` 会按这张表清掉它，
+  // 再补上新名（新名从 profile 模板的 bundles 里来）。
+  'dsh-zhiyun-shell-ui'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
 /**
  * 哪些 bundle 来自 npm 依赖、不参与本仓链接与客户端构建。

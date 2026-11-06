@@ -19,7 +19,7 @@
   `zhiyunStudyController` 服务里；本包只渲染与交互。
 - 出题策略/题型/配额的纯函数与常量来自 `dsh-zhiyun-core-quiz`。
 - UI 原子（`Notice`、`useStudy`、`mountStyle`、`zs-button`/`zs-primary`/`zs-text`）
-  来自 `dsh-zhiyun-shell-ui`。
+  来自 `@lybx-leyw/dsh-zju-ui-shared`。
 
 ## 与 dsh-zhiyun-page-study 的关系（唯一的跨页面包依赖）
 
@@ -52,4 +52,4 @@ dsh-zhiyun-page-study  ──import──▶  dsh-zhiyun-page-quiz
 - 类名一律 `zs-qz-*`：同包内后写的赢是确定的，跨包才需要防冲突；
   `npm run check:css` 会把「同一元素、同特异性、不同取值」的跨包规则报出来。
 - 颜色只取壳的 `--zy-*` 变量，明暗主题自动跟随；不在本包重定义它们。
-- 裸文字钮用壳的 `.zs-text`（**定义在 `dsh-zhiyun-shell-ui`**，学习页与题库页共用）。
+- 裸文字钮用壳的 `.zs-text`（**定义在 `@lybx-leyw/dsh-zju-ui-shared`**，学习页与题库页共用）。

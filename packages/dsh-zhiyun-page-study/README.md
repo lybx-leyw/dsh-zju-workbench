@@ -53,7 +53,7 @@
   `time` / `lessonWhen` 只有这一页用，属于「这一页怎么呈现」，不属于领域。
   `tests/study.test.mjs` 直接从本包 import 它们（`src/layered-search.js`）。
 - `lecture-reader.jsx` 用宿主的 `@deepseek-ai/dsh-client-ui-primitives`（`MarkdownText`，种子词），
-  跨包原语用 `dsh-zhiyun-shell-ui`（`useStudy` / `Notice`）—— 两个不同的包，别混。
+  跨包原语用 `@lybx-leyw/dsh-zju-ui-shared`（`useStudy` / `Notice`）—— 两个不同的包，别混。
 - **两张样式表**：`style.css`（整页）与 `video.css`（视频栏）。同包内后写的赢，
   顺序是确定的，不吃挂载顺序的亏；视频栏的类名一律 `zs-video-` 前缀，与整页的
   `zs-*` 不重名，`npm run check:css` 因此不会把它们报成跨包竞争。

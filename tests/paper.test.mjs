@@ -1342,7 +1342,7 @@ test('接线：两个新包都已进 profile 与构建清单', () => {
   assert.match(nav, /id: 'paper'/);
   assert.match(nav, /icon: 'paper'/);
 
-  const primitives = readFileSync(path.join(root, 'packages/dsh-zhiyun-shell-ui/src/primitives.jsx'), 'utf8');
+  const primitives = readFileSync(path.join(root, 'packages/client/ui-shared/src/primitives.jsx'), 'utf8');
   assert.match(primitives, /paper:/);
   assert.match(primitives, /translate:/);
 });

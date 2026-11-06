@@ -17,7 +17,7 @@
     "client": {
       "platform": "web",
       "external": [
-        "dsh-zhiyun-shell-ui",
+        "@lybx-leyw/dsh-zju-ui-shared",
         "dsh-zhiyun-core-player",
         "dsh-zhiyun-core-playback",
         "dsh-zhiyun-core-quiz",

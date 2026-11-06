@@ -348,7 +348,7 @@ test('已构建的「插件」页：读图前后两次渲染的 hook 序列一�
   const { Panel } = factory((id) => {
     if (id === 'react') return React;
     if (id === 'react/jsx-runtime') return jsxRuntime;
-    if (id === 'dsh-zhiyun-shell-ui') return shellUi;
+    if (id === '@lybx-leyw/dsh-zju-ui-shared') return shellUi;
     throw new Error(`bundle 里出现了未预期的 require：${id}`);
   });
   assert.equal(typeof Panel, 'function', 'bundle 应当导出 Panel');

@@ -8,7 +8,7 @@
 // 静态渲染安全：本文件没有任何模块级浏览器 API。全屏与朗读只在事件/副作用里碰
 // `document` / `speechSynthesis`，所以 `renderToStaticMarkup` 下与 Node 测试里都能渲染。
 import React, { useEffect, useRef, useState } from 'react';
-import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { ClassroomStage } from 'dsh-zhiyun-core-classroom-stage';
 import { ClassroomSlide } from 'dsh-zhiyun-classroom-renderer';
 import css from './style.css';

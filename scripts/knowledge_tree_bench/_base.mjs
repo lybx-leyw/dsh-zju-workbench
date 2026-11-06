@@ -395,7 +395,7 @@ export async function shell() {
   return import(urlOf('dsh-zhiyun-shell-workbench', 'src/model.js'));
 }
 
-/** `dsh-zhiyun-shell-ui` 的 UI 原语（客户端模块，基准里只核对它们存在）。 */
+/** `@lybx-leyw/dsh-zju-ui-shared` 的 UI 原语（客户端模块，基准里只核对它们存在）。 */
 export async function shellUi() {
-  return import(urlOf('dsh-zhiyun-shell-ui', 'src/index.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-ui-shared', 'src/index.js'));
 }

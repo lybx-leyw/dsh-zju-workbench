@@ -47,7 +47,9 @@ export const CLIENT_PACKAGES = [
   // 产品级的 dsh-pages 默认值校准（51px 导航宽度）。目录名是 `pages-default`，
   // 发布名是 `@lybx-leyw/dsh-zju-pages-default`，所以这里写**目录名**。
   'pages-default',
-  'dsh-zhiyun-shell-ui',
+  // 共享 UI 原语：目录名 `ui-shared`，发布名 `@lybx-leyw/dsh-zju-ui-shared`。
+  // 同样写目录名 —— 这一列是 `packages/client/<目录>` 的键。
+  'ui-shared',
   'dsh-zhiyun-shell-workbench',
   'dsh-zhiyun-shell-bridge',
   'dsh-zhiyun-source-netproxy',

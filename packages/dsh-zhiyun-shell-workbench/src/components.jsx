@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Empty, Icon } from 'dsh-zhiyun-shell-ui';
+import { Empty, Icon } from '@lybx-leyw/dsh-zju-ui-shared';
 import { NAV, FULL_BLEED_PAGES, pageSlot } from './model.js';
 
 /**

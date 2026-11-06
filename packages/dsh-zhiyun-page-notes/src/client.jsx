@@ -43,7 +43,7 @@
 // 把用户删掉的内容又救回来。
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-import { Icon, Notice, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { Icon, Notice, mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 // 图谱渲染是独立包（`dsh-zhiyun-graph-render`，整包移植自雷达候选 note-graph）：
 // 页面只负责把 vault 的 graph 读数递进去，不背 cytoscape 这份依赖。
 import { NoteGraph, css as graphCss } from 'dsh-zhiyun-graph-render';

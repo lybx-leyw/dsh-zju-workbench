@@ -22,7 +22,7 @@ import React, { createContext, useContext, useCallback, useEffect, useMemo, useR
 import { ScheduleView } from './schedule-view.jsx';
 import { taskKeyFor, weekStart } from './agenda.js';
 import scheduleCss from './schedule.css';
-import { Empty, Icon, Notice, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { Empty, Icon, Notice, mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。

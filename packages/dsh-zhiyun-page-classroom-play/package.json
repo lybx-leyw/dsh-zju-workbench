@@ -15,7 +15,7 @@
     "client": {
       "platform": "web",
       "external": [
-        "dsh-zhiyun-shell-ui",
+        "@lybx-leyw/dsh-zju-ui-shared",
         "dsh-zhiyun-classroom-renderer",
         "dsh-zhiyun-core-classroom-stage"
       ]

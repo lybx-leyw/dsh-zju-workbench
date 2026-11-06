@@ -12,7 +12,7 @@
  *   - pbl：briefing 与交付物清单。
  * 另外守一条：空 classroom 显示空状态，而不是一片空白。
  *
- * 打桩两个 external（`dsh-zhiyun-shell-ui`、`dsh-zhiyun-core-classroom-stage`）：
+ * 打桩两个 external（`@lybx-leyw/dsh-zju-ui-shared`、`dsh-zhiyun-core-classroom-stage`）：
  * 前者与本页无关，后者自带 renderer 的 vendor 树（motion / echarts / shiki），
  * 把整棵树拖进来只会让失败难归因，而舞台本身的 SSR 已由 classroom-stage.test.mjs 覆盖。
  *
@@ -89,7 +89,7 @@ async function loadClient() {
       plugins: [{
         name: 'stub-externals',
         setup(builder) {
-          builder.onResolve({ filter: /^dsh-zhiyun-shell-ui$/ }, () => ({ path: 'shell', namespace: 'stub' }));
+          builder.onResolve({ filter: /^@lybx-leyw/dsh-zju-ui-shared$/ }, () => ({ path: 'shell', namespace: 'stub' }));
           builder.onResolve({ filter: /^dsh-zhiyun-core-classroom-stage$/ }, () => ({ path: 'stage', namespace: 'stub' }));
           builder.onResolve({ filter: /^dsh-zhiyun-classroom-renderer$/ }, () => ({ path: 'renderer', namespace: 'stub' }));
           builder.onLoad({ filter: /.*/, namespace: 'stub' }, (args) => ({

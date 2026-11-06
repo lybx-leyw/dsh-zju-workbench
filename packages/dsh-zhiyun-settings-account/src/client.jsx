@@ -15,7 +15,7 @@
 //    `dsh-zhiyun-source-card` 的「浙大一卡通」分区读写；这个对话框将来要接工作台
 //    自己的账号体系，两者不能混在一起。
 import React from 'react';
-import { Icon, Notice, SectionTitle, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Icon, Notice, SectionTitle, mountStyle } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 
 export const name = 'zhiyun-settings-account-client';

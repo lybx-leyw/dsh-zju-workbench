@@ -9,7 +9,7 @@
 // 学习页的那张样式表里。
 import React from 'react';
 import { QuestionBankPage } from './question-bank.jsx';
-import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 
 export const name = 'zhiyun-page-quiz-client';

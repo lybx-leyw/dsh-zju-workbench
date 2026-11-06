@@ -76,10 +76,13 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'dsh-zhiyun-page-today',
     'dsh-zhiyun-settings-account',
     'dsh-zhiyun-shell-bridge',
-    'dsh-zhiyun-shell-ui',
     'dsh-zhiyun-shell-workbench',
     'dsh-zhiyun-source-card',
     'dsh-zhiyun-source-netproxy',
+    // 共享 UI 原语：包名是 `@lybx-leyw/dsh-zju-ui-shared`，但 `loadSheets` 的 key 是
+    // **包目录名**（`packages/client/ui-shared/`）—— 分组布局下目录名才是它在
+    // `packages/` 里的唯一标识。字典序里 `u` 排在所有 `dsh-*` 之后。
+    'ui-shared',
   ]);
 });
 

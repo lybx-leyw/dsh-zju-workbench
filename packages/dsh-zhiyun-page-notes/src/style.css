@@ -164,7 +164,7 @@ body[data-zhiyun] .zs-nt-confirm-actions {
   display: flex;
   gap: 8px;
 }
-/* ⚠️ 不在这里改 `.zs-button` 的 padding：那条规则属于 `dsh-zhiyun-shell-ui`
+/* ⚠️ 不在这里改 `.zs-button` 的 padding：那条规则属于 `@lybx-leyw/dsh-zju-ui-shared`
    （`body[data-zhiyun] .zs-button`），两个包争同一属性同一个元素的同一个值，
    胜负就只看样式表的挂载顺序 —— `tests/css-order.test.mjs` 会直接判红。
    确认条只需要"窄一点"，用 `align-self` + 让按钮自己按内容撑开即可。 */

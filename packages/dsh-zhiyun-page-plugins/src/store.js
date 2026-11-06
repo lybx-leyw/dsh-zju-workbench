@@ -2,7 +2,7 @@
 //
 // 为什么状态住在这里而不是组件里：这一页会被反复挂载/卸载（切到别的页面就卸载），
 // 而读一次图要跨宿主往返；让快照活过页面切换，切回来就不用重新等。
-// 快照的形状与 dsh-zhiyun-shell-ui 的 `useStore`（subscribe + getSnapshot）对齐，
+// 快照的形状与 @lybx-leyw/dsh-zju-ui-shared 的 `useStore`（subscribe + getSnapshot）对齐，
 // 组件因此不需要认识任何服务。
 import { buildView, fiberNameIndex, readPlane } from './runtime.js';
 

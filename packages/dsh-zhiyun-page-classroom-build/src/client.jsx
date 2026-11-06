@@ -23,7 +23,7 @@
  * 显示「课堂服务未就绪」，页面本身仍然站得住。
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { registerSlot } from './index.js';
 import {
   ATTACHMENT_STATUS,

@@ -17,7 +17,7 @@
         "@deepseek-ai/dsh-client-ui-theme",
         "@deepseek-ai/dsh-client-ui-settings-general"
       ],
-      "external": ["dsh-zhiyun-shell-ui"]
+      "external": ["@lybx-leyw/dsh-zju-ui-shared"]
     }
   },
   "peerDependencies": { "@deepseek-ai/cordis": ">=4.0.2 <5" },

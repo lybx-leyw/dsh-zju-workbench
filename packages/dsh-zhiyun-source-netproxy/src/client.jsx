@@ -17,7 +17,7 @@
 // 折叠状态下那行自述读数（「已接管流量 · 1 个代理 · 1 条规则」）保留为面板顶部一行，
 // 收起时它仍是唯一能看见的结论。
 import React, { useEffect, useState } from 'react';
-import { Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Icon, Notice, mountStyle } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 
 export const name = 'zhiyun-net-proxy-client';

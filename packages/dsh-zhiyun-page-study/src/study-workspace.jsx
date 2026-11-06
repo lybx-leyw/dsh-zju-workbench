@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { GenerationQueue } from './generation-queue.jsx';
 import { CourseGraph } from './course-graph.jsx';
-import { useStudy } from 'dsh-zhiyun-shell-ui';
+import { useStudy } from '@lybx-leyw/dsh-zju-ui-shared';
 import { VideoPanel } from "./video-panel.jsx";
 import { AiTeaching } from './ai-teaching.jsx';
 import { BranchBoard } from './branch-board.jsx';

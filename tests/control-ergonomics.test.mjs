@@ -37,7 +37,7 @@ import path from 'node:path';
 
 const read = p => fs.readFileSync(path.resolve(p), 'utf8');
 
-const SHELL_UI = read('packages/dsh-zhiyun-shell-ui/src/style.css');
+const SHELL_UI = read('packages/client/ui-shared/src/style.css');
 const WORKBENCH = read('packages/dsh-zhiyun-shell-workbench/src/style.css');
 
 const ruleOf = (css, pattern) => {

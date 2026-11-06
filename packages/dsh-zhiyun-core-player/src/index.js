@@ -1,7 +1,7 @@
 /**
  * 播放统计的**宿主半边**：本包提供的是纯函数，宿主侧没有行为。
  *
- * 但它**必须**作为 Loader entry 存在 —— 与 `dsh-zhiyun-shell-ui` 同一条理由：
+ * 但它**必须**作为 Loader entry 存在 —— 与 `@lybx-leyw/dsh-zju-ui-shared` 同一条理由：
  * bundle 是被宿主 Loader 按条目加载的，没有 `name` 的模块不是合法插件，
  * 放进 profile 会让**整个工作台起不来**（CONTRIBUTING 3.1）。
  * 所以这里给一个只有名字、没有行为的插件。

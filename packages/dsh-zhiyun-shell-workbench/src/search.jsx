@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Icon, useStore } from 'dsh-zhiyun-shell-ui';
+import { Icon, useStore } from '@lybx-leyw/dsh-zju-ui-shared';
 import { matchingPages, visiblePages } from './model.js';
 
 /**

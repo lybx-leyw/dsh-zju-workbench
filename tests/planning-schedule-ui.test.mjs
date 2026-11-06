@@ -43,7 +43,7 @@ test('DDL task -> multiple execution slots -> edit/delete, with independent due 
       };
       createRoot(document.getElementById('root')).render(<Planning ctx={null}/>);
     `, resolveDir: process.cwd(), loader: 'jsx' }, bundle: true, write: false, format: 'iife', loader: { '.css': 'text' }, plugins: [{ name: 'ui-fixture', setup(builder) {
-      builder.onResolve({filter:/^dsh-zhiyun-shell-ui$/},()=>({path:'ui',namespace:'fixture'}));
+      builder.onResolve({filter:/^@lybx-leyw/dsh-zju-ui-shared$/},()=>({path:'ui',namespace:'fixture'}));
       builder.onLoad({filter:/.*/,namespace:'fixture'},()=>({ contents: `import React from 'react'; export const Icon=()=>null; export const Empty=({title,children})=><div>{title}{children}</div>; export const Notice=({children})=><div>{children}</div>; export const mountStyle=()=>{};`, loader:'jsx',resolveDir:process.cwd() }));
     } }] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 960 } });

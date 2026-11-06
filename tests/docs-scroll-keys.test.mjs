@@ -65,7 +65,7 @@ async function bundle(workdir) {
   const outfile = path.join(dir, 'app.js');
   const { build } = await import('esbuild');
   const STUBS = {
-    'dsh-zhiyun-shell-ui': `import React from "react";
+    '@lybx-leyw/dsh-zju-ui-shared': `import React from "react";
       export const Icon = () => React.createElement("i");
       export const Empty = (p) => React.createElement("div", null, p.title, p.children);
       export const mountStyle = () => {};`,

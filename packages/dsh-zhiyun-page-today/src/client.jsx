@@ -1,6 +1,6 @@
 // 「今天」页：课表、已采纳的题、上次打开的那一节，以及今天到期还没勾掉的事。
 import React, { useEffect, useRef, useState } from 'react';
-import { Icon, Notice, SectionTitle, mountStyle, registerPageContent, useStudy } from 'dsh-zhiyun-shell-ui';
+import { Icon, Notice, SectionTitle, mountStyle, registerPageContent, useStudy } from '@lybx-leyw/dsh-zju-ui-shared';
 import { clock, projectAgenda } from './agenda.js';
 import { dueFromSnapshot } from './due.js';
 import { writeFocus } from './focus.js';

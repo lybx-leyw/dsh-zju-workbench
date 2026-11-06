@@ -62,7 +62,7 @@ function hostStubs() {
     '@deepseek-ai/dsh-client-ui-slots': {},
     '@deepseek-ai/dsh-client-ui-primitives': { MarkdownText: noop },
     '@deepseek-ai/dsh-client-ui-dockkit': {},
-    'dsh-zhiyun-shell-ui': { Icon: noop, Notice: noop, mountStyle: () => {} },
+    '@lybx-leyw/dsh-zju-ui-shared': { Icon: noop, Notice: noop, mountStyle: () => {} },
   };
 }
 

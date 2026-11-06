@@ -1,6 +1,6 @@
 // 共享 UI 原语：把「共享原子样式」注入一次，并把原语本身交给其它客户端包 require。
 //
-// 页面包用 `import { Icon } from 'dsh-zhiyun-shell-ui'`：构建时它是 external，
+// 页面包用 `import { Icon } from '@lybx-leyw/dsh-zju-ui-shared'`：构建时它是 external，
 // 运行时由客户端的模块表解析到**这个** bundle 的 exports（见 dsh.client.external）。
 import * as primitives from './primitives.jsx';
 import css from './style.css';
@@ -33,5 +33,5 @@ export { registerPageContent } from './page-registration.jsx';
 // `exports = exports.default ?? exports`），于是 default 会顶掉真正的插件面 —— 它拿到的是
 // 原语命名空间对象（没有 `apply`），整页直接 "Failed to load plugins:
 // invalid plugin, expect function or object with an \"apply\" method, received object"。
-// 具名导出就够了：别的包 `import { Icon } from 'dsh-zhiyun-shell-ui'` 走的是本 bundle
+// 具名导出就够了：别的包 `import { Icon } from '@lybx-leyw/dsh-zju-ui-shared'` 走的是本 bundle
 // 的 exports 表（dsh.client.external 建立的行），与 ESM default 无关。

@@ -3,7 +3,7 @@
 // 页面不认识任何服务：图与写动作都由 store 通过插槽 inject 递进来（`{ store }`），
 // 组件只读快照、只调回调。样式用本包自己的 `zpl-` 前缀，不去改外壳的 `.zy-*`。
 import React, { useEffect, useMemo, useState } from 'react';
-import { Icon, Notice, SectionTitle, useStore } from 'dsh-zhiyun-shell-ui';
+import { Icon, Notice, SectionTitle, useStore } from '@lybx-leyw/dsh-zju-ui-shared';
 import { createLedger, summarize } from './usage.js';
 
 /** 使用账本在 localStorage 里的键。改名等于重置统计，所以带版本号。 */

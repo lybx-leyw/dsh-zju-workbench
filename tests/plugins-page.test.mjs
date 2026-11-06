@@ -50,8 +50,8 @@ const plugin = (name, extra = {}) => ({
 });
 
 test('模块说明符归一到图行：<包名>/client 与裸包名是同一行', () => {
-  assert.equal(stripClientSuffix('dsh-zhiyun-shell-ui/client'), 'dsh-zhiyun-shell-ui');
-  assert.equal(stripClientSuffix('dsh-zhiyun-shell-ui'), 'dsh-zhiyun-shell-ui');
+  assert.equal(stripClientSuffix('@lybx-leyw/dsh-zju-ui-shared/client'), '@lybx-leyw/dsh-zju-ui-shared');
+  assert.equal(stripClientSuffix('@lybx-leyw/dsh-zju-ui-shared'), '@lybx-leyw/dsh-zju-ui-shared');
   // 只有尾部整段 `/client` 才算，别把包名里的 client 也切掉。
   assert.equal(stripClientSuffix('@x/dsh-client-ui-slots'), '@x/dsh-client-ui-slots');
 });
@@ -178,7 +178,7 @@ test('叶 = 没有任何包请求它；有下游的包不给勾选框', () => {
     modules: [
       { id: 'dsh-zhiyun-core-parser', inject: [], external: [] },
       { id: 'dsh-zhiyun-core-study', inject: [], external: [] },
-      { id: 'dsh-zhiyun-page-today', inject: [], external: ['dsh-zhiyun-shell-ui'] },
+      { id: 'dsh-zhiyun-page-today', inject: [], external: ['@lybx-leyw/dsh-zju-ui-shared'] },
     ],
     // 宿主面：study-core 硬依赖 parser 的服务。这条边决定 parser 不是叶。
     host: plane([

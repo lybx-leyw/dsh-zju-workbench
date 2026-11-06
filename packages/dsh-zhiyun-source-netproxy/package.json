@@ -8,6 +8,6 @@
   "exports": { ".": "./src/index.js", "./client": "./lib/client.js", "./package.json": "./package.json" },
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web", "external": ["dsh-zhiyun-shell-ui"] }
+    "client": { "platform": "web", "external": ["@lybx-leyw/dsh-zju-ui-shared"] }
   }
 }

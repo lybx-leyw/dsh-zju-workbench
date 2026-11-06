@@ -302,23 +302,57 @@ function candidateWidths(sheets) {
 const ISOLATED_PREFIXES = ['dsh-radar-'];
 
 /**
- * 读各客户端包的样式表 → Map<包名, 规则[]>（按包名排序）。
+ * 列出 `packages/` 下所有带 manifest 的包目录（两种布局，与 `workspace-packages.mjs` 一致）。
+ *
+ * 支持两种布局，因为本仓同时存在：
+ *   - 平铺：`packages/<name>/package.json`（绝大多数产品包）；
+ *   - 分组：`packages/<group>/<name>/package.json`（`packages/client/…`、`packages/radar/…`）。
+ *
+ * 只扫平铺会让**分组目录里的包整块逃出检查**：`ui-shared` 移进
+ * `packages/client/` 之后，它的样式表一度静默退出覆盖面，而检查照旧报「0 条问题」——
+ * 这正是守卫最糟的失效方式（假绿）。`dsh-radar-*` 仍然隔离在外。
+ *
+ * @returns `{ dir, name }[]`，按目录名排序。
+ */
+export function packageDirs(pkgRoot) {
+  const out = [];
+  if (!existsSync(pkgRoot)) return out;
+  for (const entry of readdirSync(pkgRoot).sort()) {
+    if (ISOLATED_PREFIXES.some(prefix => entry.startsWith(prefix))) continue;
+    const flat = path.join(pkgRoot, entry);
+    if (existsSync(path.join(flat, 'package.json'))) {
+      out.push({ dir: flat, name: entry });
+      continue;
+    }
+    let children;
+    try {
+      children = readdirSync(flat, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const child of children) {
+      if (!child.isDirectory() || ISOLATED_PREFIXES.some(prefix => child.name.startsWith(prefix))) continue;
+      const nested = path.join(flat, child.name);
+      if (existsSync(path.join(nested, 'package.json'))) out.push({ dir: nested, name: child.name });
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+/**
+ * 读各客户端包的样式表 → Map<包目录名, 规则[]>（按目录名排序）。
  *
  * 递归读 `src/**` 下的**所有** .css —— 只认 `src/style.css` 会让后来新增的
  * `src/settings.css` 之类的表整个逃出检查范围。读失败不吞异常：文件在那里却读不动，
  * 是环境问题，不该表现为「检查通过」。
  *
- * 收录判据是**位置**（`packages/<dir>/` 带 package.json），不是包名前缀 ——
- * 包名不再强制 `dsh-zhiyun-`，只把 `dsh-radar-*` 隔离在外。
+ * 收录判据是**位置**（带 package.json 的包目录），不是包名前缀；分组布局
+ * （`packages/client/…`）也必须扫到，否则那里的包会静默退出覆盖面。
  */
 export function loadSheets(root) {
   const pkgRoot = path.join(root, 'packages');
   const sheets = new Map();
-  if (!existsSync(pkgRoot)) return sheets;
-  for (const dir of readdirSync(pkgRoot).sort()) {
-    if (ISOLATED_PREFIXES.some(prefix => dir.startsWith(prefix))) continue;
-    if (!existsSync(path.join(pkgRoot, dir, 'package.json'))) continue;
-    const srcDir = path.join(pkgRoot, dir, 'src');
+  for (const { dir, name } of packageDirs(pkgRoot)) {
+    const srcDir = path.join(dir, 'src');
     if (!existsSync(srcDir) || !statSync(srcDir).isDirectory()) continue;
     const files = [];
     (function walk(current) {
@@ -338,7 +372,7 @@ export function loadSheets(root) {
       const tag = files.length > 1 ? path.basename(file) : undefined;
       for (const rule of parsed) rules.push(tag ? { ...rule, file: tag } : rule);
     }
-    sheets.set(dir, rules);
+    sheets.set(name, rules);
   }
   return sheets;
 }

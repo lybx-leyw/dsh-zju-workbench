@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from 'dsh-zhiyun-shell-ui';
+import { Icon } from '@lybx-leyw/dsh-zju-ui-shared';
 import { Page, NativeSettingsHost } from './components.jsx';
 import { SearchOverlay } from './search.jsx';
 import { NAV, hiddenPageIds, pageSlot } from './model.js';

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useStudy } from 'dsh-zhiyun-shell-ui';
+import { useStudy } from '@lybx-leyw/dsh-zju-ui-shared';
 import { GenerationProgress } from './generation-progress.jsx';
 
 const pending = job => ['queued', 'running'].includes(job.state);

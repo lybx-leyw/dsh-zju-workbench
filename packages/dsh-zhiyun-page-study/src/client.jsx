@@ -6,7 +6,7 @@ import React from 'react';
 // 题库页已经独立成 `dsh-zhiyun-page-quiz`：本页只保留「知识点上用同一套出题器」的那块面板，
 // 以及讲义生成要用的模型选择器。依赖方向单向（study → quiz），不会成环。
 import { GenerationModels } from 'dsh-zhiyun-page-quiz';
-import { Notice, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { Notice, mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { StudyWorkspace } from './study-workspace.jsx';
 import css from './style.css';
 // 视频栏是第二套样式（`zs-video-*`）：它有自己的网格与窄屏断点，不跟正文共用规则。

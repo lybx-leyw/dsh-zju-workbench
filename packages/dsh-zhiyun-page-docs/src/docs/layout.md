@@ -20,7 +20,7 @@
 
 | 前缀 | 职责 | 例子 |
 | --- | --- | --- |
-| `shell-` | 外壳本身：导航、插槽、共享原语 | `dsh-zhiyun-shell-workbench`、`dsh-zhiyun-shell-ui` |
+| `shell-` | 外壳本身：导航、插槽、共享原语 | `dsh-zhiyun-shell-workbench`、`@lybx-leyw/dsh-zju-ui-shared` |
 | `source-` | 外部数据源：登录、抓取、缓存 | `dsh-zhiyun-source-zdbk`、`dsh-zhiyun-source-cc98` |
 | `core-` | 领域逻辑：解析、索引、状态、出题 | `dsh-zhiyun-core-parser`、`dsh-zhiyun-core-notes` |
 | `host-` | 宿主侧能力 | `dsh-zhiyun-host-office`、`dsh-zhiyun-host-paper` |

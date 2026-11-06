@@ -32,7 +32,7 @@
 //      降级成纯文本 —— 所以页内目录不能靠锚点，只能按"第几个标题"滚动。
 //   2. 宿主的 `.markdown` 类名在产物里是哈希过的，跟着它写样式会静默失效。
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Empty, Icon, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { Empty, Icon, mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { DEFAULT_PAGE, SECTIONS } from './docs-manifest.js';
 import { contentOf } from './docs-content.js';

@@ -16,7 +16,7 @@ async function clientModules() {
     console,
     window: { __ModuleLoader__: { load(row) { factories.set(row.id, row.factory); } } },
   });
-  for (const name of ['dsh-zhiyun-shell-ui', 'dsh-zhiyun-classroom-renderer']) {
+  for (const name of ['@lybx-leyw/dsh-zju-ui-shared', 'dsh-zhiyun-classroom-renderer']) {
     const text = await readFile(new URL(`../packages/${name}/lib/client.js`, import.meta.url), 'utf8');
     vm.runInContext(text, scope, { filename: `${name}/client.js` });
   }

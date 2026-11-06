@@ -19,7 +19,7 @@
   把 `inject: ['slots']` 写在这里会让插件在宿主上永远等不到依赖 —— 那一行只会把
   「页面没注册」升级成「整个包没启动」。真正的 `inject` 与注册动作在 `client.jsx`，
   插槽名与 `registerSlot()` 集中在 `index.js`，两边不复制字符串。
-- 不 import 任何别的包的 `src/`；只走 `ctx.*` 与 `dsh-zhiyun-shell-ui` 的公开导出。
+- 不 import 任何别的包的 `src/`；只走 `ctx.*` 与 `@lybx-leyw/dsh-zju-ui-shared` 的公开导出。
 - 不新增宿主种子，不加 npm 依赖。PDF 只在浏览器里记下文件名/大小，**不上传**（见下）。
 - 样式一张 `src/style.css`，选择器全部 `.zyc-build-*`，颜色只取外壳的 `--zy-*`。
 

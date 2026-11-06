@@ -20,7 +20,7 @@
  * 用户看不到 `+`；编码只发生在宿主侧（`/api/ref`），页面不复刻规则。
  */
 import React, { useMemo } from 'react';
-import { Icon } from 'dsh-zhiyun-shell-ui';
+import { Icon } from '@lybx-leyw/dsh-zju-ui-shared';
 
 /** 相对路径的目录部分（不含结尾斜杠）；顶层给空串。 */
 function dirOf(rel) {

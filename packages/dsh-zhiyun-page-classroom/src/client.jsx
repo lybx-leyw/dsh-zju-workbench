@@ -20,7 +20,7 @@
 // 所以状态的读取与起停一律走宿主注册的同源路由 `/zhiyun-openmaic/*`
 // （见 host 包的 `src/routes.js`）。
 import React from 'react';
-import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 
 export const name = 'zhiyun-page-classroom-client';

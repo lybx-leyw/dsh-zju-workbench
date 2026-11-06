@@ -4,7 +4,7 @@ import { QuestionGenerationProgress } from './question-generation-progress.jsx';
 import {GenerationModels} from './generation-models.jsx';
 import React, { useEffect, useState, useSyncExternalStore,useRef,useId } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-import { useStudy } from 'dsh-zhiyun-shell-ui';
+import { useStudy } from '@lybx-leyw/dsh-zju-ui-shared';
 import { QUESTION_STRATEGIES, QUESTION_TYPES, STRATEGY_PRESETS, allocateStrategies } from 'dsh-zhiyun-core-quiz';
 
 const useBank = bank => useSyncExternalStore(bank.subscribe,bank.getSnapshot,bank.getSnapshot);

@@ -197,7 +197,7 @@ test('大纲：brief 生成骨架，增删改与拖序都是纯函数', () => {
 /* ────────────────────────────── 渲染 ────────────────────────────── */
 
 /**
- * 把 client.jsx 打成可 import 的 ESM，并把 `dsh-zhiyun-shell-ui` 换成最小桩。
+ * 把 client.jsx 打成可 import 的 ESM，并把 `@lybx-leyw/dsh-zju-ui-shared` 换成最小桩。
  * React 必须 external —— 打进来会有两份 React，hooks 直接拿到 null dispatcher。
  */
 async function loadClient(suffix = '') {
@@ -218,7 +218,7 @@ async function loadClient(suffix = '') {
       plugins: [{
         name: 'stub-shell-ui',
         setup(builder) {
-          builder.onResolve({ filter: /^dsh-zhiyun-shell-ui$/ }, () => ({ path: 'stub', namespace: 'stub' }));
+          builder.onResolve({ filter: /^@lybx-leyw/dsh-zju-ui-shared$/ }, () => ({ path: 'stub', namespace: 'stub' }));
           builder.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
             // 页面自注册助手：本测试只关心「组件能渲染」，注册动作由外壳承担。
             contents: 'export const mountStyle = () => {};\nexport const registerPageContent = () => {};',

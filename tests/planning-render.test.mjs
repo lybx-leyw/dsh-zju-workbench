@@ -55,7 +55,7 @@ async function loadClient(suffix = '') {
       plugins: [{
         name: 'stub-primitives',
         setup(builder) {
-          builder.onResolve({ filter: /^dsh-zhiyun-shell-ui$/ }, () => ({ path: 'stub', namespace: 'stub' }));
+          builder.onResolve({ filter: /^@lybx-leyw/dsh-zju-ui-shared$/ }, () => ({ path: 'stub', namespace: 'stub' }));
           builder.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
             contents: `
               import React from "react";

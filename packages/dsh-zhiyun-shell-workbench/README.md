@@ -93,7 +93,7 @@ profile 同时加载本包与 `dsh-zhiyun-shell-bridge` 两个 bundle，各自�
 
 设置**就是**宿主原生浮窗，与 DSH 本体一致：外壳只把原生 `sidebar.settings` 注册项的 store 动作接到导轨「设置」与账号菜单上，不复制分组、不另做一套界面。插件的 `settings.section` 注册零改动。注意它属于应用级浮层，portal 到 `body`，因此不受 ask 容器裁剪 —— 这是与原生 DSH 一致的行为。
 
-共享的图标、品牌标记、空态与分区标题来自 `dsh-zhiyun-shell-ui`（`dsh.client.external` 里声明，esbuild 里 external）。
+共享的图标、品牌标记、空态与分区标题来自 `@lybx-leyw/dsh-zju-ui-shared`（`dsh.client.external` 里声明，esbuild 里 external）。
 
 `src/style.css` 只保留智云导航与业务页面需要的 `.zy-*` 规则；原生工作区、原生侧栏、原生设置外观与浮层一律沿用宿主样式，不在这里覆盖。无前缀状态类（`is-active` 等）是跨包共享命名空间：给壳侧同名类新增属性前，先确认不与页面包的声明撞同名属性。
 

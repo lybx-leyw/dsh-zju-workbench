@@ -37,7 +37,7 @@ packages/dsh-zhiyun-page-docs/
   },
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web", "external": ["dsh-zhiyun-shell-ui"] }
+    "client": { "platform": "web", "external": ["@lybx-leyw/dsh-zju-ui-shared"] }
   }
 }
 ```
@@ -98,7 +98,7 @@ export function apply(ctx) {
 `_markdown_1ypvv_5`，跟着它写规则会静默失效。要覆盖排版就在自己的容器类下写
 后代选择器，或者用宿主显式写进 DOM 的稳定属性。
 
-**共享原语的导出是逐个列的。** `dsh-zhiyun-shell-ui` 的入口有一份显式清单，
+**共享原语的导出是逐个列的。** `@lybx-leyw/dsh-zju-ui-shared` 的入口有一份显式清单，
 新增原语忘了加进去，使用方拿到 `undefined`，React 报 #130，表现是那一整块插槽
 凭空少一片。`tests/ui-primitives.test.mjs` 会比对两边。
 

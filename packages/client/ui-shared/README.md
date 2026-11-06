@@ -1,13 +1,17 @@
-﻿# dsh-zhiyun-shell-ui
+﻿# @lybx-leyw/dsh-zju-ui-shared
 
 智云 Pro 的**共享 UI 原语**：无状态、纯展示，被外壳与全部页面包共用。拆包前这些原语散在外壳的 `components.jsx` 里，页面组件也直接从外壳 import —— 共享物塞进「界面外壳」会让任何页面改动都要碰壳。现在壳不认识页面，页面也不认识壳，两边都只认这个包。
+
+目录是 `packages/client/ui-shared/`，**包名与目录名不一致**：目录名是仓库内部的分组习惯（`packages/client/` 放浏览器侧包），包名是宿主与模块表认的身份。客户端构建清单在 `scripts/build.mjs` 的 `CLIENT_PACKAGES`，那里写的是**目录名** `ui-shared`。
+
+> ⚠️ 本包 `private: true`。一旦要发布，[`tests/publish-guard.test.mjs`](../../tests/publish-guard.test.mjs) 会对 `@lybx-leyw/dsh-zju-*` 这个带 `zju` 的名字报错 —— 那是有意的闸门：机构名不能出现在 npm 上。届时需要换一个中性名，并同步 `dsh.client.external` 的 16 个使用方。
 
 导出的东西（客户端）：`Icon`、`Mark`、`Empty`、`SectionTitle`、`Notice`、`useStore`、`useStudy`、`mountStyle`。
 
 ## 用法
 
 ```js
-import { Icon, Mark, Empty, SectionTitle, Notice, mountStyle, useStudy } from 'dsh-zhiyun-shell-ui';
+import { Icon, Mark, Empty, SectionTitle, Notice, mountStyle, useStudy } from '@lybx-leyw/dsh-zju-ui-shared';
 ```
 
 跨包解析走客户端模块表：包名写进使用方 `package.json` 的 `dsh.client.external`，构建时 esbuild external 化，运行时由模块表解析到**本包 bundle 的 exports**（`scripts/build.mjs` 从 package.json 读 external，是单一真源）。
@@ -18,7 +22,7 @@ import { Icon, Mark, Empty, SectionTitle, Notice, mountStyle, useStudy } from 'd
 
 `.zs-button`、`.zs-primary`、`.zs-muted`、`.zs-courses button` 这类公共原子类的**唯一定义在本包**，消费方却在 `dsh-zhiyun-settings-account` 与 `dsh-zhiyun-page-study` 等插件包。当前没问题：页面包都在 `dsh.client.external` 里声明了本包，客户端模块表会强制本包先 materialize，样式必然生效。
 
-但这条依赖是**隐式**的 —— 单独停用本包（或将来新增页面包忘了写 `external`）时，这三个页面的按钮与提示文字会**静默退化成无样式**，不报错。所以：新增页面包务必在 `package.json` 的 `dsh.client.external` 里写 `"dsh-zhiyun-shell-ui"`，`scripts/build.mjs` 会照它做 external 化。
+但这条依赖是**隐式**的 —— 单独停用本包（或将来新增页面包忘了写 `external`）时，这三个页面的按钮与提示文字会**静默退化成无样式**，不报错。所以：新增页面包务必在 `package.json` 的 `dsh.client.external` 里写 `"@lybx-leyw/dsh-zju-ui-shared"`，`scripts/build.mjs` 会照它做 external 化。
 
 ## 响应式覆盖必须和它覆盖的基规则同包
 
@@ -40,5 +44,5 @@ import { Icon, Mark, Empty, SectionTitle, Notice, mountStyle, useStudy } from 'd
 Failed to load plugins: invalid plugin, expect function or object with an "apply" method, received object
 ```
 
-这是拆包真机上踩到的第一个坑（整站白屏）。具名导出就够了 —— 别的包 `import { Icon } from 'dsh-zhiyun-shell-ui'` 走的是模块表的 exports 表，与 ESM default 无关。
+这是拆包真机上踩到的第一个坑（整站白屏）。具名导出就够了 —— 别的包 `import { Icon } from '@lybx-leyw/dsh-zju-ui-shared'` 走的是模块表的 exports 表，与 ESM default 无关。
 

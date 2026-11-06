@@ -20,7 +20,7 @@
 //   2. **常量从 `./shared.js` 取，不从 `./index.js` 取。** 那个文件是宿主半边，
 //      import 它会把 `apply` 与 `node:fs` 一起打进浏览器产物（见 `shared.js` 顶部）。
 import React, { useCallback, useEffect, useState } from 'react';
-import { Icon, Notice, mountStyle } from 'dsh-zhiyun-shell-ui';
+import { Icon, Notice, mountStyle } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 import { MASK, ROUTE_PATH, WRITE_HEADER, errorText } from './shared.js';
 

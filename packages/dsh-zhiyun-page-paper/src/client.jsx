@@ -1,4 +1,4 @@
-import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+import { mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 import { Paper } from './Paper.jsx';
 import { SettingsSection } from './SettingsSection.jsx';
