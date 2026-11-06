@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-cc98-ubb-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】提能力提取 obsidian-cc98-publish 的 markdownToUbb（Markdown → CC98 UBB 方言），接到「笔记」页已有的正文区，补上「读回来了、写出不去」这条断边；强化式集成，不引入任何依赖",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

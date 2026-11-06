@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-refs-import",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 citation-js 0.9.0 解析族，给「论文」页的文献库补上「粘贴 BibTeX/RIS 一次导入多条」：把外部文献条目解析成 CSL-JSON 再走既有的逐篇上传，强化式集成",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@citation-js/core": "0.9.0",
+    "@citation-js/plugin-bibtex": "0.9.0",
+    "@citation-js/plugin-ris": "0.9.0"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

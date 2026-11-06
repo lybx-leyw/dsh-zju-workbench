@@ -4,9 +4,9 @@ import sharp from 'sharp';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { composeSlides, collageRequest, splitCollage } from '../packages/dsh-zhiyun-parser/src/vision.js';
-import { LectureParser } from '../packages/dsh-zhiyun-parser/src/parser.js';
-import { Transport } from '../packages/dsh-zhiyun-classroom/src/transport.js';
+import { composeSlides, collageRequest, splitCollage } from '../packages/dsh-zhiyun-core-parser/src/vision.js';
+import { LectureParser } from '../packages/dsh-zhiyun-core-parser/src/parser.js';
+import { Transport } from '../packages/dsh-zhiyun-source-classroom/src/transport.js';
 import { lock } from '../scripts/profile.mjs';
 import { mountHost, answer, png } from './fixtures/parser/host.mjs';
 
@@ -26,7 +26,7 @@ function model(options) {
     const pages = [...v.matchAll(/原课件第 (\d+) 页/g)].map(m => Number(m[1]));
     return pages.length ? response(pages) : body(Number(v.match(/这是第 (\d+) 页/)[1]));
   }
-  if (options.messages[0].content[0].text.includes('逐块语音稿清洗器')) return '## 逐块标注\n块 1-1';
+  if (options.messages[0].content[0].text.includes('逐块语音稿清洗器')) return '## 逐块标注\n块 1-1\n## 块标记\n{"tags":[{"index":1,"role":"主线","facets":["概念"],"summary":"本页概念"}]}';
   return answer(options);
 }
 async function withHost(fn, respond = model, version = lock.hostVersions[0]) {
@@ -72,7 +72,7 @@ for (const version of lock.hostVersions) test(`DSH ${version}: four pages use on
   const images = host.requests.filter(isVision);
   assert.equal(images.length, 1);
   assert.equal(images[0].messages[0].content.find(b => b.type === 'image').attachment.width, 2);
-  assert.deepEqual(progress.filter(p => p.phase === 'faithful').map(p => p.done), [1, 2, 3, 4]);
+  assert.deepEqual(progress.filter(p => p.phase === 'faithful').map(p => p.done), [0, 1, 2, 3, 4]);
   for (const request of host.requests.filter(r => !isVision(r))) {
     if (request.messages[0].content[0].text.includes('逐块语音稿清洗器')) {
       const v = variable(request), page = Number(v.match(/本页概念(\d+)/)[1]);

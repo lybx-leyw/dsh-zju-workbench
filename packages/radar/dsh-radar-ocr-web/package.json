@@ -1,0 +1,22 @@
+{
+  "name": "dsh-radar-ocr-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 @ocr-web/core@0.2.1（MIT，纯 JS 浏览器 OCR，PP-OCRv5 + onnxruntime-web），为讲义/板书图片提供「图 → 文本」的识别底层（强化式集成，B 类能力提取 + 封装）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@ocr-web/core": "0.2.1",
+    "@ocr-web/models-ppocrv5": "0.1.1",
+    "onnxruntime-web": "1.25.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

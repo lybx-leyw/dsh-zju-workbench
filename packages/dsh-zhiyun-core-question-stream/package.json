@@ -1,0 +1,12 @@
+{
+  "name": "dsh-zhiyun-core-question-stream",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "出题链的流式标签层：把一次流式模型调用按协议标签（FINISH/TOOL/THINK/PLAN）路由，并处理 <think> 前置、usage 尾帧、finalMeta 两态推流。不发起 HTTP —— 传输由宿主的 dsh-llm 负责",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  }
+}

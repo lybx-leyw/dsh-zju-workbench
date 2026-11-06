@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head><title>考试列表</title></head>
+<body>
+<table class="exam-table">
+  <thead>
+    <tr class="headTr"><th>序号</th><th>名称</th><th>时间</th><th>时长</th><th>考试状态</th><th>我的状态</th><th>成绩</th><th>方式</th><th>操作</th></tr>
+  </thead>
+  <tbody>
+    <tr class="dataTr">
+      <td>1</td>
+      <td><a href="/exam-ans/exam/test/examcode/examlist">期中测验</a></td>
+      <td>2026-04-10 14:00~16:00</td>
+      <td>120</td>
+      <td>进行中</td>
+      <td>未作答</td>
+      <td></td>
+      <td>线上</td>
+      <td><a href="#">进入</a></td>
+    </tr>
+    <tr class="dataTr">
+      <td>2</td>
+      <td>单元小测 &amp; 自测</td>
+      <td>2026-03-01 09:00~09:30</td>
+      <td>30</td>
+      <td>已结束</td>
+      <td>已交卷</td>
+      <td>92</td>
+      <td>线上</td>
+      <td><a href="#">查看</a></td>
+    </tr>
+    <!-- 少列的行（"暂无考试"提示）必须被丢掉，不能当成一条考试 -->
+    <tr class="dataTr"><td colspan="9">暂无考试数据</td></tr>
+  </tbody>
+</table>
+</body>
+</html>

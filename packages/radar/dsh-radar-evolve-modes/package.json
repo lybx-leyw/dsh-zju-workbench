@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-evolve-modes",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 @graysilver/dsh-evolve-modes（MIT，原生 DSH Web 插件），把「规划」页的「排完」从一键成型改为可组合的工作流 + 独立验收审查（强化式集成，A 类锁版挂载 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@graysilver/dsh-evolve-modes": "0.4.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

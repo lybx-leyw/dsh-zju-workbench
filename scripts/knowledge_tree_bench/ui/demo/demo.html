@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>链路演示 · 逐步调适</title>
+<link rel="stylesheet" href="/ui/demo/demo.css">
+</head>
+<body>
+
+<header id="top">
+  <div class="brand">
+    <span class="eyebrow">Pipeline Replay</span>
+    <b>真实链路 · 逐步调适</b>
+  </div>
+
+  <nav id="rail" class="rail"></nav>
+
+  <div class="controls">
+    <button id="start" class="ghost" title="回到开头">⏮</button>
+    <button id="prev" class="ghost" title="上一步（←）">◀</button>
+    <button id="next" title="下一步（→）">下一步 ▶</button>
+    <button id="play" class="ghost" title="连续播放（空格）">播放</button>
+    <button id="end" class="ghost" title="到末尾">⏭</button>
+  </div>
+</header>
+
+<div id="integrity" class="integrity" hidden></div>
+<div id="runMeta" class="runMeta"></div>
+
+<div id="progress">
+  <div class="track"><i id="bar"></i></div>
+  <span id="barLabel">0 / 0</span>
+  <span class="stepof">第 <b id="step">0</b> / <b id="total">0</b> 步</span>
+</div>
+
+<main>
+  <section id="stage">
+    <div class="tabs">
+      <button data-view="overview" class="on">全链路</button>
+      <button data-view="points">知识点叶</button>
+      <button data-view="tree">讲义树</button>
+      <button data-view="audit">验收</button>
+      <span class="spacer"></span>
+      <span class="now"><b id="phaseNow">—</b> · <span id="actNow">（还没开始）</span></span>
+    </div>
+    <div class="canvasWrap"><svg id="canvas"></svg></div>
+    <div id="probe" hidden></div>
+  </section>
+
+  <aside>
+    <div class="card pin">
+      <div class="ch"><span>读数</span><span id="logId" class="id"></span></div>
+      <div class="bd kv2">
+        <div><b>vision</b><span id="cVision">0</span></div>
+        <div><b>mix</b><span id="cMix">0</span></div>
+        <div><b>块</b><span id="cBlocks">0</span></div>
+        <div><b>知识点</b><span id="cPoints">0</span></div>
+        <div><b>耗时</b><span id="cElapsed">0s</span></div>
+        <div title="实时事件 / 事后补发事件。只有 vision/mix 是真正实时的；标记与建树是跑完补发的。"><b>实时/补发</b><span id="cLive">0 / 0</span></div>
+      </div>
+    </div>
+
+    <div class="card grow">
+      <div class="ch"><span>本阶段产物</span><span class="dim">探针</span></div>
+      <div class="bd scroll" id="artifact"><div class="hint">（还没开始）</div></div>
+    </div>
+
+    <div class="card grow3">
+      <div class="ch"><span>架构验收</span><span class="dim">不变量</span></div>
+      <div class="bd scroll" id="audit"><div class="hint">（还没开始）</div></div>
+    </div>
+
+    <div class="card grow2">
+      <div class="ch"><span>事件</span><span class="dim">点一条跳过去</span></div>
+      <div class="filters">
+        <button class="fbtn" data-filter="failed" title="识别/混合失败、润色失败">失败</button>
+        <button class="fbtn" data-filter="overLine" title="超过斩杀线的块/叶">超线</button>
+        <button class="fbtn" data-filter="noSource" title="讲义节点没有来源块">无来源</button>
+        <button class="fbtn" data-filter="deferred" title="parse() 之后补发的事件">补发</button>
+        <button class="fbtn clear" data-filter="" title="显示全部">全部</button>
+        <input id="search" class="search" placeholder="搜页号 / 块号 / 标题…" autocomplete="off">
+      </div>
+      <div class="bd scroll" id="events"></div>
+    </div>
+  </aside>
+</main>
+
+<script type="module" src="/ui/demo/app.mjs"></script>
+</body>
+</html>

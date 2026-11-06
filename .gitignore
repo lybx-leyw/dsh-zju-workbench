@@ -2,6 +2,8 @@ node_modules/
 .ref/
 .ref_book2skill/
 .ref-codex-ui/
+.ref_ppt2note/
+.ref_course2md/
 .runtime/
 artifacts/
 .backup/
@@ -11,6 +13,9 @@ artifacts/
 .temp_env
 *.dpapi
 packages/*/lib/
+# 分组目录下的包（如 packages/client/pages-default）是两层，上面那条 `packages/*/lib/`
+# 匹配不到它们的构建产物。产物由 `npm run build` 重新生成，一律不进仓库。
+packages/*/*/lib/
 # Python 的字节码缓存：本仓有 Python 工具（deploy/ 的收件服务、robot/ 的机器人），
 # 跑一次就会在同级生成 __pycache__，且里面的 .pyc 会记录**本地绝对路径**。
 __pycache__/
@@ -22,3 +27,67 @@ build-one.local.mjs
 # 收件服务的本地落盘目录：Windows 上没有 /mnt/workspace，server.py 必然退回到这里。
 # 里面是**真实用户反馈**而不是代码，一旦被 git add -A 带上就是公开仓库的信息泄露。
 deploy/*/data/
+# 一次性审计脚本的工作目录：里面的脚本会直接读 `.runtime/home/.credentials.yaml`
+# 的真实凭据去比对仓库，属于本地排查工具而非项目产物。放到根目录还会让
+# `git add -A` 每次都把它们带进暂存区（2026-10-20 两次踩到）。
+.audit/
+# .codebuddy 是 agent 的本地记忆（与会话过程），与 .workbuddy 同类，不进公开仓库。
+.codebuddy/
+
+# Local lecture exports and one-off debugging/rewriting scripts can contain classroom data.
+/docs/v01.md
+/docs/v02.md
+/tmp-*.cjs
+/tmp-*.mjs
+
+# 上游源码快照：体积大（DeepTutor 一份就 60 MB）、有自己的许可与发行节奏，跟着
+# 我们的提交走只会拖垮 clone 与 review。统一不进仓库 —— 需要时按锁文件拉回：
+#   npm run vendor:fetch        （校验 upstream.lock.json / vendor.lock.json 的
+#   npm run vendor:fetch -- --check   提交与 SHA-256 后落盘）
+vendor/
+
+# Local research library (publisher PDFs and reading notes).
+/.refers/
+
+# Benchmark 参考实现：从上游 clone 下来做对比/贡献参考，各自有独立许可与
+# 发行节奏，不跟本仓提交走（会拖垮 clone 与 review）。需要时按需重新 clone。
+/benchmark_refers/
+
+# 归档区：存放已停止参与构建、但保留可还原性的东西（见 archive/README.md）。
+# 里面是上游 vendor 源码（76 MB / 3800+ 文件），只在本机保留，不进仓库。
+# 需要还原时按 archive/README.md 的步骤从本机把它移回去。
+/archive/*/
+# 归档说明本身要进仓库 —— 它是「为什么归档、怎么还原」的唯一记录。
+!/archive/README.md
+
+# 上游对照快照：OpenMAIC 全量源码（2.9 GB / 760k 行），本地只作移植对照，
+# 见 docs/architecture/classroom-port.md。需要时重新 clone 到 ref/。
+/ref/
+
+# Cordis 框架上游源码快照（github.com/cordiverse/cordis，MIT，Copyright Shigma）。
+# 与上面的 `vendor/`、`/ref/`、`.ref/` 同类：上游有独立许可与发行节奏，体积也不小，
+# 跟着我们的提交走只会拖垮 clone 与 review。本地按需下载解压，不进仓库。
+# 注意：这是**解压得到的快照，没有 git 历史**；要查变更来源得另外 clone。
+/.ref-cordis/
+
+# 课堂移植把上游内核（dsl / geometry / renderer）vendor 进了包内，与根 `vendor/`
+# 的「不进仓库」策略相反：这几个包没有上游 lock 文件可回放，体积也只 3.5 MB，
+# 打包进仓库才能让 clone 后直接跑测试。unpdf 同理（PDF 文本抽取的唯一本地方案）。
+!packages/dsh-zhiyun-classroom-dsl/vendor/
+!packages/dsh-zhiyun-classroom-dsl/vendor/**
+!packages/dsh-zhiyun-classroom-geometry/vendor/
+!packages/dsh-zhiyun-classroom-geometry/vendor/**
+!packages/dsh-zhiyun-classroom-renderer/vendor/
+!packages/dsh-zhiyun-classroom-renderer/vendor/**
+!packages/dsh-zhiyun-core-classroom-media/vendor/
+!packages/dsh-zhiyun-core-classroom-media/vendor/**
+
+# 渲染一致性校验的临时产物目录（每次跑会重新生成）。
+/.verify-render-*/
+
+# 本地手改 profile 清单时留下的临时副本（如 `package.json.bak`）：它只是某次
+# 改名前后的本机备份，不是模板也不是文档，进仓库只会让人不知道哪份是真的。
+profiles/*/package.json.bak
+
+# 测试用的临时产物（ail-teaching 的 esbuild 输出等）
+.tmp/

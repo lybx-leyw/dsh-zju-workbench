@@ -1,0 +1,14 @@
+# 候选骨架：**未接入 profile** —— 本 patch 只有一条 insert，
+# 把上游 `pinyin-match@1.2.10` 的报告行挂成一个 loader 条目。
+#
+# 与 A 类（原生 DSH 插件包）不同，`pinyin-match` 是一个**纯函数库**，没有
+# `dsh.bundle.patch`、不注册路由、不挂插槽。所以本包**没有** `dsh.bundle.patch`，
+# 这条 insert 也**不是必须的**：真正的接入点是「学习」页的检索层
+# （`packages/dsh-zhiyun-page-study/src/layered-search.js` 的 `findIn()`）。
+#
+# 保留这份 patch 只为：评审时能**单独挂起本包**做对照实验（挂上/摘掉各跑一遍
+# 检索用例，差分证明「多调了更优实现」）。评审通过后应删除本文件，
+# 改为在 `dsh-zhiyun-page-study` 的依赖里锁版引入。
+- insert:
+    - id: radar-pinyin-match
+      name: dsh-radar-pinyin-match

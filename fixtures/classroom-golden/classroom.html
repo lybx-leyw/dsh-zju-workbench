@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' data: blob:; style-src 'unsafe-inline' data:; img-src data: blob:; media-src data: blob:; font-src data:; frame-src data: blob:; worker-src data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="OpenMAIC">
+<title>Photosynthesis: &lt;Light&gt; &amp; &quot;Life&quot;</title>
+<style>/*
+ * 内置最小播放器的样式。
+ *
+ * 源：ref/OpenMAIC/lib/standalone-player/player.css:12-87（根容器高度、字体栈、
+ *     字幕条 .caption-bar / .caption-text 的断点行为）
+ *
+ * 上游的 player.css 还 `@import 'tailwindcss'` 并扫描渲染器产物 —— 那是编译期
+ * 的事，归页面包。导出层只带这一份手写 CSS：它必须自足（单文件、无外链字体），
+ * 而且只作用于 `#openmaic-player` 里的元素（`srcdoc` 有独立文档，不会污染外层）。
+ */
+
+html,
+body,
+#openmaic-player {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #0f172a;
+  color: #0f172a;
+}
+
+.omc-player {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.omc-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.omc-frame {
+  position: relative;
+  background: #fff;
+  box-shadow: 0 20px 45px rgb(0 0 0 / 0.35);
+  overflow: hidden;
+}
+
+.omc-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
+.omc-canvas .omc-el {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.omc-canvas .omc-text {
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.omc-canvas .omc-text p {
+  margin: 0;
+}
+
+.omc-canvas .omc-text ul,
+.omc-canvas .omc-text ol {
+  margin: 0;
+  padding-inline-start: 1.4em;
+}
+
+.omc-canvas .omc-text table {
+  border-collapse: collapse;
+}
+
+.omc-canvas .omc-text td,
+.omc-canvas .omc-text th {
+  border: 1px solid #cbd5e1;
+  padding: 4px 8px;
+}
+
+.omc-canvas img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.omc-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.omc-media {
+  width: 100%;
+  height: 100%;
+  background: #0f172a;
+}
+
+/* 非幻灯片场景：测验 / 项目 / 不可用 */
+.omc-panel {
+  box-sizing: border-box;
+  width: min(46rem, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: 1.75rem 2rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 45px rgb(0 0 0 / 0.35);
+  font-size: 16px;
+  line-height: 1.65;
+  color: #1e293b;
+}
+
+.omc-panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.omc-panel h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.omc-panel p {
+  margin: 0 0 0.75rem;
+}
+
+.omc-question {
+  margin: 0 0 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.omc-question:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.omc-option {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.omc-option:hover {
+  background: #f1f5f9;
+}
+
+.omc-option input {
+  margin-top: 0.3rem;
+}
+
+.omc-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.omc-button {
+  border: 0;
+  border-radius: 0.45rem;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  cursor: pointer;
+}
+
+.omc-button[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.omc-result {
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.omc-result[data-correct='true'] {
+  color: #15803d;
+}
+
+.omc-result[data-correct='false'] {
+  color: #b91c1c;
+}
+
+.omc-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+/* 底部控制条 */
+.omc-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #0b1120;
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+.omc-bar button {
+  border: 1px solid #334155;
+  border-radius: 0.4rem;
+  background: #1e293b;
+  color: inherit;
+  font: inherit;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+}
+
+.omc-bar button[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.omc-dots {
+  display: flex;
+  gap: 0.35rem;
+  flex: 1 1 auto;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.omc-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #334155;
+  cursor: pointer;
+}
+
+.omc-dot[aria-current='true'] {
+  background: #60a5fa;
+}
+
+/* 字幕条：宽屏浮在场景上，窄屏/矮屏给固定高度的一条（源：player.css:38-87） */
+.omc-caption {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.75rem;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding-inline: 1.5rem;
+  pointer-events: none;
+}
+
+.omc-caption span {
+  max-width: 48rem;
+  border-radius: 0.5rem;
+  background: rgb(15 23 42 / 0.8);
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.625;
+  color: #fff;
+}
+
+@media (max-width: 639px), (max-height: 499px) {
+  .omc-caption {
+    position: static;
+    flex: none;
+    align-items: center;
+    min-height: 4rem;
+    padding: 0.375rem 0.75rem;
+    background: #0f172a;
+  }
+
+  .omc-caption span {
+    background: none;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.375;
+  }
+}
+</style>
+<style>#openmaic-player:empty{display:none}.openmaic-message{box-sizing:border-box;max-width:32rem;margin:2rem auto;padding:1rem 1.25rem;font:16px/1.5 system-ui,-apple-system,sans-serif;color:#334155;text-align:center}.openmaic-fallback{opacity:0;animation:openmaic-fallback-in 0s 2s forwards}.openmaic-fallback[data-failed]{opacity:1;animation:none}@keyframes openmaic-fallback-in{to{opacity:1}}</style>
+<noscript><style>.openmaic-fallback{display:none}</style></noscript>
+</head>
+<body>
+<div id="openmaic-player"></div>
+<script type="application/json" id="openmaic-classroom">{"formatVersion":1,"exportedAt":"2026-10-30T16:19:42.173Z","appVersion":"0.1.0","stage":{"name":"Photosynthesis: \u003cLight\u003e \u0026 \"Life\"","description":"Golden classroom for the parity gate: four scene types, one each.","language":"en","style":"professional","createdAt":1700000000000,"updatedAt":1700000000000},"agents":[],"scenes":[{"type":"slide","title":"What is photosynthesis?","order":0,"content":{"type":"slide","canvas":{"id":"slide-1","viewportSize":1000,"viewportRatio":0.5625,"theme":{"backgroundColor":"#ffffff","themeColors":["#5b9bd5","#ed7d31","#a5a5a5","#ffc000","#4472c4"],"fontColor":"#333333","fontName":"Arial"},"background":{"type":"solid","color":"#f8fafc"},"elements":[{"type":"text","id":"title","left":60,"top":40,"width":880,"height":70,"rotate":0,"content":"\u003cp\u003e\u003cstrong\u003e\u003cspan style=\"font-size: 36px\"\u003eWhat is photosynthesis?\u003c/span\u003e\u003c/strong\u003e\u003c/p\u003e","defaultFontName":"Arial","defaultColor":"#14532d"},{"type":"text","id":"body","left":60,"top":140,"width":480,"height":260,"rotate":0,"content":"\u003cul\u003e\u003cli\u003e\u003cp\u003ePlants convert light energy into chemical energy.\u003c/p\u003e\u003c/li\u003e\u003cli\u003e\u003cp\u003eInputs: carbon dioxide and water.\u003c/p\u003e\u003c/li\u003e\u003cli\u003e\u003cp\u003eOutputs: glucose and oxygen.\u003c/p\u003e\u003c/li\u003e\u003c/ul\u003e","defaultFontName":"Arial","defaultColor":"#334155"},{"type":"image","id":"leaf","left":580,"top":140,"width":170,"height":170,"rotate":0,"fixedRatio":true,"src":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR4nGNQOhqHFTEMLQkAsJlRQXS/RwMAAAAASUVORK5CYII="},{"type":"chart","id":"chart","left":580,"top":330,"width":360,"height":200,"rotate":0,"chartType":"bar","data":{"labels":["Low","Medium","High"],"legends":["Rate"],"series":[[20,55,80]]},"themeColors":["#22c55e"]},{"type":"latex","id":"formula","left":60,"top":420,"width":320,"height":60,"rotate":0,"latex":"E=mc^2","color":"#0f172a"}]}},"actions":[{"id":"speech-1","type":"speech","text":"Let us look at photosynthesis."}]},{"type":"interactive","title":"Light intensity lab","order":1,"content":{"type":"interactive","html":"\u003c!doctype html\u003e\n\u003chtml data-media-id=\"standalone-1\"\u003e\u003chead\u003e\u003cmeta name=\"viewport\" content=\"width=device-width, initial-scale=1\"\u003e\u003cscript data-iframe-storage-shim\u003e\n(function () {\n  function makeStore() {\n    var data = Object.create(null);\n    return {\n      getItem: function (k) { k = String(k); return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null; },\n      setItem: function (k, v) { data[String(k)] = String(v); },\n      removeItem: function (k) { delete data[String(k)]; },\n      clear: function () { data = Object.create(null); },\n      key: function (i) { var keys = Object.keys(data); return i \u003c keys.length ? keys[i] : null; },\n      get length() { return Object.keys(data).length; }\n    };\n  }\n  ['localStorage', 'sessionStorage'].forEach(function (name) {\n    var ok = false;\n    try { var s = window[name]; if (s) { s.getItem('__probe__'); ok = true; } } catch (e) { ok = false; }\n    if (!ok) {\n      try { Object.defineProperty(window, name, { value: makeStore(), configurable: true }); } catch (e) {}\n    }\n  });\n})();\n\u003c/script\u003e\u003cmeta charset=\"utf-8\"\u003e\u003ctitle\u003eLight lab\u003c/title\u003e\u003cstyle\u003ebody{margin:0;font-family:sans-serif}#rate{font-weight:700}\u003c/style\u003e\u003c/head\u003e\n\u003cbody\u003e\u003ch1\u003eLight intensity lab\u003c/h1\u003e\u003cinput id=\"light\" type=\"range\" min=\"0\" max=\"100\" value=\"40\"\u003e\u003cp\u003ePhotosynthesis rate: \u003cspan id=\"rate\"\u003e40\u003c/span\u003e\u003c/p\u003e\u003cp id=\"note\"\u003eDrag the slider to change the light.\u003c/p\u003e\n\u003cscript\u003edocument.getElementById('light').addEventListener('input', function () { document.getElementById('rate').textContent = String(this.value); });\u003c/script\u003e\n\u003c/body\u003e\u003c/html\u003e"}},{"type":"quiz","title":"Check your understanding","order":2,"content":{"type":"quiz","questions":[{"id":"q1","type":"single","question":"Where in the cell does photosynthesis take place?","options":[{"value":"A","label":"Mitochondria"},{"value":"B","label":"Chloroplasts"},{"value":"C","label":"Nucleus"}],"answer":["B"],"analysis":"Chloroplasts contain chlorophyll.","hasAnswer":true,"points":1},{"id":"q2","type":"multiple","question":"Which are inputs of photosynthesis? \u003c/script\u003e\u003c!-- not markup --\u003e","options":[{"value":"A","label":"Carbon dioxide"},{"value":"B","label":"Oxygen"},{"value":"C","label":"Water"}],"answer":["A","C"],"analysis":"CO2 and water go in.","hasAnswer":true,"points":2}]}},{"type":"pbl","title":"Design a greenhouse","order":3,"content":{"type":"pbl","projectV2":{"title":"Design a school greenhouse","description":"Plan a small greenhouse that maximizes plant growth on a budget.","learningObjective":"Apply the limiting factors of photosynthesis to a real design.","scenario":{"setting":"Your school wants a greenhouse for the science club.","goal":"Present a design the principal can approve.","learnerRole":"Lead designer","characters":[{"name":"Ms. Rivera","persona":"Principal who cares about cost"}]},"milestones":[{"title":"Research limiting factors","description":"Find out what limits plant growth indoors.","order":0,"microtasks":[{"title":"List the factors","description":"Light, CO2, temperature, water.","order":0}]},{"title":"Sketch the design","order":1,"microtasks":[]}]}}}],"mediaIndex":{}}</script>
+<script type="application/json" id="openmaic-player-config">{"strings":{"previous":"Previous","next":"Next","scenes":"Scenes","fullscreen":"Fullscreen","exitFullscreen":"Exit fullscreen","emptyClassroom":"This classroom has no scenes.","unsupportedScene":"This scene isn't available in the offline export.","interactiveTitle":"Interactive scene","videoUnavailable":"Video isn't included in the offline export","quizSubmit":"Submit","quizRetry":"Try again","quizScore":"Score","quizCorrect":"Correct","quizIncorrect":"Incorrect","quizCorrectAnswer":"Correct answer","quizExplanation":"Explanation","quizReferenceAnswer":"Reference answer","quizNoReferenceAnswer":"No reference answer is available for this question.","quizAnswerPlaceholder":"Type your answer...","quizMultipleHint":"Select all that apply","pblScenario":"Scenario","pblGoal":"Goal","pblYourRole":"Your role","pblCharacters":"Characters","pblLearningObjective":"Learning objective","pblMilestones":"Milestones","pblOnlineOnly":"Working through the project with AI agents is only available in the online classroom.","pblContinueOnline":"Continue this project online","play":"Play","pause":"Pause","playbackStart":"Play classroom","playbackContinue":"Continue","captions":"Captions","discussionTitle":"Discussion","discussionContinueOnline":"Discuss this in the online classroom","discussionDismiss":"Close","linkedFilesUnavailable":"Some images, narration or video couldn't be loaded. If you opened classroom.html from inside the ZIP, extract the whole ZIP first.","scriptRequired":"This classroom needs JavaScript. Open this file in a web browser with JavaScript enabled, such as Safari or Chrome.","startFailed":"This classroom couldn't start. Try opening this file in another web browser, such as Safari or Chrome."}}</script>
+<p class="openmaic-message openmaic-fallback" data-testid="script-fallback" data-failed-text="This classroom couldn&#39;t start. Try opening this file in another web browser, such as Safari or Chrome.">This classroom needs JavaScript. Open this file in a web browser with JavaScript enabled, such as Safari or Chrome.</p>
+<noscript><p class="openmaic-message">This classroom needs JavaScript. Open this file in a web browser with JavaScript enabled, such as Safari or Chrome.</p></noscript>
+<script>/*
+ * 内置最小播放器（`<script>` 里的 IIFE，无任何外部依赖）。
+ *
+ * 参考（只读）：ref/OpenMAIC/lib/standalone-player/App.tsx:1-422、
+ *   lib/standalone-player/navigation.ts、lib/standalone-player/scenes/*、
+ *   lib/standalone-player/read-data.ts
+ *
+ * 上游的播放器是一个 React 产物（`public/vendor/standalone-player/player.min.js`），
+ * 由页面包编译与提供 —— 那是另一条产线。导出层如果只认那一个产物，`html()` 在没有
+ * 它的环境里就只能产出"打不开的文档"，这违反"必须是可被 srcdoc 渲染的完整文档"。
+ * 所以这里放一份等价的最小子集：幻灯片（文本/形状/图片/图表/表格/公式/视频）、
+ * 互动页 iframe、测验作答、PBL 简报、上一页/下一页与键盘导航。
+ *
+ * 它读的数据结构与上游完全一致（`#openmaic-classroom` 里的 ClassroomManifest、
+ * `#openmaic-player-config` 里的配置、`#openmaic-media` 里的播放媒体表），因此
+ * 页面包换上真正的播放器产物时，这个文件整个被替换即可，导出层无需改动。
+ */
+(function () {
+  var manifestEl = document.getElementById('openmaic-classroom');
+  if (!manifestEl) return;
+  var manifest;
+  try {
+    manifest = JSON.parse(manifestEl.textContent || '{}');
+  } catch (error) {
+    return;
+  }
+  var configEl = document.getElementById('openmaic-player-config');
+  var config = { strings: {} };
+  try {
+    config = configEl ? JSON.parse(configEl.textContent || '{}') : config;
+  } catch (error) {
+    /* 配置坏了就用空文案 */
+  }
+  var strings = config.strings || {};
+  var scenes = manifest.scenes || [];
+  var root = document.getElementById('openmaic-player');
+  if (!root) return;
+
+  var mediaTable = {};
+  var mediaEl = document.getElementById('openmaic-media');
+  if (mediaEl) {
+    try {
+      mediaTable = JSON.parse(mediaEl.textContent || '{}');
+    } catch (error) {
+      mediaTable = {};
+    }
+  }
+  var blobCache = {};
+
+  function mediaUrl(key) {
+    if (!key) return '';
+    var entry = mediaTable[key];
+    if (!entry) return '';
+    if (entry.src) return entry.src;
+    if (!entry.embedded) return '';
+    if (blobCache[key]) return blobCache[key];
+    var block = document.getElementById(entry.embedded);
+    if (!block) return '';
+    try {
+      var binary = atob((block.textContent || '').replace(/\s+/g, ''));
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([bytes], { type: entry.mimeType || 'application/octet-stream' }));
+      blobCache[key] = url;
+      return url;
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function el(tag, className) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    return node;
+  }
+
+  function text(value) {
+    return document.createTextNode(value == null ? '' : String(value));
+  }
+
+  // ── 幻灯片 ────────────────────────────────────────────────────────────────
+  function renderElement(element) {
+    var node = null;
+    if (element.type === 'text') {
+      node = el('div', 'omc-el omc-text');
+      node.innerHTML = element.content || '';
+      node.style.fontFamily = element.defaultFontName || 'inherit';
+      if (element.defaultColor) node.style.color = element.defaultColor;
+      if (element.fill) node.style.background = element.fill;
+    } else if (element.type === 'image') {
+      node = el('div', 'omc-el');
+      var img = el('img');
+      img.src = element.src || '';
+      img.alt = '';
+      if (element.clip && element.clip.shape === 'ellipse') img.style.borderRadius = '50%';
+      node.appendChild(img);
+    } else if (element.type === 'shape') {
+      node = el('div', 'omc-el');
+      node.innerHTML = shapeSvg(element);
+    } else if (element.type === 'line') {
+      node = el('div', 'omc-el');
+      node.innerHTML = lineSvg(element);
+    } else if (element.type === 'chart') {
+      node = el('div', 'omc-el');
+      node.innerHTML = chartSvg(element);
+    } else if (element.type === 'table') {
+      node = el('div', 'omc-el omc-text');
+      node.innerHTML = tableHtml(element);
+    } else if (element.type === 'latex') {
+      node = el('div', 'omc-el omc-text');
+      if (element.html) node.innerHTML = element.html;
+      else node.appendChild(text(element.latex || ''));
+      node.style.display = 'flex';
+      node.style.alignItems = 'center';
+      node.style.justifyContent = 'center';
+    } else if (element.type === 'video') {
+      node = el('div', 'omc-el');
+      var video = el('video', 'omc-media');
+      video.controls = true;
+      video.playsInline = true;
+      var src = element.mediaRef ? mediaUrl(element.mediaRef) : element.src || '';
+      if (src) video.src = src;
+      if (element.poster) video.poster = element.poster;
+      node.appendChild(video);
+    } else {
+      return null;
+    }
+    node.style.left = element.left + 'px';
+    node.style.top = element.top + 'px';
+    node.style.width = element.width + 'px';
+    node.style.height = element.height + 'px';
+    if (element.rotate) node.style.transform = 'rotate(' + element.rotate + 'deg)';
+    if (element.opacity != null) node.style.opacity = String(element.opacity);
+    return node;
+  }
+
+  function escapeAttr(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function shapeSvg(element) {
+    var viewBox = element.viewBox || [element.width, element.height];
+    var fill = element.fill || 'none';
+    var stroke = element.outline && element.outline.color ? element.outline.color : 'none';
+    var strokeWidth = element.outline && element.outline.width ? element.outline.width : 0;
+    var svg =
+      '<svg class="omc-svg" viewBox="0 0 ' + viewBox[0] + ' ' + viewBox[1] + '" preserveAspectRatio="none">' +
+      '<path d="' + escapeAttr(element.path) + '" fill="' + escapeAttr(fill) + '" stroke="' + escapeAttr(stroke) +
+      '" stroke-width="' + strokeWidth + '"/></svg>';
+    return svg;
+  }
+
+  function lineSvg(element) {
+    var start = element.start || [0, 0];
+    var end = element.end || [100, 100];
+    var d = 'M' + start[0] + ' ' + start[1] + ' L' + end[0] + ' ' + end[1];
+    if (element.broken) d = 'M' + start.join(' ') + ' L' + element.broken.join(' ') + ' L' + end.join(' ');
+    else if (element.curve) d = 'M' + start.join(' ') + ' Q' + element.curve.join(' ') + ' ' + end.join(' ');
+    else if (element.cubic) {
+      d = 'M' + start.join(' ') + ' C' + element.cubic[0].join(' ') + ' ' + element.cubic[1].join(' ') + ' ' + end.join(' ');
+    }
+    var color = element.color || '#000';
+    var width = element.width || 2;
+    return (
+      '<svg class="omc-svg" viewBox="0 0 ' + element.width + ' ' + element.height +
+      '" preserveAspectRatio="none"><path d="' + escapeAttr(d) + '" fill="none" stroke="' +
+      escapeAttr(color) + '" stroke-width="' + width + '" vector-effect="non-scaling-stroke"/></svg>'
+    );
+  }
+
+  function chartSvg(element) {
+    var data = element.data || { labels: [], series: [] };
+    var series = data.series || [];
+    var labels = data.labels || [];
+    var colors = element.themeColors || ['#2563eb'];
+    var width = element.width || 360;
+    var height = element.height || 200;
+    var pad = 28;
+    var max = 1;
+    series.forEach(function (values) {
+      values.forEach(function (value) {
+        if (value > max) max = value;
+      });
+    });
+    var parts = ['<svg class="omc-svg" viewBox="0 0 ' + width + ' ' + height + '">'];
+    if (element.chartType === 'pie' || element.chartType === 'ring') {
+      var total = 0;
+      (series[0] || []).forEach(function (value) {
+        total += Math.abs(value);
+      });
+      var angle = -Math.PI / 2;
+      var cx = width / 2;
+      var cy = height / 2;
+      var r = Math.min(width, height) / 2 - 6;
+      (series[0] || []).forEach(function (value, index) {
+        var sweep = total ? (Math.abs(value) / total) * Math.PI * 2 : 0;
+        var x1 = cx + r * Math.cos(angle);
+        var y1 = cy + r * Math.sin(angle);
+        var x2 = cx + r * Math.cos(angle + sweep);
+        var y2 = cy + r * Math.sin(angle + sweep);
+        parts.push(
+          '<path d="M' + cx + ' ' + cy + ' L' + x1 + ' ' + y1 + ' A' + r + ' ' + r + ' 0 ' +
+            (sweep > Math.PI ? 1 : 0) + ' 1 ' + x2 + ' ' + y2 + ' Z" fill="' +
+            escapeAttr(colors[index % colors.length]) + '"/>',
+        );
+        angle += sweep;
+      });
+    } else if (element.chartType === 'line' || element.chartType === 'area') {
+      var stepX = labels.length > 1 ? (width - pad * 2) / (labels.length - 1) : 0;
+      series.forEach(function (values, sIndex) {
+        var points = values
+          .map(function (value, index) {
+            var x = pad + stepX * index;
+            var y = height - pad - ((value / max) * (height - pad * 2));
+            return x + ',' + y;
+          })
+          .join(' ');
+        if (element.chartType === 'area') {
+          parts.push(
+            '<polygon points="' + pad + ',' + (height - pad) + ' ' + points + ' ' +
+              (pad + stepX * (values.length - 1)) + ',' + (height - pad) + '" fill="' +
+              escapeAttr(colors[sIndex % colors.length]) + '" opacity="0.3"/>',
+          );
+        }
+        parts.push(
+          '<polyline points="' + points + '" fill="none" stroke="' +
+            escapeAttr(colors[sIndex % colors.length]) + '" stroke-width="2"/>',
+        );
+      });
+    } else {
+      var count = labels.length || 1;
+      var slot = (width - pad * 2) / count;
+      var barWidth = Math.max(4, (slot * 0.6) / Math.max(1, series.length));
+      series.forEach(function (values, sIndex) {
+        values.forEach(function (value, index) {
+          var barHeight = (value / max) * (height - pad * 2);
+          var x = pad + slot * index + sIndex * barWidth + 2;
+          parts.push(
+            '<rect x="' + x + '" y="' + (height - pad - barHeight) + '" width="' + barWidth +
+              '" height="' + barHeight + '" fill="' + escapeAttr(colors[sIndex % colors.length]) + '"/>',
+          );
+        });
+      });
+    }
+    labels.forEach(function (label, index) {
+      var x = pad + ((width - pad * 2) / Math.max(1, labels.length)) * (index + 0.5);
+      parts.push(
+        '<text x="' + x + '" y="' + (height - 8) + '" font-size="11" text-anchor="middle" fill="#475569">' +
+          escapeAttr(label) + '</text>',
+      );
+    });
+    parts.push('</svg>');
+    return parts.join('');
+  }
+
+  function tableHtml(element) {
+    var rows = element.data || [];
+    var colWidths = element.colWidths || [];
+    var html = ['<table style="width:100%;table-layout:fixed">'];
+    rows.forEach(function (row) {
+      html.push('<tr>');
+      row.forEach(function (cell, index) {
+        var style = 'width:' + (colWidths[index] ? colWidths[index] * 100 + '%' : 'auto') + ';';
+        if (cell.style && cell.style.backcolor) style += 'background:' + cell.style.backcolor + ';';
+        if (cell.style && cell.style.color) style += 'color:' + cell.style.color + ';';
+        html.push(
+          '<td colspan="' + (cell.colspan || 1) + '" rowspan="' + (cell.rowspan || 1) + '" style="' + style + '">' +
+            (cell.text || '') + '</td>',
+        );
+      });
+      html.push('</tr>');
+    });
+    html.push('</table>');
+    return html.join('');
+  }
+
+  function renderSlide(slide) {
+    var wrap = el('div', 'omc-frame');
+    var ratio = slide.viewportRatio || 0.5625;
+    var size = slide.viewportSize || 1000;
+    var canvas = el('div', 'omc-canvas');
+    canvas.style.width = size + 'px';
+    canvas.style.height = size * ratio + 'px';
+    var background = slide.background;
+    if (background && background.type === 'solid' && background.color) {
+      canvas.style.background = background.color;
+    } else if (background && background.type === 'gradient' && background.gradient) {
+      var stops = (background.gradient.colors || []).map(function (stop) {
+        return stop.color;
+      });
+      canvas.style.background = 'linear-gradient(135deg,' + stops.join(',') + ')';
+    } else if (background && background.type === 'image' && background.image) {
+      canvas.style.backgroundImage = 'url("' + background.image.src + '")';
+      canvas.style.backgroundSize = 'cover';
+    }
+    (slide.elements || []).forEach(function (element) {
+      var node = renderElement(element);
+      if (node) canvas.appendChild(node);
+    });
+    wrap.appendChild(canvas);
+    return { frame: wrap, canvas: canvas, size: size, ratio: ratio };
+  }
+
+  // ── 非幻灯片场景 ─────────────────────────────────────────────────────────
+  function renderQuiz(scene) {
+    var panel = el('div', 'omc-panel');
+    var title = el('h2');
+    title.textContent = scene.title || strings.quizLabel || 'Quiz';
+    panel.appendChild(title);
+    var questions = (scene.content && scene.content.questions) || [];
+    var results = [];
+    var submit = el('button', 'omc-button');
+    submit.textContent = strings.quizSubmit || 'Submit';
+    submit.disabled = true;
+
+    var recompute = function () {
+      submit.disabled = !results.some(function (result) {
+        return result.answered;
+      });
+    };
+
+    questions.forEach(function (question, index) {
+      var block = el('div', 'omc-question');
+      var stem = el('p');
+      stem.textContent = (index + 1) + '. ' + (question.question || '');
+      block.appendChild(stem);
+
+      var result = { answered: false, correct: false, question: question };
+      results.push(result);
+
+      if (question.type === 'short_answer' || !question.options) {
+        var input = el('textarea');
+        input.placeholder = strings.quizAnswerPlaceholder || '';
+        input.style.width = '100%';
+        input.style.minHeight = '4rem';
+        input.addEventListener('input', function () {
+          result.answered = input.value.trim().length > 0;
+          recompute();
+        });
+        block.appendChild(input);
+      } else {
+        var multiple = question.type === 'multiple';
+        var picked = [];
+        question.options.forEach(function (option) {
+          var label = el('label', 'omc-option');
+          var radio = el('input');
+          radio.type = multiple ? 'checkbox' : 'radio';
+          radio.name = 'q' + index;
+          radio.value = option.value;
+          radio.addEventListener('change', function () {
+            if (multiple) {
+              picked = Array.prototype.slice
+                .call(block.querySelectorAll('input:checked'))
+                .map(function (node) {
+                  return node.value;
+                });
+            } else {
+              picked = option.value ? [option.value] : [];
+            }
+            result.answered = picked.length > 0;
+            recompute();
+          });
+          label.appendChild(radio);
+          label.appendChild(text(option.label || option.value || ''));
+          block.appendChild(label);
+        });
+        result.picked = function () {
+          return picked;
+        };
+      }
+      panel.appendChild(block);
+    });
+
+    var actions = el('div', 'omc-actions');
+    actions.appendChild(submit);
+    var output = el('div', 'omc-result');
+    panel.appendChild(actions);
+    panel.appendChild(output);
+
+    submit.addEventListener('click', function () {
+      var correct = 0;
+      var gradable = 0;
+      results.forEach(function (result) {
+        var answer = result.question.answer || [];
+        if (!result.question.hasAnswer || answer.length === 0) return;
+        gradable += 1;
+        var picked = result.picked ? result.picked() : [];
+        var ok =
+          answer.length === picked.length &&
+          answer.every(function (value) {
+            return picked.indexOf(value) !== -1;
+          });
+        result.correct = ok;
+        if (ok) correct += 1;
+      });
+      output.dataset.correct = String(gradable > 0 && correct === gradable);
+      output.textContent =
+        (strings.quizScore || 'Score') + ': ' + correct + ' / ' + gradable;
+      submit.textContent = strings.quizRetry || 'Try again';
+      submit.disabled = true;
+    });
+
+    return panel;
+  }
+
+  function renderPbl(scene) {
+    var panel = el('div', 'omc-panel');
+    var project = (scene.content && scene.content.projectV2) || {};
+    var title = el('h2');
+    title.textContent = scene.title || project.title || strings.pblScenario || 'Project';
+    panel.appendChild(title);
+
+    var addBlock = function (heading, value) {
+      if (!value) return;
+      var h = el('h3');
+      h.textContent = heading;
+      panel.appendChild(h);
+      var p = el('p');
+      p.textContent = value;
+      panel.appendChild(p);
+    };
+
+    var scenario = project.scenario || {};
+    addBlock(strings.pblLearningObjective || 'Learning objective', project.learningObjective);
+    addBlock(strings.pblScenario || 'Scenario', scenario.setting);
+    addBlock(strings.pblGoal || 'Goal', scenario.goal);
+    addBlock(strings.pblYourRole || 'Your role', scenario.learnerRole);
+    if ((scenario.characters || []).length) {
+      addBlock(
+        strings.pblCharacters || 'Characters',
+        scenario.characters
+          .map(function (character) {
+            return character.name ? character.name + (character.persona ? ': ' + character.persona : '') : '';
+          })
+          .filter(Boolean)
+          .join('\n'),
+      );
+    }
+    if ((project.milestones || []).length) {
+      var h = el('h3');
+      h.textContent = strings.pblMilestones || 'Milestones';
+      panel.appendChild(h);
+      var list = el('ol');
+      project.milestones
+        .slice()
+        .sort(function (a, b) {
+          return (Number(a.order) || 0) - (Number(b.order) || 0);
+        })
+        .forEach(function (milestone) {
+          var item = el('li');
+          item.textContent = milestone.title || '';
+          list.appendChild(item);
+        });
+      panel.appendChild(list);
+    }
+    addBlock(strings.pblOnlineOnly || '', '');
+    return panel;
+  }
+
+  function renderInteractive(scene) {
+    var frame = el('iframe', 'omc-iframe');
+    frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
+    frame.setAttribute('title', scene.title || strings.interactiveTitle || '');
+    frame.setAttribute('referrerpolicy', 'no-referrer');
+    if (scene.content && scene.content.html) frame.srcdoc = scene.content.html;
+    return frame;
+  }
+
+  function renderUnavailable(message) {
+    var panel = el('div', 'omc-panel');
+    var p = el('p');
+    p.textContent = message || strings.unsupportedScene || '';
+    panel.appendChild(p);
+    return panel;
+  }
+
+  // ── 外壳与导航 ───────────────────────────────────────────────────────────
+  var shell = el('div', 'omc-player');
+  var stage = el('div', 'omc-stage');
+  var bar = el('div', 'omc-bar');
+  var prev = el('button');
+  var next = el('button');
+  var dots = el('div', 'omc-dots');
+  var caption = el('div', 'omc-caption');
+  var captionText = el('span');
+  caption.appendChild(captionText);
+
+  prev.textContent = strings.previous || 'Previous';
+  next.textContent = strings.next || 'Next';
+  bar.appendChild(prev);
+  bar.appendChild(dots);
+  bar.appendChild(next);
+  stage.appendChild(caption);
+  shell.appendChild(stage);
+  shell.appendChild(bar);
+  root.appendChild(shell);
+
+  if (scenes.length === 0) {
+    stage.appendChild(renderUnavailable(strings.emptyClassroom || 'This classroom has no scenes.'));
+    prev.disabled = true;
+    next.disabled = true;
+    return;
+  }
+
+  var current = 0;
+  var slideView = null;
+
+  function resize() {
+    if (!slideView) return;
+    var rect = stage.getBoundingClientRect();
+    var scale = Math.min(rect.width / slideView.size, rect.height / (slideView.size * slideView.ratio));
+    if (!isFinite(scale) || scale <= 0) scale = 1;
+    slideView.frame.style.width = slideView.size * scale + 'px';
+    slideView.frame.style.height = slideView.size * slideView.ratio * scale + 'px';
+    slideView.canvas.style.transform = 'scale(' + scale + ')';
+  }
+
+  function show(index) {
+    if (index < 0 || index >= scenes.length) return;
+    current = index;
+    slideView = null;
+    stage.textContent = '';
+    stage.appendChild(caption);
+    var scene = scenes[index];
+    var content = scene.content || {};
+    var node;
+    if (content.type === 'slide') {
+      slideView = renderSlide(content.canvas || {});
+      node = slideView.frame;
+    } else if (content.type === 'quiz') {
+      node = renderQuiz(scene);
+    } else if (content.type === 'pbl') {
+      node = renderPbl(scene);
+    } else if (content.type === 'interactive') {
+      node = content.html ? renderInteractive(scene) : renderUnavailable(strings.unsupportedScene);
+    } else {
+      node = renderUnavailable(strings.unsupportedScene);
+    }
+    stage.insertBefore(node, caption);
+
+    var speech = (scene.actions || []).filter(function (action) {
+      return action.type === 'speech';
+    });
+    captionText.textContent = speech.length ? speech[0].text : '';
+    caption.style.display = speech.length ? '' : 'none';
+
+    prev.disabled = index === 0;
+    next.disabled = index === scenes.length - 1;
+    Array.prototype.forEach.call(dots.children, function (dot, dotIndex) {
+      dot.setAttribute('aria-current', String(dotIndex === index));
+    });
+    resize();
+  }
+
+  scenes.forEach(function (scene, index) {
+    var dot = el('button', 'omc-dot');
+    dot.type = 'button';
+    dot.title = scene.title || String(index + 1);
+    dot.setAttribute('aria-label', dot.title);
+    dot.addEventListener('click', function () {
+      show(index);
+    });
+    dots.appendChild(dot);
+  });
+
+  prev.addEventListener('click', function () {
+    show(current - 1);
+  });
+  next.addEventListener('click', function () {
+    show(current + 1);
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'ArrowLeft') show(current - 1);
+    if (event.key === 'ArrowRight') show(current + 1);
+  });
+  window.addEventListener('resize', resize);
+
+  show(0);
+  document.documentElement.setAttribute('data-player', 'ready');
+})();
+</script>
+</body>
+</html>

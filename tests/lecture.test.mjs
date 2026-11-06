@@ -23,17 +23,18 @@ import assert from 'node:assert/strict';
 import {
   buildLectureTree, looksLikeSectionDivider, detectSlideTemplate, cleanLine,
   tidySlideHeading, SLIDE_TEMPLATE,
-} from '../packages/dsh-zhiyun-lecture/src/tree.js';
+} from '../packages/dsh-zhiyun-core-lecture/src/tree.js';
 import {
   judgeWritten, normalizeLectureText, kClassroomMarks, REGISTER,
-} from '../packages/dsh-zhiyun-lecture/src/register.js';
+} from '../packages/dsh-zhiyun-core-lecture/src/register.js';
 import {
   createLectureAssembler, parseLecturePolishResponse, chunkLectureForPolish,
   buildLecturePolishBody, lectureGlossary, contentChars, checkPolishLength,
   checkPolishFiller, checkPolishShrink, isBrokenOutput, tidyWrittenText,
   kLectureWrittenSystemPrompt, kLectureFillerWords, kStage, kStageName,
-} from '../packages/dsh-zhiyun-lecture/src/polish.js';
-import { LectureError } from '../packages/dsh-zhiyun-lecture/src/errors.js';
+} from '../packages/dsh-zhiyun-core-lecture/src/polish.js';
+import {ParserCache} from '../packages/dsh-zhiyun-core-parser/src/cache.js';
+import { LectureError } from '../packages/dsh-zhiyun-core-lecture/src/errors.js';
 
 // ═══════════════════════════════════════════════════════════════
 // 夹具（与 Dart `lecture_tree_test.dart` / `lecture_polish_test.dart` 同形）
@@ -773,7 +774,7 @@ test('⑤ 并发 1 时严格串行；并发上限校验拒绝坏值', async () =
   const llm = fakeLlm({ onCall: async () => { await new Promise((r) => setTimeout(r, 2)); } });
   await run(fx, llm, { concurrency: 1 });
   assert.equal(llm.peak, 1, '并发 1 必须严格串行');
-  for (const bad of [0, -1, 17, 2.5, '3']) {
+  for (const bad of [0, -1, 513, 2.5, '3']) {
     assert.throws(() => createLectureAssembler({ llm, concurrency: bad }),
       (error) => error instanceof LectureError && error.code === 'CONFIG');
   }
@@ -899,12 +900,17 @@ test('⑥ ★★ Dart golden：系统提示词与 App 的 kLectureWrittenSystemP
   //    （提示词少 4 字符）。所以这里钉一份从 Dart 源码提取的冻结契约：
   //    改提示词的人必须同时改这个夹具，那就必须**显式面对**「实验条件变了」这件事。
   //
-  //    夹具放在**包内**（`packages/dsh-zhiyun-lecture/fixtures/`）而不是
+  //    夹具放在**包内**（`packages/dsh-zhiyun-core-lecture/fixtures/`）而不是
   //    `tests/fixtures/`：它是这个包自己的磁盘契约，跟着包走才不会被
   //    「测试目录归别人管」的写作范围挡住。
   const { readFile } = await import('node:fs/promises');
-  const golden = await readFile(
-    new URL('../packages/dsh-zhiyun-lecture/fixtures/system-prompt.txt', import.meta.url), 'utf8');
+  const raw = await readFile(
+    new URL('../packages/dsh-zhiyun-core-lecture/fixtures/system-prompt.txt', import.meta.url), 'utf8');
+  // ⚠️ 必须先归一换行符再比对：夹具是 `.txt`，在 Windows 上 checkout 会（随
+  //    `core.autocrlf` / `gitattributes`）变成 CRLF，而在 Linux/CI 上是 LF。
+  //    不归一的话，**内容一个字都没改**也会红，而且红得像「提示词被改了」。
+  //    归一之后这条仍在做它该做的事：内容里多/少一个反引号还是会红。
+  const golden = raw.replace(/\r\n/g, '\n');
   assert.equal(kLectureWrittenSystemPrompt, golden,
     '提示词与 App 不一致 —— 这不是排版问题，是把那次 A/B 对照的实验条件改掉了');
   assert.ok(golden.includes('`$...$`'), '行内代码的反引号必须真的在（先前正是这里漏了 4 个）');
@@ -916,7 +922,7 @@ test('⑥ ★★ Dart golden：系统提示词与 App 的 kLectureWrittenSystemP
 // ═══════════════════════════════════════════════════════════════
 
 test('⑦ 插件：provide 服务 + disposer 释放（宿主服务由注入项提供）', async () => {
-  const plugin = await import('../packages/dsh-zhiyun-lecture/src/index.js');
+  const plugin = await import('../packages/dsh-zhiyun-core-lecture/src/index.js');
   assert.equal(plugin.name, 'zhiyun-lecture');
   assert.deepEqual(plugin.inject, ['zhiyunParser']);
 
@@ -960,7 +966,7 @@ test('⑨ ★★ 真实 Cordis 宿主：服务挂载 / 隔离 / 卸载释放（�
     try { await access(modulePath); } catch { continue; } // 该宿主未安装 → 跳过
     ran++;
     const { Context } = await import(pathToFileURL(modulePath).href);
-    const plugin = await import('../packages/dsh-zhiyun-lecture/src/index.js');
+    const plugin = await import('../packages/dsh-zhiyun-core-lecture/src/index.js');
     const first = new Context();
     const second = new Context();
     const calls = [];
@@ -1003,7 +1009,7 @@ test('⑨ ★★ 真实 Cordis 宿主：服务挂载 / 隔离 / 卸载释放（�
 });
 
 test('⑦ 插件：没有 llm 时如实报配置错（不静默降级）', async () => {
-  const plugin = await import('../packages/dsh-zhiyun-lecture/src/index.js');
+  const plugin = await import('../packages/dsh-zhiyun-core-lecture/src/index.js');
   const ctx = { provide() { return () => {}; } };
   await assert.rejects(plugin.apply(ctx, {}), (error) => error.code === 'CONFIG');
   // 显式注入 config.llm 时仍然可用（集成层可以用别的适配器）。
@@ -1021,7 +1027,7 @@ test('⑦ 插件：没有 llm 时如实报配置错（不静默降级）', async
 
 test('⑧ 零宿主依赖：源码里不 import 任何 @deepseek-ai/*，也不碰 ctx.storage / 环境变量', async () => {
   const { readFile, readdir } = await import('node:fs/promises');
-  const dir = new URL('../packages/dsh-zhiyun-lecture/src/', import.meta.url);
+  const dir = new URL('../packages/dsh-zhiyun-core-lecture/src/', import.meta.url);
   const files = (await readdir(dir)).filter((f) => f.endsWith('.js'));
   assert.ok(files.length >= 5, 'tree / register / polish / index / errors');
   // ⚠️ 必须**先去掉注释**再扫：正文注释里就写着「本文件不碰 ctx.storage」，
@@ -1063,13 +1069,13 @@ function allTopicsOf(tree) {
  * 的正则 —— 我按注释「顺手修正」成了 `\\[a-zA-Z]+`，于是 `\le 5` 这类行
  * 在 Dart 里保留、在我的版本里被丢掉。**读代码是读不出这个的。**
  *
- * ⚠️ 它冻在包内（`packages/dsh-zhiyun-lecture/fixtures/dart-golden.json`），
+ * ⚠️ 它冻在包内（`packages/dsh-zhiyun-core-lecture/fixtures/dart-golden.json`），
  *    所以**不需要装 Dart** 也能长期复核。
  */
 test('⑨ ★★ Dart golden：知识树 / 书面语验收 / 清洗与 App 真实实现逐字段一致', async () => {
   const { readFile } = await import('node:fs/promises');
   const golden = JSON.parse(await readFile(
-    new URL('../packages/dsh-zhiyun-lecture/fixtures/dart-golden.json', import.meta.url), 'utf8'));
+    new URL('../packages/dsh-zhiyun-core-lecture/fixtures/dart-golden.json', import.meta.url), 'utf8'));
 
   // ① 知识树
   for (const c of golden.tree) {
@@ -1121,7 +1127,7 @@ test('⑨ ★★ `looksLikeNotationOnly` 里的正则**故意保留** Dart 的�
   //    不是移植该顺手做的事。
   const { readFile } = await import('node:fs/promises');
   const golden = JSON.parse(await readFile(
-    new URL('../packages/dsh-zhiyun-lecture/fixtures/dart-golden.json', import.meta.url), 'utf8'));
+    new URL('../packages/dsh-zhiyun-core-lecture/fixtures/dart-golden.json', import.meta.url), 'utf8'));
   for (const raw of ['\\le 5', '$x$\\le', '\\mathrm']) {
     assert.equal(golden.clean[raw], raw, `Dart 侧对这些行是保留的：「${raw}」`);
     assert.equal(tidySlideHeading(raw), raw, '★ 移植版必须与 Dart 一致地保留它（不许「修正」）');
@@ -1129,4 +1135,73 @@ test('⑨ ★★ `looksLikeNotationOnly` 里的正则**故意保留** Dart 的�
   // 反过来：那两条**真的**会命中 Dart 正则的行，两边都要丢掉。
   assert.equal(tidySlideHeading('[a-zA-Z]'), '', '[ + 字母 会被那条正则整段吃掉');
   assert.equal(tidySlideHeading('$k_1$'), '', '纯记号仍然要丢（这是那条正则的正当用途）');
+});
+test('成功填充断点复用；模型与正文变化使缓存失效，截断不原样重发', async () => {
+  const cache=new ParserCache();const fx=lessonFixture({pages:1});const llm=fakeLlm();
+  const a=createLectureAssembler({llm,cache,route:'model-a'});
+  try {const first=await a.assemble({tree:fx.tree,blocks:fx.blocks});assert.equal(first.failures.length,0);
+    await a.assemble({tree:fx.tree,blocks:fx.blocks});assert.equal(llm.callCount,1);
+    const b=createLectureAssembler({llm,cache,route:'model-b'});try{await b.assemble({tree:fx.tree,blocks:fx.blocks});assert.equal(llm.callCount,2);}finally{b.dispose();}
+    const changed=JSON.parse(JSON.stringify(fx));changed.blocks[0].text+='补充条件。';await a.assemble({tree:changed.tree,blocks:changed.blocks});assert.equal(llm.callCount,3);
+  }finally{a.dispose();}
+  let attempts=0;const failed=createLectureAssembler({cache:new ParserCache(),llm:{async call(){attempts++;throw Object.assign(new Error('length'),{code:'LLM_TRUNCATED'});}}});
+  try{const out=await failed.assemble({tree:fx.tree,blocks:fx.blocks});assert.equal(attempts,1);assert.ok(out.failures.length);}finally{failed.dispose();}
+});
+test('大知识点分请求填充，合回仍是一个知识点，失败片段原文及来源完整保留',async()=>{
+ const blocks=[1,2,3].map(index=>({index,page:index,register:'written',text:`来源${index}。`+'规范正文。'.repeat(650)}));
+ const tree={chapters:[{title:'章',topics:[{title:'同一知识点',blockIndexes:[1,2,3],sourceBlocks:blocks,pptLines:[]}]}]};
+ let calls=0,fail=true;const cache=new ParserCache();const llm={async call({variable}){calls++;const body=variable.split('## 已正式组织的来源正文（核对课件依据后填充，保留推导与条件）：\n')[1].split('\n').slice(1).join('\n').trim();if(body.startsWith('来源2')&&fail)throw Object.assign(new Error('length'),{code:'LLM_TRUNCATED'});return{text:JSON.stringify({chapters:[{c:1,topics:[{t:1,slots:[{kind:'讲解',text:body}]}]}]})};}};
+ const assembler=createLectureAssembler({llm,cache});try{const out=await assembler.assemble({tree,blocks});assert.equal(out.chapters[0].topics.length,1);assert.equal(calls,3);
+ const topic=out.chapters[0].topics[0];assert.equal(topic.register,REGISTER.failed);assert.deepEqual(topic.blocks.map(b=>b.sourceBlockIndexes),[[1],[2],[3]]);
+ assert.deepEqual(topic.blocks.map(b=>b.text),blocks.map(b=>b.text));fail=false;const resumed=await assembler.assemble({tree,blocks});assert.equal(calls,4);assert.equal(resumed.chapters[0].topics[0].register,REGISTER.written);
+ }finally{assembler.dispose();}
+});
+
+test('② 来源本来就是成稿时，原样返回不算「照抄口述」', () => {
+  const tidy = '制度构造了人们在政治、社会或经济方面发生交换的激励结构。';
+  const kept = judgeWritten({ source: tidy, rewritten: tidy, alreadyWritten: true });
+  assert.equal(kept.register, REGISTER.written);
+  assert.deepEqual(kept.notes, []);
+  // 只动标点同样是「本来就不用改」，仍判成稿。
+  assert.equal(judgeWritten({ source: '内存充足时采用随机寻址', rewritten: '内存充足时，采用随机寻址。', alreadyWritten: true }).register, REGISTER.written);
+  // 口述来源的判据一个字都不放松：照抄仍然是草稿。
+  assert.equal(judgeWritten({ source: tidy, rewritten: tidy }).register, REGISTER.draft);
+  // 成稿来源也不许夹课堂称呼或留半截句。
+  assert.equal(judgeWritten({ source: tidy, rewritten: `同学们，${tidy}`, alreadyWritten: true }).register, REGISTER.draft);
+});
+
+test('原样返回也不豁免课堂称呼与半截句', () => {
+  const tidy = '制度构造了人们在政治、社会或经济方面发生交换的激励结构。';
+  assert.equal(judgeWritten({ source: tidy, rewritten: tidy, alreadyWritten: true }).register, REGISTER.written);
+  const addressed = '学习本身需要各位同学的努力。';
+  const verdict = judgeWritten({ source: addressed, rewritten: addressed, alreadyWritten: true });
+  assert.equal(verdict.register, REGISTER.draft);
+  assert.ok(verdict.notes.join().includes('各位同学'));
+});
+
+
+test('assembly reports completed volumes immediately, before slower neighbors finish', async () => {
+  let releaseFirst, reportPartial;
+  const firstGate = new Promise(resolve => { releaseFirst = resolve; });
+  const partial = new Promise(resolve => { reportPartial = resolve; });
+  const llm = fakeLlm({ onCall: async ({ variable }) => {
+    if (parseRequest(variable)[0].t === 1) await firstGate;
+  } });
+  const assembler = createLectureAssembler({ llm, maxTopics: 1, concurrency: 2 });
+  const tree = { chapters: [{ title: '章', topics: [
+    { title: '点一', blockIndexes: [1], pptLines: [] },
+    { title: '点二', blockIndexes: [2], pptLines: [] },
+  ] }] };
+  const events = []; let finished = false;
+  const pending = assembler.assemble({ tree, blocks: [{ index: 1, text: RAW_ASR }, { index: 2, text: RAW_ASR }],
+    onProgress: p => { events.push(p); if (p.done === 1) reportPartial(); },
+  }).then(result => { finished = true; return result; });
+  try {
+    await partial;
+    assert.equal(finished, false);
+    assert.equal(events.at(-1).phase, 'lecture');
+    assert.equal(events.at(-1).done, 1);assert.equal(events.at(-1).total, 2);
+    releaseFirst(); await pending;
+    assert.equal(events.at(-1).done, 2);
+  } finally { releaseFirst(); await pending; assembler.dispose(); }
 });

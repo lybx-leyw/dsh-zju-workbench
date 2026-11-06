@@ -1,0 +1,8 @@
+{
+  "check": "改写讲义 md 后，同一 record 的 knowledgePoints() 返回的 title 与 text 逐字不变",
+  "domain": "handout",
+  "id": "handout_edit_isolated",
+  "kind": "affects",
+  "label": "改写讲义 md 不动基线",
+  "range": "lecture_baseline"
+}

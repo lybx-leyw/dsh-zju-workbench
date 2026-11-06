@@ -10,7 +10,7 @@
 // 本模块只做纯粹的合并、判定与排序：不碰 ctx、不认识 React，因此可以直接单测。
 //
 // 「叶」= 没有任何包请求它（在上述两套真源里都没有入边）。本仓的设计刻意让可选的加工步骤
-// 走 `ctx.get` 惰性取而不是写进 `inject`（见 dsh-zhiyun-study-core/README.md「只声明硬依赖」），
+// 走 `ctx.get` 惰性取而不是写进 `inject`（见 dsh-zhiyun-core-study/README.md「只声明硬依赖」），
 // 所以叶就是可以安全取消的那一批，不需要再叠一层「入口包」保护。
 
 /** 只看本仓的包；上游 @deepseek-ai/* 一律不进这张图。 */
@@ -126,7 +126,7 @@ export function readPlane({ entries, runtimes, store }) {
  * 为什么这条边必须进图：本仓的页面与外壳之间**只有**一条边 —— 「外壳声明插槽、页面填内容」
  * （见 dsh-zhiyun-page-today/README.md）。这条边既不是 `dsh.client.inject`/`external`，
  * 也不是服务 inject：页面用 `ctx.slots.inject('zhiyun.today.content', …)` 等外壳声明。
- * 少了它，`dsh-zhiyun-shell` 就会因为没有入边被判成「可以取消的叶」—— 而取消外壳正是
+ * 少了它，`dsh-zhiyun-shell-workbench` 就会因为没有入边被判成「可以取消的叶」—— 而取消外壳正是
  * 会让五个页面一起消失的那种操作。
  *
  * 两个名字都不是包名，必须先翻回来（真机验证时两条都踩到过）：

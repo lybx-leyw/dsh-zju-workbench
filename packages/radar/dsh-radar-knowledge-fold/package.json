@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-knowledge-fold",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】B 类「能力提取 + 封装」：给 dsh-zhiyun-knowledge 的字面检索补一层与 dsh-zhiyun-quiz 同口径的规范化（全角折叠 / 大小写 / NFKC 组合符），零新依赖（强化式集成，增强「知识」页检索）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {}
+}

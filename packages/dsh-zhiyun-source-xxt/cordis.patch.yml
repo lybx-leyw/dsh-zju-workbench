@@ -1,0 +1,10 @@
+# dsh bundle patch：把学习通数据源插进 profile 的层栈。
+#
+# 本包是**数据包**：注册一个 `zhiyunXxt` 服务与一条同源数据路由（/api/zhiyun-xxt），
+# 不注册任何 AI 工具。谁来消费（页面 / 脚本 / 将来接的 AI）由调用方决定。
+#
+# 学习通不做自动登录：用户在浏览器登录后把 Cookie 导入一次（或设 CHAOXING_COOKIE），
+# 会话用 Windows DPAPI 落在 <profile>/data/zhiyun-xxt/xxt.session。
+- insert:
+    - id: zhiyun-xxt
+      name: dsh-zhiyun-source-xxt

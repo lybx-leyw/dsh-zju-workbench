@@ -1,0 +1,45 @@
+{
+  "upstream": {
+    "name": "OpenMAIC",
+    "repository": "https://github.com/THU-MAIC/OpenMAIC",
+    "commit": "03dee2bb4e1bf2e3296ad05ca1f78ce863452921",
+    "version": "1.3.0",
+    "license": "MIT",
+    "licenseFile": "vendor/openmaic/LICENSE",
+    "thirdPartyNotices": "vendor/openmaic/ATTRIBUTION.md",
+    "archive": {
+      "kind": "codeload-tarball",
+      "sha256": "09d61133fdfbacce16d225756bca8dae481a229ef4f96a118106ead20aeab537",
+      "bytes": 95250584,
+      "tree": {
+        "algorithm": "sha256-lines-v1",
+        "files": 3835,
+        "digest": "7b009d1235762bcd50ed1c5dc91369ed83929974f0a07745135cd5188e5004cb"
+      }
+    },
+    "vendoredAt": "2026-10-30",
+    "vendorPath": "vendor/openmaic"
+  },
+  "runtime": {
+    "node": ">=22.19.0",
+    "packageManager": "pnpm@10.28.0",
+    "database": "postgresql>=16",
+    "note": "Next.js 16 应用；生成在服务端进程内长跑，必须常驻进程 + PostgreSQL，不支持 serverless。"
+  },
+  "server": {
+    "defaultPort": 3000,
+    "startCommand": "pnpm build && pnpm start",
+    "devCommand": "pnpm dev",
+    "healthPath": "/api/health"
+  },
+  "licensing": {
+    "root": "MIT",
+    "bundledExceptions": [
+      {
+        "path": "packages/mathml2omml",
+        "license": "LGPL-3.0-or-later",
+        "note": "上游自带的工作区包，不适用根 MIT；分发整份源码时该包仍受 LGPL 约束。"
+      }
+    ]
+  }
+}

@@ -1,0 +1,409 @@
+﻿/* packages/dsh-zhiyun-ui-primitives/src/style.css
+ *
+ * 由 packages/dsh-zhiyun-study/src/style.css 按「哪个包真的用到这个类」机械切分而来，
+ * 规则文本逐字未改（顺序保持原文件中的相对顺序）。.zy-* 与宿主外观无关的
+ * 公共类留在壳，领域状态的样式跟着各自的包走。
+ */
+
+body[data-zhiyun] .zs-lecture-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-surface);
+}
+body[data-zhiyun] .zs-lecture-bar .zs-muted {
+  font-size: 11px;
+}
+body[data-zhiyun] .zs-final {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--zy-line);
+  border-radius: 10px;
+  background: var(--zy-soft);
+}
+body[data-zhiyun] .zs-final small {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-final pre {
+  margin: 0;
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: inherit;
+  line-height: 1.8;
+}
+/* `.zs-heading` / `.zs-courses` / `.zs-search` 三条随「我的课」页面包一起删掉了：
+   那一页已并入「学习」，对应的类在本仓没有任何地方再用。留着它们不是「以防万一」，
+   而是让下一个读样式的人以为还存在一个「我的课」页面。 */
+body[data-zhiyun] .zs-muted {
+  color: var(--zy-secondary);
+}
+/* 裸文字钮：学习页与题库页共用，所以放在壳而不是各自页面包里。 */
+body[data-zhiyun] .zs-text {
+  background: none;
+  border: 0;
+  color: var(--zy-accent);
+  padding: 4px 0;
+  text-align: left;
+}
+body[data-zhiyun] .zs-study button,
+body[data-zhiyun] .zs-account button {
+  font: inherit;
+  cursor: pointer;
+}
+body[data-zhiyun] .zs-button,
+body[data-zhiyun] .zs-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--zy-line);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 13px !important;
+  text-decoration: none;
+  color: var(--zy-text);
+  background: var(--zy-surface);
+}
+body[data-zhiyun] .zs-primary {
+  background: var(--zy-action);
+  border-color: var(--zy-action);
+  color: white;
+}
+body[data-zhiyun] .zs-button:hover {
+  background: var(--zy-hover);
+}
+body[data-zhiyun] .zs-primary:hover {
+  background: var(--zy-action-hover);
+}
+body[data-zhiyun] .zs-study button:disabled,
+body[data-zhiyun] .zs-account button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+body[data-zhiyun] .zs-notice {
+  padding: 10px 13px;
+  border-left: 2px solid var(--zy-accent);
+  background: var(--zy-soft);
+  margin: 12px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+body[data-zhiyun] .zs-motto {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+body[data-zhiyun] .zs-motto > span {
+  font-family:
+    "Songti SC",
+    "SimSun",
+    serif;
+  font-size: 23px;
+  letter-spacing: 2px;
+  font-weight: 400;
+}
+body[data-zhiyun] .zs-account label,
+body[data-zhiyun] .zs-sections label,
+body[data-zhiyun] .zs-models label {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  gap: 7px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-account input,
+body[data-zhiyun] .zs-study select,
+body[data-zhiyun] .zs-study input,
+body[data-zhiyun] .zs-search input {
+  background: var(--zy-surface);
+  color: var(--zy-text);
+  font: inherit;
+  min-width: 0;
+  border: 1px solid var(--zy-line);
+  padding: 8px 9px;
+  border-radius: 5px;
+}
+body[data-zhiyun] .zs-account input:focus-visible,
+body[data-zhiyun] .zs-study input:focus-visible,
+body[data-zhiyun] .zs-study select:focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 2px;
+}
+body[data-zhiyun] .zs-sections {
+  padding: 16px 14px;
+  border: 1px solid var(--zy-line);
+  border-radius: 8px;
+  background: var(--zy-surface);
+}
+body[data-zhiyun] .zs-list-heading {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--zy-muted);
+  padding: 22px 7px 10px;
+}
+body[data-zhiyun] .zs-lesson {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 8px;
+  color: var(--zy-text);
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+}
+body[data-zhiyun] .zs-lesson:hover {
+  background: var(--zy-hover);
+}
+body[data-zhiyun] .zs-lesson.is-selected {
+  background: var(--zy-soft);
+  color: var(--zy-accent);
+}
+body[data-zhiyun] .zs-lesson-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--zy-muted);
+  border-radius: 50%;
+  flex: none;
+}
+body[data-zhiyun] .zs-lesson.is-selected .zs-lesson-dot {
+  background: var(--zy-accent);
+}
+body[data-zhiyun] .zs-lesson strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+}
+body[data-zhiyun] .zs-lesson small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0 20px;
+  border-bottom: 1px solid var(--zy-line);
+}
+body[data-zhiyun] .zs-section-head h2 {
+  font-size: 17px;
+  font-weight: 500;
+  margin: 6px 0;
+}
+body[data-zhiyun] .zs-section-head small,
+body[data-zhiyun] .zs-status {
+  font-size: 11px;
+  color: var(--zy-secondary);
+}
+body[data-zhiyun] .zs-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: end;
+}
+/* `.zs-tabs` 与 dsh-zhiyun-page-study 的 `.zs-content-switch` 是同一语义（互斥视图切换）的两种呈现：
+   这里是下划线式，那里是药丸式。观感各异是刻意的，但**度量是一份契约** —— 字号 12px、
+   命中高度不低于 24px、键盘焦点有可见环。改这边时请同步看那边，反之亦然，
+   否则同一个产品里两组切换的手感会分叉。 */
+body[data-zhiyun] .zs-tabs {
+  display: flex;
+  gap: 20px;
+  border-bottom: 1px solid var(--zy-line);
+  margin-bottom: 22px;
+}
+body[data-zhiyun] .zs-tabs button {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--zy-secondary);
+  padding: 12px 1px;
+  font-size: 12px;
+}
+body[data-zhiyun] .zs-tabs button[aria-selected=true] {
+  border-color: var(--zy-accent);
+  color: var(--zy-accent);
+}
+body[data-zhiyun] .zs-models .zs-notice { font-size:11px; }
+body[data-zhiyun] .zs-reader > .zs-notice:first-child:empty { display:none; }
+body[data-zhiyun] .zs-current-actions .zs-button,body[data-zhiyun] .zs-current-actions .zs-primary { min-height:40px; padding:9px 13px; font-size:13px!important; }
+/* 响应式覆盖必须和「它要覆盖的基规则」待在同一个包里。
+ *
+ * 这些 @media 曾经整块住在原 dsh-zhiyun-study 的 style.css 尾部，靠文档顺序压过前面的基规则。
+ * 拆包后基规则跟着组件去了各页面包，而每个包的 style.css 是各自 mountStyle 追加的
+ * 独立 <style>：本包 inject 为空、激活最早，表永远排在最前，同特异性的规则必输给页面包。
+ * 于是只要基规则不在本包，写在这里的覆盖就是死规则（曾真实回归：≤760 时 .zs-heading
+ * 仍是 24px/26px 而不是 18px/23px）。
+ *
+ * 所以这里只留「基规则也在本包」或「与任何基规则无属性冲突」的覆盖：
+ *   .zs-section-head / .zs-sections / .zs-lesson / .zs-motto / .zs-tabs / .zs-account label 的基规则在本包；
+ *   .zs-section-head .zs-actions{justify-content} 只添加属性、无冲突。
+ * 覆盖页面组件的 .zs-workbench / .zs-heading / .zs-account form / .zs-models / .zs-progress 已分别搬到
+ * dsh-zhiyun-page-study、page-courses、page-me 自己的 style.css。
+ */
+@media (max-width: 1050px) {
+  body[data-zhiyun] .zs-section-head {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 760px) {
+  body[data-zhiyun] .zs-sections {
+    padding: 12px;
+  }
+  body[data-zhiyun] .zs-lesson {
+    padding: 8px;
+  }
+  body[data-zhiyun] .zs-motto {
+    min-height: 160px;
+  }
+  body[data-zhiyun] .zs-tabs {
+    gap: 18px;
+  }
+  body[data-zhiyun] .zs-account label {
+    flex: 1;
+    min-width: 160px;
+  }
+  body[data-zhiyun] .zs-section-head .zs-actions {
+    justify-content: start;
+  }
+}
+/* ════════════════════════════════════════════════════════════════════════
+   基础控件的工效学尺寸
+   ════════════════════════════════════════════════════════════════════════
+
+   # 为什么集中补在这里
+
+   实测（Chromium 渲染后量 bounding box）：
+     输入框 21px / 下拉框 19px    ← 浏览器默认样式，从未被覆盖
+     文字按钮 25px
+     普通按钮 33px
+   而 WCAG 2.5.5 的下限是 44×44。
+
+   输入框和下拉框只有 19-21px 是全站最严重的问题：比按钮还矮，
+   在笔记 / 论文 / 反馈三页里完全没被覆盖过（各自 style.css 里
+   0 处 input 规则）。用户点进输入框时命中率很低，触屏几乎不可用。
+
+   补在 shell-ui 而不是逐页补，理由：这是**所有页面共用**的控件，
+   分散写会出现「题库的输入框 32px、笔记的 21px」这种不一致。
+
+   # 为什么按钮没有直接拉到 44
+
+   44 是**触屏**下限。桌面端一排工具按钮全做 44px 会让工具栏过高、
+   信息密度下降。折中：次要操作 32px、主操作 40px，左上方可点区域
+   通过 padding 保证水平方向够宽。真正需要 44 的是**导轨图标**
+   （见 shell-workbench，已改）和**独立的大按钮**（如提交答案）。
+
+   这是有意的取舍，不是遗漏：工效学要服务真实使用场景，
+   把桌面工具栏撑到 44px 反而降低效率。
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── 输入类控件：全站统一 32px 高 ────────────────────────────────────── */
+
+/* 只声明**尺寸与排版**，不碰 border / outline ——
+   视觉归页面层（题库、学习页各自有自己的输入框配色）。
+   全站层如果也写 border，两者特异性相同，胜负只能靠挂载顺序，
+   那是真隐患（check-css-order 会报跨包竞争）。 */
+body[data-zhiyun] :is(input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="email"], input[type="url"], input[type="password"], textarea, select) {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 13px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* hover / focus / disabled 的视觉归页面层与 workbench 的焦点环规则，
+   全站层不重复声明 —— 见上面 min-height 那段的说明。 */
+
+body[data-zhiyun] :is(input, textarea, select):disabled {
+  cursor: not-allowed;
+}
+
+/* 多行输入：高度由 rows 决定，不再锁 min-height */
+body[data-zhiyun] textarea {
+  min-height: 72px;
+  padding: 8px 10px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+/* 数字输入对齐 */
+body[data-zhiyun] input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 下拉框：给一个自绘箭头，默认箭头在深色下不可见 */
+body[data-zhiyun] select {
+  appearance: none;
+  padding-right: 26px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--zy-text);
+}
+
+/* ── 按钮：区分主次，各自给足高度 ────────────────────────────────────── */
+
+body[data-zhiyun] .zs-button {
+  min-height: 32px;
+  padding: 6px 13px;
+}
+
+body[data-zhiyun] .zs-primary {
+  min-height: 36px;
+  padding: 8px 18px;
+  font-weight: 600;
+}
+
+/* 文字按钮是最容易被做成「小到点不准」的一类。给足垂直 padding，
+   让它至少在水平方向有可点的宽度。 */
+body[data-zhiyun] .zs-text {
+  min-height: 30px;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+
+body[data-zhiyun] .zs-text:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--zy-accent) 6%, transparent);
+}
+
+/* ── 复选框 / 单选框：默认 13px 太小，统一 16px ──────────────────────── */
+
+body[data-zhiyun] :is(input[type="checkbox"], input[type="radio"]) {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: var(--zy-accent);
+  cursor: pointer;
+}
+
+/* 与文字并排时垂直居中；只给 checkbox/radio 本身，不影响外层容器 */
+body[data-zhiyun] label > :is(input[type="checkbox"], input[type="radio"]) {
+  /* 只做垂直对齐；水平间距由各处 label 的 gap/padding 决定，
+     这里写 margin 会与题库的 `margin: 0` 争同一属性。 */
+  vertical-align: -2px;
+}
+
+/* ── 减少动态效果偏好 ────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-zhiyun] :is(input, textarea, select) {
+    transition: none;
+  }
+}

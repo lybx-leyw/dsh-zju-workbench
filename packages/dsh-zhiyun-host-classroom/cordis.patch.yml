@@ -1,0 +1,12 @@
+# bundle 行 id 的生成规则是「包名去掉 dsh- 前缀」（scripts/test-host.mjs:90-93）。
+#
+# `dsh-zhiyun-source-classroom` 与 `dsh-zhiyun-host-classroom` 都会得到
+# `zhiyun-classroom`，两行同时出现在一个 profile 里时 Loader 要么按 id 去重
+# （后一行被静默吃掉），要么报重复 id —— 两种都不该发生，所以本包取
+# `zhiyun-classroom-studio`，与它提供的服务名 `zhiyunClassroomStudio` 对齐。
+#
+# 注意：`zhiyunClassroom` 这个服务名归 dsh-zhiyun-source-classroom（浙大教务课堂
+# 数据源），core-parser / core-study 都在 inject 它。本包不得复用该名。
+- insert:
+    - id: zhiyun-classroom-studio
+      name: dsh-zhiyun-host-classroom

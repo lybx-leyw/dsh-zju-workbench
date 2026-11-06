@@ -1,0 +1,211 @@
+{
+  "stage": {
+    "id": "stage-golden",
+    "name": "Photosynthesis: <Light> & \"Life\"",
+    "description": "Golden classroom for the parity gate: four scene types, one each.",
+    "style": "professional",
+    "language": "en",
+    "createdAt": 1700000000000,
+    "updatedAt": 1700000000000
+  },
+  "scenes": [
+    {
+      "id": "scene-quiz",
+      "stageId": "stage-golden",
+      "type": "quiz",
+      "title": "Check your understanding",
+      "order": 2,
+      "content": {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "type": "single",
+            "question": "Where in the cell does photosynthesis take place?",
+            "options": [
+              { "value": "A", "label": "Mitochondria" },
+              { "value": "B", "label": "Chloroplasts" },
+              { "value": "C", "label": "Nucleus" }
+            ],
+            "answer": ["B"],
+            "analysis": "Chloroplasts contain chlorophyll.",
+            "hasAnswer": true,
+            "points": 1
+          },
+          {
+            "id": "q2",
+            "type": "multiple",
+            "question": "Which are inputs of photosynthesis? </script><!-- not markup -->",
+            "options": [
+              { "value": "A", "label": "Carbon dioxide" },
+              { "value": "B", "label": "Oxygen" },
+              { "value": "C", "label": "Water" }
+            ],
+            "answer": ["A", "C"],
+            "analysis": "CO2 and water go in.",
+            "hasAnswer": true,
+            "points": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-slide",
+      "stageId": "stage-golden",
+      "type": "slide",
+      "title": "What is photosynthesis?",
+      "order": 0,
+      "content": {
+        "type": "slide",
+        "canvas": {
+          "id": "slide-1",
+          "viewportSize": 1000,
+          "viewportRatio": 0.5625,
+          "theme": {
+            "backgroundColor": "#ffffff",
+            "themeColors": ["#5b9bd5", "#ed7d31", "#a5a5a5", "#ffc000", "#4472c4"],
+            "fontColor": "#333333",
+            "fontName": "Arial"
+          },
+          "background": { "type": "solid", "color": "#f8fafc" },
+          "elements": [
+            {
+              "type": "text",
+              "id": "title",
+              "left": 60,
+              "top": 40,
+              "width": 880,
+              "height": 70,
+              "rotate": 0,
+              "content": "<p><strong><span style=\"font-size: 36px;\">What is photosynthesis?</span></strong></p>",
+              "defaultFontName": "Arial",
+              "defaultColor": "#14532d"
+            },
+            {
+              "type": "text",
+              "id": "body",
+              "left": 60,
+              "top": 140,
+              "width": 480,
+              "height": 260,
+              "rotate": 0,
+              "content": "<ul><li><p>Plants convert light energy into chemical energy.</p></li><li><p>Inputs: carbon dioxide and water.</p></li><li><p>Outputs: glucose and oxygen.</p></li></ul>",
+              "defaultFontName": "Arial",
+              "defaultColor": "#334155"
+            },
+            {
+              "type": "image",
+              "id": "leaf",
+              "left": 580,
+              "top": 140,
+              "width": 170,
+              "height": 170,
+              "rotate": 0,
+              "fixedRatio": true,
+              "src": "golden_leaf"
+            },
+            {
+              "type": "chart",
+              "id": "chart",
+              "left": 580,
+              "top": 330,
+              "width": 360,
+              "height": 200,
+              "rotate": 0,
+              "chartType": "bar",
+              "data": {
+                "labels": ["Low", "Medium", "High"],
+                "legends": ["Rate"],
+                "series": [[20, 55, 80]]
+              },
+              "themeColors": ["#22c55e"]
+            },
+            {
+              "type": "latex",
+              "id": "formula",
+              "left": 60,
+              "top": 420,
+              "width": 320,
+              "height": 60,
+              "rotate": 0,
+              "latex": "E=mc^2",
+              "color": "#0f172a"
+            }
+          ]
+        }
+      },
+      "actions": [{ "id": "speech-1", "type": "speech", "text": "Let us look at photosynthesis." }]
+    },
+    {
+      "id": "scene-interactive",
+      "stageId": "stage-golden",
+      "type": "interactive",
+      "title": "Light intensity lab",
+      "order": 1,
+      "content": {
+        "type": "interactive",
+        "html": "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>Light lab</title><style>body{margin:0;font-family:sans-serif}#rate{font-weight:700}</style></head>\n<body><h1>Light intensity lab</h1><input id=\"light\" type=\"range\" min=\"0\" max=\"100\" value=\"40\"><p>Photosynthesis rate: <span id=\"rate\">40</span></p><p id=\"note\">Drag the slider to change the light.</p>\n<script>document.getElementById('light').addEventListener('input', function () { document.getElementById('rate').textContent = String(this.value); });</script>\n</body></html>"
+      }
+    },
+    {
+      "id": "scene-pbl",
+      "stageId": "stage-golden",
+      "type": "pbl",
+      "title": "Design a greenhouse",
+      "order": 3,
+      "content": {
+        "type": "pbl",
+        "projectV2": {
+          "uiPhase": "hero",
+          "title": "Design a school greenhouse",
+          "description": "Plan a small greenhouse that maximizes plant growth on a budget.",
+          "learningObjective": "Apply the limiting factors of photosynthesis to a real design.",
+          "tags": ["biology"],
+          "language": "en-US",
+          "proficiency": "beginner",
+          "status": "active",
+          "scenario": {
+            "setting": "Your school wants a greenhouse for the science club.",
+            "goal": "Present a design the principal can approve.",
+            "learnerRole": "Lead designer",
+            "characters": [{ "id": "c1", "name": "Ms. Rivera", "persona": "Principal who cares about cost" }]
+          },
+          "roles": [{ "id": "r1", "type": "instructor", "name": "Coach" }],
+          "milestones": [
+            {
+              "id": "m1",
+              "title": "Research limiting factors",
+              "description": "Find out what limits plant growth indoors.",
+              "status": "active",
+              "order": 0,
+              "microtasks": [
+                {
+                  "id": "t1",
+                  "title": "List the factors",
+                  "description": "Light, CO2, temperature, water.",
+                  "status": "todo",
+                  "assignee": "user",
+                  "hints": [],
+                  "order": 0
+                }
+              ]
+            },
+            {
+              "id": "m2",
+              "title": "Sketch the design",
+              "status": "locked",
+              "order": 1,
+              "microtasks": []
+            }
+          ],
+          "submissions": [],
+          "evaluations": [],
+          "threads": [],
+          "engagementEvents": [],
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z"
+        }
+      }
+    }
+  ]
+}

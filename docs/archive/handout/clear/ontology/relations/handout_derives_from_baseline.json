@@ -1,0 +1,8 @@
+{
+  "id": "handout_derives_from_baseline",
+  "label": "初始内容来自基线",
+  "kind": "affects",
+  "domain": "lecture_baseline",
+  "range": "handout",
+  "check": "新版讲义 md 生成时逐块等于当次基线正文"
+}

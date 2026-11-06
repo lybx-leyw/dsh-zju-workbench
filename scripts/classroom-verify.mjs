@@ -1,8 +1,8 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ClassroomSource, ClassroomError, ENDPOINTS } from '../packages/dsh-zhiyun-classroom/src/source.js';
-import { shanghaiDate } from '../packages/dsh-zhiyun-classroom/src/models.js';
+import { ClassroomSource, ClassroomError, ENDPOINTS } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import { shanghaiDate } from '../packages/dsh-zhiyun-source-classroom/src/models.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);

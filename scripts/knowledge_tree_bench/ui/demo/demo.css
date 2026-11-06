@@ -1,0 +1,351 @@
+/* 演示页样式：纸张色调 + 单强调色 + 4px 网格，固定视口不滚动。
+ * 与基准台同一套设计变量，但这是独立页面，所以变量在这里定义一份。 */
+
+:root {
+  --paper: #f6f3ec; --paper-2: #efebe1; --ink: #1e1b17; --ink-2: #4a453d; --muted: #7d766a;
+  --faint: #8b8377; --rule: #dcd5c7; --rule-soft: #e8e2d5;
+  --accent: #b8402f; --mix: #4f7361; --vision: #4a6d85; --warn: #9c7a3c;
+  --mono: "JetBrains Mono", "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --sans: "PingFang SC", "Microsoft YaHei UI", "Hiragino Sans GB", "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--paper); color: var(--ink);
+  font: 400 13px/1.5 var(--sans);
+  display: flex; flex-direction: column; gap: 0;
+  padding: 10px 14px 8px; overflow: hidden;
+}
+
+/* ── 顶栏 ── */
+#top { display: flex; gap: 14px; align-items: center; flex: none; padding-bottom: 8px; }
+#top .brand { display: flex; flex-direction: column; gap: 1px; flex: none; }
+#top .eyebrow {
+  font: 500 8px/1 var(--mono); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--accent);
+}
+#top .brand b { font: 500 13px/1.2 var(--sans); }
+
+/* ── 导轨 ── */
+.rail { display: flex; gap: 0; flex: 1; min-width: 0; border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; }
+.rail .stg {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;
+  padding: 4px 6px 3px; background: transparent; border: 0; border-left: 1px solid var(--rule-soft);
+  cursor: pointer; text-align: left; position: relative;
+}
+.rail .stg:first-child { border-left: 0; }
+.rail .stg .sn { font: 500 7.5px/1 var(--mono); letter-spacing: .1em; color: var(--faint); }
+.rail .stg .st { font: 400 10px/1.2 var(--sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rail .stg .sb { height: 2px; background: var(--rule-soft); margin-top: 2px; display: block; }
+.rail .stg .sb i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .2s; }
+.rail .stg.done .sb i { background: var(--ink); }
+.rail .stg.on { background: rgba(184, 64, 47, .06); }
+.rail .stg.on .sn { color: var(--accent); }
+.rail .stg.on .st { color: var(--ink); }
+.rail .stg.on .sb i { background: var(--accent); }
+
+/* ── 控制 ── */
+.controls { display: flex; gap: 5px; flex: none; }
+.controls button, .tabs button {
+  font: 500 11px/1 var(--sans); padding: 5px 10px;
+  border: 1px solid var(--ink); border-radius: 2px;
+  background: var(--ink); color: var(--paper); cursor: pointer;
+}
+.controls button.ghost, .tabs button {
+  background: transparent; color: var(--ink-2); border-color: var(--rule);
+}
+.controls button:hover, .tabs button:hover { border-color: var(--ink); }
+
+/* ── 进度 ── */
+#progress { display: flex; gap: 10px; align-items: center; flex: none; padding: 0 0 8px; }
+#progress .track { flex: 1; height: 3px; background: var(--rule-soft); border-radius: 2px; overflow: hidden; }
+#progress .track i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .15s; }
+#progress #barLabel, #progress .stepof { font: 400 9.5px/1 var(--mono); color: var(--muted); white-space: nowrap; }
+#progress .stepof b { font-weight: 500; color: var(--ink); }
+
+/* ── 主体 ── */
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 12px; }
+#stage {
+  min-height: 0; display: flex; flex-direction: column;
+  border: 1px solid var(--rule); border-radius: 2px; background: #fbf9f4; position: relative;
+}
+.tabs {
+  display: flex; gap: 4px; align-items: center; flex: none;
+  padding: 5px 8px; border-bottom: 1px solid var(--rule-soft);
+}
+.tabs button { font-size: 10px; padding: 3px 8px; }
+.tabs button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.tabs .spacer { flex: 1; }
+.tabs .now { font: 400 10px/1 var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46%; }
+.tabs .now b { color: var(--accent); font-weight: 500; }
+
+/* 画布默认填满可用区（不撑高页面）；
+ * 只有**树视图**需要滚动（它可能比屏幕高）。由 JS 加 `tall` 类切换。
+ *
+ * ⚠️ 早先给所有视图都加 `overflow:auto` + `min-height:100%`，
+ * 结果 #canvas 把容器撑高，整个页面出现纵向滚动 —— 反而更糟。 */
+.canvasWrap { flex: 1; min-height: 0; padding: 2px; position: relative; overflow: hidden; }
+.canvasWrap.tall { overflow: auto; }
+.canvasWrap.tall #canvas { min-height: 100%; }
+#canvas { width: 100%; height: 100%; display: block; }
+
+/* ── 探针浮层 ── */
+#probe {
+  position: absolute; right: 10px; bottom: 10px; width: 300px; max-height: 62%;
+  background: #fff; border: 1px solid var(--ink); border-radius: 2px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.10); padding: 10px 12px; overflow: auto;
+  font: 400 11px/1.55 var(--sans); z-index: 5;
+}
+#probe h4 { margin: 0 0 6px; font: 500 12px/1.4 var(--sans); }
+#probe .ph {
+  font: 500 8px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 4px;
+}
+#probe .x {
+  position: absolute; right: 6px; top: 4px; border: 0; background: transparent;
+  font: 400 16px/1 var(--sans); color: var(--muted); cursor: pointer; padding: 2px 6px;
+}
+#probe .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font: 400 10.5px/1.6 var(--mono); }
+#probe .kv b { color: var(--muted); font-weight: 400; }
+#probe .probeList { margin: 6px 0 0; padding-left: 16px; }
+#probe .probeList li { margin: 2px 0; }
+
+/* ── 侧栏 ── */
+/* 侧栏四张卡片的空间分配。
+ *
+ * ⚠️ 早先 `.grow{flex:1.2}` / `.grow2{flex:1}` / `.grow3{flex:1}` 三条一起抢空间，
+ * 在 768px 高的屏上把「阶段产物」和「事件」压成了 **2px**（clientH=0）——
+ * 看起来有卡片，实际一个字都看不到。那是布局把证据藏起来了。
+ *
+ * 现在给固定基准 + 可grow：读数固定，其余按需分配，且都设 min-height，
+ * 绝不会被压成 0。 */
+aside {
+  min-height: 0; display: flex; flex-direction: column; gap: 6px;
+  /* 矮屏上四块内容确实放不下 → 让侧栏自己滚，
+   * 而不是把某一块压成 0px（那等于把证据藏起来）。 */
+  overflow: auto;
+}
+.card {
+  border: 1px solid var(--rule); border-radius: 2px; background: var(--paper-2);
+  display: flex; flex-direction: column; min-height: 0;
+}
+/* 三类内容各有**最小高度**，保证永远看得见：
+ *   · 读数      —— 固定（内容就那几行）
+ *   · 阶段产物  —— 至少 120px（要放表格）
+ *   · 验收      —— 至少 150px（这是最重要的一块）
+ *   · 事件      —— 至少 120px（要能翻）
+ */
+/* 第一张（读数）必须固定：它的内容就几行，被压成 0 等于什么都没显示。 */
+.card.pin { flex: 0 0 auto; min-height: 0; }
+.card.grow  { flex: 1 1 0; min-height: 120px; }
+.card.grow2 { flex: 1 1 0; min-height: 120px; }
+.card.grow3 { flex: 1.4 1 0; min-height: 150px; }
+.card.pin   { flex: 0 0 auto; }
+.card .ch {
+  display: flex; justify-content: space-between; gap: 6px; flex: none;
+  padding: 4px 8px; border-bottom: 1px solid var(--rule-soft);
+  font: 500 8px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--faint);
+}
+.card .bd { padding: 6px 8px; }
+.card .bd.scroll { flex: 1; min-height: 0; overflow: auto; }
+.card .id { text-transform: none; letter-spacing: 0; font-size: 7.5px; color: var(--faint); max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.kv2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px 8px; font: 400 11px/1.5 var(--mono); }
+.kv2 div { display: flex; justify-content: space-between; gap: 6px; }
+.kv2 b { color: var(--muted); font-weight: 400; }
+
+/* ── 事件列表 ── */
+.ev {
+  display: flex; gap: 6px; width: 100%; align-items: baseline;
+  padding: 2px 4px; border: 0; border-bottom: 1px dotted var(--rule-soft);
+  background: transparent; cursor: pointer; text-align: left;
+  font: 400 10px/1.5 var(--mono); color: var(--ink-2);
+}
+.ev:last-child { border-bottom: 0; }
+.ev:hover { background: var(--paper); }
+.ev.on { background: var(--ink); color: var(--paper); }
+.ev.on .ei, .ev.on .et { color: var(--paper); opacity: .7; }
+.ev .ei { width: 20px; color: var(--faint); flex: none; text-align: right; }
+.ev .et { width: 38px; color: var(--faint); flex: none; }
+/* ⚠️ flex 子项必须 `min-width:0` 才会收缩并省略；
+ * 否则长文本把行撑宽，出现横向溢出（实测 227>204）。
+ * 父级 `.ev` 也要 `min-width:0`，否则在 flex 容器里同理撑宽。 */
+.ev { min-width: 0; }
+.ev .el { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── 产物面板 ── */
+.tbl { width: 100%; border-collapse: collapse; font: 400 10px/1.45 var(--mono); }
+.tbl th {
+  text-align: left; font-weight: 500; color: var(--faint);
+  border-bottom: 1px solid var(--rule); padding: 2px 4px;
+  position: sticky; top: 0; background: var(--paper-2);
+}
+.tbl td { padding: 1px 4px; border-bottom: 1px dotted var(--rule-soft); }
+.tbl td.ok { color: var(--mix); }
+.tbl td.warn { color: var(--warn); }
+.tbl td.bad { color: var(--accent); }
+.hint { color: var(--faint); font: 400 10.5px/1.6 var(--sans); }
+.dim { color: var(--faint); font: 400 9.5px/1 var(--mono); }
+.ok { color: var(--mix); }
+.warn { color: var(--warn); }
+.bad { color: var(--accent); }
+.chap { margin-bottom: 8px; }
+.chap b { font: 500 11px/1.5 var(--sans); }
+.chap ul { margin: 2px 0 0; padding-left: 15px; font: 400 10px/1.5 var(--sans); color: var(--ink-2); }
+.empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--faint); font-size: 12px; text-align: center; padding: 20px; }
+pre { margin: 0; font: 400 9.5px/1.5 var(--mono); white-space: pre-wrap; word-break: break-all; }
+
+@media (max-width: 1100px) {
+  main { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) 210px; }
+}
+
+/* 运行身份：常驻一行，回答"这次跑的是什么" */
+.runMeta {
+  display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline;
+  padding: 0 0 6px; font: 400 10px/1.5 var(--mono); color: var(--ink-2);
+}
+.runMeta .mi { display: inline-flex; gap: 4px; }
+.runMeta .mi b { color: var(--faint); font-weight: 400; }
+.runMeta .bad { color: var(--accent); }
+
+/* ── 正文阅读器 ──────────────────────────────────────────────────
+ * 审查第 16/22 条：最终内容必须**读得下去**，不能只是计数。
+ * 正文字号比界面文字大一档，行高放松，长文可滚动。 */
+.bodyTitle {
+  margin: 8px 0 3px; font: 500 8px/1 var(--mono);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--accent);
+}
+.bodyText {
+  margin: 0; padding: 7px 9px; max-height: 46vh; overflow: auto;
+  background: var(--paper); border: 1px solid var(--rule-soft); border-radius: 2px;
+  font: 400 12px/1.85 var(--sans); color: var(--ink);
+  white-space: pre-wrap; word-break: break-word;
+}
+.expand {
+  border: 0; background: transparent; cursor: pointer; padding: 0 3px 0 0;
+  color: var(--accent); font: 400 11px/1 var(--mono);
+}
+.expand:hover { text-decoration: underline; }
+
+/* 探针加宽：要放得下正文 */
+#probe { width: 380px; max-height: 74%; }
+
+/* 大字号选项：审查第 22 条说的"长时间核查"需要能放大 */
+body.big #canvas text { font-size: 13px; }
+body.big .tbl { font-size: 12px; }
+body.big .bodyText { font-size: 14px; line-height: 1.9; }
+
+/* ── 架构验收面板 ────────────────────────────────────────────────
+ * 这是整个基准台**最重要的一块**：它回答"是否符合设计"，
+ * 而不是"做了多少活"。所以字号、对比度都按"要长时间读"来定。 */
+.card.grow3 { flex: 1; min-height: 120px; }
+
+.auditHead {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 2px 0 7px; border-bottom: 1px solid var(--rule);
+  font: 400 10.5px/1.5 var(--mono); color: var(--muted);
+}
+.auditHead .dim { font-size: 9.5px; }
+
+.ab {
+  display: inline-block; padding: 1px 5px; border-radius: 2px;
+  font: 500 9px/1.4 var(--mono); letter-spacing: .04em;
+}
+.ab.pass { background: rgba(63, 107, 82, .12); color: var(--mix); }
+.ab.fail { background: rgba(184, 64, 47, .12); color: var(--accent); }
+.ab.unknown { background: rgba(138, 104, 41, .12); color: var(--warn); }
+
+.auditList { display: flex; flex-direction: column; gap: 1px; padding: 6px 0; }
+.arow { padding: 4px 0; border-bottom: 1px dotted var(--rule-soft); }
+.arow:last-child { border-bottom: 0; }
+.arow .ah { display: flex; gap: 6px; align-items: center; }
+.arow .ah b { font: 500 11px/1.5 var(--sans); color: var(--ink); }
+.arow.fail .ah b { color: var(--accent); }
+.arow .ad { margin: 2px 0 0 42px; font: 400 10px/1.6 var(--sans); color: var(--ink-2); }
+.arow .aev {
+  display: block; margin-top: 2px; font: 400 9.5px/1.5 var(--mono); color: var(--faint);
+  word-break: break-word;
+}
+
+.designTitle {
+  margin: 8px 0 4px; padding-top: 7px; border-top: 1px solid var(--rule);
+  font: 500 8px/1 var(--mono); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--faint);
+}
+.designList { display: flex; flex-direction: column; gap: 3px; }
+.drow { display: flex; gap: 6px; align-items: baseline; font: 400 10px/1.5 var(--sans); }
+.drow .dn { color: var(--ink-2); }
+.drow .dnote { color: var(--faint); font-size: 9px; }
+
+.auditCanvas {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px; padding: 30px;
+  text-align: center; color: var(--muted); font: 400 12px/1.8 var(--sans);
+}
+.auditCanvas b { font: 500 14px/1.4 var(--sans); color: var(--ink); }
+
+/* "事后"徽标：提示这条事件是补发的，时间戳不代表操作时刻 */
+.ev .ed {
+  flex: none; font: 500 8px/1 var(--mono); color: var(--warn);
+  border: 1px solid currentColor; border-radius: 2px; padding: 1px 3px;
+  opacity: .85;
+}
+.ev.on .ed { color: var(--paper); opacity: .6; }
+
+/* 筛选与搜索：按**问题**导航，而不是逐条翻 */
+.filters {
+  display: flex; flex-wrap: wrap; gap: 3px; align-items: center;
+  padding: 4px 6px; border-bottom: 1px solid var(--rule-soft);
+}
+.fbtn {
+  font: 500 9.5px/1 var(--mono); padding: 3px 6px;
+  border: 1px solid var(--rule); border-radius: 2px;
+  background: transparent; color: var(--ink-2); cursor: pointer;
+}
+.fbtn:hover { border-color: var(--ink); }
+.fbtn.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.fbtn.clear { margin-left: auto; }
+.search {
+  flex: 1 1 100%; min-width: 0; margin-top: 2px;
+  font: 400 10px/1.4 var(--mono); padding: 3px 5px;
+  border: 1px solid var(--rule); border-radius: 2px; background: #fff; color: var(--ink);
+}
+.search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.ev.hit { background: rgba(184, 64, 47, .07); }
+
+/* 导轨失败态：必须能一眼看出哪一段出了问题 */
+.rail .stg.fail .st { color: var(--accent); }
+.rail .stg.fail .sn { color: var(--accent); }
+.rail .stg.none .st { color: var(--faint); }
+.rail .stg.none .sn { color: var(--rule); }
+
+/* 日志不完整提示：红底，必须显眼 —— 它决定你能不能相信这份回放 */
+.integrity {
+  margin: 0 0 6px; padding: 5px 9px; border-radius: 2px;
+  background: rgba(184, 64, 47, .08); border: 1px solid rgba(184, 64, 47, .3);
+  font: 400 10.5px/1.6 var(--sans); color: var(--accent);
+}
+.integrity b { font-weight: 500; }
+.integrity ul { margin: 3px 0 0; padding-left: 16px; }
+
+/* 原图预览：验收识别质量要对照 */
+.pageImg {
+  display: block; width: 100%; height: auto; margin-top: 6px;
+  border: 1px solid var(--rule); border-radius: 2px; background: var(--paper-2);
+}
+.bodyText.small { font-size: 11px; line-height: 1.7; max-height: 26vh; }
+
+@media (max-width: 800px) {
+  body { height: auto; min-height: 100%; overflow: auto; padding: 8px; }
+  #top { flex-wrap: wrap; gap: 8px; }
+  .rail { flex: 1 1 100%; order: 3; }
+  .controls { margin-left: auto; }
+  main { display: flex; flex-direction: column; }
+  #stage { min-height: 500px; }
+  .canvasWrap { min-height: 440px; }
+  aside { overflow: visible; }
+  .tabs { flex-wrap: wrap; }
+  .tabs .now { max-width: 100%; flex-basis: 100%; }
+  #probe { width: min(300px, calc(100% - 20px)); }
+}

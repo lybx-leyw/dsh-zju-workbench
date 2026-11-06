@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-vault-parse",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 markdown-it（MIT，零运行时依赖，CommonMark 级别解析器），把「笔记」页右栏的 [[双链]]/#标签预览与「论文」页的页码引用从正则估算改为 token 级判定（强化式集成，底层更优）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "markdown-it": "14.1.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

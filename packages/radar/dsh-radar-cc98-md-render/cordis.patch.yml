@@ -1,0 +1,7 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 只有一行 insert，回滚只需删本行。
+# 评审若否决本骨架，整目录删除即可，不必动别处。
+- insert:
+    - id: radar-cc98-md-render
+      name: dsh-radar-cc98-md-render

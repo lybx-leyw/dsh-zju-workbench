@@ -52,7 +52,7 @@ const output = await new Promise((resolve, reject) => {
   child.on('close',code=>code===0 ? resolve(JSON.parse(Buffer.concat(out).toString('utf8'))) : reject(new Error(Buffer.concat(err).toString('utf8'))));
 });
 if (process.argv.includes('--export')) {
-  const assets=path.join(root,'packages/dsh-zhiyun-parser/assets'); const fixtures=path.join(root,'tests/fixtures/parser');
+  const assets=path.join(root,'packages/dsh-zhiyun-core-parser/assets'); const fixtures=path.join(root,'tests/fixtures/parser');
   await mkdir(assets,{recursive:true}); await mkdir(fixtures,{recursive:true});
   await writeFile(path.join(assets,'prompts.json'),JSON.stringify(output.prompts,null,2)+'\n');
   await writeFile(path.join(fixtures,'dart-reference.json'),JSON.stringify(output,null,2)+'\n');

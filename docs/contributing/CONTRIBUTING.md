@@ -75,12 +75,37 @@ git --version
 ```bash
 npm install --prefix .runtime/dsh-0.2.0-rc.2 @deepseek-ai/dsh@0.2.0-rc.2
 npm ci
+npm run vendor:fetch
 npm run dev
 ```
 
+`npm run vendor:fetch` 把 `vendor/` 下的上游源码快照拉回来。这些目录**不进仓库**（见 [.gitignore](../../.gitignore)），脚本按 `upstream.lock.json` / `vendor.lock.json` 里锁定的提交与 SHA-256 下载校验后才落盘；已经拉过的会直接跳过，重拉加 `--force`，只校验本地副本（不联网）加 `--check`。它只影响 DeepTutor 出题引擎和外部评测器，不装也能构建、启动其余功能。
+
+**大陆网络 / 连不上 GitHub 时**，加镜像参数即可（镜像只改变下载地址，落盘前仍按锁文件校验，坏镜像拿不到能通过校验的内容，会自动回落到直连）：
+
+```bash
+# 临时用一次：镜像优先，失败回落 GitHub 直连
+npm run vendor:fetch -- --mirror https://ghfast.top
+# 多个镜像按顺序尝试，用模板 {url} 适配任意写法
+npm run vendor:fetch -- --mirror "https://ghfast.top,https://m.example/{url}"
+# 只走直连，不用镜像
+npm run vendor:fetch -- --mirror none
+```
+
+| 需求 | 操作 |
+| --- | --- |
+| 镜像长期生效（不必每次带参数） | 设环境变量 `VENDOR_GITHUB_MIRROR`；命令行 `--mirror` 优先级更高 |
+| 走本机代理（7890 之类） | Node 的 fetch 默认不读代理变量，需 `NODE_USE_ENV_PROXY=1`（Node ≥ 24）配合 `HTTPS_PROXY` / `HTTP_PROXY` |
+| 慢网络超时 | `--timeout <毫秒>` 调大，`--retries <次数>` 调重试 |
+| 只拉 / 只校验某一个来源 | `--only deeptutor` 或 `--only benchmarker` |
+
+镜像可用性**不做承诺**：公共镜像随时可能限流或失效，脚本保证的是「镜像坏了能回落、回落还不行会明确报错并提示换镜像或开代理」，而不是某个镜像一定能用。因此也支持自建镜像——任何遵守「前缀拼接」或 `{url}` 模板规则的反向代理都能用，指向内网 Nexus / 自建 Cloudflare Worker 都可以。
+
+校验分两层：`--check` 用锁文件里的 `archive.tree.digest`（目录内容摘要）核对本地快照，运行期产物（`__pycache__`、`*.pyc`、`.DS_Store`）不计入；真正下载时先核对归档 SHA-256，再核对解包出来的树摘要，两级都过才换入 `vendor/`，中途失败不会留下半份快照。
+
 安装命令使用 [runtime.lock.json](../../runtime.lock.json) 中的 `preferredHostVersion`，当前为 `0.2.0-rc.2`；不要改用 `@latest`，也不要省略 `--prefix`，它用于将宿主依赖安装到独立目录。Windows 默认位置已有受支持的 DSH Desktop 时，可跳过第一条命令；其他位置的宿主需按 1.3 显式指定。
 
-启动脚本会检查宿主版本、连接本仓库插件，并初始化独立的 `zhiyun-bench` profile，无需手动注入。终端会打印实际使用的宿主、profile、数据目录和访问地址。
+启动脚本会检查宿主版本、连接本仓库插件，并初始化独立的 `zju-workbench` profile，无需手动注入。终端会打印实际使用的宿主、profile、数据目录和访问地址。
 
 **启动成功的标志**：打开终端输出的完整地址（含临时访问令牌），能进入「今天」并看到五项导航：今天、我的课、问一问、学习、个人。默认端口为 `3091`；使用 AI 功能还需在设置中配置模型。
 
@@ -107,6 +132,9 @@ npm run desktop
 | 查看合并后的插件配置 | 构建完成后执行 `npm run profile:dump` |
 | 更换启动端口 | `npm start -- --port 3081` |
 | 提示缺少客户端产物 | 运行 `npm run dev`，先构建再启动 |
+| 提示找不到 DeepTutor 上游源码，或 vendor 目录是空的 | 运行 `npm run vendor:fetch` |
+| 拉取上游源码时报 `fetch failed` | 先用 `npm run vendor:check` 确认本地是否其实完好；需要重拉时按 1.2 加 `--mirror` 或设 `NODE_USE_ENV_PROXY=1` |
+| 怀疑本地 vendor 被改过 | `npm run vendor:check`（只读、不联网），不符会打印期望与实际摘要 |
 | 用窗口打开工作台 | 首次 `npm --prefix apps/desktop install`，之后 `npm run desktop`。先确认 `npm start` 能起来 |
 | 窗口提示实例退出（退出码 1） | 关掉窗口后重新执行 `npm run desktop`，让它使用当前终端的 Node。先用 `npm start` 确认命令行本身能起来 |
 | 提示宿主缺失或版本不匹配 | 按 1.2 安装，并检查是否设置了指向其他宿主的环境变量 |
@@ -197,8 +225,8 @@ Owner: @alice, @bob + Open
 
 ```text
 OWNERS                                      # 可不写；不写即为 shared
-packages/dsh-zhiyun-shell/OWNERS            Owner: @alice
-packages/dsh-zhiyun-shell/src/OWNERS        Owner: @alice, @bob + Open
+packages/dsh-zhiyun-shell-workbench/OWNERS            Owner: @alice
+packages/dsh-zhiyun-shell-workbench/src/OWNERS        Owner: @alice, @bob + Open
 scripts/OWNERS                              Owner: @bob, @carol + Open
 ```
 
@@ -207,6 +235,8 @@ scripts/OWNERS                              Owner: @bob, @carol + Open
 ## 3. 贡献方式：提供插件包
 
 本项目的功能单位是插件包（`packages/dsh-zhiyun-*`），不是往某个大插件里塞代码。贡献一个新功能，就是提供一个包，或改动已有的包；改动某一页时只动对应的包（各包职责见 [README](../../README.md) 与包内的 `README.md`）。
+
+> `packages/radar/` 下的 `dsh-radar-*` 是生态雷达的**候选骨架**，不是正式包，不参与构建与 profile。把骨架变成正式包（以及不转正时怎么处置）按 [RADAR.md](./RADAR.md) 执行；其中**保守废弃原则**要求：只有能力全部被提取或用户明确要求才删骨架，仅提取部分能力时只标记、不删除。
 
 **插件包怎么写没有额外规定，参考现成实现即可**：
 
@@ -217,7 +247,7 @@ scripts/OWNERS                              Owner: @bob, @carol + Open
 
 ### 3.1 不要接入会让整个 profile 起不来的包
 
-profile 中任何一条 Loader 条目解析失败，起不来的都是**整个工作台**，而不是那一个包：其他人拉取后连界面都进不去。因此没把握的插件包不要写进 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`，留在 `packages/` 下即可。
+profile 中任何一条 Loader 条目解析失败，起不来的都是**整个工作台**，而不是那一个包：其他人拉取后连界面都进不去。因此没把握的插件包不要写进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`，留在 `packages/` 下即可。
 
 开发期间当然可以接进去验证，提交前把不稳定的条目去掉。这条针对的是新引入、来源不确定的包，不针对仓库里已有的本地包。
 
@@ -238,7 +268,7 @@ test('用例名说清被钉住的行为', () => {
 });
 ```
 
-需要外部真值的用例，把夹具放在包内的 `fixtures/`，并在注释里写明生成方式；例见 `packages/dsh-zhiyun-notes/fixtures/dart-golden-*.json`。涉及宿主的改动（插槽、导航、主题、宿主适配）用 `npm run test:host` 在真实宿主中验证，它会在 `artifacts/` 留下报告与截图。
+需要外部真值的用例，把夹具放在包内的 `fixtures/`，并在注释里写明生成方式；例见 `packages/dsh-zhiyun-core-notes/fixtures/dart-golden-*.json`。涉及宿主的改动（插槽、导航、主题、宿主适配）用 `npm run test:host` 在真实宿主中验证，它会在 `artifacts/` 留下报告与截图。
 
 ### 3.3 参考其他项目前先确认协议
 

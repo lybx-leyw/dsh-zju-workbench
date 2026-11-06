@@ -1,0 +1,22 @@
+{
+  "name": "dsh-zhiyun-core-lecture-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "智云 Pro 出题专用工具集：讲义检索（rag）、大纲/清单（kb_files）、按知识点读取原文（read_source）、历史题查询（question_bank）。工具 description 与 parameters 逐字取自上游 DeepTutor，纯 JS、零第三方依赖、只读内存里的讲义",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./definitions": "./src/definitions.js",
+    "./schema": "./src/schema.js",
+    "./lecture-index": "./src/lecture-index.js",
+    "./rag": "./src/rag.js",
+    "./kb-files": "./src/kb-files.js",
+    "./read-source": "./src/read-source.js",
+    "./question-bank": "./src/question-bank.js",
+    "./prompt-hints": "./src/prompt-hints.js",
+    "./py-repr": "./src/py-repr.js",
+    "./data/upstream.json": "./src/data/upstream.json",
+    "./package.json": "./package.json"
+  }
+}

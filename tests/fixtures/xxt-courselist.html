@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head><title>课程</title></head>
+<body>
+<div class="course-list">
+  <!-- 一张卡片：链接是锚点，课程名在 course-name 的 title 上，教师名在 overHidden2 -->
+  <div class="course-info">
+    <a href="/visit/stucoursemiddle?courseid=241122334&clazzid=998877&cpi=306112233&ismooc2=1"
+       class="course-cover" title="进入课程"></a>
+    <div class="course-name" title="高等数学（甲）I"></div>
+    <p class="overHidden2 fl">高等数学（甲）I</p>
+    <p class="overHidden2 fl">张建国</p>
+    <p class="overHidden2 fl">2025-2026 秋冬</p>
+    <span class="progress">已完成 3/12</span>
+  </div>
+
+  <!-- 第二张：链接里的 &amp; 写法（另一个模板的转义）+ 教师名带实体 -->
+  <div class="course-info">
+    <a class="course-cover" href="/visit/stucoursemiddle?courseid=241122335&amp;clazzid=998878&amp;cpi=306112234&amp;ismooc2=1"></a>
+    <div class="course-name" title="大学物理 &amp; 实验"></div>
+    <p class="overHidden2 fl">大学物理 &amp; 实验</p>
+    <p class="overHidden2 fl">李&#22269;华</p>
+  </div>
+
+  <!-- 第三张：同一门课又出现一次（"继续学习"按钮），解析必须去重 -->
+  <div class="continue">
+    <a href="/visit/stucoursemiddle?courseid=241122334&clazzid=998877&cpi=306112233&ismooc2=1">继续学习</a>
+  </div>
+
+  <!-- 第四张：没有教师名的课 -->
+  <div class="course-info">
+    <a href="/visit/stucoursemiddle?courseid=241122336&clazzid=998879&cpi=306112235&ismooc2=1"></a>
+    <div class="course-name" title="形势与政策"></div>
+  </div>
+</div>
+</body>
+</html>

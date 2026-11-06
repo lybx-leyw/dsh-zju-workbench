@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-ics-rrule",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 rrule（RFC 5545 重复规则），为「导出 .ics」补上真正的周重复（强化式集成，须与 dsh-radar-ics-export 同装）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "rrule": "2.8.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -5,7 +5,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { ClassroomSource } from '../packages/dsh-zhiyun-classroom/src/source.js';
+import { ClassroomSource } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
 
 test('streaming downloads validate Range, restart ignored Range, keep cancelled partial and refuse overwrites', async () => {
   const bytes = Buffer.from('0123456789'.repeat(1000));

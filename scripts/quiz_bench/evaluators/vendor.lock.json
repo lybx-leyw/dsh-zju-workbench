@@ -1,0 +1,45 @@
+{
+  "name": "BenchMarker",
+  "repository": "https://github.com/nbalepur/BenchMarker",
+  "commit": "bcd34a531e7c15c6416732ff465f99129783cc6f",
+  "license": "MIT",
+  "scope": "Unmodified writing-flaw and shortcut scorer subset, original prompt builders, README and dependency metadata; no datasets or rewriting pipeline",
+  "files": {
+    "LICENSE": {
+      "sha256": "15a2e424b275748d8be482d14a59db40e9693597f4de14c789183dd42cc2a2dd",
+      "gitBlob": "dfa46eca3c2d9c3d891b1d5be75196b02a091f69"
+    },
+    "README.md": {
+      "sha256": "1327dd6da3b6ba8d4d6a61ff24c833bfee609ae72e86b04968fe23381505d329",
+      "gitBlob": "ffdb71a2dc88bb50b912e4cb06f387f7d2cb76b8"
+    },
+    "pyproject.toml": {
+      "sha256": "59fa2955720bb94b2d9ac8770af30f24028825f0bfa36b4d3b6eeb6411639c87",
+      "gitBlob": "addffc8be640e2c9886265af5cfe319405ccd7fb"
+    },
+    "prompts/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "prompts/writing_flaw_prompts.py": {
+      "sha256": "5dd768a873dc0c71a0903328dd4cfde9519ee4225f17670bbe527836c22f12bf",
+      "gitBlob": "90cda7a11f885eb7b5a5083263bbcca768443e54"
+    },
+    "prompts/shortcut_prompts.py": {
+      "sha256": "f7c43748eb9e80e916997f8442e1b740676e9900bd6cd56c680696c13b909c17",
+      "gitBlob": "75f5b16b9747cf745d58ccadc5524aba9e393285"
+    },
+    "scorers/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    "scorers/writing_flaws_scorer.py": {
+      "sha256": "4e4d323684be3b680145c2167d6221660028ab974ec746e2ade6b4db36e1e3df",
+      "gitBlob": "40690f2c248b73e0013662a9001adbc4c3ea74d4"
+    },
+    "scorers/shortcut_scorer.py": {
+      "sha256": "6006c4a5cec9b52a9b219b58bf7315a818eb54ec36002ae2eedf5d83311975fa",
+      "gitBlob": "87a0141430b0ae4fba9ec9f617efad6dab796c64"
+    }
+  }
+}

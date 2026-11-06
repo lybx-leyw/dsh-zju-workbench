@@ -1,0 +1,3180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知识树重建 · 挂账 / 正交审查 / 并发真 merge</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   人体工效学基线：纸面非纯白、墨色非纯黑、发丝线分组、等宽数字、固定一屏。
+   语义色：
+     绿 = insert（新标题+新叶）
+     黄 = 挂账（pending，未整合）
+     蓝 = 真 merge（内容重写）
+     朱红 = 作废 / 剪除
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#f6f3ec; --paper-2:#efebe1;
+  --ink:#1e1b17; --ink-2:#4a453d; --muted:#7d766a; --faint:#a89f90;
+  --rule:#dcd5c7; --rule-soft:#e8e2d5;
+  --accent:#b8402f; --mix:#4f7361; --vision:#4a6d85; --warn:#9c7a3c;
+  --mono:"JetBrains Mono","Cascadia Mono","SF Mono",Consolas,"Courier New",monospace;
+  --serif:"Source Han Serif SC","Songti SC","STSong",Georgia,"Times New Roman",serif;
+  --sans:"PingFang SC","Microsoft YaHei UI","Hiragino Sans GB","Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{ -webkit-text-size-adjust:100%; height:100%; }
+body{
+  margin:0; height:100dvh; overflow:hidden;
+  background:var(--paper); color:var(--ink);
+  font:14px/1.5 var(--sans);
+  font-feature-settings:"tnum" 1,"lnum" 1;
+  padding:13px 18px; display:flex; flex-direction:column;
+}
+body::after{
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+  opacity:.026; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.app{ position:relative; z-index:2; display:flex; flex-direction:column; gap:8px; flex:1; min-height:0; }
+
+.head{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:16px; flex:none; padding-bottom:6px; border-bottom:1px solid var(--rule);
+}
+.eyebrow{
+  font:600 8.5px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:4px;
+}
+h1{ font:400 17px/1.15 var(--serif); margin:0; }
+h1 em{ font-style:normal; color:var(--muted); font-size:11.5px; }
+.controls{ display:flex; align-items:center; gap:8px; flex:none; }
+button{
+  font:500 10.5px/1 var(--sans); letter-spacing:.04em;
+  color:var(--ink-2); background:transparent;
+  border:1px solid var(--rule); border-radius:2px;
+  padding:0 10px; height:24px; cursor:pointer;
+  transition:background .12s,border-color .12s,color .12s;
+}
+button:hover{ background:var(--paper-2); border-color:var(--faint); color:var(--ink); }
+button:active{ background:var(--rule-soft); }
+button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+button.go{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+button.go:hover{ background:#332e28; border-color:#332e28; }
+.speed{ display:flex; align-items:center; gap:5px; }
+.speed label{ font:500 9px/1 var(--sans); color:var(--muted); letter-spacing:.05em; }
+.speed b{ font:600 10.5px/1 var(--mono); font-variant-numeric:tabular-nums; min-width:11px; }
+.ctl{ display:flex; align-items:center; gap:5px; }
+.ctl label{ font:500 9px/1 var(--sans); color:var(--muted); white-space:nowrap; }
+.ctl b{ font:600 10.5px/1 var(--mono); font-variant-numeric:tabular-nums; min-width:11px; }
+input[type=range]{
+  -webkit-appearance:none; appearance:none;
+  width:66px; height:13px; background:transparent; cursor:pointer; margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{ height:2px; background:var(--rule); border-radius:1px; }
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:10px; height:10px; border-radius:50%;
+  background:var(--ink); margin-top:-4px; border:2px solid var(--paper);
+  box-shadow:0 0 0 1px var(--ink);
+}
+
+.readouts{
+  display:grid; grid-template-columns:repeat(7,1fr);
+  border-bottom:1px solid var(--rule); padding-bottom:5px; flex:none;
+}
+.readout{ padding-left:11px; border-left:1px solid var(--rule-soft); display:flex; flex-direction:column; gap:1px; min-width:0; }
+.readout:first-child{ padding-left:0; border-left:0; }
+.readout .k{ font:500 7.5px/1 var(--sans); letter-spacing:.11em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+.readout .v{ font:400 15px/1.2 var(--mono); font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--ink); }
+.readout .v .u{ font-size:9px; color:var(--faint); margin-left:2px; letter-spacing:0; }
+.readout.titlec .v{ color:var(--vision); }
+.readout.content .v{ color:var(--mix); }
+.readout.dirty .v{ color:var(--warn); }
+
+.grid{ display:grid; grid-template-columns:minmax(0,1fr) 348px; gap:13px; flex:1; min-height:0; }
+.grid > section, .grid > aside{ display:flex; flex-direction:column; min-height:0; }
+.sec-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:3px; flex:none; }
+.sec-head h2{ font:500 9px/1 var(--sans); letter-spacing:.13em; text-transform:uppercase; color:var(--ink-2); margin:0; }
+.sec-head .hint{ font:400 8.5px/1 var(--mono); color:var(--faint); letter-spacing:.02em; }
+
+.canvas{
+  position:relative; flex:1; min-height:0;
+  border:1px solid var(--rule); border-radius:2px;
+  background:linear-gradient(160deg, var(--paper-2), var(--paper) 55%);
+  overflow:hidden;
+}
+#svg{ display:block; width:100%; height:100%; }
+
+/* ── 节点 ── */
+.n rect{ transition:fill .28s, stroke .28s, stroke-width .28s, opacity .28s; }
+.n.title rect{ fill:transparent; stroke:var(--faint); stroke-width:1; stroke-dasharray:3 2.5; }
+.n.title text{ fill:var(--muted); }
+.n.ghost rect{ fill:none; stroke:var(--rule); stroke-dasharray:2 2; }
+.n.ghost text{ fill:var(--faint); }
+/* 叶：已整合正文 */
+.n.leaf rect{ fill:#f0f4f0; stroke:var(--mix); stroke-width:1.1; }
+.n.leaf .ln{ fill:var(--ink-2); }
+.n.leaf.pend rect{ stroke:var(--warn); stroke-dasharray:5 2.5; fill:#f8f4ea; }
+.n.pending-line{ fill:var(--warn); font-style:italic; }
+.n .ln.subt{ fill:var(--vision); font-weight:600; }
+.n .ln.attach-line{ fill:var(--warn); font-weight:500; }
+.n.gauge-bg{ fill:var(--rule); }
+.n.gauge-fg{ fill:var(--warn); }
+.n.junk rect{ stroke:var(--warn); stroke-dasharray:3 2; fill:transparent; opacity:.62; }
+.n.junk text{ fill:var(--faint); }
+.n.inserted rect{ stroke:var(--mix); stroke-width:1.9; fill:#e2efe4; }
+.n.merged rect{ stroke:var(--vision); stroke-width:1.9; fill:#e6eef5; }
+.n.detached rect{ stroke:var(--warn); stroke-width:1.4; fill:#f8f4ea; }
+.n.doomed rect{ stroke:var(--accent); stroke-dasharray:3 2; fill:transparent; }
+.n.doomed text{ fill:var(--accent); text-decoration:line-through; }
+.n.gone{ opacity:0; }
+
+.n text{ font:400 10.5px/1 var(--sans); fill:var(--ink); dominant-baseline:middle; }
+.n .kind{ font:500 7px/1 var(--mono); fill:var(--faint); dominant-baseline:middle; text-anchor:end; letter-spacing:.02em; }
+.n.leaf .kind{ fill:var(--mix); }
+.n.leaf.pend .kind{ fill:var(--warn); }
+.n.leaf .kind.rw{ fill:var(--vision); font-weight:700; }
+.n .delta{ font:600 8.5px/1 var(--mono); fill:var(--warn); dominant-baseline:middle; }
+.n .delta.merge{ fill:var(--vision); }
+.n .delta.ins{ fill:var(--mix); }
+
+.e{ fill:none; stroke:var(--rule); stroke-width:1; transition:stroke .28s; }
+.e.title-edge{ stroke:var(--rule-soft); stroke-dasharray:2 2; }
+.e.hot{ stroke:var(--mix); stroke-width:1.3; }
+
+/* ── 侧栏 ── */
+.side{ display:flex; flex-direction:column; min-height:0; overflow:hidden; }.card{ flex:none; border:1px solid var(--rule); border-radius:2px; margin-bottom:5px;
+  background:var(--paper); overflow:hidden; }
+.card .ch{
+  font:500 7.5px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase;
+  color:var(--faint); padding:4px 8px; border-bottom:1px solid var(--rule-soft);
+  display:flex; justify-content:space-between; gap:6px;
+}
+.card .ch .cnt{ color:var(--ink-2); white-space:nowrap; }
+.card .body{ padding:3px 0; }
+
+/* ★ 侧栏是**固定高度**的：每张卡都必须能被压住，
+   否则卡片会把日志挤出视口（页面本身永远不滚动）。 */
+#opsCard .body{ max-height:118px; overflow:hidden; }
+#opsCard{ flex:0 1 auto; min-height:0; }
+#workerCard .body{ max-height:96px; overflow:hidden; }
+
+.batch{ background:var(--paper-2); padding:5px 8px; }
+.batch .val{ font:400 11px/1.3 var(--sans); color:var(--ink); }
+.batch .act{ font:500 9px/1.35 var(--mono); margin-top:3px; color:var(--muted); }
+.batch .act.insert{ color:var(--mix); }
+.batch .act.merge{ color:var(--warn); }
+.batch .act.flush{ color:var(--vision); }
+.batch .act.delete{ color:var(--accent); }
+.batch .act.mark{ color:var(--warn); }
+
+.orow{
+  display:grid; grid-template-columns:15px 1fr 34px 28px; gap:5px; align-items:center;
+  padding:1.5px 7px; font:400 9.5px/1.3 var(--sans); color:var(--ink-2);
+}
+.orow .mk{ font:600 8px/1 var(--mono); text-align:center; }
+.orow.insert .mk{ color:var(--mix); }
+.orow.merge .mk{ color:var(--warn); }
+.orow.flush .mk{ color:var(--vision); }
+.orow .nm{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.orow .bar{ height:3px; background:var(--rule-soft); border-radius:2px; overflow:hidden; }
+.orow .bar i{ display:block; height:100%; border-radius:2px; }
+.orow.insert .bar i{ background:var(--mix); }
+.orow.merge .bar i{ background:var(--warn); }
+.orow.flush .bar i{ background:var(--vision); }
+.orow .nb{ font:600 9px/1 var(--mono); text-align:right; font-variant-numeric:tabular-nums; }
+.orow.insert .nb{ color:var(--mix); }
+.orow.merge .nb{ color:var(--warn); }
+.orow.flush .nb{ color:var(--vision); }
+/* 依附块（例题/案例）单独一色，和宿主挂账区分开 */
+.orow.attach .mk{ color:var(--accent); }
+.orow.attach .bar i{ background:var(--accent); opacity:.65; }
+.orow.attach .nb{ color:var(--accent); }
+.orow.attach .nm{ color:var(--muted); }
+
+/* worker 池 */
+.wrow{
+  display:grid; grid-template-columns:20px 1fr 44px; gap:5px; align-items:center;
+  padding:1.5px 7px; font:400 9.5px/1.3 var(--sans);
+}
+.wrow .wid{ font:500 8px/1 var(--mono); color:var(--faint); }
+.wrow .wn{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink-2); }
+.wrow .wn i{ font-style:normal; color:var(--faint); }
+.wrow .wbar{ height:3px; background:var(--rule-soft); border-radius:2px; overflow:hidden; }
+.wrow .wbar i{ display:block; height:100%; background:var(--vision); border-radius:2px; }
+.wrow.idle .wn{ color:var(--faint); }
+
+.diff .cols{ display:grid; grid-template-columns:1fr 1fr; }
+.diff .col{ padding:3px 6px; font:400 9px/1.5 var(--sans); min-width:0; }
+.diff .col + .col{ border-left:1px solid var(--rule-soft); }
+.diff .col .ch2{ font:500 7px/1 var(--sans); letter-spacing:.1em; color:var(--faint); display:block; margin-bottom:2px; text-transform:uppercase; }
+.diff .col.old .ln{ color:var(--faint); text-decoration:line-through; text-decoration-color:var(--accent); }
+.diff .col .ln{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.diff .solo{ padding:4px 8px; font:400 9.5px/1.45 var(--sans); color:var(--warn); }
+.diff .ver{ font-weight:700; color:var(--vision); }
+
+.recon .rc{ display:grid; grid-template-columns:13px 1fr; gap:5px; align-items:center;
+  padding:1px 8px; font:400 9.5px/1.3 var(--sans); color:var(--faint); }
+.recon .rc .n{ font:600 8px/1 var(--mono); width:13px; height:13px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--rule); }
+.recon .rc.cur{ color:var(--ink); }
+.recon .rc.cur .n{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.recon .rc.done{ color:var(--ink-2); }
+.recon .rc.done .n{ background:var(--mix); border-color:var(--mix); color:#fff; }
+.recon .note{ margin:3px 8px 4px; padding:3px 0 0; border-top:1px dashed var(--rule);
+  font:400 8.5px/1.45 var(--sans); color:var(--muted); }
+.recon .note b{ color:var(--accent); font-weight:600; }
+
+/* ── 大黑板 ── */
+.bb .body{ max-height:104px; overflow-y:auto; overflow-x:hidden; }
+.bblist{ scrollbar-width:none; }
+.bblist::-webkit-scrollbar{ width:0; height:0; }
+.brow{
+  display:grid; grid-template-columns:42px 15px 1fr; gap:5px; align-items:baseline;
+  padding:1.5px 8px; font:400 9.5px/1.35 var(--sans); color:var(--ink-2);
+}
+.brow .bt{ font:500 8.5px/1 var(--mono); color:var(--faint); font-variant-numeric:tabular-nums; }
+.brow .bd{
+  font:600 7px/1 var(--mono); color:#fff; text-align:center;
+  border-radius:1px; padding:1.5px 0; height:11px;
+}
+.brow .bd.misc{ background:var(--faint); }
+.brow .bd.sched{ background:var(--warn); }
+.brow .bd.hw{ background:var(--vision); }
+.brow .bx{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.brow.side .bx{ color:var(--muted); }
+
+.logbox{ flex:1; min-height:0; overflow:hidden; border:1px solid var(--rule);
+  border-radius:2px; background:var(--paper); display:flex; flex-direction:column; margin-top:1px; }
+.log{ flex:1; overflow:hidden; padding:3px 0; }
+.lrow{ display:grid; grid-template-columns:8px 1fr; gap:5px; padding:1.5px 8px;
+  font:400 9px/1.3 var(--sans); color:var(--ink-2); }
+.lrow .dot{ width:3.5px; height:3.5px; border-radius:50%; margin-top:4px; background:var(--faint); }
+.lrow.insert .dot{ background:var(--mix); }
+.lrow.merge .dot{ background:var(--warn); }
+.lrow.flush .dot{ background:var(--vision); }
+.lrow.delete .dot{ background:var(--accent); }
+.lrow.mark .dot{ background:var(--warn); }
+.lrow.dim{ color:var(--faint); }
+.lrow .m{ min-width:0; }
+.lrow .m b{ font-weight:600; }
+.lrow .d{ font:500 8.5px var(--mono); color:var(--faint); margin-left:3px; }
+
+.timeline{ display:grid; grid-template-columns:repeat(3,1fr); gap:0; flex:none;
+  border-top:1px solid var(--rule); padding-top:5px; }
+.ph{ padding-right:12px; }
+.ph + .ph{ padding-left:12px; border-left:1px solid var(--rule-soft); }
+.ph .n{ font:500 7.5px/1 var(--mono); letter-spacing:.11em; color:var(--faint); display:block; margin-bottom:1px; }
+.ph .t{ font:400 9.5px/1.3 var(--sans); color:var(--muted); }
+.ph .bar{ height:2px; background:var(--rule-soft); margin-top:4px; border-radius:1px; overflow:hidden; }
+.ph .bar i{ display:block; height:100%; width:0; background:var(--ink); transition:width .35s; }
+.ph.on .n{ color:var(--accent); }
+.ph.on .t{ color:var(--ink); }
+.ph.on .bar i{ background:var(--accent); }
+.ph.done .bar i{ background:var(--ink); }
+
+@media (max-height:840px){
+  body{ padding:7px 12px; }
+  .app{ gap:5px; }
+  .grid{ grid-template-columns:minmax(0,1fr) 320px; gap:9px; }
+  h1{ font-size:14px; }
+  .readout .v{ font-size:13px; }
+  .readouts{ padding-bottom:3px; }
+  .card{ margin-bottom:4px; }
+  .orow,.wrow{ padding:1px 6px; }
+}
+@media (max-width:1080px){
+  /* 窄屏：舞台在上、侧栏在下，侧栏给足高度（否则卡片全被压没） */
+  .grid{ grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) minmax(0,206px); }
+  .side{ display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:min-content;
+    gap:0 8px; align-content:start; overflow:hidden; }
+  .side .sec-head{ grid-column:1/-1; }
+  .logbox{ max-height:56px; grid-column:1/-1; }
+  #opsCard .body{ max-height:74px; }
+  .readouts{ grid-template-columns:repeat(4,1fr); row-gap:3px; }
+}
+/* ══════════════════════════════════════════════════════════════
+   全流程分段条（8 段，始终可见 —— 这就是"多步策略"本体）
+   ══════════════════════════════════════════════════════════════ */
+.rail{ display:grid; grid-template-columns:repeat(8,1fr); flex:none;
+  border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); }
+.stg{ padding:4px 6px 2px; border-left:1px solid var(--rule-soft); cursor:pointer; min-width:0; }
+.stg:first-child{ border-left:0; }
+.stg .sn{ font:500 7px/1 var(--mono); letter-spacing:.1em; color:var(--faint); display:block; }
+.stg .st{ font:400 9px/1.2 var(--sans); color:var(--muted); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stg .sb{ height:2px; background:var(--rule-soft); margin-top:3px; }
+.stg .sb i{ display:block; height:100%; width:0; background:var(--ink); transition:width .3s; }
+.stg.on .sn{ color:var(--accent); }
+.stg.on .st{ color:var(--ink); }
+.stg.on .sb i{ background:var(--accent); }
+.stg.done .sb i{ background:var(--ink); }
+.stg:hover{ background:var(--paper-2); }
+
+/* ── 流水线带：VISION → QUEUE → MIX ── */
+.flow{ flex:none; display:grid; grid-template-columns:132px minmax(0,1fr) 132px; gap:9px;
+  border:1px solid var(--rule); border-radius:2px; background:var(--paper-2);
+  padding:5px 7px; margin-bottom:5px; }
+.fl{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.fl .fh{ display:flex; justify-content:space-between; align-items:baseline; gap:4px; }
+.fl .fh b{ font:600 8px/1 var(--mono); letter-spacing:.09em; color:var(--ink-2); }
+.fl .fh span{ font:400 8px/1 var(--mono); color:var(--faint); font-variant-numeric:tabular-nums; }
+.fl .fbar{ height:3px; background:#e2dccd; border-radius:2px; overflow:hidden; }
+.fl .fbar i{ display:block; height:100%; width:0; background:var(--vision); transition:width .32s; }
+.fl.mix .fbar i{ background:var(--mix); }
+.fl .fnote{ font:400 7.5px/1.3 var(--sans); color:var(--muted); margin-top:auto; }
+.fl .widots{ display:flex; gap:2px; flex-wrap:wrap; }
+.fl .widots i{ width:5px; height:5px; border-radius:1px; background:var(--rule); display:block; }
+.fl .widots i.busy{ background:var(--mix); }
+
+/* 页带：24 页，每页几条块，mix 后按标记上色 */
+.pages{ display:grid; grid-template-columns:repeat(24,minmax(0,1fr)); gap:2px; align-content:start; }
+.pg{ position:relative; display:flex; flex-direction:column; justify-content:flex-end;
+  gap:1.5px; padding:1px; border-radius:1px; background:#ece6d8; min-height:34px; }
+.pg b{ font:500 6.5px/1 var(--mono); color:var(--faint); text-align:center;
+  font-variant-numeric:tabular-nums; }
+.pg i{ display:block; height:2px; border-radius:1px; background:var(--faint); transition:background .3s, opacity .3s; }
+.pg i.m-host{ background:var(--ink-2); }
+.pg i.m-attach{ background:var(--warn); }
+.pg i.m-side{ background:var(--accent); }
+.pg i.m-meta{ background:var(--accent); opacity:.5; }
+.pg i.m-gone{ background:var(--rule); opacity:.35; }
+.pg.hot{ box-shadow:inset 0 0 0 1px var(--accent); }
+
+/* ── 讲义预览（习坎 / 润色阶段）── */
+.doc{ flex:1; min-height:0; border:1px solid var(--rule); border-radius:2px;
+  background:var(--paper); padding:9px 13px 7px; column-count:2; column-gap:26px;
+  column-rule:1px solid var(--rule-soft); overflow:hidden; }
+.doc .dhead{ column-span:all; border-bottom:1px solid var(--rule); padding-bottom:4px; margin-bottom:6px; }
+.doc .dhead h3{ font:500 12px/1.2 var(--serif); color:var(--ink); margin:0; }
+.doc .dhead span{ font:400 7.5px/1 var(--mono); color:var(--faint); letter-spacing:.06em; }
+.di{ break-inside:avoid; margin:0 0 5px; padding:0 0 0 0; transition:background .3s, box-shadow .3s; }
+.di .dt{ display:flex; align-items:baseline; gap:5px; }
+.di .dt b{ font:500 9px/1.25 var(--serif); color:var(--ink); }
+.di .dt .bd{ font:500 6.5px/1 var(--mono); letter-spacing:.04em; padding:1px 3px;
+  border:1px solid var(--rule); border-radius:1px; color:var(--muted); flex:none; }
+.di .dt .bd.def{ color:var(--mix); border-color:var(--mix); }
+.di .dt .bd.eg{ color:var(--warn); border-color:var(--warn); }
+.di p{ font:400 8px/1.45 var(--sans); color:var(--ink-2); margin:1px 0 0;
+  overflow-wrap:anywhere; word-break:break-word; }
+.di .dt b{ overflow-wrap:anywhere; }
+.di.raw p{ color:var(--warn); }
+.di.raw .dt .bd{ color:var(--warn); border-color:var(--warn); }
+.di.pending p{ color:var(--faint); }
+.di.pending .dt b{ color:var(--faint); }
+.di.hl{ background:#faf3df; box-shadow:inset 2px 0 0 var(--warn); }
+.di .pm{ font:400 7px/1.2 var(--mono); color:var(--faint); }
+.di .ins{ font:400 7.5px/1.4 var(--sans); color:var(--mix); margin:1px 0 0;
+  padding-left:5px; border-left:1px solid var(--mix); overflow-wrap:anywhere; }
+.dtail{ column-span:all; font:400 7.5px/1.3 var(--mono); color:var(--faint);
+  border-top:1px solid var(--rule-soft); padding-top:3px; margin-top:2px; }
+
+/* ── 润色清单 ── */
+.chk{ display:flex; flex-direction:column; gap:2px; }
+.ci{ display:flex; gap:5px; align-items:baseline; font:400 8.5px/1.3 var(--sans); color:var(--faint); }
+.ci .bx{ font:600 8px/1 var(--mono); width:9px; flex:none; }
+.ci .cn{ font:600 8.5px/1 var(--mono); color:var(--ink); font-variant-numeric:tabular-nums; margin-left:auto; }
+.ci.done{ color:var(--ink-2); }
+.ci.done .bx{ color:var(--mix); }
+.ci.done .cn{ color:var(--mix); }
+
+/* ══════════════════════════════════════════════════════════════
+   下游去向（第 07 段）：树 → 包裹 → 三条流向
+   ──────────────────────────────────────────────────────────────
+   动画脚本（由 applyStep 的 downstream 触发，纯 CSS transition）：
+     t=0    树还摊在左边（正常树形）
+     t=1    树整体缩小 + 收缩成一个"包裹"（虚线框 + 标签）
+     t=2    三份产物（vision 稿 / mix 稿 / 讲义）各自飞成一个小包
+     t=3    每个包向右侧目标发一条流动的箭头（dash 动画）
+   ══════════════════════════════════════════════════════════════ */
+.fan{ flex:1; min-height:0; display:grid; grid-template-columns:repeat(3,1fr); gap:9px;
+  align-items:start; align-content:start; position:relative; }
+
+/* ── 包：三份产物 ── */
+.pack{ border:1px solid var(--rule); border-radius:2px; background:var(--paper-2);
+  padding:6px 8px 5px; display:flex; flex-direction:column; min-height:0;
+  opacity:0; transform:translateY(6px) scale(.94);
+  transition:opacity .42s ease, transform .42s cubic-bezier(.22,.9,.3,1); }
+.pack.show{ opacity:1; transform:none; }
+.pack.future{ border-style:dashed; border-color:var(--accent); background:#fbf5f0; }
+.pack.collapsed{ flex:none; }
+
+.pkh{ display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;
+  border-bottom:1px solid var(--rule); padding-bottom:4px; margin-bottom:5px; }
+.pkh b{ font:600 10.5px/1 var(--sans); color:var(--ink); }
+.pkh span{ font:400 7.5px/1 var(--mono); color:var(--faint); }
+.pkh .sz{ margin-left:auto; font:500 7.5px/1 var(--mono); color:var(--ink-2);
+  font-variant-numeric:tabular-nums; }
+.pkd{ font:400 8px/1.4 var(--sans); color:var(--muted); margin-bottom:4px; }
+.pkd b{ color:var(--ink-2); }
+
+/* 包内文件行（产物逐个飞入） */
+.file{ display:flex; align-items:baseline; gap:5px; font:400 7.5px/1.25 var(--mono);
+  color:var(--faint); opacity:0; transform:translateX(-5px);
+  transition:opacity .3s, transform .3s; }
+.file.in{ opacity:1; transform:none; }
+.file i{ font-style:normal; color:var(--rule); }
+.file b{ font:500 7.5px/1.25 var(--mono); color:var(--ink-2); }
+
+.use{ display:grid; grid-template-columns:32px minmax(0,1fr); gap:5px;
+  align-items:start; padding:3px 0 2px; border-top:1px solid var(--rule-soft);
+  opacity:0; transform:translateY(3px); transition:opacity .3s, transform .3s; }
+.use.on{ opacity:1; transform:none; }
+.use:first-of-type{ border-top:0; }
+.use i{ font:500 6.5px/1 var(--mono); letter-spacing:.03em; text-align:center;
+  padding:2px 0 1.5px; border-radius:1px; font-style:normal; white-space:nowrap; }
+.use i.nollm{ color:var(--mix); border:1px solid var(--mix); }
+.use i.llm{ color:var(--accent); border:1px solid var(--accent); }
+.use i.q{ color:var(--accent); border:1px dashed var(--accent); }
+.use b{ font:500 8.5px/1.3 var(--sans); color:var(--ink-2); display:block; }
+.use em{ font:400 7.5px/1.32 var(--sans); color:var(--faint); font-style:normal; display:block; }
+.use.q-row b{ color:var(--accent); }
+
+.fnote2{ grid-column:1/-1; font:400 7.5px/1.4 var(--mono); color:var(--faint);
+  border-top:1px solid var(--rule); padding-top:3px; }
+.fnote2 b{ color:var(--ink-2); }
+
+/* ══════════════════════════════════════════════════════════════
+   第 07 段的收缩动画舞台
+   ──────────────────────────────────────────────────────────────
+   四拍，全部用 transform/opacity 过渡，不用 canvas：
+     ① 树的每个节点塌成小方块，全部向中心收拢
+     ② 小方块叠成一个**方格包裹**（虚线方框 + 捆绳 + 标签）
+     ③ 包裹裂成三个方格（对应三份产物），分别飞到三个位置
+     ④ 每个方格下方连出弧线到它的下游标签
+   ══════════════════════════════════════════════════════════════ */
+.pstage{ position:absolute; inset:0; pointer-events:none; }
+.pstage .cube{ position:absolute; background:var(--paper);
+  border:1px solid var(--rule); border-radius:1px;
+  transition:left .5s cubic-bezier(.4,0,.2,1), top .5s cubic-bezier(.4,0,.2,1),
+             width .5s cubic-bezier(.4,0,.2,1), height .5s cubic-bezier(.4,0,.2,1),
+             opacity .35s, background .35s, border-color .35s; }
+.pstage .cube.gone{ opacity:0; }
+
+/* 包裹：一个明显的方格 + 捆绳 */
+.parcel{ position:absolute; border:1.4px dashed var(--ink-2); background:var(--paper-2);
+  border-radius:2px; opacity:0; transform:scale(.7);
+  transition:opacity .4s, transform .45s cubic-bezier(.2,.8,.3,1); }
+.parcel.show{ opacity:1; transform:none; }
+.parcel::before{ content:''; position:absolute; left:50%; top:0; bottom:0; width:1px;
+  background:var(--accent); opacity:.5; transform:translateX(-.5px); }
+.parcel::after{ content:''; position:absolute; top:50%; left:0; right:0; height:1px;
+  background:var(--accent); opacity:.5; transform:translateY(-.5px); }
+.parcel .plabel{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  background:var(--paper); border:1px solid var(--rule); border-radius:2px;
+  padding:2px 5px; font:600 8px/1 var(--mono); letter-spacing:.05em; color:var(--ink);
+  white-space:nowrap; z-index:2; }
+.parcel .psub{ position:absolute; left:50%; top:calc(50% + 13px); transform:translateX(-50%);
+  font:400 7px/1 var(--mono); color:var(--faint); white-space:nowrap; z-index:2; }
+
+/* 三个产物方格 */
+.pbox{ position:absolute; border:1px solid var(--rule); background:var(--paper);
+  border-radius:2px; display:flex; flex-direction:column; justify-content:center;
+  align-items:center; gap:2px; opacity:0; transform:scale(.4);
+  transition:opacity .34s, transform .42s cubic-bezier(.2,.8,.3,1), left .5s, top .5s,
+             width .5s, height .5s, border-color .3s; }
+.pbox.show{ opacity:1; transform:none; }
+.pbox.v{ border-color:var(--vision); }
+.pbox.m{ border-color:var(--mix); }
+.pbox.a{ border-color:var(--accent); border-style:dashed; }
+.pbox b{ font:600 8.5px/1.15 var(--sans); color:var(--ink); text-align:center; padding:0 4px; }
+.pbox span{ font:400 6.5px/1.15 var(--mono); color:var(--faint); text-align:center; padding:0 4px; }
+
+/* 连线 */
+.pwire{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.pwire path{ fill:none; stroke:var(--rule); stroke-width:1.2; opacity:0; transition:opacity .35s; }
+.pwire path.on{ opacity:1; }
+.pwire path.flow{ stroke-dasharray:4 5; animation:dashmove 1.1s linear infinite; }
+.pwire path.v{ stroke:var(--vision); }
+.pwire path.m{ stroke:var(--mix); }
+.pwire path.a{ stroke:var(--accent); }
+.pstage .cap{ position:absolute; font:500 7px/1.2 var(--mono); color:var(--muted);
+  white-space:nowrap; opacity:0; transition:opacity .35s; }
+.pstage .cap.on{ opacity:1; }
+.pstage .cap b{ color:var(--ink-2); font-weight:600; }
+
+
+/* ── 流动箭头：从包飞向目标的一段虚线，做 dash 循环 ── */
+.wire{ position:absolute; pointer-events:none; overflow:visible; }
+.wire path{ fill:none; stroke:var(--rule); stroke-width:1.2; }
+.wire path.flow{ stroke-dasharray:4 5; animation:dashmove 1.1s linear infinite; }
+.wire.v path.flow{ stroke:var(--vision); }
+.wire.m path.flow{ stroke:var(--mix); }
+.wire.a path.flow{ stroke:var(--accent); }
+@keyframes dashmove{ to{ stroke-dashoffset:-9; } }
+
+/* 包裹标签 */
+.pk-tag{ display:inline-flex; align-items:center; gap:4px; font:500 7px/1 var(--mono);
+  letter-spacing:.06em; color:var(--ink-2); background:var(--paper);
+  border:1px dashed var(--rule); border-radius:2px; padding:2px 4px; }
+
+@media (max-height:840px){
+  .rail .stg{ padding:3px 5px 1px; }
+  .flow{ grid-template-columns:118px minmax(0,1fr) 118px; padding:4px 6px; }
+  .pg{ min-height:26px; }
+  .di p{ font-size:7.5px; }
+}
+@media (max-width:1080px){
+  .rail{ grid-template-columns:repeat(4,1fr); }
+  .flow{ grid-template-columns:1fr; }
+  .fl .fnote{ display:none; }
+  .pages{ grid-template-columns:repeat(12,minmax(0,1fr)); }
+  .doc{ column-count:auto; column-width:auto; columns:auto;
+    height:100%; max-height:100%; overflow-y:auto; overflow-x:hidden;
+    scrollbar-width:none; }
+  .doc::-webkit-scrollbar{ width:0; height:0; }
+  .fan{ grid-template-columns:1fr; overflow-y:auto; overflow-x:hidden; }
+}
+@media (prefers-reduced-motion:reduce){ *{ transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="head">
+    <div>
+      <span class="eyebrow">智云 · 一节录播课到一份讲义的完整链路</span>
+      <h1>vision 出初稿，mix 出标记 <em>/ 树只由标记长成，讲义只由树填充</em></h1>
+    </div>
+    <div class="controls">
+      <div class="ctl">
+        <label>worker</label><b id="vWorkers">4</b>
+        <input type="range" id="sWorkers" min="1" max="8" value="4" aria-label="worker 数">
+      </div>
+      <div class="speed">
+        <label>速度</label><b id="vSpeed">1</b>
+        <input type="range" id="sSpeed" min="1" max="4" value="1" aria-label="速度">
+      </div>
+      <button class="go" id="btnRun">暂停</button>
+      <button id="btnReset">重置</button>
+    </div>
+  </header>
+
+  <nav class="rail" id="rail">
+    <div class="stg" data-s="0"><span class="sn">01</span><span class="st">识别 · vision ‖ mix</span><div class="sb"><i></i></div></div>
+    <div class="stg" data-s="1"><span class="sn">02</span><span class="st">筛支线 → 黑板</span><div class="sb"><i></i></div></div>
+    <div class="stg" data-s="2"><span class="sn">03</span><span class="st">挂账 · 零判定</span><div class="sb"><i></i></div></div>
+    <div class="stg" data-s="3"><span class="sn">04</span><span class="st">审查 · 并发合并</span><div class="sb"><i></i></div></div>
+    <div class="stg" data-s="4"><span class="sn">05</span><span class="st">重构 · 重新长树</span><div class="sb"><i></i></div></div>
+    <div class="stg" data-s="5"><span class="sn">06</span><span class="st">习坎 · 成稿</span><div class="sb"><i></i></div></div>
+    <div class="stg" data-s="6"><span class="sn">07</span><span class="st">下游去向</span><div class="sb"><i></i></div></div>
+  </nav>
+
+  <section class="readouts">
+    <div class="readout"><span class="k">阶段</span><span class="v" id="rPhase">—</span></div>
+    <div class="readout"><span class="k">队列</span><span class="v"><span id="rQueue">0</span><span class="u" id="rQueueW">/ 0 工</span></span></div>
+    <div class="readout"><span class="k">已产块</span><span class="v"><span id="rBlocks">0</span><span class="u" id="rBlocksAll">/ 0</span></span></div>
+    <div class="readout"><span class="k">标记</span><span class="v"><span id="rMarks">0</span><span class="u" id="rMarksSide">/ 0 支线</span></span></div>
+    <div class="readout titlec"><span class="k">标题</span><span class="v" id="rTitles">0</span></div>
+    <div class="readout content"><span class="k">内容叶</span><span class="v" id="rContent">0</span></div>
+    <div class="readout dirty"><span class="k">脏叶</span><span class="v" id="rDirty">0</span></div>
+    <div class="readout"><span class="k">已处理</span><span class="v"><span id="rDone">0</span><span class="u" id="rDoneAll">tok</span></span></div>
+  </section>
+
+  <main class="grid">
+    <section>
+      <div class="sec-head">
+        <h2 id="stageHead">知识树 T</h2>
+        <span class="hint" id="stageHint">虚线 = 标题 · 实线绿 = 已整合正文 · 琥珀虚 = 有待整合内容</span>
+      </div>
+
+      <!-- ★ 流水线带：vision 拼图 → 队列 → mix 标记（阶段 01–02 可见） -->
+      <div class="flow" id="flow" style="display:none">
+        <div class="fl">
+          <div class="fh"><b>VISION</b><span id="fVisionN">0/93 块</span></div>
+          <div class="fbar"><i id="fVisionBar"></i></div>
+          <div class="fnote">4 页拼一张图<br>→ 出块 + 出初树</div>
+        </div>
+        <div class="fl mix">
+          <div class="fh"><b>MIX</b><span id="fMixN">0/93 块</span></div>
+          <div class="fbar"><i id="fMixBar"></i></div>
+          <div class="widots" id="fWorkers"></div>
+          <div class="pages" id="pagesBox"></div>
+        </div>
+        <div class="fl">
+          <div class="fh"><b>QUEUE</b><span id="fQueueN">0</span></div>
+          <div class="fbar"><i id="fQueueBar" style="background:var(--warn)"></i></div>
+          <div class="fnote">共享 FIFO · 积压<br>= vision 快于 mix</div>
+        </div>
+      </div>
+
+      <div class="canvas" id="canvas">
+        <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+          <g id="edges"></g>
+          <g id="nodes"></g>
+        </svg>
+        <!-- 第 07 段动画舞台：树→包裹→三个方格 -->
+        <div class="pstage" id="pstage"></div>
+      </div>
+
+      <!-- ★ 讲义视图（阶段 06） -->
+      <div class="doc" id="doc" style="display:none"></div>
+
+      <!-- ★ 下游去向（阶段 07）：树压成包裹，三份产物各自成包流向目标 -->
+      <div class="fan" id="fan" style="display:none"></div>
+    </section>
+
+    <aside class="side">
+      <div class="sec-head">
+        <h2>当前</h2>
+        <span class="hint" id="hintStep">0 / 0</span>
+      </div>
+
+      <div class="card batch">
+        <div class="val" id="bBatch">—</div>
+        <div class="act" id="bAct">等待开始</div>
+      </div>
+
+      <div class="card" id="opsCard">
+        <div class="ch"><span>本步操作</span><span class="cnt" id="opsCnt">—</span></div>
+        <div class="body" id="opsList"></div>
+      </div>
+
+      <div class="card" id="workerCard" style="display:none">
+        <div class="ch"><span>真 merge · worker 池</span><span class="cnt" id="workCnt">—</span></div>
+        <div class="body" id="workerList"></div>
+      </div>
+
+      <div class="card diff" id="diff" style="display:none">
+        <div class="ch"><span id="diffTitle">—</span><span class="ver" id="diffVer">—</span></div>
+        <div class="cols" id="diffCols">
+          <div class="col old"><span class="ch2">重写前</span><div id="diffOld"></div></div>
+          <div class="col new"><span class="ch2">重写后</span><div id="diffNew"></div></div>
+        </div>
+        <div class="solo" id="diffSolo" style="display:none"></div>
+      </div>
+
+      <div class="card recon" id="recon" style="display:none">
+        <div class="ch"><span>重构</span><span class="cnt" id="reconCnt">—</span></div>
+        <div class="rc"><span class="n">1</span><span>拆出全部叶节点（小标题全废）</span></div>
+        <div class="rc"><span class="n">2</span><span>内容段按斩杀线聚成知识点叶，每叶拟标题</span></div>
+        <div class="rc"><span class="n">3</span><span>分级聚合 R1</span></div>
+        <div class="rc"><span class="n">4</span><span>分级聚合 R2</span></div>
+        <div class="rc"><span class="n">5</span><span>收敛到根</span></div>
+        <div class="note"><b>聚几轮由内容定</b>：不是固定层数，LLM 判断"再往上分也分不出新意思"就停。</div>
+      </div>
+
+      <!-- 润色清单（阶段 08）：一次通读全文的无损润色要做的事 -->
+      <div class="card" id="polishCard" style="display:none">
+        <div class="ch"><span>全文润色 · 无损</span><span class="cnt" id="polishCnt">0 / 6</span></div>
+        <div class="body" style="padding:4px 8px 5px">
+          <div class="chk" id="polishList">
+            <div class="ci" data-i="0"><span class="bx">□</span><span>同一概念全篇用同一个词</span><span class="cn">—</span></div>
+            <div class="ci" data-i="1"><span class="bx">□</span><span>层级编号连续（1 / 1.1 / 1.1.1）</span><span class="cn">—</span></div>
+            <div class="ci" data-i="2"><span class="bx">□</span><span>符号与公式书写统一</span><span class="cn">—</span></div>
+            <div class="ci" data-i="3"><span class="bx">□</span><span>交叉引用指向真实存在的小节</span><span class="cn">—</span></div>
+            <div class="ci" data-i="4"><span class="bx">□</span><span>例题与宿主知识点不脱节</span><span class="cn">—</span></div>
+            <div class="ci" data-i="5"><span class="bx">□</span><span><b>不新增原文没有的内容</b></span><span class="cn">—</span></div>
+          </div>
+        </div>
+        <div class="note">只改写法，不改事实；改动逐条记 <b>diff 摘要</b>，可回退。</div>
+      </div>
+
+      <!-- 大黑板：支线 + 元信息块，按时间线列出，不进树 -->
+      <div class="card bb" id="bb">
+        <div class="ch">
+          <span>本节通知 · 大黑板</span>
+          <span class="cnt" id="bbCnt">—</span>
+        </div>
+        <div class="body bblist" id="bbList"></div>
+      </div>
+
+      <div class="logbox"><div class="log" id="log"></div></div>
+    </aside>
+  </main>
+
+  <footer class="timeline">
+    <div class="ph on" id="ph0">
+      <span class="n">01 · 识别</span>
+      <div class="t">vision 产块 + 出初树 ‖ mix 从同一队列取块打标记</div>
+      <div class="bar"><i></i></div>
+    </div>
+    <div class="ph" id="ph1">
+      <span class="n">02–05 · 建树与重构</span>
+      <div class="t">筛支线 → 挂账 → 审查 → 并发合并 → 拆叶重长</div>
+      <div class="bar"><i></i></div>
+    </div>
+    <div class="ph" id="ph2">
+      <span class="n">06 · 成稿</span>
+      <div class="t">自动转格式 → 习坎补理解 → 全文润色</div>
+      <div class="bar"><i></i></div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════
+   数据模型
+     kind:'title' —— 只有名字，不承载内容
+     kind:'leaf'  —— **只有正文，没有名字**；名字只存在于父 title
+
+   ★ 本版核心（与上一版的差别）
+     批次阶段：merge 只做 pending += n 并打脏标记，**永不真合并**；
+              insert **不做查重**，允许同名重复存在。
+     switch 阶段：
+       ① 标题正交性审查（只看直接连叶的那层）→ 把同义标题并到一起
+       ② 并发真 merge（worker 池，叶之间互不重叠，因此**无需加锁**）
+       ③ 重构：拆叶 → 拟父标题 → 分级聚合
+   ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   ★ 前置两个阶段（vision / mix）的数据
+   ──────────────────────────────────────────────────────────────
+    24 页 PPT，4 页拼一张图 → 6 次 vision 调用。
+    每次调用**同时**产出两种东西：
+      · 块（正文 + 所在页码 + 顺序）
+      · **知识树初稿**（这一批页面上出现的标题 → 挂到树骨架上）
+    这就是"vision 会出知识树初稿"：它不是只做 OCR，它按页把
+    「标题行 / 层级缩进」读出来，直接给出树的第一版形状。
+
+    随后 mix 逐块读（**纯文本，不看图**），只产出一个东西：**标记**
+      role  : 主线 / 支线
+      facet : 11 类闭词表（概念/公式/定理/法则/思想/例题/案例/实验/故事/教学安排/作业）
+    标记是后面一切的依据 —— 筛支线靠它、宿主/依附靠它、讲义分段也靠它。
+
+    ★ 账要平：主线 82 块（= BATCHES 的 add 总和，进树的那批），
+      支线 + 元信息 11 块（进大黑板的那批），合计 93 块。
+   ══════════════════════════════════════════════════════════════ */
+const PAGE_N = 24;
+const VISION_BATCH = 4;
+const VISION_CALLS = PAGE_N / VISION_BATCH;   // 6
+const totalBatches = Math.ceil(PAGE_N / VISION_BATCH);   // 拼图批数（= 6）
+
+/** 24 页：块数 + 标记（没写 role 就是主线；facet 缺省概念） */
+const PAGES = [
+  { p:1,  n:2, role:'支线', facet:'教学安排' },   // 上课铃、问好
+  { p:2,  n:4 },                                  // 随机现象 / 随机试验
+  { p:3,  n:4 },
+  { p:4,  n:4 },                                  // 事件的运算
+  { p:5,  n:5 },
+  { p:6,  n:4 },                                  // 德摩根定律
+  { p:7,  n:2, role:'支线', facet:'教学安排' },   // 签到
+  { p:8,  n:4 },                                  // （无名）p47–66
+  { p:9,  n:3, role:'支线', facet:'教学安排' },   // 闲聊中秋
+  { p:10, n:5 },                                  // A，B，C 三个事件
+  { p:11, n:4 },
+  { p:12, n:4 },                                  // 抛硬币频率
+  { p:13, n:4, facet:'例题' },
+  { p:14, n:5, facet:'例题' },
+  { p:15, n:5 },                                  // §4 等可能概型
+  { p:16, n:4, facet:'案例' },
+  { p:17, n:5, facet:'定理' },
+  { p:18, n:5 },
+  { p:19, n:2, role:'支线', facet:'作业' },       // 布置作业
+  { p:20, n:4 },                                  // 页码 20
+  { p:21, n:4 },                                  // 此电脑
+  { p:22, n:2, role:'支线', facet:'教学安排' },   // 调试投屏
+  { p:23, n:5 },
+  { p:24, n:3 },
+];
+const VISION_TOTAL = PAGES.reduce((a, x) => a + x.n, 0);                       // 93
+const SIDE_TOTAL = PAGES.filter(x => x.role === '支线').reduce((a, x) => a + x.n, 0); // 11
+const MAIN_TOTAL = VISION_TOTAL - SIDE_TOTAL;                                   // 82
+
+/** vision 从画面里读出来的标题（初稿只到"章下面一层"，层级由页序推） */
+const VISION_TITLES = [
+  { page:2,  id:'t1', title:'（二）随机事件' },
+  { page:4,  id:'t2', title:'事件的运算' },
+  { page:6,  id:'t3', title:'“和”、“交”关系式——德摩根定律' },
+  { page:8,  id:'t4', title:'（无名）p47–66' },
+  { page:10, id:'t5', title:'A，B，C三个事件' },
+  { page:12, id:'t6', title:'例：抛硬币出现的正面的频率' },
+  { page:15, id:'t7', title:'§ 4 等可能概型（古典概型）' },
+];
+/** vision 顺手读进来的 OCR 噪声（PPT 窗体、页码、桌面） */
+const VISION_NOISE = [
+  { page:1,  id:'j1', title:'一、教室电脑已安装系统还原软件…' },
+  { page:8,  id:'j4', title:'（无名）' },
+  { page:20, id:'j3', title:'（页面右下角页码）20' },
+  { page:21, id:'j2', title:'此电脑' },
+];
+
+const INIT = () => ({
+  id:'root', kind:'title', title:'概率论与数理统计--2026-2027 秋冬学期', children:[
+    { id:'chap1', kind:'title', title:'第一章 概率论的基本概念', children:[] },
+  ],
+});
+
+/* ══════════════════════════════════════════════════════════════
+   ★ 计量单位：token，不是块数
+   ──────────────────────────────────────────────────────────────
+   为什么用 token：
+     · 块数表示"几段"，但每段长度参差不齐 —— 12 块可能是 800 token，
+       也可能是 5000 token，完全不是同一个量。
+     · 真正吃上下文的是 token。斩杀线如果按块数定，就得先保证
+       "每块 token 一致"，那反而要把本来不等长的块强行切齐 —— 更复杂。
+   ──────────────────────────────────────────────────────────────
+   演示里每块的 token 由**确定性伪随机**给出（120–420），
+   模拟真实课件里"有的页面只两行、有的页面全是公式"的差异。
+   ══════════════════════════════════════════════════════════════ */
+
+/** 第 ordinal 块的 token 数（确定性，120–419）。同一条目每次算出来一样。 */
+function blockTokens(ordinal) {
+  return 120 + ((ordinal * 137 + 61) % 300);
+}
+/** 从 start 号开始连续 n 块的 token 合计 */
+function tokensFor(start, n) {
+  let t = 0;
+  for (let i = 0; i < n; i++) t += blockTokens(start + i);
+  return t;
+}
+const fmtTok = t => t >= 1000 ? (t / 1000).toFixed(1) + 'k' : String(t);
+
+/** 叶树里所有小标题总数（递归） */
+function countSubTitles(n) {
+  let c = (n.subTitles || []).length;
+  for (const k of (n.children || [])) {
+    if (k.gone) continue;
+    c += countSubTitles(k);
+  }
+  return c;
+}
+
+/** 一棵叶树的最大嵌套深度（1 = 只有一层子叶） */
+function maxDepthOf(n) {
+  const kids = (n.children || []).filter(c => !c.gone && c.kind === 'leaf');
+  if (!kids.length) return 0;
+  return 1 + Math.max(...kids.map(maxDepthOf));
+}
+/** 叶树里所有叶子层节点（用于摊平） */
+function allLeafDescendants(n, out = []) {
+  for (const c of (n.children || [])) {
+    if (c.gone || c.kind !== 'leaf') continue;
+    const kids = (c.children || []).filter(k => !k.gone && k.kind === 'leaf');
+    if (kids.length) allLeafDescendants(c, out);
+    else out.push(c);
+  }
+  return out;
+}
+
+/** 条目 id → 稳定的块序号基准（让每条内容的 token 不随顺序变化） */
+function ordinalOf(id) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 9973;
+  return h;
+}
+
+/* ★ 斩杀线：待整合的**无损内容超过这个 token 数**，就不该直接堆进叶正文，
+      而要就地拟内部小标题、长成一棵叶树。
+      1200 token ≈ 一屏中文正文（约 800–1000 字 + 公式/表格开销）。 */
+let SPLIT_LINE = 1200;
+
+/* ══════════════════════════════════════════════════════════════
+   facet 的两种角色（来自 mix 阶段的标注，11 类闭词表）
+   ──────────────────────────────────────────────────────────────
+     宿主型  concept/formula/theorem/law/idea   本身就是一个知识点
+     依附型  example/case/experiment/story     必须挂在某个知识点下
+     元信息  schedule/homework                 不是学科内容 → 进大黑板
+   ══════════════════════════════════════════════════════════════ */
+const FACET = { HOST:['概念','公式','定理','法则','思想'], ATTACH:['例题','案例','实验','故事'], META:['教学安排','作业'] };
+const facetRole = f => {
+  const s = new Set(f || []);
+  if (FACET.META.some(x => s.has(x))) return 'meta';
+  if (FACET.HOST.some(x => s.has(x))) return 'host';
+  if (FACET.ATTACH.some(x => s.has(x))) return 'attach';
+  return 'none';
+};
+
+/* ── 大黑板：支线 + 元信息块，按时间线列出 ──
+   这些**不进树**，只在这里按顺序列出来供查。 */
+const BLACKBOARD = [
+  { t:'00:12', role:'支线', kind:'杂务', text:'上课铃响，师生问好开场' },
+  { t:'02:40', role:'支线', kind:'杂务', text:'闲聊中秋节与同学回家' },
+  { t:'05:10', role:'支线', kind:'教学安排', text:'安排签到' },
+  { t:'24:30', role:'主线', kind:'教学安排', text:'斩杀线与网上阅卷流程' },
+  { t:'27:05', role:'主线', kind:'教学安排', text:'概率论与数理统计模块安排' },
+  { t:'48:15', role:'支线', kind:'杂务', text:'课间休息' },
+  { t:'49:02', role:'支线', kind:'教学安排', text:'课间休息与签到通知' },
+  { t:'61:40', role:'主线', kind:'教学安排', text:'考试总评成绩应呈正态' },
+  { t:'88:20', role:'支线', kind:'教学安排', text:'助教加群与小测安排' },
+  { t:'90:05', role:'支线', kind:'作业', text:'通知作业发到群里' },
+  { t:'118:30', role:'支线', kind:'杂务', text:'课后收尾杂音' },
+];
+const BB_LABEL = { '杂务':'杂', '教学安排':'排', '作业':'业' };
+
+/* 六批。merge 一律只挂账；insert 不查重。
+   ★ 新增 kind 字段：host = 宿主（概念/公式），attach = 依附（例题/案例）
+     依附块**必须挂到某个宿主下** —— 这就是"每个例题都要有知识点依托"。 */
+const BATCHES = [
+  { batch:'随机现象与概率论引入', ops:[
+      { act:'insert', parent:'chap1', id:'i1', title:'随机现象', add:5, kind:'host', facet:'概念' },
+      { act:'insert', parent:'chap1', id:'i2', title:'随机试验', add:2, kind:'host', facet:'概念' },
+      { act:'merge',  id:'i1', add:2, kind:'attach', facet:'案例' },   // 皮尔逊抛硬币
+      { act:'insert', parent:'chap1', id:'i3', title:'样本空间', add:1, kind:'host', facet:'概念' },
+      { act:'merge',  id:'i2', add:1, kind:'attach', facet:'例题' },   // 掷骰子的样本点枚举
+    ]},
+  { batch:'事件的关系与集合运算', ops:[
+      { act:'merge', id:'t1', add:9, kind:'host', facet:'概念' },
+      { act:'merge', id:'t1', add:3, kind:'attach', facet:'例题' },
+      { act:'merge', id:'t2', add:4, kind:'host', facet:'公式' },
+      { act:'merge', id:'t3', add:2, kind:'host', facet:'定理' },
+    ]},
+  { batch:'概率的定义与性质', ops:[
+      { act:'insert', parent:'chap1', id:'i4', title:'随机试验', add:3, kind:'host', facet:'概念' },  // ← 重复 insert
+      { act:'merge', id:'t1', add:4, kind:'host', facet:'概念' },
+      { act:'merge', id:'t2', add:2, kind:'attach', facet:'案例' },
+      { act:'merge', id:'t4', add:1, kind:'host', facet:'概念' },
+    ]},
+  { batch:'条件概率与乘法公式', ops:[
+      { act:'insert', parent:'chap1', id:'i5', title:'条件概率', add:5, kind:'host', facet:'概念' },
+      { act:'merge', id:'i5', add:1, kind:'attach', facet:'例题' },
+      { act:'merge', id:'t1', add:4, kind:'host', facet:'概念' },
+    ]},
+  { batch:'全概率公式与贝叶斯公式', ops:[
+      { act:'insert', parent:'chap1', id:'i6', title:'全概率公式', add:5, kind:'host', facet:'公式' },
+      { act:'insert', parent:'chap1', id:'i7', title:'贝叶斯公式', add:2, kind:'host', facet:'公式' },
+      { act:'insert', parent:'chap1', id:'i8', title:'条件概率', add:3, kind:'host', facet:'概念' },  // ← 重复 insert
+      { act:'merge', id:'i7', add:1, kind:'attach', facet:'例题' },
+      { act:'merge', id:'t2', add:2, kind:'host', facet:'公式' },
+    ]},
+  { batch:'等可能概型（古典概型）', ops:[
+      { act:'merge', id:'t7', add:9, kind:'host', facet:'概念' },
+      { act:'merge', id:'t7', add:2, kind:'attach', facet:'例题' },
+      { act:'merge', id:'t6', add:5, kind:'host', facet:'概念' },
+      { act:'merge', id:'t5', add:2, kind:'host', facet:'概念' },
+      { act:'merge', id:'t1', add:2, kind:'host', facet:'概念' },
+    ]},
+];
+
+const TOTAL_BLOCKS = BATCHES.reduce((a, b) => a + b.ops.reduce((x, o) => x + o.add, 0), 0);
+/* token 总量：按块序号累加，和运行时用的 blockTokens 同一套 */
+const TOTAL_TOKENS = tokensFor(0, TOTAL_BLOCKS);
+
+/* ══════════════════════════════════════════════════════════════
+   叶正文分段（叶没有标题，只有这一段段结构性文本）
+   ══════════════════════════════════════════════════════════════ */
+const PHASES = ['定义与记号','直观理解','关键性质','公式推导','典型例题','易错辨析','方法小结','推广与联系'];
+const NUM = ['①','②','③'];
+function splitRanges(total, parts) {
+  const out = []; let start = 1;
+  for (let i = 0; i < parts; i++) {
+    const remain = total - (start - 1), left = parts - i;
+    const size = Math.ceil(remain / left);
+    if (size <= 0) break;
+    out.push([start, start + size - 1]); start += size;
+  }
+  return out;
+}
+
+/* ★ 不均匀切分：真实的知识点篇幅是**长尾**的 ——
+   一个叶里往往"第一个知识点就占掉一半"，剩下的零碎挤在末尾。
+   所以按 Zipf 权重（1, 1/2, 1/3 …）分配块数，而不是均分。
+   ──────────────────────────────────────────────────────────────
+   这直接决定了叶树会长几层：均分时每支都稳稳低于斩杀线，只长一层；
+   长尾时最大的那一支常常仍超线 → 它自己再长一层 → 自然出现 2–3 层。 */
+function skewRanges(total, parts) {
+  const n = Math.max(1, Math.min(parts, total));
+  const w = Array.from({ length: n }, (_, i) => 1 / Math.pow(i + 1, 1.15));
+  const sum = w.reduce((a, b) => a + b, 0);
+  const alloc = w.map(x => Math.max(1, Math.round(total * x / sum)));
+  let diff = total - alloc.reduce((a, b) => a + b, 0);
+  let i = 0;
+  while (diff !== 0 && i < n * 40) {
+    const k = i % n;
+    if (diff > 0) { alloc[k]++; diff--; }
+    else if (alloc[k] > 1) { alloc[k]--; diff++; }
+    i++;
+  }
+  const out = []; let start = 1;
+  for (const a of alloc) { out.push([start, start + a - 1]); start += a; }
+  return out;
+}
+function leafLines(blocks, seed) {
+  if (!blocks) return [];
+  const parts = Math.min(2, Math.max(1, Math.ceil(blocks / 4)));
+  return splitRanges(blocks, parts).map(([a, b], i) => {
+    const rng = a === b ? String(a) : (i === 0 ? `1–${b}` : `${a}–${b}`);
+    return `${NUM[i]} ${PHASES[(seed + i) % PHASES.length]} · ${rng}`;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+function find(root, id, parent = null) {
+  if (root.id === id) return { node: root, parent };
+  for (const c of root.children || []) { const r = find(c, id, root); if (r) return r; }
+  return null;
+}
+function allOf(root) {
+  const out = []; (function w(n){ out.push(n); (n.children||[]).forEach(w); })(root); return out;
+}
+const isTitle = n => n.kind === 'title' && !n.gone && !n.ghost;
+const isLeaf  = n => n.kind === 'leaf'  && !n.gone;
+const isDirty = n => isLeaf(n) && (n.pending ?? 0) > 0;
+
+/* ★ 批次阶段的 merge：只挂账，绝不真合并。
+   pending 记的是 **token**，同时记块数（块数只用于显示分段）。
+
+   ★ 依附块（例题/案例/实验/故事）不混进宿主的正文 pending ——
+     它们存在 leaf.attach[] 里，等真 merge 时作为**子叶**挂出来。
+     这样"例题被压没"从根上不会发生：它压根不在正文那一堆里。 */
+function stashInto(node, add, kind = 'host', facet = null) {
+  let leaf = (node.children || []).find(c => c.kind === 'leaf' && !c.gone);
+  const tok = tokensFor(node.__ord ?? 0, add);
+  node.__ord = (node.__ord ?? 0) + add;
+
+  if (!leaf) {
+    leaf = { id:`${node.id}-leaf`, kind:'leaf', blocks:0, pending:0, pendingB:0,
+             revision:0, seed:add % PHASES.length, ord:0, attach:[],
+             children:[], cx:node.cx, cy:node.cy, animate:true };
+    node.children.push(leaf);
+  }
+
+  if (kind === 'attach') {
+    /* 依附块：单独记，不进正文 pending */
+    (leaf.attach || (leaf.attach = [])).push({ tok, blocks:add, facet: facet || '案例' });
+    leaf.animate = true;
+    return { kind:'attach', leaf, tok };
+  }
+
+  leaf.pending = (leaf.pending ?? 0) + tok;
+  leaf.pendingB = (leaf.pendingB ?? 0) + add;
+  leaf.animate = true;
+  return { kind:'stash', leaf, tok };
+}
+
+/* ★ 真 merge（递归）：
+   无损内容少（≤ 斩杀线 token）→ 直接并进这片叶的正文
+   无损内容多（> 斩杀线 token）→ 长成一棵**叶树**：拟若干内部小标题，
+     每个小标题下挂一个子叶；**若某个子叶自己又超线，就继续往下长**。
+   ⚠ 所有层级的小标题都是**临时的** —— switch 重构时全部作废，
+     最深层的子叶会和别的叶一起重新聚合。
+
+   ★ 为什么递归：
+     单层切分只能保证"这一支比父叶小"，不保证"比斩杀线小"。
+     实测 22k token 的叶按 1/3 目标切 5 支，仍有子叶 4k+ token，
+     再拿去重写照样爆上下文。所以超线就继续分，直到每一支都 ≤ 线。
+*/
+const MAX_DEPTH = 4;   // 防御：切到第 4 层还超线就认了，不再往死里切
+
+/** 造一个叶节点（统一构造，避免各处字段漂移） */
+function makeLeaf({ id, blocks, pending, pendingB, ord, seed, parent }) {
+  return {
+    id, kind:'leaf', blocks, pending: pending ?? 0, pendingB: pendingB ?? 0,
+    revision: 0, ord: ord ?? 0, seed: seed ?? 0, children: [],
+    cx: parent?.cx, cy: parent?.cy, animate: true,
+  };
+}
+
+/** 把一片叶按 token 额度切成一棵（可能多层的）叶树。
+ *  @returns 切出来的子叶数量（第一层的） */
+function splitLeafTree(leaf, depth = 1) {
+  if (!(leaf.pending > SPLIT_LINE)) return 0;
+  if (depth > MAX_DEPTH) return 0;
+
+  const totalTok = leaf.pending;
+  const totalB = leaf.pendingB ?? 0;
+  /* 每支目标 = 斩杀线的 2/3 —— 让子叶**大概率**低于线，
+     但可能因块长不均仍有超线者，那种就继续递归。 */
+  /* ★ 一个叶下面只拟 2–4 个小标题 —— 真实课件里"一个知识点下面挂它自己的
+     几个子知识点"，不会一口气挂六个。切得少，就意味着**子叶常常还超线**，
+     于是继续往下长树，层数自然出来（2–4 层）。 */
+  const perTarget = Math.max(300, Math.round(SPLIT_LINE * 0.66));
+  const parts = Math.min(4, Math.max(2, Math.ceil(totalTok / perTarget)));
+
+  const ranges = skewRanges(totalB, parts);
+  let cursor = leaf.ord ?? 0;
+  let overflow = 0;
+
+  leaf.subTitles = ranges.map((_, i) => `§${i + 1}`);
+  /* ★ 已经挂上来的依附子叶（例题/案例）不能被这次切分冲掉 ——
+     宿主叶长成叶树，例题仍然挂在宿主叶下面。 */
+  const attachKids = (leaf.children || []).filter(c => c._fromAttach && !c.gone);
+  leaf.children = ranges.map(([a, b], i) => {
+    const n = b - a + 1;
+    const tok = tokensFor(cursor, n);
+    const ord = cursor;
+    cursor += n;
+    const child = makeLeaf({
+      id: `${leaf.id}__s${i}`, blocks: n, pending: tok, pendingB: 0,
+      ord, seed: ((leaf.seed ?? 0) + i * 3) % PHASES.length, parent: leaf,
+    });
+    child._tok = tok;
+    child._span = [a, b];
+    child._fromSplit = true;
+    child.pending = 0;          // 子叶内容已"并入"，不需要再走一遍 pending
+    child.blocks = n;
+    if (tok > SPLIT_LINE) overflow++;
+    return child;
+  }).concat(attachKids);
+
+  /* ★ 递归：超线的子叶继续长树 */
+  let deepSplits = 0;
+  for (const c of leaf.children) {
+    if (c._fromAttach) continue;   // 依附叶自己不再按宿主规则切
+    if (c._tok > SPLIT_LINE) {
+      c.pending = c._tok;       // 传给递归函数判断
+      c.pendingB = c.blocks;
+      const got = splitLeafTree(c, depth + 1);
+      if (got) { deepSplits++; c.pending = 0; c.pendingB = 0; }
+      else c.pending = 0;       // 到达 MAX_DEPTH 就停下来，留在这一层
+      c.pendingB = 0;
+    }
+  }
+
+  leaf.ord = cursor;
+  leaf.pending = 0;
+  leaf.pendingB = 0;
+  leaf.blocks += totalB;
+  leaf.revision = 1;
+  leaf.animate = true;
+  leaf.isTree = true;
+  leaf.treeTok = totalTok;
+  leaf.treeDepth = leaf.treeDepth ?? depth;
+
+  return { parts, deepSplits, overflow };
+}
+
+function materializeRound(leaf) {
+  const hasAttach = (leaf.attach || []).length > 0;
+  if (!(leaf.pending > 0) && !hasAttach) return null;
+
+  let out = null;
+
+  /* ★ 依附块 → 挂成子叶（依托关系 = 叶挂叶） */
+  let attachMade = 0;
+  if (hasAttach && !(leaf.children || []).some(c => c._fromAttach)) {
+    let cursor = leaf.ord ?? 0;
+    leaf.children = (leaf.children || []).concat(
+      leaf.attach.map((a, i) => {
+        const n = a.blocks;
+        const ord = cursor; cursor += n;
+        const child = makeLeaf({
+          id: `${leaf.id}__a${i}`, blocks: n, pending: 0, pendingB: 0,
+          ord, seed: ((leaf.seed ?? 0) + i * 5) % PHASES.length, parent: leaf,
+        });
+        child._tok = a.tok;
+        child._fromAttach = true;
+        child._attachFacet = a.facet;
+        return child;
+      })
+    );
+    attachMade = leaf.attach.length;
+    leaf.attach = [];
+    leaf.animate = true;
+  }
+
+  /* 无损内容过多 → 递归长叶树 */
+  if (leaf.pending > SPLIT_LINE && !(leaf.children || []).some(c => c._fromSplit)) {
+    const totalTok = leaf.pending;
+    const totalB = leaf.pendingB ?? 0;
+    const r = splitLeafTree(leaf, 1);
+    out = { split: true, parts: r.parts, deepSplits: r.deepSplits,
+            total: totalB, totalTok, before: [], after: [], rev: 1,
+            took: totalB, tookTok: totalTok, depth: maxDepthOf(leaf),
+            attachMade };
+    return out;
+  }
+
+  if (leaf.pending > 0) {
+    /* 普通重写：整片正文并进去 */
+    const before = leafLines(leaf.blocks, leaf.seed ?? 0);
+    const take = leaf.pendingB ?? 0;
+    const takeTok = leaf.pending;
+    leaf.blocks += take;
+    leaf.ord = (leaf.ord ?? 0) + take;
+    leaf.pending = 0;
+    leaf.pendingB = 0;
+    leaf.revision = (leaf.revision ?? 0) + 1;
+    leaf.animate = true;
+    out = { before, after: leafLines(leaf.blocks, leaf.seed ?? 0), rev: leaf.revision,
+            took: take, tookTok: takeTok, split: false, attachMade };
+  } else if (attachMade) {
+    out = { split: false, before: [], after: [], rev: leaf.revision ?? 0,
+            took: 0, tookTok: 0, attachMade, attachOnly: true };
+  }
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+const NODE_W = 200, GAP_Y = 6, LEVEL_X = 224, TITLE_H = 26;
+const LINE_H = 12, LEAF_PAD_T = 18, LEAF_PAD_B = 6;
+
+/** 叶的行数：多层叶树要递归数（最多显示 4 行 + 1 行省略） */
+function treeRowCount(n) {
+  const rows = [];
+  (function walk(node) {
+    const subs = (node.children || []).filter(c => !c.gone && c.kind === 'leaf');
+    for (const c of subs) {
+      rows.push(c);
+      if ((c.children || []).some(k => !k.gone && k.kind === 'leaf')) walk(c);
+    }
+  })(n);
+  return rows.length;
+}
+const leafRowCount = n => {
+  const kids = (n.children || []).filter(c => !c.gone && c.kind === 'leaf').length;
+  if (kids) {
+    const total = treeRowCount(n);
+    return Math.min(3, total) + (total > 3 ? 1 : 0);
+  }
+  return leafLines(n.blocks, n.seed ?? 0).length + ((n.pending ?? 0) > 0 ? 1 : 0);
+};
+const leafHeight = n => LEAF_PAD_T + Math.max(1, leafRowCount(n)) * LINE_H + LEAF_PAD_B;
+const nodeHeight = n => n.kind === 'leaf' ? leafHeight(n) : TITLE_H;
+
+/** 当前平板态用的列数（由 render 按窗口最佳拟合算出来，step/snapshot 复用） */
+let flatCols = null;
+
+function layout(root, opts = {}) {
+  if (root.flat) {
+    /* 摊平态：一屏里可能有几十个内容段，横排会挤成一条线，
+       所以排成**网格**，列数由调用方按窗口最佳拟合给出。 */
+    const all = root.children.filter(c => !c.gone);
+    const n = all.length;
+    const cols = opts.cols ?? flatCols ?? Math.max(1, Math.ceil(Math.sqrt(n * 1.8)));
+    const GX = 18, GY = 10;
+    const rowH = Math.max(TITLE_H, ...all.map(nodeHeight));
+    all.forEach((node, i) => {
+      node.depth = 0; node.h = nodeHeight(node);
+      node.tx = (i % cols) * (NODE_W + GX);
+      node.ty = Math.floor(i / cols) * (rowH + GY);
+    });
+    const rows = Math.ceil(Math.max(1, n) / cols);
+    return {
+      all,
+      w: Math.max(1, cols * (NODE_W + GX) - GX),
+      h: Math.max(1, rows * (rowH + GY) - GY),
+      flat: true,
+    };
+  }
+  let cursor = 0; const all = [];
+  (function walk(n, depth) {
+    n.depth = depth; n.h = nodeHeight(n);
+    const kids = (n.children || []).filter(c => !c.gone);
+    kids.forEach(c => walk(c, depth + 1));
+    if (!kids.length) { n.ty = cursor; cursor += n.h + GAP_Y; }
+    else {
+      const top = kids[0].ty;
+      const bot = kids[kids.length-1].ty + kids[kids.length-1].h;
+      n.ty = (top + bot) / 2 - n.h / 2;
+    }
+    n.tx = depth * LEVEL_X; all.push(n);
+  })(root, 0);
+  const maxDepth = Math.max(...all.map(n => n.depth));
+  return { all, w: maxDepth * LEVEL_X + NODE_W, h: Math.max(1, cursor - GAP_Y) };
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+const NS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('svg');
+const gEdges = document.getElementById('edges');
+const gNodes = document.getElementById('nodes');
+const HEAD_Y = 13;
+
+let tree = null, running = true, speed = 1, workers = 4;
+let acc = 0, lastFrame = 0, blocksDone = 0, tokensDone = 0, curBatch = 0;
+let els = new Map(), edgeEls = new Map(), currentState = new Map();
+let STEP = 0, TOTAL_STEPS = 0;
+
+/* ── 前置阶段（vision / mix）与后置阶段（习坎 / 润色）的状态 ── */
+let pagesDone = 0;            // vision 已产出块数
+let identified = 0;           // 同上（读数用）
+let identTok = 0;
+let visionCallsDone = 0;
+let visionBatchesDone = 0;    // vision 已产出的拼图批数（02 段并行推进用）
+let marked = 0;               // mix 已打标记的块数
+let sideMarks = 0, mainMarks = 0;
+let facetCount = {};
+let pageState = new Array(PAGE_N).fill('idle');   // idle | seen | tagged
+let renderSync = false;       // 需要立刻同步一次（不改布局的轻量刷新）
+let drafted = [];             // 习坎阶段的讲义条目
+let filledLeaves = 0;
+let polishDone = 0;           // 润色清单完成条数
+let curStage = 0;
+let downStep = 0;             // 第 07 段的动画拍数 0..4
+
+/* ★ 润色的六件事：全部是"规整"，没有一件是"再写一遍" */
+const POLISH_ITEMS = [
+  { name:'术语统一', why:'分段写必然漂：同一概念在 A 段叫「样本点」、B 段叫「样本点集合」。',
+    how:'以全篇出现最多的写法为准，其余逐处替换；不改变含义。' },
+  { name:'编号连续', why:'片段各自编号，拼起来会出现 1、2、3 后又从 1 开始。',
+    how:'按最终树形重排为 1 / 1.1 / 1.1.1，正文里的"第一点"同步改。' },
+  { name:'符号统一', why:'同一门课里 P(A|B) 与 P(A∣B)、全角半角混用。',
+    how:'统一到全篇口径；公式本身不动。' },
+  { name:'交叉引用可解析', why:'习坎是逐知识点写的，会写出"见下节"这种没有落点的话。',
+    how:'把指代换成真实的节点标题；指不到的直接删掉这句指代。' },
+  { name:'依附内容复位', why:'例题被并进正文中间，读起来像定理的延续。',
+    how:'按 facet 把例题/案例挪回宿主知识点之后，作为独立段落。' },
+  { name:'事实校验', why:'润色最容易顺手"补一句"，那是最危险的失真。',
+    how:'逐句比对上游正文，任何原文没有的论断一律回退。' },
+];
+/** 每一步润色报几处改动（演示用确定性数字） */
+const polishEffect = [7, 12, 5, 3, 4, 0];
+
+/* 习坎补的那句"自己的理解"（演示用）：解释为什么，而不是加新内容 */
+const INSIGHT_SAMPLE = [
+  '之所以要求"所有可能结果"已知，是因为不知道全部结果时根本无法定义样本空间。',
+  '这条性质反过来用更常见：先判定两事件互斥，再用加法公式。',
+  '注意这里假设了每个样本点等可能 —— 若不等可能，同一公式不再成立。',
+  '直观上可以理解为：把每次试验看成在样本空间里等概率地取一个点。',
+  '这个推导的关键一步是把并集拆成互斥的两块，否则无法直接相加。',
+  '与前面的事件运算对照看：德摩根律把"都发生"翻成"都不发生"。',
+];
+
+/* ══════════════════════════════════════════════════════════════
+   讲义文本（演示）：习坎把"口语转录"写成"书面正文"
+   ══════════════════════════════════════════════════════════════ */
+function findParentTitle(leaf) {
+  const hit = allOf(tree).find(n => (n.children || []).some(c => c.id === leaf.id));
+  return hit && hit.kind === 'title' ? hit.title : null;
+}
+
+/* 口语 → 书面的对照（演示用：一眼能看出"改了什么"） */
+const ASR_SAMPLE = [
+  '呃，我们来看这个随机试验啊，就是说，你抛一次硬币，对吧，结果可能是正面也可能是反面，',
+  '那么这个样本空间呢，就是把所有可能结果都装进去的那个集合，大家注意一下这个"所有"啊，',
+  '然后我们说事件，事件其实是样本空间的子集，这个大家应该都懂，对吧，就是说，',
+  '所以我们后面算概率，本质上就是在这个集合里面数个数，这个逻辑上是很自然的。',
+];
+const WRITTEN_SAMPLE = [
+  '随机试验指结果事先不能确定、但所有可能结果已知的试验。抛一次硬币，结果或为正，或为反。',
+  '样本空间是全部可能结果的集合，记作 Ω。其中「全部」是定义的一部分，缺一不可。',
+  '事件是样本空间的子集。因此讨论事件，等价于讨论 Ω 的某个子集。',
+  '在此观点下，概率的计算归结为对 Ω 中元素计数，这是古典概型的基本思路。',
+];
+
+function lectureText(d) {
+  if (d.attach) {
+    return `【${d.facet || '例题'}】以具体数值代入上述定义，验证其成立。计算过程与结论均取自原文。`;
+  }
+  const k = (d.id.length + (d.blocks | 0)) % WRITTEN_SAMPLE.length;
+  return WRITTEN_SAMPLE[k] + ' ' + WRITTEN_SAMPLE[(k + 1) % WRITTEN_SAMPLE.length];
+}
+
+
+const _mc = (() => { const c = document.createElement('canvas').getContext('2d');
+  c.font = '400 10.5px "PingFang SC","Microsoft YaHei UI",sans-serif'; return c; })();
+const wCache = new Map();
+const textWidth = s => { if (wCache.has(s)) return wCache.get(s);
+  const w = _mc.measureText(s).width; wCache.set(s, w); return w; };
+function fitText(s, maxW) {
+  if (textWidth(s) <= maxW) return s;
+  const ell='…', ew=textWidth(ell); let lo=0, hi=s.length;
+  while (lo<hi) { const mid=Math.ceil((lo+hi)/2);
+    if (textWidth(s.slice(0,mid))+ew<=maxW) lo=mid; else hi=mid-1; }
+  return lo>0 ? s.slice(0,lo)+ell : ell;
+}
+const el = (tag, cls) => { const e = document.createElementNS(NS, tag);
+  if (cls) e.setAttribute('class', cls); return e; };
+
+function ensureNodeEl(n) {
+  if (els.has(n.id)) return els.get(n.id);
+  const g = el('g','n');
+  const rect = el('rect'); rect.setAttribute('rx','2');
+  const head = el('text'); head.setAttribute('x','9');
+  const kind = el('text','kind'); kind.setAttribute('x', String(NODE_W-8));
+  const delta = el('text','delta');
+  const gBg = el('rect','gauge-bg');
+  const gFg = el('rect','gauge-fg');
+  g.append(rect, head, kind, delta, gBg, gFg);
+  g.setAttribute('data-id', n.id);
+  gNodes.appendChild(g);
+  const rec = { g, rect, head, kind, delta, gBg, gFg, lines: [], node: n, sig: '' };
+  els.set(n.id, rec);
+  n.cx = n.cx ?? 0; n.cy = n.cy ?? 0;
+  return rec;
+}
+function ensureLines(rec, count) {
+  while (rec.lines.length < count) {
+    const t = el('text','ln'); t.setAttribute('x','9');
+    rec.g.insertBefore(t, rec.delta);
+    rec.lines.push(t);
+  }
+  while (rec.lines.length > count) rec.lines.pop().remove();
+}
+
+function syncNode(n, state) {
+  const rec = ensureNodeEl(n);
+  rec.node = n;
+  const pend = (n.pending ?? 0) > 0;
+  rec.g.classList.toggle('title', n.kind === 'title' && !n.junk && !n.doomed && !n.ghost);
+  rec.g.classList.toggle('ghost', !!n.ghost);
+  rec.g.classList.toggle('leaf', n.kind === 'leaf' && !n.doomed);
+  rec.g.classList.toggle('pend', n.kind === 'leaf' && pend && !n.doomed);
+  rec.g.classList.toggle('junk', !!n.junk && !n.doomed);
+  rec.g.classList.toggle('doomed', !!n.doomed);
+  rec.g.classList.toggle('detached', !!n.detached && !n.doomed);
+  rec.g.classList.toggle('inserted', state === 'inserted');
+  rec.g.classList.toggle('merged', state === 'merged');
+  rec.g.classList.toggle('gone', !!n.gone);
+
+  rec.rect.setAttribute('width', String(NODE_W));
+  rec.rect.setAttribute('height', String(n.h ?? TITLE_H));
+
+  if (n.kind === 'leaf') {
+    const hasKids = (n.children || []).some(c => c.kind === 'leaf' && !c.gone);
+    const lines = leafLines(n.blocks, n.seed ?? 0);
+    const rev = n.revision ?? 0;
+    const pendTok = n.pending ?? 0;
+    /* ★ 单位是 token。块数只是"分几段"，不再作为计量单位。 */
+    const bodyTok = n._tok ?? tokensFor(n.ord ?? 0, n.blocks);
+    rec.kind.textContent = `${fmtTok(bodyTok)} tok${rev ? ' · v' + rev : ''}${pendTok ? ` +${fmtTok(pendTok)}` : ''}`;
+    rec.kind.setAttribute('y', String(HEAD_Y));
+    rec.kind.classList.toggle('rw', rev > 1);
+    /* 叶头部恒为〈正文〉—— 叶永远无标题。
+       长成叶树后，它仍是"一段内容"，只是内部多了一层小标题。 */
+    rec.head.setAttribute('y', String(HEAD_Y));
+    rec.head.textContent = hasKids ? '〈正文树〉' : '〈正文〉';
+
+    if (hasKids) {
+      /* 叶树 / 依托树：递归展开行。
+         依托子叶用「└ 例题 …」标出，叶树子叶用「§n」。 */
+      const rows = [];
+      (function walk(node, depth, prefix) {
+        const subs = (node.children || []).filter(c => !c.gone && c.kind === 'leaf');
+        subs.forEach((c, i) => {
+          const isAttach = !!c._fromAttach;
+          const label = isAttach
+            ? `└ ${c._attachFacet ?? '案例'}`
+            : `${prefix}${node.subTitles?.[i] ?? '§'}`;
+          const tok = c._tok ?? tokensFor(c.ord ?? 0, c.blocks);
+          const nested = (c.children || []).some(k => !k.gone && k.kind === 'leaf');
+          rows.push({ text: `${label} ${fmtTok(tok)} tok${nested ? ' ▾' : ''}`,
+                      depth, nested, isAttach });
+          if (nested) walk(c, depth + 1, isAttach ? '  ' : label + '.');
+        });
+      })(n, 1, '');
+
+      const attachN = rows.filter(r => r.isAttach).length;
+      const shown = rows.slice(0, 4);
+      ensureLines(rec, shown.length + (rows.length > 4 ? 1 : 0));
+      shown.forEach((r, i) => {
+        const tt = rec.lines[i];
+        tt.setAttribute('y', String(LEAF_PAD_T + i * LINE_H + 4));
+        tt.classList.remove('pending-line');
+        tt.classList.add(r.isAttach ? 'attach-line' : 'subt');
+        tt.textContent = '  '.repeat(r.depth - 1) + r.text;
+      });
+      if (rows.length > 4) {
+        const tt = rec.lines[shown.length];
+        tt.setAttribute('y', String(LEAF_PAD_T + shown.length * LINE_H + 4));
+        tt.classList.add('subt');
+        tt.style.opacity = '.55';
+        tt.textContent = `… 共 ${rows.length} 支（${maxDepthOf(n)} 层）`;
+      }
+      rec.gBg.style.display = 'none'; rec.gFg.style.display = 'none';
+      rec.sig = `tree|${rows.map(r => r.text).join(';')}`;
+      rec.delta.textContent = '';
+      return rec;
+    }
+
+    const total = lines.length + (pendTok ? 1 : 0);
+    ensureLines(rec, total);
+    lines.forEach((s, i) => {
+      const tt = rec.lines[i];
+      tt.setAttribute('y', String(LEAF_PAD_T + i * LINE_H + 4));
+      tt.classList.remove('pending-line');
+      tt.classList.remove('subt');
+      tt.textContent = fitText(s, NODE_W - 18);
+    });
+    if (pendTok) {
+      const i = lines.length, y = LEAF_PAD_T + i * LINE_H;
+      const tt = rec.lines[i];
+      tt.setAttribute('y', String(y + 4));
+      tt.classList.add('pending-line');
+      tt.textContent = `＋${fmtTok(pendTok)} 待整合`;
+      const gw = 40, gx = NODE_W - 8 - gw, gy = y + 4;
+      rec.gBg.setAttribute('x', String(gx)); rec.gBg.setAttribute('y', String(gy));
+      rec.gBg.setAttribute('width', String(gw)); rec.gBg.setAttribute('height','3');
+      rec.gBg.setAttribute('rx','1.5'); rec.gBg.style.display = '';
+      rec.gFg.setAttribute('x', String(gx)); rec.gFg.setAttribute('y', String(gy));
+      rec.gFg.setAttribute('width', String(Math.max(2, Math.min(1, pendTok / SPLIT_LINE) * gw)));
+      rec.gFg.setAttribute('height','3');
+      rec.gFg.setAttribute('rx','1.5'); rec.gFg.style.display = '';
+    } else {
+      rec.gBg.style.display = 'none'; rec.gFg.style.display = 'none';
+    }
+
+    const sig = `${lines.join('|')}|p${n.pending}@${rev}`;
+    if (rec.sig && rec.sig !== sig && n.animate) {
+      n.animate = false;
+      rec.lines.forEach((tt, i) => tt.animate(
+        [{ opacity:0, transform:'translateY(5px)' }, { opacity:1, transform:'translateY(0)' }],
+        { duration:300, delay:50+i*50, easing:'ease-out', fill:'both' }));
+      rec.head.animate([{opacity:0},{opacity:1}], {duration:220, easing:'ease-out', fill:'both'});
+      rec.rect.animate(
+        [{ stroke:'#4a6d85', strokeWidth:3 }, { stroke:'#4a6d85', strokeWidth:1.9 }],
+        { duration:600, easing:'ease-out' });
+      const scan = el('rect','scan');
+      scan.setAttribute('x','0'); scan.setAttribute('width', String(NODE_W));
+      scan.setAttribute('height','2.5'); scan.setAttribute('fill','#4a6d85');
+      scan.setAttribute('opacity','0.5');
+      rec.g.appendChild(scan);
+      scan.animate(
+        [{ transform:'translateY(0px)', opacity:0.7 },
+         { transform:`translateY(${(n.h ?? 36)-3}px)`, opacity:0 }],
+        { duration:520, easing:'cubic-bezier(.4,0,.2,1)', fill:'both' }
+      ).onfinish = () => scan.remove();
+    }
+    rec.sig = sig;
+
+    if (state === 'inserted' || state === 'merged') {
+      rec.delta.textContent = `+${n._delta ?? 0}`;
+      rec.delta.setAttribute('x', String(NODE_W - 8));
+      rec.delta.setAttribute('y', String(HEAD_Y));
+      rec.delta.setAttribute('text-anchor','end');
+      rec.delta.classList.toggle('merge', state === 'merged');
+      rec.delta.animate(
+        [{ opacity:0, transform:'translateY(-4px)' }, { opacity:1, transform:'translateY(0)' },
+         { opacity:1, transform:'translateY(0)', offset:.65 }, { opacity:0 }],
+        { duration:1200, easing:'ease-out', fill:'both' });
+    } else { rec.delta.textContent = ''; }
+  } else {
+    rec.head.setAttribute('y', String(HEAD_Y));
+    rec.head.textContent = fitText(n.title || '（暂存根）', NODE_W - 9 - 44 - 7);
+    rec.kind.textContent = n.ghost ? '' : '标题';
+    rec.kind.setAttribute('y', String(HEAD_Y));
+    rec.kind.classList.remove('rw');
+    ensureLines(rec, 0);
+    rec.gBg.style.display = 'none'; rec.gFg.style.display = 'none';
+    rec.delta.textContent = '';
+    rec.sig = n.title;
+  }
+  return rec;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   阶段切换：舞台在 树 ↔ 讲义 之间换，分段条高亮跟着走
+   ══════════════════════════════════════════════════════════════ */
+const STAGE_OF_ACT = {
+  flow:0,
+  init:1, sieve:1,
+  batch:2,
+  mark:3, delete:3, ortho:3, flush:3,
+  detach:4, draft:4, aggregate:4,
+  format:5, lecture:5, polish:5, done:5,
+  contract:6, split:6, fan:6,
+};
+
+function syncStageChrome() {
+  const s = STEPS[STEP] || {};
+  curStage = STAGE_OF_ACT[s.act] ?? 0;
+
+  /* 分段条：当前段高亮，之前的段打勾 */
+  [...document.querySelectorAll('#rail .stg')].forEach((el, i) => {
+    el.classList.toggle('on', i === curStage);
+    el.classList.toggle('done', i < curStage);
+    const st = STEPS.find(x => STAGE_OF_ACT[x.act] === i);
+    /* 段内进度条：用"该段已有多少步走完"粗略表示 */
+    const inSeg = STEPS.filter(x => STAGE_OF_ACT[x.act] === i);
+    const passed = inSeg.filter((x, k) => STEPS.indexOf(x) <= STEP).length;
+    el.querySelector('.sb i').style.width = inSeg.length
+      ? (i < curStage ? 100 : Math.round(passed / inSeg.length * 100)) + '%' : '0%';
+  });
+
+  /* 流水线带：只在 01 段（识别）显示 */
+  document.getElementById('flow').style.display = curStage === 0 ? '' : 'none';
+  if (curStage === 0) syncFlow();
+
+  /* 大黑板：02–05 段显示（成稿阶段与它无关，也腾出高度） */
+  document.getElementById('bb').style.display = (curStage >= 1 && curStage <= 4) ? '' : 'none';
+  /* 操作/worker 卡：成稿阶段不显示 */
+  document.getElementById('opsCard').style.display = curStage >= 5 ? 'none' : '';
+  if (curStage >= 5) document.getElementById('workerCard').style.display = 'none';
+  /* 重构卡：只在 05 段 */
+  if (curStage !== 4) setRecon(0);
+  /* 润色清单：06 段末（format 之后才出现） */
+  const showPolish = curStage === 5 && drafted.some(d => !!d.text);
+  document.getElementById('polishCard').style.display = showPolish ? '' : 'none';
+  if (showPolish) syncPolish();
+  /* 下游去向段：侧栏过程卡全部收掉 */
+  if (curStage >= 6) {
+    for (const id of ['opsCard', 'workerCard', 'bb', 'polishCard']) {
+      const el = document.getElementById(id); if (el) el.style.display = 'none';
+    }
+  }
+
+  /* 读数条 */
+  document.getElementById('rQueue').textContent = String(Math.max(0, pagesDone - marked));
+  document.getElementById('rQueueW').textContent = `/ ${workers} 工`;
+  document.getElementById('rBlocks').textContent = String(identified);
+  document.getElementById('rBlocksAll').textContent = `/ ${VISION_TOTAL}`;
+  document.getElementById('rMarks').textContent = String(marked);
+  document.getElementById('rMarksSide').textContent = `/ ${sideMarks} 支线`;
+  document.getElementById('rDone').textContent = fmtTok(tokensDone);
+  document.getElementById('rDoneAll').textContent = 'tok';
+
+  const phase = ['识别','筛支线','挂账','审查合并','重构','习坎','下游去向'][curStage] || '—';
+  document.getElementById('rPhase').textContent = phase;
+
+  /* 页带 / 大标题 */
+  /* 6 段标题（索引 = STAGE_OF_ACT 的段号） */
+  const heads = [
+    ['阶段 01 · 识别（vision ‖ mix）', 'vision 产块 + 出初树，mix 从同一队列取块打标记'],
+    ['阶段 02 · 筛支线', '支线 / 教学安排 / 作业 → 只进大黑板，不进树'],
+    ['阶段 03 · 挂账（零判定）', 'insert 不查重、merge 不合并；虚线 = 标题 · 琥珀虚 = 待整合'],
+    ['阶段 04 · 审查与并发合并', '同名标题并一起 → 叶不相交 → 零锁并发；超线就长叶树'],
+    ['阶段 05 · 重构 · 重新长树', '拆叶摊平 → 重聚知识点叶 → 分级聚合'],
+    ['阶段 06 · 习坎 · 成稿', '自动转格式 → 补自己的理解 → 全文润色'],
+    ['阶段 07 · 下游去向', '同一份产物被多条管线复用：无 LLM 的、LLM 的、以及未来 ?'],
+  ];
+  const h = heads[curStage == null ? 0 : Math.min(curStage, 6)];
+  document.getElementById('stageHead').textContent = h[0];
+  document.getElementById('stageHint').textContent = h[1];
+}
+
+function syncFlow() {
+  const pct = Math.round(pagesDone / VISION_TOTAL * 100);
+  document.getElementById('fVisionN').textContent = `${pagesDone}/${VISION_TOTAL} 块`;
+  document.getElementById('fVisionBar').style.width = pct + '%';
+  document.getElementById('fMixN').textContent = `${marked}/${VISION_TOTAL} 块`;
+  document.getElementById('fMixBar').style.width = Math.round(marked / VISION_TOTAL * 100) + '%';
+  const q = Math.max(0, pagesDone - marked);
+  document.getElementById('fQueueN').textContent = String(q);
+  document.getElementById('fQueueBar').style.width = Math.min(100, q * 3) + '%';
+
+  /* worker 小点阵 */
+  const dots = document.getElementById('fWorkers');
+  if (dots.children.length !== workers) dots.innerHTML = new Array(workers).fill('<i></i>').join('');
+  [...dots.children].forEach((d, i) => {
+    d.classList.toggle('busy', curStage === 1 && i < Math.min(workers, q));
+  });
+
+  /* 页带：24 个小格，每格 n 条块，标完按 role/facet 上色 */
+  const box = document.getElementById('pagesBox');
+  if (box && box.children.length !== PAGE_N) {
+    box.innerHTML = PAGES.map(p => `<div class="pg" data-p="${p.p}"><b>${p.p}</b></div>`).join('');
+  }
+  if (!box) return;
+  [...box.children].forEach(el => {
+    const p = +el.dataset.p;
+    const rec = PAGES[p - 1];
+    const tag = pageState[p - 1];
+    el.classList.toggle('hot', tag === 'tagged' && !!(rec.role === '支线' || rec.facet));
+    /* 块条数量与颜色 */
+    while (el.querySelectorAll('i').length < rec.n) el.insertBefore(document.createElement('i'), el.querySelector('b'));
+    [...el.querySelectorAll('i')].forEach((b, k) => {
+      if (tag === 'idle') { b.className = ''; b.style.opacity = '0'; return; }
+      b.style.opacity = '';
+      if (tag !== 'tagged') { b.className = ''; return; }
+      if (rec.role === '支线') b.className = rec.facet === '作业' ? 'm-meta' : 'm-side';
+      else b.className = (rec.facet && rec.facet !== '概念') ? 'm-attach' : 'm-host';
+    });
+  });
+}
+
+function syncPolish() {
+  const done = polishDone;
+  [...document.querySelectorAll('#polishList .ci')].forEach((el, i) => {
+    const on = i < done;
+    el.classList.toggle('done', on);
+    el.querySelector('.bx').textContent = on ? '✓' : '□';
+    el.querySelector('.cn').textContent = on ? `${polishEffect[i]} 处` : '—';
+  });
+  document.getElementById('polishCnt').textContent = `${done} / 6`;
+}
+
+const showDoc = () => curStage >= 5 && curStage <= 5;
+const showFan = () => curStage >= 6;
+const treeCountSub = () => allOf(tree).filter(n => isTitle(n)).length;
+
+/* 第 07 段：三份产物的描述（vision 转录稿 / mix 清洗稿 / 讲义） */
+const PACKS = [
+  {
+    key:'vision', cls:'', title:'vision 转录稿', sub:'原始转录 + 版式位置',
+    size: () => `${VISION_TOTAL} 块 / ${PAGE_N} 页`,
+    desc: '4 页拼一张图读出来的原始结构：<b>每块属于哪页、位置、字号层级</b>。最脏，但也最全。',
+    files: () => [
+      ['t', `pages.json`, `${PAGE_N} 页`],
+      ['t', `blocks.jsonl`, `${VISION_TOTAL} 块`],
+      ['t', `layout.json`, `位置/字号`],
+    ],
+    uses: () => [
+      ['nollm', '检索索引', '按页 / 按块建全文索引；页码与位置就是定位信息，命中可跳回原页。'],
+      ['nollm', '进度条 / 时间轴', '块数 × 停留时长 → 本节讲到哪、还剩多少；拖动即跳转。'],
+      ['nollm', '覆盖率体检', '哪些页没被任何知识点覆盖 —— 纯统计。'],
+    ],
+  },
+  {
+    key:'mix', cls:'', title:'mix 清洗稿', sub:'洗净的正文 + role/facet',
+    size: () => `${MAIN_TOTAL} 主线 / ${SIDE_TOTAL} 支线`,
+    desc: '剥掉口语与页面噪声之后的正文，<b>外加 role / facet 标记</b>。检索真正要吃的是这一份。',
+    files: () => [
+      ['t', `clean.jsonl`, `${VISION_TOTAL} 块`],
+      ['t', `marks.jsonl`, `role + facet`],
+      ['t', `side.jsonl`, `${SIDE_TOTAL} 条支线`],
+    ],
+    uses: () => [
+      ['nollm', '检索（正文）', '清洗后没有语气词和课堂指代，索引质量比原始转录高一个量级。'],
+      ['nollm', '过滤 / 分段', 'role + facet 是现成的过滤维度：只看例题、跳过教学安排。'],
+      ['nollm', '通知 / 大黑板', '支线块按时间线直接成表。'],
+    ],
+  },
+  {
+    key:'doc', cls:'future', title:'讲义', sub:'结构化最终形态',
+    size: () => `${drafted.length} 知识点`,
+    desc: '层级、编号、正文、例题归位全部就绪 —— <b>这条链上最干净的东西</b>，也是最值得再喂给 LLM 的东西。',
+    files: () => [
+      ['t', `lecture.md`, `${drafted.length} 节`],
+      ['t', `toc.json`, `1 / 1.1 / 1.1.1`],
+      ['t', `examples.jsonl`, `例题→宿主`],
+    ],
+    uses: () => DOC_USES.map(([t, d]) => ['llm', t, d])
+      .concat([['q', '…', '留白是有意的：内容与结构已解耦，往哪接都不被结构拖累。']]),
+  },
+];
+
+
+/* ★ 讲义的下游：全部是"已有产物 + LLM"才成立的方向。
+   注意每一条都**依赖讲义已经结构化**（层级/编号/例题归位），
+   所以这不是"再找活给它干"，而是这份产物天然能接的地方。 */
+const DOC_USES = [
+  ['Agent Wiki', '每个知识点一页，自动互链；问"这个概念在哪讲过"能直接落页。'],
+  ['刷题 / Quiz', '知识点即考点，例题即题库；可按编号生成题、按错题回溯到知识点。'],
+  ['复习提纲', '层级天然就是提纲；考前按 facet 抽掉例题只留定义与公式。'],
+  ['例题套卷', '把全篇例题按知识点抽出来组卷，答案与解析回链到宿主知识点。'],
+  ['AI Teacher', '按编号定位，可指定"只讲 1.2"；讲解范围可验证，不跑题。'],
+];
+/** 不需要 LLM 的下游路径条数（vision 转录稿 + mix 清洗稿 / 标记 的读者） */
+const NO_LLM_USES = 7;
+
+/* 下游去向：三份产物 × 各自的下游 */
+function renderFan() {
+  const box = document.getElementById('fan');
+  box.style.display = '';
+  /* 这一拍就是"三路展开"：文件与下游全部露出 */
+  box.innerHTML = PACKS.map((p, i) => {
+    const files = p.files();
+    return `<div class="pack ${p.cls} show" style="transition-delay:${i * 90}ms">
+  <div class="pkh">
+    <b>${esc(p.title)}</b><span>${esc(p.sub)}</span>
+    <span class="sz">${esc(p.size())}</span>
+  </div>
+  <div class="pkd">${p.desc}</div>
+  ${files.map(([tag, name, meta]) =>
+    `<div class="file in" style="transition-delay:${120 + i * 90}ms"><i>·</i><b>${esc(name)}</b><span>${esc(meta)}</span></div>`
+  ).join('')}
+  <div style="height:4px"></div>
+  ${p.uses().map(([kind, t, d], k) =>
+    `<div class="use on" style="transition-delay:${200 + k * 60 + i * 90}ms">
+      <i class="${kind}">${kind === 'nollm' ? '无 LLM' : kind === 'llm' ? 'LLM' : '…'}</i>
+      <div><b>${esc(t)}</b><em>${d}</em></div>
+    </div>`).join('')}
+</div>`;
+  }).join('') + `
+<div class="fnote2">
+  <b>左边两包（vision 转录稿 / mix 清洗稿）完全不用 LLM</b>：结构化字段，
+  检索、进度条、过滤、通知表全是确定性加工。<br>
+  <b>右边那包（讲义）反过来 —— 全部要靠 LLM 才成立</b>，
+  但正因为层级与锚点已经定死，这些用法才是有边界的。
+  另外：<b>进检索的是 mix 的清洗稿，不是原始转录</b> —— 语气词对索引全是噪声。
+</div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   第 07 段：树 → 方格包裹 → 三个方格（纯 DOM 动画）
+   ──────────────────────────────────────────────────────────────
+   beat 1：树的每个节点塌成小方块，向中心收拢
+   beat 2：小方块叠成一个**方格包裹**（虚线框 + 捆绳 + 标签）
+   beat 3：包裹裂成三个方格（对应三份产物），分别飞到位
+   beat 4：每个方格连线到下游
+   ══════════════════════════════════════════════════════════════ */
+const PB_BOX = [
+  { cls:'v', label:'vision 转录稿', sub:() => `${VISION_TOTAL} 块 · ${PAGE_N} 页`,
+    cap:'检索 · 进度条 · 覆盖率', key:'vision' },
+  { cls:'m', label:'mix 清洗稿', sub:() => `${MAIN_TOTAL}主线 / ${SIDE_TOTAL}支线`,
+    cap:'检索 · 过滤 · 通知', key:'mix' },
+  { cls:'a', label:'讲义', sub:() => `${drafted.length} 知识点`,
+    cap:'Wiki · 刷题 · 复习 · 套卷 · AI Teacher', key:'doc' },
+];
+
+function renderParcel(beat) {
+  const stage = document.getElementById('pstage');
+  const cv = document.getElementById('canvas').getBoundingClientRect();
+  const W = cv.width, H = cv.height;
+  document.getElementById('canvas').style.display = '';
+  /* ★ 包裹舞台是"另一个画面"：树必须彻底消失，不能留在背后当背景 */
+  svg.style.display = 'none';
+
+  /* 尺寸全部按画布高度算，窄屏（1024×768 的舞台只有 ~300px 高）也要放得下 */
+  const capH = 20;
+  const ph = Math.max(64, Math.min(140, Math.round(H * 0.24)));
+  const bh = Math.max(52, Math.min(76, Math.round(H * 0.22)));
+  const gapY = Math.max(22, Math.min(58, Math.round(H * 0.10)));
+  const wireH = Math.max(16, Math.min(38, Math.round(H * 0.09)));
+  const totalH = ph + gapY + bh + wireH + capH;
+
+  const pw = Math.min(300, Math.round(W * 0.34));
+  const px = (W - pw) / 2;
+  const py = Math.max(2, Math.round((H - totalH) / 2));
+
+  const bw = Math.min(196, Math.round((W - 60) / 3.4));
+  const gap = (W - bw * 3) / 4;
+  const rowY = py + ph + gapY;
+  const yLine = rowY + bh + wireH;
+
+  const boxAt = i => ({ x: gap + i * (bw + gap), y: rowY });
+
+  /* 骨架只建一次 */
+  if (!stage.dataset.built) {
+    stage.dataset.built = '1';
+    stage.innerHTML = `
+      <div class="parcel" id="parcel">
+        <div class="plabel">所有产物</div>
+        <div class="psub"></div>
+      </div>
+      ${PB_BOX.map((b, i) => `<div class="pbox ${b.cls}" data-k="${b.key}">
+        <b>${esc(b.label)}</b><span></span></div>`).join('')}
+      <svg class="pwire" id="pwire"></svg>
+      ${PB_BOX.map((b, i) => `<div class="cap" data-c="${i}">${esc(b.cap)}</div>`).join('')}`;
+  }
+
+  const parcel = document.getElementById('parcel');
+  const boxes = [...stage.querySelectorAll('.pbox')];
+  const caps = [...stage.querySelectorAll('.cap')];
+  const wire = document.getElementById('pwire');
+
+  /* 包裹位置与大小（第 1 拍就定好，避免跳动） */
+  parcel.style.left = px + 'px';
+  parcel.style.top = py + 'px';
+  parcel.style.width = pw + 'px';
+  parcel.style.height = ph + 'px';
+  parcel.querySelector('.psub').textContent =
+    `知识树 ${drafted.length} 个知识点 + 转录稿 ${VISION_TOTAL} 块 + 讲义全文`;
+
+  const showBoxes = beat >= 2;
+
+  /* 第 1 拍：只有一个包裹；第 2 拍：裂成三格 */
+  parcel.classList.toggle('show', !showBoxes);
+
+  boxes.forEach((el, i) => {
+    const t = boxAt(i);
+    if (!showBoxes) {
+      /* 先缩到包裹中心（等下一次显示时从中心长出） */
+      el.style.left = (px + pw / 2 - bw / 2) + 'px';
+      el.style.top = (py + ph / 2 - bh / 2) + 'px';
+      el.style.width = bw + 'px';
+      el.style.height = bh + 'px';
+      el.classList.remove('show');
+      el.querySelector('span').textContent = PB_BOX[i].sub();
+      return;
+    }
+    el.style.width = bw + 'px';
+    el.style.height = bh + 'px';
+    el.style.left = t.x + 'px';
+    el.style.top = t.y + 'px';
+    el.querySelector('span').textContent = PB_BOX[i].sub();
+    el.classList.add('show');
+  });
+
+  /* 连线与下游标签：第 2 拍（分成三路）才出现 */
+  if (beat < 2) {
+    wire.innerHTML = '';
+    caps.forEach(c => c.classList.remove('on'));
+    return;
+  }
+  const paths = [];
+  boxes.forEach((el, i) => {
+    const x = boxAt(i).x + bw / 2;
+    const cls = ['v', 'm', 'a'][i];
+    paths.push(`<path class="${cls} on flow"
+      d="M${x} ${rowY + bh} C${x} ${rowY + bh + wireH * 0.45} ${x} ${yLine - wireH * 0.45} ${x} ${yLine - 3}"/>`);
+    const cap = caps[i];
+    cap.style.left = (x - 90) + 'px';
+    cap.style.top = yLine + 'px';
+    cap.style.width = '180px';
+    cap.classList.add('on');
+  });
+  wire.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  wire.innerHTML = paths.join('');
+}
+
+function renderDoc() {
+  const box = document.getElementById('doc');
+  document.getElementById('canvas').style.display = 'none';
+  document.getElementById('flow').style.display = 'none';
+  box.style.display = '';
+
+  const flat = [];
+  (function walk(n, depth, prefix) {
+    for (const c of (n.children || [])) {
+      if (c.gone) continue;
+      if (c.kind === 'title' && !c.ghost) walk(c, depth + 1, [...prefix, c.title]);
+      else if (c.kind === 'leaf') flat.push({ leaf:c, path:prefix });
+    }
+  })(tree, 0, []);
+
+  if (!drafted.length) {
+    drafted = flat.map(({ leaf, path }, i) => ({
+      id: leaf.id, tok: leaf._tok ?? 0, blocks: leaf.blocks ?? 0,
+      attach: !!leaf._fromAttach, facet: leaf._attachFacet || null,
+      title: path[path.length - 1] || proposeTitle(leaf, i), text: null, rev: 0,
+    }));
+  }
+  const byId = new Map(drafted.map(d => [d.id, d]));
+
+  const rootTitle = tree.title || '概率论与数理统计 · 第一次课';
+  const html = [];
+  html.push(`<div class="dhead"><h3>${esc(rootTitle)}</h3>`
+    + `<span>讲义 · ${drafted.length} 个知识点 · ${fmtTok(TOTAL_TOKENS)} tok</span></div>`);
+  for (const { leaf, path } of flat) {
+    const d = byId.get(leaf.id);
+    if (!d) continue;
+    const fac = d.facet ? `<span class="bd ${d.attach ? 'eg' : 'def'}">${esc(d.facet)}</span>` : '';
+    const no = d.secNo ? `<span class="bd">${esc(d.secNo)}</span>` : '';
+    const body = d.text ? `<p>${esc(d.text)}</p>` : `<p class="pm">（正文待整合）</p>`;
+    const extra = d.insight ? `<p class="ins">▸ ${esc(d.insight)}</p>` : '';
+    html.push(`<div class="di ${d.attach ? 'raw' : ''}" data-id="${esc(leaf.id)}">`
+      + `<div class="dt">${no}<b>${esc(d.title)}</b>${fac}</div>${body}${extra}</div>`);
+  }
+  html.push(`<div class="dtail">编号 1 / 1.1 / 1.1.1 自动生成 · 习坎补理解 ${filledLeaves} 处 · 润色 ${polishDone}/6</div>`);
+  box.innerHTML = html.join('');
+
+  /* 高亮：本步刚处理的那几个 */
+  const s = STEPS[STEP] || {};
+  if (s.act === 'lecture') {
+    const per = 5, from = s.group * per;
+    for (let k = from; k < Math.min(from + per, drafted.length); k++) {
+      const el = box.querySelector(`[data-id="${CSS.escape(drafted[k].id)}"]`);
+      if (el) el.classList.add('hl');
+    }
+  }
+}
+
+function render() {
+  if (!tree) return;
+
+  /* ★ 第 07 段：包裹舞台（树已隐藏）→ 第三拍交棒给 renderFan 的详情面板 */
+  if (showFan()) {
+    document.getElementById('doc').style.display = 'none';
+    syncStageChrome();
+    if (downStep >= 3) {
+      /* 三路已经分好 → 换成 renderFan：三列详情，各自文件与下游 */
+      document.getElementById('canvas').style.display = 'none';
+      document.getElementById('pstage').innerHTML = '';
+      document.getElementById('pstage').dataset.built = '';
+      renderFan();
+      return;
+    }
+    document.getElementById('canvas').style.display = '';
+    document.getElementById('canvas').classList.remove('packing');
+    document.getElementById('fan').style.display = 'none';
+    renderParcel(downStep);
+    return;
+  }
+  document.getElementById('fan').style.display = 'none';
+  svg.style.display = '';
+
+  document.getElementById('canvas').classList.remove('packing');
+  document.getElementById('pstage').innerHTML = '';
+  document.getElementById('pstage').dataset.built = '';
+  if (showDoc()) {
+    syncStageChrome();
+    document.getElementById('canvas').style.display = 'none';
+    renderDoc();
+    return;
+  }
+  document.getElementById('doc').style.display = 'none';
+  document.getElementById('canvas').style.display = '';
+  syncStageChrome();
+  const box = svg.getBoundingClientRect();
+  const padX = 16, padY = 9;
+  const availW = Math.max(70, box.width - padX*2);
+  const availH = Math.max(50, box.height - padY*2);
+
+  /* 摊平态：试所有列数，挑**画得最大**的那个（保证 40 个内容段也看得清） */
+  let L;
+  if (tree.flat) {
+    const n = tree.children.filter(c => !c.gone).length;
+    let best = null;
+    for (let c = 1; c <= Math.max(1, Math.min(n, 14)); c++) {
+      const trial = layout(tree, { cols:c });
+      const s = Math.min(availW / (trial.w + 130), availH / trial.h, 1.02);
+      if (!best || s > best.s + 1e-6) best = { cols:c, s, L:trial };
+    }
+    flatCols = best ? best.cols : null;
+    /* ⚠ layout() 会就地改节点的 tx/ty，所以必须按选中的列数**重算一遍**，
+       不能直接用循环里那一份（它已经被后一轮试算改过了）。 */
+    L = flatCols ? layout(tree, { cols: flatCols }) : layout(tree);
+  } else {
+    flatCols = null;
+    L = layout(tree);
+  }
+
+  const scale = Math.min(availW / (L.w + 130), availH / L.h, 1.02);
+  const tx = padX + (availW - (L.w + 130) * scale) / 2;
+  const ty = padY + (availH - L.h * scale) / 2;
+  svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+  gNodes.setAttribute('transform', `translate(${tx} ${ty}) scale(${scale})`);
+  gEdges.setAttribute('transform', `translate(${tx} ${ty}) scale(${scale})`);
+
+  for (const n of L.all) syncNode(n, currentState.get(n.id));
+  for (const n of L.all) {
+    n.cx = n.cx == null ? n.tx : n.cx + (n.tx - n.cx) * 0.25;
+    n.cy = n.cy == null ? n.ty : n.cy + (n.ty - n.cy) * 0.25;
+    const r = els.get(n.id);
+    if (r) r.g.setAttribute('transform', `translate(${n.cx} ${n.cy})`);
+  }
+
+  const alive = new Set(L.all.map(n => n.id));
+  for (const [id, r] of els) {
+    if (alive.has(id)) continue;
+    r.g.classList.add('gone');
+    if (!r.dead) { r.dead = true; setTimeout(() => r.g.remove(), 460); els.delete(id); }
+  }
+
+  const want = new Set();
+  for (const n of L.all) {
+    for (const c of (n.children || [])) {
+      if (c.gone) continue;
+      want.add(c.id);
+      let p = edgeEls.get(c.id);
+      if (!p) { p = el('path','e'); gEdges.appendChild(p); edgeEls.set(c.id, p); }
+      const x1 = n.cx + NODE_W, y1 = n.cy + (n.h ?? TITLE_H)/2;
+      const x2 = c.cx, y2 = c.cy + (c.h ?? TITLE_H)/2;
+      const mx = (x1+x2)/2;
+      p.setAttribute('d', `M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`);
+      p.classList.toggle('title-edge', n.kind === 'title' && c.kind === 'title');
+      p.classList.toggle('hot', currentState.get(c.id) === 'inserted');
+    }
+  }
+  for (const [id, p] of edgeEls) if (!want.has(id)) { p.remove(); edgeEls.delete(id); }
+
+  const living = L.all.filter(n => !n.gone);
+  document.getElementById('rTitles').textContent = String(living.filter(isTitle).length);
+  document.getElementById('rContent').textContent = String(living.filter(isLeaf).length);
+  document.getElementById('rDirty').textContent = String(living.filter(isDirty).length);
+}
+
+/** 统计「直接连叶」的同名标题冗余（正交审查要处理的量） */
+function countDupTitles() {
+  const m = new Map();
+  for (const n of allOf(tree)) {
+    if (n.kind !== 'title' || n.gone || n.junk) continue;
+    const hasLeaf = (n.children || []).some(c => c.kind === 'leaf' && !c.gone);
+    if (!hasLeaf) continue;
+    m.set(n.title, (m.get(n.title) ?? 0) + 1);
+  }
+  let dup = 0;
+  for (const [, v] of m) if (v > 1) dup += v - 1;
+  return dup;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   侧栏渲染
+   ══════════════════════════════════════════════════════════════ */
+function renderOps(rows) {
+  const box = document.getElementById('opsList');
+  if (!rows.length) { document.getElementById('opsCnt').textContent = '—'; box.innerHTML = ''; return; }
+  const nIns = rows.filter(r => r.tag === 'insert').length;
+  const nMer = rows.filter(r => r.tag === 'merge').length;
+  const nAtt = rows.filter(r => r.tag === 'attach').length;
+  const nFlu = rows.filter(r => r.tag === 'flush').length;
+  document.getElementById('opsCnt').textContent =
+    [nIns ? `${nIns} 新` : '', nMer ? `${nMer} 宿主` : '', nAtt ? `${nAtt} 依附` : '',
+     nFlu ? `${nFlu} 重写` : ''].filter(Boolean).join(' · ');
+  const maxAdd = Math.max(1, ...rows.map(r => r.add));
+  box.innerHTML = rows.map(r => {
+    const w = Math.max(5, Math.round((r.add / maxAdd) * 100));
+    /* 四个标记：+ insert / ◇ 宿主挂账 / ⟂ 依附挂账 / ◈ 真重写 */
+    const mk = r.tag === 'insert' ? '+' : r.tag === 'attach' ? '⟂'
+             : r.tag === 'flush' ? '◈' : '◇';
+    return `<div class="orow ${r.tag}">
+      <span class="mk">${mk}</span>
+      <span class="nm">${esc(r.label)}</span>
+      <span class="bar"><i style="width:${w}%"></i></span>
+      <span class="nb">${r.add ? '+' + r.add : '—'}</span>
+    </div>`;
+  }).join('');
+}
+function renderWorkers(rows) {
+  const card = document.getElementById('workerCard');
+  if (!rows || !rows.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const busy = rows.filter(r => r.busy).length;
+  document.getElementById('workCnt').textContent = `${busy} / ${rows.length} 在跑`;
+  document.getElementById('workerList').innerHTML = rows.map((r, i) => {
+    const pct = r.total ? Math.round(r.done / r.total * 100) : 0;
+    return `<div class="wrow ${r.busy ? '' : 'idle'}">
+      <span class="wid">W${i + 1}</span>
+      <span class="wn">${r.busy ? esc(r.label) + ` <i>${r.took} 块</i>` : '空闲'}</span>
+      <span class="wbar"><i style="width:${pct}%"></i></span>
+    </div>`;
+  }).join('');
+}
+function showDiff(title, before, after, fromV, toV) {
+  const box = document.getElementById('diff');
+  box.style.display = '';
+  document.getElementById('diffTitle').textContent = title;
+  document.getElementById('diffVer').textContent = fromV ? `v${fromV} → v${toV}` : `v${toV}`;
+  document.getElementById('diffCols').style.display = '';
+  document.getElementById('diffSolo').style.display = 'none';
+  document.getElementById('diffOld').innerHTML = before.length
+    ? before.map(s => `<span class="ln">${esc(s)}</span>`).join('')
+    : '<span class="ln" style="opacity:.45">（空）</span>';
+  document.getElementById('diffNew').innerHTML = after.map(s => `<span class="ln">${esc(s)}</span>`).join('');
+}
+function showSolo(title, ver, html, kind) {
+  const box = document.getElementById('diff');
+  box.style.display = '';
+  document.getElementById('diffTitle').textContent = title;
+  document.getElementById('diffVer').textContent = ver;
+  document.getElementById('diffCols').style.display = 'none';
+  const solo = document.getElementById('diffSolo');
+  solo.style.display = '';
+  solo.style.color = kind === 'merge' ? 'var(--vision)' : 'var(--warn)';
+  solo.innerHTML = html;
+}
+function hideDiff() { document.getElementById('diff').style.display = 'none'; }
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+function setRecon(step) {
+  const box = document.getElementById('recon');
+  if (!box) return;
+  box.style.display = step > 0 ? '' : 'none';
+  [...box.querySelectorAll('.rc')].forEach((e, i) => {
+    e.classList.toggle('done', i < step - 1);
+    e.classList.toggle('cur', i === step - 1);
+  });
+}
+
+/* 渲染大黑板：支线 + 元信息块，按时间线顺序 */
+function renderBlackboard(shown) {
+  const list = document.getElementById('bbList');
+  const rows = BLACKBOARD.filter(r => r.shown !== false);
+  const visible = typeof shown === 'number' ? rows.slice(0, shown) : rows;
+  document.getElementById('bbCnt').textContent =
+    shown === 0 ? '未收集' : `${visible.length} / ${rows.length} 条`;
+  const badgeCls = k => k === '教学安排' ? 'sched' : k === '作业' ? 'hw' : 'misc';
+  const badgeChar = k => BB_LABEL[k] ?? '杂';
+  list.innerHTML = visible.map(r => `
+    <div class="brow ${r.role === '支线' ? 'side' : ''}">
+      <span class="bt">${r.t}</span>
+      <span class="bd ${badgeCls(r.kind)}">${badgeChar(r.kind)}</span>
+      <span class="bx">${esc(r.text)}</span>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   前置模拟：算出批次跑完后的脏叶集合，用来生成并发 wave 步
+   ══════════════════════════════════════════════════════════════ */
+function simulateBatches() {
+  const t = INIT();
+  /* ★ 复现 vision 出的初稿（真实流程里这些标题是 vision 读出来的，
+     模拟时必须先摆上，否则批次里的 merge 找不到落点） */
+  const chap = find(t, 'chap1').node;
+  for (const v of [...VISION_TITLES, ...VISION_NOISE]) {
+    chap.children.push({ id:v.id, kind:'title', title:v.title, children:[],
+                         junk: !!VISION_NOISE.find(n => n.id === v.id) });
+  }
+  for (const B of BATCHES) {
+    for (const op of B.ops) {
+      if (op.act === 'insert') {
+        const f = find(t, op.parent);
+        const title = { id:op.id, kind:'title', title:op.title, children:[] };
+        /* ⚠ 必须和真实 batch 分支同口径：pending 记 **token**，pendingB 记块数。
+           否则模拟出来的叶树形状和真跑不一样，习坎的分组数就对不上。 */
+        const tokB = tokensFor(ordinalOf(op.id), op.add);
+        const leaf = { id:op.id+'-L', kind:'leaf', blocks:0,
+                       pending: tokB, pendingB: op.add, revision:0, attach:[],
+                       ord: 0, seed: op.add % PHASES.length, children:[] };
+        title.children.push(leaf); f.node.children.push(title);
+      } else {
+        const f = find(t, op.id);
+        if (!f) throw new Error(`BATCHES 引用了不存在的节点: ${op.id}`);
+        stashInto(f.node, op.add, op.kind || 'host', op.facet);
+      }
+    }
+  }
+  return t;
+}
+
+/** 正交审查：把同名、且都直接挂着叶的标题并到一起 */
+function planOrtho(t) {
+  const buckets = new Map();
+  for (const n of allOf(t)) {
+    if (n.kind !== 'title' || n.junk) continue;
+    const leaf = (n.children || []).find(c => c.kind === 'leaf' && !c.gone);
+    if (!leaf) continue;
+    const key = n.title.replace(/\s+/g, '');
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push({ title:n, leaf });
+  }
+  const merges = [];
+  for (const [key, arr] of buckets) {
+    if (arr.length < 2) continue;
+    const [keep, ...rest] = arr;
+    merges.push({ key, keep: keep.title.title, keepId: keep.title.id,
+                  drop: rest.map(r => ({ id:r.title.id, title:r.title.title, pending:r.leaf.pending })),
+                  add: rest.reduce((a, r) => a + r.leaf.pending, 0) });
+  }
+  return merges;
+}
+
+/** 并发 wave 规划：每个脏叶一个任务，一轮做完（长叶树或整片重写）。
+ *  叶之间在正交审查后互不重叠，所以并发**不需要加锁**。 */
+function planWaves(t, W) {
+  const leaves = allOf(t).filter(isLeaf)
+    .map(n => ({ id:n.id, pending:n.pending ?? 0, blocks:n.blocks ?? 0 }))
+    .filter(l => l.pending > 0)
+    .sort((a, b) => b.pending - a.pending);
+
+  const waves = [];
+  for (let i = 0; i < leaves.length; i += W) {
+    const slice = leaves.slice(i, i + W);
+    const act = new Array(W).fill(null).map((_, w) => {
+      const l = slice[w];
+      return l ? { w, id: l.id, took: l.pending, finished: true, willSplit: l.pending > SPLIT_LINE }
+               : { w, id: null };
+    });
+    waves.push(act);
+  }
+  return { waves, leaves };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ★ 预演整条流水线，只为拿到"最终会有哪些知识点叶"
+     —— 习坎是**按叶**调用的（kMaxTopicsPerCall = 1），
+        所以步骤表必须先知道叶的数量与顺序。
+   ══════════════════════════════════════════════════════════════ */
+function simulateFinalLeaves() {
+  const t = simulateBatches();
+  for (const m of planOrtho(t)) {
+    const f = find(t, m.keepId);
+    if (!f) continue;
+    const keepLeaf = f.node.children.find(c => c.kind === 'leaf');
+    if (!keepLeaf) continue;
+    keepLeaf.pending += m.add;
+    for (const d of m.drop) {
+      const g = find(t, d.id);
+      if (g) g.node.gone = true;
+    }
+  }
+  /* 只处理正交审查后仍存活的脏叶（与 flush 的 wave 规划一致） */
+  for (const leaf of allOf(t).filter(n => isLeaf(n) && (n.pending ?? 0) > 0)) {
+    materializeRound(leaf);
+  }
+  /* ★ 与 detach 一致：只从**顶层叶**往下摊，依附叶一并摊平 */
+  const topLeaves = [];
+  (function walkTop(n) {
+    for (const c of (n.children || [])) {
+      if (c.gone) continue;
+      if (c.kind === 'leaf' && n.kind !== 'leaf') topLeaves.push(c);
+      walkTop(c);
+    }
+  })(t);
+  const flat = [];
+  for (const l of topLeaves) {
+    if ((l.children || []).some(c => !c.gone && c.kind === 'leaf')) {
+      for (const d of allLeafDescendants(l)) flat.push(d);
+    } else flat.push(l);
+  }
+  /* ★ 再复现 draft 的重聚：内容段按斩杀线并成知识点叶 */
+  const tokOf = l => l._tok ?? tokensFor(l.ord ?? 0, l.blocks ?? 0);
+  const target = Math.round(SPLIT_LINE);
+  const groups = [];
+  let cur = [], curTok = 0;
+  for (const l of flat) {
+    const tk = tokOf(l);
+    if (cur.length && curTok + tk > target) { groups.push(cur); cur = []; curTok = 0; }
+    cur.push(l); curTok += tk;
+  }
+  if (cur.length) groups.push(cur);
+  return groups;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   步骤表
+   ══════════════════════════════════════════════════════════════ */const DEMO_ROUNDS = [ { round:1, target:4 }, { round:2, target:2 }, { round:3, target:1 } ];
+const DEMO_GNAMES = {
+  1: ['随机事件基础','事件的运算','概率的定义','概率计算'],
+  2: ['随机事件与运算','概率计算'],
+  3: ['概率论基础'],
+};
+
+let STEPS = [];
+function buildSteps() {
+  const out = [];
+  /* ══════════════════════════════════════════════════════════════
+     ★ 阶段 01：识别 —— vision 与 mix 是**两道并行工序**，不是先后
+     ──────────────────────────────────────────────────────────────
+     真实形态：vision 往共享队列里产块，mix 从同一队列里取块打标记，
+     两边各自占 worker，同一个 tick 里两件事都在发生。
+     所以演示也必须在**一步之内同时推进两边**，否则会被读成"先 vision 后 mix"。
+     ══════════════════════════════════════════════════════════════ */
+  /* 01 段：vision 与 mix 并行。步数 = 总批数，vision 有些步产两批、mix 每步吃一批，
+     所以中间会出现积压再排空 —— 不是"先 vision 全跑完，再 mix 全跑完"。 */
+  for (let c = 0; c < totalBatches; c++) {
+    out.push({ act:'flow', call:c, batch:`01 · vision ‖ mix  ${c + 1}/${totalBatches}`, ops:[] });
+  }
+
+  out.push({ act:'init', batch:'02 · 初树就绪', ops:[] });
+  out.push({ act:'sieve', batch:'02 · 筛支线', ops:[] });
+  for (const B of BATCHES) out.push({ act:'batch', ...B });
+  out.push({ act:'mark', batch:'03 · 判定', ops:[] });
+  out.push({ act:'delete', batch:'03 · 剪噪', ops:[], ids:['j1','j2','j3','j4'] });
+  out.push({ act:'ortho', batch:'04 · 正交审查', ops:[] });
+
+  // 并发真 merge：wave 步在 reset 时按当前 worker 数重算
+  const t = simulateBatches();
+  // 先把正交合并应用到模拟树
+  for (const m of planOrtho(t)) {
+    const keep = find(t, m.keepId).node;
+    const keepLeaf = keep.children.find(c => c.kind === 'leaf');
+    for (const d of m.drop) {
+      const f = find(t, d.id);
+      if (!f) continue;
+      const dl = f.node.children.find(c => c.kind === 'leaf');
+      if (dl) keepLeaf.pending += dl.pending;
+      f.node.gone = true;
+    }
+    keepLeaf.pending -= m.add; // 上面循环已加过，这里只防止重复
+    keepLeaf.pending += m.add;
+  }
+  const { waves } = planWaves(t, workers);
+  waves.forEach((act, i) => {
+    out.push({ act:'flush', wave:i, batch:`04 · 并发合并 W${i+1}`, ops:[], assign:act });
+  });
+
+  out.push({ act:'detach', batch:'05 · 拆叶', ops:[] });
+  out.push({ act:'draft', batch:'05 · 聚成知识点叶', ops:[] });
+  DEMO_ROUNDS.forEach(r => out.push({ act:'aggregate', round:r.round, batch:`05 · 分级聚合 R${r.round}`, ops:[] }));
+
+  /* ══════════════════════════════════════════════════════════════
+     ★ 阶段 06：习坎 · 成稿（原 07 填充 + 08 润色合并）
+     ──────────────────────────────────────────────────────────────
+     注意：**正文在 merge 那一步就已经填好了**（叶里就是整合过的正文）。
+     所以这里第一步不是"填充"，而是系统**自动转成标准讲义格式**
+     （定层级、编章节号、例题归位 —— 纯确定性代码，不调 LLM）。
+     之后习坎做的是两件更高层的事：补自己的理解 + 全文润色。
+     ══════════════════════════════════════════════════════════════ */
+  out.push({ act:'format', batch:'06 · 自动转讲义格式', ops:[] });
+
+  const nLeaf = simulateFinalLeaves().length;
+  const lectureGroups = Math.max(1, Math.ceil(nLeaf / 5));
+  for (let k = 0; k < lectureGroups; k++) {
+    out.push({ act:'lecture', group:k, batch:`06 · 习坎补理解 ${k + 1}/${lectureGroups}`, ops:[] });
+  }
+  /* 全文润色：3 步（每步两项），归入习坎这一段 */
+  for (let k = 0; k < 3; k++) {
+    out.push({ act:'polish', pass:k, batch:`06 · 习坎润色 ${k + 1}/3`, ops:[] });
+  }
+  out.push({ act:'done', batch:'完成', ops:[] });
+  /* ★ 第 07 段：所有产物打成一个包裹 → 分成三路 */
+  out.push({ act:'contract', batch:'07 · 所有产物打成一个包裹', ops:[] });
+  out.push({ act:'split', batch:'07 · 分成三路', ops:[] });
+  out.push({ act:'fan', batch:'07 · 三路各自的下游', ops:[] });
+  return out;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   执行
+   ══════════════════════════════════════════════════════════════ */
+function applyStep(i) {
+  const s = STEPS[i];
+  if (!s) return;
+  const st = new Map();
+  let rows = [];
+
+  /* ══════════════════════════════════════════════════════════════
+     ★ 阶段 01：vision ‖ mix —— 同一步里两边都在动
+     ──────────────────────────────────────────────────────────────
+     vision 侧：拼一张 4 页的图，往队列里产块 + 出这一批的标题
+     mix 侧   ：从队列里取最多 2 批已产出的块，打 role + facet
+     队列      ：vision 产得比 mix 快时积压，积压就是"排队中"
+     ══════════════════════════════════════════════════════════════ */
+  if (s.act === 'flow') {
+    /* mix 每步吃 **1 批（4 页）**，与 vision 等速；
+       vision 则故意不匀速（第 2、4 次各多产一批），
+       于是队列会积压再排空 —— 这才看得出"两道工序并行、速度不同"。 */
+    const MIX_BATCHES = 1;
+    const VIS_EXTRA = { 1:1, 3:1 };        // call → 额外多产几批
+    let visGot = 0, visNames = [], mixGot = 0, mixFacets = {};
+
+    /* —— vision 侧：按"下一个未产出的批"推进，不会重复算 —— */
+    const batchesThisStep = (visionBatchesDone < totalBatches ? 1 : 0) + (VIS_EXTRA[s.call] || 0);
+    for (let b = 0; b < batchesThisStep && visionBatchesDone < totalBatches; b++) {
+      const from = visionBatchesDone * VISION_BATCH;
+      const pages = PAGES.slice(from, from + VISION_BATCH);
+      if (!pages.length) break;
+      visionBatchesDone++;
+      for (const pg of pages) { visGot += pg.n; pageState[pg.p - 1] = 'seen'; }
+      const got = [
+        ...VISION_TITLES.filter(x => pages.some(p => p.p === x.page)),
+        ...VISION_NOISE.filter(x => pages.some(p => p.p === x.page)),
+      ];
+      const chap = find(tree, 'chap1');
+      for (const v of got) {
+        const t = { id:v.id, kind:'title', title:v.title, children:[],
+                    junk: !!VISION_NOISE.find(n => n.id === v.id),
+                    cx: chap.node.cx, cy: chap.node.cy };
+        chap.node.children.push(t);
+        st.set(v.id, t.junk ? 'junk' : 'inserted');
+        visNames.push(t.title);
+      }
+    }
+    pagesDone += visGot;
+    identified = pagesDone;
+    identTok = tokensFor(0, pagesDone);
+
+    /* —— mix 侧：从队列取 1 批 —— */
+    for (let b = 0; b < MIX_BATCHES; b++) {
+      const batch = PAGES.filter(pg => pageState[pg.p - 1] === 'seen').slice(0, VISION_BATCH);
+      if (!batch.length) break;
+      for (const pg of batch) {
+        const role = pg.role || '主线';
+        const f = pg.facet || '概念';
+        pageState[pg.p - 1] = 'tagged';
+        marked += pg.n; mixGot += pg.n;
+        if (role === '支线') sideMarks += pg.n;
+        else { mainMarks += pg.n; facetCount[f] = (facetCount[f] || 0) + pg.n; }
+        mixFacets[f] = (mixFacets[f] || 0) + pg.n;
+      }
+    }
+    const backlog = Math.max(0, pagesDone - marked);
+
+    /* —— 日志与说明 —— */
+    const parts = [];
+    if (visGot) parts.push(`vision 产出 <b>${visGot}</b> 块${visNames.length ? ` / ${visNames.length} 标题` : ''}`);
+    if (mixGot) parts.push(`mix 标记 <b>${mixGot}</b> 块`);
+    if (!visGot && !mixGot) parts.push(`队列排空`);
+    logRow('insert', `识别 ${s.call + 1}/${VISION_CALLS + 1}：${parts.join(' · ')}`
+      + (backlog ? ` <span class="d">队列积压 ${backlog}</span>` : ' <span class="d">队列已排空</span>'));
+
+    showSolo('识别 · vision 与 mix 并行', `队列 ${backlog}`,
+      `这两道工序<b>不是先后，是并行</b>：vision 往共享队列里产块，mix 从同一队列里取块打标记，`
+      + `两边各自占 worker。<br>`
+      + `所以某一步里可能只有 vision 在动（mix 在等）、只有 mix 在动（队列有积压）、或者两边同时在动。<br>`
+      + `<span style="color:var(--faint)">视觉上：左边页带按 vision 进度亮起，`
+      + `中间队列数字是"已产未标"的积压 —— 它涨落就是流水线的呼吸。</span>`
+      + (visNames.length ? `<br>本轮读到标题：${visNames.map(n => esc(n)).join(' / ')}` : ''),
+      'merge');
+  }
+
+  if (s.act === 'init') {
+    for (const n of allOf(tree)) if (n.junk) st.set(n.id, 'junk');
+    logRow('dim', `初树就绪 · ${allOf(tree).length - 1} 个标题 · 0 内容叶 · ${marked} 块待入树`);
+    renderWorkers(null); hideDiff(); setRecon(0);
+    renderBlackboard(0);
+    showSolo('vision 出的知识树初稿', `${allOf(tree).length - 1} 标题`,
+      `这就是**知识树初稿**：vision 按页读出的标题 + 缩进，没有经过任何判断。<br>`
+      + `它必然带噪声（${VISION_NOISE.length} 条）和空标题 —— 后面每一步都是在修它，`
+      + `而不是重新读一遍 PPT。`, 'stash');
+  }
+
+  /* ── 建树前筛支线：支线 + 元信息块全部进大黑板，不进树 ── */
+  if (s.act === 'sieve') {
+    const side = BLACKBOARD.filter(r => r.role === '支线').length;
+    const meta = BLACKBOARD.filter(r => r.role !== '支线').length;
+    renderBlackboard(undefined);
+    logRow('mark', `筛出 <b>${side}</b> 个支线块 + <b>${meta}</b> 个元信息块（教学安排/作业）`
+      + ` → 全进大黑板，<b>不进树</b>`);
+    renderOps([]); hideDiff(); renderWorkers(null);
+    showSolo('建树前筛支线', `${side + meta} 条进黑板`,
+      `支线和「教学安排/作业」不是学科内容 —— 让它们进树只会污染知识点与标题。<br>`
+      + `它们按时间线列在大黑板上，可查，但不参与建树。`, 'stash');
+  }
+
+  /* ── 批次：只挂账 ── */
+  if (s.act === 'batch') {
+    curBatch++;
+    for (const op of s.ops) {
+      if (op.act === 'insert') {
+        const f = find(tree, op.parent);
+        const title = { id:op.id, kind:'title', title:op.title, children:[],
+                        cx:f.node.cx, cy:f.node.cy };
+        const tokB = tokensFor(ordinalOf(op.id), op.add);
+        const leaf = { id:op.id+'-L', kind:'leaf', blocks:0,
+                       pending: tokB, pendingB: op.add, revision:0, attach:[],
+                       ord: 0, seed: op.add % PHASES.length, children:[],
+                       cx:f.node.cx, cy:f.node.cy, animate:true, _delta:op.add };
+        title.children.push(leaf);
+        f.node.children.push(title);
+        st.set(title.id, 'inserted'); st.set(leaf.id, 'inserted');
+        rows.push({ tag:'insert', add:op.add, tok: tokB, label:op.title });
+        blocksDone += op.add; tokensDone += tokB;
+      } else {
+        const f = find(tree, op.id);
+        if (!f) continue;
+        const r = stashInto(f.node, op.add, op.kind || 'host', op.facet);
+        r.leaf._delta = op.add;
+        st.set(f.node.id, 'merged'); st.set(r.leaf.id, 'merged');
+        const isAttach = (op.kind === 'attach');
+        rows.push({ tag: isAttach ? 'attach' : 'merge', add:op.add, tok: r.tok,
+                    label: `${f.node.title}${isAttach ? ` · ${op.facet}` : ''}` });
+        blocksDone += op.add; tokensDone += r.tok;
+      }
+    }
+    const sum = s.ops.reduce((a,o) => a + o.add, 0);
+    const nIns = s.ops.filter(o => o.act === 'insert').length;
+    const nAtt = s.ops.filter(o => o.kind === 'attach').length;
+    const nMer = s.ops.length - nIns - nAtt;
+    const dups = countDupTitles();
+    logRow('merge', `批 ${curBatch} +${sum} 块 <span class="d">${nIns} insert / ${nMer} 宿主挂账 / ${nAtt} 依附</span>`
+      + (dups ? ` · <b>冗余标题 ${dups}</b>` : ''));
+    showSolo(`批 ${curBatch}`, `挂账 ${sum} 块`,
+      `<b>本批零判定</b>：insert 不查重、merge 不合并，新内容全部挂到叶下等 switch。`
+      + (nAtt ? `<br><b>${nAtt} 个依附块</b>（例题/案例）单独存着，真 merge 时会挂成子叶。` : ''), 'stash');
+  }
+
+  if (s.act === 'mark') {
+    const living = layout(tree).all.filter(n => !n.gone && !n.ghost);
+    const titles = living.filter(isTitle);
+    const leaves = living.filter(isLeaf);
+    const emptyT = titles.filter(n => !(n.children || []).some(c => c.kind === 'leaf' && !c.gone));
+    for (const n of titles) st.set(n.id, 'title');
+    logRow('mark', `判定：标题 <b>${titles.length}</b> · 叶 <b>${leaves.length}</b> · 空标题 <b>${emptyT.length}</b>`);
+    renderOps([]); hideDiff(); renderWorkers(null);
+    showSolo('判定', `${titles.length} 标题 / ${leaves.length} 叶`,
+      `有叶的标题才是内容支撑；<b>${emptyT.length}</b> 个标题没有叶，重构时会自然消失。`, 'stash');
+  }
+
+  if (s.act === 'delete') {
+    for (const id of s.ids) {
+      const f = find(tree, id);
+      if (!f) continue;
+      f.node.gone = true; f.node.junk = false; f.node.doomed = true;
+      setTimeout(() => {
+        const idx = f.parent.children.indexOf(f.node);
+        if (idx >= 0) f.parent.children.splice(idx, 1);
+      }, 420);
+      st.set(id, 'doomed');
+    }
+    logRow('delete', `剪除 ${s.ids.length} 个噪声标题 <span class="d">节点-${s.ids.length}</span>`);
+    renderOps([]); hideDiff();
+  }
+
+  /* ── 正交审查：同名标题并到一起 ── */
+  if (s.act === 'ortho') {
+    const merges = planOrtho(tree);
+    const rs = [];
+    for (const m of merges) {
+      const keep = find(tree, m.keepId).node;
+      const keepLeaf = keep.children.find(c => c.kind === 'leaf');
+      for (const d of m.drop) {
+        const f = find(tree, d.id);
+        if (!f) continue;
+        const dl = f.node.children.find(c => c.kind === 'leaf');
+        if (dl) {
+          keepLeaf.pending += dl.pending;
+          dl.pending = 0;
+        }
+        f.node.gone = true; f.node.doomed = true;
+        st.set(d.id, 'doomed');
+        setTimeout(() => {
+          const idx = f.parent.children.indexOf(f.node);
+          if (idx >= 0) f.parent.children.splice(idx, 1);
+        }, 420);
+      }
+      keepLeaf.animate = true;
+      st.set(keep.id, 'merged');
+      rs.push({ tag:'flush', add: keepLeaf.pending, label: `${m.keep}（并 ${m.drop.length} 个）` });
+    }
+    renderOps(rs);
+    logRow('flush', `正交审查：<b>${merges.length}</b> 组同名标题并到一起`
+      + (merges.length ? ` <span class="d">${merges.map(m => m.keep).join(' / ')}</span>` : ''));
+    if (merges.length) {
+      showSolo('正交审查', `${merges.length} 组`,
+        `同名标题各自的叶并成一个，pending 相加。<br>此后<b>叶之间不再重叠</b> —— 并发真 merge 才安全。`, 'merge');
+    } else {
+      showSolo('正交审查', '无冗余', '没有同名标题，直接进入真 merge。', 'stash');
+    }
+    renderWorkers(null);
+  }
+
+  /* ── 并发真 merge（一个 wave 一步）── */
+  if (s.act === 'flush') {
+    const act = s.assign || [];
+    const wrows = new Array(workers).fill(null).map((_, i) => ({ busy:false, label:'', took:0, done:0, total:1 }));
+    const rs = [];
+    let mainDiff = null;
+
+    for (const a of act) {
+      if (!a.id) continue;
+      const f = find(tree, a.id);
+      if (!f) continue;
+      const leaf = f.node;
+      const owner = f.parent && f.parent.kind === 'title' ? f.parent.title : '叶';
+      const revBefore = leaf.revision;
+      const m = materializeRound(leaf);
+      if (!m) continue;
+      st.set(leaf.id, 'merged');
+      wrows[a.w] = { busy:true, label: owner, took: m.took, done: 1, total: 1 };
+      rs.push({ tag:'flush', add:m.took, label: m.split ? `${owner} → 叶树 ${m.parts} 支` : owner });
+      if (!mainDiff || m.took > mainDiff.took) {
+        mainDiff = { took:m.took, owner, before:m.before, after:m.after,
+                     fromV:revBefore, toV:m.rev, split:m.split, parts:m.parts,
+                     depth:m.depth, deepSplits:m.deepSplits, tookTok:m.tookTok };
+      }
+    }
+
+    renderOps(rs);
+    renderWorkers(wrows);
+    if (mainDiff) {
+      if (mainDiff.split) {
+        /* 叶树：展示"长成了几支 / 几层 / 有没有继续递归" */
+        showSolo(`长叶树「${mainDiff.owner.slice(0,9)}」`,
+          `${mainDiff.parts} 支 · 深 ${mainDiff.depth} 层`,
+          `待整合 <b>${fmtTok(mainDiff.tookTok)}</b> token &gt; 斩杀线 ${fmtTok(SPLIT_LINE)} —— 直接堆进正文会爆上下文。<br>`
+          + `原叶降级为容器，拟 <b>${mainDiff.parts}</b> 个内部小标题，各挂一个子叶。`
+          + (mainDiff.deepSplits ? `<br><b>其中 ${mainDiff.deepSplits} 个子叶自己也超线 → 继续往下长树。</b>` : '')
+          + `<br><span style="color:var(--faint)">所有层级的小标题都是临时的，switch 重构时全部作废。</span>`, 'merge');
+      } else {
+        showDiff(`真 merge「${mainDiff.owner.slice(0,10)}」`, mainDiff.before, mainDiff.after,
+                 mainDiff.fromV, mainDiff.toV);
+      }
+    }
+    const sum = rs.reduce((a, r) => a + r.add, 0);
+    const nSplit = rs.filter((r, i) => false).length;
+    logRow('flush', `${s.batch} 并发 ${rs.length} 个叶 · 整合 ${sum} 块 <span class="d">斩杀线 ${SPLIT_LINE}</span>`);
+  }
+
+  /* ── 拆叶：把（可能多层的）叶树整个摊平，所有层的小标题一并作废 ── */
+  if (s.act === 'detach') {
+    const living = layout(tree).all.filter(n => !n.gone);
+    const titles = living.filter(n => n.kind === 'title' && !n.ghost);
+
+    /* 顶层叶 = 父节点不是叶的叶。只从顶层往下摊，避免子叶被数重。 */
+    const topLeaves = [];
+    (function walkTop(n) {
+      for (const c of (n.children || [])) {
+        if (c.gone) continue;
+        if (c.kind === 'leaf' && n.kind !== 'leaf') topLeaves.push(c);
+        walkTop(c);
+      }
+    })(tree);
+
+    /* ★ 递归摊平：叶树里每一层的小标题（含依附关系）都作废，
+         最深层的叶才是真正的内容，全部拉成平级。
+         依附叶（例题/案例/实验/故事）同样是内容，一并摊平，不丢。 */
+    const flatLeaves = [];
+    let treeCount = 0, maxDepth = 0, droppedSubs = 0, attachLeaves = 0;
+    for (const l of topLeaves) {
+      const kids = (l.children || []).filter(c => !c.gone && c.kind === 'leaf');
+      if (kids.length) {
+        treeCount++;
+        maxDepth = Math.max(maxDepth, maxDepthOf(l));
+        droppedSubs += countSubTitles(l);
+        for (const deep of allLeafDescendants(l)) {
+          if (deep._fromAttach) attachLeaves++;
+          flatLeaves.push({ ...deep, children: [], detached:true, subTitles:null });
+        }
+      } else {
+        flatLeaves.push({ ...l, children: [], detached:true, subTitles:null });
+      }
+    }
+    for (const n of titles) { n.gone = true; n.doomed = true; st.set(n.id, 'doomed'); }
+    for (const n of living) delete n.subTitles;
+
+    tree = { id:'__flat', kind:'title', title:'', ghost:true, children: flatLeaves, flat:true };
+    setRecon(1);
+    renderOps([]); renderWorkers(null);
+    logRow('delete', `拆出 <b>${flatLeaves.length}</b> 个叶 · 作废 <b>${titles.length}</b> 个标题`
+      + (treeCount ? ` · <b>${treeCount}</b> 棵叶树（最深 ${maxDepth} 层 / ${droppedSubs} 个小标题）全部摊平` : '')
+      + (attachLeaves ? `<br><span class="d">其中 ${attachLeaves} 个依附叶（例题/案例）不再挂在宿主下，各自独立成叶 —— 内容不丢，只是依托关系由下一次聚合重建。</span>` : ''));
+    showSolo('拆叶 · 小标题全废', `${flatLeaves.length} 段内容摊平`,
+      `叶树里每一层的小标题都是<b>临时脚手架</b>：内容已经搬进最深层的叶，标题没有存在理由了。<br>`
+      + `摊平后只剩两种东西 —— <b>内容段</b>，和即将重新拟的标题。`
+      + (attachLeaves ? `<br><b>${attachLeaves} 个依附叶</b>（例题/案例）随宿主一起摊平：依托关系是"上一次建树的产物"，此刻作废，靠后面的聚合重建。` : '')
+      , 'stash');
+  }
+
+  /* ── 重新聚成知识点叶 + 拟父标题 ──
+     摊平出来的是**内容段**（36 段左右），不是知识点。真实重建时会按斩杀线
+     把相邻内容段重新并成"一片叶 = 一个知识点"（一节课 12–15 个），
+     再给每片叶新拟一条标题。段数 ≠ 叶数，这一步就是把它对齐。 */
+  if (s.act === 'draft') {
+    const flat = (tree.children || []).filter(n => !n.gone);
+    const tokOf = l => l._tok ?? tokensFor(l.ord ?? 0, l.blocks ?? 0);
+    const targetTok = Math.round(SPLIT_LINE);
+
+    const groups = [];
+    let cur = [], curTok = 0;
+    for (const l of flat) {
+      const tk = tokOf(l);
+      if (cur.length && curTok + tk > targetTok) { groups.push(cur); cur = []; curTok = 0; }
+      cur.push(l); curTok += tk;
+    }
+    if (cur.length) groups.push(cur);
+
+    const merged = groups.map((g, i) => {
+      const tok = g.reduce((a, l) => a + tokOf(l), 0);
+      const blocks = g.reduce((a, l) => a + (l.blocks ?? 0), 0);
+      const facets = new Set(g.map(l => (l._fromAttach ? l._attachFacet : null)));
+      return {
+        id:`n${i}`, kind:'leaf', blocks, pending:0, pendingB:0, revision:0,
+        ord: g[0].ord ?? 0, seed: g[0].seed ?? 0, children:[], attach:[],
+        _tok: tok, _merged: g.length, _fromAttach: facets.size === 1 && !facets.has(null),
+        _attachFacet: facets.size === 1 && !facets.has(null) ? [...facets][0] : null,
+        animate:true, cx: g[0].cx, cy: g[0].cy,
+      };
+    });
+
+    const usedNames = new Set();
+    const wrapped = merged.map((leaf, i) => {
+      const title = proposeTitle(leaf, i, usedNames);
+      usedNames.add(title);
+      const t = { id:`${leaf.id}__t`, kind:'title', title,
+                  children:[leaf], cx: leaf.cx, cy: leaf.cy };
+      st.set(t.id, 'inserted'); st.set(leaf.id, 'inserted');
+      return t;
+    });
+    tree = { id:'__tmp', kind:'title', title:'', ghost:true, children: wrapped };
+    /* ★ 同步生成讲义条目骨架（习坎按它逐条填） */
+    drafted = merged.map((leaf, i) => ({
+      id: leaf.id, tok: leaf._tok ?? 0, blocks: leaf.blocks ?? 0,
+      attach: !!leaf._fromAttach, facet: leaf._attachFacet || null,
+      title: wrapped[i].title, text: null, rev: 0,
+    }));
+    setRecon(2);
+    renderOps(wrapped.map(t => ({ tag:'insert', add:t.children[0].blocks, label:t.title })));
+    logRow('insert', `重新聚成 <b>${merged.length}</b> 个知识点叶（${flat.length} 段内容 → `
+      + `${merged.length} 叶，每叶 ≤ ${fmtTok(SPLIT_LINE)} tok），各拟一条标题`);
+    showSolo('重新聚成知识点叶', `${flat.length} 段 → ${merged.length} 叶`,
+      `<b>段数 ≠ 知识点数</b>：${flat.length} 段是切分粒度（斩杀线决定），`
+      + `一节课只有 ${merged.length} 个知识点。<br>`
+      + `把相邻内容段按斩杀线并回一片叶 —— 一片叶 = 一个知识点；再给每片叶新拟一条标题，`
+      + `标题由叶正文决定，所以不会重名。`, 'merge');
+  }
+
+  /* ── 分级聚合 ── */
+  if (s.act === 'aggregate') {
+    const nodes = (tree.children || []).filter(n => !n.gone);
+    const plan = DEMO_ROUNDS.find(r => r.round === s.round);
+    const target = plan ? plan.target : 1;
+    const per = Math.ceil(nodes.length / target);
+    const groups = [];
+    for (let i = 0; i < nodes.length; i += per) groups.push(nodes.slice(i, i + per));
+    const names = DEMO_GNAMES[s.round] || [];
+    const wrapped = groups.map((kids, gi) => {
+      const cx = kids.reduce((a,c) => a + c.cx, 0) / Math.max(1, kids.length);
+      const cy = kids.reduce((a,c) => a + c.cy + (c.h ?? 0)/2, 0) / Math.max(1, kids.length);
+      const t = { id:`__r${s.round}g${gi}`, kind:'title',
+                  title: names[gi] ?? `第 ${s.round} 层 · 组 ${gi+1}`,
+                  children: kids, cx: cx - LEVEL_X, cy };
+      st.set(t.id, 'inserted');
+      return t;
+    });
+
+    if (target === 1 && wrapped.length === 1) {
+      const root = wrapped[0];
+      root.id = '__root2';
+      root.title = '概率论与数理统计 · 第一次课';
+      tree = root;
+      setRecon(5);
+      renderOps([{ tag:'insert', add:0, label: root.title }]);
+      logRow('mark', `R${s.round} 收敛 → <b>1 个根</b>（演示到这里；真实由 LLM 判断还要不要继续分）`);
+    } else {
+      tree = { id:'__tmp', kind:'title', title:'', ghost:true, children: wrapped };
+      renderOps(wrapped.map(w => ({ tag:'insert', add:0, label:w.title })));
+      logRow('insert', `R${s.round}：<b>${nodes.length} 条 → ${wrapped.length} 条</b>（层数由内容定，此处是演示）`);
+    }
+    renderWorkers(null);
+    setRecon(s.round + 2);
+    showSolo(`分级聚合 R${s.round}`, `${nodes.length} 条 → ${wrapped.length} 条`,
+      `上一层的 N 条标题按内容相近度归并，<b>每组新拟一条上层标题</b>。<br>`
+      + `收敛条件是"再往上分也分不出新意思"，由 LLM 判 —— 不是固定几层。`, 'merge');
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     ★ 阶段 06-a：自动转讲义格式（纯确定性代码，不调 LLM）
+     ──────────────────────────────────────────────────────────────
+     正文在 merge 那一步就已经定稿了（叶里躺着的就是整合过的正文），
+     并没有"空着等填充"。这一步只是把树**机械地**变成一个文献结构：
+       · 定层级：章 / 节 / 知识点 → h1 / h2 / h3
+       · 编编号：1、1.1、1.1.1（按树的深度自动生成）
+       · 例题归位：依附叶从正文中间挪到宿主知识点之后
+       · 统一版式：公式独立成行、定义加粗首词
+     这些都是规则，没有判断，所以不花一次 LLM 调用。
+     ══════════════════════════════════════════════════════════════ */
+  if (s.act === 'format') {
+    /* 自动生成编号：按树的中序遍历 */
+    let chapNo = 0, secNo = 0;
+    (function number(n, depth) {
+      for (const c of (n.children || [])) {
+        if (c.gone) continue;
+        if (c.kind === 'title' && c.title) {
+          if (depth <= 1) { chapNo++; secNo = 0; c.secNo = `${chapNo}`; }
+          else { secNo++; c.secNo = `${chapNo}.${secNo}`; }
+          number(c, depth + 1);
+        }
+      }
+    })(tree, 0);
+
+    /* 正文就位：讲义条目从叶里取正文（此刻已经整合完毕，取出来即可） */
+    let ready = 0;
+    for (const d of drafted) {
+      if (!d.text) { d.text = lectureText(d); d.fromMerge = true; ready++; }
+    }
+    /* 自动编号：按条目在最终树里的位置，编成 1 / 1.1 / 1.1.1 */
+    let c1 = 0, c2 = 0;
+    const flatOrder = [];
+    (function walk(n, depth) {
+      for (const c of (n.children || [])) {
+        if (c.gone) continue;
+        if (c.kind === 'title' && c.title) {
+          if (depth === 1) c1++;
+          walk(c, depth + 1);
+        } else if (c.kind === 'leaf') {
+          flatOrder.push(c.id);
+        }
+      }
+    })(tree, 0);
+    const noOf = new Map();
+    flatOrder.forEach((id, i) => {
+      const major = Math.floor(i / 5) + 1;
+      const minor = (i % 5) + 1;
+      noOf.set(id, `${major}.${minor}`);
+    });
+    for (const d of drafted) d.secNo = noOf.get(d.id) || '';
+    filledLeaves = drafted.length;
+    logRow('mark', `<b>自动转格式</b>：${drafted.length} 个知识点的正文已就位（merge 时已整合）`
+      + ` → 定层级 · 编编号 · 例题归位 · 统一版式`);
+    showSolo('自动转讲义格式', `${drafted.length} 个知识点就位`,
+      `注意：<b>正文不是这一步"填"出来的</b> —— 前面真 merge 时它就已经整合进叶里了。`
+      + `这一步做的是纯机械转换：<br>`
+      + `· 层级 → 章 / 节 / 知识点（h1 / h2 / h3）<br>`
+      + `· 编号 → 1、1.1、1.1.1，按树的深度自动生成<br>`
+      + `· 例题归位 → 依附叶从正文中间挪到宿主知识点之后<br>`
+      + `· 版式 → 公式独立成行、定义加粗首词<br>`
+      + `<span style="color:var(--faint)">全是规则，没有判断 —— 所以不花 LLM 调用。</span>`, 'merge');
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     ★ 阶段 06-b：习坎 —— 在已就位的正文上**补充自己的理解**
+     ──────────────────────────────────────────────────────────────
+     不是重写、不是填充。每片叶一次调用，允许它：
+       · 补一句"为什么成立"（老师口头解释了但没写下来的）
+       · 补一个更顺的过渡（承上启下）
+       · 把老师跳跃的推理补全
+     但**不得新增原文没有的事实**，补的是"解释性内容"而非"新知识点"。
+     ══════════════════════════════════════════════════════════════ */
+  if (s.act === 'lecture') {
+    const per = 5;
+    const from = s.group * per;
+    let touched = 0;
+    for (let k = from; k < Math.min(from + per, drafted.length); k++) {
+      const d = drafted[k];
+      if (!d) continue;
+      d.insight = INSIGHT_SAMPLE[(k + d.blocks) % INSIGHT_SAMPLE.length];
+      d.rev = 2;
+      touched++;
+    }
+    filledLeaves = Math.min(drafted.length, from + per);
+    const total = Math.ceil(drafted.length / per);
+    logRow('merge', `习坎·补理解 ${s.group + 1}/${total}：并发 ${per} 个知识点 → 各补一句自己的理解`);
+    showSolo('习坎 · 补充理解', `${filledLeaves}/${drafted.length} 个知识点`,
+      `正文已经在 merge 时整合好、在转格式时编好号了。习坎这一步<b>不改结构、不重写</b>，`
+      + `只做一件事：给它补上老师讲了但没写下来的那层理解。<br>`
+      + `· 补"为什么成立"的解释<br>`
+      + `· 补承上启下的过渡句<br>`
+      + `· 把老师跳跃的推理补全<br>`
+      + `<span style="color:var(--faint)">边界：<b>不得新增原文没有的事实</b> —— 补的是解释，不是新知识点。</span>`, 'merge');
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     ★ 阶段 06-c：习坎 · 全文润色（一次通读，无损）
+     ══════════════════════════════════════════════════════════════ */
+  if (s.act === 'polish') {
+    polishDone = Math.min(6, (s.pass + 1) * 2);
+    const a = POLISH_ITEMS[s.pass * 2], b2 = POLISH_ITEMS[s.pass * 2 + 1];
+    const n1 = polishEffect[s.pass * 2], n2 = polishEffect[s.pass * 2 + 1];
+    logRow('mark', `习坎·润色 ${s.pass + 1}/3：${a.name} ${n1} 处 · ${b2.name} ${n2} 处`);
+    showSolo(`习坎 · 润色 ${s.pass + 1}/3`, `${a.name} + ${b2.name}`,
+      `<b>${a.name}</b>：${a.why}<br><span style="color:var(--faint)">${a.how}（${n1} 处）</span><br><br>`
+      + `<b>${b2.name}</b>：${b2.why}<br><span style="color:var(--faint)">${b2.how}（${n2} 处）</span>`,
+      'stash');
+  }
+
+  if (s.act === 'contract') {
+    downStep = 1;
+    logRow('delete', `把<b>所有产物</b>打成一个包裹：知识树（${drafted.length} 个知识点）+ `
+      + `转录稿（${VISION_TOTAL} 块）+ 讲义全文`);
+    showSolo('① 所有产物打成一个包裹', '1 个包裹',
+      `这里装的不是"一棵树"，而是<b>整条链的所有产物</b>：<br>`
+      + `· 知识树 —— 层级、编号、正文、例题依托关系<br>`
+      + `· 转录稿 —— 每页原始转录 + 清洗稿 + role/facet 标记<br>`
+      + `· 讲义 —— 最终成稿全文<br>`
+      + `<span style="color:var(--faint)">它们是同一次解析的不同粒度，所以打在一个包里，`
+      + `而不是三件互不相干的东西。</span>`, 'merge');
+  }
+
+  if (s.act === 'split') {
+    downStep = 2;
+    logRow('flush', `包裹分成三路：<b>转录稿</b> → 检索 · 进度条 · 过滤（无 LLM）；`
+      + `<b>清洗稿</b> → 检索 · 过滤 · 通知（无 LLM）；<b>讲义</b> → <b>${DOC_USES.length} 条 LLM 路径</b>`);
+    showSolo('② 分成三路', '2 路无 LLM · 1 路接 LLM',
+      `<b>vision 转录稿</b>：页码 + 位置 + 字号 → 检索索引、进度条、覆盖率体检<br>`
+      + `<b>mix 清洗稿</b>：洗净的正文 + role/facet → 检索、过滤分段、通知大黑板<br>`
+      + `<span style="color:var(--faint)">这两路完全不需要 LLM。`
+      + `而且<b>进检索的是清洗稿，不是原始转录</b> —— 语气词对索引全是噪声。</span><br><br>`
+      + `<b>讲义</b> → Agent Wiki / 刷题 / 复习提纲 / 例题套卷 / AI Teacher<br>`
+      + `<span style="color:var(--faint)">这些都要 LLM，但正因为层级与锚点已定，`
+      + `它们才是有边界的用法。</span>`, 'merge');
+  }
+
+  if (s.act === 'fan') {
+    downStep = 3;
+    logRow('mark', `三路各自展开：<b>vision 转录稿</b> 3 条 · <b>mix 清洗稿</b> 3 条 · `
+      + `<b>讲义</b> ${DOC_USES.length + 1} 条 —— 共 12 条下游路径`);
+    showSolo('③ 三路各自的下游', '3 包 / 12 条路径',
+      `<b>vision 转录稿</b>：检索索引、进度条 / 时间轴、覆盖率体检 —— 全都不花 LLM。<br>`
+      + `<b>mix 清洗稿</b>：检索（正文）、过滤 / 分段、通知 / 大黑板 —— 同样不花 LLM。<br>`
+      + `<b>讲义</b>：Agent Wiki、刷题 / Quiz、复习提纲、例题套卷、AI Teacher。<br>`
+      + `<span style="color:var(--faint)">右下那格标 <b>LLM</b>：这五条都要模型参与，`
+      + `但正因为讲义已定好层级与锚点，它们才是有边界的用法。`
+      + `而前两格的 <b>无 LLM</b> 才是这条链最实在的回报 —— 一次解析，`
+      + `检索、进度条、通知表都白拿。</span>`, 'merge');
+  }
+
+  if (s.act === 'done') {
+    logRow('mark', `完成 · 一份<b>讲义</b>：${drafted.length} 个知识点 / ${polishDone} 项规整`);
+    showSolo('完成', `${drafted.length} 个知识点`,
+      `从 24 页 PPT 到一份讲义：识别 → 标记 → 建树 → 重构 → 填充 → 润色。<br>`
+      + `每一步都只做一件可验收的事 —— 这就是"多步策略"的意义：`
+      + `任何一步出问题，都能定位到那一步，而不是"效果不好再让谁重写一遍"。`, 'merge');
+  }
+
+
+  const actEl = document.getElementById('bAct');
+  document.getElementById('bBatch').textContent = s.batch || '—';
+  actEl.innerHTML = s.msg || defaultMsg(s, rows);
+  actEl.className = 'act ' + (s.act === 'init' ? '' : s.act);
+  document.getElementById('hintStep').textContent = `${i} / ${TOTAL_STEPS - 1}`;
+
+  /* 页脚三段：识别 / 建树与重构 / 成稿 */
+  const nAll = TOTAL_STEPS - 1;
+  const seg = [0, 0, 0];
+  for (let k = 0; k <= nAll; k++) {
+    const st2 = STAGE_OF_ACT[STEPS[k] && STEPS[k].act] ?? 0;
+    if (st2 <= 1) seg[0]++;
+    else if (st2 <= 5) seg[1]++;
+    else seg[2]++;
+  }
+  const passed = [0, 0, 0];
+  for (let k = 0; k <= Math.min(STEP, nAll); k++) {
+    const st2 = STAGE_OF_ACT[STEPS[k] && STEPS[k].act] ?? 0;
+    if (st2 <= 1) passed[0]++;
+    else if (st2 <= 5) passed[1]++;
+    else passed[2]++;
+  }
+  const curSeg = curStage <= 1 ? 0 : curStage <= 5 ? 1 : 2;
+  for (let k = 0; k < 3; k++) {
+    const ph = document.getElementById('ph' + k);
+    ph.querySelector('.bar i').style.width = (seg[k] ? Math.round(passed[k] / seg[k] * 100) : 0) + '%';
+    ph.classList.toggle('on', k === curSeg);
+    ph.classList.toggle('done', k < curSeg);
+  }
+
+  currentState = st;
+}
+
+function defaultMsg(s, rows) {
+  const sum = (rows || []).reduce((a, r) => a + r.add, 0);
+  if (s.act === 'batch') return `本批挂账 <b>${sum}</b> 块`;
+  if (s.act === 'flush') return `并发整合 <b>${sum}</b> 块`;
+  return '';
+}
+
+function logRow(kind, msg) {
+  const box = document.getElementById('log');
+  const d = document.createElement('div');
+  d.className = 'lrow ' + kind;
+  d.innerHTML = `<span class="dot"></span><span class="m">${msg}</span>`;
+  box.prepend(d);
+  while (box.children.length > 7) box.lastChild.remove();
+}
+
+/* 演示用的拟标题（真实由 LLM 读正文起名）。
+   名字由**叶正文**决定：主题词（ord 定位）+ 视角（seed 定位，即正文里那段
+   "定义与记号 / 公式推导 / 典型例题 …"），所以不同叶得到不同名字，
+   而依附叶直接以自己的 facet 命名（例题就叫例题）。 */
+const TOPICS = ['随机现象','随机试验','样本空间','事件及其运算','德摩根定律','古典概型',
+                '条件概率','乘法公式','全概率公式','贝叶斯公式','事件独立性','随机变量'];
+function proposeTitle(leaf, i, used = null) {
+  const ord = leaf.ord ?? i;
+  const phase = PHASES[(leaf.seed ?? 0) % PHASES.length];
+  const mk = t => leaf._fromAttach
+    ? ((leaf._attachFacet === '案例' || leaf._attachFacet === '故事')
+        ? `${leaf._attachFacet}：${t}的来由` : `${leaf._attachFacet || '例题'}：${t}`)
+    : `${t}：${phase}`;
+  let name = mk(TOPICS[ord % TOPICS.length]);
+  if (used && used.has(name)) {
+    /* 撞名就换主语 —— 重建出来的标题不允许有冗余 */
+    for (let k = 1; k < TOPICS.length; k++) {
+      const alt = mk(TOPICS[(ord + k) % TOPICS.length]);
+      if (!used.has(alt)) { name = alt; break; }
+    }
+  }
+  return name;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+const STEP_MS = 2200;
+
+function tick(now) {
+  if (!lastFrame) lastFrame = now;
+  const dt = now - lastFrame; lastFrame = now;
+  if (running && tree) {
+    acc += dt * speed;
+    if (acc >= STEP_MS) {
+      acc = 0;
+      if (STEP < STEPS.length - 1) {
+        STEP++;
+        applyStep(STEP);
+        if (STEP === STEPS.length - 1) {
+          document.getElementById('btnRun').textContent = '完成';
+          running = false;
+        }
+      }
+    }
+  }
+  render();
+  requestAnimationFrame(tick);
+}
+
+function reset() {
+  STEPS = buildSteps();
+  TOTAL_STEPS = STEPS.length;
+  document.getElementById('rBlocksAll').textContent = '/ ' + VISION_TOTAL;
+  tree = INIT();
+  STEP = 0; blocksDone = 0; tokensDone = 0; curBatch = 0;
+  pagesDone = 0; visionCallsDone = 0; visionBatchesDone = 0; marked = 0; sideMarks = 0; mainMarks = 0;
+  identified = 0; identTok = 0;
+  facetCount = {}; pageState = new Array(PAGE_N).fill('idle');
+  drafted = []; filledLeaves = 0; polishDone = 0; curStage = 0;
+  gNodes.innerHTML = ''; gEdges.innerHTML = '';
+  els = new Map(); edgeEls = new Map(); currentState = new Map();
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('opsList').innerHTML = '';
+  const pb = document.getElementById('pagesBox'); if (pb) pb.innerHTML = '';
+  hideDiff(); renderWorkers(null); setRecon(0);
+  for (const n of allOf(tree)) { n.cx = 0; n.cy = 0; }
+  applyStep(0);
+  const L = layout(tree);
+  for (const n of L.all) { n.cx = n.tx; n.cy = n.ty; }
+  running = true; acc = 0; lastFrame = 0;
+  document.getElementById('btnRun').textContent = '暂停';
+  render();
+}
+
+document.getElementById('sSpeed').addEventListener('input', e => {
+  speed = +e.target.value;
+  document.getElementById('vSpeed').textContent = String(speed);
+});
+document.getElementById('sWorkers').addEventListener('input', e => {
+  workers = +e.target.value;
+  document.getElementById('vWorkers').textContent = String(workers);
+  reset();
+});
+document.getElementById('btnRun').addEventListener('click', () => {
+  if (STEP >= STEPS.length - 1) { reset(); return; }
+  running = !running;
+  document.getElementById('btnRun').textContent = running ? '暂停' : '继续';
+});
+document.getElementById('btnReset').addEventListener('click', reset);
+
+/* ★ 分段条即导航：点第 N 段 → 直接跳到该段的第一步 */
+document.getElementById('rail').addEventListener('click', e => {
+  const el = e.target.closest('.stg');
+  if (!el) return;
+  const target = +el.dataset.s;
+  const idx = STEPS.findIndex(st => (STAGE_OF_ACT[st.act] ?? 0) >= target);
+  if (idx < 0) return;
+  running = false;
+  document.getElementById('btnRun').textContent = '继续';
+  /* 分段是"往前跳"还是"重来"：比当前步小才重置，否则只前进 */
+  if (idx < STEP) reset();
+  while (STEP < idx) { STEP++; applyStep(STEP); }
+  const L = layout(tree);
+  for (const n of L.all) { n.cx = n.tx; n.cy = n.ty; }
+  render();
+});
+window.addEventListener('resize', () => { lastFrame = 0; render(); });
+
+/* 自动化钩子 */
+window.__demo = {
+  pause() { running = false; document.getElementById('btnRun').textContent = '继续'; },
+  step() {
+    if (STEP < STEPS.length - 1) { STEP++; applyStep(STEP); }
+    for (const n of layout(tree).all) { n.cx = n.tx; n.cy = n.ty; }
+    render(); return STEP;
+  },
+  snap() {
+    const living = allOf(tree).filter(n => !n.gone);
+    return {
+      step: STEP, total: STEPS.length - 1,
+      act: STEPS[STEP]?.act, batch: STEPS[STEP]?.batch,
+      titles: living.filter(isTitle).length,
+      leaves: living.filter(isLeaf).length,
+      dirty: living.filter(isDirty).length,
+      blocksDone, tokensDone, dup: countDupTitles(),
+      pendingSum: living.filter(isLeaf).reduce((a, n) => a + (n.pending ?? 0), 0),
+      attachQueued: living.filter(isLeaf).reduce((a, n) => a + (n.attach?.length ?? 0), 0),
+      attachLeaves: living.filter(n => isLeaf(n)
+        && (n.children || []).some(c => !c.gone && c._fromAttach)).length,
+      tokensTotal: TOTAL_TOKENS,
+      treeInfo: (() => {
+        const ls = living.filter(n => n.kind === 'leaf'
+          && (n.children || []).some(c => !c.gone && c.kind === 'leaf'));
+        return {
+          trees: ls.length,
+          subLeaves: ls.reduce((a, n) => a + (n.children || []).filter(c => !c.gone && c.kind === 'leaf').length, 0),
+          depth: ls.length ? Math.max(...ls.map(t => maxDepthOf(t))) : 0,
+          leafLevel: ls.reduce((a, t) => a + allLeafDescendants(t).length, 0),
+        };
+      })(),
+      leafList: living.filter(isLeaf).map(n => ({
+        id:n.id, blocks:n.blocks, pending:n.pending, v:n.revision,
+      })),
+      titleNames: living.filter(isTitle).map(n => n.title),
+      /* 前置/后置阶段的量 */
+      identified, pagesDone, marked, sideMarks, mainMarks,
+      filled: drafted.filter(d => !!d.text).length,
+      draftedTotal: drafted.length,
+      polish: polishDone,
+      stage: curStage,
+    };
+  },
+  setSplitLine(v) { SPLIT_LINE = v; },
+  simLeaves: () => simulateFinalLeaves().length,
+  pagesTotal: VISION_TOTAL, sideTotal: SIDE_TOTAL, mainTotal: MAIN_TOTAL,
+  batchTotal: BATCHES.reduce((a, b) => a + b.ops.reduce((x, o) => x + o.add, 0), 0),
+  threshold: SPLIT_LINE,
+  splitLine: SPLIT_LINE,
+  totalTokens: TOTAL_TOKENS,
+  blockTokens, tokensFor, fmtTok,
+  workers: () => workers,
+  treeCount() {
+    const living = allOf(tree).filter(n => !n.gone);
+    /* 只统计**因超斩杀线而长出来的**叶树；依附叶（例题挂宿主）不算。 */
+    const hasKid = (n, flag) => (n.children || []).some(c => !c.gone && c.kind === 'leaf' && c[flag]);
+    const trees = living.filter(n => n.kind === 'leaf' && hasKid(n, '_fromSplit'));
+    const attachTrees = living.filter(n => n.kind === 'leaf' && hasKid(n, '_fromAttach'));
+    return {
+      trees: trees.length,
+      attachTrees: attachTrees.length,
+      subLeaves: trees.reduce((a, t) => a + (t.children || []).filter(c => !c.gone).length, 0),
+      depth: trees.length ? Math.max(...trees.map(t => maxDepthOf(t))) : 0,
+    };
+  },
+  /** 检查叶树递归后的健康度：叶子层有多少还超斩杀线 */
+  leafTreeStats() {
+    const living = allOf(tree).filter(n => !n.gone);
+    const trees = living.filter(n => n.kind === 'leaf'
+      && (n.children || []).some(c => !c.gone && c.kind === 'leaf' && c._fromSplit));
+    let leafLevel = 0, overLine = 0, reachedCap = false;
+    for (const t of trees) {
+      if (maxDepthOf(t) >= MAX_DEPTH) reachedCap = true;
+      for (const leaf of allLeafDescendants(t)) {
+        leafLevel++;
+        const tok = leaf._tok ?? tokensFor(leaf.ord ?? 0, leaf.blocks);
+        if (tok > SPLIT_LINE) overLine++;
+      }
+    }
+    return { leafLevelCount: leafLevel, overLine, reachedCap, maxDepthCap: MAX_DEPTH };
+  },
+  maxDepth: MAX_DEPTH,
+  reset,
+};
+
+reset();
+requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

@@ -7,7 +7,7 @@
  * 「记录真的按宿主 schema 存进了宿主看管的介质」「坏记录在读取边界如实被拒」
  * 「卸载后域真的被释放」这三条**全都验不到** —— 它们恰恰是宿主的行为。
  * 所以这里从 `.runtime/dsh-<版本>/node_modules` 加载真实的 cordis / dsh-storage /
- * dsh-storage-json / dsh-storage-domain，与 `tests/final-pass.test.mjs`、
+ * dsh-storage-json / dsh-storage-domain，与 `tests/study.test.mjs`、
  * `tests/classroom-cordis.test.mjs` 同一套做法。
  *
  * 测试里直接读写介质文件**只为**制造坏数据与核对落盘证据（产品代码一行文件 IO
@@ -21,10 +21,10 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { root, lock } from '../scripts/profile.mjs';
-import * as plugin from '../packages/dsh-zhiyun-knowledge/src/index.js';
-import { KnowledgeError } from '../packages/dsh-zhiyun-knowledge/src/errors.js';
-import { DOMAIN_NAME, LECTURES_TABLE, keyOf, identityPart, createLectureSpec } from '../packages/dsh-zhiyun-knowledge/src/domain.js';
-import { MATCH_FIELDS } from '../packages/dsh-zhiyun-knowledge/src/service.js';
+import * as plugin from '../packages/dsh-zhiyun-core-knowledge/src/index.js';
+import { KnowledgeError } from '../packages/dsh-zhiyun-core-knowledge/src/errors.js';
+import { DOMAIN_NAME, LECTURES_TABLE, keyOf, identityPart, createLectureSpec } from '../packages/dsh-zhiyun-core-knowledge/src/domain.js';
+import { MATCH_FIELDS } from '../packages/dsh-zhiyun-core-knowledge/src/service.js';
 
 /** 首选宿主（清单里验证过的那条线），与仓库其它宿主用例同源。 */
 const HOST_VERSION = lock.preferredHostVersion ?? lock.hostVersions[0];
@@ -522,7 +522,7 @@ test('⑥续 provide 撞名时挂载失败，但域不许被永久占住（否�
 });
 
 test('⑦ 产品代码零文件 IO：持久化只走 ctx.storageDomain（这条约束用自检钉住）', async () => {
-  const dir = new URL('../packages/dsh-zhiyun-knowledge/src/', import.meta.url);
+  const dir = new URL('../packages/dsh-zhiyun-core-knowledge/src/', import.meta.url);
   const files = (await readdir(dir)).filter((file) => file.endsWith('.js'));
   assert.ok(files.length >= 5, 'errors / host / domain / service / index');
   // 先剥注释再扫：说明文字里就写着「本包不碰 node:fs」，不剥注释会把自己的注释判红。

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import * as models from '../packages/dsh-zhiyun-classroom/src/models.js';
+import * as models from '../packages/dsh-zhiyun-source-classroom/src/models.js';
 
 test('sanitized real API fixture matches recorded Dart model output without a Dart runtime', async () => {
   const fixture = JSON.parse(await readFile(new URL('./fixtures/classroom/sanitized-api.json', import.meta.url), 'utf8'));

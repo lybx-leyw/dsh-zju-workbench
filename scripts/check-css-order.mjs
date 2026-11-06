@@ -298,19 +298,26 @@ function candidateWidths(sheets) {
 
 /* ---------------------------------------------------------------------- 装载 */
 
+/** 隔离区前缀：这些目录即使有样式表也不参与本仓产品的跨包层叠检查。 */
+const ISOLATED_PREFIXES = ['dsh-radar-'];
+
 /**
- * 读各 dsh-zhiyun-* 包的样式表 → Map<包名, 规则[]>（按包名排序）。
+ * 读各客户端包的样式表 → Map<包名, 规则[]>（按包名排序）。
  *
  * 递归读 `src/**` 下的**所有** .css —— 只认 `src/style.css` 会让后来新增的
  * `src/settings.css` 之类的表整个逃出检查范围。读失败不吞异常：文件在那里却读不动，
  * 是环境问题，不该表现为「检查通过」。
+ *
+ * 收录判据是**位置**（`packages/<dir>/` 带 package.json），不是包名前缀 ——
+ * 包名不再强制 `dsh-zhiyun-`，只把 `dsh-radar-*` 隔离在外。
  */
 export function loadSheets(root) {
   const pkgRoot = path.join(root, 'packages');
   const sheets = new Map();
   if (!existsSync(pkgRoot)) return sheets;
   for (const dir of readdirSync(pkgRoot).sort()) {
-    if (!dir.startsWith('dsh-zhiyun-')) continue;
+    if (ISOLATED_PREFIXES.some(prefix => dir.startsWith(prefix))) continue;
+    if (!existsSync(path.join(pkgRoot, dir, 'package.json'))) continue;
     const srcDir = path.join(pkgRoot, dir, 'src');
     if (!existsSync(srcDir) || !statSync(srcDir).isDirectory()) continue;
     const files = [];
@@ -513,7 +520,7 @@ if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const sheets = loadSheets(root);
   if (sheets.size === 0) {
-    console.error('没读到任何 packages/dsh-zhiyun-*/src/**/*.css —— 检查是否在仓库根运行。');
+    console.error('没读到任何 packages/*/src/**/*.css —— 检查是否在仓库根运行。');
     process.exit(1);
   }
   process.exit(report(analyzeSheets(sheets)));

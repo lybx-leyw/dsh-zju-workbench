@@ -1,0 +1,19 @@
+{
+  "name": "dsh-radar-focus-machine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 xstate 5.33.3，为专注计时（番茄钟）提供「暂停不回溯、刷新可续」的状态机底座；本轮同时记录了 xstate `after` 的两个实测边界",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "xstate": "5.33.3"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>共享队列流水线 · 调度模型</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   人体工效学基线
+   · 纸面底色 #f6f3ec —— 不用纯白，降低长时间注视的眩光
+   · 墨色 #1e1b17 —— 不用纯黑，避免小字周围的光晕（halation）
+   · 4px 栅格：所有间距是 4 的倍数，视觉节奏可预期
+   · 等宽数字：读数变化时字宽不跳，眼睛不用重新对位
+   · 发丝线分组，不用阴影与卡片堆叠 —— 减少视觉噪点
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#f6f3ec;
+  --paper-2:#efebe1;
+  --ink:#1e1b17;
+  --ink-2:#4a453d;
+  --muted:#7d766a;
+  --faint:#a89f90;
+  --rule:#dcd5c7;
+  --rule-soft:#e8e2d5;
+
+  --accent:#b8402f;        /* 朱红：全屏唯一的强调色，只给"现在/注意" */
+  --accent-soft:#f0ddd7;
+
+  --vision:#4a6d85;        /* 生产端 */
+  --mix:#4f7361;           /* 消费端 */
+
+  --c0:#4a6d85;
+  --c1:#8a6b45;
+  --c2:#4f7361;
+  --c3:#75566b;
+
+  --mono:"JetBrains Mono","Cascadia Mono","SF Mono",Consolas,"Courier New",monospace;
+  --serif:"Source Han Serif SC","Songti SC","STSong",Georgia,"Times New Roman",serif;
+  --sans:"PingFang SC","Microsoft YaHei UI","Hiragino Sans GB","Segoe UI",sans-serif;
+}
+
+*{box-sizing:border-box}
+html{ -webkit-text-size-adjust:100%; height:100%; }
+/* 固定一屏：不滚动。整页用 100dvh 锁死，内部 grid 分配剩余高度。 */
+body{
+  margin:0; height:100dvh; overflow:hidden;
+  background:var(--paper);
+  color:var(--ink);
+  font:14px/1.5 var(--sans);
+  font-feature-settings:"tnum" 1, "lnum" 1;
+  padding:20px 28px;
+  display:flex; flex-direction:column;
+}
+/* 极淡的纸纹：去掉纯色屏幕的"塑料感" */
+body::after{
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+  opacity:.028; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.app{
+  position:relative; z-index:2;
+  display:flex; flex-direction:column; gap:14px;
+  flex:1; min-height:0;          /* 关键：允许子项收缩，不撑破 100dvh */
+}
+
+/* ── 页眉 ── */
+.head{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:24px; flex:none;
+  padding-bottom:10px; border-bottom:1px solid var(--rule);
+}
+.eyebrow{
+  font:600 9px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent); display:block; margin-bottom:7px;
+}
+h1{ font:400 21px/1.15 var(--serif); margin:0; letter-spacing:.01em; }
+h1 em{ font-style:normal; color:var(--muted); font-size:15px; }
+
+/* ── 控制区 ── */
+.controls{ display:flex; align-items:flex-end; gap:16px; flex-wrap:nowrap; }
+.ctl{ display:flex; flex-direction:column; gap:3px; min-width:64px; }
+.ctl-top{ display:flex; align-items:baseline; justify-content:space-between; gap:6px; }
+.ctl label{ font:500 9.5px/1 var(--sans); color:var(--muted); letter-spacing:.05em; white-space:nowrap; }
+.ctl b{
+  font:600 11px/1 var(--mono); color:var(--ink);
+  font-variant-numeric:tabular-nums; min-width:13px; text-align:right;
+}
+input[type=range]{
+  -webkit-appearance:none; appearance:none;
+  width:88px; height:14px; background:transparent; cursor:pointer; margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{ height:2px; background:var(--rule); border-radius:1px; }
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:11px; height:11px; border-radius:50%;
+  background:var(--ink); margin-top:-4.5px; border:2px solid var(--paper);
+  box-shadow:0 0 0 1px var(--ink); transition:transform .12s;
+}
+input[type=range]:hover::-webkit-slider-thumb{ transform:scale(1.18); }
+input[type=range]:focus-visible::-webkit-slider-thumb{ background:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+
+button{
+  font:500 10.5px/1 var(--sans); letter-spacing:.04em;
+  color:var(--ink-2); background:transparent;
+  border:1px solid var(--rule); border-radius:2px;
+  padding:0 11px; height:26px; cursor:pointer;
+  transition:background .12s,border-color .12s,color .12s;
+}
+button:hover{ background:var(--paper-2); border-color:var(--faint); color:var(--ink); }
+button:active{ background:var(--rule-soft); }
+button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+button.go{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+button.go:hover{ background:#332e28; border-color:#332e28; }
+
+/* ── 读数条：主视觉层级在此 ── */
+.readouts{
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border-bottom:1px solid var(--rule); padding-bottom:10px; flex:none;
+}
+.readout{
+  padding-left:20px; border-left:1px solid var(--rule-soft);
+  display:flex; flex-direction:column; gap:1px;
+}
+.readout:first-child{ padding-left:0; border-left:0; }
+.readout .k{
+  font:500 9px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted);
+}
+.readout .v{
+  font:400 24px/1.15 var(--mono); font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em; color:var(--ink);
+}
+.readout .v .u{ font-size:10px; color:var(--faint); margin-left:3px; letter-spacing:0; }
+.readout.hot .v{ color:var(--accent); }
+
+/* ── 主网格：吃掉剩余高度 ── */
+.grid{
+  display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
+  gap:24px; align-items:stretch;
+  flex:1; min-height:0;
+}
+.grid > section{ display:flex; flex-direction:column; min-height:0; }
+
+section{ min-width:0; }
+.sec-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:12px; margin-bottom:8px; flex:none;
+}
+.sec-head h2{
+  font:500 10px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-2); margin:0;
+}
+.sec-head .hint{ font:400 9.5px/1 var(--mono); color:var(--faint); letter-spacing:.04em; }
+
+/* ── 队列 ── */
+.qbody{
+  display:grid; grid-template-columns:minmax(0,1fr) 108px; gap:14px;
+  align-items:stretch; flex:1; min-height:0;
+}
+.qtrack{
+  position:relative; min-height:120px;
+  border:1px solid var(--rule); border-radius:2px;
+  background:linear-gradient(to bottom, var(--paper-2), var(--paper));
+  overflow:hidden;
+}
+.qtrack canvas{ display:block; width:100%; height:100%; }
+.qwait{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font:400 10.5px/1 var(--mono); color:var(--faint); letter-spacing:.04em;
+  pointer-events:none; transition:opacity .2s;
+}
+.qwait.hide{ opacity:0; }
+
+.qside{ display:flex; flex-direction:column; gap:8px; min-height:0; }
+.qmeta{ display:flex; flex-direction:column; gap:4px; flex:none; }
+.qmeta .row{ display:flex; justify-content:space-between; align-items:baseline; }
+.qmeta .row span{ font:400 9.5px/1 var(--sans); color:var(--muted); letter-spacing:.05em; }
+.qmeta .row b{ font:500 11px/1 var(--mono); color:var(--ink); font-variant-numeric:tabular-nums; }
+.spark{
+  flex:1; min-height:44px; border:1px solid var(--rule); border-radius:2px;
+  background:var(--paper-2); overflow:hidden;
+}
+.spark canvas{ display:block; width:100%; height:100%; }
+.spark-label{
+  font:400 8.5px/1 var(--sans); color:var(--faint); letter-spacing:.08em;
+  text-transform:uppercase; margin-top:-3px; flex:none;
+}
+
+/* ── worker：高度紧张，压到最小行高 ── */
+.wlist{ display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
+.wrow{
+  display:grid; grid-template-columns:22px 1fr 56px;
+  align-items:center; gap:8px;
+  padding:4px 0; border-bottom:1px solid var(--rule-soft);
+}
+.wrow:last-child{ border-bottom:0; }
+.wid{ font:500 9px/1 var(--mono); color:var(--faint); letter-spacing:.04em; }
+.wname{
+  font:400 11px/1.25 var(--sans); color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.wname .tag{
+  display:inline-block; width:4px; height:4px; border-radius:50%;
+  margin-right:5px; vertical-align:middle; background:var(--faint);
+}
+.wrow.v .wname .tag{ background:var(--vision); }
+.wrow.m .wname .tag{ background:var(--mix); }
+.wrow.idle .wname{ color:var(--faint); }
+.wbar{ height:2px; background:var(--rule-soft); border-radius:2px; overflow:hidden; }
+.wbar i{ display:block; height:100%; width:0; background:var(--ink); border-radius:2px; transition:width .08s linear; }
+.wrow.v .wbar i{ background:var(--vision); }
+.wrow.m .wbar i{ background:var(--mix); }
+
+/* ── 课程：一行一条，不换行 ── */
+.clist{ display:flex; flex-direction:column; flex:none; }
+.crow{
+  display:grid; grid-template-columns:16px 84px 1fr 88px 40px;
+  align-items:center; gap:10px;
+  padding:5px 0; border-bottom:1px solid var(--rule-soft);
+}
+.crow:last-child{ border-bottom:0; }
+.cswatch{ width:7px; height:7px; border-radius:1px; }
+.cname{ font:400 11.5px/1 var(--sans); color:var(--ink); }
+.ctrack{ position:relative; height:7px; background:var(--rule-soft); border-radius:2px; overflow:hidden; }
+.ctrack .prod{ position:absolute; inset:0 auto 0 0; border-radius:2px; opacity:.28; transition:width .1s linear; }
+.ctrack .cons{ position:absolute; inset:0 auto 0 0; border-radius:2px; transition:width .1s linear; }
+.cnum{
+  font:400 10.5px/1 var(--mono); color:var(--muted);
+  font-variant-numeric:tabular-nums; text-align:right;
+}
+.crow.cancelled{ opacity:.36; }
+.crow.cancelled .cnum{ color:var(--accent); }
+.crow.done .cnum{ color:var(--mix); }
+.cx{
+  height:19px; width:40px; padding:0; font-size:9px;
+  border-color:var(--rule-soft); color:var(--faint);
+}
+.cx:hover{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+
+/* ── 页脚：单行，不换行 ── */
+.foot{
+  display:flex; gap:24px; flex-wrap:nowrap;
+  border-top:1px solid var(--rule); padding-top:8px;
+  font:400 10px/1.3 var(--sans); color:var(--muted);
+  flex:none; overflow:hidden; white-space:nowrap;
+}
+.foot > div{ overflow:hidden; text-overflow:ellipsis; }
+.foot b{ color:var(--ink-2); font-weight:600; }
+.foot .k{ font-family:var(--mono); color:var(--ink); }
+
+/* 窗口过矮时（<= 720px）进一步压缩，保证永远不出现滚动条 */
+@media (max-height: 720px){
+  body{ padding:14px 20px; }
+  .app{ gap:10px; }
+  h1{ font-size:18px; }
+  .readout .v{ font-size:20px; }
+  .qtrack{ min-height:96px; }
+  .wrow{ padding:2px 0; }
+  .crow{ padding:3px 0; }
+}
+/* 窗口过窄时：右侧 worker 移到下方，仍然不滚动 */
+@media (max-width: 900px){
+  .grid{ grid-template-columns:1fr; }
+  .readouts{ grid-template-columns:repeat(4,1fr); }
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="head">
+    <div>
+      <span class="eyebrow">调度模型 · 交互演示</span>
+      <h1>共享队列流水线 <em>/ 一个队列，N 个工人</em></h1>
+    </div>
+
+    <div class="controls">
+      <div class="ctl">
+        <div class="ctl-top"><label>课程</label><b id="vCourses">3</b></div>
+        <input type="range" id="sCourses" min="1" max="4" value="3" aria-label="课程数">
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label>全局并发</label><b id="vWorkers">4</b></div>
+        <input type="range" id="sWorkers" min="1" max="8" value="4" aria-label="全局并发">
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label>队列上限</label><b id="vCap">40</b></div>
+        <input type="range" id="sCap" min="8" max="80" step="4" value="40" aria-label="队列上限">
+      </div>
+      <div class="ctl">
+        <div class="ctl-top"><label>速度</label><b id="vSpeed">1</b></div>
+        <input type="range" id="sSpeed" min="1" max="4" value="1" aria-label="播放速度">
+      </div>
+      <button class="go" id="btnRun">暂停</button>
+      <button id="btnReset">重置</button>
+    </div>
+  </header>
+
+  <!-- 主读数：一眼回答「跟得上吗」 -->
+  <section class="readouts">
+    <div class="readout">
+      <span class="k">吞吐</span>
+      <span class="v"><span id="stTput">0.0</span><span class="u">页/秒</span></span>
+    </div>
+    <div class="readout">
+      <span class="k">队列深度</span>
+      <span class="v"><span id="qDepth">0</span><span class="u" id="qCapU">/ 40</span></span>
+    </div>
+    <div class="readout">
+      <span class="k">已完成</span>
+      <span class="v"><span id="stDone">0</span><span class="u" id="stTotalU">/ 90</span></span>
+    </div>
+    <div class="readout" id="timeBox">
+      <span class="k">已用时长</span>
+      <span class="v"><span id="stTime">0.0</span><span class="u">秒</span></span>
+    </div>
+  </section>
+
+  <main class="grid">
+    <!-- 队列 -->
+    <section>
+      <div class="sec-head">
+        <h2>共享 FIFO 队列</h2>
+        <span class="hint">下 → 上 · vision 压入 / mix 取走</span>
+      </div>
+      <div class="qbody">
+        <div class="qtrack">
+          <canvas id="qCanvas"></canvas>
+          <div class="qwait" id="qWait">空 —— mix 在此等待</div>
+        </div>
+        <div class="qside">
+          <div class="qmeta">
+            <div class="row"><span>峰值</span><b id="qPeak">0</b></div>
+            <div class="row"><span>背压阻塞</span><b id="qBlocked">0</b></div>
+            <div class="row"><span>在飞</span><b id="qFlight">0</b></div>
+          </div>
+          <div class="spark"><canvas id="spark"></canvas></div>
+          <div class="spark-label">深度 / 时间</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- worker -->
+    <section>
+      <div class="sec-head">
+        <h2>全局 Worker 池</h2>
+        <span class="hint" id="wBusyHint">0 / 4 在忙</span>
+      </div>
+      <div class="wlist" id="wlist"></div>
+    </section>
+  </main>
+
+  <!-- 课程 -->
+  <section>
+    <div class="sec-head">
+      <h2>课程</h2>
+      <span class="hint">浅色 = 已产出 · 深色 = 已处理 · 中间差 = 该课在飞</span>
+    </div>
+    <div class="clist" id="clist"></div>
+  </section>
+
+  <footer class="foot">
+    <div><b>试这个：</b>把「课程」从 <span class="k">1</span> 拉到 <span class="k">4</span> —— 吞吐几乎不变，只是跑得久。</div>
+    <div><b>再试：</b>把「全局并发」从 <span class="k">2</span> 拉到 <span class="k">8</span> —— 吞吐近乎线性上升。</div>
+    <div><b>背压：</b>把「队列上限」压到 <span class="k">12</span> —— vision 会被卡住，阻塞计数开始涨。</div>
+  </footer>
+
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════
+   常量
+   ══════════════════════════════════════════════════════════════ */
+const PAGES = 30;            // 每门课页数
+const VISION_BATCH = 4;      // 一次 vision 拼图覆盖 4 页（与 parser.js 一致）
+const TICK = 120;            // 1 tick = 120ms 仿真时间（放慢，便于观察）
+const V_TICKS = 22;          // vision 一次调用耗时 → 约 2.6s
+const M_TICKS = 15;          // mix 一页一次调用   → 约 1.8s
+const CNAMES = ['高数', '普物', '概统', '数据结构'];
+const CCOLOR = ['--c0', '--c1', '--c2', '--c3'];
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+const el = id => document.getElementById(id);
+const cfg = { courses: 3, workers: 4, cap: 40, speed: 1 };
+let S = null, running = true, acc = 0, lastFrame = 0;
+
+/* ══════════════════════════════════════════════════════════════
+   状态
+   ══════════════════════════════════════════════════════════════ */
+function makeState() {
+  const courses = Array.from({ length: cfg.courses }, (_, i) => ({
+    id: i, name: CNAMES[i], color: cssVar(CCOLOR[i]),
+    total: PAGES, produced: 0, consumed: 0, cancelled: false,
+  }));
+  const workers = Array.from({ length: cfg.workers }, (_, i) => ({
+    id: i, job: null, ticks: 0, span: 0,
+  }));
+  return {
+    courses, workers,
+    queue: [], cap: cfg.cap,
+    ticks: 0, peak: 0, blocked: 0, flight: 0,
+    reserved: 0,
+    consumed: 0,
+    history: [], done: false,
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   调度核心 —— 一个队列，N 个工人；生产端受背压约束
+   ══════════════════════════════════════════════════════════════ */
+function pick(s) {
+  const producers = s.courses.filter(c => !c.cancelled && c.produced < c.total);
+  const hasMix = s.queue.length > 0;
+  // 背压要算上**在飞的预留**：已 claim 但还没 push 的页很快就会落到队列里。
+  // 只看 s.queue.length 会让峰值冲破上限（实测冲到 52/40）。
+  const canVision = producers.length > 0
+    && s.queue.length + s.reserved + VISION_BATCH <= s.cap;
+
+  // 队列够深：优先消费，压低单页延迟
+  if (hasMix && (s.queue.length >= s.workers || !producers.length)) {
+    return { kind: 'mix', item: s.queue.shift() };
+  }
+  if (canVision) {
+    // 轮流喂课，避免某一门被饿死
+    const c = producers[s.ticks % producers.length];
+    const pages = Math.min(VISION_BATCH, c.total - c.produced);
+    // ⚠ 必须**当场认领**：同一 tick 里多个 worker 会拿到同一个 produced 旧值，
+    //   各算一次剩余页，结果同一门课被重复产出（实测 30 页变 32 页）。
+    c.produced += pages;
+    s.reserved += pages;
+    return { kind: 'vision', course: c, pages, start: c.produced - pages + 1 };
+  }
+  if (hasMix) return { kind: 'mix', item: s.queue.shift() };
+  if (producers.length) { s.blocked++; return null; }   // 背压
+  return null;
+}
+
+function step(s) {
+  if (s.done) return;
+  s.ticks++;
+
+  for (const w of s.workers) {
+    if (w.job) {
+      if (--w.ticks <= 0) finish(s, w);
+      continue;
+    }
+    const j = pick(s);
+    if (!j) continue;
+    if (j.kind === 'vision') {
+      w.job = { kind: 'vision', courseId: j.course.id, pages: j.pages, start: j.start };
+      w.span = w.ticks = V_TICKS;
+    } else {
+      w.job = { kind: 'mix', item: j.item };
+      w.span = w.ticks = M_TICKS;
+    }
+  }
+
+  // 在飞 = 已产出未处理
+  s.flight = s.courses.reduce((a, c) => a + (c.produced - c.consumed), 0);
+  s.peak = Math.max(s.peak, s.queue.length);
+  if (s.ticks % 2 === 0) {
+    s.history.push(s.queue.length);
+    if (s.history.length > 260) s.history.shift();
+  }
+  const idle = s.workers.every(w => !w.job);
+  if (idle && !s.queue.length && s.courses.every(c => c.cancelled || c.produced >= c.total)) {
+    s.done = true;
+  }
+}
+
+function finish(s, w) {
+  const j = w.job;
+  if (j.kind === 'vision') {
+    const c = s.courses[j.courseId];
+    s.reserved -= j.pages;
+    if (c && !c.cancelled) {
+      for (let k = 0; k < j.pages; k++) s.queue.push({ courseId: c.id, page: j.start + k });
+    }
+  } else {
+    const c = s.courses[j.item.courseId];
+    if (c) c.consumed++;
+    s.consumed++;
+  }
+  w.job = null; w.ticks = 0; w.span = 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   渲染 · 读数
+   ══════════════════════════════════════════════════════════════ */
+function renderReadouts(s) {
+  const sec = s.ticks * TICK / 1000;
+  const total = s.courses.reduce((a, c) => a + c.total, 0);
+  el('stTput').textContent = (s.consumed / Math.max(0.001, sec)).toFixed(1);
+  el('qDepth').textContent = s.queue.length;
+  el('qCapU').textContent = '/ ' + s.cap;
+  el('stDone').textContent = s.consumed;
+  el('stTotalU').textContent = '/ ' + total;
+  el('stTime').textContent = sec.toFixed(1);
+
+  el('qPeak').textContent = s.peak;
+  el('qBlocked').textContent = s.blocked;
+  el('qFlight').textContent = s.flight;
+
+  const busy = s.workers.filter(w => w.job).length;
+  el('wBusyHint').textContent = `${busy} / ${s.workers.length} 在忙`;
+}
+
+/* ── 队列：canvas 精确控制像素，避免布局抖动 ── */
+function drawQueue(s) {
+  const cv = el('qCanvas');
+  const box = cv.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== W * dpr || cv.height !== H * dpr) {
+    cv.width = W * dpr; cv.height = H * dpr;
+  }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+
+  const cap = s.cap;
+  const PADX = 8, PADY = 6;
+  const availH = H - PADY * 2;
+  const gap = cap > 48 ? 1 : 2;
+  const barH = Math.max(1.6, (availH - gap * (cap - 1)) / cap);
+
+  // 容量刻度：每 10 格一条极淡的参考线
+  g.strokeStyle = 'rgba(168,159,144,.22)';
+  g.lineWidth = 1;
+  for (let i = 10; i <= cap; i += 10) {
+    const y = H - PADY - i * (barH + gap) + gap + .5;
+    g.beginPath(); g.moveTo(PADX, y); g.lineTo(W - PADX, y); g.stroke();
+  }
+
+  // 从底部往上堆
+  const n = Math.min(s.queue.length, cap);
+  for (let i = 0; i < n; i++) {
+    const item = s.queue[i];
+    const c = s.courses[item.courseId];
+    const y = H - PADY - (i + 1) * (barH + gap) + gap;
+    g.fillStyle = c ? c.color : '#a89f90';
+    g.globalAlpha = 0.92;
+    g.fillRect(PADX, y, W - PADX * 2, barH);
+  }
+  g.globalAlpha = 1;
+
+  // 溢出提示（理论上被背压挡住，防御性）
+  if (s.queue.length > cap) {
+    g.fillStyle = cssVar('--accent');
+    g.fillRect(PADX, PADY, W - PADX * 2, 2);
+  }
+  el('qWait').classList.toggle('hide', s.queue.length > 0);
+}
+
+/* ── 深度曲线 ── */
+function drawSpark(s) {
+  const cv = el('spark');
+  const box = cv.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const W = box.clientWidth, H = box.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== W * dpr || cv.height !== H * dpr) {
+    cv.width = W * dpr; cv.height = H * dpr;
+  }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+
+  // 上限线（虚线）
+  g.strokeStyle = 'rgba(168,159,144,.55)';
+  g.setLineDash([3, 3]); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(0, 4.5); g.lineTo(W, 4.5); g.stroke();
+  g.setLineDash([]);
+
+  const h = s.history;
+  if (h.length < 2) return;
+  const max = Math.max(s.cap, ...h, 1);
+  const x = i => i / (h.length - 1) * W;
+  const y = v => H - 3 - (v / max) * (H - 10);
+
+  g.beginPath();
+  h.forEach((v, i) => i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)));
+  g.strokeStyle = cssVar('--accent'); g.lineWidth = 1.25; g.stroke();
+  g.lineTo(W, H - 3); g.lineTo(0, H - 3); g.closePath();
+  g.fillStyle = 'rgba(184,64,47,.09)'; g.fill();
+}
+
+/* ── worker 列表 ── */
+function renderWorkers(s) {
+  const box = el('wlist');
+  if (box.children.length !== s.workers.length) {
+    box.innerHTML = '';
+    s.workers.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'wrow idle';
+      d.innerHTML = `<span class="wid">W${i + 1}</span>
+        <span class="wname"><span class="tag"></span><span class="txt">空闲</span></span>
+        <span class="wbar"><i></i></span>`;
+      box.appendChild(d);
+    });
+  }
+  s.workers.forEach((w, i) => {
+    const d = box.children[i];
+    const txt = d.querySelector('.txt');
+    const bar = d.querySelector('.wbar i');
+    if (!w.job) {
+      d.className = 'wrow idle';
+      txt.textContent = '等待任务';
+      bar.style.width = '0%';
+    } else if (w.job.kind === 'vision') {
+      const c = s.courses[w.job.courseId];
+      d.className = 'wrow v';
+      txt.textContent = `vision · ${c ? c.name : '?'} · ${w.job.pages} 页`;
+      bar.style.width = ((1 - w.ticks / w.span) * 100).toFixed(1) + '%';
+    } else {
+      const c = s.courses[w.job.item.courseId];
+      d.className = 'wrow m';
+      txt.textContent = `mix · ${c ? c.name : '?'} · p${w.job.item.page}`;
+      bar.style.width = ((1 - w.ticks / w.span) * 100).toFixed(1) + '%';
+    }
+  });
+}
+
+/* ── 课程列表 ── */
+function renderCourses(s) {
+  const box = el('clist');
+  if (box.children.length !== s.courses.length) {
+    box.innerHTML = '';
+    s.courses.forEach(c => {
+      const d = document.createElement('div');
+      d.className = 'crow';
+      d.innerHTML = `<span class="cswatch" style="background:${c.color}"></span>
+        <span class="cname"></span>
+        <span class="ctrack"><span class="prod"></span><span class="cons"></span></span>
+        <span class="cnum"></span>
+        <button class="cx" data-cancel="${c.id}">取消</button>`;
+      box.appendChild(d);
+    });
+    box.addEventListener('click', e => {
+      const id = e.target.getAttribute && e.target.getAttribute('data-cancel');
+      if (id == null) return;
+      const c = S.courses[+id];
+      if (c) c.cancelled = true;
+    });
+  }
+  s.courses.forEach((c, i) => {
+    const d = box.children[i];
+    const pp = c.cancelled ? 100 : c.produced / c.total * 100;
+    const cp = c.consumed / c.total * 100;
+    d.className = 'crow'
+      + (c.cancelled ? ' cancelled' : '')
+      + (!c.cancelled && c.produced >= c.total ? ' done' : '');
+    d.querySelector('.cname').textContent = c.name;
+    const prod = d.querySelector('.prod');
+    prod.style.width = pp + '%';
+    prod.style.background = c.color;
+    const cons = d.querySelector('.cons');
+    cons.style.width = cp + '%';
+    cons.style.background = c.color;
+    d.querySelector('.cnum').textContent = c.cancelled
+      ? '已取消'
+      : `${c.consumed} / ${c.produced}`;
+    d.querySelector('.cx').disabled = c.cancelled;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   帧循环
+   ══════════════════════════════════════════════════════════════ */
+function render() {
+  if (!S) return;
+  renderReadouts(S);
+  drawQueue(S);
+  drawSpark(S);
+  renderWorkers(S);
+  renderCourses(S);
+  el('timeBox').classList.toggle('hot', S.done);
+}
+
+function frame(now) {
+  if (!lastFrame) lastFrame = now;
+  const dt = now - lastFrame; lastFrame = now;
+  if (running && S && !S.done) {
+    acc += dt * cfg.speed;
+    let guard = 0;
+    while (acc >= TICK && guard++ < 24) { step(S); acc -= TICK; }
+  }
+  render();
+  if (S && S.done && el('btnRun').textContent !== '完成') el('btnRun').textContent = '完成';
+  requestAnimationFrame(frame);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   控制
+   ══════════════════════════════════════════════════════════════ */
+function reset() {
+  S = makeState();
+  el('clist').innerHTML = '';
+  el('wlist').innerHTML = '';
+  el('btnRun').textContent = '暂停';
+  running = true; acc = 0;
+  render();
+}
+
+function bindSlider(inputId, valueId, key, rebuild) {
+  const inp = el(inputId), out = el(valueId);
+  out.textContent = inp.value;
+  inp.addEventListener('input', () => {
+    out.textContent = inp.value;
+    cfg[key] = +inp.value;
+    if (rebuild) reset();
+  });
+}
+bindSlider('sCourses', 'vCourses', 'courses', true);
+bindSlider('sWorkers', 'vWorkers', 'workers', true);
+bindSlider('sCap', 'vCap', 'cap', true);
+bindSlider('sSpeed', 'vSpeed', 'speed', false);
+
+el('btnRun').addEventListener('click', () => {
+  if (S && S.done) { reset(); return; }
+  running = !running;
+  el('btnRun').textContent = running ? '暂停' : '继续';
+});
+el('btnReset').addEventListener('click', reset);
+
+window.addEventListener('resize', () => { lastFrame = 0; render(); });
+
+reset();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

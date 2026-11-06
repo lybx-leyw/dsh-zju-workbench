@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-slide-dedup",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】在讲义生成前剔除「回看重复页」，补上 buildLectureTree 会把一份重复帧升级成吞页伪知识点的断边；自建实现，不引入上游依赖",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

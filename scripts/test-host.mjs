@@ -1,11 +1,11 @@
-import assert from 'node:assert/strict';
+﻿import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { initialize, lock, root, runHost } from './profile.mjs';
 import { CLIENT_PACKAGES } from './build.mjs';
-import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-study-core/src/learning-space.js';
-import { NAV, RAIL_DEFAULT } from '../packages/dsh-zhiyun-shell/src/model.js';
+import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-core-study/src/learning-space.js';
+import { NAV, RAIL_DEFAULT } from '../packages/dsh-zhiyun-shell-workbench/src/model.js';
 
 const evidence = path.join(root, 'artifacts');
 
@@ -45,13 +45,66 @@ async function settleHostOverlays(page) {
   throw new Error('a host onboarding overlay is still blocking the page after 45s');
 }
 
+/** A user click that may be temporarily blocked by a host onboarding layer that
+ *  appears after the page looked quiet (the host re-runs first-run steps on some
+ *  loads). Settling and retrying keeps the assertion about the product action. */
+async function clickAfterOnboarding(page, locator) {
+  const deadline = Date.now() + 90000;
+  let last;
+  while (Date.now() < deadline) {
+    await settleHostOverlays(page).catch(() => {});
+    try {
+      await locator.click({ timeout: 5000 });
+      return;
+    } catch (error) {
+      last = error;
+      await page.waitForTimeout(500);
+    }
+  }
+  throw last;
+}
+
 /** Load the document again and wait for the product page to mount. A row added
  *  to the profile joins the browser boot graph on the next document load: the
  *  host injects window.__DSH_BOOT__ per index.html request. */
 async function reloadProduct(page) {
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await settleHostOverlays(page);
   await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+  await settleHostOverlays(page);
+}
+
+/** Profile patching is applied by the host watcher asynchronously. A reload
+ *  issued before it settles boots the previous graph, so retry until the
+ *  product surface is actually back instead of sleeping a fixed interval. */
+async function reloadProductEventually(page) {
+  const deadline = Date.now() + 45000;
+  while (Date.now() < deadline) {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    try {
+      await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 8000 });
+      await settleHostOverlays(page);
+      return;
+    } catch {
+      await page.waitForTimeout(1000);
+    }
+  }
+  throw new Error('the product surface did not return after restoring the profile patch');
+}
+
+/** Reload until the native-only surface is really booted. The same watcher
+ *  settling applies when the product rows are disabled. */
+async function reloadNativeEventually(page) {
+  const deadline = Date.now() + 45000;
+  while (Date.now() < deadline) {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    try {
+      await page.locator('[class*="_sidebarCol"]').waitFor({ timeout: 8000 });
+      await settleHostOverlays(page);
+      if (await page.locator('.zy-sidebar').count() === 0) return;
+    } catch { /* previous graph still booting; retry */ }
+    await page.waitForTimeout(1000);
+  }
+  throw new Error('the native surface did not return after disabling the product bundles');
 }
 
 /** 一页最小可用的 PDF，够 pdf.js 渲染出 canvas 与可选中文本层。 */
@@ -88,8 +141,8 @@ function minimalPdf(lines) {
  * @returns 行 id（= 包名去掉 `dsh-` 前缀，与本仓每个 cordis.patch.yml 里 insert 的 id 一致）。
  */
 function productRowIds() {
-  const bundles = [...CLIENT_PACKAGES, 'dsh-zhiyun-paper'];
-  return [...new Set(bundles.map(bundle => bundle.replace(/^dsh-/, '')))].sort();
+  const bundles = [...CLIENT_PACKAGES, 'dsh-zhiyun-host-paper'];
+  return [...new Set(bundles.map(bundle => bundle === 'dsh-zhiyun-shell-workbench' ? 'zhiyun-shell' : bundle.replace(/^dsh-/, '')))].sort();
 }
 
 /** 往 profile 的文献库里放一篇真论文，供下面的抽屉端到端断言使用。 */
@@ -229,6 +282,31 @@ async function paperProbe(page, evidence, checks) {
   checks.push('Paper page: local PDF renders, the AI drawer answers, injected context stays folded');
   checks.push('Paper page: /resume opens a fixed-size scrollable session palette with ↑↓ navigation');
 }
+/** A real loader package, generated only in the disposable test profile. */
+async function writeNativePluginProbe(runtime) {
+  const dir = path.join(runtime.profile, 'node_modules', 'zhiyun-test-native-panel');
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, 'package.json'), JSON.stringify({
+    name: 'zhiyun-test-native-panel', private: true, type: 'module',
+    exports: { '.': './index.js', './client': './client.js', './package.json': './package.json' },
+    dsh: { client: { platform: 'web', inject: ['@deepseek-ai/dsh-client-ui-layout', '@deepseek-ai/dsh-client-ui-sidebar'] } },
+  }));
+  await writeFile(path.join(dir, 'index.js'), 'export function apply() {}\n');
+  await writeFile(path.join(dir, 'client.js'), `window.__ModuleLoader__.load({ id: 'zhiyun-test-native-panel', factory: require => {
+    const React = require('react');
+    return { inject: ['slots'], apply(ctx) {
+      ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'test-import-session' },
+        () => React.createElement('section', { 'data-test-native-panel': true }, '测试原生导入面板')));
+      ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: 'test-import-session', label: '导入会话' },
+        () => React.createElement('span', { 'aria-hidden': true }, '↓')));
+      ctx.slots.inject('shell.overlay', () => ctx.slots.register({ name: 'shell.overlay', id: 'test-native-overlay' },
+        () => React.createElement('div', { 'data-test-native-overlay': true, style: { position: 'fixed', right: 0, bottom: 30 } }, '测试普通覆盖层')));
+      ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({ name: 'sidebar.footer.action', id: 'test-native-footer' },
+        () => React.createElement('footer', { 'data-test-native-footer': true }, '测试原生页脚')));
+    } };
+  } });\n`);
+}
+
 await mkdir(evidence, { recursive: true });
 let server;
 let browser;
@@ -244,6 +322,7 @@ try {
   if (!url) {
     runtime = await initialize({ home: path.join(evidence, `host-${Date.now()}`) });
     await symlink(path.join(root, 'tests/fixtures/course-panel'), path.join(runtime.profile, 'node_modules', 'zhiyun-test-course-panel'), process.platform === 'win32' ? 'junction' : 'dir');
+    await writeNativePluginProbe(runtime);
     // 抽屉那段断言需要一篇真实文献；宿主起来之前先放进文献库，页面加载时就能列出来。
     await writeProbePaper(runtime);
     server = runHost(runtime, ['--no-open', '--port', '0'], { pipe: true });
@@ -265,6 +344,9 @@ try {
   }
   browser = await chromium.launch({ channel: process.env.ZHIYUN_BROWSER_CHANNEL ?? 'msedge', headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 980 }, locale: 'zh-CN', colorScheme: 'light' });
+  // Model onboarding can arrive after remote readiness, including after a reload.
+  // Acknowledge that host-owned prompt when it blocks any later user action.
+  await page.addLocatorHandler(page.getByRole('button', { name: '稍后配置', exact: true }), async button => { await button.click(); });
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -277,21 +359,32 @@ try {
   checks.push('Real host boot and initial Today selection');
   // 导轨上的页面数**从 RAIL_DEFAULT 推导**，不写死数字。
   // ⚠️ 导轨不再等于「NAV 里所有上侧栏的页」：默认固定在导轨上的是 RAIL_DEFAULT
-  //    （学习动线 + 个人），「插件」「反馈」默认收在末尾的「···」菜单里，
+  //    （学习动线），「插件」「反馈」默认收在末尾的「···」菜单里，
   //    由用户点图钉固定。数字是结论，依据在 RAIL_DEFAULT 里。
   assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), RAIL_DEFAULT.length + 1);
   await page.screenshot({ path: path.join(evidence, 'today-light.png'), fullPage: true });
+  if (process.argv.includes('--bridge-only')) {
+    await page.keyboard.press('Control+k');
+    await page.getByRole('textbox', { name: '搜索页面' }).fill('今天');
+    await page.keyboard.press('Enter');
+    await page.locator('.zy-page[data-page=today]').waitFor();
+    checks.push('Product page search owns Ctrl+K only outside Ask');
+  }
+  // Focused layout lane avoids unrelated parser graph and model-backed PDF checks.
+  if (!process.argv.includes('--bridge-only')) {
   for (const [label, id] of [['论文', 'paper'], ['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${id}]`).waitFor();
   }
-  // 「个人」**不在导航里**：它是导轨最下方那一格圆形头像。点头像浮出**账号面板**，
-  // 「设置」才进个人页 —— 登录也在同一层（见下面那段）。这里顺便把这条路径走全。
+  // 「个人」页已删除：导轨最下方那格圆形头像**不是页面**，点它浮出账号面板
+  // （登录 / 设置）。账号与数据的内容都在原生设置浮窗的「账号与数据」分区里，
+  // 这里先确认头像只开面板、不跳页。
   await page.getByRole('button', { name: '账号', exact: true }).click();
   await page.locator('.zy-account-menu').waitFor();
-  await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
-  await page.locator('.zy-page[data-page=me]').waitFor();
-  checks.push('All product pages navigate through host layout');
+  assert.equal(await page.locator('.zy-page[data-page=me]').count(), 0, 'the Personal page no longer exists');
+  assert.deepEqual(await page.locator('.zy-account-menu .zy-rail-menu-open').allInnerTexts(), ['登录', '设置'], 'the account menu offers sign-in and settings only');
+  await page.keyboard.press('Escape');
+  checks.push('All product pages navigate through host layout; the account avatar opens a menu, not a page');
   // 「插件」也不在导轨上：它属于「···」菜单（默认不固定，要用了再钉）。
   // 所以这里走菜单，而不是直接找导航按钮。
   await page.locator('.zy-rail-more').click();
@@ -355,106 +448,96 @@ try {
   await page.getByRole('button', { name: '切换明暗', exact: true }).click();
   await page.waitForFunction(() => !document.body.hasAttribute('data-ds-dark-theme'));
   checks.push('Native theme service switches light/dark');
+  }
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
-  await page.locator('.zy-hero-brand').waitFor();
-  checks.push('Native DSH conversation remains mounted with Zhiyun hero');
-  // 「问一问」is bound to the workbench's own learning space: the composer comes up
-  // ready instead of asking which directory to use, and that space is the one shown.
+  const native = page.locator('.zy-workbench-native');
+  await native.waitFor();
+  const nativeSidebar = native.locator('[class*="_sidebarCol"]');
+  const nativeMain = native.locator('[class*="_centerCol"]');
+  await nativeSidebar.waitFor();
+  await nativeMain.waitFor();
+  assert.match(await nativeSidebar.innerText(), /工作区/, 'Ask retains the native workspace browser');
+  for (const control of ['搜索会话', '视图选项', '添加工作区']) {
+    assert.ok(await native.getByLabel(control, { exact: true }).count() > 0, `native workspace browser offers ${control}`);
+  }
+  assert.ok(await native.locator('[aria-label*="新建会话"]').count() > 0, 'native per-workspace New Session is retained');
+  assert.equal(await page.locator('.zy-workbench-navigation [aria-label="添加工作区"]').count(), 0, 'outer navigation is independent of native workspaces');
+  assert.equal(await page.locator('.zy-drawer').count(), 0, 'Ask does not recreate the workspace browser in a custom drawer');
   await page.waitForFunction(() => !document.body.innerText.includes('选择一个工作区开始'), undefined, { timeout: 30000 });
-  assert.ok((await page.locator('body').innerText()).includes(LEARNING_SPACE_TITLE), 'the fixed learning space is selected');
+  assert.ok((await native.innerText()).includes(LEARNING_SPACE_TITLE), 'the fixed learning space is selected');
+  const retained = await native.evaluateHandle(node => ({ root: node.firstElementChild, main: node.querySelector('[class*="_centerCol"]'), sidebar: node.querySelector('[class*="_sidebarCol"]') }));
   await page.screenshot({ path: path.join(evidence, 'ask.png'), fullPage: true });
-  checks.push('Ask binds the fixed learning space instead of asking to choose a workspace');
-  // 会话管理在「问一问」的版面上：侧栏不再挂宿主的工作区浏览器（没有工作区切换）。
-  assert.equal(await page.locator('[data-slot="sidebar.workspaces"]').count(), 0, 'the host workspace browser must not be mounted');
-  const sidebarText = await page.locator('.zy-sidebar').innerText();
-  assert.equal(sidebarText.includes('工作区'), false, 'the sidebar must not offer workspace switching');
-  assert.equal(sidebarText.includes('会话记录'), false, 'the sidebar must not host the session list');
-  await page.locator('.zy-topbar').waitFor();
-  // 会话抽屉 = 对齐 app 的**左侧整高抽屉**：贴问一问面板左缘、整高、有遮罩、Esc/遮罩可关。
-  const sidebarRight = await page.locator('.zy-sidebar').evaluate(node => Math.round(node.getBoundingClientRect().right));
-  const viewport = page.viewportSize();
-  await page.locator('.zy-topbar-menu').click();
-  const drawer = page.locator('.zy-drawer');
-  await drawer.waitFor();
-  await page.waitForTimeout(400);
-  const drawerBox = await drawer.boundingBox();
-  assert.equal(await drawer.getAttribute('data-open'), 'true', 'the top-left hamburger opens the drawer');
-  assert.ok(drawerBox.height >= viewport.height * 0.95, `the drawer must span the full height (${Math.round(drawerBox.height)} of ${viewport.height})`);
-  assert.ok(Math.abs(drawerBox.x - sidebarRight) <= 2, `the drawer must start at the Ask panel's left edge (x=${Math.round(drawerBox.x)}, sidebar right=${sidebarRight})`);
-  assert.ok(drawerBox.width >= 280, `the drawer must keep the Material width (${Math.round(drawerBox.width)}px)`);
-  assert.equal(await page.locator('.zy-drawer-scrim[data-open=true]').count(), 1, 'an open drawer carries its scrim');
-  // 当前会话必须**恰好**标记一行：0.2 把 `current` 从 session controller 移走了，
-  // 早先这里读它，结果高亮永远不亮（也不再有「当前」这个概念可用）。
-  assert.equal(await page.locator('.zy-drawer-row.is-current').count(), 1, 'exactly one row is the current session');
-  assert.equal(await page.locator('.zy-drawer-head').count(), 1, 'the drawer carries its own header');
+  await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '今天', exact: true }).click();
+  await page.locator('.zy-page[data-page=today]').waitFor();
+  assert.equal(await native.isVisible(), false, 'Today hides the entire native UI');
+  assert.equal(await native.getAttribute('hidden'), '', 'native UI is hidden rather than unmounted');
+  assert.equal(await native.getAttribute('inert'), '', 'hidden native controls cannot receive focus');
+  assert.equal(await nativeMain.isVisible(), false, 'native main does not leak onto Today');
+  assert.equal(await nativeSidebar.isVisible(), false, 'native sidebar does not leak onto Today');
+  await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
+  await native.waitFor();
+  assert.ok(await native.evaluate((node, previous) => node.firstElementChild === previous.root && node.querySelector('[class*="_centerCol"]') === previous.main && node.querySelector('[class*="_sidebarCol"]') === previous.sidebar, retained), 'returning to Ask preserves native root, main and sidebar DOM identities');
+  await retained.dispose();
+  assert.equal(await page.locator('.zy-workbench-frame').getAttribute('data-workbench-page'), 'ask');
   await page.screenshot({ path: path.join(evidence, 'ask-sessions.png'), fullPage: true });
-  await page.keyboard.press('Escape');
-  await drawer.waitFor({ state: 'hidden' });
-  assert.equal(await page.locator('.zy-drawer-scrim[data-open=true]').count(), 0, 'Esc closes the drawer and its scrim');
-  await page.locator('.zy-topbar-menu').click();
-  await drawer.waitFor();
-  await page.waitForTimeout(300);
-  await page.locator('.zy-drawer-scrim').click({ position: { x: 500, y: 400 } });
-  await drawer.waitFor({ state: 'hidden' });
-  checks.push('Session management is a full-height left drawer attached to the Ask panel');
+  checks.push('Ask retains native sidebar/workspaces and fixed learning space; outer navigation hides and restores the same native root/main');
   await page.getByRole('button', { name: '账号', exact: true }).click();
   await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
-  const settings = page.locator('.zy-settings-group');
-  await settings.first().waitFor();
-  assert.ok(await settings.count() >= 2, 'host settings providers appear inside Personal');
-  assert.equal(await page.locator('.zy-sidebar').getByRole('button', { name: '设置', exact: true }).isVisible(), false);
-  // 「论文阅读」的设置集中在「个人 → 设置」里，靠注册 `settings.section`（id=paper-reader）
-  // 长出分组。分组列表由宿主 `ctx.slots.entries('settings.section')` 决定，所以这里
-  // 必须**点名**断言它存在 —— 上面那句 `>= 2` 只数宿主自己的分组，我们这条即使
-  // 掉线也照样绿（这正是它一开始没被发现的原因）。
-  const paperSettings = page.locator('[data-settings-section="paper-reader"]');
-  assert.equal(await paperSettings.count(), 1, '论文阅读的设置分组必须出现在「个人」页');
-  const paperIds = await settings.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-settings-section')));
-  assert.ok(paperIds.includes('paper-reader'), `settings groups = ${JSON.stringify(paperIds)}`);
-  // ⚠️ 用 `:scope > summary`：宿主某些设置分组内部还会渲染**嵌套**的 details，
-  //    裸 `locator('summary')` 会同时命中子节点，触发 strict mode 冲突。
-  await settings.first().locator(':scope > summary').click();
-  assert.ok(await settings.first().locator(':scope > .zy-settings-body').isVisible());
-  assert.equal(await page.locator('[role="dialog"]:visible').count(), 0, 'settings expand inline');
-  // 「论文阅读」分组里必须真的渲染出兼容层的表单（两张端点卡 + 版本/就绪状态）。
-  await paperSettings.locator(':scope > summary').click();
-  await paperSettings.locator(':scope > .zy-settings-body').waitFor();
-  assert.equal(await paperSettings.locator('.zp-settings').count(), 1, '兼容层设置表单必须渲染');
-  assert.ok(await paperSettings.locator('.zp-card').count() >= 2, '两个上游端点各一张卡');
-  assert.match(await paperSettings.locator(':scope > .zy-settings-body').innerText(), /锁定/, '要显示锁定的上游版本');
-  await paperSettings.locator(':scope > summary').click();
-  await page.waitForTimeout(250);
+  // 设置 = 宿主原生浮窗（与 DSH 一致）。「个人」页已删除，所以这里也顺带证明
+  // 打开设置不会跳到任何产品页。
+  const settingsDialog = page.locator('[role="dialog"][aria-modal="true"][data-shortcut-modal="settings"]');
+  await settingsDialog.waitFor({ timeout: 30000 });
+  assert.equal(await page.locator('.zy-page[data-page=me]').count(), 0, 'the Personal page no longer exists');
+  // 新增的「账号与数据」分区必须在这里，且排在网络代理之前。
+  const accountNav = settingsDialog.getByRole('button', { name: /账号与数据/ });
+  await accountNav.waitFor({ timeout: 30000 });
+  await accountNav.click();
+  await settingsDialog.locator('.zy-account-data').waitFor({ timeout: 30000 });
+  const sectionLabels = await settingsDialog.locator('nav button').allInnerTexts();
+  assert.ok(sectionLabels.findIndex(label => label.includes('账号与数据')) < sectionLabels.findIndex(label => label.includes('网络代理')), `section order = ${JSON.stringify(sectionLabels)}`);
+  checks.push('The account-and-data settings section exists and precedes network proxy');
+  // 分区列表来自宿主 `settings.section`，插件的注册（论文阅读）必须出现在同一个浮窗里。
+  const paperNav = settingsDialog.getByRole('button', { name: /论文阅读/ });
+  await paperNav.waitFor({ timeout: 30000 });
+  await paperNav.click();
+  await settingsDialog.locator('.zp-settings').waitFor({ timeout: 30000 });
+  assert.ok(await settingsDialog.locator('.zp-card').count() >= 2, '两个上游端点各一张卡');
+  if (!process.argv.includes('--bridge-only')) assert.match(await settingsDialog.innerText(), /锁定/, '要显示锁定的上游版本');
   await page.screenshot({ path: path.join(evidence, 'settings.png'), fullPage: true });
-  for (const group of await settings.all()) {
-    if (!await group.evaluate(node => node.open)) await group.locator(':scope > summary').click();
-    assert.ok(await group.locator(':scope > .zy-settings-body').isVisible());
-    assert.ok((await group.locator(':scope > .zy-settings-body').innerText()).trim().length > 0);
-    await group.locator(':scope > summary').click();
-  }
-  await page.locator('.zy-scroll').evaluate(node => { node.scrollTop = 0; });
+  // 网络代理已从「个人」页改注册进原生设置分区：同一个浮窗里必须能打开它。
+  const proxyNav = settingsDialog.getByRole('button', { name: /网络代理/ });
+  await proxyNav.first().click();
+  await settingsDialog.locator('.znp-switch').waitFor({ timeout: 30000 });
+  checks.push('The net-proxy panel lives in the native settings modal as its own section');
+  // Esc 关闭是宿主浮窗自己的行为，壳不另加一层。
+  await page.keyboard.press('Escape');
+  await settingsDialog.waitFor({ state: 'detached', timeout: 15000 });
+  checks.push('Settings open as the host native modal, with plugin settings.section contributions inside it');
   if (await page.locator('body').evaluate(body => body.hasAttribute('data-ds-dark-theme'))) {
     await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
     await page.waitForFunction(() => !document.body.hasAttribute('data-ds-dark-theme'));
   }
-  await page.screenshot({ path: path.join(evidence, 'personal-light.png'), fullPage: true });
+  await page.screenshot({ path: path.join(evidence, 'theme-light.png'), fullPage: true });
   await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
   await page.waitForFunction(() => document.body.hasAttribute('data-ds-dark-theme'));
   await page.waitForTimeout(250);
-  await page.screenshot({ path: path.join(evidence, 'personal-dark.png'), fullPage: true });
+  await page.screenshot({ path: path.join(evidence, 'theme-dark.png'), fullPage: true });
   await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
+  // 宿主设置快捷键直接打开同一个浮窗，且不会把用户带到任何产品页。
   await page.getByRole('button', { name: '今天', exact: true }).click();
   await page.keyboard.press('Control+Alt+Comma');
-  await page.locator('.zy-page[data-page=me]').waitFor();
-  await page.waitForFunction(() => !document.querySelector('[role="dialog"][aria-modal="true"]'));
+  await settingsDialog.waitFor({ timeout: 15000 });
+  assert.equal(await page.locator('.zy-page[data-page=today]').count(), 1, 'the host settings shortcut opens the modal without navigating away');
   await page.setViewportSize({ width: 760, height: 900 });
-  const models = page.locator('[data-settings-section="models"]');
-  await models.locator(':scope > summary').click();
+  const models = settingsDialog.getByRole('button', { name: /AI 服务|模型/ }).first();
+  if (await models.count() > 0) await models.click();
   await page.waitForTimeout(250);
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-  assert.equal(await page.locator('.zy-scroll').evaluate(node => node.scrollWidth > node.clientWidth), false, 'Personal forms fit a narrow column');
-  await page.screenshot({ path: path.join(evidence, 'personal-narrow.png'), fullPage: true });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'the settings modal fits a narrow window');
+  await page.screenshot({ path: path.join(evidence, 'settings-narrow.png'), fullPage: true });
   await page.setViewportSize({ width: 1440, height: 980 });
-  checks.push('Native settings providers expand inline inside Personal');
+  await page.keyboard.press('Escape');
+  await settingsDialog.waitFor({ state: 'detached', timeout: 15000 });
+  checks.push('Host settings shortcut opens the native modal without leaving the current page');
   // Every document load goes through the same onboarding handling: the host's
   // model step reappears per load whenever no model is configured.
   await reloadProduct(page);
@@ -486,11 +569,39 @@ try {
     // （原先遮蔽「我的课」；那个页面包并入「学习」之后已经没有 `zhiyun.courses.content`
     //  这个插槽了。用例要证的东西没变：外部插件能顶掉产品内容，并靠服务跳转。）
     await page.locator('[data-test-course-provider]').waitFor({ timeout: 30000 });
-    await page.getByRole('button', { name: '去学习', exact: true }).click();
+    await clickAfterOnboarding(page, page.getByRole('button', { name: '去学习', exact: true }));
     await page.locator('.zy-page[data-page=study]').waitFor();
+    await writeFile(patch, '- insert:\n    - id: test-native-panel\n      name: zhiyun-test-native-panel\n');
+    await page.waitForTimeout(800);
+    await reloadProduct(page);
+    const importAction = native.getByRole('button', { name: '导入会话', exact: true });
+    const overlay = page.locator('[data-test-native-overlay]');
+    const footer = page.locator('[data-test-native-footer]');
+    await overlay.waitFor({ state: 'attached', timeout: 30000 });
+    assert.equal(await importAction.isVisible(), false, 'native plugin action stays hidden on Today');
+    assert.equal(await overlay.isVisible(), false, 'ordinary overlay stays hidden on Today');
+    assert.equal(await footer.isVisible(), false, 'native footer stays hidden on Today');
+    await clickAfterOnboarding(page, page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }));
+    await importAction.waitFor();
+    await importAction.click();
+    await native.locator('[data-test-native-panel]').waitFor();
+    assert.equal(await page.locator('.zy-workbench-frame').getAttribute('data-workbench-page'), 'ask', 'native panel selection must not change the outer page');
+    assert.ok(await overlay.isVisible());
+    assert.ok(await footer.isVisible());
+    assert.ok(await overlay.evaluate(node => node.closest('.zy-workbench-native') !== null), 'ordinary shell.overlay must not portal to body');
+    assert.ok(await footer.evaluate(node => node.closest('.zy-workbench-native') !== null), 'native sidebar footer remains inside Ask');
+    const bounds = await overlay.evaluate(node => ({ overlay: node.getBoundingClientRect().toJSON(), ask: node.closest('.zy-workbench-native').getBoundingClientRect().toJSON() }));
+    assert.ok(bounds.overlay.left >= bounds.ask.left && bounds.overlay.right <= bounds.ask.right + 1, 'fixed native overlay is confined to Ask, not the outer rail');
+    await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '今天', exact: true }).click();
+    assert.equal(await overlay.isVisible(), false);
+    assert.equal(await footer.isVisible(), false);
+    await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
+    await native.locator('[data-test-native-panel]').waitFor();
+    checks.push('External loader plugin opens a native main panel from 导入会话 without changing outer navigation; ordinary overlay and footer stay inside Ask');
     await writeFile(patch, '[]\n');
     await page.waitForTimeout(800);
     await reloadProduct(page);
+    assert.equal(await page.locator('[data-test-native-panel], [data-test-native-overlay], [data-test-native-footer]').count(), 0, 'uninstalled native plugin leaves no content');
     assert.equal(await page.locator('[data-test-course-provider]').count(), 0, 'an uninstalled plugin must leave no rendered content');
     checks.push('Independent plugin shadows a product page and drives navigation through the product service');
 
@@ -501,40 +612,38 @@ try {
     // 页面包在 dsh.client.external 里声明了原语包，只停一半会让模块表缺行（require 落空），
     // 而漏停任何一个包都会让它继续注册插槽/挂样式，下面两条断言就会在 60 秒后超时。
     //
-    // 这张清单从各包自己的 cordis.patch.yml 解析出来，**不手写**：手写的那份在加「插件」页时
-    // 漏了一行，真机上就是超时失败。注意必须走 YAML 解析而不是正则抓第一个 `- id:` ——
-    // 壳的 patch 先改上游 `ui-sidebar` 再用 `insert:` 插自己，正则抓不到 `zhiyun-shell`。
+    // 从客户端构建清单推导，包含独立的 root bridge，不手写遗漏新包。
+    // 原生 ui-sidebar 本来就启用；停用产品不应再额外强制启用它。
     const productRows = [...productRowIds()].map(id => `- id: ${id}\n  disabled: true`);
-    await writeFile(patch, [...productRows, '- id: ui-sidebar\n  disabled: false\n'].join('\n') + '\n');
+    await writeFile(patch, productRows.join('\n') + '\n');
     await page.waitForTimeout(800);
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await settleHostOverlays(page);
+    await reloadNativeEventually(page);
     await page.waitForFunction(() => !document.body.hasAttribute('data-zhiyun'), undefined, { timeout: 60000 });
     assert.equal(await page.locator('style[data-zhiyun-style]').count(), 0);
     assert.equal(await page.locator('.zy-sidebar').count(), 0);
+    assert.equal(await page.locator('.zy-workbench-frame, style[data-zhiyun-bridge]').count(), 0, 'unloading restores native root and removes bridge styles');
     await page.screenshot({ path: path.join(evidence, 'disabled-host-sidebar.png'), fullPage: true });
     await writeFile(patch, '[]\n');
     await page.waitForTimeout(800);
-    await reloadProduct(page);
+    await reloadProductEventually(page);
     assert.equal(await page.locator('style[data-zhiyun-style]').count(), 1);
     checks.push('Disabling the product bundle retracts its styles and slots and restores the host sidebar');
   }
   assert.deepEqual(errors, [], 'No browser activation/render errors');
-  if (runtime) {
+  if (runtime && !process.argv.includes('--bridge-only')) {
     assert.ok(hostLog.includes('ZHIYUN_CLASSROOM_HOST_READY'), 'Business plugin injected the real classroom service in this host');
     checks.push('Independent business plugin injects the classroom source from the product profile');
     assert.ok(hostLog.includes('ZHIYUN_PARSER_HOST_READY'), 'Business plugin injected the parser in this host');
     checks.push('Independent business plugin injects the parser backed by host LLM and attachments');
-    // 讲义装配与无曰终审也必须在**真实宿主**里激活过：单测用的是假 ctx，
+    // 讲义装配（含习坎的全文润色）也必须在**真实宿主**里激活过：单测用的是假 ctx，
     // 而 `inject` 了一个不存在的服务只有在真宿主里才表现为永远 pending。
     assert.ok(hostLog.includes('ZHIYUN_LECTURE_HOST_READY'), 'Lecture assembler activated in this host');
-    assert.ok(hostLog.includes('ZHIYUN_FINAL_PASS_HOST_READY'), 'Final-pass agent service activated on the host agent runtime');
     assert.ok(hostLog.includes('ZHIYUN_STORE_HOST_READY'), 'Quiz, notes and knowledge services activated from the product profile');
-    checks.push('Lecture assembler and agent-runtime final pass activate from the product profile');
+    checks.push('Lecture assembler (incl. full-text polish) activates from the product profile');
     checks.push('Quiz, notes and knowledge storage services activate from the product profile');
   }
   const hostVersion = runtime?.version ?? lock.hostVersions.join(' / ');
-  const report = JSON.stringify({ checks, errors, hostVersion }, null, 2);
+  const report = JSON.stringify({ lane: process.argv.includes('--bridge-only') ? 'bridge-only' : 'full', checks, errors, hostVersion }, null, 2);
   await writeFile(path.join(evidence, 'host-report.json'), report);
   // 每个宿主版本各留一份：支持多个版本时，「哪一版过了」必须可查，不能被下次运行覆盖。
   await writeFile(path.join(evidence, `host-report-${hostVersion}.json`), report);
@@ -558,3 +667,4 @@ try {
     await Promise.race([new Promise(resolve => server.once('exit', resolve)), new Promise(resolve => setTimeout(resolve, 6000))]);
   }
 }
+

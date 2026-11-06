@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-search-fuzzy",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 Fuse.js 7.5.0（仅 basic 构建），把「学习」页分层检索那一层字面子串匹配扩展为「字面 ∪ 近似」双档匹配，强化式集成",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "fuse.js": "7.5.0"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "dsh-zhiyun-source-bilibili",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "B 站视频数据源（未完成、未接入 profile）：把一条 B 站视频解析成与智云课堂同形状的 { slides, subtitles }，供 ctx.zhiyunParser.parse() 直接消费",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./wbi": "./src/wbi.js",
+    "./subtitles": "./src/subtitles.js",
+    "./http": "./src/http.js",
+    "./channel": "./src/subtitle-channel.js",
+    "./triage": "./src/triage.js",
+    "./errors": "./src/errors.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json",
+    "./segment": "./src/segment.js",
+    "./frames": "./src/frames.js",
+    "./playurl": "./src/playurl.js",
+    "./lesson": "./src/lesson.js"
+  }
+}

@@ -1,4 +1,4 @@
-import { mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import css from './style.css';
 import { Paper } from './Paper.jsx';
 import { SettingsSection } from './SettingsSection.jsx';
@@ -28,10 +28,13 @@ export const inject = ['slots'];
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunPaperStyle', css, label: 'zhiyun: paper page styles' });
 
-  ctx.slots.inject('zhiyun.paper.content', () => ctx.slots.register(
-    { name: 'zhiyun.paper.content' },
-    Paper,
-  ));
+  // 直接注册给页面壳的 `page.content`（keyed）。
+  // 论文页沿用文章版心（与迁移前一致：`FULL_BLEED_PAGES` 只有 notes / docs）。
+  registerPageContent(ctx, {
+    id: 'paper',
+    label: '论文',
+    render: () => <Paper/>,
+  });
 
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',

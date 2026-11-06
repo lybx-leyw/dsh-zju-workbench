@@ -1,0 +1,252 @@
+/**
+ * 题库导出到笔记库：把选中的题目编码成一份 Markdown。
+ *
+ * # 为什么单独一个模块
+ *
+ * 编码是纯函数（题目数组 → 字符串），与「写到哪个路径」「重名怎么办」
+ * 是两件事。后者复用 `core-handout` 的 `exportMarkdown` —— 它已经做过
+ * 重名加后缀、目录层级、笔记页 `write` 的形状适配。这里不重复实现。
+ *
+ * # 为什么按知识点分组
+ *
+ * 题库本来就是「按知识点出题、按知识点复习」。导出的笔记如果要能用于复习，
+ * 目录结构必须跟这个心智模型一致：**一个知识点一个分组**，组内是它下面的题。
+ * 平铺成一个长列表，用户回到笔记里就找不回「这道题考的是哪一节」。
+ *
+ * # 为什么把答案和解析放在折叠块里
+ *
+ * 导出的主要用途是**再练一遍**。如果答案直接铺在题干下面，翻到题的同时
+ * 就看到了答案，这份笔记就只剩「阅读」价值。用 `<details>` 收起，
+ * 在 Obsidian / Typora 里默认折叠，想看再点。
+ */
+
+/** 题型的中文名。与界面用同一套词表，避免导出后叫法不一致。 */
+const TYPE_LABEL = {
+  mcq: '选择题',
+  trueFalse: '判断题',
+  cloze: '填空题',
+  shortAnswer: '简答题',
+  caseStudy: '案例题',
+};
+
+/** 策略的中文名。 */
+const STRATEGY_LABEL = {
+  recall: '基础巩固',
+  understand: '理解拓展',
+  apply: '应用变式',
+  explore: '综合探究',
+};
+
+/**
+ * 出处无法确认的题，落进这个名字的桶。
+ *
+ * 与 `quiz-engine-runtime` 里写进题库的占位名保持一致 —— 两处必须说同一句话，
+ * 否则用户会在题库里看到【未分组】、在笔记里看到另一个名字，以为是两批题。
+ *
+ * 这个桶**不是**「没归类」的兜底垃圾箱：它是一句断言 ——「这些题我们不知道
+ * 它们来自哪一节」。把它们塞进第一门课才是错的，因为那会让一份笔记看起来
+ * 分类正确、内容却混着别的科目。
+ */
+export const UNRESOLVED_LABEL = '【未分组】';
+
+/**
+ * 挖空标记 → 下划线。
+ *
+ * 导出的是「给人做的题」，不是给判分器用的数据。
+ * `{{c1::答案}}` 对读者是噪音，换成横线才像一份卷子。
+ */
+function renderStem(stem) {
+  // 统一成固定宽度的横线，不按答案长度伸缩。
+  //
+  // 试过「与答案等长」，但 1 个字和 2 个字的答案在视觉上几乎没差别，
+  // 3 个和 5 个却明显不同 —— 同一份导出里长短不齐反而更乱。
+  // 导出件是给人读的，整齐比精确更有用；答案在折叠块里，想核对随时能看。
+  return String(stem ?? '').replace(/\{\{c\d+::([^}:]*)(?:::[^}]*)?\}\}/g, () => '____');
+}
+
+/** 选择题选项 → 一行一个，带字母。 */
+function renderChoices(choices) {
+  if (!Array.isArray(choices) || !choices.length) return '';
+  return choices
+    .map(c => `- **${c.label}.** ${String(c.text ?? '').trim()}`)
+    .join('\n');
+}
+
+/**
+ * 单道题 → Markdown 片段。
+ *
+ * @param {object} question
+ * @param {number} index 组内序号（从 1 开始）
+ */
+function renderQuestion(question, index) {
+  const type = TYPE_LABEL[question.type] ?? question.type ?? '题目';
+  const strategy = question.strategy ? STRATEGY_LABEL[question.strategy] ?? question.strategy : '';
+  // 标题行只放「第几题 + 题型」，策略作为副标签 —— 太长会让目录难读
+  const heading = `### ${index}. ${type}${strategy ? `（${strategy}）` : ''}`;
+  const lines = [heading, ''];
+
+  lines.push(renderStem(question.stem).trim(), '');
+
+  const choices = renderChoices(question.choices);
+  if (choices) lines.push(choices, '');
+
+  // 答案与解析收进折叠块：导出后主要用于「再练一遍」，答案不该第一眼就看到
+  const answer = String(question.answer ?? '').trim();
+  const explanation = String(question.explanation ?? '').trim();
+  if (answer || explanation) {
+    lines.push('<details><summary>答案与解析</summary>', '');
+    if (answer) lines.push(`**答案：** ${answer}`, '');
+    if (explanation) lines.push(explanation, '');
+    lines.push('</details>', '');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * 把选中的题目编码成一份 Markdown。
+ *
+ * @param {object} params
+ * @param {Array<object>} params.questions  要导出的题目（调用方已按选中/筛选筛好）
+ * @param {string} [params.courseTitle]     用于标题；缺省时从题目里推
+ * @param {string} [params.title]           覆盖默认标题
+ * @returns {{markdown: string, count: number, groups: number}}
+ */
+export function questionsToMarkdown({ questions, courseTitle = '', title = '' } = {}) {
+  const list = Array.isArray(questions) ? questions.filter(Boolean) : [];
+  if (!list.length) return { markdown: '', count: 0, groups: 0 };
+
+  // 按知识点分组，组顺序按首次出现排 —— 保持用户在列表里看到的顺序
+  const groups = new Map();
+  for (const q of list) {
+    const key = q.pointTitle?.trim() || q.pointId || '未标注知识点';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(q);
+  }
+
+  const course = courseTitle.trim()
+    || list.find(q => q.courseTitle?.trim())?.courseTitle?.trim()
+    || '';
+  const heading = title.trim() || (course ? `${course} · 练习题` : '练习题');
+
+  const parts = [
+    `# ${heading}`,
+    '',
+    // 元信息放一行：导出时间让用户知道这份题是什么时候的
+    `> ${list.length} 道题 · ${groups.size} 个知识点 · 导出于 ${new Date().toISOString().slice(0, 10)}`,
+    '',
+  ];
+
+  for (const [pointTitle, items] of groups) {
+    parts.push(`## ${pointTitle}`, '');
+    items.forEach((q, i) => parts.push(renderQuestion(q, i + 1)));
+  }
+
+  return { markdown: parts.join('\n').trimEnd() + '\n', count: list.length, groups: groups.size };
+}
+
+/**
+ * 按来源节次拆分：一个节次一份文档。
+ *
+ * # 为什么按节次拆，而不是全塞进一个文件
+ *
+ * 题库是跨课程、跨节次的。把 8 道来自 3 个节次的题写进同一个 md，
+ * 用户回到笔记库里就没法按「这周上到哪一节」去找 —— 而笔记库本身是
+ * 按课程 / 节次组织的目录。拆开之后，导出件的位置与笔记库里其他内容一致。
+ *
+ * # 为什么只有一个节次时不拆
+ *
+ * 单节次拆出来的文件与自己那份完全一样，只是多了一层目录跳转。
+ * 判断标准是「**实际有几个节次**」，不是「有没有节次字段」。
+ *
+ * # 节次信息缺失时
+ *
+ * 归到一个 `未标注节次` 组。宁可多一个分组名，也不要让题目静默消失
+ * —— 用户勾了 8 道，导出只有 6 道，比看到「未标注节次」更困惑。
+ *
+ * @returns {Array<{courseTitle:string, lessonTitle:string, termName:string,
+ *                  markdown:string, count:number, groups:number, title:string}>}
+ */
+export function splitByLesson({ questions, termName = '', title = '' } = {}) {
+  const list = Array.isArray(questions) ? questions.filter(Boolean) : [];
+  if (!list.length) return [];
+
+  // 键 = 课程 id + 节次 id，**不是课程名 + 节次名**。
+  //
+  // 按名称分组有两个后果，都在真机上出过：
+  //   1. 同名不同 id 会被合并 —— 同一门课的不同学期都可能有一个「第3-5节」，
+  //      两节的内容被塞进同一份笔记；
+  //   2. 出处缺失的题会**静默并进第一门课** —— 只要它的 courseTitle 恰好与
+  //      别人相同。这一步看不出错，因为它「分组成功」了。
+  //
+  // id 是出处，名称只是显示。分组认 id，显示才用名称。
+  //
+  // 学期（termName）跟着**题目自己**走，而不是只认调用方传的那一个：
+  // 一次导出可能跨课程，而不同课程可能属于不同学期。用单一 termName
+  // 会把它们塞进同一层目录 —— 这也是「同一门课出现两个文件夹」的来源之一。
+  const buckets = new Map();
+  for (const q of list) {
+    const courseId = String(q.courseId ?? '').trim();
+    const subId = String(q.subId ?? '').trim();
+    const courseTitle = String(q.courseTitle ?? '').trim();
+    const lessonTitle = String(q.lessonTitle ?? '').trim();
+    // 出处未确认的题单独成桶：它不属于任何课程节次，导进任何一门课都是错的。
+    //
+    // 只有两个 id 都在时才按 id 分组；缺 id 的（老题、未归组的题）走一个
+    // 以【未分组】为名的桶 —— 用户一眼能看出「这些题的出处丢了」，
+    // 而不是在一份看起来正常的笔记里读到别的科目的题。
+    const unresolved = q.provenanceUnresolved === true || !courseId || !subId;
+    const key = unresolved ? 'unresolved' : courseId + '\u0000' + subId;
+    if (!buckets.has(key)) {
+      buckets.set(key, {
+        unresolved,
+        courseTitle: unresolved ? UNRESOLVED_LABEL : courseTitle,
+        lessonTitle: unresolved ? UNRESOLVED_LABEL : lessonTitle,
+        // 优先用题目带的学期；题目没有才退回调用方传入的。
+        // 未分组不写学期：给它编一个学期等于假装知道它属于哪一学期。
+        termName: unresolved ? '' : (String(q.termName ?? '').trim() || String(termName ?? '').trim()),
+        questions: [],
+      });
+    }
+    buckets.get(key).questions.push(q);
+  }
+
+  // 顺序按首次出现 —— 等于用户在列表里看到的顺序
+  return [...buckets.values()].map(bucket => {
+    const lesson = bucket.lessonTitle || '未标注节次';
+    const course = bucket.courseTitle;
+    // 笔记文件名加 `quiz-` 前缀，与讲义区分开。
+    //
+    // 讲义导出落的是 `学期/课程/节次`，题目落同一个名字的话：
+    //   1. 两者混在同一个目录里，看不出哪个是题、哪个是讲义
+    //   2. 同名时只会被加上「（2）」后缀，越导越乱
+    // 前缀只加在**节次这一层**，学期与课程层保持一致 ——
+    // 这样两者仍属于同一门课，只是文件本身分得清。
+    //
+    // 未分组那份不加前缀：它本来就不是「某一节的练习题」，
+    // `quiz-【未分组】` 会让它看起来像一个正常的节次名。
+    const noteLesson = bucket.unresolved ? lesson : `quiz-${lesson}`;
+    // 标题里带上课名 + 明确标记这是练习题。
+    // 只加路径前缀不够：用户在 Obsidian 里按内容搜到时，标题是最先看到的一行，
+    // 不写「练习」的话它和讲义看不出区别。
+    const docTitle = title.trim() && buckets.size === 1
+      ? title.trim()
+      : (bucket.unresolved
+        ? `${lesson} · 练习题的出处无法确认`
+        : (course ? `${course} · ${lesson} · 练习题` : `${lesson} · 练习题`));
+    const encoded = questionsToMarkdown({
+      questions: bucket.questions,
+      courseTitle: bucket.unresolved ? '' : course,
+      title: docTitle,
+    });
+    return {
+      courseTitle: course,
+      // 写进笔记库的是带前缀的名字
+      lessonTitle: noteLesson,
+      termName: bucket.termName,
+      unresolved: bucket.unresolved,
+      title: docTitle,
+      ...encoded,
+    };
+  });
+}

@@ -1,0 +1,302 @@
+/*
+ * 内置最小播放器的样式。
+ *
+ * 源：ref/OpenMAIC/lib/standalone-player/player.css:12-87（根容器高度、字体栈、
+ *     字幕条 .caption-bar / .caption-text 的断点行为）
+ *
+ * 上游的 player.css 还 `@import 'tailwindcss'` 并扫描渲染器产物 —— 那是编译期
+ * 的事，归页面包。导出层只带这一份手写 CSS：它必须自足（单文件、无外链字体），
+ * 而且只作用于 `#openmaic-player` 里的元素（`srcdoc` 有独立文档，不会污染外层）。
+ */
+
+html,
+body,
+#openmaic-player {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #0f172a;
+  color: #0f172a;
+}
+
+.omc-player {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.omc-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.omc-frame {
+  position: relative;
+  background: #fff;
+  box-shadow: 0 20px 45px rgb(0 0 0 / 0.35);
+  overflow: hidden;
+}
+
+.omc-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
+.omc-canvas .omc-el {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.omc-canvas .omc-text {
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.omc-canvas .omc-text p {
+  margin: 0;
+}
+
+.omc-canvas .omc-text ul,
+.omc-canvas .omc-text ol {
+  margin: 0;
+  padding-inline-start: 1.4em;
+}
+
+.omc-canvas .omc-text table {
+  border-collapse: collapse;
+}
+
+.omc-canvas .omc-text td,
+.omc-canvas .omc-text th {
+  border: 1px solid #cbd5e1;
+  padding: 4px 8px;
+}
+
+.omc-canvas img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.omc-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.omc-media {
+  width: 100%;
+  height: 100%;
+  background: #0f172a;
+}
+
+/* 非幻灯片场景：测验 / 项目 / 不可用 */
+.omc-panel {
+  box-sizing: border-box;
+  width: min(46rem, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: 1.75rem 2rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 45px rgb(0 0 0 / 0.35);
+  font-size: 16px;
+  line-height: 1.65;
+  color: #1e293b;
+}
+
+.omc-panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.omc-panel h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.omc-panel p {
+  margin: 0 0 0.75rem;
+}
+
+.omc-question {
+  margin: 0 0 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.omc-question:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.omc-option {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.omc-option:hover {
+  background: #f1f5f9;
+}
+
+.omc-option input {
+  margin-top: 0.3rem;
+}
+
+.omc-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.omc-button {
+  border: 0;
+  border-radius: 0.45rem;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  cursor: pointer;
+}
+
+.omc-button[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.omc-result {
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.omc-result[data-correct='true'] {
+  color: #15803d;
+}
+
+.omc-result[data-correct='false'] {
+  color: #b91c1c;
+}
+
+.omc-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+/* 底部控制条 */
+.omc-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #0b1120;
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+.omc-bar button {
+  border: 1px solid #334155;
+  border-radius: 0.4rem;
+  background: #1e293b;
+  color: inherit;
+  font: inherit;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+}
+
+.omc-bar button[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.omc-dots {
+  display: flex;
+  gap: 0.35rem;
+  flex: 1 1 auto;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.omc-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #334155;
+  cursor: pointer;
+}
+
+.omc-dot[aria-current='true'] {
+  background: #60a5fa;
+}
+
+/* 字幕条：宽屏浮在场景上，窄屏/矮屏给固定高度的一条（源：player.css:38-87） */
+.omc-caption {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.75rem;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding-inline: 1.5rem;
+  pointer-events: none;
+}
+
+.omc-caption span {
+  max-width: 48rem;
+  border-radius: 0.5rem;
+  background: rgb(15 23 42 / 0.8);
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.625;
+  color: #fff;
+}
+
+@media (max-width: 639px), (max-height: 499px) {
+  .omc-caption {
+    position: static;
+    flex: none;
+    align-items: center;
+    min-height: 4rem;
+    padding: 0.375rem 0.75rem;
+    background: #0f172a;
+  }
+
+  .omc-caption span {
+    background: none;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.375;
+  }
+}

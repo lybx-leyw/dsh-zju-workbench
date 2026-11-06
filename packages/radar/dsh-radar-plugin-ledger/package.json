@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-plugin-ledger",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 @zseven-w/dsh-harbor@0.1.0-rc.4，把「每包会做什么（13 项能力 + file:line 证据）+ 声明与检出对账」接进「插件」页（dsh-zhiyun-page-plugins）已有的每一行，强化现有 buildView（只答谁依赖谁）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@zseven-w/dsh-harbor": "0.1.0-rc.4"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

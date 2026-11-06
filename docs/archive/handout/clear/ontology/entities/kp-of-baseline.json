@@ -1,0 +1,10 @@
+{
+  "basis": "某次生成后由基线还原出的知识点集合中的一条",
+  "id": "kp-of-baseline",
+  "label": "基线还原出的知识点",
+  "provenance": {
+    "kind": "named",
+    "ref": "packages/dsh-zhiyun-core-knowledge/src/knowledge-points.js"
+  },
+  "type": "knowledge_point"
+}

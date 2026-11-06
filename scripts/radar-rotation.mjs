@@ -37,6 +37,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(HERE, '..');
 const STATE_PATH = join(REPO_ROOT, 'docs/ecosystem-radar/rotation-state.md');
 
+/** 上海相对 UTC 的偏移（毫秒）。见 `nowStamp` 的说明。 */
+const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
+
 /** 组序：下标即 `day_of_year % 3` 的结果。 */
 export const GROUPS = ['A', 'B', 'C'];
 
@@ -112,14 +115,18 @@ function emptyRuns() {
  */
 export function pickGroup(state, today) {
   const todayText = isoDay(today);
-  const stale = !state?.lastRunDay || !state?.lastGroup;
+  // `lastRunDay` 晚于今天 = 记录本身不可能（旧版 `toISOString()` 在上海凌晨写的是**前一天**，
+  // 但它同时把 `--today` 也按 UTC 算，于是两边互相错开、谁都不像个基准）。
+  // 这种状态不能信，按「状态不可用」处理并回落公式 —— 宁可多跑一轮，也不要拿脏基准去去重。
+  const future = Boolean(state?.lastRunDay) && String(state.lastRunDay) > todayText;
+  const stale = !state?.lastRunDay || !state?.lastGroup || future;
   const sameDay = state?.lastRunDay === todayText;
 
   // 规则 3 / 规则 1：状态不可用，或跨天 → 回落到原公式。
   if (stale || !sameDay) {
     return {
       group: formulaGroup(today),
-      rule: stale ? 'formula(stale-state)' : 'formula(new-day)',
+      rule: stale ? (future ? 'formula(future-state)' : 'formula(stale-state)') : 'formula(new-day)',
       stale,
       exhausted: false,
       ranToday: [],
@@ -146,6 +153,20 @@ export function pickGroup(state, today) {
   return { group, rule: 'same-day(exhausted)', stale: false, exhausted: true, ranToday: [...ranSet] };
 }
 
+/** 「现在」的**上海时刻**（`YYYY-MM-DD HH:MM`，+08:00 固定偏移）。
+ *
+ * 为什么要固定偏移而不是 `toISOString()`：`last_run_at` 的日期被当作**上海日**
+ * 与「今天」比较（见 `pickGroup`），而 `toISOString()` 给的是 **UTC** 时刻。
+ * 两者在 UTC+8 的 00:00–08:00 差一天 —— 凌晨场（00:00 / 03:00 / 06:00）写进去后，
+ * 下一轮会把「今天」判成新的一天，从而**绕过当日去重**、按公式重取组。
+ * 也不要用 `toLocaleString()`：那会随宿主的 `TZ` 漂移，同一份状态在不同机器上读法不同。
+ * 固定 +08:00 与 `parseDay` 的 UTC 日期解析口径互补：写进去是上海日，读出来也是上海日。
+ * （中国 1991 年后无夏令时，固定偏移与 `Asia/Shanghai` 等价；不引 `Intl` 以免依赖 ICU 数据。） */
+export function nowStamp(instant = Date.now()) {
+  const shanghai = new Date(Number(instant) + SHANGHAI_OFFSET_MS);
+  return `${isoDay(shanghai)} ${String(shanghai.getUTCHours()).padStart(2, '0')}:${String(shanghai.getUTCMinutes()).padStart(2, '0')}`;
+}
+
 function isoDay(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
@@ -157,26 +178,57 @@ function isoDay(date) {
 export function writeState({ group, at, note = '' }, statePath = STATE_PATH) {
   const text = readFileSync(statePath, 'utf8');
   const state = readState(statePath);
-  const atText = at ?? new Date().toISOString().slice(0, 16).replace('T', ' ');
+  const atText = at ?? nowStamp();
   const dayText = atText.slice(0, 10);
 
   const runs = { ...emptyRuns(), ...(state.groupRuns ?? {}) };
   runs[group] = (runs[group] ?? 0) + 1;
 
-  let out = text
-    .replace(LAST_GROUP_RE, `| \`last_group\` | \`${group}\` |`)
-    .replace(LAST_RUN_RE, `| \`last_run_at\` | \`${atText}\` |`);
-
-  const runsCell = GROUPS.map((g) => `${g}=${runs[g]}`).join(', ');
-  out = out.replace(GROUP_RUNS_RE, `| \`group_runs\`（累计） | ${runsCell} |`);
+  // ⚠ 只改「## 状态」一节以内的行。
+  //
+  // 为什么必须限定区段：文件顶部有一张**说明表**，它的第 2 行就是
+  // `| \`last_run_at\` | 最近一次跑的时间（\`YYYY-MM-DD HH:MM\`，UTC+8） | … |`。
+  // 旧写法用全文 `replace()` + 无 `m` 标志，只要说明行里出现一个**反引号包裹的真实时刻**
+  // （本轮的 `\`2026-10-28 00:05\`` 恰好满足），正则就会先在说明行上命中，
+  // 把「取值」写进说明、而真正的取值行**原封不动** —— 2026-10-28 实跑发生过一次：
+  // `last_group` 改了、`last_run_at` 与 `group_runs` 都没改，状态就此自相矛盾。
+  //
+  // 同样的坑 r85 / r86 在**读**侧踩过（说明表被读成取值），这里在**写**侧再踩一次。
+  // 结论：读写两侧都必须以「同一节」为边界，不能靠正则的运气。
+  const lines0 = text.split('\n');
+  const start = lines0.findIndex((l) => /^##\s*状态\s*$/.test(l));
+  const isStateRow = (l) => /^\|\s*\`(last_group|last_run_at|group_runs)\`/.test(l);
+  let inState = false;
+  const lines = lines0.map((l) => {
+    if (start >= 0) {
+      if (l === lines0[start]) { inState = true; return l; }
+      if (inState && /^##\s/.test(l)) inState = false;
+    } else {
+      // 没有 `## 状态` 节（手写的旧文件）→ 退回「第一条取值形状的行」
+      inState = isStateRow(l);
+    }
+    if (!inState) return l;
+    if (isStateRow(l) && l.startsWith('| \`last_group\`') && LAST_GROUP_RE.test(l)) {
+      return l.replace(LAST_GROUP_RE, `| \`last_group\` | \`${group}\` |`);
+    }
+    if (isStateRow(l) && l.startsWith('| \`last_run_at\`') && LAST_RUN_RE.test(l)) {
+      return l.replace(LAST_RUN_RE, `| \`last_run_at\` | \`${atText}\` |`);
+    }
+    if (isStateRow(l) && l.startsWith('| \`group_runs\`') && GROUP_RUNS_RE.test(l)) {
+      const runsCell = GROUPS.map((g) => `${g}=${runs[g]}`).join(', ');
+      return l.replace(GROUP_RUNS_RE, `| \`group_runs\`（累计） | ${runsCell} |`);
+    }
+    return l;
+  });
+  let out = lines.join('\n');
 
   // 流水表追加在最末一行数据行之后。
-  const lines = out.split('\n');
+  const outLines = out.split('\n');
   let lastData = -1;
-  for (let i = 0; i < lines.length; i += 1) if (RUN_ROW_RE.test(lines[i])) lastData = i;
+  for (let i = 0; i < outLines.length; i += 1) if (RUN_ROW_RE.test(outLines[i])) lastData = i;
   const row = `| ${atText} | ${group} | ${note || '自动记录'} |`;
-  if (lastData >= 0) lines.splice(lastData + 1, 0, row);
-  out = lines.join('\n');
+  if (lastData >= 0) outLines.splice(lastData + 1, 0, row);
+  out = outLines.join('\n');
 
   writeFileSync(statePath, out, 'utf8');
   return { group, at: atText, groupRuns: runs };
@@ -212,7 +264,9 @@ function main(argv) {
     return 0;
   }
 
-  const today = args.today ? parseDay(args.today) : new Date();
+  // 「今天」也必须是**上海日**：`new Date()` 给的是 UTC 日，与 `last_run_at` 的上海日
+  // 在 00:00–08:00 错开一天，会让 CLI 与状态文件互相判成「跨天」。
+  const today = args.today ? parseDay(args.today) : parseDay(nowStamp().slice(0, 10));
   if (!today) { console.error(`无效日期：${args.today}`); return 1; }
 
   if (args.commit) {

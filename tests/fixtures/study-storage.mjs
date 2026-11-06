@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { root, lock } from '../../scripts/profile.mjs';
-import * as knowledge from '../../packages/dsh-zhiyun-knowledge/src/index.js';
+import * as knowledge from '../../packages/dsh-zhiyun-core-knowledge/src/index.js';
 export async function mountKnowledge(directory) {
   const anchor = path.join(root, '.runtime', `dsh-${lock.preferredHostVersion ?? lock.hostVersions[0]}`);
   const require = createRequire(path.join(anchor, 'package.json'));

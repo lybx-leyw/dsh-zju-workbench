@@ -1,0 +1,153 @@
+/*
+ * 课堂舞台（dsh-zhiyun-core-classroom-stage）的样式。
+ *
+ * 选择器一律 `.zyc-` 前缀，且所有选择器都挂在 `.zyc-stage` 之下：工作台外壳的
+ * `.zy-` 命名空间与渲染层的 `.zyc-root` 都不在射程内（规范 §5）。只写定位与
+ * 尺寸，颜色尽量走变量，方便主题覆盖。
+ *
+ * 源：ref/OpenMAIC/lib/interactive/logical-viewport.ts:1-29（定尺视口，元素按比例缩放进槽位）
+ */
+
+.zyc-stage {
+  --zyc-stage-board-bg: #ffffff;
+  --zyc-stage-board-border: rgba(15, 23, 42, 0.14);
+  --zyc-stage-board-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  line-height: 1.45;
+}
+
+.zyc-stage-viewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.zyc-stage-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(15, 23, 42, 0.45);
+  font-size: 13px;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.04) 0 12px,
+    transparent 12px 24px
+  );
+}
+
+/* ── 高亮（spotlight） ─────────────────────────────────────────────────── */
+
+.zyc-stage-spotlight {
+  position: absolute;
+  border-radius: 10px;
+  pointer-events: none;
+  transition: left 180ms ease, top 180ms ease, width 180ms ease, height 180ms ease;
+  z-index: 2;
+}
+
+.zyc-stage-spotlight--full {
+  inset: 0;
+  border-radius: 0;
+}
+
+/* ── 激光笔（laser） ───────────────────────────────────────────────────── */
+
+.zyc-stage-laser {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: left 120ms ease, top 120ms ease;
+  z-index: 3;
+}
+
+/* ── 白板 ──────────────────────────────────────────────────────────────── */
+
+.zyc-stage-board {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  border: 1px solid var(--zyc-stage-board-border);
+  border-radius: 10px;
+  background: var(--zyc-stage-board-bg);
+  box-shadow: var(--zyc-stage-board-shadow);
+  overflow: hidden;
+  z-index: 4;
+}
+
+.zyc-stage-board-el {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.zyc-stage-board-shape,
+.zyc-stage-board-line {
+  overflow: visible;
+}
+
+.zyc-stage-board-text {
+  color: #333333;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  word-break: break-word;
+}
+
+.zyc-stage-board-text p {
+  margin: 0;
+}
+
+.zyc-stage-board-latex {
+  display: flex;
+  align-items: center;
+  color: #000000;
+  font-family: "Cambria Math", "Latin Modern Math", serif;
+  white-space: pre-wrap;
+}
+
+.zyc-stage-board-code {
+  margin: 0;
+  padding: 8px 10px;
+  overflow: auto;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #1f2937;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.zyc-stage-board-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.zyc-stage-board-table td {
+  padding: 4px 6px;
+  border: 1px solid #eeece1;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.zyc-stage-board-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(91, 155, 213, 0.6);
+  border-radius: 8px;
+  color: rgba(15, 23, 42, 0.55);
+  font-size: 12px;
+}
+
+.zyc-stage-board-chart-kind {
+  font-weight: 600;
+  color: #5b8def;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

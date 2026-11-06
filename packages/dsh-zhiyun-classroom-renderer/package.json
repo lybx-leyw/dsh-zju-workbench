@@ -1,0 +1,49 @@
+{
+  "name": "dsh-zhiyun-classroom-renderer",
+  "version": "0.1.0",
+  "description": "课堂渲染层：上游 @openmaic/renderer 0.2.0 的构建产物原样 vendored（PPTist 风格 Slide JSON 的只读画布），附带浏览器半边产物 lib/client.js",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./view": "./src/view/slide.jsx",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "sideEffects": false,
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "external": [
+        "react",
+        "react/jsx-runtime"
+      ],
+      "bundlesDependencies": true
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "dsh-zhiyun-classroom-dsl": "0.1.0",
+    "dsh-zhiyun-classroom-geometry": "0.1.0",
+    "katex": "0.16.38"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  }
+}

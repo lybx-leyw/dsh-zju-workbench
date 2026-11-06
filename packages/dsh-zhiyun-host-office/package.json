@@ -1,0 +1,16 @@
+{
+  "name": "dsh-zhiyun-host-office",
+  "version": "0.1.0",
+  "description": "智云 Pro 的 Office 接入层：锁版引入 dsh-univer-office（表格 / 文档 / 幻灯片 / 多维表格 / 画布，14 个 agent 工具）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "dependencies": {
+    "dsh-univer-office": "0.3.7"
+  },
+  "//note": "⚠️ 本条依赖必须装在本包自己的 node_modules 下 —— tests/univer-office.test.mjs 断言这件事，理由是 dsh-client-modules 的 resolveMeta(loaderName, baseUrl) 以「拥有该 Loader 行的树」为解析基准。但根 package.json 的 workspaces 是 packages/*，npm 默认把依赖提升到仓根 node_modules，断言因此会红。安装策略见 tests/univer-office.test.mjs 顶部说明；改动依赖后请复核 npm ls dsh-univer-office。"
+}

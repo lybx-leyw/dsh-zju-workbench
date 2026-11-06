@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { root, lock } from '../scripts/profile.mjs';
-import * as plugin from '../packages/dsh-zhiyun-classroom/src/index.js';
+import * as plugin from '../packages/dsh-zhiyun-source-classroom/src/index.js';
 
 for (const version of lock.hostVersions) test(`actual Cordis ${version}: service mounts, isolates profiles and retracts on disposal`, async t => {
   const modulePath = path.join(root, '.runtime', `dsh-${version}`, 'node_modules', '@deepseek-ai', 'cordis', 'lib', 'index.js');

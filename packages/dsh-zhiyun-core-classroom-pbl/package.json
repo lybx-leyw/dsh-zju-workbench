@@ -1,0 +1,28 @@
+{
+  "name": "dsh-zhiyun-core-classroom-pbl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "智云 Pro「项目式学习」领域包：把 OpenMAIC 的 lib/pbl/v2（planner / evaluator）与 eval/pbl-v2-planner 的评分量规搬成 ctx.zhiyunClassroomPbl（plan / buildPlan / rubric / grade / briefing）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./planner": "./src/planner.js",
+    "./project": "./src/project.js",
+    "./rubric": "./src/rubric.js",
+    "./grade": "./src/grade.js",
+    "./briefing": "./src/briefing.js",
+    "./prompts": "./src/prompts.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "src/",
+    "fixtures/",
+    "cordis.patch.yml"
+  ]
+}

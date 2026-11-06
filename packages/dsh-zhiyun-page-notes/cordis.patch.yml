@@ -2,9 +2,9 @@
 #
 # 本包同时是**页面**与**笔记库的存储半边**：
 #   - 页面在 zhiyun.notes.content 插槽（正文/列表/反链）；
-#   - 存储把笔记落成普通的 .md 文件，并推给 dsh-zhiyun-vault 建索引。
+#   - 存储把笔记落成普通的 .md 文件，并推给 dsh-zhiyun-core-vault 建索引。
 #
-# 依赖 dsh-zhiyun-vault 的索引能力，但**不写进 inject**：
+# 依赖 dsh-zhiyun-core-vault 的索引能力，但**不写进 inject**：
 # 索引器缺席时页面只是没有反链，正文仍可读写（惰性 ctx.get）。
 - insert:
     - id: zhiyun-page-notes

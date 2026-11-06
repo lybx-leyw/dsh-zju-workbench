@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-code-highlight",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 highlight.js（BSD-3-Clause，零依赖、core 可按需注册语言），把「论文」页 / 「讲义」页 / 「笔记」页的围栏代码块从「纯文本等宽显示」改为 token 级高亮（强化式集成，底层更优）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "highlight.js": "11.12.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

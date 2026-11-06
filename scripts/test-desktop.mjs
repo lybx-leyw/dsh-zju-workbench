@@ -17,6 +17,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hostLaunch, startHost } from '../apps/desktop/src/boot.js';
@@ -90,10 +91,50 @@ if (!existsSync(electronBin)) {
     console.error(`✗ Electron 启动失败：\n${error.message}`);
     process.exitCode = 1;
   }
+
+  /**
+   * 第三层：**窗口到底有没有显示出来**。
+   *
+   * 这一层以前是缺的（上面那两层只看"进程能不能起"和"宿主地址解析得出来"），
+   * 于是「窗口从不显示」这类故障会一路绿灯，直到用户报"一打开就白屏"。
+   * 而"白屏"和"窗口压根没 show"在用户眼里是同一件事，排查却完全不同。
+   *
+   * `ZHIYUN_DESKTOP_SMOKE=1` 让壳走一遍真实启动 → 加载产品页 → 退出，
+   * 并把 `visible` 写进 `launcher.log`。
+   *
+   * ⚠️ 不能读 `spawnSync` 的 stdout：`launch.mjs` 用 `stdio: 'inherit'` 把
+   *    Electron 的输出直接接到终端，捕获回来是空的。**日志文件是唯一可靠来源**
+   *    （这也是排查时必须先找到它的原因）。
+   */
+  const logFile = process.env.ZHIYUN_DESKTOP_LOG
+    || path.join(process.env.APPDATA ?? '', 'Zhiyun Pro Launcher', 'launcher.log');
+  let before = '';
+  try { before = await readFile(logFile, 'utf8'); } catch { /* 第一次跑，没有日志 */ }
+
+  spawnSync(process.execPath, ['src/launch.mjs'], {
+    cwd: path.join(root, 'apps/desktop'),
+    timeout: 180_000,
+    windowsHide: true,
+    env: { ...process.env, ZHIYUN_DESKTOP_SMOKE: '1' },
+  });
+
+  let after = '';
+  try { after = await readFile(logFile, 'utf8'); } catch { /* 没写出来 */ }
+  // 只看这一次运行新追加的部分，避免被历史记录里的 OK 蒙混过关
+  const fresh = after.startsWith(before) ? after.slice(before.length) : after;
+  const line = fresh.split(/\r?\n/).find((row) => row.includes('smoke ')) ?? '';
+  // 三个条件同时成立才算真的"进去了"：窗口可见、正文非空。
+  // 只看 `visible` 会放过"窗口在但页面是空的"那一种白屏。
+  if (/smoke OK .*visible=true.*text=\d+/.test(line)) {
+    checks.push('窗口真的显示出来了，且页面有内容（smoke visible=true text>0）');
+  } else {
+    console.error(`✗ 窗口/页面没有正常显示（这是"一打开就白屏"的根因）：\n${line || fresh.slice(-600) || '(日志里没有本次运行的 smoke 记录)'}`);
+    process.exitCode = 1;
+  }
 }
 
 for (const check of checks) console.log(`PASS ${check}`);
-if (process.exitCode !== 1) console.log('\nPASS 桌面壳：起实例 → 解析地址 → 地址可用 → 收干净');
+if (process.exitCode !== 1) console.log('\nPASS 桌面壳：起实例 → 解析地址 → 地址可用 → 窗口可见 → 收干净');
 // `fetch` 的 keep-alive 连接会让事件循环不退出（表现是"脚本跑完了却挂在那里"）。
 // 显式退出：走到这里该验的都验完了，没有需要在退出前收尾的东西。
 process.exit(process.exitCode ?? 0);

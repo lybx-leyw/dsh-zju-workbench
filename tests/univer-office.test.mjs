@@ -30,12 +30,12 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { apply, inject, name } from '../packages/dsh-zhiyun-univer-office/src/index.js';
-import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from '../packages/dsh-zhiyun-univer-office/src/upstream.js';
+import { apply, inject, name } from '../packages/dsh-zhiyun-host-office/src/index.js';
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from '../packages/dsh-zhiyun-host-office/src/upstream.js';
 import { locateHost } from '../scripts/profile.mjs';
 
 const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
-const pkgDir = path.join(root, 'packages', 'dsh-zhiyun-univer-office');
+const pkgDir = path.join(root, 'packages', 'dsh-zhiyun-host-office');
 
 const readJson = (absolute) => JSON.parse(readFileSync(absolute, 'utf8'));
 
@@ -49,8 +49,8 @@ test('锁版：声明、预期、实际安装三者一致，且不允许语义�
   assert.match(declared, /^\d+\.\d+\.\d+$/, '依赖版本必须锁定为精确版本');
 
   // 真正装到的是哪一份，只有运行时才知道（lockfile、覆盖、npm link 都能改它）。
-  // 从插件自己的位置解析：该包只装在 `packages/dsh-zhiyun-univer-office/node_modules` 下。
-  const require = createRequire(new URL('../packages/dsh-zhiyun-univer-office/package.json', import.meta.url));
+  // 从插件自己的位置解析：该包只装在 `packages/dsh-zhiyun-host-office/node_modules` 下。
+  const require = createRequire(new URL('../packages/dsh-zhiyun-host-office/package.json', import.meta.url));
   const installedFile = require.resolve(`${UPSTREAM_PACKAGE}/package.json`);
   assert.equal(readJson(installedFile).version, UPSTREAM_VERSION);
 
@@ -58,7 +58,7 @@ test('锁版：声明、预期、实际安装三者一致，且不允许语义�
   //    依赖装在 profile 根或仓根都会让这一行解不开。
   const normalized = installedFile.split(path.sep).join('/');
   assert.ok(
-    normalized.includes(`/packages/dsh-zhiyun-univer-office/node_modules/${UPSTREAM_PACKAGE}/`),
+    normalized.includes(`/packages/dsh-zhiyun-host-office/node_modules/${UPSTREAM_PACKAGE}/`),
     `上游应解析到本插件自己的 node_modules，实际解析到 ${installedFile}`,
   );
 });

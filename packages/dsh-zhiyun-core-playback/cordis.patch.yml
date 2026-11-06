@@ -1,0 +1,11 @@
+# dsh bundle patch：把回放对齐能力插进 profile 的层栈。
+#
+# 本包只有**纯计算**（对齐结果 / Δ 探针），宿主半边只把函数挂成
+# `zhiyunPlayback` 服务，没有任何生命周期行为。
+#
+# ⚠️ 与 dsh-zhiyun-core-player 同一条理由：它必须作为 Loader entry 存在。
+#    bundle 按条目加载，没有 `name` 的模块不是合法插件，放进 profile
+#    会让整个工作台起不来（CONTRIBUTING 3.1）。
+- insert:
+    - id: zhiyun-playback
+      name: dsh-zhiyun-core-playback

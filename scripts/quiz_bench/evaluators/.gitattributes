@@ -1,0 +1,2 @@
+# Vendor digests refer to upstream bytes on every checkout platform.
+vendor/benchmarker/** -text

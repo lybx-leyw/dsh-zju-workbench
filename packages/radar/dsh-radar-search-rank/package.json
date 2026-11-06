@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-search-rank",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 minisearch@7.1.2，把「学习」页 §Layered 检索的「纯字面 + 按扫描顺序」换成「字段加权 + 前缀 + 相关度排序」，语义仍由 layered-search.js 决定（强化式集成，B 类能力提取 + 封装）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "minisearch": "7.1.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

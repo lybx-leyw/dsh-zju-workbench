@@ -81,6 +81,21 @@ export const PLAN_PROMPT = [
 ].join('\n');
 
 /**
+ * 一条原文送进模型时用的**标题**。
+ *
+ * ⚠️ 它同时是回包归属的键：模型照抄 `sourceTitle` 回来，宿主拿它去 `byTitle` 查。
+ * 早先只有 `toPlanInput` 在这里截到 80 字符，而 `byTitle` 用**完整标题**做键 ——
+ * 标题超过 80 字的条目，模型抄回截断后的标题，查不到，卡片全被算成"对不上原文"
+ * 并静默丢弃。所以这个截断**必须只有一个落点**，两边都调它。
+ *
+ * @param entry - 本地留存的条目。
+ * @returns 送模型用、也是回包比对用的标题。
+ */
+export function planTitle(entry) {
+  return String(entry?.title ?? '').slice(0, MAX_TITLE);
+}
+
+/**
  * 把中转站条目整理成送模型的形状。
  *
  * 只送模型需要的字段；`text` 超长截断并**在标题里标注**，让模型知道内容不全
@@ -95,7 +110,8 @@ export function toPlanInput(entries) {
     const clipped = text.length > PLAN_TEXT_LIMIT;
     return {
       kind: String(entry.kind ?? 'note'),
-      title: String(entry.title ?? '').slice(0, MAX_TITLE),
+      // 与回包比对用同一个函数取标题，见 `planTitle` 上的注释
+      title: planTitle(entry),
       text: clipped ? `${text.slice(0, PLAN_TEXT_LIMIT)}\n…（原文过长，已截断）` : text,
       at: Number.isFinite(entry.at) ? new Date(entry.at * 1000).toISOString() : null,
     };
@@ -258,13 +274,19 @@ export class PlanStore {
    * **覆盖同一前缀的旧结果**：内容没变而卡片措辞更新时，用户要看到最新那份，
    * 而不是攒一堆历史版本。
    *
+   * ⚠️ 重拆会**重置完成状态**（新卡片是新的数组）。这是有意的：重拆后卡片本身
+   * 可能已经不同，"第 2 张做完了"不再对应同一件事，继承旧勾选会标错。
+   *
    * @param prefix - 源条目前缀。
    * @param cards - 卡片数组。
    * @param meta - `{ model }`。
    */
   record(prefix, cards, meta = {}) {
     this.state.plans[prefix] = {
-      cards,
+      // **拷贝**而不是存引用：`setCardDone` 会就地替换 `cards[i]`，若这里留着调用方
+      // 的数组，改一张卡就会连带改掉调用方手上的那份（测试里表现为"另一条用例的
+      // 数据被上一条改坏了"，生产上则是同一批卡片被两处同时持有时行为不可预期）。
+      cards: cards.map((card) => ({ ...card })),
       plannedAt: Math.floor(Date.now() / 1000),
       model: meta.model ?? null,
     };
@@ -278,9 +300,68 @@ export class PlanStore {
     this.save();
   }
 
+  /**
+   * 勾选 / 取消**某一张卡片**的完成。
+   *
+   * 卡片没有自己的 id（它们是模型产出的数组元素），所以用 `prefix + 下标` 定位。
+   * 这个组合在同一份映射里稳定 —— 只要不重拆，下标就对应同一张卡。
+   *
+   * 完成状态存在 `plans.json` 里（`cards[i].done`），**不写回中转站**：
+   * 那边是只读的，而且"我做完了"是本地的事实，不该变成别人的数据。
+   *
+   * @param prefix - 源条目前缀。
+   * @param index - 卡片下标。
+   * @param done - 是否完成。
+   * @param now - 当前毫秒时间戳。
+   * @returns 改后的卡片，或 null（前缀/下标不存在）。
+   */
+  setCardDone(prefix, index, done, now = Date.now()) {
+    const entry = this.state.plans[prefix];
+    if (!entry || !Array.isArray(entry.cards)) return null;
+    const at = Number(index);
+    if (!Number.isInteger(at) || at < 0 || at >= entry.cards.length) return null;
+    const seconds = Math.floor(now / 1000);
+    entry.cards[at] = {
+      ...entry.cards[at],
+      done: Boolean(done),
+      // 与本地规划同一口径：取消完成要清掉 doneAt，否则"做完了吗"有两个答案
+      doneAt: done ? seconds : null,
+    };
+    this.save();
+    return entry.cards[at];
+  }
+
   /** 全部映射，页面用来标"已拆过"。 */
   all() {
     return this.state.plans;
+  }
+
+  /**
+   * 把映射的**键**从旧口径换成新口径（一次性迁移）。
+   *
+   * 去重键从「拼起来截 40 字」改成「内容指纹」之后，同一个文件里的键会对不上：
+   * 不迁移的话，老条目全部算出新键、匹配不到旧记录 —— 结果是**每条都被重新拆一遍**
+   * （真花钱），而且旧的卡片全变成"无人认领"。
+   *
+   * @param mapping - `旧键 → 新键`。映射里没有的键原样保留（比如已经迁移过的）。
+   * @returns 实际改了几个键；0 表示没什么可做的。
+   */
+  rekey(mapping) {
+    if (!mapping || typeof mapping !== 'object') return 0;
+    const next = {};
+    let changed = 0;
+    for (const [key, value] of Object.entries(this.state.plans)) {
+      const target = Object.prototype.hasOwnProperty.call(mapping, key) ? mapping[key] : key;
+      // 两个旧键映射到同一个新键（旧口径下本来就被截断撞在一起的两条）时，
+      // 保留**先到的**那份卡片，另一份如实丢掉 —— 反正它们在旧口径下本来就是
+      // 同一条记录的重复，合并回一份是这次修复想要的结果。
+      if (!Object.prototype.hasOwnProperty.call(next, target)) next[target] = value;
+      if (target !== key) changed += 1;
+    }
+    if (changed === 0) return 0;
+    this.state.plans = next;
+    this.save();
+    return changed;
   }
 
   /** 最近几次拆分。 */

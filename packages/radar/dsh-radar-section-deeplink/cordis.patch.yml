@@ -1,0 +1,9 @@
+# ⚠ 未接入、未评审：本包 apply() 会抛错，**不可挂载**
+#
+# 这是一个「对照物」，不是候选包。它存在的唯一目的，是把
+# 「跨节深链」这件事的成本**钉在壳的入口参数上**，而不是钉在某个上游库上。
+#
+# 形状参照 packages/dsh-radar-knowledge-fold（同为 B 类、零依赖、刻意让 apply 抛错）。
+- insert:
+    - id: radar-section-deeplink
+      name: dsh-radar-section-deeplink

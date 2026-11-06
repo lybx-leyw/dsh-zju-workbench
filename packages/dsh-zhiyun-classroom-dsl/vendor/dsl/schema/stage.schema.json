@@ -1,0 +1,1953 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/Stage",
+  "definitions": {
+    "Stage": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "number"
+        },
+        "languageDirective": {
+          "type": "string"
+        },
+        "style": {
+          "type": "string"
+        },
+        "whiteboard": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Whiteboard"
+          }
+        },
+        "videoManifest": {
+          "$ref": "#/definitions/VideoManifest"
+        },
+        "agentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "generatedAgentConfigs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GeneratedAgentConfig"
+          },
+          "description": "Server-generated agent configurations. See  {@link  GeneratedAgentConfig } ."
+        },
+        "interactiveMode": {
+          "type": "boolean",
+          "description": "True when this classroom was generated with Interactive Mode enabled (the INTERACTIVE_OUTLINES prompt branch). Absent on legacy classrooms, imports, and regular-mode generations."
+        },
+        "taskEngineMode": {
+          "type": "boolean",
+          "description": "True when this classroom was generated with the vocational Task Engine path enabled. This is distinct from `interactiveMode`: task-engine classrooms are interactive, but not every interactive classroom is vocational."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false,
+      "description": "Stage - Represents the entire classroom/course."
+    },
+    "Whiteboard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "viewportSize": {
+          "type": "number"
+        },
+        "viewportRatio": {
+          "type": "number"
+        },
+        "elements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PPTElement"
+          }
+        },
+        "background": {
+          "$ref": "#/definitions/SlideBackground"
+        },
+        "animations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PPTAnimation"
+          }
+        },
+        "script": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "viewportSize",
+        "viewportRatio",
+        "elements"
+      ],
+      "additionalProperties": false,
+      "description": "A whiteboard slide. Structurally a  {@link  Slide }  minus the fields that only make sense on a primary canvas (`theme`, `turningMode`, `sectionTag`, `type`)."
+    },
+    "PPTElement": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PPTTextElement"
+        },
+        {
+          "$ref": "#/definitions/PPTImageElement"
+        },
+        {
+          "$ref": "#/definitions/PPTShapeElement"
+        },
+        {
+          "$ref": "#/definitions/PPTLineElement"
+        },
+        {
+          "$ref": "#/definitions/PPTChartElement"
+        },
+        {
+          "$ref": "#/definitions/PPTTableElement"
+        },
+        {
+          "$ref": "#/definitions/PPTLatexElement"
+        },
+        {
+          "$ref": "#/definitions/PPTVideoElement"
+        },
+        {
+          "$ref": "#/definitions/PPTAudioElement"
+        },
+        {
+          "$ref": "#/definitions/PPTCodeElement"
+        }
+      ]
+    },
+    "PPTTextElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "content": {
+          "type": "string",
+          "default": ""
+        },
+        "defaultFontName": {
+          "type": "string",
+          "default": "Microsoft YaHei"
+        },
+        "defaultColor": {
+          "type": "string",
+          "default": "#333333"
+        },
+        "outline": {
+          "$ref": "#/definitions/PPTElementOutline"
+        },
+        "fill": {
+          "type": "string"
+        },
+        "lineHeight": {
+          "type": "number"
+        },
+        "wordSpace": {
+          "type": "number"
+        },
+        "opacity": {
+          "type": "number"
+        },
+        "shadow": {
+          "$ref": "#/definitions/PPTElementShadow"
+        },
+        "paragraphSpace": {
+          "type": "number"
+        },
+        "vertical": {
+          "type": "boolean"
+        },
+        "textType": {
+          "$ref": "#/definitions/TextType"
+        },
+        "vAlign": {
+          "type": "string",
+          "enum": [
+            "top",
+            "middle",
+            "bottom"
+          ]
+        }
+      },
+      "required": [
+        "content",
+        "defaultColor",
+        "defaultFontName",
+        "height",
+        "id",
+        "left",
+        "rotate",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "文本元素\n\ntype: 元素类型（text）\n\ncontent: 文本内容（HTML字符串）\n\ndefaultFontName: 默认字体（会被文本内容中的HTML内联样式覆盖）\n\ndefaultColor: 默认颜色（会被文本内容中的HTML内联样式覆盖）\n\noutline?: 边框\n\nfill?: 填充色\n\nlineHeight?: 行高（倍），默认1.5\n\nwordSpace?: 字间距，默认0\n\nopacity?: 不透明度，默认1\n\nshadow?: 阴影\n\nparagraphSpace?: 段间距，默认 5px\n\nvertical?: 竖向文本\n\ntextType?: 文本类型"
+    },
+    "PPTElementLink": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/ElementLinkType"
+        },
+        "target": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "target"
+      ],
+      "additionalProperties": false,
+      "description": "元素超链接\n\ntype: 链接类型（网页、幻灯片页面）\n\ntarget: 目标地址（网页链接、幻灯片页面ID）"
+    },
+    "ElementLinkType": {
+      "type": "string",
+      "enum": [
+        "web",
+        "slide"
+      ]
+    },
+    "PPTElementOutline": {
+      "type": "object",
+      "properties": {
+        "style": {
+          "$ref": "#/definitions/LineStyleType"
+        },
+        "width": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "description": "元素边框\n\nstyle?: 边框样式（实线或虚线）\n\nwidth?: 边框宽度\n\ncolor?: 边框颜色"
+    },
+    "LineStyleType": {
+      "type": "string",
+      "enum": [
+        "solid",
+        "dashed",
+        "dotted"
+      ]
+    },
+    "PPTElementShadow": {
+      "type": "object",
+      "properties": {
+        "h": {
+          "type": "number"
+        },
+        "v": {
+          "type": "number"
+        },
+        "blur": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "h",
+        "v",
+        "blur",
+        "color"
+      ],
+      "additionalProperties": false,
+      "description": "元素阴影\n\nh: 水平偏移量\n\nv: 垂直偏移量\n\nblur: 模糊程度\n\ncolor: 阴影颜色"
+    },
+    "TextType": {
+      "type": "string",
+      "enum": [
+        "title",
+        "subtitle",
+        "content",
+        "item",
+        "itemTitle",
+        "notes",
+        "header",
+        "footer",
+        "partNumber",
+        "itemNumber"
+      ]
+    },
+    "PPTImageElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "image"
+        },
+        "fixedRatio": {
+          "type": "boolean",
+          "default": true
+        },
+        "src": {
+          "$ref": "#/definitions/AssetRef",
+          "description": "An asset reference. Legacy documents and import/render paths also store placeholder ids or concrete URLs here; such values are foreign to the asset pool and are addressed by later delivery-plan steps."
+        },
+        "outline": {
+          "$ref": "#/definitions/PPTElementOutline"
+        },
+        "filters": {
+          "$ref": "#/definitions/ImageElementFilters"
+        },
+        "clip": {
+          "$ref": "#/definitions/ImageElementClip"
+        },
+        "flipH": {
+          "type": "boolean"
+        },
+        "flipV": {
+          "type": "boolean"
+        },
+        "shadow": {
+          "$ref": "#/definitions/PPTElementShadow"
+        },
+        "radius": {
+          "type": "number"
+        },
+        "colorMask": {
+          "type": "string"
+        },
+        "imageType": {
+          "$ref": "#/definitions/ImageType"
+        },
+        "softEdge": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "fixedRatio",
+        "height",
+        "id",
+        "left",
+        "rotate",
+        "src",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "图片元素\n\ntype: 元素类型（image）\n\nfixedRatio: 固定图片宽高比例\n\nsrc: 图片地址\n\noutline?: 边框\n\nfilters?: 图片滤镜\n\nclip?: 裁剪信息\n\nflipH?: 水平翻转\n\nflipV?: 垂直翻转\n\nshadow?: 阴影\n\nradius?: 圆角半径\n\ncolorMask?: 颜色蒙版\n\nimageType?: 图片类型"
+    },
+    "AssetRef": {
+      "type": "string",
+      "description": "A stable, backend-agnostic handle to a stored asset: an identifier the provider **allocated** at `put` time, opaque to everyone else. A plain string so it embeds cleanly in DSL documents (e.g. `PPTImageElement.src`, `PPTVideoElement.mediaRef`).\n\nAllocated, not derived: a ref says nothing about the bytes behind it. That is what lets a richer implementation regenerate or replace those bytes without invalidating a single document pointing at the ref, and lets one set of bytes carry several refs with different metadata. A provider may still store identical bytes once internally, but that is a property of its storage layer, not of the ref.\n\nThe ref domain is unconstrained: any string may be handed to `resolve` or `remove`, and a ref the provider never issued is simply one that resolves to nothing."
+    },
+    "ImageElementFilters": {
+      "type": "object",
+      "properties": {
+        "blur": {
+          "type": "string"
+        },
+        "brightness": {
+          "type": "string"
+        },
+        "contrast": {
+          "type": "string"
+        },
+        "grayscale": {
+          "type": "string"
+        },
+        "saturate": {
+          "type": "string"
+        },
+        "hue-rotate": {
+          "type": "string"
+        },
+        "sepia": {
+          "type": "string"
+        },
+        "invert": {
+          "type": "string"
+        },
+        "opacity": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImageElementClip": {
+      "type": "object",
+      "properties": {
+        "range": {
+          "$ref": "#/definitions/ImageClipDataRange"
+        },
+        "shape": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "range",
+        "shape"
+      ],
+      "additionalProperties": false,
+      "description": "图片裁剪\n\nrange: 裁剪范围，例如：[[10, 10], [90, 90]] 表示裁取原图从左上角 10%, 10% 到 90%, 90% 的范围\n\nshape: 裁剪形状，见 configs/image-clip.ts CLIPPATHS"
+    },
+    "ImageClipDataRange": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        },
+        "minItems": 2,
+        "maxItems": 2
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "ImageType": {
+      "type": "string",
+      "enum": [
+        "pageFigure",
+        "itemFigure",
+        "background"
+      ]
+    },
+    "PPTShapeElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "shape"
+        },
+        "viewBox": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "path": {
+          "type": "string"
+        },
+        "fixedRatio": {
+          "type": "boolean",
+          "default": false
+        },
+        "fill": {
+          "type": "string",
+          "default": "#5b9bd5"
+        },
+        "gradient": {
+          "$ref": "#/definitions/Gradient"
+        },
+        "pattern": {
+          "type": "string"
+        },
+        "outline": {
+          "$ref": "#/definitions/PPTElementOutline"
+        },
+        "opacity": {
+          "type": "number"
+        },
+        "flipH": {
+          "type": "boolean"
+        },
+        "flipV": {
+          "type": "boolean"
+        },
+        "shadow": {
+          "$ref": "#/definitions/PPTElementShadow"
+        },
+        "special": {
+          "type": "boolean"
+        },
+        "text": {
+          "$ref": "#/definitions/ShapeText"
+        },
+        "pathFormula": {
+          "$ref": "#/definitions/ShapePathFormulasKeys"
+        },
+        "keypoints": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "required": [
+        "fill",
+        "fixedRatio",
+        "height",
+        "id",
+        "left",
+        "path",
+        "rotate",
+        "top",
+        "type",
+        "viewBox",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "形状元素\n\ntype: 元素类型（shape）\n\nviewBox: SVG的viewBox属性，例如 [1000, 1000] 表示 '0 0 1000 1000'\n\npath: 形状路径，SVG path 的 d 属性\n\nfixedRatio: 固定形状宽高比例\n\nfill: 填充，不存在渐变时生效\n\ngradient?: 渐变，该属性存在时将优先作为填充\n\npattern?: 图案，该属性存在时将优先作为填充\n\noutline?: 边框\n\nopacity?: 不透明度\n\nflipH?: 水平翻转\n\nflipV?: 垂直翻转\n\nshadow?: 阴影\n\nspecial?: 特殊形状（标记一些难以解析的形状，例如路径使用了 L Q C A 以外的类型，该类形状在导出后将变为图片的形式）\n\ntext?: 形状内文本\n\npathFormula?: 形状路径计算公式 一般情况下，形状的大小变化时仅由宽高基于 viewBox 的缩放比例来调整形状，而 viewBox 本身和 path 不会变化， 但也有一些形状希望能更精确的控制一些关键点的位置，此时就需要提供路径计算公式，通过在缩放时更新 viewBox 并重新计算 path 来重新绘制形状\n\nkeypoints?: 关键点位置百分比"
+    },
+    "Gradient": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/GradientType"
+        },
+        "colors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GradientColor"
+          }
+        },
+        "rotate": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "colors",
+        "rotate"
+      ],
+      "additionalProperties": false
+    },
+    "GradientType": {
+      "type": "string",
+      "enum": [
+        "linear",
+        "radial"
+      ],
+      "description": "渐变\n\ntype: 渐变类型（径向、线性）\n\ncolors: 渐变颜色列表（pos: 百分比位置；color: 颜色）\n\nrotate: 渐变角度（线性渐变）"
+    },
+    "GradientColor": {
+      "type": "object",
+      "properties": {
+        "pos": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pos",
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "ShapeText": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "default": ""
+        },
+        "defaultFontName": {
+          "type": "string",
+          "default": "Microsoft YaHei"
+        },
+        "defaultColor": {
+          "type": "string",
+          "default": "#333333"
+        },
+        "align": {
+          "$ref": "#/definitions/ShapeTextAlign",
+          "default": "middle"
+        },
+        "lineHeight": {
+          "type": "number"
+        },
+        "wordSpace": {
+          "type": "number"
+        },
+        "paragraphSpace": {
+          "type": "number"
+        },
+        "type": {
+          "$ref": "#/definitions/TextType"
+        }
+      },
+      "required": [
+        "content",
+        "defaultFontName",
+        "defaultColor",
+        "align"
+      ],
+      "additionalProperties": false,
+      "description": "形状内文本\n\ncontent: 文本内容（HTML字符串）\n\ndefaultFontName: 默认字体（会被文本内容中的HTML内联样式覆盖）\n\ndefaultColor: 默认颜色（会被文本内容中的HTML内联样式覆盖）\n\nalign: 文本对齐方向（垂直方向）\n\nlineHeight?: 行高（倍），默认1.5\n\nwordSpace?: 字间距，默认0\n\nparagraphSpace?: 段间距，默认 5px\n\ntype: 文本类型"
+    },
+    "ShapeTextAlign": {
+      "type": "string",
+      "enum": [
+        "top",
+        "middle",
+        "bottom"
+      ]
+    },
+    "ShapePathFormulasKeys": {
+      "type": "string",
+      "enum": [
+        "roundRect",
+        "roundRectDiagonal",
+        "roundRectSingle",
+        "roundRectSameSide",
+        "cutRectDiagonal",
+        "cutRectSingle",
+        "cutRectSameSide",
+        "cutRoundRect",
+        "message",
+        "roundMessage",
+        "L",
+        "ringRect",
+        "plus",
+        "triangle",
+        "parallelogramLeft",
+        "parallelogramRight",
+        "trapezoid",
+        "bullet",
+        "indicator",
+        "donut",
+        "diagStripe"
+      ],
+      "description": "Regular (not `const`) enum on purpose: consumers compile with `isolatedModules`, under which importing an ambient `const enum` across the package boundary is an error (TS2748). A regular enum emits a runtime object that bundles cleanly and is usable as both a value and a type."
+    },
+    "PPTLineElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "line"
+        },
+        "start": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "end": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "style": {
+          "$ref": "#/definitions/LineStyleType",
+          "default": "solid"
+        },
+        "color": {
+          "type": "string",
+          "default": "#333333"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LinePoint"
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "default": [
+            "",
+            ""
+          ]
+        },
+        "shadow": {
+          "$ref": "#/definitions/PPTElementShadow"
+        },
+        "broken": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "broken2": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "curve": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "cubic": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "color",
+        "end",
+        "id",
+        "left",
+        "points",
+        "start",
+        "style",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "线条元素\n\ntype: 元素类型（line）\n\nstart: 起点位置（[x, y]）\n\nend: 终点位置（[x, y]）\n\nstyle: 线条样式（实线、虚线、点线）\n\ncolor: 线条颜色\n\npoints: 端点样式（[起点样式, 终点样式]，可选：无、箭头、圆点）\n\nshadow?: 阴影\n\nbroken?: 折线控制点位置（[x, y]）\n\nbroken2?: 双折线控制点位置（[x, y]）\n\ncurve?: 二次曲线控制点位置（[x, y]）\n\ncubic?: 三次曲线控制点位置（[[x1, y1], [x2, y2]]）"
+    },
+    "LinePoint": {
+      "type": "string",
+      "enum": [
+        "",
+        "arrow",
+        "dot"
+      ]
+    },
+    "PPTChartElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "chart"
+        },
+        "fill": {
+          "type": "string"
+        },
+        "chartType": {
+          "$ref": "#/definitions/ChartType"
+        },
+        "data": {
+          "$ref": "#/definitions/ChartData"
+        },
+        "options": {
+          "$ref": "#/definitions/ChartOptions"
+        },
+        "importedStyle": {
+          "$ref": "#/definitions/ImportedChartStyle"
+        },
+        "outline": {
+          "$ref": "#/definitions/PPTElementOutline"
+        },
+        "themeColors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "textColor": {
+          "type": "string"
+        },
+        "lineColor": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "chartType",
+        "data",
+        "height",
+        "id",
+        "left",
+        "rotate",
+        "themeColors",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "图表元素\n\ntype: 元素类型（chart）\n\nfill?: 填充色\n\nchartType: 图表基础类型（bar/line/pie），所有图表类型都是由这三种基本类型衍生而来\n\ndata: 图表数据\n\noptions: 扩展选项\n\noutline?: 边框\n\nthemeColors: 主题色\n\ntextColor?: 坐标和文字颜色\n\nlineColor?: 网格颜色"
+    },
+    "ChartType": {
+      "type": "string",
+      "enum": [
+        "bar",
+        "column",
+        "line",
+        "pie",
+        "ring",
+        "area",
+        "radar",
+        "scatter"
+      ]
+    },
+    "ChartData": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "legends": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "series": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "required": [
+        "labels",
+        "legends",
+        "series"
+      ],
+      "additionalProperties": false
+    },
+    "ChartOptions": {
+      "type": "object",
+      "properties": {
+        "lineSmooth": {
+          "type": "boolean"
+        },
+        "stack": {
+          "type": "boolean"
+        },
+        "percentStack": {
+          "type": "boolean",
+          "description": "Plot category shares while retaining original data for labels and editing."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImportedChartStyle": {
+      "type": "object",
+      "properties": {
+        "series": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "fill": {
+                "$ref": "#/definitions/ChartFill"
+              },
+              "pointFills": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/definitions/ChartFill"
+                }
+              },
+              "pointImages": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "showValue": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "categoryAxis": {
+          "$ref": "#/definitions/ImportedChartAxis"
+        },
+        "valueAxis": {
+          "$ref": "#/definitions/ImportedChartAxis"
+        },
+        "gapWidth": {
+          "type": "number"
+        },
+        "plotArea": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "w": {
+              "type": "number"
+            },
+            "h": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "w",
+            "h"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "series"
+      ],
+      "additionalProperties": false
+    },
+    "ChartFill": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "linear"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "x2": {
+              "type": "number"
+            },
+            "y2": {
+              "type": "number"
+            },
+            "colorStops": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "offset": {
+                    "type": "number"
+                  },
+                  "color": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "offset",
+                  "color"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "type",
+            "x",
+            "y",
+            "x2",
+            "y2",
+            "colorStops"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "Explicit imported chart formatting; absent for legacy/authored charts."
+    },
+    "ImportedChartAxis": {
+      "type": "object",
+      "properties": {
+        "show": {
+          "type": "boolean"
+        },
+        "gridlines": {
+          "type": "boolean"
+        },
+        "gridlineColor": {
+          "type": "string"
+        },
+        "lineColor": {
+          "type": "string"
+        },
+        "lineVisible": {
+          "type": "boolean"
+        },
+        "labelVisible": {
+          "type": "boolean"
+        },
+        "labelColor": {
+          "type": "string"
+        },
+        "labelFontSize": {
+          "type": "number"
+        },
+        "labelBold": {
+          "type": "boolean"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "majorUnit": {
+          "type": "number"
+        },
+        "numberFormat": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PPTTableElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "table"
+        },
+        "outline": {
+          "$ref": "#/definitions/PPTElementOutline"
+        },
+        "theme": {
+          "$ref": "#/definitions/TableTheme"
+        },
+        "colWidths": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "cellMinHeight": {
+          "type": "number"
+        },
+        "rowHeights": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/TableCell"
+            }
+          }
+        }
+      },
+      "required": [
+        "cellMinHeight",
+        "colWidths",
+        "data",
+        "height",
+        "id",
+        "left",
+        "outline",
+        "rotate",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "表格元素\n\ntype: 元素类型（table）\n\noutline: 边框\n\ntheme?: 主题\n\ncolWidths: 列宽数组，如[0.3, 0.5, 0.2]表示三列宽度分别占总宽度的30%, 50%, 20%\n\ncellMinHeight: 单元格最小高度\n\ndata: 表格数据"
+    },
+    "TableTheme": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "rowHeader": {
+          "type": "boolean"
+        },
+        "rowFooter": {
+          "type": "boolean"
+        },
+        "colHeader": {
+          "type": "boolean"
+        },
+        "colFooter": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "color",
+        "rowHeader",
+        "rowFooter",
+        "colHeader",
+        "colFooter"
+      ],
+      "additionalProperties": false,
+      "description": "表格主题\n\ncolor: 主题色\n\nrowHeader: 标题行\n\nrowFooter: 汇总行\n\ncolHeader: 第一列\n\ncolFooter: 最后一列"
+    },
+    "TableCell": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "colspan": {
+          "type": "number"
+        },
+        "rowspan": {
+          "type": "number"
+        },
+        "text": {
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/TableCellStyle"
+        },
+        "padding": {
+          "type": "string"
+        },
+        "vAlign": {
+          "type": "string",
+          "enum": [
+            "top",
+            "middle",
+            "bottom"
+          ]
+        },
+        "borders": {
+          "type": "object",
+          "properties": {
+            "top": {
+              "$ref": "#/definitions/TableCellBorder"
+            },
+            "bottom": {
+              "$ref": "#/definitions/TableCellBorder"
+            },
+            "left": {
+              "$ref": "#/definitions/TableCellBorder"
+            },
+            "right": {
+              "$ref": "#/definitions/TableCellBorder"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "colspan",
+        "rowspan",
+        "text"
+      ],
+      "additionalProperties": false,
+      "description": "表格单元格\n\nid: 单元格ID\n\ncolspan: 合并列数\n\nrowspan: 合并行数\n\ntext: 文字内容\n\nstyle?: 单元格样式"
+    },
+    "TableCellStyle": {
+      "type": "object",
+      "properties": {
+        "bold": {
+          "type": "boolean"
+        },
+        "em": {
+          "type": "boolean"
+        },
+        "underline": {
+          "type": "boolean"
+        },
+        "strikethrough": {
+          "type": "boolean"
+        },
+        "color": {
+          "type": "string"
+        },
+        "backcolor": {
+          "type": "string"
+        },
+        "fontsize": {
+          "type": "string"
+        },
+        "fontname": {
+          "type": "string"
+        },
+        "align": {
+          "$ref": "#/definitions/TextAlign"
+        }
+      },
+      "additionalProperties": false,
+      "description": "表格单元格样式\n\nbold?: 加粗\n\nem?: 斜体\n\nunderline?: 下划线\n\nstrikethrough?: 删除线\n\ncolor?: 字体颜色\n\nbackcolor?: 填充色\n\nfontsize?: 字体大小\n\nfontname?: 字体\n\nalign?: 对齐方式"
+    },
+    "TextAlign": {
+      "type": "string",
+      "enum": [
+        "left",
+        "center",
+        "right",
+        "justify"
+      ]
+    },
+    "TableCellBorder": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "number"
+        },
+        "style": {
+          "type": "string",
+          "enum": [
+            "solid",
+            "dashed",
+            "dotted"
+          ]
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "width",
+        "style",
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "PPTLatexElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "latex"
+        },
+        "latex": {
+          "type": "string"
+        },
+        "html": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "strokeWidth": {
+          "type": "number"
+        },
+        "viewBox": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "fixedRatio": {
+          "type": "boolean"
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        }
+      },
+      "required": [
+        "height",
+        "id",
+        "latex",
+        "left",
+        "rotate",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "LaTeX元素（公式）\n\ntype: 元素类型（latex）\n\nlatex: latex代码\n\nhtml: KaTeX渲染的HTML字符串（新版公式使用）\n\npath: svg path（旧版SVG渲染，向后兼容，可选）\n\ncolor: 颜色（旧版SVG渲染，向后兼容，可选）\n\nstrokeWidth: 路径宽度（旧版SVG渲染，向后兼容，可选）\n\nviewBox: SVG的viewBox属性（旧版SVG渲染，向后兼容，可选）\n\nfixedRatio: 固定形状宽高比例（可选）\n\nalign: 公式水平对齐方式（left/center/right，默认center）"
+    },
+    "PPTVideoElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "video"
+        },
+        "src": {
+          "$ref": "#/definitions/AssetRef",
+          "description": "An asset reference. Legacy documents and render/import paths also store placeholder ids or concrete URLs here; such values are foreign to the asset pool and are addressed by later delivery-plan steps. Merging `src` and `mediaRef` is deliberately out of scope for this type-unification step."
+        },
+        "mediaRef": {
+          "$ref": "#/definitions/AssetRef",
+          "description": "An asset reference for generated video. Legacy documents and generation paths also store generated-video placeholder ids here; such values are foreign to the asset pool and are addressed by later delivery-plan steps. Merging `src` and `mediaRef` is deliberately out of scope for this type-unification step."
+        },
+        "autoplay": {
+          "type": "boolean"
+        },
+        "poster": {
+          "type": "string"
+        },
+        "ext": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "autoplay",
+        "height",
+        "id",
+        "left",
+        "rotate",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "视频元素\n\ntype: 元素类型（video）\n\nsrc: 视频地址\n\nautoplay: 自动播放\n\nposter: 预览封面\n\next: 视频后缀，当资源链接缺少后缀时用该字段确认资源类型"
+    },
+    "PPTAudioElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "audio"
+        },
+        "fixedRatio": {
+          "type": "boolean"
+        },
+        "color": {
+          "type": "string"
+        },
+        "loop": {
+          "type": "boolean"
+        },
+        "autoplay": {
+          "type": "boolean"
+        },
+        "src": {
+          "type": "string"
+        },
+        "ext": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "autoplay",
+        "color",
+        "fixedRatio",
+        "height",
+        "id",
+        "left",
+        "loop",
+        "rotate",
+        "src",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "音频元素\n\ntype: 元素类型（audio）\n\nfixedRatio: 固定图标宽高比例\n\ncolor: 图标颜色\n\nloop: 循环播放\n\nautoplay: 自动播放\n\nsrc: 音频地址\n\next: 音频后缀，当资源链接缺少后缀时用该字段确认资源类型"
+    },
+    "PPTCodeElement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "left": {
+          "type": "number"
+        },
+        "top": {
+          "type": "number"
+        },
+        "lock": {
+          "type": "boolean"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "rotate": {
+          "type": "number"
+        },
+        "link": {
+          "$ref": "#/definitions/PPTElementLink"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "code"
+        },
+        "language": {
+          "type": "string"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CodeLine"
+          }
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "showLineNumbers": {
+          "type": "boolean"
+        },
+        "fontSize": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "height",
+        "id",
+        "language",
+        "left",
+        "lines",
+        "rotate",
+        "top",
+        "type",
+        "width"
+      ],
+      "additionalProperties": false,
+      "description": "Code element\n\ntype: element type (code)\n\nlanguage: programming language identifier (e.g. 'python', 'javascript', 'typescript')\n\nlines: code content stored as lines, each with a stable ID\n\nfileName?: optional file name title (e.g. \"main.py\")\n\nshowLineNumbers?: whether to show line numbers, default true\n\nfontSize?: font size in pixels, default 14"
+    },
+    "CodeLine": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "content"
+      ],
+      "additionalProperties": false,
+      "description": "Code line\n\nid: stable line ID (e.g. \"L1\", \"L2\"), auto-generated by the system\n\ncontent: line content (no trailing newline)"
+    },
+    "SlideBackground": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/SlideBackgroundType"
+        },
+        "color": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "#/definitions/SlideBackgroundImage"
+        },
+        "gradient": {
+          "$ref": "#/definitions/Gradient"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "description": "幻灯片背景\n\ntype: 背景类型（纯色、图片、渐变）\n\ncolor?: 背景颜色（纯色）\n\nimage?: 图片背景\n\ngradientType?: 渐变背景"
+    },
+    "SlideBackgroundType": {
+      "type": "string",
+      "enum": [
+        "solid",
+        "image",
+        "gradient"
+      ]
+    },
+    "SlideBackgroundImage": {
+      "type": "object",
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "size": {
+          "$ref": "#/definitions/SlideBackgroundImageSize"
+        }
+      },
+      "required": [
+        "src",
+        "size"
+      ],
+      "additionalProperties": false
+    },
+    "SlideBackgroundImageSize": {
+      "type": "string",
+      "enum": [
+        "cover",
+        "contain",
+        "repeat"
+      ]
+    },
+    "PPTAnimation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "elId": {
+          "type": "string"
+        },
+        "effect": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/AnimationType"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "trigger": {
+          "$ref": "#/definitions/AnimationTrigger"
+        }
+      },
+      "required": [
+        "id",
+        "elId",
+        "effect",
+        "type",
+        "duration",
+        "trigger"
+      ],
+      "additionalProperties": false,
+      "description": "元素动画\n\nid: 动画id\n\nelId: 元素ID\n\neffect: 动画效果\n\ntype: 动画类型（入场、退场、强调）\n\nduration: 动画持续时间\n\ntrigger: 动画触发方式(click - 单击时、meantime - 与上一动画同时、auto - 上一动画之后)"
+    },
+    "AnimationType": {
+      "type": "string",
+      "enum": [
+        "in",
+        "out",
+        "attention"
+      ]
+    },
+    "AnimationTrigger": {
+      "type": "string",
+      "enum": [
+        "click",
+        "meantime",
+        "auto"
+      ]
+    },
+    "VideoManifest": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/VideoManifestEntry"
+      }
+    },
+    "VideoManifestEntry": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "video"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "aspectRatio": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "prompt"
+      ],
+      "additionalProperties": false
+    },
+    "GeneratedAgentConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "persona": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "number"
+        },
+        "voiceConfig": {
+          "$ref": "#/definitions/AgentVoiceConfig",
+          "description": "Bound TTS voice, when the generation pipeline selected one."
+        },
+        "voiceDesign": {
+          "$ref": "#/definitions/VoiceDesign",
+          "description": "3-layer vocal descriptor for automatic voice synthesis/registration."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "persona",
+        "avatar",
+        "color",
+        "priority"
+      ],
+      "additionalProperties": false,
+      "description": "Generated agent configuration. Embedded in the persisted stage document (`stage.generatedAgentConfigs`) so clients can hydrate the agent registry without relying on IndexedDB pre-population. Present for generated-roster classrooms; preset classrooms carry `agentIds` instead.\n\nThe voice fields are optional and additive: documents written before they existed simply lack them, and readers treat an absent voice as \"no bound voice\" (the TTS path falls back at call time). Adding them did not change the meaning of any existing field, so within this codebase — whose structural validators tolerate unknown fields — the addition is non-breaking and does not bump `DSL_VERSION` (see `version.ts`).\n\nIt is NOT transparent to schema-validating consumers, however: the generated `stage.schema.json` sets `additionalProperties: false` on every definition, so a cross-language consumer validating against a pinned copy of an older published schema artifact rejects any document that carries these fields. Under strict schema validation, additive fields ARE a breaking change — such consumers must upgrade their schema artifact in lockstep with the documents they accept. (A `DSL_VERSION` bump would not help them: an old schema rejects the new documents either way.)"
+    },
+    "AgentVoiceConfig": {
+      "type": "object",
+      "properties": {
+        "providerId": {
+          "type": "string"
+        },
+        "modelId": {
+          "type": "string",
+          "description": "Model the voice was selected or enrolled for, when model-bound."
+        },
+        "voiceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "providerId",
+        "voiceId"
+      ],
+      "additionalProperties": false,
+      "description": "A concrete TTS voice binding for an agent. `providerId` is an open string at the contract level — the set of available TTS providers is app-defined, and readers must treat an unknown provider as \"no bound voice\". Deliberately minimal: fields are added here only once a producer actually emits them."
+    },
+    "VoiceDesign": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "type": "string",
+          "description": "gender / age / role, written in the course language"
+        },
+        "gender": {
+          "type": "string",
+          "enum": [
+            "male",
+            "female"
+          ],
+          "description": "Language-independent vocal gender for newly generated agents. Absent on older documents; readers then keep the previous English-identity fallback."
+        },
+        "texture": {
+          "type": "string",
+          "description": "pitch / vocal quality"
+        },
+        "delivery": {
+          "type": "string",
+          "description": "emotion / pace"
+        }
+      },
+      "required": [
+        "identity",
+        "texture",
+        "delivery"
+      ],
+      "additionalProperties": false,
+      "description": "Provider-neutral vocal identity for an agent, described as a 3-layer recipe. Consumed by any TTS integration: as an inline voice prompt where supported, or as the seed for a registered/cloned voice. Part of the contract so an agent's voice travels with the document (export/import, device switches) instead of living in device-local storage."
+    }
+  }
+}

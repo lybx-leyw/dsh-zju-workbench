@@ -1,0 +1,22 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 与上游 `dsh-llm-agentrouter@2.6.1` 自带 `cordis.patch.yml` 的关系：
+#   上游那份**不是**一行 insert，而是 `override: llm-pi-ai` —— 它覆盖宿主
+#   `llm-pi-ai` 行的 `providers`，声明一条 `agentrouter` 路由，`baseURL` 指向
+#   哨兵主机 `*.internal`（故意不可解析），再由 `lib/index.js` 的出站围栏改写成
+#   所选端点。因此**本包绝不能复用上游那份 patch**：
+#
+#     1. 覆盖 `llm-pi-ai` 是「改别人的行」，与 `dsh-llm-fallback` 那种纯 insert
+#        语义完全不同；直接复用会与宿主 base 的 providers 声明顺序产生耦合，
+#        且 review 时看不到本仓自己的 id；
+#     2. 本仓规定候选包一律 `dsh-radar-` 前缀、用**本仓 id** 插入，回滚只需删
+#        本 profile 中对应的一行；
+#     3. 上游 patch 里那行 `override` 必须由上游自己 apply，才能保证
+#        `lib/route.js`（路由自愈）与 `lib/client.js`（设置卡片）看到同一份声明。
+#
+# 所以本补丁**只有一行 insert**：由 `src/index.js` 在运行时 import 上游并调用其
+# 导出的 apply，把上游的 patch 作为**本包依赖的一部分**执行，而不是并列的另一个
+# bundle。评审时必须确认这一点，否则会变成「两份 llm-pi-ai 覆盖互相踩」。
+- insert:
+    - id: radar-agent-router
+      name: dsh-radar-agent-router

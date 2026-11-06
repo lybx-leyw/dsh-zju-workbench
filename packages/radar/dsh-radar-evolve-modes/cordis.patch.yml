@@ -1,0 +1,13 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 与上游 `@graysilver/dsh-evolve-modes@0.4.1` 自带的 `cordis.patch.yml` 的区别：
+#   上游那份自己 insert 了 `id: dsh-evolve-modes`（名字即上游名），并带一段
+#   `!!js` 表达式（`process.platform === 'win32' ? 'pwsh' : 'bash'`）。
+#   本仓的安全补丁不支持（也不应支持）在 YAML 里执行任意 JS，因此本骨架：
+#     1. 用**本仓 id** `radar-evolve-modes` 插一个**本仓包名** `dsh-radar-evolve-modes`；
+#     2. 由 `src/index.js` 在运行时显式 `import('@graysilver/dsh-evolve-modes')`，
+#        把上游当库用，而不是让宿主按上游那份带 `!!js` 的 patch 去挂；
+#     3. `shellTool` 这类平台相关配置走**本包 config**，由宿主侧解析后传给上游。
+- insert:
+    - id: radar-evolve-modes
+      name: dsh-radar-evolve-modes

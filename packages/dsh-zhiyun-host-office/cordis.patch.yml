@@ -1,0 +1,28 @@
+# dsh bundle patch：把 Univer Office 插进 profile 的层栈。
+#
+# ⚠️ 两条 insert，缺一不可（这一条是实测踩出来的）。
+#
+# profile 的层栈**从空条目列表开始**，每个 bundle 的 patch 依次往上追加
+# （见 dsh-app-boot 的 profile 文档：「the tree is composed by applying each
+# bundle's patch lists in `dsh.profile.bundles` order over an empty entry list」）。
+# 也就是说：**bundle 不会因为列在 `dsh.profile.bundles` 里就自动加载** ——
+# 它必须在自己的 patch 里把自己 insert 进去。
+#
+# 只写「插入上游」那一条的后果：本包的 `src/index.js` 从未被 apply
+# （没有日志、状态路由 404），而上游的客户端半边照样进了图谱 ——
+# 一半在跑、一半静默不跑，最难查的那种。
+- insert:
+    # ① 本包自己的宿主半边（版本核对 + 状态路由）
+    - id: zhiyun-univer-office
+      name: 'dsh-zhiyun-host-office'
+    # ② 上游（`dsh-univer-office`）—— 必须用**它自己的名字**。
+    #
+    # 客户端启动图谱按 Loader 行名定位 package.json 再读 `dsh.client`
+    # （见 dsh-client-modules 的 `resolveMeta(loaderName, baseUrl)`）。
+    # 上游的 `dsh.client` 声明在它自己的 manifest 里：行名一旦换成我们的包，
+    # 那 7 个 inject 与整个客户端半边就扫不到（表现是 univer 的界面侧不出现）。
+    #
+    # 解析基准是「拥有该行的树」= 本包目录，所以上游依赖装在**包内**
+    # （`packages/dsh-zhiyun-host-office/node_modules/`），不是 profile 根。
+    - id: univer-office
+      name: 'dsh-univer-office'

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 视觉抽查：对着正在运行的实例抓几张关键状态的图，用来判断版面/字体问题。
  *
  * 用法：node scripts/shots.mjs "http://127.0.0.1:3082/?token=..."
@@ -28,60 +28,84 @@ try {
   }
   await page.screenshot({ path: path.join(out, 'today.png'), fullPage: true });
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
-  await page.locator('.zy-topbar').waitFor({ timeout: 30000 });
+  // 问一问 = 完整原生 DSH 工作区（原生侧栏、工作区浏览器、设置都在里面）。
+  await page.locator('.zy-workbench-native [class*="_sidebarCol"]').waitFor({ timeout: 30000 });
   await page.screenshot({ path: path.join(out, 'ask.png'), fullPage: true });
-  await page.locator('.zy-topbar-menu').click();
-  await page.locator('.zy-drawer').waitFor();
-  await page.waitForTimeout(700);
-  await page.screenshot({ path: path.join(out, 'ask-drawer.png'), fullPage: true });
-  // 抽查用的读数：抽屉是否是 app 那种整高侧边抽屉（锚点/尺寸/遮罩/结构）。
-  const drawer = await page.evaluate(() => {
-    const node = document.querySelector('.zy-drawer');
-    const box = node?.getBoundingClientRect();
-    return {
-      head: document.querySelector('.zy-drawer-head')?.innerText.replace(/\s+/g, ' '),
-      box: box ? `${Math.round(box.x)},${Math.round(box.y)} ${Math.round(box.width)}x${Math.round(box.height)}` : '缺失',
-      scrim: document.querySelector('.zy-drawer-scrim[data-open=true]') !== null,
-      rows: [...document.querySelectorAll('.zy-drawer-row')].map(row => ({
-        title: row.querySelector('.zy-drawer-name')?.textContent,
-        meta: row.querySelector('.zy-drawer-meta')?.textContent,
-        current: row.classList.contains('is-current'),
-      })),
-    };
-  });
-  console.log(`抽屉：${drawer.head} ｜ 位置尺寸 ${drawer.box} ｜ 遮罩 ${drawer.scrim ? '有' : '无'}`);
-  for (const row of drawer.rows) console.log(`  ${row.current ? '▶' : ' '} ${row.title} ｜ ${row.meta || '(无说明)'}`);
   console.log('布局：' + await page.evaluate(() => {
-    const frame = document.querySelector('[class*="frame"]');
-    return `grid=${getComputedStyle(frame).gridTemplateColumns} ｜ 导航栏右缘=${Math.round(document.querySelector('.zy-sidebar').getBoundingClientRect().right)}`;
+    const native = document.querySelector('.zy-workbench-native');
+    const sidebar = native?.querySelector('[class*="_sidebarCol"]');
+    return `外层页=${document.querySelector('.zy-workbench-frame')?.getAttribute('data-workbench-page')} ｜ 原生侧栏=${sidebar ? Math.round(sidebar.getBoundingClientRect().width) + 'px' : '缺失'} ｜ 导航栏右缘=${Math.round(document.querySelector('.zy-workbench-navigation').getBoundingClientRect().right)}`;
   }));
-  // 左上 bar 是否贴在问一问面板左缘（决定它是不是「设计的」，而不是浮在空里）。
-  console.log('左上bar几何：' + await page.evaluate(() => {
-    const r = selector => {
-      const node = document.querySelector(selector);
-      if (!node) return `${selector}=无`;
-      const b = node.getBoundingClientRect();
-      return `${selector}: x=${Math.round(b.x)} y=${Math.round(b.y)} w=${Math.round(b.width)} h=${Math.round(b.height)}`;
-    };
-    return [r('.zy-topbar'), r('.zy-topbar-menu'), r('.zy-topbar-title')].join(' ｜ ');
+  // 外层导航切换时原生工作区隐藏但不卸载（返回后状态还在）。
+  await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '今天', exact: true }).click();
+  await page.locator('.zy-page[data-page=today]').waitFor();
+  await page.screenshot({ path: path.join(out, 'today-after-ask.png'), fullPage: true });
+  console.log('原生工作区在离开问一问后：' + await page.evaluate(() => {
+    const node = document.querySelector('.zy-workbench-native');
+    return node === null ? '已卸载' : (node.hasAttribute('hidden') ? '已隐藏（保留挂载）' : '仍可见');
   }));
-  await page.keyboard.press('Escape');
-  await page.locator('.zy-drawer').waitFor({ state: 'hidden' });
-  await page.waitForTimeout(700);
-  await page.screenshot({ path: path.join(out, 'ask-drawer-closed.png'), fullPage: true });
   for (const [label, pageId] of [['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${pageId}]`).waitFor();
   }
-  // 「个人」不在导航里：头像 → 账号面板 → 设置。截图脚本也要走这条真路径，
-  // 否则它拍到的会是别的页面（而文件名写着 me.png）。
+  // 「个人」页已删除：头像 → 账号面板 → 设置，拍的是宿主原生设置浮窗。
   await page.getByRole('button', { name: '账号', exact: true }).click();
   await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
-  await page.locator('.zy-page[data-page=me]').waitFor();
-  await page.screenshot({ path: path.join(out, 'me.png'), fullPage: true });
+  const settingsModal = page.locator('[role="dialog"][aria-modal="true"][data-shortcut-modal="settings"]');
+  await settingsModal.waitFor();
+  await page.screenshot({ path: path.join(out, 'settings.png'), fullPage: true });
+  await page.keyboard.press('Escape');
+  await settingsModal.waitFor({ state: 'detached' });
+  // 题库页从未进过视觉验收：脚本原本只拍 today/ask/settings，而这一页恰好是被反馈
+  // 「丑且不友好」的地方，没有图也没有读数，问题只能等用户来报。这里补三档
+  // 宽度（1440/1100/900）的整页图，并在 1440 那档把「出题设置一屏读完」的几何
+  // 读成一行一字段的读数，回归时直接比数字，不靠肉眼。
+  const quizEntry = page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '题库', exact: true });
+  const quizReady = await (async () => {
+    if (!(await quizEntry.isVisible().catch(() => false))) return false;
+    try {
+      await quizEntry.click();
+      await page.locator('.zy-page[data-page=quiz]').waitFor({ timeout: 30000 });
+      return true;
+    } catch (error) {
+      console.log('题库页没打开，跳过 quiz 截图：' + error.message);
+      return false;
+    }
+  })();
+  if (quizReady) {
+    for (const [width, file] of [[1440, 'quiz-1440'], [1100, 'quiz-1100'], [900, 'quiz-900']]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: path.join(out, file + '.png'), fullPage: true });
+      if (width !== 1440) continue;
+      const quiz = await page.evaluate(() => {
+        const pageBox = document.querySelector('.zs-qz-page');
+        const setupBox = document.querySelector('.zs-qz-setup')?.getBoundingClientRect();
+        const footBox = document.querySelector('.zs-qz-setup-foot')?.getBoundingClientRect();
+        return {
+          pageScrollHeight: pageBox ? Math.round(pageBox.scrollHeight) : -1,
+          pageClientHeight: pageBox ? Math.round(pageBox.clientHeight) : -1,
+          setupHeight: setupBox ? Math.round(setupBox.height) : -1,
+          setupFootBottom: footBox ? Math.round(footBox.bottom) : -1,
+          docScrollHeight: Math.round(document.documentElement.scrollHeight),
+          winInnerHeight: Math.round(window.innerHeight),
+          pageScrolls: document.documentElement.scrollHeight > window.innerHeight,
+        };
+      });
+      quiz.genEmptyShown = await page.locator('.zs-qz-gen-empty').isVisible().catch(() => false);
+      console.log('题库读数(page-scrollHeight)=' + quiz.pageScrollHeight);
+      console.log('题库读数(page-clientHeight)=' + quiz.pageClientHeight);
+      console.log('题库读数(setup-height)=' + quiz.setupHeight);
+      console.log('题库读数(setup-foot-bottom)=' + quiz.setupFootBottom);
+      console.log('题库读数(doc-scrollHeight)=' + quiz.docScrollHeight);
+      console.log('题库读数(win-innerHeight)=' + quiz.winInnerHeight);
+      console.log('题库读数(页面纵向滚动)=' + (quiz.pageScrolls ? '有' : '无'));
+      console.log('题库读数(空态卡渲染)=' + (quiz.genEmptyShown ? '有' : '无'));
+    }
+  }
   await page.setViewportSize({ width: 760, height: 900 });
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
-  await page.locator('.zy-topbar').waitFor();
+  await page.locator('.zy-workbench-native [class*="_sidebarCol"]').waitFor();
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(out, 'ask-narrow.png'), fullPage: true });
   console.log(`截图已写入 ${out}`);
@@ -89,3 +113,4 @@ try {
 } finally {
   await browser.close();
 }
+

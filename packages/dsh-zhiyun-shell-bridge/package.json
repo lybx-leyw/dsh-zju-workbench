@@ -1,0 +1,29 @@
+{
+    "name":  "dsh-zhiyun-shell-bridge",
+    "version":  "0.1.0",
+    "private":  true,
+    "type":  "module",
+    "description":  "智云产品外观层：原生首页 slogan 与主题背景（页面壳由 profile 直接挂载 @lybx-leyw/dsh-pages）",
+    "main":  "./src/index.js",
+    "exports":  {
+                    ".":  "./src/index.js",
+                    "./client":  "./lib/client.js",
+                    "./package.json":  "./package.json"
+                },
+    "dsh":  {
+                "bundle":  {
+                               "patch":  "./cordis.patch.yml"
+                           },
+                "client":  {
+                               "platform":  "web"
+                           }
+            },
+    "peerDependencies":  {
+                             "@deepseek-ai/cordis":  "\u003e=4.0.2 \u003c5"
+                         },
+    "peerDependenciesMeta":  {
+                                 "@deepseek-ai/cordis":  {
+                                                             "optional":  true
+                                                         }
+                             }
+}

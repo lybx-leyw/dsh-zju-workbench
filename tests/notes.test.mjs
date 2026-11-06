@@ -47,18 +47,18 @@ import {
   playerRouteOfZy,
   rewriteForExport,
   timeLink,
-} from '../packages/dsh-zhiyun-notes/src/note.js';
+} from '../packages/dsh-zhiyun-core-notes/src/note.js';
 import {
   createMemorySectionNoteStore,
   createSectionNoteService,
   createTableSectionNoteStore,
   exportFileName,
-} from '../packages/dsh-zhiyun-notes/src/store.js';
-import * as plugin from '../packages/dsh-zhiyun-notes/src/index.js';
-import { NoteError } from '../packages/dsh-zhiyun-notes/src/errors.js';
+} from '../packages/dsh-zhiyun-core-notes/src/store.js';
+import * as plugin from '../packages/dsh-zhiyun-core-notes/src/index.js';
+import { NoteError } from '../packages/dsh-zhiyun-core-notes/src/errors.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const PACKAGE_DIR = path.join(HERE, '..', 'packages', 'dsh-zhiyun-notes');
+const PACKAGE_DIR = path.join(HERE, '..', 'packages', 'dsh-zhiyun-core-notes');
 /**
  * 与 Flutter 仓库的对照是可选增强：默认取与本仓库同级的 `zhiyun-pro`，
  * 也可用 `ZHIYUN_FLUTTER_ROOT` 指向其它位置；找不到时该用例自行跳过。
@@ -879,15 +879,15 @@ test('index.js 只在真正要走宿主存储时才加载宿主包（延迟 impo
     false,
     '顶层 import 宿主包会让离线环境连 note.js 都用不了',
   );
-  // 真机验收后这条改为：宿主存储的**解析**由 `dsh-zhiyun-knowledge/host` 那份
+  // 真机验收后这条改为：宿主存储的**解析**由 `dsh-zhiyun-core-knowledge/host` 那份
   // 跑通的实现负责（同一件事不留两份），但它同样只能在**动态 import** 里出现 ——
   // 否则离线环境连 note.js 都用不了，这正是本条要防的。
   assert.equal(
-    /^import\s[^\n]*dsh-zhiyun-knowledge/m.test(text),
+    /^import\s[^\n]*dsh-zhiyun-core-knowledge/m.test(text),
     false,
     '复用宿主解析器也不许放在顶层',
   );
-  assert.match(text, /import\('dsh-zhiyun-knowledge\/host'\)/, '宿主存储路径要走动态 import');
+  assert.match(text, /import\('dsh-zhiyun-core-knowledge\/host'\)/, '宿主存储路径要走动态 import');
 });
 
 // ---------------------------------------------------------------------------

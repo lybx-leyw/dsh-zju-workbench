@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-agent-router",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 dsh-llm-agentrouter（MIT，原生 DSH bundle 插件），把中转站作为一条 pi-ai 路由接进宿主，为「模型选择器」提供第三个 provider 分组（强化式集成，A 类锁版挂载 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-llm-agentrouter": "2.6.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

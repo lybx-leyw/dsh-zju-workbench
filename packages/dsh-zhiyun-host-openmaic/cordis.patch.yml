@@ -1,0 +1,11 @@
+# 把 OpenMAIC 宿主插进 profile 的层栈。
+#
+# ⚠️ 这一条**不是页面**，是上游服务的托管者：它在宿主进程里起一个 Next.js
+# 常驻服务（外加它自己的 PostgreSQL），由 dsh-zhiyun-page-classroom 以同源
+# iframe 呈现。
+#
+# 缺这一个包时页面只是显示「上游未就绪」，而不是整个 profile 挂掉 ——
+# 页面包对 ctx.zhiyunOpenMAIC 一律惰性取值。
+- insert:
+    - id: zhiyun-host-openmaic
+      name: dsh-zhiyun-host-openmaic

@@ -29,7 +29,7 @@ import {
   QUIZ_TYPES, QUIZ_STATUSES, QUIZ_CHECK_IDS, CHECK_VERDICTS, QUIZ_SEVERITIES,
   materialIdOf, makeItem, makeOption, makeSourceBlock, withItem,
   itemToJson, itemFromJson, stripLabelPrefix, quizTypeFromCode,
-} from '../packages/dsh-zhiyun-quiz/src/model.js';
+} from '../packages/dsh-zhiyun-core-quiz/src/model.js';
 import {
   QuizError, runHardChecks, createQualityPipeline, countBlanks, normalizeOptionText,
   parseNumericValue, numericValuesEquivalent, possibleCorrectLabels,
@@ -38,7 +38,7 @@ import {
   scriptedAnswerabilityChecker, scriptedGroundedJudge,
   buildGroundedJudgePrompt, buildGroundedJudgeRequest, assertNoGenericRubric,
   kGroundedJudgeSystemPrompt, wilsonInterval, ratioWithWilson,
-} from '../packages/dsh-zhiyun-quiz/src/quality.js';
+} from '../packages/dsh-zhiyun-core-quiz/src/quality.js';
 import {
   createQuizGenerator, planQuizGeneration, makeSourceMaterial, makeGenerationRequest,
   QUIZ_MATERIAL_SELECTIONS, kPhase3QuizTypes, kPhase4QuizTypes,
@@ -47,21 +47,21 @@ import {
   parseRewriteResponse, parseGenerationResponse, anchorFromMaterial,
   distractorTraceability, normalizeForTrace, adviseCardsPerPage, computeBacklog,
   kForbiddenTermRuleName, kMaxBlanksPerCard,
-} from '../packages/dsh-zhiyun-quiz/src/generate.js';
+} from '../packages/dsh-zhiyun-core-quiz/src/generate.js';
 import {
   dropExactQuizDuplicates, quizStemKey, parseQuizDedupeIndexes, dedupeQuizBatch,
   quizDedupeInput, kQuizDedupeMaxExisting,
-} from '../packages/dsh-zhiyun-quiz/src/dedupe.js';
+} from '../packages/dsh-zhiyun-core-quiz/src/dedupe.js';
 import {
   kLectureQuizNoAnchorBlock, kLectureQuizBasisPrefix, kLectureQuizMinQuoteChars,
   lecturePlainText, admitLectureDrafts, lectureQuizDraftsFromArgs,
   parseLectureQuizTurn, lectureDraftToItemFields,
-} from '../packages/dsh-zhiyun-quiz/src/lecture.js';
+} from '../packages/dsh-zhiyun-core-quiz/src/lecture.js';
 import {
   createQuizStore, makeRateLedger, rateDayKey, quizStoreWritable, quizStoreRemedy,
   QUIZ_READ_STATUSES, makeAttempt, attemptToJson, attemptFromJson,
   QUIZ_AUTOGRADE_VERDICTS, kQuizTracks,
-} from '../packages/dsh-zhiyun-quiz/src/store.js';
+} from '../packages/dsh-zhiyun-core-quiz/src/store.js';
 
 /** 每次调用**前进 1 秒**的时钟：「近 3 次」这类判据需要可分辨的先后。 */
 function tickingClock(start = Date.UTC(2026, 9, 7, 0, 0, 0)) {
@@ -76,7 +76,7 @@ const localDate = (y, m, d, h = 12) => new Date(y, m - 1, d, h, 0, 0);
 // 夹具
 // ═══════════════════════════════════════════════════════════════
 
-const PKG = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages', 'dsh-zhiyun-quiz', 'src');
+const PKG = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages', 'dsh-zhiyun-core-quiz', 'src');
 
 /** 固定时钟：测试要可复现。 */
 const FIXED = () => new Date('2026-10-07T00:00:00.000Z');
@@ -1776,7 +1776,7 @@ test('⚠️ 未实现判据：讲义题送进硬检查会在 schema 上 fail（
 // ═══════════════════════════════════════════════════════════════
 
 test('插件：inject 只声明真正需要的（不声明存储），provide zhiyunQuiz 并返回 disposer', async () => {
-  const plugin = await import('../packages/dsh-zhiyun-quiz/src/index.js');
+  const plugin = await import('../packages/dsh-zhiyun-core-quiz/src/index.js');
   assert.equal(plugin.name, 'zhiyun-quiz');
   assert.deepEqual(plugin.inject, ['zhiyunParser'], '只声明 zhiyunParser（本包不落盘，不声明存储）');
   assert.equal(plugin.inject.includes('storage'), false);
@@ -1809,7 +1809,7 @@ test('插件：inject 只声明真正需要的（不声明存储），provide zh
 });
 
 test('插件：没注入 llm → 抛 CONFIG（而不是「生成了 0 题」）', async () => {
-  const plugin = await import('../packages/dsh-zhiyun-quiz/src/index.js');
+  const plugin = await import('../packages/dsh-zhiyun-core-quiz/src/index.js');
   await assert.rejects(
     () => plugin.apply({ provide() {} }, {}),
     (e) => e.code === 'CONFIG' && /窄 llm 接口/.test(e.message),
@@ -1817,7 +1817,7 @@ test('插件：没注入 llm → 抛 CONFIG（而不是「生成了 0 题」）'
 });
 
 test('插件：config.llm 可以直接注入（集成层不必依赖 zhiyunParser）', async () => {
-  const plugin = await import('../packages/dsh-zhiyun-quiz/src/index.js');
+  const plugin = await import('../packages/dsh-zhiyun-core-quiz/src/index.js');
   const provided = [];
   const ctx = { provide(n, s) { provided.push([n, s]); return () => {}; } };
   await plugin.apply(ctx, { llm: { async call() { return { text: '[]' }; } } });
@@ -1826,7 +1826,7 @@ test('插件：config.llm 可以直接注入（集成层不必依赖 zhiyunParse
 });
 
 test('插件：llm 的 route 延迟解析（没配模型时不该激活失败）', async () => {
-  const plugin = await import('../packages/dsh-zhiyun-quiz/src/index.js');
+  const plugin = await import('../packages/dsh-zhiyun-core-quiz/src/index.js');
   const seen = [];
   const ctx = {
     provide() { return () => {}; },

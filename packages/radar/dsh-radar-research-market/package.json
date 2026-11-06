@@ -1,0 +1,15 @@
+{
+  "name": "dsh-radar-research-market",
+  "version": "0.1.0",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版挂载上游 dsh-research，为智云 Pro「插件」页的科研候选簇补上目录检索",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "dependencies": {
+    "dsh-research": "0.4.4"
+  }
+}

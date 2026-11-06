@@ -1,0 +1,15 @@
+{
+  "name": "dsh-radar-media-captions",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 media-captions（MIT，零依赖字幕格式解析器），为「字幕」页与「终稿」的原文层提供标准 cue 结构（强化式集成，B 类能力提取 + 封装）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "media-captions": "1.0.4"
+  }
+}

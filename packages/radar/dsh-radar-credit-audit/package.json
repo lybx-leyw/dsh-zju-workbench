@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-credit-audit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 Kepler16f/zju-kezhou 的确定性审计引擎（dsh-radar-credit-audit-vendor@1.7.0），把它接到「已获学分」这个面板上做培养方案达成度核算；强化式集成，不是第二套成绩视图",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-radar-credit-audit-vendor": "1.7.0"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

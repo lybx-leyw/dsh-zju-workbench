@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-repeat-law",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】给「规划」页的重复任务补上三条本仓缺失的不变量：区间 N>1 能填、学校假期（寒假/暑假）能跳、取消勾选能把多生成的那一条收回。上是 A 类锁版挂载 @magma27/dsh-calendar@0.1.7 的 core/repeat.ts（不得改上游源码）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@magma27/dsh-calendar": "0.1.7"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

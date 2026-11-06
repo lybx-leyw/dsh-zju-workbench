@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-note-search",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 minisearch@7.2.0，为「笔记」页的库内检索补上正文命中（现实现只对 path 做 includes），索引由页面内存现算、按「分词召回 + 原文子串复核」两层控制精度（强化式集成，B 类能力提取 + 封装）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "minisearch": "7.2.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-skill-stats",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 @dsh-external/dsh-skill-stats@0.1.0，替掉本仓「插件」页 usage.js 那条**从未被调用过**的 localStorage 计数账本，改用上游「会话日志回放 + 实时订阅 + 增量缓存」得到的真实调用次数（强化式集成：同一张『吃灰清单』，同一份 state 判定，只换更优的数据底层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@dsh-external/dsh-skill-stats": "0.1.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

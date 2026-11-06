@@ -1,0 +1,10 @@
+{
+  "basis": "笔记库根下的归档文件夹",
+  "id": "archive-root",
+  "label": "讲义版本归档文件夹",
+  "provenance": {
+    "kind": "named",
+    "ref": "packages/dsh-zhiyun-page-notes/src/index.js"
+  },
+  "type": "archive_dir"
+}

@@ -25,7 +25,7 @@ import {
   writeAccount,
   writeRecord,
   writeXzzdSession,
-} from '../packages/dsh-zhiyun-classroom/src/host-credentials.js';
+} from '../packages/dsh-zhiyun-source-classroom/src/host-credentials.js';
 
 /** 造一个内存版宿主凭据服务，行为对齐 `dsh-credentials-local`。 */
 function fakeCredentials() {
@@ -60,7 +60,16 @@ test('写入形状是宿主认的 grant 记录', async () => {
   assert.equal(ok, true);
   const stored = service.store.get('zhiyun-classroom/account');
   assert.equal(stored.kind, 'grant', 'api-key 的形状塞不下结构化数据，必须用 grant');
-  assert.deepEqual(stored.payload, { username: 'u', password: 'p' });
+
+  // ⚠️ 顶层**只能有 kind 与 payload**：宿主 `dsh-credentials-local` 的 `parseRecord`
+  //    对 grant 做白名单校验，多一个字段会让**整个工作台启动失败**
+  //    （而且抛在加载 yaml 时，报错看不出是哪段代码写的）。
+  assert.deepEqual(Object.keys(stored).sort(), ['kind', 'payload'], `实际字段：${Object.keys(stored)}`);
+
+  // 账号密码在 payload 里；用途说明（label）也只能放在这里
+  assert.equal(stored.payload.username, 'u');
+  assert.equal(stored.payload.password, 'p');
+  assert.equal(stored.payload.label, '浙大一卡通', '用途说明放 payload，不放顶层');
 });
 
 test('写入后可读回同一份', async () => {
@@ -151,7 +160,7 @@ test('源码里不出现"去终端 configure"这类把成本转嫁给用户的�
   );
   // 只查**命令**写法，不查 `configured` 这个标识符（它包含 configure 子串）
   assert.equal(/npm run/.test(client), false, '规划页不该让用户去终端跑命令');
-  assert.equal(/dsh-zhiyun-omni configure/.test(client), false, '规划页不该出现 configure 命令');
+  assert.equal(/dsh-zhiyun-source-omni configure/.test(client), false, '规划页不该出现 configure 命令');
 });
 
 /**

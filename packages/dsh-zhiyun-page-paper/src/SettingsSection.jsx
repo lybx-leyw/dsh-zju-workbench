@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Icon } from 'dsh-zhiyun-ui-primitives';
+import { Icon } from 'dsh-zhiyun-shell-ui';
 import {
   clearRerankConfig,
   clearTranslateConfig,

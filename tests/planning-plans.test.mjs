@@ -20,6 +20,7 @@ import {
   normalizeCard,
   parsePlanJson,
   pickPending,
+  planTitle,
   readPlanResponse,
   toPlanInput,
 } from '../packages/dsh-zhiyun-page-planning/src/plans.js';
@@ -143,6 +144,22 @@ test('送模型的输入只保留必要字段，超长正文截断并标注', ()
   assert.deepEqual(Object.keys(row).sort(), ['at', 'kind', 'text', 'title']);
   assert.ok(row.text.endsWith('（原文过长，已截断）'), '要让模型知道内容不全');
   assert.ok(row.text.length < 5000);
+});
+
+test('标题截断只有一个落点：送到模型的标题 = 回包归属用的标题', () => {
+  // 早先 `toPlanInput` 截到 80 字，而宿主 `byTitle` 用完整标题做键 ——
+  // 长标题条目上模型照抄截断标题，查不到，整批卡片被算成 orphan 静默丢弃。
+  const longTitle = '第'.repeat(120) + '三章作业';
+  const entry = { ...ENTRY, title: longTitle };
+  const [row] = toPlanInput([entry]);
+  assert.equal(row.title.length, 80, '送模型的标题被截到 80');
+  // 回包归属必须用同一个函数取标题
+  assert.equal(planTitle(entry), row.title, 'planTitle 必须与 toPlanInput 给出同一个标题');
+  // 短标题不受影响
+  assert.equal(planTitle(ENTRY), ENTRY.title);
+  // 兜底：没有 title 的条目不抛错
+  assert.equal(planTitle({}), '');
+  assert.equal(planTitle(null), '');
 });
 
 /* ───────────────────────────────────────── 映射关系（核心） */

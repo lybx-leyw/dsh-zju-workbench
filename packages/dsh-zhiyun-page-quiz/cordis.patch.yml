@@ -1,0 +1,5 @@
+# 题库页的加载入口：把本包插进 profile 的插件列表。
+# 三个字段各自的作用见 docs/contributing/CONTRIBUTING.md。
+- insert:
+    - id: zhiyun-page-quiz
+      name: dsh-zhiyun-page-quiz

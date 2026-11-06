@@ -15,6 +15,8 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzeSheets, loadSheets, parseRules, report, specificity } from '../scripts/check-css-order.mjs';
 
@@ -36,7 +38,10 @@ test('真实仓库：没有跨包 @media 顺序依赖，也没有跨包同属性
 });
 
 test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静默少检查一个包）', () => {
-  const sheets = loadSheets(root);
+  // 暂不接进 profile 的包（带 DETACHED.md）不参与「必须登记」的比对：
+  // 它的样式表不会挂载，跨包层叠依赖对它没有意义。见各包的 DETACHED.md。
+  const sheets = new Map([...loadSheets(root)]
+    .filter(([name]) => !existsSync(path.join(root, 'packages', name, 'DETACHED.md'))));
   // 这些包有 src/style.css；其余包没有样式表，不该出现在结果里。
   // 加包的样式表时**必须**在这里补一行：只加文件不改这里，测试会红；
   // 反过来若哪天这里被改成「不比了」，漏读一个包就再也没人发现了。
@@ -46,17 +51,35 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
   // 所以「跨包顺序依赖」的守卫对它们之间的关系不作判断：同包内谁后写谁赢，
   // 这是确定的，不是挂载顺序。视频栏的类名全部带 `zs-video-` 前缀，正是为此。
   assert.deepEqual([...sheets.keys()], [
-    'dsh-zhiyun-net-proxy',
+    // 按包名排序（`loadSheets` 内部 `readdirSync().sort()`），不是按加入顺序 ——
+    // 字典序：`page-*` < `shell-*` < `source-*`，所以 page 系列在最前，
+    // 而 `dsh-zhiyun-source-card` 必须排在 `dsh-zhiyun-source-netproxy` **之前**。
+    // `graph-render` 在 `page-*` 之前：字典序 `dsh-zhiyun-g…` < `dsh-zhiyun-p…`。
+    // `dsh-zhiyun-c…` 全在 `dsh-zhiyun-g…` 之前：课堂的内核与舞台。
+    // 它们的类名一律 `zyc-` 前缀，且 renderer 的 Tailwind 4 输出 `@scope` 到
+    // `.zyc-root`（见 docs/architecture/classroom-port.md 第 5 节），
+    // 与工作台的 `zy-` 不共享任何选择器，所以只登记、不参与竞争判定。
+    // dsh-pages owns component-scoped styles; its retired adapter stylesheet was removed.
+    'dsh-zhiyun-classroom-renderer',
+    'dsh-zhiyun-core-classroom-stage',
+    'dsh-zhiyun-graph-render',
+    'dsh-zhiyun-page-classroom-build',
+    'dsh-zhiyun-page-classroom-play',
+    'dsh-zhiyun-page-docs',
     'dsh-zhiyun-page-feedback',
-    'dsh-zhiyun-page-me',
     'dsh-zhiyun-page-notes',
     'dsh-zhiyun-page-paper',
     'dsh-zhiyun-page-planning',
     'dsh-zhiyun-page-plugins',
+    'dsh-zhiyun-page-quiz',
     'dsh-zhiyun-page-study',
     'dsh-zhiyun-page-today',
-    'dsh-zhiyun-shell',
-    'dsh-zhiyun-ui-primitives',
+    'dsh-zhiyun-settings-account',
+    'dsh-zhiyun-shell-bridge',
+    'dsh-zhiyun-shell-ui',
+    'dsh-zhiyun-shell-workbench',
+    'dsh-zhiyun-source-card',
+    'dsh-zhiyun-source-netproxy',
   ]);
 });
 
@@ -251,3 +274,5 @@ test('退出码：有问题返回 1，没问题返回 0', () => {
   ]));
   assert.equal(report(dirty, { log: () => {}, error: () => {} }), 1);
 });
+
+

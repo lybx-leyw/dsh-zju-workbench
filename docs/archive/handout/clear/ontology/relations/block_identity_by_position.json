@@ -1,0 +1,8 @@
+{
+  "id": "block_identity_by_position",
+  "label": "块身份由位置决定",
+  "kind": "defines",
+  "domain": "block_identity",
+  "range": "handout",
+  "check": "结构与基线同位序对齐时内容覆盖可逐块对位"
+}

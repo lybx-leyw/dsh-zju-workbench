@@ -22,10 +22,10 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { PaperError, PAPER_ERROR_STATUS, paperErrorStatus } from '../packages/dsh-zhiyun-paper/src/errors.js';
-import { createSelectionTranslator, SELECTION_MAX_CHARS } from '../packages/dsh-zhiyun-paper/src/selection.js';
-import { createPaperHandler, PAPER_ROUTE_PREFIX } from '../packages/dsh-zhiyun-paper/src/routes.js';
-import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from '../packages/dsh-zhiyun-paper/src/upstream.js';
+import { PaperError, PAPER_ERROR_STATUS, paperErrorStatus } from '../packages/dsh-zhiyun-host-paper/src/errors.js';
+import { createSelectionTranslator, SELECTION_MAX_CHARS } from '../packages/dsh-zhiyun-host-paper/src/selection.js';
+import { createPaperHandler, PAPER_ROUTE_PREFIX } from '../packages/dsh-zhiyun-host-paper/src/routes.js';
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from '../packages/dsh-zhiyun-host-paper/src/upstream.js';
 
 import {
   applyFrame,
@@ -58,7 +58,7 @@ import {
   createSessionAdmin,
   firstUserQuestion,
   isPaperSessionId,
-} from '../packages/dsh-zhiyun-paper/src/session-admin.js';
+} from '../packages/dsh-zhiyun-host-paper/src/session-admin.js';
 import * as clientApi from '../packages/dsh-zhiyun-page-paper/src/library.js';
 
 const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
@@ -69,27 +69,27 @@ const readJson = (relative) => JSON.parse(readFileSync(path.join(root, relative)
 /* ────────────────────────── 锁版 ────────────────────────── */
 
 test('锁版：声明、预期、实际安装三者一致，且不允许语义化范围', () => {
-  const manifest = readJson('packages/dsh-zhiyun-paper/package.json');
+  const manifest = readJson('packages/dsh-zhiyun-host-paper/package.json');
   const declared = manifest.dependencies?.[UPSTREAM_PACKAGE];
 
   assert.equal(declared, UPSTREAM_VERSION, 'package.json 必须写精确版本，不是 ^ 或 ~ 范围');
   assert.match(declared, /^\d+\.\d+\.\d+$/, '依赖版本必须锁定为精确版本');
 
   // 真正装到的是哪一份，只有运行时才知道（lockfile、全局覆盖、npm link 都能改它）。
-  // 从插件自己的位置解析：该包只装在 `packages/dsh-zhiyun-paper/node_modules` 下。
-  const require = createRequire(new URL('../packages/dsh-zhiyun-paper/package.json', import.meta.url));
+  // 从插件自己的位置解析：该包只装在 `packages/dsh-zhiyun-host-paper/node_modules` 下。
+  const require = createRequire(new URL('../packages/dsh-zhiyun-host-paper/package.json', import.meta.url));
   const installedFile = require.resolve(`${UPSTREAM_PACKAGE}/package.json`);
   assert.equal(JSON.parse(readFileSync(installedFile, 'utf8')).version, UPSTREAM_VERSION);
   // 必须来自本插件自己的 node_modules，而不是仓库根或别处的同名包（npm link 会骗过版本）。
   const normalized = installedFile.split(path.sep).join('/');
   assert.ok(
-    normalized.includes(`/packages/dsh-zhiyun-paper/node_modules/${UPSTREAM_PACKAGE}/`),
+    normalized.includes(`/packages/dsh-zhiyun-host-paper/node_modules/${UPSTREAM_PACKAGE}/`),
     `上游包应解析到本插件自己的 node_modules，实际解析到 ${installedFile}`,
   );
 });
 
 test('锁版：pdfjs-dist 也写精确版本（上游按深路径 import 它）', () => {
-  const manifest = readJson('packages/dsh-zhiyun-paper/package.json');
+  const manifest = readJson('packages/dsh-zhiyun-host-paper/package.json');
   assert.match(manifest.dependencies['pdfjs-dist'], /^\d+\.\d+\.\d+$/, '深路径 import 的依赖同样不能浮动');
 });
 
@@ -1307,10 +1307,21 @@ test('接线：/resume 面板挂进抽屉，删除走本包归档路由，且不
   // 面板自己抢焦点：↑↓/Enter/Delete 要在它身上生效，而不是在输入框里。
   assert.match(palette, /tabIndex=\{-1\}[\s\S]*?ref=\{boxRef\}/);
   assert.match(palette, /boxRef\.current\?\.focus\(\)/);
-  // 往上翻历史时不该被强制拽回底部：贴底只在「离底不到一屏半」时发生。
-  assert.match(drawer, /list\.clientHeight \* 1\.5/);
-  // 换会话要强制到底（用户抱怨的正是切回旧会话停在最上面）。
-  assert.match(drawer, /\}, \[state\.sessionId, open\]\)/);
+  // 往上翻历史时不该被强制拽回底部。
+  //
+  // ⚠️ 判据**改过**：原来钉的是「离底不到一屏半才贴底」（`clientHeight * 1.5`），
+  //    而那正是 bug 本身 —— 展开时内容为空、历史随后一次性到达，那一刻
+  //    `away` 等于全部历史高度，历史一多就被误判成"用户在回看"而不贴底。
+  //    现在改成「用户真的手动滚动过才不贴」，所以断言改为钉这个状态位。
+  assert.match(drawer, /userScrolledRef\.current = away > 4/,
+    '只有用户真的滚动（离底超过 4px）才标记为"翻过"');
+  // 程序性滚动不能把自己标成"用户翻过"，否则一次自动贴底之后就再也不贴了。
+  assert.match(drawer, /programmaticRef\.current = true/, '程序贴底要打标记');
+  assert.match(drawer, /if \(programmaticRef\.current\) \{ programmaticRef\.current = false; return; \}/,
+    '滚动监听要跳过自己触发的那一次');
+  // 换会话 / 展开 / 换论文都要强制到底（用户抱怨的正是切回旧会话停在最上面）。
+  assert.match(drawer, /\}, \[open, state\.sessionId, topic, name, scrollToBottom\]\)/,
+    '展开/换会话/换论文时要强制贴底并重置"翻过"标记');
 
   // 「删除」必须是本包的归档路由：上游那条只允许归档空白会话。
   assert.match(palette, /archiveSessionById/);
@@ -1320,18 +1331,18 @@ test('接线：/resume 面板挂进抽屉，删除走本包归档路由，且不
 
 
 test('接线：两个新包都已进 profile 与构建清单', () => {
-  const profile = readJson('profiles/zhiyun-bench/package.json');
-  assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-paper'));
+  const profile = readJson('profiles/zju-workbench/package.json');
+  assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-host-paper'));
   assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-page-paper'));
 
   const build = readFileSync(path.join(root, 'scripts/build.mjs'), 'utf8');
   assert.match(build, /'dsh-zhiyun-page-paper'/, '有 src/client.jsx 的包必须进 CLIENT_PACKAGES');
 
-  const nav = readFileSync(path.join(root, 'packages/dsh-zhiyun-shell/src/model.js'), 'utf8');
+  const nav = readFileSync(path.join(root, 'packages/dsh-zhiyun-shell-workbench/src/model.js'), 'utf8');
   assert.match(nav, /id: 'paper'/);
   assert.match(nav, /icon: 'paper'/);
 
-  const primitives = readFileSync(path.join(root, 'packages/dsh-zhiyun-ui-primitives/src/primitives.jsx'), 'utf8');
+  const primitives = readFileSync(path.join(root, 'packages/dsh-zhiyun-shell-ui/src/primitives.jsx'), 'utf8');
   assert.match(primitives, /paper:/);
   assert.match(primitives, /translate:/);
 });

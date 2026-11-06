@@ -1,0 +1,17 @@
+{
+  "_note": "笔记库来源（vault-data.mjs 生成）。概率论与数理统计 16 个知识点，每批 4 题、跑 2 批（cold + warm），验证缓构建复用。concurrency=2 兼顾速度与成本。",
+  "kind": "development",
+  "arms": ["r4"],
+  "concurrencies": [2],
+  "batches": [4, 4],
+  "maxCalls": 160,
+  "requestTimeoutMs": 240000,
+  "wallBudgetMs": 2400000,
+  "cases": [
+    {
+      "id": "prob",
+      "kind": "authored",
+      "source": "scripts/quiz_bench/experimental-r4/bench-data/概率论与数理统计__2026-09-17第3-5节/graph.json"
+    }
+  ]
+}

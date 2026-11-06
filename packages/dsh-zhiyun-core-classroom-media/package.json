@@ -1,0 +1,25 @@
+{
+  "name": "dsh-zhiyun-core-classroom-media",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "智云 Pro 互动课堂的语音 / 媒体 / 检索层：TTS·ASR·图片生成·联网检索·网页抓取·PDF 解析。密钥与 baseURL 一律来自 ctx.zhiyunClassroomStudio.providers",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./audio/tts": "./src/audio/tts.js",
+    "./audio/asr": "./src/audio/asr.js",
+    "./audio/timeline": "./src/audio/timeline.js",
+    "./audio/duration": "./src/audio/duration.js",
+    "./audio/wav": "./src/audio/wav.js",
+    "./media/image": "./src/media/image.js",
+    "./web/search": "./src/web/search.js",
+    "./web/fetch": "./src/web/fetch.js",
+    "./pdf/parse": "./src/pdf/parse.js",
+    "./package.json": "./package.json"
+  },
+  "optionalDependencies": {
+    "unpdf": "^1.9.1"
+  },
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+}

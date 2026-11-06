@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { ClassroomSource, SessionStore, Transport } from '../packages/dsh-zhiyun-classroom/src/source.js';
-import { authenticate, inspectJwt, jwtFromTokenCookie, rsaEncrypt, executionToken, nextLocation } from '../packages/dsh-zhiyun-classroom/src/auth.js';
-import * as models from '../packages/dsh-zhiyun-classroom/src/models.js';
-import { apply } from '../packages/dsh-zhiyun-classroom/src/index.js';
+import { ClassroomSource, SessionStore, Transport } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import { authenticate, inspectJwt, jwtFromTokenCookie, rsaEncrypt, executionToken, nextLocation } from '../packages/dsh-zhiyun-source-classroom/src/auth.js';
+import * as models from '../packages/dsh-zhiyun-source-classroom/src/models.js';
+import { apply } from '../packages/dsh-zhiyun-source-classroom/src/index.js';
 
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status });
 function source(handler, options = {}) { return new ClassroomSource({ fetch: handler, ...options }); }
@@ -33,6 +33,14 @@ test('models preserve resource metadata and all time units', () => {
   assert.equal(models.slide(slide(1, 10), 1).startMs, 10000);
   assert.equal(models.shanghaiDate(new Date('2026-10-06T16:00:00Z')), '2026-10-07');
   assert.throws(() => models.date('2026-02-31'));
+});
+
+test('course progress is clamped to <=1 even when learnNum exceeds subjectNum', () => {
+  // 平台数据脏（看完数 > 总数）时不能给出 >100% 的进度；>1 的裸值按百分数换算。
+  const dirty = models.course({ ...course(9), progress: '{"subjectProgress":120,"learnNum":6,"subjectNum":5}' });
+  assert.equal(dirty.progress, 1);
+  const percent = models.course({ ...course(10), progress: '{"subjectProgress":1.5,"learnNum":3,"subjectNum":5}' });
+  assert.equal(percent.progress, 0.015);
 });
 
 test('legacy classroom media URLs upgrade to HTTPS without changing signatures or leaking session cookies', async () => {

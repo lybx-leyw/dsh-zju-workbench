@@ -6,7 +6,7 @@
 //   - 硬边：浏览器面就地读（`ctx.loader`/`ctx.registry`/`ctx.reflect`），宿主面由本包
 //     `/api/zhiyun-plugins` 读出来 —— 两棵树互不可见，缺一面就会把 parser 这种「被
 //     study-core 硬依赖」的包误判成叶，而取消它的后果正是本仓 README 反复警告的那种。
-import { mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
 import { createStore } from './store.js';
 import { Panel } from './Panel.jsx';
 import css from './style.css';
@@ -30,10 +30,13 @@ export function apply(ctx) {
   // 宿主说「装了什么、开了什么、组合变了」就重读 —— 从这一页、从宿主的插件页、或从命令行改的都算。
   ctx.effect(() => ctx.remote.$on('plugin-manager/changed', () => { void store.refresh(); }),
     'zhiyun: plugins page invalidation');
-  ctx.slots.inject('zhiyun.plugins.content', () => ctx.slots.register({
-    name: 'zhiyun.plugins.content',
-    inject: () => ({ store }),
-  }, Panel));
+  // 直接注册给页面壳的 `page.content`（keyed）。store 仍由本包创建并交给 `Panel`，
+  // 页面壳只负责「什么时候渲染这一页」。
+  registerPageContent(ctx, {
+    id: 'plugins',
+    label: '插件',
+    render: () => <Panel store={store}/>,
+  });
 }
 
 export { Panel };

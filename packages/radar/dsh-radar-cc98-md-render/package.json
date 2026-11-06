@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-cc98-md-render",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】能力提取 amiongogo/cc98-vscode（MIT）的「UBB → 保结构 Markdown 文档」语义，给「笔记」页已有的 Markdown 通路补上 CC98 帖子的结构保真渲染（强化式集成，B 类，无上游运行时依赖）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

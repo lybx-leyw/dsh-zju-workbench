@@ -1,0 +1,179 @@
+/**
+ * **Cordis 插件包装（薄）**：只做两件事 —— 从注入项取窄 llm、把出题服务挂上 ctx。
+ *
+ * # 为什么是「薄」
+ *
+ * 本包的算法层（model / quality / generate / dedupe / lecture / store）必须能
+ * **脱离宿主单测**：题形状是纯数据、硬检查是纯函数、出题器只依赖一个窄 llm 接口、
+ * 领域服务不落盘。宿主相关的取舍（用哪个模型、并发配多少、缓存 / 数据放哪）
+ * 一律留给集成层 —— 那些是会随宿主变化的东西，混进算法层就会让「同一份算法」
+ * 在换宿主时被迫改。
+ *
+ * # ⚠️ 本文件**不碰宿主存储服务**
+ *
+ * 课题约束：本包不落盘、不读环境变量。题目 / 作答 / 额度台账的持久化
+ * 由**集成层**用宿主的存储服务负责 —— 那是宿主已有的能力，
+ * 在这里自己写一遍文件就是本仓明令禁止的「重复造轮子」。
+ * 本文件只通过 `ctx.provide('zhiyunQuiz', …)` 交出**领域服务**，
+ * 由集成层决定把它接到哪一层存储上。
+ *
+ * # llm 从哪来
+ *
+ * 宿主的 `ctx.llm` 服务形状是 `prepareCall / stream`（流式、带模型解析），
+ * 而本包要的是窄接口 `call({stage, route, constant, variable, signal})`。
+ * 那层适配**已经存在**：`dsh-zhiyun-core-parser` 的 `HarnessLlm` 就是它，
+ * 且它挂在 `ctx.zhiyunParser.llm` 上（study / lecture 两个包已经在这样用）。
+ * 所以这里直接取用，而不是再写第四个适配器 —— 本仓对「同一件事有两份实现」
+ * 是明令禁止的（两条路会在半年内无声漂开）。
+ *
+ * 若集成层要用别的适配器，`config.llm` 可以直接注入一个同形状的对象。
+ */
+
+import { createPointQuizGenerator } from './points.js';
+import {createR1Generator,engineVersion,engineEntries,registerEngine,registeredEngines} from './engines.js';
+import { QuizError } from './quality.js';
+import { createQuizGenerator } from './generate.js';
+import { createQuizStore } from './store.js';
+import { checkCandidate, createUpstreamQuizEngine } from './upstream.js';
+
+export const name = 'zhiyun-quiz';
+
+/**
+ * 依赖声明：`zhiyunParser` 提供宿主适配好的窄 llm。
+ *
+ * ⚠️ 声明它（而不是 `llm`）是有意的：直接用 `ctx.llm` 就得在本包内重写一遍
+ * `prepareCall / resolveModelInfo / stream` 的适配，那是解析器包已有的活。
+ * 声明依赖也让「谁提供模型」这件事对宿主可见 —— 靠 `ctx.llm` 猜出来
+ * 反而是隐式魔法。
+ *
+ * ⚠️ **只声明它真正需要的**：本包不声明 `storage` —— 因为本包**不落盘**。
+ * 谁要持久化谁去声明，那是集成层的依赖。
+ */
+export const inject = ['zhiyunParser'];
+
+export async function apply(ctx, config = {}) {
+  const llm = config.llm ?? ctx.zhiyunParser?.llm;
+  if (!llm || typeof llm.call !== 'function') {
+    throw new QuizError('CONFIG', '出题需要注入窄 llm 接口（{ call({stage,route,constant,variable,signal}) }）；'
+      + '宿主侧由 zhiyunParser 提供，也可用 config.llm 直接给出');
+  }
+
+  // 路由**延迟解析**：插件激活不该因为「模型还没配好」而失败 ——
+  // 没配模型时用户仍应能用题形状、硬检查、去重（那三条一次模型调用都不发）。
+  let route;
+  let resolving;
+  const resolveRoute = async (signal) => {
+    if (route !== undefined) return route;
+    if (typeof llm.resolve !== 'function') return undefined;
+    resolving ??= llm.resolve(signal,{vision:false})
+      .then((routes) => { route = routes?.text ?? routes?.vision; return route; })
+      .finally(() => { resolving = null; });
+    return resolving;
+  };
+
+  const generator = createQuizGenerator({
+    llm: {
+      call: async (request) => {
+        const resolved = await resolveRoute(request.signal);
+        return llm.call({ ...request, route: request.route ?? resolved });
+      },
+    },
+    concurrency: config.concurrency,
+    now: config.now,
+    idFactory: config.idFactory,
+    pipeline: config.pipeline ?? null,
+  });
+
+  // 领域服务：**不落盘**，集成层用宿主的存储服务接手持久化。
+  const store = createQuizStore({ now: config.now });
+
+  const pointLifetime = new AbortController();
+  const search=async(request,signal)=>{
+    const web=config.web??ctx.web;
+    if(!web?.search)throw new QuizError('WEB_UNAVAILABLE','请先在设置中配置联网搜索供应商');
+    return web.search(request,signal);
+  };
+  const pointCall=async request=>{
+    const signal=AbortSignal.any([pointLifetime.signal, ...(request.signal ? [request.signal] : [])]);
+    signal.throwIfAborted();
+    const resolved=await resolveRoute(signal);
+    return llm.call({...request,signal,route:request.route ?? resolved});
+  };
+  const pointGenerator=createPointQuizGenerator({search,guidance:config.pointGuidance??null,call:pointCall});
+  const r1Generator=createR1Generator({search,call:pointCall});
+  const service = {
+    generate: generator.generate,
+    generatePoints: input => pointGenerator({...input,signal:AbortSignal.any([pointLifetime.signal,...(input.signal ? [input.signal] : [])])}),
+    generateR1Points: input => r1Generator({...input,signal:AbortSignal.any([pointLifetime.signal,...(input.signal ? [input.signal] : [])])}),
+    /**
+     * 一次出题批次独占一个 worker 池。
+     *
+     * ⚠️ 池**由集成层构造后注入**（`{call,concurrency,snapshot}`），本包不自己 new：
+     * 本包零依赖（`tests/quiz.test.mjs` 有断言钉住），而 worker 池住在解析器包里。
+     * 由宿主构造也符合本包一贯的分工 —— 配额 / 选哪些供应商是宿主的知识。
+     */
+    createRun({pool,candidateCall,engine='local'}={}) {
+      if(!['local','deeptutor','r1'].includes(engine))throw new QuizError('CONFIG','该引擎需由学习资源集成层创建运行');
+      if(!pool||typeof pool.call!=='function'||!Number.isInteger(pool.concurrency)||pool.concurrency<1)
+        throw new QuizError('CONFIG','出题 worker 池需要由集成层构造并注入（{call,concurrency,snapshot}）');
+      const lifetime=new AbortController();
+      const generate=(engine==='r1'?createR1Generator:createPointQuizGenerator)({search,guidance:config.pointGuidance??null,call:request=>candidateCall&&/^quiz-point-(mcq|trueFalse|shortAnswer|cloze)$/.test(request.stage)?candidateCall(request):pool.call(request),concurrency:pool.concurrency});
+      return {generatePoints:input=>generate({...input,signal:AbortSignal.any([pointLifetime.signal,lifetime.signal,...(input.signal?[input.signal]:[])])}),
+        concurrency:pool.concurrency,get workers(){return pool.snapshot;},dispose:()=>lifetime.abort()};
+    },
+    dispose: () => { pointLifetime.abort(); generator.dispose(); },
+    /**
+     * 构造一个**上游候选生成引擎**（DeepTutor 主出题流水线）。
+     *
+     * ⚠️ `zhiyunDeepTutor` **不进 `inject`**：它是可选增强服务，装没装 Python、
+     * 配没配模型都可能是「没有」。声明成必需依赖会让本插件在没装上游的机器上
+     * 一直 pending —— 那样连本包自己的出题路径都用不了，这正是「可选」不该有的代价。
+     * 所以这里用 `ctx.get` 惰性取，且允许调用方直接注入（便于测试与替换）。
+     *
+     * 拿不到服务时**抛 CONFIG 并说清楚缺什么**，而不是返回一个会在 generate 时
+     * 才炸的壳 —— 早失败的那一侧永远更好定位。
+     */
+    createUpstreamEngine(options = {}) {
+      const tutor = options.tutor ?? (typeof ctx.get === 'function' ? ctx.get('zhiyunDeepTutor') : undefined)
+        ?? ctx.zhiyunDeepTutor;
+      if (!tutor) {
+        throw new QuizError('CONFIG',
+          '这台机器上没有上游出题服务（ctx.zhiyunDeepTutor）：dsh-zhiyun-host-deeptutor 未安装或未启动。'
+          + '本包自己的出题路径不受影响，可以继续用 generate / generatePoints');
+      }
+      return createUpstreamQuizEngine({ ...options, tutor, now: options.now ?? config.now, logger: options.logger ?? ctx.logger });
+    },
+    /** 校验一条上游候选题目能否进本包流程（供集成层在落库前自检）。 */
+    checkUpstreamCandidate: checkCandidate,
+    /** 题库领域服务（题目 / 作答 / 额度台账的形状与判定）。 */
+    store,
+    /**
+     * 引擎注册表。
+     *
+     * 交给外部包（`dsh-zhiyun-quiz-lab`）的唯一动作是 `register`。
+     * 真相住在 `engine-registry.js` 的模块级表里 —— 因为
+     * `planEngineQuestions` / `canResumeEngine` 是同步纯函数，读不到 `ctx`。
+     * 挂在既有 `zhiyunQuiz` 服务上、而不是另开一个服务名是有意的：
+     * 第二个 `provide` 会让只把首个值赋给变量的测试替身静默拿到错误那个，
+     * 而失败现场（`service.generateR1Points is not a function`）离真正原因很远。
+     */
+    engines: {
+      register: registerEngine,
+      list: () => registeredEngines().map(({ createRun, ...row }) => row),
+      versionOf: engineVersion,
+      entries: engineEntries,
+    },
+    get concurrency() { return generator.concurrency; },
+    get active() { return generator.active; },
+    get closed() { return generator.closed; },
+  };
+
+  const removeService = ctx.provide('zhiyunQuiz', service);
+  return () => {
+    // ⚠️ 先中断在飞的请求，再摘服务：反过来会让刚被调用的 generate 在
+    //    服务已消失之后还往模型端点发请求（白花钱，而且没人收结果）。
+    pointLifetime.abort();
+    generator.dispose();
+    if (typeof removeService === 'function') removeService();
+  };
+}

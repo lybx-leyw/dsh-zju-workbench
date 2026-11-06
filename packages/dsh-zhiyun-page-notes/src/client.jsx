@@ -43,7 +43,10 @@
 // 把用户删掉的内容又救回来。
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-import { Icon, Notice, mountStyle } from 'dsh-zhiyun-ui-primitives';
+import { Icon, Notice, mountStyle, registerPageContent } from 'dsh-zhiyun-shell-ui';
+// 图谱渲染是独立包（`dsh-zhiyun-graph-render`，整包移植自雷达候选 note-graph）：
+// 页面只负责把 vault 的 graph 读数递进去，不背 cytoscape 这份依赖。
+import { NoteGraph, css as graphCss } from 'dsh-zhiyun-graph-render';
 import css from './style.css';
 
 export const name = 'zhiyun-page-notes-client';
@@ -59,9 +62,25 @@ const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' 
 
 const NOTES_ROUTE = '/api/zhiyun-vault-notes';
 const VAULT_ROUTE = '/api/zhiyun-vault';
+/**
+ * PDF 阅读器的同源地址（宿主路由，见 `src/pdf-viewer.js`）。
+ *
+ * 阅读器是 iframe 而不是本 bundle 里的组件：pdf.js 的 worker 必须是独立脚本，
+ * 而本包客户端有「不许内联 src/ 之外文件」的构建守卫。同源则是为了把主题送进去。
+ */
+const PDF_VIEWER_PREFIX = '/zhiyun-vault-pdf/';
 const AUTOSAVE_MS = 800;
 /** 历史栈上限：够来回找，又不会把内存当日记本。 */
 const HISTORY_LIMIT = 60;
+
+/**
+ * 两次滚动键间隔小于这个值，就算"连续操作"，走 `instant` 而不是 `smooth`。
+ *
+ * 为什么需要：`smooth` 的缓动动画约 300ms，而键盘重复约 30 次/秒。若每次都从
+ * 当前位置重新起动画，按住不放反而几乎不动（实测 1.2 秒只走了一次的量）。
+ * 350ms 比一次缓动略长，刚好覆盖"上一段动画还没结束就来了下一次"。
+ */
+const REPEAT_WINDOW_MS = 350;
 
 /** 一次同源 RPC。两个路由的信封形状相同（`{type,rpcId,payload}`）。 */
 async function rpc(route, method, args, signal) {
@@ -110,6 +129,42 @@ function baseOf(rel) {
   const slash = String(rel).lastIndexOf('/');
   return slash === -1 ? String(rel) : String(rel).slice(slash + 1);
 }
+/** 去掉末尾扩展名（`a/b.pdf` → `a/b`）。标签标题用它，与笔记的「标题即文件名」一致。 */
+function stripExt(rel) {
+  const text = String(rel);
+  const dot = text.lastIndexOf('.');
+  const slash = text.lastIndexOf('/');
+  return dot <= slash ? text : text.slice(0, dot);
+}
+
+/** 这条路径是不是 PDF（决定标签页渲染 iframe 还是编辑器）。 */
+function isPdfPath(rel) {
+  return /\.pdf$/i.test(String(rel));
+}
+
+/**
+ * 把 `File` 读成 base64（不带 data URL 前缀）。
+ *
+ * 用 `FileReader` 而不是 `arrayBuffer()` + 手写编码：后者要处理分块（几十 MB 的
+ * PDF 一次性 `String.fromCharCode.apply` 会爆调用栈），而 `FileReader` 是浏览器
+ * 原生实现，不需要我们操心。
+ *
+ * @param file - `File`。
+ * @returns base64 字符串。
+ */
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error('读取文件失败'));
+    reader.onload = () => {
+      const text = String(reader.result ?? '');
+      // `readAsDataURL` 给的是 `data:application/pdf;base64,XXXX`，只要逗号之后那段。
+      const comma = text.indexOf(',');
+      resolve(comma === -1 ? text : text.slice(comma + 1));
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 /**
  * 把扁平的条目表拼成文件树的行。
@@ -152,6 +207,33 @@ function buildRows(entries, expanded, filter) {
   return rows;
 }
 
+/**
+ * 区间选择：从锚点到游标之间的**可见行**（含两端）。
+ *
+ * # 为什么按"可见行的下标"算，而不是按路径排序算
+ *
+ * 树是折叠的、过滤时还会退化成扁平命中列表。用户眼里的"这一段"永远是**屏幕上
+ * 连着的那几行**，而不是文件系统里的字典序。折叠一个文件夹后，它里面那些行
+ * 从屏幕上消失了 —— 用路径序算出来的区间会把看不见的行也框进去，用户按
+ * Delete 就删掉了他根本没看见的东西。这是这一页唯一不可逆的动作，不能这么猜。
+ *
+ * 锚点或游标已经不在可见行里（被折叠/被过滤掉）时返回空：宁可"选择消失了"，
+ * 也不要悄悄留一个指向不可见行的选择。
+ *
+ * @param paths - 当前可见行的路径，**按屏幕顺序**。
+ * @param anchor - 选区锚点（第一次按 Shift+↑/↓ 时游标所在的行）。
+ * @param cursor - 游标所在的行。
+ * @returns 选中行的路径数组（按屏幕顺序）；两端任一不可见时为空。
+ */
+function selectionRange(paths, anchor, cursor) {
+  if (anchor === null || cursor === null) return [];
+  const from = paths.indexOf(anchor);
+  const to = paths.indexOf(cursor);
+  if (from < 0 || to < 0) return [];
+  const [lo, hi] = from <= to ? [from, to] : [to, from];
+  return paths.slice(lo, hi + 1);
+}
+
 /** 一个条目的祖先目录链（用于"打开笔记时自动展开它所在的目录"）。 */
 function ancestorsOf(rel) {
   const parts = String(rel).split('/').slice(0, -1);
@@ -166,18 +248,23 @@ function ancestorsOf(rel) {
 
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zhiyunNotesPageStyle', css, label: 'zhiyun: notes page styles' });
-  ctx.slots.inject('zhiyun.notes.content', () => ctx.slots.register(
-    { name: 'zhiyun.notes.content', priority: 10 },
-    NotesLibrary,
-  ));
+  // 图谱的样式随包走（`dsh-zhiyun-graph-render` 导出自己的 css），
+  // 页面只负责在同一个 ctx 里挂上 —— 样式归属跟着组件走，不散落在页面里。
+  mountStyle(ctx, { attribute: 'zhiyunGraphRenderStyle', css: graphCss, label: 'zhiyun: graph render styles' });
+    registerPageContent(ctx, {
+    id: 'notes',
+    label: '笔记',
+    fullBleed: true,
+    render: () => <NotesLibrary/>,
+  });
 }
 
 /** 文件树的一行。`dropTarget` 让文件夹既是行也是拖放目标。 */
-function TreeRow({ row, current, expanded, onOpen, onToggle, onDropOn, onDragStart, dragging }) {
+function TreeRow({ row, current, cursor, selected, expanded, onOpen, onToggle, onDropOn, onDragStart, dragging }) {
   const isFolder = row.type === 'folder';
   const isOpen = isFolder && expanded.has(row.path);
   return <li
-    className={`zs-nt-row${row.path === current ? ' is-current' : ''}${isOpen ? ' is-expanded' : ''}${dragging === row.path ? ' is-dragging' : ''}`}
+    className={`zs-nt-row${row.path === current ? ' is-current' : ''}${row.path === cursor ? ' is-cursor' : ''}${selected ? ' is-selected' : ''}${isOpen ? ' is-expanded' : ''}${dragging === row.path ? ' is-dragging' : ''}`}
     style={{ '--zs-nt-depth': String(row.depth) }}
     draggable
     onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', row.path); onDragStart(row.path); }}
@@ -189,6 +276,11 @@ function TreeRow({ row, current, expanded, onOpen, onToggle, onDropOn, onDragSta
       type="button"
       className="zs-nt-rowbtn"
       title={row.path}
+      /* 键盘删除的落点：keydown 处理里靠 `data-path` 认出"焦点落在哪一行"。
+         比维护一个 `selected` state 更贴合真实操作 —— 行的焦点**就是**选中，
+         而且点击行本来就会让它获得焦点（按钮天然可聚焦）。 */
+      data-path={row.path}
+      data-kind={row.type}
       onClick={() => (isFolder ? onToggle(row.path) : onOpen(row.path))}
     >
       <span className="zs-nt-caret">{isFolder ? <Icon name="chevron" size={13} /> : null}</span>
@@ -201,6 +293,62 @@ function TreeRow({ row, current, expanded, onOpen, onToggle, onDropOn, onDragSta
   </li>;
 }
 
+/**
+ * PDF 标签页的正文：一个同源 iframe，指向宿主的 PDF 阅读器路由。
+ *
+ * # 为什么是 iframe
+ *
+ * 见 `pdf-viewer.js` 顶部：pdf.js 的 worker 必须是独立脚本，而客户端 bundle
+ * 不许内联本包 `src/` 之外的文件。iframe 同时解决这两件事，并且**同源** ——
+ * 只有同源才能把主题 `postMessage` 进去，PDF 才会跟着亮暗切换。
+ *
+ * # 主题同步
+ *
+ * 外层 `body[data-ds-dark-theme]` 是宿主的暗色开关（`shell-workbench` 在用它）。
+ * 这里用 `MutationObserver` 盯着它，变了就通知 iframe；加载完成时也补发一次，
+ * 否则首帧会停在 iframe 自己猜的颜色上。
+ *
+ * @param page - 库内相对路径（含 `.pdf`）。
+ * @param title - 标签标题（不含扩展名）。
+ */
+function PdfViewer({ page, title }) {
+  const frameRef = useRef(null);
+  const src = `${PDF_VIEWER_PREFIX}?path=${encodeURIComponent(page)}`;
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (frame === null) return undefined;
+    const readTheme = () => (document.body.dataset.dsDarkTheme !== undefined
+      || document.body.classList.contains('data-ds-dark-theme')
+      ? 'dark'
+      : 'light');
+    const push = () => {
+      // `contentWindow` 在同源下拿得到；拿不到说明被隔离了，那就只能维持默认。
+      frame.contentWindow?.postMessage({ type: 'zhiyun-pdf-theme', theme: readTheme() }, '*');
+    };
+    // 加载完成时补发（iframe 自己解析完才有 listener）。
+    frame.addEventListener('load', push);
+    // 宿主切主题时同步。观察 `data-ds-dark-theme` 与 class 两种写法。
+    const observer = new MutationObserver(push);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-ds-dark-theme', 'class'] });
+    push();
+    return () => {
+      frame.removeEventListener('load', push);
+      observer.disconnect();
+    };
+  }, [src]);
+
+  return <iframe
+    ref={frameRef}
+    className="zs-nt-pdf"
+    src={src}
+    title={title}
+    /* 同源（要读写主题），但不要给它 `allow-same-origin` 之外的权限。 */
+    sandbox="allow-same-origin allow-scripts allow-downloads"
+  />;
+}
+
+/** 标签页条。每一页带自己的 ×；右侧的 ＋ 新建一篇。 */
 /** 标签页条。每一页带自己的 ×；右侧的 ＋ 新建一篇。 */
 function TabStrip({ tabs, active, onPick, onClose, onCreate }) {
   return <div className="zs-nt-tabs" role="tablist">
@@ -216,7 +364,7 @@ function TabStrip({ tabs, active, onPick, onClose, onCreate }) {
 }
 
 /** 右栏：这篇笔记的操作 + 反链 / 出链 / 标签。 */
-function NoteRelations({ name, markdown, backlinks, tags, onOpen, onRename, onRemove, busy }) {
+function NoteRelations({ name, markdown, backlinks, tags, graph, onOpen, onRename, onRemove, busy }) {
   const parse = useMemo(() => {
     const links = [...String(markdown).matchAll(/\[\[([^\]\n]+)\]\]/g)]
       .map((m) => m[1].split('|')[0].split('#')[0].trim())
@@ -256,6 +404,8 @@ function NoteRelations({ name, markdown, backlinks, tags, onOpen, onRename, onRe
         </li>)}</ul>}
     </section>
 
+    <NoteGraph graph={graph} current={name ? `${name}.md` : ''} onOpen={(p) => onOpen(p.replace(/\.md$/i, ''))} />
+
     <section>
       <h3>指向 <span>{parse.links.length}</span></h3>
       {parse.links.length === 0
@@ -279,55 +429,157 @@ function NoteRelations({ name, markdown, backlinks, tags, onOpen, onRename, onRe
   </aside>;
 }
 
+/**
+ * 上次挂载时的笔记库状态（模块级，跨挂载存活）。
+ *
+ * # 为什么必须有它
+ *
+ * 壳每次切页都会**卸载**当前页、再挂载目标页。而这一页挂载时要先
+ * `refreshTree()` 拉整棵树、再 `openNote()` 打开第一篇 —— 期间一直停在
+ * `phase === 'loading'`，整页只有一个占位。于是「切到笔记」永远要等一轮
+ * 网络，哪怕数据一点没变。
+ *
+ * 放在模块作用域而不是 `useState`：组件卸载后模块仍在（ESM 只求值一次），
+ * 所以这份值能跨挂载留下来。**它只用于首屏渲染**，挂载后照常刷新。
+ */
+let lastLibrary = null;
+
 export function NotesLibrary() {
-  const [phase, setPhase] = useState('loading');
-  const [entries, setEntries] = useState([]);
+  // 有缓存时直接以它为初始值 —— 切回来第一帧就是上次的目录与当前笔记
+  const [phase, setPhase] = useState(lastLibrary ? 'ready' : 'loading');
+  const [entries, setEntries] = useState(() => lastLibrary?.entries ?? []);
   const [tabs, setTabs] = useState([]);
-  const [active, setActive] = useState(null);
-  const [expanded, setExpanded] = useState(() => new Set());
+  const [active, setActive] = useState(() => lastLibrary?.active ?? null);
+  const [expanded, setExpanded] = useState(() => new Set(lastLibrary?.expanded ?? []));
   const [explorerOpen, setExplorerOpen] = useState(true);
   // ⚠️ 右栏**默认收起**：宿主里这一页的可用宽度只有窗口减去它自己的侧栏，
   //    再常驻一列 250px 会把正文挤到读不下去（实测状态栏都换行了）。
   //    Obsidian 的右栏同样是默认收起的。开关在 ribbon 上，状态栏的反链数也能叫出来。
   const [rightOpen, setRightOpen] = useState(false);
-  const [preview, setPreview] = useState(false);
+  // 阅读态是**默认**：笔记大多是拿来读的，而 Markdown 源码对读者不友好。
+  // 想写就按工具栏那个「编辑」。
+  //
+  // ⚠️ 例外只有一个：**新建笔记**后自动切到编辑态（见 createNote）。否则用户
+  //    新建完看到的是一句「（空笔记）」，还得自己再点一次「编辑」才能开始写。
+  const [preview, setPreview] = useState(true);
   const [filter, setFilter] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [backlinks, setBacklinks] = useState([]);
   const [allTags, setAllTags] = useState([]);
+  // 全库链接图。`null` = 索引器没给，`{nodes:[],edges:[]}` = 真的没有笔记。
+  const [graph, setGraph] = useState(null);
   const [history, setHistory] = useState({ stack: [], cursor: -1 });
   const [dragging, setDragging] = useState(null);
+  /**
+   * 待确认删除的条目（`{ items: [{ path, kind }] }`）；`null` = 没有。
+   *
+   * 删除在这里**不可撤销**（没有回收站），所以键盘删除要求一次就地确认。
+   * 不做成 `window.confirm`：这个仓库统一用页面内的确认，规划页的 `confirming`
+   * 就是同一做法 —— 系统弹窗在 Electron 里会被窗口样式割裂，而且无法本地化。
+   *
+   * ⚠️ 从单条改成了 `items` 数组（批量删除）：单条就是长度为 1 的数组。
+   *    保留一种形状而不是"单条一套、批量一套"，是为了让确认条与 `removePaths`
+   *    只有一条代码路径 —— 两条路径迟早会有一条漏掉某次清理（标签页/挂起保存）。
+   */
+  const [pendingDelete, setPendingDelete] = useState(null);
+  /**
+   * 树上"当前游标"所在的行（用于 ↑/↓ 移动）。
+   *
+   * 为什么不用浏览器焦点：真机实测点完树行 `activeElement` 是 `BODY`、
+   * `focusin` 日志为空 —— 宿主把焦点拿走了，行按钮根本留不住焦点。
+   * 所以"选中哪一行"这件事必须由我们自己持有，并且在界面上**看得见**
+   * （`.is-cursor` 高亮），否则按了 ↑/↓ 用户毫无反馈。
+   */
+  const [treeCursor, setTreeCursorPath] = useState(null);
+  /**
+   * 区间选择的**锚点**（第一次按 Shift+↑/↓ 时游标所在的行）；`null` = 没有选择。
+   *
+   * 选择 = 锚点到游标之间那段**可见行**，由 `selectionRange()` 现算，不另存一份
+   * 路径数组。这样折叠一个文件夹、或者输入过滤词让行变少了，选择会自动跟着
+   * 屏幕上的东西收缩 —— 不会留下一个指向"已经看不见的行"的选择，然后被 Delete
+   * 删掉用户根本没看见的内容。
+   */
+  const [selectionAnchor, setSelectionAnchor] = useState(null);
   const filterRef = useRef(null);
+  /** 正文滚动容器（`.zs-nt-scroll`）。阅读态与编辑态共用这一个，翻页键的目标就是它。 */
+  const scrollRef = useRef(null);
+  /** 本页根节点：document 级键盘处理器靠它判断"我还在不在页面上"。 */
+  const rootRef = useRef(null);
+  /** 隐藏的 `<input type="file">`：导入 PDF 的入口。 */
+  const pdfInputRef = useRef(null);
+  /**
+   * 最近一次交互过的树行路径（`null` = 不在树上）。
+   *
+   * ⚠️ 为什么不用 `document.activeElement` 判断"用户在树上"：真机实测不成立。
+   *    点完树行 `activeElement` 是 `BODY`、`focusin` 日志为空 —— 宿主把焦点收走了，
+   *    树行根本留不住焦点。任何以焦点为前提的键盘分派在真机上都是死的。
+   *    改成记录"用户最后一次用鼠标落在哪一行"，点正文时清掉。
+   *
+   * 同时存一份 state（`treeCursor`）用于**可见高亮**：只记 ref 的话，按 ↑/↓
+   * 移动了也没有任何视觉反馈，用户会以为键没反应。
+   */
+  const treeCursorRef = useRef(null);
+  /**
+   * 上一次滚动键的时间戳与方向（用于判断"这是不是连续操作"）。
+   *
+   * 存在 ref 里而不是 state：它只影响下一帧的滚动行为，不该触发重渲染 ——
+   * 每按一次方向键就重渲染一次整页，代价远大于收益。
+   */
+  const lastScroll = useRef(null);
   // 用 ref 存"最后一次发出的正文"：定时器回调里读 state 会拿到闭包里的旧值。
   const pending = useRef(null);
   const saveTimer = useRef(null);
 
   const activeTab = tabs.find((t) => t.path === active) ?? null;
   const rows = useMemo(() => buildRows(entries, expanded, filter), [entries, expanded, filter]);
+  /**
+   * 当前可见行的路径，**按屏幕顺序**（`rows` 就是树的渲染顺序）。
+   *
+   * 区间选择靠它算下标，所以它必须是渲染顺序而不是文件系统顺序 ——
+   * 理由见 `selectionRange()`。
+   */
+  const rowPaths = useMemo(() => rows.map((row) => row.path), [rows]);
+  /**
+   * 选中的路径集合（用于给行加 `is-selected`）。
+   *
+   * 派生而不是独立 state：选择的**唯一真源**是「锚点 + 游标 + 可见行」这三样，
+   * 再存一份数组就会有"两者不同步"的可能（折叠文件夹之后最常见）。
+   */
+  const selectedPaths = useMemo(
+    () => new Set(selectionRange(rowPaths, selectionAnchor, treeCursor)),
+    [rowPaths, selectionAnchor, treeCursor],
+  );
   const canBack = history.cursor > 0;
   const canForward = history.cursor >= 0 && history.cursor < history.stack.length - 1;
 
   const refreshTree = useCallback(async () => {
     const next = await notes('tree');
-    setEntries(Array.isArray(next) ? next : []);
+    const list = Array.isArray(next) ? next : [];
+    setEntries(list);
+    // 记下来供**下次挂载**直接用（见 `lastLibrary` 的说明）
+    lastLibrary = { ...(lastLibrary ?? {}), entries: list };
     return next;
   }, []);
 
   /** 刷新右栏（反链 / 标签来自索引器；索引器缺席时只是空着）。 */
   const refreshSide = useCallback(async (name) => {
-    if (!name) { setBacklinks([]); setAllTags([]); return; }
+    if (!name) { setBacklinks([]); setAllTags([]); setGraph(null); return; }
     try {
-      const [links, tags] = await Promise.all([
+      const [links, tags, graph] = await Promise.all([
         vault('backlinks', { path: `${name}.md` }),
         vault('tags'),
+        // 图谱是**全库**的，不随当前笔记变；`null` 表示索引器没给出（不是「没有图」）。
+        vault('graph').catch(() => null),
       ]);
       setBacklinks(Array.isArray(links) ? links : []);
       setAllTags(Array.isArray(tags) ? tags.slice(0, 30) : []);
+      setGraph(graph && typeof graph === 'object' ? graph : null);
     } catch {
       // 索引器不可用时右侧留空，不打扰用户 —— 正文本身还能读写。
       setBacklinks([]);
       setAllTags([]);
+      setGraph(null);
     }
   }, []);
 
@@ -376,10 +628,20 @@ export function NotesLibrary() {
 
     setBusy(true);
     try {
+      // PDF 走另一条路：它不是文本，没有 `read` 可读，也不需要草稿与自动保存。
+      // 标签项用 `kind` 区分，正文区据此决定渲染 iframe 还是编辑区。
+      if (isPdfPath(path)) {
+        setTabs((ts) => (ts.some((t) => t.path === path) ? ts : [...ts, {
+          path, title: stripExt(baseOf(path)), kind: 'pdf', draft: '', dirty: false, savedAt: null,
+        }]));
+        // PDF 不进反链/图谱（索引器只认 .md），右栏如实留空。
+        await refreshSide(null);
+        return;
+      }
       const found = await notes('read', { name: path });
       if (!found) { setNotice({ tone: 'bad', text: `没有名为「${baseOf(path)}」的笔记。` }); return; }
       setTabs((ts) => (ts.some((t) => t.path === path) ? ts : [...ts, {
-        path, title: baseOf(path), draft: found.markdown, dirty: false, savedAt: null,
+        path, title: baseOf(path), kind: 'note', draft: found.markdown, dirty: false, savedAt: null,
       }]));
       await refreshSide(path);
     } catch (error) {
@@ -393,6 +655,22 @@ export function NotesLibrary() {
   // （effect 在 render 结束后才执行），但读代码的人得先往后翻才知道它调了什么。
   useEffect(() => {
     void (async () => {
+      /**
+       * 有缓存时：**先把上次的内容画出来，再后台刷新**。
+       *
+       * 缓存里的 `active` 是一个路径，正文由下面的子组件按路径读一次 ——
+       * 那是单文件读取，毫秒级；整棵树的重建（`tree`）才是慢的那一步，
+       * 它挪到后台，不阻塞首屏。
+       */
+      if (lastLibrary) {
+        try {
+          if (lastLibrary.active) await openNote(lastLibrary.active, { history: false });
+          else await refreshSide(null);
+        } catch { /* 单篇读失败不该让整页进 error */ }
+        // 后台刷新目录树：失败就保持旧树，不打扰用户
+        void refreshTree().catch(() => {});
+        return;
+      }
       try {
         const items = await refreshTree();
         setPhase('ready');
@@ -411,6 +689,16 @@ export function NotesLibrary() {
     // 只在挂载时跑一次。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * 把「当前打开的笔记」与「展开的目录」同步进模块级缓存。
+   *
+   * 只同步这两个 UI 位置，不碰 `tabs`：标签页里有未保存的草稿，跨挂载恢复
+   * 草稿会让"上次没保存的东西"突然又出现，那是另一类意外，不做。
+   */
+  useEffect(() => {
+    lastLibrary = { ...(lastLibrary ?? {}), active, expanded: [...expanded] };
+  }, [active, expanded]);
 
   /** 编辑当前标签页：立刻反映到界面，800ms 后写盘。 */
   const edit = (value) => {
@@ -446,8 +734,57 @@ export function NotesLibrary() {
       const made = await notes('create', { title: '新笔记', folder });
       await refreshTree();
       await openNote(made.name);
+      // 新建是为了写，不是为了读：直接进编辑态，省掉一次「点编辑」。
+      setPreview(false);
     } catch (error) {
       setNotice({ tone: 'bad', text: `新建失败：${error.message}` });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * 导入 PDF 到库里（落在当前笔记所在的文件夹）。
+   *
+   * # 为什么用 `<input type="file">` 而不是拖拽
+   *
+   * 拖拽在这个页面上已经有含义了 —— 拖动树行到文件夹是「移动」。再让「拖文件进来」
+   * 也触发导入，两种拖放会互相干扰（用户拖一张 PDF 到树上是想移动还是想导入？）。
+   * 文件选择器语义单一，也不会误伤现有交互。
+   *
+   * # 为什么读成 base64 走 RPC
+   *
+   * 宿主的路由只给了「按 JSON 信封收发」的通道（`connection.fetch.register`），
+   * 没有 multipart 解析。PDF 走 base64 会膨胀约 33%，但换来的是：不需要在宿主侧
+   * 写一个 multipart 解析器，也没有临时文件要清理。上限 64MB 由宿主再挡一次。
+   *
+   * @param file - `File`（来自 `<input type="file">`）。
+   * @param folder - 目标文件夹（相对库根，可空）。
+   */
+  const importPdf = async (file, folder = '') => {
+    if (!file) return;
+    const ext = (file.name.split('.').pop() ?? '').toLowerCase();
+    if (ext !== 'pdf') {
+      setNotice({ tone: 'bad', text: `只能导入 PDF，这个文件是 .${ext}。` });
+      return;
+    }
+    setBusy(true);
+    setNotice({ tone: 'ok', text: `正在导入「${file.name}」…` });
+    try {
+      const base64 = await fileToBase64(file);
+      const made = await notes('importAsset', {
+        // 标题取文件名去掉扩展名 —— 与「标题即文件名」一致。
+        title: stripExt(file.name),
+        folder,
+        ext: 'pdf',
+        base64,
+      });
+      await refreshTree();
+      // 导入完直接打开，用户不用再去树上找一遍。
+      await openNote(made.path);
+      setNotice({ tone: 'ok', text: `已导入「${made.title}」。` });
+    } catch (error) {
+      setNotice({ tone: 'bad', text: `导入失败：${error.message}` });
     } finally {
       setBusy(false);
     }
@@ -512,24 +849,98 @@ export function NotesLibrary() {
     }
   };
 
-  const remove = async (path) => {
+  /**
+   * 删掉一组路径（笔记 / 附件 / 文件夹），一条 RPC 走完。
+   *
+   * ⚠️ 「删掉的不该被自动保存救回来」这条对**文件夹**同样成立，而且更危险：
+   *    删一个文件夹时，里面的笔记可能在别的标签页开着，`pending.current` 里还挂着
+   *    它们某一次的正文。旧代码只挡 `pending.path === path`（笔记自身路径），
+   *    于是 800ms 后那次挂起的保存把 `理学/概率论` 又一个字不差地写回磁盘 ——
+   *    连同刚刚被递归删掉的文件夹一起**整棵复活**。这是实测出来的形状，不是推测：
+   *    探针里 `remove('理学')` 返回 `removed:true`、树变空，随后自动保存让
+   *    `folder:理学, note:理学/概率论` 原样回来。
+   *
+   *    所以这里按**前缀**判断：被删路径是 `p` 本身，或它下面的任何一条（`p/...`），
+   *    都要从挂起任务与标签页里清掉。批量删除时这个判断必须对**每一条**都成立 ——
+   *    "选了文件夹又选了它里面的笔记"正是批量选择最容易产生的形状。
+   *
+   * # 为什么批量走一个 RPC（`removeMany`）而不是循环调 `remove`
+   *
+   * 宿主半边的每个写操作结尾都会 `refreshIndex()`（重读全库 + 推给索引器）。
+   * 循环 N 次就是 N 遍全库重读：删 30 篇笔记会让界面卡住好几秒，而中间任何一次
+   * 失败还会留下"删了一半、索引只更新了一半"的状态。`removeMany` 在服务端
+   * 按父目录优先的顺序删完，最后只刷一次索引 —— 这既快，也让失败面收敛到一处。
+   *
+   * @param paths - `tree` 给的路径数组：笔记不带 `.md`，附件与文件夹是完整相对路径。
+   */
+  const removePaths = async (paths) => {
+    const list = [...new Set(paths.filter(Boolean))];
+    if (list.length === 0) return;
     setBusy(true);
     setNotice(null);
+    // 这次删除会波及哪些路径：任一条路径本身，或它下面的一切。
+    const covers = (other) => list.some((path) => other === path || other.startsWith(`${path}/`));
     try {
-      // 删掉的文件不该再由自动保存救回来：先把挂起的任务摘掉。
-      if (pending.current?.path === path) pending.current = null;
-      await notes('remove', { path });
-      setTabs((ts) => ts.filter((t) => t.path !== path));
-      setActive((cur) => (cur === path ? null : cur));
+      if (pending.current !== null && covers(pending.current.path)) {
+        pending.current = null;
+        if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+      }
+      // 单条也走同一个方法：两条路径（单条 / 批量）迟早会有一条漏掉某次清理。
+      const result = await notes('removeMany', { paths: list });
+      const removed = Array.isArray(result?.removed) ? result.removed : [];
+      if (removed.length === 0) {
+        // 后端说没删到东西：如实说出来，而不是报一个假的成功。
+        setNotice({
+          tone: 'bad',
+          text: list.length === 1
+            ? `没有删除任何东西：「${baseOf(list[0])}」可能已经不在了。`
+            : `没有删除任何东西：这 ${list.length} 条可能都已经不在了。`,
+        });
+        await refreshTree();
+        return;
+      }
+      setTabs((ts) => ts.filter((t) => !covers(t.path)));
+      setActive((cur) => (cur !== null && covers(cur) ? null : cur));
+      // 选择跟着内容一起消失：删完还留着指向已不存在路径的高亮，会让下一次
+      // Delete 对着空气弹确认条。
+      setSelectionAnchor(null);
+      treeCursorRef.current = null;
+      setTreeCursorPath(null);
       await refreshTree();
-      await refreshSide(null);
-      setNotice({ tone: 'ok', text: `已删除「${baseOf(path)}」。` });
+      if (active !== null && covers(active)) await refreshSide(null);
+      // 删文件夹要说清连带了什么 —— 这是这一页唯一会顺手删掉别的文件的动作。
+      // 批量时把连带数**加起来**，一次说清楚。
+      const contained = removed.reduce((sum, item) => sum + (Number(item.contained) || 0), 0);
+      const extra = contained > 0 ? `（含 ${contained} 个文件）` : '';
+      const title = removed.length === 1 ? `「${baseOf(removed[0].path)}」` : ` ${removed.length} 条`;
+      // ⚠️ 有东西**没删掉**时必须说出来。批量删除最容易骗人的地方就是：
+      //    用户框了 12 行、界面回一句"已删除 12 条"，而实际只删掉 9 条。
+      //    `missing`（磁盘上本来就没了）与 `skipped`（已被删掉的父文件夹一起带走）
+      //    是两种不同的"没有单独删"，分开说 —— 后者的内容确实没了，不是失败。
+      const missing = Array.isArray(result?.missing) ? result.missing.length : 0;
+      const skipped = Array.isArray(result?.skipped) ? result.skipped.length : 0;
+      // ⚠️ 这个数组**不能**叫 `notes`：本函数上面还要调 `notes('removeMany', …)`
+      //    那个 RPC 助手（模块级 const）。同名 `const` 会把整个块里的 `notes`
+      //    拖进暂时性死区，RPC 调用当场 ReferenceError。
+      const remarks = [];
+      if (skipped > 0) remarks.push(`另 ${skipped} 项随文件夹一并删除`);
+      if (missing > 0) remarks.push(`${missing} 条已经不在，跳过`);
+      const tail = remarks.length > 0 ? `；${remarks.join('，')}` : '';
+      setNotice({ tone: 'ok', text: `已删除${title}${extra}${tail}。` });
     } catch (error) {
       setNotice({ tone: 'bad', text: `删除失败：${error.message}` });
     } finally {
       setBusy(false);
     }
   };
+
+  /**
+   * 删掉一条路径。右栏的「删除这篇笔记」与结题用的确认条都走它 ——
+   * 保留这个单条入口是为了让调用点读起来仍然是"删这一篇"，而不是"删一个数组"。
+   *
+   * @param path - `tree` 给的路径：笔记不带 `.md`，附件与文件夹是完整相对路径。
+   */
+  const remove = (path) => removePaths([path]);
 
   const walkHistory = async (step) => {
     const next = history.cursor + step;
@@ -546,6 +957,299 @@ export function NotesLibrary() {
     });
   };
 
+  /**
+   * PageUp / PageDown / ↑ / ↓ 的四个键：滚**当前打开的笔记**，以及在树上移动/扩选。
+   *
+   * # 实测出来的三条事实（决定了这份实现的形状）
+   *
+   * 1. **不能指望浏览器原生滚动**。正文是 `.zs-nt-scroll`，它没有焦点时浏览器
+   *    对 `PageDown` 毫无反应（实测焦点在 `<body>` 上按 PageDown，`scrollTop`
+   *    仍是 0）。所以必须自己 `scrollBy`。
+   * 2. **焦点在树行上时，这四个键归树**（B 方案）。否则用户在树里按 `↓` 想选下一篇，
+   *    正文却滚走了 —— 那正是要避免的错位。
+   * 3. **焦点在 `textarea` 里必须放行**。编辑态正文是一个**会自己滚**的 textarea
+   *    （实测 `scrollHeight 5888 > clientHeight 420`，按 PageDown 滚的是它自己），
+   *    而且 `↑/↓` 在那里是移动光标。接管它等于把人家的输入框变砖。
+   *
+   * # Shift + ↑/↓ = 区间选择（批量选择）
+   *
+   * 语义照抄所有文件管理器：**Shift 决定"这一段从哪到哪"，游标到哪，选择就到哪。**
+   * 细节三条，都是为了"选择永远等于屏幕上看得见的那一段"：
+   *
+   *   1. 第一次按下时把**当时的游标**记为锚点；之后每按一次只移动游标，区间由
+   *      `selectionRange()` 用「锚点 → 游标」现算。所以往回按会让区间收缩，
+   *      而不是再造一段新的选择（那会变成"越缩越大"的怪行为）。
+   *   2. 不带 Shift 的 ↑/↓ 把选择塌缩掉（锚点清空）—— 与资源管理器一致：
+   *      松手后随便移动，选择就没了。
+   *   3. **只在树上生效**。焦点在正文 textarea 里时 Shift+↓ 必须是"选正文文字"，
+   *      抢过来等于把用户最常用的选区操作弄坏。
+   *
+   * # 为什么是"滚一个视口的 85%"
+   *
+   * `PageDown` 的语义是"翻一页但要保留衔接"。整屏滚动会丢掉上一页最后一行，
+   * 读者会失去位置感；少滚一行又显得没翻动。85% 是阅读器里常见的折中。
+   *
+   * @param event - keydown 事件。
+   * @returns 是否接管了这次按键。
+   */
+  const handleScrollKeys = (event) => {
+    const { key } = event;
+    if (key !== 'PageDown' && key !== 'PageUp' && key !== 'ArrowDown' && key !== 'ArrowUp') return false;
+    if (event.ctrlKey || event.metaKey || event.altKey) return false;
+    const target = event.target;
+    if (!(target instanceof Element)) return false;
+    // 输入区一律放行：原因见上面第 3 条（textarea 自己会滚，↑/↓ 是移光标）。
+    if (target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return false;
+
+    const isPage = key === 'PageDown' || key === 'PageUp';
+    const step = key === 'PageDown' || key === 'ArrowDown' ? 1 : -1;
+
+    // 焦点在树行上：↑/↓ 移焦点，PageUp/PageDown 交给树自己原生滚（A 的结论）。
+    //
+    // ⚠️ 真机上**不能只靠 `event.target`**：实测点完树行再点正文之后，
+    //    `document.activeElement` 会是宿主的正文标题 `H2`，甚至是 `BODY`，
+    //    树行永远不是 keydown 的 target。若只认 target，B 方案（树上 ↑/↓ 选笔记）
+    //    在真机上等于不存在。所以补一条：**最近一次在树里按过方向键**也算在树上，
+    //    由 `treeCursor`（ref）记住，任何一次点击正文/别处都会清掉它。
+    const rowFromTarget = target.closest('.zs-nt-rowbtn[data-path]');
+    const row = rowFromTarget ?? (treeCursorRef.current !== null
+      ? rootRef.current?.querySelector(`.zs-nt-rowbtn[data-path="${CSS.escape(treeCursorRef.current)}"]`) ?? null
+      : null);
+    if (row !== null) {
+      if (isPage) return false;           // 让浏览器滚树容器本身
+      const root = row.closest('.zs-nt');
+      if (root === null) return false;
+      const buttons = [...root.querySelectorAll('.zs-nt-rowbtn[data-path]')];
+      const at = buttons.indexOf(row);
+      const next = at < 0 ? undefined : buttons[at + step];
+      // 移得动就接管；移不动（已到头）也不拦，保持"没反应"的一致观感。
+      if (next === undefined) return false;
+      const nextPath = next.dataset.path ?? null;
+      // 亮点跟着走：真机上焦点留不住，这份 state 才是用户**看得见**的"选中"。
+      setTreeCursorPath(nextPath);
+      treeCursorRef.current = nextPath;
+      if (event.shiftKey) {
+        // 锚点只在**第一次**按住 Shift 时定下来：之后的移动都是"扩/缩这段"。
+        // 用函数式更新读当前值，避免闭包里拿到过期的锚点。
+        setSelectionAnchor((anchor) => anchor ?? (row.dataset.path ?? null));
+      } else {
+        // 不带 Shift 的移动 = 放弃选择。
+        setSelectionAnchor(null);
+      }
+      // 顺手尽力把焦点也放上去（普通浏览器上有效；真机上无效也不影响功能）。
+      next.focus?.();
+      event.preventDefault();
+      return true;
+    }
+
+    // 不在树上：Shift 的翻页/滚动组合不接管（Shift+↑/↓ 在这里没有"选择"可做，
+    // Shift+PageUp/PageDown 是浏览器的"选择到页首/页尾"，不该被这里吃掉）。
+    if (event.shiftKey) return false;
+
+    const scroller = scrollRef.current;
+    if (scroller === null) return false;
+    // ↑/↓ 一次一行不够明确（行高随排版变），按"约三行"的量滚，读长文才跟得上。
+    const lineStep = Math.round(parseFloat(getComputedStyle(scroller).lineHeight) || 24) * 3;
+    const amount = isPage ? Math.round(scroller.clientHeight * 0.85) * step : lineStep * step;
+
+    // ⚠️ 连续快速按键时**必须**用 `instant`，不能用 `smooth`。
+    //
+    // 实测（真机）：一次 `↓` 滚 63px 是舒服的，但——
+    //   - 连按 10 次只走了 130px（应为 ≈630）；
+    //   - 按住 1.2 秒只走了 63px，等于一次按键。
+    // 原因是 `behavior:'smooth'` 会起一个约 300ms 的缓动动画，而键盘重复约 30 次/秒；
+    // 每次新的 `scrollBy` 都**取消上一次动画、从当前（几乎没动的）位置重新加速**，
+    // 于是按住不放反而几乎不动 —— 用户观感就是"长按变缓了"。
+    //
+    // 两条判据，任一条成立就走 `instant`：
+    //   1. `event.repeat`：浏览器对"这次是长按自动重复"的权威回答；
+    //   2. 同方向上一个滚动键发生在 `REPEAT_WINDOW_MS` 内：连敲（每次 repeat 都是
+    //      false）同样会互相取消，这条把它们也归为"连续操作"。
+    // 单次点按仍走 smooth，保留"轻轻一按、平滑一屏"的手感。
+    const now = Date.now();
+    const prev = lastScroll.current;
+    const sameDirection = prev !== null && prev.key === key;
+    const rapid = prev !== null && now - prev.at <= REPEAT_WINDOW_MS;
+    const instant = event.repeat || (sameDirection && rapid);
+    lastScroll.current = { key, at: now };
+    scroller.scrollBy({ top: amount, behavior: instant ? 'instant' : 'smooth' });
+    event.preventDefault();
+    return true;
+  };
+
+  /**
+   * Delete / Backspace：删**文件树里选中的那些行**。
+   *
+   * # 为什么作用对象是"树上的选中行"而不是"当前打开的笔记"
+   *
+   * 删除是这一页唯一不可逆的动作。删"你刚用手指点的那个东西"是可预期的；
+   * 删"你碰巧打开着的那一篇"则要用户在动手前先确认一次自己开着什么，误触代价高
+   * 得多。而且行本身就是 `<button>`，点击即获得焦点 —— 不需要另造一个 `selected`
+   * 状态，真正的选择就是焦点。
+   *
+   * # 批量：有区间选择时删整段
+   *
+   * 按住 Shift 用 ↑/↓ 扩出来的那一段（`selectedPaths`）就是这一键的作用对象；
+   * 没有区间选择时，退化成"删游标那一条"（原有行为，不能因为加了批量就把它弄坏）。
+   * 两种情况都只**弹确认条**，不直接删 —— 见下面那条。
+   *
+   * # 为什么挂在容器上而不是 `document`
+   *
+   * 宿主里同时只有一个页面在挂载，但 `document` 上的监听在整个会话期间都可能活着
+   * （effect 的清理时机不受本页控制），把别处的 Delete 也吃掉就成了全局副作用。
+   * 挂在本页容器上，事件只在本页内的按键冒泡过来时才触发。
+   *
+   * # 三条豁免
+   *
+   * 1. **焦点在输入框/正文里**：那是改字符，不是删笔记 —— 直接放行（不 `preventDefault`）。
+   *    笔记正文就是 `textarea`，这一条是绝对前提。
+   * 2. **有修饰键**：`Ctrl/⌘+Backspace` 在输入框里是"删到行首"，别抢。
+   * 3. **焦点不在树上**：没有明确对象就不猜，什么都不做。
+   */
+  const onKeyDownCapture = (event) => {
+    // 确认条挂着时，Esc 先撤掉它 —— 这是"我按错了"最自然的反应。
+    if (event.key === 'Escape' && pendingDelete !== null) {
+      event.stopPropagation();
+      setPendingDelete(null);
+      return;
+    }
+    // Esc 撤掉区间选择（不撤游标：游标是"我在哪一行"，选择是"这一段"，
+    // 用户按 Esc 想放弃的通常是后者）。
+    if (event.key === 'Escape' && selectionAnchor !== null) {
+      event.stopPropagation();
+      setSelectionAnchor(null);
+      return;
+    }
+    // 滚动键先跑：它自己有完整的豁免判断，接管了就到此为止。
+    if (handleScrollKeys(event)) return;
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    // 豁免：正在输入的地方。`isContentEditable` 覆盖将来换成富文本编辑器的情况。
+    if (target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return;
+    // ⚠️ 有区间选择时**不要求**焦点落在树行上。
+    //
+    //    原因与 ↑/↓ 的 B 方案同源：真机上焦点根本留不住（点完树行 activeElement
+    //    仍是 BODY）。若这里坚持 `target.closest('.zs-nt-rowbtn')`，用户在树上
+    //    Shift+↓ 选了三行、然后按 Delete —— 事件目标是 BODY，于是什么都没发生。
+    //    选择本身（`.is-selected` 高亮 + 计数）就是"用户在树上"的证据，够了。
+    const row = target.closest('.zs-nt-rowbtn[data-path]');
+    const selected = [...selectedPaths];
+    if (selected.length > 0) {
+      event.preventDefault();
+      setPendingDelete({
+        // kind 在批量时也逐行带上：确认条要说清"其中 N 个文件夹"。
+        items: selected.map((path) => ({
+          path,
+          kind: rows.find((r) => r.path === path)?.type ?? 'note',
+        })),
+      });
+      return;
+    }
+    if (row === null) return;
+    const path = row.dataset.path;
+    if (!path) return;
+    // 真的接管了这次按键才 preventDefault：否则浏览器层面会把它当成"返回"之类。
+    event.preventDefault();
+    setPendingDelete({ items: [{ path, kind: row.dataset.kind ?? 'note' }] });
+  };
+
+  /**
+   * 把键盘处理器挂到 `document` 上，**且只在本页确实存在时生效**。
+   *
+   * # 为什么不能挂在页面根节点上（实测）
+   *
+   * 读笔记时用户点的是正文，而正文不可聚焦 —— 于是 `activeElement` 落回 `<body>`。
+   * 探针实测：此时按键只在 `document` 上收到，挂在 `<section>` 上的监听**一次都收不到**
+   * （`<body>` 是 `<section>` 的祖先，事件不向下冒泡）。
+   * 也就是说"挂在容器上"对滚动键是死的，只有焦点恰好在页内某个可聚焦元素上才有效。
+   *
+   * # 挂 `document` 之后怎么不越界
+   *
+   * 1. 用 `rootRef` 记本页根节点：卸载时置空，处理器立刻失效；
+   * 2. 每次按键都问一句"焦点/事件目标是不是在本页里"。焦点在 `body` 上时用
+   *    `document.contains(root)` 判"本页还在不在"—— 宿主同一时刻只挂一个页面，
+   *    所以"本页存在"就等于"用户正在看这一页"。
+   */
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const root = rootRef.current;
+      if (root === null) return;
+      // ⚠️ 判"这一页是不是当前页"，**不能**只看 `root.contains(target)`。
+      //
+      // 真机实测：读笔记时 `activeElement` 是正文渲染出来的 `H2`（宿主 MarkdownText
+      // 产出的标题），而 `root.contains(h2) === false` —— 那个 h2 与我们的 `<section>`
+      // 不在同一棵子树里（宿主把正文切进了自己的容器）。于是"目标在我这棵树里"
+      // 的判断对最常见的场景**恒为假**，handler 静默返回，按键全哑。
+      //
+      // 改成三层：
+      //   1. 目标落在本页内部（树行、按钮、过滤框）→ 是本页；
+      //   2. 目标落在正文滚动容器里，或就是它的后代 → 是本页；
+      //   3. 其余情况（焦点在 h2、body、宿主容器上）→ 只要**本页此刻可见**就算本页。
+      //      宿主同一时刻只挂一个页面，可见就等于用户正在看。
+      const target = event.target;
+      const scroller = scrollRef.current;
+      const inRoot = target instanceof Node && root.contains(target);
+      const inScroller = scroller !== null && target instanceof Node && scroller.contains(target);
+      const visible = root.isConnected && root.getClientRects().length > 0;
+      if (!inRoot && !inScroller && !visible) return;
+      onKeyDownCapture(event);
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    // 记录"用户把注意力放在哪一行"：mouse 落在树行上 → 记下；落在正文/别处 → 清掉。
+    // 用 pointerdown 而不是 click：click 发生时焦点可能已经被宿主挪走了。
+    const onPointerDown = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      // 确认条 / 选中计数条上的点击**不是"用户换了一行"**，而是在操作当前这段
+      // 选择本身，所以不重置游标。
+      if (target.closest('.zs-nt-confirm, .zs-nt-selection')) return;
+      const row = target.closest('.zs-nt-rowbtn[data-path]');
+      const path = row === null ? null : (row.dataset.path ?? null);
+      treeCursorRef.current = path;
+      setTreeCursorPath(path);
+      // ⚠️ 这里**只**更新游标，**不**清区间选择 —— 清理挪到下面的 `click` 里。
+      //
+      //    这不是洁癖，是一个实测出来的功能失效，而且它有**两种**可感知的形状：
+      //
+      //      选中 3 条后点「确认删除」→ 第一下没反应，要点两下；
+      //      选中 3 条后点树上的另一篇 → 第一下打不开，要点两下（6 行里 5 行中招）。
+      //
+      //    两者的因果链同一条：pointerdown 是**按下**，而清掉锚点会让计数条
+      //    （`.zs-nt-selection`）当场卸载 → 它下面的整个文件树上移一行 / 确认条
+      //    上移约 48px → 手指抬起时**按钮和行都已经不在原来的坐标上了** → 浏览器
+      //    合成的 click 命中的是移动后顶上来的另一个元素 → 原来那个元素的 onClick
+      //    一次都没跑。用户看到的就是"点了没反应"。
+      //
+      //    改到 `click` 里清，按下与抬起之间布局不动，click 一定命中按下的那个元素；
+      //    等它跑完再收掉计数条。语义没变：仍然是"点一下就是重新开始"，只是把
+      //    清理放在了这次点击**完成之后**。
+      //
+      //    源码级正则守卫抓不到这一类缺陷（`tests/notes-keyboard-delete.test.mjs`
+      //    就是正则级的），只有真浏览器按一次才看得见 —— 回归防线在
+      //    `tests/notes-batch-select.test.mjs`。
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    // 点击**完成之后**才收掉区间选择（理由见上面 onPointerDown 的长注释）。
+    // 跳过确认条：点「取消」是"反悔这次删除"，不是"放弃这段选择"——
+    // 把选择也清掉的话，用户再按一次 Delete 什么都不弹，得从头 Shift+↓ 一遍。
+    const onClick = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest('.zs-nt-confirm')) return;
+      // 计数条自己的按钮会清（`取消选择`）；点条上的文字也不该把它收掉。
+      if (target.closest('.zs-nt-selection')) return;
+      setSelectionAnchor(null);
+    };
+    document.addEventListener('click', onClick);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('click', onClick);
+    };
+  });
+
   if (phase === 'loading') return <section className="zs-nt"><p className="zs-muted">正在读取笔记库…</p></section>;
   if (phase === 'error') {
     return <section className="zs-nt">
@@ -557,17 +1261,31 @@ export function NotesLibrary() {
   const draft = activeTab?.draft ?? '';
   const folderOfActive = activeTab ? dirOf(activeTab.path) : '';
 
-  return <section className="zs-nt">
+  return <section className="zs-nt" ref={rootRef}>
     <div className="zs-nt-work">
       {/* ribbon：最左的窄图标列 */}
       <nav className="zs-nt-ribbon" aria-label="笔记库操作">
         <button type="button" title="文件树" aria-pressed={explorerOpen} className={explorerOpen ? 'is-on' : ''} onClick={() => setExplorerOpen((v) => !v)}><Icon name="collapse" size={16} /></button>
         <button type="button" title="新建笔记" disabled={busy} onClick={() => void createNote(folderOfActive)}><Icon name="plus" size={16} /></button>
         <button type="button" title="新建文件夹" disabled={busy} onClick={() => void createFolder(folderOfActive)}><Icon name="folderPlus" size={16} /></button>
+        <button type="button" title="导入 PDF" disabled={busy} onClick={() => pdfInputRef.current?.click()}><Icon name="paper" size={16} /></button>
         <button type="button" title="过滤笔记" onClick={() => { setExplorerOpen(true); filterRef.current?.focus(); }}><Icon name="search" size={16} /></button>
         <span className="zs-nt-ribbon-gap" />
         <button type="button" title="右栏" aria-pressed={rightOpen} className={rightOpen ? 'is-on' : ''} onClick={() => setRightOpen((v) => !v)}><Icon name="panelRight" size={16} /></button>
       </nav>
+      {/* 隐藏的文件选择器：导入 PDF 的唯一入口（见 importPdf 里为什么不用拖拽）。
+          选完立刻清空 value，否则同一个文件第二次选不会触发 onChange。 */}
+      <input
+        ref={pdfInputRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0] ?? null;
+          event.target.value = '';
+          if (file !== null) void importPdf(file, folderOfActive);
+        }}
+      />
 
       {explorerOpen && <aside className="zs-nt-explorer" aria-label="文件树">
         <div className="zs-nt-explorer-head">
@@ -585,6 +1303,48 @@ export function NotesLibrary() {
           aria-label="过滤笔记"
           onChange={(e) => setFilter(e.target.value)}
         />
+        {/* 选了多行时说清"选中几条"，并给一个不用键盘也能退出选择的口子。
+            为什么必须是**看得见的**一行：Shift+↑/↓ 不像拖拽那样有连续的视觉反馈，
+            用户框了几行只能靠数高亮块；行数一多就数不清了，而下一步就是不可逆删除。
+            单行时不显示 —— 那是普通游标，不算"批量"。 */}
+        {selectedPaths.size > 1 && <div className="zs-nt-selection" role="status">
+          <span>已选中 {selectedPaths.size} 条</span>
+          <button type="button" onClick={() => setSelectionAnchor(null)}>取消选择</button>
+        </div>}
+        {/* 键盘删除的确认条：就地出现在文件树顶部，贴着被操作的对象。
+            删除没有回收站，所以这一步不省；但也不弹系统窗 —— 见 `pendingDelete` 的说明。
+            批量时把"几条 / 其中几个文件夹"一次说清：用户按的是 Shift+↑/↓，
+            眼睛未必数过自己框了几行。 */}
+        {pendingDelete !== null && <div className="zs-nt-confirm" role="alertdialog" aria-label="确认删除">
+          <p>
+            {pendingDelete.items.length === 1
+              ? <>删除「{baseOf(pendingDelete.items[0].path)}」
+                {pendingDelete.items[0].kind === 'folder' ? '（含整个文件夹）' : ''}？删掉就找不回来了。</>
+              : <>删除这 {pendingDelete.items.length} 条
+                {pendingDelete.items.some((item) => item.kind === 'folder') ? '（其中含整个文件夹）' : ''}
+                ？删掉就找不回来了。</>}
+          </p>
+          {/* 批量时列个缩略清单：只有一条时不需要（标题已经说清了）。 */}
+          {pendingDelete.items.length > 1 && <ul className="zs-nt-confirm-list">
+            {pendingDelete.items.slice(0, 6).map((item) => <li key={item.path}>
+              {baseOf(item.path)}{item.kind === 'folder' ? '/' : ''}
+            </li>)}
+            {pendingDelete.items.length > 6 ? <li className="zs-muted">…还有 {pendingDelete.items.length - 6} 条</li> : null}
+          </ul>}
+          <div className="zs-nt-confirm-actions">
+            <button
+              type="button"
+              className="zs-button zs-nt-danger"
+              disabled={busy}
+              onClick={() => {
+                const targets = pendingDelete.items.map((item) => item.path);
+                setPendingDelete(null);
+                void removePaths(targets);
+              }}
+            >{pendingDelete.items.length === 1 ? '确认删除' : `确认删除这 ${pendingDelete.items.length} 条`}</button>
+            <button type="button" className="zs-button" onClick={() => setPendingDelete(null)}>取消</button>
+          </div>
+        </div>}
         {entries.length === 0
           ? <p className="zs-muted zs-nt-hint">还没有笔记。点 ＋ 开始写第一篇。</p>
           : rows.length === 0
@@ -598,6 +1358,8 @@ export function NotesLibrary() {
                 key={row.path}
                 row={row}
                 current={active}
+                cursor={treeCursor}
+                selected={selectedPaths.has(row.path)}
                 expanded={expanded}
                 onOpen={(p) => void openNote(p)}
                 onToggle={toggleFolder}
@@ -631,24 +1393,34 @@ export function NotesLibrary() {
                 <strong>{baseOf(activeTab.path)}</strong>
               </span>
               <span className="zs-nt-crumbs-right">
-                {activeTab.dirty
-                  ? <span className="zs-nt-saving">未保存…</span>
-                  : activeTab.savedAt
-                    ? <span className="zs-nt-saving">已保存 {new Date(activeTab.savedAt).toLocaleTimeString('zh-CN', { hour12: false })}</span>
-                    : null}
-                <button type="button" className={`zs-nt-mode${preview ? ' is-on' : ''}`} aria-pressed={preview} onClick={() => setPreview((v) => !v)}>
-                  {preview ? '编辑' : '阅读'}
-                </button>
+                {activeTab.kind === 'pdf' ? <span className="zs-nt-saving">只读 · PDF</span> : <>
+                  {activeTab.dirty
+                    ? <span className="zs-nt-saving">未保存…</span>
+                    : activeTab.savedAt
+                      ? <span className="zs-nt-saving">已保存 {new Date(activeTab.savedAt).toLocaleTimeString('zh-CN', { hour12: false })}</span>
+                      : null}
+                  <button type="button" className={`zs-nt-mode${preview ? ' is-on' : ''}`} aria-pressed={preview} onClick={() => setPreview((v) => !v)}>
+                    {preview ? '编辑' : '阅读'}
+                  </button>
+                </>}
               </span>
             </div>
 
-            <div className="zs-nt-scroll">
+            {activeTab.kind === 'pdf'
+              ? <PdfViewer page={activeTab.path} title={activeTab.title}/>
+              : <div className="zs-nt-scroll" ref={scrollRef}>
               <h1 className="zs-nt-title">{baseOf(activeTab.path)}</h1>
               {preview
                 ? <div className="zs-nt-preview-body">
                   {draft.trim() === ''
                     ? <p className="zs-muted">（空笔记）</p>
-                    : <MarkdownText text={draft} labels={MARKDOWN_LABELS} variant="compact" />}
+                    // ⚠️ 不要传 `variant="compact"`。那个变体是给**聊天里夹一段短
+                    //    Markdown** 用的：字号压到 13px/20px、正文用三级灰、而且
+                    //    `.compact :is(h1..h6){font:inherit}` 会把标题压平、
+                    //    `p/ul/ol/blockquote` 的 margin 收到 4px。用在整页长文上就是
+                    //    「又小又挤、标题不起作用」，这是这页此前显得简陋的根因。
+                    //    笔记正文要的是长文排版，用默认变体 + 本页的 .zs-nt-preview-body。
+                    : <MarkdownText text={draft} labels={MARKDOWN_LABELS} />}
                 </div>
                 : <textarea
                   className="zs-nt-input"
@@ -658,7 +1430,7 @@ export function NotesLibrary() {
                   onChange={(e) => edit(e.target.value)}
                   placeholder={'写点什么。用 [[另一篇笔记]] 连过去，#标签 归类。'}
                 />}
-            </div>
+              </div>}
           </>}
 
         <div className="zs-nt-status">
@@ -670,7 +1442,7 @@ export function NotesLibrary() {
               <button type="button" className="zs-nt-stat" onClick={() => setRightOpen(true)}>{backlinks.length} 条反向链接</button>
               <span className="zs-nt-stat">{countWords(draft)} 个词</span>
               <span className="zs-nt-stat">{draft.length} 个字符</span>
-              <span className="zs-nt-stat">{countLinks(draft)} 条链接 · {countTags(draft)} 个标签</span>
+              <button type="button" className="zs-nt-stat" onClick={() => setRightOpen(true)}>{countLinks(draft)} 条链接 · {countTags(draft)} 个标签</button>
             </> : <span className="zs-nt-stat">{entries.filter((e) => e.type === 'note').length} 篇笔记</span>}
           </span>
         </div>
@@ -681,6 +1453,7 @@ export function NotesLibrary() {
         markdown={draft}
         backlinks={backlinks}
         tags={allTags}
+        graph={graph}
         onOpen={(p) => void openNote(p)}
         onRename={rename}
         onRemove={remove}

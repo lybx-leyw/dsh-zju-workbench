@@ -1,0 +1,11 @@
+# dsh bundle patch：把教务（zdbk）数据源插进 profile 的层栈。
+#
+# 本包是**数据包**：注册一个 `zhiyunZdbk` 服务与一条同源数据路由（/api/zhiyun-zdbk），
+# 不注册任何 AI 工具，也不注册页面。谁来消费（「今天」页 / 脚本 / 将来接的 AI）
+# 由调用方决定。
+#
+# 它是从 `dsh-zhiyun-source-omni` 的 `platforms/zdbk/` 拆出来的：omni 删掉之后，
+# 教务这块仍需要一个宿主半边的挂载点，所以 id 与包名一起换成了 zdbk。
+- insert:
+    - id: zhiyun-zdbk
+      name: dsh-zhiyun-source-zdbk

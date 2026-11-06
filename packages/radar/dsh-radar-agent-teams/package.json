@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-agent-teams",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 @nanmicoder/dsh-agent-teams@0.1.25（MIT，原生 DSH Web 插件），为「今天」页/「规划」页提供依赖感知的多 Agent 协作底层（强化式集成，A 类锁版挂载 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@nanmicoder/dsh-agent-teams": "0.1.25"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-zotero-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】以「锁版挂载 + 外围兼容层」方式引入上游 @local/dsh-zotero 1.0.1，为论文阅读页补齐 Zotero 本地库与原生批注回写（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@local/dsh-zotero": "1.0.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

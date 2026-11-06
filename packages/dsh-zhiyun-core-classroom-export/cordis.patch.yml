@@ -1,0 +1,14 @@
+# dsh bundle patch：把课堂导出层插进 profile 的层栈。
+#
+# bundle 行 id 的规则是「包名去掉 dsh- 前缀」（scripts/test-host.mjs:90-93），
+# 本包会得到 `zhiyun-core-classroom-export`；任务要求固定为
+# `zhiyun-classroom-export`，两者不冲突（同一 profile 里没有同名行），按任务写死。
+#
+# 本包只提供**服务**（`ctx.zhiyunClassroomExport`），没有生命周期行为：
+#   - 导出所需的一切都来自 `zhiyunClassroomStudio`（课堂文档）与调用方注入的媒体
+#     资产；自己不碰文件系统、不探测上游、不 import 别的包的 src；
+#   - `apply()` 永不抛：宿主缺席只表现为 `status().state === 'degraded'` 与方法
+#     调用时的 `E_NO_STUDIO`。
+- insert:
+    - id: zhiyun-classroom-export
+      name: dsh-zhiyun-core-classroom-export

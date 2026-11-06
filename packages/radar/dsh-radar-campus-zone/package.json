@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-campus-zone",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】提取 ZJU 选课网页增强（0x000005/better-zdbk，MIT）的「上课地点 → 校区归属 / 校区别名」判定，用于强化「今天」页课表行的跨校区赶路提示（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

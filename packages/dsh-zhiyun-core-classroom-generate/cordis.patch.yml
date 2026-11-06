@@ -1,0 +1,17 @@
+# dsh bundle patch：把「课堂生成管线」插进 profile 的层栈。
+#
+# 与其它领域包一致：`dsh.profile.bundles` 里列了包名不会自动加载，
+# 必须在自己的 patch 里 insert。行 id 按任务写死为 `zhiyun-classroom-generate`
+# （包名去 `dsh-` 前缀会得到 `zhiyun-core-classroom-generate`，两者不撞）。
+#
+# 本包消费三个宿主/领域服务（见 src/index.js 的 inject）：
+#   zhiyunClassroomStudio（provider 清单）、zhiyunClassroomAgent（确定性大纲兜底）、
+#   zhiyunClassroomPbl（pbl 场景的项目内容）。
+# 持久化走 `zhiyunClassroomVault`，但它**不进 inject**：与 host-classroom 对
+# vault / llm / attachments 的处理同一条规矩 —— 可选增强写进 inject 会让本插件
+# 在上游未装时一直 pending。缺它只表现为调用时的 E_MISSING_SERVICE。
+#
+# `apply()` 永不因上游缺失而抛错；缺什么写进 `status().detail`。
+- insert:
+    - id: zhiyun-classroom-generate
+      name: dsh-zhiyun-core-classroom-generate

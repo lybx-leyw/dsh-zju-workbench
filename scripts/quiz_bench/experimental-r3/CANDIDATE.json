@@ -1,0 +1,34 @@
+{
+  "id": "v2-r3-iteration4",
+  "parent": "v2-r3-iteration3",
+  "protocol": "tree-teaching-assets-r10-v3",
+  "status": "asset-foundation-tested-quality-and-transfer-still-open",
+  "productionEnabled": false,
+  "realModelEvaluated": true,
+  "pairedQualityBenchmarkCompleted": false,
+  "architecture": "tree-owned-teaching-assets-independent-solving-and-owned-material-tools",
+  "files": {
+    "capsules.mjs": "c7f7728ea792344b9afa6b71e4d8281d113083cc5d783d51bbd8f420b8ac1fae",
+    "common.mjs": "ddec3066a2d27b3550807fe06bb968c90eb3f406a8cfd409f9bb773b73d4fc65",
+    "compare.mjs": "d636cbd94fbb26e46cf71fc25dcdc88cb206938d2fb11b9aee995a7b463fd415",
+    "compiler.mjs": "02d9c2204355b461bd96cd2ce497cb9ffa68df89b9c48451aec32912dae03fb3",
+    "expansion.mjs": "094182a9281a27c3bc118ea97a819ac6b74104a228eaedc308f2c5eb2172799a",
+    "generator.mjs": "d4c327dcc814af8b8a2b0973980cfc230b5eb61ec8bdb6893ebe019f42b69c02",
+    "graph.mjs": "264f82f6b209cfc7ee9ea2cdfd67b1ea58bdf648af6b26fbbcf56ae3e069b375",
+    "index.mjs": "bcf7b2317e87855981f65a53582149597688dbc8f3e827cfd3d8ddb01f14b01a",
+    "reuse-bench.mjs": "6fb6656091504c0a13de3f1832de2d8d9dd90c8c7e1ee24205448699a755a664",
+    "run.mjs": "62137b392fc63eb7808cc095e7e0a1f5879f0a69edf1d9afd9a8490c2a7a8888",
+    "scheduler.mjs": "612b8b74de1844803a50d37f44cf421523732a550457c984f5c2d78f9c271917",
+    "tools.mjs": "6ab89d52dd61d23feb6763f3433c92ece116f20d8c845c2fafc0794ff8e8806c",
+    "tree.mjs": "23beb2f3263c6983d7b398e7f1a236860a54266910ef679e2d614de83080bb01"
+  },
+  "decision": "continue-r3-asset-research-without-product-installation",
+  "evaluation": {
+    "matchedCaseCompleted": true,
+    "selectedIdeas": 2,
+    "questionsPerArm": 6,
+    "heldOutCaseCompleted": false,
+    "blockedBy": "provider-insufficient-balance",
+    "postRunSafeguardsUnitTestedOnly": true
+  }
+}

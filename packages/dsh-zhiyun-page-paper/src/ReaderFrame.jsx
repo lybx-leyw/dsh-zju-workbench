@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Icon } from 'dsh-zhiyun-ui-primitives';
+import { Icon } from 'dsh-zhiyun-shell-ui';
 import { readerUrl } from './library.js';
 import {
   createDwell,
@@ -9,6 +9,8 @@ import {
   unionRect,
 } from './selection-text.js';
 import { frameThemeCss, readThemeTokens } from './frame-theme.js';
+import { toggleFrameClass } from './frame-dom.js';
+import { attachCornellNotes } from './cornell-notes.js';
 
 /**
  * 左侧的 PDF 阅读区：同源 iframe 承载上游阅读器 + 一层「选中英文 → 悬停即译」的桥。
@@ -36,7 +38,7 @@ import { frameThemeCss, readThemeTokens } from './frame-theme.js';
 const POPOVER_GAP = 8;
 const POPOVER_WIDTH = 344;
 
-export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskAbout, registerApi }) {
+export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskAbout, registerApi, cornellOpen }) {
   const frameRef = useRef(null);
   const hostRef = useRef(null);
   const popRef = useRef(null);
@@ -50,6 +52,17 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
   const [ready, setReady] = useState(false);
   const [failure, setFailure] = useState(null);
   const [pop, setPop] = useState(null);
+  const cornellOpenRef = useRef(cornellOpen);
+  cornellOpenRef.current = cornellOpen;
+  useEffect(() => {
+    // ⚠️ 不能写成 `contentDocument?.documentElement.classList` —— `?.` 只护住它**紧挨着**
+    //    的那个值。iframe 刚换 src（打开一篇新文献、上传后自动打开）时，`contentDocument`
+    //    已经存在，但里面还是空文档，`documentElement` 为 `null`，再往下取 `.classList`
+    //    就是「Cannot read properties of null」。这个异常抛在 effect 里会被
+    //    `zhiyun.paper.content` 那个 slot 的 error boundary 接住，**整页变成空白**。
+    //    真正的兜底与判定在 `frame-dom.js`（那边有可单独测的说明）。
+    toggleFrameClass(frameRef.current?.contentDocument, 'zp-cornell-visible', cornellOpen);
+  }, [cornellOpen, ready]);
 
   const url = useMemo(() => readerUrl(topic, name, { page, q }), [topic, name, page, q]);
 
@@ -114,6 +127,7 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
     if (!frame) return undefined;
     let doc = null;
     let cancelled = false;
+    let detachNotes = null;
 
     const readSelection = () => {
       const selection = doc.defaultView.getSelection();
@@ -166,6 +180,9 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
       if (cancelled) return;
       doc = frame.contentDocument;
       if (!doc) { setFailure('阅读器加载失败：拿不到同源文档（iframe 被跨域隔离了？）'); return; }
+      detachNotes?.();
+      detachNotes = attachCornellNotes(doc, { topic, name });
+      toggleFrameClass(doc, 'zp-cornell-visible', cornellOpenRef.current);
       try {
         // 主题 + 藏掉「已经搬到本壳」的控件：只注入一张样式表，不碰上游脚本。
         const style = doc.createElement('style');
@@ -183,7 +200,7 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
       setFailure(null);
     };
 
-    const onError = () => { if (!cancelled) setFailure('阅读器加载失败：请确认宿主已启用 dsh-zhiyun-paper。'); };
+    const onError = () => { if (!cancelled) setFailure('阅读器加载失败：请确认宿主已启用 dsh-zhiyun-host-paper。'); };
 
     frame.addEventListener('load', onLoad);
     frame.addEventListener('error', onError);
@@ -192,6 +209,7 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
 
     return () => {
       cancelled = true;
+      detachNotes?.();
       frame.removeEventListener('load', onLoad);
       frame.removeEventListener('error', onError);
       if (doc) {

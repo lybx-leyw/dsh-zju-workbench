@@ -8,7 +8,7 @@
 //
 // 层 id 沿用 App 的字符串（`final` / `teacher` / `outline` / …），
 // 只有讲义是 JS 侧新增的：App 的「结构化成参考资料」是 N06/E11 那条独立支路，
-// JS 没有那条路，JS 的讲义（知识点稿）落在同一个位置上，所以另立 id 并注明来源。
+// JS 没有那条路，JS 的阅读讲义（知识点稿）落在同一个位置上，所以另立 id 并注明来源。
 
 /** 检索档位。order 即 UI 显示顺序。 */
 export const QueryMode = {
@@ -72,7 +72,7 @@ export const LayerId = {
  * 与本节同源会造成「找到 N 处」虚高，所以**刻意**不进默认集合。
  */
 export const layerRegistry = [
-  { id: LayerId.finalDoc, label: "终稿（块级）", source: "finalDoc", available: true, inDefaultSearch: true },
+  { id: LayerId.finalDoc, label: "讲义资源（块级）", source: "finalDoc", available: true, inDefaultSearch: true },
   { id: LayerId.teacher, label: "老师原话（句子层）", source: "finalDoc", available: true, inDefaultSearch: true },
   { id: LayerId.outline, label: "整节主线", source: "finalDoc", available: true, inDefaultSearch: true },
   { id: LayerId.pageText, label: "图上的字", source: "finalDoc", available: true, inDefaultSearch: true },

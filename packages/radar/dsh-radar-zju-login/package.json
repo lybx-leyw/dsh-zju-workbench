@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-zju-login",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】以「锁版挂载 + 外围兼容层」方式引入上游 login-zju@1.0.9，把浙大 12 个系统的登录态统一成一套 fetch 接口，用于强化 classroom/campus/xxt 三个数据源的会话层",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "login-zju": "1.0.9"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

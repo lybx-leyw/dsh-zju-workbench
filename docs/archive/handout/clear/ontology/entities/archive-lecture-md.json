@@ -1,0 +1,10 @@
+{
+  "basis": "归档目录里每一版保存的讲义正文副本",
+  "id": "archive-lecture-md",
+  "label": "归档里的讲义 md",
+  "provenance": {
+    "kind": "named",
+    "ref": "packages/dsh-zhiyun-core-handout/src/version.js"
+  },
+  "type": "vault_note"
+}

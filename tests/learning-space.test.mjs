@@ -7,8 +7,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { pickLearningWorkspace, sessionRows, relativeLabel } from '../packages/dsh-zhiyun-study-core/src/learning-space.js';
-import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-study-core/src/learning-space.js';
+import { pickLearningWorkspace, sessionRows, relativeLabel } from '../packages/dsh-zhiyun-core-study/src/learning-space.js';
+import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-core-study/src/learning-space.js';
 import { root } from '../scripts/profile.mjs';
 
 const space = { workspaceId: 'space', title: LEARNING_SPACE_TITLE };
@@ -26,8 +26,8 @@ test('学习空间按标题认出，唯一工作区才兜底，含糊时不猜',
 });
 
 test('学习空间标题只有一处字面量：两半都 import 同一个模块', async () => {
-  // 领域状态包（dsh-zhiyun-study-core）的两半：宿主半建空间，客户端半把它交给壳。
-  const pkg = `${root}packages/dsh-zhiyun-study-core/src/`;
+  // 领域状态包（dsh-zhiyun-core-study）的两半：宿主半建空间，客户端半把它交给壳。
+  const pkg = `${root}packages/dsh-zhiyun-core-study/src/`;
   const host = await readFile(`${pkg}host.js`, 'utf8');
   const client = await readFile(`${pkg}client.jsx`, 'utf8');
   for (const [half, source] of [['宿主半', host], ['客户端半', client]]) {
@@ -63,16 +63,40 @@ test('会话行：只列本空间、最近更新在前、空白会话不编标�
   );
 });
 
-test('归档正在看的会话时，不自动再补一条壳', async () => {
-  // 这两条钉在壳上：自动绑会话的闸门在壳的 client.jsx，抽屉的拦截在壳的 components.jsx。
-  const pkg = `${root}packages/dsh-zhiyun-shell/src/`;
-  const client = await readFile(`${pkg}client.jsx`, 'utf8');
-  const drawer = await readFile(`${pkg}components.jsx`, 'utf8');
-  assert.match(client, /shouldSkipAutoSession\(\)/, '自动绑会话要认得「先别补」');
-  assert.match(client, /selection\.subscribe/, '补上的会话真正打开之前不能放开下一次');
-  assert.doesNotMatch(client, /queueMicrotask\(\(\) => \{ pending = false; \}\)/, '不能在列表更新时立刻再补一次');
-  assert.match(drawer, /holdEmptySession\(\)/, '归档当前会话要先拦住自动补壳');
-  assert.match(drawer, /archivedSessionIds/, '列表要吃宿主的归档集合');
+test('原生归档或关闭会话不会自动再补壳，只有显式进入 ask 才请求绑定', async () => {
+  const { createLearningSpaceBinding } = await import('../packages/dsh-zhiyun-shell-workbench/src/learning-binding.js');
+  const listeners = new Set(), starts = [], cleanups = [];
+  let ready = false, active = true, sessionId, activePanelId = null;
+  const list = { getSnapshot: () => ({ phase: ready ? 'ready' : 'loading', items: [] }), subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); } };
+  const ctx = {
+    workspaces: { list }, sessions: { list },
+    layout: { panelInfo: { getSnapshot: () => ({ activePanelId }) } },
+    uiWorkspace: { selection: { getSnapshot: () => ({ sessionId }) }, startSession: id => starts.push(id) },
+    get: () => ({ title: 'test', pickLearningWorkspace: () => ({ workspaceId: 'workspace' }) }),
+    effect: fn => cleanups.push(fn()),
+  };
+  const binding = createLearningSpaceBinding(ctx, () => active);
+  binding.enter();
+  assert.deepEqual(starts, []);
+  ready = true;
+  const notify = () => { for (const fn of listeners) fn(); };
+  notify(); notify();
+  assert.deepEqual(starts, ['workspace'], 'deferred entry creates once');
+  sessionId = 'opened'; notify();
+  sessionId = undefined; notify();
+  assert.equal(starts.length, 1, 'native archive does not request a replacement');
+  binding.enter();
+  assert.equal(starts.length, 2, 'explicit entry may fill an empty selection');
+  sessionId = 'existing'; binding.enter(); notify();
+  assert.equal(starts.length, 2, 'existing selection is retained');
+  sessionId = undefined; activePanelId = 'external-import'; binding.enter(); notify();
+  assert.equal(starts.length, 2, 'returning to a plugin panel with no session must not replace it with chat');
+  activePanelId = null;
+  ready = false; sessionId = undefined; binding.enter(); binding.reset(); active = false;
+  ready = true; notify();
+  assert.equal(starts.length, 2, 'leaving ask cancels a deferred request');
+  for (const off of cleanups) off();
+  assert.equal(listeners.size, 0);
 });
 
 test('相对时间：毫秒（宿主形状）与 ISO 串都收，认不出就不显示', () => {

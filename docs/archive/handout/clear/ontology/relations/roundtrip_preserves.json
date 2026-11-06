@@ -1,0 +1,8 @@
+{
+  "check": "基线与解码所得章节逐块相等",
+  "domain": "handout",
+  "id": "roundtrip_preserves",
+  "kind": "defines",
+  "label": "往返保持结构",
+  "range": "handout"
+}

@@ -1,0 +1,47 @@
+{
+  "$comment": "DeepTutor 上游快照分发清单。vendor/deeptutor 是逐字节上游快照，不参与构建；本清单决定「发到用户机器上必须带什么」与「仓库里有但分发时可省什么」。",
+  "upstreamCommit": "a31d82624c27d75f4e771d4fcb78dce16470b383",
+  "upstreamVersion": "1.6.15",
+  "alwaysShip": [
+    "deeptutor/**",
+    "deeptutor_cli/**",
+    "requirements/**",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "pyproject.toml",
+    "README.md"
+  ],
+  "shipIfPresent": [
+    "deeptutor_web/**",
+    "packaging/**"
+  ],
+  "omitOnPackage": [
+    "assets/**",
+    "web/**",
+    "tests/**",
+    "docs/**",
+    "docs-for-user/**",
+    "examples/**",
+    "scripts/**",
+    ".github/**",
+    "**/__pycache__/**",
+    "**/*.py[cod]",
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/data/**"
+  ],
+  "reason": {
+    "assets": "开发截图 25MB，界面预览用，运行不需要",
+    "web": "上游前端源码 15.8MB，智云不复用其界面，只调 Python 门面",
+    "tests": "上游测试 7.2MB，验收在开发侧跑，不分发",
+    "docs": "上游开发文档，不是运行输入",
+    "docs-for-user": "面向最终用户的上游手册，与我们产品文档重复",
+    "examples": "示例脚本，非运行路径",
+    "scripts": "上游运维脚本，与智云启动链无关"
+  },
+  "runtimeDataExclusions": [
+    "vendor/deeptutor/data/**",
+    "vendor/deeptutor/**/__pycache__/**"
+  ],
+  "note": "运行期数据一律写 DEEPTUTOR_HOME 指向的 profile 目录，绝不写回 vendor；上游 validate_runtime_home() 也会拒绝 vendor/data。"
+}

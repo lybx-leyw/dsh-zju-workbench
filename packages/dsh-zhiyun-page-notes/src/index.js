@@ -11,22 +11,22 @@
  *   - 反过来，把笔记塞进一个私有二进制容器会让"笔记库"这个概念名不副实。
  *
  * ⚠️ 与本仓其它领域包的取舍不同（那些包把落盘交给宿主存储栈）。区别在于
- * **模型本身**：`dsh-zhiyun-notes` 的「每节一份笔记」是**应用数据**（键是
+ * **模型本身**：`dsh-zhiyun-core-notes` 的「每节一份笔记」是**应用数据**（键是
  * `账号.节次`，人不需要直接看），而这里的是**用户自己的文件**。
  * 这一点在 README 里写明了，不是随手破例。
  *
  * # 子目录（vault 就是一棵树）
  *
  * 库里可以建文件夹，笔记放在任意深度。这件事**只需要改本文件**：
- * `dsh-zhiyun-vault` 的索引器早就按嵌套路径写好了 —— `createResolver()` 的
+ * `dsh-zhiyun-core-vault` 的索引器早就按嵌套路径写好了 —— `createResolver()` 的
  * 解析顺序是「精确路径 → 同目录 → 全库唯一 basename」，`renameLinks()` 也走
  * resolver。第一版没有递归列目录，才显得像是不支持文件夹。
  *
  * 因此索引侧的形状没变，仍然是 `{ path: '目录/笔记.md', markdown }`。
  *
- * # 与 `dsh-zhiyun-vault` 的分工
+ * # 与 `dsh-zhiyun-core-vault` 的分工
  *
- * `dsh-zhiyun-vault` 是**纯索引器**（解析 `[[链接]]`、算反链/图谱、零 IO）。
+ * `dsh-zhiyun-core-vault` 是**纯索引器**（解析 `[[链接]]`、算反链/图谱、零 IO）。
  * 本文件负责「内容从哪来、写到哪去」，写完把全部笔记推给索引器。
  * 两者都不做对方的事：索引器不认识文件，本文件不解析 Markdown。
  *
@@ -40,6 +40,8 @@
 import { mkdir, readFile, readdir, rename, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write';
+import { PDF_ROUTE_PREFIX, servePdfRoute } from './pdf-viewer.js';
+export { PDF_ROUTE_PREFIX };
 
 export const name = 'zhiyun-page-notes-page';
 
@@ -61,10 +63,28 @@ export const inject = ['profileContext'];
 
 export const ROUTE_PATH = '/api/zhiyun-vault-notes';
 
+
 /** 笔记目录名（落在 profile 的 data/ 下）。 */
 export const NOTES_DIR = 'zhiyun-vault-notes';
 
 const MAX_NOTE_BYTES = 512 * 1024;
+
+/**
+ * 允许导入的二进制类型。
+ *
+ * 目前只有 PDF：用户要的是"PDF 导入后能读"。白名单而不是黑名单 ——
+ * 导入这条路会把任意字节写进库目录，允许什么必须显式列出。
+ */
+export const ALLOWED_IMPORT_EXT = ['pdf'];
+
+/**
+ * 单个导入文件的上限。
+ *
+ * 比笔记的 512KB 宽得多（笔记是文本，PDF 是扫描件），但仍要有个上限：
+ * 走 base64 过 JSON 信封会膨胀约 33%，100MB 的文件会变成 133MB 的请求体，
+ * 先把宿主拖死，用户还看不到任何提示。
+ */
+export const MAX_ASSET_BYTES = 64 * 1024 * 1024;
 const MAX_NAME_CHARS = 80;
 /** 路径总段数上限：够用，且挡住"用超深目录把界面撑爆"。 */
 const MAX_DEPTH = 12;
@@ -132,6 +152,15 @@ async function uniqueName(dir, base) {
   throw Object.assign(new Error('同名笔记太多，换一个标题'), { code: 'TOO_MANY' });
 }
 
+/** 由标题推一个不冲突的**附件**名（带扩展名；同名时加 ` 2`、` 3`…）。 */
+async function uniqueAssetName(dir, base, ext) {
+  for (let n = 1; n < 1000; n += 1) {
+    const candidate = n === 1 ? base : `${base} ${n}`;
+    if (!(await exists(path.join(dir, `${candidate}.${ext}`)))) return candidate;
+  }
+  throw Object.assign(new Error('同名文件太多，换一个名字'), { code: 'TOO_MANY' });
+}
+
 /** 由标题推一个不冲突的文件夹名。 */
 async function uniqueFolderName(dir, base) {
   for (let n = 1; n < 1000; n += 1) {
@@ -156,6 +185,11 @@ function extensionOf(fileName) {
   return dot <= 0 ? '' : fileName.slice(dot + 1).toLowerCase();
 }
 
+/** 这个相对路径是不是 PDF（决定 `content-type`）。 */
+function pdfLike(rel) {
+  return extensionOf(rel) === 'pdf';
+}
+
 /** 去掉末尾的 `.md`（**只去一个**，`a.md.md` → `a.md`）。 */
 export function stripExt(name) {
   return name.toLowerCase().endsWith(NOTES_EXT) ? name.slice(0, -NOTES_EXT.length) : name;
@@ -171,6 +205,16 @@ function baseOf(rel) {
 function dirOf(rel) {
   const slash = rel.lastIndexOf('/');
   return slash === -1 ? '' : rel.slice(0, slash);
+}
+
+/**
+ * 相对路径的**段数**（`a` → 1，`a/b/c` → 3）。
+ *
+ * 批量删除要按它升序处理：父目录先删，子项才可能被判成"已被覆盖"。
+ * 只看 `/` 的个数，因为 `safePath()` 吐出来的一定是规范化后的 `a/b` 形式。
+ */
+function depthOf(rel) {
+  return rel.split('/').length;
 }
 
 export async function apply(ctx, config = {}) {
@@ -306,6 +350,66 @@ export async function apply(ctx, config = {}) {
     return { rewrote: changes.length };
   }
 
+  /**
+   * 刷新索引并返回**空对象**，好让 `case 'remove'` 一行写完
+   * （`{ ...removeOne(...), ...refreshIndexOnce() }` 保持返回形状不变）。
+   *
+   * 为什么要这个形状：`remove` 的返回值是被既有测试与页面钉死的
+   * `{ removed, kind, contained? }` / `{ removed:false }`，一个字都不能多。
+   * 用展开合并可以把"刷新索引"这个副作用放在返回值之外，而不用把整个
+   * `case` 改写成"先 await 删、再 await 刷、最后拼返回值"三段。
+   */
+  async function refreshIndexOnce() {
+    await refreshIndex();
+    return {};
+  }
+
+  /**
+   * 删除一条路径（**不刷新索引**）：文件夹连同里面的东西，笔记只删那一个文件。
+   *
+   * 递归删是不可逆的，所以：只认库里解析出来的绝对路径，且绝不允许删库根
+   * （`remove('')` 会被 `safePath` 挡成 null）。
+   *
+   * ⚠️ 四种形状都要认，不能只试 `.md`：
+   *   - **文件夹**（无扩展名目录）→ 递归删；
+   *   - **笔记**：`tree` 给的 `path` **不带 `.md`**，要补上；
+   *   - **附件**：`tree` 给的 `path` 是**带扩展名的完整相对路径**（`截图.png`）。
+   *     曾经这里只会试 `<path>.md`，于是选中附件按删除返回 `removed:false`，
+   *     界面上什么都不发生 —— 而树里附件是一等公民，是可选中、可拖动的行。
+   *   - 名字里本来就有 `.md` 的（`a.md` 笔记）：补后缀会变成 `a.md.md`，
+   *     所以"带 .md 的候选"也要试一次。
+   *
+   * 返回值多给一个 `kind`，让调用方能说清"删掉的是文件夹还是文件"。
+   * 不刷索引是**刻意的**：批量删除要在最后只刷一次（见 `case 'removeMany'`），
+   * 所以这里必须把"删"与"刷"拆开，索引刷新由调用方决定刷几次。
+   *
+   * @returns {Promise<{removed: boolean, kind?: 'note'|'attachment'|'folder', contained?: number}>}
+   */
+  async function removeOne(args = {}) {
+    const rel = safePath(args.path ?? args.name);
+    if (!rel) throw Object.assign(new Error('路径不合法'), { code: 'INPUT' });
+    const abs = resolveIn(rel);
+    const info = await statOrNull(abs);
+    if (info?.isDirectory()) {
+      // 报告删掉了多少个文件：文件夹删除是这一页唯一会**连带**破坏内容的动作，
+      // 调用方要能把它如实说出来（"已删除「理学」（含 3 篇笔记）"）。
+      const contained = await walk(rel);
+      await rm(abs, { recursive: true, force: true });
+      return { removed: true, kind: 'folder', contained: contained.filter(e => e.type !== 'folder').length };
+    }
+    if (info?.isFile()) {
+      await rm(abs, { force: true });
+      return { removed: true, kind: extensionOf(rel) === 'md' ? 'note' : 'attachment' };
+    }
+    // 没有实体目录命中：笔记的 path 不带 `.md`，逐个候选试。
+    for (const candidate of [`${abs}${NOTES_EXT}`, abs]) {
+      if (!(await exists(candidate))) continue;
+      await rm(candidate);
+      return { removed: true, kind: 'note' };
+    }
+    return { removed: false };
+  }
+
   /** 页面可调的方法。写操作之后一律刷新索引，避免反链滞后一次。 */
   async function invoke(method, args = {}) {
     switch (method) {
@@ -394,6 +498,66 @@ export async function apply(ctx, config = {}) {
         return { path: parent === '' ? name : `${parent}/${name}` };
       }
 
+      /**
+       * 导入一个二进制文件（当前用于 PDF）到库里，落成普通文件。
+       *
+       * 与 `write` 的分工：`write` 收文本正文，走 UTF-8；二进制走 base64，
+       * 否则字节会被解码破坏。
+       *
+       * 命名沿用 `create` 的口径：**标题即文件名**。同名时加 ` 2`、` 3`，
+       * 而不是覆盖别人的文件 —— 导入是「加一份」，不是「替换」。
+       *
+       * @param args.name - 用户看到的标题（不含扩展名）。
+       * @param args.folder - 目标文件夹（相对库根，可空）。
+       * @param args.ext - 扩展名（小写、不带点）；只接受 `ALLOWED_IMPORT_EXT`。
+       * @param args.base64 - 文件字节的 base64。
+       */
+      case 'importAsset': {
+        const ext = String(args.ext ?? '').toLowerCase();
+        if (!ALLOWED_IMPORT_EXT.includes(ext)) {
+          throw Object.assign(
+            new Error(`不支持导入 .${ext}（目前只支持 ${ALLOWED_IMPORT_EXT.join(' / ')}）`),
+            { code: 'INPUT' },
+          );
+        }
+        const base = safeName(args.title ?? args.name ?? '导入的文件');
+        if (!base) throw Object.assign(new Error('文件名不合法'), { code: 'INPUT' });
+        const parent = args.folder ? safePath(args.folder) : '';
+        if (args.folder && !parent) throw Object.assign(new Error('目录不合法'), { code: 'INPUT' });
+
+        const raw = typeof args.base64 === 'string' ? args.base64 : '';
+        if (raw === '') throw Object.assign(new Error('文件内容为空'), { code: 'INPUT' });
+        const bytes = Buffer.from(raw, 'base64');
+        if (bytes.length === 0) throw Object.assign(new Error('文件内容不是合法 base64'), { code: 'INPUT' });
+        if (bytes.length > MAX_ASSET_BYTES) {
+          throw Object.assign(
+            new Error(`文件太大（${(bytes.length / 1024 / 1024).toFixed(1)}MB，上限 ${MAX_ASSET_BYTES / 1024 / 1024}MB）`),
+            { code: 'TOO_LARGE' },
+          );
+        }
+        // PDF 必须真的以 `%PDF-` 开头。扩展名可以撒谎，而这一条决定了后面
+        // pdf.js 能不能打开它 —— 与其等到阅读时炸，不如导入时就说清楚。
+        if (ext === 'pdf' && !bytes.subarray(0, 5).equals(Buffer.from('%PDF-'))) {
+          throw Object.assign(new Error('这个文件不是 PDF（缺少 %PDF- 文件头）'), { code: 'INPUT' });
+        }
+
+        const parentAbs = parent === '' ? dir : resolveIn(parent);
+        await mkdir(parentAbs, { recursive: true });
+        const name = await uniqueAssetName(parentAbs, base, ext);
+        const rel = parent === '' ? `${name}.${ext}` : `${parent}/${name}.${ext}`;
+        await writeFileAtomic(resolveIn(rel), bytes, NOTE_FILE_OPTS);
+        await refreshIndex();
+
+        // ⚠️ 这里**不**把 PDF 复制到论文库。
+        //
+        // 「论文」与「笔记」是两个**目录隔离**的工作区（共用文件系统，各有各的目录）：
+        // 论文库由上游管理（`topic/name` 两段式，译文与会话落在那儿），笔记库是
+        // 用户自己的 `.md` + 附件树。跨库复制会让「哪份是真源」「删一个另一个还在吗」
+        // 变成长期问题，而收益只是"笔记库的 PDF 也能整篇翻译"——
+        // 需要整篇翻译时，用户把 PDF 放进论文页即可。
+        return { path: rel, title: name, ext };
+      }
+
       case 'write': {
         const rel = safePath(args.name);
         if (!rel) throw Object.assign(new Error('笔记名不合法'), { code: 'INPUT' });
@@ -409,26 +573,119 @@ export async function apply(ctx, config = {}) {
       }
 
       /**
-       * 删除一条路径：文件夹**连同里面的东西**，笔记只删那一个文件。
+       * 删除一条路径。行为见 `removeOne()`，区别只有一点：**这里会刷新索引**。
        *
-       * 递归删是不可逆的，所以：只认库里解析出来的绝对路径，且绝不允许删库根
-       * （`remove('')` 会被 `safePath` 挡成 null）。
+       * 单条删除的调用方（HTTP 路由、宿主侧 `svc.remove`）只关心"删掉了吗"，
+       * 让它自己记得刷索引等于把一条隐式契约交给每个调用点；由这一层统一负责，
+       * 调用点就永远不必想索引这件事。
        */
-      case 'remove': {
-        const rel = safePath(args.path ?? args.name);
-        if (!rel) throw Object.assign(new Error('路径不合法'), { code: 'INPUT' });
-        const abs = resolveIn(rel);
-        const info = await statOrNull(abs);
-        if (info?.isDirectory()) {
-          await rm(abs, { recursive: true, force: true });
-          await refreshIndex();
-          return { removed: true };
+      case 'remove':
+        return { ...(await removeOne(args)), ...(await refreshIndexOnce()) };
+
+      /**
+       * 批量删除：一次 RPC 删多条路径，**索引只刷一次**。
+       *
+       * 为什么要有它（而不是让页面连发 N 次 `remove`）：
+       * 每次 `remove` 都会 `refreshIndex()` —— 那是"把全库 Markdown 重读一遍再推给
+       * 索引器"。删 20 篇就是 20 次全库重读，几十毫秒 × 20 的卡顿，而且中间每一次
+       * 都让索引短暂看到"删了一半"的状态。批量删除在语义上也是**一个**动作。
+       *
+       * 入参 `args.paths`（字符串数组），返回形状见本条末尾的注释块。
+       */
+      case 'removeMany': {
+        const raw = Array.isArray(args.paths) ? args.paths : [];
+
+        // 1) 逐条过 `safePath()`。剥光（`''`、`..`、纯非法字符）的路径**不报错**，
+        //    进 `invalid` 如实回报 —— 批量操作用户选了几十行，其中一条不合法就
+        //    整批失败，等于让用户自己去找是哪一条；而静默跳过又会让"删了 20 个"
+        //    的实际结果和界面说的不一致。列出来是唯一诚实的选择。
+        /** @type {string[]} */
+        const invalid = [];
+        /** @type {string[]} */
+        const wanted = [];
+        for (const item of raw) {
+          const rel = typeof item === 'string' ? safePath(item) : null;
+          if (!rel) {
+            // 非字符串也给原值的一条记录（`null` 会出现在这里），让调用方能数出少了谁。
+            invalid.push(item === null || item === undefined ? '' : String(item));
+            continue;
+          }
+          wanted.push(rel);
         }
-        const file = `${abs}${NOTES_EXT}`;
-        if (!(await exists(file))) return { removed: false };
-        await rm(file);
-        await refreshIndex();
-        return { removed: true };
+
+        // 2) 去重。界面上的选区可能因为拖拽/多选而带上同一路径两次，重复删第二次
+        //    只会得到 `removed:false`，然后被错报进 missing。
+        const unique = [...new Set(wanted)];
+
+        // 3) 按段数升序（父目录先删）。这一步是 covered 判断能成立的前提：
+        //    选了「理学」又选了「理学/概率论」时，先删「理学」整个目录，
+        //    后者的路径就被前者的删除覆盖了。顺序反过来会先删子项、
+        //    再从父目录的 `contained` 里少算 —— 更糟的是报一堆假的 missing。
+        unique.sort((a, b) => depthOf(a) - depthOf(b));
+
+        /** 已被前面（更上层）删掉的目录覆盖的路径。 */
+        const covered = [];
+        /** 真正删掉的条目：`{ path, kind, contained? }`，与 `removeOne` 的 kind 同义。 */
+        const removed = [];
+        /** 磁盘上本来就不存在的路径 —— 不是错误，用户可能看到的是过期列表。 */
+        const missing = [];
+
+        // 被删掉的文件夹覆盖的路径前缀：`理学` 记成 `理学/`（带斜杠）。
+        //
+        // ⚠️ 带斜杠是关键：不带的话 `理学` 会把 `理学 2` 也判成"已被覆盖"
+        //    （字符串前缀而已），于是另一个真存在的文件夹被静默跳过。带上斜杠后
+        //    `理学 2` 与 `理学/` 不匹配，仍然照常走删除；而 `理学/概率论` 匹配。
+        /** @type {string[]} */
+        const coveredRoots = [];
+
+        for (const rel of unique) {
+          const coveredBy = coveredRoots.find((prefix) => `${rel}/`.startsWith(prefix));
+          if (coveredBy) {
+            covered.push(rel);
+            continue;
+          }
+          const result = await removeOne({ path: rel });
+          if (result.removed === false) {
+            missing.push(rel);
+            continue;
+          }
+          removed.push({
+            path: rel,
+            kind: result.kind,
+            // 只有文件夹带 `contained`：字段存在与否本身就是"这是不是连带删除"的信号，
+            // 给文件补一个 `contained: 0` 会让调用方分不清"文件夹里是空的"和"这是个文件"。
+            ...(result.kind === 'folder' ? { contained: result.contained } : {}),
+          });
+          // 只有**文件夹**才登记覆盖前缀。删掉一个文件（`a.md`）不该让 `a.md/x` 之类
+          // 被跳过 —— 那种路径只可能来自过期列表，应该如实进 missing。
+          if (result.kind === 'folder') coveredRoots.push(`${rel}/`);
+        }
+
+        // 4) 索引只在这里刷一次（哪怕一条都没删成功也刷：那也是一次合法的"确认现状"，
+        //    且让「空数组」这种调用得到一个确定的返回值而不是什么都不做的特例）。
+        await refreshIndexOnce();
+
+        /**
+         * 返回形状（字段名即语义，调用方按它拼确认文案）：
+         *   - `removed`：`[{ path, kind, contained? }]` —— 真正删掉的条目。
+         *     `path` 是**用户给的、经 `safePath` 规范化后的相对路径**（笔记不带 `.md`，
+         *     与 `tree()` 的口径一致）；`kind` 取 `'note' | 'attachment' | 'folder'`；
+         *     `contained` 仅文件夹有，是**连带删掉的文件数**（不含子文件夹本身）。
+         *   - `missing`：`string[]` —— 磁盘上不存在的路径（原本就没了 / 过期列表）。
+         *   - `skipped`：`string[]` —— 结构上被跳过、即"被前面删掉的父目录覆盖"的路径。
+         *     单独列出而不是混进 `removed`：它们不是这次删的（删它们的是父目录），
+         *     混进去会让 `removed.length` 多算。
+         *   - `invalid`：`string[]` —— 连 `safePath` 都过不了的输入（剥光 / 非字符串）。
+         *   - `coveredCount`：`skipped.length` 的别名。页面原先只有这个计数要显示
+         *     （"另外 N 项已随文件夹一起删除"），留着它免得调用方自己 `length`。
+         */
+        return {
+          removed,
+          missing,
+          skipped: covered,
+          invalid,
+          coveredCount: covered.length,
+        };
       }
 
       /** 移动/改名一条路径。笔记改名会改写全库链接；文件夹移动只动磁盘。 */
@@ -489,7 +746,33 @@ export async function apply(ctx, config = {}) {
           const send = (value, status = 200) =>
             Response.json(value, { status, headers: { 'cache-control': 'no-store' } });
           try {
-            if (request.method === 'GET') return send({ ok: true, value: { dir, count: status.count } });
+            if (request.method === 'GET') {
+              // `?raw=<相对路径>`：把库里的**二进制**原样吐出去，供 pdf.js 取字节。
+              //
+              // 为什么不走 RPC：PDF 动辄几十 MB，base64 过 JSON 会膨胀 33% 且
+              // 要整个读进内存再编码；而 pdf.js 需要的是**可按字节区间取**的资源
+              // （它是流式解析的）。这里直接给字节 + `content-length`，
+              // pdf.js 自己会发 Range 请求。
+              const rawPath = new URL(request.url).searchParams.get('raw');
+              if (rawPath !== null) {
+                const rel = safePath(rawPath);
+                if (!rel) return new Response('路径不合法', { status: 400 });
+                const abs = resolveIn(rel);
+                const info = await statOrNull(abs);
+                if (info === null || !info.isFile()) return new Response('找不到这个文件', { status: 404 });
+                const bytes = await readFile(abs);
+                return new Response(bytes, {
+                  headers: {
+                    'content-type': pdfLike(rel) ? 'application/pdf' : 'application/octet-stream',
+                    'content-length': String(bytes.length),
+                    // 用户自己的文件，按路径缓存到会话结束即可；不设长缓存，
+                    // 否则同名替换后看到的还是旧的。
+                    'cache-control': 'private, max-age=300',
+                  },
+                });
+              }
+              return send({ ok: true, value: { dir, count: status.count } });
+            }
             const body = await request.json();
             if (body?.type !== 'client-request' || typeof body.rpcId !== 'string') {
               throw Object.assign(new Error('invalid envelope'), { code: 'INPUT' });
@@ -514,6 +797,75 @@ export async function apply(ctx, config = {}) {
     }, 'zhiyun: vault notes route');
   });
 
+  // ── PDF 阅读器：静态资源 + 阅读页 ─────────────────────────────────────
+  //
+  // 为什么要有这一段（而不是把 pdf.js 打进客户端 bundle）：
+  // 仓里有一条明确的构建守卫 —— 客户端 bundle 不许内联本包 `src/` 之外的文件。
+  // `pdfjs-dist` 的 `pdf.min.mjs` + worker + cmaps 合起来约 1.8MB，打进 bundle
+  // 会让每次进笔记页都背上它，而且 worker 在 esbuild 的 cjs 封装里根本跑不起来。
+  // 所以照「论文」页的成例：阅读器活在**同源 iframe** 里，pdf.js 由宿主路由伺服。
+  //
+  // 同源这一点是刻意的：只有同源，父页面才能把主题送进 iframe
+  // （见 `pdf-viewer.js` 里 `postMessage` 的那一段），PDF 才会跟着亮暗切换。
+  // ⚠️ 用 `ctx.inject(['webServer'])` 会把 webServer 变成**必需依赖**：拿不到时
+  //    整个笔记插件的 `apply` 都会失败，连笔记读写都一起没了。而 PDF 阅读只是
+  //    「有则更好」的能力 —— 没有 webServer（极简宿主、测试桩）时应当降级：
+  //    笔记照常可用，只是 PDF 打不开。所以这里用 `ctx.get` 惰性取，取不到就跳过。
+  const webServer = typeof ctx.get === 'function' ? ctx.get('webServer') : undefined;
+  // 来源校验用的 `connection`：同样惰性取。取不到就**拒绝**而不是放行 ——
+  // 这条路由会吐真实文件字节，"没有校验器"不该等于"谁都能读"。
+  const pdfConnection = typeof ctx.get === 'function' ? ctx.get('connection') : undefined;
+  if (webServer === undefined || typeof webServer.register !== 'function') {
+    warn('宿主没有 webServer，PDF 阅读器不可用（其余笔记功能不受影响）');
+  } else {
+    const dispose = webServer.register({
+      kind: 'prefix',
+      path: PDF_ROUTE_PREFIX,
+      handler: (req, res) => {
+        // ⚠️ 来源校验**必须有**：这条路由会把用户笔记库里的文件原样吐出去，
+        //    没有它就等于把库暴露给任何能访问这个端口的来源。
+        //    口径与上游、`host-paper/routes.js:76-81` 一致：由宿主的
+        //    `connection.requestRejection(req)` 判定，返回 401/403 就拒绝。
+        //
+        //    只读这一条路由不够 —— 但它是唯一直接返回**文件字节**的，
+        //    其余 RPC 路由走 JSON 信封，风险面小得多。
+        // 口径三条：
+        //   1. 有校验器 → 用它的判定（401/403 拒绝）；
+        //   2. 有 connection 但没这个方法 → 说明宿主版本不同，放行（与上游同一取舍：
+        //      上游也是"没有 requestRejection 就不校验"，见 dist/host.js:641-647）；
+        //   3. 完全没有 connection → 极简宿主/测试桩，放行。
+        // 这三条都写在明面上，而不是让"没校验"悄悄发生。
+        const rejection = typeof pdfConnection?.requestRejection === 'function'
+          ? pdfConnection.requestRejection(req)
+          : undefined;
+        if (rejection !== undefined) {
+          res.writeHead(rejection, { 'content-type': 'text/plain; charset=utf-8' });
+          res.end(rejection === 401 ? 'unauthorized' : 'forbidden');
+          return;
+        }
+        // `resolveFile` 把「库内相对路径」翻成绝对路径，越界一律 null。
+        // 规则与 `invoke` 里那些方法共用同一套 `safePath` + `resolveIn`。
+        const resolveFile = (raw) => {
+          const rel = safePath(raw);
+          if (!rel) return null;
+          try {
+            return resolveIn(rel);
+          } catch {
+            return null;
+          }
+        };
+        void servePdfRoute(req, res, { resolveFile });
+      },
+    });
+    // 注册返回的是 disposer；用 `ctx.effect` 挂到插件生命周期上，
+    // 卸载时自动摘掉，不会在宿主里留一条指向已销毁闭包的路由。
+    if (typeof ctx.effect === 'function' && typeof dispose === 'function') {
+      ctx.effect(() => dispose, 'zhiyun: pdf viewer route');
+    }
+    if (typeof dispose !== 'function') warn('webServer.register 没有返回 disposer，PDF 路由将随宿主退出才消失');
+    log(`PDF 阅读器路由：${PDF_ROUTE_PREFIX}`);
+  }
+
   const removeService = ctx.provide('zhiyunVaultNotes', {
     routePath,
     dir,
@@ -522,8 +874,17 @@ export async function apply(ctx, config = {}) {
     read: (name) => invoke('read', { name }),
     write: (name, markdown) => invoke('write', { name, markdown }),
     create: (title, folder) => invoke('create', { title, folder }),
+    /** 导入二进制（当前只有 PDF）。`args` 形状见 `invoke` 的 `importAsset`。 */
+    importAsset: (args) => invoke('importAsset', args),
     mkdir: (title, folder) => invoke('mkdir', { title, folder }),
     remove: (target) => invoke('remove', { path: target }),
+    /**
+     * 批量删除（一次 RPC、索引只刷一遍）。返回形状见 `invoke` 的 `case 'removeMany'`。
+     *
+     * ⚠️ 刻意**不**把入参摊成可变参数（`removeMany(...paths)`）：页面手里是一个
+     * 数组，摊开会让"传错一个对象"这种错误变成静默的空操作。
+     */
+    removeMany: (paths) => invoke('removeMany', { paths }),
     move: (from, to) => invoke('move', { from, to }),
     // ⚠️ 服务面上的方法与 `invoke` 的方法表必须**一一对应**。
     //    这条最初漏了 `rename`（HTTP 路由能调、宿主侧调不到），

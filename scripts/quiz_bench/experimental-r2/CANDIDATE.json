@@ -1,0 +1,15 @@
+{
+  "id": "v2-r2",
+  "parent": "v2-candidate-r1",
+  "status": "not-promoted-no-heldout-win",
+  "productionEnabled": false,
+  "files": {
+    "scripts/quiz_bench/experimental-r2/blueprint.mjs": "3106bf28ec99415aceccc1a23fc4bb34a110c975a3ae800cad8ed96d189d54d1",
+    "scripts/quiz_bench/experimental-r2/points.mjs": "9199d457efff2d1e6819abfcb066b34fba064ab95a41350934f055c2bf995d21",
+    "scripts/quiz_bench/experimental-r2/policy.mjs": "9c49baa96338231f586921798ffb7b5f17452054feda53150b3ebf10ccc1e063",
+    "scripts/quiz_bench/experimental-r2/rectification.mjs": "092409ef353213f990d0d2ab0b060aafcf8777249792054cfc64d95ee02d9bab",
+    "scripts/quiz_bench/experimental-r2/run.mjs": "816c6af98d446d779477532cf0e253f2a31e2491d96ebf87b076a453e7e30730",
+    "scripts/quiz_bench/experimental-r2/source.mjs": "1c33bc3fa1ab6ba5fc7194e4a0351700f2d84b985d5c0101a45d69487a46e9dd"
+  },
+  "decision": "retain-v2-candidate-r1"
+}

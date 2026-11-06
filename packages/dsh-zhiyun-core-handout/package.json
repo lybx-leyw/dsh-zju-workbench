@@ -1,0 +1,19 @@
+{
+  "name": "dsh-zhiyun-core-handout",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "讲义导出到笔记库：把当前讲义写成笔记库里的 md，单向、不覆盖、重名加后缀（零 IO，文件经注入的笔记服务）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./codec": "./src/codec.js",
+    "./version": "./src/version.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

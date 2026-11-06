@@ -1,0 +1,23 @@
+{
+  "name": "dsh-radar-bbob",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 @bbob/core 4.4.1 + @bbob/preset-html5 4.4.1，把 CC98 正文读侧的「UBB→纯文本」升级为「UBB→AST（带字符偏移）」，强化式集成",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@bbob/core": "4.4.1",
+    "@bbob/parser": "4.4.1",
+    "@bbob/plugin-helper": "4.4.1",
+    "@bbob/preset": "4.4.1",
+    "@bbob/preset-html5": "4.4.1",
+    "@bbob/types": "4.4.1"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

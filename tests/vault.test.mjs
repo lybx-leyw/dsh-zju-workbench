@@ -10,10 +10,10 @@ import assert from 'node:assert/strict';
 
 import {
   parseNoteLinks, splitWikilink, normalizeTarget, basenameOf, excludedRanges,
-} from '../packages/dsh-zhiyun-vault/src/parse/links.js';
+} from '../packages/dsh-zhiyun-core-vault/src/parse/links.js';
 import {
   buildIndex, createResolver, titleOf, renameLinks, targetCandidates,
-} from '../packages/dsh-zhiyun-vault/src/index/vault-index.js';
+} from '../packages/dsh-zhiyun-core-vault/src/index/vault-index.js';
 
 test('`[[目标|别名]]`：别名不属于目标', () => {
   const { wikilinks } = parseNoteLinks('见 [[真实笔记|显示成这个]]。');
@@ -339,4 +339,64 @@ test('excludedRanges：区间合并且不与正文错位', () => {
   // 区间内容确实是代码/数学
   const texts = ranges.map(([s, e]) => md.slice(s, e));
   assert.deepEqual(texts.sort(), ['$math$', '`code`'].sort());
+});
+
+// ── 重边折叠（生态雷达 r40 `vault-graph` 的 F-4）────────────────────
+// 同一篇里对同一目标写两遍 `[[a]]`，是**一段关系**的两种写法，不是两条边。
+// 原实现把每条 wikilink 都推进 edges，`inDegree` 随之翻倍，图画出来比实际关系多。
+
+test('重边折叠：同篇重复链接只留一条边，重复次数记在 weight', () => {
+  const idx = buildIndex([
+    { path: 'a.md', markdown: '[[b]] 与 [[b]]' },
+    { path: 'b.md', markdown: '' },
+  ]);
+  const ab = idx.graph.edges.filter((e) => e.from === 'a.md' && e.to === 'b.md');
+  assert.equal(ab.length, 1, '同 (from,to) 只保留一条边');
+  assert.equal(ab[0].weight, 2, '重复次数要留下来，否则信息丢失');
+});
+
+test('重边折叠：inDegree / outDegree 按关系数算，不按书写次数', () => {
+  const idx = buildIndex([
+    { path: 'a.md', markdown: '[[b]] [[b]] [[b]]' },
+    { path: 'b.md', markdown: '[[a]] [[a]]' },
+  ]);
+  const a = idx.graph.nodes.find((n) => n.id === 'a.md');
+  const b = idx.graph.nodes.find((n) => n.id === 'b.md');
+  assert.equal(a.outDegree, 1, 'a 只连向 b 一篇');
+  assert.equal(a.inDegree, 1, 'b 只连向 a 一篇');
+  assert.equal(b.inDegree, 1);
+  assert.equal(b.outDegree, 1);
+});
+
+test('重边折叠：反向链接面板仍保留逐次记录', () => {
+  // 图要折叠，面板不要 —— 用户想知道「它在哪几处提到我」。
+  const idx = buildIndex([
+    { path: 'a.md', markdown: '[[b]]\n\n[[b]]' },
+    { path: 'b.md', markdown: '' },
+  ]);
+  assert.equal(idx.backlinks.get('b.md').length, 2, '面板按出现次数记录');
+});
+
+test('嵌入与链接不互相折叠：`[[a]]` 与 `![[a]]` 是两种关系', () => {
+  const idx = buildIndex([
+    { path: 'a.md', markdown: '[[b]] 与 ![[b]]' },
+    { path: 'b.md', markdown: '' },
+  ]);
+  const kinds = idx.graph.edges
+    .filter((e) => e.from === 'a.md' && e.to === 'b.md')
+    .map((e) => e.kind)
+    .sort();
+  assert.deepEqual(kinds, ['embed', 'link']);
+});
+
+test('相邻两个链接各自成边：`[[A]]与 [[B]]` 不漏第二个', () => {
+  // 雷达候选曾声称这里是 F-1（正则贪婪吞掉第二个链接）。
+  // 实测不成立，这条测试把它钉住，免得以后有人"顺手修一个不存在的 bug"。
+  const idx = buildIndex([
+    { path: 'a.md', markdown: '见 [[A]]与 [[B]]' },
+    { path: 'A.md', markdown: '' },
+    { path: 'B.md', markdown: '' },
+  ]);
+  const targets = idx.graph.edges.filter((e) => e.from === 'a.md').map((e) => e.to).sort();
+  assert.deepEqual(targets, ['A.md', 'B.md']);
 });

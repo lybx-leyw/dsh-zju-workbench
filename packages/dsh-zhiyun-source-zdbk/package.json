@@ -1,0 +1,21 @@
+{
+  "name": "dsh-zhiyun-source-zdbk",
+  "version": "0.1.0",
+  "description": "浙大教务系统（zdbk）数据源：成绩/GPA、考试安排、课表。从 dsh-zhiyun-source-omni 的 zdbk 平台移植为纯 JavaScript",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "dsh-zhiyun-source-campus": "0.1.0",
+    "dsh-zhiyun-source-card": "0.1.0"
+  }
+}

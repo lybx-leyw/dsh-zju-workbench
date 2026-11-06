@@ -1,21 +1,30 @@
-import { mkdir, readFile, writeFile, access, symlink, realpath, lstat, rm, readdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, access, symlink, realpath, rm, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { ownPackageDirs, ownPackageNames, ownPackages } from './workspace-packages.mjs';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
 export const lock = JSON.parse(await readFile(new URL('../runtime.lock.json', import.meta.url), 'utf8'));
 /**
- * 本仓自有的 bundle = `packages/` 下的 `dsh-zhiyun-*` 目录。
+ * 本仓自有的 bundle = `packages/` 下带 manifest、且不属于隔离区的包。
  *
- * profile 的目录链接表、产品升级白名单、客户端构建产物检查都从这一份推导 ——
- * 拆包/加包只需要建目录，不再需要在三个地方各补一行（漏一处的表现是启动时
- * 找不到包或静默少推一个 bundle）。
+ * 判据是**位置**而不是名字前缀（见 `workspace-packages.mjs`）：包名不再必须以
+ * `dsh-zhiyun-` 开头，`dsh-radar-*` 则始终排除。profile 的目录链接表、产品升级
+ * 白名单、客户端构建产物检查都从这一份推导 —— 加包只需要建目录。
+ *
+ * 值是**包名**（manifest.name），不是目录名：profile 的 `bundles` 与宿主在
+ * `node_modules` 里的解析都只认 npm 包名，目录名仅在仓库内部使用
+ * （例如 `packages/client/pages-default/` → `@lybx-leyw/dsh-zju-pages-default`）。
  */
-export const sourceBundles = (await readdir(path.join(root, 'packages'), { withFileTypes: true }))
-  .filter(entry => entry.isDirectory() && entry.name.startsWith('dsh-zhiyun-'))
-  .map(entry => entry.name)
-  .sort();
+export const sourceBundles = await (async () => {
+  const names = [];
+  for (const dir of await ownPackageDirs(path.join(root, 'packages'))) {
+    const manifest = JSON.parse(await readFile(path.join(dir, 'package.json'), 'utf8'));
+    names.push(manifest.name);
+  }
+  return names.sort();
+})();
 /**
  * 本仓**发布过但已不再提供**的包名（旧名登记表）。
  *
@@ -23,8 +32,27 @@ export const sourceBundles = (await readdir(path.join(root, 'packages'), { withF
  * 整个 profile 起不来（拆包真机上踩过）。这里刻意**不用前缀猜测**：
  * 同前缀但没登记的条目可能来自别的分支或用户自己链进来的包，一律不动。
  */
-export const retiredBundles = ['dsh-zhiyun-pro-ui', 'dsh-zhiyun-study', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-player'];
+export const retiredBundles = ['dsh-pages', 'dsh-zhiyun-pro-ui', 'dsh-zhiyun-study', 'dsh-zhiyun-page-courses', 'dsh-zhiyun-page-player',
+  // 「个人」页整包删除：它的两块内容各自有了归属 —— 登录对话框与「账号与数据」
+  // 设置分区进了 `dsh-zhiyun-settings-account`。老 profile 里还挂着这一行的话
+  // Loader 解不开，整个 profile 起不来。
+  'dsh-zhiyun-page-me',
+  // 「无曰终审」整包删除（自由发挥那一步被并入习坎的全文润色）。
+  // 老 profile 里还挂着这一行的话 Loader 解不开，整个 profile 起不来。
+  'dsh-zhiyun-core-final-pass'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
+/**
+ * 哪些 bundle 来自 npm 依赖、不参与本仓链接与客户端构建。
+ *
+ * `@lybx-leyw/dsh-pages` 是锁版本的发布包（根 package.json 精确版本），
+ * 源码与产物都在安装好的 node_modules 里，本仓既不再保留 vendor 副本，
+ * 也不为它生成 profile 目录链接 —— profile 需要的链接由
+ * {@link externalBundles} 里的包名从 node_modules 解析。
+ */
+const EXTERNAL_BUNDLES = ['@lybx-leyw/dsh-pages'];
+export const externalBundles = EXTERNAL_BUNDLES;
+/** 需要在 profile 里出现的 bundle 名（本仓包 + npm 依赖包）。 */
+export const allBundles = () => [...sourceBundles, ...EXTERNAL_BUNDLES];
 /** 校验一个候选安装目录：六个宿主包版本一致、在清单内，Cordis 大版本匹配。 */
 async function readHost(app) {
   const modules = path.join(app, 'node_modules');
@@ -77,6 +105,117 @@ export async function locateHost(env = process.env) {
 }
 
 /**
+/**
+ * 把模板里**属于本仓 bundle** 的配置层合并进现有 patch，用户自己的覆盖一概不动。
+ *
+ * 规则刻意保守：
+ *   - 只认模板里的 `- id: <id>` 块；`id` 必须是本仓 bundle（`ownedIds`），
+ *     或该块的 `name` 是本仓包之一；
+ *   - 现有一模一样的块 → 不动；
+ *   - 现有同名 `id` 块但内容不同 → **用模板的替换**（这是产品层的配置，归本仓维护，
+ *     与「用户覆盖」不是一回事；用户的其它 id 块原样保留）；
+ *   - 现有文件里没有这个 id → 追加到末尾。
+ *
+ * @param current - 现在的 patch 文本（含用户的机器本地覆盖）。
+ * @param template - 模板 patch 文本。
+ * @param ownedIds - 本仓包名集合（用于判断某个 name 是不是我们的）。
+ * @returns 合并后的文本；没有变化时原样返回。
+ */
+export async function mergeOwnedPatch(current, template, ownedIds) {
+  const blocks = text => {
+    // Split on top-level "- id:" entries, keeping their text.
+    const lines = text.replaceAll('\r\n', '\n').split('\n');
+    const out = [];
+    let header = [];
+    let block = null;
+    for (const line of lines) {
+      if (/^- id:\s*/.test(line)) {
+        if (block !== null) out.push(block);
+        block = [line];
+      } else if (block === null) {
+        header.push(line);
+      } else {
+        block.push(line);
+      }
+    }
+    if (block !== null) out.push(block);
+    return { header, blocks: out };
+  };
+  const blockId = lines => {
+    const first = lines[0] ?? '';
+    return /^- id:\s*(\S+)/.exec(first)?.[1];
+  };
+  const blockName = lines => {
+    for (const line of lines) {
+      const match = /^\s+name:\s*["']?([^"'\n]+)["']?\s*$/.exec(line);
+      if (match) return match[1];
+    }
+    return undefined;
+  };
+
+  const templateParts = blocks(template);
+  const currentParts = blocks(current);
+  /**
+   * 模板里属于本仓的块：`name` 是本仓包名，**或** `id` 是某个「由本仓装配」的
+   * bundle patch 声明的条目 id。
+   *
+   * 后者必须同时看两类包：
+   *   - 本仓 `packages/` 下的包；
+   *   - **npm 依赖型 bundle**（如 `@lybx-leyw/dsh-pages`）——它的 patch 在
+   *     `node_modules` 里，不在 `packages/` 下，只看前者会把
+   *     `- id: dsh-pages` 那段整个漏掉，而它正是「默认宽度 51」的载体。
+   */
+  const templateIds = new Set();
+  const patchSources = [
+    ...(await ownPackages(path.join(root, 'packages'))).map(manifest => ({
+      dir: manifest.path,
+      patch: manifest.manifest.dsh?.bundle?.patch,
+    })),
+    ...externalBundles.map(name => ({
+      dir: path.join(root, 'node_modules', name),
+      patch: 'cordis.patch.yml',
+    })),
+  ];
+  for (const source of patchSources) {
+    if (typeof source.patch !== 'string') continue;
+    try {
+      const patchText = await readFile(path.join(source.dir, source.patch), 'utf8');
+      for (const match of patchText.matchAll(/^\s*-\s*id:\s*(\S+)/gm)) templateIds.add(match[1]);
+    } catch { /* a bundle without a readable patch just contributes nothing */ }
+  }
+  const ownTemplateBlocks = templateParts.blocks.filter(lines => {
+    const name = blockName(lines);
+    const id = blockId(lines);
+    if (name !== undefined && ownedIds.has(name)) return true;
+    return id !== undefined && templateIds.has(id);
+  });
+  if (ownTemplateBlocks.length === 0) return current;
+
+  const merged = [...currentParts.blocks];
+  let changed = false;
+  for (const own of ownTemplateBlocks) {
+    const id = blockId(own);
+    const index = merged.findIndex(lines => blockId(lines) === id);
+    const wanted = own.join('\n').replace(/\n+$/, '');
+    if (index < 0) {
+      merged.push(own);
+      changed = true;
+      continue;
+    }
+    const existing = merged[index].join('\n').replace(/\n+$/, '');
+    if (existing === wanted) continue;
+    merged[index] = own;
+    changed = true;
+  }
+  if (!changed) return current;
+
+  // Preserve the live file's header/comments; append blocks after them.
+  const headerText = currentParts.header.join('\n').replace(/\n+$/, '');
+  const body = merged.map(lines => lines.join('\n').replace(/\n+$/, '')).join('\n');
+  return `${headerText}\n${body}\n`;
+}
+
+/**
  * 建立 profile 里指向宿主的目录链接。
  *
  * [adopt] 为真时，如果这个链接**是我们自己建的链接**（不是实体目录）却指向别处 ——
@@ -85,9 +224,14 @@ export async function locateHost(env = process.env) {
  */
 async function linkDirectory(target, link, { adopt = false } = {}) {
   if (await exists(link)) {
-    if (path.resolve(await realpath(link)).toLowerCase() === path.resolve(await realpath(target)).toLowerCase()) return 'same';
-    const stats = await lstat(link);
-    if (!adopt || !stats.isSymbolicLink()) throw new Error(`已有路径指向其他位置，未覆盖：${link}`);
+    const here = path.resolve(await realpath(link));
+    if (here.toLowerCase() === path.resolve(await realpath(target)).toLowerCase()) return 'same';
+    // 判断「这是链接还是用户自己放的实体目录」**不能**用 `lstat().isSymbolicLink()`：
+    // Windows 的 junction 在那里报 `isDirectory()===true` / `isSymbolicLink()===false`，
+    // 于是本脚本自己建的链接会被误判成实体目录，换宿主时永远改指不了。
+    // 可靠判据是路径本身：实体目录的 realpath 就是它自己，链接的 realpath 指向别处。
+    const isLink = here.toLowerCase() !== path.resolve(link).toLowerCase();
+    if (!adopt || !isLink) throw new Error(`已有路径指向其他位置，未覆盖：${link}`);
     await rm(link, { recursive: true, force: true });
     await symlink(target, link, process.platform === 'win32' ? 'junction' : 'dir');
     return 'repointed';
@@ -122,7 +266,7 @@ export async function initialize({ home = path.join(root, '.runtime', 'home'), e
       if (!existing.dsh?.profile?.bundles?.includes(bundle)) {
         // Product upgrade: append our new source bundle to our existing profile.
         // Preserve every user-owned override and all other manifest fields.
-        if (!sourceBundles.includes(bundle) || !Array.isArray(existing.dsh?.profile?.bundles)) throw new Error(`profile 缺少 ${bundle}，请检查自己的配置；初始化不会重写配置。`);
+        if (!allBundles().includes(bundle) || !Array.isArray(existing.dsh?.profile?.bundles)) throw new Error(`profile 缺少 ${bundle}，请检查自己的配置；初始化不会重写配置。`);
         existing.dsh.profile.bundles.push(bundle);
         changed = true;
       }
@@ -132,13 +276,61 @@ export async function initialize({ home = path.join(root, '.runtime', 'home'), e
     await writeFile(manifestFile, JSON.stringify(template, null, 2) + '\n', { flag: 'wx' });
   }
   const patch = path.join(profile, 'cordis.patch.yml');
-  if (!await exists(patch)) await writeFile(patch, await readFile(path.join(root, 'profiles', lock.profile, 'cordis.patch.yml')), { flag: 'wx' });
+  // The live patch holds machine-local overrides, so it must never be overwritten
+  // wholesale. But the template's **owned** layers (config for bundles this repo
+  // declares) have to reach the live profile too — copying the template only when
+  // the file is missing meant a new `dsh-pages` config silently never applied, and
+  // "reset width" kept falling back to the shell's own default.
+  const templatePatch = await readFile(path.join(root, 'profiles', lock.profile, 'cordis.patch.yml'), 'utf8');
+  if (!await exists(patch)) {
+    await writeFile(patch, templatePatch, { flag: 'wx' });
+  } else {
+    const current = await readFile(patch, 'utf8');
+    const merged = await mergeOwnedPatch(current, templatePatch, sourceBundles);
+    if (merged !== current) {
+      await writeFile(patch, merged);
+      console.log('已把模板里本仓 bundle 的配置层合并进 profile 的 cordis.patch.yml（用户覆盖未动）');
+    }
+  }
   // 宿主换版本时改指这两条链接（它们由本脚本创建）；用户自己放的实体目录不会被覆盖。
   // 本仓包链接从 `sourceBundles` 推导 —— 拆包后多出的包不需要在这里补行。
+  // npm 依赖的 bundle（见 `externalBundles`）链到根 node_modules 里安装好的那份：
+  // profile 在 `.runtime/home` 下，解析不到仓库根的依赖树，所以仍要一条目录链接。
+  // 已退役的 bundle 在 profile 里留下的目录链接也要清掉：包目录已经删了，
+  // 链接会指向一个不存在的路径，Loader 解析到它会报错。只清 `retiredBundles`
+  // 登记表里的名字，且只清链接（实体目录不动）。
+  //
+  // ⚠️ 不能用 `exists()` 判断：悬空 junction 的 `access()` 会失败，正好把最该清掉
+  //    的那一个漏过去。改为读目录项本身 —— 目录项存在即说明有这个链接。
+  const modulesDir = path.join(profile, 'node_modules');
+  const present = new Set(await readdir(modulesDir).catch(() => []));
+  for (const name of retiredBundles) {
+    if (!present.has(name)) continue;
+    const link = path.join(modulesDir, name);
+    // 实体目录（realpath 等于自身）是用户自己放的，不动；链接一律清掉。
+    // 悬空链接的 realpath 会抛错，那正是最该清理的一种，所以抛错即视为链接。
+    const isRealDirectory = await realpath(link)
+      .then(here => path.resolve(here).toLowerCase() === path.resolve(link).toLowerCase())
+      .catch(() => false);
+    if (isRealDirectory) continue;
+    await rm(link, { recursive: false, force: true });
+    console.log(`已移除 profile 里已退役 bundle 的目录链接：${name}`);
+  }
   const repointed = [];
+  const sourceDirs = await ownPackageDirs(path.join(root, 'packages'));
+  // 链接目标一律用**包名**（manifest.name），不是目录名：宿主按 profile
+  // `bundles` 里的 npm 包名去 `node_modules` 解析，目录名只在仓库内使用
+  // （例如 `packages/client/pages-default/` → `@lybx-leyw/dsh-zju-pages-default`）。
+  const sourceLinks = [];
+  for (const dir of sourceDirs) {
+    const manifest = JSON.parse(await readFile(path.join(dir, 'package.json'), 'utf8'));
+    const segments = manifest.name.split('/');
+    sourceLinks.push([dir, path.join(profile, 'node_modules', ...segments)]);
+  }
   for (const [target, link] of [
     [path.join(host.modules, '@deepseek-ai'), path.join(profile, 'node_modules', '@deepseek-ai')],
-    ...sourceBundles.map(name => [path.join(root, 'packages', name), path.join(profile, 'node_modules', name)]),
+    ...sourceLinks,
+    ...externalBundles.map(name => [path.join(root, 'node_modules', name), path.join(profile, 'node_modules', name)]),
   ]) {
     if (await linkDirectory(target, link, { adopt: true }) === 'repointed') repointed.push(path.basename(link));
   }
@@ -187,10 +379,15 @@ export function runHost(runtime, args, { pipe = false } = {}) {
  */
 export async function missingClientBundles() {
   const missing = [];
-  for (const name of sourceBundles) {
-    const manifest = JSON.parse(await readFile(path.join(root, 'packages', name, 'package.json'), 'utf8'));
+  for (const dir of await ownPackageDirs(path.join(root, 'packages'))) {
+    const name = path.basename(dir);
+    // 带 `DETACHED.md` 的包是「已完工、但决定暂不接进 profile」的：它不参与构建，
+    // 也就不会产出 lib/client.js。要求它有产物只会让 `npm start` 直接起不来。
+    // 见各包的 DETACHED.md。
+    if (await exists(path.join(dir, 'DETACHED.md'))) continue;
+    const manifest = JSON.parse(await readFile(path.join(dir, 'package.json'), 'utf8'));
     if (manifest.dsh?.client === undefined) continue;
-    if (!await exists(path.join(root, 'packages', name, 'lib/client.js'))) missing.push(name);
+    if (!await exists(path.join(dir, 'lib/client.js'))) missing.push(name);
   }
   return missing;
 }

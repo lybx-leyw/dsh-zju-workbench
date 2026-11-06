@@ -2,7 +2,7 @@
 //
 // `time` 是课件页上「课堂时间 mm:ss」，`lessonWhen` 是节次列表上的开课时间。
 // 它们读的是领域数据（startAt / startMs 的语义来自智云课堂接口），但**只被界面使用**，
-// 所以留在页面包里；状态包（dsh-zhiyun-study-core）只管取数与任务。
+// 所以留在页面包里；状态包（dsh-zhiyun-core-study）只管取数与任务。
 export const time = (ms) => {
   const seconds = Math.floor(ms / 1e3);
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;

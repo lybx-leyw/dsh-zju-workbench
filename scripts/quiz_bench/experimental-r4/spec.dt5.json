@@ -1,0 +1,17 @@
+{
+  "_note": "只跑 DeepTutor(native) 臂，源数据与 spec.all5.json 完全相同，用于把产出的题目送进同一个外部评分器，与 r4 的 0.925/0.833 做同口径对照。不跑 r4，避免重复烧钱。",
+  "kind": "development",
+  "arms": ["native"],
+  "concurrencies": [2],
+  "batches": [3],
+  "maxCalls": 400,
+  "requestTimeoutMs": 240000,
+  "wallBudgetMs": 3600000,
+  "cases": [
+    {"id": "prob", "kind": "authored", "source": "scripts/quiz_bench/experimental-r4/bench-data/概率论与数理统计__2026-09-17第3-5节/graph.json"},
+    {"id": "physics", "kind": "authored", "source": "scripts/quiz_bench/experimental-r4/bench-data/大学物理（乙）Ⅱ__2026-10-22第6-8节（2）/graph.json"},
+    {"id": "vision", "kind": "authored", "source": "scripts/quiz_bench/experimental-r4/bench-data/计算机视觉导论__2026-10-10第3-5节/graph.json"},
+    {"id": "dsa", "kind": "authored", "source": "scripts/quiz_bench/experimental-r4/bench-data/高级数据结构与算法分析__2026-09-29第6-8节/graph.json"},
+    {"id": "psyexp", "kind": "authored", "source": "scripts/quiz_bench/experimental-r4/bench-data/心理学实验编程__2026-10-27第3-5节（2）/graph.json"}
+  ]
+}
