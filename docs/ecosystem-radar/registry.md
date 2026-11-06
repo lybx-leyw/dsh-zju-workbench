@@ -5056,3 +5056,20 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 >
 > **去重口径**：沿用 2026-11-06-03 轮的全文正则 `([A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+)` + 精确比对（4300 个名字）。
 > 本轮用它抓到 `agentcooper/react-pdf-highlighter` 已在册 —— 若按表格首列提取会漏（该行在第 24 行、格式正常，属人为疏漏而非脚本缺陷，仍建议沿用全文正则）。
+
+### 2026-11-06 09:00 · C 组（学生功能域）· r142
+
+> 轴：**公式的第二个面板** —— 课件白板上的公式现在吐源码（`client.jsx:246` `{element.latex}`），而同产品 slide 侧 KaTeX 正常。
+> 登记 **6 行**（🟢1 / 🔵3 / ⛔2）。搜索 **14 次（超额 4 次）**，如实记录。
+> 去重沿用全文正则 `([A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+)` 精确比对。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 骨架日期 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `tejasprabhune/kern` | B 其他JS | **MIT** ✅ | 数学（Typst 语法 → MathML） | **重复可强化**（白板公式） | 🟢 | skeleton-created | 2026-11-06 | 2026-11-06 | ★20，2026-11-02 活跃。npm 名 **`kern-typ@0.2.0`**（`kern` 被 redis 客户端占用），`unpackedSize` 207 KB、`dist/kern.min.js` 54.8 KB、**零运行时依赖**。沙箱实测 `renderToString('mat(1,0; 0,1)')` 等 7 例出 MathML。⚠ **硬伤**：喂 LaTeX（`\frac{a}{b}`）**不抛错**、静默渲成 `kern-eqarray` 错表 → 接入必带 LaTeX 前置判别。⚠ npm 停在 2026-05-16，GitHub 已到 2026-11-02 → **锁版锁不住最新**。骨架 `packages/radar/dsh-radar-board-latex`；**若白板公式实为 LaTeX 则该骨架作废**（改用仓库自带 `katex@0.16.38`） |
+| `BearToCode/carta` | B 其他JS | MIT ✅ | 笔记（Markdown + KaTeX） | 重复且无增益 | ⛔ | rejected | 2026-11-06 | — | ★781，2026-10-07。**Svelte 编辑器产品**（`topics: editor,katex,markdown,math`），非可挂库；本仓笔记页非 Svelte 栈 |
+| `wudream813/luogu-markdown-editor` | B 其他JS | MIT ✅ | 竞赛编程（洛谷 MD + KaTeX） | 重复且无增益 | 🔵 | proposed | 2026-11-06 | — | ★29，2026-11-01。单文件 MD 编辑器，可参考「公式输入→预览」交互；本仓无洛谷场景 |
+| `marioMLLL/ecnu-timetable-calendar` | B 其他JS | MIT ✅ | 课表导出（ECNU → 日历） | 重复且无增益 | 🔵 | proposed | 2026-11-06 | — | ★8，2026-09-22。同为**正方系教务**课表导出（`topics: ics,chrome-extension`）。异构系统抓取器，只作口径参考；不可替代本仓自研 `ics-export` |
+| `MuhametSmaili/note-it` | B 其他JS | Apache-2.0 ✅ | 笔记（截图 OCR → 笔记） | 重复可强化（笔记导入） | 🔵 | proposed | 2026-11-06 | — | ★42，2025-08 停更。Chrome 扩展形态，OCR 走云端 API，**无可搬本地算法**。C 组 `ocr notes taking` 词面 top1 合格件 |
+| `zeus-12/uxie` | B 其他JS | **`null`** ⛔ | 论文（PDF 阅读 + 笔记） | — | ⛔ | rejected | 2026-11-06 | — | ★197，`ocr notes taking` ★ 最高者。无许可证；且自带 PDF viewer → 撞 r139 新增判据「候选自带 viewer 一律 ⛔」，双重排除 |
+| 无证课表/笔记簇：`ayozoo/pdf-quiz-practice`(★7)、`shashankssp12/NPTEL-MCQ-Memorizer`(★16)、`hyggg222/ise-quiz-drill`(★5)、`webc-site/math`(★142)、`instructure/mathman`(★12)、`Waqar-743/SnapNote`(★6)、`NitinN77/Smart-Note-Taker`(★2)、`Nilesh98-codes/note-sync-docs`、`mentor98/Smart-AI-Note-Taking-App`、`Marwan-Alhindi/notaplus`、`King-fly/note-taker`、`PardhavMaradani/vit-timetable-export-plugin`、`navlemis/timetablext`、`TeoTzeShuen/timetable-exporter`、`Jay-Nepal/sunway-izone-timetable-export`、`umaidsiddiqui10/dayplan`、`PNRYates/knoxi-calendar`、`JimmyBlackley/sols-calendar`、`SparksFlash/study-routine`、`geo1337/webunits-to-ics-extension` | B 其他JS | **`null`** ⛔ | 刷题/数学/笔记/课表 | — | ⛔ | rejected | 2026-11-06 | 合并一行（★0–16，多为 ★0–1）。均为整品 App 或单校抓取扩展，无许可证。`webc-site/math` ★142 记一笔：「LaTeX→原生 MathML 编译器」这格已有玩家；`hyggg222/ise-quiz-drill` 的「复制考试界面做模考」与本仓 `quiz-lab` 同思路，可作交互参考（不摘码） |
+| AGPL 簇：`DuarteSantos8/openGym`(★19728)、`TraceApps/lifttrace`(★124)、`RunasSudo/allocics.js`(★2) | B 其他JS | **AGPL-3.0** ⛔ | 锻炼/课表 | — | ⛔ | rejected | 2026-11-06 | — | 许可证红线。`openGym` 是 `fitness tracker` 词面 ★ 第一，**不可用** |
