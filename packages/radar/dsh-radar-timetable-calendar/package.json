@@ -1,0 +1,19 @@
+{
+  "name": "dsh-radar-timetable-calendar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】借鉴「教学周 × 星期 × 节次 → 真实日期」的换算与 .ics 属性（VALARM / VTIMEZONE），为课表面板的日历导出补上游式的周次语义解析（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -7,7 +7,8 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/radar/*"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",

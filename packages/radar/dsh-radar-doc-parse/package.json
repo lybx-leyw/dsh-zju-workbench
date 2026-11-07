@@ -1,0 +1,22 @@
+{
+  "name": "dsh-radar-doc-parse",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 mammoth / read-excel-file / word-extractor，为会话内读文件补齐 DOCX/DOC/PPTX/XLSX 抽取（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "mammoth": "1.13.0",
+    "read-excel-file": "9.3.14",
+    "word-extractor": "1.0.4"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

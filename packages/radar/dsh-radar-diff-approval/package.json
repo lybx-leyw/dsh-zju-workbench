@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-diff-approval",
+  "version": "0.0.0-radar",
+  "private": true,
+  "description": "候选骨架（未评审）：锁版挂载 dsh-diff-approval，外围兼容层接管编辑审批入口",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "dsh-diff-approval": "0.36.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

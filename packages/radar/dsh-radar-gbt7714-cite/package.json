@@ -1,0 +1,19 @@
+{
+  "name": "dsh-radar-gbt7714-cite",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 citeproc 2.4.63 + @retorquere/bibtex-parser 13.0.11，给「笔记」页补一条 GB/T 7714-2015 参考文献表生成链路：选中文献 → 按国标样式排版 → 复制进文末；强化式集成（同一面板：正文编辑态）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "citeproc": "2.4.63",
+    "@retorquere/bibtex-parser": "13.0.11"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

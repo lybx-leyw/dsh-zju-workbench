@@ -1,0 +1,15 @@
+{
+  "name": "dsh-radar-zone-notify",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版挂载上游 dsh-plugin-notifications 的宿主半边，为「今日」页的到点待办补上桌面通知（强化式集成）",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "dependencies": {
+    "dsh-plugin-notifications": "0.1.0"
+  }
+}

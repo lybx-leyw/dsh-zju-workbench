@@ -1,0 +1,15 @@
+{
+  "name": "dsh-radar-notify-capability",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】把 Web Push / 通知权限的「能力探测 + 降级链」抽成一层统一判定，供本仓已有的 cc98 / 学在浙大通知读侧复用；取 dsh-plugin-notifications（B 类，MIT）的形态为参照；强化式集成",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-sketchpad",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】把手写画板接进课堂页「讲一段、画一段」：形状集合从 3 个扩到 8 个（强化式集成，A 类：锁版挂载 dsh-sketchpad@0.1.1 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-sketchpad": "0.1.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

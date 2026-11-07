@@ -1,0 +1,9 @@
+# 与上游 cordis.patch.yml 同形（上游 id: diff-approval → 本包改为 radar-diff-approval）。
+# 评审要点：上游自己就是「bundle layer」，会在 profile 自己的 patch 之前插入一行；
+# 本包再包一层会得到**两行 insert、同一个插件被挂两次**。正式接入时必须二选一：
+#   ① 只挂上游 bundle（本包只做外围兼容层，patch 文件留空）；
+#   ② 只挂本包，删掉上游 bundle。
+# 评审通过前不要把本包加进任何 profile。
+- insert:
+    - id: radar-diff-approval
+      name: dsh-radar-diff-approval

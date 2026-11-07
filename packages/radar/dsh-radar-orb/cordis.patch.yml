@@ -1,0 +1,11 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+#
+# 只挂**宿主半边**（`dsh-orb` 主入口 = 会话/附件服务），**不挂**它的
+# `preset-computer-use` 与 `./client`（悬浮球外壳）。
+# 理由见 README「三条必须守住的边界」：上游 patch 会新建一个「Computer Use」
+# 预设（新 agent 模式）+ 一个常驻桌面悬浮球（新外壳），两者都不是「同一个面板」。
+#
+# insert id 与上游 `dsh-orb` 错开，避免与上游 patch 同槽位互抢。
+- insert:
+    - id: radar-orb
+      name: dsh-radar-orb

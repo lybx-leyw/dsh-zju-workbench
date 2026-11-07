@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-cc98-material-search",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】B 类能力提取：把上游 cc98-material-search（MIT）v0.1.0 的「搜索结果分拣 + 多楼层附件发现」，以纯规则模块重写进 CC98 源，强化 `cc98.search`（强化式集成：仍是同一个搜索面板，底层多一层分拣）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

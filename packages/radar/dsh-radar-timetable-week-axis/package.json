@@ -1,0 +1,19 @@
+{
+  "name": "dsh-radar-timetable-week-axis",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】从 nus-vacansee 提取「三态周次归一器 + 学期周号计算」，为课表补周次轴（强化式集成，纯能力提取，无 npm 依赖）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 与上游 `dsh-data-quality@0.3.24` 自带的 `cordis.patch.yml` 的区别：
+#   上游那份只有一行 `insert: [{ id: dsh-data-quality, name: dsh-data-quality }]`，
+#   且带一长串 Config 字段注释（`allowedExtensions` / `workspaceRoot` / `maxRows` /
+#   `maxFileSizeMB` / `evidenceRowLimit` …）。
+#   本骨架**不用**上游那份 patch，理由有二：
+#     1. 上游 patch 的 id 是**上游名**，与「一律 `dsh-radar-` 前缀」的污染防护冲突；
+#     2. 挂载意图（挂到哪个面板、默认开哪几个工具）要由本包显式声明，而不是照抄上游。
+#   做法：本包用**自己的 id** 插入，由 `src/index.js` 在宿主侧 `import()` 上游、
+#   调它导出的 `apply(ctx)`，把上游当**库**用。**上游源码一行不改。**
+#
+# 为什么**不带 config**：
+#   上游 config 里 `workspaceRoot`（默认空 = harness 进程启动目录）与
+#   `allowedExtensions`（默认可读 `.csv/.tsv/.json/.jsonl`）决定**能读哪些文件**，
+#   `maxFileSizeMB` 决定**一次能读多大** —— 都是评审必须先裁定的边界
+#   （见 src/index.js TODO 3 / TODO 4）。骨架阶段**不预置默认值**，
+#   避免「评审时看不出来它悄悄放开了什么权限」。
+- insert:
+    - id: radar-data-quality
+      name: dsh-radar-data-quality

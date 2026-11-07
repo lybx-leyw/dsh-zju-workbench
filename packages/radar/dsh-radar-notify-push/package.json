@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-notify-push",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版挂载上游 @goodandready/dsh-plugin-notify 宿主半边，为「今日」页的到点待办补上关掉标签页也能收到的推送（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@goodandready/dsh-plugin-notify": "0.4.8"
+  }
+}

@@ -1,0 +1,6 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+# insert id 与上游 `whiteboard` 错开，避免与上游 patch 同槽位互抢；
+# 上游客户端半边（`dsh.client.inject`，会自建左侧导航）**不接**，见 README。
+- insert:
+    - id: radar-whiteboard
+      name: dsh-radar-whiteboard

@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-cc98-search-rank",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】以「锁版挂载 + 外围兼容层」方式引入上游 cc98-searchpro 0.1.0 的检索层（多路召回 / 分级证据排序 / 首帖正文核对 / 命中片段），为现有 CC98 源包的 search 动作补上排序与证据（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "cc98-searchpro": "0.1.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

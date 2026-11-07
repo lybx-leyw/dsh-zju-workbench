@@ -1,0 +1,8 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+# 锁版引入上游 dsh-chart@0.5.0（宿主半边注册 show_chart 工具，客户端半边注册
+# tool.call.toolview 与 conversation.chat.turnTail 两个 slot）。
+# 上游自带 cordis.patch.yml（id: chart）—— 本包**不直接引它**，
+# 而是在这里以本包 id 再插一条，避免与上游包名冲突；评审时二选一。
+- insert:
+    - id: radar-study-chart
+      name: dsh-radar-study-chart

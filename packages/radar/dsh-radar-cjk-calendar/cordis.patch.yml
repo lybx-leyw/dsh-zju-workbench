@@ -1,0 +1,15 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+#
+# 本包**没有上游 DSH 包可锁**（B 类：能力来自 ECMA-402 的 `calendar: "chinese"`，
+# 由宿主 Node/ICU 提供，不是 npm 依赖）。因此 `dependencies` 为空，
+# 这里只声明「将来评审通过后，它作为一个 host 层插件挂进来」的形状。
+#
+# 评审要点：本包**不注册页面、不注册 slot、不注册工具**。它要做的只是
+# 「把一行文本塞进今天页已有的日期行」——如果评审结论是「不值得为一行文本
+# 单独占一个插件槽位」，正确做法是整目录删除、把 `src/lunar.js` 的算法
+# 直接内联进 `dsh-zhiyun-page-today`，而不是给本包加更多能力。
+#
+# insert id 带 radar- 前缀，与其它 radar 骨架错开。
+- insert:
+    - id: radar-cjk-calendar
+      name: dsh-radar-cjk-calendar
