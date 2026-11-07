@@ -5280,3 +5280,38 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | （口径）**npm 同名不同物**：存在 ≠ 是同一人 | — | — | — | — | — | note | 2026-11-07 | — | `dsh-files` 在 npm 上返回 **0.0.1**，作者 `dushaobindoudou`，tarball 只有 `package.json`+`README.md`（**零代码**，description 写 "name reserved"）；而上游仓库 `taxueseek/dsh-files` 的 `name` 恰是 `dsh-files`、`version` 0.7.0 却**从未发布成功**（`@taxueseek/dsh-files` 全 404、`scope:taxueseek` 搜索 0）。**A 类判据补全**：r145「npm 404 即封」之外，还要比对 tarball 内 `package.json` 的 `repository.url` 与 upstream git 地址。写 `"dsh-files": "0.7.0"` 会装到陌生人包上 |
 | （口径·建议）**市场/目录簇正式封板** | — | — | — | — | — | note | 2026-11-07 | — | 本轮又冒出 **5 个**新目录/市场仓（`dshworks/awesome-dsh-plugins`、`billLiao/awesome-dsh-plugin`、`lwmxiaobei/dsh-plugins`、`Britneycode/dsh-update-center`、`123caiji/awesome-agent-security`），是 r78/r111/r144 之后的**第 4 次**同结论。**建议：`awesome-*/market/registry/directory/plugins 目录` 类一律登记一行「🔵 市场簇（封板）」即止**，省下的检索预算给中星段 TS 轴 |
 | （口径·选型情报）`xlsx@0.18.5` 原型污染 CVE | — | — | — | — | — | note | 2026-11-07 | — | `taxueseek/dsh-files` 的 `src/parse/xlsx.ts` 首段注释原文：*"read-excel-file (read-only parser, no known advisories — **replaces `xlsx@0.18.5` which carries prototype-pollution CVEs**)"*。本仓此前无任何 XLSX 解析，若自己挑很可能直接 `npm i xlsx` —— **这条情报单独就有价值**，已写入骨架 `ATTRIBUTION.md` |
+| `cacfd3a/bibtex-js` | B 其他JS | MIT | 论文/文献导入 | 重复且无增益 | ⛔ | proposed | 2026-11-07 | 84★，pushed 2025-10-19，npm 末次发布 2017-09-09。与 refs-import 已锁 `@citation-js/plugin-bibtex@0.9.0` 完全重叠且更弱（输出非 CSL-JSON、无 RIS、9 年未发版）。判据③不成立 ⇒ ⛔。唯一优势：零依赖/体积小，若评审否决 refs-import 的 682KB 成本，可作为轻量回退方案重新提起。身份已核：`digitalheir/bibtex-js` 301→`repositories/92252929`→同一仓库（用户名改名），非陌生人接管 |
+| `linkedin-faq/linkedin-quizzes-kodyfire` | B 其他JS | MIT | 刷题 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | 28★，末次推送 2023-01-30；终端刷 LinkedIn 测评，题库锁死在 LinkedIn，与 page-quiz 题库来源不同位、无增益。仅作终端刷题交互参考 |
+| `youzi258/Scholia` | B 其他JS | MIT | 论文阅读 | 重复可强化（论文页 UI） | 🔵 | proposed | 2026-11-07 | 0★，2026-07-31 后未推；本地优先 Windows 论文阅读器，形态与 host-paper（锁版 paper-reader + iframe）同构。其「证据分组」交互可作论文页 UI 参考，不足以支撑集成 |
+| `zichenmoshang/mathpaws` | B 其他JS | NOASSERTION | 口算练习 | — | ⚠ 待核 | pending-license | 2026-11-07 | 0★；离线手写口算 PWA（手写识别答题+养成），全批手写候选里唯一有产品完成度的。spdx=NOASSERTION，**只作参考、不得摘取任何代码** |
+| `h16nning/skola` | B 其他JS | AGPL-3.0 | 间隔重复 | — | ⛔ | rejected | 2026-11-07 | 56★；AGPL-3.0 许可证硬排除，不采用 |
+| `bdim404/upf-calendar-userscript` | B 其他JS | MIT | 课表导出 | 重复且无增益 | ⛔ | proposed | 2026-11-07 | 0★；单校（UPF）课表→日历油猴脚本，与已锁 `ics` 上游重叠 |
+| `robotwar12/elementary-math-app` | B 其他JS | MIT | 口算练习 | 重复且无增益 | ⛔ | proposed | 2026-11-07 | 0★；小学手写口算，场景不匹配大学刷题 |
+| `Shaashwatprasad/CalcInk` | B 其他JS | Apache-2.0 | 手写公式 | 重复且无增益 | ⛔ | proposed | 2026-11-07 | 0★；手写数学画布，依赖外部多模态 API；本仓无手写输入面，且引入新网络出口 |
+| `PardhavMaradani/vit-timetable-export-plugin` | B 其他JS | null | 课表导出 | — | ⛔ | rejected | 2026-11-07 | 1★；无许可证，硬排除 |
+| `navlemis/timetablext` | B 其他JS | null | 课表导出 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `TeoTzeShuen/timetable-exporter` | B 其他JS | null | 课表导出 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `Jay-Nepal/sunway-izone-timetable-export` | B 其他JS | null | 课表导出 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证，2024 停更 |
+| `umaidsiddiqui10/dayplan` | B 其他JS | null | 课表导出 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `PNRYates/knoxi-calendar` | B 其他JS | null | 课表导出 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `JimmyBlackley/sols-calendar` | B 其他JS | null | 课表导出 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `SparksFlash/study-routine` | B 其他JS | null | 学习计划 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `geo1337/webunits-to-ics-extension` | B 其他JS | null | 课表导出 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证，但「自动识别单双周」思路与 timetable-week-axis 同题 |
+| `Rooper-JS/SE-Projekt` | B 其他JS | null | 课表 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证，2021 停更 |
+| `Abdsqb/case-file` | B 其他JS | null | 无关 | 无关 | ⛔ | rejected | 2026-11-07 | 误命中（本地案件记录器） |
+| `juliesm/split-screen-annotations` | B 其他JS | null | 论文批注 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证，2017 停更 |
+| `romit-23/research-reader` | B 其他JS | null | 论文批注 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `ChutchawanGit/research-paper-workspace` | B 其他JS | null | 论文批注 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证，Go 后端非 JS 栈 |
+| `devaniketh/Refract` | B 其他JS | null | 论文阅读 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `Nilesh98-codes/note-sync-docs` | B 其他JS | null | 笔记 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `mentor98/Smart-AI-Note-Taking-App` | B 其他JS | null | 笔记 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `King-fly/note-taker` | B 其他JS | null | 笔记 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `shfuerte79-web/ideas-from-ai-powered-screensh-1756298289331` | B 其他JS | null | 无关 | 无关 | ⛔ | rejected | 2026-11-07 | 误命中：实为 LLM 生成的**点子清单**（description 是 JSON 数组），非可运行项目 |
+| `shfuerte79-web/ideas-from-ai-powered-screensh-1756304393362` | B 其他JS | null | 无关 | 无关 | ⛔ | rejected | 2026-11-07 | 同上，另一份点子清单 |
+| `daviddprtma/Visual-Math-AI` | B 其他JS | null | 手写公式 | — | ⛔ | rejected | 2026-11-07 | 3★；无许可证 |
+| `udithanayanajith/calculus-mobile` | B 其他JS | null | 手写公式 | — | ⛔ | rejected | 2026-11-07 | 1★；无许可证 |
+| `KeroppiMomo/mathboard` | B 其他JS | null | 手写公式 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `mihirh19/DrawMath` | B 其他JS | null | 手写公式 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `iamrohit568/Math-AI-fy` | B 其他JS | null | 手写公式 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| `ViplavKhode/CalciQ` | B 其他JS | null | 手写公式 | — | ⛔ | rejected | 2026-11-07 | 0★；无许可证 |
+| （口径·**建议**）**C 组常规五词池枯竭** | — | — | — | — | — | note | 2026-11-07 | — | r147（当日第 6 轮，C 第 3 次）实测：`fitness tracker` 零新面孔、`quiz practice` 仅 1 条且误命中；还活着的词面 total 只剩 18/9/12，长尾 0★ 个人项目**无许可证率 76%**（34 新候选中 26 条 null）。换轴（手写识别/BibTeX/间隔重复）后唯一有分量的命中撞上本仓已锁版本上游。**建议：C 组从「按轮次盲扫」降级为「按需定点触发」**，预算还给 A 组（最高优先）与 B 组（`pushed:>` 时间窗仍有效） |
