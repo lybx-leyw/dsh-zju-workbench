@@ -5205,3 +5205,78 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | （失效词）`dsh plugin pushed:>DATE`（未编码 `>`） | — | — | — | — | — | note | 2026-11-07 | — | **GitHub Search 不接受裸 `>`**：`q=dsh+plugin+pushed:>2026-10-20` 返回**空 body**（非 422），`pushed:%3E2026-10-20` 正常返回 6590。脚本里必须写成 `%3E`/`%3C`。本轮因此空转 3 次 |
 | （口径）「自己人已排掉」需逐字节核 | — | — | — | — | — | note | 2026-11-07 | — | `iPolloWork` 是「元数据 `NOASSERTION` → 原文为自定义 Source-Available」的**第 3 例**（前两例：`thu-info-app` BUSL、`See-Sol-Lab/DeepSeekGUI`）。**凡 `license.name == 'Other'` 一律点开 `LICENSE` 原文**，单看 `spdx_id` 会把它误当「待核」而不是「红线」 |
 | （口径）A 类判 ⛔ 的新前置条件：**npm 不存在即可直接封** | — | — | — | — | — | note | 2026-11-07 | — | `gorwayne/dsh-gor-tasks` 形态齐全、MIT、当天在推，唯一硬伤是 npm 404。**A 类「锁版挂载」的定义前提就是「npm 上有精确版本」**，此条不成立时所有后续评估都是无效功。**流程改进：A 类候选第一步查 `registry.npmjs.org/<scope>%2F<name>`，404 立即 🔵 归档，不读源码、不评估功能**（与 r123 `luobosibing2/dsh-jev-plugin` 同一坑，第 2 次） |
+
+## r146 · 2026-11-07-18 · A 组（DSH 插件生态 · **`stars:20..200` 中星段**）
+
+> 取组说明：脚本建议 `same-day(exhausted)`，三组今天均已跑（00 C / 03 A / 06 C / 09 B / 12 A）。按 r145 结尾留的作业「**建议 A 组下次改中星段 `stars:20..200 sort=updated`，那是唯一未被扫的区间**」取 **A 组，换轴为中星段**。
+> 8 次搜索（全部有效，0 次 403）、**完整**。
+> **61 行登记 / 🟢 1 / 🟡 2 / 🔵 27 / ⛔ 9 / ⚠ 4 / note 5 / 骨架 1。** 核心结论：**中星段是 A 组唯一未饱和的区间** —— `dsh plugin stars:20..200 sort=updated` 首屏 5/20 新面孔，`dsh stars:20..200 language:typescript` 13/20 新，且质量全面高于 stars 轴与 pushed 轴。
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `taxueseek/dsh-files` | **A 原生DSH** | **MIT** ✅（`LICENSE` 原文逐字读：29 行标准 MIT，`Copyright (c) 2026 taxueseek`，无附加条款） | **论文 / 笔记 / 课堂资料** | **重复且可强化**（会话内读文件：补 DOCX/DOC/PPTX/XLSX 抽取） | 🟢 | **skeleton-created** | 2026-11-07 | ★43/fork 10、4 068 KB、2026-08-14 建 / **2026-11-07 推**、73 文件、`CHANGELOG.md` 47 KB（迭代到 **0.7.0**）。形态齐：`dsh.bundle.patch`→`cordis.patch.yml`、`dsh.client.inject`→`@deepseek-ai/dsh-client-ui-conversation`、ESM。**三判据全成立**：①落在既有「拖文件进对话让 AI 读」，不新增页；②PDF(`pdfjs-dist@6.4.299`) 不动，只补另四种容器；③本仓 `grep mammoth\|word-extractor\|read-excel-file`=**0**，`.docx/.xlsx` 仅在 `core-lecture/src/tree.js:85,128` 扩展名白名单与 `host-classroom/src/upstream/mime.js:29-30` MIME 别名表里（**只识别不解析**）。**选型情报**：`read-excel-file` 是为规避 `xlsx@0.18.5` 原型污染 CVE（上游注释原文）。**⚠ npm 包名被占** → 见下条 note。骨架 `packages/radar/dsh-radar-doc-parse/`：锁 `mammoth@1.13.0`(BSD-2)+`read-excel-file@9.3.14`(MIT)+`word-extractor@1.0.4`(MIT) |
+| `Noob-stupid/dsh-plugin-gating-hub` | **A 原生DSH** | **MIT** ✅ | 通用（装/升插件不搞挂工作台） | **重复可强化**（仅借判据，不挂载） | 🟡 | proposed（不重开） | 2026-10-18 | 本轮首屏 ★124 最高，但**已在册两次**（L1526 r?? 2026-10-18、L3013 2026-10-27），两次均判 🟡「能力对、形态是独立插件非可挂载库」。本轮**无新信息，不追加证据、不改判** |
+| `regrevia/dsh-unlag` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★49、1 885 KB、JS、当天推。重建集成层解卡顿，属**宿主运行时**非面板 |
+| `GDWhisper/dsh-ntr` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★108、4 320 KB、TS。统一 agent 入口（codebuddy/claude code/opencode/qoder），本仓已有 `shell-bridge` |
+| `Contexera/dsh-agent-team` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★88、44 080 KB、TS。Agent Teams，radar 已有 `dsh-radar-agent-teams` 骨架 |
+| `diqierjia/StrataGate-AgentMemory` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★116、50 016 KB、TS。记忆「近期详、久之简」分层压缩；`core-vault` + `dsh-radar-me-memory` 已覆盖 |
+| `lijiaqi-AI-Product-Manager/dsh-agent-compare` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★170、TS。同需求两版对跑后审查采用；与 quiz「对比作答」语义不同，借不了 |
+| `copylee711/dsh-computer-use` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★37、TS、Windows 电脑控制（截图/鼠标/键盘/剪贴板）。**非目标平台** |
+| `AITabby/dockyard-dsh` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★77、JS。账号池 + 多 provider（Codex/Antigravity…），provider 层不属面板 |
+| `masknull/dsh-qoder-connect` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★69、TS。Qoder 以 PAT 接入 + 侧栏额度展示，同类 provider 插件 |
+| `wink-run/tokenbank` | A 原生DSH | Apache-2.0 ✅ | 无 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★111 但 **293 317 KB（287 MB）**、JS。本地 LLM 网关，体量与形态均不适 |
+| `Senguk520/dsh-multitask` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★42、2 371 KB。多任务「减震器」预设 + agent preset |
+| `WNLUO/dsh-mobile-plugin` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★26、8 257 KB。手机远程操控宿主（受限移动 API + 中转隧道 + 局域网配对）；`dsh-web-mobile`(在册) 已覆盖窄屏 |
+| `biedongbin/dsh-claude-compat` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★18、753 KB。桥接 Claude Code 的 `.claude/`（skills/commands/rules）；本仓无此约定 |
+| `lishize20040802-rgb/dsh-deep-ptc-mode` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★16、435 KB。轻量自适应 Deep PTC：宿主预设 + 插件协作 + 中断 |
+| `MarchLiu/dsh-cybernetics` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★11、1 770 KB。「把 LLM 编排显式设计成控制回路」，抽象层，无落地落点 |
+| `ZekaiShi/dsh-evo-subagent` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★7、5 819 KB。跨工作区人格 + 子代理路由，与 `dsh-radar-agent-router` 同域 |
+| `morehao/dsh-github-trending` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★10、TS。GitHub Trending 日报，非学生场景 |
+| `XMoon/dsh-pi-tui` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★21、53 165 KB。第三方 TUI（vendored fork of pi）；TUI 非本仓目标形态 |
+| `LAU-MARS/dsh-cad` | A 原生DSH | Apache-2.0 ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★35、TS、1 530 KB。2D/3D CAD |
+| `AmethystLuna/embedded-workbench` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★32、498 KB、最后推 2026-11-06。嵌入式 C/C++ 固件技能（FreeRTOS/Keil/HardFault） |
+| `z85pktck64-cell/dsh-team-space` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★21、8 147 KB、最后推 2026-11-06。局域网团队会话共享/认领/归还 |
+| `ppy-web/dsh-plugin-xiaomi-mimo-tts` | A 原生DSH | MIT ✅ | 通用（朗读） | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★47、25 602 KB、TS。小米 MiMo TTS / 豆包 Seed TTS；`dsh-voice-mode`(在册) 已覆盖按句朗读 |
+| `Tal-Shin/dsh-glass` | A 原生DSH | MIT ✅ | 无 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★4、312 KB。玻璃拟态 UI 插件；主题域已有 `dsh-skins`/`theme-endfield` |
+| `Lutisure/cyrene-dsh-plugin` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★5、46 771 KB。角色 agent + 客户端主题 + 本地安全扫描三合一 |
+| `Anmulzhao/DSH-AGINT` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★5、14 470 KB。「自进化 agent 框架：40 个 cordis 插件」，与 `core-classroom-agent` 域冲突 |
+| `Mzy123l/dsh-plugin-remote-access` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★5、2 209 KB。桌面版远程访问（限网段 + 数字密码），与 `dsh-mobile-plugin` 同类 |
+| `mrzturn/dsh-switchman` | A 原生DSH（待核） | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★8、21 727 KB。描述仅一句 "dsh-switchman who is a plugin for deepseek harness"，**信息不足以评估** |
+| `billLiao/awesome-dsh-plugin` | A 数据仓（目录） | CC0-1.0 ✅ | 无 | 重复且无增益（市场簇·封板） | 🔵 | proposed | 2026-11-07 | ★19、**Python**、79 772 KB。curated list |
+| `dshworks/awesome-dsh-plugins` | A 数据仓（目录） | MIT ✅ | 无 | 重复且无增益（市场簇·封板） | 🔵 | proposed | 2026-11-07 | ★32、JS、**346 186 KB（338 MB）**。"Spam-filtered, open-data registry" |
+| `lwmxiaobei/dsh-plugins` | A 数据仓（目录） | MIT ✅ | 无 | 重复且无增益（市场簇·封板） | 🔵 | proposed | 2026-11-07 | ★7、17 993 KB、JS。社区目录，自动汇总 + 基础校验 + 双语详情 |
+| `Britneycode/dsh-update-center` | A 数据仓（市场） | BSD-3-Clause ✅ | 无 | 重复且无增益（市场簇·封板） | 🔵 | proposed | 2026-11-07 | ★2、1 552 KB、JS。更新中心 + 自托管 `plugins.json` 注册表 |
+| `123caiji/awesome-agent-security` | A 数据仓（目录） | MIT ✅ | 无 | 重复且无增益（市场簇·封板） | 🔵 | proposed | 2026-11-07 | ★1、165 KB、JS。Agent 安全工具 + DSH 生态索引 |
+| `unStone/dsh-xray` | A 数据仓（审计） | Apache-2.0 ✅ | 无 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★7、**Python**、201 456 KB。「声明能力 vs 实际行为」X-ray，与 `dsh-radar-plugin-audit` 同域 |
+| `liangdabiao/dsh-plugin-developer-skill` | A 原生DSH（Skill） | **`null`** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-11-07 | ★36、344 KB。插件开发 Skill（从 0 到 1 构建），**无许可证，不摘码** |
+| `ke-wood/dsh-workflow-kit` | A 原生DSH | **NOASSERTION** ⚠ | 通用 | 重复且无增益 | ⚠ | pending-license | 2026-11-07 | ★3、**Python**、1 115 KB。5 agent presets + 18 skills + 路由表；与 `core-classroom-agent` 域重叠，待核后多半仍无增益 |
+| `Nyasers/DSHana` | A 形态（反向） | **MPL-2.0** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-11-07 | ★57、TS、91 502 KB。把 **DSH 当 HanaAgent 的子代理** —— 方向与「DSH 为主宿主」相反；许可证亦不在白名单 |
+| `Yuuyuko-uu/dsh-qq-link` | A 原生DSH | **NOASSERTION** ⚠ | 无 | 无关 | ⚠ | pending-license | 2026-11-07 | ★173（本轮第 2 高）、799 KB、JS。QQ 双向互通（OneBot 11 / NapCat）。**不采用、不摘码** |
+| `Yuuyuko-uu/dsh-fish-buddy` | A 原生DSH | **NOASSERTION** ⚠ | 无 | 无关 | ⚠ | pending-license | 2026-11-07 | ★48、**Python**、44 300 KB。桌面鲸鱼挂件 + 陪看字幕 + 游戏弹幕。**不采用、不摘码** |
+| `linsport/dsh-whale-persona` | A 原生DSH | **NOASSERTION** ⚠ | 无 | 无关 | ⚠ | pending-license | 2026-11-07 | ★23、552 KB、JS。鲸鱼娘人格预设（零依赖）。**不采用、不摘码** |
+| `xqpsec/dsh-jailbreak` | A 原生DSH | **AGPL-3.0** ⛔ | 无 | 无关 | ⛔ | rejected | 2026-11-07 | ★104、1 533 KB。「破甲/越狱」提示词注入。**双红线：许可证 + 用途**。不集成、不摘码 |
+| `Mladery/pojia-ce` | A 原生DSH | MIT | 无 | 无关 | ⛔ | rejected | 2026-11-07 | ★32、**Python**、2 991 KB。给 17 个 AI 客户端注入人格、解除限制 —— 用途红线，许可证再宽松也不进学习工作台 |
+| `Nero0427/dsh-purge-lite` | A 原生DSH | Apache-2.0 | 无 | 无关 | ⛔ | rejected | 2026-11-07 | ★1、537 KB。「裁剪版提示词注入」（自带 system prompt 覆盖），同一类 |
+| `monagisa/dsh-plugin-shop-accounts` | A 原生DSH | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-11-07 | ★13、1 690 KB。电商店铺账号管理（拼多多/淘宝/天猫/抖音/京东/1688），与学习工作台正交 |
+| `Darianliu23/dsh-stardew-blind-whale-farmer` | B 其他（**C#**） | MIT ✅ | 无 | 无关 | ⛔ | rejected | 2026-11-07 | ★5、668 KB。星露谷自动种田。技术栈（C#）与场景双不符 |
+| `cofy-x/axern` | B 其他（**Go**） | Apache-2.0 ✅ | 无 | 无关 | ⛔ | rejected | 2026-11-07 | ★65、12 932 KB。gVisor 自托管 agent 执行平台，**非 JS 技术栈** |
+| `mimierZBL/dsh-inline-branch-chat` | A 原生DSH | **`null`** ⛔ | 通用 | 重复且无增益 | ⛔ | rejected | 2026-11-07 | ★1、0 KB（空仓）、无语言。行内分支对话；`conversation-tree` 骨架已覆盖 + 无许可证 |
+| `12we21/cute-fat-fish-pet` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★33、**72 896 KB**、最后推 2026-10-27。桌面宠物（106 个手绘动画） |
+| `Yi-111-a/dsh-jingling` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★52、24 241 KB、**最后推 2026-08-15（停滞近 3 个月）**。人格/角色向 |
+| `Moraxyc/deepseek-harness.nix` | A 打包 | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★39、**Nix**、5 117 KB。Nix 打包，非 JS |
+| `evolving-foundry/ember-evaluator` | B 其他JS | Apache-2.0 ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★28、TS、16 922 KB。通用评测框架（统一 benchmark），非 DSH 专用 |
+| `Johnly1986/AmberFlow` | B 其他JS | Apache-2.0 ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★2、TS、49 938 KB。冻结计划的自动化中间件（LLM 规划一次，本地规则执行） |
+| `stevenwang15/dsh-caveman` | A 原生DSH | Apache-2.0 ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★1、57 KB。caveman 输出风格（三档语气）移植。体积极小、单点风格 |
+| `nothurry/stronger-dsh` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★1、1 798 KB。原生界面/动效/有界上下文召回/作用域技能，**当天建**，无可评估的落地证据 |
+| `jiangyuxue666/dsh-conversation-tree` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★1、498 KB。对话分支树（血缘/token/带回/归档）。**与 radar 既有 `dsh-radar-conversation-tree` 同名同域**，且该骨架已存在 |
+| `dafantong01/dsh-memory-palace` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★1、1 931 KB。把对话轮次归档为工作区本地可搜索记忆；`core-vault` 已覆盖 |
+| `askdkc/kiokuko-dsh` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★1、19 356 KB、TS。Kiokuko（記憶庫）插件，同记忆域 |
+| `CCCAUCHY/Plastic-Memories` | A 原生DSH | MIT ✅ | 通用 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★1、13 256 KB。可逆编辑的实验性上下文管理，同记忆域 |
+| `ZelotsNullzwei/whale-pod` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★1、4 664 KB。QQ 群机器人（NapCat + OneBot v11 + LLM 网关），同 `dsh-qq-link` 域但 MIT |
+| `From-WH/dsh-ganleme` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★1、944 KB。各工作区 git 提交统计与日/周/月报 |
+| `Xiaxin1235/WhaleMaid` | A 原生DSH | MIT ✅ | 无 | 无关 | 🔵 | proposed | 2026-11-07 | ★5、22 290 KB、TS。Autopilot 自动推进 + 陪伴角色大肥鱼 |
+| （口径·正面）**中星段是 A 组唯一未饱和区间** | — | — | — | — | — | note | 2026-11-07 | — | `dsh plugin stars:20..200 sort=updated`（total 335）首屏 20 条 **5 条新面孔**；`dsh stars:20..200 language:typescript`（370）**13 条新**；而 `sort=stars` 首屏 70/75 在册（r145）、`pushed:%3E` 全是 0–2★。**建议把 `dsh plugin stars:20..200 sort=updated` 列为 A 组主入口**，`language:typescript` 单列子轴（TS 质量 > JS） |
+| （口径·反面）**`notes OR study OR quiz OR paper` 布尔叠加失效** | — | — | — | — | — | note | 2026-11-07 | — | `dsh stars:20..200 notes OR study OR quiz OR paper` → total 1135，首屏与关键词无关（混进 `tokenbank`、`DSHana`、`pojia-ce`）。GitHub 对 OR 是放宽匹配，**等于没加限定符**。与 r145「限定符别叠加」同源，这次是布尔叠加 |
+| （口径）**npm 同名不同物**：存在 ≠ 是同一人 | — | — | — | — | — | note | 2026-11-07 | — | `dsh-files` 在 npm 上返回 **0.0.1**，作者 `dushaobindoudou`，tarball 只有 `package.json`+`README.md`（**零代码**，description 写 "name reserved"）；而上游仓库 `taxueseek/dsh-files` 的 `name` 恰是 `dsh-files`、`version` 0.7.0 却**从未发布成功**（`@taxueseek/dsh-files` 全 404、`scope:taxueseek` 搜索 0）。**A 类判据补全**：r145「npm 404 即封」之外，还要比对 tarball 内 `package.json` 的 `repository.url` 与 upstream git 地址。写 `"dsh-files": "0.7.0"` 会装到陌生人包上 |
+| （口径·建议）**市场/目录簇正式封板** | — | — | — | — | — | note | 2026-11-07 | — | 本轮又冒出 **5 个**新目录/市场仓（`dshworks/awesome-dsh-plugins`、`billLiao/awesome-dsh-plugin`、`lwmxiaobei/dsh-plugins`、`Britneycode/dsh-update-center`、`123caiji/awesome-agent-security`），是 r78/r111/r144 之后的**第 4 次**同结论。**建议：`awesome-*/market/registry/directory/plugins 目录` 类一律登记一行「🔵 市场簇（封板）」即止**，省下的检索预算给中星段 TS 轴 |
+| （口径·选型情报）`xlsx@0.18.5` 原型污染 CVE | — | — | — | — | — | note | 2026-11-07 | — | `taxueseek/dsh-files` 的 `src/parse/xlsx.ts` 首段注释原文：*"read-excel-file (read-only parser, no known advisories — **replaces `xlsx@0.18.5` which carries prototype-pollution CVEs**)"*。本仓此前无任何 XLSX 解析，若自己挑很可能直接 `npm i xlsx` —— **这条情报单独就有价值**，已写入骨架 `ATTRIBUTION.md` |
