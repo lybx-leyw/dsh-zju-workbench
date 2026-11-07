@@ -5157,3 +5157,27 @@ B 组后续只保留 `zju language:typescript` + `cc98` + `zju dsh`，**建议�
 | （封板记录）`fitness tracker` 6,259 仓 | — | — | 锻炼 | — | — | note | 2026-11-07 | — | 前 15 名在册 4 个（`workout-cool`/`lyftr`/`gymcoach`/`Fitness-OS`），其余为 RN/Capacitor 移动壳。**锻炼簇封板**（自 r135）；`activity-heatmap` 已够 |
 | （封板记录）`ocr notes taking` 12 仓 | — | — | 笔记 | — | — | note | 2026-11-07 | — | 11 个无许可证；唯一 MIT 的 `MuhametSmaili/note-it` 已在册。**OCR 簇封板**（`ocr-web` 在册） |
 | （结构性推论）C 组主词边际收益归零 | — | — | — | — | — | note | 2026-11-07 | — | **本轮 7 个新面孔里 5 个来自补充探针 `timetable pwa`**，5 条主词仅贡献 2 个（且均为 🔵）。与 r142 的 A 组结论同构：**「主词检索的边际收益已归零」**。**建议 C 组下次把主词降为探针，主入口改 `topic:student,university,timetable language:{typescript} pushed:>` 按 updated 排序**（对齐 r133 对 B 组的处置） |
+
+## r144 · 2026-11-07-09 · B 组（浙大场景 · **时间切面**）
+
+> 取组说明：`radar-rotation.mjs` → `same-day(unused)`。公式 `311%3=2` 给 **C**，但今日 C（06:00）与 A（03:00）已跑，**B 为唯一未跑组** → 取 **B**。
+> 入口改造（采纳 r142/r143 建议）：主词降为探针，主入口改 **`language:{js,ts}` + `pushed:>` + `sort=updated`**。8 次搜索、0 次 403、**完整**。
+> **10 行登记 / 🟢 0 / ⛔ 3 / 🔵 7 / 骨架 0。本轮核心产出是一条封板，不是新包。**
+
+| 仓库 | 类型 | 许可证 | 学生场景 | 与现有功能 | 分级 | 状态 | 首次发现 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Lucent-Snow/classroom-zju-note-extension` | B 其他JS | **MIT** ✅ | 智云课堂/字幕/笔记 | **重复且无增益** | 🔵 | proposed | 2026-11-07 | ★2，100 KB，★0 依赖，push 2026-03-02。智云课堂笔记增强扩展：字幕导出 TXT/SRT/JSON + 笔记导出 MD/DOCX/PDF + 字幕上下文 AI 问答。**判据③反了**：上游**从 DOM 抠**（`.trans-item`，结尾写死 `start+5s`、毫秒恒 0），本仓走 **API**（`search-trans-result` 给真实 `startMs/endMs`），`toSrt` 已是全维度更强（`core-classroom-export/src/video.js:76`，含 `usableCues` 过滤 + `toVtt`）。`getTranscript()` 亦已覆盖「分段+分页+时间戳聚合」。**唯一增量是 DOM 选择器表**，但本仓 `grep 'trans-item\|trans-lan'` = 0，因为**从不解析智云 DOM** ⇒ 对 API 路线无用 → **封板整类** |
+| `iagloria/zju_isee_verilog-learning-web` | B 其他JS | **`null`** ⛔ | 刷题/实验 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★0，640 KB，建/推同日 2026-11-05。Verilog 刷题站：900 个题库文件 + 57 testbench + `lint.js`(19 KB) + `tbgrade.js`。**验证靠 `spawn` 本地 `iverilogx.exe`（Windows 二进制）** ⇒ 本仓纯前端 bundle **不可能跑**，需 WASM 重写。题库为 Icarus 特定生态，与 `quiz-lab`「LLM 判/规则判」不同构。**无许可证** ⇒ 不摘码。**线索**：`lint.js` 的 Verilog 教学风格规则集可作 `quiz-lab` 代码题静态检查的**思路**来源 |
+| `Ayakatokyo/zju-course-planner` | B 其他JS（Python） | **`null`** ⛔ | 选课/培养方案 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★0，21.9 MB，push 2026-10-29，自述「代码草稿与开发交接」。`course_plan_policy.py` **54 KB** + `current_term_recommendation.py` 38 KB + `audit.py` 34 KB。与在册 `dsh-radar-credit-audit`（`Kepler16f/zju-kezhou`）同能力面，推荐层与 `mycoursereviews` 重叠 ⇒ **即便核成宽松也是第四重复**。无许可证不采用 |
+| `thu-info-community/thu-info-app` | B 其他JS | **`NOASSERTION`** ⚠ → 原文 **BUSL-1.1**（`Additional Use Grant: None`） | 校园信息聚合 | 无关（清华，非浙大） | ⛔ | rejected | 2026-11-07 | ★**240**（本轮最高）。React Native，聚合教务/课表/成绩。**已读 `NOTICE` 原文确认 Business Source License 1.1，非白名单、无附加使用授权** ⇒ 不摘任何代码 |
+| `VITPC/campus-companion` | B 其他JS | **MIT** ✅ | 校园信息聚合 | 无关（YIBS，非浙大） | 🔵 | proposed | 2026-11-07 | ★0，576 KB，建 2026-11-05 次日即最后推送，无 README。校名非浙大、无可用内容 ⇒ 与任何面板不构成强化关系 |
+| `kenyawilliamss31-wq/Lincoln-Hub` | B 其他JS | **MIT** ✅ | 校园信息聚合 | 无关（Lincoln University） | 🔵 | proposed | 2026-11-07 | ★0，1.9 MB，React Native + Expo。事件/餐饮/体育/校历/电话簿/地图 —— **全部是本校静态数据**，无通用算法。与 `campus-zone` 无关 |
+| `ThaiBenjamin/cypress-scheduler` | B 其他JS | **`null`** ⛔ | 选课/排课 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★0，14 MB，活跃（2026-11-06）。「从所有 section 组合里生成无冲突方案」——排课价值点，但：①无许可证；②**在册 `dsh-radar-plan-solver`（r143）已含 DSATUR+回溯+退火+`yalps` 锁版**，本仓缺的是「冲突说明」而非「组合生成」⇒ 判据③不成立 |
+| `Marine-rubbish/cc98_search_tool` | B 其他JS | **`null`** ⛔ | 论坛检索 | 重复且无增益 | 🔵 | proposed | 2026-11-07 | ★0，109 KB，2026-09-30 单日推送后停更。CC98 正文全文检索。在册已有 `cc98-search-rank`/`cc98-material-search`/`note-fulltext`/`search-segment` 四层 ⇒ 重复。无许可证 |
+| `nothing793/dshgo-zju-assistant` | **A 原生DSH** | **GPL-3.0** ⛔ | 校园助手 | 重复且无增益 | ⛔ | rejected | 2026-11-07 | ★0，1.6 MB，2026-11-06 建。与已登记 ★71 的 `Anchorite-no/dsh-zju-assistant` 同名同形态（疑派生），而后者本身即 **GPL-3.0** 在册。**GPL 红线，不摘任何代码** |
+| `EveSunMaple/zju-project` | B 其他JS | **GPL-3.0** ⛔ | —（无描述） | 无关 | ⛔ | rejected | 2026-11-07 | ★0，1.5 MB，单日推送。无描述、无 README 线索。GPL 红线 |
+| `m15147908866-source/zju-bidding-android` | B 其他JS | **`null`** ⛔ | 桥牌练习 | 无关 | 🔵 | proposed | 2026-11-07 | ★0，238 KB，含 APK + 源码。浙大桥牌社「自然叫牌」练习 —— 与学习工作台完全正交（同作者 PWA 版 `zju-bidding` 已在册）。无许可证 |
+| （封板记录）**「浏览器扩展/油猴脚本抠智云 DOM」整类** | — | — | 字幕/笔记 | — | — | note | 2026-11-07 | — | **结构性封板**。本仓走 API（`yjapi…search-trans-result` 给真实 `startMs/endMs`）+ `toSrt`/`toVtt` 已完备；上游一律从 DOM 抠、结尾靠 `start+5s` 猜、毫秒恒 0。**该类在本仓结构上不可能成为更优底层**。后续遇同类默认 🔵，**不必逐行读源码**（本轮为此花了 4 次源码请求） |
+| （封板记录）B 组主词池 ≠ 工具池 | — | — | — | — | — | note | 2026-11-07 | — | 主词 `zju`（不限语言）返回 **课程资料库 / 个人主页 / 实验室官网**（`zju-pil-lab.github.io`、`ZJU-ICED-DATA.github.io`、`ZJUSCT/mirror-front`、`tzhangZJU.github.io`、`ZJU-Charger frontend`…），**无一是工具**。`language:`+`pushed:`+`sort=updated` 切面 234 仓 → 10 个新工具。**B 组从此固定用切面** |
+| （失效词）`zju credit` / `zju gpa` / `campus app` | — | — | — | — | — | note | 2026-11-07 | — | `zju credit :typescript` **0**、`zju gpa :typescript` **0**（浙大侧学分/绩点工具全是 Python/HTML，Q5 已证）；`campus app :typescript` 523 仓但**高星全是外校**（thu-info-app ★240 ÷ BUSL、OpenWTU charging-crawler）⇒ 无边际价值，降为 probe |
+| （结构性推论）判据③ 已近结构性关闭 | — | — | — | — | — | note | 2026-11-07 | — | **A(r142)/C(r143)/B(r144) 三方同构**：120 个 radar 包已覆盖课表6/CC98 5/笔记5/排程3/训练4/测验3…，新候选几乎必然在①（第二面板）或②（平行实现）上失败。r143 的 `nus-vacansee` 能过③，是因为本仓课表条目**确无周次**（真空）。**一旦维度已有实现，平行实现按定义过不了③**。**流程改进：搜索阶段先用 `grep` 确认本仓该维度是否真空白，再决定读不读源码 —— 本轮若先做，可省 4 次源码请求** |
