@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="film" content="<!--FILM-->">
+<link rel="icon" href="data:,">
+<title><!--TITLE--></title>
+<!--STYLE-->
+</head>
+<body>
+<main class="page">
+  <header>
+    <div><div class="eyebrow"><!--EYEBROW--></div><h1><!--TITLE--></h1></div>
+    <div class="edition"><i></i>中文字幕 · <span id="total">00:00</span></div>
+  </header>
+  <div class="watch">
+  <nav class="chapters" id="chapters" aria-label="跳转到章节"></nav>
+  <section class="player" id="player" aria-label="动画播放器">
+    <div class="stage" id="stage"><canvas id="film" role="img" aria-label="动画画面"></canvas></div>
+    <div class="controls">
+      <div class="timeline"><label class="sr-only" for="seek">播放进度，秒</label><input id="seek" type="range" min="0" max="100" step="0.01" value="0"></div>
+      <div class="control-row">
+        <button id="play" class="play" type="button" aria-label="播放" aria-pressed="false"><svg class="play-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2 14 8 4 14Z"/></svg><svg class="pause-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2h3v12H3zm7 0h3v12h-3z"/></svg><span id="play-label">播放</span></button>
+        <button class="quiet" id="replay" type="button">重播</button>
+        <div class="clock"><b id="elapsed">00:00</b></div>
+        <div class="spacer"></div>
+        <label class="sr-only" for="speed">播放速度</label><select class="speed" id="speed"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+        <button class="quiet" id="captions" type="button" aria-pressed="true">字幕</button>
+        <button class="quiet" id="wide" type="button" aria-pressed="false">网页全屏</button>
+        <button class="quiet" id="fullscreen" type="button" aria-pressed="false">全屏</button>
+      </div>
+    </div>
+  </section>
+  </div>
+  <footer>
+    <div><!--SOURCE--></div>
+    <div class="keys"><kbd>空格</kbd> 播放 / 暂停　<kbd>← →</kbd> 前后 5 秒　<kbd>F</kbd> 全屏　<kbd>W</kbd> 网页全屏　<kbd>C</kbd> 字幕</div>
+  </footer>
+</main>
+<!--SCRIPTS-->
+</body>
+</html>

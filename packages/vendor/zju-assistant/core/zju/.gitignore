@@ -1,0 +1,21 @@
+# 凭据、会话、知识库、日志：绝不进 git
+data/
+!data/.gitkeep
+.env
+.env.*
+profile.env
+profile.env.*
+!profile.env.example
+
+# 依赖与产物
+node_modules/
+dist/
+*.log
+*.tmp
+__pycache__/
+*.py[cod]
+scripts/tmp/
+
+# 系统
+Thumbs.db
+.DS_Store

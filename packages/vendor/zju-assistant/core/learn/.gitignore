@@ -1,0 +1,36 @@
+# 可选配音运行环境、模型和开发下载，不进仓库；应用实际安装在用户数据目录
+/tools/qwen-tts/
+/tools/wheels/
+
+# 每份学习资料的原件与中间产物
+data/
+
+# 工具生成的东西（切出的字幕行、解说词清单、公式缓存、截图、配音），每部成片一个 build 文件夹
+build/
+
+# 成品 HTML 都在根目录的 dist 里；旧布局下每部成片各有一个 dist、audio、shots（out/archive 里的旧版本还是这样放的）
+dist/
+audio/
+shots/
+narration.json
+.texcache/
+
+# 参考音色和取材的原始音轨，只在本机自用
+/voices/
+
+# 试跑输出、合成的音频与运行缓存
+/out/
+*.wav
+*.mp3
+__pycache__/
+.venv/
+node_modules/
+
+# 下载来的字体文件，体积大，只在本机用
+/tools/tts/fonts/*/
+
+# 学的人的基础，属于个人信息，只在本机用
+/lessons/profile.md
+
+# 写讲稿时分头写的草稿、读资料时做的对照表和截图拼图：合并后以 plan 下的定稿为准，里面还有资料的截图
+/lessons/*/plan/work/

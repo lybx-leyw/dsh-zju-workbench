@@ -1,0 +1,4 @@
+# 开发时让实现包指向仓库里的 plugin/，改了代码不用重装。
+# 这个文件不进 npm 包（package.json 的 files 里没有它），从 npm 装的人拿到的是 dependencies 里写的那个版本。
+overrides:
+  dsh-zju-campus: link:..

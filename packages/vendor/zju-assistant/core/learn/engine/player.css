@@ -1,0 +1,61 @@
+*{box-sizing:border-box}
+:root{color-scheme:dark;--page:#141413;--panel:#1C1B19;--line:#2E2C28;--text:#EDE9DD;--muted:#8F8C82;--clay:#D97757}
+body{margin:0;background:var(--page);color:var(--text);font:15px/1.6 "Learn Sans","Inter","HarmonyOS Sans SC","PingFang SC","Noto Sans SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;letter-spacing:.03em}
+button,input,a,select{-webkit-tap-highlight-color:transparent}button,select{font:inherit}button{cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--clay);outline-offset:4px}
+.page{width:min(1500px,calc(100% - 64px));margin:26px auto 22px}
+/* the picture is kept no taller than the window leaves it: 220px is the chapter column with its gap, 262px what stands above and below the picture */
+@media(min-width:860px){.page{max-width:max(940px,calc(220px + (100svh - 262px)*16/9))}}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:0 0 20px}
+.eyebrow{color:var(--muted);font-size:11px;letter-spacing:.2em;margin-bottom:7px}
+h1{font-size:24px;line-height:1.35;font-weight:600;margin:0;letter-spacing:.05em}
+.edition{color:var(--muted);font-size:12px;white-space:nowrap;padding-bottom:4px}.edition i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--clay);margin:0 8px 1px 0}
+/* the chapters stand in a column left of the picture, as tall as the player; more of them than fit scroll inside it */
+.watch{display:grid;grid-template-columns:200px minmax(0,1fr);gap:0 20px}
+.player{background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 24px 80px #0007}
+.stage{position:relative;aspect-ratio:16/9;background:#F0EEE6}
+canvas{width:100%;height:100%;display:block;cursor:pointer;position:relative;z-index:1}
+/* a scene's own layer: a 1920×1080 box under the canvas, scaled with the picture by the player */
+.layer{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;pointer-events:none;display:none}
+.controls{padding:14px 22px 16px;background:var(--panel);border-top:1px solid var(--line)}
+.timeline{height:18px;display:flex;align-items:center;margin-bottom:8px}
+input[type=range]{width:100%;height:4px;margin:0;appearance:none;background:linear-gradient(to right,var(--clay) 0%,var(--clay) var(--p,0%),#3A3832 var(--p,0%),#3A3832 100%);border-radius:4px;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;border-radius:50%;background:#F3EFE4;box-shadow:0 0 0 4px #D9775722}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;border-radius:50%;background:#F3EFE4}
+.control-row{display:flex;align-items:center;gap:15px;min-height:34px}
+.play{display:flex;align-items:center;gap:9px;min-width:74px;justify-content:center;color:#FBF8F1;background:#3A2A23;border:1px solid #6B4534;border-radius:7px;padding:5px 12px;font-size:13px}
+.play:hover{background:#4A342A}
+.play svg{width:13px;height:13px;fill:currentColor}.play .pause-icon{display:none}.play[aria-pressed=true] .play-icon{display:none}.play[aria-pressed=true] .pause-icon{display:block}
+.quiet{border:0;background:none;padding:5px 4px;color:#A29F94;font-size:12px;white-space:nowrap}.quiet:hover{color:#fff}.quiet[aria-pressed=true]{color:var(--clay)}
+.clock{font-size:12px;line-height:1.2;letter-spacing:.03em;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}.clock b{color:#E8E4D8;font-weight:400}
+.spacer{flex:1}.speed{background:#22211E;border:1px solid #3A3832;border-radius:5px;color:#B8B4A8;font-size:12px;padding:3px 6px}
+/* contain:size keeps a long list from making the row taller than the player. The rows are flat and answer with a fill; their left edge is the title's */
+.chapters{contain:size;margin-left:-10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#3A3832 transparent}
+.chapter{display:grid;grid-template-columns:auto 1fr;gap:0 12px;width:100%;margin-bottom:1px;padding:7px 10px 8px;background:none;color:#858278;border:0;border-radius:8px;text-align:left;font-size:13px;line-height:22px;transition:background .15s,color .15s}
+.chapter span{font-size:12px;font-variant-numeric:tabular-nums;color:#5F5D55}
+.chapter:hover{background:#1C1B19;color:#E6E2D6}
+.chapter[aria-current=true]{background:#24231F;color:#F1EDE1}.chapter[aria-current=true] span{color:var(--clay)}
+footer{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;margin-top:16px;font-size:11px;line-height:1.75;color:#77746B}
+footer a{color:#B0ADA2;text-decoration:none}footer a:hover{text-decoration:underline;color:#E6E2D6}.keys{white-space:nowrap}kbd{font-family:inherit;color:#A29F94}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* html.full — the picture alone, set by the player for 网页全屏 (it fills the window the film is in) and for 全屏 (the whole screen as well).
+   The controls lie over the picture's bottom edge, where the captions are, so they are away unless the pointer comes down to them (.near);
+   a pointer left alone is put away too (.still). The colours are written out: the reader app turns the film light, but not this */
+.full,.full body{overflow:hidden}
+.full .player{position:fixed;inset:0;z-index:10;border:0;border-radius:0;box-shadow:none;background:#141413}
+.full .stage{height:100%;aspect-ratio:auto}
+.full .controls{position:absolute;left:0;right:0;bottom:0;z-index:2;background:rgba(28,27,25,.94);border-top:1px solid #2E2C28;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+.full.near .controls{opacity:1;visibility:visible}
+.full.still .player,.full.still canvas{cursor:none}
+/* ?bare=1 — canvas only, for frame capture */
+.bare header,.bare footer,.bare .chapters,.bare .controls{display:none}
+.bare .page{width:100vw;max-width:none;margin:0}.bare .watch{display:block}.bare .player{border:0;border-radius:0;height:100vh;box-shadow:none}.bare .stage{aspect-ratio:auto;height:100vh;background:#141413;overflow:hidden}
+/* a window too narrow to give the chapters a column: they go under the picture, in a strip that scrolls sideways */
+@media(max-width:859px){
+.watch{display:flex;flex-direction:column}
+.chapters{contain:none;order:1;display:flex;align-items:stretch;flex-shrink:0;margin:16px 0 0;overflow-x:auto;overflow-y:hidden;border-bottom:1px solid var(--line)}
+.chapter{display:block;flex:1;width:auto;min-width:max-content;margin:0;padding:9px 12px 12px;border-bottom:2px solid transparent;border-radius:0;font-size:12px;line-height:1.6}
+.chapter span{display:block;font-size:10px;margin-bottom:3px}
+.chapter:hover,.chapter[aria-current=true]{background:none}.chapter[aria-current=true]{border-color:var(--clay)}
+}
+@media(max-width:720px){.page{width:calc(100% - 24px);margin:18px auto}header{margin-bottom:14px;gap:12px}h1{font-size:20px}.edition{display:none}.controls{padding:10px 14px 12px}.control-row{gap:10px}#wide{display:none}footer{display:block}.keys{margin-top:8px;white-space:normal}.player{border-radius:8px}}

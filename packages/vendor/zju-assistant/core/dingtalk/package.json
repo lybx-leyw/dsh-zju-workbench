@@ -1,0 +1,22 @@
+{
+  "name": "dingtalk-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "只读查询 Windows、macOS 钉钉本地会话、联系人、群成员与聊天记录",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "dingtalk": "scripts/dingtalk.ts"
+  },
+  "scripts": {
+    "dingtalk": "node scripts/dingtalk.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,31 @@
+# ZJU All-in-One Assistant（dsh-zju-assistant）的组合包层：装上以后，profile 把这一层叠在已有的各层后面。
+#
+# 一行一个子插件，都来自本包依赖的 dsh-zju-campus，顺序就是官方插件页上的顺序（../rows.mjs 是清单，../rows.test.mjs 核对两边一致）。
+# 第一行「校园账号」是 dsh-zju-campus 的包根：页面那一半只挂在名字恰好是包名的这一行上，它还提供各子行共用的服务 ctx.zjuCampus，
+# 所以它关掉，其余各行都会停下。子行默认关着的，用户在组合包页面上打开，官方把开关记进 profile 自己的 patch。
+# 行的 id 就是中文标题（../rows.mjs 的 entryId），插件页上就不再多列一行英文 id。
+- insert:
+    - id: 校园账号
+      name: dsh-zju-campus
+    - id: 课程与学习
+      name: dsh-zju-campus/courses
+    - id: 课程讲解
+      name: dsh-zju-campus/learn
+      disabled: true
+    - id: 活动与场馆
+      name: dsh-zju-campus/activities
+    - id: 校园社区
+      name: dsh-zju-campus/community
+    - id: 校园通知
+      name: dsh-zju-campus/notices
+    - id: 浙大邮箱
+      name: dsh-zju-campus/mail
+    - id: 微信聊天
+      name: dsh-zju-campus/wechat-chat
+      disabled: true
+    - id: 钉钉聊天
+      name: dsh-zju-campus/dingtalk
+      disabled: true
+    - id: 微信公众号
+      name: dsh-zju-campus/wechat
+      disabled: true
