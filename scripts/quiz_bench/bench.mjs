@@ -8,7 +8,7 @@ import { runQuizBench,atomicJson,defaultOptions } from './run.mjs';
 import { fromLectureLog } from './input.mjs';
 import { readLog } from '../knowledge_tree_bench/log.mjs';
 import { prefill } from '../knowledge_tree_bench/defaults.mjs';
-import { QUESTION_STRATEGIES,QUESTION_TYPES } from '../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
+import { QUESTION_STRATEGIES,QUESTION_TYPES } from '../../packages/core/quiz/src/strategies.js';
 import { applyReview,reviewTemplate,markdownReport,measure,trialSummary } from './metrics.mjs';
 import {applyCorrections,evidenceOf,seedOf} from './evidence.mjs';
 

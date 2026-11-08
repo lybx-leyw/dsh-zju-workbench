@@ -24,15 +24,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const RUNTIME = path.join(root, 'packages/dsh-zhiyun-page-plugins/src/runtime.js');
+const RUNTIME = path.join(root, 'packages/client/page-plugins/src/runtime.js');
 
 // 用本仓真实的包名前缀与一个「教科书形状」的平面：parser 提供 zhiyunParser，
 // study-core 需要它，page-today 需要 study-core 的一条服务。三包都活着时，
 // 图应当是 page-today → study-core → parser，唯一的叶是 page-today。
 const PKG = Object.freeze({
-  parser: 'dsh-zhiyun-core-parser',
-  study: 'dsh-zhiyun-core-study',
-  today: 'dsh-zhiyun-page-today',
+  parser: '@lybx-leyw/dsh-zju-core-parser',
+  study: '@lybx-leyw/dsh-zju-core-study',
+  today: '@lybx-leyw/dsh-zju-page-today',
 });
 
 /**
@@ -85,7 +85,7 @@ export function edgesOf(view) {
  * 只关一个、不连坐：关一个包会连带让它的下游失去服务，下游若也一起从读数里消失，
  * 就分不清「这条边是关 A 弄丢的」还是「关 B 弄丢的」。逐个关，归因才是干净的。
  *
- * @param buildView - `packages/dsh-zhiyun-page-plugins/src/runtime.js` 的 `buildView`。
+ * @param buildView - `packages/client/page-plugins/src/runtime.js` 的 `buildView`。
  * @param plugins - 行级开关读数（`listPlugins()` 形状）；`enabled:false` 表示用户关掉了它。
  * @returns `{ baseline, cases }`；`cases[i].lost` 是这一步消失的边。
  */

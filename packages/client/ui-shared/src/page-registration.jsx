@@ -37,6 +37,33 @@ export function registerPageContent(ctx, spec) {
    * `ctx.get('pages')` 存在则立刻注册；不存在则**不静默跳过**（那会变成空白页），
    * 而是等 `pages` 出现后再注册，保证「有入口就一定有内容」。
    */
+  /**
+   * 注册导航条目 —— 让页面自己声明「我叫什么、排第几」。
+   *
+   * # 这取代了静态 `NAV` 清单
+   *
+   * 旧设计：外壳持有一张 11 页的 `NAV`，逐页注册。每加一页都要改那张表，
+   * 而漏改的表现是「页面内容注册成功，但导轨上没有入口」——论文页踩过。
+   *
+   * 新设计：`dsh-pages` 的 `registerPage(spec)` 本来就是动态累加（返回一个
+   * 「只移除这一次注册」的 disposer）。谁装了页面包，导轨就多一个入口。
+   *
+   * @param shell - `pages` 服务。
+   * @returns disposer，或 undefined（外壳不提供 registerPage 时）。
+   */
+  const registerNav = shell => {
+    // 自定义外壳可能没有 registerPage。缺席时只注册内容 —— 不报错，
+    // 否则一个可选能力的缺失会让整个页面注册失败。
+    if (typeof shell.registerPage !== 'function') return undefined;
+    return shell.registerPage({
+      id: spec.id,
+      label: spec.label,
+      ...(spec.icon === undefined ? {} : { icon: spec.icon }),
+      ...(spec.order === undefined ? {} : { order: spec.order }),
+      ...(spec.region === undefined ? {} : { region: spec.region }),
+    });
+  };
+
   const attach = shell => ctx.slots.inject(shell.config.pageSlot, () => ctx.slots.register({
     name: shell.config.pageSlot,
     key: spec.id,
@@ -50,7 +77,22 @@ export function registerPageContent(ctx, spec) {
     navigate={navigate()}
     body={spec.render({ navigate: navigate() })}
   />));
+  /**
+   * 挂上内容与导航，返回组合 disposer。
+   *
+   * 卸载顺序反过来：先摘导航（入口消失），再摘内容 —— 避免出现
+   * 「入口还在、点开空白」的中间态。
+   */
+  const bind = shell => {
+    const disposeContent = attach(shell);
+    const disposeNav = registerNav(shell);
+    return () => {
+      if (typeof disposeNav === 'function') disposeNav();
+      if (typeof disposeContent === 'function') disposeContent();
+    };
+  };
+
   const shell = ctx.get('pages');
-  if (shell !== undefined) return attach(shell);
-  return ctx.inject(['pages'], scope => attach(scope.pages));
+  if (shell !== undefined) return bind(shell);
+  return ctx.inject(['pages'], scope => bind(scope.pages));
 }

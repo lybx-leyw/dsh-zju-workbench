@@ -51,7 +51,7 @@ grep -n "MAX_REPEAT_INTERVAL" packages/dsh-zhiyun-page-planning/src/local.js  # 
 # ② 本仓没有「已生成日期」这层记账
 grep -rniE "materialized|原样回链|originId" packages/dsh-zhiyun-page-planning/src/   # → 0 命中
 # ③ 本仓没有学校假期/调休概念
-grep -rniE "寒假|暑假|校历|补班|调休" packages/dsh-zhiyun-page-planning/src/ packages/dsh-zhiyun-source-zdbk/src/  # → 0 命中
+grep -rniE "寒假|暑假|校历|补班|调休" packages/dsh-zhiyun-page-planning/src/ packages/source/zdbk/src/  # → 0 命中
 ```
 
 ### F-1 · 引擎会做「每两周」，界面不会传（实跑）

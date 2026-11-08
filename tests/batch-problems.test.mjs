@@ -18,7 +18,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { batchProblems } from '../packages/dsh-zhiyun-core-study/src/question-bank.js';
+import { batchProblems } from '../packages/core/study/src/question-bank.js';
 
 const makeError = (message, code) => Object.assign(Error(message), { code });
 

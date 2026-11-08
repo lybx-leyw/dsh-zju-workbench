@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { parseJsonObject, parseTags } from '../packages/dsh-zhiyun-core-parser/src/core.js';
-import { assembleMixPage, markingRetryHint } from '../packages/dsh-zhiyun-core-parser/src/mix.js';
-import { runMixUnit } from '../packages/dsh-zhiyun-core-parser/src/mix-unit.js';
+import { parseJsonObject, parseTags } from '../packages/core/parser/src/core.js';
+import { assembleMixPage, markingRetryHint } from '../packages/core/parser/src/mix.js';
+import { runMixUnit } from '../packages/core/parser/src/mix-unit.js';
 
 const vocab = [{ name: '概念' }, { name: '公式' }];
 const lines = [

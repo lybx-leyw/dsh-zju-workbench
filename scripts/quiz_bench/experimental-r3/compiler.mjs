@@ -2,8 +2,8 @@ import {inspectGraph} from './graph.mjs';
 import {reasoningTree,bindBasis} from './tree.mjs';
 import {contentHash,poolLimit,serial,checkStrings} from './common.mjs';
 import {TOOLS,nodeToolRequest,toolArguments,failedTool} from './tools.mjs';
-import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
-import {normalizedText} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/core/quiz/src/strategies.js';
+import {normalizedText} from '../../../packages/core/quiz/src/concepts.js';
 
 export const VERSION='tree-ideas-r3-v9-node-capacity';
 const prompt=`沿已有知识树，在当前节点编译可复用考法，不写成品题。每条考法单独调用 submit_idea；全部提交后调用一次 finish_node。可以同一轮多次调用，也可以分多轮提交，服务器会保留每条成功结果。已接受的 key 不必重复提交，需要修正时用同一个 key 更新。只有 finish_node 成功才完成节点；收到错误时只修正对应考法。不要在正文模拟工具调用。参数结构见工具定义。

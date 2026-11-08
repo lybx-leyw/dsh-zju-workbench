@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { renderSlideChapter } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
-import { auditSlideHtml } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-audit.js';
+import { renderSlideChapter } from '../packages/core/classroom-generate/src/html-slide-shell.js';
+import { auditSlideHtml } from '../packages/core/classroom-generate/src/html-slide-audit.js';
 
 const slide = { title: '图示与公式', points: ['固定横版画布'], summary: '只有公式逐步展示',
   visualHtml: '<svg viewBox="0 0 800 560"><rect x="100" y="140" width="400" height="200" fill="#176c68"/><text x="140" y="230" fill="#fff" font-size="32">条件 → 结论</text></svg>',

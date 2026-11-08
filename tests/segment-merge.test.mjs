@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SEGMENT_MERGE_DEFAULTS, mergeSegments } from '../packages/dsh-zhiyun-page-study/src/segment-merge.js';
+import { SEGMENT_MERGE_DEFAULTS, mergeSegments } from '../packages/client/page-study/src/segment-merge.js';
 
 const MIN = 60_000;
 /** 100 分钟的课。 */

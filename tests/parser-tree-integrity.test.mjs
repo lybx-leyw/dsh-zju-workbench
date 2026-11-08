@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildTreeFromBlocks, flattenLeaves, stashBlocks, mergeLeaf } from '../packages/dsh-zhiyun-core-parser/src/tree.js';
+import { buildTreeFromBlocks, flattenLeaves, stashBlocks, mergeLeaf } from '../packages/core/parser/src/tree.js';
 
 /** 造一个真实形状的块：正文在 `sentences[]`，没有 `text`。 */
 function block(index, page, text, { role = '主线', facet = '概念' } = {}) {

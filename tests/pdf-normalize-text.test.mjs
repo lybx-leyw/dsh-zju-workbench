@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizePdfText } from '../packages/dsh-zhiyun-core-classroom-media/src/pdf/normalize-text.js';
+import { normalizePdfText } from '../packages/core/classroom-media/src/pdf/normalize-text.js';
 
 // 真实样本：从这篇论文 PDF 抽出来的原始行，每行都是版心硬折行，全文没有空行。
 const RAW = [

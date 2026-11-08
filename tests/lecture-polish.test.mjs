@@ -14,8 +14,8 @@ import assert from 'node:assert/strict';
 import {
   kLecturePolishSystemPrompt, kPolishItems, POLISH_ITEM_NAMES,
   buildPolishVariable, describePolishChanges, createLectureAssembler,
-} from '../packages/dsh-zhiyun-core-lecture/src/polish.js';
-import { exportReorganization, mergeReorganization } from '../packages/dsh-zhiyun-core-lecture/src/agent-text.js';
+} from '../packages/core/lecture/src/polish.js';
+import { exportReorganization, mergeReorganization } from '../packages/core/lecture/src/agent-text.js';
 
 /** 一份最小的讲义 + 记录（够 export/merge 走通）。 */
 const lecture = () => ({ title: '完整课堂', chapters: [{ no: 1, title: '概率', topics: [

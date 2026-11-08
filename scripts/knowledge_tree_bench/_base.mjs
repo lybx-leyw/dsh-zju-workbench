@@ -357,7 +357,7 @@ function findDescriptor(target, name) {
 }
 
 /**
- * 先装 `dsh-zhiyun-source-campus`。
+ * 先装 `@lybx-leyw/dsh-zju-source-campus`。
  *
  * 它是唯一 `provide('zhiyunEgress')` 的包，其余 `source-*` 的 `sharedFetch(ctx)`
  * 都指向那个服务。所以任何**要出网**的链路都要先过这一手 —— 否则不会报错，
@@ -367,7 +367,7 @@ function findDescriptor(target, name) {
  *    这条"回源头拉原稿"的链路需要它。别在别的域里顺手调 —— 那会让基准意外联网。
  */
 export async function mountCampus({ dataDir, credentials, fetchImpl = globalThis.fetch } = {}) {
-  return mount('dsh-zhiyun-source-campus', { dataDir, credentials, fetchImpl });
+  return mount('@lybx-leyw/dsh-zju-source-campus', { dataDir, credentials, fetchImpl });
 }
 
 /** 把错误收成可序列化的形状（凭据在外面擦除，这里只留 code/message）。 */
@@ -392,7 +392,7 @@ export function fail(error) {
  * @returns 那份模块的全部导出。
  */
 export async function shell() {
-  return import(urlOf('dsh-zhiyun-shell-workbench', 'src/model.js'));
+  return import(urlOf('..', 'client/ui-shared/src/pages-model.js'));
 }
 
 /** `@lybx-leyw/dsh-zju-ui-shared` 的 UI 原语（客户端模块，基准里只核对它们存在）。 */

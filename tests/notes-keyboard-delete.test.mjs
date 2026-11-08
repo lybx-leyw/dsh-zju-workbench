@@ -30,7 +30,7 @@ const root = path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/([
 test('键盘删除的作用对象与豁免（源码级守卫）', async () => {
   // 这一条读源码而不是跑 DOM：本仓没有 jsdom，而这几条是**结构性质**，
   // 用正则钉住比造一套 DOM 桩更可靠，也不会因为桩的行为漂移而误报。
-  const source = await readFile(path.join(root, 'packages/dsh-zhiyun-page-notes/src/client.jsx'), 'utf8');
+  const source = await readFile(path.join(root, 'packages/client/page-notes/src/client.jsx'), 'utf8');
 
   // ① 行上要有 data-path：没有它，keydown 就认不出"焦点在哪一行"。
   assert.match(source, /data-path=\{row\.path\}/, 'TreeRow 的按钮必须带 data-path');
@@ -67,7 +67,7 @@ test('键盘删除的作用对象与豁免（源码级守卫）', async () => {
 });
 
 test('删除确认条：默认不删，必须先确认，Esc 可撤', async () => {
-  const source = await readFile(path.join(root, 'packages/dsh-zhiyun-page-notes/src/client.jsx'), 'utf8');
+  const source = await readFile(path.join(root, 'packages/client/page-notes/src/client.jsx'), 'utf8');
 
   // 按键只负责**弹确认**，不直接删 —— 这是"不可撤销动作要一次确认"的落点。
   //
@@ -89,7 +89,7 @@ test('删除确认条：默认不删，必须先确认，Esc 可撤', async () =
 });
 
 test('批量删除：作用对象是区间选择，且不要求焦点落在树行上', async () => {
-  const source = await readFile(path.join(root, 'packages/dsh-zhiyun-page-notes/src/client.jsx'), 'utf8');
+  const source = await readFile(path.join(root, 'packages/client/page-notes/src/client.jsx'), 'utf8');
   const handler = source.slice(source.indexOf('const onKeyDownCapture'));
   const body = handler.slice(0, handler.indexOf('if (phase === '));
 
@@ -107,7 +107,7 @@ test('批量删除：作用对象是区间选择，且不要求焦点落在树�
 });
 
 test('删除会清掉子路径的挂起保存（删文件夹不会被自动保存复活）', async () => {
-  const source = await readFile(path.join(root, 'packages/dsh-zhiyun-page-notes/src/client.jsx'), 'utf8');
+  const source = await readFile(path.join(root, 'packages/client/page-notes/src/client.jsx'), 'utf8');
 
   // ⚠️ 这条钉的是实测到的形状：删文件夹时，里面有笔记在别的标签页开着，
   //    `pending.current` 还挂着它的正文；800ms 后自动保存把它写回去，

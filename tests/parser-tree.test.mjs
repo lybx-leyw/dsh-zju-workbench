@@ -16,8 +16,8 @@ import {
   FACET, facetRole, sieveBlocks, stashBlocks, orthogonalize, mergeLeaf,
   zipfRanges, leafTreeDepth, flattenLeaves, regroupLeaves, aggregate, buildTreeFromBlocks,
   kDefaultSplitLine,
-} from '../packages/dsh-zhiyun-core-parser/src/tree.js';
-import { tokensOf, formatTokens } from '../packages/dsh-zhiyun-core-parser/src/tokenize.js';
+} from '../packages/core/parser/src/tree.js';
+import { tokensOf, formatTokens } from '../packages/core/parser/src/tokenize.js';
 
 const block = (index, page, text, role = '主线', facets = ['概念']) =>
   ({ index, page, text, tag: { role, facets, summary: `S${index}` }, startMs: index * 1000 });

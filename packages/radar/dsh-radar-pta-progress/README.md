@@ -47,9 +47,9 @@
 测法：注入一个假 `fetch`，按 URL 匹配回包 —— 与 `tests/campus.test.mjs` 的 `makeTransport` 同构。
 
 ```bash
-grep -n "ptaRead\|case 'progress'" packages/dsh-zhiyun-source-campus/src/index.js   # → :583 ptaRead 动作面存在
+grep -n "ptaRead\|case 'progress'" packages/source/campus/src/index.js   # → :583 ptaRead 动作面存在
 grep -rn "pta=" packages/*/src --include=*.jsx                                      # → 前端 0 处调用 pta-read
-grep -rn "/submissions" packages/dsh-zhiyun-source-campus/src/*.js                  # → 0 命中
+grep -rn "/submissions" packages/source/campus/src/*.js                  # → 0 命中
 ```
 
 ### F-1 · `progress()` 把「未作答」算成了「做过」（实跑，零依赖，可当场改）
@@ -133,7 +133,7 @@ createProblemSetExam               → 0 命中
 | ② | `campus/src/pta.js:381` 的 `catch` | 把「读不到」变成显式未知态（TODO-2），不要 `null` |
 | ③ | `page-planning/src/client.jsx` 拼题A 条目行 | 在**既有行**上加「3/20 已通过」，点击时才 `ptaRead({action:'progress'})`（懒加载，避免首屏 +1 请求） |
 | ④ | `campus/src/index.js` 服务面 | 提交链路要新增方法（`ptaSubmit`），**复用** `ptaTransport()` 与 200ms limiter，不另开 Agent |
-| ⑤ | `packages/dsh-zhiyun-source-campus/package.json` | 本包**无依赖**；若要 vendor 上游 `src/utils`，走 TODO-5 单独评审 |
+| ⑤ | `packages/source/campus/package.json` | 本包**无依赖**；若要 vendor 上游 `src/utils`，走 TODO-5 单独评审 |
 
 ---
 

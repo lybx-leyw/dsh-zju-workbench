@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { renderSlideChapter } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
-import { fitSlideOutput } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-fit.js';
-import { auditSlideHtml } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-audit.js';
+import { renderSlideChapter } from '../packages/core/classroom-generate/src/html-slide-shell.js';
+import { fitSlideOutput } from '../packages/core/classroom-generate/src/html-slide-fit.js';
+import { auditSlideHtml } from '../packages/core/classroom-generate/src/html-slide-audit.js';
 
 test('long equations are deterministically split into rows/pages without deleting terms or shrinking fonts', async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true });

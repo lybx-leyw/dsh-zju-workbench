@@ -1,0 +1,33 @@
+{
+  "name": "@lybx-leyw/dsh-zju-core-parser",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "智云 App 三阶段解析器，使用 DSH LLM 与附件服务",
+  "exports": {
+    ".": "./src/index.js",
+    "./parser": "./src/parser.js",
+    "./worker-pool": "./src/worker-pool.js",
+    "./vocabulary": "./src/vocabulary.js",
+    "./accel": "./src/accel.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "sharp": "0.35.5",
+    "@lybx-leyw/dsh-zju-core-llm-error": "^0.1.0"
+  },
+  "main": "./src/index.js",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-atomic-write": "0.2.2-rc.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-atomic-write": {
+      "optional": true
+    }
+  }
+}

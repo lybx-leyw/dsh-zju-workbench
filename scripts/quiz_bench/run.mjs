@@ -6,12 +6,12 @@ import { mountQuiz, modelCall } from './bridge.mjs';
 import { datasetFrom,loadDataset } from './input.mjs';
 import { fixture,fixtureCall } from './fixture.mjs';
 import { measure,markdownReport,trialSummary } from './metrics.mjs';
-import { contentHash } from '../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
-import { planPointQuestions,QUESTION_STRATEGIES,QUESTION_TYPES,newPointCheckpoint,POINT_QUIZ_CACHE_VERSION } from '../../packages/dsh-zhiyun-core-quiz/src/points.js';
+import { contentHash } from '../../packages/core/quiz/src/concepts.js';
+import { planPointQuestions,QUESTION_STRATEGIES,QUESTION_TYPES,newPointCheckpoint,POINT_QUIZ_CACHE_VERSION } from '../../packages/core/quiz/src/points.js';
 import { resolveConfig } from '../knowledge_tree_bench/defaults.mjs';
 import { createWriter,readLog } from '../knowledge_tree_bench/log.mjs';
-import {persistWithRetry,storageCode} from '../../packages/dsh-zhiyun-core-quiz/src/durability.js';
-import {conceptCacheKey,pointIdentity} from '../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {persistWithRetry,storageCode} from '../../packages/core/quiz/src/durability.js';
+import {conceptCacheKey,pointIdentity} from '../../packages/core/quiz/src/concepts.js';
 
 export const defaultOptions={counts:[10],batches:3,repeats:1,strategies:['recall','understand'],types:['cloze'],mode:'uniform',difficulty:'basic',recallMode:'complete',auditPolicy:'focused',seed:42,maxCalls:120};
 export function optionsOf(raw={}) {
@@ -48,7 +48,7 @@ export async function runQuizBench(raw,{call:injected,signal,onEvent=()=>{},outD
   if(raw.gold)dataset.gold=raw.gold;
   if(raw.pointIds?.length)dataset.points=dataset.points.filter(p=>raw.pointIds.includes(p.id));
   if(!dataset.points.length)throw new Error('未选择可评测知识点');
-  const kernelHash=await contentHash(await Promise.all(['index.js','points.js','concepts.js','completion.js','facts.js','ledger.js','blueprint.js','rectification.js','durability.js','strategies.js','knowledge-points.js','generate.js','quality.js'].map(file=>fs.readFile(new URL('../../packages/dsh-zhiyun-core-quiz/src/'+file,import.meta.url),'utf8'))));
+  const kernelHash=await contentHash(await Promise.all(['index.js','points.js','concepts.js','completion.js','facts.js','ledger.js','blueprint.js','rectification.js','durability.js','strategies.js','knowledge-points.js','generate.js','quality.js'].map(file=>fs.readFile(new URL('../../packages/core/quiz/src/'+file,import.meta.url),'utf8'))));
   const datasetHash=await contentHash(dataset.points),seed=raw.seedArtifact??null;
   if(seed){
     if(seed.version!==1||seed.datasetHash!==datasetHash||seed.kernelHash!==kernelHash||!seed.conceptCache||!Array.isArray(seed.questions))throw new Error('复用底稿与资料或内核版本不匹配，请重新导出');

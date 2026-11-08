@@ -34,7 +34,7 @@ import {
   pullEntries,
   saveConfig,
   urgencyOf,
-} from '../packages/dsh-zhiyun-page-planning/src/index.js';
+} from '../packages/client/page-planning/src/index.js';
 
 const KEY = 'read-key-1234';
 
@@ -318,7 +318,7 @@ test('紧迫度按"还剩多久"分档，不是按哪天真', () => {
 
 test('路由与写头两端一致（漂移会表现为"保存没反应"）', async () => {
   const client = await readFile(
-    new URL('../packages/dsh-zhiyun-page-planning/src/client.jsx', import.meta.url), 'utf8',
+    new URL('../packages/client/page-planning/src/client.jsx', import.meta.url), 'utf8',
   );
   assert.ok(ROUTE_PATH.startsWith('/_dsh/'));
   assert.ok(client.includes(`'${ROUTE_PATH}'`), '客户端必须打同一个路由');
@@ -327,7 +327,7 @@ test('路由与写头两端一致（漂移会表现为"保存没反应"）', asy
 
 test('客户端不得把读密钥或 Cookie 写进任何持久化位置', async () => {
   const client = await readFile(
-    new URL('../packages/dsh-zhiyun-page-planning/src/client.jsx', import.meta.url), 'utf8',
+    new URL('../packages/client/page-planning/src/client.jsx', import.meta.url), 'utf8',
   );
   // 定位便笺只允许经过专用 helper 读取/清除；凭证仍禁止持久化。
   const withoutFocusReads = client.replace(/(?:readFocus|clearFocus)\(globalThis\.sessionStorage\)/g, '');
@@ -338,7 +338,7 @@ test('客户端不得把读密钥或 Cookie 写进任何持久化位置', async 
 
 test('拼题A 必须有独立配置项（它与智云用的不是同一套凭证）', async () => {
   const client = await readFile(
-    new URL('../packages/dsh-zhiyun-page-planning/src/client.jsx', import.meta.url), 'utf8',
+    new URL('../packages/client/page-planning/src/client.jsx', import.meta.url), 'utf8',
   );
   assert.match(client, /拼题A Cookie/, '拼题A 必须有独立配置项');
   // 学在浙大复用智云账号，本页不该再出现账号密码输入

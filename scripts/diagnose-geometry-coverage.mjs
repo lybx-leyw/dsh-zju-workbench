@@ -6,7 +6,7 @@
 //
 // 本脚本枚举几类**真实模型常犯**的布局错误，看自检是否都能修正。
 
-import { parseSceneResponse } from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
+import { parseSceneResponse } from '../packages/core/classroom-generate/src/scene.js';
 
 const outline = { id: 'o1', type: 'slide', title: '诊断页', keyPoints: [] };
 

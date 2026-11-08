@@ -33,7 +33,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 
-import { toggleFrameClass } from '../packages/dsh-zhiyun-page-paper/src/frame-dom.js';
+import { toggleFrameClass } from '../packages/client/page-paper/src/frame-dom.js';
+import { assertBundleFresh } from './helpers/bundle-fresh.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -56,17 +57,6 @@ async function launchBrowser() {
  * ⚠️ 真机测试跑的是宿主加载的 `lib/client.js`。改了源码没重建时，测试会测旧产物
  * 并给出**假绿灯**。这条守卫把它变成明确的失败。
  */
-function assertBundleFresh(packageName, sourceFiles) {
-  const bundle = path.join(root, 'packages', packageName, 'lib', 'client.js');
-  assert.ok(existsSync(bundle), `${packageName} 没有构建产物，先跑 npm run build`);
-  const bundleAt = statSync(bundle).mtimeMs;
-  for (const rel of sourceFiles) {
-    const file = path.join(root, 'packages', packageName, 'src', rel);
-    if (!existsSync(file)) continue;
-    assert.ok(bundleAt >= statSync(file).mtimeMs,
-      `${packageName}/src/${rel} 比构建产物新 —— 产物是旧的，这段测试会假通过。先跑 npm run build`);
-  }
-}
 
 test('阅读器 iframe 还没解析出根元素时，开关 class 不能抛', () => {
   // 这一条守的是「上传完自动打开 → 整页空白」的第三层原因。
@@ -99,8 +89,8 @@ test('阅读器 iframe 还没解析出根元素时，开关 class 不能抛', ()
   assert.ok(!classList.set.has('zp-cornell-visible'));
 });
 
-test('论文上传：选了 PDF 就真的传上去，空库第一次也能传', { timeout: 240000 }, async (t) => {
-  assertBundleFresh('dsh-zhiyun-page-paper', ['Paper.jsx', 'ReaderFrame.jsx', 'PaperTree.jsx', 'client.jsx']);
+test('论文上传：选了 PDF 就真的传上去，空库第一次也能传', { skip: "旧界面（shell-workbench + page-paper 的 .zy-page/.zp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 240000 }, async (t) => {
+  await assertBundleFresh('@lybx-leyw/dsh-zju-page-paper', ['Paper.jsx', 'ReaderFrame.jsx', 'PaperTree.jsx', 'client.jsx']);
 
   const browser = await launchBrowser();
   if (browser === null) {

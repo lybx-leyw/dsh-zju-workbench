@@ -20,14 +20,14 @@ import {
   TEXT_HEIGHT_TABLE,
   buildScenePrompt,
   renderHeightTable,
-} from '../packages/dsh-zhiyun-core-classroom-generate/src/prompts.js';
+} from '../packages/core/classroom-generate/src/prompts.js';
 import {
   estimateTextLines,
   heightFor,
   measureTextContent,
   parseSceneResponse,
   reconcileSlideGeometry,
-} from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
+} from '../packages/core/classroom-generate/src/scene.js';
 
 // ── 1. 高度查表必须与上游逐值一致 ──────────────────────────────────────────
 

@@ -22,9 +22,9 @@ test('one AI reply proposing three time blocks saves all three after a single co
     const result = await build({ stdin: { contents: `
       import React from 'react';
       import {createRoot} from 'react-dom/client';
-      import {Planning} from './packages/dsh-zhiyun-page-planning/src/client.jsx';
-      import baseCss from './packages/dsh-zhiyun-page-planning/src/style.css';
-      import agendaCss from './packages/dsh-zhiyun-page-planning/src/schedule.css';
+      import {Planning} from './packages/client/page-planning/src/client.jsx';
+      import baseCss from './packages/client/page-planning/src/style.css';
+      import agendaCss from './packages/client/page-planning/src/schedule.css';
       document.head.appendChild(Object.assign(document.createElement('style'),{textContent:baseCss+agendaCss}));
       const mines = ['期末作业','完成新中国史线上课程期中考核','提交新中国史期末论文电子版'].map((title,i)=>({id:'t'+i,title,due:null,done:false,createdAt:1,updatedAt:1}));
       let schedule=[];
@@ -48,8 +48,8 @@ test('one AI reply proposing three time blocks saves all three after a single co
       };
       createRoot(document.getElementById('root')).render(<Planning ctx={null}/>);
     `, resolveDir: process.cwd(), loader: 'jsx' }, bundle: true, write: false, format: 'iife', loader: { '.css': 'text' }, plugins: [{ name: 'fixture', setup(builder) {
-      builder.onResolve({ filter: /^@lybx-leyw/dsh-zju-ui-shared$/ }, () => ({ path: 'ui', namespace: 'fixture' }));
-      builder.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: "import React from 'react'; export const Icon=()=>null; export const Empty=({title,children})=><div>{title}{children}</div>; export const Notice=({children})=><div>{children}</div>; export const mountStyle=()=>{};", loader: 'jsx', resolveDir: process.cwd() }));
+      builder.onResolve({ filter: /^@lybx-leyw\/dsh-zju-ui-shared$/ }, () => ({ path: 'ui', namespace: 'fixture' }));
+      builder.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: "import React from 'react'; export const Icon=()=>null; export const Empty=({title,children})=><div>{title}{children}</div>; export const Notice=({children})=><div>{children}</div>; export const mountStyle=()=>{}; export const registerPageContent=()=>{};", loader: 'jsx', resolveDir: process.cwd() }));
     } }] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
     const errors = []; page.on('pageerror', error => errors.push(error.message));

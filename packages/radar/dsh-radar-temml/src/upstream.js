@@ -34,7 +34,7 @@ export const UPSTREAM_REPOSITORY = 'https://github.com/ronkok/Temml';
 /**
  * 本仓**没有**任何客户端公式渲染器（核对于 2026-10-18）。
  *
- * `dsh-zhiyun-core-lecture/src/tree.js` 的 `looksLikeNotationOnly()` 只用 `/^\$...\$$/`
+ * `@lybx-leyw/dsh-zju-core-lecture/src/tree.js` 的 `looksLikeNotationOnly()` 只用 `/^\$...\$$/`
  * 判断「整行是否为公式」，那是**分词启发式**，不是渲染；`$k_1$` 原样交给宿主
  * `MarkdownText` 显示。`dsh-zhiyun-page-paper/src/citations.js` 只处理「第 N 页」
  * 页码引用，与公式无关。

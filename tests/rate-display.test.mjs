@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 
 import {
   RATE_VISIBLE_KEY, RATE_VISIBLE_DEFAULT, readRateVisible, writeRateVisible, formatRate,
-} from '../packages/dsh-zhiyun-page-study/src/rate-display.js';
+} from '../packages/client/page-study/src/rate-display.js';
 
 /** 内存版 Storage，便于精确控制返回值与抛错。 */
 function memoryStorage(initial = {}) {

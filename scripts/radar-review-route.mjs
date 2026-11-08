@@ -46,7 +46,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const QUIZ_SRC = path.join(ROOT, 'packages', 'dsh-zhiyun-core-quiz', 'src');
+const QUIZ_SRC = path.join(ROOT, 'packages', '@lybx-leyw/dsh-zju-core-quiz', 'src');
 
 /** 确定性伪随机，保证「同一份代码跑出同一个数」。 */
 function seeded(seed) {
@@ -61,10 +61,10 @@ async function loadQuiz() {
   const points = await import(pathToFileURL(path.join(QUIZ_SRC, 'points.js')).href);
   const store = await import(pathToFileURL(path.join(QUIZ_SRC, 'store.js')).href);
   if (typeof points.planPractice !== 'function') {
-    throw new Error('dsh-zhiyun-core-quiz 里没有导出 planPractice（上游改了接口？）');
+    throw new Error('@lybx-leyw/dsh-zju-core-quiz 里没有导出 planPractice（上游改了接口？）');
   }
   if (!store.QUIZ_AUTOGRADE_VERDICTS || typeof store.makeAttempt !== 'function') {
-    throw new Error('dsh-zhiyun-core-quiz 的 store 缺 makeAttempt / QUIZ_AUTOGRADE_VERDICTS');
+    throw new Error('@lybx-leyw/dsh-zju-core-quiz 的 store 缺 makeAttempt / QUIZ_AUTOGRADE_VERDICTS');
   }
   return { planPractice: points.planPractice, makeAttempt: store.makeAttempt, VERDICT: store.QUIZ_AUTOGRADE_VERDICTS };
 }

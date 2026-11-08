@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-studio/', import.meta.url);
 const moduleUrl = (rel) => pathToFileURL(join(fileURLToPath(PACKAGE_DIR), rel)).href;
 
 const { mountAgentRuntime, queryWhiteboardVisibility, PENDING_VISIBILITY_KEY } =

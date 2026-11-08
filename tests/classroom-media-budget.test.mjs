@@ -8,12 +8,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { adaptMediaService } from '../packages/dsh-zhiyun-core-classroom-generate/src/media-port.js';
+import { adaptMediaService } from '../packages/core/classroom-generate/src/media-port.js';
 import {
   MATERIAL_TEXT_LIMIT,
   MAX_MATERIALS,
   allocateMaterialBudgets,
-} from '../packages/dsh-zhiyun-core-classroom-generate/src/phases/material-analysis.js';
+} from '../packages/core/classroom-generate/src/phases/material-analysis.js';
 
 // ── 媒体端口适配 ──────────────────────────────────────────────────────────
 

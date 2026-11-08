@@ -7,14 +7,14 @@ import {createLlmBridge} from '../../packages/dsh-zhiyun-host-deeptutor/src/mode
 import {createService} from '../../packages/dsh-zhiyun-host-deeptutor/src/service.js';
 import {createRunStore} from '../../packages/dsh-zhiyun-host-deeptutor/src/run-store.js';
 import {createResourceRegistry} from '../../packages/dsh-zhiyun-host-deeptutor/src/resources.js';
-import * as resources from '../../packages/dsh-zhiyun-core-learning-resource/src/index.js';
-import {createDeepTutorCandidateCall,nativeQuizContract} from '../../packages/dsh-zhiyun-core-study/src/deeptutor-quiz.js';
-import {WorkerPoolLlm} from '../../packages/dsh-zhiyun-core-parser/src/worker-pool.js';
+import * as resources from '../../packages/core/learning-resource/src/index.js';
+import {createDeepTutorCandidateCall,nativeQuizContract} from '../../packages/core/study/src/deeptutor-quiz.js';
+import {WorkerPoolLlm} from '../../packages/core/parser/src/worker-pool.js';
 import {deepTutorBenchHost} from './deeptutor-host.mjs';
 import {loadDataset} from './input.mjs';
 import {mountQuiz} from './bridge.mjs';
-import {planPointQuestions} from '../../packages/dsh-zhiyun-core-quiz/src/points.js';
-import {DEEPTUTOR_GUIDANCE_ID} from '../../packages/dsh-zhiyun-core-quiz/src/deeptutor-guidance.js';
+import {planPointQuestions} from '../../packages/core/quiz/src/points.js';
+import {DEEPTUTOR_GUIDANCE_ID} from '../../packages/core/quiz/src/deeptutor-guidance.js';
 import {tokenLedger,timingLedger,attemptOffset} from './accounting.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url)),pkg=path.join(root,'packages/dsh-zhiyun-host-deeptutor');

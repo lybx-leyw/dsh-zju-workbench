@@ -22,7 +22,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
-const CLIENT = 'packages/dsh-zhiyun-page-notes/src/client.jsx';
+const CLIENT = 'packages/client/page-notes/src/client.jsx';
 const src = readFileSync(path.join(root, CLIENT), 'utf8');
 
 test('阅读态是默认：preview 初值为 true', () => {

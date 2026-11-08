@@ -1,6 +1,6 @@
 // 共享 UI 原语：无状态、纯展示，被壳与各页面包共同引用。
 //
-// 这里**没有**领域状态：账号、课程、解析任务属于 dsh-zhiyun-core-study，
+// 这里**没有**领域状态：账号、课程、解析任务属于 @lybx-leyw/dsh-zju-core-study，
 // 通过 Cordis 服务传递（见下面的 useStudy）。这个包只回答「长什么样」。
 import React, { useSyncExternalStore } from 'react';
 import brandMark from './assets/zhiyun-mark.svg';

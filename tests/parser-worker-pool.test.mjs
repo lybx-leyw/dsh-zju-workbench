@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LectureParser } from '../packages/dsh-zhiyun-core-parser/src/parser.js';
-import { createLectureService } from '../packages/dsh-zhiyun-core-lecture/src/index.js';
-import { WorkerPoolLlm, normalizeWorkers } from '../packages/dsh-zhiyun-core-parser/src/worker-pool.js';
+import { LectureParser } from '../packages/core/parser/src/parser.js';
+import { createLectureService } from '../packages/core/lecture/src/index.js';
+import { WorkerPoolLlm, normalizeWorkers } from '../packages/core/parser/src/worker-pool.js';
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function fixture(entries, visual = ['a']) {

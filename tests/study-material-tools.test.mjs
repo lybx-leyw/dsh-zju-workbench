@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Context } from '@deepseek-ai/cordis';
 import { ToolRuntime } from '@deepseek-ai/dsh-tools';
-import { createStudyMaterialTools, registerStudyMaterialTools } from '../packages/dsh-zhiyun-core-study/src/material-tools.js';
+import { createStudyMaterialTools, registerStudyMaterialTools } from '../packages/core/study/src/material-tools.js';
 
 test('real host registry accepts definitions and unregisters every tool', () => {
   const ctx = new Context();

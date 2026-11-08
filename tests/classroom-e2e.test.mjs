@@ -176,16 +176,16 @@ test('课堂链路：brief → 生成 → 落盘 → 读回 → 导出 HTML/PPTX
 
   const llmCalls = [];
   const llm = fakeLlm(llmCalls);
-  await mount('dsh-zhiyun-core-classroom-vault');
-  await mount('dsh-zhiyun-core-classroom-media');
-  await mount('dsh-zhiyun-core-classroom-agent', { llm });
-  await mount('dsh-zhiyun-core-classroom-pbl', { llm });
-  await mount('dsh-zhiyun-core-classroom-export');
-  await mount('dsh-zhiyun-core-classroom-stage');
-  await mount('dsh-zhiyun-core-classroom-generate', { llm });
+  await mount('@lybx-leyw/dsh-zju-core-classroom-vault');
+  await mount('@lybx-leyw/dsh-zju-core-classroom-media');
+  await mount('@lybx-leyw/dsh-zju-core-classroom-agent', { llm });
+  await mount('@lybx-leyw/dsh-zju-core-classroom-pbl', { llm });
+  await mount('@lybx-leyw/dsh-zju-core-classroom-export');
+  await mount('@lybx-leyw/dsh-zju-core-classroom-stage');
+  await mount('@lybx-leyw/dsh-zju-core-classroom-generate', { llm });
   // 宿主的 providers.list() 走 providerConfig；空清单会让 generate 的 resolveLlm
   // 以 E_NO_LLM_PROVIDER 拒绝，所以这里注入一个「配了 openai」的装载器。
-  await mount('dsh-zhiyun-host-classroom', {
+  await mount('@lybx-leyw/dsh-zju-core-classroom-studio', {
     providerConfig: { getServerProviders: () => ({ openai: { models: ['gpt-4o'] } }) },
   });
 

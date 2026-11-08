@@ -2,7 +2,7 @@
  * dsh-radar-credit-audit —— **候选骨架，未评审、未接入 profile、不可直接使用。**
  *
  * 目标（见 README）：把「已获学分」从一个**总数**，变成**按培养方案模块拆开、逐条可溯源**的
- * 达成度报告。落点是**已有的**学分/GPA 看板（`dsh-zhiyun-source-zdbk/src/reads.js` 的
+ * 达成度报告。落点是**已有的**学分/GPA 看板（`@lybx-leyw/dsh-zju-source-zdbk/src/reads.js` 的
  * `gpaOf()` 与 `earned_credits`），不新建页面。
  *
  * # 这里为什么一行实现都没有
@@ -78,7 +78,7 @@ export function apply() {
  * TODO-1（**阻塞**）· 学期口径换算：两套制式必须先对齐
  *
  * 本轮实测（见报告 §3）：
- *   - 本仓 `dsh-zhiyun-source-zdbk/src/parse.js:101` 的 `semesterOfCourseKey` 用
+ *   - 本仓 `@lybx-leyw/dsh-zju-source-zdbk/src/parse.js:101` 的 `semesterOfCourseKey` 用
  *     `/^\((\d{4}-\d{4})-(\d)\)/`，**只认 `-1` / `-2`**；`-3` / `-4` 会原样变成 `semester: 3/4`，
  *     与「第 3/4 学期」在下游（`reads.js:159` 的 `key = ${academic_year}-${semester}`、GPA 学期走势）**无法区分**。
  *   - 同文件 `parse.js:15` 自述「浙大按秋/冬/春/夏分」，`TERMS = ['秋','冬','春','夏']` —— 注释与实现不一致。

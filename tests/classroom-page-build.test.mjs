@@ -24,12 +24,12 @@ import {
   reduceAll,
   removeOutlineScene,
   updateOutlineScene,
-} from '../packages/dsh-zhiyun-page-classroom-build/src/progress.js';
+} from '../packages/client/page-classroom-build/src/progress.js';
 import {
   SLOT_NAME,
   name as hostName,
   registerSlot,
-} from '../packages/dsh-zhiyun-page-classroom-build/src/index.js';
+} from '../packages/client/page-classroom-build/src/index.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 
@@ -206,7 +206,7 @@ async function loadClient(suffix = '') {
   const outfile = path.join(dir, `client-${suffix}.mjs`);
   try {
     await build({
-      entryPoints: [path.join(root, 'packages/dsh-zhiyun-page-classroom-build/src/client.jsx')],
+      entryPoints: [path.join(root, 'packages/client/page-classroom-build/src/client.jsx')],
       bundle: true,
       write: true,
       outfile,
@@ -218,10 +218,12 @@ async function loadClient(suffix = '') {
       plugins: [{
         name: 'stub-shell-ui',
         setup(builder) {
-          builder.onResolve({ filter: /^@lybx-leyw/dsh-zju-ui-shared$/ }, () => ({ path: 'stub', namespace: 'stub' }));
+          builder.onResolve({ filter: /^@lybx-leyw\/dsh-zju-ui-shared$/ }, () => ({ path: 'stub', namespace: 'stub' }));
           builder.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
             // 页面自注册助手：本测试只关心「组件能渲染」，注册动作由外壳承担。
-            contents: 'export const mountStyle = () => {};\nexport const registerPageContent = () => {};',
+            // 桩要覆盖**真实模块的全部导出面** —— 页面入口现在还会 import `Icon`
+            // 做导轨图标，少了它 esbuild 报 No matching export，用例直接红。
+            contents: 'export const mountStyle = () => {};\nexport const registerPageContent = () => {};\nexport const Icon = () => null;',
             loader: 'js',
             resolveDir: root,
           }));

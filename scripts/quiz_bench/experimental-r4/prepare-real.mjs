@@ -10,7 +10,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {loadDataset} from '../input.mjs';
-import {inspectGraph} from 'dsh-zhiyun-core-quiz/engines';
+import {inspectGraph} from '@lybx-leyw/dsh-zju-core-quiz/engines';
 
 const [source, target] = process.argv.slice(2);
 if (!source || !target) throw Error('Usage: prepare-real.mjs <lecture.jsonl> <graph.json>');

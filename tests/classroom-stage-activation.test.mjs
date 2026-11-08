@@ -16,11 +16,11 @@ async function clientModules() {
     console,
     window: { __ModuleLoader__: { load(row) { factories.set(row.id, row.factory); } } },
   });
-  for (const name of ['@lybx-leyw/dsh-zju-ui-shared', 'dsh-zhiyun-classroom-renderer']) {
+  for (const name of ['@lybx-leyw/dsh-zju-ui-shared', '@lybx-leyw/dsh-zju-core-classroom-renderer']) {
     const text = await readFile(new URL(`../packages/${name}/lib/client.js`, import.meta.url), 'utf8');
     vm.runInContext(text, scope, { filename: `${name}/client.js` });
   }
-  for (const name of ['dsh-zhiyun-core-classroom-stage', 'dsh-zhiyun-page-classroom-play']) {
+  for (const name of ['@lybx-leyw/dsh-zju-core-classroom-stage', 'dsh-zhiyun-page-classroom-play']) {
     const { result } = await buildClientPackage(name, { write: false });
     vm.runInContext(result.outputFiles[0].text, scope, { filename: `${name}/client.js` });
   }
@@ -36,7 +36,7 @@ async function clientModules() {
 
 test('stage and play activate their plugin faces rather than invoke React components as plugins', async () => {
   const { load, scope } = await clientModules();
-  const stage = load('dsh-zhiyun-core-classroom-stage');
+  const stage = load('@lybx-leyw/dsh-zju-core-classroom-stage');
   const play = load('dsh-zhiyun-page-classroom-play');
   assert.equal(typeof stage.ClassroomStage, 'function');
   assert.equal(typeof play.ClassroomPlay, 'function');

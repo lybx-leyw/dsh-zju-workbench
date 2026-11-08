@@ -19,7 +19,7 @@
 
 | 判据 | 结论 | 依据 |
 | --- | --- | --- |
-| ① 仍是同一个面板 | ✅ | 落点是 `dsh-zhiyun-core-lecture` 的 `generateLecture()` 入口前 / parser 建树前。**不新建页面、不新增侧栏、不新增插槽**，用户看到的仍是同一份讲义 |
+| ① 仍是同一个面板 | ✅ | 落点是 `@lybx-leyw/dsh-zju-core-lecture` 的 `generateLecture()` 入口前 / parser 建树前。**不新建页面、不新增侧栏、不新增插槽**，用户看到的仍是同一份讲义 |
 | ② 功能仍相似正交 | ✅ | `buildLectureTree` 回答「**这页属于哪个知识点**」（分类）；本包回答「**这页是不是同一页**」（去噪）。同一条链、相邻的环，输入相同但职责不重叠 |
 | ③ 底层多调了更优质实现 | ✅ | 本仓这一维**为 0**（`grep -rn '续讲\|重复页\|重复图' packages/dsh-zhiyun-core-{parser,lecture}/src` 只命中**同一页内**的块归并）。本包补上「跨页内容判同」，并用本仓已有的服务端文本（`pageText`）+ `sharp` 做组合，**能覆盖上游覆盖不了的回看场景**（见下节实测） |
 
@@ -103,7 +103,7 @@ if (await isSameImage(lastUrl, currentUrl)) continue;   // ← 只看上一张
 | --- | --- | --- |
 | 有 `pageText` 吗 | ❌ 没有 OCR，只有像素 | ✅ `vision.js` 逐页转述，`parser` 已落盘 |
 | 有原课件页号吗 | ⚠ 有 `time`，无 `page` | ✅ `pages[].page` |
-| 图像库 | ❌ 只能 `canvas` + `getImageData` | ✅ `sharp@0.35.5` 已在 `dsh-zhiyun-core-parser` |
+| 图像库 | ❌ 只能 `canvas` + `getImageData` | ✅ `sharp@0.35.5` 已在 `@lybx-leyw/dsh-zju-core-parser` |
 | 能判「回看」吗 | ❌ 相邻比对 | ✅ 全量比对 + 页号倒退信号 |
 
 **结论**：正确形态不是「把 ZYNotes 的算法搬进来」，而是
@@ -119,7 +119,7 @@ if (await isSameImage(lastUrl, currentUrl)) continue;   // ← 只看上一张
 | 客户端半边 | **无** —— 不改 UI。唯一要加的是一个 `warnings` 出口（TODO-6） |
 | `inject` | `[]` |
 | 新增插槽 / 页面 / 网络请求 | **0 / 0 / 0** |
-| 真实形态 | 一个纯函数 `dedupeSlides({ pages })`，由 `dsh-zhiyun-core-parser` 或 `dsh-zhiyun-core-lecture` 主动调用 |
+| 真实形态 | 一个纯函数 `dedupeSlides({ pages })`，由 `@lybx-leyw/dsh-zju-core-parser` 或 `@lybx-leyw/dsh-zju-core-lecture` 主动调用 |
 
 ---
 
@@ -141,7 +141,7 @@ if (await isSameImage(lastUrl, currentUrl)) continue;   // ← 只看上一张
 ## 风险
 
 - **R-1 · `sharp` 依赖靠宿主提供。** 本包 `dependencies` 为空。若评审决定独立成包，
-  必须显式锁 `sharp@0.35.5`（与 `dsh-zhiyun-core-parser` 同版），否则会出现两份原生模块。
+  必须显式锁 `sharp@0.35.5`（与 `@lybx-leyw/dsh-zju-core-parser` 同版），否则会出现两份原生模块。
   **v1 建议不进 `dependencies`，改由宿主注入缩略图函数**（`(imageData) => Promise<Uint8Array>`），
   这样本包保持零依赖、可纯单测。
 - **R-2 · 阈值未标定。** 32 / 30 / 0.9 三个数是上游的工程值，**本仓没有任何真机样本支撑**。

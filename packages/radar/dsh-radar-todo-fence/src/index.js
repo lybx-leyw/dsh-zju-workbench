@@ -6,7 +6,7 @@
  *
  * # 这个包要解决的事
  *
- * 「今天」页与「规划」页消费的是 `packages/dsh-zhiyun-source-campus` 给出的同一份 `rows`。
+ * 「今天」页与「规划」页消费的是 `packages/source/campus` 给出的同一份 `rows`。
  * 现在这份 rows 有两处不可见的性质：
  *
  *   1. 它可能来自 `fast`（1 个请求）或 `slow`（5N 个请求），调用方看不出差别；

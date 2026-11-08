@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { noteAnchor } from '../packages/dsh-zhiyun-page-paper/src/cornell-notes.js';
+import { noteAnchor } from '../packages/client/page-paper/src/cornell-notes.js';
 
 test('Cornell anchors retain relative page position at different zoom levels', () => {
   assert.equal(noteAnchor(300, { top: 100, height: 800 }), 0.25);
@@ -19,7 +19,7 @@ test('Cornell notes scroll with pages, restore anchors after reconstruction, wra
     const page = await browser.newPage({ viewport: { width: 1300, height: 800 } });
     page.setDefaultTimeout(5000);
     page.on('pageerror', (error) => console.error('Browser error:', error.message));
-    const source = readFileSync(new URL('../packages/dsh-zhiyun-page-paper/src/cornell-notes.js', import.meta.url), 'utf8');
+    const source = readFileSync(new URL('../packages/client/page-paper/src/cornell-notes.js', import.meta.url), 'utf8');
     await page.route('http://cornell.test/**', (route) => route.fulfill({
       contentType: 'text/html; charset=utf-8', body: `<meta charset="utf-8"><style>
         #pane {height:700px;overflow:auto} #pdf-pages{display:flex;flex-direction:column;align-items:safe center;gap:14px}

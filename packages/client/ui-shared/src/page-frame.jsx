@@ -29,6 +29,27 @@ import { Empty, Icon } from './primitives.jsx';
  * @param props - see below.
  * @returns the page's own frame.
  */
+/**
+ * PageFrame 的三层几何。
+ *
+ * `zy-page` 撑满页面槽、`zy-scroll` 负责滚动、`zy-content` 是内容列。
+ * 只写结构性约束（尺寸 / 溢出 / 弹性），不写颜色与字体 —— 后者留给各页面包，
+ * 否则内联样式（特异性最高）会把主题化锁死。
+ *
+ * **为什么要内联**：这三层的样式原本在已归档的外壳 CSS 里。归档后整个基础层
+ * 消失，真机表现是「页面只有 101px 高」——因为 `height: 100%` 的父元素
+ * 没有确定高度。内联后不依赖任何外部样式表。
+ */
+const FRAME_STYLE = {
+  page: { display: 'flex', flexDirection: 'column', width: '100%', height: '100%', minHeight: 0 },
+  scroll: { flex: '1 1 auto', minHeight: 0, overflow: 'auto' },
+  content: { width: '100%', margin: '0 auto', maxWidth: '720px' },
+  contentFlush: {
+    width: '100%', margin: '0', maxWidth: 'none',
+    height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column',
+  },
+};
+
 export function PageFrame({
   /** Page id; lands on `data-page` for styling and debugging. */
   page,
@@ -47,10 +68,13 @@ export function PageFrame({
 }) {
   const contentClass = fullBleed ? 'zy-content zy-content-flush' : 'zy-content';
   const missing = <Empty title={`${label}暂时不可用`}>这个页面由独立的插件包提供，当前未启用。</Empty>;
-  return <div className="zy-page" data-page={page}>
+  return <div className="zy-page" data-page={page} style={FRAME_STYLE.page}>
     {/* `tabIndex={-1}` is not for tab order: it lets the skip link move focus in.
         `-1` also keeps the container itself out of the tab sequence. */}
-    <main className="zy-scroll" id="zy-main" tabIndex={-1}><div className={contentClass}>
+    <main className="zy-scroll" id="zy-main" tabIndex={-1} style={FRAME_STYLE.scroll}><div
+      className={contentClass}
+      style={fullBleed ? FRAME_STYLE.contentFlush : FRAME_STYLE.content}
+    >
       {parent && navigate && <button type="button" className="zy-page-back"
         onClick={() => navigate(parent.id)}><Icon name="arrowLeft" size={14}/>{parent.label}</button>}
       {children.length > 0 && navigate && <div className="zy-page-subnav" role="group" aria-label={`${label}的更多入口`}>

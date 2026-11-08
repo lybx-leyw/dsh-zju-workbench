@@ -73,7 +73,7 @@ export const inject = [];
 /**
  * 上游线索的只读快照（供评审对照；**不是**锁版凭据）。
  *
- * 上游未发布到 npm（E404），且其目标形态已由 `dsh-zhiyun-source-cc98` 原生实现，
+ * 上游未发布到 npm（E404），且其目标形态已由 `@lybx-leyw/dsh-zju-source-cc98` 原生实现，
  * 所以这里不再有"我们锁了哪个版本"可声明。字段写成 `null` 而不是删掉整个对象，
  * 是为了让评审一眼看到"这里本该有锁版凭据、现在没有，以及为什么"。
  */
@@ -81,7 +81,7 @@ export const UPSTREAM = Object.freeze({
   package: 'cc98-mcp',
   version: null,
   published: false,
-  supersededBy: 'dsh-zhiyun-source-cc98',
+  supersededBy: '@lybx-leyw/dsh-zju-source-cc98',
 });
 
 

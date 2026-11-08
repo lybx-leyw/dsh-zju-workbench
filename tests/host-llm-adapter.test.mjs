@@ -78,7 +78,7 @@ const LECTURE = {
 };
 
 async function runWith(pool) {
-  const { createCoreQuestionBackend } = await import('../packages/dsh-zhiyun-core-study/src/core-question-backend.js');
+  const { createCoreQuestionBackend } = await import('../packages/core/study/src/core-question-backend.js');
   const backend = createCoreQuestionBackend({ pool, llmService: null });
   backend.__setHostResources({ attach: async () => ({ handleId: 'h1', revision: 'r1' }), release: async () => {} });
   backend.rememberBundle('h1', { lecture: LECTURE });

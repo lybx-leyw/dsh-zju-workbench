@@ -315,9 +315,9 @@ test('所有页面包：没有组件把 hook 写在提前 return 之后', () => 
  *    没构建过就跳过，而不是让 CI 红在「没跑 build」这种与代码无关的事上。
  */
 test('已构建的「插件」页：读图前后两次渲染的 hook 序列一致', async (t) => {
-  const bundle = path.join(root, 'packages/dsh-zhiyun-page-plugins/lib/client.js');
+  const bundle = path.join(root, 'packages/client/page-plugins/lib/client.js');
   if (!existsSync(bundle)) {
-    t.skip('packages/dsh-zhiyun-page-plugins/lib/client.js 还没构建，跳过');
+    t.skip('packages/client/page-plugins/lib/client.js 还没构建，跳过');
     return;
   }
 

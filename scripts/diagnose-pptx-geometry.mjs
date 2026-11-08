@@ -7,8 +7,8 @@
 // 若发现系统性偏差（尤其纵向），那就是"对齐糟糕"的根因。
 
 import JSZip from 'jszip';
-import { buildPptxBuffer } from '../packages/dsh-zhiyun-core-classroom-export/src/index.js';
-import { ratiosFor } from '../packages/dsh-zhiyun-core-classroom-export/src/doc.js';
+import { buildPptxBuffer } from '../packages/core/classroom-export/src/index.js';
+import { ratiosFor } from '../packages/core/classroom-export/src/doc.js';
 
 const EMU_PER_INCH = 914400;
 

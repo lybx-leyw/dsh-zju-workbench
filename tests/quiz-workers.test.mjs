@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setTimeout as delay} from 'node:timers/promises';
-import {createPointQuizGenerator,planPointQuestions,checkpointCount,planPractice} from '../packages/dsh-zhiyun-core-quiz/src/points.js';
-import {rectifyQuestions} from '../packages/dsh-zhiyun-core-quiz/src/rectification.js';
-import {WorkerPoolLlm} from '../packages/dsh-zhiyun-core-parser/src/worker-pool.js';
-import {apply} from '../packages/dsh-zhiyun-core-quiz/src/index.js';
+import {createPointQuizGenerator,planPointQuestions,checkpointCount,planPractice} from '../packages/core/quiz/src/points.js';
+import {rectifyQuestions} from '../packages/core/quiz/src/rectification.js';
+import {WorkerPoolLlm} from '../packages/core/parser/src/worker-pool.js';
+import {apply} from '../packages/core/quiz/src/index.js';
 import {fixture,fixtureCall} from '../scripts/quiz_bench/fixture.mjs';
 import {datasetFrom} from '../scripts/quiz_bench/input.mjs';
 const points=()=>datasetFrom(fixture).points;

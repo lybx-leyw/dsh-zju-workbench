@@ -15,8 +15,8 @@ import {
   MAX_OUTLINE_SCENES,
   MAX_OUTLINE_STREAM_BYTES,
   produceOutline,
-} from '../packages/dsh-zhiyun-core-classroom-generate/src/phases/outline.js';
-import { parseOutlineResponse } from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
+} from '../packages/core/classroom-generate/src/phases/outline.js';
+import { parseOutlineResponse } from '../packages/core/classroom-generate/src/scene.js';
 
 const brief = {
   requirement: '讲 BST',

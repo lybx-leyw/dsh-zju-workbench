@@ -7,7 +7,7 @@ import { openAiHost } from '../knowledge_tree_bench/openai.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 export async function mountQuiz({call,config={},dataDir}={}) {
   setRoot(root);
-  const mounted=await mount('dsh-zhiyun-core-quiz',{dataDir:dataDir??path.join(root,'artifacts','quiz-bench'),services:{zhiyunParser:{llm:{call}}},config});
+  const mounted=await mount('@lybx-leyw/dsh-zju-core-quiz',{dataDir:dataDir??path.join(root,'artifacts','quiz-bench'),services:{zhiyunParser:{llm:{call}}},config});
   const service=serviceOf(mounted,'zhiyunQuiz');
   return {generatePoints:service.generatePoints,dispose:()=>mounted.dispose?.()};
 }

@@ -14,7 +14,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dayKey, looksLikeSeconds, buildMonthCalendar } from '../packages/dsh-zhiyun-page-planning/src/time.js';
+import { dayKey, looksLikeSeconds, buildMonthCalendar } from '../packages/client/page-planning/src/time.js';
 
 /** 统一入口：默认看本月。 */
 function buildCalendar(rows, now, options = {}) {

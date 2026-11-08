@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 
 import {
   SEGMENT_ROLE, SKIP_DEFAULTS, segmentAt, skipTargetMs, branchRanges,
-} from '../packages/dsh-zhiyun-page-study/src/skip-branch.js';
+} from '../packages/client/page-study/src/skip-branch.js';
 
 /** 造一段轨道：10 分钟（600_000ms），段用比例表示。 */
 const AXIS = 600_000;

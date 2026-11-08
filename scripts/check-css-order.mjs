@@ -23,6 +23,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isIsolated } from './workspace-packages.mjs';
 
 const norm = s => s.replace(/\s+/g, ' ').trim();
 
@@ -298,8 +299,6 @@ function candidateWidths(sheets) {
 
 /* ---------------------------------------------------------------------- 装载 */
 
-/** 隔离区前缀：这些目录即使有样式表也不参与本仓产品的跨包层叠检查。 */
-const ISOLATED_PREFIXES = ['dsh-radar-'];
 
 /**
  * 列出 `packages/` 下所有带 manifest 的包目录（两种布局，与 `workspace-packages.mjs` 一致）。
@@ -318,7 +317,7 @@ export function packageDirs(pkgRoot) {
   const out = [];
   if (!existsSync(pkgRoot)) return out;
   for (const entry of readdirSync(pkgRoot).sort()) {
-    if (ISOLATED_PREFIXES.some(prefix => entry.startsWith(prefix))) continue;
+    if (isIsolated(entry)) continue;
     const flat = path.join(pkgRoot, entry);
     if (existsSync(path.join(flat, 'package.json'))) {
       out.push({ dir: flat, name: entry });
@@ -331,7 +330,7 @@ export function packageDirs(pkgRoot) {
       continue;
     }
     for (const child of children) {
-      if (!child.isDirectory() || ISOLATED_PREFIXES.some(prefix => child.name.startsWith(prefix))) continue;
+      if (!child.isDirectory() || isIsolated(child.name)) continue;
       const nested = path.join(flat, child.name);
       if (existsSync(path.join(nested, 'package.json'))) out.push({ dir: nested, name: child.name });
     }

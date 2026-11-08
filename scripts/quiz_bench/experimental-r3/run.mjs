@@ -5,7 +5,7 @@ import {graphFromRecord,graphFromDataset,compileIdeas,createScheduler,createQues
 import {loadDataset} from '../input.mjs';
 import {deepTutorBenchHost} from '../deeptutor-host.mjs';
 import {tokenLedger,timingLedger} from '../accounting.mjs';
-import {WorkerPoolLlm} from '../../../packages/dsh-zhiyun-core-parser/src/worker-pool.js';
+import {WorkerPoolLlm} from '../../../packages/core/parser/src/worker-pool.js';
 import {createToolTransport} from './tools.mjs';
 
 export async function loadGraph(input){

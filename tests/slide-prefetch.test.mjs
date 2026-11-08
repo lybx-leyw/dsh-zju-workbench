@@ -13,8 +13,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { ClassroomSource } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
-import { SlideCache } from '../packages/dsh-zhiyun-source-classroom/src/slide-store.js';
+import { ClassroomSource } from '../packages/source/classroom/src/source.js';
+import { SlideCache } from '../packages/source/classroom/src/slide-store.js';
 
 /**
  * 造一个**不碰网络**的 ClassroomSource。

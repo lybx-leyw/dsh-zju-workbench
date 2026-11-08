@@ -1,4 +1,4 @@
-// dsh-zhiyun-core-classroom-pbl 的装配与契约测试。
+// @lybx-leyw/dsh-zju-core-classroom-pbl 的装配与契约测试。
 //
 // 覆盖任务书的三条验证：
 //   1. 假 ctx apply 不抛，并 provide `zhiyunClassroomPbl`（含 provide 抛错的降级路径）；
@@ -17,10 +17,10 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-pbl/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-pbl/', import.meta.url);
 const plugin = await import(pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href);
 const BRIEF = JSON.parse(
-  await readFile(new URL('../packages/dsh-zhiyun-core-classroom-pbl/fixtures/brief.json', import.meta.url), 'utf8'),
+  await readFile(new URL('../packages/core/classroom-pbl/fixtures/brief.json', import.meta.url), 'utf8'),
 );
 
 // ── 测试装置 ────────────────────────────────────────────────────────────────

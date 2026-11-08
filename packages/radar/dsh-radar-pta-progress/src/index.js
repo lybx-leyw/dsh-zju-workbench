@@ -7,7 +7,7 @@
  * 落点（全部是**既有**的面板与既有**一个**服务，本包不注册任何插槽）：
  *
  *   ① `ptaRead({ action: 'progress' })` 的**返回口径**
- *      → `packages/dsh-zhiyun-source-campus/src/pta.js:480 progress()`
+ *      → `packages/source/campus/src/pta.js:480 progress()`
  *   ② `ptaRead({ action: 'problems' })` 的每行 `myStatus` 的三态化
  *      → 同文件 `:390 problems()`
  *   ③ 提交链路（本仓**完全不存在**，见 README「缺口 F-4」）
@@ -18,7 +18,7 @@
  *   只能「读它的语义 → 在本仓写」。因此**不复制上游源码**，只借鉴协议事实。
  */
 
-/** 服务名：本包依赖的既有校园数据服务（由 `dsh-zhiyun-source-campus` 提供）。 */
+/** 服务名：本包依赖的既有校园数据服务（由 `@lybx-leyw/dsh-zju-source-campus` 提供）。 */
 export const CAMPUS_SERVICE = 'zhiyunCampus';
 
 /**

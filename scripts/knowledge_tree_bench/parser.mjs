@@ -19,22 +19,22 @@ import { mount, serviceOf, apiOf, hostLlm, urlOf } from './_base.mjs';
 
 /** 纯函数模块（建树与重构）。 */
 export async function treeModule() {
-  return import(urlOf('dsh-zhiyun-core-parser', 'src/tree.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-parser', 'src/tree.js'));
 }
 
 /** 流水线模块（队列与 worker 池）。 */
 export async function pipelineModule() {
-  return import(urlOf('dsh-zhiyun-core-parser', 'src/pipeline.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-parser', 'src/pipeline.js'));
 }
 
 /** token 估算模块。 */
 export async function tokenizeModule() {
-  return import(urlOf('dsh-zhiyun-core-parser', 'src/tokenize.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-parser', 'src/tokenize.js'));
 }
 
 /** 阶段名与顺序。 */
 export async function stagesModule() {
-  return import(urlOf('dsh-zhiyun-core-parser', 'src/stages.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-parser', 'src/stages.js'));
 }
 
 /**
@@ -97,7 +97,7 @@ export async function mountParser({ dataDir, respond, config = {} } = {}) {
     },
     transport: { request() { throw Object.assign(new Error('基准台没有接课堂出口'), { code: 'NO_CLASSROOM' }); } },
   };
-  const mounted = await mount('dsh-zhiyun-core-parser', {
+  const mounted = await mount('@lybx-leyw/dsh-zju-core-parser', {
     dataDir,
     // 这一层的 ctx.llm 必须是**宿主形状**（prepareCall / resolveModelInfo），
     // 因为包内部要用产品自己的 HarnessLlm 去适配它。

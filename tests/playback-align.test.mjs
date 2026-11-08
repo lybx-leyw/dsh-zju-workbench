@@ -15,10 +15,10 @@ import {
   ALIGNMENT_STATE, REFUSAL,
   matched, locatedOnly, refused, validateResult,
   indexAt, resolveAt,
-} from '../packages/dsh-zhiyun-core-playback/src/alignment.js';
+} from '../packages/core/playback/src/alignment.js';
 import {
   probeDelta, findPageTurnCues, suggestAnchors, tagSuspicion, PROBE_DEFAULTS,
-} from '../packages/dsh-zhiyun-core-playback/src/probe.js';
+} from '../packages/core/playback/src/probe.js';
 
 // ── 三态契约 ─────────────────────────────────────────────
 

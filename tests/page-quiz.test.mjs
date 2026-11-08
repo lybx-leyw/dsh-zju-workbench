@@ -10,7 +10,7 @@ import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
-const pkg = join(root, 'packages', 'dsh-zhiyun-page-quiz');
+const pkg = join(root, 'packages', 'client', 'page-quiz');
 
 test('包声明与接线清单四处对齐', async () => {
   const manifest = JSON.parse(await readFile(join(pkg, 'package.json'), 'utf8'));
@@ -27,16 +27,20 @@ test('包声明与接线清单四处对齐', async () => {
   // 3. cordis.patch.yml 指向正确的 id。
   const patch = await readFile(join(pkg, 'cordis.patch.yml'), 'utf8');
   assert.match(patch, /id: zhiyun-page-quiz/);
-  assert.match(patch, /name: dsh-zhiyun-page-quiz/);
+  // ⚠️ 正则里 scope 的 `/` 只需**一层**转义（`\/`）。写成 `\\/` 时
+  // `\\` 表示「字面反斜杠」、紧跟的 `/` 提前闭合正则 → 整个文件
+  // `Invalid regular expression flags`。批量改包名时踩过。
+  // patch 里的 name 值带单引号（YAML 里 `@` 开头必须加引号，否则解析失败）。
+  assert.match(patch, /name: '@lybx-leyw\/dsh-zju-page-quiz'/);
 
   // 4. 进构建清单与 profile 装载清单。
   const build = await readFile(join(root, 'scripts', 'build.mjs'), 'utf8');
-  assert.ok(build.includes("'dsh-zhiyun-page-quiz'"),
+  assert.ok(build.includes("'page-quiz'"),
     'scripts/build.mjs 的 CLIENT_PACKAGES 里没有本包 —— 那条注释说的就是这件事：漏了不会报错，只会白屏');
 
   const profile = JSON.parse(await readFile(
     join(root, 'profiles', 'zju-workbench', 'package.json'), 'utf8'));
-  assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-page-quiz'),
+  assert.ok(profile.dsh.profile.bundles.includes('@lybx-leyw/dsh-zju-page-quiz'),
     'profiles/zju-workbench/package.json 的 bundles 里没有本包');
 });
 
@@ -47,15 +51,25 @@ test('client.jsx 注册的页面 id 与 NAV 里的 id 一致', async () => {
   const id = /id: '([a-z]+)'/.exec(client)[1];
   assert.equal(id, 'quiz');
 
+  // NAV 的唯一真相在 ui-shared。归档包里的 model.js 只是一句转发注释，读它拿不到 NAV。
   const model = await readFile(
-    join(root, 'packages', 'dsh-zhiyun-shell-workbench', 'src', 'model.js'), 'utf8');
+    join(root, 'packages', 'client', 'ui-shared', 'src', 'pages-model.js'), 'utf8');
   assert.ok(model.includes(`id: '${id}'`), `model.js 的 NAV 里没有 id: '${id}'`);
-  // 题库页是正常版心，不是整幅铺开 —— 反过来写进 FULL_BLEED_PAGES 会让它失去居中版心。
+  // 静态清单 `FULL_BLEED_PAGES` 只有 notes / docs —— 题库不进去。
   const fullBleed = /FULL_BLEED_PAGES = Object\.freeze\(\[([^\]]*)\]/.exec(model);
   assert.ok(fullBleed, 'model.js 里找不到 FULL_BLEED_PAGES');
   assert.ok(!fullBleed[1].includes("'quiz'"), '题库页不该进 FULL_BLEED_PAGES');
-  // 页面自己注册时必须与外壳的版式契约一致，否则版心会分叉。
-  assert.ok(!/fullBleed: true/.test(client), '题库页不应声明 fullBleed');
+  // 但页面**自己**要声明 `fullBleed: true`。
+  //
+  // 这条与上一行不矛盾，两者管的是不同的事：
+  //   - `FULL_BLEED_PAGES` 是旧外壳的静态清单（已无运行时消费者）；
+  //   - `registerPageContent({ fullBleed })` 是 `PageFrame` 的实际入参。
+  //
+  // 题库是应用型页面（CSS 里有 15 处 `height:100%` / `overflow` 布局信号），
+  // 必须走 `contentFlush` 才能自己管高度；不声明的话外壳会强塞 720px 内联
+  // 版心，把它压成窄栏。它**内部**仍用 `max-width: 900px; margin: 0 auto`
+  // 保持阅读宽度 —— 版心由页面自己给，不再靠外壳。
+  assert.ok(/fullBleed: true/.test(client), '题库页应声明 fullBleed（应用型页面，自己管布局与高度）');
 });
 
 test('两个页面包之间只有一条单向依赖：study → quiz', async () => {
@@ -75,13 +89,15 @@ test('两个页面包之间只有一条单向依赖：study → quiz', async () 
   }
 
   const quizManifest = JSON.parse(await readFile(join(pkg, 'package.json'), 'utf8'));
-  assert.ok(!quizManifest.dsh.client.external.includes('dsh-zhiyun-page-study'),
+  assert.ok(
+    !quizManifest.dsh.client.external.some((d) => d === 'dsh-zhiyun-page-study' || d === '@lybx-leyw/dsh-zju-page-study'),
     '题库包不该把学习页声明成 external 依赖');
 
   // 学习页这一侧要真的用上题库包（否则 external 声明过期，build-seeds 也会红）。
   const studyManifest = JSON.parse(await readFile(
-    join(root, 'packages', 'dsh-zhiyun-page-study', 'package.json'), 'utf8'));
-  assert.ok(studyManifest.dsh.client.external.includes('dsh-zhiyun-page-quiz'),
+    join(root, 'packages', 'client', 'page-study', 'package.json'), 'utf8'));
+  assert.ok(
+    studyManifest.dsh.client.external.some((d) => d === 'dsh-zhiyun-page-quiz' || d === '@lybx-leyw/dsh-zju-page-quiz'),
     '学习页没有把题库包声明成 external —— 它 import 了 quiz-panel.jsx / generation-models.jsx');
 });
 
@@ -90,7 +106,7 @@ test('学习页不再自己注册题库内容槽', async () => {
   // （key 是自己的页面 id），不再有 `zhiyun.<id>.content` 这层子槽。
   // 这条守卫的**本意**仍在：题库只能有一个注册者。
   const studyClient = await readFile(
-    join(root, 'packages', 'dsh-zhiyun-page-study', 'src', 'client.jsx'), 'utf8');
+    join(root, 'packages', 'client', 'page-study', 'src', 'client.jsx'), 'utf8');
   assert.ok(!studyClient.includes("id: 'quiz'"),
     '学习页也在注册 quiz 页内容，会和题库包抢同一个 key');
 

@@ -98,7 +98,7 @@ async function main() {
 
   const creds = credentialsFromEnv();
   // card 模块只 import 一次，各域文件共用
-  const card = await import(pathToFileURL(path.join(root, 'packages', 'dsh-zhiyun-source-card', 'src', 'index.js')).href);
+  const card = await import(pathToFileURL(path.join(root, 'packages', '@lybx-leyw/dsh-zju-source-login', 'src', 'index.js')).href);
 
   for (const name of names) {
     const spec = PLATFORMS[name];

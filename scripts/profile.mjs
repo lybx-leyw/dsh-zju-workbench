@@ -46,6 +46,41 @@ export const retiredBundles = ['dsh-pages', 'dsh-zhiyun-pro-ui', 'dsh-zhiyun-stu
   // 再补上新名（新名从 profile 模板的 bundles 里来）。
   'dsh-zhiyun-shell-ui'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
+
+/**
+ * 断言宿主的**客户端内核**（`ui-slots` / `ui-primitives` / `client-store`）可用。
+ *
+ * # 它们在哪一层（0.2.2-rc.1 实测）
+ *
+ * 这三个模块**不再是独立 npm 包**，而是打包进前端产物：
+ * `@deepseek-ai/dsh-web-frontend/dist/assets/index-*.js`。
+ *
+ * 我们的客户端 bundle 仍然按模块名 `require` 它们（构建期 external），
+ * 由宿主前端的模块表在运行时解析 —— 所以**客户端代码不需要改**，
+ * 但「装没装好」的判断必须换成查 dist。
+ *
+ * 查 node_modules 会得到「找不到宿主」的误报；而新版宿主确实没有那个包。
+ *
+ * @param modules - 宿主的 `node_modules` 绝对路径。
+ * @param version - 宿主版本（报错信息用）。
+ */
+async function assertClientKernel(modules, version) {
+  const distDir = path.join(modules, '@deepseek-ai', 'dsh-web-frontend', 'dist');
+  if (!await exists(distDir)) {
+    throw new Error(
+      `宿主 ${version} 缺少 @deepseek-ai/dsh-web-frontend/dist —— `
+      + '客户端内核模块（ui-slots / ui-primitives / client-store）由它提供，'
+      + '缺了这个目录，所有客户端插件都会在运行时找不到模块。这个安装目录不完整。',
+    );
+  }
+  // dist 里必须真的有打包产物：空目录等于「装了但没构建」，比没装更难查。
+  const assets = path.join(distDir, 'assets');
+  const files = await readdir(assets).catch(() => []);
+  if (!files.some(name => name.endsWith('.js'))) {
+    throw new Error(`宿主 ${version} 的 dsh-web-frontend/dist/assets 里没有 .js 产物 —— 前端未构建完整。`);
+  }
+}
+
 /**
  * 哪些 bundle 来自 npm 依赖、不参与本仓链接与客户端构建。
  *
@@ -54,16 +89,47 @@ export async function exists(file) { try { await access(file); return true; } ca
  * 也不为它生成 profile 目录链接 —— profile 需要的链接由
  * {@link externalBundles} 里的包名从 node_modules 解析。
  */
-const EXTERNAL_BUNDLES = ['@lybx-leyw/dsh-pages'];
+// 不属于「本仓自有包」但需要在 profile 里出现的 bundle。
+//
+// `sourceBundles` 只收 `ownPackages()` 扫到的包；而 vendor 区块
+// （`packages/vendor/`）被 `ISOLATED_GROUPS` 隔离，不在那个集合里 ——
+// 但它确实是本仓维护、需要装配的包，所以在这里单列。
+const EXTERNAL_BUNDLES = [
+  '@lybx-leyw/dsh-pages',
+  // 论文阅读：上游代码 + 我们的改动，住在 `packages/vendor/paper-reader/`。
+  '@ggboy123/dsh-paper-reader',
+];
 export const externalBundles = EXTERNAL_BUNDLES;
 /** 需要在 profile 里出现的 bundle 名（本仓包 + npm 依赖包）。 */
 export const allBundles = () => [...sourceBundles, ...EXTERNAL_BUNDLES];
-/** 校验一个候选安装目录：六个宿主包版本一致、在清单内，Cordis 大版本匹配。 */
+/**
+ * 校验一个候选安装目录：宿主包版本一致、在清单内，Cordis 大版本匹配。
+ *
+ * # 为什么不能只查一份固定包名清单
+ *
+ * 原先这里硬编码六个包（含 `dsh-client-ui-slots`）。但 **0.2.1-rc.5 起，宿主把
+ * `ui-slots` / `ui-primitives` / `client-store` 内嵌进了前端 dist**
+ * （`@deepseek-ai/dsh-web-frontend/dist/assets/index-*.js`），不再作为独立 npm 包安装。
+ *
+ * 它们在浏览器里**依然存在** —— 宿主的 UI 包照旧
+ * `require("@deepseek-ai/dsh-client-ui-primitives")`，由前端 dist 的模块表解析。
+ * 所以我们的 `HOST_SEEDS`（构建期 external 名单）**不需要改**，要改的只是这里
+ * 对「宿主装没装好」的判断方式。
+ *
+ * 现在的做法：
+ *   1. 必查的只有四个**每条版本线都在**的包（dsh / dsh-base / dsh-web-app / ui-layout）；
+ *   2. `ui-workspace` 按存在性记为可选（它是布局桥接用的，缺了功能降级但不该拒绝启动）；
+ *   3. 内核包（primitives / store / slots）**不再查 node_modules**，
+ *      改由前端 dist 是否就绪来判断（见 {@link assertClientKernel}）。
+ */
 async function readHost(app) {
   const modules = path.join(app, 'node_modules');
   const supported = lock.hostVersions;
   const seen = new Set();
-  for (const name of ['dsh', 'dsh-base', 'dsh-web-app', 'dsh-client-ui-layout', 'dsh-client-ui-slots', 'dsh-client-ui-workspace']) {
+  // 每个受支持版本都必须有的包。**不要在加版本时把已经内嵌的包塞回来** ——
+  // 那会让新版宿主直接「找不到宿主」，而它其实是好的。
+  const REQUIRED = ['dsh', 'dsh-base', 'dsh-web-app', 'dsh-client-ui-layout'];
+  for (const name of REQUIRED) {
     const file = path.join(modules, '@deepseek-ai', name, 'package.json');
     if (!await exists(file)) throw new Error(`找不到 DSH 宿主：${file}。请用 ZHIYUN_DSH_APP_DIR 指向已安装的 resources/app。`);
     const { version } = JSON.parse(await readFile(file, 'utf8'));
@@ -72,6 +138,7 @@ async function readHost(app) {
   }
   // 每个包各自都在清单里还不够：一个目录里混着两个版本同样是坏状态。
   if (seen.size > 1) throw new Error(`宿主包版本不一致（${[...seen].join(' / ')}）—— 同一个安装目录不能混用版本。`);
+  await assertClientKernel(modules, [...seen][0]);
   const cordis = JSON.parse(await readFile(path.join(modules, '@deepseek-ai/cordis/package.json'), 'utf8'));
   if (Number(cordis.version.split('.')[0]) !== lock.cordisMajor) {
     throw new Error(`Cordis 大版本不匹配：${cordis.version}，本工作台验证的是 ${lock.cordisMajor}.x`);

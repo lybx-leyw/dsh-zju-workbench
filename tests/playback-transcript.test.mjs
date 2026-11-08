@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import {
   TRACK_KIND, resolveTrack, buildCues, activeIndex, burnLine, speechBands,
   isTailNoise, noiseStats,
-} from '../packages/dsh-zhiyun-core-playback/src/transcript.js';
+} from '../packages/core/playback/src/transcript.js';
 
 // ── 碎片合并（真实截图里的形状） ─────────────────────────
 //

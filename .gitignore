@@ -1,4 +1,10 @@
 node_modules/
+# 临时脚本与调试输出：开发时随手写的 `tmp-*.mjs` / `tmp-out.txt` 常含
+# **本地绝对路径**（如 `C:\Users\<name>\...` 的模块解析报错）。本仓库是公开的，
+# 这类文件必须挡在提交之外 —— 已踩过一次（tmp-out.txt 被抓出 5 处用户路径）。
+tmp-*
+.temp-*
+.tmp-*
 .ref/
 .ref_book2skill/
 .ref-codex-ui/
@@ -45,6 +51,12 @@ deploy/*/data/
 #   npm run vendor:fetch        （校验 upstream.lock.json / vendor.lock.json 的
 #   npm run vendor:fetch -- --check   提交与 SHA-256 后落盘）
 vendor/
+
+# ⚠️ 例外：`packages/vendor/` 是**会改对方代码的上游副本**，与上面那种「只读快照」
+# 性质相反 —— 我们自己维护、自己锁版本，改动必须以普通文件进版本控制，
+# 否则 clone 下来缺代码、也没人知道我们改了上游什么（见该目录的 PATCHES.md 约定）。
+!packages/vendor/
+!packages/vendor/**
 
 # Local research library (publisher PDFs and reading notes).
 /.refers/

@@ -27,9 +27,9 @@ const {
   produceMaterialAnalysis,
   MATERIAL_PHASE,
   MAX_MATERIALS,
-} = await import(src('dsh-zhiyun-core-classroom-generate', 'phases/material-analysis.js'));
-const { buildOutlinePrompt } = await import(src('dsh-zhiyun-core-classroom-generate', 'prompts.js'));
-const { parsePDF } = await import(src('dsh-zhiyun-core-classroom-media', 'pdf/parse.js'));
+} = await import(src('@lybx-leyw/dsh-zju-core-classroom-generate', 'phases/material-analysis.js'));
+const { buildOutlinePrompt } = await import(src('@lybx-leyw/dsh-zju-core-classroom-generate', 'prompts.js'));
+const { parsePDF } = await import(src('@lybx-leyw/dsh-zju-core-classroom-media', 'pdf/parse.js'));
 const page = await import(src('dsh-zhiyun-page-classroom-build', 'progress.js'));
 
 const LECTURE_PATH = join(REPO_ROOT, 'fixtures', 'classroom-material', 'lecture-fourier.pdf');

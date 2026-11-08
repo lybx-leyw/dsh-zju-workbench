@@ -11,7 +11,7 @@
  * （JiLiZART/BBob，MIT，★200，push 2026-10-26），
  * 给 CC98 的**读侧正文转换**换一种中间表示：
  *
- *   (a) 现有底层：`packages/dsh-zhiyun-source-cc98/src/ubb.js` 的
+ *   (a) 现有底层：`packages/source/cc98/src/ubb.js` 的
  *       `ubbToText(content) → string` —— 78 行手写正则，输出**纯文本**。
  *       契约是 string，所以下面这些**结构上不可能保留**：
  *         · `[quote]` 的**嵌套深度**（两层与一层都压成行首一个 `> [引用]`）；
@@ -24,7 +24,7 @@
  * ── 为什么是「强化式集成」而不是简单集成（三问见 README）──────────
  *
  *   1. **仍是同一个面板** —— 4 个调用点（`reads.js:106 / :347 / :384 / :430`）都在
- *      `dsh-zhiyun-source-cc98` 内，服务同一条 CC98 正文读路径；不新增页面、不加插槽。
+ *      `@lybx-leyw/dsh-zju-source-cc98` 内，服务同一条 CC98 正文读路径；不新增页面、不加插槽。
  *   2. **仍是相似正交的功能** —— 同一个输入（UBB 字符串）、同一个出口（正文），
  *      只把**中间表示**从 string 换成 AST。不是第二套渲染器，是同一层的升级。
  *   3. **底层多调了更优质实现** —— 「嵌套层级」与「字符偏移」本仓**为 0**；
@@ -71,7 +71,7 @@ export function upstreamManifest() {
  *
  * TODO-C1 · `[code]` 缝合层（**前置条件**）
  *   - 先用 `/\[code(?:=[^\]]*)?\][\s\S]*?\[\/code\]/gi` 把 `[code]…[/code]` 整段**占位化**
- *     （与 `dsh-zhiyun-source-cc98/src/ubb.js` 的处理保持一致）；
+ *     （与 `@lybx-leyw/dsh-zju-source-cc98/src/ubb.js` 的处理保持一致）；
  *   - 剩余片段交 `parse()`；未闭合的 `[code]`（站点历史写法）需单独兜底；
  *   - 重组时把占位符换回原文，并**重新计算**拼接点的偏移。
  *

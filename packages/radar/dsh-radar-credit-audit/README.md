@@ -18,7 +18,7 @@
 
 | 判据 | 结论 | 依据 |
 | --- | --- | --- |
-| 仍是同一个面板 | ✅ | 落点是 `dsh-zhiyun-source-zdbk/src/reads.js` 的 `gpaOf()` 结果（`earned_credits` / `gpa_credits`）；不新增页、不新增路由、**本包零 UI** |
+| 仍是同一个面板 | ✅ | 落点是 `@lybx-leyw/dsh-zju-source-zdbk/src/reads.js` 的 `gpaOf()` 结果（`earned_credits` / `gpa_credits`）；不新增页、不新增路由、**本包零 UI** |
 | 功能仍相似正交 | ✅ | 现有 = **总数 + GPA**（一个口径、一个数）；接入后 = **同一个数**再按模块拆开 + 缺口 + 在修证据。同一件事的两个粒度，不是两件事 |
 | 底层多调了更优质实现 | ✅ | 现有 = 学分加权求和（`gpaOf`）；接入后 = 确定性规则引擎（选课组「至少 N 门」折算、外语 L1/L2/L3 封顶、并列选项组、在修降级 red→yellow）+ JSON Schema 契约 + 双实现对拍 |
 

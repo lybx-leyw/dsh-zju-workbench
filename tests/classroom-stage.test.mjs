@@ -1,4 +1,4 @@
-// dsh-zhiyun-core-classroom-stage 的契约测试。
+// @lybx-leyw/dsh-zju-core-classroom-stage 的契约测试。
 //
 // 覆盖任务书的三条验证：
 //   1. 动作账本按序重放，得到**相同终态**（宿主折叠 vs 重新折叠，逐字段深比较）；
@@ -19,7 +19,7 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const pkgDir = path.join(root, 'packages/dsh-zhiyun-core-classroom-stage');
+const pkgDir = path.join(root, 'packages/core/classroom-stage');
 
 const plugin = await import(pathToFileURL(path.join(pkgDir, 'src/index.js')).href);
 const ledgerModule = await import(pathToFileURL(path.join(pkgDir, 'src/ledger.js')).href);
@@ -320,7 +320,7 @@ test('时间轴按 EFFECT_AUTO_CLEAR_MS 抹掉过期的高亮', () => {
  * 把 client.jsx 打成可 import 的 ESM。
  *
  * 渲染层换成桩：本测试只回答「组件树能不能渲染出 HTML」，真渲染树由
- * `dsh-zhiyun-classroom-renderer` 自己的测试负责（那里 vendor 了上游产物）。
+ * `@lybx-leyw/dsh-zju-core-classroom-renderer` 自己的测试负责（那里 vendor 了上游产物）。
  */
 async function loadClient() {
   const { build } = await import('esbuild');
@@ -340,7 +340,7 @@ async function loadClient() {
       plugins: [{
         name: 'stub-renderer',
         setup(builder) {
-          builder.onResolve({ filter: /^dsh-zhiyun-classroom-renderer$/ }, () => ({
+          builder.onResolve({ filter: /^@lybx-leyw\/dsh-zju-core-classroom-renderer$/ }, () => ({
             path: 'renderer-stub',
             namespace: 'stub',
           }));

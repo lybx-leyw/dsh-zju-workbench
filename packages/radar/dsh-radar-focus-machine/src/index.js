@@ -47,7 +47,7 @@ export const name = 'radar-focus-machine';
  * 不声明 `inject`：本包是**纯状态机**，不取任何服务、不提供任何服务。
  *
  * TODO-4：若评审选择「宿主侧」路线，需要改成 `inject: ['profileContext']` 以便把
- * 计时状态落盘到 `data/`（与 `dsh-zhiyun-source-zdbk` 同一做法）；
+ * 计时状态落盘到 `data/`（与 `@lybx-leyw/dsh-zju-source-zdbk` 同一做法）；
  * 若选「客户端」路线，则保持无 inject，状态走 `uiWorkspace` 之外的本地存储。
  */
 export const inject = [];

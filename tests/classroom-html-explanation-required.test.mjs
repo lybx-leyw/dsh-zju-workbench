@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateSlideDeck } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
+import { validateSlideDeck } from '../packages/core/classroom-generate/src/html-slide-shell.js';
 
 const base = {
   title: '标题', points: ['要点'], summary: '总结',

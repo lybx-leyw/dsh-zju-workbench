@@ -5,7 +5,7 @@
 //   - 手机端：自动堆叠（幻灯片在上、讲解在下），幻灯片仍完整
 import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { renderSlideChapter } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
+import { renderSlideChapter } from '../packages/core/classroom-generate/src/html-slide-shell.js';
 
 const saved = JSON.parse(await readFile(new URL('../artifacts/html-slides-real/chapter-1-checkpoint.json', import.meta.url), 'utf8'));
 // strictFontSize: false —— 这是**已生成**的历史数据，不能拿今天的生成期字号下限去卡它。

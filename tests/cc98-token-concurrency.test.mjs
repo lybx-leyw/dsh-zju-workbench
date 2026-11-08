@@ -20,9 +20,9 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SessionStore } from 'dsh-zhiyun-source-campus/http';
-import { TokenStore } from '../packages/dsh-zhiyun-source-cc98/src/token.js';
-import { Cc98Client } from '../packages/dsh-zhiyun-source-cc98/src/client.js';
+import { SessionStore } from '@lybx-leyw/dsh-zju-source-http';
+import { TokenStore } from '../packages/source/cc98/src/token.js';
+import { Cc98Client } from '../packages/source/cc98/src/client.js';
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });

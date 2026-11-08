@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 
 import {
   TOPIC_RANGE_DEFAULTS, buildTopicRanges, topicAt, topicList,
-} from '../packages/dsh-zhiyun-page-study/src/topic-range.js';
+} from '../packages/client/page-study/src/topic-range.js';
 
 const SEC = 1000;
 

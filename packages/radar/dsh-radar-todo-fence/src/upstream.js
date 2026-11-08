@@ -40,7 +40,7 @@ export const UPSTREAM_PENDING_FIELDS = Object.freeze(['is_closed', 'is_started',
 export const NOT_BORROWED = Object.freeze([
   '不搬 zju.py 的任何函数体：它是单文件脚本，与本仓 ESM + 包结构不兼容，搬过来就是「搬运上游源码」',
   '不搬它的登录（keyring / Keychain）：本仓用 CAS + SessionStore，两套会话生命周期不同',
-  '不搬它的 PPT 截图合并 / 转录链路：本仓 `dsh-zhiyun-core-player` 已有，属重复',
+  '不搬它的 PPT 截图合并 / 转录链路：本仓 `@lybx-leyw/dsh-zju-core-player` 已有，属重复',
   '不采用它的 `todo` 命令语义：它直接把 `todo_list` 打印出来，没有与逐课对账 —— 这恰恰是本包要补的那一层',
 ]);
 

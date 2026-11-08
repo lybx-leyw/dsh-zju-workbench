@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import {
   ACTION, DEFAULT_POLICY, decide, withRetry, backoffDelay, throttleConcurrency,
   createStreamWatchdog, guardedStream,
-} from '../packages/dsh-zhiyun-core-llm-error/src/index.js';
+} from '../packages/core/llm-error/src/index.js';
 
 /** 立即返回的 sleep（测试不该真的等）。 */
 const noSleep = async () => {};

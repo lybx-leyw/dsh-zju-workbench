@@ -17,7 +17,7 @@ import { mount, serviceOf, apiOf, memoryCredentials, urlOf } from './_base.mjs';
 
 /** 知识域：存储服务（study 需要它，否则构造直接拒绝）。 */
 export async function mountKnowledge({ dataDir } = {}) {
-  const mounted = await mount('dsh-zhiyun-core-knowledge', { dataDir });
+  const mounted = await mount('@lybx-leyw/dsh-zju-core-knowledge', { dataDir });
   const service = serviceOf(mounted, 'zhiyunKnowledge');
   return { mounted, service, ...apiOf(service) };
 }
@@ -39,7 +39,7 @@ export async function mountStudy({ dataDir, llm, parser, classroom, lecture, qui
   // 知识库是**构造期硬依赖**：没有它工作台根本起不来（记录没地方落）。
   const knowledge = await mountKnowledge({ dataDir: path.join(dataDir, 'knowledge') });
 
-  const mounted = await mount('dsh-zhiyun-core-study', {
+  const mounted = await mount('@lybx-leyw/dsh-zju-core-study', {
     dataDir,
     llm,
     services: {
@@ -78,7 +78,7 @@ export function inMemoryClassroom() {
 
 /** quiz 域：题库动作。 */
 export async function mountQuiz({ dataDir, parser } = {}) {
-  const mounted = await mount('dsh-zhiyun-core-quiz', {
+  const mounted = await mount('@lybx-leyw/dsh-zju-core-quiz', {
     dataDir,
     services: { zhiyunParser: parser ?? { async parse() { throw Object.assign(new Error('基准没有接解析器'), { code: 'NO_PARSER' }); } } },
   });
@@ -88,14 +88,14 @@ export async function mountQuiz({ dataDir, parser } = {}) {
 
 /** notes 域：节笔记。 */
 export async function mountNotes({ dataDir } = {}) {
-  const mounted = await mount('dsh-zhiyun-core-notes', { dataDir });
+  const mounted = await mount('@lybx-leyw/dsh-zju-core-notes', { dataDir });
   const service = serviceOf(mounted, 'zhiyunNotes');
   return { mounted, service, ...apiOf(service) };
 }
 
 /** 讲义文本 codec（study 侧要核对润色前后的结构不变量）。 */
 export async function agentTextModule() {
-  return import(urlOf('dsh-zhiyun-core-lecture', 'src/agent-text.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-lecture', 'src/agent-text.js'));
 }
 
 export { memoryCredentials };

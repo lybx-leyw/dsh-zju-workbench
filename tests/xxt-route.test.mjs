@@ -18,8 +18,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { apply, ROUTE_PATH, name } from '../packages/dsh-zhiyun-source-xxt/src/index.js';
-import { XXT_ENDPOINTS } from '../packages/dsh-zhiyun-source-xxt/src/hosts.js';
+import { apply, ROUTE_PATH, name } from '../packages/source/xxt/src/index.js';
+import { XXT_ENDPOINTS } from '../packages/source/xxt/src/hosts.js';
 
 /**
  * 造一个够用的假上下文。

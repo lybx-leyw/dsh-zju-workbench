@@ -10,8 +10,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createGenerateService } from '../packages/dsh-zhiyun-core-classroom-generate/src/index.js';
-import { initialState, reduce, PHASE } from '../packages/dsh-zhiyun-page-classroom-build/src/progress.js';
+import { createGenerateService } from '../packages/core/classroom-generate/src/index.js';
+import { initialState, reduce, PHASE } from '../packages/client/page-classroom-build/src/progress.js';
 
 function fakeStudio() {
   return {

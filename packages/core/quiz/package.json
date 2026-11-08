@@ -1,0 +1,41 @@
+{
+  "name": "@lybx-leyw/dsh-zju-core-quiz",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "智云 Pro 出题与质检：题形状 + 先筛后出 + 三态硬检查（零 UI、零落盘，llm 由集成层注入）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./model": "./src/model.js",
+    "./generate": "./src/generate.js",
+    "./quality": "./src/quality.js",
+    "./dedupe": "./src/dedupe.js",
+    "./lecture": "./src/lecture.js",
+    "./store": "./src/store.js",
+    "./package.json": "./package.json",
+    "./points": "./src/points.js",
+    "./knowledge-points": "./src/knowledge-points.js",
+    "./upstream": "./src/upstream.js",
+    "./engines": "./src/engines.js",
+    "./engine-registry": "./src/engine-registry.js",
+    "./concepts": "./src/concepts.js",
+    "./strategies": "./src/strategies.js",
+    "./engines/r3-v9/common": "./src/engines/r3-v9/common.mjs",
+    "./engines/r3-v9/tree": "./src/engines/r3-v9/tree.mjs",
+    "./engines/r3-v9/graph": "./src/engines/r3-v9/graph.mjs",
+    "./engines/r3-v9/tools": "./src/engines/r3-v9/tools.mjs",
+    "./engines/r3-v9/generator": "./src/engines/r3-v9/generator.mjs",
+    "./engines/r3-v9/scheduler": "./src/engines/r3-v9/scheduler.mjs",
+    "./engines/r3-v9/compiler": "./src/engines/r3-v9/compiler.mjs",
+    "./client": "./lib/client.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  }
+}

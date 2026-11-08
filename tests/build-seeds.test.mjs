@@ -142,7 +142,7 @@ test('本包的 dsh.client.external 声明的每个包都真的被 import 了（
 // 允许**有意内联**的第三方依赖（包名 -> 理由）。
 // 其余任何 src/ 之外的文件出现在产出里，都说明某个裸模块 import 没被 external 化。
 const INTENTIONALLY_BUNDLED = {
-  // 见 packages/dsh-zhiyun-page-study/src/hls.js 文件头：客户端产物是 CJS，
+  // 见 packages/client/page-study/src/hls.js 文件头：客户端产物是 CJS，
   // esbuild 在 CJS 下不做代码分割，所以「按需加载」只能靠选最小构建产物，
   // 体积（~363 KB）已被显式接受。它必须进产出，否则直播直接不可用。
   'hls.js': 'page-study：HLS 直播播放器，按设计内联（见 src/hls.js 体积权衡）',
@@ -167,12 +167,16 @@ const INTENTIONALLY_BUNDLED = {
   //
   // 跨包内联同理：classroom-agent / classroom-stage / classroom-renderer
   // 各自把用到的内核打进自己的 bundle，不做运行时共享。
-  'dsh-zhiyun-classroom-dsl': 'classroom 内核：无客户端半边，按设计被使用者内联',
-  'dsh-zhiyun-classroom-geometry': 'classroom 内核：无客户端半边，按设计被使用者内联',
+  //
+  // `dsh-zhiyun-classroom-dsl` 已归档（`archive/deprecated-packages/`）：
+  // 2026-10-31 `renderer` 改成自研 4 类元素后，全仓再没有 import 它。
+  // 从这份「允许无客户端产物」的例外清单里一并移除 —— 留着会与
+  // 「清单里的包必须真实存在」冲突。
+  '@lybx-leyw/dsh-zju-core-classroom-geometry': 'classroom 内核：无客户端半边，按设计被使用者内联',
   // 朗读时长估算：纯函数、零依赖、无 React 无 IO。
   // 从 classroom-stage（客户端包）下沉到这里，就是为了让服务端包
   // （export / agent）能内联它而不越过「客户端包不该被内联」的边界。
-  'dsh-zhiyun-core-classroom-timing': 'classroom-timing：纯函数时长估算，被 stage/export/agent 内联共用',
+  '@lybx-leyw/dsh-zju-core-classroom-timing': 'classroom-timing：纯函数时长估算，被 stage/export/agent 内联共用',
   // classroom-geometry 的三个纯依赖：SVG path 解析、HTML 实体解码、颜色换算。
   // 都是无状态纯函数，classroom-stage 与 classroom-renderer 各自内联一份，
   // 没有跨包共享实例的需求（几何计算输入输出都是 JSON，不存在对象身份比较）。

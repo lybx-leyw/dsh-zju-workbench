@@ -18,7 +18,7 @@
 | 判据 | 结论 | 依据 |
 | --- | --- | --- |
 | ① 仍是同一个面板 | ✅ 成立 | 落点是笔记页已有的正文渲染通路（`dsh-zhiyun-page-notes/src/client.jsx` 用宿主 `MarkdownText`，见该文件 23-28 行注释「为什么正文用宿主的 MarkdownText」）。本包只改「这段 Markdown 由谁产生」 |
-| ② 功能仍相似正交 | ✅ 成立 | 现有 `dsh-zhiyun-source-cc98/src/ubb.js` 的 `ubbToText()` 只做 **UBB → 纯文本**；本包做同一件事的**保结构档位**。与 `dsh-radar-cc98-ubb-bridge`（写方向）构成读写对偶，不重叠 |
+| ② 功能仍相似正交 | ✅ 成立 | 现有 `@lybx-leyw/dsh-zju-source-cc98/src/ubb.js` 的 `ubbToText()` 只做 **UBB → 纯文本**；本包做同一件事的**保结构档位**。与 `dsh-radar-cc98-ubb-bridge`（写方向）构成读写对偶，不重叠 |
 | ③ 底层多调了更优质实现 | ✅ 成立 | 纯文本方案里，`[img]` / `[url]` / `[quote]` 都被压成文字，**翻页与引用楼层的链接关系不可回溯**；上游用 `documents.ts` + `navigation.ts` 建带锚点的文档图，链接是真的链接 |
 
 ## 上游
@@ -38,7 +38,7 @@
 
 | 包 | 方向 | 关系 |
 | --- | --- | --- |
-| `dsh-zhiyun-source-cc98` | 取正文 | 复用其 `Cc98Client` / `TokenStore`，**不另建登录栈** |
+| `@lybx-leyw/dsh-zju-source-cc98` | 取正文 | 复用其 `Cc98Client` / `TokenStore`，**不另建登录栈** |
 | `dsh-radar-cc98-ubb-bridge` | **写**（MD → UBB） | 与本包构成读写对偶；**标记表必须同源**，否则写出去再读回来会对不上 |
 
 ## 评审要点（按优先级）

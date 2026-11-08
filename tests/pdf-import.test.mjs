@@ -136,7 +136,7 @@ test('PDF 删除走同一条 remove（附件路径带扩展名）', async () => 
 });
 
 test('PDF 路由：路径穿越与非法资源被挡', async () => {
-  const mod = await import('../packages/dsh-zhiyun-page-notes/src/pdf-viewer.js');
+  const mod = await import('../packages/client/page-notes/src/pdf-viewer.js');
   const dir = await mkdtemp(path.join(tmpdir(), 'pdf-route-'));
   try {
     await writeFile(path.join(dir, 'a.pdf'), minimalPdf());

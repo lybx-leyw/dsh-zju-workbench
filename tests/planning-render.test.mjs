@@ -41,7 +41,7 @@ async function loadClient(suffix = '') {
   const outfile = path.join(dir, `client${suffix}.mjs`);
   try {
     await build({
-      entryPoints: [path.join(root, 'packages/dsh-zhiyun-page-planning/src/client.jsx')],
+      entryPoints: [path.join(root, 'packages/client/page-planning/src/client.jsx')],
       bundle: true,
       write: true,
       outfile,
@@ -55,7 +55,10 @@ async function loadClient(suffix = '') {
       plugins: [{
         name: 'stub-primitives',
         setup(builder) {
-          builder.onResolve({ filter: /^@lybx-leyw/dsh-zju-ui-shared$/ }, () => ({ path: 'stub', namespace: 'stub' }));
+          // ⚠️ 正则里的 `/` 必须转义：包名带 scope 时（`@lybx-leyw/dsh-zju-ui-shared`）
+          // 不转义会让字面量在 scope 中间提前闭合，整个文件报
+          // `Invalid regular expression flags`。批量改包名时踩过。
+          builder.onResolve({ filter: /^@lybx-leyw\/dsh-zju-ui-shared$/ }, () => ({ path: 'stub', namespace: 'stub' }));
           builder.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
             contents: `
               import React from "react";
@@ -68,6 +71,13 @@ async function loadClient(suffix = '') {
               export const useStore = (store) => store.getSnapshot();
               export const useStudy = (controller) => controller.getSnapshot();
               export const mountStyle = () => {};
+              // 桩必须覆盖**真实模块的全部导出面**：页面入口直接用 registerPageContent
+              // 注册自己，少了它 esbuild 会报 No matching export，八条用例全红。
+              // 新增原语时这里也要跟着加（同 ui-shared 的导出清单）。
+              export const registerPageContent = () => {};
+              export const AssistantDrawer = () => null;
+              export const Markdown = () => null;
+              export const PageFrame = () => null;
             `,
             loader: 'jsx',
             resolveDir: root,

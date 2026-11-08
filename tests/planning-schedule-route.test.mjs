@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createHandler as createPlanningHandler, ScheduleStore } from '../packages/dsh-zhiyun-page-planning/src/index.js';
+import { createHandler as createPlanningHandler, ScheduleStore } from '../packages/client/page-planning/src/index.js';
 
 const block = { taskKey: 'plan:fake-prefix:2', title: '保留的标题', start: '2026-11-01T09:00:00Z', end: '2026-11-01T10:00:00Z' };
 function harness(t, { cached = false, enabled = true } = {}) {

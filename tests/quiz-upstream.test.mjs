@@ -8,7 +8,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { checkCandidate, createUpstreamQuizEngine } from '../packages/dsh-zhiyun-core-quiz/src/upstream.js';
+import { checkCandidate, createUpstreamQuizEngine } from '../packages/core/quiz/src/upstream.js';
 
 // ── 词表与语义 ────────────────────────────────────────────────────────────────
 

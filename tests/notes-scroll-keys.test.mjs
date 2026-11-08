@@ -55,7 +55,7 @@ async function bundle() {
       export const Icon = () => React.createElement("i");
       export const Notice = (p) => React.createElement("div", { className: "notice" }, p.children);
       export const mountStyle = () => {};`,
-    'dsh-zhiyun-graph-render': `export const NoteGraph = () => null; export const css = "";`,
+    '@lybx-leyw/dsh-zju-ui-graph-render': `export const NoteGraph = () => null; export const css = "";`,
     '@deepseek-ai/dsh-client-ui-primitives': `import React from "react";
       export const MarkdownText = (p) => React.createElement("div", { className: "md" },
         React.createElement("div", { style: { height: 6000 } }, p.text));`,
@@ -65,7 +65,7 @@ async function bundle() {
       contents: `
         import React from "react";
         import { createRoot } from "react-dom/client";
-        import { NotesLibrary } from "./packages/dsh-zhiyun-page-notes/src/client.jsx";
+        import { NotesLibrary } from "./packages/client/page-notes/src/client.jsx";
         const tree = ${JSON.stringify(TREE)};
         window.fetch = async (url, init) => {
           let method = "";
@@ -324,7 +324,7 @@ test('笔记页：PageUp/PageDown/↑/↓ 按焦点上下文分派', async (t) =
 
 test('滚动键的接线守卫：挂 document 而非容器，且四类豁免齐全', async () => {
   // 上面那条浏览器测试证明"行为对"；这一条钉住"实现不会在下一次重构里退回错的那版"。
-  const source = await readFile(path.join(root, 'packages/dsh-zhiyun-page-notes/src/client.jsx'), 'utf8');
+  const source = await readFile(path.join(root, 'packages/client/page-notes/src/client.jsx'), 'utf8');
 
   assert.match(source, /document\.addEventListener\('keydown', onKeyDown, true\)/,
     '必须挂 document —— 挂在页面容器上的话，焦点在 body 时一次都收不到（实测）');

@@ -5,9 +5,9 @@
 // 而不是"我们的纠正函数被调用了"。
 
 import assert from 'node:assert/strict';
-import { buildPptxBuffer } from '../packages/dsh-zhiyun-core-classroom-export/src/index.js';
-import { parseSceneResponse } from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
-import { ratiosFor } from '../packages/dsh-zhiyun-core-classroom-export/src/doc.js';
+import { buildPptxBuffer } from '../packages/core/classroom-export/src/index.js';
+import { parseSceneResponse } from '../packages/core/classroom-generate/src/scene.js';
+import { ratiosFor } from '../packages/core/classroom-export/src/doc.js';
 import JSZip from 'jszip';
 
 const EMU_PER_INCH = 914400;

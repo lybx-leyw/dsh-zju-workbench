@@ -21,7 +21,7 @@
  * 本文件早就写明「npm 上 `cc98-mcp` 返回 404，上游从未发布到 npm」，并给了两条
  * 出路：(a) 等发 npm / 改 git 依赖，(b) 放弃挂载、按 MIT 做源码级移植。
  *
- * 后来实际走的是 (b) 的加强版：`dsh-zhiyun-source-cc98` 用本仓自己的 HTTP 层
+ * 后来实际走的是 (b) 的加强版：`@lybx-leyw/dsh-zju-source-cc98` 用本仓自己的 HTTP 层
  * **原生重写**了 CC98 读取（10 个只读方法 + OAuth2 密码模式 + UBB 清洗），
  * 并且已接入 profile。本骨架想达成的目标已有可用实现。
  *

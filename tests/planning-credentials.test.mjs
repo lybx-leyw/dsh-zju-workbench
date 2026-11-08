@@ -25,7 +25,7 @@ import {
   writeAccount,
   writeRecord,
   writeXzzdSession,
-} from '../packages/dsh-zhiyun-source-classroom/src/host-credentials.js';
+} from '../packages/source/classroom/src/host-credentials.js';
 
 /** 造一个内存版宿主凭据服务，行为对齐 `dsh-credentials-local`。 */
 function fakeCredentials() {
@@ -156,7 +156,7 @@ test('课堂写、omni 读：同一个键，同一份账号', async () => {
 test('源码里不出现"去终端 configure"这类把成本转嫁给用户的文案', async () => {
   const { readFile } = await import('node:fs/promises');
   const client = await readFile(
-    new URL('../packages/dsh-zhiyun-page-planning/src/client.jsx', import.meta.url), 'utf8',
+    new URL('../packages/client/page-planning/src/client.jsx', import.meta.url), 'utf8',
   );
   // 只查**命令**写法，不查 `configured` 这个标识符（它包含 configure 子串）
   assert.equal(/npm run/.test(client), false, '规划页不该让用户去终端跑命令');
@@ -173,7 +173,7 @@ test('源码里不出现"去终端 configure"这类把成本转嫁给用户的�
 test('页面识别 NEED_LOGIN 并显示成"待登录"，而非"读取失败"', async () => {
   const { readFile: rf } = await import('node:fs/promises');
   const client = await rf(
-    new URL('../packages/dsh-zhiyun-page-planning/src/client.jsx', import.meta.url), 'utf8',
+    new URL('../packages/client/page-planning/src/client.jsx', import.meta.url), 'utf8',
   );
   assert.match(client, /NEED_LOGIN/, '页面必须认得宿主翻译后的码');
   // 三个码都要在判定列表里，否则某一处改动就会退化成"读取失败"
@@ -188,7 +188,7 @@ test('页面识别 NEED_LOGIN 并显示成"待登录"，而非"读取失败"', a
 test('宿主侧把 LOGIN_REQUIRED 翻译成 NEED_LOGIN', async () => {
   const { readFile: rf } = await import('node:fs/promises');
   const host = await rf(
-    new URL('../packages/dsh-zhiyun-page-planning/src/index.js', import.meta.url), 'utf8',
+    new URL('../packages/client/page-planning/src/index.js', import.meta.url), 'utf8',
   );
   assert.match(host, /code: 'NEED_LOGIN'/, '宿主侧必须产出统一码');
   assert.equal(host.includes("npm run"), false, '宿主侧不该让用户去终端跑命令');

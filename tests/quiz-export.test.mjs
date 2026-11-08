@@ -24,7 +24,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { questionsToMarkdown } from '../packages/dsh-zhiyun-core-study/src/quiz-export.js';
+import { questionsToMarkdown } from '../packages/core/study/src/quiz-export.js';
 
 const read = p => fs.readFileSync(path.resolve(p), 'utf8');
 
@@ -133,7 +133,7 @@ test('题型与策略用中文名，导出后不出现内部代号', () => {
 // ── 后端接线 ────────────────────────────────────────────────────────
 
 test('bank-export 只认 id 列表，不自己再筛一遍', () => {
-  const src = read('packages/dsh-zhiyun-core-study/src/question-bank.js');
+  const src = read('packages/core/study/src/question-bank.js');
   const start = src.indexOf("if (method==='bank-export')");
   assert.ok(start > 0, '找不到 bank-export');
   const body = src.slice(start, src.indexOf("if (method==='bank-", start + 10));
@@ -143,7 +143,7 @@ test('bank-export 只认 id 列表，不自己再筛一遍', () => {
 });
 
 test('已弃用的题不导出', () => {
-  const src = read('packages/dsh-zhiyun-core-study/src/question-bank.js');
+  const src = read('packages/core/study/src/question-bank.js');
   const start = src.indexOf("if (method==='bank-export')");
   const body = src.slice(start, src.indexOf("if (method==='bank-", start + 10));
   assert.match(body, /status !== 'rejected'/, '用户刚弃用的题不该再导到笔记里');
@@ -151,7 +151,7 @@ test('已弃用的题不导出', () => {
 });
 
 test('落盘复用 core-handout 的 exportMarkdown，不另写一套', () => {
-  const src = read('packages/dsh-zhiyun-core-study/src/question-bank.js');
+  const src = read('packages/core/study/src/question-bank.js');
   const start = src.indexOf("if (method==='bank-export')");
   const body = src.slice(start, src.indexOf("if (method==='bank-", start + 10));
   assert.match(body, /service\.exportMarkdown/, '重名后缀 / 目录层级都由它负责');
@@ -159,26 +159,26 @@ test('落盘复用 core-handout 的 exportMarkdown，不另写一套', () => {
 });
 
 test('bank-export 在宿主 RPC 白名单里', () => {
-  const host = read('packages/dsh-zhiyun-core-study/src/host.js');
+  const host = read('packages/core/study/src/host.js');
   assert.match(host, /"bank-export"/, '不在白名单会被挡成「输入信息无效」');
 });
 
 test('前端导出按钮受选中数量约束', () => {
-  const page = read('packages/dsh-zhiyun-page-quiz/src/question-history.jsx');
+  const page = read('packages/client/page-quiz/src/question-history.jsx');
   assert.match(page, /exportPicked/, '要有导出处理函数');
   assert.match(page, /disabled=\{!selected\.length\|\|exporting\}/, '没选中或正在导出时禁用');
   assert.match(page, /导出到笔记库/, '按钮文案');
 });
 
 test('导出结果如实显示落到哪个路径，重名要说出来', () => {
-  const page = read('packages/dsh-zhiyun-page-quiz/src/question-history.jsx');
+  const page = read('packages/client/page-quiz/src/question-history.jsx');
   assert.match(page, /data\.folder/, '要显示目录');
   assert.match(page, /deduped/, '重名加后缀要告知用户');
 });
 
 // ── 按来源节次拆分 ──────────────────────────────────────────────────
 
-import { splitByLesson } from '../packages/dsh-zhiyun-core-study/src/quiz-export.js';
+import { splitByLesson } from '../packages/core/study/src/quiz-export.js';
 
 /**
  * 造一道题。

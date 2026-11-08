@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { ClassroomSource, ENDPOINTS } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import { ClassroomSource, ENDPOINTS } from '../packages/source/classroom/src/source.js';
 
 const json = (value, status = 200) => new Response(JSON.stringify(value), {
   status, headers: { 'content-type': 'application/json' },

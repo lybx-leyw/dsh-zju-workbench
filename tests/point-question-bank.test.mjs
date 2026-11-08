@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {knowledgeChapters,knowledgePoints,planPointQuestions,planPractice,createPointQuizGenerator} from '../packages/dsh-zhiyun-core-quiz/src/points.js';
-import {StudyWorkbench} from '../packages/dsh-zhiyun-core-study/src/workbench.js';
+import {knowledgeChapters,knowledgePoints,planPointQuestions,planPractice,createPointQuizGenerator} from '../packages/core/quiz/src/points.js';
+import {StudyWorkbench} from '../packages/core/study/src/workbench.js';
 import {mountKnowledge} from './fixtures/study-storage.mjs';
-import {parseConcepts,conceptCacheKey,nearDuplicate} from '../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {parseConcepts,conceptCacheKey,nearDuplicate} from '../packages/core/quiz/src/concepts.js';
 import {syntheticFactAudit,syntheticSourceCheck,syntheticProofReview} from '../scripts/quiz_bench/fixture.mjs';
 
 const text='随机事件发生可能性的度量称为概率，概率的取值在零和一之间。';

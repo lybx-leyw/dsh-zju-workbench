@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { StudyWorkbench } from '../packages/dsh-zhiyun-core-study/src/workbench.js';
+import { StudyWorkbench } from '../packages/core/study/src/workbench.js';
 
 const scene = { id: 's1', title: '标题', order: 1, content: { type: 'slide', canvas: { elements: [] } }, actions: [{ type: 'speech', text: '讲稿' }] };
 async function fixture(t) {

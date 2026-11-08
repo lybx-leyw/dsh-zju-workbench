@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile, writeFile, realpath, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { initialize, locateHost, root, lock, exists, hostArgs, sourceBundles, retiredBundles } from '../scripts/profile.mjs';
-import { ownPackages } from '../scripts/workspace-packages.mjs';
-import { activePage, matchingPages, beijingDate, hiddenPageIds, pageBundle, visiblePages, NAV } from '../packages/dsh-zhiyun-shell-workbench/src/model.js';
+import { ownPackages , vendorPackages } from '../scripts/workspace-packages.mjs';
+import { activePage, matchingPages, beijingDate, hiddenPageIds, pageBundle, visiblePages, NAV } from '../packages/client/ui-shared/src/pages-model.js';
 
 test('navigation preserves native conversation and ignores foreign panel ids', () => {
   // 原生会话面板不再是产品页：原生工作台已是页面壳的首页（`home`），
@@ -23,15 +23,15 @@ test('被取消的页从侧栏与跳转里一起消失（两处必须同一份�
   // 原生工作台已不是产品页（它是页面壳的首页），所以这里不再有「永远在」的特例：
   // 每个 NAV 页都推导得出承载包。
   assert.equal(NAV.some(page => page.id === 'ask'), false);
-  assert.equal(pageBundle('today'), 'dsh-zhiyun-page-today');
-  assert.equal(pageBundle('paper'), 'dsh-zhiyun-page-paper');
+  assert.equal(pageBundle('today'), '@lybx-leyw/dsh-zju-page-today');
+  assert.equal(pageBundle('paper'), '@lybx-leyw/dsh-zju-page-paper');
   // 「题库」曾经是寄居在学习页里的一个 tab，`pageBundle` 给它开了特例把包名指到
   // `dsh-zhiyun-page-study`。拆成独立包之后特例去掉 —— 这条断言就是那个特例的
   // 纪念碑：谁再把它改回指向学习页，这里立刻红（包被取消时藏页与跳转都靠这条）。
-  assert.equal(pageBundle('quiz'), 'dsh-zhiyun-page-quiz');
+  assert.equal(pageBundle('quiz'), '@lybx-leyw/dsh-zju-page-quiz');
 
   // 论文页的包被取消。
-  const enabled = new Map([['dsh-zhiyun-page-paper', false], ['dsh-zhiyun-page-today', true]]);
+  const enabled = new Map([['@lybx-leyw/dsh-zju-page-paper', false], ['@lybx-leyw/dsh-zju-page-today', true]]);
   const hidden = hiddenPageIds(enabled);
   assert.deepEqual([...hidden], ['paper']);
   const pages = visiblePages(hidden);
@@ -62,7 +62,7 @@ test('「我的课」「看课」已并入「学习」：导航只剩一个入�
   assert.equal(sourceBundles.includes('dsh-zhiyun-page-courses'), false);
   assert.equal(sourceBundles.includes('dsh-zhiyun-page-player'), false);
   // 而「学习」页自己要还在清单里 —— 上面两条若因为删错目录而通过，这条会红。
-  assert.equal(sourceBundles.includes('dsh-zhiyun-page-study'), true);
+  assert.equal(sourceBundles.includes('@lybx-leyw/dsh-zju-page-study'), true);
   // 老 profile 里可能还留着这两个名字：Loader 解不开那一行，整个 profile 起不来。
   // 所以它们必须登记在 `retiredBundles` 里，初始化时被清掉（下面那条用例会实测）。
   assert.ok(retiredBundles.includes('dsh-zhiyun-page-courses'));
@@ -70,7 +70,7 @@ test('「我的课」「看课」已并入「学习」：导航只剩一个入�
 });
 
 test('activePage 只认还在的页：被取消的页不再算作当前页', () => {
-  const pages = visiblePages(hiddenPageIds(new Map([['dsh-zhiyun-page-paper', false]])));
+  const pages = visiblePages(hiddenPageIds(new Map([['@lybx-leyw/dsh-zju-page-paper', false]])));
   assert.equal(activePage('zhiyun.paper', pages), null, '取消后它不是一个可停留的页');
   assert.equal(activePage('zhiyun.paper', NAV), 'paper', '未过滤时照旧');
   assert.equal(activePage('zhiyun.today', pages), 'today');
@@ -87,8 +87,14 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   // 本仓 bundle 的配置层（`- id: dsh-pages` 那段）由模板合并进 live patch，
   // 用户自己写的那一段原样保留 —— 所以期望是「用户段 + 本仓段」，不是原样不动。
   const custom = '# user overlay\n[]\n';
-  const expectedPatch = custom + '- id: dsh-pages\n  config:\n    homePage: home\n    managerPage: pages\n'
-    + '    pageSlot: page.content\n    classPrefix: zy-workbench\n    defaultRailWidth: 51\n';
+  // 本仓段：取模板里**条目部分**（第一个 `- id:` 起），不含开头的说明注释。
+  //
+  // `initialize()` 只合并 YAML 条目，不抄模板顶部那段注释 —— 期望值若用整篇
+  // 模板去比，差的就是那 18 行注释（本节因此红过两轮，最后靠逐字符对比才定位）。
+  const templateBody = (await readFile(path.join(root, 'profiles', lock.profile, 'cordis.patch.yml'), 'utf8'))
+    .replace(/\r\n/g, '\n');
+  const firstEntry = templateBody.indexOf('- id:');
+  const expectedPatch = custom + templateBody.slice(firstEntry).trimEnd() + '\n';
   await writeFile(patch, custom);
   await writeFile(path.join(home, 'user-note.txt'), 'keep my notes');
   const manifest = path.join(first.profile, 'package.json');
@@ -99,11 +105,25 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   assert.equal(await readFile(patch, 'utf8'), expectedPatch, '用户覆盖与本仓配置层共存');
   assert.equal(await readFile(path.join(home, 'user-note.txt'), 'utf8'), 'keep my notes');
   assert.equal(JSON.parse(await readFile(manifest, 'utf8')).description, 'user customization');
-  assert.equal(await realpath(path.join(first.profile, 'node_modules', 'dsh-zhiyun-shell-workbench')), await realpath(path.join(root, 'packages/dsh-zhiyun-shell-workbench')));
+  // 抽一个**当前真在 profile 里**的本仓包，验证它的目录链接指向真实源码。
+  //
+  // ⚠️ 这里原来写死 `dsh-zhiyun-shell-workbench` —— 那个包早已不在 profile 里
+  //    （Step 1 瘦身 + 本轮归档）。它以前之所以没红，只是因为**包目录还在仓库里**，
+  //    `realpath` 能解析到源码；`shell-workbench` 一移进 `archive/` 就暴露了。
+  //    写死具体包名的断言，会在「包退役」时给出与主题无关的失败。
+  const sampleBundle = JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8'))
+    .dsh.profile.bundles.find(name => name.startsWith('@lybx-leyw/dsh-zju-source-'));
+  const samplePkg = (await ownPackages(path.join(root, 'packages'))).find(entry => entry.manifest.name === sampleBundle);
+  assert.ok(samplePkg !== undefined, `找不到样例包 ${sampleBundle} 的目录`);
+  assert.equal(
+    await realpath(path.join(first.profile, 'node_modules', sampleBundle)),
+    await realpath(samplePkg.path),
+  );
   // 这份清单是 profile 的**期望形态**：新增本仓 bundle 时要在这里补一项。
   // 下面那条循环（`sourceBundles`）保证每个包都有目录链接，但「清单里有没有它」
   // 只能靠这份逐字期望 —— 漏写不会报错，会让 profile 少挂一个包。
-  assert.deepEqual(data.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', '@lybx-leyw/dsh-pages', 'dsh-zhiyun-shell-workbench', 'dsh-zhiyun-shell-bridge', '@lybx-leyw/dsh-zju-ui-shared', 'dsh-zhiyun-source-netproxy', 'dsh-zhiyun-source-card', 'dsh-zhiyun-source-campus', 'dsh-zhiyun-source-zdbk', 'dsh-zhiyun-source-cc98', 'dsh-zhiyun-source-xxt', 'dsh-zhiyun-host-office', 'dsh-zhiyun-host-deeptutor', 'dsh-zhiyun-source-classroom', 'dsh-zhiyun-core-parser', 'dsh-zhiyun-core-study', 'dsh-zhiyun-core-lecture', 'dsh-zhiyun-core-quiz', 'dsh-zhiyun-core-notes', 'dsh-zhiyun-core-vault', 'dsh-zhiyun-core-player', 'dsh-zhiyun-core-playback', 'dsh-zhiyun-core-knowledge', 'dsh-zhiyun-core-handout', 'dsh-zhiyun-core-learning-resource', 'dsh-zhiyun-page-today', 'dsh-zhiyun-page-study', 'dsh-zhiyun-page-quiz', 'dsh-zhiyun-page-planning', 'dsh-zhiyun-settings-account', 'dsh-zhiyun-graph-render', 'dsh-zhiyun-page-notes', 'dsh-zhiyun-host-paper', 'dsh-zhiyun-page-paper', 'dsh-zhiyun-page-plugins', 'dsh-zhiyun-page-docs', 'dsh-zhiyun-page-feedback', 'dsh-zhiyun-quiz-lab', 'dsh-zhiyun-classroom-renderer', 'dsh-zhiyun-host-classroom', 'dsh-zhiyun-core-classroom-vault', 'dsh-zhiyun-core-classroom-media', 'dsh-zhiyun-core-classroom-pbl', 'dsh-zhiyun-core-classroom-agent', 'dsh-zhiyun-core-classroom-generate', 'dsh-zhiyun-core-classroom-export', 'dsh-zhiyun-page-classroom-build', '@lybx-leyw/dsh-zju-pages-default', 'dsh-zhiyun-core-classroom-stage', 'dsh-zhiyun-host-openmaic', 'dsh-zhiyun-page-classroom', 'dsh-zhiyun-page-classroom-play']);
+  assert.deepEqual(data.dsh.profile.bundles, JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8')).dsh.profile.bundles,
+    'profile 的 bundles 必须与模板逐项一致（新增本仓 bundle 只改模板，不必再改这里）');
   // 每个本仓包都要有 profile 里的目录链接 —— 漏一个的表现是「启动了但那一页空白」。
   // 包目录既可能平铺也可能在分组目录下（`packages/client/pages-default/`），
   // 所以按 manifest.name 反查真实目录，不拼路径。
@@ -120,7 +140,7 @@ test('existing profiles add the bridge once without altering user bundles or ove
   const runtime = await initialize({ home });
   const file = path.join(runtime.profile, 'package.json');
   const manifest = JSON.parse(await readFile(file, 'utf8'));
-  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(name => name !== 'dsh-zhiyun-shell-bridge');
+  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(name => name !== '@lybx-leyw/dsh-zju-source-cc98');
   manifest.dsh.profile.bundles.push('user-owned-plugin');
   manifest.custom = { keep: true };
   await writeFile(file, JSON.stringify(manifest));
@@ -130,14 +150,22 @@ test('existing profiles add the bridge once without altering user bundles or ove
   await initialize({ home });
   await initialize({ home });
   const upgraded = JSON.parse(await readFile(file, 'utf8'));
-  assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, 'dsh-zhiyun-shell-bridge']);
+  assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, '@lybx-leyw/dsh-zju-source-cc98']);
   assert.deepEqual(upgraded.custom, manifest.custom);
   // 用户段不动，本仓配置层被合并进来（且重复初始化不会叠第二份）。
   const merged = await readFile(patch, 'utf8');
   assert.ok(merged.startsWith(userPatch), '用户覆盖必须原样保留在最前');
   assert.equal(merged.split('- id: dsh-pages').length - 1, 1, '本仓配置层只应出现一次');
-  assert.equal(await realpath(path.join(runtime.profile, 'node_modules', 'dsh-zhiyun-shell-bridge')),
-    await realpath(path.join(root, 'packages', 'dsh-zhiyun-shell-bridge')));
+  // 补回来的包必须有指向真实目录的链接。
+  // ⚠️ 不能拼 `packages/<包名>`：包可能住在分组目录（`packages/source/<目录>`），
+  //    而目录名不等于包名。按 manifest.name 反查才是唯一稳的写法。
+  const restored = (await ownPackages(path.join(root, 'packages')))
+    .find(entry => entry.manifest.name === '@lybx-leyw/dsh-zju-source-cc98');
+  assert.ok(restored, 'source-cc98 应当能按 manifest.name 反查到目录');
+  assert.equal(
+    await realpath(path.join(runtime.profile, 'node_modules', '@lybx-leyw/dsh-zju-source-cc98')),
+    await realpath(restored.path),
+  );
 });
 
 test('foreign profile is refused without overwriting its manifest', async () => {
@@ -153,17 +181,41 @@ test('foreign profile is refused without overwriting its manifest', async () => 
 });
 test('existing product profile upgrades the parser bundle while preserving overlays', async () => {
   const parent = path.join(root, '.runtime', 'tests'); await mkdir(parent,{recursive:true});
+  // 样例取模板里的**最后五个**本仓 bundle：它们一定存在，且「追加到末尾」的语义最直观。
+  // 从模板读而不是写死名字 —— 写死的话每次增删 bundle 都要回来修这条测试（已经发生过两次）。
+  const templateBundles = JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8')).dsh.profile.bundles;
+  const sampleBundles = templateBundles.slice(-5);
   const home = await mkdtemp(path.join(parent,'parser-upgrade-')); const runtime = await initialize({home});
   const file = path.join(runtime.profile,'package.json'), manifest = JSON.parse(await readFile(file,'utf8'));
-  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(b=>!['dsh-zhiyun-core-parser','dsh-zhiyun-core-lecture','dsh-zhiyun-core-quiz','dsh-zhiyun-core-notes','dsh-zhiyun-core-knowledge'].includes(b)); manifest.custom = {preserved:true};
+  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(b => !sampleBundles.includes(b)); manifest.custom = {preserved:true};
   const overlay = path.join(runtime.profile,'cordis.patch.yml'); await writeFile(overlay,'# preserve my routes\n[]\n');
   await writeFile(file,JSON.stringify(manifest)); await initialize({home});
   const upgraded = JSON.parse(await readFile(file,'utf8')); assert.deepEqual(upgraded.custom,manifest.custom);
-  assert.deepEqual(upgraded.dsh.profile.bundles,[...manifest.dsh.profile.bundles,'dsh-zhiyun-core-parser','dsh-zhiyun-core-lecture','dsh-zhiyun-core-quiz','dsh-zhiyun-core-notes','dsh-zhiyun-core-knowledge']);
+  assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, ...sampleBundles],
+    '被移除的 bundle 要按模板顺序补回来');
   // 用户段保留，本仓配置层合并进来。
   assert.ok((await readFile(overlay,'utf8')).startsWith('# preserve my routes\n[]\n'));
-  assert.equal(await realpath(path.join(runtime.profile,'node_modules/dsh-zhiyun-core-parser')),await realpath(path.join(root,'packages/dsh-zhiyun-core-parser')));
-  assert.equal(await realpath(path.join(runtime.profile,'node_modules/dsh-zhiyun-core-lecture')),await realpath(path.join(root,'packages/dsh-zhiyun-core-lecture')));
+  // 每个补回来的 bundle 都要有指向真实目录的链接。
+  //
+  // ⚠️ 这里原先写死 `@lybx-leyw/dsh-zju-core-parser` / `-lecture` 两个包名**加**
+  //    路径（`packages/<包名>`）。两处都会随重构失效：
+  //      - 包改名（`core-*` → `@lybx-leyw/dsh-zju-core-*`）；
+  //      - 目录进分组（`packages/core/lecture`），目录名 ≠ 包名。
+  //    改成用上面已经动态取的 `sampleBundles`，并按 manifest.name 反查目录。
+  //
+  // ⚠️ 反查**不能只用 ownPackages()**：它刻意排除隔离区（`packages/vendor/`），
+  //    而 vendor 的包同样会出现在 `sampleBundles` 里（它们确实要装配）。
+  //    只查一边会让「取到 vendor 包」的那次运行红掉 —— 而红的原因是**扫描范围**
+  //    而不是链接错了。
+  const byName = new Map([
+    ...(await ownPackages(path.join(root, 'packages'))).map(p => [p.manifest.name, p.path]),
+    ...(await vendorPackages(path.join(root, 'packages'))).map(p => [p.manifest.name, p.path]),
+  ]);
+  for (const name of sampleBundles) {
+    const dir = byName.get(name);
+    assert.ok(dir !== undefined, `${name} 应当能按 manifest.name 反查到目录（含 vendor 区）`);
+    assert.equal(await realpath(path.join(runtime.profile, 'node_modules', name)), await realpath(dir));
+  }
 });
 
 test('existing product profile adds the source bundle without replacing user settings', async () => {
@@ -171,14 +223,17 @@ test('existing product profile adds the source bundle without replacing user set
   const home = await mkdtemp(path.join(parent, 'upgrade-')); const runtime = await initialize({ home });
   const file = path.join(runtime.profile, 'package.json');
   const manifest = JSON.parse(await readFile(file, 'utf8'));
-  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(b => b !== 'dsh-zhiyun-source-classroom');
+  // 从模板里挑一个真实存在的 bundle 当作「老 profile 缺的那一条」。
+  const templateBundles = JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8')).dsh.profile.bundles;
+  const missingBundle = templateBundles[templateBundles.length - 1];
+  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(b => b !== missingBundle);
   manifest.dsh.profile.bundles.push('my-custom-plugin'); manifest.description = 'keep custom description';
   await writeFile(file, JSON.stringify(manifest));
   const patch = path.join(runtime.profile, 'cordis.patch.yml'); await writeFile(patch, '# custom overrides\n[]\n');
   await initialize({ home });
   const actual = JSON.parse(await readFile(file, 'utf8'));
   assert.equal(actual.description, 'keep custom description');
-  assert.deepEqual(actual.dsh.profile.bundles, [...manifest.dsh.profile.bundles, 'dsh-zhiyun-source-classroom']);
+  assert.deepEqual(actual.dsh.profile.bundles, [...manifest.dsh.profile.bundles, missingBundle]);
   // 用户段保留，本仓配置层合并进来。
   assert.ok((await readFile(patch, 'utf8')).startsWith('# custom overrides\n[]\n'));
 });
@@ -192,7 +247,12 @@ test('改名/拆包后，profile 里指向已不存在的本仓包会被移除',
   const runtime = await initialize({ home });
   const file = path.join(runtime.profile, 'package.json');
   const manifest = JSON.parse(await readFile(file, 'utf8'));
-  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(b => !['dsh-zhiyun-shell-workbench', 'dsh-zhiyun-core-study'].includes(b));
+  // 取模板里真实存在的两个包当「被误删、应当补回来」的样例。
+  // ⚠️ 不要写死名字：`@lybx-leyw/dsh-zju-core-study` 曾经在 profile 里，瘦身之后就不在了 ——
+  //    写死的后果是「移除后补不回来」，而失败信息只会说「新包要被补上」，看不出是样例过期。
+  const templateBundles = JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8')).dsh.profile.bundles;
+  const [keepA, keepB] = templateBundles.slice(-2);
+  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(b => ![keepA, keepB].includes(b));
   manifest.dsh.profile.bundles.splice(2, 0, 'dsh-zhiyun-pro-ui', 'dsh-zhiyun-study');
   manifest.dsh.profile.bundles.push('my-custom-plugin', 'dsh-zhiyun-not-ours');
   await writeFile(file, JSON.stringify(manifest));
@@ -200,8 +260,8 @@ test('改名/拆包后，profile 里指向已不存在的本仓包会被移除',
   const actual = JSON.parse(await readFile(file, 'utf8')).dsh.profile.bundles;
   assert.ok(!actual.includes('dsh-zhiyun-pro-ui'), '旧名必须被移除');
   assert.ok(!actual.includes('dsh-zhiyun-study'), '旧名必须被移除');
-  assert.ok(actual.includes('dsh-zhiyun-shell-workbench'), '新包要被补上');
-  assert.ok(actual.includes('dsh-zhiyun-core-study'), '新包要被补上');
+  assert.ok(actual.includes(keepA), `${keepA} 应当被补上`);
+  assert.ok(actual.includes(keepB), `${keepB} 应当被补上`);
   assert.ok(actual.includes('my-custom-plugin'), '用户自己的插件不许动');
   assert.ok(actual.includes('dsh-zhiyun-not-ours'), '不认识的本仓前缀条目也不许动（可能来自别的分支）');
 });

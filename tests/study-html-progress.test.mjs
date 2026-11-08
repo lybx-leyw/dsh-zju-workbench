@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { StudyWorkbench } from '../packages/dsh-zhiyun-core-study/src/workbench.js';
-import { createGenerateService } from '../packages/dsh-zhiyun-core-classroom-generate/src/index.js';
+import { StudyWorkbench } from '../packages/core/study/src/workbench.js';
+import { createGenerateService } from '../packages/core/classroom-generate/src/index.js';
 
 const slide = { title: '一页', points: ['短词'], summary: '总结', visualHtml: '<svg viewBox="0 0 800 560"><text x="60" y="120" font-size="32">关系</text></svg>', formulas: [], explanation: '画布外讲解。' };
 

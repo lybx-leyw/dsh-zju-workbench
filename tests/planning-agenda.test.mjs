@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { taskKeyFor, toShanghaiLocal, fromShanghaiLocal, weekStart, groupWeek, overlaps, overlappingIds, isAfterDue } from '../packages/dsh-zhiyun-page-planning/src/agenda.js';
+import { taskKeyFor, toShanghaiLocal, fromShanghaiLocal, weekStart, groupWeek, overlaps, overlappingIds, isAfterDue } from '../packages/client/page-planning/src/agenda.js';
 const slot = (id, start, end) => ({ id, taskKey: 'local:1', title: '示例任务', start: fromShanghaiLocal(start), end: fromShanghaiLocal(end) });
 test('stable keys match mine, actual planCards prefix/index and external sources', () => {
   assert.equal(taskKeyFor({ source: 'mine', id: 'abc' }), 'local:abc');

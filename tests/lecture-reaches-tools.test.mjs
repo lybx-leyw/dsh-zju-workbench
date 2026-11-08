@@ -26,7 +26,7 @@ import { pathToFileURL } from 'node:url';
 const ROOT = path.resolve('.');
 const load = rel => import(pathToFileURL(path.join(ROOT, rel)).href);
 
-const BACKEND = 'packages/dsh-zhiyun-core-study/src/core-question-backend.js';
+const BACKEND = 'packages/core/study/src/core-question-backend.js';
 const source = fs.readFileSync(path.resolve(BACKEND), 'utf8');
 
 const SAMPLE = {
@@ -47,7 +47,7 @@ const SAMPLE = {
 };
 
 test('bundle 顶层有 chapters，且没有 lecture 字段', async () => {
-  const { fromLecture } = await load('packages/dsh-zhiyun-core-learning-resource/src/sources.js');
+  const { fromLecture } = await load('packages/core/learning-resource/src/sources.js');
   const bundle = fromLecture(SAMPLE);
   assert.ok(Array.isArray(bundle.chapters), 'bundle 顶层必须有 chapters');
   assert.ok(bundle.chapters.length > 0);
@@ -55,8 +55,8 @@ test('bundle 顶层有 chapters，且没有 lecture 字段', async () => {
 });
 
 test('把 bundle 传给 buildLectureIndex 能建出块；传 bundle.lecture 建不出', async () => {
-  const { fromLecture } = await load('packages/dsh-zhiyun-core-learning-resource/src/sources.js');
-  const { buildLectureIndex } = await load('packages/dsh-zhiyun-core-lecture-tools/src/lecture-index.js');
+  const { fromLecture } = await load('packages/core/learning-resource/src/sources.js');
+  const { buildLectureIndex } = await load('packages/core/lecture-tools/src/lecture-index.js');
   const bundle = fromLecture(SAMPLE);
 
   const good = buildLectureIndex(bundle);
@@ -100,8 +100,8 @@ test('源码里不再出现 resource.lecture（该字段不存在）', () => {
 });
 
 test('rag 必须能检索到讲义（kbName 缺省值要给它）', async () => {
-  const { fromLecture } = await load('packages/dsh-zhiyun-core-learning-resource/src/sources.js');
-  const { createLectureTools } = await load('packages/dsh-zhiyun-core-lecture-tools/src/index.js');
+  const { fromLecture } = await load('packages/core/learning-resource/src/sources.js');
+  const { createLectureTools } = await load('packages/core/lecture-tools/src/index.js');
   const bundle = fromLecture(SAMPLE);
 
   // 不给 kbName：rag 报 "RAG requires an explicit kb_name"
