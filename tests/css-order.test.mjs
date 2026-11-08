@@ -54,15 +54,12 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     // key 是**包目录名**（`loadSheets` 按 `packages/<group>/<目录>` 收集），
     // 不是包名 —— 目录改名（`dsh-zhiyun-page-*` → `client/page-*`）时这里要跟着改。
     //
-    // 字典序规则：`classroom-stage`（core 组）< `dsh-*` < `login` < `netproxy`
-    // < `page-*` < `ui-shared`。
-    // 课堂的内核与舞台类名一律 `zyc-` 前缀，renderer 的 Tailwind 4 输出 `@scope`
-    // 到 `.zyc-root`（见 docs/architecture/classroom-port.md 第 5 节），
-    // 与工作台的 `zy-` 不共享任何选择器，所以只登记、不参与竞争判定。
     // 这一列写的是 `loadSheets` 的 key —— **目录名**，不是包名。
-    // 顺序是 `readdirSync().sort()` 的字典序：renderer < stage。
+    //
+    // `classroom-stage` / `page-classroom-play` / `page-classroom-build` 已归档：
+    // 产品侧只要 AI 教学那条链路，不要独立的课堂播放页。留下的 renderer 仍在
+    // 表里 —— `page-study` 用它渲染单张课件。
     'classroom-renderer',
-    'classroom-stage',
     'graph-render',
     // `dsh-zhiyun-settings-account` 已归档到 `archive/deprecated-packages/`：
     // 它的 style.css 不再被 `loadSheets` 读到，所以这里也不列它。
@@ -73,10 +70,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'login',
     'netproxy',
     // 页面包全部迁到 `packages/client/page-*`：目录名即短名，按字典序排在后面。
-    // `page-classroom`（openmaic 整站 iframe 版）已归档 —— 它与 `host-openmaic`
-    // 是同一对，整页依赖上游 Next.js 托管，已被 `page-classroom-play` 取代。
-    'page-classroom-build',
-    'page-classroom-play',
+    // `page-classroom` / `-play` / `-build` 都已归档 —— 产品侧不要独立的课堂页面。
     'page-docs',
     'page-feedback',
     'page-notes',

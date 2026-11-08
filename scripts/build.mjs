@@ -66,14 +66,12 @@ export const CLIENT_PACKAGES = [
   'zdbk',
   'cc98',
   'classroom',
-  // `page-classroom`（openmaic 整站 iframe 版）已归档到 `archive/deprecated-packages/`：
-  // 它与 `host-openmaic` 是同一对，整页依赖上游 Next.js 托管。
-  // **不要加回来** —— 加了会报 `no package directory named "page-classroom"`。
-  // 课堂页的正牌是 `page-classroom-play`（用我们的 `classroom-renderer`）。
-  'page-classroom-build',
-  'page-classroom-play',
+  // 课堂的**页面**已归档（`page-classroom` / `-play` / `-build`）：
+  // 产品侧只要「AI 教学」这条链路（生成课件 + 单张渲染），不要独立的课堂播放页。
+  // **不要加回来** —— 加了会报 `no package directory named ...`。
+  // 保留的 classroom 包只有 `classroom-agent`（有客户端半边）与
+  // `classroom-renderer`（page-study 用它渲染课件）。
   'classroom-agent',
-  'classroom-stage',
   'quiz',
   // `core-study` 的目录名是 `study`（住在 `packages/core/` 下）。
   // `packageDir()` 按**目录的 basename** 查找，所以这一列只能写目录名 ——

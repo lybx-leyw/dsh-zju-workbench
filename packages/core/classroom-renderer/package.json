@@ -30,7 +30,6 @@
     }
   },
   "dependencies": {
-    "@lybx-leyw/dsh-zju-core-classroom-geometry": "0.1.0",
     "katex": "0.16.38"
   },
   "peerDependencies": {

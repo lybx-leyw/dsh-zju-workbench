@@ -37,7 +37,6 @@
         "@lybx-leyw/dsh-zju-core-quiz",
         "@lybx-leyw/dsh-zju-core-playback",
         "@lybx-leyw/dsh-zju-core-player",
-        "@lybx-leyw/dsh-zju-core-classroom-stage",
         "@lybx-leyw/dsh-zju-core-classroom-renderer",
         "@lybx-leyw/dsh-zju-ui-graph-render",
         "@lybx-leyw/dsh-zju-core-classroom-studio",
@@ -45,7 +44,8 @@
         "@lybx-leyw/dsh-zju-core-classroom-agent",
         "@lybx-leyw/dsh-zju-core-classroom-pbl",
         "@lybx-leyw/dsh-zju-core-classroom-media",
-        "@lybx-leyw/dsh-zju-core-classroom-generate"
+        "@lybx-leyw/dsh-zju-core-classroom-generate",
+        "@lybx-leyw/dsh-zju-core-classroom-export"
       ],
       "patchReload": "live"
     }

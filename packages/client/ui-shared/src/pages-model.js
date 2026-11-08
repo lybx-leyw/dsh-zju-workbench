@@ -41,19 +41,14 @@ export const NAV = Object.freeze([
   // 现在播放是这一页里的一栏（`zs-content-switch` 的「视频」），课程目录是左栏，
   // 整理在其余几栏。导航因此少两项 —— 这是**合并**，不是删功能。
   { id: 'study', label: '学习', icon: 'bulb', hint: '课程、回放、课件与笔记，都在这一页' },
-  // 「课堂」= 生成出来的那一节课本身，紧跟在「学习」后面：学习读的是自己的课，
-  // 课堂看的是生成出来的课，是同一段动线上相邻的两步。
+  // 「课堂」页面已移除（2026-11）：产品侧要的是**学习页里的 AI 教学**
+  // ——生成课件、在学习页渲染单张课件——不要独立的课堂播放页与生成页。
   //
-  // 它注册的插槽不叫 `zhiyun.<id>.content` —— 页面包（`dsh-zhiyun-page-classroom-play`）
-  // 用的是 `zhiyun.classroom.play`。宿主侧插槽名归页面包所有（它同时被播放页的测试与
-  // 客户端共用），所以这里**照实写死**，由 `pageSlot()` 统一取值，而不是让壳去猜一个
-  // 页面包没注册过的名字（猜错的表现是这一页永远只有「暂时不可用」占位）。
-  { id: 'classroom', label: '课堂', icon: 'play', slot: 'zhiyun.classroom.play', hint: '按场景播放生成出来的课堂，随时翻到任意一节' },
-  // 「生成」是「课堂」的**二级入口**：`sidebar: false` + `parent` ——
-  // 与并入「学习」之前的「看课」同一种写法（子页不占导轨、也不进 Ctrl+K）。
-  // 理由：它是从课堂里 drill-in 的一步（要改的正是这一节课的大纲），离开课堂上下文
-  // 单独点进去只有一张空表单。入口由课堂页的 `zy-page-subnav` 按钮给出。
-  { id: 'classroom-build', label: '生成', icon: 'play', sidebar: false, parent: 'classroom', slot: 'zhiyun.classroom.build', hint: '写一段 brief，先改大纲再生成整节课' },
+  // 因此这里不再有 `classroom` / `classroom-build` 两条 NAV：
+  // `page-classroom-play`、`page-classroom-build`、`core/classroom-stage`、
+  // `core/classroom-geometry` 都已归档到 `archive/deprecated-packages/`。
+  // 保留的是生成与渲染链路（`classroom-generate` → `zhiyunClassroomGenerate`，
+  // `classroom-renderer` → `page-study` 的 `ClassroomSlide`）。
   // 「规划」紧跟「学习」：学完当天的事，接下来就是安排明天 —— 动线是连着的。
   //
   // ⚠️ label 与 hint 都**刻意不含「规划」**吗？不 —— 这一页就是叫「规划」。
@@ -94,7 +89,7 @@ export const panelKey = id => `zhiyun.${id}`;
  * ⚠️ 用 `Object.freeze` 的**清单**而不是给 NAV 加字段：上半组是「版式契约」，
  *    和 `FULL_BLEED_PAGES` 一样集中在这里，一眼能看全导轨长什么样。
  */
-export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'study', 'classroom', 'quiz', 'planning', 'notes']);
+export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'study', 'quiz', 'planning', 'notes']);
 
 /**
  * 导轨最下方那一格：**账号入口**，不是一个页面。
@@ -132,9 +127,7 @@ export const FULL_BLEED_PAGES = Object.freeze(['notes', 'docs']);
  * 这一页的内容插槽名。
  *
  * 默认由 id 推导（`zhiyun.<id>.content`），这是壳与页面包之间唯一的插槽约定。
- * 「课堂」的两页是例外：它们注册的是 `zhiyun.classroom.play` / `zhiyun.classroom.build`
- * （名字归页面包所有，见 `dsh-zhiyun-page-classroom-play/src/index.js`），
- * 所以 NAV 里直接写着，这里只做取值 —— 不再维护第二份推导规则。
+ * 其余页面都用默认规则；需要自定义时在 NAV 里直接写 `slot`，这里只做取值。
  * @param page - `NAV` 里的一项。
  * @returns 插槽名。
  */
@@ -145,13 +138,11 @@ export function pageSlot(page) {
 /**
  * 承载页面的包名，与 `dsh-zhiyun-page-<id>` 推导不一致的那些。
  *
- * 只有「课堂」：「课堂」的播放与生成是两个包，而导航只有一页（指向播放），
- * 生成是它的二级页。被取消时要藏起来的正是**播放**那一项。
+ * 目前为空：唯一曾需要它的「课堂」两页已归档。
+ * 保留这个空对象而不是删掉函数，是因为 `pageBundle()` 与「插件」页的
+ * 依赖图都读它 —— 删了要改三处调用方，留一个空表等价且更稳。
  */
-const PAGE_BUNDLES = Object.freeze({
-  classroom: '@lybx-leyw/dsh-zju-page-classroom-play',
-  'classroom-build': '@lybx-leyw/dsh-zju-page-classroom-build',
-});
+const PAGE_BUNDLES = Object.freeze({});
 
 /**
  * 一个页面由哪个包承载。

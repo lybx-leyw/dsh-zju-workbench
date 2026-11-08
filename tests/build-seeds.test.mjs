@@ -172,17 +172,16 @@ const INTENTIONALLY_BUNDLED = {
   // 2026-10-31 `renderer` 改成自研 4 类元素后，全仓再没有 import 它。
   // 从这份「允许无客户端产物」的例外清单里一并移除 —— 留着会与
   // 「清单里的包必须真实存在」冲突。
-  '@lybx-leyw/dsh-zju-core-classroom-geometry': 'classroom 内核：无客户端半边，按设计被使用者内联',
+  //
+  // `classroom-geometry` 同样已归档：它唯一的真实使用者是 `classroom-stage`，
+  // 而课堂页面整套已移除。`renderer` 的 dependencies 里那行是残留，已清掉。
   // 朗读时长估算：纯函数、零依赖、无 React 无 IO。
   // 从 classroom-stage（客户端包）下沉到这里，就是为了让服务端包
   // （export / agent）能内联它而不越过「客户端包不该被内联」的边界。
-  '@lybx-leyw/dsh-zju-core-classroom-timing': 'classroom-timing：纯函数时长估算，被 stage/export/agent 内联共用',
-  // classroom-geometry 的三个纯依赖：SVG path 解析、HTML 实体解码、颜色换算。
-  // 都是无状态纯函数，classroom-stage 与 classroom-renderer 各自内联一份，
-  // 没有跨包共享实例的需求（几何计算输入输出都是 JSON，不存在对象身份比较）。
-  'svg-pathdata': 'classroom-geometry：纯 path 解析，随几何内核内联',
-  'entities': 'classroom-geometry：纯实体解码，随几何内核内联',
-  'tinycolor2': 'classroom-geometry：纯颜色换算，随几何内核内联',
+  '@lybx-leyw/dsh-zju-core-classroom-timing': 'classroom-timing：纯函数时长估算，被 export/agent 内联共用',
+  // `svg-pathdata` / `entities` / `tinycolor2` 曾登记于此，因为
+  // classroom-geometry 内联了它们。geometry 已随课堂页面归档，这三个也不再
+  // 出现在任何包的依赖里 —— 从清单移除。
   // classroom-renderer 的 vendor 内核（上游 dist 原样拷贝）import 的第三方库。
   // 它们**不能**写进 dsh.client.external：external 意味着「运行时由别的包提供」，
   // 而这几个库没有任何客户端包会提供它们 —— 写进 external 只会在浏览器里
