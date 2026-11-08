@@ -35,7 +35,7 @@ const CHECK_ONLY = process.argv.includes('--check');
  */
 function discover() {
   const dirs = [];
-  for (const pattern of ['packages', 'packages/core', 'packages/client', 'packages/source', 'packages/tool']) {
+  for (const pattern of ['packages', 'packages/core', 'packages/client', 'packages/source', 'packages/tool', 'packages/preset']) {
     const base = path.join(ROOT, pattern);
     if (!fs.existsSync(base)) continue;
     for (const name of fs.readdirSync(base)) {
