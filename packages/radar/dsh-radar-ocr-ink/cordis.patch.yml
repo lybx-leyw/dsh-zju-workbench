@@ -1,0 +1,24 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 形态说明（B 类骨架的通用形态，与 `dsh-radar-ocr-web` 同构）：
+#   上游 `jritzi/ocr-extractor` 是一个 **Obsidian 社区插件**（桌面端，读 Obsidian
+#   的 vault API 与 `app.plugins`），既没有 `dsh.bundle.patch`、也不认识 cordis，
+#   因此**没有「上游 patch」可以照抄或封装**。
+#   本包自己就是那个「外围兼容层」：把上游的「引擎选择 + 提取结果落成 callout」
+#   两个契约重新实现成宿主服务，再插入 profile。
+#
+# 为什么仍然只写一行 insert、用**本仓 id**：
+#   1. 本仓规定候选包一律 `dsh-radar-` 前缀、用本仓 id 插入；
+#   2. profile 里只多一行 —— 回滚只需删这一行，不触碰任何既有 bundle；
+#   3. 与本仓页面插件（`dsh-zju-page-*`）的 id 命名不冲突。
+#
+# ⚠ 评审前请确认三件事（见 README §风险）：
+#   R-0 上游**未发 npm、无 git tag** ⇒ 不能写 `dependencies` 锁版
+#       （本 package.json 的 `dependencies` 是空的，这是有意的，不是漏写）。
+#   R-1 引擎是**原生二进制**（Tesseract / system OCR），不是 wasm：
+#       谁来装、装在哪、离线包多大，必须人工拍板（本仓无静态资源管线）。
+#   R-2 写入位置是「笔记的 markdown 正文」而不是旁挂索引 ⇒ 会**改用户文档**。
+#       评审需确认是否接受「提取结果作为可折叠 callout 追加」这一写语义。
+- insert:
+    - id: radar-ocr-ink
+      name: dsh-radar-ocr-ink
