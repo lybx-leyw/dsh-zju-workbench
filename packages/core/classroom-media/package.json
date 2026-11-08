@@ -21,5 +21,10 @@
   "optionalDependencies": {
     "unpdf": "^1.9.1"
   },
-  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "GPL-3.0-or-later"
 }

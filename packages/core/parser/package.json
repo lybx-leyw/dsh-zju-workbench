@@ -29,5 +29,6 @@
     "@deepseek-ai/dsh-atomic-write": {
       "optional": true
     }
-  }
+  },
+  "license": "MIT"
 }

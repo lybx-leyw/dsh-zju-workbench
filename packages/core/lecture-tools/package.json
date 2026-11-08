@@ -18,5 +18,6 @@
     "./py-repr": "./src/py-repr.js",
     "./data/upstream.json": "./src/data/upstream.json",
     "./package.json": "./package.json"
-  }
+  },
+  "license": "GPL-3.0-or-later"
 }

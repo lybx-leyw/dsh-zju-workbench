@@ -21,5 +21,6 @@
         "@lybx-leyw/dsh-zju-ui-shared"
       ]
     }
-  }
+  },
+  "license": "GPL-3.0-or-later"
 }

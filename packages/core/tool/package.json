@@ -22,5 +22,6 @@
     "./json": "./src/json.js",
     "./home": "./src/home.js",
     "./package.json": "./package.json"
-  }
+  },
+  "license": "GPL-3.0-or-later"
 }

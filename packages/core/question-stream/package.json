@@ -8,5 +8,6 @@
   "exports": {
     ".": "./src/index.js",
     "./package.json": "./package.json"
-  }
+  },
+  "license": "GPL-3.0-or-later"
 }

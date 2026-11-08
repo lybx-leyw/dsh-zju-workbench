@@ -13,5 +13,10 @@
     "./agent-text": "./src/agent-text.js",
     "./package.json": "./package.json"
   },
-  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "GPL-3.0-or-later"
 }

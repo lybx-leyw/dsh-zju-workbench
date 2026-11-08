@@ -25,5 +25,6 @@
   "files": [
     "src/",
     "cordis.patch.yml"
-  ]
+  ],
+  "license": "GPL-3.0-or-later"
 }

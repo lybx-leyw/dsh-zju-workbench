@@ -43,5 +43,6 @@
     "@deepseek-ai/dsh-atomic-write": {
       "optional": true
     }
-  }
+  },
+  "license": "GPL-3.0-or-later"
 }

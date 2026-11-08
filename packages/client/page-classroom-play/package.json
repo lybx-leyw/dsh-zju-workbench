@@ -34,5 +34,6 @@
     "react": {
       "optional": true
     }
-  }
+  },
+  "license": "GPL-3.0-or-later"
 }

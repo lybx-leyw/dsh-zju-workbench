@@ -1,5 +1,8 @@
 # 智云课堂解析器
 
+> **授权：MIT**。本包是本仓唯一按 MIT 独立开源的包，不适用仓库默认的
+> GPL-3.0-or-later —— 详见仓库根 [LICENSING.md](../../../LICENSING.md)。
+
 从 Flutter `lib/fusion/` 移植的独立 Cordis 插件。profile 自动加载并提供 `ctx.zhiyunParser`。所有模型调用直接使用宿主 `ctx.llm`；图片由 `ctx.attachments` 持久化与校验。没有独立 API key、模型 HTTP 客户端或另一套 agent runtime。
 
 ```js

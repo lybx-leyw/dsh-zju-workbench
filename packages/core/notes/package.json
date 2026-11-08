@@ -15,5 +15,10 @@
   "dependencies": {
     "@lybx-leyw/dsh-zju-core-knowledge": "0.1.0"
   },
-  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "GPL-3.0-or-later"
 }
