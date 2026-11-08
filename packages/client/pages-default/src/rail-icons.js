@@ -83,6 +83,22 @@ const ARTWORK = Object.freeze({
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /**
+ * 找到目标按钮后打在它身上的稳定标记（值就是页面 id）。
+ *
+ * # 为什么必须有它
+ *
+ * 原先整条链路（CSS 选择器 + JS 查询）都锚在 `aria-label` 上。而 `aria-label` 是
+ * **本地化文本**：`dsh-pages` 用 `ctx.locale.resolveText()` 实时解析，切到英文后
+ * 同一个按钮的标签从「DSH 工作台」变成「DSH workbench」。样式表是按 apply 那一刻的
+ * 标签生成的，切换语言后选择器失配 —— 结果是**原生字形已被物理移除、新图形却没被
+ * 认领**，格子全空。
+ *
+ * 把「定位」与「身份」分开：首次用标签（任一语言变体）找到按钮，立刻打上这个标记；
+ * 之后 CSS 和 JS 都只认标记。语言再怎么切，标记不变。
+ */
+const ROLE_ATTR = 'data-zju-rail-role';
+
+/**
  * CSS 属性选择器里的字符串转义。
  *
  * 标签由产品配置给出，理论上可能含引号或反斜杠；不转义会让整条规则语法错误，
@@ -141,16 +157,17 @@ function targetsOf(pages) {
  */
 export function railIconCss(pages) {
   return targetsOf(pages)
-    .map(({ labels }) => {
-      const buttons = labels
-        .map(label => `[data-dsh-pages-rail] button[aria-label=${cssString(label)}]`)
-        .join(',');
+    .map(({ id }) => {
+      // 只认稳定标记。标记还没打上时（首帧）这一段不生效，等 apply() 打完标记后
+      // 由观察者触发的那一轮自然接上。
+      const buttons = `[data-dsh-pages-rail] button[${ROLE_ATTR}=${cssString(id)}]`;
       const art = `${buttons} [data-dsh-pages-rail-icon]>svg[${MARK}]`;
       // 颜色显式给足：页面壳给未选中页的是 `--dsw-alias-label-secondary`，
       // 在浅色主题下约 `rgb(97,102,107)`，一列图标连起来看就是「糊成一片灰」。
       // 这里改用主色 + 透明度区分选中态：形状与原生同源，但对比够。
       return [
         `${buttons} [data-dsh-pages-rail-icon]>span{display:none!important}`,
+        `${buttons} [data-dsh-pages-rail-icon]>svg:not([${MARK}]){display:none!important}`,
         `${art}{color:var(--dsw-alias-label-primary,#101318);opacity:.72}`,
         `${buttons}[aria-current="page"] ${art}{color:var(--dsw-alias-brand-primary,#2f6fed);opacity:1}`,
         `${buttons}:hover ${art}{opacity:1}`,
@@ -159,15 +176,6 @@ export function railIconCss(pages) {
     .join('\n');
 }
 
-/**
- * 造一个内联 svg 元素，规格与页面插件自己声明的图标**完全一致**：24 网格、19px、
- * 1.65 描边（见文件头的 `ICON_*` 说明）。
- *
- * @param doc - 文档对象。
- * @param artwork - `ARTWORK` 里的图形描述。
- * @param size - 可选：覆盖渲染尺寸（管理页的行比导轨小一档时用）。
- * @returns 孤立的 `<svg>` 元素。
- */
 export function createArtwork(doc, artwork, size = ICON_SIZE) {
   const svg = doc.createElementNS(SVG_NS, 'svg');
   svg.setAttributeNS(null, MARK, '');
@@ -249,26 +257,43 @@ export function installRailIconArtwork(pages, doc = globalThis.document) {
     applying = true;
     try {
       applyManagerIcons();
-      for (const { labels, artwork } of targets) {
-        for (const label of labels) {
-          let button;
-          try {
-            button = doc.querySelector(`[data-dsh-pages-rail] button[aria-label=${cssString(label)}]`);
-          } catch {
-            continue; // 标签里有意料之外的字符时跳过，不影响其它页
-          }
-          const cell = button?.querySelector('[data-dsh-pages-rail-icon]');
-          if (cell === null || cell === undefined) continue;
-          // 物理移走原生字形（`⌂` / `▦`），不是只 display:none：要求是「原版商标隐藏」，
-          // 留在 DOM 里既可能被别的样式重新显出来，也让「已替换」这件事无法自证。
-          for (const glyph of [...cell.children]) {
-            if (glyph.tagName?.toLowerCase() !== 'span') continue;
-            removed.push({ cell, glyph, next: glyph.nextSibling ?? null });
-            glyph.remove();
-          }
-          if (cell.querySelector(`[${MARK}]`) !== null) continue;
-          cell.append(createArtwork(doc, artwork));
+      for (const { labels, artwork, id } of targets) {
+        // ① 先前缀按稳定标记找 —— 语言无关，切语言后仍能命中。
+        let button;
+        const marked = `button[${ROLE_ATTR}=${cssString(id)}]`;
+        try {
+          button = doc.querySelector(`[data-dsh-pages-rail] ${marked}`);
+        } catch {
+          button = undefined;
         }
+        // ② 首帧还没有标记：用任一语言变体的标签把它认出来，然后**立刻打上标记**。
+        if (button === null || button === undefined) {
+          for (const label of labels) {
+            try {
+              button = doc.querySelector(`[data-dsh-pages-rail] button[aria-label=${cssString(label)}]`);
+            } catch {
+              continue; // 标签里有意料之外的字符时跳过，不影响其它页
+            }
+            if (button !== null && button !== undefined) break;
+          }
+        }
+        if (button === null || button === undefined) continue;
+        try { button.setAttribute(ROLE_ATTR, id); } catch { /* 只读 DOM 上打标记失败就跳过 */ }
+        const cell = button.querySelector('[data-dsh-pages-rail-icon]');
+        if (cell === null || cell === undefined) continue;
+        // 物理移走原生字形（`⌂` / `▦`），不是只 display:none：要求是「原版商标隐藏」，
+        // 留在 DOM 里既可能被别的样式重新显出来，也让「已替换」这件事无法自证。
+        //
+        // 只移除 `span`：`PageIcon` 在 `entry.icon` 存在时渲染的是 `<Icon/>`（svg），
+        // 那是宿主自己的图形，不归这里处理；由上面的 CSS 把非本包的 svg 藏掉，
+        // 避免出现「一格两个图标」。
+        for (const glyph of [...cell.children]) {
+          if (glyph.tagName?.toLowerCase() !== 'span') continue;
+          removed.push({ cell, glyph, next: glyph.nextSibling ?? null });
+          glyph.remove();
+        }
+        if (cell.querySelector(`[${MARK}]`) !== null) continue;
+        cell.append(createArtwork(doc, artwork));
       }
     } finally {
       applying = false;

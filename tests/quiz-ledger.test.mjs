@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activeFacts,curateFacts,reconcileLedger} from '../packages/dsh-zhiyun-core-quiz/src/ledger.js';
-import {coveredFacts,factSlots} from '../packages/dsh-zhiyun-core-quiz/src/facts.js';
+import {activeFacts,curateFacts,reconcileLedger} from '../packages/core/quiz/src/ledger.js';
+import {coveredFacts,factSlots} from '../packages/core/quiz/src/facts.js';
 const entry=()=>({materialKey:'m',concepts:[{id:'c',statement:'单位时间内发生的事件次数定义为速率。',blanks:[{id:'b',text:'速率',start:17,aliases:[]}]}],factAudit:{facts:[{id:'f1',claim:'速率定义',evidence:'单位时间内发生的事件次数',positions:[{conceptId:'c',blankId:'b'}]}],rejected:[]}});
 test('reaudit rephrasing preserves the identity of an unchanged position and its coverage',()=>{
   const old=entry(),next=structuredClone(old);next.factAudit.facts[0].id='f2';next.factAudit.facts[0].claim='用单位时间的事件数描述速率';

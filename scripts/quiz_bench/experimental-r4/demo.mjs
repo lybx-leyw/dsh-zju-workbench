@@ -1,7 +1,7 @@
 import {mkdir,writeFile} from 'node:fs/promises';
 import {runR4} from './run.mjs';
 import {graph,model} from './fixture.mjs';
-import {compileIdeas} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/compiler.mjs';
+import {compileIdeas} from '../../../packages/core/quiz/src/engines/r3-v9/compiler.mjs';
 
 const out=new URL('../../../artifacts/quiz-r4-demo/',import.meta.url);await mkdir(out,{recursive:true});
 const input=graph(),selected={...input,root:{...input.root,children:input.root.children.slice(0,2)}};

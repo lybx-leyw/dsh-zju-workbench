@@ -51,7 +51,7 @@
  *           **二选一，不要两处都做**。
  *
  * TODO-U2 · `onlyAllowTags` 需要一份白名单。起点可直接取本仓
- *           `packages/dsh-zhiyun-source-cc98/src/ubb.js` 里正则已列举的标签集合
+ *           `packages/source/cc98/src/ubb.js` 里正则已列举的标签集合
  *           （`b i u del center left right line noubb color size font align bg sound upload
  *             img video audio code quote url ac/em/cc98/tb/ms 编号  bili`）。
  *

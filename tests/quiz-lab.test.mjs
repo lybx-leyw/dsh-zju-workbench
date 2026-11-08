@@ -8,7 +8,7 @@ import {createPointQuizGenerator,planPointQuestions} from '../scripts/quiz_bench
 import {datasetFrom} from '../scripts/quiz_bench/input.mjs';
 import {fixture,fixtureCall} from '../scripts/quiz_bench/fixture.mjs';
 import {auditFacts} from '../scripts/quiz_bench/experimental/source.mjs';
-import {parseConcepts} from '../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {parseConcepts} from '../packages/core/quiz/src/concepts.js';
 import {traceInput} from '../scripts/quiz_bench/experimental/run.mjs';
 
 test('experiment tracing preserves both JSON requests and the production plain-text dedupe protocol',()=>{

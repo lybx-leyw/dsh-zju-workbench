@@ -8,7 +8,7 @@ const root = fileURLToPath(new URL('../..', import.meta.url));
 /** 起一个最小的笔记库服务（不启整个 Cordis）。 */
 export async function makeVault() {
   const dir = await mkdtemp(path.join(tmpdir(), 'vault-pdf-'));
-  const mod = await import(pathToFileURL(path.join(root, 'packages/dsh-zhiyun-page-notes/src/index.js')).href);
+  const mod = await import(pathToFileURL(path.join(root, 'packages/client/page-notes/src/index.js')).href);
   const provided = {};
   const ctx = {
     profileContext: { dir: path.join(dir, 'profile') },

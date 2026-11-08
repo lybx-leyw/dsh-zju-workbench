@@ -53,8 +53,8 @@ export const UPSTREAM_SERVICES = Object.freeze([
  * 再看本包到底该替换哪一段，**不要**整包换掉。
  */
 export const LOCAL_SESSION_OWNERS = Object.freeze([
-  { pkg: 'dsh-zhiyun-source-classroom', scope: '智云课堂 / 学在浙大（classroom.zju.edu.cn、courses.zju.edu.cn）' },
-  { pkg: 'dsh-zhiyun-source-campus', scope: '综合服务门户（xzzd / pta 并入本包）' },
-  { pkg: 'dsh-zhiyun-source-card', scope: '一卡通 + CC98 账号记录（含 CC98 OAuth2）' },
+  { pkg: '@lybx-leyw/dsh-zju-source-classroom', scope: '智云课堂 / 学在浙大（classroom.zju.edu.cn、courses.zju.edu.cn）' },
+  { pkg: '@lybx-leyw/dsh-zju-source-campus', scope: '综合服务门户（xzzd / pta 并入本包）' },
+  { pkg: '@lybx-leyw/dsh-zju-source-login', scope: '一卡通 + CC98 账号记录（含 CC98 OAuth2）' },
   { pkg: 'dsh-zhiyun-source-netproxy', scope: 'WebVPN 分域中继（**不在上游覆盖范围内**）' },
 ])

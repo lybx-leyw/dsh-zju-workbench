@@ -13,8 +13,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildPolishVariable, POLISH_ITEM_NAMES } from '../packages/dsh-zhiyun-core-lecture/src/polish.js';
-import { exportReorganization, mergeReorganization } from '../packages/dsh-zhiyun-core-lecture/src/agent-text.js';
+import { buildPolishVariable, POLISH_ITEM_NAMES } from '../packages/core/lecture/src/polish.js';
+import { exportReorganization, mergeReorganization } from '../packages/core/lecture/src/agent-text.js';
 
 const lecture = () => ({
   title: '讲义',

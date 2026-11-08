@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 
 import {
   UNIFORM_DEFAULTS, buildUniformPlan, weightedAverageRate, rateAt,
-} from '../packages/dsh-zhiyun-page-study/src/uniform-speed.js';
+} from '../packages/client/page-study/src/uniform-speed.js';
 
 const SEC = 1000;
 const MIN = 60 * SEC;

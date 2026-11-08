@@ -25,7 +25,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 // Windows 上 import 必须用 file:// URL，不能直接给盘符路径
 const { buildPptxBuffer } = await import(
-  pathToFileURL(path.join(ROOT, 'packages/dsh-zhiyun-core-classroom-export/src/pptx/deck.js')).href
+  pathToFileURL(path.join(ROOT, 'packages/core/classroom-export/src/pptx/deck.js')).href
 );
 
 /** 与生成侧产出同形的一页课件：标题 + 抽象圆角块 + 正文。 */

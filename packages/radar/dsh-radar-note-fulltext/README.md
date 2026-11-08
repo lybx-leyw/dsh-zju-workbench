@@ -49,8 +49,8 @@
 | 位置 | 现在是什么 | 后果 |
 | --- | --- | --- |
 | `dsh-zhiyun-page-notes/src/client.jsx:128-131` | `.filter((e) => \`${e.path}\`.toLowerCase().includes(query))` | **只看路径**，正文再多次提及也搜不到 |
-| `dsh-zhiyun-core-vault/src/index/vault-index.js:203` | `notesMap.set(path, { path, title, outlinks, tags })` | 库索引**不保留正文**，只有链接/标签 |
-| `dsh-zhiyun-core-knowledge/src/service.js:280` | 字面 `String.includes`，只覆盖 knowledge 自己的域 | 与笔记库**不是同一批数据** |
+| `@lybx-leyw/dsh-zju-core-vault/src/index/vault-index.js:203` | `notesMap.set(path, { path, title, outlinks, tags })` | 库索引**不保留正文**，只有链接/标签 |
+| `@lybx-leyw/dsh-zju-core-knowledge/src/service.js:280` | 字面 `String.includes`，只覆盖 knowledge 自己的域 | 与笔记库**不是同一批数据** |
 
 > 一句话：现在「搜一篇笔记里的词」这件事，在本工作台里**做不到**。
 

@@ -1,0 +1,146 @@
+{
+  "name": "dsh-zju-campus",
+  "version": "0.1.8",
+  "description": "ZJU All-in-One Assistant（dsh-zju-assistant）的实现：校园账号和各个子插件。",
+  "icon": "./icon.svg",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anchorite-no/dsh-zju-assistant.git",
+    "directory": "plugin"
+  },
+  "homepage": "https://github.com/Anchorite-no/dsh-zju-assistant#readme",
+  "bugs": {
+    "url": "https://github.com/Anchorite-no/dsh-zju-assistant/issues"
+  },
+  "author": "Anchorite",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "zju",
+    "zhejiang-university"
+  ],
+  "type": "module",
+  "main": "host/index.mjs",
+  "exports": {
+    ".": "./host/index.mjs",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./courses": "./host/rows/courses.mjs",
+    "./courses/locale/*.json": "./rows/courses/locale/*.json",
+    "./courses/icon": "./rows/courses/icon.svg",
+    "./courses/package.json": "./rows/courses/package.json",
+    "./learn": "./host/rows/learn.mjs",
+    "./learn/locale/*.json": "./rows/learn/locale/*.json",
+    "./learn/icon": "./rows/learn/icon.svg",
+    "./learn/package.json": "./rows/learn/package.json",
+    "./activities": "./host/rows/activities.mjs",
+    "./activities/locale/*.json": "./rows/activities/locale/*.json",
+    "./activities/icon": "./rows/activities/icon.svg",
+    "./activities/package.json": "./rows/activities/package.json",
+    "./community": "./host/rows/community.mjs",
+    "./community/locale/*.json": "./rows/community/locale/*.json",
+    "./community/icon": "./rows/community/icon.svg",
+    "./community/package.json": "./rows/community/package.json",
+    "./notices": "./host/rows/notices.mjs",
+    "./notices/locale/*.json": "./rows/notices/locale/*.json",
+    "./notices/icon": "./rows/notices/icon.svg",
+    "./notices/package.json": "./rows/notices/package.json",
+    "./mail": "./host/rows/mail.mjs",
+    "./mail/locale/*.json": "./rows/mail/locale/*.json",
+    "./mail/icon": "./rows/mail/icon.svg",
+    "./mail/package.json": "./rows/mail/package.json",
+    "./wechat-chat": "./host/rows/wechat-chat.mjs",
+    "./wechat-chat/locale/*.json": "./rows/wechat-chat/locale/*.json",
+    "./wechat-chat/icon": "./rows/wechat-chat/icon.svg",
+    "./wechat-chat/package.json": "./rows/wechat-chat/package.json",
+    "./dingtalk": "./host/rows/dingtalk.mjs",
+    "./dingtalk/locale/*.json": "./rows/dingtalk/locale/*.json",
+    "./dingtalk/icon": "./rows/dingtalk/icon.svg",
+    "./dingtalk/package.json": "./rows/dingtalk/package.json",
+    "./wechat": "./host/rows/wechat.mjs",
+    "./wechat/locale/*.json": "./rows/wechat/locale/*.json",
+    "./wechat/icon": "./rows/wechat/icon.svg",
+    "./wechat/package.json": "./rows/wechat/package.json"
+  },
+  "files": [
+    "rows.mjs",
+    "rows.d.mts",
+    "accounts.mjs",
+    "accounts.d.mts",
+    "calendar.mjs",
+    "calendar.d.mts",
+    "host",
+    "!host/**/*.test.mjs",
+    "locale/*.json",
+    "icon.svg",
+    "rows",
+    "skill",
+    "lib/client.js",
+    "core",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=24",
+    "dsh": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test rows.test.mjs calendar.test.mjs host/*.test.mjs client/*.test.mjs",
+    "prepack": "node build.mjs && node pack-core.mjs && node ../scripts/check-package.mjs",
+    "postpack": "node pack-core.mjs --clean"
+  },
+  "dependencies": {
+    "imapflow": "^2.5.2",
+    "js-yaml": "^4.1.0",
+    "mailparser": "^3.9.40",
+    "nodemailer": "^10.1.2",
+    "decimal.js": "10.6.0",
+    "parse5": "8.0.1",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "6.4.299",
+    "pngjs": "7.0.0",
+    "commander": "^14.0.0",
+    "entities": "^8.1.0",
+    "htmlparser2": "^10.1.0",
+    "linkedom": "^0.18.12",
+    "turndown": "^7.2.1",
+    "turndown-plugin-gfm": "^1.0.2",
+    "silk-wasm": "^3.7.1",
+    "esbuild-wasm": "^0.28.2",
+    "@napi-rs/keyring": "2.1.2"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4",
+    "@deepseek-ai/dsh-credentials": ">=0.2.1-rc.3 <0.3.0",
+    "@deepseek-ai/dsh-home-paths": ">=0.2.1-rc.3 <0.3.0",
+    "@deepseek-ai/dsh-llm": ">=0.2.1-rc.3 <0.3.0",
+    "@deepseek-ai/dsh-tools": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4",
+    "@deepseek-ai/dsh-credentials": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-home-paths": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-llm": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-tools": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.2-rc.1"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-sidebar-right",
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-plugin-manager"
+      ]
+    }
+  }
+}

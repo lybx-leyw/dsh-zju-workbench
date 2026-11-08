@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { knowledgePoints } from '../../packages/dsh-zhiyun-core-quiz/src/knowledge-points.js';
-import { parseAgentLectureText } from '../../packages/dsh-zhiyun-core-lecture/src/agent-text.js';
+import { knowledgePoints } from '../../packages/core/quiz/src/knowledge-points.js';
+import { parseAgentLectureText } from '../../packages/core/lecture/src/agent-text.js';
 
 /** A finished bench work directory and a product record use the same projection. */
 export function datasetFrom(value,{id='import',title='导入讲义'}={}) {

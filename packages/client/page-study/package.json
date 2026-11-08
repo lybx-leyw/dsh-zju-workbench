@@ -1,0 +1,37 @@
+{
+  "name": "@lybx-leyw/dsh-zju-page-study",
+  "version": "0.1.0",
+  "description": "智云 Pro「学习」页：课程树、讲义阅读、分层检索与习题（页面插件）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "@lybx-leyw/dsh-zju-ui-shared",
+        "@lybx-leyw/dsh-zju-core-player",
+        "@lybx-leyw/dsh-zju-core-playback",
+        "@lybx-leyw/dsh-zju-core-quiz",
+        "@lybx-leyw/dsh-zju-page-quiz",
+        "@lybx-leyw/dsh-zju-core-classroom-renderer"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-classroom-renderer": "0.1.0",
+    "@lybx-leyw/dsh-zju-core-playback": "0.1.0",
+    "@lybx-leyw/dsh-zju-core-quiz": "0.1.0",
+    "@lybx-leyw/dsh-zju-page-quiz": "0.1.0",
+    "hls.js": "1.7.3"
+  },
+  "license": "GPL-3.0-or-later"
+}

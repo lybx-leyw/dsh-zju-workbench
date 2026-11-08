@@ -1,7 +1,7 @@
 /**
  * dsh-radar-slide-dedup —— **候选骨架，未评审、未接入 profile、不可直接使用。**
  *
- * 目标（见 README）：在 `dsh-zhiyun-core-lecture` 的 `generateLecture()` **入口前**，
+ * 目标（见 README）：在 `@lybx-leyw/dsh-zju-core-lecture` 的 `generateLecture()` **入口前**，
  * 把「回看 / 重复帧」从 `record.pages` 里剔掉，避免 `buildLectureTree()` 把它们
  * 升级成「吞掉后续所有页」的伪知识点。
  *
@@ -15,7 +15,7 @@
  *
  * 真正的实现应当是一个**纯函数**（`dedupeSlides({ pages, keepPage })`），
  * 输入输出都是普通数组，便于单测；它**不引入任何依赖**（像素兜底用的 `sharp`
- * 由宿主 `dsh-zhiyun-core-parser` 提供，见 README「风险 R-1」）。
+ * 由宿主 `@lybx-leyw/dsh-zju-core-parser` 提供，见 README「风险 R-1」）。
  *
  * # 缺陷来源
  *
@@ -26,7 +26,7 @@
 
 export const name = 'dsh-radar-slide-dedup';
 
-/** 本骨架不注入任何东西 —— 真实实现应当是纯函数，由 `dsh-zhiyun-core-lecture` 主动调用。 */
+/** 本骨架不注入任何东西 —— 真实实现应当是纯函数，由 `@lybx-leyw/dsh-zju-core-lecture` 主动调用。 */
 export const inject = [];
 
 export function apply() {
@@ -45,7 +45,7 @@ export function apply() {
  * 而 `record.tree` 是**上游已经建好的树**。也就是说：若在建树时就把重复页算进去了，
  * 这里再剔 `pages` 已经来不及 —— 树已经错了。
  *
- * → 落点必须上移到**建树之前**：`dsh-zhiyun-core-parser` 产出 `record.pages` 与
+ * → 落点必须上移到**建树之前**：`@lybx-leyw/dsh-zju-core-parser` 产出 `record.pages` 与
  *   `record.tree` 之间。需评审确认改哪一侧：
  *     (a) 在 parser 侧用去重后的 `pages` 建树（推荐：树从源头就是对的）；
  *     (b) 在 lecture 侧「建树 → 发现重复页 → 重建树」（多一次纯计算，但不动 parser）。

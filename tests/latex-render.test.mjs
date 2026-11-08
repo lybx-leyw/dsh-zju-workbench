@@ -26,7 +26,7 @@ const ROOT = path.resolve('.');
 const require = createRequire(path.join(ROOT, 'package.json'));
 
 const PRIMITIVES = path.join(ROOT, 'node_modules/@deepseek-ai/dsh-client-ui-primitives/lib/index.js');
-const PAGE = path.join(ROOT, 'packages/dsh-zhiyun-page-quiz/src/question-bank.jsx');
+const PAGE = path.join(ROOT, 'packages/client/page-quiz/src/question-bank.jsx');
 
 const primitivesSrc = fs.existsSync(PRIMITIVES) ? fs.readFileSync(PRIMITIVES, 'utf8') : '';
 const pageSrc = fs.readFileSync(PAGE, 'utf8');

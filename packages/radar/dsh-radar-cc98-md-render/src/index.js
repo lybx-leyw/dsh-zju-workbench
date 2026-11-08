@@ -13,7 +13,7 @@
  *      输出交给宿主 `MarkdownText` 渲染 —— **不换渲染器**（笔记页
  *      `src/client.jsx:23-28` 说明了为什么必须复用宿主组件）。
  *
- *   2. 复用 `dsh-zhiyun-source-cc98` 的 `Cc98Client` / `TokenStore` 取正文，
+ *   2. 复用 `@lybx-leyw/dsh-zju-source-cc98` 的 `Cc98Client` / `TokenStore` 取正文，
  *      **不要**另建一套登录与请求栈（那是重复且无增益）。
  *
  *   3. 与 `dsh-radar-cc98-ubb-bridge`（Markdown → UBB，**写**方向）配对：

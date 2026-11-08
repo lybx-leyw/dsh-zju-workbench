@@ -45,7 +45,7 @@ test('文档声称：\\( 不出现在任何输入层（生成题目 / 基线题�
   }
 
   for (const f of [
-    'packages/dsh-zhiyun-core-question/src/prompts/pipeline.js',
+    'packages/core/question/src/prompts/pipeline.js',
     'packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/agents/question/prompts/zh/pipeline.yaml',
   ]) {
     if (!exists(f)) continue;

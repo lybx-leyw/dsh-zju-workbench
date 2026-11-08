@@ -18,7 +18,7 @@ import {
   CC98_LABEL, CC98_RECORD_KEY, readCc98, writeCc98, clearCc98, cc98Status,
   cardStatus, clearCard, clearWebvpn, createHandler, fillCardIfEmpty, normalizePassword,
   normalizeUsername, readCard, readWebvpn, webvpnStatus, writeCard, writeWebvpn,
-} from '../packages/dsh-zhiyun-source-card/src/index.js';
+} from '../packages/source/login/src/index.js';
 
 /** 内存版宿主凭据服务，模拟 `ctx.credentials`。 */
 function memoryCtx() {

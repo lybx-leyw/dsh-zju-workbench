@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import {
   FALLBACK_LINE_HEIGHT, LINE_FACTOR, PAGE_RATIO, REPEAT_WINDOW_MS, SCROLL_KEYS,
   isInstantScroll, scrollAmount, scrollIntent,
-} from '../packages/dsh-zhiyun-page-docs/src/keys.js';
+} from '../packages/client/page-docs/src/keys.js';
 
 // ---------------------------------------------------------------- 认键
 

@@ -34,7 +34,7 @@ import {
   fallbackComment,
   createJudgeLlm,
   judgeWithModel,
-} from '../packages/dsh-zhiyun-core-study/src/grading.js';
+} from '../packages/core/study/src/grading.js';
 
 // ── 题型分工 ────────────────────────────────────────────────────────
 

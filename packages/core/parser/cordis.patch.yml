@@ -1,0 +1,3 @@
+- insert:
+    - id: zhiyun-parser
+      name: '@lybx-leyw/dsh-zju-core-parser'

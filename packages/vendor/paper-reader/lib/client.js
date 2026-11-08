@@ -1,0 +1,2056 @@
+// dsh-paper-reader — BROWSER half（全部走官方 seam 组合，零自绘聊天）。
+//
+// 布局组合（用户习惯：中间论文、最右对话）：
+//   [侧栏: 专题→论文→会话 树]  [中间: PDF 阅读器]  [最右: 原生 dsh 对话]
+//   - 原生对话组件绑定 main（keyed 'conversation'），无法挪进 rightbar；
+//     PDF 页签内容挂在 rightbar。于是做**视觉换位**：PDF 页签存在时，把 rightbar
+//     列钉到 grid 第 2 轨（宽轨=阅读器），center 列自动流入第 3 轨（窄轨=对话）。
+//     纯 CSS grid 放置技巧：JS 只维护 grid-template-columns 的列宽（宽轨给 PDF、
+//     窄轨给对话，正是想要的比例），内容换列不影响拖拽手柄/全屏/折叠逻辑。
+//   - sidebar.workspaces single slot 按 priority -1000 接管（lowest renders）——但**按需**：
+//     「论文伴读模式」默认关闭，侧栏底部 footer.action 开关行点击才注册（再点注销，
+//     还原官方工作区列表），localStorage 记忆。安装后官方侧栏原样，只多一行开关。
+//   - 选中即问：阅读器内选中 → /api/ask 注入当前会话 → 原生对话区实时流出。
+//
+// 加载机制：package.json 声明 dsh.client.inject + exports["./client"]；require 解析
+// 官方客户端包，不要用裸 import。
+
+/**
+ * 失败文案组装（**纯函数**：入参 `err` + i18n 的 `t`，返回 `{ text, recovery }`）。
+ * 放在 `load()` **之外**的文件顶层：Node 里执行本文件即可直接取用（测试用 harness 追加导出），
+ * 不需要给模块对象加任何测试钩子。
+ *
+ * 为什么必须在这里组装（评审 F-B）：clear 失败会返回 409 `file-busy` 且带 `rollbackFailed` ——
+ * 那些文件**真的还在 `.trash/` 里**，而 `listPapers` 只看常规文件，于是文献树里该篇看起来
+ * 「消失」了。若只 toast 一句「文件被占用，关闭后重试」，用户永远不知道该去回收站恢复。
+ * 规则：
+ *   · `rollbackFailed` 非空 ⇒ 点名文件 + 给出回收站**相对**路径（`trashRel`，绝不用绝对路径）与恢复方法；
+ *   · 未回滚非空时**不得**声称「文献库未改变」（F-C：那句是服务端内层文案，只对失败那一篇成立）；
+ *   · 没有回滚失败 ⇒ 只给简洁文案，不吓唬用户。
+ */
+/**
+ * 深色模式镜像（**纯函数**，与 reader/index.html 的键名字面一致）：
+ * 阅读器是同源 iframe，但它的 <head> 首帧判定发生在网络请求之前 ⇒ 必须有一个**同步**可读的镜像。
+ * 配置的权威来源仍是服务端 /api/theme/config；这里只是镜像，写失败（隐私模式）不影响功能。
+ */
+const DPR_THEME_PREF_KEY = 'dpr.pdfTheme'
+const DPR_THEME_MIRROR_KEY = 'dpr.pdfThemeCfg'
+function dprThemeMirror(cfg) {
+  if (!cfg || typeof cfg !== 'object') return null
+  const mode = ['follow', 'off', 'light', 'dark'].includes(cfg.pdfTheme) ? cfg.pdfTheme : 'follow'
+  const strength = Number.isInteger(cfg.pdfDarkStrength) ? cfg.pdfDarkStrength : 1
+  return { mode, strength, chrome: cfg.pdfDarkChrome !== false, curve: cfg.curve || null }
+}
+function writeThemeMirror(cfg) {
+  const mir = dprThemeMirror(cfg)
+  if (!mir) return null
+  try {
+    localStorage.setItem(DPR_THEME_PREF_KEY, mir.mode)
+    localStorage.setItem(DPR_THEME_MIRROR_KEY, JSON.stringify(mir))
+  } catch { /* 隐私模式：写不了镜像，阅读器仍可从服务端/宿主 postMessage 拿到 */ }
+  return mir
+}
+
+function clearFailureText(err, t) {
+  const files = Array.isArray(err && err.rollbackFailed) ? err.rollbackFailed.filter((x) => typeof x === 'string') : []
+  const where = err && typeof err.trashRel === 'string' && err.trashRel ? err.trashRel : '.trash'
+  const base = err && err.code === 'file-busy' ? t('delBusyFile') : ((err && err.message) || String(err))
+  if (files.length === 0) return { text: base, recovery: '' }
+  return {
+    text: t('clearPartialFailText').replace('{n}', String(files.length)).replace('{names}', files.join('、')),
+    recovery: t('clearRecoveryHint').replace('{where}', where).replace('{names}', files.join('、')),
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   嵌套专题（`A/B`）的**纯函数**层 —— 放在 load() 之外，Node 里可直接执行断言。
+
+   PR #8 维护者评审 A/H 的共同根因：客户端把「topic」当单段名，而新布局的 topic 是**路径**。
+   这里集中几件事：
+     · `parseDprSession`：会话 id 里 topic/name 按**最后一个** `/` 切（论文名不含 `/`）；
+     · `dprSessionStale`：ⓘ「对话还停在另一篇」的判定（子专题论文不再永远常亮）；
+     · `dprReprefixTopic` / `dprRekeyTopicState`：专题改名后的**前缀感知**重写（cur / 折叠键 / dpr.last）；
+     · `dprTopicPaperCount`：删除专题时 clear-vs-delete 的**子树**计数；
+     · `dprApiError` / `dprClearRetryNeeded`：把服务端 `clearEndpoint` 透传到 Error，让重试路径可达。
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * 伴读会话 id → `{topic, name, n}`；非伴读/畸形 id 返回 null。
+ * topic 是**路径**（可多级 `A/B`），只有论文名保证不含 `/` ⇒ 必须 `lastIndexOf('/')`。
+ * （用第一个 `/` 切会把 `A/B/P` 解成 topic=`A` / name=`B/P`，子专题论文的 ⓘ 按钮永远常亮。）
+ */
+function parseDprSession(sid) {
+  if (typeof sid !== 'string' || !sid.startsWith('dpr-')) return null
+  try {
+    const body = sid.slice(4)
+    const m = body.match(/-(\d+)$/)
+    const n = m ? +m[1] : 1
+    const b64 = (m ? body.slice(0, -m[0].length) : body).replaceAll('-', '+').replaceAll('_', '/')
+    const bin = atob(b64)
+    const decoded = decodeURIComponent([...bin].map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''))
+    const sep = decoded.lastIndexOf('/')
+    if (sep <= 0 || sep === decoded.length - 1) return null
+    return { topic: decoded.slice(0, sep), name: decoded.slice(sep + 1), n }
+  } catch { return null }
+}
+
+/** 「对话还停在另一篇」判定（纯函数）：会话绑定的论文与阅读器当前论文不一致才提示。 */
+function dprSessionStale(chatPaper, viewed) {
+  if (!chatPaper || !viewed || !viewed.topic) return false
+  return chatPaper.topic !== viewed.topic || chatPaper.name !== viewed.name
+}
+
+/**
+ * 专题改名的**前缀感知**重写：`path === oldTopic` 或以 `oldTopic + '/'` 开头 ⇒ 换前缀；否则 null。
+ * 分隔符判定是必须的：`A` 改名成 `X/A` 时，同级同前缀名 `AB` 绝不能被误伤。
+ */
+function dprReprefixTopic(path, oldTopic, newTopic) {
+  if (typeof path !== 'string' || typeof oldTopic !== 'string' || typeof newTopic !== 'string') return null
+  if (!oldTopic || path === '') return null
+  if (path === oldTopic) return newTopic
+  if (path.startsWith(oldTopic + '/')) return newTopic + path.slice(oldTopic.length)
+  return null
+}
+
+/**
+ * 专题改名后，客户端里所有「按专题路径记的身份」整体换前缀：
+ * `cur`（阅读器 iframe 的身份）/ `closed`（树折叠键）/ `last`（dpr.last 上次打开）。
+ * 返回新状态；调用方负责 setState / 派发 `dpr:paper` / 持久化折叠态。
+ */
+function dprRekeyTopicState(oldTopic, newTopic, state) {
+  const st = state || {}
+  const out = { cur: st.cur ?? null, closed: {}, last: st.last ?? null }
+  if (st.cur && typeof st.cur === 'object') {
+    const t = dprReprefixTopic(st.cur.topic, oldTopic, newTopic)
+    if (t !== null) out.cur = { ...st.cur, topic: t }
+  }
+  for (const [k, v] of Object.entries(st.closed || {})) {
+    out.closed[dprReprefixTopic(k, oldTopic, newTopic) ?? k] = v
+  }
+  if (st.last && typeof st.last === 'object') {
+    const t = dprReprefixTopic(st.last.topic, oldTopic, newTopic)
+    if (t !== null) out.last = { ...st.last, topic: t }
+  }
+  return out
+}
+
+/**
+ * 专题子树内的论文数（`lib.papers` 是全量列表）：删除专题时据此分流「清空」还是「直接删」。
+ * 只数**直接**论文会让「论文全在子专题里」的专题没有 UI 路径到 /topic/clear。
+ * 判定必须带分隔符：写 `startsWith(topic)` 会把 `AB` 算进 `A`。
+ */
+function dprTopicPaperCount(papers, topic) {
+  if (typeof topic !== 'string' || !topic) return 0
+  return (papers || []).filter((p) => p && typeof p.topic === 'string' && (p.topic === topic || p.topic.startsWith(topic + '/'))).length
+}
+
+/** HTTP 失败响应 → 带机器码的 Error（`code`/`status`/`papers`/`entries` + `clearEndpoint` 透传）。 */
+function dprApiError(status, body) {
+  const b = body && typeof body === 'object' ? body : {}
+  const err = new Error(b.error || b.reason || ('HTTP ' + status))
+  err.code = b.code
+  err.status = status
+  if (b.papers) err.papers = b.papers
+  if (b.entries) err.entries = b.entries
+  // 服务端 409 topic-not-empty 会带「下一步」端点；不挂到 Error 上，doDeleteTopic 的重试就是死代码
+  if (b.clearEndpoint) err.clearEndpoint = b.clearEndpoint
+  if (b.clearPlanEndpoint) err.clearPlanEndpoint = b.clearPlanEndpoint
+  return err
+}
+
+/** 删除专题撞上「非空」且服务端给了清空入口 ⇒ 改走批量清空中间态（其余错误不重试）。 */
+function dprClearRetryNeeded(err) {
+  return !!(err && err.code === 'topic-not-empty' && err.clearEndpoint)
+}
+
+/**
+ * 分屏「同步滚动」偏好 —— **纯函数**（文件顶层：Node 里执行本文件即可取用，测试 harness 追加导出）。
+ * 与 `reader/index.html` 里的同键读写必须保持同一套编码，所以两边都只认 `'1'` / `'0'`。
+ *
+ * 键为什么长这样（`dpr.syncScroll`：无 topic/name、也不带 `dpr.variant.` 前缀）：
+ *   ① 用户明确要求**全局**（所有论文共用一个值，不按篇记）；
+ *   ② `migrateLsKeys`（改名搬家）只搬 `dpr.variant.` / `dpr.sessionN.` 两个前缀 ⇒ 这个键既不会被搬
+ *      也不会被删，论文/专题改名**不可能**让偏好丢失（全局键本来就没有「跟着某篇走」的身份）。
+ *      反例：若塞进 `dpr.variant.<topic>/<name>`（按篇），改名搬家会搬它，而「全局」语义就破了。
+ *   ③ 缺省 = 开：与改造前「分屏两列被 rAF 强行同步」的既有行为一致（老用户升级后观感不变）。
+ */
+const DPR_SYNC_SCROLL_KEY = 'dpr.syncScroll'
+/** 只认显式的 '0' 为关；缺失 / 脏值 / 隐私模式都算开（与 reader 的 readSyncPref 逐字同义）。 */
+function dprSyncScrollFromRaw(raw) { return raw !== '0' }
+function dprSyncScrollRaw(on) { return on ? '1' : '0' }
+
+window.__ModuleLoader__.load({
+  // 必须等于 npm 包名：浏览器端 loader 按包名期待注册（改名时漏改这里 →
+  // "loaded without registering" 整页插件加载失败，实测）
+  id: '@ggboy123/dsh-paper-reader',
+  factory: (require) => {
+    const React = require('react')
+    const { createPortal } = require('react-dom')
+    const { useState, useEffect, useCallback } = React
+    const h = React.createElement
+
+    const NS = 'dsh-paper-reader'
+    const zh = {
+      library: '文献库',
+      empty: '文献库为空', hint: '新建专题或上传 PDF 开始', newTopic: '新建专题',
+      cancel: '取消', ok: '确定', defaultTopic: '默认专题', uploadBtn: '上传 PDF',
+      newTopicFail: '新建专题失败',
+      rename: '重命名', renameTopic: '重命名专题', renamePaper: '重命名论文',
+      renameFail: '重命名失败', delFail: '删除失败',
+      upload: '上传 PDF 到此专题', newChat: '新建对话', session: '会话', pdfTab: '论文 PDF',
+      history: '历史对话',
+      sync: '对话还停在另一篇文献的会话里，点击切到当前文献',
+      mode: '论文伴读', modeEnterTip: '进入论文伴读：左侧变为文献库树', modeExitTip: '退出论文伴读：恢复官方工作区列表',
+      settings: '论文伴读',
+      setRerankTitle: '检索重排（Jev）',
+      setRerankDesc: 'search_paper 检索的语义重排：关键词先捞候选，Jev 逐个判断「这段能否回答这个问题」再排序——大白话提问也能命中论文里的术语段落。不配则退回纯关键词排序。',
+      setEmbedTitle: '嵌入模型检索（可选）',
+      setEmbedDesc: 'search_paper 的语义召回：分块文本会发送到该 OpenAI 兼容 /embeddings 端点，用向量把「关键词一个字都没命中」的语义相近片段也捞进候选（与关键词结果融合，不替代）。留空即关闭，检索行为与现在完全一致。注意：分块文本（论文正文）会发往该端点。',
+      setTranslateTitle: '翻译端点',
+      setTranslateDesc: '「生成中文版」（babeldoc）与划词翻译共用的 OpenAI 兼容端点，三项必填。OpenCode Go 填 https://opencode.ai/inference/go/openai/v1（插件会自动带 x-opencode-session）。保存前会先测连接。',
+      setBaseUrl: '端点 URL', setModel: '模型', setKey: 'API Key',
+      setSave: '测试并保存', setSaving: '测试连接中…', setClear: '清除自填配置',
+      setSaved: '已保存，立即生效', setCleared: '已清除，回落到部署方默认',
+      setKeyKeep: '留空沿用已保存的 ', setOptional: '可选',
+      setEmbedBatchSize: '批大小（每次请求的分块数，端点限制更小时调低，如百炼部分模型 10/20）',
+      setSourceFile: '当前来源：设置页', setSourceProfile: '当前来源：配置文件（部署方默认）',
+      setSourceEnv: '当前来源：环境变量', setSourceNone: '未配置',
+      setMineruTitle: 'MinerU 解析后端',
+      setMineruDesc: 'PDF 转录的 MinerU 后端：本地 MinerU API（127.0.0.1:8000，扫描件/OCR 友好）或 mineru.net v4 云端。默认关闭（走本地 pdf.js）。保存前会先测试连接。',
+      setMineruMode: '模式', setMineruModeOff: '关闭', setMineruModeLocal: '本地', setMineruModeCloud: '云端',
+      setMineruLocalUrl: '本地服务地址', setMineruLocalKey: '本地 API Key', setMineruBackend: '本地解析后端',
+      setMineruEffort: 'hybrid effort', setMineruParseMethod: '本地解析方式', setMineruCloudKey: '云端 token',
+      setMineruTestConnection: '测试连接', setMineruHealthOk: '连接正常', setMineruHealthFail: '连接失败',
+      // 激活门槛人话（上游评审第 7 条）：普通用户不知道 MinerU 是什么。① 什么时候需要它
+      // （扫描版读不了 / 公式点不了）；② 配置后入口出现在哪（阅读器公式面板的「用 MinerU 重新转录」）。
+      setMineruWhy: '扫描版论文读不了？公式点不了？——在这里配置后就能解析：本地 MinerU 或 mineru.net 云端 token，二选一；保存后阅读器公式面板里会出现「用 MinerU 重新转录」。',
+      setMineruWhyLocal: '本地模式需要你自己跑一个 MinerU 服务（127.0.0.1:8000），适合有显卡、论文不外传的场景。',
+      setMineruWhyCloud: '云端模式只要一个 mineru.net token，无需本地显卡；论文会上传到 mineru.net 解析。',
+      setMineruOffHint: '当前为「关闭」：转录走本地 pdf.js——有文本层的普通 PDF 完全够用；扫描版（没有文本层）与公式引用才需要 MinerU（选本地或云端）。',
+      // 分屏「同步滚动」（模式 B 的全局偏好）：与阅读器分屏控件旁的那个开关是**同一个值**
+      // （键 dpr.syncScroll，见文件顶层的纯函数），任一处改动另一处立即跟着变。
+      setSyncScrollTitle: '分屏同步滚动',
+      setSyncScrollDesc: '阅读器里「分屏」对照（模式 B：原文 PDF ↔ 中文版 PDF 两列）时，两列是否一起滚动。关闭后两列各自独立滚动（适合对照着看不同页）；重新打开会自动把两列对齐回当前页，不会停在两页上。全局偏好：所有论文共用一个值，不按篇记；默认开。模式 A（babeldoc 的中英对照 PDF）只有一个滚动条，不受此项影响。',
+      setSyncScrollLabel: '分屏两列同步滚动',
+      setSyncScrollOnHint: '当前：开 —— 两列一起滚动（默认）',
+      setSyncScrollOffHint: '当前：关 —— 两列各自独立滚动；再打开时会自动对齐回当前页',
+      // 文献管理（删除/重命名）：契约见 docs/reader-ux-requirements.md §2.9。
+      // 去重说明：rename/renameTopic/renamePaper/renameFail/delFail 只保留上面上游那组
+      // （JS 对象字面量重复 key 不报错、后者静默胜出 → 必须手工去重，否则文案悄悄取自另一份）。
+      newName: '新名称', renameDone: '已重命名',
+      renameDetached: '注意：{n} 个历史会话不会删除，但不再显示在列表里',
+      renameTargetExists: '已存在同名文献或专题',
+      delPaper: '删除文献', delTopic: '删除专题',
+      delConfirmTitle: '确认删除', delToTrash: '移入回收站',
+      delConfirmBody: '将移入回收站（可恢复）：共 {files} 个文件、{size}',
+      delNotDeleted: '不会删除：伴读会话历史、共享翻译环境',
+      delTopicTypeName: '请输入专题名「{name}」以确认',
+      delDone: '已移入回收站（{files} 个文件）',
+      delBusySession: '该文献有正在运行的会话，请先结束后再操作',
+      delBusyTranslate: '正在生成译文，请等待完成后再操作',
+      delTopicNotEmpty: '专题内还有 {n} 篇文献，需批量清空或先逐篇删除',
+      delTopicClearTitle: '清空「{topic}」并删除',
+      delTopicClearBody: '共 {papers} 篇文献、{files} 个文件（{size}）：确认后逐篇移入回收站（可恢复），然后删除专题目录。有运行中会话或正在翻译的文献会被服务端先拦下。',
+      delTopicClearConfirm: '清空并删除',
+      delTopicClearFiles: '{n} 个文件',
+      delTopicClearBlocked: '注意：以下文献正在翻译或有运行中会话，会被服务端拦下（先处理再清空）：{names}',
+      delTopicClearPlanFail: '无法获取清空清单',
+      delTopicClearHidden: '隐藏条目 {names} 也会进回收站（不销毁）',
+      clearDone: '已清空「{topic}」：{papers} 篇 / {files} 个文件 → 已移入回收站',
+      delBusyFile: '文件被占用（可能正在阅读器或其他程序中打开），关闭后重试',
+      // F-B/F-C：回滚失败必须把「哪些文件、在哪个回收站、怎么恢复」说清楚；未回滚时不得声称「库未改变」
+      clearPartialFailText: '操作未完成：{n} 个文件未能回滚，仍在回收站里（文献树里可能已看不到）：{names}',
+      clearRecoveryHint: '恢复方法：把 {where}/ 里列出的这些文件移回原专题目录即可',
+      delPlanFail: '无法获取删除清单',
+      delBusy: '同一篇文献的另一个删除/重命名操作正在进行，请稍后重试',
+      delSessionUnknown: '暂时无法确认该文献的伴读会话状态，为避免误删已取消本次操作；请稍后重试',
+      eqTitle: '公式', eqPanelEmpty: '本论文未解析出公式',
+      eqNeedMineru: '需要 MinerU 解析产物才能点击引用公式',
+      eqTranscribe: '用 MinerU 重新转录', eqBadArtifact: 'MinerU 产物损坏，已忽略',
+      eqCopy: '复制 LaTeX', eqCopied: '已复制公式 LaTeX',
+      eqChip: '第 {page} 页 · 公式 {k}',
+      eqTranslatedView: '译文视图没有公式位置信息，切回原文可点击',
+      eqNoPosition: '无位置信息',
+      // 深色模式（方案 §A2.3）：模式 / 强度 / 界面；文案里**如实写明图片会变负片**这一已知代价
+      setThemeTitle: 'PDF 深色模式',
+      setThemeDesc: 'dsh 切到深色时把 PDF 一起变深色（默认「跟随」）。实现是整页反色 + 色相回正：论文里的图片/照片会明显褪色偏色（实测纯红 [255,0,0] → 浅粉 [229,134,134]，不是真负片）——这是已知代价（与 Sioyek #171 同源）；「关闭」可一键绕过。下载/导出的 PDF 始终是原文，不受影响。',
+      setThemeMode: '模式',
+      setThemeModeFollow: '跟随 dsh 主题（默认）',
+      setThemeModeOff: '关闭（PDF 保持原色）',
+      setThemeModeLight: '强制浅色',
+      setThemeModeDark: '强制深色',
+      setThemeStrength: '强度（越往下越柔和）',
+      setThemeStrength0: '最黑',
+      setThemeStrength1: '近黑（默认）',
+      setThemeStrength2: '柔和',
+      setThemeStrength3: '纸感',
+      setThemeChrome: '阅读器界面也切深色（顶栏/面板）',
+      setThemeHint: '当前：{state}。设置面板与阅读器里的「A」按钮共用同一份配置，改一处另一处立即生效。',
+      setThemeStateDark: '深色生效中',
+      setThemeStateLight: '浅色（不变深）',
+      // 嵌套子专题（方案 §B2）：目录即层级；论文按文件夹整理
+      newSubTopic: '新建子专题', moveTopic: '移动到…', moveTopicTitle: '移动到（目标父专题路径，留空=顶层）：',
+      moveTopicHint: '整棵子树跟着移动；历史伴读会话不会删除，但会与树脱钩（确认框会给出数量）',
+      uploadHere: '上传 PDF 到此处',
+    }
+    const en = {
+      library: 'Library',
+      empty: 'Library is empty', hint: 'Create a topic or upload a PDF to start', newTopic: 'New topic',
+      cancel: 'Cancel', ok: 'OK', defaultTopic: 'Default', uploadBtn: 'Upload PDF',
+      newTopicFail: 'Failed to create topic',
+      rename: 'Rename', renameTopic: 'Rename topic', renamePaper: 'Rename paper',
+      renameFail: 'Rename failed', delFail: 'Delete failed',
+      upload: 'Upload PDF into this topic', newChat: 'New chat', session: 'Session', pdfTab: 'Paper PDF',
+      history: 'Chat history',
+      sync: 'Chat is still on another paper — click to switch to the current one',
+      mode: 'Paper Reading', modeEnterTip: 'Enter paper-reading mode: sidebar becomes the library tree', modeExitTip: 'Exit paper-reading mode: restore the official workspace list',
+      settings: 'Paper Reader',
+      setRerankTitle: 'Search rerank (Jev)',
+      setRerankDesc: 'Semantic rerank for search_paper: keyword search shortlists candidates, Jev judges "can this passage answer the question" and reorders — plain-language questions hit terminology passages. Without it, plain keyword ranking is used.',
+      setEmbedTitle: 'Embedding search (optional)',
+      setEmbedDesc: 'Semantic recall for search_paper: chunk texts are sent to this OpenAI-compatible /embeddings endpoint so passages that share no keywords but are semantically close still enter the candidate set (fused with keyword hits, never replacing them). Leave empty to keep it off — search behaviour stays exactly as today. Note: chunk texts (paper body) are sent to this endpoint.',
+      setTranslateTitle: 'Translate endpoint',
+      setTranslateDesc: 'OpenAI-compatible endpoint shared by "Generate Chinese version" (babeldoc) and selection translation; all three fields required. For OpenCode Go use https://opencode.ai/inference/go/openai/v1 (the plugin adds x-opencode-session automatically). Connection is tested before saving.',
+      setBaseUrl: 'Endpoint URL', setModel: 'Model', setKey: 'API Key',
+      setSave: 'Test & save', setSaving: 'Testing…', setClear: 'Clear my config',
+      setSaved: 'Saved, effective immediately', setCleared: 'Cleared, falling back to deployment defaults',
+      setKeyKeep: 'Leave empty to keep saved ', setOptional: 'optional',
+      setEmbedBatchSize: 'Batch size (chunks per request; lower it when the endpoint caps inputs, e.g. 10/20 on some Bailian models)',
+      setSourceFile: 'Source: settings page', setSourceProfile: 'Source: config file (deployment default)',
+      setSourceEnv: 'Source: environment variable', setSourceNone: 'Not configured',
+      setMineruTitle: 'MinerU parser',
+      setMineruDesc: 'MinerU backend for PDF transcription: local MinerU API (127.0.0.1:8000, scan/OCR friendly) or mineru.net v4 cloud. Off by default (local pdf.js). Connection is tested before saving.',
+      setMineruMode: 'Mode', setMineruModeOff: 'Off', setMineruModeLocal: 'Local', setMineruModeCloud: 'Cloud',
+      setMineruLocalUrl: 'Local service URL', setMineruLocalKey: 'Local API key', setMineruBackend: 'Local backend',
+      setMineruEffort: 'hybrid effort', setMineruParseMethod: 'Parse method', setMineruCloudKey: 'Cloud token',
+      setMineruTestConnection: 'Test connection', setMineruHealthOk: 'Connection OK', setMineruHealthFail: 'Connection failed',
+      setMineruWhy: 'Scanned PDFs unreadable? Formulas not clickable? Configure a parser here: either a local MinerU API or a mineru.net cloud token. Once saved, the reader adds a "Re-parse with MinerU" button in the formula panel.',
+      setMineruWhyLocal: 'Local mode expects your own MinerU service (127.0.0.1:8000) — for GPUs and papers that should stay on your machine.',
+      setMineruWhyCloud: 'Cloud mode needs only a mineru.net token and no local GPU; the paper is uploaded to mineru.net for parsing.',
+      setMineruOffHint: 'Currently Off: transcription uses local pdf.js — fine for PDFs that already have a text layer; scanned PDFs (no text layer) and formula citing need MinerU (local or cloud).',
+      setSyncScrollTitle: 'Split-view sync scrolling',
+      setSyncScrollDesc: 'In the reader split view (mode B: the original PDF next to the translated -zh.pdf) — should the two columns scroll together? Off: each column scrolls independently (handy to compare different pages); turning it back on realigns both columns to the current page instead of leaving them on different pages. Global preference: one value for every paper, never per paper; on by default. Mode A (babeldoc dual PDF) has a single scrollbar and is unaffected.',
+      setSyncScrollLabel: 'Scroll the two split columns together',
+      setSyncScrollOnHint: 'Currently: on — the two columns scroll together (default)',
+      setSyncScrollOffHint: 'Currently: off — the two columns scroll independently; turning it on realigns them to the current page',
+      newName: 'New name', renameDone: 'Renamed',
+      renameDetached: 'Note: {n} past chats are kept but no longer listed',
+      renameTargetExists: 'A paper or topic with that name already exists',
+      delPaper: 'Delete paper', delTopic: 'Delete topic',
+      delConfirmTitle: 'Confirm deletion', delToTrash: 'Move to trash',
+      delConfirmBody: 'Will be moved to trash (recoverable): {files} files, {size}',
+      delNotDeleted: 'Not deleted: chat history, shared translation venv',
+      delTopicTypeName: 'Type the topic name "{name}" to confirm',
+      delDone: 'Moved to trash ({files} files)',
+      delBusySession: 'A session is still running — end it first',
+      delBusyTranslate: 'Translation in progress — try again later',
+      delTopicNotEmpty: 'Topic still has {n} papers — use bulk clear, or delete them one by one',
+      delTopicClearTitle: 'Clear \u201c{topic}\u201d and delete',
+      delTopicClearBody: '{papers} papers, {files} files ({size}): after confirmation each paper is moved to the trash (recoverable), then the topic folder is removed. Papers with a running chat or an in-progress translation are blocked first.',
+      delTopicClearConfirm: 'Clear & delete',
+      delTopicClearFiles: '{n} files',
+      delTopicClearBlocked: 'Heads up: these papers are translating or have running chats and will be blocked by the server — handle them first: {names}',
+      delTopicClearPlanFail: 'Could not fetch the clear plan',
+      delTopicClearHidden: 'Hidden entries {names} are moved to the trash too (never destroyed)',
+      clearDone: 'Cleared \u201c{topic}\u201d: {papers} papers / {files} files \u2192 moved to trash',
+      delBusyFile: 'File is in use (open in the reader or another program) — close it and retry',
+      clearPartialFailText: 'The operation did not finish: {n} file(s) could not be rolled back and are still in the trash (the paper may look gone in the tree): {names}',
+      clearRecoveryHint: 'To recover: move those files from {where}/ back into the original topic folder',
+      delPlanFail: 'Could not fetch the deletion manifest',
+      delBusy: 'Another delete/rename on this paper is in progress — try again later',
+      delSessionUnknown: 'Could not confirm chat status — cancelled to avoid accidental deletion; try again later',
+      eqTitle: 'Formulas', eqPanelEmpty: 'No formulas parsed for this paper',
+      eqNeedMineru: 'MinerU output required to click-cite formulas',
+      eqTranscribe: 'Re-parse with MinerU', eqBadArtifact: 'MinerU output is corrupt — ignored',
+      eqCopy: 'Copy LaTeX', eqCopied: 'Formula LaTeX copied',
+      eqChip: 'p.{page} · formula {k}',
+      eqTranslatedView: 'No positions in the translated view — switch back to the original',
+      eqNoPosition: 'No position info',
+      setThemeTitle: 'PDF dark mode',
+      setThemeDesc: 'When dsh goes dark, make the PDF dark too (default: follow). It inverts the whole page and rotates hue back, so photos/figures visibly desaturate and shift colour (measured: pure red [255,0,0] becomes pink [229,134,134], not a true negative) — a known cost (same root cause as Sioyek #171); switch to "Off" to bypass. Downloaded/exported PDFs are always the original bytes.',
+      setThemeMode: 'Mode',
+      setThemeModeFollow: 'Follow dsh theme (default)',
+      setThemeModeOff: 'Off (keep the PDF as-is)',
+      setThemeModeLight: 'Force light',
+      setThemeModeDark: 'Force dark',
+      setThemeStrength: 'Strength (softer downwards)',
+      setThemeStrength0: 'Blackest',
+      setThemeStrength1: 'Near-black (default)',
+      setThemeStrength2: 'Soft',
+      setThemeStrength3: 'Paper-like',
+      setThemeChrome: 'Darken the reader UI too (toolbar/panels)',
+      setThemeHint: 'Currently: {state}. The settings panel and the reader "A" button share one server-side config - changing either applies immediately.',
+      setThemeStateDark: 'dark applied',
+      setThemeStateLight: 'light (unchanged)',
+      newSubTopic: 'New subtopic', moveTopic: 'Move to...', moveTopicTitle: 'Move to (target parent topic path, empty = top level):',
+      moveTopicHint: 'The whole subtree moves with it; past chats are kept but detach from the tree (the count is reported).',
+      uploadHere: 'Upload a PDF here',
+    }
+
+    let t = (k) => k
+    const setT = (fn) => { t = fn }
+
+    /* ---------- 共享状态桥（树 / PDF 页签 / 阅读器 iframe 三方同步） ---------- */
+    const sessionKey = (topic, name) => `dpr.sessionN.${topic}/${name}`
+    function setCurrentPaper(topic, name, n) {
+      localStorage.setItem('dpr.last', JSON.stringify({ topic, name }))
+      localStorage.setItem(sessionKey(topic, name), String(n))
+      window.dispatchEvent(new CustomEvent('dpr:paper', { detail: { topic, name, n } }))
+    }
+
+    /* ---------- 会话消息里的阅读器跳转链接 ----------
+       agent 引用页码时给 [文字](http://<host>/paper-reader/?topic=..&name=..&page=N)
+       （dsh 渲染器对 http(s) 链接加 target=_blank，capture 拦截是应用内跳转的唯一窗口）。
+       同论文 → 阅读器 iframe 原地跳页：不重载文档，用户正在看中文版就落在中文版该页；
+       跨论文/iframe 未就绪 → setCurrentPaper 换论文，页码经 pendingJumpPage 挂上 src，
+       阅读器 bootstrap 直达目标页。 */
+    let readerIframeEl = null
+    let pendingJump = null // { page, q }：跨论文/iframe 未就绪时挂上 src，由阅读器 bootstrap 消费
+    /* 宿主（dsh）当前是否深色：来自官方 theme 服务（ctx.theme.getTheme().active.colorScheme），
+       拿不到时保守判「亮色」（与阅读器的降级方向一致：宁可该黑没黑，绝不误黑）。 */
+    let dprHostDark = false
+    /** 把主题推给阅读器 iframe：postMessage（权威、无轮询）+ data 属性（排障/断言用）。 */
+    function pushThemeToReader() {
+      const payload = { type: 'dpr:theme' }
+      try {
+        const mir = JSON.parse(localStorage.getItem(DPR_THEME_MIRROR_KEY) || 'null')
+        if (mir) { payload.mode = mir.mode; payload.strength = mir.strength; payload.chrome = mir.chrome; payload.curve = mir.curve }
+      } catch { /* 镜像损坏：仍然推宿主亮暗 */ }
+      const effective = payload.mode === 'dark' || (payload.mode !== 'off' && payload.mode !== 'light' && dprHostDark) ? 'dark' : 'light'
+      try { if (readerIframeEl) readerIframeEl.setAttribute('data-dpr-theme', effective) } catch {}
+      try { readerIframeEl?.contentWindow?.postMessage({ type: 'dpr:theme', pdfTheme: payload.mode, pdfDarkStrength: payload.strength, pdfDarkChrome: payload.chrome, curve: payload.curve }, '*') } catch { /* 读文档还没起来：它自己会拉一次配置 */ }
+    }
+    function jumpToPaperPage(topic, name, page, q) {
+      // 阅读器页签若关着尽量展开（seat 未绑定时静默失败，跳转本身仍生效）
+      try { clientApi?.sidebarRight?.openTab('dpr-reader', { revealIfOpened: true }) } catch {}
+      const cur = JSON.parse(localStorage.getItem('dpr.last') || 'null')
+      const tp = topic || cur?.topic, nm = name || cur?.name
+      if (!tp || !nm) return
+      const win = readerIframeEl?.contentWindow
+      if (cur && tp === cur.topic && nm === cur.name && win?.dpr?.jumpPage) {
+        win.dpr.jumpPage(page, q || undefined)
+        return
+      }
+      pendingJump = { page, q }
+      setCurrentPaper(tp, nm, cur && tp === cur.topic && nm === cur.name ? cur.n : 0)
+    }
+
+    async function api(path, opts) {
+      const r = await fetch('/paper-reader/api' + path, opts)
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}))
+        // 机器可读码/下一步端点统一挂到 Error 上（见顶层 dprApiError）：调用方按 code 分支
+        // （别去匹配中文文案），并按 clearEndpoint 走「改批清空」的重试路径。
+        throw dprApiError(r.status, body)
+      }
+      return r.json()
+    }
+
+    /* ---------- 改名搬家：论文粒度的本地记忆键跟随新身份 ----------
+       dpr.variant.<topic>/<name>（语言版本记忆）、dpr.sessionN.<topic>/<name>（会话序号）、
+       dpr.last（上次打开）。论文改名精确搬单键；专题改名把该专题前缀的键整体搬。 */
+    function migrateLsKeys(oldTopic, newTopic, oldName, newName) {
+      try {
+        if (oldName != null) {
+          for (const base of ['dpr.variant.', 'dpr.sessionN.']) {
+            const from = base + oldTopic + '/' + oldName
+            const to = base + newTopic + '/' + newName
+            const v = localStorage.getItem(from)
+            if (v != null) { localStorage.setItem(to, v); localStorage.removeItem(from) }
+          }
+        } else {
+          for (const base of ['dpr.variant.', 'dpr.sessionN.']) {
+            const pre = base + oldTopic + '/'
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+              const k = localStorage.key(i)
+              if (k && k.startsWith(pre)) {
+                localStorage.setItem(base + newTopic + '/' + k.slice(pre.length), localStorage.getItem(k))
+                localStorage.removeItem(k)
+              }
+            }
+          }
+        }
+        const last = JSON.parse(localStorage.getItem('dpr.last') || 'null')
+        // 前缀感知（评审 H1）：dpr.last 里的 topic 也是**路径**——读 A/B 时改名 A→X/A，
+        // 它必须跟到 X/A/B，否则刷新后阅读器回落 papers[0]（阅读位置丢）。
+        // 逻辑与文件顶层的 dprReprefixTopic 同义；这里**内联**是为了让本函数能单独被提取执行
+        // （既有测试只抠出这一个函数体跑，不能依赖别处定义）。
+        if (last && typeof last.topic === 'string') {
+          const moved = last.topic === oldTopic
+            ? newTopic
+            : (last.topic.startsWith(oldTopic + '/') ? newTopic + last.topic.slice(oldTopic.length) : null)
+          const sameName = oldName == null || last.name === oldName
+          if (moved !== null && sameName) {
+            localStorage.setItem('dpr.last', JSON.stringify({ ...last, topic: moved, ...(oldName != null ? { name: newName } : {}) }))
+          }
+        }
+      } catch { /* 隐私模式等写不了就算了 */ }
+    }
+
+    /* 当前在屏（主视图）会话 id：0.1.x 是会话列表快照的 .current 字段；
+       0.2.0 起快照没有该字段，官方以 retainedBy.mainView>0 标记主视图保留的会话
+       （dsh-client-ui-workspace 自己的 current() 就是这么读的）—— 两代都取到。 */
+    function currentSessionOf(snap) {
+      if (!snap) return null
+      if (snap.current !== undefined) return snap.current
+      try {
+        return Object.values(snap.byId ?? {}).find((row) => (row.retainedBy?.mainView ?? 0) > 0)?.id ?? null
+      } catch { return null }
+    }
+
+    /* ---------- 轻提示（DOM 直挂，不进 React 树） ----------
+       window.alert 桌面端（Electron）虽可用但阻塞且各壳表现不一，一律换掉。 */
+    function toast(msg) {
+      const el = document.createElement('div')
+      el.setAttribute('data-dpr-toast', '')
+      el.textContent = msg
+      Object.assign(el.style, {
+        position: 'fixed', left: '50%', bottom: '30px', transform: 'translateX(-50%)',
+        zIndex: 80, maxWidth: '76vw', padding: '8px 14px', borderRadius: '8px',
+        fontSize: '12px', lineHeight: 1.6, whiteSpace: 'pre-wrap', textAlign: 'center',
+        background: 'var(--dsw-alias-bg-inverse, #24292f)', color: 'var(--dsw-alias-label-inverse, #f6f8fa)',
+        boxShadow: '0 4px 16px rgba(0,0,0,.25)',
+      })
+      document.body.appendChild(el)
+      setTimeout(() => el.remove(), 4000)
+    }
+
+    /* ---------- 会话切换护栏：PDF/网格全程冻结，只允许对话区换内容 ----------
+       rightbar.session 是 session 作用域 slot，切会话 = seat 整体重挂：
+       旧 seat 卸载时汇报 closeRightbar，新 seat 初挂时 surface 尚未建立也汇报
+       closed → 右栏轨道塌 0 → 对话列（钉在第 3 轨）消失、PDF 列（第 2 轨）撑满
+       → 换位按轨宽撤钉 → openTab 再撑开 = 用户看到的"整个页面跟着动"（逐帧实测）。
+       预开路径救不了新建会话：openTabIn 对未被 adopt 的 store 恒静默 no-op
+       （新建会话要等成为当前会话才 adopt，实测创建后等 2.5s 仍 no-op），
+       而非当前会话的 surface 又没有任何 API 可读 → 无法验证预开是否生效。
+       于是反向兜底，切换窗口（1.5s）内三件事：
+       ① 吞掉 layout.closeRightbar 汇报 —— grid 冻在当前轨道（openRightbar 照放）；
+       ② ReaderOverlay 锚点测量/几何冻结 —— 锚点被重绑带着消失/滑动都是暂态
+         （applySwap 照跑：新面板的 maxWidth 钳制要尽快钉上，防左溢盖侧栏）；
+       ③ [data-rightbar-instant] 连带杀掉面板 transform 过渡（官方只管 grid/handle）。
+       窗口结束对账：若右栏面板确实没开着（护栏期间被收起/开页签失败），
+       补一次真实 close，让 grid 回到真状态。 */
+    const SWITCH_GUARD_MS = 1500
+    let switching = false
+    let switchTimer = 0
+    let realCloseRightbar = null
+    let layoutService = null
+
+    function beginSwitchGuard() {
+      switching = true
+      document.querySelector('[data-rightbar-col]')?.parentElement?.setAttribute('data-rightbar-instant', '')
+      if (layoutService && realCloseRightbar === null && typeof layoutService.closeRightbar === 'function') {
+        realCloseRightbar = layoutService.closeRightbar
+        layoutService.closeRightbar = () => {}
+      }
+      clearTimeout(switchTimer)
+      switchTimer = setTimeout(() => {
+        switching = false
+        document.querySelector('[data-rightbar-col]')?.parentElement?.removeAttribute('data-rightbar-instant')
+        if (!layoutService || realCloseRightbar === null) return
+        layoutService.closeRightbar = realCloseRightbar
+        const panelOpen = !!document.querySelector('[data-sidebar-right-panel][data-sidebar-right-open]')
+        realCloseRightbar = null
+        if (!panelOpen) {
+          try { layoutService.closeRightbar() } catch { /* 上下文已销毁 */ }
+        }
+      }, SWITCH_GUARD_MS)
+    }
+
+    /* ---------- 阅读器悬浮层：一个跨会话永不重建的 iframe ----------
+       rightbar 页签内容跟随会话 seat 重绑整体重建（TabSlot 以 tab.id 为 key，
+       新会话的 rightbar 布局里没有旧 tab）——iframe 每次重载，滚动/缩放全丢
+       （"新建对话整页都动"）。改为：PdfTab 只渲染占位锚点；真正的 iframe 由
+       ReaderOverlay 常驻渲染（挂在 LibraryTree 下，不随会话变），fixed 覆盖在锚点矩形上，
+       200ms 轮询跟随；锚点消失（关页签/收右栏/全屏）时隐藏但 iframe 存活。 */
+    function ReaderOverlay() {
+      const [cur, setCur] = useState(() => JSON.parse(localStorage.getItem('dpr.last') || 'null'))
+      const [geo, setGeo] = useState({ visible: false, left: 0, top: 0, width: 0, height: 0 })
+      const lastShownRef = React.useRef(0)
+      useEffect(() => {
+        const on = (e) => {
+          // 空库（最后一篇被删）：撤掉阅读器 iframe，回到「从文献库选择一篇论文」占位
+          if (e.detail.empty) { try { localStorage.removeItem('dpr.last') } catch {}; setCur(null); return }
+          // 跳转链接挂的页码/引文（jumpToPaperPage 的跨论文路径）：随 src 传给阅读器 bootstrap
+          const j = pendingJump
+          pendingJump = null
+          setCur({ topic: e.detail.topic, name: e.detail.name, page: j?.page, q: j?.q })
+        }
+        window.addEventListener('dpr:paper', on)
+        return () => window.removeEventListener('dpr:paper', on)
+      }, [])
+      useEffect(() => {
+        let alive = true
+        // 布局换位：rightbar 列(PDF) ↔ center 列(对话) 交换视觉位置。列+行都钉
+        // （auto-placement 只钉列会重叠/塌行，实测）；面板锚列右缘且内联宽度=rightbar
+        // 配置宽度，列进窄轨会左溢盖侧栏 → 钉 max-width（⚠️ 不抢 width：dsh 在会话 store
+        // 每次提交都重写内联 width，互写同属性 = 持续闪烁，实测）。
+        // 钉住条件 = **dpr 页签锚点存在** + 右栏轨宽自判断：右栏折叠（第 3 轨≈0）时撤钉
+        // —— 否则 seat 重绑的空窗期 PDF 列会吃掉对话列的宽度，双双消失又出现（"整屏闪"，实测）。
+        // 只看轨宽不够（#10）：任何右侧栏页签（官方文件预览/present 卡片）都会撑开第 3 轨，
+        // 普通会话里会把对话挤到最右。锚点在 seat 重绑/切换护栏的空窗期会瞬时消失（同下方
+        // overlay 测量的暂态），按 lastSeen 加 1500ms（=切换护栏窗口宽）迟滞，免得换位
+        // 撤钉又回钉，闪回当初修掉的整屏闪。
+        const setStyle = (el, prop, val) => { if (el.style[prop] !== val) el.style[prop] = val }
+        let lastPdfTabAt = 0
+        const applySwap = () => {
+          const col = document.querySelector('[data-rightbar-col]')
+          const center = col?.previousElementSibling // DOM 序固定：sidebar | center | rightbar
+          const frame = col?.parentElement
+          if (!col || !center || !frame) return
+          const tracks = getComputedStyle(frame).gridTemplateColumns.split(' ').map(parseFloat)
+          const tabEl = document.querySelector('[data-dpr-tab]')
+          if (tabEl) lastPdfTabAt = Date.now()
+          const eff = (!!tabEl || Date.now() - lastPdfTabAt < 1500) && (tracks[2] ?? 0) >= 50 && !frame.hasAttribute('data-rightbar-fullscreen')
+          // 所有写入带值守卫：重复写同值也会触发样式重算，200ms 轮询下会闪
+          setStyle(col, 'gridColumn', eff ? '2' : '')
+          setStyle(col, 'gridRow', eff ? '1' : '')
+          setStyle(center, 'gridColumn', eff ? '3' : '')
+          setStyle(center, 'gridRow', eff ? '1' : '')
+          const panel = col.querySelector('[data-sidebar-right-panel]')
+          if (!panel) return
+          setStyle(panel, 'maxWidth', eff ? '100%' : '')
+          // dsh 把面板内联宽度写成 cols.rightbar 且锚在列右缘。换位后 col 落在 1fr 轨，
+          // 拖窄对话列时该轨会比配置宽度**宽**——面板不撑满就缩在列右半边，锚点跟着跑，
+          // 阅读器整个右移并变窄（实测 x=800 w=300，而列是 280..1100）。
+          // 只补 minWidth，不碰 width：dsh 每次会话提交都重写内联 width，抢同一属性会持续闪烁。
+          setStyle(panel, 'minWidth', eff ? '100%' : '')
+          // 全屏态层级修复（用户实测「点全屏放大后一片白」）：dsh 的页签宿主 ._tabCell
+          // z-index 是 var(--dsh-dockkit-dock-layer, 10)，全屏时该变量被抬到 40——但只定义在
+          // 右栏**面板**（P3OORG_panel）子树上，把本阅读器 z-10 的悬浮 iframe 压在下面：
+          // iframe 里页面活着、工具栏都在，却被白色 tab 宿主盖住。⚠️ 变量不从列/帧继承，
+          // body 级 iframe 拿到的是回落值 10——必须从 panel 上现读实际值再 +2：
+          // 盖回 tabCell、仍低于对话头部浮动按钮 45（全屏下拖拽手柄本就隐藏）；
+          // 非全屏回 10（低于手柄 11 与 overlayLayer 20）。
+          if (readerIframeEl) {
+            const dockLayer = parseFloat(getComputedStyle(panel).getPropertyValue('--dsh-dockkit-dock-layer')) || 10
+            setStyle(readerIframeEl, 'zIndex', frame.hasAttribute('data-rightbar-fullscreen') ? String(dockLayer + 2) : '10')
+          }
+        }
+        const tick = () => {
+          if (!alive) return
+          // 切换护栏期：锚点测量/overlay 几何冻结 —— 锚点消失、被面板 transform
+          // 带着滑动、未钳制时左溢错位，都是 seat 重绑的暂态，追着跑 = overlay 乱跳
+          // （实测）。只冻结"正在显示"的场景；首开（从未显示过）不冻结，PDF 照常出现。
+          const frozen = switching && lastShownRef.current && Date.now() - lastShownRef.current < 5000
+          if (!frozen) {
+            const anchor = document.querySelector('[data-dsh-surface="rightbar-tab-anchor"]')
+            let next = null
+            if (anchor) {
+              const r = anchor.getBoundingClientRect()
+              if (r.width > 50 && r.height > 50) {
+                next = { visible: true, left: Math.round(r.left), top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) }
+              }
+            }
+            // 锚点消失只藏不拆，且隐藏带 900ms 迟滞：seat 重绑的百毫秒间隙里
+            // PDF 保持原位显示，不闪（iframe 常驻存活，拆了再挂就重载丢滚动）
+            setGeo((prev) => {
+              if (next) {
+                lastShownRef.current = Date.now()
+                return (prev.visible && prev.left === next.left && prev.top === next.top && prev.width === next.width && prev.height === next.height) ? prev : next
+              }
+              if (prev.visible && Date.now() - lastShownRef.current < 900) return prev
+              return prev.visible ? { ...prev, visible: false } : prev
+            })
+          }
+          // applySwap 冻结期照跑（值守卫幂等）：新 seat 的面板是全新 DOM，宽度钳制
+          // （maxWidth）必须尽快钉上，否则面板按内联宽左溢盖住侧栏（实测锚点 x=168）
+          applySwap()
+        }
+        tick()
+        const timer = setInterval(tick, 200)
+        return () => { alive = false; clearInterval(timer) }
+      }, [])
+      if (!cur) return null
+      const src = `/paper-reader/?topic=${encodeURIComponent(cur.topic)}&name=${encodeURIComponent(cur.name)}${cur.page ? '&page=' + cur.page : ''}${cur.q ? '&q=' + encodeURIComponent(cur.q) : ''}`
+      return createPortal(
+        h('iframe', {
+          ref: (el) => { readerIframeEl = el },
+          src, title: t('pdfTab'),
+          'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-surface': 'reader-overlay',
+          style: {
+            position: 'fixed', left: geo.left + 'px', top: geo.top + 'px',
+            width: geo.width + 'px', height: geo.height + 'px', border: 'none',
+            // 不用 display:none（布局归零会把 iframe 内滚动位置清零）；visibility 保留布局
+            visibility: geo.visible ? 'visible' : 'hidden',
+            pointerEvents: geo.visible ? 'auto' : 'none',
+            // z-index 低于 overlayLayer(20) 与按钮组(45)：不挡拖拽手柄和弹层
+            zIndex: 10, background: 'var(--dsw-alias-bg-layer-1, #f6f7f9)',
+          },
+        }),
+        document.body,
+      )
+    }
+
+    /* ---------- rightbar PDF 页签（只剩占位锚点 + 布局换位） ---------- */
+    function PdfTab() {
+      // 真正的阅读器是 ReaderOverlay 的常驻 iframe；这里只提供定位锚点。
+      // data-dpr-tab 标记 = 「dpr 页签在本会话开着」，applySwap 据此判断是否换位（#10：
+      // 不能只看右栏轨宽，否则官方文件预览页签也会把对话挤到最右）。
+      const hasPaper = !!localStorage.getItem('dpr.last')
+      return h('div', {
+        'data-dsh-surface': 'rightbar-tab-anchor',
+        'data-dpr-tab': '1',
+        style: { width: '100%', height: '100%' },
+      }, hasPaper ? null : h('div', { style: { padding: '16px', fontSize: '13px', color: 'var(--dsw-alias-label-secondary, #656d76)' } }, '← 从文献库选择一篇论文'))
+    }
+
+    /* ---------- 对话列头部的 [🕐历史 / ＋新建] 浮动按钮组 ----------
+       官方 header.actions 是 session 作用域 slot，动态包（ModuleLoader）注册的条目
+       不被渲染（实测：register 成功但零渲染）——退化为 fixed 浮动组，portal 到 body，
+       200ms 轮询对齐对话列头部右侧原生按钮的左缘；仅当前会话是伴读会话（dpr-）时显示。
+       历史点开下拉：该论文全部会话（真实标题+日期），点哪条进哪条。
+       （`parseDprSession` 是文件顶层的纯函数：topic 是路径，按 lastIndexOf('/') 切。） */
+
+    function SessionActions(props) {
+      const { uiWorkspace } = props
+      const [curSid, setCurSid] = useState(null)
+      const [anchor, setAnchor] = useState(null) // {top, right} | null
+      const [open, setOpen] = useState(false)
+      const [list, setList] = useState(null)
+      const btnRef = React.useRef(null)
+      const popRef = React.useRef(null)
+      const [popPos, setPopPos] = useState(null)
+
+      // 轮询：当前会话 + 对话列头部锚点（跟随换位/拖拽/折叠/会话切换）
+      useEffect(() => {
+        let alive = true
+        const tick = () => {
+          if (!alive) return
+          let next = null
+          let docked = null
+          try {
+            const snap = uiWorkspace.sessions?.list?.getSnapshot?.()
+            const cur = currentSessionOf(snap)
+            setCurSid((prev) => (prev === cur ? prev : cur))
+            const col = document.querySelector('[data-rightbar-col]')?.previousElementSibling
+            const conv = col?.querySelector('[data-phase]')
+            if (col && conv && typeof cur === 'string' && cur.startsWith('dpr-')) {
+              const r = col.getBoundingClientRect()
+              if (r.width > 200) {
+                // 贴头部右端：preset 徽标之右、系统控件（utilities/corner，哪个可见用哪个）之左；
+                // 给该控件加 margin-left 腾出 80px 空隙（flex 行内原生腾位，不压任何文字）
+                const vis = (el) => (el && el.getBoundingClientRect().width > 0 ? el : null)
+                const dock = vis(col.querySelector('[class*="headerUtilities"]')) || vis(col.querySelector('[class*="headerCorner"]'))
+                const leftEdge = dock ? dock.getBoundingClientRect().left : r.right - 12
+                if (dock && dock.style.marginLeft !== '80px') { dock.dataset.dprPad = '1'; dock.style.marginLeft = '80px' }
+                docked = dock
+                next = { top: Math.round(r.top + 10), right: Math.round(window.innerWidth - leftEdge + 6) }
+              }
+            }
+            if (!next) {
+              const padded = document.querySelector('[data-dpr-pad]')
+              if (padded) { delete padded.dataset.dprPad; padded.style.marginLeft = '' }
+            }
+          } catch { /* 目录未就绪 */ }
+          setAnchor((prev) => (prev && next && prev.top === next.top && prev.right === next.right) || (!prev && !next) ? prev : next)
+        }
+        tick()
+        const timer = setInterval(tick, 200)
+        return () => {
+          alive = false
+          clearInterval(timer)
+          const padded = document.querySelector('[data-dpr-pad]')
+          if (padded) { delete padded.dataset.dprPad; padded.style.marginLeft = '' }
+        }
+      }, [uiWorkspace])
+
+      // 阅读器当前文献（dpr.last 恢复 + 跟随 dpr:paper）。侧栏点论文只保证阅读器切换，
+      // 会话列切换是尽力而为（activateSession 轮询 6s 后静默放弃）——两者可能脱钩：
+      // 此时「历史/新建」若跟着会话列走，会在用户正看的另一篇论文上建会话（实测踩坑）。
+      // 这里以「正在看的文献」为准；脱钩时给 ⚠ 一键对齐入口（把会话列切回当前文献）。
+      const [viewed, setViewed] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('dpr.last') || 'null') } catch { return null }
+      })
+      useEffect(() => {
+        const on = (e) => setViewed({ topic: e.detail.topic, name: e.detail.name, n: e.detail.n })
+        window.addEventListener('dpr:paper', on)
+        return () => window.removeEventListener('dpr:paper', on)
+      }, [])
+
+      const chatPaper = parseDprSession(curSid)
+      const paper = viewed || chatPaper
+      // 子专题论文（topic=A/B）必须解析出同样的 topic/name，否则 ⚠ 永远常亮（评审 A 第二条）
+      const mismatch = dprSessionStale(chatPaper, viewed)
+      const activeN = chatPaper?.n ?? paper?.n
+
+      // 下拉打开时拉该论文的会话列表；点外面关闭
+      useEffect(() => {
+        if (!open || !paper) return undefined
+        setList(null)
+        api(`/sessions?topic=${encodeURIComponent(paper.topic)}&name=${encodeURIComponent(paper.name)}`)
+          .then((d) => setList(d.sessions)).catch(() => setList([]))
+        const onDown = (e) => {
+          if (popRef.current?.contains(e.target) || btnRef.current?.contains(e.target)) return
+          setOpen(false)
+        }
+        document.addEventListener('mousedown', onDown)
+        return () => document.removeEventListener('mousedown', onDown)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [open, paper?.topic, paper?.name])
+
+      if (!paper || !anchor) return null
+
+      let titles = {}
+      try {
+        const snap = uiWorkspace.sessions?.list?.getSnapshot?.()
+        for (const s of list ?? []) {
+          const title = snap?.byId?.[s.sessionId]?.title
+          if (title) titles[s.sessionId] = title
+        }
+      } catch { /* 标题不可读时用 会话N */ }
+
+      const iconBtn = {
+        width: '28px', height: '28px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
+        display: 'grid', placeItems: 'center',
+        color: 'var(--dsw-alias-label-tertiary, #656d76)',
+        background: 'var(--dsw-alias-bg-base, #fff)',
+      }
+
+      return createPortal(
+        h('div', {
+          'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-surface': 'session-actions',
+          style: { position: 'fixed', top: anchor.top + 'px', right: anchor.right + 'px', display: 'flex', gap: '2px', zIndex: 45 },
+        },
+          mismatch && h('button', {
+            style: { ...iconBtn, color: 'var(--dsw-alias-state-warn, #d29922)' },
+            title: t('sync'),
+            onClick: () => window.dispatchEvent(new CustomEvent('dpr:enter', { detail: { topic: viewed.topic, name: viewed.name } })),
+          }, '⚠'),
+          h('button', {
+            ref: btnRef, style: iconBtn, title: t('history'),
+            onClick: () => {
+              if (!open && btnRef.current) {
+                const r = btnRef.current.getBoundingClientRect()
+                setPopPos({ top: Math.round(r.bottom + 6), right: Math.round(window.innerWidth - r.right) })
+              }
+              setOpen(!open)
+            },
+          }, '🕐'),
+          h('button', {
+            style: iconBtn, title: t('newChat'),
+            onClick: () => window.dispatchEvent(new CustomEvent('dpr:newchat', { detail: { topic: paper.topic, name: paper.name } })),
+          }, '＋'),
+          open && createPortal(
+            h('div', {
+              ref: popRef,
+              'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-surface': 'session-history',
+              style: {
+                position: 'fixed', top: (popPos?.top ?? 40) + 'px', right: (popPos?.right ?? 20) + 'px',
+                minWidth: '220px', maxWidth: '320px', maxHeight: '50vh', overflowY: 'auto', zIndex: 90,
+                background: 'var(--dsw-alias-bg-base, #fff)', border: '.5px solid var(--dsw-alias-border-l3, #e2e5ea)',
+                borderRadius: '10px', boxShadow: '0 8px 30px rgba(0,0,0,.14)', padding: '4px',
+              },
+            },
+              list === null
+                ? h('div', { style: { padding: '10px 12px', fontSize: '12px', color: 'var(--dsw-alias-label-tertiary, #656d76)' } }, '…')
+                : list.map((s) => {
+                    const active = s.n === activeN
+                    return h('div', {
+                      key: s.sessionId,
+                      onClick: () => {
+                        setOpen(false)
+                        if (!active) window.dispatchEvent(new CustomEvent('dpr:enter', { detail: { topic: paper.topic, name: paper.name, n: s.n } }))
+                      },
+                      style: {
+                        padding: '7px 10px', borderRadius: '7px', cursor: 'pointer', fontSize: '13px',
+                        color: active ? 'var(--dsw-alias-state-business-primary, #0969da)' : 'var(--dsw-alias-label-primary, #24292f)',
+                        background: active ? 'var(--dsw-alias-bg-active, rgba(9,105,218,.10))' : 'none',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      },
+                    },
+                      (s.running ? '● ' : '') + (titles[s.sessionId] || `${t('session')} ${s.n}`),
+                      h('span', { style: { float: 'right', fontSize: '11px', color: 'var(--dsw-alias-label-tertiary, #656d76)', marginLeft: '12px' } },
+                        s.updatedAt ? new Date(s.updatedAt).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }) : ''),
+                    )
+                  }),
+            ),
+            document.body,
+          ),
+        ),
+        document.body,
+      )
+    }
+
+    /* ---------- 侧栏文献库树（接管 sidebar.workspaces） ---------- */
+    const S = {
+      root: { padding: '4px 0 12px', fontSize: '13px', color: 'var(--dsw-alias-label-primary, #24292f)' },
+      head: { display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 10px 6px', fontSize: '12px', fontWeight: 600, color: 'var(--dsw-alias-label-secondary, #656d76)' },
+      iconBtn: { cursor: 'pointer', border: 'none', background: 'none', color: 'inherit', padding: '0 4px', fontSize: '13px', opacity: .75 },
+      // 页内弹窗（Electron 无 window.prompt）与空库入口按钮
+      btnPrimary: { fontSize: '13px', padding: '5px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--dsw-alias-button-primary-fill, #1f6feb)', color: 'var(--dsw-alias-button-primary-foreground, #fff)' },
+      btnGhost: { fontSize: '13px', padding: '5px 14px', borderRadius: '6px', cursor: 'pointer', background: 'none', border: '1px solid var(--dsw-alias-border-l1, #d0d7de)', color: 'var(--dsw-alias-label-secondary, #656d76)' },
+      linkBtn: { display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', background: 'none', border: '1px solid var(--dsw-alias-border-l1, #d0d7de)', color: 'var(--dsw-alias-label-action-primary, #0969da)' },
+      topicHead: { display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 8px', margin: '1px 6px 0', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, userSelect: 'none' },
+      caret: { fontSize: '10px', color: 'var(--dsw-alias-label-secondary, #656d76)', transition: 'transform .12s', display: 'inline-block' },
+      items: { marginLeft: '14px' },
+      item: { display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', margin: '0 6px', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+      active: { background: 'var(--dsw-alias-bg-active, rgba(9,105,218,.12))', color: 'var(--dsw-alias-label-action-primary, #0969da)', fontWeight: 600 },
+      sessionItem: { fontSize: '12px', color: 'var(--dsw-alias-label-secondary, #656d76)' },
+      empty: { padding: '10px 12px', fontSize: '12px', color: 'var(--dsw-alias-label-secondary, #656d76)', lineHeight: 1.6 },
+      running: { color: 'var(--dsw-alias-state-success-primary, #1a7f37)', fontSize: '9px' },
+      // 收起态（rail）：官方 rail 的控件是 36×36 圆形按钮、左对齐
+      rail: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
+      railBtn: { width: '36px', height: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'none', borderRadius: '50%', color: 'var(--dsw-alias-label-primary, #24292f)', cursor: 'pointer', fontSize: '17px', padding: '0' },
+    }
+
+    /* ---------- 页内文本输入弹窗：Electron 渲染进程不实现 window.prompt
+       （实测同版本 Electron 调用即抛 "prompt() is not supported"，桌面端点「＋」
+       曾因此毫无反应），一律走 createPortal 挂 document.body，避免被侧栏 overflow 裁剪。 ---------- */
+    function AskText(props) {
+      const { title, confirmText, cancelText, onConfirm, onCancel, initial } = props
+      const [v, setV] = useState(() => initial ?? '')   // 上游写法：惰性初值（避免每次渲染重算）
+      const ref = React.useRef(null)
+      useEffect(() => {
+        ref.current?.focus()
+        if (ref.current && initial) ref.current.select() // 重命名场景：默认选中旧名，直接覆盖输入
+      }, [])
+      const submit = () => { const s = v.trim(); if (s) onConfirm(s) }
+      return h('div', {
+        style: { position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', font: 'inherit' },
+        onClick: onCancel,
+      },
+        h('div', {
+          style: { width: '320px', maxWidth: '90vw', padding: '16px', borderRadius: '10px', boxShadow: '0 8px 30px rgba(0,0,0,.3)', background: 'var(--dsw-alias-bg-layer-1, #ffffff)', color: 'var(--dsw-alias-label-primary, #24292f)' },
+          onClick: (e) => e.stopPropagation(),
+        },
+          h('div', { style: { fontSize: '13px', fontWeight: 600, margin: '0 0 10px' } }, title),
+          h('input', {
+            ref, value: v, type: 'text',
+            style: { width: '100%', boxSizing: 'border-box', fontSize: '13px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--dsw-alias-border-l1, #d0d7de)', background: 'var(--dsw-alias-bg-layer-2, #f6f8fa)', color: 'inherit', outline: 'none' },
+            onChange: (e) => setV(e.target.value),
+            onKeyDown: (e) => { if (e.key === 'Enter') submit(); else if (e.key === 'Escape') onCancel() },
+          }),
+          h('div', { style: { display: 'flex', gap: '8px', justifyContent: 'flex-end', margin: '12px 0 0' } },
+            h('button', { type: 'button', style: S.btnGhost, onClick: onCancel }, cancelText),
+            h('button', { type: 'button', style: S.btnPrimary, onClick: submit }, confirmText))))
+    }
+
+    /* ---------- 破坏性操作确认弹窗（删除专用）----------
+       与 AskText 同一套 portal + 页内弹窗约定：Electron 渲染进程不支持 window.confirm/prompt。
+       契约要求：文案必须**逐条列出将删除的内容**，且清单来自服务端 dry-run（delete-plan），
+       不允许前端自己拼。专题删除额外要求输入专题名（type-to-confirm）。 */
+    function ConfirmDelete(props) {
+      const { title, body, detail, notDeleted, confirmText, cancelText, requireText, onConfirm, onCancel } = props
+      const [typed, setTyped] = useState('')
+      const ok = !requireText || typed.trim() === requireText
+      return h('div', {
+        style: { position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', font: 'inherit' },
+        onClick: onCancel,
+      },
+        h('div', {
+          style: { width: '380px', maxWidth: '92vw', maxHeight: '86vh', overflow: 'auto', padding: '16px', borderRadius: '10px', boxShadow: '0 8px 30px rgba(0,0,0,.3)', background: 'var(--dsw-alias-bg-layer-1, #ffffff)', color: 'var(--dsw-alias-label-primary, #24292f)' },
+          onClick: (e) => e.stopPropagation(),
+        },
+          h('div', { style: { fontSize: '13px', fontWeight: 600, margin: '0 0 8px' } }, title),
+          body ? h('div', { style: { fontSize: '12.5px', lineHeight: 1.6 } }, body) : null,
+          detail ? h('div', {
+            style: { margin: '8px 0 0', padding: '6px 8px', borderRadius: '6px', background: 'var(--dsw-alias-bg-layer-2, #f6f8fa)', fontSize: '11.5px', lineHeight: 1.7, maxHeight: '32vh', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' },
+          }, detail) : null,
+          notDeleted ? h('div', { style: { marginTop: '8px', fontSize: '11.5px', color: 'var(--dsw-alias-label-secondary, #656d76)', lineHeight: 1.6 } }, notDeleted) : null,
+          requireText ? h('input', {
+            value: typed, type: 'text', placeholder: requireText,
+            style: { width: '100%', boxSizing: 'border-box', marginTop: '10px', fontSize: '13px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--dsw-alias-border-l1, #d0d7de)', background: 'var(--dsw-alias-bg-layer-2, #f6f8fa)', color: 'inherit', outline: 'none' },
+            onChange: (e) => setTyped(e.target.value),
+            onKeyDown: (e) => { if (e.key === 'Enter' && ok) onConfirm(); else if (e.key === 'Escape') onCancel() },
+          }) : null,
+          h('div', { style: { display: 'flex', gap: '8px', justifyContent: 'flex-end', margin: '12px 0 0' } },
+            h('button', { type: 'button', style: S.btnGhost, onClick: onCancel }, cancelText),
+            h('button', {
+              type: 'button',
+              style: { ...S.btnPrimary, ...(ok ? {} : { opacity: .5, cursor: 'default' }) },
+              disabled: !ok,
+              onClick: () => { if (ok) onConfirm() },
+            }, confirmText))))
+    }
+
+    function LibraryTree(props) {
+      const { layout, uiWorkspace, sidebarRight, wide, expandSidebar } = props
+      const [lib, setLib] = useState(null)
+      const [closed, setClosed] = useState(() => JSON.parse(localStorage.getItem('dpr.treeClosed') || '{}'))
+      /* 折叠态：键从「专题名」升级为「专题路径」（含 `/`，方案 §B2.3）。
+         一级专题的历史键就是「专题名」＝路径本身，所以旧数据天然兼容（无需额外映射）。
+         默认：一级展开（现状不变）、子专题折叠（避免深层树一次铺开）。 */
+      const collapsedOf = (path, depth) => (Object.prototype.hasOwnProperty.call(closed, path) ? !!closed[path] : depth > 0)
+      const [sessions, setSessions] = useState({}) // `${topic}/${name}` → [{n, sessionId, running}]
+      const [cur, setCur] = useState(() => JSON.parse(localStorage.getItem('dpr.last') || 'null'))
+      const fileInput = React.useRef(null)
+      const uploadTopic = React.useRef('')
+
+      const refresh = useCallback(() => {
+        api('/library').then(setLib).catch(() => {})
+      }, [])
+      useEffect(() => {
+        refresh()
+        const timer = setInterval(refresh, 30000)
+        return () => clearInterval(timer)
+      }, [refresh])
+
+      const loadSessions = useCallback((topic, name) => {
+        api(`/sessions?topic=${encodeURIComponent(topic)}&name=${encodeURIComponent(name)}`)
+          .then((d) => setSessions((m) => ({ ...m, [`${topic}/${name}`]: d.sessions })))
+          .catch(() => {})
+      }, [])
+
+      // 打开 PDF 页签：等 rightbar seat 绑定到目标会话后只调一次 openTab（成功即停，
+      // 不再轮询——否则用户关页签会被后续 tick 重开，「关很多次才能关掉」）。
+      // 「在屏会话」的读法两代不同：0.1.x 是 sidebarRight.binding.sessionId，
+      // 0.2.0 起没有 binding，换成 mounted store（快照=在屏 sessionId）——
+      // 只认旧的会把新版的页签轮询 30 次全部耗尽，PDF 永远开不出来（issue #1 实测）。
+      const onScreenSession = (sr) => sr.binding?.sessionId ?? sr.mounted?.getSnapshot?.()
+      const openPdfTab = useCallback((sessionId) => {
+        let tries = 30
+        const tick = () => {
+          try {
+            if (onScreenSession(sidebarRight) !== sessionId) throw new Error('seat-not-bound')
+            sidebarRight.openTab('dpr-reader', { revealIfOpened: true })
+          } catch {
+            // 快轮询：seat 重绑一完成就开页签，把"面板空白"窗口压到最短
+            if (--tries > 0) setTimeout(tick, 100)
+          }
+        }
+        tick()
+      }, [sidebarRight])
+
+      // 激活会话：客户端会话目录（catalog）感知到新会话有时延，轮询到「已列出」再
+      // openSession，并以 current === sessionId 为成功标准（否则原生对话区不切换）。
+      // ⚠️ 仅凭 catalog 的 current 判断不够（用户实测「点插件页后再点论文没反应」）：
+      // 插件页等非对话视图占着主视图时，目录里 cur 仍是目标会话，但视图并不在对话——
+      // 提前返回会让主视图永远停在插件页、PDF 锚点不回来。补一个可见事实作成功标准：
+      // PDF 页签锚点回来（对话视图已恢复）；没回来就持续 openSession 往回推。
+      const activateSession = useCallback((sessionId) => {
+        let tries = 20
+        const tick = () => {
+          try {
+            const snap = uiWorkspace.sessions?.list?.getSnapshot?.()
+            const anchorBack = !!document.querySelector('[data-dsh-surface="rightbar-tab-anchor"]')
+            if (currentSessionOf(snap) === sessionId && anchorBack) return // 会话已切 + 视图已回
+            const listed = !!(snap && (snap.byId?.[sessionId] || snap.ids?.includes(sessionId)))
+            if (listed) uiWorkspace.openSession(sessionId)
+            if (--tries > 0) setTimeout(tick, 300)
+          } catch {
+            if (--tries > 0) setTimeout(tick, 300)
+          }
+        }
+        tick()
+      }, [uiWorkspace])
+
+      // 预开 PDF 页签到目标会话的 rightbar（在切换前）：先等客户端目录收录该会话
+      // （否则 openTabIn 对未收编 store 静默 no-op），收录后 openTabIn 成功再切会话。
+      // 不做这步的话，新会话的 rightbar 初始为空 → 列折叠 → openTab 再撑开
+      // = PDF 消失又出现（实测逐帧确认）。
+      const preOpenPdfTab = useCallback((sessionId, done) => {
+        let tries = 30
+        const tick = () => {
+          try {
+            const snap = uiWorkspace.sessions?.list?.getSnapshot?.()
+            const listed = !!(snap && (snap.byId?.[sessionId] || snap.ids?.includes(sessionId)))
+            if (listed) {
+              // 对目录里早已存在的会话这步能真正预开（store 已 adopt）；
+              // 对刚创建的会话恒 no-op —— 靠切换护栏兜底（见 beginSwitchGuard）。
+              // ⚠️ openTabIn 失败不能堵住 done()（用户实测「点插件页后再点论文没反应」）：
+              // 插件页等非对话视图占着主视图时，目标会话在右栏没有 seat，openTabIn 每次都抛——
+              // 若当可重试错误轮询，done() 永远不执行 → activateSession（openSession 切回对话
+              // 视图）不被调用 → 主视图停在插件页、PDF 锚点永不回来。预开只是优化，失败就
+              // 直接放行，切换护栏 + openPdfTab 轮询兜底。
+              try {
+                sidebarRight.openTabIn(sessionId, 'dpr-reader', { revealIfOpened: true })
+              } catch { /* 无 seat（插件页/会话未收编）——切换后由 openPdfTab 补开 */ }
+              done?.()
+              return
+            }
+          } catch { /* 目录未就绪 */ }
+          if (--tries > 0) setTimeout(tick, 150)
+          else done?.() // 兜底：超时也照常切（护栏 + openPdfTab 兜底路径）
+        }
+        tick()
+      }, [sidebarRight, uiWorkspace])
+
+      // 激活某个具体会话（原生对话区 + PDF 页签 + 阅读器同步）。纯函数式操作，不碰列表状态。
+      const activate = useCallback((topic, name, target) => {
+        // 离开的若是空白草稿（点了新建又没问任何问题）→ 后台归档，不留在会话列表里
+        try {
+          const snap = uiWorkspace.sessions?.list?.getSnapshot?.()
+          const leaving = currentSessionOf(snap)
+          if (leaving && typeof leaving === 'string' && leaving.startsWith('dpr-') && leaving !== target.sessionId
+            && snap?.byId?.[leaving]?.blank && !snap.byId[leaving].running) {
+            api('/sessions/archive', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ sessionId: leaving, topic, name }),
+            }).then(() => loadSessions(topic, name)).catch(() => {})
+          }
+        } catch { /* 目录未就绪就不归档（host 侧对账会兜底） */ }
+        setCur({ topic, name, n: target.n })
+        setCurrentPaper(topic, name, target.n)
+        // 切换护栏：冻结右栏轨道/阅读器几何/面板过渡，只有对话区换内容（见 beginSwitchGuard）
+        beginSwitchGuard()
+        preOpenPdfTab(target.sessionId, () => activateSession(target.sessionId))
+        openPdfTab(target.sessionId)         // 兜底：seat 重绑后立即开页签（幂等 reveal）
+      }, [activateSession, loadSessions, openPdfTab, preOpenPdfTab, uiWorkspace])
+
+      // 进入伴读：永远拉最新会话列表（缓存的 sessions 可能过期）。
+      // 只在「未指定会话且一个都没有」时才创建会话1；指定了 n 就绝不擅自新建（避免重复创建）。
+      const enter = useCallback(async (topic, name, n) => {
+        let list = []
+        try {
+          const d = await api(`/sessions?topic=${encodeURIComponent(topic)}&name=${encodeURIComponent(name)}`)
+          list = d.sessions
+          setSessions((m) => ({ ...m, [`${topic}/${name}`]: d.sessions }))
+        } catch { /* 列表拉取失败按空处理 */ }
+        let target = n ? list.find((s) => s.n === n) : list[list.length - 1]
+        if (!target) {
+          if (n) return // 指定的会话不存在，不做
+          target = await api('/sessions/new', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ topic, name }),
+          })
+          setSessions((m) => ({ ...m, [`${topic}/${name}`]: [...(m[`${topic}/${name}`] || []), target] }))
+        }
+        activate(topic, name, target)
+      }, [activate])
+
+      // 新建对话：host 建好后直接激活它（不进 enter 的查找路径，杜绝二次创建）
+      const newChat = useCallback(async (topic, name) => {
+        const created = await api('/sessions/new', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ topic, name }),
+        })
+        const key = `${topic}/${name}`
+        setSessions((m) => ({ ...m, [key]: [...(m[key] || []), created] }))
+        activate(topic, name, created)
+        loadSessions(topic, name) // 后台对账：让 host 的空白过滤把被顶替的旧空白会话收掉
+      }, [activate, loadSessions])
+
+      const [askTopic, setAskTopic] = useState(false)
+      const createTopic = useCallback(async (raw) => {
+        const name = raw?.trim()
+        if (!name) return
+        await api('/library/topic', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name }),
+        })
+        refresh()
+      }, [refresh])
+      // 新建专题：window.prompt 在 Electron 渲染进程不可用（抛 "prompt() is not
+      // supported"，点击无任何反应），改为 AskText 页内弹窗（见 LibraryTree return）。
+      const newTopic = useCallback(() => setAskTopic(true), [])
+      // 子专题：目标父路径（'' = 顶层）；目录即层级 ⇒ 后端 mkdir recursive + 父目录必须存在
+      const [askSub, setAskSub] = useState(null) // { parent }
+      const [moving, setMoving] = useState(null) // { topic }
+      const createSubTopic = useCallback(async (parent, name) => {
+        const path = parent ? `${parent}/${name}` : name
+        try {
+          await api('/library/topic', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ name: path }),
+          })
+          // 新建后展开父节点，用户能立刻看到结果
+          setClosed((c) => { const n = { ...c, [parent || path]: false }; try { localStorage.setItem('dpr.treeClosed', JSON.stringify(n)) } catch {} return n })
+          refresh()
+        } catch (err) { toast(t('newTopicFail') + ': ' + err.message) }
+      }, [refresh])
+
+      /* ---------- 库管理：改名/删除（用户反馈补齐） ----------
+         已知代价（README 明示）：sessionId 编码旧 topic/name，改名后历史伴读会话从树上
+         消失（会话本体仍在 dsh 全局列表）；study.json/译文/转录缓存随文件改名全部保留。 */
+      const [renaming, setRenaming] = useState(null) // {kind:'topic'|'paper', topic, name}
+
+      const doRename = useCallback(async (kind, topic, name, to) => {
+        const newTopicName = kind === 'topic' ? to : topic
+        const newName = kind === 'paper' ? to : name
+        let r = null
+        try {
+          r = await api(`/library/rename-${kind}`, {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(kind === 'topic' ? { topic, to } : { topic, name, to }),
+          })
+        } catch (err) {
+          // 与删除一致：改名失败也可能带回 rollbackFailed（部分产物名字没能回滚）→ 必须给出恢复指引
+          const f = clearFailureText(err, t)
+          toast(t('renameFail') + ': ' + f.text + (f.recovery ? '　' + f.recovery : ''), f.recovery ? 15000 : 6000)
+          return
+        }
+        // 我们分支的加固实现会回 detachedSessions（会话 id 内嵌旧 topic/name → 改名后不再挂树上，
+        // 但会话本体不删除）。上游 UI 不提示这一点，用户会以为会话丢了——保留我们的提示。
+        if (r && r.detachedSessions) toast(t('renameDone') + ' · ' + t('renameDetached').replace('{n}', String(r.detachedSessions)), 6000)
+        // 本地记忆（语言版本/会话序号/上次打开/折叠态）搬到新身份
+        migrateLsKeys(topic, newTopicName, kind === 'paper' ? name : null, kind === 'paper' ? newName : null)
+        setSessions((m) => { const c = { ...m }; delete c[`${topic}/${name}`]; return c })
+        if (kind === 'topic') {
+          // 前缀感知（评审 H1）：折叠键里可能是更深的子专题（`A/B`），按精确相等搬会漏；
+          // `A` vs 同级同前缀名 `AB` 由 dprReprefixTopic 的分隔符判定区分，绝不误伤。
+          setClosed((c) => {
+            const rekeyed = dprRekeyTopicState(topic, to, { closed: c }).closed
+            const changed = Object.keys(rekeyed).length !== Object.keys(c).length
+              || Object.entries(c).some(([k, v]) => rekeyed[k] !== v)
+            if (!changed) return c
+            try { localStorage.setItem('dpr.treeClosed', JSON.stringify(rekeyed)) } catch { /* 隐私模式 */ }
+            return rekeyed
+          })
+          // 正在读的论文若在改名的专题（含子专题）下 ⇒ cur / iframe 身份整体换前缀。
+          // 否则 iframe 还持 `?topic=A/B`：提问、翻译全 404，刷新后回落 papers[0]（阅读位置丢）。
+          const rekeyed = dprRekeyTopicState(topic, to, { cur })
+          if (rekeyed.cur && rekeyed.cur !== cur) {
+            setCur(rekeyed.cur)
+            window.dispatchEvent(new CustomEvent('dpr:paper', { detail: { topic: rekeyed.cur.topic, name: rekeyed.cur.name } }))
+          }
+        } else if (cur && cur.topic === topic && cur.name === name) {
+          // 改的是当前论文 → 树与阅读器 iframe 跟到新身份
+          setCur((c) => ({ ...c, topic: newTopicName, name: newName }))
+          window.dispatchEvent(new CustomEvent('dpr:paper', { detail: { topic: newTopicName, name: newName } }))
+        }
+        refresh()
+      }, [cur, refresh])
+
+      // 删除不走上游的「同一按钮点两次（3s arm）」：改用我们的「服务端删除计划 + 页内确认框」
+      // （文献列清单/总字节，专题要手输专题名）。语义上严格包含上游的两段式——第二击之前
+      // 还多一次带清单的确认，且底层是移入回收站（可恢复）而不是 rmSync。
+
+      const upload = useCallback((topic) => {
+        uploadTopic.current = topic
+        fileInput.current?.click()
+      }, [])
+
+      const onFile = useCallback(async (e) => {
+        const file = e.target.files?.[0]
+        e.target.value = ''
+        if (!file) return
+        await fetch('/paper-reader/api/library/upload', {
+          method: 'POST',
+          // header 值只允许 ISO-8859-1：中文专题名/文件名必须先编码，否则 fetch 在发请求前就抛错
+          headers: { 'x-dpr-topic': encodeURIComponent(uploadTopic.current), 'x-dpr-name': encodeURIComponent(file.name), 'content-type': 'application/pdf' },
+          body: file,
+        }).then(async (r) => {
+          if (!r.ok) {
+            const body = await r.json().catch(() => ({}))
+            throw new Error(body.error || body.reason || ('HTTP ' + r.status))
+          }
+        }).catch((err) => toast('上传失败: ' + err.message))
+        refresh()
+      }, [refresh])
+
+      const topics = lib?.topics ?? []
+      const papers = lib?.papers ?? []
+
+      // 头部「⬆」与空库按钮共用：定位目标专题，没有专题时先自动建「默认专题」
+      // （宿主端 mkdir recursive，重名无害）再弹文件选择——空库不再是无入口的死路。
+      const uploadSmart = useCallback(async () => {
+        let topic = cur?.topic || topics[0]
+        if (!topic) {
+          topic = t('defaultTopic')
+          try {
+            await api('/library/topic', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ name: topic }),
+            })
+          } catch { /* 已存在等情形忽略，继续走上传 */ }
+          refresh()
+        }
+        upload(topic)
+      }, [cur, topics, upload, refresh])
+
+      // 对话头部按钮 → 树的既有动作（enter/newChat 闭包在这里）
+      useEffect(() => {
+        const onEnter = (e) => enter(e.detail.topic, e.detail.name, e.detail.n)
+        const onNew = (e) => newChat(e.detail.topic, e.detail.name)
+        window.addEventListener('dpr:enter', onEnter)
+        window.addEventListener('dpr:newchat', onNew)
+        return () => {
+          window.removeEventListener('dpr:enter', onEnter)
+          window.removeEventListener('dpr:newchat', onNew)
+        }
+      }, [enter, newChat])
+
+      /* ---------- 文献管理：重命名 / 删除（契约 §2）----------
+         破坏性操作的 UI 规矩：
+           · 一律页内 portal 弹窗（Electron 无 window.confirm/prompt）；
+           · 删除前先打 /library/paper/delete-plan 拿服务端清单，把「将删除什么 / 不删什么」
+             逐条写进确认框（前端不许自己拼清单）；
+           · 服务端 409 用机器可读 code 分支（session-running / translation-busy /
+             topic-not-empty / target-exists），不匹配中文文案。 */
+      const [delDlg, setDelDlg] = useState(null) // {kind, topic, name, plan}
+
+      const fmtBytes = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n >= 1024 ? Math.round(n / 1024) + ' KB' : n + ' B')
+      const errText = (err) => {
+        switch (err && err.code) {
+          case 'session-running': return t('delBusySession')
+          case 'translation-busy': return t('delBusyTranslate')
+          case 'busy': return t('delBusy')
+          // 上游必修 3：Windows 文件占用（EBUSY/EPERM）→ 409 file-busy，给「关掉占用程序再试」的可执行文案
+          case 'file-busy': return t('delBusyFile')
+          case 'session-unknown': return t('delSessionUnknown')
+          case 'target-exists': return t('renameTargetExists')
+          case 'topic-not-empty': return t('delTopicNotEmpty').replace('{n}', String((err.papers || []).length || (err.entries || []).length || 0))
+          default: return (err && err.message) || String(err)
+        }
+      }
+
+      const openDelete = useCallback(async (kind, topic, name) => {
+        try {
+          if (kind === 'topic') {
+            // 按**子树**计数（评审 H2）：只数直接论文时，「论文全在子专题里」的专题会被当成空专题
+            // 走删除 → 服务端 409 topic-not-empty → 用户没有 UI 路径到 /topic/clear。
+            const n = dprTopicPaperCount(lib?.papers, name)
+            if (n > 0) {
+              // 非空专题 → 「批量清空」中间态（上游评论第 10 条：逐篇列清单、一次确认）。
+              // 清单来自服务端 dry-run（topic/clear-plan），前端不自己拼；拿不到就如实报错，不弹空壳。
+              const plan = await api(`/library/topic/clear-plan?topic=${encodeURIComponent(name)}`)
+              setDelDlg({ kind: 'topic-clear', topic: name, name, plan })
+              return
+            }
+            setDelDlg({ kind, topic: name, name, plan: null })
+            return
+          }
+          const plan = await api(`/library/paper/delete-plan?topic=${encodeURIComponent(topic)}&name=${encodeURIComponent(name)}`)
+          setDelDlg({ kind, topic, name, plan })
+        } catch (e) {
+          // 预览失败（含 409/400/404）：用 code 给出可读原因，不弹一个空壳确认框
+          toast(t('delPlanFail') + '：' + errText(e))
+        }
+      }, [lib])
+
+      /** 删掉的是当前打开的文献（或其所在专题）→ 切到剩余第一篇；全空则收起阅读器。
+       *  （上游 v1.3.0 doDelete 的行为，整合时保留——否则 iframe 会指向已被删除的文件。） */
+      const switchAfterDelete = useCallback(async (kind, topic, name) => {
+        if (!(cur && (kind === 'topic' ? cur.topic === topic : (cur.topic === topic && cur.name === name)))) return
+        const d = await api('/library').catch(() => null)
+        const next = d?.papers?.[0] || null
+        if (next) {
+          setCur({ topic: next.topic, name: next.name })
+          window.dispatchEvent(new CustomEvent('dpr:paper', { detail: { topic: next.topic, name: next.name } }))
+        } else {
+          setCur(null)
+          try { localStorage.removeItem('dpr.last') } catch { /* 隐私模式 */ }
+          window.dispatchEvent(new CustomEvent('dpr:paper', { detail: { empty: true } }))
+        }
+      }, [cur])
+
+      const doDeletePaper = useCallback(async () => {
+        const d = delDlg
+        if (!d) return
+        setDelDlg(null)
+        try {
+          // O2（t4 评审）：删除也走**上游规范名**（与重命名的 /library/rename-${kind} 一致）；
+          // 别名族仍保留在服务端（旧测试与旧客户端用），但本 UI 只用规范名这一条。
+          const r = await api('/library/delete-paper', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ topic: d.topic, name: d.name }),
+          })
+          toast(t('delDone').replace('{files}', String((r.moved || []).length)))
+          await switchAfterDelete('paper', d.topic, d.name)
+          refresh()
+        } catch (e) {
+          const f = clearFailureText(e, t)
+          toast(t('delFail') + '：' + f.text + (f.recovery ? '　' + f.recovery : ''), f.recovery ? 15000 : 6000)
+          refresh()
+        }
+      }, [delDlg, refresh, switchAfterDelete])
+
+      /** 批量清空 + 删除专题：**一次**确认（手输专题名保留在这一步），逐篇走回收站；
+       *  失败由服务端「整体回滚」并把 rollbackFailed 如实带回，这里只按 code 给可读文案。 */
+      const doClearTopic = useCallback(async () => {
+        const d = delDlg
+        if (!d) return
+        setDelDlg(null)
+        try {
+          const r = await api('/library/topic/clear', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ topic: d.name, confirmName: d.name }),
+          })
+          toast(t('clearDone').replace('{topic}', d.name).replace('{papers}', String(r.cleared)).replace('{files}', String(r.movedFiles)), 5000)
+          await switchAfterDelete('topic', d.name, undefined)
+          refresh()
+        } catch (e) {
+          // F-B：clear 失败正是走 409 file-busy + rollbackFailed —— 必须把「文件还在回收站、
+          // 在哪个回收站、怎么恢复」显示出来（只报「文件被占用」会让用户以为文献丢了）。
+          const f = clearFailureText(e, t)
+          toast(t('delFail') + '：' + f.text + (f.recovery ? '　' + f.recovery : ''), f.recovery ? 15000 : 8000)
+          refresh()
+        }
+      }, [delDlg, refresh, switchAfterDelete])
+
+      const doDeleteTopic = useCallback(async () => {
+        const d = delDlg
+        if (!d) return
+        setDelDlg(null)
+        try {
+          await api('/library/delete-topic', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ name: d.name, confirmName: d.name }),
+          })
+          toast(t('delDone').replace('{files}', '0'))
+          await switchAfterDelete('topic', d.name, undefined)
+          refresh()
+        } catch (e) {
+          const f = clearFailureText(e, t)
+          toast(t('delFail') + '：' + f.text + (f.recovery ? '　' + f.recovery : ''), f.recovery ? 15000 : 6000)
+          // 竞态：确认框弹出后该专题又有了文献 → 服务端 409 topic-not-empty 且带 clearEndpoint，
+          // 直接改走「批量清空」中间态（服务端同源清单），不让用户从头再来一次。
+          // 判据走顶层纯函数（dprApiError 已把 clearEndpoint 透传到 Error）——此前 api() 没挂这个字段，
+          // 该分支永远不可达（评审 H3 的死代码）。
+          if (dprClearRetryNeeded(e)) await openDelete('topic', d.name, d.name)
+          refresh()
+        }
+      }, [delDlg, refresh, switchAfterDelete, openDelete])
+
+      // 清空确认框里的「会被服务端拦下」提示：清单里的 translation.busy / sessions.running 篇名
+      // （在用户点确认**之前**就提示，而不是等 409）
+      const clearBlockedNames = delDlg?.kind === 'topic-clear'
+        ? (delDlg.plan?.papers ?? []).filter((p) => p.translation?.busy || (p.sessions?.running ?? 0) > 0).map((p) => p.name)
+        : []
+
+      // 收起态（rail）：官方契约 —— sidebar.workspaces 在窄栏里只该给一个图标入口，点击请求
+      // 宿主展开。整棵树不渲染：塞进 56px 会被挤成竖排文字（实测）。
+      const papersOf = (path) => papers.filter((p) => p.topic === path)
+      /**
+       * 递归渲染一个专题节点（含子专题与论文）。
+       * 折叠：一级默认展开、子专题默认折叠（避免深层树一次铺开，方案 §B2.3）。
+       */
+      const renderNode = (node, depth) => {
+        const path = node.path || node.name
+        const collapsed = collapsedOf(path, depth)
+        const childPapers = papersOf(path)
+        const children = node.children || []
+        const hasKids = children.length > 0 || childPapers.length > 0
+        return h('div', { key: path },
+          h('div', {
+            style: { ...S.topicHead, ...(depth > 0 ? { paddingLeft: 6 + depth * 10 } : {}) }, 'data-dpr-row': '', 'data-dpr-topic': path,
+            onClick: () => {
+              const next = { ...closed, [path]: !collapsed }
+              setClosed(next)
+              try { localStorage.setItem('dpr.treeClosed', JSON.stringify(next)) } catch {}
+            },
+          },
+            h('span', { style: { ...S.caret, transform: collapsed ? 'rotate(-90deg)' : 'none' } }, '▾'),
+            h('span', { style: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }, title: path }, node.name || path),
+            h('button', { style: S.iconBtn, title: t('uploadHere'), onClick: (e) => { e.stopPropagation(); upload(path) } }, '⬆'),
+            h('button', { style: S.iconBtn, title: t('newSubTopic'), onClick: (e) => { e.stopPropagation(); setAskSub({ parent: path }) } }, '＋'),
+            h('button', {
+              'data-dpr-act': 'rename', style: S.iconBtn, title: t('rename'),
+              onClick: (e) => { e.stopPropagation(); setRenaming({ kind: 'topic', topic: path }) },
+            }, '✎'),
+            h('button', {
+              'data-dpr-act': 'move', style: S.iconBtn, title: t('moveTopic'),
+              onClick: (e) => { e.stopPropagation(); setMoving({ topic: path }) },
+            }, '→'),
+            h('button', {
+              'data-dpr-act': 'del', style: S.iconBtn, title: t('delTopic'),
+              onClick: (e) => { e.stopPropagation(); openDelete('topic', path, path) },
+            }, '🗑'),
+          ),
+          !collapsed && h('div', { style: S.items },
+            // 论文节点（叶子）：路径 = 父专题路径 + 论文名
+            childPapers.map((p) => {
+              const isCurrentPaper = cur && cur.topic === p.topic && cur.name === p.name
+              return h('div', {
+                key: path + '/' + p.name,
+                style: { ...S.item, ...(depth > 0 ? { paddingLeft: 6 + depth * 10 } : {}), ...(isCurrentPaper ? S.active : {}) },
+                'data-dpr-row': '', 'data-dpr-paper': path + '/' + p.name,
+                title: p.pdfPath || p.name,
+                onClick: () => enter(p.topic, p.name),
+              }, '📄 ',
+                h('span', { style: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' } }, p.name),
+                h('button', {
+                  'data-dpr-act': 'rename', style: S.iconBtn, title: t('rename'),
+                  onClick: (e) => { e.stopPropagation(); setRenaming({ kind: 'paper', topic: p.topic, name: p.name }) },
+                }, '✎'),
+                h('button', {
+                  'data-dpr-act': 'del', style: S.iconBtn, title: t('delPaper'),
+                  onClick: (e) => { e.stopPropagation(); openDelete('paper', p.topic, p.name) },
+                }, '🗑'))
+            }),
+            // 子专题（递归）
+            children.map((c) => renderNode(c, depth + 1)),
+          ),
+        )
+      }
+
+      // 用 wide === false 而非 !wide：宿主万一没传这个 prop 时按展开态走，即改动前的行为。
+      const tree = wide === false
+        ? h('div', { style: S.rail },
+            h('button', {
+              type: 'button', style: S.railBtn, 'data-dpr-rail': '', title: t('library'),
+              'aria-label': t('library'), onClick: () => expandSidebar && expandSidebar(),
+            }, '📚'))
+        : h(React.Fragment, null,
+            h('div', { style: S.head },
+              h('span', { style: { flex: 1 } }, t('library')),
+              h('button', { style: S.iconBtn, title: t('upload'), onClick: () => uploadSmart() }, '⬆'),
+              h('button', { style: S.iconBtn, title: t('newTopic'), onClick: newTopic }, '＋'),
+              h('button', { style: S.iconBtn, title: 'refresh', onClick: refresh }, '⟳'),
+            ),
+            lib && topics.length === 0 && h('div', { style: S.empty },
+              `${t('empty')}：${t('hint')}`,
+              h('div', { style: { display: 'flex', gap: '8px', margin: '8px 0 2px' } },
+                h('button', { type: 'button', style: S.linkBtn, onClick: () => uploadSmart() }, '⬆ ', t('uploadBtn')),
+                h('button', { type: 'button', style: S.linkBtn, onClick: newTopic }, '＋ ', t('newTopic')))),
+            // 递归渲染专题树（方案 §B2.3）：专题节点可折叠，论文节点是叶子。
+            // 数据来自服务端 /api/library 的 `tree`（完整嵌套树）；`papers` 里的 topic 是相对路径，
+            // 逐节点用 path 精确匹配（**不用前缀匹配** —— `A` 会误伤兄弟 `A/B`，R10 的教训）。
+            (lib?.tree ?? topics.map((t) => ({ name: t, path: t, papers: [], children: [] }))).map((node) => renderNode(node, 0)),
+          )
+
+      return h('div', {
+        style: S.root, 'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-surface': 'sidebar',
+      },
+        h('input', { ref: fileInput, type: 'file', accept: '.pdf', style: { display: 'none' }, onChange: onFile }),
+        // 阅读器 iframe 与对话头部按钮组已迁往 shell.overlay 常驻注册（见 applyPaperMode 下方）——
+        // 它们不属于侧栏，更不能跟着「退出伴读模式」被卸载（已打开的 PDF 页签要继续活着）
+        tree,
+        askTopic && createPortal(
+          h(AskText, {
+            title: t('newTopic') + '：', confirmText: t('ok'), cancelText: t('cancel'),
+            onConfirm: (name) => {
+              setAskTopic(false)
+              createTopic(name).catch((err) => toast(t('newTopicFail') + ': ' + err.message))
+            },
+            onCancel: () => setAskTopic(false),
+          }),
+          document.body),
+        // 新建子专题（方案 §B2.3）：输入的是**相对父专题的名字**，服务端拼成路径后 mkdir
+        askSub && createPortal(
+          h(AskText, {
+            title: `${t('newSubTopic')}：${askSub.parent}/`, confirmText: t('ok'), cancelText: t('cancel'),
+            onConfirm: (name) => { const p = askSub.parent; setAskSub(null); createSubTopic(p, name) },
+            onCancel: () => setAskSub(null),
+          }),
+          document.body),
+        // 移动到…（方案 §B2.3：不引入 HTML5 拖拽，改用输入目标父路径；整棵子树跟着走）
+        moving && createPortal(
+          h(AskText, {
+            title: t('moveTopicTitle'),
+            initial: (() => { const parts = moving.topic.split('/'); parts.pop(); return parts.join('/') })(),
+            confirmText: t('ok'), cancelText: t('cancel'),
+            onConfirm: (parent) => {
+              const mv = moving
+              setMoving(null)
+              const name = mv.topic.split('/').pop()
+              const to = parent.trim() ? `${parent.trim().replace(/\/+$/, '')}/${name}` : name
+              doRename('topic', mv.topic, null, to)
+            },
+            onCancel: () => setMoving(null),
+          }),
+          document.body),
+        // 重命名：上游 v1.3.0 的页内输入弹窗（初始值 = 旧名，走 migrateLsKeys 迁移本地记忆）
+        renaming && createPortal(
+          h(AskText, {
+            title: (renaming.kind === 'topic' ? t('renameTopic') : t('renamePaper')) + '：',
+            initial: renaming.kind === 'topic' ? renaming.topic : renaming.name,
+            confirmText: t('ok'), cancelText: t('cancel'),
+            onConfirm: (name) => {
+              const r = renaming
+              setRenaming(null)
+              doRename(r.kind, r.topic, r.name, name)
+            },
+            onCancel: () => setRenaming(null),
+          }),
+          document.body),
+        // 删除：确认框必须列出服务端给的清单；专题删除还要输入专题名
+        delDlg && createPortal(
+          h(ConfirmDelete, {
+            title: delDlg.kind === 'topic-clear'
+              ? t('delTopicClearTitle').replace('{topic}', delDlg.topic)
+              : `${t('delConfirmTitle')} · ${delDlg.kind === 'paper' ? delDlg.name : delDlg.topic}`,
+            body: delDlg.kind === 'topic-clear'
+              ? t('delTopicClearBody')
+                  .replace('{papers}', String(delDlg.plan.papersCount))
+                  .replace('{files}', String(delDlg.plan.filesCount))
+                  .replace('{size}', fmtBytes(delDlg.plan.totalBytes))
+              : delDlg.kind === 'paper' && delDlg.plan
+                ? t('delConfirmBody').replace('{files}', String(delDlg.plan.files.length)).replace('{size}', fmtBytes(delDlg.plan.totalBytes))
+                : t('delTopicTypeName').replace('{name}', delDlg.name),
+            detail: delDlg.kind === 'topic-clear'
+              // 逐篇列出清单（服务端同源）：篇名 — k 个文件 · 大小，再跟该篇的产物文件名
+              ? delDlg.plan.papers.map((p) => `· ${p.name} — ${t('delTopicClearFiles').replace('{n}', String(p.files.length))} · ${fmtBytes(p.totalBytes)}\n    ${p.files.map((f) => f.name).join('、')}`).join('\n')
+              : delDlg.kind === 'paper' && delDlg.plan
+                ? delDlg.plan.files.map((f) => `· ${f.name}  ${fmtBytes(f.bytes)}`).join('\n')
+                : null,
+            // R4-F4：清单必须与服务端同源——用 delete-plan 返回的 notDeleted 派生出文案，
+            // 不再用本地 i18n 硬编码（那份已经与契约漂移了）。专题删除没有 plan，保留本地兜底文案。
+            notDeleted: delDlg.kind === 'topic-clear'
+              ? [Array.isArray(delDlg.plan.notDeleted) ? delDlg.plan.notDeleted.join(' · ') : '',
+                 clearBlockedNames.length ? t('delTopicClearBlocked').replace('{names}', clearBlockedNames.join('、')) : '',
+                 delDlg.plan.hidden?.length ? t('delTopicClearHidden').replace('{names}', delDlg.plan.hidden.join('、')) : ''].filter(Boolean).join('  ')
+              : delDlg.kind === 'paper' && delDlg.plan && Array.isArray(delDlg.plan.notDeleted)
+                ? delDlg.plan.notDeleted.join(' · ')
+                : t('delNotDeleted'),
+            confirmText: delDlg.kind === 'topic-clear' ? t('delTopicClearConfirm') : delDlg.kind === 'paper' ? t('delToTrash') : t('delTopic'),
+            cancelText: t('cancel'),
+            // 手输专题名确认保留在「批量清空」这一步（与单篇删除同强度，不放松）
+            requireText: delDlg.kind === 'paper' ? undefined : delDlg.name,
+            onConfirm: delDlg.kind === 'topic-clear' ? doClearTopic : delDlg.kind === 'paper' ? doDeletePaper : doDeleteTopic,
+            onCancel: () => setDelDlg(null),
+          }),
+          document.body),
+      )
+    }
+
+    /* ---------- 论文伴读模式：默认不接管侧栏 ----------
+       sidebar.workspaces 是 single slot，注册即遮蔽官方工作区列表——「一装就覆盖」
+       对用户不礼貌。改为按需注册：默认不注册（官方侧栏原样），sidebar.footer.action
+       （list slot，侧栏底部常驻）放一个开关行，点击注册/注销文献库树，localStorage 记忆。
+       阅读器悬浮层/会话按钮组走 shell.overlay 常驻注册，与本开关无关——退出模式时
+       已打开的 PDF 页签和伴读会话照常工作，随时可切回。 */
+    let paperMode = localStorage.getItem('dpr.mode') === 'paper'
+    let disposeLibrarySlot = null
+    let clientApi = null // apply() 里注入 { slots, layout, uiWorkspace, sidebarRight }
+
+    function applyPaperMode(on) {
+      paperMode = on
+      try { localStorage.setItem('dpr.mode', on ? 'paper' : '') } catch { /* 隐私模式写不了就算了 */ }
+      if (!clientApi) return
+      if (on && !disposeLibrarySlot) {
+        clientApi.slots.inject('sidebar.workspaces', () => {
+          disposeLibrarySlot = clientApi.slots.register({
+            name: 'sidebar.workspaces', priority: -1000, locale: NS,
+          }, function LibrarySection(slot) {
+            return h(LibraryTree, {
+              layout: clientApi.layout, uiWorkspace: clientApi.uiWorkspace,
+              sidebarRight: clientApi.sidebarRight,
+              wide: slot?.wide, expandSidebar: slot?.expandSidebar,
+            })
+          })
+        })
+      } else if (!on && disposeLibrarySlot) {
+        disposeLibrarySlot()
+        disposeLibrarySlot = null
+      }
+    }
+
+    const MODE = {
+      // 展开态：对齐官方 panelRow（36px 高、radius 8、hover 官方交互色）
+      wide: { display: 'flex', alignItems: 'center', gap: '8px', width: '100%', minHeight: '36px', padding: '7px 8px', borderRadius: '8px', border: 'none', background: 'none', cursor: 'pointer', font: 'inherit', textAlign: 'left', color: 'var(--dsw-alias-label-secondary, #656d76)' },
+      wideOn: { background: 'var(--dsw-alias-interactive-bg-active, rgba(9,105,218,.12))', color: 'var(--dsw-alias-label-primary, #24292f)', fontWeight: 600 },
+      // 收起态（rail）：36×36 圆形图标钮，对齐官方 rail 控件
+      rail: { width: '36px', height: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: 'none', background: 'none', cursor: 'pointer', font: 'inherit', color: 'var(--dsw-alias-label-primary, #24292f)' },
+    }
+
+    function PaperModeToggle(props) {
+      const wide = props?.wide !== false
+      const [on, setOn] = useState(paperMode)
+      return h('button', {
+        type: 'button', 'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-surface': 'paper-mode', 'data-dpr-mode': '',
+        title: on ? t('modeExitTip') : t('modeEnterTip'),
+        'aria-pressed': on ? 'true' : 'false',
+        style: { ...(wide ? MODE.wide : MODE.rail), ...(on && wide ? MODE.wideOn : {}) },
+        onClick: () => { applyPaperMode(!paperMode); setOn(paperMode) },
+      }, wide ? h(React.Fragment, null, '📚', h('span', null, t('mode'))) : '📚')
+    }
+
+    /* ---------- 设置面板：Jev 重排 + 翻译端点统一管理 ----------
+       settings.section 面板（与官方 通用设置/模型 同款缝）。两张端点卡片共用一套
+       读写口（GET 掩码回显 / POST 预检后落盘 / DELETE 回落默认），key 明文永不回传，
+       留空即沿用已保存的那把。保存即生效：宿主每次调用都现读配置文件。 */
+    const SET = {
+      card: { border: '1px solid var(--dsw-alias-border-l1, #30363d)', borderRadius: '10px', padding: '14px 16px', margin: '0 0 16px', background: 'var(--dsw-alias-bg-layer-1, #0d1117)' },
+      title: { fontSize: '14px', fontWeight: 600, color: 'var(--dsw-alias-label-primary, #24292f)', margin: '0 0 4px' },
+      desc: { fontSize: '12px', lineHeight: '1.6', color: 'var(--dsw-alias-label-secondary, #656d76)', margin: '0 0 12px' },
+      label: { display: 'block', fontSize: '12px', color: 'var(--dsw-alias-label-secondary, #656d76)', margin: '10px 0 4px' },
+      input: { width: '100%', boxSizing: 'border-box', fontSize: '13px', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--dsw-alias-border-l1, #30363d)', background: 'var(--dsw-alias-bg-layer-2, #161b22)', color: 'var(--dsw-alias-label-primary, #24292f)' },
+      row: { display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px' },
+      btn: { fontSize: '13px', padding: '6px 14px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'var(--dsw-alias-button-primary-fill, #1f6feb)', color: 'var(--dsw-alias-label-primary-foreground, #fff)' },
+      btnGhost: { fontSize: '12px', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', background: 'none', border: '1px solid var(--dsw-alias-border-l1, #30363d)', color: 'var(--dsw-alias-label-secondary, #656d76)' },
+      ok: { fontSize: '12px', color: 'var(--dsw-alias-state-success-primary, #3fb950)' },
+      err: { fontSize: '12px', color: 'var(--dsw-alias-state-error-primary, #f85149)' },
+      meta: { fontSize: '12px', color: 'var(--dsw-alias-label-secondary, #656d76)' },
+    }
+
+    function EndpointCard(props) {
+      const [cfg, setCfg] = useState(null) // GET 结果（含 apiKeyHint/source）
+      const [form, setForm] = useState({ baseUrl: '', model: '', apiKey: '', batchSize: '' })
+      const [busy, setBusy] = useState(false)
+      const [msg, setMsg] = useState(null) // { ok, text }
+      const load = useCallback(() => {
+        api(props.path).then((d) => {
+          setCfg(d)
+          setForm({
+            baseUrl: d.baseUrl || '',
+            model: d.model || '',
+            apiKey: '',
+            // null = 未显式配置（回落 profile / 默认 10），输入框留空展示占位符
+            ...(props.batchSize ? { batchSize: d.batchSize != null ? String(d.batchSize) : '' } : {}),
+          })
+        }).catch((e) => setMsg({ ok: false, text: String(e.message || e) }))
+      }, [props.path])
+      useEffect(load, [load])
+      const sourceText = !cfg ? '' : { file: t('setSourceFile'), profile: t('setSourceProfile'), env: t('setSourceEnv'), none: t('setSourceNone') }[cfg.source] || ''
+      const save = async () => {
+        setBusy(true); setMsg(null)
+        try {
+          await api(props.path, {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(form),
+          })
+          setMsg({ ok: true, text: t('setSaved') })
+          load()
+        } catch (e) { setMsg({ ok: false, text: String(e.message || e) }) } finally { setBusy(false) }
+      }
+      const clear = async () => {
+        setBusy(true); setMsg(null)
+        try {
+          await api(props.path, { method: 'DELETE' })
+          setMsg({ ok: true, text: t('setCleared') })
+          load()
+        } catch (e) { setMsg({ ok: false, text: String(e.message || e) }) } finally { setBusy(false) }
+      }
+      const field = (key, label, placeholder, type) => h('div', null,
+        h('label', { style: SET.label }, label, props.optional && key !== 'apiKey' ? `（${t('setOptional')}）` : ''),
+        h('input', {
+          style: SET.input, type: type || 'text', value: form[key], placeholder, disabled: busy,
+          onChange: (e) => setForm({ ...form, [key]: e.target.value }),
+        }),
+      )
+      return h('div', { style: SET.card, 'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-part': 'settings-card' },
+        h('h3', { style: SET.title }, props.title),
+        h('p', { style: SET.desc }, props.desc),
+        field('baseUrl', t('setBaseUrl'), props.baseUrlPlaceholder),
+        field('model', t('setModel'), props.modelPlaceholder),
+        field('apiKey', t('setKey'), cfg?.hasApiKey ? t('setKeyKeep') + cfg.apiKeyHint : props.keyPlaceholder, 'password'),
+        // 批大小仅嵌入卡片有（issue #14）：预检会按这个值真打一批，端点限流当场暴露而不是首次检索才失败
+        props.batchSize ? field('batchSize', t('setEmbedBatchSize'), '10') : null,
+        h('div', { style: SET.row },
+          h('button', { type: 'button', style: SET.btn, disabled: busy, onClick: save }, busy ? t('setSaving') : t('setSave')),
+          cfg?.source === 'file' ? h('button', { type: 'button', style: SET.btnGhost, disabled: busy, onClick: clear }, t('setClear')) : null,
+          msg ? h('span', { style: msg.ok ? SET.ok : SET.err }, msg.text) : h('span', { style: SET.meta }, sourceText),
+        ),
+      )
+    }
+
+    /* ---------- 分屏同步滚动卡片（模式 B 的**全局**偏好）----------
+       本卡片与阅读器是**两个文档**（阅读器是同源 iframe ~ /paper-reader/），共享同一个 localStorage：
+         · 这里勾/取消 → 写 `dpr.syncScroll` → 阅读器收到 storage 事件 → 开关与滚动行为立即跟着变
+           （打开时还会自动把两列对齐回当前页）；
+         · 反之在阅读器「分屏」控件旁点开关 → 这里收到 storage 事件 → 勾选态立即跟着变。
+       ⇒ 两处入口互相同步，且都是**同一个键**（键名与 '1'/'0' 编码由文件顶层的纯函数定义，
+          与 reader/index.html 逐字一致）。默认开 = 缺省值（与改造前行为一致）。 */
+    function SyncScrollCard() {
+      const readPref = () => { try { return dprSyncScrollFromRaw(localStorage.getItem(DPR_SYNC_SCROLL_KEY)) } catch { return true } }
+      const [on, setOn] = useState(readPref)
+      useEffect(() => {
+        const onStorage = (e) => {
+          if (!e || e.key !== DPR_SYNC_SCROLL_KEY) return
+          setOn(dprSyncScrollFromRaw(e.newValue))   // 另一处（阅读器/另一个窗口）改了 → 立即反映
+        }
+        window.addEventListener('storage', onStorage)
+        return () => window.removeEventListener('storage', onStorage)
+      }, [])
+      const apply = (v) => {
+        setOn(v)
+        try { localStorage.setItem(DPR_SYNC_SCROLL_KEY, dprSyncScrollRaw(v)) } catch { /* 隐私模式写不了：阅读器里仍可单独改 */ }
+      }
+      return h('div', { style: SET.card, 'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-part': 'settings-card' },
+        h('h3', { style: SET.title }, t('setSyncScrollTitle')),
+        h('p', { style: SET.desc }, t('setSyncScrollDesc')),
+        h('div', { style: SET.row },
+          h('label', { style: { ...SET.label, display: 'flex', alignItems: 'center', gap: '8px', margin: '0' }, 'data-dpr-sync-label': '' },
+            h('input', {
+              type: 'checkbox', checked: on, 'data-dpr-sync-input': '',
+              // 与面板主题色对齐（原生 checkbox 的默认蓝与每套主题都对不上）：accent-color 是标准
+              // 属性，不支持的旧壳只是回落成默认色，不影响可用性
+              style: { width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--dsw-alias-button-primary-fill, #1f6feb)' },
+              onChange: (e) => apply(!!e.target.checked),
+            }),
+            t('setSyncScrollLabel'),
+          ),
+          h('span', { style: SET.meta, 'data-dpr-sync-state': '' }, on ? t('setSyncScrollOnHint') : t('setSyncScrollOffHint')),
+        ),
+      )
+    }
+
+    /* ---------- 深色模式卡片（方案 §A2.3 入口 1）----------
+       与阅读器 ⚙ 浮层里的同一组控件读/写**同一个后端配置**（/api/theme/config），
+       并写一份 localStorage 镜像：阅读器 iframe 的 <head> 首帧判定要在网络请求之前同步读到它，
+       而 storage 事件会让已打开的阅读器立即跟着变（跨文档，无需轮询）。 */
+    function ThemeCard() {
+      const [cfg, setCfg] = useState(null)
+      const [msg, setMsg] = useState(null)
+      const [busy, setBusy] = useState(false)
+      const load = useCallback(() => {
+        api('/theme/config').then((d) => { setCfg(d); writeThemeMirror(d) })
+          .catch((e) => setMsg({ ok: false, text: String(e.message || e) }))
+      }, [])
+      useEffect(load, [load])
+      const save = async (patch) => {
+        setBusy(true); setMsg(null)
+        try {
+          const r = await api('/theme/config', {
+            method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(patch),
+          })
+          setCfg(r); writeThemeMirror(r); setMsg({ ok: true, text: t('setSaved') })
+        } catch (e) { setMsg({ ok: false, text: String(e.message || e) }) } finally { setBusy(false) }
+      }
+      const modeOptions = [
+        ['follow', t('setThemeModeFollow')], ['off', t('setThemeModeOff')],
+        ['light', t('setThemeModeLight')], ['dark', t('setThemeModeDark')],
+      ]
+      const strengthOptions = [[0, t('setThemeStrength0')], [1, t('setThemeStrength1')], [2, t('setThemeStrength2')], [3, t('setThemeStrength3')]]
+      const dark = cfg && (cfg.pdfTheme === 'dark' || (cfg.pdfTheme === 'follow' && dprHostDark))
+      return h('div', { style: SET.card, 'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-part': 'settings-card', 'data-dpr-theme-card': '' },
+        h('h3', { style: SET.title }, t('setThemeTitle')),
+        h('p', { style: SET.desc }, t('setThemeDesc')),
+        h('div', { style: SET.row },
+          h('label', { style: SET.label }, t('setThemeMode')),
+          h('select', {
+            style: SET.input, disabled: busy, 'data-dpr-theme-mode': '', value: cfg?.pdfTheme || 'follow',
+            onChange: (e) => save({ pdfTheme: e.target.value }),
+          }, modeOptions.map(([v, label]) => h('option', { key: v, value: v }, label))),
+        ),
+        h('div', { style: SET.row },
+          h('label', { style: SET.label }, t('setThemeStrength')),
+          h('select', {
+            style: SET.input, disabled: busy, 'data-dpr-theme-strength': '', value: String(cfg?.pdfDarkStrength ?? 1),
+            onChange: (e) => save({ pdfDarkStrength: Number(e.target.value), pdfDarkAdvanced: null }),
+          }, strengthOptions.map(([v, label]) => h('option', { key: v, value: String(v) }, label))),
+        ),
+        h('div', { style: SET.row },
+          h('label', { style: { ...SET.label, display: 'flex', alignItems: 'center', gap: '8px', margin: '0' }, 'data-dpr-theme-chrome-label': '' },
+            h('input', {
+              type: 'checkbox', checked: cfg?.pdfDarkChrome !== false, disabled: busy, 'data-dpr-theme-chrome': '',
+              style: { width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--dsw-alias-button-primary-fill, #1f6feb)' },
+              onChange: (e) => save({ pdfDarkChrome: e.target.checked }),
+            }),
+            t('setThemeChrome'),
+          ),
+        ),
+        h('p', { style: SET.desc, 'data-dpr-theme-hint': '' },
+          t('setThemeHint').replace('{state}', dark ? t('setThemeStateDark') : t('setThemeStateLight'))),
+        msg ? h('span', { style: msg.ok ? SET.ok : SET.err }, msg.text) : null,
+      )
+    }
+
+    function SettingsPanel() {
+      return h('div', { style: { maxWidth: '560px' }, 'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-surface': 'settings-modal' },
+        h(EndpointCard, {
+          path: '/typesafe/config', title: t('setRerankTitle'), desc: t('setRerankDesc'), optional: true,
+          baseUrlPlaceholder: 'https://api.typesafe.ai', modelPlaceholder: 'jev-latest', keyPlaceholder: 'ts-...',
+        }),
+        h(EndpointCard, {
+          path: '/embed/config', title: t('setEmbedTitle'), desc: t('setEmbedDesc'), optional: true,
+          baseUrlPlaceholder: 'https://api.openai.com/v1', modelPlaceholder: 'text-embedding-3-small', keyPlaceholder: 'sk-...',
+          batchSize: true,
+        }),
+        h(EndpointCard, {
+          path: '/translate/config', title: t('setTranslateTitle'), desc: t('setTranslateDesc'),
+          baseUrlPlaceholder: 'https://api.deepseek.com/v1', modelPlaceholder: 'deepseek-chat', keyPlaceholder: 'sk-...',
+        }),
+        h(MineruCard, null),
+        h(ThemeCard, null),
+        h(SyncScrollCard, null),
+      )
+    }
+
+    /* ---------- MinerU 卡片：模式 + 本地/云端参数 + 保存前预检 ---------- */
+    function MineruCard() {
+      const [cfg, setCfg] = useState(null)
+      const [form, setForm] = useState({ mode: 'off', baseUrl: '', backend: 'pipeline', effort: 'medium', parseMethod: 'auto', apiKey: '', cloudApiKey: '' })
+      const [busy, setBusy] = useState(false)
+      const [msg, setMsg] = useState(null) // { ok, text }
+      const load = useCallback(() => {
+        api('/mineru/config').then((d) => {
+          setCfg(d)
+          setForm({
+            mode: d.mode || 'off',
+            baseUrl: d.local?.baseUrl || '',
+            backend: d.local?.backend || 'pipeline',
+            effort: d.local?.effort || 'medium',
+            parseMethod: d.local?.parseMethod || 'auto',
+            apiKey: '',
+            cloudApiKey: '',
+          })
+        }).catch((e) => setMsg({ ok: false, text: String(e.message || e) }))
+      }, [])
+      useEffect(load, [load])
+      const sourceText = !cfg ? '' : { file: t('setSourceFile'), profile: t('setSourceProfile'), env: t('setSourceEnv'), none: t('setSourceNone') }[cfg.source] || ''
+      const payload = () => ({
+        mode: form.mode,
+        local: { baseUrl: form.baseUrl, backend: form.backend, effort: form.effort, parseMethod: form.parseMethod, apiKey: form.apiKey },
+        cloud: { apiKey: form.cloudApiKey },
+      })
+      const save = async () => {
+        setBusy(true); setMsg(null)
+        try {
+          await api('/mineru/config', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload()) })
+          setMsg({ ok: true, text: t('setSaved') })
+          load()
+        } catch (e) { setMsg({ ok: false, text: String(e.message || e) }) } finally { setBusy(false) }
+      }
+      const clear = async () => {
+        setBusy(true); setMsg(null)
+        try {
+          await api('/mineru/config', { method: 'DELETE' })
+          setMsg({ ok: true, text: t('setCleared') })
+          load()
+        } catch (e) { setMsg({ ok: false, text: String(e.message || e) }) } finally { setBusy(false) }
+      }
+      const testConn = async () => {
+        setBusy(true); setMsg(null)
+        try {
+          const d = await api('/mineru/test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload()) })
+          setMsg({ ok: d.reachable, text: d.reachable ? t('setMineruHealthOk') : (t('setMineruHealthFail') + (d.error ? ': ' + d.error : '')) })
+        } catch (e) { setMsg({ ok: false, text: String(e.message || e) }) } finally { setBusy(false) }
+      }
+      const field = (key, label, placeholder, type) => h('div', null,
+        h('label', { style: SET.label }, label),
+        h('input', {
+          style: SET.input, type: type || 'text', value: form[key], placeholder, disabled: busy,
+          onChange: (e) => setForm({ ...form, [key]: e.target.value }),
+        }),
+      )
+      const select = (key, label, options) => h('div', null,
+        h('label', { style: SET.label }, label),
+        h('select', {
+          style: SET.input, value: form[key], disabled: busy,
+          onChange: (e) => setForm({ ...form, [key]: e.target.value }),
+        }, options.map((o) => h('option', { value: o.value, key: o.value }, o.label))),
+      )
+      return h('div', { style: SET.card, 'data-dsh-plugin': 'dsh-paper-reader', 'data-dsh-part': 'settings-card' },
+        h('h3', { style: SET.title }, t('setMineruTitle')),
+        h('p', { style: SET.desc }, t('setMineruDesc')),
+        // 激活门槛人话（上游评审第 7 条）：说清「什么时候需要 + 配好之后入口出现在哪」，
+        // 并按当前模式给一句取舍；「关闭」时明确 pdf.js 与 MinerU 各自能干什么（不夸大）。
+        h('p', { style: SET.desc }, t('setMineruWhy')),
+        h('p', { style: SET.meta },
+          form.mode === 'local' ? t('setMineruWhyLocal') : form.mode === 'cloud' ? t('setMineruWhyCloud') : t('setMineruOffHint')),
+        select('mode', t('setMineruMode'), [
+          { value: 'off', label: t('setMineruModeOff') },
+          { value: 'local', label: t('setMineruModeLocal') },
+          { value: 'cloud', label: t('setMineruModeCloud') },
+        ]),
+        field('baseUrl', t('setMineruLocalUrl'), 'http://127.0.0.1:8000'),
+        select('backend', t('setMineruBackend'), [
+          { value: 'pipeline', label: 'pipeline' },
+          { value: 'hybrid-engine', label: 'hybrid-engine' },
+          { value: 'vlm-engine', label: 'vlm-engine' },
+          { value: 'vlm-http-client', label: 'vlm-http-client' },
+          { value: 'hybrid-http-client', label: 'hybrid-http-client' },
+        ]),
+        select('parseMethod', t('setMineruParseMethod'), [
+          { value: 'auto', label: 'auto' },
+          { value: 'txt', label: 'txt' },
+          { value: 'ocr', label: 'ocr' },
+        ]),
+        select('effort', t('setMineruEffort'), [
+          { value: 'medium', label: 'medium' },
+          { value: 'high', label: 'high' },
+        ]),
+        field('apiKey', t('setMineruLocalKey'), cfg?.local?.hasApiKey ? t('setKeyKeep') + cfg.local.apiKeyHint : '', 'password'),
+        field('cloudApiKey', t('setMineruCloudKey'), cfg?.cloud?.hasApiKey ? t('setKeyKeep') + cfg.cloud.apiKeyHint : 'mineru.net token', 'password'),
+        h('div', { style: SET.row },
+          h('button', { type: 'button', style: SET.btn, disabled: busy, onClick: save }, busy ? t('setSaving') : t('setSave')),
+          h('button', { type: 'button', style: SET.btnGhost, disabled: busy, onClick: testConn }, t('setMineruTestConnection')),
+          cfg?.source === 'file' ? h('button', { type: 'button', style: SET.btnGhost, disabled: busy, onClick: clear }, t('setClear')) : null,
+          msg ? h('span', { style: msg.ok ? SET.ok : SET.err }, msg.text) : h('span', { style: SET.meta }, sourceText),
+        ),
+      )
+    }
+
+    return {
+      // 'theme' = 官方 dsh 主题服务（ctx.theme.getTheme() / ctx.on('theme/change')）。
+      // 注入是可选的：拿不到时阅读器仍按「宿主属性 + prefers-color-scheme」自己判（方案 §A2.2 的降级链）。
+      inject: ['slots', 'locale', 'layout', 'uiWorkspace', 'sidebarRight', 'sidebarRightTabs', 'theme'],
+      apply(ctx) {
+        try {
+          ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-paper-reader: dicts')
+          const bound = ctx.locale.bind(NS)
+          setT(bound)
+
+          // 切换护栏要挂到共享的 LayoutController 上（所有插件拿到的是同一实例）
+          layoutService = ctx.layout
+          // 官方 data-rightbar-instant 只瞬时化 grid 轨道和拖拽手柄；
+          // 右栏面板自身是 transform 滑动过渡，补一条规则让它在切换窗口内也瞬时
+          if (!document.getElementById('dpr-switch-instant')) {
+            const styleEl = document.createElement('style')
+            styleEl.id = 'dpr-switch-instant'
+            styleEl.textContent = '[data-rightbar-instant] [data-sidebar-right-panel]{transition:none!important}'
+            document.head.appendChild(styleEl)
+          }
+          // 自绘元素里 :hover 这类伪类内联 style 表达不了。内联仍写死态（注入失败时有个安全默认），
+          // 这里用 !important 盖过内联给出 hover。
+          if (!document.getElementById('dpr-surface-css')) {
+            const styleEl = document.createElement('style')
+            styleEl.id = 'dpr-surface-css'
+            styleEl.textContent = '[data-dpr-rail]:hover,[data-dpr-mode]:hover{background:var(--dsw-alias-interactive-bg-hover)!important}'
+              // 树行内的 ✎🗑 操作按钮：默认隐身，行悬停才现身（不再有「待确认态常亮」的 armed 状态）
+              + '[data-dpr-act]{opacity:0!important;transition:opacity .12s}'
+              + '[data-dpr-row]:hover [data-dpr-act]{opacity:1!important}'
+            document.head.appendChild(styleEl)
+          }
+
+          // rightbar PDF 页签类型 + 内容
+          ctx.effect(() => ctx.sidebarRightTabs.register({
+            id: 'dpr-reader', kind: 'dpr-reader', title: () => bound('pdfTab'),
+          }), 'dsh-paper-reader: tab type')
+          ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+            name: 'sidebar.right.pane.tab', key: 'dpr-reader', locale: NS,
+          }, PdfTab))
+
+          // 设置面板（设置 → 论文伴读）：Jev 重排 + 翻译端点统一管理
+          ctx.slots.inject('settings.section', () => ctx.slots.register({
+            name: 'settings.section', id: 'dsh-paper-reader', order: 70,
+            label: () => bound('settings'), locale: NS,
+          }, SettingsPanel))
+
+          clientApi = { slots: ctx.slots, layout: ctx.layout, uiWorkspace: ctx.uiWorkspace, sidebarRight: ctx.sidebarRight }
+
+          /* 深色模式：把 dsh 的主题**权威地**推给阅读器（方案 §A2.2 实装方式 1）。
+             三处都包在 try 里：旧版 dsh 没有 theme 服务时，阅读器的四级降级链仍然工作，
+             深色能力不会因为宿主缺接口而整体失灵（也绝不因此让 apply() 抛错）。 */
+          try {
+            const readHostTheme = () => {
+              try {
+                const snap = ctx.theme?.getTheme?.()
+                const scheme = snap?.active?.colorScheme
+                if (scheme === 'dark' || scheme === 'light') dprHostDark = scheme === 'dark'
+              } catch { /* 保守：保持上一个值 / 默认亮色 */ }
+            }
+            readHostTheme()
+            ctx.effect(() => {
+              const off = ctx.on?.('theme/change', () => { readHostTheme(); pushThemeToReader() })
+              return () => { try { off?.() } catch { /* 已释放 */ } }
+            }, 'dsh-paper-reader: theme bridge')
+          } catch { /* 宿主无 theme 服务：降级链接管 */ }
+
+          // 阅读器跳转链接拦截（capture 阶段，一次绑定）：渲染器给 http(s) 链接加了
+          // target=_blank，不拦会新开浏览器标签页 —— 拦下后交给应用内跳转
+          if (!window.__dprJumpLinkBound) {
+            window.__dprJumpLinkBound = true
+            document.addEventListener('click', (e) => {
+              const a = e.target?.closest?.('a[href*="/paper-reader/"]')
+              if (!a) return
+              let url
+              try { url = new URL(a.href) } catch { return }
+              const page = +(url.searchParams.get('page') || 0)
+              if (!page) return
+              e.preventDefault()
+              e.stopImmediatePropagation()
+              jumpToPaperPage(url.searchParams.get('topic'), url.searchParams.get('name'), page, url.searchParams.get('q') || '')
+            }, true)
+          }
+
+          // 常驻浮层（与模式开关无关）：阅读器 iframe + 对话头部历史/新建按钮组。
+          // shell.overlay 是官方钦定的整页浮层自留地（list slot，additive，不遮蔽任何人）。
+          // （对话头部按钮不走 slot —— session 作用域 slot 不渲染动态包条目，只能自渲染。）
+          ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+            name: 'shell.overlay', id: 'dpr-paper-overlays', locale: NS,
+          }, function PaperOverlays() {
+            return h(React.Fragment, null,
+              h(ReaderOverlay, null),
+              h(SessionActions, { uiWorkspace: clientApi?.uiWorkspace }),
+            )
+          }))
+
+          // 侧栏底部常驻的模式开关行（list slot）——安装后官方侧栏原样，只是底部多一行
+          // 「论文伴读」；点它才接管 workspaces 区，再点还原。
+          ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
+            name: 'sidebar.footer.action', id: 'dpr-paper-mode', locale: NS,
+          }, PaperModeToggle))
+
+          // 上次会话开过伴读模式的话恢复（默认/首次安装 = 关 = 官方侧栏）
+          if (paperMode) applyPaperMode(true)
+        } catch (e) {
+          console.error('[dsh-paper-reader] client apply failed:', e)
+        }
+      },
+    }
+  },
+})

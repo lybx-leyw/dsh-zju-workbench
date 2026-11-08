@@ -1,4 +1,4 @@
-import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
+import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/core/quiz/src/strategies.js';
 const validList=(xs,allowed)=>Array.isArray(xs)&&xs.length>0&&new Set(xs).size===xs.length&&xs.every(x=>Object.hasOwn(allowed,x));
 export function buildBlueprint({pointIds,count,compositeCount=0,types=['mcq'],strategies=['understand'],blueprint,purpose='practice'}){
  if(!['practice','assessment'].includes(purpose)||!validList(types,QUESTION_TYPES)||!validList(strategies,QUESTION_STRATEGIES))throw Error('用途、题型或认知策略无效');

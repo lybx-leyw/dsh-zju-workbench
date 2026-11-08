@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { exportLectureForAgent, mergeAgentLectureText } from '../packages/dsh-zhiyun-core-lecture/src/agent-text.js';
+import { exportLectureForAgent, mergeAgentLectureText } from '../packages/core/lecture/src/agent-text.js';
 /** 数一数协议文本里的知识点与正文块（本测试自用的小工具）。
  *
  *  ⚠️ 原来它来自 `dsh-zhiyun-core-final-pass` —— 那个包（自由发挥式终审）

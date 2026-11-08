@@ -17,14 +17,14 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { SECTIONS, DEFAULT_PAGE } from '../packages/dsh-zhiyun-page-docs/src/docs-manifest.js';
+import { SECTIONS, DEFAULT_PAGE } from '../packages/client/page-docs/src/docs-manifest.js';
 import {
   OUTLINE_DEPTHS, filterPages, flattenPages, neighbors, plainHeading, scanHeadings, stripHeading1,
-} from '../packages/dsh-zhiyun-page-docs/src/outline.js';
+} from '../packages/client/page-docs/src/outline.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
-const pkg = join(root, 'packages', 'dsh-zhiyun-page-docs');
+const pkg = join(root, 'packages', 'client', 'page-docs');
 
 const FLAT = flattenPages(SECTIONS);
 

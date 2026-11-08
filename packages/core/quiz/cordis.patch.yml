@@ -1,0 +1,3 @@
+- insert:
+    - id: zhiyun-quiz
+      name: '@lybx-leyw/dsh-zju-core-quiz'

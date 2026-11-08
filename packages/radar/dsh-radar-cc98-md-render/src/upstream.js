@@ -16,7 +16,7 @@
  *
  * ## ① UBB → 带结构的 Markdown（核心，`src/render/`）
  *
- *   与 `dsh-zhiyun-source-cc98/src/ubb.js` 的 `ubbToText()` 覆盖面**相同**，
+ *   与 `@lybx-leyw/dsh-zju-source-cc98/src/ubb.js` 的 `ubbToText()` 覆盖面**相同**，
  *   但输出不同：那边把 `[img]u[/img]` 压成 `[图片: u]`、`[quote]` 压成 `> [引用]`、
  *   `[url=x]t[/url]` 压成 `t (x)` —— **链接与楼层关系在这一步就丢了**。
  *   上游输出的是 `![](u)`、嵌套 `> `、`[t](x)`，即「原样可渲染的结构」。
@@ -65,5 +65,5 @@ export const WHY_NOT_PINNED =
 /** 本包与同簇包的关系（防止评审时重复造轮子）。 */
 export const SIBLINGS = Object.freeze({
   'dsh-radar-cc98-ubb-bridge': '写方向（Markdown → UBB）。本包是读方向（UBB → Markdown）。**标记表必须同源**。',
-  'dsh-zhiyun-source-cc98': '已有 `ubbToText()`（纯文本）与 `Cc98Client`。本包复用其取正文，只换「UBB → 什么」这一步。',
+  '@lybx-leyw/dsh-zju-source-cc98': '已有 `ubbToText()`（纯文本）与 `Cc98Client`。本包复用其取正文，只换「UBB → 什么」这一步。',
 });

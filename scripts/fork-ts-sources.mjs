@@ -14,7 +14,7 @@
  * 3. **改 import 路径**：
  *      `.tsx` / `.ts` 扩展名 → `.js`
  *      `@openmaic/dsl`      → `dsh-zhiyun-classroom-dsl`
- *      `@openmaic/geometry` → `dsh-zhiyun-classroom-geometry`
+ *      `@openmaic/geometry` → `@lybx-leyw/dsh-zju-core-classroom-geometry`
  *    后两条是把上游 npm 包名换成仓库里的包名。
  *
  * # 为什么不用 esbuild 的 bundle 模式
@@ -68,8 +68,8 @@ function findTs(dir, acc = []) {
  */
 const PACKAGE_REWRITE = [
   [/from\s+['"]@openmaic\/dsl['"]/g, "from 'dsh-zhiyun-classroom-dsl'"],
-  [/from\s+['"]@openmaic\/geometry['"]/g, "from 'dsh-zhiyun-classroom-geometry'"],
-  [/from\s+['"]@openmaic\/renderer['"]/g, "from 'dsh-zhiyun-classroom-renderer'"],
+  [/from\s+['"]@openmaic\/geometry['"]/g, "from '@lybx-leyw/dsh-zju-core-classroom-geometry'"],
+  [/from\s+['"]@openmaic\/renderer['"]/g, "from '@lybx-leyw/dsh-zju-core-classroom-renderer'"],
 ];
 
 const files = findTs(inDir);

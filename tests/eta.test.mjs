@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 
 import {
   remainingPlayMs, estimateRemainingMs, formatEta, formatSaved,
-} from '../packages/dsh-zhiyun-page-study/src/eta.js';
+} from '../packages/client/page-study/src/eta.js';
 
 /** 60 分钟的一节课。 */
 const AXIS = 60 * 60_000;

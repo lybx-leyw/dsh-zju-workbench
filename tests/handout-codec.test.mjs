@@ -18,7 +18,7 @@ import {
   markdownToChapters,
   resolveBlockKind,
   roundtrip,
-} from '../packages/dsh-zhiyun-core-handout/src/codec.js';
+} from '../packages/core/handout/src/codec.js';
 
 const kind = (label) => resolveBlockKind(label);
 

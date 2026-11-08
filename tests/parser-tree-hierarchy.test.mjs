@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildTreeFromBlocks, aggregateTree, makeTitle, leavesOf, titlesOf, orthogonalizePoints,
-} from '../packages/dsh-zhiyun-core-parser/src/tree.js';
+} from '../packages/core/parser/src/tree.js';
 
 function block(index, page, text, { role = '主线', facet = '概念' } = {}) {
   return { index, page, sentences: [{ text }], tag: { role, facets: [facet], summary: '' } };

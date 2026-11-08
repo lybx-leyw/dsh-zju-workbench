@@ -1,9 +1,9 @@
 /**
- * 讲义导出按钮（packages/dsh-zhiyun-page-study/src/handout-export.jsx）的静态契约守卫。
+ * 讲义导出按钮（packages/client/page-study/src/handout-export.jsx）的静态契约守卫。
  *
  * 这一条是真机踩出来的：按钮点下去报「输入信息无效。」。根因不在服务端，而在
  * 客户端传错了字段 —— 节次对象上**没有可用的 `id`**，全仓一律用 `subId`
- *（见 `dsh-zhiyun-core-study/src/model.js:23` 的 `currentKey()`）。
+ *（见 `@lybx-leyw/dsh-zju-core-study/src/model.js:23` 的 `currentKey()`）。
  *
  * 更坏的是它有两层伪装：
  *   1. 前置检查写成 `lesson.id` 时永远为真，按钮点了只会说「还没选中一节课」，
@@ -25,9 +25,9 @@ import { fileURLToPath } from 'node:url';
 const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
 const read = (rel) => readFileSync(path.join(root, rel), 'utf8');
 
-const BUTTON = 'packages/dsh-zhiyun-page-study/src/handout-export.jsx';
-const READER = 'packages/dsh-zhiyun-page-study/src/lecture-reader.jsx';
-const WORKBENCH = 'packages/dsh-zhiyun-core-study/src/workbench.js';
+const BUTTON = 'packages/client/page-study/src/handout-export.jsx';
+const READER = 'packages/client/page-study/src/lecture-reader.jsx';
+const WORKBENCH = 'packages/core/study/src/workbench.js';
 
 test('导出按钮只用 subId，绝不引用 lesson.id', () => {
   // 注释里会提到 `lesson.id` 作为反例，所以先把注释剥掉再查 —— 查的是真正会执行的代码。
@@ -66,7 +66,7 @@ test('宿主侧对「没有讲义」给具体原因，不退化成 INPUT 的通�
 });
 
 test('handout-export 在 method 白名单里，且 host 注入了 handout 取值函数', () => {
-  const host = read('packages/dsh-zhiyun-core-study/src/host.js');
+  const host = read('packages/core/study/src/host.js');
   assert.ok(host.includes('"handout-export"'), 'method 白名单缺 handout-export，请求会被直接拒成 unknown');
   assert.ok(/handout:\s*\(\)\s*=>\s*ctx\.get\("zhiyunHandout"\)/.test(host), 'host 没有注入 handout 取值函数');
 });

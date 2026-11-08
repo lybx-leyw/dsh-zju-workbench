@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SRC = 'packages/dsh-zhiyun-core-study/src/quiz-engine-runtime.js';
+const SRC = 'packages/core/study/src/quiz-engine-runtime.js';
 const source = fs.readFileSync(path.resolve(SRC), 'utf8');
 
 /** 把 runtimeState 抽出来跑（它只依赖 fault 与 serial）。 */

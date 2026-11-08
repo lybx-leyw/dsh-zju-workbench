@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { briefFromLecture, pagesFromHtmlChapters, pollGeneration, runGeneration } from '../packages/dsh-zhiyun-core-study/src/ai-teaching-generate.js';
+import { briefFromLecture, pagesFromHtmlChapters, pollGeneration, runGeneration } from '../packages/core/study/src/ai-teaching-generate.js';
 
 const htmlChapters = [{ chapterId: 'c1', title: '导数', html: '<!doctype html><html><body>图解导数</body></html>', analysis: { obstacles: [] }, storyboard: { scenes: [] } }];
 test('study selects HTML-first and preserves complete chapter source', () => {

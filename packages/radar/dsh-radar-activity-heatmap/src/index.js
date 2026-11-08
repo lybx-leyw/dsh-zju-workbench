@@ -32,8 +32,8 @@
 //
 // TODO（采用前必须完成）：
 //   1. 数据源接线：日粒度的记录**已经在库里**，不要新建存储 ——
-//      - 作答：`dsh-zhiyun-core-quiz/src/store.js` 的 `attempts` 轨道（`makeAttempt` 带 ISO `at`）
-//      - 会话：`dsh-zhiyun-core-study/src/learning-space.js` 的 `sessionRows()` 已在读 `updatedAt`（毫秒）
+//      - 作答：`@lybx-leyw/dsh-zju-core-quiz/src/store.js` 的 `attempts` 轨道（`makeAttempt` 带 ISO `at`）
+//      - 会话：`@lybx-leyw/dsh-zju-core-study/src/learning-space.js` 的 `sessionRows()` 已在读 `updatedAt`（毫秒）
 //      两者都要**从宿主服务读出全量**，再按 `Asia/Shanghai` 归日（本仓 `relativeLabel()` 已有
 //      这个时区约定，见 learning-space.js L89–91 —— 不要另起一套）。
 //   2. 「一天做了几道题」的口径要写死并测：
@@ -72,5 +72,5 @@ export const UPSTREAM = Object.freeze({ package: UPSTREAM_PACKAGE, version: UPST
 //   }
 //
 //   # activityEntries(rpc) -> [{ date: 'YYYY-MM-DD', count: number }]
-//   #   rpc 见 dsh-zhiyun-core-study/src/client.jsx 的 controller 形状
+//   #   rpc 见 @lybx-leyw/dsh-zju-core-study/src/client.jsx 的 controller 形状
 //   #   （ctx.connection.rpc.call('/api', 'zhiyun-study', { method, args })）

@@ -1,15 +1,15 @@
 /**
- * 跨包客户端接线：`dsh-zhiyun-page-notes` external import `dsh-zhiyun-graph-render`。
+ * 跨包客户端接线：`dsh-zhiyun-page-notes` external import `@lybx-leyw/dsh-zju-ui-graph-render`。
  *
  * # 为什么值得一条常驻测试
  *
- * 这条接线是**整包移植**留下的：图谱渲染整包搬进 `dsh-zhiyun-graph-render`，
+ * 这条接线是**整包移植**留下的：图谱渲染整包搬进 `@lybx-leyw/dsh-zju-ui-graph-render`，
  * 页面只 `import { NoteGraph, css }`，自己不背 cytoscape。于是产生三处必须同时成立的约定：
  *
- *   1. 页面 `dsh.client.external` 里有 `dsh-zhiyun-graph-render`（否则 esbuild 会试图
+ *   1. 页面 `dsh.client.external` 里有 `@lybx-leyw/dsh-zju-ui-graph-render`（否则 esbuild 会试图
  *      把整个渲染包连同 cytoscape 内联进页面 bundle —— 打包成功，但页面又背上了那份依赖）；
- *   2. `dsh-zhiyun-graph-render` 在 `CLIENT_PACKAGES` 里（否则它没有 `lib/client.js`，
- *      外部化后的 `require('dsh-zhiyun-graph-render')` 在运行时谁也解不到，图谱静默不显示）；
+ *   2. `@lybx-leyw/dsh-zju-ui-graph-render` 在 `CLIENT_PACKAGES` 里（否则它没有 `lib/client.js`，
+ *      外部化后的 `require('@lybx-leyw/dsh-zju-ui-graph-render')` 在运行时谁也解不到，图谱静默不显示）；
  *   3. 它在 profile 的 bundles 里（否则 Loader 根本不加载它，症状同上）。
  *
  * 三处**都不会**让构建报错，坏起来只是「图不出现」。所以拿真实产物跑一遍模块表：
@@ -62,7 +62,7 @@ function hostStubs() {
     '@deepseek-ai/dsh-client-ui-slots': {},
     '@deepseek-ai/dsh-client-ui-primitives': { MarkdownText: noop },
     '@deepseek-ai/dsh-client-ui-dockkit': {},
-    'dsh-zhiyun-shell-ui': { Icon: noop, Notice: noop, mountStyle: () => {} },
+    '@lybx-leyw/dsh-zju-ui-shared': { Icon: noop, Notice: noop, mountStyle: () => {} },
   };
 }
 
@@ -95,7 +95,7 @@ test('页面 require 到的 graph-render 带着 NoteGraph 与 css（跨包接线
 
   // 没有 node_modules 时 esbuild 解不开 cytoscape —— 环境问题，跳过而不是红。
   try {
-    await buildClientPackage('dsh-zhiyun-graph-render', { write: false });
+    await buildClientPackage('@lybx-leyw/dsh-zju-ui-graph-render', { write: false });
   } catch (error) {
     t.skip(`构建依赖未就绪（多半是根目录还没 npm install）：${error instanceof Error ? error.message.split('\n')[0] : error}`);
     return;
@@ -103,8 +103,8 @@ test('页面 require 到的 graph-render 带着 NoteGraph 与 css（跨包接线
 
   const registry = hostStubs();
   // 加载顺序：宿主种子词 → 渲染包 → 页面（与 profile 的 bundles 顺序一致）。
-  const graph = await loadInto('dsh-zhiyun-graph-render', registry, buildClientPackage);
-  registry['dsh-zhiyun-graph-render'] = graph;
+  const graph = await loadInto('@lybx-leyw/dsh-zju-ui-graph-render', registry, buildClientPackage);
+  registry['@lybx-leyw/dsh-zju-ui-graph-render'] = graph;
 
   for (const key of GRAPH_EXPORTS) {
     assert.ok(key in graph, `graph-render 没有导出 ${key}`);
@@ -127,25 +127,29 @@ test('页面 dsh.client.external 里写着 graph-render，渲染包也在 CLIENT
   // 拿不到就只能把「清单」那半段跳过，前半段（manifest 与 profile）照样查。
   const CLIENT_PACKAGES = api?.CLIENT_PACKAGES ?? null;
 
-  const notesManifest = JSON.parse(await readFile(`${root}packages/dsh-zhiyun-page-notes/package.json`, 'utf8'));
+  const notesManifest = JSON.parse(await readFile(`${root}packages/client/page-notes/package.json`, 'utf8'));
   const declared = notesManifest.dsh?.client?.external ?? [];
-  assert.ok(declared.includes('dsh-zhiyun-graph-render'),
+  assert.ok(declared.includes('@lybx-leyw/dsh-zju-ui-graph-render'),
     '页面没有把 graph-render 写进 dsh.client.external —— esbuild 会把 cytoscape 内联进页面');
 
   if (CLIENT_PACKAGES === null) {
     t.diagnostic('解不开 scripts/build.mjs（未 npm install），跳过 CLIENT_PACKAGES 断言');
   } else {
-    assert.ok(CLIENT_PACKAGES.includes('dsh-zhiyun-graph-render'),
+    // ⚠️ `CLIENT_PACKAGES` 存的是**目录名**（`packageDir()` 按 basename 递归找），
+    // 不是包名。包迁到 `packages/client/graph-render` 后两者分开了：
+    // 目录 `graph-render`，包名 `@lybx-leyw/dsh-zju-ui-graph-render`。
+    // 原来这里写包名也能过，只因为那时目录名和包名恰好相同。
+    assert.ok(CLIENT_PACKAGES.includes('graph-render'),
       'graph-render 不在 CLIENT_PACKAGES 里 —— 它不会有 lib/client.js，外部化后运行时解不到');
   }
 
   const profile = JSON.parse(await readFile(`${root}profiles/zju-workbench/package.json`, 'utf8'));
   const bundles = profile.dsh?.profile?.bundles ?? [];
-  assert.ok(bundles.includes('dsh-zhiyun-graph-render'),
+  assert.ok(bundles.includes('@lybx-leyw/dsh-zju-ui-graph-render'),
     'graph-render 不在 profile 的 bundles 里 —— Loader 不会加载它，图谱静默不显示');
 
   // 渲染包自己不 external 任何东西：cytoscape 是纯库，没有共享实例需求，随包内联。
-  const graphManifest = JSON.parse(await readFile(`${root}packages/dsh-zhiyun-graph-render/package.json`, 'utf8'));
+  const graphManifest = JSON.parse(await readFile(`${root}packages/client/graph-render/package.json`, 'utf8'));
   const graphExternal = graphManifest.dsh?.client?.external ?? [];
   assert.deepEqual(graphExternal, [],
     `graph-render 不应该 external 任何包（实际：${graphExternal.join(', ')}）—— 声明了却没人提供，` +

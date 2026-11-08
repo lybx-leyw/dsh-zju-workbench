@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { apply } from '../packages/dsh-zhiyun-core-lecture/src/index.js';
-import { ParserCache } from '../packages/dsh-zhiyun-core-parser/src/cache.js';
+import { apply } from '../packages/core/lecture/src/index.js';
+import { ParserCache } from '../packages/core/parser/src/cache.js';
 const input=()=>({sectionId:'s',lecture:{title:'课',chapters:[{title:'章',topics:[1,2].map(i=>({title:'知识点'+i,sourceBlockIndexes:[i],blocks:[{kind:{wire:'explanation',label:'讲解'},text:`正文${i}。`,sourceBlockIndexes:[i]}]}))}]},
   record:{blocks:[1,2].map(i=>({index:i,page:i*10,tag:{role:'主线'},slideEvidence:[{page:i*10,text:`题设${i}`}]})),outline:[]}});
 test('知识点终审隔离其他题设；一段格式失败只重试该段，已成功邻段命中缓存',async()=>{

@@ -29,7 +29,7 @@ import path from 'node:path';
 
 const ROOT = path.resolve('.');
 const AGENT_LOOP = path.join(ROOT, '.runtime/dsh-0.2.0-rc.2/node_modules/@deepseek-ai/dsh-agent-loop/lib/index.js');
-const BACKEND = path.join(ROOT, 'packages/dsh-zhiyun-core-study/src/core-question-backend.js');
+const BACKEND = path.join(ROOT, 'packages/core/study/src/core-question-backend.js');
 
 const hasHost = fs.existsSync(AGENT_LOOP);
 

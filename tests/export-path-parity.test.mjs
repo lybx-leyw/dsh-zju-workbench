@@ -32,11 +32,11 @@ const ROOT = path.resolve('.');
 const load = rel => import(pathToFileURL(path.join(ROOT, rel)).href);
 const read = p => fs.readFileSync(path.resolve(p), 'utf8');
 
-const BANK = read('packages/dsh-zhiyun-core-study/src/question-bank.js');
-const RUNTIME = read('packages/dsh-zhiyun-core-study/src/quiz-engine-runtime.js');
+const BANK = read('packages/core/study/src/question-bank.js');
+const RUNTIME = read('packages/core/study/src/quiz-engine-runtime.js');
 
 test('currentNotePath 有学期时是三层，无学期时是两层', async () => {
-  const { currentNotePath } = await load('packages/dsh-zhiyun-core-handout/src/version.js');
+  const { currentNotePath } = await load('packages/core/handout/src/version.js');
   assert.equal(
     currentNotePath({ courseTitle: '概率论', lessonTitle: '第一节', termName: '2026 秋' }),
     '2026 秋/概率论/第一节',
@@ -77,7 +77,7 @@ test('回查失败不阻塞导出（拿不到就少一层，不编造学期）',
 });
 
 test('splitByLesson 按题目自己的 termName 分组（一次导出可能跨学期）', async () => {
-  const { splitByLesson } = await load('packages/dsh-zhiyun-core-study/src/quiz-export.js');
+  const { splitByLesson } = await load('packages/core/study/src/quiz-export.js');
   const docs = splitByLesson({
     questions: [
       { courseTitle: '甲课', courseId: 'c-甲', subId: 's-1', lessonTitle: '第一节', termName: '2026 秋', pointTitle: 'p', stem: 'x', answer: 'y' },
@@ -90,7 +90,7 @@ test('splitByLesson 按题目自己的 termName 分组（一次导出可能跨�
 });
 
 test('调用方传入的 termName 作为兜底（题目完全没有时才用）', async () => {
-  const { splitByLesson } = await load('packages/dsh-zhiyun-core-study/src/quiz-export.js');
+  const { splitByLesson } = await load('packages/core/study/src/quiz-export.js');
   const docs = splitByLesson({
     questions: [{ courseTitle: '甲课', courseId: 'c-甲', subId: 's-1', lessonTitle: '第一节', pointTitle: 'p', stem: 'x', answer: 'y' }],
     termName: '2026 秋',
@@ -99,7 +99,7 @@ test('调用方传入的 termName 作为兜底（题目完全没有时才用）'
 });
 
 test('题目自带 termName 时优先于调用方', async () => {
-  const { splitByLesson } = await load('packages/dsh-zhiyun-core-study/src/quiz-export.js');
+  const { splitByLesson } = await load('packages/core/study/src/quiz-export.js');
   const docs = splitByLesson({
     questions: [{ courseTitle: '甲课', courseId: 'c-甲', subId: 's-1', lessonTitle: '第一节', termName: '题目自带', pointTitle: 'p', stem: 'x', answer: 'y' }],
     termName: '调用方给的',

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createLecturePdfHandler,lecturePdfOptions} from '../apps/desktop/src/lecture-pdf.js';
-import {graphSheets,pdfFilename} from '../packages/dsh-zhiyun-page-study/src/lecture-export-model.js';
+import {graphSheets,pdfFilename} from '../packages/client/page-study/src/lecture-export-model.js';
 
 function fixture({canceled=false,ready=true}={}){
   const calls=[],frame={},sender={mainFrame:frame,getURL:()=> 'http://127.0.0.1:8000/',executeJavaScript:async()=>ready,printToPDF:async options=>{calls.push(['pdf',options]);return Buffer.from('%PDF-fixture');}},win={webContents:sender,isDestroyed:()=>false};

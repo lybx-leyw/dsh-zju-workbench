@@ -37,7 +37,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const pkg = path.join(root, 'packages', 'dsh-zhiyun-page-docs');
+const pkg = path.join(root, 'packages', 'client', 'page-docs');
 
 /** 外壳的布局链 + 主题变量。页面样式表依赖 `--zy-*` 与 `.zy-content-flush`。 */
 const SHELL_CSS = [
@@ -65,7 +65,7 @@ async function bundle(workdir) {
   const outfile = path.join(dir, 'app.js');
   const { build } = await import('esbuild');
   const STUBS = {
-    'dsh-zhiyun-shell-ui': `import React from "react";
+    '@lybx-leyw/dsh-zju-ui-shared': `import React from "react";
       export const Icon = () => React.createElement("i");
       export const Empty = (p) => React.createElement("div", null, p.title, p.children);
       export const mountStyle = () => {};`,
@@ -84,7 +84,7 @@ async function bundle(workdir) {
       contents: `
         import React from "react";
         import { createRoot } from "react-dom/client";
-        import { Docs } from "./packages/dsh-zhiyun-page-docs/src/client.jsx";
+        import { Docs } from "./packages/client/page-docs/src/client.jsx";
         document.body.dataset.zhiyun = "";
         createRoot(document.getElementById("host")).render(React.createElement(Docs));
       `,

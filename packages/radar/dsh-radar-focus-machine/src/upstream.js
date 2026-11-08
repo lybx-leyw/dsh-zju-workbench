@@ -28,7 +28,7 @@ export const UPSTREAM_REPOSITORY = 'https://github.com/statelyai/xstate';
  * TODO-0（**阻塞项**）：由评审决定本包是「宿主侧状态机」还是「客户端状态机」。
  *
  *   - 宿主侧：`import { createMachine, createActor, assign } from 'xstate'`，
- *     状态落盘走 `dsh-zhiyun-core-study` 同款的 `atomic()` 写法；
+ *     状态落盘走 `@lybx-leyw/dsh-zju-core-study` 同款的 `atomic()` 写法；
  *   - 客户端：客户端 bundle 体积要单独量（`xstate` 5.33.3 无运行时依赖，
  *     但本仓客户端不跑打包器的 tree-shake 结论 —— 本轮**未测**）。
  *

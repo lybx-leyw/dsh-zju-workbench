@@ -68,7 +68,7 @@ export function weekdayOf(dow, upstream) {
 /**
  * TODO-C · 「组内是否恰好每 7 天一条」—— RRULE 能否替代逐日展开的**唯一**判据。
  *
- *   本仓课表条目（`dsh-zhiyun-source-classroom/src/models.js:66-71` `scheduleEntry`）
+ *   本仓课表条目（`@lybx-leyw/dsh-zju-source-classroom/src/models.js:66-71` `scheduleEntry`）
  *   只有 `{ courseId, subId, startMs, endMs, courseTitle, roomName, … }`，
  *   **没有周次 / 节次号 / 楼栋**；`page-today/src/agenda.js` 的 `projectAgenda()` 是逐日拍平的。
  *

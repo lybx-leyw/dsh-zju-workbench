@@ -51,7 +51,7 @@
  *
  *  TODO-2 落点：在 `dsh-zhiyun-page-today` 的轨迹区加「选中即引用」，
  *          不新开面板；引用产生的条目写入「笔记」页当期 vault 的**同一棵树**
- *          （不改 `dsh-zhiyun-core-vault` 的存储形状，只多一类来源标记）。
+ *          （不改 `@lybx-leyw/dsh-zju-core-vault` 的存储形状，只多一类来源标记）。
  *
  *  TODO-3 锚定语义：上游的 `text-anchor.js` 与我们 `zy://section/<账号>.<节次>`
  *          是两套定位体系。需要一个**双向映射**（会话消息 → 课程节次），

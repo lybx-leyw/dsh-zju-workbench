@@ -19,9 +19,9 @@ test('DDL task -> multiple execution slots -> edit/delete, with independent due 
     const result = await build({ stdin: { contents: `
       import React from 'react';
       import {createRoot} from 'react-dom/client';
-      import {Planning} from './packages/dsh-zhiyun-page-planning/src/client.jsx';
-      import baseCss from './packages/dsh-zhiyun-page-planning/src/style.css';
-      import agendaCss from './packages/dsh-zhiyun-page-planning/src/schedule.css';
+      import {Planning} from './packages/client/page-planning/src/client.jsx';
+      import baseCss from './packages/client/page-planning/src/style.css';
+      import agendaCss from './packages/client/page-planning/src/schedule.css';
       document.head.appendChild(Object.assign(document.createElement('style'),{textContent:baseCss+agendaCss}));
       const local = {id:'demo', title:'虚构作业', due:'2026-11-08T15:59:00.000Z', done:false, createdAt:1, updatedAt:1};
       let schedule = [], serial = 0;
@@ -43,8 +43,8 @@ test('DDL task -> multiple execution slots -> edit/delete, with independent due 
       };
       createRoot(document.getElementById('root')).render(<Planning ctx={null}/>);
     `, resolveDir: process.cwd(), loader: 'jsx' }, bundle: true, write: false, format: 'iife', loader: { '.css': 'text' }, plugins: [{ name: 'ui-fixture', setup(builder) {
-      builder.onResolve({filter:/^dsh-zhiyun-shell-ui$/},()=>({path:'ui',namespace:'fixture'}));
-      builder.onLoad({filter:/.*/,namespace:'fixture'},()=>({ contents: `import React from 'react'; export const Icon=()=>null; export const Empty=({title,children})=><div>{title}{children}</div>; export const Notice=({children})=><div>{children}</div>; export const mountStyle=()=>{};`, loader:'jsx',resolveDir:process.cwd() }));
+      builder.onResolve({filter:/^@lybx-leyw\/dsh-zju-ui-shared$/},()=>({path:'ui',namespace:'fixture'}));
+      builder.onLoad({filter:/.*/,namespace:'fixture'},()=>({ contents: `import React from 'react'; export const Icon=()=>null; export const Empty=({title,children})=><div>{title}{children}</div>; export const Notice=({children})=><div>{children}</div>; export const mountStyle=()=>{}; export const registerPageContent=()=>{};`, loader:'jsx',resolveDir:process.cwd() }));
     } }] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 960 } });
     const errors = []; page.on('pageerror', error => errors.push(error.message));

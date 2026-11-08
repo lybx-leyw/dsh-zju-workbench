@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Context } from '@deepseek-ai/cordis';
 import { ToolRuntime } from '@deepseek-ai/dsh-tools';
-import { createStudyMaterialTools, registerStudyMaterialTools } from '../packages/dsh-zhiyun-core-study/src/material-tools.js';
+// 工具实现与注册动作都搬到了 `packages/tool/study`：
+//   - `createStudyMaterialTools` 仍是纯函数，用来单测工具行为；
+//   - 注册改由包的 `apply(ctx)` 承担，它从 `zhiyunStudy` 服务取 workbench。
+import { createStudyMaterialTools } from '../packages/tool/study/src/tools.js';
+import * as toolStudy from '../packages/tool/study/src/index.js';
 
 test('real host registry accepts definitions and unregisters every tool', () => {
   const ctx = new Context();
@@ -19,9 +23,12 @@ test('optional host injection publishes schemas, executes canonical output and u
   const ctx = new Context();
   let promptSchemas;
   ctx.provide('systemPrompt', { tools: callback => { promptSchemas = callback; return () => {}; } });
+  // `ToolRuntime` 构造时自己就把 `tools` 服务 provide 出去了 —— 这里不能再 provide 一次
+  // （会报 `service "tools" has been registered`）。只需补新包要的 `zhiyunStudy`。
   const registry = new ToolRuntime(ctx, { mode: 'native' });
   const f = fixture();
-  const fiber = registerStudyMaterialTools(ctx, f.workbench);
+  ctx.provide('zhiyunStudy', f.workbench);
+  const fiber = ctx.plugin(toolStudy);
   try {
     await fiber;
     assert.deepEqual(registry.schemas().map(tool => tool.name).sort(), Object.keys(f.tools).sort());
@@ -41,7 +48,10 @@ test('optional host injection publishes schemas, executes canonical output and u
 test('missing optional registry does not block its parent plugin', async () => {
   const ctx = new Context();
   let loaded = false;
-  const parent = ctx.plugin({ apply(scope) { registerStudyMaterialTools(scope, {}); loaded = true; } });
+  // 宿主没有 `tools` 服务：本包的 inject 不满足，应当**不激活且不抛**
+  // —— 这正是「工具表是附加能力」的契约。
+  ctx.provide('zhiyunStudy', {});
+  const parent = ctx.plugin({ apply(scope) { scope.plugin(toolStudy); loaded = true; } });
   try { await parent; assert.equal(loaded, true); } finally { await parent.dispose(); }
 });
 

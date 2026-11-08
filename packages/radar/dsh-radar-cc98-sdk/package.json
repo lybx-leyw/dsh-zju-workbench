@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】原计划锁版挂载上游 cc98-mcp；该上游在 npm 上不存在（E404），且目标形态已由 dsh-zhiyun-source-cc98 原生实现",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】原计划锁版挂载上游 cc98-mcp；该上游在 npm 上不存在（E404），且目标形态已由 @lybx-leyw/dsh-zju-source-cc98 原生实现",
   "main": "./src/index.js",
   "exports": { ".": "./src/index.js", "./package.json": "./package.json" },
   "dependencies": {},

@@ -1,0 +1,176 @@
+# 「讲义」Agent preset —— 标准模式 + 课程资料检索工具。
+#
+# # 为什么要有这个 preset
+#
+# 课程资料检索（`study_catalog` / `study_read` / `study_search`）只对
+# 「读课程讲义」这类任务有意义。挂在主机平面会让**每个** preset 的 agent
+# 都看到这三个工具，占工具表、增加误选概率，也让 standard 的职责变模糊。
+# 所以它只在本 preset 暴露。
+#
+# # composition 的来源
+#
+# `plugins` 是宿主**当前版本自带**的
+# `@deepseek-ai/dsh-web-app/presets/standard.patch.yml` 里那棵 row 树的
+# 逐行复制 + 末尾追加一行 `tool-study`。
+#
+# 为什么必须用这一份：从 pnpm 存储里翻到的
+# `@deepseek-ai/dsh-agent-presets@0.1.5-rc.3` 是**旧版遗留**，它的 persona 写
+# `suffix: ... {{cwd}}`，而 0.2.2 只注册了 `provider` / `model` 两个变量 ——
+# 切到该 preset 会直接抛
+# `unknown prompt variable "{{cwd}}" in section "deployment:persona-suffix"`。
+#
+# `@deepseek-ai/dsh-agent-preset` 的 Config 没有继承机制
+# （`plugins` 必须是完整数组），所以只能整份复制。
+#
+# ⚠️ 这份文件由 `gen.mjs` 生成，不要手改 ——
+#    改行为请改 gen.mjs 的追加段，或重跑脚本对齐上游。
+#
+# dsh 0.2.x 的声明式 preset：随 bundle 安装并在 profile 启动时注册。
+- insert:
+    # 本包自己。**这一行不能省** —— 它才是让 Loader 去 import 本包、跑
+    # `apply()` 的入口。少了它，下面的 preset row 照样会被解析并注册进 roster，
+    # 但本包里任何代码都不会执行。
+    - id: zhiyun-preset-lecture
+      name: '@lybx-leyw/dsh-zju-preset-lecture'
+
+    - id: preset-lecture
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: lecture
+        name: 讲义模式
+        description: 标准模式加上课程资料检索：能查你已整理的讲义目录、按主题读取全文、按关键词定位出处。适合「帮我看看这周的课讲了什么」「这个知识点在我哪节课里出现过」这类问题。
+        order: 5
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: You are a coding agent powered by the {{model}} model.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              # Set false to drop the apply_patch tool beside edit.
+              applyPatch: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-schedule
+            name: '@deepseek-ai/dsh-tool-schedule'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: planning
+            name: cordis:group
+            group: true
+            isolate:
+              planMode: true
+            config:
+              - id: plan-mode
+                name: '@deepseek-ai/dsh-plan-mode'
+                config:
+                  section: |
+                    You are in plan mode. Stay in plan mode until the user approves your plan through exit_plan_mode or switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+
+                    Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+
+                    The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+
+                    Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+
+                    Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+
+                    When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelection: true
+                  modelDiscovery: true
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+          - id: tool-plugin-manager
+            name: '@deepseek-ai/dsh-plugin-manager/tools'
+            disabled: !!js "!ctx.get('profileContext')"
+          - id: tool-plugin-market
+            name: '@deepseek-ai/dsh-plugin-market/tools'
+            disabled: true
+
+          # ── 本 preset 独有：课程资料检索 ─────────────────────────────────────
+          #
+          # 这三个工具由 `@lybx-leyw/dsh-zju-tool-study` 注册（study_catalog /
+          # study_read / study_search）。它 inject 的是主机的 `zhiyunStudy` 服务
+          # （`core/study` provide）和 `tools` 注册表，自己不 provide 任何服务，
+          # 所以不需要 `isolate` realm —— realm 只用于隔离 preset 自己对外发布的
+          # 服务名，不隔离对主机服务的读取。
+          #
+          # 该包**不在** profile 的 bundles 里，正是为了让它只出现在这个 preset：
+          # 放进 profile 就是主机平面，所有 preset 都会看到。
+          - id: tool-study
+            name: '@lybx-leyw/dsh-zju-tool-study'

@@ -12,8 +12,8 @@ import {
   engineVersion, engineLabel, isNativeEngine, canResumeEngine, planEngineQuestions,
   newEngineCheckpoint, engineComplete, isBuiltinEngine,
   selectableEngines, isSelectableEngine, DEFAULT_ENGINE,
-} from '../packages/dsh-zhiyun-core-quiz/src/engines.js';
-import {_resetEngineRegistry} from '../packages/dsh-zhiyun-core-quiz/src/engine-registry.js';
+} from '../packages/core/quiz/src/engines.js';
+import {_resetEngineRegistry} from '../packages/core/quiz/src/engine-registry.js';
 
 const fake = (extra = {}) => ({
   id: 'fake-lab', label: '假实验室', description: '测试用',

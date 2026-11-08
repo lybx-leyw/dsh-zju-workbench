@@ -76,7 +76,7 @@
 ### 本包**不改**的东西
 
 - ❌ 不改 `dsh-zhiyun-page-notes/src/index.js` 的存储语义（`.md` 落盘、`safePath` 路径校验、原子写）。
-- ❌ 不改 `dsh-zhiyun-core-vault` 的「每次写完整份重算」设计决定（其文件头第 1 条明写）。
+- ❌ 不改 `@lybx-leyw/dsh-zju-core-vault` 的「每次写完整份重算」设计决定（其文件头第 1 条明写）。
 - ❌ 不引入独立的后端/数据库 —— 索引只在页面内存里现算。
 
 ---

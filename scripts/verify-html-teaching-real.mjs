@@ -67,8 +67,8 @@ async function main() {
         compat: { supportsStore: false, supportsDeveloperRole: false, maxTokensField: 'max_tokens', thinkingFormat: 'deepseek', supportsReasoningEffort: false } }],
     } } });
     const [{ createGenerateService }, { createHostLlmTransport }] = await Promise.all([
-      import('../packages/dsh-zhiyun-core-classroom-generate/src/index.js'),
-      import('../packages/dsh-zhiyun-core-classroom-generate/src/host-llm.js'),
+      import('../packages/core/classroom-generate/src/index.js'),
+      import('../packages/core/classroom-generate/src/host-llm.js'),
     ]);
     const noMedia = () => { report.mediaCalls++; throw new Error('Media is forbidden in HTML verification'); };
     const quiet = () => {};

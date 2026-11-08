@@ -1,6 +1,6 @@
 /** Measurements are reproducible from artifacts; model labels are never gold labels. */
-import { normalizedText, nearDuplicate } from '../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
-import {activeFacts,resolveFactId} from '../../packages/dsh-zhiyun-core-quiz/src/ledger.js';
+import { normalizedText, nearDuplicate } from '../../packages/core/quiz/src/concepts.js';
+import {activeFacts,resolveFactId} from '../../packages/core/quiz/src/ledger.js';
 
 const ratio=(n,d)=>d?n/d:null;
 const unique=values=>new Set(values).size;

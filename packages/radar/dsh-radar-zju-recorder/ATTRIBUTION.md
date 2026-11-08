@@ -12,7 +12,7 @@
 
   1. **OAuth2 授权码登录链路** —— `casapi auth/login` → `cas/oauth2.0/authorize`
      → `cas/login` → `tgmedia get-info?code=ST-xxx` → `_token` cookie 内的 JWT。
-     上游 `app/zjuauth.js` 头部注释描述了该链路，本仓 `dsh-zhiyun-source-classroom`
+     上游 `app/zjuauth.js` 头部注释描述了该链路，本仓 `@lybx-leyw/dsh-zju-source-classroom`
      现有实现走的是另一条 CAS 直连路径，**二者不重叠**。
   2. **Cookie 匹配语义** —— 上游 `CookieJar` 类的 `domain` / host-only / `path` 三元匹配。
   3. **RSA 密码加密的分块实现** —— 密码整串反转 + 按 modulus 分块 `modpow`，

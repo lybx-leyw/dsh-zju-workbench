@@ -20,9 +20,9 @@ import path from 'node:path';
 
 const read = p => fs.readFileSync(path.resolve(p), 'utf8');
 
-const practice = read('packages/dsh-zhiyun-page-quiz/src/question-bank.jsx');
-const history = read('packages/dsh-zhiyun-page-quiz/src/question-history.jsx');
-const css = read('packages/dsh-zhiyun-page-quiz/src/style.css');
+const practice = read('packages/client/page-quiz/src/question-bank.jsx');
+const history = read('packages/client/page-quiz/src/question-history.jsx');
+const css = read('packages/client/page-quiz/src/style.css');
 
 test('练习页的原文依据用 details 包裹', () => {
   assert.match(practice, /<details className="zs-qz-basis">/, '必须是可折叠容器');

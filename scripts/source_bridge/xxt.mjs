@@ -19,7 +19,7 @@ export async function run({ cookie, dataDir }) {
 
   await mountCampus({ dataDir: `${dataDir}host/`, credentials: creds.service });
 
-  const { routes } = await mount('dsh-zhiyun-source-xxt', {
+  const { routes } = await mount('@lybx-leyw/dsh-zju-source-xxt', {
     dataDir,
     credentials: creds.service,
   });

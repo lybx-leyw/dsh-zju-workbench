@@ -1,0 +1,3 @@
+- insert:
+    - id: zju-source-http
+      name: "@lybx-leyw/dsh-zju-source-http"

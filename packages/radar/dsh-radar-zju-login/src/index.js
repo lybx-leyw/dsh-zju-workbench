@@ -9,9 +9,9 @@
  * 只把它们底下那层「怎么登进智云/学在浙大」换成上游 `login-zju@1.0.9` 的实现。
  *
  *   本仓现状（会话层是**手写、且按站各写一遍**）：
- *     dsh-zhiyun-source-classroom/src/auth.js   手写 CAS，只服务智云一个目标
- *     dsh-zhiyun-source-campus/…                另一套（xzzd）
- *     dsh-zhiyun-source-card/…                  CC98 走自己的 OAuth2
+ *     @lybx-leyw/dsh-zju-source-classroom/src/auth.js   手写 CAS，只服务智云一个目标
+ *     @lybx-leyw/dsh-zju-source-campus/…                另一套（xzzd）
+ *     @lybx-leyw/dsh-zju-source-login/…                  CC98 走自己的 OAuth2
  *   上游现状：`new ZJUAM(user, pass)` + `new <Service>(am)` → `service.fetch(url)`
  *   把 12 个系统的登录/续期/COOKIE 收口成同一个 `fetch` 形状。
  *

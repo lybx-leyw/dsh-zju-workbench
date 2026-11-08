@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {labCall} from '../packages/dsh-zhiyun-core-quiz/src/engines/r1/policy.mjs';
+import {labCall} from '../packages/core/quiz/src/engines/r1/policy.mjs';
 
 const missingContext={stem:'甲参加集会的概率是多少？',choices:[{label:'A',text:'0.3'},{label:'B',text:'0.4'},{label:'C',text:'0.5'},{label:'D',text:'0.05'}],answer:'B',explanation:'由题设 P(A)=P(B)=P(C)=0.4，甲参加的概率为0.4。'};
 const request={stage:'quiz-point-review',variable:JSON.stringify({type:'mcq',strategy:'recall',source:'例题：P(A)=P(B)=P(C)=0.4。',items:[missingContext]})};

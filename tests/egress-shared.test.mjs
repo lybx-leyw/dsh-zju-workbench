@@ -14,7 +14,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-import { sharedFetch } from '../packages/dsh-zhiyun-source-campus/src/cas/http.js';
+import { sharedFetch } from '../packages/source/http/src/index.js';
 
 /** 一个假的 ctx：`get` 返回给定服务表里的东西。 */
 function fakeCtx(services = {}) {
@@ -93,7 +93,7 @@ test('sharedFetch：**惰性**解析 —— 服务晚于调用方就绪也能用
 
 test('campus 通过 ctx.provide 暴露 zhiyunEgress，且带齐必要方法', async () => {
   const src = await readFile(
-    new URL('../packages/dsh-zhiyun-source-campus/src/index.js', import.meta.url), 'utf8',
+    new URL('../packages/source/campus/src/index.js', import.meta.url), 'utf8',
   );
   assert.match(src, /ctx\.provide\('zhiyunEgress'/, 'campus 必须 provide 这个服务名');
   for (const key of ['mode', 'fetch', 'send', 'toPhysical', 'state', 'probeCampus', 'forget']) {
@@ -102,13 +102,15 @@ test('campus 通过 ctx.provide 暴露 zhiyunEgress，且带齐必要方法', as
 });
 
 test('各 source 包都接了 sharedFetch（不许再直接用 globalThis.fetch）', async () => {
+  // 路径写的是**分组后的目录**（`packages/source/<目录>`），不是包名 ——
+  // 包名仍是 `dsh-zhiyun-source-*`，两者刻意不同（见 README 的分组说明）。
   const targets = [
-    ['dsh-zhiyun-source-zdbk', 'index.js'],
-    ['dsh-zhiyun-source-cc98', 'index.js'],
-    ['dsh-zhiyun-source-xxt', 'index.js'],
+    ['packages/source/zdbk/src/index.js', 'zdbk'],
+    ['packages/source/cc98/src/index.js', 'cc98'],
+    ['packages/source/xxt/src/index.js', 'xxt'],
   ];
-  for (const [pkg, file] of targets) {
-    const src = await readFile(new URL(`../packages/${pkg}/src/${file}`, import.meta.url), 'utf8');
+  for (const [path, pkg] of targets) {
+    const src = await readFile(new URL(`../${path}`, import.meta.url), 'utf8');
     assert.match(src, /sharedFetch\(ctx\)/, `${pkg} 应当用 sharedFetch(ctx)`);
     assert.doesNotMatch(
       src,
@@ -120,7 +122,7 @@ test('各 source 包都接了 sharedFetch（不许再直接用 globalThis.fetch�
 
 test('classroom 也优先用共享出口，并保留自己的本地兜底', async () => {
   const src = await readFile(
-    new URL('../packages/dsh-zhiyun-source-classroom/src/index.js', import.meta.url), 'utf8',
+    new URL('../packages/source/classroom/src/index.js', import.meta.url), 'utf8',
   );
   assert.match(src, /zhiyunEgress/, 'classroom 应当优先取共享出口');
   assert.match(src, /localNet/, '拿不到共享出口时要有本地兜底');

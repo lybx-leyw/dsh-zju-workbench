@@ -36,7 +36,7 @@ import {
   htmlToTextLines,
   sceneTextLines,
 } from '../scripts/classroom-golden-parity.mjs';
-import { buildStoredZip } from '../packages/dsh-zhiyun-core-classroom-export/src/zip/stored-zip.js';
+import { buildStoredZip } from '../packages/core/classroom-export/src/zip/stored-zip.js';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const GOLDEN = path.join(ROOT, 'fixtures', 'classroom-golden');

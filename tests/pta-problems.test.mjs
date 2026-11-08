@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 
 import {
   PtaApi, ptaId, PTA_TYPE_LABELS, PTA_PROBLEM_TYPES,
-} from '../packages/dsh-zhiyun-source-campus/src/pta.js';
+} from '../packages/source/campus/src/pta.js';
 
 const json = (value, status = 200) => ({
   status, headers: new Headers({ 'content-type': 'application/json' }), text: JSON.stringify(value),

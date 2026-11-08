@@ -29,13 +29,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { planEngineQuestions, newEngineCheckpoint } from '../packages/dsh-zhiyun-core-quiz/src/engines.js';
-import { createNativeQuizRun, resolvePointById } from '../packages/dsh-zhiyun-core-study/src/quiz-engine-runtime.js';
-import { splitByLesson, UNRESOLVED_LABEL } from '../packages/dsh-zhiyun-core-study/src/quiz-export.js';
-import { buildQuizPdfOutline, UNRESOLVED_SECTION_LABEL } from '../packages/dsh-zhiyun-page-quiz/src/question-export-model.js';
-import { parsePlan, splitTopicPoint } from '../packages/dsh-zhiyun-core-question/src/plan.js';
-import { payloadToQaPair } from '../packages/dsh-zhiyun-core-question/src/quiz-payload.js';
-import { toProductQuestions } from '../packages/dsh-zhiyun-core-question/src/product-questions.js';
+import { planEngineQuestions, newEngineCheckpoint } from '../packages/core/quiz/src/engines.js';
+import { createNativeQuizRun, resolvePointById } from '../packages/core/study/src/quiz-engine-runtime.js';
+import { splitByLesson, UNRESOLVED_LABEL } from '../packages/core/study/src/quiz-export.js';
+import { buildQuizPdfOutline, UNRESOLVED_SECTION_LABEL } from '../packages/client/page-quiz/src/question-export-model.js';
+import { parsePlan, splitTopicPoint } from '../packages/core/question/src/plan.js';
+import { payloadToQaPair } from '../packages/core/question/src/quiz-payload.js';
+import { toProductQuestions } from '../packages/core/question/src/product-questions.js';
 
 /* ── 夹具 ─────────────────────────────────────────────────────────────── */
 

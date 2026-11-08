@@ -23,18 +23,18 @@ import assert from 'node:assert/strict';
 import {
   buildLectureTree, looksLikeSectionDivider, detectSlideTemplate, cleanLine,
   tidySlideHeading, SLIDE_TEMPLATE,
-} from '../packages/dsh-zhiyun-core-lecture/src/tree.js';
+} from '../packages/core/lecture/src/tree.js';
 import {
   judgeWritten, normalizeLectureText, kClassroomMarks, REGISTER,
-} from '../packages/dsh-zhiyun-core-lecture/src/register.js';
+} from '../packages/core/lecture/src/register.js';
 import {
   createLectureAssembler, parseLecturePolishResponse, chunkLectureForPolish,
   buildLecturePolishBody, lectureGlossary, contentChars, checkPolishLength,
   checkPolishFiller, checkPolishShrink, isBrokenOutput, tidyWrittenText,
   kLectureWrittenSystemPrompt, kLectureFillerWords, kStage, kStageName,
-} from '../packages/dsh-zhiyun-core-lecture/src/polish.js';
-import {ParserCache} from '../packages/dsh-zhiyun-core-parser/src/cache.js';
-import { LectureError } from '../packages/dsh-zhiyun-core-lecture/src/errors.js';
+} from '../packages/core/lecture/src/polish.js';
+import {ParserCache} from '../packages/core/parser/src/cache.js';
+import { LectureError } from '../packages/core/lecture/src/errors.js';
 
 // ═══════════════════════════════════════════════════════════════
 // 夹具（与 Dart `lecture_tree_test.dart` / `lecture_polish_test.dart` 同形）
@@ -900,12 +900,12 @@ test('⑥ ★★ Dart golden：系统提示词与 App 的 kLectureWrittenSystemP
   //    （提示词少 4 字符）。所以这里钉一份从 Dart 源码提取的冻结契约：
   //    改提示词的人必须同时改这个夹具，那就必须**显式面对**「实验条件变了」这件事。
   //
-  //    夹具放在**包内**（`packages/dsh-zhiyun-core-lecture/fixtures/`）而不是
+  //    夹具放在**包内**（`packages/core/lecture/fixtures/`）而不是
   //    `tests/fixtures/`：它是这个包自己的磁盘契约，跟着包走才不会被
   //    「测试目录归别人管」的写作范围挡住。
   const { readFile } = await import('node:fs/promises');
   const raw = await readFile(
-    new URL('../packages/dsh-zhiyun-core-lecture/fixtures/system-prompt.txt', import.meta.url), 'utf8');
+    new URL('../packages/core/lecture/fixtures/system-prompt.txt', import.meta.url), 'utf8');
   // ⚠️ 必须先归一换行符再比对：夹具是 `.txt`，在 Windows 上 checkout 会（随
   //    `core.autocrlf` / `gitattributes`）变成 CRLF，而在 Linux/CI 上是 LF。
   //    不归一的话，**内容一个字都没改**也会红，而且红得像「提示词被改了」。
@@ -922,7 +922,7 @@ test('⑥ ★★ Dart golden：系统提示词与 App 的 kLectureWrittenSystemP
 // ═══════════════════════════════════════════════════════════════
 
 test('⑦ 插件：provide 服务 + disposer 释放（宿主服务由注入项提供）', async () => {
-  const plugin = await import('../packages/dsh-zhiyun-core-lecture/src/index.js');
+  const plugin = await import('../packages/core/lecture/src/index.js');
   assert.equal(plugin.name, 'zhiyun-lecture');
   assert.deepEqual(plugin.inject, ['zhiyunParser']);
 
@@ -966,7 +966,7 @@ test('⑨ ★★ 真实 Cordis 宿主：服务挂载 / 隔离 / 卸载释放（�
     try { await access(modulePath); } catch { continue; } // 该宿主未安装 → 跳过
     ran++;
     const { Context } = await import(pathToFileURL(modulePath).href);
-    const plugin = await import('../packages/dsh-zhiyun-core-lecture/src/index.js');
+    const plugin = await import('../packages/core/lecture/src/index.js');
     const first = new Context();
     const second = new Context();
     const calls = [];
@@ -1009,7 +1009,7 @@ test('⑨ ★★ 真实 Cordis 宿主：服务挂载 / 隔离 / 卸载释放（�
 });
 
 test('⑦ 插件：没有 llm 时如实报配置错（不静默降级）', async () => {
-  const plugin = await import('../packages/dsh-zhiyun-core-lecture/src/index.js');
+  const plugin = await import('../packages/core/lecture/src/index.js');
   const ctx = { provide() { return () => {}; } };
   await assert.rejects(plugin.apply(ctx, {}), (error) => error.code === 'CONFIG');
   // 显式注入 config.llm 时仍然可用（集成层可以用别的适配器）。
@@ -1027,7 +1027,7 @@ test('⑦ 插件：没有 llm 时如实报配置错（不静默降级）', async
 
 test('⑧ 零宿主依赖：源码里不 import 任何 @deepseek-ai/*，也不碰 ctx.storage / 环境变量', async () => {
   const { readFile, readdir } = await import('node:fs/promises');
-  const dir = new URL('../packages/dsh-zhiyun-core-lecture/src/', import.meta.url);
+  const dir = new URL('../packages/core/lecture/src/', import.meta.url);
   const files = (await readdir(dir)).filter((f) => f.endsWith('.js'));
   assert.ok(files.length >= 5, 'tree / register / polish / index / errors');
   // ⚠️ 必须**先去掉注释**再扫：正文注释里就写着「本文件不碰 ctx.storage」，
@@ -1069,13 +1069,13 @@ function allTopicsOf(tree) {
  * 的正则 —— 我按注释「顺手修正」成了 `\\[a-zA-Z]+`，于是 `\le 5` 这类行
  * 在 Dart 里保留、在我的版本里被丢掉。**读代码是读不出这个的。**
  *
- * ⚠️ 它冻在包内（`packages/dsh-zhiyun-core-lecture/fixtures/dart-golden.json`），
+ * ⚠️ 它冻在包内（`packages/core/lecture/fixtures/dart-golden.json`），
  *    所以**不需要装 Dart** 也能长期复核。
  */
 test('⑨ ★★ Dart golden：知识树 / 书面语验收 / 清洗与 App 真实实现逐字段一致', async () => {
   const { readFile } = await import('node:fs/promises');
   const golden = JSON.parse(await readFile(
-    new URL('../packages/dsh-zhiyun-core-lecture/fixtures/dart-golden.json', import.meta.url), 'utf8'));
+    new URL('../packages/core/lecture/fixtures/dart-golden.json', import.meta.url), 'utf8'));
 
   // ① 知识树
   for (const c of golden.tree) {
@@ -1127,7 +1127,7 @@ test('⑨ ★★ `looksLikeNotationOnly` 里的正则**故意保留** Dart 的�
   //    不是移植该顺手做的事。
   const { readFile } = await import('node:fs/promises');
   const golden = JSON.parse(await readFile(
-    new URL('../packages/dsh-zhiyun-core-lecture/fixtures/dart-golden.json', import.meta.url), 'utf8'));
+    new URL('../packages/core/lecture/fixtures/dart-golden.json', import.meta.url), 'utf8'));
   for (const raw of ['\\le 5', '$x$\\le', '\\mathrm']) {
     assert.equal(golden.clean[raw], raw, `Dart 侧对这些行是保留的：「${raw}」`);
     assert.equal(tidySlideHeading(raw), raw, '★ 移植版必须与 Dart 一致地保留它（不许「修正」）');

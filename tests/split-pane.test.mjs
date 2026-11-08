@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 
 import {
   SPLIT_DEFAULTS, ratioFromPointer, clampRatio, splitColumns, topicFits,
-} from '../packages/dsh-zhiyun-page-study/src/split-pane.js';
+} from '../packages/client/page-study/src/split-pane.js';
 
 /** 造一个 1000px 宽、从 x=100 开始的容器。 */
 const rect = (left = 100, width = 1000) => ({ left, width });

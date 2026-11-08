@@ -26,7 +26,7 @@ import { pathToFileURL } from 'node:url';
 const ROOT = path.resolve('.');
 const load = rel => import(pathToFileURL(path.join(ROOT, rel)).href);
 
-const PAGE = 'packages/dsh-zhiyun-page-quiz/src/question-bank.jsx';
+const PAGE = 'packages/client/page-quiz/src/question-bank.jsx';
 const pageSource = fs.readFileSync(path.resolve(PAGE), 'utf8');
 
 test('导航角标只数在用的题（不取原始数组长度）', () => {
@@ -43,13 +43,13 @@ test('导航角标只数在用的题（不取原始数组长度）', () => {
 
 test('过滤表达式与后端 coverage 口径一致', () => {
   // 后端 coverageOf 用的是 q.status !== 'rejected'
-  const backend = fs.readFileSync(path.resolve('packages/dsh-zhiyun-core-study/src/question-bank.js'), 'utf8');
+  const backend = fs.readFileSync(path.resolve('packages/core/study/src/question-bank.js'), 'utf8');
   assert.match(backend, /filter\(q\s*=>\s*q\.status\s*!==\s*'rejected'\)/, '后端口径');
   assert.match(pageSource, /status\s*!==\s*'rejected'/, '前端口径必须相同');
 });
 
 test('state.questions 本身不过滤（历史页要靠它分两栏）', () => {
-  const backend = fs.readFileSync(path.resolve('packages/dsh-zhiyun-core-study/src/question-bank.js'), 'utf8');
+  const backend = fs.readFileSync(path.resolve('packages/core/study/src/question-bank.js'), 'utf8');
   // bank-load 返回的 questions 必须仍是全量
   const idx = backend.indexOf("if (method==='bank-load')");
   assert.ok(idx > 0);
@@ -76,7 +76,7 @@ test('真实数据校验：过滤后计数小于全量', async () => {
 });
 
 test('历史题库页仍然分别显示在用与弃用', () => {
-  const src = fs.readFileSync(path.resolve('packages/dsh-zhiyun-page-quiz/src/question-history.jsx'), 'utf8');
+  const src = fs.readFileSync(path.resolve('packages/client/page-quiz/src/question-history.jsx'), 'utf8');
   assert.match(src, /道在用/, '历史页要显示在用数');
   assert.match(src, /道已弃用/, '历史页要显示弃用数');
 });

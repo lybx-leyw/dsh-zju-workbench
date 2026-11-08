@@ -11,7 +11,7 @@ const out = path.join(dir, 'teaching-progress.mjs');
 
 const esbuild = await import('esbuild');
 await esbuild.build({
-  entryPoints: [path.join(ROOT, 'packages/dsh-zhiyun-page-study/src/teaching-progress.jsx')],
+  entryPoints: [path.join(ROOT, 'packages/client/page-study/src/teaching-progress.jsx')],
   bundle: true, outfile: out, format: 'esm', platform: 'node', external: ['react', 'react-dom'],
   jsx: 'automatic', logLevel: 'silent',
 });

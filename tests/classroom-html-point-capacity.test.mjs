@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { renderSlideChapter } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
-import { auditSlideHtml } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-audit.js';
+import { renderSlideChapter } from '../packages/core/classroom-generate/src/html-slide-shell.js';
+import { auditSlideHtml } from '../packages/core/classroom-generate/src/html-slide-audit.js';
 
 const base = {
   title: '要点容量',

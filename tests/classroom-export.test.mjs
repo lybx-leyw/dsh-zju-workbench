@@ -1,4 +1,4 @@
-// dsh-zhiyun-core-classroom-export 的对照测试。
+// @lybx-leyw/dsh-zju-core-classroom-export 的对照测试。
 //
 // 判据来自 docs/architecture/classroom-port.md §1「能力等价」：**同一份课堂 fixture，
 // 产物在结构与内容上必须与上游一致**，不是"看起来像"。
@@ -27,7 +27,7 @@ import {
   DEFAULT_FIXTURE_MEDIA,
 } from './fixtures/classroom-standalone.mjs';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-export/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-export/', import.meta.url);
 const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
 const plugin = await import(INDEX_URL);
 

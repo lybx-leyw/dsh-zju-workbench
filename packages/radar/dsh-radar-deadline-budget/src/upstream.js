@@ -90,7 +90,7 @@ export const TAKEN_SEMANTICS = Object.freeze(['deadline.msUntil', 'interval.coun
  *      课表是「每周同一天同一节」，节次之间**不等距**：
  *
  *      ```
- *      实测（packages/dsh-zhiyun-source-zdbk/src/parse.js 的 PERIOD_TIMES）：
+ *      实测（packages/source/zdbk/src/parse.js 的 PERIOD_TIMES）：
  *      第1→2节 08:00→08:50 = 50 分
  *      第2→3节 08:50→10:00 = 70 分（大课间）
  *      第5→6节 11:40→13:25 = 105 分（午休）

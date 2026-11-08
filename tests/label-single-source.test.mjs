@@ -13,8 +13,8 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyLabel as fromTool, bindLabelClassifier } from '../packages/dsh-zhiyun-core-tool/src/loop.js';
-import { classifyLabel as fromLlm } from '../packages/dsh-zhiyun-core-question-stream/src/index.js';
+import { classifyLabel as fromTool, bindLabelClassifier } from '../packages/core/tool/src/loop.js';
+import { classifyLabel as fromLlm } from '../packages/core/question-stream/src/index.js';
 
 /** 边界用例：包裹方式、裸标签、分隔符、流中间态。 */
 const CASES = [

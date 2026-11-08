@@ -49,8 +49,8 @@
 
 ## 本仓为什么真的缺这两格（三条实证）
 
-1. `packages/dsh-zhiyun-source-xxt/src/parse.js:372` → `weeks: lesson.weeks ?? null`，**原样透传，形态未定**
-2. `packages/dsh-zhiyun-source-zdbk/src/parse.js:297,343` → `'all' | 'odd' | 'even'`，**只有单双周，无区间**
+1. `packages/source/xxt/src/parse.js:372` → `weeks: lesson.weeks ?? null`，**原样透传，形态未定**
+2. `packages/source/zdbk/src/parse.js:297,343` → `'all' | 'odd' | 'even'`，**只有单双周，无区间**
 3. `packages/radar/dsh-radar-ics-rrule` → 自述「本仓课表条目**没有周次 / 节次号**」
 
 → 三个源三种形态，**中间缺一层归一化**。

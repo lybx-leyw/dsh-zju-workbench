@@ -20,9 +20,9 @@ import {
   generateDefaults,
   normalizeActions,
   parseSceneActions,
-} from '../packages/dsh-zhiyun-core-classroom-generate/src/actions.js';
-import { buildActionsPrompt } from '../packages/dsh-zhiyun-core-classroom-generate/src/prompts.js';
-import { buildScene } from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
+} from '../packages/core/classroom-generate/src/actions.js';
+import { buildActionsPrompt } from '../packages/core/classroom-generate/src/prompts.js';
+import { buildScene } from '../packages/core/classroom-generate/src/scene.js';
 
 // ── 解析：三级容错 ────────────────────────────────────────────────────────
 

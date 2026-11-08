@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { validateHtmlChapter } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-deck.js';
+import { validateHtmlChapter } from '../packages/core/classroom-generate/src/html-deck.js';
 
 const directory = path.resolve('artifacts/html-teaching-real');
 await mkdir(directory, { recursive: true });

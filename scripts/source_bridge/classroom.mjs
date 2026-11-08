@@ -20,7 +20,7 @@ export async function run({ account, dataDir, card }) {
 
   await mountCampus({ dataDir: `${dataDir}host/`, credentials: creds.service });
 
-  const { ctx, services } = await mount('dsh-zhiyun-source-classroom', {
+  const { ctx, services } = await mount('@lybx-leyw/dsh-zju-source-classroom', {
     dataDir,
     credentials: creds.service,
   });

@@ -1,4 +1,4 @@
-import {knowledgePoints} from '../../../packages/dsh-zhiyun-core-quiz/src/knowledge-points.js';
+import {knowledgePoints} from '../../../packages/core/quiz/src/knowledge-points.js';
 // Finalized structured blocks are authoritative; a topic's aggregate text is a mirror.
 const finalText=value=>{
  if(typeof value==='string')return value;

@@ -1,0 +1,46 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-xxt",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "学习通（超星 / chaoxing.com）数据源：课程、作业、截止时间、考试、通知、课表，只读；Cookie 由用户导入，不做自动登录",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./parse": "./src/parse.js",
+    "./package.json": "./package.json",
+    "./client": "./lib/client.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "own",
+      "network": "public",
+      "writes": false,
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http"
+      ]
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "@lybx-leyw/dsh-zju-ui-shared"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-atomic-write": "0.2.2-rc.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-atomic-write": {
+      "optional": true
+    }
+  },
+  "license": "GPL-3.0-or-later"
+}

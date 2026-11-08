@@ -61,7 +61,7 @@ fs.writeFileSync(quizStub, [
 
 const esbuild = await import('esbuild');
 await esbuild.build({
-  entryPoints: [path.join(ROOT, 'packages/dsh-zhiyun-page-study/src/ai-teaching.jsx')],
+  entryPoints: [path.join(ROOT, 'packages/client/page-study/src/ai-teaching.jsx')],
   bundle: true,
   outfile: out,
   format: 'esm',
@@ -69,8 +69,13 @@ await esbuild.build({
   external: ['react', 'react-dom'],
   alias: {
     '@deepseek-ai/dsh-client-ui-primitives': stub,
-    'dsh-zhiyun-classroom-renderer': rendererStub,
-    'dsh-zhiyun-page-quiz': quizStub,
+    '@lybx-leyw/dsh-zju-core-classroom-renderer': rendererStub,
+    // ⚠️ key 必须与源码里的 import 说明**逐字一致**。
+    // 这里曾写作旧包名 `dsh-zhiyun-page-quiz`，而源码早就写成
+    // `@lybx-leyw/dsh-zju-page-quiz` —— alias 不生效，esbuild 去解析真实包，
+    // 落到 `src/index.js`（只有 name/apply），于是报
+    // `No matching export for import "GenerationModels"`。
+    '@lybx-leyw/dsh-zju-page-quiz': quizStub,
   },
   jsx: 'automatic',
   logLevel: 'silent',

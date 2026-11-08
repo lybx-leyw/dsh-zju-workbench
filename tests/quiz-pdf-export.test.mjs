@@ -33,7 +33,7 @@ import {
   safeFilenamePart,
   stemForPrint,
   typeBreakdown,
-} from '../packages/dsh-zhiyun-page-quiz/src/question-export-model.js';
+} from '../packages/client/page-quiz/src/question-export-model.js';
 import { PDF_DOCUMENTS, createLecturePdfHandler, createPdfExportHandler } from '../apps/desktop/src/pdf-export.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -141,7 +141,7 @@ test('文件名净化：非法字符、尾部点空格、超长截断', () => {
 /* ── 前端契约 ─────────────────────────────────────────────────────────── */
 
 test('历史题库的批量工具栏里有「导出 PDF」，且导出的是勾选题目对象', () => {
-  const history = read('packages/dsh-zhiyun-page-quiz/src/question-history.jsx');
+  const history = read('packages/client/page-quiz/src/question-history.jsx');
   assert.match(history, /import\s*\{\s*ExportPdfButton\s*\}\s*from\s*'\.\/question-export\.jsx'/, '没有引入 PDF 按钮');
   assert.match(history, /<ExportPdfButton/, '批量工具栏里没有按钮');
   // 必须是题目对象数组，不是 id 数组：排版要题干、选项、解析
@@ -150,7 +150,7 @@ test('历史题库的批量工具栏里有「导出 PDF」，且导出的是勾�
 });
 
 test('导出文档用宿主 MarkdownText 渲染，公式在纸面上也是排好的', () => {
-  const source = read('packages/dsh-zhiyun-page-quiz/src/question-export.jsx');
+  const source = read('packages/client/page-quiz/src/question-export.jsx');
   assert.match(source, /from\s*'@deepseek-ai\/dsh-client-ui-primitives'/, '没有用宿主渲染器');
   assert.match(source, /<MarkdownText/, '题干没有走 MarkdownText：$...$ 会以原始 TeX 出现在 PDF 里');
   // labels 必须是模块级常量（MarkdownText 按身份缓存，内联字面量会反复重建组件表）
@@ -158,7 +158,7 @@ test('导出文档用宿主 MarkdownText 渲染，公式在纸面上也是排好
 });
 
 test('导出流程：离屏挂载 → 等排版 → 桌面桥接优先 → 浏览器回落打印', () => {
-  const source = read('packages/dsh-zhiyun-page-quiz/src/question-export.jsx');
+  const source = read('packages/client/page-quiz/src/question-export.jsx');
   assert.match(source, new RegExp(`QUIZ_EXPORT_ROOT_ID|'${QUIZ_EXPORT_ROOT_ID}'`), '没有用统一的挂载点 id');
   assert.match(source, /createRoot\(element\)/);
   assert.match(source, /document\.body\.append\(element\)/);
@@ -170,7 +170,7 @@ test('导出流程：离屏挂载 → 等排版 → 桌面桥接优先 → 浏�
 });
 
 test('纸面样式只锚定 #zs-quiz-export，打印时隐藏应用界面', () => {
-  const css = read('packages/dsh-zhiyun-page-quiz/src/question-export.css');
+  const css = read('packages/client/page-quiz/src/question-export.css');
   assert.match(css, new RegExp(`#${QUIZ_EXPORT_ROOT_ID}\\b`), '样式没有以挂载点 id 作用域化');
   assert.match(css, /@media print/, '缺少打印样式');
   assert.match(css, /@page\s*\{\s*size:\s*A4/, '缺 A4 页面设置');

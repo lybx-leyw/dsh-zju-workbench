@@ -1,6 +1,6 @@
-import {QuizError} from '../../../packages/dsh-zhiyun-core-quiz/src/quality.js';
-import {normalizedText} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
-import {persistWithRetry} from '../../../packages/dsh-zhiyun-core-quiz/src/durability.js';
+import {QuizError} from '../../../packages/core/quiz/src/quality.js';
+import {normalizedText} from '../../../packages/core/quiz/src/concepts.js';
+import {persistWithRetry} from '../../../packages/core/quiz/src/durability.js';
 import {parse} from './policy.mjs';
 const key=q=>q.pointKey??q.pointId;
 const describe=q=>({id:q.id,type:q.type,strategy:q.strategy,stem:q.stem,choices:q.choices,answer:q.answer,explanation:q.explanation,variantChange:q.variantChange});

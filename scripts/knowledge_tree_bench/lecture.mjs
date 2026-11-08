@@ -13,22 +13,22 @@ import { mount, serviceOf, apiOf, stubLlm, urlOf } from './_base.mjs';
 
 /** 纯函数模块（讲义提示词、校验、正文装配、润色清单）。 */
 export async function polishModule() {
-  return import(urlOf('dsh-zhiyun-core-lecture', 'src/polish.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-lecture', 'src/polish.js'));
 }
 
 /** 知识树模块（从页面文字建树）。 */
 export async function treeModule() {
-  return import(urlOf('dsh-zhiyun-core-lecture', 'src/tree.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-lecture', 'src/tree.js'));
 }
 
 /** 讲义文本 codec（导出/合回）。润色必须与装配用同一份，否则格式会漂。 */
 export async function agentTextModule() {
-  return import(urlOf('dsh-zhiyun-core-lecture', 'src/agent-text.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-lecture', 'src/agent-text.js'));
 }
 
 /** 书面语验收模块。 */
 export async function registerModule() {
-  return import(urlOf('dsh-zhiyun-core-lecture', 'src/register.js'));
+  return import(urlOf('@lybx-leyw/dsh-zju-core-lecture', 'src/register.js'));
 }
 
 /**
@@ -81,7 +81,7 @@ export async function pureApi() {
  */
 export async function mountLecture({ dataDir, respond, config = {} } = {}) {
   const narrow = stubLlm(respond);
-  const mounted = await mount('dsh-zhiyun-core-lecture', {
+  const mounted = await mount('@lybx-leyw/dsh-zju-core-lecture', {
     dataDir,
     config,
     // lecture 的 llm 来源：`config.llm ?? ctx.zhiyunParser?.llm`

@@ -1,7 +1,7 @@
-import {planQuestionTargets as reserve} from '../../../packages/dsh-zhiyun-core-quiz/src/blueprint.js';
-import {pointIdentity} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {planQuestionTargets as reserve} from '../../../packages/core/quiz/src/blueprint.js';
+import {pointIdentity} from '../../../packages/core/quiz/src/concepts.js';
 import {parse} from './policy.mjs';
-export {assignedCloze} from '../../../packages/dsh-zhiyun-core-quiz/src/blueprint.js';
+export {assignedCloze} from '../../../packages/core/quiz/src/blueprint.js';
 export async function planQuestionTargets({plan,saved,history,random,requestModel,parallel}){
  reserve({plan,saved,history,random});saved.blueprints??={};
  const groups=new Map();for(const [index,task]of plan.tasks.entries()){

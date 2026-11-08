@@ -26,7 +26,7 @@ import { pathToFileURL } from 'node:url';
 const ROOT = path.resolve('.');
 const load = rel => import(pathToFileURL(path.join(ROOT, rel)).href);
 
-const RUNTIME = 'packages/dsh-zhiyun-core-study/src/quiz-engine-runtime.js';
+const RUNTIME = 'packages/core/study/src/quiz-engine-runtime.js';
 const source = fs.readFileSync(path.resolve(RUNTIME), 'utf8');
 
 /** 抽出 bankQuestion（它只依赖 randomUUID 与 pointIdentity）。 */
@@ -35,7 +35,7 @@ async function loadBankQuestion() {
   assert.ok(start > 0, '找不到 bankQuestion');
   const end = source.indexOf('\nfunction ', start + 10);
   const body = source.slice(start, end > 0 ? end : undefined);
-  const { pointIdentity } = await load('packages/dsh-zhiyun-core-quiz/src/concepts.js');
+  const { pointIdentity } = await load('packages/core/quiz/src/concepts.js');
   const crypto = await import('node:crypto');
   return new Function('randomUUID', 'pointIdentity', `${body}; return bankQuestion;`)(crypto.randomUUID, pointIdentity);
 }

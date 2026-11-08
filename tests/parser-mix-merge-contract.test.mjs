@@ -110,8 +110,8 @@ test('正式语言组织失败必须partial，不能把raw稿冒充正式正文'
     assert.equal(out.blocks[0].text, undefined);
   } finally { await host?.dispose(); await rm(dir, { recursive: true, force: true }); }
 });
-import {organizeLeaf} from '../packages/dsh-zhiyun-core-parser/src/organize.js';
-import {ParserCache,Limiter} from '../packages/dsh-zhiyun-core-parser/src/cache.js';
+import {organizeLeaf} from '../packages/core/parser/src/organize.js';
+import {ParserCache,Limiter} from '../packages/core/parser/src/cache.js';
 test('组织格式失败只修复一次，完整来源通过后才缓存；失败不污染正文', async()=>{
   const cache=new ParserCache(),limiter=new Limiter(1),events=[];let calls=0;
   const leaf=()=>({id:'a',blocks:[{index:1,page:1,sentences:[{text:'这是来源。'}]}]});
@@ -211,7 +211,7 @@ test('无图时间段走mix同次清洗标记，失败段隔离，字幕来源�
  assert.ok(!partial.knowledgePoints.some(p=>p.blocks.some(b=>b.cleanStatus==='incomplete')));
  }finally{await host?.dispose();await rm(dir,{recursive:true,force:true});}
 });
-import {assembleMixPage} from '../packages/dsh-zhiyun-core-parser/src/mix.js';
+import {assembleMixPage} from '../packages/core/parser/src/mix.js';
 test('原子块记录绑定自己的区间和标记，拒绝乱序编号及无效区间',()=>{
  const lines=[{startMs:0,endMs:1,text:'定义。'},{startMs:1,endMs:2,text:'应用。'}],vocab=[{name:'概念'}];
  const card=tags=>'## 块标记\n'+JSON.stringify({tags});

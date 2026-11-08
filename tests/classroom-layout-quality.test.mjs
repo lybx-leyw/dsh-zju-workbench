@@ -15,8 +15,8 @@ import {
   SLIDE_CANVAS_HEIGHT,
   SLIDE_CANVAS_WIDTH,
   SLIDE_MARGIN,
-} from '../packages/dsh-zhiyun-core-classroom-generate/src/prompts.js';
-import { parseSceneResponse, reconcileSlideGeometry } from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
+} from '../packages/core/classroom-generate/src/prompts.js';
+import { parseSceneResponse, reconcileSlideGeometry } from '../packages/core/classroom-generate/src/scene.js';
 
 const MIN_GAP = 16;
 const maxBottom = SLIDE_CANVAS_HEIGHT - SLIDE_MARGIN;

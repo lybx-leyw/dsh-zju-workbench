@@ -5,13 +5,13 @@ import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
-import {QUIZ_ENGINES,planEngineQuestions,newEngineCheckpoint,canResumeEngine,engineComplete} from '../packages/dsh-zhiyun-core-quiz/src/engines.js';
-import {knowledgePoints} from '../packages/dsh-zhiyun-core-quiz/src/knowledge-points.js';
-import {apply} from '../packages/dsh-zhiyun-core-quiz/src/index.js';
-import {WorkerPoolLlm} from '../packages/dsh-zhiyun-core-parser/src/worker-pool.js';
-import {createTreeQuizRun,createNativeQuizRun,selectedQuizGraph,pooledToolCall} from '../packages/dsh-zhiyun-core-study/src/quiz-engine-runtime.js';
-import {StudyWorkbench} from '../packages/dsh-zhiyun-core-study/src/workbench.js';
-import {QuestionBank,batchProblems} from '../packages/dsh-zhiyun-core-study/src/question-bank.js';
+import {QUIZ_ENGINES,planEngineQuestions,newEngineCheckpoint,canResumeEngine,engineComplete} from '../packages/core/quiz/src/engines.js';
+import {knowledgePoints} from '../packages/core/quiz/src/knowledge-points.js';
+import {apply} from '../packages/core/quiz/src/index.js';
+import {WorkerPoolLlm} from '../packages/core/parser/src/worker-pool.js';
+import {createTreeQuizRun,createNativeQuizRun,selectedQuizGraph,pooledToolCall} from '../packages/core/study/src/quiz-engine-runtime.js';
+import {StudyWorkbench} from '../packages/core/study/src/workbench.js';
+import {QuestionBank,batchProblems} from '../packages/core/study/src/question-bank.js';
 import {mountKnowledge} from './fixtures/study-storage.mjs';
 import {quizFakeModel} from './fixtures/quiz-fake-model.mjs';
 import {fixture,fixtureCall} from '../scripts/quiz_bench/fixture.mjs';
@@ -133,7 +133,7 @@ test('App exposes precisely the three requested choices and distinct resumable c
  assert.throws(()=>planEngineQuestions(knowledgePoints(record()),{engine:'r3-v9',count:1,source:'web'}),/课内/);
 });
 test('published kernel files exactly match the measured promotion digests and never import bench fixtures',async()=>{
- const base='packages/dsh-zhiyun-core-quiz/src/engines',proof=JSON.parse(await fs.readFile(base+'/versions.json','utf8'));
+ const base='packages/core/quiz/src/engines',proof=JSON.parse(await fs.readFile(base+'/versions.json','utf8'));
  for(const [engine,files]of Object.entries(proof.kernels))for(const [name,row]of Object.entries(files)){
   const source=await fs.readFile(`${base}/${engine}/${name}`,'utf8');assert.equal(createHash('sha256').update(source).digest('hex'),row.promotedSha256);assert.doesNotMatch(source,/from ['"].*(?:scripts\/quiz_bench|artifacts\/|fixture)/);assert.doesNotMatch(source,/from ['"]node:fs/);
  }

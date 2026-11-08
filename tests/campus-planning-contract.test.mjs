@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { apply } from '../packages/dsh-zhiyun-source-campus/src/index.js';
-import { apply as applyClassroom } from '../packages/dsh-zhiyun-source-classroom/src/index.js';
-import { createHandler } from '../packages/dsh-zhiyun-page-planning/src/index.js';
+import { apply } from '../packages/source/campus/src/index.js';
+import { apply as applyClassroom } from '../packages/source/classroom/src/index.js';
+import { createHandler } from '../packages/client/page-planning/src/index.js';
 
 /**
  * ⚠️ 本文件测的是**逐课爬取**那条路的完整契约（会话失效重试、429 中止、

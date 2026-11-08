@@ -8,7 +8,7 @@
  *
  *   1. render  同一份课堂文档里的每张幻灯片，用**上游 OpenMAIC renderer**
  *              (`ref/OpenMAIC/packages/@openmaic/renderer/dist`) 与**我们 vendor 的
- *              renderer** (`packages/dsh-zhiyun-classroom-renderer/vendor/renderer`)
+ *              renderer** (`packages/core/classroom-renderer/vendor/renderer`)
  *              分别 `renderToStaticMarkup`，抽出的文本**多重集**必须相等。
  *              实现差异（缺字、多字）→ divergent；仅顺序/空白不同 → equivalent。
  *
@@ -59,8 +59,8 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url));
 
 const PATHS = {
   upstreamRenderer: path.join(ROOT, 'ref/OpenMAIC/packages/@openmaic/renderer/dist/index.js'),
-  vendorRenderer: path.join(ROOT, 'packages/dsh-zhiyun-classroom-renderer/vendor/renderer/index.js'),
-  exporter: path.join(ROOT, 'packages/dsh-zhiyun-core-classroom-export/src/index.js'),
+  vendorRenderer: path.join(ROOT, 'packages/core/classroom-renderer/vendor/renderer/index.js'),
+  exporter: path.join(ROOT, 'packages/core/classroom-export/src/index.js'),
   fixture: path.join(ROOT, 'fixtures/classroom-render-parity/classroom.json'),
 };
 

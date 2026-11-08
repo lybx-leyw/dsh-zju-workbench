@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateLecture } from '../packages/dsh-zhiyun-core-lecture/src/generate.js';
-import { normalizeLectureTree } from '../packages/dsh-zhiyun-core-lecture/src/tree.js';
-import { facetRole } from '../packages/dsh-zhiyun-core-parser/src/tree.js';
+import { generateLecture } from '../packages/core/lecture/src/generate.js';
+import { normalizeLectureTree } from '../packages/core/lecture/src/tree.js';
+import { facetRole } from '../packages/core/parser/src/tree.js';
 
 const record = () => {
  const blocks=[

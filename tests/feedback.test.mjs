@@ -17,10 +17,10 @@ import {
   ago, checkComment, checkIssue, isValidName, loadIssues, localName, needsReply, orderIssues,
   paths, pendingIssues, randomName, resetName, submitComment, submitIssue,
   summarize, validateBoard, validateIssue,
-} from '../packages/dsh-zhiyun-page-feedback/src/board.js';
+} from '../packages/client/page-feedback/src/board.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const source = readFileSync(`${root}packages/dsh-zhiyun-page-feedback/src/client.jsx`, 'utf8');
+const source = readFileSync(`${root}packages/client/page-feedback/src/client.jsx`, 'utf8');
 const server = readFileSync(`${root}deploy/feedback-service/server.py`, 'utf8');
 
 /** 服务端 `fold()` 会产出的一个条目（形状即契约）。 */
@@ -256,7 +256,7 @@ test('页面侧不打机器人端点：那不是它的事，归 robot/feedback.p
   // 那两条路径**公开可用**（谁都能当机器人），但页面本身不该替用户去当。
   // 只看**代码**、不看注释 —— 注释里正当的解释（"那两条不在这里"）不该被判违规。
   const strip = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-  const board = strip(readFileSync(`${root}packages/dsh-zhiyun-page-feedback/src/board.js`, 'utf8'));
+  const board = strip(readFileSync(`${root}packages/client/page-feedback/src/board.js`, 'utf8'));
   assert.ok(!/feedback\/robot/.test(board), 'board.js 不该有机器人端点');
   assert.ok(!/feedback\/status/.test(board), 'board.js 不该有状态端点');
   const robot = readFileSync(`${root}robot/feedback.py`, 'utf8');
@@ -363,7 +363,7 @@ test('接线：把反馈页注册进页面壳的 page.content', () => {
   // 页面壳（`registerPageContent`）。这条仍钉住「反馈页必须自己注册内容」。
   assert.match(source, /registerPageContent\(/, '页面必须自己注册内容');
   assert.match(source, /id: 'feedback'/, '注册的 key 必须是 feedback');
-  assert.match(readFileSync(`${root}packages/dsh-zhiyun-shell-workbench/src/model.js`, 'utf8'), /id: 'feedback'/, '外壳 NAV 里必须有 id: feedback');
+  assert.match(readFileSync(`${root}packages/client/ui-shared/src/pages-model.js`, 'utf8'), /id: 'feedback'/, '外壳 NAV 里必须有 id: feedback');
 });
 
 test('接线：页面只依赖 slots，收件服务挂了不影响它渲染', () => {
@@ -377,7 +377,7 @@ test('接线：页面只依赖 slots，收件服务挂了不影响它渲染', ()
 
 test('仓库里不再有第二份只读公开板（单一真值）', () => {
   // 服务端条目改了而仓库那份不知道，就会出现两个打架的来源 —— 宁可只有服务端一处。
-  assert.throws(() => readFileSync(`${root}packages/dsh-zhiyun-page-feedback/data/issues.json`, 'utf8'),
+  assert.throws(() => readFileSync(`${root}packages/client/page-feedback/data/issues.json`, 'utf8'),
     /ENOENT/, 'data/issues.json 应当已经删掉');
   assert.ok(!/issues\.json/.test(source), '页面不该再引用仓库内的公开板');
 });

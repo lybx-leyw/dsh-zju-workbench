@@ -51,35 +51,36 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
   // 所以「跨包顺序依赖」的守卫对它们之间的关系不作判断：同包内谁后写谁赢，
   // 这是确定的，不是挂载顺序。视频栏的类名全部带 `zs-video-` 前缀，正是为此。
   assert.deepEqual([...sheets.keys()], [
-    // 按包名排序（`loadSheets` 内部 `readdirSync().sort()`），不是按加入顺序 ——
-    // 字典序：`page-*` < `shell-*` < `source-*`，所以 page 系列在最前，
-    // 而 `dsh-zhiyun-source-card` 必须排在 `dsh-zhiyun-source-netproxy` **之前**。
-    // `graph-render` 在 `page-*` 之前：字典序 `dsh-zhiyun-g…` < `dsh-zhiyun-p…`。
-    // `dsh-zhiyun-c…` 全在 `dsh-zhiyun-g…` 之前：课堂的内核与舞台。
-    // 它们的类名一律 `zyc-` 前缀，且 renderer 的 Tailwind 4 输出 `@scope` 到
-    // `.zyc-root`（见 docs/architecture/classroom-port.md 第 5 节），
-    // 与工作台的 `zy-` 不共享任何选择器，所以只登记、不参与竞争判定。
-    // dsh-pages owns component-scoped styles; its retired adapter stylesheet was removed.
-    'dsh-zhiyun-classroom-renderer',
-    'dsh-zhiyun-core-classroom-stage',
-    'dsh-zhiyun-graph-render',
-    'dsh-zhiyun-page-classroom-build',
-    'dsh-zhiyun-page-classroom-play',
-    'dsh-zhiyun-page-docs',
-    'dsh-zhiyun-page-feedback',
-    'dsh-zhiyun-page-notes',
-    'dsh-zhiyun-page-paper',
-    'dsh-zhiyun-page-planning',
-    'dsh-zhiyun-page-plugins',
-    'dsh-zhiyun-page-quiz',
-    'dsh-zhiyun-page-study',
-    'dsh-zhiyun-page-today',
-    'dsh-zhiyun-settings-account',
-    'dsh-zhiyun-shell-bridge',
-    'dsh-zhiyun-shell-ui',
-    'dsh-zhiyun-shell-workbench',
-    'dsh-zhiyun-source-card',
-    'dsh-zhiyun-source-netproxy',
+    // key 是**包目录名**（`loadSheets` 按 `packages/<group>/<目录>` 收集），
+    // 不是包名 —— 目录改名（`dsh-zhiyun-page-*` → `client/page-*`）时这里要跟着改。
+    //
+    // 这一列写的是 `loadSheets` 的 key —— **目录名**，不是包名。
+    //
+    // `classroom-stage` / `page-classroom-play` / `page-classroom-build` 已归档：
+    // 产品侧只要 AI 教学那条链路，不要独立的课堂播放页。留下的 renderer 仍在
+    // 表里 —— `page-study` 用它渲染单张课件。
+    'classroom-renderer',
+    'graph-render',
+    // `dsh-zhiyun-settings-account` 已归档到 `archive/deprecated-packages/`：
+    // 它的 style.css 不再被 `loadSheets` 读到，所以这里也不列它。
+    // `login` / `netproxy` / `ui-shared` 是分组目录名：
+    //   login     → 包名 `@lybx-leyw/dsh-zju-source-login`
+    //   netproxy  → 包名 `@lybx-leyw/dsh-zju-source-netproxy`
+    //   ui-shared → 包名 `@lybx-leyw/dsh-zju-ui-shared`
+    'login',
+    'netproxy',
+    // 页面包全部迁到 `packages/client/page-*`：目录名即短名，按字典序排在后面。
+    // `page-classroom` / `-play` / `-build` 都已归档 —— 产品侧不要独立的课堂页面。
+    'page-docs',
+    'page-feedback',
+    'page-notes',
+    'page-paper',
+    'page-planning',
+    'page-plugins',
+    'page-quiz',
+    'page-study',
+    'page-today',
+    'ui-shared',
   ]);
 });
 

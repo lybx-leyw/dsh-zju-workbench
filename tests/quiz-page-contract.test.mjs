@@ -1,5 +1,5 @@
 /**
- * 题库页（packages/dsh-zhiyun-page-quiz）的静态契约守卫。
+ * 题库页（packages/client/page-quiz）的静态契约守卫。
  *
  * 这一页被用户直接反馈「丑、不友好」，可它此前从未进过任何自动验收：shots 脚本只拍
  * today/ask/me，测试只测服务端批次。于是「改没改、改好没改好」只能靠人眼，改完之后也
@@ -29,10 +29,10 @@ import { fileURLToPath } from 'node:url';
 const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
 const read = rel => readFileSync(path.join(root, rel), 'utf8');
 
-const CSS = 'packages/dsh-zhiyun-page-quiz/src/style.css';
-const BANK = 'packages/dsh-zhiyun-page-quiz/src/question-bank.jsx';
-const MODELS = 'packages/dsh-zhiyun-page-quiz/src/generation-models.jsx';
-const PROGRESS = 'packages/dsh-zhiyun-page-quiz/src/question-generation-progress.jsx';
+const CSS = 'packages/client/page-quiz/src/style.css';
+const BANK = 'packages/client/page-quiz/src/question-bank.jsx';
+const MODELS = 'packages/client/page-quiz/src/generation-models.jsx';
+const PROGRESS = 'packages/client/page-quiz/src/question-generation-progress.jsx';
 
 const css = read(CSS);
 

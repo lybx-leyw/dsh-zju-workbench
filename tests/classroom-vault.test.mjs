@@ -1,4 +1,4 @@
-// dsh-zhiyun-core-classroom-vault 的验收测试。
+// @lybx-leyw/dsh-zju-core-classroom-vault 的验收测试。
 //
 // 覆盖三件事（其余交给人工）：
 //   1. 端口实现度：host-classroom 声明的 7 个方法一个不少，且 apply() 提供
@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-vault/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-vault/', import.meta.url);
 const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
 const plugin = await import(INDEX_URL);
 const adapterModule = await import(pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'adapter.js')).href);

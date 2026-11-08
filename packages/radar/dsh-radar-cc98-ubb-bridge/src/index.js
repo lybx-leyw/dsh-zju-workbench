@@ -63,7 +63,7 @@ export function apply(_ctx) {
  * TODO-4 · 图片：只转换，不上传
  * 上游 `images.ts` 依赖 `obsidian` 的 `App` / `TFile`，**不可移植**；可移植的只有
  * `convert.ts` 里的纯函数（`collectLocalImageRefs` / `formatImageTag` / `applyImageUrlMap`）。
- * 而「上传到 `file.cc98.org`」是**写操作** —— 本仓 CC98 是只读源（`dsh-zhiyun-source-cc98`
+ * 而「上传到 `file.cc98.org`」是**写操作** —— 本仓 CC98 是只读源（`@lybx-leyw/dsh-zju-source-cc98`
  * 自述「只读」），是否允许上传**须产品拍板**。建议先做纯转换版。
  *
  * TODO-5 · 硬换行先实测再定

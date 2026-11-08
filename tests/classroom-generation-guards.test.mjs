@@ -12,12 +12,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildScenePrompt } from '../packages/dsh-zhiyun-core-classroom-generate/src/prompts.js';
+import { buildScenePrompt } from '../packages/core/classroom-generate/src/prompts.js';
 import {
   applyOutlineFallbacks,
   parseOutlineResponse,
   uniquifyMediaElementIds,
-} from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
+} from '../packages/core/classroom-generate/src/scene.js';
 
 // ── mediaGenerations 的 id 必须全局唯一 ────────────────────────────────────
 

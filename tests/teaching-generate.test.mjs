@@ -26,7 +26,7 @@ fs.writeFileSync(stub, [
 
 const esbuild = await import('esbuild');
 await esbuild.build({
-  entryPoints: [path.join(ROOT, 'packages/dsh-zhiyun-page-study/src/teaching-generate.jsx')],
+  entryPoints: [path.join(ROOT, 'packages/client/page-study/src/teaching-generate.jsx')],
   bundle: true, outfile: out, format: 'esm', platform: 'node', external: ['react', 'react-dom'],
   alias: { 'dsh-zhiyun-page-quiz': stub },
   jsx: 'automatic', logLevel: 'silent',
@@ -68,7 +68,7 @@ test('existing result switches the label to re-prepare', () => {
 });
 
 test('the old bespoke chapter-concurrency popover is gone', () => {
-  const source = fs.readFileSync(path.join(ROOT, 'packages/dsh-zhiyun-page-study/src/teaching-generate.jsx'), 'utf8');
+  const source = fs.readFileSync(path.join(ROOT, 'packages/client/page-study/src/teaching-generate.jsx'), 'utf8');
   // 注释里会提到旧名字（说明为什么不用它），所以先把注释剥掉再断言。
   const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   assert.doesNotMatch(code, /chapterConcurrency/, '不能再出现独立的章节并发数字');

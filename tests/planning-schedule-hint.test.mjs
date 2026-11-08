@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createStudyController } from '../packages/dsh-zhiyun-core-study/src/model.js';
-import { hintWindow, scheduleHint, shiftDate } from '../packages/dsh-zhiyun-page-planning/src/schedule-hint.js';
+import { createStudyController } from '../packages/core/study/src/model.js';
+import { hintWindow, scheduleHint, shiftDate } from '../packages/client/page-planning/src/schedule-hint.js';
 
 const context = {
   from: '2026-10-17',

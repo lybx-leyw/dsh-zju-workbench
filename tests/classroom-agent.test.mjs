@@ -1,4 +1,4 @@
-// dsh-zhiyun-core-classroom-agent 的装配与契约测试。
+// @lybx-leyw/dsh-zju-core-classroom-agent 的装配与契约测试。
 //
 // 覆盖三件事（对应任务书的验证条款）：
 //   1. 用假 ctx apply 一次不抛，并 provide `zhiyunClassroomAgent`；
@@ -17,12 +17,12 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-agent/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-agent/', import.meta.url);
 const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
 const plugin = await import(INDEX_URL);
 
 const BRIEF = JSON.parse(
-  await readFile(new URL('../packages/dsh-zhiyun-core-classroom-agent/fixtures/brief.json', import.meta.url), 'utf8'),
+  await readFile(new URL('../packages/core/classroom-agent/fixtures/brief.json', import.meta.url), 'utf8'),
 );
 
 // ── 测试装置 ────────────────────────────────────────────────────────────────

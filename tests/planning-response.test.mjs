@@ -10,9 +10,9 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { errorText } from '../packages/dsh-zhiyun-page-planning/src/error.js';
-import { URGENCY, dayKey, dayLabel, urgencyOf } from '../packages/dsh-zhiyun-page-planning/src/time.js';
-import { createHandler } from '../packages/dsh-zhiyun-page-planning/src/index.js';
+import { errorText } from '../packages/client/page-planning/src/error.js';
+import { URGENCY, dayKey, dayLabel, urgencyOf } from '../packages/client/page-planning/src/time.js';
+import { createHandler } from '../packages/client/page-planning/src/index.js';
 
 /* ───────────────────────────────────────── 1. `planned` 一名两用 */
 

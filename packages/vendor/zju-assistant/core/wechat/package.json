@@ -1,0 +1,7 @@
+{
+  "name": "campus-wechat-chat",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": { "htmlparser2": "^10.1.0", "silk-wasm": "^3.7.1" }
+}
