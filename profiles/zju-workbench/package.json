@@ -30,6 +30,7 @@
         "@lybx-leyw/dsh-zju-page-quiz",
         "@lybx-leyw/dsh-zju-page-study",
         "@lybx-leyw/dsh-zju-core-parser",
+        "@lybx-leyw/dsh-zju-core-lecture",
         "@lybx-leyw/dsh-zju-core-knowledge",
         "@lybx-leyw/dsh-zju-core-study",
         "@lybx-leyw/dsh-zju-core-quiz",
