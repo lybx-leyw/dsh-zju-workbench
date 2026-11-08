@@ -27,7 +27,7 @@ const { questions } = await runDeepQuestion({
 
 `questions[]` 与产品 `tutor.runs.result().questions` **逐字段兼容**：
 `{ type, stem, options, choices, answer, explanation, topic, difficulty, questionId, issues }`。
-所以 `packages/dsh-zhiyun-core-study/src/quiz-engine-runtime.js` 一行不用改。
+所以 `packages/core/study/src/quiz-engine-runtime.js` 一行不用改。
 
 同时返回上游信封 `{ summary, response, mode, usage }`，便于和旧实现对照
 （`summary.results[].qa_pair` 里是同一份数据，只是 topic 的键名是 `concentration`）。

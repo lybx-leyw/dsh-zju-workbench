@@ -127,7 +127,7 @@ export async function apply(ctx, config = {}) {
    *
    * # 三条曾经写错的路（都别写回去）
    *
-   * 1. **指望 `dsh-zhiyun-source-netproxy` 接管** —— 它默认 `enabled: false`（刻意如此：
+   * 1. **指望 `@lybx-leyw/dsh-zju-source-netproxy` 接管** —— 它默认 `enabled: false`（刻意如此：
    *    装个插件不该顺手改全局网络行为）。用户没打开时，校园域名照样走全局代理。
    *    把可用性押在"用户记得去开另一个开关"上，等于把根因留在原地。
    * 2. **给 `globalThis.fetch` 传 `dispatcher`** —— Node 内置 fetch 直接抛

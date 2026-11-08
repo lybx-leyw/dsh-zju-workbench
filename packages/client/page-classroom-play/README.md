@@ -1,4 +1,4 @@
-# dsh-zhiyun-page-classroom-play
+# @lybx-leyw/dsh-zju-page-classroom-play
 
 「课堂播放」页：一份 classroom（`{ scenes, meta, assets }`）按顺序放给你看 ——
 顶部是场景进度条，中间是舞台，底部是上一场 / 下一场 / 朗读 / 全屏。

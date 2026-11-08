@@ -19,7 +19,7 @@
  *
  * 曾试过两条"看起来对"的办法，都不成立：
  *
- * 1. **指望 `dsh-zhiyun-source-netproxy` 接管** —— 它默认 `enabled: false`（刻意如此：
+ * 1. **指望 `@lybx-leyw/dsh-zju-source-netproxy` 接管** —— 它默认 `enabled: false`（刻意如此：
  *    装个插件不该顺手改全局网络行为）。用户没去打开它时，校园域名照样走全局代理。
  *    把可用性押在"用户记得去开另一个开关"上，是把根因留在原地。
  * 2. **给 `globalThis.fetch` 传 `dispatcher`** —— Node 内置 fetch 直接抛

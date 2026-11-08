@@ -1,6 +1,7 @@
 # NOTES —— 从 Python 源码读出的关键行为
 
-> 对象：`packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/tools/`
+> 对象：`archive/deprecated-packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/tools/`
+> （deeptutor 已归档；本笔记保留的是**当时**逐行读出的行为契约，对照实现见本包 `src/`）
 > 以及决定「出题到底挂哪些工具」的 `agents/question/pipeline.py`。
 > 行号指上述文件。本文只记录**不明显、但改了就会掉分**的东西。
 
@@ -287,7 +288,7 @@ python tools/gen-lecture-baseline.py
 node   tools/diff-lecture-tools.mjs      # 期望 ALL MATCH
 
 # 本包单测
-cd packages/dsh-zhiyun-core-lecture-tools && node tests/lecture-tools.test.mjs
+cd packages/core/lecture-tools && node tests/lecture-tools.test.mjs
 ```
 
 `diff-lecture-tools.mjs` 覆盖 question_bank 的 12 个分支、kb_files 的 12 个渲染分支、

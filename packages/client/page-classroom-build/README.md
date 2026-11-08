@@ -1,4 +1,4 @@
-# dsh-zhiyun-page-classroom-build
+# @lybx-leyw/dsh-zju-page-classroom-build
 
 「生成课堂」页：**说清楚要什么 → 看一眼大纲并改掉 → 场景一个个生成出来**。
 

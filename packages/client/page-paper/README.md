@@ -36,4 +36,4 @@
 - `inject: ['slots']`；内容插槽 `zhiyun.paper.content` 由外壳 `main` 插槽声明并认领 children，本页只注册内容。
 - 设置入口只注册 `settings.section`（`id: 'paper-reader'`, `order: 60`）—— 外壳的 `PersonalSettingsBridge` 会按 order 摊成折叠分组，**零改壳**。
 - 不碰 `sidebar.workspaces`、不碰 `shell.overlay`：那是上游客户端与本仓外壳的地盘。
-- 铺满页面的 CSS 用 `body[data-zhiyun] .zy-content:has(> .zp-page)` 而不是 `.zy-page[data-page=paper] .zy-content` —— 后者与 `dsh-zhiyun-page-study` 的同名覆盖同特异性同主体，胜负只剩挂载顺序，正是 `check-css-order` 判隐患的形状。
+- 铺满页面的 CSS 用 `body[data-zhiyun] .zy-content:has(> .zp-page)` 而不是 `.zy-page[data-page=paper] .zy-content` —— 后者与 `@lybx-leyw/dsh-zju-page-study` 的同名覆盖同特异性同主体，胜负只剩挂载顺序，正是 `check-css-order` 判隐患的形状。

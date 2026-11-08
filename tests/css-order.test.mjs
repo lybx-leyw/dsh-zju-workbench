@@ -68,7 +68,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     // 它的 style.css 不再被 `loadSheets` 读到，所以这里也不列它。
     // `login` / `netproxy` / `ui-shared` 是分组目录名：
     //   login     → 包名 `@lybx-leyw/dsh-zju-source-login`
-    //   netproxy  → 包名 `dsh-zhiyun-source-netproxy`
+    //   netproxy  → 包名 `@lybx-leyw/dsh-zju-source-netproxy`
     //   ui-shared → 包名 `@lybx-leyw/dsh-zju-ui-shared`
     'login',
     'netproxy',

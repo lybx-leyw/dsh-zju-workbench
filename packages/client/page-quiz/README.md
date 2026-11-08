@@ -1,10 +1,10 @@
-# dsh-zhiyun-page-quiz
+# @lybx-leyw/dsh-zju-page-quiz
 
 智云 Pro 的「题库」页（页面插件）。跨课程按知识点出题、组卷练习、管理历史题目。
 
 ## 这一页为什么是独立插件包
 
-在此之前，题库页挂在 `dsh-zhiyun-page-study` 里 —— 壳用 `pageBundle('quiz')` 特判，
+在此之前，题库页挂在 `@lybx-leyw/dsh-zju-page-study` 里 —— 壳用 `pageBundle('quiz')` 特判，
 把 `zhiyun.quiz.content` 交给学习页注册。两者其实是两件不同的事：
 
 - 「学习」页按**课程 → 节次 → 知识点**纵向走，围绕一节课展开；
@@ -21,14 +21,14 @@
 - UI 原子（`Notice`、`useStudy`、`mountStyle`、`zs-button`/`zs-primary`/`zs-text`）
   来自 `@lybx-leyw/dsh-zju-ui-shared`。
 
-## 与 dsh-zhiyun-page-study 的关系（唯一的跨页面包依赖）
+## 与 @lybx-leyw/dsh-zju-page-study 的关系（唯一的跨页面包依赖）
 
 学习页的知识点面板里嵌着一份**点级**出题目板（`quiz-panel.jsx`），它和学习页的
 讲义生成共用一个模型选择器（`generation-models.jsx`）。这两个组件都放在本包，
 由学习页以 `external` 方式导入：
 
 ```
-dsh-zhiyun-page-study  ──import──▶  dsh-zhiyun-page-quiz
+@lybx-leyw/dsh-zju-page-study  ──import──▶  @lybx-leyw/dsh-zju-page-quiz
 ```
 
 方向是**单向**的：本包不 import 学习页。客户端模块加载器对成环的 external 图会在

@@ -63,7 +63,7 @@
 
 试过三条路，前两条都不成立：
 
-1. **指望 `dsh-zhiyun-source-netproxy` 接管** —— 它默认 `enabled: false`（刻意如此：装个
+1. **指望 `@lybx-leyw/dsh-zju-source-netproxy` 接管** —— 它默认 `enabled: false`（刻意如此：装个
    插件不该顺手改全局网络行为）。用户没打开时，校园域名照样走全局代理。
 2. **给 `globalThis.fetch` 传 `dispatcher`** —— Node 内置 fetch 直接抛
    `UND_ERR_INVALID_ARG`，选项根本不生效。

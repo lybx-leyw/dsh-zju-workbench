@@ -1,4 +1,4 @@
-# dsh-zhiyun-page-docs
+# @lybx-leyw/dsh-zju-page-docs
 
 「文档」页：把协作规范搬进工作台，形态照文档站来。
 
@@ -149,7 +149,7 @@
 ## 验证
 
 ```bash
-npm run build                       # 构建，末行应出现 Built dsh-zhiyun-page-docs
+npm run build                       # 构建，末行应出现 Built @lybx-leyw/dsh-zju-page-docs
 node --test tests/docs-page.test.mjs # 清单、扫描器、隐私红线
 node --test tests/docs-scroll-keys*.test.mjs  # 滚动键：纯函数判据 + 真浏览器接线
 npm run check:css                   # 样式归属（跨包冲突、@media 倒序）

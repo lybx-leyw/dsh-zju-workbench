@@ -1,4 +1,4 @@
-# dsh-zhiyun-page-notes
+# @lybx-leyw/dsh-zju-page-notes
 
 「笔记」页：**Obsidian 式笔记库** —— 文件树、多标签页、双链、反链、标签。
 正文存成**普通的 `.md` 文件**。

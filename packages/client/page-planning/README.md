@@ -1,4 +1,4 @@
-# dsh-zhiyun-page-planning
+# @lybx-leyw/dsh-zju-page-planning
 
 「规划」页：**写下要做的事**，让 AI 帮你拆成可执行条目；同时把学在浙大待办、
 拼题A 题集、以及你自己中转站里的内容并到同一张表上。

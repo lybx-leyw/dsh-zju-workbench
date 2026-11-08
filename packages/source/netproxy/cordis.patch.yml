@@ -4,4 +4,4 @@
 # 与 /_dsh/net-proxy 设置路由；本包只负责锁版、默认策略与生命周期。
 - insert:
     - id: zhiyun-net-proxy
-      name: dsh-zhiyun-source-netproxy
+      name: @lybx-leyw/dsh-zju-source-netproxy

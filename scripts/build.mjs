@@ -54,7 +54,7 @@ export const CLIENT_PACKAGES = [
   // `archive/deprecated-packages/`（产品界面外壳，当前 profile 不装配）。
   // **不要在这里加回来** —— 除非它们真的搬回 `packages/`；
   // 留着会让构建报 `no package directory named ...`。
-  // 分域网络代理：目录 `netproxy`（原 `dsh-zhiyun-source-netproxy`），包名不变。
+  // 分域网络代理：目录 `netproxy`（原 `@lybx-leyw/dsh-zju-source-netproxy`），包名不变。
   'netproxy',
   // 一卡通凭据（原 `dsh-zhiyun-source-card`）：目录名 `login`，
   // 发布名 `@lybx-leyw/dsh-zju-source-login`。这一列同样写**目录名**。

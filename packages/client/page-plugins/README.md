@@ -1,4 +1,4 @@
-# dsh-zhiyun-page-plugins
+# @lybx-leyw/dsh-zju-page-plugins
 
 「插件」页：按**运行时依赖关系图**列出这个工作台由哪些包组成，并允许取消没有被任何包依赖的**叶包**。
 

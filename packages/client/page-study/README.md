@@ -1,4 +1,4 @@
-# dsh-zhiyun-page-study
+# @lybx-leyw/dsh-zju-page-study
 
 「学习」页：**课程目录 + 课堂回放 + 整理**，一页。
 
@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 左栏（课程目录） | 课程 → 节次，就地展开；已整理 / 解析中的状态点 | `study-workspace.jsx` 的 `CourseTree` |
 | 正文区「视频」栏 | 视频主视图 + 课件小窗 + 字幕，两者可互换。终稿出来后，栏顶是四个汇总，视频下有内容分段和语速条 | `video-panel.jsx` / `seek-bar.js` / `video.css` |
-| 正文区「知识点」栏 | 有阅读讲义时默认就是这份讲义：目录、章节、知识点、小标题。卡片和图谱用来跳进某一则；终稿是来源 | `knowledge-board.jsx`、`lecture-reader.jsx`、`note-panel.jsx`（卡片上的点级题板 `QuizPanel` 由 `dsh-zhiyun-page-quiz` 提供） |
+| 正文区「知识点」栏 | 有阅读讲义时默认就是这份讲义：目录、章节、知识点、小标题。卡片和图谱用来跳进某一则；终稿是来源 | `knowledge-board.jsx`、`lecture-reader.jsx`、`note-panel.jsx`（卡片上的点级题板 `QuizPanel` 由 `@lybx-leyw/dsh-zju-page-quiz` 提供） |
 
 课件和字幕不另开顶栏，跟在视频里。直播也不占顶栏：从左侧「正在直播」进来，落在视频栏的直播画面上。
 出题和笔记的读写在 `@lybx-leyw/dsh-zju-core-study`。这一页只渲染：从已选片段出填空或简答，
@@ -30,7 +30,7 @@
 
 反过来也发生过一次：**「题库」页曾经寄居在这里**（壳的 `pageBundle` 特判把
 `zhiyun.quiz.content` 交给本包），但两者走的方向不同 —— 学习页按课程 → 节次纵向走，
-题库页按知识点横向跨课程走。现在它独立成 `dsh-zhiyun-page-quiz`，本页只留知识点卡片上
+题库页按知识点横向跨课程走。现在它独立成 `@lybx-leyw/dsh-zju-page-quiz`，本页只留知识点卡片上
 那一小块点级题板。依赖方向是单向的 `study → quiz`。
 
 ## 播放那几条不能破的约定
@@ -87,9 +87,9 @@
 
 ## 按知识点出题（本页）与全局题库（独立页面包）
 
-导航「题库」已经独立成 `dsh-zhiyun-page-quiz`（见该包 README）——本页只保留**知识点卡片上那一小块出题面板**（`quiz-panel.jsx`），方便「讲到哪、就地考到哪」。
+导航「题库」已经独立成 `@lybx-leyw/dsh-zju-page-quiz`（见该包 README）——本页只保留**知识点卡片上那一小块出题面板**（`quiz-panel.jsx`），方便「讲到哪、就地考到哪」。
 
-卡片里的面板与题库页共用同一套出题器组件：`PointQuizComposer`、`QuestionHistory`、`QuestionGenerationProgress` 都住在 `dsh-zhiyun-page-quiz` 里，本包按单向依赖 import 过来（`study → quiz`，不反向，不会成环）。出题配置、引擎、进度、断点恢复的说明见 [page-quiz 的 README](../dsh-zhiyun-page-quiz/README.md)。四种策略为基础巩固、理解拓展、应用变式、综合探究，可按权重组合，提供背知识、练应用、综合自测预设。题型独立选择填空、选择、判断、简答；不适用的组合明确提示。知识点分配独立选择均匀或随机，随机最多覆盖约 2/3 的知识点。生成前展示策略题数与预计覆盖，难度、权重及联网设置按需展开。
+卡片里的面板与题库页共用同一套出题器组件：`PointQuizComposer`、`QuestionHistory`、`QuestionGenerationProgress` 都住在 `@lybx-leyw/dsh-zju-page-quiz` 里，本包按单向依赖 import 过来（`study → quiz`，不反向，不会成环）。出题配置、引擎、进度、断点恢复的说明见 [page-quiz 的 README](../page-quiz/README.md)。四种策略为基础巩固、理解拓展、应用变式、综合探究，可按权重组合，提供背知识、练应用、综合自测预设。题型独立选择填空、选择、判断、简答；不适用的组合明确提示。知识点分配独立选择均匀或随机，随机最多覆盖约 2/3 的知识点。生成前展示策略题数与预计覆盖，难度、权重及联网设置按需展开。
 
 出题引擎单独选择：新批次默认用 r1（推荐），也可选 r3 v9（实验）或 DeepTutor 直调。进度面板按所选引擎显示真实阶段。r3 v9 沿讲义原知识图谱编译与分配考法，可选局部和跨考点范围；DeepTutor 直调展示其原生的讲义查阅、规划和出题阶段。三种引擎有各自版本化的持久断点。DeepTutor 已返回的完整批次会缓存，未完成的上游运行可能需要重试。下面两段讲的是**这些组件自己的行为**，由本页与题库页共用。
 

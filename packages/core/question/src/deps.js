@@ -28,7 +28,10 @@ async function tryImport(candidates) {
 
 const coreTool = await tryImport([
   '@lybx-leyw/dsh-zju-core-tool',
-  '../../dsh-zhiyun-core-tool/src/index.js',
+  // 兜底路径跟着目录改名走：`packages/dsh-zhiyun-core-tool` → `packages/core/tool`。
+  // 旧路径在本轮重构后已不存在，留着的话一旦裸包名解析失败（软链没建），
+  // 兜底也会一起失败，而错误信息会误导人去看一个不存在的目录。
+  '../../tool/src/index.js',
 ]);
 
 /**
@@ -41,7 +44,8 @@ const coreTool = await tryImport([
  */
 const questionStream = await tryImport([
   '@lybx-leyw/dsh-zju-core-question-stream',
-  '../../dsh-zhiyun-core-question-stream/src/index.js',
+  // 同上：目录已迁到 `packages/core/question-stream`。
+  '../../question-stream/src/index.js',
 ]).catch(() => null);
 
 export const coreLlmRunLabeledStep = questionStream?.runLabeledStep ?? null;

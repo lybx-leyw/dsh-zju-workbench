@@ -1,4 +1,4 @@
-# dsh-zhiyun-page-today
+# @lybx-leyw/dsh-zju-page-today
 
 「今天」页：今天的课表、已采纳的题、上次打开的那一节，以及今天到期还没勾掉的事。
 
