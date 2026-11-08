@@ -7,7 +7,6 @@
 // 2. 学习工作台：把课程/解析/持久化编排挂成 `zhiyunStudy` 服务 + /api/zhiyun-study。
 import { mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
-import { registerStudyMaterialTools } from './material-tools.js';
 import { StudyWorkbench, publicError } from "./workbench.js";
 import { LEARNING_SPACE_DIR, LEARNING_SPACE_TITLE } from './learning-space.js';
 
@@ -44,8 +43,10 @@ export async function apply(ctx) {
     handout: () => ctx.get("zhiyunHandout") });
   await workbench.ready;
   ctx.provide("zhiyunStudy", workbench);
-  // Optional host capability: study remains usable when the chat tool registry is disabled.
-  registerStudyMaterialTools(ctx, workbench);
+  // 学习资料工具已搬到 `@lybx-leyw/dsh-zju-tool-study`（`packages/tool/study`）。
+  // 本包只负责把 workbench 挂成 `zhiyunStudy` 服务；那个包自己
+  // `inject: ['zhiyunStudy', 'tools']` 取走。两边只剩服务契约，没有 import。
+  // 也因此：工具表注册失败（宿主没启用 tools）完全不影响学习面板。
   const remove = ctx.connection.fetch.register({ path: "/api/zhiyun-study", methods: ["POST"], requestBody: "buffered", fetch: async (request) => {
     let rpcId = "invalid-request", result;
     try {
