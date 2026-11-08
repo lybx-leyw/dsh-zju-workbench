@@ -1,8 +1,10 @@
 {
-  "hostVersions": ["0.2.0-rc.2", "0.2.1-alpha.1"],
-  "preferredHostVersion": "0.2.0-rc.2",
+  "hostVersions": [
+    "0.2.2-rc.1"
+  ],
+  "preferredHostVersion": "0.2.2-rc.1",
   "cordisMajor": 4,
   "profile": "zju-workbench",
-  "referenceCommit": "5badb15009ae1756c3afe0ae0cef1faafc290ccc",
-  "note": "Reference HEAD is for research only. Runtime compatibility is tested against an installed release, not HEAD. Every version listed in hostVersions must pass scripts/test-host.mjs before it is added."
+  "referenceCommit": "66491b05e3f05ad35bcdd4f6cd7ed26041d9e3db",
+  "note": "Reference HEAD (.ref) must be checked out at the same tag as preferredHostVersion; it is for research only. Runtime compatibility is tested against an installed release, not HEAD. This workbench currently targets **0.2.2-rc.1 only** — one host version, one set of slot names, one client-kernel plane. Adding another version means re-running `node scripts/test-host.mjs` against it and re-checking the three seams that differed between releases: the settings trigger slot (`settings.launcher`), the client kernel plane (`@deepseek-ai/dsh-web-frontend/dist` rather than node_modules packages), and the `@deepseek-ai/dsh-atomic-write` peer version."
 }

@@ -12,7 +12,7 @@ const entry = path.join(dir, 'entry.jsx');
 fs.writeFileSync(entry, `
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { TeachingProgress } from '${path.join(ROOT, 'packages/dsh-zhiyun-page-study/src/teaching-progress.jsx').replaceAll('\\', '/')}';
+import { TeachingProgress } from '${path.join(ROOT, 'packages/client/page-study/src/teaching-progress.jsx').replaceAll('\\', '/')}';
 const progress = {
   phase: 'html', chapterTotal: 4, chaptersDone: 1, slidesDone: 5,
   chapterProgress: [
@@ -30,7 +30,7 @@ await esbuild.build({ entryPoints: [entry], bundle: true, outfile: path.join(dir
   format: 'iife', jsx: 'automatic', platform: 'browser', logLevel: 'silent',
   define: { 'process.env.NODE_ENV': '"development"' } });
 
-const studyCss = fs.readFileSync(path.join(ROOT, 'packages/dsh-zhiyun-page-study/src/style.css'), 'utf8');
+const studyCss = fs.readFileSync(path.join(ROOT, 'packages/client/page-study/src/style.css'), 'utf8');
 const shellCss = `:root{--zy-surface:#fffdf8;--zy-line:#dcd6c8;--zy-text:#1d2724;--zy-muted:#6b7671;--zy-secondary:#3f4b47;--zy-accent:#176c68;--zy-hover:#eef2ef;--zy-space-1:4px;--zy-space-2:8px;--zy-space-3:12px;--zy-space-4:16px;--zy-space-5:20px;--zy-fs-sm:13px;--zy-fs-md:15px}
 body[data-zhiyun]{margin:0;padding:32px;background:#f2efe7;font-family:system-ui,sans-serif;color:var(--zy-text)}`;
 

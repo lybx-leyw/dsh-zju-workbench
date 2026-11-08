@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { apply } from '../packages/dsh-zhiyun-core-lecture/src/index.js';
-import { ParserCache } from '../packages/dsh-zhiyun-core-parser/src/cache.js';
+import { apply } from '../packages/core/lecture/src/index.js';
+import { ParserCache } from '../packages/core/parser/src/cache.js';
 const fixture = () => ({lecture:{title:'课',chapters:[{title:'章',topics:[{title:'点',sourceBlockIndexes:[1],blocks:[{kind:{wire:'explanation',label:'讲解'},text:'来源正文。',sourceBlockIndexes:[1]}]}]}]},
   sectionId:'s',record:{blocks:[{index:1,page:1,tag:{role:'主线'}}],outline:[]}});
 test('成功终审持久缓存按模型和输入绑定，重复读取不再调用且重新验证来源',async()=>{

@@ -1,5 +1,5 @@
 /**
- * 教务数据源（`dsh-zhiyun-source-zdbk`）的契约测试。**全部离线**。
+ * 教务数据源（`@lybx-leyw/dsh-zju-source-zdbk`）的契约测试。**全部离线**。
  *
  * 这个包的代码是从 `dsh-zhiyun-source-omni` 的 `platforms/zdbk/` 移植来的，
  * 但**逻辑照搬不等于可以照搬测试可信度**：真正容易错、错了又最难发现的地方
@@ -26,16 +26,16 @@ import path from 'node:path';
 
 import {
   ZDBK_BASE, ZDBK_CAS_ENTRY, ZDBK_HOSTS, ZDBK_PATHS, ZDBK_SERVICE, ZDBK_HOST,
-} from '../packages/dsh-zhiyun-source-zdbk/src/hosts.js';
+} from '../packages/source/zdbk/src/hosts.js';
 import {
   PERIOD_TIMES, checkAcademicYear, courseCodeOfKey, currentTerm, gpaOf, parseExams,
   parseExamTime, parseGrade, parseSession, semesterOfCourseKey, semesterOfTerm, termCode,
-} from '../packages/dsh-zhiyun-source-zdbk/src/parse.js';
-import { casForm, casLogin, encryptCasPassword, hasCasForm, describeAuthFailure } from '../packages/dsh-zhiyun-source-zdbk/src/cas.js';
-import { ZdbkClient } from '../packages/dsh-zhiyun-source-zdbk/src/client.js';
-import { ZdbkReader } from '../packages/dsh-zhiyun-source-zdbk/src/reads.js';
-import { Transport } from 'dsh-zhiyun-source-campus/http';
-import * as plugin from '../packages/dsh-zhiyun-source-zdbk/src/index.js';
+} from '../packages/source/zdbk/src/parse.js';
+import { casForm, casLogin, encryptCasPassword, hasCasForm, describeAuthFailure } from '../packages/source/zdbk/src/cas.js';
+import { ZdbkClient } from '../packages/source/zdbk/src/client.js';
+import { ZdbkReader } from '../packages/source/zdbk/src/reads.js';
+import { Transport } from '@lybx-leyw/dsh-zju-source-http';
+import * as plugin from '../packages/source/zdbk/src/index.js';
 
 /**
  * 测试用的 RSA 公钥 modulus（1024 位 = 256 个 hex 字符）。
@@ -1138,19 +1138,23 @@ test('错误归一化：toError 保留 code', () => {
 
 test('manifest 与 bundle patch：包名、入口、patch 一致（profile 靠它挂载）', async () => {
   const { readFile } = await import('node:fs/promises');
-  const root = new URL('../packages/dsh-zhiyun-source-zdbk/', import.meta.url);
+  const root = new URL('../packages/source/zdbk/', import.meta.url);
   const manifest = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
-  assert.equal(manifest.name, 'dsh-zhiyun-source-zdbk');
+  assert.equal(manifest.name, '@lybx-leyw/dsh-zju-source-zdbk');
   assert.equal(manifest.type, 'module');
   assert.equal(manifest.main, './src/index.js');
   assert.equal(manifest.dsh.bundle.patch, './cordis.patch.yml');
   // 共享层必须是**依赖**而不是复制：少了这两条，装到 profile 里就 import 不到。
-  assert.ok(manifest.dependencies['dsh-zhiyun-source-campus'], '必须依赖共享 HTTP 层');
-  assert.ok(manifest.dependencies['dsh-zhiyun-source-card'], '必须依赖凭据读取');
+  // 传输层现在来自 tier 0 的 `@lybx-leyw/dsh-zju-source-http`，不再借 campus。
+  assert.ok(manifest.dependencies['@lybx-leyw/dsh-zju-source-http'], '必须依赖共享 HTTP 层');
+  assert.ok(manifest.dependencies['@lybx-leyw/dsh-zju-source-login'], '必须依赖凭据读取');
+  assert.equal(manifest.dependencies['@lybx-leyw/dsh-zju-source-campus'], undefined,
+    '不该再依赖 campus —— 出口服务由 source-http 提供');
 
   const patch = await readFile(new URL('cordis.patch.yml', root), 'utf8');
-  assert.match(patch, /id: zhiyun-zdbk/);
-  assert.match(patch, /name: dsh-zhiyun-source-zdbk/);
+  assert.match(patch, /id: zju-source-zdbk/);
+  // 包名里有 `/`，正则里必须转义，否则整行变成一个非法正则（语法错误，不是断言失败）。
+  assert.match(patch, /name: @lybx-leyw\/dsh-zju-source-zdbk/);
 
   // 源码里不许出现 TypeScript（本包刻意是纯 JS）。
   const src = await readFile(new URL('src/index.js', root), 'utf8');

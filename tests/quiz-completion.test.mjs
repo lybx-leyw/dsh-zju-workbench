@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPointQuizGenerator,planPointQuestions} from '../packages/dsh-zhiyun-core-quiz/src/points.js';
-import {parseConcepts,conceptCacheKey} from '../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {createPointQuizGenerator,planPointQuestions} from '../packages/core/quiz/src/points.js';
+import {parseConcepts,conceptCacheKey} from '../packages/core/quiz/src/concepts.js';
 import {syntheticFactAudit,syntheticSourceCheck,syntheticProofReview} from '../scripts/quiz_bench/fixture.mjs';
 
 const first='概率是随机事件发生可能性的度量。',second='互斥事件的概率可由各事件概率相加得到。';

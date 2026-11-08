@@ -5,20 +5,20 @@ import { fileURLToPath } from 'node:url';
 
 import {
   parseXxtCookie, missingRequired, seedCookies, storedCookieNames, XXT_REQUIRED,
-} from '../packages/dsh-zhiyun-source-xxt/src/cookie.js';
+} from '../packages/source/xxt/src/cookie.js';
 import {
   parseCourses, parseHomeworkList, parseHomeworkDetail, parseExams,
   parseSchedule, normalizeNotice, matchesNotice, isPending, nearestDate,
   stripTags, unescapeHtml, hiddenValue,
-} from '../packages/dsh-zhiyun-source-xxt/src/parse.js';
-import { XxtReader, XXT_METHODS, describeError } from '../packages/dsh-zhiyun-source-xxt/src/reads.js';
-import { XxtClient, XXT_SETUP, withQuery } from '../packages/dsh-zhiyun-source-xxt/src/client.js';
-import { XXT_HOSTS, isXxtHost, XXT_ENDPOINTS } from '../packages/dsh-zhiyun-source-xxt/src/hosts.js';
-import { splitMethod, name, inject, ROUTE_PATH } from '../packages/dsh-zhiyun-source-xxt/src/index.js';
-import { SessionStore, ClassroomError } from 'dsh-zhiyun-source-campus/http';
+} from '../packages/source/xxt/src/parse.js';
+import { XxtReader, XXT_METHODS, describeError } from '../packages/source/xxt/src/reads.js';
+import { XxtClient, XXT_SETUP, withQuery } from '../packages/source/xxt/src/client.js';
+import { XXT_HOSTS, isXxtHost, XXT_ENDPOINTS } from '../packages/source/xxt/src/hosts.js';
+import { splitMethod, name, inject, ROUTE_PATH } from '../packages/source/xxt/src/index.js';
+import { SessionStore, ClassroomError } from '@lybx-leyw/dsh-zju-source-http';
 
 /**
- * 学习通数据源（`dsh-zhiyun-source-xxt`）。
+ * 学习通数据源（`@lybx-leyw/dsh-zju-source-xxt`）。
  *
  * # 这份测试在钉什么
  *

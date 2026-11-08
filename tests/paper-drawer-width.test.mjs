@@ -5,8 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const source = readFileSync(path.join(here, '../packages/dsh-zhiyun-page-paper/src/AssistantDrawer.jsx'), 'utf8');
-const css = readFileSync(path.join(here, '../packages/dsh-zhiyun-page-paper/src/style.css'), 'utf8');
+const source = readFileSync(path.join(here, '../packages/client/page-paper/src/AssistantDrawer.jsx'), 'utf8');
+const css = readFileSync(path.join(here, '../packages/client/page-paper/src/style.css'), 'utf8');
 
 test('助手栏宽度没有产品上限，只受窗口宽度约束', () => {
   // 旧实现把宽度夹在 MIN_WIDTH..MAX_WIDTH(720) 之间，用户拖不过去。

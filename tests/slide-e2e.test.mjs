@@ -12,8 +12,8 @@ import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { SlideCache, createSlideHandler, SLIDE_ROUTE_PREFIX } from '../packages/dsh-zhiyun-source-classroom/src/slide-store.js';
-import { cacheKeyForSlide } from '../packages/dsh-zhiyun-source-classroom/src/slide-cache.js';
+import { SlideCache, createSlideHandler, SLIDE_ROUTE_PREFIX } from '../packages/source/classroom/src/slide-store.js';
+import { cacheKeyForSlide } from '../packages/source/classroom/src/slide-cache.js';
 
 const IMG = 'https://video.cmc.zju.edu.cn/c/1/slides/0001.jpg';
 

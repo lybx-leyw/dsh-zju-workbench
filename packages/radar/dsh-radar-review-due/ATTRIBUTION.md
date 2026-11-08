@@ -20,5 +20,5 @@
 
 ## 本仓内的参考（非上游）
 
-- `dsh-zhiyun-core-quiz/src/store.js` 的「FSRS 隔离」注释（`selfRecall` 唯一来源）
+- `@lybx-leyw/dsh-zju-core-quiz/src/store.js` 的「FSRS 隔离」注释（`selfRecall` 唯一来源）
   是本包坚持「非法自评返回 `null`，绝不回落」的依据来源。**本包未复制其代码**，仅沿用该纪律。

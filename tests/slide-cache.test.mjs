@@ -20,7 +20,7 @@ import {
   planEviction,
   removeKeys,
   missingSlides,
-} from '../packages/dsh-zhiyun-source-classroom/src/slide-cache.js';
+} from '../packages/source/classroom/src/slide-cache.js';
 
 const IMG = 'https://video.cmc.zju.edu.cn/course/86582/slides/0001.jpg';
 

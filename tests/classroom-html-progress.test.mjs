@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pollGeneration } from '../packages/dsh-zhiyun-core-study/src/ai-teaching-generate.js';
-import { createGenerateService } from '../packages/dsh-zhiyun-core-classroom-generate/src/index.js';
+import { pollGeneration } from '../packages/core/study/src/ai-teaching-generate.js';
+import { createGenerateService } from '../packages/core/classroom-generate/src/index.js';
 
 const slide = { title: '一页关系', points: ['短关键词'], summary: '核心总结', visualHtml: '<svg viewBox="0 0 800 560"><text x="60" y="120" font-size="32">关系</text></svg>', formulas: [], explanation: '画布外的完整讲解，足够长以说明推导依据。' };
 

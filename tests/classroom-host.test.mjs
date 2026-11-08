@@ -1,4 +1,4 @@
-// dsh-zhiyun-host-classroom 的装配冒烟测试。
+// @lybx-leyw/dsh-zju-core-classroom-studio 的装配冒烟测试。
 //
 // 这里测的不是算法，而是「把插件真的 apply 到一个假 ctx 上，会不会炸」：
 // 本包的价值全在**形状**上 —— 21 个 route 搬成 10 个服务方法，L2/L3 照这份形状
@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-studio/', import.meta.url);
 // Windows 上 `URL.pathname` 是 "/C:/Users/..."，直接丢给 pathToFileURL 会拼成
 // "file:///C:/C:/Users/..."（盘符重复），导入必然失败。
 // 先用 fileURLToPath 转成真正的本地路径再拼。
@@ -169,7 +169,7 @@ test('status() 在能力位解析器抛错时降级为 degraded，而不是抛�
 });
 
 test('status() 在组合层冲突时 state=partial 并如实写明占用者', async () => {
-  // 源包的形状特征：acquireSso / transport（packages/dsh-zhiyun-source-classroom/src/index.js:82-101）
+  // 源包的形状特征：acquireSso / transport（packages/source/classroom/src/index.js:82-101）
   const { service, logs } = mount();
   const harness = makeCtx({
     services: { zhiyunClassroomStudio: { acquireSso: async () => [], transport: {} } },
@@ -179,7 +179,7 @@ test('status() 在组合层冲突时 state=partial 并如实写明占用者', as
 
   const status = await conflicted.status();
   assert.equal(status.state, 'partial');
-  assert.equal(status.detail.conflict.occupiedBy, 'dsh-zhiyun-source-classroom');
+  assert.equal(status.detail.conflict.occupiedBy, '@lybx-leyw/dsh-zju-source-classroom');
   assert.ok(service, '普通实例不受影响');
   assert.ok(
     harness.logs.some(([level]) => level === 'error'),

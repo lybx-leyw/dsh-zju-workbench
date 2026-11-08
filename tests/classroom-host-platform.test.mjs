@@ -20,7 +20,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-studio/', import.meta.url);
 const PLATFORM_URL = pathToFileURL(
   join(fileURLToPath(PACKAGE_DIR), 'src', 'services', 'platform.js'),
 ).href;
@@ -39,7 +39,7 @@ const { ClassroomError } = await import(ERRORS_URL);
 
 const silentLog = { debug() {}, info() {}, warn() {}, error() {} };
 
-/** 内存版 kv（形状同 `packages/dsh-zhiyun-core-classroom-vault`）。 */
+/** 内存版 kv（形状同 `packages/core/classroom-vault`）。 */
 function makeVault() {
   const kv = new Map();
   return {

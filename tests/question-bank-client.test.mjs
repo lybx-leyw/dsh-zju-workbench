@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createQuestionBankController} from '../packages/dsh-zhiyun-core-study/src/question-bank-client.js';
+import {createQuestionBankController} from '../packages/core/study/src/question-bank-client.js';
 const questions=()=>[1,2,3].map(id=>({id:String(id),status:'proposed',attempts:[]}));
 test('source navigation resolves the exact point revision and never redirects an obsolete question to new content',async()=>{
   const opened=[],point={id:'current',chapterIndex:1,topicIndex:2};

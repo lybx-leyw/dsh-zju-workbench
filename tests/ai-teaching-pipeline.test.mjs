@@ -26,7 +26,7 @@ const {
   runGeneration,
   startGeneration,
   pollGeneration,
-} = await import('../packages/dsh-zhiyun-core-study/src/ai-teaching-generate.js');
+} = await import('../packages/core/study/src/ai-teaching-generate.js');
 
 const LECTURE = {
   chapters: [

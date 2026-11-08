@@ -1,0 +1,3 @@
+- insert:
+    - id: zhiyun-classroom-renderer
+      name: '@lybx-leyw/dsh-zju-core-classroom-renderer'

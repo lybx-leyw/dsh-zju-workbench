@@ -22,7 +22,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { publicError } from '../packages/dsh-zhiyun-core-study/src/workbench.js';
+import { publicError } from '../packages/core/study/src/workbench.js';
 
 const err = (message, code) => Object.assign(Error(message), { code });
 

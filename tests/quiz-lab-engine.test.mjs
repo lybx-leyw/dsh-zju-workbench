@@ -11,15 +11,15 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {model, graph} from '../packages/dsh-zhiyun-quiz-lab/src/kernel/fixture.mjs';
+import {model, graph} from '../packages/core/quiz-lab/src/kernel/fixture.mjs';
 import {
   LAB_ENGINE, CHECKPOINT_VERSION, createLabRun, toR4Config, patchCheckpoint,
   recordQuestion, toBankQuestion, resolveGraph, coveredPoints,
-} from '../packages/dsh-zhiyun-quiz-lab/src/engine.js';
-import {canResumeLab, resumeRefusal, LAB_CHECKPOINT_VERSION} from '../packages/dsh-zhiyun-quiz-lab/src/checkpoint.js';
-import {apply, name as labName, inject} from '../packages/dsh-zhiyun-quiz-lab/src/index.js';
-import {engineEntries, engineVersion, registerEngine, engineComplete, newEngineCheckpoint} from '../packages/dsh-zhiyun-core-quiz/src/engines.js';
-import {knowledgePoints} from '../packages/dsh-zhiyun-core-quiz/src/knowledge-points.js';
+} from '../packages/core/quiz-lab/src/engine.js';
+import {canResumeLab, resumeRefusal, LAB_CHECKPOINT_VERSION} from '../packages/core/quiz-lab/src/checkpoint.js';
+import {apply, name as labName, inject} from '../packages/core/quiz-lab/src/index.js';
+import {engineEntries, engineVersion, registerEngine, engineComplete, newEngineCheckpoint} from '../packages/core/quiz/src/engines.js';
+import {knowledgePoints} from '../packages/core/quiz/src/knowledge-points.js';
 
 const point = id => ({id, title: id, text: `知识点${id}`, courseId: 'c', subId: 's', courseTitle: 'C', lessonTitle: 'S', blockIndexes: [0], page: 1, atSec: 0});
 const plan = (count = 1) => ({count, types: ['mcq'], strategies: [{id: 'understand'}], mode: 'practice', tasks: [{point: point('a'), count, type: 'mcq', strategy: 'understand'}]});

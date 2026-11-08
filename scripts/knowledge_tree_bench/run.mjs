@@ -26,7 +26,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { setRoot, mount, serviceOf } from './_base.mjs';
-import { V4_PROFILE, V4_ACCEL } from '../../packages/dsh-zhiyun-core-parser/src/generation-profile.js';
+import { V4_PROFILE, V4_ACCEL } from '../../packages/core/parser/src/generation-profile.js';
 import { openAiHost } from './openai.mjs';
 import { resolveConfig } from './defaults.mjs';
 import { createWriter } from './log.mjs';
@@ -256,7 +256,7 @@ async function main() {
     const workDir = args.workDir ? path.resolve(ROOT, String(args.workDir)) : DATA;
     await fs.mkdir(workDir, { recursive: true });
     const host = openAiHost({ baseUrl, apiKey, model, visionModel });
-    const mounted = await mount('dsh-zhiyun-core-parser', {
+    const mounted = await mount('@lybx-leyw/dsh-zju-core-parser', {
       dataDir: path.join(workDir, `.${cacheNs}`) + path.sep,
       services: {
         llm: host,
@@ -523,7 +523,7 @@ async function main() {
           return { text, usage: null };
         },
       };
-      const lectureMounted = await mount('dsh-zhiyun-core-lecture', {
+      const lectureMounted = await mount('@lybx-leyw/dsh-zju-core-lecture', {
         dataDir: path.join(workDir, `.${cacheNs}-lecture`) + path.sep,
         services: { zhiyunParser: { llm: narrow, cache: parser.cache } },
         config: { concurrency: Math.min(4, concurrency) },

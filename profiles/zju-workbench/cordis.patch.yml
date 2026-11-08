@@ -23,3 +23,27 @@
     pageSlot: page.content
     classPrefix: zy-workbench
     defaultRailWidth: 51
+    # 两个内建页的名字。**不改上游包**：`dsh-pages` 的 `registerPage()` 接受
+    # `LocalizedText`（`isLocalizedText` 要求 `en` 为 string、其余值也是 string），
+    # 而它自带的默认值只有 `{ en, zh }` —— 切到日/德/俄时回退成英文。
+    #
+    # 这里把八种语言都给它，与官方插件 `locale.register(NS, { zh, en, ja, ... })`
+    # 的口径一致。宿主用 `ctx.locale.resolveText()` 按当前语言取，取不到回退 `en`。
+    homeLabel:
+      zh: DSH 工作台
+      en: DSH workbench
+      ja: DSH ワークベンチ
+      es: Mesa de trabajo DSH
+      fr: Espace de travail DSH
+      de: DSH-Werkbank
+      ru: Рабочая среда DSH
+      pt: Área de trabalho DSH
+    managerLabel:
+      zh: 页面管理
+      en: Pages
+      ja: ページ管理
+      es: Páginas
+      fr: Pages
+      de: Seiten
+      ru: Страницы
+      pt: Páginas

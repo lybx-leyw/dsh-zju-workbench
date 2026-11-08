@@ -1,0 +1,5 @@
+# 文本文件在工作区一律用 LF，不随各人 git 的 autocrlf 设置变。
+# 有的检查逐字节比对生成的文件（ui/client/trace/commands.test.mjs），换成 CRLF 就对不上。
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf

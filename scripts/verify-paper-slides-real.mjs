@@ -18,7 +18,7 @@ import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { parseEnv } from 'node:util';
-import { fitSlideOutput } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-fit.js';
+import { fitSlideOutput } from '../packages/core/classroom-generate/src/html-slide-fit.js';
 
 const DEFAULT_PDF = 'artifacts/paper-slides/input.pdf';
 
@@ -84,9 +84,9 @@ async function main() {
     const load = name => import(pathToFileURL(require.resolve('@deepseek-ai/' + name)).href);
     const [{ Context }, { default: Llm }, PiAi, { createGenerateService }, { createHostLlmTransport }, { auditSlideHtml }, { chromium }] = await Promise.all([
       load('cordis'), load('dsh-llm'), load('dsh-llm-pi-ai'),
-      import('../packages/dsh-zhiyun-core-classroom-generate/src/index.js'),
-      import('../packages/dsh-zhiyun-core-classroom-generate/src/host-llm.js'),
-      import('../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-audit.js'),
+      import('../packages/core/classroom-generate/src/index.js'),
+      import('../packages/core/classroom-generate/src/host-llm.js'),
+      import('../packages/core/classroom-generate/src/html-slide-audit.js'),
       import('playwright'),
     ]);
     browser = await chromium.launch({ channel: 'msedge', headless: true });
@@ -242,8 +242,8 @@ async function exists(file) { try { await fs.access(file); return true; } catch 
  * 而 `4.2 DEBIASING STRATEGIES` 这种标题是稳定的。
  */
 async function loadPaperChapters(pdfPath, outDir) {
-  const { parsePDF } = await import('../packages/dsh-zhiyun-core-classroom-media/src/pdf/parse.js');
-  const { normalizePdfText } = await import('../packages/dsh-zhiyun-core-classroom-media/src/pdf/normalize-text.js');
+  const { parsePDF } = await import('../packages/core/classroom-media/src/pdf/parse.js');
+  const { normalizePdfText } = await import('../packages/core/classroom-media/src/pdf/normalize-text.js');
   const buffer = await fs.readFile(pdfPath);
   const parsed = await parsePDF(null, { providerId: 'unpdf', textOnly: true }, buffer, {});
   const raw = String(parsed?.text ?? '');

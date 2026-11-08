@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeLectureTree } from '../packages/dsh-zhiyun-core-lecture/src/tree.js';
-import { createLectureAssembler } from '../packages/dsh-zhiyun-core-lecture/src/polish.js';
+import { normalizeLectureTree } from '../packages/core/lecture/src/tree.js';
+import { createLectureAssembler } from '../packages/core/lecture/src/polish.js';
 
 const tree = () => ({ kind: 'title', title: '静电学', children: [
   { kind: 'title', title: '电容', children: [

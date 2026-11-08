@@ -14,7 +14,7 @@ export const UPSTREAM = 'ts-fsrs';
 export const UPSTREAM_VERSION = '5.4.2';
 
 /**
- * 本仓三档自评（`dsh-zhiyun-core-study/src/question-bank.js:257` 实文）
+ * 本仓三档自评（`@lybx-leyw/dsh-zju-core-study/src/question-bank.js:257` 实文）
  * → FSRS 四档评分的映射。
  *
  * ⚠️ 这不是「配置项」，是**必须由人拍板的产品判断**。实测两种候选映射在

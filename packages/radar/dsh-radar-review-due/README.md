@@ -30,7 +30,7 @@
   - ② **功能仍相似正交** —— 还是做题与复习，只是「先做哪道」由到期时间决定；
   - ③ **底层多调了更优质实现** —— 单调的「采纳顺序」→ FSRS 记忆模型。
 - **边界**：本包**不落盘**、不出题、不判分、不算积压。积压（`computeBacklog`）已在
-  `dsh-zhiyun-core-quiz/src/generate.js:1087` 实现且**无人调用**；本包只出队列，截断策略留给产品决策。
+  `@lybx-leyw/dsh-zju-core-quiz/src/generate.js:1087` 实现且**无人调用**；本包只出队列，截断策略留给产品决策。
 
 ## 为什么不是重复 `dsh-radar-fsrs-scheduler`
 
@@ -40,7 +40,7 @@
 | --- | --- | --- |
 | 依赖 | `ts-fsrs@5.4.2` | `ts-fsrs@5.4.2`（同一把锁） |
 | 代码 | 只有 `export const name` + 注释 TODO | `upstream.js` **已实测跑通**；`index.js` 是可调用的纯函数 |
-| 状态放在哪 | README 写着「落 `dsh-zhiyun-core-study`」 | **不落盘**：进出都是普通对象，由宿主决定放哪 |
+| 状态放在哪 | README 写着「落 `@lybx-leyw/dsh-zju-core-study`」 | **不落盘**：进出都是普通对象，由宿主决定放哪 |
 | 自评 → 评分映射 | 未提及 | **实测两种映射都不可用**，见下节 |
 
 **结论：两者不能同时启用**（`insert id` 已错开：`radar-review-due` vs `radar-fsrs-scheduler`）。
@@ -55,7 +55,7 @@
 2. **`Again` 不是「立即到期」**。它把卡置为 `state=3`（重学）并给 `due = 作答时刻 + 10min`。
    → 任何拿 `due` 当「重放到哪了」游标的实现都会**整段丢掉后续历史**；本包已改为用 `lastReview`。
 3. **`Rating` 四档没有一档叫「部分掌握」**。本仓自评是三档（`correct / partial / incorrect`，
-   见 `dsh-zhiyun-core-study/src/question-bank.js:257`）。实测同一序列
+   见 `@lybx-leyw/dsh-zju-core-study/src/question-bank.js:257`）。实测同一序列
    `掌握了 → 部分掌握 → 需要复习 → 掌握了`：
    - 方案 A（`correct→Good, partial→Hard, incorrect→Again`）→ `0d, 0d, 0d, 0d`，**间隔全不增长**；
    - 方案 B（`correct→Easy, partial→Good, incorrect→Again`）→ `8d, 39d, 0d, 5d`，**partial 反而比 correct 长**。
@@ -66,7 +66,7 @@
 
 - [ ] **拍板自评映射**（上面第 3 条）。这是产品判断，不是技术调参：要么把自评扩到四档，
       要么接受 A 方案「部分掌握 = 继续在学习步里」并**在界面上说清楚**。
-- [ ] **决定状态落哪**：本包不落盘。候选是 `dsh-zhiyun-core-study` 的题库记录（`quiz.attempts` 已有），
+- [ ] **决定状态落哪**：本包不落盘。候选是 `@lybx-leyw/dsh-zju-core-study` 的题库记录（`quiz.attempts` 已有），
       但**不要**新增第三个存储键。
 - [ ] **回答「作答链路本身是否已通」**：见下节，这一条比调度器本身更关键。
 
@@ -74,7 +74,7 @@
 
 评审必须先回答这个，否则本包接上去也是接在断线上：
 
-| | 服务层（`dsh-zhiyun-core-study/src/question-bank.js:257`） | 存储层（`dsh-zhiyun-core-quiz/src/store.js:608`） |
+| | 服务层（`@lybx-leyw/dsh-zju-core-study/src/question-bank.js:257`） | 存储层（`@lybx-leyw/dsh-zju-core-quiz/src/store.js:608`） |
 | --- | --- | --- |
 | 作答字段 | `verdict` / `grading` / `selfVerdict` | `selfRecall` / `autoVerdict` |
 | `fsrsRating` | 无 | 有，且**全仓无消费方** |

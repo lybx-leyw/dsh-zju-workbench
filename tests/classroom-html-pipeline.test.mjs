@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGenerateService } from '../packages/dsh-zhiyun-core-classroom-generate/src/index.js';
+import { createGenerateService } from '../packages/core/classroom-generate/src/index.js';
 
 const fragment = JSON.stringify({ slides: [{ title: '先看变化', points: ['平均变化率'], summary: '从两点到一点', visualHtml: '<svg viewBox="0 0 800 560"><line x1="80" y1="400" x2="700" y2="100" stroke="#0f766e"/></svg>', formulas: [{ html: 'Δs / Δt' }], explanation: '从平均变化理解瞬时变化，再把过程写成公式。这段长解释始终在画布外。' }] });
 function setup() {

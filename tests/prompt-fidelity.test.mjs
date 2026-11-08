@@ -24,8 +24,8 @@ const VENDOR_LIVE = 'packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptut
 const VENDOR_ARCHIVED = 'archive/deeptutor-vendor-1.6.15/deeptutor/agents/question/prompts';
 const VENDOR = fs.existsSync(VENDOR_LIVE) ? VENDOR_LIVE : VENDOR_ARCHIVED;
 const GENERATED = {
-  zh: 'packages/dsh-zhiyun-core-question/src/prompts',
-  en: 'packages/dsh-zhiyun-core-question/src/prompts-en',
+  zh: 'packages/core/question/src/prompts',
+  en: 'packages/core/question/src/prompts-en',
 };
 
 const BLOCK_RE = /^(\s*)("?[^":]+"?):\s*(\|-|\|\+?|>)\s*$/;

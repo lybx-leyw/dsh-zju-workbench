@@ -40,8 +40,8 @@ test('③ review 不会混入「从没做过的题」', async () => {
 
 test('④ 阴性对照：错题优先的选池必须过阈值', async () => {
   // 与被测代码同构的最小对照：`old` 池再按 countsAsWrong 分成两段，错题在前。
-  const { planPractice } = await import('../packages/dsh-zhiyun-core-quiz/src/points.js');
-  const { makeAttempt, QUIZ_AUTOGRADE_VERDICTS: VERDICT } = await import('../packages/dsh-zhiyun-core-quiz/src/store.js');
+  const { planPractice } = await import('../packages/core/quiz/src/points.js');
+  const { makeAttempt, QUIZ_AUTOGRADE_VERDICTS: VERDICT } = await import('../packages/core/quiz/src/store.js');
 
   const mk = (v) => makeAttempt({
     id: 'a', quizId: 'q', courseId: 'c', sectionId: 's', blockIndex: 0,

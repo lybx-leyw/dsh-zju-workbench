@@ -14,7 +14,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildTreeFromBlocks, leavesOf } from '../packages/dsh-zhiyun-core-parser/src/tree.js';
+import { buildTreeFromBlocks, leavesOf } from '../packages/core/parser/src/tree.js';
 
 function block(index, page, sentences, { role = '主线', facet = '概念' } = {}) {
   return { index, page, sentences: sentences.map((text) => ({ text })), tag: { role, facets: [facet], summary: '' } };

@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import {
   XzzdReader, activitySummary, boundedText, filesOf, isGroupHomework,
   pageInfo, publicFile, submissionState,
-} from '../packages/dsh-zhiyun-source-campus/src/xzzd-reads.js';
+} from '../packages/source/campus/src/xzzd-reads.js';
 
 const XZZD = 'https://courses.zju.edu.cn';
 

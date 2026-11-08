@@ -21,7 +21,7 @@ export async function run({ account, dataDir, card }) {
   // zdbk 用 sharedFetch(ctx) 借 campus 的出口
   await mountCampus({ dataDir: `${dataDir}host/`, credentials: creds.service });
 
-  const { ctx, routes } = await mount('dsh-zhiyun-source-zdbk', {
+  const { ctx, routes } = await mount('@lybx-leyw/dsh-zju-source-zdbk', {
     dataDir,
     credentials: creds.service,
   });

@@ -44,7 +44,7 @@ async function loadComponent() {
   const dir = await mkdtemp(path.join(root, '.verify-render-'));
   const outfile = path.join(dir, 'hls-video.mjs');
   await build({
-    entryPoints: [path.join(root, 'packages/dsh-zhiyun-page-study/src/hls-video.jsx')],
+    entryPoints: [path.join(root, 'packages/client/page-study/src/hls-video.jsx')],
     bundle: true,
     write: true,
     outfile,

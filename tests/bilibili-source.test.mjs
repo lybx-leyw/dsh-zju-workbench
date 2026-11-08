@@ -25,16 +25,16 @@ import assert from 'node:assert/strict';
 
 import {
   MIXIN_KEY_ENC_TAB, MIXIN_KEY_LENGTH, keysFromNav, keysLookValid, mixinKey, wbiSign,
-} from '../packages/dsh-zhiyun-source-bilibili/src/wbi.js';
-import { MAX_CUE_SECONDS, cueToSubtitle, cuesToSubtitles, transcriptOf } from '../packages/dsh-zhiyun-source-bilibili/src/subtitles.js';
-import { BilibiliError, ERROR_CODE, explainCode, isCredentialIssue, isRiskControl, isUnavailable } from '../packages/dsh-zhiyun-source-bilibili/src/errors.js';
-import { headersFor } from '../packages/dsh-zhiyun-source-bilibili/src/http.js';
-import { inspectCredential } from '../packages/dsh-zhiyun-source-bilibili/src/subtitle-channel.js';
+} from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/wbi.js';
+import { MAX_CUE_SECONDS, cueToSubtitle, cuesToSubtitles, transcriptOf } from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/subtitles.js';
+import { BilibiliError, ERROR_CODE, explainCode, isCredentialIssue, isRiskControl, isUnavailable } from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/errors.js';
+import { headersFor } from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/http.js';
+import { inspectCredential } from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/subtitle-channel.js';
 import {
   BROWSER_UA, downloadVideo, extractFrames, probeFfmpeg, summarizeFfmpegError,
-} from '../packages/dsh-zhiyun-source-bilibili/src/frames.js';
-import { DEFAULT_QUALITY, MAX_DURL_SEGMENTS, fetchPlayUrl } from '../packages/dsh-zhiyun-source-bilibili/src/playurl.js';
-import { DEFAULT_SAMPLE_SEC, buildLesson, finishFrames } from '../packages/dsh-zhiyun-source-bilibili/src/lesson.js';
+} from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/frames.js';
+import { DEFAULT_QUALITY, MAX_DURL_SEGMENTS, fetchPlayUrl } from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/playurl.js';
+import { DEFAULT_SAMPLE_SEC, buildLesson, finishFrames } from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/lesson.js';
 import { EventEmitter } from 'node:events';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -271,7 +271,7 @@ test('inspectCredential 报出缺哪几个字段（不是笼统说「无效」�
 // 把 412 当网络错误会重试到账号被封；把 200+HTML 当坏 JSON 会让人去改代码；
 // 把 -101 当风控会让用户一直等而不知道要登录。
 
-import { getData, getJson } from '../packages/dsh-zhiyun-source-bilibili/src/http.js';
+import { getData, getJson } from '../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/http.js';
 
 /** 临时替换 `globalThis.fetch`，跑完必定还原（含抛错路径）。 */
 async function withFetch(responder, run) {
@@ -367,7 +367,7 @@ test('匿名 nav（code=-101）仍要能取到 wbi key —— 不能走 getData'
       sub_url: 'https://i0.hdslb.com/bfs/wbi/4932caff0ff746eab6f01bf08b70ac45.png',
     } },
   });
-  const { fetchWbiKeys } = await import('../packages/dsh-zhiyun-source-bilibili/src/subtitle-channel.js');
+  const { fetchWbiKeys } = await import('../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/subtitle-channel.js');
   await withFetch(respond(200, navBody), async () => {
     const keys = await fetchWbiKeys();
     assert.equal(keys.imgKey, '7cd084941338484aae1ad9425b84077c');
@@ -376,7 +376,7 @@ test('匿名 nav（code=-101）仍要能取到 wbi key —— 不能走 getData'
 });
 
 test('nav 没有 wbi_img 时抛 API_SHAPE（不是静默空 key）', async () => {
-  const { fetchWbiKeys } = await import('../packages/dsh-zhiyun-source-bilibili/src/subtitle-channel.js');
+  const { fetchWbiKeys } = await import('../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/subtitle-channel.js');
   await withFetch(respond(200, '{"code":0,"data":{}}'), async () => {
     await assert.rejects(fetchWbiKeys(), (error) => {
       assert.equal(error.code, ERROR_CODE.API_SHAPE);
@@ -394,7 +394,7 @@ test('nav 没有 wbi_img 时抛 API_SHAPE（不是静默空 key）', async () =>
 import {
   KIND, MIN_FRAMES, STATIC_EPS, analyze, classify, extractionAdvice,
   profileOf, quantile, signatureDistance, stepDistances,
-} from "../packages/dsh-zhiyun-source-bilibili/src/triage.js";
+} from "../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/triage.js";
 
 /** 造一个签名：灰度 base + 确定性抖动（不用随机，测试必须可复现）。 */
 function frame(base, { size = 5184, jitter = 0, seed = 1 } = {}) {
@@ -532,7 +532,7 @@ test("STATIC_EPS 是「几乎没动」的绝对阈值，与实测 p50 同量级"
 import {
   DEFAULT_THRESHOLD, MAX_THRESHOLD, MIN_PAGE_SECONDS,
   buildSlides, estimateFrames, segmentFrames, slidesFromFrames, validateSlides,
-} from "../packages/dsh-zhiyun-source-bilibili/src/segment.js";
+} from "../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/segment.js";
 
 /** 造签名：灰度值填充（同页内完全相同 → step=0）。 */
 const sig = (value, size = 64) => new Uint8Array(size).fill(value);
@@ -985,7 +985,7 @@ test('字幕失败不拖垮元数据 —— 两者失败不对称', async () => 
   const original = globalThis.fetch;
   globalThis.fetch = stubBilibiliNoSubtitle();
   try {
-    const { resolveLesson } = await import('../packages/dsh-zhiyun-source-bilibili/src/subtitle-channel.js');
+    const { resolveLesson } = await import('../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/subtitle-channel.js');
     const result = await resolveLesson({ bvid: 'BV11DXrYeE5D' });
     // 元数据必须还在
     assert.equal(result.aid, 114199086762590);

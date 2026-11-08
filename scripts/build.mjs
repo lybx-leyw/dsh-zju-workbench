@@ -47,42 +47,72 @@ export const CLIENT_PACKAGES = [
   // 产品级的 dsh-pages 默认值校准（51px 导航宽度）。目录名是 `pages-default`，
   // 发布名是 `@lybx-leyw/dsh-zju-pages-default`，所以这里写**目录名**。
   'pages-default',
-  'dsh-zhiyun-shell-ui',
-  'dsh-zhiyun-shell-workbench',
-  'dsh-zhiyun-shell-bridge',
-  'dsh-zhiyun-source-netproxy',
-  'dsh-zhiyun-source-card',
-  'dsh-zhiyun-page-classroom',
-  'dsh-zhiyun-page-classroom-build',
-  'dsh-zhiyun-page-classroom-play',
-  'dsh-zhiyun-core-classroom-agent',
-  'dsh-zhiyun-core-classroom-stage',
-  'dsh-zhiyun-core-quiz',
-  'dsh-zhiyun-core-study',
+  // 共享 UI 原语：目录名 `ui-shared`，发布名 `@lybx-leyw/dsh-zju-ui-shared`。
+  // 同样写目录名 —— 这一列是 `packages/client/<目录>` 的键。
+  'ui-shared',
+  // `dsh-zhiyun-shell-workbench` / `-shell-bridge` 已归档到
+  // `archive/deprecated-packages/`（产品界面外壳，当前 profile 不装配）。
+  // **不要在这里加回来** —— 除非它们真的搬回 `packages/`；
+  // 留着会让构建报 `no package directory named ...`。
+  // 分域网络代理：目录 `netproxy`（原 `@lybx-leyw/dsh-zju-source-netproxy`），包名不变。
+  'netproxy',
+  // 一卡通凭据（原 `dsh-zhiyun-source-card`）：目录名 `login`，
+  // 发布名 `@lybx-leyw/dsh-zju-source-login`。这一列同样写**目录名**。
+  'login',
+  // 学在浙大 / 拼题A 的设置分区（PTA Cookie 粘贴入口）。
+  'campus',
+  // 各数据源的设置分区：只做状态展示与 Cookie 粘贴，不重复收 CAS 密码。
+  'xxt',
+  'zdbk',
+  'cc98',
+  'classroom',
+  // 课堂的**页面**已归档（`page-classroom` / `-play` / `-build`）：
+  // 产品侧只要「AI 教学」这条链路（生成课件 + 单张渲染），不要独立的课堂播放页。
+  // **不要加回来** —— 加了会报 `no package directory named ...`。
+  // 保留的 classroom 包只有 `classroom-agent`（有客户端半边）与
+  // `classroom-renderer`（page-study 用它渲染课件）。
+  'classroom-agent',
+  'quiz',
+  // `core-study` 的目录名是 `study`（住在 `packages/core/` 下）。
+  // `packageDir()` 按**目录的 basename** 查找，所以这一列只能写目录名 ——
+  // 写包名会 `no package directory named "@lybx-leyw/..."`。
+  'study',
   // 回放下面那层「主线/语速/四汇总」由本包算，学习页 external import 它 ——
   // 所以它必须有自己的客户端产物。（远端以旧名 `dsh-zhiyun-player` 加入，
   // 本仓按性质改名为 `core-player`，合并时对应成新名。）
-  'dsh-zhiyun-core-player',
+  'player',
   // 回放字幕轨：学习页视频栏 external import 它的 `resolveTrack` / `burnLine`
   // （清洗句子替换原始碎片、字幕烧进播放器），所以它必须有自己的客户端产物。
-  'dsh-zhiyun-core-playback',
-  'dsh-zhiyun-page-today',
-  'dsh-zhiyun-page-study',
-  'dsh-zhiyun-page-quiz',
-  'dsh-zhiyun-page-planning',
-  'dsh-zhiyun-settings-account',
+  'playback',
+  'page-today',
+  'page-study',
+  'page-quiz',
+  'page-planning',
+  // `dsh-zhiyun-settings-account` 已归档到 `archive/deprecated-packages/`
+  // （账号面板占位，从未装配）。**不要加回来** —— 加了会报
+  // `no package directory named "dsh-zhiyun-settings-account"`。
   // 图谱渲染层：「笔记」页 external import 它（整包移植自雷达候选 note-graph），
   // 所以它必须有自己的客户端产物 —— 否则外部化后运行时谁都提供不了这个模块。
-  'dsh-zhiyun-graph-render',
-  'dsh-zhiyun-page-notes',
-  'dsh-zhiyun-page-paper',
-  'dsh-zhiyun-page-plugins',
-  'dsh-zhiyun-page-feedback',
-  'dsh-zhiyun-page-docs',
+  //
+  // ⚠️ 这一列写**目录名**（`packageDir()` 按 basename 递归找），不是包名。
+  // 包已迁到 `packages/client/graph-render`，包名是
+  // `@lybx-leyw/dsh-zju-ui-graph-render` —— 但这里只能写目录短名。
+  'graph-render',
+  'page-notes',
+  // 目录名是 `page-paper`（住在 `packages/client/`），发布名才是
+  // `@lybx-leyw/dsh-zju-page-paper`。`CLIENT_PACKAGES` 是**目录 basename** 的键。
+  'page-paper',
+  'page-plugins',
+  'page-feedback',
+  'page-docs',
   // 课堂渲染层（L0 内核）：上游 `@openmaic/renderer` 的 vendor 封装。渲染树交给
   // esbuild 原样打包（motion / echarts / shiki / katex 内联，只有 react 三件套
   // external），所以它必须有自己的客户端产物 —— 播放页与构建页都 import 它。
-  'dsh-zhiyun-classroom-renderer',
+  //
+  // ⚠️ 这一列写的是**目录名**（`packageDir()` 按 basename 递归找），不是包名。
+  // 包已迁到 `packages/core/classroom-renderer`，包名变成
+  // `@lybx-leyw/dsh-zju-core-classroom-renderer` —— 但这里只能写目录短名。
+  'classroom-renderer',
 ];
 
 /**

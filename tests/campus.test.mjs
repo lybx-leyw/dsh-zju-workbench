@@ -1,5 +1,5 @@
 /**
- * 校园数据源（`dsh-zhiyun-source-campus`）：学在浙大待办 + 拼题A 题集。
+ * 校园数据源（`@lybx-leyw/dsh-zju-source-campus`）：学在浙大待办 + 拼题A 题集。
  *
  * 实现口径来自本仓的 Flutter 版（`zhiyun-pro` 的 `courses_todo_data_source.dart` /
  * `pta_data_source.dart` / `zjuam_client.dart`）。那些文件里写下的结论是踩出来的，
@@ -19,17 +19,17 @@ import {
   XzzdApi, buildCourseTodos, isPendingTodo, normalizeDeadline, hasXzzdSession,
   API_MY_SEMESTERS, API_MY_COURSES, courseApis, ONGOING_STATUS, COURSE_CONCURRENCY,
   diffTodos, API_TODOS,
-} from '../packages/dsh-zhiyun-source-campus/src/xzzd.js';
+} from '../packages/source/campus/src/xzzd.js';
 import {
   PtaApi, parsePtaCookie, yesterdayUtcMidnight, isPendingProblemSet,
-} from '../packages/dsh-zhiyun-source-campus/src/pta.js';
-import { normalizeXzzd, normalizePta } from '../packages/dsh-zhiyun-source-campus/src/index.js';
-import { Transport, AUTH_HOSTS } from '../packages/dsh-zhiyun-source-campus/src/cas/transport.js';
-import { SessionStore } from '../packages/dsh-zhiyun-source-campus/src/cas/session.js';
-import { xzzdLogin } from '../packages/dsh-zhiyun-source-campus/src/cas/login.js';
+} from '../packages/source/campus/src/pta.js';
+import { normalizeXzzd, normalizePta } from '../packages/source/campus/src/index.js';
+import { Transport, AUTH_HOSTS } from '@lybx-leyw/dsh-zju-source-http';
+import { SessionStore } from '@lybx-leyw/dsh-zju-source-http';
+import { xzzdLogin } from '../packages/source/campus/src/cas/login.js';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { CAMPUS_HOSTS } from '../packages/dsh-zhiyun-source-campus/src/hosts.js';
+import { CAMPUS_HOSTS } from '../packages/source/campus/src/hosts.js';
 
 /** 造一个已装 cookie 的 Transport，`fetch` 可注入。 */
 async function makeTransport(fetchImpl, cookies = [], hosts = CAMPUS_HOSTS) {
@@ -145,7 +145,7 @@ test('完整的登录链路：CAS 换票 → 带票访问业务页 → 拿到 se
   };
 
   const transport = new Transport({ fetch: fakeFetch, hosts: CAMPUS_HOSTS });
-  const { xzzdLogin } = await import('../packages/dsh-zhiyun-source-campus/src/cas/login.js');
+  const { xzzdLogin } = await import('../packages/source/campus/src/cas/login.js');
   await xzzdLogin(transport, { username: 'u', password: 'p' });
 
   assert.equal(await hasXzzdSession(transport), true, '登录后应该有 session cookie');
@@ -173,7 +173,7 @@ test('CAS 拒绝时回 AUTH_REJECTED，并如实转述站点给的原因', async
   };
 
   const transport = new Transport({ fetch: fakeFetch, hosts: CAMPUS_HOSTS });
-  const { xzzdLogin } = await import('../packages/dsh-zhiyun-source-campus/src/cas/login.js');
+  const { xzzdLogin } = await import('../packages/source/campus/src/cas/login.js');
   await assert.rejects(
     () => xzzdLogin(transport, { username: 'u', password: 'wrong' }),
     (error) => {
@@ -197,7 +197,7 @@ test('CAS 错误文案必须按元素取文本，不能把属性名当文案', a
   // 于是"文案"变成了 `errormsg" role="heading">`。
   // 再往上，调用方把所有 AUTH_REJECTED 一律说成"学号或密码不对" ——
   // 一次网络失败被报成了密码错，用户于是反复去改密码。
-  const { casErrorMessage, describeAuthFailure } = await import('../packages/dsh-zhiyun-source-campus/src/cas/login.js');
+  const { casErrorMessage, describeAuthFailure } = await import('../packages/source/campus/src/cas/login.js');
 
   const realPage = `<div class="login-middle"><form id="fm1" action="/cas/login" method="post">
       <div class="form-group">
@@ -309,7 +309,9 @@ test('一门课挂掉不拖垮其它课（单端 403 只丢那一类）', async 
     ['/activities', () => json({
       activities: [{
         id: 1, title: '该交的作业', published: true,
-        end_time: '2026-10-30T15:59:00+08:00',
+        // 截止时间按「现在 + 7 天」算：写死未来日期只是把过期时间往后推，
+        // 日子一到这两条又会无声地红（真发生过）。
+        end_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }],
     })],
     // exams 没权限 —— 只该丢这一类
@@ -334,7 +336,9 @@ test('homework/submission-status 返回 404 是"这门课没有作业"，不是�
     ['/activities', () => json({
       activities: [{
         id: 1, title: '该交的作业', published: true,
-        end_time: '2026-10-30T15:59:00+08:00',
+        // 截止时间按「现在 + 7 天」算：写死未来日期只是把过期时间往后推，
+        // 日子一到这两条又会无声地红（真发生过）。
+        end_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }],
     })],
     ['/exams', () => json({ exams: [] })],
@@ -555,7 +559,7 @@ test('模块加载时不能引用未导入的常量（PTA_BASE 曾漏导入）',
   //
   // 所以这里不测函数，而是**真的走一次拼题A 的读取路径**：
   // 只要那个常量没导入，这条路一定炸。
-  const module = await import('../packages/dsh-zhiyun-source-campus/src/index.js');
+  const module = await import('../packages/source/campus/src/index.js');
   assert.equal(typeof module.PTA_BASE, 'string', 'PTA_BASE 必须能作为值导出');
   assert.ok(module.PTA_BASE.startsWith('https://'), 'PTA_BASE 应是完整 URL');
 
@@ -567,7 +571,7 @@ test('模块加载时不能引用未导入的常量（PTA_BASE 曾漏导入）',
 test('拼题A 未配 Cookie 时报"需要粘贴"，不是笼统的失败', async () => {
   // 这条同时守住了 PTA_BASE 那条路径：它必须真的走到 `ptaTransport()` 里，
   // 才会暴露出常量缺失或 throw 位置错误。
-  const { apply } = await import('../packages/dsh-zhiyun-source-campus/src/index.js');
+  const { apply } = await import('../packages/source/campus/src/index.js');
   const services = {};
   const ctx = {
     profileContext: { dir: '.verify-campus' },

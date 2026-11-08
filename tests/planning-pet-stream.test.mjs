@@ -16,8 +16,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createStreamParser } from '../packages/dsh-zhiyun-page-planning/src/pet.js';
-import { createPetStream } from '../packages/dsh-zhiyun-page-planning/src/pet-stream.js';
+import { createStreamParser } from '../packages/client/page-planning/src/pet.js';
+import { createPetStream } from '../packages/client/page-planning/src/pet-stream.js';
 
 const F = '`'.repeat(3);
 

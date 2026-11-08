@@ -24,6 +24,7 @@ function node(tag) {
 /** 极小的选择器解释器：只认测试真正用到的那几种。 */
 function all(root, selector) {
   const out = [];
+  const roleMatch = /data-zju-rail-role="([^"]*)"/.exec(selector);
   const labelMatch = /aria-label="([^"]*)"/.exec(selector);
   const insideRail = selector.startsWith('[data-dsh-pages-rail]');
   const wantCell = selector.includes('data-dsh-pages-rail-icon');
@@ -31,7 +32,11 @@ function all(root, selector) {
   const walk = (element, inRail) => {
     for (const child of element.children) {
       const rail = inRail || child.attributes.has('data-dsh-pages-rail');
-      if (labelMatch !== null) {
+      // 标记优先：找到按钮后 install 会给它打 `data-zju-rail-role`，之后一律按标记定位，
+      // 语言切换不再影响。标签只用于首帧识别（见 rail-icons.js 的 ROLE_ATTR 说明）。
+      if (roleMatch !== null) {
+        if (rail && child.attributes.get('data-zju-rail-role') === roleMatch[1]) out.push(child);
+      } else if (labelMatch !== null) {
         if (rail && child.attributes.get('aria-label') === labelMatch[1]) out.push(child);
       } else if (wantMark) {
         if (child.attributes.has('data-zju-rail-art')) out.push(child);
@@ -118,4 +123,53 @@ test('artwork is filled in even when the rail renders after the plugin applies',
   undo();
   assert.equal(count(), 0);
   assert.equal(observers.every(observer => observer.disconnected), true, '卸载时断开观察');
+});
+
+test('切换界面语言后图标不丢：定位锚点从 aria-label 换成稳定标记', () => {
+  // 真机症状：英文模式下侧边栏 home 与页面管理两格**完全空白**。
+  // 原因：dsh-pages 用 ctx.locale.resolveText() 实时解析 aria-label，切换语言后
+  // 同一个按钮的标签变了；样式表是按 apply 那一刻的标签生成的，于是选择器失配 —
+  // 原生字形已被物理移除，新图形却没被认领。
+  // 修法：首次用（任一语言的）标签认出按钮，立刻打上 data-zju-rail-role=<id>，
+  // 之后 CSS 与 JS 都只认标记，与语言无关。
+  const { doc, body } = documentStub();
+  const undo = installRailIconArtwork(pages, doc);
+  renderRail(body);
+  doc.trigger();
+
+  const count = () => all(doc.documentElement, '[data-zju-rail-art]').length;
+  assert.equal(count(), 2, '中文下两格都有图形');
+
+  const buttons = all(doc.documentElement, '[data-dsh-pages-rail]');
+  const rail = buttons[0];
+  const labelled = () => rail.children.filter(child => child.attributes.has('aria-label'));
+
+  // 模拟切到英文：只有 aria-label 变，DOM 结构不变
+  const zhToEn = new Map([['工作台', 'DSH workbench'], ['页面管理', 'Pages']]);
+  for (const button of labelled()) {
+    const current = button.attributes.get('aria-label');
+    if (zhToEn.has(current)) button.attributes.set('aria-label', zhToEn.get(current));
+  }
+  doc.trigger();
+  assert.equal(count(), 2, '切到英文后图形必须仍在');
+
+  // 再模拟页面壳整体重渲染：字形 span 回来、我们的 svg 被换掉
+  for (const art of all(doc.documentElement, '[data-zju-rail-art]')) art.remove();
+  for (const button of labelled()) {
+    const cell = button.children.find(child => child.attributes.has('data-dsh-pages-rail-icon'));
+    if (cell === undefined) continue;
+    const span = node('span');
+    cell.append(span);
+  }
+  doc.trigger();
+  assert.equal(count(), 2, '英文下重渲染后仍要补回图形');
+
+  // CSS 里不能再出现 aria-label —— 那是语言相关的锚点，用回去就复发
+  const style = doc.head.children.find(child => child.dataset?.zjuRailIcons !== undefined);
+  assert.ok(style !== undefined);
+  assert.ok(!style.textContent.includes('aria-label'), '样式表不得以 aria-label 定位');
+  assert.ok(style.textContent.includes('data-zju-rail-role="home"'), '按稳定标记定位');
+
+  undo();
+  assert.equal(count(), 0);
 });

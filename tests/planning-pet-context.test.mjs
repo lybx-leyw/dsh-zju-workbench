@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPlanningFacts, answerScheduleStatus } from '../packages/dsh-zhiyun-page-planning/src/pet-context.js';
+import { buildPlanningFacts, answerScheduleStatus } from '../packages/client/page-planning/src/pet-context.js';
 
 const sources = Object.fromEntries(['xzzd', 'pta', 'local', 'plans'].map((key) => [key, { ok: true }]));
 const due = '2026-11-03T12:00:00+08:00';

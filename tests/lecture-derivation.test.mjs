@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { reviewDerivation, withDerivation } from '../packages/dsh-zhiyun-core-lecture/src/derivation.js';
-import { judgeWritten, REGISTER } from '../packages/dsh-zhiyun-core-lecture/src/register.js';
+import { reviewDerivation, withDerivation } from '../packages/core/lecture/src/derivation.js';
+import { judgeWritten, REGISTER } from '../packages/core/lecture/src/register.js';
 
 const skew = `于是合并后的势满足 Phi_{i+1} ≤ h + l1 + l2，而合并前的势为 Phi_i = h1 + h2 + h。由此得势的变化量 Phi_{i+1} - Phi_i ≤ l1 + l2 - h1 - h2。
 采用势函数 Phi_i = h_1 + h_2 + h。合并后势能满足 Phi_{i+1} ≤ l_1 + l_2 + h。从而得到 Phi_{i+1} - Phi_i ≤ 2(l_1 + l_2)。`;

@@ -137,7 +137,7 @@ const TREE = [
 const BOOTSTRAP = `
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { NotesLibrary } from "./packages/dsh-zhiyun-page-notes/src/client.jsx";
+import { NotesLibrary } from "./packages/client/page-notes/src/client.jsx";
 
 const TREE = ${JSON.stringify(TREE)};
 window.__fixtureCount = TREE.length;
@@ -196,11 +196,11 @@ async function bundle() {
   const outfile = path.join(dir, 'app.js');
   const { build } = await import('esbuild');
   const STUBS = {
-    'dsh-zhiyun-shell-ui': `import React from "react";
+    '@lybx-leyw/dsh-zju-ui-shared': `import React from "react";
       export const Icon = () => React.createElement("i");
       export const Notice = (p) => React.createElement("div", { className: "notice" }, p.children);
       export const mountStyle = () => {};`,
-    'dsh-zhiyun-graph-render': `export const NoteGraph = () => null; export const css = "";`,
+    '@lybx-leyw/dsh-zju-ui-graph-render': `export const NoteGraph = () => null; export const css = "";`,
     '@deepseek-ai/dsh-client-ui-primitives': `import React from "react";
       export const MarkdownText = (p) => React.createElement("div", { className: "md" }, p.text);`,
   };

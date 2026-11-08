@@ -25,9 +25,9 @@
  * 退出码：0 = 通过；1 = 断言失败（可直接放进 CI）
  */
 
-import { SessionStore } from 'dsh-zhiyun-source-campus/http';
-import { TokenStore } from '../packages/dsh-zhiyun-source-cc98/src/token.js';
-import { Cc98Client } from '../packages/dsh-zhiyun-source-cc98/src/client.js';
+import { SessionStore } from '@lybx-leyw/dsh-zju-source-http';
+import { TokenStore } from '../packages/source/cc98/src/token.js';
+import { Cc98Client } from '../packages/source/cc98/src/client.js';
 
 const CONCURRENCY = 3;
 

@@ -1,0 +1,41 @@
+{
+  "name": "@lybx-leyw/dsh-zju-core-study",
+  "version": "0.1.0",
+  "description": "智云 Pro 领域状态层：学习空间、学习控制器与 /api/zhiyun-study 后端（多页共用的唯一真源）",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-classroom-generate": "0.1.0",
+    "@lybx-leyw/dsh-zju-core-parser": "0.1.0",
+    "@lybx-leyw/dsh-zju-core-lecture": "0.1.0",
+    "@lybx-leyw/dsh-zju-core-quiz": "0.1.0",
+    "@lybx-leyw/dsh-zju-core-notes": "0.1.0",
+    "@lybx-leyw/dsh-zju-core-llm-error": "0.1.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-atomic-write": "0.2.2-rc.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-atomic-write": {
+      "optional": true
+    }
+  },
+  "license": "GPL-3.0-or-later"
+}

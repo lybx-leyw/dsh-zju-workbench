@@ -1,0 +1,67 @@
+name: Credential safety
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  credentials:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.19.0
+      - name: Install verified Gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o "$RUNNER_TEMP/gitleaks.tar.gz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/gitleaks-bin"
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP/gitleaks-bin" gitleaks
+          echo "$RUNNER_TEMP/gitleaks-bin" >> "$GITHUB_PATH"
+      - name: Reject private files and exposed credentials
+        run: node scripts/check-security.mjs
+      - name: Verify encryption and redaction failures are safe
+        run: node --test scripts/private-paths.test.mjs core/zju/tests/credential-storage.test.mjs core/zju/tests/redact.test.mjs
+
+  system-keyring:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.19.0
+          cache: npm
+          cache-dependency-path: core/zju/package-lock.json
+      - name: Install the platform keyring binding
+        run: npm ci --ignore-scripts --no-audit --no-fund --prefix core/zju
+      - name: Prepare an isolated macOS test keychain
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/campus-keyring-test.keychain-db"
+          password=$(openssl rand -base64 32)
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security default-keychain -d user -s "$keychain"
+      - name: Migrate and decrypt through the actual OS keyring
+        env:
+          CAMPUS_TEST_OS_KEYRING: '1'
+        run: node --test core/zju/tests/native-vault.test.mjs
+      - name: Remove the macOS test keychain
+        if: always() && runner.os == 'macOS'
+        shell: bash
+        run: security delete-keychain "$RUNNER_TEMP/campus-keyring-test.keychain-db"

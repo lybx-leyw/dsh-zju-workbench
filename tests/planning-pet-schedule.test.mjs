@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPetPrompt, normalizeReply, resolveScheduleReply, readPetResponse, createStreamParser, scheduleDraftItems } from '../packages/dsh-zhiyun-page-planning/src/pet.js';
+import { createPetPrompt, normalizeReply, resolveScheduleReply, readPetResponse, createStreamParser, scheduleDraftItems } from '../packages/client/page-planning/src/pet.js';
 
 const draft = { taskKey: 'local\u0000opaque', start: '2026-11-02T09:00:00+08:00', end: '2026-11-02T10:00:00+08:00' };
 const reply = (patch = {}) => ({ say: '执行时间草案，尚未保存。', action: 'schedule', draft: { ...draft, ...patch } });

@@ -6,7 +6,7 @@ npm run bench:quiz
 npm run bench:quiz -- --port 8801 --no-browser
 ```
 
-与 `scripts/knowledge_tree_bench` 同样采用本机页面、真实产品插件装配、完整 JSONL 日志与事后产物查看。调用的是 `dsh-zhiyun-core-quiz.apply()` 提供的 `generatePoints`，不在基准里实现另一套出题器。接口默认值、OpenAI 兼容流式传输和日志写入器与知识树基准共用。
+与 `scripts/knowledge_tree_bench` 同样采用本机页面、真实产品插件装配、完整 JSONL 日志与事后产物查看。调用的是 `@lybx-leyw/dsh-zju-core-quiz.apply()` 提供的 `generatePoints`，不在基准里实现另一套出题器。接口默认值、OpenAI 兼容流式传输和日志写入器与知识树基准共用。
 
 ## 资料
 

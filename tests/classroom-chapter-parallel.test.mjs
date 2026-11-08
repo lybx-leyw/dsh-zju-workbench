@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeBrief } from '../packages/dsh-zhiyun-core-classroom-generate/src/brief.js';
-import { produceChapters } from '../packages/dsh-zhiyun-core-classroom-generate/src/phases/chapters.js';
-import { runPipeline } from '../packages/dsh-zhiyun-core-classroom-generate/src/pipeline.js';
-import { createEventLog } from '../packages/dsh-zhiyun-core-classroom-generate/src/events.js';
-import { buildOutlinePrompt, buildScenePrompt } from '../packages/dsh-zhiyun-core-classroom-generate/src/prompts.js';
+import { normalizeBrief } from '../packages/core/classroom-generate/src/brief.js';
+import { produceChapters } from '../packages/core/classroom-generate/src/phases/chapters.js';
+import { runPipeline } from '../packages/core/classroom-generate/src/pipeline.js';
+import { createEventLog } from '../packages/core/classroom-generate/src/events.js';
+import { buildOutlinePrompt, buildScenePrompt } from '../packages/core/classroom-generate/src/prompts.js';
 
 const chapters = Array.from({ length: 6 }, (_, i) => ({ id: `c${i}`, title: `CH${i}`, sourceText: `FULL${i}`.repeat(3000), knowledgeTree: { node: `TREE${i}` } }));
 function fixture(extra = {}) {

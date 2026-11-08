@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 import {
   createLedger, recordUse, staleness, summarize, STALE_DAYS,
-} from '../packages/dsh-zhiyun-page-plugins/src/usage.js';
+} from '../packages/client/page-plugins/src/usage.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 

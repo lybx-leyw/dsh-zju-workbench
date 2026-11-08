@@ -1,0 +1,50 @@
+{
+  "name": "dsh-zju-assistant",
+  "version": "0.1.8",
+  "description": "ZJU All-in-One Assistant：浙大学生的一站式校园助手，装进 DeepSeek Harness。课表、作业、通知、学习页、日程表，和已授权的选课、预约、交作业",
+  "icon": "./icon.svg",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anchorite-no/dsh-zju-assistant.git",
+    "directory": "plugin/bundle"
+  },
+  "homepage": "https://github.com/Anchorite-no/dsh-zju-assistant#readme",
+  "bugs": {
+    "url": "https://github.com/Anchorite-no/dsh-zju-assistant/issues"
+  },
+  "author": "Anchorite",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "zju",
+    "zhejiang-university"
+  ],
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "detail.md",
+    "detail.en.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=24",
+    "dsh": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "dependencies": {
+    "dsh-zju-campus": "0.1.8"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

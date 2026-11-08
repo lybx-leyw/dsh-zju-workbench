@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 
 import {
   advanceBy, nextOccurrence, recallGenerated, setDone,
-} from '../packages/dsh-zhiyun-page-planning/src/local.js';
+} from '../packages/client/page-planning/src/local.js';
 
 const at = (iso) => Date.parse(iso);
 

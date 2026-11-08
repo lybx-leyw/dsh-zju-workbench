@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { supplementChapters, generateTeachingSupplement, buildSupplementPrompt } from '../packages/dsh-zhiyun-core-study/src/ai-teaching-supplement.js';
+import { supplementChapters, generateTeachingSupplement, buildSupplementPrompt } from '../packages/core/study/src/ai-teaching-supplement.js';
 
 const lecture = { chapters: Array.from({ length: 3 }, (_, i) => ({ title: `章${i + 1}`, topics: [{ title: '运动', blocks: [{ text: '沿场分量保持不变。绕行一周前进的距离等于速度乘周期。' }] }] })) };
 const baseSpeech = '这里已经概括讲了最重要的结论，但还没有解释推导。';

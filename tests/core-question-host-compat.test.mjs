@@ -14,8 +14,8 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { runDeepQuestion } from '../packages/dsh-zhiyun-core-question/src/index.js';
-import { normalizeUpstreamQuestion } from '../packages/dsh-zhiyun-core-study/src/deeptutor-quiz.js';
+import { runDeepQuestion } from '../packages/core/question/src/index.js';
+import { normalizeUpstreamQuestion } from '../packages/core/study/src/deeptutor-quiz.js';
 
 const lecture = {
   chapters: [{

@@ -16,9 +16,9 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { TickStore, tickKey } from '../packages/dsh-zhiyun-page-planning/src/ticks.js';
-import { normalizeTicks } from '../packages/dsh-zhiyun-page-planning/src/ticks.js';
-import { createHandler } from '../packages/dsh-zhiyun-page-planning/src/index.js';
+import { TickStore, tickKey } from '../packages/client/page-planning/src/ticks.js';
+import { normalizeTicks } from '../packages/client/page-planning/src/ticks.js';
+import { createHandler } from '../packages/client/page-planning/src/index.js';
 
 /* ────────────────────────────────────── 键的形状 */
 
@@ -519,7 +519,7 @@ test('plan-card-done 只回这张卡片，不回整份快照', async () => {
  * 的入口。这里把它钉成断言，防止以后有人顺手加一个写方法。
  */
 test('网关条目（entries）在结构上没有任何写入口', async () => {
-  const { LocalStore } = await import('../packages/dsh-zhiyun-page-planning/src/index.js');
+  const { LocalStore } = await import('../packages/client/page-planning/src/index.js');
   const store = new LocalStore(path.join(tmpdir(), `entries-${Math.random().toString(16).slice(2)}.json`));
 
   for (const banned of ['update', 'remove', 'delete', 'setDone', 'edit']) {
@@ -593,7 +593,7 @@ test('「今天到期」按「键在即勾」判：脏值不能让一条勾掉�
     await writeFile(file, JSON.stringify({
       ticks: { 'xzzd:1': false, 'xzzd:2': { doneAt: 1793000000 } },
     }), 'utf8');
-    const { dueFromSnapshot } = await import('../packages/dsh-zhiyun-page-today/src/due.js');
+    const { dueFromSnapshot } = await import('../packages/client/page-today/src/due.js');
     const now = Date.parse('2026-10-27T10:00:00+08:00');
     const due = dueFromSnapshot({
       local: [],

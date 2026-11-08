@@ -30,9 +30,9 @@
  *
  * ── 为什么本仓「真的缺」这两格（三条实证） ──────────────────────────────
  *
- *   1. `packages/dsh-zhiyun-source-xxt/src/parse.js:372`
+ *   1. `packages/source/xxt/src/parse.js:372`
  *      → `weeks: lesson.weeks ?? null`，**平台原样透传，形态未定**。
- *   2. `packages/dsh-zhiyun-source-zdbk/src/parse.js:297,343`
+ *   2. `packages/source/zdbk/src/parse.js:297,343`
  *      → `@property {'all'|'odd'|'even'} weeks`，**只有单双周，没有「第几到第几周」**。
  *   3. `packages/radar/dsh-radar-ics-rrule/src/index.js` README
  *      → 自述「本仓课表条目**没有周次 / 节次号**」，RRULE 因此只能保守退回逐条。

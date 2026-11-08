@@ -1,0 +1,11 @@
+node_modules/
+# `lib/` 在本仓**要入库**（上游原本排除它，因为上游只走 npm 发布）。
+#
+# 与 `packages/vendor/paper-reader` 同一约定：clone 本仓就必须能直接跑，
+# 不能要求谁先去 `npm install && npm run build`。缺产物的表现是
+# 「profile 启动报模块找不到」，而报错指不出「你需要先构建」。
+#
+# 重新生成：cd packages/vendor/dsh-pages && npm install && npm run build
+!lib/
+*.tgz
+.DS_Store

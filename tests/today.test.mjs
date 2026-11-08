@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { StudyWorkbench } from '../packages/dsh-zhiyun-core-study/src/workbench.js';
-import { createStudyController } from '../packages/dsh-zhiyun-core-study/src/model.js';
+import { StudyWorkbench } from '../packages/core/study/src/workbench.js';
+import { createStudyController } from '../packages/core/study/src/model.js';
 import { mountKnowledge } from './fixtures/study-storage.mjs';
-import { clock, projectAgenda } from '../packages/dsh-zhiyun-page-today/src/agenda.js';
-import { collectDue, dueFromSnapshot, shanghaiDay } from '../packages/dsh-zhiyun-page-today/src/due.js';
+import { clock, projectAgenda } from '../packages/client/page-today/src/agenda.js';
+import { collectDue, dueFromSnapshot, shanghaiDay } from '../packages/client/page-today/src/due.js';
 
 const eight = Date.parse('2026-10-14T00:00:00Z');
 const entry = (title, startMs, endMs) => ({

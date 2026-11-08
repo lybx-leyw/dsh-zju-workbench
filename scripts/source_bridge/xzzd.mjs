@@ -22,7 +22,7 @@ export async function run({ account, dataDir, card }) {
   // 让 campus 在这一轮把耗时剖析挂在结果上（只影响"记不记诊断数据"）
   process.env.ZHIYUN_PROFILE_TODOS = '1';
 
-  const { ctx, routes, services } = await mount('dsh-zhiyun-source-campus', {
+  const { ctx, routes, services } = await mount('@lybx-leyw/dsh-zju-source-campus', {
     dataDir,
     credentials: creds.service,
   });

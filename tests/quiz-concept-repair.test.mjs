@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {requestConcepts} from '../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {requestConcepts} from '../packages/core/quiz/src/concepts.js';
 const point={courseId:'c',subId:'s',title:'定义',text:'概率是随机事件发生可能性的度量。'};
 const valid=JSON.stringify({concepts:[{statement:point.text,blanks:[{text:'随机事件'}]}]});
 const request={stage:'quiz-rewrite',constant:'extract',variable:JSON.stringify({source:point.text})};

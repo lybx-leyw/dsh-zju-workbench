@@ -12,7 +12,7 @@
  *
  * # 做法
  *
- * 走产品自己的入口 —— `dsh-zhiyun-source-classroom` 的 `downloadSlides()`，
+ * 走产品自己的入口 —— `@lybx-leyw/dsh-zju-source-classroom` 的 `downloadSlides()`，
  * 它已封装好"登录 → 列出课件 → 按页下载 → 命名"的全套（含并发与大小限制）。
  * 基准只负责把结果落进 `data/`。
  *
@@ -74,7 +74,7 @@ async function main() {
   const workDir = path.join(DATA, '.session') + path.sep;
   await fs.mkdir(workDir, { recursive: true });
   await mountCampus({ dataDir: path.join(workDir, 'campus') + path.sep, credentials: creds.service });
-  const mounted = await mount('dsh-zhiyun-source-classroom', { dataDir: workDir, credentials: creds.service });
+  const mounted = await mount('@lybx-leyw/dsh-zju-source-classroom', { dataDir: workDir, credentials: creds.service });
   const classroom = serviceOf(mounted, 'zhiyunClassroom');
 
   console.log('登录智云课堂…');

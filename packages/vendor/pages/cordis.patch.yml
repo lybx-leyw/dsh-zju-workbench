@@ -1,0 +1,14 @@
+# dsh bundle patch: insert the pages plugin.
+#
+# Optional configuration overrides for this entry:
+#
+#   config:
+#     homePage: home          # reveals the existing native workbench
+#     managerPage: pages      # built-in page manager
+#     pageSlot: page.content  # owned keyed content slot; must start with page.
+#
+# The shell starts on homePage. Navigation width and page arrangement are
+# managed in the page manager and stored as browser-local preferences.
+- insert:
+    - id: dsh-pages
+      name: "@lybx-leyw/dsh-pages"

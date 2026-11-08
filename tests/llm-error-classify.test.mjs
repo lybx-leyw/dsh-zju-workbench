@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import {
   ACTION, FAILURE, PLAYBOOK, STATUS_OF_FAILURE,
   classifyError, classifyClientFailure, shouldRetry, shouldThrottle,
-} from '../packages/dsh-zhiyun-core-llm-error/src/index.js';
+} from '../packages/core/llm-error/src/index.js';
 
 /** 断言助手：一个失败面 + 它应有的动作。 */
 const expect = (input, failure, action) => {

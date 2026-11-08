@@ -1,5 +1,5 @@
 import {labCall as r1Call,parse} from '../experimental/policy.mjs';
-import {contentHash} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {contentHash} from '../../../packages/core/quiz/src/concepts.js';
 export {parse};
 export function blindQuestion(row){
  const choices=row.choices??[],linked=choices.some(c=>/(?:选项\s*[A-D]|[A-D]项|[A-D]\s*[和与、]\s*[A-D])/u.test(c.text));

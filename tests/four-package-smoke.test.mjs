@@ -8,9 +8,9 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { runLabeledStep } from '../packages/dsh-zhiyun-core-question-stream/src/index.js';
-import { createToolRegistry, runAgenticLoop } from '../packages/dsh-zhiyun-core-tool/src/index.js';
-import { createLectureTools, lectureToolSchemas } from '../packages/dsh-zhiyun-core-lecture-tools/src/index.js';
+import { runLabeledStep } from '../packages/core/question-stream/src/index.js';
+import { createToolRegistry, runAgenticLoop } from '../packages/core/tool/src/index.js';
+import { createLectureTools, lectureToolSchemas } from '../packages/core/lecture-tools/src/index.js';
 
 /** 最小讲义：两节，够 read_source / kb_files 用。 */
 const lecture = {

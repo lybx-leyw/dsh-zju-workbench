@@ -26,13 +26,13 @@ const count = Number(countArg ?? 3);
 const root = process.cwd();
 const load = rel => import(pathToFileURL(path.join(root, rel)).href);
 
-const { runDeepQuestion } = await load('packages/dsh-zhiyun-core-question/src/index.js');
-const { createLlmClient } = await load('packages/dsh-zhiyun-core-llm/src/index.js');
-const { wireLabelClassifier } = await load('packages/dsh-zhiyun-core-llm/src/index.js');
-const { bindLabelClassifier } = await load('packages/dsh-zhiyun-core-tool/src/loop.js');
-const { createLectureTools } = await load('packages/dsh-zhiyun-core-lecture-tools/src/index.js');
-const { createToolRegistry } = await load('packages/dsh-zhiyun-core-tool/src/index.js');
-const { nativeQuizContract } = await load('packages/dsh-zhiyun-core-study/src/deeptutor-quiz.js');
+const { runDeepQuestion } = await load('packages/core/question/src/index.js');
+const { createLlmClient } = await load('archive/deprecated-packages/dsh-zhiyun-core-llm/src/index.js');
+const { wireLabelClassifier } = await load('archive/deprecated-packages/dsh-zhiyun-core-llm/src/index.js');
+const { bindLabelClassifier } = await load('packages/core/tool/src/loop.js');
+const { createLectureTools } = await load('packages/core/lecture-tools/src/index.js');
+const { createToolRegistry } = await load('packages/core/tool/src/index.js');
+const { nativeQuizContract } = await load('packages/core/study/src/deeptutor-quiz.js');
 
 // 标签识别统一到 core-llm 那一份，避免两份实现漂移导致协议死循环
 wireLabelClassifier(bindLabelClassifier);

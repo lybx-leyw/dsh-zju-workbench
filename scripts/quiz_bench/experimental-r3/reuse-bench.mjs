@@ -7,7 +7,7 @@ import {prepareCase} from './compare.mjs';
 import {compileIdeas,createScheduler,createQuestionGenerator,createCapsuleStore,projectTeachingBooks,reserveWithExpansion,openState,walkTree,createToolTransport} from './index.mjs';
 import {deepTutorBenchHost} from '../deeptutor-host.mjs';
 import {tokenLedger,timingLedger} from '../accounting.mjs';
-import {WorkerPoolLlm} from '../../../packages/dsh-zhiyun-core-parser/src/worker-pool.js';
+import {WorkerPoolLlm} from '../../../packages/core/parser/src/worker-pool.js';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 async function kernels(){const out={};for(const dir of ['experimental','experimental-r3'])for(const f of await fs.readdir('scripts/quiz_bench/'+dir))if(f.endsWith('.mjs'))out[dir+'/'+f]=hash(await fs.readFile('scripts/quiz_bench/'+dir+'/'+f));return out;}
 export async function runReuseBench({spec,out,credentials}){

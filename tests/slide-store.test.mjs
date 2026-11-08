@@ -19,8 +19,8 @@ import {
   isCacheKey,
   isSlideFileName,
   SLIDE_ROUTE_PREFIX,
-} from '../packages/dsh-zhiyun-source-classroom/src/slide-store.js';
-import { cacheKeyForSlide, slideFileName } from '../packages/dsh-zhiyun-source-classroom/src/slide-cache.js';
+} from '../packages/source/classroom/src/slide-store.js';
+import { cacheKeyForSlide, slideFileName } from '../packages/source/classroom/src/slide-cache.js';
 
 const IMG = 'https://video.cmc.zju.edu.cn/c/1/slides/0001.jpg';
 

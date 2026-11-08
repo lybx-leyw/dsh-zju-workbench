@@ -122,8 +122,11 @@ test('树摘要按路径排序、对内容敏感、忽略运行期产物', () =>
 });
 
 test('锁文件里的树摘要与本地快照互相印证（离线，不需要网络）', (t) => {
+  // `dsh-zhiyun-host-deeptutor` 已归档 → 锁文件跟着搬到 archive。
+  // 这里仍然读它：锁文件的摘要校验是「归档快照没被篡改」的判据，
+  // 与包是否装配无关。路径改指归档区，断言内容一字不动。
   const lock = JSON.parse(
-    readFileSync(new URL('../packages/dsh-zhiyun-host-deeptutor/upstream.lock.json', import.meta.url), 'utf8'),
+    readFileSync(new URL('../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/upstream.lock.json', import.meta.url), 'utf8'),
   );
   const tree = lock.upstream?.archive?.tree;
   assert.ok(tree, 'upstream.lock.json 应记录 archive.tree');

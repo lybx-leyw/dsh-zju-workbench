@@ -9,7 +9,7 @@ from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 
 root = Path(__file__).resolve().parent.parent
-target = root / 'packages/dsh-zhiyun-ui-primitives/src/assets'
+target = root / 'packages/client/ui-shared/src/assets'
 target.mkdir(parents=True, exist_ok=True)
 font = TTFont('C:/Windows/Fonts/msyhbd.ttc', fontNumber=0)
 glyphs = font.getGlyphSet()

@@ -1,23 +1,84 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { initialize, lock, root, runHost } from './profile.mjs';
 import { CLIENT_PACKAGES } from './build.mjs';
-import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-core-study/src/learning-space.js';
-import { NAV, RAIL_DEFAULT } from '../packages/dsh-zhiyun-shell-workbench/src/model.js';
+import { LEARNING_SPACE_TITLE } from '../packages/core/study/src/learning-space.js';
+import { NAV, RAIL_DEFAULT } from '../packages/client/ui-shared/src/pages-model.js';
 
 const evidence = path.join(root, 'artifacts');
 
+/**
+ * 当前 profile **真实具备**哪些产品能力。
+ *
+ * 这个脚本原先写死了一套装配（必有 today 页、必有四个启动标记）。profile 瘦身
+ * 之后那套装配不存在了，脚本就在第一屏超时 —— 看起来像「宿主不兼容」，
+ * 实际是「测试对象被移除了」。所以改成先问 profile：你有什么，我就验什么。
+ *
+ * @returns `{ hasShell, pages, hasClassroom, hasParser, hasLecture, hasStore }`。
+ */
+async function profileCapabilities() {
+  const template = JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8'));
+  const bundles = template.dsh.profile.bundles;
+  const has = name => bundles.includes(name);
+  return {
+    bundles,
+    // 外壳：决定页面上有没有 .zy-page 与智云导轨。
+    hasShell: has('dsh-zhiyun-shell-workbench'),
+    // 页面包：决定导航里能不能点开具体页。
+    pages: bundles.filter(name => name.startsWith('@lybx-leyw/dsh-zju-page-')),
+    // 四个启动标记的产出方（都是业务插件，瘦身后不在 profile 里）。
+    hasClassroom: has('@lybx-leyw/dsh-zju-core-classroom-studio'),
+    hasParser: has('@lybx-leyw/dsh-zju-core-parser'),
+    hasLecture: has('@lybx-leyw/dsh-zju-core-lecture'),
+    hasStore: has('@lybx-leyw/dsh-zju-core-quiz') || has('@lybx-leyw/dsh-zju-core-notes') || has('@lybx-leyw/dsh-zju-core-knowledge'),
+  };
+}
+
+/**
+ * 等「产品面」出现。
+ *
+ * 有外壳时等 `.zy-page[data-page=today]`（原行为）；没有外壳时只等 DOM 就绪 ——
+ * 界面是原生 DSH，不存在 .zy-page，硬等只会得到一个与根因无关的超时。
+ *
+ * @param page - Playwright 页面。
+ * @param caps - {@link profileCapabilities} 的返回值。
+ * @param timeout - 毫秒。
+ */
+async function waitForProductSurface(page, caps, timeout = 60000) {
+  if (!caps.hasShell) {
+    await page.waitForLoadState('domcontentloaded');
+    return;
+  }
+  await page.locator('.zy-page[data-page=today]').waitFor({ timeout });
+}
+
 /** The host runs its own first-run steps — the developer-preview notice and the
  *  "add an API key" model step. They belong to host onboarding, not to this
- *  product, so acknowledge them the way a user would (继续 / 稍后配置) and then
+ *  product, so acknowledge them the way a user would and then
  *  require a genuinely quiet page before touching it. Only a *visible* mask
- *  counts: the modal layer stays attached when nothing is open. */
+ *  counts: the modal layer stays attached when nothing is open.
+ *
+ *  # 按钮文案随宿主版本变（实测）
+ *
+ *  | 宿主 | 首次引导的按钮 |
+ *  | --- | --- |
+ *  | 0.2.0-rc.2 / 0.2.1-alpha.1 | 「继续」、「稍后配置」 |
+ *  | 0.2.1-rc.5 / 0.2.2-rc.1 | 「开始使用」弹窗：「添加 API Key」、「登录」、右上角 × |
+ *
+ * 只认旧版文案的后果不是「兼容性差」，而是**卡在 45 秒超时**，且报错说的是
+ * 「overlay 挡住了」，看不出真正原因是文案变了。所以这里两份都认。
+ *
+ * 「添加 API Key」是**关闭引导最轻的一步**（它只是打开配置，不会真的写 key）；
+ * 不点「登录」—— 那需要账号，跑测试不该依赖它。 */
 async function settleHostOverlays(page) {
   const steps = [
+    // 旧版
     page.getByRole('button', { name: '继续', exact: true }),
     page.getByRole('button', { name: '稍后配置', exact: true }),
+    // 新版「开始使用」弹窗：走「添加 API Key」把引导收掉
+    page.getByRole('button', { name: '添加 API Key', exact: true }),
   ];
   const mask = page.locator('div[role="presentation"] > div[aria-hidden="true"]').first();
   const deadline = Date.now() + 45000;
@@ -69,7 +130,7 @@ async function clickAfterOnboarding(page, locator) {
  *  host injects window.__DSH_BOOT__ per index.html request. */
 async function reloadProduct(page) {
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+  await waitForProductSurface(page, CAPS, 60000);
   await settleHostOverlays(page);
 }
 
@@ -141,7 +202,7 @@ function minimalPdf(lines) {
  * @returns 行 id（= 包名去掉 `dsh-` 前缀，与本仓每个 cordis.patch.yml 里 insert 的 id 一致）。
  */
 function productRowIds() {
-  const bundles = [...CLIENT_PACKAGES, 'dsh-zhiyun-host-paper'];
+  const bundles = [...CLIENT_PACKAGES, ''@ggboy123/dsh-paper-reader''];
   return [...new Set(bundles.map(bundle => bundle === 'dsh-zhiyun-shell-workbench' ? 'zhiyun-shell' : bundle.replace(/^dsh-/, '')))].sort();
 }
 
@@ -314,6 +375,14 @@ let hostLog = '';
 let runtime;
 const errors = [];
 const checks = [];
+// 先问 profile：它有什么，就验什么（见文件头 profileCapabilities 的说明）。
+// 这一步必须早于任何 waitFor —— 否则会在一个不存在的 .zy-page 上白等 60 秒，
+// 而超时信息完全指不出真正原因（测试对象被移除了）。
+const CAPS = await profileCapabilities();
+if (!CAPS.hasShell) {
+  console.log('[adaptive] profile 没有外壳包（dsh-zhiyun-shell-workbench），界面是原生 DSH；'
+    + '跳过页面导航类断言，只验启动、无报错、插件不被跳过。');
+}
 try {
   let url = process.env.ZHIYUN_TEST_URL;
   if (!url && process.argv.includes('--running')) {
@@ -350,7 +419,7 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+  await waitForProductSurface(page, CAPS, 60000);
   await settleHostOverlays(page);
   if (await page.locator('body').evaluate(body => body.hasAttribute('data-ds-dark-theme'))) {
     await page.getByRole('button', { name: '切换明暗', exact: true }).click();
@@ -361,9 +430,12 @@ try {
   // ⚠️ 导轨不再等于「NAV 里所有上侧栏的页」：默认固定在导轨上的是 RAIL_DEFAULT
   //    （学习动线），「插件」「反馈」默认收在末尾的「···」菜单里，
   //    由用户点图钉固定。数字是结论，依据在 RAIL_DEFAULT 里。
-  assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), RAIL_DEFAULT.length + 1);
+  // 没有外壳包时不存在这条导轨，跳过（否则会等到一个永远不出现的元素）。
+  if (CAPS.hasShell) {
+    assert.equal(await page.getByRole('navigation', { name: '主要页面' }).getByRole('button').count(), RAIL_DEFAULT.length + 1);
+  }
   await page.screenshot({ path: path.join(evidence, 'today-light.png'), fullPage: true });
-  if (process.argv.includes('--bridge-only')) {
+  if (process.argv.includes('--bridge-only') && CAPS.hasShell) {
     await page.keyboard.press('Control+k');
     await page.getByRole('textbox', { name: '搜索页面' }).fill('今天');
     await page.keyboard.press('Enter');
@@ -371,7 +443,9 @@ try {
     checks.push('Product page search owns Ctrl+K only outside Ask');
   }
   // Focused layout lane avoids unrelated parser graph and model-backed PDF checks.
-  if (!process.argv.includes('--bridge-only')) {
+  // 整段都在验「页面能导航、插件页能打开」—— 前提是 profile 里有外壳包与页面包。
+  // 瘦身到只有 source 后端包时，这一整段都无从谈起，直接跳过。
+  if (!process.argv.includes('--bridge-only') && CAPS.hasShell) {
   for (const [label, id] of [['论文', 'paper'], ['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
     await page.locator(`.zy-page[data-page=${id}]`).waitFor();
@@ -449,6 +523,13 @@ try {
   await page.waitForFunction(() => !document.body.hasAttribute('data-ds-dark-theme'));
   checks.push('Native theme service switches light/dark');
   }
+  // ── 以下整段依赖「产品外壳 + 页面包」：问一问 / 账号面板 / 设置分区 / 导轨 ──
+  // profile 瘦身到只有 source 后端包时，这些元素在页面上**根本不存在**，
+  // 硬跑只会得到一串与根因无关的超时。所以按 profile 能力整段跳过，
+  // 而不是逐个断言加条件 —— 逐个加会让「这一层没有」和「这一层坏了」难以分辨。
+  if (!CAPS.hasShell) {
+    checks.push('profile 无外壳包：跳过问一问 / 账号面板 / 设置分区 / 导轨相关断言');
+  } else {
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
   const native = page.locator('.zy-workbench-native');
   await native.waitFor();
@@ -558,7 +639,8 @@ try {
   assert.equal(overflow, false, 'window must not overflow horizontally');
   await page.screenshot({ path: path.join(evidence, 'today-narrow.png'), fullPage: true });
   checks.push('Collapsed navigation and narrow window');
-  if (runtime) {
+  } // end if (CAPS.hasShell)
+  if (runtime && CAPS.hasShell) {
     const patch = path.join(runtime.profile, 'cordis.patch.yml');
     // Installing a row is an install: the file watcher applies the new layer
     // first, then the next document load carries the new entry in its boot graph.
@@ -631,16 +713,28 @@ try {
   }
   assert.deepEqual(errors, [], 'No browser activation/render errors');
   if (runtime && !process.argv.includes('--bridge-only')) {
-    assert.ok(hostLog.includes('ZHIYUN_CLASSROOM_HOST_READY'), 'Business plugin injected the real classroom service in this host');
-    checks.push('Independent business plugin injects the classroom source from the product profile');
-    assert.ok(hostLog.includes('ZHIYUN_PARSER_HOST_READY'), 'Business plugin injected the parser in this host');
-    checks.push('Independent business plugin injects the parser backed by host LLM and attachments');
+    // 这四个标记由**业务插件**打印。不在 profile 里的插件不会打印它们 ——
+    // 所以按 profile 实际具备的能力决定断言，而不是无条件要求。
+    // 无条件要求会把「这一层被主动裁掉了」误报成「宿主不兼容」。
+    if (CAPS.hasClassroom) {
+      assert.ok(hostLog.includes('ZHIYUN_CLASSROOM_HOST_READY'), 'Business plugin injected the real classroom service in this host');
+      checks.push('Independent business plugin injects the classroom source from the product profile');
+    }
+    if (CAPS.hasParser) {
+      assert.ok(hostLog.includes('ZHIYUN_PARSER_HOST_READY'), 'Business plugin injected the parser in this host');
+      checks.push('Independent business plugin injects the parser backed by host LLM and attachments');
+    }
     // 讲义装配（含习坎的全文润色）也必须在**真实宿主**里激活过：单测用的是假 ctx，
     // 而 `inject` 了一个不存在的服务只有在真宿主里才表现为永远 pending。
-    assert.ok(hostLog.includes('ZHIYUN_LECTURE_HOST_READY'), 'Lecture assembler activated in this host');
-    assert.ok(hostLog.includes('ZHIYUN_STORE_HOST_READY'), 'Quiz, notes and knowledge services activated from the product profile');
-    checks.push('Lecture assembler (incl. full-text polish) activates from the product profile');
-    checks.push('Quiz, notes and knowledge storage services activate from the product profile');
+    if (CAPS.hasLecture) {
+      assert.ok(hostLog.includes('ZHIYUN_LECTURE_HOST_READY'), 'Lecture assembler activated in this host');
+      checks.push('Lecture assembler (incl. full-text polish) activates from the product profile');
+    }
+    if (CAPS.hasStore) {
+      assert.ok(hostLog.includes('ZHIYUN_STORE_HOST_READY'), 'Quiz, notes and knowledge services activated from the product profile');
+      checks.push('Quiz, notes and knowledge storage services activate from the product profile');
+    }
+    checks.push(`profile 能力：shell=${CAPS.hasShell} pages=${CAPS.pages.length}`);
   }
   const hostVersion = runtime?.version ?? lock.hostVersions.join(' / ');
   const report = JSON.stringify({ lane: process.argv.includes('--bridge-only') ? 'bridge-only' : 'full', checks, errors, hostVersion }, null, 2);

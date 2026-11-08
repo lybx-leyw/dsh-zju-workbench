@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { runPipeline, SharedQueue } from '../packages/dsh-zhiyun-core-parser/src/pipeline.js';
+import { runPipeline, SharedQueue } from '../packages/core/parser/src/pipeline.js';
 
 test('【缺陷 6】唯一消费者抛错时，流水线必须收场而不是永久等待', async () => {
   const unhandled = [];

@@ -11,7 +11,7 @@
  *   → 被 generate() 的 catch 吞成 `DeepSeek Messages transport failed`(TRANSPORT)
  *
  * 所以错误信息看似网络故障，真因是消息格式。仓库里正确的写法在
- * `packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/tools.mjs:66`：
+ * `packages/core/quiz/src/engines/r3-v9/tools.mjs:66`：
  *   `const blocks = text => [{type:'text', text}]`
  *
  * 用法：node tests/message-format.test.mjs
@@ -21,7 +21,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BACKEND = 'packages/dsh-zhiyun-core-study/src/core-question-backend.js';
+const BACKEND = 'packages/core/study/src/core-question-backend.js';
 const source = fs.readFileSync(path.resolve(BACKEND), 'utf8');
 
 /** 从源码里把 toHostMessages 抽出来独立跑（它没依赖外部符号）。 */

@@ -1,0 +1,29 @@
+{
+  "name": "@lybx-leyw/dsh-zju-page-quiz",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "题库页：跨课程按知识点出题、练习与历史题目管理。",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "@lybx-leyw/dsh-zju-ui-shared",
+        "@lybx-leyw/dsh-zju-core-quiz"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-quiz": "0.1.0"
+  },
+  "license": "GPL-3.0-or-later"
+}

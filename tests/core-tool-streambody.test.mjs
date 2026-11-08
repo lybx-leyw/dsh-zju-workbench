@@ -13,7 +13,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { runAgenticLoop } from '../packages/dsh-zhiyun-core-tool/src/loop.js';
+import { runAgenticLoop } from '../packages/core/tool/src/loop.js';
 
 const protocol = {
   allowed: new Set(['FINISH', 'TOOL', 'THINK']),

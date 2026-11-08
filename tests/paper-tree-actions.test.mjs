@@ -22,6 +22,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
+import { assertBundleFresh } from './helpers/bundle-fresh.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -44,21 +45,10 @@ async function launchBrowser() {
  * ⚠️ 真机测试跑的是宿主加载的 `lib/client.js`。改了源码没重建时，测试会测旧产物
  * 并给出**假绿灯**（本轮踩过）。这条守卫把它变成明确的失败。
  */
-function assertBundleFresh(packageName, sourceFiles) {
-  const bundle = path.join(root, 'packages', packageName, 'lib', 'client.js');
-  assert.ok(existsSync(bundle), `${packageName} 没有构建产物，先跑 npm run build`);
-  const bundleAt = statSync(bundle).mtimeMs;
-  for (const rel of sourceFiles) {
-    const file = path.join(root, 'packages', packageName, 'src', rel);
-    if (!existsSync(file)) continue;
-    assert.ok(bundleAt >= statSync(file).mtimeMs,
-      `${packageName}/src/${rel} 比构建产物新 —— 产物是旧的，这段测试会假通过。先跑 npm run build`);
-  }
-}
 
-test('论文树：新建/上传的链路在栏头，不在页头', { timeout: 180000 }, async (t) => {
+test('论文树：新建/上传的链路在栏头，不在页头', { skip: "旧界面（shell-workbench + page-paper 的 .zy-page/.zp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
   // 守卫放最前：产物过期时立刻失败，不用先花 20 秒起浏览器。
-  assertBundleFresh('dsh-zhiyun-page-paper', ['Paper.jsx', 'PaperTree.jsx', 'style.css', 'client.jsx']);
+  await assertBundleFresh('@lybx-leyw/dsh-zju-page-paper', ['Paper.jsx', 'PaperTree.jsx', 'style.css', 'client.jsx']);
 
   const browser = await launchBrowser();
   if (browser === null) {

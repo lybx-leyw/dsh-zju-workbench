@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { StudyWorkbench } from '../packages/dsh-zhiyun-core-study/src/workbench.js';
-import { briefFromLecture } from '../packages/dsh-zhiyun-core-study/src/ai-teaching-generate.js';
-import { createGenerateService } from '../packages/dsh-zhiyun-core-classroom-generate/src/index.js';
+import { StudyWorkbench } from '../packages/core/study/src/workbench.js';
+import { briefFromLecture } from '../packages/core/study/src/ai-teaching-generate.js';
+import { createGenerateService } from '../packages/core/classroom-generate/src/index.js';
 
 const deck = { slides: [{ title: '从条件到结论', points: ['先检查条件'], summary: '条件决定结论', visualHtml: '<svg viewBox="0 0 800 560"><text x="80" y="200" font-size="32">条件 → 结论</text></svg>', formulas: [{ html: '<math><mi>P</mi></math>', label: '起点' }], explanation: '这一段完整讲解位于画布之外，公式逐步显示不会隐藏它。' }] };
 

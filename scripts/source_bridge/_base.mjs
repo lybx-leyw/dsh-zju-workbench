@@ -14,7 +14,7 @@
  *
  * # 装配顺序是有讲究的
  *
- * 必须**先** `apply()` `dsh-zhiyun-source-campus`：它 `provide('zhiyunEgress')`，
+ * 必须**先** `apply()` `@lybx-leyw/dsh-zju-source-campus`：它 `provide('zhiyunEgress')`，
  * 其余包经 `sharedFetch(ctx)` → `ctx.get('zhiyunEgress')` 才拿得到共享出口。
  * 顺序反了不会报错，只会静默退化成 `globalThis.fetch`（走宿主给 LLM 配的
  * 全局代理，国内站点基本必失败）。
@@ -223,7 +223,7 @@ export async function mount(name, { dataDir, fetchImpl = globalThis.fetch, crede
  * @returns 装配结果。
  */
 export async function mountCampus({ dataDir, credentials, fetchImpl = globalThis.fetch }) {
-  return mount('dsh-zhiyun-source-campus', { dataDir, credentials, fetchImpl });
+  return mount('@lybx-leyw/dsh-zju-source-campus', { dataDir, credentials, fetchImpl });
 }
 
 /**

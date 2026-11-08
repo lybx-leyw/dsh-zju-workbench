@@ -1,7 +1,7 @@
-import {contentHash,serial} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/common.mjs';
-import {atPath,walkTree} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/tree.mjs';
-import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
-import {normalizedText} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {contentHash,serial} from '../../../packages/core/quiz/src/engines/r3-v9/common.mjs';
+import {atPath,walkTree} from '../../../packages/core/quiz/src/engines/r3-v9/tree.mjs';
+import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/core/quiz/src/strategies.js';
+import {normalizedText} from '../../../packages/core/quiz/src/concepts.js';
 import {validateParameters,parameterIdentity} from './item-model.mjs';
 
 const resultBranch=node=>({nodeId:node.nodeId,title:node.title,questions:[],children:node.children.map(resultBranch)});

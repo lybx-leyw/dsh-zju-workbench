@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createStudyController } from '../packages/dsh-zhiyun-core-study/src/model.js';
+import { createStudyController } from '../packages/core/study/src/model.js';
 
 const course = { id: '7', title: 'Course' };
 const lesson = { id: '20', subId: '20', title: 'Lesson' };

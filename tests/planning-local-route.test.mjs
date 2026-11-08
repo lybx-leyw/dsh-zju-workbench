@@ -20,7 +20,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { LocalPlanStore, createHandler } from '../packages/dsh-zhiyun-page-planning/src/index.js';
+import { LocalPlanStore, createHandler } from '../packages/client/page-planning/src/index.js';
 
 /** 起一个真实 handler，本地规划落临时目录。 */
 async function harness(options = {}) {

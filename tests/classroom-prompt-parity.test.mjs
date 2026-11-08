@@ -11,8 +11,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildOutlinePrompt, buildScenePrompt } from '../packages/dsh-zhiyun-core-classroom-generate/src/prompts.js';
-import { normalizeOutline, parseSceneResponse } from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
+import { buildOutlinePrompt, buildScenePrompt } from '../packages/core/classroom-generate/src/prompts.js';
+import { normalizeOutline, parseSceneResponse } from '../packages/core/classroom-generate/src/scene.js';
 
 const brief = {
   requirement: '讲一下二叉搜索树',

@@ -14,6 +14,32 @@
  * 分组的数量由页面壳决定（固定三组），用 `grid-template-columns: repeat(3, ...)` 让它们
  * 铺满整行；窄屏逐级退成两列、一列。
  *
+ * # 高度归谁管：从视口倒推 → 由布局分配
+ *
+ * 第一版给分组卡写的是 `max-height:calc(100vh - 340px)`。那个 340 是量出来的经验值
+ * （页头 + 两条设置条 + 间距 + 页面内边距），它有三个逃不掉的毛病：
+ *
+ *   - 设置条换行、字号变化、窗口变矮，340 就不再成立，卡片要么溢出要么提前截断；
+ *   - 卡片各自贴顶（`align-items:start`），三列高度互不相干，第三列只有一行时页面
+ *     底部会留一整块空洞（1600×907 下实测空 365px）；
+ *   - 滚动条挂在整张卡上，连标题一起滚，且「页面还有空位时就先出滚动条」。
+ *
+ * 现在的做法是**不再猜高度**：页面壳的 `[data-dsh-pages-content]` 本身就是
+ * `flex:1; min-height:0; overflow:auto` 的纵向 flex 容器，所以本页作为它的 flex 项
+ * `flex:1 1 auto; min-height:0` 就正好占满，不需要任何视口算式。再把剩余高度交给
+ * 网格的第三行（`grid-template-rows:auto auto minmax(132px,1fr)`），三列
+ * `align-items:stretch` 等高，滚动下沉到各列的 `ul`。于是：
+ *
+ *   - 窗口多高、字号多大，版面都自动贴合，没有魔法数；
+ *   - 底部组只有 1 项时，它和另外两列**同高**，空白留在卡内（可控留白），不在页面右侧；
+ *   - 只有条目列表滚动，分组标题始终可见；`scrollbar-gutter:stable` 让滚动条出现/消失
+ *     时条目不横向跳动。
+ *
+ * 第三行设成填充行**依赖设条确实是两条**（页面壳在 `setRailPosition` / `setRailWidth`
+ * 两个 action 都在时才渲染它们，见 lib/client.js 的 PageManager）。所以那个
+ * `grid-template-rows` 写在一条结构性 `:has()` 后面：DOM 形状一变（少一条设置条、
+ * 多一个兄弟），规则自动不生效，退回「内容高度」—— 宁可少填一块，也不凭空多出一整行空白。
+ *
  * # 为什么是外挂 CSS
  *
  * 页面壳是锁版本的 npm 依赖（`0.1.3`），源码在 `node_modules` 里，改它下次安装就丢。
@@ -68,14 +94,28 @@ export const MANAGER_CSS = `
   width:100%;
   max-width:1560px;
   margin:0 auto;
-  padding:clamp(20px,2.4vw,32px) clamp(20px,2.4vw,32px) 48px;
+  padding:clamp(20px,2.4vw,32px) clamp(20px,2.4vw,32px) 32px;
   line-height:1.55;
-  align-items:start;
+  /* 三列**等高**：默认 stretch 让项少的列也填满行高，空白留在卡内而不是页面右侧 */
+  align-items:stretch;
   overflow-wrap:anywhere;
+  /* 本页是页面壳 [data-dsh-pages-content]（flex column, flex:1）的子项：
+     吃满剩余高度，高度由布局分配，不用任何视口算式（原因见文件头「高度归谁管」）。 */
+  flex:1 1 auto;
+  min-height:0;
 }
 :root [data-pages-manager] *{
   box-sizing:border-box;
   min-width:0;
+}
+/* 剩余高度只交给第三行（三张分组卡）。只在**确实有两条设置条**时启用：
+   页面壳在 setRailPosition / setRailWidth 两个 action 都在时才渲染它们，
+   DOM 形状一变这条选择器就自动失配，退回「各行按内容高」——宁可少填一块，
+   也不凭空多出一整行空白（原因见文件头「高度归谁管」）。 */
+@media(min-width:1181px){
+  :root [data-pages-manager]:has(> section:has(> label) + section:has(> label)){
+    grid-template-rows:auto auto minmax(132px,1fr);
+  }
 }
 /* 页头标题与说明按产品要求去掉：这一页的入口就在导轨上（图标+悬停标题），
    页面里再写一遍「页面管理」和大段说明属于重复。整块 header 只含 h2 + p，
@@ -155,16 +195,21 @@ export const MANAGER_CSS = `
   border-radius:var(--dsw-radius-md,12px);
   background:var(--zju-card-fill,var(--dsw-alias-bg-layer-2,#fff));
   box-shadow:0 1px 2px color-mix(in srgb, var(--dsw-alias-label-primary,#0f1115) 6%, transparent);
-  /* 卡片自身滚动：分组很长时不会把整页拉得老高 */
-  max-height:calc(100vh - 340px);
-  min-height:132px;
-  overflow:auto;
+  /* 卡片自身是纵向 flex：标题固定、列表吃掉剩余高度并自己滚动。
+     不写 max-height —— 高度来自网格行（见文件头「高度归谁管」）。 */
+  display:flex;
+  flex-direction:column;
+  /* min-height:0 是内部能滚的前提：flex 项默认 min-height:auto，会撑破行高 */
+  min-height:0;
+  overflow:hidden;
 }
 /* 分组标题：小号大写字 + 计数胶囊 */
 :root [data-pages-manager] > section:not(:has(> label)) > h3{
   display:flex;
   align-items:center;
   gap:8px;
+  /* 标题不参与伸缩：滚动只发生在它下面的列表里 */
+  flex:0 0 auto;
   margin:0 0 10px;
   font-size:11px;
   font-weight:600;
@@ -194,6 +239,15 @@ export const MANAGER_CSS = `
   list-style:none;
   min-height:0;
   border-radius:var(--dsw-radius-sm,8px);
+  /* 滚动下沉到这里：只有条目滚，分组标题始终可见。
+     scrollbar-gutter:stable 让滚动条出现/消失时条目不横向跳动（Windows 上必然抖动）。
+     注意页面壳对 ul 设了 min-height:48px，这里用 flex 收缩 + min-height:0 覆盖掉，
+     否则空组在窄高度下仍会顶出卡片。 */
+  flex:1 1 auto;
+  overflow:auto;
+  scrollbar-gutter:stable;
+  /* 内滚区域自身留一点右内边距，避免内容贴住滚动条 */
+  padding-right:2px;
 }
 :root [data-pages-manager] li{
   /* 三列布局下每列只有约 420px，横排六个控件会挤成一团 —— 改上下两段 */
@@ -206,6 +260,8 @@ export const MANAGER_CSS = `
   border-radius:var(--dsw-radius-sm,8px);
   background:transparent;
   transition:background .12s var(--ds-ease-in-out,cubic-bezier(.4,0,.2,1));
+  /* 列表容器可滚，条目本身不该被压扁：高度由内容决定，超出就滚 */
+  flex:0 0 auto;
 }
 :root [data-pages-manager] li:not(.pm-empty):hover{
   background:var(--dsw-alias-interactive-bg-hover,#2631480f);
@@ -349,9 +405,17 @@ export const MANAGER_CSS = `
 @media(max-width:1180px){
   :root [data-pages-manager]{
     grid-template-columns:repeat(2,minmax(0,1fr));
+    /* 两列 / 一列时不再吃满视口高度：底部组横跨整行拉高只会变成一张大空卡，
+       不如让页面按内容高度自然排布、内容区自己滚（[data-dsh-pages-content] 本来就是
+       滚动容器）。这也是三列填充行只在 ≥1181px 生效的原因。 */
+    flex:0 0 auto;
   }
-  :root [data-pages-manager] > section:not(:has(> label)){
-    max-height:none;
+  /* 卡片与列表都退回内容高度：窄屏下内滚等于把内容藏起来，不如整页滚 */
+  :root [data-pages-manager] > section:not(:has(> label)),
+  :root [data-pages-manager] ul{
+    overflow:visible;
+    flex:0 0 auto;
+    scrollbar-gutter:auto;
   }
 }
 @media(max-width:760px){

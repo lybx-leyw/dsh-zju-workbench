@@ -11,7 +11,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SharedQueue, PipelineScheduler } from '../packages/dsh-zhiyun-core-parser/src/pipeline.js';
+import { SharedQueue, PipelineScheduler } from '../packages/core/parser/src/pipeline.js';
 
 test('【缺陷 7】背压把在飞预留算进去：只看队列长度会冲破上限', () => {
   const queue = new SharedQueue({ capacity: 10 });
