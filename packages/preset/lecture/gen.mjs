@@ -1,45 +1,75 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 /**
- * 生成 `lecture` preset 的 composition。
+ * 生成 `lecture` preset 的 patch。
  *
- * # 为什么是整份复制
+ * # 来源必须是宿主**当前版本自带**的那份
  *
- * `@deepseek-ai/dsh-agent-preset` 的 Config schema 没有 `extends` / `base`：
+ * 踩过大坑：一开始从 pnpm 存储里的 `@deepseek-ai/dsh-agent-presets@0.1.5-rc.3`
+ * 取 `presets/standard/agent.cordis.yml`（255 行）。那是**旧版遗留**，
+ * 它的 persona 写着：
  *
- *     z.object({ id, name, description, order, plugins: z.array(z.any()).required() })
+ *     suffix: Your working directory is {{cwd}}.
  *
- * `plugins` 是完整数组，没有继承机制。所以想让 lecture 等于「standard + 多一个
- * 工具行」，只能把 standard 的 composition 整份搬过来。
+ * 而 0.2.2 的变量表只有 `provider` / `model`，没有 `cwd` —— 于是切到该 preset
+ * 直接失败：
  *
- * # 缩进层级（踩过一次）
+ *     unknown prompt variable "{{cwd}}" in section "deployment:persona-suffix";
+ *     registered variables: provider, model
  *
- *     - insert:                ← 0 格
- *         - id: preset-x       ← 4 格
- *           config:            ← 6 格
- *             plugins:         ← 8 格
- *             - id: persona    ← 8 格（数组项与 plugins 键同级）
- *               name: ...
+ * 0.2.2 真正的 preset 在 `dsh-web-app/presets/*.patch.yml`，persona 只有
+ * `prefix`、没有 suffix，也没有 `list-agents` / `workflow-worker-thread` /
+ * `tool-ralph` 那批旧 row。
  *
- * 数组项写成 6 格会得到 `YAMLException: bad indentation of a sequence entry`。
+ * # 为什么不按 row 增删
+ *
+ * 中途试过「删掉报错的 row」「给报错的 row 加 disabled」—— 两者都是在跟旧版
+ * 的差异打补丁。正确做法是**换对来源**：结构差异从源头就没了。
  */
 const SRC = process.argv[2];
 if (!SRC || !existsSync(SRC)) {
-  console.error('用法: node gen.mjs <standard/agent.cordis.yml 路径>');
+  console.error('用法: node gen.mjs <dsh-web-app/presets/standard.patch.yml 路径>');
   process.exit(1);
 }
 
 const DEST = 'cordis.patch.yml';
 
-/** 数组项的缩进：与 `plugins:` 键同级（8 格）。 */
-const ITEM = ' '.repeat(8);
+/** 数组项的缩进：与 `plugins:` 键同级（10 格，见 standard.patch.yml）。 */
+const ITEM = ' '.repeat(10);
 
 const standard = readFileSync(SRC, 'utf8').replace(/\r\n/g, '\n');
 
-/** standard 的每一行整体缩进到数组项深度；空行保持空。 */
-const indented = standard
-  .split('\n')
-  .map((line) => (line.trim() === '' ? '' : `${ITEM}${line}`))
+/**
+ * 取出 `config.plugins:` 之后的内容（即那棵 row 树的正文）。
+ *
+ * 不直接整文件搬运：源文件是**完整的 patch 文件**（带 `- insert:` 头、
+ * 带 `id: preset-standard`），我们要的是它 `plugins` 的子树。
+ */
+function extractPlugins(text) {
+  const lines = text.split('\n');
+  const start = lines.findIndex((line) => /^\s*plugins:\s*$/.test(line));
+  if (start < 0) throw new Error('源文件里找不到 `plugins:` 行');
+
+  const body = lines.slice(start + 1);
+  const out = [];
+  for (const line of body) {
+    if (line.trim() === '') { out.push(''); continue; }
+    const indent = line.length - line.trimStart().length;
+    if (indent === 0) break; // 回到顶层，plugins 段结束
+    out.push(line);
+  }
+  while (out.length > 0 && out[out.length - 1].trim() === '') out.pop();
+  return out;
+}
+
+const bodyLines = extractPlugins(standard);
+const minIndent = Math.min(
+  ...bodyLines.filter((l) => l.trim() !== '').map((l) => l.length - l.trimStart().length),
+);
+
+/** 归一化到 ITEM 深度。 */
+const indented = bodyLines
+  .map((line) => (line.trim() === '' ? '' : `${ITEM}${line.slice(minIndent)}`))
   .join('\n');
 
 const header = `# 「讲义」Agent preset —— 标准模式 + 课程资料检索工具。
@@ -53,19 +83,27 @@ const header = `# 「讲义」Agent preset —— 标准模式 + 课程资料检
 #
 # # composition 的来源
 #
-# \`plugins\` 是对官方 \`standard\` preset 的**整份复制** + 末尾追加一行
-# \`tool-study\`。原因是 \`@deepseek-ai/dsh-agent-preset\` 的 Config 没有继承
-# 机制（\`plugins\` 必须是完整数组），无法写「standard + 一行」。
+# \`plugins\` 是宿主**当前版本自带**的
+# \`@deepseek-ai/dsh-web-app/presets/standard.patch.yml\` 里那棵 row 树的
+# 逐行复制 + 末尾追加一行 \`tool-study\`。
 #
-# ⚠️ 这份文件由 \`gen.mjs\` 从运行时安装的 standard 生成，不要手改 ——
-#    改完重跑脚本会用上游覆盖你的改动。要改行为请在 gen.mjs 的追加段里加。
+# 为什么必须用这一份：从 pnpm 存储里翻到的
+# \`@deepseek-ai/dsh-agent-presets@0.1.5-rc.3\` 是**旧版遗留**，它的 persona 写
+# \`suffix: ... {{cwd}}\`，而 0.2.2 只注册了 \`provider\` / \`model\` 两个变量 ——
+# 切到该 preset 会直接抛
+# \`unknown prompt variable "{{cwd}}" in section "deployment:persona-suffix"\`。
+#
+# \`@deepseek-ai/dsh-agent-preset\` 的 Config 没有继承机制
+# （\`plugins\` 必须是完整数组），所以只能整份复制。
+#
+# ⚠️ 这份文件由 \`gen.mjs\` 生成，不要手改 ——
+#    改行为请改 gen.mjs 的追加段，或重跑脚本对齐上游。
 #
 # dsh 0.2.x 的声明式 preset：随 bundle 安装并在 profile 启动时注册。
 - insert:
     # 本包自己。**这一行不能省** —— 它才是让 Loader 去 import 本包、跑
     # \`apply()\` 的入口。少了它，下面的 preset row 照样会被解析并注册进 roster，
-    # 但本包里任何代码都不会执行（踩过：apply 里的探针一行都没打）。
-    # \`vendor/paper-reader/cordis.patch.yml\` 同构：它的第一行也是加载自己。
+    # 但本包里任何代码都不会执行。
     - id: zhiyun-preset-lecture
       name: '@lybx-leyw/dsh-zju-preset-lecture'
 
@@ -97,3 +135,4 @@ ${ITEM}  name: '@lybx-leyw/dsh-zju-tool-study'
 const out = header + indented + '\n' + footer;
 writeFileSync(DEST, out);
 console.log(`✓ 已生成 ${DEST}（${out.split('\n').length} 行）`);
+console.log(`  来源: ${SRC}`);
