@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-core-vault",
   "version": "0.1.0",
   "description": "Obsidian 式笔记库：存储（普通 .md 文件、路径安全、PDF 阅读器）与索引（双链、标签、图谱、未解析链接、重命名改链）。不含 UI",
-  "private": true,
   "type": "module",
   "main": "./src/host.js",
   "exports": {
@@ -12,6 +11,22 @@
     "./parse": "./src/parse/links.js",
     "./index": "./src/index/vault-index.js",
     "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/vault"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   },
   "dependencies": {
     "pdfjs-dist": "6.4.299"
@@ -23,11 +38,5 @@
     "@deepseek-ai/dsh-atomic-write": {
       "optional": true
     }
-  },
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-ui-graph-render",
   "version": "0.1.0",
   "description": "笔记链接图的渲染层：把 @lybx-leyw/dsh-zju-core-vault 算好的 {nodes,edges} 画成可交互的画布（cytoscape + fcose）",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -10,6 +9,18 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/client/graph-render"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -22,6 +33,5 @@
   "dependencies": {
     "cytoscape": "3.34.4",
     "cytoscape-fcose": "2.2.0"
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

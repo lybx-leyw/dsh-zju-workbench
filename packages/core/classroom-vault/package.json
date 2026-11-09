@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-core-classroom-vault",
   "version": "0.1.0",
   "description": "课堂持久层：把 OpenMAIC lib/persistence + lib/store + @openmaic/storage 的 SQL 语义落成本地文件布局，提供 host-classroom 的 7 个存储端口与课堂/run/资产/文件树/快照读写",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -12,6 +11,17 @@
     "./paths": "./src/paths.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/classroom-vault"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -24,6 +34,5 @@
     "@deepseek-ai/dsh-atomic-write": {
       "optional": true
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

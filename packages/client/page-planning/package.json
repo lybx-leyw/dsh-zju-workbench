@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-page-planning",
   "version": "0.1.0",
   "description": "智云 Pro「规划」页（只含 UI）：列表、日历、日程与 pet 对话。数据聚合与路由由 core-planning 提供",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -10,6 +9,18 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/client/page-planning"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -23,6 +34,5 @@
   },
   "dependencies": {
     "@lybx-leyw/dsh-zju-core-planning": "0.1.0"
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

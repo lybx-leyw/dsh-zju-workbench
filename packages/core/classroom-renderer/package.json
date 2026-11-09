@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-core-classroom-renderer",
   "version": "0.1.0",
   "description": "课堂画布约定（纯数据）：viewportSize / viewportRatio 两个常量，生成与渲染两侧共用。渲染组件在 ui-shared",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -11,13 +10,19 @@
   },
   "files": [
     "src/",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "README.md"
   ],
-  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/classroom-renderer"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
   },
-  "license": "GPL-3.0-or-later"
+  "sideEffects": false
 }

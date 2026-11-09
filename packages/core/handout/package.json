@@ -1,9 +1,8 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-handout",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "讲义导出到笔记库：把当前讲义写成笔记库里的 md，单向、不覆盖、重名加后缀（零 IO，文件经注入的笔记服务）",
+  "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
@@ -11,10 +10,20 @@
     "./version": "./src/version.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/handout"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

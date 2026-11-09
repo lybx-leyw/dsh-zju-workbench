@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-source-webvpn",
   "version": "0.2.0",
   "description": "浙大 WebVPN 通路与出口策略：地址改写、网关登录、校园网探测与选路，供所有 zju 专属数据源共用（零第三方依赖）",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -12,6 +11,17 @@
     "./egress": "./src/egress.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/webvpn"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -23,6 +33,5 @@
       "writes": false,
       "requires": []
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

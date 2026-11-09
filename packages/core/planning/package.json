@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-core-planning",
   "version": "0.1.0",
   "description": "规划域宿主半边：数据聚合与 /_dsh/zhiyun-planning 路由、上海时区口径、我的规划、pet 协议、执行时间块与平台勾选存储（不含 UI）",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -23,10 +22,20 @@
     "./focus": "./src/focus.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/planning"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

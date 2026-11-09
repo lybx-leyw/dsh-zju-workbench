@@ -1,16 +1,28 @@
 /**
  * Publication guard.
  *
- * Every package in this repo is `private: true` except the ones we actually
- * publish. The private ones carry descriptive names tied to the institution
- * (`dsh-zhiyun-*`) — fine in-tree, but publishing such a name on npm would read
- * as an official release from Zhejiang University, which this project is not.
+ * 这个守卫只管**发布身份会不会被误读**，不管包名里能不能出现 `zju` / `zhiyun`。
  *
- * So the rule is about the *act of publishing*, not the directory name:
- * a package may keep an institutional name while private, and must be renamed
- * to something neutral before it becomes publishable. This test enforces that at
- * the moment a package loses `private: true`, which is exactly when the mistake
- * would otherwise ship.
+ * # 为什么规则是「必须带 scope」而不是「不许出现机构名」
+ *
+ * 早先这里是四条正则（`/zju/i`、`/zhiyun/i`、`/浙大/`、`/智云/`），理由是
+ * 「机构名发到 npm 上会被读成官方发布」。那条理由**不成立**：
+ *
+ * - npm 的官方归属靠 **scope**，不靠名字里的词。`@lybx-leyw/dsh-zju-core-parser`
+ *   的发布者显示为 `@lybx-leyw`，不会有人读成浙江大学的官方包；
+ * - 反过来，`dsh-zju` 这种**无 scope** 的名字才是真危险 —— 它会被 npm 判为
+ *   一个普遍命名空间下的无名包，任何人才都能抢注同名包，而 `zju` 二字
+ *   摆在最前面恰恰最容易被误认为官方。
+ *
+ * 所以判据换成「发布时必须带 scope」，并且 `zju` / `zhiyun` 这类描述用途的词
+ * 允许留在 scope 后面。这既守住了防混淆，也让「给学生用的」这件事留在名字里。
+ *
+ * # 三条硬要求
+ *
+ * 1. 可发布的包**必须带 scope**（`@owner/name`）；
+ * 2. 必须声明 `license` 与 `repository`；
+ * 3. 声明了 `dsh.bundle.patch` 的包，`files` 必须覆盖那个 patch 文件 ——
+ *    否则 `npm pack` 打出来的 tarball 装得下、却永远加载不起来。
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,9 +31,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-
-/** Names that would imply an official affiliation this project does not have. */
-const INSTITUTIONAL = [/zju/i, /zhiyun/i, /浙大/, /智云/];
 
 /**
  * Every package directory with a manifest, as `{ dir, manifest }`.
@@ -67,19 +76,18 @@ function packages() {
   return out;
 }
 
-test('a publishable package must not carry an institutional name', () => {
+test('a publishable package must be scoped', () => {
+  // scope 是 npm 上「这是谁发的」的唯一凭据。无 scope 的名字进公共命名空间后
+  // 既可能被同名抢注，也无法表明与本项目的归属关系。
   const violations = [];
   for (const { dir, manifest } of packages()) {
     if (manifest.private === true) continue;
     const name = manifest.name ?? '';
-    for (const pattern of INSTITUTIONAL) {
-      if (pattern.test(name) || pattern.test(dir)) {
-        violations.push(`${dir}: name "${name}" carries an institutional identifier — rename to something neutral before publishing`);
-        break;
-      }
+    if (!name.startsWith('@') || !name.includes('/')) {
+      violations.push(`${dir}: name "${name}" 没有 scope —— 发布前改成 @owner/name`);
     }
   }
-  assert.deepEqual(violations, [], `发布前必须改名：\n${violations.join('\n')}`);
+  assert.deepEqual(violations, [], `发布身份不明确：\n${violations.join('\n')}`);
 });
 
 test('a publishable package declares a license and a repository', () => {

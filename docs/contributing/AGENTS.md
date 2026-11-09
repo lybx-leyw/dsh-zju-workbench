@@ -44,9 +44,9 @@ git config user.email         # 提交者邮箱，会进入公开历史，见“
 # ✅ 装第三方依赖（esbuild / react / katex…）或按锁文件重装
 npm ci
 
-# ✅ 链接 51 个 workspace 包（junction，不联网，不碰锁文件）
+# ✅ 链接 workspace 包（junction，不联网，不碰锁文件）
 node scripts/link-workspace-packages.mjs
-node scripts/link-workspace-packages.mjs --check   # 期望 linked 51
+node scripts/link-workspace-packages.mjs --check   # 期望 linked 52
 ```
 
 **不要跑 `npm install`。** 它的后果实测过：
@@ -90,8 +90,8 @@ npm install --package-lock-only --legacy-peer-deps --offline --no-audit --no-fun
 # 3. 落盘。用 --prefer-offline（严格 --offline 会因个别 tarball 未缓存失败）
 npm ci --legacy-peer-deps --prefer-offline --ignore-scripts --no-audit --no-fund
 
-# 4. 确认 51 个包都链上了
-node scripts/link-workspace-packages.mjs --check   # 期望 {"total":51,"linked":51,"missing":[]}
+# 4. 确认包都链上了
+node scripts/link-workspace-packages.mjs --check   # 期望 {"total":52,"linked":52,"missing":[]}
 
 # 5. 构建
 npm run build
