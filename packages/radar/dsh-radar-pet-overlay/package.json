@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-pet-overlay",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】给规划页已有的右下角对话角色 pet 加一套受控状态表情：把上游 dsh-kun-like-pet 的 9 行动画契约接到本仓已有的 pet 上（强化式集成，不装 shell 覆盖层、不调系统命令）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-kun-like-pet": "1.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
