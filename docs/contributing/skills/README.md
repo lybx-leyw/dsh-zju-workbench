@@ -9,6 +9,7 @@
 | Skill | 内容 | 规模 |
 | --- | --- | --- |
 | [human-factors-screen-design](human-factors-screen-design/) | 屏幕内容与界面设计的人体工效学：字号/间距/对比度/配色/目标尺寸/布局密度/响应时延/告警编码，以及**可调参数的默认值设计**。来源为 8 份公有领域标准（FAA、NASA、MIL-STD、NUREG、FHWA、WCAG 2.2） | 10 章 + 速查表，约 7.5 万词 |
+| [lossless-plugin-fusion](lossless-plugin-fusion/) | 引入外部同类插件时的无损融合工作流：先画全链路泳道图并校验无遗漏，再由用户逐层剪枝（数据源 → 处理链路 → 终端），最后对数据源、core 链路、page/tool/preset/skill 四类终端逐项比对，把可自动完成的与必须由用户裁决的分开 | 9 步流程 + 逐项检查表 + 基准泳道图样本 |
 
 ## 怎么用
 

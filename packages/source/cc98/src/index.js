@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CC98 数据源（`@lybx-leyw/dsh-zju-source-cc98`）：浙大 CC98 论坛的**只读**数据包。
  *
  * # 它是什么
@@ -205,7 +205,7 @@ export async function apply(ctx, config = {}) {
   /**
    * 本包的 `fetch`。
    *
-   * 走**共享出口**（`zhiyunEgress`，campus 提供）：CC98 是公网域，出口策略会
+   * 走**共享出口**（`zhiyunEgress`，由 `source-http` 提供）：CC98 是公网域，出口策略会
    * 判定为直连 —— 关键是它会**绕开宿主为 LLM 配的全局代理**，那个代理打国内
    * 站点基本必失败。同时保留 campus 那份校园域判定，将来若有站内资源要过
    * WebVPN 也不用再改这里。

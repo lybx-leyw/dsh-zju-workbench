@@ -19,7 +19,12 @@ import { tmpdir } from 'node:os';
 
 const PACKAGE_DIR = new URL('../packages/core/classroom-media/', import.meta.url);
 const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
-const REPO_ROOT = new URL('..', import.meta.url).pathname;
+// ⚠️ 必须用 `fileURLToPath`，不能用 `.pathname`。
+// 在 Windows 上 `new URL('..', import.meta.url).pathname` 返回 `/C:/Users/...`
+// —— 带前导斜杠且已含盘符。拿它去 `path.join(REPO_ROOT, 'fixtures', ...)`
+// 会拼出 `C:\C:\Users\...`（第二个 `C:` 变成目录名），读文件必然 ENOENT。
+// `fileURLToPath` 是唯一正确的 URL→路径转换，跨平台。
+const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const plugin = await import(INDEX_URL);
 
 // ── 测试装置 ────────────────────────────────────────────────────────────────

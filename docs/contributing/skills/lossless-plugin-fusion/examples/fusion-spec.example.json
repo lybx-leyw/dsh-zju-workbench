@@ -1,0 +1,309 @@
+{
+  "eyebrow": "图 1",
+  "fig_head": "示例插件 · 融合泳道",
+  "rev": "FIG.1 — FUSION LANES · rev.2026-11",
+  "title": "融合泳道图（示例规格）",
+  "subtitle": "把外部插件的每条数据流画成一条泳道，剪枝只改 cut 字段",
+  "lede": "这份 spec 是给你改的：复制它、把节点换成外部插件的真实模块，再跑 `py tools/lanes.py spec.json --out xxx.html`。第 5 步用户要回答「前驱是什么、后继是什么」时，直接跑 `--report`，把输出贴给用户即可。",
+
+  "meta": [
+    { "v": "6", "k": "Lanes" },
+    { "v": "3", "k": "Sources" },
+    { "v": "2", "k": "Terminus types" },
+    { "v": "1", "k": "Cut" }
+  ],
+
+  "legend": [
+    { "text": "数据源 · 外部事实", "color": "src" },
+    { "text": "变换 · 宿主侧，无 UI", "color": "proc" },
+    { "text": "呈现 · 页面", "color": "ui" },
+    { "text": "agent 触点 · 工具 / preset", "color": "tool" },
+    { "text": "虚线 · 无下游 / 已剪", "dash": true }
+  ],
+
+  "bands": [
+    { "title": "Ⅰ · 主链 — 数据进到产物", "range": "L1 — L3" },
+    { "title": "Ⅱ · 侧链与末端", "range": "L4 — L6" }
+  ],
+
+  "lanes": [
+    {
+      "id": "L1",
+      "band": 0,
+      "no": "01",
+      "name": "外部课程站 → 讲义稿",
+      "sub": "一次抓取与解析，产出可检索的结构",
+      "accent": "src",
+      "feeds": ["L2", "L3"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "课程站",
+              "pkg": "src/source/course",
+              "in": "课程 / 节次 / 课件图 / 字幕",
+              "out": "原始页 + 逐句字幕"
+            },
+            { "arrow": "normal" },
+            {
+              "grp": "解析 · 四步",
+              "items": [
+                { "t": "识别", "in": "4 页拼图", "out": "页文字 + 块" },
+                { "arrow": "normal" },
+                { "t": "标记", "in": "页 + 课件证据", "out": "清洗稿 + 块角色" },
+                { "arrow": "normal" },
+                { "t": "建树", "in": "块", "out": "主线挂叶 / 支线进黑板" },
+                { "arrow": "normal" },
+                { "t": "重构", "in": "叶树", "out": "一叶一个知识点" }
+              ]
+            }
+          ]
+        },
+        {
+          "items": [
+            { "cont": "↳" },
+            {
+              "t": "资源终稿",
+              "em": "知识树 · 主支线黑板 · 知识点 · 逐句来源 · 待处理区"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "入库",
+              "pkg": "core/knowledge",
+              "in": "终稿",
+              "out": "按 账号:课程:节次 落 KV 域"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "旁支" },
+        { "chip": "回放观感 `core/playback`" },
+        { "chip": "播放统计 `core/player`" }
+      ]
+    },
+
+    {
+      "id": "L2",
+      "band": 0,
+      "no": "02",
+      "name": "讲义稿 → 阅读讲义",
+      "sub": "从结构到成文",
+      "accent": "proc",
+      "feeds": ["L6"],
+      "rows": [
+        {
+          "items": [
+            { "t": "资源终稿 + 原录音稿", "em": "树 + 逐句正文" },
+            { "arrow": "normal" },
+            {
+              "t": "装配",
+              "pkg": "core/lecture",
+              "in": "知识点 + 稿",
+              "out": "逐点填充 + 书面语验收"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "学习页讲义栏",
+              "in": "阅读讲义",
+              "out": "可读正文 + 来源跳转"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "L3",
+      "band": 0,
+      "no": "03",
+      "name": "讲义稿 → 题目",
+      "sub": "两条出题路，共用一个采纳闸门",
+      "accent": "proc",
+      "feeds": ["L6"],
+      "rows": [
+        {
+          "items": [
+            { "t": "知识点 + 正文", "em": "已整理材料" },
+            { "arrow": "normal" },
+            {
+              "t": "出题",
+              "pkg": "core/quiz",
+              "in": "已筛块",
+              "out": "先筛后出 · 题形状 · 三态检查"
+            },
+            { "arrow": "normal" },
+            { "t": "proposed 题", "em": "生成即入库，不进复习队列" },
+            { "arrow": "normal" },
+            { "t": "用户采纳", "em": "proposed → accepted 唯一入口" },
+            { "arrow": "normal" },
+            { "kind": "ui", "t": "题库页", "em": "组卷练习 · 历史 · 复习队列" }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "另一条路" },
+        { "chip": "深度出题 `core/question` explore → plan → quiz" },
+        { "chip": "标签状态机 `core/question-stream`" }
+      ]
+    },
+
+    {
+      "id": "L4",
+      "band": 1,
+      "no": "04",
+      "name": "讲义稿 → 待办聚合",
+      "sub": "示例：这条已被用户剪掉",
+      "accent": "src",
+      "cut": true,
+      "feeds": [],
+      "rows": [
+        {
+          "items": [
+            { "kind": "src", "t": "校园待办", "pkg": "src/source/campus", "em": "作业 / 练习" },
+            { "arrow": "normal" },
+            { "t": "规划聚合", "pkg": "core/planning", "in": "多源并表", "out": "快照" },
+            { "arrow": "normal" },
+            { "kind": "ui", "t": "今天页", "em": "今天到期 · 插空任务" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "L5",
+      "band": 1,
+      "no": "05",
+      "name": "skill 文件 → agent 指令",
+      "sub": "不进工具表，进的是模型先读到的目录",
+      "accent": "tool",
+      "feeds": [],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "skill 目录包",
+              "pkg": "docs/contributing/skills/",
+              "in": "SKILL.md",
+              "out": "YAML frontmatter"
+            },
+            { "arrow": "cut" },
+            {
+              "kind": "ghost",
+              "t": "到此为止",
+              "em": "目录不在任何扫描根里，不会被自动发现"
+            }
+          ]
+        },
+        {
+          "label": "扫描侧",
+          "items": [
+            {
+              "t": "发现与解析",
+              "pkg": "skill-filesystem",
+              "in": ".dsh/skills → .agents/skills → custom → user",
+              "out": "目录条目"
+            },
+            { "arrow": "normal" },
+            { "t": "注册表", "pkg": "dsh-skill", "em": "任一 provider 都能喂它" },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "skill 工具",
+              "pkg": "tool-skill",
+              "in": "注册表 + agents + tools",
+              "out": "会话目录 + 加载器 + /name"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "两种可见性" },
+        { "chip": "`disable-model-invocation: true` → 不给模型看" },
+        { "chip": "`user-invocable: false` → 不给用户 `/name`" }
+      ]
+    },
+
+    {
+      "id": "L6",
+      "band": 1,
+      "no": "06",
+      "name": "无下游模块",
+      "sub": "provide 在，消费者不在 —— 画虚线",
+      "accent": "ghost",
+      "feeds": [],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "ghost",
+              "t": "论坛源",
+              "pkg": "source/forum",
+              "out": "10 个只读方法",
+              "em": "仓内 0 处取用"
+            },
+            { "arrow": "cut" },
+            {
+              "kind": "ghost",
+              "t": "学习通源",
+              "pkg": "source/xxt",
+              "out": "课程 / 作业 / 考试",
+              "em": "仓内 0 处取用"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "判据" },
+        { "chip": "全仓搜服务名只命中各自的 `provide`" }
+      ]
+    }
+  ],
+
+  "notes": [
+    {
+      "no": "01",
+      "kind": "warn",
+      "title": "剪枝要留痕，不要物理删除",
+      "paras": [
+        "被剪的泳道在 spec 里保留 `cut: true`，渲染成删除线。物理删掉之后，复核时**分不清「这条是剪掉的」还是「这条从来就没画」**。",
+        "`--check` 会把「剪了前置但留着后继」判为错误：`L4 已剪，但仍向未剪的 L6 供数`。这条检查就是第 4、5 步最容易漏的地方。"
+      ]
+    },
+    {
+      "no": "02",
+      "kind": "proc",
+      "title": "前驱后继不要自己数",
+      "paras": [
+        "第 5 步要求用户明确写出「哪条泳道、前驱是什么、后继是什么」。跑 `--report` 直接得到这份清单，粘贴给用户，让他确认或改写 —— 比让用户凭空回忆箭头指向可靠得多。"
+      ]
+    },
+    {
+      "no": "03",
+      "kind": "tool",
+      "title": "终端类型决定第 9 步要问几组问题",
+      "paras": [
+        "`--report` 的「终端」一栏列出每条泳道里的 ui / tool 节点。一条泳道如果没有任何终端，第 9 步就会漏裁决 —— 工具会给警告提示这一点。",
+        "preset 与 skill 除非单独成节点，否则不会出现在这一栏；它们通常挂在 side chips 里，需要人工确认。"
+      ]
+    }
+  ],
+
+  "footer": [
+    {
+      "head": "怎么改这份 spec",
+      "text": "把 lanes[].rows[].items 换成外部插件的真实模块；每个节点写 in/out（形态变化），不要写「做了什么」。节点右上角 pkg 用于让人能搜到源码位置。"
+    },
+    {
+      "head": "剪枝",
+      "text": "给泳道加 `\"cut\": true`，或临时跑 `--prune L4,L6`（不修改 spec 文件）。恢复用 `--restore`。"
+    },
+    {
+      "head": "为什么不用自动折行",
+      "text": "浏览器折行位置不可控，同一条流在不同宽度下会断在不同节点后，读者会读错归属。所以每行用手写的 row 拆开，行内的节点数由你决定。"
+    }
+  ]
+}

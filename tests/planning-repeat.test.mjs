@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import {
   advanceBy, createLocal, nextOccurrence, normalizeRepeat,
   patchLocal, setDone, REPEAT_UNITS, REPEAT_LABEL,
-} from '../packages/client/page-planning/src/local.js';
+} from '../packages/core/planning/src/local.js';
 
 const iso = (value) => new Date(value).toISOString();
 

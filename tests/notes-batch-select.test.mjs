@@ -199,7 +199,10 @@ async function bundle() {
     '@lybx-leyw/dsh-zju-ui-shared': `import React from "react";
       export const Icon = () => React.createElement("i");
       export const Notice = (p) => React.createElement("div", { className: "notice" }, p.children);
-      export const mountStyle = () => {};`,
+      export const mountStyle = () => {};
+      // 页面半边 import 了这个（见 page-notes/client.jsx 的 apply）。
+      // 桩里缺它会让 esbuild 构建失败，而失败后的进程不退出，看着像 hang。
+      export const registerPageContent = () => {};`,
     '@lybx-leyw/dsh-zju-ui-graph-render': `export const NoteGraph = () => null; export const css = "";`,
     '@deepseek-ai/dsh-client-ui-primitives': `import React from "react";
       export const MarkdownText = (p) => React.createElement("div", { className: "md" }, p.text);`,

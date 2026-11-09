@@ -1,6 +1,6 @@
-// 「插件依赖」页的**宿主半边**。
+// 「插件依赖」页的**宿主半边**：把宿主那棵 Cordis 树的依赖事实读出来。
 //
-// 为什么这一页需要一个真正干活的宿主半边：宿主与浏览器各有一棵独立的 Cordis 插件树，
+// 为什么需要一个真正干活的宿主半边：宿主与浏览器各有一棵独立的 Cordis 插件树，
 // 而本仓最重要的那几条依赖边全在**宿主面** —— @lybx-leyw/dsh-zju-core-study 的 `inject` 里写着
 // `zhiyunClassroom / zhiyunParser / zhiyunKnowledge`，解析包写着 `zhiyunClassroom`，
 // 讲义与出题包写着 `zhiyunParser`。浏览器里读不到宿主那棵树，所以由这里读出来交给客户端；
@@ -8,6 +8,12 @@
 //
 // 数据只走运行时已有的字段：Loader 条目的 `options.name`/`fiber`、fiber 的 `inject`、
 // 以及 `ctx.reflect.store` 里每条实现的 `name`/`fiber`。不解析源码，不扫描目录。
+//
+// # 为什么它在 core
+//
+// 它原先在 `packages/client/page-plugins/src/host.js` —— 那是「一个页面包注册宿主路由」。
+// 按本仓分层，页面只渲染；读运行时事实、开只读路由归 core。图的计算（`runtime.js`）
+// 被宿主与客户端共用，也一起搬了过来。
 import { readPlane } from './runtime.js';
 
 /** 与 @lybx-leyw/dsh-zju-core-study 同一套信封：宿主面读运行时，必须已经有一棵装载完成的树。 */

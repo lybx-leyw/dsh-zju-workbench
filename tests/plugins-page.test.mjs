@@ -12,7 +12,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { ownPackages } from '../scripts/workspace-packages.mjs';
 import { fileURLToPath } from 'node:url';
-import { buildView, fiberNameIndex, orderGraph, readPlane, slotEdges, stripClientSuffix, ZHIYUN_PREFIX, ZHIYUN_PREFIXES } from '../packages/client/page-plugins/src/runtime.js';
+import { buildView, fiberNameIndex, orderGraph, readPlane, slotEdges, stripClientSuffix, ZHIYUN_PREFIX, ZHIYUN_PREFIXES } from '../packages/core/plugin-graph/src/runtime.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = relative => readFileSync(path.join(root, relative), 'utf8');

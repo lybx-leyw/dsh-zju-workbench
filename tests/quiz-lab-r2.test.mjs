@@ -12,7 +12,10 @@ const solution=(input,ambiguous=false)=>{
 };
 test('candidate r1 is byte-for-byte frozen',async()=>{
  const m=JSON.parse(await readFile('scripts/quiz_bench/experimental/CANDIDATE.json','utf8'));
- assert.equal(m.id,'v2-candidate-r1');for(const [name,hash]of Object.entries(m.files))assert.equal(createHash('sha256').update(await readFile('scripts/quiz_bench/experimental/'+name)).digest('hex'),hash,name);
+ // 先归一化到 LF 再取哈希：digest 的 canonical 形态是提交进仓库的 blob（纯 LF）。
+ // Windows 上 core.autocrlf=true 会把工作区检出成 CRLF，直接哈希磁盘原始字节
+ // 会让同一份代码在本机假失败（Linux 绿、Windows 红）。
+ assert.equal(m.id,'v2-candidate-r1');for(const [name,hash]of Object.entries(m.files)){const text=await readFile('scripts/quiz_bench/experimental/'+name,'utf8');assert.equal(createHash('sha256').update(text.replace(/\r\n/g,'\n')).digest('hex'),hash,name);}
 });
 test('blind review excludes answer, explanation and generated metadata and maps permuted labels back',async()=>{
  const stages=[];const call=labCall(async r=>{stages.push(r.stage);const d=JSON.parse(r.variable);

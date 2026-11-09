@@ -3,6 +3,8 @@
  *
  * 键与 `dsh-zhiyun-page-today` 的 `src/focus.js` 必须一致。
  * 读不到、过期、或列表里没有这一条，调用方就当没这回事，不报错。
+ *
+ * 纯函数（storage 由调用方注入），所以页面与测试共用同一份实现。
  */
 
 export const FOCUS_STORAGE_KEY = 'zhiyun.planning.focus';

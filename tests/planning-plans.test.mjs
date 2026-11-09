@@ -23,8 +23,8 @@ import {
   planTitle,
   readPlanResponse,
   toPlanInput,
-} from '../packages/client/page-planning/src/plans.js';
-import { entryPrefix } from '../packages/client/page-planning/src/entries.js';
+} from '../packages/core/planning/src/plans.js';
+import { entryPrefix } from '../packages/core/planning/src/entries.js';
 
 /** 内存版 PlanStore，避免每个用例都碰磁盘。 */
 function memoryStore() {

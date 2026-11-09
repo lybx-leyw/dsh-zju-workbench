@@ -88,6 +88,66 @@ export class CampusError extends Error {
 /** 造一个 CampusError。 */
 export const fault = (code, message) => new CampusError(code, message);
 
+/**
+ * 学在浙大的错误码 → 用户能照做的**唯一**一张表。
+ *
+ * # 为什么这张表必须在 source 包里
+ *
+ * 它原来长在 `page-planning/src/index.js`（`translateXzzdError`）。那意味着：
+ * 换一页来用学在浙大待办，就得把这张表再抄一遍；而文案指的是**本包的凭据
+ * 写入口**（「设置 → 浙大一卡通」），写入口改了、抄出去的那份不会跟着改。
+ * 所以翻译跟着数据源走 —— 下游拿到 `NEED_LOGIN` 时 `message` 已经是能直接上屏
+ * 的一句，不需要再映射一次。
+ *
+ * @param error - 任意 `{ code, message }`。
+ * @returns `{ code, message }`，或 null。
+ */
+export function translateXzzdError(error) {
+  if (!error) return null;
+  const code = error.code ?? 'XZZD_FAILED';
+  const message = typeof error.message === 'string' ? error.message : String(error.message ?? code);
+  // 本包自己给出的指引已经指向「设置 → 浙大一卡通」时原样透传 ——
+  // 用旧文案盖掉它，等于把上游修好的话又改回错的。
+  if (message.includes('浙大一卡通')) return { code: 'NEED_LOGIN', message };
+  if (code === 'NEED_LOGIN' || code === 'CONFIGURATION_REQUIRED' || code === 'LOGIN_REQUIRED') {
+    return {
+      code: 'NEED_LOGIN',
+      message: '还没配置「浙大一卡通」：去「设置 → 浙大一卡通」填一次学号和密码，学在浙大与智云课堂会共用这一份。',
+    };
+  }
+  if (code === 'AUTHENTICATION_REQUIRED' || code === 'AUTH_CHALLENGE_REQUIRED' || code === 'SESSION_EXPIRED') {
+    return {
+      code: 'NEED_LOGIN',
+      message: '「浙大一卡通」的登录态已过期：去「设置 → 浙大一卡通」核对一次密码，课堂与学在浙大会各自重新登录。',
+    };
+  }
+  if (code === 'UNREACHABLE' || code === 'NETWORK' || code === 'TIMEOUT' || code === 'WEBVPN') {
+    return { code: 'UNREACHABLE', message };
+  }
+  return { code, message };
+}
+
+/**
+ * 拼题A 的错误码 → 用户能照做的一句。
+ *
+ * 拼题A 的答案是「粘 Cookie」而不是「登录」（它要短信验证，无法自动登录），
+ * 所以不能和学在浙大共用一张表。
+ *
+ * @param error - 任意 `{ code, message }`。
+ * @returns `{ code, message }`，或 null。
+ */
+export function translatePtaError(error) {
+  if (!error) return null;
+  const code = error.code ?? 'PTA_FAILED';
+  if (code === 'COOKIE_IMPORT_REQUIRED' || code === 'COOKIE_EXPIRED') {
+    return {
+      code: 'COOKIE_IMPORT_REQUIRED',
+      message: '拼题A 需要在「设置 → 拼题A」粘贴一次 Cookie（它登录要短信验证，无法自动登录）。',
+    };
+  }
+  return { code, message: typeof error.message === 'string' ? error.message : String(error.message ?? code) };
+}
+
 export async function apply(ctx, config = {}) {
   const log = (message) => {
     const line = `[zhiyun-campus] ${message}`;
@@ -452,7 +512,9 @@ export async function apply(ctx, config = {}) {
 
           return { ok: true, rows: normalizeXzzd(fast.todos), error: null };
         } catch (error) {
-          return { ok: false, rows: [], error: toError(error) };
+          // 在这里就翻成用户能照做的一句：下游（页面/脚本/AI）拿到 `error` 直接上屏，
+          // 不需要再按 error.code 映射一次。见 `translateXzzdError` 的说明。
+          return { ok: false, rows: [], error: translateXzzdError(toError(error)) };
         }
       })(),
       (async () => {
@@ -461,7 +523,7 @@ export async function apply(ctx, config = {}) {
           const result = await new PtaApi(transport).problemSets({ includeEnded: false });
           return { ok: true, rows: normalizePta(result.problemSets), error: null };
         } catch (error) {
-          return { ok: false, rows: [], error: toError(error) };
+          return { ok: false, rows: [], error: translatePtaError(toError(error)) };
         }
       })(),
     ]);

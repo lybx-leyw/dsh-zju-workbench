@@ -34,7 +34,7 @@ import {
   pullEntries,
   saveConfig,
   urgencyOf,
-} from '../packages/client/page-planning/src/index.js';
+} from '../packages/core/planning/src/index.js';
 
 const KEY = 'read-key-1234';
 
@@ -336,12 +336,31 @@ test('客户端不得把读密钥或 Cookie 写进任何持久化位置', async 
   }
 });
 
-test('拼题A 必须有独立配置项（它与智云用的不是同一套凭证）', async () => {
-  const client = await readFile(
+test('拼题A 的配置入口归数据源，页面不重复提供', async () => {
+  // ⚠️ 这条断言**换过方向**，原因写在下面，别改回去。
+  //
+  // 早先它断言「规划页里必须出现 `拼题A Cookie`」—— 那是「凭据散在页面里」的时代。
+  // 后来凭据统一到 source：`source/campus` 自己注册 `settings.section`，
+  // 页面再注册一个同名入口会让设置栏出现**两个「拼题A」**，各打各的路由。
+  // 所以现在的契约是**相反**的：页面不许出现，数据源必须有。
+  //
+  // 同一事实由 `tests/source-error-contract.test.mjs` 从另一侧守着
+  // （「页面不重复注册数据源已有的设置分区」）。两条一起看才不会误改。
+  const page = await readFile(
     new URL('../packages/client/page-planning/src/client.jsx', import.meta.url), 'utf8',
   );
-  assert.match(client, /拼题A Cookie/, '拼题A 必须有独立配置项');
+  const code = page.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.equal(code.includes('拼题A Cookie'), false,
+    '规划页不该再提供拼题A Cookie 的配置入口 —— 它归 source/campus');
+
   // 学在浙大复用智云账号，本页不该再出现账号密码输入
-  assert.equal(/name="username"/.test(client), false, '本页不该重复录入浙大账号');
-  assert.equal(/name="password"/.test(client), false, '本页不该重复录入浙大密码');
+  assert.equal(/name="username"/.test(code), false, '本页不该重复录入浙大账号');
+  assert.equal(/name="password"/.test(code), false, '本页不该重复录入浙大密码');
+
+  // 数据源那一侧必须真的有这个入口，否则两处都没有 = 用户无处可配。
+  const campus = await readFile(
+    new URL('../packages/source/campus/src/client.jsx', import.meta.url), 'utf8',
+  );
+  assert.match(campus, /拼题A Cookie/, '校园数据源必须提供拼题A Cookie 的配置入口');
+  assert.match(campus, /settings\.section/, '而且必须注册成设置分区，用户才找得到');
 });

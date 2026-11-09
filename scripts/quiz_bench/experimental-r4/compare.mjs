@@ -37,7 +37,14 @@ export const runFingerprint=(spec,credentials)=>hash(JSON.stringify({
 export async function kernelHashes(){
  const files={};
  async function visit(dir){for(const row of await fs.readdir(dir,{withFileTypes:true})){if(row.name==='__pycache__')continue;const file=dir+'/'+row.name;if(row.isDirectory())await visit(file);else if(/\.(mjs|js|py|json|ya?ml)$/.test(row.name))files[file]=hash(await fs.readFile(file));}}
- for(const dir of ['scripts/quiz_bench/experimental-r4','packages/core/quiz/src','packages/dsh-zhiyun-host-deeptutor/src','packages/dsh-zhiyun-host-deeptutor/python','packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor'])await visit(dir);
+ for(const dir of ['scripts/quiz_bench/experimental-r4','packages/core/quiz/src','archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src','archive/deprecated-packages/dsh-zhiyun-host-deeptutor/python','archive/deeptutor-vendor-1.6.15/deeptutor']){
+  // ⚠️ 三个 deeptutor 目录**可能整个不存在**（包已归档、vendor 树在 archive 里另存，
+  //    而且 `archive/` 本身是被 gitignore 的本地目录 —— 新克隆的仓库里根本没有）。
+  //    r3 的同名函数一直有 `catch ENOENT`，r4 漏了：缺目录会让 `runComparison`
+  //    在写 manifest 之前就抛 ENOENT，连"为什么跑不起来"都看不出。
+  //    这里与 r3 对齐：只吞 ENOENT，其它错误照旧抛出。
+  try{await visit(dir);}catch(e){if(e.code!=='ENOENT')throw e;}
+ }
  for(const file of ['scripts/quiz_bench/deeptutor.mjs','scripts/quiz_bench/deeptutor-host.mjs','scripts/quiz_bench/accounting.mjs','packages/core/parser/src/worker-pool.js','packages/core/study/src/deeptutor-quiz.js'])files[file]=hash(await fs.readFile(file));
  return files;
 }

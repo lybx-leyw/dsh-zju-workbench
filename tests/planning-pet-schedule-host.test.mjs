@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { apply, ScheduleStore } from '../packages/client/page-planning/src/index.js';
+import { apply, ScheduleStore } from '../packages/core/planning/src/index.js';
 
 async function boot(t) {
   const dir = await mkdtemp(path.join(tmpdir(), 'pet-schedule-'));

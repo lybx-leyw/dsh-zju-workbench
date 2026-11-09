@@ -24,7 +24,17 @@ export function apply(ctx) {
 
 /**
  * 规划数据在宿主上，浏览器里的 `ctx.get` 看不到它。
- * 与规划页用同一条回环接口；路由必须和宿主 `ROUTE_PATH` 一致。
+ *
+ * # 这条 URL 是**跨域耦合**，但只到「路由名」这一层
+ *
+ * 今天页不 import 规划页的任何东西（页面之间不许互相认识），它只按 URL 取一份
+ * 公开快照。代价是这个字符串必须与 `@lybx-leyw/dsh-zju-core-planning` 的
+ * `ROUTE_PATH` 一致 —— 一边改、另一边忘了改的表现是**今天页静默没有到期事项**
+ * （下面 `!response.ok` 就返回 null），不会报错。
+ *
+ * 所以：改规划域的路由时，必须同时改这里。`tests/page-isolation.test.mjs` 有一条
+ * 断言盯着这两个字符串相等。
+ *
  * 包没装、接口拒绝、或这一天没有到期的事，都返回 null，今天页不报错。
  */
 async function readDue(nowMs) {

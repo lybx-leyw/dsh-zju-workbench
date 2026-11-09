@@ -69,8 +69,8 @@ export const CLIENT_PACKAGES = [
   // 课堂的**页面**已归档（`page-classroom` / `-play` / `-build`）：
   // 产品侧只要「AI 教学」这条链路（生成课件 + 单张渲染），不要独立的课堂播放页。
   // **不要加回来** —— 加了会报 `no package directory named ...`。
-  // 保留的 classroom 包只有 `classroom-agent`（有客户端半边）与
-  // `classroom-renderer`（page-study 用它渲染课件）。
+  // 保留的 classroom 包只有 `classroom-agent`（有客户端半边）。
+  // `classroom-renderer` 已不在任何清单里：它的渲染组件搬去了 `ui-shared`。
   'classroom-agent',
   'quiz',
   // `core-study` 的目录名是 `study`（住在 `packages/core/` 下）。
@@ -105,14 +105,9 @@ export const CLIENT_PACKAGES = [
   'page-plugins',
   'page-feedback',
   'page-docs',
-  // 课堂渲染层（L0 内核）：上游 `@openmaic/renderer` 的 vendor 封装。渲染树交给
-  // esbuild 原样打包（motion / echarts / shiki / katex 内联，只有 react 三件套
-  // external），所以它必须有自己的客户端产物 —— 播放页与构建页都 import 它。
-  //
-  // ⚠️ 这一列写的是**目录名**（`packageDir()` 按 basename 递归找），不是包名。
-  // 包已迁到 `packages/core/classroom-renderer`，包名变成
-  // `@lybx-leyw/dsh-zju-core-classroom-renderer` —— 但这里只能写目录短名。
-  'classroom-renderer',
+  // ⚠️ `classroom-renderer` 已从本清单删除：渲染组件（含 React / katex）已搬到
+  // `packages/client/ui-shared/src/classroom-slide.jsx`，`core/classroom-renderer`
+  // 只剩两个画布常量，**没有客户端半边**了。
 ];
 
 /**

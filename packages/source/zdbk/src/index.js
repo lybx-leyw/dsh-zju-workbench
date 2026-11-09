@@ -38,7 +38,7 @@
  * # 网络出口：走**共享出口**，自动分域
  *
  * 教务站是校园域（`zdbk.zju.edu.cn`），请求经 `sharedFetch(ctx)` 借
- * `@lybx-leyw/dsh-zju-source-campus` 提供的 `zhiyunEgress` 服务：
+ * `@lybx-leyw/dsh-zju-source-http` 提供的 `zhiyunEgress` 服务：
  *
  *   - 境内直连（**绕开宿主为 LLM 配的全局代理** —— 浙大站点经代理基本必失败）；
  *   - 校内直连、校外自动绕 WebVPN；
@@ -155,7 +155,7 @@ export async function apply(ctx, config = {}) {
    *
    * `config.fetch` 是测试注入口 —— 单测注入假 fetch 时不该真的发网络请求。
    *
-   * 生产路径走**共享出口**（`zhiyunEgress`，由 `@lybx-leyw/dsh-zju-source-campus` 提供）：
+   * 生产路径走**共享出口**（`zhiyunEgress`，由 `@lybx-leyw/dsh-zju-source-http` 提供）：
    * 教务站是校园域，自动出口会在校内直连、在校外绕 WebVPN，并且**绕开宿主为
    * LLM 配的全局代理**（浙大站点经那个代理基本必失败）。
    *

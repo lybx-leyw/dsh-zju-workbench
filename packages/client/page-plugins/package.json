@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-page-plugins",
   "version": "0.1.0",
-  "description": "智云 Pro「插件」页：按运行时依赖关系图列出本工作台的插件，并取消没有被依赖的叶包（页面插件）",
+  "description": "智云 Pro「插件」页（只含 UI）：按运行时依赖关系图列出本工作台的插件并取消叶包。图的计算与只读路由由 core-plugin-graph 提供",
   "private": true,
   "type": "module",
   "main": "./src/index.js",
@@ -20,6 +20,9 @@
         "@lybx-leyw/dsh-zju-ui-shared"
       ]
     }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-plugin-graph": "0.1.0"
   },
   "license": "GPL-3.0-or-later"
 }

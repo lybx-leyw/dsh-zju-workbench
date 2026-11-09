@@ -32,6 +32,11 @@ export function knowledgePoints(record) {
     const anchor = blocks[0];
     out.push({ id: `${record.courseId}:${record.subId}:${revision}:${ci}:${ti}`, courseId: record.courseId, subId: record.subId,
       courseTitle: record.courseTitle ?? record.courseId, lessonTitle: record.lessonTitle ?? record.title ?? record.subId,
+      // 学期要跟着 point 走到题目里（`quiz-engine-runtime` 会把它存进题目）。
+      // 不传的话生成出来的题目 termName 恒为空，导出时只能回查课堂接口；
+      // 离线 / 课堂不可达时拿不到，题库就会落进比讲义少一层的目录
+      // —— 用户看到同一门课的两个同名文件夹。
+      termName: record.termName ?? '',
       chapterIndex:ci,topicIndex:ti,chapterTitle: chapter.title, title: topic.title || `知识点 ${ti + 1}`, revision, blockIndexes: blocks.map(b => b.index),
       page: anchor?.page ?? null, atSec: anchor?.startMs != null ? Math.floor(anchor.startMs / 1000) : null, text });
   }

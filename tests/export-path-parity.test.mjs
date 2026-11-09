@@ -34,6 +34,9 @@ const read = p => fs.readFileSync(path.resolve(p), 'utf8');
 
 const BANK = read('packages/core/study/src/question-bank.js');
 const RUNTIME = read('packages/core/study/src/quiz-engine-runtime.js');
+// 知识点是在 `core/quiz` 里产出的（`study` 只是调用方）。termName 从记录到 point
+// 的那一步就在这里，所以断言要读这个文件。
+const POINTS = read('packages/core/quiz/src/knowledge-points.js');
 
 test('currentNotePath 有学期时是三层，无学期时是两层', async () => {
   const { currentNotePath } = await load('packages/core/handout/src/version.js');
@@ -47,14 +50,45 @@ test('currentNotePath 有学期时是三层，无学期时是两层', async () =
   );
 });
 
-test('catalog 会提取 course.termName', () => {
-  assert.match(BANK, /courseTerms\s*=\s*new Map\(courses\.map\(course=>\[String\(course\.id\),course\.termName/,
-    '不提取 termName，题目生成时就存不下来');
+test('生成时把 course.termName 带进知识点（离线也拿得到学期）', () => {
+  // ⚠️ 这条断言**换过对象**。它原先盯的是 `question-bank.js` 里的 `courseTerms` 变量，
+  // 那个变量在 5b63f60a 的性能重构里被整个删掉了 —— 当时删的理由是
+  // 「本地记录里本来就有 termName」，但那句话是错的：`knowledge` 的 record schema
+  // 里没有这个字段。于是生成出来的题目 termName 恒为空，只剩导出时回查兜底，
+  // 课堂接口不可达时题库就会落进比讲义少一层的目录。
+  //
+  // 现在契约是：`workbench.start()` 收下 `labels.termName` → 存进记录 →
+  // `knowledgePoints()` 带到每个 point → `quiz-engine-runtime` 存进题目。
+  // 所以断言要盯 `knowledge-points.js`，而且要用真实调用验证，不能只搜字符串。
+  assert.match(POINTS, /termName:\s*record\.termName/,
+    'knowledgePoints 必须把 record.termName 带到 point 上');
 });
 
-test('catalog 产出的 point 带 termName', () => {
-  const idx = BANK.indexOf('termName:courseTerms.get(record.courseId)');
-  assert.ok(idx > 0, 'point 上要带 termName，否则 bankQuestion 取不到');
+test('knowledgePoints 真的会把 termName 传出来（不是只写在源码里）', async () => {
+  const { knowledgePoints } = await import('../packages/core/quiz/src/knowledge-points.js');
+  // ⚠️ fixture 的形状要照 `knowledgePoints()` **真正读的**字段来写：
+  //    它读 `record.lecture.chapters`（且 `generationVersion === 'architecture-v4'`）
+  //    或 `record.semanticPlan`，**不读 `knowledgeTree`** —— 那是解析的输出，不是输入。
+  //    第一版我写成 `knowledgeTree`，结果产出 0 个 point，
+  //    而 `a[0]?.termName` 只会静默得到 `undefined`，看起来像通过。
+  //    另外 topic 必须带 `sourceBlockIndexes`（或 `from`/`to`），否则匹配不到任何 block。
+  const record = {
+    courseId: 'c-1', subId: 's-1', courseTitle: '甲课', lessonTitle: '第一节',
+    termName: '2026 秋', revision: 'r1',
+    lecture: {
+      generationVersion: 'architecture-v4',
+      revision: 'r1',
+      chapters: [{ title: '章', topics: [{ title: '点', text: '正文内容足够长', sourceBlockIndexes: [0] }] }],
+    },
+    blocks: [{ index: 0, text: '正文内容足够长', tag: { role: '主线' } }],
+  };
+  const points = knowledgePoints(record);
+  assert.ok(points.length > 0, '这个 fixture 应当至少产出一个知识点');
+  assert.equal(points[0].termName, '2026 秋', 'point 上要带 termName，否则题目存不下来');
+
+  // 反向对照：记录上没有 termName 时不该凭空造一个
+  const { termName: _drop, ...withoutTerm } = record;
+  assert.equal(knowledgePoints(withoutTerm)[0].termName, '', '缺 termName 时留空，不要编');
 });
 
 test('bankQuestion 把 termName 存进题目', () => {

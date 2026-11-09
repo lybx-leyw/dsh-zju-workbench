@@ -30,7 +30,8 @@
     "ATTRIBUTION.md"
   ],
   "dependencies": {
-    "@lybx-leyw/dsh-zju-core-classroom-timing": "0.1.0"
+    "@lybx-leyw/dsh-zju-core-classroom-timing": "0.1.0",
+    "svg-pathdata": "8.0.0"
   },
   "license": "GPL-3.0-or-later"
 }

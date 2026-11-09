@@ -36,6 +36,93 @@ git config user.email         # 提交者邮箱，会进入公开历史，见“
 
 `git config user.name` 的结果就是后文里的“当前用户”。归属判断依据是这个值，而不是发起请求的账号 —— 两者可能不一致。
 
+## 依赖：**不要用 `npm install` 装工作区**
+
+这条是踩过坑写下的，请当成硬规则。
+
+```bash
+# ✅ 装第三方依赖（esbuild / react / katex…）或按锁文件重装
+npm ci
+
+# ✅ 链接 51 个 workspace 包（junction，不联网，不碰锁文件）
+node scripts/link-workspace-packages.mjs
+node scripts/link-workspace-packages.mjs --check   # 期望 linked 51
+```
+
+**不要跑 `npm install`。** 它的后果实测过：
+
+```text
+removed 252 packages, changed 1 package
+package-lock.json: +550 / -3231 行
+51 个工作区包全部掉链接，katex 等第三方依赖被删
+```
+
+原因是仓库用**两层目录**（`packages/core/*`、`packages/client/*`…），
+而根 `package.json` 的 `workspaces` 早先只写了 `"packages/*"` —— 那个 glob 匹配到的是
+7 个**分组目录**，它们自己都没有 `package.json`，于是 npm 认为本仓库**零工作区**，
+把 51 个真实包当成 `extraneous` 一并清掉。（`workspaces` 已改成五个分组 glob，
+但 `npm install` 仍会重写锁文件，所以依然优先用 `npm ci`。）
+
+判断依据很简单：**仓库里有 `scripts/link-workspace-packages.mjs`，就说明工作区
+不由 npm 管。** 需要新包被链接时跑那个脚本，不要动 npm。
+
+新增分组目录（例如将来的 `packages/foo/*`）时，两处都要补：
+
+1. `package.json` 的 `workspaces`
+2. `scripts/link-workspace-packages.mjs` 第 38 行那个 `for (const pattern of [...])`
+
+`packages/radar/*`（79 个候选骨架）与 `packages/vendor/*` **有意不进 workspaces**，
+不要加进去。
+
+### 依赖坏了怎么修（实测可用的完整流程）
+
+`node_modules` 被清空、或构建报 `Could not resolve "katex"` / `Could not resolve "@lybx-leyw/dsh-zju-*"`
+时，按这个顺序走。**不要在中间插 `npm install`。**
+
+```powershell
+# 1. 备份锁文件（后面要对比改了什么）
+Copy-Item package-lock.json "$env:TEMP\package-lock.backup.json" -Force
+
+# 2. 离线重建锁文件 —— 不动 node_modules，不需要网络
+#    这一步同时会修掉「锁里还按旧扁平路径记录工作区」的问题
+npm install --package-lock-only --legacy-peer-deps --offline --no-audit --no-fund
+
+# 3. 落盘。用 --prefer-offline（严格 --offline 会因个别 tarball 未缓存失败）
+npm ci --legacy-peer-deps --prefer-offline --ignore-scripts --no-audit --no-fund
+
+# 4. 确认 51 个包都链上了
+node scripts/link-workspace-packages.mjs --check   # 期望 {"total":51,"linked":51,"missing":[]}
+
+# 5. 构建
+npm run build
+```
+
+**如果第 3 步报 `EPERM ... libvips-42.dll`**：那是一个**中断安装留下的孤儿暂存目录**
+（`node_modules/@img/.sharp-win32-x64-XXXXXXXX`）被某个进程占着。注意两点：
+
+- **给目录改名不能绕过锁**（锁在文件对象上，不在路径上），实测无效；
+- 正确做法是把它**整个移出 `node_modules`**：
+
+```powershell
+Get-ChildItem node_modules\@img -Directory -Force | Where-Object { $_.Name -like '.*' } |
+  ForEach-Object { Move-Item $_.FullName "$env:TEMP\sharp-orphan-$($_.Name)" -Force }
+```
+
+移走后再跑第 3 步即可。**不要 `Remove-Item node_modules`** —— 那才真的会撞上 EPERM，
+而且要把 105 个包全部重装。
+
+### 两条容易踩的版本约束
+
+1. **`@deepseek-ai/dsh-atomic-write` 必须与 `runtime.lock.json` 的
+   `preferredHostVersion` 一致**（当前 `0.2.2-rc.1`）。8 个工作区包在
+   `peerDependencies` 里写死了这个版本；根依赖若停留在 `^0.2.0-rc.2`，caret 范围
+   **覆盖不到** `0.2.2-rc.1`，npm 会一路装 `0.2.0-rc.2` 并发 peer 警告。
+   因为 peer 标了 `optional: true`，它**不会硬失败**——所以这个不一致会静默存在很久。
+2. **内部包互相引用的版本号必须等于对方的 `version`**，不能落后。曾经
+   `source/campus` 与 `source/http` 把 `source-webvpn` 钉在 `0.1.0` 而它已经是 `0.2.0`：
+   本地不满足 → npm 回退去 registry 找 → 这个包 `private: true` 从未发布 → **404**。
+   改内部包版本号时，先全局搜一遍谁引用它。
+
 ## 文件归属
 
 谁的代码由各目录的 `OWNERS` 声明，规则与 [CONTRIBUTING.md 第 2 章](CONTRIBUTING.md#2-owner-机制)一致；本节是供就地判断用的摘要，细节以原文为准。先讲机制，再讲 `OWNERS` 放在哪里。

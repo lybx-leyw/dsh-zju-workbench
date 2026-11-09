@@ -78,6 +78,18 @@ if (CHECK_ONLY) {
   for (const pkg of missing) {
     const target = path.join(NODE_MODULES, pkg.name);
     try {
+      // ⚠️ **必须先把作用域目录建出来**（`node_modules/@lybx-leyw/`）。
+      //
+      // `symlinkSync` 不会为它创建一个父目录：目标父级不存在时直接 ENOENT。
+      // 本仓 51 个包全是 `@lybx-leyw/*`，所以第一次在干净环境里跑本脚本时
+      // **每一个都会失败** —— 而失败只落在 `failed[]` 里，输出看起来像
+      // 「跑完了，有几个失败」，很容易被当成个别包的偶发问题。
+      //
+      // 这个 bug 长期没暴露，是因为 `node_modules/@lybx-leyw` 一直存在
+      // （由早先某次 `npm install` 或手工链接留下）。一旦它被删掉
+      // （例如误跑 `npm install` 把 workspace 当作 extraneous 清掉），
+      // 本脚本就再也补不回来 —— 恢复路径断在这里。
+      fs.mkdirSync(path.dirname(target), { recursive: true });
       // Windows 上必须用 junction：默认的 dir symlink 需要管理员或开发者模式。
       fs.symlinkSync(pkg.source, target, 'junction');
       linked.push(pkg.name);

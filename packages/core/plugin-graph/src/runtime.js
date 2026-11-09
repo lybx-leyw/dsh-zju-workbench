@@ -12,6 +12,12 @@
 // 「叶」= 没有任何包请求它（在上述两套真源里都没有入边）。本仓的设计刻意让可选的加工步骤
 // 走 `ctx.get` 惰性取而不是写进 `inject`（见 @lybx-leyw/dsh-zju-core-study/README.md「只声明硬依赖」），
 // 所以叶就是可以安全取消的那一批，不需要再叠一层「入口包」保护。
+//
+// # 为什么它在 core
+//
+// 它原先在 `packages/client/page-plugins/src/runtime.js`，但**宿主半边的 `host.js` 与
+// 客户端的 `store.js` 都 import 它** —— 两边共用一份纯逻辑，正是「该放在 core」的信号。
+// 搬过来之后页面只渲染（`Panel.jsx`），图的计算与 `/api/zhiyun-plugins` 都在 core。
 
 /**
  * 只看本仓的包；上游 `@deepseek-ai/*` 一律不进这张图。
@@ -375,7 +381,9 @@ export function buildView({ bundles, modules, host, client, plugins, slots, fibe
     const readOnlyReason = plugin?.readOnlyReason ?? bundle?.readOnlyReason;
     return {
       name,
-      short: name.slice(prefix.length),
+      // `prefix` 可能是一组（迁移期两种命名并存），所以取**实际匹配上的那个**去减，
+      // 不能直接 `name.slice(prefix.length)` —— 那既会算错长度，也会在数组上取到 undefined。
+      short: name.slice((prefixes.find(p => name.startsWith(p)) ?? '').length),
       enabled,
       entryId: typeof plugin?.entryId === 'string' ? plugin.entryId : undefined,
       readOnlyReason,

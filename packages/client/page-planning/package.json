@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-page-planning",
   "version": "0.1.0",
-  "description": "智云 Pro「规划」页：读取用户自己部署的中转站，把推上去的个人规划与日记摆成第一栏（页面插件）",
+  "description": "智云 Pro「规划」页（只含 UI）：列表、日历、日程与 pet 对话。数据聚合与路由由 core-planning 提供",
   "private": true,
   "type": "module",
   "main": "./src/index.js",
@@ -20,6 +20,9 @@
         "@lybx-leyw/dsh-zju-ui-shared"
       ]
     }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-planning": "0.1.0"
   },
   "license": "GPL-3.0-or-later"
 }

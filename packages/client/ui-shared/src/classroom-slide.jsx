@@ -1,20 +1,21 @@
 /**
- * 课件页渲染器 —— 我们自己的实现。
+ * 课件页渲染器 —— 我们自己的实现。**住在 UI 层，不在 core**。
+ *
+ * # 为什么在 ui-shared 而不是 `core/classroom-renderer`
+ *
+ * 它 `import React` 并产出 DOM。按本仓分层：**core 不含 UI**（只有纯逻辑与
+ * 宿主服务），页面的渲染组件归 UI 层。所以组件搬到这里，`core/classroom-renderer`
+ * 只留画布常量这类纯数据。
+ *
+ * 这也修掉了一个真实的耦合：以前是 `core` 里的组件被 `page-study` 直接 import，
+ * 于是「core 不依赖 React」这条边界一直是破的。
  *
  * # 为什么重写而不是继续 vendor
  *
  * 上游 `@openmaic/renderer` 是 246 个文件 / 1.5 MB 的构建产物，支持 11 类元素
  * （chart / table / code / audio / video / snapshot…）。但**产品实际只用到 4 类**：
  * 它自己的 prompt 就写着「只用 text / shape / image / latex 四类；没有配图就用 text」
- * （见 `core-classroom-generate/src/prompts.js` 的 `SCENE_SYSTEM.slide`）。
- *
- * 为一个用不到 1/3 能力的场景维护 1.5 MB 二进制代码，代价是：
- *   - 上游一升级就要重新 vendor 一次
- *   - 24 处 `"use client"`（Next.js 指令，在我们这里毫无意义）
- *   - 1.6 MB 的 .map / .d.ts 只给编辑器看
- *   - 想改任何一处渲染都要改编译产物
- *
- * 所以按「产品真的需要的 4 类」重写。这不是缩水：多出来的 7 类从来没有生产者。
+ * （见 `core/classroom-generate/src/prompts.js` 的 `SCENE_SYSTEM.slide`）。
  *
  * # 画布约定（与生成侧一致）
  *
@@ -26,10 +27,8 @@
  */
 import React from 'react';
 import katex from 'katex';
-
-/** 默认画布尺寸，与 `core-classroom-generate/src/prompts.js` 的常量保持一致。 */
-export const VIEWPORT_SIZE = 1000;
-export const VIEWPORT_RATIO = 0.5625;
+// 画布常量是**纯数据**，定义权留在 core（生成侧也要用它），这里只引用。
+import { VIEWPORT_RATIO, VIEWPORT_SIZE } from '@lybx-leyw/dsh-zju-core-classroom-renderer';
 
 /** 只有这四类会被渲染。其它类型原样跳过 —— 静默忽略比画错好。 */
 const SUPPORTED = new Set(['text', 'shape', 'image', 'latex']);
@@ -74,8 +73,6 @@ export function ClassroomSlide({ slide, width = 800 }) {
               left: num(element.left) * scale,
               top: num(element.top) * scale,
               width: Math.max(1, num(element.width) * scale),
-              // 文字用 minHeight：内容长了允许往下撑开，不被齐头裁掉。
-              // shape/image 仍然用固定 height —— 它们的尺寸就是图形本身。
               // 文字与公式用 minHeight：它们的高度由内容（字体度量 / KaTeX 排版）
               // 决定，模型给的格子只是估计值，硬约束会把内容裁掉。
               // shape / image 仍用固定 height —— 它们的尺寸就是图形本身。
@@ -121,9 +118,6 @@ function renderElement(element) {
  * `content` 是 HTML 片段（生成侧就是这么给的，含 `<p>`）。
  * 用 `dangerouslySetInnerHTML` 是必要的：内容来自我们的模型 + 我们自己的 prompt 约束，
  * 不来自任意用户输入；而把它解析成 React 节点需要额外一个 HTML 解析器，不值得。
- */
-/**
- * 文本。
  *
  * # 高度是「最小高度」，不是硬约束
  *

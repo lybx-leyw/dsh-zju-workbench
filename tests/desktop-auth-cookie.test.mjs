@@ -39,10 +39,14 @@ const root = path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/([
 async function loadPurge() {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(path.join(root, 'apps/desktop/src/main.js'), 'utf8');
-  const start = source.indexOf('async function purgeStaleAuthCookies()');
+  // 先归一化换行符再切片：`main.js` 在 Windows 上是 CRLF 检出
+  // （CRLF=287、纯 LF=0），而这里找的是 `'\n}\n'` —— 它不会匹配 `\r\n}\r\n`，
+  // 于是 `indexOf` 恒为 -1，报「找不到函数结尾」。这不是 main.js 的问题，
+  // 是切片写法假定了 LF。归一化对判断函数边界没有任何副作用。
+  const normalized = source.replace(/\r\n/g, '\n');
+  const start = normalized.indexOf('async function purgeStaleAuthCookies()');
   assert.ok(start >= 0, 'main.js 里应当有 purgeStaleAuthCookies');
-  // 取到函数结束（下一个顶层 `}` 后跟空行）
-  const body = source.slice(start);
+  const body = normalized.slice(start);
   const end = body.indexOf('\n}\n');
   assert.ok(end > 0, '找不到函数结尾');
   const fnSource = body.slice(0, end + 2);

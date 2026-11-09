@@ -1,7 +1,12 @@
 # @lybx-leyw/dsh-zju-page-notes
 
-「笔记」页：**Obsidian 式笔记库** —— 文件树、多标签页、双链、反链、标签。
-正文存成**普通的 `.md` 文件**。
+「笔记」页：**Obsidian 式笔记库**的**界面** —— 文件树、多标签页、双链、反链、标签。
+
+> ⚠️ **本包只含 UI**。存储（落盘、路径安全、PDF 字节流、`/api/zhiyun-vault-notes`）
+> 在 `@lybx-leyw/dsh-zju-core-vault`（`src/notes-host.js`）。本包的 `apply()` 是空的，
+> 它能存在只是为了把客户端 bundle 带进启动图谱。
+> 页面不认识存储细节，只按路由要数据 —— 这是分层要求：page 只管渲染。
+> 正文最终仍是**普通的 `.md` 文件**，这一点没变。
 
 ## 版面：照着 Obsidian 的四个分区来
 

@@ -24,7 +24,7 @@ export async function apply(ctx, config = {}) {
   /**
    * 本包的 `fetch`。
    *
-   * 优先用**共享出口** `zhiyunEgress`（campus 提供）：它比这里的本地兜底多了
+   * 优先用**共享出口** `zhiyunEgress`（由 `source-http` 提供）：它比这里的本地兜底多了
    * 「校园网判定 + 校外绕 WebVPN」，而且 undici 连接池与 WebVPN 会话全省一份 ——
    * 各包各自登录 WebVPN 会互相踢掉（与 CAS 双登录同一类事故）。
    *

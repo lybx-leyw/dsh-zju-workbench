@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@lybx-leyw/dsh-zju-source-login": "0.1.0",
-    "@lybx-leyw/dsh-zju-source-webvpn": "0.1.0",
+    "@lybx-leyw/dsh-zju-source-webvpn": "0.2.0",
     "tough-cookie": "6.0.2",
     "undici": "^8.10.2",
     "@lybx-leyw/dsh-zju-source-http": "0.1.0"

@@ -187,9 +187,27 @@ test('页面识别 NEED_LOGIN 并显示成"待登录"，而非"读取失败"', a
 
 test('宿主侧把 LOGIN_REQUIRED 翻译成 NEED_LOGIN', async () => {
   const { readFile: rf } = await import('node:fs/promises');
-  const host = await rf(
-    new URL('../packages/client/page-planning/src/index.js', import.meta.url), 'utf8',
+  // 翻译表住在**数据源**里，不在页面里：页面换一个、或新增一页来用学在浙大，
+  // 都不该把码表再抄一遍。这里校验的是 campus 自己的那一份。
+  const source = await rf(
+    new URL('../packages/source/campus/src/index.js', import.meta.url), 'utf8',
   );
-  assert.match(host, /code: 'NEED_LOGIN'/, '宿主侧必须产出统一码');
-  assert.equal(host.includes("npm run"), false, '宿主侧不该让用户去终端跑命令');
+  assert.match(source, /code: 'NEED_LOGIN'/, '数据源必须产出统一码');
+  assert.equal(source.includes("npm run"), false, '数据源不该让用户去终端跑命令');
+});
+
+test('规划域的宿主半边不再自己翻译数据源的错误码（码表只有一份）', async () => {
+  const { readFile: rf } = await import('node:fs/promises');
+  // 宿主半边已从 page-planning 搬到 core-planning：页面只渲染，聚合与路由在 core。
+  // 无论哪一层，都不该再出现第二张码表 —— 翻译归 source/campus。
+  const host = await rf(
+    new URL('../packages/core/planning/src/index.js', import.meta.url), 'utf8',
+  );
+  // 下游只要把 campus 返回的 `error` 原样透传；**定义**一份码表（`const translateX… =
+  // (error) =>`）就说明又在页面里抄了一遍。注释里提到就名字不算，所以先剥注释，
+  // 且只匹配定义。
+  const body = host.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.doesNotMatch(body, /translateXzzdError\s*=/, '页面不该再定义错误码翻译');
+  assert.doesNotMatch(body, /translatePtaError\s*=/, '页面不该再定义错误码翻译');
+  assert.equal(body.includes('设置 → 浙大一卡通'), false, '凭据指引只应出现在数据源里');
 });

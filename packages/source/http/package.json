@@ -25,7 +25,7 @@
     }
   },
   "dependencies": {
-    "@lybx-leyw/dsh-zju-source-webvpn": "0.1.0",
+    "@lybx-leyw/dsh-zju-source-webvpn": "0.2.0",
     "tough-cookie": "6.0.2"
   },
   "peerDependencies": {

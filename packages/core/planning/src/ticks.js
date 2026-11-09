@@ -25,6 +25,11 @@
  *
  * **必须带 source**：两个平台的 id 都是小整数，`xzzd:12` 与 `pta:12` 是
  * 完全不同的两件事，只按 id 存会互相覆盖。
+ *
+ * # 为什么住在 core 而不在「规划」页里
+ *
+ * 它读写文件（`node:fs`），是存储。页面只该渲染 —— 详见
+ * `packages/core/planning/src/index.js` 的说明。
  */
 
 import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';

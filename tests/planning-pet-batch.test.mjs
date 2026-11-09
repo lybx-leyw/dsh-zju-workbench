@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { apply, ScheduleStore } from '../packages/client/page-planning/src/index.js';
+import { apply, ScheduleStore } from '../packages/core/planning/src/index.js';
 
 /** Boot the real host plugin with a deterministic LLM; no network, no real model. */
 async function boot(t, replies) {

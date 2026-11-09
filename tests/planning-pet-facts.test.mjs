@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPlanningFacts, answerScheduleStatus } from '../packages/client/page-planning/src/pet-context.js';
-import { createPetPrompt } from '../packages/client/page-planning/src/pet.js';
+import { buildPlanningFacts, answerScheduleStatus } from '../packages/core/planning/src/pet-context.js';
+import { createPetPrompt } from '../packages/core/planning/src/pet.js';
 
 const now = Date.parse('2026-11-01T12:00:00+08:00');
 
