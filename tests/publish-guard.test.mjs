@@ -126,13 +126,18 @@ test('the page shell dependency is an exact published version, not a local copy'
   const { readFileSync, readdirSync, existsSync } = await import('node:fs');
   const readManifest = (relative) => JSON.parse(readFileSync(path.join(root, relative), 'utf8'));
   const rootManifest = readManifest('package.json');
-  const bridge = readManifest('packages/dsh-zhiyun-shell-bridge/package.json');
+  // 桥接包已归档（`archive/deprecated-packages/`）—— 但仍要守住它当初的错误：
+  // 「桥接包重复声明页面壳」会让 `pages` 服务被注册两次。归档副本同样不该带这条依赖。
+  const bridgePath = 'archive/deprecated-packages/dsh-zhiyun-shell-bridge/package.json';
   const name = '@lybx-leyw/dsh-pages';
   const range = rootManifest.dependencies?.[name];
   assert.equal(typeof range, 'string', `${name} 必须在根 package.json 里声明`);
   assert.match(range, /^\d+\.\d+\.\d+$/, `${name} 必须锁精确版本，收到 ${range}`);
-  assert.equal(bridge.dependencies?.[name], undefined,
-    '桥接包不应重复声明页面壳 —— 它由 profile 挂载，重复安装会撞 pages 服务');
+  if (existsSync(path.join(root, bridgePath))) {
+    const bridge = readManifest(bridgePath);
+    assert.equal(bridge.dependencies?.[name], undefined,
+      '桥接包不应重复声明页面壳 —— 它由 profile 挂载，重复安装会撞 pages 服务');
+  }
   // profile 必须把它挂成 bundle，否则宿主根本不加载页面壳。
   const profile = readManifest('profiles/zju-workbench/package.json');
   assert.ok(profile.dsh.profile.bundles.includes(name), 'profile 必须挂载页面壳');

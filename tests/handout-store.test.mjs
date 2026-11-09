@@ -13,9 +13,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createHandoutService } from '../packages/dsh-zhiyun-core-handout/src/store.js';
-import { availableNotePath, currentNotePath, existingNoteKeys } from '../packages/dsh-zhiyun-core-handout/src/version.js';
-import { baselineToMarkdown } from '../packages/dsh-zhiyun-core-handout/src/codec.js';
+import { createHandoutService } from '../packages/core/handout/src/store.js';
+import { availableNotePath, currentNotePath, existingNoteKeys } from '../packages/core/handout/src/version.js';
+import { baselineToMarkdown } from '../packages/core/handout/src/codec.js';
 
 const COURSE = '数据结构';
 const LESSON = '第三讲 树与二叉树';

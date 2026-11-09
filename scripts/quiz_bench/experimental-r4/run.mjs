@@ -1,5 +1,5 @@
-import {inspectGraph} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/graph.mjs';
-import {contentHash,poolLimit,serial} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/common.mjs';
+import {inspectGraph} from '../../../packages/core/quiz/src/engines/r3-v9/graph.mjs';
+import {contentHash,poolLimit,serial} from '../../../packages/core/quiz/src/engines/r3-v9/common.mjs';
 import {createScheduler} from './scheduler.mjs';
 import {createQuestionGenerator} from './generator.mjs';
 import {buildBlueprint,assessmentReport} from './blueprint.mjs';

@@ -1,4 +1,4 @@
-// dsh-zhiyun-core-classroom-media 的装配与契约测试。
+// @lybx-leyw/dsh-zju-core-classroom-media 的装配与契约测试。
 //
 // 刻意覆盖四类断言（对应交付要求的三条 + 一条回归）：
 //   1. `apply()` 永不抛（含：没有 studio、provide 会抛、上游全缺）；
@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { cp, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-core-classroom-media/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-media/', import.meta.url);
 const INDEX_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'index.js')).href;
 const REPO_ROOT = new URL('..', import.meta.url).pathname;
 const plugin = await import(INDEX_URL);
@@ -266,7 +266,7 @@ test('fetchPage() 遇到不支持的内容类型时返回错误而不是空正�
 
 // ── 4. PDF：本地解析与缺依赖时的形状 ────────────────────────────────────────
 //
-// 本仓已把 `unpdf` 装进 media 包（`packages/dsh-zhiyun-core-classroom-media/node_modules`），
+// 本仓已把 `unpdf` 装进 media 包（`packages/core/classroom-media/node_modules`），
 // 所以「装了能解析」是要断言的主路径；「没装要明说」用隔离目录验证 ——
 // ESM 的 bare specifier 按**模块自身位置**解析，把 src 复制到没有 node_modules 的
 // 临时目录再导入，才能真的制造出「依赖不在」的状态（而不是假装它不在）。

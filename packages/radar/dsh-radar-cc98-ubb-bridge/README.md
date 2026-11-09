@@ -21,7 +21,7 @@
 | 判据 | 结论 | 依据 |
 | --- | --- | --- |
 | ① 仍是同一个面板 | ✅ | 落点是 `packages/dsh-zhiyun-page-notes/src/client.jsx` 的**已有正文区**：选中一篇 `.md` → 一个「复制为 CC98 UBB」按钮。不新建页面、不新增侧栏、不新增插槽 |
-| ② 功能仍相似正交 | ✅ | 现有 `dsh-zhiyun-source-cc98/src/ubb.js` 只有 `ubbToText`（UBB → 纯文本，**读**进门）；本包是 `markdownToUbb`（Markdown → UBB，**写**出门）。方向相反、用途不同，不是第二份渲染器 |
+| ② 功能仍相似正交 | ✅ | 现有 `@lybx-leyw/dsh-zju-source-cc98/src/ubb.js` 只有 `ubbToText`（UBB → 纯文本，**读**进门）；本包是 `markdownToUbb`（Markdown → UBB，**写**出门）。方向相反、用途不同，不是第二份渲染器 |
 | ③ 底层多调了更优质实现 | ✅ | 现有这一维**为 0**（全仓 `markdownToUbb|toUbb|toUBB` 0 命中）。上游提供 288+217 行、**专为 CC98 方言**写的转换：标题 `[size=7..2]`、按分隔符扫描的强调转换、代码区不参与替换、URL 先屏蔽后还原、`[bili]`/`[video]`/`[audio]` 三种媒体标签 |
 
 ---

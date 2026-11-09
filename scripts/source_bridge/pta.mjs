@@ -24,7 +24,7 @@ export const label = '拼题A';
  */
 export async function run({ cookie, dataDir }) {
   const creds = memoryCredentials();
-  const { routes } = await mount('dsh-zhiyun-source-campus', {
+  const { routes } = await mount('@lybx-leyw/dsh-zju-source-campus', {
     dataDir,
     credentials: creds.service,
   });

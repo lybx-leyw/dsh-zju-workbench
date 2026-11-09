@@ -1,4 +1,10 @@
 node_modules/
+# 临时脚本与调试输出：开发时随手写的 `tmp-*.mjs` / `tmp-out.txt` 常含
+# **本地绝对路径**（如 `C:\Users\<name>\...` 的模块解析报错）。本仓库是公开的，
+# 这类文件必须挡在提交之外 —— 已踩过一次（tmp-out.txt 被抓出 5 处用户路径）。
+tmp-*
+.temp-*
+.tmp-*
 .ref/
 .ref_book2skill/
 .ref-codex-ui/
@@ -46,6 +52,12 @@ deploy/*/data/
 #   npm run vendor:fetch -- --check   提交与 SHA-256 后落盘）
 vendor/
 
+# ⚠️ 例外：`packages/vendor/` 是**会改对方代码的上游副本**，与上面那种「只读快照」
+# 性质相反 —— 我们自己维护、自己锁版本，改动必须以普通文件进版本控制，
+# 否则 clone 下来缺代码、也没人知道我们改了上游什么（见该目录的 PATCHES.md 约定）。
+!packages/vendor/
+!packages/vendor/**
+
 # Local research library (publisher PDFs and reading notes).
 /.refers/
 
@@ -70,17 +82,10 @@ vendor/
 # 注意：这是**解压得到的快照，没有 git 历史**；要查变更来源得另外 clone。
 /.ref-cordis/
 
-# 课堂移植把上游内核（dsl / geometry / renderer）vendor 进了包内，与根 `vendor/`
-# 的「不进仓库」策略相反：这几个包没有上游 lock 文件可回放，体积也只 3.5 MB，
-# 打包进仓库才能让 clone 后直接跑测试。unpdf 同理（PDF 文本抽取的唯一本地方案）。
-!packages/dsh-zhiyun-classroom-dsl/vendor/
-!packages/dsh-zhiyun-classroom-dsl/vendor/**
-!packages/dsh-zhiyun-classroom-geometry/vendor/
-!packages/dsh-zhiyun-classroom-geometry/vendor/**
-!packages/dsh-zhiyun-classroom-renderer/vendor/
-!packages/dsh-zhiyun-classroom-renderer/vendor/**
-!packages/dsh-zhiyun-core-classroom-media/vendor/
-!packages/dsh-zhiyun-core-classroom-media/vendor/**
+# 课堂四个包曾把上游内核 vendor 进包内并豁免跟踪（见历史提交 337b3b4），
+# 与根 `vendor/` 的「不进仓库」策略相悖。2026-11-06 起撤销豁免：vendor 一律
+# 不进仓库。已跟踪的文件已用 `git rm -r --cached` 移出索引；文件本身留在磁盘上，
+# 本地构建与测试不受影响，只是不再产生新的跟踪变更。
 
 # 渲染一致性校验的临时产物目录（每次跑会重新生成）。
 /.verify-render-*/

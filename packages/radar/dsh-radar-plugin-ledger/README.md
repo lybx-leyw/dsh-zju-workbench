@@ -59,7 +59,7 @@
 
 1. **没有许可证维度。** `grep -rni "license" src/scan/ src/hub/` → **0 条**。
    「每包什么许可」得本包自写（TODO-5）。**不要**把 license 说成 harbor 的能力。
-2. **证据会命中注释行。** 对本仓 `dsh-zhiyun-source-campus` 实测：`network-egress` 的
+2. **证据会命中注释行。** 对本仓 `@lybx-leyw/dsh-zju-source-campus` 实测：`network-egress` 的
    6 条证据**全部**是 `src/egress.js` 的 `/** … */` 注释（第 4/6/16/20/21/146 行），
    另有 **18 条被省略**。⇒ 界面文案必须写「启发式线索」，不能写「检测到」。
    同理 `tool-registration` / `env-read` 在上游自己标注的 tier 就是 `heuristic`。

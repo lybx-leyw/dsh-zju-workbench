@@ -1,4 +1,4 @@
-import {DEEPTUTOR_GENERAL_GUIDANCE} from '../../../packages/dsh-zhiyun-core-quiz/src/deeptutor-guidance.js';
+import {DEEPTUTOR_GENERAL_GUIDANCE} from '../../../packages/core/quiz/src/deeptutor-guidance.js';
 export const parse=raw=>JSON.parse(String(raw.text??raw).replace(/^```(?:json)?\s*|\s*```$/g,''));
 const review=`独立解答并核对单题，只输出 JSON {"verdicts":[{"index":0,"valid":true,"targetMatched":true,"reason":"","optionTruth":{"A":false,"B":true,"C":false,"D":false}}]}。
 先自行求解，再逐个检查全部选项和参考解析，不以给定答案为准。mcq 每项 optionTruth 必须是布尔值且恰好一项为真，与 answer 一致。部分正确、条件不足或有歧义的选项也不可当作明确错误干扰项，须 valid=false。检查计算、符号与单位、零值/空值、适用范围及解析中的每个断言，不能只看选项答案正确。

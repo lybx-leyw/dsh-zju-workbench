@@ -1,0 +1,12 @@
+# Reviewed historical frontend protocol constants, not personal credentials.
+# Scope is one exact commit/file/rule/line; new matches still fail the scan.
+# CC98's official frontend OAuth client constants.
+9b00f69d039f01768bd7ceda02829d065fe4fb11:core/zju/lib/cc98/README.md:generic-api-key:15
+9b00f69d039f01768bd7ceda02829d065fe4fb11:core/zju/lib/cc98/auth.ts:generic-api-key:24
+# Lab and sports-site public frontend application identifiers/signing constants.
+9b00f69d039f01768bd7ceda02829d065fe4fb11:core/zju/lib/lab/README.md:generic-api-key:34
+9b00f69d039f01768bd7ceda02829d065fe4fb11:core/zju/lib/lab/index.ts:generic-api-key:38
+9b00f69d039f01768bd7ceda02829d065fe4fb11:core/zju/lib/tyys/client.ts:generic-api-key:86
+9b00f69d039f01768bd7ceda02829d065fe4fb11:core/zju/lib/tyys/venue.ts:generic-api-key:149
+# Unused default identifier in the removed local OCR implementation (no external API call).
+9b00f69d039f01768bd7ceda02829d065fe4fb11:core/zju/scripts/tyys/captcha.py:generic-api-key:55

@@ -13,9 +13,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { splitUnanchored } from '../packages/dsh-zhiyun-core-parser/src/parser.js';
-import { tokensOf } from '../packages/dsh-zhiyun-core-parser/src/tokenize.js';
-import { anchor } from '../packages/dsh-zhiyun-core-parser/src/core.js';
+import { splitUnanchored } from '../packages/core/parser/src/parser.js';
+import { tokensOf } from '../packages/core/parser/src/tokenize.js';
+import { anchor } from '../packages/core/parser/src/core.js';
 
 /** 造一句 n 字的字幕。 */
 const line = (i, chars = 100, gapMs = 1000) => ({

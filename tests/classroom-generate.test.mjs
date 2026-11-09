@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { apply, createGenerateService } from '../packages/dsh-zhiyun-core-classroom-generate/src/index.js';
+import { apply, createGenerateService } from '../packages/core/classroom-generate/src/index.js';
 
 // ── 测试替身 ────────────────────────────────────────────────────────────────
 

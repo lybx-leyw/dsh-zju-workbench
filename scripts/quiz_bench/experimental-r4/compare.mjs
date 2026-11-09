@@ -6,18 +6,18 @@ import {createHash} from 'node:crypto';
 import {writeFileAtomic} from '@deepseek-ai/dsh-atomic-write';
 import {runR4} from './run.mjs';
 import {createToolTransport as createR4ToolTransport} from './tools.mjs';
-import {compileIdeas} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/compiler.mjs';
-import {createScheduler} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/scheduler.mjs';
-import {createQuestionGenerator} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/generator.mjs';
-import {createCapsuleStore} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/capsules.mjs';
-import {reserveWithExpansion} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/expansion.mjs';
-import {createToolTransport} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/tools.mjs';
-import {inspectGraph} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/graph.mjs';
-import {createPointQuizGenerator,planPointQuestions} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r1/points.mjs';
+import {compileIdeas} from '../../../packages/core/quiz/src/engines/r3-v9/compiler.mjs';
+import {createScheduler} from '../../../packages/core/quiz/src/engines/r3-v9/scheduler.mjs';
+import {createQuestionGenerator} from '../../../packages/core/quiz/src/engines/r3-v9/generator.mjs';
+import {createCapsuleStore} from '../../../packages/core/quiz/src/engines/r3-v9/capsules.mjs';
+import {reserveWithExpansion} from '../../../packages/core/quiz/src/engines/r3-v9/expansion.mjs';
+import {createToolTransport} from '../../../packages/core/quiz/src/engines/r3-v9/tools.mjs';
+import {inspectGraph} from '../../../packages/core/quiz/src/engines/r3-v9/graph.mjs';
+import {createPointQuizGenerator,planPointQuestions} from '../../../packages/core/quiz/src/engines/r1/points.mjs';
 import {deepTutorBenchHost} from '../deeptutor-host.mjs';
 import {runDeepTutorBench} from '../deeptutor.mjs';
 import {tokenLedger,timingLedger} from '../accounting.mjs';
-import {poolLimit} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/common.mjs';
+import {poolLimit} from '../../../packages/core/quiz/src/engines/r3-v9/common.mjs';
 
 const hash=x=>createHash('sha256').update(x).digest('hex');
 const write=(file,value)=>writeFileAtomic(file,JSON.stringify(value,null,2),{mode:0o600});
@@ -37,8 +37,8 @@ export const runFingerprint=(spec,credentials)=>hash(JSON.stringify({
 export async function kernelHashes(){
  const files={};
  async function visit(dir){for(const row of await fs.readdir(dir,{withFileTypes:true})){if(row.name==='__pycache__')continue;const file=dir+'/'+row.name;if(row.isDirectory())await visit(file);else if(/\.(mjs|js|py|json|ya?ml)$/.test(row.name))files[file]=hash(await fs.readFile(file));}}
- for(const dir of ['scripts/quiz_bench/experimental-r4','packages/dsh-zhiyun-core-quiz/src','packages/dsh-zhiyun-host-deeptutor/src','packages/dsh-zhiyun-host-deeptutor/python','packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor'])await visit(dir);
- for(const file of ['scripts/quiz_bench/deeptutor.mjs','scripts/quiz_bench/deeptutor-host.mjs','scripts/quiz_bench/accounting.mjs','packages/dsh-zhiyun-core-parser/src/worker-pool.js','packages/dsh-zhiyun-core-study/src/deeptutor-quiz.js'])files[file]=hash(await fs.readFile(file));
+ for(const dir of ['scripts/quiz_bench/experimental-r4','packages/core/quiz/src','packages/dsh-zhiyun-host-deeptutor/src','packages/dsh-zhiyun-host-deeptutor/python','packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor'])await visit(dir);
+ for(const file of ['scripts/quiz_bench/deeptutor.mjs','scripts/quiz_bench/deeptutor-host.mjs','scripts/quiz_bench/accounting.mjs','packages/core/parser/src/worker-pool.js','packages/core/study/src/deeptutor-quiz.js'])files[file]=hash(await fs.readFile(file));
  return files;
 }
 export const deliveredQuestions=result=>{

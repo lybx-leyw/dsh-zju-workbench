@@ -1,22 +1,22 @@
 // Isolated v5 research fork. Never imported by the App. See README.md.
 import {labCall} from './policy.mjs';
-import { QuizError } from '../../../packages/dsh-zhiyun-core-quiz/src/quality.js';
-import { parseGenerationResponse, applyClozeRules } from '../../../packages/dsh-zhiyun-core-quiz/src/generate.js';
-import { QUESTION_STRATEGIES, QUESTION_TYPES, allocateStrategies } from '../../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
-import { conceptCacheKey, pointIdentity, requestConcepts, recallConcepts, mergeConceptEntries, CONCEPT_PROMPT, normalizedText, contentHash } from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
-import { completeConcepts,basicHistory } from '../../../packages/dsh-zhiyun-core-quiz/src/completion.js';
+import { QuizError } from '../../../packages/core/quiz/src/quality.js';
+import { parseGenerationResponse, applyClozeRules } from '../../../packages/core/quiz/src/generate.js';
+import { QUESTION_STRATEGIES, QUESTION_TYPES, allocateStrategies } from '../../../packages/core/quiz/src/strategies.js';
+import { conceptCacheKey, pointIdentity, requestConcepts, recallConcepts, mergeConceptEntries, CONCEPT_PROMPT, normalizedText, contentHash } from '../../../packages/core/quiz/src/concepts.js';
+import { completeConcepts,basicHistory } from '../../../packages/core/quiz/src/completion.js';
 import {auditFacts,factFor} from './source.mjs';
-import {persistWithRetry,storageCode} from '../../../packages/dsh-zhiyun-core-quiz/src/durability.js';
+import {persistWithRetry,storageCode} from '../../../packages/core/quiz/src/durability.js';
 import {planQuestionTargets,assignedCloze} from './blueprint.mjs';
 import {rectifyQuestions} from './rectification.mjs';
-import {withDeepTutorGuidance} from '../../../packages/dsh-zhiyun-core-quiz/src/deeptutor-guidance.js';
+import {withDeepTutorGuidance} from '../../../packages/core/quiz/src/deeptutor-guidance.js';
 
 const fail = message => { throw new QuizError('INPUT', message); };
 // v5 separates shared point preparation, reserved single-question work, and final rectification.
 export const POINT_QUIZ_CACHE_VERSION = 'point-quiz-lab-v2-r2';
-export { QUESTION_STRATEGIES, QUESTION_TYPES, STRATEGY_PRESETS } from '../../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
-export { knowledgePoints, knowledgeChapters } from '../../../packages/dsh-zhiyun-core-quiz/src/knowledge-points.js';
-export {activeFacts,curateFacts,resolveFactId} from '../../../packages/dsh-zhiyun-core-quiz/src/ledger.js';
+export { QUESTION_STRATEGIES, QUESTION_TYPES, STRATEGY_PRESETS } from '../../../packages/core/quiz/src/strategies.js';
+export { knowledgePoints, knowledgeChapters } from '../../../packages/core/quiz/src/knowledge-points.js';
+export {activeFacts,curateFacts,resolveFactId} from '../../../packages/core/quiz/src/ledger.js';
 // Exact material identities keep this package portable and cannot collide.
 const digest = value => JSON.stringify(value);
 const shuffle = (values, random) => {

@@ -15,9 +15,9 @@
  *
  * 只看**路径**。也就是说：一篇叫「第四章 导论.md」的笔记，正文里写了十遍「拉格朗日」，
  * 搜「拉格朗日」**一篇都出不来**。这不是「排序不够好」，是「搜不到」——
- * 本仓 `dsh-zhiyun-core-vault` 的 `buildIndex()` 建的是**链接/标签**索引
+ * 本仓 `@lybx-leyw/dsh-zju-core-vault` 的 `buildIndex()` 建的是**链接/标签**索引
  * （`notesMap.set(path, { path, title, outlinks, tags })`），**不保留正文**；
- * `dsh-zhiyun-core-knowledge` 的 `search()` 是**字面** `String.includes`，
+ * `@lybx-leyw/dsh-zju-core-knowledge` 的 `search()` 是**字面** `String.includes`，
  * 且只覆盖 `core-knowledge` 自己的域，与笔记库不是同一批数据。
  *
  * ── 为什么是「强化式集成」而不是简单集成（三条逐条核对）─────────────

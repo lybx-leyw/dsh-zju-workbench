@@ -1,4 +1,4 @@
-import {contentHash} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {contentHash} from '../../../packages/core/quiz/src/concepts.js';
 export {contentHash};
 export function poolLimit(limit){
  if(!Number.isInteger(limit)||limit<1||limit>512)throw Error('worker数无效');

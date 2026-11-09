@@ -19,7 +19,7 @@
 
 | 项 | 值 |
 | --- | --- |
-| 来源 | 本仓 `packages/dsh-zhiyun-source-campus/docs/todos-vs-zju-mcp.md`（内部文档，2026-10-21） |
+| 来源 | 本仓 `packages/source/campus/docs/todos-vs-zju-mcp.md`（内部文档，2026-10-21） |
 | 借鉴内容 | 概念：用「两条路都跑一次再比」代替「引用一句断言」 |
 | 改动 | 本包**不同意**该文档的 `type !== 'classroom'` 阈值（见报告 r67 §3.1），改为三态（计入漏 / 无法判定 / 结构性差异） |
 

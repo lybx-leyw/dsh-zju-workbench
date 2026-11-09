@@ -6,9 +6,9 @@ import {deepTutorBenchHost} from '../deeptutor-host.mjs';
 import {tokenLedger,timingLedger} from '../accounting.mjs';
 import {loadDataset} from '../input.mjs';
 import {mountQuiz} from '../bridge.mjs';
-import {WorkerPoolLlm} from '../../../packages/dsh-zhiyun-core-parser/src/worker-pool.js';
-import {DEEPTUTOR_GUIDANCE_ID} from '../../../packages/dsh-zhiyun-core-quiz/src/deeptutor-guidance.js';
-import {planPointQuestions as basePlan} from '../../../packages/dsh-zhiyun-core-quiz/src/points.js';
+import {WorkerPoolLlm} from '../../../packages/core/parser/src/worker-pool.js';
+import {DEEPTUTOR_GUIDANCE_ID} from '../../../packages/core/quiz/src/deeptutor-guidance.js';
+import {planPointQuestions as basePlan} from '../../../packages/core/quiz/src/points.js';
 import {createPointQuizGenerator,planPointQuestions} from './points.mjs';
 export function traceInput(value){try{return JSON.parse(value);}catch{return {raw:value};}}
 
@@ -43,7 +43,7 @@ export async function runLab({input,out,mode='lab-v2',seed=43,count=6,workers=2,
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
  const [out,experiment='paired']=process.argv.slice(2);if(!out)throw Error('Provide a new ignored artifact directory');
  const values=Object.fromEntries((await fs.readFile('.env','utf8')).split(/\r?\n/).map(line=>{const i=line.indexOf('=');return i>0?[line.slice(0,i).trim(),line.slice(i+1).trim().replace(/^['"]|['"]$/g,'')]:[];}).filter(row=>row.length));
- const input='artifacts/quiz-bench-real-20261025/source.json',files=['points.js','blueprint.js','rectification.js','facts.js','index.js','concepts.js'].map(f=>'packages/dsh-zhiyun-core-quiz/src/'+f);
+ const input='artifacts/quiz-bench-real-20261025/source.json',files=['points.js','blueprint.js','rectification.js','facts.js','index.js','concepts.js'].map(f=>'packages/core/quiz/src/'+f);
  const hashes=async()=>Object.fromEntries(await Promise.all(files.map(async f=>[f,createHash('sha256').update(await fs.readFile(f)).digest('hex')])));
  const manifest={experiment,model:values.ModelName,count:6,workers:2,sourceHash:createHash('sha256').update(await fs.readFile(input)).digest('hex'),productionBefore:await hashes(),startedAt:new Date().toISOString(),runs:[]};
  await fs.mkdir(out,{recursive:true});await fs.writeFile(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2));

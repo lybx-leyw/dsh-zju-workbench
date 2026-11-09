@@ -8,7 +8,7 @@ import {compileIdeas,createScheduler,createQuestionGenerator,openState,walkTree,
 import {createPointQuizGenerator,planPointQuestions} from '../experimental/points.mjs';
 import {runDeepTutorBench} from '../deeptutor.mjs';
 import {deepTutorBenchHost} from '../deeptutor-host.mjs';
-import {WorkerPoolLlm} from '../../../packages/dsh-zhiyun-core-parser/src/worker-pool.js';
+import {WorkerPoolLlm} from '../../../packages/core/parser/src/worker-pool.js';
 import {tokenLedger,timingLedger} from '../accounting.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const random=initial=>{let seed=initial>>>0;return()=>{seed+=0x6D2B79F5;let n=seed;n=Math.imul(n^n>>>15,n|1);n^=n+Math.imul(n^n>>>7,n|61);return ((n^n>>>14)>>>0)/4294967296;};};
@@ -25,9 +25,9 @@ export async function prepareCase(spec){
 
 async function currentHashes(){
  const files={};for(const dir of ['experimental','experimental-r3'])for(const f of (await fs.readdir('scripts/quiz_bench/'+dir)).filter(n=>n.endsWith('.mjs'))){const file='scripts/quiz_bench/'+dir+'/'+f;files[file]=hash(await fs.readFile(file));}
- for(const file of ['scripts/quiz_bench/deeptutor.mjs','scripts/quiz_bench/deeptutor-host.mjs','scripts/quiz_bench/accounting.mjs','packages/dsh-zhiyun-core-parser/src/worker-pool.js'])files[file]=hash(await fs.readFile(file));
+ for(const file of ['scripts/quiz_bench/deeptutor.mjs','scripts/quiz_bench/deeptutor-host.mjs','scripts/quiz_bench/accounting.mjs','packages/core/parser/src/worker-pool.js'])files[file]=hash(await fs.readFile(file));
  async function visit(dir){for(const row of await fs.readdir(dir,{withFileTypes:true})){if(row.name==='__pycache__'||row.name==='.git')continue;const file=dir+'/'+row.name;if(row.isDirectory())await visit(file);else if(/\.(js|mjs|py|md|ya?ml)$/.test(row.name))files[file]=hash(await fs.readFile(file));}}
- for(const dir of ['packages/dsh-zhiyun-core-quiz/src','packages/dsh-zhiyun-host-deeptutor/src','packages/dsh-zhiyun-host-deeptutor/python','packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor']){
+ for(const dir of ['packages/core/quiz/src','packages/dsh-zhiyun-host-deeptutor/src','packages/dsh-zhiyun-host-deeptutor/python','packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor']){
   try{await visit(dir);}catch(e){if(e.code!=='ENOENT')throw e;}
  }return files;
 }

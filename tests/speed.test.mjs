@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 
 import {
   RATE_MIN, RATE_MAX, RATE_STEP, roundRate, nextRate, atRateBound,
-} from '../packages/dsh-zhiyun-page-study/src/speed.js';
+} from '../packages/client/page-study/src/speed.js';
 
 test('roundRate 对齐到一位小数', () => {
   assert.equal(roundRate(1), 1);

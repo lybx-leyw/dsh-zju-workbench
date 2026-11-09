@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { validateSlideDeck, renderSlideChapter, validateSlideChapter } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
+import { validateSlideDeck, renderSlideChapter, validateSlideChapter } from '../packages/core/classroom-generate/src/html-slide-shell.js';
 
 const visual = '<svg viewBox="0 0 800 560"><rect x="40" y="40" width="720" height="440" fill="#176c68"/><text x="80" y="120" fill="#fff">科学示意</text></svg>';
 const slide = (overrides = {}) => ({ title: '守恒关系', kicker: '观察 · 推导', points: ['系统边界', '比较前后状态'], summary: '总量不随内部交换改变', visualHtml: visual, formulas: [{ html: '<math><mrow><mi>E</mi><mo>=</mo><mi>mc</mi><msup><mn>2</mn></msup></mrow></math>', label: '关系式' }, { html: 'ΔE = Q &lt; W' }], explanation: '这里是独立于画布的详细讲解。完整分析系统边界，再说明各物理量及其适用条件。'.repeat(12), ...overrides });

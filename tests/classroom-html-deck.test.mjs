@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateHtmlChapters, validateHtmlChapter, validateSlideDeck } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-deck.js';
+import { generateHtmlChapters, validateHtmlChapter, validateSlideDeck } from '../packages/core/classroom-generate/src/html-deck.js';
 
 const visualHtml = '<svg viewBox="0 0 800 560" aria-label="条件与结论"><rect x="100" y="140" width="240" height="160" fill="#edf5f1"/><text x="140" y="230" font-size="32">假设 → 结论</text></svg>';
 const deck = { slides: [{ title: '从假设到结论', points: ['先检查条件'], summary: '条件决定结论的适用范围', visualHtml,

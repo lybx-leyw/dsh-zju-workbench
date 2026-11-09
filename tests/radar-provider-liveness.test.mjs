@@ -13,11 +13,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildView as realBuildView } from '../packages/dsh-zhiyun-page-plugins/src/runtime.js';
+import { buildView as realBuildView } from '../packages/client/page-plugins/src/runtime.js';
 import { bundlesOf, edgesOf, planeOf, probe, verdictOf } from '../scripts/radar-provider-liveness.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const PKG = ['dsh-zhiyun-core-parser', 'dsh-zhiyun-core-study', 'dsh-zhiyun-page-today'];
+const PKG = ['@lybx-leyw/dsh-zju-core-parser', '@lybx-leyw/dsh-zju-core-study', 'dsh-zhiyun-page-today'];
 const livePlugins = () => PKG.map(name => ({ entryId: `entry:${name}`, moduleName: name, enabled: true, fiberPhase: null }));
 
 test('检查器可跑：真实 buildView 上给出 LIVENESS_ERODES，且报告的是「关谁丢哪条」', () => {
@@ -26,17 +26,17 @@ test('检查器可跑：真实 buildView 上给出 LIVENESS_ERODES，且报告�
   assert.equal(verdict.code, 'LIVENESS_ERODES');
   // 归因必须按「关掉的那一个」分组 —— 而不是笼统一句「有边丢了」。
   const byClosed = Object.fromEntries(verdict.affected.map(item => [item.closed, item.lost]));
-  assert.deepEqual(byClosed['dsh-zhiyun-core-parser'], ['dsh-zhiyun-core-study -> dsh-zhiyun-core-parser']);
-  assert.deepEqual(byClosed['dsh-zhiyun-page-today'], ['dsh-zhiyun-page-today -> dsh-zhiyun-core-study']);
+  assert.deepEqual(byClosed['@lybx-leyw/dsh-zju-core-parser'], ['@lybx-leyw/dsh-zju-core-study -> @lybx-leyw/dsh-zju-core-parser']);
+  assert.deepEqual(byClosed['dsh-zhiyun-page-today'], ['dsh-zhiyun-page-today -> @lybx-leyw/dsh-zju-core-study']);
 });
 
 test('真实 buildView：关掉 study-core 之后，parser 被当成叶、并被允许取消', () => {
   // 这是「取消掉不该取消的包」的那条路径：parser 明明还在替 study-core 顶着
   // zhiyunParser，只因为 study-core 不在了，它就变成了「没有任何下游」。
   const result = probe(realBuildView, livePlugins());
-  const study = result.cases.find(item => item.closed === 'dsh-zhiyun-core-study');
-  assert.ok(study.newlyCancellable.includes('dsh-zhiyun-core-parser'), 'parser 会新获得可取消资格');
-  assert.ok(study.lost.includes('dsh-zhiyun-page-today -> dsh-zhiyun-core-study'), 'page-today 连 study-core 的那条边也一并消失');
+  const study = result.cases.find(item => item.closed === '@lybx-leyw/dsh-zju-core-study');
+  assert.ok(study.newlyCancellable.includes('@lybx-leyw/dsh-zju-core-parser'), 'parser 会新获得可取消资格');
+  assert.ok(study.lost.includes('dsh-zhiyun-page-today -> @lybx-leyw/dsh-zju-core-study'), 'page-today 连 study-core 的那条边也一并消失');
 });
 
 test('基线形状：三包都活着时只有两条边、唯一的叶是 page-today', () => {
@@ -44,8 +44,8 @@ test('基线形状：三包都活着时只有两条边、唯一的叶是 page-to
     bundles: bundlesOf(), modules: [], host: planeOf(PKG), client: planeOf([]), plugins: livePlugins(), slots: [],
   });
   assert.deepEqual([...edgesOf(view)].sort(), [
-    'dsh-zhiyun-core-study -> dsh-zhiyun-core-parser',
-    'dsh-zhiyun-page-today -> dsh-zhiyun-core-study',
+    '@lybx-leyw/dsh-zju-core-study -> @lybx-leyw/dsh-zju-core-parser',
+    'dsh-zhiyun-page-today -> @lybx-leyw/dsh-zju-core-study',
   ]);
   assert.deepEqual(view.leaves, ['dsh-zhiyun-page-today']);
   assert.deepEqual(view.cancellable, ['dsh-zhiyun-page-today']);

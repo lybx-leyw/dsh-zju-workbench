@@ -10,8 +10,8 @@
 // 这直接对应"下游四处消费方终于有东西可播"。
 
 import assert from 'node:assert/strict';
-import { produceScenes } from '../packages/dsh-zhiyun-core-classroom-generate/src/phases/scenes.js';
-import { collectMediaItems } from '../packages/dsh-zhiyun-core-classroom-generate/src/phases/media.js';
+import { produceScenes } from '../packages/core/classroom-generate/src/phases/scenes.js';
+import { collectMediaItems } from '../packages/core/classroom-generate/src/phases/media.js';
 
 /** 假模型：outline 不在这里用；scene 段回 content，scene-actions 段回动作序列。 */
 function fakeLlm() {

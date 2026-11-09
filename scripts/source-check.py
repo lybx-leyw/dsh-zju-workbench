@@ -1158,7 +1158,11 @@ def chain_hygiene(v: Verifier, r: Chain) -> None:
     packages = v.load_packages()
 
     placeholders = []
-    for name in ("dsh-zhiyun-source-cc98", "dsh-zhiyun-source-zdbk", "dsh-zhiyun-source-xxt"):
+    # 包名在 2026-11 统一成 `@lybx-leyw/dsh-zju-source-*`（目录移进 packages/source/）。
+    # 这里按**包名**查，改名后不同步就会静默跳过三项检查 —— 那正是这个脚本最该防的事。
+    for name in ("@lybx-leyw/dsh-zju-source-cc98",
+                 "@lybx-leyw/dsh-zju-source-zdbk",
+                 "@lybx-leyw/dsh-zju-source-xxt"):
         meta = packages.get(name)
         if not meta:
             continue
@@ -2031,7 +2035,7 @@ def main(argv: list[str] | None = None) -> int:
 # 1. **只绑 127.0.0.1**，不监听 0.0.0.0 —— 同一局域网的人碰不到；
 # 2. **带一次性 token**：URL 里给 `?t=<token>`，没 token 的请求一律 403。
 #    防的是"本机另一个网页顺手 POST 到 127.0.0.1:端口"（DNS rebinding / CSRF）；
-# 3. **只认回环 Host**，防 DNS rebinding（与 `dsh-zhiyun-source-card` 同一条规矩）；
+# 3. **只认回环 Host**，防 DNS rebinding（与 `@lybx-leyw/dsh-zju-source-login` 同一条规矩）；
 # 4. 凭证**只在进程内存**，不写盘；报告写出前过 `vault.redact()`。
 #
 # # 端口

@@ -23,7 +23,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const BACKEND = 'packages/dsh-zhiyun-core-study/src/core-question-backend.js';
+const BACKEND = 'packages/core/study/src/core-question-backend.js';
 const source = fs.readFileSync(path.resolve(BACKEND), 'utf8');
 
 /** 从源码里抽出两张表独立验证。 */

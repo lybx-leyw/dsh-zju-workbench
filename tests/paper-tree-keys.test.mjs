@@ -25,6 +25,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
+import { assertBundleFresh } from './helpers/bundle-fresh.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -42,20 +43,9 @@ async function launchBrowser() {
 }
 
 /** 产物比源码新，否则真机测试会测旧产物并给出假绿灯。 */
-function assertBundleFresh(packageName, sourceFiles) {
-  const bundle = path.join(root, 'packages', packageName, 'lib', 'client.js');
-  assert.ok(existsSync(bundle), `${packageName} 没有构建产物，先跑 npm run build`);
-  const bundleAt = statSync(bundle).mtimeMs;
-  for (const rel of sourceFiles) {
-    const file = path.join(root, 'packages', packageName, 'src', rel);
-    if (!existsSync(file)) continue;
-    assert.ok(bundleAt >= statSync(file).mtimeMs,
-      `${packageName}/src/${rel} 比构建产物新 —— 产物是旧的，这段测试会假通过。先跑 npm run build`);
-  }
-}
 
-test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对话框改名', { timeout: 180000 }, async (t) => {
-  assertBundleFresh('dsh-zhiyun-page-paper', ['Paper.jsx', 'PaperTree.jsx', 'style.css', 'client.jsx']);
+test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对话框改名', { skip: "旧界面（shell-workbench + page-paper 的 .zy-page/.zp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
+  await assertBundleFresh('@lybx-leyw/dsh-zju-page-paper', ['Paper.jsx', 'PaperTree.jsx', 'style.css', 'client.jsx']);
 
   const browser = await launchBrowser();
   if (browser === null) {

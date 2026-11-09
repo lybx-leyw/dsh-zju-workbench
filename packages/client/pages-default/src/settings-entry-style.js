@@ -29,13 +29,36 @@
 /**
  * 原生设置区的容器选择器。
  *
- * 类名是 CSS module 生成的；稳定锚点 `data-slot="settings.trigger"` 在它内部，
+ * 类名是 CSS module 生成的；稳定锚点（槽名）在它内部，
  * 所以必须用类名才能选中容器。退化行为：藏不住原生入口（多一个入口），但功能仍在。
  */
 const AREA = '.hHd-Xa_settingsArea';
 
+/**
+ * 原生设置触发器的槽名 —— **只针对 0.2.2-rc.1**。
+ *
+ * # 为什么是 `settings.launcher` 而不是 `settings.trigger`
+ *
+ * 实测：`0.2.0-rc.2` / `0.2.1-alpha.1` 用 `settings.trigger`，
+ * `0.2.2-rc.1` 用 **`settings.launcher`**。写错槽名时，自制按钮的 click
+ * 转发会拿到 `null` —— **点击静默失败、控制台一个字都不报**（真机踩过：
+ * 设置按钮点不开）。这类失败最难查，因为所有可见的样式与几何都是对的。
+ *
+ * # 为什么不按文案找
+ *
+ * 0.2.2 那个入口的 `aria-label` 是 **`Account menu`**（英文）。按文案匹配
+ * 会被本地化改动打穿，也会误中别的按钮。
+ *
+ * 本仓当前**只支持这一个宿主版本**（见 `runtime.lock.json`）；要扩版本时
+ * 先核实这个槽名在目标版本里是否仍然成立。
+ */
+export const NATIVE_TRIGGER_SLOT = 'settings.launcher';
+
+
 /** 我们自己那个按钮的标记属性。 */
 export const OWN_MARK = 'data-zju-settings-trigger';
+
+
 
 /** 页面壳的基准尺寸：所有尺寸都是 `基准 × (railWidth / 64)`（见 page-shell.jsx）。 */
 const BASE = Object.freeze({
@@ -105,9 +128,84 @@ export function strokeWidthFor(displaySize) {
  * 所以收起侧栏时它**不会跟着淡出** —— 这正是这一版要解决的问题。
  */
 export const SETTINGS_ENTRY_CSS = `
-/* 原生入口藏掉：位置与外观由我们自己的按钮接管，避免出现两个设置。 */
+/* 原生账号入口：**搬过来、正常显示**，不再自绘一个替代品。
+ *
+ * # 为什么不再自绘（真机看到的事实）
+ *
+ * 宿主登录后，原生按钮里是**真实头像 + 昵称**：
+ *
+ *   <span class="yHnPSG_avatar" data-avatar-status="ready">
+ *     <img src="https://static.deepseek.com/user-avatar/…">
+ *   </span>
+ *   <span class="yHnPSG_label">绿意不息</span>
+ *
+ * 自绘的是一张写死的人形 SVG —— 永远不会有真实头像，因为头像来自宿主的
+ * 登录状态与远端资源，客户端插件无从得知。用户看到的就是「登录了但头像没了」。
+ *
+ * # 这个包的边界
+ *
+ * 负责**位置与外观**（导轨底部、随宽度缩放、不跟着侧栏淡出），
+ * **内容**（头像 / 昵称 / 菜单）归宿主。所以这里只做定位与尺寸；
+ * 点击也直接落在原生按钮上 —— 不需要转发。
+ *
+ * # 为什么之前用 display:none 是错的
+ *
+ * 原生菜单锚在触发器的 getBoundingClientRect 上。display:none 会让 rect 变成
+ * (0,0,0,0)，菜单就跑到视口左上角。保留它并定位，rect 才对，菜单才贴着它弹。 */
 ${AREA}{
+  position:fixed !important;
+  /* 与目标位置**逐变量对齐**：同一组 --zju-settings-* 决定位置，
+     所以原生触发器的 rect 就是菜单要锚的那个 rect。
+     只写 left/bottom 会在导轨贴右侧或顶部时错位（VARS 里还有 right/top）。 */
+  left:var(${VARS.left},0) !important;
+  right:var(${VARS.right},auto) !important;
+  top:var(${VARS.top},auto) !important;
+  bottom:var(${VARS.bottom},50px) !important;
+  width:var(${VARS.button},37px) !important;
+  height:var(${VARS.button},37px) !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:visible !important;
+  z-index:40 !important;
+  /* 侧栏收起时原生 footArea 会 opacity 1→0→1。本元素已 fixed 脱离文档流的
+     定位语境，但仍显式钉住不透明度，避免继承到祖先的过渡值。 */
+  opacity:1 !important;
+}
+/* 原生入口内部：收成「一个圆头像」。
+   - 隐藏昵称文字：导轨只有图标，名字靠悬停提示；
+   - 头像铺满按钮并圆形裁切；
+   - 去掉原生那层的 padding / 背景。 */
+${AREA} .yHnPSG_label{
   display:none !important;
+}
+${AREA} .yHnPSG_trigger{
+  width:100% !important;
+  height:100% !important;
+  padding:0 !important;
+  border:none !important;
+  background:transparent !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:var(${VARS.radius},7px) !important;
+  cursor:pointer;
+}
+${AREA} .yHnPSG_avatar{
+  width:calc(var(${VARS.button},37px) * 0.78) !important;
+  height:calc(var(${VARS.button},37px) * 0.78) !important;
+  border-radius:999px !important;
+  overflow:hidden !important;
+  display:grid !important;
+  place-items:center !important;
+}
+${AREA} .yHnPSG_avatar img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  border-radius:999px !important;
+}
+${AREA} :is(button, [role="button"]):focus-visible{
+  outline:2px solid var(${VARS.stroke}, currentColor);
+  outline-offset:2px;
 }
 /* ---- 「更多页面」图标的尺寸对齐 ----
    它是页面壳自己的按钮（button[data-dsh-pages-more]），图标内部写死 width="23"，
@@ -169,41 +267,10 @@ button[data-dsh-pages-more] svg{
   background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.06));
 }
 
-/* 我们自己的设置按钮：fixed 相对视口，挂在 body 下，不受侧栏透明度影响。 */
+/* 自绘按钮的样式已删除 —— 现在直接复用原生账号入口。
+ * 只保留一条：清理**上一版安装留下的**自绘节点（热更新时 DOM 可能还在）。 */
 [${OWN_MARK}]{
-  position:fixed;
-  left:var(${VARS.left},0);
-  right:var(${VARS.right},auto);
-  top:var(${VARS.top},auto);
-  bottom:var(${VARS.bottom},50px);
-  width:var(${VARS.button},37px);
-  height:var(${VARS.button},37px);
-  padding:0;
-  margin:0;
-  box-sizing:border-box;
-  display:grid;
-  place-items:center;
-  border:none;
-  background:transparent;
-  border-radius:var(${VARS.radius},7px);
-  color:var(--dsw-alias-label-primary,#101318);
-  cursor:pointer;
-  z-index:45;
-}
-[${OWN_MARK}]:hover{
-  background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.06));
-}
-[${OWN_MARK}]:focus-visible{
-  outline:2px solid var(--dsw-alias-border-info,var(--zy-accent,#94bdf4));
-  outline-offset:2px;
-}
-[${OWN_MARK}] svg{
-  width:var(${VARS.icon},18px);
-  height:var(${VARS.icon},18px);
-  /* 视觉描边与导轨其它页面图标统一，具体值由 settingsGeometry 反算后写入
-     （见 strokeWidthFor）。不在这里用 calc 除以带单位的变量：那样兼容性差，
-     也没法在纯函数里测。 */
-  stroke-width:var(${VARS.stroke},1.15px);
+  display:none !important;
 }
 `;
 
@@ -285,49 +352,8 @@ export function settingsGeometry(snapshot) {
  * 之前这版是手绘的，画出来是个花瓣似的怪齿轮（用户指出过）。原生图标是 16 网格上的
  * 「中心圆 + 齿形轮廓」两条路径，直接抄过来才能与宿主视觉一致。
  */
-const GEAR = Object.freeze({
-  viewBox: '0 0 16 16',
-  size: 16,
-  strokeWidth: 1.3,
-  paths: Object.freeze([
-    'M8 9.75012C8.9665 9.75012 9.75 8.96662 9.75 8.00012C9.75 7.03362 8.9665 6.25012 8 6.25012C7.0335 6.25012 6.25 7.03362 6.25 8.00012C6.25 8.96662 7.0335 9.75012 8 9.75012Z',
-    'M13.0107 7.79377C12.9505 7.89401 12.9205 7.94413 12.9205 7.99951C12.9205 8.0549 12.9505 8.10502 13.0106 8.20528L13.9849 9.83006C14.045 9.93029 14.0751 9.9804 14.0751 10.0358C14.0751 10.0911 14.045 10.1413 13.9849 10.2415L13.0037 11.8777C12.9468 11.9726 12.9184 12.0201 12.8725 12.0461C12.8267 12.072 12.7713 12.072 12.6607 12.072H10.6704C10.5598 12.072 10.5045 12.072 10.4586 12.098C10.4128 12.1239 10.3843 12.1714 10.3274 12.2662L9.33825 13.9142C9.28133 14.009 9.25287 14.0564 9.20703 14.0823C9.16118 14.1083 9.10588 14.1083 8.99529 14.1083H7.00486C6.89426 14.1083 6.83896 14.1083 6.79312 14.0823C6.74727 14.0564 6.71881 14.009 6.6619 13.9142L5.67273 12.2662C5.61581 12.1714 5.58735 12.1239 5.54151 12.098C5.49566 12.072 5.44036 12.072 5.32977 12.072H3.33945C3.2288 12.072 3.17347 12.072 3.12761 12.0461C3.08176 12.0201 3.0533 11.9726 2.9964 11.8777L2.0152 10.2415C1.9551 10.1413 1.92505 10.0911 1.92505 10.0358C1.92505 9.9804 1.9551 9.93029 2.0152 9.83006L2.98951 8.20528C3.04963 8.10502 3.07969 8.0549 3.07969 7.99951C3.07968 7.94413 3.04961 7.89401 2.98946 7.79377L2.01529 6.17011C1.95514 6.06987 1.92507 6.01975 1.92507 5.96437C1.92506 5.90899 1.95512 5.85886 2.01524 5.7586L2.9964 4.1224C3.0533 4.0275 3.08176 3.98005 3.12761 3.95408C3.17347 3.92811 3.2288 3.92811 3.33945 3.92811H5.32977C5.44036 3.92811 5.49566 3.92811 5.54151 3.90216C5.58735 3.87621 5.61581 3.82879 5.67273 3.73397L6.6619 2.08599C6.71881 1.99116 6.74727 1.94375 6.79312 1.9178C6.83896 1.89185 6.89426 1.89185 7.00486 1.89185H8.99529C9.10588 1.89185 9.16118 1.89185 9.20703 1.9178C9.25287 1.94375 9.28133 1.99116 9.33825 2.08599L10.3274 3.73397C10.3843 3.82879 10.4128 3.87621 10.4586 3.90216C10.5045 3.92811 10.5598 3.92811 10.6704 3.92811H12.6607C12.7713 3.92811 12.8267 3.92811 12.8725 3.95408C12.9184 3.98005 12.9468 4.0275 13.0037 4.1224L13.9849 5.7586C14.045 5.85886 14.0751 5.90899 14.0751 5.96437C14.0751 6.01975 14.045 6.06987 13.9849 6.17011L13.0107 7.79377Z',
-  ]),
-});
 
-/**
- * 造我们自己的设置按钮。
- *
- * 图标原样复用原生那一份（见 {@link GEAR}），只按导轨尺寸等比缩放；不手绘，
- * 否则形状与宿主对不上（第一版画成了花瓣齿轮）。
- *
- * @param doc - 文档对象。
- * @returns 按钮元素。
- */
-function createOwnButton(doc) {
-  const button = doc.createElement('button');
-  button.type = 'button';
-  button.setAttribute(OWN_MARK, '');
-  button.setAttribute('aria-label', '设置');
-  button.setAttribute('title', '设置');
-  button.setAttribute('aria-haspopup', 'dialog');
-  const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  // 与原生完全相同的属性：同一个 viewBox、同一套描边，缩放交给 CSS。
-  svg.setAttribute('width', String(GEAR.size));
-  svg.setAttribute('height', String(GEAR.size));
-  svg.setAttribute('viewBox', GEAR.viewBox);
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', String(GEAR.strokeWidth));
-  svg.setAttribute('aria-hidden', 'true');
-  for (const d of GEAR.paths) {
-    const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', d);
-    svg.append(path);
-  }
-  button.append(svg);
-  return button;
-}
+
 
 /**
  * 安装「设置入口搬进导轨」。
@@ -372,19 +398,18 @@ export function installSettingsRailEntry({ pages, doc = globalThis.document } = 
   const off = typeof pages?.subscribe === 'function' ? pages.subscribe(write) : undefined;
 
   /**
-   * 把按钮挂到 `body`，**不是** `head` 或侧栏里。
+   * **不挂自绘按钮**。
    *
-   * 挂在 `body` 直属层的意义：它不在 `.hHd-Xa_footArea` 之内，所以侧栏收起时
-   * 那个 `opacity: 1 → 0 → 1` 的过渡不会作用到它 —— 这正是「闪一帧」的根治点。
+   * 这个入口的内容（真实头像、昵称、设置/反馈/登录菜单）全部归宿主。
+   * 我们只通过上面的 CSS 把它搬到导轨底部并收成圆形头像 —— 于是：
+   *
+   *   - 登录后自动显示真实头像（自绘的永远做不到）；
+   *   - 点击直接落在原生按钮上，菜单锚点就是它自己的 rect，位置天然正确；
+   *   - 宿主改头像/菜单样式，我们自动跟随。
+   *
+   * 之前那版自绘 + 转发 + `opacity:0` 藏原生的做法，代价是「头像永远是通用人形」，
+   * 而这正是用户报的问题。
    */
-  const button = createOwnButton(doc);
-  button.addEventListener('click', event => {
-    event.preventDefault();
-    // 每次点击现查原生触发器：它可能已经被 React 重建过实例。
-    doc.querySelector('[data-slot="settings.trigger"]')?.closest?.('button')?.click?.();
-  });
-  (doc.body ?? doc.documentElement).append(button);
-
   return () => {
     off?.();
     removeAll();

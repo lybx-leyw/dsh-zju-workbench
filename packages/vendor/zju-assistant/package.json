@@ -1,0 +1,50 @@
+{
+  "name": "dsh-zju-assistant-workspace",
+  "version": "0.1.8",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "description": "ZJU All-in-One Assistant: DeepSeek Harness plugin for Windows and macOS",
+  "engines": {
+    "node": ">=24.18.0 <25",
+    "npm": ">=11 <12"
+  },
+  "scripts": {
+    "postinstall": "node scripts/setup.mjs",
+    "setup": "node scripts/setup.mjs",
+    "build": "node plugin/build.mjs",
+    "typecheck": "npm run typecheck:plugin && npm run typecheck:core && npm run typecheck:weread && npm run typecheck:dingtalk",
+    "typecheck:plugin": "tsc --noEmit -p plugin",
+    "typecheck:core": "node core/zju/node_modules/typescript/bin/tsc --noEmit -p core/zju",
+    "typecheck:weread": "node core/weread/node_modules/typescript/bin/tsc --noEmit -p core/weread",
+    "typecheck:dingtalk": "node core/dingtalk/node_modules/typescript/bin/tsc --noEmit -p core/dingtalk",
+    "verify": "npm run typecheck && node --test plugin/*.test.mjs plugin/host/*.test.mjs plugin/client/*.test.mjs scripts/private-paths.test.mjs scripts/learn.test.mjs core/zju/tests/*.test.ts core/zju/tests/*.test.mjs core/weread/tests/*.test.ts core/weread/tests/*.test.mjs core/chat/*.test.mjs core/wechat/tests/*.test.mjs core/dingtalk/tests/*.test.ts",
+    "test:plugin": "node --test plugin/*.test.mjs plugin/host/*.test.mjs plugin/client/*.test.mjs",
+    "test:core": "node --test core/zju/tests/*.test.ts core/zju/tests/*.test.mjs",
+    "test:weread": "node --test core/weread/tests/*.test.ts core/weread/tests/*.test.mjs",
+    "test:chats": "node --test core/chat/*.test.mjs core/wechat/tests/*.test.mjs core/dingtalk/tests/*.test.ts plugin/host/chat-watch.test.mjs",
+    "pack:plugin": "npm pack ./plugin",
+    "security": "node scripts/check-security.mjs"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh": "0.2.2-rc.1",
+    "@napi-rs/keyring": "2.1.2",
+    "imapflow": "^2.5.2",
+    "js-yaml": "^4.3.2",
+    "mailparser": "^3.9.40",
+    "nodemailer": "^10.1.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.2-rc.1",
+    "@types/react": "18.3",
+    "electron": "44.10.1",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "@deepseek-ai/libreoffice-kit": {
+      "fflate": "0.8.3"
+    }
+  }
+}

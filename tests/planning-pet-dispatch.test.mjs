@@ -17,7 +17,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createHandler, WRITE_HEADER } from '../packages/dsh-zhiyun-page-planning/src/index.js';
+import { createHandler, WRITE_HEADER } from '../packages/client/page-planning/src/index.js';
 
 /** 造一个最小的 req/res，行为与宿主一致（读 JSON body、回 JSON）。 */
 function call(handler, method, url, body) {

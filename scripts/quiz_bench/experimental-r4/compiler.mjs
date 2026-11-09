@@ -1,12 +1,12 @@
 // Experimental fork of the frozen r3 v9 compiler. Only the requested owner
 // is compiled; descendants supply full material without model work.
-import {inspectGraph} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/graph.mjs';
-import {reasoningTree,bindBasis} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/tree.mjs';
-import {contentHash,poolLimit,serial,checkStrings} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/common.mjs';
+import {inspectGraph} from '../../../packages/core/quiz/src/engines/r3-v9/graph.mjs';
+import {reasoningTree,bindBasis} from '../../../packages/core/quiz/src/engines/r3-v9/tree.mjs';
+import {contentHash,poolLimit,serial,checkStrings} from '../../../packages/core/quiz/src/engines/r3-v9/common.mjs';
 import {TOOLS,nodeToolRequest,toolArguments,failedTool} from './tools.mjs';
 import {validateItemModel,validateParameters,parameterIdentity} from './item-model.mjs';
-import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
-import {normalizedText} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/core/quiz/src/strategies.js';
+import {normalizedText} from '../../../packages/core/quiz/src/concepts.js';
 
 export const VERSION='r4-demand-models-v2';
 const prompt=`沿已有知识树，在当前节点编译可复用考法，不写成品题。在同一次回复里把本节点所有考法各调一次 submit_idea，并**同时**调用一次 finish_node——两者放在同一轮，节点一次就完成。实测分开两轮时，光「补一次 finish_node」就多花一整次调用（7 个知识点因此多出 7 次、约 4 万 token）。若确实要分轮补交，服务器会保留每条成功结果。已接受的 key 不必重复提交，需要修正时用同一个 key 更新。只有 finish_node 成功才完成节点；收到错误时只修正对应考法。不要在正文模拟工具调用。参数结构见工具定义。

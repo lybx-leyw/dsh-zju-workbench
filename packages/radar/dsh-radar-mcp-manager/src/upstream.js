@@ -68,7 +68,7 @@ export function loadUpstream() {
  *
  * TODO-D · 与本仓既有「来源包」的边界（写清楚，否则评审会误判成重复功能）。
  *
- *   `dsh-zhiyun-source-campus`（CC98 / 学在浙大）、`source-cc98`、`source-classroom`
+ *   `@lybx-leyw/dsh-zju-source-campus`（CC98 / 学在浙大）、`source-cc98`、`source-classroom`
  *   是**业务取数**，走的是各自站点的真实 HTTP 端点、带登录态与限流；
  *   MCP 是**通用工具来源通道**，不替代它们，也不应被用来绕开它们。
  *   评审建议：第一版只允许用户手动填清单，**不**内置任何 DSH 官方或社区 MCP 服务器。

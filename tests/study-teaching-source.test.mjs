@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { briefFromLecture, sourceFromLecture, pagesFromScenes } from '../packages/dsh-zhiyun-core-study/src/ai-teaching-generate.js';
+import { briefFromLecture, sourceFromLecture, pagesFromScenes } from '../packages/core/study/src/ai-teaching-generate.js';
 
 test('teaching sends full finalized chapters and matches knowledge branches by title', () => {
   const tail = '正文末尾不得丢失';

@@ -1,0 +1,39 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-zdbk",
+  "version": "0.1.0",
+  "description": "浙大教务系统（zdbk）数据源：成绩/GPA、考试安排、课表。从 dsh-zhiyun-source-omni 的 zdbk 平台移植为纯 JavaScript",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json",
+    "./client": "./lib/client.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "cas",
+      "network": "campus",
+      "writes": false,
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http",
+        "@lybx-leyw/dsh-zju-source-login"
+      ]
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "@lybx-leyw/dsh-zju-ui-shared"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-login": "0.1.0",
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0"
+  },
+  "license": "GPL-3.0-or-later"
+}

@@ -92,7 +92,7 @@ focusSummary(上面 5 条) → { overdue: 0, soon: 2, today: 1 } → 摘要条�
 
 ### 2. 课表是「墙钟 + 不等距」，`Interval` 表达不了
 
-`packages/dsh-zhiyun-source-zdbk/src/parse.js` 的 `PERIOD_TIMES` 实测：
+`packages/source/zdbk/src/parse.js` 的 `PERIOD_TIMES` 实测：
 
 ```
 第1→2节 08:00→08:50 = 50 分

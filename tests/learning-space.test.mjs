@@ -7,8 +7,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { pickLearningWorkspace, sessionRows, relativeLabel } from '../packages/dsh-zhiyun-core-study/src/learning-space.js';
-import { LEARNING_SPACE_TITLE } from '../packages/dsh-zhiyun-core-study/src/learning-space.js';
+import { pickLearningWorkspace, sessionRows, relativeLabel } from '../packages/core/study/src/learning-space.js';
+import { LEARNING_SPACE_TITLE } from '../packages/core/study/src/learning-space.js';
 import { root } from '../scripts/profile.mjs';
 
 const space = { workspaceId: 'space', title: LEARNING_SPACE_TITLE };
@@ -26,8 +26,8 @@ test('学习空间按标题认出，唯一工作区才兜底，含糊时不猜',
 });
 
 test('学习空间标题只有一处字面量：两半都 import 同一个模块', async () => {
-  // 领域状态包（dsh-zhiyun-core-study）的两半：宿主半建空间，客户端半把它交给壳。
-  const pkg = `${root}packages/dsh-zhiyun-core-study/src/`;
+  // 领域状态包（@lybx-leyw/dsh-zju-core-study）的两半：宿主半建空间，客户端半把它交给壳。
+  const pkg = `${root}packages/core/study/src/`;
   const host = await readFile(`${pkg}host.js`, 'utf8');
   const client = await readFile(`${pkg}client.jsx`, 'utf8');
   for (const [half, source] of [['宿主半', host], ['客户端半', client]]) {
@@ -64,7 +64,7 @@ test('会话行：只列本空间、最近更新在前、空白会话不编标�
 });
 
 test('原生归档或关闭会话不会自动再补壳，只有显式进入 ask 才请求绑定', async () => {
-  const { createLearningSpaceBinding } = await import('../packages/dsh-zhiyun-shell-workbench/src/learning-binding.js');
+  const { createLearningSpaceBinding } = await import('../archive/deprecated-packages/dsh-zhiyun-shell-workbench/src/learning-binding.js');
   const listeners = new Set(), starts = [], cleanups = [];
   let ready = false, active = true, sessionId, activePanelId = null;
   const list = { getSnapshot: () => ({ phase: ready ? 'ready' : 'loading', items: [] }), subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); } };

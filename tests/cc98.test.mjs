@@ -1,5 +1,5 @@
 /**
- * `dsh-zhiyun-source-cc98` 的离线单测。
+ * `@lybx-leyw/dsh-zju-source-cc98` 的离线单测。
  *
  * 三条硬约束：
  *
@@ -15,10 +15,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-import { SessionStore, ClassroomError } from 'dsh-zhiyun-source-campus/http';
+import { SessionStore, ClassroomError } from '@lybx-leyw/dsh-zju-source-http';
 
-import { ubbToText } from '../packages/dsh-zhiyun-source-cc98/src/ubb.js';
-import { TOKEN_URL } from '../packages/dsh-zhiyun-source-cc98/src/hosts.js';
+import { ubbToText } from '../packages/source/cc98/src/ubb.js';
+import { TOKEN_URL } from '../packages/source/cc98/src/hosts.js';
 import {
   CLIENT_ID,
   CLIENT_SECRET,
@@ -27,10 +27,10 @@ import {
   passwordForm,
   refreshForm,
   TokenStore,
-} from '../packages/dsh-zhiyun-source-cc98/src/token.js';
-import { Cc98Client, apiPath, withQuery, httpError, parseBody } from '../packages/dsh-zhiyun-source-cc98/src/client.js';
-import { Cc98Reader, at, cc98Id, nextFrom, postText } from '../packages/dsh-zhiyun-source-cc98/src/reads.js';
-import { apply, METHODS, ROUTE_PATH } from '../packages/dsh-zhiyun-source-cc98/src/index.js';
+} from '../packages/source/cc98/src/token.js';
+import { Cc98Client, apiPath, withQuery, httpError, parseBody } from '../packages/source/cc98/src/client.js';
+import { Cc98Reader, at, cc98Id, nextFrom, postText } from '../packages/source/cc98/src/reads.js';
+import { apply, METHODS, ROUTE_PATH } from '../packages/source/cc98/src/index.js';
 
 /* ────────────────────────── UBB → 纯文本 ────────────────────────── */
 
@@ -221,13 +221,13 @@ test('token: 没配账号时抛 NEED_LOGIN，且不发出任何请求', async ()
 /* ───────────────────── 凭据来源：CC98 自己那份，不是一卡通 ───────────────────── */
 
 test('凭据：cc98 包读的是 CC98 独立记录，不是「浙大一卡通」', async () => {
-  const src = await readFile(new URL('../packages/dsh-zhiyun-source-cc98/src/index.js', import.meta.url), 'utf8');
+  const src = await readFile(new URL('../packages/source/cc98/src/index.js', import.meta.url), 'utf8');
   assert.match(src, /readCc98/, '应从 card 包取 CC98 专用凭据');
   assert.doesNotMatch(src, /readCard\b/, '不该再借用一卡通那份记录');
 });
 
 test('凭据：card 包为 CC98 单独开了记录键与四个操作', async () => {
-  const card = await import('../packages/dsh-zhiyun-source-card/src/index.js');
+  const card = await import('../packages/source/login/src/index.js');
   assert.equal(card.CC98_RECORD_KEY, 'zhiyun-cc98/account');
   assert.notEqual(card.CC98_RECORD_KEY, card.CARD_RECORD_KEY, '不能与一卡通共用同一个键');
   assert.notEqual(card.CC98_RECORD_KEY, card.WEBVPN_RECORD_KEY, '不能与 WebVPN 共用');
@@ -237,7 +237,7 @@ test('凭据：card 包为 CC98 单独开了记录键与四个操作', async () 
 });
 
 test('凭据：CC98 账号与一卡通各自独立，清除一个不影响另一个', async () => {
-  const card = await import('../packages/dsh-zhiyun-source-card/src/index.js');
+  const card = await import('../packages/source/login/src/index.js');
   // 用一个最小的内存凭据服务
   const records = new Map();
   const ctx = {
@@ -260,7 +260,7 @@ test('凭据：CC98 账号与一卡通各自独立，清除一个不影响另一
 });
 
 test('凭据：只有 CC98 账号的人不会被要求去填浙大密码', async () => {
-  const card = await import('../packages/dsh-zhiyun-source-card/src/index.js');
+  const card = await import('../packages/source/login/src/index.js');
   const records = new Map();
   const ctx = {
     get: (name) => (name === 'credentials' ? {

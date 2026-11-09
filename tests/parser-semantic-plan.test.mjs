@@ -1,8 +1,8 @@
 ﻿import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSemanticPlan, findPlanIssues, describePlanIssues, planThresholds, kPlanCheckMinBlocks } from '../packages/dsh-zhiyun-core-parser/src/semantic-plan.js';
-import { buildTreeFromBlocks, leavesOf } from '../packages/dsh-zhiyun-core-parser/src/tree.js';
-import { normalizeLectureTree } from '../packages/dsh-zhiyun-core-lecture/src/tree.js';
+import { parseSemanticPlan, findPlanIssues, describePlanIssues, planThresholds, kPlanCheckMinBlocks } from '../packages/core/parser/src/semantic-plan.js';
+import { buildTreeFromBlocks, leavesOf } from '../packages/core/parser/src/tree.js';
+import { normalizeLectureTree } from '../packages/core/lecture/src/tree.js';
 const blocks = [1,2,3,4].map(index=>({index,page:index<4?1:2,text:`来源${index}。`.repeat(60),register:'written',
   slideEvidence:[{page:1,text:'题设 q 与 Q 为不同电荷'}],sentences:[{text:`来源${index}。`.repeat(60)}],tag:{role:'主线',facets:['概念'],summary:`很长的课堂摘要${index}`}}));
 const plan=[{title:'导体与介质',topics:[{title:'电势',from:1,to:2},{title:'电容',from:3,to:4}]}];

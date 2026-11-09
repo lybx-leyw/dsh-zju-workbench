@@ -26,7 +26,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SRC = path.resolve('packages/dsh-zhiyun-page-quiz/src/question-bank.jsx');
+const SRC = path.resolve('packages/client/page-quiz/src/question-bank.jsx');
 const src = fs.readFileSync(SRC, 'utf8');
 
 /** 取 PracticeSession 组件源码段。 */

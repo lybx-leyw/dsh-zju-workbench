@@ -10,7 +10,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateSlideDeck } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
+import { validateSlideDeck } from '../packages/core/classroom-generate/src/html-slide-shell.js';
 
 const svg = '<svg viewBox="0 0 800 560"><text x="60" y="120" font-size="32">关系</text></svg>';
 const make = (overrides = {}) => ({ title: '一页', points: ['要点一'], summary: '总结',

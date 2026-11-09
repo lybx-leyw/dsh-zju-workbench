@@ -4,7 +4,7 @@
  * 这是一次真实事故的回归测试（2026-10-31）：
  * 适配层用 `path.join(process.cwd(), 'packages/...')` 拼路径，命令行下 cwd 是仓库根
  * 所以能跑；desktop 进程的 cwd 是 `.runtime/home/workspace`，拼出来的路径根本不存在，
- * 报 `Cannot find module .../workspace/packages/dsh-zhiyun-core-question/src/index.js`。
+ * 报 `Cannot find module .../workspace/packages/core/question/src/index.js`。
  *
  * 症状极具迷惑性：单元测试全绿、命令行验证通过、只有真机挂 ——
  * 因为所有验证都在仓库根跑，没人站在 desktop 的 cwd 上看过。
@@ -21,7 +21,7 @@ import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve('.');
-const BACKEND = path.join(ROOT, 'packages/dsh-zhiyun-core-study/src/core-question-backend.js');
+const BACKEND = path.join(ROOT, 'packages/core/study/src/core-question-backend.js');
 
 test('适配层的跨包 import 不依赖 process.cwd()', () => {
   // 造一个「像 desktop 那样」的 cwd：不在仓库根，且没有 packages/ 子树

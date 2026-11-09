@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 
 import {
   BROWSE_DEFAULTS, groupByChapter, chapterOfIndex, resolveBrowse, stepChapter,
-} from '../packages/dsh-zhiyun-page-study/src/topic-browse.js';
+} from '../packages/client/page-study/src/topic-browse.js';
 
 const SEC = 1000;
 const MIN = 60 * SEC;

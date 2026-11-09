@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseConcepts} from '../packages/dsh-zhiyun-core-quiz/src/concepts.js';
-import {auditFacts,factSlots,factFor,parseSourceReview,needsSourceProof,sourceBranches} from '../packages/dsh-zhiyun-core-quiz/src/facts.js';
-import {persistWithRetry} from '../packages/dsh-zhiyun-core-quiz/src/durability.js';
-import {createPointQuizGenerator,planPointQuestions} from '../packages/dsh-zhiyun-core-quiz/src/points.js';
+import {parseConcepts} from '../packages/core/quiz/src/concepts.js';
+import {auditFacts,factSlots,factFor,parseSourceReview,needsSourceProof,sourceBranches} from '../packages/core/quiz/src/facts.js';
+import {persistWithRetry} from '../packages/core/quiz/src/durability.js';
+import {createPointQuizGenerator,planPointQuestions} from '../packages/core/quiz/src/points.js';
 import {syntheticFactAudit,syntheticSourceCheck,syntheticProofReview,fixtureCall,fixture} from '../scripts/quiz_bench/fixture.mjs';
 const sentences=['在本模型中，速率定义为单位时间内发生的事件次数。','事件次数与观测时长的比值称为速率。','该速率采用每秒事件数作为度量单位。','对于这个模型，一个很重要的标准是测量是否稳定。'];
 const point={id:'p',courseId:'c',subId:'s',title:'合成测量',blockIndexes:[0],text:sentences.join('\n')};

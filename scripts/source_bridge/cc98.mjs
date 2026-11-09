@@ -12,7 +12,7 @@ export const label = 'CC98 论坛';
 /**
  * @param options.account - `{ username, password }`（CC98 账号）。
  * @param options.dataDir - 落盘目录。
- * @param options.card - 已 import 的 `dsh-zhiyun-source-card` 模块。
+ * @param options.card - 已 import 的 `@lybx-leyw/dsh-zju-source-login` 模块。
  * @returns 探针读数。
  */
 export async function run({ account, dataDir, card }) {
@@ -22,7 +22,7 @@ export async function run({ account, dataDir, card }) {
   await mountCampus({ dataDir: `${dataDir}host/`, credentials: creds.service });
 
   // ② 再装 cc98 本身
-  const { ctx, routes, warnings } = await mount('dsh-zhiyun-source-cc98', {
+  const { ctx, routes, warnings } = await mount('@lybx-leyw/dsh-zju-source-cc98', {
     dataDir,
     credentials: creds.service,
   });

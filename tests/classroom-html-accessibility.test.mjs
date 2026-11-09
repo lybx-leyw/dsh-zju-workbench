@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateSlideDeck } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
+import { validateSlideDeck } from '../packages/core/classroom-generate/src/html-slide-shell.js';
 
 const svg = (inner, attrs = 'viewBox="0 0 800 560"') =>
   `<svg ${attrs}>${inner}</svg>`;

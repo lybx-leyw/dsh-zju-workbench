@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { adaptPoolTransport } from '../packages/dsh-zhiyun-core-classroom-generate/src/llm-pool.js';
+import { adaptPoolTransport } from '../packages/core/classroom-generate/src/llm-pool.js';
 
 /** 最小可用的池子端口，形状与 core-parser 的 WorkerPoolLlm 一致。 */
 function fakePool({ concurrency = 3 } = {}) {

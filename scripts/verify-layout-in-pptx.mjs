@@ -5,9 +5,9 @@
 
 import assert from 'node:assert/strict';
 import JSZip from 'jszip';
-import { buildPptxBuffer } from '../packages/dsh-zhiyun-core-classroom-export/src/index.js';
-import { ratiosFor } from '../packages/dsh-zhiyun-core-classroom-export/src/doc.js';
-import { parseSceneResponse } from '../packages/dsh-zhiyun-core-classroom-generate/src/scene.js';
+import { buildPptxBuffer } from '../packages/core/classroom-export/src/index.js';
+import { ratiosFor } from '../packages/core/classroom-export/src/doc.js';
+import { parseSceneResponse } from '../packages/core/classroom-generate/src/scene.js';
 
 const EMU = 914400;
 const MIN_GAP = 16;

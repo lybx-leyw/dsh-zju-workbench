@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyPolishPatch } from '../packages/dsh-zhiyun-core-lecture/src/polish-patch.js';
-import { createLectureAssembler } from '../packages/dsh-zhiyun-core-lecture/src/polish.js';
+import { applyPolishPatch } from '../packages/core/lecture/src/polish-patch.js';
+import { createLectureAssembler } from '../packages/core/lecture/src/polish.js';
 const text = '#!section s 课\n##!topic 1 1 | 标题\n>>> BLOCK 讲解 | ref=c1t1b1 | src=1\n甲乙丙。\n>>> BLOCK 例题 | ref=c1t1b2 | src=2\n甲乙丙。\n>>> SOLUTION\n解答。';
 const patch = edits => JSON.stringify({ edits });
 

@@ -12,7 +12,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateHtmlChapters } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-deck.js';
+import { generateHtmlChapters } from '../packages/core/classroom-generate/src/html-deck.js';
 
 const slide = (title) => ({ title, points: ['短词'], summary: '总结',
   visualHtml: '<svg viewBox="0 0 800 560"><text x="60" y="120" font-size="32">关系</text></svg>',

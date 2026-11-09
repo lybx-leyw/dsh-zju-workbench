@@ -33,11 +33,11 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SRC = fs.readFileSync(
-  path.join(ROOT, 'packages/dsh-zhiyun-classroom-renderer/src/view/slide.jsx'),
+  path.join(ROOT, 'packages/core/classroom-renderer/src/view/slide.jsx'),
   'utf8',
 );
 const CSS = fs.readFileSync(
-  path.join(ROOT, 'packages/dsh-zhiyun-classroom-renderer/src/style.css'),
+  path.join(ROOT, 'packages/core/classroom-renderer/src/style.css'),
   'utf8',
 );
 

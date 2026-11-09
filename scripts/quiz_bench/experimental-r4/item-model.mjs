@@ -1,5 +1,5 @@
-import {contentHash} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
-import {normalizedText} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {contentHash} from '../../../packages/core/quiz/src/concepts.js';
+import {normalizedText} from '../../../packages/core/quiz/src/concepts.js';
 
 const text=v=>typeof v==='string'&&v.trim().length>0;
 const unique=xs=>new Set(xs).size===xs.length;

@@ -1,7 +1,7 @@
 import {contentHash,serial} from './common.mjs';
 import {atPath,walkTree} from './tree.mjs';
-import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/dsh-zhiyun-core-quiz/src/strategies.js';
-import {normalizedText} from '../../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {QUESTION_TYPES,QUESTION_STRATEGIES} from '../../../packages/core/quiz/src/strategies.js';
+import {normalizedText} from '../../../packages/core/quiz/src/concepts.js';
 
 const resultBranch=node=>({nodeId:node.nodeId,title:node.title,questions:[],children:node.children.map(resultBranch)});
 /** Traversal reserves node-owned work; only executable tickets enter a linear queue. */

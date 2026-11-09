@@ -47,7 +47,7 @@ export const name = 'radar-market';
  * 只硬依赖 `profileContext`（数据目录）。`webServer` / `connection` / `remote`
  * 全部走 `ctx.inject` / `ctx.get` 惰性取 —— 可选宿主服务不写进 inject，
  * 否则对方没就绪时本插件会一直 pending（这条规矩见 dsh-zhiyun-host-paper 与
- * dsh-zhiyun-core-study 的 README）。
+ * @lybx-leyw/dsh-zju-core-study 的 README）。
  */
 export const inject = ['profileContext'];
 

@@ -13,7 +13,7 @@ import { mount, serviceOf, apiOf, urlOf } from './_base.mjs';
 
 /** 记录 schema（基准造数要用它的形状）。 */
 export async function schemaModule() {
-  return import(urlOf('dsh-zhiyun-core-knowledge', 'src/schema.js')).catch(() => null);
+  return import(urlOf('@lybx-leyw/dsh-zju-core-knowledge', 'src/schema.js')).catch(() => null);
 }
 
 /**
@@ -29,7 +29,7 @@ export async function mountKnowledge({ dataDir, storageDomain } = {}) {
       { code: 'NO_STORAGE' },
     );
   }
-  const mounted = await mount('dsh-zhiyun-core-knowledge', { dataDir, services: { storageDomain } });
+  const mounted = await mount('@lybx-leyw/dsh-zju-core-knowledge', { dataDir, services: { storageDomain } });
   const service = serviceOf(mounted, 'zhiyunKnowledge');
   return { mounted, service, ...apiOf(service) };
 }

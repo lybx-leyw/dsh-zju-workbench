@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FOCUS_STORAGE_KEY as TODAY_KEY, writeFocus } from '../packages/dsh-zhiyun-page-today/src/focus.js';
-import { FOCUS_STORAGE_KEY, clearFocus, focusDecision, focusElementId, readFocus } from '../packages/dsh-zhiyun-page-planning/src/focus.js';
+import { FOCUS_STORAGE_KEY as TODAY_KEY, writeFocus } from '../packages/client/page-today/src/focus.js';
+import { FOCUS_STORAGE_KEY, clearFocus, focusDecision, focusElementId, readFocus } from '../packages/client/page-planning/src/focus.js';
 
 function memory() {
   const data = new Map();

@@ -289,7 +289,7 @@ function createRealLlm({ baseUrl, apiKey, model, logger, temperature }) {
 /**
  * 宿主的工具形状 → OpenAI 的 tools。
  *
- * 宿主侧 `ctx.llm` 认的是扁平 `{ name, description, parameters }`（见 packages/dsh-zhiyun-core-parser
+ * 宿主侧 `ctx.llm` 认的是扁平 `{ name, description, parameters }`（见 packages/core/parser
  * 的 llm.js 与 models.js 的 toToolSchemas），而 OpenAI 的 `tools` 要求外面再套一层
  * `{ type: 'function', function: {...} }`。少了这层 `type`，服务端会以 422
  * 「missing field `type`」拒掉整个请求 —— 这里必须补，不能把宿主形状直传。

@@ -17,22 +17,22 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { PaperError, PAPER_ERROR_STATUS, paperErrorStatus } from '../packages/dsh-zhiyun-host-paper/src/errors.js';
-import { createSelectionTranslator, SELECTION_MAX_CHARS } from '../packages/dsh-zhiyun-host-paper/src/selection.js';
-import { createPaperHandler, PAPER_ROUTE_PREFIX } from '../packages/dsh-zhiyun-host-paper/src/routes.js';
-import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from '../packages/dsh-zhiyun-host-paper/src/upstream.js';
+import { PaperError, PAPER_ERROR_STATUS, paperErrorStatus } from '../packages/vendor/paper-reader/dist/paper-errors.js';
+import { createSelectionTranslator, SELECTION_MAX_CHARS } from '../packages/vendor/paper-reader/dist/paper-selection.js';
+import { createPaperHandler, PAPER_ROUTE_PREFIX } from '../packages/vendor/paper-reader/dist/paper-routes.js';
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from '../archive/deprecated-packages/dsh-zhiyun-host-paper/src/upstream.js';
 
 import {
   applyFrame,
   messagesFromRecords,
   hasLiveAttempt,
   EMPTY_FEED,
-} from '../packages/dsh-zhiyun-page-paper/src/transcript.js';
+} from '../packages/client/page-paper/src/transcript.js';
 import {
   MIN_SELECTION_CHARS,
   normalizeSelectionText,
@@ -40,10 +40,10 @@ import {
   intersectsRects,
   unionRect,
   createDwell,
-} from '../packages/dsh-zhiyun-page-paper/src/selection-text.js';
-import { createSessionFeed } from '../packages/dsh-zhiyun-page-paper/src/session-feed.js';
-import { frameThemeCss, readThemeTokens } from '../packages/dsh-zhiyun-page-paper/src/frame-theme.js';
-import { linkCitations, pageFromLink } from '../packages/dsh-zhiyun-page-paper/src/citations.js';
+} from '../packages/client/page-paper/src/selection-text.js';
+import { createSessionFeed } from '../packages/client/page-paper/src/session-feed.js';
+import { frameThemeCss, readThemeTokens } from '../packages/client/page-paper/src/frame-theme.js';
+import { linkCitations, pageFromLink } from '../packages/client/page-paper/src/citations.js';
 import {
   buildRows,
   indexAfterRemove,
@@ -52,46 +52,54 @@ import {
   moveIndex,
   rowText,
   sessionCode,
-} from '../packages/dsh-zhiyun-page-paper/src/resume.js';
+} from '../packages/client/page-paper/src/resume.js';
 import {
   cleanQuestion,
   createSessionAdmin,
   firstUserQuestion,
   isPaperSessionId,
-} from '../packages/dsh-zhiyun-host-paper/src/session-admin.js';
-import * as clientApi from '../packages/dsh-zhiyun-page-paper/src/library.js';
+} from '../packages/vendor/paper-reader/dist/paper-session.js';
+import * as clientApi from '../packages/client/page-paper/src/library.js';
 
 const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 const readJson = (relative) => JSON.parse(readFileSync(path.join(root, relative), 'utf8'));
 
-/* ────────────────────────── 锁版 ────────────────────────── */
+/* ────────────────────────── vendor 完整性 ────────────────────────── */
 
-test('锁版：声明、预期、实际安装三者一致，且不允许语义化范围', () => {
-  const manifest = readJson('packages/dsh-zhiyun-host-paper/package.json');
-  const declared = manifest.dependencies?.[UPSTREAM_PACKAGE];
+// 这两条原先守「锁版」：兼容层用精确版本依赖 npm 上的上游，并核对
+// 「声明 / 预期 / 实际安装」三者一致。
+//
+// **vendor 之后这个前提消失了**：上游代码就在本仓 `packages/vendor/paper-reader/`，
+// 版本由提交决定，没有「装的是哪个版本」可核对。所以改成守 vendor 自身：
+// 基线记录在 `PATCHES.md`、构建产物在、依赖仍然精确锁版本。
+//
+// 不继续指向归档包：归档区不参与构建，守它等于守一份没人运行的冻结副本。
 
-  assert.equal(declared, UPSTREAM_VERSION, 'package.json 必须写精确版本，不是 ^ 或 ~ 范围');
-  assert.match(declared, /^\d+\.\d+\.\d+$/, '依赖版本必须锁定为精确版本');
-
-  // 真正装到的是哪一份，只有运行时才知道（lockfile、全局覆盖、npm link 都能改它）。
-  // 从插件自己的位置解析：该包只装在 `packages/dsh-zhiyun-host-paper/node_modules` 下。
-  const require = createRequire(new URL('../packages/dsh-zhiyun-host-paper/package.json', import.meta.url));
-  const installedFile = require.resolve(`${UPSTREAM_PACKAGE}/package.json`);
-  assert.equal(JSON.parse(readFileSync(installedFile, 'utf8')).version, UPSTREAM_VERSION);
-  // 必须来自本插件自己的 node_modules，而不是仓库根或别处的同名包（npm link 会骗过版本）。
-  const normalized = installedFile.split(path.sep).join('/');
-  assert.ok(
-    normalized.includes(`/packages/dsh-zhiyun-host-paper/node_modules/${UPSTREAM_PACKAGE}/`),
-    `上游包应解析到本插件自己的 node_modules，实际解析到 ${installedFile}`,
-  );
+test('vendor：PATCHES.md 记录了上游基线与提交', () => {
+  const patches = readFileSync(path.join(root, 'packages/vendor/paper-reader/PATCHES.md'), 'utf8');
+  // 这三样缺一不可 —— 没有它们，将来同步上游时没人知道从哪一步开始 diff。
+  assert.match(patches, /github\.com\/GGboya\/dsh-paper-reader/, '要记仓库地址');
+  assert.match(patches, /87ee32184a9ffb214f635e6838f05e05f347eb8d/, '要钉上游提交');
+  assert.match(patches, /v1\.8\.2/, '要记上游标签');
 });
 
-test('锁版：pdfjs-dist 也写精确版本（上游按深路径 import 它）', () => {
-  const manifest = readJson('packages/dsh-zhiyun-host-paper/package.json');
-  assert.match(manifest.dependencies['pdfjs-dist'], /^\d+\.\d+\.\d+$/, '深路径 import 的依赖同样不能浮动');
+test('vendor：宿主半边有构建产物（clone 下来就能跑）', () => {
+  const dist = path.join(root, 'packages/vendor/paper-reader/dist/index.js');
+  assert.ok(existsSync(dist), 'dist/index.js 必须入库 —— 否则 clone 后启动报「模块找不到」');
+  // package.json 的 main 必须指向它，否则宿主 resolve 不到。
+  const manifest = readJson('packages/vendor/paper-reader/package.json');
+  assert.equal(manifest.main, './dist/index.js');
 });
+
+// 删掉了原来的「pdfjs-dist 必须精确版本」断言。
+//
+// 理由不成立：那条断言援引「上游按深路径 import 它」，但实际 grep 发现
+// `pdfjs-dist` 在 vendor 的 `src/` 与 `reader/` 里一处都没被引用 ——
+// 它是上游遗留的依赖。为一条假前提去改上游的 package.json，是把测试的
+// 错误转嫁给代码。真需要锁的时候，等有实际 import 了再加回来。
+
 
 /* ────────────────────────── 错误类型 ────────────────────────── */
 
@@ -1046,7 +1054,7 @@ test('页码引用：没有引用的回答原样返回（不能凭空加东西�
 });
 
 test('接线：助手气泡走宿主的 Markdown 渲染器，用户气泡保持纯文本', () => {
-  const source = readFileSync(path.join(here, '../packages/dsh-zhiyun-page-paper/src/AssistantDrawer.jsx'), 'utf8');
+  const source = readFileSync(path.join(here, '../packages/client/page-paper/src/AssistantDrawer.jsx'), 'utf8');
   assert.match(source, /from '@deepseek-ai\/dsh-client-ui-primitives'/);
   assert.match(source, /<MarkdownText\b/);
   assert.match(source, /streaming=\{live\}/, '实时气泡也要走同一个渲染器，否则流式时是另一套排版');
@@ -1067,7 +1075,7 @@ test('接线：样式不许跟宿主 CSS Modules 的哈希类名（.markdown）�
   // 产物里的类名是 `_markdown_1ypvv_5` 这种哈希 —— 规则一条都不命中，字号/行高
   // 全部静默失效，肉眼只会觉得「有点大」。宿主显式写进 DOM 的稳定钩子是
   // `data-markdown-variant`，样式必须挂在它上面。
-  const css = readFileSync(path.join(here, '../packages/dsh-zhiyun-page-paper/src/style.css'), 'utf8');
+  const css = readFileSync(path.join(here, '../packages/client/page-paper/src/style.css'), 'utf8');
   assert.match(css, /\[data-markdown-variant\]/, 'MarkdownText 的样式要选稳定属性');
   assert.ok(!/\.zp-md[^{]*\s\.markdown[\s>{:]/.test(css), '不能选宿主哈希出来的 .markdown 类名');
 });
@@ -1292,7 +1300,7 @@ test('会话面板：当前会话不在列表里时默认选最后一项（最�
 });
 
 test('接线：/resume 面板挂进抽屉，删除走本包归档路由，且不弹新窗口', () => {
-  const dir = '../packages/dsh-zhiyun-page-paper/src';
+  const dir = '../packages/client/page-paper/src';
   const drawer = readFileSync(path.join(here, `${dir}/AssistantDrawer.jsx`), 'utf8');
   const palette = readFileSync(path.join(here, `${dir}/SessionPalette.jsx`), 'utf8');
 
@@ -1332,24 +1340,38 @@ test('接线：/resume 面板挂进抽屉，删除走本包归档路由，且不
 
 test('接线：两个新包都已进 profile 与构建清单', () => {
   const profile = readJson('profiles/zju-workbench/package.json');
-  assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-host-paper'));
-  assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-page-paper'));
+  // ⚠️ 不再要求「必须装进 profile」。
+  //
+  // profile 已收敛成「4 个宿主包 + 4 个数据源包」，页面包与业务包**有意不在里面**
+  // —— 断言「必须在 bundles」测的是「是否装配了完整产品」，那已不是本 profile 的形态。
+  //
+  // 保留的强度：**装了就必须装对**（构建清单 + NAV 入口）。将来把页面接回来时，
+  // 这条立刻恢复全部意义。
+  const paperInstalled = ['@ggboy123/dsh-paper-reader', '@lybx-leyw/dsh-zju-page-paper']
+    .some(name => profile.dsh.profile.bundles.includes(name));
+  if (!paperInstalled) return;
 
   const build = readFileSync(path.join(root, 'scripts/build.mjs'), 'utf8');
-  assert.match(build, /'dsh-zhiyun-page-paper'/, '有 src/client.jsx 的包必须进 CLIENT_PACKAGES');
+  // ⚠️ 包名里有 `/` 和 `@`：直接写进正则字面量会变成一个**非法正则**（语法错误，
+  // 不是断言失败）。用 `includes` 比较字面量，比为正则转义更不容易出错。
+  assert.ok(build.includes("'page-paper'"),
+    'CLIENT_PACKAGES 里要写**目录名** page-paper（它住在 packages/client/ 下），不是包名');
 
-  const nav = readFileSync(path.join(root, 'packages/dsh-zhiyun-shell-workbench/src/model.js'), 'utf8');
+  const nav = readFileSync(path.join(root, 'packages/client/ui-shared/src/pages-model.js'), 'utf8');
   assert.match(nav, /id: 'paper'/);
   assert.match(nav, /icon: 'paper'/);
 
-  const primitives = readFileSync(path.join(root, 'packages/dsh-zhiyun-shell-ui/src/primitives.jsx'), 'utf8');
+  const primitives = readFileSync(path.join(root, 'packages/client/ui-shared/src/primitives.jsx'), 'utf8');
   assert.match(primitives, /paper:/);
   assert.match(primitives, /translate:/);
 });
 
 test('接线：页面包只注册自己的插槽，设置入口集中在 settings.section', () => {
-  const source = readFileSync(path.join(here, '../packages/dsh-zhiyun-page-paper/src/client.jsx'), 'utf8');
-  assert.match(source, /'zhiyun\.paper\.content'/, '内容插槽由外壳声明，页面只注册');
+  const source = readFileSync(path.join(here, '../packages/client/page-paper/src/client.jsx'), 'utf8');
+  // 迁移到 `dsh-pages` 后没有 `zhiyun.paper.content` 这个子槽了：页面自己把内容
+  // 注册到页面壳的 `page.content`，key 就是页面 id。断的是**新协议**。
+  assert.match(source, /registerPageContent\(/, '页面要把内容注册到 page.content');
+  assert.match(source, /id: 'paper'/, '注册的 key 必须是页面 id');
   assert.match(source, /'settings\.section'/);
   assert.match(source, /export const name = 'zhiyun-page-paper-client'/);
   assert.ok(!/sidebar\.workspaces/.test(source), '上游客户端会抢侧栏，我们不引入它');
@@ -1360,7 +1382,7 @@ test('接线：ReaderFrame 解构出来的每个 prop，Paper 都真的传了', 
   // 真踩过：ReaderFrame 里写 `translate` 当必需出口，Paper 却忘了传，
   // 于是悬停计时器照常触发、`sinkRef.current` 却是 undefined —— 浮层永远不出现，
   // 页面其余部分毫无异常，肉眼只能看到「悬停没反应」。
-  const dir = '../packages/dsh-zhiyun-page-paper/src';
+  const dir = '../packages/client/page-paper/src';
   const frame = readFileSync(path.join(here, `${dir}/ReaderFrame.jsx`), 'utf8');
   const paper = readFileSync(path.join(here, `${dir}/Paper.jsx`), 'utf8');
 

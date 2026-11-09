@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-studio/', import.meta.url);
 const MEDIA_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'services', 'media.js')).href;
 const ERRORS_URL = pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', 'errors.js')).href;
 const { mountMedia } = await import(MEDIA_URL);
@@ -26,7 +26,7 @@ const { ClassroomError } = await import(ERRORS_URL);
 /**
  * 内存版 vault：`kv` 用 Map，`materials` 用数组，`assets` 用 Map。
  *
- * 形状按 `packages/dsh-zhiyun-core-classroom-vault/src/index.js` 的方法签名来，
+ * 形状按 `packages/core/classroom-vault/src/index.js` 的方法签名来，
  * 少了哪个方法就少哪条降级分支 —— 这是刻意的（测降级时直接把那一层置 null）。
  */
 function makeVault(options = {}) {

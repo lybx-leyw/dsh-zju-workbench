@@ -2,7 +2,7 @@
  * 把新建的 workspace 包链进 node_modules。
  *
  * 为什么需要这个脚本：`npm install` 在这台机器上没有把新包链进来
- * （package-lock 里也没有它们），于是 `import 'dsh-zhiyun-core-tool'` 报
+ * （package-lock 里也没有它们），于是 `import '@lybx-leyw/dsh-zju-core-tool'` 报
  * ERR_MODULE_NOT_FOUND。core-question 为此加了相对路径兜底，
  * 但兜底是权宜之计：它让「测试跑的文件」和「产品装包后跑的文件」可能不是同一份，
  * 一旦某天两边真的分叉，症状会非常难查。
@@ -20,10 +20,22 @@ const ROOT = process.cwd();
 const NODE_MODULES = path.join(ROOT, 'node_modules');
 const CHECK_ONLY = process.argv.includes('--check');
 
-/** 找出所有尚未链入 node_modules 的 workspace 包。 */
+/**
+ * 找出所有尚未链入 node_modules 的 workspace 包。
+ *
+ * ⚠️ 这里必须列全**分组目录**。早先只扫 `packages` 与 `packages/radar`，
+ * 于是包从顶层迁进 `packages/core/` 之后链接就断了 —— 症状是构建报
+ * `Could not resolve "@lybx-leyw/dsh-zju-core-classroom-geometry"`，
+ * 而包目录明明就在那儿。加新分组时同步补一行。
+ *
+ * ⚠️ **不要加 `packages/radar`**。那是「候选骨架区」：79 个候选包只做形态参考，
+ * 不进产品 `node_modules`（既不需要被 import，也会让 `packageDir()` 的
+ * basename 查找多出 79 个候选人）。早先这里写着 radar，但脚本从未成功执行过，
+ * 所以「扫了但没链」一直没暴露；一旦真跑起来就会把 79 个候选全链进产品依赖图。
+ */
 function discover() {
   const dirs = [];
-  for (const pattern of ['packages', 'packages/radar']) {
+  for (const pattern of ['packages', 'packages/core', 'packages/client', 'packages/source', 'packages/tool', 'packages/preset']) {
     const base = path.join(ROOT, pattern);
     if (!fs.existsSync(base)) continue;
     for (const name of fs.readdirSync(base)) {

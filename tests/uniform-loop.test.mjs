@@ -23,7 +23,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { rateAt, buildUniformPlan } from '../packages/dsh-zhiyun-page-study/src/uniform-speed.js';
+import { rateAt, buildUniformPlan } from '../packages/client/page-study/src/uniform-speed.js';
 
 /**
  * 模拟"同步环"：返回在给定规则下，`rate` 经过若干步是否收敛。

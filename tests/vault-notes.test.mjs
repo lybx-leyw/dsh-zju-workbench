@@ -15,7 +15,7 @@ import { mkdtemp, rm, readFile, readdir, writeFile, mkdir, stat } from 'node:fs/
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { safeName, safePath, NOTES_DIR } from '../packages/dsh-zhiyun-page-notes/src/index.js';
+import { safeName, safePath, NOTES_DIR } from '../packages/client/page-notes/src/index.js';
 
 /** 存在性判断（测试里的断言读起来比 `stat().catch()` 顺）。 */
 async function exists(file) {
@@ -83,7 +83,7 @@ test('宿主半边：写读往返 + 列表 + 删除（真落盘到临时目录�
   const dir = await mkdtemp(path.join(tmpdir(), 'vault-notes-test-'));
   try {
     // 直接构造一个最小 ctx，避免起整个 Cordis。
-    const mod = await import('../packages/dsh-zhiyun-page-notes/src/index.js');
+    const mod = await import('../packages/client/page-notes/src/index.js');
     const provided = {};
     const routes = [];
     const ctx = {
@@ -154,10 +154,10 @@ test('宿主半边：写读往返 + 列表 + 删除（真落盘到临时目录�
 test('宿主半边：重命名会改写别的笔记里指向它的链接', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'vault-notes-rename-'));
   try {
-    const mod = await import('../packages/dsh-zhiyun-page-notes/src/index.js');
+    const mod = await import('../packages/client/page-notes/src/index.js');
     const provided = {};
-    // 用一个**真的**索引器（dsh-zhiyun-core-vault），验两者协作。
-    const vaultMod = await import('../packages/dsh-zhiyun-core-vault/src/host.js');
+    // 用一个**真的**索引器（@lybx-leyw/dsh-zju-core-vault），验两者协作。
+    const vaultMod = await import('../packages/core/vault/src/host.js');
     const services = {};
     const makeCtx = (target) => ({
       profileContext: { dir: path.join(dir, 'profile') },
@@ -222,8 +222,8 @@ test('safePath：允许子目录，但 `..` 一律被中和（不是报错）', 
 test('宿主半边：文件夹的建 / 列 / 移 / 删，以及嵌套路径下的双链解析', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'vault-folders-'));
   try {
-    const mod = await import('../packages/dsh-zhiyun-page-notes/src/index.js');
-    const vaultMod = await import('../packages/dsh-zhiyun-core-vault/src/host.js');
+    const mod = await import('../packages/client/page-notes/src/index.js');
+    const vaultMod = await import('../packages/core/vault/src/host.js');
     const provided = {};
     const services = {};
     // 两个半边一起上：验的是"文件夹 + 双链"这组协作，不是各自孤立的行为。
@@ -349,8 +349,8 @@ test('宿主半边：文件夹的建 / 列 / 移 / 删，以及嵌套路径下�
 test('宿主半边：批量删除（removeMany）一次 RPC 删多条，索引只刷一次', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'vault-removemany-'));
   try {
-    const mod = await import('../packages/dsh-zhiyun-page-notes/src/index.js');
-    const vaultMod = await import('../packages/dsh-zhiyun-core-vault/src/host.js');
+    const mod = await import('../packages/client/page-notes/src/index.js');
+    const vaultMod = await import('../packages/core/vault/src/host.js');
     const services = {};
     const provided = {};
 

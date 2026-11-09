@@ -203,10 +203,14 @@ test('built-in glyphs are hidden by CSS and replaced by inline vector SVG, never
     managerLabel: { en: 'Pages', zh: '页面管理' },
   };
   const css = railIcons.railIconCss({ config });
-  // 按 aria-label 限定，不碰插件页自己的图标。
-  for (const label of ['DSH workbench', 'DSH 工作台', 'Pages', '页面管理']) {
-    assert.ok(css.includes(`button[aria-label="${label}"]`), `${label} 必须被覆盖`);
+  // 按**稳定标记**限定，不按 aria-label：标签是本地化文本，切语言后会变，
+  // 用它当选择器锚点会让图标在英文模式下失去归属（真机踩过：格子全空）。
+  // 断言的是「每个内建页各有自己的选择器」，而不是某个语言的具体文案。
+  for (const id of ['home', 'pages']) {
+    assert.ok(css.includes(`button[data-zju-rail-role="${id}"]`), `${id} 必须被覆盖`);
   }
+  // 反向断言：不能再依赖 aria-label —— 一旦依赖，语言一换就失效。
+  assert.ok(!css.includes('aria-label'), '不得再以 aria-label 作选择器锚点（语言相关）');
   // 字形由 JS 物理移除；CSS 这条是兜底（带 !important，防止别处重新显出来）。
   assert.ok(css.includes('[data-dsh-pages-rail-icon]>span{display:none!important}'));
   // 不再靠继承 secondary 的灰：显式给主色，选中态换品牌色。

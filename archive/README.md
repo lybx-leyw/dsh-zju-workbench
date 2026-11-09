@@ -187,3 +187,282 @@ Remove-Item packages/dsh-zhiyun-page-classroom/DETACHED.md -ErrorAction Silently
    被 CSP 拦，**运行时不报错，只表现为白屏**
 
 这两条决定了它不是「开箱可用」的方案，也是被重构版取代的原因之一。
+
+## deprecated-packages/dsh-zhiyun-source-bilibili
+
+### 是什么
+
+B 站视频数据源：把一条 B 站视频解析成与智云课堂同形状的 `{ slides, subtitles }`，
+供 `ctx.zhiyunParser.parse()` 直接消费。15 个源文件，含 WBI 签名、字幕轨、
+分段拉流、抽帧、triage 分流。
+
+### 为什么归档
+
+**它从未完成、也从未接进 profile** —— `package.json` 的 description 自己写着
+「未完成、未接入 profile」。它不在 `profiles/zju-workbench/package.json` 的
+bundles 里，也不在 `scripts/build.mjs` 的 `CLIENT_PACKAGES` 里，没有任何别的包
+import 它。
+
+2026-11-06 的全仓自底向上重构在整理 `packages/source/` 时把它移出产品树：
+一个没有入口、没有消费方、自述「未完成」的包留在 `packages/` 里，
+只会让「哪些包真的在产品里」这个问题每年都要重新回答一次。
+
+### 代码仍然可用
+
+归档**不是删除**。`tests/bilibili-source.test.mjs` 的 import 路径已改为
+`../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/...`，
+**77 条测试全绿** —— WBI 签名、字幕切分、错误码分类、抽帧与 playurl 这些
+纯逻辑都还在正常工作。
+
+### 怎么还原
+
+```bash
+# 1. 搬回产品树
+git mv archive/deprecated-packages/dsh-zhiyun-source-bilibili packages/dsh-zhiyun-source-bilibili
+
+# 2. 测试路径改回来
+#    tests/bilibili-source.test.mjs 里的
+#    ../archive/deprecated-packages/dsh-zhiyun-source-bilibili  ->  ../packages/dsh-zhiyun-source-bilibili
+
+# 3. 接进 profile（如果要让它真的加载）
+#    profiles/zju-workbench/package.json 的 bundles 追加 "dsh-zhiyun-source-bilibili"
+
+# 4. 跑既有测试确认没烂
+node --test tests/bilibili-source.test.mjs
+```
+
+### 要真能用还差什么
+
+它的产出形状与智云课堂对齐，但**没有经过 `zhiyunParser` 的端到端验证**——
+当时只做到「能解析出 slides/subtitles」，没做到「能驱动那个解析器跑完一节课」。
+另外 B 站需要 WBI 签名（已实现）与可选的登录 cookie（字幕轨才需要），
+这两条在真实视频上的长期稳定性没有实测记录。
+
+
+## dsh-zhiyun-shell-workbench / -shell-bridge（产品界面外壳）
+
+### 是什么
+
+两个**产品外观与外壳**包，2026-11 一并归档。
+
+| 包 | 职责 | 规模 |
+| --- | --- | --- |
+| `dsh-zhiyun-shell-workbench` | 侧栏 / 页框架 / 主题 / 导航服务 `zhiyunNavigation` / 11 个页面目录 | 10 个源文件，约 40 KB |
+| `dsh-zhiyun-shell-bridge` | 产品背景样式 + 原生首页 slogan 替换 | 5 个源文件，约 12 KB |
+
+`shell-workbench` 的 `NAV` 原先定义整条导轨：
+
+```
+today 今天 · paper 论文 · study 学习 · classroom 课堂 · classroom-build 生成
+quiz 题库 · planning 规划 · notes 笔记 · plugins 插件 · docs 文档 · feedback 反馈
+```
+
+### 为什么归档
+
+profile 在「Step 1 瘦身」后收敛成 **4 个宿主包 + 4 个数据源包**，不含任何页面包，
+因此这两个包的运行时消费者为零：
+
+- `zhiyunNavigation` 的 5 个调用方（`core-study`、`page-paper`、
+  `page-classroom-build`、`ui-shared/page-registration`、`radar-section-deeplink`）
+  全部随页面包一起不在 profile 里；
+- 页面外壳改由 profile 直接挂载的 `@lybx-leyw/dsh-pages` 提供 ——
+  `shell-bridge` 早就因此退化成「背景 + slogan」；
+- 结果是界面为**纯原生 DSH**，两侧导轨一条都不渲染。
+
+### 归档前做了什么
+
+1. **先把 `model.js` 的纯函数拆出去**，搬到
+   `packages/client/ui-shared/src/pages-model.js`。
+   它是零 import、零副作用的纯数据 + 纯函数（页面目录、插槽名、可见性判定、
+   北京日期），被 4 个测试与 2 个脚本用于断言 —— 那些断言**不依赖外壳存在**。
+2. 统计并处理了全部 14 处引用：
+   - 读 `model.js` 的 → 改指 `ui-shared/src/pages-model.js`（5 处）；
+   - 测**通用纪律**的（控件尺寸、学习空间识别、设置浮窗桥接纯函数）→
+     改指归档副本，断言保留（4 个测试，16 项断言）；
+   - 测**已退休实现本身**的（slogan 文案、桥接包自身）→ 删除
+     （`hero-copy.test.mjs`、`shell-bridge.test.mjs`）；
+   - `publish-guard` 里「桥接包不许重复声明页面壳」改为检查归档副本，
+     约束本身保留。
+3. 归档后 `tests/profile.test.mjs`（15 项）、`control-ergonomics`（8 项）、
+   `learning-space`（5 项）、`settings-adapter` / `settings-opener` 全绿。
+
+### 怎么还原
+
+```bash
+# 1. 搬回产品树
+git mv archive/deprecated-packages/dsh-zhiyun-shell-workbench packages/
+git mv archive/deprecated-packages/dsh-zhiyun-shell-bridge   packages/
+
+# 2. 恢复 model.js（归档副本里已替换成指针说明）
+git show HEAD~1:packages/dsh-zhiyun-shell-workbench/src/model.js \
+  > packages/dsh-zhiyun-shell-workbench/src/model.js
+
+# 3. 测试与脚本的 import 改回原路径
+#    pages-model.js -> dsh-zhiyun-shell-workbench/src/model.js
+#    影响的文件：tests/{profile,feedback,paper,plugins-page}.test.mjs、
+#                scripts/test-host.mjs、scripts/knowledge_tree_bench/_base.mjs
+
+# 4. 接进 profile（外壳要真加载，页面包也得一起回来）
+#    profiles/zju-workbench/package.json 的 bundles 追加两个包名
+#    —— 但只有外壳没有页面包时，导轨是空的，实际意义不大
+```
+
+### 要真能用还差什么
+
+**只剩外壳是没用的。** `NAV` 里有 11 个页面，而对应页面包
+（`page-today` / `page-paper` / `page-study` / `page-quiz` / `page-planning` /
+`page-notes` / `page-plugins` / `page-docs` / `page-feedback` /
+`page-classroom` / `page-classroom-build`）**全部不在 profile 里**。
+要恢复完整产品界面，得把这些包连同它们的依赖
+（`core-study` / `core-quiz` / `core-notes` / `host-paper` 等）一并接回。
+
+换句话说：归档这两个包是**顺着已有事实做的整理**，不是新的产品决定。
+真要把产品界面接回来，是一次范围更大的装配决策。
+
+### 顺带记录一个测试教训
+
+`tests/profile.test.mjs` 曾断言「profile 里必须有 `dsh-zhiyun-shell-workbench` 的链接」。
+这个包在 Step 1 就离开 profile 了，但断言**一直没红** —— 因为包目录还在仓库里，
+`realpath` 能解析到源码。直到本轮把它移进 `archive/`，才暴露出这条断言早已过期。
+
+> 教训：**断言具体包名时，要同时想清楚「这个包退役后这条断言怎么死」。**
+> 已改成从模板取一个当前真实在 profile 里的包做样例。
+
+
+## deprecated-packages 第二批（2026-11-07，遗留 hosts 清理）
+
+一次清掉 6 个「从未装配、且能力已被重构版取代」的包。判据不是凭印象，
+而是先把 11 个剩余包的依赖图与服务面全量拉出来：
+
+- 11 个包**全部没有上游依赖**（没有别的包 import 它们），只能靠 profile 直接装配；
+- 逐个核对它们在 profile 里的状态 —— 全部未装配；
+- 逐个核对它们的服务提供者关系 —— 只有 `quiz-lab` / `host-classroom` 落在真实链路上。
+
+### 一、直接删除（archive 里已有同名副本）
+
+| 包 | 证据 |
+| --- | --- |
+| `dsh-zhiyun-host-openmaic` | 见上文第 115 行那节：它早已归档。`packages/` 里的这份是**重复副本**（含 `DETACHED.md`、`vendor/`、`upstream.lock.json`） |
+| `dsh-zhiyun-page-classroom` | 同上。它是 openmaic 整站 iframe 版，整页依赖 `/zhiyun-openmaic/*` 路由；与 `host-openmaic` 是同一对 |
+
+> 这两份是「归档后又从别处拷贝回来」的残留。删之前核对了文件结构与 archive 版一致。
+
+### 二、新归档
+
+| 包 | 是什么 | 为什么归档 |
+| --- | --- | --- |
+| `dsh-zhiyun-host-deeptutor` | 上游 DeepTutor 的宿主桥：`python/` 运行时桥、`distribution.json`、能力五态目录 | 出题能力已由纯 JS 重构版接管（`core-question` / `core-quiz` 的 `r4` / `core-llm`）。它的 vendor 早在 `deeptutor-vendor-1.6.15` 就归档了，包里只剩没有调用方的桥 |
+| `dsh-zhiyun-host-bridge` | 局域网桥 + 规划快照（把本机规划整理成手机能读的 JSON） | package.json 描述自己写着「**尚未挂进 profile**」；只有 2 个源文件、无 README；无任何引用方 |
+| `dsh-zhiyun-host-office` | `dsh-univer-office` 接入层（表格/文档/幻灯片/多维表格） | 11 个页面**无一涉及 Office**，无消费方 |
+| `dsh-zhiyun-settings-account` | 头像登录对话框 + 「账号与数据」设置分区 | 账号面板占位，从未装配 |
+
+### 三、连同归档的测试
+
+| 测试 | 随谁归档 | 说明 |
+| --- | --- | --- |
+| `deeptutor-bridge.test.mjs`（692 行） | host-deeptutor | 直接 `import` 包的 `src/protocol.js`、`src/runtime.js` |
+| `deeptutor-host.test.mjs`（457 行） | 同上 | 读 `PACKAGE_DIR` 做锁版/状态断言 |
+| `deeptutor-integration.test.mjs`（127 行） | 同上 | `src/models.js`、`src/wire-options.js` |
+| `deeptutor-service.test.mjs`（1424 行） | 同上 | `src/service.js`、`src/capabilities.js` |
+| `learning-resource.test.mjs`（753 行） | 同上 | ⚠ 见下方「遗留缺口」 |
+| `univer-office.test.mjs` | host-office | 直接删（无还原价值：Office 接入整体废弃） |
+
+它们在 `archive/deprecated-packages/dsh-zhiyun-host-deeptutor/tests/`。
+**还原时要一起挪回 `tests/`** —— 它们是「回退是否成功」的判据，不是可选项。
+
+### 四、遗留缺口（重要）
+
+`learning-resource.test.mjs` 是**混合测试**：
+
+- 前三条（`validate()` 的 JSON Pointer 定位、`contentHash` 键序不敏感、`project()` 锚点反查）
+  测的是**契约**，重构版 `packages/core/learning-resource` 也实现了这些能力；
+- 第四条（`createResourceRegistry` 先校验再落盘）只存在于 deeptutor 版。
+
+它此前已经**跑不起来**（import 路径随包移走而失效），所以归档不损失任何现有覆盖。
+但要注意：
+
+> `@lybx-leyw/dsh-zju-core-learning-resource` **目前未装配**，也**没有对应的契约测试**。
+> 将来要启用学习资源时，必须把前三条断言按 core 版的 API（`revisionOf` 而非 `revisionFor`）
+> 重建一份 —— 否则「缓存键算错」「锚点被吞」这两类悄悄错没有任何守卫。
+
+### 五、怎么还原
+
+```powershell
+# 1. 包搬回原位
+mv archive/deprecated-packages/dsh-zhiyun-host-deeptutor packages/
+mv archive/deprecated-packages/dsh-zhiyun-host-bridge packages/
+mv archive/deprecated-packages/dsh-zhiyun-host-office packages/
+mv archive/deprecated-packages/dsh-zhiyun-settings-account packages/
+
+# 2. 测试搬回
+mv archive/deprecated-packages/dsh-zhiyun-host-deeptutor/tests/*.test.mjs tests/
+
+# 3. 两处清单补回（**少一处就构建失败**）
+#    scripts/build.mjs 的 CLIENT_PACKAGES → 补 'dsh-zhiyun-settings-account'
+#    tests/css-order.test.mjs 的包列表   → 补 'dsh-zhiyun-settings-account'
+
+# 4. 重建 profile 链接
+node scripts/profile.mjs init
+```
+
+### 六、验证过什么
+
+- 归档后 `npm run build`（`scripts/build.mjs`）全绿；
+- profile 启动**零 skipping / 零 pending**；
+- 11 个页面全部渲染出内容，`POST /api/zhiyun-study` 返回 200；
+- `tests/css-order.test.mjs` 18/18、`tests/vendor-fetch.test.mjs` 通过
+  （后者的锁文件断言改成读 archive 路径，断言内容一字未动）。
+
+
+## deprecated-packages/dsh-zhiyun-classroom-dsl（84 文件）
+
+### 是什么
+
+上游 `@openmaic/dsl@0.12.0` 的构建产物原样 vendored：Slide JSON 的 JSON Schema、
+纯校验器、版本/迁移助手。本包 `src/index.js` 只有一行 —— `export * from '../vendor/dsl/index.js'`。
+
+### 为什么归档
+
+**全仓 `import 'dsh-zhiyun-classroom-dsl'` 命中 0 处。**
+
+它唯一的痕迹是 `classroom-renderer` 的 `dependencies` 声明，但 renderer 的源码不引用它：
+
+```js
+// packages/dsh-zhiyun-classroom-renderer/src/view/slide.jsx
+import React from 'react';
+import katex from 'katex';          // 只有这两个
+```
+
+成因：2026-10-31 renderer 从「vendor 上游」改成「自研 4 类元素」时，
+依赖清单没跟着清（这个时间点见 renderer 自己 `src/index.js` 的头注）。
+
+另外两条候选消费者也都不用它：
+
+- `core/classroom-generate` 生成幻灯片时用自己的 `validateSlideDeck`
+  （`src/html-slide-shell.js`），不走上游 schema；
+- `core/classroom-stage` 用的是 `classroom-geometry`（另一个包），不是 dsl。
+
+> 对照：**`classroom-geometry` 保留**。它被 `core/classroom-stage/src/geometry.js`
+> 的 `validateShapeGeometry` 真实调用，而 stage 已装配。
+
+### 同时做的清理
+
+| 位置 | 改动 |
+| --- | --- |
+| `packages/dsh-zhiyun-classroom-renderer/package.json` | `dependencies` 摘掉 `"dsh-zhiyun-classroom-dsl": "0.1.0"` |
+| `tests/build-seeds.test.mjs` | 从「允许无客户端产物」的例外清单里移除该条目 |
+| `tests/classroom-dsl-vendor.test.mjs`（179 行） | 随包移到 `archive/deprecated-packages/dsh-zhiyun-classroom-dsl/tests/` |
+
+### 怎么还原
+
+```powershell
+mv archive/deprecated-packages/dsh-zhiyun-classroom-dsl packages/
+mv archive/deprecated-packages/dsh-zhiyun-classroom-dsl/tests/*.test.mjs tests/
+# 然后把 renderer 的 dependencies 与 build-seeds 的例外清单各补回一行
+node scripts/profile.mjs init
+```
+
+### 已验证
+
+- `scripts/build.mjs` 全绿（renderer 的客户端产物照常生成，487 KB）；
+- `tests/build-seeds.test.mjs` 4/4。

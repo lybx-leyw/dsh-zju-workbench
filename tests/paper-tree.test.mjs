@@ -21,7 +21,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { decodeTopic, encodeTopic, readPaperTree, upstreamRefFor } from '../packages/dsh-zhiyun-host-paper/src/paper-tree.js';
+import { decodeTopic, encodeTopic, readPaperTree, upstreamRefFor } from '../packages/vendor/paper-reader/dist/paper-tree.js';
 
 test('编码可逆：任意层级往返后不变', () => {
   const cases = ['理学', '理学/力学', 'a/b/c', 'a+b', 'a%2Fb', '100% 完成', 'a__b', '混合/中文 mixed'];
@@ -93,8 +93,13 @@ test('页面侧的 decodeTopic 与宿主侧规则一致', async () => {
   //
   // 用 indexOf 切片取函数体，不在正则里写换行转义 —— 那样很容易在多轮编辑中被
   // 转成真实换行，反而把整个文件弄成语法错误。
-  const url = new URL('../packages/dsh-zhiyun-page-paper/src/Paper.jsx', import.meta.url);
-  const source = await readFile(url, 'utf8');
+  const url = new URL('../packages/client/page-paper/src/Paper.jsx', import.meta.url);
+  // ⚠️ 统一行尾再比较。
+  //
+  // 这条测试原先找 `'\n}\n'` —— 在 LF 检出的机器上成立，在 Windows（CRLF）上
+  // 永远返回 -1，于是报「decodeTopic 应是一个完整函数体」。那是**跨平台缺陷**，
+  // 与 decodeTopic 本身无关：函数一直在那里、形状也没变。
+  const source = (await readFile(url, 'utf8')).replace(/\r\n/g, '\n');
   const signature = 'function decodeTopic(topic) {';
   const at = source.indexOf(signature);
   assert.ok(at !== -1, 'Paper.jsx 里应有一份 decodeTopic（客户端不能 import 宿主的实现）');

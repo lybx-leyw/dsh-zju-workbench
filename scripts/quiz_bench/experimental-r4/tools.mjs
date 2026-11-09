@@ -1,6 +1,6 @@
-import * as base from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/tools.mjs';
+import * as base from '../../../packages/core/quiz/src/engines/r3-v9/tools.mjs';
 import {ADAPTATIONS} from './item-model.mjs';
-export {failedTool} from '../../../packages/dsh-zhiyun-core-quiz/src/engines/r3-v9/tools.mjs';
+export {failedTool} from '../../../packages/core/quiz/src/engines/r3-v9/tools.mjs';
 /** Generic hosts may report failures as terminal chunks instead of throwing. */
 export const createToolTransport=host=>base.createToolTransport({...host,async prepareCall(...args){
  const prepared=await host.prepareCall(...args);

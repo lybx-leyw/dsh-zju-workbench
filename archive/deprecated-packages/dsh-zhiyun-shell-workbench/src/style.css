@@ -1,0 +1,136 @@
+body[data-zhiyun] {
+  /* 求是蓝来自官网公开主题配置；浅色表面保持 Pro 的暖灰层次。 */
+  --zy-bg:#f7f7f5;--zy-surface:#fff;--zy-sidebar:#eff1f3;--zy-text:#252a30;--zy-secondary:#666b72;--zy-muted:#6b7178;--zy-line:#e1e3e5;--zy-accent:#00479d;--zy-soft:#e7eef8;--zy-hover:#e6eaf0;--zy-brand:#00479d;--zy-brand-soft:#e7eef8;--zy-action:#00479d;--zy-action-hover:#003b83;
+  /* 一个字体栈，全产品共用：Windows 上优先 Segoe UI Variable（Win11 的 UI 字），
+     中文落到雅黑 UI。会话区里的自有表面（会话条/历史面板）不继承 .zy-page，
+     所以它们自己再声明一次同一个变量，避免两处字体不一样。 */
+  /* 字号阶梯（P0-1）：中文正文 ≥12px，元信息 ≥11px，禁止 <11px。 */
+  --zy-fs-meta:11px;--zy-fs-sm:12px;--zy-fs-base:13px;--zy-fs-md:14px;--zy-fs-lg:17px;--zy-fs-xl:21px;--zy-fs-display:24px;
+  /* 间距阶梯（P2）：4px 基准，新代码优先使用；存量逐步迁移，不强制重排。 */
+  --zy-space-1:4px;--zy-space-2:8px;--zy-space-3:12px;--zy-space-4:16px;--zy-space-6:24px;--zy-space-8:32px;--zy-space-12:48px;--zy-space-16:64px;
+  --zy-font:'Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
+  /* 会话抽屉宽度。JS 侧的同名真源在 components.jsx 的 DRAWER_WIDTH（两边必须一致：
+     抽屉多宽，问一问那一列就要让出多宽，否则「挤压」会错位）。 */
+  --dsw-font-family:var(--zy-font);
+  --dsw-alias-button-info-fill:var(--zy-action);--dsw-alias-button-info-hover:var(--zy-action-hover);
+}
+body[data-zhiyun][data-ds-dark-theme] {
+  --zy-bg:#191c20;--zy-surface:#22262b;--zy-sidebar:#15181c;--zy-text:#e8ebee;--zy-secondary:#afb6bf;--zy-muted:#9099a4;--zy-line:#363b43;--zy-accent:#94bdf4;--zy-soft:#25344a;--zy-hover:#2b3440;--zy-brand:#94bdf4;--zy-brand-soft:#25344a;--zy-action:#245fa9;--zy-action-hover:#2b70c3;
+}
+.zy-page, .zy-search-dialog, .zy-page *, .zy-search-dialog *{box-sizing:border-box;}
+/* `appearance:none` 是按钮的常规重置：让平台的原生绘制（边框、圆角、底色）不参与，
+ * 只用我们写的样式。
+ *
+ * ⚠️ 别把它当成"圆角不生效"的解 —— 排查头像那个超椭圆问题时我一度这么以为，
+ *    实测（同尺寸对照：加不加 appearance 都按圆角命中）证明不成立。真正的原因是
+ *    宿主继承下来的 `corner-shape`，见下面 `.zy-rail-avatar` 那一段。 */
+.zy-page button, .zy-search-dialog button{font:inherit;cursor:pointer;border:0;color:inherit;background:transparent;appearance:none;}
+/* 焦点环：不能只覆盖 button。
+ *
+ * 页面里大量可聚焦元素不是 <button> —— 链接（a）、输入框、可聚焦的容器
+ * （[tabindex]）、<summary>（折叠区标题）。只给 button 写焦点样式，
+ * 键盘用户在这几类元素上就看不见自己停在哪，等于键盘导航断掉。
+ *
+ * 用 `:is()` 把清单集中在一处，新增可聚焦元素时只改这一行。 */
+a, [tabindex]):focus-visible, .zy-page :is(button, a, [tabindex], summary):focus-visible, .zy-search-dialog :is(button, a, [tabindex]):focus-visible{
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 3px;
+}
+
+/* 输入类控件用更贴边的焦点环：外扩 3px 会和相邻标签重叠 */
+.zy-page :is(input, textarea, select):focus-visible {
+  outline: 2px solid var(--zy-accent);
+  outline-offset: 1px;
+}
+.zy-page svg{flex-shrink:0;}
+
+
+
+/* The motto replaces the native hero brand title. */
+.zy-mark {display:inline-flex;align-items:center;justify-content:center;width:44px;height:38px;color:var(--zy-brand);flex-shrink:0;}
+.zy-mark svg {width:44px;height:36px;}
+.zy-mark-large {width:68px;height:56px;}.zy-mark-large svg{width:68px;height:56px;}
+.zy-mark-compact{width:32px;height:38px;}.zy-mark-compact svg{width:30px;height:36px;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.zy-page {display:flex;flex-direction:column;height:100%;min-width:0;background:var(--zy-bg);}
+.zy-scroll{flex:1;overflow:auto;min-height:0;}.zy-content{max-width:980px;margin:0 auto;padding:43px 48px 28px;}
+/* 整幅铺开的应用型页面（见 model.js 的 FULL_BLEED_PAGES）。
+ * ⚠️ 选择器写成 `.zy-content.zy-content-flush`（两个类）而不是单个类：下面窄屏
+ *    的 @media 只改 `.zy-content`，同特异性时后者会因为靠后而赢 —— 那样窗口一窄，
+ *    文章式内边距又会回来。两个类直接压过它，不依赖声明顺序。
+ * height:100% 能解析，是因为 `.zy-scroll` 在 `.zy-page` 这个列向 flex 里 flex:1，
+ * 高度是确定的。于是面板填满整个内容区，滚动交给页面内部的分区。 */
+.zy-content.zy-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0;}
+/* 二级入口（`NAV` 的 `parent`）：主线页里通往子页的一行按钮，以及子页的回程。
+ * 两者都排在内容之前、只有一行高，不抢页面自己的版式 —— 子页本身是完整页面，
+ * 壳只负责给出「进去」和「回来」两个动作。 */
+.zy-page-subnav{display:flex;align-items:center;gap:8px;margin:0 0 22px;}
+.zy-page-subnav button,.zy-page-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:1;padding:7px 13px;border:1px solid var(--zy-line);border-radius:999px;background:var(--zy-surface);color:var(--zy-secondary);}
+.zy-page-subnav button:hover,.zy-page-back:hover{color:var(--zy-text);border-color:var(--zy-accent);}
+.zy-page-back{margin:0 0 16px;padding-left:10px;}
+.zy-intro {display:flex;justify-content:space-between;align-items:center;margin-bottom:34px;gap:24px;}.zy-eyebrow{font-size:11px;color:var(--zy-accent);letter-spacing:1.2px;}.zy-intro h1{font-size:24px;font-weight:500;line-height:1.4;letter-spacing:-.7px;margin:9px 0 9px;}.zy-intro p{font-size:12px;color:var(--zy-secondary);margin:0;}.zy-intro>svg,.zy-date-icon{color:var(--zy-accent);opacity:.65;}.zy-date-icon{margin-right:12px;}
+.zy-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 12px;}.zy-section-title h2{font-size:13px;font-weight:600;margin:0;}.zy-section-title>span{font-size:11px;color:var(--zy-muted);}
+.zy-now {border:1px solid color-mix(in srgb,var(--zy-accent) 13%,var(--zy-line));border-left:3px solid var(--zy-accent);background:var(--zy-soft);border-radius:9px;padding:21px 24px 19px;}.zy-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--zy-accent);}.zy-pill>span{width:5px;height:5px;border-radius:50%;background:var(--zy-accent);}.zy-now h2{font-size:19px;letter-spacing:-.3px;font-weight:500;margin:11px 0 5px;}.zy-now p{font-size:11px;color:var(--zy-secondary);margin:0 0 15px;}
+.zy-text-button{display:inline-flex;align-items:center;gap:8px;padding:0!important;color:var(--zy-accent)!important;font-size:11px!important;}.zy-text-button:hover{text-decoration:underline;text-underline-offset:3px;}
+.zy-agenda-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:28px;}.zy-empty-row{display:flex;align-items:center;gap:13px;border:1px solid var(--zy-line);border-radius:8px;padding:19px 17px;background:var(--zy-surface);}.zy-empty-row>svg{color:var(--zy-muted);}.zy-empty-row strong{font-size:12px;font-weight:500;}.zy-empty-row p{font-size:11px;color:var(--zy-muted);margin:4px 0 0;}
+.zy-resume{display:flex;align-items:center;gap:16px;padding:19px 21px;border:1px solid var(--zy-line);border-radius:9px;background:var(--zy-surface);}.zy-book-cover{height:56px;width:45px;display:grid;place-items:center;background:var(--zy-sidebar);color:var(--zy-secondary);border:1px solid var(--zy-line);border-left:4px solid var(--zy-line);border-radius:3px 6px 6px 3px;flex-shrink:0;}.zy-resume h3{font-size:12px;font-weight:500;margin:0 0 5px;}.zy-resume p{font-size:11px;color:var(--zy-muted);margin:0;}.zy-resume>.zy-secondary{margin-left:auto;flex-shrink:0;}
+.zy-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--zy-line)!important;border-radius:6px;background:var(--zy-surface)!important;padding:7px 11px!important;font-size:11px!important;}.zy-secondary:hover{border-color:var(--zy-accent)!important;color:var(--zy-accent)!important;}
+.zy-quiet-footer {font-size:11px;text-align:center;color:var(--zy-muted);padding-top:32px;letter-spacing:.4px;}.zy-empty{min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:48px 28px;text-align:center;}.zy-empty-icon{width:68px;height:68px;display:grid;place-items:center;border-radius:20px;background:var(--zy-sidebar);color:var(--zy-accent);margin-bottom:20px;}.zy-empty h3{font-size:16px;font-weight:500;margin:0 0 9px;}.zy-empty p{font-size:12px;color:var(--zy-secondary);max-width:350px;margin:0;line-height:1.9;}
+
+
+@media(max-width:1050px){.zy-content{padding:32px 28px;}.zy-agenda-grid{gap:14px;}.zy-empty-row{padding:16px 12px;}}
+@media(max-width:650px){.zy-content{padding:25px 19px;}.zy-intro h1{font-size:21px;}.zy-agenda-grid{grid-template-columns:1fr;gap:0;margin-bottom:20px;}.zy-resume{flex-wrap:wrap;padding:17px;}.zy-resume>.zy-secondary{margin-left:61px;}.zy-now{padding:18px;}.zy-intro>svg,.zy-date-icon{display:none;}}
+@media(prefers-reduced-motion:no-preference){.zy-content{animation:zy-enter 180ms ease-out;}@keyframes zy-enter{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}}
+
+
+
+.zy-eyebrow{color:var(--zy-secondary);font-size:11px;letter-spacing:.5px;}
+.zy-intro h1{font-weight:600;letter-spacing:-.5px;}
+.zy-intro p{font-size:13px;line-height:1.8;}
+.zy-intro>svg,.zy-date-icon{color:var(--zy-muted);opacity:.55;}
+
+
+.zy-now{background:var(--zy-surface);border-color:var(--zy-line);border-left-color:var(--zy-accent);}
+.zy-now h2{font-weight:600;}.zy-now p{font-size:12px;line-height:1.8;}
+.zy-page button{transition:background-color 120ms ease,color 120ms ease;}
+@media(max-width:650px){}
+@media(prefers-reduced-motion:reduce){.zy-page button{transition:none;}}

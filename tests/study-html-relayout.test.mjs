@@ -7,7 +7,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pagesFromHtmlChapters } from '../packages/dsh-zhiyun-core-study/src/ai-teaching-generate.js';
+import { pagesFromHtmlChapters } from '../packages/core/study/src/ai-teaching-generate.js';
 
 const slide = { title: '一页', points: ['短词'], summary: '总结',
   visualHtml: '<svg viewBox="0 0 800 560"><text x="60" y="120" font-size="32">关系</text></svg>',

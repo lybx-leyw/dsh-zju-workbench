@@ -1,0 +1,28 @@
+{
+  "name": "doc",
+  "title": "文档转文字与 PDF 处理",
+  "tier": 1,
+  "runtime": "node",
+  "hosts": [],
+  "auth": "none",
+  "network": "public",
+  "writes": false,
+  "provides": [
+    "doc text",
+    "doc pdf",
+    "doc pages",
+    "doc find"
+  ],
+  "requires": [
+    "core",
+    "webvpn",
+    "zdbk"
+  ],
+  "localDependencies": {
+    "documents": {
+      "runtime": "node",
+      "packages": ["pdfjs-dist", "pdf-lib", "sharp", "@deepseek-ai/libreoffice-kit"],
+      "purpose": "随桌面应用提供 PDF、图片及 Office 文档处理，无需系统 Python 或 LibreOffice"
+    }
+  }
+}

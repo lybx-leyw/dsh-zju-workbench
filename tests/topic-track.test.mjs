@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 
 import {
   TRACK_DEFAULTS, buildTrack, currentState, seekTargetMs, stateLabel, trackNote,
-} from '../packages/dsh-zhiyun-page-study/src/topic-track.js';
+} from '../packages/client/page-study/src/topic-track.js';
 
 const SEC = 1000;
 const MIN = 60 * SEC;

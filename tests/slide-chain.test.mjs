@@ -18,10 +18,10 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { ClassroomSource } from '../packages/dsh-zhiyun-source-classroom/src/source.js';
+import { ClassroomSource } from '../packages/source/classroom/src/source.js';
 import {
   SlideCache, createSlideHandler, SLIDE_ROUTE_PREFIX,
-} from '../packages/dsh-zhiyun-source-classroom/src/slide-store.js';
+} from '../packages/source/classroom/src/slide-store.js';
 
 const IMG = (n) => `https://video.cmc.zju.edu.cn/c/99/100/slides/${String(n).padStart(4, '0')}.jpg?e=1&token=t`;
 

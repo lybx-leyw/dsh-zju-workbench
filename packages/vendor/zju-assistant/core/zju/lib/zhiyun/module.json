@@ -1,0 +1,50 @@
+{
+  "name": "zhiyun",
+  "title": "智云课堂",
+  "tier": 1,
+  "runtime": "node",
+  "hosts": [
+    "classroom.zju.edu.cn",
+    "yjapi.cmc.zju.edu.cn",
+    "education.cmc.zju.edu.cn",
+    "tgmedia.cmc.zju.edu.cn"
+  ],
+  "auth": "cas",
+  "network": "public",
+  "writes": false,
+  "provides": [
+    "zhiyun search courses",
+    "zhiyun search lessons",
+    "zhiyun timetable",
+    "zhiyun search resources",
+    "zhiyun download",
+    "zhiyun setup",
+    "zhiyun check",
+    "zhiyun trans audio",
+    "zhiyun session login",
+    "zhiyun session status",
+    "zhiyun session logout",
+    "zhiyun search subtitles",
+    "zhiyun live start",
+    "zhiyun live status",
+    "zhiyun live stop",
+    "zhiyun live text"
+  ],
+  "requires": [
+    "core",
+    "profile",
+    "webvpn",
+    "zjuam"
+  ],
+  "localDependencies": {
+    "media": {
+      "runtime": "ffmpeg",
+      "setup": "zhiyun setup --component media"
+    },
+    "asr": {
+      "runtime": "sherpa-onnx",
+      "model": "SenseVoiceSmall int8",
+      "setup": "zhiyun setup --component asr"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@lybx-leyw/dsh-zju-tool-study",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "学习资料工具包：把已整理的讲义放进 agent 的工具表（study_catalog / study_read / study_search）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./study-materials": "./src/study-materials.js",
+    "./tools": "./src/tools.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@lybx-leyw/dsh-zju-core-lecture": "0.1.0"
+  },
+  "license": "GPL-3.0-or-later"
+}

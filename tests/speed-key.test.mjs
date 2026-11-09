@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 import {
   HOLD_DEFAULTS, heldSteps, pendingSteps, speedKeyAction, shouldHandleSpeedKey, isTypingTarget,
-} from '../packages/dsh-zhiyun-page-study/src/speed-key.js';
+} from '../packages/client/page-study/src/speed-key.js';
 
 // ── 按键识别 ─────────────────────────────────────────────
 

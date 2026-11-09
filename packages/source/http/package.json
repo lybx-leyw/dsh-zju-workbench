@@ -1,0 +1,44 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-http",
+  "version": "0.1.0",
+  "description": "校园站点共享 HTTP 层与唯一的出口服务（zhiyunEgress）：传输、会话落盘、错误类型、自动分域（tier 0）",
+  "private": true,
+  "type": "module",
+  "main": "./src/host.js",
+  "exports": {
+    ".": "./src/host.js",
+    "./lib": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 0,
+      "auth": "none",
+      "network": "public",
+      "writes": false,
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-webvpn"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-webvpn": "0.1.0",
+    "tough-cookie": "6.0.2"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.2 <5",
+    "@deepseek-ai/dsh-atomic-write": "0.2.2-rc.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-atomic-write": {
+      "optional": true
+    }
+  },
+  "license": "GPL-3.0-or-later"
+}

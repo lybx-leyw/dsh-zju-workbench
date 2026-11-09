@@ -1,4 +1,4 @@
-// dsh-zhiyun-host-classroom 批 1（生成 / 运行 / 舞台，20 条 route）的行为测试。
+// @lybx-leyw/dsh-zju-core-classroom-studio 批 1（生成 / 运行 / 舞台，20 条 route）的行为测试。
 //
 // 测的是**形状与分支**，不是算法：
 //   1. 每条 route 的入参校验分支（400 / 404 / 409）与正常分支各至少一例；
@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 
-const PACKAGE_DIR = new URL('../packages/dsh-zhiyun-host-classroom/', import.meta.url);
+const PACKAGE_DIR = new URL('../packages/core/classroom-studio/', import.meta.url);
 const SRC = (name) => pathToFileURL(join(fileURLToPath(PACKAGE_DIR), 'src', name)).href;
 
 const { createClassroomService, inspectShape } = await import(SRC('service.js'));
@@ -38,7 +38,7 @@ function vError(code, message) {
 }
 
 /**
- * 内存版 `ctx.zhiyunClassroomVault`：方法与 `dsh-zhiyun-core-classroom-vault` 的
+ * 内存版 `ctx.zhiyunClassroomVault`：方法与 `@lybx-leyw/dsh-zju-core-classroom-vault` 的
  * `classroom.*` / `runs.*` 同名同参（只实现本批用到的那几个）。
  */
 function memoryVault({ ownerId = 'local' } = {}) {
@@ -222,7 +222,7 @@ function memoryVault({ ownerId = 'local' } = {}) {
 }
 
 /**
- * 内存版 `ctx.zhiyunClassroomGenerate`：签名照 `dsh-zhiyun-core-classroom-generate`
+ * 内存版 `ctx.zhiyunClassroomGenerate`：签名照 `@lybx-leyw/dsh-zju-core-classroom-generate`
  * 的 `start / stream / get / list / cancel / resume`。
  */
 function memoryGenerate({ runId = RUN_A } = {}) {

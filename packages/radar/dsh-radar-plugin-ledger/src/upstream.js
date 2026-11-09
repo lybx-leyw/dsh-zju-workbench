@@ -17,7 +17,7 @@
  *      要看 `dist-tags` 到底指向谁。
  *   b. **它没有许可证维度**。`grep -rni "license" src/scan/ src/hub/` → 0 条。
  *      「每包什么许可」必须由本包自写（TODO-5），**不得**算成上游的能力。
- *   c. **证据会命中注释行**（r58 · M3）。对本仓 `dsh-zhiyun-source-campus` 实测：
+ *   c. **证据会命中注释行**（r58 · M3）。对本仓 `@lybx-leyw/dsh-zju-source-campus` 实测：
  *      `network-egress` 的 6 条证据全部落在 `src/egress.js` 的 `/** … *\/` 注释里，
  *      另有 18 条被省略 ⇒ 证据是**线索**，不是**定论**。界面文案必须这么写。
  *   d. **`inspectPlugin` 的入参是 `{ dir, name }`**，不是 `{ packageDir }`；

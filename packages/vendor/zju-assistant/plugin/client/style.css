@@ -1,0 +1,3201 @@
+/*
+ * ZJU All-in-One Assistant 各页的样式。照 ui/client/style.css 摘过来，只留插件页面用得到的规则，而且每条都限定在 .campus-* 下面
+ * （学习页的视图过渡认的是我们自己在根上设的 data-campus-move），不改官方界面的样子。尺寸和颜色照引擎的设计变量。
+ * 最后一段是插件版自己加的：侧栏图标上的角标、组合包第一次启用时的引导、配置页的外框。
+ */
+
+/* ── 页面骨架 ─────────────────────────────────────────────
+插件页、个人档案和两个占位页共用。尺寸照引擎自带的插件页：
+内容居中、960px 封顶，标题 20px，顶部留 28px。 */
+.campus-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  box-sizing: border-box;
+  height: 100%;
+  overflow: auto;
+  padding: 0 clamp(24px, 4vw, 48px) 48px;
+  /* 列数按主区域的宽度定，不按窗口：侧栏和右边栏开着时主区域会窄很多。 */
+  container: campus-page / inline-size;
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.campus-page > * {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 960px;
+}
+
+/* 校园事务、学习、日程表三页是两栏和格子，官方 dsh 的主区域比桌面版宽得多，960 封顶时两边空一大块（1600 宽的窗口里主区域 1320）。
+   这三页放到 1440；点开一条作业、一条备忘的详情还是 960，正文太宽了不好读。 */
+.campus-page:is(.campus-affairs, .campus-learn, .campus-plan) > * {
+  max-width: 1440px;
+}
+
+.campus-page > .campus-detail {
+  max-width: 960px;
+}
+
+.campus-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 28px;
+}
+
+.campus-page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+  overflow-wrap: anywhere;
+}
+
+.campus-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.campus-titleline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.campus-count {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--dsw-alias-label-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.campus-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 22px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.campus-alert {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  border-radius: var(--dsw-radius-md);
+  background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 10%, transparent);
+  color: var(--dsw-alias-state-error-primary);
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.campus-alert[data-tone='warn'] {
+  background: var(--dsw-alias-state-warn-tertiary);
+  color: var(--dsw-alias-label-primary);
+}
+
+.campus-alert > button {
+  color: var(--dsw-alias-label-primary);
+}
+
+.campus-page :is(.campus-crumb, .campus-columns-toggle button, .campus-secret-eye, .campus-textlink, .campus-select, .campus-tagchip > button, .campus-tagbox-more):focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+/* ── 分组与列表行 ───────────────────────────────────────── */
+.campus-group,
+.campus-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.campus-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.campus-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+}
+
+.campus-section-title {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+/* 一行一条，行间一根细线，直接落在页面底色上。 */
+.campus-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campus-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 2px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-row:last-child {
+  border-bottom: 0;
+}
+
+.campus-row-title {
+  font-size: 13.5px;
+  line-height: 20px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* ── 详情页 ───────────────────────────────────────────────
+照引擎的插件详情页：顶上一行返回；图标在左、开关在右；下面是名字和一句话；
+再往下是一节一节的内容。所有东西直接落在页面底色上，不垫底板。 */
+.campus-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.campus-crumb {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin-top: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-xs);
+  background: none;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.campus-crumb > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-crumb:hover {
+  color: var(--dsw-alias-label-primary);
+}
+
+/* 插件接了哪些系统：一行一个，左边是系统的名字，右边是它能做什么，行间一根细线。 */
+.campus-systems {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.campus-systems > div {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.campus-systems > div + div {
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+/* 用 600：这里的名字中英文混排（教务网、PTA），500 时中文字体没有这个粗细会按常规画，只有字母变粗。 */
+.campus-systems dt {
+  font-weight: 600;
+}
+
+.campus-systems dd {
+  margin: 0;
+  color: var(--dsw-alias-label-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* 「课程讲解」的可选依赖：和上面是同一种行，右边多一格放装没装和安装的按钮；按钮的高度不把行撑开。 */
+.campus-parts > div {
+  grid-template-columns: 128px minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.campus-parts dd > .campus-form-error {
+  display: block;
+  margin-top: 2px;
+}
+
+.campus-parts-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+/* 详情页里通到别处的一行：左边名字，右边按钮，和引擎设置里带开关的行一个排法。 */
+.campus-linkrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.campus-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.campus-detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 20px;
+}
+
+/* 卡片详情没有图标，标题直接和操作排在同一行，放不下时操作换到下一行。 */
+.campus-detail-head[data-wrap] {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.campus-detail-head[data-wrap] > .campus-detail-main {
+  flex: 1 1 320px;
+  margin-top: 0;
+}
+
+.campus-detail-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.campus-detail-notices:empty {
+  display: none;
+}
+
+.campus-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.campus-notice-facts { display: grid; gap: 12px; margin: 16px 0 24px; }
+
+.campus-notice-facts > div { display: grid; grid-template-columns: 6em minmax(0, 1fr); gap: 12px; }
+
+.campus-notice-facts dt { color: var(--dsw-alias-label-secondary); }
+
+.campus-notice-facts dd { margin: 0; white-space: pre-wrap; }
+
+/* ── 微信公众号详情 ─────────────────────────────────────
+来源、跟踪的号、添加时的候选都是同一种行：左边名字在上、一行小字在下，右边一个开关或者按钮。 */
+.campus-wechat-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.campus-wechat-meta {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+  overflow-wrap: anywhere;
+}
+
+/* 要用户留意的那一行（微信没开、登录过期、要验证）。 */
+.campus-wechat-meta[data-tone='warn'] {
+  color: var(--dsw-alias-state-warn-label, var(--dsw-alias-state-warn-primary));
+}
+
+/* 一个号最新的那篇：标题点开是原文，后面跟着哪天发的。 */
+.campus-wechat-latest {
+  align-self: flex-start;
+  max-width: 100%;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-secondary);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.campus-wechat-latest:hover > span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.campus-wechat-latest > time {
+  margin-left: 8px;
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+}
+
+/* 跟踪的号多了在框里滚动（大约五行高），页面不会被拉长。 */
+.campus-wechat-tracked {
+  max-height: 316px;
+  overflow-y: auto;
+}
+
+/* 一行右边不止一样东西时（「已登录」和「退出」）。 */
+.campus-wechat-end {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 添加弹窗最上面的输入框，撑满一行。 */
+.campus-wechat-find {
+  display: flex;
+}
+
+.campus-wechat-find > .campus-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 添加弹窗里的候选多了在框里滚动。 */
+.campus-wechat-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ── 表单 ─────────────────────────────────────────────────
+尺寸照引擎插件设置页的表单（primitives 里的 SettingsForm 和 fields）：标签在上，输入框通栏，
+上下两项之间一根细线；并排的几项放进网格；一组有一个小标题；保存按钮在左下角。 */
+.campus-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.campus-form-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px 0;
+}
+
+.campus-form-heading {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* 一种账号的几组（CC98 可以填好几个）：这一层不占排版，里面的组和别的组一样排。 */
+.campus-form-accounts {
+  display: contents;
+}
+
+/* 一组的小标题那一行；追加的账号右边有「移除」。 */
+.campus-form-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* 「添加另一个账号」跟在这种账号最后一组的下面。 */
+.campus-form-more {
+  padding: 0 0 16px;
+}
+
+.campus-mail-settings { display: grid; gap: 24px; min-width: 0; }
+
+.campus-mail-settings .campus-form-foot { flex-wrap: wrap; }
+
+.campus-mail-help { margin: 12px 0; padding: 16px; border: 1px solid var(--dsw-alias-border-standard, #8883); border-radius: 12px; font-size: 13px; line-height: 1.7; }
+
+.campus-mail-help summary { cursor: pointer; font-size: 13px; font-weight: 500; }
+
+.campus-mail-help[open] summary { margin-bottom: 12px; }
+
+.campus-mail-help ol { margin: 0; padding-left: 20px; }
+
+.campus-mail-help li + li { margin-top: 4px; }
+
+.campus-mail-help-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+.campus-mail-help-links a { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 9px 12px; border: 1px solid var(--dsw-alias-border-standard, #8883); border-radius: 8px; color: inherit; text-decoration: none; min-width: 0; max-width: 100%; }
+
+.campus-mail-help-links a:hover { background: var(--dsw-alias-fill-secondary, #8881); }
+
+.campus-mail-help-links a:focus-visible { outline: 2px solid #4a78e8; outline-offset: 2px; }
+
+.campus-mail-help-links span { font-weight: 500; }
+
+.campus-mail-help-links small { font-size: 11px; opacity: .7; overflow-wrap: anywhere; }
+
+.campus-mail-settings .campus-text { overflow-wrap: anywhere; }
+
+.campus-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 0 16px;
+}
+
+.campus-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 0;
+}
+
+:is(.campus-form, .campus-form-group) > .campus-field + .campus-field {
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-field-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.campus-field-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* 和引擎一样不设宽度：输入框在纵向的弹性容器里自己撑满，高度是 34px 再加上下描边。 */
+.campus-input {
+  min-width: 0;
+  height: 34px;
+  padding: 0 12px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-3);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.campus-input::placeholder {
+  color: var(--dsw-alias-label-dimmed);
+}
+
+.campus-input:focus-visible {
+  outline: none;
+  border-color: var(--dsw-alias-state-business-primary);
+}
+
+.campus-input:disabled {
+  color: var(--dsw-alias-label-tertiary);
+  cursor: default;
+}
+
+.campus-textarea {
+  height: auto;
+  min-height: 280px;
+  padding: 10px 12px;
+  line-height: 22px;
+  resize: vertical;
+}
+
+/* 下拉选择：一个长得和输入框一样的按钮，右边一个向下的箭头；点开的菜单是引擎的。 */
+.campus-select-wrap {
+  display: flex;
+  min-width: 0;
+}
+
+.campus-select {
+  box-sizing: content-box;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.campus-select > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campus-select[data-empty] > span {
+  color: var(--dsw-alias-label-dimmed);
+}
+
+.campus-select > svg {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-select:disabled {
+  cursor: default;
+}
+
+/* 标签框：已选的标签一个个排在框里，后面接着输入，最右边是点开已有标签的箭头。 */
+.campus-tagbox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  height: auto;
+  min-height: 34px;
+  padding: 0 4px 0 8px;
+}
+
+.campus-tagbox:focus-within {
+  border-color: var(--dsw-alias-state-business-primary);
+}
+
+.campus-tagbox > input {
+  flex: 1;
+  min-width: 96px;
+  height: 26px;
+  padding: 0 4px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.campus-tagbox > input::placeholder {
+  color: var(--dsw-alias-label-dimmed);
+}
+
+.campus-tagchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px 1px 8px;
+  border-radius: 999px;
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.campus-tagchip > button,
+.campus-tagbox-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.campus-tagchip > button {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.campus-tagbox-more {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--dsw-radius-sm);
+}
+
+:is(.campus-tagchip > button, .campus-tagbox-more):hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* 密码框：右边一只眼睛，默认闭着。 */
+.campus-secret {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.campus-secret > .campus-input {
+  flex: 1;
+  padding-right: 38px;
+}
+
+.campus-secret-eye {
+  position: absolute;
+  inset-block: 0;
+  right: 4px;
+  margin-block: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+.campus-secret-eye:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.campus-secret-eye[aria-pressed='true'] {
+  color: var(--dsw-alias-label-primary);
+}
+
+/* 几选一，照引擎的 SegmentedControl：一条浅灰的槽，选中的那一格下面是一块浮起的白块，切换时滑过去。 */
+.campus-choice {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.campus-choice-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc((100% - 8px - 2px * (var(--campus-choice-count) - 1)) / var(--campus-choice-count));
+  height: calc(100% - 8px);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--dsw-elevation-soft);
+  transform: translateX(calc(var(--campus-choice-index) * (100% + 2px)));
+  transition: transform 160ms ease;
+  pointer-events: none;
+}
+
+.campus-choice > button {
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  height: 28px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.campus-choice > button:hover:not(:disabled),
+.campus-choice > button[aria-checked='true'] {
+  color: var(--dsw-alias-label-primary);
+}
+
+.campus-choice > button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.campus-choice > button:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-choice-thumb,
+  .campus-choice > button {
+    transition: none;
+  }
+
+}
+
+.campus-form-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+/* 保存和它旁边的取消，尺寸照引擎表单的保存按钮。 */
+.campus-save,
+.campus-cancel {
+  appearance: none;
+  flex: none;
+  padding: 5px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--dsw-radius-md);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.campus-save {
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-bg-layer-3);
+}
+
+.campus-cancel {
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+}
+
+.campus-cancel:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+:is(.campus-save, .campus-cancel):disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+:is(.campus-save, .campus-cancel):focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 1px;
+}
+
+.campus-form-error {
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dsw-alias-state-error-primary);
+  overflow-wrap: anywhere;
+}
+
+.campus-textlink {
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-xs);
+  background: none;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.campus-textlink:hover:not(:disabled) {
+  color: var(--dsw-alias-label-primary);
+}
+
+/* 「移除」这类去掉东西的：鼠标放上去变红。 */
+.campus-textlink[data-danger]:hover:not(:disabled) {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* ── 个人档案 ───────────────────────────────────────────── */
+.campus-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 32px;
+  margin: 0;
+}
+
+.campus-facts[data-readonly] {
+  padding: 18px 2px;
+  border-block: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-facts dt {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-facts dd {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.campus-unset {
+  color: var(--dsw-alias-label-caption);
+}
+
+.campus-fact-aside {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.campus-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.campus-search {
+  width: 260px;
+  max-width: 100%;
+}
+
+/* 按标签筛选的一排：前面写明「标签」，每个标签带一圈细线，看得出是能点的。 */
+.campus-taglist {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.campus-taglist-label {
+  margin-right: 6px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-taglist > button:not([aria-pressed='true']) {
+  box-shadow: inset 0 0 0 0.5px var(--dsw-alias-border-l3);
+}
+
+/* 确认框里删除、放弃这类不可撤回的按钮，和引擎的删除确认一样用红字。 */
+.campus-danger {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* 笔记列表：一行一篇，左边标题，右边是最近改动的日期，行间一根细线。整行都能点。 */
+.campus-note-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campus-note-row {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 -8px;
+  padding: 12px 8px;
+  border-radius: var(--dsw-radius-lg);
+}
+
+/* 行间的细线；悬停的那一行和它下面一行的线让位给底色。 */
+.campus-note-row + .campus-note-row::before {
+  content: '';
+  position: absolute;
+  inset: 0 8px auto;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-note-row:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.campus-note-row:hover::before,
+.campus-note-row:hover + .campus-note-row::before {
+  display: none;
+}
+
+.campus-note-open {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.campus-note-open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--dsw-radius-lg);
+}
+
+.campus-note-open:focus-visible {
+  outline: none;
+}
+
+.campus-note-open:focus-visible::after {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+.campus-note-row > time {
+  flex: none;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+}
+
+/* 单篇笔记标题下面的属性，照 Obsidian 的属性区：一项一行，左边名称，右边内容；下面一根细线隔开正文。 */
+.campus-props {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 20px 0 0;
+  padding-bottom: 20px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-props > div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.campus-props dt {
+  color: var(--dsw-alias-label-tertiary);
+  overflow-wrap: anywhere;
+}
+
+.campus-props dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.campus-note-body {
+  margin-top: 20px;
+}
+
+/* 编辑笔记时的属性：也是一项一行，左边名称，右边内容，最后是「添加属性」。 */
+.campus-proplist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.campus-proprow {
+  display: grid;
+  grid-template-columns: minmax(0, 180px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.campus-proprow > .campus-tagbox {
+  grid-column: 2 / -1;
+}
+
+.campus-propname {
+  padding-left: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.campus-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  color: var(--dsw-alias-label-tertiary);
+  text-align: center;
+}
+
+.campus-empty > p {
+  max-width: 360px;
+  margin: 0;
+}
+
+.campus-empty > button {
+  color: var(--dsw-alias-label-primary);
+}
+
+.campus-markdown {
+  max-width: 720px;
+  font-size: 14px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.campus-markdown pre {
+  overflow-x: auto;
+}
+
+.campus-markdown img {
+  max-width: 100%;
+}
+
+.campus-markdown table {
+  display: block;
+  overflow-x: auto;
+}
+
+.campus-preview {
+  box-sizing: border-box;
+  max-width: none;
+  min-height: 280px;
+  padding: 10px 12px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-md);
+}
+
+.campus-editor {
+  margin-top: 32px;
+}
+
+@container (max-width: 680px) {
+  .campus-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campus-page-head {
+    flex-wrap: wrap;
+  }
+
+  .campus-proprow {
+    grid-template-columns: minmax(0, 110px) minmax(0, 1fr) auto;
+  }
+
+  .campus-props > div {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+}
+
+.campus-update-token .campus-input {
+  flex: 1;
+}
+
+.campus-chatgpt-step .campus-input {
+  flex: 1;
+}
+
+/* ── 校园事务 ─────────────────────────────────────────────
+一条作业一张卡片：一圈细线、不填色，直接落在页面底色上。 */
+
+/* 卡片滑进滑出时会超出页面左右一点，横向不出滚动条。 */
+.campus-affairs {
+  overflow-x: hidden;
+}
+
+/* 页面标题右边的刷新：一个 28px 的图标按钮，正在读的时候图标转。 */
+.campus-refresh {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+.campus-refresh:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.campus-refresh:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.campus-refresh:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+.campus-refresh[aria-busy='true'] > svg {
+  animation: campus-spin 900ms linear infinite;
+}
+
+@keyframes campus-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 会进出的列表（Flow.tsx）。每一项三层：最外面管高度，中间一层把收起来的部分裁掉，最里面管左右滑动；
+两项之间的空隙放在最里面那层，高度收起来时空隙跟着一起收掉。 */
+.campus-flow {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 -8px;
+  padding: 0;
+  list-style: none;
+}
+
+/* 一项都没有时不占位置；还有卡片在滑出去的时候，下面那句「没有作业」先不出来。 */
+.campus-flow:empty,
+.campus-flow:not(:empty) ~ .campus-task-empty {
+  display: none;
+}
+
+.campus-flow-item {
+  display: grid;
+  /* 列宽跟着列表走，不跟着内容走：里面有不换行的内容（截掉的课程名）时，这一项也不会撑得比列表宽。 */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 260ms cubic-bezier(0.2, 0, 0, 1), opacity 200ms ease;
+}
+
+.campus-flow-clip {
+  min-height: 0;
+  overflow-y: clip;
+}
+
+.campus-flow-body {
+  padding-bottom: 8px;
+}
+
+/* 折起来的项：高度收到零，看不见也点不到；露出来时按上面的过渡展开。 */
+.campus-flow-item[data-folded] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 260ms cubic-bezier(0.2, 0, 0, 1), opacity 160ms ease, visibility 0s 260ms;
+}
+
+/* 进来：先让出位置，再从左边滑进来。走掉：先向右滑出去，再把位置收起来。
+一进一出都是往右走：同时有来有走时，两张卡片不会在同一边交错。
+同时进来的几项按 --campus-flow-order 一个接一个。 */
+.campus-flow-item[data-motion],
+.campus-flow-item[data-motion] .campus-flow-body {
+  animation-duration: 460ms;
+  animation-delay: calc(var(--campus-flow-order, 0) * 60ms);
+  animation-fill-mode: both;
+}
+
+.campus-flow-item[data-motion='enter'] { animation-name: campus-flow-open; }
+
+.campus-flow-item[data-motion='enter'] .campus-flow-body { animation-name: campus-flow-in; }
+
+.campus-flow-item[data-motion='leave'] { animation-name: campus-flow-close; pointer-events: none; }
+
+.campus-flow-item[data-motion='leave'] .campus-flow-body { animation-name: campus-flow-out; }
+
+@keyframes campus-flow-open {
+  from { grid-template-rows: 0fr; animation-timing-function: cubic-bezier(0.2, 0, 0, 1); }
+  45%, to { grid-template-rows: 1fr; }
+}
+
+@keyframes campus-flow-in {
+  from { opacity: 0; transform: translateX(-56px); }
+  20% { opacity: 0; transform: translateX(-56px); animation-timing-function: cubic-bezier(0.2, 0, 0, 1); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes campus-flow-out {
+  from { opacity: 1; transform: none; animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
+  60%, to { opacity: 0; transform: translateX(56px); }
+}
+
+@keyframes campus-flow-close {
+  from { grid-template-rows: 1fr; }
+  40% { grid-template-rows: 1fr; animation-timing-function: cubic-bezier(0.2, 0, 0, 1); }
+  to { grid-template-rows: 0fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-flow-item,
+  .campus-flow-item[data-folded] {
+    transition: none;
+  }
+
+  .campus-flow-item[data-motion],
+  .campus-flow-item[data-motion] .campus-flow-body {
+    animation-duration: 1ms;
+    animation-delay: 0s;
+  }
+
+  .campus-refresh[aria-busy='true'] > svg {
+    animation: none;
+  }
+
+}
+
+/* 一条作业：左边名字，下面是哪门课、在哪个系统；右边是截止时间和还剩多久，最右是「交给助手」的图标。 */
+.campus-task {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 12px 16px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-lg);
+}
+
+.campus-task:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.campus-task-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* 名字是个按钮，点击范围铺满整张卡片，所以点哪里都能打开；「交给助手」压在它上面，保留自己的点击。
+用 600：作业名常常中英文混排（HW3 链表），500 时中文字体没有这个粗细，只有字母变粗。 */
+.campus-task-open {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.campus-task-open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--dsw-radius-lg);
+}
+
+.campus-task-open:focus-visible {
+  outline: none;
+}
+
+.campus-task-open:focus-visible::after {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+/* 「交给助手」的图标按钮：28px 见方，只有一个图标，鼠标放上去才显示这四个字。压在整行的点击范围上面。
+通知那一行的「加到备忘录」是同一个样子。 */
+.campus-hand {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  justify-content: center;
+  gap: 0;
+  width: 28px;
+  min-width: 0;
+  height: 28px;
+  padding: 0;
+}
+
+/* 已经加进备忘录的那一条：图标是一个勾，用强调色。 */
+.campus-hand[data-added] {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+/* 正在加（要总结的要等一阵）：图标转圈。 */
+.campus-hand[aria-busy='true'] svg {
+  animation: campus-spin 900ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-hand[aria-busy='true'] svg {
+    animation: none;
+  }
+
+}
+
+.campus-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-task-due {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.campus-task-left {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* 不到一天就截止的，「还有几小时」用红字。 */
+.campus-task-due[data-urgent] > .campus-task-left {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* 没有作业时占着一张卡片的位置，虚线，和有内容的卡片分得开。 */
+.campus-task-empty {
+  margin: 0;
+  padding: 20px 16px;
+  border: 0.5px dashed var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-lg);
+  color: var(--dsw-alias-label-tertiary);
+  text-align: center;
+}
+
+.campus-more {
+  align-self: flex-start;
+}
+
+/* 点开一份作业：要求是老师写的原文，照原来的换行排；附件一行一个，可以下载；PTA 的小题是一张表。 */
+.campus-task-body {
+  max-width: 720px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 附件的一行：名字占满左边，没下成的原因写在名字下面；右边是「下载」，下过了是「打开文件夹」。 */
+.campus-task-file {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.campus-task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.campus-task-table :is(th, td) {
+  padding: 10px 16px 10px 2px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  text-align: left;
+}
+
+.campus-task-table th {
+  color: var(--dsw-alias-label-tertiary);
+  font-weight: 400;
+}
+
+.campus-task-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* 列表下面的说明：哪个系统没读到、为什么，后面跟一个去处理的入口。 */
+.campus-task-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 520px) {
+  .campus-task {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .campus-task-main {
+    flex: none;
+  }
+
+  .campus-task-due {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+}
+
+/* ── 校园事务：两栏 ───────────────────────────────────────
+左栏是要办的（作业，下面是备忘录），右栏是通知；右栏略宽一点，放得下通知的标题（2026-10-18）。主区域窄的时候上下叠放。 */
+.campus-affairs-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+  gap: 32px 40px;
+}
+
+.campus-affairs-todo {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+}
+
+@container (min-width: 761px) {
+  .campus-affairs-columns .campus-task {
+    gap: 12px;
+    padding: 9px 12px 9px 16px;
+  }
+
+  .campus-affairs-columns .campus-task-main {
+    gap: 2px;
+  }
+
+  .campus-affairs-columns .campus-task-meta {
+    flex-wrap: nowrap;
+    max-width: 100%;
+  }
+
+  .campus-affairs-columns .campus-task-meta > * {
+    flex: none;
+  }
+
+  .campus-affairs-columns .campus-task-meta > .campus-task-course {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .campus-affairs-columns .campus-task-due {
+    gap: 0;
+  }
+
+}
+
+/* 两栏时整页不跟着内容变长（2026-11-04）：两栏占满这一页标题下面的高度，各自在栏里滚。右栏的标题和页签不动，
+只有下面的通知（或者点开的那一条）在框里滚；左栏的作业和备忘录也在左栏里滚。上下叠放时放不下，还是整页滚。
+左右各让出 8px，行的悬停底色和卡片的描边不被框裁掉。 */
+@container (min-width: 761px) {
+  /* 一行占满：行高是 auto 时会按内容撑高，栏里的框就不滚了。 */
+  .campus-affairs > .campus-affairs-columns {
+    flex: 1 1 0;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .campus-affairs-columns > :is(.campus-affairs-todo, .campus-feed) {
+    min-height: 0;
+  }
+
+  .campus-affairs-todo,
+  .campus-feed > :is(.campus-feed-panel, .campus-notice-detail) {
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 0 -8px;
+    padding: 0 8px 2px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+
+@container (max-width: 760px) {
+  .campus-affairs-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+}
+
+/* 学习页的列表放在一个定高的框里自己滚动，框的高度跟着窗口走，底边大致落在窗口底部。
+行的悬停底色比内容左右各宽 8px，框也左右各让出 8px，免得被裁掉。 */
+.campus-notice-scroll {
+  max-height: max(320px, calc(100vh - 190px));
+  margin: 0 -8px;
+  padding: 0 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 校园事务的通知不按窗口算高度：定高的框按整个窗口算，桌面版的内容区比窗口矮，框底会落到应用外面。
+两栏时滚动的是右栏放通知的那一块（见上面「两栏时整页不跟着内容变长」）。左右照样各让出 8px。 */
+.campus-notice-list {
+  margin: 0 -8px;
+  padding: 0 8px;
+}
+
+:is(.campus-notice-scroll, .campus-notice-list):has(> .campus-flow:empty) {
+  display: none;
+}
+
+/* 一条通知：标题，下面是谁发的和哪天；整行点开原文，右边是「交给助手」的图标。行间一根细线，直接落在页面底色上。 */
+.campus-flow:has(.campus-notice) {
+  margin-bottom: 0;
+}
+
+.campus-flow-body:has(> .campus-notice) {
+  padding-bottom: 0;
+}
+
+.campus-notice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 -8px;
+  padding: 10px 8px;
+  border-radius: var(--dsw-radius-lg);
+}
+
+.campus-flow-item + .campus-flow-item .campus-notice::before {
+  content: '';
+  position: absolute;
+  inset: 0 8px auto;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-notice:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.campus-notice:hover::before,
+.campus-flow-item:has(.campus-notice:hover) + .campus-flow-item .campus-notice::before {
+  display: none;
+}
+
+.campus-notice-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 标题是个链接，点击范围铺满整行；最多两行，再长的截掉。 */
+.campus-notice-open {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: inherit;
+  font-size: 13.5px;
+  line-height: 20px;
+  font-weight: 500;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.campus-notice-open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--dsw-radius-lg);
+}
+
+.campus-notice-open:focus-visible {
+  outline: none;
+}
+
+.campus-notice-open:focus-visible::after {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+/* 上次来过之后新出现的：标题前一个小圆点。 */
+.campus-notice[data-new] .campus-notice-open::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-primary);
+  vertical-align: 2px;
+}
+
+.campus-notice-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* 公众号的文章：谁发的那一格前面有一枚浅蓝底的小标签写明「公众号」，号名比学校通知的那一格深一档。
+（先做的是整块绿色的标签，用户 2026-10-12 说太绿；换成灰色小标签以后又说还是要一点颜色，定了浅蓝底。） */
+.campus-notice-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: var(--dsw-alias-label-secondary);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.campus-notice-account > span {
+  flex: none;
+  padding: 0 6px;
+  border-radius: var(--dsw-radius-xs);
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, transparent);
+  color: var(--dsw-alias-state-business-primary);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 17px;
+}
+
+/* 二课平台的活动用同一种标签，写「二课」，底色换成浅橘色，和公众号的浅蓝一眼分得开（颜色是用户 2026-10-12 定的）。
+引擎的色板里暖色只有偏黄的琥珀色，橘色是这里自己定的；字往正文的颜色那边靠一点，亮色下深一些、暗色下浅一些，都看得清。 */
+.campus-notice-account[data-kind='sztz'] > span {
+  --campus-orange: #f0700f;
+  background: color-mix(in srgb, var(--campus-orange) 14%, transparent);
+  color: color-mix(in srgb, var(--campus-orange) 78%, var(--dsw-alias-label-primary));
+}
+
+/* 通知的两个页签和「筛选」排在同一行，下面一根细线；页签选中的那个字深一档、底下一道线（2026-10-18）。 */
+.campus-feed-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-feed-tabs {
+  display: flex;
+  gap: 20px;
+  min-width: 0;
+}
+
+.campus-feed-tabs > button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: -0.5px;
+  padding: 8px 0 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.campus-feed-tabs > button:hover {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.campus-feed-tabs > button[aria-selected='true'] {
+  border-bottom-color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+
+.campus-feed-tabs > button:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+  border-radius: var(--dsw-radius-xs);
+}
+
+.campus-feed-tabs .campus-count {
+  font-weight: 400;
+}
+
+/* 页签那一行右边的「筛选」：平的文字按钮，不加底色和边框；选了别的来源或时间时按钮上写着选了什么，字深一档。
+（原来是表头右边一个带边框的菜单按钮，2026-10-18 改成和页签同一行，面板贴着按钮弹出。） */
+.campus-feed-filter-anchor {
+  position: relative;
+  flex: none;
+}
+
+.campus-feed-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+  height: 28px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.campus-feed-filter > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campus-feed-filter:hover,
+.campus-feed-filter[aria-expanded='true'],
+.campus-feed-filter[data-active] {
+  color: var(--dsw-alias-label-primary);
+}
+
+.campus-feed-filter:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 0;
+}
+
+.campus-feed-filter > svg {
+  flex: none;
+  transition: transform 120ms ease;
+}
+
+.campus-feed-filter[aria-expanded='true'] > svg {
+  transform: rotate(180deg);
+}
+
+/* 筛选的面板：贴着按钮下沿、靠右对齐，盖在列表上面，不挤动下面的列表；不透明，深浅主题都看得清。窄的时候不超出窗口。 */
+.campus-feed-filter-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 264px;
+  max-width: calc(100vw - 32px);
+  padding: 14px;
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-layer-1, var(--dsw-alias-bg-base));
+  --dsw-elevation-stroke-color: var(--dsw-alias-border-l1);
+  box-shadow: var(--dsw-elevation-prominent);
+}
+
+.campus-feed-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campus-feed-filter-label {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-feed-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.campus-feed-filter-options > button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0.5px solid var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 18px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.campus-feed-filter-options > button:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.campus-feed-filter-options > button[aria-checked='true'] {
+  border-color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+
+.campus-feed-filter-options > button:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 1px;
+}
+
+.campus-feed-filter-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.campus-feed-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* 点开的一条通知，在右栏原位：返回、标题、来源和时间，下面是能读到的内容，最后是加到备忘录和原文。 */
+.campus-notice-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.campus-notice-detail .campus-crumb {
+  margin-top: 4px;
+}
+
+.campus-notice-detail-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.campus-notice-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-notice-detail .campus-notice-facts {
+  margin: 4px 0;
+}
+
+.campus-notice-detail .campus-task-body {
+  max-width: none;
+  font-size: 13.5px;
+}
+
+.campus-notice-detail img {
+  max-width: 100%;
+  height: auto;
+}
+
+.campus-notice-summary,
+.campus-notice-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campus-notice-detail-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.campus-notice-detail-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding-top: 4px;
+}
+
+/* 只给读屏的人听的字：看不见，但读得到（列表里「未读」的那个点）。 */
+.campus-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 收起的那些展开以后：字淡一档，看得出是另一类。 */
+.campus-notice[data-folded] .campus-notice-open {
+  color: var(--dsw-alias-label-tertiary);
+  font-weight: 400;
+}
+
+/* ── 设置里的个人档案 ─────────────────────────────────────
+画在引擎设置面板的内容栏里（五百多像素宽），没有页面骨架：一块一块往下排，字号和页面里一样。 */
+.campus-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  container-type: inline-size;
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+/* 点开一条记忆时，顶上的返回紧贴内容栏的顶，不再留页面顶部那一段。 */
+.campus-settings .campus-crumb {
+  margin-top: 0;
+}
+
+.campus-settings :is(.campus-crumb, .campus-textlink, .campus-select, .campus-tagchip > button, .campus-tagbox-more):focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+/* ── 学习 ─────────────────────────────────────────────────
+两栏和校园事务一样宽（用它的 .campus-affairs-columns），课程、总结和讲解各放在定高的框里滚动（.campus-notice-scroll）。
+一行用通知那一行的样子（.campus-notice）：标题点开，下面一行小字，右边是这一行自己的东西。 */
+.campus-learn {
+  overflow-x: hidden;
+  /* 整页滚动条的位置一直留着：内容长短一变（换一节、展开目录）滚动条时有时无，不留的话整页的东西会跟着左右挪几个像素。 */
+  scrollbar-gutter: stable;
+}
+
+/* 标题和紧跟着它的「智云 / 超星」排成一行；位置只由标题定，右边的字怎么变它都不动。 */
+.campus-learn-title {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 切换比标题那一行高 8px：上下各收 4px，页头不被撑高，下面两栏的位置和校园事务页对得上。 */
+.campus-learn-title > .campus-choice {
+  margin-block: -4px;
+}
+
+/* 通知的标题是链接，这里是按钮：去掉按钮自己的样子，其余照旧。 */
+.campus-learn button.campus-notice-open {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* 还在做的讲解点不开：不铺点击范围，鼠标放上去也不变色。 */
+.campus-learn .campus-notice[data-idle] .campus-notice-open::after {
+  content: none;
+}
+
+.campus-learn .campus-notice[data-idle]:hover {
+  background: none;
+}
+
+.campus-learn .campus-notice[data-idle]:hover::before {
+  display: block;
+}
+
+.campus-learn .campus-notice-meta {
+  align-items: center;
+}
+
+/* 行右边的小字（最近上过的那一次）、标记和箭头。 */
+.campus-learn-side {
+  flex: none;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.campus-learn-tags {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.campus-learn-arrow {
+  display: inline-flex;
+  flex: none;
+  color: var(--dsw-alias-label-caption);
+}
+
+/* 一次课的资料：左边一小列写是哪一种。 */
+.campus-learn-kind {
+  flex: none;
+  width: 72px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* 总结是整篇 Markdown：里面的标题不能比页面自己的小标题还大，压到同一个量级。 */
+.campus-learn .campus-markdown :is(h1, h2) {
+  margin: 24px 0 8px;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.campus-learn .campus-markdown :is(h3, h4) {
+  margin: 18px 0 6px;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.campus-learn-film {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 20px;
+}
+
+@container (max-width: 520px) {
+  .campus-learn-side {
+    display: none;
+  }
+
+}
+
+/* 左栏是目录，点中的那一行和悬停是同一种浅底色（引擎侧栏里点中的一项也是这样），上下的细线让开。
+试过改成描一圈线，用户说不直观，改回来了。 */
+.campus-learn .campus-notice[aria-current] {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.campus-learn .campus-notice[aria-current]::before,
+.campus-learn .campus-flow-item:has(.campus-notice[aria-current]) + .campus-flow-item .campus-notice::before {
+  display: none;
+}
+
+/* 课程列表下面的「总结与讲解」：不在列表里，自己带上面那根细线。 */
+.campus-learn-made:not(:hover, [aria-current])::before {
+  content: '';
+  position: absolute;
+  inset: 0 8px auto;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+/* 点进一次课以后左栏顶上那一行：返回和这门课的名字排在一起，占的还是原来「课程」那一行。 */
+.campus-learn-menu .campus-crumb {
+  align-self: center;
+  margin-top: 0;
+}
+
+/* 右栏最上面：左边是点中的那一项（名字，下面一行小字），右边是切换；下面一根细线隔开内容。 */
+.campus-learn-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-learn-head > .campus-learn-picked {
+  flex: 1;
+}
+
+.campus-learn-head > .campus-choice {
+  flex: none;
+}
+
+/* 右栏的内容放在定高的框里自己滚动，左栏的目录一直看得见。上面多了名字那两行，所以比左栏的框矮一截，两边的底大致对齐。 */
+.campus-learn-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: max(320px, calc(100vh - 244px));
+  margin: 0 -8px;
+  padding: 0 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 左栏当目录的课次列表上面没有那两行，和课程列表一样高。 */
+.campus-learn-menu > .campus-learn-pane {
+  max-height: max(320px, calc(100vh - 190px));
+}
+
+/* 学习页两栏时也照校园事务那样占满这一页标题下面的高度（2026-11-04）：上面几个框的定高按整个窗口算，
+桌面版的内容区比窗口矮，条目多了框底会落到应用外面。两栏时栏占满一行，框不再按窗口定高，内容少时照内容的高度，
+多了在框里滚，下面那行小字跟在框后面。上下叠放时还用上面的定高。 */
+@container (min-width: 761px) {
+  .campus-learn > .campus-affairs-columns {
+    flex: 1 1 0;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .campus-learn > .campus-affairs-columns > .campus-section {
+    min-height: 0;
+  }
+
+  .campus-learn > .campus-affairs-columns > .campus-section > :is(.campus-notice-scroll, .campus-learn-pane) {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+}
+
+/* 一次课的资料、总结、讲解三块之间隔得开一些。 */
+.campus-learn-lesson {
+  gap: 28px;
+}
+
+/* 学在浙大的课件（超星那一边的章节目录和右栏的两组文件也用这一套）：一章一块，照学在浙大网页上章节的样子。
+一块是一个带细边的圆角框，最上面一条很淡的灰色标题条（章名加粗，点一下展开或收起），
+下面是这一章的东西，一个一行、行间一根细线：文件类型的图标、名字（常规粗细，写全）、右边一个带框的小图标。
+块的排法是用户 2026-10-11 从四个示意里选的（文件夹式、标题在框外、粗线分章、带底色的标题条）。标题条的底色定在很淡的灰：
+比引擎放标签的那种灰（--dsw-alias-bg-module-platform）还淡，只取它的四分之三。第一次用的就是那种灰的原样，用户嫌灰灰的色块难看；
+换成很浅的蓝以后又说蓝的丑，要回灰色、淡一点。所以这里不要加深，也不要换成别的颜色。整页是平的，没有阴影。
+否掉的做法不要再用：章和文件同一种字同一种行（混在一起）；标题和文件同在一个白框里只隔一根线（分不出来）；
+用阴影把块浮起来（平面的软件变得不伦不类）；章是描边的横条、文件顺着竖线挂在下面（不直观）；浅蓝的标题条（丑）。 */
+.campus-learn-chapters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campus-learn-chapter {
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-md);
+  overflow: hidden;
+}
+
+.campus-learn-chapter-head {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 0;
+  background: color-mix(in srgb, var(--dsw-alias-bg-module-platform) 75%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* 展开着的时候，标题条和下面的东西之间一根细线：底色很淡，没有这根线边界看不清。收起时框自己的边就是它的下边。 */
+.campus-learn-chapter-head:not(:last-child) {
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+/* 悬停时是引擎那种浅底，比平时深一点点。 */
+.campus-learn-chapter-head:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.campus-learn-chapter-head:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+.campus-learn-chapter-head > svg {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-learn-chapter-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.campus-learn-chapter-head > .campus-count {
+  font-size: 12.5px;
+}
+
+.campus-learn-chapter-files {
+  margin: 0;
+  padding: 0 12px;
+  list-style: none;
+}
+
+.campus-learn-chapter-files > li + li {
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+/* 一个文件。 */
+.campus-learn-file {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 0;
+  font-size: 13.5px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.campus-learn-file > svg {
+  flex: none;
+}
+
+.campus-learn-file-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.campus-learn-file-name > .campus-form-error,
+.campus-learn-file-name > .campus-note {
+  display: block;
+}
+
+.campus-learn-file[data-empty] {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-learn-file > .campus-learn-progress {
+  bottom: -0.5px;
+}
+
+/* 下载进度：一根 2px 的线压在这一行底边那根细线的位置，从左往右长。不占高度，出现和消失时别的行不会跳。 */
+.campus-learn .campus-row {
+  position: relative;
+}
+
+.campus-learn-progress {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: var(--campus-progress);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--dsw-alias-label-primary);
+  transition: width 300ms linear;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-learn-progress {
+    transition: none;
+  }
+
+}
+
+/* ── 学习：超星那一边 ─────────────────────────────────────
+左栏是章节目录，右栏是点中那一节的课件和视频。两边都是和学在浙大那一边一样的块（上面的 .campus-learn-chapter）：
+左栏一个大章一块，标题条点一下展开或收起，下面是它的各节，点一节右栏就是它；右栏课件一块、视频一块，标题条不能点。
+2026-10-10 第一版是照引擎侧栏的样子排的目录（一行 32px，大章和各节同一种字），学在浙大那一边改成块以后跟着改的。 */
+
+/* 块里的一节：整行可以点（所以这一种的块里面左右不留边，边留在行自己身上），悬停和点中都是引擎那种浅底，点中的字加粗。 */
+.campus-learn-chapter-files:has(> li > .campus-learn-leaf) {
+  padding: 0;
+}
+
+.campus-learn-leaf {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 20px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+
+.campus-learn-leaf:hover,
+.campus-learn-leaf[aria-current] {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.campus-learn-leaf[aria-current] {
+  font-weight: 500;
+}
+
+.campus-learn-leaf:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+/* 右栏的课件、视频两块：标题条只是标题，不能点。 */
+.campus-learn-chapter-head[data-static] {
+  cursor: default;
+}
+
+.campus-learn-chapter-head[data-static]:hover {
+  background: color-mix(in srgb, var(--dsw-alias-bg-module-platform) 75%, transparent);
+}
+
+/* 目录的框比别的列表矮一点，给下面那行小字（还没开放的有几节）留出位置，整页不会因为它多出一截而出现滚动条；
+滚动条的位置一直留着，展开几组以后目录长出框外时，行右边的小字不会被挤着往左挪。 */
+.campus-tree-scroll {
+  max-height: max(320px, calc(100vh - 240px));
+  scrollbar-gutter: stable;
+}
+
+/* 右栏最上面点中的是什么（一门课、一次课、一节），下面一行小字。上面让出 4px，名字和左栏的标题在同一条线上。 */
+.campus-learn-picked {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.campus-learn-picked-title {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* 课程不止一门时目录上面的下拉：不占满一整行。 */
+.campus-learn-course {
+  width: min(100%, 320px);
+}
+
+/* ── 学习：换内容时的动效 ─────────────────────────────────
+用浏览器的视图过渡（learnParts.tsx 的 move）。两栏里的几样东西各有名字。智云那一边：a 是左栏的课程，b 是列表
+（右栏点中的那门课；点进一次课以后是左栏的课次），c 是右栏的那一次课。超星那一边：x 是左栏的章节目录，c 是右栏点中的那一节。
+同名的换之前和之后位置不一样，浏览器自己把它滑过去；下面只定只有一边有的怎么进、怎么出，和同一栏里换内容时怎么换。
+「减少动态效果」时 move 不发起过渡，这些规则用不上。 */
+.campus-learn-a { view-transition-name: campus-learn-a; }
+
+.campus-learn-b { view-transition-name: campus-learn-b; }
+
+.campus-learn-c { view-transition-name: campus-learn-c; }
+
+.campus-learn-x { view-transition-name: campus-learn-x; }
+
+/* 页面上别的东西不参与，原样不动。 */
+:root[data-campus-move]::view-transition-old(root),
+:root[data-campus-move]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* 往下点一级：右栏的列表滑到左边。 */
+::view-transition-group(campus-learn-b) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 往下点一级：左栏的课程向左淡出，新的那一次课从右边进来；退回来时反着走。 */
+:root[data-campus-move='in']::view-transition-old(campus-learn-a):only-child {
+  animation: campus-move-out-left 200ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+:root[data-campus-move='out']::view-transition-new(campus-learn-a):only-child {
+  animation: campus-move-in-left 320ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+:root[data-campus-move='out']::view-transition-old(campus-learn-c):only-child {
+  animation: campus-move-out-right 200ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+:root[data-campus-move='in']::view-transition-new(campus-learn-c):only-child {
+  animation: campus-move-in-right 320ms cubic-bezier(0.2, 0, 0, 1) 60ms both;
+}
+
+/* 换内容（换一门课、换一边、换一次课、换一节、换平台）：旧的淡出，新的从下面升上来一点。只有一边有的（换平台时整栏换掉）也一样。 */
+:root[data-campus-move='swap']::view-transition-old(campus-learn-a):only-child,
+:root[data-campus-move='swap']::view-transition-old(campus-learn-b),
+:root[data-campus-move='swap']::view-transition-old(campus-learn-c),
+:root[data-campus-move='swap']::view-transition-old(campus-learn-x):only-child {
+  animation: campus-move-fade 120ms ease both;
+}
+
+:root[data-campus-move='swap']::view-transition-new(campus-learn-a):only-child,
+:root[data-campus-move='swap']::view-transition-new(campus-learn-b),
+:root[data-campus-move='swap']::view-transition-new(campus-learn-c),
+:root[data-campus-move='swap']::view-transition-new(campus-learn-x):only-child {
+  animation: campus-move-rise 280ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes campus-move-out-left { to { opacity: 0; transform: translateX(-28px); } }
+
+@keyframes campus-move-in-left { from { opacity: 0; transform: translateX(-28px); } }
+
+@keyframes campus-move-out-right { to { opacity: 0; transform: translateX(28px); } }
+
+@keyframes campus-move-in-right { from { opacity: 0; transform: translateX(28px); } }
+
+@keyframes campus-move-fade { to { opacity: 0; } }
+
+@keyframes campus-move-rise { from { opacity: 0; transform: translateY(12px); } }
+
+/* Chat settings and retained message originals. */
+.campus-chat-search, .campus-chat-selected { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+.campus-chat-search > input { flex: 1; min-width: 160px; }
+
+.campus-section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+/* 监控的聊天（2026-11-04，原来一个聊天占一大块）：一个聊天一行，名字、两个下拉框、停止监控，各行和表头用 subgrid 对齐；
+提示、指定的成员这些附加的话占满一行，跟在那个聊天下面。 */
+.campus-chat-tracks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 176px) minmax(120px, 152px) auto;
+  column-gap: 12px;
+}
+
+.campus-chat-tracks-head,
+.campus-chat-track {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+.campus-chat-tracks-head {
+  padding-bottom: 6px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.campus-chat-track {
+  row-gap: 6px;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.campus-chat-track:last-child { border-bottom: 0; }
+
+.campus-chat-track > :is(.campus-alert, .campus-note, .campus-chat-selected) { grid-column: 1 / -1; }
+
+/* 下拉框里的字比名字稍灰一点（主色和次要色之间偏主色），也小一号（12px，框里不显得满），一行的重心落在左边的名字上；
+不用次要色，那就灰过头了。 */
+.campus-chat-track .campus-select { height: 28px; color: color-mix(in srgb, var(--dsw-alias-label-primary) 55%, var(--dsw-alias-label-secondary)); font-size: 12px; }
+
+/* 名字是这一行的主角：主色，比下拉框里的字大一号（2026-11-04：一样是 13px 时，下拉框有边框、底色和箭头，名字看着反而小；
+Windows 的雅黑没有 500 这一档，加粗也看不出来）。鼠标放上去出下划线，点开是收到的消息。 */
+.campus-chat-name { min-width: 0; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-primary); font-size: 14px; font-weight: 500; line-height: 20px; }
+
+.campus-chat-name:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+
+.campus-chat-stop { justify-self: end; white-space: nowrap; }
+
+/* 只有一个聊天没读到时，原因跟在它那一行下面，一行小字，不用提示框。 */
+.campus-chat-problem { color: var(--dsw-alias-state-warn-label, var(--dsw-alias-state-warn-primary)); }
+
+/* 添加聊天的弹窗宽一些，列表随弹窗的剩余空间收缩。 */
+div.campus-chat-picker-dialog { width: min(560px, 100%); max-height: 100%; }
+
+/* Modal 的内容、正文和列表都允许收缩，标题、搜索框和底部按钮留在弹窗内。 */
+.campus-chat-picker-content,
+.campus-chat-picker-content > :last-child,
+.campus-chat-picker-content .campus-section { min-height: 0; }
+
+.campus-chat-picker-dialog > :last-child { flex: none; }
+
+.campus-chat-pick-list { min-height: 0; max-height: 560px; }
+
+/* 列表里一个聊天一行：「群聊」「个人聊天」跟在名字后面，不再另占一行（原来一行 65px 高，320px 的框只露不到五个）。 */
+.campus-chat-pick-list .campus-row { padding-block: 8px; }
+
+.campus-chat-pick-list .campus-wechat-main { flex-direction: row; align-items: baseline; gap: 8px; }
+
+.campus-chat-pick-list .campus-row-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.campus-chat-pick-list .campus-wechat-meta { flex: none; }
+
+.campus-chat-folder { overflow-wrap: anywhere; }
+
+.campus-chat-person { display: flex; gap: 10px; align-items: center; cursor: pointer; }
+
+.campus-chat-history { max-height: 55vh; overflow: auto; }
+
+.campus-chat-message { padding: 12px 0; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+
+.campus-chat-message:last-child { border-bottom: 0; }
+
+.campus-chat-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+
+.campus-chat-message blockquote { margin: 10px 0 0; padding-left: 14px; border-left: 2px solid var(--dsw-alias-border-l2); }
+
+button.campus-chat-open { border: 0; background: transparent; padding: 0; text-align: left; font: inherit; cursor: pointer; }
+
+.campus-notice-account[data-kind='chat'] > span { color: light-dark(#13864e, #7ae3ac); background: color-mix(in srgb, #1da86a 12%, transparent); }
+
+/* 个人消息里的 CC98 用一点紫色，和邮箱（同公众号的浅蓝）、聊天（浅绿）分得开。 */
+.campus-notice-account[data-kind='cc98'] > span { --campus-violet: #7d5bd6; color: color-mix(in srgb, var(--campus-violet) 80%, var(--dsw-alias-label-primary)); background: color-mix(in srgb, var(--campus-violet) 13%, transparent); }
+
+/* 配置页窄的时候（插件页放在窄窗口里）：名字和停止监控一行，两个下拉框下一行，表头不要了。 */
+@container campus-config (max-width: 520px) {
+  .campus-chat-tracks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+
+  .campus-chat-tracks-head { display: none; }
+
+  .campus-chat-track > .campus-chat-stop { grid-row: 1; grid-column: 2; }
+
+}
+
+.campus-chat-open { font-size: 13.5px !important; line-height: 20px !important; font-weight: 500 !important; }
+
+/* ── 日程表 ───────────────────────────────────────────────
+侧栏上「日程表」那一页（SchedulePage.tsx）：顶上「日程 / 定时任务」两个页签当标题用，尺寸和别的页标题一样；
+宽度、左右留白照引擎任务页的内容区，两个页签切过去时标题不跳。
+「日程」是课表那样的格子，见下面「课表格子」。 */
+.campus-schedule {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.campus-schedule > .campus-page {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+/* 「日程」一页：页签、哪一周、刷新和校历挤在第一行，下面直接是格子，上下的留白都收紧，默认大小的窗口放得下一整天。 */
+.campus-plan {
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.campus-plan-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding-top: 12px;
+}
+
+.campus-plan-head > .campus-actions {
+  margin-left: auto;
+}
+
+.campus-plan-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.campus-plan-nav > button {
+  flex: none;
+  white-space: nowrap;
+}
+
+.campus-plan-range {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0 0 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.campus-plan-week {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-plan-refresh[data-busy] svg {
+  animation: campus-spin 0.9s linear infinite;
+}
+
+@keyframes campus-spin { to { transform: rotate(360deg); } }
+
+.campus-plan-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 校历还没填时的那一段：不是出错，用浅底，不用红色。 */
+.campus-plan-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 12px 10px 14px;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-specific-sidebar-fill, var(--dsw-alias-interactive-bg-hover));
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.campus-plan-notice > p {
+  flex: 1 1 320px;
+  margin: 0;
+}
+
+/* 课表格子：照手机上的课表，一张浅底的卡片，左边一列是节次，右边七列是一周；不画格线，课是圆角的色块。
+表头一行，下面是 13 节，每节一样高；作业的截止也按时间钉在格子里。高度只看节数，和这周有多少事无关；
+块里放不下的字截掉，鼠标放上去看全。页面是纵向的弹性容器，裁边的子项默认会被压到放得下为止，格子不能被压。 */
+.campus-grid {
+  /* 每节的高度跟着窗口：减去第一行、表头、上下留白和桌面版顶上 40px 的菜单栏（100dvh 把它也算进去了），再多留 2px 给屏幕缩放的小数，
+     剩下的 13 节平分，最矮 34px、最高 56px。这些加起来要等于这里的 164px，不然默认大小的窗口里整页能滚一点点（2026-11-04）。 */
+  --campus-row: clamp(34px, calc((100dvh - 164px) / var(--campus-periods)), 56px);
+  --campus-axis: 48px;
+  --campus-gap: 3px;
+  display: grid;
+  flex: none;
+  grid-template-columns: var(--campus-axis) repeat(7, minmax(0, 1fr));
+  grid-template-rows: 44px calc(var(--campus-row) * var(--campus-periods));
+  column-gap: 2px;
+  padding: 2px 8px 8px 2px;
+  border-radius: 16px;
+  background: var(--dsw-specific-sidebar-fill, var(--dsw-alias-interactive-bg-hover));
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+
+.campus-grid-head,
+.campus-grid-day {
+  min-width: 0;
+}
+
+.campus-grid-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.campus-grid-dayline {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.campus-grid-weekday {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.campus-grid-date {
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-grid-head[data-today] .campus-grid-weekday {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.campus-grid-head[data-today] .campus-grid-date {
+  background: var(--dsw-alias-state-business-primary);
+  color: #fff;
+}
+
+.campus-mark {
+  max-width: 100%;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campus-mark[data-kind='off'] {
+  background: color-mix(in srgb, var(--dsw-alias-label-primary) 8%, transparent);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.campus-mark[data-kind='swap'] {
+  background: var(--dsw-alias-state-warn-tertiary);
+  color: var(--dsw-alias-label-primary);
+}
+
+.campus-grid-axis {
+  display: grid;
+  grid-template-rows: repeat(var(--campus-periods), var(--campus-row));
+}
+
+.campus-grid-period {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1;
+}
+
+.campus-grid-period > span {
+  font-size: 10px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-grid-period > b {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 一天：今天和放假的那天垫一层很浅的底；块都按行数绝对定位。 */
+.campus-grid-day {
+  position: relative;
+  border-radius: 10px;
+}
+
+.campus-grid-day[data-today] {
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 7%, transparent);
+}
+
+.campus-grid-day[data-off] {
+  background: color-mix(in srgb, var(--dsw-alias-label-primary) 4%, transparent);
+}
+
+.campus-grid-offnote,
+.campus-grid-missing {
+  position: absolute;
+  top: calc(var(--campus-row) * 1.5);
+  left: 0;
+  right: 0;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  color: var(--dsw-alias-label-tertiary);
+  pointer-events: none;
+}
+
+.campus-grid-now {
+  position: absolute;
+  top: calc(var(--campus-row) * var(--campus-block-top));
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1.5px solid var(--dsw-alias-state-error-primary);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.campus-grid-now::before {
+  content: '';
+  position: absolute;
+  top: -4.5px;
+  left: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-error-primary);
+}
+
+/* 一块：中等深浅的底、深色的字，课是蓝的，考试橙的，备忘录里的事绿的；挂在课上的作业是块里一张白色的小卡片，
+靠和底色的反差显出来，不靠大块的红。底色和字色都和引擎的底色、字色混出来，深浅主题自己跟着变。 */
+.campus-block {
+  --campus-accent: var(--dsw-alias-state-business-primary);
+  position: absolute;
+  top: calc(var(--campus-row) * var(--campus-block-top) + var(--campus-gap));
+  height: calc(var(--campus-row) * var(--campus-block-span) - var(--campus-gap) * 2);
+  left: calc((100% - var(--campus-gap)) * var(--campus-block-lane) / var(--campus-block-lanes) + var(--campus-gap));
+  width: calc((100% - var(--campus-gap)) / var(--campus-block-lanes) - var(--campus-gap));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--campus-accent) 40%, var(--dsw-alias-bg-base));
+  color: color-mix(in srgb, var(--campus-accent) 45%, var(--dsw-alias-label-primary));
+  text-align: center;
+  overflow: hidden;
+}
+
+.campus-block[data-kind='exam'] { --campus-accent: var(--dsw-alias-state-warn-primary); }
+
+.campus-block[data-kind='event'] { --campus-accent: var(--dsw-alias-state-success-primary); }
+
+/* 正在上的那一节：外面一圈底色再一圈本色，像被选中。 */
+.campus-block[data-live] {
+  box-shadow: 0 0 0 2px var(--dsw-specific-sidebar-fill, var(--dsw-alias-bg-base)), 0 0 0 3.5px var(--campus-accent);
+}
+
+.campus-block-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+/* 钉在格子里的截止：一行高的卡片，和页面同色，底对着截止的时刻，盖在课的上面（课名在块的上头，一般挡不住）；
+上面一行红字是几点截止，下面是作业名，最多两行。 */
+.campus-pin {
+  position: absolute;
+  top: calc(var(--campus-row) * var(--campus-block-top) + var(--campus-gap));
+  left: 4px;
+  right: 4px;
+  z-index: 1;
+  height: calc(var(--campus-row) - var(--campus-gap) * 2);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-base);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.14), inset 0 0 0 0.5px var(--dsw-alias-border-l3);
+  color: var(--dsw-alias-label-primary);
+  overflow: hidden;
+}
+
+.campus-pin-when {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 12px;
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.campus-pin[data-kind='event'] .campus-pin-when { color: var(--dsw-alias-state-success-primary); }
+
+/* 交过的作业：整张卡片变淡，上面一行是绿色的「已完成」。 */
+.campus-pin[data-done] {
+  opacity: 0.6;
+  box-shadow: inset 0 0 0 0.5px var(--dsw-alias-border-l3);
+}
+
+.campus-pin[data-done] .campus-pin-when {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.campus-pin[data-done] .campus-pin-title {
+  font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.campus-pin[data-kind='exam'] .campus-pin-when { color: var(--dsw-alias-state-warn-primary); }
+
+/* 自己加的日程在格子里是按钮：去掉按钮自带的边框和字体，鼠标放上去略微提亮，点了打开修改的弹框。 */
+button.campus-block,
+button.campus-pin {
+  margin: 0;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.campus-pin {
+  width: auto;
+  text-align: left;
+}
+
+button.campus-block:hover,
+button.campus-pin:hover {
+  filter: brightness(1.06);
+}
+
+button.campus-block:focus-visible,
+button.campus-pin:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 1px;
+}
+
+.campus-pin-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 13px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.campus-block-time,
+.campus-block-sub {
+  font-size: 11px;
+  line-height: 14px;
+  color: color-mix(in srgb, var(--campus-accent) 30%, var(--dsw-alias-label-secondary));
+  overflow-wrap: anywhere;
+}
+
+@container campus-page (max-width: 640px) {
+  .campus-grid {
+    --campus-axis: 34px;
+    --campus-gap: 2px;
+    padding-right: 4px;
+  }
+
+  .campus-grid-period > span {
+    font-size: 9px;
+  }
+
+  .campus-block {
+    padding: 4px 2px;
+  }
+
+  .campus-block-title {
+    font-size: 11px;
+    line-height: 14px;
+  }
+
+  .campus-block-sub,
+  .campus-block-time {
+    font-size: 10px;
+    line-height: 13px;
+  }
+
+}
+
+/* 校历：一行一个学期或一个特殊的日子，几格并排；最后一格是删除。 */
+.campus-calendar {
+  padding-bottom: 24px;
+}
+
+.campus-calendar > .campus-section,
+.campus-calendar > .campus-alert {
+  margin-top: 24px;
+}
+
+.campus-calendar-rows {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+}
+
+.campus-calendar-rows[data-kind='terms'] {
+  grid-template-columns: minmax(96px, 1fr) minmax(72px, 0.6fr) minmax(140px, 1.2fr) minmax(64px, 0.5fr) 28px;
+}
+
+.campus-calendar-rows[data-kind='days'] {
+  grid-template-columns: minmax(140px, 1fr) minmax(80px, 0.6fr) minmax(140px, 1fr) minmax(96px, 1fr) 28px;
+}
+
+.campus-calendar-row {
+  display: contents;
+}
+
+.campus-calendar-known {
+  justify-content: space-between;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  padding: 9px 2px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.campus-calendar-known[data-past] {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-calendar-known > .campus-row-title {
+  flex: 1 1 auto;
+}
+
+.campus-calendar-source {
+  flex: none;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-calendar-label {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.campus-calendar .campus-form-foot {
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.campus-plan-foot-gap {
+  flex: 1;
+}
+
+/* 加、改自己的日程的弹框：名称占一整行，下面两两并排：日期和重复到哪天、几点到几点、地点和种类。 */
+.campus-event-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+
+.campus-event-form > .campus-alert,
+.campus-event-wide {
+  grid-column: 1 / -1;
+}
+
+.campus-event-form .campus-field {
+  padding: 8px 0;
+}
+
+.campus-event-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* 弹框挂在 body 上，不在页面的容器里，按窗口宽度收成一列。 */
+@media (max-width: 520px) {
+  .campus-event-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container (max-width: 560px) {
+  .campus-calendar-rows:is([data-kind='terms'], [data-kind='days']) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px;
+  }
+
+  .campus-calendar-label {
+    display: none;
+  }
+
+}
+
+/* ── 插件版自己的 ── */
+
+.campus-form :is(.campus-secret-eye, .campus-textlink):focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+/* 侧栏图标：有新提醒时右上角一个小圆点。 */
+.campus-panel-icon {
+  position: relative;
+  display: inline-flex;
+}
+
+.campus-panel-badge {
+  position: absolute;
+  top: -1px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-error-primary, #f53f3f);
+  box-shadow: 0 0 0 1.5px var(--dsw-alias-bg-base, #fff);
+}
+
+/* 组合包第一次启用时的引导。 */
+.campus-activation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.campus-activation p {
+  margin: 0;
+}
+
+.campus-activation-title {
+  font-weight: 600;
+}
+
+/* 配置页的内容：和插件页的表单一样宽。 */
+.campus-config {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  container: campus-config / inline-size;
+}
+
+/* 一页里有好几节时（聊天的自动同步、数据位置、监控的聊天；公众号的来源和跟踪的号）节和节之间拉开，
+不然上一节最后的输入框和下一节的标题贴在一起（2026-11-04）。节末尾是一个表单项时，去掉它下面那截留白，各节间距才一样。 */
+.campus-config > .campus-section + .campus-section,
+.campus-config > .campus-form + .campus-section {
+  margin-top: 28px;
+}
+
+.campus-config > .campus-section > .campus-field:last-child {
+  padding-bottom: 0;
+}
+
+.campus-config > .campus-alert {
+  margin-bottom: 12px;
+}
+
+/* 设置导航里「个人档案」的图标（2026-11-04）：引擎按分区 id 选图标，插件的分区都是齿轮，和「通用设置」一样；
+index.tsx 给这一项按钮加上 data-campus-nav="profile"，这里藏起齿轮，画引擎图标库（dsh-client-ui-primitives，MIT）里的
+IconUserOutline 一个人像，和导航里别的图标一样用 1.3px 的描边（Medium）。原来的 IconListPenOutline 纸页外框只有 1px，摆在一起浅一层。
+用遮罩画，颜色跟着按钮的文字走。
+只在 DSH 0.2.1 的结构上生效（图标 svg 直接是按钮的第一个孩子）。0.2.2 起图标包了一层 span，改用 settings.section.icon 插槽（index.tsx），
+这里不限定结构的话，齿轮藏不掉，人像又多画一个。 */
+button[data-campus-nav='profile'] > svg:first-child {
+  display: none;
+}
+
+button[data-campus-nav='profile']:has(> svg:first-child)::before {
+  content: '';
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.3'%3E%3Cpath d='M8 8.25C9.51878 8.25 10.75 7.01878 10.75 5.5C10.75 3.98122 9.51878 2.75 8 2.75C6.48122 2.75 5.25 3.98122 5.25 5.5C5.25 7.01878 6.48122 8.25 8 8.25Z'/%3E%3Cpath d='M2.5 14.5C2.5 11.5 5.25 10.25 8 10.25C10.75 10.25 13.5 11.5 13.5 14.5'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+}

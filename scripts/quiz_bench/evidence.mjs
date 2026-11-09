@@ -1,6 +1,6 @@
-import {activeFacts,curateFacts,resolveFactId} from '../../packages/dsh-zhiyun-core-quiz/src/ledger.js';
+import {activeFacts,curateFacts,resolveFactId} from '../../packages/core/quiz/src/ledger.js';
 import {measure,trialSummary} from './metrics.mjs';
-import {pointIdentity} from '../../packages/dsh-zhiyun-core-quiz/src/concepts.js';
+import {pointIdentity} from '../../packages/core/quiz/src/concepts.js';
 export function evidenceOf(report) {
   return report.cells.flatMap((cell,cellIndex)=>Object.values(cell.conceptCache).map(entry=>{
     const point=report.points.find(p=>pointIdentity(p)===entry.pointKey);

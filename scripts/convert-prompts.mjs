@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const lang = process.argv[2] ?? 'zh';
-const outDir = process.argv[3] ?? 'packages/dsh-zhiyun-core-question/src/prompts';
+const outDir = process.argv[3] ?? 'packages/core/question/src/prompts';
 const src = path.join(
   'packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/agents/question/prompts',
   lang,

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {tokenLedger,timingLedger} from '../scripts/quiz_bench/accounting.mjs';
-import {withDeepTutorGuidance,DEEPTUTOR_GUIDANCE_ID} from '../packages/dsh-zhiyun-core-quiz/src/deeptutor-guidance.js';
-import {planPointQuestions,newPointCheckpoint,createPointQuizGenerator} from '../packages/dsh-zhiyun-core-quiz/src/points.js';
+import {withDeepTutorGuidance,DEEPTUTOR_GUIDANCE_ID} from '../packages/core/quiz/src/deeptutor-guidance.js';
+import {planPointQuestions,newPointCheckpoint,createPointQuizGenerator} from '../packages/core/quiz/src/points.js';
 
 test('token ledger does not double-count cached input or reasoning output and does not invent missing bills',()=>{
   const receipts=[{usage:{prompt_tokens:100,completion_tokens:20,total_tokens:120,prompt_cache_hit_tokens:80,prompt_cache_miss_tokens:20,completion_tokens_details:{reasoning_tokens:5}}},{usage:{prompt_tokens:50,completion_tokens:10,total_tokens:60}}];

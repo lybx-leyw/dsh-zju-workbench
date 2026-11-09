@@ -18,7 +18,7 @@
  *
  * ── 这个包想做什么 ───────────────────────────────────────────────
  *
- * 强化 `packages/dsh-zhiyun-source-classroom` 的**直播 / 回放**通路。上游可提取的能力有三块：
+ * 强化 `packages/source/classroom` 的**直播 / 回放**通路。上游可提取的能力有三块：
  *
  *   1. **智云 SSO 的第二条链路**（本仓完全没有）
  *      本仓 `src/auth.js` 走的是 CAS 直连：
@@ -43,10 +43,10 @@
  * ── 为什么是「强化式集成」而不是简单集成 ────────────────────────
  *
  * 三条同时成立：
- *   1. **仍是同一个面板** —— 仍是「**智云课堂**」页（`dsh-zhiyun-source-classroom`），
+ *   1. **仍是同一个面板** —— 仍是「**智云课堂**」页（`@lybx-leyw/dsh-zju-source-classroom`），
  *      不新增独立页面、不改导航、不抢 `dsh-zhiyun-page-courses` 的布局主张。
  *   2. **功能仍相似正交** —— 两边都是「**智云课堂的视频从哪来、怎么看**」。
- *      本仓现状只有**已下载文件的解析**（`src/parser` / `dsh-zhiyun-core-parser`）
+ *      本仓现状只有**已下载文件的解析**（`src/parser` / `@lybx-leyw/dsh-zju-core-parser`）
  *      与**CAS 直连取 cookie**；上游补的是**实时流（FLV/HLS）的观看与录制**，
  *      以及**另一条取 JWT 的授权码链路** —— 同一件事的缺失部分，
  *      不是并列的第二套课堂客户端。
@@ -92,7 +92,7 @@
  *      **不一致时以本仓现有实现为准**（它已在生产路径上跑过）。
  *
  *   4. 【CookieJar 归位】把上游的 cookie 匹配语义（domain / host-only / path）
- *      实现到本仓的 `packages/dsh-zhiyun-source-classroom/src/transport.js`，
+ *      实现到本仓的 `packages/source/classroom/src/transport.js`，
  *      **而不是**新建第三个 cookie 容器 —— 同一 profile 里不允许有两套 cookie 状态。
  *
  *   5. 【实时流协议】盘点 `tgmedia get-info` 返回的流地址形状
@@ -108,7 +108,7 @@
  *      以及**凭据不出现在任何 status / 日志输出里**（这条必须是会红的测试）。
  *
  *   8. 【验证】接入前跑通 `npm test` 与 `npm run test:host`，
- *      并在真实宿主里确认它**没有**影响 `dsh-zhiyun-source-classroom` 现有的下载通路。
+ *      并在真实宿主里确认它**没有**影响 `@lybx-leyw/dsh-zju-source-classroom` 现有的下载通路。
  */
 
 export const name = 'radar-zju-recorder';
@@ -117,7 +117,7 @@ export const name = 'radar-zju-recorder';
  * 只硬依赖 `profileContext`（数据目录）。
  * `webServer` / `connection` / `remote` 全部走 `ctx.inject` / `ctx.get` 惰性取 ——
  * 可选宿主服务不写进 inject，否则对方没就绪时本插件会一直 pending
- * （这条规矩见 dsh-zhiyun-host-paper 与 dsh-zhiyun-core-study 的 README）。
+ * （这条规矩见 dsh-zhiyun-host-paper 与 @lybx-leyw/dsh-zju-core-study 的 README）。
  */
 export const inject = ['profileContext'];
 

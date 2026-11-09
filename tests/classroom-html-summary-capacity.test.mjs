@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
-import { renderSlideChapter, validateSlideDeck } from '../packages/dsh-zhiyun-core-classroom-generate/src/html-slide-shell.js';
+import { renderSlideChapter, validateSlideDeck } from '../packages/core/classroom-generate/src/html-slide-shell.js';
 
 const base = {
   title: '标题', points: ['要点'],

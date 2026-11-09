@@ -1,0 +1,23 @@
+node_modules/
+# `dist/` 在本仓**要入库**（上游原本排除它，因为上游只走 npm 发布）。
+#
+# 区别在于：上游的 dist 由使用者从 npm 拿到；而我们是 vendor —— clone 本仓
+# 就必须能直接跑，不能要求谁先去 `npm i && tsc`。缺 dist 的表现是
+# 「profile 启动时报模块找不到」，而报错完全指不出「你需要先构建」。
+#
+# 重新生成：cd packages/vendor/paper-reader && npm i && npx tsc -p tsconfig.json
+!dist/
+*.log
+.lflow/
+.DS_Store
+.probe/
+
+# 上游 README 的演示媒体（GIF/MP4，合计约 10 MB）。
+#
+# 它们只服务于「怎么用这个插件」的展示，与本仓的**代码**无关；而本仓引入这个
+# vendor 的目的是改代码。10 MB 的二进制跟着每次 clone 与 review 走，不划算。
+# 需要看演示时去上游仓库：https://github.com/GGboya/dsh-paper-reader
+/docs/demo.gif
+/docs/demo.mp4
+/docs/desktop-official-use.gif
+/docs/dev-workflow.gif

@@ -13,7 +13,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assistantMessage, assistantMessageWithToolCalls } from '../packages/dsh-zhiyun-core-tool/src/messages.js';
+import { assistantMessage, assistantMessageWithToolCalls } from '../packages/core/tool/src/messages.js';
 
 /** 端点的校验规则：content 非空 或 tool_calls 非空，二者至少一个。 */
 function isAcceptable(message) {

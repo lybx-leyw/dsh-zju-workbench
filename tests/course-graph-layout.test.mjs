@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { layoutCourseGraph, fitCourseGraph, zoomCourseGraph } from '../packages/dsh-zhiyun-page-study/src/course-graph-layout.js';
+import { layoutCourseGraph, fitCourseGraph, zoomCourseGraph } from '../packages/client/page-study/src/course-graph-layout.js';
 
 const items = Array.from({ length: 24 }, (_, index) => ({ lesson: { subId: String(index) }, chapters: Array.from({ length: 3 + index % 4 }, () => ({ title: '章节', topics: Array.from({ length: 6 }, () => ({ title: '知识点' })) })) }));
 
