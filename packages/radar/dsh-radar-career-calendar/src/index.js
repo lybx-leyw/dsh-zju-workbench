@@ -103,7 +103,9 @@
  *       可参考上游 devDeps 里的 `ical.js` 用法与 `clock-check.mjs`。
  *   [ ] 与既有**通知/提醒**能力协调：宣讲提醒要不要复用既有提醒通道？
  *   [ ] 离线策略：宣讲常在**会场**查看，是否需 PWA 级离线？（本仓形态待确认）
- *   [ ] 补 `tests/radar-career-calendar.test.mjs`，断言 iCal 输出的时区与字段完整性。
+ *   [ ] 实现 iCal 输出后，**人工核对** `DTSTART;TZID=Asia/Shanghai` 与字段完整性
+ *       （r163 订正：此处原写「补 tests/radar-career-calendar.test.mjs」，
+ *        违反「radar 包内不写测试」硬边界，已删除该 TODO）。
  *
  * ── 明确不做（避免越界）──────────────────────────────────────────
  *

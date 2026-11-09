@@ -126,3 +126,18 @@
 故**未创建 `ATTRIBUTION.md`**。
 若后续确有代码借鉴，须先解决上节【1】的版权归属问题，
 再按 `CONTRIBUTING.md` 3.3 在 `ATTRIBUTION.md` 登记。
+
+---
+
+## ⚠ 已知悬空项 / 登记矛盾（2026-11-10 r163 订正）
+
+本节记录本轮复核时发现、并已在骨架内处理的问题，供评审时一并裁决。
+
+| # | 问题 | 处理 |
+| --- | --- | --- |
+| 1 | `src/index.js` 的 TODO 列表原含一条「补 `tests/radar-career-calendar.test.mjs`」 | **已删除**。radar 包内**不得有测试文件**是硬边界（例外只有 `tests/radar-rotation.test.mjs`，测的是轮换器而非 radar 包）。改为「实现后人工核对 `DTSTART;TZID=Asia/Shanghai` 与字段完整性」 |
+| 2 | `registry.md` 里**同一仓库登记了两行且分级冲突**：L609 `🟡`（2026-10-16）+ L4531 `🔵`（2026-11-03），后者论据「与在册 `dsh-radar-career-calendar` 同域」属自引用 | **已追加「同域合并」行**（r163）收口，**以该行为准：维持 🟡**。旧行按追加式原则不删 |
+| 3 | 旧登记行（L609）把骨架位置写成 `packages/dsh-radar-career-calendar` | 实际位置为 **`packages/radar/dsh-radar-career-calendar/`**（阶段 1.5 已迁移）。以目录为准 |
+| 4 | 上游 `LICENSE` 版权归属异常（「大连理工宣讲日历贡献者」） | **仍未修复**（r163 重新读取上游 `LICENSE` 逐字确认）。**本节【1】的动工前提依然有效** |
+
+> 第 1 项是本轮唯一的**代码级**订正；第 2–4 项是登记一致性订正，不改变本包的 🟡 分级。
