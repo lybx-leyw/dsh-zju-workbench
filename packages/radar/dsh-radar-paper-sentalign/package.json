@@ -1,0 +1,19 @@
+{
+  "name": "dsh-radar-paper-sentalign",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】论文页句级对照翻译引擎契约（按 id 契约 / 字符预算分批 / 逐句语言检测 / 术语表失效），强化既有「选中即译」通道（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./sentalign": "./src/sentalign.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
