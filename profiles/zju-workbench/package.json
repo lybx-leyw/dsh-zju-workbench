@@ -57,7 +57,8 @@
         "@lybx-leyw/dsh-zju-core-classroom-generate",
         "@lybx-leyw/dsh-zju-core-classroom-export",
         "@lybx-leyw/dsh-zju-source-xuezai",
-        "@lybx-leyw/dsh-zju-source-pta"
+        "@lybx-leyw/dsh-zju-source-pta",
+        "@lybx-leyw/dsh-zju-source-mail"
       ],
       "patchReload": "live"
     }
