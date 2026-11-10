@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-word-pronounce",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 cmu-pronouncing-dictionary@3.0.0，为笔记/刷题/学习页的英文词补「音素序列 + 主重音」，强化同一「读这个词」动作的底层数据（B 类，无上游 DSH patch）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream.js": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "cmu-pronouncing-dictionary": "3.0.0"
+  }
+}
