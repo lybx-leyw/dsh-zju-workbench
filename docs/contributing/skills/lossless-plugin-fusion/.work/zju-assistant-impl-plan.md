@@ -793,7 +793,7 @@ AffairsPage
 | **Q-L** | D9 的邮箱另外 3 个包（`tool/mail` / `core/mail-feed` / client）还建不建？ | 邮箱只能读，发信与「有没有新信」没有承载方 |
 | **Q-M** | proc 层 11 个包（P2-1 ~ P2-11）整体的归属与优先级 | 校历、课表合并、作业聚合、通知汇总、档案、备忘录…全部未建 |
 | **Q-N** | `tool/campus-write` 的注入点（preset 未定，它现在不加载） | 22 条写能力在实机上没有入口 |
-| **Q-O** | `zjuam session status`（本仓没有「这张票还有效吗」这个动作）补不补 | `source/login` 只报「有没有存账号密码」 |
+| **Q-O** | `zjuam session status` 补不补（本仓没有单独的「这张票还有效吗」判据） | 服务面只报「有没有存账号密码」；路由 GET 会探三个下游，但那不是这张票本身 |
 | **Q-P** | 上游「不单独建包」的 8 个辅助文件（`chat-watch.mjs` / `model.mjs` / `vision.mjs` / `ffmpeg.mjs` / `identity-fill.mjs` / `colleges.mjs` / `documents.mjs` / `downloads.mjs`）归哪个包 | 清单第 2 层末尾给过「建议合进 X」，但那是**建议**不是裁决，按规矩不算已决 |
 
 ---

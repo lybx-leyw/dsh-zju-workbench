@@ -493,13 +493,14 @@ node scripts/probe-write-contract.mjs
 | # | 上游 provides | 本仓落点 | 判定 | 说明 |
 | --- | --- | --- | --- | --- |
 | 1 | `zjuam session login` | `source/login/src/cas.js:317` `casLogin(transport, {entry, hosts, credentials})` | **B** | 能力在：跟跳转 → 抠 execution → 取 RSA 公钥 → 加密 → 提交 → 判票，六步齐全（`cas.js` 的 `casForm` / `encryptCasPassword` / `authUrlGuard` / `describeAuthFailure` 各有单测）。**差异**：上游是一个 `Zjuam` 类，自己管 `SessionStore` 与 `loginPromise` 并发去重；本仓是无类函数集合，会话持久化**由调用方**负责，登录去重也没有（`webvpn-coverage` 的 D-3 记了同一类差异） |
-| 2 | `zjuam session status` | 无独立方法 | **C** | `zjuam` 没有 `status()`。`source/login` 服务面提供的是**凭据**状态（`cardStatus` → `{configured, username}`），不是**会话**状态。两者不同：前者说「有没有存账号密码」，后者说「现在这张票还有效吗」 |
+| 2 | `zjuam session status` | 无独立方法；但路由的 GET 会**探下游** | **B / 部分** | 精确说：`zjuam` 本身没有 `status()`。`source/login` 的服务面给的是**凭据**状态（`cardStatus` → `{configured, username}`）；它的**路由 GET** 另外并行探三个下游（`probeCampusSource` / `probeClassroom` / `probeZdbk`，`index.js:768-770`，带 `withDeadline`）。所以「下游能不能用」有答案了，但**「CAS 这张票现在还有效吗」这个单独的判据没有** —— 上游 `zjuam status` 给的是 `{file, username, expiresAt, cached}`（纯本地、不联网）。本仓的 `webvpn` 侧倒是有等价的 `hasWebvpnSession`/`probeWebvpnSession`。**结论：新增能力，判待补而非缺失** |
 | 3 | `zjuam session logout` | `cardStatus` 侧的 `clear()` / `clearWebvpn()`（`index.js:839,844`） | **B** | 清的是**凭据记录**，不是 CAS 会话票。上游 `logout()` 清的是 `zjuam.json` 里的 cookie。**语义不同**：本仓没有「把票作废」这个动作 |
 
 **这条要特别记**：`zju-assistant-inventory.md:39` 把 `zjuam` 一行标成「`无需`」，
 依据是「`source/login` 有账号，`source/http` 的 `AUTH_HOSTS` 含 zjuam」。
 那个判断**只覆盖了 login 的输入侧**（账号从哪来），没覆盖 status / logout。
-本轮改判：**1 B + 1 C + 1 B**，`status` 是真实缺口。
+本轮改判：**login B / status 待补（新增能力，不是丢失）/ logout B**。
+`status` 的准确说法是「`zjuam` 没有单独的票有效性判据」，而不是「忘了做」。
 
 ### Z-2 · `doc`（文档转文字与 PDF 处理，4 条 provides）
 
