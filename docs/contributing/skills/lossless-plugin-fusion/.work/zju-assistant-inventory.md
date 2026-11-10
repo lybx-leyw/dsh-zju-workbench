@@ -36,7 +36,7 @@
 
 | # | 泳道 | 上游模块 | 本项目现状（有证据） | 待办 |
 | --- | --- | --- | --- | --- |
-| 1 | L1 | `zjuam` 统一身份认证 | `packages/source/login`（一卡通账号，`src/index.js` 33 KB）；`packages/source/http` 有 CAS 传输（`src/transport.js:33` AUTH_HOSTS 含 zjuam） | `无需` |
+| 1 | L1 | `zjuam` 统一身份认证 | `packages/source/login`（一卡通账号，`src/index.js` 33 KB）；`packages/source/http` 有 CAS 传输（`src/transport.js:33` AUTH_HOSTS 含 zjuam） | ~~`无需`~~ → **改判**：`login` 对上了、`status` 缺、`logout` 语义不同（清凭据 ≠ 作废票）。见 [coverage-gaps](coverage-gaps.md) 第九节 Z-1 |
 | 2 | L1 | `webvpn` 网关 | `packages/source/webvpn`（`src/protocol.js` 地址改写、`src/login.js` 网关登录、`src/egress.js` 344 行选路；判定只有 `CAMPUS_SUFFIX = 'zju.edu.cn'` 一个常量） | **独立集成计划 W1–W4**（见 [webvpn-plan](zju-assistant-webvpn-plan.md)）：后缀匹配 → 模块声明 + 68 主机实测表 + 会话内降级 |
 | 3 | L2 | `zdbk` 教务网 | `packages/source/zdbk`，`src/index.js:93` 的 `READ_METHODS = ['grades','gpaSummary','exams','timetable']` | `扩展`：+`plan view/list`、`student`、`selection *`（读 6 个 + 写 3 个） |
 | 4 | L2 | `yjsy` 研究生教务 | **无** | `新建` |
@@ -58,7 +58,17 @@
 | 20 | L10 | 钉钉聊天 | **无** | `新建`（`core/dingtalk`） |
 
 > 注：编号 1–20 含 L1 的两个基础设施，实际「数据源」20 项对应上游 18 个 `core/zju/lib/*` 模块
-> 加 4 个不在模块表里的（邮箱/公众号/微信/钉钉）减掉 webvpn+doc（doc 归 proc 层）。
+
+### ⚠️ 这张表漏了一整个模块：`doc`
+
+上游 `core/zju/lib/doc/`（**有 `module.json`，4 条 provides**：`doc text` / `doc pdf` /
+`doc pages` / `doc find`）不在这张表里 —— 它被当成「工具」而不是「数据源」，
+于是两份审计（批次 A / B）也没覆盖它。
+
+实际状态：`doc text` 部分有（`core/classroom-media` 的 `parsePdf`，只支持 PDF，
+不支持 Word/PPT/Excel），其余 3 条**完全没有承接方**。见
+[coverage-gaps](coverage-gaps.md) 第九节 Z-2。
+> 加 4 个不在模块表里的（邮箱/公众号/微信/钉钉）减掉 webvpn（基础设施）。
 
 ---
 
@@ -72,7 +82,7 @@
 | 24 | L4 | `learning.mjs` / `xuezai.mjs` / `chaoxing.mjs` 学习页聚合 | `packages/core/learning-resource`（schema + 章节投影）；`core/study`（学习空间） | `裁决`：功能重叠，见第 8 步 |
 | 25 | L5 | `feed.mjs` 通知汇总 | **无** | `新建` |
 | 26 | L5 | `notice-filter.mjs` 相关度筛选 | **无** | `新建` |
-| 27 | L11 | `doc` 文档处理 | `packages/core/parser`（三阶段，LLM）；`vendor/paper-reader`（PDF 阅读） | `裁决`：见第 8 步 B/C |
+| 27 | L11 | `doc` 文档处理（**有 `module.json`、4 条 provides**） | **部分**：`core/classroom-media` 的 `parsePdf`（PDF 文字，`unpdf`/MinerU）；`core/vault` 的 `pdfjs-dist` 用于**阅读器渲染**；`vendor/paper-reader` 是独立的论文阅读器。**PDF 合成 / 取页 / 找页 零实现**，Word/PPT/Excel 解析零实现 | `裁决`（Q-K）：它读本地文件（不连外部 → 不宜进 source）、做变换落盘（→ core 合理），但与 D21 的「下载归 core」不是同一形状。见 [coverage-gaps](coverage-gaps.md) Z-2 |
 | 28 | L12 | `alerts.mjs` 提醒总线 | **无** | `新建` |
 | 29 | L14 | `learn` 课程讲解引擎 | `core/classroom-generate`（四段管线）+ `classroom-media`（TTS/ASR/图/检索）+ `classroom-export`（PPTX/HTML/ZIP）+ `classroom-studio` | `裁决`：见第 8 步 B |
 | 30 | L15 | `film.mjs` CSP 沙箱播放 | `core/classroom-export` 有单文件 HTML 导出 | `裁决` |

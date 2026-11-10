@@ -24,8 +24,11 @@
  *
  * # 三条边界（都是刻意的）
  *
- * 1. **只读**。不移植 omni 的 `actions.ts`（发帖、回复、私信发送）。本包没有任何
- *    会改变论坛状态的入口 —— 少一个入口比多一层确认更可靠。
+ * 1. **写动作不进读方法表**。8 个写动作实现了（`src/writes.js`），但只以
+ *    `xxxPrepare` / `xxxExecute` 成对的形式注册（`writeMethods` 16 个方法名），
+ *    **审批在 `packages/tool/campus-write`**。早先这里写的是「本包只读、
+ *    没有任何会改变论坛状态的入口」—— 那是错的，与本文件 `:480` 的
+ *    `readOnly: false` 直接矛盾。
  * 2. **不做 WebVPN**。omni 里 `mode === 'webvpn'` 那一支依赖 `ctx.network.webvpnJar()`
  *    / `loginWebvpn()`，那是 omni 自己的网络抽象。本包**只直连**；
  *    校外连不上时明确抛 `WEBVPN_REQUIRED`，由用户决定要不要用别的出口。
@@ -82,7 +85,11 @@ export const ROUTE_PATH = '/api/zhiyun-cc98';
  *
  * 白名单而不是"反射读取器上的一切"：这条路由是同源页面可调的，
  * 让调用方能拨动 `constructor` / `__proto__` 这类属性没有正当用途。
- * 同时它也是**只读**的证明 —— 表里没有任何写操作。
+ *
+ * **它同时是「路由只给读」的边界**：表里没有任何写动作，写动作走
+ * `writeMethods`（另一条路径、由 tool 层的审批守着）。
+ * 早先这句话写成「它也是只读的证明」，容易被读成「本包没有写方法」——
+ * 本包有 8 个，见文件头。
  */
 export const METHODS = Object.freeze([
   'search',

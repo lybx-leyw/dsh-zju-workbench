@@ -1,6 +1,11 @@
 # @lybx-leyw/dsh-zju-source-cc98
 
-浙大 **CC98 论坛**（`api.cc98.org`）的**只读**数据源。
+浙大 **CC98 论坛**（`api.cc98.org`）数据源：22 个读方法 + 8 个写动作。
+
+> ⚠️ 这一行早先写的是「**只读**数据源」。那与代码直接矛盾：`src/writes.js` 实现了
+> 8 个写动作，`src/index.js:480` 的 `readOnly` 是 `false`，`writeMethods` 列了 16 个
+> `xxxPrepare` / `xxxExecute`。分层结果是「写方法的**审批**在 `tool/campus-write`」，
+> 不是「数据包里没有写方法」。
 
 纯 JavaScript（ESM，无 TypeScript），不编译、不打包宿主代码，`node -e "import(...)"` 就能加载。
 

@@ -194,7 +194,8 @@ npm run classroom:live-probe -- --live --trace               # 打印每条请�
 约 240 MB 模型并落盘。它改的是**本机安装状态**，属于安装层而不是读取层。
 
 **这条不是裁决，是当前没做。** 本包提供 `check`（只读诊断，会给出 `action`），
-`setup` 未实现，已记进 `coverage-gaps.md` 的待补清单（W-8）。
+`setup` 未实现，已记进 `coverage-gaps.md` 的待补清单（W-6）。
+（早先这里引的是 W-8 —— 那是 `check` 的 SHA-256 校验，不是 `setup`。）
 
 ## 本地转写（`transcribeAudio`）
 

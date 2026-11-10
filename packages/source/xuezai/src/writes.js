@@ -457,7 +457,8 @@ export function createXuezaiWrites(reader) {
           }
 
           // 全试完还没签上。上游会再用「≥3 个距离」做球面最小二乘反推一个位置；
-          // 那一步**尚未实现**（已记进 coverage-gaps.md 的 W-6）。
+          // 那一步**尚未实现**（已记进 coverage-gaps.md 的 W-29）。
+          // 早先这里写的是 W-6 —— 那是 classroom 的 `setup`，引用错了条目。
           // 这里如实报试了多少个点、拿到了几个距离，让用户知道下一步怎么办。
           const distances = tries.filter((t) => t.distance !== null);
           throw new ClassroomError(

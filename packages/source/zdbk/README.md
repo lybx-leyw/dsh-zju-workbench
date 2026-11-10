@@ -1,10 +1,15 @@
 # @lybx-leyw/dsh-zju-source-zdbk
 
 浙大**教务系统**（`zdbk.zju.edu.cn/jwglxt`）数据源：成绩与 GPA、考试安排、课表、
-培养方案、自主选课的**查询**部分。纯 JavaScript（ESM，无 TypeScript），本仓原生实现。
+培养方案、自主选课的查询与写操作。纯 JavaScript（ESM，无 TypeScript），本仓原生实现。
 
-**只读**。选课的「选 / 退 / 排序」是写操作，归 `packages/tool/campus-write`（见下面
-[写操作去哪了](#写操作去哪了)）。
+**读方法 + 写方法都在本包，但写方法只能经 `packages/tool/campus-write` 批准后调用。**
+见下面 [写操作去哪了](#写操作去哪了)。
+
+> ⚠️ 这一行早先写的是「**只读**」。那与代码直接矛盾：`src/writes.js` 实现了
+> `selectCourse` / `dropCourse` / `reorderCourse`，`src/index.js:498` 的
+> `writeMethods` 把它们注册在服务面上，`readOnly` 是 `false`。
+> 分层结果是「写方法的**审批**在 tool 层」，不是「数据包里没有写方法」。
 
 ## 能力
 
@@ -47,10 +52,12 @@ await zdbk.hasSession(); // 只看 jar 里有没有 JSESSIONID
 默认是延迟落盘的（为了登录前那次清空不必白等一次 DPAPI 子进程）；登出若也跟着延迟，
 进程恰好退出时磁盘上的旧会话就会「复活」—— 那是安全问题，不是性能问题。
 
-## 写操作去哪了
+## 写操作在哪、谁来批准
 
-D17 分层：**只读的进数据包，写操作进 `packages/tool/`**。教务这边被划走的正好是
-上游 `vendor/zju-assistant/core/zju/lib/zdbk/xsxk.ts` 里那三个方法：
+D17 分层：**读进数据包，写操作的注册与审批进 `packages/tool/`**。
+写方法的**实现**留在本包（它需要 `ZdbkClient` 的单次写请求语义、`pool`/`category` 解析、
+志愿组顺序计算），`campus-write` 只负责「Prepare → 审批 → Execute」。
+教务这边对应上游 `vendor/zju-assistant/core/zju/lib/zdbk/xsxk.ts` 里的三个方法：
 
 | 上游 provides | 归哪 | 为什么 |
 | --- | --- | --- |
@@ -58,13 +65,18 @@ D17 分层：**只读的进数据包，写操作进 `packages/tool/`**。教务�
 | `zdbk selection reorder` | **`packages/tool/campus-write`** | 调整志愿顺序，同样服务端有状态 |
 | `zdbk selection drop` | **`packages/tool/campus-write`** | 退选，可能让别人抢走位置，不可逆 |
 
-这三条在**本包不存在**：`READ_METHODS` 里没有、`zhiyunZdbk` 服务上没有、
-`ZdbkClient` 也没有给它们用的单次写请求语义（不跟随重定向、失效后不重放）。
-所以「误调写操作」在这个包里不是被拦下来，而是**根本没有那条路径**。
+这三条的**接口**是 `zdbk.selectCoursePrepare` / `selectCourseExecute` 这样成对的方法
+（`index.js:498` 的 `writeMethods`），**只能由 `tool/campus-write` 在审批通过后调用**；
+它们不在 `READ_METHODS` 表里，路由也不会暴露成读动作。
 
-`packages/tool/campus-write` 本次**未实现**。上游那三个方法依赖：
-写闸（`confirm` + 环境变量）、`journal` 落盘、写完必须回查。这些都要在 tool 一侧，
-不该回收进数据包。
+> ⚠️ 这段早先写的是「这三条在**本包不存在**」。那是错的：三处都不实 ——
+> `writes.js` 完整实现了它们，`index.js` 注册到了服务面，`client.js` 的 `postOnce`
+> 就是单次写请求语义。
+
+`packages/tool/campus-write` 已经建成（7 个工具 / 22 条写操作），但**没有挂进
+profile 也不在 preset 里**，所以实机上还没有入口。
+另有两条参数契约断裂：`drop` / `reorder` 工具层不传 `section`，会在 prepare 抛错
+（`coverage-gaps.md` 的 Y-7）。
 
 ## 培养方案（plan view / plan list）
 
