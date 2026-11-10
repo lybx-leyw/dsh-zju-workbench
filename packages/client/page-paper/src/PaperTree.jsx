@@ -18,12 +18,28 @@
  * 上游只认 `topic/name` 两段式，所以磁盘上深层路径编码进单段目录名
  * （`理学/力学` → `理学+力学`）。这里拿到的是 `/api/tree` 给的**已解码**路径，
  * 用户看不到 `+`；编码只发生在宿主侧（`/api/ref`），页面不复刻规则。
+ *
+ * # 文献行的两种形态（都来自宿主，页面不自己拼）
+ *
+ * 宿主读盘时同时认两种布局，所以一条 `type: 'paper'` 的 `path` 可能是：
+ *
+ *     论文一            ← 新布局的**论文文件夹**（上传落的就是它）
+ *     旧论文.pdf        ← 旧平铺布局（未迁移的库，读兼容）
+ *
+ * 页面因此**不得**假设文献行一定以 `.pdf` 结尾（早先 `Paper.jsx` 把
+ * `${name}.pdf` 拼出来做高亮，新布局下这一行永远不会命中，高亮静默消失）。
+ * 判断靠 `row.type`，路径原样使用。
  */
 import React, { useMemo } from 'react';
 import { Icon } from '@lybx-leyw/dsh-zju-ui-shared';
 
-/** 相对路径的目录部分（不含结尾斜杠）；顶层给空串。 */
-function dirOf(rel) {
+/**
+ * 相对路径的目录部分（不含结尾斜杠）；顶层给空串。
+ *
+ * 导出是因为 `Paper.jsx` 要按同一规则判断「游标落在哪个文件夹」——
+ * 上传目标、新建文件夹的父级都读这一份，两处各写一套迟早漂移。
+ */
+export function dirOf(rel) {
   const slash = String(rel).lastIndexOf('/');
   return slash === -1 ? '' : String(rel).slice(0, slash);
 }
@@ -88,7 +104,8 @@ export function ancestorsOf(rel) {
  * 树本身（含栏头操作、过滤框）。
  *
  * @param props.entries - 扁平条目表。
- * @param props.current - 当前打开的文献路径。
+ * @param props.current - 当前打开的文献路径；可以是**数组**（论文文件夹与旧平铺 `.pdf`
+ *   两种行形态各一条候选，命中任意一条都算当前）。
  * @param props.expanded - 展开集合。
  * @param props.filter - 过滤词。
  * @param props.onToggle - 展开/折叠文件夹。
@@ -111,6 +128,14 @@ export function PaperTree({
   busy = false, error = null,
 }) {
   const rows = useMemo(() => buildTreeRows(entries, expanded, filter), [entries, expanded, filter]);
+  /**
+   * 「当前打开的文献」可能对应**一条或两条**路径（论文文件夹 / 旧平铺 `.pdf`）。
+   * 统一成一个集合：调用方给字符串就按单条处理，给数组就全部认。
+   */
+  const currentPaths = useMemo(
+    () => new Set((Array.isArray(current) ? current : [current]).filter((p) => typeof p === 'string' && p !== '')),
+    [current],
+  );
 
   return <>
     {/* 栏头：与笔记库同一排 26×26 图标按钮。
@@ -151,7 +176,7 @@ export function PaperTree({
             const open = isFolder && expanded.has(row.path);
             return <li
               key={row.path}
-              className={`zp-tree-row${row.path === current ? ' is-current' : ''}${open ? ' is-expanded' : ''}${row.path === cursor ? ' is-cursor' : ''}`}
+              className={`zp-tree-row${currentPaths.has(row.path) ? ' is-current' : ''}${open ? ' is-expanded' : ''}${row.path === cursor ? ' is-cursor' : ''}`}
               style={{ '--zp-depth': String(row.depth) }}
             >
               <button

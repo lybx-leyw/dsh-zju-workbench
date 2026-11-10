@@ -3,7 +3,7 @@ import { Icon } from '@lybx-leyw/dsh-zju-ui-shared';
 import { AssistantDrawer } from './AssistantDrawer.jsx';
 import { ReaderFrame } from './ReaderFrame.jsx';
 import { createTopic, loadPaper, loadTranslateState, transcribePaper, translateSelection, uploadPaper } from './library.js';
-import { PaperTree, ancestorsOf } from './PaperTree.jsx';
+import { PaperTree, ancestorsOf, dirOf } from './PaperTree.jsx';
 import { RenameDialog } from './RenameDialog.jsx';
 
 /**
@@ -112,17 +112,39 @@ export function Paper({ controller }) {
    */
   const [treeOpen, setTreeOpen] = useState(readTreeOpen);
 
+  /**
+   * 一篇文献在**树上**的路径（就是 `row.path` 那个形状）。
+   *
+   * 两种布局并存，所以不能只拼一种：
+   *   - 新布局的论文文件夹：`<topic 路径>/<论文名>`（**不带** `.pdf`）；
+   *   - 旧平铺布局：`<topic 路径>/<论文名>.pdf`。
+   *
+   * 树里到底有哪一条要以**磁盘**为准，页面不猜。两条都给出来，交给
+   * `PaperTree` 的 `current` 用数组匹配 —— 早先只拼 `${name}.pdf`，
+   * 新布局下这一行永远不会被认成"当前"，高亮静默消失（不报错，最难发现）。
+   */
+  const paperPaths = useCallback((next) => {
+    if (next === null || next === undefined) return [];
+    const dir = decodeTopic(next.topic);
+    return [
+      [dir, next.name].filter(Boolean).join('/'),
+      [dir, `${next.name}.pdf`].filter(Boolean).join('/'),
+    ];
+  }, []);
+
   const pick = useCallback((next) => {
     // 展开到这篇文献所在的目录：页头下拉切换、或从树里打开，都要让树上看得见它。
-    const relPath = [decodeTopic(next.topic), `${next.name}.pdf`].filter(Boolean).join('/');
-    setExpanded((set) => new Set([...set, ...ancestorsOf(relPath)]));
+    // `ancestorsOf` 取的是「目录部分」，两种行形态的祖先目录是同一个。
+    for (const relPath of paperPaths(next)) {
+      setExpanded((set) => new Set([...set, ...ancestorsOf(relPath)]));
+    }
     setPaper({ topic: next.topic, name: next.name });
     setSelection(null);
     setJump(null);
     setMeta(null);
     setTranscript(null);
     writeLast({ topic: next.topic, name: next.name });
-  }, []);
+  }, [paperPaths]);
 
   // 打开一篇文献就顺手读一次元信息（页数 / 是否已转录）与译文状态。
   useEffect(() => {
@@ -229,11 +251,36 @@ export function Paper({ controller }) {
   }, [refreshTree]);
 
   /**
-   * 上传 PDF 到**当前选中的文件夹**（或库根）。
+   * 上传与新建文件夹的**目标文件夹**（相对库根；库根给空串）。
+   *
+   * # 优先级：树上选中的那一条 > 当前打开的文献 > 库根
+   *
+   * 早先只认「当前打开的文献所在的文件夹」。那在一种很常见的操作里是错的：
+   * 用户先点「新建文件夹」建出 `专题 A`，然后点 ＋ 导入 —— 此时打开着的可能还是
+   * 另一篇文献，于是文件被传进了**别的**文件夹，用户在目标文件夹里什么都看不到。
+   * 树上刚点过的那一行才是"我想放这里"的表达，所以它优先。
+   *
+   * @returns 目标文件夹的相对路径（库根是空串）。
+   */
+  const uploadTarget = useCallback(() => {
+    const row = treeCursor === null ? null : tree.find((entry) => entry.path === treeCursor);
+    if (row !== undefined && row !== null) {
+      // 选中的是文件夹 → 就传到它里面；选中的是文献 → 传到它所在的文件夹。
+      return row.type === 'folder' ? row.path : dirOf(row.path);
+    }
+    return paper !== null ? decodeTopic(paper.topic) : '';
+  }, [paper, tree, treeCursor]);
+
+  /**
+   * 上传 PDF 到**目标文件夹**（见 `uploadTarget`，空则落进兜底专题）。
    *
    * 走上游的 `/api/library/upload`：原始字节 + `x-dpr-topic` / `x-dpr-name` 头。
    * 上游的 topic 只能是单段目录名，所以深层路径要先经 `/api/ref` 编码 ——
    * 编码规则只在宿主侧一份，页面不复刻。
+   *
+   * 宿主把这一篇落成**论文文件夹** `<topic>/<论文名>/<论文名>.pdf`（结构不变量：
+   * 一篇论文的全部产物收在同一个文件夹里）。侧栏能不能看见它，取决于宿主的树读取
+   * 认不认这个布局 —— 那是 `paper-tree.ts` 的事，页面这边只负责把 topic 传对。
    *
    * ⚠️ **上游不接受空 topic**：`host.js` 那条上传路由见到
    * `!topic.trim()` 就回 400「缺少 x-dpr-topic / x-dpr-name 头」。
@@ -257,16 +304,15 @@ export function Paper({ controller }) {
     setTreeBusy(true);
     setTreeError(null);
     try {
+      const folder = uploadTarget();
+      let topic = DEFAULT_TOPIC;
+      if (folder !== '') {
+        const response = await fetch(`/zhiyun-paper/api/ref?path=${encodeURIComponent(`${folder}/x.pdf`)}`);
+        const ref = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(ref?.error ?? `HTTP ${response.status}`);
+        topic = ref.topic;
+      }
       for (const file of list) {
-        // 传到「当前打开文献所在的文件夹」；没有打开的就落进兜底专题。
-        const folder = paper ? decodeTopic(paper.topic) : '';
-        let topic = DEFAULT_TOPIC;
-        if (folder !== '') {
-          const response = await fetch(`/zhiyun-paper/api/ref?path=${encodeURIComponent(`${folder}/x.pdf`)}`);
-          const ref = await response.json().catch(() => null);
-          if (!response.ok) throw new Error(ref?.error ?? `HTTP ${response.status}`);
-          topic = ref.topic;
-        }
         const bytes = new Uint8Array(await file.arrayBuffer());
         const uploaded = await uploadPaper({ topic, name: file.name, bytes });
         // 新的坐标交给 pick：上传完直接打开它，用户不用再去树上找。
@@ -274,18 +320,22 @@ export function Paper({ controller }) {
           pick({ topic: uploaded.topic, name: uploaded.name });
         }
       }
-      await refreshTree();
+      // 传完把目标文件夹展开 —— 新文件藏在折叠的目录里，用户会以为没传上去。
+      await handleUploaded({ folder });
     } catch (error) {
       setTreeError(error instanceof Error ? error.message : String(error));
     } finally {
       setTreeBusy(false);
     }
-  }, [paper, pick, refreshTree]);
+  }, [handleUploaded, pick, uploadTarget]);
 
   /**
    * 新建文件夹（栏头的 folderPlus 按钮）。
    *
-   * 建在**当前打开的文献所在目录**下；没打开就建在库根。
+   * 父级与上传目标**同一份规则**（见 `uploadTarget`）：树上选中的文件夹优先，
+   * 其次是当前打开文献所在的文件夹，都没有就建在库根。两处各写一套的话，
+   * 用户会遇到「新建在 专题 A、传上去却落在 专题 B」这种自相矛盾的行为。
+   *
    * 名字先给一个默认值，用户可以马上在树上看到它 —— 与笔记库的
    * 「新建文件夹 → 直接出现一个"新文件夹"」同一手感（那边也没做命名弹窗）。
    */
@@ -293,7 +343,9 @@ export function Paper({ controller }) {
     setTreeBusy(true);
     setTreeError(null);
     try {
-      const parent = paper ? decodeTopic(paper.topic) : '';
+      // `uploadTarget()` 已经把「选中的是文献行」换算成它**所在**的文件夹 ——
+      // 新建的文件夹是它的兄弟，不是它的子目录。
+      const parent = uploadTarget();
       // 先问宿主当前有哪些目录，推一个不重名的默认名。
       const existing = new Set(tree.filter((e) => e.type === 'folder').map((e) => e.path));
       let name = '新文件夹';
@@ -311,12 +363,13 @@ export function Paper({ controller }) {
       await createTopic(ref.topic);
       await refreshTree();
       setExpanded((set) => new Set([...set, ...ancestorsOf(`${relDir}/x`), relDir]));
+      setTreeCursor(relDir);
     } catch (error) {
       setTreeError(error instanceof Error ? error.message : String(error));
     } finally {
       setTreeBusy(false);
     }
-  }, [paper, tree, refreshTree]);
+  }, [refreshTree, tree, uploadTarget]);
 
   /**
    * 把树上的路径换算成上游坐标（`{topic, name}`）。
@@ -416,8 +469,10 @@ export function Paper({ controller }) {
       }
       await refreshTree();
       // 游标跟着走：改完名后用户往往还要接着操作这一行。
+      // 新名字要按**原来的行形态**拼：论文文件夹行不带 `.pdf`，旧平铺行带。
       const parent = row.path.slice(0, row.path.lastIndexOf('/') + 1);
-      setTreeCursor(row.type === 'folder' ? `${parent}${name}` : `${parent}${name}.pdf`);
+      const suffix = row.type === 'folder' || !/\.pdf$/i.test(row.path) ? '' : '.pdf';
+      setTreeCursor(`${parent}${name}${suffix}`);
     } catch (error) {
       setTreeError(error instanceof Error ? error.message : String(error));
     } finally {
@@ -507,8 +562,9 @@ export function Paper({ controller }) {
     entries={tree}
     // 树的路径是**解码后**的多级路径，而 `paper.topic` 是编码过的目录名，
     // 直接拼会永远匹配不上（高亮消失，但不报错）。
-    // 树的 `row.path` **带 `.pdf`**，而 `paper.name` 去掉了扩展名。
-    current={paper ? [decodeTopic(paper.topic), `${paper.name}.pdf`].filter(Boolean).join('/') : null}
+    // 文献行有两种形态（论文文件夹 / 旧平铺 `.pdf`），所以传**两条候选**给树，
+    // 命中哪一条都算当前 —— 见 `paperPaths` 里为什么不能只拼 `.pdf`。
+    current={paperPaths(paper)}
     expanded={expanded}
     filter={treeFilter}
     onFilter={setTreeFilter}
