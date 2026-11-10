@@ -52,6 +52,7 @@ const NO_SETTINGS = new Map([
   ['ebook', '按 IP 认证、无用户可配置项；校外经 WebVPN'],
   ['cnki', '按出口 IP 认机构、无用户可配置项；校外经 WebVPN'],
   ['lab', '凭据由集成层注入、本包无用户可配置项；校外经 WebVPN'],
+  ['sztz', '凭据由集成层注入、本包无用户可配置项；校外经 WebVPN'],
 ]);
 
 function packages() {
