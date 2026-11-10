@@ -527,4 +527,72 @@ export class XzzdReader {
       };
     }
   }
+  /**
+   * 一门课的**点名记录**（对应上游 `xuezai rollcall history`）。
+   *
+   * # 这是纯读，先前被一句假理由删掉了
+   *
+   * 审计查出本仓把 `rollcall status` / `rollcall history` 归为「上游和签到绑定」，
+   * 而上游 `rollcall-cli.ts:52` 的原话是「**只查看，不签到**」——
+   * `rollcallHistory` 就是一条纯 GET。两条纯读能力因此被误删。
+   *
+   * # 端点
+   *
+   * `GET /api/course/{courseId}/student/{userId}/rollcalls`
+   *
+   * @param options.courseId - 课程 id。
+   * @param options.userId - 学生 id（不给就查当前账号）。
+   * @param options.signal - 中止信号。
+   * @returns `{ courseId, records, total, signed, notSigned, latest }`。
+   */
+  async rollcallHistory({ courseId, userId, signal } = {}) {
+    const id = int(courseId);
+    if (id <= 0) throw new ClassroomError('INVALID_INPUT', '课程 id 不合法');
+    const uid = userId ?? await this.currentUserId(id, { signal });
+
+    const data = await this.listRead(
+      `${XZZD_BASE}/api/course/${id}/student/${uid}/rollcalls`,
+      '点名记录',
+      { signal },
+    );
+    if (!Array.isArray(data?.rollcalls)) {
+      throw new ClassroomError('SCHEMA_CHANGED', '点名记录响应缺少 rollcalls 数组，不能据此判断有没有缺勤。');
+    }
+
+    /** 点名来源的中文名（照上游 `SOURCES`）。 */
+    const SOURCES = { radar: '雷达', number: '数字', qr: '二维码' };
+
+    /**
+     * 一条历史点名的状态。
+     *
+     * 照上游 `pastStatus`：已应答 → 已签到；点名还没结束 → 「未签（点名未结束）」，
+     * 那是「还能补」而不是「缺勤」；否则看 `absent`。
+     */
+    const statusOf = (row) => {
+      const answered = [row?.status, row?.status_name].some((v) => v === 'on_call' || v === 'on_call_fine');
+      if (answered || row?.student_status === 'on_call') return '已签到';
+      if (row?.rollcall_status && row.rollcall_status !== 'finished') return '未签（点名未结束）';
+      const status = row?.student_status || row?.status || '';
+      return status === 'absent' ? '缺勤' : (status || '未知');
+    };
+
+    const records = data.rollcalls
+      .map((row) => ({
+        time: String(row?.rollcall_time ?? ''),
+        type: SOURCES[row?.source ?? ''] ?? String(row?.source ?? ''),
+        status: statusOf(row),
+      }))
+      // 从新到旧：用户看记录是为了找「最近有没有漏签」。
+      .sort((a, b) => b.time.localeCompare(a.time));
+
+    const signed = records.filter((row) => row.status === '已签到').length;
+    return {
+      courseId: id,
+      records,
+      total: records.length,
+      signed,
+      notSigned: records.length - signed,
+      latest: records[0]?.time ?? null,
+    };
+  }
 }

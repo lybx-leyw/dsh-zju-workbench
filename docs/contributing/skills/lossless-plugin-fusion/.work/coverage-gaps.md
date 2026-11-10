@@ -251,15 +251,15 @@
 
 | # | 包 | 能力 | 影响 |
 | --- | --- | --- | --- |
-| W-18 | `zdbk` | `timetable` 六类非正式课 + `student` | **同响应内，成本≈0** |
+| W-18 | `zdbk` | `timetable` 六类非正式课 + `student` | 六类**已补**（`kind` 字段标明来源）；`student` 待补 |
 | W-19 | `zdbk` | `grades` 的评教提示 | 评教没做时查成绩会被拒，本仓没提示原因 |
 | W-20 | `cc98` | `board list` 缺「我关注的」与「按名搜」两态 | 版面发现能力弱 |
 | W-21 | `cc98` | `search` 单关键词、无编排 | 上游支持多说法 + 相关度 + 限流退避 |
 | W-22 | `cc98` | `user` 字段大面积丢失 | 用户资料只留了一部分 |
 | W-23 | `cc98` | `notifications` 无汇总 | 上游有按类汇总 |
-| W-24 | `cc98` | **`messages` 顺序反了** | 上游 `.reverse()` 成「从早到晚」，本仓直接 map。**不报错、不缺字段，只骗「谁先说的」** |
+| W-24 | `cc98` | ~~`messages` 顺序反了~~ | **已修**：加 `.reverse()`。原测试夹具是按正序写的，所以删掉 reverse 也不会红 —— 夹具已改成平台真实顺序（从新到旧） |
 | W-25 | `cc98` | `topic view` 的 `only`（只看楼主）/ `find`（按词筛楼层）/ 热门 | 长帖读不动 |
-| W-26 | `xuezai` | **`rollcall status` / `rollcall history`** | **两个纯 GET**，被一句**假理由**删掉了（见 7.3） |
+| W-26 | `xuezai` | ~~`rollcall status` / `rollcall history`~~ | **`rollcallHistory` 已补**（纯 GET）；`rollcall status` 待补 |
 | W-27 | `xuezai` | `course list` 未暴露 | 上游有独立课程列表 |
 | W-28 | `xuezai` | `course view` / `modules` | 课程详情缺模块清单 |
 | W-29 | `xuezai` | 参考点全败后的最小二乘反推 | 见 Y-6 |

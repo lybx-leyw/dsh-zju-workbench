@@ -681,7 +681,15 @@ export class Cc98Reader {
   async messages({ user_id, from = 0, size = 20 } = {}) {
     const id = cc98Id(user_id, '用户');
     const rows = asList(await this.api.get(`/message/user/${id}`, { query: { from, size }, where: '私信记录' }));
-    const messages = rows.map((m) => ({
+    /**
+     * ⚠️ **必须 reverse**：平台按「从新到旧」返回，而对话读起来是「从早到晚」。
+     *
+     * 这条是审计查出来的：字段全对、只是顺序反了，所以**任何形状校验都抓不到**
+     * —— 返回结构完全合法，只在「谁先说的」上骗人。
+     *
+     * 上游 `index.ts:346` 的 `thread()` 里有同一句 `.reverse()`。
+     */
+    const messages = rows.reverse().map((m) => ({
       id: m?.id,
       // `senderId` 与查询的用户 ID 相同 → 这条是对方发的。不去查"我是谁"：
       // 那要多打一次 `/me`，而这里的信息已经足够判定方向。

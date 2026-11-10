@@ -1584,3 +1584,66 @@ test('fault() 造的是 XuezaiError，带 code 与 name', () => {
   assert.equal(error.name, 'XuezaiError');
   assert.equal(error.message, '参数不对');
 });
+
+test('rollcallHistory：纯读，按从新到旧给记录（审计 W-26）', async () => {
+  // 审计查出：本仓把这条归为「上游和签到绑定」而删掉，理由是假的 ——
+  // 上游 rollcall-cli.ts:52 原话「只查看，不签到」，端点是纯 GET。
+  const { XzzdReader } = await import('../packages/source/xuezai/src/xzzd-reads.js');
+  const calls = [];
+  const reader = new XzzdReader({
+    async json(url, options) {
+      calls.push({ url, method: options?.method });
+      return {
+        rollcalls: [
+          { rollcall_time: '2026-11-01 08:00', source: 'radar', status: 'on_call' },
+          { rollcall_time: '2026-11-08 08:00', source: 'number', student_status: 'absent' },
+          { rollcall_time: '2026-11-09 08:00', source: 'qr' },
+        ],
+      };
+    },
+  }, 'https://courses.zju.edu.cn');
+
+  const result = await reader.rollcallHistory({ courseId: 11, userId: 22 });
+
+  assert.equal(calls[0].method, undefined, 'GET 不带 method');
+  assert.match(calls[0].url, /\/api\/course\/11\/student\/22\/rollcalls$/);
+  assert.equal(result.total, 3);
+  assert.equal(result.signed, 1, '只有 on_call 那条算已签到');
+  assert.equal(result.notSigned, 2);
+
+  // 从新到旧
+  assert.deepEqual(result.records.map((r) => r.time),
+    ['2026-11-09 08:00', '2026-11-08 08:00', '2026-11-01 08:00']);
+  assert.equal(result.latest, '2026-11-09 08:00');
+
+  // 状态映射
+  assert.equal(result.records[2].status, '已签到');
+  assert.equal(result.records[1].status, '缺勤');
+  // 来源中文化
+  assert.equal(result.records[0].type, '二维码');
+});
+
+test('rollcallHistory：点名未结束要标「未签（点名未结束）」而不是缺勤', async () => {
+  const { XzzdReader } = await import('../packages/source/xuezai/src/xzzd-reads.js');
+  const reader = new XzzdReader({
+    async json() {
+      return { rollcalls: [{ rollcall_time: '2026-11-10 08:00', source: 'radar', rollcall_status: 'ongoing' }] };
+    },
+  }, 'https://courses.zju.edu.cn');
+  const result = await reader.rollcallHistory({ courseId: 1, userId: 2 });
+  assert.equal(result.records[0].status, '未签（点名未结束）', '那是「还能补」，不是缺勤');
+});
+
+test('rollcallHistory：缺 rollcalls 数组要报 SCHEMA_CHANGED，不能当成「没缺勤」', async () => {
+  const { XzzdReader } = await import('../packages/source/xuezai/src/xzzd-reads.js');
+  const reader = new XzzdReader({
+    async json() { return { unexpected: 1 }; },
+  }, 'https://courses.zju.edu.cn');
+  await assert.rejects(
+    () => reader.rollcallHistory({ courseId: 1, userId: 2 }),
+    (error) => {
+      assert.equal(error.code, 'SCHEMA_CHANGED');
+      return true;
+    },
+  );
+});

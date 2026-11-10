@@ -2279,3 +2279,47 @@ test('错误码稳定：新方法用的码都在预期集合里', async () => {
   );
   assert.equal(api.calls.filter((c) => c.kind === 'html').length, 1, '只有 selectionContext 读过一次首页');
 });
+
+test('timetable：六类课都在同一响应里，kind 标明来源（审计 W-18）', async () => {
+  // 审计查出本仓先前只读 kbList，另外五类（实践/线上/英文/进修/服从安排）全丢。
+  // 那些是学生真实课表里有的课，漏读的代价是「课表少了几门课」，
+  // 而用户会以为教务网没排。
+  const { ZdbkReader } = await import('../packages/source/zdbk/src/reads.js');
+  // `parseSession` 要的字段：`kcb`（含 <br> 分隔的课程/教师/地点）、`xqj` 星期、
+  // `djj` 起始节、`skcd` 连堂节数。字段名写错会让解析静默返回 0 条。
+  const base = {
+    kcmc: '高等数学', xqj: '1', djj: '1', skcd: '2',
+    kcb: '高等数学<br>必修<br>张三<br>紫金港东1-101',
+    kcdm: 'MATH1001', xkkh: 'P1', zcd: '1-16周',
+  };
+  const reader = new ZdbkReader({
+    async post() {
+      return {
+        kbList: [{ ...base, kcmc: '正式课' }],
+        sjkList: [{ ...base, kcmc: '实践课' }],
+        xskList: [{ ...base, kcmc: '线上课' }],
+        ywkList: [{ ...base, kcmc: '英文课' }],
+        jxkList: [{ ...base, kcmc: '进修课' }],
+        fKbList: [{ ...base, kcmc: '服从安排' }],
+      };
+    },
+  }, () => new Date('2026-11-10T12:00:00+08:00'));
+
+  const result = await reader.timetable({ academic_year: '2026-2027', term: 1 });
+  assert.equal(result.sessions.length, 6, '六类都要读进来');
+  const kinds = new Set(result.sessions.map((s) => s.kind));
+  assert.deepEqual([...kinds].sort(),
+    ['advanced', 'arranged', 'english', 'formal', 'online', 'practice'],
+    'kind 要标明来源');
+});
+
+test('timetable：kbList 缺失仍是错误（那是主课表，不是空）', async () => {
+  const { ZdbkReader } = await import('../packages/source/zdbk/src/reads.js');
+  const reader = new ZdbkReader({
+    async post() { return { sjkList: [] }; },
+  }, () => new Date('2026-11-10T12:00:00+08:00'));
+  await assert.rejects(
+    () => reader.timetable({ academic_year: '2026-2027', term: 1 }),
+    '缺 kbList 说明结构变了，不能静默成空',
+  );
+});

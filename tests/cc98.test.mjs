@@ -560,9 +560,13 @@ test('reads.conversations: /message/recent-contact-users + 预览截断', async 
 });
 
 test('reads.messages: /message/user/{id}，按 senderId 判方向，正文清洗 UBB', async () => {
+  // ⚠️ 夹具按**平台真实顺序（从新到旧）**给：id=2 是我最新发的。
+  // 上游 index.ts:346 的 thread() 有 .reverse() 把它转成「从早到晚」。先前的夹具
+  // 是按从早到晚给的，于是 .reverse() 删掉也照样绿 —— 审计查出「messages 顺序反了」
+  // 时正是这条测试没能发现。
   const api = fakeApi([
-    { id: 1, senderId: 42, receiverId: 9, content: '[b]对方发的[/b]', time: '2024-01-02T03:04:05Z' },
     { id: 2, senderId: 9, receiverId: 42, content: '我发的', contentType: 1, time: null },
+    { id: 1, senderId: 42, receiverId: 9, content: '[b]对方发的[/b]', time: '2024-01-02T03:04:05Z' },
   ]);
   const result = await new Cc98Reader(api).messages({ user_id: 42, from: 0, size: 20 });
   assert.equal(api.calls[0].path, '/message/user/42');

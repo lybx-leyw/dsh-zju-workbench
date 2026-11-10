@@ -573,7 +573,9 @@ export async function apply(ctx, config = {}) {
      *
      * 参数错误是调用方的错，与凭据状态无关，所以它该先报。
      */
-    const ACTIONS = ['activities', 'assignments', 'activity', 'materials', 'submission'];
+    // `rollcallHistory` 是纯读（上游 rollcall-cli.ts:52 明写「只查看，不签到」）。
+    // 先前被一句「上游和签到绑定」的假理由漏掉了，审计查出后补回。
+    const ACTIONS = ['activities', 'assignments', 'activity', 'materials', 'submission', 'rollcallHistory'];
     if (!ACTIONS.includes(action)) {
       throw fault('INVALID_INPUT', `未知的作业读取动作：${action || '(空)'}。可选 ${ACTIONS.join(' / ')}`);
     }
@@ -604,6 +606,8 @@ export async function apply(ctx, config = {}) {
           pageSize: Number(body.pageSize ?? 30),
           signal,
         });
+      case 'rollcallHistory':
+        return reader.rollcallHistory({ courseId: body.courseId, userId: body.userId, signal });
       case 'submission':
         return reader.activitySubmission(
           { id: body.activityId, course_id: body.courseId, group_set_id: body.groupSetId, submit_by_group: body.isGroup },

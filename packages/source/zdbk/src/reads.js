@@ -225,12 +225,59 @@ export class ZdbkReader {
     const term = args.term ?? guessed.term;
     // `allowNull`：学期不存在时正方回 `null`，那不是错误 —— 就是这一学期没课。
     const data = await this.api.post(ZDBK_PATHS.timetable, { form: { xnm: academic_year, xqm: termCode(term), captcha_value: '' }, allowNull: true });
-    const items = data == null ? [] : requiredArray(data, 'kbList');
+    /**
+     * 六类课都在**同一个响应**里，只是字段名不同。
+     *
+     * 审计查出本仓只读了 `kbList`（正式课），另外六类全丢 —— 而那些是
+     * 「实践 / 线上 / 英文 / 进修 / 服从安排调配」的课，学生真实课表里有。
+     *
+     * 上游 `kbcx.ts:13` 的字段名与含义：
+     * | 字段 | 类别 |
+     * | --- | --- |
+     * | `kbList` | 正式课 |
+     * | `sjkList` | 实践课 |
+     * | `xskList` | 线上课 |
+     * | `ywkList` | 英文课 |
+     * | `jxkList` | 进修课 |
+     * | `fKbList` | 服从安排（调配结果） |
+     *
+     * 全读进来的成本≈0（同一次请求），漏读的代价是「课表少了几门课」——
+     * 用户会以为教务网没排。
+     */
+    const buckets = data == null ? {} : data;
+    /** 类别 → 字段名，顺序即展示优先级。 */
+    const KINDS = [
+      ['kbList', 'formal', '正式课'],
+      ['sjkList', 'practice', '实践课'],
+      ['xskList', 'online', '线上课'],
+      ['ywkList', 'english', '英文课'],
+      ['jxkList', 'advanced', '进修课'],
+      ['fKbList', 'arranged', '服从安排'],
+    ];
+    /**
+     * `kbList`（正式课）**必须存在** —— 它是主课表。
+     *
+     * 缺它说明响应结构变了，那时静默返回空列表会让界面说「这学期没课」，
+     * 而真相是「解析不了」。所以这一条仍走 `requiredArray` 抛错。
+     *
+     * 另外五类**可以缺**：多数学生没有实践课/进修课，缺字段是正常的空。
+     */
+    const items = [];
+    for (const row of (data == null ? [] : requiredArray(data, 'kbList'))) {
+      items.push({ ...row, __kind: 'formal' });
+    }
+    for (const [field, kind] of KINDS.slice(1)) {
+      const rows = buckets[field];
+      if (!Array.isArray(rows)) continue;
+      for (const row of rows) items.push({ ...row, __kind: kind });
+    }
     const { rows, skipped } = this.rows(items, (item) => {
       const session = parseSession(item);
       // 占位行返回 `[]`（不是 `null`）：`rows()` 用「是不是数组」来区分
       // 「按设计不显示」与「解析失败」，这里必须按前者的语义返回。
-      return session ? [session] : [];
+      // `kind` 由外层按字段名注入 —— 页面要能区分「正式课」与「实践课」，
+      // 否则六类混在一张表里看不出哪条是正式学分。
+      return session ? [{ ...session, kind: item.__kind }] : [];
     });
     // 按星期、再按起始节次排：页面直接按这个顺序往格子图上放。
     rows.sort((a, b) => a.weekday - b.weekday || a.periods[0] - b.periods[0]);
