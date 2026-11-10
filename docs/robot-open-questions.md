@@ -79,3 +79,49 @@
 - **相关位置**：`packages/dsh-zhiyun-page-feedback/src/style.css`（`.zfb-item` 标题、`.zfb-summary`
   摘要、`.zfb-meta` / `.zfb-field` / `.zfb-counter` 辅助文字、`.zfb-back`）；基准字号与排版变量在
   `packages/dsh-zhiyun-shell-workbench/src/style.css`。
+
+## 2026-10-19 · F-004 中转站一键部署
+
+- **诉求**：中转站要用户自己在魔搭创空间上建一台，门槛偏高。希望无中转站时，用户可以选择
+  「让 AI 拿我提供的魔搭 API + 本仓库的示例，替我搭一个」，以此降低上手门槛。
+- **为何复杂/宽泛**：**技术上可行**（魔搭确实有 Studio OpenAPI：`POST /openapi/v1/studios`
+  建创空间、`POST /studios/{o}/{r}/deploy` 部署、`POST /studios/{o}/{r}/secrets` 灌密钥，
+  另有 `ms` CLI 与 `modelscope_hub.HubApi`；均需 `Authorization: Bearer $MODELSCOPE_API_KEY`），
+  但**要拍板的是形态与凭据处理，不是能不能做**：
+  - 交付形态有多种合理取舍（文档指引 / 可执行脚本 / 工作台内引导 UI）；
+  - 用户的魔搭 API Token 怎么交给 AI 或脚本、是否落盘、如何不进仓库 —— 属安全取舍；
+  - 建完还要把 `deploy/relay-service/` 的代码推上去（魔搭 Studio 代码走 git，默认分支 `master`），
+    并写入 `WRITEKEY` / `READKEY` 两个平台 Secret（**变量名不能有下划线**，见
+    `deploy/relay-service/README.md`），这一步是否也一并自动化；
+  - 引入新依赖（`modelscope` Python SDK）还是用标准库直连 HTTP，是两种不同代价。
+  **机器人当前无法验证**：沙箱里没有真实的魔搭 API Token，任何一条 OpenAPI 调用都跑不通，
+  写脚本等于交一份没验证过的东西 —— 违反「不编造」红线，所以只调研、不实现。
+- **待开发者决策**：
+  1. 先做**文档形态**：写一份「给 AI 的部署作业指导书」（步骤 + 可复制的 curl/git 命令 +
+     密钥填写位置），用户把 API Token 给自己的 AI 照做 —— 零代码、零依赖、无需验证，代价最低；
+  2. 做**脚本形态**（如 `scripts/deploy-relay.mjs`，标准库直连 OpenAPI，Token 只从环境变量读、
+     不落盘）—— 体验最好，代价：新增一条可执行路径，需真 Token 联调后才能说可用；
+  3. 在工作台「个人 → 设置 → 规划数据源」里加一个**引导入口** —— 与第 1/2 条叠加，
+     属跨包 UI 改动，范围最大。
+  另需定：免费档硬件名（现用 `platform/2v-cpu-8g-mem`）是否写死、创空间重名时怎么提示。
+- **相关位置**：`deploy/relay-service/`（`server.py` / `Dockerfile` / `ms_deploy.json` / `README.md`）；
+  对应文档 `docs/modelscope-as-cloud-server.md`（第 4 节「部署细节（照做版）」是现成的手工步骤）；
+  消费端 `packages/dsh-zhiyun-page-planning/src/index.js`。
+
+## 2026-11-06 · F-005 后续 snapshotFresh 中 entries / config 的取值时机
+
+- **诉求**：非用户新诉求，是本轮解开 robot 与 main 长期合并冲突（10-24 起连续两周同一组两文件）
+  时**被放弃的唯一细节**，按既定方案落成待决策条目：`packages/dsh-zhiyun-page-planning/src/index.js`
+  取 main 全量重写版（robot 旧补丁的三路并发诉求已被上游 `Promise.allSettled` 达成且更完整），
+  旧补丁随之整体废弃。
+- **为何复杂/宽泛**：robot 当时的补丁特意把 `entries` / `config` 的取值放在 `sync` **之前**，
+  理由是：若在 `sync` 之后取，本次同步新增的条目会**同时**出现在返回的 `entries` 列表和
+  `remote.added` 计数里，等于重复呈现；main 现在的 `snapshotFresh()` 是在 `Promise.allSettled`
+  三路并发结束后、于 `return` 字面量里取 `entries: store.list()` / `config: mask(getConfig())`，
+  即 `sync` **之后**取。改哪种是语义取舍，且该文件属主干，robot 分支不越界代改。
+- **待开发者决策**：
+  1. 在 main 上把 `entries` / `config` 的取值挪到 `sync` 之前（恢复 robot 补丁的语义，避免重复计入）；
+  2. 维持现状，但在 `snapshotFresh()` 里加注释写明「`sync` 之后取值是有意为之」及理由；
+  3. 若取值时机确实影响，改为在返回体里区分「同步前快照」与「本次新增」两个字段。
+- **相关位置**：`packages/dsh-zhiyun-page-planning/src/index.js`（`snapshotFresh()`，约 859 行起）；
+  历史补丁见 robot 分支被废弃的 F-005 改动（`git log --follow` 可查）。
