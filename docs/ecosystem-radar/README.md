@@ -40,17 +40,25 @@ node scripts/radar-rotation.mjs --group
 
 ## `radar-` 前缀的包
 
-`packages/dsh-radar-*` 是雷达自动生成的**候选骨架**：
+`packages/radar/dsh-radar-*` 是雷达自动生成的**候选骨架**
+（**全部**收在 `packages/radar/` 下，`packages/` 根**不得**有平铺的 radar 包）：
 
 - **未评审、未接入 profile、不可直接使用**；
 - 仅供人工评估；真要采用须重写并走正常包流程；
-- **不要**把它们写进 `profiles/zhiyun-bench/package.json` —— 未验证的包会让整个工作台起不来（[CONTRIBUTING 3.1](../../docs/contributing/CONTRIBUTING.md)）。
+- **不要**把它们写进 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles` —— 未验证的包会让整个工作台起不来（[CONTRIBUTING 3.1](../../docs/contributing/CONTRIBUTING.md)）。
+
+> **⚠ 路径已于 r168（2026-11-10）更正。** 本节长期写的是 `packages/dsh-radar-*` 与
+> `profiles/zhiyun-bench/`，二者**都已不存在**：`origin/main` 已把 radar 包统一迁到
+> `packages/radar/`，并把 `profiles/zhiyun-bench/` 更名为 `profiles/zju-workbench/`
+> （`files` 未随之更新）。r160 / r166 / r167 三轮的 registry 里都记过同一个
+> `FileNotFoundError` —— 那是**文档过期**导致的重复劳动，不是任务脚本的缺陷。
+> 本轮直接把真值写进本文，后续轮次不必再记。
 
 ## 两类优先候选
 
 | 类型 | 判据 | 集成方式 |
 | --- | --- | --- |
-| **A · 原生 DSH 插件包** | 带 `dsh.bundle.patch` / `cordis.patch.yml` | **最高优先**。锁版挂载 + 外围兼容层（效法 `packages/dsh-zhiyun-paper`）：锁版引入上游、自有前缀路由、自有插槽承载，**绝不改上游源码** |
+| **A · 原生 DSH 插件包** | 带 `dsh.bundle.patch` / `cordis.patch.yml` | **最高优先**。锁版挂载 + 外围兼容层（效法宿主自带的 paper/reader 类包）：锁版引入上游、自有前缀路由、自有插槽承载，**绝不改上游源码** |
 | **B · 其他 JS 项目** | JS / TS 技术栈 | 须**高 stars** 或**明确面向浙大 / 考试 / 刷题 / 笔记 / 论文 / 锻炼** |
 
 ## 强化式集成（核心判据）
@@ -66,10 +74,10 @@ node scripts/radar-rotation.mjs --group
 ## 硬边界
 
 - **推 `radar` 分支，绝不推 `main`**。
-- **候选包不得接进 profile**：绝不写 `profiles/zhiyun-bench/package.json` 的 `dsh.profile.bundles`。候选包只放 `packages/` 下并标注「未接入、未评审」。
+- **候选包不得接进 profile**：绝不写 `profiles/zju-workbench/package.json` 的 `dsh.profile.bundles`。候选包只放 `packages/radar/` 下并标注「未接入、未评审」。
 - **许可证（仅宽松）**：`MIT / Apache-2.0 / BSD-2-Clause / BSD-3-Clause / ISC / 0BSD / Unlicense / CC0-1.0` ✅；`GPL / AGPL / LGPL / MPL` 与**无许可证** ⛔ 只登记「仅供参考」，**不得摘取任何代码**；`NOASSERTION` ⚠ 待人工核验，不采用。
 - **不搬运上游源码**；**不碰他人 `OWNERS`**（新包 `Owner: shared`）。
-- 候选骨架一律 `dsh-radar-` 前缀，避免与本仓 `dsh-zhiyun-*` 混淆。
+- 候选骨架一律 `dsh-radar-` 前缀，统一放 `packages/radar/`，避免与本仓业务包（`packages/core|client|tool|source` 下的 `classroom-*` / `page-*`）混淆。
 
 ## 评审入口
 

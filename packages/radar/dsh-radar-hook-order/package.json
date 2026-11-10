@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-hook-order",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 @tengxiaohtx/dsh-plugin-hooks-ordering@0.2.0，给宿主 hook 链补上 before/after 确定性排序：把「谁先谁后」从加载时序改成可声明的拓扑序，强化同一组 hook 的执行底层",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@tengxiaohtx/dsh-plugin-hooks-ordering": "0.2.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

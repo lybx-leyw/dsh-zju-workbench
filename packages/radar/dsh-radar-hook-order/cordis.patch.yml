@@ -1,0 +1,36 @@
+# dsh-radar-hook-order 的挂载声明（候选骨架，未评审）。
+#
+# ── 与上游 patch 的**唯一**差别：本包把默认控制面收窄 ──────────────
+#
+# 上游 @tengxiaohtx/dsh-plugin-hooks-ordering 默认控制 13 个 waterfall hook + 1 个
+# serial hook（agent/pre-step、agent/request、llm/stream、system-prompt/assemble、
+# tools/pre-execute、tools/execute、tools/post-execute、fs/write-intent、
+# fs/edit-intent、approval/request、session-telemetry/record …）。
+#
+# 本包**不照抄那份清单**，只控制「本仓自己的包会挂上去、且顺序真的会影响结果」的那几个。
+# 理由：hook 空链上是透明透传（上游 README 明说），但每多控一个 hook，
+# 就多一条「本仓的排序策略可能压过某个第三方插件的隐式假设」的风险面。
+# 先把面收窄，评审通过后再按实测逐条放行，是**可回退的扩张**；
+# 一上来全开，出问题时无从判断是哪个 hook 被压坏了。
+#
+# 注意：上游 patch 注释强调 **apply LAST** —— 必须在原生/贡献插件之后加载，
+# 否则后注册的 prepend 会跑到 bracket 外面去。本包只做 insert，
+# 「是否排在最后」由 profile 层的叠加顺序保证，不是骨架能替评审决定的（TODO-2）。
+- insert:
+    - id: radar-hook-order
+      name: '@tengxiaohtx/dsh-plugin-hooks-ordering/dsh'
+      config:
+        # 只控「写入前 / 写入后」这两个接缝：本仓 dsh-radar-diff-approval（审批）
+        # 与编辑器写入路径都落在这里，顺序错会让审计先于改动记录、或把 diff 算在半截状态上。
+        hooks:
+          - 'tools/pre-execute'
+          - 'tools/post-execute'
+          - 'fs/write-intent'
+          - 'fs/edit-intent'
+        # 暂不控 serial hook（agent/turn-stopping）：本仓无订阅者，开了也只是一条
+        # 空 coordinator，徒增故障面（TODO-3）。
+        serialHooks: []
+        # 每次注册关系变化时写出约束 DAG（JSON）。
+        # 目的不是「好看」，是让「顺序变了」这件事**可事后归因** ——
+        # 没有这份账，顺序出问题时只能靠猜（TODO-4）。
+        log: './radar-hook-order-dag.json'
