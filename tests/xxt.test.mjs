@@ -9,7 +9,7 @@ import {
 import {
   parseCourses, parseHomeworkList, parseHomeworkDetail, parseExams,
   parseSchedule, normalizeNotice, matchesNotice, isPending, nearestDate,
-  stripTags, unescapeHtml, hiddenValue,
+  stripTags, unescapeHtml, hiddenValue, parseChapters, parseCards,
 } from '../packages/source/xxt/src/parse.js';
 import { XxtReader, XXT_METHODS, describeError } from '../packages/source/xxt/src/reads.js';
 import { XxtClient, XXT_SETUP, withQuery } from '../packages/source/xxt/src/client.js';
@@ -840,9 +840,9 @@ test('插件形状：name / inject 与路由常量', () => {
   assert.equal(ROUTE_PATH, '/api/zhiyun-xxt');
 });
 
-test('方法白名单：9 个只读方法，一个不多一个不少', () => {
+test('方法白名单：12 个只读方法，一个不多一个不少', () => {
   assert.deepEqual([...XXT_METHODS], [
-    'courses', 'listCourses', 'findCourse', 'homework', 'listHomework',
+    'courses', 'listCourses', 'findCourse', 'chapters', 'materials', 'downloadParams', 'homework', 'listHomework',
     'deadlines', 'exams', 'notices', 'schedule',
   ]);
   // 读取器上确实有这些方法（白名单不能是空名单）
@@ -882,3 +882,329 @@ test('通知 / 课表参数校验', async () => {
 });
 
 
+
+/* ────────────────────────────────────────────── chapters（parse5 那条路） */
+
+/**
+ * 章节目录的测试。
+ *
+ * # 为什么用 parse5 而不是正则
+ *
+ * 章节树是**嵌套**的：`div.chapter_unit` 是大章，`id="cur<编号>"` 是节，
+ * 节还能再套 `li`。正则数不清层级，而层级错了会让「第几章第几节」显示错。
+ *
+ * ⚠️ 夹具按上游 `chaoxing/parse.ts` 的注释与实现推断，**未经真实课程页验证**。
+ */
+
+/** 一段带两层嵌套的章节 HTML。 */
+const CHAPTERS_HTML = `
+<div class="chapter_unit">
+  <div class="catalog_name">第一章 绪论</div>
+  <ul>
+    <li><div id="cur101"><span class="catalog_sbar">1.1</span><a class="clicktitle" title="什么是机器学习">什么是机器学习</a></div></li>
+    <li><div id="cur102"><span class="catalog_sbar">1.2</span><a class="clicktitle" title="发展历程">发展历程</a></div></li>
+  </ul>
+</div>
+<div class="chapter_unit">
+  <div class="catalog_name">第二章 模型</div>
+  <ul>
+    <li><div id="cur201"><span class="catalog_sbar">2.1</span><a class="clicktitle" title="线性模型">线性模型</a></div></li>
+  </ul>
+</div>`;
+
+test('parseChapters：按大章分组，节带编号与完整路径', () => {
+  const chapters = parseChapters(CHAPTERS_HTML);
+  assert.equal(chapters.length, 3, '两章共三节');
+  assert.deepEqual(chapters.map((c) => c.id), ['101', '102', '201']);
+
+  const first = chapters[0];
+  assert.equal(first.title, '1.1 什么是机器学习', '编号要并进标题');
+  assert.deepEqual(first.path, ['第一章 绪论', '1.1 什么是机器学习'], 'path 从大章到本节');
+  assert.equal(first.locked, false);
+
+  // 第二节仍然是第一章——path 不能串到上一节去。
+  assert.deepEqual(chapters[1].path, ['第一章 绪论', '1.2 发展历程']);
+  assert.deepEqual(chapters[2].path, ['第二章 模型', '2.1 线性模型']);
+});
+
+test('parseChapters：嵌套 li 里的节，path 要带上父节', () => {
+  const nested = `
+<div class="chapter_unit">
+  <div class="catalog_name">第三章</div>
+  <ul>
+    <li><div id="cur301"><a class="clicktitle" title="父节">父节</a></div>
+      <ul><li><div id="cur302"><a class="clicktitle" title="子节">子节</a></div></li></ul>
+    </li>
+  </ul>
+</div>`;
+  const chapters = parseChapters(nested);
+  assert.equal(chapters.length, 2);
+  assert.equal(chapters[0].path.length, 2, '父节：大章 + 自己');
+  assert.deepEqual(chapters[1].path, ['第三章', '父节', '子节'], '子节要带父节');
+});
+
+test('parseChapters：带锁标记的节标出来', () => {
+  const locked = `
+<div class="chapter_unit">
+  <div class="catalog_name">第四章</div>
+  <ul><li><div id="cur401"><a class="clicktitle" title="未解锁内容">未解锁内容</a><span class="bntHoverTips">本章需解锁后查看</span></div></li></ul>
+</div>`;
+  const chapters = parseChapters(locked);
+  assert.equal(chapters.length, 1);
+  assert.equal(chapters[0].locked, true);
+});
+
+test('parseChapters：空 HTML 返回空数组，不抛', () => {
+  assert.deepEqual(parseChapters(''), []);
+  assert.deepEqual(parseChapters('<div>没有章节</div>'), []);
+});
+
+test('chapters 方法：先 findCourse 再取页面，返回数量', async () => {
+  const calls = [];
+  // 课程卡片：`parseCourses` 认 `stucoursemiddle?courseid=…&clazzid=…&cpi=…`
+  // 这条链接 + 紧跟的 `course-name[title]`。夹具按它的真实形状写。
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=111&clazzid=222&cpi=333">'
+    + '<span class="course-name" title="机器学习">机器学习</span></a>';
+
+  const reader = new XxtReader({
+    get: async (url, query) => {
+      calls.push({ url, query });
+      if (url.includes('courselistdata')) return COURSE_HTML;
+      return CHAPTERS_HTML;
+    },
+    post: async () => '',
+  });
+  const result = await reader.chapters({ course: '机器学习' });
+  assert.equal(result.count, 3);
+  assert.equal(result.chapters.length, 3);
+
+  const page = calls.find((c) => c.url.includes('studentcourse'));
+  assert.equal(page.query.courseid, '111', '要用 findCourse 拿到的 id');
+  assert.equal(page.query.clazzid, '222');
+  assert.equal(page.query.cpi, '333');
+});
+
+/* ────────────────────────────────────────────── materials（章节附件清单） */
+
+/**
+ * 章节附件清单。
+ *
+ * ⚠️ 夹具按上游 `chaoxing/parse.ts` 的注释与实现推断，**未经真实卡片页验证**。
+ */
+
+/** 造一段卡片 HTML，里面 `mArg = {attachments:[…]}`。 */
+function cardsHtml(attachments) {
+  const mArg = JSON.stringify({ attachments: attachments.map((a) => ({ property: a })) });
+  return `<script>mArg = ${mArg};</script>`;
+}
+
+test('parseCards：从 mArg 里取附件，按 objectId 校验 32 位 hex', () => {
+  const html = cardsHtml([
+    { objectid: 'a'.repeat(32), name: '讲义', type: '.pdf', size: 1024 },
+    { objectid: 'not-hex', name: '坏的', type: '.pdf' },
+    { objectid: 'b'.repeat(32), name: '视频', type: '.mp4', size: 5000 },
+  ]);
+  const card = parseCards(html);
+  assert.equal(card.found, true);
+  assert.equal(card.files.length, 2, '非 32 位 hex 的 objectId 要丢掉');
+  assert.equal(card.files[0].name, '讲义.pdf', '扩展名要补上');
+  assert.equal(card.files[0].size, 1024);
+  assert.equal(card.files[1].name, '视频.mp4');
+});
+
+test('parseCards：没有 mArg 的页面 found=false（表示 num 已越过最后一张）', () => {
+  const card = parseCards('<html><body>没有卡片</body></html>');
+  assert.equal(card.found, false);
+  assert.equal(card.files.length, 0);
+  assert.equal(card.notOpen, false);
+});
+
+test('parseCards：章节未开放要标出来', () => {
+  const card = parseCards('<div>章节未开放</div>');
+  assert.equal(card.notOpen, true);
+});
+
+test('parseCards：名字已经带扩展名时不重复加', () => {
+  const html = cardsHtml([{ objectid: 'c'.repeat(32), name: '文档.pdf', type: '.pdf' }]);
+  assert.equal(parseCards(html).files[0].name, '文档.pdf');
+});
+
+test('materials：同一附件在多张卡里重复出现时只留一条', async () => {
+  // ⚠️ 这条单独写，是因为第一版的「去重」断言是无效的：夹具里每个 objectId
+  // 只出现一次，`seen` 那行删掉也不会红。这里让同一份附件出现在两张卡里。
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=111&clazzid=222&cpi=333">'
+    + '<span class="course-name" title="课">课</span></a>';
+  const CHAPTERS = '<div class="chapter_unit"><div class="catalog_name">章</div>'
+    + '<ul><li><div id="cur1"><a class="clicktitle" title="节">节</a></div></li></ul></div>';
+  const DUP = { objectid: 'f'.repeat(32), name: '同一份', type: '.pdf', size: 10 };
+
+  const reader = new XxtReader({
+    get: async (url, query) => {
+      if (url.includes('courselistdata')) return COURSE_HTML;
+      if (url.includes('studentcourse')) return CHAPTERS;
+      if (url.includes('knowledge/cards')) {
+        // num=0 与 num=1 各给一张卡，都含同一份附件；num=2 才没有卡。
+        return Number(query.num) <= 1 ? cardsHtml([DUP]) : '<html>没有卡片</html>';
+      }
+      return '';
+    },
+    post: async () => '',
+  });
+
+  const result = await reader.materials({ course: '课' });
+  assert.equal(result.count, 1, '同一 objectId 只留一条');
+});
+
+test('materials：逐节取卡片，按 objectId 去重，锁住的节进 notOpen', async () => {
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=111&clazzid=222&cpi=333">'
+    + '<span class="course-name" title="机器学习">机器学习</span></a>';
+  const CHAPTERS = `
+<div class="chapter_unit">
+  <div class="catalog_name">第一章</div>
+  <ul>
+    <li><div id="cur101"><a class="clicktitle" title="第一节">第一节</a></div></li>
+    <li><div id="cur102"><a class="clicktitle" title="锁住的">锁住的</a><span class="bntHoverTips">需解锁</span></div></li>
+  </ul>
+</div>`;
+
+  const calls = [];
+  const reader = new XxtReader({
+    get: async (url, query) => {
+      calls.push({ url, query });
+      if (url.includes('courselistdata')) return COURSE_HTML;
+      if (url.includes('studentcourse')) return CHAPTERS;
+      if (url.includes('knowledge/cards')) {
+        // 第一节有 2 张卡：num=0 两张附件（其中一张重复），num=1 无卡
+        if (query.knowledgeid === '101' && Number(query.num) === 0) {
+          return cardsHtml([
+            { objectid: 'd'.repeat(32), name: '讲义', type: '.pdf', size: 100 },
+            { objectid: 'e'.repeat(32), name: '视频', type: '.mp4' },
+          ]);
+        }
+        return '<html>没有卡片</html>';
+      }
+      return '';
+    },
+    post: async () => '',
+  });
+
+  const result = await reader.materials({ course: '机器学习' });
+  assert.equal(result.count, 2, '两个附件');
+  assert.equal(result.files.length, 2);
+  assert.deepEqual(result.notOpen, ['锁住的'], '锁住的节要报出来');
+  assert.equal(result.files[0].location[1], '第一节', 'location 带节标题');
+  assert.equal(result.files[0].kind, 'document');
+  assert.equal(result.files[1].kind, 'video', 'mp4 判成视频');
+
+  // 锁住的节不该发卡片请求
+  const lockedCalls = calls.filter((c) => c.query?.knowledgeid === '102');
+  assert.equal(lockedCalls.length, 0, '锁住的节直接跳过，不请求');
+});
+
+/* ────────────────────────────────────────────── downloadParams（D21：只给参数） */
+
+/**
+ * 下载参数。
+ *
+ * ⚠️ 夹具按上游 `chaoxing/download.ts` 的 `ObjectStatus` 形状推断，**未经真实响应验证**。
+ *
+ * # 这里测的是「参数给全了没有」
+ *
+ * 按 D21，下载的执行归 `packages/core/*`；本包只负责把执行需要的东西一次给全。
+ * 所以断言集中在：地址选对没有、`note` 说没说清、`headers` 带没带 Referer。
+ */
+
+/** 造一个成功的 ananas 状态响应。 */
+function statusResponse(extra = {}) {
+  return JSON.stringify({ status: 'success', filename: '讲义.pdf', length: 2048, ...extra });
+}
+
+test('downloadParams：默认取原文件，带 Referer 与预期大小', async () => {
+  const reader = new XxtReader({
+    get: async () => statusResponse({ download: 'http://mooc1.chaoxing.com/f/abc.pdf' }),
+    post: async () => '',
+  });
+  const params = await reader.downloadParams({ objectId: 'a'.repeat(32) });
+
+  assert.equal(params.variant, 'original');
+  assert.equal(params.url, 'https://mooc1.chaoxing.com/f/abc.pdf', 'http 要升成 https');
+  assert.equal(params.size, 2048);
+  assert.equal(params.filename, '讲义.pdf');
+  assert.equal(params.headers.Referer, 'https://mooc1.chaoxing.com/', '不带 Referer 会 403');
+});
+
+test('downloadParams：要播放版且平台有时给播放版', async () => {
+  const reader = new XxtReader({
+    get: async () => statusResponse({
+      download: 'https://mooc1.chaoxing.com/f/original.mp4',
+      http: 'https://mooc1.chaoxing.com/f/playback.mp4',
+    }),
+    post: async () => '',
+  });
+  const params = await reader.downloadParams({ objectId: 'b'.repeat(32), playback: true });
+  assert.equal(params.variant, 'playback');
+  assert.equal(params.url, 'https://mooc1.chaoxing.com/f/playback.mp4');
+});
+
+test('downloadParams：要播放版但平台没给时退回原文件，并说明', async () => {
+  const reader = new XxtReader({
+    get: async () => statusResponse({ download: 'https://mooc1.chaoxing.com/f/o.pdf' }),
+    post: async () => '',
+  });
+  const params = await reader.downloadParams({ objectId: 'c'.repeat(32), playback: true });
+  assert.equal(params.variant, 'original');
+  assert.match(params.note, /没有这个视频的播放版/, '要如实说明拿到的是原文件');
+});
+
+test('downloadParams：没有原文件时退回播放版并说明', async () => {
+  const reader = new XxtReader({
+    get: async () => statusResponse({ http: 'https://mooc1.chaoxing.com/f/p.mp4' }),
+    post: async () => '',
+  });
+  const params = await reader.downloadParams({ objectId: 'd'.repeat(32) });
+  assert.equal(params.variant, 'playback');
+  assert.match(params.note, /没有给原文件/);
+});
+
+test('downloadParams：只剩预览 PDF 时给 preview', async () => {
+  const reader = new XxtReader({
+    get: async () => statusResponse({ pdf: 'https://mooc1.chaoxing.com/f/prev.pdf' }),
+    post: async () => '',
+  });
+  const params = await reader.downloadParams({ objectId: 'e'.repeat(32) });
+  assert.equal(params.variant, 'preview');
+  assert.match(params.note, /预览用的 PDF/);
+});
+
+test('downloadParams：平台状态不是 success 时报 REJECTED 并转述原因', async () => {
+  const reader = new XxtReader({
+    get: async () => JSON.stringify({ status: 'fail', msg: '文件已删除' }),
+    post: async () => '',
+  });
+  await assert.rejects(() => reader.downloadParams({ objectId: 'f'.repeat(32) }), (error) => {
+    assert.equal(error.code, 'REJECTED');
+    assert.match(error.message, /文件已删除/);
+    return true;
+  });
+});
+
+test('downloadParams：没有任何地址时报 REJECTED', async () => {
+  const reader = new XxtReader({
+    get: async () => statusResponse({}),
+    post: async () => '',
+  });
+  await assert.rejects(() => reader.downloadParams({ objectId: 'a'.repeat(32) }), (error) => {
+    assert.equal(error.code, 'REJECTED');
+    assert.match(error.message, /没有给出这个文件的下载地址/);
+    return true;
+  });
+});
+
+test('downloadParams：objectId 不是 32 位 hex 时抛 INVALID_ARGUMENT', async () => {
+  const reader = new XxtReader({ get: async () => '', post: async () => '' });
+  await assert.rejects(() => reader.downloadParams({ objectId: 'not-hex' }), (error) => {
+    assert.equal(error.code, 'INVALID_ARGUMENT');
+    return true;
+  });
+  await assert.rejects(() => reader.downloadParams({}), { code: 'INVALID_ARGUMENT' });
+});

@@ -29,7 +29,19 @@ import {
   TokenStore,
 } from '../packages/source/cc98/src/token.js';
 import { Cc98Client, apiPath, withQuery, httpError, parseBody } from '../packages/source/cc98/src/client.js';
-import { Cc98Reader, at, cc98Id, nextFrom, postText } from '../packages/source/cc98/src/reads.js';
+import {
+  Cc98Reader,
+  at,
+  cc98Id,
+  nextFrom,
+  nextFromTotal,
+  postText,
+  fileLinks,
+  floorAnchor,
+  idsPath,
+  ratingSummary,
+  safeFileName,
+} from '../packages/source/cc98/src/reads.js';
 import { apply, METHODS, ROUTE_PATH } from '../packages/source/cc98/src/index.js';
 
 /* ────────────────────────── UBB → 纯文本 ────────────────────────── */
@@ -634,7 +646,7 @@ async function rpc(route, method, payload = {}) {
   return response.json();
 }
 
-test('apply: 注册一条 GET/POST 路由，方法表就是那 10 个只读方法', async () => {
+test('apply: 注册一条 GET/POST 路由，方法表就是那 22 个只读方法', async () => {
   const { ctx, routes, services } = fakeContext();
   const dispose = await apply(ctx, { dataDir: null, fetch: async () => new Response('{}', { status: 200 }) });
 
@@ -658,8 +670,10 @@ test('apply: 注册一条 GET/POST 路由，方法表就是那 10 个只读方�
 
   const service = services.get('zhiyunCc98');
   assert.equal(service.readOnly, true);
-  assert.equal(service.methods.length, 10);
+  assert.equal(service.methods.length, 22);
   assert.equal(service.describe().platform, 'cc98');
+  // 落盘目录默认是 null（只回链接），这条要能自描述出来
+  assert.equal(status.value.downloadDir, null);
   await dispose();
 });
 
@@ -745,3 +759,561 @@ test('apply: 匿名接口不需要账号，需要账号的接口报 NEED_LOGIN �
   assert.equal(calls, 1, '需要账号的接口在没配账号时不该发出任何请求');
 });
 
+/* ═══════════════════════════════════════════════════════════════════════
+ * 补齐上游只读能力的 12 个方法（版面标签 / 帖内文件 / 评分理由 / 楼层原文 /
+ * 账号 7 条 / 签到记录）
+ *
+ * 约定与上面一致：假客户端记录 URL 与查询参数，**不联网**；
+ * 每个方法都断言「成功分支的具体值」与「失败分支的具体错误码」。
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+test('reads.boardTags: 两层标签拆成 tag1 / tag2，tag2 按 ID 去重', async () => {
+  const api = fakeApi({
+    layers: 2,
+    tags: [
+      { id: 11, name: '提问', subTags: [{ id: 21, name: '课程' }, { id: 22, name: '生活' }] },
+      { id: 12, name: '分享', subTags: [{ id: 21, name: '课程' }] },
+    ],
+  });
+  const result = await new Cc98Reader(api).boardTags({ board_id: '3' });
+
+  assert.equal(api.calls[0].path, '/board/3/tag-v2');
+  assert.equal(result.board_id, 3);
+  assert.equal(result.layers, 2);
+  assert.deepEqual(result.tag1, [{ id: 11, name: '提问' }, { id: 12, name: '分享' }]);
+  // 21 出现两次，只能留一条 —— 平铺的第二层选择器里出现重复项会让人选重
+  assert.deepEqual(result.tag2, [{ id: 21, name: '课程' }, { id: 22, name: '生活' }]);
+  assert.equal(result.tag1.length, 2);
+  assert.equal(result.tag2.length, 2);
+
+  // 版面没有标签：空数组是**真答案**，不是"接口变了"
+  const empty = await new Cc98Reader(fakeApi({ layers: 1, tags: [] })).boardTags({ board_id: 1 });
+  assert.equal(empty.tag1.length, 0);
+  assert.equal(empty.tag2.length, 0);
+
+  // 缺 tags 字段：同样算"没有标签"（body 仍是对象，能分辨出这不是形状错）
+  const missing = await new Cc98Reader(fakeApi({ layers: 1 })).boardTags({ board_id: 1 });
+  assert.equal(missing.tag1.length, 0);
+
+  await assert.rejects(new Cc98Reader(fakeApi({})).boardTags({ board_id: 0 }), (error) => error.code === 'INVALID_ID');
+  // body 不是对象 → 形状错，不能当成"这个版面没标签"
+  await assert.rejects(new Cc98Reader(fakeApi('[]')).boardTags({ board_id: 2 }), (error) => error.code === 'SCHEMA_CHANGED');
+  // body 是对象但 tags 不是数组 → 形状错
+  await assert.rejects(new Cc98Reader(fakeApi({ tags: 'nope' })).boardTags({ board_id: 2 }), (error) => error.code === 'API_SHAPE');
+});
+
+test('reads.ratingReasons: type=1/2 各查一次，停用的理由被剔掉', async () => {
+  const api = fakeApi((path, options) => {
+    assert.equal(path, '/post/rating-reason');
+    return options.query.type === 1
+      ? [{ id: 1, reason: '很有帮助', enabled: true }, { id: 2, reason: '旧理由', enabled: false }, { id: 3, reason: '内容优质' }]
+      : [{ id: 9, reason: '广告', enabled: true }];
+  });
+  const result = await new Cc98Reader(api).ratingReasons();
+
+  assert.deepEqual(api.calls.map(c => c.query.type), [1, 2]);
+  // enabled:false 与服务端保留但停用的历史项被剔掉；缺 enabled 的（id 3）算启用
+  assert.deepEqual(result.plus, [{ id: 1, reason: '很有帮助' }, { id: 3, reason: '内容优质' }]);
+  assert.equal(result.plus.length, 2);
+  assert.deepEqual(result.minus, [{ id: 9, reason: '广告' }]);
+  assert.equal(result.minus.length, 1);
+
+  await assert.rejects(new Cc98Reader(fakeApi({ nope: 1 })).ratingReasons(), (error) => error.code === 'SCHEMA_CHANGED');
+});
+
+test('reads.original: 原文不清洗，format 按 contentType 判定', async () => {
+  const api = fakeApi({ id: 100, topicId: 7, floor: 3, title: null, contentType: 0, content: '[b]原样[/b][img]https://file.cc98.org/a.png[/img]' });
+  const ubb = await new Cc98Reader(api).original({ post_id: '100' });
+
+  assert.equal(api.calls[0].path, '/post/100/original');
+  assert.equal(ubb.post_id, 100);
+  assert.equal(ubb.topic_id, 7);
+  assert.equal(ubb.floor, 3);
+  assert.equal(ubb.format, 'ubb');
+  // 这是它存在的意义：标记必须原样留着，不能被 ubbToText 吃掉
+  assert.equal(ubb.content, '[b]原样[/b][img]https://file.cc98.org/a.png[/img]');
+
+  const md = await new Cc98Reader(fakeApi({ id: 101, topicId: 7, floor: 4, contentType: 1, content: '**粗**' })).original({ post_id: 101 });
+  assert.equal(md.format, 'markdown');
+  assert.equal(md.content, '**粗**');
+
+  await assert.rejects(new Cc98Reader(fakeApi({})).original({ post_id: 'abc' }), (error) => error.code === 'INVALID_ID');
+  await assert.rejects(new Cc98Reader(fakeApi('nope')).original({ post_id: 5 }), (error) => error.code === 'SCHEMA_CHANGED');
+});
+
+test('reads.overview: /me + 签到 + 未读 + 自定义版面；版面为空时不发多余请求', async () => {
+  const api = fakeApi((path) => {
+    if (path === '/me') return { id: 42, name: '我', gender: 1, postCount: 10, fanCount: 3, levelTitle: 'Lv.5', customBoards: [3, 4], signInCardCount: 2 };
+    if (path === '/me/signin') return { hasSignedInToday: true, lastSignInCount: 12, lastReward: 5, lastSignInTime: '2026-11-10T01:02:03Z' };
+    if (path === '/me/unread-count') return { systemCount: 1, atCount: 2, replyCount: 3, messageCount: 4 };
+    if (path.startsWith('/board/')) return [{ id: 3, name: '水源', todayCount: 7 }, { id: 4, name: '科技', todayCount: 9 }];
+    throw new Error(`意外的路径 ${path}`);
+  });
+  const result = await new Cc98Reader(api).overview();
+
+  assert.deepEqual(api.calls.map(c => c.path), ['/me', '/me/signin', '/me/unread-count', '/board/?id=3&id=4']);
+  assert.equal(result.user.name, '我');
+  assert.equal(result.user.gender, '男');
+  assert.equal(result.user.sign_in_cards, 2);
+  assert.deepEqual(result.sign_in, { signed_today: true, streak: 12, last_reward: 5, last_sign_in_time: '2026-11-10 09:02:03 +08:00' });
+  assert.deepEqual(result.unread, { system: 1, at: 2, reply: 3, message: 4 });
+  assert.deepEqual(result.custom_boards, [{ id: 3, name: '水源', today: 7 }, { id: 4, name: '科技', today: 9 }]);
+  assert.equal(result.custom_boards.length, 2);
+
+  // 没有自定义版面：不能拼出 `/board/?` 去问一个空查询
+  const bare = fakeApi((path) => {
+    if (path === '/me') return { id: 42, name: '我', customBoards: [] };
+    if (path === '/me/signin') return {};
+    return { systemCount: 0, atCount: 0, replyCount: 0, messageCount: 0 };
+  });
+  const noBoards = await new Cc98Reader(bare).overview();
+  assert.deepEqual(bare.calls.map(c => c.path), ['/me', '/me/signin', '/me/unread-count']);
+  assert.deepEqual(noBoards.custom_boards, []);
+  // 缺字段的签到状态：signed_today 是 false，streak 是 null（不编 0）
+  assert.equal(noBoards.sign_in.signed_today, false);
+  assert.equal(noBoards.sign_in.streak, null);
+  // 老账号没有 signInCardCount：字段不出现，而不是 0
+  assert.equal('sign_in_cards' in noBoards.user, false);
+
+  await assert.rejects(new Cc98Reader(fakeApi({})).overview(), (error) => error.code === 'SCHEMA_CHANGED');
+});
+
+test('reads.myTopics: /me/recent-topic + from/size，满页才有 next_from', async () => {
+  const rows = Array.from({ length: 2 }, (_, i) => ({ ...TOPIC_ROW, id: i + 1 }));
+  const api = fakeApi(rows);
+  const result = await new Cc98Reader(api).myTopics({ from: 0, size: 2 });
+  assert.equal(api.calls[0].path, '/me/recent-topic');
+  assert.deepEqual(api.calls[0].query, { from: 0, size: 2 });
+  assert.equal(result.topics.length, 2);
+  assert.equal(result.topics[0].id, 1);
+  assert.equal(result.next_from, 2);
+
+  await assert.rejects(new Cc98Reader(fakeApi({})).myTopics(), (error) => error.code === 'SCHEMA_CHANGED');
+});
+
+test('reads.myPosts: 分页对象保住 count，next_from 用总数算而不是"满页猜"', async () => {
+  const post = { id: 900, topicId: 7, floor: 12, userName: '我', content: '[b]我的回复[/b]', time: '2024-01-02T03:04:05Z', likeCount: 3 };
+  const api = fakeApi({ data: [post], count: 25, from: 0, size: 20 });
+  const result = await new Cc98Reader(api).myPosts({ from: 0, size: 20 });
+
+  assert.equal(api.calls[0].path, '/me/recent-post');
+  assert.deepEqual(api.calls[0].query, { from: 0, size: 20 });
+  assert.equal(result.count, 25);
+  assert.equal(result.posts.length, 1);
+  assert.equal(result.posts[0].text, '我的回复');
+  assert.equal(result.posts[0].topic_id, 7);
+  // 11 楼以上要跳到第 2 页的锚点，不能被写成 /topic/7#12
+  assert.equal(result.posts[0].url, 'https://www.cc98.org/topic/7/2#2');
+  assert.equal(result.next_from, 20);
+
+  // hot 走另一条路径
+  const hotApi = fakeApi({ data: [{ id: 1, topicId: 7, floor: 1, content: 'x' }], count: 1 });
+  const hot = await new Cc98Reader(hotApi).myPosts({ hot: true });
+  assert.equal(hotApi.calls[0].path, '/me/hot-post');
+  assert.equal(hot.hot, true);
+  assert.equal(hot.next_from, null, 'count=1、size=20 → 已经到底');
+
+  // 满页但 count 说没了：靠 count 判 null，而不是靠"满页"
+  const exact = await new Cc98Reader(fakeApi({ data: Array.from({ length: 20 }, (_, i) => ({ id: i + 1 })), count: 20 }))
+    .myPosts({ from: 0, size: 20 });
+  assert.equal(exact.posts.length, 20);
+  assert.equal(exact.next_from, null);
+
+  await assert.rejects(new Cc98Reader(fakeApi({ weird: 1 })).myPosts(), (error) => error.code === 'SCHEMA_CHANGED');
+});
+
+test('reads.history: 浏览记录带 last_browsing_time，count 来自服务端', async () => {
+  const api = fakeApi({ data: [{ ...TOPIC_ROW, lastBrowsingTime: '2024-02-03T04:05:06Z' }], count: 41 });
+  const result = await new Cc98Reader(api).history({ from: 20, size: 20 });
+
+  assert.equal(api.calls[0].path, '/me/browsing-record');
+  assert.deepEqual(api.calls[0].query, { from: 20, size: 20 });
+  assert.equal(result.count, 41);
+  assert.equal(result.topics[0].last_browsing_time, '2024-02-03 12:05:06 +08:00');
+  assert.equal(result.topics[0].title, '标题');
+  // from 20 + size 20 = 40 < 41 → 还有一条
+  assert.equal(result.next_from, 40);
+  // 恰好取到第 40 条（count=40）时，靠 count 判定「到底了」而不是靠"满页"
+  const exact = await new Cc98Reader(fakeApi({ data: [TOPIC_ROW], count: 40 })).history({ from: 20, size: 20 });
+  assert.equal(exact.count, 40);
+  assert.equal(exact.next_from, null);
+
+  await assert.rejects(new Cc98Reader(fakeApi(null)).history(), (error) => error.code === 'SCHEMA_CHANGED');
+});
+
+test('reads.favorites: 分组每次都取；有 keyword 走搜索，顺序参数被校验', async () => {
+  const api = fakeApi((path) => {
+    if (path === '/me/favorite-topic-group') return { data: [{ id: 0, name: '默认', count: 2 }, { id: 5, name: '考研', count: 1 }], count: 2 };
+    return [TOPIC_ROW];
+  });
+  const reader = new Cc98Reader(api);
+
+  const normal = await reader.favorites({ from: 0, size: 20 });
+  assert.equal(api.calls[0].path, '/me/favorite-topic-group');
+  assert.equal(api.calls[1].path, '/topic/me/favorite');
+  assert.deepEqual(api.calls[1].query, { from: 0, size: 20, order: 1, groupid: 0 });
+  assert.deepEqual(normal.groups, [{ id: 0, name: '默认', count: 2 }, { id: 5, name: '考研', count: 1 }]);
+  assert.equal(normal.groups.length, 2);
+  assert.equal(normal.topics.length, 1);
+  assert.equal('keyword' in normal, false, '没搜就不该出现 keyword 字段');
+
+  const searched = await reader.favorites({ keyword: '  选课 ', group_id: 5, order: 0 });
+  assert.equal(api.calls[2].path, '/me/favorite-topic-group');
+  assert.equal(api.calls[3].path, '/topic/me/search-favorite');
+  assert.deepEqual(api.calls[3].query, { from: 0, size: 20, keyword: '选课' });
+  assert.equal(searched.keyword, '选课');
+
+  await assert.rejects(reader.favorites({ order: 2 }), (error) => error.code === 'INVALID_ARGUMENT');
+  await assert.rejects(reader.favorites({ group_id: -1 }), (error) => error.code === 'INVALID_ARGUMENT');
+});
+
+test('reads.following: 纯 ID 数组 → 再查 /user/basic，顺序按原始列表', async () => {
+  const api = fakeApi((path) => {
+    if (path === '/me/followee') return [34, 12, 34];
+    if (path === '/me/follower') return [56];
+    if (path.startsWith('/user/basic')) {
+      // 服务端按自己的顺序回，不能拿它当展示顺序
+      return [{ id: 12, name: '小明' }, { id: 34, name: '小红' }];
+    }
+    throw new Error(`意外的路径 ${path}`);
+  });
+  const reader = new Cc98Reader(api);
+
+  const following = await reader.following({ from: 0, size: 20 });
+  assert.equal(api.calls[0].path, '/me/followee');
+  // 去重后按原始出现顺序拼重复参数
+  assert.equal(api.calls[1].path, '/user/basic?id=34&id=12');
+  assert.deepEqual(following.users, [
+    { id: 34, name: '小红', url: 'https://www.cc98.org/user/id/34' },
+    { id: 12, name: '小明', url: 'https://www.cc98.org/user/id/12' },
+  ]);
+  assert.equal(following.users.length, 2);
+  assert.equal(following.fans, false);
+  assert.equal(following.next_from, null);
+
+  const fans = await reader.following({ fans: true });
+  assert.equal(api.calls[2].path, '/me/follower');
+  assert.equal(fans.fans, true);
+  // 查不到名字 → null，绝不编一个「用户56」
+  assert.equal(fans.users[0].name, null);
+
+  // 一个都不关注：不该去打 /user/basic（空 id 查询没有形状保证）
+  const emptyApi = fakeApi([]);
+  const none = await new Cc98Reader(emptyApi).following();
+  assert.deepEqual(emptyApi.calls.map(c => c.path), ['/me/followee']);
+  assert.equal(none.users.length, 0);
+
+  await assert.rejects(new Cc98Reader(fakeApi({})).following(), (error) => error.code === 'SCHEMA_CHANGED');
+});
+
+test('reads.feed: boards / users 两条路径，users 带 order=0', async () => {
+  const api = fakeApi([TOPIC_ROW]);
+  const reader = new Cc98Reader(api);
+
+  const boards = await reader.feed({ from: 0, size: 10 });
+  assert.equal(api.calls[0].path, '/me/custom-board/topic');
+  assert.deepEqual(api.calls[0].query, { from: 0, size: 10 });
+  assert.equal(boards.kind, 'boards');
+  assert.equal(boards.topics.length, 1);
+
+  const users = await reader.feed({ kind: 'users', from: 10, size: 10 });
+  assert.equal(api.calls[1].path, '/me/followee/topic');
+  // order 缺了服务端会换一种排序，"动态"就不是网页上那一批了
+  assert.deepEqual(api.calls[1].query, { from: 10, size: 10, order: 0 });
+  assert.equal(users.kind, 'users');
+
+  // kind 会被拼进 URL 分支，必须白名单
+  await assert.rejects(reader.feed({ kind: '../me' }), (error) => error.code === 'INVALID_ARGUMENT');
+});
+
+test('reads.signinMonth: 只算有记录的日期，奖励缺字段不当 0', async () => {
+  const api = fakeApi([
+    { year: 2026, month: 11, day: 1, reward: 5, useCard: false },
+    { year: 2026, month: 11, day: 2, reward: 3, useCard: true },
+    { year: 2026, month: 11, day: 3 },
+  ]);
+  const result = await new Cc98Reader(api).signinMonth({ year: '2026', month: '11' });
+
+  assert.equal(api.calls[0].path, '/me/signin-in-month');
+  assert.deepEqual(api.calls[0].query, { year: 2026, month: 11 });
+  assert.equal(result.year, 2026);
+  assert.equal(result.month, 11);
+  assert.equal(result.signed_days, 3);
+  assert.deepEqual(result.days, [
+    { day: 1, reward: 5 },
+    { day: 2, reward: 3, use_card: true },
+    { day: 3, reward: null },
+  ]);
+  // 5 + 3 + 0（day 3 缺奖励，按 0 累加但不是"全是 null"）
+  assert.equal(result.total_reward, 8);
+
+  // 全是 null 时总量是 null（不知道），不是 0（确实没奖励）
+  const unknown = await new Cc98Reader(fakeApi([{ day: 1 }])).signinMonth({ year: 2026, month: 11 });
+  assert.equal(unknown.total_reward, null);
+  assert.equal(unknown.signed_days, 1);
+
+  await assert.rejects(new Cc98Reader(fakeApi([])).signinMonth({ year: 2026, month: 13 }), (error) => error.code === 'INVALID_ARGUMENT');
+  await assert.rejects(new Cc98Reader(fakeApi([])).signinMonth({ year: 1800, month: 1 }), (error) => error.code === 'INVALID_ARGUMENT');
+  await assert.rejects(new Cc98Reader(fakeApi({})).signinMonth({ year: 2026, month: 1 }), (error) => error.code === 'SCHEMA_CHANGED');
+});
+
+/* ───────────────────── 帖内文件：链接提取 + 可选落盘 ───────────────────── */
+
+test('fileLinks: 只算本楼自己的文件，嵌套引用里的不算', () => {
+  // 引用的引用，且外层引用块在**内层结束之后**还有内容。
+  // 「第一个 [quote] 到第一个 [/quote]」那种非贪婪写法在这里会配对错：
+  // 它只删掉 `[quote]外层[quote]内层[/quote]`，把外层剩下的
+  // `https://file.cc98.org/quoted.png` 留在正文里，于是上一楼的附件被算成本楼的。
+  const nested = '[quote]外层[quote]内层[/quote][img]https://file.cc98.org/quoted.png[/img][/quote]'
+    + '[img]https://file.cc98.org/mine.png[/img]';
+  assert.deepEqual(fileLinks(nested), ['https://file.cc98.org/mine.png']);
+
+  // 单个引用块
+  assert.deepEqual(
+    fileLinks('[quote][img]https://file.cc98.org/q.png[/img][/quote][img]https://file.cc98.org/a.png[/img][img]https://file.cc98.org/a.png[/img]'),
+    ['https://file.cc98.org/a.png'],
+  );
+
+  // Markdown 的引用是 > 行
+  assert.deepEqual(
+    fileLinks('> ![](https://file.cc98.org/old.png)\n![](https://file.cc98.org/new.png)', true),
+    ['https://file.cc98.org/new.png'],
+  );
+
+  // 别的主机不算（这些不是帖内文件，不该进入下载清单）
+  assert.deepEqual(fileLinks('[img]https://example.com/x.png[/img]'), []);
+
+  assert.deepEqual(fileLinks(null), []);
+});
+
+test('floorAnchor / ratingSummary / idsPath / safeFileName 的具体行为', () => {
+  assert.equal(floorAnchor(7, 1), '/topic/7#1');
+  assert.equal(floorAnchor(7, 10), '/topic/7#10');
+  // 第 11 楼在第 2 页、页内第 1 楼
+  assert.equal(floorAnchor(7, 11), '/topic/7/2#1');
+  assert.equal(floorAnchor(7, 12), '/topic/7/2#2');
+  assert.equal(floorAnchor(7, 20), '/topic/7/2#10');
+  assert.equal(floorAnchor(7, 21), '/topic/7/3#1');
+  assert.equal(floorAnchor(7, 0), '/topic/7');
+
+  // 同一项求和；deleted 的不算
+  assert.equal(ratingSummary([
+    { content: '风评值 +1' }, { content: '风评值 +4' }, { content: '财富值 +1000' },
+    { content: '风评值 -2' }, { content: '已删的 +99', deleted: true },
+  ]), '风评值 +3，财富值 +1000');
+  // 没有数值的纯文字理由原样保留，不硬造 0
+  assert.equal(ratingSummary([{ content: '写得好' }]), '写得好');
+  assert.equal(ratingSummary([]), null);
+
+  assert.equal(idsPath('/board/', [3, 4, 3]), '/board/?id=3&id=4');
+  assert.equal(idsPath('/user/basic', [0, -1, 'x', 5]), '/user/basic?id=5');
+  assert.equal(idsPath('/board/', []), '/board/');
+
+  assert.equal(safeFileName(new URL('https://file.cc98.org/2024/a%20b.png')), 'a b.png');
+  // 只有 `.` / `..` 的路径段落不能当成文件名（会变成"写上一级目录"）
+  assert.equal(safeFileName(new URL('https://file.cc98.org/x/..')), 'file');
+  assert.equal(safeFileName(new URL('https://file.cc98.org/')), 'file');
+  // 非法字符被替换，且只取最后一段 —— 不能凭链接造出子目录
+  assert.equal(safeFileName(new URL('https://file.cc98.org/dir/sub/c:d.zip')), 'c_d.zip');
+  assert.equal(safeFileName(new URL('https://file.cc98.org/dir/a*b|c.png')), 'a_b_c.png');
+});
+
+test('reads.topicDownload: 没配目录时只回链接；配了才落盘', async () => {
+  const post = {
+    id: 100,
+    topicId: 7,
+    floor: 2,
+    contentType: 0,
+    content: '[img]https://file.cc98.org/a.png[/img][upload=2]https://file.cc98.org/b.zip[/upload]',
+  };
+  const api = fakeApi((path) => {
+    assert.equal(path, '/Topic/7/post');
+    return [post];
+  });
+  // 未配目录：只回链接，且**不该**调用 fetchFile
+  const result = await new Cc98Reader(api).topicDownload({ topic_id: 7, floor: 2 });
+
+  assert.deepEqual(api.calls[0].query, { from: 1, size: 1 });
+  assert.equal(result.topic_id, 7);
+  assert.equal(result.floor, 2);
+  assert.equal(result.downloaded, false);
+  assert.equal(result.dir, null);
+  assert.deepEqual(result.files, [
+    { url: 'https://file.cc98.org/a.png', name: 'a.png', path: null, bytes: null },
+    { url: 'https://file.cc98.org/b.zip', name: 'b.zip', path: null, bytes: null },
+  ]);
+  assert.equal(result.files.length, 2);
+  assert.match(result.note, /只回了文件链接/);
+
+  // 配了目录但客户端只实现了 get → 明确报 UNSUPPORTED，不假装已落盘
+  await assert.rejects(
+    new Cc98Reader(api, { downloadDir: 'C:/tmp/cc98' }).topicDownload({ topic_id: 7, floor: 2 }),
+    (error) => error.code === 'UNSUPPORTED',
+  );
+});
+
+test('reads.topicDownload: 楼层不存在 / 已删除 / 没有文件 三种都报 NOT_FOUND', async () => {
+  const readerFor = (rows) => new Cc98Reader(fakeApi(rows));
+
+  // 服务端回的那一楼不是我们要的楼层（分页语义变了）→ 不能拿错的那一楼去下文件
+  await assert.rejects(readerFor([{ id: 1, floor: 5 }]).topicDownload({ topic_id: 7, floor: 2 }),
+    (error) => error.code === 'NOT_FOUND');
+  await assert.rejects(readerFor([]).topicDownload({ topic_id: 7, floor: 2 }),
+    (error) => error.code === 'NOT_FOUND');
+  await assert.rejects(readerFor([{ id: 2, floor: 2, isDeleted: true }]).topicDownload({ topic_id: 7, floor: 2 }),
+    (error) => error.code === 'NOT_FOUND');
+  await assert.rejects(readerFor([{ id: 3, floor: 2, content: '纯文字，没有附件' }]).topicDownload({ topic_id: 7, floor: 2 }),
+    (error) => error.code === 'NOT_FOUND');
+  // 楼层号不合法（0 / 非整数）在发请求之前就该拒掉
+  await assert.rejects(readerFor([{ id: 3, floor: 2, content: 'x' }]).topicDownload({ topic_id: 7, floor: 0 }),
+    (error) => error.code === 'INVALID_ARGUMENT');
+  await assert.rejects(readerFor([{ id: 3, floor: 2, content: 'x' }]).topicDownload({ topic_id: 7 }),
+    (error) => error.code === 'INVALID_ARGUMENT');
+  // 只允许 file.cc98.org：别的主机一律拒绝
+  await assert.rejects(readerFor([{ id: 4, floor: 2, content: '[img]https://evil.example/x.png[/img]' }])
+    .topicDownload({ topic_id: 7, floor: 2 }), (error) => error.code === 'NOT_FOUND');
+  await assert.rejects(new Cc98Reader(fakeApi({})).topicDownload({ url: 'https://evil.example/x.png' }),
+    (error) => error.code === 'INVALID_PATH');
+  await assert.rejects(new Cc98Reader(fakeApi({})).topicDownload({ url: 'http://file.cc98.org/x.png' }),
+    (error) => error.code === 'INVALID_PATH');
+});
+
+test('reads.topicDownload: 配了目录时真的把字节写进文件，撞名加序号不覆盖', async () => {
+  const { mkdtemp, readFile, rm, readdir } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const nodePath = await import('node:path');
+  const dir = await mkdtemp(nodePath.join(tmpdir(), 'cc98-download-'));
+  try {
+    const saved = [];
+    const api = {
+      calls: [],
+      async get(path, options = {}) {
+        this.calls.push({ path, ...options });
+        return [{ id: 100, topicId: 7, floor: 2, contentType: 0, content: '[img]https://file.cc98.org/a.png[/img]' }];
+      },
+      async fetchFile(url) {
+        saved.push(url);
+        return { bytes: Buffer.from(`bytes-of:${url}`), contentType: 'image/png' };
+      },
+    };
+    const reader = new Cc98Reader(api, { downloadDir: dir });
+
+    const first = await reader.topicDownload({ topic_id: 7, floor: 2 });
+    assert.equal(first.downloaded, true);
+    assert.equal(first.dir, dir);
+    assert.deepEqual(saved, ['https://file.cc98.org/a.png']);
+    assert.equal(first.files[0].path, nodePath.join(dir, 'a.png'));
+    assert.equal(first.files[0].bytes, 'bytes-of:https://file.cc98.org/a.png'.length);
+    assert.equal(first.files[0].content_type, 'image/png');
+    assert.equal(await readFile(first.files[0].path, 'utf8'), 'bytes-of:https://file.cc98.org/a.png');
+
+    // 同名再下一次：加序号，**不覆盖**已下载的那份
+    const second = await reader.topicDownload({ topic_id: 7, floor: 2 });
+    assert.equal(second.files[0].path, nodePath.join(dir, 'a (1).png'));
+    assert.equal(await readFile(nodePath.join(dir, 'a.png'), 'utf8'), 'bytes-of:https://file.cc98.org/a.png');
+    assert.equal(await readFile(second.files[0].path, 'utf8'), 'bytes-of:https://file.cc98.org/a.png');
+    assert.deepEqual((await readdir(dir)).sort(), ['a (1).png', 'a.png']);
+
+    // 直接给 url 的入口也走同一条落盘路径
+    const direct = await reader.topicDownload({ url: 'https://file.cc98.org/2019/12/31/pic.jpg' });
+    assert.equal(direct.files.length, 1);
+    assert.equal(direct.files[0].name, 'pic.jpg');
+    assert.equal(await readFile(nodePath.join(dir, 'pic.jpg'), 'utf8'), 'bytes-of:https://file.cc98.org/2019/12/31/pic.jpg');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('client.fetchFile: 不把 Bearer 发给 file.cc98.org；网页/空体/错误状态都报错', async () => {
+  const okTransport = {
+    calls: [],
+    async request(url, init) {
+      this.calls.push({ url, init });
+      return {
+        response: {
+          ok: true,
+          status: 200,
+          headers: new Headers({ 'content-type': 'image/png' }),
+          async arrayBuffer() { return new TextEncoder().encode('PNG-BYTES').buffer; },
+        },
+        release: () => { this.released = true; },
+      };
+    },
+  };
+  const client = new Cc98Client({ tokens: { token: async () => 'TOKEN-9' }, transport: okTransport });
+  const file = await client.fetchFile('https://file.cc98.org/a.png');
+
+  assert.equal(okTransport.calls[0].url, 'https://file.cc98.org/a.png');
+  assert.equal(okTransport.calls[0].init.method, 'GET');
+  // 令牌不该出现在另一个域上
+  assert.equal(okTransport.calls[0].init.headers.Authorization, undefined);
+  assert.equal(okTransport.calls[0].init.stream, true);
+  assert.equal(file.bytes.toString('utf8'), 'PNG-BYTES');
+  assert.equal(file.contentType, 'image/png');
+  assert.equal(okTransport.released, true);
+
+  const make = (response) => new Cc98Client({
+    tokens: { token: async () => 'TOKEN-9' },
+    transport: { async request() { return { response, release: () => {} }; } },
+  });
+
+  // 不存在的文件回了 200 + 网页：落到 .png 里会是个打不开的文件，比报错更难查
+  await assert.rejects(
+    make({ ok: true, status: 200, headers: new Headers({ 'content-type': 'text/html; charset=utf-8' }), async arrayBuffer() { return new ArrayBuffer(0); } })
+      .fetchFile('https://file.cc98.org/gone.png'),
+    (error) => error.code === 'NOT_FOUND',
+  );
+  await assert.rejects(
+    make({ ok: false, status: 404, headers: new Headers(), async arrayBuffer() { return new ArrayBuffer(0); } })
+      .fetchFile('https://file.cc98.org/gone.png'),
+    (error) => error.code === 'NOT_FOUND',
+  );
+  await assert.rejects(
+    make({ ok: false, status: 403, headers: new Headers(), async arrayBuffer() { return new ArrayBuffer(0); } })
+      .fetchFile('https://file.cc98.org/gone.png'),
+    (error) => error.code === 'FORBIDDEN',
+  );
+  await assert.rejects(
+    make({ ok: true, status: 200, headers: new Headers({ 'content-type': 'image/png' }), async arrayBuffer() { return new ArrayBuffer(0); } })
+      .fetchFile('https://file.cc98.org/empty.png'),
+    (error) => error.code === 'UNEXPECTED_RESPONSE',
+  );
+  await assert.rejects(client.fetchFile('https://evil.example/x.png'), (error) => error.code === 'INVALID_PATH');
+});
+
+test('apply: 新增的 12 个方法都在白名单里，且旧的那批一个不少', () => {
+  for (const key of [
+    'boardTags', 'topicDownload', 'ratingReasons', 'original',
+    'overview', 'myTopics', 'myPosts', 'history', 'favorites', 'following', 'feed', 'signinMonth',
+  ]) {
+    assert.ok(METHODS.includes(key), `缺 cc98.${key}`);
+  }
+  assert.equal(METHODS.length, 22);
+  // 写操作名一个都不能进来（它们归 packages/tool/campus-write）
+  for (const write of ['reply', 'post', 'favorite', 'like', 'rate', 'edit', 'send', 'signin']) {
+    assert.equal(METHODS.includes(write), false, `写操作 ${write} 不该出现在只读方法表里`);
+  }
+});
+
+
+test('describe：会话动作与读取方法分开列，且 logout 在清单里', async () => {
+  // 1-A 裁决：`session logout` 要能被看到。
+  // 但它是**会话动作**，不是读取方法 —— 混进 `methods` 会让
+  // 「能力清单里有 23 条读取」这种误解成立。
+  const { ctx, services } = fakeContext();
+  const dispose = await apply(ctx);
+  const described = services.get('zhiyunCc98').describe();
+  assert.equal(described.readOnly, true);
+  assert.ok(Array.isArray(described.actions), 'describe 要有 actions');
+  const names = described.actions.map((item) => item.action);
+  assert.equal(names.includes('cc98.logout'), true, 'logout 必须在自描述里');
+  assert.equal(names.includes('cc98.status'), true, 'status 也在');
+  assert.equal(described.actions.length, 2);
+
+  // 两个动作都不许混进读取方法表。
+  const readMethods = described.methods.map((item) => item.method);
+  assert.equal(readMethods.includes('cc98.logout'), false, 'logout 不是读取方法');
+  assert.equal(readMethods.includes('cc98.status'), false, 'status 不是读取方法');
+  assert.equal(readMethods.length, 22, '读取方法仍是 22 条');
+  await dispose();
+});

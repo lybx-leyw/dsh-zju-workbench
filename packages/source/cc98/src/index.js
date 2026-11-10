@@ -10,7 +10,7 @@
  *   POST /api/zhiyun-cc98   → { type:'client-request', rpcId, method:'cc98.hot', payload:{...} }
  * ```
  *
- * `method` 一律是 `cc98.<函数名>`，函数名就是 `Cc98Reader` 上的 10 个只读方法。
+ * `method` 一律是 `cc98.<函数名>`，函数名就是 `Cc98Reader` 上的 22 个只读方法。
  * 谁是消费方（页面 / 脚本 / 将来的 AI 工具）由调用方决定，本包不预设 ——
  * 与 `source-campus` / `source-omni` 的取舍一致。
  *
@@ -90,10 +90,22 @@ export const METHODS = Object.freeze([
   'newTopics',
   'boards',
   'boardTopics',
+  'boardTags',
   'user',
   'notifications',
   'conversations',
   'messages',
+  'topicDownload',
+  'ratingReasons',
+  'original',
+  'overview',
+  'myTopics',
+  'myPosts',
+  'history',
+  'favorites',
+  'following',
+  'feed',
+  'signinMonth',
 ]);
 
 /**
@@ -110,17 +122,46 @@ const ARGS_OF = Object.freeze({
   newTopics: { from: 0, size: 20 },
   boards: {},
   boardTopics: { board_id: 1, from: 0, size: 20, best: false },
+  boardTags: { board_id: 1 },
   user: { user_id: 1, name: '水友' },
   notifications: { kind: 'reply', from: 0, size: 20 },
   conversations: { from: 0, size: 20 },
   messages: { user_id: 1, from: 0, size: 20 },
+  topicDownload: { topic_id: 1, floor: 1, url: 'https://file.cc98.org/…' },
+  ratingReasons: {},
+  original: { post_id: 1 },
+  overview: {},
+  myTopics: { from: 0, size: 20 },
+  myPosts: { from: 0, size: 20, hot: false },
+  history: { from: 0, size: 20 },
+  favorites: { from: 0, size: 20, group_id: 0, order: 1, keyword: '' },
+  following: { from: 0, size: 20, fans: false },
+  feed: { kind: 'boards', from: 0, size: 20 },
+  signinMonth: { year: 2026, month: 11 },
 });
 
 export { Cc98Client, Cc98Reader, TokenStore, ubbToText, cc98Id };
 export { CC98_API, CC98_WEB, TOKEN_URL, CC98_HOSTS, REFERER } from './hosts.js';
 export { CLIENT_ID, CLIENT_SECRET, SCOPE, parseTokenResponse, passwordForm, refreshForm } from './token.js';
-export { asList, at, postText, topicSummary, nextFrom } from './reads.js';
-export { apiPath, withQuery, httpError, parseBody } from './client.js';
+export {
+  asList,
+  at,
+  postText,
+  topicSummary,
+  nextFrom,
+  nextFromTotal,
+  fileLinks,
+  floorAnchor,
+  idsPath,
+  postView,
+  pagedView,
+  ratingSummary,
+  safeFileName,
+  signInView,
+  unreadView,
+  userView,
+} from './reads.js';
+export { apiPath, withQuery, httpError, parseBody, fileApiUrl, FILE_HOST } from './client.js';
 
 /**
  * 给用户看的一句话状态：这次请求走的是哪条路。
@@ -142,6 +183,9 @@ const TRANSPORT_LABEL = '直连 api.cc98.org（本包不做 WebVPN）';
  * @param [config.protect] - `SessionStore` 的保护器（默认 DPAPI）。
  * @param [config.timeoutMs] - 单请求超时。
  * @param [config.verbose] - 打请求日志。
+ * @param [config.downloadDir] - 帖内文件的落盘目录（`cc98.topicDownload`）。
+ *   **默认 `null`：不落盘，只回文件链接**。不默认开，是因为默认目录一旦被写满
+ *   用户无从知道那些文件是从哪来的；这是一件应当显式同意的事。
  */
 export async function apply(ctx, config = {}) {
   const log = (message) => {
@@ -237,7 +281,7 @@ export async function apply(ctx, config = {}) {
       : () => {},
   });
 
-  const reader = new Cc98Reader(client);
+  const reader = new Cc98Reader(client, { downloadDir: config.downloadDir ?? null });
 
   /**
    * 调一个只读方法。
@@ -313,8 +357,25 @@ export async function apply(ctx, config = {}) {
     label: 'CC98 论坛',
     readOnly: true,
     dataDir: persist ? dataDir : null,
+    /** 帖内文件的落盘目录；`null` 表示只回链接、不落盘（默认）。 */
+    downloadDir: reader.downloadDir,
     methods: METHODS.map(key => ({ method: `cc98.${key}`, args: ARGS_OF[key] })),
-    note: '只读数据源：没有发帖/回复/私信发送等写操作。认证走 OAuth2 密码模式（Bearer），只支持直连。',
+    /**
+     * 会话动作。
+     *
+     * 与 `methods` 分开列，而不是塞进同一个数组：它们**不是读取**，
+     * 不进 `METHODS`、不吃 `ARGS_OF` 的参数，走的是路由特判那条路。
+     * 混在一起会让「能力清单里有 23 条读取」这种误解成立。
+     *
+     * `status` 不发请求（只报本地有没有令牌）；`logout` 只清本地令牌 ——
+     * cc98 的令牌是无状态的，没有远端登出这回事。
+     */
+    actions: [
+      { action: 'cc98.status', note: '本地是否已登录（不联网）' },
+      { action: 'cc98.logout', note: '清掉本地令牌与会话' },
+    ],
+    note: '只读数据源：没有发帖/回复/私信发送/签到/赞踩/评分等写操作（那批归 packages/tool/campus-write）。'
+      + '认证走 OAuth2 密码模式（Bearer），只支持直连。',
   });
 
   /* ── 数据路由 ────────────────────────────────────────────────────── */

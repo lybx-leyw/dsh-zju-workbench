@@ -37,6 +37,22 @@ export const XXT_ENDPOINTS = Object.freeze({
   examList: 'https://mooc1-api.chaoxing.com/exam-ans/exam/test/examcode/examlist',
   /** 通知列表（JSON）。 */
   noticeList: 'https://notice.chaoxing.com/pc/notice/getNoticeList',
+  /**
+   * 课程页（HTML）—— 章节目录从这里取。
+   *
+   * \mooc2-ans\ 是超星 2.0 的课程页；旧版 \mooc-ans\ 用另一套路径。
+   * 本仓只支持 2.0（上游同口径）。
+   */
+  chapterList: 'https://mooc2-ans.chaoxing.com/mooc2-ans/mycourse/studentcourse',
+
+  /**
+   * 章节卡片内容（HTML 片段）—— 附件清单从这里取。
+   *
+   * \
+um\ 从 0 递增，取到没有卡片为止（见 \eads.js\ 的 MAX_CARDS）。
+   */
+  chapterCards: 'https://mooc1.chaoxing.com/mooc-ans/knowledge/cards',
+
   /** 我的课表（JSON）。 */
   schedule: 'https://kb.chaoxing.com/pc/curriculum/getMyLessons',
 });
