@@ -57,9 +57,10 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     // 这一列写的是 `loadSheets` 的 key —— **目录名**，不是包名。
     //
     // `classroom-stage` / `page-classroom-play` / `page-classroom-build` 已归档：
-    // 产品侧只要 AI 教学那条链路，不要独立的课堂播放页。留下的 renderer 仍在
-    // 表里 —— `page-study` 用它渲染单张课件。
-    'classroom-renderer',
+    // 产品侧只要 AI 教学那条链路，不要独立的课堂播放页。
+    // ⚠️ `classroom-renderer` 已不在这张表里：渲染组件连同它的样式一起搬到
+    // `ui-shared`（`classroom-slide.css`），`core/classroom-renderer` 只剩常量，
+    // 没有样式表了。它的行仍在下面（`ui-shared` 一行聚合全部表）。
     'graph-render',
     // `dsh-zhiyun-settings-account` 已归档到 `archive/deprecated-packages/`：
     // 它的 style.css 不再被 `loadSheets` 读到，所以这里也不列它。

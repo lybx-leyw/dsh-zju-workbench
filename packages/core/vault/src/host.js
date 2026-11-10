@@ -62,6 +62,37 @@ export async function apply(ctx, config = {}) {
     else console.warn(line);
   };
 
+  /**
+   * 先把**存储半边**挂起来（它就是 `.md` 落盘那部分，原住在「笔记」页里）。
+   *
+   * # 为什么在这里挂，而不是在 patch 里单开一行
+   *
+   * 单开一行要写 `name: '@lybx-leyw/dsh-zju-core-vault/src/notes-host.js'` ——
+   * 那是**子路径**。宿主按 profile `bundles` 里的**包名**去 `node_modules` 解析
+   * 并建目录链接（见 `scripts/profile.mjs`），子路径能不能被当成一个 bundle
+   * 解析取决于宿主实现，**而这一点在本仓无法验证**（构建/启动都跑不了）。
+   * 赌错的后果是静默的：存储不启动 → 笔记页两条路由都 404，页面看上去只是"空了"。
+   *
+   * 所以改成由本包入口显式挂载：一行 bundle 条目、一个包名，解析路径不变。
+   * 存储先起（它建目录、注册路由），索引器随后即可经 `zhiyunVault` 拿到内容。
+   */
+  if (config.notesStore !== false) {
+    try {
+      const { apply: applyNotesStore } = await import('./notes-host.js');
+      const disposeStore = await applyNotesStore(ctx, config.notesStore ?? {});
+      // ⚠️ 必须写成 `() => () => disposeStore()`：`ctx.effect` 的约定是
+      //    回调**返回 cleanup 函数**。写成 `() => disposeStore` 也能跑（返回的就是
+      //    那个函数），但读起来像"effect 的返回值是 disposer 本身"，下一个人很容易
+      //    改成 `ctx.effect(disposeStore)` —— 那会在求值时立刻执行一次 disposer。
+      if (typeof disposeStore === 'function') {
+        ctx.effect(() => () => disposeStore(), 'zhiyun: notes store');
+      }
+    } catch (error) {
+      // 存储起不来不该拖垮索引器：反链还能算，只是没有正文可读。
+      warn(`笔记存储未能启动，笔记页将没有内容：${error?.message ?? error}`);
+    }
+  }
+
   const routePath = config.routePath ?? ROUTE_PATH;
 
   /** 当前笔记集（由调用方注入或推入）。 */

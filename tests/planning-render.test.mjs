@@ -117,25 +117,25 @@ test('页面组件能真的渲染出 HTML（白屏的第一道闸）', async () 
   assert.match(html, /zpg-head/, '应渲染出页头');
 });
 
-test('两个设置分区都能渲染（拆开之后各自都要能站住）', async () => {
-  // 原来只有一个 `SettingsSection`（中转站 + 拼题A 挤在一起）。现在拆成两个独立分区，
-  // 所以两个都要单独验证 —— 白屏在设置里同样会露出来。
+test('本页只注册「个人中转站」一个设置分区，且它能渲染', async () => {
+  // 以前这里有两个分区：中转站 + 拼题A。**拼题A 已移除** —— Cookie 是
+  // `@lybx-leyw/dsh-zju-source-campus` 的凭据，由那个包自己注册设置分区；
+  // 本页再注册一个，设置栏里就会出现两个「拼题A」入口、各打各的路由。
+  //
+  // 所以现在：本页只有 `RelaySection`（`zhiyun-relay`），
+  // `PtaSection` 与旧的合并组件 `SettingsSection` 都应不存在。
   const React = (await import('react')).default;
   const { renderToStaticMarkup } = await import('react-dom/server');
   const client = await loadClient('b');
 
-  assert.equal(typeof client.PtaSection, 'function', '拼题A 分区必须导出');
   assert.equal(typeof client.RelaySection, 'function', '个人中转站分区必须导出');
-  // 旧的那个合并组件必须已经不存在 —— 留着会让人以为还能注册
+  assert.equal(client.PtaSection, undefined,
+    'PtaSection 应已删除：拼题A 凭据的配置入口归 source/campus');
   assert.equal(client.SettingsSection, undefined, '旧的合并分区应已删除');
 
   const relay = renderToStaticMarkup(React.createElement(client.RelaySection));
   assert.ok(relay.length > 100, '中转站分区渲染结果为空的');
   assert.match(relay, /中转站域名/, '应出现域名配置字段');
-
-  const pta = renderToStaticMarkup(React.createElement(client.PtaSection));
-  assert.ok(pta.length > 100, '拼题A 分区渲染结果为空的');
-  assert.match(pta, /Cookie/, '应出现 Cookie 配置字段');
 });
 
 test('页面组件在没有宿主 ctx 时也不炸（这是它必须能独立打开的前提）', async () => {

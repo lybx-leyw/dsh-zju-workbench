@@ -25,12 +25,18 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import {
-  ZDBK_BASE, ZDBK_CAS_ENTRY, ZDBK_HOSTS, ZDBK_PATHS, ZDBK_SERVICE, ZDBK_HOST,
+  ZDBK_BASE, ZDBK_CAS_ENTRY, ZDBK_HOSTS, ZDBK_PATHS, ZDBK_PLAN_PATHS,
+  ZDBK_SELECTION_PATHS, ZDBK_SERVICE, ZDBK_HOST, planPdfUrl,
 } from '../packages/source/zdbk/src/hosts.js';
 import {
   PERIOD_TIMES, checkAcademicYear, courseCodeOfKey, currentTerm, gpaOf, parseExams,
   parseExamTime, parseGrade, parseSession, semesterOfCourseKey, semesterOfTerm, termCode,
 } from '../packages/source/zdbk/src/parse.js';
+import { parsePlan, splitCourses } from '../packages/source/zdbk/src/plan.js';
+import {
+  assertSelectionTerm, flatten, parseCapacity, parseMyPlan, parseSelectionContext,
+  parseSelectionRow, sectionView, selectionPageForm, selectionSearchForm, selectionState,
+} from '../packages/source/zdbk/src/selection.js';
 import { casForm, casLogin, encryptCasPassword, hasCasForm, describeAuthFailure } from '../packages/source/zdbk/src/cas.js';
 import { ZdbkClient } from '../packages/source/zdbk/src/client.js';
 import { ZdbkReader } from '../packages/source/zdbk/src/reads.js';
@@ -1005,11 +1011,23 @@ test('插件装配：注册服务与数据路由，路由信封按 { type, rpcId
   assert.deepEqual(registered.methods, ['GET', 'POST']);
   assert.equal(registered.requestBody, 'buffered');
 
-  // GET：自描述，四个方法都在，且顺序稳定。
+  // GET：自描述，十二个方法都在，且顺序稳定。
+  // 前四个是移植来的，后八个是补齐上游 `plan view/list` + `selection` 六条查询。
+  // ⚠️ 顺序是**契约**：`READ_METHODS` 是数组而不是 Set，就是为了让这份自描述稳定。
+  //    选课的 select/reorder/drop 三条写操作**不在**这里（归 packages/tool/campus-write）。
   const getResponse = await registered.fetch(new Request('http://127.0.0.1/api/zhiyun-zdbk', { method: 'GET' }));
   const described = await getResponse.json();
   assert.equal(described.ok, true);
-  assert.deepEqual(described.value.methods.map((m) => m.method), ['zdbk.grades', 'zdbk.gpaSummary', 'zdbk.exams', 'zdbk.timetable']);
+  assert.deepEqual(described.value.methods.map((m) => m.method), [
+    'zdbk.grades', 'zdbk.gpaSummary', 'zdbk.exams', 'zdbk.timetable',
+    'zdbk.planList', 'zdbk.planView',
+    'zdbk.selectionContext', 'zdbk.selectionCourses', 'zdbk.selectionSearch',
+    'zdbk.selectionSections', 'zdbk.selectionSelected', 'zdbk.selectionCredits',
+  ]);
+  // 写操作**不许**出现在这张表里 —— 出现了就是分层被破坏（而且会绕过写闸）。
+  for (const forbidden of ['zdbk.select', 'zdbk.reorder', 'zdbk.drop']) {
+    assert.equal(described.value.methods.some((m) => m.method === forbidden), false, `${forbidden} 属写操作，不该在本包`);
+  }
 
   // GET 不该触发任何登录 → 上面那个一定失败的 fetch 一次都没被调用就说明没问题
   // （若被调用会得到 500 → PLATFORM_ERROR，而不是这份自描述）。
@@ -1024,7 +1042,8 @@ test('插件装配：注册服务与数据路由，路由信封按 { type, rpcId
   assert.equal(badBody.result.error.code, 'INPUT');
 
   // POST：原型链上的名字一律拒绝（这是安全边界，不能只靠"看起来对"）。
-  for (const method of ['zdbk.constructor', 'zdbk.__proto__', 'zdbk.toString', 'zdbk.items', 'zdbk.rows', '__proto__', 'grades', 42, null]) {
+  // `selectionPages` / `plansOfYear` 是本轮新增的内部编排方法，同样不许从路由拨到。
+  for (const method of ['zdbk.constructor', 'zdbk.__proto__', 'zdbk.toString', 'zdbk.items', 'zdbk.rows', 'zdbk.selectionPages', 'zdbk.plansOfYear', 'zdbk.myPlanIdentity', '__proto__', 'grades', 42, null]) {
     const response = await registered.fetch(new Request('http://127.0.0.1/api/zhiyun-zdbk', {
       method: 'POST', body: JSON.stringify({ type: 'client-request', rpcId: 'r2', method }),
     }));
@@ -1159,4 +1178,1148 @@ test('manifest 与 bundle patch：包名、入口、patch 一致（profile 靠�
   // 源码里不许出现 TypeScript（本包刻意是纯 JS）。
   const src = await readFile(new URL('src/index.js', root), 'utf8');
   assert.equal(/\.ts['"]/.test(src), false, 'index.js 不该 import .ts');
+});
+
+/* ══════════════════════════════════════════════════════════════════════
+ * 本轮新增：培养方案（planList / planView）与选课查询（selection* 六条）
+ *
+ * ⚠️ 夹具按上游注释推断，未经真实响应验证。
+ *
+ * 上游 `pyfagl.ts` / `xsxk.ts` 的文件头写着这些接口的字段与形态，
+ * 但本仓**没有**真实响应可对照（2026-11 起上游那些接口的实测样本不在仓库里）。
+ * 所以下面所有夹具都是照注释拼出来的：字段名、分隔写法、裸数组形态可信，
+ * 具体取值不可信。这意味着：
+ *
+ *   - 测试能守住「解析口径」「错误码」「分页/去重」「消歧义」这些**逻辑**；
+ *   - 测试**不能**证明「真实响应能被解析」—— 那要等真机样本；
+ *   - 真机上如果字段名变了，这里不会红，表现会是线上解析失败。
+ *
+ * 这条标注必须留着：上一轮的事故正是「夹具配合实现写」，于是两边一起错还全绿。
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * 一个假的客户端，覆盖读取器这一轮用到的**全部**取数方法。
+ *
+ * 与既有的 `fakeApi`（只实现 `post`）分开写而不是扩展它：既有的四条测试
+ * 靠「夹具必须显式覆盖被调用的路径」来抓「意外请求」，把新方法塞进去会削弱
+ * 那条约束（未知方法随便回个空值就过了）。这里同样严格 —— 未覆盖即抛错。
+ *
+ * @param {{grid?: object, html?: object, postArray?: object, post?: object}} routes - 按方法分组的路径表。
+ * @returns {object} 假客户端（带 `calls` 记录）。
+ */
+function fakeApi2(routes = {}) {
+  const calls = [];
+  const pick = (kind, path, options) => {
+    calls.push({ kind, path, options });
+    const table = routes[kind] ?? {};
+    if (!(path in table)) throw new Error(`夹具未覆盖 ${kind} ${path}`);
+    const value = table[path];
+    return typeof value === 'function' ? value(options) : value;
+  };
+  return {
+    calls,
+    async post(path, options) { return pick('post', path, options); },
+    async postArray(path, options) { return pick('postArray', path, options); },
+    async grid(path, form, paging) { return pick('grid', path, { form, paging }); },
+    async html(path, options) { return pick('html', path, options); },
+  };
+}
+
+/** 选课首页的 HTML（字段名按上游 `parseSelectionContext` 的注释）。 */
+const SELECTION_INDEX_HTML = `
+<html><body>
+<form id="xkjhForm">
+  <input id="xn" name="xn" value="2025-2026" />
+  <input id="xq" name="xq" value="1" />
+  <input id="nj" name="nj" value="2025" />
+  <input id="zydm" name="zydm" value="080901" />
+  <input id="xkzys" name="xkzys" value="3" />
+  <input id="ylxs" name="ylxs" value="4" />
+</form>
+<ul class="nav">
+  <li kclbmc="通识核心课程" kcbs="01">
+    <a href="#" onclick="categroyClick(this, 'xk_1', 'bl')">通识核心课程</a>
+    <ul><li><a href="#" onclick="categroyClick(this, 'xk_1', 'zl')">通识核心课程子类</a></li></ul>
+  </li>
+  <li title="全部课程">
+    <a href="#" onclick="categroyClick(this, 'xk_2', 'qb')">全部课程</a>
+  </li>
+  <li kclbmc="条件搜索">
+    <a href="#" onclick="categroyClick(this, 'xk_9', 'ss')">条件搜索</a>
+  </li>
+  <li kclbmc="补考选课">
+    <a href="#" onclick="categroyClick(this, 'xk_1_1', 'bk')">补考选课</a>
+  </li>
+</ul>
+</body></html>`;
+
+/** 一条课程记录（`cxZzxkGhbKcList` 的形态；`xk_9` 搜索也是同一套字段）。 */
+const SELECTION_COURSE_ROWS = [
+  {
+    xkkh: '(2025-2026-1)-CS1001G-0012345-1',
+    kcdm: 'CS1001G',
+    kcmc: '程序设计基础',
+    kcxx: '0~3.0~3.0-0.0',
+    kclb: '专业必修',
+    kkxy: '计算机科学与技术学院',
+    xxq: '秋冬',
+  },
+  {
+    xkkh: '(2025-2026-1)-MA1001G-0012346-1',
+    kcdm: 'MA1001G',
+    kcmc: '微积分(Ⅰ)',
+    xf: '5',
+    kclb: '通识必修',
+    kkxy: '数学科学学院',
+    xxq: '秋冬',
+  },
+];
+
+/** 教学班记录：**没有 kcdm**（这是上游注释明确写下的形态）。 */
+const SELECTION_SECTION_ROWS = [
+  {
+    xkkh: '(2025-2026-1)-CS1001G-0012345-1',
+    kcmc: '程序设计基础',
+    jsxm: '张三',
+    sksj: '周一第1,2节<br>周三第3,4节',
+    skdd: '紫金港东1-101<br>紫金港东1-102',
+    rs: '5/60',
+    xxq: '秋冬',
+    kssj: '2026年01月15日(08:00-10:00)',
+  },
+  {
+    xkkh: '(2025-2026-1)-CS1001G-0012346-1',
+    kcmc: '程序设计基础',
+    jsxm: '李四',
+    sksj: '周二第1,2节',
+    skdd: '紫金港东1-201',
+    rs: '60/60',
+    xxq: '秋冬',
+  },
+];
+
+/** 本人志愿：一条已选上、一条待筛选、一条 sxbj 缺失（→ 未知）。 */
+const SELECTION_OWNED_ROWS = [
+  {
+    xkkh: '(2025-2026-1)-CS1001G-0012345-1',
+    kcdm: 'CS1001G',
+    kcmc: '程序设计基础',
+    jsxm: '张三',
+    sksj: '周一第1,2节',
+    skdd: '紫金港东1-101',
+    xf: '3',
+    sxbj: '1',
+    xkzy: '1',
+    xksj: '2025-09-01 10:20:30',
+  },
+  {
+    xkkh: '(2025-2026-1)-MA1001G-0012346-1',
+    kcdm: 'MA1001G',
+    kcmc: '微积分(Ⅰ)',
+    jsxm: '王五',
+    sksj: '周二第3,4节',
+    skdd: '紫金港西2-205',
+    xf: '5',
+    sxbj: '0',
+    xkzy: '2',
+    xkzyfz: 'G-MA1001G',
+  },
+  {
+    xkkh: '(2025-2026-1)-PH1001G-0012347-1',
+    kcdm: 'PH1001G',
+    kcmc: '大学物理',
+    jsxm: '赵六',
+    xf: '4',
+  },
+];
+
+/** 培养方案列表的一行（jqGrid）。 */
+function planRow(id, major, college, extra = {}) {
+  return {
+    jxjhh: id,
+    zymc: major,
+    xymc: college,
+    synj: '2025',
+    zdbyxf: '160',
+    syxw: '工学学士',
+    xz: '4',
+    xqmc: '紫金港校区',
+    dlbsmc: '主修',
+    zyhxkc: '程序设计基础<br>数据结构基础',
+    qywkc: '人工智能导论　机器学习导论',
+    ...extra,
+  };
+}
+
+/* ───────────────────── 培养方案：纯解析 */
+
+test('培养方案解析：核心课按 <br> / 双空格 / 全角空格三种写法都能切开', () => {
+  // 三种分隔写法在真实页面上同时存在。只认 <br> 的后果是「核心课」变成一整个
+  // 长字符串，被下游当列表用时只渲染成一段文字 —— 看起来像排版问题。
+  assert.deepEqual(splitCourses('课A<br>课B'), ['课A', '课B']);
+  assert.deepEqual(splitCourses('课A  课B'), ['课A', '课B'], '两个半角空格');
+  assert.deepEqual(splitCourses('课A　课B'), ['课A', '课B'], '全角空格');
+  assert.deepEqual(splitCourses('课A<br/>课B'), ['课A', '课B'], '自闭合 br');
+  assert.deepEqual(splitCourses('课A &amp; 课B'), ['课A & 课B'], '实体要解');
+  assert.deepEqual(splitCourses(''), []);
+  assert.deepEqual(splitCourses(null), [], 'null 不是错误，是空列表');
+  // 单个空格**不切**：课程名里有空格（「Python 程序设计」），切了就断成两门课。
+  assert.deepEqual(splitCourses('Python 程序设计'), ['Python 程序设计']);
+});
+
+test('培养方案解析：字段齐全，id 取 jxjhh', () => {
+  const plan = parsePlan(planRow('2025080901', '软件工程', '计算机科学与技术学院'));
+  assert.equal(plan.id, '2025080901');
+  assert.equal(plan.major, '软件工程');
+  assert.equal(plan.college, '计算机科学与技术学院');
+  assert.equal(plan.year, '2025');
+  assert.equal(plan.credits, '160');
+  assert.equal(plan.degree, '工学学士');
+  assert.equal(plan.duration, '4');
+  assert.equal(plan.campus, '紫金港校区');
+  assert.equal(plan.category, '主修');
+  assert.deepEqual(plan.core_courses, ['程序设计基础', '数据结构基础']);
+  assert.deepEqual(plan.frontier_courses, ['人工智能导论', '机器学习导论']);
+  // 别名：某些版本用 pyfaxx_id 而不是 jxjhh。
+  assert.equal(parsePlan({ pyfaxx_id: 'X1', zymc: '某专业' }).id, 'X1');
+});
+
+test('培养方案解析：缺教学计划号是 SCHEMA_CHANGED，不是"跳过这一条"', () => {
+  // 上游 `String(r.jxjhh ?? r.pyfaxx_id ?? "")` 会兜成空串 —— 于是产出一条
+  // id 为空的方案：界面上正常，点「查看」什么也打不开。这里必须抛。
+  assert.throws(() => parsePlan({ zymc: '某专业' }), (e) => e.code === 'SCHEMA_CHANGED');
+  assert.throws(() => parsePlan({ jxjhh: '  ', zymc: '某专业' }), (e) => e.code === 'SCHEMA_CHANGED');
+  assert.throws(() => parsePlan(null), (e) => e.code === 'SCHEMA_CHANGED');
+  assert.throws(() => parsePlan([1, 2]), (e) => e.code === 'SCHEMA_CHANGED');
+});
+
+test('培养方案 PDF 链接：id 编码一次、模块码是 N153020', () => {
+  const url = new URL(planPdfUrl('2025080901'));
+  assert.equal(url.hostname, 'zdbk.zju.edu.cn');
+  assert.equal(url.pathname, '/jwglxt/pyfagl/pyfayl_cxPyfaylPdf.html');
+  assert.equal(url.searchParams.get('id'), '2025080901');
+  assert.equal(url.searchParams.get('doType'), 'query');
+  assert.equal(url.searchParams.get('gnmkdm'), 'N153020');
+  // 特殊字符必须只编码一次（双重编码会让服务端找不到那份 PDF）。
+  assert.equal(new URL(planPdfUrl('a b')).searchParams.get('id'), 'a b');
+});
+
+/* ───────────────────── 培养方案：读取编排 */
+
+test('planList：给 year 就完全不碰选课首页（非选课期唯一能用的形态）', async () => {
+  const api = fakeApi2({
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: {
+        items: [
+          planRow('2025080901', '软件工程', '计算机科学与技术学院'),
+          planRow('2025080902', '计算机科学与技术', '计算机科学与技术学院'),
+          planRow('2025081001', '数学与应用数学', '数学科学学院'),
+        ],
+        total: 3, page: 1, size: 500, totalPages: 1,
+      },
+    },
+  });
+  const out = await new ZdbkReader(api).planList({ year: '2025' });
+  assert.equal(out.year, '2025');
+  assert.equal(out.count, 3);
+  assert.equal(out.plans.length, 3, 'count 与数组长度必须一致');
+  assert.equal(out.plans[0].major, '软件工程');
+  // 关键：一次 html() 都没发 → 不依赖选课首页。
+  assert.equal(api.calls.some((c) => c.kind === 'html'), false, '给了 year 不该读选课首页');
+  // 分页必须拉满，否则一个年级静默只剩 10 条。
+  assert.equal(api.calls[0].options.paging.size, 500);
+  assert.equal(api.calls[0].options.form.synj, '2025');
+});
+
+test('planList：不给 year 就读本人年级；选课首页没有年级是 SCHEMA_CHANGED', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: {
+        items: [planRow('2025080901', '软件工程', '计算机科学与技术学院')],
+        total: 1, page: 1, size: 500, totalPages: 1,
+      },
+    },
+  });
+  const out = await new ZdbkReader(api).planList();
+  assert.equal(out.year, '2025', '本人年级来自选课首页的 nj');
+  assert.equal(api.calls[0].kind, 'html');
+  assert.equal(api.calls[1].options.form.synj, '2025');
+
+  // 首页上没有 nj / zydm：必须报「无法确定」，不许猜一个年级。
+  const broken = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: '<html><body><input id="xn" value="2025-2026"></body></html>' },
+  });
+  await assert.rejects(() => new ZdbkReader(broken).planList(), (e) => {
+    assert.equal(e.code, 'SCHEMA_CHANGED');
+    assert.match(e.message, /year/, '文案要指出怎么绕开这一步');
+    return true;
+  });
+});
+
+test('planList：学院/专业按名字本地筛（服务端只认代码）', async () => {
+  const api = fakeApi2({
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: {
+        items: [
+          planRow('2025080901', '软件工程', '计算机科学与技术学院'),
+          planRow('2025080902', '计算机科学与技术', '计算机科学与技术学院'),
+          planRow('2025081001', '数学与应用数学', '数学科学学院'),
+        ],
+        total: 3, page: 1, size: 500, totalPages: 1,
+      },
+    },
+  });
+  const reader = new ZdbkReader(api);
+  assert.equal((await reader.planList({ year: '2025', college: '计算机' })).count, 2);
+  assert.equal((await reader.planList({ year: '2025', major: '软件' })).count, 1);
+  const both = await reader.planList({ year: '2025', college: '计算机', major: '数学' });
+  assert.equal(both.count, 0, '两个条件是与关系');
+  assert.deepEqual(both.plans, []);
+});
+
+test('planList：year 不是四位数字是 INVALID_ARGUMENT（不会拿错年份去查）', async () => {
+  // ⚠️ 这里刻意把首页夹具也塞进去：即使实现先读首页再校验年份，
+  // 这条也照样能断言「码是 INVALID_ARGUMENT」，不会因为夹具缺 html 而误红。
+  // 同时断言「根本没发 grid 请求」—— 这才是"不拿错年份去查"的证据。
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    grid: {},
+  });
+  for (const year of ['25', '20255', 'abc', '']) {
+    await assert.rejects(() => new ZdbkReader(api).planList({ year }), (e) => e.code === 'INVALID_ARGUMENT', year);
+  }
+  assert.equal(api.calls.some((c) => c.kind === 'grid'), false, '年份非法时一次列表请求都不该发');
+});
+
+test('planList：全部行都没有教学计划号 = 接口变了（不是"没有方案"）', async () => {
+  const api = fakeApi2({
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: {
+        items: [{ zymc: '甲' }, { zymc: '乙' }],
+        total: 2, page: 1, size: 500, totalPages: 1,
+      },
+    },
+  });
+  await assert.rejects(() => new ZdbkReader(api).planList({ year: '2025' }), (e) => e.code === 'SCHEMA_CHANGED');
+});
+
+test('planList：个别坏行只计 skipped，其余照常返回', async () => {
+  const api = fakeApi2({
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: {
+        items: [
+          planRow('2025080901', '软件工程', '计算机科学与技术学院'),
+          { zymc: '没有计划号的占位行' },
+        ],
+        total: 2, page: 1, size: 500, totalPages: 1,
+      },
+    },
+  });
+  const out = await new ZdbkReader(api).planList({ year: '2025' });
+  assert.equal(out.plans.length, 1);
+  assert.equal(out.skipped_items, 1, '坏行要如实计数，不能吞掉');
+});
+
+test('planList：totalPages > 1 时必须翻页取全（否则一个年级静默只剩一页）', async () => {
+  // 关键回归：`plansOfYear` 里那个 `for (let page = 2; ...)` 循环。
+  // 去掉它测试仍然全绿（第一页的数据是对的），但真实数据下一整个年级
+  // 会被截断到 500 条 —— 而 2025 级实测约 150 条，所以这条只能靠
+  // 构造 totalPages=2 来钉。
+  const secondPage = [planRow('2025081001', '数学与应用数学', '数学科学学院')];
+  const api = fakeApi2({
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: (options) => (options.paging.page === 1
+        ? {
+          items: [planRow('2025080901', '软件工程', '计算机科学与技术学院')],
+          total: 501, page: 1, size: 500, totalPages: 2,
+        }
+        : { items: secondPage, total: 501, page: 2, size: 500, totalPages: 2 }),
+    },
+  });
+  const out = await new ZdbkReader(api).planList({ year: '2025' });
+  assert.equal(out.plans.length, 2, '两页的方案都要在');
+  assert.equal(out.count, 2);
+  assert.deepEqual(out.plans.map((p) => p.major), ['软件工程', '数学与应用数学']);
+  const gridCalls = api.calls.filter((c) => c.kind === 'grid');
+  assert.equal(gridCalls.length, 2, '必须发两次列表请求');
+  assert.equal(gridCalls[1].options.paging.page, 2);
+  assert.equal(gridCalls[1].options.paging.size, 500, '第二页的 size 也要拉满');
+});
+
+test('planView：本人方案按 年级+专业代码 定位，返回 PDF 链接', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: {
+        items: [
+          planRow('2025080901', '软件工程', '计算机科学与技术学院'),
+          // 本人专业代码是 080901（首页的 zydm）→ 教学计划号 2025080901
+          planRow('2025080902', '计算机科学与技术', '计算机科学与技术学院'),
+        ],
+        total: 2, page: 1, size: 500, totalPages: 1,
+      },
+    },
+  });
+  const out = await new ZdbkReader(api).planView();
+  assert.equal(out.id, '2025080901');
+  assert.equal(out.major, '软件工程');
+  assert.equal(out.pdf_url, planPdfUrl('2025080901'));
+  assert.deepEqual(out.core_courses, ['程序设计基础', '数据结构基础']);
+  assert.match(out.note, /PDF/);
+});
+
+test('planView：本人方案找不到是 NOT_FOUND（带 year 与专业代码，能照做）', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: {
+        items: [planRow('2025999999', '别的专业', '别的学院')],
+        total: 1, page: 1, size: 500, totalPages: 1,
+      },
+    },
+  });
+  await assert.rejects(() => new ZdbkReader(api).planView(), (e) => {
+    assert.equal(e.code, 'NOT_FOUND');
+    assert.match(e.message, /2025/, '文案要写出是哪一级');
+    assert.equal(e.details.major_code, '080901');
+    assert.equal(e.details.plan_id, '2025080901');
+    return true;
+  });
+});
+
+test('planView：给 major 时按名称消歧义，命中多条是 NEEDS_DISAMBIGUATION', async () => {
+  const api = fakeApi2({
+    grid: {
+      [ZDBK_PLAN_PATHS.list]: {
+        items: [
+          planRow('2025080901', '计算机科学与技术', '计算机科学与技术学院'),
+          planRow('2025080902', '计算机科学与技术（求是科学班）', '计算机科学与技术学院'),
+        ],
+        total: 2, page: 1, size: 500, totalPages: 1,
+      },
+    },
+  });
+  // 精确匹配只中第一个 → 唯一，直接返回。
+  const exact = await new ZdbkReader(api).planView({ year: '2025', major: '计算机科学与技术' });
+  assert.equal(exact.id, '2025080901');
+
+  // 模糊匹配「计算机」中两条 → 必须报错，不许挑第一个。
+  // 挑第一个的后果是用户拿到一份别人的培养方案，两边都不报错。
+  await assert.rejects(() => new ZdbkReader(api).planView({ year: '2025', major: '计算机' }), (e) => {
+    assert.equal(e.code, 'NEEDS_DISAMBIGUATION');
+    assert.equal(e.details.candidates.length, 2, '候选要一起给出来，用户才能选');
+    assert.equal(e.details.candidates[0].major, '计算机科学与技术');
+    return true;
+  });
+
+  // 完全没命中：同样带候选（这里候选是全部方案，便于用户看有什么）。
+  await assert.rejects(
+    () => new ZdbkReader(api).planView({ year: '2025', major: '考古学' }),
+    (e) => e.code === 'NEEDS_DISAMBIGUATION' && /没有找到/.test(e.message),
+  );
+});
+
+/* ───────────────────── 选课：纯解析 */
+
+test('选课上下文解析：字段齐全，xnxq 形如 (2025-2026-1)-', () => {
+  const context = parseSelectionContext(SELECTION_INDEX_HTML);
+  assert.equal(context.academic_year, '2025-2026');
+  assert.equal(context.semester, 1);
+  assert.equal(context.term, '秋冬');
+  assert.equal(context.grade, '2025');
+  assert.equal(context.major_code, '080901');
+  assert.equal(context.plan_id, '2025080901', '教学计划号 = nj + zydm');
+  assert.equal(context.xnxq, '(2025-2026-1)-');
+  assert.equal(context.max_choices, 3);
+  assert.equal(context.study_length, '4');
+});
+
+test('选课上下文解析：kind 决定走哪条查询链（search / special / courses）', () => {
+  const categories = parseSelectionContext(SELECTION_INDEX_HTML).categories;
+  // ⚠️ 按 `dl` + `lx` 建索引，不能只按 `dl`：同一个 `dl`（xk_1）同时挂着
+  // 父页签（lx=bl）与子类页签（lx=zl），只按 dl 会互相覆盖。
+  const byKey = Object.fromEntries(categories.map((c) => [`${c.dl}/${c.lx}`, c]));
+  assert.equal(byKey['xk_1/bl'].kind, 'courses');
+  assert.equal(byKey['xk_2/qb'].kind, 'courses');
+  assert.equal(byKey['xk_9/ss'].kind, 'search', 'xk_9 是条件搜索页签');
+  assert.equal(byKey['xk_1_1/bk'].kind, 'special', '补考选课未接入');
+  // 子类页签也要被收进来（服务端按 lx 区分），不能因为同名就丢掉。
+  assert.equal(byKey['xk_1/bl'].name, '通识核心课程', '父页签用 kclbmc（不是链接文字）');
+  assert.equal(byKey['xk_1/zl'].name, '通识核心课程子类', '没有 kclbmc 时用链接文字');
+  assert.equal(byKey['xk_1/bl'].kcbs, '01', 'kcbs 是页签上的筛选标记，要原样回传');
+  assert.equal(byKey['xk_2/qb'].name, '全部课程', '没有 kclbmc 时用 title 优先于链接文字');
+});
+
+test('选课上下文解析：缺 xn/xq/nj/zydm/xkzys 任一都是 SCHEMA_CHANGED（不给默认值）', () => {
+  // 给默认值的后果是带着错的学年学期去查，正方不报错、只回空列表。
+  for (const key of ['xn', 'xq', 'nj', 'zydm', 'xkzys']) {
+    const html = SELECTION_INDEX_HTML.replace(new RegExp(`id="${key}" name="${key}" value="[^"]*"`), '');
+    assert.throws(() => parseSelectionContext(html), (e) => {
+      assert.equal(e.code, 'SCHEMA_CHANGED', `${key} 缺失应报 SCHEMA_CHANGED`);
+      assert.match(e.message, new RegExp(key), '文案要点名缺了哪个字段');
+      return true;
+    });
+  }
+});
+
+test('选课上下文解析：学期/志愿数格式异常也是 SCHEMA_CHANGED', () => {
+  const bad = (from, to) => SELECTION_INDEX_HTML.replace(from, to);
+  assert.throws(() => parseSelectionContext(bad('value="2025-2026"', 'value="25-26"')), (e) => e.code === 'SCHEMA_CHANGED');
+  assert.throws(() => parseSelectionContext(bad('id="xq" name="xq" value="1"', 'id="xq" name="xq" value="秋"')), (e) => e.code === 'SCHEMA_CHANGED');
+  assert.throws(() => parseSelectionContext(bad('id="xkzys" name="xkzys" value="3"', 'id="xkzys" name="xkzys" value="0"')), (e) => e.code === 'SCHEMA_CHANGED');
+  assert.throws(() => parseSelectionContext(bad('id="xkzys" name="xkzys" value="3"', 'id="xkzys" name="xkzys" value="1.5"')), (e) => e.code === 'SCHEMA_CHANGED');
+});
+
+test('parseMyPlan：只要 nj + zydm（非选课期也能用）', () => {
+  // 非选课期页面上通常没有 xkzys，所以「推本人方案」不能要求全部字段。
+  const html = '<html><input id="nj" value="2025"><input id="zydm" value="080901"></html>';
+  assert.deepEqual(parseMyPlan(html), { id: '2025080901', year: '2025', major: '080901' });
+  assert.equal(parseMyPlan('<html><input id="nj" value="25"></html>'), null, '年级格式不对 → null，不猜');
+  assert.equal(parseMyPlan('<html></html>'), null);
+});
+
+test('选课记录解析：教学班响应没有 kcdm，用本次查询的课程代码兜住', () => {
+  // 不兜的话每一条教学班都会被判「缺字段」，错误指向「接口变了」——
+  // 真实原因却是调用方没把课程代码带下来。
+  const row = parseSelectionRow({ xkkh: '(2025-2026-1)-CS1001G-0012345-1', kcmc: '程序设计基础' }, 'CS1001G');
+  assert.equal(row.xkkh, '(2025-2026-1)-CS1001G-0012345-1');
+  assert.equal(row.kcdm, 'CS1001G');
+  // 白名单：渲染用的噪音字段要被丢掉。
+  assert.equal(parseSelectionRow({ xkkh: 'X', kcdm: 'C', tabname: 'jxrwbview' }, null).tabname, 'jxrwbview', 'tabname 在白名单里（要用它判补考）');
+  assert.equal('zyfzByKcdm' in parseSelectionRow({ xkkh: 'X', kcdm: 'C', zyfzByKcdm: 1 }, null), false, '渲染用字段要丢掉');
+});
+
+test('选课记录解析：缺 xkkh / kcdm 是 SCHEMA_CHANGED', () => {
+  assert.throws(() => parseSelectionRow({ kcmc: '课' }, 'CS1001G'), (e) => e.code === 'SCHEMA_CHANGED', '缺教学班号');
+  assert.throws(() => parseSelectionRow({ xkkh: '(2025-2026-1)-X-1-1' }), (e) => e.code === 'SCHEMA_CHANGED', '缺课程代码');
+  assert.throws(() => parseSelectionRow(null, 'C'), (e) => e.code === 'SCHEMA_CHANGED');
+  assert.throws(() => parseSelectionRow(['数组'], 'C'), (e) => e.code === 'SCHEMA_CHANGED');
+});
+
+test('志愿状态：sxbj=1 已选上 / 0 待筛选 / 其他未知（不猜）', () => {
+  assert.equal(selectionState({ sxbj: '1' }), 'selected');
+  assert.equal(selectionState({ sxbj: '0' }), 'pending');
+  assert.equal(selectionState({ sxbj: '2' }), 'unknown', '没见过的值必须如实标未知');
+  assert.equal(selectionState({}), 'unknown');
+  assert.equal(selectionState({ sxbj: '' }), 'unknown');
+});
+
+test('容量解析：{"5/60"} → remaining 5 / capacity 60；格式不符两个都是 null', () => {
+  assert.deepEqual(parseCapacity('5/60'), { remaining: 5, capacity: 60 });
+  assert.deepEqual(parseCapacity(' 5 / 60 '), { remaining: 5, capacity: 60 });
+  assert.deepEqual(parseCapacity('0/0'), { remaining: 0, capacity: 0 }, '0 是有效值，不是"没给"');
+  // 拆错的表现是「余量显示成 60」——页面上看不出错，只是课满了照显示有位置。
+  for (const value of ['', '5', 'abc', '5/60/', null, undefined]) {
+    assert.deepEqual(parseCapacity(value), { remaining: null, capacity: null }, String(value));
+  }
+});
+
+test('flatten：<br> 换连接符、去标签、解实体、「--」视为没有', () => {
+  // 正方的多值字段用 <br> 分隔；原样上屏会把一整段 HTML 糊在界面上。
+  assert.equal(flatten('周一第1,2节<br>周三第3,4节'), '周一第1,2节、周三第3,4节');
+  assert.equal(flatten('周一第1,2节<br>周三第3,4节', '；'), '周一第1,2节；周三第3,4节');
+  assert.equal(flatten('<span>东1-101</span>'), '东1-101', '行内标签要去掉');
+  assert.equal(flatten('A &amp; B'), 'A & B', '实体要解');
+  assert.equal(flatten('A&nbsp;B'), 'A B');
+  // ⚠️ `--` 是正方表达「没有」的写法。当成地点显示出来就是一句假话
+  //    （「考试地点：--」比「考试地点：未公布」更糟，用户会以为在某个地方）。
+  assert.equal(flatten('--'), '', '-- 要当作空');
+  assert.equal(flatten('紫金港东1-101<br>--'), '紫金港东1-101', '多值里混进 -- 时只丢那一段');
+  assert.equal(flatten(''), '');
+  assert.equal(flatten(null), '');
+  assert.equal(flatten(undefined), '');
+});
+
+test('flatten：`--` 出现在教学班地点里时不该上屏', () => {
+  // 走完整链路验证一次：sectionView 用的是 flatten，所以这条覆盖「地点为 --」的真实形态。
+  const view = sectionView({ kcdm: 'CS1001G', xkkh: '(2025-2026-1)-CS1001G-1-1', skdd: '--', jsxm: '张三' });
+  assert.equal(view.location, undefined, '地点是 -- 时字段整个不出现');
+  assert.equal('location' in view, false);
+  assert.equal(view.teacher, '张三');
+});
+
+test('分页表单：正方要的是行号区间 kspage/jspage，不是页码', () => {
+  assert.deepEqual(selectionPageForm(), { kspage: '1', jspage: '20' });
+  assert.deepEqual(selectionPageForm(1, 50), { kspage: '1', jspage: '50' });
+  // 第 2 页 = 第 51~100 行。按页码传 2 的表现是「第 2 页还是第 1 页的内容」。
+  assert.deepEqual(selectionPageForm(2, 50), { kspage: '51', jspage: '100' });
+  assert.deepEqual(selectionPageForm(3, 20), { kspage: '41', jspage: '60' });
+  for (const [page, size] of [[0, 20], [1, 0], [1, 51], [1.5, 20], ['1', 20]]) {
+    assert.throws(() => selectionPageForm(page, size), (e) => e.code === 'INVALID_ARGUMENT', `${page}/${size}`);
+  }
+});
+
+test('搜索表单：keyword 与 conditions 互斥；字段/比较方式必须合法', () => {
+  const context = parseSelectionContext(SELECTION_INDEX_HTML);
+  const form = selectionSearchForm(context, { keyword: '高等数学' });
+  assert.equal(form.xnxq, '(2025-2026-1)-');
+  assert.equal(form.cx_zbgx, 'and');
+  assert.equal(form.cx_ylcx, '0');
+  assert.equal(form['cxtjList[0].cxlb'], 'kcmc', '默认按课程名搜');
+  assert.equal(form['cxtjList[0].cxgx'], 'like');
+  assert.equal(form['cxtjList[0].cxnr'], '高等数学');
+
+  // only_available → cx_ylcx=1
+  assert.equal(selectionSearchForm(context, { keyword: 'x', onlyAvailable: true }).cx_ylcx, '1');
+
+  // 多条件 + or
+  const multi = selectionSearchForm(context, {
+    relation: 'or',
+    conditions: [
+      { field: 'kcmc', value: '数学' },
+      { field: 'jsxm', operator: 'equal', value: '张三' },
+    ],
+  });
+  assert.equal(multi.cx_zbgx, 'or');
+  assert.equal(multi['cxtjList[1].cxlb'], 'jsxm');
+  assert.equal(multi['cxtjList[1].cxgx'], 'equal');
+  assert.equal(multi['cxtjList[1].cxnr'], '张三');
+
+  assert.throws(() => selectionSearchForm(context, { keyword: 'x', conditions: [] }), (e) => e.code === 'INVALID_ARGUMENT', '两者互斥');
+  assert.throws(() => selectionSearchForm(context, { conditions: [] }), (e) => e.code === 'INVALID_ARGUMENT');
+  assert.throws(() => selectionSearchForm(context, { relation: 'xor', keyword: 'x' }), (e) => e.code === 'INVALID_ARGUMENT');
+  assert.throws(() => selectionSearchForm(context, { conditions: [{ field: 'nope', value: 'x' }] }), (e) => e.code === 'INVALID_ARGUMENT');
+  assert.throws(() => selectionSearchForm(context, { conditions: [{ field: 'kcmc', operator: 'regex', value: 'x' }] }), (e) => e.code === 'INVALID_ARGUMENT');
+  assert.throws(() => selectionSearchForm(context, { conditions: [{ field: 'kcmc', value: '  ' }] }), (e) => e.code === 'INVALID_ARGUMENT');
+  // 21 个条件超上限
+  assert.throws(
+    () => selectionSearchForm(context, { conditions: Array.from({ length: 21 }, () => ({ field: 'kcmc', value: 'x' })) }),
+    (e) => e.code === 'INVALID_ARGUMENT',
+  );
+});
+
+test('学期校验：课号里的学年学期必须是本学期（不许拿上学期的课号提交）', () => {
+  const context = parseSelectionContext(SELECTION_INDEX_HTML);
+  // 本学期 2025-2026-1：通过。
+  assertSelectionTerm('(2025-2026-1)-CS1001G-0012345-1', context);
+  // 池形态允许一个前缀（体育池实测是 4(...)-）。
+  assertSelectionTerm('4(2025-2026-1)-PE-001', context, true);
+  assertSelectionTerm('T(2025-2026-1)-PE-001', context, true);
+  // 上学期 / 下学期 / 乱码一律拒绝。
+  for (const id of ['(2024-2025-1)-X-1-1', '(2025-2026-2)-X-1-1', 'X-1-1', '']) {
+    assert.throws(() => assertSelectionTerm(id, context), (e) => e.code === 'INVALID_ARGUMENT', id);
+  }
+  // 池模式不认普通形态的裸前缀之外——不带括号的仍然拒绝。
+  assert.throws(() => assertSelectionTerm('CS1001G', context, true), (e) => e.code === 'INVALID_ARGUMENT');
+});
+
+/* ───────────────────── 选课：读取编排 */
+
+test('selectionContext：返回学期、志愿数与页签（页面能读不代表允许选课）', async () => {
+  const api = fakeApi2({ html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML } });
+  const out = await new ZdbkReader(api).selectionContext();
+  assert.equal(out.academic_year, '2025-2026');
+  assert.equal(out.semester, 1);
+  assert.equal(out.term, '秋冬');
+  assert.equal(out.max_choices, 3);
+  assert.equal(out.plan_id, '2025080901');
+  // 4 个页签 + 1 个子类页签 = 5 条（子类不合并，服务端按 lx 区分）。
+  assert.equal(out.categories.length, 5);
+  assert.deepEqual(out.categories.map((c) => `${c.dl}/${c.kind}`), [
+    'xk_1/courses', 'xk_1/courses', 'xk_2/courses', 'xk_9/search', 'xk_1_1/special',
+  ]);
+  assert.match(out.note, /不代表现在允许选课/);
+  assert.equal(api.calls[0].options.query.gnmkdm, 'N253530', '选课模块码');
+});
+
+test('selectionCourses：翻页取全，课程视图带 pool（不是 code）', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: {
+      [ZDBK_SELECTION_PATHS.courses]: (options) => {
+        // 第一页给满 50 条 → 触发第二页；第二页只给 2 条 → 收尾。
+        if (options.form.jspage === '50') {
+          return Array.from({ length: 50 }, (_, i) => ({
+            xkkh: `(2025-2026-1)-C${i}-1-1`, kcdm: `C${i}`, kcmc: `课${i}`,
+          }));
+        }
+        return SELECTION_COURSE_ROWS;
+      },
+    },
+  });
+  const out = await new ZdbkReader(api).selectionCourses({ category: 'xk_1', name: '通识核心课程' });
+  assert.equal(out.count, 52, '50 + 2：两页都要取回来');
+  assert.equal(out.courses.length, 52, 'count 与数组长度必须一致');
+  assert.equal(api.calls.filter((c) => c.kind === 'postArray').length, 2, '取了两页');
+  // 第二页的行号区间必须是 51~100。
+  const second = api.calls.filter((c) => c.kind === 'postArray')[1];
+  assert.equal(second.options.form.kspage, '51');
+  assert.equal(second.options.form.jspage, '100');
+  // 课程视图的 pool 是课程号（xkkh），sections 要用它。
+  const first = out.courses[0];
+  assert.equal(first.pool, '(2025-2026-1)-C0-1-1');
+  assert.equal(first.code, 'C0');
+  assert.equal(first.category, 'xk_1');
+});
+
+test('selectionCourses：表单条件按上游口径组装（含 xk_6 的虚拟教学计划号）', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML.replace('xk_2', 'xk_6') },
+    postArray: { [ZDBK_SELECTION_PATHS.courses]: SELECTION_COURSE_ROWS },
+  });
+  await new ZdbkReader(api).selectionCourses({ category: 'xk_6', name: '全部课程' });
+  const form = api.calls.find((c) => c.kind === 'postArray').options.form;
+  assert.equal(form.nj, '2025');
+  assert.equal(form.xn, '2025-2026');
+  assert.equal(form.xq, '1');
+  assert.equal(form.zydm, '080901');
+  assert.equal(form.xnxq, '(2025-2026-1)-');
+  assert.equal(form.jxjhh, '2025cx01', 'xk_6 用当年 + cx01 的虚拟计划号');
+});
+
+test('selectionCourses：页签不存在 / search 页签 / special 页签分别明确报错', async () => {
+  const api = fakeApi2({ html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML } });
+  const reader = new ZdbkReader(api);
+
+  // 不存在的类别码：报错里要列出可用的，用户才知道给什么。
+  await assert.rejects(() => reader.selectionCourses({ category: 'xk_404' }), (e) => {
+    assert.equal(e.code, 'INVALID_ARGUMENT');
+    assert.match(e.message, /xk_1/);
+    return true;
+  });
+  // search 页签要走 selectionSearch，不能走课程列表。
+  await assert.rejects(() => reader.selectionCourses({ category: 'xk_9' }), (e) => {
+    assert.equal(e.code, 'UNSUPPORTED');
+    assert.match(e.message, /selectionSearch/);
+    return true;
+  });
+  // special 页签（补考）未接入：必须报错，**不能**回空列表（空列表会被读成"这学期没有"）。
+  await assert.rejects(() => reader.selectionCourses({ category: 'xk_1_1' }), (e) => e.code === 'UNSUPPORTED');
+  // 一次 postArray 都不该发生 —— 参数错误要在发请求之前就停下。
+  assert.equal(api.calls.some((c) => c.kind === 'postArray'), false);
+});
+
+test('selectionSearch：结果带 pool，search 条件原样回给调用方', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: { [ZDBK_SELECTION_PATHS.search]: SELECTION_COURSE_ROWS },
+  });
+  const out = await new ZdbkReader(api).selectionSearch({ keyword: '程序设计', field: 'kcmc', only_available: true });
+  assert.equal(out.count, 2);
+  assert.equal(out.courses[0].code, 'CS1001G');
+  assert.equal(out.courses[0].category, 'xk_9');
+  assert.equal(out.search.keyword, '程序设计');
+  assert.equal(out.search.relation, 'and');
+  assert.equal(out.search.only_available, true);
+  const form = api.calls.find((c) => c.kind === 'postArray').options.form;
+  assert.equal(form.cx_ylcx, '1');
+  assert.equal(form['cxtjList[0].cxnr'], '程序设计');
+});
+
+test('selectionSections：教学班展开、余量容量、HTML 多值字段拍平', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: { [ZDBK_SELECTION_PATHS.sections]: SELECTION_SECTION_ROWS },
+  });
+  const out = await new ZdbkReader(api).selectionSections({
+    course: 'CS1001G',
+    pool: '(2025-2026-1)-CS1001G-0012345-1',
+    category: 'xk_1',
+  });
+  assert.equal(out.count, 2);
+  assert.equal(out.sections.length, 2, 'count 与数组长度必须一致');
+  const [first, second] = out.sections;
+  assert.equal(first.course, '程序设计基础');
+  assert.equal(first.code, 'CS1001G', '教学班响应没有 kcdm，要用本次查询的课程代码补上');
+  assert.equal(first.section, '(2025-2026-1)-CS1001G-0012345-1');
+  assert.equal(first.teacher, '张三');
+  assert.equal(first.time, '周一第1,2节；周三第3,4节', '<br> 要换成连接符');
+  assert.equal(first.location, '紫金港东1-101；紫金港东1-102');
+  assert.equal(first.remaining, 5);
+  assert.equal(first.capacity, 60);
+  assert.equal(second.remaining, 60);
+  assert.equal(second.capacity, 60);
+});
+
+test('selectionSections：缺参数 / 课程池跨学期 / 页签不对，都在发请求前报错', async () => {
+  const api = fakeApi2({ html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML } });
+  const reader = new ZdbkReader(api);
+  const ok = { course: 'CS1001G', pool: '(2025-2026-1)-CS1001G-0012345-1', category: 'xk_1' };
+
+  await assert.rejects(() => reader.selectionSections({}), (e) => {
+    assert.equal(e.code, 'INVALID_ARGUMENT');
+    assert.match(e.message, /course/);
+    return true;
+  });
+  await assert.rejects(() => reader.selectionSections({ ...ok, pool: '' }), (e) => /pool/.test(e.message) && e.code === 'INVALID_ARGUMENT');
+  await assert.rejects(() => reader.selectionSections({ ...ok, category: '' }), (e) => /category/.test(e.message) && e.code === 'INVALID_ARGUMENT');
+  // 上学期的池：服务端会静默回空，所以必须在本地拦。
+  await assert.rejects(() => reader.selectionSections({ ...ok, pool: '(2024-2025-1)-CS1001G-0012345-1' }), (e) => e.code === 'INVALID_ARGUMENT');
+  // 补考页签不在普通页签里。
+  await assert.rejects(() => reader.selectionSections({ ...ok, category: 'xk_1_1' }), (e) => e.code === 'INVALID_ARGUMENT');
+  // xk_9 必须带 search（否则服务端找不到课程池）。
+  await assert.rejects(() => reader.selectionSections({ ...ok, category: 'xk_9' }), (e) => {
+    assert.equal(e.code, 'INVALID_ARGUMENT');
+    assert.match(e.message, /search/);
+    return true;
+  });
+  assert.equal(api.calls.some((c) => c.kind === 'postArray'), false, '参数校验必须在发包之前');
+});
+
+test('selectionSections：xk_9 带上原搜索条件（不是空条件）', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: { [ZDBK_SELECTION_PATHS.sections]: SELECTION_SECTION_ROWS },
+  });
+  await new ZdbkReader(api).selectionSections({
+    course: 'CS1001G',
+    pool: '(2025-2026-1)-CS1001G-0012345-1',
+    category: 'xk_9',
+    search: { keyword: '程序设计', field: 'kcmc' },
+  });
+  const form = api.calls.find((c) => c.kind === 'postArray').options.form;
+  assert.equal(form.dl, 'xk_9');
+  assert.equal(form['cxtjList[0].cxnr'], '程序设计', '搜索条件必须一起回传');
+  assert.equal(form.ylxs, '4', '培养年限来自首页');
+});
+
+test('selectionSelected：三种状态如实给，学分汇总附在里面', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: { [ZDBK_SELECTION_PATHS.chosen]: SELECTION_OWNED_ROWS },
+    post: {
+      [ZDBK_SELECTION_PATHS.credits]: { status: 'success', result: { xf9: '12.5', xf91: '10', xf92: '2.5' } },
+    },
+  });
+  const out = await new ZdbkReader(api).selectionSelected();
+  assert.equal(out.count, 3);
+  assert.equal(out.choices.length, 3, 'count 与数组长度必须一致');
+  assert.deepEqual(out.choices.map((c) => c.state), ['已选上', '待筛选', '未知']);
+  assert.equal(out.choices[0].order, 1);
+  assert.equal(out.choices[1].order, 2);
+  assert.equal(out.choices[2].order, null, '没有 xkzy 时给 null，不是 0');
+  assert.equal(out.choices[0].saved_at, '2025-09-01 10:20', '只取到分钟');
+  assert.equal(out.choices[1].group, 'G-MA1001G', '组号与课程代码不同时才给');
+  assert.equal(out.choices[0].group, undefined, '同课时不冗余输出 group');
+  assert.deepEqual(out.credits, { total: 12.5, regular: 10, short: 2.5 });
+  assert.equal(out.credits_error, null);
+});
+
+test('selectionSelected：学分汇总失败不影响志愿列表（附 credits_error）', async () => {
+  // 与 gpaSummary 对专业 GPA 的取舍同一套：一个可选指标失败不该把整页带走。
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: { [ZDBK_SELECTION_PATHS.chosen]: SELECTION_OWNED_ROWS },
+    post: {
+      [ZDBK_SELECTION_PATHS.credits]: () => { throw Object.assign(new Error('拒绝'), { code: 'FORBIDDEN' }); },
+    },
+  });
+  const out = await new ZdbkReader(api).selectionSelected();
+  assert.equal(out.choices.length, 3, '志愿照常返回');
+  assert.equal(out.credits, null);
+  assert.equal(out.credits_error, 'FORBIDDEN', '要如实记下原因，不能假装学分是 0');
+});
+
+test('selectionSelected：with_credits=false 时完全不请求学分接口', async () => {
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: { [ZDBK_SELECTION_PATHS.chosen]: SELECTION_OWNED_ROWS },
+  });
+  const out = await new ZdbkReader(api).selectionSelected({ with_credits: false });
+  assert.equal(out.credits, null);
+  assert.equal(out.credits_error, null);
+  assert.equal(api.calls.some((c) => c.path === ZDBK_SELECTION_PATHS.credits), false);
+});
+
+test('selectionCredits：三档学分，空串不给成 0', async () => {
+  const good = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    post: { [ZDBK_SELECTION_PATHS.credits]: { status: 'success', result: { xf9: '20', xf91: '17.5', xf92: '2.5' } } },
+  });
+  const out = await new ZdbkReader(good).selectionCredits();
+  assert.equal(out.total, 20);
+  assert.equal(out.regular, 17.5);
+  assert.equal(out.short, 2.5);
+  assert.equal(out.academic_year, '2025-2026');
+  assert.equal(out.semester, 1);
+
+  // `Number('') === 0` 的坑：空串必须报错，不能变成「0 学分」。
+  const emptyString = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    post: { [ZDBK_SELECTION_PATHS.credits]: { status: 'success', result: { xf9: '', xf91: '1', xf92: '1' } } },
+  });
+  await assert.rejects(() => new ZdbkReader(emptyString).selectionCredits(), (e) => {
+    assert.equal(e.code, 'SCHEMA_CHANGED');
+    assert.match(e.message, /xf9/);
+    return true;
+  });
+  // status 不是 success 也是 SCHEMA_CHANGED。
+  const badStatus = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    post: { [ZDBK_SELECTION_PATHS.credits]: { status: 'fail', result: { xf9: 1, xf91: 1, xf92: 1 } } },
+  });
+  await assert.rejects(() => new ZdbkReader(badStatus).selectionCredits(), (e) => e.code === 'SCHEMA_CHANGED');
+  // 负数也是异常。
+  const negative = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    post: { [ZDBK_SELECTION_PATHS.credits]: { status: 'success', result: { xf9: '-1', xf91: 1, xf92: 1 } } },
+  });
+  await assert.rejects(() => new ZdbkReader(negative).selectionCredits(), (e) => e.code === 'SCHEMA_CHANGED');
+});
+
+test('选课分页：出现重复条目就报 PAGINATION_UNSTABLE（宁可说不完整，也不给半份）', async () => {
+  // 正方的分页在数据变动时会回退：第 2 页可能返回第 1 页的内容。
+  // 不查重就会把同一门课列两次，而因为页数固定，有的课永远取不到。
+  let calls = 0;
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: {
+      [ZDBK_SELECTION_PATHS.courses]: () => {
+        calls++;
+        // 两页都给满 50 条且完全一样 → 第 2 页必然命中重复。
+        return Array.from({ length: 50 }, (_, i) => ({ xkkh: `(2025-2026-1)-C${i}-1-1`, kcdm: `C${i}`, kcmc: `课${i}` }));
+      },
+    },
+  });
+  await assert.rejects(() => new ZdbkReader(api).selectionCourses({ category: 'xk_2', name: '全部课程' }), (e) => {
+    assert.equal(e.code, 'PAGINATION_UNSTABLE');
+    assert.match(e.message, /重复/);
+    return true;
+  });
+  assert.equal(calls, 2, '第 2 页就发现重复，不该继续翻');
+});
+
+test('选课查询：空数组是「没有」，不是错误（与成绩那族的"缺字段"相反）', async () => {
+  // 选课接口回空数组是合法结果：这门课这学期确实没开教学班。
+  const api = fakeApi2({
+    html: { [ZDBK_SELECTION_PATHS.index]: SELECTION_INDEX_HTML },
+    postArray: {
+      [ZDBK_SELECTION_PATHS.sections]: [],
+      [ZDBK_SELECTION_PATHS.search]: [],
+    },
+  });
+  const reader = new ZdbkReader(api);
+  const sections = await reader.selectionSections({
+    course: 'CS1001G', pool: '(2025-2026-1)-CS1001G-0012345-1', category: 'xk_1',
+  });
+  assert.deepEqual(sections.sections, []);
+  assert.equal(sections.count, 0);
+  assert.equal((await reader.selectionSearch({ keyword: '不存在的课' })).count, 0);
+});
+
+/* ───────────────────── 客户端：新增的三个通道 */
+
+test('postArray：只接受数组；对象是 SCHEMA_CHANGED（不许退化成空数组）', async () => {
+  const ok = makeTransport(async () => new Response('[{"xkkh":"X"}]', { status: 200 }));
+  assert.deepEqual(await new ZdbkClient(ok).postArray('/xsxk/a.html'), [{ xkkh: 'X' }]);
+
+  // 对象 → 明确报错。退化成空数组会被上层读成「没有可选课程」，一个彻底的谎。
+  const object = makeTransport(async () => new Response('{"msg":"错误"}', { status: 200 }));
+  await assert.rejects(() => new ZdbkClient(object).postArray('/xsxk/a.html'), (e) => e.code === 'SCHEMA_CHANGED');
+
+  // 空正文是合法的空列表（正方在"没有可选项"时就是回空串）。
+  const blank = makeTransport(async () => new Response('', { status: 200 }));
+  assert.deepEqual(await new ZdbkClient(blank).postArray('/xsxk/a.html'), []);
+
+  // 登录页 / 非 JSON 仍按既有口径报。
+  const login = makeTransport(async () => new Response('<html><form action="/cas/login"><input name="password"></form></html>', { status: 200 }));
+  await assert.rejects(() => new ZdbkClient(login).postArray('/xsxk/a.html'), (e) => e.code === 'LOGIN_REQUIRED');
+});
+
+test('html：登录页要判成 LOGIN_REQUIRED，不是"页面结构变了"', async () => {
+  // 顺序写反的后果：登录页恰好是合法 HTML（有 form、有 password 输入框），
+  // 会被当成正常页面往下传，最后在解析层报「找不到 xjxjhh」——
+  // 一个把「没登录」说成「页面改版」的错误归因。
+  const login = makeTransport(async () => new Response('<html><body><form id="loginForm"><input name="password"></form></body></html>', { status: 200 }));
+  await assert.rejects(() => new ZdbkClient(login).html('/xsxk/x.html'), (e) => {
+    assert.equal(e.code, 'LOGIN_REQUIRED');
+    return true;
+  });
+
+  const ok = makeTransport(async () => new Response('<html><body><input id="xn" value="2025-2026"></body></html>', { status: 200 }));
+  assert.match(await new ZdbkClient(ok).html('/xsxk/x.html'), /xn/);
+
+  // 空页面 / 非页面正文各有专门错误。
+  const blank = makeTransport(async () => new Response('   ', { status: 200 }));
+  await assert.rejects(() => new ZdbkClient(blank).html('/xsxk/x.html'), (e) => e.code === 'UNEXPECTED_RESPONSE');
+  const text = makeTransport(async () => new Response('not html at all', { status: 200 }));
+  await assert.rejects(() => new ZdbkClient(text).html('/xsxk/x.html'), (e) => e.code === 'UNEXPECTED_RESPONSE');
+});
+
+test('html：正常页面里出现「未登录」字样不该被误判成登录页', async () => {
+  // `LOGIN_MARKERS` 是拿来判 **JSON 接口正文**的；一个正常页面里顶栏/页脚
+  // 出现「统一身份认证」「未登录」并不异常。拿它判页面会误杀。
+  const page = makeTransport(async () => new Response(
+    '<html><body><div>统一身份认证 · 未登录用户请联系管理员</div><input id="nj" value="2025"></body></html>',
+    { status: 200 },
+  ));
+  assert.match(await new ZdbkClient(page).html('/xsxk/x.html'), /nj/);
+});
+
+test('grid：条件走表单体、总数兜到行上、缺 items 是 SCHEMA_CHANGED', async () => {
+  const seen = [];
+  const transport = makeTransport(async (url, init) => {
+    seen.push({ url: String(url), body: String(init?.body ?? '') });
+    return new Response(JSON.stringify({ items: [{ totalResult: 150 }] }), { status: 200 });
+  });
+  const out = await new ZdbkClient(transport).grid('/pyfagl/a.html', { synj: '2025' }, { page: 2, size: 500 });
+  // 条件在表单体里，URL 上只有 doType —— 混用会得到「HTTP 200 + items: []」。
+  assert.match(seen[0].url, /[?&]doType=query/);
+  const body = new URLSearchParams(seen[0].body);
+  assert.equal(body.get('synj'), '2025');
+  assert.equal(body.get('queryModel.showCount'), '500');
+  assert.equal(body.get('queryModel.currentPage'), '2');
+  // totalResult 藏在行里时也要读到，否则「翻页到此为止」，只取第一页。
+  assert.equal(out.total, 150);
+  assert.equal(out.totalPages, 1, '150 / 500 → 1 页');
+  assert.equal(out.items.length, 1);
+
+  const missing = makeTransport(async () => new Response('{"data":[]}', { status: 200 }));
+  await assert.rejects(() => new ZdbkClient(missing).grid('/pyfagl/a.html'), (e) => e.code === 'SCHEMA_CHANGED');
+});
+
+/* ───────────────────── 服务面：会话三件套 + 新方法接线 */
+
+test('服务面：12 条只读方法都接到 invoke（名字与路由 action 一致）', async (t) => {
+  const { dir, cleanup } = await tempDataDir('surface');
+  t.after(cleanup);
+  const services = {};
+  const ctx = {
+    profileContext: { dir },
+    logger: { info() {} },
+    get: () => undefined,
+    provide: (key, value) => { services[key] = value; return () => {}; },
+    inject: () => {},
+  };
+  await plugin.apply(ctx, {
+    dataDir: dir,
+    protect: async (bytes) => bytes,
+    fetch: async () => { throw new Error('不该发请求'); },
+  });
+
+  const service = services.zhiyunZdbk;
+  // ⚠️ 接写操作后这里从 true 改成 false：本包现在含 `xxxPrepare` / `xxxExecute`
+  // （见 `writes.js`）。只读方法表 `methods` 仍是 12 条，写方法另列在 `writeMethods`。
+  assert.equal(service.readOnly, false);
+  // 服务上的方法名与 `describe()` 的 method 表必须**一一对应**。
+  // 这里曾经出过错：表里叫 selectionContext、文档里写 selection.context。
+  const described = service.describe().methods.map((m) => m.method.replace('zdbk.', ''));
+  for (const key of described) {
+    assert.equal(typeof service[key], 'function', `服务上缺 ${key}`);
+  }
+  assert.deepEqual(described, [
+    'grades', 'gpaSummary', 'exams', 'timetable',
+    'planList', 'planView',
+    'selectionContext', 'selectionCourses', 'selectionSearch',
+    'selectionSections', 'selectionSelected', 'selectionCredits',
+  ]);
+  assert.equal(typeof service.methods.length, 'number');
+  assert.equal(service.methods.length, 12);
+  // 写操作不许在服务上出现 —— 出现了就绕过写闸。
+  for (const forbidden of ['select', 'reorder', 'drop']) {
+    assert.equal(service[forbidden], undefined, `服务上不该有 ${forbidden}`);
+  }
+});
+
+test('服务面：status 不联网、logout 清会话且立即落盘', async (t) => {
+  const { dir, cleanup } = await tempDataDir('session');
+  t.after(cleanup);
+  const services = {};
+  let requests = 0;
+  const ctx = {
+    profileContext: { dir },
+    logger: { info() {} },
+    get: () => undefined,
+    provide: (key, value) => { services[key] = value; return () => {}; },
+    inject: () => {},
+  };
+  await plugin.apply(ctx, {
+    dataDir: dir,
+    protect: async (bytes) => bytes,
+    fetch: async () => { requests++; throw new Error('status/logout 不该发请求'); },
+  });
+  const service = services.zhiyunZdbk;
+
+  // 没登录过：logged_in=false，但**一次请求都不能发**。
+  const before = await service.status();
+  assert.equal(before.logged_in, false);
+  assert.equal(before.account_known, false, '没配凭据');
+  assert.equal(requests, 0, 'status 不许联网');
+  assert.match(before.note, /不联网/);
+
+  const out = await service.logout();
+  assert.deepEqual(out, { cleared: true });
+  assert.equal(requests, 0, 'logout 不许联网');
+
+  // 登出后仍然是 false。
+  assert.equal((await service.status()).logged_in, false);
+  // `logout` 要求立即落盘（persist: true）—— 延迟落盘时磁盘上的旧会话会"复活"，
+  // 那是安全问题。这条断言只能证明「清空没抛错」，落盘策略由 SessionStore 保证。
+  assert.equal(typeof service.login, 'function');
+});
+
+test('plugin 导出：新增的纯解析函数都从 index 透出（页面/脚本不必深引 src）', () => {
+  for (const key of [
+    'parsePlan', 'splitCourses', 'PLAN_PAGE_SIZE', 'planPdfUrl',
+    'parseSelectionContext', 'parseSelectionRow', 'parseCapacity', 'selectionState',
+    'selectionPageForm', 'selectionSearchForm', 'assertSelectionTerm',
+    'courseView', 'sectionView', 'ownedView', 'flatten',
+    'ZDBK_MODULES', 'ZDBK_PLAN_PATHS', 'ZDBK_SELECTION_PATHS',
+  ]) {
+    assert.ok(key in plugin, `index.js 应导出 ${key}`);
+  }
+  // 写操作相关的（上游 `Xsxk#select` 那三个）**不许**出现在导出里。
+  for (const forbidden of ['selectionSelect', 'selectionReorder', 'selectionDrop', 'Xsxk']) {
+    assert.equal(forbidden in plugin, false, `${forbidden} 属写操作，不该在本包`);
+  }
+});
+
+test('错误码稳定：新方法用的码都在预期集合里', async () => {
+  // 码要稳定（页面按码分派），文案要可操作 —— 这里钉的是**码**。
+  // 首页给一篇空 HTML：解析层必然报「缺 xn」。
+  const api = fakeApi2({ html: { [ZDBK_SELECTION_PATHS.index]: '<html><body>没有 input</body></html>' } });
+  const reader = new ZdbkReader(api);
+  await assert.rejects(() => reader.selectionContext(), (e) => e.code === 'SCHEMA_CHANGED');
+  await assert.rejects(() => reader.planList({ year: 'x' }), (e) => e.code === 'INVALID_ARGUMENT');
+  // 缺参数时**在发请求之前**报（`selectionSections` 先校验参数、再取上下文）。
+  await assert.rejects(
+    () => reader.selectionSections({}),
+    (e) => e.code === 'INVALID_ARGUMENT',
+  );
+  assert.equal(api.calls.filter((c) => c.kind === 'html').length, 1, '只有 selectionContext 读过一次首页');
+});
+
+test('timetable：六类课都在同一响应里，kind 标明来源（审计 W-18）', async () => {
+  // 审计查出本仓先前只读 kbList，另外五类（实践/线上/英文/进修/服从安排）全丢。
+  // 那些是学生真实课表里有的课，漏读的代价是「课表少了几门课」，
+  // 而用户会以为教务网没排。
+  const { ZdbkReader } = await import('../packages/source/zdbk/src/reads.js');
+  // `parseSession` 要的字段：`kcb`（含 <br> 分隔的课程/教师/地点）、`xqj` 星期、
+  // `djj` 起始节、`skcd` 连堂节数。字段名写错会让解析静默返回 0 条。
+  const base = {
+    kcmc: '高等数学', xqj: '1', djj: '1', skcd: '2',
+    kcb: '高等数学<br>必修<br>张三<br>紫金港东1-101',
+    kcdm: 'MATH1001', xkkh: 'P1', zcd: '1-16周',
+  };
+  const reader = new ZdbkReader({
+    async post() {
+      return {
+        kbList: [{ ...base, kcmc: '正式课' }],
+        sjkList: [{ ...base, kcmc: '实践课' }],
+        xskList: [{ ...base, kcmc: '线上课' }],
+        ywkList: [{ ...base, kcmc: '英文课' }],
+        jxkList: [{ ...base, kcmc: '进修课' }],
+        fKbList: [{ ...base, kcmc: '服从安排' }],
+      };
+    },
+  }, () => new Date('2026-11-10T12:00:00+08:00'));
+
+  const result = await reader.timetable({ academic_year: '2026-2027', term: 1 });
+  assert.equal(result.sessions.length, 6, '六类都要读进来');
+  const kinds = new Set(result.sessions.map((s) => s.kind));
+  assert.deepEqual([...kinds].sort(),
+    ['advanced', 'arranged', 'english', 'formal', 'online', 'practice'],
+    'kind 要标明来源');
+});
+
+test('timetable：kbList 缺失仍是错误（那是主课表，不是空）', async () => {
+  const { ZdbkReader } = await import('../packages/source/zdbk/src/reads.js');
+  const reader = new ZdbkReader({
+    async post() { return { sjkList: [] }; },
+  }, () => new Date('2026-11-10T12:00:00+08:00'));
+  await assert.rejects(
+    () => reader.timetable({ academic_year: '2026-2027', term: 1 }),
+    '缺 kbList 说明结构变了，不能静默成空',
+  );
 });

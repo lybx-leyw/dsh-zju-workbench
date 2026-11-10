@@ -113,10 +113,56 @@ export function createEgress(options = {}) {
 
 ```text
 packages/source/webvpn/
-  package.json         包名、exports（./ / ./protocol / ./login）
+  package.json         包名、exports（./ / ./protocol / ./login / ./egress / ./hosts / ./doctor）
   cordis.patch.yml     insert 一行（做 Loader 条目用）
   src/index.js         宿主入口 + 统一导出面
   src/protocol.js      地址改写、AES 编解码、登录页解析、失败码文案
-  src/login.js         网关登录流程、会话判定
+  src/login.js         网关登录流程、会话判定与探测、ticket 导入
+  src/egress.js        出口策略：三级判定、升级重试、会话内降级
+  src/hosts.js         主机归属表（campus / public / cas 三份名单）
+  src/doctor.js        网络与网关诊断
   src/errors.js        WebvpnError
+  scripts/probe-hosts.mjs  重新生成 hosts.js 的实测部分（需在校园网外跑）
 ```
+
+## 主机归属表（`hosts.js`）
+
+选路不再只看 `*.zju.edu.cn` 这一条后缀规则，而是查一张**逐主机的事实表**：
+
+| 判定 | 含义 | 依据 |
+| --- | --- | --- |
+| `public` | 公网可达，**永远直连** | 各模块 `module.json` 的 `network` + 校外实测 |
+| `campus` | 只在校内可达，校外经网关 | 同上 |
+| `unknown` | 表里没有，**回退后缀规则** | `*.zju.edu.cn` 绕网关，其余直连 |
+
+单后缀规则两个方向都会错：教务网 / 学在浙大 / 智云 / 体艺 / 研究生教务实测**公网可达**
+却被强制绕道；而 `cc98.org`（不在该后缀下）与实验平台的私网 IP `10.203.16.55`
+只在校内可达却被判直连，校外必然失败。
+
+表是**一次实测的快照**（`HOSTS_GENERATED_AT`），会过期。重新生成：
+
+```bash
+npm run probe:hosts --prefix packages/source/webvpn
+```
+
+脚本会先自查是否在校园网内并在校内时拒绝运行 —— 在校园网里测，所有站点都可达，
+表就没有意义了。它**不直接改写 `hosts.js`**：输出表格并用 `!` 标出与现值不一致的项，
+由人确认后再改。
+
+## 会话内降级
+
+某主机直连失败、或落到网站群的「无权访问」页（`/nopermit_zjusub.jsp`，HTTP 200），
+本次运行里该主机改走网关并**记住**，之后不再先试直连。降级是**逐主机**的：
+一个站失败不会牵连另一个本来能直连的站。换了网络调 `forget()` 清空。
+
+## 诊断
+
+```js
+import { doctor } from '@lybx-leyw/dsh-zju-source-webvpn'
+
+const report = await doctor({ fetch: sharedFetch(ctx), credentials })
+// → { transport, direct: { campus, public, ms }, webvpn: { reachable, ms, credentials, sessionValid }, ok, advice[] }
+```
+
+`advice` 每条都是可执行的下一步。凭据**由调用方传入** —— 本包是 tier 0，
+不知道凭据从哪来（那是 `source/login` 的事）。

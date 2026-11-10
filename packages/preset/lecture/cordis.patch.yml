@@ -172,5 +172,13 @@
           #
           # 该包**不在** profile 的 bundles 里，正是为了让它只出现在这个 preset：
           # 放进 profile 就是主机平面，所有 preset 都会看到。
+          #
+          # # 分工：tool 只注册，preset 才注入
+          #
+          # `tool/study` 是**纯工具包**：只有 `apply()` 里那一圈
+          # `ctx.tools.register()`，**不带自己在 cordis.patch.yml 里的挂载行**
+          # （早先带过，于是同一个包既能被 preset 插一次、又能被 profile 当
+          # bundle 挂一次 —— 工具在表里注册两遍）。所以「什么时候把这些工具给
+          # agent」只由**本 preset** 决定：下面这一行是它唯一的注入点。
           - id: tool-study
             name: '@lybx-leyw/dsh-zju-tool-study'

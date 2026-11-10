@@ -28,7 +28,7 @@ import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { createHandler } from '../packages/client/page-planning/src/index.js';
+import { createHandler } from '../packages/core/planning/src/index.js';
 
 /** 起一个 handler；每个依赖都可以单独注入"抛错"。 */
 function makeHandler(overrides = {}) {

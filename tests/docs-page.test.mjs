@@ -314,20 +314,28 @@ test('包声明与接线清单四处对齐', async () => {
   assert.ok((await readFile(join(pkg, 'src', 'index.js'), 'utf8')).includes("'zhiyun-page-docs'"));
 
   // 3. cordis.patch.yml 指向正确的 id。
+  //
+  // ⚠️ 这里是**包名**，用的是新命名 `@lybx-leyw/dsh-zju-*`。早先写的是未加作用域的
+  // `dsh-zhiyun-page-docs` —— 那是重命名迁移前的形态。`plugins-page.test.mjs`
+  // 有一条「前缀可换」的用例说明本仓**同时认两套命名**，所以旧断言不会在别处报错，
+  // 只会在本包自证时炸。
   const patch = await readFile(join(pkg, 'cordis.patch.yml'), 'utf8');
   assert.match(patch, /id: zhiyun-page-docs/);
-  assert.match(patch, /name: dsh-zhiyun-page-docs/);
+  assert.match(patch, /name: '@lybx-leyw\/dsh-zju-page-docs'/);
 
   // 4. 进构建清单与 profile 装载清单（这两条 plugins-page.test.mjs 也查，
   //    但那边是扫包目录，这里是本包自证，失败时的报错更近）。
+  //
+  // ⚠️ `CLIENT_PACKAGES` 里写的是**目录 basename**（`'page-docs'`），不是包名 ——
+  // `build.mjs` 靠目录名找 `packages/client/page-docs/`。别把它改成包名。
   const build = await readFile(join(root, 'scripts', 'build.mjs'), 'utf8');
-  assert.ok(build.includes("'dsh-zhiyun-page-docs'"), 'scripts/build.mjs 的 CLIENT_PACKAGES 里没有本包');
+  assert.ok(build.includes("'page-docs'"), 'scripts/build.mjs 的 CLIENT_PACKAGES 里没有本包');
   assert.match(build, /'\.md':\s*'text'/,
     'scripts/build.mjs 的 loader 表里没有 .md —— 正文会被当成无法识别的文件类型');
 
   const profile = JSON.parse(await readFile(
     join(root, 'profiles', 'zju-workbench', 'package.json'), 'utf8'));
-  assert.ok(profile.dsh.profile.bundles.includes('dsh-zhiyun-page-docs'),
+  assert.ok(profile.dsh.profile.bundles.includes('@lybx-leyw/dsh-zju-page-docs'),
     'profiles/zju-workbench/package.json 的 bundles 里没有本包');
 });
 
@@ -338,8 +346,10 @@ test('client.jsx 注册的页面 id 与 NAV 里的 id 一致', async () => {
   const id = /id: '([a-z]+)'/.exec(client)[1];
   assert.equal(id, 'docs');
 
+  // ⚠️ 这个文件搬过家：原 `dsh-zhiyun-shell-workbench/src/model.js` 已拆进
+  // `ui-shared`，归档目录里只留一份 135 字节的墓碑（指向这里），不能当代码读。
   const model = await readFile(
-    join(root, 'packages', 'dsh-zhiyun-shell-workbench', 'src', 'model.js'), 'utf8');
+    join(root, 'packages', 'client', 'ui-shared', 'src', 'pages-model.js'), 'utf8');
   assert.ok(model.includes(`id: '${id}'`), `model.js 的 NAV 里没有 id: '${id}'`);
   // 整幅铺开的页要进 FULL_BLEED_PAGES，否则会套上 980px 版心，三栏被挤成一条缝。
   assert.match(model, /FULL_BLEED_PAGES = Object\.freeze\(\[[^\]]*'docs'/);

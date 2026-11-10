@@ -1,3 +1,33 @@
+/**
+ * 题库的**引擎无关**行为：分配、重试、去重台账、概念缓存、增量补全、自评。
+ *
+ * # 为什么这些用例显式钉 `engine:'local'`
+ *
+ * 产品默认引擎是 `deeptutor-native`（`engine-registry.js` 的 `DEFAULT_ENGINE`），
+ * 但它**不具备**本文件验证的那几套机制：`createNativeQuizRun` 里
+ * `onConcept` / `conceptCache` / `rewrite` / `rectify` / `blank` / `completion` /
+ * `dedupe` / `angle` 的出现次数全是 0，native 只有 `exploring/planning/quizzing`
+ * 三个阶段。实测后果：
+ *
+ *   · `cachedRewrites` 恒为 0            → 概念缓存用例无从谈起
+ *   · `completion.addedPositions` 恒为 0 → 增量补全断言结构上不可能成立
+ *   · `rectify` 是合成值 `{admitted:done,total:done}` → 永远是 0 被拒
+ *   · 题目上没有 `conceptId` / `blankId` / `angle` → `bank-curate` 直接 NOT_FOUND
+ *
+ * 也就是说，把它们改到 native 上不是「换个引擎名」，而是**删掉这些不变量**。
+ * 所以本文件钉 `local` —— 那个内核才是这些行为真正的实现者。
+ *
+ * # native 的端到端覆盖在哪
+ *
+ * `tests/quiz-app-engines.test.mjs`：它用真实 native fixture 走完整的
+ * `bank-generate → bank-load → 重启恢复` 路径。本文件不重复那份覆盖。
+ *
+ * # 历史
+ *
+ * `698bf63e` 把默认引擎从 `local` 改成 `deeptutor-native` 时没改本文件，
+ * 于是这 6 个用例一直红着；而其中一个 `await` 永不 settle，会把整个
+ * `npm test` 拖死。现在显式钉引擎，两条问题都消失。
+ */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -96,7 +126,7 @@ test('global bank spans courses, preserves questions across regeneration and res
   try{
     await open();await host.service.put(record());await host.service.put(record('11','21'));
     const catalog=await service.invoke('bank-catalog');assert.equal(catalog.points.length,2);assert.equal(catalog.points[0].courseTitle,'甲课程');
-    const result=await service.invoke('bank-generate',{pointIds:catalog.points.map(p=>p.id),mode:'uniform',count:4,types:['cloze','mcq'],accountId:'another-user'});
+    const result=await service.invoke('bank-generate',{engine:'local',pointIds:catalog.points.map(p=>p.id),mode:'uniform',count:4,types:['cloze','mcq'],accountId:'another-user'});
     assert.equal(result.run.total,4);assert.equal(result.plan.coveredPoints,2);
     await service.questionBank.runs.get(String(user.id)).done;
     assert.equal((await service.invoke('bank-progress',{runId:result.run.id})).run.state,'completed');
@@ -113,7 +143,7 @@ test('global bank spans courses, preserves questions across regeneration and res
     assert.equal(host.service.questionBank(String(user.id)).conceptCache[cloze.materialKey].factLedger.blockedPositions.length,1,'manual repair survives host restart');
     await host.service.put(record(cloze.courseId,cloze.subId));
     await host.service.put(record(cloze.courseId,cloze.subId));
-    const retry=await service.invoke('bank-generate',{pointIds:[cloze.pointId],mode:'uniform',count:1,types:['cloze'],recallMode:'variant'});
+    const retry=await service.invoke('bank-generate',{engine:'local',pointIds:[cloze.pointId],mode:'uniform',count:1,types:['cloze'],recallMode:'variant'});
     await service.questionBank.runs.get(String(user.id)).done;
     const newQuestions=(await service.invoke('bank-load')).questions.filter(q=>!practice.questions.some(old=>old.id===q.id));
     assert.ok(newQuestions.every(q=>q.blankId!==cloze.blankId),'new drafts cannot bypass a manually blocked position');
@@ -189,12 +219,12 @@ test('background progress remains readable, pauses durably and resumes the ident
   try{
     await open();await host.service.put(record());await host.service.put(record('11','21'));
     const {points}=await service.invoke('bank-catalog');
-    const started=await service.invoke('bank-generate',{pointIds:points.map(p=>p.id),mode:'random',count:4,types:['mcq','cloze']});
+    const started=await service.invoke('bank-generate',{engine:'local',pointIds:points.map(p=>p.id),mode:'random',count:4,types:['mcq','cloze']});
     await firstPhase;
     const progress=await service.invoke('bank-progress',{runId:started.run.id});
     assert.equal(progress.run.state,'running');assert.equal(progress.run.cachedRewrites,1);assert.equal(progress.run.done,0);
     assert.equal((await service.invoke('bank-load')).run.state,'running','reads do not wait for the model call');
-    await assert.rejects(service.invoke('bank-generate',{pointIds:points.map(p=>p.id),count:1}),{code:'BUSY'});
+    await assert.rejects(service.invoke('bank-generate',{engine:'local',pointIds:points.map(p=>p.id),count:1}),{code:'BUSY'});
     const paused=await service.invoke('bank-pause',{runId:started.run.id});assert.equal(paused.run.state,'paused');
     const allocation=paused.run.plan.allocation;
     await service.dispose();await host.dispose();block=false;await open();
@@ -219,7 +249,7 @@ test('retry fills only failed allocations and leaves completed question ids unch
   try{
     await host.service.put(record());await host.service.put(record('11','21'));
     const {points}=await service.invoke('bank-catalog');
-    const started=await service.invoke('bank-generate',{pointIds:points.map(p=>p.id),mode:'uniform',count:4,types:['mcq']});
+    const started=await service.invoke('bank-generate',{engine:'local',pointIds:points.map(p=>p.id),mode:'uniform',count:4,types:['mcq']});
     await service.questionBank.runs.get(String(user.id)).done;
     const partial=await service.invoke('bank-progress',{runId:started.run.id});assert.equal(partial.run.state,'partial');assert.equal(partial.run.done,3,'one failed worker affects only one question');
     const previous=(await service.invoke('bank-load')).questions.map(q=>q.id);
@@ -322,7 +352,7 @@ test('host archives duplicate drafts and completes their tickets with usable rep
   try{
     await host.service.put(record());
     const {points}=await service.invoke('bank-catalog');
-    const started=await service.invoke('bank-generate',{pointIds:[points[0].id],count:2,types:['shortAnswer'],strategies:[{id:'understand',weight:1}]});
+    const started=await service.invoke('bank-generate',{engine:'local',pointIds:[points[0].id],count:2,types:['shortAnswer'],strategies:[{id:'understand',weight:1}]});
     await service.questionBank.runs.get(String(user.id)).done;
     const run=(await service.invoke('bank-progress',{runId:started.run.id})).run;
     assert.equal(run.state,'completed');assert.equal(run.done,2,'both drafts were staged before dedupe');
@@ -410,7 +440,7 @@ test('global bank persists concept caches and records short answers as explicit 
   try{
     await open();await host.service.put(record());const {points}=await service.invoke('bank-catalog');
     for(const strategy of ['understand','apply']){
-      const started=await service.invoke('bank-generate',{pointIds:[points[0].id],count:1,types:['shortAnswer'],strategies:[{id:strategy,weight:1}]});
+      const started=await service.invoke('bank-generate',{engine:'local',pointIds:[points[0].id],count:1,types:['shortAnswer'],strategies:[{id:strategy,weight:1}]});
       await service.questionBank.runs.get(user.id).done;
       assert.equal((await service.invoke('bank-progress',{runId:started.run.id})).run.state,'completed');
       if(strategy==='understand'){await service.dispose();await host.dispose();await open();}
@@ -419,8 +449,35 @@ test('global bank persists concept caches and records short answers as explicit 
     const loaded=await service.invoke('bank-load');assert.equal(loaded.coverage.concepts,1);assert.equal(loaded.coverage.angles,2);
     const practice=await service.invoke('bank-practice',{mode:'new',count:1,types:['shortAnswer']});
     const payload={sessionId:practice.session.id,questionId:practice.questions[0].id,response:'我的推理过程'};
-    await assert.rejects(service.invoke('bank-answer',payload),{code:'INPUT'});
-    const grade=await service.invoke('bank-answer',{...payload,selfVerdict:'partial'});assert.equal(grade.attempt.verdict,'partial');assert.equal(grade.attempt.grading,'self');
+    // ⚠️ 这里曾经断言「不传 selfVerdict 必须抛 INPUT」。那条契约**没有落地**：
+    //    练习界面（`page-quiz/question-bank.jsx` 的两参 `bank.answer(...)`）
+    //    从来不送这个字段，于是所有简答题提交都会被拒 —— 是回归，不是校验。
+    //    现在的契约是「带自评就用，不带就让模型判」，与 README 里那句
+    //    「简答题**可以**显式提交 selfVerdict」一致。
+    //
+    // ⚠️ 断言只查 `verdict` 非空，**不查 grading**：`grading:'self'` 是**两个**
+    //    状态的共用值 —— 用户自评（`question-bank.js`），以及模型不可用时的降级
+    //    （`grading.js:230`）。本用例的 owner 没有 judge 模型，所以走的正是后者，
+    //    `grading` 必然是 `'self'`。拿它当「有没有自评」的判据会得出错误结论。
+    const graded=await service.invoke('bank-answer',payload);
+    assert.ok(graded.attempt.verdict,'没自评也要给出一个判定（模型判或降级），不能是 null');
+
+    // ⚠️ **必须换一道题**。`bank-answer` 对同一 `sessionId+questionId` 会**重放**
+    //    上一次作答并直接返回（`question-bank.js` 顶部的 `previous` 短路），
+    //    所以拿同一道题再答一次，根本走不到 `selfVerdict` 分支 ——
+    //    这样的断言即使把自评逻辑整段删掉也照样通过（降级路径同样给
+    //    `verdict:'partial'` / `grading:'self'`），是纯粹的空转。
+    const practice2=await service.invoke('bank-practice',{mode:'new',count:1,types:['shortAnswer']});
+    const fresh=practice2.questions[0];
+    assert.notEqual(fresh.id,payload.questionId,'第二道题必须与第一道不同，否则又被重放');
+    // ⚠️ 自评值必须是 `incorrect`，**不能是 `partial`**。
+    //    本用例的 owner 没有 judge 模型，`buildAttempt` 会走模型不可用的降级分支
+    //    （`grading.js:227-231`），而那一条**恰好也产出 `verdict:'partial'`,
+    //    `grading:'self'`**。也就是说自评写 `'partial'` 时，即使把整个自评分支删掉，
+    //    断言照样通过 —— 实测过：删掉分支后 25/25 仍然全绿。
+    //    用 `'incorrect'` 才能与降级值区分开（删掉分支时会变成 `'partial'` 而失败）。
+    const grade=await service.invoke('bank-answer',{sessionId:practice2.session.id,questionId:fresh.id,response:'另一段推理',selfVerdict:'incorrect'});
+    assert.equal(grade.attempt.verdict,'incorrect','自评要成为判定（与降级值 partial 区分开）');
     await service.dispose();await host.dispose();await open();
     assert.equal((await service.invoke('bank-load')).questions.find(q=>q.id===payload.questionId).attempts[0].grading,'self');
   }finally{await service?.dispose();await host?.dispose();await rm(directory,{recursive:true,force:true});}
@@ -445,10 +502,10 @@ test('incremental recall completion survives real host storage and preserves old
   try{
     await open();await host.service.put(record());const {points}=await service.invoke('bank-catalog');
     const settings={pointIds:[points[0].id],count:1,types:['cloze']};
-    await service.invoke('bank-generate',settings);await service.questionBank.runs.get(user.id).done;
+    await service.invoke('bank-generate',{...settings,engine:'local'});await service.questionBank.runs.get(user.id).done;
     const original=(await service.invoke('bank-load')).questions[0];assert.equal(original.answer,'随机事件');
     await service.dispose();await host.dispose();await open();
-    const started=await service.invoke('bank-generate',settings);await service.questionBank.runs.get(user.id).done;
+    const started=await service.invoke('bank-generate',{...settings,engine:'local'});await service.questionBank.runs.get(user.id).done;
     const progress=(await service.invoke('bank-progress',{runId:started.run.id})).run;
     assert.equal(progress.done,1);assert.equal(progress.completion.addedConcepts,0);assert.equal(progress.completion.addedPositions,1);
     await service.dispose();await host.dispose();await open();

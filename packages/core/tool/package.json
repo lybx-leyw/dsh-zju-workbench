@@ -1,9 +1,8 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-tool",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "智云 Pro 工具协议与调度层：schema 生成、参数守卫、并行调度、标签驱动的 agentic 循环、流总线（纯 JS、零第三方依赖、不真调模型）",
+  "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
@@ -22,6 +21,15 @@
     "./json": "./src/json.js",
     "./home": "./src/home.js",
     "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/tool"
   },
   "license": "GPL-3.0-or-later"
 }

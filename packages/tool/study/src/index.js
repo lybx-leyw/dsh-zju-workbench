@@ -25,6 +25,16 @@
  *
  * 两条注入都是惰性的：宿主没有 `tools` 服务时这一包不起作用，
  * 学习页照常可用 —— 工具表是附加能力，不该成为学习功能的前置。
+ * # 本包不带自己的挂载行
+ *
+ * `package.json` **没有** `dsh.bundle.patch`，仓库里**没有** `cordis.patch.yml`。
+ * 这不是遗漏：工具包只负责“怎么注册”，不负责“什么时候装”—— 后者是 preset
+ * 的决定。两边各写一份挂载行的后果是同一个工具在表里出现两次（一次来自
+ * profile 的 bundle，一次来自 preset 的 `plugins` 树）。
+ *
+ * 目前唯一的注入点是 `@lybx-leyw/dsh-zju-preset-lecture` 的
+ * `cordis.patch.yml` 末行（`- id: tool-study`）。要把它给别的 preset，
+ * 在那个 preset 的 plugins 树里加一行即可，不要把它加进 profile 的 bundles。
  */
 import { createStudyMaterialTools } from './tools.js';
 

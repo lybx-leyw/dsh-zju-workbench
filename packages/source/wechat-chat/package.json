@@ -1,0 +1,33 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-wechat-chat",
+  "version": "0.1.0",
+  "description": "只读查询本机微信的个人与群聊、联系人、群成员和聊天记录，提取已缓存的图片、语音、视频与文件",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "wechat": "scripts/wechat.mjs"
+  },
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "ATTRIBUTION.md",
+    "THIRD_PARTY_NOTICES.txt",
+    "lib/",
+    "scripts/",
+    "references/"
+  ],
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": false,
+      "requires": []
+    }
+  },
+  "dependencies": {
+    "htmlparser2": "^10.1.0",
+    "silk-wasm": "^3.7.1"
+  }
+}

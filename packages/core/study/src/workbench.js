@@ -394,8 +394,7 @@ export class StudyWorkbench {
       this.accountBusy = false;
     }
   }
-  async start(courseId, subId, context, labels = {}) {
-    await this.ready;
+  async start(courseId, subId, context, labels = {}) {    await this.ready;
     if (this.configBusy) throw fault("BUSY", "请等待生成配置保存完成");
     const user = await this.user(), key = this.key(user, courseId, subId), existing = this.jobs.get(key);
     if (this.configBusy) throw fault("BUSY", "请等待生成配置保存完成");
@@ -413,6 +412,11 @@ export class StudyWorkbench {
       //    或者退化成用编号当标题。这里就把它挡掉。
       courseTitle: String(nonEmpty(labels.courseTitle) ?? courseId).slice(0, 500),
       lessonTitle: String(nonEmpty(labels.lessonTitle) ?? subId).slice(0, 500),
+      // 学期（笔记库的第一层目录）。`listCourses()` 回来的课程对象上有它
+      // （`source/classroom/src/models.js` 的 `row.TermName`），页面上传下来时
+      // 跟着 `labels` 一起进来。存进记录之后，生成题目就能带着它走，
+      // 导出不必再回查课堂接口 —— 离线时也能落到正确的那一层。
+      termName: String(nonEmpty(labels.termName) ?? '').slice(0, 500),
       selection: this.effectiveWorkers().map(row => ({ ...row })), progress: { phase: 'source', done: 0, total: 0 }, controller, userId: user.id };
     this.jobs.delete(key);
     this.jobs.set(key, job);
@@ -464,19 +468,19 @@ export class StudyWorkbench {
         const result = await (runParser ?? this.parser).parseClassroom(courseId, subId, { context: title, signal, onProgress });
         signal.throwIfAborted();
         const sourceVersion = finalVersion(result);
-        await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, lecture: null, knowledgeTree: result.tree,
+        await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, termName:job.termName, lecture: null, knowledgeTree: result.tree,
           lectureHistory: [], quiz: null });
         const generated = await lecture.generate({ record: result, title, signal, onProgress,
           onAssembled: async assembled => {
             signal.throwIfAborted();
-            await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, knowledgeTree: result.tree, lectureHistory: [], quiz: null,
+            await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, termName:job.termName, knowledgeTree: result.tree, lectureHistory: [], quiz: null,
               lecture: { schema: 1, title, chapters: assembled.chapters, generationVersion: GENERATION_VERSION, sourceVersion,
                 revision: randomUUID(), warnings: assembled.warnings ?? [], failures: assembled.failures ?? [],
                 polish: { complete: false, failures: [], warnings: ['终审尚未完成'] } } });
           },
         });
         signal.throwIfAborted();
-        await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, knowledgeTree: result.tree,
+        await this.save(key, { ...result, sourceVersion, title, courseTitle:job.courseTitle, lessonTitle:job.lessonTitle, termName:job.termName, knowledgeTree: result.tree,
           lecture: { ...generated.lecture, sourceVersion, revision: randomUUID(), at: new Date().toISOString() },
           lectureHistory: [], quiz: null });
         job.state = result.status === "ready" && generated.polished.complete !== false && !generated.assembled.failures?.length ? "ready" : "partial";
@@ -839,9 +843,10 @@ export class StudyWorkbench {
       return await service.exportLecture({
         courseTitle,
         lessonTitle,
-        // 学期是笔记库里的第一层文件夹。它只来自调用方 —— 记录上没有这个字段，
-        // 早期生成的记录更不可能有，所以缺失就只是少一层目录。
-        termName: nonEmpty(payload?.termName),
+        // 学期是笔记库里的第一层文件夹。新记录生成时已经存了 `stored.termName`，
+        // 所以**优先用记录上的**；调用方传的次之；都没有才留空（只少一层目录）。
+        // 老记录（那批生成时还没存这个字段）仍靠调用方补。
+        termName: nonEmpty(stored.termName) ?? nonEmpty(payload?.termName),
         chapters: lecture.chapters,
         title: nonEmpty(payload?.lessonTitle) ?? nonEmpty(lecture.title) ?? lessonTitle,
       });

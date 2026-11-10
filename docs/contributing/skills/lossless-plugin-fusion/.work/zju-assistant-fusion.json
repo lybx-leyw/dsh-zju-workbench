@@ -1,0 +1,1127 @@
+{
+  "eyebrow": "图 1 · packages/vendor/zju-assistant · 数据流",
+  "fig_head": "FIG.1 — ZJU-ASSISTANT FUSION LANES · rev.2026-11-09",
+  "title": "zju-assistant → 本仓 融合泳道图",
+  "subtitle": "dsh-zju-assistant 0.1.8（GPL-3.0-only，整仓 vendored，我们零改动）的全部可执行路径",
+  "lede": "上游不是一个包，是**自带 workspace 的独立项目**：`plugin/` 10 行子插件 + `core/` 8 个子包。下图把它的全部数据流画成 18 条泳道，每条泳道 = 一种数据从源头走到终端的完整路径。剪枝只改 `cut` 字段，不物理删除。",
+
+  "meta": [
+    { "v": "18", "k": "Lanes" },
+    { "v": "18", "k": "Upstream modules" },
+    { "v": "10", "k": "Sub-plugins" },
+    { "v": "0", "k": "Our patches" }
+  ],
+
+  "legend": [
+    { "text": "数据源 · 外部事实", "color": "src" },
+    { "text": "变换 · 宿主侧，无 UI", "color": "proc" },
+    { "text": "呈现 · 页面", "color": "ui" },
+    { "text": "agent 触点 · 工具 / skill", "color": "tool" },
+    { "text": "虚线 · 已剪 / 无下游", "dash": true }
+  ],
+
+  "bands": [
+    { "title": "Ⅰ · 校园数据主链 — 站点到页面与助手", "range": "L1 — L7" },
+    { "title": "Ⅱ · 消息与文档侧链", "range": "L8 — L13" },
+    { "title": "Ⅲ · 讲解、档案与 skill 终端", "range": "L14 — L18" }
+  ],
+
+  "lanes": [
+    {
+      "id": "L1",
+      "band": 0,
+      "no": "01",
+      "name": "统一身份认证 + WebVPN → 其余每条泳道的通行证",
+      "sub": "所有校园站点的会话来源；也是本仓已有一份实现的那一条",
+      "accent": "src",
+      "feeds": ["L2", "L3", "L4", "L5", "L6", "L7"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "zjuam 统一身份认证",
+              "pkg": "core/zju/lib/zjuam",
+              "in": "学号 + 密码",
+              "out": "CAS 会话 cookie"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "RSA 加密登录",
+              "pkg": "core/zju/lib/zjuam/rsa.ts",
+              "in": "明文密码",
+              "out": "pubkey 加密参数"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "会话落盘",
+              "pkg": "core/zju/lib/zjuam/session.ts",
+              "in": "cookie",
+              "out": "<数据目录>/sessions/zjuam.json"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "WebVPN 网关",
+              "pkg": "core/zju/lib/webvpn",
+              "in": "原地址",
+              "out": "webvpn.zju.edu.cn 改写地址"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "选路",
+              "pkg": "core/zju/lib/webvpn/probe.ts",
+              "in": "目标主机",
+              "out": "校内直连 / 经网关"
+            }
+          ]
+        },
+        {
+          "items": [
+            { "cont": "↳" },
+            {
+              "t": "凭据读取",
+              "pkg": "core/zju/lib/profile/profile.ts",
+              "in": "accounts.json",
+              "out": "ACCOUNT_KEYS 解出的账号"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "插件页「校园账号」配置",
+              "pkg": "plugin/client/AccountForm.tsx",
+              "in": "account-read / account-save",
+              "out": "设置项写入"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "`packages/source/login` 一卡通账号" },
+        { "chip": "`packages/source/webvpn` 地址改写 + 网关登录" },
+        { "chip": "`packages/source/http` 分域出口 zhiyunEgress" }
+      ]
+    },
+
+    {
+      "id": "L2",
+      "band": 0,
+      "no": "02",
+      "name": "教务网 + 研究生教务网 → 日程表页",
+      "sub": "课表、考试、成绩被排成一张按校历算好的周表",
+      "accent": "src",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "本科教务网 zdbk",
+              "pkg": "core/zju/lib/zdbk",
+              "in": "学期 + 学年",
+              "out": "kbcx 课表 / kscx 考试 / cjcx 成绩"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "研究生教务网 yjsy",
+              "pkg": "core/zju/lib/yjsy",
+              "in": "学年 + 大学期",
+              "out": "研究生课表（本科网里没有）"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "合表 + 校历排期",
+              "pkg": "plugin/host/schedule.mjs",
+              "in": "两网课表 + calendar.json",
+              "out": "逐日课次（周次/单双周/放假调休）"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "侧栏「日程表」页",
+              "pkg": "plugin/client/SchedulePage.tsx",
+              "in": "schedule-read / schedule-refresh",
+              "out": "周视图 + 考试 + 作业截止 + 备忘 + 自建日程"
+            }
+          ]
+        },
+        {
+          "items": [
+            { "cont": "↳" },
+            {
+              "kind": "tool",
+              "t": "`campus_schedule`",
+              "pkg": "plugin/host/tools.mjs",
+              "in": "{from, to} / terms / days / items",
+              "out": "逐日安排 + 今天是第几周"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "校历三层",
+              "pkg": "plugin/host/holidays.mjs",
+              "in": "国家放假安排 + 浙大校历 + 用户填的",
+              "out": "layerCalendars 优先级合成"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "`packages/source/zdbk` 有 timetable/exams/grades/gpaSummary" },
+        { "chip": "`packages/client/page-today` 有日程落点" },
+        { "chip": "**研究生教务网本仓无**" }
+      ]
+    },
+
+    {
+      "id": "L3",
+      "band": 0,
+      "no": "03",
+      "name": "学在浙大 + PTA + 学习通 → 校园事务页作业栏",
+      "sub": "三平台作业聚合成一份待办，各存一份缓存",
+      "accent": "src",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "学在浙大 xuezai",
+              "pkg": "core/zju/lib/xuezai",
+              "in": "课程名 / 作业名",
+              "out": "课件清单 + 作业 + 待办 + 点名"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "PTA 拼题A",
+              "pkg": "core/zju/lib/pta",
+              "in": "题集名 / 题号",
+              "out": "作业进度 + 小题答案 + 提交"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "超星学习通 chaoxing",
+              "pkg": "core/zju/lib/chaoxing",
+              "in": "课程名 / 章节",
+              "out": "课件与视频清单 + 作业"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "作业聚合",
+              "pkg": "plugin/host/affairs.mjs",
+              "in": "三源读取结果",
+              "out": "未完成 + 截止 + 附件（各源独立缓存）"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "侧栏「校园事务」作业栏",
+              "pkg": "plugin/client/AffairsPage.tsx",
+              "in": "affairs-read / affairs-detail",
+              "out": "待办列表 + 详情 + 附件下载"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "`packages/source/campus` 学在待办 + PTA" },
+        { "chip": "`packages/source/xxt` 学习通课程/作业/考试" },
+        { "chip": "**作业详情与提交本仓无**" }
+      ]
+    },
+
+    {
+      "id": "L4",
+      "band": 0,
+      "no": "04",
+      "name": "智云课堂 + 学在浙大 + 超星 → 学习页课件",
+      "sub": "三门课的课件与回放，落到同一个课程文件夹结构里",
+      "accent": "src",
+      "feeds": ["L14"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "智云课堂 zhiyun",
+              "pkg": "core/zju/lib/zhiyun",
+              "in": "课程 / 课次",
+              "out": "回放 + 字幕 + 课件 + 实时字幕"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "学习页聚合",
+              "pkg": "plugin/host/learning.mjs",
+              "in": "智云课程与课次",
+              "out": "课程树 + 课次（缓存 10 分钟）"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "学在块",
+              "pkg": "plugin/host/xuezai.mjs",
+              "in": "一门智云课",
+              "out": "按章匹配到的学在课件"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "超星块",
+              "pkg": "plugin/host/chaoxing.mjs",
+              "in": "一门课",
+              "out": "章节课件视频 + 实验课表对齐"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "侧栏「学习」页",
+              "pkg": "plugin/client/LearningPage.tsx",
+              "in": "learning-read / lesson / download",
+              "out": "课程树 + 课件栏 + 下载到 CampusAgent"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "`packages/source/classroom` 智云数据源" },
+        { "chip": "`packages/client/page-study` 学习页" },
+        { "chip": "`packages/core/playback` 字幕课件对齐" }
+      ]
+    },
+
+    {
+      "id": "L5",
+      "band": 0,
+      "no": "05",
+      "name": "学校部门官网 → 校园通知栏",
+      "sub": "两套适配器读十几个部门的通知，再用模型筛相关度",
+      "accent": "src",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "通知来源表",
+              "pkg": "core/zju/lib/notice/sources.ts",
+              "in": "学院名 / 部门",
+              "out": "已接来源与栏目"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "两套适配器",
+              "pkg": "core/zju/lib/notice/adapters",
+              "in": "webplus / kyjs / zdbk 页面",
+              "out": "标题 + 日期 + 正文 + 附件"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "通知汇总",
+              "pkg": "plugin/host/feed.mjs",
+              "in": "notice new + 公众号 + 二课",
+              "out": "按时间排的 campus / personal 两页签"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "相关度筛选",
+              "pkg": "plugin/host/notice-filter.mjs",
+              "in": "标题 + 个人档案基础信息",
+              "out": "屏蔽词直收 + 模型逐条判断"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "校园事务右栏「校园通知」",
+              "pkg": "plugin/client/Feed.tsx",
+              "in": "feed-read / feed-content",
+              "out": "列表 + 正文 + 加进备忘录"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "**通知读取本仓无**" },
+        { "chip": "`packages/source/cc98` 只覆盖论坛，不覆盖部门官网" }
+      ]
+    },
+
+    {
+      "id": "L6",
+      "band": 0,
+      "no": "06",
+      "name": "二课平台 + 体育场馆 → 活动与预约",
+      "sub": "会改动账号状态的那一类，写操作前过 dsh 审批",
+      "accent": "src",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "素质拓展平台 sztz",
+              "pkg": "core/zju/lib/sztz",
+              "in": "活动名 / 关键词",
+              "out": "活动 + 记点 + 报名状态"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "体育场馆 tyys",
+              "pkg": "core/zju/lib/tyys",
+              "in": "运动 / 校区 / 日期",
+              "out": "空场 + 预约须知 + 订单"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "验证码问模型",
+              "pkg": "plugin/host/vision.mjs",
+              "in": "场馆验证码图（base64）",
+              "out": "经管道 CAMPUS_MODEL_ENDPOINT 的一次问答"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "`zju` 工具 + 审批闸",
+              "pkg": "plugin/host/zju-tool.mjs",
+              "in": "args 含 --confirm",
+              "out": "ctx.approval 批准后才设 ZJU_ALLOW_WRITE=1"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "**二课与场馆本仓无**" },
+        { "chip": "本仓写操作走 `ctx.approval` 的等价机制存在？**未核实**" }
+      ]
+    },
+
+    {
+      "id": "L7",
+      "band": 0,
+      "no": "07",
+      "name": "CC98 + 查老师 + 电子书 + 知网 → 社区与检索",
+      "sub": "四类只读检索，终端都在 `zju` 工具的 JSON 结果里",
+      "accent": "src",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "CC98 论坛",
+              "pkg": "core/zju/lib/cc98",
+              "in": "关键词 / 版面 / 帖子 ID",
+              "out": "十大 + 新帖 + 帖子 + 通知 + 私信"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "查老师 chalaoshi",
+              "pkg": "core/zju/lib/chalaoshi",
+              "in": "教师姓名 / 拼音",
+              "out": "评分 + 热度 + 主页"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "电子书 ebook",
+              "pkg": "core/zju/lib/ebook",
+              "in": "书名 / ISBN",
+              "out": "有全文的平台与直达地址"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "知网 cnki",
+              "pkg": "core/zju/lib/cnki",
+              "in": "检索式 + 筛选",
+              "out": "题录 + 全文 PDF"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "CC98 个人消息进「个人消息」页签",
+              "pkg": "plugin/host/cc98-feed.mjs",
+              "in": "account notifications",
+              "out": "回复 + @ + 系统消息 + 私信摘要"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "`packages/source/cc98` 10 个只读方法（不含私信写）" },
+        { "chip": "**查老师 / 电子书 / 知网本仓无**" }
+      ]
+    },
+
+    {
+      "id": "L8",
+      "band": 1,
+      "no": "08",
+      "name": "浙大邮箱 IMAP/SMTP → 个人消息 + 发信",
+      "sub": "唯一一个自带第三方依赖（imapflow/mailparser/nodemailer）的链路",
+      "accent": "src",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "imap.zju.edu.cn",
+              "pkg": "plugin/host/mail.mjs",
+              "in": "客户端专用密码",
+              "out": "IMAP 会话 + 邮件正文附件"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "专用密码保管",
+              "pkg": "plugin/host/mail-vault.mjs",
+              "in": "明文",
+              "out": "ctx.credentials 里的一条 grant（系统凭据库封的密文）"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "新信基线",
+              "pkg": "plugin/host/mail-feed.mjs",
+              "in": "UID + UIDVALIDITY",
+              "out": "只取比基线大的信"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "校园事务「个人消息」",
+              "pkg": "plugin/client/Feed.tsx",
+              "in": "mail-connect / mail-status",
+              "out": "新信列表（打开时才读正文）"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "`campus_mail` / `campus_mail_send`",
+              "pkg": "plugin/host/rows/mail.mjs",
+              "in": "search / read / draft / send",
+              "out": "发信前经审批"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "**邮箱本仓无**" },
+        { "chip": "本仓凭据走哪个服务？**未核实**" }
+      ]
+    },
+
+    {
+      "id": "L9",
+      "band": 1,
+      "no": "09",
+      "name": "微信读书 → 微信公众号文章",
+      "sub": "借微信读书绕过公众号的验证闸门",
+      "accent": "src",
+      "feeds": ["L5", "L12"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "微信读书 weread",
+              "pkg": "core/weread",
+              "in": "公众号名 / 文章 URL",
+              "out": "文章正文 HTML + 图片"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "浏览器管道",
+              "pkg": "plugin/host/weread-bridge.mjs",
+              "in": "cookie / request / login / captcha / article",
+              "out": "一条本地管道上的五个操作"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "插件自带浏览器",
+              "pkg": "plugin/host/browser.mjs",
+              "in": "CDP over DevToolsActivePort",
+              "out": "独立资料目录的 Chromium 窗口"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "半小时轮询",
+              "pkg": "plugin/host/wechat.mjs",
+              "in": "跟踪的号",
+              "out": "新文章进校园通知"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "`campus_wechat`",
+              "pkg": "plugin/host/rows/wechat.mjs",
+              "in": "weread 命令 args",
+              "out": "文章正文 / 存成 Markdown"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "**公众号本仓无**" },
+        { "chip": "本仓有无自带浏览器？**未核实**" }
+      ]
+    },
+
+    {
+      "id": "L10",
+      "band": 1,
+      "no": "10",
+      "name": "本机微信 / 钉钉数据库 → 聊天监控",
+      "sub": "只读本机客户端的数据，Mac 上要关 SIP",
+      "accent": "src",
+      "feeds": ["L12"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "微信本地库",
+              "pkg": "core/wechat",
+              "in": "数据目录",
+              "out": "群聊 + 私聊 + 联系人 + 附件"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "src",
+              "t": "钉钉本地库",
+              "pkg": "core/dingtalk",
+              "in": "v2 / v3 账号库",
+              "out": "群聊 + 私聊 + 群成员"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "监控与整理",
+              "pkg": "plugin/host/chat-watch.mjs",
+              "in": "选定的群/私聊 + 新消息",
+              "out": "按批交给模型整理成事项"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "模型整理",
+              "pkg": "plugin/host/model.mjs",
+              "in": "12000 字一批 + 学生身份摘要",
+              "out": "要做什么 + 截止 + 时间地点"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "`campus_wechat_chat` / `campus_dingtalk`",
+              "pkg": "plugin/host/rows/chat.mjs",
+              "in": "读取器命令 args",
+              "out": "聊天记录 JSON"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "**微信/钉钉读取本仓无**" },
+        { "chip": "上游自述：Mac 支持只用合成数据测过" }
+      ]
+    },
+
+    {
+      "id": "L11",
+      "band": 1,
+      "no": "11",
+      "name": "任意文件 / 链接 → 文档取文字与转 PDF",
+      "sub": "PDF、Word、PPT、Excel 的提取与切分，零外部二进制",
+      "accent": "proc",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "本地文件或链接",
+              "pkg": "core/zju/lib/doc",
+              "in": "PDF/Word/PPT/Excel/HTML/文本",
+              "out": "纯文字 + Markdown"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "PDF 工具四件",
+              "pkg": "core/zju/lib/doc/pdf.ts",
+              "in": "PDF",
+              "out": "取页 / 找页 / 取图 / 渲染"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "合成与转正",
+              "pkg": "core/zju/lib/doc/office.ts",
+              "in": "图片 / Word",
+              "out": "合并 PDF（按拍摄方向转正）"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "`zju doc ...`",
+              "pkg": "core/zju/lib/doc/cli.ts",
+              "in": "file / url / pages / keyword",
+              "out": "文字或新 PDF 的绝对路径"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "`packages/core/parser` 三阶段解析器（LLM + 附件服务）" },
+        { "chip": "`packages/vendor/paper-reader` PDF 阅读" },
+        { "chip": "**能力重叠但口径不同，见第 8 步 B 类**" }
+      ]
+    },
+
+    {
+      "id": "L12",
+      "band": 1,
+      "no": "12",
+      "name": "多源消息 → 通知汇总与提醒角标",
+      "sub": "campus / personal 两个页签的分流口径",
+      "accent": "proc",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "六类来源",
+              "pkg": "plugin/host/feed.mjs",
+              "in": "学校通知 / 公众号 / 二课 / 聊天 / 邮箱 / CC98",
+              "out": "按来源与聊天类型分两个页签"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "个人消息不过相关度筛",
+              "pkg": "plugin/host/notice-filter.mjs",
+              "in": "campus 页签的条目",
+              "out": "personal 全部保留"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "后台轮询",
+              "pkg": "plugin/host/feed.mjs",
+              "in": "start() 每分钟",
+              "out": "邮箱与 CC98 各自隔一阵读一次"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "侧栏角标 + 浏览器通知",
+              "pkg": "plugin/host/alerts.mjs",
+              "in": "最近 50 条内存提醒",
+              "out": "点开回到对应对话或页签"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "`campus_notify`",
+              "pkg": "plugin/host/tools.mjs",
+              "in": "title + text",
+              "out": "主动提醒一次"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "**统一提醒总线本仓无**" }
+      ]
+    },
+
+    {
+      "id": "L13",
+      "band": 1,
+      "no": "13",
+      "name": "校内链接 → 插件自带浏览器（带登录态）",
+      "sub": "点开就是已登录；CDP 拦跳转继续改写地址",
+      "accent": "proc",
+      "feeds": [],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "页面上的校内链接",
+              "pkg": "plugin/host/campus-page.mjs",
+              "in": "zju.edu.cn / cc98 原地址",
+              "out": "续上 CAS 与 WebVPN 会话"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "地址改写",
+              "pkg": "plugin/host/campus-page.mjs",
+              "in": "目标主机",
+              "out": "WebVPN 地址 / 直连（KNOWN_PUBLIC）"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "浏览器窗口",
+              "pkg": "plugin/host/browser.mjs",
+              "in": "profile 目录 + CDP",
+              "out": "已登录的窗口"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "页面点链接即开",
+              "pkg": "plugin/host/index.mjs#page-open",
+              "in": "dispatch('page-open')",
+              "out": "用户看到已登录的原文页"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "`webvpnLinks` 的写法本仓已在用？**未核实**" }
+      ]
+    },
+
+    {
+      "id": "L14",
+      "band": 2,
+      "no": "14",
+      "name": "课件 → 带画面的课程讲解",
+      "sub": "本仓已有最强的一条同类链路，也是最该做量化对比的一条",
+      "accent": "proc",
+      "feeds": ["L15"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "一次课 / 一份资料",
+              "pkg": "core/learn",
+              "in": "课件 + 字幕 + 录音稿",
+              "out": "讲解脚本（分镜）"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "引擎",
+              "pkg": "core/learn/engine",
+              "in": "分镜 + TeX + 动画库",
+              "out": "单文件 HTML + 沙箱脚本"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "依赖安装",
+              "pkg": "plugin/host/learn.mjs",
+              "in": "CTAN 镜像 / npm 的 SHA-512",
+              "out": "TeX（约 300 MB）+ gsap/three（约 6 MB）"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "成品分发",
+              "pkg": "plugin/host/film.mjs",
+              "in": "文件名",
+              "out": "CSP sandbox 的 /api/zju-campus/film"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "学习页点播放（新标签页）",
+              "pkg": "plugin/client/learnParts.tsx",
+              "in": "film.html",
+              "out": "可播放的讲解"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应（已核实）" },
+        { "chip": "`packages/core/classroom-generate` 四段生成管线" },
+        { "chip": "`packages/core/classroom-media` TTS/ASR/图/检索" },
+        { "chip": "`packages/core/classroom-export` PPTX/HTML/ZIP" },
+        { "chip": "`packages/client/page-study` 学习页" }
+      ]
+    },
+
+    {
+      "id": "L15",
+      "band": 2,
+      "no": "15",
+      "name": "讲解成品 → 沙箱播放",
+      "sub": "顶层的 CSP 决定这条链路的安全边界",
+      "accent": "proc",
+      "feeds": [],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "dist/*.html",
+              "pkg": "plugin/host/film.mjs",
+              "in": "文件名（不认路径）",
+              "out": "文件字节"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "CSP 头",
+              "pkg": "plugin/host/film.mjs",
+              "in": "sandbox allow-scripts",
+              "out": "不透明源，connect-src 'none'"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "新标签页播放器",
+              "pkg": "core/learn/engine",
+              "in": "沙箱内脚本",
+              "out": "画面 + 讲解"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "L16",
+      "band": 2,
+      "no": "16",
+      "name": "个人档案 / 备忘录 / 校园档案 → 三份 Markdown 库",
+      "sub": "一条一个 .md，frontmatter 与 Obsidian 同构",
+      "accent": "proc",
+      "feeds": ["L17"],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "基础信息",
+              "pkg": "plugin/host/store.mjs",
+              "in": "identity.json",
+              "out": "00-个人资料.md"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "记忆 / 备忘录",
+              "pkg": "plugin/host/store.mjs",
+              "in": "SHELVES: memory / notes",
+              "out": "一条一个 md + revision"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "校园档案",
+              "pkg": "plugin/host/context.mjs",
+              "in": "course / platform / matter",
+              "out": "三份索引 + 双向关联"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "关联核对",
+              "pkg": "plugin/host/context-relations.mjs",
+              "in": "review token + decisions",
+              "out": "confirmed / pending / rejected"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "设置「个人档案」+ 备忘录",
+              "pkg": "plugin/client/ProfileSettings.tsx",
+              "out": "基础信息 + 记忆编辑"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "`campus_profile` / `campus_note` / `campus_context`",
+              "pkg": "plugin/host/tools.mjs",
+              "in": "read / write / save / link",
+              "out": "Markdown 读写"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应（已核实）" },
+        { "chip": "`packages/core/vault` 存储 + 索引 + 双链" },
+        { "chip": "`packages/client/page-notes` 笔记页" },
+        { "chip": "`packages/core/notes` 节笔记 + zy:// 内链" }
+      ]
+    },
+
+    {
+      "id": "L17",
+      "band": 2,
+      "no": "17",
+      "name": "zju-campus 技能 → agent 指令",
+      "sub": "一个 skill 按开着的行拼正文，是上面 12 条泳道的助手入口",
+      "accent": "tool",
+      "feeds": [],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "skill/SKILL.md",
+              "pkg": "plugin/skill/SKILL.md",
+              "in": "YAML frontmatter + 公共段",
+              "out": "技能元信息"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "按行拼接",
+              "pkg": "plugin/host/index.mjs#skill()",
+              "in": "开着的行的 skill/rows/<key>.md",
+              "out": "一份合并正文"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "技能 provider",
+              "pkg": "ctx.skills.registerProvider",
+              "in": "list / get",
+              "out": "会话目录里的一条"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "tool",
+              "t": "模型先读后做",
+              "pkg": "plugin/skill/references",
+              "in": "pages / records / schedule",
+              "out": "命令参数写法"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "可见性" },
+        { "chip": "`modelInvocable: true` 模型可见" },
+        { "chip": "`userInvocable: false` 不进 `/` 菜单" },
+        { "cap": "本仓对应（已核实）" },
+        { "chip": "`packages/tool/study` 三个工具" },
+        { "chip": "`packages/preset/lecture` 唯一 preset" }
+      ]
+    },
+
+    {
+      "id": "L18",
+      "band": 2,
+      "no": "18",
+      "name": "插件页 10 行开关 → 能力启停",
+      "sub": "关掉一行，页面、工具、命令三样一起停",
+      "accent": "tool",
+      "feeds": [],
+      "rows": [
+        {
+          "items": [
+            {
+              "kind": "src",
+              "t": "ROWS 清单",
+              "pkg": "plugin/rows.mjs",
+              "in": "10 行 + modules 归属",
+              "out": "patch 顺序 + 配置页键"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "启用/停用",
+              "pkg": "plugin/host/row.mjs",
+              "in": "ctx.zjuCampus.activate(key)",
+              "out": "active Set + parts Map"
+            },
+            { "arrow": "normal" },
+            {
+              "t": "三处联动",
+              "pkg": "plugin/host/index.mjs",
+              "in": "disabledModules / disabledRow / rows()",
+              "out": "ZJU_DISABLED_MODULES + 页面撤下 + 技能段落"
+            },
+            { "arrow": "normal" },
+            {
+              "kind": "ui",
+              "t": "插件页行配置",
+              "pkg": "plugin/client/index.tsx",
+              "in": "plugins.row.config 插槽",
+              "out": "账号表单与各页设置"
+            }
+          ]
+        }
+      ],
+      "side": [
+        { "cap": "本仓对应" },
+        { "chip": "`packages/client/page-plugins` 插件页 + `core/plugin-graph`" }
+      ]
+    }
+  ],
+
+  "notes": [
+    {
+      "no": "01",
+      "kind": "warn",
+      "title": "上游是 GPL-3.0-only，不是本仓默认的 -or-later",
+      "paras": [
+        "上游 `LICENSE` 是 GPLv3 全文，`package.json` 两处都写 `GPL-3.0-only`，`THIRD_PARTY_NOTICES.md` 也明确「仅限该版本」。本仓 `LICENSING.md` 规定 vendor 包按包内声明为准，因此 **不冲突**：`-only` 与 `-or-later` 同为 GPLv3 家族，可以共存于同一仓库的不同包。",
+        "但**不要**把上游代码复制进非 vendor 包。非 vendor 包默认 `GPL-3.0-or-later`，把 `-only` 的代码搬进去会让整包的协议口径含糊。要么整包留在 `packages/vendor/`，要么在目标包内单独声明 `-only`。"
+      ]
+    },
+    {
+      "no": "02",
+      "kind": "proc",
+      "title": "它是一整个 workspace，不是一个包",
+      "paras": [
+        "`plugin/` 依赖 `core/*` 七个子包，有独立构建链（`plugin/build.mjs`）、独立锁文件与 `engines: node >=24.18 <25`。只取 `plugin/` 会得到一个跑不起来的半截包 —— 这是 `PATCHES.md` 已经写明的事。",
+        "`packages/vendor/zju-assistant/PATCHES.md` 记录：**我们目前零改动，一个字节没动**。任何融合动作都会让这份「代价清单」开始计数。"
+      ]
+    },
+    {
+      "no": "03",
+      "kind": "tool",
+      "title": "18 条泳道里有 5 条本仓完全没有",
+      "paras": [
+        "**L5 通知**、**L6 二课与场馆**、**L8 邮箱**、**L9 公众号**、**L10 微信/钉钉聊天** —— 本仓 `packages/source/` 十个数据源与 `packages/core/` 二十六个核心包都不覆盖。",
+        "**L2 的研究生教务网**、**L3 的作业详情与提交**、**L7 的查老师/电子书/知网** 也是本仓没有的。这些是「直接集成」的候选，代价是新增数据源包与依赖。"
+      ]
+    },
+    {
+      "no": "04",
+      "kind": "proc",
+      "title": "本仓已有且口径不同：三条要量化对比",
+      "paras": [
+        "**L14 课程讲解**：本仓 `packages/core/classroom-generate` 四段管线 + `classroom-media`（TTS/ASR/图/检索）+ `classroom-export`（PPTX/HTML/ZIP）明显更重，上游只有一个 `core/learn/engine`。这是第 8 步 B/C 类的主战场。",
+        "**L11 文档取文字**：本仓 `packages/core/parser` 走 LLM 三阶段，上游 `core/zju/lib/doc` 是纯正则与库解析，不调模型。",
+        "**L16 档案库**：本仓 `packages/core/vault` 是 Obsidian 式笔记库（双链/图谱/重命名改链），上游 `plugin/host/store.mjs` 只有一个带 revision 的 md 架子，功能是子集。"
+      ]
+    },
+    {
+      "no": "05",
+      "kind": "warn",
+      "title": "本仓现状里有几处我只能写「未核实」",
+      "paras": [
+        "**审批闸（L6）**：上游写操作走 `ctx.approval` + `ZJU_ALLOW_WRITE=1` 双闸。本仓是否有等价机制、在哪个包，我没查到证据，标为未核实 —— 按硬规则 3，不写「已有」。",
+        "**凭据服务（L8）**：上游用 `@deepseek-ai/dsh-credentials` 的 grant 记邮箱专用密码。本仓 `source/login` 走的是「宿主凭据读写」，是否同一个服务未核实。",
+        "**自带浏览器（L9/L13）**：上游自己起 Chromium 走 CDP。本仓是否有同类能力未核实。"
+      ]
+    }
+  ],
+
+  "footer": [
+    {
+      "head": "怎么读",
+      "text": "一条泳道 = 一种数据的完整路径，起点在最左，终端在最右。节点的 `入/出` 写的是**形态变化**，不是「做了什么」——做了什么是实现细节，形态变化才是契约。节点右下的 pkg 是源码位置，可直接在仓库里搜。"
+    },
+    {
+      "head": "为什么没画",
+      "text": "`core/initialize`（只含 references 文档，无代码）、`core/skills`（5 个 skill 的 md 模板）、`scripts/`（上游自己的 setup 与安全检查）不产生数据流，画在图外。`packages/vendor/*` 与本仓 `radar/*` 与本次任务无关，同样不画。"
+    },
+    {
+      "head": "与代码的一致性",
+      "text": "本图的入口清单来自 `core/zju/lib/cli.ts` 的 18 个模块注册表、`plugin/rows.mjs` 的 10 行、`plugin/host/index.mjs` 的 dispatch 表与 `ctx.tools.register` 的 9 个工具，以及 `plugin/client/index.tsx` 的插槽登记。三者合起来就是「可执行入口」的全集，第 2 步的映射表逐条对应。"
+    },
+    {
+      "head": "剪枝",
+      "text": "给泳道加 `\"cut\": true`，或临时跑 `--prune L5,L8`（不改 spec 文件）。恢复用 `--restore`。被剪的泳道渲染成删除线，不物理删除 —— 复核时才能分清「剪掉的」和「从来就没画的」。"
+    }
+  ]
+}

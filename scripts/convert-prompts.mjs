@@ -12,10 +12,18 @@ import path from 'node:path';
 
 const lang = process.argv[2] ?? 'zh';
 const outDir = process.argv[3] ?? 'packages/core/question/src/prompts';
-const src = path.join(
-  'packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/agents/question/prompts',
-  lang,
-);
+// vendor 已归档（见 archive/README.md）。优先读活副本，不在就退到归档区，
+// 这样转换器在「只保留归档」的机器上仍可复现同一份产物。
+const VENDOR_LIVE = 'packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/agents/question/prompts';
+const VENDOR_ARCHIVED = 'archive/deeptutor-vendor-1.6.15/deeptutor/agents/question/prompts';
+const vendorRoot = fs.existsSync(VENDOR_LIVE) ? VENDOR_LIVE : VENDOR_ARCHIVED;
+const src = path.join(vendorRoot, lang);
+if (!fs.existsSync(src)) {
+  throw new Error(
+    `找不到上游提示词目录：${VENDOR_LIVE} 与 ${VENDOR_ARCHIVED} 下都没有 ${lang}。` +
+      '请按 archive/README.md 还原 vendor 快照后再转换。',
+  );
+}
 
 /**
  * 极简 YAML 解析器：只覆盖这几个提示词文件用到的子集。

@@ -93,12 +93,19 @@ test('两个页面包之间只有一条单向依赖：study → quiz', async () 
     !quizManifest.dsh.client.external.some((d) => d === 'dsh-zhiyun-page-study' || d === '@lybx-leyw/dsh-zju-page-study'),
     '题库包不该把学习页声明成 external 依赖');
 
-  // 学习页这一侧要真的用上题库包（否则 external 声明过期，build-seeds 也会红）。
+  // 学习页这一侧**不再**把题库包声明成 external —— 它已改成按契约名取组件
+  // （`usePublishedComponent('quiz.generationModels')`），两边不再互相 import。
+  // 反过来钉住：不能又偷偷 import 回去，那会把两页重新焊在一起。
   const studyManifest = JSON.parse(await readFile(
     join(root, 'packages', 'client', 'page-study', 'package.json'), 'utf8'));
   assert.ok(
-    studyManifest.dsh.client.external.some((d) => d === 'dsh-zhiyun-page-quiz' || d === '@lybx-leyw/dsh-zju-page-quiz'),
-    '学习页没有把题库包声明成 external —— 它 import 了 quiz-panel.jsx / generation-models.jsx');
+    !studyManifest.dsh.client.external.some((d) => d === 'dsh-zhiyun-page-quiz' || d === '@lybx-leyw/dsh-zju-page-quiz'),
+    '学习页不该再把题库包声明成 external —— 页面之间靠契约名，不靠 import');
+  for (const file of ['client.jsx', 'knowledge-board.jsx', 'teaching-generate.jsx']) {
+    const source = await readFile(join(root, 'packages', 'client', 'page-study', 'src', file), 'utf8');
+    assert.ok(!/from\s+['"](dsh-zhiyun-page-quiz|@lybx-leyw\/dsh-zju-page-quiz)['"]/.test(source),
+      `${file} 又直接 import 了题库页 —— 页面之间不许互相认识`);
+  }
 });
 
 test('学习页不再自己注册题库内容槽', async () => {

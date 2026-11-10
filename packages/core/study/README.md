@@ -71,4 +71,8 @@ models 返回宿主模型目录和已保存的 workers；目录按供应商在�
 
 `bank-generate` 持久化分配方案与检查点后立即返回批次。`bank-progress` 无需等待模型或持有长事务；`bank-pause`、`bank-resume` 控制同一批次。批次、题目和练习写操作通过账号级短事务串行，模型请求在事务外运行。批次停止与账号切换、宿主卸载一起等待；缓存和原始分配在宿主重启后仍可恢复。阶段检查点包含版本及资料指纹，题目与草稿游标一次提交，缓存不匹配时拒绝恢复。
 
-新批次接受 `strategies:[{id,weight}]`、`difficulty`（basic/advanced/challenge）、`source`（course/web），与 `mode`（uniform/random）、`types`、`count` 独立。概念底稿存入同账号 `conceptCache`，通过资料摘要跨批次复用。完整历史题只在服务端用于生成上下文与去重，客户端无法提供或覆盖资料。`bank-load` 附带概念与考查角度覆盖统计；`bank-practice` 支持 `freshRatio`、策略与题型过滤，`bank-answer` 的简答题必须显式提交 `selfVerdict`，存为自评而非机器判分。
+新批次接受 `strategies:[{id,weight}]`、`difficulty`（basic/advanced/challenge）、`source`（course/web），与 `mode`（uniform/random）、`types`、`count` 独立。概念底稿存入同账号 `conceptCache`，通过资料摘要跨批次复用。完整历史题只在服务端用于生成上下文与去重，客户端无法提供或覆盖资料。`bank-load` 附带概念与考查角度覆盖统计；`bank-practice` 支持 `freshRatio`、策略与题型过滤，`bank-answer` 的简答题**可以**带上 `selfVerdict`（`correct`/`incorrect`/`partial`），带了就存为自评而非机器判分。
+
+⚠️ **`selfVerdict` 是可选的，不是必填。** 早先这一行写的是「必须显式提交」，据此加过一条 `INPUT` 守卫 —— 但练习界面（`page-quiz/question-bank.jsx`）只送 `questionId` 与 `response`，没有自评控件，于是**每一道简答题提交都会被拒**。那是回归而不是校验，已经撤回。要恢复强制自评，先补 UI 控件，别只加守卫。
+
+另注：`grading:'self'` 目前是**两个**状态的共用值 —— 用户自评，以及模型不可用时的降级（`grading.js`）。两者语义不同，将来若要区分（比如降级改叫 `unjudged`），`page-quiz` 的 `verdictLabel` 要一起改，否则用户选了「正确」会看到「未能自动评判」。

@@ -1,0 +1,29 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-lab",
+  "version": "0.1.0",
+  "description": "实验课选课平台（10.203.16.55）数据源：学期、实验课、班次余量、已选、课表、公告。只读，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["README.md", "src/", "cordis.patch.yml"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/lab"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "capability": {
+      "tier": 1,
+      "auth": "own",
+      "network": "campus",
+      "writes": false,
+      "requires": ["@lybx-leyw/dsh-zju-source-http"]
+    }
+  },
+  "dependencies": { "@lybx-leyw/dsh-zju-source-http": "0.1.0" }
+}

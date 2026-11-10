@@ -1,7 +1,13 @@
 # ATTRIBUTION — @lybx-leyw/dsh-zju-core-classroom-renderer
 
-本包曾 vendor 上游 `@openmaic/renderer` 的编译产物，**2026-10-31 已改为本仓自研**：
-`vendor/renderer/` 已删除，现在只有 `src/view/slide.jsx` 这一份自己的实现。
+本包曾 vendor 上游 `@openmaic/renderer` 的编译产物，**2026-10-31 已改为本仓自研**；
+`vendor/renderer/` 已删除。
+
+> **2026-11 变动**：自研渲染组件 `slide.jsx` 连同它的样式一起搬到了
+> `packages/client/ui-shared/src/classroom-slide.jsx` —— 它 `import React` 并产出
+> DOM，按分层属于 UI 层，不该住在 `core`。本包现在只剩画布常量
+> （`VIEWPORT_SIZE` / `VIEWPORT_RATIO`）。下面关于「自研 4 类元素」的记录
+> 仍然有效，只是实现位置变了。
 
 | 项 | 值 |
 | --- | --- |
@@ -14,10 +20,10 @@
 
 ## 现状
 
-`src/view/slide.jsx` 是**独立实现**的课件页渲染器，只支持 4 类元素
-（`text` / `shape` / `image` / `latex`）。这个分类不是随手定的 —— 生成侧
-`core-classroom-generate/src/prompts.js` 的 `SCENE_SYSTEM.slide` 原话就是
-「只用 text / shape / image / latex 四类」。
+渲染器是**独立实现**的，只支持 4 类元素（`text` / `shape` / `image` / `latex`）。
+这个分类不是随手定的 —— 生成侧 `core-classroom-generate/src/prompts.js` 的
+`SCENE_SYSTEM.slide` 原话就是「只用 text / shape / image / latex 四类」。
+实现现在在 `@lybx-leyw/dsh-zju-ui-shared`（`src/classroom-slide.jsx`）。
 
 上游另外 7 类（chart / table / code / audio / video / snapshot / 任意 SVG path）
 在整条链路里**没有任何生产者**，为它们维护 1.5 MB 编译产物没有回报。

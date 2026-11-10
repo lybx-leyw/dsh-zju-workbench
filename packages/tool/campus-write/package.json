@@ -1,0 +1,30 @@
+{
+  "name": "@lybx-leyw/dsh-zju-tool-campus-write",
+  "version": "0.1.0",
+  "description": "校园写操作工具包：选课、二课报名、场馆预约、交作业、签到、发帖、私信。每个动作都要用户逐次批准",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/tool/campus-write"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": true,
+      "requires": []
+    }
+  }
+}

@@ -1,0 +1,12 @@
+# dsh bundle patch：插件依赖图的宿主半边。
+#
+# 本包**不含 UI**：
+#   - `src/runtime.js` —— 把宿主/浏览器两面的运行时读数折成一张依赖图（纯函数，两端共用）；
+#   - `src/index.js`   —— `/api/zhiyun-plugins` 的**只读** `graph` 方法。
+#
+# 这两块原先住在 `packages/client/page-plugins/`：那是「页面包注册宿主路由」，
+# 而 `runtime.js` 还被宿主半边与客户端 `store.js` 同时 import —— 两端共用一份纯逻辑，
+# 正是该放进 core 的信号。
+- insert:
+    - id: zhiyun-plugin-graph
+      name: '@lybx-leyw/dsh-zju-core-plugin-graph'

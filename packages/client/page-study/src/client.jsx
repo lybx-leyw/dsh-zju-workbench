@@ -3,10 +3,10 @@
 // 领域状态（取数、任务、持久化）在 @lybx-leyw/dsh-zju-core-study 提供的 `zhiyunStudyController`
 // 服务里；本包只负责渲染与交互，以及「这一页特有的检索与格式化」。
 import React from 'react';
-// 题库页已经独立成 `dsh-zhiyun-page-quiz`：本页只保留「知识点上用同一套出题器」的那块面板，
-// 以及讲义生成要用的模型选择器。依赖方向单向（study → quiz），不会成环。
-import { GenerationModels } from '@lybx-leyw/dsh-zju-page-quiz';
-import { Icon, mountStyle, Notice, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
+// ⚠️ **本页不 import 题库页**。两页之间只通过 `ui-shared` 的组件契约名认识：
+//   题库页 apply 时 publish 出 `quiz.generationModels` / `quiz.pointPanel`，
+//   本页按名字取。拿不到（用户把题库页关掉了）就是一块说明，不是白屏。
+import { Icon, mountStyle, Notice, registerPageContent, usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { StudyWorkspace } from './study-workspace.jsx';
 import css from './style.css';
 // 视频栏是第二套样式（`zs-video-*`）：它有自己的网格与窄屏断点，不跟正文共用规则。
@@ -35,7 +35,19 @@ export function apply(ctx) {
   });
 }
 
-export const ModelSettings = GenerationModels;
+/**
+ * 模型/并发配置的壳。真身由题库页发布；没装题库页时把它换掉，**不要抛**。
+ *
+ * 为什么需要一个壳而不是直接传组件：`usePublishedComponent` 是 hook，
+ * 只能在组件里调用；`StudyWorkspace` 只是把它当 prop 渲染。
+ */
+function ModelSettings(props) {
+  const Panel = usePublishedComponent('quiz.generationModels');
+  if (!Panel) {
+    return <p className="zs-muted" role="status">模型与并发配置由「题库」页提供；该页未启用时用设置里的默认模型。</p>;
+  }
+  return <Panel {...props} />;
+}
 function Study({ controller }) { return <StudyWorkspace controller={controller} Notice={Notice} ModelSettings={ModelSettings} safeLink={safeLink} />; }
 export function safeLink(value) {
   if (typeof value !== "string" || !value.trim()) return void 0;

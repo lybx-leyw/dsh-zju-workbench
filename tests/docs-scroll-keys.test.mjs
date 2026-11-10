@@ -68,7 +68,13 @@ async function bundle(workdir) {
     '@lybx-leyw/dsh-zju-ui-shared': `import React from "react";
       export const Icon = () => React.createElement("i");
       export const Empty = (p) => React.createElement("div", null, p.title, p.children);
-      export const mountStyle = () => {};`,
+      export const mountStyle = () => {};
+      // ⚠️ 页面半边会 import 这个函数（page-docs/page-notes 的 apply() 里用它注册页面）。
+      // 桩里漏掉它，esbuild 会报 "No matching export in stub:@lybx-leyw/dsh-zju-ui-shared
+      // for import registerPageContent" —— 而那个错误在测试里表现为**进程不退出**，
+      // 看起来像 hang，实际是构建失败后没打印摘要。补成空实现即可：
+      // 本文件测的是滚动与选中行为，不关心页面注册。
+      export const registerPageContent = () => {};`,
     '@deepseek-ai/dsh-client-ui-primitives': `import React from "react";
       export const MarkdownText = (p) => React.createElement("div", null,
         String(p.text).split(/\\n\\n/).map((block, i) => {

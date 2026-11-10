@@ -1,15 +1,26 @@
 {
   "name": "@lybx-leyw/dsh-zju-page-quiz",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "题库页：跨课程按知识点出题、练习与历史题目管理。",
+  "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/client/page-quiz"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -24,6 +35,5 @@
   },
   "dependencies": {
     "@lybx-leyw/dsh-zju-core-quiz": "0.1.0"
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

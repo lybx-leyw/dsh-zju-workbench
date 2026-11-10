@@ -26,7 +26,8 @@ import { closeSync, constants, openSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const root = resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
-const pkgDir = join(root, 'packages', 'dsh-zhiyun-host-deeptutor');
+const pkgDir = join(root, 'archive', 'deprecated-packages', 'dsh-zhiyun-host-deeptutor');
+const vendorDir = join(root, 'archive', 'deeptutor-vendor-1.6.15', 'deeptutor');
 const args = new Set(process.argv.slice(2));
 const quick = args.has('--quick');
 const asJson = args.has('--json');
@@ -152,10 +153,6 @@ async function checkFiles() {
     'src/index.js',
     'src/protocol.js',
     'python/deeptutor_bridge.py',
-    'vendor/deeptutor/LICENSE',
-    'vendor/deeptutor/pyproject.toml',
-    'vendor/deeptutor/deeptutor/app/facade.py',
-    'vendor/deeptutor/deeptutor/agents/question/pipeline.py',
   ];
   const missing = [];
   for (const rel of required) {
@@ -210,7 +207,7 @@ async function checkVendorVersion() {
   }
   let actual = null;
   try {
-    const versionSource = await readFile(join(pkgDir, 'vendor/deeptutor/deeptutor/__version__.py'), 'utf8');
+    const versionSource = await readFile(join(vendorDir, '__version__.py'), 'utf8');
     const match = versionSource.match(/__version__\s*=\s*["']([^"']+)["']/);
     actual = match?.[1] ?? null;
   } catch (error) {
@@ -313,7 +310,7 @@ async function checkUpstreamImport(pythonPath) {
     record('上游模块可导入', false, '没有可用 Python，跳过', '先解决前面几条');
     return;
   }
-  const vendorPath = join(pkgDir, 'vendor', 'deeptutor');
+  const vendorPath = vendorDir;
   const code = [
     'import sys, json',
     `sys.path.insert(0, ${JSON.stringify(vendorPath)})`,
@@ -346,7 +343,7 @@ async function checkUpstreamImport(pythonPath) {
       : `版本=${info.version ?? info.version_error ?? '?'}；门面=${info.facade ?? info.facade_error ?? (out.stderr.trim().slice(-160) || '失败')}`,
     ok
       ? undefined
-      : `按 requirements/server.txt 装依赖：${pythonPath} -m pip install -r packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/requirements/server.txt`,
+      : `按 requirements/server.txt 装依赖：${pythonPath} -m pip install -r archive/deeptutor-vendor-1.6.15/deeptutor/requirements/server.txt`,
   );
 }
 

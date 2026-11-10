@@ -95,7 +95,10 @@ test('每个 source 包都声明了 dsh.capability', () => {
 test('capability 的字段取值合法', () => {
   const TIERS = [0, 1];
   const AUTH = ['none', 'own', 'cas'];
-  const NETWORK = ['public', 'campus'];
+  // `none` 是给**纯本机**数据源用的：它们读本机文件/进程，不取任何网络出口。
+  // 用 `public` 冒充会让 source/webvpn 的主机表判定失去意义 —— 那个字段问的是
+  // 「取证要走哪种出口」，本地读盘两个都不取。
+  const NETWORK = ['public', 'campus', 'none'];
   const problems = [];
   for (const { name, manifest } of sourcePackages()) {
     const cap = manifest.dsh?.capability;

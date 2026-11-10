@@ -1,0 +1,29 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-sztz",
+  "version": "0.1.0",
+  "description": "素质拓展数智平台（二三四课堂）数据源：活动、项目、记点、成绩单、通知。只读，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["README.md", "src/", "cordis.patch.yml"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/sztz"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "capability": {
+      "tier": 1,
+      "auth": "cas",
+      "network": "campus",
+      "writes": false,
+      "requires": ["@lybx-leyw/dsh-zju-source-http"]
+    }
+  },
+  "dependencies": { "@lybx-leyw/dsh-zju-source-http": "0.1.0" }
+}

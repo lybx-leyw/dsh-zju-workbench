@@ -15,7 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
-const srcDir = path.join(root, 'packages', '@lybx-leyw/dsh-zju-core-handout', 'src');
+const srcDir = path.join(root, 'packages', 'core', 'handout', 'src');
 
 const FORBIDDEN = [
   /^\s*import\s[^;]*['"]node:fs['"]/m,

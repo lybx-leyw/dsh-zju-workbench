@@ -27,7 +27,24 @@
  * 超额自动等待。界面上不需要再多一个「几章并行」的旋钮。
  */
 import React from 'react';
-import { GenerationModels } from '@lybx-leyw/dsh-zju-page-quiz';
+// 讲义/备课共用的「供应商 + 每供应商 worker 数」面板属于题库页。
+// 本页不 import 它，按契约名取；题库页没装配时退回一句说明。
+import { usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
+
+/**
+ * 取已发布的配置面板，套上 `.zs-qz` 祖先类后渲染。
+ *
+ * `.zs-qz` 不能省：`GenerationModels` 的每条样式都限定在 `.zs-qz` / `.zs-qz-page`
+ * 之下，不套的话浮窗能渲染但 `zs-generation-split` 退回 `display:block`，
+ * 宽度与定位全丢（真实浏览器量过：无祖先 block、有祖先 flex）。
+ */
+function ConfigPanel(props) {
+  const Models = usePublishedComponent('quiz.generationModels');
+  if (!Models) {
+    return <p className="zs-muted" role="status">模型与并发配置由「题库」页提供；该页未启用时用设置里的默认模型。</p>;
+  }
+  return <Models {...props} />;
+}
 
 /**
  * @param {object} props
@@ -39,7 +56,7 @@ import { GenerationModels } from '@lybx-leyw/dsh-zju-page-quiz';
  */
 export function TeachingGenerate({ controller, disabled = false, running = false, hasResult = false, onGenerate }) {
   return <div className="zs-teach-generate zs-qz">
-    <GenerationModels
+    <ConfigPanel
       controller={controller}
       purpose="teaching"
       // 备课不生成图片，所以不要求视觉模型。

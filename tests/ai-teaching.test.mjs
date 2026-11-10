@@ -48,8 +48,14 @@ fs.writeFileSync(rendererStub, [
   "});",
 ].join('\n'));
 
-// 学习页从 page-quiz 取配置面板（供应商+worker）。测试里换成桩：
-// 真身会把整个题库页拖进来，这里只需要它被渲染出来。
+// 学习页不再 import 题库页：它从 ui-shared 的组件契约表取配置面板，
+// 这里替身 ui-shared：既要给 `usePublishedComponent`，也要给 `ClassroomSlide`
+// （渲染器现在也住在 ui-shared —— core 不再带 React 组件）。
+const sharedStub = path.join(dir, 'ui-shared.mjs');
+fs.writeFileSync(sharedStub, [
+  "export { usePublishedComponent } from './published.mjs';",
+  "export { ClassroomSlide } from './renderer.mjs';",
+].join('\n'));
 const quizStub = path.join(dir, 'quiz.mjs');
 fs.writeFileSync(quizStub, [
   "import React from 'react';",
@@ -57,6 +63,10 @@ fs.writeFileSync(quizStub, [
   "  'data-generation-models': '1',",
   "  'data-purpose': props.purpose,",
   "}, props.label);",
+].join('\n'));
+fs.writeFileSync(path.join(dir, 'published.mjs'), [
+  `import { GenerationModels } from ${JSON.stringify(quizStub)};`,
+  "export const usePublishedComponent = (name) => name === 'quiz.generationModels' ? GenerationModels : undefined;",
 ].join('\n'));
 
 const esbuild = await import('esbuild');
@@ -69,13 +79,7 @@ await esbuild.build({
   external: ['react', 'react-dom'],
   alias: {
     '@deepseek-ai/dsh-client-ui-primitives': stub,
-    '@lybx-leyw/dsh-zju-core-classroom-renderer': rendererStub,
-    // ⚠️ key 必须与源码里的 import 说明**逐字一致**。
-    // 这里曾写作旧包名 `dsh-zhiyun-page-quiz`，而源码早就写成
-    // `@lybx-leyw/dsh-zju-page-quiz` —— alias 不生效，esbuild 去解析真实包，
-    // 落到 `src/index.js`（只有 name/apply），于是报
-    // `No matching export for import "GenerationModels"`。
-    '@lybx-leyw/dsh-zju-page-quiz': quizStub,
+    '@lybx-leyw/dsh-zju-ui-shared': sharedStub,
   },
   jsx: 'automatic',
   logLevel: 'silent',

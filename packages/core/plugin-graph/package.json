@@ -1,0 +1,29 @@
+{
+  "name": "@lybx-leyw/dsh-zju-core-plugin-graph",
+  "version": "0.1.0",
+  "description": "插件依赖图的折叠（宿主与浏览器共用的纯函数）+ 宿主侧 /api/zhiyun-plugins 只读路由（不含 UI）",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./browser": "./src/runtime.js",
+    "./runtime": "./src/runtime.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/plugin-graph"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

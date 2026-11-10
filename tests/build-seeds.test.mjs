@@ -18,11 +18,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildClientPackage, clientSourceRoot, packageDir, CLIENT_PACKAGES, HOST_SEEDS } from '../scripts/build.mjs';
-import { isIsolated } from '../scripts/workspace-packages.mjs';
+import { isIsolated, ownPackageNames } from '../scripts/workspace-packages.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -49,16 +49,35 @@ async function bareSpecifiers(entry) {
     // 这种多行写法仓库里很常见（ledger.js 导入 geometry 就是），逐行正则扫不到，
     // 后续文件便不会被跟进 —— 可达性分析悄悄断链，
     // 于是「external 过期」那条断言会把**真的依赖**误报成过期声明。
+    //
+    // ⚠️ **必须先剥注释**：文档注释里经常引用「原来的写法」当作反例，
+    // 例如 `component-registry.js` 的
+    //     ```js
+    //     import { QuizPanel } from '@lybx-leyw/dsh-zju-page-quiz';
+    //     ```
+    // 那是**说明它已经不再这样做了**。不剥注释就会把它当成真的依赖，
+    // 于是「external 面不完整」报出一个根本不存在的 import —— 而修法只有两种：
+    // 要么把已删除的依赖加回 external（把边界重新打破），要么改这里的扫描。
+    // 正确做法是后者。
+    const code = source
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
     const importRe = /(?:^|\s)(?:import|export)\s[^'"]*?from\s+['"]([^'"]+)['"]/g;
     let m;
-    while ((m = importRe.exec(source)) !== null) {
+    while ((m = importRe.exec(code)) !== null) {
       const specifier = m[1];
       if (specifier.startsWith(".")) {
         queue.push(path.resolve(path.dirname(key), specifier));
       } else if (!specifier.startsWith("node:")) {
-        // 行号 = 匹配位置之前的换行数 + 1
-        const line = source.slice(0, m.index).split("\n").length;
-        const at = path.relative(root, key) + ":" + line;
+        // 行号 = 匹配位置之前的换行数 + 1。
+        //
+        // ⚠️ 必须用 `code` 而不是 `source`：`m.index` 是在**剥过注释**的文本里量出来的。
+        // 注释被替换成空串后，同一位置对应的源码偏移会变小 —— 用 `source` 去算，
+        // 报出来的行号会**偏小**（行数越多偏得越多），排查时会指向无关的一行。
+        // 剥注释保留换行符（`/*…*/` 里的换行被一起删掉，但线上注释保留），
+        // 所以对绝大多数 import 而言行号仍然准确。
+        const line = code.slice(0, m.index).split('\n').length;
+        const at = path.relative(root, key) + ':' + line;
         if (!bare.has(specifier)) bare.set(specifier, at);
       }
     }
@@ -187,7 +206,36 @@ const INTENTIONALLY_BUNDLED = {
   // 而这几个库没有任何客户端包会提供它们 —— 写进 external 只会在浏览器里
   // 报「未注册的模块」，页面静默白屏（与 graph-render 的 cytoscape 同一个坑）。
   // 所以按设计内联：各自打进 classroom-renderer 的 bundle。
-  'katex': 'classroom-renderer：数学公式渲染，随 vendor 内核内联',
+  //
+  // ⚠️ 渲染组件已搬到 `ui-shared`（`classroom-slide.jsx`），所以现在真正内联
+  // 它们的是 **ui-shared** 的产物，不是 classroom-renderer。条目本身保留
+  // （它们仍是「有意内联」），但 `clsx` / `tailwind-merge` / `motion` / `lucide`
+  // 只在旧 vendor 内核里用过，自研 4 类元素后已无引用 —— 留着无妨，
+  // 但别再把它们当成「renderer 需要」。
+  'katex': 'ui-shared：课件公式渲染（classroom-slide.jsx），随包内联',
+  // ── 本轮分层重构新引入的 core 包（都没有客户端半边） ──────────────
+  //
+  // 判据与上面 classroom 那批一致：**没有 `src/client.jsx`、不在 CLIENT_PACKAGES、
+  // 没有 `lib/client.js`** 的包不能写进 `dsh.client.external` —— external 意味着
+  // 「运行时由别的包提供」，而浏览器里没人提供它，`makeRequire` 抛错、页面白屏。
+  // 所以它们只能被内联，这里点名豁免是**显式声明这件事是设计**。
+  //
+  // `core-planning`：页面用 `…/browser` 子入口取纯函数（时区、月历、重复规则、
+  // pet 协议）。它没有客户端产物，整包是宿主半边 + 纯函数。
+  // `core-plugin-graph`：页面用 `…/browser` 取依赖图的折叠函数。
+  // `core-classroom-renderer`：只剩两个画布常量，被 `ui-shared` 的
+  // `classroom-slide.jsx` 内联。
+  //
+  // ⚠️ **键必须写成源码里真正出现的那个说明符**，包括 `/browser` 子路径。
+  // 白名单是按 `specifier` 精确查表的：只登记裸包名，源码 import
+  // `…/core-planning/browser` 时查不到，就会报「external 面不完整」——
+  // 而那条报错会把人引向「加进 dsh.client.external」，那才是真正的错
+  //（这些包没有客户端半边，external 化 = 运行时解析不到 = 白屏）。
+  '@lybx-leyw/dsh-zju-core-planning': 'core-planning：无客户端半边，内联',
+  '@lybx-leyw/dsh-zju-core-planning/browser': 'core-planning：纯函数子入口，页面内联',
+  '@lybx-leyw/dsh-zju-core-plugin-graph': 'core-plugin-graph：无客户端半边，内联',
+  '@lybx-leyw/dsh-zju-core-plugin-graph/browser': 'core-plugin-graph：折叠函数子入口，页面内联',
+  '@lybx-leyw/dsh-zju-core-classroom-renderer': 'core-classroom-renderer：只剩画布常量，被 ui-shared 内联',
   'clsx': 'classroom-renderer：className 拼接，纯函数内联',
   'tailwind-merge': 'classroom-renderer：className 去重，纯函数内联',
   'motion/react': 'classroom-renderer：过渡动画，随 vendor 内核内联',
@@ -233,11 +281,18 @@ test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的�
     //    若它被内联进别人的 bundle，就会产出一份**独立副本** ——
     //    两份模块状态不共享（signals、缓存、事件总线全断），而且体积翻倍。
     const clientPkgs = new Set(CLIENT_PACKAGES);
-    const workspacePkgs = new Set(
-      readdirSync(path.join(root, 'packages'), { withFileTypes: true })
-        .filter((e) => e.isDirectory())
-        .map((e) => e.name),
-    );
+    // ⚠️ **必须用分组感知的枚举**，不能扫 `packages/` 的顶层目录名。
+    //
+    // 仓库改成两层结构后，`packages/` 下面只有 5 个**分组**目录
+    // （`client` / `core` / `preset` / `source` / `tool` …），它们都不是包名。
+    // 早先这句是 `readdirSync(packages).map(e => e.name)`，得到的集合与 51 个
+    // 真实包名的交集只有 `tool` 一个 —— 于是 `packages/core/classroom-renderer/src/…`
+    // 这类「本仓内核被按设计内联」的文件全被当成外来文件误报。
+    //
+    // 症状很迷惑：断言说 `ui-shared` 内联了 `core/classroom-renderer`，而那条内联
+    // 恰恰是 INTENTIONALLY_BUNDLED 里显式声明过的设计。修法不是放宽断言，
+    // 是让这个集合真的是「本仓有哪些包」。
+    const workspacePkgs = new Set(await ownPackageNames(path.join(root, 'packages')));
 
     const foreign = inputs.filter((p) => {
       if (p.startsWith(own)) return false;
@@ -247,10 +302,26 @@ test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的�
       // 它们运行时由 Loader 提供，被内联会产生不共享状态的独立副本。
       // 这条收紧是有意的：放宽能救 classroom 的内核内联，但不能顺手
       // 把「客户端包互相内联」这个真正的边界泄漏也放过去。
+      //
+      // ⚠️ 包可能住在**分组目录**下（`packages/core/planning/…`、
+      //    `packages/client/page-study/…`）。早先只取相对路径的第一段，
+      //    得到的是分组名（`core` / `client`）—— 那永远不是一个包名，
+      //    于是这些包的内联会被当成「外来文件」误报（`core-planning` 正是如此）。
+      //
+      //    正解：逐段往下走，**第一个带 package.json 的目录**才是包根；
+      //    它的目录名与 `workspacePkgs`（顶层目录名集合）可比。
       const rel = path.relative(path.join(root, 'packages'), p);
       if (!rel.startsWith('..')) {
-        const pkgName = rel.split(path.sep)[0];
-        if (workspacePkgs.has(pkgName) && !clientPkgs.has(pkgName)) return false;
+        const segments = rel.split(path.sep);
+        let pkgDir = path.join(root, 'packages');
+        for (const segment of segments) {
+          const candidate = path.join(pkgDir, segment);
+          pkgDir = candidate;
+          if (existsSync(path.join(candidate, 'package.json'))) break;
+        }
+        const pkgName = path.basename(pkgDir);
+        // 只放行「本仓已知的、没有客户端半边的」包。
+        if ((workspacePkgs.has(pkgName) || isIsolated(pkgName)) && !clientPkgs.has(pkgName)) return false;
       }
       const bundled = /[\\/]node_modules[\\/]([^\\/]+)(?:[\\/]|$)/.exec(p);
       if (bundled === null) return true;

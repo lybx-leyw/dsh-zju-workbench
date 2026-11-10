@@ -17,6 +17,8 @@
  * 否则页面拿到的形状会变。所以这里逐条保留原正则，只在注释里补上"为什么是这样"。
  */
 
+import { parse } from 'parse5';
+
 /* ────────────────────────────────────────────── HTML 基础 */
 
 /** HTML 实体表。只收学习通页面上真会出现的几个。 */
@@ -375,4 +377,222 @@ export function parseSchedule(data, week) {
       || a.periods.localeCompare(b.periods, undefined, { numeric: true })),
     note: '不传 week 时为平台当前周。weekday 1=周一。',
   };
+}
+
+/* ────────────────────────────────────────────── 章节目录（parse5） */
+
+/**
+ * 章节目录解析。
+ *
+ * # 为什么这个文件里只有它用 parse5
+ *
+ * 上面那些解析器都是正则 —— 学习通的作业列表、考试表格、通知 JSON 结构足够平，
+ * 正则能可靠地切出来，而**章节树是嵌套的**：`div.chapter_unit` 是大章，
+ * 里面 `id="cur<编号>"` 的块是可以点开的节，节还能再套一层 `li`。
+ * 用正则数层级会在「同一层有两个并列节」和「一个节点套三层」之间摇摆，
+ * 而错误的层级会让「第几章第几节」显示错 —— 那是用户直接看见的东西。
+ *
+ * 所以这一段照上游（`chaoxing/parse.ts`）逐行搬，用 parse5 建 DOM 再遍历。
+ * 分母是「与上游行为一致」，不是「少一个依赖」。
+ */
+
+/**
+ * 取一个元素上的属性值。
+ *
+ * @param {object} element - parse5 的元素节点。
+ * @param {string} name - 属性名。
+ * @returns {string} 属性值，没有时是空串。
+ */
+const attrOf = (element, name) => element.attrs?.find((a) => a.name === name)?.value ?? '';
+
+/**
+ * 元素是否带某个 class。
+ *
+ * @param {object} element - 元素节点。
+ * @param {string} name - class 名。
+ * @returns {boolean}
+ */
+const hasClass = (element, name) => attrOf(element, 'class').split(/\s+/).includes(name);
+
+/** 是不是元素节点（parse5 的文本节点没有 `tagName`）。 */
+const isElement = (node) => Boolean(node) && 'tagName' in node;
+
+/** 取子节点数组，文本节点没有 `childNodes`。 */
+const childrenOf = (node) => (node?.childNodes ?? []);
+
+/**
+ * 深度优先遍历所有后代元素。
+ *
+ * @param {object} root - 根节点。
+ * @yields {object} 每个元素节点。
+ */
+function* elementsOf(root) {
+  for (const child of childrenOf(root)) {
+    if (!isElement(child)) continue;
+    yield child;
+    yield* elementsOf(child);
+  }
+}
+
+/**
+ * 节点的纯文本（递归拼所有文本后代）。
+ *
+ * @param {object} node - 任意节点。
+ * @returns {string}
+ */
+const textOf = (node) => (node?.nodeName === '#text'
+  ? node.value
+  : childrenOf(node).map(textOf).join(''));
+
+/** 压空白。 */
+const squash = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+/**
+ * 在 root 的后代里找第一个满足条件的元素。
+ *
+ * @param {object} root - 根节点。
+ * @param {(element: object) => boolean} test - 判据。
+ * @returns {object|undefined}
+ */
+function firstIn(root, test) {
+  for (const element of elementsOf(root)) if (test(element)) return element;
+  return undefined;
+}
+
+/**
+ * `element` 在 `root` 里被几层 `tag` 包着。
+ *
+ * 章节树靠它区分「大章」与「嵌套的节」。
+ *
+ * @param {object} element - 目标元素。
+ * @param {object} root - 遍历范围。
+ * @param {string} tag - 标签名，如 `'li'`。
+ * @returns {number}
+ */
+function nestingOf(element, root, tag) {
+  let count = 0;
+  let parent = element.parentNode;
+  while (parent && parent !== root) {
+    if (isElement(parent) && parent.tagName === tag) count += 1;
+    parent = isElement(parent) ? parent.parentNode : null;
+  }
+  return count;
+}
+
+/**
+ * 章节目录。
+ *
+ * 每个 `div.chapter_unit` 是一个大章，里面 `id="cur<编号>"` 的块是可以点开的节，
+ * 节还可以再嵌套（外面多一层 `li`）。
+ *
+ * @param {string} html - 课程页 HTML。
+ * @returns {Array<{id: string, title: string, path: string[], locked: boolean}>}
+ */
+export function parseChapters(html) {
+  const document = parse(String(html ?? ''));
+  const out = [];
+  const seen = new Set();
+
+  const scan = (root) => {
+    const head = firstIn(root, (e) => hasClass(e, 'catalog_name') && nestingOf(e, root, 'li') === 0);
+    const unit = head ? squash(textOf(head)) : '';
+    const trail = [];
+    for (const element of elementsOf(root)) {
+      const id = (attrOf(element, 'id').match(/^cur(\d+)$/) ?? [])[1];
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+
+      const number = firstIn(element, (x) => hasClass(x, 'catalog_sbar'));
+      const label = number ? squash(textOf(number)) : '';
+      const link = firstIn(element, (x) => x.tagName === 'a' && hasClass(x, 'clicktitle'));
+      const name = squash(link ? attrOf(link, 'title') || textOf(link) : attrOf(element, 'title')) || `章节 ${id}`;
+      const title = label && !name.startsWith(label) ? `${label} ${name}` : name;
+
+      const depth = nestingOf(element, root, 'li');
+      // `trail` 维护「当前这一支上的祖先标题」。切到别的分支时截断到当前深度。
+      trail.length = Math.max(0, depth - 1);
+      const path = depth === 0
+        ? [title]
+        : [...(unit && unit !== title ? [unit] : []), ...trail, title];
+      if (depth > 0) trail[depth - 1] = title;
+
+      const tips = firstIn(element, (x) => hasClass(x, 'bntHoverTips'));
+      out.push({ id, title, path, locked: /解锁|未开放/.test(tips ? textOf(tips) : '') });
+    }
+  };
+
+  const units = [...elementsOf(document)].filter((e) => hasClass(e, 'chapter_unit'));
+  if (units.length) for (const unit of units) scan(unit);
+  else scan(document);
+  return out;
+}
+
+/* ────────────────────────────────────────────── 章节卡片附件 */
+
+/**
+ * 从 `start` 处的 `{` 起取出配对完整的对象文本（跳过字符串里的括号）。
+ *
+ * 页面上是 `mArg = {attachments:[…]}` 这样的 JS 对象字面量，不是合法 JSON 片段，
+ * 所以要先按括号配对切出整段，再交给 `JSON.parse`。
+ *
+ * @param {string} text - 整段页面文本。
+ * @param {number} start - `{` 所在下标。
+ * @returns {string|undefined} 配对的整段（含两端括号），找不到时 undefined。
+ */
+function objectAt(text, start) {
+  let depth = 0;
+  let quote = '';
+  for (let i = start; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === '\\') i += 1;
+      else if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === '{') depth += 1;
+    else if (ch === '}' && (depth -= 1) === 0) return text.slice(start, i + 1);
+  }
+  return undefined;
+}
+
+/**
+ * 章节卡片里的附件。
+ *
+ * 页面脚本里 `mArg = {attachments:[…]}`，每个附件的 `property` 带
+ * `objectid`、`name`、`type`（扩展名）。
+ *
+ * `found: false` 表示这一页没有卡片（`num` 已经越过最后一张）—— 调用方据此停止翻页。
+ *
+ * @param {string} html - 卡片页 HTML。
+ * @returns {{found: boolean, notOpen: boolean, files: Array<{objectId: string, name: string, size: number|null}>}}
+ */
+export function parseCards(html) {
+  const text = String(html ?? '');
+  const notOpen = /章节未开放/.test(text);
+  for (const match of text.matchAll(/mArg\s*=\s*\{/g)) {
+    const raw = objectAt(text, match.index + match[0].length - 1);
+    let data;
+    try {
+      data = raw ? JSON.parse(raw) : undefined;
+    } catch {
+      continue; // 这一段不是合法 JSON，换下一处 mArg
+    }
+    if (!data || !Array.isArray(data.attachments)) continue;
+    const files = [];
+    for (const item of data.attachments) {
+      const property = item?.property && typeof item.property === 'object' ? item.property : {};
+      const objectId = String(property.objectid ?? item?.objectId ?? '');
+      // 只认 32 位 hex —— 别的形状不是可下载对象
+      if (!/^[0-9a-f]{32}$/i.test(objectId)) continue;
+      let name = squash(String(property.name ?? property.title ?? ''));
+      const extension = String(property.type ?? '').trim().toLowerCase();
+      if (/^\.\w{1,8}$/.test(extension) && !name.toLowerCase().endsWith(extension)) name += extension;
+      if (!name) continue;
+      const size = Number(property.size);
+      files.push({ objectId, name, size: Number.isFinite(size) && size > 0 ? size : null });
+    }
+    return { found: true, notOpen, files };
+  }
+  return { found: false, notOpen, files: [] };
 }

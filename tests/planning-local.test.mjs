@@ -16,10 +16,10 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { LocalPlanStore } from '../packages/client/page-planning/src/index.js';
+import { LocalPlanStore } from '../packages/core/planning/src/index.js';
 import {
   createLocal, createSplit, normalizeLocalInput, patchLocal, setDone,
-} from '../packages/client/page-planning/src/local.js';
+} from '../packages/core/planning/src/local.js';
 
 /* ─────────────────────────────────────────────── 写入校验 */
 

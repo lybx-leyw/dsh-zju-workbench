@@ -43,8 +43,22 @@ export class Transport {
       throw new ClassroomError('NETWORK', '无法连接智云服务');
     } finally { if (!handedOff) this.controllers.delete(controller); }
   }
-  async json(url, label, options) {
-    const result = await this.request(url, options);
+  /**
+   * 取 JSON 并做统一的失败分类。
+   *
+   * `options.tolerate` 是本仓为**一种**上游行为开的口子：有些接口在「这一类资源
+   * 本来就不存在」时是**拒绝**而不是给空表（例如当天还没点播的课次查字幕，
+   * 上游回 `未查询到语音数据`）。默认把它归成 `BUSINESS` 是对的 —— 别吞错。
+   * 但调用方如果**确实知道**这一种可以当空处理，就得有个地方说清楚：
+   * `tolerate(data)` 返回真时**原样返回 data**，由调用方自己决定怎么用。
+   *
+   * 关键点：判定发生在**能看到上游原文的**这一层。放到外面去匹配
+   * `error.message` 是不行的 —— 下面把业务失败统一成了「智云服务返回失败」，
+   * 上游的 `msg` 根本不出现在 message 里，外面匹配什么都不会命中。
+   */
+  async json(url, label, options = {}) {
+    const { tolerate, ...request } = options;
+    const result = await this.request(url, request);
     if ([401, 403].includes(result.status)) throw new ClassroomError('SESSION_EXPIRED', '智云登录会话已过期', { status: result.status, label });
     if (result.status >= 400) throw new ClassroomError('HTTP', '智云服务请求失败', { status: result.status, label });
     if (result.status >= 300 && result.status < 400) throw new ClassroomError('SESSION_EXPIRED', '智云请求被重定向，需要重新登录', { label });
@@ -57,8 +71,8 @@ export class Transport {
     if (!object(data)) throw shape(label, '不是对象');
     if ([401, 403].includes(Number(data.code))) throw new ClassroomError('SESSION_EXPIRED', '智云登录会话已过期', { label });
     // Course API uses business code=1000 for success, not an HTTP status.
-    if (Number(data.code) >= 400 && Number(data.code) <= 599) throw new ClassroomError('BUSINESS', '智云服务返回失败', { label });
-    if (data.success === false || data.success === 'false') throw new ClassroomError('BUSINESS', '智云服务返回失败', { label });
+    if (Number(data.code) >= 400 && Number(data.code) <= 599 && !tolerate?.(data)) throw new ClassroomError('BUSINESS', '智云服务返回失败', { label });
+    if ((data.success === false || data.success === 'false') && !tolerate?.(data)) throw new ClassroomError('BUSINESS', '智云服务返回失败', { label });
     return data;
   }
   cancelAll() { for (const controller of this.controllers) controller.abort(); this.controllers.clear(); }

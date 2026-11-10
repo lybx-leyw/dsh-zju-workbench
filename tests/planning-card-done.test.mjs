@@ -15,8 +15,8 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { PlanStore } from '../packages/client/page-planning/src/plans.js';
-import { createHandler } from '../packages/client/page-planning/src/index.js';
+import { PlanStore } from '../packages/core/planning/src/plans.js';
+import { createHandler } from '../packages/core/planning/src/index.js';
 
 const PREFIX = 'note\u0000标题\u0000abcdef0123456789';
 

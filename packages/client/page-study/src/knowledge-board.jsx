@@ -1,9 +1,24 @@
 import { knowledgeChapters } from '@lybx-leyw/dsh-zju-core-quiz';
 import React, { useEffect, useState } from "react";
 import { LectureReader } from "./lecture-reader.jsx";
-import { QuizPanel } from "@lybx-leyw/dsh-zju-page-quiz";
+// 点级出题面板属于题库页（它要题库的持久化与历史题）。本页**不 import 那一页**，
+// 只按契约名取：题库页 apply 时发布 `quiz.pointPanel`，没装配就显示一行说明。
+import { usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { NotePanel } from "./note-panel.jsx";
 import { time } from "./format.js";
+
+/**
+ * 包一层，把「没装题库页」这个合法状态变成可读的一行，而不是崩。
+ *
+ * `usePublishedComponent` 是 hook，所以必须先包成组件再用（不能在本文件顶层解构）。
+ */
+function QuizPanel(props) {
+  const Panel = usePublishedComponent('quiz.pointPanel');
+  if (!Panel) {
+    return <div className="zs-muted" role="status">知识点出题面板由「题库」页提供；在「插件」页启用题库后就能在这里出题。</div>;
+  }
+  return <Panel {...props} />;
+}
 
 const panes = [
   ["lecture", "阅读正文"],

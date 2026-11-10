@@ -122,7 +122,7 @@ export function engineEntries() {
  * 依然登记在册，老断点照常可读、可续跑、可查看，只是不再出现在新建下拉里。
  * 一个引擎「不该再被选」和「从没存在过」是两件事，混成一个会让存量数据变成孤儿。
  */
-const SELECTABLE = Object.freeze(['deeptutor-native', 'r1']);
+const SELECTABLE = Object.freeze(['deeptutor-native', 'r1', 'local']);
 export const isSelectableEngine = engine => SELECTABLE.includes(engine);
 export function selectableEngines() {
   return engineEntries().filter(row => isSelectableEngine(row.id));

@@ -71,3 +71,76 @@ export const ZDBK_PATHS = {
   exams: '/xskscx/kscx_cxXsgrksIndex.html',
   timetable: '/kbcx/xskbcx_cxXsKb.html',
 };
+
+/**
+ * 功能模块码（URL 里的 `gnmkdm`）。
+ *
+ * ⚠️ 与上面的 `ZDBK_PATHS` **分开两张表**是刻意的：`ZDBK_PATHS` 是「学生个人数据」
+ * 那四个接口，本包对外承诺的 `zdbk.grades/exams/timetable` 一一对应它。
+ * 培养方案与选课是另外两个模块，带自己的模块码与查询口径，混进同一张表会让
+ * 「路径表 = 对外能力表」这个直觉失效（已有测试正是按那张表钉的）。
+ */
+export const ZDBK_MODULES = {
+  /** 培养方案查询（N153020）。 */
+  plan: 'N153020',
+  /** 自主选课（N253530）。 */
+  selection: 'N253530',
+};
+
+/**
+ * 培养方案相关路径（相对 `ZDBK_BASE`）。
+ *
+ * `list` 走 jqGrid 分页（`?doType=query` + `queryModel.*`），响应里的 `jxjhh`
+ * （教学计划号）既是 `pyfaxx_id`，也是 PDF 接口的 `id`。
+ */
+export const ZDBK_PLAN_PATHS = {
+  list: '/pyfagl/pyfaxxcx_cxPyfaxscxIndex.html',
+  pdf: '/pyfagl/pyfayl_cxPyfaylPdf.html',
+};
+
+/**
+ * 自主选课相关路径（相对 `ZDBK_BASE`）。
+ *
+ * ⚠️ 这一族**没有一条是 GET**（首页除外），而且响应是**裸 JSON 数组**，
+ * 不是 jqGrid 的 `{items, totalResult}` 外壳 —— 与成绩/考试/课表那一族不同。
+ * 用 `ZdbkClient.post` 读它们会被判成 `SCHEMA_CHANGED`（它只接受对象）。
+ */
+export const ZDBK_SELECTION_PATHS = {
+  /** 选课首页（HTML）：学年学期、年级专业、志愿数、页签都在这里。 */
+  index: '/xsxk/zzxkghb_cxZzxkGhbIndex.html',
+  /** 本人已选志愿（含待筛选）。 */
+  chosen: '/xsxk/zzxkghb_cxZzxkGhbChoosed.html',
+  /** 学分汇总。 */
+  credits: '/xsxk/zzxkghb_cxZzxkYxxf.html',
+  /** 某个页签下的课程列表。 */
+  courses: '/xsxk/zzxkghb_cxZzxkGhbKcList.html',
+  /** 条件搜索（对应 `xk_9` 页签）。 */
+  search: '/xsxk/zzxkghb_cxZzxkGhbDdkcList.html',
+  /** 某门课/某课程池下的教学班。 */
+  sections: '/xsxk/zzxkghb_cxZzxkGhbJxbList.html',
+  /**
+   * 提交一个教学班志愿。
+   *
+   * ⚠️ 这是**写**端点，虽然名字与上面那几个「cx…（查询）」并列。
+   * 判读写不能看路径长相，要看它改不改变状态 —— 这个会。
+   */
+  select: '/xsxk/zzxkghb_xkBcZyZzxkGhb.html',
+  /** 调整同一志愿组内的顺序（写）。 */
+  reorder: '/xsxk/zzxkghb_xkBcZypxZzxkGhb.html',
+  /** 退选（写）。 */
+  drop: '/xsxk/zzxkghb_tuikBcZzxkGhb.html',
+};
+
+/**
+ * 培养方案 PDF 的地址。
+ *
+ * 本包**只给地址，不下载**：`Transport` 返回的是文本，PDF 是二进制；
+ * 为了一个链接在数据包里加一条二进制通道并不划算（见 README「已知限制」）。
+ *
+ * @param {string} id - 教学计划号（`jxjhh`）。
+ * @returns {string} 绝对地址。
+ */
+export function planPdfUrl(id) {
+  return `${ZDBK_BASE}${ZDBK_PLAN_PATHS.pdf}?id=${encodeURIComponent(id)}&doType=query`
+    + `&gnmkdm=${ZDBK_MODULES.plan}`;
+}

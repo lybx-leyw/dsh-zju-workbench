@@ -135,7 +135,10 @@ test('App exposes precisely the three requested choices and distinct resumable c
 test('published kernel files exactly match the measured promotion digests and never import bench fixtures',async()=>{
  const base='packages/core/quiz/src/engines',proof=JSON.parse(await fs.readFile(base+'/versions.json','utf8'));
  for(const [engine,files]of Object.entries(proof.kernels))for(const [name,row]of Object.entries(files)){
-  const source=await fs.readFile(`${base}/${engine}/${name}`,'utf8');assert.equal(createHash('sha256').update(source).digest('hex'),row.promotedSha256);assert.doesNotMatch(source,/from ['"].*(?:scripts\/quiz_bench|artifacts\/|fixture)/);assert.doesNotMatch(source,/from ['"]node:fs/);
+  // 先归一化到 LF 再取哈希：digest 的 canonical 形态是提交进仓库的 blob（纯 LF）。
+  // Windows 上 core.autocrlf=true 会把工作区检出成 CRLF，直接哈希磁盘原始字节
+  // 会让同一份代码在本机假失败（Linux 绿、Windows 红）。
+  const source=await fs.readFile(`${base}/${engine}/${name}`,'utf8');assert.equal(createHash('sha256').update(source.replace(/\r\n/g,'\n')).digest('hex'),row.promotedSha256);assert.doesNotMatch(source,/from ['"].*(?:scripts\/quiz_bench|artifacts\/|fixture)/);assert.doesNotMatch(source,/from ['"]node:fs/);
  }
 });
 test('r1 service runs the frozen lab planning and review policy rather than the legacy product generator',async()=>{

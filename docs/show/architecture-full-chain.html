@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>智云 Pro · 数据流泳道图</title>
+<style>
+  /* ===========================================================
+     方向：工程手册 / 印刷图纸
+     纸张与油墨、钢笔画线、等宽注记、宋体做标题。
+     每条泳道是确定的两三行，不靠自动折行 —— 折出来的断点每次都不同。
+     =========================================================== */
+
+  :root{
+    --paper:#f3f0e8;
+    --paper-hi:#fbf9f3;
+    --paper-lo:#eae5d8;
+
+    --ink:#191813;
+    --ink-2:#3a372f;
+    --ink-3:#6b6558;
+    --ink-4:#978f7e;
+
+    --rule:#d6d0bf;
+    --rule-2:#c0b8a3;
+    --rule-3:#a79e86;
+
+    --c-src:#235d9e;
+    --c-proc:#9c611a;
+    --c-ui:#ab382c;
+    --c-tool:#2b6749;
+    --c-ghost:#8a8477;
+
+    --serif:"Source Han Serif SC","Noto Serif SC","Songti SC","STSong","SimSun",Georgia,serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    --mono:"Cascadia Code","JetBrains Mono",ui-monospace,SFMono-Regular,Consolas,"SF Mono",monospace;
+
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+
+  body{
+    margin:0;color:var(--ink);
+    background-color:var(--paper);
+    background-image:
+      radial-gradient(1200px 700px at 50% -8%, #fcfaf5 0%, transparent 60%),
+      radial-gradient(900px 600px at 92% 100%, #eee9dc 0%, transparent 68%);
+    font:14px/1.7 var(--sans);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    opacity:.40;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)' opacity='.15'/%3E%3C/svg%3E");
+  }
+
+  /* 阅读进度 */
+  #prog{
+    position:fixed;top:0;left:0;height:2px;width:0;z-index:50;
+    background:linear-gradient(90deg,var(--c-src),var(--c-proc) 42%,var(--c-ui) 72%,var(--c-tool));
+    transition:width .1s linear;
+    box-shadow:0 0 0 1px rgba(25,24,19,.05);
+  }
+
+  .wrap{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:64px 40px 110px}
+
+  code{
+    font-family:var(--mono);font-size:.87em;color:var(--ink-2);
+    background:rgba(25,24,19,.045);
+    padding:.5px 4px;border-radius:2px;white-space:nowrap;
+  }
+
+  /* ─────────────── 页眉 ─────────────── */
+  header{margin-bottom:40px}
+
+  .fig-head{
+    display:flex;align-items:baseline;gap:14px;
+    padding-bottom:9px;border-bottom:1.5px solid var(--ink);
+    font-family:var(--mono);font-size:9.5px;font-weight:600;
+    letter-spacing:.26em;text-transform:uppercase;color:var(--ink-3);
+  }
+  .fig-head .no{color:var(--c-ui);letter-spacing:.2em}
+  .fig-head .rt{margin-left:auto;letter-spacing:.16em;font-weight:400;color:var(--ink-4)}
+
+  h1{
+    margin:28px 0 0;
+    font-family:var(--serif);
+    font-size:clamp(37px,4.4vw,60px);
+    font-weight:700;line-height:1.04;letter-spacing:-1.6px;
+    color:var(--ink);
+  }
+  h1 .thin{
+    display:block;margin-top:12px;
+    font-family:var(--sans);
+    font-size:clamp(14px,1.45vw,17px);font-weight:400;letter-spacing:.12em;
+    color:var(--ink-3);
+  }
+
+  .lede{
+    margin:26px 0 0;max-width:820px;
+    font-size:14.5px;line-height:1.88;color:var(--ink-2);text-align:justify;
+  }
+  .lede b{font-weight:600;color:var(--ink);box-shadow:inset 0 -1px 0 var(--rule-3)}
+
+  .meta{
+    display:flex;flex-wrap:wrap;margin:38px 0 0;
+    border-top:1px solid var(--rule-2);border-bottom:1px solid var(--rule-2);
+  }
+  .meta div{flex:1 1 118px;padding:13px 0 14px;border-right:1px solid var(--rule)}
+  .meta div:last-child{border-right:none}
+  .meta div:not(:first-child){padding-left:22px}
+  .meta .v{
+    font-family:var(--mono);font-size:20px;font-weight:600;
+    letter-spacing:-.03em;line-height:1.15;color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .meta .k{
+    font-size:9.5px;letter-spacing:.17em;color:var(--ink-4);
+    margin-top:5px;text-transform:uppercase;
+  }
+
+  /* ─────────────── 图例 ─────────────── */
+  .legend{
+    display:flex;flex-wrap:wrap;gap:10px 26px;align-items:center;
+    margin:26px 0 12px;font-size:11.5px;color:var(--ink-3);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+  .legend i{display:block;width:18px;height:2px}
+  .legend i.dash{height:0;border-top:2px dashed var(--c-ghost);background:none}
+
+  /* ─────────────── 图纸 ─────────────── */
+  .stage{
+    position:relative;margin-top:6px;
+    border:1px solid var(--rule-2);
+    background-color:var(--paper-hi);
+    background-image:radial-gradient(circle at 1px 1px, rgba(25,24,19,.05) 1px, transparent 1px);
+    background-size:20px 20px;
+  }
+  .stage .reg{position:absolute;width:11px;height:11px;pointer-events:none;z-index:3}
+  .stage .reg::before,.stage .reg::after{content:"";position:absolute;background:var(--rule-3)}
+  .stage .reg::before{left:50%;top:0;bottom:0;width:1px;transform:translateX(-.5px)}
+  .stage .reg::after{top:50%;left:0;right:0;height:1px;transform:translateY(-.5px)}
+  .stage .reg.tl{top:-6px;left:-6px}
+  .stage .reg.tr{top:-6px;right:-6px}
+  .stage .reg.bl{bottom:-6px;left:-6px}
+  .stage .reg.br{bottom:-6px;right:-6px}
+
+  /* ─────────────── 分区标题 ─────────────── */
+  .band-div{
+    display:flex;align-items:baseline;gap:12px;
+    padding:9px 18px 8px;
+    background:var(--paper-lo);
+    border-bottom:1px solid var(--rule-2);
+    font-family:var(--mono);font-size:9px;font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
+  }
+  .band-div .r{margin-left:auto;letter-spacing:.16em;font-weight:400;color:var(--ink-4)}
+
+  /* ─────────────── 泳道 ─────────────── */
+  .lane{
+    --accent:var(--c-proc);
+    display:grid;grid-template-columns:70px 176px minmax(0,1fr);
+    border-bottom:1px solid var(--rule);
+    position:relative;
+    opacity:0;transform:translateY(8px);
+    animation:lane-in .6s var(--ease) forwards;
+  }
+  .lane:last-of-type{border-bottom:none}
+  .lane:nth-of-type(1){animation-delay:.03s}
+  .lane:nth-of-type(2){animation-delay:.07s}
+  .lane:nth-of-type(3){animation-delay:.11s}
+  .lane:nth-of-type(4){animation-delay:.15s}
+  .lane:nth-of-type(5){animation-delay:.19s}
+  .lane:nth-of-type(6){animation-delay:.23s}
+  .lane:nth-of-type(7){animation-delay:.27s}
+  .lane:nth-of-type(8){animation-delay:.31s}
+  .lane:nth-of-type(9){animation-delay:.35s}
+  .lane:nth-of-type(10){animation-delay:.39s}
+  .lane:nth-of-type(11){animation-delay:.43s}
+
+  @keyframes lane-in{to{opacity:1;transform:none}}
+
+  .lane-no{
+    position:relative;padding:21px 0 0 15px;
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    letter-spacing:.05em;color:var(--accent);
+    border-right:1px solid var(--rule);
+  }
+  .lane-no::after{
+    content:"";position:absolute;right:-1px;top:21px;
+    width:2px;height:15px;background:var(--accent);
+    transition:height .34s var(--ease);
+  }
+  .lane:hover .lane-no::after{height:calc(100% - 42px)}
+
+  .lane-name{padding:19px 15px 21px 17px;border-right:1px solid var(--rule)}
+  .lane-name .nm{
+    display:block;font-family:var(--serif);font-size:14.5px;font-weight:700;
+    line-height:1.5;letter-spacing:-.15px;color:var(--ink);
+  }
+  .lane-name .ab{
+    display:block;margin-top:6px;font-size:10.5px;line-height:1.65;
+    color:var(--ink-4);
+  }
+
+  .lane-body{padding:20px 22px 21px;display:flex;flex-direction:column;gap:12px;min-width:0}
+
+  /* ─────────────── 行 ─────────────── */
+  .flow{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .row{
+    display:flex;flex-wrap:wrap;align-items:stretch;
+    row-gap:12px;min-width:0;
+  }
+  .cont-mark{
+    flex:0 0 24px;align-self:center;
+    font-family:var(--mono);font-size:12px;line-height:1;
+    color:var(--rule-3);text-align:left;user-select:none;
+  }
+  .row-label{
+    flex:0 0 auto;align-self:center;
+    font-family:var(--mono);font-size:8.5px;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--ink-4);
+    padding-right:12px;margin-right:2px;border-right:1px solid var(--rule);
+  }
+  .row-label.top{align-self:flex-start;padding-top:9px}
+  .row-label.split{
+    border-right:none;border-left:1px solid var(--rule);
+    padding-right:0;padding-left:12px;margin-left:0;margin-right:2px;
+  }
+
+  /* ─────────────── 节点 ─────────────── */
+  .node{
+    --ac:var(--c-proc);
+    position:relative;flex:0 1 auto;max-width:360px;
+    background:var(--paper-hi);
+    border:1px solid var(--rule-2);
+    padding:9px 12px 9px 14px;
+    transition:border-color .18s var(--ease),background .18s var(--ease),box-shadow .18s var(--ease);
+  }
+  .node::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:var(--ac);transform:scaleY(.4);transform-origin:top;
+    transition:transform .28s var(--ease);
+  }
+  .node:hover::before{transform:scaleY(1)}
+  .node:hover{border-color:var(--ac);background:#fefcf7;box-shadow:0 0 0 3px rgba(25,24,19,.032)}
+
+  .node .t{
+    display:flex;align-items:baseline;gap:10px;justify-content:space-between;
+    font-size:12.5px;font-weight:600;letter-spacing:-.05px;line-height:1.45;
+    color:var(--ink);margin-bottom:3px;
+  }
+  .node .t small{
+    font-family:var(--mono);font-size:8.5px;font-weight:400;letter-spacing:.01em;
+    color:var(--ink-4);white-space:nowrap;flex-shrink:0;
+  }
+  .node .io{font-size:10.5px;line-height:1.66;color:var(--ink-3)}
+  .node .io b{
+    font-family:var(--mono);font-size:8px;font-weight:600;letter-spacing:.08em;
+    color:var(--ink-4);margin-right:5px;vertical-align:.6px;
+  }
+  .node .io em{font-style:normal;color:var(--ink-2)}
+  .node .io code{font-size:9.5px;background:rgba(25,24,19,.05)}
+
+  .n-src {--ac:var(--c-src); background:linear-gradient(180deg,rgba(35,93,158,.055),rgba(35,93,158,.012))}
+  .n-proc{--ac:var(--c-proc);background:linear-gradient(180deg,rgba(156,97,26,.045),rgba(156,97,26,.008))}
+  .n-ui  {--ac:var(--c-ui);  background:linear-gradient(180deg,rgba(171,56,44,.05),rgba(171,56,44,.01))}
+  .n-tool{--ac:var(--c-tool);background:linear-gradient(180deg,rgba(43,103,73,.05),rgba(43,103,73,.01))}
+  .n-src:hover,.n-proc:hover,.n-ui:hover,.n-tool:hover{background:#fefcf7}
+
+  .n-ghost{
+    --ac:var(--c-ghost);
+    border-style:dashed;border-color:var(--rule-2);
+    background-image:repeating-linear-gradient(45deg,transparent 0 7px,rgba(138,132,119,.08) 7px 8px);
+  }
+  .n-ghost:hover{border-color:var(--c-ghost);background-color:#f7f4eb}
+  .n-ghost .t{color:var(--ink-3)}
+  .n-ghost .io em{color:var(--c-ui);font-weight:500}
+
+  /* ─────────────── 箭头 ─────────────── */
+  .arw{flex:0 0 30px;align-self:center;position:relative;height:1px;color:var(--rule-3)}
+  .arw::before{content:"";position:absolute;left:2px;right:8px;top:0;height:1px;background:currentColor}
+  .arw::after{
+    content:"";position:absolute;right:3px;top:0;width:5px;height:5px;
+    border-top:1px solid currentColor;border-right:1px solid currentColor;
+    transform:translateY(-2.5px) rotate(45deg);
+  }
+  .arw.plus::before,.arw.plus::after{display:none}
+  .arw.plus .pl{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-family:var(--mono);font-size:11px;line-height:1;
+    color:var(--ink-4);background:var(--paper-hi);padding:0 2px;
+  }
+  .arw.cut::before{border-top:1px dashed var(--c-ghost);background:none;opacity:.8}
+  .arw.cut::after{border-color:var(--c-ghost)}
+
+  /* ─────────────── 分组 ─────────────── */
+  .grp{
+    position:relative;display:flex;align-items:stretch;flex:0 1 auto;
+    border:1px dashed var(--rule-3);
+    padding:11px 9px 9px;background:rgba(156,97,26,.026);
+  }
+  .grp::before{
+    content:attr(data-label);position:absolute;top:-7px;left:12px;
+    background:var(--paper-hi);padding:0 7px;
+    font-family:var(--mono);font-size:8px;letter-spacing:.1em;
+    color:var(--ink-4);text-transform:uppercase;
+  }
+  .grp .node{background:rgba(254,252,247,.7)}
+
+  /* ─────────────── 旁注 ─────────────── */
+  .side{
+    display:flex;flex-wrap:wrap;align-items:center;gap:6px 7px;
+    padding-top:11px;border-top:1px dotted var(--rule-2);
+  }
+  .side .cap{
+    font-family:var(--mono);font-size:8px;font-weight:600;
+    letter-spacing:.17em;text-transform:uppercase;color:var(--ink-4);
+    padding-right:10px;margin-right:2px;border-right:1px solid var(--rule);
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;
+    border:1px solid var(--rule);background:rgba(255,255,255,.45);
+    padding:3px 8px;font-size:10.5px;line-height:1.55;color:var(--ink-2);
+    white-space:nowrap;
+    transition:border-color .16s var(--ease),background .16s var(--ease);
+  }
+  .chip:hover{border-color:var(--rule-3);background:#fefcf7}
+  .chip code{background:none;padding:0;font-size:9.5px;color:var(--ink-3)}
+
+  /* ─────────────── 观察 ─────────────── */
+  .notes{margin-top:54px}
+  .notes-hd{
+    display:flex;align-items:baseline;gap:14px;
+    padding-bottom:9px;border-bottom:1.5px solid var(--ink);
+    font-family:var(--mono);font-size:9.5px;font-weight:600;
+    letter-spacing:.26em;text-transform:uppercase;color:var(--ink-3);
+  }
+  .notes-hd .rt{margin-left:auto;letter-spacing:.15em;font-weight:400;color:var(--ink-4)}
+
+  .note{
+    display:grid;grid-template-columns:52px minmax(0,1fr);
+    border-bottom:1px solid var(--rule);
+  }
+  .note-no{
+    padding:19px 0 22px;
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    letter-spacing:.05em;color:var(--nc,var(--c-proc));
+  }
+  .note-body{padding:17px 0 22px}
+  .note-body h3{
+    margin:0 0 8px;font-family:var(--serif);font-size:16px;font-weight:700;
+    letter-spacing:-.2px;line-height:1.45;color:var(--ink);
+  }
+  .note-body p{
+    margin:0 0 8px;max-width:910px;
+    font-size:13px;line-height:1.85;color:var(--ink-2);text-align:justify;
+  }
+  .note-body p:last-child{margin-bottom:0}
+  .note-body strong{font-weight:600;color:var(--ink)}
+  .note.warn{--nc:var(--c-ui)}
+  .note.proc{--nc:var(--c-proc)}
+  .note.tool{--nc:var(--c-tool)}
+
+  /* ─────────────── 页脚 ─────────────── */
+  footer{margin-top:54px}
+  .colophon{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));
+    gap:0 44px;border-top:1.5px solid var(--ink);padding-top:18px;
+  }
+  .colophon p{margin:0 0 14px;font-size:11.5px;line-height:1.9;color:var(--ink-3);text-align:justify}
+  .colophon p b{
+    display:block;margin-bottom:4px;
+    font-family:var(--mono);font-size:8.5px;font-weight:600;
+    letter-spacing:.17em;text-transform:uppercase;color:var(--ink-2);
+  }
+  .endmark{
+    margin-top:28px;text-align:right;
+    font-family:var(--mono);font-size:9px;letter-spacing:.24em;
+    color:var(--ink-4);text-transform:uppercase;
+  }
+
+  /* ─────────────── 响应式 ─────────────── */
+  @media (max-width:1180px){
+    .wrap{padding:44px 24px 80px}
+    .lane{grid-template-columns:56px minmax(0,1fr)}
+    .lane-no{grid-row:1 / span 2;padding-top:19px}
+    .lane-name{grid-column:2;border-right:none;padding:17px 18px 0}
+    .lane-name .ab{display:inline;margin-left:9px}
+    .lane-body{grid-column:2;padding:12px 18px 19px}
+  }
+  @media (max-width:780px){
+    .wrap{padding:30px 15px 66px}
+    .node{max-width:none;flex:1 1 100%}
+    .arw{flex:0 0 100%;height:14px;transform:rotate(90deg)}
+    .grp{flex:1 1 100%;padding:12px 8px}
+    .meta div{flex:1 1 46%}
+    .note{grid-template-columns:34px minmax(0,1fr)}
+    .side .cap{border-right:none;padding-right:0}
+    .cont-mark{flex:0 0 100%;text-align:left;transform:rotate(90deg);margin:2px 0 0 2px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none !important;transition:none !important}
+    .lane{opacity:1;transform:none}
+  }
+  @media print{
+    body{background:#fff}
+    body::before,#prog{display:none}
+    .wrap{max-width:none;padding:0}
+    .lane{break-inside:avoid;opacity:1;transform:none;animation:none}
+    .node:hover{box-shadow:none;background:inherit}
+    .stage{background-image:none}
+    .band-div{break-after:avoid}
+  }
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="wrap">
+
+<header>
+  <div class="fig-head">
+    <span class="no">图 1</span>
+    <span>智云 Pro · 数据流泳道</span>
+    <span class="rt">FIG.1 — SIGNAL FLOW · rev.2026-11</span>
+  </div>
+
+  <h1>数据流泳道图<span class="thin">一条泳道，一种数据从源头走到用户跟前</span></h1>
+
+  <p class="lede">
+    每个节点写的是<b>这一步把什么形态变成什么形态</b>。有了 <code>provide</code> 却没人
+    <code>get</code> / <code>inject</code> 的服务，画成虚线 —— 不在链路上，就不装成在链路上。
+  </p>
+
+  <div class="meta">
+    <div><div class="v">11</div><div class="k">Lanes</div></div>
+    <div><div class="v">51</div><div class="k">Packages</div></div>
+    <div><div class="v">28</div><div class="k">Core</div></div>
+    <div><div class="v">05</div><div class="k">Host routes</div></div>
+    <div><div class="v">03</div><div class="k">Terminus types</div></div>
+    <div><div class="v">03</div><div class="k">Orphan sources</div></div>
+  </div>
+</header>
+
+<div class="legend">
+  <span><i style="background:var(--c-src)"></i>数据源 · 外部事实</span>
+  <span><i style="background:var(--c-proc)"></i>变换 · 宿主侧，无 UI</span>
+  <span><i style="background:var(--c-ui)"></i>呈现 · 页面</span>
+  <span><i style="background:var(--c-tool)"></i>agent 触点 · 工具 / preset</span>
+  <span><i class="dash"></i>虚线 · 仓内无消费者</span>
+</div>
+
+<div class="stage">
+  <span class="reg tl"></span><span class="reg tr"></span><span class="reg bl"></span><span class="reg br"></span>
+
+  <div class="band-div"><span>Ⅰ · 加工链 — 课堂与讲义</span><span class="r">L1 — L4</span></div>
+
+  <!-- L1 -->
+  <section class="lane" style="--accent:var(--c-src)">
+    <div class="lane-no">01</div>
+    <div class="lane-name">
+      <span class="nm">课堂 → 讲义稿</span>
+      <span class="ab">一次解析，产出可检索的结构</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-src">
+            <div class="t">智云课堂<small>source/classroom</small></div>
+            <div class="io"><em>课程 / 节次 / 课件页图像 / 逐句字幕</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="grp" data-label="core/parser · 一场解析，四步">
+            <div class="node n-proc">
+              <div class="t">识别</div>
+              <div class="io"><b>入</b>4 页拼图<br><b>出</b>页文字 + 块</div>
+            </div>
+            <span class="arw"></span>
+            <div class="node n-proc">
+              <div class="t">标记</div>
+              <div class="io"><b>入</b>页 + 课件证据<br><b>出</b>清洗稿 + 块角色</div>
+            </div>
+            <span class="arw"></span>
+            <div class="node n-proc">
+              <div class="t">建树</div>
+              <div class="io"><b>入</b>块<br><b>出</b>主线挂叶 / 支线进黑板</div>
+            </div>
+            <span class="arw"></span>
+            <div class="node n-proc">
+              <div class="t">重构</div>
+              <div class="io"><b>入</b>叶树<br><b>出</b>一叶一个知识点</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="cont-mark">↳</span>
+          <div class="node n-proc">
+            <div class="t">讲义资源终稿</div>
+            <div class="io"><em>知识树 · 主支线黑板 · 知识点 · 逐句来源 · 待处理区</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">入库<small>core/knowledge</small></div>
+            <div class="io"><b>入</b>终稿<br><b>出</b>按 <em>账号:课程:节次</em> 落 KV 域</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-tool">
+            <div class="t">zhiyunStudy</div>
+            <div class="io"><em>领域服务 · 页面与工具的唯一真源</em></div>
+          </div>
+        </div>
+
+        <!-- 终点分叉：同一份数据，两条路出去 -->
+        <div class="row">
+          <span class="row-label">终点 A · 人</span>
+          <div class="node n-ui">
+            <div class="t">学习页<small>page-study</small></div>
+            <div class="io"><em>直接读 zhiyunStudyController，不经过 HTTP</em></div>
+          </div>
+          <span class="arw plus"><span class="pl">‖</span></span>
+          <span class="row-label split">终点 B · agent</span>
+          <div class="node n-tool">
+            <div class="t">工具包<small>tool/study</small></div>
+            <div class="io"><b>入</b><em>zhiyunStudy</em> + <code>tools</code> 注册表<br><b>出</b><code>study_catalog</code> / <code>study_read</code> / <code>study_search</code></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-tool">
+            <div class="t">注入点<small>preset/lecture</small></div>
+            <div class="io"><b>入</b>三个工具定义<br><b>出</b>本 preset <code>plugins</code> 树末行 <code>- id: tool-study</code></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-tool">
+            <div class="t">agent 工具表</div>
+            <div class="io"><em>仅「讲义模式」可见</em></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <span class="cap">旁支</span>
+        <span class="chip">回放观感 <code>core/playback</code></span>
+        <span class="chip">播放统计 <code>core/player</code></span>
+        <span class="chip">错误分类 <code>core/llm-error</code></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- L2 -->
+  <section class="lane" style="--accent:var(--c-proc)">
+    <div class="lane-no">02</div>
+    <div class="lane-name">
+      <span class="nm">讲义稿 → 阅读讲义 / 笔记</span>
+      <span class="ab">从结构到成文，再落到别处</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-proc">
+            <div class="t">资源终稿 + 原录音稿</div>
+            <div class="io"><em>树 + 逐句正文</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">装配<small>core/lecture</small></div>
+            <div class="io"><b>入</b>知识点 + 稿<br><b>出</b>逐点填充 + 书面语验收</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">阅读讲义</div>
+            <div class="io"><em>written / draft 逐点标记，部分完成如实标注</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-ui">
+            <div class="t">学习页讲义栏</div>
+            <div class="io"><em>可读正文 + 来源跳转</em></div>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="row-label">旁支</span>
+          <div class="node n-proc">
+            <div class="t">当前讲义</div>
+            <div class="io"><b>入</b><em>record.lecture</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">成稿导出<small>core/handout</small></div>
+            <div class="io"><b>入</b>讲义<br><b>出</b>Markdown，一份，单向，不覆盖</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">笔记库</div>
+            <div class="io"><b>出</b>普通 <em>.md</em> 文件 · 经 <code>zhiyunVaultNotes</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- L3 -->
+  <section class="lane" style="--accent:var(--c-proc)">
+    <div class="lane-no">03</div>
+    <div class="lane-name">
+      <span class="nm">讲义稿 → 题目</span>
+      <span class="ab">两条出题路，共用一个采纳闸门</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-proc">
+            <div class="t">知识点 + 正文</div>
+            <div class="io"><em>已整理材料</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">出题<small>core/quiz</small></div>
+            <div class="io"><b>入</b>已筛块<br><b>出</b>先筛后出 · 题形状 · 三态检查</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">proposed 题</div>
+            <div class="io"><em>生成即入库，不进复习队列</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">用户采纳</div>
+            <div class="io"><b>proposed → accepted</b><em> 唯一入口</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-ui">
+            <div class="t">题库页 / 习题栏</div>
+            <div class="io"><em>组卷练习 · 历史 · 复习队列</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <span class="cap">另一条路</span>
+        <span class="chip">深度出题 <code>core/question</code> explore → plan → quiz</span>
+        <span class="chip">标签状态机 <code>core/question-stream</code></span>
+        <span class="chip">工具调度 <code>core/tool</code></span>
+        <span class="chip">讲义检索 <code>core/lecture-tools</code></span>
+        <span class="cap">引擎</span>
+        <span class="chip"><code>core/quiz-lab</code> 把 r4 注册进 <code>zhiyunQuiz.engines</code></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- L4 -->
+  <section class="lane" style="--accent:var(--c-proc)">
+    <div class="lane-no">04</div>
+    <div class="lane-name">
+      <span class="nm">讲义 → AI 教学课件</span>
+      <span class="ab">第二套加工厂，与 01 并列不嵌套</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-proc">
+            <div class="t">讲义<small>chapters / topics / blocks</small></div>
+            <div class="io"><em>学习页已整理内容</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">课堂编排<small>classroom-studio</small></div>
+            <div class="io"><b>入</b>上游 21 个 route<br><b>出</b>服务方法 + 普通返回值</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">生成<small>classroom-generate</small></div>
+            <div class="io"><b>入</b>brief<br><b>出</b>outline → scenes → media → HTML，可断点续跑</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">导出<small>classroom-export</small></div>
+            <div class="io"><b>出</b>pptx（PK 头）/ 整页 HTML</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-ui">
+            <div class="t">学习页课件栏</div>
+            <div class="io"><em>逐页画布</em> <code>ClassroomSlide</code></div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <span class="cap">生成内部消费</span>
+        <span class="chip">编排 <code>classroom-agent</code></span>
+        <span class="chip">项目式学习 <code>classroom-pbl</code></span>
+        <span class="chip">媒体 / TTS / 检索 <code>classroom-media</code></span>
+        <span class="chip">本地持久化 <code>classroom-vault</code></span>
+        <span class="chip">时长估算 <code>classroom-timing</code></span>
+        <span class="chip">画布常量 <code>classroom-renderer</code></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="band-div"><span>Ⅱ · 侧通道 — 待办、笔记、论文、运行时、凭证</span><span class="r">L5 — L9</span></div>
+  <!-- L5 -->
+  <section class="lane" style="--accent:var(--c-src)">
+    <div class="lane-no">05</div>
+    <div class="lane-name">
+      <span class="nm">校园待办 → 今天 / 规划</span>
+      <span class="ab">四份来源并成一张表</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-src">
+            <div class="t">学在浙大 · 拼题A<small>source/campus</small></div>
+            <div class="io"><em>作业待办 / 未结束的练习</em></div>
+          </div>
+          <span class="arw plus"><span class="pl">+</span></span>
+          <div class="node n-src">
+            <div class="t">中转站</div>
+            <div class="io"><em>用户自部署推送的笔记与计划</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">规划聚合<small>core/planning</small></div>
+            <div class="io"><b>入</b>四源并表<br><b>出</b>快照 + AI 拆分 + pet 对话</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-ui">
+            <div class="t">今天页</div>
+            <div class="io"><em>今天到期 · 插空任务 · 上次打开</em></div>
+          </div>
+          <span class="arw plus"><span class="pl">+</span></span>
+          <div class="node n-ui">
+            <div class="t">规划页</div>
+            <div class="io"><em>列表 / 日历 / 日程 / 对话</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <span class="cap">宿主路由</span>
+        <span class="chip"><code>/_dsh/zhiyun-planning</code></span>
+        <span class="cap">惰性取 · 不写进 inject</span>
+        <span class="chip"><code>zhiyunCampus</code></span>
+        <span class="chip"><code>zhiyunParser</code></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- L6 -->
+  <section class="lane" style="--accent:var(--c-src)">
+    <div class="lane-no">06</div>
+    <div class="lane-name">
+      <span class="nm">笔记库 ⇄ 笔记页</span>
+      <span class="ab">唯一直接读写本机文件的领域</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-src">
+            <div class="t">本机 .md</div>
+            <div class="io"><em>Obsidian 式笔记库</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">笔记库<small>core/vault</small></div>
+            <div class="io"><b>入</b>文件<br><b>出</b>双链 / 反链 / 标签 / 图谱 / 改链</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-ui">
+            <div class="t">笔记页</div>
+            <div class="io"><em>文件树 · 多标签 · 双链面板</em></div>
+          </div>
+          <span class="arw plus"><span class="pl">+</span></span>
+          <div class="node n-ui">
+            <div class="t">图渲染<small>client/graph-render</small></div>
+            <div class="io"><b>入</b>{nodes, edges}<br><b>出</b>可交互画布</div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <span class="cap">宿主半边</span>
+        <span class="chip"><code>zhiyunVault</code></span>
+        <span class="chip"><code>zhiyunVaultNotes</code> → <code>/api/zhiyun-vault-notes</code></span>
+        <span class="cap">页内节笔记</span>
+        <span class="chip">走 <code>zhiyunNotes</code>，键是 <code>账号.节次</code></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- L7 -->
+  <section class="lane" style="--accent:var(--c-src)">
+    <div class="lane-no">07</div>
+    <div class="lane-name">
+      <span class="nm">PDF → 论文页</span>
+      <span class="ab">不改上游源码的一页</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-src">
+            <div class="t">本机 PDF</div>
+            <div class="io"><em>论文 / 教材 / 讲义原件</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">论文宿主</div>
+            <div class="io"><b>出</b>文件与转录 + <code>zhiyunPaper</code></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">上游阅读器 iframe</div>
+            <div class="io"><b>入</b><code>/paper-reader/</code><br><b>出</b>只注入样式表，不 fork</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-ui">
+            <div class="t">论文页</div>
+            <div class="io"><em>阅读器 + AI 助手抽屉 + 选中即译</em></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- L8 -->
+  <section class="lane" style="--accent:var(--c-proc)">
+    <div class="lane-no">08</div>
+    <div class="lane-name">
+      <span class="nm">运行时事实 → 插件页</span>
+      <span class="ab">这张图自己的读法</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-src">
+            <div class="t">Loader / fiber / reflect.store</div>
+            <div class="io"><em>模块边 · 服务硬边 · 插槽边</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">依赖图<small>core/plugin-graph</small></div>
+            <div class="io"><b>入</b>两棵插件树读数<br><b>出</b>拓扑序 · 环 · 层序违例</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-ui">
+            <div class="t">插件页</div>
+            <div class="io"><em>按依赖列出，只允许取消无入边的叶包</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <span class="cap">宿主路由</span>
+        <span class="chip"><code>/api/zhiyun-plugins</code></span>
+        <span class="cap">取消走</span>
+        <span class="chip"><code>pluginManager.setPluginEnabled</code>，不另开写入口</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- L9 -->
+  <section class="lane" style="--accent:var(--c-tool)">
+    <div class="lane-no">09</div>
+    <div class="lane-name">
+      <span class="nm">横切 · 凭证与出口</span>
+      <span class="ab">所有 *.zju.edu.cn 源的前置</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-src">
+            <div class="t">浙大一卡通<small>source/login</small></div>
+            <div class="io"><b>出</b><code>zhiyunCard</code> 唯一凭证来源</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">WebVPN 通路<small>source/webvpn</small></div>
+            <div class="io"><b>入</b>校内地址<br><b>出</b>网关地址 + 网关登录</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">唯一出口<small>source/http</small></div>
+            <div class="io"><b>出</b><code>zhiyunEgress</code>，所有源共用一份</div>
+          </div>
+          <span class="arw plus"><span class="pl">+</span></span>
+          <div class="node n-proc">
+            <div class="t">分域代理<small>source/netproxy</small></div>
+            <div class="io"><em>国内直连 / 海外走代理</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <span class="cap">共用方</span>
+        <span class="chip">课堂</span>
+        <span class="chip">学在浙大 · 拼题A</span>
+        <span class="chip">教务</span>
+        <span class="chip">CC98</span>
+        <span class="chip">学习通</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="band-div"><span>Ⅲ · 另一类终点 — skill 通路</span><span class="r">L10</span></div>
+
+  <!-- L10 -->
+  <section class="lane" style="--accent:var(--c-tool)">
+    <div class="lane-no">10</div>
+    <div class="lane-name">
+      <span class="nm">skill 文件 → agent 指令</span>
+      <span class="ab">不出页面，也不进工具表；进的是模型先读到的那份目录</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-src">
+            <div class="t">skill 目录包<small>docs/contributing/skills/</small></div>
+            <div class="io"><b>出</b><code>&lt;name&gt;/SKILL.md</code> + YAML frontmatter<br><em>name / description / whenToUse</em></div>
+          </div>
+          <span class="arw cut"></span>
+          <div class="node n-ghost">
+            <div class="t">到此为止<small>刻意如此</small></div>
+            <div class="io"><em>该目录不在任何扫描根里，不会被自动发现<br>要用就手工复制到扫描根 —— 仓库不替使用者决定宿主</em></div>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="row-label">扫描侧</span>
+          <div class="node n-proc">
+            <div class="t">发现与解析<small>skill-filesystem</small></div>
+            <div class="io"><b>入</b>扫描根 <code>.dsh/skills</code> → <code>.agents/skills</code> → custom → user<br><b>出</b>目录条目（name + 截断的 description）</div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-proc">
+            <div class="t">注册表<small>dsh-skill</small></div>
+            <div class="io"><em>任一 provider 都能喂它<br>文件系统只是其中一种</em></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-tool">
+            <div class="t">skill 工具<small>tool-skill</small></div>
+            <div class="io"><b>入</b>注册表 + <code>agents</code> + <code>tools</code><br><b>出</b>会话目录 + 加载器 + <code>/name</code></div>
+          </div>
+          <span class="arw"></span>
+          <div class="node n-tool">
+            <div class="t">agent 指令</div>
+            <div class="io"><em>先读目录，正文按需加载<br>不靠摘要猜指令</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <span class="cap">两种可见性</span>
+        <span class="chip"><code>disable-model-invocation: true</code> → 不给模型看</span>
+        <span class="chip"><code>user-invocable: false</code> → 不给用户 <code>/name</code></span>
+        <span class="cap">目录热更新</span>
+        <span class="chip">增删改名都会追加一份替换目录，不用重启</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="band-div"><span>Ⅳ · 无下游 — provide 在，消费者不在</span><span class="r">L11</span></div>
+
+  <!-- L11 -->
+  <section class="lane" style="--accent:var(--c-ghost)">
+    <div class="lane-no">11</div>
+    <div class="lane-name">
+      <span class="nm">悬空源</span>
+      <span class="ab">画成虚线，是因为它们真的没人接</span>
+    </div>
+    <div class="lane-body">
+      <div class="flow">
+        <div class="row">
+          <div class="node n-ghost">
+            <div class="t">CC98<small>source/cc98</small></div>
+            <div class="io"><b>出</b><code>zhiyunCc98</code> 10 个只读方法<br><em>仓内 0 处取用</em></div>
+          </div>
+          <span class="arw cut"></span>
+          <div class="node n-ghost">
+            <div class="t">学习通<small>source/xxt</small></div>
+            <div class="io"><b>出</b><code>zhiyunXxt</code> 课程 / 作业 / 考试<br><em>仓内 0 处取用</em></div>
+          </div>
+          <span class="arw cut"></span>
+          <div class="node n-ghost">
+            <div class="t">教务<small>source/zdbk</small></div>
+            <div class="io"><b>出</b><code>zhiyunZdbk</code> 成绩 / GPA / 课表<br><em>仅登录页健康探测取一次</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <span class="cap">判据</span>
+        <span class="chip">全仓搜 <code>zhiyunCc98</code> / <code>zhiyunXxt</code> 只命中各自的 <code>provide</code></span>
+        <span class="chip"><code>zhiyunZdbk</code> 只在 <code>source/login</code> 的 <code>probeZdbk</code> 里被 <code>ctx.get</code></span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ─────────────── 观察 ─────────────── -->
+<div class="notes">
+  <div class="notes-hd"><span>观察</span><span class="rt">NOTES · 05</span></div>
+
+  <div class="note warn">
+    <div class="note-no">01</div>
+    <div class="note-body">
+      <h3>旧图把「链」画成了「层」</h3>
+      <p>旧版把 28 个 core 归成「处理链 A / 处理链 B / 汇流 / 旁路」四组，那是按语义印象分的，不是按数据流分的。</p>
+      <p>结果是 <code>classroom-generate</code> 与 <code>classroom-studio</code> 这种「上游 route 服务化」的真实关系反而看不见。现在每一组都挂在它实际消费的那条数据上 —— 04 的编排族只服务 04，不参与 01。</p>
+    </div>
+  </div>
+
+  <div class="note proc">
+    <div class="note-no">02</div>
+    <div class="note-body">
+      <h3>「汇流」一句话盖掉了三个节点</h3>
+      <p>那句「把两条链的产物装成一个可用的工作台」不是节点，是三个节点被压成一句：<strong>资源终稿</strong> → <strong>入库</strong> → <strong>zhiyunStudy</strong>。</p>
+      <p>压掉之后，<code>lecture</code> 依赖 <code>parser</code>、<code>knowledge</code> 依赖 <code>storageDomain</code> 这两条边在图上就没有了落点。</p>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <div class="note-no">03</div>
+    <div class="note-body">
+      <h3>图上全画，仓里没有</h3>
+      <p>旧版画了 CC98、学习通、教务三个源，看起来和课堂、学在浙大一样在用。实际上 <code>zhiyunCc98</code> 与 <code>zhiyunXxt</code> 在仓内没有任何消费者，<code>zhiyunZdbk</code> 只被登录页的健康探测摸一次。</p>
+      <p>这不是「图不够美」，是会误导判断：读者会以为停掉 CC98 会影响某条链路，其实一条都不影响。</p>
+    </div>
+  </div>
+
+  <div class="note tool">
+    <div class="note-no">04</div>
+    <div class="note-body">
+      <h3>终点有三类，不是一类</h3>
+      <p><strong>页面</strong>给人看（<code>page-study</code> 等）；<strong>工具</strong>给 agent 调（<code>tool/study</code> 的三个方法），注入点是 <code>preset/lecture</code> 那一行 —— 写进 profile 就会变成所有 preset 都看得到；<strong>skill</strong> 给 agent 先读后做（<code>docs/contributing/skills/</code> 的 <code>SKILL.md</code>，经 <code>skill-filesystem</code> → <code>dsh-skill</code> → <code>tool-skill</code> 进会话目录）。</p>
+      <p>三者的数据形态完全不同：页面吃已装配的领域状态，工具吃服务 + 注册表并吐出结构化返回值，skill 吃磁盘上的 Markdown 并吐出一段指令。把它们画成同一类终点，就等于说「反正都是给人用的」。</p>
+      <p>还有一条：<code>docs/contributing/skills/</code> <strong>刻意不在任何扫描根里</strong>，所以它不会自动生效 —— 图上用虚线标出这一段，是因为它确实是断的，不是漏画。</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="colophon">
+    <p><b>怎么读</b>沿一条泳道从左往右，就是一份数据从外部事实变成你能看见的东西的全部路径。节点右上角是包名；入 / 出 写的是形态变化，不是「做了什么」—— 做了什么是实现细节，形态变化才是契约。</p>
+    <p><b>为什么没有 vendor 与 radar</b><code>packages/vendor/*</code> 与 <code>packages/radar/*</code> 有意不进 workspaces，前者是锁版上游、后者是未评审候选骨架，都不在当前产品的数据流上。</p>
+    <p><b>与代码的一致性</b>服务名、<code>provide</code> / <code>inject</code> / <code>ctx.get</code>、宿主路由都取自查仓库当前状态；悬空节点的判据是可复核的搜索结果，不是推测。代码改动后这张图会过期 —— 运行时的活图在产品的「插件」页，它直接从 DSH 运行时读拓扑，不靠手抄。</p>
+  </div>
+  <div class="endmark">End of Fig.1</div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var bar = document.getElementById('prog');
+  if (!bar) return;
+  var raf = 0;
+  function paint(){
+    raf = 0;
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - doc.clientHeight;
+    bar.style.width = (max > 0 ? (doc.scrollTop / max) * 100 : 0) + '%';
+  }
+  function onScroll(){ if (!raf) raf = requestAnimationFrame(paint); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  paint();
+})();
+</script>
+</body>
+</html>

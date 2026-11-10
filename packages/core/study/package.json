@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-core-study",
   "version": "0.1.0",
   "description": "智云 Pro 领域状态层：学习空间、学习控制器与 /api/zhiyun-study 后端（多页共用的唯一真源）",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -10,6 +9,18 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/study"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -36,6 +47,5 @@
     "@deepseek-ai/dsh-atomic-write": {
       "optional": true
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

@@ -2,11 +2,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
-import {PythonBridge} from '../../packages/dsh-zhiyun-host-deeptutor/src/runtime.js';
-import {createLlmBridge} from '../../packages/dsh-zhiyun-host-deeptutor/src/models.js';
-import {createService} from '../../packages/dsh-zhiyun-host-deeptutor/src/service.js';
-import {createRunStore} from '../../packages/dsh-zhiyun-host-deeptutor/src/run-store.js';
-import {createResourceRegistry} from '../../packages/dsh-zhiyun-host-deeptutor/src/resources.js';
+import {PythonBridge} from '../../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src/runtime.js';
+import {createLlmBridge} from '../../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src/models.js';
+import {createService} from '../../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src/service.js';
+import {createRunStore} from '../../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src/run-store.js';
+import {createResourceRegistry} from '../../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src/resources.js';
 import * as resources from '../../packages/core/learning-resource/src/index.js';
 import {createDeepTutorCandidateCall,nativeQuizContract} from '../../packages/core/study/src/deeptutor-quiz.js';
 import {WorkerPoolLlm} from '../../packages/core/parser/src/worker-pool.js';
@@ -17,7 +17,7 @@ import {planPointQuestions} from '../../packages/core/quiz/src/points.js';
 import {DEEPTUTOR_GUIDANCE_ID} from '../../packages/core/quiz/src/deeptutor-guidance.js';
 import {tokenLedger,timingLedger,attemptOffset} from './accounting.mjs';
 
-const root=fileURLToPath(new URL('../../',import.meta.url)),pkg=path.join(root,'packages/dsh-zhiyun-host-deeptutor');
+const root=fileURLToPath(new URL('../../',import.meta.url)),pkg=path.join(root,'archive/deprecated-packages/dsh-zhiyun-host-deeptutor');
 export async function runDeepTutorBench({input,out,apiKey,baseUrl='https://api.deepseek.com/v1',model='deepseek-flash',mode='upstream-native',workers=2,count=3,maxCalls=60,seed=42,existingQuestions=[],signal}={}){
   if(!apiKey)throw new Error('请提供模型凭证');
   if(!['local','local-guided','upstream-native','integrated-parallel'].includes(mode)||!Number.isInteger(count)||count<1||count>50||!Number.isInteger(workers)||workers<1||workers>32)throw new Error('评测模式、题数或 workers 无效');
@@ -27,7 +27,7 @@ export async function runDeepTutorBench({input,out,apiKey,baseUrl='https://api.d
   const previousAttempts=(await fs.readFile(path.join(dir,'attempts.jsonl'),'utf8').catch(e=>{if(e.code==='ENOENT')return '';throw e;})).trim().split('\n').filter(Boolean).map(JSON.parse),offset=attemptOffset(calls,previousAttempts);
   let attemptWrites=Promise.resolve();const attempts=[];
   const events=[],host=deepTutorBenchHost({apiKey,baseUrl,model,maxCalls,onAttempt:attempt=>{attempts.push(attempt);attemptWrites=attemptWrites.then(()=>fs.appendFile(path.join(dir,'attempts.jsonl'),JSON.stringify({...attempt,index:offset+attempt.index})+'\n'));return attemptWrites;},onCall:call=>{calls.push({...call,index:offset+call.index});writes=writes.then(()=>fs.writeFile(path.join(dir,'model-calls.json'),JSON.stringify(calls,null,2)));return writes;}});
-  const bridge=new PythonBridge({rootDir:pkg,pythonPath:path.join(root,'.runtime/deeptutor-py311/Scripts/python.exe'),vendorPath:path.join(pkg,'vendor/deeptutor'),homeDir:path.join(dir,'home'),startTimeoutMs:60000,requestTimeoutMs:240000});
+  const bridge=new PythonBridge({rootDir:pkg,pythonPath:path.join(root,'.runtime/deeptutor-py311/Scripts/python.exe'),vendorPath:path.join(root,'archive/deeptutor-vendor-1.6.15/deeptutor'),homeDir:path.join(dir,'home'),startTimeoutMs:60000,requestTimeoutMs:240000});
   const llm=createLlmBridge({llm:host,selection:()=>({provider:'bench',model})});llm.attachTo(bridge);
   const registry=createResourceRegistry({dataDir:path.join(dir,'resources'),validate:resources.validate,contentHash:resources.contentHash,project:resources.project});
   const runStore=createRunStore({runsDir:path.join(dir,'runs')});

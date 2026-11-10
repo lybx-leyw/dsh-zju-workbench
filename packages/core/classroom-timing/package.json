@@ -1,9 +1,8 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-classroom-timing",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "课堂系列的时长常量与朗读估算：纯函数、零依赖，被舞台/导出/agent 共用",
+  "type": "module",
   "main": "./src/timing.js",
   "exports": {
     ".": "./src/timing.js",
@@ -11,7 +10,13 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "src/"
+    "src/",
+    "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/classroom-timing"
+  },
   "license": "GPL-3.0-or-later"
 }

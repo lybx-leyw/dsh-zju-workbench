@@ -34,6 +34,38 @@ import yaml from 'js-yaml';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const SKIP = new Set(['node_modules', 'lib', 'vendor', '.git']);
 
+/**
+ * 宿主解析 patch 用的 Schema —— **必须与它一致**，否则这条测试在测一个不存在的约束。
+ *
+ * `dsh-app-boot/lib/index.js` 干的是这件事：
+ *
+ * ```js
+ * :672  const JsExpr = new yaml.Type('tag:yaml.org,2002:js', {kind:'scalar', ...})
+ * :680  const entryListSchema = yaml.JSON_SCHEMA.extend(JsExpr)
+ * :4743 parsed = yaml.load(content, { schema: userPatchesSchema })
+ * ```
+ *
+ * 也就是说 `!!js` 是宿主**官方支持**的写法，用来表达「按运行时条件禁用某条插件」：
+ *
+ * ```yaml
+ * - id: tool-bash
+ *   disabled: !!js process.platform === 'win32'
+ * ```
+ *
+ * DSH 自带的 `dsh-base/cordis.patch.yml` 里用的是一模一样的三个 idiom
+ * （`:22/:30/:107/:111` 的 `!!js "!ctx.get('profileContext')"`、
+ * `:283` 与 `:287` 的按平台禁用）。本仓 preset 里那三行是照着它抄的，**是对的**。
+ *
+ * ⚠️ 用 `JSON_SCHEMA` 而**不是** `DEFAULT_SCHEMA`：后者会把 `yes`/`no`/`on`/`off`
+ *    解析成布尔、把时间戳解析成 Date —— 宿主不会，那等于换了个解析器再测一遍。
+ *    照抄宿主的选择才是「测它真的会怎么读」。
+ */
+const jsExpr = new yaml.Type('tag:yaml.org,2002:js', {
+  kind: 'scalar',
+  construct: (data) => data,
+});
+const HOST_SCHEMA = yaml.JSON_SCHEMA.extend([jsExpr]);
+
 function patchFiles(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (SKIP.has(entry.name)) continue;
@@ -51,12 +83,16 @@ test('所有 cordis.patch.yml 都能被 YAML 解析', () => {
   const failures = [];
   for (const file of files) {
     try {
-      yaml.load(readFileSync(file, 'utf8'));
+      yaml.load(readFileSync(file, 'utf8'), { schema: HOST_SCHEMA });
     } catch (error) {
       failures.push(`${path.relative(root, file)}: ${String(error.message).split('\n')[0]}`);
     }
   }
-  assert.deepEqual(failures, [], `以下 patch 无法解析（宿主会静默跳过它）：\n${failures.join('\n')}`);
+  // 措辞校正：「静默跳过」并不准确 —— 宿主对 bundle 的 patch 解析失败会记进
+  // profile.skippedBundles 并往 stderr 打一行 `dsh: skipping profile bundle …`；
+  // 对 profile 自己的 cordis.patch.yml 则直接抛出（硬失败）。
+  // 真正的问题是「那层配置没生效」，而不是「一点痕迹都没有」。
+  assert.deepEqual(failures, [], `以下 patch 无法解析（宿主会跳过该 bundle 或直接失败）：\n${failures.join('\n')}`);
 });
 
 test('name 的值若以 @ 开头，必须显式加引号', () => {

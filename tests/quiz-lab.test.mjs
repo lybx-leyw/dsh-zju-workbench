@@ -18,7 +18,10 @@ test('experiment tracing preserves both JSON requests and the production plain-t
 
 test('lab research fork leaves the production source snapshot unchanged',async()=>{
  const m=JSON.parse(await readFile('scripts/quiz_bench/experimental/fork-manifest.json','utf8'));
- assert.equal(createHash('sha256').update(await readFile(m.origin)).digest('hex'),m.sha256);
+ // 先归一化到 LF 再取哈希：digest 的 canonical 形态是提交进仓库的 blob（纯 LF）。
+ // Windows 上 core.autocrlf=true 会把工作区检出成 CRLF，直接哈希磁盘原始字节
+ // 会让同一份代码在本机假失败（Linux 绿、Windows 红）。
+ const source=await readFile(m.origin,'utf8');assert.equal(createHash('sha256').update(source.replace(/\r\n/g,'\n')).digest('hex'),m.sha256);
 });
 test('lab review only requires recall targets and checks all option truth values',async()=>{
  let constant;const invoke=labCall(async r=>{constant=r.constant;return {text:JSON.stringify({verdicts:[{index:0,valid:true,optionTruth:{A:true,B:true,C:false,D:false}}]})};});

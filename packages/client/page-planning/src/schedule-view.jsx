@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { addDays, fromShanghaiLocal, groupWeek, isAfterDue, overlappingIds, overlaps, shanghaiDate, toShanghaiLocal, weekStart } from './agenda.js';
+import { addDays, fromShanghaiLocal, groupWeek, isAfterDue, overlappingIds, overlaps, shanghaiDate, toShanghaiLocal, weekStart } from '@lybx-leyw/dsh-zju-core-planning/browser';
 
 const emptyForm = (taskKey = '') => ({ taskKey, title: '', start: '', end: '' });
 const errorText = (error) => error?.message || String(error || '操作失败，请重试');

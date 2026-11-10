@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-ui-shared",
   "version": "0.1.0",
   "description": "智云 Pro 共享 UI 原语：图标、品牌标记、空态、分区标题与样式挂载（无状态，全产品共用）",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -10,6 +9,18 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/client/ui-shared"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -18,5 +29,8 @@
       "platform": "web"
     }
   },
-  "license": "GPL-3.0-or-later"
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-classroom-renderer": "0.1.0",
+    "katex": "0.16.38"
+  }
 }

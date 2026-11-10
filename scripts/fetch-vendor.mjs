@@ -9,7 +9,7 @@
  *   node scripts/fetch-vendor.mjs                缺什么补什么，已存在则跳过
  *   node scripts/fetch-vendor.mjs --force        忽略本地副本，重新拉取
  *   node scripts/fetch-vendor.mjs --check        只校验本地副本，不联网
- *   node scripts/fetch-vendor.mjs --only <id>    只处理一个来源（deeptutor / benchmarker）
+ *   node scripts/fetch-vendor.mjs --only <id>    只处理一个来源（benchmarker / openmaic）
  *
  * 大陆网络相关（GitHub 直连常被阻断，Node 的 fetch 又默认不读代理变量）：
  *
@@ -35,14 +35,6 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url));
 
 /** 仓库里被 vendor 的上游快照：锁文件是唯一事实来源，这里只声明「锁在哪、落到哪」。 */
 const SOURCES = [
-  {
-    id: 'deeptutor',
-    kind: 'archive',
-    lock: 'packages/dsh-zhiyun-host-deeptutor/upstream.lock.json',
-    dest: 'packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor',
-    /** 归档 31 MB，实测慢网络下 150 s，留足余量。 */
-    timeoutMs: 900_000,
-  },
   {
     id: 'benchmarker',
     kind: 'files',

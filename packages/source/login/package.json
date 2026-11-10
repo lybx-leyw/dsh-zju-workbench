@@ -2,14 +2,26 @@
   "name": "@lybx-leyw/dsh-zju-source-login",
   "version": "0.1.0",
   "description": "浙大一卡通账号（智云课堂与学在浙大共用的凭证）：设置界面 + 宿主凭据读写",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
     "./client": "./lib/client.js",
+    "./cas": "./src/cas.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/login"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -25,8 +37,12 @@
       "auth": "none",
       "network": "public",
       "writes": false,
-      "requires": []
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http"
+      ]
     }
   },
-  "license": "GPL-3.0-or-later"
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0"
+  }
 }

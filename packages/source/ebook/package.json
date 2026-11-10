@@ -1,0 +1,39 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-ebook",
+  "version": "0.1.0",
+  "description": "学校订购的电子图书数据源：电子书刊导航与超星电子书，查有没有某本书的电子版及在哪个平台。只读，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/ebook"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "campus",
+      "writes": false,
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0"
+  }
+}

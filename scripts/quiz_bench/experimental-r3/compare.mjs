@@ -38,10 +38,16 @@ export async function runComparison({spec,out,credentials,onProgress=()=>{}}){
  if(await fs.access(path.join(dir,'manifest.json')).then(()=>true,()=>false))throw Error('请使用新的输出目录，禁止覆盖正式结果');
  const write=(name,value)=>fs.writeFile(path.join(dir,name),JSON.stringify(value,null,2));
  const frozen=JSON.parse(await fs.readFile('scripts/quiz_bench/experimental/CANDIDATE.json','utf8'));
- for(const [file,expected]of Object.entries(frozen.files))if(hash(await fs.readFile('scripts/quiz_bench/experimental/'+file))!==expected)throw Error('冻结 r1 文件发生变化：'+file);
+ // ⚠️ 哈希前先归一化到 LF：manifest 里的摘要是按**仓库 blob**（纯 LF）测的。
+ // Windows 上 core.autocrlf=true 会把工作区检出成 CRLF，直接哈希磁盘原始字节
+ // 会让这个冻结校验在本地假报「文件发生变化」，而 Linux 上又是绿的。
+ // 与 tests/quiz-app-engines.test.mjs、tests/quiz-lab.test.mjs、tests/quiz-lab-r2.test.mjs
+ // 用的是同一个口径。改这里前先确认 manifest 也是按 LF 重算过的。
+ const hashOf=async p=>hash(Buffer.from((await fs.readFile(p,'utf8')).replace(/\r\n/g,'\n')));
+ for(const [file,expected]of Object.entries(frozen.files))if(await hashOf('scripts/quiz_bench/experimental/'+file)!==expected)throw Error('冻结 r1 文件发生变化：'+file);
  if(spec.kind==='formal'){
   const candidate=JSON.parse(await fs.readFile('scripts/quiz_bench/experimental-r3/CANDIDATE.json','utf8'));
-  for(const [file,expected]of Object.entries(candidate.files))if(hash(await fs.readFile('scripts/quiz_bench/experimental-r3/'+file))!==expected)throw Error('正式评测前 r3 摘要不一致：'+file);
+  for(const [file,expected]of Object.entries(candidate.files))if(await hashOf('scripts/quiz_bench/experimental-r3/'+file)!==expected)throw Error('正式评测前 r3 摘要不一致：'+file);
  }
  const arms=spec.arms??['r1','native','r3'],batches=spec.batches??[4,2],workers=spec.workers??2,maxCalls=spec.maxCalls??85;
  if(arms.some(a=>!['r1','native','r3'].includes(a))||!batches.length||batches.some(n=>!Number.isInteger(n)||n<1))throw Error('评测组别或题数无效');

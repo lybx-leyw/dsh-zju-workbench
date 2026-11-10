@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { ClassroomError } from './errors.js';
 import { ClassroomSource } from './source.js';
 import { STREAM_ROUTE_PREFIX, createStreamHandler } from './stream.js';
 import { SLIDE_ROUTE_PREFIX, SlideCache, createSlideHandler } from './slide-store.js';
@@ -9,6 +10,15 @@ import { savedAccountConnection } from './connection.js';
 import { classroomNetwork } from './network.js';
 import { readCard, fillCardIfEmpty } from '@lybx-leyw/dsh-zju-source-login';
 export const name = 'zhiyun-classroom';
+
+/**
+ * 只读数据路由。
+ *
+ * 前缀与其他 source 包一致（`/api/zhiyun-<name>`）。**action 名就是方法名**：
+ * `searchResources` / `check` / `transcribeAudio` / `liveStart` / `liveStatus` /
+ * `liveStop` / `liveText`。
+ */
+export const ROUTE_PATH = '/api/zhiyun-classroom';
 // `webServer` 不进 inject：它是**可选**的宿主服务，只有直播播放需要它。
 // 写进 inject 会让「宿主没起 HTTP 面」时整个课堂数据源一起 pending ——
 // 回放、解析、课表全都用不了，只为了一条直播通路。
@@ -24,7 +34,7 @@ export async function apply(ctx, config = {}) {
   /**
    * 本包的 `fetch`。
    *
-   * 优先用**共享出口** `zhiyunEgress`（campus 提供）：它比这里的本地兜底多了
+   * 优先用**共享出口** `zhiyunEgress`（由 `source-http` 提供）：它比这里的本地兜底多了
    * 「校园网判定 + 校外绕 WebVPN」，而且 undici 连接池与 WebVPN 会话全省一份 ——
    * 各包各自登录 WebVPN 会互相踢掉（与 CAS 双登录同一类事故）。
    *
@@ -48,6 +58,21 @@ export async function apply(ctx, config = {}) {
     fetch: fetcher,
     protect: config.protect,
     sessionFile: path.join(ctx.profileContext.dir, 'data', 'zhiyun-classroom', 'session.dpapi'),
+    /**
+     * 诊断用的数据目录：`check('media')` 要能说出「托管 FFmpeg 应该在哪」。
+     * 与下面的 `cacheDir` 同根，不另立一份。
+     */
+    dataDirectory: path.join(ctx.profileContext.dir, 'data', 'zhiyun-classroom'),
+    /** 语音模型的 DSH home（`check('asr')` 用它定位模型目录）；不传则由 `DSH_HOME` 兜底。 */
+    asrHome: config.asrHome ?? null,
+    /**
+     * 本地转写的识别内核 —— **默认没有**。
+     *
+     * 本包不含 `sherpa-onnx-node` 与 SenseVoice 模型（见 `asr.js` 文件头）。
+     * 宿主若已具备，可通过 `config.transcriber` 注入；没注入时
+     * `transcribeAudio` 报 `DEPENDENCY_MISSING`，**不**伪造成功。
+     */
+    transcriber: config.transcriber ?? null,
     /**
      * 登录成功后把账号回填进宿主凭据服务。
      *
@@ -137,6 +162,7 @@ export async function apply(ctx, config = {}) {
   //   「直播装不上」升级成「整个课堂页打不开」—— 降级而不是连带失败。
   let removeRoutes = null;
   let removeSlideRoute = null;
+  let removeDataRoute = null;
   if (typeof ctx.inject === 'function') {
     removeRoutes = ctx.inject(['webServer'], (scope) => scope.effect(() => {
       const handler = createStreamHandler({ log: event => ctx.logger?.debug?.(`zhiyun: live ${JSON.stringify(event)}`) });
@@ -144,6 +170,49 @@ export async function apply(ctx, config = {}) {
       ctx.logger?.info?.(`zhiyun: 直播流转发 ${STREAM_ROUTE_PREFIX}`);
       return dispose;
     }, 'zhiyun: live stream relay'));
+    // 数据路由：**action 名 = 方法名**，一个不多一个不少（本仓 source 包的统一形状）。
+    // 只挂新增的七个只读能力，老的读法（courses / lessons / slides …）历史上走服务
+    // 对象而不是 HTTP，这里不去改它们的形状。
+    removeDataRoute = ctx.inject(['webServer'], (scope) => scope.effect(() => {
+      const dispose = scope.webServer.register({
+        kind: 'exact',
+        path: ROUTE_PATH,
+        handler: async (req, res) => {
+          res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+          try {
+            const body = await new Promise((done, fail) => {
+              const chunks = [];
+              req.on('data', (chunk) => chunks.push(chunk));
+              req.on('end', () => done(Buffer.concat(chunks).toString('utf8')));
+              req.on('error', fail);
+            });
+            const input = body ? JSON.parse(body) : {};
+            const action = input?.action;
+            const handlers = {
+              searchResources: () => {
+                const value = input.input ?? {};
+                return source.searchResources(value.courseId, value.subId, value);
+              },
+              check: () => source.check(input.input?.component ?? 'all', input.input ?? {}),
+              transcribeAudio: () => source.transcribeAudio(input.input ?? {}),
+              liveStart: () => source.liveStart(input.input ?? {}),
+              liveStatus: () => source.liveStatus(input.input ?? {}),
+              liveStop: () => source.liveStop(input.input ?? {}),
+              liveText: () => source.liveText(input.input ?? {}),
+            };
+            const handler = handlers[action];
+            if (!handler) {
+              throw new ClassroomError('INVALID_INPUT', `不认识的操作：${action ?? '(空)'}。可选 ${Object.keys(handlers).join(' / ')}`);
+            }
+            res.end(JSON.stringify({ ok: true, value: await handler() }));
+          } catch (error) {
+            res.end(JSON.stringify({ ok: false, error: { code: error?.code ?? 'FAILED', message: String(error?.message ?? error) } }));
+          }
+        },
+      });
+      ctx.logger?.info?.(`zhiyun: 数据路由 ${ROUTE_PATH}`);
+      return dispose;
+    }, 'zhiyun: classroom data route'));
     // 课件图单独一个前缀：它的威胁模型是"只发磁盘上已有的字节"，
     // 和直播转发的"代你去白名单域名取任意 URL"完全不同，不能混在一个前缀里。
     if (slideCache) {
@@ -161,6 +230,7 @@ export async function apply(ctx, config = {}) {
   return async () => {
     try {
       await removeSlideRoute?.();
+      await removeDataRoute?.();
       await removeRoutes?.();
     } finally {
       await source.dispose();

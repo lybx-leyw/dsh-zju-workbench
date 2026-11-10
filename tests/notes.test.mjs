@@ -25,9 +25,43 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { Context } from '@deepseek-ai/cordis';
+/**
+ * 宿主的 `@deepseek-ai/cordis` **不在仓库 node_modules 里** —— 它由
+ * `.runtime/dsh-<version>/node_modules` 提供（`scripts/profile.mjs` 从那里解析）。
+ *
+ * 早先这里写的是顶层静态 import，于是这个文件**从来没能加载过**：
+ *   `ERR_MODULE_NOT_FOUND: Cannot find package '@deepseek-ai/cordis'`
+ * 而这个问题长期被另一个 bug 掩盖着 —— 第 886/890 行的正则里斜杠没转义，
+ * 报的是 `SyntaxError: Invalid regular expression flags`。语法错误先发生，
+ * 所以谁也没走到模块解析那一步。修掉语法错误之后，真正的原因才露出来。
+ *
+ * 现在按宿主版本惰性加载，与 `tests/classroom-cordis.test.mjs`、
+ * `tests/knowledge.test.mjs` 同一套做法。
+ */
+const repoRoot = fileURLToPath(new URL('..', import.meta.url));
+const hostLock = JSON.parse(readFileSync(path.join(repoRoot, 'runtime.lock.json'), 'utf8'));
+const hostVersion = hostLock.preferredHostVersion ?? hostLock.hostVersions[0];
+const hostModules = path.join(repoRoot, '.runtime', `dsh-${hostVersion}`, 'node_modules', '@deepseek-ai');
+
+/**
+ * 取一个 `Context` 构造器。
+ *
+ * 惰性加载而不是顶层 await：没装宿主的环境里，让**用到它的用例**失败，
+ * 而不是整个文件在加载阶段就报 ENOENT —— 后者会让 900 行里所有与宿主无关的
+ * 断言（文件内容、golden 对照等）全都没机会跑。
+ */
+async function hostContext() {
+  const entry = path.join(hostModules, 'cordis', 'lib', 'index.js');
+  try {
+    await statSync(entry);
+  } catch {
+    throw new Error(`宿主 cordis 未安装：${entry}（按 runtime.lock.json 的 ${hostVersion} 找）`);
+  }
+  const { Context } = await import(pathToFileURL(entry).href);
+  return Context;
+}
 
 import {
   assetLink,
@@ -58,7 +92,10 @@ import * as plugin from '../packages/core/notes/src/index.js';
 import { NoteError } from '../packages/core/notes/src/errors.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const PACKAGE_DIR = path.join(HERE, '..', 'packages', '@lybx-leyw/dsh-zju-core-notes');
+// ⚠️ 包按分组住在 `packages/core/notes`（重构把 `packages/<包名>` 拍平改成了
+// `packages/{core,client,source,tool,preset}/<短名>`）。这里的路径必须跟着走 ——
+// 否则会在 `readJson` 处报 ENOENT，而那个报错看起来像"fixture 丢了"。
+const PACKAGE_DIR = path.join(HERE, '..', 'packages', 'core', 'notes');
 /**
  * 与 Flutter 仓库的对照是可选增强：默认取与本仓库同级的 `zhiyun-pro`，
  * 也可用 `ZHIYUN_FLUTTER_ROOT` 指向其它位置；找不到时该用例自行跳过。
@@ -516,6 +553,7 @@ test('normalizeNote 丢掉坏记录与坏附件，但保住整条笔记', () => 
 // ---------------------------------------------------------------------------
 
 test('真实 Cordis：装载后 ctx.zhiyunNotes 可用；卸载后服务消失、写确实落到了 store', async () => {
+  const Context = await hostContext();
   const ctx = new Context();
   // 插件声明了 `inject: ['storageDomain']`（真机验收定的），所以装载前必须有这个服务；
   // 这条用例走的是 config.store 注入，域服务只是让插件能激活的空壳。
@@ -536,6 +574,7 @@ test('真实 Cordis：装载后 ctx.zhiyunNotes 可用；卸载后服务消失�
 });
 
 test('卸载之后的调用给出有名字的 CLOSED，而不是没法解释的错', async () => {
+  const Context = await hostContext();
   const ctx = new Context();
   ctx.provide('storageDomain', { open: async () => { throw new Error('不应走到宿主域'); } });
   const dispose = await ctx.plugin(plugin, { store: createMemorySectionNoteStore() });
@@ -549,6 +588,7 @@ test('没有注入 store 且宿主没有 storageDomain 时，插件**等待依�
   //    Cordis 的语义是「依赖未就绪 → 插件 pending」，所以这里**不会**抛错，
   //    也**不会**留下一个假装能用的内存服务 —— 服务在依赖到位前根本不存在。
   //    这正是我们要的：如实"还没好"，而不是"看起来好了、重启就没"。
+  const Context = await hostContext();
   const ctx = new Context();
   await ctx.plugin(plugin, {});
   assert.equal(ctx.get('zhiyunNotes'), undefined, '依赖缺失时不许挂上半吊子服务');
@@ -562,6 +602,7 @@ test('没有注入 store 且宿主没有 storageDomain 时，插件**等待依�
 });
 
 test('config.domain=false 时也只认注入的 store', async () => {
+  const Context = await hostContext();
   const ctx = new Context();
   // `inject: ['storageDomain']` 是激活前提；本用例要验的是"即便域就绪也不去开它"。
   let opened = 0;
@@ -657,6 +698,7 @@ test('真实 Cordis：本插件**声明** inject 后能拿到 storageDomain（�
   // ① 依赖就绪后 `ctx.storageDomain` 真的可读（不是抛、不是 undefined）；
   // ② 那个 Cordis 陷阱依然真实存在 —— 对**未声明**的服务读属性会抛，
   //    所以将来若要把某个服务做成可选，仍然必须用 `ctx.get`。
+  const Context = await hostContext();
   const ctx = new Context({ name: 'probe-cordis-inject' });
   let observed;
   await ctx.plugin({
@@ -682,6 +724,7 @@ test('真实 Cordis：本插件**声明** inject 后能拿到 storageDomain（�
 });
 
 test('真实 Cordis + 真实 storageDomain 形状：走宿主存储路径能装载、读写、卸载', async () => {
+  const Context = await hostContext();
   // 这里把**真宿主服务**挂在真 Context 上，宿主 domain 用假的（真 domain 的内部行为
   // 属于宿主自己的测试面，本仓离线环境里也没有那个包）。
   const records = new Map();
@@ -883,11 +926,11 @@ test('index.js 只在真正要走宿主存储时才加载宿主包（延迟 impo
   // 跑通的实现负责（同一件事不留两份），但它同样只能在**动态 import** 里出现 ——
   // 否则离线环境连 note.js 都用不了，这正是本条要防的。
   assert.equal(
-    /^import\s[^\n]*@lybx-leyw/dsh-zju-core-knowledge/m.test(text),
+    /^import\s[^\n]*@lybx-leyw\/dsh-zju-core-knowledge/m.test(text),
     false,
     '复用宿主解析器也不许放在顶层',
   );
-  assert.match(text, /import\('@lybx-leyw/dsh-zju-core-knowledge\/host'\)/, '宿主存储路径要走动态 import');
+  assert.match(text, /import\('@lybx-leyw\/dsh-zju-core-knowledge\/host'\)/, '宿主存储路径要走动态 import');
 });
 
 // ---------------------------------------------------------------------------

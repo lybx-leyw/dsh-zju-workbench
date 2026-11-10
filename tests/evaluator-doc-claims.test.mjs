@@ -46,7 +46,9 @@ test('文档声称：\\( 不出现在任何输入层（生成题目 / 基线题�
 
   for (const f of [
     'packages/core/question/src/prompts/pipeline.js',
-    'packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/agents/question/prompts/zh/pipeline.yaml',
+    // vendor 已归档（见 archive/README.md）：活副本在时就比活副本，否则比归档快照。
+    ...['packages/dsh-zhiyun-host-deeptutor/vendor/deeptutor/deeptutor/agents/question/prompts/zh/pipeline.yaml',
+      'archive/deeptutor-vendor-1.6.15/deeptutor/agents/question/prompts/zh/pipeline.yaml'].filter(exists),
   ]) {
     if (!exists(f)) continue;
     assert.equal(fs.readFileSync(f, 'utf8').includes(OPEN_PAREN), false,
