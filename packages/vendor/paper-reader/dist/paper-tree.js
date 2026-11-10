@@ -31,8 +31,9 @@
  */
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
-/** 译文产物后缀：它们不是独立文献（同一篇论文的变体）。 */
-const VARIANT_SUFFIX = /-(?:zh|dual)$/i;
+// 布局判据**复用** `library.ts` 的那两份实现，不在这里另写一套：
+// 两套判据漂移的后果是「树里有一行、点开却 404」，而那种不一致不会报错。
+import { isPaperDir, isPaperPDF } from "./library.js";
 /** 隐藏文件与上游的临时/虚拟环境目录都不列。 */
 const SKIP = new Set(['.pdf2zh-tmp', '.venv-pdf2zh']);
 /**
@@ -59,6 +60,23 @@ export function decodeTopic(topic) {
 /**
  * 读论文库，产出**扁平条目表**（文件夹 + 文献）。
  *
+ * # 必须同时认两种布局，否则「刚上传的论文」根本不在树里
+ *
+ * 写侧（`host.ts` 的上传路由）落的是**新布局**：
+ *
+ *     <dataDir>/<topic>/<论文名>/<论文名>.pdf
+ *
+ * 而这里原先只扫 `<topic>/` 一层的 `*.pdf`：上传刚写完的论文是一个**目录**，
+ * 于是树里只剩一个空的专题文件夹 —— 页面侧 `refreshTree()` 拿到的条目里没有它，
+ * 侧栏的行数、树的层级都少这一篇，用户看到的就是「传上去了，但侧栏没认出来」。
+ *
+ * 判据**复用 `library.ts` 的 `isPaperDir` / `isPaperPDF`**（与 `listPapers`、
+ * 迁移、删除同一份）：论文目录 = 目录里有 `<basename(dir)>.pdf` 常规文件，
+ * 遍历到此为止（绝不递归进论文目录）。
+ *
+ * 旧平铺布局（`<topic>/<名>.pdf`，未迁移的库）继续列出，与 `listPapers` 的
+ * 「读兼容」口径一致；同名时**文件夹赢**（确定性优先级）。
+ *
  * @param dataDir - 论文库根目录。
  */
 export async function readPaperTree(dataDir) {
@@ -70,6 +88,16 @@ export async function readPaperTree(dataDir) {
     catch {
         return out;
     }
+    /** 把一条解码后的多级目录补进文件夹行（幂等：深层路径逐段补齐）。 */
+    const pushFolders = (relDir) => {
+        let acc = '';
+        for (const segment of relDir.split('/').filter(Boolean)) {
+            acc = acc === '' ? segment : `${acc}/${segment}`;
+            if (!out.some((row) => row.type === 'folder' && row.path === acc)) {
+                out.push({ type: 'folder', path: acc, title: segment });
+            }
+        }
+    };
     for (const dir of dirs) {
         if (!dir.isDirectory())
             continue;
@@ -77,35 +105,48 @@ export async function readPaperTree(dataDir) {
             continue;
         // 目录名就是编码后的 topic；解码成多级路径供展示。
         const relDir = decodeTopic(dir.name);
-        const segments = relDir.split('/').filter(Boolean);
-        let acc = '';
-        for (const segment of segments) {
-            acc = acc === '' ? segment : `${acc}/${segment}`;
-            if (!out.some((row) => row.type === 'folder' && row.path === acc)) {
-                out.push({ type: 'folder', path: acc, title: segment });
-            }
-        }
-        let files;
+        pushFolders(relDir);
+        let entries;
         try {
-            files = await readdir(path.join(dataDir, dir.name), { withFileTypes: true });
+            entries = await readdir(path.join(dataDir, dir.name), { withFileTypes: true });
         }
         catch {
             continue;
         }
-        for (const file of files) {
-            if (!file.isFile())
+        // ── 新布局：论文文件夹 `<topic>/<论文名>/<论文名>.pdf` ────────────────
+        // 先扫目录（与 `listPapers` 的顺序一致：论文目录在平铺文件之前判定）。
+        const folderStems = new Set();
+        for (const entry of entries) {
+            if (!entry.isDirectory())
                 continue;
-            if (!/\.pdf$/i.test(file.name))
+            // 论文目录**先判后跳隐藏名**：`listPapers` 同样把 `.hidden/` 这种前导点的
+            // 论文目录列出来（upload 能创建的名字必须能被看见、能点开）。
+            if (!isPaperDir(path.join(dataDir, dir.name, entry.name)))
                 continue;
-            const stem = file.name.slice(0, -4);
-            // `x-zh.pdf` / `x-dual.pdf` 是译文产物，不单独成行。
-            if (VARIANT_SUFFIX.test(stem))
+            folderStems.add(entry.name);
+            out.push({
+                type: 'paper',
+                path: relDir === '' ? entry.name : `${relDir}/${entry.name}`,
+                title: entry.name,
+                topic: dir.name,
+                name: entry.name,
+            });
+        }
+        // ── 旧布局：`<topic>/<名>.pdf`（未迁移的库，读兼容）─────────────────
+        for (const entry of entries) {
+            if (!entry.isFile())
+                continue;
+            if (!isPaperPDF(entry.name))
+                continue;
+            const stem = entry.name.slice(0, -4);
+            // 同名论文文件夹赢：平铺产物已被收纳，不再单独成行。
+            if (folderStems.has(stem))
                 continue;
             out.push({
                 type: 'paper',
-                path: relDir === '' ? file.name : `${relDir}/${file.name}`,
+                path: relDir === '' ? entry.name : `${relDir}/${entry.name}`,
                 title: stem,
-                // 打开上游要的两个坐标：topic 就是磁盘目录名，name 是文件名去掉 .pdf。
+                // 打开上游要的两个坐标：topic 就是磁盘目录名，name 是文献名。
                 topic: dir.name,
                 name: stem,
             });
