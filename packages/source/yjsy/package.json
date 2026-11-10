@@ -1,0 +1,39 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-yjsy",
+  "version": "0.1.0",
+  "description": "浙大研究生教育管理信息系统（yjsy.zju.edu.cn）数据源：本人研究生课表。只读，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/yjsy"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "cas",
+      "network": "public",
+      "writes": false,
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0"
+  }
+}

@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.js",
     "./client": "./lib/client.js",
+    "./cas": "./src/cas.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -36,7 +37,12 @@
       "auth": "none",
       "network": "public",
       "writes": false,
-      "requires": []
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http"
+      ]
     }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0"
   }
 }
