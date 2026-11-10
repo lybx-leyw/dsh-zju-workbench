@@ -20,6 +20,7 @@ import { sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
 import {
   BASE, HOST, Sztz, SztzError, activityView, beijing, category, freshActivities, points, recordView, statusOf,
 } from './sztz.js';
+import { createSztzWrites } from './writes.js';
 
 export const name = 'zju-source-sztz';
 
@@ -73,16 +74,46 @@ export function apply(ctx) {
       return client;
     };
 
+    /**
+     * 写操作集合（Prepare 与 Execute 共用一份，见下面的说明）。
+     *
+     * 惰性构造 + 随客户端重置：`createSztzWrites` 需要已登录的实例，
+     * 而换账号后那份会话不该还挂着旧客户端。
+     */
+    let writesCache = null;
+    const writes = () => {
+      const active = ensure();
+      if (!writesCache || writesCache.client !== active) {
+        writesCache = { client: active, api: createSztzWrites(active) };
+      }
+      return writesCache.api;
+    };
+
     const service = {
       routePath: ROUTE_PATH,
       platform: 'sztz',
       label: '二三四课堂',
-      readOnly: true,
+      // 本包含写方法（报名 / 取消报名），如实标 false。
+      readOnly: false,
       methods: [
         'sztz.activities', 'sztz.projects', 'sztz.newActivities',
         'sztz.myActivities', 'sztz.myCredits', 'sztz.bulletins',
       ],
+      /** 写方法名（成对出现），与只读 `methods` 分开列。 */
+      writeMethods: ['sztz.signupActivityPrepare', 'sztz.signupActivityExecute',
+        'sztz.cancelActivityPrepare', 'sztz.cancelActivityExecute'],
       site: `${BASE}/`,
+
+      /**
+       * 写操作的两个方法。
+       *
+       * `prepare` 算参数与说明，`execute` 才发请求。**审批不在这里** ——
+       * 那是 `packages/tool/campus-write` 的事。
+       */
+      signupActivityPrepare: async (input) => writes().signupActivity.prepare(input),
+      signupActivityExecute: async (signal) => writes().signupActivity.execute(signal),
+      cancelActivityPrepare: async (input) => writes().cancelActivity.prepare(input),
+      cancelActivityExecute: async (signal) => writes().cancelActivity.execute(signal),
 
       /** 注入登录能力（`() => Promise<void>`）。返回撤销函数。 */
       setSessionProvider(handler) {

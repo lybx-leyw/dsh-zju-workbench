@@ -88,3 +88,35 @@ export function csharpCompileFailure() {
   }
   return cachedCompile
 }
+
+let cachedRuntime = null
+
+/**
+ * 应用运行时不支持**内存数据库**吗。
+ *
+ * # 为什么需要这一类
+ *
+ * 上面两类（缺依赖、C# 被拦）之外还有第三类：`scripts/wechat.mjs` 的读库路径
+ * 需要 `node:sqlite` 的 `DatabaseSync.serialize/deserialize` —— 那是
+ * **Node 24.16.0** 才加的能力。本机 24.11.1 上两者都是 `undefined`，
+ * CLI 会如实回 `{"ok":false,"status":"runtime_missing"}`。
+ *
+ * 探测的是**能力存不存在**，不是版本号：宿主可能跑 Electron 的 Node，
+ * 版本号与能力不一定对得上。
+ *
+ * 不把这一条探出来，`profiles.test.mjs` 会因为子进程只回一个 `runtime_missing`
+ * 而**以「JSON 解析失败」的假象失败** —— 那看起来像代码坏了，实际是环境不够。
+ */
+export function runtimeMissing() {
+  if (cachedRuntime !== null) return cachedRuntime
+  try {
+    const { DatabaseSync } = require('node:sqlite')
+    const probe = new DatabaseSync(':memory:')
+    const ok = typeof probe.serialize === 'function' && typeof probe.deserialize === 'function'
+    probe.close?.()
+    cachedRuntime = ok ? false : '本机 Node 的 node:sqlite 没有 serialize/deserialize（需要 >= 24.16.0），读库用例跳过'
+  } catch (error) {
+    cachedRuntime = `node:sqlite 不可用（${error?.code ?? error?.message}），读库用例跳过`
+  }
+  return cachedRuntime
+}

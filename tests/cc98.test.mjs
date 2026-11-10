@@ -658,9 +658,13 @@ test('apply: 注册一条 GET/POST 路由，方法表就是那 22 个只读方�
   assert.equal(status.ok, true);
   // GET 一次给全：能干什么（describe）+ 现在能不能读（status）
   assert.equal(status.value.platform, 'cc98');
-  assert.equal(status.value.readOnly, true);
+  // ⚠️ 这四条 `readOnly` 断言在接写操作时从 true 改成了 false。
+  // 本包现在含 `xxxPrepare` / `xxxExecute` 写方法（见 `writes.js`），
+  // 自描述里写 true 会让「这个包会不会改我的账号」这个问题答错。
+  // 只读方法表 `methods` 仍是 22 条 —— 写方法与它分开列在 `writeMethods`。
+  assert.equal(status.value.readOnly, false);
   assert.equal(status.value.dataDir, null, 'dataDir:null 是"纯内存"，自描述里要如实写 null');
-  assert.equal(status.value.status.readOnly, true);
+  assert.equal(status.value.status.readOnly, false);
   assert.equal(status.value.status.configured, true);
   // 状态里绝不能出现令牌本身
   assert.equal(JSON.stringify(status).includes('access_token'), false);
@@ -669,7 +673,7 @@ test('apply: 注册一条 GET/POST 路由，方法表就是那 22 个只读方�
   assert.ok(status.value.methods.every(m => m.args && typeof m.args === 'object'));
 
   const service = services.get('zhiyunCc98');
-  assert.equal(service.readOnly, true);
+  assert.equal(service.readOnly, false);
   assert.equal(service.methods.length, 22);
   assert.equal(service.describe().platform, 'cc98');
   // 落盘目录默认是 null（只回链接），这条要能自描述出来
@@ -1303,7 +1307,7 @@ test('describe：会话动作与读取方法分开列，且 logout 在清单里'
   const { ctx, services } = fakeContext();
   const dispose = await apply(ctx);
   const described = services.get('zhiyunCc98').describe();
-  assert.equal(described.readOnly, true);
+  assert.equal(described.readOnly, false);
   assert.ok(Array.isArray(described.actions), 'describe 要有 actions');
   const names = described.actions.map((item) => item.action);
   assert.equal(names.includes('cc98.logout'), true, 'logout 必须在自描述里');

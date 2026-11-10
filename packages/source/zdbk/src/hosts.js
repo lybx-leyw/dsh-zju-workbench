@@ -118,6 +118,17 @@ export const ZDBK_SELECTION_PATHS = {
   search: '/xsxk/zzxkghb_cxZzxkGhbDdkcList.html',
   /** 某门课/某课程池下的教学班。 */
   sections: '/xsxk/zzxkghb_cxZzxkGhbJxbList.html',
+  /**
+   * 提交一个教学班志愿。
+   *
+   * ⚠️ 这是**写**端点，虽然名字与上面那几个「cx…（查询）」并列。
+   * 判读写不能看路径长相，要看它改不改变状态 —— 这个会。
+   */
+  select: '/xsxk/zzxkghb_xkBcZyZzxkGhb.html',
+  /** 调整同一志愿组内的顺序（写）。 */
+  reorder: '/xsxk/zzxkghb_xkBcZypxZzxkGhb.html',
+  /** 退选（写）。 */
+  drop: '/xsxk/zzxkghb_tuikBcZzxkGhb.html',
 };
 
 /**

@@ -178,17 +178,43 @@ export class PtaApi {
    * @param options.signal - 中止信号。
    * @returns 解析后的 JSON 对象。
    */
-  async get(path, { query = null, referer = PTA_REFERER, signal } = {}) {
+  /**
+   * 发一次请求并做统一的失败分类。**读写共用**。
+   *
+   * # 为什么把错误分类抽在这里
+   *
+   * 拼题A 的错误信号散在四处：HTTP 状态码、404 的特殊含义（用户不存在）、
+   * 403 的两种原因、以及**包在 200 里**的业务错误。写操作与读操作遇到的
+   * 失败是同一批，所以分类只写一份 —— 复制到 `writes.js` 里必然漂移。
+   *
+   * # 写操作额外看什么
+   *
+   * `submit: true` 时多判一件事：**业务错误里的 `PLATFORM_REJECTED`**。
+   * 答题提交被拒（答案格式不对、题目类型不符）是**业务失败**，不是网络问题，
+   * 那种情况重试没有意义，要让调用方看到平台的原话。
+   *
+   * @param path - 只允许 `/api/` 接口路径。
+   * @param options.method - HTTP 方法（默认 GET）。
+   * @param options.body - 请求体（对象会被 JSON 序列化）。
+   * @param options.query - 查询串。
+   * @param options.referer - Referer。
+   * @param options.signal - 取消信号。
+   * @returns 解析后的响应体。
+   */
+  async send(path, { method = 'GET', body, query = null, referer = PTA_REFERER, signal } = {}) {
     if (typeof path !== 'string' || !path.startsWith('/api/') || path.includes('..')) {
       throw new ClassroomError('INVALID_PATH', '只允许拼题A 的 /api/ 接口路径');
     }
     const target = `${PTA_BASE}${path}${query ? `?${new URLSearchParams(query).toString()}` : ''}`;
     const result = await this.transport.request(target, {
+      method,
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       headers: {
         Accept: 'application/json;charset=UTF-8',
         'Accept-Language': 'zh-CN',
         Referer: referer,
         'User-Agent': USER_AGENT,
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json;charset=UTF-8' }),
       },
       signal,
     });
@@ -201,8 +227,8 @@ export class PtaApi {
       throw new ClassroomError('COOKIE_EXPIRED', '拼题A 登录已失效，请重新粘贴 Cookie', { status: result.status });
     }
     if (result.status === 400) {
-      // 400 往往意味着查询串被双重编码了 —— 把这条线索写进错误里
-      throw new ClassroomError('BAD_REQUEST', '拼题A 返回 400：多半是查询串编码有问题', { status: 400 });
+      // 400 在写请求上通常是答案格式不对；在读请求上多半是查询串编码问题。
+      throw new ClassroomError('BAD_REQUEST', '拼题A 返回 400：请求格式不被接受（读请求多半是查询串编码，写请求多半是答案格式）', { status: 400 });
     }
     if (result.status === 403) {
       // 403 有两种完全不同的原因，别让用户猜：
@@ -231,6 +257,9 @@ export class PtaApi {
       throw new ClassroomError('HTTP', `拼题A 返回 HTTP ${result.status}`, { status: result.status });
     }
 
+    // 有些写接口成功时不返回 JSON（204 / 空体）。那不是错误。
+    if (result.status === 204 || result.text === '' || result.text === 'null') return null;
+
     let data;
     try {
       data = JSON.parse(result.text);
@@ -238,9 +267,14 @@ export class PtaApi {
       if (/^\s*</.test(result.text)) {
         throw new ClassroomError('COOKIE_EXPIRED', '拼题A 返回了网页而不是 JSON，登录态可能已失效');
       }
+      // 写接口可能回纯文本（如 `"ok"`）。
+      if (method !== 'GET') return { raw: result.text };
       throw new ClassroomError('API_SHAPE', '拼题A 返回的 JSON 无法解析');
     }
+    if (data === null) return null;
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      // 写接口可能回一个数组或标量；读接口只认对象。
+      if (method !== 'GET') return { raw: data };
       throw new ClassroomError('API_SHAPE', '拼题A 返回的不是对象');
     }
     // 业务错误包在 200 里
@@ -249,9 +283,22 @@ export class PtaApi {
       if (/USER_NOT_FOUND|UNAUTHORIZED|LOGIN|SESSION/i.test(code)) {
         throw new ClassroomError('COOKIE_EXPIRED', '拼题A Cookie 已失效，请重新登录后粘贴');
       }
-      throw new ClassroomError('PLATFORM_REJECTED', `拼题A 拒绝请求：${data.error.message ?? code}`);
+      throw new ClassroomError('PLATFORM_REJECTED', `拼题A 拒绝请求：${data.error.message ?? code}`, { code });
     }
     return data;
+  }
+
+  /**
+   * 读一个拼题A 接口。
+   *
+   * 薄薄一层 —— 错误分类在 `send` 里，读写共用。
+   *
+   * @param path - 接口路径。
+   * @param options - 同 `send`。
+   * @returns 解析后的响应体。
+   */
+  async get(path, options = {}) {
+    return this.send(path, { ...options, method: 'GET' });
   }
 
   /**
@@ -321,8 +368,39 @@ export class PtaApi {
    * @param options.signal - 中止信号。
    * @returns `{ id, name, description, problemTypes, progress }`。
    */
-  async problemSet(problemSetId, { signal } = {}) {
+  /**
+   * 题集的**答题实例**（对应上游 `query.ts:13` 的 `getExam`）。
+   *
+   * # 为什么需要它
+   *
+   * 「保存 / 提交答案」都要求先有一个 `exam`（答题实例）：提交接口的路径是
+   * `/api/exams/{exam.id}/exam-submissions`。没有实例 = 用户还没在网页上点
+   * 「开始作业」，写操作必须停。
+   *
+   * `serverTime` 也在这里拿 —— 判「是否超过截止时间」要用**服务端**的时间，
+   * 用本机时钟会在时区或时间漂移时判错。
+   *
+   * @param problemSetId - 题集 id。
+   * @param options.signal - 中止信号。
+   * @returns `{ problemSet, exam, serverTime, status }`；`exam` 可能是 `null`。
+   */
+  async getExam(problemSetId, { signal } = {}) {
     const id = ptaId(problemSetId, '题集 ID');
+    const data = await this.get(`/api/problem-sets/${id}/exams`, { signal });
+    // 形状校验照上游：`problemSet.id` 必须回指同一题集，否则说明响应串了。
+    const returnedId = data?.problemSet?.id == null ? null : String(data.problemSet.id);
+    if (returnedId !== null && returnedId !== id) {
+      throw new ClassroomError('API_SHAPE', `题集响应与目标不符：要 ${id}，回来的是 ${returnedId}`);
+    }
+    return {
+      problemSet: data?.problemSet ?? { id },
+      exam: data?.exam ?? null,
+      serverTime: data?.serverTime ?? null,
+      status: data?.status ?? null,
+    };
+  }
+
+  async problemSet(problemSetId, { signal } = {}) {    const id = ptaId(problemSetId, '题集 ID');
     const detail = await this.get(`/api/problem-sets/${id}/exam-problems`, { signal }).catch(() => null);
     const summaries = await this.get(`/api/problem-sets/${id}/problem-summaries`, { signal });
 
@@ -344,12 +422,34 @@ export class PtaApi {
       progress = null;
     }
 
+    // 答题实例：写操作要它，读侧也用得上（页面要显示「还没开始 / 进行中」）。
+    // 拿不到不算失败 —— 没开始的题集本来就没有实例，题集详情仍然可读。
+    let examInfo = null;
+    try {
+      examInfo = await this.getExam(id, { signal });
+    } catch {
+      examInfo = null;
+    }
+
     return {
       id,
       name: String(detail?.problemSet?.name ?? '').trim() || null,
       description: String(detail?.problemSet?.description ?? '').trim() || null,
       problemTypes,
       progress,
+      /**
+       * 答题实例（`null` 表示还没开始）。
+       *
+       * ⚠️ 这个字段是**后补的**：先前 `problemSet()` 只返回前四个字段，
+       * 而 `writes.js` 的 `examOf()` 从这里读 `exam` —— 于是写操作
+       * 「无条件报『题集还没开始作答』」，与用户是否真的开始过无关。
+       * 那是死链，靠补这个字段修好。
+       */
+      exam: examInfo?.exam ?? null,
+      /** 服务端时间（判截止用）。没有时写操作回落到本机时钟。 */
+      serverTime: examInfo?.serverTime ?? null,
+      /** 题集作答状态（`start` 之前是 `null`）。 */
+      examStatus: examInfo?.status ?? null,
     };
   }
 

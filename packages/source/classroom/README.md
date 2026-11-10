@@ -187,13 +187,14 @@ npm run classroom:live-probe -- --live --trace               # 打印每条请�
 每个结果都带 `action` 字段，明说「缺什么、怎么办」—— 只说 `available:false`
 没有用。`asr` 的 `verified` **恒为 false**：这里没算 SHA-256，不冒充校验通过。
 
-### `setup` 明确不做
+### `setup` 尚未实现
 
 上游 `setup`（`core/zju/lib/zhiyun/setup.ts`）是**写操作**：`media` 分支
 `npm install ffmpeg-static@5.3.0`，`asr` 分支从 HuggingFace / hf-mirror 下载
-约 240 MB 模型并落盘。它改的是**本机安装状态**，属于安装层而不是读取层，
-且本仓不执行 `npm install`。所以本包只提供 `check`，`setup` 交给宿主安装层，
-需要它时按 `check` 返回的 `action` 操作。
+约 240 MB 模型并落盘。它改的是**本机安装状态**，属于安装层而不是读取层。
+
+**这条不是裁决，是当前没做。** 本包提供 `check`（只读诊断，会给出 `action`），
+`setup` 未实现，已记进 `coverage-gaps.md` 的待补清单（W-8）。
 
 ## 本地转写（`transcribeAudio`）
 

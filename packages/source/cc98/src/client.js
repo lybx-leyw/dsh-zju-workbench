@@ -178,21 +178,60 @@ export class Cc98Client {
    * @param {AbortSignal} [options.signal] - 取消信号。
    * @returns `{ status, text }`。
    */
-  async send(method, path, { query, anonymous = false, signal } = {}) {
+  /**
+   * 发一次 HTTP 请求。
+   *
+   * # 写请求的 body 有两种形态（照上游实测）
+   *
+   * - **对象** → 序列化成 JSON（`rating-v2` 这类接口要 JSON body）
+   * - **字符串** → 原样发（`like` 的 body 就是一个 `"1"` / `"2"`）
+   *
+   * 不在这里判断该用哪种 —— 由调用方按接口约定给。判错了服务端会拒，
+   * 那比在这里猜一个默认值更容易查。
+   *
+   * @param method - HTTP 方法。
+   * @param path - 接口路径。
+   * @param [options.query] - 查询串。
+   * @param [options.body] - 请求体；对象走 JSON，字符串原样。
+   * @param [options.anonymous] - 不带 Bearer。
+   * @param [options.signal] - 取消信号。
+   * @returns 原始响应（`{ status, headers, text }`）。
+   */
+  async send(method, path, { query, body, anonymous = false, signal } = {}) {
     const url = withQuery(`${CC98_API}${apiPath(path)}`, query);
     const headers = { Accept: 'application/json', Referer: REFERER };
     if (!anonymous) headers.Authorization = `Bearer ${await this.tokens.token()}`;
-    return this.transport.request(url, { method, headers, signal });
+
+    /** @type {Record<string, unknown>} */
+    const init = { method, headers, signal };
+    if (body !== undefined) {
+      if (typeof body === 'string') {
+        headers['Content-Type'] = 'text/plain;charset=UTF-8';
+        init.body = body;
+      } else {
+        headers['Content-Type'] = 'application/json;charset=UTF-8';
+        init.body = JSON.stringify(body);
+      }
+    }
+    return this.transport.request(url, init);
   }
 
   /**
-   * 读一个 CC98 接口。
+   * 调一个 CC98 接口。
    *
-   * 401 时刷新令牌**重试一次**：令牌可能只是到期（`expires_at` 留了 60 秒余量，
-   * 仍可能被服务端提前判废）。若第二次仍是 401，说明密码/账号真有问题，
-   * 交给 `httpError` 报 `LOGIN_REQUIRED` —— 不再重试。
+   * # 401 会刷新令牌重试一次
    *
-   * @param {string} method - 只应传 GET。
+   * 令牌可能只是到期（`expires_at` 留了 60 秒余量，仍可能被服务端提前判废）。
+   * 若第二次仍是 401，说明密码/账号真有问题，交给 `httpError` 报
+   * `LOGIN_REQUIRED` —— 不再重试。
+   *
+   * # 读与写都走这里
+   *
+   * 写请求（`PUT` / `POST` / `DELETE`）由 `writes.js` 调用，body 形态见 `send`。
+   * **本方法不做审批** —— 审批在 `packages/tool/campus-write`。
+   * 数据源只管「怎么和平台说话」，「要不要做」是 tool 的事。
+   *
+   * @param {string} method - `GET` / `PUT` / `POST` / `DELETE`。
    * @param {string} path - 接口路径。
    * @param {object} [options] - 同 `send`。
    * @returns 解析后的响应体。

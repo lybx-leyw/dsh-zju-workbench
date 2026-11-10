@@ -34,6 +34,7 @@
  * 由调用方给出**当前账号**；本包不读凭据文件、也不猜。
  */
 import { sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
+import { createTyysWrites } from './writes.js';
 import {
   APP_LOGIN_SERVICE, ATTENDANCE_STATUS, TyysApp, TyysError, VENUE_LOGIN_SERVICE, VenueClient,
   beijingDate, history, listOrders, listVenues, targetDate, timeRange,
@@ -133,16 +134,46 @@ export function apply(ctx) {
       return targetDate(input, Date.now(), bounded);
     };
 
+    /**
+     * 写操作集合（Prepare 与 Execute 共用同一份）。
+     *
+     * 缓存键是 `venue` 客户端实例：换账号后 `clients()` 会重建，
+     * 写会话不该还挂在旧客户端上。
+     */
+    let writesCache = null;
+    const writes = async () => {
+      const { venue } = clients();
+      if (!writesCache || writesCache.client !== venue) {
+        writesCache = { client: venue, api: createTyysWrites(venue) };
+      }
+      return writesCache.api;
+    };
+
     const service = {
       routePath: ROUTE_PATH,
       platform: 'tyys',
       label: '浙大体艺',
-      readOnly: true,
+      // 本包含写方法（场馆预约 / 取消），如实标 false。
+      readOnly: false,
       methods: [
         'tyys.venues', 'tyys.slots', 'tyys.notice', 'tyys.orders',
         'tyys.attendance', 'tyys.session', 'tyys.identity',
       ],
+      /** 写方法名（成对出现），与只读 `methods` 分开列。 */
+      writeMethods: ['tyys.bookVenuePrepare', 'tyys.bookVenueExecute',
+        'tyys.cancelVenuePrepare', 'tyys.cancelVenueExecute'],
       site: 'http://www.tyys.zju.edu.cn/venue-server',
+
+      /**
+       * 写操作的两个方法。
+       *
+       * `prepare` 算参数与说明，`execute` 才发请求。**审批不在这里** ——
+       * 那是 `packages/tool/campus-write` 的事。
+       */
+      bookVenuePrepare: async (input) => (await writes()).bookVenue.prepare(input),
+      bookVenueExecute: async (signal) => (await writes()).bookVenue.execute(signal),
+      cancelVenuePrepare: async (input) => (await writes()).cancelVenue.prepare(input),
+      cancelVenueExecute: async (signal) => (await writes()).cancelVenue.execute(signal),
 
       /**
        * 注入登录能力。返回撤销函数。

@@ -119,9 +119,12 @@ const ORDER_MAX_PAGES = 10;
  * 上游允许用 POST 的**只读**接口。
  *
  * 上游原集合是四个（`order/info`、`captcha/check`、`vip/view/buddy_no`、
- * `vip/check/buddy_no`）。后三个是「验证码校验」与「同伴码」的步骤，只服务于
- * 提交预约 —— 本包不搬运它们（见 README 的「已知限制」与「写操作去哪了」），
- * 于是只留下真正能读的这一个。
+ * `vip/check/buddy_no`）。当前只有 `order/info` 在**读**路径上（预下单预览）；
+ * 另外三个只服务于提交预约，所以放在 `writes.js` 的写路径里，不进这个集合。
+ *
+ * ⚠️ `captcha/check` 的取题与同伴校验（`vip/view/buddy_no` 一带）此前被写成
+ * 「本包不搬运」，那是**未经裁决的自判**，已改正：验证码已实现（见 `captcha.js`），
+ * 同伴参数**尚未实现**并已记进 `coverage-gaps.md`。
  */
 const READ_POSTS = new Set(['/api/reservation/order/info']);
 

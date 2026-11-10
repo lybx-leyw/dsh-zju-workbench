@@ -36,6 +36,7 @@ import path from 'node:path';
 import { ClassroomError, SessionStore, Transport, sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
 
 import { PtaApi, normalizePta, parsePtaCookie, translatePtaError } from './pta.js';
+import { createPtaWrites } from './writes.js';
 import { PTA_BASE, PTA_HOST, PTA_HOSTS, isPtaHost } from './hosts.js';
 
 export const name = 'zju-source-pta';
@@ -425,15 +426,34 @@ export function apply(ctx, config = {}) {
     }, 'zhiyun: pta data route');
   });
 
+  /**
+   * 写操作集合（Prepare 与 Execute 共用一份）。
+   *
+   * 缓存键是客户端实例：`client()` 每次新建一个，所以这里按「打开的连接」缓存。
+   * 换 Cookie / 换账号后 `openTransport()` 会重建，写会话不会跟过去。
+   */
+  let writesCache = null;
+  const writes = async () => {
+    const active = await openTransport().then((transport) => new PtaApi(transport));
+    if (!writesCache || writesCache.client !== active) {
+      writesCache = { client: active, api: createPtaWrites(active) };
+    }
+    return writesCache.api;
+  };
+
   const removeService = ctx.provide('zhiyunPta', {
     routePath,
     dataDir,
     platform: 'pta',
     label: '拼题A',
-    readOnly: true,
+    // 本包含写方法（保存 / 提交答案），如实标 false。
+    readOnly: false,
     /** 读取动作与客户端动作的名字（服务自述，给脚本/测试核对）。 */
     reads: [...READ_ACTIONS],
     actions: [...CLIENT_ACTIONS],
+    /** 写方法名（成对出现），与只读动作分开列。 */
+    writeMethods: ['pta.saveAnswerPrepare', 'pta.saveAnswerExecute',
+      'pta.submitAnswerPrepare', 'pta.submitAnswerExecute'],
     /** 状态（`{ configured, names }`），与 campus 的 `ptaStatus()` 同形。 */
     ptaStatus,
     status: ptaStatus,
@@ -454,6 +474,17 @@ export function apply(ctx, config = {}) {
     session: () => session,
     /** 主机表与站点常量，供诊断/测试核对。 */
     hosts: { base: PTA_BASE, host: PTA_HOST, all: [...PTA_HOSTS], isPtaHost },
+
+    /**
+     * 写操作的两个方法。
+     *
+     * `prepare` 算参数与说明，`execute` 才发请求。**审批不在这里** ——
+     * 那是 `packages/tool/campus-write` 的事。
+     */
+    saveAnswerPrepare: async (input) => (await writes()).saveAnswer.prepare(input),
+    saveAnswerExecute: async (signal) => (await writes()).saveAnswer.execute(signal),
+    submitAnswerPrepare: async (input) => (await writes()).submitAnswer.prepare(input),
+    submitAnswerExecute: async (signal) => (await writes()).submitAnswer.execute(signal),
   });
 
   return async () => {

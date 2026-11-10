@@ -727,7 +727,10 @@ test('apply() provide 了 zhiyunPta 并注册了 /api/zhiyun-pta', () => {
     assert.equal(pta.routePath, ROUTE_PATH);
     assert.equal(ROUTE_PATH, '/api/zhiyun-pta');
     assert.equal(pta.platform, 'pta');
-    assert.equal(pta.readOnly, true);
+    // ⚠️ 接写操作后从 true 改成 false：本包含 `saveAnswer` / `submitAnswer` 的
+  // Prepare/Execute 对（见 `writes.js`）。只读动作表 `reads` 不变，
+  // 写方法另列在 `writeMethods` 里。
+  assert.equal(pta.readOnly, false);
     assert.equal(routes.length, 1, '必须注册一条路由');
     assert.equal(routes[0].path, '/api/zhiyun-pta');
     // 服务自述的名单要与实现一致 —— 少一个动作等于对外少一个能力

@@ -1882,9 +1882,13 @@ test('index：apply() 真的 provide 了 zhiyunTyys，且只注册一条同源�
   assert.equal(routes[0].kind, 'exact');
 });
 
-test('index：服务面声明只读，方法表与实现对齐，且没有写方法', () => {
+test('index：方法表与实现对齐，写方法与只读方法分开列', () => {
+  // ⚠️ 这条原名是「服务面声明只读……且没有写方法」，在接写操作时改过。
+  // 现在 readOnly 是 false，写方法是 `bookVenuePrepare/Execute` 那一对 ——
+  // 但**只读方法表 `methods` 不变**，写方法单独列在 `writeMethods` 里。
+  // 这个分离是有意的：混在一起会让「能力清单里有 10 条读取」这种误解成立。
   const { tyys } = mount();
-  assert.equal(tyys.readOnly, true);
+  assert.equal(tyys.readOnly, false);
   assert.equal(tyys.platform, 'tyys');
   assert.deepEqual(tyys.methods, [
     'tyys.venues', 'tyys.slots', 'tyys.notice', 'tyys.orders',
@@ -1894,8 +1898,16 @@ test('index：服务面声明只读，方法表与实现对齐，且没有写方
     const key = name.slice('tyys.'.length);
     assert.equal(typeof tyys[key], 'function', `声明了 ${name} 却没有实现`);
   }
-  for (const name of ['book', 'booking', 'cancel', 'submit', 'pay', 'write']) {
-    assert.equal(typeof tyys[name], 'undefined', `数据源不该有 ${name}`);
+  // 写方法成对出现，且都在 `writeMethods` 里（不在 `methods` 里）。
+  assert.deepEqual(tyys.writeMethods, [
+    'tyys.bookVenuePrepare', 'tyys.bookVenueExecute',
+    'tyys.cancelVenuePrepare', 'tyys.cancelVenueExecute',
+  ]);
+  for (const name of tyys.writeMethods) {
+    const key = name.slice('tyys.'.length);
+    assert.equal(typeof tyys[key], 'function', `声明了 ${name} 却没有实现`);
+    // 写方法不能再出现在只读方法表里
+    assert.equal(tyys.methods.includes(name), false, `${name} 不该出现在只读 methods 里`);
   }
 });
 

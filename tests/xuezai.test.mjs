@@ -1241,13 +1241,28 @@ test('apply() 真的 provide 了 zhiyunXuezai 并注册了 /api/zhiyun-xuezai', 
   assert.equal(routes[0].kind, 'exact');
 });
 
-test('服务声明自己是只读数据源（D17）', async () => {
+test('服务声明自己的能力面：只读方法 + 写方法分开列', async () => {
+  // ⚠️ 这条原名是「服务声明自己是只读数据源（D17）」，在接写操作时改过。
+  // D17 判的是「**读**操作进 source、**写**操作要经审批」——不是「source 不许有
+  // 写能力」。写方法现在成对出现在本包里（`xxxPrepare` 算参数、`xxxExecute` 发请求），
+  // 审批在 `packages/tool/campus-write`。所以 readOnly 如实改成 false，
+  // 但两批方法仍然分开列：混在一起会让「能力清单里有 9 条读取」这种误解成立。
   const { service } = await mount();
-  assert.equal(service.readOnly, true);
+  assert.equal(service.readOnly, false);
   assert.equal(service.platform, 'xzzd');
   assert.equal(service.label, '学在浙大');
   for (const method of ['todos', 'xzzdRead', 'fingerprint', 'egress', 'xzzdClient', 'loginProfile', 'reset', 'invalidate']) {
     assert.equal(typeof service[method], 'function', `缺方法 ${method}`);
+  }
+  // 写方法成对出现，且都能调；它们不在只读方法里。
+  assert.deepEqual(service.writeMethods, [
+    'xzzd.submitHomeworkPrepare', 'xzzd.submitHomeworkExecute',
+    'xzzd.retractHomeworkPrepare', 'xzzd.retractHomeworkExecute',
+    'xzzd.rollcallPrepare', 'xzzd.rollcallExecute',
+  ]);
+  for (const name of service.writeMethods) {
+    const key = name.slice('xzzd.'.length);
+    assert.equal(typeof service[key], 'function', `声明了 ${name} 却没有实现`);
   }
 });
 

@@ -17,6 +17,7 @@
  * token 由 `setSession` 注入持久化（默认纯内存，进程重启要重新登录）。
  */
 import { sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
+import { createLabWrites } from './writes.js';
 import { LAB_HOST, LabCourse, LabError, apiSign, jwtExpiresAt, parseOpenWeek } from './lab.js';
 
 export const name = 'zju-source-lab';
@@ -54,6 +55,22 @@ export function apply(ctx) {
     let cached = null;
 
     /**
+     * 写操作集合（Prepare 与 Execute 共用同一份，见服务面里的说明）。
+     *
+     * 惰性构造：`createLabWrites` 需要已登录的客户端，而装配时往往还没登录。
+     * 客户端被重置（`reset()` / 换账号）时这份要一起丢掉 —— 否则写会话还挂在
+     * 旧客户端的令牌上。
+     */
+    let writesCache = null;
+    const writes = async () => {
+      const active = await client();
+      if (!writesCache || writesCache.client !== active) {
+        writesCache = { client: active, api: createLabWrites(active) };
+      }
+      return writesCache.api;
+    };
+
+    /**
      * 取一个已登录的客户端。
      *
      * @param options.fresh - 强制重新登录。
@@ -80,13 +97,39 @@ export function apply(ctx) {
       routePath: ROUTE_PATH,
       platform: 'lab',
       label: '实验课平台',
-      readOnly: true,
+      // 本包含写方法（选实验 / 退选），如实标 false。
+      readOnly: false,
       methods: [
         'lab.terms', 'lab.currentTerm', 'lab.myCourses', 'lab.labs',
         'lab.weekStatus', 'lab.mySelections', 'lab.openStatus', 'lab.notices',
         'lab.myTimetable', 'lab.myInfo',
       ],
+      /**
+       * 写方法名（成对出现）。
+       *
+       * 与只读 `methods` 分开列，不混进去 —— 混在一起会让
+       * 「能力清单里有 12 条读取」这种误解成立。
+       */
+      writeMethods: ['lab.selectLabPrepare', 'lab.selectLabExecute', 'lab.cancelLabPrepare', 'lab.cancelLabExecute'],
       site: `http://${LAB_HOST}:86/lab-course/selectCourse`,
+
+      /**
+       * 写操作的两个方法。
+       *
+       * `prepare` 算出「将要做什么」并缓存参数，`execute` 才真的发请求。
+       * **审批不在这里** —— 那是 `packages/tool/campus-write` 的事。
+       *
+       * # 为什么用 `writes` 缓存而不是每次现造
+       *
+       * `createLabWrites` 内部为每个动作建一个 session（Prepare 存参数、
+       * Execute 取参数）。若 Prepare 与 Execute 各造一份，Execute 会拿到
+       * 一个**空 session** 并报 `NEED_PREPARE` —— 看起来像「用户没批准」，
+       * 实际是接线错了。所以这里缓存一份，两个方法共用。
+       */
+      selectLabPrepare: async (input) => (await writes()).selectLab.prepare(input),
+      selectLabExecute: async (signal) => (await writes()).selectLab.execute(signal),
+      cancelLabPrepare: async (input) => (await writes()).cancelLab.prepare(input),
+      cancelLabExecute: async (signal) => (await writes()).cancelLab.execute(signal),
 
       /** 注入凭据提供者（`() => Promise<{username, password}>`）。返回撤销函数。 */
       setCredentialProvider(handler) {

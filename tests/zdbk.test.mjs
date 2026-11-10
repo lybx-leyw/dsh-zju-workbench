@@ -2189,7 +2189,9 @@ test('服务面：12 条只读方法都接到 invoke（名字与路由 action �
   });
 
   const service = services.zhiyunZdbk;
-  assert.equal(service.readOnly, true);
+  // ⚠️ 接写操作后这里从 true 改成 false：本包现在含 `xxxPrepare` / `xxxExecute`
+  // （见 `writes.js`）。只读方法表 `methods` 仍是 12 条，写方法另列在 `writeMethods`。
+  assert.equal(service.readOnly, false);
   // 服务上的方法名与 `describe()` 的 method 表必须**一一对应**。
   // 这里曾经出过错：表里叫 selectionContext、文档里写 selection.context。
   const described = service.describe().methods.map((m) => m.method.replace('zdbk.', ''));

@@ -59,6 +59,7 @@ import { ClassroomError, SessionStore, object, sharedFetch } from '@lybx-leyw/ds
 import { readCc98 } from '@lybx-leyw/dsh-zju-source-login';
 
 import { Cc98Client } from './client.js';
+import { createCc98Writes } from './writes.js';
 import { Cc98Reader, cc98Id } from './reads.js';
 import { TokenStore } from './token.js';
 import { ubbToText } from './ubb.js';
@@ -340,7 +341,8 @@ export async function apply(ctx, config = {}) {
       // 过期时间给人看，不参与判断（判断在 `TokenStore.token()` 里）。
       expires_at: cached?.expires_at ? new Date(Number(cached.expires_at)).toISOString() : null,
       transport: TRANSPORT_LABEL,
-      readOnly: true,
+      // 本包含写方法（见 `writes.js`），如实标 false。
+      readOnly: false,
       methods: METHODS.map(m => `cc98.${m}`),
     };
   };
@@ -355,7 +357,9 @@ export async function apply(ctx, config = {}) {
     route: ROUTE_PATH,
     platform: 'cc98',
     label: 'CC98 论坛',
-    readOnly: true,
+    // 含写方法，如实标 false。`methods` 仍是只读那 22 条，
+    // 写方法在 `writeMethods` 里单独列 —— 两者不混。
+    readOnly: false,
     dataDir: persist ? dataDir : null,
     /** 帖内文件的落盘目录；`null` 表示只回链接、不落盘（默认）。 */
     downloadDir: reader.downloadDir,
@@ -449,12 +453,34 @@ export async function apply(ctx, config = {}) {
    * 与路由暴露同一批方法，**不加**额外能力 —— 两处能力不一致时，
    * 「HTTP 能调、宿主侧调不到」这类问题会先在页面上暴露出来。
    */
+  /**
+   * 写操作。
+   *
+   * 每个动作是 `xxxPrepare` / `xxxExecute` **两个方法**（见 `writes.js` 的说明）：
+   * `tool/campus-write` 先调 Prepare 拿到「将要做什么」，让用户批准，
+   * 批准后再调 Execute 发请求。**本包不做审批** —— 那是宿主概念。
+   *
+   * 展开成 `signInPrepare` / `signInExecute` 这样的扁平方法名，
+   * 因为服务面是「按名字取方法」的，不套一层嵌套会让调用方少一次判空。
+   */
+  const writes = createCc98Writes(reader);
+  const writeMethods = Object.fromEntries(
+    Object.entries(writes).flatMap(([name, { prepare, execute }]) => [
+      [`${name}Prepare`, prepare],
+      [`${name}Execute`, execute],
+    ]),
+  );
+
   const removeService = ctx.provide('zhiyunCc98', {
     routePath: ROUTE_PATH,
     platform: 'cc98',
     label: 'CC98 论坛',
-    readOnly: true,
+    // 本包现在**含写方法**，`readOnly` 要如实标 false —— 它自描述给人看，
+    // 写成 true 会让「这个包会不会改我的账号」这个问题答错。
+    readOnly: false,
     methods: METHODS.map(m => `cc98.${m}`),
+    /** 写方法名（成对出现，见上）。与只读方法分开列，不混进 `methods`。 */
+    writeMethods: Object.keys(writeMethods),
     describe,
     status,
     logout: async () => { await tokens.clear(); return status(); },
@@ -464,6 +490,7 @@ export async function apply(ctx, config = {}) {
     invoke,
     /** 内联的 UBB 清洗，供调用方处理自己拿到的正文。 */
     ubbToText,
+    ...writeMethods,
   });
 
   return async () => {

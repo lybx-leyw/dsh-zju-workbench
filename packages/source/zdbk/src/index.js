@@ -54,6 +54,7 @@ import { createHash } from 'node:crypto';
 import { Transport, SessionStore, sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
 import { readCard } from '@lybx-leyw/dsh-zju-source-login';
 
+import { createZdbkWrites } from './writes.js';
 import { ZdbkClient } from './client.js';
 import { ZdbkReader } from './reads.js';
 import { casLogin } from './cas.js';
@@ -346,6 +347,28 @@ export async function apply(ctx, config = {}) {
   const readerOf = (api) => new ZdbkReader(api, config.now ?? (() => new Date()));
 
   /**
+   * 写操作集合（Prepare 与 Execute 共用同一份）。
+   *
+   * # 为什么不能每次新建 reader
+   *
+   * 写会话把 Prepare 算好的表单存在 reader 的闭包里，Execute 要取同一份。
+   * 若两个方法各调一次 `readerOf()`，Execute 会拿到空会话并报 `NEED_PREPARE` ——
+   * 看起来像「用户没批准」，实际是接线错了。
+   *
+   * 缓存键是 `api` 实例：换账号 / 会话重置后重新建，不会把旧会话带过去。
+   */
+  let writesCache = null;
+  const writes = async () => {
+    const api = new ZdbkClient(await transport(), {
+      ...(config.retryDelayMs !== undefined ? { retryDelayMs: config.retryDelayMs } : {}),
+    });
+    if (!writesCache || writesCache.api !== api) {
+      writesCache = { api, list: createZdbkWrites(readerOf(api)) };
+    }
+    return writesCache.list;
+  };
+
+  /**
    * 一次「登录 + 真读一次」的登录验证。
    *
    * 为什么不靠 CAS 的状态码：CAS 登成功不等于 `/jwglxt` 认你（回调可能没走完）。
@@ -468,8 +491,13 @@ export async function apply(ctx, config = {}) {
     routePath: ROUTE_PATH,
     platform: 'zdbk',
     label: '教务系统',
-    readOnly: true,
+    // 本包含写方法（选课 / 退课 / 调整志愿顺序），如实标 false。
+    readOnly: false,
     methods: READ_METHODS.map((key) => `zdbk.${key}`),
+    /** 写方法名（成对出现），与只读 `methods` 分开列。 */
+    writeMethods: ['zdbk.selectCoursePrepare', 'zdbk.selectCourseExecute',
+      'zdbk.dropCoursePrepare', 'zdbk.dropCourseExecute',
+      'zdbk.reorderCoursePrepare', 'zdbk.reorderCourseExecute'],
     describe,
     invoke,
     /* ── 上游 5 + 6 条只读 provides ── */
@@ -485,6 +513,22 @@ export async function apply(ctx, config = {}) {
     selectionSections: (options = {}) => invoke('zdbk.selectionSections', options),
     selectionSelected: (options = {}) => invoke('zdbk.selectionSelected', options),
     selectionCredits: () => invoke('zdbk.selectionCredits'),
+
+    /**
+     * 写操作的两个方法。
+     *
+     * `prepare` 算参数与说明，`execute` 才发请求。**审批不在这里** ——
+     * 那是 `packages/tool/campus-write` 的事。
+     *
+     * 与服务面其它方法一样经 `invoke` 风格的惰性取服务：`reader` 在登录后才有，
+     * 而写会话要挂在**同一个** reader 上（Prepare 存的参数 Execute 要用）。
+     */
+    selectCoursePrepare: async (input) => (await writes()).selectCourse.prepare(input),
+    selectCourseExecute: async (signal) => (await writes()).selectCourse.execute(signal),
+    dropCoursePrepare: async (input) => (await writes()).dropCourse.prepare(input),
+    dropCourseExecute: async (signal) => (await writes()).dropCourse.execute(signal),
+    reorderCoursePrepare: async (input) => (await writes()).reorderCourse.prepare(input),
+    reorderCourseExecute: async (signal) => (await writes()).reorderCourse.execute(signal),
 
     /* ── 会话（对应上游 zdbk session login / status / logout） ── */
     /** 会话是否看起来还在（只看 cookie，不发请求、不登录）。 */

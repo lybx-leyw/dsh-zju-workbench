@@ -51,6 +51,7 @@ import { sharedRead } from './reads.js';
 import { xzzdLogin } from './cas/login.js';
 import { XzzdApi, hasXzzdSession, diffTodos } from './xzzd.js';
 import { XzzdReader } from './xzzd-reads.js';
+import { createXuezaiWrites } from './writes.js';
 import { XZZD_BASE, CAS_HOST, XUEZAI_HOSTS } from './hosts.js';
 
 export const name = 'zju-source-xuezai';
@@ -716,11 +717,36 @@ export async function apply(ctx, config = {}) {
     else register();
   });
 
+  /**
+   * 写操作集合（Prepare 与 Execute 共用一份）。
+   *
+   * # 为什么缓存
+   *
+   * 写会话把 Prepare 算好的参数存在闭包里，Execute 要取同一份。若两个方法
+   * 各建一次，Execute 会拿到空会话并报 `NEED_PREPARE` —— 看起来像
+   * 「用户没批准」，实际是接线错了。
+   *
+   * 缓存键是 `xzzdClient()` 的实例：换账号后重新建，旧会话不跟过去。
+   */
+  let writesCache = null;
+  const writes = async () => {
+    const client = await xzzdClient();
+    if (!writesCache || writesCache.client !== client) {
+      writesCache = { client, api: createXuezaiWrites(client) };
+    }
+    return writesCache.api;
+  };
+
   const removeService = ctx.provide(SERVICE_NAME, {
     routePath: ROUTE_PATH,
     platform: 'xzzd',
     label: '学在浙大',
-    readOnly: true,
+    // 本包含写方法（交作业 / 撤回 / 签到），如实标 false。
+    readOnly: false,
+    /** 写方法名（成对出现），与只读方法分开列。 */
+    writeMethods: ['xzzd.submitHomeworkPrepare', 'xzzd.submitHomeworkExecute',
+      'xzzd.retractHomeworkPrepare', 'xzzd.retractHomeworkExecute',
+      'xzzd.rollcallPrepare', 'xzzd.rollcallExecute'],
     /**
      * 待办：`{ xzzd: { ok, rows, error }, pta: { …哨兵, notInThisPackage: true } }`。
      *
@@ -741,6 +767,19 @@ export async function apply(ctx, config = {}) {
     reset,
     /** 待办缓存失效（不重登，只重读）。 */
     invalidate: () => loadTodos.invalidate(),
+
+    /**
+     * 写操作的两个方法。
+     *
+     * `prepare` 算参数与说明，`execute` 才发请求。**审批不在这里** ——
+     * 那是 `packages/tool/campus-write` 的事。
+     */
+    submitHomeworkPrepare: async (input) => (await writes()).submitHomework.prepare(input),
+    submitHomeworkExecute: async (signal) => (await writes()).submitHomework.execute(signal),
+    retractHomeworkPrepare: async (input) => (await writes()).retractHomework.prepare(input),
+    retractHomeworkExecute: async (signal) => (await writes()).retractHomework.execute(signal),
+    rollcallPrepare: async (input) => (await writes()).rollcall.prepare(input),
+    rollcallExecute: async (signal) => (await writes()).rollcall.execute(signal),
   });
 
   return async () => {

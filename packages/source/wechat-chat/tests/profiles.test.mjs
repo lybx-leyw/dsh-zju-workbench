@@ -5,13 +5,13 @@ import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { skipWithout } from './helpers/environment.mjs'
+import { runtimeMissing, skipWithout } from './helpers/environment.mjs'
 
 const script = fileURLToPath(new URL('../scripts/wechat.mjs', import.meta.url))
 // 这个用例跑的是 `scripts/wechat.mjs` 这个 CLI，它静态 import 了
 // lib/content.mjs（→ `htmlparser2`）。缺依赖时子进程直接 ERR_MODULE_NOT_FOUND，
 // 只剩空 stdout，用例会以「JSON 解析失败」的假象失败 —— 所以先探测再跳过。
-const missing = skipWithout('htmlparser2')
+const missing = skipWithout('htmlparser2') || runtimeMissing()
 
 /** 造一个只有 contact.db 占位的账号文件夹；这里只找文件夹，不解密。 */
 function account(folder) {
