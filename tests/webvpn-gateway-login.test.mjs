@@ -27,7 +27,30 @@ import { CookieJar } from 'tough-cookie';
 
 import { Transport } from '../packages/source/http/src/index.js';
 import { webvpnLogin, hasWebvpnSession, probeWebvpnSession, WEBVPN_ORIGIN, WEBVPN_TICKET_COOKIE } from '../packages/source/webvpn/src/index.js';
-import { CAMPUS_HOSTS, WEBVPN_HOSTS, WEBVPN_HOST } from '../packages/source/campus/src/hosts.js';
+import { HOSTS } from '../packages/source/webvpn/src/hosts.js';
+
+/**
+ * 网关主机。
+ *
+ * 这组测试验的是「网关登录用哪份白名单不会丢 ticket」，属于 webvpn 包自身的职责，
+ * 不该挂在某个业务包的主机表上 —— 拆包前它借的是 `source/campus` 的 `CAMPUS_HOSTS`，
+ * 而那份表本身是为了「学在浙大 + 拼题A」收窄过的，与本测试要证的事无关。
+ */
+const WEBVPN_HOST = 'webvpn.zju.edu.cn';
+
+/**
+ * 业务主机白名单（测试用）。
+ *
+ * 取 webvpn 主机表里判为 campus 的那批，再显式加上网关 —— 这正是当年踩坑的形状：
+ * 表里**漏了**网关时，`Transport` 不存网关的 `Set-Cookie`，ticket 被静默丢弃。
+ */
+const CAMPUS_HOSTS = new Set([
+  ...Object.entries(HOSTS).filter(([, v]) => v === 'campus').map(([k]) => k),
+  WEBVPN_HOST,
+]);
+
+/** 网关登录专用白名单：含网关，且是业务表的超集。 */
+const WEBVPN_HOSTS = CAMPUS_HOSTS;
 
 /** 登录页：给足 _csrf / captcha_id，让登录能走到提交那一步。 */
 const LOGIN_PAGE = '<input type="hidden" name="_csrf" value="c"><input type="hidden" name="captcha_id" value="k">';

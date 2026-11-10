@@ -12,7 +12,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 
 import { sharedFetch } from '../packages/source/http/src/index.js';
 
@@ -194,15 +194,39 @@ test('共享出口由 source-http 提供，campus 不再重复注册', async () 
       `zhiyunEgress 缺成员 ${key}（要的是 service 对象里的成员定义，不是调用点或注释）`);
   }
 
-  const campus = await readFile(
-    new URL('../packages/source/campus/src/index.js', import.meta.url), 'utf8',
-  );
-  // 只看代码行，不看注释 —— 那段注释里恰好引用了这串字符。
-  const campusCode = campus
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '');
-  assert.doesNotMatch(campusCode, /ctx\.provide\('zhiyunEgress'/,
-    'campus 不许再 provide 同名服务 —— 会让整个插件激活失败');
+  // 除 `source/http` 之外，**任何** source 包都不许再 provide 这个服务名。
+  //
+  // 拆包前这里只查 `source/campus` 一个文件（当年是它重复注册的），
+  // `campus` 已按平台拆成 `xuezai` + `pta` 并退役，所以改成扫全量：
+  // 这既覆盖了当年的那处、也挡住了将来任何新包再犯同一个错
+  // （同名服务注册两次会让 Cordis 直接抛 `service "zhiyunEgress" has been
+  // registered at <zju-source-http>`，整个插件激活失败、设置面板都点不开）。
+  const offenders = [];
+  for (const group of ['source', 'core', 'client', 'tool']) {
+    const dir = new URL(`../packages/${group}/`, import.meta.url);
+    let names;
+    try {
+      names = await readdir(dir);
+    } catch {
+      continue; // 该分组目录不存在
+    }
+    for (const name of names) {
+      if (group === 'source' && name === 'http') continue; // 它才是提供者
+      let file;
+      try {
+        file = await readFile(new URL(`../packages/${group}/${name}/src/index.js`, import.meta.url), 'utf8');
+      } catch {
+        continue; // 该包没有 src/index.js
+      }
+      // 只看代码行，不看注释 —— 注释里恰好会引用这串字符。
+      const code = file
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/^\s*\/\/.*$/gm, '');
+      if (/ctx\.provide\('zhiyunEgress'/.test(code)) offenders.push(`${group}/${name}`);
+    }
+  }
+  assert.deepEqual(offenders, [],
+    `除 source/http 外不许 provide zhiyunEgress（会让整个插件激活失败）：${offenders.join(', ')}`);
 });
 
 test('各 source 包都接了 sharedFetch（不许再直接用 globalThis.fetch）', async () => {

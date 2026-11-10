@@ -14,7 +14,9 @@ async function boot(t) {
   const ctx = { profileContext: { dir }, get: name => services.get(name), provide: (name, value) => { services.set(name,value); return () => services.delete(name); } };
   ctx.inject = (_names, factory) => factory({ ...ctx, effect: fn => fn(), webServer: { register: row => { handler = row.handler; return () => {}; } } });
   services.set('zhiyunParser', { llm: { resolve: async () => ({model:'fixture'}), call: async request => { calls.push(request); return {text:modelReply}; }, async *callStream(request) { calls.push(request); yield {type:'delta',text:modelReply}; } } });
-  services.set('zhiyunCampus', { todos: async () => ({xzzd:{ok:true,rows:[{id:'external',source:'xzzd',title:'虚构平台任务',due:null}]},pta:{ok:true,rows:[]}}) });
+  // 拆包后两个平台分属两个 source 包，各给一个桩。
+  services.set('zhiyunXuezai', { todos: async () => ({xzzd:{ok:true,rows:[{id:'external',source:'xzzd',title:'虚构平台任务',due:null}]}}) });
+  services.set('zhiyunPta', { todos: async () => ({pta:{ok:true,rows:[]}}) });
   const dispose = await apply(ctx, {}); t.after(dispose);
   return { dir, calls, service: services.get('zhiyunPlanning'), reply: value => { modelReply = typeof value === 'string' ? value : JSON.stringify(value); }, get handler(){return handler;} };
 }

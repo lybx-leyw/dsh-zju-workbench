@@ -1,0 +1,18 @@
+本包的 `lib/` 源码移植自 dsh-zju-assistant（GPL-3.0-only）的 core/dingtalk/。
+移植范围、逐文件对账与我们的改动见本目录 ATTRIBUTION.md。
+
+上游在本仓的位置：packages/vendor/zju-assistant/core/dingtalk/
+上游仓库：https://github.com/Anchorite-no/dsh-zju-assistant
+上游提交：e59b81e1c254d979402f047c6fc8e43bf30b9713（2026-11-05，Prepare 0.1.8）
+
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+
+完整条款见 packages/vendor/zju-assistant/LICENSE（35,149 字节，GPLv3 全文）。
+本包整体按 GPL-3.0-only 分发；上游 LICENSE 的逐字副本随 vendor 保留，不在此重复。
+
+第三方来源说明（上游注释里列为格式依据，**未复制其代码**）：
+- https://bbs.kanxue.com/thread-287455.htm （钉钉 v3 密钥分析，许可证未核实）
+- https://github.com/RedTeamExp/dingding （早期本地库分析，GitHub API license: null
+  = 无许可证，保留所有权利，不得从中取代码）
+- https://www.sqlite.org/fileformat2.html#walformat （SQLite 官方格式规范）

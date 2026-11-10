@@ -358,9 +358,12 @@ test('拼题A 的配置入口归数据源，页面不重复提供', async () => 
   assert.equal(/name="password"/.test(code), false, '本页不该重复录入浙大密码');
 
   // 数据源那一侧必须真的有这个入口，否则两处都没有 = 用户无处可配。
-  const campus = await readFile(
-    new URL('../packages/source/campus/src/client.jsx', import.meta.url), 'utf8',
+  //
+  // 拆包前它在 `source/campus`；按「设置分区跟凭证走」拆开后归 `source/pta`
+  // —— 拼题A 才有独立凭证（Cookie），学在浙大走 CAS、不占分区。
+  const pta = await readFile(
+    new URL('../packages/source/pta/src/client.jsx', import.meta.url), 'utf8',
   );
-  assert.match(campus, /拼题A Cookie/, '校园数据源必须提供拼题A Cookie 的配置入口');
-  assert.match(campus, /settings\.section/, '而且必须注册成设置分区，用户才找得到');
+  assert.match(pta, /拼题A Cookie/, '拼题A 数据源必须提供 Cookie 的配置入口');
+  assert.match(pta, /settings\.section/, '而且必须注册成设置分区，用户才找得到');
 });

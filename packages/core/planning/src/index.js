@@ -12,8 +12,8 @@
  * 不是"读一个来源"，是把**四份东西并到一张表**：
  *
  * ```text
- *   学在浙大待办   ← campus.todos()      （与智云共用 CAS 账号，配置在别处）
- *   拼题A 待办     ← campus.todos()      （Cookie，由 source/campus 的设置分区配）
+ *   学在浙大待办   ← zhiyunXuezai.todos()（与智云共用 CAS 账号，配置在别处）
+ *   拼题A 待办     ← zhiyunPta.todos()   （Cookie，由 source/pta 的设置分区配）
  *   中转站条目     ← 用户自己的创空间     （域名 + 读密钥）
  *   本地留存       ← 本文件维护          （中转站之上的一层缓存）
  * ```
@@ -27,7 +27,7 @@
  *
  * 学在浙大缺的是 **CAS 账号**（与智云共用，配一次即可）；拼题A 缺的是 **Cookie**
  * （短信验证，只能手动导入）。混成一句"待办读取失败"，用户不知道该去哪配。
- * **翻译在 source 里做**：`campus.todos()` 回来的 `error` 已经是能直接上屏的一句。
+ * **翻译在 source 里做**：两个 source 包回来的 `error` 已经是能直接上屏的一句。
  */
 
 import path from 'node:path';
@@ -1913,49 +1913,62 @@ export async function apply(ctx, config = {}) {
   /**
    * 两类待办。
    *
-   * # 数据来源：`zhiyunCampus`（source 包）
+   * # 数据来源：两个 source 包，不是一个
    *
-   * 学在浙大待办与拼题A 题集都由 `@lybx-leyw/dsh-zju-source-campus` 提供。
-   * 本函数**只做转发**：凭证在那边读，错误码在那边翻成能上屏的一句，
-   * 这里不重建错误对象，也没有第二张码表。
+   * 学在浙大待办来自 `zhiyunXuezai`，拼题A 题集来自 `zhiyunPta` ——
+   * 拆包前它们都在 `zhiyunCampus` 里，现在按平台分开了。
    *
-   * ⚠️ 两个平台**并发**读，各自 try/catch：一个来源失败不该让另一个也拿不到
-   * （campus 内部已经这么做了，这里兜的是"它整个没装配"）。
+   * # 为什么在这里合并，而不是让两个 source 包互相依赖
+   *
+   * `xuezai` 与 `pta` 都是 tier 1 业务包，按本仓硬规则**不得互相依赖**。
+   * 而这一层的消费者要的是合并结果 —— 那就只能在消费者这一层合并。
+   * `core/*` 是聚合层，天然适合做这件事。
+   *
+   * ⚠️ 两个平台**并发**读，各自 try/catch：一个来源失败不该让另一个也拿不到。
+   *
+   * @returns `{ xzzd, pta }`，两半的形状都是 `{ ok, rows, error }`。
    */
   const loadTodos = async () => {
-    const campus = ctx.get('zhiyunCampus');
-    if (campus) {
-      try {
-        return await campus.todos();
-      } catch (error) {
-        // campus 内部已经把每条链路收成 error，走到这里说明是它自己没有正常装配
-        const why = { code: 'CAMPUS_FAILED', message: String(error?.message ?? error) };
-        return { xzzd: { ok: false, rows: [], error: why }, pta: { ok: false, rows: [], error: why } };
+    /**
+     * 把一个 source 包的读取包成 `{ ok, rows, error }`。
+     *
+     * @param read - 返回 `{ ok, rows, error }` 的函数，或 `null`（该包没装）。
+     * @param label - 报错时用的名字。
+     * @returns `{ ok, rows, error }`。
+     */
+    const half = async (read, label) => {
+      if (!read) {
+        return { ok: false, rows: [], error: { code: 'CAMPUS_UNAVAILABLE', message: `${label}未启用：需要对应的 source 包` } };
       }
-    }
+      try {
+        const result = await read();
+        return { ok: result?.ok === true, rows: result?.rows ?? [], error: result?.error ?? null };
+      } catch (error) {
+        // 走到这里说明那个包自己没正常装配 —— 它内部应该已经收成 error 了。
+        return { ok: false, rows: [], error: { code: 'CAMPUS_FAILED', message: String(error?.message ?? error) } };
+      }
+    };
 
-    // 没有 campus 就是真的没装，如实说一句，不要编一个空结果。
-    const why = { code: 'CAMPUS_UNAVAILABLE', message: '校园数据包未启用：需要 @lybx-leyw/dsh-zju-source-campus' };
-    return { xzzd: { ok: false, rows: [], error: why }, pta: { ok: false, rows: [], error: why } };
+    const xuezai = ctx.get('zhiyunXuezai');
+    const pta = ctx.get('zhiyunPta');
+
+    const [xzzd, ptaHalf] = await Promise.all([
+      half(xuezai && (() => xuezai.todos().then((r) => r.xzzd)), '学在浙大'),
+      half(pta && (() => pta.todos().then((r) => r.pta)), '拼题A'),
+    ]);
+    return { xzzd, pta: ptaHalf };
   };
 
 
   /** 拼题A 是否已配 Cookie（只回键名，不回值）。 */
   const ptaStatus = async () => {
-    // 优先 campus：Cookie 现在存在它自己的会话文件里
-    const campus = ctx.get('zhiyunCampus');
-    if (campus) {
-      try {
-        return await campus.ptaStatus();
-      } catch (error) {
-        return { configured: false, error: String(error?.message ?? error) };
-      }
-    }
-    if (!ctx.get('zhiyunCampus')) return { configured: false, error: '校园数据包未启用' };
+    // Cookie 存在 `source/pta` 自己的会话文件里（拆包前在 campus）。
+    const pta = ctx.get('zhiyunPta');
+    if (!pta) return { configured: false, error: '拼题A 数据包未启用（需要 @lybx-leyw/dsh-zju-source-pta）' };
     try {
-      const status = await ctx.get('zhiyunCampus').ptaStatus();
-      // campus 的 ptaStatus 只给 `{ configured, names }`（没有 `source`）——
-      // 它不区分"来自环境变量还是会话文件"，那是 omni 的旧概念。
+      const status = await pta.ptaStatus();
+      // `ptaStatus()` 只给 `{ configured, names }` —— 它不区分"来自环境变量还是会话文件"，
+      // 那是 omni 的旧概念。
       return { configured: Boolean(status?.configured), names: status?.names ?? [] };
     } catch (error) {
       return { configured: false, error: String(error?.message ?? error) };
@@ -1975,9 +1988,9 @@ export async function apply(ctx, config = {}) {
    * 设置分区负责（`zju-source-campus`）。这条 HTTP 动作只为兼容保留。
    */
   const savePtaCookie = async (raw) => {
-    const campus = ctx.get('zhiyunCampus');
-    if (!campus) throw new Error('校园数据包未启用（需要 @lybx-leyw/dsh-zju-source-campus），无法保存拼题A Cookie');
-    const result = await campus.savePtaCookie(raw);
+    const pta = ctx.get('zhiyunPta');
+    if (!pta) throw new Error('拼题A 数据包未启用（需要 @lybx-leyw/dsh-zju-source-pta），无法保存拼题A Cookie');
+    const result = await pta.saveCookie(raw);
     log(`拼题A Cookie 已保存（来源：${result?.source ?? '未知'}，${result?.names?.length ?? 0} 个键）`);
     // 与 xxt 的响应同形：页面拿到的都是 `{ source, cookie_names }`。
     return { source: result?.source, cookie_names: result?.names ?? [] };

@@ -14,7 +14,6 @@
         "@lybx-leyw/dsh-zju-source-login",
         "@lybx-leyw/dsh-zju-source-webvpn",
         "@lybx-leyw/dsh-zju-source-http",
-        "@lybx-leyw/dsh-zju-source-campus",
         "@lybx-leyw/dsh-zju-source-classroom",
         "@lybx-leyw/dsh-zju-source-zdbk",
         "@lybx-leyw/dsh-zju-source-xxt",
@@ -25,6 +24,8 @@
         "@lybx-leyw/dsh-zju-source-cnki",
         "@lybx-leyw/dsh-zju-source-lab",
         "@lybx-leyw/dsh-zju-source-sztz",
+        "@lybx-leyw/dsh-zju-source-notice",
+        "@lybx-leyw/dsh-zju-source-tyys",
         "@ggboy123/dsh-paper-reader",
         "@lybx-leyw/dsh-zju-page-paper",
         "@lybx-leyw/dsh-zju-page-today",
@@ -54,7 +55,9 @@
         "@lybx-leyw/dsh-zju-core-classroom-pbl",
         "@lybx-leyw/dsh-zju-core-classroom-media",
         "@lybx-leyw/dsh-zju-core-classroom-generate",
-        "@lybx-leyw/dsh-zju-core-classroom-export"
+        "@lybx-leyw/dsh-zju-core-classroom-export",
+        "@lybx-leyw/dsh-zju-source-xuezai",
+        "@lybx-leyw/dsh-zju-source-pta"
       ],
       "patchReload": "live"
     }

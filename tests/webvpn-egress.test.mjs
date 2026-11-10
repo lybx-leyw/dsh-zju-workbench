@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
  */
 
 const webvpn = await import('../packages/source/webvpn/src/index.js');
-const campusEgress = await import('../packages/source/campus/src/egress.js');
+const campusEgress = await import('../packages/source/webvpn/src/egress.js');
 
 test('校园域名判定要求点边界（evilzju.edu.cn 不是浙大）', () => {
   assert.equal(webvpn.isCampusHost('courses.zju.edu.cn'), true);
@@ -51,7 +51,9 @@ test('campus 的判定 = 共享策略 + 它的业务配置（行为不得漂移�
 });
 
 test('拼题A 在 campus 里仍然判定为直连', () => {
-  assert.equal(campusEgress.isPintiaHost('pintia.cn'), true);
+  // `isPintiaHost` 是 `source/campus` 的私有判据，随那个包退役了；
+  // 留下的是真正要证的性质：拼题A 是公网站，**不**需要绕网关。
+  // 主机归属见 `hosts.js` 的 `PUBLIC_HOSTS`（`pintia.cn` 在其中）。
   assert.equal(campusEgress.needsCampusNetwork('pintia.cn'), false);
   assert.equal(campusEgress.needsCampusNetwork('api.pintia.cn'), false);
 });

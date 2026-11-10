@@ -44,7 +44,11 @@ export const retiredBundles = ['dsh-pages', 'dsh-zhiyun-pro-ui', 'dsh-zhiyun-stu
   // `dsh-zhiyun-shell-ui` → `@lybx-leyw/dsh-zju-ui-shared`。老 profile 里留着旧名时
   // Loader 解析不到该 bundle，整个 profile 起不来；`profile:init` 会按这张表清掉它，
   // 再补上新名（新名从 profile 模板的 bundles 里来）。
-  'dsh-zhiyun-shell-ui'];
+  'dsh-zhiyun-shell-ui',
+  // 校园数据包按平台拆开：`source/campus`（学在浙大 + 拼题A 混装）
+  // → `source/xuezai`（学在浙大）+ `source/pta`（拼题A）。
+  // 老 profile 里还挂着 campus 的话 Loader 解不开，整个 profile 起不来。
+  '@lybx-leyw/dsh-zju-source-campus'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
 
 /**

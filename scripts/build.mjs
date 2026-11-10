@@ -59,8 +59,10 @@ export const CLIENT_PACKAGES = [
   // 一卡通凭据（原 `dsh-zhiyun-source-card`）：目录名 `login`，
   // 发布名 `@lybx-leyw/dsh-zju-source-login`。这一列同样写**目录名**。
   'login',
-  // 学在浙大 / 拼题A 的设置分区（PTA Cookie 粘贴入口）。
-  'campus',
+  // 拼题A 的设置分区（Cookie 粘贴入口）。
+  // 拆包前这一格是 `campus`（学在浙大 + 拼题A 混装），按「设置分区跟凭证走」拆开后
+  // 归 `pta` —— 它才有独立凭证；学在浙大走 CAS，不占分区。
+  'pta',
   // 各数据源的设置分区：只做状态展示与 Cookie 粘贴，不重复收 CAS 密码。
   'xxt',
   'zdbk',
