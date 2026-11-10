@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-plugin-trim",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 dsh-plugin-trim@0.2.2（MIT，原生 DSH 插件包），为「插件」页补上上下文成本与冲突两列 + 显式应用/回滚，把现有的静态插件画像升级成可解释的减负决策（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-plugin-trim": "0.2.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

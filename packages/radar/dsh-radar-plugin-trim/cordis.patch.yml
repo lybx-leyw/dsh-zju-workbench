@@ -1,0 +1,7 @@
+# 本包自己的 patch：只用本仓 id `radar-plugin-trim` 插入本包名。
+#
+# 刻意不使用上游那份 cordis.patch.yml —— 上游 id 为 `plugin-trim`，
+# 与本仓 `dsh-radar-` 前缀的污染防护口径不一致；沿用会绕过 prefix 检查。
+- insert:
+    - id: radar-plugin-trim
+      name: dsh-radar-plugin-trim
