@@ -53,6 +53,23 @@ export function apply(ctx) {
   return ctx.effect(() => {
     let egress = null;
     let disposed = false;
+    /**
+     * 网关会话的来源，由上层注入。
+     *
+     * # 为什么是回调而不是直接读凭据
+     *
+     * 本包是 **tier 0**：不依赖任何业务包，也就不知道凭据存在哪、也不知道
+     * 网关登录该怎么走（那是 `@lybx-leyw/dsh-zju-source-webvpn` 的 `webvpnLogin`
+     * 与 `source/login` 的账号读取）。但出口这一层**必须**在「直连失败、要改走
+     * 网关」之前确认「有人能建会话」—— 否则发出去的请求会被网关回一个登录页
+     * （HTTP 200），各数据源把登录页当业务数据去解析，报出一堆莫名其妙的字段缺失。
+     *
+     * 所以这里只持有**回调**：上层（`source/login` 或 profile 装配层）通过
+     * `setWebvpnSession` 注册一个「请确保网关会话可用」的函数。
+     * 没注册时出口会抛 `WEBVPN_REQUIRED` 并提示去配账号 —— 明确的失败，
+     * 好过把登录页当数据。
+     */
+    let webvpnSession = null;
 
     const ensure = async () => {
       if (egress !== null || disposed) return egress;
@@ -62,6 +79,20 @@ export function apply(ctx) {
         mode: 'auto',
         undici,
         log: () => {}, // 出口每次请求都打日志会淹掉真正的错误；诊断走 state()
+        // 惰性转发：注册可能晚于首次请求（profile 装配顺序不保证）。
+        onWebvpnRequired: webvpnSession === null
+          ? undefined
+          : async () => {
+            const current = webvpnSession;
+            if (current === null) return false;
+            try {
+              return (await current()) !== false;
+            } catch {
+              // 建会话失败（账号没填、密码错、要验证码）→ 不让出口继续改写，
+              // 调用方会拿到 WEBVPN_REQUIRED 而不是一个登录页。
+              return false;
+            }
+          },
       });
       return egress;
     };
@@ -69,6 +100,25 @@ export function apply(ctx) {
     // 服务面是**惰性**的：`createEgress` 要异步装 undici，而 `provide` 是同步的。
     // 所以先给一个占位对象，内部保证首次调用时初始化完成。
     const service = {
+      /**
+       * 注册「请确保网关会话可用」的回调。
+       *
+       * 回调返回 `true`（或任何不是 `false` 的值）表示会话可用；返回 `false`
+       * 或抛错表示建不起来，出口会拒绝改写并抛 `WEBVPN_REQUIRED`。
+       *
+       * 传 `null` 取消注册。返回撤销函数（幂等）。
+       *
+       * ⚠️ 出口实例是**惰性**创建的，且创建后不会再换回调 —— 所以这个注册
+       * 必须在第一次需要走网关的请求**之前**完成。profile 装配层应尽早调用；
+       * 若晚于该请求，那一次仍会抛 `WEBVPN_REQUIRED`，下一次才生效。
+       *
+       * @param handler - 返回 Promise<boolean> 的函数，或 null。
+       * @returns 撤销函数。
+       */
+      setWebvpnSession(handler) {
+        webvpnSession = typeof handler === 'function' ? handler : null;
+        return () => { if (webvpnSession === handler) webvpnSession = null; };
+      },
       /**
        * 与 `fetch` 同签名。
        *

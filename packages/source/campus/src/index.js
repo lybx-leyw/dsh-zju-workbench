@@ -41,7 +41,7 @@ import { xzzdLogin } from './cas/login.js';
 import { XzzdApi, hasXzzdSession, diffTodos } from './xzzd.js';
 import { XzzdReader } from './xzzd-reads.js';
 import { PtaApi, parsePtaCookie } from './pta.js';
-import { CAMPUS_HOSTS, PTA_BASE, XZZD_BASE } from './hosts.js';
+import { CAMPUS_HOSTS, WEBVPN_HOSTS, PTA_BASE, XZZD_BASE } from './hosts.js';
 import { createEgress, loadUndici } from './egress.js';
 import { WEBVPN_ORIGIN, webvpnLogin, hasWebvpnSession } from '@lybx-leyw/dsh-zju-source-webvpn';
 // 「浙大一卡通」账号的唯一读取入口。
@@ -69,7 +69,7 @@ export const inject = ['profileContext'];
 export const ROUTE_PATH = '/api/zhiyun-campus';
 
 export { XzzdApi, PtaApi, parsePtaCookie, hasXzzdSession, diffTodos };
-export { XZZD_BASE, PTA_BASE, XZZD_HOST, PTA_HOST, CAMPUS_HOSTS } from './hosts.js';
+export { XZZD_BASE, PTA_BASE, XZZD_HOST, PTA_HOST, CAMPUS_HOSTS, WEBVPN_HOSTS } from './hosts.js';
 
 /**
  * 本包的统一错误形状。
@@ -217,7 +217,7 @@ export async function apply(ctx, config = {}) {
       if (!account) {
         throw fault('WEBVPN_NOT_CONFIGURED', '当前在校外，访问学在浙大需要 WebVPN，但还没配「上网账号」：去「设置 → 浙大一卡通」的 WebVPN 一栏填一次。');
       }
-      const transport = transportFor(webvpnSession, `${WEBVPN_ORIGIN}/login`, { direct: true });
+      const transport = transportFor(webvpnSession, `${WEBVPN_ORIGIN}/login`, { direct: true, webvpn: true });
       await webvpnLogin(transport, account);
       await webvpnSession.save();
       log('WebVPN 会话已建立');
@@ -253,12 +253,13 @@ export async function apply(ctx, config = {}) {
    * `direct: true` 让这个 Transport **绕过 WebVPN**：网关自己不能被改写，
    * 否则就是"网关的网关"无限套娃。
    */
-  const transportFor = (session, referer, { direct = false } = {}) => new Transport({
+  const transportFor = (session, referer, { direct = false, webvpn = false } = {}) => new Transport({
     session,
     fetch: direct && typeof config.fetch !== 'function' ? egress.send : campusFetch,
     timeoutMs: config.timeoutMs ?? 20000,
-    // 本包要碰的全部主机：CAS 域 + 学在浙大 + 拼题A
-    hosts: CAMPUS_HOSTS,
+    // 主机白名单按用途分档（见下方 `WEBVPN_HOSTS` 的注释）：
+    // 业务请求不需要网关域，网关登录必须含网关自己。
+    hosts: webvpn ? WEBVPN_HOSTS : CAMPUS_HOSTS,
     referer,
     log: config.verbose ? (entry) => log(`${entry.method} ${entry.host}${entry.path} → ${entry.status}`) : undefined,
   });

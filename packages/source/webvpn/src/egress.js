@@ -41,6 +41,7 @@
  */
 
 import { toWebvpnUrl, fromWebvpnUrl, WEBVPN_HOST } from './protocol.js';
+import { classifyHost, HOSTS, HOSTS_GENERATED_AT, needsCas as hostNeedsCas } from './hosts.js';
 import { WebvpnError } from './errors.js';
 
 /**
@@ -103,23 +104,94 @@ export function isPublicHost(hostname, suffixes = []) {
 /**
  * 这个主机是否**必须**走校园网（也就是校外的唯一解法是 WebVPN）。
  *
- * 网关自己不算：它本来就在公网上，校外可达。
+ * # 三级判定（D4/D5 裁决）
+ *
+ * 从前这里只有一条规则：「`*.zju.edu.cn` 就要校园网」。那条规则是**对域名规律
+ * 的猜测**，两个方向都会错 —— 教务网、学在浙大、智云、体艺、研究生教务实测
+ * 从校外**能直连**却被强制绕道；而 `cc98.org`（不在该后缀下）与实验平台的
+ * 私网 IP `10.203.16.55` 只在校内可达却被判直连，校外必然失败。
+ *
+ * 现在改成按 `hosts.js` 的主机表判定，三级：
+ *
+ *   1. `public`  → **永不**走校园网（用户选了「都走网关」也不改）；
+ *   2. `campus`  → 需要校园网；
+ *   3. `unknown` → 回退到原有的后缀规则（`isCampusHost`），
+ *      即 `*.zju.edu.cn` 绕网关、其余直连。**保守**，与改动前的行为一致，
+ *      不会因为换了表而让既有站点突然改变判定。
+ *
+ * `directSuffixes` 仍然优先于表：它是业务包声明的「这些站走公网」，
+ * 属于业务知识，比表更具体。
+ *
+ * 网关自己永远不算需要校园网：它本来就在公网上，校外可达；
+ * 若把它也改写就是「网关的网关」，无限递归。
  *
  * @param hostname - 主机名。
- * @param options.directSuffixes - 额外走公网的后缀。
+ * @param options.directSuffixes - 额外走公网的后缀（业务侧注入）。
  * @returns 是否需要校园网。
  */
 export function needsCampusNetwork(hostname, { directSuffixes = [] } = {}) {
-  const host = String(hostname ?? '').toLowerCase();
+  const host = String(hostname ?? '').toLowerCase().replace(/\.$/, '');
   if (host === WEBVPN_HOST) return false;
+  // 业务侧点名的公网站优先：它比表更具体。
   if (isPublicHost(host, directSuffixes)) return false;
-  return isCampusHost(host);
+
+  switch (classifyHost(host)) {
+    case 'public':
+      return false;
+    case 'campus':
+      return true;
+    default:
+      // unknown：回退后缀规则，保持既有行为。
+      return isCampusHost(host);
+  }
+}
+
+/**
+ * 某个主机这次该走哪条路 —— 不探测、不看 `mode`，只看归属表。
+ *
+ * 与 {@link needsCampusNetwork} 的区别：这个返回三态，把「表里没有」暴露给
+ * 调用方；`needsCampusNetwork` 是它折叠成布尔后的历史接口。
+ *
+ * @param hostname - 主机名。
+ * @param options.directSuffixes - 额外走公网的后缀。
+ * @returns `'public' | 'campus' | 'unknown'`。
+ */
+export function hostNetwork(hostname, { directSuffixes = [] } = {}) {
+  const host = String(hostname ?? '').toLowerCase().replace(/\.$/, '');
+  if (isPublicHost(host, directSuffixes)) return 'public';
+  return classifyHost(host);
 }
 
 /** 把 `'1'` / `'2'` 解释成"在校园网内"。其余（含空）都是"不在"。 */
 export function interpretCampusProbe(text) {
   const value = String(text ?? '').trim();
   return value === '1' || value === '2';
+}
+
+/** 学校网站群把校外读者挡下来时跳去的页面（`hosts.ts:27` 的同名常量）。 */
+const NO_PERMIT_PATH = '/nopermit_zjusub.jsp';
+
+/**
+ * 这个响应是不是「只给校内看」的拒绝页。
+ *
+ * 网站群对某些只给校内看的页面，会把校外访问**以 200 返回一个拒绝页**，
+ * 地址落在 `nopermit_zjusub.jsp`（可能带 `?parentUrl=…`）。只看状态码发现不了，
+ * 所以按响应地址的路径匹配。
+ *
+ * 只读 `response.url`（undici 与全局 fetch 都提供），不读 body —— 读 body 会
+ * 把这层变成需要消费流的异步判断，而且拒绝页可能很大。
+ *
+ * @param response - 一次直连得到的响应。
+ * @returns 是否为「无权访问」页。
+ */
+function isNoPermitResponse(response) {
+  const landed = typeof response?.url === 'string' ? response.url : '';
+  if (!landed) return false;
+  try {
+    return new URL(landed).pathname === NO_PERMIT_PATH;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -168,6 +240,25 @@ export function createEgress({
   let campus = null;
   /** 当前是否正在用 WebVPN（用于状态展示与日志）。 */
   let usingWebvpn = false;
+  /**
+   * 本次会话里「直连不通、已改走网关」的主机集合（W3，D6 裁决：会话内持久）。
+   *
+   * # 为什么需要它
+   *
+   * 改动前每次请求都重新 `routeFor`，同一个主机可能反复
+   * 「直连失败 → 升级 → 下一次又先直连失败」。在校园网外访问 `notice` 那类
+   * 逐站判定为 public、实际却只给校内看的页面时，用户会连着吃几次超时。
+   *
+   * 上游的口径是：某主机一旦直连不通、或落到「无权访问」页，就**在这次运行里**
+   * 移出直连集合，之后直接走网关（`jju-assistant` 的 `transport.ts:139`
+   * `open.delete(host)`）。这里照同一语义实现。
+   *
+   * # 为什么是「持久到会话结束」而不是「只重试这一次」
+   *
+   * 网络在同一会话内突变的情况少，而每次失败都要等一个连接超时；
+   * 反复试探的代价比偶尔多绕一跳高得多。用户换了网络（`forget()`）时清空。
+   */
+  const downgraded = new Set();
 
   const agentFor = () => {
     if (!undici) return undefined;
@@ -223,14 +314,26 @@ export function createEgress({
   async function routeFor(url) {
     const target = url instanceof URL ? url : new URL(String(url));
     if (mode === 'direct') return 'direct';
+    // 本次会话里已降级的主机直接走网关，不再重新试探直连。
+    //
+    // ⚠️ 这里是**唯一**一条「因为过去失败过而改道」的判据，而且它**按主机**记账。
+    //    历史实现还读过 `usingWebvpn` —— 那是个全局闩锁：任意一个主机降级之后，
+    //    所有需要校园网的主机都跟着改道。实测后果是「sztz 失败一次，
+    //    另一个本来能直连的站点也被推去网关」。降级必须 per-host。
+    if (downgraded.has(target.hostname)) return 'webvpn';
     if (mode === 'webvpn') return needsCampusNetwork(target.hostname, { directSuffixes }) ? 'webvpn' : 'direct';
-    // CAS 与 identity 是公网服务，与校园网身份无关。
+    // 登录域是**公网服务**，与校园网身份无关。这条必须在 auto 分支之前判：
+    // 放在分支里会让 `mode: 'webvpn'` 把 zjuam 也改写，变成「网关的网关」。
     if (PUBLIC_AUTH_HOSTS.includes(target.hostname)) return 'direct';
     // auto
     if (!needsCampusNetwork(target.hostname, { directSuffixes })) return 'direct';
-    const inside = await probeCampus();
-    // 探不到时按直连试：校园网里直连永远是对的，校外直连失败后由调用方升级。
-    return usingWebvpn && inside !== true ? 'webvpn' : 'direct';
+    // 先探一次，但**不论探到什么都先试直连**：
+    //   - 在校园网内直连永远是对的；
+    //   - 在校外，很多主机其实也能直连（这正是 D4 那张表的意义），
+    //     试探失败的代价是一次连接超时，而误绕过网关的代价是「明明能通却打不开」。
+    // 探测结果的用途在 `fetchWithEgress` 里 —— 它决定**失败后是否值得升级**。
+    await probeCampus();
+    return 'direct';
   }
 
   /**
@@ -278,23 +381,38 @@ export function createEgress({
   async function fetchWithEgress(url, init = {}) {
     const target = url instanceof URL ? url : new URL(String(url));
     const route = await routeFor(target);
+    // 只有「需要校园网」的主机才值得因失败而永久降级；公网站失败是它自己的事。
+    const mayDowngrade = mode === 'auto' && needsCampusNetwork(target.hostname, { directSuffixes });
 
     if (route !== 'webvpn') {
       try {
-        return await send(target, init);
+        const response = await send(target, init);
+        // 学校网站群会把校外的访问挡到「无权访问」页。这时的 HTTP 状态是 200，
+        // 只看状态码发现不了 —— 上游靠识别这个路径（`transport.ts:28` 的
+        // `NO_PERMIT_PATH`），这里照同一口径。
+        if (mayDowngrade && isNoPermitResponse(response)) {
+          log(`${target.hostname} 这一页只给校内看，改走 WebVPN`);
+          await ensureWebvpnReady(target.hostname, null);
+          downgraded.add(target.hostname);
+          usingWebvpn = true;
+          return send(toWebvpnUrl(target), init);
+        }
+        return response;
       } catch (error) {
         // 只重试安全的读；绝不重放凭据提交。
-        const worthEscalating = mode === 'auto'
-          && needsCampusNetwork(target.hostname, { directSuffixes })
+        const worthEscalating = mayDowngrade
           && campus !== true
           && ['GET', 'HEAD'].includes(String(init.method ?? 'GET').toUpperCase())
           && !init.signal?.aborted;
         if (!worthEscalating) throw error;
-        if (typeof onWebvpnRequired === 'function' && (await onWebvpnRequired()) === false) throw error;
+        await ensureWebvpnReady(target.hostname, error);
         log(`${target.hostname} 直连失败（${error?.code ?? error?.message}），网络未探明，试一次 WebVPN`);
         usingWebvpn = true;
         try {
-          return await send(toWebvpnUrl(target), init);
+          const response = await send(toWebvpnUrl(target), init);
+          // 升级成功 → 记住这个主机，本次会话不再先试直连（W3）。
+          downgraded.add(target.hostname);
+          return response;
         } catch {
           // 升级也失败：把**最初**那个错误抛出去。它更接近"到底怎么了"，
           // 而升级只是我们的一次尝试，不该覆盖原始证据。
@@ -303,14 +421,47 @@ export function createEgress({
       }
     }
 
-    if (typeof onWebvpnRequired === 'function' && (await onWebvpnRequired()) === false) {
-      throw new WebvpnError('WEBVPN_REQUIRED', '访问校园站点需要 WebVPN，但还没有可用的 WebVPN 会话');
-    }
+    // route === 'webvpn'：确定要走网关。此时同样必须先确认「有人能建会话」，
+    // 否则发出去的就是一个会被网关回登录页的请求（见 ensureWebvpnReady 的注释）。
+    await ensureWebvpnReady(target.hostname, null);
     usingWebvpn = true;
     if (!undici) {
       log('warn: 没有 undici，WebVPN 请求仍会受全局代理影响');
     }
     return send(toWebvpnUrl(target), init);
+  }
+
+  /**
+   * 决定能不能真的走网关，并在不能时给出可行动的错。
+   *
+   * # 为什么不能「没传回调就直接改写」（历史缺陷）
+   *
+   * 历史实现是 `typeof onWebvpnRequired === 'function' && (...)`：**没传回调时
+   * 条件整体为 false，于是直接往下改写并发出去**。而 `source/http` 建共享出口时
+   * 恰恰没传它 —— 结果是「校外 + 直连失败」时，请求被改写到网关，
+   * 网关回的是**登录页**（HTTP 200），`cc98` / `zdbk` / `xxt` / `classroom`
+   * 会把登录页当成业务数据去解析，报出一堆莫名其妙的字段缺失。
+   *
+   * 现在的口径与上游一致：**没有回调就没有人负责建立网关会话**，
+   * 这时不能假装能走网关，而要抛 `WEBVPN_REQUIRED` 让调用方去配账号。
+   * 回调返回 `false` 同样是「这个人现在建不了会话」。
+   *
+   * @param hostname - 目标主机（只用于错误文案）。
+   * @param cause - 触发升级的原始错误，有的话挂进 details 便于排查。
+   * @throws {WebvpnError} code `WEBVPN_REQUIRED`。
+   */
+  async function ensureWebvpnReady(hostname, cause) {
+    if (typeof onWebvpnRequired !== 'function') {
+      throw new WebvpnError(
+        'WEBVPN_REQUIRED',
+        `访问 ${hostname} 需要 WebVPN，但这一层没有配置网关会话的建立方式。`
+        + '请先在「设置 → 浙大一卡通」里填 WebVPN 的上网账号与密码。',
+        cause ? { cause } : {},
+      );
+    }
+    if ((await onWebvpnRequired()) === false) {
+      throw new WebvpnError('WEBVPN_REQUIRED', `访问 ${hostname} 需要 WebVPN，但还没有可用的 WebVPN 会话`);
+    }
   }
 
   return {
@@ -321,8 +472,15 @@ export function createEgress({
     toLogical,
     routeFor,
     probeCampus,
-    /** 清掉探测缓存（换了网络、或用户改了设置时用）。 */
-    forget() { campus = null; },
+    /**
+     * 清掉探测缓存与降级集合（换了网络、或用户改了设置时用）。
+     *
+     * 两样都要清：只清探测结果的话，某个主机仍会因为上一张网络下的失败被
+     * 永久绕网关 —— 用户明明回到校园网了却还在走网关。
+     */
+    forget() { campus = null; downgraded.clear(); },
+    /** 本次会话里已降级到网关的主机（诊断用）。 */
+    downgradedHosts() { return [...downgraded]; },
     /** 给状态面板/日志用的一句事实。 */
     state() {
       return {
@@ -330,6 +488,7 @@ export function createEgress({
         campus: campus === null ? 'unknown' : campus ? 'inside' : 'outside',
         viaWebvpn: usingWebvpn,
         degraded: !undici,
+        downgraded: [...downgraded],
       };
     },
     close() {

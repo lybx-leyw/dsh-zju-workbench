@@ -9,13 +9,19 @@
     "./protocol": "./src/protocol.js",
     "./login": "./src/login.js",
     "./egress": "./src/egress.js",
+    "./hosts": "./src/hosts.js",
+    "./doctor": "./src/doctor.js",
     "./package.json": "./package.json"
   },
   "files": [
     "README.md",
     "src/",
+    "scripts/",
     "cordis.patch.yml"
   ],
+  "scripts": {
+    "probe:hosts": "node scripts/probe-hosts.mjs"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",

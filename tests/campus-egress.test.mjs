@@ -52,8 +52,15 @@ test('拼题A 走公网，不该被当成校园站点', () => {
 
 test('WebVPN 网关自己不算"需要校园网" —— 否则会无限套网关', () => {
   assert.equal(needsCampusNetwork('webvpn.zju.edu.cn'), false);
-  assert.equal(needsCampusNetwork('courses.zju.edu.cn'), true);
-  assert.equal(needsCampusNetwork('zjuam.zju.edu.cn'), true);
+  // ⚠️ D4 裁决后改过：`courses.zju.edu.cn` 实测公网可达，现在是 public。
+  // 用真正只在校内的站点来验这条语义。
+  assert.equal(needsCampusNetwork('sztz.zju.edu.cn'), true, '二课平台只在校内');
+  assert.equal(needsCampusNetwork('cc98.org'), true, 'CC98 不在 zju 域下但只在校内');
+  // 公网站点永远不需要校园网。
+  assert.equal(needsCampusNetwork('courses.zju.edu.cn'), false, '实测公网可达');
+  assert.equal(needsCampusNetwork('zdbk.zju.edu.cn'), false, '实测公网可达');
+  // 登录域：CAS 是公网服务，与是否在校园网无关。
+  assert.equal(needsCampusNetwork('zjuam.zju.edu.cn'), false);
 });
 
 test('校园网探测的返回值只认 1 / 2', () => {
@@ -151,8 +158,11 @@ test('登录页解析不能被相似字段名骗到', () => {
 });
 
 test('没有字段时回空串，不抛错', () => {
-  assert.deepEqual(parseWebvpnLoginPage('<html></html>'), { csrf: '', captchaId: '' });
-  assert.deepEqual(parseWebvpnLoginPage(null), { csrf: '', captchaId: '' });
+  // W5 之后返回值多了 key / iv（来自登录页内联的 encrypt(...) 调用）。
+  // 页面上没有它们时回空串，由 webvpnPassword 决定是否回退到内置常量。
+  const empty = { csrf: '', captchaId: '', key: '', iv: '' };
+  assert.deepEqual(parseWebvpnLoginPage('<html></html>'), empty);
+  assert.deepEqual(parseWebvpnLoginPage(null), empty);
 });
 
 /* ────────────────────────────────────── 登录失败的归因 */
@@ -216,14 +226,15 @@ test('direct 模式下任何域名都直连，且每个请求都带上自己的 
   }
 });
 
-test('webvpn 模式：校园域名改写，公开站点不动', async () => {
+test('webvpn 模式：只在校内的站点改写，公网站点不动', async () => {
   const fake = fakeUndici([['*', () => new Response('ok', { status: 200 })]]);
-  const egress = createEgress({ mode: 'webvpn', undici: fake.module });
+  const egress = createEgress({ mode: 'webvpn', undici: fake.module, onWebvpnRequired: () => true });
 
-  await egress.fetch('https://courses.zju.edu.cn/api/x');
+  // D4：改用真正 campus 的站点来验改写（courses 现在判 public，不绕网关）。
+  await egress.fetch('https://sztz.zju.edu.cn/api/x');
   await egress.fetch('https://pintia.cn/api/y');
 
-  assert.ok(fake.calls[0].url.startsWith(WEBVPN_ORIGIN), '校园域名要走网关');
+  assert.ok(fake.calls[0].url.startsWith(WEBVPN_ORIGIN), '只在校内的站点要走网关');
   assert.ok(fake.calls[0].url.includes('/https/'), '要被改写成网关编码路径');
   assert.equal(fake.calls[1].url, 'https://pintia.cn/api/y', '拼题A 走公网，不该绕网关');
 });
@@ -234,10 +245,10 @@ test('auto 模式：探到在校园网内 → 直连，且只探一次', async (
     [CAMPUS_PROBE_URL, () => { probes += 1; return new Response('1', { status: 200 }); }],
     ['*', () => new Response('ok', { status: 200 })],
   ]);
-  const egress = createEgress({ mode: 'auto', undici: fake.module });
+  const egress = createEgress({ mode: 'auto', undici: fake.module, onWebvpnRequired: () => true });
 
-  await egress.fetch('https://courses.zju.edu.cn/api/a');
-  await egress.fetch('https://courses.zju.edu.cn/api/b');
+  await egress.fetch('https://sztz.zju.edu.cn/api/a');
+  await egress.fetch('https://sztz.zju.edu.cn/api/b');
 
   assert.equal(probes, 1, '探测结果要缓存：每次请求都探一遍会把延迟翻倍');
   assert.equal(fake.calls.filter((c) => !c.url.includes(CAMPUS_PROBE_URL)).length, 2);
@@ -251,28 +262,28 @@ test('auto 模式：探到在校外但业务站点可直连 → 保持直连', a
     [CAMPUS_PROBE_URL, () => new Response('0', { status: 200 })],
     ['*', () => new Response('ok', { status: 200 })],
   ]);
-  const egress = createEgress({ mode: 'auto', undici: fake.module });
+  const egress = createEgress({ mode: 'auto', undici: fake.module, onWebvpnRequired: () => true });
 
-  await egress.fetch('https://courses.zju.edu.cn/api/a');
+  await egress.fetch('https://sztz.zju.edu.cn/api/a');
 
   const apiCall = fake.calls.find((c) => !c.url.includes(CAMPUS_PROBE_URL));
-  assert.ok(apiCall.url.startsWith('https://courses.zju.edu.cn/'), '校园探测不能否定业务站点的直连能力');
+  assert.ok(apiCall.url.startsWith('https://sztz.zju.edu.cn/'), '校园探测不能否定业务站点的直连能力');
 });
 
 test('auto 模式：探不到网络时先试直连，直连失败才升级', async () => {
   const fake = fakeUndici([
     [CAMPUS_PROBE_URL, () => { throw Object.assign(new Error('probe down'), { code: 'ECONNREFUSED' }); }],
     [WEBVPN_ORIGIN, () => new Response('via-webvpn', { status: 200 })],
-    ['courses.zju.edu.cn', () => { throw Object.assign(new Error('direct down'), { code: 'ECONNRESET' }); }],
+    ['sztz.zju.edu.cn', () => { throw Object.assign(new Error('direct down'), { code: 'ECONNRESET' }); }],
   ]);
-  const egress = createEgress({ mode: 'auto', undici: fake.module });
+  const egress = createEgress({ mode: 'auto', undici: fake.module, onWebvpnRequired: () => true });
 
-  const response = await egress.fetch('https://courses.zju.edu.cn/api/a');
+  const response = await egress.fetch('https://sztz.zju.edu.cn/api/a');
   assert.equal(await response.text(), 'via-webvpn', '直连失败后要升级到 WebVPN');
 
   // 顺序必须是「先直连、再网关」—— 校园网里直连永远是对的
   const order = fake.calls.map((c) => c.url);
-  assert.ok(order[1].startsWith('https://courses.zju.edu.cn'));
+  assert.ok(order[1].startsWith('https://sztz.zju.edu.cn'));
   assert.ok(order[2].startsWith(WEBVPN_ORIGIN));
 });
 
@@ -281,12 +292,12 @@ test('auto 模式：已确认在校园网内时直连失败不升级', async () 
   // 这时把人赶去配一个根本用不到的网关账号，比如实报错更糟。
   const fake = fakeUndici([
     [CAMPUS_PROBE_URL, () => new Response('1', { status: 200 })],
-    ['courses.zju.edu.cn', () => { throw Object.assign(new Error('down'), { code: 'ECONNRESET' }); }],
+    ['sztz.zju.edu.cn', () => { throw Object.assign(new Error('down'), { code: 'ECONNRESET' }); }],
     [WEBVPN_ORIGIN, () => new Response('via-webvpn', { status: 200 })],
   ]);
-  const egress = createEgress({ mode: 'auto', undici: fake.module });
+  const egress = createEgress({ mode: 'auto', undici: fake.module, onWebvpnRequired: () => true });
 
-  await assert.rejects(() => egress.fetch('https://courses.zju.edu.cn/api/a'), { code: 'ECONNRESET' });
+  await assert.rejects(() => egress.fetch('https://sztz.zju.edu.cn/api/a'), { code: 'ECONNRESET' });
   assert.equal(
     fake.calls.some((c) => c.url.startsWith(WEBVPN_ORIGIN)), false,
     '在校园网内不该因为直连失败就去配 WebVPN',
@@ -297,35 +308,35 @@ test('升级也失败时抛最初那个错误，而不是升级后的错误', as
   // 原始错误更接近"到底怎么了"；升级只是我们的一次尝试，不该覆盖证据。
   const fake = fakeUndici([
     [CAMPUS_PROBE_URL, () => { throw Object.assign(new Error('probe down'), { code: 'ECONNREFUSED' }); }],
-    ['courses.zju.edu.cn', () => { throw Object.assign(new Error('direct down'), { code: 'ECONNRESET' }); }],
+    ['sztz.zju.edu.cn', () => { throw Object.assign(new Error('direct down'), { code: 'ECONNRESET' }); }],
     [WEBVPN_ORIGIN, () => { throw Object.assign(new Error('gateway down'), { code: 'WEBVPN_DOWN' }); }],
   ]);
-  const egress = createEgress({ mode: 'auto', undici: fake.module });
+  const egress = createEgress({ mode: 'auto', undici: fake.module, onWebvpnRequired: () => true });
 
-  await assert.rejects(() => egress.fetch('https://courses.zju.edu.cn/api/a'), { code: 'ECONNRESET' });
+  await assert.rejects(() => egress.fetch('https://sztz.zju.edu.cn/api/a'), { code: 'ECONNRESET' });
 });
 
 test('auto 模式：直连拿到 4xx 不重试 —— 那是业务答复，不是网络故障', async () => {
   const fake = fakeUndici([
     [CAMPUS_PROBE_URL, () => { throw Object.assign(new Error('down'), { code: 'ECONNREFUSED' }); }],
-    ['courses.zju.edu.cn', () => new Response('nope', { status: 401 })],
+    ['sztz.zju.edu.cn', () => new Response('nope', { status: 401 })],
     [WEBVPN_ORIGIN, () => new Response('via-webvpn', { status: 200 })],
   ]);
-  const egress = createEgress({ mode: 'auto', undici: fake.module });
+  const egress = createEgress({ mode: 'auto', undici: fake.module, onWebvpnRequired: () => true });
 
-  const response = await egress.fetch('https://courses.zju.edu.cn/api/a');
+  const response = await egress.fetch('https://sztz.zju.edu.cn/api/a');
   assert.equal(response.status, 401);
   assert.equal(fake.calls.some((c) => c.url.startsWith(WEBVPN_ORIGIN)), false, '401 不该触发升级');
 });
 
 test('显式 direct 模式不升级 —— 用户说直连就是直连', async () => {
   const fake = fakeUndici([
-    ['courses.zju.edu.cn', () => { throw Object.assign(new Error('down'), { code: 'ECONNRESET' }); }],
+    ['sztz.zju.edu.cn', () => { throw Object.assign(new Error('down'), { code: 'ECONNRESET' }); }],
     [WEBVPN_ORIGIN, () => new Response('via-webvpn', { status: 200 })],
   ]);
   const egress = createEgress({ mode: 'direct', undici: fake.module });
 
-  await assert.rejects(() => egress.fetch('https://courses.zju.edu.cn/api/a'), { code: 'ECONNRESET' });
+  await assert.rejects(() => egress.fetch('https://sztz.zju.edu.cn/api/a'), { code: 'ECONNRESET' });
   assert.equal(fake.calls.some((c) => c.url.startsWith(WEBVPN_ORIGIN)), false);
 });
 
@@ -335,7 +346,7 @@ test('没有 undici 时降级到 globalThis.fetch，并且状态如实标注 deg
   globalThis.fetch = async (url) => { seen.push(String(url)); return new Response('ok', { status: 200 }); };
   try {
     const egress = createEgress({ mode: 'direct', undici: null });
-    await egress.fetch('https://courses.zju.edu.cn/api/a');
+    await egress.fetch('https://sztz.zju.edu.cn/api/a');
     assert.equal(seen.length, 1);
     assert.equal(egress.state().degraded, true, '必须如实标注降级，不能让调用方以为已经分域了');
   } finally {
@@ -359,10 +370,10 @@ test('物理地址转回逻辑地址：网关地址能还原，别的原样返�
 test('auto never replays a password POST after an ambiguous network failure', async () => {
  const fake=fakeUndici([
   [CAMPUS_PROBE_URL,()=>new Response('0')],
-  ['courses.zju.edu.cn',()=>{throw Object.assign(new Error('lost'),{code:'ECONNRESET'});}]
+  ['sztz.zju.edu.cn',()=>{throw Object.assign(new Error('lost'),{code:'ECONNRESET'});}]
  ]);
  const egress=createEgress({mode:'auto',undici:fake.module});
- await assert.rejects(egress.fetch('https://courses.zju.edu.cn/login',{method:'POST',body:'fake'}),{code:'ECONNRESET'});
+ await assert.rejects(egress.fetch('https://sztz.zju.edu.cn/login',{method:'POST',body:'fake'}),{code:'ECONNRESET'});
  assert.equal(fake.calls.filter(c=>!c.url.includes(CAMPUS_PROBE_URL)).length,1);
  assert.equal(fake.calls.some(c=>c.url.startsWith(WEBVPN_ORIGIN)),false);
 });
