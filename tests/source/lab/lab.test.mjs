@@ -361,3 +361,70 @@ test('myTimetable：缺 dates 时查日期表；查不到给 null', async () => 
   assert.deepEqual(rows.map((row) => row.date), ['2026-09-14', '2026-09-21']);
   assert.equal(rows[0].room, '东1', '地址末尾的逗号要去掉');
 });
+
+/* ────────────────────────────── 宿主入口：清本地会话 ── */
+
+/**
+ * 最小 cordis 替身。
+ *
+ * 与 `tests/pta.test.mjs` 的 `fakeCtx` 同构：`inject` 的回调立刻执行，
+ * `webServer.register` 把注册项记下来。凭据走 `setCredentialProvider` 注入，
+ * 所以**不读**宿主的凭据服务。
+ */
+function fakeCtx() {
+  const services = new Map();
+  const routes = [];
+  const ctx = {
+    effect(fn) { return fn() ?? (() => {}); },
+    provide(name, value) { services.set(name, value); return () => services.delete(name); },
+    inject(names, callback) {
+      const scope = { effect: (fn) => fn(), webServer: { register(entry) { routes.push(entry); return () => {}; } } };
+      callback(scope);
+    },
+  };
+  return { ctx, services, routes };
+}
+
+/** 记录读写次数的会话持久化替身。 */
+function fakeSession(initial = null) {
+  const store = {
+    value: initial,
+    saves: 0,
+    clears: 0,
+    load() { return store.value; },
+    async save(next) { store.saves += 1; store.value = next ?? null; },
+    clear() { store.clears += 1; store.value = null; },
+  };
+  return store;
+}
+
+test('logout：清掉内存登录态与持久化会话，并如实报出之前有没有', async () => {
+  const { apply } = await import('../../../packages/source/lab/src/index.js');
+  const { ctx, services } = fakeCtx();
+  const dispose = apply(ctx);
+  try {
+    const service = services.get('zhiyunLab');
+    const session = fakeSession({ token: 'T', expiresAt: Date.now() + 3600_000 });
+    service.setSession(session);
+
+    assert.deepEqual(await service.logout(), { cleared: true }, '持久化里有 token 就算「有会话」');
+    assert.equal(session.clears, 1, '磁盘那份必须真的清掉，否则下次 restore() 会读回来');
+    assert.equal(session.value, null);
+
+    assert.deepEqual(await service.logout(), { cleared: false }, '没有会话时也如实说');
+  } finally {
+    await dispose?.();
+  }
+});
+
+test('logout：没有注入持久化层时不抛错（纯内存模式下也要能用）', async () => {
+  const { apply } = await import('../../../packages/source/lab/src/index.js');
+  const { ctx, services } = fakeCtx();
+  const dispose = apply(ctx);
+  try {
+    const service = services.get('zhiyunLab');
+    assert.deepEqual(await service.logout(), { cleared: false });
+  } finally {
+    await dispose?.();
+  }
+});

@@ -356,6 +356,122 @@ export class ClassroomSource {
   }
 
   /**
+   * 在录播字幕里搜关键词（对应上游 `zhiyun search subtitles`，审计 漏-5 / W-13）。
+   *
+   * # 为什么它必须存在
+   *
+   * 「老师有没有说点名」「考试范围讲到哪」这类问题，用字幕时间轴一条条读是读不动的：
+   * 一学期几十节课、每节几百句。上游就是靠这个方法把问题压成「命中的那几句 +
+   * 前后文」。
+   *
+   * # 两条输入路径
+   *
+   * - 给 `lessons`（`[{courseId, subId, date?}]`）时直接搜这些课次 —— 调用方手里
+   *   已经有课次时不必再查一遍课表；
+   * - 只给 `courseId` 时用 `getMyLectures({days})` 展开我最近的课次，跳过
+   *   `upcoming`（还没上课的课次没有字幕）。
+   *
+   * # 没有字幕是正常情况，不是失败
+   *
+   * 当天的课课后才有字幕，站点对这类课次是**拒绝**（`未查询到语音数据`）。
+   * 这里按「这一节没有字幕」记进 `lessonsWithoutCaptions` —— 那是用户要看到的
+   * 事实（「这几节还没生成字幕」），不是要吞掉的错误。其余失败照抛。
+   *
+   * @param {object} [options]
+   * @param {string} [options.keyword] - 关键词，几个说法用顿号或竖线分隔（如 `点名、签到`）。
+   * @param {Array<{courseId: string|number, subId: string|number, date?: string, lesson?: number}>} [options.lessons] - 要搜的课次。
+   * @param {string|number} [options.courseId] - 不给 `lessons` 时用它展开最近课次。
+   * @param {number} [options.days] - 展开几天（1–14，默认 7）。
+   * @param {number} [options.limit] - 最多回多少条命中（默认 100）。
+   * @param {AbortSignal} [options.signal] - 中止信号。
+   * @returns `{ keywords, lessonsSearched, lessonsWithoutCaptions, counts, total, hits, truncated? }`。
+   */
+  async searchCaptions({ keyword, lessons, courseId, days = 7, limit = 100, signal } = {}) {
+    await this.ready;
+    const keywords = splitPhrases(keyword);
+    if (!keywords.length) {
+      throw new ClassroomError('INVALID_INPUT', '需要 keyword（例如「点名」「考试范围」，几个说法用顿号分隔）。');
+    }
+    if (!Number.isInteger(limit) || limit < 1) throw new ClassroomError('INVALID_INPUT', 'limit 要是正整数');
+
+    /** @type {Array<{courseId: string, subId: string, date: string|null, lesson: number}>} */
+    let rows;
+    if (Array.isArray(lessons) && lessons.length) {
+      rows = lessons.map((row, index) => ({
+        courseId: String(models.id(row?.courseId, '课程')),
+        subId: String(models.id(row?.subId, '节次')),
+        date: row?.date ? String(row.date) : null,
+        lesson: Number.isInteger(row?.lesson) ? row.lesson : index + 1,
+      }));
+    } else {
+      if (courseId == null) {
+        throw new ClassroomError('INVALID_INPUT', '要么给 lessons（课次清单），要么给 courseId（它会展开最近 days 天的课次）。');
+      }
+      const { lectures } = await this.getMyLectures({ days, signal });
+      const wanted = String(models.id(courseId, '课程'));
+      rows = lectures
+        // 还没上课的课次没有字幕；它们进 lessonsWithoutCaptions 只会误导。
+        .filter((row) => !row.upcoming && row.courseId === wanted)
+        .map((row, index) => ({ courseId: row.courseId, subId: row.subId, date: row.date, lesson: index + 1 }));
+    }
+
+    const clock = (ms) => {
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      const pad = (n) => String(n).padStart(2, '0');
+      return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+    };
+
+    const counts = Object.fromEntries(keywords.map((word) => [word, 0]));
+    const hits = [];
+    const withoutCaptions = [];
+    let searched = 0;
+    let total = 0;
+
+    for (const row of rows) {
+      signal?.throwIfAborted();
+      const { items } = await this.getSubtitles(row.courseId, row.subId, { signal, tolerateNoSpeech: true });
+      if (!items.length) {
+        withoutCaptions.push(row.lesson);
+        continue;
+      }
+      searched += 1;
+      items.forEach((caption, index) => {
+        const text = String(caption.text ?? '');
+        const found = keywords.filter((word) => text.includes(word));
+        if (!found.length) return;
+        total += 1;
+        for (const word of found) counts[word] += 1;
+        if (hits.length >= limit) return;
+        hits.push({
+          lesson: row.lesson,
+          courseId: row.courseId,
+          subId: row.subId,
+          date: row.date,
+          at: clock(caption.startMs ?? 0),
+          atMs: caption.startMs ?? 0,
+          keywords: found,
+          // 前后各一句：命中词常常是「点名」这种孤立的两三个字，
+          // 只给那一句看不出老师到底在说什么。
+          text: [items[index - 1]?.text, text, items[index + 1]?.text].filter(Boolean).join(' '),
+        });
+      });
+    }
+
+    return {
+      keywords,
+      lessonsSearched: searched,
+      lessonsWithoutCaptions: withoutCaptions,
+      counts,
+      total,
+      hits,
+      ...(total > hits.length ? { truncated: true } : {}),
+    };
+  }
+
+  /**
    * 按天列出「我的课」—— 与我本人课表相关的节次（含直播状态）。
    *
    * 与 `getSchedule()` 的区别：那个是**时间段**内的排课（可能含别人的课、
@@ -887,4 +1003,30 @@ export class ClassroomSource {
     await this.ready;
     await this.transport.session.pending;
   }
+}
+
+/**
+ * 把「几个说法」拆成关键词表。
+ *
+ * 用户会写「点名、签到」「点名|签到」或一行一个；这里统一按那几种分隔符切，
+ * 去空白、按归一化后的写法去重（全角/大小写差异不该算两个关键词）。
+ *
+ * 与上游 `core/match.ts` 的 `splitPhrases` 同一口径 —— 分隔符是照着它抄的，
+ * 少一种就会让「、」这种中文习惯写法整串不拆。
+ *
+ * @param {string} raw - 原始输入。
+ * @returns {string[]} 关键词（保序、去重）。
+ */
+export function splitPhrases(raw) {
+  const seen = new Set();
+  return String(raw ?? '')
+    .split(/[|｜、，,；;\n]+/)
+    .map((word) => word.trim())
+    .filter((word) => {
+      if (!word) return false;
+      const key = word.normalize('NFKC').toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }

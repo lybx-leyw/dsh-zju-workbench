@@ -121,7 +121,7 @@ D21 原文（`impl-plan.md:56`）：
 | **A-1** | `xuezai` 的 `material download` / `homework download` | D21 → `packages/core/*` | ❌ 不存在 | 学在浙大的课件与作业附件**下不下来** |
 | **A-2** | `zdbk` 培养方案 PDF（`downloadPdf`） | D21 → core | ❌ 不存在（`zdbk/README.md` 自己写「丢弃」但没引 D21） | 培养方案只能拿到 `pdf_url`，拿不到文件 |
 | **A-3** | `xxt` 的 `downloadParams`（课件 / 视频） | D21 → core | ❌ 参数接口正确，**无消费者** | 用户拿不到学习通课件，也看不到「该把参数交给谁」 |
-| **A-4** | 六个包的**凭据/会话注入口**（`setCredentialProvider` / `setLoginProvider` / `setSessionProvider` / `setTokenProvider` / `setServiceLoginProvider`） | 设计说「由集成层注入」 | ❌ **集成层整块不存在** | `lab` / `tyys` / `sztz` / `mail` / `yjsy` / `notice` 挂得上、用不了（见 3.1） |
+| **A-4** | 六个包的**凭据/会话注入口**（`setCredentialProvider` / `setLoginProvider` / `setSessionProvider` / `setTokenProvider` / `setServiceLoginProvider`） | 设计说「由集成层注入」 | ✅ **六个全修**：`ecf080f` 把 `lab` / `mail` 改成读 `source/login` 的记录、`sztz` / `tyys` / `notice` 改走共享 `casTransport` / `casLoginFor`；`yjsy` 补了共享 CAS 兜底（`validateLogin` 那一跳在本包发，因为 `dataapi` 前缀只有它知道） | 见 3.1；六行的实测结论已全部作废 |
 | **A-5** | 8 个写动作的**工具层入口** | D17 → `tool/campus-write` | ⚠️ 工具存在，但**参数契约对不上** | 退课/调序、场馆预约、交/撤作业、点名、评分、选实验**点了就报错**（见 `coverage-gaps.md` 第八节） |
 | **A-6** | `classroom` 的 `trans audio` 识别内核 | 本仓设计 → 装配方注入 `setTranscriber` | ❌ 无装配方 | 转写**必然** `DEPENDENCY_MISSING`（漏-4） |
 | **A-7** | `source/http` 的 `setWebvpnSession` | 本仓设计 → 装配方 | ❌ 无调用方 | 校外场景 `source/http` 仍抛 `WEBVPN_REQUIRED`（R-3） |
@@ -151,6 +151,23 @@ notice  ready=false   匿名可用（status: partial，11 个来源读不到）
 
 **证据强度**：静态 grep（`setXxxProvider` 除定义处与测试外零命中）+ 最小替身实测。
 **没有**在真实 profile 上跑过一次真机（那需要账号）。
+
+> **2026-11-11 复核**：上面六行里五行的结论**已作废** —— `ecf080f` 按 D18 给
+> `source/login` 补了 `casTransport` / `casLoginFor` 两项共享能力，`lab` / `mail`
+> 改为读 `source/login` 的记录，`sztz` / `tyys` / `notice` 改走共享 CAS。
+> 复核命令：
+>
+> ```bash
+> for p in lab tyys sztz mail yjsy notice; do
+>   printf '%-8s %s\n' $p "$(grep -o 'readCard\|readLab\|readMail\|casTransport\|casLoginFor' packages/source/$p/src/index.js | sort -u | tr '\n' ' ')"
+> done
+> ```
+>
+> 结果是 `lab` → `readCard readLab`、`mail` → `readMail`、`sztz` / `tyys` / `notice` →
+> `casTransport` / `casLoginFor`。`yjsy` 在 `ecf080f` 之后**仍然为空**，所以本票
+> 把它的兜底也补上了：`tokenFromSharedCas()` 用 `card.casLoginFor()` 拿票、
+> 自己发 `validateLogin` 换 token，`ready()` 也把这条路算进「已接入」。
+> 复核：`node --test tests/yjsy-host.test.mjs`（13 条，含三条新增的共享 CAS 用例）。
 
 ### 3.2 A-5 的实测（本轮新发现）
 
@@ -229,7 +246,7 @@ notice  ready=false   匿名可用（status: partial，11 个来源读不到）
 | --- | --- | --- | --- |
 | Q-1 | `doc` 模块（4 条 provides）归哪一层 | 它读本地文件（不连外部 → 不该进 source），做变换与落盘（→ core 合理），但和 D21 的「下载归 core、source 给参数」不是同一形状 | 文档转文字、PDF 合成/取页/找页**整块没有归属** |
 | Q-2 | D9 的邮箱另外 3 个包还建不建 | D9 已裁「拆 4 个包」，但 `tool/mail`（发信走审批）、`core/mail-feed`（后台轮询基线）、client 的连接表单都没建 | 邮箱只能读；发信与「有没有新信」没有承载方 |
-| Q-3 | A-4 的装配层放哪 | 「凭据由集成层注入」这句在设计里出现 20 次，但**集成层本身没有身份**：是 profile 的 `cordis.patch.yml`？是一个新包？还是各 source 包改成自己读凭据（像 `zdbk` 那样）？ | 六个数据源实机不可用 |
+| Q-3 | A-4 的装配层放哪 | **已按「各 source 包自己取」落地**：读凭据的用 `readCard` / `readLab` / `readMail`，走 CAS 的用 `casTransport` / `casLoginFor`；`yjsy` 用 `casLoginFor` 拿票后自己发 `validateLogin` | ✅ 不再卡住任何能力 |
 | Q-4 | A-5 的 8 处契约断裂修哪一侧 | 改工具层（要给模型加参数）或改 source（要接受自然语言定位），两条路都改已发布契约 | 8 个写动作不可用 |
 | Q-5 | D21 怎么落地 | 要么在 core 建下载执行方，要么**改裁决**（承认 source 可以落盘）。现状是两边都不成立 | 所有下载能力 |
 | Q-6 | D11 preset / D12 skill / D20 发现机制 | 原裁决就是「延迟」 | 工具可见范围、skill 形态 |

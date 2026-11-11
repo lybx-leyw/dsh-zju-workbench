@@ -7,17 +7,32 @@
  * **不注册 AI 工具**、**不含写操作** —— 写操作按 D17 归 `packages/tool/*`。
  * 与 `source/zdbk` 的注释同口径：「本包是数据包，不注册任何 AI 工具」。
  *
- * # 为什么服务面要收一个 token 提供者
+ * # 登录：注入优先，共享 CAS 兜底
  *
- * 本包不该知道凭据从哪来（那是 `source/login` 的事），也不该自己走 CAS
- * （那在 `source/campus` 的 `cas/login.js` 里）。所以服务面收一个
- * `acquireToken(entry, service)` 回调，由集成层注入。
+ * 研究生教务网要两跳：CAS 给 `service` 签票，再拿票换 `X-Access-Token`。
+ * 第一跳是通用的（`source/login` 的 `casLoginFor`），**第二跳必须在本包做** ——
+ * 只有本包知道 `dataapi` 前缀与两个入口。
  *
- * 这与 `source/webvpn` 的 `doctor()` 收凭据、`source/http` 的
- * `setWebvpnSession()` 收会话来源是同一条原则：**下层不知道凭据从哪来。**
+ * 这与 `tyys` / `sztz` / `notice` 同一条路：凭据与 CAS 流程都在 tier 0，
+ * 数据源只说明自己要哪个 `service`。
+ *
+ * 早先这里只留了 `setTokenProvider` 注入点，而**全仓没有任何调用方** ——
+ * 于是这个包挂得上、用不了（`abandoned.md` 的 A-4）。注入点仍然保留
+ * （装配方可能有更完整的票据链，优先于共享 CAS）。
  */
 import { Transport, SessionStore, sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
-import { HOST, ENTRIES, YjsyError, openYjsy, timetable } from './yjsy.js';
+import { API, HOST, ENTRIES, YjsyError, openYjsy, timetable } from './yjsy.js';
+
+/** CAS 主机。本包要它只是因为白名单要放行 —— CAS 流程在 `source/login` 里。 */
+export const CAS_HOST = 'zjuam.zju.edu.cn';
+
+/**
+ * 用共享 CAS 换 `X-Access-Token` 的路径（相对 `API`）。
+ *
+ * 上游 `yjsy/index.ts:60`：CAS 给 `service` 签票之后，拿票换 token 走这一跳。
+ * `result.token` 就是之后每个请求的 `X-Access-Token`。
+ */
+export const VALIDATE_LOGIN_PATH = 'sys/cas/client/validateLogin';
 
 export const name = 'zju-source-yjsy';
 
@@ -104,8 +119,56 @@ export function apply(ctx) {
      * @param options.fresh - 强制重新换 token（调用方发现会话失效时用）。
      * @returns `Yjsy` 实例。
      */
+    /**
+     * 共享 CAS：没注入 `setTokenProvider` 时的兜底。
+     *
+     * # 为什么这不再是「装配层缺失」
+     *
+     * 研究生教务网要的是「CAS 票 → `X-Access-Token`」两跳。`casLoginFor` 已经
+     * 给了第一跳（带回跳落地页），第二跳（`validateLogin`）**必须在本包做** ——
+     * 只有本包知道 `API` 前缀与 `dataapi` 的存在。这与 `tyys` / `sztz` / `notice`
+     * 的做法一致：凭据与 CAS 流程都在 tier 0，数据源只说明自己要哪个 `service`。
+     *
+     * @param input - `{ entry, service }`。
+     * @returns `Promise<string>`：换到的 token。
+     */
+    const tokenFromSharedCas = async ({ entry, service }) => {
+      const card = ctx.get?.('zhiyunCard');
+      if (typeof card?.casLoginFor !== 'function') {
+        throw new YjsyError(
+          'CONFIG',
+          '研究生教务网还没接入登录：到「设置 → 浙大一卡通」配置学号密码后重试'
+          + '（若你是插件作者：调用 setTokenProvider 注入取 token 的能力）。',
+        );
+      }
+      const landing = await card.casLoginFor({ entry: service, hosts: [HOST, CAS_HOST] });
+      const ticket = landing?.url?.searchParams?.get?.('ticket') ?? '';
+      if (!ticket) {
+        throw new YjsyError('AUTH_TICKET_MISSING', '统一身份认证没有给研究生教务网签票。');
+      }
+      const response = await sharedFetch(ctx)(
+        `${API}/${VALIDATE_LOGIN_PATH}?${new URLSearchParams({ ticket, service })}`,
+        { headers: { Accept: 'application/json' } },
+      );
+      const text = await response.text();
+      let reply;
+      try {
+        reply = JSON.parse(text);
+      } catch {
+        throw new YjsyError('AUTH_REJECTED', `研究生教务网登录没有返回 JSON（HTTP ${response.status}）`);
+      }
+      if (!reply || typeof reply.success !== 'boolean') {
+        throw new YjsyError('AUTH_REJECTED', '研究生教务网的登录响应不是 {success, code, message, result} 形状。');
+      }
+      if (reply.success && reply.result?.token) return String(reply.result.token);
+      // 换不到时把平台的原话带出去 —— 本科生走研究生入口就是这一种。
+      throw new YjsyError('AUTH_REJECTED', String(reply.message || `code ${reply.code}`));
+    };
+
     const client = async ({ username, fresh = false } = {}) => {
-      if (!acquireToken) {
+      // 两条路都算「已接入」：注入的 provider，或宿主的共享 CAS。
+      // 只认前者会把「装了 login、没手动注入」误报成「用户没配账号」。
+      if (!acquireToken && typeof ctx.get?.('zhiyunCard')?.casLoginFor !== 'function') {
         throw new YjsyError(
           'CONFIG',
           '研究生教务网还没接入登录：到「设置 → 浙大一卡通」配置学号密码后重试'
@@ -140,7 +203,10 @@ export function apply(ctx) {
       });
 
       const opened = await openYjsy({
-        acquireToken: (entry, service) => acquireToken({ entry, service, username }),
+        acquireToken: (entry, service) => (typeof acquireToken === 'function'
+          // 注入优先：装配方可能自己有更完整的票据链（例如已经缓存过 token）。
+          ? acquireToken({ entry, service, username })
+          : tokenFromSharedCas({ entry, service })),
         username,
         request: requestOf(transport),
       });
@@ -198,8 +264,16 @@ export function apply(ctx) {
         cached = null;
         return () => { if (acquireToken === handler) { acquireToken = null; cached = null; } };
       },
-      /** 当前是否已经接入登录。 */
-      ready() { return acquireToken !== null; },
+      /**
+       * 当前是否已经接入登录。
+       *
+       * 两条路都算：注入的 provider，或宿主的共享 CAS（`source/login`）。
+       * 只认前者会让「装了 login 但没手动注入」被报成「没配账号」——
+       * 那正是本轮修掉的那类误导。
+       */
+      ready() {
+        return acquireToken !== null || typeof ctx.get?.('zhiyunCard')?.casLoginFor === 'function';
+      },
       timetable: readTimetable,
       /** 清掉缓存的会话（换账号、或用户点了「重新登录」）。 */
       reset() {

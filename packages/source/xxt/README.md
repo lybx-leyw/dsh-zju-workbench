@@ -17,10 +17,10 @@ xxt 这一块拆出来时顺带修了三处**落在用户可见路径上**的问
 
 ## 能力
 
-`/api/zhiyun-xxt` 上的 12 个**只读**方法，方法名即 `xxt.<名字>`：
+`/api/zhiyun-xxt` 上的 13 个**只读**方法，方法名即 `xxt.<名字>`：
 
 > 早先这里写「9 个」并漏了三行（`chapters` / `materials` / `downloadParams`）。
-> 实际的方法表是 `reads.js` 的 `XXT_METHODS`，本轮按它逐条对齐。
+> 实际的方法表是 `reads.js` 的 `XXT_METHODS`；补上资料栏（`dataFiles`）后是 **13 个**。
 
 | 方法 | 作用 | 请求 |
 | --- | --- | --- |
@@ -29,7 +29,8 @@ xxt 这一块拆出来时顺带修了三处**落在用户可见路径上**的问
 | `findCourse` | 按 id / 全名 / 名字片段找一门课 | 复用上面的缓存 |
 | `chapters` | 一门课的章节目录（`{id,title,path[],locked}`） | 逐节请求 |
 | `materials` | 章节卡片附件清单（`kind` 分 video / document） | 逐节逐卡 |
-| `downloadParams` | 某个附件的下载参数（`{url, variant, filename, size, headers}`），**按 D21 不落盘** | 1 次 GET |
+| `dataFiles` | **资料栏**文件清单（逐层文件夹 + 分页；带 `dataId` / `downloadable`） | 中间页 1 次 + 每层每页 1 次 |
+| `downloadParams` | 附件的下载参数（`{url, variant, filename, size, headers}`），**按 D21 不落盘**；章节附件给 `objectId`，资料栏文件给 `dataId` + `course` | 1 次 GET（资料栏走 302 取 `Location`） |
 | `homework` | 一门课的作业列表 + 进度 | 2 次 GET |
 | `listHomework` | 作业清单（带 `pending`，去掉签名 URL） | 同上 |
 | `deadlines` | 所有课**未完成**作业的截止时间聚合 | 2×课程数 + 每条未完成作业 1 次 |
@@ -37,8 +38,15 @@ xxt 这一块拆出来时顺带修了三处**落在用户可见路径上**的问
 | `notices` | 通知（支持未读 / 关键词过滤，最多 5 页） | 每页 1 次 POST |
 | `schedule` | 我的课表（按星期与节次排好） | 1 次 POST |
 
-外加三个**客户端动作**（不在读取方法里，因为它们是配置而不是数据）：
-`xxt.status`（配了没、缺哪个键）、`xxt.importCookie`（存 Cookie）、`xxt.checkLogin`（探一次登录态）。
+外加四个**客户端动作**（不在读取方法里，因为它们是配置而不是数据）：
+`xxt.status`（配了没、缺哪个键）、`xxt.importCookie`（存 Cookie）、`xxt.checkLogin`（探一次登录态）、
+`xxt.logout`（清**本机**会话，不动服务端登录态）。
+
+### 为什么资料栏要单独一条
+
+老师把课件放「资料」里是常态，而**资料栏不在章节卡片里**。只读 `materials()` 会得到
+「这门课没有课件」的错误结论。两条通路共用同一个 `objectId` 命名空间，调用方应当合并、
+按 `objectId` 去重（`dataFiles` 内部已按它去重，跨通路要去重的是调用方）。
 
 ### 为什么 `deadlines` 这么贵，以及为什么还是这么做
 
@@ -88,7 +96,7 @@ JSON 接口 —— 列表页是服务端渲染的 HTML。所以要让用户看�
 
 这是**产品口径**，不是实现细节：
 
-- 12 个方法全部只做**查询**；
+- 13 个方法全部只做**查询**；
 - 学习通里「交作业」「开始考试」「签到」这类动作**没有**对应方法 —— 那是用户自己的决定，
   一个数据包替用户点下去是不可逆的；
 - 唯一的写操作是 `xxt.importCookie`，它写的是**本机会话文件**，不是学习通的数据。

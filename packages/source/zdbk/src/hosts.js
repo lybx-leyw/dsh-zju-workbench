@@ -73,6 +73,17 @@ export const ZDBK_PATHS = {
 };
 
 /**
+ * 评教状态（只用来解释「本学期成绩为什么是空的」）。
+ *
+ * 回 `{status:"success", result:"1"}` 表示已完成评教。
+ *
+ * ⚠️ **不放进 `ZDBK_PATHS`**：那张表是「对外能力表」（四个学生个人数据接口，
+ * 一一对应 `zdbk.grades/exams/timetable`），而这一条只服务于一句提示。
+ * 混进去会让「路径表 = 能力表」这个直觉失效，测试也正是按那张表钉的。
+ */
+export const ZDBK_EVAL_PATH = '/xtgl/index_cxMyCosJxpj.html';
+
+/**
  * 功能模块码（URL 里的 `gnmkdm`）。
  *
  * ⚠️ 与上面的 `ZDBK_PATHS` **分开两张表**是刻意的：`ZDBK_PATHS` 是「学生个人数据」

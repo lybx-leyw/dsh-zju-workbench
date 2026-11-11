@@ -36,6 +36,7 @@ try {
 | `prefetchSlides(courseId,subId,options)` | 显式等待一节课的课件补齐；未挂缓存时返回 `cached:false` |
 | `getSchedule({start,end,userId,signal})` | 课表；默认上海今天，最多 31 天 |
 | `searchResources(courseId,subId,{kind,signal})` | 某节次的资源清单（**只看不下载**）；`kind` 为 `video,audio,ppt,slides,subtitles` 或 `all` |
+| `searchCaptions({keyword,lessons\|courseId,days,limit,signal})` | 在录播字幕里搜关键词，命中带前后各一句；没有字幕的课次如实列出 |
 | `check(component)` | 本地组件诊断（`asr` / `media` / `all`）；**只读**，不装任何东西 |
 | `setTranscriber(fn)` | 注入本地转写的识别内核；返回撤销函数 |
 | `transcribeAudio({file,directory,signal,timeoutMs})` | 本地音视频转写，结果落盘；**分钟级**调用 |
@@ -48,7 +49,7 @@ try {
 | `dispose()` | 取消请求、停止实时字幕采集、关闭客户端、等待会话写入 |
 
 HTTP 数据路由是 `/api/zhiyun-classroom`（`exact`），body 为 `{action, input}`。
-**action 名与方法名逐字一致**：`searchResources` / `check` / `transcribeAudio` /
+**action 名与方法名逐字一致**：`searchResources` / `searchCaptions` / `check` / `transcribeAudio` /
 `liveStart` / `liveStatus` / `liveStop` / `liveText`。老方法不在这条路由上
 （它们历史上走 Cordis 服务对象，这里不改既有形状）。
 
@@ -174,6 +175,18 @@ npm run classroom:live-probe -- --live --trace               # 打印每条请�
 当天还没点播的课次查字幕，上游是**拒绝**（`未查询到语音数据`）而不是给空表。
 这一种按 0 句处理，其余失败照抛。判定在 `transport.json` 的 `tolerate` 里做 ——
 那一层才看得到上游 `msg`（外面看到的只有统一后的「智云服务返回失败」）。
+
+## 字幕关键词检索（`searchCaptions`）
+
+对应上游 `zhiyun search subtitles`（`materials.ts:46` 的 `searchCaptions`）：
+「老师有没有说点名」「考试范围讲到哪」这类问题，用时间轴一条条读是读不动的。
+
+- 两种输入：给 `lessons`（`[{courseId, subId, date?}]`）直接搜；或给 `courseId`
+  让它用 `getMyLectures({days})` 展开最近课次（跳过还没上课的）。
+- 命中带**前后各一句**：命中词常常是「点名」这种孤立的两三个字，只给那一句看不出上下文。
+- 没有字幕的课次进 `lessonsWithoutCaptions`（**如实报**，不是吞掉）—— 当天的课课后才有字幕，
+  站点对这类是拒绝而不是空表。
+- `counts` 按关键词分开计数；`total` 是真实命中数，`hits` 受 `limit` 封顶，超出时带 `truncated`。
 
 ## 本地组件诊断（`check`）
 

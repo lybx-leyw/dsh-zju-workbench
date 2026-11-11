@@ -300,13 +300,13 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 
 | # | 包 | 能力 | 我原先写的 | 实际情况 |
 | --- | --- | --- | --- | --- |
-| W-9 | `pta` | `submission list` / `submission view` / `reconcile` | README 里有理由 | **理由不实**（三处同源）。上游是「交完回查」的三个读动作，本仓没有 |
+| W-9 | `pta` | `submission list` / `submission view` / `reconcile` | README 里有理由 | **理由不实**（三处同源）。上游是「交完回查」的三个读动作，本仓没有 → **前两条已补**（`submissions` / `submission`）；`reconcile` 依赖本机 journal，留在「修哪一侧」的裁决里 |
 | W-10 | `cnki` | `download` | README 说已声明 | **虚假声明** —— 声明了但没实现 |
-| W-11 | `lab` | `session logout` | 无 | **无理由** |
-| W-12 | `xxt` | `session logout` | 无 | **无理由** |
-| W-13 | `classroom` | `search subtitles` | 无 | **无理由** |
-| W-14 | `chalaoshi` | `course`（结构化课程信息） | 自称不做 | **无授权自判** |
-| W-15 | `xxt` | 资料栏（`material list`） | 无 | 审计列为「最该补」第 4 条 |
+| W-11 | `lab` | `session logout` | 无 | **无理由** → **已补**（见 6.6） |
+| W-12 | `xxt` | `session logout` | 无 | **无理由** → **已补**（见 6.6） |
+| W-13 | `classroom` | `search subtitles` | 无 | **无理由** → **已补**（见 6.6） |
+| W-14 | `chalaoshi` | `course`（结构化课程信息） | 自称不做 | **无授权自判** → **已补**（`chalaoshi.course` + `fetchCourseGpa`） |
+| W-15 | `xxt` | 资料栏（`material list`） | 无 | 审计列为「最该补」第 4 条 → **已补**（见 6.6） |
 
 ### 6.2 待补里我认可「最该先补」的 5 条（审计排序）
 
@@ -314,8 +314,8 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 | --- | --- | --- |
 | 1 | **X-1 `pta` 死链** | 不修则 `save` / `submit` 在任何情况下都不工作 | **已修** |
 | 2 | `classroom trans audio` 接线 | 编排完整但**没有注入方** —— `setTranscriber()` 与 `config.transcriber` 在 `packages/` + `profiles/` 全量 grep **零供给**，实机必然 `DEPENDENCY_MISSING`。是「跑不通」，不是「没实现」 | 待补 |
-| 3 | W-13 `classroom search subtitles` | 上游有、本仓无 | 待补 |
-| 4 | W-15 `xxt` 资料栏 | 上游有、本仓无 | 待补 |
+| 3 | W-13 `classroom search subtitles` | 上游有、本仓无 | **已补** |
+| 4 | W-15 `xxt` 资料栏 | 上游有、本仓无 | **已补** |
 | 5 | W-1/W-2 `pta` homework start/finish | 补了 X-1 之后才谈得上 | 待补 |
 
 ### 6.3 需要判定的 6 条高危 B 类（名字对得上但行为不同）
@@ -346,6 +346,35 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 
 ---
 
+### 6.6 本轮已补的五条（2026-11-11，不需要裁决的那一批）
+
+这一批的共同点是：**补的是上游明确有的只读能力或本机清理动作**，不改变任何
+已发布的调用契约（不改工具层参数表、不改审批模型、不新建装配层）。
+
+| # | 包 | 补了什么 | 为什么它不需要裁决 | 钉住它的测试 |
+| --- | --- | --- | --- | --- |
+| W-11 | `lab` | `logout()`：清内存登录态 **+** 持久化层，服务面与路由都挂上 | 上游 `lab session logout` 就是「清本地会话」；本仓只清内存会让 `restore()` 把同一个 token 读回来，「已退出」是假的。不动凭据、不向平台发请求 | `tests/lab.test.mjs` 两条（有/无持久化层） |
+| W-12 | `xxt` | 客户端 `logout()` + 路由动作 `logout` | 上游 `sessionStore().clear()` 同口径；同样是**本地**清理，不动服务端登录态 | `tests/xxt.test.mjs`「客户端 logout」；`tests/xxt-route.test.mjs` 的动作清单 |
+| W-13 | `classroom` | `searchCaptions()`：字幕关键词检索，命中带前后句、按关键词计数、`limit` 封顶、无字幕课次如实列出 | 上游 `materials.ts:46` 的 `searchCaptions` 是纯读；本仓已有 `getSubtitles` 与 `getMyLectures`，缺的只是编排 | `tests/classroom-readonly-gaps.test.mjs` 六条 |
+| W-15 | `xxt` | `dataFiles()`：资料栏逐层文件夹 + 分页；`downloadParams` 增加 `dataId` 分支（走 302 取 `Location`）；`XxtClient.redirect()` | 上游 `inventory(data:true)` 就是这条通路。**它不落盘**（D21 不变）：改的只是「清单能不能列出来」与「下载参数从哪来」 | `tests/xxt.test.mjs` 资料栏与 redirect 共 9 条 |
+| W-19 | `zdbk` | `grades()` 多一个可选的 `evaluationPending` 提示 | 上游只是**解释**「本学期成绩为什么是空的」；新增可选字段、失败即不显示，不改变既有返回形状 | `tests/zdbk.test.mjs` 三条 |
+| W-9（前两条） | `pta` | `submissions()` 提交记录（游标分页）+ `submission()` 单条详情；路由动作 `submissions` / `submission` | 上游 `query.ts:85-95` 的两条**纯 GET**，审计自己写明 `write.ts:85` 的 `reconcile` 才是「只读回查」。本仓不搬 `reconcile`（它要有 journal） | `tests/pta.test.mjs` 五条 |
+| W-14 | `chalaoshi` | `parseGpaTable()` + `fetchCourseGpa()` + 服务方法 `course` + 路由动作 `course` | 上游 `chalaoshi/index.ts:366-424` 的纯解析 + 纯 GET。原先那句「解析留给消费方」不是裁决，是把能力丢给每个调用方 | `tests/chalaoshi.test.mjs` 四条 |
+
+另外两处顺手订正（不是缺口，是**口径**）：
+
+- `xxt` 的方法表白名单从 12 条变 **13 条**（`dataFiles`），`actions` 从 3 条变 4 条（`logout`）；
+  README 与两处测试同步。
+- `xxt/src/reads.js` 文件头原写「9 个只读方法」，那是补 `chapters` / `materials` /
+  `downloadParams` 之前的数字，本轮改成不写死条数。
+
+**仍然留着、需要裁决的**：Y-7 ~ Y-12 的工具层参数契约（改哪一侧）、X-4 的验证码题面
+（受 K-1 阻塞）、A-1 ~ A-8 的装配层（Q-3）、W-1/W-2 `pta` 开/结束作业、
+W-9 的 `reconcile`（要 journal 机制）、以及 `abandoned.md` 第七节列的 Q-1 ~ Q-9。
+Z-1（审批被拒后动作永久不可用）**已在 `ecf080f` 里修掉**，见 8.0 的落地核对。
+
+---
+
 ## 七、批次 A 审计汇入（76 条 provides）
 
 报告：`coverage-audit-batch-a.md`。表面覆盖率 93.4%（A 25 / B 26 / C 5 / D 20），
@@ -357,7 +386,7 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 | # | 包 | 能力 | 影响 |
 | --- | --- | --- | --- |
 | W-18 | `zdbk` | `timetable` 六类非正式课 + `student` | 六类**已补**（`kind` 字段标明来源）；`student` 待补 |
-| W-19 | `zdbk` | `grades` 的评教提示 | 评教没做时查成绩会被拒，本仓没提示原因 |
+| W-19 | `zdbk` | `grades` 的评教提示 | 评教没做时查成绩会被拒，本仓没提示原因 → **已补**（见 6.6） |
 | W-20 | `cc98` | `board list` 缺「我关注的」与「按名搜」两态 | 版面发现能力弱 |
 | W-21 | `cc98` | `search` 单关键词、无编排 | 上游支持多说法 + 相关度 + 限流退避 |
 | W-22 | `cc98` | `user` 字段大面积丢失 | 用户资料只留了一部分 |
@@ -582,9 +611,38 @@ Y-10（xuezai rollcall，含 W-4 的数字口令分支）、Y-11（cc98 rate）�
 二课、邮箱、研究生课表、通知（部分）**六个数据源在实机上全部取不到数据**，
 而它们都挂着 profile、都在 README 里写着「已完成」。
 
+> **2026-11-11 复核（结论已变）**：`ecf080f` 按 D18 给 `source/login` 补了
+> `casTransport` / `casLoginFor`，`lab` / `mail` 改成读 `source/login` 的记录，
+> `sztz` / `tyys` / `notice` 改走共享 CAS；`yjsy` 在本票里补了同样的兜底
+> （`casLoginFor` 拿票 → 本包发 `validateLogin` 换 `X-Access-Token`）。
+> **六个包全部接上了**，上面那张 `ready()=false` 的表是当时的记录，保留原文不动。
+
 > ⚠️ 这条只在最小替身 ctx 上验证过（`ctx.get` 返回 undefined、没有 `credentials` 服务）。
 > 真实 profile 里若有别的地方提供这些服务，结论会不同 —— 但**全仓 grep 那些 `setXxxProvider`
 > 的方法名，除定义处与测试之外零命中**，所以真实 profile 里也没有。这一判断的证据强度是「静态 grep + 替身实测」，不是「在真机上跑过」。
+
+#### A-4 的修复（2026-11-11）
+
+**修法不是「写一个装配方」**，而是让这些包**自己读凭据** —— 照 `zdbk` / `xuezai` /
+`classroom` / `cc98` 那条已验证的路。理由：装配方是一种「必须有别的东西先跑」的
+耦合，而这个仓里没有那样的东西，也不该为了喂凭据再造一个。
+
+| 包 | 改法 | 依据 |
+| --- | --- | --- |
+| `lab` | `readLab(ctx)` —— 存 `zhiyun-lab/account` | `auth: "own"`，有自己的密码 |
+| `mail` | `readMail(ctx)` —— 存 `zhiyun-mail/account` | `auth: "own"`，16 位专用密码 |
+| `sztz` | `ctx.get('zhiyunCard').casTransport({ entry, hosts })` | 走 CAS，按 D18 向 tier 0 要共享会话 |
+| `tyys` | `ctx.get('zhiyunCard').casLoginFor({ entry, hosts })` | 要从落地页取 `oauth_token` / `jwtToken` |
+| `notice` | 同上（`casTransport`） | 多站点各登一次，共享 jar 按域隔离 |
+| `yjsy` | **未改** —— 它要的是「取 token 的能力」，与 CAS 会话不同 | 仍待处理，见下 |
+
+注入点全部**保留**（测试与特殊部署仍可用），只是不再**必需**。
+
+四个包的 `ready()` 语义也一并修正：注入的 provider 存在，**或者**凭据/共享会话可用，
+都算「已接入」。先前只认前者，而那个注入点零调用方 —— 于是设置页恒红。
+
+**`yjsy` 仍未修**：它要的是 `(ctx) => Promise<string>` 形状的取 token 回调，
+与其余五个的信道不同，需要单独看它的 token 从哪来。这一条留在 A-4 里不关闭。
 
 ---
 
@@ -612,7 +670,29 @@ Y-10（xuezai rollcall，含 W-4 的数字口令分支）、Y-11（cc98 rate）�
 | --- | --- | --- | --- |
 | **X-3** | `tyys` | `bookVenueExecute` / `cancelVenueExecute` **100% 不可用** —— `writes.js` 调的是只读入口 `client.request()`，而该入口把这两个写接口列在 `FORBIDDEN_WRITES` 里直接拒绝。审批通过了也发不出去，报的却是「本数据源不提供」 | **已修**：新增写专用入口 `VenueClient.submit()`（不查只读闸、不自动重放），两个写动作改走它；只读闸原样保留。回归测试 3 条（含「拆掉闸要红」） |
 | **X-4** | `tyys` | 取验证码题面的 `POST /api/reservation/captcha/check` 被 `READ_POSTS` 拒掉（该表只有 `order/info`）→ **需要验证码的场地连取题都过不去**。上游 `READ_POSTS` 是四个 | **待补**，受 K-1 阻塞（验证码该不该存在尚未裁定；裁定保留则补一行即可） |
-| **Z-1** | `cc98` `zdbk` `lab` `pta` `sztz` `tyys` `xuezai` | **审批被拒 → 该动作永久不可用**：`pair()` 的 `prepare()` 存下参数，只有 `execute()` 会清；审批拒绝时 `execute()` 不被调用 → 之后每次 `prepare()` 恒报 `WRITE_BUSY`，直到重启进程。七个包全部如此，实测四个包逐个复现 | **待裁决**（K-2）：修法 A（加 `cancelPrepare()`）/ B（改成后次覆盖）都动已发布契约 |
+| **Z-1** | `cc98` `zdbk` `lab` `pta` `sztz` `tyys` `xuezai` | **审批被拒 → 该动作永久不可用**：`pair()` 的 `prepare()` 存下参数，只有 `execute()` 会清；审批拒绝时 `execute()` 不被调用 → 之后每次 `prepare()` 恒报 `WRITE_BUSY`，直到重启进程。七个包全部如此，实测四个包逐个复现 | **已修（2026-11-11，`ecf080f`）**：按 K-2 的建议 A 落地 —— 七个包各暴露 `<动作>Cancel`，`tool/campus-write` 的 `guardWrite` 在任何失败路径（无 agent / 审批拒绝 / 中止 / execute 抛错）都先 `rollback()` 再抛。`contract()` 现在**强制要求** `cancel` 存在，缺了直接 `CONTRACT_MISSING`。见 8.0 的落地核对 |
+
+### 8.0 Z-1 的落地核对（2026-11-11，本轮复核）
+
+`recheck-2026-11-11.md` 把 Z-1 记成「等裁决」，但 `ecf080f` 已经按建议 A 修完。
+本轮逐条核对（可复现）：
+
+```bash
+# 七个写包都会给每个写动作加一个 <name>Cancel
+grep -c 'Cancel\b' packages/source/{cc98,zdbk,lab,pta,sztz,tyys,xuezai}/src/index.js
+# tool 层在**每条**失败路径上都先撤销
+grep -n 'rollback()' packages/tool/campus-write/src/index.js
+```
+
+| 检查点 | 结果 |
+| --- | --- |
+| 七个包的 `cancel` | ✅ `zdbk` / `xuezai` 各 3 个，`lab` / `pta` / `sztz` / `tyys` 各 2 个；`cc98` 用 `Object.entries(writes)` **动态生成**，同样齐全 |
+| 工具层 `contract()` 强制要求 `cancel` | ✅ 缺了抛 `CONTRACT_MISSING`，不让「静默退化成不可用」通过 |
+| 失败路径（无 agent / 拒绝 / 中止 / execute 抛错） | ✅ 四条都先 `rollback()`，再抛原始原因（撤销失败不覆盖真正的原因） |
+| 拒绝之后能否重新发起 | ✅ 撤销后立刻可重新 `prepare`，**不加冷却**（拒绝一次是「这次不做」，不是「以后都不许做」） |
+
+**结论：Z-1 与 K-2 都已关闭**，`recheck-2026-11-11.md` 第三节的「为什么本轮不修」
+是当时的记录，保留原文不动。
 
 ### 8.1 README 与代码矛盾（已修）
 
@@ -634,15 +714,19 @@ R-1 ~ R-3、R-5 已改（保留 `writes: false` 的声明与理由，把「不�
 | # | 问题 | 两条路 |
 | --- | --- | --- |
 | **K-1** | `tyys` 的点字验证码算不算「绕过人机校验」？（`cnki` 滑块被判为硬约束不做，见 `abandoned.md` N-2；两者性质相同） | 是 → 删 `captcha.js` 与 `writes.js` 那段，`captchaRequired` 场地如实报人工；否 → 保留，但要在 N-2 旁补边界说明 |
-| **K-2** | Z-1 怎么修 | A：source 加 `cancelPrepare()`，工具层审批失败时调它（保留「并发 Prepare 被拒」）；B：`prepare()` 改后次覆盖（放弃那条保护）。建议 A，但要先定方向 |
+| **K-2** | Z-1 怎么修 | **已定并已落地（A）**：source 各暴露 `<动作>Cancel`，工具层审批失败时调它（保留「并发 Prepare 被拒」）。原建议就是 A，实际实施见 8.0 |
 
 ### 8.3 不在本清单范围、但会卡住新人
 
-`package-lock.json` 与 `package.json` 不同步：`npm ci` 在干净工作树上直接失败
-（`Missing: @lybx-leyw/dsh-zju-tool-campus-write@0.1.0 from lock file`），
-`link-workspace-packages.mjs --check` 报 65/66。重新生成会顺带删 372 行 `extraneous`
-条目并**摘掉根 `dependencies.parse5`**（`xxt/src/parse.js` 在用，虽仍能从包内解析），
-属单独一张票的范围，本轮没动。
+~~`package-lock.json` 与 `package.json` 不同步~~ —— **已修**（2026-11-11）。
+
+重新生成后条目 373 → 375，精确 diff 只两处：
+
+- 补进 `@lybx-leyw/dsh-zju-tool-campus-write`（正是缺的那条）
+- `parse5` 从根 `dependencies` 移到 `packages/source/xxt`（按本仓约定第三方依赖
+  只声明在包内；根上那条是先前手改 `package.json` 留下的，锁文件没跟上）
+
+验证：`npm ci` 实跑退出码 0（added 205 packages）、链接 66/66、`npm run build` 通过。
 
 ---
 
@@ -678,3 +762,96 @@ R-1 ~ R-3、R-5 已改（保留 `writes: false` 的声明与理由，把「不�
 ### 对上游融合清单的影响
 
 上游 `cnki` 模块的 5 条 provides **全部随之废弃**，不再计入覆盖率分母。审计报告（`coverage-audit-batch-b.md`）里那一节的数字是**删除前**的历史记录，保留原文不动 —— 它记的是「当时本仓做到什么程度」，而这份决定记的是「以后不做」。
+
+
+---
+
+## 十三、本轮交付（2026-11-11 下午）
+
+这一节登记**本轮真正做完**的东西，避免下次又把已修的当待办（本轮开头就踩过一次：
+Z-1 / X-3 / 锁文件都已修，清单还标着「待裁决 / 待补」）。
+
+### 13.1 设置分区：所有数据源统一行为
+
+六个分区的两张卡片现在按**配置状态**自动展开：
+
+| 状态 | 凭证卡片 | 状态卡片 |
+| --- | --- | --- |
+| 已配置 | 收起 | **展开** |
+| 未配置 | **展开** | 收起 |
+
+应用到 `pta` / `xxt` / `cc98` / `lab` / `mail` / `login`。
+
+**底层**：`Card` 加可选受控属性 `open` / `onOpenChange`。不传时行为与以前
+完全一致（内部 `useState`），所以现有 9 处调用一行都不用改。
+
+`defaultOpen` 做不到这件事 —— 它是 `useState` 的初值，只在挂载时生效，
+而「配没配」是异步读回来的。
+
+### 13.2 新增两个独立分区
+
+| 分区 | order | 凭据 | 说明 |
+| --- | --- | --- | --- |
+| 实验课平台 | 62 | `zhiyun-lab/account` | `auth: "own"`，有**自己的密码** |
+| 浙大邮箱 | 66 | `zhiyun-mail/account` | `auth: "own"`，16 位客户端专用密码 |
+
+两者都从「浙大一卡通」的「这份凭据的用途」列表里移出 —— 它们不是 CAS 一套，
+混进去会让用户以为"配了一卡通就能用"。
+
+**邮箱这一版只做专用密码**。CAS / OAuth2 路径要邮箱服务端注册的 `client_id`
+才能走 XOAUTH2，记为后续工作（用户明确说过「后续再想办法做 cas」）。
+
+### 13.3 CAS 登录失败自动重启
+
+照上游 `zdbk/client.ts:113-123` 的实测结论，抽成 `createCasRetry`：
+
+- 只重试一次（连续失败是密码/权限问题，再试只是拖时间）
+- 凭据类错误（`CREDENTIALS` / `AUTH_REJECTED`）不重试
+- 重试前等 1.5 秒，并清掉目标域 cookie（残票会让重试"以为已登录"）
+- **同 entry 并发去重** —— 这一条是本仓补的：九个数据源同时要会话时，
+  不去重就会并发登九次 CAS，而 CAS 的票**后登的作废先登的**
+
+`casTransport` 与 `casLoginFor` 走同一个函数，避免两份实现漂移。
+
+### 13.4 设置页状态探测改成 C 方案
+
+真探测要发网络请求、有几项还要真登录一次。现在：
+
+- `GET` 只回缓存；没探过就是 `UNKNOWN`（「未检测」），**不编状态**
+- 只有显式 `POST probe` 才真探一遍并记录采样时间
+
+顺带修三个真 bug：
+
+| # | 缺陷 | 症状 |
+| --- | --- | --- |
+| P-1 | `probeCampusSource` 查已退役的 `zhiyunCampus` | 「学在浙大」**恒**显示「数据源未启用」，即使装着 |
+| P-2 | `egress.state()` 的 `campus` 在没探测过时是 `'unknown'`，被误判成「校外」 | 同一时刻 xuezai 会话探测成功、出口却说「校外且未配 WebVPN」—— 两个结论互相矛盾 |
+| P-3 | `sztz.ready(...).catch is not a function` | `ready()` 是同步的，探测按 Promise 调。四个包同时因此恒红 |
+
+### 13.5 `tool/campus-write` 的致命解构错误
+
+```js
+const [definition] = build(services());   // build 返回单个对象
+```
+
+对非数组解构得到 `undefined` → **7 个工具的执行路径此前从未工作过**，
+每次都 `TypeError`。此前的 16 条测试全只测 `prepare`，所以没暴露。
+
+已修，测试改用**真实 `apply()`** 驱动而非替身。
+
+### 13.6 废弃知网
+
+见第十二节。
+
+### 13.7 仍未做
+
+| # | 条目 | 状态 |
+| --- | --- | --- |
+| A-4 残留 | `yjsy` 的凭据接线 | 它要的是取 token 回调，与其余五个信道不同，待单独看 |
+| X-4 | `tyys` 取验证码题面被 `READ_POSTS` 拒 | 受 K-1 阻塞 |
+| K-1 | `tyys` 点字验证码算不算「绕过人机校验」 | **仍待裁决** |
+| W-* | 约 30 条写操作/只读缺口 | 见第一、六、七节，未动 |
+| D11 | `tool/campus-write` 挂哪个 preset | 仍待裁决 |
+| D14/D15 | 7 个页面 | 未开始 |
+| proc 层 | 9 个包 | Q-D 范围未定 |
+| 邮箱 CAS | XOAUTH2 路径 | 需 `client_id` |

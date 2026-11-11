@@ -107,8 +107,8 @@ test('路由：GET 列出方法与动作（页面用来自我发现）', async (
     assert.equal(body.value.route, ROUTE_PATH);
     assert.equal(body.value.platform.id, 'xxt');
     assert.equal(body.value.platform.label, '学习通');
-    assert.equal(body.value.methods.length, 12);
-    assert.deepEqual(body.value.actions, ['status', 'importCookie', 'checkLogin']);
+    assert.equal(body.value.methods.length, 13);
+    assert.deepEqual(body.value.actions, ['status', 'importCookie', 'checkLogin', 'logout']);
     // 只读口径要写在返回值里，别只写在 README 里
     assert.match(body.value.note, /只读/);
   } finally {
@@ -236,7 +236,7 @@ test('路由：服务面（zhiyunXxt）能直接调用，不必绕 HTTP', async 
     assert.equal(status.configured, false);
     const described = host.service.describe();
     assert.equal(described.ready, true);
-    assert.equal(described.methods.length, 12);
+    assert.equal(described.methods.length, 13);
     // 读取器要能直接拿到（脚本用它）
     assert.equal(typeof host.service.reader().deadlines, 'function');
     assert.equal(typeof host.service.client().importCookie, 'function');

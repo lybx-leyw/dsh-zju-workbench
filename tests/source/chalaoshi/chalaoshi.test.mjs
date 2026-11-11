@@ -10,9 +10,13 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 import {
-  SITE, ChalaoshiError, IndexCache, fetchIndex, parseRate, searchIndex, splitQuery, teacherFromIndex,
+  SITE, ChalaoshiError, IndexCache, fetchCourseGpa, fetchIndex, parseGpaTable, parseRate, searchIndex,
+  splitQuery, teacherFromIndex,
 } from '../../../packages/source/chalaoshi/src/chalaoshi.js';
 
 /** 一份小索引：两位同姓教师、一位外教、一位拼音易混的。 */
@@ -273,4 +277,89 @@ test('hot 全为 0 时不会除零', () => {
   const hits = searchIndex(index, '张');
   assert.equal(hits.length, 1);
   assert.ok(Number.isFinite(hits[0].score), '分数必须是有限数，不能是 NaN');
+});
+
+/* ────────────────────────────── 课程绩点表（W-14） ────────────────────────── */
+
+/**
+ * 课程绩点表（`api /gpa?course=`）。
+ *
+ * ⚠️ 夹具按上游 `chalaoshi/index.ts` 的 `parseGpaTable` 正则手写，**未经真实页面验证**；
+ * 站点在国内不可达，拿不到真实响应。
+ */
+
+const GPA_TABLE = `<table><tr><th>教师</th><th>平均绩点</th><th>样本</th></tr>
+<tr><td class="course_name">王伟</td><td>4.12<span class="sd">±0.31</span></td><td>500+</td></tr>
+<tr><td class="course_name">李娜</td><td>3.80</td><td>42</td></tr>
+<tr><td class="course_name">Smith &amp; Co</td><td>2.55</td><td>7</td></tr>
+</table>`;
+
+test('parseGpaTable：姓名、均绩点、标准差、样本（保留 500+ 的「至少」语义）', () => {
+  const rows = parseGpaTable(GPA_TABLE);
+  assert.equal(rows.length, 3);
+  assert.equal(rows[0].teacher, '王伟');
+  assert.equal(rows[0].gpa, 4.12);
+  assert.equal(rows[0].sd, 0.31);
+  assert.equal(rows[0].sampleText, '500+');
+  assert.equal(rows[0].sample, 500, '`+` 只影响 sampleText，不改变数字');
+  assert.equal(rows[1].sd, null, '没有 ± 时给 null，不编一个 0');
+  assert.equal(rows[2].teacher, 'Smith & Co', '实体要反转义');
+});
+
+test('parseGpaTable：结构不符时给空数组，不抛（调用方据 count 说话）', () => {
+  assert.deepEqual(parseGpaTable('<html>没有这门课</html>'), []);
+  assert.deepEqual(parseGpaTable(null), []);
+});
+
+test('fetchCourseGpa：课程名编码一次；404 说清「没有数据」而不是「网络失败」', async () => {
+  const calls = [];
+  const ok = await fetchCourseGpa({
+    request: async (url) => { calls.push(url); return { status: 200, text: GPA_TABLE }; },
+    course: '微积分（甲）Ⅰ',
+  });
+  assert.equal(ok.course, '微积分（甲）Ⅰ');
+  assert.equal(ok.count, 3);
+  assert.match(calls[0], /^https:\/\/api\.chalaoshi\.de\/gpa\?course=/);
+  assert.match(calls[0], /%E5%BE%AE%E7%A7%AF%E5%88%86/, '课程名要编码');
+
+  await assert.rejects(
+    () => fetchCourseGpa({ request: async () => ({ status: 404, text: '' }), course: '没有这门课' }),
+    (error) => {
+      assert.equal(error.code, 'NOT_FOUND');
+      assert.match(error.message, /没有课程/);
+      return true;
+    },
+  );
+});
+
+test('fetchCourseGpa：空课程名当场拒绝，不发请求', async () => {
+  let called = false;
+  await assert.rejects(
+    () => fetchCourseGpa({ request: async () => { called = true; return { status: 200, text: '' }; }, course: '  ' }),
+    (error) => error.code === 'INVALID_INPUT',
+  );
+  assert.equal(called, false);
+});
+
+test('apply()：服务面把 course 列进 methods，路由也认这个动作', async () => {
+  const { apply, ROUTE_PATH } = await import('../../../packages/source/chalaoshi/src/index.js');
+  const services = new Map();
+  const routes = [];
+  const ctx = {
+    profileContext: { dir: mkdtempSync(path.join(tmpdir(), 'chalaoshi-')) },
+    effect(fn) { return fn() ?? (() => {}); },
+    provide(name, value) { services.set(name, value); return () => services.delete(name); },
+    inject(names, callback) { callback({ webServer: { register(entry) { routes.push(entry); return () => {}; } } }); },
+    get() { return undefined; },
+  };
+  const dispose = apply(ctx);
+  try {
+    const service = services.get('zhiyunChalaoshi');
+    assert.ok(service, '必须 provide zhiyunChalaoshi');
+    assert.deepEqual([...service.methods].sort(), ['chalaoshi.course', 'chalaoshi.search', 'chalaoshi.teacher']);
+    assert.equal(typeof service.course, 'function');
+    assert.equal(routes[0].path, ROUTE_PATH);
+  } finally {
+    await dispose?.();
+  }
 });

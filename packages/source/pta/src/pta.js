@@ -133,6 +133,27 @@ export function normalizeDeadline(value) {
 }
 
 /**
+ * 把时间字段归成 `{ iso, text }`，**并认数字时间戳**。
+ *
+ * `normalizeDeadline` 只认能被 `Date.parse` 解成字符串的时间；提交记录的
+ * `submitAt` 是**毫秒时间戳**（数字或数字串），`Date.parse('1762345678000')`
+ * 是 `NaN` —— 直接复用会让每一条提交都显示「时间未知」。
+ *
+ * @param value - 原始值（ISO 串、毫秒时间戳、秒级时间戳的字符串）。
+ * @returns `{ iso, text }`；认不出时 `iso` 为 null 并保留原文。
+ */
+export function normalizeTimestamp(value) {
+  if (value == null || value === '') return { iso: null, text: null };
+  const numeric = typeof value === 'number' ? value : (/^\d{10,}$/.test(String(value).trim()) ? Number(value) : null);
+  if (numeric === null) return normalizeDeadline(value);
+  // 秒级与毫秒级都有人用：小于 1e12 的当作秒。这条判据在 2286 年前都成立。
+  const at = numeric < 1e12 ? numeric * 1000 : numeric;
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return { iso: null, text: String(value) };
+  return { iso: date.toISOString(), text: String(value) };
+}
+
+/**
  * 判一条题集是不是"还要做的事"。
  *
  * @param row - 原始题集。
@@ -594,6 +615,103 @@ export class PtaApi {
       accepted: byStatus.PROBLEM_ACCEPTED ?? 0,
       byStatus,
     };
+  }
+
+  /**
+   * 我对这份题集的**提交记录**（对应上游 `pta submission list`，审计 W-9）。
+   *
+   * # 为什么它是纯读
+   *
+   * `GET /api/exams/{examId}/problem-sets/{setId}/submissions` —— 只查自己交过
+   * 什么、判到哪一步。上游把它和保存/提交放在同一个 CLI 组里，审计据此判成
+   * 「写链路的一部分」并整条丢掉；那是**归类错误**，不是能力缺失。
+   *
+   * # 没有答题实例时不是错误
+   *
+   * 还没在网页上点「开始作业」就没有 `exam`，也就没有任何提交。这时按空表返回
+   * 并带 `examStarted: false`，让调用方说「还没开始」，而不是抛一个看起来像
+   * 权限问题的错。
+   *
+   * @param problemSetId - 题集 id。
+   * @param options.before - 从这个提交 id 往前翻（分页游标）。
+   * @param options.limit - 单页条数（默认 30，与上游一致）。
+   * @param options.problemId - 只看某道小题的提交。
+   * @param options.signal - 中止信号。
+   * @returns `{ examStarted, submissions, page }`。
+   */
+  async submissions(problemSetId, { before, limit = 30, problemId, signal } = {}) {
+    const id = ptaId(problemSetId, '题集 ID');
+    if (!Number.isInteger(limit) || limit < 1) {
+      throw new ClassroomError('INVALID_INPUT', 'limit 要是正整数');
+    }
+    const info = await this.getExam(id, { signal });
+    if (!info.exam) return { examStarted: false, submissions: [], page: { before: null, limit, nextBefore: null } };
+
+    const filter = { userId: info.exam.userId };
+    if (problemId !== undefined) filter.problemSetProblemId = ptaId(problemId, '题目 ID');
+    const data = await this.get(`/api/exams/${ptaId(info.exam.id, '答题实例 ID')}/problem-sets/${id}/submissions`, {
+      query: {
+        ...(before !== undefined ? { before: ptaId(before, '提交记录 ID') } : {}),
+        limit: String(limit),
+        // `filter` 只能编码一次 —— 手工 encodeURIComponent 会双重编码，PTA 直接 400
+        // （与题集列表的 `filter` 同一条实测结论）。
+        filter: JSON.stringify(filter),
+      },
+      signal,
+    });
+
+    const rows = Array.isArray(data?.submissions) ? data.submissions : [];
+    if (!Array.isArray(data?.submissions)) {
+      // 「没有提交过」是空数组，不是缺字段。缺字段说明契约变了，要如实报。
+      throw new ClassroomError('API_SHAPE', '拼题A 提交记录响应缺少 submissions');
+    }
+    return {
+      examStarted: true,
+      submissions: rows.map((row) => ({
+        id: row?.id == null ? '' : String(row.id),
+        problemSetProblemId: row?.problemSetProblemId == null ? null : String(row.problemSetProblemId),
+        problemType: row?.problemType ? String(row.problemType) : null,
+        status: row?.status ? String(row.status) : null,
+        submittedAt: normalizeTimestamp(row?.submitAt ?? row?.createdAt),
+        score: row?.score ?? null,
+      })),
+      // 上游用这两个布尔告诉调用方「还能往前翻 / 有没有更新的」。
+      page: {
+        before: before ?? null,
+        limit,
+        nextBefore: data?.hasBefore === true ? (rows.length ? rows[rows.length - 1].id : null) : null,
+      },
+    };
+  }
+
+  /**
+   * 一条提交记录的**详情**（代码、判题结果、逐测试点）。
+   *
+   * 与 `submissions()` 一样是纯读。归属校验照上游：记录必须属于**本人**、
+   * 且属于**这份题集** —— 不校验的话，一个猜出来的 id 就能读到别人的代码。
+   *
+   * @param problemSetId - 题集 id。
+   * @param submissionId - 提交记录 id。
+   * @param options.signal - 中止信号。
+   * @returns 平台原样的详情对象。
+   */
+  async submission(problemSetId, submissionId, { signal } = {}) {
+    const id = ptaId(problemSetId, '题集 ID');
+    const sid = ptaId(submissionId, '提交记录 ID');
+    const info = await this.getExam(id, { signal });
+    if (!info.exam) {
+      throw new ClassroomError('NO_EXAM', '还没开始作答这份题集，所以没有提交记录。先在网页上点「开始」。');
+    }
+    const data = await this.get(`/api/exams/${ptaId(info.exam.id, '答题实例 ID')}/submissions/${sid}`, { signal });
+    const row = data?.submission;
+    if (!row || typeof row !== 'object') {
+      throw new ClassroomError('API_SHAPE', '拼题A 提交详情缺少 submission');
+    }
+    if ((row.userId != null && String(row.userId) !== String(info.exam.userId))
+      || (row.problemSetId != null && String(row.problemSetId) !== id)) {
+      throw new ClassroomError('API_SHAPE', '这条提交记录不属于本人当前题集，拒绝返回');
+    }
+    return data;
   }
 
   /**
