@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-milkdown-notes",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 Milkdown（ProseMirror WYSIWYG Markdown 编辑器），给「笔记」页既有编辑态 textarea 加一层所见即所得（强化式集成·判据③成立，前提是先做双斜杠缝合）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@milkdown/kit": "7.23.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+# 上游 awesome-dsh-plugin **没有**可锁版的 npm 包。
+#
+# 实测（2026-11-06，master 树 ls）：
+#   - 仓库根目录**没有** package.json；
+#   - 唯一 package.json 在 `scripts/host-market/` 下（采集流水线自己的 devDeps），
+#     不是可挂载的 DSH bundle；
+#   - 因此 `dsh.bundle.patch` 无从谈起，A 类的「锁版挂载」一栏**目前是空的**。
+#
+# 这不是遗漏，是判据：评审要回答的第一个问题就是
+# 「把它的判据搬成一个本地 bundle，代价是否小于它带来的增益」。
+# 若答案为否 —— 本目录**整目录删除**是允许的结局（参见 README「撤销条件」）。
+#
+# 一旦上游发布 npm 包，按下面格式补齐（id 前缀 radar- 不可改）：
+#
+# - insert:
+#     - id: radar-star-anomaly
+#       name: dsh-radar-star-anomaly

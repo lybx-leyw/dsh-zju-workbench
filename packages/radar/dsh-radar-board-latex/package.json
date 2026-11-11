@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-board-latex",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】给课件白板上的 latex 元素补一个真渲染末端（现在 client.jsx:246 直接把 element.latex 当文本吐出）；强化式集成，上游待定：Typst 语法用 kern-typ，LaTeX 语法应直接用仓库自带 katex",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

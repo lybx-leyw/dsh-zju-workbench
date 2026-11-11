@@ -1,0 +1,32 @@
+# dsh-radar-ctx-compact 的挂载声明（候选骨架，未评审）。
+#
+# ── 刻意与上游 patch 不同 ────────────────────────────────────────────
+#
+# 上游 @aiwayds/dsh-dcp 自带的 cordis.patch.yml 是两段：
+#
+#     - id: compaction-basic
+#       name: '@deepseek-ai/dsh-compaction-basic'
+#       disabled: true          # ← 无条件禁用官方压缩
+#     - insert:
+#         - id: dsh-dcp
+#           ...
+#
+# 本包**不抄第一段**。理由：禁用官方压缩 = **没有回退路径**。
+# 一旦评审发现「语义归纳缺失」对本仓是真伤害（见 README R-3），
+# 用户除了手改 patch 没有别的办法退回原状态。
+#
+# ⇒ 本包只 insert 自己；「要不要禁 compaction-basic」是评审的**决策项**，
+#    不是骨架该替评审做的**默认值**（TODO-2）。
+#
+# 另外，若上游支持「两者并存 + 由用户在设置里选后端」，那第一段根本不需要 ——
+# 这是 TODO-2 要先去上游确认的事。
+- insert:
+    - id: radar-ctx-compact
+      name: dsh-radar-ctx-compact
+      config:
+        # 触发压缩的上下文占比。上游默认 0.7；本仓若接，须按
+        # `dsh-radar-context-dashboard`（上下文构成分解）的实测基线重新定。
+        thresholdRatio: 0.7
+        # 摘要语言。本仓用户以中文为主，上游对 CJK 按真实密度计价，
+        # 写 zh 能让「用户原话 / 路径 / 报错」逐字保留（见 README R-3 反例）。
+        language: zh

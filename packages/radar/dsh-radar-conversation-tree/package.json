@@ -1,0 +1,16 @@
+{
+  "name": "dsh-radar-conversation-tree",
+  "version": "0.0.0-radar",
+  "private": true,
+  "description": "候选骨架（未评审）：锁版挂载 dsh-conversation-tree，外围注入中文检索增强层",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "dsh-conversation-tree": "0.1.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

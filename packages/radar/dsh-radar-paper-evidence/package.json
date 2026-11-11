@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-paper-evidence",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 @ggboy123/dsh-paper-reader@1.3.1（已有页面在同一上游的 iframe）+ 借鉴 codex-paper-reader-skill 的坐标契约，为论文页补「原文区块级证据锚点」",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@ggboy123/dsh-paper-reader": "1.3.1"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

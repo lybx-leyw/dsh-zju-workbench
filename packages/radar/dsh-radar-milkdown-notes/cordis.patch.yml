@@ -1,0 +1,5 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+# 见 README.md 的「必须先解决的三个保真度缺口」一节。
+- insert:
+    - id: radar-milkdown-notes
+      name: dsh-radar-milkdown-notes

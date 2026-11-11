@@ -1,0 +1,19 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+#
+# 强化式集成（非全新面板）。本包**不引入**上游任何 npm 包 —— 上游
+# `chenqianyu486-sys/dsh-zju-lecture-note`（MIT，1.3.3）是「智云回放 → 讲义」的**整条流水线**
+# 插件（7 个工具：解析链接 / 抓字幕 / 抓投影 PPT / 读本地课件 / 取视频直链 / 读 Edge Cookie / 校验讲义），
+# 与本仓已有的 `dsh-zhiyun-source-classroom`（课堂数据源）+ `dsh-zhiyun-core-lecture`（讲义装配）
+# + `dsh-zhiyun-page-classroom`（课堂页）**功能重叠**，整包挂载属「重复且无增益」，故**不按 A 类锁版挂载**。
+#
+# 只取其中**唯一不可替代**的一块：`zju_lecture/note_lint.py`（378 行，纯标准库、零网络）
+# —— 「讲义 Markdown 能不能正常渲染」的静态校验。本仓 `grep -rl 'table_bare_pipe|frac_no_brace|
+# inline_math_unclosed|details_single_line'` 在 `packages/` 下**零命中**，即本仓目前**没有**这道闸。
+#
+# 依据 CONTRIBUTING 3.3：**借鉴规则、不搬运源码**，用 JS 重写为纯函数；规则清单与判据记在
+# ATTRIBUTION.md。上游以 MIT 发布，重写版同样按 MIT 兼容使用，但**不复制其 Python 源文件**。
+#
+# 挂载点：作为**纯逻辑服务**注册，不抢任何 UI 位置。讲义装配完成后、写盘前调用一次。
+- insert:
+    - id: radar-lecture-note-lint
+      name: dsh-radar-lecture-note-lint

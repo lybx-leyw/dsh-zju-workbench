@@ -320,6 +320,45 @@ test('last_run_at 晚于今天 → 视为脏状态，回落公式（不拿不可
   assert.equal(picked.group, formulaGroup(today));
 });
 
+test('回归（读侧）：说明表的 `last_run_at` 是「旧日期」时，readState 不得读成旧值', () => {
+  // 2026-11-03 12:00 实跑踩到：真实文件里说明表那条是
+  //   ``| `last_run_at` | `2026-11-02 21:05` | 最近一轮的…… |``
+  // 全文 exec() 取**第一条** → last_group 因行首 `^` 锚躲过、last_run_at 没躲过。
+  // 现象极具欺骗性：`--commit` 明明写进了 `2026-11-03 12:00`，再读却报 `2026-11-02 21:05`，
+  // 于是每次都判「跨天」走公式、同日去重被永久绕过。
+  const dir = mkdtempSync(join(tmpdir(), 'radar-rotation-'));
+  const file = join(dir, 'rotation-state.md');
+  try {
+    writeFileSync(file, [
+      '## 状态字段',
+      '',
+      '| 字段 | 含义 |',
+      '| --- | --- |',
+      '| `last_group` | `B`（示例） |',
+      '| `last_run_at` | `2026-11-02 21:05` |',
+      '| `group_runs` | 各组历史累计运行次数 |',
+      '',
+      '## 状态',
+      '',
+      '| 项 | 值 |',
+      '| --- | --- |',
+      '| `last_group` | `C` |',
+      '| `last_run_at` | `2026-11-03 12:00` |',
+      '| `group_runs`（累计） | A=59, B=42, C=40 |',
+      '',
+    ].join('\n'), 'utf8');
+
+    const back = readState(file);
+    assert.equal(back.lastGroup, 'C', 'last_group 必须取状态表的值');
+    assert.equal(back.lastRunAt, '2026-11-03 12:00', 'last_run_at 不得被说明表的示例劫持');
+    assert.equal(back.lastRunDay, '2026-11-03');
+    assert.equal(back.groupRuns.A, 59);
+    assert.equal(back.groupRuns.C, 40);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('回归（写侧）：说明表里恰好含一个反引号时刻时，writeState 仍只改「## 状态」节', () => {
   // 2026-10-28 实跑踩到：说明表第 2 行是 ``| `last_run_at` | `2026-10-28 00:05` | …|``，
   // 全文 replace() 先在说明行命中 → last_group 改了、last_run_at 与 group_runs 没改。

@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-cost-guard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 @tomjerrygit/dsh-cost-guard@0.1.0（MIT，原生 DSH 插件包），把本仓「零成本折算」的用量账本接上价格表与缓存命中口径，输出到既有页面（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@tomjerrygit/dsh-cost-guard": "0.1.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

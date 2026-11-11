@@ -1,0 +1,20 @@
+# 候选骨架的挂载补丁 —— **未评审、未接入 profile**。
+#
+# 上游 `dsh-study-tutor@0.2.2` 自带 `cordis.patch.yml`（在其 tarball 根目录），
+# 内容是在 bundle 里 insert 上游自己的行。本骨架**不使用**那份 patch，理由：
+#
+#   1. 上游 patch 的 id 是上游名（`dsh-study-mode`），与「radar 包一律
+#      `dsh-radar-` 前缀」的污染防护冲突；
+#   2. 挂载意图（接到哪个页面、默认开不开、要不要进 preset roster）必须由
+#      本包显式声明，而不是照抄上游 —— 否则评审时看不出我们改了什么。
+#
+# 做法：本包用自己的 id 插入，由 `src/index.js` 在宿主侧 `import()` 上游、
+# 调它导出的 `apply(ctx)`，把上游当**库**用。**上游源码一行不改。**
+#
+# 为什么**不带 config**：
+#   上游的 `engines.dsh` 是 `>=0.2.1-rc.3 <0.2.3`，与宿主版本强绑定；
+#   而「是否把 `Study Mode` preset 放进 agent 选择器 roster」是评审必须先
+#   裁定的产品决策（见 src/index.js TODO 1）。骨架阶段不预置默认值。
+- insert:
+    - id: radar-study-tutor
+      name: dsh-radar-study-tutor

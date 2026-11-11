@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-cc98-webvpn",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】给 dsh-zhiyun-source-cc98 的校外连通性补一层网关会话：同一批 cc98.* 只读方法，多一条经 WebVPN 的出口（含网关重定向判定与 ticket 生命周期）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@walavave/cc98-cli": "0.4.1"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

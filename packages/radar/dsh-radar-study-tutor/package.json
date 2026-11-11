@@ -1,0 +1,21 @@
+{
+  "name": "dsh-radar-study-tutor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】锁版引入 dsh-study-tutor@0.2.2（MIT，原生 DSH Agent preset），把「宿主拥有作答/判分/掌握度证据」接到学习页的判分链路上（强化式集成，A 类锁版挂载 + 外围兼容层）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-study-tutor": "0.2.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

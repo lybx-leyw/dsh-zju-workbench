@@ -1,0 +1,13 @@
+{
+  "name": "dsh-radar-attendance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】纯函数库形态（无 Cordis patch、无上游挂载）：借 campuskit 的出勤阈值口径（迟到计入出勤 / 请假剔出分母 / 还能缺几次 / 需连上几次），为今天页的「下一节」补一句可解释的出勤风险",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {}
+}

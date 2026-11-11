@@ -1,0 +1,14 @@
+{
+  "name": "dsh-radar-clash-guard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】课表时间冲突判定（同门课多段 / 单双周 parity / 跨节次链式重叠 / 非节次时间），为「课表格子」补上「这两门课撞不撞」这一格（强化式集成，B 类源码级借鉴，无运行时依赖）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,25 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+#
+# A 类 · 锁版挂载。上游 `suanmingxing/dsh-ai-mistake-book`（MIT，v0.3.2）是**原生 DSH 插件包**
+# （`package.json` 有 `dsh.bundle.patch` → `./cordis.patch.yml`，patch id `ai-mistake-book`），
+# 按「锁版挂载 + 外围兼容层」引入：`package.json.dependencies` 写死 `0.3.2`（**不用 `^`**），
+# 本包**不改上游一行源码**。
+#
+# ⚠ 上游 npm 无发布（README 明写「目前只通过 GitHub 分发」），只能按 git tag 锁：
+#   评审通过后由 lockfile 走 `github:suanmingxing/dsh-ai-mistake-book#v0.3.2`，
+#   或 vendor 到 `vendor/` 后按目录锁（与 `dsh-zhiyun-paper` 同法）。**两种都需人工定。**
+#
+# ⚠ 上游把 `node_modules/`（schemastery / cosmokit / katex）**随仓库提交**，
+#   仅为支持 `link:` 安装；**本骨架不 vendor 其 `node_modules/`**，
+#   只走 `dependencies` 正常解析（`dsh plugin add github:` 的主路径就是这么走的）。
+#
+# 本包相对上游的增量（评审通过后才实现；见 README「三处增量」）：
+#   ① 卷面错题**可选回流**到本仓 `core-quiz` 的 `attempts` —— 上游只归档到自己的 `library/`，
+#      与「薄弱点统计」不连通；回流后「卷面错的」也能进同一条归因链；
+#   ② `archiveRoot` **钉在工作区**、拒绝指向 profile 目录（上游默认 `~/.dsh/ai-mistake-book`）；
+#   ③ 视觉模型能力**前置探测**（上游在插件启动时校验，本层在「投喂前」就给出可行动提示）。
+#
+# insert id 带 radar- 前缀，与其它 radar 骨架错开。
+- insert:
+    - id: radar-mistake-book
+      name: dsh-radar-mistake-book

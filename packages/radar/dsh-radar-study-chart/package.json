@@ -1,0 +1,20 @@
+{
+  "name": "dsh-radar-study-chart",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】锁版引入 dsh-chart@0.5.0（show_chart 工具 + recharts 内联渲染），给「题库」页与「学习」页既有的正确率/掌握度统计补一条趋势图（强化式集成·三条判据全成立）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "dsh-chart": "0.5.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

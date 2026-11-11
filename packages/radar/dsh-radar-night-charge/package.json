@@ -1,0 +1,17 @@
+{
+  "name": "dsh-radar-night-charge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】提取 ZJU-ontime-charge（symudie，MIT）的尼普顿充电桩预约与到点开电逻辑，接到「今天」页的校园生活时段卡片（强化式集成）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

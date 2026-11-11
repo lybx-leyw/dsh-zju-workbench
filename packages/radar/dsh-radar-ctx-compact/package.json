@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-ctx-compact",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审·未接入 profile·不可直接使用】锁版引入 @aiwayds/dsh-dcp@0.14.0，把宿主的上下文压缩后端从「每次调 LLM 重写摘要」换成「零 LLM 的确定性抽取」，强化同一压缩动作的底层",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@aiwayds/dsh-dcp": "0.14.0"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}

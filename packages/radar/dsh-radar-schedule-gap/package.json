@@ -1,0 +1,14 @@
+{
+  "name": "dsh-radar-schedule-gap",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架·未评审】课表空档判定（相邻课的间隔分钟 / 可直接到达 vs 赶不上 / 单双周与学期口径），为「规划」页课表提示补上「这两节课之间还有多久」，强化式集成，B 类源码级借鉴，零运行时依赖",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./upstream": "./src/upstream.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {}
+}

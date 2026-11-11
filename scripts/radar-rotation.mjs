@@ -47,9 +47,33 @@ export const GROUPS = ['A', 'B', 'C'];
 // `last_group` / `last_run_at` / `group_runs` 字样，宽松的 `[^|]*` 会先撞上说明表
 // 而把解释文字当成取值（曾经真的撞上过：把 `A=1, B=0, C=2` 读成了 0/0/0）。
 // 因此每个模式都要求**取值必须是反引号包裹的具体值 / `A=n, B=n, C=n` 形状**。
-const GROUP_RUNS_RE = /\|\s*`group_runs`[^|]*\|\s*((?:[ABC]\s*=\s*\d+\s*,?\s*)+)\|/;
-const LAST_GROUP_RE = /\|\s*`last_group`\s*\|\s*`([ABC])`\s*\|/;
-const LAST_RUN_RE = /\|\s*`last_run_at`\s*\|\s*`([0-9]{4}-[0-9]{2}-[0-9]{2})\s+([0-9]{2}:[0-9]{2})`\s*\|/;
+// 状态字段必须取**最后一条**匹配，不能全文 `exec` 取第一条：文件顶部的「状态字段」说明表里
+// 同样整行出现 ``| `last_group` | `B`（示例） | ...`` 与
+// ``| `last_run_at` | `2026-11-02 21:05` | ...``，两者**都能通过取值行的正则**，
+// 第一条必然是说明表（2026-11-03 实跑：`last_group` 靠行首 `^` 锚躲过一半，`last_run_at` 完全没躲过，
+// 于是 `--commit` 写回了新值、读取仍报旧日期，状态自相矛盾）。
+// 说明表在「## 状态」表**之前**、逐轮流水在「## 状态」表**之后**，两者都不带 `last_run_at` 单字段行，
+// 所以「最后一条」稳定命中真取值行 —— 既不依赖 `## 状态` 标题存在（测试 fixture 就没有），也不怕说明表。
+export function stateSection(text) {
+  const i = text.search(/^## 状态\s*$/m);
+  return i < 0 ? text : text.slice(i);
+}
+
+const GROUP_RUNS_RE = /\|\s*`group_runs`[^|]*\|\s*((?:[ABC]\s*=\s*\d+\s*,?\s*)+)\|/g;
+const LAST_GROUP_RE = /^\|\s*`last_group`\s*\|\s*`([ABC])`\s*\|/gm;
+const LAST_RUN_RE = /^\|\s*`last_run_at`\s*\|\s*`([0-9]{4}-[0-9]{2}-[0-9]{2})\s+([0-9]{2}:[0-9]{2})`\s*\|/gm;
+
+/** 取正则的**最后一条**匹配（`g` 标志 + 循环到耗尽）。 */
+export function lastMatch(re, text) {
+  let m = null;
+  let cur;
+  re.lastIndex = 0;
+  while ((cur = re.exec(text)) !== null) {
+    m = cur;
+    if (cur.index === re.lastIndex) re.lastIndex += 1;
+  }
+  return m;
+}
 const RUN_ROW_RE = /^\|\s*([0-9]{4}-[0-9]{2}-[0-9]{2})[^|]*\|\s*([ABC])\s*\|(.*)\|\s*$/;
 
 /** 年积日（1-based），与 shell 的 `date +%j` 一致。 */
@@ -81,14 +105,15 @@ export function readState(statePath = STATE_PATH) {
     return { lastGroup: null, lastRunDay: null, lastRunAt: null, groupRuns: emptyRuns(), runs: [], raw: null };
   }
 
-  const lastGroup = LAST_GROUP_RE.exec(text)?.[1] ?? null;
-  const runMatch = LAST_RUN_RE.exec(text);
+  const state = stateSection(text);
+  const lastGroup = lastMatch(LAST_GROUP_RE, state)?.[1] ?? null;
+  const runMatch = lastMatch(LAST_RUN_RE, state);
   const lastRunDay = runMatch?.[1] ?? null;
   const lastRunAt = runMatch ? `${runMatch[1]} ${runMatch[2]}` : null;
 
   // 累计次数写作 `A=1, B=0, C=2`
   const groupRuns = emptyRuns();
-  const runsText = GROUP_RUNS_RE.exec(text)?.[1] ?? '';
+  const runsText = lastMatch(GROUP_RUNS_RE, state)?.[1] ?? '';
   for (const m of runsText.matchAll(/([ABC])\s*=\s*(\d+)/g)) groupRuns[m[1]] = Number(m[2]);
 
   const runs = [];

@@ -1,0 +1,18 @@
+{
+  "name": "dsh-radar-api-drift",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】给「插件」页补一列「按宿主版本求导的能力漂移」：每个已装插件声明的 peer/engines 是否还覆盖当前宿主，而不是只看它依赖谁的包名（强化式集成，零运行时依赖）",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

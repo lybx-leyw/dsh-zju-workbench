@@ -12,7 +12,8 @@
     "packages/client/*",
     "packages/source/*",
     "packages/tool/*",
-    "packages/preset/*"
+    "packages/preset/*",
+    "packages/radar/*"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",

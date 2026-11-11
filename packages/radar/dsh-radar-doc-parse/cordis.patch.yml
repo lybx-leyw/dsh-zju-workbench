@@ -1,0 +1,6 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+# 见 README.md「风险」一节：上游插件本体在 npm 上的包名被他人占位，
+# 本包只锁版引入它的三个底层库，插件编排由本仓兼容层自己写。
+- insert:
+    - id: radar-doc-parse
+      name: dsh-radar-doc-parse

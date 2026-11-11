@@ -1,0 +1,16 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+#
+# 本包**不锁上游**：能力契约来自 `2026heshao/dsh-armory`（MIT，npm `dsh-armory@2.4.7`），
+# 但上游是一体看板（MCP 管理 + Skill 市场 + Expert + 六档主题 + MCP OAuth 授权），
+# 整包挂载会在插件页旁多出它自己的面板，违反「仍是同一个面板」——因此 `dependencies` 为空，
+# `src/upstream.js` 只记录**接口形状**与待核项，一行代码都不摘。
+#
+# 评审要点：本包不注册页面、不注册 slot、不注册工具。它要做的只是
+# 「在 `dsh-zhiyun-page-plugins` 已有的面板里多加一列」。若评审结论是
+# 「不值得为这一列单独占一个插件槽位」，正确做法是整目录删除，把 `src/caps.js`
+# 的形状直接内联进 `dsh-zhiyun-page-plugins`。
+#
+# insert id 带 radar- 前缀，与其它 radar 骨架错开。
+- insert:
+    - id: radar-plugin-caps
+      name: dsh-radar-plugin-caps

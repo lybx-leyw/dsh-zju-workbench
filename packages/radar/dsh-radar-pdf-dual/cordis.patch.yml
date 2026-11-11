@@ -1,0 +1,11 @@
+- insert:
+    - id: radar-pdf-dual
+      name: dsh-radar-pdf-dual
+      config:
+        # 单次请求携带的段落数 / 字符数上限，取自上游 dsh-pdf-math-reader@1.1.0
+        # 出厂 cordis.patch.yml 的同一组值；改这里不改上游。
+        maxSegmentsPerRequest: 5
+        maxCharsPerRequest: 3800
+        timeoutMs: 180000
+        # 本仓侧新增：单页缓存的段落数上限（外层 LRU，见 src/store.js 的 TODO）。
+        pageCacheLimit: 300

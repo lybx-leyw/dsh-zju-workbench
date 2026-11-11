@@ -1,0 +1,6 @@
+# 与上游 cordis.patch.yml 同形（上游 id: conversation-tree → 本包发布后由它改为 radar-conversation-tree）。
+# 评审要点：本包与上游**并存挂载**时，左侧带槽位归属（html[data-dsh-band-owner]）会打架，
+# 因此正式接入时应二选一：要么只挂上游 + 外围兼容层，要么只挂本包。
+- insert:
+    - id: radar-conversation-tree
+      name: dsh-radar-conversation-tree

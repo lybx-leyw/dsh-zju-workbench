@@ -1,0 +1,30 @@
+{
+  "name": "dsh-radar-pdf-dual",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "【候选骨架 · 未评审 · 未接入 profile · 不可直接使用】把本仓论文页「悬停翻译（单句）」与「整篇 -dual.pdf（babeldoc 分钟级）」之间的空白补上：单页段落级双语对照 + 术语表 + 段落笔记（强化式集成，锁版引入 dsh-pdf-math-reader@1.1.0 的翻译内核，挂载面由本仓自持）",
+  "license": "MIT",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src/**",
+    "cordis.patch.yml",
+    "README.md",
+    "ATTRIBUTION.md",
+    "OWNERS"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "dsh-pdf-math-reader": "1.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

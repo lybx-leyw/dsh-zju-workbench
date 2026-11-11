@@ -1,0 +1,18 @@
+# 候选骨架：未评审、未接入 profile、不可直接使用。
+#
+# A 类（原生 DSH 插件包）。上游 `dsh-kun-like-pet@1.0.0` 在 package.json 里**锁版**，
+# 但注意：上游**不是 npm 可安装的包**（`private: false` 却没有任何 publish 记录，
+# 且 README 自陈「以 DSH 动态插件形式开发并运行验证（cordis_define）」）——
+# 评审第一步是确认 1.0.0 到底能不能 `npm install`。
+#
+# 若不能：本包**不得**走 `npm i dsh-kun-like-pet@1.0.0` 这条路，
+# 而应改成「把上游的两个半部（host.js / client.js）作为 vendored 参考件读一遍、
+# 只把动画帧表抄成本仓自己的常量」—— 那种情况下本包的 `dependencies` 必须清空。
+#
+# 本包**不注册 shell.overlay**（上游的做法）：本仓规划页右下角已经有对话角色 pet，
+# 再叠一个全局面板就是两个角色抢同一块地方。渲染面接在已有那个 pet 上。
+#
+# insert id 带 radar- 前缀，与其它 radar 骨架错开。
+- insert:
+    - id: radar-pet-overlay
+      name: dsh-radar-pet-overlay
