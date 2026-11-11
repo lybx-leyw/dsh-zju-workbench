@@ -643,3 +643,38 @@ R-1 ~ R-3、R-5 已改（保留 `writes: false` 的声明与理由，把「不�
 `link-workspace-packages.mjs --check` 报 65/66。重新生成会顺带删 372 行 `extraneous`
 条目并**摘掉根 `dependencies.parse5`**（`xxt/src/parse.js` 在用，虽仍能从包内解析），
 属单独一张票的范围，本轮没动。
+
+---
+
+## 十二、用户明确废弃：知网（cnki）数据源
+
+**决定**：用户 2026-11-11 明确指示「知网数据源明确删除，用户明确不做知网数据源了」。
+
+**这不是「待补」，也不是「暂缓」——是不做。** 记录在此以免后来者把它当成遗漏。
+
+### 删除范围（已执行）
+
+| 项 | 处理 |
+| --- | --- |
+| `packages/source/cnki/` | **整包删除** |
+| `tests/cnki.test.mjs` | 删除 |
+| `profiles/zju-workbench/package.json` | 移除 `@lybx-leyw/dsh-zju-source-cnki`（53 → 52） |
+| `source/login` 的 `probeCnki` | 删除（探测函数与 `runProbes` / `sources` 里的引用） |
+| `login/client.jsx` 的 `sourceCnki` | 删除（状态行 + 8 种语言文案） |
+| `tests/login-sources.test.mjs` | 去掉知网相关的期望与断言 |
+| `tests/source-settings.test.mjs` | `NO_SETTINGS` 白名单移除 `cnki` |
+
+### 保留了什么，为什么
+
+| 位置 | 内容 | 为什么保留 |
+| --- | --- | --- |
+| `source/webvpn/src/hosts.js` | `'cnki.net'` 在主机归属表里 | 那是**事实**（知网只在校内可达），不是知网的实现。表是 WebVPN 的路由依据，删一条会让「将来别人接知网时又得重新实测」 |
+| `source/tyys/README.md` | 提到 `cnki` 的滑块求解器作为**类比** | 讲的是「tyys 的点字验证码与 cnki 的滑块是同一类人机门槛」，是论证材料，不是知网功能 |
+
+### 连带影响
+
+原本 `cnki` 在设置页的「这份凭据的用途」里有一行（因为它是 `auth: none` + 按 IP 认证，没独立分区）。删掉后那一块从 9 行变 8 行。
+
+### 对上游融合清单的影响
+
+上游 `cnki` 模块的 5 条 provides **全部随之废弃**，不再计入覆盖率分母。审计报告（`coverage-audit-batch-b.md`）里那一节的数字是**删除前**的历史记录，保留原文不动 —— 它记的是「当时本仓做到什么程度」，而这份决定记的是「以后不做」。

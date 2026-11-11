@@ -483,8 +483,10 @@ export function apply(ctx, config = {}) {
      */
     saveAnswerPrepare: async (input) => (await writes()).saveAnswer.prepare(input),
     saveAnswerExecute: async (signal) => (await writes()).saveAnswer.execute(signal),
+    saveAnswerCancel: async () => (await writes()).saveAnswer.cancel(),
     submitAnswerPrepare: async (input) => (await writes()).submitAnswer.prepare(input),
     submitAnswerExecute: async (signal) => (await writes()).submitAnswer.execute(signal),
+    submitAnswerCancel: async () => (await writes()).submitAnswer.cancel(),
   });
 
   return async () => {

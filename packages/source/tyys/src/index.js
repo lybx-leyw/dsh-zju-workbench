@@ -80,13 +80,72 @@ export function apply(ctx) {
     const forget = () => { cached = null; };
 
     /**
+     * 取共享 CAS 服务（`source/login` 提供）。
+     *
+     * # 这是 D18 的 B 方案：CAS 会话由 `login` 统一持有一份
+     *
+     * 本包先前只留了 `setLoginProvider` / `setAccountProvider` 两个注入点，
+     * 而**全仓没有任何调用方** —— 于是它挂着却永远拿不到登录，
+     * 场馆预约与考勤都不可用。那不是「用户没配账号」，是「没人喂账号」。
+     *
+     * 现在兜底到 `zhiyunCard`：凭据、CAS 流程、会话文件全在 tier 0，
+     * 本包只说明自己要哪个 `service`。
+     *
+     * @returns 服务对象，或 `null`（没装 `source/login`）。
+     */
+    const cardService = () => ctx.get?.('zhiyunCard') ?? null;
+
+    /**
+     * 登录回调（注入优先，其次共享 CAS）。
+     *
+     * 场馆要**回跳落地 URL**（取 `oauth_token`），体艺 App 要**落地正文**
+     * （取 `jwtToken`）—— 所以走 `casLoginFor` 而不是 `casTransport`。
+     *
+     * @param input - `{ service }`：`VENUE_LOGIN_SERVICE` 或 `APP_LOGIN_SERVICE`。
+     * @returns 落地结果 `{ url, html, status? }`。
+     */
+    const loginFor = async (input = {}) => {
+      if (typeof acquireLogin === 'function') return acquireLogin(input);
+      const card = cardService();
+      if (typeof card?.casLoginFor !== 'function') {
+        throw new TyysError(
+          'CONFIG',
+          '体艺平台还没接入登录：到「设置 → 浙大一卡通」配置后重试'
+          + '（它用的是统一身份认证的共享会话）。',
+        );
+      }
+      const service = String(input?.service ?? '').trim();
+      if (!service) throw new TyysError('CONFIG', '体艺登录需要 service 地址。');
+      const landing = await card.casLoginFor({
+        entry: service,
+        hosts: [HOST, 'zjuam.zju.edu.cn', 'tyys.zju.edu.cn', 'www.tyys.zju.edu.cn'],
+      });
+      return { url: landing?.url?.href ?? '', body: landing?.html ?? '', status: 200 };
+    };
+
+    /**
+     * 取当前账号：注入优先，其次「浙大一卡通」里的学号。
+     *
+     * @returns 账号字符串（可能为空）。
+     */
+    const accountOf = async () => {
+      if (typeof accountProvider === 'function') return accountProvider();
+      const card = cardService();
+      if (typeof card?.read === 'function') {
+        const account = await card.read().catch(() => null);
+        return account?.username ?? '';
+      }
+      return '';
+    };
+
+    /**
      * 解析当前账号，账号变了就丢掉旧客户端。
      *
      * @returns 账号字符串。
      * @throws {TyysError} `CONFIG` 没有账号提供者、或它返回空。
      */
     const ensureAccount = async () => {
-      const value = typeof accountProvider === 'function' ? await accountProvider() : '';
+      const value = await accountOf();
       const next = String(value ?? '').trim();
       if (!next) {
         throw new TyysError('CONFIG', '还不知道用哪个账号查体艺：到「设置 → 浙大一卡通」配置学号后重试。');
@@ -113,8 +172,8 @@ export function apply(ctx) {
       if (!cached) {
         cached = {
           account,
-          venue: new VenueClient({ request: requestOf(ctx), acquireLogin, username: account }),
-          app: new TyysApp({ request: requestOf(ctx), acquireLogin, username: account }),
+          venue: new VenueClient({ request: requestOf(ctx), acquireLogin: loginFor, username: account }),
+          app: new TyysApp({ request: requestOf(ctx), acquireLogin: loginFor, username: account }),
         };
       }
       return cached;
@@ -172,8 +231,10 @@ export function apply(ctx) {
        */
       bookVenuePrepare: async (input) => (await writes()).bookVenue.prepare(input),
       bookVenueExecute: async (signal) => (await writes()).bookVenue.execute(signal),
+      bookVenueCancel: async () => (await writes()).bookVenue.cancel(),
       cancelVenuePrepare: async (input) => (await writes()).cancelVenue.prepare(input),
       cancelVenueExecute: async (signal) => (await writes()).cancelVenue.execute(signal),
+      cancelVenueCancel: async () => (await writes()).cancelVenue.cancel(),
 
       /**
        * 注入登录能力。返回撤销函数。
@@ -212,7 +273,16 @@ export function apply(ctx) {
       },
 
       /** 是否已接入登录。 */
-      ready() { return acquireLogin !== null; },
+      /**
+       * 是否已接入登录。
+       *
+       * 两个来源都算：注入了 provider，**或者** source/login 已装配
+       * （共享 CAS 会话由它负责）。先前只认前者，而那个注入点全仓没人调用。
+       */
+      ready() {
+        return typeof acquireLogin === 'function'
+          || typeof ctx.get?.('zhiyunCard')?.casLoginFor === 'function';
+      },
 
       /** 清掉缓存的会话（换账号、或用户点了「重新登录」）。 */
       reset() { forget(); },

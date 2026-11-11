@@ -77,6 +77,46 @@ export function apply(ctx) {
     let client = null;
 
     /**
+     * 用共享 CAS 会话登录某个站点（D18 的 B 方案）。
+     *
+     * # 这一包为什么只需要「登录一次某站点」
+     *
+     * 通知来自几十个部门站点（网站群 + 教务 + 学院）。它们各自是一个 host，
+     * CAS 的 service 地址也随之不同。本包不自己实现 CAS —— 那是 tier 0
+     * `source/login` 的事 —— 这里只把 `{ service, host }` 转给它。
+     *
+     * 共享会话的好处正在这里：同一份 `iPlanetDirectoryPro` 票，
+     * 第一个站点登录成功后，其余站点多数直接放行，不必一个个走表单。
+     *
+     * @param input - `{ service, host }`。
+     * @returns Promise<void>
+     * @throws {NoticeError} 没装 `source/login`，或登录失败。
+     */
+    const casLoginFor = async (input = {}) => {
+      const service = String(input?.service ?? '').trim();
+      if (!service) {
+        throw new NoticeError('AUTH_REQUIRED', '这个栏目的通知要统一身份认证，但没有给出 service 地址。', {
+          host: input?.host,
+        });
+      }
+      const card = ctx.get?.('zhiyunCard');
+      if (typeof card?.casTransport !== 'function') {
+        throw new NoticeError(
+          'AUTH_REQUIRED',
+          '这个栏目的通知要统一身份认证：到「设置 → 浙大一卡通」登录后重试',
+          { host: input?.host },
+        );
+      }
+      // `hosts` 要含该站点自己 —— 否则 Transport 不会存它的 `Set-Cookie`，
+      // 表现为「登录成功了但下一个请求还是匿名」。
+      const host = String(input?.host ?? '').trim();
+      await card.casTransport({
+        entry: service,
+        hosts: [host, 'zjuam.zju.edu.cn'].filter(Boolean),
+      });
+    };
+
+    /**
      * 取客户端。
      *
      * `request` 每次现取：宿主上下文与出口都是惰性的（见 `sharedFetch` 的注释），
@@ -85,18 +125,12 @@ export function apply(ctx) {
     const ensure = () => {
       client ??= new NoticeSource({
         request: requestOf(ctx),
-        acquireServiceLogin: serviceLogin === null
-          ? null
-          : (input) => {
-            if (serviceLogin === null) {
-              throw new NoticeError(
-                'AUTH_REQUIRED',
-                '这个栏目的通知要统一身份认证：到「设置 → 浙大一卡通」登录后重试',
-                { host: input.host },
-              );
-            }
-            return serviceLogin(input);
-          },
+        acquireServiceLogin: (input) => {
+          // 注入优先（测试与特殊部署）。
+          if (typeof serviceLogin === 'function') return serviceLogin(input);
+          // 否则向 tier 0 的 `zhiyunCard` 要共享 CAS 会话。
+          return casLoginFor(input);
+        },
       });
       client.setProfile(profile);
       return client;
@@ -159,7 +193,16 @@ export function apply(ctx) {
       },
 
       /** 是否已接入统一身份认证（用于设置页的状态读数）。 */
-      ready() { return serviceLogin !== null; },
+      /**
+       * 是否已接入登录。
+       *
+       * 两个来源都算：注入了 provider，**或者** `source/login` 已装配
+       * （共享 CAS 会话由它负责）。先前只认前者，而那个注入点全仓没人调用。
+       */
+      ready() {
+        return typeof serviceLogin === 'function'
+          || typeof ctx.get?.('zhiyunCard')?.casTransport === 'function';
+      },
 
       /** 清掉缓存（换账号、或用户点了「重新登录」）。 */
       reset() { client = null; },

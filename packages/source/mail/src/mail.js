@@ -14,7 +14,16 @@
  *
  * - IMAP `imap.zju.edu.cn:993`，`secure: true`（隐式 TLS）；
  * - SMTP `smtp.zju.edu.cn:994`，`secure: true`；
- * - 认证用**16 位客户端专用密码**，不是统一身份认证密码。
+ * - 认证用**16 位客户端专用密码**（在浙大邮箱网页版生成），不是统一身份认证密码。
+ *
+ * # 为什么现在只做专用密码
+ *
+ * 邮箱另有 CAS / OAuth2 路径（用户指出过：`service` 指向
+ * `cas/oauth2.0/callbackAuthorize`），但那要邮箱服务端注册的 `client_id`
+ * 才能走 XOAUTH2。**这一版只实现专用密码这一条路**，CAS 作为后续工作单独做。
+ *
+ * 两种认证混在一起写，会让「填了密码却登不上」变成一桩悬案 ——
+ * 用户不知道是该改密码还是该等 CAS 支持。分开做，失败原因才是确定的。
  *
  * # 三个第三方依赖都走「默认工厂 + 动态 import」
  *
@@ -305,7 +314,7 @@ export function translateConnectError(error, { phase = 'imap' } = {}) {
   if (isAuthError(error)) {
     return new MailError(
       'AUTH_EXPIRED',
-      '浙大邮箱认证失败：请确认填写的是完整邮箱地址，并在浙大邮箱网页版重新生成 16 位「客户端专用密码」后更新配置。'
+      '浙大邮箱认证失败：请确认账号与密码是否正确（账号可填学号或完整地址）。若用客户端专用密码，它可能已失效，需去邮箱网页版重新生成。'
       + '（这不是网络问题，反复重试不会好转。）',
       { phase, cause },
     );
@@ -538,7 +547,7 @@ export class Mail {
     if (!this.credentialProvider) {
       throw new MailError(
         'CONFIG',
-        '浙大邮箱还没有可用的客户端专用密码：请先在浙大邮箱网页版生成 16 位「客户端专用密码」并接入本工作台，然后重试。'
+        '浙大邮箱还没有配置账号：请到「设置 → 浙大邮箱」填写账号与密码后重试。'
         + '（若你是插件作者：调用 setCredentialProvider 注入。）',
       );
     }
@@ -554,17 +563,46 @@ export class Mail {
       const cause = error?.code ?? error?.name ?? '未知原因';
       throw new MailError(
         'CONFIG',
-        `读取邮箱凭据失败（${cause}）：请在凭据管理里重新填写浙大邮箱的 16 位客户端专用密码后重试。`,
+        `读取邮箱凭据失败（${cause}）：请到「设置 → 浙大邮箱」重新填写账号与密码后重试。`,
         { cause, reason: String(error?.message ?? '') },
       );
     }
     if (value === null || value === undefined) {
-      throw new MailError('CONFIG', '浙大邮箱还没有配置客户端专用密码：请先接入后再试。');
+      // `reason: 'MISSING'` 是给 `snapshot()` 用的**机器可读标记**：
+      // 它据此区分「没配账号」（显示未配置）与「配了但这次取不到」
+      // （显示已配但未连接）。靠匹配中文文案来判断太脆。
+      throw new MailError('CONFIG', '浙大邮箱还没有配置账号：请到「设置 → 浙大邮箱」填写账号与密码后重试。', { reason: 'MISSING' });
     }
     const address = text(value.address, 254, false);
     const password = text(value.password, 128, false);
+    /**
+     * 用户名接受**两种**写法，都合法：
+     *
+     * - 完整地址 `1234567890@zju.edu.cn`
+     * - 纯学号 `1234567890`
+     *
+     * # 为什么不再强制带 `@`
+     *
+     * 浙大邮箱**支持用学号登录**（这是事实，不是推断）。原来的正则强制
+     * `xxx@yyy.zzz`，会在用户填学号时直接报「地址不完整」—— 把一条本可
+     * 走通的路挡在门口，而且理由还是错的（他会以为要补域名，其实不补也能登）。
+     *
+     * # 但也不能完全不校验
+     *
+     * 学号是**纯数字**。放行之前只要拦「既不是数字、也不像地址」的输入，
+     * 否则像 `not-an-email` 这种会被原样送进 IMAP，用户要等一次网络超时
+     * 才知道自己填错了东西 —— 那笔时间白花。
+     *
+     * @throws {MailError} 既不是学号也不像邮箱地址。
+     */
+    // 专用密码这条路认的是**完整邮箱地址**（IMAP 的 `auth.user`）。
+    // 学号路径属于 CAS/XOAUTH2，不在本版范围内 —— 混着放行会让
+    // 「填了学号却认证失败」看起来像密码错。
     if (!/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(address)) {
-      throw new MailError('CONFIG', '邮箱凭据里的邮箱地址不完整：请填写完整地址（例如 1234567890@zju.edu.cn）。');
+      throw new MailError('CONFIG', '邮箱账号请填写完整地址（例如 1234567890@zju.edu.cn）。');
+    }
+    if (address.length > 254) {
+      throw new MailError('CONFIG', '邮箱账号过长，请检查是否粘贴了多余内容。');
     }
     return { address, password };
   }
@@ -1001,7 +1039,28 @@ export class Mail {
       }
     }
     return {
-      ready: this.credentialProvider !== null,
+      /**
+       * 「配过账号没有」。
+       *
+       * # 两条语义必须分开
+       *
+       * - `ready` = 配过（凭据存在）。**取不到也算配过** —— 比如钥匙串锁了、
+       *   网络暂时不通。这时说「未配置」会让用户去重填一个本来填好的密码。
+       * - `connected` = 这次真的取到了地址。
+       *
+       * # `credentialProvider !== null` 为什么不够
+       *
+       * `index.js` 现在**总是**传一个 provider（它内部回退到 `source/login`
+       * 里存的那份账号）。只看 provider 是否为 null 会恒为 true ——
+       * 没配账号的用户也会看到「已就绪」。
+       *
+       * # 判据：`missing` 由 provider 显式告知
+       *
+       * provider 取不到凭据时返回 `null`（不是抛错），`credentials()` 会把它
+       * 转成一条明确的 CONFIG。所以这里看 `error` 的 `reason` 里有没有那个
+       * 专门标记 `MISSING`：其它任何失败（钥匙串锁、解码失败）都不算「没配」。
+       */
+      ready: this.credentialProvider !== null && error?.reason !== 'MISSING',
       connected: address !== '',
       address,
       connectedAt: '',

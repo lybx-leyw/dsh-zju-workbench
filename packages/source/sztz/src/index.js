@@ -16,7 +16,7 @@
  * 的 CAS 地址，走完 CAS 再回跳。这段流程由 `setSessionProvider` 注入 ——
  * D18 之后 CAS 通用实现在 `source/login/src/cas.js`，本包不重复一份。
  */
-import { sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
+import { CAS_HOST, sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
 import {
   BASE, HOST, Sztz, SztzError, activityView, beijing, category, freshActivities, points, recordView, statusOf,
 } from './sztz.js';
@@ -31,7 +31,49 @@ export const inject = [];
 export const ROUTE_PATH = '/api/zhiyun-sztz';
 
 /**
- * 把 `sharedFetch` 适配成数据层期望的形状。
+ * 取一个**已登录**的请求函数。
+ *
+ * # 登录归 `source/login`（D18 的 B 方案：共享 CAS 会话）
+ *
+ * 先前本包只留了 `setSessionProvider` 注入点，而**全仓没有任何调用方** ——
+ * 于是它虽然挂在 profile 里，却永远拿不到会话，任何一次读取都报
+ * 「还没接入登录」。那不是「用户没配账号」，是「没人给它喂账号」。
+ *
+ * 现在改成向 tier 0 的 `zhiyunCard` 要一份已带 CAS 票的传输层：
+ * 由 `login` 统一走 CAS、统一持有会话，本包只说明自己的入口与主机。
+ *
+ * 两个来源按优先级：
+ * 1. 注入了 `setSessionProvider`（测试与特殊部署）→ 用它；
+ * 2. 否则 → `ctx.get('zhiyunCard').casTransport({ entry, hosts })`。
+ *
+ * @param ctx - 宿主上下文。
+ * @param getProvider - 返回当前注入的 provider（可能为 null）。
+ * @returns `(url, init) => Promise<{status, text}>`。
+ */
+const requestWithLogin = (ctx, getProvider) => async (url, init = {}) => {
+  const provider = getProvider();
+  if (typeof provider === 'function') {
+    // 注入的 provider 只负责「让会话生效」，实际请求仍走 sharedFetch。
+    await provider();
+    const response = await sharedFetch(ctx)(url, init);
+    return { status: response.status, text: await response.text() };
+  }
+  // 没注入就向 `login` 要共享会话（它会替我们走一次 CAS）。
+  const card = ctx.get?.('zhiyunCard');
+  if (typeof card?.casTransport !== 'function') {
+    throw new SztzError(
+      'CONFIG',
+      '素质拓展平台需要「浙大一卡通」的共享会话，但 `source/login` 没有装配。'
+      + '请启用该数据源包，或在「设置 → 浙大一卡通」配置账号。',
+    );
+  }
+  const transport = await card.casTransport({ entry: `${BASE}/`, hosts: [HOST, CAS_HOST] });
+  const result = await transport.request(url, { ...init });
+  return { status: result.status, text: result.text };
+};
+
+/**
+ * 把 `sharedFetch` 适配成数据层期望的形状（**不登录**，用于公开页面）。
  *
  * @param ctx - 宿主上下文。
  * @returns `(url, init) => Promise<{status, text}>`。
@@ -56,19 +98,21 @@ export function apply(ctx) {
     /** 缓存的客户端。 */
     let client = null;
 
-    /** 取客户端（无状态，登录由 provider 负责）。 */
+    /** 取客户端（无状态，登录由 provider 或共享 CAS 会话负责）。 */
     const ensure = () => {
       client ??= new Sztz({
-        request: requestOf(ctx),
+        // 用带登录的那个：没注入 provider 时它会向 `zhiyunCard` 要共享会话。
+        request: requestWithLogin(ctx, () => acquireSession),
         acquireSession: () => {
-          if (!acquireSession) {
-            throw new SztzError(
-              'CONFIG',
-              '素质拓展平台还没接入登录：到「设置 → 浙大一卡通」配置后重试'
-              + '（若你是插件作者：调用 setSessionProvider）。',
-            );
-          }
-          return acquireSession();
+          if (typeof acquireSession === 'function') return acquireSession();
+          // 走共享 CAS 的路径不需要在这里做任何事 —— `requestWithLogin`
+          // 在发第一个请求前已经把票拿好了。
+          if (typeof ctx.get?.('zhiyunCard')?.casTransport === 'function') return Promise.resolve();
+          throw new SztzError(
+            'CONFIG',
+            '素质拓展平台还没接入登录：到「设置 → 浙大一卡通」配置后重试'
+            + '（它用的是统一身份认证的共享会话）。',
+          );
         },
       });
       return client;
@@ -112,8 +156,10 @@ export function apply(ctx) {
        */
       signupActivityPrepare: async (input) => writes().signupActivity.prepare(input),
       signupActivityExecute: async (signal) => writes().signupActivity.execute(signal),
+      signupActivityCancel: async () => (await writes()).signupActivity.cancel(),
       cancelActivityPrepare: async (input) => writes().cancelActivity.prepare(input),
       cancelActivityExecute: async (signal) => writes().cancelActivity.execute(signal),
+      cancelActivityCancel: async () => (await writes()).cancelActivity.cancel(),
 
       /** 注入登录能力（`() => Promise<void>`）。返回撤销函数。 */
       setSessionProvider(handler) {
@@ -132,7 +178,16 @@ export function apply(ctx) {
       },
 
       /** 是否已接入登录。 */
-      ready() { return acquireSession !== null; },
+      /**
+       * 是否已接入登录。
+       *
+       * 两个来源都算：注入了 provider，**或者** source/login 已装配
+       * （共享 CAS 会话由它负责）。先前只认前者，而那个注入点全仓没人调用。
+       */
+      ready() {
+        return typeof acquireSession === 'function'
+          || typeof ctx.get?.('zhiyunCard')?.casTransport === 'function';
+      },
 
       /* ── 只读接口 ── */
 

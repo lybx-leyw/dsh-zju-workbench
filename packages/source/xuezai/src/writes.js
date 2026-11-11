@@ -183,6 +183,7 @@ export function createXuezaiWrites(reader) {
           session.clear();
         }
       },
+      cancel: async () => { session.clear(); },
     };
   };
 

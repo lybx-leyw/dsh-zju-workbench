@@ -8,7 +8,11 @@
     ".": "./src/index.js",
     "./package.json": "./package.json"
   },
-  "files": ["README.md", "src/", "cordis.patch.yml"],
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
@@ -16,14 +20,21 @@
   },
   "license": "GPL-3.0-or-later",
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "capability": {
       "tier": 1,
       "auth": "cas",
       "network": "public",
       "writes": false,
-      "requires": ["@lybx-leyw/dsh-zju-source-http"]
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http"
+      ]
     }
   },
-  "dependencies": { "@lybx-leyw/dsh-zju-source-http": "0.1.0" }
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0",
+    "@lybx-leyw/dsh-zju-source-login": "0.1.0"
+  }
 }

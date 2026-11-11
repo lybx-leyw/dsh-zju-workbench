@@ -50,9 +50,6 @@ const NO_SETTINGS = new Map([
   ['chalaoshi', '无需登录、无用户可配置项；索引刷新走服务动作而不是设置'],
   // 电子图书按 IP 认证：校外经 WebVPN，没有账号要填、也没有可配置项。
   ['ebook', '按 IP 认证、无用户可配置项；校外经 WebVPN'],
-  ['cnki', '按出口 IP 认机构、无用户可配置项；校外经 WebVPN'],
-  ['lab', '凭据由集成层注入、本包无用户可配置项；校外经 WebVPN'],
-  ['mail', '凭据由集成层注入、本包无用户可配置项；IMAP 993 / SMTP 994 直连公网'],
   ['xuezai', '与 zdbk/classroom 同口径：走「浙大一卡通」的 CAS 凭据，状态并入那个分区，本包不另占一格'],
   ['sztz', '凭据由集成层注入、本包无用户可配置项；校外经 WebVPN'],
   ['wechat-chat', '独立 agent skill、无客户端半边也无可配置项；纯本机只读，不联网'],

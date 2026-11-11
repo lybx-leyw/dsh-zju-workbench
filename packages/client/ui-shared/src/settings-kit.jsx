@@ -173,10 +173,36 @@ export function Intro({ children }) {
  * @param root0.defaultOpen - 初始是否展开；缺省时按有无 actions 推断。
  * @param root0.children - 卡片内容（折叠区）。
  */
-export function Card({ title, detail, actions, defaultOpen, children }) {
+/**
+ * 一张可折叠的设置卡片。
+ *
+ * # `open` 是**可选的受控**属性（后加）
+ *
+ * 不传 `open` 时行为与以前完全一致：内部 `useState` 记住用户点开的状开，
+ * 初值取 `defaultOpen ?? Boolean(actions)`。
+ *
+ * 传了 `open` 就变成**受控**：展开状态由调用方决定。这条是给「按配置状态自动
+ * 展开/收起」用的 —— 例如实验课平台那块，配好账号后应自动收起凭证卡片、
+ * 展开状态卡片。
+ *
+ * ⚠️ 为什么不能只用 `defaultOpen`：它是 `useState` 的**初值**，只在挂载时读一次。
+ * 而「配没配」是异步读回来的（`status` 加载完才知道），那时组件早挂载过了，
+ * 改 `defaultOpen` 不会有任何效果。
+ *
+ * 受控时仍允许用户手动点开 —— 点击只调用 `onOpenChange`（若给了），
+ * 不传则点击无效果（由调用方决定状态）。这样「自动展开」不会把卡片锁死。
+ */
+export function Card({ title, detail, actions, defaultOpen, open: controlledOpen, onOpenChange, children }) {
   const hasContent = children !== null && children !== undefined && children !== false;
   // 有操作区的卡片默认展开；纯状态卡片默认收起。
-  const [open, setOpen] = useState(defaultOpen ?? Boolean(actions));
+  const [internalOpen, setInternalOpen] = useState(defaultOpen ?? Boolean(actions));
+  // 受控就听调用方的，否则用自己的 state。
+  const controlled = controlledOpen !== undefined;
+  const open = controlled ? Boolean(controlledOpen) : internalOpen;
+  const toggle = () => {
+    if (controlled) onOpenChange?.(!open);
+    else setInternalOpen((current) => !current);
+  };
   if (!hasContent) {
     // 没有内容的卡片退化成一行，不显示折叠箭头（否则点了没反应）。
     return React.createElement('div', { className: 'zju-setting-card' },
@@ -186,7 +212,6 @@ export function Card({ title, detail, actions, defaultOpen, children }) {
           detail ? React.createElement('span', { className: 'zju-setting-card-detail' }, detail) : null),
         actions ? React.createElement('div', { className: 'zju-setting-card-actions' }, actions) : null));
   }
-  const toggle = () => setOpen((current) => !current);
   return React.createElement('div', {
     className: 'zju-setting-card',
     'data-open': open ? '' : undefined,

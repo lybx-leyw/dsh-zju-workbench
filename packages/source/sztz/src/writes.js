@@ -99,6 +99,7 @@ export function createSztzWrites(client) {
           session.clear();
         }
       },
+      cancel: async () => { session.clear(); },
     };
   };
 

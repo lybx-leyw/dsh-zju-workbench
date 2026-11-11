@@ -82,22 +82,40 @@ export function createCampusWriteTools({ services }) {
   const optStr = (value, name, options) => (value === undefined ? undefined : str(value, name, options));
 
   /**
-   * source 必须提供的两个方法。缺了就是契约不完整，要立即报错而不是等到执行时。
+   * source 必须提供的三个方法。缺了就是契约不完整，要立即报错而不是等到执行时。
+   *
+   * # 为什么 `cancel` 是必需的
+   *
+   * 用户可能**点了拒绝**，也可能审批超时 / 中止 —— 那时 `execute` 永远不会被调用，
+   * 而 `prepare` 已经把参数存进了 source 的写会话。若不撤销，下一次 `prepare`
+   * 会撞上 `WRITE_BUSY`，**这个动作此后一直不能用**（直到重启进程）。
+   *
+   * 这条是复审查出来的（`recheck-2026-11-11.md` 的 Z-1），七个包全部如此。
+   *
+   * **拒绝不等于封锁**：撤销之后立刻可以重新准备、重新问用户。
+   * 用户拒绝一次是「这次不做」，不是「以后都不许做」。
    *
    * @param service - source 服务。
-   * @param name - 方法名前缀，如 `prepareSelect`。
-   * @returns `{ prepare, execute }`。
+   * @param name - 方法名前缀，如 `selectCourse`。
+   * @returns `{ prepare, execute, cancel }`。
    */
   const contract = (service, name) => {
     const prepare = service?.[`${name}Prepare`];
     const execute = service?.[`${name}Execute`];
+    const cancel = service?.[`${name}Cancel`];
     if (typeof prepare !== 'function' || typeof execute !== 'function') {
       throw Object.assign(
         new Error(`数据源没有提供 ${name}Prepare / ${name}Execute，这个动作暂时做不了。`),
         { code: 'CONTRACT_MISSING', methods: [`${name}Prepare`, `${name}Execute`] },
       );
     }
-    return { prepare, execute };
+    if (typeof cancel !== 'function') {
+      throw Object.assign(
+        new Error(`数据源没有提供 ${name}Cancel —— 审批被拒后那个动作会永久不可用。`),
+        { code: 'CONTRACT_MISSING', methods: [`${name}Cancel`] },
+      );
+    }
+    return { prepare, execute, cancel };
   };
 
   return [
@@ -129,15 +147,15 @@ export function createCampusWriteTools({ services }) {
         const zdbk = need('zhiyunZdbk', '@lybx-leyw/dsh-zju-source-zdbk');
 
         if (action === 'select') {
-          const { prepare, execute } = contract(zdbk, 'selectCourse');
-          return { summary: await prepare({ course, section: str(args.section, '教学班编号（select 需要）') }), execute };
+          const { prepare, execute, cancel } = contract(zdbk, 'selectCourse');
+          return { summary: await prepare({ course, section: str(args.section, '教学班编号（select 需要）') }), execute, cancel };
         }
         if (action === 'drop') {
-          const { prepare, execute } = contract(zdbk, 'dropCourse');
-          return { summary: await prepare({ course }), execute };
+          const { prepare, execute, cancel } = contract(zdbk, 'dropCourse');
+          return { summary: await prepare({ course }), execute, cancel };
         }
-        const { prepare, execute } = contract(zdbk, 'reorderCourse');
-        return { summary: await prepare({ course, order: args.order }), execute };
+        const { prepare, execute, cancel } = contract(zdbk, 'reorderCourse');
+        return { summary: await prepare({ course, order: args.order }), execute, cancel };
       },
     },
 
@@ -164,12 +182,12 @@ export function createCampusWriteTools({ services }) {
         if (platform === 'sztz') {
           const sztz = need('zhiyunSztz', '@lybx-leyw/dsh-zju-source-sztz');
           if (action === 'signup') {
-            const { prepare, execute } = contract(sztz, 'signupActivity');
-            return { summary: await prepare({ activity: target }), execute };
+            const { prepare, execute, cancel } = contract(sztz, 'signupActivity');
+            return { summary: await prepare({ activity: target }), execute, cancel };
           }
           if (action === 'cancel') {
-            const { prepare, execute } = contract(sztz, 'cancelActivity');
-            return { summary: await prepare({ activity: target }), execute };
+            const { prepare, execute, cancel } = contract(sztz, 'cancelActivity');
+            return { summary: await prepare({ activity: target }), execute, cancel };
           }
           throw inputError(`sztz 只支持 signup / cancel，收到 ${action}`);
         }
@@ -177,15 +195,15 @@ export function createCampusWriteTools({ services }) {
         if (platform === 'tyys') {
           const tyys = need('zhiyunTyys', '@lybx-leyw/dsh-zju-source-tyys');
           if (action === 'cancel') {
-            const { prepare, execute } = contract(tyys, 'cancelVenue');
-            return { summary: await prepare({ order: target }), execute };
+            const { prepare, execute, cancel } = contract(tyys, 'cancelVenue');
+            return { summary: await prepare({ order: target }), execute, cancel };
           }
           if (action === 'book' || action === 'signup') {
             const venue = str(args.venue, '场地编号（预约需要）');
             const date = str(args.date, '日期（预约需要）');
             if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw inputError('date 要写成 YYYY-MM-DD');
-            const { prepare, execute } = contract(tyys, 'bookVenue');
-            return { summary: await prepare({ venue, slot: target, date }), execute };
+            const { prepare, execute, cancel } = contract(tyys, 'bookVenue');
+            return { summary: await prepare({ venue, slot: target, date }), execute, cancel };
           }
           throw inputError(`tyys 只支持 book / cancel，收到 ${action}`);
         }
@@ -220,12 +238,12 @@ export function createCampusWriteTools({ services }) {
           const course = str(args.course, '课程名（xuezai 需要）');
           if (action === 'submit') {
             const content = str(args.content, '要提交的正文', { max: 20000 });
-            const { prepare, execute } = contract(xuezai, 'submitHomework');
-            return { summary: await prepare({ course, homework, content }), execute };
+            const { prepare, execute, cancel } = contract(xuezai, 'submitHomework');
+            return { summary: await prepare({ course, homework, content }), execute, cancel };
           }
           if (action === 'retract') {
-            const { prepare, execute } = contract(xuezai, 'retractHomework');
-            return { summary: await prepare({ course, homework }), execute };
+            const { prepare, execute, cancel } = contract(xuezai, 'retractHomework');
+            return { summary: await prepare({ course, homework }), execute, cancel };
           }
           throw inputError(`xuezai 只支持 submit / retract，收到 ${action}`);
         }
@@ -235,12 +253,12 @@ export function createCampusWriteTools({ services }) {
           const problem = str(args.problem, '题目编号（pta 需要）');
           if (action === 'save') {
             const content = optStr(args.content, '要保存的代码', { max: 20000 });
-            const { prepare, execute } = contract(pta, 'saveAnswer');
-            return { summary: await prepare({ homework, problem, content }), execute };
+            const { prepare, execute, cancel } = contract(pta, 'saveAnswer');
+            return { summary: await prepare({ homework, problem, content }), execute, cancel };
           }
           if (action === 'submit') {
-            const { prepare, execute } = contract(pta, 'submitAnswer');
-            return { summary: await prepare({ homework, problem }), execute };
+            const { prepare, execute, cancel } = contract(pta, 'submitAnswer');
+            return { summary: await prepare({ homework, problem }), execute, cancel };
           }
           throw inputError(`pta 只支持 save / submit，收到 ${action}`);
         }
@@ -269,14 +287,14 @@ export function createCampusWriteTools({ services }) {
           const xuezai = need('zhiyunXuezai', '@lybx-leyw/dsh-zju-source-xuezai');
           const course = str(args.course, '课程名（点名需要）');
           const code = optStr(args.code, '点名口令');
-          const { prepare, execute } = contract(xuezai, 'rollcall');
-          return { summary: await prepare({ course, code }), execute };
+          const { prepare, execute, cancel } = contract(xuezai, 'rollcall');
+          return { summary: await prepare({ course, code }), execute, cancel };
         }
 
         if (platform === 'cc98') {
           const cc98 = need('zhiyunCc98', '@lybx-leyw/dsh-zju-source-cc98');
-          const { prepare, execute } = contract(cc98, 'signIn');
-          return { summary: await prepare(), execute };
+          const { prepare, execute, cancel } = contract(cc98, 'signIn');
+          return { summary: await prepare(), execute, cancel };
         }
 
         throw inputError(`不认识的 platform：${platform}`);
@@ -305,23 +323,23 @@ export function createCampusWriteTools({ services }) {
 
         if (action === 'post') {
           const board = str(args.board, '版面编号（post 需要）');
-          const { prepare, execute } = contract(cc98, 'postTopic');
-          return { summary: await prepare({ board, content }), execute };
+          const { prepare, execute, cancel } = contract(cc98, 'postTopic');
+          return { summary: await prepare({ board, content }), execute, cancel };
         }
         if (action === 'reply') {
           const topic = str(args.topic, '帖子编号（reply 需要）');
-          const { prepare, execute } = contract(cc98, 'replyTopic');
-          return { summary: await prepare({ topic, content }), execute };
+          const { prepare, execute, cancel } = contract(cc98, 'replyTopic');
+          return { summary: await prepare({ topic, content }), execute, cancel };
         }
         if (action === 'edit') {
           const topic = str(args.topic, '帖子编号（edit 需要）');
-          const { prepare, execute } = contract(cc98, 'editPost');
-          return { summary: await prepare({ topic, content }), execute };
+          const { prepare, execute, cancel } = contract(cc98, 'editPost');
+          return { summary: await prepare({ topic, content }), execute, cancel };
         }
         if (action === 'message') {
           const recipient = str(args.recipient, '收信人（message 需要）');
-          const { prepare, execute } = contract(cc98, 'sendMessage');
-          return { summary: await prepare({ recipient, content }), execute };
+          const { prepare, execute, cancel } = contract(cc98, 'sendMessage');
+          return { summary: await prepare({ recipient, content }), execute, cancel };
         }
         throw inputError(`不认识的 action：${action}`);
       },
@@ -347,18 +365,18 @@ export function createCampusWriteTools({ services }) {
         const post = str(args.post, '目标编号');
 
         if (action === 'like') {
-          const { prepare, execute } = contract(cc98, 'likeFloor');
-          return { summary: await prepare({ post }), execute };
+          const { prepare, execute, cancel } = contract(cc98, 'likeFloor');
+          return { summary: await prepare({ post }), execute, cancel };
         }
         if (action === 'favorite') {
-          const { prepare, execute } = contract(cc98, 'favoriteTopic');
-          return { summary: await prepare({ post }), execute };
+          const { prepare, execute, cancel } = contract(cc98, 'favoriteTopic');
+          return { summary: await prepare({ post }), execute, cancel };
         }
         if (action === 'rate') {
           if (!Number.isInteger(args.value)) throw inputError('rate 需要整数 value');
           const reason = optStr(args.reason, '理由编号');
-          const { prepare, execute } = contract(cc98, 'rateFloor');
-          return { summary: await prepare({ post, value: args.value, reason }), execute };
+          const { prepare, execute, cancel } = contract(cc98, 'rateFloor');
+          return { summary: await prepare({ post, value: args.value, reason }), execute, cancel };
         }
         throw inputError(`不认识的 action：${action}`);
       },
@@ -387,13 +405,13 @@ export function createCampusWriteTools({ services }) {
         if (action === 'select') {
           const id = str(args.lab, '班次编号（select 需要）');
           const week = str(args.week, '周次段（select 需要）');
-          const { prepare, execute } = contract(lab, 'selectLab');
-          return { summary: await prepare({ course, lab: id, week }), execute };
+          const { prepare, execute, cancel } = contract(lab, 'selectLab');
+          return { summary: await prepare({ course, lab: id, week }), execute, cancel };
         }
         if (action === 'cancel') {
           const record = str(args.record, '选课记录编号（cancel 需要）');
-          const { prepare, execute } = contract(lab, 'cancelLab');
-          return { summary: await prepare({ record }), execute };
+          const { prepare, execute, cancel } = contract(lab, 'cancelLab');
+          return { summary: await prepare({ record }), execute, cancel };
         }
         throw inputError(`不认识的 action：${action}`);
       },

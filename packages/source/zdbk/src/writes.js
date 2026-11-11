@@ -105,6 +105,7 @@ export function createZdbkWrites(reader) {
           session.clear();
         }
       },
+      cancel: async () => { session.clear(); },
     };
   };
 

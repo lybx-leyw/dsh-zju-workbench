@@ -17,6 +17,7 @@
  * token 由 `setSession` 注入持久化（默认纯内存，进程重启要重新登录）。
  */
 import { sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
+import { clearLab, readLab, writeLab } from '@lybx-leyw/dsh-zju-source-login';
 import { createLabWrites } from './writes.js';
 import { LAB_HOST, LabCourse, LabError, apiSign, jwtExpiresAt, parseOpenWeek } from './lab.js';
 
@@ -77,16 +78,40 @@ export function apply(ctx) {
      * @returns `LabCourse` 实例。
      * @throws {LabError} 还没注入凭据提供者。
      */
+    /**
+     * 取凭据。
+     *
+     * # ⚠️ 本包是 `auth: "own"`，**不用 CAS**
+     *
+     * 实验课平台有自己的账号体系（`POST /api/login {username, password}`
+     * 换 JWT）。它的账号**通常**是学号，但**密码与统一身份认证不是同一个**。
+     *
+     * 我一度把它改成 `readCard(ctx)`（读「浙大一卡通」）—— 那是错的：
+     * 拿 CAS 的密码去登实验平台会一直失败，而且会让用户以为「一卡通密码填错了」。
+     *
+     * 所以这里只认注入。集成层要给它单独的账号来源
+     * （见 README 的「配置」一节）。
+     *
+     * @returns `{ username, password } | null`。
+     */
+    const credentialsOf = async () => {
+      if (typeof credentials === 'function') return credentials();
+      // `auth: "own"`：读的是**实验课平台自己**那份账号（`zhiyun-lab/account`），
+      // 不是「浙大一卡通」。用户名通常是学号，但密码与统一身份认证**不是同一个**。
+      return readLab(ctx);
+    };
+
     const client = async ({ fresh = false } = {}) => {
-      if (!credentials) {
+      const account = await credentialsOf();
+      if (!account) {
         throw new LabError(
           'CONFIG',
           '实验课平台还没接入登录：到「设置 → 浙大一卡通」配置后重试'
-          + '（若你是插件作者：调用 setCredentialProvider）。',
+          + '（实验课平台用的是你的学号，与统一身份认证同一份记录）。',
         );
       }
       if (!cached) {
-        cached = new LabCourse({ request: requestOf(ctx), credentials, session });
+        cached = new LabCourse({ request: requestOf(ctx), credentials: async () => account, session });
         cached.restore();
       }
       if (fresh || !cached.hasToken) await cached.login(fresh);
@@ -128,8 +153,10 @@ export function apply(ctx) {
        */
       selectLabPrepare: async (input) => (await writes()).selectLab.prepare(input),
       selectLabExecute: async (signal) => (await writes()).selectLab.execute(signal),
+      selectLabCancel: async () => (await writes()).selectLab.cancel(),
       cancelLabPrepare: async (input) => (await writes()).cancelLab.prepare(input),
       cancelLabExecute: async (signal) => (await writes()).cancelLab.execute(signal),
+      cancelLabCancel: async () => (await writes()).cancelLab.cancel(),
 
       /** 注入凭据提供者（`() => Promise<{username, password}>`）。返回撤销函数。 */
       setCredentialProvider(handler) {
@@ -148,15 +175,105 @@ export function apply(ctx) {
         return () => { if (session === store) session = null; };
       },
 
-      /** 是否已接入登录。 */
-      ready() { return credentials !== null; },
+      /** 是否已接入登录（`auth: "own"`：只认注入的平台账号，不读 CAS）。 */
+      /**
+       * 保存实验课平台的账号。
+       *
+       * `auth: "own"`：这份账号存在 `source/login` 的 `zhiyun-lab/account` 记录里，
+       * 与「浙大一卡通」分开（用户名通常同学号，但**密码不是同一个**）。
+       *
+       * @param input - `{ username, password }`。
+       * @returns `{ configured, username }`。
+       */
+      async saveAccount(input = {}) {
+        const username = String(input?.username ?? '').trim();
+        const password = String(input?.password ?? '');
+        if (!username || !password) {
+          throw new LabError('CONFIG', '需要实验课平台的用户名与密码。');
+        }
+        await writeLab(ctx, { username, password });
+        // 换了账号要丢掉旧客户端与旧 token。
+        credentials = async () => ({ username, password });
+        cached = null;
+        return { configured: true, username };
+      },
+
+      /** 清掉实验课平台的账号。 */
+      async clearAccount() {
+        await clearLab(ctx);
+        credentials = null;
+        cached = null;
+        return { configured: false, username: '' };
+      },
+
+      /**
+       * 是否已接入登录。
+       *
+       * 两个来源都算：注入了 provider，**或者** `source/login` 里存着实验课平台
+       * 自己的账号（`readLab`）。后者是常规路径 —— 用户在设置里填一次。
+       */
+      async ready() {
+        if (typeof credentials === 'function') return true;
+        return Boolean(await readLab(ctx));
+      },
 
       /** 登录态快照（不联网）。 */
-      status() {
+      /**
+       * **真的登录一次**，回答「这份账号现在能不能用」。
+       *
+       * # 为什么不能只读 status()
+       *
+       * `status()` 只读内存里的 token 快照，**不联网** —— 拿它当「检测连接」
+       * 等于什么都没测。要让用户知道「账号对不对」，就得真去换一次 JWT。
+       *
+       * `fresh: true` 强制重登（不吃上次的 token），所以这一下确实打到了平台。
+       *
+       * @returns `{ ok, name?, role?, error? }`。
+       */
+      async verify() {
+        try {
+          const active = await client({ fresh: true });
+          const auth = active?.auth;
+          return {
+            ok: true,
+            loggedIn: true,
+            configured: true,
+            username: auth?.username ?? '',
+            ...(auth?.name ? { name: auth.name } : {}),
+            ...(auth?.role ? { role: auth.role } : {}),
+          };
+        } catch (error) {
+          return {
+            ok: false,
+            loggedIn: false,
+            configured: Boolean(await credentialsOf()),
+            code: error?.code ?? 'FAILED',
+            error: String(error?.message ?? error),
+          };
+        }
+      },
+
+      /**
+       * 登录状态 + 是否配过账号。
+       *
+       * # 为什么要带上 `configured` / `username`
+       *
+       * 设置页要回答两个不同的问题：「配了没有」与「登上了没有」。
+       * 只给 `loggedIn` 时，配过但还没登录会显示成「未配置」—— 用户会以为
+       * 自己刚才那次保存没生效。这两个状态必须分开报。
+       *
+       * @returns `{ loggedIn, configured, username, ... }`。
+       */
+      async status() {
         const auth = cached?.auth;
-        return auth
-          ? { loggedIn: true, username: auth.username, name: auth.name, role: auth.role, expiresAt: auth.expiresAt }
-          : { loggedIn: false };
+        const account = await credentialsOf();
+        const username = auth?.username ?? account?.username ?? '';
+        return {
+          loggedIn: Boolean(auth),
+          configured: Boolean(account),
+          username,
+          ...(auth ? { name: auth.name, role: auth.role, expiresAt: auth.expiresAt } : {}),
+        };
       },
 
       /** 清掉缓存（换账号、或用户点了「重新登录」）。 */
@@ -205,6 +322,10 @@ export function apply(ctx) {
               'my-timetable': () => service.myTimetable(input.input ?? {}),
               'my-info': () => service.myInfo(),
               status: () => service.status(),
+              // 凭据读写（`auth: "own"`：实验课平台自己的账号，不经 CAS）
+              verify: () => service.verify(),
+              'save-account': () => service.saveAccount(input.input ?? {}),
+              'clear-account': () => service.clearAccount(),
             };
             const handler = handlers[action];
             if (!handler) throw new LabError('CONFIG', `不认识的操作：${action ?? '(空)'}`);

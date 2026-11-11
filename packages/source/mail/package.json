@@ -6,9 +6,15 @@
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./client": "./lib/client.js"
   },
-  "files": ["README.md", "src/", "cordis.patch.yml"],
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
@@ -16,18 +22,29 @@
   },
   "license": "GPL-3.0-or-later",
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "capability": {
       "tier": 1,
       "auth": "own",
       "network": "public",
       "writes": false,
-      "requires": []
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-login"
+      ]
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "@lybx-leyw/dsh-zju-ui-shared"
+      ]
     }
   },
   "dependencies": {
     "imapflow": "^2.5.2",
     "mailparser": "^3.9.40",
-    "nodemailer": "^10.1.2"
+    "nodemailer": "^10.1.2",
+    "@lybx-leyw/dsh-zju-source-login": "0.1.0"
   }
 }

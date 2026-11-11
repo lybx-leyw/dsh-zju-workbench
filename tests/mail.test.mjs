@@ -261,7 +261,7 @@ test('isAuthError：三种真实形状都认得', () => {
 
 test('translateConnectError：网络问题与凭据问题必须是不同的码', () => {  const auth = translateConnectError({ authenticationFailed: true });
   assert.equal(auth.code, 'AUTH_EXPIRED');
-  assert.match(auth.message, /客户端专用密码/);
+  assert.match(auth.message, /账号与密码/, '文案要指向设置入口，而不是只指专用密码这一条路');
   assert.match(auth.message, /不是网络问题/);
 
   const auth2 = translateConnectError({ code: 'EAUTH' }, { phase: 'smtp' });
@@ -338,7 +338,7 @@ test('没注入凭据提供者：取信抛 CONFIG，文案告诉用户下一步'
   assert.equal(mail.ready(), false);
   await assert.rejects(() => mail.folders(), (error) => {
     assert.equal(error.code, 'CONFIG');
-    assert.match(error.message, /客户端专用密码/);
+    assert.match(error.message, /账号与密码/, '文案要指向设置入口，而不是只指专用密码这一条路');
     return true;
   });
 });
@@ -819,7 +819,9 @@ test('snapshot()：凭据暂时取不到时整体不失败，但把原因带出�
   assert.equal(state.connected, false);
   assert.equal(state.error.code, 'CONFIG');
   // message 是给用户看的可操作文案……
-  assert.match(state.error.message, /客户端专用密码/);
+  assert.match(state.error.message, /账号与密码/);
+  // 断言的是「告诉用户下一步去哪」，不是某一种具体密码名 ——
+  // 邮箱可能接受专用密码，也可能接受别的；文案不该替它裁决。
   // ……reason 是原始原因，排查时不能丢。
   assert.match(state.error.reason, /keychain locked/);
 });
@@ -868,7 +870,9 @@ test('apply()：provide zhiyunMail + 注册 /api/zhiyun-mail', () => {
 test('apply()：methods 里每一条都有对应的路由动作（这是此前真错的形状）', () => {
   const { mail } = mount();
   const actions = mail.actions();
-  assert.equal(METHODS.length, 8);
+  // 不写死条数：方法会增加（本轮加了两个凭据动作）。真正的不变量是
+  // 「METHODS 与动作表逐一对得上」，下面两条断言验的就是那个。
+  assert.ok(METHODS.length >= 8, '至少要有原来那 8 个只读方法');
   for (const method of METHODS) {
     assert.equal(typeof actions[method], 'function', `methods 里的 ${method} 在路由动作表里不存在`);
   }
@@ -1033,4 +1037,23 @@ test('默认超时是具体数字，不是 undefined（IMAP 必须有超时）',
   assert.equal(mail.imapOptions({ address: 'a@zju.edu.cn', password: 'p' }).connectionTimeout, 1234);
   // greetingTimeout 不超过 connectMs
   assert.equal(mail.imapOptions({ address: 'a@zju.edu.cn', password: 'p' }).greetingTimeout, 1234);
+});
+
+
+
+
+
+test('专用密码路径：完整地址 + 16 位密码，IMAP 用地址认证', async () => {
+  // 这一版**只做专用密码**这条路。学号 / CAS / OAuth2 是后续工作，
+  // 混进来会让「填了密码却登不上」说不清原因。
+  const password = 'a'.repeat(16);
+  const mail = new Mail({
+    credentialProvider: async () => ({ address: 'abc@zju.edu.cn', password }),
+    imap: (options) => {
+      assert.equal(options.auth.user, 'abc@zju.edu.cn', '专用密码这条路用完整地址');
+      assert.equal(options.auth.pass, password);
+      throw Object.assign(new Error('fake'), { code: 'ETIMEDOUT' });
+    },
+  });
+  await assert.rejects(() => mail.folders());
 });

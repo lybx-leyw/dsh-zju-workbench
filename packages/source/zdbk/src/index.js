@@ -525,10 +525,13 @@ export async function apply(ctx, config = {}) {
      */
     selectCoursePrepare: async (input) => (await writes()).selectCourse.prepare(input),
     selectCourseExecute: async (signal) => (await writes()).selectCourse.execute(signal),
+    selectCourseCancel: async () => (await writes()).selectCourse.cancel(),
     dropCoursePrepare: async (input) => (await writes()).dropCourse.prepare(input),
     dropCourseExecute: async (signal) => (await writes()).dropCourse.execute(signal),
+    dropCourseCancel: async () => (await writes()).dropCourse.cancel(),
     reorderCoursePrepare: async (input) => (await writes()).reorderCourse.prepare(input),
     reorderCourseExecute: async (signal) => (await writes()).reorderCourse.execute(signal),
+    reorderCourseCancel: async () => (await writes()).reorderCourse.cancel(),
 
     /* ── 会话（对应上游 zdbk session login / status / logout） ── */
     /** 会话是否看起来还在（只看 cookie，不发请求、不登录）。 */

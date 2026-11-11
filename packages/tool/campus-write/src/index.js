@@ -94,7 +94,7 @@ export function apply(ctx) {
    *   每次执行时重跑，这样**服务晚到时也能用** —— 见 `services()` 的说明。
    * @returns 可直接 `ctx.tools.register` 的对象。
    */
-  const toHostTool = (name, build) => ({
+  const toHostTool = (name, build, approval = ctx.approval) => ({
     name,
     description: build({}).description,
     parameters: build({}).parameters,
@@ -104,13 +104,15 @@ export function apply(ctx) {
     },
     async execute(args, exec = {}) {
       // 每次执行重新构造定义 —— 里面的 `need()` 会读**当前**的服务表。
-      const [definition] = build(services());
+      // `build` 返回的是**单个**工具定义（见文件末尾的 `.find(...)`）。
+      const definition = build(services());
 
       // 1) 让 source 算好参数与说明。**这一步不发写请求** ——
       //    source 的 `prepareXxx` 只做查询与构造。
       const prepared = await definition.prepare(args, { signal: exec.signal });
       const summary = prepared?.summary;
       const act = prepared?.execute;
+      const cancel = prepared?.cancel;
       if (typeof act !== 'function') {
         throw Object.assign(
           new Error(`${name}：数据源没有给出可执行的写动作（缺少 execute）。`),
@@ -118,9 +120,24 @@ export function apply(ctx) {
         );
       }
 
+      /**
+       * 撤销 source 那边的写会话。
+       *
+       * 走任何一条失败路径前都要调它 —— 否则 source 的 `session.prepared` 一直占着，
+       * 下一次 `prepare` 撞上 `WRITE_BUSY`，**这个动作此后一直不能用**。
+       *
+       * 清理本身不许抛错：那会把「审批被拒」变成「清理失败」，用户看到的
+       * 错误与真正原因无关。
+       */
+      const rollback = async () => {
+        if (typeof cancel !== 'function') return;
+        try { await cancel(); } catch { /* 撤销失败不该盖住真正的原因 */ }
+      };
+
       // 2) 审批。`agent` 可能为空（后台/无主调用），而审批服务要求它 ——
       //    缺了就是没有可审计的主体，按「没有通道」处理（fail closed）。
       if (!exec.agent) {
+        await rollback();
         throw new WriteRejected(
           WRITE_CODES.NO_CHANNEL,
           '这次调用没有关联的会话，写操作不会执行。请在对话里重试。',
@@ -129,16 +146,24 @@ export function apply(ctx) {
       }
 
       const reason = typeof summary === 'string' ? summary : summary?.reason ?? `${name} 将改变你在平台上的状态`;
-      const result = await guardWrite({
-        approval: ctx.approval,
-        agent: exec.agent,
-        act,
-        signal: exec.signal,
-        toolName: name,
-        callId: exec.callId,
-        reason,
-        displayReason: typeof summary === 'object' && summary?.displayReason ? summary.displayReason : undefined,
-      });
+      let result;
+      try {
+        result = await guardWrite({
+          approval,
+          agent: exec.agent,
+          act,
+          signal: exec.signal,
+          toolName: name,
+          callId: exec.callId,
+          reason,
+          displayReason: typeof summary === 'object' && summary?.displayReason ? summary.displayReason : undefined,
+        });
+      } catch (error) {
+        // 审批被拒 / 超时 / 中止 / 通道不可用 —— 这几种情况下 `execute` 从未执行，
+        // session 还占着。撤销它，让用户**立刻**能重新发起（不封锁、不需要等待）。
+        await rollback();
+        throw error;
+      }
 
       return { ok: true, action: name, result };
     },
