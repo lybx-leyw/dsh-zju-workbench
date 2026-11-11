@@ -27,14 +27,15 @@
  *
  * # 原生品牌行
  *
- * 产品自己那只鲸鱼在导轨上，原生侧栏头部再放一只鲸鱼加字标，就是两只同样的鲸鱼并排。
- * 所以顶部品牌行被让空（见 `brand.js`）。这一项与页面壳无关，走宿主槽位影子注册，
- * 且**只清身份区**：折叠按钮留在原处。它是独立 effect，页面壳缺席时照常生效。
+ * 产品自己那只鲸鱼在导轨上，原生侧栏头部再放一只鲸鱼，就是两只同样的鲸鱼并排。
+ * 所以只让掉那只重复的**鲸鱼**，字标交还宿主（见 `brand.js`）—— 不画任何自有图形。
+ * 这一项与页面壳无关，走宿主槽位影子注册，且**只动标记槽**：折叠按钮与字标留在原处。
+ * 它是独立 effect，页面壳缺席时照常生效。
  */
 
 import { WhaleIcon } from './icons.jsx';
 import { installRailIconArtwork } from './rail-icons.js';
-import { suppressNativeBrand } from './brand.js';
+import { suppressBrandMark } from './brand.js';
 import { installCollapseIntoWhale } from './rail-action.jsx';
 import { installManagerStyle } from './manager-style.js';
 import { installSettingsRailEntry } from './settings-entry-style.js';
@@ -142,7 +143,7 @@ export function apply(ctx) {
   // 原生品牌行与页面壳**无关**：它由宿主侧栏自己的槽位渲染。放在同一个 effect 里会让
   // 「页面壳升级换 API」连坐掉整个品牌处理，所以两者各管各的。
   ctx.inject(['slots'], scope => {
-    scope.effect(() => suppressNativeBrand(scope.slots), 'zju: native brand row');
+    scope.effect(() => suppressBrandMark(scope.slots), 'zju: drop duplicate whale mark');
   });
   // 「折叠收进鲸鱼」要三样东西一起才成立：槽位（挂替身）、页面壳（槽名）、布局（真去折叠）。
   // 少任何一个**都不隐藏**原生按钮 —— 否则用户会既没有替身、也没有原生入口。
