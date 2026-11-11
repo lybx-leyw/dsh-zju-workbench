@@ -75,7 +75,9 @@ export function isCacheKey(key) {
 export function isSlideFileName(name) {
   if (typeof name !== 'string' || name === '') return false;
   if (name === '.' || name === '..') return false;
-  // 只要 basename 与自身相等，就说明不含目录分隔符（`/`、`\` 都算）。
+  // 目录分隔符两种都要挡：`path.basename` 只在当前平台的分隔符上切 ——
+  // Linux 上 `a\b.jpg` 的 basename 仍是它自己，而索引文件可能是 Windows 上写的。
+  if (/[\\/]/.test(name)) return false;
   if (path.basename(name) !== name) return false;
   // Windows 上 `C:foo.jpg` 是盘符相对路径，basename 也是它自己，得单独挡。
   return !/^[a-zA-Z]:/.test(name);

@@ -150,7 +150,7 @@ curl -s -H "$UA" -H "$R" $BASE/entries
 单元测试（不连网、起真服务打真端口）：
 
 ```bash
-python -m unittest tests/test_relay_service.py
+python3 -m unittest discover -s tests/python -p "test_*.py"
 ```
 
 ## 踩过的坑

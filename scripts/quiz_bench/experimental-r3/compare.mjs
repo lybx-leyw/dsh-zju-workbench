@@ -6,7 +6,6 @@ import {createHash} from 'node:crypto';
 import {loadGraph} from './run.mjs';
 import {compileIdeas,createScheduler,createQuestionGenerator,openState,walkTree,createToolTransport,reserveWithExpansion,createCapsuleStore} from './index.mjs';
 import {createPointQuizGenerator,planPointQuestions} from '../experimental/points.mjs';
-import {runDeepTutorBench} from '../deeptutor.mjs';
 import {deepTutorBenchHost} from '../deeptutor-host.mjs';
 import {WorkerPoolLlm} from '../../../packages/core/parser/src/worker-pool.js';
 import {tokenLedger,timingLedger} from '../accounting.mjs';
@@ -89,7 +88,7 @@ export async function runComparison({spec,out,credentials,onProgress=()=>{}}){
    });
    if(arm==='native')return phase(id,null,async signal=>{
     const nativeDir=path.join(dir,c.id+'-native'),read=async(name,jsonl=false)=>{try{const text=await fs.readFile(path.join(nativeDir,name),'utf8');return jsonl?text.trim().split('\n').filter(Boolean).map(JSON.parse):JSON.parse(text);}catch(e){if(e.code==='ENOENT')return [];throw e;}},priorCalls=(await read('model-calls.json')).length,priorEvents=(await read('attempts.jsonl',true)).length,start=Date.now();let report;
-    try{if(nativeCalls>=maxCalls)throw Error('达到本语料直调请求预算');report=await runDeepTutorBench({...credentials,input:path.join(dir,c.id+'-source.json'),out:nativeDir,mode:'upstream-native',workers,count,maxCalls:maxCalls-nativeCalls,existingQuestions:nativeHistory,signal});}
+    try{if(nativeCalls>=maxCalls)throw Error('达到本语料直调请求预算');report=await (await import('../deeptutor.mjs')).runDeepTutorBench({...credentials,input:path.join(dir,c.id+'-source.json'),out:nativeDir,mode:'upstream-native',workers,count,maxCalls:maxCalls-nativeCalls,existingQuestions:nativeHistory,signal});}
     catch(e){const calls=(await read('model-calls.json')).slice(priorCalls),events=(await read('attempts.jsonl',true)).slice(priorEvents),elapsedMs=Date.now()-start,attempts=events.filter(e=>e.status==='started').length;report={elapsedMs,error:{name:e?.name,message:String(e?.message??e).split(credentials.apiKey).join('[REDACTED]')},result:{questions:[]},calls:attempts,tokens:tokenLedger(calls,{attempts}),timing:timingLedger(events,{wallMs:Math.max(1,elapsedMs),slots:workers,delivered:0})};}
     nativeCalls+=report.calls;nativeHistory.push(...(report.result.questions??[]));return {external:report};
    });

@@ -11,7 +11,7 @@
  * ⚠️ 与上游的唯一差异：上游用 `typebox` 声明工具参数，本仓没有该依赖（且不许新增），
  *    这里改用等价的 **纯 JSON Schema 字面量**。字段/必填/enum 与上游逐条对应，
  *    只是不再有 `Static<>` 类型推导 —— 那是编译期的东西，运行期形状不变。
- *    `nanoid` 本仓已有，原样使用（动作 id 的生成行为与上游一致）。
+ *    动作 id 用下面的 `randomId()`，不用上游的 `nanoid`（本仓没有该依赖）。
  */
 
 /**
@@ -546,7 +546,7 @@ export function buildActionTools(opts) {
         const actionParams = params;
 
         if (isWhiteboardDrawAction(name) && !actionParams.elementId) {
-          actionParams.elementId = randomUUID();
+          actionParams.elementId = randomId();
         }
 
         if (name === 'wb_draw_table' && !isNonEmptyRectangularStringMatrix(actionParams.data)) {
@@ -675,13 +675,13 @@ export function buildActionTools(opts) {
                 : [];
             actionParams.newLineIds = Array.from(
               { length: contentLineCount },
-              (_unused, index) => replacedLineIds[index] ?? nanoid(),
+              (_unused, index) => replacedLineIds[index] ?? randomId(),
             );
           }
         }
 
         opts.abortSignal?.throwIfAborted();
-        const actionId = nanoid();
+        const actionId = randomId();
         const delivery = opts.send({
           type: 'action',
           data: {

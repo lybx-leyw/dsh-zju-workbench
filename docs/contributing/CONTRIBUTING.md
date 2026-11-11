@@ -255,18 +255,22 @@ profile 中任何一条 Loader 条目解析失败，起不来的都是**整个�
 
 不强制，但建议提供：改动出错时其他人能立刻发现，也才敢动这个包。
 
-- 放在仓库根目录的 `tests/<名字>.test.mjs`。`npm test` 即 `node --test tests/*.test.mjs`，文件名必须匹配 `*.test.mjs`。
+- 放在**被测包对应的测试目录**里：`tests/<层>/<包名>/<主题>.test.mjs`，与 `packages/` 的分层一一对应（例：测 `packages/core/parser` 就放 `tests/core/parser/`）。`npm test` 即 `node --test "tests/**/*.test.mjs"`，文件名必须匹配 `*.test.mjs`。
+- 只有**跨包**的守卫（分层边界、发布身份、i18n 字典完整性、CSS 顺序等）放 `tests/repo/`。一个包内部的规则不要放进去。
 - 直接 import 包的源码，不经过构建产物、不需要宿主、不连网，任何人都能用一条命令跑完。
 
 ```js
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { 某个纯函数 } from '../packages/dsh-zhiyun-<名字>/src/<文件>.js';
+// 从 tests/core/parser/ 出发：三层 ../ 到仓库根
+import { 某个纯函数 } from '../../../packages/core/parser/src/<文件>.js';
 
 test('用例名说清被钉住的行为', () => {
   assert.equal(某个纯函数(输入), 期望);
 });
 ```
+
+目录约定与「新增测试放哪」的完整说明见 [tests/README.md](../../tests/README.md)。
 
 需要外部真值的用例，把夹具放在包内的 `fixtures/`，并在注释里写明生成方式；例见 `packages/dsh-zhiyun-core-notes/fixtures/dart-golden-*.json`。涉及宿主的改动（插槽、导航、主题、宿主适配）用 `npm run test:host` 在真实宿主中验证，它会在 `artifacts/` 留下报告与截图。
 
