@@ -90,7 +90,6 @@ export const CLIENT_PACKAGES = [
   // 回放字幕轨：学习页视频栏 external import 它的 `resolveTrack` / `burnLine`
   // （清洗句子替换原始碎片、字幕烧进播放器），所以它必须有自己的客户端产物。
   'playback',
-  'page-today',
   'page-study',
   'page-quiz',
   'page-planning',
