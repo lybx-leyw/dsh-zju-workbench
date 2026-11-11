@@ -32,7 +32,6 @@
         "@lybx-leyw/dsh-zju-page-docs",
         "@lybx-leyw/dsh-zju-page-planning",
         "@lybx-leyw/dsh-zju-page-plugins",
-        "@lybx-leyw/dsh-zju-page-feedback",
         "@lybx-leyw/dsh-zju-page-quiz",
         "@lybx-leyw/dsh-zju-page-study",
         "@lybx-leyw/dsh-zju-core-parser",

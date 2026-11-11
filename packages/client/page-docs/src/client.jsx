@@ -62,8 +62,7 @@ export function apply(ctx) {
  * 宿主 Markdown 渲染器的文案。
  *
  * 必须是**模块级常量**：`MarkdownText` 按 `labels` 的**身份**缓存组件表，每次渲染
- * 新建一个字面量会让它反复重建。`dsh-zhiyun-page-feedback` 与
- * `@lybx-leyw/dsh-zju-page-paper` 也是这么写的。
+ * 新建一个字面量会让它反复重建。`@lybx-leyw/dsh-zju-page-paper` 也是这么写的。
  */
 const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
 

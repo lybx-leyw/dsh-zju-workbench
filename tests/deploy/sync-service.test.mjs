@@ -13,7 +13,7 @@ import path from 'node:path';
 const SERVER = path.join(import.meta.dirname, '..', '..', 'deploy', 'sync-service', 'server.py');
 
 /* ⚠️ 这组测试测的是 `deploy/sync-service/server.py` —— 一个**当前工作区里不存在**
- * 的文件（`deploy/` 下只有 feedback-service 与 relay-service）。
+ * 的文件（`deploy/` 下只有 relay-service）。
  *
  * 早先它照样跑：`startServer()` 起子进程失败，然后等 10 秒、再对空地址 `fetch`，
  * 每个用例各挂几十秒 —— 一次全量自检要多花好几分钟，而且报的是"超时"，

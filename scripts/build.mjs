@@ -109,7 +109,6 @@ export const CLIENT_PACKAGES = [
   // `@lybx-leyw/dsh-zju-page-paper`。`CLIENT_PACKAGES` 是**目录 basename** 的键。
   'page-paper',
   'page-plugins',
-  'page-feedback',
   'page-docs',
   // ⚠️ `classroom-renderer` 已从本清单删除：渲染组件（含 React / katex）已搬到
   // `packages/client/ui-shared/src/classroom-slide.jsx`，`core/classroom-renderer`
