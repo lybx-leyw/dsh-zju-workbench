@@ -26,6 +26,7 @@
  */
 
 import path from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 /** 仓库根（调用方以 `--root` 传入，或从本文件位置推）。 */
@@ -45,9 +46,66 @@ export function rootDir() {
   return ROOT;
 }
 
-/** 某个包某个源文件的 file URL。 */
+/**
+ * 包名 → 包目录（相对仓库根）的索引，按需构建一次。
+ *
+ * # 为什么不能直接 `packages/<name>`
+ *
+ * 包目录与包名**不是一回事**：`packages/core/quiz` 的包名是
+ * `@lybx-leyw/dsh-zju-core-quiz`。早期只有一层扁平目录时两者恰好能拼出来，
+ * 改成 `packages/<层>/<包>` 之后 `packages/@lybx-leyw/...` 必然不存在 ——
+ * 于是所有 `mount('<包名>')` 都报「找不到模块」，而报错里显示的是一个
+ * 一眼就知道不对的路径。
+ *
+ * 这里扫 `packages/<层>/<包>/package.json` 的 `name` 反查目录。只扫正式分层
+ * （core/client/source/tool/preset），`radar` / `vendor` 有意排除（见
+ * scripts/workspace-packages.mjs）。
+ */
+let packageIndex = null;
+function packageIndexFor(rootDir) {
+  if (packageIndex !== null && packageIndex.root === rootDir) return packageIndex.map;
+  const map = new Map();
+  for (const layer of ['core', 'client', 'source', 'tool', 'preset']) {
+    const layerDir = path.join(rootDir, 'packages', layer);
+    let children;
+    try {
+      children = readdirSync(layerDir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const child of children) {
+      if (!child.isDirectory()) continue;
+      const dir = path.join(layerDir, child.name);
+      try {
+        const manifest = JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf8'));
+        if (manifest.name) map.set(manifest.name, path.join('packages', layer, child.name));
+      } catch {
+        // 没有 manifest 的目录不是包，跳过。
+      }
+    }
+  }
+  packageIndex = { root: rootDir, map };
+  return map;
+}
+
+/**
+ * 某个包某个源文件的 file URL。
+ *
+ * `name` 有三种写法，都出现在既有调用里：
+ *   - **包名**（`@lybx-leyw/dsh-zju-core-quiz`）→ 查上面的索引反查目录；
+ *   - **相对 `packages/` 的目录**（`core/quiz`）→ 直接拼；
+ *   - `'..'` → `packages/` 的上一级（仓库根）。有些文件在
+ *     `client/ui-shared/` 这类跨层位置，只能相对根取。
+ *
+ * @param name - 包名、`packages/` 下的相对目录，或 `'..'`（仓库根）。
+ * @param file - 包内（或相对根）的文件路径。
+ */
 export function urlOf(name, file = 'src/index.js') {
-  return pathToFileURL(path.join(rootDir(), 'packages', name, file)).href;
+  const root = rootDir();
+  if (name === '..') return pathToFileURL(path.join(root, file)).href;
+  const mapped = packageIndexFor(root).get(name);
+  const base = mapped ?? path.join('packages', name);
+  return pathToFileURL(path.join(root, base, file)).href;
 }
 
 /** 包入口的 file URL。 */

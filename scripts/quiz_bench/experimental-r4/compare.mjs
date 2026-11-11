@@ -15,7 +15,6 @@ import {createToolTransport} from '../../../packages/core/quiz/src/engines/r3-v9
 import {inspectGraph} from '../../../packages/core/quiz/src/engines/r3-v9/graph.mjs';
 import {createPointQuizGenerator,planPointQuestions} from '../../../packages/core/quiz/src/engines/r1/points.mjs';
 import {deepTutorBenchHost} from '../deeptutor-host.mjs';
-import {runDeepTutorBench} from '../deeptutor.mjs';
 import {tokenLedger,timingLedger} from '../accounting.mjs';
 import {poolLimit} from '../../../packages/core/quiz/src/engines/r3-v9/common.mjs';
 
@@ -134,7 +133,7 @@ export async function runComparison({spec,out,credentials,onProgress=()=>{},resu
      result=await createQuestionGenerator({library:s.library,scheduler,call:s.call,concurrency:workers,capsules,blind:!!capsules,onProgress:progress})(plan.id,{signal});
     }else{
      const nativeDir=path.join(s.home,'native'),before=await fs.readFile(path.join(nativeDir,'attempts.jsonl'),'utf8').catch(()=>''),beforeRows=before.trim().split('\n').filter(Boolean).length;
-     try{const r=await runDeepTutorBench({...credentials,input:path.join(dir,c.id+'-source.json'),out:nativeDir,mode:'upstream-native',workers,count,maxCalls:(spec.maxCalls??60)-s.nativeCalls,existingQuestions:s.history,signal});result=r.result;}
+     try{const r=await (await import('../deeptutor.mjs')).runDeepTutorBench({...credentials,input:path.join(dir,c.id+'-source.json'),out:nativeDir,mode:'upstream-native',workers,count,maxCalls:(spec.maxCalls??60)-s.nativeCalls,existingQuestions:s.history,signal});result=r.result;}
      finally{const calls=JSON.parse(await fs.readFile(path.join(nativeDir,'model-calls.json'),'utf8').catch(()=>'[]')),rows=(await fs.readFile(path.join(nativeDir,'attempts.jsonl'),'utf8').catch(()=>'')).trim().split('\n').filter(Boolean).map(JSON.parse),events=rows.slice(beforeRows),attempts=events.filter(e=>e.status==='started').length;s.nativeCalls+=attempts;const ids=new Set(events.filter(e=>e.status==='started').map(e=>e.index));tokens=tokenLedger(calls.filter(r=>ids.has(r.index)),{attempts});timing=events;}
     }
    }catch(e){
