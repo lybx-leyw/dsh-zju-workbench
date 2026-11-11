@@ -238,9 +238,10 @@ const CSS = [
   '.zy-scroll{flex:1;overflow:auto;min-height:0}',
   '.zy-content.zy-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0}',
   '.host{display:flex;flex-direction:column;flex:1;min-height:0}',
-  '.zs-nt{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}',
+  /* 与 style.css 一致：工具栏要贴着下面的三栏，所以根容器没有 gap。 */
+  '.zs-nt{display:flex;flex-direction:column;gap:0;flex:1;min-height:0}',
   '.zs-nt-work{display:flex;flex:1;min-height:0;overflow:hidden}',
-  '.zs-nt-ribbon{display:flex;flex-direction:column;width:40px}',
+  '.zs-nt-topbar{display:flex;align-items:center;gap:3px;padding:5px 8px}',
   '.zs-nt-explorer{width:240px;display:flex;flex-direction:column;min-height:0}',
   '.zs-nt-tree{list-style:none;margin:0;padding:0;overflow-y:auto;flex:1;min-height:0}',
   '.zs-nt-rowbtn{display:block;width:100%;text-align:left;padding:6px}',
