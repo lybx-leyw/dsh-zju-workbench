@@ -7,7 +7,9 @@
  *
  * # 版式照着 Obsidian 的分区来
  *
- *   ribbon │ 文件树 │ 标签页 / 编辑器 / 状态栏 │ 右栏
+ *   顶部工具栏
+ *   ──────────────────────────────────────────
+ *   文件树 │ 标签页 / 编辑器 / 状态栏 │ 右栏
  *
  * 四处是刻意的：
  *   1. **铺满整个内容区，不是浮在文章流里的一张卡片**。这一页在壳的
@@ -26,7 +28,10 @@
 body[data-zhiyun] .zs-nt {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  /* ⚠️ 没有 `gap`：顶部工具栏（`.zs-nt-topbar`）必须与下面的三栏**贴齐**。
+   *    留 12px 缝的话，那条工具栏会看起来像浮在页面上的一条，而不是版面的一部分。
+   *    下面的提示条自己带外边距（`.zs-notice` 有 `margin:12px 0`）。 */
+  gap: 0;
   /* 父级 `.zy-content-flush` 是列向 flex，`flex:1` 让面板吃满整个内容区高度。 */
   flex: 1;
   min-height: 0;
@@ -43,21 +48,32 @@ body[data-zhiyun] .zs-nt-work {
   background: var(--zy-bg);
 }
 
-/* ── ribbon：最左的窄图标列 ───────────────────────────────────────── */
-body[data-zhiyun] .zs-nt-ribbon {
+/* ── 顶部工具栏：本页操作用一排横着的图标 ────────────────────────────
+ *
+ * 它原先是最左边一条 46px 的竖列（Obsidian 的 ribbon），紧挨着页面壳自己的
+ * 导轨 —— 于是这一页出现**两条并排的竖导航**：一条切页面、一条管笔记库内部，
+ * 用户第一眼分不清哪条是干什么的（真机反馈原话：「有两个导航bar」）。
+ *
+ * 改横排的三个理由：
+ *   1. 页面壳的导轨与本页工具栏管的是两件事（去哪一页 / 在这一页做什么），
+ *      所以它们该沿**不同的方向**排，让人一眼看出不是一个东西；
+ *   2. 那 46px 是从正文里扣掉的 —— 横过来之后正文整列多出 46px 宽；
+ *   3. 工具栏横跨整页，与下面的文件树 / 标签页 / 右栏都对齐同一条左边缘。
+ *
+ * 「右栏」开关仍在最右端（原在竖列底部）：面板开关分处两端，与导航栏把
+ * 「入口」和「面板」分开的直觉一致。 */
+body[data-zhiyun] .zs-nt-topbar {
   flex: none;
-  width: 46px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 10px 0;
+  padding: 5px 8px;
   background: var(--zy-sidebar);
-  border-right: 1px solid var(--zy-line);
+  border-bottom: 1px solid var(--zy-line);
 }
-body[data-zhiyun] .zs-nt-ribbon button {
-  width: 32px;
-  height: 32px;
+body[data-zhiyun] .zs-nt-topbar button {
+  width: 30px;
+  height: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -67,21 +83,21 @@ body[data-zhiyun] .zs-nt-ribbon button {
   color: var(--zy-secondary);
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-ribbon button:hover {
+body[data-zhiyun] .zs-nt-topbar button:hover {
   background: var(--zy-hover);
   color: var(--zy-text);
 }
 /* 开着的面板：图标染色，让"我现在开着什么"不用去数面板。 */
-body[data-zhiyun] .zs-nt-ribbon button.is-on {
+body[data-zhiyun] .zs-nt-topbar button.is-on {
   color: var(--zy-accent);
   background: var(--zy-soft);
 }
-body[data-zhiyun] .zs-nt-ribbon button:disabled {
+body[data-zhiyun] .zs-nt-topbar button:disabled {
   opacity: .45;
   cursor: default;
 }
-/* 把右栏开关顶到底部：与 Obsidian 一样，右侧类开关在 ribbon 的另一头。 */
-body[data-zhiyun] .zs-nt-ribbon-gap {
+/* 把右栏开关推到最右端：面板类开关与入口类按钮分开两头。 */
+body[data-zhiyun] .zs-nt-topbar-gap {
   flex: 1;
 }
 
@@ -885,14 +901,15 @@ body[data-zhiyun] .zs-nt-rename input {
   min-width: 0;
 }
 body[data-zhiyun] .zs-nt-note-ok {
-  margin: 0;
+  /* 与工作区之间留一点缝：`.zs-nt` 没有 gap 了（见那条规则的说明）。 */
+  margin: 10px 2px 0;
   font-size: 12.5px;
   color: var(--zy-accent);
 }
 
 /* 窄屏：把两侧面板的**基准宽度**收一收（现在它们是可收缩的 flex 项，
    设 `width` 不会生效 —— 主轴尺寸由 `flex-basis` 决定）。
-   **不**用 `display:none` 强行藏掉任何一栏 —— 那会让 ribbon 上的开关按下没反应
+   **不**用 `display:none` 强行藏掉任何一栏 —— 那会让顶部工具栏上的开关按下没反应
    （看起来像坏了）。收不收由用户决定；挤不下时面板自己让位给正文。 */
 @media (max-width: 1280px) {
   body[data-zhiyun] .zs-nt-side {

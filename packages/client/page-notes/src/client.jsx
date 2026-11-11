@@ -8,12 +8,16 @@
 // 同一段正文可以**同时**带这两种链接。两者各有各的用处：前者绑定课程上下文，
 // 后者是跨课程的知识网。
 //
-// # 布局按 Obsidian 的真实结构来
+// # 布局
 //
-//   ribbon（窄图标列）│ 文件树 │ 标签页 + 编辑器 + 状态栏 │ 右栏（可折叠）
+//   顶部工具栏（新建 / 文件夹 / 导入 / 过滤 / 面板开关）
+//   ──────────────────────────────────────────────────
+//   文件树 │ 标签页 + 编辑器 + 状态栏 │ 右栏（可折叠）
 //
-// 每一块都对应 Obsidian 里真实存在的东西，不是装饰：
-//   - **ribbon**：新建笔记 / 新建文件夹 / 过滤 / 开关两侧面板；
+// 每一块都对应真实存在的东西，不是装饰：
+//   - **顶部工具栏**：新建笔记 / 新建文件夹 / 导入 PDF / 过滤 / 开关两侧面板；
+//     它是**横排**的，不占左侧 —— 页面壳自己已经有一条竖导轨，再竖一条会让
+//     人分不清哪条管切页、哪条管笔记库内部（见 `.zs-nt-topbar` 的样式注释）；
 //   - **文件树**：文件夹可折叠、笔记与附件分形状、拖到文件夹上即移动；
 //   - **标签页**：同时开多篇，各自带自己的草稿与未保存状态；
 //   - **面包屑**：`← →` 是打开历史（后退/前进），右边是所在目录 + 文件名；
@@ -456,7 +460,7 @@ export function NotesLibrary() {
   const [explorerOpen, setExplorerOpen] = useState(true);
   // ⚠️ 右栏**默认收起**：宿主里这一页的可用宽度只有窗口减去它自己的侧栏，
   //    再常驻一列 250px 会把正文挤到读不下去（实测状态栏都换行了）。
-  //    Obsidian 的右栏同样是默认收起的。开关在 ribbon 上，状态栏的反链数也能叫出来。
+  //    Obsidian 的右栏同样是默认收起的。开关在顶部工具栏上，状态栏的反链数也能叫出来。
   const [rightOpen, setRightOpen] = useState(false);
   // 阅读态是**默认**：笔记大多是拿来读的，而 Markdown 源码对读者不友好。
   // 想写就按工具栏那个「编辑」。
@@ -1264,17 +1268,22 @@ export function NotesLibrary() {
   const folderOfActive = activeTab ? dirOf(activeTab.path) : '';
 
   return <section className="zs-nt" ref={rootRef}>
+    {/* 顶部工具栏：本页自己的操作全在这里。
+        ⚠️ 它原先是最左边一条 46px 的竖列（ribbon），紧挨着页面壳的导轨 ——
+        于是「笔记库」一个页面就有**两条竖导航**：一条切页面、一条管笔记库内部，
+        用户第一眼分不清哪条是干什么的（真机反馈原话：「有两个导航bar」）。
+        现在横排到页面顶上，竖着那条只留页面壳的。 */}
+    <div className="zs-nt-topbar" role="toolbar" aria-label="笔记库操作">
+      <button type="button" title="文件树" aria-label="文件树" aria-pressed={explorerOpen} className={explorerOpen ? 'is-on' : ''} onClick={() => setExplorerOpen((v) => !v)}><Icon name="collapse" size={16} /></button>
+      <button type="button" title="新建笔记" aria-label="新建笔记" disabled={busy} onClick={() => void createNote(folderOfActive)}><Icon name="plus" size={16} /></button>
+      <button type="button" title="新建文件夹" aria-label="新建文件夹" disabled={busy} onClick={() => void createFolder(folderOfActive)}><Icon name="folderPlus" size={16} /></button>
+      <button type="button" title="导入 PDF" aria-label="导入 PDF" disabled={busy} onClick={() => pdfInputRef.current?.click()}><Icon name="paper" size={16} /></button>
+      <button type="button" title="过滤笔记" aria-label="过滤笔记" onClick={() => { setExplorerOpen(true); filterRef.current?.focus(); }}><Icon name="search" size={16} /></button>
+      <span className="zs-nt-topbar-gap" />
+      <button type="button" title="右栏" aria-label="右栏" aria-pressed={rightOpen} className={rightOpen ? 'is-on' : ''} onClick={() => setRightOpen((v) => !v)}><Icon name="panelRight" size={16} /></button>
+    </div>
+
     <div className="zs-nt-work">
-      {/* ribbon：最左的窄图标列 */}
-      <nav className="zs-nt-ribbon" aria-label="笔记库操作">
-        <button type="button" title="文件树" aria-pressed={explorerOpen} className={explorerOpen ? 'is-on' : ''} onClick={() => setExplorerOpen((v) => !v)}><Icon name="collapse" size={16} /></button>
-        <button type="button" title="新建笔记" disabled={busy} onClick={() => void createNote(folderOfActive)}><Icon name="plus" size={16} /></button>
-        <button type="button" title="新建文件夹" disabled={busy} onClick={() => void createFolder(folderOfActive)}><Icon name="folderPlus" size={16} /></button>
-        <button type="button" title="导入 PDF" disabled={busy} onClick={() => pdfInputRef.current?.click()}><Icon name="paper" size={16} /></button>
-        <button type="button" title="过滤笔记" onClick={() => { setExplorerOpen(true); filterRef.current?.focus(); }}><Icon name="search" size={16} /></button>
-        <span className="zs-nt-ribbon-gap" />
-        <button type="button" title="右栏" aria-pressed={rightOpen} className={rightOpen ? 'is-on' : ''} onClick={() => setRightOpen((v) => !v)}><Icon name="panelRight" size={16} /></button>
-      </nav>
       {/* 隐藏的文件选择器：导入 PDF 的唯一入口（见 importPdf 里为什么不用拖拽）。
           选完立刻清空 value，否则同一个文件第二次选不会触发 onChange。 */}
       <input
