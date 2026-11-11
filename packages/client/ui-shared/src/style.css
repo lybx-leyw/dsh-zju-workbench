@@ -21,6 +21,23 @@ body[data-zhiyun] {
   --zy-fs-meta:11px;--zy-fs-sm:12px;--zy-fs-base:13px;--zy-fs-md:14px;--zy-fs-lg:17px;--zy-fs-xl:21px;--zy-fs-display:24px;
   /* 间距阶梯（P2）：4px 基准，新代码优先使用；存量逐步迁移，不强制重排。 */
   --zy-space-1:4px;--zy-space-2:8px;--zy-space-3:12px;--zy-space-4:16px;--zy-space-6:24px;--zy-space-8:32px;--zy-space-12:48px;--zy-space-16:64px;
+  /* 页面侧栏（左目录 / 文件树 / 课程树）的统一宽度。
+   *
+   * # 为什么是 229
+   *
+   * 页面壳在左侧有一条 51px 的导轨（鲸鱼 + 图标，见 pages-default 的
+   * `DEFAULT_RAIL_WIDTH`）。所有页面的内容区都从那条导轨右边算起，
+   * 所以各页自己的侧栏应当**让出导轨占掉的那 51px**：
+   *
+   *     280 − 51 = 229
+   *
+   * 280 是宿主侧栏的出厂宽度（`ui-layout` 的 `SIDEBAR_DEFAULT`），
+   * 壳层已经把它收成 229；页面内自绘的侧栏跟着对齐，视觉上才是同一条线。
+   *
+   * ⚠️ 改这里之前先看 `pages-default/src/rail-action.jsx` 的
+   * `MIN_SIDEBAR_WIDTH` —— 壳层与页面层必须是同一个数，否则首页侧栏
+   * 与其他页侧栏会差一截。 */
+  --zy-pane-w:229px;
   --zy-font:'Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
   /* 会话抽屉宽度。JS 侧的同名真源在 components.jsx 的 DRAWER_WIDTH（两边必须一致：
      抽屉多宽，问一问那一列就要让出多宽，否则「挤压」会错位）。 */

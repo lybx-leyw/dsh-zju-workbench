@@ -87,10 +87,10 @@ body[data-zhiyun] .zs-nt-ribbon-gap {
 
 /* ── 文件树 ──────────────────────────────────────────────────────── */
 body[data-zhiyun] .zs-nt-explorer {
-  /* ⚠️ `0 1 264px` 而不是 `none`：两侧面板**必须能让位**给正文。
+  /* ⚠️ `0 1 var(--zy-pane-w)` 而不是 `none`：两侧面板**必须能让位**给正文。
    *    第一版写成 `flex:none`（永不收缩），于是窄窗口 + 右栏打开时，
    *    正文区被挤到 298px —— 面板铺得越满，这个毛病越明显。 */
-  flex: 0 1 264px;
+  flex: 0 1 var(--zy-pane-w);
   min-width: 190px;
   display: flex;
   flex-direction: column;
@@ -769,7 +769,7 @@ body[data-zhiyun] button.zs-nt-stat:hover {
 /* ── 右：关系 ─────────────────────────────────────────────────────── */
 body[data-zhiyun] .zs-nt-side {
   /* 与文件树同理：可收缩，但有个地板。右栏是一列链接，190px 仍然读得下去。 */
-  flex: 0 1 264px;
+  flex: 0 1 var(--zy-pane-w);
   min-width: 186px;
   display: flex;
   flex-direction: column;

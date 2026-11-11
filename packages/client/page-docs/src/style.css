@@ -81,7 +81,7 @@ body[data-zhiyun] .zyd-body {
 /* 左目录 */
 body[data-zhiyun] .zyd-nav {
   flex: none;
-  width: 196px;
+  width: var(--zy-pane-w);
   padding: 16px 10px 24px 20px;
   overflow-y: auto;
   border-right: 1px solid var(--zy-line);
