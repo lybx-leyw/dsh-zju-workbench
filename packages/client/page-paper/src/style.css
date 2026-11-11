@@ -66,9 +66,10 @@ body[data-zhiyun] .zp-page {
  * 类名前缀仍用 `zp-tree-*`：两边是不同的包，跨包共享选择器会让改一边影响另一边
  * （`tests/css-order.test.mjs` 也会因"跨包同属性竞争"判红）。 */
 body[data-zhiyun] .zp-tree-pane {
-  /* `0 1 264px` 而不是 `flex:none`：两侧面板必须能让位给正文。
-   * 笔记库那边踩过这个坑（写死 264px 后窄窗口把正文挤到 298px）。 */
-  flex: 0 1 264px;
+  /* `0 1 var(--zy-pane-w)` 而不是 `flex:none`：两侧面板必须能让位给正文。
+   * 笔记库那边踩过这个坑（写死宽度后窄窗口把正文挤到 298px）。
+   * 宽度取 `var(--zy-pane-w)`（229px，与页面壳侧栏同一条线）。 */
+  flex: 0 1 var(--zy-pane-w);
   min-width: 190px;
   display: flex;
   flex-direction: column;
@@ -268,7 +269,7 @@ body[data-zhiyun] .zp-main {
 /* 空态（还没打开文献）：照学习页的起始页排 —— motto + 一句大标题 + 一行副文。
  *
  * 它必须顶替 `.zp-main` 的位置：`.zp-main` 是 `flex: 1; min-width: 0`，抽屉
- * （46px ↔ 392px，且可拖宽）和文件树（264px，可收起、可被挤窄）都是会变的兄弟，
+ * （46px ↔ 392px，且可拖宽）和文件树（`var(--zy-pane-w)`，可收起、可被挤窄）都是会变的兄弟，
  * 空态若不定宽，可用宽度就只由那几行字决定 —— 版心贴着树边，抽屉开合也不跟着动。
  * 居中写在这里（而不是交给子组件），因为这一块自己就是那一栏的全部内容。 */
 body[data-zhiyun] .zp-landing {

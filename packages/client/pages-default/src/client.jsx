@@ -27,15 +27,16 @@
  *
  * # 原生品牌行
  *
- * 产品自己那只鲸鱼在导轨上，原生侧栏头部再放一只鲸鱼加字标，就是两只同样的鲸鱼并排。
- * 所以顶部品牌行被让空（见 `brand.js`）。这一项与页面壳无关，走宿主槽位影子注册，
- * 且**只清身份区**：折叠按钮留在原处。它是独立 effect，页面壳缺席时照常生效。
+ * 产品自己那只鲸鱼在导轨上，原生侧栏头部再放一只鲸鱼，就是两只同样的鲸鱼并排。
+ * 所以只让掉那只重复的**鲸鱼**，字标交还宿主（见 `brand.js`）—— 不画任何自有图形。
+ * 这一项与页面壳无关，走宿主槽位影子注册，且**只动标记槽**：折叠按钮与字标留在原处。
+ * 它是独立 effect，页面壳缺席时照常生效。
  */
 
 import { WhaleIcon } from './icons.jsx';
 import { installRailIconArtwork } from './rail-icons.js';
-import { suppressNativeBrand } from './brand.js';
-import { installCollapseIntoWhale } from './rail-action.jsx';
+import { suppressBrandMark } from './brand.js';
+import { applySidebarWidth, installCollapseIntoWhale, sidebarWidthCss } from './rail-action.jsx';
 import { installManagerStyle } from './manager-style.js';
 import { installSettingsRailEntry } from './settings-entry-style.js';
 
@@ -142,7 +143,7 @@ export function apply(ctx) {
   // 原生品牌行与页面壳**无关**：它由宿主侧栏自己的槽位渲染。放在同一个 effect 里会让
   // 「页面壳升级换 API」连坐掉整个品牌处理，所以两者各管各的。
   ctx.inject(['slots'], scope => {
-    scope.effect(() => suppressNativeBrand(scope.slots), 'zju: native brand row');
+    scope.effect(() => suppressBrandMark(scope.slots), 'zju: drop duplicate whale mark');
   });
   // 「折叠收进鲸鱼」要三样东西一起才成立：槽位（挂替身）、页面壳（槽名）、布局（真去折叠）。
   // 少任何一个**都不隐藏**原生按钮 —— 否则用户会既没有替身、也没有原生入口。
@@ -151,6 +152,35 @@ export function apply(ctx) {
       slots: scope.slots, pages: scope.pages, layout: scope.layout,
     }), 'zju: collapse into whale');
   });
+  // 「侧栏让出导轨那 51px」**不能**挂在上面那个 effect 里。
+  //
+  // `installCollapseIntoWhale` 在槽位服务形状不对时会**提前 return**（见它的两个
+  // 早退分支），于是同一 effect 里的收窄逻辑跟着一起没执行 —— 真机踩过：
+  // 代码打进产物了，但页面上宽度纹丝不动，因为那一行根本没跑到。
+  //
+  // 收窄只依赖 DOM，与槽位 / 页面壳 / 布局服务都无关，所以单独一个 effect，
+  // 不需要任何 inject —— 它在本包挂载后立刻生效。
+  // 「侧栏让出导轨那 51px」走 **CSS 变量 + !important**，不走 DOM 改写。
+  //
+  // 宽度是 React 每次 render 重写的内联样式；用 JS 抢不过（真机实测：
+  // 函数被调到了、也找到了元素，宽度仍然纹丝不动）。而 CSS 的 !important
+  // 压得住内联 —— 实测内联仍写着 280px、计算宽度已是 229。
+  //
+  // 所以分工是：CSS 定宽度，JS 只把「该多宽」算出来写进变量。
+  ctx.effect(() => {
+    const doc = globalThis.document;
+    const style = doc?.createElement?.('style');
+    if (style !== undefined && style !== null) {
+      style.dataset.zjuSidebarWidth = '';
+      style.textContent = sidebarWidthCss();
+      doc.head?.append?.(style);
+    }
+    const undo = applySidebarWidth();
+    return () => {
+      undo();
+      style?.remove?.();
+    };
+  }, 'zju: sidebar gives up the rail width');
   // 惰性取 pages：页面壳可能晚于本包挂载，而把它写进 inject 会让本包在
   // 页面壳缺席时一起 pending —— 一个只管默认宽度的包不该有这个连坐能力。
   ctx.inject(['pages'], scope => {

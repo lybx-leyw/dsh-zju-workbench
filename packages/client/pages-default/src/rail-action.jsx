@@ -185,6 +185,34 @@ export function injectedCss() {
 }
 
 /**
+ * 找出所有 AppFrame 根元素。
+ *
+ * # 为什么不能用 `[data-sidebar-collapsed]`
+ *
+ * 宿主写的是 `data-sidebar-collapsed={sidebarCollapsed || undefined}`
+ * —— 展开态那一位是 `undefined`，React **不渲染这个属性**。所以展开态下
+ * `querySelectorAll('[data-sidebar-collapsed]')` 一个都匹配不到。
+ *
+ * 改用「三段的 `grid-template-columns`」这个特征：frame 是唯一一个把
+ * `<侧栏>px <中>px <右>px` 三段写进内联样式的元素，与属性无关。
+ *
+ * @param doc - 文档对象。
+ * @returns frame 元素数组。
+ */
+function frames(doc) {
+  const out = [];
+  for (const node of doc.querySelectorAll('*') ?? []) {
+    const grid = node.style?.gridTemplateColumns;
+    if (grid === undefined || grid === '') continue;
+    const parts = grid.trim().split(/\s+(?![^(]*\))/);
+    if (parts.length < 3) continue;
+    if (!/^[\d.]+px$/.test(parts[0])) continue;
+    out.push(node);
+  }
+  return out;
+}
+
+/**
  * 把 frame 的网格第一列在收起态压成 0，展开态原样还原。
  *
  * 只动第一段，其余段逐字保留 —— 右侧栏开合、窗口缩放都照常。
@@ -203,7 +231,7 @@ export function collapseSidebarColumn(doc = globalThis.document) {
    */
   const original = new WeakMap();
   const apply = () => {
-    for (const frame of doc.querySelectorAll('[data-sidebar-collapsed]') ?? []) {
+    for (const frame of frames(doc)) {
       // 只处理「已收起」的 frame；展开态一律不碰，交给宿主自己的渲染值。
       if (frame.getAttribute('data-sidebar-collapsed') !== 'true') continue;
       const style = frame.style;
@@ -218,13 +246,47 @@ export function collapseSidebarColumn(doc = globalThis.document) {
     }
   };
   apply();
-  const root = doc.documentElement ?? doc.body;
-  const Observer = doc.defaultView?.MutationObserver ?? globalThis.MutationObserver;
+  /**
+   * 首次调用发生在**插件挂载**阶段，那时 React 还没渲染出 AppFrame
+   * （真机实测：函数被调到了，但页面里还没有那个元素）。
+   *
+   * 所以必须挂 observer 等它出现。观察根用 `documentElement`，它比 `body`
+   * 更早存在；两者都还没有时退到 `document` 本身。
+   *
+   * ⚠️ 曾经这里只观察根节点的 `style` 属性变化，但**节点插入**不会触发
+   * 属性观察 —— 必须同时开 `childList` + `subtree`。
+   */
+  const root = doc.documentElement ?? doc.body ?? doc;
+  const Observer = globalThis.MutationObserver ?? doc.defaultView?.MutationObserver;
   let observer;
   if (root !== null && root !== undefined && typeof Observer === 'function') {
     observer = new Observer(apply);
-    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-sidebar-collapsed', 'style'] });
+    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
   }
+  /**
+   * 兜底：前若干帧再试。
+   *
+   * # 为什么单靠 MutationObserver 不够（真机实测）
+   *
+   * 本函数在**插件挂载**阶段被调用，那时 React 还没渲染出 AppFrame
+   * （诊断输出：`root=HTML`、`found=0`）。之后节点由 React 插入，
+   * 但那条通知**没有让收窄发生** —— 只观察 `style` 属性时，节点插入本身
+   * 未必触发回调（不同浏览器的 `attributeFilter` 语义有差异）。
+   *
+   * 与其和观察器的边界条件纠缠，不如在头几帧主动重试几次：AppFrame 一定
+   * 在首次渲染后的很短时间里出现，重试 30 帧（约 0.5 秒）足够覆盖。
+   * 之后仍由 observer 负责真正的变化（用户拖拽、窗口缩放）。
+   */
+  let frame = 0;
+  const retry = () => {
+    if (frame >= 30) return;
+    frame += 1;
+    apply();
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      globalThis.requestAnimationFrame(retry);
+    }
+  };
+  if (typeof globalThis.requestAnimationFrame === 'function') globalThis.requestAnimationFrame(retry);
   return () => {
     observer?.disconnect();
     for (const frame of doc.querySelectorAll('[data-sidebar-collapsed]') ?? []) {
@@ -235,19 +297,181 @@ export function collapseSidebarColumn(doc = globalThis.document) {
 }
 
 /**
- * 安装「折叠收进鲸鱼」。
+ * 找出所有 AppFrame 根元素。
  *
- * 两件事各自独立、各自可撤：
- *   1. 在 `page.rail-action` 里按页面 key 注册动作（keyed 槽，没注册的 key 走 fallback）；
- *   2. 隐藏原生折叠按钮（样式表 + 标记属性，卸载时逐项还原）。
+ * # 为什么不能用 `[data-sidebar-collapsed]`
  *
- * @param root0 - 依赖。
- * @param root0.slots - 槽位服务（`ctx.slots`）。
- * @param root0.pages - 页面壳服务（`ctx.pages`），提供槽名与当前页。
- * @param root0.layout - 布局服务（`ctx.layout`），提供 `toggleSidebar`。
- * @param root0.doc - 文档对象，默认 `globalThis.document`。
- * @returns 撤销函数。
+ * 宿主写的是 `data-sidebar-collapsed={sidebarCollapsed || undefined}`
+ * （`AppFrame.tsx`）—— 展开态那一位是 `undefined`，React **不渲染这个属性**。
+ * 于是展开态下 `querySelectorAll('[data-sidebar-collapsed]')` **一个都匹配不到**，
+ * 整段收窄逻辑从未执行过（真机验证：页面上一共有 0 个这样的元素）。
+ *
+ * 改用「三段的 `grid-template-columns`」这个特征：frame 是唯一一个把
+ * `<侧栏>px <中>px <右>px` 三段写进内联样式的元素，与属性无关。
+ *
+ * @param doc - 文档对象。
+ * @returns frame 元素数组。
  */
+/**
+ * 侧栏宽度的 CSS 变量名。
+ *
+ * # 为什么用 CSS 变量而不是改写内联样式
+ *
+ * 宽度是 React 写进元素的**内联** `grid-template-columns` 与内联 `width`，
+ * 每次 render 都会重写。用 JS 去改：改完下一帧就被覆盖，只能靠 observer
+ * 反复抢 —— 真机实测抢不过（诊断显示函数被调用过、找到了 frame，但宽度纹丝不动）。
+ *
+ * 而 CSS 的 `!important` **压得住内联样式**（实测：内联仍写着 280px，
+ * `getComputedStyle` 与实测宽度都是 229）。所以正确的分工是：
+ * **宽度由 CSS 定，JS 只负责把「该多宽」算出来写进这个变量**。
+ */
+export const SIDEBAR_WIDTH_VAR = '--zju-sidebar-width';
+
+/**
+ * 导轨宽度（px）。
+ *
+ * ⚠️ 与 `client.jsx` 的 `DEFAULT_RAIL_WIDTH` 必须是同一个数。
+ *
+ * 为什么不在本文件 import 它：`client.jsx` 依赖本文件（取
+ * `installCollapseIntoWhale`），反向再 import 会成环。复制一个常量比引入
+ * 循环依赖便宜，而且这个数由产品设计固定，不是配置项。
+ *
+ * 测试会断言两者相等 —— 见 `pages-default-width.test.mjs`。
+ */
+export const DEFAULT_RAIL_WIDTH = 51;
+/**
+ * 侧栏的**最小宽度**（px）—— 硬编码，**不由任何量反推**。
+ *
+ * # 为什么必须硬编码（这条是踩过的坑）
+ *
+ * 曾经写成 `min(宿主下限, 宿主默认 − 导轨宽)`：导轨一旦做宽到接近 280，
+ * `宿主默认 − 导轨宽` 就是 0 或负数，取 min 之后**侧栏直接消失**。
+ * 一个「让出空间」的调整不该有能力把整栏做没。
+ *
+ * 所以 MIN 是一个写死的兜底：`max(MIN, current − railWidth)` 里的 MIN。
+ * 无论导轨多宽、宿主算出的 current 多窄，侧栏都不会低于它。
+ *
+ * 280 − 51 = 229 —— 正好是「让出导轨后」的目标宽度，于是默认情况下
+ * `max(229, 280−51)` 与 `max(229, 用户拖的值−51)` 都落在合理位置。
+ */
+export const MIN_SIDEBAR_WIDTH = 229;
+
+/** 宿主契约里的侧栏默认宽度（`ui-layout` 的 `SIDEBAR_DEFAULT`）。 */
+export const HOST_SIDEBAR_DEFAULT = 280;
+
+/**
+ * 侧栏该用多宽 = `max(新下限, 当前 − 导轨宽)`。
+ *
+ * - `current`：宿主这次算出的宽度（用户拖过就是他拖的值，没拖过是 280）；
+ * - `railWidth`：导轨占掉的横向空间，侧栏让出来抵消。
+ *
+ * 以 280 / 229 / 51 代入：`max(229, 229) = 229`。
+ *
+ * @param options.current - 宿主算出的当前宽度。
+ * @param options.floor - 新下限。
+ * @param options.railWidth - 导轨宽度。
+ * @returns 目标宽度（px）。
+ */
+export function sidebarTarget({ current, floor = MIN_SIDEBAR_WIDTH, railWidth = DEFAULT_RAIL_WIDTH } = {}) {
+  return Math.max(floor, current - railWidth);
+}
+
+/**
+ * 算出侧栏宽度并写进 CSS 变量，**不碰任何内联样式**。
+ *
+ * @param options.doc - 文档对象。
+ * @param options.railWidth - 导轨宽度。
+ * @returns 还原函数。
+ */
+export function applySidebarWidth({ doc = globalThis.document, railWidth = DEFAULT_RAIL_WIDTH } = {}) {
+  const root = doc?.documentElement;
+  if (root?.style === undefined) return () => {};
+  /**
+   * 读宿主这次算出的侧栏宽度。
+   *
+   * 不缓存：用户拖拽、窗口缩放、右侧栏开合都会改它，每次重新读才准。
+   *
+   * @returns 当前宽度（px），找不到返回 `null`。
+   */
+  /**
+   * 读宿主这次算出的侧栏宽度。
+   *
+   * # 为什么不遍历所有元素
+   *
+   * 曾经用 `querySelectorAll('*')` 找「内联 grid 有三段」的那个，真机上遍历了
+   * 1400+ 个节点**一个都没匹配到**（某些节点访问 `.style` 会抛错，被宿主吞掉）。
+   *
+   * 改用宿主插槽服务写的语义锚点：`[data-slot="root"]` 的子元素就是 AppFrame，
+   * 它的第一段就是侧栏宽。结构比「特征扫描」稳，也快得多。
+   *
+   * 找不到时回落到宿主默认宽 —— 宁可给默认值，也不要让变量留空
+   * （留空的话 `var()` 失效，CSS 规则那条 `!important` 也跟着白写）。
+   *
+   * @returns 当前宽度（px）。
+   */
+  const measure = () => {
+    const frame = doc.querySelector('[data-slot="root"] > [data-slot="root"]')
+      ?? doc.querySelector('[data-slot="root"] > *');
+    const grid = frame?.style?.gridTemplateColumns;
+    if (grid !== undefined && grid !== '') {
+      const first = Number.parseFloat(grid.trim().split(/\s+/)[0]);
+      if (Number.isFinite(first) && first > 0) return first;
+    }
+    return HOST_SIDEBAR_DEFAULT;
+  };
+  /** 硬编码兜底：无论导轨多宽、宿主算出多窄，侧栏都不低于它。 */
+  const floor = MIN_SIDEBAR_WIDTH;
+  const sync = () => {
+    const current = measure();
+    if (current === null) return;
+    root.style.setProperty(SIDEBAR_WIDTH_VAR, `${sidebarTarget({ current, floor, railWidth })}px`);
+  };
+  sync();
+  const Observer = globalThis.MutationObserver ?? doc.defaultView?.MutationObserver;
+  let observer;
+  if (typeof Observer === 'function') {
+    observer = new Observer(sync);
+    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+  }
+  return () => {
+    observer?.disconnect();
+    root.style.removeProperty?.(SIDEBAR_WIDTH_VAR);
+  };
+}
+
+/**
+ * 侧栏宽度的样式表文本。
+ *
+ * # 两条规则各压一层内联（都实测过 `!important` 压得住）
+ *
+ * | 目标 | 宿主写的内联 | 不覆盖的后果 |
+ * | --- | --- | --- |
+ * | frame 的网格第一列 | `grid-template-columns` | 列还是 280 |
+ * | `SidebarRoot` 的宽度 | `width` | 元素仍是 280，被列裁掉右端 |
+ *
+ * # 锚点为什么用 `data-slot`
+ *
+ * 那是宿主插槽服务写的语义属性（`root` / `sidebar`），比 CSS Module 哈希类名
+ * （`pI_x6G_frame`）稳 —— 后者换一次构建就变，规则会静默失效。
+ *
+ * @returns 样式表文本。
+ */
+export function sidebarWidthCss() {
+  return [
+    // ⚠️ **只在展开态生效**（`:not([data-sidebar-collapsed="true"])`）。
+    //
+    // 少了这个限定，收起后网格仍被 `!important` 锁在 229 —— 真机踩过：
+    // 宿主把内联写成 56px（收起轨），计算值却还是 229，**侧栏根本收不起来**。
+    // 收起态交给 `collapseSidebarColumn`（它把第一列压成 0）。
+    `[data-slot="root"] > *:not([data-sidebar-collapsed="true"]){grid-template-columns:var(${SIDEBAR_WIDTH_VAR}) minmax(0px,1fr) minmax(0px,0px) !important}`,
+    `[data-slot="root"]:not(:has([data-sidebar-collapsed="true"])) [data-slot="sidebar"] > *{width:var(${SIDEBAR_WIDTH_VAR}) !important;max-width:var(${SIDEBAR_WIDTH_VAR}) !important}`,
+    // 拖拽手柄用内联 `left` 定位（`<DragHandle left={cols.sidebar}>`），
+    // 收窄网格后它还停在旧位置 —— 用户看到的是一条离侧栏 51px 的拖拽线。
+    // 同样只在展开态改写；`margin-left:-4px` 是宿主自己的居中补偿，保留。
+    `[data-slot="root"] > *:not([data-sidebar-collapsed="true"]) > [class*="handle"]{left:var(${SIDEBAR_WIDTH_VAR}) !important}`,
+  ].join('\n');
+}
+
 export function installCollapseIntoWhale({ slots, pages, layout, doc = globalThis.document }) {
   const disposers = [];
   // 顺序是有讲究的：**先挂替身，成功了才藏原生按钮**。

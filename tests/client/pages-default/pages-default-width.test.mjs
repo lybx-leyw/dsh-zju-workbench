@@ -306,31 +306,71 @@ function fakeSlots({ declared = true } = {}) {
   return { slots, registrations, injected };
 }
 
-test('the native brand row is shadowed on both slots at a lower priority', () => {
+test('only the duplicate whale mark is suppressed; the host wordmark is left alone', () => {
   const { slots, registrations, injected } = fakeSlots();
-  const undo = brand.suppressNativeBrand(slots);
+  const undo = brand.suppressBrandMark(slots);
 
-  assert.deepEqual(injected, ['sidebar.brand.mark', 'sidebar.brand.name'], '两个槽都接管');
-  assert.equal(registrations.length, 2);
-  for (const record of registrations) {
-    // 原生那份是默认 priority 0；更低的数值才会被选为渲染者。
-    assert.equal(record.priority, -1, `${record.name} 必须压在原生之下`);
-    assert.equal(record.component(), null, '影子组件渲染空内容');
-  }
+  // ⚠️ bug1 的回归锚就在这一行断言里：上一版把**两个**槽都让空，
+  // 而宿主 `.logoRow` 写死 60px、`.brand` 又是 flex:1 —— 内容空了盒子还在，
+  // 顶部就是一条 60px 的空白带。字标必须留给宿主。
+  assert.deepEqual(injected, ['sidebar.brand.mark'], '只接管标记槽');
+  assert.deepEqual([...brand.SUPPRESSED_BRAND_SLOTS], ['sidebar.brand.mark']);
+  assert.ok(!brand.SUPPRESSED_BRAND_SLOTS.includes('sidebar.brand.name'),
+    'name 槽必须留着，否则顶部又会空一块');
+  assert.equal(registrations.length, 1);
+  // 原生那份是默认 priority 0；更低的数值才会被选为渲染者。
+  assert.equal(registrations[0].priority, -1, '必须压在原生之下');
+  // 让掉的是重复的鲸鱼：这里渲染的是一个**零视觉的定位锚点**（空 span），不是图标。
+  const marker = registrations[0].component({});
+  assert.equal(marker.type, 'span', '标记槽渲染空 span 作为锚点');
+  assert.equal(marker.props.children, undefined, '锚点没有任何内容');
+  assert.equal(marker.props['aria-hidden'], 'true', '锚点对辅助技术不可见');
 
   undo();
-  assert.ok(registrations.every(record => record.disposed), '卸载后两条注册都撤掉，原生品牌恢复');
+  assert.ok(registrations.every(record => record.disposed), '卸载后注册撤掉，原生鲸鱼恢复');
+});
+
+test('the brand row is left-aligned after the whale is dropped', () => {
+  // 宿主原本是 justify-content:flex-end + .brand{flex:1}：让掉鲸鱼之后字标会被顶到最右，
+  // 左端空着。产品其余部分（导轨/页头/列表）都是左对齐，这一行必须跟上。
+  const css = brand.BRAND_ROW_CSS;
+  assert.match(css, /justify-content:flex-start/, '整行左对齐');
+  assert.ok(!/justify-content:flex-end/.test(css), '不能保留右对齐');
+  assert.match(css, /flex:0 0 auto/, '身份按钮不再 flex:1 撑满整行');
+  // 死规则自检：隐藏装锚点的那层 span 会让 :has() 失配、整套样式永久失效。
+  assert.ok(!/span:first-child\{\s*display:none/.test(css),
+    '不能隐藏锚点所在的 span —— 那会让选择器自己关掉自己');
+});
+
+test('the alignment selectors only match the wide state, never the collapsed rail', () => {
+  // 宽态：button > span > span > span[marker]；收起态：button > span > span[marker]。
+  // 差一层，所以只命中宽态 —— 不会误伤收起态那颗 36px 的折叠按钮。
+  const selector = brand.ROW_SELECTOR;
+  assert.match(selector, /data-window-drag/, '用宿主写死的语义属性当锚点');
+  assert.match(selector, /\[data-zju-brand-slot\]/, '用我们自己的标记当判据');
+  assert.ok(!/GgXflG|_\w+\{/.test(selector), '不依赖构建期哈希类名');
+  assert.match(selector, /:has\(> button > span > span > \[data-zju-brand-slot\]\)/,
+    '层级必须比收起态多一层');
+});
+
+test('the package draws no brand artwork of its own', () => {
+  // 用户明确要求：不做自己的图标。这个包只能「少做一件事」，不能新增品牌绘制。
+  const exported = Object.keys(brand);
+  for (const forbidden of ['ZhiyunBrandMark', 'ZhiyunBrandName', 'BRAND_MARK_WORD',
+    'BRAND_WORD_PATH', 'BRAND_MARK_SCREEN', 'BRAND_MARK_VIEWBOX']) {
+    assert.ok(!exported.includes(forbidden), `不应再导出自有品牌绘制：${forbidden}`);
+  }
 });
 
 test('brand suppression is a no-op when the slot service is absent or misshapen', () => {
   // 宿主没提供 slots、或换了形状：静默不动，绝不能因此让侧栏起不来。
   for (const absent of [undefined, null, {}, { inject: () => {} }, { register: () => {} }]) {
-    assert.doesNotThrow(() => brand.suppressNativeBrand(absent), '缺失槽位服务时安全退出');
-    assert.equal(typeof brand.suppressNativeBrand(absent), 'function', '仍然返回可调用的撤销函数');
+    assert.doesNotThrow(() => brand.suppressBrandMark(absent), '缺失槽位服务时安全退出');
+    assert.equal(typeof brand.suppressBrandMark(absent), 'function', '仍然返回可调用的撤销函数');
   }
   // 槽位还没声明时 inject 不会回调；撤销函数照样可用。
   const pending = fakeSlots({ declared: false });
-  const undo = brand.suppressNativeBrand(pending.slots);
+  const undo = brand.suppressBrandMark(pending.slots);
   assert.equal(pending.registrations.length, 0, '槽位未声明就不注册');
   assert.doesNotThrow(undo);
 });
@@ -348,4 +388,83 @@ test('the rail whale carries an explicit primary colour instead of inheriting gr
   assert.equal(icons.WhaleIcon({ size: 23 }).props.children.props.fill, 'currentColor');
   assert.equal(typeof createArtwork, 'function', '内建页图标的着色路径不受影响');
   assert.ok(doc);
+});
+
+/* ───────────────────── 侧栏让出导轨宽度（CSS 变量方案） */
+
+/**
+ * 侧栏宽度的规则，全是纯函数 —— 不需要 DOM 就能测。
+ *
+ * 真正把宽度落到界面上的那一步交给 CSS（`!important` 压住 React 的内联样式），
+ * 这里只验「算得对」与「生成的规则覆盖了该覆盖的地方」。
+ */
+const rail = await bundleModule('packages/client/pages-default/src/rail-action.jsx');
+
+test('目标宽度 = max(MIN, 当前 − 导轨宽)：默认 280 时得到 229', () => {
+  // 280 − 51 = 229，正好等于 MIN，两个分支同值。
+  assert.equal(rail.sidebarTarget({ current: 280, floor: 229, railWidth: 51 }), 229);
+});
+
+test('目标宽度 = max(MIN, 当前 − 导轨宽)：用户拖到 340 时得到 289', () => {
+  assert.equal(rail.sidebarTarget({ current: 340, floor: 229, railWidth: 51 }), 289);
+});
+
+test('目标宽度不会低于 MIN：当前比导轨还窄时仍给 229', () => {
+  // 这一条钉的是「侧栏不能消失」：`current - railWidth` 一旦 <= 0，
+  // 结果必须落回 MIN，而不是 0 或负数。
+  assert.equal(rail.sidebarTarget({ current: 40, floor: 229, railWidth: 51 }), 229);
+});
+
+test('目标宽度永远不会是 0 或负数 —— 无论输入多离谱', () => {
+  for (const current of [0, 1, 51, 100, -50]) {
+    const v = rail.sidebarTarget({ current, floor: 229, railWidth: 51 });
+    assert.ok(v >= 229, `current=${current} 时得到 ${v}，低于 MIN`);
+  }
+});
+
+test('MIN 是硬编码的 229，不由任何量反推', () => {
+  // 曾经写成 min(宿主下限, 宿主默认 − 导轨宽)：导轨一旦做宽到接近 280，
+  // 宿主默认 − 导轨宽 就是 0 或负数，取 min 之后侧栏直接消失。
+  assert.equal(rail.MIN_SIDEBAR_WIDTH, 229);
+  assert.equal(rail.DEFAULT_RAIL_WIDTH, 51);
+  // 与 client.jsx 的导轨宽度必须一致（两处复制了这个常量）
+  assert.equal(rail.DEFAULT_RAIL_WIDTH, defaults.DEFAULT_RAIL_WIDTH);
+});
+
+test('CSS 规则覆盖两层内联样式，且都带 !important', () => {
+  const css = rail.sidebarWidthCss();
+  // ① frame 的网格第一列（宿主写的是内联 grid-template-columns）
+  assert.match(css, /\[data-slot="root"\]/);
+  assert.match(css, /grid-template-columns:var\(--zju-sidebar-width\)[^;}]*!important/);
+  // ② SidebarRoot 自身的宽度（只改网格会把它裁掉右端）
+  assert.match(css, /\[data-slot="sidebar"\]/);
+  assert.match(css, /width:var\(--zju-sidebar-width\)[^;}]*!important/);
+});
+
+test('CSS 规则只在展开态生效 —— 否则收起后也锁在 229', () => {
+  // 真机踩过：少了这个限定，宿主把内联写成 56px（收起轨），
+  // 计算值却还是 229，**侧栏根本收不起来**。
+  const css = rail.sidebarWidthCss();
+  const lines = css.split('\n').filter(line => line.includes('data-slot') && line.includes('{'));
+  assert.equal(lines.length, 3, '应当正好三条规则');
+  for (const rule of lines) {
+    // 收起态判定有两种写法：宿主把属性写在被选元素上（\:not(...)），
+    // 或写在后代上（:has(\:not(...))）。两种都算有防护。
+    const guarded = rule.includes(':not([data-sidebar-collapsed="true"])')
+      || rule.includes(':not(:has([data-sidebar-collapsed="true"]))');
+    assert.ok(guarded, `缺少展开态限定: ${rule.slice(0, 70)}`);
+  }
+});
+
+test('拖拽手柄的位置也用同一个变量 —— 否则它停在旧位置', () => {
+  // 宿主的 `<DragHandle left={cols.sidebar}>` 把 left 写成内联 280px，
+  // 收窄网格后手柄会停在离侧栏 51px 的地方，拖它会拖错东西。
+  const css = rail.sidebarWidthCss();
+  assert.match(css, /handle[^{]*\{left:var\(--zju-sidebar-width\)[^;}]*!important/);
+});
+
+test('CSS 规则不用构建期哈希类名（换一次构建就失效）', () => {
+  const css = rail.sidebarWidthCss();
+  // 宿主类名长这样：pI_x6G_frame / hHd-Xa_root —— 形态是 [A-Za-z0-9_-]+_xxx
+  assert.doesNotMatch(css, /\.[A-Za-z0-9_-]{5,}_[a-zA-Z]/, `CSS 里出现了哈希类名: ${css}`);
 });
