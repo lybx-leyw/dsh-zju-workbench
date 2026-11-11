@@ -24,7 +24,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const RUNTIME = path.join(root, 'packages/client/page-plugins/src/runtime.js');
+// 依赖图的折叠已搬到 core-plugin-graph（页面只管渲染）。
+const RUNTIME = path.join(root, 'packages/core/plugin-graph/src/runtime.js');
 
 // 用本仓真实的包名前缀与一个「教科书形状」的平面：parser 提供 zhiyunParser，
 // study-core 需要它，page-today 需要 study-core 的一条服务。三包都活着时，
@@ -85,7 +86,7 @@ export function edgesOf(view) {
  * 只关一个、不连坐：关一个包会连带让它的下游失去服务，下游若也一起从读数里消失，
  * 就分不清「这条边是关 A 弄丢的」还是「关 B 弄丢的」。逐个关，归因才是干净的。
  *
- * @param buildView - `packages/client/page-plugins/src/runtime.js` 的 `buildView`。
+ * @param buildView - `packages/core/plugin-graph/src/runtime.js` 的 `buildView`。
  * @param plugins - 行级开关读数（`listPlugins()` 形状）；`enabled:false` 表示用户关掉了它。
  * @returns `{ baseline, cases }`；`cases[i].lost` 是这一步消失的边。
  */

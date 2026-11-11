@@ -1,48 +1,28 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-classroom-renderer",
   "version": "0.1.0",
-  "description": "课堂渲染层：上游 @openmaic/renderer 0.2.0 的构建产物原样 vendored（PPTist 风格 Slide JSON 的只读画布），附带浏览器半边产物 lib/client.js",
-  "private": true,
+  "description": "课堂画布约定（纯数据）：viewportSize / viewportRatio 两个常量，生成与渲染两侧共用。渲染组件在 ui-shared",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./view": "./src/view/slide.jsx",
-    "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
   "files": [
     "src/",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "README.md"
   ],
-  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/classroom-renderer"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
-    "client": {
-      "platform": "web",
-      "external": [
-        "react",
-        "react/jsx-runtime"
-      ],
-      "bundlesDependencies": true
-    },
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
   },
-  "dependencies": {
-    "katex": "0.16.38"
-  },
-  "peerDependencies": {
-    "react": ">=18",
-    "react-dom": ">=18"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
-  },
-  "license": "GPL-3.0-or-later"
+  "sideEffects": false
 }

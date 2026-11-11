@@ -1,9 +1,8 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-notes",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "智云 Pro 节笔记：Markdown 笔记 + zy://section / zy-asset 内链解析（零 UI、零落盘，持久化由集成层注入 store）",
+  "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
@@ -12,13 +11,24 @@
     "./errors": "./src/errors.js",
     "./package.json": "./package.json"
   },
-  "dependencies": {
-    "@lybx-leyw/dsh-zju-core-knowledge": "0.1.0"
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "fixtures/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/notes"
   },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
   },
-  "license": "GPL-3.0-or-later"
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-knowledge": "0.1.0"
+  }
 }

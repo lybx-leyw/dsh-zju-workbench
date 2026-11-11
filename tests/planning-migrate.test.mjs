@@ -21,8 +21,8 @@ import path from 'node:path';
 
 import {
   LocalStore, entryPrefix, legacyEntryPrefix,
-} from '../packages/client/page-planning/src/index.js';
-import { PlanStore, pickPending } from '../packages/client/page-planning/src/plans.js';
+} from '../packages/core/planning/src/index.js';
+import { PlanStore, pickPending } from '../packages/core/planning/src/plans.js';
 
 /** 造一个内存版 PlanStore（迁移只看键，不必真落盘到别处）。 */
 function memoryStore(initial) {

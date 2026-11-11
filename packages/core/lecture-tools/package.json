@@ -1,9 +1,8 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-lecture-tools",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "智云 Pro 出题专用工具集：讲义检索（rag）、大纲/清单（kb_files）、按知识点读取原文（read_source）、历史题查询（question_bank）。工具 description 与 parameters 逐字取自上游 DeepTutor，纯 JS、零第三方依赖、只读内存里的讲义",
+  "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
@@ -18,6 +17,15 @@
     "./py-repr": "./src/py-repr.js",
     "./data/upstream.json": "./src/data/upstream.json",
     "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/lecture-tools"
   },
   "license": "GPL-3.0-or-later"
 }

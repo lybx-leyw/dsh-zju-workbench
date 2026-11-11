@@ -5,7 +5,7 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-import { ClassroomSlide } from '@lybx-leyw/dsh-zju-core-classroom-renderer';
+import { ClassroomSlide } from '@lybx-leyw/dsh-zju-ui-shared';
 import { TeachingGenerate } from './teaching-generate.jsx';
 import { TeachingProgress } from './teaching-progress.jsx';
 

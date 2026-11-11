@@ -2,8 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-pages-default",
   "version": "0.1.0",
   "description": "Calibrate the dsh-pages navigation rail default width to 51px for the ZJU workbench",
-  "license": "GPL-3.0-or-later",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -11,14 +9,20 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "src",
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "src/",
+    "lib/"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
     "directory": "packages/client/pages-default"
   },
-  "publishConfig": {
-    "access": "public"
-  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -27,10 +31,7 @@
       "platform": "web"
     }
   },
-  "files": [
-    "src",
-    "lib",
-    "cordis.patch.yml",
-    "README.md"
-  ]
+  "publishConfig": {
+    "access": "public"
+  }
 }

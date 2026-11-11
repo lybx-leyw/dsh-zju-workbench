@@ -38,7 +38,7 @@
  * # 网络出口：走**共享出口**，自动分域
  *
  * 教务站是校园域（`zdbk.zju.edu.cn`），请求经 `sharedFetch(ctx)` 借
- * `@lybx-leyw/dsh-zju-source-campus` 提供的 `zhiyunEgress` 服务：
+ * `@lybx-leyw/dsh-zju-source-http` 提供的 `zhiyunEgress` 服务：
  *
  *   - 境内直连（**绕开宿主为 LLM 配的全局代理** —— 浙大站点经代理基本必失败）；
  *   - 校内直连、校外自动绕 WebVPN；
@@ -54,10 +54,12 @@ import { createHash } from 'node:crypto';
 import { Transport, SessionStore, sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
 import { readCard } from '@lybx-leyw/dsh-zju-source-login';
 
+import { createZdbkWrites } from './writes.js';
 import { ZdbkClient } from './client.js';
 import { ZdbkReader } from './reads.js';
 import { casLogin } from './cas.js';
 import { ZDBK_BASE, ZDBK_HOST, ZDBK_HOSTS, ZDBK_PATHS } from './hosts.js';
+import { ZdbkError, fault } from './errors.js';
 
 export const name = 'zhiyun-zdbk';
 
@@ -70,27 +72,63 @@ export const ROUTE_PATH = '/api/zhiyun-zdbk';
 export { ZdbkClient } from './client.js';
 export { ZdbkReader } from './reads.js';
 export {
-  ZDBK_HOST, ZDBK_BASE, ZDBK_HOSTS, ZDBK_PATHS, ZDBK_SERVICE, ZDBK_CAS_ENTRY, CAS_HOST,
+  ZDBK_HOST, ZDBK_BASE, ZDBK_HOSTS, ZDBK_PATHS, ZDBK_MODULES, ZDBK_PLAN_PATHS,
+  ZDBK_SELECTION_PATHS, ZDBK_SERVICE, ZDBK_CAS_ENTRY, CAS_HOST, planPdfUrl,
 } from './hosts.js';
 export {
   TERMS, PERIOD_TIMES, checkAcademicYear, courseCodeOfKey, currentTerm, gpaOf, parseExamTime,
   parseExams, parseGrade, parseSession, semesterOfCourseKey, semesterOfTerm, termCode,
 } from './parse.js';
+export { PLAN_PAGE_SIZE, parsePlan, splitCourses } from './plan.js';
+export {
+  SELECTION_SEARCH_FIELDS, SELECTION_SEARCH_OPERATORS, assertSelectionTerm, courseView,
+  decodeEntities, flatten, ownedView, parseCapacity, parseMyPlan, parseSelectionContext,
+  parseSelectionInputs, parseSelectionRow, preferenceGroup, sectionView, selectionPageForm,
+  selectionSearchForm, selectionState,
+} from './selection.js';
 export {
   authUrlGuard, casForm, casLogin, describeAuthFailure, encryptCasPassword, hasCasForm,
 } from './cas.js';
 
 /**
+ * 本包的统一错误形状。
+ *
+ * 定义在 `src/errors.js`（读取层也要抛它，反向 import `index.js` 会成环）。
+ * 这里原样再导出一次：对外的 `ZdbkError` / `fault` 身份不变。
+ */
+export { ZdbkError, fault };
+
+/**
  * 对外暴露的数据方法（`zdbk.<key>` → 读取器上的同名方法）。
  *
  * ⚠️ **必须是一张写死的表**，不能从读取器原型上现取。这条路由是给同源页面用的，
- * 原型上还有 `constructor` / `rows` / `items`，现取就等于让调用方能拨动内部对象
- * （omni 的测试里专门钉过这一条）。
+ * 原型上还有 `constructor` / `rows` / `items` / `selectionPages`，现取就等于让调用方能拨动
+ * 内部对象（omni 的测试里专门钉过这一条）。
  *
  * 插入顺序即 `describe()` 里列举的顺序 —— 用数组而不是 Set，
  * 是为了让「暴露面」这件事在自描述里也是稳定的。
+ *
+ * # 17 条上游 provides 在这一张表里的位置
+ *
+ * | 上游 | 本表 | 说明 |
+ * | --- | --- | --- |
+ * | `zdbk timetable/exams/grades` | `timetable` / `exams` / `grades` | 已有 |
+ * | `zdbk plan view` | `planView` | 本次新增 |
+ * | `zdbk plan list` | `planList` | 本次新增 |
+ * | `zdbk selection context/courses/search/sections/selected/credits` | 同名 camelCase | 本次新增 |
+ * | `zdbk selection select/reorder/drop` | **不在这张表里** | 写操作，归 `packages/tool/campus-write` |
+ * | `zdbk session login/status/logout` | 服务面 `login` / `status` / `logout` | 已有（见下面的服务） |
+ *
+ * ⚠️ 方法名与路由 `action` 名必须**同一份**（`READ_METHODS` 只有一个来源），
+ * 这里曾经出过错：表里叫 `selectionContext`、文档里写 `selection.context`，
+ * 于是「文档能用、代码报 INVALID_METHOD」。
  */
-const READ_METHODS = ['grades', 'gpaSummary', 'exams', 'timetable'];
+const READ_METHODS = [
+  'grades', 'gpaSummary', 'exams', 'timetable',
+  'planList', 'planView',
+  'selectionContext', 'selectionCourses', 'selectionSearch',
+  'selectionSections', 'selectionSelected', 'selectionCredits',
+];
 
 /** 每个方法接受哪些参数（只做说明，不参与校验）。 */
 const ARGS_OF = {
@@ -98,25 +136,17 @@ const ARGS_OF = {
   gpaSummary: {},
   exams: { academic_year: '2025-2026', semester: 1, upcoming_only: false },
   timetable: { academic_year: '2025-2026', term: '秋' },
+  planList: { year: '2025', college: '计算机', major: '软件工程' },
+  planView: { year: '2025', major: '软件工程' },
+  selectionContext: {},
+  selectionCourses: { category: 'xk_1', name: '通识核心课程' },
+  selectionSearch: { keyword: '高等数学', field: 'kcmc', only_available: false },
+  selectionSections: {
+    course: 'CS1001G', pool: '(2025-2026-1)-CS1001G-0012345-1', category: 'xk_1',
+  },
+  selectionSelected: { with_credits: true },
+  selectionCredits: {},
 };
-
-/**
- * 本包的统一错误形状。
- *
- * 与 omni 的 `ToolError` 不同：这里只有 code + message，不带层层嵌套的原始响应。
- * 错误信息是给用户看的，不是给日志看的。（与 campus 的 `CampusError` 同一口径。）
- */
-export class ZdbkError extends Error {
-  constructor(code, message, details = {}) {
-    super(message);
-    this.name = 'ZdbkError';
-    this.code = code;
-    this.details = details;
-  }
-}
-
-/** 造一个 ZdbkError。 */
-export const fault = (code, message, details) => new ZdbkError(code, message, details);
 
 /**
  * 把错误收成 `{ code, message }`。
@@ -155,7 +185,7 @@ export async function apply(ctx, config = {}) {
    *
    * `config.fetch` 是测试注入口 —— 单测注入假 fetch 时不该真的发网络请求。
    *
-   * 生产路径走**共享出口**（`zhiyunEgress`，由 `@lybx-leyw/dsh-zju-source-campus` 提供）：
+   * 生产路径走**共享出口**（`zhiyunEgress`，由 `@lybx-leyw/dsh-zju-source-http` 提供）：
    * 教务站是校园域，自动出口会在校内直连、在校外绕 WebVPN，并且**绕开宿主为
    * LLM 配的全局代理**（浙大站点经那个代理基本必失败）。
    *
@@ -317,6 +347,28 @@ export async function apply(ctx, config = {}) {
   const readerOf = (api) => new ZdbkReader(api, config.now ?? (() => new Date()));
 
   /**
+   * 写操作集合（Prepare 与 Execute 共用同一份）。
+   *
+   * # 为什么不能每次新建 reader
+   *
+   * 写会话把 Prepare 算好的表单存在 reader 的闭包里，Execute 要取同一份。
+   * 若两个方法各调一次 `readerOf()`，Execute 会拿到空会话并报 `NEED_PREPARE` ——
+   * 看起来像「用户没批准」，实际是接线错了。
+   *
+   * 缓存键是 `api` 实例：换账号 / 会话重置后重新建，不会把旧会话带过去。
+   */
+  let writesCache = null;
+  const writes = async () => {
+    const api = new ZdbkClient(await transport(), {
+      ...(config.retryDelayMs !== undefined ? { retryDelayMs: config.retryDelayMs } : {}),
+    });
+    if (!writesCache || writesCache.api !== api) {
+      writesCache = { api, list: createZdbkWrites(readerOf(api)) };
+    }
+    return writesCache.list;
+  };
+
+  /**
    * 一次「登录 + 真读一次」的登录验证。
    *
    * 为什么不靠 CAS 的状态码：CAS 登成功不等于 `/jwglxt` 认你（回调可能没走完）。
@@ -350,7 +402,7 @@ export async function apply(ctx, config = {}) {
     label: '教务系统',
     dataDir,
     methods: READ_METHODS.map((key) => ({ method: `zdbk.${key}`, args: ARGS_OF[key] })),
-    note: '教务数据（成绩/GPA/考试/课表）。凭据与学在浙大共用一份「浙大一卡通」；会话保存在本机。',
+    note: '教务数据（成绩/GPA/考试/课表/培养方案/选课查询）。只读；选课的选/退/排序是写操作，归 packages/tool/campus-write。凭据与学在浙大共用一份「浙大一卡通」；会话保存在本机。',
   });
 
   /**
@@ -422,21 +474,117 @@ export async function apply(ctx, config = {}) {
 
   /**
    * 服务面：给宿主侧代码（别的插件、脚本）绕过 HTTP 层直接用。
+   *
+   * # `session status` / `session logout` 的落点
+   *
+   * 上游把登录态做成三条 `zdbk session …` provides。本包对应的是下面三样：
+   *
+   *   - `login()` —— 真登一次并读一次业务接口（`verify`）；
+   *   - `status()` —— **不联网**，只看磁盘上那份会话；
+   *   - `logout()` —— 清掉本地会话文件。
+   *
+   * 它们**不在 `READ_METHODS` 里**，因为那张表走的是「每次调用都读一次业务数据」
+   * 那条链（`readWithRetry` + 新建客户端）。登录态没有业务数据可读，硬塞进去
+   * 会让「查登录状态」触发一次 CAS 登录 —— 那正好是这条接口要避免的事。
    */
   const removeService = ctx.provide('zhiyunZdbk', {
     routePath: ROUTE_PATH,
     platform: 'zdbk',
     label: '教务系统',
+    // 本包含写方法（选课 / 退课 / 调整志愿顺序），如实标 false。
+    readOnly: false,
+    methods: READ_METHODS.map((key) => `zdbk.${key}`),
+    /** 写方法名（成对出现），与只读 `methods` 分开列。 */
+    writeMethods: ['zdbk.selectCoursePrepare', 'zdbk.selectCourseExecute',
+      'zdbk.dropCoursePrepare', 'zdbk.dropCourseExecute',
+      'zdbk.reorderCoursePrepare', 'zdbk.reorderCourseExecute'],
     describe,
     invoke,
+    /* ── 上游 5 + 6 条只读 provides ── */
     grades: (filter = {}) => invoke('zdbk.grades', filter),
     gpaSummary: () => invoke('zdbk.gpaSummary'),
     exams: (filter = {}) => invoke('zdbk.exams', filter),
     timetable: (args = {}) => invoke('zdbk.timetable', args),
+    planList: (options = {}) => invoke('zdbk.planList', options),
+    planView: (options = {}) => invoke('zdbk.planView', options),
+    selectionContext: () => invoke('zdbk.selectionContext'),
+    selectionCourses: (options = {}) => invoke('zdbk.selectionCourses', options),
+    selectionSearch: (options = {}) => invoke('zdbk.selectionSearch', options),
+    selectionSections: (options = {}) => invoke('zdbk.selectionSections', options),
+    selectionSelected: (options = {}) => invoke('zdbk.selectionSelected', options),
+    selectionCredits: () => invoke('zdbk.selectionCredits'),
+
+    /**
+     * 写操作的两个方法。
+     *
+     * `prepare` 算参数与说明，`execute` 才发请求。**审批不在这里** ——
+     * 那是 `packages/tool/campus-write` 的事。
+     *
+     * 与服务面其它方法一样经 `invoke` 风格的惰性取服务：`reader` 在登录后才有，
+     * 而写会话要挂在**同一个** reader 上（Prepare 存的参数 Execute 要用）。
+     */
+    selectCoursePrepare: async (input) => (await writes()).selectCourse.prepare(input),
+    selectCourseExecute: async (signal) => (await writes()).selectCourse.execute(signal),
+    dropCoursePrepare: async (input) => (await writes()).dropCourse.prepare(input),
+    dropCourseExecute: async (signal) => (await writes()).dropCourse.execute(signal),
+    reorderCoursePrepare: async (input) => (await writes()).reorderCourse.prepare(input),
+    reorderCourseExecute: async (signal) => (await writes()).reorderCourse.execute(signal),
+
+    /* ── 会话（对应上游 zdbk session login / status / logout） ── */
     /** 会话是否看起来还在（只看 cookie，不发请求、不登录）。 */
     hasSession,
-    /** 强制走一次完整登录 + 业务验证。 */
-    login: verify,
+    /**
+     * 登录态快照（**不联网**）。
+     *
+     * 与 `hasSession()` 的差别：那个只回答「jar 里有没有 JSESSIONID」，
+     * 这个还带上账号与会话文件位置 —— 页面上的「连接状态」用它更好，因为它能
+     * 区分「从没登录过」和「登录过、但凭据被清掉了」。
+     *
+     * ⚠️ **不许为它发请求**。`shared Source http` 的 `SessionStore` 没有 `status()`，
+     * 过期判断要读文件时间 —— 那件事由 `hasSession()`（读 jar）+ 文件是否存在回答。
+     *
+     * @returns {Promise<object>} 会话快照。
+     */
+    status: async () => {
+      const present = await hasSession();
+      const account = await accountOf().catch(() => null);
+      return {
+        logged_in: present,
+        account_known: Boolean(account),
+        account: account?.username ?? null,
+        session_file: session.file ?? null,
+        using_cached_session: present,
+        note: '只看本机会话文件与 cookie，不联网。logged_in=false 时下一次读取会自动走一次 CAS 登录。',
+      };
+    },
+    /** 强制走一次完整登录 + 业务验证（对应上游 `zdbk session login`）。 */
+    login: async (options = {}) => {
+      const force = options.fresh !== false;
+      if (force) await session.clear().catch(() => {});
+      const ok = await verify();
+      return { logged_in: ok, forced: force };
+    },
+    /**
+     * 清掉本地会话（对应上游 `zdbk session logout`）。
+     *
+     * **不碰凭据**：密码在「设置 → 浙大一卡通」，这里只是丢掉磁盘上的会话，
+     * 下次调用会重新走 CAS。
+     *
+     * ⚠️ 必须 `persist: true`（立即落盘）。`SessionStore.clear()` 默认是**延迟**
+     * 落盘的（为了登录前那次清空不必白等一次 DPAPI 子进程）；登出若也跟着延迟，
+     * 进程恰好退出时磁盘上的旧会话就会**复活** —— 那是安全问题，不是性能问题。
+     *
+     * @returns {Promise<{cleared: boolean}>} 清完的结论。
+     */
+    logout: async () => {
+      try {
+        await session.clear({ persist: true });
+      } catch (error) {
+        throw fault('LOGOUT_FAILED', `清除本地教务会话失败：${String(error?.message ?? error)}`);
+      }
+      loadTask = undefined;
+      return { cleared: true };
+    },
     /** 建一个读取器（调用方自己拿去用，不再经过路由）。惰性 —— 取它不会触发登录。 */
     reader: async (options = {}) => readerOf(new ZdbkClient(await transport(), { ...options, signal: config.signal })),
   });

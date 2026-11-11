@@ -24,11 +24,20 @@ fs.writeFileSync(stub, [
   "});",
 ].join('\n'));
 
+// 学习页**不再 import 题库页**：它只从 ui-shared 的契约表取组件。
+// 这里替身 ui-shared，让 `usePublishedComponent` 返回上面那个可观测的桩 ——
+// 断言的事没变（传了哪些 props、有没有 `.zs-qz` 祖先），但不再跨页 import。
+const sharedStub = path.join(dir, 'ui-shared.mjs');
+fs.writeFileSync(sharedStub, "export { usePublishedComponent } from './published.mjs';\n");
+fs.writeFileSync(path.join(dir, 'published.mjs'), [
+  `import { GenerationModels } from ${JSON.stringify(stub)};`,
+  "export const usePublishedComponent = (name) => name === 'quiz.generationModels' ? GenerationModels : undefined;",
+].join('\n'));
 const esbuild = await import('esbuild');
 await esbuild.build({
   entryPoints: [path.join(ROOT, 'packages/client/page-study/src/teaching-generate.jsx')],
   bundle: true, outfile: out, format: 'esm', platform: 'node', external: ['react', 'react-dom'],
-  alias: { 'dsh-zhiyun-page-quiz': stub },
+  alias: { '@lybx-leyw/dsh-zju-ui-shared': sharedStub },
   jsx: 'automatic', logLevel: 'silent',
 });
 const React = (await import('react')).default;

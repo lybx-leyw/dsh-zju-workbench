@@ -1,0 +1,32 @@
+# 统一的检出策略：仓库内所有文本文件一律以 LF 检出。
+#
+# 为什么必须有这一行：Windows 上 `core.autocrlf=true`，git 会把 LF 的 blob
+# checkout 成 CRLF；仓库里却有若干处**对文件内容取 sha256** 的完整性校验
+# （最典型的是 `packages/core/quiz/src/engines/versions.json` 的 `promotedSha256`）。
+# 那些 digest 是在某个具体的磁盘字节形态上测的，于是同一份代码在不同机器上
+# 算出不同的哈希 —— 表现为「测试只在 Windows 上红，Linux 上绿」。
+#
+# 实测过更糟的一点：`versions.json` 里 14 条 digest **混用了两种口径**
+# （8 条按 CRLF、6 条按 LF）。所以「把检出改成 LF」会修好 6 条、弄坏另外 8 条 ——
+# 光靠 `.gitattributes` 不够，还必须把 digest 重新按统一口径测量一遍。
+# 这件事已经做了：现在 14 条全部是 LF 口径，与本文件一致。
+#
+# 改这里的规则前先想清楚：任何依赖「文件字节」的校验都会跟着变。
+* text=auto eol=lf
+
+# 二进制资源不走文本归一化（否则 git 会试图改写换行、破坏文件）。
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.zip binary
+*.docx binary
+*.pptx binary
+*.xlsx binary

@@ -1,0 +1,29 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-tyys",
+  "version": "0.1.0",
+  "description": "浙大体艺（场馆平台与体艺 App）数据源：场馆目录、某日空场、预约须知与放号时刻、本人场馆订单、体育课考勤、App 会话状态。只读，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["README.md", "src/", "cordis.patch.yml"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/tyys"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "capability": {
+      "tier": 1,
+      "auth": "cas",
+      "network": "public",
+      "writes": false,
+      "requires": ["@lybx-leyw/dsh-zju-source-http"]
+    }
+  },
+  "dependencies": { "@lybx-leyw/dsh-zju-source-http": "0.1.0" }
+}

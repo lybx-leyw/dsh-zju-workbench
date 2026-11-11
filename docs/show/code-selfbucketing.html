@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>代码自分类 · 函数打标 → 文件分桶 → 原文存档</title>
+<style>
+:root{
+  --paper:#f5f2e9;--panel:#fcfaf4;--ink:#252d2a;--muted:#737970;--line:#dcded2;
+  --green:#35705a;--green-l:#e6eee3;--orange:#ae542f;--orange-l:#f5e7da;
+  --blue:#426a83;--blue-l:#e7edf0;--violet:#6a5a83;--violet-l:#ece7f0;
+  --teal:#2f6b6b;--teal-l:#e2eeee;--gray:#83887e;--gray-l:#ebeae1;
+  --sans:"Microsoft YaHei UI","PingFang SC","Segoe UI",sans-serif;
+  --serif:"Source Han Serif SC","Songti SC","STSong",Georgia,serif;
+  --mono:"Cascadia Code",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.65 var(--sans)}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
+button:disabled{cursor:default;opacity:.4}
+button:focus-visible,input:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+::selection{background:#cddfc9}
+
+.page{max-width:1560px;margin:auto;padding:26px 36px 34px}
+
+.eyebrow{display:flex;align-items:center;gap:13px;color:var(--green);font:11px var(--mono);letter-spacing:.13em}
+.eyebrow .mark{display:inline-grid;place-items:center;width:26px;height:26px;background:var(--ink);color:var(--paper);font-size:12px;letter-spacing:0}
+.eyebrow .rule{height:1px;flex:1;background:var(--line)}
+.badge{font:11px var(--sans);letter-spacing:.03em;border:1px solid var(--line);padding:3px 9px;border-radius:3px;color:var(--muted)}
+
+header{margin:23px 0 0}header .top{display:flex;align-items:flex-end;justify-content:space-between;gap:28px}
+h1{font:normal clamp(25px,2.9vw,38px)/1.35 var(--serif);letter-spacing:.015em;margin:0}
+h1 em{color:var(--green);font-style:normal}
+.intro{margin:9px 0 0;color:var(--muted);font-size:13px}
+.version{flex-shrink:0;text-align:right;font:11px/1.9 var(--mono);color:var(--muted)}
+.version b{font-weight:400;color:var(--ink)}
+
+.controls{display:flex;gap:11px;align-items:center;margin-top:16px;padding-top:13px;border-top:1px solid var(--line)}
+.play-btn{border:1px solid var(--green);background:var(--green);color:#fff;height:32px;border-radius:4px;padding:0 16px;font-size:12px;min-width:84px}
+.ghost-btn{border:1px solid var(--line);background:var(--panel);height:32px;border-radius:4px;padding:0 12px;font-size:12px}
+.scrub-wrap{flex:1;display:flex;align-items:center;gap:11px}
+.scrub-wrap input{width:100%;accent-color:var(--green);height:4px}
+.time{font:10px var(--mono);color:var(--muted);white-space:nowrap}
+.speed{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+kbd{font:10px var(--mono);border:1px solid var(--line);border-radius:3px;padding:1px 4px;background:var(--panel)}
+
+.steps{display:grid;grid-template-columns:repeat(7,1fr);border-block:1px solid var(--line);margin:16px 0 15px}
+.step{border:0;border-right:1px solid var(--line);background:none;text-align:left;padding:11px 12px 12px;position:relative}
+.step:last-child{border-right:0}
+.step .num{display:block;font:11px var(--mono);color:var(--muted);margin-bottom:4px}
+.step .label{font-size:12px;white-space:nowrap}
+.step::after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:3px;background:transparent}
+.step.current{background:var(--green-l)}
+.step.current::after{background:var(--green)}
+.step.current .num{color:var(--green)}
+.step.past .num::after{content:" ✓";color:var(--green)}
+
+.stage-heading{display:flex;justify-content:space-between;gap:20px;align-items:baseline;margin:0 0 12px}
+.stage-copy{min-height:52px}
+.stage-copy h2{font:normal 19px/1.4 var(--serif);margin:0 0 4px}
+.stage-copy p{margin:0;font-size:12px;color:var(--muted);max-width:78ch}
+.counter{font:11px var(--mono);color:var(--muted);flex-shrink:0}
+
+.canvas{display:grid;grid-template-columns:minmax(0,1fr) 328px;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 15px;border-bottom:1px solid var(--line);font-size:11px;color:var(--muted)}
+.panel-head b{font-weight:500;color:var(--ink);font-size:12px;letter-spacing:.02em}
+.caps{font:10px var(--mono);letter-spacing:.1em;color:var(--muted)}
+
+.units{max-height:452px;overflow-y:auto;padding:4px 0 8px}
+.fgroup{padding:7px 15px 3px}
+.fgroup+.fgroup{border-top:1px dashed #e6e5da}
+.fhead{display:flex;align-items:center;gap:8px;font:11px var(--mono);color:var(--muted);padding:3px 0 5px}
+.fhead .fname{color:var(--ink);font-size:11.5px}
+.fhead .fcount{color:var(--muted)}
+.fbadge{margin-left:auto;font:10px var(--sans);padding:1px 7px;border-radius:3px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.fbadge.mixed{color:var(--orange);border-color:#e0c4b0;background:var(--orange-l)}
+.fbadge.done{color:var(--green);border-color:#c2d4c4;background:var(--green-l)}
+
+.u{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;padding:3px 7px;border-radius:3px;width:100%;text-align:left}
+.u:hover{background:#f0efe5}
+.u.sel{background:var(--green-l);box-shadow:inset 2px 0 0 var(--green)}
+.u .uname{font:11.5px/1.6 var(--mono);color:var(--ink);overflow-wrap:anywhere}
+.u .uname .kind{color:var(--muted);font-size:10px}
+.u.hidden{display:none}
+
+.chip{font:10px/1.5 var(--sans);padding:1px 6px;border-radius:3px;white-space:nowrap;border:1px solid transparent}
+.chip.ui{background:var(--blue-l);color:var(--blue);border-color:#c4d2da}
+.chip.core{background:var(--green-l);color:var(--green);border-color:#c2d4c4}
+.chip.ds{background:var(--orange-l);color:var(--orange);border-color:#e0c4b0}
+.chip.tool{background:var(--violet-l);color:var(--violet);border-color:#cfc6da}
+.chip.preset{background:var(--teal-l);color:var(--teal);border-color:#bcd4d4}
+.chip.skill{background:#f0e9f3;color:#7a4a86;border-color:#dbcbdf}
+.chip.side{background:var(--gray-l);color:var(--gray);border-color:#d5d4c8}
+.chip.mixed{background:#fff;color:var(--orange);border:1px dashed #cf9f80}
+.chip.pending{background:transparent;color:#b6bab1;border:1px dashed var(--line)}
+.chip.lowconf{position:relative}
+.chip.lowconf::after{content:"·";position:absolute;right:-5px;top:-4px;color:var(--orange)}
+
+.side{border-left:1px solid var(--line);background:#f8f7ef;display:flex;flex-direction:column}
+.card{border-bottom:1px solid var(--line);padding:11px 14px 12px}
+.card:last-child{border-bottom:0}
+.card h3{font:500 11px var(--sans);letter-spacing:.04em;color:var(--muted);margin:0 0 7px}
+.card .big{font:normal 16px/1.4 var(--serif);margin:0 0 3px}
+.pathline{font:10px/1.6 var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:2px 9px;font-size:11px;margin-top:6px}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0}
+.note{font-size:11px;color:var(--muted);line-height:1.75;margin:6px 0 0}
+.note b{font-weight:500;color:var(--ink)}
+.alt{border-left:2px solid #d9c3b2;background:#fbf6f0;padding:5px 8px;margin-top:6px;font-size:10.5px;line-height:1.7;color:#6d5b4e}
+.alt b{font-weight:500;color:var(--orange)}
+
+.vocab{display:flex;flex-direction:column;gap:3px}
+.vrow{display:grid;grid-template-columns:auto 1fr auto;gap:7px;align-items:center;font-size:11px}
+.vrow .bar{height:3px;background:#e4e3d8;border-radius:2px;overflow:hidden}
+.vrow .bar i{display:block;height:100%;width:0;transition:width .35s}
+.vrow .n{font:10px var(--mono);color:var(--muted);min-width:16px;text-align:right}
+
+.lower{display:grid;grid-template-columns:minmax(0,1fr) 328px;gap:14px;margin-top:14px}
+.buckets{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.bgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;padding:12px 14px 14px}
+.bk{border:1px solid var(--line);border-radius:6px;padding:8px 9px 9px;background:#faf9f2;min-height:104px;display:flex;flex-direction:column;transition:border-color .3s,background .3s}
+.bk .bt{display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:2px}
+.bk .bt b{font-weight:500}
+.bk .br{font-size:9.5px;color:var(--muted);line-height:1.5;margin:0 0 6px;min-height:28px}
+.bk .files{display:flex;flex-direction:column;gap:3px;margin-top:auto}
+.bk .fchip{font:10px/1.5 var(--mono);padding:2px 6px;border-radius:3px;background:#fff;border:1px solid var(--line);color:#4f564e;opacity:0;transform:translateY(5px);transition:opacity .32s,transform .32s;overflow-wrap:anywhere}
+.bk .fchip.in{opacity:1;transform:none}
+.bk .empty{font-size:9.5px;color:#b8bcb2;font-style:italic}
+.bk.hot{border-color:#c2d4c4;background:#f4f8f2}
+.bk.alert{border-color:#e0c4b0;background:#fdf7f2}
+.bk.sidebk{background:#f4f3ec}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+
+.ledger{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lbody{padding:10px 14px 12px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:3px 10px;font-size:11px}
+.kv .k{color:var(--muted)}
+.kv .v{font:11px var(--mono)}
+.kv .v.ok{color:var(--green)}
+.kv .v.warn{color:var(--orange)}
+.kv .v.off{color:#b6bab1}
+.sep{height:1px;background:var(--line);margin:9px 0}
+
+.issues{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.issue{display:grid;grid-template-columns:auto 1fr;gap:7px;font-size:10.5px;line-height:1.65;padding:5px 7px;border-radius:4px;background:#fdf7f2;border-left:2px solid var(--orange)}
+.issue.ok{background:#f4f8f2;border-left-color:var(--green);color:#4c5c4e}
+.issue .tag{font:9px var(--mono);color:var(--orange);padding-top:1px}
+.issue.ok .tag{color:var(--green)}
+
+.report{margin-top:14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden;display:none}
+.report.on{display:block}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e8e7dd}
+th{font:500 10px var(--sans);letter-spacing:.04em;color:var(--muted);background:#f6f5ec}
+td.num{font:11px var(--mono);text-align:right}
+tr:last-child td{border-bottom:0}
+.tot{background:#f8f7ef;font-weight:500}
+
+.verdict{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vbox{border:1px solid var(--line);border-radius:7px;padding:11px 13px;background:#faf9f2}
+.vbox.warn{background:#fdf7f2;border-color:#e8d3c3}
+.vbox h4{font:500 11px var(--sans);margin:0 0 5px;color:var(--muted);letter-spacing:.04em}
+.vbox p{margin:0;font-size:11.5px;line-height:1.8}
+.vbox b{font-weight:500;color:var(--orange)}
+
+.principles{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.principle .n{font:10px var(--mono);color:var(--orange);margin-right:7px}
+.principle b{font-size:11px;font-weight:500}
+.principle p{font-size:11px;color:var(--muted);line-height:1.8;margin:5px 0 0}
+
+footer{display:flex;justify-content:space-between;gap:20px;font-size:10px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:9px}
+
+@media(max-width:1140px){
+  .canvas,.lower{grid-template-columns:1fr}
+  .side{border-left:0;border-top:1px solid var(--line)}
+  .bgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps{grid-template-columns:repeat(7,minmax(96px,1fr));overflow-x:auto}
+  .principles{grid-template-columns:1fr}
+  .verdict{grid-template-columns:1fr}
+  .version{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">
+    <span class="mark" aria-hidden="true">B</span>
+    <span>SELF-BUCKETING / DESIGN SPEC</span>
+    <span class="rule"></span>
+    <span class="badge">设计示意 · 未实现 · 计数为演示</span>
+  </div>
+
+  <header>
+    <div class="top">
+      <div>
+        <h1>函数先打标，文件再分桶 <em>/ 只归类，不改写，原文另存</em></h1>
+        <p class="intro">每个函数拿到一个闭词表标签 → 文件按主导标签整文件归桶 → 原始代码原样留档。这是一次<b>分类</b>，不是一次<b>重构</b>。</p>
+      </div>
+      <div class="version">
+        <b>R1 / MARK-THEN-BUCKET</b><br>
+        样例取自 <code>packages/core/parser/src</code><br>
+        标签为演示值，不代表真实代码意图<br>
+        另含 3 条<b>虚构路径</b>，专门演示 tool / 支线 两桶
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="play-btn" id="btnPlay">播放</button>
+      <button class="ghost-btn" id="btnReset">重置</button>
+      <div class="scrub-wrap">
+        <input type="range" id="scrub" min="0" max="10" value="0" aria-label="进度">
+        <span class="time" id="timeTxt">0 / 0</span>
+      </div>
+      <div class="speed">
+        速度 <button class="ghost-btn" id="btnSpeed" style="min-width:40px">1×</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="steps" id="steps" aria-label="阶段">
+    <button class="step" data-s="0"><span class="num">01</span><span class="label">扫描 · 采单位</span></button>
+    <button class="step" data-s="1"><span class="num">02</span><span class="label">打标 · 闭词表</span></button>
+    <button class="step" data-s="2"><span class="num">03</span><span class="label">校验 · 恰好一次</span></button>
+    <button class="step" data-s="3"><span class="num">04</span><span class="label">聚合 · 主导标签</span></button>
+    <button class="step" data-s="4"><span class="num">05</span><span class="label">分桶 · 只搬不改</span></button>
+    <button class="step" data-s="5"><span class="num">06</span><span class="label">存档 · 原文不动</span></button>
+    <button class="step" data-s="6"><span class="num">07</span><span class="label">报告 · 缺陷外显</span></button>
+  </nav>
+
+  <div class="stage-heading">
+    <div class="stage-copy">
+      <h2 id="stageTitle">01 · 扫描：把文件拆成可判定的单位</h2>
+      <p id="stageDesc">单位不是「文件」，也不是「行」，是<b>函数</b>。一个文件是单位容器，它本身没有标签 —— 标签只能来自它里面那些函数。</p>
+    </div>
+    <span class="counter" id="counter">单位 0 / 0</span>
+  </div>
+
+  <div class="canvas">
+    <div>
+      <div class="panel-head">
+        <b>单位清单 · 按文件分组</b>
+        <span class="caps" id="unitsHint">扫描中…</span>
+      </div>
+      <div class="units" id="units"></div>
+    </div>
+
+    <aside class="side">
+      <div class="card" id="cardUnit">
+        <h3>选中单位</h3>
+        <p class="big" style="color:#b6bab1">↓ 点左侧任一函数</p>
+        <p class="note">选中后会显示：标签、依据、置信度，以及<b>它为什么不是那个更顺手的桶</b>。</p>
+      </div>
+      <div class="card">
+        <h3>词表计数 · 闭集</h3>
+        <div class="vocab" id="vocab"></div>
+        <p class="note">新增标签必须显式声明（<code>新增:类型名</code>）。静默新增会让后面的所有统计失真。</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="lower">
+    <section class="buckets">
+      <div class="panel-head">
+        <b>桶 · 整文件归位</b>
+        <span class="caps" id="bucketHint">等待聚合</span>
+      </div>
+      <div class="bgrid" id="bgrid"></div>
+    </section>
+
+    <aside class="ledger">
+      <div class="panel-head"><b>记账与校验</b></div>
+      <div class="lbody">
+        <div class="kv">
+          <span class="k">单位</span><span class="v" id="kUnits">0</span>
+          <span class="k">已打标</span><span class="v" id="kMarked">0</span>
+          <span class="k">文件</span><span class="v" id="kFiles">0</span>
+          <span class="k">有主导标签</span><span class="v" id="kDom">0</span>
+          <span class="k">冲突（无主导）</span><span class="v" id="kMix">0</span>
+          <span class="k">少数派外显</span><span class="v" id="kMinor">0</span>
+          <span class="k">空桶</span><span class="v" id="kEmpty">0</span>
+        </div>
+        <div class="sep"></div>
+        <div class="issues" id="issues">
+          <div class="issue ok"><span class="tag">等待</span><span>校验在第 03 / 04 段之后才有结论。</span></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="report" id="report">
+    <div class="panel-head">
+      <b>分桶结果 · 逐桶账</b>
+      <span class="caps">覆盖率按单位算，不按文件算</span>
+    </div>
+    <table id="reportTable"></table>
+  </section>
+
+  <div class="verdict" id="verdict" style="display:none">
+    <div class="vbox">
+      <h4>这个算法给出什么</h4>
+      <p>一张<b>可 review 的分配表</b>＋一次<b>可 dry-run 的搬移计划</b>。它回答「这堆函数各自属于哪一类」，并把答案变成目录形状。</p>
+    </div>
+    <div class="vbox warn">
+      <h4>它不给出什么（边界，写死在设计里）</h4>
+      <p>整文件搬走后相对导入必然断。<b>分桶产物不是可运行仓库</b>：桶是分类视图，存档是唯一可信副本。想让它可运行，得另做一次依赖重写 —— 那是重构，不是分桶。</p>
+    </div>
+  </div>
+
+  <div class="principles">
+    <div class="principle">
+      <span class="n">01</span><b>单位下沉到函数，标签才能被证据支撑</b>
+      <p>文件级标签只能靠文件名猜；函数级标签可以靠签名、导出、@decorator、调用边去支撑。粒度错了，后面所有覆盖率都是自欺。</p>
+    </div>
+    <div class="principle">
+      <span class="n">02</span><b>一个单位恰好一个标签</b>
+      <p>允许重复就是允许含糊。互不相交是并发裁决与「覆盖率 = 1.0」同时成立的前提 —— 也是这套算法从解析器那边唯一硬搬过来的性质。</p>
+    </div>
+    <div class="principle">
+      <span class="n">03</span><b>先挂账，后判定</b>
+      <p>打标阶段只记账，不动文件。判定留到聚合阶段 —— 那时才有「这个文件整体像什么」的信息。在信息不全时拍板，等于把局部最优焊死在树上。</p>
+    </div>
+    <div class="principle">
+      <span class="n">04</span><b>无主导就进 <code>mixed</code>，不猜</b>
+      <p>主导标签不足阈值时，文件进暂存桶等人工裁决。把 40% 的文件硬塞进 55% 的桶，是这张表最早失去可信度的方式。</p>
+    </div>
+    <div class="principle">
+      <span class="n">05</span><b>少数派必须外显，不许被主导标签吞掉</b>
+      <p>一个 <code>pure-core</code> 文件里混着一个 prompts 函数，桶照样定，但那一处必须进清单。被吞掉的少数派就是未来最贵的 bug。</p>
+    </div>
+    <div class="principle">
+      <span class="n">06</span><b>原文不动，因为这是唯一的回滚点</b>
+      <p>分桶产物可以随时重算，存档不能。每个桶内文件带 <code>origin</code> 指针与 <code>contentHash</code> —— 哈希一漂，说明存档与新代码已经不同源。</p>
+    </div>
+  </div>
+
+  <footer>
+    <span>分类 ≠ 重构。桶间依赖环<b>只报告，不自动解</b>。</span>
+    <span>规格文件 · 与本仓 <code>docs/show/zhiyun-pipeline.html</code> 同一套词汇表</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════
+   词表（闭集）
+   ══════════════════════════════════════════════════════════════ */
+const LABELS = {
+  ui:    { name:'纯 UI',       color:'var(--blue)',   light:'var(--blue-l)'  },
+  core:  { name:'纯 core',     color:'var(--green)',  light:'var(--green-l)' },
+  ds:    { name:'数据源',      color:'var(--orange)', light:'var(--orange-l)'},
+  tool:  { name:'agent tool',  color:'var(--violet)', light:'var(--violet-l)'},
+  preset:{ name:'preset',      color:'var(--teal)',   light:'var(--teal-l)'  },
+  skill: { name:'skill',       color:'#7a4a86',       light:'#f0e9f3'        },
+  side:  { name:'支线',        color:'var(--gray)',   light:'var(--gray-l)'  }
+};
+const ORDER = ['ui','core','ds','tool','preset','skill','side'];
+
+const BUCKETS = [
+  { key:'ui',     name:'pure-ui',     rule:'只渲染与交互；不含取数、不含凭据' },
+  { key:'core',   name:'pure-core',   rule:'纯逻辑：不 import UI，不碰 IO' },
+  { key:'ds',     name:'data-source', rule:'取数、凭据、适配层、落盘' },
+  { key:'tool',   name:'agent-tool',  rule:'只注册工具，不注入 preset' },
+  { key:'preset', name:'preset',      rule:'装配与注入：provide / patch' },
+  { key:'skill',  name:'skill',       rule:'提示词与操作手册，无可执行逻辑' },
+  { key:'side',   name:'支线 · 待处置', rule:'死代码、脚手架、迁移 shim。不归档，进清单' },
+  { key:'mixed',  name:'mixed · 待裁决', rule:'无标签达阈值。不猜，等人看' }
+];
+
+/* ══════════════════════════════════════════════════════════════
+   样例单位（取自本仓 packages/core/parser/src；标签为演示值）
+   ══════════════════════════════════════════════════════════════ */
+const FILES = [
+
+  /* ── 真实文件：符号名逐个核对过 export 列表 ── */
+  { path:'packages/core/parser/src/index.js', units:[
+    { n:'apply', k:'fn', l:'preset', f:['di','provide'], c:0.92,
+      s:'装配 HarnessLlm / 词表 store / 缓存，ctx.provide("zhiyunParser")，返回 dispose',
+      alt:'core', why:'它不实现任何算法，只在装配。归 core 会让人以为解析逻辑在这里。' }
+  ]},
+
+  { path:'packages/core/parser/src/parser.js', units:[
+    { n:'splitUnanchored', k:'fn', l:'core', f:['切分'], c:0.95, s:'把没落到任何页的字幕按 token 与停顿切成无图段时间窗' },
+    { n:'stitch', k:'fn', l:'core', f:['缝合'], c:0.93, s:'按页序缝合相邻块，丢弃空块' },
+    { n:'blockOf', k:'internal', l:'core', f:['构造'], c:0.97, s:'构造块记录：句区间、bridge、页码、来源编号' },
+    { n:'validateInput', k:'internal', l:'core', f:['校验'], c:0.98, s:'校验每页须有 page / createdSec 与三种图片之一' },
+    { n:'LectureParser.parse', k:'method', l:'ds', f:['io','编排'], c:0.61,
+      s:'整节编排：读图、跑流水线、建树、装配产物',
+      alt:'core', why:'置信度只有 0.61，因为它既编排又直接 readFile。低置信度本身就是信号：这个文件是两件事。' },
+    { n:'LectureParser.loadVocabulary', k:'method', l:'ds', f:['落盘'], c:0.72, s:'从 store 读词表；失败退回种子并记 loadIssues' },
+    { n:'LectureParser.saveVocabulary', k:'method', l:'ds', f:['落盘'], c:0.96, s:'只在真有新增标签时写盘一次' },
+    { n:'LectureParser.bytes', k:'method', l:'ds', f:['io'], c:0.99, s:'三段取图：bytes / imagePath / 智云 transport，50MB 上限' },
+    { n:'LectureParser.request', k:'method', l:'ds', f:['io','缓存'], c:0.90, s:'带缓存与限额的单次模型调用' },
+    { n:'LectureParser.createRun', k:'method', l:'preset', f:['装配'], c:0.70, s:'按宿主适配器建本次任务的 worker 池' },
+    { n:'LectureParser.parseClassroom', k:'method', l:'ds', f:['io','编排'], c:0.88, s:'取课件与字幕后转 parse，可 allowPartialSource' },
+    { n:'LectureParser.dispose', k:'method', l:'core', f:['生命周期'], c:0.90, s:'取消本插件所有任务' }
+  ]},
+
+  { path:'packages/core/parser/src/tree.js', units:[
+    { n:'sieveBlocks', k:'fn', l:'core', f:['筛支线'], c:0.96, s:'把主线块与支线/元信息分开；元信息判据优先于宿主判据' },
+    { n:'stashBlocks', k:'fn', l:'core', f:['挂账'], c:0.97, s:'只累加 token 与块数，永不真合并' },
+    { n:'orthogonalize', k:'fn', l:'core', f:['合并'], c:0.94, s:'只合并直接连叶的同名标题；叶集合互不相交' },
+    { n:'mergeLeaf', k:'fn', l:'core', f:['切分'], c:0.92, s:'超斩杀线就递归长叶树，最高 kMaxLeafDepth 层' },
+    { n:'zipfRanges', k:'fn', l:'core', f:['切分'], c:0.95, s:'按 Zipf 权重不均匀切块 —— 长尾是层数自然出来的原因' },
+    { n:'flattenLeaves', k:'fn', l:'core', f:['摊平'], c:0.93, s:'拆叶：小标题全废，只留最深层的叶' },
+    { n:'regroupLeaves', k:'fn', l:'core', f:['重聚'], c:0.94, s:'按斩杀线把内容段并回「一片叶 = 一个知识点」' },
+    { n:'aggregate', k:'fn', l:'core', f:['聚合'], c:0.90, s:'分级聚合，收敛到根' },
+    { n:'buildTreeFromBlocks', k:'fn', l:'core', f:['建树'], c:0.91, s:'把上面几步串成一次建树' }
+  ]},
+
+  { path:'packages/core/parser/src/pipeline.js', units:[
+    { n:'SharedQueue', k:'class', l:'core', f:['调度'], c:0.96, s:'有上限的 FIFO，支持取消与失败传播' },
+    { n:'SharedQueue.push', k:'method', l:'core', f:['背压'], c:0.97, s:'队列满就等 —— 这就是背压' },
+    { n:'SharedQueue.take', k:'method', l:'core', f:['背压'], c:0.97, s:'没有就等；关闭且空则返回 null 作收工信号' },
+    { n:'SharedQueue.abort', k:'method', l:'core', f:['收场'], c:0.95, s:'立即作废未消费项，解除所有等待者' },
+    { n:'PipelineScheduler.pick', k:'method', l:'core', f:['判定'], c:0.93, s:'一次调度决策，与演示 pick(s) 同序' },
+    { n:'PipelineScheduler.nextVision', k:'method', l:'core', f:['认领'], c:0.95, s:'当场累加 reserved 与 produced，防同 tick 重复认领' },
+    { n:'runPipeline', k:'fn', l:'core', f:['收场'], c:0.92, s:'生产/消费同队；任一侧失败即 abort 并统一抛首个真实错误' }
+  ]},
+
+  { path:'packages/core/parser/src/cache.js', units:[
+    { n:'hash', k:'fn', l:'core', f:['哈希'], c:0.97, s:'sha256；对象先 JSON 序列化，绑定缓存身份' },
+    { n:'ParserCache', k:'class', l:'ds', f:['落盘'], c:0.86, s:'缓存读写到 profile 目录' },
+    { n:'Limiter', k:'class', l:'core', f:['并发'], c:0.94, s:'并发闸：一次只放 N 个任务在飞' }
+  ]},
+
+  { path:'packages/core/parser/src/mix.js', units:[
+    { n:'assembleMixPage', k:'fn', l:'core', f:['校验'], c:0.95, s:'一次回包里同时解出句子、块区间与原子标记' },
+    { n:'markingRetryHint', k:'fn', l:'core', f:['重试'], c:0.84, s:'生成重试提示：逐条点名缺号与违规区间' },
+    { n:'mixTaggingPrompt', k:'fn', l:'skill', f:['提示词'], c:0.88,
+      s:'纯提示词文本：块标记的 JSON 形状与约束',
+      alt:'core', why:'它不含任何判定逻辑。放进 core 桶后，改提示词就不再算改「核心算法」—— 那正是最容易悄悄退化的一类改动。' }
+  ]},
+
+  { path:'packages/core/parser/src/organize.js', units:[
+    { n:'ORGANIZE_PROMPT', k:'const', l:'skill', f:['提示词'], c:0.97, s:'正式语言组织的系统提示词' },
+    { n:'collectOrganized', k:'fn', l:'core', f:['解析'], c:0.88, s:'从回包里收集可采纳正文' },
+    { n:'parseOrganized', k:'fn', l:'core', f:['解析'], c:0.90, s:'按编号解析正文；缺号保留原文并标草稿' }
+  ]},
+
+  { path:'packages/core/parser/src/prompts.js', units:[
+    { n:'faithfulRequest', k:'fn', l:'skill', f:['提示词'], c:0.93, s:'看图阶段的请求模板' },
+    { n:'mixRequest', k:'fn', l:'skill', f:['提示词'], c:0.93, s:'mix 请求模板：原字幕 + 图片转述 + 术语表' },
+    { n:'transcriptMixRequest', k:'fn', l:'skill', f:['提示词'], c:0.93, s:'无图 mix 请求模板（原子块模式）' },
+    { n:'chunkBlocks', k:'fn', l:'core', f:['切分'], c:0.95, s:'按条数与字符上限切块，供分卷请求' },
+    { n:'outlineRequest', k:'fn', l:'skill', f:['提示词'], c:0.93, s:'整节主线请求模板' }
+  ]},
+
+  { path:'packages/core/parser/src/vision.js', units:[
+    { n:'transcribeSlides', k:'fn', l:'ds', f:['io'], c:0.86, s:'一批页拼图后请求视觉模型，逐页回调 onPage' },
+    { n:'collageRequest', k:'fn', l:'skill', f:['提示词'], c:0.90, s:'拼图识别请求模板' },
+    { n:'splitCollage', k:'fn', l:'core', f:['解析'], c:0.88, s:'按原页码把拼图响应拆回单页文字、画面与术语' }
+  ]},
+
+  { path:'packages/core/parser/src/llm.js', units:[
+    { n:'HarnessLlm.resolve', k:'method', l:'ds', f:['路由'], c:0.94, s:'解析视觉 / 文本路由，视觉模型须支持 image' },
+    { n:'HarnessLlm.call', k:'method', l:'ds', f:['io'], c:0.97, s:'把 stage 与 accel 档位落成一次宿主请求' },
+    { n:'HarnessLlm.image', k:'method', l:'ds', f:['io'], c:0.96, s:'图片仅派给支持图片的模型' }
+  ]},
+
+  { path:'packages/core/parser/src/vocabulary.js', units:[
+    { n:'createJsonFileVocabularyStore', k:'fn', l:'ds', f:['落盘'], c:0.94, s:'load/save 到 profile 目录，原子写' },
+    { n:'normalizeVocabulary', k:'fn', l:'core', f:['归一'], c:0.90, s:'去重、校验形状、把坏数据转成 issue' },
+    { n:'seedVocabulary', k:'fn', l:'core', f:['常量'], c:0.95, s:'内置种子词表' }
+  ]},
+
+  /* ── 以下 3 条是**虚构路径**，只为让 tool / 支线 桶非空。
+       本仓这个包里确实没有它们，别当成真实文件。 ── */
+  { path:'packages/core/parser/tools/register-tools.js', units:[
+    { n:'registerParseTool', k:'fn', l:'tool', f:['注册'], c:0.93, s:'ctx.tools.register("parse_classroom")，自身不注入 preset' }
+  ]},
+  { path:'packages/core/parser/src/legacy/old-tagging.js', units:[
+    { n:'runLegacyTagging', k:'fn', l:'side', f:['死代码'], c:0.86,
+      s:'上一版独立 tags 阶段，已由 mix 内联标记取代',
+      alt:'core', why:'它已无调用方。归 core 会让 core 桶的「有效代码量」虚高 —— 而虚高的桶看起来最健康。' }
+  ]},
+  { path:'packages/core/parser/_scratch/bench.mjs', units:[
+    { n:'benchOnce', k:'fn', l:'side', f:['脚手架'], c:0.90, s:'一次性基准脚本，不在任何入口' }
+  ]}
+];
+
+/* ══════════════════════════════════════════════════════════════
+   步骤表
+   ══════════════════════════════════════════════════════════════ */
+const STEPS = [];
+FILES.forEach(f => STEPS.push({ kind:'scan', file:f }));
+FILES.forEach(f => STEPS.push({ kind:'label', file:f }));
+STEPS.push({ kind:'check' });
+FILES.forEach(f => STEPS.push({ kind:'aggregate', file:f }));
+STEPS.push({ kind:'bucket' });
+STEPS.push({ kind:'archive' });
+STEPS.push({ kind:'report' });
+
+const STAGE_OF = { scan:0, label:1, check:2, aggregate:3, bucket:4, archive:5, report:6 };
+const STAGE_HEAD = [
+  ['01 · 扫描：把文件拆成可判定的单位',
+   '单位不是「文件」，也不是「行」，是<b>函数</b>。文件只是容器，它自己没有标签 —— 标签只能来自里面的函数。'],
+  ['02 · 打标：一次调用给出标签、依据与置信度',
+   '标签来自闭词表，另附 facets 与一句概述。<b>低置信度不外抛，留在表上</b> —— 它正好标出「这个文件其实是两件事」。'],
+  ['03 · 校验：每个单位恰好一个标签',
+   '允许重复就是允许含糊。互不相交是「覆盖率 = 1.0」和并发裁决同时成立的前提。缺一个单位，后面所有百分比都不成立。'],
+  ['04 · 聚合：文件由多数派决定，但少数派必须外显',
+   '主导标签 ≥ 60% 才算有主导；否则进 <code>mixed</code> 等人裁决。被吞掉的少数派逐条记进清单。'],
+  ['05 · 分桶：整文件搬，不改一个字符',
+   '这是分类不是重构。搬移计划是 dry-run diff：谁从哪到哪，先看后执行。'],
+  ['06 · 存档：原文是唯一回滚点',
+   '桶内文件带 origin 指针与 contentHash。哈希一漂，说明存档与新代码已经不同源。'],
+  ['07 · 报告：缺陷外显，不假装全绿',
+   '覆盖率、冲突、少数派、空桶、桶间依赖环 —— 有五项就报五项。partial 是一等状态。']
+];
+
+const THRESHOLD = 0.6;
+
+/* ══════════════════════════════════════════════════════════════
+   聚合：文件 → 桶
+   ══════════════════════════════════════════════════════════════ */
+function tally(file){
+  const m = new Map();
+  for (const u of file.units) m.set(u.l, (m.get(u.l) || 0) + 1);
+  return m;
+}
+function decide(file){
+  const m = tally(file);
+  if (m.size === 1 && m.has('side')) return { bucket:'side', share:1, dominant:'side', minor:[] };
+  const live = new Map([...m].filter(([k]) => k !== 'side'));
+  const liveTotal = [...live.values()].reduce((a,b) => a+b, 0) || 1;
+  let best = null, bestN = -1;
+  for (const [k,n] of live) if (n > bestN) { best = k; bestN = n; }
+  const share = bestN / liveTotal;
+  /* 少数派 = 与主导标签不同的**所有**单位，支线也算 ——
+     一个 core 文件里躺着的死代码，正是最该被点名的那一类。 */
+  const minor = [...m].filter(([k]) => k !== best)
+    .map(([k,n]) => ({ label:k, count:n, units:file.units.filter(u => u.l === k).map(u => u.n) }));
+  if (share < THRESHOLD) return { bucket:'mixed', share, dominant:best, minor };
+  return { bucket:best, share, dominant:best, minor };
+}
+
+/* ══════════════════════════════════════════════════════════════
+   状态
+   ══════════════════════════════════════════════════════════════ */
+let cur = 0, playing = false, speed = 1, timer = null;
+const TOTAL_UNITS = FILES.reduce((a,f) => a + f.units.length, 0);
+
+function stateAt(i){
+  const s = { scanned:new Set(), labeled:new Set(), checked:false,
+              decided:new Set(), bucketed:false, archived:false, reported:false };
+  for (let k = 0; k <= i && k < STEPS.length; k++){
+    const st = STEPS[k];
+    if (st.kind === 'scan') s.scanned.add(st.file.path);
+    else if (st.kind === 'label') s.labeled.add(st.file.path);
+    else if (st.kind === 'check') s.checked = true;
+    else if (st.kind === 'aggregate') s.decided.add(st.file.path);
+    else if (st.kind === 'bucket') s.bucketed = true;
+    else if (st.kind === 'archive') s.archived = true;
+    else if (st.kind === 'report') s.reported = true;
+  }
+  return s;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   渲染
+   ══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let selected = null;
+
+function chipHtml(label, low){
+  const L = LABELS[label];
+  return '<span class="chip '+label+(low ? ' lowconf' : '')+'">'+L.name+'</span>';
+}
+
+function renderUnits(s, idx){
+  const host = $('units');
+  let html = '';
+  FILES.forEach((f, fi) => {
+    const scanned = s.scanned.has(f.path);
+    if (!scanned) return;
+    const labeled = s.labeled.has(f.path);
+    const d = decide(f);
+    let badge = '';
+    if (s.decided.has(f.path)){
+      /* 判定只发生在第 04 段之后：第 03 段只验覆盖，不给桶。 */
+      badge = d.bucket === 'mixed'
+        ? '<span class="fbadge mixed">无主导 · mixed</span>'
+        : '<span class="fbadge done">→ '+esc(BUCKETS.find(b => b.key === d.bucket).name)+'</span>';
+    }
+    html += '<div class="fgroup"><div class="fhead">'
+          + '<span class="fname">'+esc(f.path.split('/').pop())+'</span>'
+          + '<span class="fcount">'+f.units.length+' 单位</span>'+badge+'</div>';
+    f.units.forEach((u, ui) => {
+      const id = fi+':'+ui;
+      let right = '<span class="chip pending">未打标</span>';
+      if (labeled){
+        const low = u.c < 0.65;
+        right = chipHtml(u.l, low) + (low ? '<span style="font:9px var(--mono);color:var(--orange);margin-left:4px">'+u.c.toFixed(2)+'</span>' : '');
+      }
+      html += '<button class="u'+(selected === id ? ' sel' : '')+'" data-id="'+id+'">'
+            + '<span class="uname">'+esc(u.n)+' <span class="kind">'+u.k+'</span></span>'
+            + '<span>'+right+'</span></button>';
+    });
+    html += '</div>';
+  });
+  if (!html) html = '<p class="note" style="padding:14px 15px">扫描中…</p>';
+  host.innerHTML = html;
+}
+
+function renderInspector(){
+  const card = $('cardUnit');
+  if (!selected){ return; }
+  const [fi, ui] = selected.split(':').map(Number);
+  const f = FILES[fi], u = f.units[ui];
+  const labeled = stateAt(cur).labeled.has(f.path);
+  let html = '<h3>选中单位</h3>'
+    + '<p class="big">'+esc(u.n)+'</p>'
+    + '<div class="pathline">'+esc(f.path)+'</div>';
+  if (labeled){
+    html += '<dl class="facts">'
+      + '<dt>标签</dt><dd>'+chipHtml(u.l)+'</dd>'
+      + '<dt>置信度</dt><dd style="font-family:var(--mono)">'+u.c.toFixed(2)+'</dd>'
+      + '<dt>facets</dt><dd>'+((u.f || []).map(x => '「'+esc(x)+'」').join(' ') || '—')+'</dd>'
+      + '</dl>'
+      + '<p class="note">'+esc(u.s)+'</p>';
+    if (u.alt){
+      html += '<div class="alt"><b>为何不是 '+esc(LABELS[u.alt].name)+'：</b>'+esc(u.why)+'</div>';
+    }
+  } else {
+    html += '<p class="note">这个单位还没打标。打标在第 02 段。</p>';
+  }
+  card.innerHTML = html;
+}
+
+function renderVocab(s){
+  const count = {};
+  for (const k of ORDER) count[k] = 0;
+  let total = 0;
+  for (const f of FILES){
+    if (!s.labeled.has(f.path)) continue;
+    for (const u of f.units){ count[u.l] += 1; total += 1; }
+  }
+  $('vocab').innerHTML = ORDER.map(k => {
+    const L = LABELS[k], n = count[k];
+    const w = total ? Math.round(n / total * 100) : 0;
+    return '<div class="vrow"><span class="dot" style="background:'+L.color+'"></span>'
+      + '<span>'+L.name+'</span><span class="n">'+n+'</span></div>'
+      + '<div class="vrow"><span></span><span class="bar"><i style="background:'+L.color+';width:'+w+'%"></i></span><span></span></div>';
+  }).join('');
+}
+
+function renderBuckets(s){
+  const host = $('bgrid');
+  const groups = {};
+  for (const b of BUCKETS) groups[b.key] = [];
+  let mixedCount = 0;
+  for (const f of FILES){
+    if (!s.decided.has(f.path)) continue;
+    const d = decide(f);
+    groups[d.bucket].push({ f, d });
+    if (d.bucket === 'mixed') mixedCount++;
+  }
+  host.innerHTML = BUCKETS.map(b => {
+    const items = groups[b.key];
+    const cls = b.key === 'mixed' && items.length ? 'bk alert'
+              : b.key === 'side' ? 'bk sidebk'
+              : items.length ? 'bk hot' : 'bk';
+    const L = b.key === 'mixed' ? { color:'var(--orange)' } : LABELS[b.key];
+    const body = items.length
+      ? items.map(({f}) => '<span class="fchip'+(s.bucketed ? ' in' : '')+'">'+esc(f.path.split('/').pop())+'</span>').join('')
+      : '<span class="empty">空桶</span>';
+    return '<div class="'+cls+'">'
+      + '<div class="bt"><span class="dot" style="background:'+L.color+'"></span><b>'+esc(b.name)+'</b></div>'
+      + '<p class="br">'+esc(b.rule)+'</p>'
+      + '<div class="files">'+body+'</div></div>';
+  }).join('');
+  $('bucketHint').textContent = s.bucketed ? '已归位 · 待执行搬移' : (mixedCount ? '聚合完成' : '等待聚合');
+}
+
+function renderLedger(s){
+  let marked = 0;
+  for (const f of FILES) if (s.labeled.has(f.path)) marked += f.units.length;
+  $('kUnits').textContent = TOTAL_UNITS;
+  $('kMarked').textContent = marked;
+  $('kFiles').textContent = FILES.length;
+
+  let dom = 0, mix = 0, minor = 0, empty = 0;
+  const live = {};
+  /* 判定只在**所有**文件都聚合完之后才有意义：少一个文件的多数派就可能翻盘。 */
+  const allDecided = s.decided.size === FILES.length;
+  if (allDecided){
+    for (const f of FILES){
+      const d = decide(f);
+      if (d.bucket === 'mixed') mix++; else dom++;
+      /* mixed 文件没有主导标签，谈不上「被吞」；它自己单列在桶表里。
+         这里只统计已经归了桶、但里面有异类的那些。 */
+      if (d.bucket !== 'mixed') minor += d.minor.reduce((a, x) => a + x.count, 0);
+      if (d.bucket !== 'mixed') live[d.bucket] = (live[d.bucket] || 0) + 1;
+    }
+    for (const b of BUCKETS) if (!live[b.key] && b.key !== 'mixed') empty++;
+  }
+  $('kDom').textContent = allDecided ? dom : '—';
+  $('kMix').textContent = allDecided ? mix : '—';
+  $('kMinor').textContent = allDecided ? minor : '—';
+  $('kEmpty').textContent = allDecided ? empty : '—';
+
+  const issues = [];
+  if (!s.checked){
+    issues.push(['等待', '校验在第 03 / 04 段之后才有结论。', false]);
+  } else {
+    issues.push(['覆盖', marked + ' / ' + TOTAL_UNITS + ' 单位恰好一个标签 —— ' + (marked === TOTAL_UNITS ? '齐' : '不齐'), marked === TOTAL_UNITS]);
+    if (allDecided){
+      issues.push(['裁决', dom + ' 个文件有主导标签，' + mix + ' 个无主导进 mixed（阈值 ' + THRESHOLD + '）', true]);
+      issues.push(['少数派', '共 ' + minor + ' 个单位与其文件主导标签不同，已逐条入清单', false]);
+      const emptyNames = BUCKETS.filter(b => !live[b.key] && b.key !== 'mixed').map(b => b.name);
+      issues.push(['空桶', emptyNames.length
+        ? emptyNames.join('、') + ' 为空 —— 照实显示，不隐藏空桶'
+        : '每个桶都有成员', emptyNames.length === 0]);
+      issues.push(['环', '桶间依赖环未检查：本阶段不读 import 图，只报告不做解', false]);
+      if (s.archived) issues.push(['存档', FILES.length + ' 个文件的 contentHash 与 origin 指针已登记', true]);
+    } else {
+      issues.push(['聚合', '还有 ' + (FILES.length - s.decided.size) + ' 个文件未判定，暂不出桶统计', false]);
+    }
+  }
+  $('issues').innerHTML = issues.map(([tag, txt, ok]) =>
+    '<div class="issue'+(ok ? ' ok' : '')+'"><span class="tag">'+tag+'</span><span>'+txt+'</span></div>').join('');
+}
+
+function renderSteps(idx){
+  const stage = STAGE_OF[STEPS[Math.min(idx, STEPS.length - 1)].kind];
+  document.querySelectorAll('.step').forEach(b => {
+    const n = Number(b.dataset.s);
+    b.classList.toggle('current', n === stage);
+    b.classList.toggle('past', n < stage);
+  });
+}
+
+function renderReport(s){
+  const box = $('report'), v = $('verdict');
+  if (!s.reported){ box.classList.remove('on'); v.style.display = 'none'; return; }
+  box.classList.add('on'); v.style.display = 'grid';
+  const rows = [];
+  let totalFiles = 0, totalUnits = 0;
+  for (const b of BUCKETS){
+    const fs = FILES.filter(f => decide(f).bucket === b.key);
+    const us = fs.reduce((a,f) => a + f.units.length, 0);
+    totalFiles += fs.length; totalUnits += us;
+    rows.push('<tr><td>'+esc(b.name)+'</td><td class="num">'+fs.length+'</td>'
+      + '<td class="num">'+us+'</td><td class="num">'+(TOTAL_UNITS ? (us/TOTAL_UNITS*100).toFixed(1) : '0.0')+'%</td>'
+      + '<td style="font-size:10px;color:var(--muted)">'+(fs.length ? fs.map(f => esc(f.path.split('/').pop())).join(' · ') : '—')+'</td></tr>');
+  }
+  rows.push('<tr class="tot"><td>合计</td><td class="num">'+totalFiles+'</td><td class="num">'+totalUnits+'</td>'
+    + '<td class="num">100.0%</td><td style="font-size:10px;color:var(--muted)">覆盖率按单位算：'
+    + (totalUnits === TOTAL_UNITS ? '齐' : '缺 ' + (TOTAL_UNITS - totalUnits))
+    + ' —— ' + totalUnits + ' / ' + TOTAL_UNITS + '</td></tr>');
+
+  const minorRows = [];
+  for (const f of FILES){
+    const d = decide(f);
+    /* mixed 文件没有主导标签，谈不上「被吞」；它自己已在桶表里单列，
+       这里只收「已经归了桶、但里面有异类」的那些。 */
+    if (d.bucket === 'mixed') continue;
+    for (const m of d.minor){
+      minorRows.push('<tr><td>'+esc(f.path.split('/').pop())+'</td><td>'+esc(LABELS[m.label].name)+'</td>'
+        + '<td class="num">'+m.count+'</td><td colspan="2" style="font-size:10px">'+esc(m.units.join('、'))+'</td></tr>');
+    }
+  }
+
+  $('reportTable').innerHTML =
+    '<thead><tr><th>桶</th><th style="text-align:right">文件</th><th style="text-align:right">单位</th>'
+    + '<th style="text-align:right">占比</th><th>成员</th></tr></thead><tbody>'+rows.join('')+'</tbody>';
+  if (minorRows.length){
+    $('reportTable').innerHTML += '<tbody>'
+      + '<tr><td colspan="5" style="background:#fdf7f2;color:var(--orange);font-size:10px;letter-spacing:.04em">'
+      + '少数派清单 · 已归桶，但文件内仍有异类单位 —— 桶照样定，这些单位仍要人看</td></tr>'
+      + '<tr><td style="font-size:10px;color:var(--muted)">文件</td>'
+      + '<td style="font-size:10px;color:var(--muted)">少数标签</td>'
+      + '<td style="text-align:right;font-size:10px;color:var(--muted)">数量</td>'
+      + '<td colspan="2" style="font-size:10px;color:var(--muted)">单位</td></tr>'
+      + minorRows.join('')+'</tbody>';
+  }
+}
+
+function render(){
+  const s = stateAt(cur);
+  const stage = STAGE_OF[STEPS[Math.min(cur, STEPS.length - 1)].kind];
+  $('stageTitle').textContent = STAGE_HEAD[stage][0];
+  $('stageDesc').innerHTML = STAGE_HEAD[stage][1];
+
+  let marked = 0;
+  for (const f of FILES) if (s.labeled.has(f.path)) marked += f.units.length;
+  $('counter').textContent = '单位 ' + marked + ' / ' + TOTAL_UNITS;
+
+  const f = STEPS[Math.min(cur, STEPS.length - 1)].file;
+  $('unitsHint').textContent = f ? '扫描 ' + f.path.split('/').pop() : '全部文件已扫描';
+
+  renderUnits(s, cur);
+  renderInspector();
+  renderVocab(s);
+  renderBuckets(s);
+  renderLedger(s);
+  renderReport(s);
+  renderSteps(cur);
+
+  $('timeTxt').textContent = cur + ' / ' + (STEPS.length - 1);
+  $('scrub').value = String(cur);
+  $('scrub').max = String(STEPS.length - 1);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   交互
+   ══════════════════════════════════════════════════════════════ */
+function goto(i){
+  cur = Math.max(0, Math.min(STEPS.length - 1, i));
+  render();
+}
+function tick(){
+  if (!playing) return;
+  if (cur >= STEPS.length - 1){ playing = false; $('btnPlay').textContent = '重播'; return; }
+  goto(cur + 1);
+  timer = setTimeout(tick, 1500 / speed);
+}
+function play(){
+  if (cur >= STEPS.length - 1) goto(0);
+  playing = true; $('btnPlay').textContent = '暂停';
+  clearTimeout(timer); tick();
+}
+function pause(){ playing = false; $('btnPlay').textContent = '继续'; clearTimeout(timer); }
+
+$('btnPlay').addEventListener('click', () => { playing ? pause() : play(); });
+$('btnReset').addEventListener('click', () => { pause(); goto(0); $('btnPlay').textContent = '播放'; });
+$('scrub').addEventListener('input', e => { pause(); goto(Number(e.target.value)); });
+$('btnSpeed').addEventListener('click', () => {
+  speed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
+  $('btnSpeed').textContent = speed + '×';
+});
+document.querySelectorAll('.step').forEach(b => {
+  b.addEventListener('click', () => {
+    pause(); $('btnPlay').textContent = '继续';
+    const stage = Number(b.dataset.s);
+    const i = STEPS.findIndex(s => STAGE_OF[s.kind] === stage);
+    goto(i < 0 ? 0 : i);
+  });
+});
+$('units').addEventListener('click', e => {
+  const btn = e.target.closest('.u');
+  if (!btn) return;
+  selected = btn.dataset.id;
+  render();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight'){ pause(); goto(cur + 1); }
+  if (e.key === 'ArrowLeft'){ pause(); goto(cur - 1); }
+  if (e.key === ' '){ e.preventDefault(); playing ? pause() : play(); }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   起跑：停在第一段，等用户按播放
+   ══════════════════════════════════════════════════════════════ */
+$('btnPlay').textContent = '播放';
+goto(0);
+</script>
+</body>
+</html>

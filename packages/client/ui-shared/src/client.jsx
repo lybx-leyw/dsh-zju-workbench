@@ -4,6 +4,7 @@
 // 运行时由客户端的模块表解析到**这个** bundle 的 exports（见 dsh.client.external）。
 import * as primitives from './primitives.jsx';
 import css from './style.css';
+import classroomSlideCss from './classroom-slide.css';
 
 export const name = 'zhiyun-ui-primitives-client';
 /** 纯展示包：除了客户端的 `slots` 什么都不依赖。 */
@@ -36,6 +37,11 @@ export function apply(ctx) {
     attribute: 'zhiyunPrimitivesStyle',
     css,
     label: 'zhiyun: shared primitive styles',
+  });
+  primitives.mountStyle(ctx, {
+    attribute: 'zhiyunClassroomSlideStyle',
+    css: classroomSlideCss,
+    label: 'zhiyun: classroom slide styles',
   });
 }
 // ⚠️ 这张清单是**逐个列**的，新增原语必须同时加到这里，否则它在 `primitives.jsx` 里
@@ -70,6 +76,20 @@ export {
   panelKey,
   visiblePages,
 } from './pages-model.js';
+// 页面之间的组件契约：发布/取用按名字，**页面不 import 页面**。
+// 提供方 `publishComponent('quiz.pointPanel', QuizPanel)`，
+// 使用方 `usePublishedComponent('quiz.pointPanel')`（拿不到就自己降级）。
+export {
+  getComponent,
+  publishComponent,
+  resetPublishedComponents,
+  subscribeComponent,
+} from './component-registry.js';
+export { usePublishedComponent } from './component-registry.jsx';
+// 课件页渲染器：**UI 归 UI 层**。它 import React 并产 DOM，不属于 core。
+// 画布常量（VIEWPORT_SIZE / VIEWPORT_RATIO）仍在 `core/classroom-renderer` 里，
+// 因为生成侧也要用 —— 这里只引用，不另存一份。
+export { ClassroomSlide } from './classroom-slide.jsx';
 // 设置分区工具箱：各 source 包的设置面板共用同一套外观与 i18n 注册。
 export {
   REGISTER_NAMESPACE_PREFIX,

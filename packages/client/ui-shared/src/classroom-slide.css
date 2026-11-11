@@ -1,0 +1,57 @@
+/*
+ * 课件页渲染器的样式边界。
+ *
+ * 从 `core/classroom-renderer/src/style.css` 搬过来：组件在 UI 层，它的样式也跟着
+ * 上来。职责只有一条：把渲染树**圈**在 `.zyc-` 前缀里，不让这些规则落到
+ * 工作台外壳或别的页面上。
+ *
+ * 本文件由 `classroom-slide.jsx` 旁边的 `mountStyle` 注入（见 `client.jsx`），
+ * 构建期把 `.css` 当 text 打进 bundle（`scripts/build.mjs` 的 loader 表）。
+ */
+.zyc-root {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.zyc-classroom-slide {
+  contain: layout paint;
+}
+
+/* 课件页内的文本块。
+ *
+ * 模型给的 content 是 HTML 片段（常见 <p>、<br>、<strong>）。
+ * 浏览器默认给 <p> 上下各 1em margin —— 在「高度按元素格子算」的排版里，
+ * 那 1em 会把首行文字顶出格子、被容器裁掉，表现是标题只剩半截。
+ * 所以统一压掉段间距：间距由模型给的元素位置决定，不靠段落 margin。
+ */
+.zyc-slide p {
+  margin: 0;
+}
+
+/* 连续多个段落之间留一点缝，但远小于默认的 1em */
+.zyc-slide p + p {
+  margin-top: 0.4em;
+}
+
+/* 列表也是同理：默认 padding-left 40px 会吃掉宽度 */
+/* 用两个独立选择器而不是 :is(ul, ol)：仓里的层叠检查器会把 :is() 里的元素
+ * 当成裸元素选择器，误报与别的包「争 margin」。展开后特异性一目了然。 */
+.zyc-slide ul,
+.zyc-slide ol {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.zyc-slide li {
+  margin: 0;
+}
+
+/* 首尾元素不要额外外边距把内容顶出去 */
+.zyc-slide > div > :first-child {
+  margin-top: 0;
+}
+
+.zyc-slide > div > :last-child {
+  margin-bottom: 0;
+}

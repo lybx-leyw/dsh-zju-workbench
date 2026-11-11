@@ -14,8 +14,8 @@ import assert from 'node:assert/strict';
 
 import {
   ACTIONS, MAX_HISTORY, MAX_MESSAGE, createPetPrompt, normalizeReply, trimHistory,
-} from '../packages/client/page-planning/src/pet.js';
-import { dateTable } from '../packages/client/page-planning/src/time.js';
+} from '../packages/core/planning/src/pet.js';
+import { dateTable } from '../packages/core/planning/src/time.js';
 
 const calendar = dateTable(Date.parse('2026-10-21T12:00:00+08:00'), { days: 14 });
 

@@ -1,8 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-source-cc98",
   "version": "0.1.0",
-  "description": "浙大 CC98 论坛（api.cc98.org）数据源：OAuth2 密码模式取令牌，10 个只读方法（搜索/帖子/十大/新帖/版面/用户/通知/私信），不含任何写操作",
-  "private": true,
+  "description": "浙大 CC98 论坛（api.cc98.org）数据源：OAuth2 密码模式取令牌，22 个只读方法（搜索/帖子/十大/新帖/版面/标签/用户/通知/私信/帖内文件/楼层原文/评分理由/账号 7 条/签到记录），不含任何写操作",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -11,6 +10,18 @@
     "./package.json": "./package.json",
     "./client": "./lib/client.js"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/cc98"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -35,6 +46,5 @@
   "dependencies": {
     "@lybx-leyw/dsh-zju-source-login": "0.1.0",
     "@lybx-leyw/dsh-zju-source-http": "0.1.0"
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

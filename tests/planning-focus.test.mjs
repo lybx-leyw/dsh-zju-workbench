@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import {
   focusOf, focusSummary, isNewArrival, FOCUS_ORDER, FOCUS_LABEL,
   atShanghai, nextWeekday, quickTimes,
-} from '../packages/client/page-planning/src/time.js';
+} from '../packages/core/planning/src/time.js';
 
 const HOUR = 3600 * 1000;
 /** 固定"现在"，避免真实时间让断言漂移。 */

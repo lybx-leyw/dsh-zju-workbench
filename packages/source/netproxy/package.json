@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-source-netproxy",
   "version": "0.1.0",
   "description": "智云 Pro 的分域网络代理：所有出口流量经本地中继，按用户配置的域名规则分发到不同代理或直连，配可视化设置页",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -10,6 +9,18 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/netproxy"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -27,6 +38,5 @@
       "writes": false,
       "requires": []
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

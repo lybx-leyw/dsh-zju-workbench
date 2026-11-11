@@ -97,7 +97,12 @@ node scripts/test-quiz-bench.mjs
 
 人工复核模板仍用于逐题质量判断，未知项保留 null。`humanQuality` 在没有覆盖金标时也记录已复核/明确通过的题目及每道通过题所用调用数；这与独立金标覆盖率分开，不采用模型自评分充当人工结论。
 
-### DeepTutor 原版与集成对照
+### DeepTutor 原版与集成对照（vendor 桥已退役）
+
+> **已退役**：`scripts/quiz_bench/deeptutor.mjs`、`deeptutor_smoke.mjs`、`deeptutor_bridge_selftest.mjs`
+> 与 `packages/dsh-zhiyun-host-deeptutor` 已移除，vendor Python 快照移到 `archive/`（见 `archive/README.md`）。
+> 下面描述的三路对照已不能运行；`native` 评测组会显式报错说明原因。保留本段仅为记录当时的测量口径。
+> 仍可用的是 `local` 与 `local-guided` 两组（后者见下一段），以及 r1/r3/r4 各实验目录。
 
 `node scripts/quiz_bench/deeptutor.mjs <资料.json> <输出目录> [local|upstream-native|integrated-parallel]` 支持既有算法、真正 vendored Python 原版门面、独立题并行集成三路对照，不复制上游提示词模拟结果。凭证从 `DEEPSEEK_API_KEY` 读取；可选 `DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL`。默认使用原模型，不自动升级模型。
 

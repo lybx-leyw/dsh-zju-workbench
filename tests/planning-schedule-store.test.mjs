@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, readFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { ScheduleStore, MAX_SCHEDULE_SLOTS } from '../packages/client/page-planning/src/schedule.js';
+// 存储已下沉到 core：page 只做 UI（原先那份放在规划页里，早已迁走）。
+import { ScheduleStore, MAX_SCHEDULE_SLOTS } from '../packages/core/planning/src/schedule.js';
 
 const block = { taskKey: 'local:fake', title: '示例任务快照', start: '2026-11-01T09:00:00+08:00', end: '2026-11-01T10:00:00+08:00' };
 function fixture(t) {

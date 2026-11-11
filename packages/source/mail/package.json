@@ -1,0 +1,33 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-mail",
+  "version": "0.1.0",
+  "description": "浙大邮箱（imap.zju.edu.cn:993 / smtp.zju.edu.cn:994）数据源：目录、邮件列表、收件箱增量、正文与附件。只读，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["README.md", "src/", "cordis.patch.yml"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/mail"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "capability": {
+      "tier": 1,
+      "auth": "own",
+      "network": "public",
+      "writes": false,
+      "requires": []
+    }
+  },
+  "dependencies": {
+    "imapflow": "^2.5.2",
+    "mailparser": "^3.9.40",
+    "nodemailer": "^10.1.2"
+  }
+}

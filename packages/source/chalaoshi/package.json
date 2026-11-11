@@ -1,0 +1,47 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-chalaoshi",
+  "version": "0.1.0",
+  "description": "查老师（chalaoshi.de）数据源：教师评分与课程绩点。只读，本地索引搜索，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/chalaoshi"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "public",
+      "writes": false,
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-atomic-write": "0.2.2-rc.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-atomic-write": {
+      "optional": true
+    }
+  }
+}

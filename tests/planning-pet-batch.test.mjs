@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { apply, ScheduleStore } from '../packages/client/page-planning/src/index.js';
+import { apply, ScheduleStore } from '../packages/core/planning/src/index.js';
 
 /** Boot the real host plugin with a deterministic LLM; no network, no real model. */
 async function boot(t, replies) {
@@ -18,9 +18,11 @@ async function boot(t, replies) {
   services.set('zhiyunParser', { llm: { resolve: async () => ({ model: 'fixture' }),
     call: async request => { calls.push(request); return { text: JSON.stringify(reply()) }; },
     async *callStream(request) { calls.push(request); yield { type: 'delta', text: JSON.stringify(reply()) }; } } });
-  services.set('zhiyunCampus', { todos: async () => ({ xzzd: { ok: true, rows: [
+  // 拆包后两个平台分属两个 source 包（tier 1 互不依赖），这里各给一个桩。
+  services.set('zhiyunXuezai', { todos: async () => ({ xzzd: { ok: true, rows: [
     { id: 'p1', source: 'xzzd', title: '虚构平台任务一', due: '2026-11-08T12:00:00+08:00' },
-    { id: 'p2', source: 'xzzd', title: '虚构平台任务二', due: '2026-11-08T12:00:00+08:00' } ] }, pta: { ok: true, rows: [] } }) });
+    { id: 'p2', source: 'xzzd', title: '虚构平台任务二', due: '2026-11-08T12:00:00+08:00' } ] } }) });
+  services.set('zhiyunPta', { todos: async () => ({ pta: { ok: true, rows: [] } }) });
   const dispose = await apply(ctx, {}); t.after(dispose);
   return { dir, calls, service: services.get('zhiyunPlanning'), get handler() { return handler; } };
 }

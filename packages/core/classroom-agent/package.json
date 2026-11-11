@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-core-classroom-agent",
   "version": "0.1.0",
   "description": "智云 Pro「课堂智能体编排」领域包：把 OpenMAIC 的 lib/{workbench,orchestration,chat,agent,action,choreography,prompts} 搬成 ctx.zhiyunClassroomAgent（plan / run / cancel）",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -14,6 +13,19 @@
     "./package.json": "./package.json",
     "./client": "./lib/client.js"
   },
+  "files": [
+    "src/",
+    "fixtures/",
+    "cordis.patch.yml",
+    "README.md",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/classroom-agent"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -23,13 +35,7 @@
       "external": []
     }
   },
-  "files": [
-    "src/",
-    "fixtures/",
-    "cordis.patch.yml"
-  ],
   "dependencies": {
     "@lybx-leyw/dsh-zju-core-classroom-timing": "0.1.0"
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

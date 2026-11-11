@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-core-classroom-export",
   "version": "0.1.0",
   "description": "智云 Pro「互动课堂」导出层：PPTX（含 MathML→OMML、富文本、占位页）/ 单文件 HTML（样式字体脚本内联、srcset）/ ZIP / 视频时间轴，源头 lib/export 与 lib/video-export*",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -17,20 +16,27 @@
     "./zip": "./src/zip/stored-zip.js",
     "./package.json": "./package.json"
   },
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    }
-  },
   "files": [
     "src/",
     "vendor/",
     "cordis.patch.yml",
     "README.md",
-    "ATTRIBUTION.md"
+    "ATTRIBUTION.md",
+    "assets/"
   ],
-  "dependencies": {
-    "@lybx-leyw/dsh-zju-core-classroom-timing": "0.1.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/classroom-export"
   },
-  "license": "GPL-3.0-or-later"
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-classroom-timing": "0.1.0",
+    "svg-pathdata": "8.0.0"
+  }
 }

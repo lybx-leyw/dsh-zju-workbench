@@ -76,7 +76,7 @@ const localDate = (y, m, d, h = 12) => new Date(y, m - 1, d, h, 0, 0);
 // 夹具
 // ═══════════════════════════════════════════════════════════════
 
-const PKG = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages', '@lybx-leyw/dsh-zju-core-quiz', 'src');
+const PKG = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages', 'core', 'quiz', 'src');
 
 /** 固定时钟：测试要可复现。 */
 const FIXED = () => new Date('2026-10-07T00:00:00.000Z');

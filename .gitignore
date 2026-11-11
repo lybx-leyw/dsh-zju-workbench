@@ -87,6 +87,18 @@ vendor/
 # 不进仓库。已跟踪的文件已用 `git rm -r --cached` 移出索引；文件本身留在磁盘上，
 # 本地构建与测试不受影响，只是不再产生新的跟踪变更。
 
+# `packages/vendor/tmp/` 是 zju-assistant 函数分桶的**中间产物**（1249 个文件 /
+# 33.6 MB），不是会维护的上游副本，与上面「packages/vendor 要进仓库」的例外无关：
+# 它由 `packages/vendor/tmp/_tools/*.mjs` 一次性生成，其中 16 个脚本还硬编码了
+# 本机绝对路径（`C:/Users/<name>/...`）。生成器与产物都只在本机有意义。
+# 上面第 58–59 行的 `!packages/vendor/**` 会把这一层一并放行，所以这里必须显式挡回。
+/packages/vendor/tmp/
+
+# 截图与一次性检查脚本的工作目录（`.artifacts/` 是带点的，与第 14 行的
+# `artifacts/` 不是同一个路径，不会被那条规则覆盖）。里面的 png 是某次 UI 迭代的
+# 临时留档，`_arch-check.cjs` 里写着本机绝对路径。
+/.artifacts/
+
 # 渲染一致性校验的临时产物目录（每次跑会重新生成）。
 /.verify-render-*/
 

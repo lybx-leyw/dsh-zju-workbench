@@ -3,13 +3,15 @@
   "parent": "v2-candidate-r1",
   "status": "not-promoted-no-heldout-win",
   "productionEnabled": false,
+  "rebasedFrom": "402c528e",
+  "rebasedReason": "import-path regroup in a96e5e94 (packages/dsh-zhiyun-core-quiz -> packages/core/quiz); digests recomputed over LF-normalised bytes",
   "files": {
-    "scripts/quiz_bench/experimental-r2/blueprint.mjs": "3106bf28ec99415aceccc1a23fc4bb34a110c975a3ae800cad8ed96d189d54d1",
-    "scripts/quiz_bench/experimental-r2/points.mjs": "9199d457efff2d1e6819abfcb066b34fba064ab95a41350934f055c2bf995d21",
-    "scripts/quiz_bench/experimental-r2/policy.mjs": "9c49baa96338231f586921798ffb7b5f17452054feda53150b3ebf10ccc1e063",
-    "scripts/quiz_bench/experimental-r2/rectification.mjs": "092409ef353213f990d0d2ab0b060aafcf8777249792054cfc64d95ee02d9bab",
-    "scripts/quiz_bench/experimental-r2/run.mjs": "816c6af98d446d779477532cf0e253f2a31e2491d96ebf87b076a453e7e30730",
-    "scripts/quiz_bench/experimental-r2/source.mjs": "1c33bc3fa1ab6ba5fc7194e4a0351700f2d84b985d5c0101a45d69487a46e9dd"
+    "scripts/quiz_bench/experimental-r2/blueprint.mjs": "d265e4166c258f6d3b7de5ddfc98946504cc0e55039b5c1f5dae29c065263b6a",
+    "scripts/quiz_bench/experimental-r2/points.mjs": "51be5d60eeee59d3cb3d541c32317bfcd3c790bcac80a33b53726caea83629e4",
+    "scripts/quiz_bench/experimental-r2/policy.mjs": "0fee7289986bb9550f4362ddfde2c1f3acdb06339a34f2fc8e0cc17e6bad3a6a",
+    "scripts/quiz_bench/experimental-r2/rectification.mjs": "3cd261ba7d2a92e5c67479bccd0303b6e69f07eb3d6a95ab8d12e8fecf245139",
+    "scripts/quiz_bench/experimental-r2/run.mjs": "856b2d7a87f952ea75778de0fbdf53a10a21caa7680eaa584aba3c84c693d7d1",
+    "scripts/quiz_bench/experimental-r2/source.mjs": "740a0580b16b0a72b7facfbb82cd27d569ef09367b1105180239ebfd68c0ff0a"
   },
   "decision": "retain-v2-candidate-r1"
 }

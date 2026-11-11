@@ -1,0 +1,23 @@
+# 本包里 `lib/` 是**源码**，不是构建产物。
+#
+# 根 `.gitignore` 有两条规则会把它整目录吞掉：
+#
+#     packages/*/lib/      # 分组目录下包的构建产物
+#     packages/*/*/lib/    # 两层分组的包（本包正好命中这一条）
+#
+# 那两条针对的是「`npm run build` 重新生成、不进仓库」的产物（如 `lib/client.js`）。
+# 本包不一样：`lib/` 是从上游 `zju-assistant` 的 `core/weread/` 原样移植过来的
+# 实现（`article.ts` / `cli.ts` / `config.ts` / `errors.mjs` / `sources.ts` / `web.ts`，
+# 以及 `article/` / `browser/` / `captcha/` 三个子目录共 15 个文件），
+# 是唯一的源码副本，没有任何构建步骤会生成它。
+#
+# 后果是静默的：文件明明在磁盘上、测试也跑得通，但 `git status` 里看不见它们，
+# 一提交就少整个 `lib/` —— 而本地一切正常，所以几乎不会被发现。
+#
+# 用否定规则把这一层捞回来。Git 的规则是「父目录被排除后，子文件的否定无效」，
+# 但这里被排除的是 `lib/` 这个**目录本身**，`!lib/` 正好把该目录重新纳入，
+# 其下的文件（含 `article/` / `browser/` / `captcha/` 子目录）随后即可正常跟踪。
+#
+# 已用 `git check-ignore` 逐个验证（退出码 1 = 不被忽略）：
+#   lib/article.ts、lib/captcha/electron.mjs、lib/browser/service.cjs
+!lib/

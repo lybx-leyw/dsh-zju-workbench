@@ -87,10 +87,21 @@ export class QuestionBank {
    * `listLessons`（每个节次一次请求）—— 知识点与题目都在本地，这几跳纯属白等，
    * 而且首屏就卡在「正在读取知识点与历史题目…」上。
    *
-   * 那两次外呼只为了补课程名、学期名、节次名；本地记录里本来就有
-   * （`record.courseTitle` / `termName` / `lessonTitle` / `title`），缺了也按 id 显示。
-   * 唯一需要外呼的时机是**导出**，而且只有老题目缺学期时才会去补
-   * （见 `invoke('bank-export')` 的学期兜底）。
+   * 那两次外呼只为了补课程名、学期名、节次名。其中课程名与节次名本地记录里
+   * 确实有（`record.courseTitle` / `record.lessonTitle` / `record.title`），
+   * 缺了也按 id 显示。
+   *
+   * ⚠️ **`termName` 不在记录里**（`knowledge/src/domain.js` 的 record schema
+   *    没有这个字段）。早先这里写着「本地记录里本来就有 termName」，那句话是错的，
+   *    而且正是它让「生成时携带学期」这一步被删掉了。现在的分工是：
+   *
+   *      · 生成时：`workbench.start()` 从 `labels.termName` 收下、存进记录，
+   *        `knowledgePoints()` 再把它带到每个 point 上 —— 离线也拿得到；
+   *      · 导出时：下面这段 `needTerm` 回查兜底，只服务**老题目**
+   *        （那批生成时还没有这个字段）。
+   *
+   *    只保留导出兜底是不够的：课堂接口不可达时回查失败，题库就会落进比讲义
+   *    少一层的目录，用户看到同一门课的两个同名文件夹。
    */
   async catalog(user) {
     return this.records(user).flatMap(record=>knowledgePoints(record));
@@ -363,6 +374,15 @@ export class QuestionBank {
         // 重放同一条作答时，把当时那条评价一起还回去 —— 否则刷新页面后评价就消失了。
         if (previous) return {attempt:previous,answer:question.answer,explanation:question.explanation,basis:question.basis,rubric:question.rubric??[]};
         if (typeof payload.response!=='string' || payload.response.length>5000) throw fault('INPUT','作答内容无效');
+        // 简答题**可以**由作答者自评（`selfVerdict`），但**不是必须** ——
+        // 目前的练习界面只提交 `response`（`page-quiz/question-bank.jsx` 里是两参调用），
+        // 没有自评控件。所以这里不能把缺失当成错误：那会让所有简答题提交被 INPUT 拒绝。
+        //
+        // 契约是「有就用，没有就让模型判定」：
+        //   · 传了合法的 selfVerdict → 存为自评（`grading:'self'`），这是作答者的结论，
+        //     比模型猜更可信；
+        //   · 没传 → 走下面的三档判分（模型给判定与一句评价）。
+        const selfVerdict = ['correct','incorrect','partial'].includes(payload.selfVerdict) ? payload.selfVerdict : null;
 
         // 判分三档（详见 grading.js 顶部表格）：
         //   客观题  → 精确匹配，不问模型
@@ -389,7 +409,12 @@ export class QuestionBank {
         const built = buildAttempt({ question, response: payload.response, judged, matched: exact.matched });
 
         const attempt={id:randomUUID(),questionId:question.id,sessionId:session.id,response:payload.response,
-          verdict:built.verdict,grading:built.grading,comment:built.comment,at:new Date().toISOString()};
+          // 简答题**带了自评**才用它（作答者的结论比模型猜更可信）；
+          // 没带就走模型判定的结果 —— 与客观题同一条路。
+          // 注意判据是 `selfVerdict` 而不是 `question.type`：只按题型分会让
+          // 「简答题但没自评」的作答被存成 `verdict:null`，那是个隐性的坏状态。
+          ...(selfVerdict?{verdict:selfVerdict,grading:'self'}:{verdict:built.verdict,grading:built.grading}),
+          comment:built.comment,at:new Date().toISOString()};
         (question.attempts??=[]).push(attempt);session.answers.push(attempt);
         if (session.answers.length===session.questionIds.length) session.finishedAt=new Date().toISOString();
         await this.save(bank);

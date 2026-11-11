@@ -1,0 +1,40 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-notice",
+  "version": "0.1.0",
+  "description": "校内通知公告数据源：教务网、本科生院、学工部、团委、综合服务网等部处与各学院官网的通知列表与正文。只读，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/",
+    "data/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/notice"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "cas",
+      "network": "campus",
+      "writes": false,
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http"
+      ]
+    }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0"
+  }
+}

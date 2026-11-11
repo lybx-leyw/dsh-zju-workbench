@@ -12,6 +12,15 @@ export const liveEndpoints = Object.freeze({
   courses: 'https://classroom.zju.edu.cn/courseapi/v2/course-live/search-live-course-list',
   streams: 'https://yjapi.cmc.zju.edu.cn/courseapi/v2/course-live/search-live-course-list',
   screenstream: 'https://classroom.zju.edu.cn/courseapi/index.php/v2/meta/getscreenstream',
+  /**
+   * 节次详情：**实时字幕的入口**。
+   *
+   * 与取流用不同的接口，因为实时字幕不是从 HLS 里剥出来的 ——
+   * 它是官方那个 `qlite` 网关上另开的一路订阅，地址写在 `content.trans_socket_url` 里。
+   * 同一个接口还给出 `sub_status`，`3` / `6` 是「已结束」，据此不必再去连一个
+   * 已经散场的会话。
+   */
+  subInfo: 'https://yjapi.cmc.zju.edu.cn/courseapi/v3/portal-home-setting/get-sub-info',
 });
 
 // 浙大在智云上只有一个租户号；写成常量而不是散在参数表里，避免各处抄错。
@@ -293,5 +302,45 @@ export class LiveSource {
     const streamId = streamIdOf(sub);
     if (streamId) return pack(await this.screenStreams(courseId, subId, streamId, { signal }));
     return pack(direct);
+  }
+  /**
+   * 节次详情：**实时字幕的入口**，也是「这节课结束了没有」的权威判据。
+   *
+   * # 为什么和 `resolveStreams` 分开
+   *
+   * 取流回答的是「有哪些机位可以看」，这里回答的是「有没有一路实时字幕订阅」。
+   * 两者在同一个页面上，但**不是同一个资源**：一场课可能没有可播机位却仍在
+   * 出字幕（纯音频教室），也可能机位都在但字幕网关还没开。
+   *
+   * # 三处必须校验的地方
+   *
+   *   1. **返回的课次 id 必须与请求一致**。上游偶尔会用「最近一节」兜住查不到的
+   *      sub_id —— 拿它当答案，会把**别的课**的字幕地址接到这节课上；
+   *   2. `content` 可能是字符串也可能是对象（`models.embedded` 两种都收）；
+   *   3. `trans_socket_url` **不是 URL 就直接报结构错**，不返回 null ——
+   *      返回 null 会让上层把它读成「这节课没有字幕」，而真因是字段漂移。
+   *
+   * @param {string} courseId
+   * @param {string} subId
+   * @param {object} [options]
+   * @param {AbortSignal} [options.signal]
+   * @returns {Promise<{address: string|null, ended: boolean, subStatus: string|null}>}
+   *   `address` 为 null 表示「还没开播」；`ended` 为真表示「已经散场」。
+   */
+  async subInfo(courseId, subId, { signal } = {}) {
+    courseId = models.id(courseId, '直播课程'); subId = models.id(subId, '直播节次');
+    const headers = await this.authHeaders();
+    const data = await this.transport.json(query(this.endpoints.subInfo, { course_id: courseId, sub_id: subId }), '节次详情', { signal, headers });
+    if (!object(data.data)) throw shape('节次详情', 'data');
+    const row = data.data;
+    // 上游用「返回的 id 与请求不一致」判定串课次；缺字段是结构漂移。
+    if (row.course_id !== undefined && String(row.course_id) !== courseId) throw shape('节次详情', 'course_id');
+    if (row.sub_id !== undefined && String(row.sub_id) !== subId) throw shape('节次详情', 'sub_id');
+    const content = models.embedded(row.content) ?? {};
+    const raw = content.trans_socket_url;
+    if (raw != null && typeof raw !== 'string') throw shape('节次详情', 'content.trans_socket_url');
+    const address = raw && raw.trim() ? raw.trim() : null;
+    const subStatus = row.sub_status == null ? null : String(row.sub_status);
+    return { address, ended: ['3', '6'].includes(subStatus ?? ''), subStatus };
   }
 }

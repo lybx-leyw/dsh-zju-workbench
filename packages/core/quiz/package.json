@@ -1,9 +1,8 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-quiz",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "智云 Pro 出题与质检：题形状 + 先筛后出 + 三态硬检查（零 UI、零落盘，llm 由集成层注入）",
+  "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
@@ -30,6 +29,18 @@
     "./engines/r3-v9/compiler": "./src/engines/r3-v9/compiler.mjs",
     "./client": "./lib/client.js"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/quiz"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -37,6 +48,5 @@
     "client": {
       "platform": "web"
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

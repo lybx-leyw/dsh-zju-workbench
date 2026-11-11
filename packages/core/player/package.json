@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-core-player",
   "version": "0.1.0",
   "description": "播放统计：把终稿的块级数据算成能画在进度条上的分段与语速热力。纯逻辑，零 IO",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -11,6 +10,18 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/player"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -18,6 +29,5 @@
     "client": {
       "platform": "web"
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

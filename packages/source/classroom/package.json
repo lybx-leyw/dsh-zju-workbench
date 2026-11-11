@@ -1,9 +1,8 @@
 {
   "name": "@lybx-leyw/dsh-zju-source-classroom",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "智云课堂独立数据源与 Cordis 服务",
+  "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
@@ -11,6 +10,18 @@
     "./package.json": "./package.json",
     "./client": "./lib/client.js"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/classroom"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -43,6 +54,5 @@
     "@deepseek-ai/dsh-atomic-write": {
       "optional": true
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

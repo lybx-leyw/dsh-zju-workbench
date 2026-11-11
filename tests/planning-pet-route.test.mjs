@@ -15,7 +15,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
-const ENTRY = pathToFileURL(path.join(root, 'packages/client/page-planning/src/index.js')).href;
+const ENTRY = pathToFileURL(path.join(root, 'packages/core/planning/src/index.js')).href;
 
 /**
  * 起一个最小宿主。`reply` 可以是字符串或函数（拿到请求再决定回什么）。

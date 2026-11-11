@@ -26,12 +26,34 @@
 import { ClassroomError } from '@lybx-leyw/dsh-zju-source-http';
 
 import { XXT_ENDPOINTS } from './hosts.js';
+
+/** 一节的卡片数上限。上游用 12 —— 正常一章不会有那么多张卡，超出就是异常页。 */
+const MAX_CARDS = 12;
+
+/** 超星课程服务（nanas 状态接口在这里）。 */
+const MOOC1 = 'https://mooc1.chaoxing.com';
+
+/** 视频扩展名。kindOf 用它们把附件分成视频/音频/文档。 */
+const VIDEO_EXT = new Set(['mp4', 'flv', 'm3u8', 'avi', 'mov', 'wmv', 'mkv']);
+
+/**
+ * 按扩展名判附件类型。
+ *
+ * @param {string} name - 文件名。
+ * @returns {'video'|'audio'|'document'}
+ */
+function kindOf(name) {
+  const extension = String(name ?? '').split('.').pop()?.toLowerCase() ?? '';
+  return VIDEO_EXT.has(extension) ? 'video' : 'document';
+}
 import {
   hiddenValue,
   isPending,
   nearestDate,
   normalizeNotice,
   matchesNotice,
+  parseCards,
+  parseChapters,
   parseCourses,
   parseExams,
   parseHomeworkDetail,
@@ -165,6 +187,180 @@ export class XxtReader {
       ?? courses.find((item) => item.name.includes(wanted));
     if (!hit) throw new ClassroomError('COURSE_NOT_FOUND', `学习通中没有找到“${wanted}”这门课。`);
     return hit;
+  }
+
+  /**
+   * 一门课的**章节目录**。
+   *
+   * 学习通的课程页是 `mooc2-ans` 那套：每个大章一个 `div.chapter_unit`，
+   * 里面 `id="cur<编号>"` 的块是能点开的节，节还能再套一层 `li`。
+   * 解析用 parse5 建 DOM 再遍历 —— 正则数不清嵌套层级（见 `parse.js` 的说明）。
+   *
+   * `course` 收课程 **id 或名字**（不是原始对象）：路由与页面手里只有这个，
+   * 让它们先自己 `findCourse` 再传对象，等于把同一个约定抄两遍。
+   *
+   * @param {{course?: string, signal?: AbortSignal}} [options] - `course` 是 id 或名字。
+   * @returns {Promise<{chapters: Array<{id: string, title: string, path: string[], locked: boolean}>, count: number}>}
+   */
+  async chapters({ course, signal } = {}) {
+    const hit = await this.findCourse(course, { signal });
+    const html = await this.client.get(XXT_ENDPOINTS.chapterList, {
+      courseid: hit.courseid,
+      clazzid: hit.clazzid,
+      cpi: hit.cpi ?? '',
+      ut: 's',
+      t: String(Date.now()),
+    }, { signal });
+    const chapters = parseChapters(html);
+    return { chapters, count: chapters.length };
+  }
+
+  /**
+   * 一门课的**课件/附件清单**（逐节的卡片附件）。
+   *
+   * # 为什么是一串请求
+   *
+   * 学习通没有「整门课的附件列表」这种接口：附件挂在**每节的卡片**里，
+   * 而一节可以有多张卡片（`num` 从 0 递增，取到 `found: false` 为止）。
+   * 所以这个方法的请求数是 `节数 × 每节卡片数`，最坏情况不小。
+   *
+   * 上游对 `num` 设了 12 的上限，这里沿用 —— 超过 12 张卡片的节会被截断，
+   * 那属于异常页面（正常一章不会有那么多卡）。
+   *
+   * 按 `objectId` 去重：同一份附件在多个卡片里重复出现是常态。
+   *
+   * @param {{course?: string, signal?: AbortSignal}} [options]
+   * @returns {Promise<{files: Array<{name: string, kind: string, location: string[], objectId: string, size: number|null}>, notOpen: string[], count: number}>}
+   */
+  async materials({ course, signal } = {}) {
+    const hit = await this.findCourse(course, { signal });
+    const { chapters } = await this.chapters({ course: hit.courseid, signal });
+
+    const files = [];
+    const notOpen = [];
+    const seen = new Set();
+
+    for (const chapter of chapters) {
+      // 锁住的节读了也是空页，直接记下名字跳过 —— 省一次请求，也让用户知道漏了哪节。
+      if (chapter.locked) {
+        notOpen.push(chapter.title);
+        continue;
+      }
+      let closed = false;
+      for (let num = 0; num < MAX_CARDS; num += 1) {
+        const html = await this.client.get(XXT_ENDPOINTS.chapterCards, {
+          clazzid: hit.clazzid,
+          courseid: hit.courseid,
+          knowledgeid: chapter.id,
+          num,
+          ut: 's',
+          cpi: hit.cpi ?? '',
+          mooc2: '1',
+        }, { signal });
+        const card = parseCards(html);
+        if (card.notOpen) {
+          notOpen.push(chapter.title);
+          closed = true;
+          break;
+        }
+        if (!card.found) break; // num 已越过最后一张
+        for (const file of card.files) {
+          if (seen.has(file.objectId)) continue;
+          seen.add(file.objectId);
+          files.push({ ...file, kind: kindOf(file.name), location: chapter.path });
+        }
+      }
+      if (closed) continue;
+    }
+
+    return { files, notOpen, count: files.length };
+  }
+
+  /**
+   * 一个附件的**下载参数**。**本方法不下载任何东西。**
+   *
+   * # 为什么只给参数（D21）
+   *
+   * 下载的执行归 `packages/core/*`：只有那一层知道用户想把文件放哪、要不要限速、
+   * 磁盘够不够。数据源若自己写盘，就得同时决定目录约定、并发、断点续传 ——
+   * 那些都是宿主的决定，不是「学习通有什么」这个事实的一部分。
+   *
+   * 所以这里把执行下载需要的东西**一次给全**：地址、请求头、建议文件名、
+   * 预期字节数、以及「这份是不是原文件」。
+   *
+   * # 三种变体
+   *
+   * 平台对同一个附件可能给多个地址：
+   * - `original` —— 老师上传的原文件（有 `download` 字段时）
+   * - `playback` —— 视频转码后的播放版（体积小得多，只有视频有）
+   * - `preview`  —— 文档预览用的 PDF（没有原文件时才有）
+   *
+   * 默认取原文件；视频可以要播放版。要的那种平台没给时退回另一种，
+   * 并在 `note` 里说明 —— 不让调用方以为自己拿到的是原文件。
+   *
+   * @param {{objectId?: string, playback?: boolean, signal?: AbortSignal}} [options]
+   * @returns {Promise<{url: string, variant: 'original'|'playback'|'preview', filename?: string, size?: number, headers: Record<string,string>, note?: string}>}
+   */
+  async downloadParams({ objectId, playback = false, signal } = {}) {
+    const id = String(objectId ?? '').trim();
+    if (!/^[0-9a-f]{32}$/i.test(id)) {
+      throw new ClassroomError('INVALID_ARGUMENT', '下载需要 32 位 hex 的 objectId（从 materials() 的返回里取）。');
+    }
+
+    // `k` 是机构 id，从 Cookie 的 `fid` 取。取不到时留空 —— 平台多数情况下不校验它，
+    // 但缺了会让部分资源 403，所以这里只报警不改行为。
+    const fid = await this.fid();
+    const status = JSON.parse(await this.client.get(`${MOOC1}/ananas/status/${id}`, {
+      k: fid,
+      flag: 'normal',
+      _dc: String(Date.now()),
+    }, { signal }));
+
+    if (status?.status !== 'success') {
+      throw new ClassroomError('REJECTED', `学习通没有给出这个文件：${status?.msg || status?.status || '状态未知'}`);
+    }
+
+    const secure = (url) => String(url).replace(/^http:\/\/([^/]*(?:chaoxing\.com|cldisk\.com))/i, 'https://$1');
+    const original = status.download
+      ? { url: secure(status.download), variant: 'original', ...(Number(status.length) > 0 ? { size: Number(status.length) } : {}) }
+      : undefined;
+    // 文档的 `http` 是在线阅读页，不是文件；只有视频的 `http` 才是播放版。
+    const stream = status.http || status.httphd || status.httpmd;
+
+    /** @type {{url: string, variant: string, size?: number, note?: string}} */
+    let picked;
+    if (playback && stream) picked = { url: secure(stream), variant: 'playback' };
+    else if (original) {
+      picked = playback ? { ...original, note: '平台没有这个视频的播放版，给的是原文件' } : original;
+    } else if (stream) picked = { url: secure(stream), variant: 'playback', note: '平台没有给原文件，给的是播放版' };
+    else if (status.pdf) picked = { url: secure(status.pdf), variant: 'preview', note: '平台没有给原文件，给的是预览用的 PDF' };
+    else throw new ClassroomError('REJECTED', '学习通没有给出这个文件的下载地址');
+
+    return {
+      ...picked,
+      ...(status.filename ? { filename: String(status.filename) } : {}),
+      // 下载这几个域不带这个 Referer 会 403。执行下载的一方照抄即可。
+      headers: { Referer: `${MOOC1}/` },
+    };
+  }
+
+  /**
+   * 从会话 Cookie 里取机构 id（`fid`）。
+   *
+   * 客户端不保证能访问 jar，所以拿不到时返回空串 —— 调用方（`downloadParams`）
+   * 把它当可选参数用，不因此失败。
+   *
+   * @returns {Promise<string>}
+   */
+  async fid() {
+    try {
+      const jar = this.client?.session?.jar;
+      if (!jar?.getCookies) return '';
+      const cookies = await jar.getCookies(XXT_BASE);
+      return String(cookies.find((c) => c.key === 'fid')?.value ?? '');
+    } catch {
+      return '';
+    }
   }
 
   /**
@@ -439,6 +635,9 @@ export const XXT_METHODS = Object.freeze([
   'courses',
   'listCourses',
   'findCourse',
+  'chapters',
+  'materials',
+  'downloadParams',
   'homework',
   'listHomework',
   'deadlines',

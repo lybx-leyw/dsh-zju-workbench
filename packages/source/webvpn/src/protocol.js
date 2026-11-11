@@ -42,7 +42,7 @@ export const WEBVPN_ORIGIN = `https://${WEBVPN_HOST}`;
 
 /** 地址编码用的公开常量。 */
 const URL_KEY = 'wrdvpnisthebest!';
-/** 登录表单里密码字段用的另一把钥匙。 */
+/** 登录表单里密码字段用的另一把钥匙 —— **仅作兜底**，优先用登录页里挖到的。 */
 const PASSWORD_KEY = 'wrdvpnisawesome!';
 
 /**
@@ -144,28 +144,64 @@ export function isWebvpnLoginUrl(url) {
 }
 
 /**
- * 登录表单里的密码字段：网关要求用另一把钥匙编码后提交。
+ * 登录表单里的密码字段：网关要求用 AES-128-CFB 编码后提交。
+ *
+ * # 两把钥匙的来历
+ *
+ * 网关登录页内联了 `encrypt(password, "<key>", "<iv>")`，那两个值是页面决定的。
+ * 所以正常路径是**从登录页挖**（`parseWebvpnLoginPage` 的 `key` / `iv`），
+ * 由调用方传进来。
+ *
+ * 不传（或传了不合法的长度）时回退到内置常量 `wrdvpnisawesome!`：
+ * 那是本包历史上一直用的值，在网关没换 key 的前提下仍然可用。回退而不是抛错，
+ * 是因为「页面结构变了」不该等价于「不能登录」—— 先试一次旧值比直接失败好。
+ *
+ * 加密结果的形状是 `hex(iv)` + `hex(密文)`，与上游 `encryptPassword`
+ * （`client.ts:47-52`）一致。iv 必须前置：网关靠它解出后面那段。
  *
  * @param password - 上网账号的明文密码。
+ * @param options.key - 登录页给的 key；缺省或长度不为 16 时用内置常量。
+ * @param options.iv - 登录页给的 iv；缺省或长度不为 16 时用内置常量。
  * @returns 编码后的值。
  */
-export function webvpnPassword(password) {
-  return wrdEncrypt(PASSWORD_KEY, password);
+export function webvpnPassword(password, { key, iv } = {}) {
+  const valid = (value) => typeof value === 'string' && value.length === 16;
+  const k = valid(key) ? key : PASSWORD_KEY;
+  const i = valid(iv) ? iv : PASSWORD_KEY;
+  // 形状与上游一致：iv 前置 + 密文。key 与 iv 相同时退化成原来的 wrdEncrypt 结果。
+  const encrypted = cfb(k, Buffer.from(String(password ?? ''), 'utf8'));
+  return Buffer.from(i, 'utf8').toString('hex') + encrypted.toString('hex');
 }
 
 /**
- * 从登录页里取 `_csrf` 与 `captcha_id`。
+ * 从登录页里取 `_csrf`、`captcha_id`，以及**加密用的 key 与 iv**。
+ *
+ * # 为什么 key/iv 要从页面里取，而不是写死
+ *
+ * 网关的登录页内联了一段 `encrypt(password, "key", "iv")` 的调用，把那两个常量
+ * 直接写在页面里。上游的实现（`client.ts:99-105`）就是从这段代码里挖出来的 ——
+ * 也就是说**这两个值由页面决定，不由我们决定**。写死一个常量在今天能用，
+ * 网关哪天换了就是「密码怎么都不对」，而且报错方向上会把用户引去改密码。
+ *
+ * # 与上游的两处偏离（都是保守方向）
+ *
+ * 1. **挖不到 key/iv 不抛错**，返回空串，由调用方回退到内置常量。
+ *    上游是「缺一个就抛 BadResponse」（`client.ts:103`）。页面结构一变，
+ *    上游直接登录不能；这里还能试一次旧常量。
+ * 2. `_csrf` 仍然按上游口径处理：它是登录必需项，拿不到就没法提交，
+ *    在 `login.js` 里单独报 `WEBVPN_SHAPE`。
  *
  * ⚠️ 只按 `name="…"` 精确匹配。此前本包在 CAS 那边踩过一次：用宽松正则去找
  * "错误提示"，结果匹配到了 `id="errormsg"` 这个**属性名**，把一次网络失败
  * 说成了"密码不对"。这里同理 —— 字段名必须整词比对。
  *
  * @param html - 登录页 HTML。
- * @returns `{ csrf, captchaId }`，取不到就是空串。
+ * @returns `{ csrf, captchaId, key, iv }`，取不到的项是空串。
  */
 export function parseWebvpnLoginPage(html) {
+  const source = String(html ?? '');
   const attr = (name) => {
-    for (const tag of String(html ?? '').match(/<input\b[^>]*>/gi) ?? []) {
+    for (const tag of source.match(/<input\b[^>]*>/gi) ?? []) {
       const fields = Object.fromEntries(
         [...tag.matchAll(/([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)].map((m) => [m[1].toLowerCase(), m[2] ?? m[3]]),
       );
@@ -173,7 +209,15 @@ export function parseWebvpnLoginPage(html) {
     }
     return '';
   };
-  return { csrf: attr('_csrf'), captchaId: attr('captcha_id') };
+  // 与上游同一条正则：匹配 `encrypt(<任意第一个参数>, "key", "iv")`。
+  // 第一个参数在页面里是 `password.value` 之类，不参与捕获。
+  const kv = source.match(/encrypt\s*\([^,]+,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)/);
+  return {
+    csrf: attr('_csrf'),
+    captchaId: attr('captcha_id'),
+    key: kv?.[1] ?? '',
+    iv: kv?.[2] ?? '',
+  };
 }
 
 /**

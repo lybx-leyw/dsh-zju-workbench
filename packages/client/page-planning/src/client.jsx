@@ -20,19 +20,19 @@
 // 人体工效学 skill 的条款在 `style.css` 里逐条标注。
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScheduleView } from './schedule-view.jsx';
-import { taskKeyFor, weekStart } from './agenda.js';
+import { taskKeyFor, weekStart } from '@lybx-leyw/dsh-zju-core-planning/browser';
 import scheduleCss from './schedule.css';
 import { Empty, Icon, Notice, mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 // 时间口径与错误文案是纯函数，放在 `time.js` / `error.js` 里：JSX 文件测试导不进来，
 // 而这两个地方恰恰是最需要守卫的（时区错配、错误对象被字符串化成 [object Object]）。
-import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel, buildMonthCalendar } from './time.js';
-import { REPEAT_LABEL } from './local.js';
-import { createPetStream } from './pet-stream.js';
-import { resolveScheduleReply, scheduleDraftItems } from './pet.js';
-import { hintWindow, scheduleHint } from './schedule-hint.js';
-import { clearFocus, focusDecision, focusElementId, readFocus } from './focus.js';
-import { errorText } from './error.js';
+import { FOCUS_LABEL, FOCUS_ORDER, focusOf, focusSummary, isNewArrival, quickTimes, dayKey, dayLabel, buildMonthCalendar } from '@lybx-leyw/dsh-zju-core-planning/browser';
+import { REPEAT_LABEL } from '@lybx-leyw/dsh-zju-core-planning/browser';
+import { createPetStream } from '@lybx-leyw/dsh-zju-core-planning/browser';
+import { resolveScheduleReply, scheduleDraftItems } from '@lybx-leyw/dsh-zju-core-planning/browser';
+import { hintWindow, scheduleHint } from '@lybx-leyw/dsh-zju-core-planning/browser';
+import { clearFocus, focusDecision, focusElementId, readFocus } from '@lybx-leyw/dsh-zju-core-planning/browser';
+import { errorText } from '@lybx-leyw/dsh-zju-core-planning/browser';
 
 export const name = 'zhiyun-page-planning-client';
 
@@ -141,17 +141,13 @@ export function apply(ctx) {
   // 设置集中在「个人 → 设置」：壳里的 PersonalSettingsBridge 会把所有
   // settings.section 按 order 摊成折叠分组，所以这里零改壳。
   //
-  // ⚠️ **拆成两块**，不再合成一个「规划数据源」。理由：中转站与拼题A 是**互不相干**
-  //    的两件事（一个是你自己的数据中转站，一个是第三方判题平台），
-  //    它们共用同一个折叠分组只会让人以为"配完上面才轮到下面"。
-  //    而且这两块将来都可能被别的页面用到，不该绑在"规划页"这个名字上。
-  ctx.slots.inject('settings.section', () => ctx.slots.register({
-    name: 'settings.section',
-    id: 'zhiyun-pta',
-    // 拼题A 排在个人中转站之前：它更常需要重配（Cookie 会过期）
-    order: 65,
-    label: () => '拼题A',
-  }, PtaSection));
+  // ⚠️ **拼题A 的那一块不在这里**。Cookie 是 `@lybx-leyw/dsh-zju-source-campus`
+  //    的凭据，它自己已经在设置里注册了分区（`zju-source-campus`，含粘贴与状态复测）。
+  //    这里曾经也注册过一个「拼题A」—— 于是设置栏里出现两个同名入口、各自打
+  //    不同的路由，用户不知道该信哪个。**凭据归数据源**：页面不重复提供配置入口。
+  //
+  // 「个人中转站」留在这里，因为它不是任何 source 的数据源，而是这一页自己的
+  // 上游（用户自建的中转站）：域名 + 读密钥，只有这页消费。
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
     id: 'zhiyun-relay',
@@ -169,11 +165,11 @@ export function apply(ctx) {
  */
 const ERROR = {
   NOT_CONFIGURED: { title: '还没有配置中转站', next: '去「设置 → 个人中转站」填域名和读密钥。' },
-  // 学在浙大缺的是**账号**，不是 Cookie。而账号现在在「浙大一卡通」那一块配。
-  NEED_LOGIN: {
-    title: '还没配置浙大一卡通',
-    next: '去「设置 → 浙大一卡通」填一次账号密码 —— 智云课堂与学在浙大共用这一份。',
-  },
+  // ⚠️ **这里没有 `NEED_LOGIN` / `COOKIE_IMPORT_REQUIRED`**。
+  //    学在浙大与拼题A 的失败文案由数据源自己给（`@lybx-leyw/dsh-zju-source-campus`
+  //    的 `translateXzzdError` / `translatePtaError`），`message` 里已经带着
+  //    「去『设置 → 浙大一卡通』」这类指引。本表只管**中转站**（本域自己的上游）
+  //    的码 —— 在这里再抄一份凭据指引，改设置入口时就会漏改。
   KEY_REJECTED: {
     title: '读密钥被拒绝',
     next: '到「设置 → 个人中转站」核对读密钥；换过域名的话也要一起改。',
@@ -1320,11 +1316,8 @@ function summarize(todoCount, entryCount) {
  * ⚠️ 「下一步」指向**设置里的浙大一卡通那一块**。它曾经指向「个人」页的
  *    「连接课堂」按钮，但那个入口已经改成占位：写入口统一到了设置。文案不改，
  *    用户会去找一个不存在的按钮。
- */
-/**
- * 顶部摘要条：一眼回答「现在最该关心什么」。
  *
- * # 为什么需要它
+ * # 顶部摘要条（`Summary`）为什么单独一块
  *
  * 学生的真实问题是"我漏了什么、接下来几小时要干什么"。旧页面把这些和
  * 「一周内」「更晚」「没有截止时间」平铺在同一个滚动列里 —— 得扫一遍才知道
@@ -1389,13 +1382,16 @@ function SourceBar({ todos, pta, remote, entryCount, mineCount }) {
   const xzzd = todos.xzzdError;
   const ptaError = todos.ptaError;
   const remoteError = remote?.error;
-  // 学在浙大读不到 = 还没配过「浙大一卡通」。**不引导去终端跑命令**，也**不再**
-  // 指向「个人」页那个「连接课堂」按钮 —— 凭据现在统一在「设置 → 浙大一卡通」写入，
-  // 那一份由智云课堂与学在浙大共用。
-  // 「没配」不是故障，是待完成的动作。三个码都归于这一类：
-  //   NEED_LOGIN      —— 宿主侧翻译后的统一码（当前口径）
-  //   LOGIN_REQUIRED  —— 数据包原始码（宿主翻译漏掉时兜底）
-  //   NO_SESSION      —— 旧桥接方案留下的码，保留以免旧缓存读到就显示"读取失败"
+  // 学在浙大读不到时，**先分清是哪一类**，再决定怎么说 —— 这不是「重新翻译错误」，
+  // 而是 UI 的分支判断：文案仍然直接用数据源给的 `xzzd.message`。
+  //
+  // 「没配」不是故障，是待完成的动作，所以它与其他读取失败必须分开呈现
+  // （混在一起会把「去配一次」说成「坏了」，用户会去重启）。
+  //
+  // 三个码都归这一类：
+  //   NEED_LOGIN      —— `source/campus` 的 `translateXzzdError` 归一后的码（当前口径）
+  //   LOGIN_REQUIRED  —— 数据源原始码（归一漏掉时兜底）
+  //   NO_SESSION      —— 旧桥接方案留下的码，保留以免旧快照读到就显示"读取失败"
   const needLogin = ['NEED_LOGIN', 'LOGIN_REQUIRED', 'NO_SESSION'].includes(xzzd?.code);
   const needCookie = ptaError?.code === 'COOKIE_IMPORT_REQUIRED';
 
@@ -2305,95 +2301,6 @@ function ErrorBlock({ error }) {
         {info.next && <p className="zpg-error-next">{info.next}</p>}
       </div>
     </div>
-  );
-}
-
-/**
- * 设置分区：**拼题A**。
- *
- * 只有一项：Cookie。它与中转站是**互不相干**的两件事，所以分成两个折叠分组
- * （见 `apply` 里那两处 `settings.section` 注册）。
- *
- * 学在浙大不在这里 —— 它用的是「浙大一卡通」账号（`@lybx-leyw/dsh-zju-source-login` 那块），
- * 与拼题A 的 Cookie 是两套完全不同的凭证。
- */
-export function PtaSection() {
-  const [cookie, setCookie] = useState('');
-  const [state, setState] = useState({ loading: true, saving: false, message: null, error: null });
-  const [pta, setPta] = useState(null);
-
-  useEffect(() => {
-    let live = true;
-    settings('').then(
-      (payload) => {
-        if (!live) return;
-        setPta(payload.pta ?? null);
-        setState({ loading: false, saving: false, message: null, error: null });
-      },
-      (failure) => { if (live) setState({ loading: false, saving: false, message: null, error: failure.message }); },
-    );
-    return () => { live = false; };
-  }, []);
-
-  const saveCookie = async (event) => {
-    event.preventDefault();
-    setState({ loading: false, saving: true, message: null, error: null });
-    try {
-      const payload = await settings('pta', { cookie });
-      setCookie('');
-      setPta(payload.pta ?? null);
-      setState({
-        loading: false,
-        saving: false,
-        message: `拼题A Cookie 已保存（识别为「${payload.cookie?.source ?? '未知'}」，${payload.cookie?.cookie_names?.length ?? 0} 个键）`,
-        error: null,
-      });
-    } catch (failure) {
-      setState({ loading: false, saving: false, message: null, error: failure.message });
-    }
-  };
-
-  // ⚠️ 这里**不画** `<details>` / `.zy-settings-group`。
-  //    壳的 `PersonalSettingsBridge` 已经为每个 `settings.section` 注册渲染了外层折叠分组
-  //    （图标 + 标题 + 副标题 + chevron + body），然后才把本组件渲染进 body 里。
-  //    自己再包一层会变成"壳套壳"：两层折叠框、两个同名标题。
-  return (
-    <>
-      <form className="zpg-form" onSubmit={saveCookie}>
-        <label className="zpg-field">
-          <span>
-            拼题A Cookie
-            {pta && (
-              <span className={`zpg-pill ${pta.configured ? 'zpg-pill-ok' : ''}`}>
-                {pta.configured ? '已配置' : '未配置'}
-              </span>
-            )}
-          </span>
-          <textarea
-            name="ptaCookie"
-            rows={3}
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="登录 pintia.cn 后，从任一 /api 请求复制 Cookie 或整条 cURL 粘贴到这里"
-            value={cookie}
-            onChange={(event) => setCookie(event.target.value)}
-            disabled={state.loading || state.saving}
-          />
-          <small>
-            拼题A 登录要短信验证，无法用账号密码自动登录，只能粘贴 Cookie。
-            它与「浙大一卡通」是**不同**的凭证，所以单独一项。
-          </small>
-        </label>
-        <div className="zpg-form-foot">
-          <button className="zy-primary" disabled={state.loading || state.saving || !cookie.trim()}>
-            {state.saving ? '正在保存…' : '保存 Cookie'}
-          </button>
-        </div>
-      </form>
-
-      {state.message && <Notice>{state.message}</Notice>}
-      {state.error && <Notice>{state.error}</Notice>}
-    </>
   );
 }
 

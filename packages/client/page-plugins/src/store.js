@@ -4,7 +4,7 @@
 // 而读一次图要跨宿主往返；让快照活过页面切换，切回来就不用重新等。
 // 快照的形状与 @lybx-leyw/dsh-zju-ui-shared 的 `useStore`（subscribe + getSnapshot）对齐，
 // 组件因此不需要认识任何服务。
-import { buildView, fiberNameIndex, readPlane } from './runtime.js';
+import { buildView, fiberNameIndex, readPlane } from '@lybx-leyw/dsh-zju-core-plugin-graph/browser';
 
 /**
  * 读一个 Cordis 平面的服务依赖事实。

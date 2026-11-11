@@ -1,8 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-page-plugins",
   "version": "0.1.0",
-  "description": "智云 Pro「插件」页：按运行时依赖关系图列出本工作台的插件，并取消没有被依赖的叶包（页面插件）",
-  "private": true,
+  "description": "智云 Pro「插件」页（只含 UI）：按运行时依赖关系图列出本工作台的插件并取消叶包。图的计算与只读路由由 core-plugin-graph 提供",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -10,6 +9,18 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/client/page-plugins"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -21,5 +32,7 @@
       ]
     }
   },
-  "license": "GPL-3.0-or-later"
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-core-plugin-graph": "0.1.0"
+  }
 }

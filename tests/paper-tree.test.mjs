@@ -81,6 +81,75 @@ test('readPaperTree：从编码目录解码出多级树', async () => {
   }
 });
 
+test('readPaperTree：**上传落的新布局**（论文文件夹）必须出现在树里', async () => {
+  // 这条守的是用户实际报到的问题：上传成功（200）、磁盘上也有了，
+  // 但侧栏只显示一个空的专题文件夹 —— 因为写侧落的是
+  // `<topic>/<论文名>/<论文名>.pdf`，而树原先只扫 `<topic>/*.pdf` 这一层。
+  //
+  // 「上传后看不见」是这类不一致里最难查的一种：没有任何错误，
+  // 页面只是少了一行，用户会以为文件根本没传上去。
+  const dir = await mkdtemp(path.join(tmpdir(), 'paper-tree-new-'));
+  try {
+    // 写侧（host.ts 的上传路由）落盘的确切形状
+    await mkdir(path.join(dir, '未分类', '论文一'), { recursive: true });
+    await writeFile(path.join(dir, '未分类', '论文一', '论文一.pdf'), 'x');
+    // 嵌套专题 + 论文文件夹
+    await mkdir(path.join(dir, '理学+力学', '讲义'), { recursive: true });
+    await writeFile(path.join(dir, '理学+力学', '讲义', '讲义.pdf'), 'x');
+    // 论文文件夹里的派生产物不是独立文献
+    await writeFile(path.join(dir, '理学+力学', '讲义', '讲义-zh.pdf'), 'x');
+    await writeFile(path.join(dir, '理学+力学', '讲义', '讲义-dual.pdf'), 'x');
+    await writeFile(path.join(dir, '理学+力学', '讲义', '讲义-en.pdf'), 'x');
+    await writeFile(path.join(dir, '理学+力学', '讲义', '讲义.txt'), 'x');
+    // 不是论文目录的子目录：不是文献（树里仍由顶层文件夹承载，本层不冒出一行）
+    await mkdir(path.join(dir, '未分类', '子专题'), { recursive: true });
+
+    const rows = await readPaperTree(dir);
+    const paths = rows.map((r) => `${r.type}:${r.path}`);
+
+    assert.ok(paths.includes('folder:未分类'));
+    assert.ok(paths.includes('paper:未分类/论文一'),
+      `上传落成的论文文件夹必须成行：${JSON.stringify(paths)}`);
+    assert.ok(paths.includes('paper:理学/力学/讲义'), '嵌套专题里的论文文件夹也要成行');
+    assert.ok(!paths.includes('paper:未分类/子专题'), '没有同名 .pdf 的目录不是论文');
+    assert.ok(!paths.some((p) => /-en\.pdf$|-zh\.pdf$|-dual\.pdf$/.test(p)),
+      `论文文件夹里的译文产物不该单独成行：${JSON.stringify(paths)}`);
+
+    const row = rows.find((r) => r.path === '未分类/论文一');
+    assert.equal(row.topic, '未分类', 'topic 是磁盘上的单段目录名（点开时上游就用它）');
+    assert.equal(row.name, '论文一', 'name 是论文目录名，不带 .pdf');
+    assert.equal(row.title, '论文一', '标题是论文名，展示层不该露出扩展名');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('readPaperTree：旧平铺布局仍可读，同名时论文文件夹赢', async () => {
+  // `listPapers` 对未迁移的旧库是「兼容读」；树必须同口径，否则会出现
+  // 「树里有、点开 404」或反过来的死行。同名时文件夹优先是**确定性优先级**，
+  // 与 listPapers / 迁移计划完全一致。
+  const dir = await mkdtemp(path.join(tmpdir(), 'paper-tree-mixed-'));
+  try {
+    await mkdir(path.join(dir, '旧专题'), { recursive: true });
+    await writeFile(path.join(dir, '旧专题', '旧论文.pdf'), 'x');
+    await writeFile(path.join(dir, '旧专题', '旧论文.txt'), 'x');
+    // 同名的新布局：这一个赢
+    await mkdir(path.join(dir, '旧专题', '同名'), { recursive: true });
+    await writeFile(path.join(dir, '旧专题', '同名', '同名.pdf'), 'x');
+    await writeFile(path.join(dir, '旧专题', '同名.pdf'), 'x');
+
+    const rows = await readPaperTree(dir);
+    const papers = rows.filter((r) => r.type === 'paper');
+
+    assert.deepEqual(papers.map((r) => r.path).sort(), ['旧专题/旧论文.pdf', '旧专题/同名'].sort(),
+      `旧平铺要留着、同名时只留文件夹：${JSON.stringify(papers)}`);
+    const same = papers.find((r) => r.name === '同名');
+    assert.equal(same.path, '旧专题/同名', '文件夹赢：路径不带 .pdf');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test('readPaperTree：目录不存在时返回空表，不抛错', async () => {
   const rows = await readPaperTree(path.join(tmpdir(), `definitely-not-there-${Date.now()}`));
   assert.deepEqual(rows, []);

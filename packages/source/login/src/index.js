@@ -849,3 +849,16 @@ export async function apply(ctx, config = {}) {
     if (typeof removeService === 'function') removeService();
   };
 }
+
+
+/**
+ * CAS 登录流程（D18：抽到本包，供所有走 CAS 的数据源共用）。
+ *
+ * 从前这套流程在 `source/zdbk` 里，别的 tier 1 包想用只能反向依赖它。抽到 tier 1 的
+ * 凭证包之后，各数据源只需传自己的 `entry`。
+ *
+ * 子路径入口也可用：`import { casLogin } from '@lybx-leyw/dsh-zju-source-login/cas'`。
+ */
+export {
+  authUrlGuard, casForm, hasCasForm, encryptCasPassword, casErrorMessage, describeAuthFailure, casLogin,
+} from './cas.js';

@@ -4,13 +4,21 @@ import { Transport } from './transport.js';
 import { SessionStore } from './session.js';
 import { authenticate, inspectJwt, jwtFromTokenCookie } from './auth.js';
 import { LiveSource } from './live.js';
+import { LiveCollector } from './live-caption.js';
 import { ClassroomError, array, object, shape } from './errors.js';
 import * as models from './models.js';
 import { download } from './download.js';
+import { KINDS, assetsOf, extractedAudioNotice, parseKinds } from './resources.js';
+import { DEFAULT_MAX_CHARACTERS, DEFAULT_TRANSCRIBE_TIMEOUT_MS, renderTranscript, transcribeFile } from './asr.js';
+import { checkComponents } from './diagnostics.js';
 export { ClassroomError } from './errors.js';
 export { SessionStore } from './session.js';
 export { Transport } from './transport.js';
 export { LiveSource } from './live.js';
+export { LiveCollector, decodeFrame, subtitleEndpoint, normalizeCaption, missingIntervals } from './live-caption.js';
+export { KINDS, parseKinds, assetsOf, videoHeight } from './resources.js';
+export { transcribeFile, withTimeout, normalizeSegments, renderTranscript, DEFAULT_TRANSCRIBE_TIMEOUT_MS } from './asr.js';
+export { checkComponents, checkMedia, checkAsr, resolveFfmpeg, COMPONENTS } from './diagnostics.js';
 
 export const ENDPOINTS = Object.freeze({
   courses: 'https://education.cmc.zju.edu.cn/personal/courseapi/vlabpassportapi/v1/account-profile/course',
@@ -48,7 +56,7 @@ function result(items, { complete = true, reason = 'single-response', total = nu
 }
 
 export class ClassroomSource {
-  constructor({ transport, sessionFile, protect, fetch, log, timeoutMs, maxPages = 20, pageSize = 100, onLogin } = {}) {
+  constructor({ transport, sessionFile, protect, fetch, log, timeoutMs, maxPages = 20, pageSize = 100, onLogin, transcriber = null, dataDirectory = null, asrHome = null } = {}) {
     if (!Number.isInteger(maxPages) || maxPages < 1 || !Number.isInteger(pageSize) || pageSize < 1) throw new TypeError('分页限制须为正整数');
     this.transport = transport ?? new Transport({ session: new SessionStore({ file: sessionFile, protect }), fetch, log, timeoutMs });
     // 直播与回放共用同一次登录（同一个 transport），但各自成类：
@@ -61,6 +69,20 @@ export class ClassroomSource {
     this.prefetching = new Map();
     /** 预取自己的中止控制器集合，`dispose` 时一次性取消。 */
     this.prefetchAbort = new Set();
+    /**
+     * 本地转写的识别内核（可选，见 `setTranscriber`）。
+     *
+     * **默认 null，并且不会自动回退到「假装转写成功」**：本包不含 sherpa-onnx
+     * 运行库与 SenseVoice 模型（见 `asr.js` 文件头）。没注入时 `transcribeAudio`
+     * 报 `DEPENDENCY_MISSING`，而不是返回空文本。
+     */
+    this.transcriber = transcriber;
+    /** 本包的数据目录（课件缓存、诊断用的托管 FFmpeg 路径都从它推）。 */
+    this.dataDirectory = dataDirectory;
+    /** 语音模型的 DSH home；null 时诊断回退到 `process.env.DSH_HOME`。 */
+    this.asrHome = asrHome;
+    /** 进行中的实时字幕采集任务（`Map<scope, LiveCollector>`）。 */
+    this.liveTasks = new Map();
     // 登录成功后的回调。用于把账号与会话交给**宿主凭据服务**，
     // 让 dsh-zhiyun-source-omni 不必再要一次同样的账号（见 index.js 的装配）。
     // 失败不影响登录本身 —— 课堂能用了，只是别的包还读不到。
@@ -220,9 +242,32 @@ export class ClassroomSource {
     }
     return result(items, { complete: false, reason: 'page-limit', total, pages: this.maxPages, received });
   }
-  async getSubtitles(courseId, subId, { signal, onProgress } = {}) {
+  /**
+   * 站点字幕。
+   *
+   * `options.tolerateNoSpeech` 是给 `searchResources` 用的：当天的课课后才有字幕，
+   * 上游对这类课次是**拒绝**（`未查询到语音数据`）而不是给空表。开这个开关时，
+   * 那**一种**业务失败按空表处理；其余失败照抛。
+   *
+   * 判定必须在 transport 里做（那里能看到上游 `msg`），这里只把开关传下去。
+   */
+  async getSubtitles(courseId, subId, { signal, onProgress, tolerateNoSpeech = false } = {}) {
     await this.ready; models.id(courseId); subId = models.id(subId);
-    const data = await this.transport.json(query(ENDPOINTS.subtitles, { sub_id: subId, format: 'json' }), '字幕', { signal });
+    const data = await this.transport.json(
+      query(ENDPOINTS.subtitles, { sub_id: subId, format: 'json' }),
+      '字幕',
+      {
+        signal,
+        ...(tolerateNoSpeech
+          ? { tolerate: (payload) => /未查询到语音数据|没有语音/.test(String(payload?.msg ?? payload?.message ?? '')) }
+          : {}),
+      },
+    );
+    // 被容忍的那一种：上游没有 list，按「0 句」返回，不是伪装成有数据。
+    if (!Array.isArray(data.list)) {
+      if (tolerateNoSpeech) return result([]);
+      throw shape('字幕', 'list');
+    }
     const items = rows(data.list, '字幕', 'list', row => rows(row.all_content, '字幕', 'all_content', models.subtitle))
       .flat().filter(s => s.text).sort((a, b) => a.startMs - b.startMs);
     onProgress?.({ phase: 'subtitles', completed: items.length, total: items.length });
@@ -432,6 +477,298 @@ export class ClassroomSource {
       courses: rows(row.course, '课表', 'course', models.scheduleEntry).sort((a, b) => a.startAt - b.startAt) })).sort((a, b) => a.day.localeCompare(b.day));
     return result(items);
   }
+  /**
+   * 「这场比赛有哪些资源」—— **只看不下载**（对应上游 `zhiyun search resources`）。
+   *
+   * # 为什么不直接读 `lesson.resources`
+   *
+   * `models.lesson()` 已经给出「有没有回放、课件叫什么」，但那是**课次响应里的
+   * 那一段**，没有种类标签，也不含课堂截图与字幕句数 —— 后两者要另外请求。
+   * 上游的做法就是把它们拼成同一个带 `kind` 的数组（`cli.ts:73-93`）。
+   *
+   * # `kind` 决定要不要发额外请求
+   *
+   * 只问 `video` 时**不该**因为「顺便」去拉一遍 83 页 PPT 和整份字幕。
+   * 所以 `slides` / `subtitles` 的计数是**按需**取的：
+   *
+   *   - `slides` 走 `getSlides`（分页，可能好几次往返）；
+   *   - `subtitles` 走 `getSubtitles`，并且**吞掉「还没有语音数据」这一种**
+   *     —— 当天的课本来就是课后才有字幕，把它当成整条命令失败，
+   *     会让「只想看看这节有没有回放」变成报错。**只吞这一种**，其余照抛。
+   *
+   * # `audio` 缺独立音轨时的那一条
+   *
+   * 上游会补 `{kind:'audio', source:'下载时从视频里提取'}`。本仓没有落地的
+   * 视频→音频压制链路，所以这里给的是 `available:false` 的说明项 ——
+   * 报一个下不下来的地址比报「没有」更糟。
+   *
+   * @param {string} courseId
+   * @param {string} subId
+   * @param {object} [options]
+   * @param {string|string[]} [options.kind] - `video,audio,ppt,slides,subtitles` 或 `all`（默认）。
+   * @param {AbortSignal} [options.signal]
+   * @returns {Promise<{courseId, subId, title, playable, kinds:string[], resources:object[], meta}>}
+   */
+  async searchResources(courseId, subId, { kind, signal } = {}) {
+    await this.ready;
+    courseId = models.id(courseId, '课程'); subId = models.id(subId, '节次');
+    const wanted = parseKinds(kind);
+    const data = await this.transport.json(query(ENDPOINTS.lessons, { course_id: courseId }), '节次', { signal });
+    const lessons = rows(data.result?.data, '节次', 'result.data', models.lesson);
+    // 用 subId 精确定位：只按「第几次课」定位在上游是另一套编号，容易错一课。
+    const lesson = lessons.find((item) => item.subId === subId);
+    if (!lesson) throw new ClassroomError('NOT_FOUND', '该课次不属于这门课', { courseId, subId });
+
+    const resources = [];
+    const seen = new Set();
+    for (const asset of assetsOf(lesson)) {
+      // `ppt` 与 `video` / `audio` 都受 `kind` 约束：只要 `slides` 时不返回视频条目。
+      if (!wanted.includes(asset.kind)) continue;
+      const identity = `${asset.kind}\u0000${asset.url}`;
+      if (seen.has(identity)) continue;
+      seen.add(identity);
+      resources.push({ ...asset, available: true });
+    }
+    if (wanted.includes('audio') && !resources.some((item) => item.kind === 'audio')) {
+      const notice = extractedAudioNotice();
+      if (!seen.has(`audio\u0000${notice.url}`)) resources.push(notice);
+    }
+    if (wanted.includes('slides')) {
+      const slides = await this.getSlides(courseId, subId, { signal });
+      resources.push({ kind: 'slides', name: '课堂截图', available: slides.items.length > 0, count: slides.items.length });
+    }
+    if (wanted.includes('subtitles')) {
+      // 当天的课要点播之后才有字幕：上游对这类课次是**拒绝**而不是空表。
+      // 只把这一种当「0 句」（判定在 transport 层，那里看得到上游 msg），
+      // 其余照抛 —— 把网络错误吞成「没有字幕」会让人白等到下课。
+      const subtitles = await this.getSubtitles(courseId, subId, { signal, tolerateNoSpeech: true });
+      const count = subtitles.items.length;
+      resources.push({ kind: 'subtitles', name: '站点字幕', available: count > 0, count });
+    }
+    return {
+      courseId,
+      subId,
+      title: lesson.title,
+      playable: lesson.isPlayable,
+      kinds: wanted,
+      resources,
+      meta: { source: 'zhiyun-classroom', fetchedAt: new Date().toISOString(), version: digest(resources) },
+    };
+  }
+
+  /**
+   * 本地组件诊断（对应上游 `zhiyun check`）。
+   *
+   * **只读**：不装任何东西、不下模型、不写文件。
+   *
+   * 上游的 `zhiyun setup`（`setup.ts`，`npm install ffmpeg-static` + 下 240 MB 模型）
+   * 是**写操作**，不在本包的只读面上 —— 理由与替代路径写在 README「已知限制」。
+   *
+   * @param {string|string[]} [component] - `'asr'` / `'media'` / `'all'`（默认）。
+   * @returns {Promise<{component:string, available:boolean, results:object[]}>}
+   */
+  async check(component = 'all', options = {}) {
+    return checkComponents(component, {
+      dataDirectory: this.dataDirectory,
+      ...(this.asrHome === null ? {} : { home: this.asrHome }),
+      ...options,
+    });
+  }
+
+  /**
+   * 注入本地转写的识别内核。
+   *
+   * 形状：`({file, directory, signal}) => Promise<{segments:[{start,end,text}], engine?}>`
+   * （`start` / `end` 单位秒）。传对象也行：只要有 `transcribe` 方法。
+   *
+   * 为什么是注入而不是内置：本包不含 `sherpa-onnx-node` 与 SenseVoice 模型
+   * （见 `asr.js` 文件头）。返回撤销函数，方便宿主卸载时还原。
+   */
+  setTranscriber(transcriber) {
+    const previous = this.transcriber;
+    this.transcriber = transcriber ?? null;
+    return () => { if (this.transcriber === (transcriber ?? null)) this.transcriber = previous; };
+  }
+
+  /**
+   * 本地音视频转写（对应上游 `zhiyun trans audio`）。
+   *
+   * # 代价（必须让调用方看见）
+   *
+   * 上游实测：一节 148 分钟的录播在 CPU 上要跑**几分钟**，模型首次下载约 **240 MB**。
+   * 所以这个方法是本包**唯一**一个「分钟级」的调用，默认上限 30 分钟，
+   * 并且必须能被 `signal` 取消。转写期间不要在同一线程上等 UI。
+   *
+   * # 落盘归本包
+   *
+   * D17：写自己的数据目录不算写上游。产物在 `directory` 下
+   * （`segments.json` / `transcript.txt` / `transcript.md` / `transcribe.json`），
+   * 中间 WAV 在 `finally` 里删掉 —— 一节课近 300 MB。
+   *
+   * @param {object} options
+   * @param {string} options.file - 本地音视频的**绝对路径**。
+   * @param {string} options.directory - 输出目录的**绝对路径**。
+   * @param {AbortSignal} [options.signal]
+   * @param {number} [options.timeoutMs] - 默认 `DEFAULT_TRANSCRIBE_TIMEOUT_MS`（30 分钟）。
+   * @returns `{directory, markdown, segments, text, totalCharacters, durationMs, engine, reused, bytes}`
+   */
+  async transcribeAudio({ file, directory, signal, timeoutMs = DEFAULT_TRANSCRIBE_TIMEOUT_MS } = {}) {
+    await this.ready;
+    return transcribeFile(this.transcriber, {
+      file,
+      directory,
+      signal,
+      timeoutMs,
+      engine: typeof this.transcriber?.engine === 'string' ? this.transcriber.engine : null,
+    });
+  }
+
+  /**
+   * 开始采一节课的**官方实时字幕**（`zhiyun live start`）。
+   *
+   * ⚠️ 语义与其余方法**不同**，见 `live-caption.js` 文件头的长说明。要点：
+   *
+   *   - 这是**长连接（HTTP comet 长轮询）**，不是请求-响应；
+   *   - `liveStart` **只建立会话**：起后台循环后立刻返回，**不**等到收到第一条字；
+   *   - 生命周期由本包管：`liveStatus` 观察、`liveStop` 结束、`dispose()` 兜底；
+   *   - **进程退出 = 采集停止**（没有上游那种脱离进程的守护进程）。
+   *
+   * 同一范围（courseId+subId 集合）重复调用返回**同一个任务**，不重复发请求。
+   *
+   * @param {object} options
+   * @param {string} options.courseId
+   * @param {string} options.subId
+   * @param {string} [options.title] - 只用于展示。
+   * @param {string} [options.room]
+   * @param {number} [options.startsAt] - 开课时间（毫秒）。缺省按「现在」处理。
+   * @param {number} [options.endsAt] - 下课时间（毫秒）。缺省为「开课后 2 小时」。
+   * @returns {Promise<object>} 与 `liveStatus()` 同形状。
+   */
+  async liveStart({ courseId, subId, title = '', room = null, startsAt, endsAt } = {}) {
+    await this.ready;
+    courseId = models.id(courseId, '直播课程'); subId = models.id(subId, '直播节次');
+    const begin = Number.isFinite(startsAt) ? Number(startsAt) : Date.now();
+    const finish = Number.isFinite(endsAt) ? Number(endsAt) : begin + 2 * 3600000;
+    if (finish <= begin) throw new ClassroomError('INVALID_INPUT', '下课时间须晚于开课时间');
+    const scope = `${courseId}:${subId}`;
+    const existing = this.liveTasks.get(scope);
+    if (existing && !['stopped', 'ended', 'failed'].includes(existing.status)) {
+      return { ...existing.statusView(), reused: true };
+    }
+    const collector = new LiveCollector({
+      live: this.live,
+      lessons: [{ courseId, subId, title, room, startsAt: begin, endsAt: finish }],
+      log: (event) => this.transport.log?.(`[zhiyun-classroom] live ${JSON.stringify(event)}`),
+    });
+    this.liveTasks.set(scope, collector);
+    collector.start();
+    return { ...collector.statusView(), reused: false };
+  }
+
+  /**
+   * 实时字幕采集的状态（`zhiyun live status`）。
+   *
+   * **纯本地**：不联网、不改状态。`receiving` 显式区分「连上了」和「真的收到字了」——
+   * 这两件事在用户眼里是一句话，在协议上是两回事。
+   *
+   * @param {object} [options]
+   * @param {string} [options.courseId]
+   * @param {string} [options.subId] - 不传时返回所有任务。
+   */
+  liveStatus({ courseId, subId } = {}) {
+    if (courseId != null || subId != null) {
+      const scope = `${models.id(courseId, '直播课程')}:${models.id(subId, '直播节次')}`;
+      const collector = this.liveTasks.get(scope);
+      if (!collector) return { status: 'not-running', message: '这节课没有正在进行的字幕采集。', lessons: [], sentences: 0, receiving: false };
+      return collector.statusView();
+    }
+    const tasks = [...this.liveTasks.values()];
+    if (!tasks.length) {
+      return { status: 'not-running', message: '尚未启动实时字幕采集。', tasks: [], lessons: [], sentences: 0, receiving: false };
+    }
+    return {
+      status: tasks.some((task) => task.status === 'running') ? 'running' : tasks[0].status,
+      tasks: tasks.map((task) => task.statusView()),
+      lessons: tasks.flatMap((task) => task.statusView().lessons),
+      sentences: tasks.reduce((sum, task) => sum + task.statusView().sentences, 0),
+      receiving: tasks.some((task) => task.statusView().receiving),
+    };
+  }
+
+  /**
+   * 停止采集（`zhiyun live stop`）。**已收到的字不删**，只是不再继续收。
+   *
+   * @returns {Promise<object>} 停止后的状态快照。
+   */
+  async liveStop({ courseId, subId } = {}) {
+    if (courseId != null || subId != null) {
+      const scope = `${models.id(courseId, '直播课程')}:${models.id(subId, '直播节次')}`;
+      const collector = this.liveTasks.get(scope);
+      if (!collector) return { status: 'not-running', message: '这节课没有正在进行的字幕采集。', lessons: [], sentences: 0, receiving: false };
+      const view = await collector.stop();
+      this.liveTasks.delete(scope);
+      return view;
+    }
+    const views = [];
+    for (const [scope, collector] of [...this.liveTasks]) {
+      views.push(await collector.stop());
+      this.liveTasks.delete(scope);
+    }
+    return {
+      status: 'stopped',
+      tasks: views,
+      lessons: views.flatMap((view) => view.lessons),
+      sentences: views.reduce((sum, view) => sum + view.sentences, 0),
+      receiving: false,
+    };
+  }
+
+  /**
+   * 取窗口内的**已收**文字（`zhiyun live text`）。
+   *
+   * 与上游的差别：**不等待未来**。上游 `liveText` 会为 `--after` 阻塞到点
+   * （`live-task.ts:186-194`），那是 CLI 的一次性语义；本包是长驻服务，
+   * 阻塞式等待会把宿主的一个请求挂上几分钟。未来部分由 `pending` 标出来，
+   * 调用方自己决定要不要再查一次。
+   *
+   * @param {object} [options]
+   * @param {string} [options.courseId]
+   * @param {string} [options.subId]
+   * @param {number} [options.at] - 窗口中心（毫秒），默认现在。
+   * @param {number} [options.before] - 往前多少毫秒，默认 5 分钟。
+   * @param {number} [options.after] - 往后多少毫秒，默认 0。
+   * @returns 窗口结果；多课次命中时报 `INVALID_INPUT` 并在 details 里给候选。
+   */
+  liveText({ courseId, subId, at, before = 5 * 60000, after = 0 } = {}) {
+    if (courseId != null || subId != null) {
+      const scope = `${models.id(courseId, '直播课程')}:${models.id(subId, '直播节次')}`;
+      const collector = this.liveTasks.get(scope);
+      if (!collector) {
+        return { status: 'unavailable', message: '这节课没有正在进行的字幕采集。', text: '', segments: [], gaps: [] };
+      }
+      return collector.text({ at, before, after });
+    }
+    const tasks = [...this.liveTasks.values()];
+    if (!tasks.length) {
+      return { status: 'unavailable', message: '尚未启动实时字幕采集。', text: '', segments: [], gaps: [] };
+    }
+    // 多任务时逐个试：某个窗口只对应一个任务才不会歧义。
+    const hits = [];
+    const misses = [];
+    for (const task of tasks) {
+      try { hits.push(task.text({ at, before, after })); } catch (error) { misses.push(error); }
+    }
+    const live = hits.filter((hit) => hit.status !== 'unavailable');
+    if (live.length === 1) return live[0];
+    if (live.length > 1) {
+      throw new ClassroomError('INVALID_INPUT', '文字窗口对应多个课次，请指定课程或缩小时间范围', {
+        candidates: live.map((hit) => ({ course: hit.course, window: hit.window })),
+      });
+    }
+    if (hits.length === 1) return hits[0];
+    throw misses[0] ?? new ClassroomError('INVALID_INPUT', '文字窗口没有对应的采集任务');
+  }
+
   async downloadResource(options) { await this.ready; return download(this.transport, options); }
 
   /**
@@ -531,6 +868,20 @@ export class ClassroomSource {
     for (const controller of this.prefetchAbort) controller.abort();
     this.prefetchAbort.clear();
     this.prefetching.clear();
+    /**
+     * 实时字幕的采集循环也必须**先停干净**再关 transport。
+     *
+     * 只 abort 不 await 是不够的：轮询循环正在 `await post()`，它握着的
+     * 就是这个 transport —— 下面 `close()` 会把它打断成一条无主错误，
+     * 而且 `u<uid>&cl` 退订请求根本发不出去，服务端会留着那路订阅。
+     *
+     * 顺序反过来（先 close 再 stop）等于让 stop 里的退订必然失败。
+     */
+    const live = [...this.liveTasks.values()];
+    this.liveTasks.clear();
+    for (const collector of live) {
+      try { await collector.stop(); } catch (error) { this.transport.log?.(`[zhiyun-classroom] 停止实时字幕失败：${error?.message ?? error}`); }
+    }
     await Promise.allSettled(pending);
     this.transport.close();
     await this.ready;

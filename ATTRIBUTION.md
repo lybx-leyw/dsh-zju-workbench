@@ -23,10 +23,49 @@
 - [bili-2-ppt](https://github.com/ewkzcz/bili-2-ppt) · **MIT** ✅（`LICENSE` 实文已核，**双版权头**：`Copyright (c) 2026 Bili Note contributors (https://github.com/Rimagination/bili-note)` + `Copyright (c) 2026 ewkzcz`；其上游 [Rimagination/bili-note](https://github.com/Rimagination/bili-note) 同为 MIT）· ★33 · 参考提交 `5ebdd759f9493855b82e49ab1d92319b272f906c`（`master` 与 `dev` 同 SHA，2026-09-25）。B 站视频 → 学习资料的 Agent Skill，四阶段：字幕/ASR → **画面采集** → 知识树 → 文档与 PPT。**已阅读**其 `README.md`、`SKILL.md`、`LICENSE`、`bili-keyframes/SKILL.md`、`bili-keyframes/scripts/dedupe_frames.py`（`group_runs()` / `dedupe_part()` / `collect_hints()` 全文）、`bili-keyframes/scripts/cdp_capture.mjs`（手写 CDP 客户端与「seek → 等 `seeking=false` → 等 settle → `Page.captureScreenshot`」序列）、`bili-subtitle-asr/SKILL.md`、`bili-keyframes/references/capture-contract.md`，以及全量文件清单（74 文件 / 6.29 MB —— 其中 5.03 MB 是三套 `.pptx` 模板、419 KB 是 Python，**JS 仅 14 KB**）。用途：`packages/dsh-zhiyun-source-bilibili`（B 站数据源空骨架）的**画面那一半**——本仓「帧 → 页」判据为 0，该上游给出双条件判据（相邻帧差 **且** 与本段首帧累积差）、保留**段末**帧、`createdSec` 取**段首**，以及阈值 3.0 的标定缘由（旧默认 9 会把版式相近的相邻页合并）。**未复制其任何源码**：骨架内只有注释与 TODO，`dependencies` 为空；阈值只作**待标定初值**记录。**不能锁版**：`registry.npmjs.org/bili-2-ppt` 返回 `Not found`（未发布 npm）。**本地参考**已按提交 SHA 拉取校验后落在 `.refers/bili-2-ppt/`（归档 SHA-256 `f5f42a38ce59983b98d09ce9486000a5206a58c40456ca7cd5f0a5b2a2669575`，4,523,988 B；解包树与 SHA 归档逐文件一致），该目录被 `.gitignore` 忽略，**不随仓库分发**。⚠ 其形态是 Python + venv + 外部 Chrome（原生 Windows 须 WSL2），与本仓浏览器工作台不兼容 → **只能能力提取，不能挂载**。
 - [dsh-bili-watch](https://github.com/Sacredbluedragon/dsh-bili-watch) · **MIT** ✅（`LICENSE` 实文已核，1073 B）· ★5 · 参考版本 `0.3.5`（npm `latest`，2026-10-29T04:06 发布；参考提交 `6b2d3ccdaafa66e63090cb9032f7dbaa3272966e`）。把 B 站视频读成文本给 AI 用的 DSH 插件 / CLI：元数据、评论、弹幕、**官方 AI 字幕**、本地 ASR 转写、抽帧 OCR，支持 `b23.tv` 短链与 av 号。**已阅读**其 `README.md`、`package.json`、`LICENSE`、`THIRD_PARTY_NOTICES.md`、`cordis.patch.yml`、`tools/look.mjs` 的 `fetchSubtitle()`（WBI 签名 → `x/player/wbi/v2` → `subtitle_url` → `cues`）、`cmdFrames()` 与 `cmdLocal()`，以及 `deps/_bili-asr.py` 的输出 schema。用途：`packages/dsh-zhiyun-source-bilibili`（B 站数据源空骨架）的**字幕那一半**——其 `cues` 形状为 `{from,to,content}`（秒），与本仓 `subtitles[]` 的 `{startMs,endMs,text}` 一一对应，转换只有三行；且 **`aid`/`cid` 都是纯数字**，能直接过 `workbench` 的 `identifier()` 与 `knowledge` 的 `IDENTITY_RE`。**未复制其任何源码**：骨架内只有注释与 TODO，`dependencies` 为空，锁版凭据只写进 `src/upstream.js` 常量（`package.json` **尚未**加这条依赖）。**可锁版但尚未锁**：npm 实测 `dsh-bili-watch@0.3.5`，`unpacked 443,445 B` / 13 files，唯一运行时依赖 `qrcode@^1.5.4`，三条 peer 均 `optional` —— 但挂载会多出 `bili_watch` 工具与 `/bili` 命令两个命令面，**是挂载还是只取自建，属评审待拍板项**（见骨架 TODO-1）。**本地参考**已按提交 SHA 拉取校验后落在 `.refers/dsh-bili-watch/`（归档 SHA-256 `7e1e1ac15a91912c1019ae8a4c12645f0ccb7b73e5b9506ea19ffa46a67ee0aa`，174,998 B / 解包 524 KB），该目录被 `.gitignore` 忽略，**不随仓库分发**。⚠ 实测**匿名态拿不到官方字幕**（90 个视频全部 `subtitles: []`），必须登录态 `SESSDATA`；⚠ 其 `frames` 是**固定间隔采样，不做「帧 → 页」归并**，这正是本仓要自己补的那一步。
 
-- [dsh-zju-assistant](https://github.com/Anchorite-no/dsh-zju-assistant) · **GPL-3.0-only** ✅（`LICENSE` 实文已核，35,149 B，GitHub API 确认 `main` @ `e59b81e1c254d979402f047c6fc8e43bf30b9713`）· npm `dsh-zju-assistant@0.1.8`（`engines.dsh >= 0.2.1-rc.3 < 0.3.0`，与本仓锁定的 `0.2.0-rc.2` / `0.2.1-alpha.1` **不兼容**）。浙大学生的一站式校园助手，DSH 插件形态，覆盖教务、学在浙大、智云课堂、学习通、PTA、通知、场馆、CC98、邮箱、微信/钉钉聊天等。**已阅读**其根 `README.md`、`plugin/` 与 `core/zju/lib/` 的文件清单（GitHub Trees API，约 900 条路径），以及 `core/zju/lib/{webvpn,zjuam,zhiyun,zdbk,xuezai,cc98,yjsy,tyys}/module.json` 的完整内容。**未复制其任何源码**，也未把包加入 `dependencies` —— GPL-3.0 的分发义务与本仓公开仓库的定位冲突，且其宿主版本门槛更高。
+- [dsh-zju-assistant](https://github.com/Anchorite-no/dsh-zju-assistant) · **GPL-3.0-only** ✅（`LICENSE` 实文已核，35,149 B，GitHub API 确认 `main` @ `e59b81e1c254d979402f047c6fc8e43bf30b9713`）· npm `dsh-zju-assistant@0.1.8`（`engines.dsh >= 0.2.1-rc.3 < 0.3.0`，与本仓锁定的 `0.2.0-rc.2` / `0.2.1-alpha.1` **不兼容**）。浙大学生的一站式校园助手，DSH 插件形态，覆盖教务、学在浙大、智云课堂、学习通、PTA、通知、场馆、CC98、邮箱、微信/钉钉聊天等。
+
+  **⚠️ 本仓已实际融合其实现**（此前这条写的是「未复制其任何源码」，那是当时的真实状态，现已不成立）。上游以 `packages/vendor/zju-assistant/` 形式整包 vendor 进来，逐包移植细节见各包内 `ATTRIBUTION.md`；总账如下。
 
   本次借鉴的是**模块清单的设计**（`module.json` 的 `tier` / `auth` / `network` / `writes` / `provides` / `requires` 六个字段），落到本仓 `packages/source/*/package.json` 的 `dsh.capability` 与 `tests/source-capability.test.mjs`。具体采纳的只有一条判断：**业务域应当平级依赖基础设施，而不是互相依赖。** 其清单里 `webvpn` 与 `zjuam` 是 `tier: 0` 的基础设施，`zhiyun` / `zdbk` / `xuezai` / `cc98` 等 `tier: 1` 业务域一律写成 `requires: [..., webvpn, zjuam]`，**没有一个业务域依赖另一个业务域**。这正好命中本仓此前的实际形状（`cc98` / `zdbk` / `xxt` 都 `import` 了 `@lybx-leyw/dsh-zju-source-campus`，即一个数据包的能力被另一个业务包绑架），因此把这条约束写成了可执行的守卫。
 
+
+  ### 融合清单：新增机制 vs 增强已有实现
+
+  **「新增机制」**＝本仓此前没有这个能力，该包是上游实现的移植。
+  **「增强已有」**＝本仓已有同名数据源包，从上游补齐能力或修正实现。
+
+  | 包 | 融合方式 | 上游来源 | 归属文件 |
+  | --- | --- | --- | --- |
+  | `source/yjsy` | **新增机制** | `core/zju/lib/yjsy` | 见包内 `README.md` |
+  | `source/chalaoshi` | **新增机制** | `core/zju/lib/chalaoshi` | 同上 |
+  | `source/ebook` | **新增机制** | `core/zju/lib/ebook` | 同上 |
+  | `source/cnki` | **新增机制** | `core/zju/lib/cnki` | 同上 |
+  | `source/lab` | **新增机制** | `core/zju/lib/lab` | 同上 |
+  | `source/sztz` | **新增机制** | `core/zju/lib/sztz` | 同上 |
+  | `source/notice` | **新增机制** | `core/zju/lib/notice`（含 `adapters/` 三套） | `packages/source/notice/ATTRIBUTION.md` |
+  | `source/wechat-chat` | **新增机制** | `core/wechat`（独立 agent skill） | `packages/source/wechat-chat/ATTRIBUTION.md` |
+  | `source/dingtalk-chat` | **新增机制** | `core/dingtalk`（独立 agent skill） | `packages/source/dingtalk-chat/ATTRIBUTION.md` |
+  | `source/weread` | **新增机制** | `core/weread`（独立 agent skill） | `packages/source/weread/ATTRIBUTION.md` |
+  | `source/webvpn` | **增强已有** | `core/zju/lib/webvpn` | 见 `packages/source/webvpn/ATTRIBUTION.md` |
+  | `source/zdbk` | **待融合** | `core/zju/lib/zdbk` | 上游 17 条能力，本仓现有 5 条 |
+  | `source/cc98` | **待融合** | `core/zju/lib/cc98` | 上游 32 条，本仓现有 10 条 |
+  | `source/xxt` | **待融合** | `core/zju/lib/chaoxing` | 上游 10 条，本仓现有 9 条（注意上游模块名是 `chaoxing`） |
+  | `source/classroom` | **待融合** | `core/zju/lib/zhiyun` | 上游 16 条，本仓 17 条但有缺项 |
+  | `source/campus` | **待拆包** | `core/zju/lib/xuezai` + `pta` | 按 D8/D17 拆成 `source/xuezai` + `source/pta`，写操作归 `tool/` |
+  | `source/login` | **增强已有** | `core/zju/lib/zjuam` + CAS 流程 | 已抽出通用 CAS（D18） |
+  | `source/mail` | **待建** | `plugin/host/mail.mjs` | 拆 4 包之一，只读部分进 `source/mail`，发信归 `tool/mail` |
+
+  ### 有意丢弃的上游实现
+
+  | 上游 | 丢弃理由 |
+  | --- | --- |
+  | 微信/钉钉的**密钥提取**（`runtime-key.cs` 等） | **未丢弃**——已随 skill 包完整移植，上游以 MIT 声明了格式来源（见 `packages/source/wechat-chat/THIRD_PARTY_NOTICES.txt`） |
+  | `tyys/captcha.ts`（点字验证码自动识别） | **丢弃**：规避站点反自动化措施，且需外部模型服务。见 `packages/source/tyys/README.md` |
+  | `cnki/slider.ts`（滑块求解） | **丢弃**：同性质。`needs_user` 交由用户手动完成 |
+  | `weread` 的验证码自动识别 | **未丢弃**——原样保留但默认不启用，性质判定与合规提示见 `packages/source/weread/README.md` |
+  | 各模块的 `cli.ts` | **丢弃**：按 D17，数据源不注册 CLI 命令 |
+  | 全部写操作（选课、报名、预约、发帖、发信、提交作业等） | **归 `packages/tool/*`**（按 D17 读写分层），不在 `source/*` |
   **未采纳**其 TypeScript + 编译步骤、30+ 子插件粒度、`module.json` 与 CLI 双入口、以及微信/钉钉本机聊天记录读取（超出校园数据源范畴且有隐私面）。
 
 ## 运行时依赖的第三方插件

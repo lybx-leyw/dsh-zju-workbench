@@ -32,14 +32,14 @@ import {
   PythonBridge,
   probeVendorDeps,
   resolvePython,
-} from '../packages/dsh-zhiyun-host-deeptutor/src/runtime.js';
-import { createLlmBridge } from '../packages/dsh-zhiyun-host-deeptutor/src/models.js';
-import { toQuizCandidates } from '../packages/dsh-zhiyun-host-deeptutor/src/adapters/quiz.js';
+} from '../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src/runtime.js';
+import { createLlmBridge } from '../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src/models.js';
+import { toQuizCandidates } from '../archive/deprecated-packages/dsh-zhiyun-host-deeptutor/src/adapters/quiz.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
-const PACKAGE_DIR = join(REPO_ROOT, 'packages', 'dsh-zhiyun-host-deeptutor');
-const VENDOR_PATH = join(PACKAGE_DIR, 'vendor', 'deeptutor');
+const PACKAGE_DIR = join(REPO_ROOT, 'archive', 'deprecated-packages', 'dsh-zhiyun-host-deeptutor');
+const VENDOR_PATH = join(REPO_ROOT, 'archive', 'deeptutor-vendor-1.6.15', 'deeptutor');
 
 // ── 参数 ────────────────────────────────────────────────────────────────────
 

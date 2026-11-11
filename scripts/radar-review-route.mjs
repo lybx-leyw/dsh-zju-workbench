@@ -46,7 +46,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const QUIZ_SRC = path.join(ROOT, 'packages', '@lybx-leyw/dsh-zju-core-quiz', 'src');
+// ⚠️ `packages/@lybx-leyw/dsh-zju-core-quiz` 是**包名作用域**，不是目录。
+// 重构后真实路径是 `packages/core/quiz`（包名仍是 `@lybx-leyw/dsh-zju-core-quiz`）。
+const QUIZ_SRC = path.join(ROOT, 'packages', 'core', 'quiz', 'src');
 
 /** 确定性伪随机，保证「同一份代码跑出同一个数」。 */
 function seeded(seed) {

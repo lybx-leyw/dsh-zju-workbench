@@ -1,9 +1,9 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-parser",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "智云 App 三阶段解析器，使用 DSH LLM 与附件服务",
+  "type": "module",
+  "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
     "./parser": "./src/parser.js",
@@ -12,15 +12,26 @@
     "./accel": "./src/accel.js",
     "./package.json": "./package.json"
   },
-  "dependencies": {
-    "sharp": "0.35.5",
-    "@lybx-leyw/dsh-zju-core-llm-error": "^0.1.0"
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "assets/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/parser"
   },
-  "main": "./src/index.js",
+  "license": "MIT",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "dependencies": {
+    "sharp": "0.35.5",
+    "@lybx-leyw/dsh-zju-core-llm-error": "^0.1.0"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-atomic-write": "0.2.2-rc.1"
@@ -29,6 +40,5 @@
     "@deepseek-ai/dsh-atomic-write": {
       "optional": true
     }
-  },
-  "license": "MIT"
+  }
 }

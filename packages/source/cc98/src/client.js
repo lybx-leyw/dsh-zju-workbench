@@ -41,6 +41,37 @@ export function apiPath(path) {
 }
 
 /**
+ * 帖内文件所在的唯一主机。
+ *
+ * 上游实测：文件全在 `file.cc98.org`，**不要** CC98 的 Bearer 令牌。
+ * 本包只允许从这一个主机取文件 —— 楼层正文里的链接是**外部用户写的**，
+ * 放任任意主机就等于让一条帖子把本包变成一个任意 URL 抓取器。
+ */
+export const FILE_HOST = 'file.cc98.org';
+
+/**
+ * 校验并归一一条帖内文件链接。
+ *
+ * @param url - 楼层正文里出现的链接。
+ * @returns `URL` 实例（已校验协议与主机）。
+ * @throws ClassroomError `INVALID_PATH` —— 不是 `https://file.cc98.org/…`。
+ */
+export function fileApiUrl(url) {
+  let parsed;
+  try {
+    parsed = new URL(String(url ?? ''));
+  } catch {
+    throw new ClassroomError('INVALID_PATH', `不是合法的文件链接：${String(url)}`);
+  }
+  if (parsed.protocol !== 'https:' || parsed.hostname.toLowerCase() !== FILE_HOST) {
+    throw new ClassroomError('INVALID_PATH',
+      `只下载 ${FILE_HOST} 上的 CC98 文件（收到 ${parsed.protocol}//${parsed.hostname}）。`
+      + '帖子里的图片/附件用 topicDownload 会自动筛成这个主机。');
+  }
+  return parsed;
+}
+
+/**
  * 把查询参数拼进 URL。
  *
  * `undefined` / `null` 的键**整个不出现**，而不是发 `?from=undefined`：
@@ -147,21 +178,60 @@ export class Cc98Client {
    * @param {AbortSignal} [options.signal] - 取消信号。
    * @returns `{ status, text }`。
    */
-  async send(method, path, { query, anonymous = false, signal } = {}) {
+  /**
+   * 发一次 HTTP 请求。
+   *
+   * # 写请求的 body 有两种形态（照上游实测）
+   *
+   * - **对象** → 序列化成 JSON（`rating-v2` 这类接口要 JSON body）
+   * - **字符串** → 原样发（`like` 的 body 就是一个 `"1"` / `"2"`）
+   *
+   * 不在这里判断该用哪种 —— 由调用方按接口约定给。判错了服务端会拒，
+   * 那比在这里猜一个默认值更容易查。
+   *
+   * @param method - HTTP 方法。
+   * @param path - 接口路径。
+   * @param [options.query] - 查询串。
+   * @param [options.body] - 请求体；对象走 JSON，字符串原样。
+   * @param [options.anonymous] - 不带 Bearer。
+   * @param [options.signal] - 取消信号。
+   * @returns 原始响应（`{ status, headers, text }`）。
+   */
+  async send(method, path, { query, body, anonymous = false, signal } = {}) {
     const url = withQuery(`${CC98_API}${apiPath(path)}`, query);
     const headers = { Accept: 'application/json', Referer: REFERER };
     if (!anonymous) headers.Authorization = `Bearer ${await this.tokens.token()}`;
-    return this.transport.request(url, { method, headers, signal });
+
+    /** @type {Record<string, unknown>} */
+    const init = { method, headers, signal };
+    if (body !== undefined) {
+      if (typeof body === 'string') {
+        headers['Content-Type'] = 'text/plain;charset=UTF-8';
+        init.body = body;
+      } else {
+        headers['Content-Type'] = 'application/json;charset=UTF-8';
+        init.body = JSON.stringify(body);
+      }
+    }
+    return this.transport.request(url, init);
   }
 
   /**
-   * 读一个 CC98 接口。
+   * 调一个 CC98 接口。
    *
-   * 401 时刷新令牌**重试一次**：令牌可能只是到期（`expires_at` 留了 60 秒余量，
-   * 仍可能被服务端提前判废）。若第二次仍是 401，说明密码/账号真有问题，
-   * 交给 `httpError` 报 `LOGIN_REQUIRED` —— 不再重试。
+   * # 401 会刷新令牌重试一次
    *
-   * @param {string} method - 只应传 GET。
+   * 令牌可能只是到期（`expires_at` 留了 60 秒余量，仍可能被服务端提前判废）。
+   * 若第二次仍是 401，说明密码/账号真有问题，交给 `httpError` 报
+   * `LOGIN_REQUIRED` —— 不再重试。
+   *
+   * # 读与写都走这里
+   *
+   * 写请求（`PUT` / `POST` / `DELETE`）由 `writes.js` 调用，body 形态见 `send`。
+   * **本方法不做审批** —— 审批在 `packages/tool/campus-write`。
+   * 数据源只管「怎么和平台说话」，「要不要做」是 tool 的事。
+   *
+   * @param {string} method - `GET` / `PUT` / `POST` / `DELETE`。
    * @param {string} path - 接口路径。
    * @param {object} [options] - 同 `send`。
    * @returns 解析后的响应体。
@@ -189,5 +259,56 @@ export class Cc98Client {
    */
   async get(path, options) {
     return this.request('GET', path, options);
+  }
+
+  /**
+   * 取一个帖内文件（**二进制**，不分域白名单）。
+   *
+   * # 为什么单独一条路，而不是复用 `get`
+   *
+   * 1. 文件在 `file.cc98.org`，**不要 Bearer 令牌**（上游实测：带上也无害，
+   *    但把它发给另一个域没有任何必要，反而多一处泄漏面）；
+   * 2. `get` 会 `parseBody`（JSON 解析），对图片/视频是纯粹的浪费与误判；
+   * 3. 文件可能很大，要单独的超时预算（默认 20 秒只够 API 请求）。
+   *
+   * # 不落盘
+   *
+   * 这里只把字节取回内存并返回。写哪个目录、叫什么名字由 `reads.js` 决定
+   * （它知道 `downloadDir` 的来历）。把两件事分开，是为了让"下载"这件事
+   * 只有一个地方碰 `fs`。
+   *
+   * @param url - 已校验的 `https://file.cc98.org/…` 链接。
+   * @param [options]
+   * @param [options.timeoutMs] - 单次下载超时（默认 10 分钟，与上游一致）。
+   * @returns `{ bytes: Buffer, contentType: string|null }`。
+   */
+  async fetchFile(url, { timeoutMs = 600_000 } = {}) {
+    const target = fileApiUrl(url).toString();
+    const { response, release } = await this.transport.request(target, {
+      method: 'GET',
+      // ⚠️ 不发 `Authorization`：这是另一个域，令牌不该出现在那里。
+      headers: { Accept: '*/*', Referer: REFERER },
+      stream: true,
+      timeoutMs,
+    });
+    try {
+      if (!response.ok) {
+        // 文件服务器不返回 JSON 错误体，只给状态码；403/404/410 的语义与 API 那套一致。
+        throw httpError(response.status, '', new URL(target).pathname, '该文件');
+      }
+      const type = response.headers.get('content-type') ?? null;
+      // 有些站点对不存在的文件回 200 + 一段 HTML。落到 `.jpg` 里会是一个打不开的文件，
+      // 比报错更难排查，所以这里挡掉。
+      if (type && /text\/html/i.test(type)) {
+        throw new ClassroomError('NOT_FOUND', 'CC98 文件链接返回的是网页（文件可能已被删除）。', { path: new URL(target).pathname });
+      }
+      const bytes = Buffer.from(await response.arrayBuffer());
+      if (!bytes.length) {
+        throw new ClassroomError('UNEXPECTED_RESPONSE', 'CC98 文件内容为空。', { path: new URL(target).pathname });
+      }
+      return { bytes, contentType: type };
+    } finally {
+      release?.();
+    }
   }
 }

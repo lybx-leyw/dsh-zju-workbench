@@ -2,7 +2,6 @@
   "name": "@lybx-leyw/dsh-zju-page-feedback",
   "version": "0.1.0",
   "description": "智云 Pro「反馈」页：内嵌的迷你社区（发需求、评论讨论、状态推进），形态照 GitHub issue，署名用本机随机笔名",
-  "private": true,
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -11,6 +10,18 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/client/page-feedback"
+  },
+  "license": "GPL-3.0-or-later",
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -21,6 +32,5 @@
         "@lybx-leyw/dsh-zju-ui-shared"
       ]
     }
-  },
-  "license": "GPL-3.0-or-later"
+  }
 }

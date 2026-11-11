@@ -1,0 +1,29 @@
+{
+  "name": "@lybx-leyw/dsh-zju-source-cnki",
+  "version": "0.1.0",
+  "description": "中国知网数据源：文献检索与全文 PDF 下载。按出口 IP 认机构（浙大图书馆），只读，不含任何写操作",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["README.md", "src/", "cordis.patch.yml"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/source/cnki"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "campus",
+      "writes": false,
+      "requires": ["@lybx-leyw/dsh-zju-source-http"]
+    }
+  },
+  "dependencies": { "@lybx-leyw/dsh-zju-source-http": "0.1.0" }
+}
