@@ -207,28 +207,38 @@ import 它。
 一个没有入口、没有消费方、自述「未完成」的包留在 `packages/` 里，
 只会让「哪些包真的在产品里」这个问题每年都要重新回答一次。
 
-### 代码仍然可用
+### 代码仍然可用，但测试已删除
 
-归档**不是删除**。`tests/bilibili-source.test.mjs` 的 import 路径已改为
-`../archive/deprecated-packages/dsh-zhiyun-source-bilibili/src/...`，
-**77 条测试全绿** —— WBI 签名、字幕切分、错误码分类、抽帧与 playurl 这些
-纯逻辑都还在正常工作。
+归档**不是删除**，源码就在本机归档区里，WBI 签名、字幕切分、错误码分类、
+抽帧与 playurl 这些纯逻辑都还在正常工作。
+
+但 `tests/bilibili-source.test.mjs` 已随 2026-11-11 的测试分层整理**删除**，
+原因有两条，任一条都足以让它永远红：
+
+1. **归档区在 `.gitignore` 里**（`/archive/*/`）。新 clone 上根本没有
+   `archive/deprecated-packages/dsh-zhiyun-source-bilibili/`，
+   那份测试的 20 个 import 全部解析不到，整个文件在加载期就崩。
+2. 它守的是一个**从没进过仓库、也从未接进 profile** 的包：`package.json` 自述
+   「未完成、未接入 profile」，没有任何消费方。一条永远跑不起来的测试不算覆盖，
+   只会让 `npm test` 常态变红、训练人忽略红色。
+
+要重新启用这个包时，把下面第 3 步补上就是一份新测试 —— 按现在的新布局放到
+`tests/source/bilibili/bilibili-source.test.mjs`。
 
 ### 怎么还原
 
 ```bash
 # 1. 搬回产品树
-git mv archive/deprecated-packages/dsh-zhiyun-source-bilibili packages/dsh-zhiyun-source-bilibili
+mv archive/deprecated-packages/dsh-zhiyun-source-bilibili packages/source/bilibili
 
-# 2. 测试路径改回来
-#    tests/bilibili-source.test.mjs 里的
-#    ../archive/deprecated-packages/dsh-zhiyun-source-bilibili  ->  ../packages/dsh-zhiyun-source-bilibili
+# 2. 校验它还能跑（包内的纯函数没有外部依赖）
+node -e "import('./packages/source/bilibili/src/wbi.js').then(m=>console.log(Object.keys(m)))"
 
-# 3. 接进 profile（如果要让它真的加载）
-#    profiles/zju-workbench/package.json 的 bundles 追加 "dsh-zhiyun-source-bilibili"
+# 3. 写一份新的契约测试放到 tests/source/bilibili/
+#    （旧文件可用 git 历史找回：git log --all --diff-filter=D -- tests/bilibili-source.test.mjs）
 
-# 4. 跑既有测试确认没烂
-node --test tests/bilibili-source.test.mjs
+# 4. 接进 profile（如果要让它真的加载）
+#    profiles/zju-workbench/package.json 的 bundles 追加新包名
 ```
 
 ### 要真能用还差什么

@@ -64,7 +64,7 @@
 | # | 门槛 | 怎么验 |
 | --- | --- | --- |
 | 1 | **有人认领** | 正式包的 `OWNERS` 不是 `shared`；新包按 CONTRIBUTING 2.3 写 |
-| 2 | **有测试** | `tests/<名字>.test.mjs`，`npm test` 通过；涉及插槽/导航/主题再跑 `npm run test:host` |
+| 2 | **有测试** | `tests/<层>/<包名>/<名字>.test.mjs`（见 [tests/README.md](../../tests/README.md)），`npm test` 通过；涉及插槽/导航/主题再跑 `npm run test:host` |
 | 3 | **前置问题已答** | 骨架 README「接入前必须先做的事」逐条回答或划掉，**不留 "后续再说"** |
 | 4 | **profile 起得来** | 按 CONTRIBUTING 3.1 先本地接入验证，再提交；`npm run check:css` 视改动而定 |
 
@@ -168,7 +168,7 @@ README 顶部写着「**已并入，本骨架待删**（2026-10-18）」，而�
 开转正 PR 时，描述里逐条勾选：
 
 - [ ] 新建了 `packages/dsh-zhiyun-<slug>/`，`OWNERS` 已写（非 `shared`）
-- [ ] `tests/<名字>.test.mjs` 存在且 `npm test` 通过
+- [ ] `tests/<层>/<包名>/<名字>.test.mjs` 存在且 `npm test` 通过
 - [ ] 骨架 README「接入前必须先做的事」已逐条回答
 - [ ] 本地接入 profile 验证过，`npm run test:host` 通过
 - [ ] 骨架的能力清单已更新：`已提取` 项写明去向
