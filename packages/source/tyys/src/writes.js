@@ -175,7 +175,7 @@ export function createTyysWrites(client) {
       const fee = wanted.reduce((sum, slot) => sum + (Number(slot.fee) || 0), 0);
       return {
         summarized: `预约场馆：${site} ${date} ${start}-${end}（${wanted.length} 个时段，费用约 ${fee} 元）`,
-        run: (signal) => client.request('POST', '/api/reservation/order/submit', {
+        run: () => client.submit('/api/reservation/order/submit', {
           venueSiteId: site,
           reservationDate: date,
           weekStartDate: day.weekStart,
@@ -187,7 +187,7 @@ export function createTyysWrites(client) {
           phone: preview.phone,
           ...(verification ? { captchaVerification: JSON.stringify(verification) } : {}),
           isOfflineTicket: 1,
-        }, signal),
+        }),
       };
     }),
 
@@ -209,7 +209,7 @@ export function createTyysWrites(client) {
         .filter(Boolean).join(' ');
       return {
         summarized: `取消场馆预约：${label || order}`,
-        run: () => client.request('POST', '/api/venue/finances/order/cancel', { orderId: hit.id ?? order }),
+        run: () => client.submit('/api/venue/finances/order/cancel', { orderId: hit.id ?? order }),
       };
     }),
   };

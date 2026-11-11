@@ -2136,3 +2136,93 @@ test('清理后服务被摘掉、路由被注销（不泄漏）', async () => {
   assert.ok(services.get('zhiyunTyys'));
   await assert.doesNotReject(async () => { await dispose?.(); });
 });
+
+/* ══════════════════════════════════════════════════════════════════════
+ * 写操作的**执行路径**：预约与取消真的能发出请求
+ *
+ * 这一组守的是 X-3 那类缺陷：`writes.js` 的 `execute()` 走的是只读入口
+ * `client.request()`，而那条入口把写接口列在 `FORBIDDEN_WRITES` 里
+ * **直接拒绝**。症状是「审批通过了、`execute()` 抛『本数据源不提供』」——
+ * 看起来像分层设计，实际两个写动作在任何情况下都不可用。
+ *
+ * 之前没有任何一条测试跑过 `bookVenueExecute` / `cancelVenueExecute`：
+ * `tests/campus-write.test.mjs` 用的是假 source（一个空函数就够），
+ * 而本文件的写测试只测到 `prepare()`，所以缺陷全绿。
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/** 造一个「读到空场、预下单成功、写请求成功」的场馆客户端，并记录它发了什么。 */
+function bookingClient({ orders = [] } = {}) {
+  const calls = [];
+  const client = new VenueClient({
+    request: async (url, init = {}) => {
+      const path = String(url).slice(VENUE_BASE.length);
+      calls.push({ method: init.method ?? 'GET', path });
+      if (path === '/api/reservation/order/submit' || path === '/api/venue/finances/order/cancel') {
+        return envelope({ orderId: 'NEW-1' });
+      }
+      if (path.startsWith('/api/orders/mine')) return envelope({ content: orders, last: true });
+      throw new Error(`本夹具没准备 ${path}`);
+    },
+    acquireLogin: async () => ({ url: `http://tyys.zju.edu.cn/x?oauth_token=OT-123` }),
+    username: '3230100000',
+    now: () => NOW,
+  });
+  // 登录与空场查询都走现成实现太啰嗦：这两步已在别处测过，这里只钉执行路径。
+  client.login = async () => { client.token = 'tk'; };
+  client.day = async () => ({
+    open: true,
+    token: 'day-token',
+    weekStart: '2026-11-09',
+    slots: [{ start: '19:00', end: '20:00', status: 1, spaceId: '501', timeId: '9001', fee: 10 }],
+  });
+  client.preview = async () => ({ captchaRequired: false, buddyMin: 0, phone: '13800000000' });
+  return { client, calls };
+}
+
+test('bookVenueExecute：审批通过后真的把订单提交出去（X-3 死链）', async () => {
+  const { createTyysWrites } = await import('../packages/source/tyys/src/writes.js');
+  const { client, calls } = bookingClient();
+
+  const writes = createTyysWrites(client);
+  const summary = await writes.bookVenue.prepare({
+    venue: 'v-1', date: '2026-11-12', start: '19:00', end: '20:00',
+  });
+  assert.match(summary, /预约场馆/);
+
+  const result = await writes.bookVenue.execute();
+  assert.deepEqual(result, { orderId: 'NEW-1' });
+
+  // 断言「请求真的发了」，而不是「没抛错」—— 死链的形态正是「抛了一个
+  // 听起来像设计决定的错」，所以只看 rejects 会把它当成预期行为。
+  const posted = calls.filter((call) => call.method === 'POST');
+  assert.deepEqual(posted.map((call) => call.path), ['/api/reservation/order/submit']);
+});
+
+test('cancelVenueExecute：取消预约也真的发得出去（同一个死链的另一半）', async () => {
+  const { createTyysWrites } = await import('../packages/source/tyys/src/writes.js');
+  const { client, calls } = bookingClient({
+    orders: [{ tradeNo: 'O-1', id: '1', campusName: '紫金港', venueName: '网球场', siteName: '1号场',
+      reservationStartDate: '2026-11-13 19:00:00', reservationEndDate: '2026-11-13 20:00:00', orderStatus: 1, payStatus: 1 }],
+  });
+
+  const writes = createTyysWrites(client);
+  await writes.cancelVenue.prepare({ order: 'O-1' });
+  assert.deepEqual(await writes.cancelVenue.execute(), { orderId: 'NEW-1' });
+
+  assert.deepEqual(
+    calls.filter((call) => call.method === 'POST').map((call) => call.path),
+    ['/api/venue/finances/order/cancel'],
+  );
+});
+
+test('只读入口仍然拒绝写接口（修死链不能拆掉分层防线）', async () => {
+  const { client, calls } = bookingClient();
+  for (const endpoint of ['/api/reservation/order/submit', '/api/venue/finances/order/cancel']) {
+    await assert.rejects(() => client.request('POST', endpoint, {}), (error) => {
+      assert.equal(error.code, 'CONFIG');
+      assert.match(error.message, /写操作/);
+      return true;
+    });
+  }
+  assert.deepEqual(calls, [], '读入口不该把请求发出去');
+});

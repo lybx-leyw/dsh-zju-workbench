@@ -129,10 +129,15 @@ const ORDER_MAX_PAGES = 10;
 const READ_POSTS = new Set(['/api/reservation/order/info']);
 
 /**
- * 写接口。**本包永不放行**，列出来是为了给出可读的拒绝理由，
+ * 真正的写接口：**读路径永不放行**，列出来是为了给出可读的拒绝理由，
  * 而不是让调用方拿到一个笼统的 404。
  *
- * 它们归 `packages/tool/*`（预约 / 付款 / 取消）。
+ * ⚠️ **`request()` 不是写操作的执行通道**。本包确实实现了一条写路径
+ * （`writes.js` 的 `bookVenueExecute` / `cancelVenueExecute`），但它走
+ * `submit()` —— 那条**不经过**这道闸。早先 `writes.js` 调的是 `client.request()`，
+ * 于是「预约」和「取消预约」在任何情况下都被本包自己的闸挡死，
+ * 报的还是「本数据源不提供」—— 看起来像分层设计，实际是死链
+ * （`coverage-gaps.md` 的 X-3）。审批在 `tool/campus-write`，闸在那边。
  */
 const FORBIDDEN_WRITES = new Set([
   '/api/reservation/order/submit',
@@ -1086,6 +1091,59 @@ export class VenueClient {
    */
   request(method, endpoint, params = {}) {
     const pending = this.queue.then(() => this.request_(method, endpoint, params));
+    this.queue = pending.catch(() => undefined);
+    return pending;
+  }
+
+  /**
+   * 发一次**写**请求（`writes.js` 专用）。
+   *
+   * # 为什么需要第二个入口
+   *
+   * 只读入口 `request()` 有三道闸：拒写接口、只放行白名单里的 POST、
+   * 会话失效不重放。前两道对写操作是**反的** —— 写操作的端点本来就在
+   * `FORBIDDEN_WRITES` 里。
+   *
+   * 早先 `writes.js` 直接调 `client.request()`，于是 `bookVenue` / `cancelVenue`
+   * 的 `execute()` 在任何情况下都抛「本数据源不提供：请在工具包里完成」。
+   * 那不是分层防线，是死链（`coverage-gaps.md` 的 X-3）。
+   *
+   * 这个入口只做三件事：串行化、登录、把「业务码 ≠ 200」翻成错误。
+   * **不做**只读白名单判断，**不自动重放**（重放一次写请求可能建两张单，
+   * 或把刚取消的订单再取消一次 —— 会话失效时如实报错，由上层决定）。
+   *
+   * # 审批不在这里
+   *
+   * 本包不做审批：`tool/campus-write` 先调 `xxxPrepare`，问用户，再调
+   * `xxxExecute`。这个方法是 `xxxExecute` 的实现细节。
+   *
+   * @param endpoint - 必须是 `/api/...`。
+   * @param params - 表单参数（对象值会被 JSON 序列化由调用方负责）。
+   * @returns `data`。
+   * @throws {TyysError}
+   */
+  submit(endpoint, params = {}) {
+    const run = async () => {
+      if (!/^\/api\/[A-Za-z0-9_/-]+$/.test(endpoint)) {
+        throw new TyysError('CONFIG', `不是有效的场馆接口路径：${endpoint}。`, { endpoint });
+      }
+      await this.login();
+      const result = await this.send('POST', endpoint, params);
+      if (Number(result.code) === VENUE_AUTH_CODE) {
+        // 写请求不自动重放：会话失效时如实报错，让上层重新 Prepare（等于重新问用户）。
+        this.reset();
+        throw new TyysError(
+          'AUTH_EXPIRED',
+          '场馆会话已失效，这次写请求没有重放（重放可能重复建单）。请重新发起一次。',
+          { endpoint },
+        );
+      }
+      if (Number(result.code) !== 200) {
+        throw new TyysError('REJECTED', `场馆平台拒绝：${text(result.message) || `code=${text(result.code)}`}`, { code: result.code, endpoint });
+      }
+      return result.data;
+    };
+    const pending = this.queue.then(run);
     this.queue = pending.catch(() => undefined);
     return pending;
   }
