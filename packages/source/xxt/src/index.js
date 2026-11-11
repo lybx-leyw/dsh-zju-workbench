@@ -23,7 +23,8 @@
  *
  * # 只读边界（这是产品口径，不是实现细节）
  *
- * 9 个方法全部只做**查询**。学习通里「交作业」「开始考试」「签到」这类动作
+ * 12 个方法全部只做**查询**（`reads.js` 的 `XXT_METHODS` 是权威表）。学习通里
+ * 「交作业」「开始考试」「签到」这类动作
  * **没有**对应方法：那是用户自己的决定，一个数据包替用户点下去，是不可逆的。
  * 唯一的写操作是 `xxt.importCookie` —— 它写的是本机会话文件，不是学习通的数据。
  *
@@ -145,7 +146,7 @@ export async function apply(ctx, config = {}) {
     platform: { id: 'xxt', label: '学习通', host: XXT_HOST, base: XXT_BASE },
     methods: [...XXT_METHODS],
     actions: [...CLIENT_ACTIONS],
-    note: '只读数据包：9 个读取方法 + 状态/导入 Cookie。学习通不做自动登录，Cookie 失效后需要重新导入。',
+    note: '只读数据包：12 个读取方法 + 状态/导入 Cookie。学习通不做自动登录，Cookie 失效后需要重新导入。',
   });
 
   /**

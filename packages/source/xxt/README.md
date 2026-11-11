@@ -17,13 +17,19 @@ xxt 这一块拆出来时顺带修了三处**落在用户可见路径上**的问
 
 ## 能力
 
-`/api/zhiyun-xxt` 上的 9 个**只读**方法，方法名即 `xxt.<名字>`：
+`/api/zhiyun-xxt` 上的 12 个**只读**方法，方法名即 `xxt.<名字>`：
+
+> 早先这里写「9 个」并漏了三行（`chapters` / `materials` / `downloadParams`）。
+> 实际的方法表是 `reads.js` 的 `XXT_METHODS`，本轮按它逐条对齐。
 
 | 方法 | 作用 | 请求 |
 | --- | --- | --- |
 | `courses` | 全部课程（原始形状，5 分钟缓存） | 2 次 GET |
 | `listCourses` | 课程清单（`course_id` / `class_id` / `name` / `teacher`） | 复用上面的缓存 |
 | `findCourse` | 按 id / 全名 / 名字片段找一门课 | 复用上面的缓存 |
+| `chapters` | 一门课的章节目录（`{id,title,path[],locked}`） | 逐节请求 |
+| `materials` | 章节卡片附件清单（`kind` 分 video / document） | 逐节逐卡 |
+| `downloadParams` | 某个附件的下载参数（`{url, variant, filename, size, headers}`），**按 D21 不落盘** | 1 次 GET |
 | `homework` | 一门课的作业列表 + 进度 | 2 次 GET |
 | `listHomework` | 作业清单（带 `pending`，去掉签名 URL） | 同上 |
 | `deadlines` | 所有课**未完成**作业的截止时间聚合 | 2×课程数 + 每条未完成作业 1 次 |
@@ -82,7 +88,7 @@ JSON 接口 —— 列表页是服务端渲染的 HTML。所以要让用户看�
 
 这是**产品口径**，不是实现细节：
 
-- 9 个方法全部只做**查询**；
+- 12 个方法全部只做**查询**；
 - 学习通里「交作业」「开始考试」「签到」这类动作**没有**对应方法 —— 那是用户自己的决定，
   一个数据包替用户点下去是不可逆的；
 - 唯一的写操作是 `xxt.importCookie`，它写的是**本机会话文件**，不是学习通的数据。

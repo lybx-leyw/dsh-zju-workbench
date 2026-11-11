@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-source-cnki",
   "version": "0.1.0",
-  "description": "中国知网数据源：文献检索与全文 PDF 下载。按出口 IP 认机构（浙大图书馆），只读，不含任何写操作",
+  "description": "中国知网数据源：文献检索（全文下载尚未实现，见 coverage-gaps W-10）。按出口 IP 认机构（浙大图书馆），只读，不含任何写操作",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
