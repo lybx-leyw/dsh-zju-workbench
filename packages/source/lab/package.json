@@ -6,9 +6,15 @@
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./client": "./lib/client.js"
   },
-  "files": ["README.md", "src/", "cordis.patch.yml"],
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml",
+    "lib/"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
@@ -16,14 +22,28 @@
   },
   "license": "GPL-3.0-or-later",
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "capability": {
       "tier": 1,
       "auth": "own",
       "network": "campus",
       "writes": false,
-      "requires": ["@lybx-leyw/dsh-zju-source-http"]
+      "requires": [
+        "@lybx-leyw/dsh-zju-source-http",
+        "@lybx-leyw/dsh-zju-source-login"
+      ]
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "@lybx-leyw/dsh-zju-ui-shared"
+      ]
     }
   },
-  "dependencies": { "@lybx-leyw/dsh-zju-source-http": "0.1.0" }
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0",
+    "@lybx-leyw/dsh-zju-source-login": "0.1.0"
+  }
 }

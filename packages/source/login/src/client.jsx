@@ -122,6 +122,18 @@ const TEXT = {
     sourceCampus: '学在浙大',
     sourceClassroom: '智云课堂',
     sourceZdbk: '教务',
+    sourceXuezaiSession: '学在浙大会话',
+
+    sourceSztz: '二课',
+    sourceTyys: '体育场馆',
+    sourceNotice: '通知',
+
+    sourceUnknown: '未检测',
+    sourcesAt: '上次检测于 {time}',
+    sourcesNever: '从未检测过',
+    probe: '重新检测',
+    probing: '检测中…',
+    probeDone: '检测完成',
     sourceOk: '可用',
     sourceNeedsLogin: '登录失败',
     sourceNeedsCredential: '未配凭据',
@@ -168,6 +180,18 @@ const TEXT = {
     sourceCampus: 'XueZaiZJU',
     sourceClassroom: 'Zhiyun Classroom',
     sourceZdbk: 'Academic affairs',
+    sourceXuezaiSession: 'XueZaiZJU session',
+
+    sourceSztz: 'Extracurricular',
+    sourceTyys: 'Sports venues',
+    sourceNotice: 'Notices',
+
+    sourceUnknown: 'Not checked',
+    sourcesAt: 'Last checked at {time}',
+    sourcesNever: 'Never checked',
+    probe: 'Check now',
+    probing: 'Checking…',
+    probeDone: 'Check complete',
     sourceOk: 'available',
     sourceNeedsLogin: 'sign-in failed',
     sourceNeedsCredential: 'no credential',
@@ -214,6 +238,18 @@ const TEXT = {
     sourceCampus: '学在浙大',
     sourceClassroom: '智雲教室',
     sourceZdbk: '教務',
+    sourceXuezaiSession: '学在浙大セッション',
+
+    sourceSztz: '課外活動',
+    sourceTyys: '体育施設',
+    sourceNotice: 'お知らせ',
+
+    sourceUnknown: '未確認',
+    sourcesAt: '最終確認 {time}',
+    sourcesNever: '未確認',
+    probe: '再確認',
+    probing: '確認中…',
+    probeDone: '確認完了',
     sourceOk: '利用可能',
     sourceNeedsLogin: 'サインイン失敗',
     sourceNeedsCredential: '認証情報なし',
@@ -260,6 +296,18 @@ const TEXT = {
     sourceCampus: 'XueZaiZJU',
     sourceClassroom: 'Aula Zhiyun',
     sourceZdbk: 'Asuntos académicos',
+    sourceXuezaiSession: 'Sesión XueZaiZJU',
+
+    sourceSztz: 'Extracurriculares',
+    sourceTyys: 'Instalaciones deportivas',
+    sourceNotice: 'Avisos',
+
+    sourceUnknown: 'Sin comprobar',
+    sourcesAt: 'Última comprobación {time}',
+    sourcesNever: 'Nunca comprobado',
+    probe: 'Comprobar',
+    probing: 'Comprobando…',
+    probeDone: 'Comprobación lista',
     sourceOk: 'disponible',
     sourceNeedsLogin: 'fallo de inicio de sesión',
     sourceNeedsCredential: 'sin credencial',
@@ -306,6 +354,18 @@ const TEXT = {
     sourceCampus: 'XueZaiZJU',
     sourceClassroom: 'Classe Zhiyun',
     sourceZdbk: 'Scolarité',
+    sourceXuezaiSession: 'Session XueZaiZJU',
+
+    sourceSztz: 'Périscolaire',
+    sourceTyys: 'Installations sportives',
+    sourceNotice: 'Annonces',
+
+    sourceUnknown: 'Non vérifié',
+    sourcesAt: 'Dernière vérification {time}',
+    sourcesNever: 'Jamais vérifié',
+    probe: 'Vérifier',
+    probing: 'Vérification…',
+    probeDone: 'Vérification terminée',
     sourceOk: 'disponible',
     sourceNeedsLogin: 'échec de connexion',
     sourceNeedsCredential: 'aucun identifiant',
@@ -352,6 +412,18 @@ const TEXT = {
     sourceCampus: 'XueZaiZJU',
     sourceClassroom: 'Zhiyun-Klassenzimmer',
     sourceZdbk: 'Studienverwaltung',
+    sourceXuezaiSession: 'XueZaiZJU-Sitzung',
+
+    sourceSztz: 'Außerunterrichtlich',
+    sourceTyys: 'Sportanlagen',
+    sourceNotice: 'Mitteilungen',
+
+    sourceUnknown: 'Nicht geprüft',
+    sourcesAt: 'Zuletzt geprüft {time}',
+    sourcesNever: 'Nie geprüft',
+    probe: 'Jetzt prüfen',
+    probing: 'Prüfe…',
+    probeDone: 'Prüfung fertig',
     sourceOk: 'verfügbar',
     sourceNeedsLogin: 'Anmeldung fehlgeschlagen',
     sourceNeedsCredential: 'keine Zugangsdaten',
@@ -398,6 +470,18 @@ const TEXT = {
     sourceCampus: 'XueZaiZJU',
     sourceClassroom: 'Аудитория Zhiyun',
     sourceZdbk: 'Учебная часть',
+    sourceXuezaiSession: 'Сессия XueZaiZJU',
+
+    sourceSztz: 'Внеучебные',
+    sourceTyys: 'Спортсооружения',
+    sourceNotice: 'Объявления',
+
+    sourceUnknown: 'Не проверено',
+    sourcesAt: 'Последняя проверка {time}',
+    sourcesNever: 'Ни разу не проверялось',
+    probe: 'Проверить',
+    probing: 'Проверка…',
+    probeDone: 'Проверка завершена',
     sourceOk: 'доступно',
     sourceNeedsLogin: 'ошибка входа',
     sourceNeedsCredential: 'нет учётных данных',
@@ -444,6 +528,18 @@ const TEXT = {
     sourceCampus: 'XueZaiZJU',
     sourceClassroom: 'Sala Zhiyun',
     sourceZdbk: 'Assuntos académicos',
+    sourceXuezaiSession: 'Sessão XueZaiZJU',
+
+    sourceSztz: 'Extracurricular',
+    sourceTyys: 'Instalações desportivas',
+    sourceNotice: 'Avisos',
+
+    sourceUnknown: 'Não verificado',
+    sourcesAt: 'Última verificação {time}',
+    sourcesNever: 'Nunca verificado',
+    probe: 'Verificar',
+    probing: 'A verificar…',
+    probeDone: 'Verificação concluída',
     sourceOk: 'disponível',
     sourceNeedsLogin: 'falha no início de sessão',
     sourceNeedsCredential: 'sem credencial',
@@ -513,6 +609,8 @@ export function SettingsSection({ t }) {
    * `null` = 还没读到（显示"读取中"），不是"未登录"。
    */
   const [sources, setSources] = useState(null);
+  /** 上次真探测的采样时间（`null` = 从未探过）。 */
+  const [sourcesAt, setSourcesAt] = useState(null);
 
   /**
    * 把宿主回的 `card` 落到界面。
@@ -587,6 +685,7 @@ export function SettingsSection({ t }) {
         // 三个下游数据源的状态：它们都用这一份凭据，放在这里才能形成
         // 「填了什么 → 换来了什么」的闭环。缺字段时保持 null（显示"读取中"）。
         setSources(payload.sources ?? null);
+      setSourcesAt(payload.sourcesAt ?? null);
       },
       (failure) => {
         if (!live) return;
@@ -604,6 +703,31 @@ export function SettingsSection({ t }) {
    *
    * @param kind - `'card'` / `'webvpn'`。
    */
+  /**
+   * 「重新检测」：真探一遍全部数据源。
+   *
+   * # 为什么单独一个动作（C 方案）
+   *
+   * 真探测要发网络请求、有几项还要真的走一次 CAS。所以它**不能**在打开页面时
+   * 自动跑 —— 用户可能只是来改个密码。只有明确点这个按钮才连。
+   *
+   * 结果与采样时间一起回填，页面据此显示「上次检测于 …」。
+   */
+  const probeNow = async () => {
+    setBusy('probe');
+    setMessage(null);
+    try {
+      const payload = await settings('probe', { probe: true });
+      setSources(payload.sources ?? null);
+      setSourcesAt(payload.sourcesAt ?? Date.now());
+      setMessage({ tone: 'ok', text: t('probeDone') });
+    } catch (error) {
+      setMessage({ tone: 'warn', text: String(error?.message ?? error) });
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const saveOne = async (kind) => {
     // 三种凭据的提交口径完全相同（动作名 / 表单 / 打码值 / 落库函数），
     // 差别只有"打哪个动作、读哪份表单、回填哪一块"。写成表而不是三元链：
@@ -651,6 +775,36 @@ export function SettingsSection({ t }) {
     Boolean(source.username.trim()) && (Boolean(source.password) || hasSaved);
 
   const configured = Boolean(status?.configured);
+  const vpnConfigured = Boolean(vpnStatus?.configured);
+
+  /**
+   * 三张卡片的展开状态 —— 与其余数据源分区同一套规矩。
+   *
+   * | 卡片 | 已配置 | 未配置 |
+   * | --- | --- | --- |
+   * | 凭证（一卡通 / WebVPN） | 收起 | **展开** |
+   * | 数据源状态 | **展开** | 收起 |
+   *
+   * # 为什么用 `useEffect` 而不是 `useState` 初值
+   *
+   * `configured` 来自异步读回的 `status`：第一次渲染时它是 `false`
+   * （还没读到），把它当展开状态初值会让**已配置的用户看到凭证卡大开着**。
+   * 必须等 `status` 到了再定。
+   *
+   * `undefined` = 还没读到，这时用 `defaultOpen` 的默认行为。
+   */
+  const [cardOpen, setCardOpen] = useState(undefined);
+  const [vpnOpen, setVpnOpen] = useState(undefined);
+  const [sourcesOpen, setSourcesOpen] = useState(undefined);
+  useEffect(() => {
+    if (status === null) return;
+    setCardOpen(!configured);
+    setSourcesOpen(configured);
+  }, [status, configured]);
+  useEffect(() => {
+    if (vpnStatus === null) return;
+    setVpnOpen(!vpnConfigured);
+  }, [vpnStatus, vpnConfigured]);
   const working = busy !== null;
   /**
    * 能否保存。
@@ -689,11 +843,21 @@ export function SettingsSection({ t }) {
    * @param name - 数据源名（`campus` / `classroom` / `zdbk`）。
    * @returns `{ value, tone }`。
    */
+  /**
+   * 一行分项状态的文案与色调。
+   *
+   * # `ok === null` 是「未检测」，不是「失败」
+   *
+   * 那一块**只在点了「重新检测」之后**才真的连一次（C 方案）。没探过就如实
+   * 说「未检测」—— 编一个「登录失败」会让用户去排查一个根本不存在的故障。
+   */
   const sourceRow = (all, name) => {
     if (all === null) return { value: t('reading'), tone: 'plain' };
     const state = all?.[name] ?? {};
-    const tone = state.ok ? 'ok' : 'warn';
-    if (state.ok) return { value: t('sourceOk'), tone };
+    if (state.ok === null || state.code === 'UNKNOWN') {
+      return { value: t('sourceUnknown'), tone: 'plain' };
+    }
+    if (state.ok) return { value: t('sourceOk'), tone: 'ok' };
     const byCode = {
       OFF_CAMPUS: () => t('sourceOffCampus'),
       NOT_INSTALLED: () => t('sourceDisabled'),
@@ -701,7 +865,7 @@ export function SettingsSection({ t }) {
       PROBE_TIMEOUT: () => t('sourceTimeout'),
     };
     const render = byCode[state.code];
-    return { value: render === undefined ? t('sourceNeedsLogin') : render(), tone };
+    return { value: render === undefined ? t('sourceNeedsLogin') : render(), tone: 'warn' };
   };
 
   return (
@@ -712,6 +876,8 @@ export function SettingsSection({ t }) {
       {/* 统一身份认证 —— 智云课堂与学在浙大共用这一份。 */}
       <Rows>
         <Card
+          open={cardOpen}
+          onOpenChange={setCardOpen}
           title={t('section')}
           detail={configured
             ? t('configuredAs').replace('{username}', status?.username ?? '')
@@ -777,6 +943,8 @@ export function SettingsSection({ t }) {
         {/* WebVPN 上网账号 —— **另一套系统的另一个密码**（学校网络中心）。
             独立卡片，理由同上：合成一张卡，用户会以为填一次就都有了。 */}
         <Card
+          open={vpnOpen}
+          onOpenChange={setVpnOpen}
           title={t('vpnSection')}
           detail={vpnStatus === null
             ? t('reading')
@@ -839,13 +1007,37 @@ export function SettingsSection({ t }) {
         </Card>
 
         {/* 第三张卡：这份凭据**换来了什么**。
-            三者共用同一份统一身份认证，所以状态放在一起才有意义 ——
+            多数数据源共用同一份统一身份认证，所以状态放在一起才有意义 ——
             用户填完密码，最想知道的就是它们通了没有。
-            `defaultOpen={false}`：它只是确认「通没通」，不必常驻占版面。 */}
-        <Card title={t('sourcesTitle')} defaultOpen={false}>
+            有独立凭证的（拼题A / 学习通 / CC98 / 实验课平台）各自有设置分区，不在这里重复。
+            展开状态由「配没配」决定（见上面的 useEffect）。 */}
+        <Card
+          open={sourcesOpen}
+          onOpenChange={setSourcesOpen}
+          title={t('sourcesTitle')}
+          detail={sourcesAt
+            ? t('sourcesAt').replace('{time}', new Date(sourcesAt).toLocaleTimeString())
+            : t('sourcesNever')}
+          actions={(
+            <Actions>
+              <button
+                type="button"
+                data-primary=""
+                disabled={busy === 'probe' || working}
+                onClick={() => { void probeNow(); }}
+              >
+                {busy === 'probe' ? t('probing') : t('probe')}
+              </button>
+            </Actions>
+          )}
+        >
           <StatusLine label={t('sourceCampus')} {...sourceRow(sources, 'campus')} />
           <StatusLine label={t('sourceClassroom')} {...sourceRow(sources, 'classroom')} />
           <StatusLine label={t('sourceZdbk')} {...sourceRow(sources, 'zdbk')} />
+          <StatusLine label={t('sourceXuezaiSession')} {...sourceRow(sources, 'xuezai')} />
+          <StatusLine label={t('sourceSztz')} {...sourceRow(sources, 'sztz')} />
+          <StatusLine label={t('sourceTyys')} {...sourceRow(sources, 'tyys')} />
+          <StatusLine label={t('sourceNotice')} {...sourceRow(sources, 'notice')} />
         </Card>
       </Rows>
     </Section>

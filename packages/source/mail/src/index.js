@@ -27,6 +27,7 @@
  */
 import path from 'node:path';
 
+import { clearMail, readMail, writeMail } from '@lybx-leyw/dsh-zju-source-login';
 import { Mail, MailError, ZJU_MAIL, filename } from './mail.js';
 
 export const name = 'zju-source-mail';
@@ -56,6 +57,8 @@ export const METHODS = Object.freeze([
   'mail.drafts',
   'mail.test',
   'mail.snapshot',
+  'mail.saveAccount',
+  'mail.clearAccount',
 ]);
 
 /**
@@ -90,6 +93,16 @@ export function apply(ctx, config = {}) {
       ?? (profileDir === null ? null : path.join(profileDir, 'data', 'zhiyun-mail', 'outbox'));
     const downloadRoot = config.downloadRoot ?? downloadDirectory();
 
+    /**
+     * 外部注入的凭据提供者（测试与特殊部署用）。
+     *
+     * ⚠️ 它和 `readMail` 的关系：**注入优先，没有注入就读 login 存的那份**。
+     * 用这个变量而不是直接交给 `Mail.setCredentialProvider`，是因为那个
+     * setter 会把 `credentialProvider` **整体替换**掉 —— 一旦有人注入，
+     * 我们放在构造参数里的兜底就没了。
+     */
+    let injectedCredentials = null;
+
     const mail = new Mail({
       draftDir,
       ...(downloadRoot === null ? {} : { downloadRoot }),
@@ -97,6 +110,22 @@ export function apply(ctx, config = {}) {
       ...(typeof config.imap === 'function' ? { imap: config.imap } : {}),
       ...(typeof config.smtp === 'function' ? { smtp: config.smtp } : {}),
       ...(typeof config.parse === 'function' ? { parse: config.parse } : {}),
+      /**
+       * 凭据来源：**注入优先，其次读 `source/login` 存的 16 位专用密码**。
+       *
+       * # 为什么要有这个兜底
+       *
+       * 先前的实现只认 `setCredentialProvider`，而它**全仓没有任何调用方**
+       * —— 于是「设置 → 邮箱」永远显示「未配凭据」，用户也没有地方填。
+       * 那是「接线断了」，不是「用户没配」。
+       *
+       * 现在用户在设置分区里填一次，就存在 `zhiyun-mail/account`，
+       * 这里每次现取（不缓存），换账号立刻生效。
+       */
+      credentialProvider: async () => {
+        if (typeof injectedCredentials === 'function') return injectedCredentials();
+        return readMail(ctx);
+      },
     });
 
     const service = {
@@ -107,12 +136,36 @@ export function apply(ctx, config = {}) {
       methods: [...METHODS],
       servers: ZJU_MAIL,
       draftDir,
-      /** 注入凭据提供者（`() => Promise<{ address, password }>`）。返回撤销函数。 */
-      setCredentialProvider(handler) { return mail.setCredentialProvider(handler); },
-      /** 是否已接入凭据（不联网）。 */
-      ready() { return mail.ready(); },
+      /**
+       * 注入凭据提供者（`() => Promise<{ address, password }>`）。返回撤销函数。
+       *
+       * 注入**优先于**「设置里存的那份」，但它不该抹掉兜底 —— 所以写本地变量，
+       * 不动 `Mail` 内部的那个 provider（它已经串好了 readMail）。
+       */
+      setCredentialProvider(handler) {
+        if (handler !== null && handler !== undefined && typeof handler !== 'function') {
+          throw new MailError('CONFIG', 'setCredentialProvider 需要一个返回 { address, password } 的函数（或 null 取消注册）。');
+        }
+        injectedCredentials = typeof handler === 'function' ? handler : null;
+        return () => { if (injectedCredentials === handler) injectedCredentials = null; };
+      },
+      /**
+       * 是否已接入凭据（不联网）。
+       *
+       * # 这里曾经永远为 false
+       *
+       * 先前的实现只认 `setCredentialProvider` 注入，而**全仓没有任何调用方**
+       * —— 于是「设置 → 邮箱」永远显示「未配凭据」，而用户根本没地方填。
+       *
+       * 现在两个来源都算：注入了 provider，**或者** `source/login` 里存着
+       * 16 位客户端专用密码（`readMail`）。后者是常规路径。
+       */
+      async ready() {
+        if (typeof injectedCredentials === 'function') return true;
+        return Boolean(await readMail(ctx));
+      },
       /** 清空配置（换账号时用）。 */
-      reset() { mail.setCredentialProvider(null); },
+      reset() { injectedCredentials = null; },
 
       /* ── 只读接口（名字与 `methods` 里的后一段一致） ── */
       async folders() { return mail.folders(); },
@@ -131,6 +184,31 @@ export function apply(ctx, config = {}) {
        * 暴露出来是为了让测试能断言「每个 methods 都有对应的动作」——
        * 之前那个错（声明 `mail.list`、路由只认 `list`）就是缺了这条约束。
        */
+      /**
+       * 保存邮箱账号。
+       *
+       * 邮箱是 `auth: "own"`：它**有自己的密码**，不是统一身份认证那一套。
+       * 所以账号存在本包自己的设置分区里，与「浙大一卡通」完全分开。
+       *
+       * @param input - `{ address, password }`。
+       */
+      async saveAccount(input = {}) {
+        const address = String(input?.address ?? '').trim();
+        const password = String(input?.password ?? '');
+        if (!address) throw new MailError('CONFIG', '请填写邮箱账号。');
+        if (!password) throw new MailError('CONFIG', '请填写邮箱密码。');
+        await writeMail(ctx, { address, password });
+        injectedCredentials = async () => ({ address, password });
+        return { configured: true, address };
+      },
+
+      /** 清掉邮箱账号。 */
+      async clearAccount() {
+        await clearMail(ctx);
+        injectedCredentials = null;
+        return { configured: false, address: '' };
+      },
+
       actions: () => ({
         'mail.folders': () => service.folders(),
         'mail.list': (input) => service.list(input),
@@ -140,6 +218,8 @@ export function apply(ctx, config = {}) {
         'mail.drafts': () => service.drafts(),
         'mail.test': () => service.test(),
         'mail.snapshot': () => service.snapshot(),
+        'mail.saveAccount': (input) => service.saveAccount(input),
+        'mail.clearAccount': () => service.clearAccount(),
       }),
     };
 

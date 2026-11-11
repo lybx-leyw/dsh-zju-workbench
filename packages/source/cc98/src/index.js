@@ -472,9 +472,12 @@ export async function apply(ctx, config = {}) {
    */
   const writes = createCc98Writes(reader);
   const writeMethods = Object.fromEntries(
-    Object.entries(writes).flatMap(([name, { prepare, execute }]) => [
+    Object.entries(writes).flatMap(([name, { prepare, execute, cancel }]) => [
       [`${name}Prepare`, prepare],
       [`${name}Execute`, execute],
+      // `cancel` 撤销一次 Prepare（审批被拒 / 超时 / 中止时由 tool 调）。
+      // 没有它，那个动作在用户拒绝一次后会永久 `WRITE_BUSY` —— 见 recheck 的 Z-1。
+      [`${name}Cancel`, cancel],
     ]),
   );
 

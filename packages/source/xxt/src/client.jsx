@@ -317,6 +317,23 @@ export function SettingsSection({ t }) {
   /** Cookie 是否已导入（来自 GET 的 `state.configured`）。 */
   const configured = status?.state?.configured === true;
 
+  /**
+   * 两张卡片的展开状态 —— 由「配没配」决定：配好收起输入、展开状态，反之亦然。
+   *
+   * `configured` 是**派生值**（从 `status` 算出来的），所以它的变化要
+   * 用 `useEffect` 跟，不能直接写进 `useState` 初值 —— 第一次渲染时
+   * `status` 还是 null，那时算出来的「未配置」是错的。
+   *
+   * `undefined` = 还没读到 status，按默认走。
+   */
+  const [credentialOpen, setCredentialOpen] = useState(undefined);
+  const [statusOpen, setStatusOpen] = useState(undefined);
+  useEffect(() => {
+    if (status === null) return; // 还没读到，别急着改
+    setCredentialOpen(!configured);
+    setStatusOpen(configured);
+  }, [status, configured]);
+
   // 结构与其余三个分区一致：Section(gap 12) → 标题 → 说明 → 卡片列表。
   // 之前是 Field + Actions 直接铺在页面上，同一个浮窗里两种设计语言并存。
   return React.createElement(Section, null,
@@ -326,6 +343,8 @@ export function SettingsSection({ t }) {
       // 卡片一：凭据（可展开，含 Cookie 输入与两个操作）。
       React.createElement(Card, {
         title: t('cookieTitle'),
+        open: credentialOpen,
+        onOpenChange: setCredentialOpen,
         actions: React.createElement(Actions, null,
           React.createElement('button', { type: 'button', 'data-primary': '', disabled: busy !== null, onClick: importCookie },
             busy === 'save' ? t('saving') : t('save')),
@@ -348,7 +367,8 @@ export function SettingsSection({ t }) {
       // 卡片二：状态。纯状态卡默认收起，与统一身份认证那边同一套约定。
       React.createElement(Card, {
         title: t('statusTitle'),
-        defaultOpen: false,
+        open: statusOpen,
+        onOpenChange: setStatusOpen,
       },
         // 第一行：Cookie 有没有导入。不发网络请求，反映「有没有」。
         React.createElement(StatusLine, {

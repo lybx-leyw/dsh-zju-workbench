@@ -95,6 +95,7 @@ export function createLabWrites(client) {
           session.clear();
         }
       },
+      cancel: async () => { session.clear(); },
     };
   };
 

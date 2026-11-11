@@ -780,10 +780,13 @@ export async function apply(ctx, config = {}) {
      */
     submitHomeworkPrepare: async (input) => (await writes()).submitHomework.prepare(input),
     submitHomeworkExecute: async (signal) => (await writes()).submitHomework.execute(signal),
+    submitHomeworkCancel: async () => (await writes()).submitHomework.cancel(),
     retractHomeworkPrepare: async (input) => (await writes()).retractHomework.prepare(input),
     retractHomeworkExecute: async (signal) => (await writes()).retractHomework.execute(signal),
+    retractHomeworkCancel: async () => (await writes()).retractHomework.cancel(),
     rollcallPrepare: async (input) => (await writes()).rollcall.prepare(input),
     rollcallExecute: async (signal) => (await writes()).rollcall.execute(signal),
+    rollcallCancel: async () => (await writes()).rollcall.cancel(),
   });
 
   return async () => {

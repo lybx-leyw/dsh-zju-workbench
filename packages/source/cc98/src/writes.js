@@ -52,6 +52,16 @@ class WriteSession {
   }
 
   /**
+   * 丢掉这次准备（不执行写请求）。
+   *
+   * 两个调用点：`execute` 执行完之后（一次 Prepare 只执行一次）、
+   * 以及 `cancel`（审批被拒 / 超时 / 中止时由 tool 层调）。
+   */
+  clear() {
+    this.prepared = null;
+  }
+
+  /**
    * 执行 Prepare 记下的动作。
    *
    * @param signal - 取消信号。
@@ -114,17 +124,22 @@ export function createCc98Writes(reader) {
   const client = reader.client;
 
   /**
-   * 造一对方法。
+   * 造一对 Prepare / Execute / Cancel。
    *
-   * # 为什么 session 是「一次一个」
+   * # 为什么有 `cancel`
    *
-   * 同一个动作被并发调用两次时（模型重试、或两个页面同时点），
-   * 共用一个 session 会让后一次 Prepare 覆盖前一次的参数 —— 于是
-   * **用户批准的是 A，发出去的是 B**。所以 Prepare 第二次进来时直接拒。
+   * 用户可能**点了拒绝**，也可能审批通道超时/中止 —— 那时 `execute` 永远不会被
+   * 调用，而 `prepare` 已经把参数存进了 session。若不撤销，下一次 `prepare`
+   * 会撞上上面那个 `WRITE_BUSY` 闸，**这个动作此后一直不能用**（直到重启进程）。
+   *
+   * 这条是复审查出来的（`recheck-2026-11-11.md` 的 Z-1），七个包全部如此。
+   *
+   * **拒绝不等于封锁**：撤销之后立刻可以重新准备、重新问用户。
+   * 用户拒绝一次是「这次不做」，不是「以后都不许做」。
    *
    * @param name - 动作名（只用于报错）。
    * @param build - `(args) => Promise<{ summarized, run }>`。
-   * @returns `{ prepare, execute }`。
+   * @returns `{ prepare, execute, cancel }`。
    */
   const pair = (name, build) => {
     const session = new WriteSession();
@@ -155,8 +170,18 @@ export function createCc98Writes(reader) {
         } finally {
           // 一次 Prepare 只能被执行一次：清空之后想再做要重新 Prepare，
           // 那意味着重新问用户 —— 正是我们要的。
-          session.prepared = null;
+          session.clear();
         }
+      },
+      /**
+       * 撤销这次 Prepare（**不执行写请求**）。
+       *
+       * 审批被拒 / 超时 / 中止时由 tool 层调用。反复调用是安全的 ——
+       * 没有准备好的东西时它什么都不做，不报错（报错只会让 tool 的清理逻辑
+       * 自己变成新的失败源）。
+       */
+      cancel: async () => {
+        session.clear();
       },
     };
   };

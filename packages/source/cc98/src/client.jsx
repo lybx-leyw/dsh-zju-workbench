@@ -473,6 +473,20 @@ export function SettingsSection({ t }) {
   const configured = state.configured === true;
   const authenticated = state.authenticated === true;
 
+  /**
+   * 两张卡片的展开状态 —— 由「配没配」决定：配好收起输入、展开状态，反之亦然。
+   *
+   * `configured` 是派生值，变化要用 `useEffect` 跟：第一次渲染时
+   * `status` 还是 null，那时算出的「未配置」是错的，不能当 `useState` 初值。
+   */
+  const [credentialOpen, setCredentialOpen] = useState(undefined);
+  const [statusOpen, setStatusOpen] = useState(undefined);
+  useEffect(() => {
+    if (status === null) return;
+    setCredentialOpen(!configured);
+    setStatusOpen(configured);
+  }, [status, configured]);
+
   return (
     <Section>
       <PageTitle>{t('section')}</PageTitle>
@@ -480,6 +494,8 @@ export function SettingsSection({ t }) {
 
       <Rows>
         <Card
+          open={credentialOpen}
+          onOpenChange={setCredentialOpen}
           title={account === null
             ? t('reading')
             : account.configured
@@ -539,8 +555,9 @@ export function SettingsSection({ t }) {
 
         <Card
           title={t('statusTitle')}
-          // 纯状态卡默认收起：它只是确认「通没通」，不必常驻占版面。
-          defaultOpen={false}
+          // 展开状态由「配没配」决定（见上面的 useEffect），不再写死。
+          open={statusOpen}
+          onOpenChange={setStatusOpen}
           actions={(
             <Actions>
               <button type="button" disabled={working} onClick={() => { void refresh(); }}>

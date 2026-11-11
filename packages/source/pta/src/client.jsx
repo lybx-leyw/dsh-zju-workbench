@@ -222,12 +222,24 @@ export function SettingsSection({ t }) {
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(null);
   const [message, setMessage] = useState(null);
+  /**
+   * 两张卡片的展开状态 —— 由「配没配」决定：配好收起输入、展开状态，反之亦然。
+   *
+   * `undefined` = 还没读到 status，按默认走。不能用 `defaultOpen` ——
+   * 它是 useState 初值，只在挂载时生效，而配置状态是异步读回来的。
+   */
+  const [credentialOpen, setCredentialOpen] = useState(undefined);
+  const [statusOpen, setStatusOpen] = useState(undefined);
 
   const load = async () => {
     try {
       const response = await fetch(ROUTE_PATH, { headers: { Accept: 'application/json' } });
       if (!response.ok) return;
-      setStatus(await response.json());
+      const payload = await response.json();
+      setStatus(payload);
+      const configured = payload?.pta?.configured === true;
+      setCredentialOpen(!configured);
+      setStatusOpen(configured);
     } catch { /* 读不到就保持上一份结论，不把面板弄没 */ }
   };
 
@@ -284,6 +296,8 @@ export function SettingsSection({ t }) {
       React.createElement(Card, {
         title: t('ptaTitle'),
         detail: t('ptaHint'),
+        open: credentialOpen,
+        onOpenChange: setCredentialOpen,
         actions: React.createElement(Actions, null,
           React.createElement('button', { type: 'button', 'data-primary': '', disabled: busy !== null, onClick: save },
             busy === 'save' ? t('saving') : t('save')),
@@ -309,6 +323,8 @@ export function SettingsSection({ t }) {
       //   把无关读数摆进这一页，用户会以为「出口错了」是 Cookie 失效的原因。
       React.createElement(Card, {
         title: t('statusTitle'),
+        open: statusOpen,
+        onOpenChange: setStatusOpen,
       },
         // `ptaStatus()` 只返回 `{ configured, names }` —— 没有 `ok`。
         // 按真实字段判。它只说明「Cookie 在不在」，不是「能不能用」
