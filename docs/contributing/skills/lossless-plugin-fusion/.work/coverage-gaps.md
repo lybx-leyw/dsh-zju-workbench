@@ -621,6 +621,29 @@ Y-10（xuezai rollcall，含 W-4 的数字口令分支）、Y-11（cc98 rate）�
 > 真实 profile 里若有别的地方提供这些服务，结论会不同 —— 但**全仓 grep 那些 `setXxxProvider`
 > 的方法名，除定义处与测试之外零命中**，所以真实 profile 里也没有。这一判断的证据强度是「静态 grep + 替身实测」，不是「在真机上跑过」。
 
+#### A-4 的修复（2026-11-11）
+
+**修法不是「写一个装配方」**，而是让这些包**自己读凭据** —— 照 `zdbk` / `xuezai` /
+`classroom` / `cc98` 那条已验证的路。理由：装配方是一种「必须有别的东西先跑」的
+耦合，而这个仓里没有那样的东西，也不该为了喂凭据再造一个。
+
+| 包 | 改法 | 依据 |
+| --- | --- | --- |
+| `lab` | `readLab(ctx)` —— 存 `zhiyun-lab/account` | `auth: "own"`，有自己的密码 |
+| `mail` | `readMail(ctx)` —— 存 `zhiyun-mail/account` | `auth: "own"`，16 位专用密码 |
+| `sztz` | `ctx.get('zhiyunCard').casTransport({ entry, hosts })` | 走 CAS，按 D18 向 tier 0 要共享会话 |
+| `tyys` | `ctx.get('zhiyunCard').casLoginFor({ entry, hosts })` | 要从落地页取 `oauth_token` / `jwtToken` |
+| `notice` | 同上（`casTransport`） | 多站点各登一次，共享 jar 按域隔离 |
+| `yjsy` | **未改** —— 它要的是「取 token 的能力」，与 CAS 会话不同 | 仍待处理，见下 |
+
+注入点全部**保留**（测试与特殊部署仍可用），只是不再**必需**。
+
+四个包的 `ready()` 语义也一并修正：注入的 provider 存在，**或者**凭据/共享会话可用，
+都算「已接入」。先前只认前者，而那个注入点零调用方 —— 于是设置页恒红。
+
+**`yjsy` 仍未修**：它要的是 `(ctx) => Promise<string>` 形状的取 token 回调，
+与其余五个的信道不同，需要单独看它的 token 从哪来。这一条留在 A-4 里不关闭。
+
 ---
 
 ## 十一、清单自身的编号缺陷（本轮修正）
@@ -695,11 +718,15 @@ R-1 ~ R-3、R-5 已改（保留 `writes: false` 的声明与理由，把「不�
 
 ### 8.3 不在本清单范围、但会卡住新人
 
-`package-lock.json` 与 `package.json` 不同步：`npm ci` 在干净工作树上直接失败
-（`Missing: @lybx-leyw/dsh-zju-tool-campus-write@0.1.0 from lock file`），
-`link-workspace-packages.mjs --check` 报 65/66。重新生成会顺带删 372 行 `extraneous`
-条目并**摘掉根 `dependencies.parse5`**（`xxt/src/parse.js` 在用，虽仍能从包内解析），
-属单独一张票的范围，本轮没动。
+~~`package-lock.json` 与 `package.json` 不同步~~ —— **已修**（2026-11-11）。
+
+重新生成后条目 373 → 375，精确 diff 只两处：
+
+- 补进 `@lybx-leyw/dsh-zju-tool-campus-write`（正是缺的那条）
+- `parse5` 从根 `dependencies` 移到 `packages/source/xxt`（按本仓约定第三方依赖
+  只声明在包内；根上那条是先前手改 `package.json` 留下的，锁文件没跟上）
+
+验证：`npm ci` 实跑退出码 0（added 205 packages）、链接 66/66、`npm run build` 通过。
 
 ---
 
@@ -735,3 +762,96 @@ R-1 ~ R-3、R-5 已改（保留 `writes: false` 的声明与理由，把「不�
 ### 对上游融合清单的影响
 
 上游 `cnki` 模块的 5 条 provides **全部随之废弃**，不再计入覆盖率分母。审计报告（`coverage-audit-batch-b.md`）里那一节的数字是**删除前**的历史记录，保留原文不动 —— 它记的是「当时本仓做到什么程度」，而这份决定记的是「以后不做」。
+
+
+---
+
+## 十三、本轮交付（2026-11-11 下午）
+
+这一节登记**本轮真正做完**的东西，避免下次又把已修的当待办（本轮开头就踩过一次：
+Z-1 / X-3 / 锁文件都已修，清单还标着「待裁决 / 待补」）。
+
+### 13.1 设置分区：所有数据源统一行为
+
+六个分区的两张卡片现在按**配置状态**自动展开：
+
+| 状态 | 凭证卡片 | 状态卡片 |
+| --- | --- | --- |
+| 已配置 | 收起 | **展开** |
+| 未配置 | **展开** | 收起 |
+
+应用到 `pta` / `xxt` / `cc98` / `lab` / `mail` / `login`。
+
+**底层**：`Card` 加可选受控属性 `open` / `onOpenChange`。不传时行为与以前
+完全一致（内部 `useState`），所以现有 9 处调用一行都不用改。
+
+`defaultOpen` 做不到这件事 —— 它是 `useState` 的初值，只在挂载时生效，
+而「配没配」是异步读回来的。
+
+### 13.2 新增两个独立分区
+
+| 分区 | order | 凭据 | 说明 |
+| --- | --- | --- | --- |
+| 实验课平台 | 62 | `zhiyun-lab/account` | `auth: "own"`，有**自己的密码** |
+| 浙大邮箱 | 66 | `zhiyun-mail/account` | `auth: "own"`，16 位客户端专用密码 |
+
+两者都从「浙大一卡通」的「这份凭据的用途」列表里移出 —— 它们不是 CAS 一套，
+混进去会让用户以为"配了一卡通就能用"。
+
+**邮箱这一版只做专用密码**。CAS / OAuth2 路径要邮箱服务端注册的 `client_id`
+才能走 XOAUTH2，记为后续工作（用户明确说过「后续再想办法做 cas」）。
+
+### 13.3 CAS 登录失败自动重启
+
+照上游 `zdbk/client.ts:113-123` 的实测结论，抽成 `createCasRetry`：
+
+- 只重试一次（连续失败是密码/权限问题，再试只是拖时间）
+- 凭据类错误（`CREDENTIALS` / `AUTH_REJECTED`）不重试
+- 重试前等 1.5 秒，并清掉目标域 cookie（残票会让重试"以为已登录"）
+- **同 entry 并发去重** —— 这一条是本仓补的：九个数据源同时要会话时，
+  不去重就会并发登九次 CAS，而 CAS 的票**后登的作废先登的**
+
+`casTransport` 与 `casLoginFor` 走同一个函数，避免两份实现漂移。
+
+### 13.4 设置页状态探测改成 C 方案
+
+真探测要发网络请求、有几项还要真登录一次。现在：
+
+- `GET` 只回缓存；没探过就是 `UNKNOWN`（「未检测」），**不编状态**
+- 只有显式 `POST probe` 才真探一遍并记录采样时间
+
+顺带修三个真 bug：
+
+| # | 缺陷 | 症状 |
+| --- | --- | --- |
+| P-1 | `probeCampusSource` 查已退役的 `zhiyunCampus` | 「学在浙大」**恒**显示「数据源未启用」，即使装着 |
+| P-2 | `egress.state()` 的 `campus` 在没探测过时是 `'unknown'`，被误判成「校外」 | 同一时刻 xuezai 会话探测成功、出口却说「校外且未配 WebVPN」—— 两个结论互相矛盾 |
+| P-3 | `sztz.ready(...).catch is not a function` | `ready()` 是同步的，探测按 Promise 调。四个包同时因此恒红 |
+
+### 13.5 `tool/campus-write` 的致命解构错误
+
+```js
+const [definition] = build(services());   // build 返回单个对象
+```
+
+对非数组解构得到 `undefined` → **7 个工具的执行路径此前从未工作过**，
+每次都 `TypeError`。此前的 16 条测试全只测 `prepare`，所以没暴露。
+
+已修，测试改用**真实 `apply()`** 驱动而非替身。
+
+### 13.6 废弃知网
+
+见第十二节。
+
+### 13.7 仍未做
+
+| # | 条目 | 状态 |
+| --- | --- | --- |
+| A-4 残留 | `yjsy` 的凭据接线 | 它要的是取 token 回调，与其余五个信道不同，待单独看 |
+| X-4 | `tyys` 取验证码题面被 `READ_POSTS` 拒 | 受 K-1 阻塞 |
+| K-1 | `tyys` 点字验证码算不算「绕过人机校验」 | **仍待裁决** |
+| W-* | 约 30 条写操作/只读缺口 | 见第一、六、七节，未动 |
+| D11 | `tool/campus-write` 挂哪个 preset | 仍待裁决 |
+| D14/D15 | 7 个页面 | 未开始 |
+| proc 层 | 9 个包 | Q-D 范围未定 |
+| 邮箱 CAS | XOAUTH2 路径 | 需 `client_id` |
