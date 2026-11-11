@@ -3,7 +3,12 @@
 浙江大学大学生**素质拓展数智平台**（`sztz.zju.edu.cn/dekt`，简称「二三四课堂」）数据源：
 第二、三、四课堂的活动、项目、记点与成绩单。
 
-纯只读（D17），`auth: cas`，`network: campus`。
+**读 6 个方法 + 写 2 个动作**，`auth: cas`，`network: campus`。
+
+> ⚠️ 这一行早先写的是「纯只读（D17）」。那与代码直接矛盾：`src/writes.js` 实现了
+> 报名 / 取消报名，`src/index.js:103` 的 `writeMethods` 列了 4 个
+> `xxxPrepare` / `xxxExecute`，服务面 `readOnly` 是 `false`。
+> D17 判的是「**审批**在 tool 层」，不是「数据包里没有写方法」。
 
 ## ⚠️ 主机只解析到校内地址
 
@@ -82,17 +87,20 @@ await sztz.activities({ limit: 10 })
 
 ## 写操作去哪了
 
-按 D17，**写操作归 `packages/tool/`**。上游的三个写方法：
+按 D17，**写操作的注册与审批归 `packages/tool/`**，实现留在本包
+（它需要本包的活动检索与本人列表回查）。上游的三个写方法：
 
 | 上游方法 | 平台接口 | 现在在哪 |
 | --- | --- | --- |
-| `signUp`（报名） | `student/home/hdbm` | 将来进 `packages/tool/campus-write` |
-| `cancelSignUp`（取消报名） | `student/home/hdqxbm` | 同上 |
-| `setFavorite`（收藏开关） | `student/home/hdsc` | 同上 |
+| `signUp`（报名） | `student/home/hdbm` | `packages/tool/campus-write` 的 `campus_activity` → 本包 `signupActivityPrepare` / `signupActivityExecute` |
+| `cancelSignUp`（取消报名） | `student/home/hdqxbm` | 同上 → `cancelActivityPrepare` / `cancelActivityExecute` |
+| `setFavorite`（收藏开关） | `student/home/hdsc` | **尚未实现**，记 `coverage-gaps.md` 的 W-3 |
 
-三者在上游都过写闸，且「写请求只发一次、之后用本人列表回查」——
-这套语义（包括「收藏是开关，重发会把状态翻回去」）要在 tool 包里实现，
-本包**不含任何写代码**。
+上游要求「写请求只发一次、之后用本人列表回查」，本包的 `Prepare` 已经先查
+（已在报名里就不重复提交）；「收藏是开关，重发会把状态翻回去」这条语义随 W-3 一起待补。
+
+> ⚠️ 这段早先写的是「将来进 campus-write / 本包不含任何写代码」。报名与取消
+> 两条早已在本包实现并注册到服务面（`src/index.js:113-116`）；只有收藏没有。
 
 ## 没有设置分区
 
