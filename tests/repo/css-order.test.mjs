@@ -79,7 +79,6 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'page-plugins',
     'page-quiz',
     'page-study',
-    'page-today',
     'ui-shared',
   ]);
 });

@@ -255,24 +255,6 @@ test('客户端的**间接依赖**也不许碰裸入口（沿 import 链走一�
     '客户端 import 链上出现了裸入口（node: 依赖会进浏览器产物）:\n' + violations.join('\n'));
 });
 
-test('跨域读数据只走 URL：今天页的路由字符串必须与 core-planning 的 ROUTE_PATH 一致', () => {
-  // 今天页要显示「今天到期的规划/待办」，而那份数据在 core-planning 的宿主半边里。
-  // 页面之间不许互相 import，所以它按 URL 取一份快照 —— 这是**允许的**跨域读法。
-  //
-  // 代价是这个字符串是隐式契约：一边改名、另一边忘了改，表现是今天页**静默**
-  // 没有到期事项（`!response.ok` 就返回 null），不报错、不白屏，只是东西不见了。
-  // 这条断言把两边钉在一起。
-  const today = readFileSync(path.join(CLIENT, 'page-today', 'src', 'client.jsx'), 'utf8');
-  const used = /fetch\('(\/_dsh\/[^']+)'\)/.exec(today);
-  assert.ok(used !== null, '今天页里没找到 fetch("/_dsh/…")，读法变了就要改本条测试');
-
-  const planning = readFileSync(path.join(ROOT, 'packages', 'core', 'planning', 'src', 'index.js'), 'utf8');
-  const declared = /export const ROUTE_PATH = '([^']+)'/.exec(planning);
-  assert.ok(declared !== null, 'core-planning 里没找到 ROUTE_PATH 声明');
-
-  assert.equal(used[1], declared[1],
-    `今天页读的是 ${used[1]}，而 core-planning 的 ROUTE_PATH 是 ${declared[1]} —— 改一处必须改两处`);
-});
 
 test('跨域读数据只走 URL：笔记页的三条路径必须与 core-vault 的声明一致', () => {
   // 与上一条同源：笔记页不 import core-vault（页面不许认识它），只按 URL 读写。
