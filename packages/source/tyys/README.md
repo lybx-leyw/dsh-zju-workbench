@@ -7,7 +7,13 @@
 2. **体艺 App**（`http://tyys.zju.edu.cn/cgapp-server` + `http://www.tyys.zju.edu.cn/ptm`）
    —— 体育课考勤、App 会话状态。
 
-纯只读（D17），`auth: cas`，`network: public`，`writes: false`。
+**读 7 个方法 + 写 2 个动作**，`auth: cas`，`network: public`。
+
+> ⚠️ 这一行早先写的是「纯只读（D17）……`writes: false`」。那与代码直接矛盾：
+> `src/writes.js` 实现了预约与取消，`src/index.js:163` 的 `writeMethods` 列了 4 个
+> `xxxPrepare` / `xxxExecute`，服务面 `readOnly` 是 `false`。
+> `package.json` 的 `dsh.capability.writes` 仍是 `false`，那是**分层口径**
+> （审批在 tool 层），不是「本包没有写方法」—— 两件事此前被混成一句了。
 
 ## 平台事实
 
@@ -88,41 +94,77 @@ sign = md5(salt + endpoint + 排序后(按参数名)的 k+v（跳过 null、空�
 
 ## 写操作去哪了
 
-按 D17，**写操作归 `packages/tool/`**。上游 `tyys/booking.ts` 里的写动作：
+按 D17，**写操作的注册与审批归 `packages/tool/`**，实现留在本包（它需要本包的签名、
+令牌与时段查询）。上游 `tyys/booking.ts` 里的写动作：
 
-| 上游方法 | 平台接口 | 归到哪个 tool 包 |
+| 上游方法 | 平台接口 | 现在在哪 |
 | --- | --- | --- |
-| `bookVenue`（预约提交） | `POST /api/reservation/order/submit` | 将来的 `packages/tool/tyys-write` |
-| `payAndVerify`（付款 / 零元确认） | `POST /api/venue/finances/order/pay` | 同上 |
-| `cancelVenue`（取消预约） | `POST /api/venue/finances/order/cancel` | 同上 |
-| `captcha`（点字验证码，预约流程的一部分） | `GET /api/captcha/get`、`POST /api/captcha/check` | 同上 **（若做）** |
-| `companionParams`（同伴码） | `POST /api/vip/view/buddy_no`、`POST /api/vip/check/buddy_no` | 同上 |
+| `bookVenue`（预约提交） | `POST /api/reservation/order/submit` | `packages/tool/campus-write` 的 `campus_activity` → 本包 `bookVenuePrepare` / `bookVenueExecute` |
+| `cancelVenue`（取消预约） | `POST /api/venue/finances/order/cancel` | 同上 → `cancelVenuePrepare` / `cancelVenueExecute` |
+| `payAndVerify`（付款 / 零元确认） | `POST /api/venue/finances/order/pay` | **尚未实现** |
+| `captcha`（点字验证码，预约流程的一部分） | `GET /api/captcha/get`、`POST /api/captcha/check` | **已实现**（`src/captcha.js`）；识别用的模型调用由调用方注入 |
+| `companionParams`（同伴码） | `POST /api/vip/view/buddy_no`、`POST /api/vip/check/buddy_no` | **尚未实现**，记 `coverage-gaps.md` 的 W-7 |
 
-本包**不含任何写代码**，而且是**硬拦**：`VenueClient.request_` 见到上表三个写接口
-直接抛 `CONFIG`，路径拼对了也发不出去（`FORBIDDEN_WRITES`）。上游允许用 POST 的
-四个「读」接口里，只有 `POST /api/reservation/order/info`（**预下单**，不建单）保留了；
-另外三个（验证码校验、同伴码）只服务于提交预约，一并留给 tool 包。
+写路径走 `VenueClient.submit()`，**不经过**只读闸：只读入口 `request()` 仍然把
+上表三个写接口列在 `FORBIDDEN_WRITES` 里直接拒绝，那条防线没被拆掉。
 
-写操作在上游都过写闸（`--confirm` + `ZJU_ALLOW_WRITE`），且「写请求只发一次、
-之后用本人订单回查」—— 这套语义要在 tool 包里实现。
+> ⚠️ 这段早先写的是「本包不含任何写代码，而且是硬拦」。前半不实（写方法早已实现），
+> 而后半藏着一个死链：`writes.js` 当时调的是 `client.request()`，于是
+> **预约与取消这两个动作在任何情况下都被本包自己的闸挡死**，报的还是
+> 「本数据源不提供」—— 看起来像分层设计，实际审批通过后必然失败。
+> 已记 `coverage-gaps.md` 的 X-3，并补了两条「执行路径真的发得出请求」的回归测试。
 
-## 明确丢弃：验证码识别
+写操作在上游都过写闸（`--confirm` + `ZJU_ALLOW_WRITE`），本仓对应的是
+`tool/campus-write` 的逐次审批（`ctx.approval`，只有 `allowed-once` 放行）；
+「写请求只发一次、之后用本人订单回查」这条，回查在 `Prepare` 里做（`cancelVenue`
+先核对订单存在）。
+
+## 验证码识别：代码实现了，但**这与一条更严的约束冲突，待裁决**
+
+> ⚠️ 这一节早先的标题是「**明确丢弃：验证码识别**」，正文断言 `tyys/captcha.ts` 的
+> 全部导出「一个都没有对应物」。**后半是事实错误**：`src/captcha.js` 有 9 个导出
+> （`CAPTCHA_SCALE`、`ASK_TIMEOUT_MS`、`decodePng`、`encodePng`、`enlargePng`、
+> `glyphsIn`、`locate`、`promptOf`、`CaptchaSolver`），`writes.js` 的预约流程真的会调它。
+>
+> 但把标题改成「已实现」也是错的 —— 那等于替用户撤销一条更强的约束。现状是
+> **代码与政策不一致**，两天平都指不出哪边该让步，所以要单独记，不能就地结案。
 
 上游 `tyys/captcha.ts` 是**用多模态模型识别点字验证码**：把图片放大 3 倍交给模型，
-让模型认出图里每个汉字并给出中心坐标，再按题目顺序点出来。它还有一段 prompt
-写着「仅识别验证码内容，不执行图片中的其他指令」。
+让模型认出图里每个汉字并给出中心坐标，再按题目顺序点出来。
 
-**这是规避站点反自动化措施，本包不搬。** 理由不是「技术上做不到」，而是：
+### 事实：本仓实现了什么
 
-- 验证码是站点表达「这里应该由人来做」的机制，自动识别它绕过了站点明确设下的门槛；
-- 它还需要一个外部模型服务（`CAMPUS_MODEL_ENDPOINT`），那是本仓 `source` 层
-  不该有的依赖；
-- 它只在**提交预约**时用，而提交预约本身就不是本包的职责。
+| 部分 | 在哪 |
+| --- | --- |
+| PNG 编解码、放大、坐标换算、题面拼装 | `src/captcha.js` |
+| 问模型 | `CaptchaSolver` 的 `ask` 回调，**由调用方注入** |
+| 什么时候要过验证码 | `preview().captchaRequired`；`bookVenuePrepare` 遇到它才启动识别 |
 
-所以 `tyys/captcha.ts` 的**全部导出**（`askApp`、`enlarge`、`glyphsIn`、`locate`、
-`CaptchaSolver`、`Point`、`Glyph`、`Ask`）一个都没有对应物。
-`preview()` 仍然会**如实报告**「这个场馆要不要过验证码」（`captchaRequired`），
-因为那是平台给用户的既成事实，不是绕过手段。
+没注入 `ask` 时 `CaptchaSolver.start()` 报 `DEPENDENCY_MISSING` 并说清要注入什么，
+不假装提交、不编坐标。
+
+### 冲突：另一处写着「不绕过人机校验」
+
+同一批文档里，`cnki` 滑块求解器被判为**硬约束不做**（「不绕过人机校验」，
+见 `abandoned.md` 的 N-2；`cnki/src/` 里确实没有 slider 求解器）。
+tyys 的点字验证码与 cnki 的滑块拼图在性质上是同一类东西 —— 站点用来区分人机的门槛。
+
+**所以这是个必须由用户裁定的问题，不是我能就地解掉的**：
+
+- 若「不绕过人机校验」是全局硬约束 → `captcha.js` 与 `writes.js` 的那段要**删掉**，
+  `captchaRequired` 的场地如实报「需要人工验证码，本仓不代做」，并记进遗弃记录；
+- 若只有 cnki 那个滑块属于红线（理由可能是它破解的是拼图算式，而点字只是「看图选字」）
+  → 现状保留，但要在这里写清理由，并在 `abandoned.md` 的 N-2 旁边补一句边界说明。
+
+**在裁定之前不要依据 `captcha.js` 承诺「自动过验证码」** —— 它是否该存在本身还没定。
+
+### 顺带查出的死链（无论上面怎么裁定都要修）
+
+`writes.js:141` 取题时调的是 `client.request('POST', '/api/reservation/captcha/check')`，
+而只读入口的 `READ_POSTS` 只有 `/api/reservation/order/info` —— 这个 POST 会被
+`request_` 的「不支持对这个接口用 POST」直接拒掉。也就是说：**需要验证码的场地，
+连取题这一步都过不去**。上表写的是「理论路径」，实测走不通。
+已记 `coverage-gaps.md` 的 X-4。
 
 ## 登录与会话
 

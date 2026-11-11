@@ -604,3 +604,42 @@ Y-10（xuezai rollcall，含 W-4 的数字口令分支）、Y-11（cc98 rate）�
 | 编号 | 状态 |
 | --- | --- |
 | **W-16** | **空号**。历史文档从未定义过它。不回收，避免旧引用指向别的条目 |
+## 八、第二轮自检新增（2026-11-11）
+
+> 详细记录见 [`recheck-2026-11-11.md`](recheck-2026-11-11.md)。这一节只登记编号。
+
+| # | 包 | 缺陷 | 状态 |
+| --- | --- | --- | --- |
+| **X-3** | `tyys` | `bookVenueExecute` / `cancelVenueExecute` **100% 不可用** —— `writes.js` 调的是只读入口 `client.request()`，而该入口把这两个写接口列在 `FORBIDDEN_WRITES` 里直接拒绝。审批通过了也发不出去，报的却是「本数据源不提供」 | **已修**：新增写专用入口 `VenueClient.submit()`（不查只读闸、不自动重放），两个写动作改走它；只读闸原样保留。回归测试 3 条（含「拆掉闸要红」） |
+| **X-4** | `tyys` | 取验证码题面的 `POST /api/reservation/captcha/check` 被 `READ_POSTS` 拒掉（该表只有 `order/info`）→ **需要验证码的场地连取题都过不去**。上游 `READ_POSTS` 是四个 | **待补**，受 K-1 阻塞（验证码该不该存在尚未裁定；裁定保留则补一行即可） |
+| **Z-1** | `cc98` `zdbk` `lab` `pta` `sztz` `tyys` `xuezai` | **审批被拒 → 该动作永久不可用**：`pair()` 的 `prepare()` 存下参数，只有 `execute()` 会清；审批拒绝时 `execute()` 不被调用 → 之后每次 `prepare()` 恒报 `WRITE_BUSY`，直到重启进程。七个包全部如此，实测四个包逐个复现 | **待裁决**（K-2）：修法 A（加 `cancelPrepare()`）/ B（改成后次覆盖）都动已发布契约 |
+
+### 8.1 README 与代码矛盾（已修）
+
+与第五节同一类问题，这次错在「只读」这个词上：
+
+| # | 位置 | 原文 | 实际 |
+| --- | --- | --- | --- |
+| R-1 | `lab/README.md:5,81-90` | 「纯只读」+「不含任何写代码」 | 写方法已实现，`writeMethods` 列 4 个，`readOnly: false` |
+| R-2 | `sztz/README.md:6,83-95` | 同上 | 报名/取消已实现；只有收藏（W-3）真缺 |
+| R-3 | `tyys/README.md:10,89-106` | 「纯只读……`writes: false`」+「不含任何写代码，而且是硬拦」 | 预约/取消已实现；「硬拦」正是 X-3 的来源 |
+| R-4 | `tyys/README.md:122` | 标题「明确丢弃：验证码识别」 | `src/captcha.js` 有 9 个导出且 `writes.js` 在调它 —— **代码与政策不一致**，见 K-1 |
+| R-5 | `tyys/README.md:89-106` | 写操作「归将来的 `tool/tyys-write`」 | 实际归 `tool/campus-write` 的 `campus_activity` |
+
+R-1 ~ R-3、R-5 已改（保留 `writes: false` 的声明与理由，把「不含写代码」改成
+「写方法在、审批在 tool 层」）。R-4 改成如实陈述冲突，不当场裁定。
+
+### 8.2 新增的两条待裁决
+
+| # | 问题 | 两条路 |
+| --- | --- | --- |
+| **K-1** | `tyys` 的点字验证码算不算「绕过人机校验」？（`cnki` 滑块被判为硬约束不做，见 `abandoned.md` N-2；两者性质相同） | 是 → 删 `captcha.js` 与 `writes.js` 那段，`captchaRequired` 场地如实报人工；否 → 保留，但要在 N-2 旁补边界说明 |
+| **K-2** | Z-1 怎么修 | A：source 加 `cancelPrepare()`，工具层审批失败时调它（保留「并发 Prepare 被拒」）；B：`prepare()` 改后次覆盖（放弃那条保护）。建议 A，但要先定方向 |
+
+### 8.3 不在本清单范围、但会卡住新人
+
+`package-lock.json` 与 `package.json` 不同步：`npm ci` 在干净工作树上直接失败
+（`Missing: @lybx-leyw/dsh-zju-tool-campus-write@0.1.0 from lock file`），
+`link-workspace-packages.mjs --check` 报 65/66。重新生成会顺带删 372 行 `extraneous`
+条目并**摘掉根 `dependencies.parse5`**（`xxt/src/parse.js` 在用，虽仍能从包内解析），
+属单独一张票的范围，本轮没动。

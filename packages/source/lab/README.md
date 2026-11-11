@@ -2,7 +2,13 @@
 
 实验课选课平台（`10.203.16.55`）数据源：**学期、实验课、班次余量、已选、课表、公告**。
 
-纯只读（D17），`auth: own`，`network: campus`。
+**读 10 个方法 + 写 2 个动作**，`auth: own`，`network: campus`。
+
+> ⚠️ 这一行早先写的是「纯只读（D17）」。那与代码直接矛盾：`src/writes.js` 实现了
+> 选实验 / 退选，`src/index.js:113` 的 `writeMethods` 列了 4 个
+> `xxxPrepare` / `xxxExecute`，服务面 `readOnly` 是 `false`。
+> D17 判的是「**审批**在 tool 层」，不是「数据包里没有写方法」。见下面
+> [写操作去哪了](#写操作去哪了)。
 
 ## ⚠️ 平台在私网 IP 上
 
@@ -80,14 +86,21 @@ token 失效（`code` 401/408）时**重登一次再重放**，收敛条件保�
 
 ## 写操作去哪了
 
-按 D17，**写操作归 `packages/tool/`**。上游的两个写方法：
+按 D17，**写操作的注册与审批归 `packages/tool/`**，实现留在本包
+（它需要本包的签名、`termId`、班次与已选查询）。上游的两个写方法：
 
 | 上游方法 | 现在在哪 |
 | --- | --- |
-| `select()`（选实验班次） | 将来进 `packages/tool/campus-write` |
-| `cancel()`（退选） | 同上 |
+| `select()`（选实验班次） | `packages/tool/campus-write` 的 `campus_lab_select` → 本包 `selectLabPrepare` / `selectLabExecute` |
+| `cancel()`（退选） | 同上 → `cancelLabPrepare` / `cancelLabExecute` |
 
-两者在上游都过写闸（`--confirm` + `ZJU_ALLOW_WRITE`），本包**不含任何写代码**。
+两者在上游都过写闸（`--confirm` + `ZJU_ALLOW_WRITE`），本仓对应的是
+`tool/campus-write` 的逐次审批（`ctx.approval`，只有 `allowed-once` 放行）。
+
+> ⚠️ 这段早先写的是「将来进 campus-write / 本包不含任何写代码」。两处都不实：
+> 写方法早已在本包实现并注册到服务面（`src/index.js:129-132`）。
+> 另有一处真实缺陷：`campus_lab_select` 的 `select` 传课程名会被 source 的
+> `id()` 拒掉（`coverage-gaps.md` 的 Y-12）。
 
 ## 没有设置分区
 
