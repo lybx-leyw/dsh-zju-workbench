@@ -36,7 +36,7 @@
 import { WhaleIcon } from './icons.jsx';
 import { installRailIconArtwork } from './rail-icons.js';
 import { suppressBrandMark } from './brand.js';
-import { installCollapseIntoWhale } from './rail-action.jsx';
+import { applySidebarWidth, installCollapseIntoWhale, sidebarWidthCss } from './rail-action.jsx';
 import { installManagerStyle } from './manager-style.js';
 import { installSettingsRailEntry } from './settings-entry-style.js';
 
@@ -152,6 +152,35 @@ export function apply(ctx) {
       slots: scope.slots, pages: scope.pages, layout: scope.layout,
     }), 'zju: collapse into whale');
   });
+  // 「侧栏让出导轨那 51px」**不能**挂在上面那个 effect 里。
+  //
+  // `installCollapseIntoWhale` 在槽位服务形状不对时会**提前 return**（见它的两个
+  // 早退分支），于是同一 effect 里的收窄逻辑跟着一起没执行 —— 真机踩过：
+  // 代码打进产物了，但页面上宽度纹丝不动，因为那一行根本没跑到。
+  //
+  // 收窄只依赖 DOM，与槽位 / 页面壳 / 布局服务都无关，所以单独一个 effect，
+  // 不需要任何 inject —— 它在本包挂载后立刻生效。
+  // 「侧栏让出导轨那 51px」走 **CSS 变量 + !important**，不走 DOM 改写。
+  //
+  // 宽度是 React 每次 render 重写的内联样式；用 JS 抢不过（真机实测：
+  // 函数被调到了、也找到了元素，宽度仍然纹丝不动）。而 CSS 的 !important
+  // 压得住内联 —— 实测内联仍写着 280px、计算宽度已是 229。
+  //
+  // 所以分工是：CSS 定宽度，JS 只把「该多宽」算出来写进变量。
+  ctx.effect(() => {
+    const doc = globalThis.document;
+    const style = doc?.createElement?.('style');
+    if (style !== undefined && style !== null) {
+      style.dataset.zjuSidebarWidth = '';
+      style.textContent = sidebarWidthCss();
+      doc.head?.append?.(style);
+    }
+    const undo = applySidebarWidth();
+    return () => {
+      undo();
+      style?.remove?.();
+    };
+  }, 'zju: sidebar gives up the rail width');
   // 惰性取 pages：页面壳可能晚于本包挂载，而把它写进 inject 会让本包在
   // 页面壳缺席时一起 pending —— 一个只管默认宽度的包不该有这个连坐能力。
   ctx.inject(['pages'], scope => {

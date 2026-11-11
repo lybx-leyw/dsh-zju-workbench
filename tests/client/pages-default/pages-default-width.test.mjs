@@ -389,3 +389,82 @@ test('the rail whale carries an explicit primary colour instead of inheriting gr
   assert.equal(typeof createArtwork, 'function', '内建页图标的着色路径不受影响');
   assert.ok(doc);
 });
+
+/* ───────────────────── 侧栏让出导轨宽度（CSS 变量方案） */
+
+/**
+ * 侧栏宽度的规则，全是纯函数 —— 不需要 DOM 就能测。
+ *
+ * 真正把宽度落到界面上的那一步交给 CSS（`!important` 压住 React 的内联样式），
+ * 这里只验「算得对」与「生成的规则覆盖了该覆盖的地方」。
+ */
+const rail = await bundleModule('packages/client/pages-default/src/rail-action.jsx');
+
+test('目标宽度 = max(MIN, 当前 − 导轨宽)：默认 280 时得到 229', () => {
+  // 280 − 51 = 229，正好等于 MIN，两个分支同值。
+  assert.equal(rail.sidebarTarget({ current: 280, floor: 229, railWidth: 51 }), 229);
+});
+
+test('目标宽度 = max(MIN, 当前 − 导轨宽)：用户拖到 340 时得到 289', () => {
+  assert.equal(rail.sidebarTarget({ current: 340, floor: 229, railWidth: 51 }), 289);
+});
+
+test('目标宽度不会低于 MIN：当前比导轨还窄时仍给 229', () => {
+  // 这一条钉的是「侧栏不能消失」：`current - railWidth` 一旦 <= 0，
+  // 结果必须落回 MIN，而不是 0 或负数。
+  assert.equal(rail.sidebarTarget({ current: 40, floor: 229, railWidth: 51 }), 229);
+});
+
+test('目标宽度永远不会是 0 或负数 —— 无论输入多离谱', () => {
+  for (const current of [0, 1, 51, 100, -50]) {
+    const v = rail.sidebarTarget({ current, floor: 229, railWidth: 51 });
+    assert.ok(v >= 229, `current=${current} 时得到 ${v}，低于 MIN`);
+  }
+});
+
+test('MIN 是硬编码的 229，不由任何量反推', () => {
+  // 曾经写成 min(宿主下限, 宿主默认 − 导轨宽)：导轨一旦做宽到接近 280，
+  // 宿主默认 − 导轨宽 就是 0 或负数，取 min 之后侧栏直接消失。
+  assert.equal(rail.MIN_SIDEBAR_WIDTH, 229);
+  assert.equal(rail.DEFAULT_RAIL_WIDTH, 51);
+  // 与 client.jsx 的导轨宽度必须一致（两处复制了这个常量）
+  assert.equal(rail.DEFAULT_RAIL_WIDTH, defaults.DEFAULT_RAIL_WIDTH);
+});
+
+test('CSS 规则覆盖两层内联样式，且都带 !important', () => {
+  const css = rail.sidebarWidthCss();
+  // ① frame 的网格第一列（宿主写的是内联 grid-template-columns）
+  assert.match(css, /\[data-slot="root"\]/);
+  assert.match(css, /grid-template-columns:var\(--zju-sidebar-width\)[^;}]*!important/);
+  // ② SidebarRoot 自身的宽度（只改网格会把它裁掉右端）
+  assert.match(css, /\[data-slot="sidebar"\]/);
+  assert.match(css, /width:var\(--zju-sidebar-width\)[^;}]*!important/);
+});
+
+test('CSS 规则只在展开态生效 —— 否则收起后也锁在 229', () => {
+  // 真机踩过：少了这个限定，宿主把内联写成 56px（收起轨），
+  // 计算值却还是 229，**侧栏根本收不起来**。
+  const css = rail.sidebarWidthCss();
+  const lines = css.split('\n').filter(line => line.includes('data-slot') && line.includes('{'));
+  assert.equal(lines.length, 3, '应当正好三条规则');
+  for (const rule of lines) {
+    // 收起态判定有两种写法：宿主把属性写在被选元素上（\:not(...)），
+    // 或写在后代上（:has(\:not(...))）。两种都算有防护。
+    const guarded = rule.includes(':not([data-sidebar-collapsed="true"])')
+      || rule.includes(':not(:has([data-sidebar-collapsed="true"]))');
+    assert.ok(guarded, `缺少展开态限定: ${rule.slice(0, 70)}`);
+  }
+});
+
+test('拖拽手柄的位置也用同一个变量 —— 否则它停在旧位置', () => {
+  // 宿主的 `<DragHandle left={cols.sidebar}>` 把 left 写成内联 280px，
+  // 收窄网格后手柄会停在离侧栏 51px 的地方，拖它会拖错东西。
+  const css = rail.sidebarWidthCss();
+  assert.match(css, /handle[^{]*\{left:var\(--zju-sidebar-width\)[^;}]*!important/);
+});
+
+test('CSS 规则不用构建期哈希类名（换一次构建就失效）', () => {
+  const css = rail.sidebarWidthCss();
+  // 宿主类名长这样：pI_x6G_frame / hHd-Xa_root —— 形态是 [A-Za-z0-9_-]+_xxx
+  assert.doesNotMatch(css, /\.[A-Za-z0-9_-]{5,}_[a-zA-Z]/, `CSS 里出现了哈希类名: ${css}`);
+});
