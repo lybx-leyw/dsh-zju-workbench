@@ -16,6 +16,26 @@ async function bundleModule(relative) {
   const result = await build({
     entryPoints: [path.join(root, relative)],
     bundle: true, write: false, format: 'esm', platform: 'neutral', jsx: 'automatic', logLevel: 'silent',
+    // ⚠️ `@lybx-leyw/dsh-zju-ui-shared` 在这个包里是 external（运行时由客户端的模块表
+    // 提供），而它的 `main` 是**宿主半边** `src/index.js` —— 只有 `apply()`，没有 React
+    // 组件。直接打进来会得到 `No matching export … usePageSidebar`。
+    //
+    // 用桩替掉它：这里要验的是「按 pageId 取页面侧栏登记」这一层，注册表本身有
+    // `tests/client/ui-shared/page-sidebar.test.mjs` 单独覆盖。
+    plugins: [{
+      name: 'ui-shared-stub',
+      setup(builder) {
+        builder.onResolve({ filter: /^@lybx-leyw\/dsh-zju-ui-shared$/ }, () => ({ path: 'ui-shared', namespace: 'stub' }));
+        builder.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
+          contents: [
+            'const controls = new Map();',
+            'export function usePageSidebar(pageId) { return controls.get(pageId); }',
+            'export function __set(pageId, control) { controls.set(pageId, control); }',
+          ].join('\n'),
+          loader: 'js',
+        }));
+      },
+    }],
   });
   return import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
 }
@@ -35,6 +55,29 @@ function fakeSlots() {
         registrations.push(record);
         return dispose;
       },
+    },
+  };
+}
+
+/**
+ * 一个够用的假页面服务：只有快照与订阅，形状照抄 `ctx.pages`。
+ *
+ * 快照形状必须是 `{ pages: [{ id }] }` —— 产品层据此决定给哪几页挂动作，
+ * 与页面壳真实的 `state.js` 一致（`pages: Object.freeze([...])`）。
+ */
+function fakePages(ids) {
+  const entries = ids.map(id => ({ id }));
+  const listeners = new Set();
+  const publish = () => { for (const listener of [...listeners]) listener(); };
+  return {
+    config: { railActionSlot: 'page.rail-action', homePage: 'home' },
+    getSnapshot: () => ({ pages: entries.map(entry => ({ ...entry })) }),
+    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    add(id) { entries.push({ id }); publish(); },
+    remove(id) {
+      const at = entries.findIndex(entry => entry.id === id);
+      if (at !== -1) entries.splice(at, 1);
+      publish();
     },
   };
 }
@@ -79,23 +122,55 @@ function fakeDocument({ toggles = 1 } = {}) {
   return { doc, buttons, own };
 }
 
-test('only the home page gets a registered action; every other page keeps the shell fallback', () => {
+test('every page in the snapshot gets a registered action, not just home', () => {
+  // 这里曾经断言「只注册 home」，那是有意为之的旧口径。现在用户要求同样的位置
+  // 在**每个**带侧栏的页面都能用，于是注册面跟着页面快照走。
   const { slots, registrations } = fakeSlots();
+  const pages = fakePages(['home', 'paper', 'notes', 'docs', 'study']);
   const undo = railAction.installCollapseIntoWhale({
-    slots,
-    pages: { config: { railActionSlot: 'page.rail-action' } },
-    layout: { toggleSidebar() {} },
-    doc: fakeDocument().doc,
+    slots, pages, layout: { toggleSidebar() {} }, doc: fakeDocument().doc,
   });
 
-  // keyed 槽：key 就是页面 id。只登记 home 是**有意为之** —— 没登记的 key 走 fallback。
-  assert.equal(registrations.length, 1, '只注册 home 一页');
-  assert.equal(registrations[0].name, 'page.rail-action');
-  assert.equal(registrations[0].key, 'home');
-  assert.equal(typeof registrations[0].component, 'function');
+  assert.deepEqual(registrations.map(record => record.key), ['home', 'paper', 'notes', 'docs', 'study'],
+    '快照里有几页就注册几页（keyed 槽只认精确 key）');
+  for (const record of registrations) {
+    assert.equal(record.name, 'page.rail-action');
+    assert.equal(typeof record.component, 'function');
+  }
 
   undo();
-  assert.equal(registrations[0].disposed, true, '卸载时撤掉注册');
+  for (const record of registrations) assert.equal(record.disposed, true, '卸载时撤掉全部注册');
+});
+
+test('a page that lands later is registered without re-registering the others', () => {
+  // 插件按需装载：页面可能比导轨晚到。整批推倒重挂会让已经在那一格上的按钮
+  // 闪一下并丢掉悬停态，所以按差集增量挂。
+  const { slots, registrations } = fakeSlots();
+  const pages = fakePages(['home', 'notes']);
+  railAction.installCollapseIntoWhale({
+    slots, pages, layout: { toggleSidebar() {} }, doc: fakeDocument().doc,
+  });
+  assert.equal(registrations.length, 2);
+
+  pages.add('paper');
+  assert.equal(registrations.length, 3, '新页面补挂一条');
+  assert.deepEqual(registrations.map(record => record.disposed), [false, false, false], '旧的两条没有被推倒重来');
+
+  pages.remove('notes');
+  assert.equal(registrations[1].disposed, true, '回收的页面撤掉自己的那一条');
+  assert.equal(registrations[0].disposed, false, 'home 不受影响');
+});
+
+test('home collapses the native sidebar; every other page gets the page-sidebar form', () => {
+  const { slots, registrations } = fakeSlots();
+  const layout = { toggleSidebar() {} };
+  railAction.installCollapseIntoWhale({
+    slots, pages: fakePages(['home', 'notes']), layout, doc: fakeDocument().doc,
+  });
+  const [home, notes] = registrations.map(record => record.component({ railWidth: 51 }));
+  assert.equal(home.type.name, 'CollapseIntoWhale', 'home 仍是原生侧栏那条路径');
+  assert.equal(notes.type.name, 'PageSidebarAction', '其他页走页面自己的侧栏');
+  assert.equal(notes.props.pageId, 'notes', '页面 id 由 keyed 槽的 key 决定，不需要再猜');
 });
 
 test('the native collapse button is marked, and the mark is removed on dispose', () => {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Icon } from '@lybx-leyw/dsh-zju-ui-shared';
+import { Icon, useRegisterPageSidebar } from '@lybx-leyw/dsh-zju-ui-shared';
 import { AssistantDrawer } from './AssistantDrawer.jsx';
 import { ReaderFrame } from './ReaderFrame.jsx';
 import { createTopic, loadPaper, loadTranslateState, transcribePaper, translateSelection, uploadPaper } from './library.js';
@@ -111,6 +111,26 @@ export function Paper({ controller }) {
    * 那对"我想专心读 PDF"的人是持续的干扰。
    */
   const [treeOpen, setTreeOpen] = useState(readTreeOpen);
+  /**
+   * 把「论文库」的开关交给导轨顶部那只鲸鱼（`ui-shared` 的页面侧栏契约）。
+   *
+   * 收起/展开原先只有栏头那个 `×` 与窄条上的箭头两个入口，位置在页面**里面**；
+   * 而 home 页的同一个位置（导轨顶上那只鲸鱼）是可以点的。这个 hook 让两者对齐，
+   * 同时保留页内那两个入口 —— 惯用位置与就近位置都该存在，不是替换关系。
+   *
+   * ⚠️ 必须在下面的 `if (!paper)` 提前 return **之前**调用（hook 数量不能变）。
+   */
+  const toggleTree = useCallback(() => {
+    setTreeOpen((open) => {
+      writeTreeOpen(!open);
+      return !open;
+    });
+  }, []);
+  useRegisterPageSidebar('paper', {
+    expanded: treeOpen,
+    toggle: toggleTree,
+    label: treeOpen ? '收起论文库' : '展开论文库',
+  });
 
   /**
    * 一篇文献在**树上**的路径（就是 `row.path` 那个形状）。
@@ -575,12 +595,8 @@ export function Paper({ controller }) {
     onUploadClick={() => paperInputRef.current?.click()}
     onNewFolder={() => void createPaperFolder()}
     onCollapseAll={() => setExpanded(new Set())}
-    onCollapse={() => {
-      setTreeOpen((open) => {
-        writeTreeOpen(!open);
-        return !open;
-      });
-    }}
+    // 栏头那个 × 与导轨鲸鱼是**同一个动作**：都走 `toggleTree`，偏好只写一次。
+    onCollapse={toggleTree}
     cursor={treeCursor}
     onCursor={setTreeCursor}
     busy={treeBusy}
@@ -625,12 +641,7 @@ export function Paper({ controller }) {
       : <button
         type="button"
         className="zp-tree-toggle"
-        onClick={() => {
-          setTreeOpen((open) => {
-            writeTreeOpen(!open);
-            return !open;
-          });
-        }}
+        onClick={toggleTree}
         title="展开论文库"
         aria-label="展开论文库"
       >

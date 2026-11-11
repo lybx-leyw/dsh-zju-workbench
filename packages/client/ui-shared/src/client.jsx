@@ -86,6 +86,15 @@ export {
   subscribeComponent,
 } from './component-registry.js';
 export { usePublishedComponent } from './component-registry.jsx';
+// 页面侧栏契约：页面把自己的「收起 / 展开」交给产品层，产品层把它挂进导轨顶部的鲸鱼。
+// 这是单向的 —— 页面不知道导轨，产品层不知道页面的内部状态（见 page-sidebar.js 的说明）。
+export {
+  getPageSidebar,
+  registerPageSidebar,
+  resetPageSidebars,
+  subscribePageSidebar,
+} from './page-sidebar.js';
+export { usePageSidebar, useRegisterPageSidebar } from './page-sidebar.jsx';
 // 课件页渲染器：**UI 归 UI 层**。它 import React 并产 DOM，不属于 core。
 // 画布常量（VIEWPORT_SIZE / VIEWPORT_RATIO）仍在 `core/classroom-renderer` 里，
 // 因为生成侧也要用 —— 这里只引用，不另存一份。

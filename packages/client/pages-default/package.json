@@ -28,7 +28,10 @@
       "patch": "./cordis.patch.yml"
     },
     "client": {
-      "platform": "web"
+      "platform": "web",
+      "external": [
+        "@lybx-leyw/dsh-zju-ui-shared"
+      ]
     }
   },
   "publishConfig": {

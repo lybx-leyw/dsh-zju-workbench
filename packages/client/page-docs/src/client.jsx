@@ -31,8 +31,8 @@
 //   1. 宿主渲染标题时**不写 id**，`[x](#foo)` 这种 fragment 链接还会被 allowlist
 //      降级成纯文本 —— 所以页内目录不能靠锚点，只能按"第几个标题"滚动。
 //   2. 宿主的 `.markdown` 类名在产物里是哈希过的，跟着它写样式会静默失效。
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Empty, Icon, mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Empty, Icon, mountStyle, registerPageContent, useRegisterPageSidebar } from '@lybx-leyw/dsh-zju-ui-shared';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
 import { DEFAULT_PAGE, SECTIONS } from './docs-manifest.js';
 import { contentOf } from './docs-content.js';
@@ -133,6 +133,20 @@ export function Docs() {
   const [query, setQuery] = useState('');
   const [activeHeading, setActiveHeading] = useState(-1);
   const [copied, setCopied] = useState(false);
+  /**
+   * 左侧目录是否展开。
+   *
+   * 这一页原先**没有**收起态：目录栏恒占 229px。窄窗口下靠 `@media` 断点自动让位，
+   * 但那不给用户任何主动选择 —— 想专心读一篇时没法把目录收掉。
+   *
+   * 默认展开（第一次进来看得到「这一片有哪些篇」），收起后由导轨那只鲸鱼叫回来。
+   * 与论文库不同，这里**不记进 localStorage**：文档页是「读哪一篇」的临时位置，
+   * 宽度偏好那种跨会话的东西不属于它（与 `pageId` 本身一样不留存）。
+   */
+  const [navOpen, setNavOpen] = useState(true);
+  /** 把目录开关交给导轨鲸鱼（见 `ui-shared/page-sidebar.js`）。 */
+  const toggleNav = useCallback(() => setNavOpen((value) => !value), []);
+  useRegisterPageSidebar('docs', { expanded: navOpen, toggle: toggleNav, label: navOpen ? '收起文档目录' : '展开文档目录' });
   const scrollRef = useRef(null);
   /**
    * 点目录之后"钉住"的那一条。
@@ -417,8 +431,8 @@ export function Docs() {
     </div>
 
     <div className="zyd-body">
-      {/* 左：目录。按分区成组，组头不可点。 */}
-      <nav className="zyd-nav" aria-label="文档目录">
+      {/* 左：目录。按分区成组，组头不可点。收起时整栏退场（导轨那只鲸鱼负责叫回来）。 */}
+      {navOpen && <nav className="zyd-nav" aria-label="文档目录">
         <label className="zyd-filter">
           <Icon name="search" size={14}/>
           <input
@@ -446,7 +460,7 @@ export function Docs() {
           </div>;
         })}
         {matched.size === 0 && <p className="zyd-nav-empty">没有匹配的文档</p>}
-      </nav>
+      </nav>}
 
       {/* 中：正文。整页唯一的滚动容器。 */}
       <div className="zyd-main" ref={scrollRef}>
