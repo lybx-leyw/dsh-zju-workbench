@@ -236,7 +236,7 @@ scripts/OWNERS                              Owner: @bob, @carol + Open
 
 本项目的功能单位是插件包（`packages/dsh-zhiyun-*`），不是往某个大插件里塞代码。贡献一个新功能，就是提供一个包，或改动已有的包；改动某一页时只动对应的包（各包职责见 [README](../../README.md) 与包内的 `README.md`）。
 
-> `packages/radar/` 下的 `dsh-radar-*` 是生态雷达的**候选骨架**，不是正式包，不参与构建与 profile。把骨架变成正式包（以及不转正时怎么处置）按 [RADAR.md](./RADAR.md) 执行；其中**保守废弃原则**要求：只有能力全部被提取或用户明确要求才删骨架，仅提取部分能力时只标记、不删除。
+> `packages/radar/` 下的 `dsh-radar-*` 是**参考实现库**（[reference-library.md](../reference-library.md)）：静态归档，不再维护、不再更新。它们不是正式包，不参与构建、不进 profile。实现某项能力前可以去那里看「别人怎么做过」，但**参考，不要照搬**——真要采用须新建正式包并重写。
 
 **插件包怎么写没有额外规定，参考现成实现即可**：
 

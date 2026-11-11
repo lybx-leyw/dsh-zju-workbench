@@ -21,7 +21,7 @@ const questionText = question => question.stem.replace(/\{\{c\d+::[^}]*\}\}/g,'_
  * 宿主 Markdown 渲染器的文案。
  *
  * 必须是**模块级常量**：`MarkdownText` 按 `labels` 的**身份**缓存组件表，
- * 每次渲染新建一个字面量会让它反复重建（`page-docs` / `page-feedback` 同样写法）。
+ * 每次渲染新建一个字面量会让它反复重建（`page-docs` 同样写法）。
  */
 const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
 

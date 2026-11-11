@@ -73,7 +73,6 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     // 页面包全部迁到 `packages/client/page-*`：目录名即短名，按字典序排在后面。
     // `page-classroom` / `-play` / `-build` 都已归档 —— 产品侧不要独立的课堂页面。
     'page-docs',
-    'page-feedback',
     'page-notes',
     'page-paper',
     'page-planning',

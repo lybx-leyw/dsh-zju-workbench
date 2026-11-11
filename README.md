@@ -36,7 +36,7 @@
 OpenMAIC 来源），这些归属记录在各自的 `ATTRIBUTION.md` 里，不影响按包划分的协议。
 完整规则见 [LICENSING.md](LICENSING.md)。
 
-`profiles/zju-workbench/` 是 profile 模板；`packages/dsh-zhiyun-*` 是功能包，其中 `page-{today,paper,study,quiz,planning,notes,me,plugins,docs,feedback}` 对应侧栏各页（`paper` 是「论文阅读」，见 `packages/dsh-zhiyun-page-paper/README.md` 与它下面的 `dsh-zhiyun-host-paper`；`quiz` 是跨课程题库，见 `packages/dsh-zhiyun-page-quiz/README.md`；`plugins` 是依赖图与插件裁剪，见 `packages/dsh-zhiyun-page-plugins/README.md`；`feedback` 是内嵌的迷你社区（发需求、评论讨论，形态照 GitHub issue），见 `packages/dsh-zhiyun-page-feedback/README.md`，其收件服务在 `deploy/feedback-service/`），其余为外壳、UI 原语、领域状态与业务能力；`scripts/`、`tests/` 是工具与测试。每个包内有自己的 `README.md`，用法与限制以包内那份为准。
+`profiles/zju-workbench/` 是 profile 模板；`packages/dsh-zhiyun-*` 是功能包，其中 `page-{today,paper,study,quiz,planning,notes,plugins,docs}` 对应侧栏各页（`paper` 是「论文阅读」，见 `packages/dsh-zhiyun-page-paper/README.md` 与它下面的 `dsh-zhiyun-host-paper`；`quiz` 是跨课程题库，见 `packages/dsh-zhiyun-page-quiz/README.md`；`plugins` 是依赖图与插件裁剪，见 `packages/dsh-zhiyun-page-plugins/README.md`），其余为外壳、UI 原语、领域状态与业务能力；`scripts/`、`tests/` 是工具与测试。每个包内有自己的 `README.md`，用法与限制以包内那份为准。
 
 `packages/source/netproxy/` 是**分域网络代理**：所有出口流量经一个本地中继，按你在「设置 → 网络代理」里配置的域名规则分发到不同代理或直连（代理数量不设上限）。它存在的理由是智云是国内站点，不该跟着全局代理绕道海外。设计与配置形状见该包 [README](packages/source/netproxy/README.md)。
 
