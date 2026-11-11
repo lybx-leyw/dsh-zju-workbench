@@ -342,7 +342,7 @@ test('fetchCourseGpa：空课程名当场拒绝，不发请求', async () => {
 });
 
 test('apply()：服务面把 course 列进 methods，路由也认这个动作', async () => {
-  const { apply, ROUTE_PATH } = await import('../packages/source/chalaoshi/src/index.js');
+  const { apply, ROUTE_PATH } = await import('../../../packages/source/chalaoshi/src/index.js');
   const services = new Map();
   const routes = [];
   const ctx = {

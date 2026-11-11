@@ -399,7 +399,7 @@ function fakeSession(initial = null) {
 }
 
 test('logout：清掉内存登录态与持久化会话，并如实报出之前有没有', async () => {
-  const { apply } = await import('../packages/source/lab/src/index.js');
+  const { apply } = await import('../../../packages/source/lab/src/index.js');
   const { ctx, services } = fakeCtx();
   const dispose = apply(ctx);
   try {
@@ -418,7 +418,7 @@ test('logout：清掉内存登录态与持久化会话，并如实报出之前�
 });
 
 test('logout：没有注入持久化层时不抛错（纯内存模式下也要能用）', async () => {
-  const { apply } = await import('../packages/source/lab/src/index.js');
+  const { apply } = await import('../../../packages/source/lab/src/index.js');
   const { ctx, services } = fakeCtx();
   const dispose = apply(ctx);
   try {
