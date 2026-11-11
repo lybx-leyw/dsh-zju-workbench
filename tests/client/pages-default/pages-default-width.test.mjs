@@ -306,31 +306,71 @@ function fakeSlots({ declared = true } = {}) {
   return { slots, registrations, injected };
 }
 
-test('the native brand row is shadowed on both slots at a lower priority', () => {
+test('only the duplicate whale mark is suppressed; the host wordmark is left alone', () => {
   const { slots, registrations, injected } = fakeSlots();
-  const undo = brand.suppressNativeBrand(slots);
+  const undo = brand.suppressBrandMark(slots);
 
-  assert.deepEqual(injected, ['sidebar.brand.mark', 'sidebar.brand.name'], '两个槽都接管');
-  assert.equal(registrations.length, 2);
-  for (const record of registrations) {
-    // 原生那份是默认 priority 0；更低的数值才会被选为渲染者。
-    assert.equal(record.priority, -1, `${record.name} 必须压在原生之下`);
-    assert.equal(record.component(), null, '影子组件渲染空内容');
-  }
+  // ⚠️ bug1 的回归锚就在这一行断言里：上一版把**两个**槽都让空，
+  // 而宿主 `.logoRow` 写死 60px、`.brand` 又是 flex:1 —— 内容空了盒子还在，
+  // 顶部就是一条 60px 的空白带。字标必须留给宿主。
+  assert.deepEqual(injected, ['sidebar.brand.mark'], '只接管标记槽');
+  assert.deepEqual([...brand.SUPPRESSED_BRAND_SLOTS], ['sidebar.brand.mark']);
+  assert.ok(!brand.SUPPRESSED_BRAND_SLOTS.includes('sidebar.brand.name'),
+    'name 槽必须留着，否则顶部又会空一块');
+  assert.equal(registrations.length, 1);
+  // 原生那份是默认 priority 0；更低的数值才会被选为渲染者。
+  assert.equal(registrations[0].priority, -1, '必须压在原生之下');
+  // 让掉的是重复的鲸鱼：这里渲染的是一个**零视觉的定位锚点**（空 span），不是图标。
+  const marker = registrations[0].component({});
+  assert.equal(marker.type, 'span', '标记槽渲染空 span 作为锚点');
+  assert.equal(marker.props.children, undefined, '锚点没有任何内容');
+  assert.equal(marker.props['aria-hidden'], 'true', '锚点对辅助技术不可见');
 
   undo();
-  assert.ok(registrations.every(record => record.disposed), '卸载后两条注册都撤掉，原生品牌恢复');
+  assert.ok(registrations.every(record => record.disposed), '卸载后注册撤掉，原生鲸鱼恢复');
+});
+
+test('the brand row is left-aligned after the whale is dropped', () => {
+  // 宿主原本是 justify-content:flex-end + .brand{flex:1}：让掉鲸鱼之后字标会被顶到最右，
+  // 左端空着。产品其余部分（导轨/页头/列表）都是左对齐，这一行必须跟上。
+  const css = brand.BRAND_ROW_CSS;
+  assert.match(css, /justify-content:flex-start/, '整行左对齐');
+  assert.ok(!/justify-content:flex-end/.test(css), '不能保留右对齐');
+  assert.match(css, /flex:0 0 auto/, '身份按钮不再 flex:1 撑满整行');
+  // 死规则自检：隐藏装锚点的那层 span 会让 :has() 失配、整套样式永久失效。
+  assert.ok(!/span:first-child\{\s*display:none/.test(css),
+    '不能隐藏锚点所在的 span —— 那会让选择器自己关掉自己');
+});
+
+test('the alignment selectors only match the wide state, never the collapsed rail', () => {
+  // 宽态：button > span > span > span[marker]；收起态：button > span > span[marker]。
+  // 差一层，所以只命中宽态 —— 不会误伤收起态那颗 36px 的折叠按钮。
+  const selector = brand.ROW_SELECTOR;
+  assert.match(selector, /data-window-drag/, '用宿主写死的语义属性当锚点');
+  assert.match(selector, /\[data-zju-brand-slot\]/, '用我们自己的标记当判据');
+  assert.ok(!/GgXflG|_\w+\{/.test(selector), '不依赖构建期哈希类名');
+  assert.match(selector, /:has\(> button > span > span > \[data-zju-brand-slot\]\)/,
+    '层级必须比收起态多一层');
+});
+
+test('the package draws no brand artwork of its own', () => {
+  // 用户明确要求：不做自己的图标。这个包只能「少做一件事」，不能新增品牌绘制。
+  const exported = Object.keys(brand);
+  for (const forbidden of ['ZhiyunBrandMark', 'ZhiyunBrandName', 'BRAND_MARK_WORD',
+    'BRAND_WORD_PATH', 'BRAND_MARK_SCREEN', 'BRAND_MARK_VIEWBOX']) {
+    assert.ok(!exported.includes(forbidden), `不应再导出自有品牌绘制：${forbidden}`);
+  }
 });
 
 test('brand suppression is a no-op when the slot service is absent or misshapen', () => {
   // 宿主没提供 slots、或换了形状：静默不动，绝不能因此让侧栏起不来。
   for (const absent of [undefined, null, {}, { inject: () => {} }, { register: () => {} }]) {
-    assert.doesNotThrow(() => brand.suppressNativeBrand(absent), '缺失槽位服务时安全退出');
-    assert.equal(typeof brand.suppressNativeBrand(absent), 'function', '仍然返回可调用的撤销函数');
+    assert.doesNotThrow(() => brand.suppressBrandMark(absent), '缺失槽位服务时安全退出');
+    assert.equal(typeof brand.suppressBrandMark(absent), 'function', '仍然返回可调用的撤销函数');
   }
   // 槽位还没声明时 inject 不会回调；撤销函数照样可用。
   const pending = fakeSlots({ declared: false });
-  const undo = brand.suppressNativeBrand(pending.slots);
+  const undo = brand.suppressBrandMark(pending.slots);
   assert.equal(pending.registrations.length, 0, '槽位未声明就不注册');
   assert.doesNotThrow(undo);
 });
