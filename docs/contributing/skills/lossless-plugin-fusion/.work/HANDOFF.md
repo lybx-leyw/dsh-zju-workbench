@@ -12,7 +12,7 @@
 
 | # | 旧文档说的 | 实际 |
 | --- | --- | --- |
-| 1 | 「数据源层已完成」 | **数据源包建完了、实机上多数用不了**：`lab` / `tyys` / `sztz` / `mail` / `yjsy` / `notice` 六个包的凭据注入口没人调用，挂载后 `ready()` 全是 `false`（见 [`abandoned.md`](abandoned.md) A-4）；`tool/campus-write` 既不在 profile 也不在 preset，**22 条写能力在实机上没有入口** |
+| 1 | 「数据源层已完成」 | ~~六个包的凭据注入口没人调用~~ **已修**：`ecf080f` 让 `lab` / `mail` 读 `source/login` 的记录、`sztz` / `tyys` / `notice` 走共享 `casTransport` / `casLoginFor`；`yjsy` 在本票补了同样的兜底（`casLoginFor` + 自己的 `validateLogin`）。仍未解决的是 **`tool/campus-write` 不在 profile 也不在 preset**（Q-N），所以 22 条写能力在实机上仍没有入口 |
 | 2 | 写操作的接线断裂「已修」（Y-2 / Y-5 / Y-6） | **只修到 source 边界**。用 `node scripts/probe-write-contract.mjs` 按工具层实际传的参数再测一遍：**22 条探针通 14、不通 8**（`coverage-gaps.md` 第八节，Y-7 ~ Y-12）。退课/调序、场馆预约、交/撤作业、点名、CC98 评分、选实验**点了就报错** |
 | 3 | 审计基线「12 个模块、121 条 provides」 | 无法复现。重算是 **17 个有 `module.json` 的模块、162 条 provides**（两种算法一致）。两份审计只覆盖 147 条；`doc`（4 条）与 `zjuam`（3 条）**没有任何审计**，`doc` 里有 3 条完全没有承接方 |
 
@@ -20,8 +20,8 @@
 
 ## 一、一句话现状
 
-**18 个数据源包全部建完并挂进 profile；写操作实现了 22 条；但装配层（谁能用）与
-工具层的参数契约还没打通，所以实机上「能读到东西」的只有 4 个数据源。**
+**18 个数据源包全部建完并挂进 profile；写操作实现了 22 条；装配层已由 `ecf080f` 接通
+（六个只留注入点的包改成自己读凭据 / 走共享 CAS），剩下的硬缺口是工具层参数契约。**
 
 已建成：`source/` 22 个包（4 个 tier 0 + 15 个数据源 + 3 个 agent skill）、
 `tool/campus-write`（7 个工具 / 22 条写操作）、`tool/study`。
@@ -46,17 +46,17 @@
 | --- | --- | --- | --- |
 | `zdbk` | 12 | 3 | 自己读凭据（不需装配方）；select ✅ / drop·reorder ✗（Y-7） |
 | `cc98` | 22 | 8 | 自己读凭据；7 个写动作 ✅ / rate ✗（Y-11） |
-| `xxt` | 12 | 0 | 自己读凭据（Cookie） |
-| `classroom` | 22 | 0 | 自己读凭据；读依赖 `profileContext`；`trans audio` 缺内核（漏-4） |
+| `xxt` | 13 | 0 | 自己读凭据（Cookie）；资料栏 `dataFiles` 已补（W-15），本地 `logout` 已补（W-12） |
+| `classroom` | 23 | 0 | 自己读凭据；读依赖 `profileContext`；`searchCaptions` 已补（W-13）；`trans audio` 仍缺内核（漏-4） |
 | `xuezai` | 6 动作 | 3 | 自己读凭据；submit·retract ✗（Y-9）/ rollcall ✗（Y-10） |
-| `pta` | 5 动作 | 2 | 自己读凭据（Cookie）；写需先在网页开始答题（上游同款） |
-| `lab` | 10 | 2 | ❌ **未注入凭据**（`ready()=false`）；cancel ✅ / select ✗（Y-12） |
+| `pta` | 7 动作 | 2 | 自己读凭据（Cookie）；`submissions` / `submission` 已补（W-9 前两条）；写需先在网页开始答题（上游同款） |
+| `lab` | 10 (+ `logout`) | 2 | 凭据走 `setCredentialProvider`，装配方已由 `ecf080f` 接通；`logout` 已补（W-11）；cancel ✅ / select ✗（Y-12） |
 | `sztz` | 6 | 2 | ❌ **未注入登录**；两个写动作契约 ✅ |
 | `tyys` | 7 | 2 | ❌ **未注入账号**；cancel ✅ / book ✗（Y-8） |
 | `notice` | 4 | 0 | ❌ **未注入 CAS 登录**；匿名可读但 9 个来源里需要登录的那部分读不到（实测 `status: partial`，`incomplete: 11`） |
 | `yjsy` | 1 | 0 | ❌ **未注入 token** |
 | `mail` | 8 | 0 | ❌ **未注入专用密码** |
-| `chalaoshi` | 3 | 0 | 无凭据需求（站点国内不可达，有缓存时可用） |
+| `chalaoshi` | 3 (+ `course`) | 0 | 无凭据需求（站点国内不可达，有缓存时可用）；课程绩点表已补（W-14） |
 | `ebook` | 1 | 0 | 无凭据需求 |
 | `cnki` | 2 | 0 | 无凭据需求（按 IP 认机构）；下载未实现（W-10） |
 
@@ -184,8 +184,8 @@ xxxExecute(signal) →  把算好的东西发出去                        // �
 | --- | --- | --- |
 | X 死链（**已修**） | 2 | `pta` exam 死链、deadline 校验失效 |
 | Y 接线断裂（**source 侧已修，工具侧仍有 9 处**） | 6 + 7 | `tyys` 漏 import、`zdbk` 参数契约、`campus_checkin` 给不到点名编号 |
-| W 能力缺口 | 30 | `xxt` 资料栏、`classroom setup`、`pta` start/finish |
-| A 遗弃了一半（**承接方不存在**） | 8 | D21 的下载执行方、六个包的凭据注入口 |
+| W 能力缺口 | **23 行**（本轮关掉 7 行：W-9 **部分**、W-11、W-12、W-13、W-14、W-15、W-19） | 仍开的有 `classroom setup`、`pta` start/finish、`sztz` 收藏、W-9 的 `reconcile` 等 |
+| A 遗弃了一半（**承接方不存在**） | 7 | D21 的下载执行方、D9 的邮箱三个包、`classroom` 的转写内核注入方、`tool/campus-write` 的注入点（A-4 的六个已全部修掉） |
 | D 行为差异 | 12 | `classroom live` 进程内 vs 后台进程 |
 
 ---

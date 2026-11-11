@@ -15,7 +15,7 @@
 
 | 方法 | 作用 | 主要参数 |
 | --- | --- | --- |
-| `zdbk.grades` | 成绩列表 + 该范围的 GPA 汇总 | `academic_year` / `semester` / `major_only` |
+| `zdbk.grades` | 成绩列表 + 该范围的 GPA 汇总；评教没做完时多一个 `evaluationPending` 说明**为什么本学期成绩是空的** | `academic_year` / `semester` / `major_only` |
 | `zdbk.gpaSummary` | 总体 / 专业 / 分学期 GPA | 无 |
 | `zdbk.exams` | 考试安排（期中 + 期末） | `academic_year` / `semester` / `upcoming_only` |
 | `zdbk.timetable` | 课表（按星期与节次排好） | `academic_year` / `term` |

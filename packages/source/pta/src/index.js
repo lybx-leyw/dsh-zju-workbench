@@ -65,7 +65,7 @@ export const WRITE_HEADER = 'x-zhiyun-pta';
 const CLIENT_ACTIONS = Object.freeze(['status', 'saveCookie', 'clearCookie']);
 
 /** 读取动作白名单 —— 路由只认这几个词，不做任意属性访问。 */
-const READ_ACTIONS = Object.freeze(['problemSet', 'problems', 'problem', 'progress']);
+const READ_ACTIONS = Object.freeze(['problemSet', 'problems', 'problem', 'progress', 'submissions', 'submission']);
 
 /** 默认会话文件相对数据目录的位置。 */
 const SESSION_FILE = 'pta.session';
@@ -321,6 +321,16 @@ export function apply(ctx, config = {}) {
           maxCharacters: Number(body.maxCharacters ?? 16000),
           signal,
         });
+      case 'submissions':
+        // 上游 `pta submission list`：只看「我交过什么」，纯 GET（审计 W-9）。
+        return api.submissions(body.problemSetId, {
+          ...(body.before !== undefined ? { before: body.before } : {}),
+          ...(body.limit !== undefined ? { limit: Number(body.limit) } : {}),
+          ...(body.problemId !== undefined ? { problemId: body.problemId } : {}),
+          signal,
+        });
+      case 'submission':
+        return api.submission(body.problemSetId, body.submissionId, { signal });
       default:
         return api.progress(body.problemSetId, { signal });
     }
@@ -533,5 +543,5 @@ async function readJson(req) {
 export { PtaApi, normalizePta, parsePtaCookie, translatePtaError, PTA_BASE, PTA_HOST, PTA_HOSTS, isPtaHost };
 export {
   PTA_PAGE_LIMIT, PTA_ORDER_BY, PTA_PROBLEM_TYPES, PTA_TYPE_LABELS,
-  ptaId, yesterdayUtcMidnight, normalizeDeadline, isPendingProblemSet,
+  ptaId, yesterdayUtcMidnight, normalizeDeadline, normalizeTimestamp, isPendingProblemSet,
 } from './pta.js';

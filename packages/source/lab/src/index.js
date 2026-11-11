@@ -279,6 +279,30 @@ export function apply(ctx) {
       /** 清掉缓存（换账号、或用户点了「重新登录」）。 */
       reset() { cached = null; },
 
+      /**
+       * 清掉本地实验课会话（对应上游 `lab session logout`）。
+       *
+       * # 它清的是什么
+       *
+       * 平台发的 JWT 缓存在本机（`setSession` 注入的 `{load, save}`）。这个方法
+       * 丢掉内存里的登录态**并**让持久化层丢掉磁盘上那份 —— 只清内存的话，
+       * 下次 `restore()` 又会把同一个 token 读回来，「已退出」是假的。
+       *
+       * # 它不做什么
+       *
+       * 不向平台发请求（平台没有注销端点），也**不动凭据** —— 账号密码还在
+       * 「设置 → 实验课平台」，用户要删的是那份记录。
+       *
+       * @returns `{ cleared: boolean }` —— 之前有没有可清的会话。
+       */
+      async logout() {
+        const had = Boolean(cached?.auth ?? (session?.load?.()?.token));
+        cached = null;
+        if (session && typeof session.clear === 'function') await session.clear();
+        else if (session && typeof session.save === 'function') await session.save(null);
+        return { cleared: Boolean(had) };
+      },
+
       /* ── 只读接口 ── */
       async terms() { return (await client()).terms(); },
       async currentTerm() { return (await client()).currentTerm(); },
@@ -322,6 +346,7 @@ export function apply(ctx) {
               'my-timetable': () => service.myTimetable(input.input ?? {}),
               'my-info': () => service.myInfo(),
               status: () => service.status(),
+              logout: () => service.logout(),
               // 凭据读写（`auth: "own"`：实验课平台自己的账号，不经 CAS）
               verify: () => service.verify(),
               'save-account': () => service.saveAccount(input.input ?? {}),

@@ -192,3 +192,120 @@ function makeReq(body) {
   };
   return req;
 }
+
+/* ──────────────────────────── 共享 CAS 兜底（A-4 的最后一条） ──────────────────────────── */
+
+/**
+ * 装了 `source/login` 时，本包应当自己换 token，而不是报「没人喂账号」。
+ *
+ * # 这一条钉的是什么
+ *
+ * A-4 的原症状是「挂得上、用不了」：`setTokenProvider` 全仓没有调用方。
+ * `ecf080f` 把 `lab` / `mail` / `sztz` / `tyys` / `notice` 都改成自己取凭据，
+ * 只有 `yjsy` 漏了。这里钉住它现在也走共享 CAS：
+ *
+ *   1. 宿主有 `zhiyunCard.casLoginFor` 时 `ready()` 就该是 true；
+ *   2. 换 token 的那一跳（`validateLogin`）由本包发，`ticket` 来自落地 URL；
+ *   3. 换不到 token 时把**平台原话**带出来（本科生走研究生入口就是这一种）。
+ */
+function fakeCtxWithCard({ landingUrl, validate }) {
+  const services = new Map();
+  const routes = [];
+  const fetchCalls = [];
+  const card = {
+    async casLoginFor() {
+      return { url: new URL(landingUrl), html: '', passwordSubmitted: false };
+    },
+  };
+  /**
+   * 出口替身：换 token 那一跳会经 `sharedFetch(ctx)`，而它会先问
+   * `ctx.get('zhiyunEgress')`。这里给一个假出口，测试就**不联网**，
+   * 也能精确断言「带上了哪个 ticket、哪个 service」。
+   */
+  const egress = {
+    async fetch(url, init) {
+      fetchCalls.push({ url: String(url), init });
+      const body = typeof validate === 'function' ? validate(String(url)) : validate ?? {};
+      return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  };
+  const ctx = {
+    effect(fn) { return fn() ?? (() => {}); },
+    provide(name, value) { services.set(name, value); return () => services.delete(name); },
+    inject(names, callback) {
+      const scope = { webServer: { register(entry) { routes.push(entry); return () => {}; } } };
+      callback(scope);
+    },
+    get(name) {
+      if (name === 'zhiyunCard') return card;
+      if (name === 'zhiyunEgress') return egress;
+      return undefined;
+    },
+  };
+  return { ctx, services, routes, card, fetchCalls };
+}
+
+test('装了 source/login 时 ready() 为 true，且用落地票换 token', async () => {
+  const host = fakeCtxWithCard({
+    landingUrl: 'https://yjsy.zju.edu.cn/?ticket=ST-1',
+    validate: { success: true, code: 200, message: 'ok', result: { token: 'TOKEN-1' } },
+  });
+  apply(host.ctx);
+  const yjsy = host.services.get('zhiyunYjsy');
+  assert.equal(yjsy.ready(), true, '有共享 CAS 就算「已接入」');
+
+  // 换 token 成功之后才去读课表；课表那一跳同样经假出口，回一个空但合法的形状。
+  await yjsy.timetable({ username: '2234567890' }).catch(() => {});
+
+  const exchange = host.fetchCalls.find((call) => call.url.includes('validateLogin'));
+  assert.ok(exchange, '本包必须自己发 validateLogin 那一跳');
+  const target = new URL(exchange.url);
+  assert.equal(target.searchParams.get('ticket'), 'ST-1', 'ticket 取自回跳落地地址');
+  assert.equal(target.searchParams.get('service'), 'https://yjsy.zju.edu.cn/', 'service 是研究生入口');
+
+  // token 要真的带到后续业务请求的头上（换 token 那一跳自己不带）。
+  const read = host.fetchCalls.find((call) => call.init?.headers?.['X-Access-Token']);
+  assert.ok(read, '换到 token 之后必须带着它去读数据');
+  assert.equal(read.init.headers['X-Access-Token'], 'TOKEN-1');
+  assert.equal(read.url.includes('validateLogin'), false, '换 token 那一跳不该带旧 token');
+});
+
+test('共享 CAS 但没有票时抛 REJECTED，说清是认证那边的问题', async () => {
+  const host = fakeCtxWithCard({ landingUrl: 'https://yjsy.zju.edu.cn/' });
+  apply(host.ctx);
+  const yjsy = host.services.get('zhiyunYjsy');
+  await assert.rejects(() => yjsy.timetable({ username: '2234567890' }), (error) => {
+    assert.equal(error.code, 'REJECTED', '两个入口都失败时归成 REJECTED');
+    assert.match(error.message, /签票|不让这个账号登录/);
+    return true;
+  });
+  assert.equal(host.fetchCalls.length, 0, '没有票就不该发换 token 的请求');
+});
+
+test('换不到 token 时把平台原话带出来（本科生走研究生入口就是这一种）', async () => {
+  const host = fakeCtxWithCard({
+    landingUrl: 'https://yjsy.zju.edu.cn/?ticket=ST-1',
+    validate: { success: false, code: 500, message: '无效的用户信息' },
+  });
+  apply(host.ctx);
+  const yjsy = host.services.get('zhiyunYjsy');
+  await assert.rejects(() => yjsy.timetable({ username: '3234567890' }), (error) => {
+    assert.equal(error.code, 'REJECTED');
+    assert.match(error.message, /无效的用户信息/, '平台原话要出现在最终错误里');
+    return true;
+  });
+});
+
+test('注入的 provider 优先于共享 CAS（装配方可以有更完整的票据链）', async () => {
+  let called = 0;
+  const host = fakeCtxWithCard({
+    landingUrl: 'https://yjsy.zju.edu.cn/?ticket=ST-1',
+    validate: { success: true, code: 200, message: 'ok', result: { token: 'FROM-CAS' } },
+  });
+  apply(host.ctx);
+  const yjsy = host.services.get('zhiyunYjsy');
+  yjsy.setTokenProvider(async () => { called += 1; return 'INJECTED'; });
+  await yjsy.timetable({ username: '2234567890' }).catch(() => {});
+  assert.equal(called > 0, true, '注入的 provider 必须被调用');
+  assert.equal(host.fetchCalls.some((call) => call.url.includes('validateLogin')), false, '注入优先时不该再走共享 CAS');
+});

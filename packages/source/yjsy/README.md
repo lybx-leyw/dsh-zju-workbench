@@ -29,25 +29,35 @@
 - `courses[].pending` —— `xkzt === 12`，页面上标橙色的「还没处理完的选课」；
 - `courses[].undergraduate` —— `bkbj === 1`，本科生课（选了研究生课的本科生的课会混在这里）。
 
-## 登录不归本包管
+## 登录：注入优先，共享 CAS 兜底
 
-本包**不碰凭据、不走 CAS**。CAS 登录在 `packages/source/campus` 的 `cas/login.js`，
-而 tier 1 的数据源不该反向依赖一个业务包。
+研究生教务网要两跳：**CAS 给 `service` 签票**，再拿票
+`GET dataapi/sys/cas/client/validateLogin?ticket=&service=` 换成 `X-Access-Token`。
 
-所以服务面收一个取 token 的回调：
+第一跳是通用的，走 `source/login` 的 `casLoginFor`；**第二跳必须在本包做** ——
+只有本包知道 `dataapi` 前缀与那两个入口。这与 `tyys` / `sztz` / `notice`
+的做法一致：凭据与 CAS 流程都在 tier 0，数据源只说明自己要哪个 `service`。
 
 ```js
-const yjsy = ctx.get('zhiyunYjsy')
+// 常规路径：装了 source/login 就能用（会在「设置 → 浙大一卡通」取账号）
+const table = await ctx.get('zhiyunYjsy').timetable({ username: '2234567890' })
+
+// 可选：装配方有更完整的票据链时，注入自己的 provider，优先于共享 CAS
 yjsy.setTokenProvider(async ({ entry, service, username }) => {
-  // 走一遍 CAS 拿 ticket，再换 token；返回 access token 字符串
+  // 返回 access token 字符串；返回空串会让本包去试另一个入口
 })
-const table = await yjsy.timetable({ username: '2234567890' })
 ```
 
-这与 `source/webvpn` 的 `doctor()` 收凭据、`source/http` 的 `setWebvpnSession()`
-收会话来源是同一条原则：**下层不知道凭据从哪来**。
+`ready()` 两条路都算：注入过 provider，或宿主装了 `source/login`。
 
-没注入回调时调 `timetable()` 会抛 `CONFIG` 并说清缺什么，不会静默返回空课表。
+> 早先这里写「本包不碰 CAS，等集成层注入」。那个集成层**始终没有出现**，
+> 结果是这个包挂得上、用不了（`abandoned.md` 的 A-4）。现在改成自己走共享 CAS，
+> 与另外五个包同一条路。
+
+两条路都没有时调 `timetable()` 会抛 `CONFIG` 并说清缺什么，不会静默返回空课表。
+
+**换不到 token 时把平台原话带出来**：本科生走研究生入口会拿到 500「无效的用户信息」，
+那句话会出现在最终错误里 —— 否则用户只会看到「登录失败」。
 
 ## 服务面
 
@@ -56,8 +66,8 @@ const table = await yjsy.timetable({ username: '2234567890' })
 | `routePath` | `/api/zhiyun-yjsy` |
 | `readOnly` | 恒为 `true` |
 | `methods` | `['yjsy.timetable']` |
-| `setTokenProvider(handler)` | 注入取 token 的能力；返回撤销函数 |
-| `ready()` | 是否已接入登录 |
+| `setTokenProvider(handler)` | 注入取 token 的能力（优先于共享 CAS）；返回撤销函数 |
+| `ready()` | 是否已接入登录（注入过 provider，或宿主装了 `source/login`） |
 | `timetable(input)` | 取课表；会话失效时自动重换一次 token |
 | `reset()` | 清掉缓存的会话（换账号、或用户点了「重新登录」） |
 

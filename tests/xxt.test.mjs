@@ -10,6 +10,7 @@ import {
   parseCourses, parseHomeworkList, parseHomeworkDetail, parseExams,
   parseSchedule, normalizeNotice, matchesNotice, isPending, nearestDate,
   stripTags, unescapeHtml, hiddenValue, parseChapters, parseCards,
+  parseDataList, roughBytes,
 } from '../packages/source/xxt/src/parse.js';
 import { XxtReader, XXT_METHODS, describeError } from '../packages/source/xxt/src/reads.js';
 import { XxtClient, XXT_SETUP, withQuery } from '../packages/source/xxt/src/client.js';
@@ -840,10 +841,10 @@ test('插件形状：name / inject 与路由常量', () => {
   assert.equal(ROUTE_PATH, '/api/zhiyun-xxt');
 });
 
-test('方法白名单：12 个只读方法，一个不多一个不少', () => {
+test('方法白名单：13 个只读方法，一个不多一个不少', () => {
   assert.deepEqual([...XXT_METHODS], [
-    'courses', 'listCourses', 'findCourse', 'chapters', 'materials', 'downloadParams', 'homework', 'listHomework',
-    'deadlines', 'exams', 'notices', 'schedule',
+    'courses', 'listCourses', 'findCourse', 'chapters', 'materials', 'dataFiles', 'downloadParams', 'homework',
+    'listHomework', 'deadlines', 'exams', 'notices', 'schedule',
   ]);
   // 读取器上确实有这些方法（白名单不能是空名单）
   const reader = new XxtReader({ get: async () => '', post: async () => '' });
@@ -1207,4 +1208,292 @@ test('downloadParams：objectId 不是 32 位 hex 时抛 INVALID_ARGUMENT', asyn
     return true;
   });
   await assert.rejects(() => reader.downloadParams({}), { code: 'INVALID_ARGUMENT' });
+});
+
+/* ────────────────────────────────────────────── 资料栏（W-15 漏-6） */
+
+/**
+ * 资料栏（`dataFiles`）。
+ *
+ * ⚠️ 夹具按上游 `chaoxing/parse.ts` 的 `parseDataList` 实现推断（`ul.dataBody_td`
+ * 一行、`toOpen(...)` 取参数、`input#totalPages` 给页数），**未经真实页面验证**。
+ */
+
+/** 造一行资料栏条目。 */
+function dataRowHtml({ name, type = 'pdf', dataId = '1', objectId = '', enc = '', size = '14KB', downloadable = true, folder = false }) {
+  const call = `toOpen('${name}','${type}','${dataId}','','${objectId}','0','0','0','0','${enc}')`;
+  return `<ul class="dataBody_td" id="${dataId}" dataname="${name}" type="${folder ? 'afolder' : type}"`
+    + ` objectid="${objectId}" isdown="${downloadable ? '1' : '0'}" onclick="${call}">`
+    + `<li class="dataBody_name_stu">${name}</li><li class="dataBody_size_stu">${size}</li></ul>`;
+}
+
+/** 造一页资料栏。 */
+function dataListHtml(rows, totalPages = 1) {
+  return `<html><body>${rows.join('')}<input id="totalPages" value="${totalPages}"></body></html>`;
+}
+
+test('parseDataList：从 ul.dataBody_td 取名字、类型、大小与 enc', () => {
+  const html = dataListHtml([
+    dataRowHtml({ name: '讲义', type: 'pdf', dataId: '11', objectId: 'a'.repeat(32), enc: 'E1', size: '14KB' }),
+  ]);
+  const list = parseDataList(html);
+  assert.equal(list.totalPages, 1);
+  assert.equal(list.rows.length, 1);
+  assert.equal(list.rows[0].name, '讲义');
+  assert.equal(list.rows[0].type, 'pdf');
+  assert.equal(list.rows[0].dataId, '11');
+  assert.equal(list.rows[0].objectId, 'a'.repeat(32));
+  assert.equal(list.rows[0].enc, 'E1');
+  assert.equal(list.rows[0].downloadable, true);
+  assert.equal(roughBytes(list.rows[0].size), 14336);
+});
+
+test('parseDataList：isdown="0" 标成不可下载；文件夹行保留类型', () => {
+  const list = parseDataList(dataListHtml([
+    dataRowHtml({ name: '锁住的', type: 'pdf', dataId: '12', downloadable: false }),
+    dataRowHtml({ name: '第一章', type: 'afolder', dataId: '13', folder: true, enc: 'F1' }),
+  ]));
+  assert.equal(list.rows[0].downloadable, false);
+  assert.equal(list.rows[1].type, 'afolder');
+  assert.equal(list.rows[1].enc, 'F1');
+});
+
+test('parseDataList：没有 totalPages 时当作一页（不无限翻）', () => {
+  const list = parseDataList('<html><body><ul class="dataBody_td" id="1" dataname="x" type="pdf"></ul></body></html>');
+  assert.equal(list.totalPages, 1);
+  assert.equal(list.rows.length, 1);
+});
+
+test('roughBytes：K / M / G 与裸字节；认不出给 null 而不是 0', () => {
+  assert.equal(roughBytes('14KB'), 14 * 1024);
+  assert.equal(roughBytes('1.5MB'), Math.round(1.5 * 1024 ** 2));
+  assert.equal(roughBytes('500B'), 500);
+  assert.equal(roughBytes('2G'), 2 * 1024 ** 3);
+  assert.equal(roughBytes(''), null);
+  assert.equal(roughBytes('很大'), null);
+});
+
+test('dataFiles：逐层翻文件夹并分页，文件带「资料」前缀的路径', async () => {
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=111&clazzid=222&cpi=333">'
+    + '<span class="course-name" title="课">课</span></a>';
+  const calls = [];
+  const reader = new XxtReader({
+    get: async (url, query) => {
+      calls.push({ url, query });
+      if (url.includes('courselistdata')) return COURSE_HTML;
+      if (url.includes('stucoursemiddle')) return '<input id="enc" value="STU">';
+      if (url.includes('stu-datalist')) {
+        // 根层：一个文件夹 + 一个文件；文件夹里：另一个文件，分两页。
+        if (!query.dataId) {
+          return dataListHtml([
+            dataRowHtml({ name: '第一章', type: 'afolder', dataId: '9', folder: true, enc: 'F9' }),
+            dataRowHtml({ name: '大纲', type: 'pdf', dataId: '1', objectId: 'a'.repeat(32), enc: '', size: '10KB' }),
+          ]);
+        }
+        const page = Number(query.pages ?? 1);
+        return page === 1
+          ? dataListHtml([dataRowHtml({ name: '课件', type: 'pptx', dataId: '2', objectId: 'b'.repeat(32), size: '2MB' })], 2)
+          : dataListHtml([dataRowHtml({ name: '附录', type: 'docx', dataId: '3', size: '1KB' })], 2);
+      }
+      return '';
+    },
+    post: async () => '',
+  });
+
+  const result = await reader.dataFiles({ course: '课' });
+  assert.equal(result.count, 3, '根层 1 + 文件夹 2');
+  const names = result.files.map((f) => f.name);
+  // 顺序是深度优先（文件夹当场展开，与上游一致），所以这里只钉集合。
+  assert.deepEqual([...names].sort(), ['大纲.pdf', '附录.docx', '课件.pptx'].sort(), '扩展名要补上');
+  assert.deepEqual(result.files.find((f) => f.name === '课件.pptx').location, ['资料', '第一章']);
+  const outline = result.files.find((f) => f.name === '大纲.pdf');
+  assert.equal(outline.objectId, 'a'.repeat(32));
+  assert.equal(outline.size, 10 * 1024);
+  const appendix = result.files.find((f) => f.name === '附录.docx');
+  assert.equal(appendix.objectId, null, '没有 objectId 时如实给 null，不编一个');
+  assert.match(result.note, /约数/);
+
+  // 根层请求要带上中间页取到的 stuenc；文件夹要用它自己的 enc。
+  // ⚠️ 这份替身没有 `redirect`，所以走的是「从正文隐藏域取」的退路 ——
+  // 真实客户端走 302 的 `Location`（见下一条）。
+  const root = calls.find((c) => c.url.includes('stu-datalist') && !c.query.dataId);
+  assert.equal(root.query.stuenc, 'STU');
+  assert.equal(root.query.courseid, '111');
+  assert.equal(root.query.clazzid, '222');
+  const folder = calls.find((c) => c.url.includes('stu-datalist') && c.query.dataId === '9');
+  assert.equal(folder.query.enc, 'F9');
+  assert.equal(page2Requested(calls), true, '文件夹第二页要按 pages=2 再取一次');
+});
+
+/** 文件夹那一层有没有真的翻到第二页。 */
+function page2Requested(calls) {
+  return calls.some((c) => c.url.includes('stu-datalist') && c.query.dataId === '9' && Number(c.query.pages) === 2);
+}
+
+test('dataFiles：真实客户端从课程页 302 的 Location 里取 stuenc（正文里没有）', async () => {
+  // 这一条钉的是「不能从正文抠」：中间页正文**不含** enc，只有 302 的地址带。
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=111&clazzid=222&cpi=333">'
+    + '<span class="course-name" title="课">课</span></a>';
+  const fetcher = recorder([
+    ['courselistdata', () => new Response(COURSE_HTML, { status: 200, headers: { 'content-type': 'text/html' } })],
+    ['stucoursemiddle', () => new Response('', {
+      status: 302,
+      headers: { location: 'https://mooc1.chaoxing.com/mooc-ans/mycourse/studentstudy?courseId=111&clazzid=222&enc=FROM_REDIRECT' },
+    })],
+    ['stu-datalist', () => new Response(dataListHtml([dataRowHtml({ name: '大纲', type: 'pdf', dataId: '1' })]), {
+      status: 200, headers: { 'content-type': 'text/html' },
+    })],
+  ]);
+  const client = await makeClient(fetcher);
+  const reader = new XxtReader(client);
+  const result = await reader.dataFiles({ course: '课' });
+  assert.equal(result.count, 1);
+  const dataCall = fetcher.calls.find((c) => String(c.url).includes('stu-datalist'));
+  assert.match(String(dataCall.url), /stuenc=FROM_REDIRECT/, 'stuenc 必须来自 302 的落地地址');
+});
+
+test('dataFiles：取 stuenc 失败也照样列清单（不把整份清单一起带走）', async () => {
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=111&clazzid=222&cpi=333">'
+    + '<span class="course-name" title="课">课</span></a>';
+  const calls = [];
+  const reader = new XxtReader({
+    get: async (url, query) => {
+      calls.push({ url, query });
+      if (url.includes('courselistdata')) return COURSE_HTML;
+      if (url.includes('stu-datalist')) return dataListHtml([dataRowHtml({ name: '大纲', type: 'pdf', dataId: '1' })]);
+      return '';
+    },
+    post: async () => '',
+    redirect: async () => { throw new Error('没有跳转'); },
+  });
+  const result = await reader.dataFiles({ course: '课' });
+  assert.equal(result.count, 1, '取不到 stuenc 不该让清单为空');
+  const root = calls.find((c) => c.url.includes('stu-datalist'));
+  assert.equal(root.query.stuenc, '', '取不到就传空串，不编一个');
+});
+
+test('dataFiles：「教师课件」入口不是文件，跳过', async () => {
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=1&clazzid=2&cpi=3">'
+    + '<span class="course-name" title="课">课</span></a>';
+  const reader = new XxtReader({
+    get: async (url) => {
+      if (url.includes('courselistdata')) return COURSE_HTML;
+      if (url.includes('stucoursemiddle')) return '<input id="enc" value="S">';
+      if (url.includes('stu-datalist')) {
+        return dataListHtml([dataRowHtml({ name: '教师课件', type: 'tch-courseware', dataId: '77' })]);
+      }
+      return '';
+    },
+    post: async () => '',
+  });
+  const result = await reader.dataFiles({ course: '课' });
+  assert.equal(result.count, 0, '入口本身不是文件');
+});
+
+test('dataFiles：同一 objectId 在两层都出现时只留一条', async () => {
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=1&clazzid=2&cpi=3">'
+    + '<span class="course-name" title="课">课</span></a>';
+  const DUP = 'c'.repeat(32);
+  const reader = new XxtReader({
+    get: async (url, query) => {
+      if (url.includes('courselistdata')) return COURSE_HTML;
+      if (url.includes('stucoursemiddle')) return '<input id="enc" value="S">';
+      if (url.includes('stu-datalist')) {
+        if (!query.dataId) {
+          return dataListHtml([
+            dataRowHtml({ name: '夹', type: 'afolder', dataId: '5', folder: true, enc: 'F5' }),
+            dataRowHtml({ name: '同一份', type: 'pdf', dataId: '1', objectId: DUP }),
+          ]);
+        }
+        return dataListHtml([dataRowHtml({ name: '同一份', type: 'pdf', dataId: '1', objectId: DUP })]);
+      }
+      return '';
+    },
+    post: async () => '',
+  });
+  const result = await reader.dataFiles({ course: '课' });
+  assert.equal(result.count, 1, '按 objectId 去重');
+});
+
+test('downloadParams：资料栏文件走 302 入口，取 Location 而不是把跳转页当文件', async () => {
+  const COURSE_HTML = '<a href="https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid=111&clazzid=222&cpi=333">'
+    + '<span class="course-name" title="课">课</span></a>';
+  const redirected = [];
+  const reader = new XxtReader({
+    get: async (url) => {
+      if (url.includes('courselistdata')) return COURSE_HTML;
+      return '';
+    },
+    post: async () => '',
+    redirect: async (url, options) => {
+      redirected.push({ url, options });
+      return 'https://cldisk.chaoxing.com/signed/abc.pdf?e=1';
+    },
+  });
+  const params = await reader.downloadParams({ dataId: '42', course: '课' });
+  assert.equal(params.variant, 'original');
+  assert.equal(params.url, 'https://cldisk.chaoxing.com/signed/abc.pdf?e=1');
+  assert.equal(params.headers.Referer, 'https://mooc1.chaoxing.com/');
+  assert.match(params.note, /302/);
+  assert.equal(redirected.length, 1);
+  assert.equal(redirected[0].options.query.dataId, '42');
+  assert.equal(redirected[0].options.query.classId, '222', 'classId 从课程取');
+  assert.equal(redirected[0].options.query.courseId, '111');
+});
+
+test('downloadParams：资料栏文件没给 course 时报 INVALID_ARGUMENT（不猜 classId）', async () => {
+  const reader = new XxtReader({ get: async () => '', post: async () => '' });
+  await assert.rejects(() => reader.downloadParams({ dataId: '42' }), (error) => {
+    assert.equal(error.code, 'INVALID_ARGUMENT');
+    assert.match(error.message, /course/);
+    return true;
+  });
+});
+
+test('客户端 logout：清掉本地会话，并报出之前有没有可清的', async () => {
+  const client = new XxtClient({ session: new SessionStore({}), fetch: recorder([]), env: {} });
+  assert.deepEqual(await client.logout(), { cleared: false });
+
+  await client.importCookie('UID=1; _uid=2; fid=3');
+  assert.equal((await client.status()).configured, true);
+  assert.deepEqual(await client.logout(), { cleared: true });
+  assert.deepEqual(await client.status(), { configured: false, source: null });
+});
+
+test('客户端 redirect：302 到签名地址时只取 Location；不是 302 就报 REJECTED', async () => {
+  const client = await makeClient(recorder([
+    ['coursedata/downloadData', () => new Response('', {
+      status: 302,
+      headers: { location: 'https://cldisk.chaoxing.com/signed/x.pdf' },
+    })],
+    ['coursedata/noopen', () => new Response('<html>老师没有开放下载</html>', {
+      status: 200,
+      headers: { 'content-type': 'text/html' },
+    })],
+  ]));
+  assert.equal(
+    await client.redirect(XXT_ENDPOINTS.dataDownload, { query: { dataId: '1' } }),
+    'https://cldisk.chaoxing.com/signed/x.pdf',
+  );
+  await assert.rejects(
+    () => client.redirect('https://mooc1.chaoxing.com/coursedata/noopen'),
+    (error) => {
+      assert.equal(error.code, 'REJECTED');
+      assert.match(error.message, /没有开放下载/);
+      return true;
+    },
+  );
+});
+
+test('客户端 redirect：跳到登录域算 Cookie 失效', async () => {
+  const client = await makeClient(recorder([
+    ['coursedata/downloadData', () => new Response('', {
+      status: 302,
+      headers: { location: 'https://passport2.chaoxing.com/login' },
+    })],
+  ]));
+  await assert.rejects(
+    () => client.redirect(XXT_ENDPOINTS.dataDownload),
+    (error) => error.code === 'COOKIE_EXPIRED',
+  );
 });

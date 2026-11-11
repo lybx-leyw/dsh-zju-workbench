@@ -16,7 +16,7 @@
 import { ClassroomError } from '@lybx-leyw/dsh-zju-source-http';
 
 import {
-  ZDBK_MODULES, ZDBK_PATHS, ZDBK_PLAN_PATHS, ZDBK_SELECTION_PATHS, planPdfUrl,
+  ZDBK_EVAL_PATH, ZDBK_MODULES, ZDBK_PATHS, ZDBK_PLAN_PATHS, ZDBK_SELECTION_PATHS, planPdfUrl,
 } from './hosts.js';
 import {
   checkAcademicYear, currentTerm, gpaOf, parseExams, parseGrade, parseSession,
@@ -122,6 +122,31 @@ export class ZdbkReader {
   }
 
   /**
+   * 本学期有没有还没做的评教（对应上游 `zdbk grades` 的评教提示，审计 W-19）。
+   *
+   * # 为什么这件事值得单独一个请求
+   *
+   * 教务网在评教没做完时**不显示本学期成绩**。不解释的话，用户看到的是
+   * 「这学期一门课都没有」—— 一个看起来正常、实际是彻底的错的结论。
+   * 上游的判据是 `/xtgl/index_cxMyCosJxpj.html` 回 `{status:"success", result:"1"}`
+   * 表示已完成，`result` 不是 `1` 就是待评教。
+   *
+   * # 失败一律当「不知道」
+   *
+   * 这个接口与成绩本身无关：它挂掉不该把整页成绩带走。所以任何失败都回
+   * `null`（调用方据此不显示提示），而不是回 `false` —— 那会凭空造出
+   * 「你没评教」的结论。
+   *
+   * @returns {Promise<string|null>} 待评教时给一句可直接上屏的话，否则 null。
+   */
+  async evaluationPending() {
+    const data = await this.api.post(ZDBK_EVAL_PATH, { form: {} }).catch(() => null);
+    if (!data || data.status !== 'success') return null;
+    if (String(data.result ?? '') === '1') return null;
+    return '本学期尚未完成评教，教务网暂不显示本学期成绩；完成评教后再查。';
+  }
+
+  /**
    * 成绩（含该筛选范围的 GPA 汇总）。
    *
    * @param {SemesterFilter & {major_only?: boolean}} [filter] - 筛选条件。
@@ -129,10 +154,13 @@ export class ZdbkReader {
    */
   async grades(filter = {}) {
     if (filter.academic_year) checkAcademicYear(filter.academic_year);
-    const { rows, skipped } = this.rows(
-      await this.items(filter.major_only ? ZDBK_PATHS.majorGrades : ZDBK_PATHS.grades),
-      parseGrade,
-    );
+    // 评教状态与成绩**并行**取：它只用来解释「本学期成绩为什么是空的」，
+    // 查询失败不能影响成绩结果（上游 `cjcx.ts:58-63` 同口径）。
+    const [items, evaluation] = await Promise.all([
+      this.items(filter.major_only ? ZDBK_PATHS.majorGrades : ZDBK_PATHS.grades),
+      this.evaluationPending(),
+    ]);
+    const { rows, skipped } = this.rows(items, parseGrade);
     const selected = rows
       .filter((r) => matches(r, filter))
       // 新的在前；同一学期内按课程名（中文）排，保证顺序稳定 —— 不排的话
@@ -143,6 +171,7 @@ export class ZdbkReader {
       summary: gpaOf(selected),
       grades: selected,
       skipped_items: skipped,
+      ...(evaluation ? { evaluationPending: evaluation } : {}),
       note: 'GPA 由本地按学分加权计算（五分制直接取教务绩点；4.3 制按 5.0→4.3、4.8→4.2、4.5→4.1、4.2→4.0，其余封顶 4.0）。弃修、待录、缓考、无效不计学分，合格/不合格不计 GPA。以学校官方成绩单为准。',
     };
   }

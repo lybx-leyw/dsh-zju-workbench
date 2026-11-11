@@ -22,6 +22,7 @@
 | --- | --- |
 | `chalaoshi.search` | 本地索引搜索：姓名 / 拼音 / 首字母，可带学院 |
 | `chalaoshi.teacher` | 读教师详情页（**会打站点**，国内多半失败） |
+| `chalaoshi.course` | 一门课所有任课老师的平均绩点表（**会打站点**；上游 `chalaoshi course`，审计 W-14） |
 | `indexStatus()` | 索引状态（不联网）：有没有缓存、多少位教师、多久前拉的 |
 | `refresh()` | 拉/刷新索引（条件 GET） |
 
@@ -50,13 +51,18 @@
 | --- | --- |
 | `routePath` | `/api/zhiyun-chalaoshi` |
 | `readOnly` | 恒为 `true` |
-| `methods` | `['chalaoshi.search', 'chalaoshi.teacher']` |
+| `methods` | `['chalaoshi.search', 'chalaoshi.teacher', 'chalaoshi.course']` |
 | `indexStatus()` | 索引状态 |
 | `refresh(options)` | 拉索引；`{ fresh: true }` 忽略条件头 |
 | `search(input)` | `{ keyword, sort?, limit?, ratedOnly?, college?, fresh? }` |
 | `teacher(input)` | `{ id }` → 详情页 HTML |
+| `course(input)` | `{ course }` → `{ course, count, teachers[] }`（均绩点 / 标准差 / 样本） |
 
-同源路由 `POST /api/zhiyun-chalaoshi`，动作 `search` / `index-status` / `refresh`。
+同源路由 `POST /api/zhiyun-chalaoshi`，动作 `search` / `teacher` / `course` /
+`index-status` / `refresh`。
+
+> `course` 早先被写成「解析留给消费方」。那不是裁决 —— 它等于把上游一条能力
+> 丢给每个调用方各写一遍（审计 W-14 的改判）。现在解析在本包，返回结构化字段。
 
 ## 索引缓存
 

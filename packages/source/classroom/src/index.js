@@ -193,6 +193,7 @@ export async function apply(ctx, config = {}) {
                 const value = input.input ?? {};
                 return source.searchResources(value.courseId, value.subId, value);
               },
+              searchCaptions: () => source.searchCaptions(input.input ?? {}),
               check: () => source.check(input.input?.component ?? 'all', input.input ?? {}),
               transcribeAudio: () => source.transcribeAudio(input.input ?? {}),
               liveStart: () => source.liveStart(input.input ?? {}),

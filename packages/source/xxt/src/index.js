@@ -23,7 +23,7 @@
  *
  * # 只读边界（这是产品口径，不是实现细节）
  *
- * 12 个方法全部只做**查询**（`reads.js` 的 `XXT_METHODS` 是权威表）。学习通里
+ * 这些方法全部只做**查询**（`reads.js` 的 `XXT_METHODS` 是权威表，当前 13 条）。学习通里
  * 「交作业」「开始考试」「签到」这类动作
  * **没有**对应方法：那是用户自己的决定，一个数据包替用户点下去，是不可逆的。
  * 唯一的写操作是 `xxt.importCookie` —— 它写的是本机会话文件，不是学习通的数据。
@@ -68,7 +68,7 @@ export {
  * `importCookie` 写会话、`checkLogin` 探一次登录态。放进同一个白名单会让
  * "读数据"和"改配置"混成一层。
  */
-const CLIENT_ACTIONS = Object.freeze(['status', 'importCookie', 'checkLogin']);
+const CLIENT_ACTIONS = Object.freeze(['status', 'importCookie', 'checkLogin', 'logout']);
 
 /**
  * 把 `xxt.deadlines` 拆成 `deadlines`。
@@ -146,7 +146,7 @@ export async function apply(ctx, config = {}) {
     platform: { id: 'xxt', label: '学习通', host: XXT_HOST, base: XXT_BASE },
     methods: [...XXT_METHODS],
     actions: [...CLIENT_ACTIONS],
-    note: '只读数据包：12 个读取方法 + 状态/导入 Cookie。学习通不做自动登录，Cookie 失效后需要重新导入。',
+    note: '只读数据包：13 个读取方法 + 状态/导入 Cookie/清会话。学习通不做自动登录，Cookie 失效后需要重新导入。',
   });
 
   /**
@@ -183,6 +183,13 @@ export async function apply(ctx, config = {}) {
     }
     if (action === 'status') return client.status();
     if (action === 'checkLogin') return client.checkLogin();
+    if (action === 'logout') {
+      const result = await client.logout();
+      // 清完会话顺手丢课程缓存：换账号后还读旧课程列表是最容易骗到人的错误。
+      reader.courseCache.clear();
+      log(result.cleared ? '学习通本地会话已清除' : '学习通本来就没有可清的会话');
+      return result;
+    }
     const input = typeof args?.input === 'string' ? args.input : '';
     if (!input.trim()) throw new ClassroomError('INVALID_ARGUMENT', '没有收到 Cookie 内容。');
     const result = await client.importCookie(input);

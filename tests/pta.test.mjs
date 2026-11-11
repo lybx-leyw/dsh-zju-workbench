@@ -37,6 +37,7 @@ import {
   ptaId,
   yesterdayUtcMidnight,
   normalizeDeadline,
+  normalizeTimestamp,
   isPendingProblemSet,
 } from '../packages/source/pta/src/pta.js';
 import { PTA_BASE, PTA_HOST, PTA_HOSTS, isPtaHost } from '../packages/source/pta/src/hosts.js';
@@ -734,8 +735,8 @@ test('apply() provide 了 zhiyunPta 并注册了 /api/zhiyun-pta', () => {
     assert.equal(routes.length, 1, '必须注册一条路由');
     assert.equal(routes[0].path, '/api/zhiyun-pta');
     // 服务自述的名单要与实现一致 —— 少一个动作等于对外少一个能力
-    assert.equal(pta.reads.length, 4);
-    assert.deepEqual([...pta.reads].sort(), ['problem', 'problemSet', 'problems', 'progress']);
+    assert.equal(pta.reads.length, 6);
+    assert.deepEqual([...pta.reads].sort(), ['problem', 'problemSet', 'problems', 'progress', 'submission', 'submissions']);
     assert.equal(pta.actions.length, 3);
   } finally { cleanup(); }
 });
@@ -1122,4 +1123,98 @@ test('config.now 注入生效（题集过滤用注入的时间，不用系统时
     const filter = JSON.parse(new URL(fetchImpl.calls[0]).searchParams.get('filter'));
     assert.equal(filter.endAtAfter, '2026-10-20T00:00:00.000Z');
   } finally { cleanup(); }
+});
+
+/* ────────────────────────────── 提交记录（W-9：这三点都是纯读） ────────────────────────────── */
+
+test('submissions：还没开始作答时回空表 + examStarted:false，不抛权限错', async () => {
+  const transport = fakeTransport([
+    ['/api/problem-sets/9/exams', () => json({ problemSet: { id: '9' }, exam: null, status: null })],
+  ]);
+  const out = await new PtaApi(transport).submissions('9');
+  assert.equal(out.examStarted, false);
+  assert.equal(out.submissions.length, 0);
+  assert.equal(transport.calls.length, 1, '没有实例时不该再去查提交');
+});
+
+test('submissions：filter 只编码一次，带上本人 userId 与游标', async () => {
+  const transport = fakeTransport([
+    ['/api/problem-sets/9/exams', () => json({ problemSet: { id: '9' }, exam: { id: '77', userId: 'u1', problemSetId: '9' }, status: 'START' })],
+    ['/api/exams/77/problem-sets/9/submissions', () => json({
+      submissions: [
+        { id: '501', problemSetProblemId: 'p1', problemType: 'PROGRAMMING', status: 'PROBLEM_ACCEPTED', submitAt: 1762345678000, score: 100 },
+        { id: '500', problemSetProblemId: 'p1', problemType: 'PROGRAMMING', status: 'PROBLEM_WRONG_ANSWER', submitAt: 1762345600000, score: 0 },
+      ],
+      hasBefore: true,
+    })],
+  ]);
+  const out = await new PtaApi(transport).submissions('9', { limit: 2 });
+  assert.equal(out.examStarted, true);
+  assert.equal(out.submissions.length, 2);
+  assert.equal(out.submissions[0].id, '501');
+  assert.equal(out.submissions[0].status, 'PROBLEM_ACCEPTED');
+  // `submitAt` 是**毫秒时间戳**：`Date.parse('1762345678000')` 是 NaN，
+  // 所以这里必须用能认数字时间戳的归一函数，否则每条提交都会显示「时间未知」。
+  assert.equal(out.submissions[0].submittedAt.iso, new Date(1762345678000).toISOString());
+  assert.equal(out.page.nextBefore, '500', '游标指向本页最后一条');
+
+  const target = new URL(transport.calls[1].url);
+  assert.equal(target.searchParams.get('limit'), '2');
+  // 双击编码会得到 %7B%22userId%22…%7D —— PTA 直接 400。
+  assert.equal(JSON.parse(target.searchParams.get('filter')).userId, 'u1');
+});
+
+test('submissions：缺 submissions 字段要报 API_SHAPE，不能冒充「没有提交」', async () => {
+  const transport = fakeTransport([
+    ['/api/problem-sets/9/exams', () => json({ problemSet: { id: '9' }, exam: { id: '77', userId: 'u1' }, status: 'START' })],
+    ['/api/exams/77/problem-sets/9/submissions', () => json({ wrong: [] })],
+  ]);
+  await assert.rejects(
+    () => new PtaApi(transport).submissions('9'),
+    (error) => error.code === 'API_SHAPE',
+  );
+});
+
+test('submission：记录不属于本人或不属于本题集时拒绝返回', async () => {
+  const make = (submission) => fakeTransport([
+    ['/api/problem-sets/9/exams', () => json({ problemSet: { id: '9' }, exam: { id: '77', userId: 'u1' }, status: 'START' })],
+    ['/api/exams/77/submissions/501', () => json({ submission })],
+  ]);
+  const mine = await new PtaApi(make({ id: '501', userId: 'u1', problemSetId: '9' })).submission('9', '501');
+  assert.equal(mine.submission.id, '501');
+
+  await assert.rejects(
+    () => new PtaApi(make({ id: '501', userId: 'someone-else', problemSetId: '9' })).submission('9', '501'),
+    (error) => error.code === 'API_SHAPE',
+  );
+  await assert.rejects(
+    () => new PtaApi(make({ id: '501', userId: 'u1', problemSetId: '10' })).submission('9', '501'),
+    (error) => error.code === 'API_SHAPE',
+  );
+});
+
+test('submission：没开始作答时给 NO_EXAM，说清该先做什么', async () => {
+  const transport = fakeTransport([
+    ['/api/problem-sets/9/exams', () => json({ problemSet: { id: '9' }, exam: null, status: null })],
+  ]);
+  await assert.rejects(
+    () => new PtaApi(transport).submission('9', '501'),
+    (error) => {
+      assert.equal(error.code, 'NO_EXAM');
+      assert.match(error.message, /开始/);
+      return true;
+    },
+  );
+});
+
+test('normalizeTimestamp：毫秒 / 秒 / ISO 都认，认不出保留原文', () => {
+  const ms = normalizeTimestamp(1762345678000);
+  assert.equal(ms.iso, new Date(1762345678000).toISOString());
+  assert.equal(ms.text, '1762345678000', '原文保留，便于排查');
+
+  const sec = normalizeTimestamp('1762345678');
+  assert.equal(sec.iso, new Date(1762345678 * 1000).toISOString(), '小于 1e12 的当秒');
+  assert.equal(normalizeTimestamp('2026-11-01T00:00:00Z').iso, '2026-11-01T00:00:00.000Z');
+  assert.deepEqual(normalizeTimestamp(null), { iso: null, text: null });
+  assert.deepEqual(normalizeTimestamp('不是时间'), { iso: null, text: '不是时间' });
 });

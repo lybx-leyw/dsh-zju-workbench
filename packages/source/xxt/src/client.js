@@ -212,6 +212,29 @@ export class XxtClient {
   }
 
   /**
+   * 清掉本地会话（对应上游 `xxt session logout`）。
+   *
+   * **只清本机**：它不向学习通发任何请求，所以不会注销服务端那个登录态
+   * （浏览器里那份仍然有效）。这与上游 `logout: sessionStore().clear()`
+   * 同一口径 —— 用户要的是「别再用这份 Cookie」，不是「把浏览器也登出」。
+   *
+   * @param {{persist?: boolean}} [options] - `persist` 为真时立刻落盘（默认）。
+   * @returns {Promise<{cleared: boolean}>} 之前有没有可清的会话。
+   */
+  async logout({ persist = true } = {}) {
+    const before = await this.cookieNames();
+    await this.session.clear({ persist });
+    // 环境变量那份是内存罐，也要丢 —— 否则「清掉了」之后下一次请求还带着它。
+    this.envSession = null;
+    // 传输层缓存按会话建；会话没了就该丢弃，顺手取消还挂着的请求。
+    for (const transport of this.transports.values()) {
+      try { transport.close?.(); } catch { /* 关闭失败不该让「已清掉」变成报错 */ }
+    }
+    this.transports.clear();
+    return { cleared: before.length > 0 };
+  }
+
+  /**
    * 导入一份 Cookie。
    *
    * 只写会话（加密落盘），不验证、不登录 —— 验证是下一次读取的事，
@@ -284,6 +307,56 @@ export class XxtClient {
     }
     const response = await transport.request(target, init);
     return this.inspect(parsed, response);
+  }
+
+  /**
+   * 不跟随跳转，只取跳转目标。
+   *
+   * 资料栏文件的下载入口（`coursedata/downloadData`）是 **302 到带签名的
+   * 真实地址**，它本身不返回文件。把这种 URL 当普通下载地址交给调用方，
+   * 拿到的是几十字节的跳转页 —— 而调用方只会看到「文件下坏了」。
+   *
+   * 所以这里唯一的作用是「把 302 的 Location 摘出来」，其余响应一律按
+   * 失败处理：没有跳转就是老师没开放下载，不是网络问题。
+   *
+   * @param {string} url - 完整地址，必须属于 `chaoxing.com`。
+   * @param {{query?: Record<string, unknown>, signal?: AbortSignal}} [options]
+   * @returns {Promise<string>} 跳转目标（绝对地址）。
+   */
+  async redirect(url, { query, signal } = {}) {
+    const target = withQuery(url, query);
+    let parsed;
+    try {
+      parsed = new URL(target);
+    } catch {
+      throw new ClassroomError('INVALID_PATH', `不是合法的学习通地址：${String(url)}。`);
+    }
+    if (parsed.protocol !== 'https:' || !isXxtHost(parsed.hostname)) {
+      throw new ClassroomError('INVALID_PATH', '只允许学习通（chaoxing.com）地址。');
+    }
+    const session = await this.activeSession();
+    const names = await storedCookieNames(session.jar, target);
+    if (!names.length) {
+      throw new ClassroomError(
+        'COOKIE_IMPORT_REQUIRED',
+        `学习通需要导入一次 Cookie（它登录要扫码或过滑块验证，不做自动登录）。${XXT_SETUP}`,
+        { setup: XXT_SETUP },
+      );
+    }
+    const response = await this.transportFor(session).request(target, { method: 'GET', signal });
+    const location = response.headers?.get?.('location') ?? '';
+    if (response.status >= 300 && response.status < 400 && location) {
+      if (location.includes(XXT_PASSPORT_HOST)) {
+        throw new ClassroomError('COOKIE_EXPIRED', `学习通登录已失效，请重新导入 Cookie。${XXT_SETUP}`, { setup: XXT_SETUP });
+      }
+      return new URL(location, target).toString();
+    }
+    // 没有跳转：老师没开放下载，或这个文件被平台收回。
+    throw new ClassroomError(
+      'REJECTED',
+      '学习通没有给出这个文件的地址，老师可能没有开放下载。',
+      { status: response.status },
+    );
   }
 
   /**

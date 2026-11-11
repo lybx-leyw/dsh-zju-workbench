@@ -25,7 +25,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import {
-  ZDBK_BASE, ZDBK_CAS_ENTRY, ZDBK_HOSTS, ZDBK_PATHS, ZDBK_PLAN_PATHS,
+  ZDBK_BASE, ZDBK_CAS_ENTRY, ZDBK_EVAL_PATH, ZDBK_HOSTS, ZDBK_PATHS, ZDBK_PLAN_PATHS,
   ZDBK_SELECTION_PATHS, ZDBK_SERVICE, ZDBK_HOST, planPdfUrl,
 } from '../packages/source/zdbk/src/hosts.js';
 import {
@@ -40,7 +40,7 @@ import {
 import { casForm, casLogin, encryptCasPassword, hasCasForm, describeAuthFailure } from '../packages/source/zdbk/src/cas.js';
 import { ZdbkClient } from '../packages/source/zdbk/src/client.js';
 import { ZdbkReader } from '../packages/source/zdbk/src/reads.js';
-import { Transport } from '@lybx-leyw/dsh-zju-source-http';
+import { ClassroomError, Transport } from '@lybx-leyw/dsh-zju-source-http';
 import * as plugin from '../packages/source/zdbk/src/index.js';
 
 /**
@@ -2322,4 +2322,34 @@ test('timetable：kbList 缺失仍是错误（那是主课表，不是空）', a
     () => reader.timetable({ academic_year: '2026-2027', term: 1 }),
     '缺 kbList 说明结构变了，不能静默成空',
   );
+});
+/* ────────────────────────────── 评教提示（W-19） ── */
+
+test('grades：评教没做时给一句能直接上屏的提示，成绩照常返回', async () => {
+  const api = fakeApi({
+    [ZDBK_PATHS.grades]: { items: GRADE_FIXTURE },
+    [ZDBK_EVAL_PATH]: { status: 'success', result: '0' },
+  });
+  const out = await new ZdbkReader(api).grades();
+  assert.equal(out.grades.length, 5, '提示不能把成绩带走');
+  assert.match(out.evaluationPending, /尚未完成评教/, '要说明「本学期成绩为什么是空的」');
+});
+
+test('grades：评教已完成时不给提示（不能凭一个字段编结论）', async () => {
+  const api = fakeApi({
+    [ZDBK_PATHS.grades]: { items: GRADE_FIXTURE },
+    [ZDBK_EVAL_PATH]: { status: 'success', result: '1' },
+  });
+  const out = await new ZdbkReader(api).grades();
+  assert.equal('evaluationPending' in out, false);
+});
+
+test('grades：评教接口挂掉时当作「不知道」，不编「你没评教」', async () => {
+  const api = fakeApi({
+    [ZDBK_PATHS.grades]: { items: GRADE_FIXTURE },
+    [ZDBK_EVAL_PATH]: () => { throw new ClassroomError('PLATFORM_ERROR', 'boom'); },
+  });
+  const out = await new ZdbkReader(api).grades();
+  assert.equal(out.grades.length, 5);
+  assert.equal('evaluationPending' in out, false);
 });

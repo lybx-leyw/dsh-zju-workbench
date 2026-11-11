@@ -343,6 +343,97 @@ export async function fetchIndex({ request, cached, fresh = false } = {}) {
 }
 
 /**
+ * 解析「某门课所有任课老师的平均绩点」表格。
+ *
+ * # 它的输入是一张 HTML 表
+ *
+ * `api.chalaoshi.de/gpa?course=` 回的是一张服务端渲染的表，每行一位老师：
+ * 姓名、平均绩点（可能带 `±标准差`）、样本人数（`500+` 这种约数）。
+ * 没有任何 JSON 版本 —— 上游也是照这张表解析的。
+ *
+ * # 为什么用正则而不是 parse5
+ *
+ * 这张表的结构是**平**的：一行三个固定 `<td>`，没有嵌套。用 DOM 反而多一层
+ * 依赖，且这里与 `chalaoshi.js` 其余部分（纯正则 + 纯函数）保持一致。
+ *
+ * 样本人数保留原文（`500+`）并另给一个去掉 `+` 的数字：`+` 是「至少这么多」，
+ * 抹成 500 会让人以为精确。
+ *
+ * @param {string} html - 表格 HTML。
+ * @returns {Array<{teacher: string, gpa: number, sd: number|null, sampleText: string, sample: number}>}
+ */
+export function parseGpaTable(html) {
+  const out = [];
+  const text = String(html ?? '');
+  for (const match of text.matchAll(/<tr[^>]*>\s*<td class="course_name">([^<]*)<\/td>\s*<td>([\d.]+)(?:<span[^>]*>±([\d.]+)<\/span>)?<\/td>\s*<td>(\d+\+?)<\/td>/g)) {
+    out.push({
+      teacher: unescapeEntities(match[1]),
+      gpa: Number(match[2]),
+      sd: match[3] !== undefined ? Number(match[3]) : null,
+      sampleText: match[4],
+      sample: Number(match[4].replace('+', '')),
+    });
+  }
+  return out;
+}
+
+/**
+ * 反转义表格里会出现的几个实体。
+ *
+ * 上游用的是同一套替换（`&amp;` / `&nbsp;` / 引号 / 尖括号）。这里只收这几个：
+ * 姓名里不会出现别的。
+ *
+ * @param {string} value - 原始片段。
+ * @returns {string}
+ */
+function unescapeEntities(value) {
+  return String(value ?? '')
+    .replace(/&amp;/g, '&')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+
+/**
+ * 取一门课所有任课老师的平均绩点（对应上游 `chalaoshi course`，审计 W-14）。
+ *
+ * # 为什么它不该留给消费方
+ *
+ * 上游的 `teacher` 命令顺带给了「这位老师教过的课与各课绩点」，但「这门课
+ * 所有老师谁给分高」是另一条链路（`api /gpa?course=`）。本包原先把它写成
+ * 「解析留给消费方」—— 那不是裁决，等于把上游一条能力丢给每个调用方各写一遍。
+ *
+ * # 站点在国内不可达
+ *
+ * 与 `teacher` 一样：它**必须联网**（索引缓存帮不上忙）。失败时照实抛：
+ * 404 → `NOT_FOUND`（查老师里没有这门课），其余状态码 → `HTTP`。
+ * 传输层自身的失败（连不上）原样上抛，不在这里改写成别的码 —— 调用方
+ * 已经能从 `UNREACHABLE` / `NETWORK` 认出「要出海」这件事。
+ *
+ * @param {object} options
+ * @param {(url: string, init?: object) => Promise<{status: number, headers?: object, text: string}>} options.request - 注入的请求函数。
+ * @param {string} options.course - 课程名（要与页面写法一致，如 `微积分（甲）Ⅰ`）。
+ * @returns {Promise<{course: string, count: number, teachers: Array<object>}>}
+ */
+export async function fetchCourseGpa({ request, course } = {}) {
+  const name = String(course ?? '').trim();
+  if (!name) throw new ChalaoshiError('INVALID_INPUT', 'course 需要课程名（与查老师页面的写法一致）。');
+  const url = `${API}/gpa?course=${encodeURIComponent(name)}`;
+  const response = await request(url, { headers: { Accept: 'text/html' } });
+  if (response.status === 404) {
+    throw new ChalaoshiError('NOT_FOUND', `查老师里没有课程「${name}」的绩点数据。`, { course: name });
+  }
+  if (response.status !== 200) {
+    throw new ChalaoshiError('HTTP', `查老师绩点表 HTTP ${response.status}`, { status: response.status, url });
+  }
+  const teachers = parseGpaTable(response.text);
+  return { course: name, count: teachers.length, teachers };
+}
+
+/**
  * 取一个响应头（大小写不敏感，`Headers` 与普通对象都认）。
  *
  * @param headers - 响应头。

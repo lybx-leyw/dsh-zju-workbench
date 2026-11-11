@@ -596,3 +596,90 @@ export function parseCards(html) {
   }
   return { found: false, notOpen, files: [] };
 }
+
+/* ────────────────────────────────────────────── 资料栏（每个文件夹一层） */
+
+/**
+ * 把页面上的约数大小（`14KB` / `1.2 MB` / `500B`）换成字节数。
+ *
+ * 资料栏只给约数，给不了准确字节数；返回 `null` 表示没写，而不是 0 ——
+ * 「不知道」与「空文件」在界面上是两件事。
+ *
+ * @param {string} text - 页面上的大小文本。
+ * @returns {number|null}
+ */
+export function roughBytes(text) {
+  const match = String(text ?? '').trim().match(/^([\d.]+)\s*([KMG]?)B?$/i);
+  if (!match) return null;
+  const value = Number(match[1]);
+  if (!Number.isFinite(value)) return null;
+  return Math.round(value * 1024 ** ['', 'K', 'M', 'G'].indexOf(match[2].toUpperCase()));
+}
+
+/**
+ * `onclick` 里 `fn('a','b',3,…)` 的参数，去掉引号。
+ *
+ * 资料栏的每一行都没有稳定的 data-* 属性，唯一可靠的位置是 `toOpen(...)` 的
+ * 参数表：名字、类型、id、objectId、enc 都在里面。
+ *
+ * @param {string} source - `onclick` 属性原文。
+ * @param {string} fn - 函数名。
+ * @returns {string[]} 参数（已去引号）；找不到时空数组。
+ */
+function callArgs(source, fn) {
+  const at = String(source ?? '').indexOf(`${fn}(`);
+  if (at < 0) return [];
+  const args = [];
+  let current = '';
+  let quote = '';
+  for (let i = at + fn.length + 1; i < source.length; i += 1) {
+    const ch = source[i];
+    if (quote) {
+      if (ch === '\\' && i + 1 < source.length) current += source[(i += 1)];
+      else if (ch === quote) quote = '';
+      else current += ch;
+      continue;
+    }
+    if (ch === "'" || ch === '"') quote = ch;
+    else if (ch === ',') { args.push(current.trim()); current = ''; }
+    else if (ch === ')') { args.push(current.trim()); return args; }
+    else current += ch;
+  }
+  return args;
+}
+
+/**
+ * 资料栏一层。
+ *
+ * # 为什么要按 `ul.dataBody_td` 逐行取
+ *
+ * 资料栏是服务端渲染的列表，一页 30 行、总页数在 `input#totalPages` 里。
+ * 每行的 `onclick="toOpen('名字','pdf','id',…)"` 才是权威位置 ——
+ * 名字被截断时页面正文是省略号，而参数里是完整的。
+ *
+ * @param {string} html - 资料栏页面 HTML。
+ * @returns {{rows: Array<{dataId: string, name: string, type: string, objectId: string, downloadable: boolean, size: string, enc: string}>, totalPages: number}}
+ */
+export function parseDataList(html) {
+  const document = parse(String(html ?? ''));
+  const rows = [];
+  for (const element of elementsOf(document)) {
+    if (element.tagName !== 'ul' || !hasClass(element, 'dataBody_td')) continue;
+    const call = [element, ...elementsOf(element)]
+      .map((node) => attrOf(node, 'onclick'))
+      .find((value) => value.includes('toOpen(')) ?? '';
+    const args = callArgs(call, 'toOpen');
+    const sizeNode = firstIn(element, (node) => hasClass(node, 'dataBody_size_stu'));
+    rows.push({
+      dataId: attrOf(element, 'id') || args[2] || '',
+      name: squash(unescapeHtml(attrOf(element, 'dataname') || args[0] || '')),
+      type: String(attrOf(element, 'type') || args[1] || '').toLowerCase(),
+      objectId: attrOf(element, 'objectid') || args[4] || '',
+      downloadable: attrOf(element, 'isdown') !== '0',
+      size: sizeNode ? squash(textOf(sizeNode)) : '',
+      enc: args[9] ?? '',
+    });
+  }
+  const pages = firstIn(document, (node) => node.tagName === 'input' && attrOf(node, 'id') === 'totalPages');
+  return { rows, totalPages: Math.max(1, Number(pages ? attrOf(pages, 'value') : 1) || 1) };
+}

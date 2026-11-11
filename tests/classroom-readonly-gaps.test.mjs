@@ -34,7 +34,7 @@ import { mkdtemp, readFile, readdir, rm, stat, writeFile, mkdir } from 'node:fs/
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { ClassroomSource, ENDPOINTS } from '../packages/source/classroom/src/source.js';
+import { ClassroomSource, ENDPOINTS, splitPhrases } from '../packages/source/classroom/src/source.js';
 import { liveEndpoints } from '../packages/source/classroom/src/live.js';
 import {
   IDLE_MS, LiveCollector, beijingTime, decodeFrame, missingIntervals,
@@ -1097,4 +1097,142 @@ test('beijingTime renders +08:00 and refuses non-finite input', () => {
 test('idle and ping constants match the upstream protocol numbers', () => {
   // 这两个数字是上游实测出来的；改小会让服务端判我们掉线，改大会拖慢重连。
   assert.equal(IDLE_MS, 35000);
+});
+
+/* ══════════════════════════════════ search captions（W-13 / 漏-5） ══════════════════════════════════ */
+
+/**
+ * 字幕关键词检索（对应上游 `zhiyun/materials.ts` 的 `searchCaptions`）。
+ *
+ * ⚠️ 夹具按上游 `parseTranscript` 的形状（`list[].all_content[]`，字段
+ * `BeginSec` / `EndSec` / `Text`）手写，**未经真实字幕接口验证**。
+ */
+
+test('splitPhrases splits on Chinese and ASCII separators, keeps order, drops duplicates', async () => {
+  assert.deepEqual(splitPhrases('点名、签到|考勤\n点名'), ['点名', '签到', '考勤']);
+  assert.deepEqual(splitPhrases('  考试范围 ，Exam  ；exam '), ['考试范围', 'Exam'], '全角/大小写差异算同一个词');
+  assert.deepEqual(splitPhrases(''), []);
+  assert.deepEqual(splitPhrases(null), []);
+});
+
+test('searchCaptions returns hits with neighbouring sentences and per-keyword counts', async () => {
+  const source = await withToken(classroom((url) => {
+    const target = new URL(url);
+    if (target.pathname.endsWith('/search-trans-result')) {
+      return json({ list: [
+        { all_content: [
+          { BeginSec: 0, EndSec: 3, Text: '今天讲第三章' },
+          { BeginSec: 3, EndSec: 6, Text: '这节课会点名，请同学们注意' },
+          { BeginSec: 6, EndSec: 9, Text: '点名用的是学习通' },
+        ] },
+      ] });
+    }
+    throw new Error(`未预期的请求：${target.pathname}`);
+  }));
+
+  const out = await source.searchCaptions({
+    keyword: '点名', lessons: [{ courseId: 7, subId: 9, date: '2026-11-01' }],
+  });
+
+  assert.deepEqual(out.keywords, ['点名']);
+  assert.equal(out.lessonsSearched, 1);
+  assert.deepEqual(out.lessonsWithoutCaptions, []);
+  assert.equal(out.total, 2);
+  assert.equal(out.counts['点名'], 2);
+  assert.equal(out.hits.length, 2);
+  // 前后各一句拼在一起：只给命中的那一句看不出老师在说什么。
+  assert.match(out.hits[0].text, /今天讲第三章 .*这节课会点名/);
+  assert.equal(out.hits[0].at, '00:03');
+  assert.equal(out.hits[0].lesson, 1);
+  assert.equal(out.hits[0].date, '2026-11-01');
+  assert.equal('truncated' in out, false);
+});
+
+test('searchCaptions marks lessons without captions instead of failing the whole search', async () => {
+  const source = await withToken(classroom((url) => {
+    const target = new URL(url);
+    if (target.pathname.endsWith('/search-trans-result')) {
+      // 当天的课课后才有字幕：站点对这一种是拒绝而不是给空表。
+      if (target.searchParams.get('sub_id') === '2') return json({ msg: '未查询到语音数据' });
+      return json({ list: [{ all_content: [{ BeginSec: 0, EndSec: 2, Text: '这节没有点名' }] }] });
+    }
+    throw new Error(`未预期的请求：${target.pathname}`);
+  }));
+
+  const out = await source.searchCaptions({
+    keyword: '点名、考试',
+    lessons: [{ courseId: 7, subId: 1 }, { courseId: 7, subId: 2 }],
+  });
+  assert.equal(out.lessonsSearched, 1, '只有真的有字幕的课次算搜过');
+  assert.deepEqual(out.lessonsWithoutCaptions, [2], '没有字幕的课次要如实报出来');
+  assert.equal(out.total, 1);
+  assert.deepEqual(out.counts, { 点名: 1, 考试: 0 });
+});
+
+test('searchCaptions rethrows real subtitle failures (only "no speech" is tolerated)', async () => {
+  // 业务失败（`code` 落在 400–599）：只有「未查询到语音数据」那一种能被容忍。
+  const business = await withToken(classroom(() => json({ code: 500, msg: '服务不可用' })));
+  await assert.rejects(
+    () => business.searchCaptions({ keyword: '点名', lessons: [{ courseId: 7, subId: 1 }] }),
+    (error) => error.code === 'BUSINESS',
+  );
+  await business.dispose();
+
+  // 传输失败更要照抛：吞成「没有字幕」会让人白等到下课。
+  const broken = await withToken(classroom(() => new Response('boom', { status: 500 })));
+  await assert.rejects(
+    () => broken.searchCaptions({ keyword: '点名', lessons: [{ courseId: 7, subId: 1 }] }),
+    (error) => error.code === 'HTTP',
+  );
+  await broken.dispose();
+});
+
+test('searchCaptions caps hits at limit and marks truncated', async () => {
+  const captions = Array.from({ length: 5 }, (_, i) => ({ BeginSec: i * 2, EndSec: i * 2 + 2, Text: `第${i}次点名` }));
+  const source = await withToken(classroom(() => json({ list: [{ all_content: captions }] })));
+  const out = await source.searchCaptions({ keyword: '点名', lessons: [{ courseId: 7, subId: 1 }], limit: 2 });
+  assert.equal(out.total, 5, '总数要如实给');
+  assert.equal(out.hits.length, 2, '回给调用方的条数按 limit 封顶');
+  assert.equal(out.truncated, true);
+});
+
+test('searchCaptions needs either lessons or courseId, and a keyword', async () => {
+  const source = await withToken(classroom(() => json({ list: [] })));
+  await assert.rejects(() => source.searchCaptions({ keyword: '点名' }), (error) => error.code === 'INVALID_INPUT');
+  await assert.rejects(
+    () => source.searchCaptions({ lessons: [{ courseId: 7, subId: 1 }] }),
+    (error) => error.code === 'INVALID_INPUT',
+  );
+});
+
+test('searchCaptions：给 courseId 时用「我的课」展开最近课次，跳过还没上课的', async () => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const seen = [];
+  const source = await withToken(classroom((url) => {
+    const target = new URL(url);
+    seen.push(target);
+    if (target.pathname.endsWith('/get-my-course-day')) {
+      return json({ list: [{ course: [
+        // 已经上过的课（有字幕可选）、还没开始的课（一定没有字幕）。
+        { id: 7, title: '数据结构', sub_id: 70, course_begin: nowSec - 3600 },
+        { id: 7, title: '下周那节', sub_id: 71, course_begin: nowSec + 7200 },
+        // 别的课：给了 courseId 就不该混进来。
+        { id: 8, title: '操作系统', sub_id: 80, course_begin: nowSec - 3600 },
+      ] }] });
+    }
+    if (target.pathname.endsWith('/search-trans-result')) {
+      assert.equal(target.searchParams.get('sub_id'), '70', '只该搜本人那门课、那节已经开始的');
+      return json({ list: [{ all_content: [{ BeginSec: 0, EndSec: 2, Text: '下次课点名' }] }] });
+    }
+    throw new Error(`未预期的请求：${target.pathname}`);
+  }));
+
+  const out = await source.searchCaptions({ keyword: '点名', courseId: 7, days: 1 });
+  assert.equal(out.lessonsSearched, 1);
+  assert.deepEqual(out.lessonsWithoutCaptions, [], '还没上课的课次不该被算成「没有字幕」');
+  assert.equal(out.total, 1);
+  assert.equal(out.hits[0].courseId, '7');
+  assert.equal(out.hits[0].subId, '70');
+  // 课次编号在展开时按顺序给，用于和 lessons 输入区分。
+  assert.equal(out.hits[0].lesson, 1);
 });

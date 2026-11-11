@@ -33,7 +33,7 @@
 
 ## 能力表
 
-### 读取（4 个动作，全部只读）
+### 读取（6 个动作，全部只读）
 
 | `action` | 方法 | 作用 | 返回要点 |
 | --- | --- | --- | --- |
@@ -41,6 +41,13 @@
 | `problems` | `PtaApi.problems(id, opts)` | 某题型的题目列表（分页） | `{ problems[], typeLabel, total, nextPage }`，每条带 `myStatus` |
 | `problem` | `PtaApi.problem(setId, problemId)` | 题面**原文** | `{ content, nextOffset, totalCharacters, timeLimitMs, … }` |
 | `progress` | `PtaApi.progress(id)` | 我的做题进度 | `{ total, accepted, byStatus }`，没有数据时 `null` |
+| `submissions` | `PtaApi.submissions(id, opts)` | 我对这份题集的**提交记录**（游标分页） | `{ examStarted, submissions[], page }`；没开始作答时 `examStarted: false` 而不是报错 |
+| `submission` | `PtaApi.submission(id, submissionId)` | 一条提交的详情（代码、判题结果、逐测试点） | 平台原样；不属于本人/本题集时拒返回 |
+
+> `submissions` / `submission` 是上游 `pta submission list` / `submission view`
+> 两条**纯 GET**。审计（W-9）指出它们曾被当成「写链路的一部分」整条丢掉，
+> 那是归类错误：它们只查「我交过什么」。上游的第三条 `reconcile` 依赖
+> 本机 journal，本仓没有那套机制，**没有搬** —— 它属于「修哪一侧」的裁决范围。
 
 动作名走**白名单**（`READ_ACTIONS`），不做任意属性访问：这条路由是给同源页面用的，
 不该成为一个能拨动插件进程内部对象的口子。

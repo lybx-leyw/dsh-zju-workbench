@@ -300,13 +300,13 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 
 | # | 包 | 能力 | 我原先写的 | 实际情况 |
 | --- | --- | --- | --- | --- |
-| W-9 | `pta` | `submission list` / `submission view` / `reconcile` | README 里有理由 | **理由不实**（三处同源）。上游是「交完回查」的三个读动作，本仓没有 |
+| W-9 | `pta` | `submission list` / `submission view` / `reconcile` | README 里有理由 | **理由不实**（三处同源）。上游是「交完回查」的三个读动作，本仓没有 → **前两条已补**（`submissions` / `submission`）；`reconcile` 依赖本机 journal，留在「修哪一侧」的裁决里 |
 | W-10 | `cnki` | `download` | README 说已声明 | **虚假声明** —— 声明了但没实现 |
-| W-11 | `lab` | `session logout` | 无 | **无理由** |
-| W-12 | `xxt` | `session logout` | 无 | **无理由** |
-| W-13 | `classroom` | `search subtitles` | 无 | **无理由** |
-| W-14 | `chalaoshi` | `course`（结构化课程信息） | 自称不做 | **无授权自判** |
-| W-15 | `xxt` | 资料栏（`material list`） | 无 | 审计列为「最该补」第 4 条 |
+| W-11 | `lab` | `session logout` | 无 | **无理由** → **已补**（见 6.6） |
+| W-12 | `xxt` | `session logout` | 无 | **无理由** → **已补**（见 6.6） |
+| W-13 | `classroom` | `search subtitles` | 无 | **无理由** → **已补**（见 6.6） |
+| W-14 | `chalaoshi` | `course`（结构化课程信息） | 自称不做 | **无授权自判** → **已补**（`chalaoshi.course` + `fetchCourseGpa`） |
+| W-15 | `xxt` | 资料栏（`material list`） | 无 | 审计列为「最该补」第 4 条 → **已补**（见 6.6） |
 
 ### 6.2 待补里我认可「最该先补」的 5 条（审计排序）
 
@@ -314,8 +314,8 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 | --- | --- | --- |
 | 1 | **X-1 `pta` 死链** | 不修则 `save` / `submit` 在任何情况下都不工作 | **已修** |
 | 2 | `classroom trans audio` 接线 | 编排完整但**没有注入方** —— `setTranscriber()` 与 `config.transcriber` 在 `packages/` + `profiles/` 全量 grep **零供给**，实机必然 `DEPENDENCY_MISSING`。是「跑不通」，不是「没实现」 | 待补 |
-| 3 | W-13 `classroom search subtitles` | 上游有、本仓无 | 待补 |
-| 4 | W-15 `xxt` 资料栏 | 上游有、本仓无 | 待补 |
+| 3 | W-13 `classroom search subtitles` | 上游有、本仓无 | **已补** |
+| 4 | W-15 `xxt` 资料栏 | 上游有、本仓无 | **已补** |
 | 5 | W-1/W-2 `pta` homework start/finish | 补了 X-1 之后才谈得上 | 待补 |
 
 ### 6.3 需要判定的 6 条高危 B 类（名字对得上但行为不同）
@@ -346,6 +346,35 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 
 ---
 
+### 6.6 本轮已补的五条（2026-11-11，不需要裁决的那一批）
+
+这一批的共同点是：**补的是上游明确有的只读能力或本机清理动作**，不改变任何
+已发布的调用契约（不改工具层参数表、不改审批模型、不新建装配层）。
+
+| # | 包 | 补了什么 | 为什么它不需要裁决 | 钉住它的测试 |
+| --- | --- | --- | --- | --- |
+| W-11 | `lab` | `logout()`：清内存登录态 **+** 持久化层，服务面与路由都挂上 | 上游 `lab session logout` 就是「清本地会话」；本仓只清内存会让 `restore()` 把同一个 token 读回来，「已退出」是假的。不动凭据、不向平台发请求 | `tests/lab.test.mjs` 两条（有/无持久化层） |
+| W-12 | `xxt` | 客户端 `logout()` + 路由动作 `logout` | 上游 `sessionStore().clear()` 同口径；同样是**本地**清理，不动服务端登录态 | `tests/xxt.test.mjs`「客户端 logout」；`tests/xxt-route.test.mjs` 的动作清单 |
+| W-13 | `classroom` | `searchCaptions()`：字幕关键词检索，命中带前后句、按关键词计数、`limit` 封顶、无字幕课次如实列出 | 上游 `materials.ts:46` 的 `searchCaptions` 是纯读；本仓已有 `getSubtitles` 与 `getMyLectures`，缺的只是编排 | `tests/classroom-readonly-gaps.test.mjs` 六条 |
+| W-15 | `xxt` | `dataFiles()`：资料栏逐层文件夹 + 分页；`downloadParams` 增加 `dataId` 分支（走 302 取 `Location`）；`XxtClient.redirect()` | 上游 `inventory(data:true)` 就是这条通路。**它不落盘**（D21 不变）：改的只是「清单能不能列出来」与「下载参数从哪来」 | `tests/xxt.test.mjs` 资料栏与 redirect 共 9 条 |
+| W-19 | `zdbk` | `grades()` 多一个可选的 `evaluationPending` 提示 | 上游只是**解释**「本学期成绩为什么是空的」；新增可选字段、失败即不显示，不改变既有返回形状 | `tests/zdbk.test.mjs` 三条 |
+| W-9（前两条） | `pta` | `submissions()` 提交记录（游标分页）+ `submission()` 单条详情；路由动作 `submissions` / `submission` | 上游 `query.ts:85-95` 的两条**纯 GET**，审计自己写明 `write.ts:85` 的 `reconcile` 才是「只读回查」。本仓不搬 `reconcile`（它要有 journal） | `tests/pta.test.mjs` 五条 |
+| W-14 | `chalaoshi` | `parseGpaTable()` + `fetchCourseGpa()` + 服务方法 `course` + 路由动作 `course` | 上游 `chalaoshi/index.ts:366-424` 的纯解析 + 纯 GET。原先那句「解析留给消费方」不是裁决，是把能力丢给每个调用方 | `tests/chalaoshi.test.mjs` 四条 |
+
+另外两处顺手订正（不是缺口，是**口径**）：
+
+- `xxt` 的方法表白名单从 12 条变 **13 条**（`dataFiles`），`actions` 从 3 条变 4 条（`logout`）；
+  README 与两处测试同步。
+- `xxt/src/reads.js` 文件头原写「9 个只读方法」，那是补 `chapters` / `materials` /
+  `downloadParams` 之前的数字，本轮改成不写死条数。
+
+**仍然留着、需要裁决的**：Y-7 ~ Y-12 的工具层参数契约（改哪一侧）、X-4 的验证码题面
+（受 K-1 阻塞）、A-1 ~ A-8 的装配层（Q-3）、W-1/W-2 `pta` 开/结束作业、
+W-9 的 `reconcile`（要 journal 机制）、以及 `abandoned.md` 第七节列的 Q-1 ~ Q-9。
+Z-1（审批被拒后动作永久不可用）**已在 `ecf080f` 里修掉**，见 8.0 的落地核对。
+
+---
+
 ## 七、批次 A 审计汇入（76 条 provides）
 
 报告：`coverage-audit-batch-a.md`。表面覆盖率 93.4%（A 25 / B 26 / C 5 / D 20），
@@ -357,7 +386,7 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 | # | 包 | 能力 | 影响 |
 | --- | --- | --- | --- |
 | W-18 | `zdbk` | `timetable` 六类非正式课 + `student` | 六类**已补**（`kind` 字段标明来源）；`student` 待补 |
-| W-19 | `zdbk` | `grades` 的评教提示 | 评教没做时查成绩会被拒，本仓没提示原因 |
+| W-19 | `zdbk` | `grades` 的评教提示 | 评教没做时查成绩会被拒，本仓没提示原因 → **已补**（见 6.6） |
 | W-20 | `cc98` | `board list` 缺「我关注的」与「按名搜」两态 | 版面发现能力弱 |
 | W-21 | `cc98` | `search` 单关键词、无编排 | 上游支持多说法 + 相关度 + 限流退避 |
 | W-22 | `cc98` | `user` 字段大面积丢失 | 用户资料只留了一部分 |
@@ -582,6 +611,12 @@ Y-10（xuezai rollcall，含 W-4 的数字口令分支）、Y-11（cc98 rate）�
 二课、邮箱、研究生课表、通知（部分）**六个数据源在实机上全部取不到数据**，
 而它们都挂着 profile、都在 README 里写着「已完成」。
 
+> **2026-11-11 复核（结论已变）**：`ecf080f` 按 D18 给 `source/login` 补了
+> `casTransport` / `casLoginFor`，`lab` / `mail` 改成读 `source/login` 的记录，
+> `sztz` / `tyys` / `notice` 改走共享 CAS；`yjsy` 在本票里补了同样的兜底
+> （`casLoginFor` 拿票 → 本包发 `validateLogin` 换 `X-Access-Token`）。
+> **六个包全部接上了**，上面那张 `ready()=false` 的表是当时的记录，保留原文不动。
+
 > ⚠️ 这条只在最小替身 ctx 上验证过（`ctx.get` 返回 undefined、没有 `credentials` 服务）。
 > 真实 profile 里若有别的地方提供这些服务，结论会不同 —— 但**全仓 grep 那些 `setXxxProvider`
 > 的方法名，除定义处与测试之外零命中**，所以真实 profile 里也没有。这一判断的证据强度是「静态 grep + 替身实测」，不是「在真机上跑过」。
@@ -612,7 +647,29 @@ Y-10（xuezai rollcall，含 W-4 的数字口令分支）、Y-11（cc98 rate）�
 | --- | --- | --- | --- |
 | **X-3** | `tyys` | `bookVenueExecute` / `cancelVenueExecute` **100% 不可用** —— `writes.js` 调的是只读入口 `client.request()`，而该入口把这两个写接口列在 `FORBIDDEN_WRITES` 里直接拒绝。审批通过了也发不出去，报的却是「本数据源不提供」 | **已修**：新增写专用入口 `VenueClient.submit()`（不查只读闸、不自动重放），两个写动作改走它；只读闸原样保留。回归测试 3 条（含「拆掉闸要红」） |
 | **X-4** | `tyys` | 取验证码题面的 `POST /api/reservation/captcha/check` 被 `READ_POSTS` 拒掉（该表只有 `order/info`）→ **需要验证码的场地连取题都过不去**。上游 `READ_POSTS` 是四个 | **待补**，受 K-1 阻塞（验证码该不该存在尚未裁定；裁定保留则补一行即可） |
-| **Z-1** | `cc98` `zdbk` `lab` `pta` `sztz` `tyys` `xuezai` | **审批被拒 → 该动作永久不可用**：`pair()` 的 `prepare()` 存下参数，只有 `execute()` 会清；审批拒绝时 `execute()` 不被调用 → 之后每次 `prepare()` 恒报 `WRITE_BUSY`，直到重启进程。七个包全部如此，实测四个包逐个复现 | **待裁决**（K-2）：修法 A（加 `cancelPrepare()`）/ B（改成后次覆盖）都动已发布契约 |
+| **Z-1** | `cc98` `zdbk` `lab` `pta` `sztz` `tyys` `xuezai` | **审批被拒 → 该动作永久不可用**：`pair()` 的 `prepare()` 存下参数，只有 `execute()` 会清；审批拒绝时 `execute()` 不被调用 → 之后每次 `prepare()` 恒报 `WRITE_BUSY`，直到重启进程。七个包全部如此，实测四个包逐个复现 | **已修（2026-11-11，`ecf080f`）**：按 K-2 的建议 A 落地 —— 七个包各暴露 `<动作>Cancel`，`tool/campus-write` 的 `guardWrite` 在任何失败路径（无 agent / 审批拒绝 / 中止 / execute 抛错）都先 `rollback()` 再抛。`contract()` 现在**强制要求** `cancel` 存在，缺了直接 `CONTRACT_MISSING`。见 8.0 的落地核对 |
+
+### 8.0 Z-1 的落地核对（2026-11-11，本轮复核）
+
+`recheck-2026-11-11.md` 把 Z-1 记成「等裁决」，但 `ecf080f` 已经按建议 A 修完。
+本轮逐条核对（可复现）：
+
+```bash
+# 七个写包都会给每个写动作加一个 <name>Cancel
+grep -c 'Cancel\b' packages/source/{cc98,zdbk,lab,pta,sztz,tyys,xuezai}/src/index.js
+# tool 层在**每条**失败路径上都先撤销
+grep -n 'rollback()' packages/tool/campus-write/src/index.js
+```
+
+| 检查点 | 结果 |
+| --- | --- |
+| 七个包的 `cancel` | ✅ `zdbk` / `xuezai` 各 3 个，`lab` / `pta` / `sztz` / `tyys` 各 2 个；`cc98` 用 `Object.entries(writes)` **动态生成**，同样齐全 |
+| 工具层 `contract()` 强制要求 `cancel` | ✅ 缺了抛 `CONTRACT_MISSING`，不让「静默退化成不可用」通过 |
+| 失败路径（无 agent / 拒绝 / 中止 / execute 抛错） | ✅ 四条都先 `rollback()`，再抛原始原因（撤销失败不覆盖真正的原因） |
+| 拒绝之后能否重新发起 | ✅ 撤销后立刻可重新 `prepare`，**不加冷却**（拒绝一次是「这次不做」，不是「以后都不许做」） |
+
+**结论：Z-1 与 K-2 都已关闭**，`recheck-2026-11-11.md` 第三节的「为什么本轮不修」
+是当时的记录，保留原文不动。
 
 ### 8.1 README 与代码矛盾（已修）
 
@@ -634,7 +691,7 @@ R-1 ~ R-3、R-5 已改（保留 `writes: false` 的声明与理由，把「不�
 | # | 问题 | 两条路 |
 | --- | --- | --- |
 | **K-1** | `tyys` 的点字验证码算不算「绕过人机校验」？（`cnki` 滑块被判为硬约束不做，见 `abandoned.md` N-2；两者性质相同） | 是 → 删 `captcha.js` 与 `writes.js` 那段，`captchaRequired` 场地如实报人工；否 → 保留，但要在 N-2 旁补边界说明 |
-| **K-2** | Z-1 怎么修 | A：source 加 `cancelPrepare()`，工具层审批失败时调它（保留「并发 Prepare 被拒」）；B：`prepare()` 改后次覆盖（放弃那条保护）。建议 A，但要先定方向 |
+| **K-2** | Z-1 怎么修 | **已定并已落地（A）**：source 各暴露 `<动作>Cancel`，工具层审批失败时调它（保留「并发 Prepare 被拒」）。原建议就是 A，实际实施见 8.0 |
 
 ### 8.3 不在本清单范围、但会卡住新人
 

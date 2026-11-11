@@ -17,7 +17,7 @@ import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write';
 import path from 'node:path';
 import { sharedFetch } from '@lybx-leyw/dsh-zju-source-http';
 import {
-  SITE, ChalaoshiError, IndexCache, fetchIndex, fetchTeacherPage, searchIndex,
+  SITE, ChalaoshiError, IndexCache, fetchCourseGpa, fetchIndex, fetchTeacherPage, searchIndex,
 } from './chalaoshi.js';
 
 export const name = 'zju-source-chalaoshi';
@@ -136,7 +136,7 @@ export function apply(ctx) {
       platform: 'chalaoshi',
       label: '查老师',
       readOnly: true,
-      methods: ['chalaoshi.search', 'chalaoshi.teacher'],
+      methods: ['chalaoshi.search', 'chalaoshi.teacher', 'chalaoshi.course'],
       site: SITE,
       /** 索引状态（不联网）：有没有缓存、多少位教师、多久前拉的。 */
       indexStatus() {
@@ -175,6 +175,14 @@ export function apply(ctx) {
       teacher(input = {}) {
         return fetchTeacherPage({ request: requestOf(ctx), id: input.id });
       },
+      /**
+       * 一门课所有任课老师的平均绩点（上游 `chalaoshi course`，审计 W-14）。
+       *
+       * 与 `teacher` 一样**必须联网**：索引里没有绩点表。
+       */
+      course(input = {}) {
+        return fetchCourseGpa({ request: requestOf(ctx), course: input.course ?? input.name });
+      },
     };
 
     const disposeService = ctx.provide('zhiyunChalaoshi', service);
@@ -197,6 +205,10 @@ export function apply(ctx) {
             const action = input?.action;
             if (action === 'search') {
               res.end(JSON.stringify({ ok: true, value: await service.search(input.input ?? {}) }));
+            } else if (action === 'teacher') {
+              res.end(JSON.stringify({ ok: true, value: await service.teacher(input.input ?? {}) }));
+            } else if (action === 'course') {
+              res.end(JSON.stringify({ ok: true, value: await service.course(input.input ?? {}) }));
             } else if (action === 'index-status') {
               res.end(JSON.stringify({ ok: true, value: service.indexStatus() }));
             } else if (action === 'refresh') {

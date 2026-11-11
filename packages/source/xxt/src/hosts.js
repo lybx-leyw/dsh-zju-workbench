@@ -49,12 +49,30 @@ export const XXT_ENDPOINTS = Object.freeze({
    * 章节卡片内容（HTML 片段）—— 附件清单从这里取。
    *
    * \
-um\ 从 0 递增，取到没有卡片为止（见 \eads.js\ 的 MAX_CARDS）。
+um\ 从 0 递增，取到没有卡片为止（见 \
+eads.js\ 的 MAX_CARDS）。
    */
   chapterCards: 'https://mooc1.chaoxing.com/mooc-ans/knowledge/cards',
 
-  /** 我的课表（JSON）。 */
+  /**
+   * 我的课表（JSON）。
+   */
   schedule: 'https://kb.chaoxing.com/pc/curriculum/getMyLessons',
+
+  /**
+   * 资料栏列表（HTML 片段，每个文件夹一层）。
+   *
+   * 与章节卡片是**两条独立的通路**：老师把课件放「资料」里时，章节卡片
+   * 里一张附件都没有 —— 只读章节就会得到「这门课没有课件」的错误结论。
+   */
+  dataList: 'https://mooc2-ans.chaoxing.com/mooc2-ans/coursedata/stu-datalist',
+
+  /**
+   * 资料栏文件的下载入口：302 到带签名的文件地址。
+   *
+   * 它**不直接回文件**，所以只能取 `Location`，不能当普通下载地址用。
+   */
+  dataDownload: 'https://mooc1.chaoxing.com/coursedata/downloadData',
 });
 
 /**

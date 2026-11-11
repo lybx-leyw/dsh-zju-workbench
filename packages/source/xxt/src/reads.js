@@ -1,5 +1,5 @@
 /**
- * 学习通的 9 个**只读**读取方法。
+ * 学习通的只读读取方法。
  *
  * # 与上游（ZJU-Omni · xxt/reads.ts）的关系
  *
@@ -14,7 +14,7 @@
  *
  * # 只读边界
  *
- * 这 9 个方法全部只发 GET/POST **查询**，没有一处提交、删除或修改。学习通里
+ * 这些方法全部只发 GET/POST **查询**，没有一处提交、删除或修改。学习通里
  * 「交作业」「开始考试」这类动作**没有**对应方法 —— 那是用户自己的决定，
  * 不该由一个数据包替他做。
  *
@@ -29,6 +29,12 @@ import { XXT_ENDPOINTS } from './hosts.js';
 
 /** 一节的卡片数上限。上游用 12 —— 正常一章不会有那么多张卡，超出就是异常页。 */
 const MAX_CARDS = 12;
+
+/** 资料栏一个文件夹的最大页数（上游 50）。 */
+const MAX_DATA_PAGES = 50;
+
+/** 资料栏的最大嵌套层数（上游 8）。超出的目录不再打开，避免病态页面把请求打爆。 */
+const MAX_DATA_DEPTH = 8;
 
 /** 超星课程服务（nanas 状态接口在这里）。 */
 const MOOC1 = 'https://mooc1.chaoxing.com';
@@ -55,10 +61,12 @@ import {
   parseCards,
   parseChapters,
   parseCourses,
+  parseDataList,
   parseExams,
   parseHomeworkDetail,
   parseHomeworkList,
   parseSchedule,
+  roughBytes,
 } from './parse.js';
 
 /** 课程列表的缓存时长。 */
@@ -277,6 +285,132 @@ export class XxtReader {
   }
 
   /**
+   * 一门课**资料栏**里的文件（对应上游 `inventory(data: true)` 那一路）。
+   *
+   * # 为什么这条通路必须单列
+   *
+   * 老师把课件放「资料」里是常态，而资料栏**不在章节卡片里** —— 只读
+   * `materials()` 会得到「这门课没有课件」的错误结论（审计 漏-6）。
+   * 两条通路共用同一个 `objectId` 命名空间，所以在调用方那里应当合并、
+   * 按 `objectId` 去重。
+   *
+   * # 逐层逐页
+   *
+   * 资料栏是一棵**可以套八层的文件夹树**，每一层自带分页（页面右下角
+   * `input#totalPages`）。文件夹要用它自己那一行给的 `enc` 才能打开 ——
+   * 拿父层的 `enc` 去开子层会被拒绝。
+   *
+   * @param {{course?: string, signal?: AbortSignal}} [options] - `course` 是 id 或名字。
+   * @returns {Promise<{files: Array<{name: string, kind: string, location: string[], dataId: string, objectId: string|null, size: number|null, downloadable: boolean}>, count: number, note: string}>}
+   */
+  async dataFiles({ course, signal } = {}) {
+    const hit = await this.findCourse(course, { signal });
+
+    /**
+     * 根页面的 `stuenc`。
+     *
+     * # 为什么不能从中间页正文里抠
+     *
+     * 课程中间页会 **302 到** `…/studentstudy?…&enc=<stuenc>`，`stuenc` 只在
+     * **落地地址的查询串**里，正文里没有（上游也是读跳转后的 URL）。所以这里
+     * 不跟随跳转、只要 `Location`，再取 `enc` 参数。
+     *
+     * # 拿不到时不编
+     *
+     * 平台有时不校验它。取不到就传空串 —— 比编一个「看起来像」的值安全：
+     * 编错了会被服务端静默当成另一个课程的资料栏。
+     *
+     * 客户端没有 `redirect`（测试替身可能只给 `get`）时退回从正文的隐藏域取，
+     * 那是上一版的做法，仍然可用。
+     */
+    let stuenc = '';
+    try {
+      if (typeof this.client.redirect === 'function') {
+        const landing = await this.client.redirect(XXT_ENDPOINTS.stuMiddle, {
+          query: { courseid: hit.courseid, clazzid: hit.clazzid, cpi: hit.cpi, ismooc2: 1, v: 2 },
+          signal,
+        });
+        stuenc = new URL(landing).searchParams.get('enc') ?? '';
+      } else {
+        const middle = await this.client.get(XXT_ENDPOINTS.stuMiddle, {
+          courseid: hit.courseid, clazzid: hit.clazzid, cpi: hit.cpi, ismooc2: 1, v: 2,
+        }, { signal });
+        stuenc = hiddenValue(middle, 'enc');
+      }
+    } catch {
+      // 取不到 `stuenc` 不该让整份清单读不出来：多半是课程页换了跳转形态。
+      stuenc = '';
+    }
+
+    const files = [];
+    const seen = new Set();
+    /** 一层：给文件夹行（或 undefined 表示根）与它所在的路径。 */
+    const walk = async (folder, folders) => {
+      for (let page = 1; page <= MAX_DATA_PAGES; page += 1) {
+        if (folders.length > MAX_DATA_DEPTH) return;
+        const html = await this.client.get(XXT_ENDPOINTS.dataList, {
+          courseid: hit.courseid,
+          clazzid: hit.clazzid,
+          cpi: hit.cpi,
+          ut: 's',
+          stuenc,
+          ...(folder
+            ? {
+              dataName: folder.name,
+              dataId: folder.dataId,
+              type: 1,
+              parent: '',
+              flag: 0,
+              enc: folder.enc,
+              microTopicId: 0,
+              isAjax: 'isAjax',
+            }
+            : {}),
+          t: Date.now(),
+          ...(page > 1 ? { pages: page } : {}),
+        }, { signal });
+        const list = parseDataList(html);
+        for (const row of list.rows) {
+          if (row.type === 'afolder') {
+            if (row.dataId && row.name) await walk(row, [...folders, row.name]);
+            continue;
+          }
+          // 「教师课件」入口不是文件，是一个跳到章节卡片页的链接。
+          if (row.type === 'tch-courseware') continue;
+          if (!row.dataId || !row.name) continue;
+          const name = row.type && !row.name.toLowerCase().endsWith(`.${row.type}`)
+            ? `${row.name}.${row.type}`
+            : row.name;
+          const objectId = /^[0-9a-f]{32}$/i.test(row.objectId) ? row.objectId : null;
+          // 同一份文件可能既在章节里又在资料栏里，也可能在两个文件夹里；
+          // 有 objectId 时按它去重，没有时按「路径 + 名字」。
+          const identity = objectId ?? `${folders.join('/')}\u0000${name}`;
+          if (seen.has(identity)) continue;
+          seen.add(identity);
+          files.push({
+            name,
+            kind: kindOf(name),
+            location: ['资料', ...folders],
+            dataId: row.dataId,
+            objectId,
+            size: roughBytes(row.size),
+            downloadable: row.downloadable,
+          });
+        }
+        if (page >= list.totalPages) return;
+      }
+    };
+
+    await walk(undefined, []);
+    return {
+      files,
+      count: files.length,
+      note: '资料栏文件与章节附件是两条通路；按 objectId 合并去重后再展示。'
+        + '大小是页面上的约数（同一份文件在章节里可能有准确字节数）。',
+    };
+  }
+
+  /**
    * 一个附件的**下载参数**。**本方法不下载任何东西。**
    *
    * # 为什么只给参数（D21）
@@ -298,13 +432,44 @@ export class XxtReader {
    * 默认取原文件；视频可以要播放版。要的那种平台没给时退回另一种，
    * 并在 `note` 里说明 —— 不让调用方以为自己拿到的是原文件。
    *
-   * @param {{objectId?: string, playback?: boolean, signal?: AbortSignal}} [options]
+   * # 资料栏文件走另一条入口
+   *
+   * 章节附件的地址来自云盘对象状态接口；资料栏文件没有 `objectId`，
+   * 它的下载入口是 `coursedata/downloadData`，**302 到带签名的真实地址**。
+   * 所以传 `dataId` 时走那条入口，并顺带要求 `course`（平台要 classId/cpi）。
+   *
+   * @param {{objectId?: string, dataId?: string, course?: string, clazzid?: string, cpi?: string, playback?: boolean, signal?: AbortSignal}} [options]
    * @returns {Promise<{url: string, variant: 'original'|'playback'|'preview', filename?: string, size?: number, headers: Record<string,string>, note?: string}>}
    */
-  async downloadParams({ objectId, playback = false, signal } = {}) {
+  async downloadParams({ objectId, dataId, course, clazzid, cpi, playback = false, signal } = {}) {
     const id = String(objectId ?? '').trim();
+    const data = String(dataId ?? '').trim();
+    if (!id && data) {
+      // 资料栏文件：入口是 302，只有 `Location` 是能用的地址。
+      if (!course) {
+        throw new ClassroomError('INVALID_ARGUMENT', '资料栏文件需要同时给 course（课程 id 或名字）：平台的下载入口要 classId 与 cpi。');
+      }
+      const hit = await this.findCourse(course, { signal });
+      const url = await this.client.redirect(XXT_ENDPOINTS.dataDownload, {
+        query: {
+          dataId: data,
+          classId: clazzid ?? hit.clazzid,
+          cpi: cpi ?? hit.cpi ?? '',
+          courseId: hit.courseid,
+          ut: 's',
+        },
+        signal,
+      });
+      return {
+        url,
+        variant: 'original',
+        // 资料栏不给准确字节数（页面上只有约数），所以这里不编一个 size。
+        headers: { Referer: `${MOOC1}/` },
+        note: '资料栏文件：地址由平台 302 到带签名的真实位置，有效期有限，取到就下。',
+      };
+    }
     if (!/^[0-9a-f]{32}$/i.test(id)) {
-      throw new ClassroomError('INVALID_ARGUMENT', '下载需要 32 位 hex 的 objectId（从 materials() 的返回里取）。');
+      throw new ClassroomError('INVALID_ARGUMENT', '下载需要 32 位 hex 的 objectId（从 materials() 的返回里取），或资料栏文件的 dataId。');
     }
 
     // `k` 是机构 id，从 Cookie 的 `fid` 取。取不到时留空 —— 平台多数情况下不校验它，
@@ -637,6 +802,7 @@ export const XXT_METHODS = Object.freeze([
   'findCourse',
   'chapters',
   'materials',
+  'dataFiles',
   'downloadParams',
   'homework',
   'listHomework',
