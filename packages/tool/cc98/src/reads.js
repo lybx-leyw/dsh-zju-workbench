@@ -72,7 +72,10 @@ export function createCc98ReadTools(services) {
           order: { type: 'integer', enum: [0, 1], description: 'favorites：0 按收藏时间、1 按最后回复时间（默认 1）' },
           hot: { type: 'boolean', description: 'myPosts：只要高赞回复' },
           fans: { type: 'boolean', description: 'following：取粉丝而不是关注的人' },
-          kind: { type: 'string', enum: ['boards', 'users'], description: 'feed 用；notifications 用 reply / at / system' },
+          // ⚠️ 不能写 enum：`feed` 只收 boards / users，`notifications` 只收
+          // reply / at / system，两套值的并集会让模型以为任意一个都能用在任意
+          // action 上（source 会拒，但那时错误已经不在参数层了）。
+          kind: { type: 'string', description: 'feed：boards 或 users；notifications：reply / at / system' },
           year: { type: 'integer', minimum: 1900, maximum: 2999, description: 'signinMonth：年份' },
           month: { type: 'integer', minimum: 1, maximum: 12, description: 'signinMonth：月份' },
         },

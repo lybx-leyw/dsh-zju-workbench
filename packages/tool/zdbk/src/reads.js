@@ -65,8 +65,11 @@ export function createZdbkReadTools(services) {
         properties: {
           action: { type: 'string', enum: ACTIONS, description: '要查什么' },
           academic_year: { type: 'string', description: '学年，如 2025-2026（课表、考试、成绩）' },
-          semester: { type: 'integer', enum: [1, 2, 3, 4], description: '学期：1 秋冬、2 春夏、3 暑、4 短学期（考试、成绩）' },
-          term: { type: 'string', description: '课表用的学期写法，如「秋」「春夏」（可不给，默认按学年推）' },
+          // ⚠️ 不写 enum：正方课号里的学期号本仓只见过 1 / 2（见 `source/zdbk`
+          // 的 `semesterOfCourseKey` 与 `gpaSummary` 的说明）。写死 1–4 会让
+          // 模型以为 3 / 4 存在，而那是它自己编出来的两个学期。
+          semester: { type: 'integer', description: '学期号（考试、成绩）：1 秋冬、2 春夏；不给就是全部' },
+          term: { type: 'string', description: '课表用的学期：秋 / 冬 / 春 / 夏（不给就按今天推）' },
           major_only: { type: 'boolean', description: 'grades：只看主修课' },
           upcoming_only: { type: 'boolean', description: 'exams：只看还没考的' },
           year: { type: 'string', description: 'planList / planView：入学年份，如 2025' },
@@ -103,13 +106,13 @@ export function createZdbkReadTools(services) {
           case 'exams':
             return zdbk.exams(defined({
               academic_year: optStr(args.academic_year, '学年'),
-              semester: optInt(args.semester, '学期', { min: 1, max: 4 }),
+              semester: optInt(args.semester, '学期', { min: 1 }),
               upcoming_only: optBool(args.upcoming_only, 'upcoming_only'),
             }));
           case 'grades':
             return zdbk.grades(defined({
               academic_year: optStr(args.academic_year, '学年'),
-              semester: optInt(args.semester, '学期', { min: 1, max: 4 }),
+              semester: optInt(args.semester, '学期', { min: 1 }),
               major_only: optBool(args.major_only, 'major_only'),
             }));
           case 'gpa':
