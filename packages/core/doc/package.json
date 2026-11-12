@@ -1,0 +1,46 @@
+{
+  "name": "@lybx-leyw/dsh-zju-core-doc",
+  "version": "0.1.0",
+  "description": "文档转文字与 PDF 处理：PDF / Word / Excel / PPT / HTML / 文本取字（按页给出）、图片与 PDF 合成 PDF、取指定页、按关键词找页。纯本地文件，不连外部站点",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./text": "./src/text.js",
+    "./pdf": "./src/pdf.js",
+    "./office": "./src/office.js",
+    "./sniff": "./src/sniff.js",
+    "./zip": "./src/zip.js",
+    "./errors": "./src/errors.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "ATTRIBUTION.md",
+    "PROOF.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/core/doc"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": true,
+      "requires": []
+    }
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "6.4.299"
+  }
+}

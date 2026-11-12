@@ -163,12 +163,26 @@ async function probe(tool, action, run) {
   const { createSztzWrites } = await load('packages/source/sztz/src/writes.js');
   const client = {
     unfinished: async () => [{ id: 501, mc: '志愿活动' }],
-    myActivities: async () => [{ id: 501, mc: '志愿活动' }],
+    // ⚠️ 真服务的形状：`myActivities()` 给视图（细项**没有 id**），
+    // `myList(action)` 给平台原始记录（带 id）。写动作要 id，所以只能读后者。
+    // 早先这份夹具只给了 `myActivities: async () => [...]`（一个数组），
+    // 于是探针测的是一条**真机上不存在**的形状，把实机缺陷放了过去。
+    myActivities: async () => ({
+      signedUp: [{ name: '志愿活动' }], favorites: [], recognized: [], counts: { signedUp: 1, favorites: 0, recognized: 0 },
+    }),
+    myList: async (action) => (action === 0
+      ? [{ id: 501, mc: '志愿活动' }]
+      : action === 1 ? [{ id: 501, mc: '志愿活动' }] : []),
     call: async () => ({}),
+    write: async () => ({ code: 0 }),
   };
   const writes = () => createSztzWrites(client);
   await probe('campus_activity', 'sztz signup', () => writes().signupActivity.prepare({ activity: '志愿活动' }));
   await probe('campus_activity', 'sztz cancel', () => writes().cancelActivity.prepare({ activity: '志愿活动' }));
+  // 收藏两个方向：工具层传的就是 `{ activity }`（见 packages/tool/sztz 的 prepare）。
+  // 「取消收藏」那条要求活动在收藏列表里 —— 上面的 `myList(1)` 给了它。
+  await probe('campus_activity', 'sztz favorite', () => writes().favoriteActivity.prepare({ activity: '志愿活动' }));
+  await probe('campus_activity', 'sztz unfavorite', () => writes().unfavoriteActivity.prepare({ activity: '志愿活动' }));
 }
 
 /* ─────────────────────────── tyys ─────────────────────────── */
@@ -244,6 +258,25 @@ async function probe(tool, action, run) {
   await probe('campus_homework', 'xuezai retract（按名字）', () => writes().retractHomework.prepare({ course: '数据结构', homework: '第三次作业' }));
   // 工具层传 {course, code}；source 现在也收 course
   await probe('campus_checkin', 'xuezai rollcall（按课程名）', () => writes().rollcall.prepare({ course: '数据结构点名', code: '1234' }));
+
+  // 批量签到（W-5）：工具层传 `{ all: true }` 或 `{ all: true, course }`，**不给点名 id**。
+  // 它自己列 `/api/radar/rollcalls`，所以夹具要回那个端点 —— 这是它比单次多出来的
+  // 唯一依赖，也是「批量 ≠ 单次加个默认参数」的证据。
+  const { createRollcallBatch } = await load('packages/source/xuezai/src/rollcall-batch.js');
+  const batchReader = {
+    json: async (url) => {
+      if (!/radar\/rollcalls/.test(url)) throw new Error(`批量签到不该读 ${url}`);
+      return {
+        rollcalls: [
+          { rollcall_id: 202, course_title: '数据结构', is_radar: true, status: 'not_on_call' },
+          { rollcall_id: 203, course_title: '数据结构', is_radar: true, status: 'on_call' },
+        ],
+      };
+    },
+  };
+  const batch = () => createRollcallBatch(batchReader, { rollcall: writes().rollcall, wait: async () => {} });
+  await probe('campus_checkin', 'xuezai rollcall all（全部待签）', () => batch().prepare({}));
+  await probe('campus_checkin', 'xuezai rollcall all（按课程筛）', () => batch().prepare({ course: '数据结构' }));
   await probe('campus_checkin', 'xuezai rollcall（按编号）', () => writes().rollcall.prepare({ homework: 202, code: '1234' }));
 }
 

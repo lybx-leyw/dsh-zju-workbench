@@ -49,6 +49,23 @@ export function createYjsyReadTools(services) {
   ];
 }
 
+export const name = 'zhiyun-tool-yjsy';
+
+/**
+ * 惰性注入：`tools` 由宿主提供，`zhiyunYjsy` 由对应的 source 包提供。
+ *
+ * # 为什么必须声明
+ *
+ * 不声明时宿主不会等服务就绪，`ctx.tools` 可能是 undefined —— 那时
+ * `apply` 里访问 `ctx.tools.register` 直接抛
+ * `Cannot read properties of undefined`。
+ *
+ * 同一个 workspace 里的 `tool/classroom` / `tool/cc98` / `tool/xxt`
+ * 都声明了，这四个包当初漏了。因为这个包一直没被 preset 挂载，
+ * 「不声明也能跑」从未被验证过。
+ */
+export const inject = ['tools', 'zhiyunYjsy'];
+
 export function apply(ctx) {
   createReadToolRegistrar({
     ctx,

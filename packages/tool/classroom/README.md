@@ -42,7 +42,8 @@
 
 ## 读工具（`campus_classroom_read`）
 
-平台原始数据的读：课程、节次、课件与录像、字幕检索、直播采集状态、课堂文字。
+平台原始数据的读：课程、节次、课件与录像、字幕检索、直播采集状态、课堂文字、
+今天的直播候选，以及本地组件诊断与安装计划。
 
 它**不与** `study_*` 争同一件事：`study_*` 读的是**已整理的讲义**（`zhiyunStudy`
 的知识库），本工具读的是**平台上的原始数据**（`source/classroom`）。前者是加工过的，
@@ -52,5 +53,23 @@
 讲义工具都会一起不激活。它只提供平台取证，是附加能力，缺席时那一个工具如实报
 `SERVICE_MISSING`，`study_*` 照常可用。
 
-直播只读状态，不启动 / 不停止采集 —— `liveStart` / `liveStop` 会起停后台进程，
-而直播链路还没真机验证（清单 B-3）。一个不留神启动的采集进程没人会发现。
+### 三条边界
+
+| 边界 | 为什么 |
+| --- | --- |
+| **不启动 / 不停止直播采集** | `liveStart` / `liveStop` 会起停后台循环、占住 transport，属于写。只暴露 `liveStatus` / `liveText` 这两条**纯本地**的读，一个不留神启动的采集循环没人会发现。 |
+| **不转写** | `transcribeAudio` 是**分钟级**本地计算（一节 148 分钟的录播要跑几分钟），而且要先有 FFmpeg 与识别内核。它不是「查一下」的粒度。 |
+| **不装任何东西** | `setupPlan` 只给「放到哪、从哪取」的计划，`executed` **恒为 false**；真正装依赖要宿主安装层，见 N-3。 |
+
+### 新增的三个 action（本轮）
+
+| action | 是什么 | 为什么是读 |
+| --- | --- | --- |
+| `liveCandidates` | 今天还值得起采集的直播课次（含 `courseId` / `subId` / `startsAt` / `endsAt`） | 只查课表并筛掉已散场与非直播的课次，**不建会话、不订阅**。它是 `liveStart` 的**入参来源** —— 没有它，模型只能拿 `lessonList`（回放口径，编号体系不同）硬凑，凑错的表现是「采集建起来了但一直 waiting」。 |
+| `check` | 本地组件诊断（`asr` / `media` / `all`） | 跑一次 `ffmpeg -version`、stat 几个模型文件。**不装任何东西**。 |
+| `setupPlan` | 安装计划：目标路径 / URL / 字节数 / SHA-256 | 无副作用；输出完全可由 `check` 推出，只是把「缺什么」翻译成「放到哪、从哪取」。 |
+
+`liveCandidates` 对应的服务方法是 `LiveSource.remaining()`；`check` 对应
+`ClassroomSource.check()`；`setupPlan` 对应该服务对象上的 `setupPlan()`
+（由数据源包的装配层 `index.js` 挂上，因为它只依赖数据目录与 DSH home，
+不需要会话状态 —— 与 `getCurrentUser` / `logout` 的包装同一手法）。

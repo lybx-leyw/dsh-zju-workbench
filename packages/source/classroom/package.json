@@ -32,7 +32,8 @@
       "network": "campus",
       "writes": false,
       "requires": [
-        "@lybx-leyw/dsh-zju-source-login"
+        "@lybx-leyw/dsh-zju-source-login",
+        "@lybx-leyw/dsh-zju-source-http"
       ]
     },
     "client": {
@@ -45,6 +46,7 @@
   "dependencies": {
     "tough-cookie": "6.0.2",
     "@lybx-leyw/dsh-zju-source-login": "0.1.0",
+    "@lybx-leyw/dsh-zju-source-http": "0.1.0",
     "undici": "^8.10.2"
   },
   "peerDependencies": {

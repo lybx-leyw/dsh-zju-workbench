@@ -1,0 +1,24 @@
+{
+  "name": "@lybx-leyw/dsh-zju-tool-doc",
+  "version": "0.1.0",
+  "description": "文档工具包：campus_doc 一条工具收 text / pdf / pages / find 四个 action，接 core/doc 的服务（纯只读，不过审批）",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/tool/doc"
+  },
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0"
+  }
+}

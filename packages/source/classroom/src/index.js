@@ -15,8 +15,13 @@ export const name = 'zhiyun-classroom';
  * 只读数据路由。
  *
  * 前缀与其他 source 包一致（`/api/zhiyun-<name>`）。**action 名就是方法名**：
- * `searchResources` / `check` / `transcribeAudio` / `liveStart` / `liveStatus` /
- * `liveStop` / `liveText`。
+ * `searchResources` / `check` / `setupPlan` / `transcribeAudio` / `liveStart` /
+ * `liveStatus` / `liveStop` / `liveText` / `liveCandidates`。
+ *
+ * ⚠️ `liveStart` / `liveStop` / `transcribeAudio` / `setupPlan` 在这条路由上
+ * **存在但不给 agent 工具用**：它们是「能力在服务面、不在工具面」的那一类
+ * （起停采集、分钟级本地计算、安装动作）。工具面只有 `campus_classroom_read`
+ * 的读 action，见 `tool/classroom/src/reads.js` 的边界说明。
  */
 export const ROUTE_PATH = '/api/zhiyun-classroom';
 // `webServer` 不进 inject：它是**可选**的宿主服务，只有直播播放需要它。
@@ -195,11 +200,15 @@ export async function apply(ctx, config = {}) {
               },
               searchCaptions: () => source.searchCaptions(input.input ?? {}),
               check: () => source.check(input.input?.component ?? 'all', input.input ?? {}),
+              // 只给计划，不执行：见 `source.js` 的 `setupPlan()` 注释与 N-3。
+              setupPlan: () => source.setupPlan(input.input?.component ?? 'all'),
               transcribeAudio: () => source.transcribeAudio(input.input ?? {}),
               liveStart: () => source.liveStart(input.input ?? {}),
               liveStatus: () => source.liveStatus(input.input ?? {}),
               liveStop: () => source.liveStop(input.input ?? {}),
               liveText: () => source.liveText(input.input ?? {}),
+              // 今天还值得起采集的直播课次 —— `liveStart` 的入参来源，本身是读。
+              liveCandidates: () => source.live.remaining(input.input?.date, input.input ?? {}),
             };
             const handler = handlers[action];
             if (!handler) {

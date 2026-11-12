@@ -16,6 +16,30 @@ export const XXT_ORIGIN = 'https://i.chaoxing.com';
 export const XXT_BASE = `${XXT_ORIGIN}/base`;
 
 /**
+ * 学习任务引擎。
+ *
+ * 老师常把作业打包进课程「任务」栏里按周发的学习任务，这种作业**不在**作业栏里，
+ * 手机端的作业列表也不全（见 `homework.ts` 顶部）。所以它是一条独立的域名，
+ * 不能塞进 `mooc1` / `mooc2-ans` 那一串。
+ */
+export const XXT_TASK_ORIGIN = 'https://task.chaoxing.com';
+
+/** 移动端接口集合。作业的「全局列表」在这里（`/work/stu-work` 在 mooc1-api 上）。 */
+export const XXT_MOBILELEARN_ORIGIN = 'https://mobilelearn.chaoxing.com';
+
+/** 作业的全局列表（服务端渲染 HTML，所有课混在一页）。 */
+export const XXT_STU_WORK = 'https://mooc1-api.chaoxing.com/work/stu-work';
+
+/**
+ * 超星的文件 CDN。
+ *
+ * 下载地址（`cldisk` / `ananas`）与接口**不是同一套主机**：接口在 `chaoxing.com`
+ * 上，文件在 `cldisk.com` 上。所以「能不能拨这个地址」和「能不能带 Cookie 去」
+ * 是两个不同的判定，见 {@link isXxtFileHost}。
+ */
+export const XXT_CDN_HOST = 'cldisk.com';
+
+/**
  * 默认 Referer。
  *
  * 学习通部分接口会校验来源页；上游一直用 mooc1 的首页，实测有效。
@@ -73,6 +97,31 @@ eads.js\ 的 MAX_CARDS）。
    * 它**不直接回文件**，所以只能取 `Location`，不能当普通下载地址用。
    */
   dataDownload: 'https://mooc1.chaoxing.com/coursedata/downloadData',
+
+  /**
+   * 章节附件的对象状态（JSON）。
+   *
+   * `download` 是原文件、`http|httphd|httpmd` 是视频的播放版、`pdf` 是文档的
+   * 预览用 PDF。三者不是同一份文件，体积差一个数量级，所以要分别取。
+   */
+  objectStatus: 'https://mooc1.chaoxing.com/ananas/status',
+
+  /** 学习任务列表（JSON）：一门课有哪些学习任务、各自进度。 */
+  taskList: 'https://mobilelearn.chaoxing.com/v2/apis/active/getData',
+
+  /**
+   * 学习任务的跳转中间页（HTML）。
+   *
+   * 明细要一个**加密的任务编号**，它只出现在这一页的脚本里
+   * （`const eTaskUserId = "…"`）；任务列表给的 `id` 不能直接用。
+   */
+  taskMiddlePage: 'https://task.chaoxing.com/api/v1/middlePageApi/jumpStudyPlanList',
+
+  /** 学习任务明细（JSON）：里面每一项的 `planType` 区分作业与其他内容。 */
+  taskStandard: 'https://task.chaoxing.com/userStudyPlan/getUserStandard',
+
+  /** 作业的全局列表（HTML，所有课混在一页）。 */
+  stuWork: 'https://mooc1-api.chaoxing.com/work/stu-work',
 });
 
 /**
@@ -106,3 +155,46 @@ export function isXxtHost(hostname) {
 export const XXT_HOSTS = {
   has: (hostname) => isXxtHost(hostname),
 };
+
+/**
+ * 判断一个主机名是不是超星的文件 CDN。
+ *
+ * # 为什么要和接口域分开判
+ *
+ * 接口域上的请求要带 Cookie（那是身份），文件 CDN 上的请求**不需要也不该**
+ * 带 Cookie —— 地址本身带签名，而 Cookie 是给第三方的。两者用同一个判定，
+ * 结果要么是文件下载 403（少带了 Referer），要么是把会话 Cookie 发给了
+ * 一个只负责存文件的主机。
+ *
+ * @param {string} hostname - 已是小写的 URL 主机名。
+ * @returns {boolean}
+ */
+export function isXxtFileHost(hostname) {
+  const host = String(hostname ?? '').toLowerCase();
+  return isXxtHost(host) || host === XXT_CDN_HOST || host.endsWith(`.${XXT_CDN_HOST}`);
+}
+
+/**
+ * 下载地址的协议升级。
+ *
+ * # 为什么必须升
+ *
+ * 平台**经常**在 JSON 里给 `http://` 的 `download` 地址（真机响应就是这样），
+ * 而本包的请求白名单只放 https。不升级的后果是「清单列得出来、文件下不下来」，
+ * 且错误落在 `INVALID_PATH` 上 —— 看起来像参数写错，实际是平台给的地址形态。
+ *
+ * 只对超星自己的主机升级：别的域（第三方图床之类）不在本包的职责里，
+ * 擅自改协议会让原本能用的链接变成不能用的。
+ *
+ * @param {string} url - 平台给的地址。
+ * @returns {string} 升级后的地址（不属于本平台主机时原样返回）。
+ */
+export function secureXxtUrl(url) {
+  const text = String(url ?? '');
+  if (!/^http:\/\//i.test(text)) return text;
+  try {
+    return isXxtFileHost(new URL(text).hostname) ? text.replace(/^http:\/\//i, 'https://') : text;
+  } catch {
+    return text;
+  }
+}

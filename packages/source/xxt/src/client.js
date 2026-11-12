@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 学习通客户端：**Cookie 导入 + 带会话发请求**，不做自动登录。
  *
  * # 为什么没有登录
@@ -30,7 +30,9 @@ import {
   XXT_HOSTS,
   XXT_PASSPORT_HOST,
   XXT_REFERER,
+  isXxtFileHost,
   isXxtHost,
+  secureXxtUrl,
 } from './hosts.js';
 import {
   missingRequired,
@@ -419,6 +421,69 @@ export class XxtClient {
    */
   get(url, query, options = {}) {
     return this.request(url, { method: 'GET', query, ...options });
+  }
+
+  /**
+   * 取一个下载响应**不读正文**（流式）。
+   *
+   * # 为什么与 `request` 分开
+   *
+   * `request` 会 `await response.text()` —— 对一个 500 MB 的课程录像来说，那是
+   * 把整个文件读进内存再丢掉。下载必须拿到的就是那个还在流动的 body。
+   *
+   * # 三条与接口请求不同的规则
+   *
+   * 1. **文件 CDN 也在白名单里**（`cldisk.com`）。地址是平台给的签名链接，
+   *    只放 `chaoxing.com` 会让所有资料栏文件都下不下来。
+   * 2. **不发 Cookie**：签名地址本身就是授权，而会话 Cookie 不该交给一个
+   *    只负责存文件的主机。业务接口上的请求照旧带。
+   * 3. **必须带 Referer**：`cldisk` / `ananas` 不带 `https://mooc1.chaoxing.com/`
+   *    会直接 403 —— 这是实测结论，不是防御性写法。
+   *
+   * 登录态不在这里判：文件地址过期时平台会回 403，那由调用方翻译成
+   * 「地址已过期，重取一次」而不是「Cookie 失效」。
+   *
+   * @param {string} url - 下载地址（`http://` 会被升成 `https://`）。
+   * @param {object} [options] - `{ headers, signal, timeoutMs }`。
+   * @returns {Promise<{response: Response, release: () => void, signal: AbortSignal}>}
+   */
+  async stream(url, { headers = {}, signal, timeoutMs = this.timeoutMs } = {}) {
+    const target = secureXxtUrl(url);
+    let parsed;
+    try {
+      parsed = new URL(target);
+    } catch {
+      throw new ClassroomError('INVALID_PATH', `不是合法的下载地址：${String(url)}。`);
+    }
+    if (parsed.protocol !== 'https:' || !isXxtFileHost(parsed.hostname)) {
+      throw new ClassroomError('INVALID_PATH', '只允许下载学习通（chaoxing.com / cldisk.com）上的文件。');
+    }
+    const controller = new AbortController();
+    const combined = AbortSignal.any([
+      controller.signal,
+      AbortSignal.timeout(timeoutMs),
+      ...(signal ? [signal] : []),
+    ]);
+    try {
+      const response = await this.fetcher(target, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: combined,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            + ' (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          Referer: XXT_REFERER,
+          ...headers,
+        },
+      });
+      this.log({ method: 'GET', host: parsed.hostname, path: parsed.pathname, status: response.status });
+      return { response, release: () => controller.abort(), signal: combined };
+    } catch (error) {
+      if (combined.aborted) {
+        throw new ClassroomError(signal?.aborted ? 'CANCELLED' : 'TIMEOUT', '下载请求已取消或超时。');
+      }
+      throw new ClassroomError('NETWORK', '无法连接学习通的文件服务。');
+    }
   }
 
   /**

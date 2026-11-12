@@ -14,11 +14,18 @@
  * 而字幕检索（`searchCaptions`）正是原文定位 —— 它是**读数**，不是生成，
  * 所以它属于工具面，不属于 agent 自己的推断。
  *
- * # 直播只读状态，不启动/停止
+ * # 三条边界：哪些进读工具，哪些不进
  *
- * `liveStart` / `liveStop` 会起停后台采集进程（改状态、占资源），
- * 而且直播链路还没真机验证（清单 B-3）。本包只暴露 `liveStatus` 与 `liveText`
- * 这两条**纯本地**的读 —— 一个不留神启动的采集进程没人会发现。
+ * 这个文件里每条 action 都在它自己的注释里说明**为什么是读**。三条边界是：
+ *
+ *   1. **只读平台的原始数据**（课程 / 节次 / 资源 / 字幕 / 直播状态）；
+ *   2. **不启动采集、不停止采集** —— `liveStart` / `liveStop` 会起停后台循环、
+ *      占住 transport，属于写；
+ *   3. **不安装任何东西** —— `setupPlan` 只给「要放到哪、从哪取」的计划，
+ *      `executed` 恒为 false；真正装依赖要宿主安装层，见 N-3。
+ *
+ * `check` 与 `setupPlan` 都在第 1 条与第 3 条之间：它们读的是**本机状态**
+ * （FFmpeg 版本、模型文件在不在），不读平台，也不改任何东西 —— 所以它们是读。
  */
 
 import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
@@ -27,7 +34,11 @@ const SERVICE_SOURCES = Object.freeze({
   zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom',
 });
 
-const ACTIONS = ['courseList', 'searchCourses', 'lessonList', 'resourceList', 'captionSearch', 'liveStatus', 'liveText'];
+const ACTIONS = [
+  'courseList', 'searchCourses', 'lessonList', 'resourceList', 'captionSearch',
+  'liveStatus', 'liveText', 'liveCandidates',
+  'check', 'setupPlan',
+];
 
 /**
  * 读工具的定义。**纯数据 + 纯函数**。
@@ -43,7 +54,9 @@ export function createClassroomReadTools(services) {
       name: 'campus_classroom_read',
       description:
         '查智云课堂平台上的只读数据：我选的课、按关键词/教师搜课、某门课的节次、某节课的课件与录像、'
-        + '按关键词在字幕里定位原文、实时字幕采集的本地状态、某个时间点的课堂文字。'
+        + '按关键词在字幕里定位原文、实时字幕采集的本地状态、某个时间点的课堂文字、'
+        + '今天还值得开始采字幕的直播课次（liveCandidates，供 startLive 用）。'
+        + '还能做本地组件诊断（check）与安装计划（setupPlan，只说装到哪、绝不动手）。'
         + '它读的是平台原始数据；已整理的讲义用 study_catalog / study_read / study_search。'
         + '开始或停止直播采集是写操作，本工具不做。',
       parameters: {
@@ -61,6 +74,10 @@ export function createClassroomReadTools(services) {
           limit: { type: 'integer', minimum: 1, description: 'captionSearch：最多几条命中，默认 100' },
           at: { type: 'string', description: 'liveText：时间点（ISO 时间或毫秒时间戳）；不给就取最新的' },
           before: { type: 'integer', minimum: 0, description: 'liveText：往前取多少毫秒，默认 300000（5 分钟）' },
+          date: { type: 'string', description: 'liveCandidates：查哪一天（YYYY-MM-DD），默认今天（北京时间）' },
+          course: { type: 'string', description: 'liveCandidates：只看这门课（课程名或 courseId）；重名时会给候选让你指定 courseId' },
+          component: { type: 'string', enum: ['all', 'asr', 'media'], description: 'check / setupPlan：查哪一类本地组件，默认 all' },
+          verify: { type: 'boolean', description: 'check：连 SHA-256 一起校验（要读约 240 MB，默认只比大小）' },
         },
         required: ['action'],
         additionalProperties: false,
@@ -112,6 +129,58 @@ export function createClassroomReadTools(services) {
               at: optStr(args.at, '时间点'),
               before: optInt(args.before, 'before', { min: 0 }),
             }));
+          /**
+           * `liveCandidates` —— 「今天哪些课还能开始采字幕」。
+           *
+           * 这是 `live start` 的**入参来源**，但它本身是读：只是查课表、筛掉已散场
+           * 与非直播的课次，不建会话、不发订阅。真正的 `liveStart` 会起后台循环、
+           * 占住 transport，属于写，不在本工具里。
+           *
+           * 之所以要单独一个 action：`liveStart` 要 `courseId` / `subId` /
+           * `startsAt` / `endsAt` 四个值，而模型手上通常只有「现在」。没有这个
+           * action 时它只能拿 `lessonList`（回放口径、编号体系不同）硬凑，凑错的
+           * 表现是「采集建起来了但一直 waiting」—— 那种失败看起来像「还没开播」。
+           */
+          case 'liveCandidates': {
+            if (typeof classroom.live?.remaining !== 'function') {
+              throw inputError('这个数据源版本还没有 liveCandidates（缺 LiveSource.remaining）');
+            }
+            return classroom.live.remaining(optStr(args.date, '日期'), defined({
+              course: optStr(args.course, '课程'),
+            }));
+          }
+          /**
+           * `check` —— 本地组件诊断（对应上游 `zhiyun check`）。
+           *
+           * 读：跑一次 `ffmpeg -version`、stat 几个模型文件。**不装任何东西**。
+           * 缺什么、怎么办都在结果的 `action` 字段里。
+           */
+          case 'check':
+            return classroom.check(optStr(args.component, 'component') ?? 'all', defined({
+              ...(args.verify === undefined ? {} : { verify: args.verify === true }),
+            }));
+          /**
+           * `setupPlan` —— 安装计划（对应上游 `zhiyun setup` 的**计划面**）。
+           *
+           * 这是本轮唯一的「不硬做」项，理由见 `diagnostics.js` 的 `setupPlan`
+           * 与交付报告：装 FFmpeg 要 `npm install`（本仓硬禁止），下模型要 241 MB
+           * 且属安装层（N-3）。所以这里给的是**可复算的步骤**（目标路径、URL、
+           * 字节数、SHA-256），`executed` 恒为 false，一步都不执行。
+           *
+           * 把它做成读工具是合理的：它不产生任何副作用，输出完全可以由
+           * `check` 的结果推出 —— 只是把「缺什么」翻译成「放到哪」。
+           *
+           * ⚠️ 直接取 source 上的方法（`source.setupPlan`）而不是自己算：
+           * 目标路径必须由数据源决定（`dataDirectory` / `asrHome` 只有它知道），
+           * 工具层自己拼路径就等于把「装到哪」这个知识复制了一份。
+           */
+          case 'setupPlan': {
+            const plan = classroom.setupPlan;
+            if (typeof plan !== 'function') {
+              throw inputError('这个数据源版本还没有 setupPlan；用 check 看缺什么，或升级 source-classroom');
+            }
+            return plan.call(classroom, optStr(args.component, 'component') ?? 'all');
+          }
           default:
             // 上面已前置校验过 action，走到这里说明分派漏了一个 —— 那是本文件的 bug。
             throw new Error(`campus_classroom_read 的 action 分派漏了 ${action}`);

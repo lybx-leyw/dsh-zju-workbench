@@ -130,6 +130,20 @@ ${ITEM}# 该包**不在** profile 的 bundles 里，正是为了让它只出现�
 ${ITEM}# 放进 profile 就是主机平面，所有 preset 都会看到。
 ${ITEM}- id: tool-classroom
 ${ITEM}  name: '@lybx-leyw/dsh-zju-tool-classroom'
+
+${ITEM}# ── 本 preset 独有：本地文档处理 ─────────────────────────────────────
+${ITEM}#
+${ITEM}# \`campus_doc\`（text / pdf / pages / find）由 \`@lybx-leyw/dsh-zju-tool-doc\`
+${ITEM}# 注册，读的是主机 \`zhiyunDoc\` 服务（\`core/doc\` provide）。
+${ITEM}#
+${ITEM}# 与 \`tool-classroom\` 同一条理由放在 preset 而不是 profile：它不是每个
+${ITEM}# 会话都要用的东西，而工具表每多一格都在挤占模型的选择空间。
+${ITEM}#
+${ITEM}# 为什么这个 preset 是它的落点：本 preset 的场景就是「读课程资料」，
+${ITEM}# 而作业、讲义、教材常常是 PDF / Word —— 拿到一份 PDF 却没法取字，
+${ITEM}# 只能让用户自己复制粘贴。
+${ITEM}- id: tool-doc
+${ITEM}  name: '@lybx-leyw/dsh-zju-tool-doc'
 `;
 
 const out = header + indented + '\n' + footer;

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 学习通的只读读取方法。
  *
  * # 与上游（ZJU-Omni · xxt/reads.ts）的关系
@@ -12,11 +12,20 @@
  * | 抛错文案里的 `setup_command` | `descriptor.setup` 中性文案 | 见 `client.js` 的 `XXT_SETUP` |
  * | `this.api.get(url, query)` | `XxtClient.get(url, query, { signal })` | 支持取消；页面切走时不该还占着连接 |
  *
+ * # 分层：本文件只做「发哪个请求、拿哪段数据」
+ *
+ * 纯解析在 `parse.js`，名称匹配与圈定范围在 `files.js`，清单聚合与落盘在
+ * `inventory.js`。本文件的方法负责把它们串成**一个能直接调用的基础函数**：
+ * 参数收用户能给出的各种形式（课程名 / 课程 id / 课程页链接、章节标题 / 清单里
+ * 的 `location`、文件名 / 不带扩展名 / 名字里的一段），返回固定形状。
+ * 工具层不该再去调几个读方法自己拼 —— 那样每加一个工具就多一份拼法。
+ *
  * # 只读边界
  *
  * 这些方法全部只发 GET/POST **查询**，没有一处提交、删除或修改。学习通里
  * 「交作业」「开始考试」这类动作**没有**对应方法 —— 那是用户自己的决定，
- * 不该由一个数据包替他做。
+ * 不该由一个数据包替他做。**下载文件**不属于这一类：它读的是平台的文件、
+ * 写的是本机磁盘，平台上的状态一点没变（判据是「有没有改别人的状态」）。
  *
  * # 唯一的写操作是导入 Cookie
  *
@@ -25,49 +34,57 @@
 
 import { ClassroomError } from '@lybx-leyw/dsh-zju-source-http';
 
-import { XXT_ENDPOINTS } from './hosts.js';
-
-/** 一节的卡片数上限。上游用 12 —— 正常一章不会有那么多张卡，超出就是异常页。 */
-const MAX_CARDS = 12;
-
-/** 资料栏一个文件夹的最大页数（上游 50）。 */
-const MAX_DATA_PAGES = 50;
-
-/** 资料栏的最大嵌套层数（上游 8）。超出的目录不再打开，避免病态页面把请求打爆。 */
-const MAX_DATA_DEPTH = 8;
-
-/** 超星课程服务（nanas 状态接口在这里）。 */
-const MOOC1 = 'https://mooc1.chaoxing.com';
-
-/** 视频扩展名。kindOf 用它们把附件分成视频/音频/文档。 */
-const VIDEO_EXT = new Set(['mp4', 'flv', 'm3u8', 'avi', 'mov', 'wmv', 'mkv']);
-
-/**
- * 按扩展名判附件类型。
- *
- * @param {string} name - 文件名。
- * @returns {'video'|'audio'|'document'}
- */
-function kindOf(name) {
-  const extension = String(name ?? '').split('.').pop()?.toLowerCase() ?? '';
-  return VIDEO_EXT.has(extension) ? 'video' : 'document';
-}
+import { XXT_BASE, XXT_ENDPOINTS, secureXxtUrl } from './hosts.js';
 import {
-  hiddenValue,
+  beijingMinute,
+  fromWorkRow,
+  homeworkKind,
   isPending,
   nearestDate,
   normalizeNotice,
   matchesNotice,
-  parseCards,
   parseChapters,
   parseCourses,
-  parseDataList,
   parseExams,
   parseHomeworkDetail,
   parseHomeworkList,
   parseSchedule,
-  roughBytes,
+  parseStuWork,
+  parseTaskKey,
+  parseTaskList,
+  parseTaskPlans,
+  hiddenValue,
 } from './parse.js';
+import {
+  chapterInventory,
+  dataRows,
+  groupedFiles,
+  inventory,
+  saveFiles,
+  summarize,
+} from './inventory.js';
+import {
+  KIND_GROUPS,
+  distinctFiles,
+  fileRow,
+  groupBySection,
+  pickFiles,
+  splitPhrases,
+} from './files.js';
+
+/** 一节的卡片数上限。上游用 12 —— 正常一章不会有那么多张卡，超出就是异常页。 */
+const MAX_CARDS = 12;
+
+/** 超星课程服务（ananas 状态接口在这里）。 */
+const MOOC1 = 'https://mooc1.chaoxing.com';
+
+/**
+ * 学习任务明细的缓存时长。
+ *
+ * 全部做完的任务不会再变，隔这么久重读一次就够；老师放着不管的课不必每次
+ * 一项项读 —— 超星对密集请求会要验证码。
+ */
+const TASK_QUIET_MS = 6 * 3600_000;
 
 /** 课程列表的缓存时长。 */
 const COURSES_TTL_MS = 5 * 60 * 1000;
@@ -106,18 +123,35 @@ export function describeError(error) {
  */
 export class XxtReader {
   /**
-   * @param {{get: Function, post: Function}} client - 请求门面。
+   * @param {{get: Function, post: Function, stream?: Function}} client - 请求门面。
    * @param {object} [options]
    * @param {() => Date} [options.now] - 注入当前时间（截止时间的年份推断要用）。
+   * @param {string} [options.downloadDir] - 下载根目录。**装配时**定，调用方不给路径。
    */
-  constructor(client, { now = () => new Date() } = {}) {
+  constructor(client, { now = () => new Date(), downloadDir } = {}) {
     if (typeof client?.get !== 'function' || typeof client?.post !== 'function') {
       throw new ClassroomError('CONFIG', '学习通读取器需要一个带 get/post 的客户端');
     }
     this.client = client;
     this.now = now;
+    /**
+     * 下载根目录。
+     *
+     * 为什么由装配方给而不是由调用方传：让模型传路径等于让它往任意位置写文件。
+     * 与 `source/cc98` 的 `downloadDir` 同一口径。
+     */
+    this.downloadDir = downloadDir;
     /** @type {Map<string, {at: number, courses: object[]}>} */
     this.courseCache = new Map();
+    /**
+     * 课程文件清单的缓存（按课程，30 分钟）。
+     *
+     * 先看清单再下载、连着下几次是常态；没有它，每次下载都要把 30 节的卡片
+     * 重读一遍 —— 那是几十个请求，而学习通对突发请求很敏感。
+     */
+    this.inventoryCache = new Map();
+    /** 学习任务明细的缓存（按课程 × 任务，进度与时间戳决定能不能复用）。 */
+    this.taskCache = new Map();
   }
 
   /**
@@ -224,188 +258,157 @@ export class XxtReader {
   }
 
   /**
-   * 一门课的**课件/附件清单**（逐节的卡片附件）。
+   * 一门课的**章节目录 + 每节的文件**（一次给出「整门课有什么」）。
    *
-   * # 为什么是一串请求
+   * # 为什么与 `chapters()` 并存而不是替换它
    *
-   * 学习通没有「整门课的附件列表」这种接口：附件挂在**每节的卡片**里，
-   * 而一节可以有多张卡片（`num` 从 0 递增，取到 `found: false` 为止）。
-   * 所以这个方法的请求数是 `节数 × 每节卡片数`，最坏情况不小。
+   * `chapters()` 只读目录页，一次请求、很快；它是「我只想知道有哪几章」的答案。
+   * 本方法要把每节的卡片都读一遍（30 节 → 几十个请求），只有当用户真的问
+   * 「这门课有什么文件」时才值得付这个代价。两者的**成本差一个数量级**，
+   * 合成一个就等于让「查章节目录」也要等十秒。
    *
-   * 上游对 `num` 设了 12 的上限，这里沿用 —— 超过 12 张卡片的节会被截断，
-   * 那属于异常页面（正常一章不会有那么多卡）。
-   *
-   * 按 `objectId` 去重：同一份附件在多个卡片里重复出现是常态。
-   *
-   * @param {{course?: string, signal?: AbortSignal}} [options]
-   * @returns {Promise<{files: Array<{name: string, kind: string, location: string[], objectId: string, size: number|null}>, notOpen: string[], count: number}>}
+   * @param {{course?: string, fresh?: boolean, signal?: AbortSignal}} [options]
+   * @returns {Promise<{course: string, chapter_count: number, file_count: number, chapters: Array<object>, notOpen: string[], warning?: string, cached?: boolean, note: string}>}
    */
-  async materials({ course, signal } = {}) {
-    const hit = await this.findCourse(course, { signal });
-    const { chapters } = await this.chapters({ course: hit.courseid, signal });
-
-    const files = [];
-    const notOpen = [];
-    const seen = new Set();
-
-    for (const chapter of chapters) {
-      // 锁住的节读了也是空页，直接记下名字跳过 —— 省一次请求，也让用户知道漏了哪节。
-      if (chapter.locked) {
-        notOpen.push(chapter.title);
-        continue;
-      }
-      let closed = false;
-      for (let num = 0; num < MAX_CARDS; num += 1) {
-        const html = await this.client.get(XXT_ENDPOINTS.chapterCards, {
-          clazzid: hit.clazzid,
-          courseid: hit.courseid,
-          knowledgeid: chapter.id,
-          num,
-          ut: 's',
-          cpi: hit.cpi ?? '',
-          mooc2: '1',
-        }, { signal });
-        const card = parseCards(html);
-        if (card.notOpen) {
-          notOpen.push(chapter.title);
-          closed = true;
-          break;
-        }
-        if (!card.found) break; // num 已越过最后一张
-        for (const file of card.files) {
-          if (seen.has(file.objectId)) continue;
-          seen.add(file.objectId);
-          files.push({ ...file, kind: kindOf(file.name), location: chapter.path });
-        }
-      }
-      if (closed) continue;
-    }
-
-    return { files, notOpen, count: files.length };
+  async chapterList({ course, fresh = false, signal } = {}) {
+    const { course: hit, chapters, inventory: full } = await chapterInventory(this, course, { fresh, signal });
+    const files = distinctFiles(full.files);
+    const sections = groupBySection(files);
+    return {
+      ...summarize(hit, files, full),
+      // `count` 从 `summarize` 出来是**文件数**；这里再给两个更具体的数，
+      // 因为「这门课有几节」与「有几个文件」是两个不同的问题。
+      count: files.length,
+      chapter_count: chapters.length,
+      section_count: sections.length,
+      chapters: sections,
+    };
   }
 
   /**
-   * 一门课**资料栏**里的文件（对应上游 `inventory(data: true)` 那一路）。
+   * 一门课的**课件等文件**清单（章节附件 + 「资料」栏，按 objectId 合并去重）。
    *
-   * # 为什么这条通路必须单列
+   * # 为什么默认两条通路都读
    *
-   * 老师把课件放「资料」里是常态，而资料栏**不在章节卡片里** —— 只读
-   * `materials()` 会得到「这门课没有课件」的错误结论（审计 漏-6）。
-   * 两条通路共用同一个 `objectId` 命名空间，所以在调用方那里应当合并、
-   * 按 `objectId` 去重。
+   * 老师把课件放「资料」里是常态，而**资料栏不在章节卡片里**。只读章节会得到
+   * 「这门课没有课件」的错误结论（审计 漏-6）。所以默认两条都读，并按课程里
+   * 的层次合并 —— 章节里那份的准确字节数优先于资料栏的约数。
    *
-   * # 逐层逐页
+   * # `chapter` 收三种写法
    *
-   * 资料栏是一棵**可以套八层的文件夹树**，每一层自带分页（页面右下角
-   * `input#totalPages`）。文件夹要用它自己那一行给的 `enc` 才能打开 ——
-   * 拿父层的 `enc` 去开子层会被拒绝。
+   * 章节标题里的一段（「等厚干涉」「5.2」）、清单里原样的 `location`（「第一章 / 5.2 等厚干涉」）、
+   * 或资料栏的文件夹名（「资料 / 课件」）。**这是「只下某一节」的前提** ——
+   * 用户手里只有从页面上看到的标题，没有内部编号。
    *
-   * @param {{course?: string, signal?: AbortSignal}} [options] - `course` 是 id 或名字。
-   * @returns {Promise<{files: Array<{name: string, kind: string, location: string[], dataId: string, objectId: string|null, size: number|null, downloadable: boolean}>, count: number, note: string}>}
+   * @param {{course?: string, chapter?: string, fresh?: boolean, signal?: AbortSignal}} [options]
+   * @returns {Promise<object>} `{ course, count, files: [...], notOpen, warning?, note }`
+   */
+  async materials({ course, chapter, fresh = false, signal } = {}) {
+    const found = await groupedFiles(this, course, { chapter, fresh, signal });
+    return {
+      ...summarize(found.course, found.files, found),
+      ...(found.scope ? { scope: found.scope.join(' / ') } : {}),
+      files: found.files.map(fileRow),
+    };
+  }
+
+  /**
+   * 一门课的**视频**清单（章节里的视频 + 资料栏里的视频）。
+   *
+   * 与 `materials()` 同一套范围规则，只是筛出 `kind === 'video'`。
+   * 单独一条而不是让调用方自己过滤：`kindOf` 认 16 种视频扩展名，
+   * 让每个调用方各写一遍那个集合，迟早有一方漏掉 `rmvb`、`ts` 这些老格式。
+   *
+   * @param {{course?: string, chapter?: string, fresh?: boolean, signal?: AbortSignal}} [options]
+   * @returns {Promise<object>}
+   */
+  async videos({ course, chapter, fresh = false, signal } = {}) {
+    const found = await groupedFiles(this, course, { kinds: ['video'], chapter, fresh, signal });
+    return {
+      ...summarize(found.course, found.files, found),
+      ...(found.scope ? { scope: found.scope.join(' / ') } : {}),
+      files: found.files.map(fileRow),
+    };
+  }
+
+  /**
+   * 把课件 / 视频**下载到本地**。
+   *
+   * # 三种选文件的写法
+   *
+   * - `name`：文件名（全名、不带扩展名的名字，或名字里的一段；多个用 `|` / `、` 分隔）；
+   * - `chapter`：只下这一章 / 这一节 / 这个资料文件夹的；
+   * - `all`：这门课的全部（同一组内）。
+   *
+   * 三者必须说清一个 —— 都没给时**不发请求**就报错：一个「下载整门课」的
+   * 意外动作代价是几百 MB 流量与磁盘，不该靠默认值发生。
+   *
+   * # 为什么落盘目录不由调用方给
+   *
+   * 目录在装配时定（`XxtReader` 的 `downloadDir`）。让调用方传路径等于让一次
+   * 对话把文件写到任意位置；`outDir` 只在装配方明确传参时生效（排障与脚本用）。
+   *
+   * @param {object} options
+   * @param {string} options.course - 课程（id / 名字 / 课程页链接）。
+   * @param {'material'|'video'} [options.group] - 下载哪一组，默认课件。
+   * @param {string} [options.name] - 文件名，多个用竖线或顿号分隔。
+   * @param {string} [options.chapter] - 章节或资料栏文件夹。
+   * @param {boolean} [options.all] - 这门课这一组的全部。
+   * @param {boolean} [options.playback] - 视频要平台的播放版（体积约为原文件十分之一）。
+   * @param {string} [options.outDir] - 覆盖根目录（仅装配方 / 脚本用）。
+   * @param {AbortSignal} [options.signal]
+   * @returns {Promise<object>} `{ course, dir, count, files, failed? }`
+   */
+  async downloadFiles({
+    course, group = 'material', name, chapter, all = false, playback = false, outDir, signal,
+  } = {}) {
+    const names = splitPhrases(name);
+    if (all ? names.length > 0 || chapter !== undefined : !names.length && chapter === undefined) {
+      throw new ClassroomError(
+        'INVALID_ARGUMENT',
+        `需要 name（文件名）、chapter（章节），或 all（这门课的全部${group === 'video' ? '视频' : '课件'}）。`,
+      );
+    }
+    const found = await groupedFiles(this, course, { kinds: KIND_GROUPS[group] ?? KIND_GROUPS.material, chapter, signal });
+    const choose = (files) => {
+      if (!names.length) return files.filter((file) => file.downloadable !== false);
+      return pickFiles(files, names, (file) => fileRow(file));
+    };
+    let wanted;
+    try {
+      wanted = choose(found.files);
+    } catch (error) {
+      // 清单来自缓存时，老师刚传的文件可能不在里面：重读一次再找。
+      if (error?.code !== 'NEEDS_USER' || !found.cached) throw error;
+      const again = await groupedFiles(this, course, { kinds: KIND_GROUPS[group] ?? KIND_GROUPS.material, chapter, fresh: true, signal });
+      wanted = choose(again.files);
+    }
+    const saved = await saveFiles(this, found.course, wanted, found.files, { playback, outDir, signal });
+    return {
+      ...saved,
+      ...(found.notOpen.length ? { notOpen: found.notOpen } : {}),
+    };
+  }
+
+  /**
+   * 一门课**资料栏**里的文件（只走资料栏，不看章节卡片）。
+   *
+   * # 什么时候需要它
+   *
+   * `materials()` 已经把两条通路合并了。这条单列的价值是**分开取证**：
+   * 排查「资料栏到底读到没有」、或只要资料栏里那批文件时，不必把 30 节的
+   * 卡片也读一遍。
+   *
+   * @param {{course?: string, signal?: AbortSignal}} [options] - `course` 是 id / 名字 / 课程页链接。
+   * @returns {Promise<{files: Array<object>, count: number, note: string}>}
    */
   async dataFiles({ course, signal } = {}) {
     const hit = await this.findCourse(course, { signal });
-
-    /**
-     * 根页面的 `stuenc`。
-     *
-     * # 为什么不能从中间页正文里抠
-     *
-     * 课程中间页会 **302 到** `…/studentstudy?…&enc=<stuenc>`，`stuenc` 只在
-     * **落地地址的查询串**里，正文里没有（上游也是读跳转后的 URL）。所以这里
-     * 不跟随跳转、只要 `Location`，再取 `enc` 参数。
-     *
-     * # 拿不到时不编
-     *
-     * 平台有时不校验它。取不到就传空串 —— 比编一个「看起来像」的值安全：
-     * 编错了会被服务端静默当成另一个课程的资料栏。
-     *
-     * 客户端没有 `redirect`（测试替身可能只给 `get`）时退回从正文的隐藏域取，
-     * 那是上一版的做法，仍然可用。
-     */
-    let stuenc = '';
-    try {
-      if (typeof this.client.redirect === 'function') {
-        const landing = await this.client.redirect(XXT_ENDPOINTS.stuMiddle, {
-          query: { courseid: hit.courseid, clazzid: hit.clazzid, cpi: hit.cpi, ismooc2: 1, v: 2 },
-          signal,
-        });
-        stuenc = new URL(landing).searchParams.get('enc') ?? '';
-      } else {
-        const middle = await this.client.get(XXT_ENDPOINTS.stuMiddle, {
-          courseid: hit.courseid, clazzid: hit.clazzid, cpi: hit.cpi, ismooc2: 1, v: 2,
-        }, { signal });
-        stuenc = hiddenValue(middle, 'enc');
-      }
-    } catch {
-      // 取不到 `stuenc` 不该让整份清单读不出来：多半是课程页换了跳转形态。
-      stuenc = '';
-    }
-
-    const files = [];
-    const seen = new Set();
-    /** 一层：给文件夹行（或 undefined 表示根）与它所在的路径。 */
-    const walk = async (folder, folders) => {
-      for (let page = 1; page <= MAX_DATA_PAGES; page += 1) {
-        if (folders.length > MAX_DATA_DEPTH) return;
-        const html = await this.client.get(XXT_ENDPOINTS.dataList, {
-          courseid: hit.courseid,
-          clazzid: hit.clazzid,
-          cpi: hit.cpi,
-          ut: 's',
-          stuenc,
-          ...(folder
-            ? {
-              dataName: folder.name,
-              dataId: folder.dataId,
-              type: 1,
-              parent: '',
-              flag: 0,
-              enc: folder.enc,
-              microTopicId: 0,
-              isAjax: 'isAjax',
-            }
-            : {}),
-          t: Date.now(),
-          ...(page > 1 ? { pages: page } : {}),
-        }, { signal });
-        const list = parseDataList(html);
-        for (const row of list.rows) {
-          if (row.type === 'afolder') {
-            if (row.dataId && row.name) await walk(row, [...folders, row.name]);
-            continue;
-          }
-          // 「教师课件」入口不是文件，是一个跳到章节卡片页的链接。
-          if (row.type === 'tch-courseware') continue;
-          if (!row.dataId || !row.name) continue;
-          const name = row.type && !row.name.toLowerCase().endsWith(`.${row.type}`)
-            ? `${row.name}.${row.type}`
-            : row.name;
-          const objectId = /^[0-9a-f]{32}$/i.test(row.objectId) ? row.objectId : null;
-          // 同一份文件可能既在章节里又在资料栏里，也可能在两个文件夹里；
-          // 有 objectId 时按它去重，没有时按「路径 + 名字」。
-          const identity = objectId ?? `${folders.join('/')}\u0000${name}`;
-          if (seen.has(identity)) continue;
-          seen.add(identity);
-          files.push({
-            name,
-            kind: kindOf(name),
-            location: ['资料', ...folders],
-            dataId: row.dataId,
-            objectId,
-            size: roughBytes(row.size),
-            downloadable: row.downloadable,
-          });
-        }
-        if (page >= list.totalPages) return;
-      }
-    };
-
-    await walk(undefined, []);
+    const files = await dataRows(this, hit, signal);
     return {
       files,
       count: files.length,
-      note: '资料栏文件与章节附件是两条通路；按 objectId 合并去重后再展示。'
+      note: '资料栏文件与章节附件是两条通路；本方法只读资料栏。'
         + '大小是页面上的约数（同一份文件在章节里可能有准确字节数）。',
     };
   }
@@ -475,30 +478,30 @@ export class XxtReader {
     // `k` 是机构 id，从 Cookie 的 `fid` 取。取不到时留空 —— 平台多数情况下不校验它，
     // 但缺了会让部分资源 403，所以这里只报警不改行为。
     const fid = await this.fid();
-    const status = JSON.parse(await this.client.get(`${MOOC1}/ananas/status/${id}`, {
-      k: fid,
-      flag: 'normal',
-      _dc: String(Date.now()),
-    }, { signal }));
+    const status = await this.#json(
+      `${MOOC1}/ananas/status/${id}`,
+      { k: fid, flag: 'normal', _dc: String(Date.now()) },
+      signal,
+      '附件状态',
+    );
 
     if (status?.status !== 'success') {
       throw new ClassroomError('REJECTED', `学习通没有给出这个文件：${status?.msg || status?.status || '状态未知'}`);
     }
 
-    const secure = (url) => String(url).replace(/^http:\/\/([^/]*(?:chaoxing\.com|cldisk\.com))/i, 'https://$1');
     const original = status.download
-      ? { url: secure(status.download), variant: 'original', ...(Number(status.length) > 0 ? { size: Number(status.length) } : {}) }
+      ? { url: secureXxtUrl(status.download), variant: 'original', ...(Number(status.length) > 0 ? { size: Number(status.length) } : {}) }
       : undefined;
     // 文档的 `http` 是在线阅读页，不是文件；只有视频的 `http` 才是播放版。
     const stream = status.http || status.httphd || status.httpmd;
 
     /** @type {{url: string, variant: string, size?: number, note?: string}} */
     let picked;
-    if (playback && stream) picked = { url: secure(stream), variant: 'playback' };
+    if (playback && stream) picked = { url: secureXxtUrl(stream), variant: 'playback' };
     else if (original) {
       picked = playback ? { ...original, note: '平台没有这个视频的播放版，给的是原文件' } : original;
-    } else if (stream) picked = { url: secure(stream), variant: 'playback', note: '平台没有给原文件，给的是播放版' };
-    else if (status.pdf) picked = { url: secure(status.pdf), variant: 'preview', note: '平台没有给原文件，给的是预览用的 PDF' };
+    } else if (stream) picked = { url: secureXxtUrl(stream), variant: 'playback', note: '平台没有给原文件，给的是播放版' };
+    else if (status.pdf) picked = { url: secureXxtUrl(status.pdf), variant: 'preview', note: '平台没有给原文件，给的是预览用的 PDF' };
     else throw new ClassroomError('REJECTED', '学习通没有给出这个文件的下载地址');
 
     return {
@@ -507,6 +510,36 @@ export class XxtReader {
       // 下载这几个域不带这个 Referer 会 403。执行下载的一方照抄即可。
       headers: { Referer: `${MOOC1}/` },
     };
+  }
+
+  /**
+   * 取一个 JSON 接口。
+   *
+   * # 为什么不在调用点直接 `JSON.parse`
+   *
+   * 学习通在登录态失效、被风控、或接口换版时，会用 **HTTP 200 + 一段 HTML**
+   * 顶替 JSON。`JSON.parse` 抛的是 `SyntaxError`，它没有 `code` —— 于是会被
+   * 上层当作 `INTERNAL_ERROR` 报出去，用户看到的是「未知错误」而不是
+   * 「Cookie 失效了」或「平台换了形状」。这里把它翻译成稳定的 code。
+   *
+   * @param {string} url - 完整地址。
+   * @param {Record<string, unknown>|undefined} query - 查询参数。
+   * @param {AbortSignal|undefined} signal - 取消信号。
+   * @param {string} label - 出错时用来指认是哪个接口。
+   * @returns {Promise<object>}
+   */
+  async #json(url, query, signal, label) {
+    const text = await this.client.get(url, query, { signal });
+    let payload;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      throw new ClassroomError('SCHEMA_CHANGED', `${label}没有返回 JSON。`);
+    }
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      throw new ClassroomError('SCHEMA_CHANGED', `${label}返回的不是对象。`);
+    }
+    return payload;
   }
 
   /**
@@ -575,23 +608,240 @@ export class XxtReader {
   /**
    * 一门课的作业清单（页面形状，去掉详情 URL）。
    *
-   * 去掉 `url` 是有意的：那是带签名的地址，复制到别处就会失效，
-   * 摆在响应里只会让人误以为可以点。
+   * # 为什么这一条要合并三个来源
    *
-   * @param {{course: string, signal?: AbortSignal}} options
-   * @returns {Promise<{course: string, progress: object|null, homework: object[]}>}
+   * 学习通里「要交的作业」分散在三处，**任何一处单独读都会漏**：
+   *
+   * | 来源 | 能读到什么 | 漏掉什么 |
+   * | --- | --- | --- |
+   * | 课程的作业栏（`mooc2/work/list`） | 老师直接发在这门课里的作业与进度 | 打包进「学习任务」的那些 |
+   * | 课程「任务」栏（任务引擎） | 按周发的学习任务里附的作业、要求、开放与截止时间 | 老师不在任务里发的 |
+   * | 手机端全局列表（`work/stu-work`） | 跨课程、不在上面两处的 | 没有截止时间、没有要求 |
+   *
+   * 老师常把作业打包进学习任务，而这类作业课程作业栏里**根本没有**；
+   * 手机端列表也不全。所以三个来源都要读，并按「课程 + 标题」去重。
+   *
+   * # 去重为什么按「课程 + 标题」
+   *
+   * 同一份作业会同时出现在任务与手机端列表里，而两处都没有共同的 id。
+   * 标题在同一门课里重复的情况极少（真重复时留在两处也不误导：它们确实
+   * 是两条要交的东西）。
+   *
+   * # 单门课的作业栏读不到不算失败
+   *
+   * 很多课只用资料、没开作业功能（`HOMEWORK_UNAVAILABLE`）。把它记成错误会让
+   * 「读了 29 门，1 门没开作业」看起来像出了问题。所以那种 code 静默跳过，
+   * 其余失败记进 `failed` 并让调用方知道结果不完整。
+   *
+   * @param {{course?: string, fresh?: boolean, pending_only?: boolean, signal?: AbortSignal}} [options]
+   *   `course` 给了就只看这门课，不给就是**全部课程**；`fresh` 不用学习任务明细的缓存；
+   *   `pending_only` 只要还没交的（交过的仍有价值 —— 用户要区分「漏了没」与「交了没」，
+   *   所以这是**可选**过滤，不是默认行为）。
+   * @returns {Promise<object>} 给了 `course` 时是 `{course, progress, homework, failed}`；
+   *   没给时是 `{count, homeworks, failed}`（全部课程合并）。
    */
-  async listHomework({ course, signal } = {}) {
-    const hit = await this.findCourse(course, { signal });
-    const result = await this.homework(hit, { signal });
+  async listHomework({ course, fresh = false, pending_only: pendingOnly = false, signal } = {}) {
+    if (course) {
+      const hit = await this.findCourse(course, { signal });
+      const one = await this.#courseHomework(hit, { fresh, signal });
+      const rows = pendingOnly ? one.homework.filter((row) => row.pending) : one.homework;
+      // 按截止时间从近到远，没有截止时间的在最后。
+      return {
+        course: hit.name,
+        progress: one.progress,
+        count: rows.length,
+        homework: rows.sort((a, b) => (a.deadline ?? '9').localeCompare(b.deadline ?? '9')),
+        failed: one.failed,
+      };
+    }
+    const courses = await this.courses({ signal });
+    const homeworks = [];
+    const failed = [];
+    for (const hit of courses) {
+      const one = await this.#courseHomework(hit, { fresh, signal });
+      homeworks.push(...one.homework);
+      failed.push(...one.failed);
+    }
+    const rows = pendingOnly ? homeworks.filter((row) => row.pending) : homeworks;
     return {
-      course: hit.name,
-      progress: result.progress,
-      homework: result.items.map(({ url: _url, ...rest }) => ({
-        ...rest,
-        pending: isPending(rest.status),
-      })),
+      count: rows.length,
+      homeworks: rows.sort((a, b) => (a.deadline ?? '9').localeCompare(b.deadline ?? '9')),
+      failed,
     };
+  }
+
+  /**
+   * 一门课的作业（三个来源合并）。
+   *
+   * 拆出来是因为「全部课程」那一路要逐课调用它：把合并逻辑写在公开方法的循环里，
+   * 单门课那一支就得复制一遍三个来源的读法 —— 那正是漏掉某个来源的经典成因。
+   *
+   * @param {object} hit - 原始课程对象。
+   * @param {{fresh: boolean, signal?: AbortSignal}} options
+   * @returns {Promise<{homework: object[], failed: Array<{course: string, reason: string}>}>}
+   */
+  async #courseHomework(hit, { fresh = false, signal } = {}) {
+    const failed = [];
+    const rows = [];
+    let progress = null;
+
+    try {
+      const page = await this.homework(hit, { signal });
+      progress = page.progress;
+      for (const item of page.items) {
+        rows.push({
+          course: hit.name,
+          task: '',
+          title: item.title,
+          // 作业栏没有「类型」字段，按名字判 —— 周测、小测在超星里也是作业。
+          type: homeworkKind(item.title),
+          index: item.index,
+          status: item.status,
+          // 作业栏不显示开题/截止时间；只有学习任务那条通路有。
+          opens: null,
+          deadline: null,
+          done: !isPending(item.status),
+          closed: false,
+          requirement: '',
+          otherLeft: 0,
+        });
+      }
+    } catch (error) {
+      if (error?.code !== 'HOMEWORK_UNAVAILABLE') {
+        failed.push({ course: hit.name, reason: String(error?.message ?? error) });
+      }
+    }
+
+    // 学习任务里的作业：逐任务读明细。失败按任务记，不影响其余来源。
+    const now = this.now().getTime();
+    try {
+      rows.push(...await this.courseTaskHomework(hit, { fresh, now, signal }));
+    } catch (error) {
+      const fatal = ['COOKIE_EXPIRED', 'COOKIE_IMPORT_REQUIRED', 'RATE_LIMITED', 'CANCELLED'];
+      if (fatal.includes(error?.code)) throw error;
+      failed.push({ course: `${hit.name}（学习任务）`, reason: String(error?.message ?? error) });
+    }
+
+    // 手机端全局列表：补前两处都没有的（跨课程、或老师直接在 App 上发的）。
+    // 这一页是**所有课混在一起**的，所以只挑这门课的行。
+    try {
+      const known = new Set(rows.map((row) => `${row.course}\n${row.title}`));
+      const html = await this.client.get(XXT_ENDPOINTS.stuWork, undefined, { signal });
+      for (const raw of parseStuWork(html)) {
+        const row = fromWorkRow(raw, now);
+        if (row.course !== hit.name || known.has(`${row.course}\n${row.title}`)) continue;
+        rows.push(row);
+      }
+    } catch (error) {
+      const fatal = ['COOKIE_EXPIRED', 'COOKIE_IMPORT_REQUIRED', 'RATE_LIMITED', 'CANCELLED'];
+      if (fatal.includes(error?.code)) throw error;
+      failed.push({ course: '手机端作业列表', reason: String(error?.message ?? error) });
+    }
+
+    return {
+      progress,
+      failed,
+      homework: rows.map((row) => ({ ...row, pending: !row.done && !row.closed })),
+    };
+  }
+
+  /**
+   * 一门课「任务」栏里附的作业。
+   *
+   * # 两跳，且第二跳要一个加密编号
+   *
+   * 1. 任务列表（`getData`）给 `id` 与进度；
+   * 2. 中间页（`jumpStudyPlanList`）的脚本里有 `eTaskUserId = "…"`，
+   *    **它才是明细要的编号**，任务列表给的 `id` 不能直接用；
+   * 3. 明细（`getUserStandard`）里 `planType === 4` 的才是作业。
+   *
+   * # 缓存口径：按进度与时间判能不能复用
+   *
+   * 进度变了（`finished/total` 变了）一定重读；全部做完的任务可以一直复用；
+   * 没做完的看有没有还没截止的作业、以及隔了多久 —— 老师放着不管的课不必
+   * 每次一项项读，超星对密集请求会要验证码。
+   *
+   * @param {object} course - 原始课程对象。
+   * @param {{fresh: boolean, now: number, signal?: AbortSignal}} options
+   * @returns {Promise<Array<object>>}
+   */
+  async courseTaskHomework(course, { fresh = false, now = this.now().getTime(), signal } = {}) {
+    const payload = await this.#json(
+      XXT_ENDPOINTS.taskList,
+      { DB_STRATEGY: 'DEFAULT', courseId: course.courseid, classId: course.clazzid },
+      signal,
+      '学习任务列表',
+    );
+    const list = parseTaskList(payload);
+    if (!list.available) {
+      // 这门课没有「任务」栏（老师直接在作业栏发作业）。那是**正常情况**，
+      // 不是失败 —— 报错会让每门只用作业栏的课都留一行 failed。
+      return [];
+    }
+    if (list.malformed) {
+      throw new ClassroomError('SCHEMA_CHANGED', '学习任务列表的结构不是预期的形状。', {
+        course: course.name,
+      });
+    }
+
+    const key = `${course.courseid}/${course.clazzid}`;
+    const saved = this.taskCache.get(key) ?? { tasks: new Map() };
+    /** 只留现在还存在的任务：读完这一次就不会再问那些已经消失的。 */
+    const after = new Map();
+    const rows = [];
+
+    for (const task of list.tasks) {
+      const signature = `${task.finished}/${task.total}`;
+      const old = saved.tasks.get(task.id);
+      const reusable = old
+        && !fresh
+        && old.signature === signature
+        && (task.total > 0 && task.finished >= task.total
+          || (!old.plans.some((plan) => !plan.done && plan.ends !== null && plan.ends > now)
+            && now - old.at < TASK_QUIET_MS));
+      let entry = old;
+      if (!reusable) {
+        const page = await this.client.get(XXT_ENDPOINTS.taskMiddlePage, {
+          taskId: task.id,
+          moocClassId: course.clazzid,
+        }, { signal });
+        const taskKey = parseTaskKey(page);
+        if (!taskKey) {
+          throw new ClassroomError('SCHEMA_CHANGED', '学习任务页里没有任务编号（页面结构变了）。');
+        }
+        const detail = await this.#json(
+          XXT_ENDPOINTS.taskStandard,
+          { encryTaskUserId: taskKey },
+          signal,
+          '学习任务明细',
+        );
+        entry = { ...parseTaskPlans(detail?.data), signature, at: now };
+      }
+      after.set(task.id, entry);
+      for (const plan of entry.plans) {
+        rows.push({
+          course: course.name,
+          task: task.name,
+          title: plan.title,
+          type: homeworkKind(plan.title),
+          index: null,
+          status: plan.done ? '已完成' : '未提交',
+          opens: beijingMinute(plan.opens),
+          deadline: beijingMinute(plan.ends),
+          done: plan.done,
+          closed: plan.ends !== null && plan.ends <= now,
+          requirement: plan.requirement,
+          // 同一个学习任务里作业以外还有几项没学完：用户要的是「这一周还有多少事」。
+          otherLeft: entry.otherLeft,
+        });
+      }
+    }
+    saved.tasks = after;
+    this.taskCache.set(key, saved);
+    for (const stale of [...this.taskCache.keys()].slice(8)) {
+      if (stale !== key) this.taskCache.delete(stale);
+    }
+    return rows;
   }
 
   /**
@@ -617,11 +867,12 @@ export class XxtReader {
    * 其他失败记进 `errors` 并让 `complete: false`。这样"读了 29 门，1 门超时"
    * 仍然给出 29 门的数据，同时如实说明不完整 —— 比整批失败有用得多。
    *
-   * @param {{course?: string, horizon_days?: number, max_courses?: number, signal?: AbortSignal}} [options]
+   * @param {{course?: string, horizon_days?: number, max_courses?: number, fresh?: boolean, signal?: AbortSignal}} [options]
+   *   `fresh` 跳过学习任务明细的缓存（用户说「老师刚发了作业」时用）。
    * @returns {Promise<{items: object[], courses_scanned: number, complete: boolean, errors: object[], note: string}>}
    */
   async deadlines({
-    course, horizon_days: horizonDays = 90, max_courses: maxCourses = 30, signal,
+    course, horizon_days: horizonDays = 90, max_courses: maxCourses = 30, fresh = false, signal,
   } = {}) {
     if (!Number.isFinite(horizonDays) || horizonDays < 0) {
       throw new ClassroomError('INVALID_ARGUMENT', 'horizon_days 必须是非负数。');
@@ -637,6 +888,35 @@ export class XxtReader {
     const rows = [];
     const errors = [];
     for (const item of courses) {
+      /**
+       * 学习任务里的作业**自带截止时间**，不必逐条读详情页。
+       *
+       * 这条来源以前完全没接：只读作业栏时，那些打包进学习任务的作业
+       * 连「存在」都看不到（老师常这么发），于是待办列表是空的 —— 而用户
+       * 以为是自己看错了地方。它的时间来自任务明细，比详情页的
+       * 「MM-DD HH:MM」还准（那里没有年份，要靠猜）。
+       */
+      let taskRows = [];
+      try {
+        taskRows = await this.courseTaskHomework(item, { fresh, now: now.getTime(), signal });
+      } catch (error) {
+        const fatal = ['COOKIE_EXPIRED', 'COOKIE_IMPORT_REQUIRED', 'RATE_LIMITED', 'CANCELLED'];
+        if (fatal.includes(error?.code)) throw error;
+        errors.push({ course: item.name, title: '学习任务', error: describeError(error) });
+      }
+      for (const row of taskRows) {
+        if (row.done || row.closed) continue;
+        if (row.deadline && Date.parse(row.deadline.replace(' ', 'T')) > horizon) continue;
+        rows.push({
+          course: item.name,
+          title: row.title,
+          status: row.status,
+          deadline: row.deadline,
+          task: row.task,
+          ...(row.otherLeft ? { otherLeft: row.otherLeft } : {}),
+        });
+      }
+
       let homework;
       try {
         homework = await this.homework(item, { signal });
@@ -647,7 +927,10 @@ export class XxtReader {
         }
         continue;
       }
+      // 任务里已经列过的（同一门课同名）不再从作业栏重复列一次。
+      const known = new Set(taskRows.map((row) => row.title));
       for (const pending of homework.items.filter((entry) => isPending(entry.status))) {
+        if (known.has(pending.title)) continue;
         let due = null;
         // 只读 https 的详情地址：页面偶尔给出 `javascript:` 或相对路径，
         // 那些既不能读、也不该被当成数据返回。
@@ -667,15 +950,23 @@ export class XxtReader {
     // 排序：还要做的（按时间正序）→ 已过期的 → 没有截止时间的。
     // 用户打开这个列表是为了知道"下一步做什么"，过期的排在后面但仍然可见。
     rows.sort((a, b) => {
-      const rank = (row) => (row.deadline == null ? 2 : Date.parse(row.deadline) < nowMs ? 1 : 0);
-      return rank(a) - rank(b) || (a.deadline ?? '').localeCompare(b.deadline ?? '');
+      // 两种来源的时间形状不同：学习任务给的是「YYYY-MM-DD HH:mm」，
+      // 详情页补出来的是带 +08:00 的 ISO 串。排序前统一成时间戳，
+      // 直接比字符串会让「2026-04-20 23:59」永远排在「2026-04-05T23:59:00+08:00」后面。
+      const at = (row) => (row.deadline == null ? null : Date.parse(row.deadline.replace(' ', 'T')));
+      const rank = (row) => {
+        const time = at(row);
+        return time == null ? 2 : time < nowMs ? 1 : 0;
+      };
+      return rank(a) - rank(b) || (at(a) ?? 0) - (at(b) ?? 0);
     });
     return {
       items: rows,
       courses_scanned: courses.length,
       complete: errors.length === 0,
       errors,
-      note: '只列未完成的作业；截止时间来自作业详情页（原文无年份，按最接近今天的年份补全，北京时间）。',
+      note: '只列未完成的作业；学习任务里的时间来自任务明细，作业栏里的来自详情页'
+        + '（原文无年份，按最接近今天的年份补全，北京时间）。',
     };
   }
 
@@ -801,9 +1092,12 @@ export const XXT_METHODS = Object.freeze([
   'listCourses',
   'findCourse',
   'chapters',
+  'chapterList',
   'materials',
+  'videos',
   'dataFiles',
   'downloadParams',
+  'downloadFiles',
   'homework',
   'listHomework',
   'deadlines',
@@ -811,3 +1105,5 @@ export const XXT_METHODS = Object.freeze([
   'notices',
   'schedule',
 ]);
+
+

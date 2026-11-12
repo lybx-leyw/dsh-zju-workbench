@@ -29,6 +29,17 @@ export { Transport, AUTH_HOSTS, REFERER } from './transport.js';
 export { SessionStore, dpapi } from './session.js';
 export { ClassroomError, shape, object, array } from './errors.js';
 export { resourceUrl } from './urls.js';
+/**
+ * 带断点续传的单文件下载器。
+ *
+ * 放在 tier 0 而不是某个数据源里：**“把已签名的字节流落到磁盘”不是站点知识**。
+ * 地址从哪来（学在浙大的 `/api/uploads/<id>/url`、CC98 的 `file.cc98.org`）
+ * 才是站点知识，而 Range 续传、半截文件命名、何时算发布成功属于传输层。
+ *
+ * **2026-11-12 起全仓只有这一份**：`source/classroom` 原先自带同语义实现，
+ * 已改为引用本包（取舍写在 `download.js` 的文件头）。
+ */
+export { download } from './download.js';
 
 /** 登录域。它们是公网服务，与是否在校园网无关。 */
 export const CAS_HOST = 'zjuam.zju.edu.cn';

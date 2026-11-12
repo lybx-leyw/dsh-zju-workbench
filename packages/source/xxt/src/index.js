@@ -53,12 +53,49 @@ export const ROUTE_PATH = '/api/zhiyun-xxt';
 
 export { XxtClient, XXT_SETUP, XXT_COOKIE_ENV, withQuery } from './client.js';
 export { XxtReader, XXT_METHODS } from './reads.js';
-export { XXT_HOST, XXT_BASE, XXT_HOSTS, XXT_ENDPOINTS, isXxtHost } from './hosts.js';
+export {
+  XXT_HOST, XXT_BASE, XXT_HOSTS, XXT_ENDPOINTS, isXxtHost, isXxtFileHost, secureXxtUrl,
+} from './hosts.js';
 export { parseXxtCookie, missingRequired, XXT_REQUIRED } from './cookie.js';
+export {
+  abbreviates,
+  chapterScope,
+  courseLink,
+  distinctFiles,
+  fileRow,
+  fileSize,
+  folderScope,
+  groupBySection,
+  inData,
+  KIND_GROUPS,
+  kindOf,
+  linkOf,
+  localName,
+  normalizeName,
+  pickFiles,
+  resolveCourse,
+  safeFileName,
+  similarity,
+  splitPhrases,
+  uniqueMatch,
+  variantName,
+} from './files.js';
+export { downloadTo } from './download.js';
+export {
+  chapterCards,
+  chapterInventory,
+  dataRows,
+  groupedFiles,
+  inventory,
+  saveFiles,
+  summarize,
+} from './inventory.js';
 export {
   parseCourses, parseHomeworkList, parseHomeworkDetail, parseExams,
   parseSchedule, matchesNotice, normalizeNotice, isPending, nearestDate,
   stripTags, unescapeHtml, hiddenValue,
+  beijingMinute, fromWorkRow, homeworkKind, parseStuWork, parseTaskKey,
+  parseTaskList, parseTaskPlans,
 } from './parse.js';
 
 /**
@@ -134,7 +171,21 @@ export async function apply(ctx, config = {}) {
   /** 会话只可能 `load()` 一次：并发请求不该各读一遍文件。 */
   await loaded;
 
-  const reader = new XxtReader(client, { now: config.now ?? (() => new Date()) });
+  const reader = new XxtReader(client, {
+    now: config.now ?? (() => new Date()),
+    /**
+     * 下载根目录。
+     *
+     * # 为什么在装配时定，而不是让调用方传
+     *
+     * 让模型（或页面）传路径等于让它往任意位置写文件。目录跟 profile 走，
+     * 于是「用户下到哪了」这个问题只有一个答案，也会跟 profile 一起被备份/清理。
+     *
+     * 默认落在 `<数据目录>/downloads`，与 `source/classroom` 的
+     * `data/output/…` 分开：那边是生成物，这里是平台的原始文件。
+     */
+    downloadDir: config.downloadDir ?? path.join(dataDir, 'downloads'),
+  });
 
   const routePath = config.routePath ?? ROUTE_PATH;
 
@@ -143,10 +194,13 @@ export async function apply(ctx, config = {}) {
     ready: true,
     route: routePath,
     dataDir,
+    downloadDir: reader.downloadDir,
     platform: { id: 'xxt', label: '学习通', host: XXT_HOST, base: XXT_BASE },
     methods: [...XXT_METHODS],
     actions: [...CLIENT_ACTIONS],
-    note: '只读数据包：13 个读取方法 + 状态/导入 Cookie/清会话。学习通不做自动登录，Cookie 失效后需要重新导入。',
+    note: `只读数据包：${XXT_METHODS.length} 个读取方法 + 状态/导入 Cookie/清会话。`
+      + '下载只读平台、写本机，保存目录由本包配置决定。'
+      + '学习通不做自动登录，Cookie 失效后需要重新导入。',
   });
 
   /**
@@ -186,7 +240,11 @@ export async function apply(ctx, config = {}) {
     if (action === 'logout') {
       const result = await client.logout();
       // 清完会话顺手丢课程缓存：换账号后还读旧课程列表是最容易骗到人的错误。
+      // 文件清单与学习任务明细同理 —— 它们是按课程 id 缓存的，而课程 id 在
+      // 换账号后可能指向另一门课（或者同一门课里已经没有那个文件了）。
       reader.courseCache.clear();
+      reader.inventoryCache.clear();
+      reader.taskCache.clear();
       log(result.cleared ? '学习通本地会话已清除' : '学习通本来就没有可清的会话');
       return result;
     }
@@ -194,8 +252,10 @@ export async function apply(ctx, config = {}) {
     if (!input.trim()) throw new ClassroomError('INVALID_ARGUMENT', '没有收到 Cookie 内容。');
     const result = await client.importCookie(input);
     log(`学习通 Cookie 已保存（来源：${result.source}，${result.cookie_names.length} 个键）`);
-    // 导入完顺手把课程缓存清掉：换了账号还读旧课程列表是最容易骗到人的错误。
+    // 导入完顺手把缓存清掉：换了账号还读旧课程列表是最容易骗到人的错误。
     reader.courseCache.clear();
+    reader.inventoryCache.clear();
+    reader.taskCache.clear();
     return result;
   }
 
@@ -256,6 +316,8 @@ export async function apply(ctx, config = {}) {
   const removeService = ctx.provide('zhiyunXxt', {
     routePath,
     dataDir,
+    /** 下载根目录：工具层把它写进返回值，用户据此知道文件到了哪。 */
+    get downloadDir() { return reader.downloadDir; },
     describe,
     invoke,
     act,

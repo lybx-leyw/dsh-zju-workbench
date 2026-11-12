@@ -55,6 +55,7 @@
   | `source/campus` | **待拆包** | `core/zju/lib/xuezai` + `pta` | 按 D8/D17 拆成 `source/xuezai` + `source/pta`，写操作归 `tool/` |
   | `source/login` | **增强已有** | `core/zju/lib/zjuam` + CAS 流程 | 已抽出通用 CAS（D18） |
   | `source/mail` | **待建** | `plugin/host/mail.mjs` | 拆 4 包之一，只读部分进 `source/mail`，发信归 `tool/mail` |
+  | `core/doc` + `tool/doc` | **新增机制** | `core/zju/lib/doc`（`index` / `pdf` / `office` / `sniff` / `cli`） | `packages/core/doc/ATTRIBUTION.md`（归属裁决见该包 `README.md`：读本地文件、无网络出口 → core，不进 source） |
 
   ### 有意丢弃的上游实现
 

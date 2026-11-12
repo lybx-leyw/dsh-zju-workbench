@@ -253,11 +253,22 @@ notice  ready=false   匿名可用（status: partial，11 个来源读不到）
 
 | # | 事项 | 为什么需要裁决 | 卡住了什么 |
 | --- | --- | --- | --- |
-| Q-1 | `doc` 模块（4 条 provides）归哪一层 | 它读本地文件（不连外部 → 不该进 source），做变换与落盘（→ core 合理），但和 D21 的「下载归 core、source 给参数」不是同一形状 | 文档转文字、PDF 合成/取页/找页**整块没有归属** |
+| Q-1 | `doc` 模块（4 条 provides）归哪一层 | ~~它读本地文件（不连外部 → 不该进 source），做变换与落盘（→ core 合理），但和 D21 的「下载归 core、source 给参数」不是同一形状~~ → **2026-11-12 已定：`packages/core/doc` + `packages/tool/doc`**，理由见下 | ✅ **已落地**，4 条全部实现 |
 | Q-2 | D9 的邮箱另外 3 个包还建不建 | D9 已裁「拆 4 个包」，但 `tool/mail`（发信走审批）、`core/mail-feed`（后台轮询基线）、client 的连接表单都没建 | 邮箱只能读；发信与「有没有新信」没有承载方 |
 | Q-3 | A-4 的装配层放哪 | **已按「各 source 包自己取」落地**：读凭据的用 `readCard` / `readLab` / `readMail`，走 CAS 的用 `casTransport` / `casLoginFor`；`yjsy` 用 `casLoginFor` 拿票后自己发 `validateLogin` | ✅ 不再卡住任何能力 |
 | Q-4 | A-5 的 8 处契约断裂修哪一侧 | 改工具层（要给模型加参数）或改 source（要接受自然语言定位），两条路都改已发布契约 | 8 个写动作不可用 |
-| Q-5 | D21 怎么落地 | 要么在 core 建下载执行方，要么**改裁决**（承认 source 可以落盘）。现状是两边都不成立 | 所有下载能力 |
+| Q-5 | D21 怎么落地 | **已定：口径更正**。原文「`source/*` 只暴露参数、**不碰文件系统**」是 agent 擅自加的限定，**用户从未如此裁决**（2026-11-12 确认）。真实裁决只有「下载由 `core/*` 执行」；`source` 可以落盘 | ✅ 不再卡住任何能力（下载已实现：`source/xuezai/src/downloads.js`、`source/xxt/src/download.js`、`source/http/src/download.js`） |
+
+### Q-1 的落地（2026-11-12）
+
+| 项 | 决定 |
+| --- | --- |
+| 放哪 | `packages/core/doc`（服务）+ `packages/tool/doc`（工具面 `campus_doc`，4 个 action） |
+| 为什么是 core | ① 不连外部站点 —— 放 `source/*` 会让 `dsh.capability.network` 失真，而 `tests/repo/source-capability` 正靠那个字段守分层；② 做的是「变换 + 落盘」，是 `core/*` 的形状（`core/parser`、`core/classroom-export` 同类） |
+| Q-1 原来卡的那一半怎么办 | **切掉**：上游 `doc text --url`（从网址抓文档）属 source 层，本包不做。工具层因此也**不声明** `url` 参数 —— 声明一个永远走不通的参数比不声明更糟 |
+| 与 D21 的关系 | **不冲突，是不适用**：`doc` 没有任何下载动作。D21 管的是「从平台下载文件」，`doc` 读的是本地已有文件 |
+| Word / Excel / PPT | **不装 `libreoffice-kit`**，改读 OOXML/ODF 里的 XML（零新依赖）。97-2003 老式二进制读不了 → 明确报 `UNSUPPORTED`，不猜不装。装了引擎的环境会自动切回上游那条路 |
+| 页边界 | **没有改** `core/classroom-media/src/pdf/parse.js`（4 处调用点全按 `text: string` 用，改成 `string[]` 会全炸）。新写 `core/doc/src/pdf.js` 的 `pdfTexts()` 逐页取字，页边界留在结果里 |
 | Q-6 | D11 preset / D12 skill / D20 发现机制 | 原裁决就是「延迟」 | 工具可见范围、skill 形态 |
 | Q-7 | proc 层（P2-1 ~ P2-11）全部未建 | `impl-plan.md` 第 2 层列的 11 个包，`packages/core/` 里**一个都没有**（`campus-*` 前缀零命中） | 校历、课表合并、作业聚合、通知汇总、档案、备忘录… |
 | Q-8 | `tool/` 层其余 6 个包 | `tool/zju` / `tool/campus` / `tool/mail` / `tool/campus-wechat` / `tool/campus-chat` 都没建；已建的 `campus-write` **没有挂进 profile 也没有挂进 preset** | 22 条写能力**在实机上没有任何入口** |

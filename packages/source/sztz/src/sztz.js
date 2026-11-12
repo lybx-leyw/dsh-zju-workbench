@@ -4,8 +4,10 @@
  *
  * # 分层（D17）
  *
- * 本包**只读**。上游的 `signUp`（报名）、`cancelSignUp`（取消报名）、
- * `setFavorite`（收藏开关）三个写方法归 `packages/tool/*`，不在这里。
+ * 本文件是**只读**那一半：检索、翻页、视图转换、本人列表。
+ * 写动作（报名 / 取消报名 / 收藏开关）在 `writes.js`，**审批与 tool 注册**在
+ * `packages/tool/sztz`。D17 判的是「审批在 tool 层」，不是「数据包里没有写方法」——
+ * 后者早先被误写进本注释，与代码直接矛盾（`writes.js` 一直在发写请求）。
  *
  * # 接口事实（照上游 `sztz/index.ts` 的实测记录）
  *
@@ -302,6 +304,49 @@ export class Sztz {
     }
     if (reply.code !== 0) {
       throw new SztzError('REJECTED', `素质拓展平台：${reply.msg ?? '请求失败'}`, { path, code: reply.code });
+    }
+    return reply;
+  }
+
+  /**
+   * 发一次**不重放**的写请求，并把平台信封原样交回。
+   *
+   * # 为什么单独一个方法，而不是继续用 `call('POST', …)`
+   *
+   * `call` 走 `send` 的默认 `resend = true`：连接断开时会**再发一次**。
+   * 对报名这类幂等动作也许还能接受，但对**开关**（收藏 / 取消收藏）是一次
+   * 状态翻转 —— 重发等于把刚翻过去的状态又翻回来，而用户以为只点了一次。
+   *
+   * 所以写请求走这里：`resend = false`，失败就如实报「不知道有没有生效」，
+   * 由调用方回查（`myActivities()`）判断，而不是替用户赌一次重试。
+   *
+   * # 为什么未登录不重试
+   *
+   * 提交那一刻会话失效，平台**根本没处理**这次请求。这时重发是安全的，
+   * 但本方法不替调用方做这个决定：先如实报 `AUTH_EXPIRED`，让用户重新登录后
+   * 由 `Prepare` 重新算参数（那时他看到的候选列表也才是最新的）。
+   *
+   * # 为什么是 POST
+   *
+   * 上游记录的形态是「GET 风格的路径 + 活动 id」（`sztz/index.ts` 的 `write`）。
+   * 本仓同文件里的 `signupActivity` / `cancelActivity` 一直用 POST 且是这个包
+   * **唯一真跑过**的形状；`hdsc` 与 `hdqxbm` 是同一类接口，所以跟同门兄弟一致。
+   * 真正与安全相关的是「只发一次」，不是动词 —— 动词若将来需要订正，
+   * 只改这一个地方。
+   *
+   * @param path - 相对 `BASE` 的路径。
+   * @param params - 表单参数。
+   * @returns 平台信封（`code !== 0` 也照实返回，由调用方判）。
+   * @throws {SztzError} HTTP / 形状错误，或提交时会话失效。
+   */
+  async write(path, params = {}) {
+    const reply = await this.send('POST', path, params, false);
+    if (Sztz.denied(reply)) {
+      throw new SztzError(
+        'AUTH_EXPIRED',
+        '提交时素质拓展平台的登录恰好失效了 —— 这次请求平台没有处理，重新登录后再试一次即可（没有产生半截状态）。',
+        { path },
+      );
     }
     return reply;
   }

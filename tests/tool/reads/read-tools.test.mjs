@@ -38,6 +38,7 @@ const PACKAGES = [
   { dir: 'chalaoshi', factory: 'createChalaoshiReadTools', service: 'zhiyunChalaoshi', tool: 'campus_chalaoshi_read', pkg: '@lybx-leyw/dsh-zju-source-chalaoshi' },
   { dir: 'ebook', factory: 'createEbookReadTools', service: 'zhiyunEbook', tool: 'campus_ebook_read', pkg: '@lybx-leyw/dsh-zju-source-ebook' },
   { dir: 'yjsy', factory: 'createYjsyReadTools', service: 'zhiyunYjsy', tool: 'campus_yjsy_read', pkg: '@lybx-leyw/dsh-zju-source-yjsy' },
+  { dir: 'xxt', factory: 'createXxtReadTools', service: 'zhiyunXxt', tool: 'campus_xxt_read', pkg: '@lybx-leyw/dsh-zju-source-xxt' },
 ];
 
 const load = (dir) => import(`../../../packages/tool/${dir}/src/index.js`);
@@ -168,6 +169,56 @@ test('服务没装配时报 SERVICE_MISSING 并说清装哪个包', async () => 
         assert.match(error.message, new RegExp(entry.pkg.replace(/[/@.]/g, '\\$&')));
         return true;
       },
+    );
+  }
+});
+
+test('每个工具包都声明了 inject —— 漏了会在挂载时抛 undefined', async () => {
+  // # 为什么这条必须存在
+  //
+  // 不声明 `inject` 时宿主不会等服务就绪，`ctx.tools` 可能是 undefined，
+  // `apply()` 里 `ctx.tools.register(...)` 直接抛
+  // `Cannot read properties of undefined (reading 'register')`。
+  //
+  // 2026-11-12 实测过：`tool/ebook`、`tool/notice`、`tool/chalaoshi`、`tool/yjsy`
+  // 四个包**都漏了**。它们没被发现，是因为一直没有任何 preset 挂载它们 ——
+  // 「不声明也能跑」从未被验证过。补上之后这条守卫挡住复发。
+  //
+  // ⚠️ 只断言 `tools`。**不断言服务名**：`tool/classroom` 用的是
+  // `zhiyunStudy`（讲义来自 `core/study`），与它的目录名 classroom 不是
+  // 同一个词；按「目录名推出服务名」写断言会误报。服务名对不对由
+  // 上一组 SERVICE_MISSING 测试覆盖（它拿 `entry.service` 实际去查）。
+  for (const entry of PACKAGES) {
+    const mod = await load(entry.dir);
+    assert.ok(Array.isArray(mod.inject), `${entry.dir} 必须声明 inject`);
+    assert.ok(mod.inject.includes('tools'), `${entry.dir} 的 inject 必须含 tools`);
+    assert.ok(typeof mod.name === 'string' && mod.name.startsWith('zhiyun-tool-'),
+      `${entry.dir} 的 name 应当以 zhiyun-tool- 开头`);
+  }
+});
+
+test('apply() 在最小 ctx 上能把工具注册进去，且卸载干净', async () => {
+  // 光有 inject 声明还不够：要确认 apply 真的用了 `ctx.tools`。
+  //
+  // ⚠️ 不断言「恰好一个」：`tool/classroom` 注册 2 个（3 个课堂资料工具 +
+  // 1 个读工具），`tool/zdbk` 也注册 2 个（读 + 写）。要断言的是**至少有一个
+  // 名字带 campus_ 或 study_ 的工具**，否则说明 apply 根本没注册东西。
+  for (const entry of PACKAGES) {
+    const mod = await load(entry.dir);
+    const registered = [];
+    const effects = [];
+    const ctx = {
+      get: (key) => (key === entry.service ? {} : undefined),
+      tools: { register: (tool) => { registered.push(tool.name); return () => {}; } },
+      effect: (fn) => { effects.push(fn); return () => {}; },
+    };
+    mod.apply(ctx);
+    // effect 是惰性的，得跑一遍才算真注册。
+    for (const fn of effects) fn();
+    assert.ok(registered.length >= 1, `${entry.dir} 应当注册至少一个工具`);
+    assert.ok(
+      registered.some((n) => n === entry.tool || n.startsWith('campus_') || n.startsWith('study_')),
+      `${entry.dir} 注册的工具名都不像工具：${registered.join(', ')}`,
     );
   }
 });

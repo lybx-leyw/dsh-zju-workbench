@@ -3,8 +3,13 @@
  *
  * # 分层（D17）
  *
- * 纯只读数据源：**不注册 AI 工具**、**无写操作**。上游的 `signUp` / `cancelSignUp` /
- * `setFavorite` 三个写方法归 `packages/tool/`。
+ * 本包**不注册 AI 工具**，审批与注册归 `packages/tool/sztz`；但**写方法留在本包**
+ * （`src/writes.js`）：它们需要本包的活动检索与本人列表回查，搬到 tool 层会让
+ * 那层重新实现一遍翻页与匹配。
+ *
+ * 所以 `dsh.capability.writes` 是 `false` 而代码里确实有写方法 —— 这条口径与
+ * `zdbk` / `tyys` / `xuezai` 一致：那个标志判的是**数据包自己会不会去改上游**，
+ * 写动作必须由 tool 层带着审批进来才发得出去。
  *
  * # network 是 campus
  *
@@ -145,14 +150,20 @@ export function apply(ctx) {
       ],
       /** 写方法名（成对出现），与只读 `methods` 分开列。 */
       writeMethods: ['sztz.signupActivityPrepare', 'sztz.signupActivityExecute',
-        'sztz.cancelActivityPrepare', 'sztz.cancelActivityExecute'],
+        'sztz.cancelActivityPrepare', 'sztz.cancelActivityExecute',
+        'sztz.favoriteActivityPrepare', 'sztz.favoriteActivityExecute',
+        'sztz.unfavoriteActivityPrepare', 'sztz.unfavoriteActivityExecute'],
       site: `${BASE}/`,
 
       /**
        * 写操作的两个方法。
        *
        * `prepare` 算参数与说明，`execute` 才发请求。**审批不在这里** ——
-       * 那是 `packages/tool/campus-write` 的事。
+       * 那是 `packages/tool/sztz` 的事。
+       *
+       * 每个动作**三个**方法都要有，少一个 `Cancel` 的后果不是「少个功能」，
+       * 是「审批被拒后这个动作永久不可用（WRITE_BUSY）」：`prepare` 算出的
+       * 参数占着写会话，而只有 `execute` 会清它。
        */
       signupActivityPrepare: async (input) => writes().signupActivity.prepare(input),
       signupActivityExecute: async (signal) => writes().signupActivity.execute(signal),
@@ -160,6 +171,12 @@ export function apply(ctx) {
       cancelActivityPrepare: async (input) => writes().cancelActivity.prepare(input),
       cancelActivityExecute: async (signal) => writes().cancelActivity.execute(signal),
       cancelActivityCancel: async () => (await writes()).cancelActivity.cancel(),
+      favoriteActivityPrepare: async (input) => writes().favoriteActivity.prepare(input),
+      favoriteActivityExecute: async (signal) => writes().favoriteActivity.execute(signal),
+      favoriteActivityCancel: async () => (await writes()).favoriteActivity.cancel(),
+      unfavoriteActivityPrepare: async (input) => writes().unfavoriteActivity.prepare(input),
+      unfavoriteActivityExecute: async (signal) => writes().unfavoriteActivity.execute(signal),
+      unfavoriteActivityCancel: async () => (await writes()).unfavoriteActivity.cancel(),
 
       /** 注入登录能力（`() => Promise<void>`）。返回撤销函数。 */
       setSessionProvider(handler) {
