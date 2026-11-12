@@ -101,7 +101,6 @@ export function createLabWrites(client) {
 
   return {
     selectLab: pair('lab.selectLab', async (args) => {
-      const course = id(args.course, '课程编号');
       const lab = id(args.lab, '班次编号');
       const week = String(args.week ?? '').trim();
       if (!week) throw invalid('需要 week（周次段，由班次的 weeks 给出）');
@@ -109,6 +108,40 @@ export function createLabWrites(client) {
       // 查课程、班次、当前学期 —— 三者都要真的去查，不能只校验格式。
       const termId = await client.termId(args.term);
       const courses = await client.myCourses(termId);
+
+      // 课程可以给编号，也可以给名字。
+      //
+      // # 为什么名字也要收
+      //
+      // 工具层对用户说的是「实验课程名或编号」，用户手里通常只有名字
+      // （「大学物理实验」）。先前 `id()` 只收正整数，于是传名字必抛
+      // 「课程编号 必须是正整数」—— 一条用户无从照做的错误。
+      //
+      // 名字匹配必须**唯一**：同名两门实验课（不同学期/不同教师）猜一个
+      // 等于替他选了另一门课。
+      let course;
+      const numeric = Number(args.course);
+      if (Number.isSafeInteger(numeric) && numeric > 0) {
+        course = numeric;
+      } else {
+        const wanted = String(args.course ?? '').trim();
+        if (!wanted) throw invalid('需要 course（实验课程编号或名称）');
+        const exact = courses.filter((item) => String(item.courseName ?? item.name ?? '').trim() === wanted);
+        const partial = courses.filter((item) => String(item.courseName ?? item.name ?? '').includes(wanted));
+        const hits = exact.length ? exact : partial;
+        if (hits.length === 1) {
+          course = Number(hits[0].id);
+        } else if (!hits.length) {
+          throw invalid(`这个学期没有名叫「${wanted}」的实验课（用 myCourses 看真实名称）`);
+        } else {
+          throw invalid(
+            `「${wanted}」匹配到 ${hits.length} 门实验课：`
+            + `${hits.slice(0, 5).map((item) => `${item.courseName ?? item.name}（${item.id}）`).join('、')}`
+            + ' 请用课程编号指定。',
+          );
+        }
+      }
+
       const hit = courses.find((item) => Number(item.id) === course);
       if (!hit) throw invalid(`这个学期没有编号 ${course} 的实验课`);
 

@@ -83,7 +83,7 @@ test('两段式：同一个动作并发 Prepare 会被拒（防止 A 批准 B �
   });
 });
 
-test('likeFloor：state 决定赞还是踩', async () => {
+test('likeFloor：state 决定赞、踩、取消 —— 赞错了要撤得回', async () => {
   const client = fakeClient();
   const api = createCc98Writes({ client });
 
@@ -93,8 +93,15 @@ test('likeFloor：state 决定赞还是踩', async () => {
   assert.match(await api.likeFloor.prepare({ post: 5, state: 'down' }), /点踩/);
   await api.likeFloor.execute();
 
+  // 平台的口径是「再发一次当前状态即取消」，等价于发 0。
+  // 原先只认 1 / 2，于是赞错了撤不回 —— 那是没有回退路径，不是少个选项。
+  assert.match(await api.likeFloor.prepare({ post: 5, state: 'none' }), /取消/);
+  await api.likeFloor.execute();
+  assert.match(await api.likeFloor.prepare({ post: 5, state: 0 }), /取消/);
+  await api.likeFloor.execute();
+
   const bodies = writes(client.calls).map((call) => call.body);
-  assert.deepEqual(bodies, ['1', '2'], '赞发 1、踩发 2，且 body 是字符串不是 JSON');
+  assert.deepEqual(bodies, ['1', '2', '0', '0'], '赞发 1、踩发 2、取消发 0，且 body 是字符串不是 JSON');
 });
 
 test('rateFloor：分值符号决定 type，绝对值进 value', async () => {
@@ -166,16 +173,59 @@ test('postTopic：正文超 8000 字要拒，不静默截断', async () => {
   assert.equal(writes(client.calls).length, 0);
 });
 
-test('replyTopic：body 是 form，且不带匿名', async () => {
+test('replyTopic：匿名与 Markdown 是参数，不是写死的常量', async () => {
+  // 原先这两项被写死成 `contentType:'0'` / `anonymous:'false'`，等于
+  // **用户选了匿名也发不出去**。所以「不传 = 平台默认」和「传了 = 照传」
+  // 两种都要锁住。
   const client = fakeClient();
   const api = createCc98Writes({ client });
   await api.replyTopic.prepare({ topic: 4, content: '同意' });
   await api.replyTopic.execute();
 
-  const [call] = writes(client.calls);
-  const form = new URLSearchParams(call.body);
-  assert.equal(form.get('content'), '同意');
-  assert.equal(form.get('anonymous'), 'false');
+  const plain = new URLSearchParams(writes(client.calls)[0].body);
+  assert.equal(plain.get('content'), '同意');
+  assert.equal(plain.has('anonymous'), false, '没要求匿名就不该塞这个字段');
+  assert.equal(plain.get('contentType'), '0');
+
+  await api.replyTopic.prepare({ topic: 5, content: '匿名说一句', anonymous: true, contentType: 1 });
+  await api.replyTopic.execute();
+  const anon = new URLSearchParams(writes(client.calls)[1].body);
+  assert.equal(anon.get('anonymous'), 'true');
+  assert.equal(anon.get('contentType'), '1');
+});
+
+test('replyTopic：quote 传楼层号，notifyAll 单独可开关', async () => {
+  const client = fakeClient();
+  const api = createCc98Writes({ client });
+  await api.replyTopic.prepare({ topic: 9, content: '回应楼上', quote: 12, notifyAll: true });
+  await api.replyTopic.execute();
+
+  const form = new URLSearchParams(writes(client.calls)[0].body);
+  assert.equal(form.get('quoteId'), '12');
+  assert.equal(form.get('notifyAll'), 'true');
+  // 说明里要让人看得出这条回复带了什么，审批时才有意义。
+  assert.match(await api.replyTopic.prepare({ topic: 9, content: 'x', quote: 12 }), /引用/);
+});
+
+test('postTopic：标签能传下去 —— 有必选标签的版面才发得出去', async () => {
+  // 原先写死 `tag1: ''`，平台回「请选择标签」，用户却在浏览器里明明能选。
+  const client = fakeClient();
+  const api = createCc98Writes({ client });
+  const summary = await api.postTopic.prepare({ board: 3, content: '出二手', tag1: '交易', tag2: '数码' });
+  await api.postTopic.execute();
+
+  const form = new URLSearchParams(writes(client.calls)[0].body);
+  assert.equal(form.get('tag1'), '交易');
+  assert.equal(form.get('tag2'), '数码');
+  assert.match(summary, /标签 交易\/数码/, '审批说明里要显示标签，用户才知道选了什么');
+});
+
+test('postTopic：匿名也可传', async () => {
+  const client = fakeClient();
+  const api = createCc98Writes({ client });
+  await api.postTopic.prepare({ board: 3, content: '匿名帖', anonymous: true });
+  await api.postTopic.execute();
+  assert.equal(new URLSearchParams(writes(client.calls)[0].body).get('anonymous'), 'true');
 });
 
 test('editPost：PUT 到楼层，body 带 content 与 title', async () => {

@@ -1,0 +1,32 @@
+{
+  "name": "@lybx-leyw/dsh-zju-tool-write-kit",
+  "version": "0.1.0",
+  "description": "校园写操作共享底座：审批封装 + source 契约校验 + 工具注册器。不含任何具体工具，供按域拆开的写工具包共用",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./approval": "./src/approval.js",
+    "./register": "./src/register.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/tool/write-kit"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": false,
+      "requires": []
+    }
+  }
+}

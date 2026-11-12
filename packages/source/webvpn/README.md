@@ -90,8 +90,13 @@ export function createEgress(options = {}) {
 | `isCampusHost(host)` | 是否是 `*.zju.edu.cn`（要求点边界，`evilzju.edu.cn` 不命中） |
 | `isPublicHost(host, suffixes)` | 命中 `directSuffixes` 里的后缀 |
 | `CAMPUS_PROBE_URL` / `interpretCampusProbe` / `MODES` / `loadUndici` | 探测端点、探测结果解释、模式枚举、undici 惰性装载 |
+| `doctor(opts)` | 网络诊断：公网 / 校园网 / 网关 / 会话四项分开问，每条给可执行的下一步 |
+| `probeHost(host, opts)` | **单主机探测**：该直连还是走网关、要不要过 CAS。公共 DoH 解析 + TUN 检测 + `via` 外部实测 |
+| `isPrivateAddress(ip)` / `tunInterfaces()` | 私网段判定、本机隧道接口检测（`probeHost` 的判据，单独给出便于复用） |
+| `checkReachable(hosts, opts)` | **逐主机可达性**：并发探一组主机，TTL 缓存（默认内存，`cacheFile` 可选落盘） |
+| `requireReachable(hosts, opts)` | 同上，但不通就抛 `TRANSPORT`，错误里带可行动的解释 |
 
-子路径入口 `/protocol`、`/login`、`/egress` 也可用，给只想要一小块、或想在测试里单独打桩的调用方。
+子路径入口 `/protocol`、`/login`、`/egress`、`/probe`、`/reach` 也可用，给只想要一小块、或想在测试里单独打桩的调用方。
 
 ## ⚠️ 两套认证，别混
 
@@ -113,16 +118,18 @@ export function createEgress(options = {}) {
 
 ```text
 packages/source/webvpn/
-  package.json         包名、exports（./ / ./protocol / ./login / ./egress / ./hosts / ./doctor）
+  package.json         包名、exports（./ / ./protocol / ./login / ./egress / ./hosts / ./doctor / ./probe / ./reach）
   cordis.patch.yml     insert 一行（做 Loader 条目用）
   src/index.js         宿主入口 + 统一导出面
   src/protocol.js      地址改写、AES 编解码、登录页解析、失败码文案
   src/login.js         网关登录流程、会话判定与探测、ticket 导入
   src/egress.js        出口策略：三级判定、升级重试、会话内降级
   src/hosts.js         主机归属表（campus / public / cas 三份名单）
-  src/doctor.js        网络与网关诊断
+  src/doctor.js        网络与网关诊断（本机处境）
+  src/probe.js         单主机探测（这个站该直连还是绕网关、要不要 CAS）
+  src/reach.js         逐主机可达性（访问前的闸门，带 TTL 缓存）
   src/errors.js        WebvpnError
-  scripts/probe-hosts.mjs  重新生成 hosts.js 的实测部分（需在校园网外跑）
+  scripts/probe-hosts.mjs  重新生成 hosts.js 的实测部分（`src/probe.js` 的 CLI 包装）
 ```
 
 ## 主机归属表（`hosts.js`）
@@ -148,6 +155,62 @@ npm run probe:hosts --prefix packages/source/webvpn
 脚本会先自查是否在校园网内并在校内时拒绝运行 —— 在校园网里测，所有站点都可达，
 表就没有意义了。它**不直接改写 `hosts.js`**：输出表格并用 `!` 标出与现值不一致的项，
 由人确认后再改。
+
+本机开着 Clash / ZJU Connect / Tailscale 之类 TUN 代理时，本机结论本来就不可信
+（IP 直连也会被隧道带进校园网）。两种对策都能用：
+
+```bash
+# 1) 脚本会检测隧道接口并警告，但仍按本机结果跑
+npm run probe:hosts --prefix packages/source/webvpn
+
+# 2) 直接换到一台校外干净主机上测（ground truth）
+node packages/source/webvpn/scripts/probe-hosts.mjs --via my-server
+```
+
+## 探测单个站点
+
+表的维护靠脚本，但**「这个站该不该走网关」是一份数据，也是一个可调用的判定**。
+设置页与 agent 需要后者：
+
+```js
+import { probeHost } from '@lybx-leyw/dsh-zju-source-webvpn'
+
+const report = await probeHost('some-new-college.zju.edu.cn')
+// → { host, resolver, addresses, privateAddress,
+//     direct: { ip, reachable, status, final, ms },
+//     suggested: { network: 'public'|'campus', auth: 'cas'|'unknown', casService? },
+//     caveats: [...] }
+```
+
+判法跟着跳转走到底，看最后停在哪：
+
+| 落点 | `network` | `auth` |
+| --- | --- | --- |
+| `zjuam.zju.edu.cn/cas/…` | `public` | `cas` |
+| 200（首页） | `public` | `unknown` |
+| `/nopermit_zjusub.jsp` | `campus` | — |
+| 连不上 / 超时 / 403 / 5xx | `campus` | — |
+
+解析走公共 DoH（阿里 / 腾讯），直连解析出的 **IP** 而不走系统 DNS —— 本机 DNS 与
+hosts 都改不动结论。`caveats` 会把「有 TUN 接口，结果不可信」「无 A 记录」
+「auth 需人工确认」这些话说清楚，**不静默给一个看起来确定的答案**。
+
+## 逐主机可达性
+
+`doctor()` 答的是「本机处境」，这个答的是「某几个站现在通不通」：
+
+```js
+import { checkReachable, requireReachable } from '@lybx-leyw/dsh-zju-source-webvpn'
+
+// 只报告，不失败 —— 设置页的「测一下」按钮用这个
+const results = await checkReachable(['zdbk.zju.edu.cn', 'cc98.org'])
+
+// 不通就抛 TRANSPORT，错误里带可行动的解释 —— 访问前的闸门用这个
+await requireReachable(['zdbk.zju.edu.cn'], { cacheFile: '/path/to/reach.json' })
+```
+
+结果按主机缓存 **10 分钟**，默认**只在内存**（不产生任何文件）；传 `cacheFile` 才落盘。
+只缓存**成功**：一次失败可能只是瞬断，缓存它等于让用户在一次抖动后持续看到「不可达」。
 
 ## 会话内降级
 

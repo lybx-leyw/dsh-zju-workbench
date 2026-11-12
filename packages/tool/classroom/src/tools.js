@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { materialEntries, catalogEntry, searchEntries } from './study-materials.js';
+import { materialEntries, catalogEntry, searchEntries } from './classroom-materials.js';
 
 const inputError = message => Object.assign(new Error(message), { code: 'INPUT' });
 const id = value => typeof value === 'string' && /^[A-Za-z0-9._-]{1,200}$/.test(value);

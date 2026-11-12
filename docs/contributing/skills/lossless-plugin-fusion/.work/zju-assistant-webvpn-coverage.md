@@ -65,11 +65,24 @@
 
 | # | 上游导出 | 本仓对应 | 状态 |
 | --- | --- | --- | --- |
-| 15 | `probeHost(host, {via})` | `scripts/probe-hosts.mjs` | ✅ **已融合（W4）**，判法一致（跟跳转、看最终落点、分 public/campus/cas） |
+| 15 | `probeHost(host, {via})` | `src/probe.js` 的 `probeHost(host, options)` | ✅ **已融合（2026-11-12 补齐）**；`scripts/probe-hosts.mjs` 降级为它的 CLI 包装 |
 
-**差异**：上游支持 `--via <ssh目标>` 从外部主机实测；本仓脚本只在本机跑，但**增加了
-「在校园网内拒绝运行」的自查** —— 那正是 `--via` 想解决的问题（本机判断不可信）。
-两种解法取向不同：上游换机器，本仓检测环境。
+**逐项对齐**（这一版把上游 `probe.ts` 的判据全部搬齐了）：
+
+| 上游能力 | 本仓 | 备注 |
+| --- | --- | --- |
+| DoH 解析（阿里 223.5.5.5 / 腾讯 119.29.29.29） | `DOH_RESOLVERS` + `resolvePublic()` | 用 IP 直连，绕开本机 DNS 与 hosts |
+| 私网段判定 | `isPrivateAddress()` | 含 `100.64/10`（CGNAT）与 `127/8` |
+| TUN 接口检测 | `tunInterfaces()` | `clash`/`mihomo`/`tun`/`wintun`/`tailscale`/`zju-connect`/`sing-box` |
+| 跟跳转走到底 | `probeWithRedirects()` | 同站跟、跨站停、有次数上限 |
+| `casRedirect` + `casService` | ✅ | 停在 `zjuam.zju.edu.cn/cas/` 即判 `auth: 'cas'` |
+| `caveats[]` | ✅ | 无 A 记录 / 有 TUN / 探测失败 / auth 需人工确认，四类 |
+| `--via <ssh目标>` | `probeVia()` + `options.via` | `ssh` + `curl`，主机名走字符白名单 |
+| 「本机判断不可信」 | 双保险 | 上游靠换机器；本仓**两者都有**：TUN 检测 + `via` |
+
+**本仓多出的一项**：识别 `nopermit_zjusub.jsp` 落点。上游 `probe.ts` **只看状态码**，
+所以网站群对校外返回「200 + 无权访问页」时，上游会判成 `public`（错），本仓判 `campus`。
+判法与 `egress.js` 的 `isNoPermitResponse` 同口径。
 
 ---
 
@@ -90,8 +103,8 @@
 | # | 上游命令 | 本仓对应 | 状态 |
 | --- | --- | --- | --- |
 | 17 | `webvpn check` | `doctor()` | ✅ 导出函数 |
-| 18 | `webvpn check --host` | ❌ **未做** | 逐主机可达性检查。`scripts/probe-hosts.mjs --hosts` 可替代（但它是脚本，不是服务面） |
-| 19 | `webvpn probe --host --via` | `scripts/probe-hosts.mjs` | ✅ 脚本 |
+| 18 | `webvpn check --host` | `checkReachable()` / `requireReachable()`（`src/reach.js`） | ✅ **已融合（2026-11-12 补齐）** |
+| 19 | `webvpn probe --host --via` | `probeHost()` | ✅ **已融合（2026-11-12 补齐）** |
 | 20 | `webvpn url encode` | `toWebvpnUrl` / `wrdEncrypt` | ✅ 导出函数 |
 | 21 | `webvpn url decode` | `fromWebvpnUrl` / `wrdDecrypt` | ✅ 导出函数 |
 | 22 | `webvpn login` | `webvpnLogin` | ✅ 导出函数 |
@@ -119,17 +132,18 @@
 
 | 分类 | 数量 |
 | --- | --- |
-| ✅ 已融合（含结构转换） | 21 |
+| ✅ 已融合（含结构转换） | 23 |
 | ⚠️ 有意偏离（有理由） | 4 |
 | ❌ 明确丢弃（有理由） | 2（`rewriteFor`、`openContext`） |
-| ❌ 未做（能力缺口） | 1（`webvpn check --host` 的服务面版本） |
+| ❌ 未做（能力缺口） | **0** |
 
 **上游 webvpn 链路的可执行能力已全部处置**：要么融合，要么写明丢弃理由，
-没有「没看见所以没做」的项。
+没有「没看见所以没做」的项，且**没有剩余能力缺口**。
 
-**唯一真正的能力缺口**是 `webvpn check --host`（逐主机可达性检查）没有服务面版本
-—— 它只在 `scripts/probe-hosts.mjs` 里有，而那是给维护者用的脚本，不是给
-设置页/agent 用的接口。**若将来设置页要做「测一下这个站能不能通」，需要补。**
+**2026-11-12 关闭的最后一个缺口**：`webvpn check --host` 与 `webvpn probe` 曾经只有
+一个维护者脚本（`scripts/probe-hosts.mjs`），没有给设置页/agent 用的接口。
+现在判定逻辑在 `src/probe.js` 与 `src/reach.js`，脚本降级为 CLI 包装 ——
+**能力覆盖 100%**。
 
 ---
 
@@ -140,8 +154,8 @@
 | 阶段 | 状态 |
 | --- | --- |
 | W1–W8 | ✅ 全部实现 |
-| 上游覆盖度 | ✅ 21 融合 / 4 有意偏离 / 2 明确丢弃 / 1 能力缺口（`check --host` 服务面版，未做） |
-| 测试 | ✅ 240 条相关用例通过（含 5 条反证），全仓无新增失败 |
+| 上游覆盖度 | ✅ 23 融合 / 4 有意偏离 / 2 明确丢弃 / **0 能力缺口** |
+| 测试 | ✅ 85 条 webvpn 用例通过（含 26 条 probe/reach 新增），全仓无新增失败 |
 
 ---
 
@@ -155,10 +169,16 @@
 | 项 | 内容 |
 | --- | --- |
 | 状态 | 本机在校园网内（`is_campus_network` 返回 `1`），`probe-hosts.mjs` 按设计拒绝运行 |
-| 已验证 | 校外路径的**协议层**用假 transport 全覆盖（302/200/cookie 丢弃/降级/升级） |
+| 已验证 | 校外路径的**协议层**用假 transport 全覆盖（302/200/cookie 丢弃/降级/升级）；`probe`/`reach` 的判定逻辑用注入替身覆盖（26 条，含 3 条反证） |
 | **未验证** | 真实网关是否接受这套改写与登录；真实校外网络下 `zdbk`/`courses` 等是否真能直连 |
 | 会怎么坏 | 若 `hosts.json` 的实测结论过时，校外用户会遇到「本该直连的被绕道」（慢）或「本该绕道的直连失败」（错） |
-| 解除条件 | 在**校园网外**真机跑一次 `npm run probe:hosts --prefix packages/source/webvpn`，比对差异 |
+| 解除条件 | 在**校园网外**真机跑一次 `node packages/source/webvpn/scripts/probe-hosts.mjs`（或加 `--via <校外主机>`），比对差异 |
+
+> **2026-11-12 实测记录**：补完 `probe.js` 后就地跑了一次（本机在校内）：
+> DoH 正常解出真实 IP（`zdbk` → `210.32.15.59`、`cc98.org` → `10.10.98.98`），
+> **`cc98.org` 被正确判为私网**（印证表里把它判 campus 是对的）；
+> 三个站的 IP 直连全部失败（`ETIMEDOUT` / `ECONNRESET`）——
+> 这正是「本机在校内、直连被网关拦」的表现，也再次说明**必须校外测**。
 
 ### R-2 · `HOSTS_GENERATED_AT` 是 2026-10-09 的快照
 
@@ -180,9 +200,14 @@
 | `fromWebvpnUrl` 不剥离 `vpn-12-o2-` | 本仓 `toWebvpnUrl` **不加**这个参数，所以当前无残留。若将来为「给人看的页面」加上，必须同时补剥离 | 暂无触发条件 |
 | IPv6 主机名被主机名校验拒绝 | `[::1]` 这类字面量往返会抛 `WEBVPN_URL` | 浙大无 IPv6-only 站点 |
 
-### R-5 · `webvpn check --host` 缺服务面版本
+### R-5 · ~~`webvpn check --host` 缺服务面版本~~（**已关闭**）
 
-逐主机可达性检查只在 `scripts/probe-hosts.mjs` 里（维护者脚本），**没有给设置页/agent 用的接口**。若设置页要做「测一下这个站能不能通」，需要补。
+2026-11-12 补齐：`checkReachable()` / `requireReachable()` 在 `src/reach.js`，
+逐主机可达 + TTL 缓存。缓存**默认只在内存**；传 `cacheFile` 才落盘 ——
+落盘是可选的，因为这个包不假定调用方有可写目录。
+
+> **关于 D21 的一处更正**：原计划里「`source/*` 不碰文件系统」被当成用户裁决，
+> 而用户明确否定了这一限定。所以这里的落盘不需要任何裁决支撑，只是「可选能力」。
 
 ### R-6 · 全仓 26 个既有测试失败与本批无关
 

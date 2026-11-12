@@ -11,6 +11,8 @@
     "./egress": "./src/egress.js",
     "./hosts": "./src/hosts.js",
     "./doctor": "./src/doctor.js",
+    "./probe": "./src/probe.js",
+    "./reach": "./src/reach.js",
     "./package.json": "./package.json"
   },
   "files": [

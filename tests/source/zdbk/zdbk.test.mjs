@@ -1014,7 +1014,7 @@ test('插件装配：注册服务与数据路由，路由信封按 { type, rpcId
   // GET：自描述，十二个方法都在，且顺序稳定。
   // 前四个是移植来的，后八个是补齐上游 `plan view/list` + `selection` 六条查询。
   // ⚠️ 顺序是**契约**：`READ_METHODS` 是数组而不是 Set，就是为了让这份自描述稳定。
-  //    选课的 select/reorder/drop 三条写操作**不在**这里（归 packages/tool/campus-write）。
+  //    选课的 select/reorder/drop 三条写操作**不在**这里（归 packages/tool/zdbk）。
   const getResponse = await registered.fetch(new Request('http://127.0.0.1/api/zhiyun-zdbk', { method: 'GET' }));
   const described = await getResponse.json();
   assert.equal(described.ok, true);

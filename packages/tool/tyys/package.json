@@ -1,0 +1,33 @@
+{
+  "name": "@lybx-leyw/dsh-zju-tool-tyys",
+  "version": "0.1.0",
+  "description": "体育场馆写操作工具包：场地预约与取消预约。每个动作都要用户逐次批准",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/tool/tyys"
+  },
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-write-kit": "0.1.0"
+  },
+  "dsh": {
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": true,
+      "requires": []
+    }
+  }
+}

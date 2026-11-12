@@ -200,9 +200,20 @@ export function createCc98Writes(reader) {
 
     likeFloor: pair('cc98.likeFloor', async (args) => {
       const post = id(args.post, '楼层编号');
-      const state = args.state === 'down' || args.state === 2 ? 2 : 1;
+      // 三种状态：1 赞、2 踩、0 取消。
+      //
+      // # 为什么必须支持「取消」
+      //
+      // 平台的口径是「再发一次当前状态即取消」，等价于发 0。本包原先只认
+      // 1 / 2，于是赞错了撤不回 —— 那不是「少一个选项」，是**没有回退路径**。
+      // 与 `rateFloor` 的「评分不可撤销」不同，赞踩是随时可改的。
+      const raw = args.state ?? args.value;
+      const state = raw === 'none' || raw === 0 || raw === '0' || raw === 'cancel'
+        ? 0
+        : (raw === 'down' || raw === 2 || raw === '2' ? 2 : 1);
+      const label = state === 0 ? '取消' : (state === 1 ? '点赞' : '点踩');
       return {
-        summarized: state === 1 ? `给楼层 ${post} 点赞` : `给楼层 ${post} 点踩`,
+        summarized: `${label}楼层 ${post}`,
         run: (signal) => client.request('PUT', `post/${post}/like`, { body: String(state), signal }),
       };
     }),
@@ -225,7 +236,7 @@ export function createCc98Writes(reader) {
     }),
 
     favoriteTopic: pair('cc98.favoriteTopic', async (args) => {
-      // 	opic 与 post 都收：前者是 CC98 的说法（收藏的是主题），
+      // topic 与 post 都收：前者是 CC98 的说法（收藏的是主题），
       // 后者是工具层统一用的说法（对用户来说都是「那个帖子」）。
       const topic = id(args.topic ?? args.post, '帖子编号');
       const on = args.on !== false;
@@ -239,11 +250,22 @@ export function createCc98Writes(reader) {
       const board = id(args.board, '版面编号');
       const content = body(args.content, '正文', 8000);
       const title = args.title === undefined ? content.slice(0, 30) : body(args.title, '标题', 100);
+      // 版面可以要求必选标签。原先写死 `tag1: ''`，于是**有必选标签的版面
+      // 直接发不出去** —— 平台会回一句「请选择标签」，用户却看到浏览器
+      // 里明明能选。所以这里三个字段都要收。
+      const tag1 = args.tag1 ?? args.tag ?? '';
+      const tag2 = args.tag2 ?? args.subTag ?? '';
+      const form = new URLSearchParams({ title, content, type: String(args.type ?? 0), tag1, tag2 });
+      // 匿名与 Markdown 是帖子属性，不是渲染选项：平台按 contentType 存正文，
+      // 写错了正文会被当成另一种格式展示（乱码），所以必须走参数。
+      if (args.contentType !== undefined) form.set('contentType', String(args.contentType));
+      if (args.anonymous !== undefined) form.set('anonymous', args.anonymous ? 'true' : 'false');
+      const tags = [tag1, tag2].filter(Boolean);
       return {
-        summarized: `在版面 ${board} 发帖「${title}」`,
+        summarized: `在版面 ${board} 发帖「${title}」${tags.length ? `（标签 ${tags.join('/')}）` : ''}`,
         run: (signal) => client.request('POST', `topic/${board}`, {
           // 上游用 form 提交，字段名照它。
-          body: new URLSearchParams({ title, content, type: '0', tag1: '', tag2: '' }).toString(),
+          body: form.toString(),
           signal,
         }),
       };
@@ -252,20 +274,28 @@ export function createCc98Writes(reader) {
     replyTopic: pair('cc98.replyTopic', async (args) => {
       const topic = id(args.topic, '帖子编号');
       const content = body(args.content, '回复正文', 8000);
+      const form = new URLSearchParams({ content, contentType: String(args.contentType ?? 0) });
+      // 引用的是**楼层号**（`quoteId`），不是帖子号：平台要定位到具体那一楼。
+      if (args.quote !== undefined) form.set('quoteId', String(id(args.quote, '被引用楼层')));
+      if (args.anonymous !== undefined) form.set('anonymous', args.anonymous ? 'true' : 'false');
+      // 「通知全体」只在楼主回复时可用，但要不要用是用户的事，不是我们替他决定。
+      if (args.notifyAll !== undefined) form.set('notifyAll', args.notifyAll ? 'true' : 'false');
+      const marks = [
+        args.quote !== undefined ? '引用' : null,
+        args.anonymous ? '匿名' : null,
+        args.notifyAll ? '通知全体' : null,
+      ].filter(Boolean);
       return {
-        summarized: `回复帖子 ${topic}（${content.length} 字）`,
-        run: (signal) => client.request('POST', `topic/${topic}/post`, {
-          body: new URLSearchParams({ content, contentType: '0', anonymous: 'false' }).toString(),
-          signal,
-        }),
+        summarized: `回复帖子 ${topic}（${content.length} 字${marks.length ? `，${marks.join('/')}` : ''}）`,
+        run: (signal) => client.request('POST', `topic/${topic}/post`, { body: form.toString(), signal }),
       };
     }),
 
     editPost: pair('cc98.editPost', async (args) => {
-      // 收 post，也收 	opic —— 工具层按「编辑帖子」把它当 topic 传。
+      // 收 post，也收 topic —— 工具层按「编辑帖子」把它当 topic 传。
       // 走 PUT post/{id} 时那个 id 是**楼层 postId**，不是 topicId；
       // 两者在 CC98 的「回复即楼层」结构下对单楼帖子是同一个值，
-      // 但多楼帖不同。所以这里只认 post 优先、	opic 兜底，并在
+      // 但多楼帖不同。所以这里只认 post 优先、topic 兜底，并在
       // 说明里写清用的是楼层号。
       const post = id(args.post ?? args.topic, '楼层编号');
       const content = body(args.content, '正文', 8000);

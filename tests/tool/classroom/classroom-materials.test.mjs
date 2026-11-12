@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { GENERATION_VERSION } from '../../../packages/core/lecture/src/generate.js';
-import { materialEntries, catalogEntry, searchEntries } from '../../../packages/tool/study/src/study-materials.js';
+import { materialEntries, catalogEntry, searchEntries } from '../../../packages/tool/classroom/src/classroom-materials.js';
 
 const fixture = () => ({
   accountId: 'fictional-account', localPath: '/home/example/private.json',

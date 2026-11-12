@@ -31,6 +31,8 @@
 | [`zju-assistant-decisions.md`](zju-assistant-decisions.md) | 裁决的推理过程与备选方案 |
 | [`zju-assistant-qa-approval.md`](zju-assistant-qa-approval.md) | 审批服务溯源（宿主 `ctx.approval` 的契约） |
 | [`campus-split-plan.md`](campus-split-plan.md) | `source/campus` 拆成 `xuezai` + `pta` 的七步方案 |
+| [`tool-domain-restructure-2026-11-12.md`](tool-domain-restructure-2026-11-12.md) | **`packages/tool/` 按域重构**：拆包方案、顺带修掉的 8 处跨层契约断裂、反证清单 |
+| [`upstream-tool-fusion-checklist.md`](upstream-tool-fusion-checklist.md) | **上游 162 条 provides 逐条对照 tool 面**：84 条只缺 tool、21 条 source 也要补、2 条不做、35 条会话动作无需 tool |
 
 ---
 

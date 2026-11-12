@@ -85,7 +85,7 @@ const header = `# 「讲义」Agent preset —— 标准模式 + 课程资料检
 #
 # \`plugins\` 是宿主**当前版本自带**的
 # \`@deepseek-ai/dsh-web-app/presets/standard.patch.yml\` 里那棵 row 树的
-# 逐行复制 + 末尾追加一行 \`tool-study\`。
+# 逐行复制 + 末尾追加一行 \`tool-classroom\`。
 #
 # 为什么必须用这一份：从 pnpm 存储里翻到的
 # \`@deepseek-ai/dsh-agent-presets@0.1.5-rc.3\` 是**旧版遗留**，它的 persona 写
@@ -120,7 +120,7 @@ const header = `# 「讲义」Agent preset —— 标准模式 + 课程资料检
 const footer = `
 ${ITEM}# ── 本 preset 独有：课程资料检索 ─────────────────────────────────────
 ${ITEM}#
-${ITEM}# 这三个工具由 \`@lybx-leyw/dsh-zju-tool-study\` 注册（study_catalog /
+${ITEM}# 这三个工具由 \`@lybx-leyw/dsh-zju-tool-classroom\` 注册（study_catalog /
 ${ITEM}# study_read / study_search）。它 inject 的是主机的 \`zhiyunStudy\` 服务
 ${ITEM}# （\`core/study\` provide）和 \`tools\` 注册表，自己不 provide 任何服务，
 ${ITEM}# 所以不需要 \`isolate\` realm —— realm 只用于隔离 preset 自己对外发布的
@@ -128,8 +128,8 @@ ${ITEM}# 服务名，不隔离对主机服务的读取。
 ${ITEM}#
 ${ITEM}# 该包**不在** profile 的 bundles 里，正是为了让它只出现在这个 preset：
 ${ITEM}# 放进 profile 就是主机平面，所有 preset 都会看到。
-${ITEM}- id: tool-study
-${ITEM}  name: '@lybx-leyw/dsh-zju-tool-study'
+${ITEM}- id: tool-classroom
+${ITEM}  name: '@lybx-leyw/dsh-zju-tool-classroom'
 `;
 
 const out = header + indented + '\n' + footer;

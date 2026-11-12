@@ -188,26 +188,56 @@ export function createXuezaiWrites(reader) {
   };
 
   /**
-   * 把 id 或「活动对象」统一成活动对象。
+   * 把 id、名称或「活动对象」统一成活动对象。
    *
    * `activitySubmission` 要的是**活动对象**（它从中读 `course_id` 与
    * `group_set_id`），不是裸 id。所以这里要么用调用方给的对象，
    * 要么去待办/作业列表里找出来。
    *
-   * @param input - id 或活动对象。
+   * # 为什么名称也要收
+   *
+   * 用户与模型手里通常只有作业**名字**（「第三次作业」），而接口要数字 id。
+   * 先前只认数字，于是工具层传名字就抛 `需要 homework（作业编号）` ——
+   * 用户看到的是一句他无从照做的话。查一次名字→id 是**这个数据源的知识**
+   * （要知道去哪个接口、按哪个字段匹配），不该让每个调用方各写一遍。
+   *
+   * 名字匹配是**唯一**才算命中：重名作业（同一门课的「作业1」很常见）
+   * 要给用户看清有哪些候选，而不是替他挑一个。
+   *
+   * @param input - id、作业名，或活动对象。
    * @param signal - 中止信号。
    * @returns 活动对象。
    */
   const resolveActivity = async (input, signal) => {
     if (input && typeof input === 'object' && Number(input.id) > 0) return input;
-    const id = Number(input);
-    if (!Number.isSafeInteger(id) || id <= 0) {
-      throw invalid('需要 homework（作业编号，来自 assignments 的 id）');
-    }
+
     const todos = await reader.todos?.({ signal }).catch(() => null);
-    const row = todos?.xzzd?.rows?.find?.((item) => Number(item.id) === id);
-    if (row) return row;
-    throw invalid(`没找到编号 ${id} 的作业（用 assignments 或 todos 看真实编号）`);
+    const rows = Array.isArray(todos?.xzzd?.rows) ? todos.xzzd.rows : [];
+
+    const numeric = Number(input);
+    if (Number.isSafeInteger(numeric) && numeric > 0) {
+      const row = rows.find((item) => Number(item.id) === numeric);
+      if (row) return row;
+      throw invalid(`没找到编号 ${numeric} 的作业（用 assignments 或 todos 看真实编号）`);
+    }
+
+    const name = String(input ?? '').trim();
+    if (!name) throw invalid('需要 homework（作业编号或作业名，来自 assignments）');
+
+    // 先按「标题等于」找，找不到再退到「标题包含」—— 用户往往只记得一部分。
+    const exact = rows.filter((item) => String(item.title ?? '').trim() === name);
+    if (exact.length === 1) return exact[0];
+    const partial = rows.filter((item) => String(item.title ?? '').includes(name));
+    const hits = exact.length > 1 ? exact : partial;
+
+    if (hits.length === 1) return hits[0];
+    if (hits.length === 0) {
+      throw invalid(`没有标题匹配「${name}」的作业（用 assignments 看真实标题）`);
+    }
+    const candidates = hits.slice(0, 5)
+      .map((item) => `${item.id}：${item.title}`)
+      .join('；');
+    throw invalid(`「${name}」匹配到 ${hits.length} 个作业，请改用编号：${candidates}`);
   };
 
   return {
@@ -361,7 +391,15 @@ export function createXuezaiWrites(reader) {
     }),
 
     rollcall: pair('xuezai.rollcall', async (args) => {
-      const activity = await resolveActivity(args.rollcall ?? args.activity);
+      // `rollcall` / `activity` / `homework` / `course` 都收。
+      //
+      // 点名在待办表里与作业是**同一类行**（`xzzd.rows`），用户与模型看到的
+      // 是「哪门课在点名」，工具层自然会传课程名或作业名。先前只读
+      // `rollcall`/`activity`，于是工具传 `course` 时必抛「需要 homework」——
+      // 连错误文案都在说另一件事。
+      const activity = await resolveActivity(
+        args.rollcall ?? args.activity ?? args.homework ?? args.course,
+      );
       const rollcallId = Number(activity.id);
       const label = String(activity.title ?? activity.course_name ?? rollcallId);
       const code = args.code === undefined ? undefined : String(args.code).trim();

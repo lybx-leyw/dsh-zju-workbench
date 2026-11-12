@@ -248,7 +248,7 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 | # | 能力 | 裁决说归谁 | 实际状态 | 证据 |
 | --- | --- | --- | --- | --- |
 | **A-1** | `xuezai` 的 `material download` / `homework download` | D21 → `packages/core/*` | **core 里没有下载执行方**。`packages/core/` 28 个包 grep `downloadParams` / `saveFiles` / `downloadTo` **零命中** | `grep -rn "downloadParams\|saveFiles\|downloadTo" packages/core` → 空 |
-| **A-2** | `zdbk` 培养方案 PDF、`cc98` 帖内附件 | D21 → core | 同上，无承接方。且 `cc98` 的 source 侧**已经**有落盘（`reads.js` 的 `downloadDir`），与 D21「source 不碰文件系统」自相矛盾 | `cc98/src/reads.js` 有 `createWriteStream` |
+| **A-2** | `zdbk` 培养方案 PDF、`cc98` 帖内附件 | D21 → core | 同上，无承接方。~~且 `cc98` 的 source 侧已经有落盘，与 D21「source 不碰文件系统」自相矛盾~~ → **2026-11-12 更正：用户从未裁决「source 不碰文件系统」，那是 agent 擅自加进 D21 的限定，落盘不是矛盾** | `cc98/src/reads.js` 有 `createWriteStream`（合法） |
 | **A-3** | `xxt` 的 `downloadParams` | D21 → core | 参数接口正确（只给 `{url, variant, filename, size, headers}`），但**全仓无消费者** | `grep -rn downloadParams packages` 只命中定义处 |
 
 > 完整推导、以及 D1–D21 每一条的落地核对，见 [`abandoned.md`](abandoned.md)。
@@ -266,7 +266,7 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 
 | 类型 | 例子 | 是否合法 |
 | --- | --- | --- |
-| **真裁决** | D16（Q-D 移出数据源范围）、D19（skill 包不带 patch）、D21（下载归 core） | ✅ 有授权 |
+| **真裁决** | D16（Q-D 移出数据源范围）、D19（skill 包不带 patch）、D21（下载归 core） | ✅ 有授权 —— ⚠️ 但 D21 曾被 agent 追加「source 不碰文件系统」，**用户从未如此裁决**，2026-11-12 已更正；引用 D21 时只能引「下载由 core 执行」这一半 |
 | **分层设计** | 「本包不做审批」（审批属 tool）、「不做任意属性访问」（安全措施） | ✅ 不是「不做能力」 |
 | **我自判「不做」** | 见下表 | ❌ **无授权** |
 
