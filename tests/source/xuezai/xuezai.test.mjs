@@ -1259,6 +1259,8 @@ test('服务声明自己的能力面：只读方法 + 写方法分开列', async
     'xzzd.submitHomeworkPrepare', 'xzzd.submitHomeworkExecute',
     'xzzd.retractHomeworkPrepare', 'xzzd.retractHomeworkExecute',
     'xzzd.rollcallPrepare', 'xzzd.rollcallExecute',
+    // W-5：批量签到是**另一个动作**，不是 rollcall 的默认参数（见 rollcall-batch.js）。
+    'xzzd.rollcallAllPrepare', 'xzzd.rollcallAllExecute',
   ]);
   for (const name of service.writeMethods) {
     const key = name.slice('xzzd.'.length);

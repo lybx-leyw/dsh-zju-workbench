@@ -19,6 +19,8 @@
 
 import { parse } from 'parse5';
 
+import { ClassroomError } from '@lybx-leyw/dsh-zju-source-http';
+
 /* ────────────────────────────────────────────── HTML 基础 */
 
 /** HTML 实体表。只收学习通页面上真会出现的几个。 */
@@ -682,4 +684,199 @@ export function parseDataList(html) {
   }
   const pages = firstIn(document, (node) => node.tagName === 'input' && attrOf(node, 'id') === 'totalPages');
   return { rows, totalPages: Math.max(1, Number(pages ? attrOf(pages, 'value') : 1) || 1) };
+}
+
+/* ────────────────────────────────────────────── 作业：三个来源 */
+
+/**
+ * 毫秒时间戳 → 北京时间的「YYYY-MM-DD HH:mm」。
+ *
+ * # 为什么不用本地时区
+ *
+ * 跑这个包的人可能在任意时区（CI 上是 UTC）。用本地时间格式化会让同一份作业
+ * 在不同机器上显示成不同的截止时间 —— 而「什么时候到期」是这个功能存在的**全部理由**。
+ *
+ * @param {unknown} value - 毫秒数、可解析的时间串，或空。
+ * @returns {string|null} 解析不出来时 `null`（不知道就别编）。
+ */
+export function beijingMinute(value) {
+  const at = typeof value === 'number' ? value : (typeof value === 'string' && value ? Date.parse(value) : NaN);
+  if (!Number.isFinite(at)) return null;
+  return new Date(at + 8 * 3600_000).toISOString().slice(0, 16).replace('T', ' ');
+}
+
+/** 作业类型。平台上没有字段区分，只能看名字 —— 周测、小测在超星里也是作业。 */
+const TEST_NAME = /周测|小测|测验|测试|考试/;
+
+/**
+ * 按名字判作业类型。
+ *
+ * @param {string} title - 作业标题。
+ * @returns {'作业'|'测试'}
+ */
+export const homeworkKind = (title) => (TEST_NAME.test(String(title ?? '')) ? '测试' : '作业');
+
+/** 页面上的富文本 → 纯文本（老师写的要求里常带 `<br>` 与 `&nbsp;`）。 */
+const plain = (value) => stripTags(value ?? '');
+
+/**
+ * 学习任务明细里作业这一类别的 `planType`。
+ *
+ * 上游 `homework.ts:41` 的定义：字段 `standardPlanTypeMethod` 是 `HOMEWORK`。
+ * 其他取值是视频、阅读、讨论之类的「别的项」，只数还剩几项没学完，
+ * 不当成作业列出来 —— 把它们混进作业列表会让「还有几份作业要交」永远为假。
+ */
+const PLAN_HOMEWORK = 4;
+
+/**
+ * 学习任务明细（`getUserStandard` 的 `data`）→ 里面的作业。
+ *
+ * 只取 `planType === 4` 的项；其余项只累计「没学完的还有几项」，
+ * 让用户知道「这节课还有别的东西要做」，但不会把它们误报成作业。
+ *
+ * @param {object|undefined} standard - 接口的 `data` 字段。
+ * @returns {{plans: Array<{title: string, requirement: string, opens: number|null, ends: number|null, done: boolean}>, otherLeft: number}}
+ * @throws {ClassroomError} `SCHEMA_CHANGED`：结构不是预期的形状。
+ */
+export function parseTaskPlans(standard) {
+  const rows = standard?.userTaskQualifyDTO?.passStandardCalcResultDTOList;
+  if (!Array.isArray(rows)) {
+    throw new ClassroomError('SCHEMA_CHANGED', '学习任务的明细结构不是预期的形状。');
+  }
+  const result = { plans: [], otherLeft: 0 };
+  for (const row of rows) {
+    const plan = row?.planUserBO?.plan;
+    const done = row?.planUserBO?.finish === 1;
+    if (plan?.planType !== PLAN_HOMEWORK) {
+      if (!done) result.otherLeft += 1;
+      continue;
+    }
+    const at = (value) => {
+      const parsed = typeof value === 'string' && value ? Date.parse(value) : NaN;
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+    result.plans.push({
+      title: plain(plan.name),
+      requirement: plain(plan.introduce),
+      opens: at(plan.startDate),
+      ends: at(plan.endDate),
+      done,
+    });
+  }
+  return result;
+}
+
+/**
+ * 学习任务的跳转中间页里那个加密编号。
+ *
+ * 任务列表给的 `id` 不能直接查明细：明细要的是 `eTaskUserId`，它只出现在
+ * 中间页的脚本里（`const eTaskUserId = "…"`）。少了它明细读不出来。
+ *
+ * @param {string} html - 中间页 HTML。
+ * @returns {string} 取不到时空串（调用方据此报结构错误）。
+ */
+export function parseTaskKey(html) {
+  return /const eTaskUserId = "([^"]+)"/.exec(String(html ?? ''))?.[1] ?? '';
+}
+
+/**
+ * 学习任务列表（`getData` 的 JSON）→ 有 id 的那些任务。
+ *
+ * # `result !== 1` 不等于出错
+ *
+ * 大量课程从没用过「任务」栏（老师直接在作业栏发作业）。那种课这个接口回的是
+ * `result: 0` 或空对象，`data` 根本不存在 —— 那是**「这门课没有学习任务」**，
+ * 与「接口换了形状」是两件事。混成一个错误会让每门只用作业栏的课都在
+ * `failed` 里留一行，用户看到的是「读了 3 门，3 门失败」。
+ *
+ * 所以 `available: false` 单独表达：调用方据此当作「这一路没有作业」，
+ * 而 `available: true` 但 `data` 不是数组才是 `SCHEMA_CHANGED`。
+ *
+ * @param {object|undefined} payload - 接口响应。
+ * @returns {{available: boolean, tasks: Array<{id: string, name: string, total: number, finished: number}>, malformed: boolean}}
+ */
+export function parseTaskList(payload) {
+  if (payload?.result !== 1) return { available: false, tasks: [], malformed: false };
+  if (payload.data != null && !Array.isArray(payload.data)) {
+    return { available: true, tasks: [], malformed: true };
+  }
+  const rows = Array.isArray(payload.data) ? payload.data : [];
+  return {
+    available: true,
+    malformed: false,
+    tasks: rows
+      .filter((task) => task?.id)
+      .map((task) => ({
+        id: String(task.id),
+        name: plain(task.name),
+        total: typeof task.planCount === 'number' ? task.planCount : 0,
+        finished: typeof task.planFinishCount === 'number' ? task.planFinishCount : 0,
+      })),
+  };
+}
+
+/**
+ * 手机端作业列表（`work/stu-work`）→ 一行一份作业。
+ *
+ * # 形状
+ *
+ * 所有课的作业混在一页里，每个 `li` 一份：标题在 `p`，后面的 `span` 依次是
+ * 状态、《课程》和「剩余 N 天 N 小时 N 分钟」。**只列 `《…》` 的才是作业** ——
+ * 页面上的其他 `li`（分组标题之类）没有课程名。
+ *
+ * @param {string} html - 页面 HTML。
+ * @returns {Array<{title: string, status: string, course: string, leftMinutes: number|null}>}
+ */
+export function parseStuWork(html) {
+  const rows = [];
+  for (const element of elementsOf(parse(String(html ?? '')))) {
+    if (element.tagName !== 'li') continue;
+    const title = firstIn(element, (node) => node.tagName === 'p');
+    if (!title) continue;
+    const spans = [...elementsOf(element)]
+      .filter((node) => node.tagName === 'span')
+      .map((node) => squash(textOf(node)))
+      .filter(Boolean);
+    const course = spans.find((text) => /^《.*》$/.test(text));
+    if (!course) continue;
+    const left = spans.find((text) => text.startsWith('剩余'));
+    const part = (pattern) => Number(left?.match(pattern)?.[1] ?? 0);
+    rows.push({
+      title: squash(textOf(title)),
+      course: course.slice(1, -1),
+      status: spans.find((text) => text !== course && text !== left) ?? '',
+      // 页面只写「剩余 N 小时 M 分钟」（往下取整），所以这里是**近似值**；
+      // 调用方要按分钟粒度还原成绝对时间（见 `reads.js` 的 `homeworkList`）。
+      leftMinutes: left && /\d/.test(left)
+        ? part(/(\d+)天/) * 1440 + part(/(\d+)小时/) * 60 + part(/(\d+)分钟/)
+        : null,
+    });
+  }
+  return rows;
+}
+
+/**
+ * 手机端列表的一行 → 与另外两个来源同形的作业。
+ *
+ * 截止时间按整分钟**往上**补：页面写的是「剩余 3 小时 20 分钟」（向下取整），
+ * 直接拿 `now + leftMinutes` 会早最多 59 秒，把它写成绝对时间时取整到分钟即可。
+ *
+ * @param {{title: string, status: string, course: string, leftMinutes: number|null}} row - 一行的原始形状。
+ * @param {number} now - 当前毫秒时间戳（注入，便于测试）。
+ * @returns {object}
+ */
+export function fromWorkRow(row, now) {
+  const ends = row.leftMinutes === null ? null : Math.ceil((now + row.leftMinutes * 60_000) / 60_000) * 60_000;
+  return {
+    course: row.course,
+    task: '',
+    title: row.title,
+    type: homeworkKind(row.title),
+    opens: null,
+    deadline: beijingMinute(ends),
+    done: /已完成|待批阅|已批阅|已提交/.test(row.status),
+    closed: /已过期|已截止/.test(row.status),
+    requirement: '',
+    otherLeft: 0,
+  };
 }

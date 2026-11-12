@@ -1,0 +1,33 @@
+{
+  "name": "@lybx-leyw/dsh-zju-tool-xxt",
+  "version": "0.1.0",
+  "description": "学习通（超星 / chaoxing）工具包：课程、章节、课件与视频清单、课件与视频下载、作业清单（只读，不过审批）",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/tool/xxt"
+  },
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0"
+  },
+  "dsh": {
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": false,
+      "requires": []
+    }
+  }
+}

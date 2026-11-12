@@ -3,10 +3,10 @@
 浙江大学大学生**素质拓展数智平台**（`sztz.zju.edu.cn/dekt`，简称「二三四课堂」）数据源：
 第二、三、四课堂的活动、项目、记点与成绩单。
 
-**读 6 个方法 + 写 2 个动作**，`auth: cas`，`network: campus`。
+**读 6 个方法 + 写 4 个动作**，`auth: cas`，`network: campus`。
 
 > ⚠️ 这一行早先写的是「纯只读（D17）」。那与代码直接矛盾：`src/writes.js` 实现了
-> 报名 / 取消报名，`src/index.js:103` 的 `writeMethods` 列了 4 个
+> 报名 / 取消报名，`src/index.js` 的 `writeMethods` 列了成对的
 > `xxxPrepare` / `xxxExecute`，服务面 `readOnly` 是 `false`。
 > D17 判的是「**审批**在 tool 层」，不是「数据包里没有写方法」。
 
@@ -92,15 +92,29 @@ await sztz.activities({ limit: 10 })
 
 | 上游方法 | 平台接口 | 现在在哪 |
 | --- | --- | --- |
-| `signUp`（报名） | `student/home/hdbm` | `packages/tool/campus-write` 的 `campus_activity` → 本包 `signupActivityPrepare` / `signupActivityExecute` |
+| `signUp`（报名） | `student/home/hdbm` | `packages/tool/sztz` 的 `campus_activity` → 本包 `signupActivityPrepare` / `signupActivityExecute` |
 | `cancelSignUp`（取消报名） | `student/home/hdqxbm` | 同上 → `cancelActivityPrepare` / `cancelActivityExecute` |
-| `setFavorite`（收藏开关） | `student/home/hdsc` | **尚未实现**，记 `coverage-gaps.md` 的 W-3 |
+| `setFavorite`（收藏开关） | `student/home/hdsc` | 同上 → `favoriteActivity*` / `unfavoriteActivity*`（每个方向一套） |
 
-上游要求「写请求只发一次、之后用本人列表回查」，本包的 `Prepare` 已经先查
-（已在报名里就不重复提交）；「收藏是开关，重发会把状态翻回去」这条语义随 W-3 一起待补。
+### 三个动作的**重发语义不一样**
+
+| 动作 | 重发同一次请求的后果 |
+| --- | --- |
+| 报名 | 平台拒绝（已报过）→ 幂等 |
+| 取消报名 | 平台拒绝（没报过）→ 幂等 |
+| **收藏 / 取消收藏** | **把状态翻回去** → 有害 |
+
+`hdsc` 是**开关**：同一个 id 再发一次，收藏就变回未收藏。所以：
+
+1. 收藏那条走 `Sztz.write()`（`send(..., resend = false)`），报名/取消走 `call()`；
+2. **状态已经符合时一个请求都不发**。否则「已经收藏过」会被真正发出去，
+   把用户的收藏**取消**掉 —— 那不是没做成，是反着做了。
+
+收藏与取消收藏是**两个独立的写会话**：它们的参数、该查的列表（收藏列表 vs
+未结束活动）都不同。共用一个会让「准备收藏」被「准备取消收藏」撞成 `WRITE_BUSY`。
 
 > ⚠️ 这段早先写的是「将来进 campus-write / 本包不含任何写代码」。报名与取消
-> 两条早已在本包实现并注册到服务面（`src/index.js:113-116`）；只有收藏没有。
+> 两条早已在本包实现并注册到服务面；收藏已在 2026-11-12 补齐（W-3）。
 
 ## 没有设置分区
 

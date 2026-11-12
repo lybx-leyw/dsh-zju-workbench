@@ -1,6 +1,7 @@
 # @lybx-leyw/dsh-zju-tool-sztz
 
-二课工具包。一个包只装一个域：**活动报名，以及报名要的活动/记点读侧**。
+二课工具包。一个包只装一个域：**活动报名、取消报名、收藏、取消收藏**，
+以及报名要的活动/记点读侧。
 
 对应数据源：`source/sztz`（包名 `@lybx-leyw/dsh-zju-source-sztz`）。
 
@@ -8,8 +9,13 @@
 
 | 工具 | 作用 |
 | --- | --- |
-| `campus_activity` | 写：报名 / 取消报名（逐次审批） |
+| `campus_activity` | 写：`signup` 报名 / `cancel` 取消报名 / `favorite` 收藏 / `unfavorite` 取消收藏（逐次审批） |
 | `campus_sztz_read` | 读：活动、新活动、我的活动、记点、项目库、通知（**不过审批**） |
+
+四个 action → source 方法前缀的映射在 `src/index.js` 的 `ACTIONS` 表里。
+写成表而不是 if/else 的用途：**新增一个 action 只剩一行**，而漏写 `cancel`
+是不可能的 —— 前缀由 `contractOf` 统一取三个方法，缺任何一个都会在 prepare
+阶段就报 `CONTRACT_MISSING`。
 
 ## 分工
 

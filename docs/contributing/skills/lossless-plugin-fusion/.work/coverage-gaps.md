@@ -34,7 +34,7 @@
 | --- | --- | --- |
 | `zjuam` | 3（session login / status / logout） | 部分落地，**没有审计报告**，见第九节 Z-1 |
 | `webvpn` | 8 | 有独立对账（`zju-assistant-webvpn-coverage.md`，16 个导出逐条） |
-| `doc` | 4（text / pdf / pages / find） | **完全没有承接方**，见第九节 Z-2 |
+| `doc` | 4（text / pdf / pages / find） | ✅ **已补**（2026-11-12，`core/doc` + `tool/doc`），见第九节 Z-2 |
 
 状态图例：
 - **待补** —— 确实缺，应当补
@@ -130,15 +130,67 @@
 | --- | --- | --- | --- | --- | --- |
 | W-1 | `pta` | `homework start` | 无 | **待补** | `POST /api/problem-sets/{id}/exams` 开一份答题实例。**注意**：本仓已有 `getExam()`（X-1 的修复）能**读**这个端点，但没有把它做成写动作 |
 | W-2 | `pta` | `homework finish` | 无 | **待补** | `PUT /api/exams/{id}/end` 提前结束作业。源码里连注释都没有 |
-| W-3 | `sztz` | `favorite`（收藏开关） | 无 | **待补** | `student/home/hdsc`，与报名同形态。`sztz/src/writes.js` 只有 `signupActivity` / `cancelActivity` |
+| W-3 | `sztz` | `favorite`（收藏开关） | `favoriteActivity` / `unfavoriteActivity` + `campus_activity` 的 `favorite` / `unfavorite` | **已补（2026-11-12）** | `student/home/hdsc`。落点：`sztz/src/writes.js`（两个方向各一个写会话）、`sztz/src/sztz.js` 的 `write()`（**不重发**的写入口）、`source/sztz/src/index.js` 的 6 个服务方法、`tool/sztz/src/index.js` 的 action 表。**开关语义**：状态已符合时不提交（否则反向），重发会把状态翻回去。测试 `tests/source/sztz/sztz-favorite.test.mjs`（14）+ `tests/tool/sztz/sztz-activity-tools.test.mjs`（9），探针 2 条 |
 | W-4 | `xuezai` | `rollcall number`（数字口令签到） | **源码已实现** | **已补（源码）/ 但工具走不到** | `writes.js:411` 走 `/api/rollcall/{id}/answer_number_rollcall`，测试 `tests/xuezai-writes.test.mjs:208` 覆盖。**但工具层传的是 `{course, code}`，source 要 `{rollcall}` 或 `{activity}`** → 见 Y-10 |
-| W-5 | `xuezai` | `rollcall all`（一键签所有待签） | 无 | **待补** | `rollcall-all.ts`（并发跑 gps + number 双路，先签上者停），本仓无对应编排 |
+| W-5 | `xuezai` | `rollcall all`（一键签所有待签） | `createRollcallBatch` + `campus_checkin` 的 `all: true` | **已补（2026-11-12）** | 落点：`xuezai/src/rollcall-batch.js`（**新文件**）、`source/xuezai/src/index.js` 的 `rollcallAll*` 三个方法 + `writeMethods`、`tool/xuezai/src/index.js` 的 `all` / `passes` 参数。**前置**：`radarRollcalls()` 也在这个新文件里（`GET /api/radar/rollcalls` 此前全仓没有，见下方合并说明）。测试 `tests/source/xuezai/xuezai-rollcall-batch.test.mjs`（22）+ `tests/tool/xuezai/xuezai-checkin-tools.test.mjs`（11），探针 2 条 |
 | W-6 | `classroom` | `setup`（装 FFmpeg / 下 ASR 模型） | 无 | **待补** | 上游 `setup.ts`：`npm install ffmpeg-static` + 240 MB 模型下载。`diagnostics.js:20-25` 的措辞已经是「尚未实现（不是裁决）」，但那段仍把「本任务不跑 npm install」当理由 —— **那是流程约束，不是产品理由**，见第十节 |
 | W-7 | `tyys` | 同伴参数（`vip/view/buddy_no` / `vip/check/buddy_no`） | 无 | **待补** | `writes.js:165-171` 对 `buddyMin > 0` 抛 `NOT_IMPLEMENTED` 并说清原因（**这是诚实的**，不是编理由） |
 | W-8 | `classroom` | `check` 的 SHA-256 校验 | 部分 | **待补** | 上游用 `assets.json` 的 sha256 校验 ffmpeg 与模型；本仓 `diagnostics.js:165-167,211` 明确不做，`verified` 恒为 `false`（**如实标 false，不是假绿**） |
 
 **本轮复核确认（2026-11-11，grep 实证）**：W-1 / W-2 / W-3 / W-5 / W-6 / W-7 / W-8 全部仍为待补；
-W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一条可以改判为已补。**
+W-4 的源码已实现、但工具层参数契约不通（Y-10）。
+
+**2026-11-12 更新**：**W-3 与 W-5 已补**（见上表落点）。其余 W-1 / W-2 / W-6 / W-7 / W-8 仍为待补。
+
+### W-5 落地记录（2026-11-12）
+
+上游 `rollcall-all.ts` 只有 22 行、标题就写着「Composition only」，组合的是
+`signin`（GPS 轮询）+ `signinNumber`（字幕取码）。**但本仓这两个执行器与上游
+都不是同一个东西**，所以「照抄一个组合器」抄不过来：
+
+| 上游 | 本仓原状 |
+| --- | --- |
+| `signin`：**轮询** `GET /api/radar/rollcalls`，发现未签就应答，直到签上/超时 | `rollcall` 雷达分支：`prepare` 之后**一次性**试完 13 个参考点就结束 |
+| `signinNumber`：从课堂字幕里取四位码 | `rollcall` 数字分支：调用方**直接给口令** |
+| `signinAll`：组合器 | **没有**；且它依赖的 `GET /api/radar/rollcalls` **全仓也没有** |
+
+所以实际做法分两层：
+
+1. **补 `radarRollcalls()`**（`GET /api/radar/rollcalls`）—— 没有它，「待签有哪些」
+   无从知道。这是 W-5 的真前置。
+2. **新建 `rollcall-batch.js`** 做编排，单点应答**直接复用** `writes.js` 的
+   `rollcall`（协议一行没重写）。**`writes.js` 未改动。**
+
+#### 三处与上游有意的差异
+
+| 项 | 上游 | 本仓 | 理由 |
+| --- | --- | --- | --- |
+| 任一路成功后 | `stop.abort()` 停另一路 | **默认不停**，`stopAtFirst: true` 才停 | 停早了会漏签：同时有 3 个雷达点名时，第一个签上就停，剩下两个没签 |
+| 时间形态 | `duration`（默认 600 秒一直轮询） | `passes`（默认 1 轮扫完） | 本仓的调用是**一次工具调用**，不是常驻进程。要盯就给大 `passes` |
+| 数字那一路 | 字幕取码后提交 | `numberUnavailable()` **如实报签不了** | 取字幕要跨包接 `campus_classroom_read` 的 `liveText`，不在 W-5 范围内。**不能假装做了** —— 用户会以为批量已处理一切 |
+
+#### ⚠️ 一处**临时实现**，将来要合并
+
+`radarRollcalls()` 按分层该在 `xzzd.js`（客户端方法）或 `xzzd-reads.js`（读方法），
+而不是一个写工厂文件里。本轮放进 `rollcall-batch.js` 的原因：当时
+`xuezai/src/index.js` 与 `xzzd-reads.js` 由另一条编辑线在改（下载），放新文件
+可以零冲突落地。
+
+**合并办法**：把它挪进 `xzzd.js` 作为 `XzzdApi.radarRollcalls()`，然后
+`rollcall-batch.js` 改成转调 —— 签名 `(reader, { signal }) => rows` 就是照那个目标写的。
+
+#### 判据：「单次」与「批量」不是同一个动作
+
+这条写进了 `rollcall-batch.js` 的文件头，因为它是**最容易被后来者「简化」掉**的：
+
+| | `rollcall`（单次） | `rollcallAll`（批量） |
+| --- | --- | --- |
+| 谁决定签哪个 | **调用方**给 id / 课程名 | **它自己**列当前点名 |
+| 数量 | 1 个 | 0..N 个 |
+| 时间形态 | 一次应答 | 可多轮扫 |
+
+把批量「简化」成给 `rollcall` 传个空参数的后果：看起来有批量能力，实际只签得到
+调用方点名的那一个 —— 而点名窗口只有几分钟，正是最需要它自己找的时候。
 
 已实现（对照用，**不掉以轻心**）：
 
@@ -148,9 +200,9 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 | `cc98` | `signIn` / `postTopic` / `replyTopic` / `editPost` / `sendMessage` / `likeFloor` / `favoriteTopic` / `rateFloor` | 8 条 |
 | `lab` | `selectLab` / `cancelLab` | select / cancel |
 | `pta` | `saveAnswer` / `submitAnswer` | problem save / problem submit |
-| `sztz` | `signupActivity` / `cancelActivity` | signup / cancel |
+| `sztz` | `signupActivity` / `cancelActivity` / `favoriteActivity` / `unfavoriteActivity` | signup / cancel / favorite（收藏拆成两个方向） |
 | `tyys` | `bookVenue` / `cancelVenue` | book / cancel |
-| `xuezai` | `submitHomework` / `retractHomework` / `rollcall` | homework submit / retract / rollcall |
+| `xuezai` | `submitHomework` / `retractHomework` / `rollcall` / `rollcallAll` | homework submit / retract / rollcall / rollcall all |
 
 **写能力的总数对账（两种方法各算一遍）**：
 
@@ -158,30 +210,32 @@ W-4 的源码已实现、但工具层参数契约不通（Y-10）。**没有一�
 | --- | --- | --- | --- | --- |
 | `zdbk` | 3 | 3 | 0 | |
 | `cc98` | 8 | 8 | 0 | |
-| `xuezai` | 5（`submit` / `retract` / `rollcall` / `rollcall number` / `rollcall all`） | 3（`rollcall` 一条内含数字口令分支） | **−2** | `number` 合进 `rollcall`；`all` 完全没做（W-5） |
+| `xuezai` | 5（`submit` / `retract` / `rollcall` / `rollcall number` / `rollcall all`） | 4（`submitHomework` / `retractHomework` / `rollcall` 内含数字分支 / `rollcallAll`） | **−1** | `number` 合进 `rollcall`；`all` 已补（W-5）。数字口令那条**源码有、工具走不到**（Y-10） |
 | `pta` | 4（`start` / `finish` / `save` / `submit`） | 2 | **−2** | W-1 + W-2 |
 | `lab` | 1（`select`，上游用它带 `--cancel`） | 2（`selectLab` / `cancelLab`） | **+1** | 本仓把退选拆成独立方法 |
-| `sztz` | 2（`signup` / `favorite`） | 2（`signupActivity` / `cancelActivity`） | 0 | **数字对齐纯属巧合**：本仓做的是「报名 + 取消」，上游是「报名 + 收藏」——`favorite` 缺（W-3），`cancel` 是上游没有的方法 |
+| `sztz` | 2（`signup` / `favorite` 开关） | 4（`signupActivity` / `cancelActivity` / `favoriteActivity` / `unfavoriteActivity`） | **+2** | 上游把「取消」合进 signup 的开关语义、把「取消收藏」合进 favorite 的 `--cancel`；本仓每个方向一个方法。**能力集合已对齐**（W-3 已补） |
 | `tyys` | 2 | 2 | 0 | |
-| **合计** | **25** | **22** | **−3（净）** | |
+| **合计** | **25** | **25** | **0（净）** | |
 
-⚠️ **净差 −3 是「−2 −2 +1」抵消出来的，不能读成「只缺 3 条」。** 逐条看，**实际缺 4 个动作**：
+⚠️ **净差 0 不能读成「都做完了」。** 逐条看，**实际仍缺 2 个动作**：
 
 | 缺的 | 编号 |
 | --- | --- |
 | `pta` `homework start` | W-1 |
 | `pta` `homework finish` | W-2 |
-| `sztz` `activity favorite` | W-3 |
-| `xuezai` `rollcall all` | W-5 |
 
-`sztz` 是最容易看漏的一行：两边都数出「2 条」，但**内容不同** ——
-上游的 2 条是 `signup` + `favorite`，本仓的 2 条是 `signupActivity` + `cancelActivity`。
-`favorite` 没做，`cancel` 是上游 provides 里没有的（上游把取消合进 signup 的开关语义）。
+（`sztz activity favorite` **W-3** 与 `xuezai rollcall all` **W-5** 已于 2026-11-12 补上，移出本表。）
+
+（`sztz activity favorite` **W-3 已于 2026-11-12 补上**，移出本表。）
+
+`sztz` 那一行曾经是最容易看漏的：两边都数出「2 条」，但**内容不同** ——
+上游的 2 条是 `signup` + `favorite`，本仓那时的 2 条是 `signupActivity` + `cancelActivity`。
 **条数相同不等于能力对齐**，这是「对数字」这件事最薄的一层。
+现在本仓是 4 条（每个方向一个方法），上游是 2 条开关式能力，**能力集合对齐**。
 
 > 旧版写的「上游约 22 条、本仓 19 条、缺 5 条」三个数都不对。
 > **这就是「数字要用两种方法交叉验证」那条规矩的第四个实例** ——
-> 只算总数会得到一个「看起来对」的差值（−3），逐包算才看得出缺的是哪 4 条。
+> 只算总数会得到一个「看起来对」的差值，逐包算才看得出缺的是哪几条。
 
 
 ### W-1 / W-2 我为什么先前只写在注释里
@@ -533,13 +587,16 @@ node scripts/probe-write-contract.mjs
 
 ### Z-2 · `doc`（文档转文字与 PDF 处理，4 条 provides）
 
+> **2026-11-12 已补。** 下表是补之前的实证记录，保留不改（那是当时的取证）。
+> 现状见本节末尾「已落地」。
+
 上游 `doc` 模块：`text`（文件/链接 → 文字）、`pdf`（图片/Word/PDF 合成 PDF）、
 `pages`（取指定页）、`find`（找关键词所在页）。依赖 `pdfjs-dist` / `pdf-lib` /
 `sharp` / LibreOffice 引擎（`module.json` 的 `localDependencies`）。
 
-本仓现状（逐条 grep 实证）：
+本仓现状（逐条 grep 实证，**2026-11-12 之前**）：
 
-| # | 上游 provides | 本仓 | 判定 |
+| # | 上游 provides | 本仓（补之前） | 判定 |
 | --- | --- | --- | --- |
 | 1 | `doc text` | **部分**：`core/classroom-media` 的 `parsePdf(buffer)` 能取 PDF 文字（`unpdf` 优先，可配 MinerU）；`core/vault` 有 `pdfjs-dist` 但用于**阅读器渲染**。**Word / PPT / Excel 无解析**（无 `mammoth` / `xlsx` / office 引擎依赖） | **部分 / 待补** |
 | 2 | `doc pdf`（合成 PDF） | **无**。全仓无 `pdf-lib` | **待补** |
@@ -548,19 +605,31 @@ node scripts/probe-write-contract.mjs
 
 **为什么这一整块一直没人发现**：它不在 `zju-assistant-inventory.md` 的 20 行清单里
 （那份清单列的是「数据源」，`doc` 被当成工具而不是数据源），也不在两份审计的范围里。
-按 providess 算，它是 **4 条**，比 `yjsy`（1 条）、`chalaoshi`（3 条）、`ebook`（1 条）都多。
+按 provides 算，它是 **4 条**，比 `yjsy`（1 条）、`chalaoshi`（3 条）、`ebook`（1 条）都多。
 
-**归属建议（不替用户裁决）**：`doc` 不连外部站点（它读本地文件），所以按分层硬约束
-**不该进 `source/*`**；而它做的是「变换 + 落盘」，`core/*` 是合理的落点。
-但 D21 说「下载执行归 core、source 只给参数」—— `doc` 的输入本身就是本地文件，
-不需要下载。**这条要单独裁决，记在这里。**
+#### 已落地（2026-11-12）
+
+| 项 | 结果 |
+| --- | --- |
+| 归属 | `packages/core/doc`（服务）+ `packages/tool/doc`（`campus_doc`，4 个 action）。裁决记录见 `abandoned.md` 的 **Q-1** |
+| `doc text` | ✅ PDF / Word / Excel / PPT / HTML / 纯文本 → 按页文字 + 全文落盘 Markdown |
+| `doc pdf` | ✅ 图片(JPEG/PNG)+PDF+Office 按序合成；A4 / original 两模式；EXIF 旋转转正 |
+| `doc pages` | ✅ `1,3-5` 规则取页，越界 / 倒序 / 写错一律报错 |
+| `doc find` | ✅ 关键词找页 + 每页上下文 |
+| 依赖 | `pdf-lib`（**用户 2026-11-12 授权安装**，`1.17.1`）；其余零新依赖 |
+| 页边界 | **没有改** `core/classroom-media/src/pdf/parse.js`（4 处调用点全按 `text: string` 用）。新写 `core/doc/src/pdf.js` 的 `pdfTexts()` |
+| Word / Excel / PPT | 不装 `libreoffice-kit`，改读 OOXML/ODF 的 XML。**97-2003 老式二进制读不了** → 报 `UNSUPPORTED` |
+| 不做 | `doc text --url`（从网址抓文档）—— 属 source 层，本包无网络出口 |
+
+**已知未验证**（`core/doc/PROOF.md` 末尾也记了）：真实 Office 文件没用真样本验过；
+`via:'libreoffice'` 那条分支只被注入钩子间接测到；加密 PDF 只读代码没夹具。
 
 ### Z-3 · 顺带校正 `zju-assistant-inventory.md:39` 的两处
 
 | 位置 | 原文 | 实际 |
 | --- | --- | --- |
 | `zjuam` 行 | 待办「无需」 | 见 Z-1：`status` 确实缺 |
-| `doc` 行 | **不在表里** | 4 条 provides，其中 3 条完全没有承接方 |
+| `doc` 行 | **不在表里** | 4 条 provides，3 条完全没有承接方（**2026-11-12 已全部补上**，见 Z-2） |
 
 ---
 

@@ -1,0 +1,27 @@
+{
+  "name": "@lybx-leyw/dsh-zju-preset-zju",
+  "version": "0.1.0",
+  "description": "「校园」Agent preset：标准模式 + 全部校园工具（教务、学在浙大、CC98、二课、场馆、实验、学习通、拼题A、通知、查老师、电子书、课堂资料、文档处理）",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/preset/zju"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -7,10 +7,13 @@ import { LiveSource } from './live.js';
 import { LiveCollector } from './live-caption.js';
 import { ClassroomError, array, object, shape } from './errors.js';
 import * as models from './models.js';
-import { download } from './download.js';
+// 下载器住在 tier 0 的 `source-http`：Range 怎么续、半截文件叫什么、什么时候算
+// 发布成功是**传输层知识**，不是智云课堂的知识。本包原先自带一份同语义实现，
+// 2026-11-12 合并到共享层（那份多支持重定向跟随与 HTTPS 校验，是本包的超集）。
+import { download } from '@lybx-leyw/dsh-zju-source-http';
 import { KINDS, assetsOf, extractedAudioNotice, parseKinds } from './resources.js';
 import { DEFAULT_MAX_CHARACTERS, DEFAULT_TRANSCRIBE_TIMEOUT_MS, renderTranscript, transcribeFile } from './asr.js';
-import { checkComponents } from './diagnostics.js';
+import { checkComponents, setupPlan as planLocalSetup } from './diagnostics.js';
 export { ClassroomError } from './errors.js';
 export { SessionStore } from './session.js';
 export { Transport } from './transport.js';
@@ -688,6 +691,41 @@ export class ClassroomSource {
       dataDirectory: this.dataDirectory,
       ...(this.asrHome === null ? {} : { home: this.asrHome }),
       ...options,
+    });
+  }
+
+  /**
+   * 本地组件的安装**计划**（对应上游 `zhiyun setup`，但只给计划不执行）。
+   *
+   * # 为什么只给计划
+   *
+   * 上游 `setup.ts` 是两件**写操作**：`npm install ffmpeg-static@5.3.0`
+   * 与从 HuggingFace 下约 241 MB 权重（`ASR_TOTAL_BYTES = 241357257`）。
+   * 前者本仓硬禁止（见 `docs/contributing/AGENTS.md` 的依赖规则），
+   * 后者属安装层（裁决 N-3）。**硬做就是造假** —— 装不上却报装好了，
+   * 用户会以为能用，直到真的去转写才失败。
+   *
+   * # 但「什么都不给」也不行
+   *
+   * `check()` 只说缺 `model.int8.onnx`，用户不知道那是哪个文件、放哪个目录、
+   * 多大、下完怎么校验。所以这里给出每一步的**确切信息**：
+   * 目标路径、下载 URL（含镜像）、字节数、SHA-256。用户照着自己装即可。
+   *
+   * # `executed` 恒为 `false`
+   *
+   * 这不是「暂时返回 false，以后会真装」，而是**契约**：这个方法永远不执行
+   * 任何安装步骤。有测试钉住（谎报 `true` 会红）—— 因为一个会撒谎的
+   * 「装好了」比「没装」危险得多。
+   *
+   * 已就位的组件标 `satisfied: true`，避免用户重下 241 MB。
+   *
+   * @param {string|string[]} [component] - `'asr'` / `'media'` / `'all'`（默认）。
+   * @returns {Promise<{component:string, executed:false, steps:object[]}>}
+   */
+  async setupPlan(component = 'all') {
+    return planLocalSetup(component, {
+      ...(this.dataDirectory ? { dataDirectory: this.dataDirectory } : {}),
+      ...(this.asrHome ? { home: this.asrHome } : {}),
     });
   }
 

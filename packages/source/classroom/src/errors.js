@@ -6,12 +6,16 @@
  * 于是同一个错误类型在进程里有两个构造函数。`instanceof` 判定会因此失效，
  * 而 `error.code` 恰好两边一致，所以**不会立刻暴露**。
  *
- * 目前不改的理由：`classroom` 没有依赖 `source-http`（两者是平级的 tier-1 与 tier-0），
- * 改依赖要动 `package.json`、`dsh.capability.requires` 与本目录下 8 个模块的 import，
- * 而收益只是消除重复 —— 属于 source 层内部的整洁问题，不是分层违规。
+ * # 现状（2026-11-12 更新）
  *
- * 要改的话：删掉本文件，把 8 个 `from './errors.js'` 改成
- * `from '@lybx-leyw/dsh-zju-source-http'`，并在 `package.json` 里加依赖。
+ * 本包**已经**依赖 `source-http` 了（合并下载器时加的：`package.json` 的
+ * `dependencies` 与 `dsh.capability.requires` 都有它）。所以现在**可以**把
+ * 本文件删掉、把 8 个 `from './errors.js'` 改成 `from '@lybx-leyw/dsh-zju-source-http'`。
+ *
+ * 之所以**这次没顺手做**：它和下载器合并是两件事 —— 下载器有 2 条测试覆盖
+ * （`classroom-download.test.mjs`），而错误类型牵扯本目录 8 个模块的 import
+ * 与所有 `instanceof ClassroomError` 的判定点。混在一起改，出问题时分不清是
+ * 哪一处引起的。留作独立一步。
  */
 export class ClassroomError extends Error {
   constructor(code, message, details = {}) {

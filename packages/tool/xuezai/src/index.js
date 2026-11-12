@@ -65,20 +65,51 @@ export function createXuezaiWriteTools(services) {
 
     {
       name: 'campus_checkin',
-      description: '课堂点名签到（学在浙大）。点名通常只有几分钟窗口，错过不能补。执行前会请求你批准。',
+      description: '课堂点名签到（学在浙大）。点名通常只有几分钟窗口，错过不能补。'
+        + '给 course 是签指定的这一门；给 all=true 是**一次签全部待签的点名**'
+        + '（可能一批准就签上好几个）。执行前会请求你批准。',
       parameters: {
         type: 'object',
         properties: {
-          course: { type: 'string', description: '课程名' },
+          course: { type: 'string', description: '课程名。给了就只签这一门' },
           code: { type: 'string', description: '点名口令（数字点名时用）' },
+          all: {
+            type: 'boolean',
+            description: '批量：一次签全部待签的点名（可能多个）。与 course 二选一，不给 course 时签全部',
+          },
+          passes: { type: 'integer', minimum: 1, maximum: 600, description: '批量：扫几轮，默认 1（盯一段时间就给大一点）' },
         },
-        required: ['course'],
+        // ⚠️ `course` 不再是必填：批量模式恰恰是「不知道该签哪门」时用的。
+        // 但两个都不给是不行的 —— 那种调用会变成「随便签点什么」，所以运行时校验。
+        required: [],
         additionalProperties: false,
       },
       async prepare(args) {
-        const course = str(args.course, '课程名');
+        const course = optStr(args.course, '课程名');
         const code = optStr(args.code, '点名口令');
+        const all = args.all === true;
+        if (!all && !course) {
+          throw inputError('需要 course（签哪一门）或 all: true（签全部待签的点名）');
+        }
+        if (all && code) {
+          // 批量模式下每门课的口令不同，一个口令签不了多个点名 —— 那是两个动作。
+          throw inputError('all: true 时不能同时给 code：批量签到不猜口令，数字点名会如实报「签不了」');
+        }
         const xuezai = need('zhiyunXuezai');
+
+        if (all) {
+          const { prepare, execute, cancel } = contractOf(xuezai, 'rollcallAll');
+          // `course` 在批量模式里是**筛选器**（可选）：给了就只签名字含它的那些。
+          return {
+            summary: await prepare({
+              ...(course ? { course } : {}),
+              ...(args.passes === undefined ? {} : { passes: args.passes }),
+            }),
+            execute,
+            cancel,
+          };
+        }
+
         const { prepare, execute, cancel } = contractOf(xuezai, 'rollcall');
         return { summary: await prepare({ course, code }), execute, cancel };
       },

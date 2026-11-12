@@ -841,10 +841,11 @@ test('插件形状：name / inject 与路由常量', () => {
   assert.equal(ROUTE_PATH, '/api/zhiyun-xxt');
 });
 
-test('方法白名单：13 个只读方法，一个不多一个不少', () => {
+test('方法白名单：16 个只读方法，一个不多一个不少', () => {
   assert.deepEqual([...XXT_METHODS], [
-    'courses', 'listCourses', 'findCourse', 'chapters', 'materials', 'dataFiles', 'downloadParams', 'homework',
-    'listHomework', 'deadlines', 'exams', 'notices', 'schedule',
+    'courses', 'listCourses', 'findCourse', 'chapters', 'chapterList', 'materials', 'videos',
+    'dataFiles', 'downloadParams', 'downloadFiles', 'homework', 'listHomework', 'deadlines',
+    'exams', 'notices', 'schedule',
   ]);
   // 读取器上确实有这些方法（白名单不能是空名单）
   const reader = new XxtReader({ get: async () => '', post: async () => '' });

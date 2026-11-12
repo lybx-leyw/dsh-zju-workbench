@@ -143,7 +143,7 @@
 | `Documents` 类 | ❌ 0 命中 |
 | `reveal()`（打开所在文件夹） | ❌ 0 命中 |
 | 下载进度总线 | ❌ 只有 `source/classroom/download.js:52` 的包内回调 |
-| **断点续传** | ⚠️ **只在 `source/classroom/src/download.js`**（`.part` + `If-Range` + `link()` 原子发布 + 六种错误码）—— **恰好是 D21 明令不该在的地方**，且只有 1 个 importer、无 tool 消费 |
+| **断点续传** | ~~只在 `source/classroom/src/download.js`~~ → **2026-11-12 已上移到 tier 0 的 `source/http/src/download.js`**（`.part` + `If-Range` + `link()` 原子发布 + 六种错误码），`classroom` 改为引用它，全仓一份 |
 | 四个页面的下载入口 | ❌ 0 |
 | ffmpeg / TeX / gsap / ASR 模型按需下载 | ❌ 0 |
 

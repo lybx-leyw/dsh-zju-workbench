@@ -32,7 +32,8 @@
 | [`zju-assistant-qa-approval.md`](zju-assistant-qa-approval.md) | 审批服务溯源（宿主 `ctx.approval` 的契约） |
 | [`campus-split-plan.md`](campus-split-plan.md) | `source/campus` 拆成 `xuezai` + `pta` 的七步方案 |
 | [`tool-domain-restructure-2026-11-12.md`](tool-domain-restructure-2026-11-12.md) | **`packages/tool/` 按域重构**：拆包方案、顺带修掉的 8 处跨层契约断裂、反证清单 |
-| [`upstream-tool-fusion-checklist.md`](upstream-tool-fusion-checklist.md) | **上游 162 条 provides 逐条对照 tool 面**：84 条只缺 tool、21 条 source 也要补、2 条不做、35 条会话动作无需 tool |
+| [`upstream-tool-fusion-checklist.md`](upstream-tool-fusion-checklist.md) | 上游 162 条 provides 逐条对照 tool 面（**第一版，已被 v2 取代**） |
+| [`upstream-tool-fusion-checklist-v2.md`](upstream-tool-fusion-checklist-v2.md) | **上游 tool 缺口清单（当前有效）**：以 24 个已落地工具为基准，113 覆盖 / 1 只缺 tool / 5 source 也要补。数字由 `scripts/audit-tool-coverage.mjs` 产出，可复算 |
 
 ---
 

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { ClassroomError, array, object, shape } from './errors.js';
 import { jwtFromTokenCookie } from './auth.js';
+import { LESSON_GRACE_MS } from './live-caption.js';
 import * as models from './models.js';
 
 // 直播与回放是两条互不相交的通路：回放走 course/catalogue 与已录制资源（source.js），
@@ -166,6 +167,43 @@ function clockSec(value) {
 function shanghaiSecond(now) {
   return Math.floor((((now.getTime() + 8 * 3600000) % 86400000) + 86400000) % 86400000 / 1000);
 }
+/**
+ * 把「某天的第几秒」换成毫秒时间戳。
+ *
+ * 时段表给的是**当天秒数**（`clockSec`），而采集循环要的是绝对时间。
+ * 用 `Date.parse('<day>T00:00:00+08:00') + second * 1000` 而不是 `new Date(day)`
+ * 之后 `setHours`：后者按**本机时区**解释，在一台 UTC 的机器上整节课会偏 8 小时，
+ * 而症状是「采集任务立刻结束了」（因为已经过截止）。
+ */
+function dayEpochMs(day, second) {
+  const midnight = Date.parse(`${day}T00:00:00+08:00`);
+  if (!Number.isFinite(midnight)) throw shape('直播时段', 'day');
+  return midnight + second * 1000;
+}
+/**
+ * 按课程名 / courseId 挑一门课。
+ *
+ * 与上游 `matchLiveCourse` 同口径：先按 courseId 精确匹配，再按课程名精确匹配，
+ * 最后才做**唯一**包含匹配（「数据结构」命中「数据结构（甲）」）。多个候选时
+ * 报错并给候选，不替调用方选 —— 选错一门课的表现是「采集起来了但收不到字」。
+ */
+function pickCourse(items, course) {
+  if (!course) return items;
+  const wanted = str(course).trim().normalize('NFKC').toLowerCase();
+  if (!wanted) return items;
+  const exact = items.filter(row => row.courseId === wanted || str(row.title).trim().normalize('NFKC').toLowerCase() === wanted);
+  if (exact.length) return exact;
+  const loose = items.filter(row => str(row.title).normalize('NFKC').toLowerCase().includes(wanted));
+  if (loose.length === 1) return loose;
+  if (loose.length > 1) {
+    throw new ClassroomError('INVALID_INPUT', `「${course}」对应多门课，请用 courseId 指定`, {
+      candidates: loose.map(row => ({ course: row.title, courseId: row.courseId, subId: row.subId })),
+    });
+  }
+  throw new ClassroomError('INVALID_INPUT', `今天没有这门课的直播：${course}`, {
+    candidates: items.map(row => ({ course: row.title, courseId: row.courseId, subId: row.subId })),
+  });
+}
 function quantumRow(row) {
   // 0 被上游占作「探路」语义，绝不能当成一个真实时段混进来。
   const quantumId = Number(row.id ?? row.quantum_id);
@@ -274,6 +312,69 @@ export class LiveSource {
     // 课间没有课时段：返回空列表，而不是最近一节课 —— 否则「当前直播」会指向还没开始或已结束的课。
     if (!current) return result([]);
     return result(await this.coursesOf(day, current, { signal }));
+  }
+  /**
+   * 当天**还值得采**的直播课次 —— `liveStart` 的入参就从这里来。
+   *
+   * # 为什么这个方法是必要的
+   *
+   * `liveStart({courseId, subId, startsAt, endsAt})` 要四个值，而调用方（模型 / UI）
+   * 手上通常只有一个「现在」。以前这四个值得由调用方自己凑：`getMyLectures`
+   * 给的是回放口径的课表（`course_begin` 秒，且含非直播课），和直播网关的
+   * `sub_id` 不是一回事 —— 凑错的症状是**采集任务建起来了，却一个地址都取不到**，
+   * `liveStatus` 显示 `waiting`，看起来像「还没开播」。这与上游不一致：上游
+   * `live-task.ts:135` 是 `dayLessons(client).filter(l => l.endsAt + 300000 > Date.now())`，
+   * 即**先按直播口径筛出还能听的课次，再启动**。
+   *
+   * # 三个判据都来自上游
+   *
+   *   - `live`（`status_label` 含「直播」）：不是直播课就不可能有实时字幕；
+   *   - `endSec + 5 分钟 > 现在`：已散场的课次不必再起采集（老师拖堂的 5 分钟宽限
+   *     直接读 `live-caption.js` 的 `LESSON_GRACE_MS` —— 同一个数只写一处，
+   *     两边漂开会让任务「起得来、一起来就过了截止立刻退出」）；
+   *   - 时段给了时间窗才有 `startsAt` / `endsAt`；**缺时间窗的课次照样返回**，
+   *     但两个字段为 null，由调用方决定要不要用「现在 + 2 小时」兜底 ——
+   *     凭空补一个窗口比报 null 更糟，那会让 `liveStart` 在课后继续听。
+   *
+   * @param {string} [date] - `YYYY-MM-DD`，默认北京时间今天。
+   * @param {object} [options]
+   * @param {Date|number} [options.now] - 判定「现在」的时刻（可注入，便于测试）。
+   * @param {string} [options.course] - 课程名或 courseId，用于在多门课里挑一门。
+   * @param {AbortSignal} [options.signal]
+   * @returns {Promise<{items: object[], meta: object}>} 按开课时间排序；每项多
+   *   `startsAt` / `endsAt`（毫秒，可能为 null）与 `secondsLeft`（可能为 null）。
+   */
+  async remaining(date, { now = new Date(), course, signal } = {}) {
+    const at = now instanceof Date ? now : new Date(Number(now));
+    if (Number.isNaN(at.getTime())) throw new TypeError('now 须为有效日期');
+    const day = models.date(typeof date === 'string' && date ? date : models.shanghaiDate(at));
+    // 查的不是今天时按「当天零点」判：否则今天 11 点会把明天 08:00 的课当成已散场筛掉。
+    const second = models.shanghaiDate(at) === day ? shanghaiSecond(at) : 0;
+    const page = await this.listLiveDay(day, { signal });
+    const grace = Math.floor(LESSON_GRACE_MS / 1000);
+
+    const items = page.items
+      .filter(row => row.live)
+      // 缺时间窗的课次保留（见上），只是不参与「已散场」判定。
+      .filter(row => row.endSec == null || row.endSec + grace > second)
+      .map(row => ({
+        ...row,
+        startsAt: row.beginSec == null ? null : dayEpochMs(day, row.beginSec),
+        endsAt: row.endSec == null ? null : dayEpochMs(day, row.endSec),
+        secondsLeft: row.endSec == null ? null : Math.max(0, row.endSec + grace - second),
+      }))
+      .sort((a, b) => (a.startsAt ?? Number.MAX_SAFE_INTEGER) - (b.startsAt ?? Number.MAX_SAFE_INTEGER));
+
+    const matched = pickCourse(items, course);
+    return result(matched, {
+      complete: page.meta.complete,
+      reason: page.meta.reason,
+      pages: page.meta.pages,
+      date: day,
+      // 筛掉了多少：让调用方看得见「今天有课但都散了」，而不是以为没课。
+      excluded: page.items.length - items.length,
+      ...(page.meta.failedQuantums ? { failedQuantums: page.meta.failedQuantums } : {}),
+    });
   }
   async screenStreams(courseId, subId, streamId, { signal } = {}) {
     const headers = await this.authHeaders();

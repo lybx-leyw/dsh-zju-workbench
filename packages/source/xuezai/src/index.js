@@ -51,7 +51,9 @@ import { sharedRead } from './reads.js';
 import { xzzdLogin } from './cas/login.js';
 import { XzzdApi, hasXzzdSession, diffTodos } from './xzzd.js';
 import { XzzdReader } from './xzzd-reads.js';
+import { XzzdDownloads } from './downloads.js';
 import { createXuezaiWrites } from './writes.js';
+import { createRollcallBatch } from './rollcall-batch.js';
 import { XZZD_BASE, CAS_HOST, XUEZAI_HOSTS } from './hosts.js';
 
 export const name = 'zju-source-xuezai';
@@ -78,7 +80,8 @@ export const WRITE_HEADER = 'x-zhiyun-xuezai';
 export const SERVICE_NAME = 'zhiyunXuezai';
 
 /** 重新导出，供别处（脚本/测试）直接构造。 */
-export { XzzdApi, XzzdReader, hasXzzdSession, diffTodos };
+export { XzzdApi, XzzdReader, hasXzzdSession, diffTodos, XzzdDownloads };
+export { safeFileName, underRoot, batchName } from './downloads.js';
 
 /**
  * `xzzdRead` 认识的读取动作。
@@ -675,6 +678,129 @@ export async function apply(ctx, config = {}) {
     return { ok: true };
   };
 
+  /**
+   * 下载根目录。
+   *
+   * # 为什么目录由装配层决定，而不让调用方传
+   *
+   * 与 `source/cc98` 的 `downloadDir` 同一条理由：让调用方传路径，等于让
+   * 一份**平台上别人起的文件名**决定本机写到哪。所以根在这里定死
+   * （`config.downloadDir` → 默认 `<dataDir>/downloads`），往下的层级由
+   * `downloads.js` 按「课程 → 类别 → 作业」拼，每一段都过 `safeFileName()`
+   * 并再核一次真实路径仍在根之下。
+   *
+   * 放在 `dataDir` 之下而不是用户「下载」文件夹：这是插件的派生产物，
+   * 与缓存同理 —— 它该跟数据目录一起被清理，而不是混进用户自己的下载里。
+   */
+  const downloadRoot = () => path.resolve(config.downloadDir ?? path.join(dataDir, 'downloads'));
+
+  /**
+   * 建一个下载器。
+   *
+   * 与 `writes()` 一样按客户端实例缓存：换账号后 `xzzdClient()` 会给新实例，
+   * 旧的下载器不该跟着过去（它持有的传输层带着上一个会话）。
+   */
+  let downloadsCache = null;
+  const downloads = async () => {
+    const client = await xzzdClient();
+    if (!downloadsCache || downloadsCache.client !== client) {
+      downloadsCache = {
+        client,
+        api: new XzzdDownloads({
+          api: client,
+          reader: new XzzdReader(client, XZZD_BASE),
+          root: downloadRoot(),
+          ...(config.downloadMaxBytes === undefined ? {} : { maxBytes: config.downloadMaxBytes }),
+        }),
+      };
+    }
+    return downloadsCache.api;
+  };
+
+  /**
+   * 学在浙大的下载入口：**算参数与执行都在这一层**。
+   *
+   * # 它算写操作吗（判据与结论）
+   *
+   * 判据是「会不会改变**平台**上的状态」。下载只从平台读字节、写本机文件，
+   * 平台侧一个字节都没变 —— 所以它不是写操作，`writeMethods` 里也没有它。
+   *
+   * 但它**会往本机写文件**，这一半不能轻描淡写。处置分三段：
+   *
+   *   1. 目录根由装配层定，调用方传不进路径（`downloadRoot()`）；
+   *   2. 文件名过 `safeFileName()` 且再核一次不越界（`underRoot()`）；
+   *   3. 目标已存在时**永不覆盖**（共享下载器用 `link()` 发布），大小一致才复用。
+   *
+   * 这三条取代了"审批"想买到的那个东西（把影响面关在已知范围内）。审批留给
+   * 真正改变平台状态的动作 —— 见工具层 `tool/xuezai/src/reads.js` 的选择说明。
+   *
+   * @param body - `{ action: 'materials'|'homework', courseId, course, activityId, uploadIds, names, all, parts }`。
+   * @returns 下载结果。
+   */
+  const xzzdDownload = async (body = {}) => {
+    const action = String(body?.action ?? '').trim();
+    // 与 `xzzdRead` 同一条顺序：先校验动作名，再取会话。反过来的话一个拼错的
+    // 动作名会先触发一次 CAS 登录，用户看到的是「没配账号」。
+    if (!['materials', 'homework'].includes(action)) {
+      throw fault('INVALID_INPUT', `未知的下载动作：${action || '(空)'}。可选 materials / homework`);
+    }
+    const numericIds = (value) => {
+      if (value === undefined || value === null) return null;
+      if (!Array.isArray(value)) throw fault('INVALID_INPUT', 'uploadIds 要给数组');
+      const ids = value.map((id) => String(id).trim()).filter((id) => /^\d{1,15}$/.test(id));
+      // 过滤后一个都不剩时**报错**而不是当成「没指定」：静默变成「全部」是
+      // 最坏的一种解释（用户以为自己只挑了一个）。
+      if (ids.length === 0) throw fault('INVALID_INPUT', 'uploadIds 里没有合法的文件 id（要平台给的纯数字 id）');
+      return ids;
+    };
+    const names = (() => {
+      if (body.names === undefined || body.names === null) return null;
+      if (!Array.isArray(body.names)) throw fault('INVALID_INPUT', 'names 要给数组');
+      const rows = body.names.map((name) => String(name ?? '').trim()).filter(Boolean);
+      if (rows.length === 0) throw fault('INVALID_INPUT', 'names 里没有非空的名字');
+      return rows;
+    })();
+    const uploadIds = numericIds(body.uploadIds);
+
+    /**
+     * ⚠️ 两个 id 的校验也在这里，**早于** `downloads()`（也就是早于取会话）。
+     *
+     * 反过来的话，一个非法的 courseId / activityId 会先触发一次 CAS 登录，
+     * 然后才回 400 —— 用户看到的延迟与「好像很慢 / 好像没配账号」全归因错了。
+     * 与 `xzzdRead` 的 `courseBundle` 那条是同一类。
+     */
+    const courseId = body.courseId === undefined || body.courseId === null ? null : Number(body.courseId);
+    if (action === 'materials') {
+      if (!Number.isSafeInteger(courseId) || courseId <= 0) throw fault('INVALID_INPUT', 'materials 需要正整数 courseId');
+    } else {
+      if (courseId !== null && (!Number.isSafeInteger(courseId) || courseId <= 0)) {
+        throw fault('INVALID_INPUT', 'homework 的 courseId 要给正整数（或干脆不给）');
+      }
+      const activityId = Number(body.activityId);
+      if (!Number.isSafeInteger(activityId) || activityId <= 0) throw fault('INVALID_INPUT', 'homework 需要正整数 activityId');
+    }
+
+    const engine = await downloads();
+    if (action === 'materials') {
+      return engine.materials({
+        courseId,
+        courseLabel: body.course ?? null,
+        uploadIds,
+        names,
+        all: body.all === true,
+      });
+    }
+
+    return engine.homework({
+      activityId: Number(body.activityId),
+      courseId,
+      courseLabel: body.course ?? null,
+      uploadIds,
+      names,
+      ...(Array.isArray(body.parts) && body.parts.length ? { parts: body.parts.map(String) } : {}),
+    });
+  };
+
   /* ── 路由 ────────────────────────────────────────────────────────── */
 
   /** 路由处理函数。 */
@@ -720,6 +846,13 @@ export async function apply(ctx, config = {}) {
       // 学在浙大的深入读取：活动 / 作业 / 活动详情 / 课件 / 我的提交。
       if (action === 'xzzd-read') {
         send(200, { ok: true, result: await xzzdRead(await readBody()) });
+        return;
+      }
+
+      // 下载（课件 / 作业）。它会往本机写文件，所以和读分开一个动作名 ——
+      // 页面与脚本据此可以「读随手调、下载单独确认」。
+      if (action === 'xzzd-download') {
+        send(200, { ok: true, result: await xzzdDownload(await readBody()) });
         return;
       }
 
@@ -785,6 +918,34 @@ export async function apply(ctx, config = {}) {
     return writesCache.api;
   };
 
+  /**
+   * **批量签到**的写会话（W-5）。
+   *
+   * # 为什么是单独一份缓存，而不是塞进 `writesCache`
+   *
+   * `rollcall-batch.js` 是新建的文件、不修改 `writes.js`，它的会话与单点应答
+   * 的会话是**两个独立对象**。共用一份缓存会让「准备批量签到」与「准备单次
+   * 签到」互相撞成 `WRITE_BUSY`，而它们是两个动作。
+   *
+   * # 为什么每次都重新构造而不是缓存
+   *
+   * `createRollcallBatch` 内部自己持有 `prepared` 状态 —— **那正是要的**：
+   * `prepare` 与 `execute` 必须落在同一个实例上，否则 `execute` 拿到空会话并报
+   * `NEED_PREPARE`（看起来像「用户没批准」，实际是接线错了）。
+   *
+   * 所以这里**必须**与 `writes()` 一样按客户端实例缓存：同一账号的
+   * `xzzdClient()` 会返回同一个实例，`prepare` 与 `execute` 于是取到同一个
+   * 批量会话；换账号后重建，旧会话不跟过去。
+   */
+  let batchCache = null;
+  const batchWrites = async () => {
+    const client = await xzzdClient();
+    if (!batchCache || batchCache.client !== client) {
+      batchCache = { client, api: createRollcallBatch(client) };
+    }
+    return batchCache.api;
+  };
+
   const removeService = ctx.provide(SERVICE_NAME, {
     routePath: ROUTE_PATH,
     platform: 'xzzd',
@@ -794,7 +955,8 @@ export async function apply(ctx, config = {}) {
     /** 写方法名（成对出现），与只读方法分开列。 */
     writeMethods: ['xzzd.submitHomeworkPrepare', 'xzzd.submitHomeworkExecute',
       'xzzd.retractHomeworkPrepare', 'xzzd.retractHomeworkExecute',
-      'xzzd.rollcallPrepare', 'xzzd.rollcallExecute'],
+      'xzzd.rollcallPrepare', 'xzzd.rollcallExecute',
+      'xzzd.rollcallAllPrepare', 'xzzd.rollcallAllExecute'],
     /**
      * 待办：`{ xzzd: { ok, rows, error }, pta: { …哨兵, notInThisPackage: true } }`。
      *
@@ -803,6 +965,16 @@ export async function apply(ctx, config = {}) {
     todos: loadTodos,
     /** 学在浙大深入读取（活动 / 作业 / 课件 / 我的提交），只读。 */
     xzzdRead,
+    /**
+     * 下载（课件 / 作业附件 / 本人提交 / 老师批改）。
+     *
+     * ⚠️ 它**不在** `writeMethods` 里：判据是「会不会改变平台上的状态」，
+     * 而下载一个字节都没改平台。写本机文件这一半由目录根 + 文件名过滤 +
+     * 工具层审批三道处置，见 `xzzdDownload` 的说明。
+     */
+    xzzdDownload,
+    /** 下载根目录（绝对路径）。页面与用户要能知道文件去哪了。 */
+    downloadDir: downloadRoot,
     /** 会话指纹（换账号时变化）。 */
     fingerprint,
     /** 出口状态（校园网判定与是否经 WebVPN），供别的包/脚本查。 */
@@ -831,6 +1003,23 @@ export async function apply(ctx, config = {}) {
     rollcallPrepare: async (input) => (await writes()).rollcall.prepare(input),
     rollcallExecute: async (signal) => (await writes()).rollcall.execute(signal),
     rollcallCancel: async () => (await writes()).rollcall.cancel(),
+
+    /**
+     * **批量签到**（W-5）：一次签全部待签的点名。
+     *
+     * 与上面的 `rollcall` 是**两个动作**，不是同一个的默认参数：
+     *
+     * | | `rollcall` | `rollcallAll` |
+     * | --- | --- | --- |
+     * | 签哪个 | 调用方给 id / 课程名 | 自己列当前点名、自己挑待签的 |
+     * | 数量 | 1 个 | 0..N 个 |
+     * | 时间形态 | 一次应答 | 可多轮扫（`passes`） |
+     *
+     * 实现全在 `rollcall-batch.js`，单点应答复用上面的 `rollcall`（协议不重写）。
+     */
+    rollcallAllPrepare: async (input) => (await batchWrites()).prepare(input),
+    rollcallAllExecute: async (signal) => (await batchWrites()).execute(signal),
+    rollcallAllCancel: async () => (await batchWrites()).cancel(),
   });
 
   return async () => {

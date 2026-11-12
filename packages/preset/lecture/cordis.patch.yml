@@ -162,15 +162,42 @@
             name: '@deepseek-ai/dsh-plugin-market/tools'
             disabled: true
 
-          # ── 本 preset 独有：课程资料检索 ─────────────────────────────────────
+          # ── 本 preset 独有：课程资料与课堂原始素材 ──────────────────────────
           #
-          # 这三个工具由 `@lybx-leyw/dsh-zju-tool-classroom` 注册（study_catalog /
-          # study_read / study_search）。它 inject 的是主机的 `zhiyunStudy` 服务
-          # （`core/study` provide）和 `tools` 注册表，自己不 provide 任何服务，
-          # 所以不需要 `isolate` realm —— realm 只用于隔离 preset 自己对外发布的
-          # 服务名，不隔离对主机服务的读取。
+          # 这一行挂上 7 个工具，由 `@lybx-leyw/dsh-zju-tool-classroom` 注册：
+          #
+          #   study_courses     入口索引：有哪些课、每节整理到什么程度（**含未整理的**）
+          #   study_catalog     已整理的讲义目录（wiki 经验库）
+          #   study_read        读一条整理好的讲义主题
+          #   study_search      在已整理讲义里按关键词定位（可带课名锁定是哪一门）
+          #   raw_transcript    课堂原始转写稿（老师原话，带时间戳）
+          #   raw_slides        PPT 页面**图片**（没有文字层，本仓不做 OCR）
+          #   campus_classroom_read  平台原始数据（课程/节次/课件/字幕/直播状态）
+          #
+          # 前六个分成两组是有意的：study_* 读的是**二次加工过的 wiki 讲义**，
+          # raw_* 读的是**原始素材**。混在一起时模型会把「老师随口说的话」当成
+          # 讲义的结论，也会把 PPT 的图片当成页面上的文字去引用。
+          #
+          # 它 inject 的是主机的 `zhiyunStudy`（`core/study` provide）与 `tools`
+          # 注册表，自己不 provide 任何服务，所以不需要 `isolate` realm ——
+          # realm 只用于隔离 preset 自己对外发布的服务名，不隔离对主机服务的读取。
           #
           # 该包**不在** profile 的 bundles 里，正是为了让它只出现在这个 preset：
           # 放进 profile 就是主机平面，所有 preset 都会看到。
+          # 而工具表每多一格都在挤占模型的选择空间 —— 7 个已经不少了。
           - id: tool-classroom
             name: '@lybx-leyw/dsh-zju-tool-classroom'
+
+          # ── 本 preset 独有：本地文档处理 ─────────────────────────────────────
+          #
+          # `campus_doc`（text / pdf / pages / find）由 `@lybx-leyw/dsh-zju-tool-doc`
+          # 注册，读的是主机 `zhiyunDoc` 服务（`core/doc` provide）。
+          #
+          # 与 `tool-classroom` 同一条理由放在 preset 而不是 profile：它不是每个
+          # 会话都要用的东西，而工具表每多一格都在挤占模型的选择空间。
+          #
+          # 为什么这个 preset 是它的落点：本 preset 的场景就是「读课程资料」，
+          # 而作业、讲义、教材常常是 PDF / Word —— 拿到一份 PDF 却没法取字，
+          # 只能让用户自己复制粘贴。
+          - id: tool-doc
+            name: '@lybx-leyw/dsh-zju-tool-doc'

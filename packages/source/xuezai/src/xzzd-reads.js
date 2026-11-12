@@ -96,6 +96,29 @@ export function publicFile(file) {
 }
 
 /**
+ * 老师批改后传回的文件（与「网页批注」标记）。
+ *
+ * 平台把批改附件放在 `submission_correct.uploads`，里面混着平台自己存笔迹用的
+ * `markattatchment.txt`（URL 编码的 SVG 路径，名字里那个 `attatchment` 是平台
+ * 自己的拼写）。**它不是给人看的文件**，列出来只会让人以为老师传了个 .txt。
+ * 但它的存在说明「老师在网页上直接批注了」，这个信息要留下 —— 否则
+ * 「为什么没有批改文件」就没法解释。
+ *
+ * @param submission - 一条提交记录（原始形状）。
+ * @returns `{ files, annotated }`。
+ */
+export function correctionFilesOf(submission) {
+  const uploads = Array.isArray(submission?.submission_correct?.uploads)
+    ? submission.submission_correct.uploads
+    : [];
+  const isMark = (file) => /^markatt?a(t)?chment\.txt$/i.test(String(file?.name ?? ''));
+  return {
+    files: uploads.filter((file) => !isMark(file)),
+    annotated: uploads.some(isMark),
+  };
+}
+
+/**
  * 收集一条活动上的全部附件。
  *
  * 上游把附件放在**三个不同位置**（`uploads` / `data.uploads` / `data.files`），
@@ -500,6 +523,7 @@ export class XzzdReader {
         ?? list[0]
         ?? null;
 
+      const corrected = latest ? correctionFilesOf(latest) : { files: [], annotated: false };
       return {
         submissionStatus: submissionState(list, activity?.submitted),
         group,
@@ -514,6 +538,20 @@ export class XzzdReader {
           score: latest.final_score ?? latest.score ?? latest.submission_correct?.instructor_score ?? null,
           gradedAt: normalizeDeadline(latest.score_at),
           instructorComment: boundedText(latest.instructor_comment ?? latest.submission_correct?.comment),
+          /**
+           * 老师批改后**传回**的文件（`submission_correct.uploads`）。
+           *
+           * 为什么要单列而不是并进 `uploads`：那两批东西含义相反 —— `uploads`
+           * 是学生交上去的，是**我写过什么**的证据；这一批是老师打回来的。
+           * 混在一起之后，「哪几个是我交的」就看不出来了，而作业下载要落的
+           * 恰恰是这两类（放不同子目录）。
+           *
+           * `markattatchment.txt` 要剔掉：它是平台存网页批注笔迹用的
+           * SVG 路径文本（连名字都是平台自己拼错的），不是给人看的文件。
+           * 它的**存在**有意义（说明有网页批注），所以单独给 `annotated`。
+           */
+          correctionFiles: corrected.files.map(publicFile),
+          annotated: corrected.annotated,
         } : null,
         submissionCount: list.length,
         draftIds: list.filter((row) => row?.is_draft === true).map((row) => row.id),

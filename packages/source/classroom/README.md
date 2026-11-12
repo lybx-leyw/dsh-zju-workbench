@@ -37,7 +37,8 @@ try {
 | `getSchedule({start,end,userId,signal})` | 课表；默认上海今天，最多 31 天 |
 | `searchResources(courseId,subId,{kind,signal})` | 某节次的资源清单（**只看不下载**）；`kind` 为 `video,audio,ppt,slides,subtitles` 或 `all` |
 | `searchCaptions({keyword,lessons\|courseId,days,limit,signal})` | 在录播字幕里搜关键词，命中带前后各一句；没有字幕的课次如实列出 |
-| `check(component)` | 本地组件诊断（`asr` / `media` / `all`）；**只读**，不装任何东西 |
+| `check(component, {verify})` | 本地组件诊断（`asr` / `media` / `all`）；**只读**，不装任何东西。`verify` 加做 SHA-256 |
+| `setupPlan(component)` | **安装计划**（不是安装）：目标路径 / URL / 字节数 / SHA-256，`executed` 恒为 false；导出在 `diagnostics.js`，路由 action 由 `index.js` 装配 |
 | `setTranscriber(fn)` | 注入本地转写的识别内核；返回撤销函数 |
 | `transcribeAudio({file,directory,signal,timeoutMs})` | 本地音视频转写，结果落盘；**分钟级**调用 |
 | `liveStart({courseId,subId,...})` | 开始采官方实时字幕；**长连接**，只建立会话即返回 |
@@ -88,6 +89,7 @@ HTTP 数据路由是 `/api/zhiyun-classroom`（`exact`），body 为 `{action, i
 | --- | --- |
 | `listCurrent({signal,now})` | 此刻在播的课（今天 + 当前时段）；课间返回空列表 |
 | `listLiveDay(date,{signal})` | 某天全天直播课；单时段失败标 `partial-quantum`，全失败才抛 |
+| `remaining({now,course})` | **今天还值得起采集的直播课次** —— `liveStart` 的入参来源；已散场与非直播的筛掉 |
 | `resolveStreams(courseId,subId,{signal})` | `{streams,dropped,source}`；机位 key 为 teacher/screen/student/extra |
 
 三处与回放**不同**、写错就会静默失败的地方：
@@ -198,30 +200,77 @@ npm run classroom:live-probe -- --live --trace               # 打印每条请�
 | `asr` | 语音运行库与模型 | 运行库能否解析（`createRequire.resolve`，只解析不加载）+ 模型目录里三个文件在不在、多大 |
 
 每个结果都带 `action` 字段，明说「缺什么、怎么办」—— 只说 `available:false`
-没有用。`asr` 的 `verified` **恒为 false**：这里没算 SHA-256，不冒充校验通过。
+没有用。
 
-### `setup` 尚未实现
+目录布局两种都认：`models/sensevoice-onnx/` + `models/silero/`（上游 `asr.ts` 与
+宿主语音包的形状）与平铺的 `models/*.onnx`（手工摆放的常见形状）。结果里的
+`layout` 写明按哪种找到的。大小不符（下载截断）算「没准备好」，不是「文件在」。
+
+`asr` 的 `verified` **只在 `verify: true` 且三件摘要全对时为 true**；默认只比大小，
+不冒充「校验通过」。
+
+### `setup`：给计划，不执行（N-3）
 
 上游 `setup`（`core/zju/lib/zhiyun/setup.ts`）是**写操作**：`media` 分支
 `npm install ffmpeg-static@5.3.0`，`asr` 分支从 HuggingFace / hf-mirror 下载
-约 240 MB 模型并落盘。它改的是**本机安装状态**，属于安装层而不是读取层。
+约 241 MB 模型并落盘。前者在本仓是硬禁止，后者属安装层；两件都改**本机安装状态**。
 
-**这条不是裁决，是当前没做。** 本包提供 `check`（只读诊断，会给出 `action`），
-`setup` 未实现，已记进 `coverage-gaps.md` 的待补清单（W-6）。
-（早先这里引的是 W-8 —— 那是 `check` 的 SHA-256 校验，不是 `setup`。）
+所以本包给的是 `setupPlan()` —— 一份**可复算的安装计划**。它在
+`src/diagnostics.js` 里（纯函数，不碰会话），由 `index.js` 的
+`/api/zhiyun-classroom` 路由以 `action: 'setupPlan'` 暴露：
+
+```js
+const { value } = await (await fetch('/api/zhiyun-classroom', {
+  method: 'POST',
+  body: JSON.stringify({ action: 'setupPlan', input: { component: 'all' } }),
+})).json();
+// { component:'all', executed:false, totalBytes:241357257, steps:[...], reason:'…N-3…' }
+```
+
+（这是唯一入口：`setupPlan` 不在 `src/source.js` 的导出面上，本包也没有单独的
+diagnostics 子路径导出。）
+
+每一步都带确切的目标路径、URL、镜像 URL、字节数与 SHA-256，已就位的标
+`satisfied: true`（免得重下 240 MB）。`executed` **恒为 false** —— 本方法一步都不做。
+
+**这不是裁决 N-3 的替代品**：N-3 拒绝的是「把 sherpa-onnx 内核与权重内置进数据源包」，
+本方法更退一步 —— 它连装都不装，只把 `check` 的「缺什么」翻译成「放到哪、从哪取」，
+执行交给宿主安装层或用户。做完之后 `check` 立刻转绿。
+
+### 本地转写现在**有装配方**了（漏-4 的收口）
+
+调查后发现漏-4 的前提是错的：本仓**不需要**装 `sherpa-onnx-node`，也**不需要**下模型 ——
+宿主 DeepSeek Harness 自带的
+`@deepseek-ai/dsh-experimental-speech-to-text-sensevoice` 已经把这些都做了
+（它注册 `speechToText` provider，自带运行库与 `assets.json` 清单，模型按需自下）。
+缺的只是**没人把那个服务接到本包的 `transcriber` 接口上**。
+
+`createHostTranscriber({ speechToText, executable, providerId?, language?, chunkSeconds? })`
+就是那个适配器，它三点都是本包自己该做的编排：
+
+1. **抽音频**：FFmpeg 转 16 kHz 单声道 PCM WAV（SenseVoice 唯一接受的格式）；
+2. **按内核窗口切片**：宿主 provider 一条请求最多 4 MB，按时间轴切块分别送；
+3. **拼句段**：provider 只回一整段文字、**没有时间戳**，所以给的是**块级**时间
+   （`engine` 里写明 `chunked`），**不伪造成逐句时间**。
+
+⚠️ **未真机验证**：本机没有启用宿主语音包、也没有权重（`~/.dsh/speech-to-text/`
+不存在）。测试全部用假 provider 与假 FFmpeg 钉**编排**（切片、偏移、失败分类、
+时间戳拼接），**没有**跑过真识别。
 
 ## 本地转写（`transcribeAudio`）
 
 对应上游 `zhiyun trans audio`。
 
-**本包没有内置识别内核。** 上游用的是 `sherpa-onnx-node` + SenseVoiceSmall
-（ONNX int8，CPU），运行库与模型都由**宿主应用**自带；这两样都不在本仓的依赖里
-（`package.json` 只有 tough-cookie / undici / source-login），装它们要
-`npm install`。所以本包把「编排」与「识别内核」拆开：
+**本包没有内置识别内核**，但**现在有装配方**了（见上一节）。三条硬约束决定了
+内核不能内置：`sherpa-onnx-node` 不在本仓依赖里（装它要 `npm install`，本仓禁止）；
+240 MB 权重的下载属首次安装；上游借的是**宿主应用自带**的运行库。
+
+所以本包把「编排」与「识别内核」拆开：
 
 - **编排归本包**：路径与文件校验、落盘（原子换名）、缓存去重、超时、取消、结果形状；
 - **识别靠注入**：`config.transcriber` 或 `source.setTranscriber(fn)`，
   形状是 `({file,directory,signal}) => ({segments:[{start,end,text}], engine?})`（秒）。
+  现成的接法是 `createHostTranscriber({speechToText, executable})`。
 
 没注入时**报 `DEPENDENCY_MISSING`**，不返回空文本 —— 否则「转写失败」看起来
 和「这段音频没人说话」一模一样。

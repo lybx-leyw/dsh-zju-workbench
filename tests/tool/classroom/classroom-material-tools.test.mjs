@@ -70,11 +70,22 @@ test('optional host injection publishes schemas, executes canonical output and u
   const f = fixture();
   ctx.provide('zhiyunStudy', f.workbench);
   const fiber = ctx.plugin(toolClassroom);
-  // 本包现在**还**注册一个平台原始数据的读工具（`campus_classroom_read`）。
-  // 它的 source（`zhiyunClassroom`）不在本 case 的 ctx 里 —— 那正是设计：
-  // `zhiyunClassroom` **没有**写进 `inject`，缺席时那个工具如实报
+  // 本包现在注册三组工具：
+  //   - `study_*` 三个（讲义 wiki）
+  //   - `campus_classroom_read` 一个（平台原始数据）
+  //   - `study_courses` 一个（入口索引：有哪些课、整理到什么程度）
+  //   - `raw_transcript` / `raw_slides` 两个（原始素材：课堂原话、PPT 图）
+  //
+  // 它们的 source（`zhiyunClassroom`）不在本 case 的 ctx 里 —— 那正是设计：
+  // `zhiyunClassroom` **没有**写进 `inject`，缺席时那些工具如实报
   // SERVICE_MISSING，而 `study_*` 照常可用。
-  const expected = [...Object.keys(f.tools), 'campus_classroom_read'].sort();
+  const expected = [
+    ...Object.keys(f.tools),
+    'campus_classroom_read',
+    'study_courses',
+    'raw_transcript',
+    'raw_slides',
+  ].sort();
   try {
     await fiber;
     assert.deepEqual(registry.schemas().map(tool => tool.name).sort(), expected);
