@@ -1,0 +1,32 @@
+{
+  "name": "@lybx-leyw/dsh-zju-tool-kit",
+  "version": "0.1.0",
+  "description": "校园读类工具的共享底座：参数校验小件 + 读工具注册器。不含任何具体工具，也不做审批（审批只给写操作）",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./args": "./src/args.js",
+    "./register": "./src/register.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/tool/kit"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": false,
+      "requires": []
+    }
+  }
+}

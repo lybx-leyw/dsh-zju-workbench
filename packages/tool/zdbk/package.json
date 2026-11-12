@@ -19,6 +19,7 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0",
     "@lybx-leyw/dsh-zju-tool-write-kit": "0.1.0"
   },
   "dsh": {

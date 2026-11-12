@@ -734,9 +734,11 @@ test('apply() provide 了 zhiyunPta 并注册了 /api/zhiyun-pta', () => {
   assert.equal(pta.readOnly, false);
     assert.equal(routes.length, 1, '必须注册一条路由');
     assert.equal(routes[0].path, '/api/zhiyun-pta');
-    // 服务自述的名单要与实现一致 —— 少一个动作等于对外少一个能力
-    assert.equal(pta.reads.length, 6);
-    assert.deepEqual([...pta.reads].sort(), ['problem', 'problemSet', 'problems', 'progress', 'submission', 'submissions']);
+    // 服务自述的名单要与实现一致 —— 少一个动作等于对外少一个能力。
+    // `exam` 是 2026-11-12 补的：上游 `pta homework view` 读的是题集作答状态，
+    // 而它是一条 GET（**不会**启动计时，`homework start` 才是）。
+    assert.equal(pta.reads.length, 7);
+    assert.deepEqual([...pta.reads].sort(), ['exam', 'problem', 'problemSet', 'problems', 'progress', 'submission', 'submissions']);
     assert.equal(pta.actions.length, 3);
   } finally { cleanup(); }
 });

@@ -1,0 +1,33 @@
+{
+  "name": "@lybx-leyw/dsh-zju-tool-notice",
+  "version": "0.1.0",
+  "description": "校内通知读工具包：通知列表、全文、新通知与来源名录（纯只读，不过审批）",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "src/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/tool/notice"
+  },
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0"
+  },
+  "dsh": {
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": false,
+      "requires": []
+    }
+  }
+}

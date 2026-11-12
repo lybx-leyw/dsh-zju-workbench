@@ -7,6 +7,8 @@
  * 审批与注册器在 `tool/write-kit`，**不重复实现**。
  */
 import { createWriteToolRegistrar, contractOf, inputError, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
+import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
+import { createCc98ReadTools } from './reads.js';
 
 export const name = 'zhiyun-tool-cc98';
 
@@ -166,4 +168,14 @@ export function apply(ctx) {
     serviceSources: SERVICE_SOURCES,
   });
   registrar.register(createCc98WriteTools);
+
+  // 读工具**不过审批**：CC98 的 22 条读能力零风险，给它们配批准对话框只会
+  // 让用户对「批准」这件事脱敏。写工具照旧逐次审批。
+  createReadToolRegistrar({
+    ctx,
+    build: createCc98ReadTools,
+    serviceSources: SERVICE_SOURCES,
+  }).register(createCc98ReadTools);
 }
+
+export { createCc98ReadTools } from './reads.js';

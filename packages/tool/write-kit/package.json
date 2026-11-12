@@ -28,5 +28,8 @@
       "writes": false,
       "requires": []
     }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0"
   }
 }

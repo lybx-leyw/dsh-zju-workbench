@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-tool-cc98",
   "version": "0.1.0",
-  "description": "CC98 写操作工具包：发帖、回复、编辑、私信、赞踩评分收藏、每日签到。每个动作都要用户逐次批准",
+  "description": "CC98 工具包：发帖/回复/私信/赞踩/评分/签到（逐次审批），以及 22 条只读查询（不过审批）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -19,6 +19,7 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0",
     "@lybx-leyw/dsh-zju-tool-write-kit": "0.1.0"
   },
   "dsh": {

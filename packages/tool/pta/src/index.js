@@ -7,6 +7,8 @@
  * 审批与注册器在 `tool/write-kit`，**不重复实现**。
  */
 import { createWriteToolRegistrar, contractOf, inputError, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
+import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
+import { createPtaReadTools } from './reads.js';
 
 export const name = 'zhiyun-tool-pta';
 
@@ -70,4 +72,14 @@ export function apply(ctx) {
     serviceSources: SERVICE_SOURCES,
   });
   registrar.register(createPtaWriteTools);
+
+  // 读工具**不过审批**；`campus_pta_read` 也**不**开始答题 —— 那会启动计时，
+  // 是替用户做决定，属于尚未裁决的产品问题（见 README）。
+  createReadToolRegistrar({
+    ctx,
+    build: createPtaReadTools,
+    serviceSources: SERVICE_SOURCES,
+  }).register(createPtaReadTools);
 }
+
+export { createPtaReadTools } from './reads.js';

@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-tool-lab",
   "version": "0.1.0",
-  "description": "实验选课平台写操作工具包：选实验班次与退选。每个动作都要用户逐次批准",
+  "description": "实验课工具包：选实验班次与退选（逐次审批），以及课程/班次/周次/选课结果的读工具（不过审批）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -19,6 +19,7 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0",
     "@lybx-leyw/dsh-zju-tool-write-kit": "0.1.0"
   },
   "dsh": {

@@ -65,7 +65,7 @@ export const WRITE_HEADER = 'x-zhiyun-pta';
 const CLIENT_ACTIONS = Object.freeze(['status', 'saveCookie', 'clearCookie']);
 
 /** 读取动作白名单 —— 路由只认这几个词，不做任意属性访问。 */
-const READ_ACTIONS = Object.freeze(['problemSet', 'problems', 'problem', 'progress', 'submissions', 'submission']);
+const READ_ACTIONS = Object.freeze(['exam', 'problemSet', 'problems', 'problem', 'progress', 'submissions', 'submission']);
 
 /** 默认会话文件相对数据目录的位置。 */
 const SESSION_FILE = 'pta.session';
@@ -306,6 +306,15 @@ export function apply(ctx, config = {}) {
     const api = new PtaApi(await openTransport());
     const signal = undefined;
     switch (action) {
+      /**
+       * 题集当前的作答状态（上游 `pta homework view`）。
+       *
+       * **不启动计时**：`getExam` 是一条 GET，回的是题集与 exam 状态、
+       * 服务端时间。真正会「开始答题、启动计时」的是本包刻意没做的
+       * `homework start`（见 `packages/tool/pta/README.md` 的说明）。
+       */
+      case 'exam':
+        return api.getExam(body.problemSetId, { signal });
       case 'problemSet':
         return api.problemSet(body.problemSetId, { signal });
       case 'problems':

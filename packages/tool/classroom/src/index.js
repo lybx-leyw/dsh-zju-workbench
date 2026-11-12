@@ -45,6 +45,8 @@
  * 在那个 preset 的 plugins 树里加一行即可，不要把它加进 profile 的 bundles。
  */
 import { createStudyMaterialTools } from './tools.js';
+import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
+import { createClassroomReadTools } from './reads.js';
 
 export const name = 'zhiyun-tool-classroom';
 
@@ -60,7 +62,22 @@ export function apply(ctx) {
     // 每个工具一条 effect：fiber 卸载时逐条注销，不留半套。
     ctx.effect(() => ctx.tools.register(tool));
   }
+
+  /**
+   * 平台原始数据的读工具（课程 / 节次 / 课件 / 字幕 / 直播状态）。
+   *
+   * ⚠️ **不把 `zhiyunClassroom` 写进 `inject`**：那样课堂数据源没装时，
+   * 连 `study_*` 三个讲义工具都会一起不激活。它只提供平台取证，是附加能力，
+   * 缺席时那一个工具如实报 `SERVICE_MISSING`，`study_*` 照常可用。
+   */
+  createReadToolRegistrar({
+    ctx,
+    build: createClassroomReadTools,
+    serviceSources: { zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom' },
+  }).register(createClassroomReadTools);
 }
+
+export { createClassroomReadTools } from './reads.js';
 
 export { createStudyMaterialTools } from './tools.js';
 export { materialEntries, catalogEntry, searchEntries } from './classroom-materials.js';

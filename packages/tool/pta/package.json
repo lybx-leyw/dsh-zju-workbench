@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-tool-pta",
   "version": "0.1.0",
-  "description": "拼题A 写操作工具包：保存与提交题目答案。每个动作都要用户逐次批准",
+  "description": "拼题A 工具包：保存/提交答案（逐次审批），以及题集/题目/提交记录的读工具（不过审批，也不开始答题）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -19,6 +19,7 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0",
     "@lybx-leyw/dsh-zju-tool-write-kit": "0.1.0"
   },
   "dsh": {

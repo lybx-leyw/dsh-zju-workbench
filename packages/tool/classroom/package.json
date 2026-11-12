@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-tool-classroom",
   "version": "0.1.0",
-  "description": "智云课堂工具包：把已整理的讲义放进 agent 的工具表（study_catalog / study_read / study_search）",
+  "description": "智云课堂工具包：已整理的讲义（study_catalog / study_read / study_search）与平台原始数据的读工具（campus_classroom_read）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -31,5 +31,8 @@
       "writes": false,
       "requires": []
     }
+  },
+  "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0"
   }
 }

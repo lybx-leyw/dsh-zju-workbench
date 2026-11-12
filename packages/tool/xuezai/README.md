@@ -1,14 +1,16 @@
 # @lybx-leyw/dsh-zju-tool-xuezai
 
-学在浙大写操作工具包。一个包只装一个域：**交作业、撤作业、课堂点名签到**。
+学在浙大工具包。一个包只装一个域：**交作业、点名签到，以及它们要的读侧**。
 
 对应数据源：`source/xuezai`（包名 `@lybx-leyw/dsh-zju-source-xuezai`）。
 
 ## 工具
 
-`campus_homework` / `campus_checkin`
-
-每个动作执行前都会请求用户批准，**且只有 `allowed-once` 才放行**。
+| 工具 | 作用 |
+| --- | --- |
+| `campus_homework` | 写：提交 / 撤回作业（逐次审批） |
+| `campus_checkin` | 写：课堂点名签到（逐次审批） |
+| `campus_xuezai_read` | 读：待办、课程、课程文件、作业、点名历史（**不过审批**） |
 
 ## 分工
 
@@ -33,3 +35,12 @@
 
 本包**不带** `dsh.bundle.patch`，仓库里**没有** `cordis.patch.yml`。
 工具包只负责「怎么注册」，不负责「什么时候装」—— 后者是 preset 的决定。
+
+## 读工具与写工具分开两条注册链
+
+本包同时挂写工具（`createXxxWriteTools`，走 `tool/write-kit`，**每一步都审批**）
+与读工具（`createXxxReadTools`，走 `tool/kit`，**不审批**）。
+
+这不是代码风格，是产品决定：审批只给会改变平台状态的动作。给「查课表」配一个
+批准对话框，会让用户养成一路点同意的习惯 —— 等真的选课、交作业时，那次点击
+就不再有意义了。两条链分开，才不会有「顺手把审批也套在读工具上」的余地。
