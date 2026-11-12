@@ -382,7 +382,7 @@ node scripts/probe-write-contract.mjs
 
 | 包 | 工具 | action 数 | 覆盖的 provides |
 | --- | --- | --- | --- |
-| `tool/zdbk` | `campus_zdbk_read` | 12 | 11 条 A-1 全部（`selection credits` 与 `gpa` 各算一条） |
+| `tool/zdbk` | `campus_zdbk_read` | 12 | 11 条 A-1 全部；`gpa` 是 `grades` 之外单列的一个 action（`gpaSummary` 比上游强，值得单独问） |
 | `tool/xuezai` | `campus_xuezai_read` | 7 | 10 条 A-2（`homework view` 一条覆盖 `activity` + `activitySubmission`；4 条点名只有 `rollcallHistory` 有 source 方法） |
 | `tool/cc98` | `campus_cc98_read` | 22 | 21 条 A-3 全部 |
 | `tool/pta` | `campus_pta_read` | 7 | A-5 的 7 条读（含 `problem view` 的清单 + 正文两步；`homework start` / `finish` **未做**，见 8.3） |
@@ -392,8 +392,8 @@ node scripts/probe-write-contract.mjs
 | `tool/classroom` | `campus_classroom_read` | 7 | A-6 的 7 条**读侧**（`zhiyun text` 用 `liveText`，`zhiyun live start/stop` 未做） |
 | `tool/notice`（新） | `campus_notice_read` | 4 | A-7 的 4 条 |
 | `tool/chalaoshi`（新） | `campus_chalaoshi_read` | 3 | A-7 的 3 条 |
-| `tool/ebook`（新） | `campus_ebook_read` | 1 | A-7 的 1 条 |
-| `tool/yjsy`（新） | `campus_yjsy_read` | 1 | A-7 的 1 条 |
+| `tool/ebook`（新） | `campus_ebook_read` | —（单一用途，无 action） | A-7 的 1 条 |
+| `tool/yjsy`（新） | `campus_yjsy_read` | —（单一用途，无 action） | A-7 的 1 条 |
 
 `webvpn`（4 条）**没有**做成工具：清单 A-7 自己就说「它们更可能挂在设置页的诊断
 按钮上，而不是给 agent 的工具」。做成工具会让模型有机会去碰出口配置。
