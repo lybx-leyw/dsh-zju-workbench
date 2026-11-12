@@ -46,7 +46,7 @@ export function createNoticeReadTools(services) {
         type: 'object',
         properties: {
           action: { type: 'string', enum: ACTIONS, description: '要查什么' },
-          keyword: { type: 'string', description: 'list / new：关键词' },
+          keyword: { type: 'string', description: 'list：关键词（new 不收关键词：它按「上次看到哪」算新）' },
           source: { type: 'string', description: 'list / new：只查这些来源（名称或 id，多个用竖线分隔）' },
           since: { type: 'string', description: 'list：只看这个时间之后发布的（YYYY-MM-DD）' },
           until: { type: 'string', description: 'list：只看这个时间之前发布的（YYYY-MM-DD）' },
@@ -81,8 +81,10 @@ export function createNoticeReadTools(services) {
               url: optStr(args.url, '通知链接'),
             }));
           case 'new':
+            // `noticeNew` 只认 `source` / `reset`（它按已读记录算「新」）。
+            // 这里**不**把 keyword 塞进去：塞了会被静默忽略，而模型会以为
+            // 「按关键词过滤的新通知」生效了。
             return notice.noticeNew(defined({
-              keyword: optStr(args.keyword, '关键词'),
               source: optStr(args.source, '来源'),
               reset: args.reset === true ? true : undefined,
             }));
