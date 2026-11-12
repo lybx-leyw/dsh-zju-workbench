@@ -45,6 +45,8 @@
  * 在那个 preset 的 plugins 树里加一行即可，不要把它加进 profile 的 bundles。
  */
 import { createStudyMaterialTools } from './tools.js';
+import { createStudyCoursesTools, matchCourses } from './study-courses.js';
+import { createRawMaterialTools } from './raw-materials.js';
 import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createClassroomReadTools } from './reads.js';
 
@@ -58,7 +60,41 @@ export const inject = ['zhiyunStudy', 'tools'];
 
 export function apply(ctx) {
   const workbench = ctx.zhiyunStudy;
-  for (const tool of createStudyMaterialTools(workbench)) {
+
+  /**
+   * 把一个课名解析成 courseId，跨学期同名时**明确报歧义**。
+   *
+   * 传给 `study_*` 的工具定义，用来实现「用户只说了课名」这条路径。
+   * 拿不到课堂数据源时返回 `unsupported`，工具会提示改用 courseId ——
+   * 不静默降级成「按全部记录搜」，那正是会答错学期的那条路。
+   */
+  const resolveCourse = async (wanted, { term, signal } = {}) => {
+    const classroom = ctx.get('zhiyunClassroom');
+    if (!classroom || typeof classroom.listCourses !== 'function') return { kind: 'unsupported' };
+    const listed = await classroom.listCourses({ signal });
+    let courses = Array.isArray(listed?.items) ? listed.items : [];
+    if (term) {
+      const key = String(term).toLowerCase();
+      courses = courses.filter((item) => String(item.termName ?? '').toLowerCase().includes(key));
+    }
+    const hits = matchCourses(courses, wanted);
+    if (!hits.length) return { kind: 'missing' };
+    if (hits.length === 1) return { kind: 'one', courseId: String(hits[0].id), course: hits[0] };
+    // 名字完全相等且只有一门 → 那就是它（避免「物理」命中「物理（荣誉）」时误报歧义）
+    const exact = hits.filter((item) => String(item.title ?? '').trim() === String(wanted).trim());
+    if (exact.length === 1) return { kind: 'one', courseId: String(exact[0].id), course: exact[0] };
+    return {
+      kind: 'ambiguous',
+      candidates: hits.map((item) => ({
+        courseId: String(item.id),
+        title: item.title,
+        term: item.termName ?? null,
+        teacher: item.teacher ?? null,
+      })),
+    };
+  };
+
+  for (const tool of createStudyMaterialTools(workbench, { resolveCourse })) {
     // 每个工具一条 effect：fiber 卸载时逐条注销，不留半套。
     ctx.effect(() => ctx.tools.register(tool));
   }
@@ -75,9 +111,37 @@ export function apply(ctx) {
     build: createClassroomReadTools,
     serviceSources: { zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom' },
   }).register(createClassroomReadTools);
+
+  /**
+   * 入口索引：有哪些课、每节整理到什么程度（含**未整理**的）。
+   *
+   * 单独一个注册器，因为它要**同时**用 `zhiyunStudy`（资料库状态）与
+   * `zhiyunClassroom`（课程列表）。二者缺一时它如实报错，不影响其他工具 ——
+   * 这正是把它与 `study_*` 分开注册的理由。
+   */
+  createReadToolRegistrar({
+    ctx,
+    build: createStudyCoursesTools,
+    serviceSources: {
+      zhiyunStudy: '@lybx-leyw/dsh-zju-core-study',
+      zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom',
+    },
+  }).register(createStudyCoursesTools);
+
+  /** 原始素材：课堂原话（字幕）与 PPT 图片。与 wiki 讲义明确分开。 */
+  createReadToolRegistrar({
+    ctx,
+    build: createRawMaterialTools,
+    serviceSources: {
+      zhiyunStudy: '@lybx-leyw/dsh-zju-core-study',
+      zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom',
+    },
+  }).register(createRawMaterialTools);
 }
 
 export { createClassroomReadTools } from './reads.js';
 
 export { createStudyMaterialTools } from './tools.js';
+export { createStudyCoursesTools, indexRecords, matchCourses, LESSON_STATES } from './study-courses.js';
+export { createRawMaterialTools } from './raw-materials.js';
 export { materialEntries, catalogEntry, searchEntries } from './classroom-materials.js';

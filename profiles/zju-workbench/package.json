@@ -39,6 +39,7 @@
         "@lybx-leyw/dsh-zju-core-knowledge",
         "@lybx-leyw/dsh-zju-core-study",
         "@lybx-leyw/dsh-zju-preset-lecture",
+        "@lybx-leyw/dsh-zju-preset-zju",
         "@lybx-leyw/dsh-zju-core-quiz",
         "@lybx-leyw/dsh-zju-core-playback",
         "@lybx-leyw/dsh-zju-core-player",

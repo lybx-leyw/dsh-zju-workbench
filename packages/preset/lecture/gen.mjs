@@ -118,16 +118,29 @@ const header = `# 「讲义」Agent preset —— 标准模式 + 课程资料检
 `;
 
 const footer = `
-${ITEM}# ── 本 preset 独有：课程资料检索 ─────────────────────────────────────
+${ITEM}# ── 本 preset 独有：课程资料与课堂原始素材 ──────────────────────────
 ${ITEM}#
-${ITEM}# 这三个工具由 \`@lybx-leyw/dsh-zju-tool-classroom\` 注册（study_catalog /
-${ITEM}# study_read / study_search）。它 inject 的是主机的 \`zhiyunStudy\` 服务
-${ITEM}# （\`core/study\` provide）和 \`tools\` 注册表，自己不 provide 任何服务，
-${ITEM}# 所以不需要 \`isolate\` realm —— realm 只用于隔离 preset 自己对外发布的
-${ITEM}# 服务名，不隔离对主机服务的读取。
+${ITEM}# 这一行挂上 7 个工具，由 \`@lybx-leyw/dsh-zju-tool-classroom\` 注册：
+${ITEM}#
+${ITEM}#   study_courses     入口索引：有哪些课、每节整理到什么程度（**含未整理的**）
+${ITEM}#   study_catalog     已整理的讲义目录（wiki 经验库）
+${ITEM}#   study_read        读一条整理好的讲义主题
+${ITEM}#   study_search      在已整理讲义里按关键词定位（可带课名锁定是哪一门）
+${ITEM}#   raw_transcript    课堂原始转写稿（老师原话，带时间戳）
+${ITEM}#   raw_slides        PPT 页面**图片**（没有文字层，本仓不做 OCR）
+${ITEM}#   campus_classroom_read  平台原始数据（课程/节次/课件/字幕/直播状态）
+${ITEM}#
+${ITEM}# 前六个分成两组是有意的：study_* 读的是**二次加工过的 wiki 讲义**，
+${ITEM}# raw_* 读的是**原始素材**。混在一起时模型会把「老师随口说的话」当成
+${ITEM}# 讲义的结论，也会把 PPT 的图片当成页面上的文字去引用。
+${ITEM}#
+${ITEM}# 它 inject 的是主机的 \`zhiyunStudy\`（\`core/study\` provide）与 \`tools\`
+${ITEM}# 注册表，自己不 provide 任何服务，所以不需要 \`isolate\` realm ——
+${ITEM}# realm 只用于隔离 preset 自己对外发布的服务名，不隔离对主机服务的读取。
 ${ITEM}#
 ${ITEM}# 该包**不在** profile 的 bundles 里，正是为了让它只出现在这个 preset：
 ${ITEM}# 放进 profile 就是主机平面，所有 preset 都会看到。
+${ITEM}# 而工具表每多一格都在挤占模型的选择空间 —— 7 个已经不少了。
 ${ITEM}- id: tool-classroom
 ${ITEM}  name: '@lybx-leyw/dsh-zju-tool-classroom'
 

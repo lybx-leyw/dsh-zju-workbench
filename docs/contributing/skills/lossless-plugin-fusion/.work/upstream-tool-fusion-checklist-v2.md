@@ -32,7 +32,7 @@
 
 ---
 
-## 二、本仓现有 24 个工具（实测）
+## 二、本仓现有 27 个工具（实测）
 
 | 包 | 工具 | 说明 |
 | --- | --- | --- |
@@ -54,6 +54,9 @@
 | `tool/pta` | `campus_pta_read` | 7 action |
 | | `campus_answer` | 2 action（写） |
 | `tool/classroom` | `campus_classroom_read` | **10 action**（含 `check` / `setupPlan` / `liveCandidates`） |
+| | `study_courses` | 入口索引：有哪些课、每节整理状态（**含未整理**） |
+| | `study_catalog` / `study_read` / `study_search` | wiki 讲义（已整理） |
+| | `raw_transcript` / `raw_slides` | 原始素材：课堂原话 / PPT 图 |
 | `tool/doc` | `campus_doc` | 4 action（text / pdf / pages / find） |
 | `tool/xxt` | `campus_xxt_read` | 7 action |
 | `tool/notice` | `campus_notice_read` | 4 action |
@@ -134,7 +137,7 @@
 
 | 项 | 结果 |
 | --- | --- |
-| 工具数 | 24 |
+| 工具数 | **27** |
 | 探针 | **32/32** |
 | tool + repo + doc 测试 | **317 条**（316 过 / 1 skip / 0 失败） |
 | classroom + http | **253 条**（252 过 / 1 skip / 0 失败） |
@@ -158,7 +161,7 @@
 
 ## 七、仍然压着的一件事
 
-**24 个工具一个都没挂载。**
+**27 个工具里只有 8 个被挂载**：`tool-classroom` 的 7 个（`study_courses` / `study_catalog` / `study_read` / `study_search` / `raw_transcript` / `raw_slides` / `campus_classroom_read`）+ `tool-doc` 的 1 个（`campus_doc`）。**其余 19 个到不了 agent。**
 
 - preset（`D11`）仍未定
 - 按约定工具包不进 profile bundles

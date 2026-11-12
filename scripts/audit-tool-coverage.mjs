@@ -235,8 +235,10 @@ for (const dir of readdirSync(TOOL_DIR)) {
   if (!existsSync(srcDir)) continue;
   for (const file of readdirSync(srcDir).filter((x) => x.endsWith('.js'))) {
     const text = readFileSync(path.join(srcDir, file), 'utf8');
-    // ⚠️ 字符类必须含 0-9：`campus_cc98_read`
-    for (const m of text.matchAll(/name:\s*['"]((?:campus|study)_[a-z0-9_]+)['"]/g)) existing.add(m[1]);
+    // ⚠️ 字符类必须含 0-9：`campus_cc98_read`。
+    // 前缀也要含 `raw`：`raw_transcript` / `raw_slides` 是 2026-11-12 新增的
+    // 「原始素材」工具组，只在 campus|study 里找会漏掉它们。
+    for (const m of text.matchAll(/name:\s*['"]((?:campus|study|raw)_[a-z0-9_]+)['"]/g)) existing.add(m[1]);
   }
 }
 
