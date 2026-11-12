@@ -27,7 +27,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 // 依赖图的折叠已搬到 core-plugin-graph（页面只管渲染）。
 const RUNTIME = path.join(root, 'packages/core/plugin-graph/src/runtime.js');
 
-// 用本仓真实的包名前缀与一个「教科书形状」的平面：parser 提供 zhiyunParser，
+// 用本仓真实的包名前缀与一个「教科书形状」的平面：parser 提供 zwParser，
 // study-core 需要它，page-today 需要 study-core 的一条服务。三包都活着时，
 // 图应当是 page-today → study-core → parser，唯一的叶是 page-today。
 const PKG = Object.freeze({
@@ -45,14 +45,14 @@ const PKG = Object.freeze({
  */
 export function planeOf(live) {
   const spec = {
-    [PKG.parser]: { inject: [], resolved: [], provides: 'zhiyunParser' },
-    [PKG.study]: { inject: ['zhiyunParser'], resolved: ['zhiyunParser'] },
-    [PKG.today]: { inject: ['zhiyunStudyController'], resolved: ['zhiyunStudyController'] },
+    [PKG.parser]: { inject: [], resolved: [], provides: 'zwParser' },
+    [PKG.study]: { inject: ['zwParser'], resolved: ['zwParser'] },
+    [PKG.today]: { inject: ['zwStudyController'], resolved: ['zwStudyController'] },
   };
-  // study-core 提供 zhiyunStudyController；它关掉后这条服务从 providers 消失。
+  // study-core 提供 zwStudyController；它关掉后这条服务从 providers 消失。
   const providers = new Map();
   for (const name of live) if (spec[name]?.provides) providers.set(spec[name].provides, name);
-  if (live.includes(PKG.study)) providers.set('zhiyunStudyController', PKG.study);
+  if (live.includes(PKG.study)) providers.set('zwStudyController', PKG.study);
   const rows = live.map(name => ({
     name,
     requires: [...spec[name].inject].sort(),
@@ -160,11 +160,11 @@ async function main() {
   }
   console.log(`基线边集（全部活着）：${result.baseline.join(' | ') || '（空）'}`);
   for (const item of result.cases) {
-    const short = item.closed.replace(/^dsh-zhiyun-/, '');
+    const short = item.closed.replace(/^dsh-zju-/, '');
     console.log(`\n关掉 ${short}：`);
     console.log(`  消失的边：${item.lost.length === 0 ? '（无）' : item.lost.join(' | ')}`);
     console.log(`  它自己：leaf=${item.closedRow?.leaf} cancellable=${item.closedRow?.cancellable}`);
-    console.log(`  因此新获得「可取消」的包：${item.newlyCancellable.map(name => name.replace(/^dsh-zhiyun-/, '')).join('、') || '（无）'}`);
+    console.log(`  因此新获得「可取消」的包：${item.newlyCancellable.map(name => name.replace(/^dsh-zju-/, '')).join('、') || '（无）'}`);
   }
   if (verdict.code === 'LIVENESS_STABLE') {
     console.log('\n✓ 图对行的开关是透明的：关掉一个包，不会让别的包的依赖凭空消失。');

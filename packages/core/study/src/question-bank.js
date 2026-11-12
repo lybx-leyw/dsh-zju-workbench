@@ -25,7 +25,7 @@ const codeOf = value => typeof value === 'string' ? value : value?.code;
  * "到底是 Python 没装、依赖缺失、还是能力未就绪"的关键区分就永久丢了。
  */
 const BATCH_FAILURE_HINTS={
-  E_DISABLED:'DeepTutor 宿主服务未启用，请在插件设置中开启 zhiyun-deeptutor',
+  E_DISABLED:'DeepTutor 宿主服务未启用，请在插件设置中开启 zw-deeptutor',
   E_PYTHON_MISSING:'没有可用的 Python 3.11–3.14 解释器，请安装或在设置中指定路径',
   E_PYTHON_VERSION:'Python 版本不受支持，需要 3.11–3.14',
   E_DEPS_MISSING:'DeepTutor 运行依赖未安装（vendor/deeptutor/requirements/server.txt）',

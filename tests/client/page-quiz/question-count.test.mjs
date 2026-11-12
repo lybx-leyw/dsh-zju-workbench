@@ -66,7 +66,7 @@ test('真实数据校验：过滤后计数小于全量', async (t) => {
   // 真实题库只存在于**本机 profile 的存储**里（`.runtime/home/storages/`），
   // 那份数据被 `.gitignore` 排除、不进仓库。新 clone / CI 上它必然不存在，
   // 所以这里 skip 而不是 ENOENT 失败 —— 这条用例本来就是「拿真实数据抽查」。
-  const STORE = path.resolve('.runtime/home/storages/zhiyun_knowledge.json');
+  const STORE = path.resolve('.runtime/home/storages/zw_knowledge.json');
   if (!fsx.existsSync(STORE)) {
     t.skip('本机没有真实题库存储（.runtime/home/storages/），这是本地抽查用例');
     return;

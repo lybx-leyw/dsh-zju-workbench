@@ -5,7 +5,7 @@
  *
  * 1. **纯函数 / 客户端层**（`src/pta.js`）：题集列表、题面、进度、Cookie 解析、
  *    错误分类。这一层用假 `request`，永不联网。
- * 2. **集成层**（`src/index.js`）：`apply()` 真的 provide 了 `zhiyunPta` 吗？
+ * 2. **集成层**（`src/index.js`）：`apply()` 真的 provide 了 `zwPta` 吗？
  *    路由路径对吗？非法动作会不会静默成功？
  *
  * 第二层单列，是因为 `tests/yjsy-host.test.mjs` 记过的教训：纯解析测试全绿
@@ -719,21 +719,21 @@ test('整串 Cookie 原样保留（PTA 用整串认证，不是挑单个键）',
 
 /* ────────────────────────────── 集成层：服务面与路由 ────────────────────────────── */
 
-test('apply() provide 了 zhiyunPta 并注册了 /api/zhiyun-pta', () => {
+test('apply() provide 了 zwPta 并注册了 /api/zw-pta', () => {
   const { ctx, services, routes, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fakeFetch(), protect: identityProtect });
-    const pta = services.get('zhiyunPta');
-    assert.ok(pta, '必须 provide zhiyunPta');
+    const pta = services.get('zwPta');
+    assert.ok(pta, '必须 provide zwPta');
     assert.equal(pta.routePath, ROUTE_PATH);
-    assert.equal(ROUTE_PATH, '/api/zhiyun-pta');
+    assert.equal(ROUTE_PATH, '/api/zw-pta');
     assert.equal(pta.platform, 'pta');
     // ⚠️ 接写操作后从 true 改成 false：本包含 `saveAnswer` / `submitAnswer` 的
   // Prepare/Execute 对（见 `writes.js`）。只读动作表 `reads` 不变，
   // 写方法另列在 `writeMethods` 里。
   assert.equal(pta.readOnly, false);
     assert.equal(routes.length, 1, '必须注册一条路由');
-    assert.equal(routes[0].path, '/api/zhiyun-pta');
+    assert.equal(routes[0].path, '/api/zw-pta');
     // 服务自述的名单要与实现一致 —— 少一个动作等于对外少一个能力。
     // `exam` 是 2026-11-12 补的：上游 `pta homework view` 读的是题集作答状态，
     // 而它是一条 GET（**不会**启动计时，`homework start` 才是）。
@@ -747,7 +747,7 @@ test('服务面把 pta 的纯函数也暴露出来（宿主侧可直接用）', 
   const { ctx, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fakeFetch(), protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     for (const method of ['ptaStatus', 'status', 'todos', 'ptaTodos', 'saveCookie',
       'savePtaCookie', 'clearCookie', 'problemSets', 'read', 'client', 'session']) {
       assert.equal(typeof pta[method], 'function', `缺少方法 ${method}`);
@@ -768,7 +768,7 @@ test('GET 反映"没配 Cookie"，且不回任何 Cookie 值', async () => {
     assert.equal(res.result.body.ok, true);
     assert.equal(res.result.body.pta.configured, false, '没配就是 false，不是 unknown');
     assert.equal(res.result.body.pta.names.length, 0);
-    assert.equal(res.result.body.route, '/api/zhiyun-pta');
+    assert.equal(res.result.body.route, '/api/zw-pta');
     assert.equal(res.result.body.platform.label, '拼题A');
     // 只回键名，不回值 —— 这条路由的输出会出现在浏览器里
     assert.doesNotMatch(JSON.stringify(res.result.body), /PTASESSION=/);
@@ -795,7 +795,7 @@ test('README 承诺的四个 read 动作里，非法的那一个返回 INVALID_I
   const { ctx, routes, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fakeFetch(), protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     // 先配上 Cookie，否则会先撞 COOKIE_IMPORT_REQUIRED（那是另一条断言）
     await pta.saveCookie('PTASESSION=a; SESSION=b');
 
@@ -836,7 +836,7 @@ test('saveCookie：粘 cURL 后 ptaStatus 变 configured，键名正确', async 
   const { ctx, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fakeFetch(), protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
 
     assert.deepEqual(await pta.ptaStatus(), { configured: false, names: [] });
 
@@ -855,7 +855,7 @@ test('saveCookie：空串 = 清除（不是"没识别出 Cookie"）', async () =
   const { ctx, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fakeFetch(), protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     await pta.saveCookie('PTASESSION=abc');
     assert.equal((await pta.ptaStatus()).configured, true);
 
@@ -875,7 +875,7 @@ test('saveCookie：认不出的输入抛 INVALID_INPUT，且不冲掉已有 Cook
   const { ctx, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fakeFetch(), protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     await pta.saveCookie('PTASESSION=abc');
 
     await assert.rejects(() => pta.saveCookie('Path=/; HttpOnly'), (error) => {
@@ -894,7 +894,7 @@ test('路由：缺写头返回 403（CSRF 防线）', async () => {
     const res = makeRes();
     await routes[0].handler(makeReq('{"cookie":"PTASESSION=a"}', { url: `${ROUTE_PATH}?cookie` }), res);
     assert.equal(res.result.status, 403);
-    assert.match(res.result.body.error, /x-zhiyun-pta/);
+    assert.match(res.result.body.error, /x-zw-pta/);
   } finally { cleanup(); }
 });
 
@@ -985,7 +985,7 @@ test('read:problemSet 走真实 Transport + 假 fetch，返回题型分布', asy
   const { ctx, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fetchImpl, protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     await pta.saveCookie('PTASESSION=abc');
 
     const out = await pta.read({ action: 'problemSet', problemSetId: '100' });
@@ -1008,7 +1008,7 @@ test('todos() 的 pta 半：形状是 { pta: { ok, rows, error } }', async () =>
   const { ctx, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fetchImpl, protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     await pta.saveCookie('PTASESSION=abc');
 
     const out = await pta.todos();
@@ -1027,7 +1027,7 @@ test('todos() 的 pta 半：失败也返回 ok:false，绝不抛到调用方', a
   try {
     // 没有 Cookie：这是最常见的"没配"
     apply(ctx, { fetch: fakeFetch(), protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
 
     const out = await pta.todos();
     assert.equal(out.pta.ok, false);
@@ -1042,7 +1042,7 @@ test('todos() 的 pta 半：网络层失败也收成 ok:false', async () => {
   const { ctx, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: failing, protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     await pta.saveCookie('PTASESSION=abc');
 
     const out = await pta.todos();
@@ -1060,7 +1060,7 @@ test('problemSets() 服务方法返回原始形状（不归一）', async () => 
   const { ctx, services, cleanup } = fakeCtx();
   try {
     apply(ctx, { fetch: fetchImpl, protect: identityProtect });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     await pta.saveCookie('PTASESSION=abc');
 
     const out = await pta.problemSets();
@@ -1076,14 +1076,14 @@ test('会话落盘：写成文件后重新装配能读回（重启不丢 Cookie�
   try {
     const first = fakeCtx({ dir });
     apply(first.ctx, { fetch: fakeFetch(), protect: identityProtect });
-    await first.services.get('zhiyunPta').saveCookie('PTASESSION=keepme; SESSION=2');
-    assert.equal((await first.services.get('zhiyunPta').ptaStatus()).configured, true);
+    await first.services.get('zwPta').saveCookie('PTASESSION=keepme; SESSION=2');
+    assert.equal((await first.services.get('zwPta').ptaStatus()).configured, true);
     // 显式刷盘（卸载钩子也做这件事，这里直接等 saveCookie 里的 save）
-    await first.services.get('zhiyunPta').session().flush();
+    await first.services.get('zwPta').session().flush();
 
     const second = fakeCtx({ dir });
     apply(second.ctx, { fetch: fakeFetch(), protect: identityProtect });
-    const status = await second.services.get('zhiyunPta').ptaStatus();
+    const status = await second.services.get('zwPta').ptaStatus();
     assert.equal(status.configured, true, '重新装配后 Cookie 应该在');
     assert.deepEqual(status.names.sort(), ['PTASESSION', 'SESSION']);
   } finally {
@@ -1095,10 +1095,10 @@ test('卸载后服务被摘掉、路由也解绑（可重复卸载）', async ()
   const { ctx, services, routes, cleanup } = fakeCtx();
   try {
     const dispose = apply(ctx, { fetch: fakeFetch(), protect: identityProtect });
-    assert.ok(services.get('zhiyunPta'));
+    assert.ok(services.get('zwPta'));
     assert.equal(routes.length, 1);
     await dispose();
-    assert.equal(services.get('zhiyunPta'), undefined, '卸载必须摘掉服务');
+    assert.equal(services.get('zwPta'), undefined, '卸载必须摘掉服务');
     await assert.doesNotReject(async () => { await dispose(); }, '重复卸载不该抛');
   } finally { cleanup(); }
 });
@@ -1114,7 +1114,7 @@ test('config.now 注入生效（题集过滤用注入的时间，不用系统时
       protect: identityProtect,
       now: () => new Date('2026-10-21T00:00:00Z'),
     });
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     await pta.saveCookie('PTASESSION=abc');
 
     const out = await pta.problemSets({ includeEnded: false });

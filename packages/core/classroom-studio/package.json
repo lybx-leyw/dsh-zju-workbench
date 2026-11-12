@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-classroom-studio",
   "version": "0.1.0",
-  "description": "智云 Pro「互动课堂」宿主半边：把 OpenMAIC 的 app/api/* route 搬成 ctx.zhiyunClassroom 服务（status / generate / runs / classroom / export / providers），不暴露实现",
+  "description": "ZJU Workbench「互动课堂」宿主半边：把 OpenMAIC 的 app/api/* route 搬成 ctx.zwClassroom 服务（status / generate / runs / classroom / export / providers），不暴露实现",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

@@ -8,15 +8,15 @@
  *
  * # 为什么提供空服务而不是什么都不做
  *
- * `ctx.provide('zhiyunPlayerStats', …)` 把纯函数挂成服务，
+ * `ctx.provide('zwPlayerStats', …)` 把纯函数挂成服务，
  * 让**将来的消费方**（页面包 / 别的插件）经 `ctx.get` 就能拿到，
  * 不必知道这些函数住在哪个文件的哪条相对路径上。
- * 这与本仓其他领域包的形状一致（`zhiyunNotes` / `zhiyunQuiz` / `zhiyunKnowledge` …）。
+ * 这与本仓其他领域包的形状一致（`zwNotes` / `zwQuiz` / `zwKnowledge` …）。
  *
  * # 消费方
  *
  * 学习页视频栏经客户端包拿到同一批函数（`src/client.jsx`），画在回放下面。
- * 宿主侧别的插件仍然 `ctx.get('zhiyunPlayerStats')`，不必改这里。
+ * 宿主侧别的插件仍然 `ctx.get('zwPlayerStats')`，不必改这里。
  */
 
 import {
@@ -29,11 +29,11 @@ import {
   STATS_MERGE_GAP_SEC,
 } from './stats.js';
 
-export const name = 'zhiyun-player-stats';
+export const name = 'zw-player-stats';
 
 /** 无宿主行为：本包只有纯计算。 */
 export function apply(ctx) {
-  return ctx.provide('zhiyunPlayerStats', {
+  return ctx.provide('zwPlayerStats', {
     computeSectionStats,
     buildContentSegments,
     buildSpeedBuckets,

@@ -3,7 +3,7 @@
  *
  * # 来历
  *
- * 原先住在 `dsh-zhiyun-shell-workbench/src/model.js` —— 那个包是**产品界面外壳**
+ * 原先住在 `dsh-zju-shell-workbench/src/model.js` —— 那个包是**产品界面外壳**
  * （侧栏、页框架、主题、React 组件）。外壳已随产品方向调整而退休（见
  * `archive/deprecated-packages/`），但本文件里的东西**不是外壳**：
  *
@@ -38,7 +38,7 @@ export const NAV = Object.freeze([
   // 也是同一段动线（选课 → 看回放 → 整理 → 回看），拆成三页的代价是每一步都要离开
   // 当前上下文：看课时读不到讲义，读讲义时回不到那一段，还得记着自己是从哪进来的。
   //
-  // 现在播放是这一页里的一栏（`zs-content-switch` 的「视频」），课程目录是左栏，
+  // 现在播放是这一页里的一栏（`zws-content-switch` 的「视频」），课程目录是左栏，
   // 整理在其余几栏。导航因此少两项 —— 这是**合并**，不是删功能。
   { id: 'study', label: '学习', icon: 'bulb', hint: '课程、回放、课件与笔记，都在这一页' },
   // 「课堂」页面已移除（2026-11）：产品侧要的是**学习页里的 AI 教学**
@@ -47,7 +47,7 @@ export const NAV = Object.freeze([
   // 因此这里不再有 `classroom` / `classroom-build` 两条 NAV：
   // `page-classroom-play`、`page-classroom-build`、`core/classroom-stage`、
   // `core/classroom-geometry` 都已归档到 `archive/deprecated-packages/`。
-  // 保留的是生成与渲染链路（`classroom-generate` → `zhiyunClassroomGenerate`，
+  // 保留的是生成与渲染链路（`classroom-generate` → `zwClassroomGenerate`，
   // `classroom-renderer` → `page-study` 的 `ClassroomSlide`）。
   // 「规划」紧跟「学习」：学完当天的事，接下来就是安排明天 —— 动线是连着的。
   //
@@ -75,7 +75,7 @@ export const NAV = Object.freeze([
   // 它原来与「插件」「文档」并列放在尾部 —— 三者都是关于工作台**本身**的页。
   // 现在是两页，位置不变。若将来要接回，导航项、包、profile 三处都要一起加。
 ]);
-export const panelKey = id => `zhiyun.${id}`;
+export const panelKey = id => `zw.${id}`;
 
 /**
  * 导航**上半组**：固定在上面、**不可撤销**的页 —— 学习动线（今天 / 论文 /
@@ -104,14 +104,14 @@ export const RAIL_DEFAULT = Object.freeze(['today', 'paper', 'study', 'quiz', 'p
 export const RAIL_ACCOUNT = 'account';
 
 /**
- * **整幅铺开**的页：内容区不套 `.zy-content` 的版心（980px 上限 + 文章式内边距）。
+ * **整幅铺开**的页：内容区不套 `.zw-content` 的版心（980px 上限 + 文章式内边距）。
  *
- * 为什么需要这个区分：`.zy-content` 是给**文章型**页面用的（今天 / 插件），
+ * 为什么需要这个区分：`.zw-content` 是给**文章型**页面用的（今天 / 插件），
  * 它的 max-width 与内边距让长文本行宽可读。但编辑器不是文章 —— 它是一个应用面板：
  *
  *   1. 版心 980px 减去左右各 48px 内边距，只剩约 880px；笔记页里再放
  *      文件树 + 编辑器 + 右栏，正文被挤到一两百像素宽；
- *   2. `.zy-content` 的高度由内容决定，于是页内元素的 `height:100%` 解析成
+ *   2. `.zw-content` 的高度由内容决定，于是页内元素的 `height:100%` 解析成
  *      `auto` —— 面板变成一张浮在滚动容器里的小卡片，四周全是死空间。
  *
  * 这类页面**自己**负责滚动（内部分区各自 overflow），所以整页不再纵向滚动。
@@ -126,13 +126,13 @@ export const FULL_BLEED_PAGES = Object.freeze(['notes', 'docs']);
 /**
  * 这一页的内容插槽名。
  *
- * 默认由 id 推导（`zhiyun.<id>.content`），这是壳与页面包之间唯一的插槽约定。
+ * 默认由 id 推导（`zw.<id>.content`），这是壳与页面包之间唯一的插槽约定。
  * 其余页面都用默认规则；需要自定义时在 NAV 里直接写 `slot`，这里只做取值。
  * @param page - `NAV` 里的一项。
  * @returns 插槽名。
  */
 export function pageSlot(page) {
-  return page.slot ?? `zhiyun.${page.id}.content`;
+  return page.slot ?? `zw.${page.id}.content`;
 }
 
 /**
@@ -213,7 +213,7 @@ export function matchingPages(query, pages = NAV) {
 
 // 这里曾经有一份 pickLearningWorkspace 的副本。拆包时学习空间连同它的挑选规则一起
 // 搬进了 @lybx-leyw/dsh-zju-core-study/src/learning-space.js（那里要求「标题恰好命中一条」才算
-// 确定，并把选中逻辑经 zhiyunLearningSpace 服务暴露给外壳）。留在壳里的这份无人导入、
+// 确定，并把选中逻辑经 zwLearningSpace 服务暴露给外壳）。留在壳里的这份无人导入、
 // 语义还更弱（find 而非 filter），是过期副本，已删除 —— 别再抄第二份。
 export function beijingDate(now = new Date()) {
   return new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'long' }).format(now);

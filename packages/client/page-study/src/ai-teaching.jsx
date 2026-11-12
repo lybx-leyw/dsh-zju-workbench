@@ -287,19 +287,19 @@ export function AiTeaching({ state, controller }) {
   // ── 未生成 / 生成中 / 失败：只给入口与原因 ────────────────────
   if (status !== 'ready' || !total) {
     return (
-      <section className="zs-ai-teach" aria-label="AI 教学">
-        <div className="zs-ai-start">
+      <section className="zws-ai-teach" aria-label="AI 教学">
+        <div className="zws-ai-start">
           <strong>把抽象内容变成看得懂的讲解</strong>
           <p>预判理解障碍，再用示意图、例子和逐步推导生成章节 HTML。章节并发，章内串行；不生成语音和图片。</p>
-          {status === 'error' && <p className="zs-ai-err" role="alert">{error}</p>}
-          <div className="zs-ai-start-actions">
+          {status === 'error' && <p className="zws-ai-err" role="alert">{error}</p>}
+          <div className="zws-ai-start-actions">
             {/* 失败且还留着 runId → 优先「继续」（不重跑已完成的章）；
                 只有在没有可续的 run 时才从头生成。
                 「继续」是独立的两个按钮，不套并发配置 —— 续跑不重新规划章节。 */}
             {status === 'error' && runId ? (
               <>
-                <button type="button" className="zs-primary" onClick={() => void resume()}>继续上次备课</button>
-                <button type="button" className="zs-text" onClick={() => void generate()}>从头开始</button>
+                <button type="button" className="zws-primary" onClick={() => void resume()}>继续上次备课</button>
+                <button type="button" className="zws-text" onClick={() => void generate()}>从头开始</button>
               </>
             ) : (
               <TeachingGenerate
@@ -323,62 +323,62 @@ export function AiTeaching({ state, controller }) {
 
   // ── 有课件：逐页展示 ─────────────────────────────────────────
   return (
-    <section className="zs-ai-teach" aria-label="AI 教学">
-      <header className="zs-ai-head">
+    <section className="zws-ai-teach" aria-label="AI 教学">
+      <header className="zws-ai-head">
         <div>
-          <span className="zs-eyebrow">
+          <span className="zws-eyebrow">
             AI 讲解 · 第 {index + 1} {current?.html ? '章' : '页'} / 共 {total} {current?.html ? '章' : '页'}{loadedFromDisk ? ' · 上次保存的' : ''}
             {current?.html && deckState ? ` · 本章第 ${deckState.slideIndex + 1}/${deckState.slideCount} 页` : ''}
             {current?.html && deckState?.formulaCount ? ` · 公式 ${deckState.formulaStep}/${deckState.formulaCount}` : ''}
           </span>
           <h2>{current?.title}</h2>
         </div>
-        <div className="zs-ai-nav">
-          <button type="button" className="zs-button" disabled={index === 0} onClick={() => go(index - 1)} aria-label="上一页">←</button>
-          <span className="zs-ai-count">{index + 1} / {total}</span>
-          <button type="button" className="zs-button" disabled={index >= total - 1} onClick={() => go(index + 1)} aria-label="下一页">→</button>
+        <div className="zws-ai-nav">
+          <button type="button" className="zws-button" disabled={index === 0} onClick={() => go(index - 1)} aria-label="上一页">←</button>
+          <span className="zws-ai-count">{index + 1} / {total}</span>
+          <button type="button" className="zws-button" disabled={index >= total - 1} onClick={() => go(index + 1)} aria-label="下一页">→</button>
         </div>
       </header>
 
-      <div className="zs-ai-progress" role="progressbar" aria-valuemin={1} aria-valuemax={total} aria-valuenow={index + 1}>
+      <div className="zws-ai-progress" role="progressbar" aria-valuemin={1} aria-valuemax={total} aria-valuenow={index + 1}>
         <i style={{ width: `${((index + 1) / total) * 100}%` }} />
       </div>
 
       {/* 章内页进度：章节 HTML 自己会画一条；这里再给一条外层可读的，避免 iframe 缩放后看不见。 */}
       {current?.html && deckState ? (
-        <div className="zs-ai-deck-progress" role="progressbar" aria-label="本章页进度"
+        <div className="zws-ai-deck-progress" role="progressbar" aria-label="本章页进度"
           aria-valuemin={1} aria-valuemax={deckState.slideCount} aria-valuenow={deckState.slideIndex + 1}>
           <i style={{ width: `${((deckState.slideIndex + 1) / deckState.slideCount) * 100}%` }} />
         </div>
       ) : null}
 
       {/* 课件页：canvas 是生成管线给的（元素位置/字号/图形都在里面）。
-          章节 HTML 用 class 承载尺寸（见 style.css 的 .zs-ai-slide-frame）：
+          章节 HTML 用 class 承载尺寸（见 style.css 的 .zws-ai-slide-frame）：
           父容器原本 max-width:760px，会把 iframe 压到 HTML 自己的 <900px 堆叠断点里，
           于是「左右两栏」永远显示成「上下」。 */}
       {current?.html ? (
-        <div className="zs-ai-slide-frame">
+        <div className="zws-ai-slide-frame">
           <iframe ref={frameRef} key={current.id} title={current.title} srcDoc={current.html} sandbox="allow-scripts"
             referrerPolicy="no-referrer" />
         </div>
       ) : current?.canvas ? (
-        <div className="zs-ai-slide">
+        <div className="zws-ai-slide">
           <ClassroomSlide slide={current.canvas} width={720} />
         </div>
       ) : (
-        <p className="zs-ai-err" role="alert">这一页缺少画面内容（生成时未产出 canvas）</p>
+        <p className="zws-ai-err" role="alert">这一页缺少画面内容（生成时未产出 canvas）</p>
       )}
 
       {/* 讲课稿：AI 要说的话，与页面内容不是一回事，单独一块 */}
       {current?.speech ? (
-        <div className="zs-ai-speech">
-          <span className="zs-ai-speech-label">讲课稿</span>
+        <div className="zws-ai-speech">
+          <span className="zws-ai-speech-label">讲课稿</span>
           <MarkdownText text={current.speech} labels={MARKDOWN_LABELS} />
         </div>
       ) : null}
 
-      <footer className="zs-ai-foot">
-        <div className="zs-ai-foot-left">
+      <footer className="zws-ai-foot">
+        <div className="zws-ai-foot-left">
           <TeachingGenerate
             controller={controller}
             running={false}
@@ -387,20 +387,20 @@ export function AiTeaching({ state, controller }) {
           />
           <button
             type="button"
-            className="zs-text"
+            className="zws-text"
             disabled={!current?.html && (exporting || !runIdToExport)}
             onClick={() => current?.html ? exportHtml() : void exportPptx()}
           >
             {current?.html ? '保存本章 HTML' : exporting ? '正在导出…' : '保存为 PPT'}
           </button>
         </div>
-        <button type="button" className="zs-primary" disabled={index >= total - 1} onClick={() => go(index + 1)}>
+        <button type="button" className="zws-primary" disabled={index >= total - 1} onClick={() => go(index + 1)}>
           {index >= total - 1 ? '这一节讲完了' : '下一页'}
         </button>
       </footer>
 
       {/* 导出失败要说清楚原因，而不是让按钮闪一下什么都不发生 */}
-      {exportError && <p className="zs-ai-err" role="alert">{exportError}</p>}
+      {exportError && <p className="zws-ai-err" role="alert">{exportError}</p>}
     </section>
   );
 }

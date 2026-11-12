@@ -106,7 +106,7 @@ test('预取在后台把缓存填上，之后再读就带 cacheUrl', async () =>
     const again = await source.getLessonContent('1', '2');
     assert.equal(again.slides.items.length, 2);
     for (const item of again.slides.items) {
-      assert.equal(item.cacheUrl, `/zhiyun-slides/${item.cacheKey}`);
+      assert.equal(item.cacheUrl, `/zw-slides/${item.cacheKey}`);
     }
     assert.equal(download.calls.length, 2, '两张图只该下次，第二次全命中');
   });

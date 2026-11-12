@@ -1,7 +1,7 @@
 /**
  * 页面自注册：页面包把自己的内容交给页面壳，不再依赖产品外壳代为声明子槽。
  *
- * 迁移前：外壳为每一页声明 `zhiyun.<id>.content` 子槽，页面包往里注册 —— 页面包因此
+ * 迁移前：外壳为每一页声明 `zw.<id>.content` 子槽，页面包往里注册 —— 页面包因此
  * 隐含依赖「外壳在场」。迁移后：页面包直接注册到页面壳拥有的 `page.content`（keyed），
  * 外壳只负责导航元数据、主题与设置，不再介入内容。
  *
@@ -26,12 +26,12 @@ import { PageFrame } from './page-frame.jsx';
  */
 export function registerPageContent(ctx, spec) {
   // 导航控制器是可选的：外壳缺席时页面仍要能显示，只是按钮不可用。
-  const navigate = () => ctx.get('zhiyunNavigation')?.navigate;
+  const navigate = () => ctx.get('zwNavigation')?.navigate;
   /**
    * 在**已就绪的 pages 服务**上注册；服务还没到时等它。
    *
    * 不能再嵌套一层 `ctx.inject(['pages'], …)`：调用方常常已经在一个注入作用域里
-   * （例如先等 `zhiyunClassroomStudio`），嵌两层会让注册落在内层 fiber，外层一旦
+   * （例如先等 `zwClassroomStudio`），嵌两层会让注册落在内层 fiber，外层一旦
    * 先被丢弃就跟着没了 —— 表现是「导轨有入口、点开空白」。
    *
    * `ctx.get('pages')` 存在则立刻注册；不存在则**不静默跳过**（那会变成空白页），

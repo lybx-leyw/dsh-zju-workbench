@@ -260,7 +260,7 @@ node --test tests/source-capability.test.mjs  # → 7 条，6 过 1 败
 | --- | --- |
 | `tests/patch-yaml.test.mjs` | ✅ 2/2 过（含「`@` 开头必须加引号」那条） |
 | `tests/source-settings.test.mjs` | ⚠️ 1 条失败：`wechat-chat: 没有 src/client.jsx` |
-| `scripts/check-attribution.mjs` | ⚠️ 失败，但**与本包无关**：12 条 dangling link 全指向 `packages/dsh-zhiyun-*`（旧路径） |
+| `scripts/check-attribution.mjs` | ⚠️ 失败，但**与本包无关**：12 条 dangling link 全指向 `packages/dsh-zju-*`（旧路径） |
 
 `source-settings` 的失败同理：本包没有客户端半边、也不该有（纯 CLI 数据源），
 需要往 `NO_SETTINGS` 白名单加一行；那也是共享文件，这次不动。

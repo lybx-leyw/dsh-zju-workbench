@@ -24,15 +24,15 @@ test('拖动时不触发整页重渲染，松手才提交一次', () => {
   // 每一帧 setState 会让整页重排、PDF iframe 跟着重排 —— 这正是连续漂移和卡顿的来源。
   assert.ok(!/setWidth\(/.test(drag[0].replace('setWidth(pending)', '')), '拖动过程中不能 setWidth');
   assert.match(drag[0], /requestAnimationFrame/, '挪动合并到每帧一次');
-  assert.match(drag[0], /--zp-drawer-width/, '拖动只改 CSS 变量');
+  assert.match(drag[0], /--zwp-drawer-width/, '拖动只改 CSS 变量');
   assert.match(drag[0], /setPointerCapture/, '指针捕获，避免移进 iframe 后丢事件');
   assert.match(drag[0], /setWidth\(pending\)/, '松手时才提交一次');
   assert.match(source, /onDoubleClick=\{resetWidth\}/, '双击分隔条恢复默认宽度');
   assert.match(source, /addEventListener\?\.\('resize'/, '窗口变窄要把超出的宽度收回来');
   assert.match(source, /onPointerDown=\{startResize\}/, '用 pointer 事件，鼠标移出窗口也能收到');
-  assert.match(css, /body\.zp-resizing[\s\S]*?user-select: none/, '拖动时禁止选中文本');
-  assert.match(css, /body\.zp-resizing \.zp-frame[\s\S]*?pointer-events: none/, '拖动时不让 iframe 吃掉指针');
-  assert.match(css, /width: var\(--zp-drawer-width/, '抽屉宽度读变量');
+  assert.match(css, /body\.zwp-resizing[\s\S]*?user-select: none/, '拖动时禁止选中文本');
+  assert.match(css, /body\.zwp-resizing \.zwp-frame[\s\S]*?pointer-events: none/, '拖动时不让 iframe 吃掉指针');
+  assert.match(css, /width: var\(--zwp-drawer-width/, '抽屉宽度读变量');
 });
 
 test('存下来的宽度只在合法区间内复用', () => {

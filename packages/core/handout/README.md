@@ -79,7 +79,7 @@ O(log n)，每次折半。
 ```
 
 - `##` 章、`###` 知识点、`#### 类型 · 小标题` 块。
-- 块类型只有五种，与 `dsh-zhiyun-page-study/src/lecture-content.jsx` 的 `kinds` 一致：
+- 块类型只有五种，与 `dsh-zju-page-study/src/lecture-content.jsx` 的 `kinds` 一致：
   讲解 / 定义 / 步骤 / 例题 / 说明。
 - **例题**用一行 `##### 解答` 分隔题干与解答（其余四种块只有一段正文）。
 - 页码、时间锚点、`blockIndexes` **不写进 md**：那些是机器字段，
@@ -96,16 +96,16 @@ md 可能已经被人改过，为一个排版失误让整份讲义读不出来�
 ## 服务面
 
 ```js
-ctx.zhiyunHandout.exportLecture({ courseTitle, lessonTitle, chapters, title })
+ctx.zwHandout.exportLecture({ courseTitle, lessonTitle, chapters, title })
 // → { path, name, folder, deduped, chars }
 
-ctx.zhiyunHandout.exportMarkdown({ courseTitle, lessonTitle, markdown })
+ctx.zwHandout.exportMarkdown({ courseTitle, lessonTitle, markdown })
 // → 同上；给「讲义已经编码好了」的场合用，省一次编码
 
-ctx.zhiyunHandout.ready()   // 诊断：笔记库挂上了没有
+ctx.zwHandout.ready()   // 诊断：笔记库挂上了没有
 ```
 
-`zhiyunVaultNotes` 是**惰性**取的，不写进 `inject`：它缺席时导出只是不可用，
+`zwVaultNotes` 是**惰性**取的，不写进 `inject`：它缺席时导出只是不可用，
 不该把学习页整片拖成 pending。
 
 ## 测试

@@ -35,7 +35,7 @@ const plugin = await import(INDEX_URL);
  * 照 `tests/deeptutor-host.test.mjs` 的写法 —— 那里已经踩过一次坑：
  * 真 Cordis 里 provide 与 get 是同一个容器，测试里分开，才能显式掌控"谁先加载"。
  */
-function makeCtx({ profileDir = '/tmp/zyc-profile', services = {}, provideThrows = false } = {}) {
+function makeCtx({ profileDir = '/tmp/zwc-profile', services = {}, provideThrows = false } = {}) {
   const provided = new Map(Object.entries(services));
   const disposers = [];
   const logs = [];
@@ -83,8 +83,8 @@ function mount(config) {
   const harness = makeCtx();
   const dispose = plugin.apply(harness.ctx, config);
   assert.equal(typeof dispose, 'function', 'apply() 必须返回 disposer');
-  const service = harness.provided.get('zhiyunClassroomStudio');
-  assert.ok(service, 'apply() 必须 provide zhiyunClassroomStudio');
+  const service = harness.provided.get('zwClassroomStudio');
+  assert.ok(service, 'apply() 必须 provide zwClassroomStudio');
   return { ...harness, service, dispose };
 }
 
@@ -102,7 +102,7 @@ test('apply() 在空 ctx 上不抛，并声明了规范 §4 的全部形状', ()
     'providers.list', 'providers.set',
   ]) {
     const fn = path.split('.').reduce((cursor, key) => cursor?.[key], service);
-    assert.equal(typeof fn, 'function', `缺少 zhiyunClassroomStudio.${path}`);
+    assert.equal(typeof fn, 'function', `缺少 zwClassroomStudio.${path}`);
   }
 
   assert.deepEqual(plugin.inspectShape(service), [], '形状自检必须为空');
@@ -111,7 +111,7 @@ test('apply() 在空 ctx 上不抛，并声明了规范 §4 的全部形状', ()
 test('apply() 在没有 profileContext 时不抛（数据根缺失只降级）', () => {
   const harness = makeCtx({ profileDir: null });
   assert.doesNotThrow(() => plugin.apply(harness.ctx, {}));
-  assert.ok(harness.provided.get('zhiyunClassroomStudio'), '没有数据根也要 provide');
+  assert.ok(harness.provided.get('zwClassroomStudio'), '没有数据根也要 provide');
 });
 
 test('apply() 在 provide 抛错时不抛（服务名被占用的最坏情况）', () => {
@@ -172,10 +172,10 @@ test('status() 在组合层冲突时 state=partial 并如实写明占用者', as
   // 源包的形状特征：acquireSso / transport（packages/source/classroom/src/index.js:82-101）
   const { service, logs } = mount();
   const harness = makeCtx({
-    services: { zhiyunClassroomStudio: { acquireSso: async () => [], transport: {} } },
+    services: { zwClassroomStudio: { acquireSso: async () => [], transport: {} } },
   });
   plugin.apply(harness.ctx, {});
-  const conflicted = harness.provided.get('zhiyunClassroomStudio');
+  const conflicted = harness.provided.get('zwClassroomStudio');
 
   const status = await conflicted.status();
   assert.equal(status.state, 'partial');
@@ -321,10 +321,10 @@ test('未迁移的方法抛 ClassroomError(E_NOT_IMPLEMENTED)，detail.source �
 
 test('disposer 注销服务，重复调用不抛', () => {
   const { provided, dispose } = mount();
-  assert.ok(provided.get('zhiyunClassroomStudio'));
+  assert.ok(provided.get('zwClassroomStudio'));
 
   dispose();
-  assert.equal(provided.get('zhiyunClassroomStudio'), undefined);
+  assert.equal(provided.get('zwClassroomStudio'), undefined);
 
   assert.doesNotThrow(() => dispose());
 });
@@ -334,7 +334,7 @@ test('dispose 钩子也注销服务（宿主卸载路径两条都要能用）', 
   assert.equal(disposers.length, 1);
 
   disposers[0]();
-  assert.equal(provided.get('zhiyunClassroomStudio'), undefined);
+  assert.equal(provided.get('zwClassroomStudio'), undefined);
 });
 
 // ── 6. 存储适配层空壳 ──────────────────────────────────────────────────────

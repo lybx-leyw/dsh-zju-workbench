@@ -14,7 +14,7 @@
  *
  * # 为什么经窄 llm 接口
  *
- * AI 调用一律走 `ctx.zhiyunParser.llm` 的窄接口
+ * AI 调用一律走 `ctx.zwParser.llm` 的窄接口
  * `{ call({stage, route, constant, variable, signal}), resolve(signal) }`，
  * 不直接碰宿主的 `ctx.llm`（它只有 `prepareCall / stream`，适配已由解析器包做过
  * 一遍，这里再写一份就是「同一件事两份实现，半年内无声漂开」）。
@@ -28,7 +28,7 @@
  *   3. **截断**：万一用户拖选了一整页，不能让一次悬停产生一笔巨额调用。
  *      超长一律截断并在返回值里如实标记（不静默丢弃，页面要能提示「仅翻译了前 N 字」）。
  *
- * # 从 `dsh-zhiyun-host-paper` 迁入
+ * # 从 `dsh-zju-host-paper` 迁入
  */
 import { PaperError } from "./paper-errors.js";
 /** 送进模型的文本上限（字符）。整页拖选会轻易超过，截断比拒绝更可用。 */
@@ -77,14 +77,14 @@ function cacheKey(model, text) {
     return `${model ?? ''}\u0000${text}`;
 }
 /**
- * @param options.llm - 窄 llm 接口（`ctx.zhiyunParser.llm`）。缺 `call` 即抛 CONFIG。
+ * @param options.llm - 窄 llm 接口（`ctx.zwParser.llm`）。缺 `call` 即抛 CONFIG。
  * @param options.cacheLimit - 缓存条数上限，默认 300。
  * @param options.maxChars - 单次送模型的最大字符数，默认 `SELECTION_MAX_CHARS`。
  */
 export function createSelectionTranslator({ llm: llmInput, cacheLimit = 300, maxChars = SELECTION_MAX_CHARS, } = {}) {
     if (!llmInput || typeof llmInput.call !== 'function') {
         throw new PaperError('CONFIG', '选中翻译需要窄 llm 接口（{ call({stage,route,constant,variable,signal}) }）；'
-            + '宿主侧由 zhiyunParser 提供，也可用 config.llm 直接给出');
+            + '宿主侧由 zwParser 提供，也可用 config.llm 直接给出');
     }
     // 收窄后存到局部常量：`llmInput` 是可选的，闭包里（`translate`）再访问时
     // TS 已经丢了上面的检查结论。

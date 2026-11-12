@@ -42,9 +42,9 @@ export function killTree(child) {
  *
  * 不写死 3091：那个端口常被「命令行起的那个实例」占着，撞上会 EADDRINUSE，
  * 而 `profile.mjs` 的注释记过这个后果 —— 宿主起不来还会把一串依赖它的插件拖垮。
- * `ZHIYUN_PORT` 显式给了就听它的（与命令行行为一致）。
+ * `ZW_PORT` 显式给了就听它的（与命令行行为一致）。
  */
-export async function freePort(requested = process.env.ZHIYUN_PORT) {
+export async function freePort(requested = process.env.ZW_PORT) {
   if (requested) return Number(requested);
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -65,14 +65,14 @@ export async function freePort(requested = process.env.ZHIYUN_PORT) {
  * 43.0.0 / 44.0.0 / 45.0.0-alpha.6 里，于是 profile 直接退出码 1
  * （`Unsupported/no-context`）。`npm start` 用的是系统 node，所以能起来。
  *
- * `launch.mjs` 把那个 node 的路径放进 `ZHIYUN_NODE`。测试直接在 node 下跑时
+ * `launch.mjs` 把那个 node 的路径放进 `ZW_NODE`。测试直接在 node 下跑时
  * 没有这个变量，`process.execPath` 已经是 node。
  *
  * @param env - 默认 `process.env`。测试传入一份假环境。
  * @returns `{ executable, electronBinary }`。只有可执行文件本身是 electron 时才需要 `ELECTRON_RUN_AS_NODE`。
  */
 export function hostLaunch(env = process.env) {
-  const executable = env.ZHIYUN_NODE || process.execPath;
+  const executable = env.ZW_NODE || process.execPath;
   const base = path.basename(executable).toLowerCase();
   return { executable, electronBinary: base === 'electron.exe' || base === 'electron' };
 }
@@ -89,7 +89,7 @@ export async function startHost({ log = () => {}, onState = () => {}, timeoutMs 
   onState({ phase: 'starting', detail: '正在定位宿主与 profile…', hint: '' });
   // 只读复用产品脚本：它负责「宿主在哪、版本对不对、profile 该有哪些链接」。
   // 这一步是幂等的 —— 已有配置原样保留，缺的补上，用户自己放的实体目录绝不覆盖。
-  const runtime = await initialize({ home: process.env.ZHIYUN_DSH_HOME });
+  const runtime = await initialize({ home: process.env.ZW_DSH_HOME });
 
   // 缺客户端产物时宿主**能起来**，但页面是空白的 —— 那种失败最难判断
   // （窗口开了、地址也有了、就是没内容）。所以起进程之前先说清楚。

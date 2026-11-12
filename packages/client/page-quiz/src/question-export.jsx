@@ -39,13 +39,13 @@ const strategyName = id => QUESTION_STRATEGIES[id]?.label ?? '';
 function PaperItem({entry}) {
   const q = entry.question;
   const choices = Array.isArray(q.choices) ? q.choices.filter(c => String(c.text ?? '').trim()) : [];
-  return <article className="zs-pdf-q">
-    <h4><span className="zs-pdf-q-no">{entry.number}</span><span className="zs-pdf-q-type">{typeName(q.type)}</span></h4>
-    <Rich className="zs-pdf-stem" text={stemForPrint(q.stem)}/>
-    {choices.length > 0 && <ul className="zs-pdf-choices">{choices.map(choice => <li key={choice.label}>
-      <b>{choice.label}</b><Rich className="zs-pdf-choice-text" text={choice.text}/>
+  return <article className="zws-pdf-q">
+    <h4><span className="zws-pdf-q-no">{entry.number}</span><span className="zws-pdf-q-type">{typeName(q.type)}</span></h4>
+    <Rich className="zws-pdf-stem" text={stemForPrint(q.stem)}/>
+    {choices.length > 0 && <ul className="zws-pdf-choices">{choices.map(choice => <li key={choice.label}>
+      <b>{choice.label}</b><Rich className="zws-pdf-choice-text" text={choice.text}/>
     </li>)}</ul>}
-    {q.type === 'shortAnswer' && <p className="zs-pdf-answer-space" aria-hidden="true"/>}
+    {q.type === 'shortAnswer' && <p className="zws-pdf-answer-space" aria-hidden="true"/>}
   </article>;
 }
 
@@ -55,12 +55,12 @@ function AnswerItem({entry}) {
   const answer = String(q.answer ?? '').trim();
   const explanation = String(q.explanation ?? '').trim();
   const rubric = Array.isArray(q.rubric) ? q.rubric.filter(item => String(item ?? '').trim()) : [];
-  return <article className="zs-pdf-a">
-    <h4><span className="zs-pdf-q-no">{entry.number}</span><span className="zs-pdf-q-type">{typeName(q.type)}{strategyName(q.strategy) ? ` · ${strategyName(q.strategy)}` : ''}</span></h4>
-    {answer ? <Rich className="zs-pdf-answer" text={answer}/> : <p className="zs-pdf-answer zs-pdf-answer-empty">这道题没有保存参考答案。</p>}
-    {rubric.length > 0 && <ol className="zs-pdf-rubric">{rubric.map((item, i) => <li key={i}>{item}</li>)}</ol>}
-    {explanation && <Rich className="zs-pdf-explanation" text={explanation}/>}
-    {q.requiresSourceReview && <p className="zs-pdf-flag">资料有尚未确认的提示，请结合原文核对参考答案。</p>}
+  return <article className="zws-pdf-a">
+    <h4><span className="zws-pdf-q-no">{entry.number}</span><span className="zws-pdf-q-type">{typeName(q.type)}{strategyName(q.strategy) ? ` · ${strategyName(q.strategy)}` : ''}</span></h4>
+    {answer ? <Rich className="zws-pdf-answer" text={answer}/> : <p className="zws-pdf-answer zws-pdf-answer-empty">这道题没有保存参考答案。</p>}
+    {rubric.length > 0 && <ol className="zws-pdf-rubric">{rubric.map((item, i) => <li key={i}>{item}</li>)}</ol>}
+    {explanation && <Rich className="zws-pdf-explanation" text={explanation}/>}
+    {q.requiresSourceReview && <p className="zws-pdf-flag">资料有尚未确认的提示，请结合原文核对参考答案。</p>}
   </article>;
 }
 
@@ -77,27 +77,27 @@ export function QuizPdfDocument({outline, title, date, onReady}) {
   const courses = [...new Set(sections.map(s => s.courseTitle).filter(Boolean))];
   const breakdown = typeBreakdown(items);
   const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  return <div className="zs-pdf-quiz">
+  return <div className="zws-pdf-quiz">
     <style>{printCss}</style>
-    <header className="zs-pdf-cover">
+    <header className="zws-pdf-cover">
       <span>题库 · 练习卷</span>
       <h1>{title}</h1>
-      {courses.length > 0 && <p className="zs-pdf-courses">{courses.join(' / ')}</p>}
+      {courses.length > 0 && <p className="zws-pdf-courses">{courses.join(' / ')}</p>}
       <small>{items.length} 道 · {sections.length} 个节次 · 答案与解析见卷末 · {day}</small>
-      {breakdown.length > 0 && <p className="zs-pdf-breakdown">{breakdown.map(row => `${typeName(row.type)} ${row.count}`).join(' · ')}</p>}
+      {breakdown.length > 0 && <p className="zws-pdf-breakdown">{breakdown.map(row => `${typeName(row.type)} ${row.count}`).join(' · ')}</p>}
     </header>
-    <main className="zs-pdf-body">
-      {sections.map((section, si) => <section className="zs-pdf-section" key={section.key}>
+    <main className="zws-pdf-body">
+      {sections.map((section, si) => <section className="zws-pdf-section" key={section.key}>
         <h2><small>第 {si + 1} 节</small>{[section.courseTitle, section.lessonTitle].filter(Boolean).join(' / ') || '未标注课程'}</h2>
-        {section.points.map((point, pi) => <section className="zs-pdf-point" key={`${point.title}-${pi}`}>
+        {section.points.map((point, pi) => <section className="zws-pdf-point" key={`${point.title}-${pi}`}>
           <h3>{point.title}</h3>
           {point.items.map(entry => <PaperItem key={entry.number} entry={entry}/>)}
         </section>)}
       </section>)}
     </main>
-    <section className="zs-pdf-answers">
+    <section className="zws-pdf-answers">
       <h2>答案与解析</h2>
-      {sections.map(section => <section className="zs-pdf-answer-section" key={`answer-${section.key}`}>
+      {sections.map(section => <section className="zws-pdf-answer-section" key={`answer-${section.key}`}>
         <h3>{[section.courseTitle, section.lessonTitle].filter(Boolean).join(' / ') || '未标注课程'}</h3>
         {section.points.flatMap(point => point.items).map(entry => <AnswerItem key={entry.number} entry={entry}/>)}
       </section>)}
@@ -109,7 +109,7 @@ export function QuizPdfDocument({outline, title, date, onReady}) {
  * 等正文排完版：公式由 KaTeX 异步注入，字体也要等 —— 直接 `print()` 会打出
  * 半截公式和回退字体。
  *
- * 与讲义导出同一条思路（`dsh-zhiyun-page-study/src/lecture-export.jsx`）：等到 DOM
+ * 与讲义导出同一条思路（`dsh-zju-page-study/src/lecture-export.jsx`）：等到 DOM
  * 静默 500ms，再等字体与图片就绪，最后等两帧。这里不 import 那边 —— 两个页面包
  * 之间只允许 study → quiz 的单向依赖，反向 import 会让客户端模块图成环。
  */
@@ -142,7 +142,7 @@ let exporting = false;
  *
  * # 桌面壳与浏览器两条路
  *
- * 桌面壳里 `window.zhiyunPdf.save()` 直接弹保存对话框、`printToPDF` 落盘，
+ * 桌面壳里 `window.zwPdf.save()` 直接弹保存对话框、`printToPDF` 落盘，
  * 用户不用在打印预览里再点一次「另存为 PDF」；浏览器里退回 `window.print()`，
  * 由用户在系统打印对话框里选「另存为 PDF」。两条路的产物是同一份文档。
  *
@@ -173,7 +173,7 @@ export async function exportQuestionsPdf({questions, title = ''} = {}) {
     if (!element.textContent?.trim()) throw new Error('导出正文为空，请重试');
     document.title = docTitle;
     // 桌面壳优先；`lecturePdf` 是旧键，保留回落以免已有脚本/旧壳失效。
-    const bridge = window.zhiyunPdf?.save ? window.zhiyunPdf : window.lecturePdf?.save ? window.lecturePdf : null;
+    const bridge = window.zwPdf?.save ? window.zwPdf : window.lecturePdf?.save ? window.lecturePdf : null;
     if (bridge?.save) {
       const result = await bridge.save(filename, 'quiz');
       if (result?.error) throw new Error(result.error);
@@ -215,7 +215,7 @@ export function ExportPdfButton({questions, disabled = false, onDone, onError}) 
       setBusy(false);
     }
   };
-  return <button type="button" className="zs-button" disabled={busy || disabled || !count} title="把勾选的题目排成一份练习卷（答案与解析在卷末），导出为单个 PDF" onClick={start}>
+  return <button type="button" className="zws-button" disabled={busy || disabled || !count} title="把勾选的题目排成一份练习卷（答案与解析在卷末），导出为单个 PDF" onClick={start}>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></svg>{busy ? '正在排版…' : '导出 PDF'}
   </button>;
 }

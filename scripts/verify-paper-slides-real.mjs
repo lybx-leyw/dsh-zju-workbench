@@ -29,7 +29,7 @@ if (args.includes('--help') || args.includes('-h')) {
 
 async function main() {
   let ctx, service, browser, output, report, previousKey, installed = false;
-  const keyName = 'ZHIYUN_PAPER_SLIDES_PRIVATE_KEY';
+  const keyName = 'ZW_PAPER_SLIDES_PRIVATE_KEY';
   let secrets = [];
   const redact = value => secrets.reduce((text, secret) => text.replaceAll(secret, '[redacted]'), String(value));
   const safeError = value => redact(value?.message ?? value)

@@ -102,24 +102,24 @@ async function bundle() {
  * 照抄真机的布局链。
  *
  * ⚠️ 这条链必须**逐层带上 `min-height:0` / `flex`**。上一版少了真机那三层
- *    （`.zy-page > .zy-scroll > .zy-content-flush`），于是 `.zs-nt-scroll` 的
+ *    （`.zw-page > .zw-scroll > .zw-content-flush`），于是 `.zws-nt-scroll` 的
  *    `scrollHeight` 等于 `clientHeight`（实测 6254/6254）—— 它根本没被限高，
  *    "能滚"是假象，测试也就永远测不出真机上的失效。真机的量测是 sh=2122/ch=851。
  */
 const CSS = [
   'html,body{margin:0;height:100%;overflow:hidden}',
-  '.zy-page{display:flex;flex-direction:column;height:100%;min-width:0}',
-  '.zy-scroll{flex:1;overflow:auto;min-height:0}',
-  '.zy-content.zy-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0}',
+  '.zw-page{display:flex;flex-direction:column;height:100%;min-width:0}',
+  '.zw-scroll{flex:1;overflow:auto;min-height:0}',
+  '.zw-content.zw-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0}',
   '.host{display:flex;flex-direction:column;flex:1;min-height:0}',
-  '.zs-nt{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}',
-  '.zs-nt-work{display:flex;flex:1;min-height:0;overflow:hidden}',
-  '.zs-nt-explorer{width:220px;display:flex;flex-direction:column;min-height:0}',
-  '.zs-nt-tree{list-style:none;margin:0;padding:0;overflow-y:auto;flex:1;min-height:0}',
-  '.zs-nt-rowbtn{display:block;width:100%;text-align:left;padding:6px}',
-  '.zs-nt-main{flex:1 1 auto;min-width:400px;min-height:0;display:flex;flex-direction:column}',
-  '.zs-nt-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:20px}',
-  '.zs-nt-input{width:100%;min-height:420px;border:0;resize:none;font:15.5px/1.9 sans-serif;display:block}',
+  '.zws-nt{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}',
+  '.zws-nt-work{display:flex;flex:1;min-height:0;overflow:hidden}',
+  '.zws-nt-explorer{width:220px;display:flex;flex-direction:column;min-height:0}',
+  '.zws-nt-tree{list-style:none;margin:0;padding:0;overflow-y:auto;flex:1;min-height:0}',
+  '.zws-nt-rowbtn{display:block;width:100%;text-align:left;padding:6px}',
+  '.zws-nt-main{flex:1 1 auto;min-width:400px;min-height:0;display:flex;flex-direction:column}',
+  '.zws-nt-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:20px}',
+  '.zws-nt-input{width:100%;min-height:420px;border:0;resize:none;font:15.5px/1.9 sans-serif;display:block}',
 ].join('\n');
 
 const browserPath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || chromium.executablePath();
@@ -161,7 +161,7 @@ test('笔记页：PageUp/PageDown/↑/↓ 按焦点上下文分派', async (t) =
   const { dir, outfile } = await bundle();
   const pageFile = path.join(dir, 'host.html');
   await writeFile(pageFile, `<!doctype html><meta charset="utf-8"><style>${CSS}</style>
-    <div class="zy-page" data-page="notes"><main class="zy-scroll"><div class="zy-content zy-content-flush">
+    <div class="zw-page" data-page="notes"><main class="zw-scroll"><div class="zw-content zw-content-flush">
     <div class="host" id="host"></div></div></main></div><script src="/app.js"></script>`);
 
   const server = createServer(async (req, res) => {
@@ -180,7 +180,7 @@ test('笔记页：PageUp/PageDown/↑/↓ 按焦点上下文分派', async (t) =
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle' });
 
-    const scroller = page.locator('.zs-nt-scroll').first();
+    const scroller = page.locator('.zws-nt-scroll').first();
     await scroller.waitFor();
     const top = () => scroller.evaluate((el) => Math.round(el.scrollTop));
 
@@ -216,10 +216,10 @@ test('笔记页：PageUp/PageDown/↑/↓ 按焦点上下文分派', async (t) =
     //    页面靠它记录"用户在树上"的游标。
     await scroller.evaluate((el) => { el.scrollTop = 0; });
     const order = await page.evaluate(() =>
-      [...document.querySelectorAll('.zs-nt-rowbtn[data-path]')].map((b) => b.dataset.path));
+      [...document.querySelectorAll('.zws-nt-rowbtn[data-path]')].map((b) => b.dataset.path));
     assert.ok(order.length >= 2, `树里应有多行，实际 ${JSON.stringify(order)}`);
     await page.evaluate(() => {
-      const btn = document.querySelector('.zs-nt-rowbtn[data-path]');
+      const btn = document.querySelector('.zws-nt-rowbtn[data-path]');
       const opts = { bubbles: true, cancelable: true, composed: true, clientX: 10, clientY: 10, button: 0, pointerId: 1, pointerType: 'mouse', isPrimary: true };
       btn.dispatchEvent(new PointerEvent('pointerdown', opts));
       btn.dispatchEvent(new PointerEvent('pointerup', opts));
@@ -227,13 +227,13 @@ test('笔记页：PageUp/PageDown/↑/↓ 按焦点上下文分派', async (t) =
     });
     await page.waitForTimeout(600);
     const cursorBefore = await page.evaluate(() =>
-      document.querySelector('.zs-nt-row.is-cursor .zs-nt-rowbtn')?.dataset?.path ?? null);
+      document.querySelector('.zws-nt-row.is-cursor .zws-nt-rowbtn')?.dataset?.path ?? null);
     assert.equal(cursorBefore, order[0], '点击树行后该行应成为游标（真机上焦点留不住，只能靠这个）');
 
     await page.keyboard.press('ArrowDown');
     await page.waitForTimeout(300);
     const cursorAfter = await page.evaluate(() =>
-      document.querySelector('.zs-nt-row.is-cursor .zs-nt-rowbtn')?.dataset?.path ?? null);
+      document.querySelector('.zws-nt-row.is-cursor .zws-nt-rowbtn')?.dataset?.path ?? null);
     assert.equal(cursorAfter, order[1], `↓ 应把游标移到下一行：${order[0]} → ${cursorAfter}`);
     assert.equal(await top(), 0, '注意力在树上时不该滚正文');
 
@@ -244,19 +244,19 @@ test('笔记页：PageUp/PageDown/↑/↓ 按焦点上下文分派', async (t) =
 
     // ── ⑥ 编辑态：textarea 有焦点时 ↑ 移光标，不接管 ──
     await page.getByRole('button', { name: '编辑' }).first().click();
-    const textarea = page.locator('textarea.zs-nt-input');
+    const textarea = page.locator('textarea.zws-nt-input');
     await textarea.waitFor();
     await textarea.click();
     await page.evaluate(() => {
-      const el = document.querySelector('textarea.zs-nt-input');
+      const el = document.querySelector('textarea.zws-nt-input');
       el.selectionStart = el.selectionEnd = 0;
       el.scrollTop = 0;
-      document.querySelector('.zs-nt-scroll').scrollTop = 0;
+      document.querySelector('.zws-nt-scroll').scrollTop = 0;
     });
     await page.keyboard.press('ArrowDown');
     await page.waitForTimeout(200);
     assert.equal(await top(), 0, '在 textarea 里按 ↓ 不该滚正文');
-    assert.ok(await page.evaluate(() => document.querySelector('textarea.zs-nt-input').selectionStart) > 0,
+    assert.ok(await page.evaluate(() => document.querySelector('textarea.zws-nt-input').selectionStart) > 0,
       '在 textarea 里按 ↓ 应移动光标');
 
     // ── ⑦ 长按要跟得上，不能被 smooth 动画拖住 ──
@@ -347,7 +347,7 @@ test('滚动键的接线守卫：挂 document 而非容器，且四类豁免齐�
   const body = fn.slice(0, fn.indexOf('const onKeyDownCapture'));
   assert.match(body, /PageDown[\s\S]*PageUp[\s\S]*ArrowDown[\s\S]*ArrowUp/, '四个键都要认');
   assert.match(body, /input, textarea, select, \[contenteditable/, '输入区必须豁免（编辑态正文是 textarea）');
-  assert.match(body, /\.zs-nt-rowbtn\[data-path\]/, '要能认出注意力在树行上');
+  assert.match(body, /\.zws-nt-rowbtn\[data-path\]/, '要能认出注意力在树行上');
   assert.match(body, /scrollBy/, '正文滚动必须自己算（原生不生效）');
   // preventDefault 必须在豁免之后，否则会把输入框里的按键吃掉。
   assert.ok(body.indexOf('preventDefault') > body.indexOf('contenteditable'),

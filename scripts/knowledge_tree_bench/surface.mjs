@@ -18,12 +18,12 @@ import { stubLlm } from './_base.mjs';
 
 /** 基准**已经桥过**的功能面（照 `scripts/knowledge_tree_bench/*.mjs` 的导出写）。 */
 export const BRIDGED = Object.freeze({
-  'zhiyunParser': ['parse', 'parseClassroom', 'dispose'],
-  'zhiyunLecture': ['assemble', 'polish', 'buildTree', 'judgeWritten', 'dispose'],
-  'zhiyunStudy': ['invoke', 'dispatch', 'dispose'],
-  'zhiyunKnowledge': ['put', 'get', 'remove', 'close'],
-  'zhiyunQuiz': ['generate', 'store'],
-  'zhiyunNotes': ['getOrEmpty'],
+  'zwParser': ['parse', 'parseClassroom', 'dispose'],
+  'zwLecture': ['assemble', 'polish', 'buildTree', 'judgeWritten', 'dispose'],
+  'zwStudy': ['invoke', 'dispatch', 'dispose'],
+  'zwKnowledge': ['put', 'get', 'remove', 'close'],
+  'zwQuiz': ['generate', 'store'],
+  'zwNotes': ['getOrEmpty'],
 });
 
 /** 这些名字**不算**功能面（生命周期 / 诊断字段），比对时忽略。 */
@@ -54,14 +54,14 @@ export async function survey({ dataDir, llm } = {}) {
   // 解析器
   try {
     const p = await mountParser({ dataDir: `${dataDir}parser/`, llm: stub });
-    collect('zhiyunParser', '解析器', p);
-  } catch (error) { domains.zhiyunParser = { label: '解析器', error: String(error?.message ?? error) }; }
+    collect('zwParser', '解析器', p);
+  } catch (error) { domains.zwParser = { label: '解析器', error: String(error?.message ?? error) }; }
 
   // 讲义
   try {
     const l = await mountLecture({ dataDir: `${dataDir}lecture/`, llm: stub });
-    collect('zhiyunLecture', '讲义', l);
-  } catch (error) { domains.zhiyunLecture = { label: '讲义', error: String(error?.message ?? error) }; }
+    collect('zwLecture', '讲义', l);
+  } catch (error) { domains.zwLecture = { label: '讲义', error: String(error?.message ?? error) }; }
 
   const total = Object.values(domains).reduce((a, d) => a + (d.functions?.length ?? 0), 0);
   return { domains, summary: { domains: Object.keys(domains).length, functions: total } };

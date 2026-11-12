@@ -46,7 +46,7 @@ export const name = 'zju-source-tyys';
 export const inject = [];
 
 /** 同源数据路由。 */
-export const ROUTE_PATH = '/api/zhiyun-tyys';
+export const ROUTE_PATH = '/api/zw-tyys';
 
 /**
  * 把 `sharedFetch` 适配成数据层期望的形状。
@@ -88,12 +88,12 @@ export function apply(ctx) {
      * 而**全仓没有任何调用方** —— 于是它挂着却永远拿不到登录，
      * 场馆预约与考勤都不可用。那不是「用户没配账号」，是「没人喂账号」。
      *
-     * 现在兜底到 `zhiyunCard`：凭据、CAS 流程、会话文件全在 tier 0，
+     * 现在兜底到 `zwCard`：凭据、CAS 流程、会话文件全在 tier 0，
      * 本包只说明自己要哪个 `service`。
      *
      * @returns 服务对象，或 `null`（没装 `source/login`）。
      */
-    const cardService = () => ctx.get?.('zhiyunCard') ?? null;
+    const cardService = () => ctx.get?.('zwCard') ?? null;
 
     /**
      * 登录回调（注入优先，其次共享 CAS）。
@@ -281,7 +281,7 @@ export function apply(ctx) {
        */
       ready() {
         return typeof acquireLogin === 'function'
-          || typeof ctx.get?.('zhiyunCard')?.casLoginFor === 'function';
+          || typeof ctx.get?.('zwCard')?.casLoginFor === 'function';
       },
 
       /** 清掉缓存的会话（换账号、或用户点了「重新登录」）。 */
@@ -376,7 +376,7 @@ export function apply(ctx) {
       },
     };
 
-    const disposeService = ctx.provide('zhiyunTyys', service);
+    const disposeService = ctx.provide('zwTyys', service);
 
     let removeRoute = null;
     ctx.inject(['webServer'], (scope) => {

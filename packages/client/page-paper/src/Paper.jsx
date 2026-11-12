@@ -18,7 +18,7 @@ import { RenameDialog } from './RenameDialog.jsx';
  * iframe 换 src 会重建 pdf.js，代价高；所以用 `reloadKey` 触发重挂载。
  */
 
-const LAST_KEY = 'zhiyun.paper.last';
+const LAST_KEY = 'zw.paper.last';
 
 /**
  * 库根上传的兜底专题。
@@ -64,7 +64,7 @@ function decodeTopic(topic) {
 }
 
 /** 树栏展开状态的键。收起是用户的长期偏好，不该每次切页就重置。 */
-const TREE_OPEN_KEY = 'zhiyun.paper.treeOpen';
+const TREE_OPEN_KEY = 'zw.paper.treeOpen';
 
 function readTreeOpen() {
   try {
@@ -181,11 +181,11 @@ export function Paper({ controller }) {
     return () => { live = false; };
   }, [paper]);
 
-  // 跨窗口进来的 `zhiyun.paper.open`（例如从「问一问」的回答里点链接）也接住。
+  // 跨窗口进来的 `zw.paper.open`（例如从「问一问」的回答里点链接）也接住。
   useEffect(() => {
     const onMessage = (event) => {
       const data = event?.data;
-      if (!data || data.type !== 'zhiyun.paper.open') return;
+      if (!data || data.type !== 'zw.paper.open') return;
       if (typeof data.topic !== 'string' || typeof data.name !== 'string') return;
       pick({ topic: data.topic, name: data.name });
       if (data.page) setJump({ page: Number(data.page), q: data.q, key: Date.now() });
@@ -227,7 +227,7 @@ export function Paper({ controller }) {
     setTreeBusy(true);
     setTreeError(null);
     try {
-      const response = await fetch('/zhiyun-paper/api/tree');
+      const response = await fetch('/zw-paper/api/tree');
       const body = await response.json().catch(() => null);
       if (!response.ok) throw new Error(body?.error ?? `HTTP ${response.status}`);
       const entries = Array.isArray(body?.entries) ? body.entries : [];
@@ -247,7 +247,7 @@ export function Paper({ controller }) {
   /** 打开树里的一篇文献：把多级路径交给宿主换算成上游坐标。 */
   const openFromTree = useCallback(async (row) => {
     try {
-      const response = await fetch(`/zhiyun-paper/api/ref?path=${encodeURIComponent(row.path)}`);
+      const response = await fetch(`/zw-paper/api/ref?path=${encodeURIComponent(row.path)}`);
       const body = await response.json().catch(() => null);
       if (!response.ok) throw new Error(body?.error ?? `HTTP ${response.status}`);
       // 顺手展开它所在的目录，否则打开后树上看不到它。
@@ -327,7 +327,7 @@ export function Paper({ controller }) {
       const folder = uploadTarget();
       let topic = DEFAULT_TOPIC;
       if (folder !== '') {
-        const response = await fetch(`/zhiyun-paper/api/ref?path=${encodeURIComponent(`${folder}/x.pdf`)}`);
+        const response = await fetch(`/zw-paper/api/ref?path=${encodeURIComponent(`${folder}/x.pdf`)}`);
         const ref = await response.json().catch(() => null);
         if (!response.ok) throw new Error(ref?.error ?? `HTTP ${response.status}`);
         topic = ref.topic;
@@ -377,7 +377,7 @@ export function Paper({ controller }) {
       const relDir = parent === '' ? name : `${parent}/${name}`;
       // 上游建 topic 的能力是 `/api/library/topic`，但它只收单段名 ——
       // 所以深层路径仍旧要走编码。
-      const response = await fetch(`/zhiyun-paper/api/ref?path=${encodeURIComponent(`${relDir}/x.pdf`)}`);
+      const response = await fetch(`/zw-paper/api/ref?path=${encodeURIComponent(`${relDir}/x.pdf`)}`);
       const ref = await response.json().catch(() => null);
       if (!response.ok) throw new Error(ref?.error ?? `HTTP ${response.status}`);
       await createTopic(ref.topic);
@@ -396,7 +396,7 @@ export function Paper({ controller }) {
    * @param relPath - 形如 `理学/力学/讲义.pdf`。
    */
   const refForPath = useCallback(async (relPath) => {
-    const response = await fetch(`/zhiyun-paper/api/ref?path=${encodeURIComponent(relPath)}`);
+    const response = await fetch(`/zw-paper/api/ref?path=${encodeURIComponent(relPath)}`);
     const body = await response.json().catch(() => null);
     if (!response.ok) throw new Error(body?.error ?? `HTTP ${response.status}`);
     return body;
@@ -610,22 +610,22 @@ export function Paper({ controller }) {
    * 如果整栏拔掉，用户就找不到把它叫回来的入口了。
    */
   const treePane = <aside
-    className={`zp-tree-pane${treeOpen ? '' : ' is-collapsed'}`}
+    className={`zwp-tree-pane${treeOpen ? '' : ' is-collapsed'}`}
     aria-label="论文库"
     aria-expanded={treeOpen}
   >
     {treeOpen
       ? <>
         {/* 删除确认条：删文献会连带删掉转录/译文/学习档案，不可逆，所以必须确认。 */}
-        {pendingDelete !== null && <div className="zp-tree-confirm" role="alertdialog" aria-label="确认删除">
+        {pendingDelete !== null && <div className="zwp-tree-confirm" role="alertdialog" aria-label="确认删除">
           <p>
             删除「{pendingDelete.title ?? pendingDelete.path.split('/').pop()}」
             {pendingDelete.type === 'folder' ? '（含其中全部文献）' : '（连同转录与译文）'}？找不回来了。
           </p>
-          <div className="zp-tree-confirm-actions">
+          <div className="zwp-tree-confirm-actions">
             <button
               type="button"
-              className="zp-tree-danger"
+              className="zwp-tree-danger"
               disabled={treeBusy}
               onClick={() => {
                 const row = tree.find((entry) => entry.path === pendingDelete.path);
@@ -640,7 +640,7 @@ export function Paper({ controller }) {
       </>
       : <button
         type="button"
-        className="zp-tree-toggle"
+        className="zwp-tree-toggle"
         onClick={toggleTree}
         title="展开论文库"
         aria-label="展开论文库"
@@ -674,13 +674,13 @@ export function Paper({ controller }) {
   />;
 
   if (!paper) {
-    return <div className={`zp-page zp-page-with-tree${treeOpen ? '' : ' is-tree-collapsed'}`}>
+    return <div className={`zwp-page zwp-page-with-tree${treeOpen ? '' : ' is-tree-collapsed'}`}>
       {treePane}
       {paperFileInput}
       {renameDialog}
       {/* 空态也要摆上抽屉：和阅读态同样的三栏，版心才会跟着抽屉开合重新居中。 */}
-      <div className="zp-landing">
-        <span className="zp-landing-motto">惟学无际，际于天地</span>
+      <div className="zwp-landing">
+        <span className="zwp-landing-motto">惟学无际，际于天地</span>
         <h1>从一篇文献开始，把读过的都留下来。</h1>
         <p>左边栏头点 ＋ 导入 PDF。选中英文会自动翻译，右侧抽屉可以就着这一段提问。</p>
       </div>
@@ -694,20 +694,20 @@ export function Paper({ controller }) {
   const pages = meta?.pageCount ? `${meta.pageCount} 页` : '页数未知';
   const transcribed = meta?.hasTranscript ?? transcript?.hasTranscript;
 
-  return <div className={`zp-page${drawerOpen ? ' is-drawer-open' : ''} zp-page-with-tree${treeOpen ? '' : ' is-tree-collapsed'}`}>
+  return <div className={`zwp-page${drawerOpen ? ' is-drawer-open' : ''} zwp-page-with-tree${treeOpen ? '' : ' is-tree-collapsed'}`}>
     {treePane}
     {paperFileInput}
     {renameDialog}
-    <div className="zp-main">
-      <div className="zp-bar">
-        <button type="button" className="zp-cornell-toggle" aria-expanded={cornellOpen}
+    <div className="zwp-main">
+      <div className="zwp-bar">
+        <button type="button" className="zwp-cornell-toggle" aria-expanded={cornellOpen}
           onClick={() => setCornellOpen((value) => !value)} title="展开或收起康奈尔笔记">
           {cornellOpen ? '‹' : '›'} 康奈尔笔记
         </button>
         {/* 页头不再放文献库下拉：打开/上传/新建都在左侧树栏里，
             两套入口会让人不知道该用哪个。 */}
-        <span className="zp-bar-meta">{pages}{transcribed ? ' · 已转录' : ''}</span>
-        <div className="zp-bar-actions">
+        <span className="zwp-bar-meta">{pages}{transcribed ? ' · 已转录' : ''}</span>
+        <div className="zwp-bar-actions">
           <button type="button" onClick={onTranscribe} disabled={transcript?.busy} title="转录成文本，让检索与问答能定位到原文">
             <Icon name="layers" size={15}/>{transcript?.busy ? '转录中…' : transcribed ? '重新转录' : '转录'}
           </button>
@@ -720,7 +720,7 @@ export function Paper({ controller }) {
         </div>
       </div>
 
-      {transcript?.error && <div className="zp-bar-error">{transcript.error}</div>}
+      {transcript?.error && <div className="zwp-bar-error">{transcript.error}</div>}
 
       <ReaderFrame
         key={JSON.stringify([paper.topic, paper.name])}

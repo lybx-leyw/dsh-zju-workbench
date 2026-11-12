@@ -46,7 +46,7 @@ async function launchBrowser() {
  * 并给出**假绿灯**（本轮踩过）。这条守卫把它变成明确的失败。
  */
 
-test('论文树：新建/上传的链路在栏头，不在页头', { skip: "旧界面（shell-workbench + page-paper 的 .zy-page/.zp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
+test('论文树：新建/上传的链路在栏头，不在页头', { skip: "旧界面（shell-workbench + page-paper 的 .zw-page/.zwp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
   // 守卫放最前：产物过期时立刻失败，不用先花 20 秒起浏览器。
   await assertBundleFresh('@lybx-leyw/dsh-zju-page-paper', ['Paper.jsx', 'PaperTree.jsx', 'style.css', 'client.jsx']);
 
@@ -61,7 +61,7 @@ test('论文树：新建/上传的链路在栏头，不在页头', { skip: "旧�
 
   const home = await mkdtemp(path.join(tmpdir(), 'paper-head-'));
   const runtime = await initialize({ home });
-  const dataDir = path.join(runtime.profile, 'data', 'zhiyun-paper');
+  const dataDir = path.join(runtime.profile, 'data', 'zw-paper');
   await mkdir(path.join(dataDir, '心理学'), { recursive: true });
   await writeFile(path.join(dataDir, '心理学', '总论.pdf'), minimalPdf());
 
@@ -88,7 +88,7 @@ test('论文树：新建/上传的链路在栏头，不在页头', { skip: "旧�
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+    await page.locator('.zw-page[data-page=today]').waitFor({ timeout: 60000 });
     await page.evaluate(() => {
       for (const b of document.querySelectorAll('button')) {
         if (['继续', '稍后配置'].includes(b.textContent?.trim() ?? '')) b.click();
@@ -100,7 +100,7 @@ test('论文树：新建/上传的链路在栏头，不在页头', { skip: "旧�
 
     // ① 栏头四个操作
     const headButtons = await page.evaluate(() => {
-      const head = document.querySelector('.zp-tree-head');
+      const head = document.querySelector('.zwp-tree-head');
       return head ? [...head.querySelectorAll('button')].map((b) => b.title) : null;
     });
     assert.ok(Array.isArray(headButtons), '应有一排栏头按钮');
@@ -109,22 +109,22 @@ test('论文树：新建/上传的链路在栏头，不在页头', { skip: "旧�
     assert.ok(headButtons.includes('新建文件夹'), `缺少「新建文件夹」：${JSON.stringify(headButtons)}`);
 
     // ② 过滤框在栏内
-    assert.equal(await page.locator('.zp-tree-filter').count(), 1, '树上方应有过滤框');
+    assert.equal(await page.locator('.zwp-tree-filter').count(), 1, '树上方应有过滤框');
 
     // ③ 页头不再有重复的文献库下拉
-    assert.equal(await page.locator('.zp-library').count(), 0,
+    assert.equal(await page.locator('.zwp-library').count(), 0,
       '页头不该再有文献库面板（两套入口会让人不知道用哪个）');
 
     // ④ 新建文件夹：磁盘 + 树都要有
     const before = (await readdir(dataDir)).length;
     await page.evaluate(() => {
-      [...document.querySelectorAll('.zp-tree-head button')].find((b) => b.title === '新建文件夹')?.click();
+      [...document.querySelectorAll('.zwp-tree-head button')].find((b) => b.title === '新建文件夹')?.click();
     });
     await sleep(1500);
     const after = await readdir(dataDir);
     assert.equal(after.length, before + 1, `磁盘应多一个目录：${JSON.stringify(after)}`);
     assert.ok(after.some((name) => name.includes('新文件夹')), `新目录名不对：${JSON.stringify(after)}`);
-    const treeHasNew = await page.evaluate(() => [...document.querySelectorAll('.zp-tree-btn')]
+    const treeHasNew = await page.evaluate(() => [...document.querySelectorAll('.zwp-tree-btn')]
       .some((b) => (b.dataset.path ?? '').includes('新文件夹')));
     assert.ok(treeHasNew, '新建的文件夹应出现在树里');
 
@@ -135,7 +135,7 @@ test('论文树：新建/上传的链路在栏头，不在页头', { skip: "旧�
       let opened = 0;
       const original = input.click.bind(input);
       input.click = () => { opened += 1; /* 不真的弹系统对话框 */ };
-      [...document.querySelectorAll('.zp-tree-head button')].find((b) => b.title === '导入 PDF')?.click();
+      [...document.querySelectorAll('.zwp-tree-head button')].find((b) => b.title === '导入 PDF')?.click();
       input.click = original;
       return { found: true, opened };
     });

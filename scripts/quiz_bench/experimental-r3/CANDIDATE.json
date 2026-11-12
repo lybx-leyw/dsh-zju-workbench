@@ -8,7 +8,7 @@
   "pairedQualityBenchmarkCompleted": false,
   "architecture": "tree-owned-teaching-assets-independent-solving-and-owned-material-tools",
   "rebasedFrom": "7e49ce33",
-  "rebasedReason": "import-path regroup in a96e5e94 (packages/dsh-zhiyun-core-quiz -> packages/core/quiz, packages/dsh-zhiyun-core-parser -> packages/core/parser); digests recomputed over LF-normalised bytes; lazy-import the retired deeptutor bench module in compare.mjs so the remaining r3 arms load without the archived vendor tree",
+  "rebasedReason": "import-path regroup in a96e5e94 (packages/dsh-zju-core-quiz -> packages/core/quiz, packages/dsh-zju-core-parser -> packages/core/parser); digests recomputed over LF-normalised bytes; lazy-import the retired deeptutor bench module in compare.mjs so the remaining r3 arms load without the archived vendor tree",
   "files": {
     "capsules.mjs": "343e4a21b261569832f9f617f82e98a9ddd540c4efe075a934bb08400de7193e",
     "common.mjs": "6e099e0ddfbb19e4356a213922a93654824a5d44ed26c2cb48ea92772183b9da",

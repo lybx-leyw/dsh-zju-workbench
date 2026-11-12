@@ -1,12 +1,12 @@
 # dsh bundle patch：规划域的宿主半边（数据聚合 + 路由 + 存储）。
 #
 # 本包**不含 UI**：页面（`page-planning`）只渲染，数据从这里的
-# `/_dsh/zhiyun-planning` 取。
+# `/_dsh/zw-planning` 取。
 #
 # 条目原先由 `page-planning` 自己的 patch 注册 —— 那是「页面包同时是服务器」，
 # 与分层冲突。搬到 core 之后，停用页面不再等于停用这套数据。
 #
 # 只有一行：`src/index.js` 的 `apply()` 会把存储、索引与路由一起挂起来。
 - insert:
-    - id: zhiyun-planning
+    - id: zw-planning
       name: '@lybx-leyw/dsh-zju-core-planning'

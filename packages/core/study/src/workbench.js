@@ -45,7 +45,7 @@ const isoDay = (value) => {
 // 写的是相对分片、并且跨域（三条原因都写在 `classroom/src/stream.js` 的文件头）。
 // 前缀与那边的 `STREAM_ROUTE_PREFIX` 必须一致 —— 同样因为依赖表里没有 classroom
 // 包，这里留一份字符串常量，而不是为了一个字符串去 import 一个包。
-const LIVE_RELAY_PREFIX = "/zhiyun-live";
+const LIVE_RELAY_PREFIX = "/zw-live";
 const liveRelayUrl = (url) => (typeof url === "string" && url ? `${LIVE_RELAY_PREFIX}/hls?u=${encodeURIComponent(url)}` : null);
 /**
  * 把一路直播流收敛成**客户端该怎么播**的样子。
@@ -878,7 +878,7 @@ export class StudyWorkbench {
    * 直播数据源（`classroom.live`）的取用入口。
    *
    * ⚠️ 这里**必须**能优雅降级：`live` 是另一个任务接线进来的可选能力，宿主那边
-   *    `zhiyunClassroom` 是服务实例，谁都不知道它有没有 `.live`（旧版本没有、
+   *    `zwClassroom` 是服务实例，谁都不知道它有没有 `.live`（旧版本没有、
    *    接线失败没有、单测里的假 classroom 也没有）。缺了只让这三个 RPC 如实报
    *    「未接入」，绝不能让学习页的其他动作跟着挂 —— 直播与课程/解析/讲义是
    *    互不相交的几条通路，缺一条不该连坐。
@@ -1036,7 +1036,7 @@ export class StudyWorkbench {
     //
     // ⚠️ 这是**单向**动作：只写笔记库，不读回来、也不参与生成。
     //    重名由导出层加「（2）」后缀处理，不覆盖用户已有的笔记。
-    //    讲义导出服务（`zhiyunHandout`）是**惰性**取的：它缺席时这件事只是不可用，
+    //    讲义导出服务（`zwHandout`）是**惰性**取的：它缺席时这件事只是不可用，
     //    不该把整个学习面板拖成 pending（同 `lectureOf` 那条注释的理由）。
     if (method === "teach-generate") return this.generateTeaching(key, payload, signal);
     if (method === "teach-load") return this.loadTeaching(key, user, signal);

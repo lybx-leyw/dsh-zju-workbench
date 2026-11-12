@@ -5,7 +5,7 @@
 // 胜负只看哪张表后挂载，而挂载顺序取决于各 fiber 的 inject 满足时机（不是 profile 顺序）。
 // 拆包时这里真的踩过一次：原 dsh-zhiyun-study/style.css 尾部的两个 @media 被整块留在
 // ui-primitives（inject 为空、永远最先挂），而基规则跟着组件去了页面包，于是移动端覆盖
-// 全部变成死规则 —— ≤760 时 .zs-heading 仍是 24px/26px 而不是 18px/23px（真机复现）。
+// 全部变成死规则 —— ≤760 时 .zws-heading 仍是 24px/26px 而不是 18px/23px（真机复现）。
 //
 // 只认一条硬规则：**两条规则若能命中同一个元素、特异性相同、又给同一块地盘赋了不同的值，
 // 谁生效就只取决于挂载顺序 —— 这就是隐患**。围绕它做三件事：
@@ -14,7 +14,7 @@
 //   3. 简写/长写：`margin` 与 `margin-bottom` 争同一块地盘，属性名不同也要算冲突。
 //
 // 判定「能命中同一个元素」用**主体（最右复合选择器）相同 + 选择器里的类/属性记号有交集**，
-// 而不是选择器字符串全等 —— 后者会漏掉「同一个选择器在别的包里多写了 `body[data-zhiyun]`
+// 而不是选择器字符串全等 —— 后者会漏掉「同一个选择器在别的包里多写了 `body[data-zw]`
 // 前缀」这类拼写差异，而那正是这个 bug 最容易重现的形状。特异性不同则不算隐患：高的那条
 // 无论挂载顺序都会赢。
 //
@@ -218,16 +218,16 @@ function subjectOf(selector) {
   return compounds.length > 0 ? compounds[compounds.length - 1] : '';
 }
 
-/** 主题作用域前缀去掉后的形态：`body[data-zhiyun] .x h1` 与 `.x h1` 是同一个选择器。 */
+/** 主题作用域前缀去掉后的形态：`body[data-zw] .x h1` 与 `.x h1` 是同一个选择器。 */
 function stripScope(selector) {
   return norm(norm(selector)
-    .replace(/^body\[data-zhiyun\]\s*/i, '')
+    .replace(/^body\[data-zw\]\s*/i, '')
     .replace(/^html\s+/i, '')
     .replace(/^:root\s+/i, ''));
 }
 
-/** 选择器里出现的类/属性/id 记号（`[data-zhiyun]` 这种主题作用域除外）。 */
-const SCOPE_TOKENS = new Set(['[data-zhiyun]', '[data-zhiyun-study]', '[data-zhiyun-primitives]']);
+/** 选择器里出现的类/属性/id 记号（`[data-zw]` 这种主题作用域除外）。 */
+const SCOPE_TOKENS = new Set(['[data-zw]', '[data-zw-study]', '[data-zw-primitives]']);
 function tokensOf(selector) {
   const set = new Set();
   for (const m of norm(selector).matchAll(/[.#][\w-]+|\[[^\]]+\]/g)) {

@@ -21,13 +21,13 @@
  *      循环 30 次会让界面卡住）。
  *   4. **Esc 的优先级**（先撤确认条、再撤选择、游标保留）是纯粹的**顺序**行为，
  *      只有把两个状态同时立起来、再按同一个键，才测得出来。
- *   5. **Delete 弹的是本页自己的确认条**（`.zs-nt-confirm`），不是 `window.confirm`。
+ *   5. **Delete 弹的是本页自己的确认条**（`.zws-nt-confirm`），不是 `window.confirm`。
  *      未确认前磁盘一个字都不能动 —— 这是这页唯一不可逆的动作，必须用真按键
  *      证明"按键只弹条、不删盘"。
  *
  * # ⚠️ 一个有位移的界面会让"点一下"变成"点两下"（本文件抓到的真缺陷）
  *
- * 有区间选择时，计数条 `.zs-nt-selection` 挂在**确认条上方**。而 `pointerdown`
+ * 有区间选择时，计数条 `.zws-nt-selection` 挂在**确认条上方**。而 `pointerdown`
  * 处理器会重置树状态 —— 一旦它在这次 pointerdown 里把锚点清掉，计数条就**当场
  * 卸载**，它下面整块内容**上移**。实测（1200×800，真实 style.css，系统 Edge）：
  *
@@ -69,7 +69,7 @@
  *
  * # 覆盖的九条行为
  *
- *   ① 点树上一行 → 该行成为游标（`.zs-nt-row.is-cursor`）；
+ *   ① 点树上一行 → 该行成为游标（`.zws-nt-row.is-cursor`）；
  *   ② Shift+↓ 两次 → 游标下移两行，**三行**带 `.is-selected`，且计数条可见；
  *   ③ Shift+↑ → 区间**收缩**到 2 行（不是另起一段新的选择）；
  *   ④ 普通 ↓ → 选择塌缩（锚点清空），游标继续下移；
@@ -230,33 +230,33 @@ async function bundle() {
  * 样式本身不是断言对象（选中与否看类名），但**必须让元素可点、可滚**：
  * ⑦ 要真点确认条上的按钮，⑤ 要靠 textarea 的内部滚动与光标。所以照抄
  * notes-scroll-keys.test.mjs 里那条带上 `min-height:0` 的 flex 链 —— 那条链是
- * 从真机量测反推出来的，随便简化会让 `.zs-nt-scroll` 与树容器失去限高。
+ * 从真机量测反推出来的，随便简化会让 `.zws-nt-scroll` 与树容器失去限高。
  */
 const CSS = [
   'html,body{margin:0;height:100%;overflow:hidden}',
-  '.zy-page{display:flex;flex-direction:column;height:100%;min-width:0}',
-  '.zy-scroll{flex:1;overflow:auto;min-height:0}',
-  '.zy-content.zy-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0}',
+  '.zw-page{display:flex;flex-direction:column;height:100%;min-width:0}',
+  '.zw-scroll{flex:1;overflow:auto;min-height:0}',
+  '.zw-content.zw-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0}',
   '.host{display:flex;flex-direction:column;flex:1;min-height:0}',
   /* 与 style.css 一致：工具栏要贴着下面的三栏，所以根容器没有 gap。 */
-  '.zs-nt{display:flex;flex-direction:column;gap:0;flex:1;min-height:0}',
-  '.zs-nt-work{display:flex;flex:1;min-height:0;overflow:hidden}',
-  '.zs-nt-topbar{display:flex;align-items:center;gap:3px;padding:5px 8px}',
-  '.zs-nt-explorer{width:240px;display:flex;flex-direction:column;min-height:0}',
-  '.zs-nt-tree{list-style:none;margin:0;padding:0;overflow-y:auto;flex:1;min-height:0}',
-  '.zs-nt-rowbtn{display:block;width:100%;text-align:left;padding:6px}',
-  '.zs-nt-row.is-cursor .zs-nt-rowbtn{outline:2px solid #5b8cff}',
-  '.zs-nt-row.is-selected{background:#dfe8ff}',
-  '.zs-nt-selection{display:flex;gap:8px;align-items:center;padding:4px 8px;background:#eef3ff;font-size:12px}',
-  '.zs-nt-confirm{padding:8px;background:#fff4e5;border:1px solid #e0a040;font-size:12px}',
-  '.zs-nt-confirm-list{margin:4px 0;padding-left:18px}',
-  '.zs-nt-main{flex:1 1 auto;min-width:400px;min-height:0;display:flex;flex-direction:column}',
-  '.zs-nt-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:20px}',
-  '.zs-nt-input{width:100%;min-height:420px;border:0;resize:none;font:15.5px/1.9 sans-serif;display:block}',
+  '.zws-nt{display:flex;flex-direction:column;gap:0;flex:1;min-height:0}',
+  '.zws-nt-work{display:flex;flex:1;min-height:0;overflow:hidden}',
+  '.zws-nt-topbar{display:flex;align-items:center;gap:3px;padding:5px 8px}',
+  '.zws-nt-explorer{width:240px;display:flex;flex-direction:column;min-height:0}',
+  '.zws-nt-tree{list-style:none;margin:0;padding:0;overflow-y:auto;flex:1;min-height:0}',
+  '.zws-nt-rowbtn{display:block;width:100%;text-align:left;padding:6px}',
+  '.zws-nt-row.is-cursor .zws-nt-rowbtn{outline:2px solid #5b8cff}',
+  '.zws-nt-row.is-selected{background:#dfe8ff}',
+  '.zws-nt-selection{display:flex;gap:8px;align-items:center;padding:4px 8px;background:#eef3ff;font-size:12px}',
+  '.zws-nt-confirm{padding:8px;background:#fff4e5;border:1px solid #e0a040;font-size:12px}',
+  '.zws-nt-confirm-list{margin:4px 0;padding-left:18px}',
+  '.zws-nt-main{flex:1 1 auto;min-width:400px;min-height:0;display:flex;flex-direction:column}',
+  '.zws-nt-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:20px}',
+  '.zws-nt-input{width:100%;min-height:420px;border:0;resize:none;font:15.5px/1.9 sans-serif;display:block}',
 ].join('\n');
 
 const HTML = `<!doctype html><meta charset="utf-8"><style>${CSS}</style>
-  <div class="zy-page" data-page="notes"><main class="zy-scroll"><div class="zy-content zy-content-flush">
+  <div class="zw-page" data-page="notes"><main class="zw-scroll"><div class="zw-content zw-content-flush">
   <div class="host" id="host"></div></div></main></div><script src="/app.js"></script>`;
 
 const browserPath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || chromium.executablePath();
@@ -344,7 +344,7 @@ async function withPage(t, body) {
     await page.goto(`http://127.0.0.1:${harness.port}/`, { waitUntil: 'networkidle' });
     // 首屏会把整棵树读出来并自动打开第一篇 —— 等行数到齐再动手，避免和挂载竞速。
     await page.waitForFunction(
-      () => document.querySelectorAll('.zs-nt-rowbtn[data-path]').length === window.__fixtureCount,
+      () => document.querySelectorAll('.zws-nt-rowbtn[data-path]').length === window.__fixtureCount,
     );
     await body(page);
     assert.deepEqual(errors, [], '页面不该有异常');
@@ -355,21 +355,21 @@ async function withPage(t, body) {
 
 // ── 读界面 / 读夹具的小工具（全部只读 DOM 与 window，不假设任何实现细节）──
 
-/** 可见行的路径，**按屏幕顺序**（就是 `.zs-nt-rowbtn[data-path]` 的 DOM 顺序）。 */
+/** 可见行的路径，**按屏幕顺序**（就是 `.zws-nt-rowbtn[data-path]` 的 DOM 顺序）。 */
 const rowPaths = (page) => page.evaluate(() =>
-  [...document.querySelectorAll('.zs-nt-rowbtn[data-path]')].map((btn) => btn.dataset.path));
+  [...document.querySelectorAll('.zws-nt-rowbtn[data-path]')].map((btn) => btn.dataset.path));
 
 /** 游标所在行（真机上 `activeElement` 靠不住，只能看这个类）。 */
 const cursorPath = (page) => page.evaluate(() =>
-  document.querySelector('.zs-nt-row.is-cursor .zs-nt-rowbtn')?.dataset?.path ?? null);
+  document.querySelector('.zws-nt-row.is-cursor .zws-nt-rowbtn')?.dataset?.path ?? null);
 
 /** 带选中标记的行，按屏幕顺序。 */
 const selectedPaths = (page) => page.evaluate(() =>
-  [...document.querySelectorAll('.zs-nt-row.is-selected .zs-nt-rowbtn')].map((btn) => btn.dataset.path));
+  [...document.querySelectorAll('.zws-nt-row.is-selected .zws-nt-rowbtn')].map((btn) => btn.dataset.path));
 
 /** 计数条的文案（没有计数条就是 null）。 */
 const selectionText = (page) => page.evaluate(() =>
-  document.querySelector('.zs-nt-selection')?.textContent?.trim() ?? null);
+  document.querySelector('.zws-nt-selection')?.textContent?.trim() ?? null);
 
 /** 已经发出去的 RPC 方法名序列。 */
 const callMethods = (page) => page.evaluate(() => window.__calls.map((call) => call.method));
@@ -386,7 +386,7 @@ const fixtureLen = (page) => page.evaluate(() => window.__tree.length);
  *    页面靠 `pointerdown` 记录"用户在树上"，靠 `click` 打开笔记。
  */
 const clickRow = (page, index) => page.evaluate((at) => {
-  const btn = document.querySelectorAll('.zs-nt-rowbtn[data-path]')[at];
+  const btn = document.querySelectorAll('.zws-nt-rowbtn[data-path]')[at];
   if (!btn) throw new Error(`树里没有第 ${at} 行`);
   const options = {
     bubbles: true, cancelable: true, composed: true,
@@ -406,7 +406,7 @@ const clickRow = (page, index) => page.evaluate((at) => {
  * Shift+↓ 选一行字，结果框住了左边的树。
  */
 const pointerDownRow = (page, index) => page.evaluate((at) => {
-  const btn = document.querySelectorAll('.zs-nt-rowbtn[data-path]')[at];
+  const btn = document.querySelectorAll('.zws-nt-rowbtn[data-path]')[at];
   if (!btn) throw new Error(`树里没有第 ${at} 行`);
   btn.dispatchEvent(new PointerEvent('pointerdown', {
     bubbles: true, cancelable: true, composed: true,
@@ -439,7 +439,7 @@ test('① 点树上一行 → 该行成为游标，且界面上看得见', async
 
     assert.equal(await cursorPath(page), order[0], '点过的那一行应成为游标');
     assert.equal(
-      await page.evaluate(() => document.querySelectorAll('.zs-nt-row.is-cursor').length), 1,
+      await page.evaluate(() => document.querySelectorAll('.zws-nt-row.is-cursor').length), 1,
       '游标只能有一个');
     assert.deepEqual(await selectedPaths(page), [], '单纯点一下不等于区间选择');
     assert.equal(await selectionText(page), null, '没框到多行时不该出现计数条');
@@ -518,7 +518,7 @@ test('⑤ 焦点在正文 textarea 时：Shift+↓ 不选中树行，↓ 只移�
   await withPage(t, async (page) => {
     const order = await rowPaths(page);
     await page.getByRole('button', { name: '编辑' }).first().click();
-    const textarea = page.locator('textarea.zs-nt-input');
+    const textarea = page.locator('textarea.zws-nt-input');
     await textarea.waitFor();
 
     // 合成出"游标在第一行、焦点在 textarea"的状态（真机上这个组合只能这样造）。
@@ -526,11 +526,11 @@ test('⑤ 焦点在正文 textarea 时：Shift+↓ 不选中树行，↓ 只移�
     await settle(page);
     assert.equal(await cursorPath(page), order[0], '前置：游标应在第一行');
     await page.evaluate(() => {
-      const el = document.querySelector('textarea.zs-nt-input');
+      const el = document.querySelector('textarea.zws-nt-input');
       el.focus();
       el.selectionStart = el.selectionEnd = 0;
       el.scrollTop = 0;
-      document.querySelector('.zs-nt-scroll').scrollTop = 0;
+      document.querySelector('.zws-nt-scroll').scrollTop = 0;
     });
     assert.equal(await page.evaluate(() => document.activeElement?.tagName), 'TEXTAREA',
       '前置：焦点要真的在正文里');
@@ -540,19 +540,19 @@ test('⑤ 焦点在正文 textarea 时：Shift+↓ 不选中树行，↓ 只移�
     assert.deepEqual(await selectedPaths(page), [], '正文里的 Shift+↓ 不该选中树行');
     assert.equal(await selectionText(page), null, '不该出现计数条');
     assert.equal(await cursorPath(page), order[0], '游标不该被正文里的按键推走');
-    assert.ok(await page.evaluate(() => document.querySelector('textarea.zs-nt-input').selectionEnd) > 0,
+    assert.ok(await page.evaluate(() => document.querySelector('textarea.zws-nt-input').selectionEnd) > 0,
       'Shift+↓ 必须留给浏览器去选正文文字（被 preventDefault 掉就选不了了）');
 
     // 普通 ↓：仍然只移光标，不滚正文。
     await page.evaluate(() => {
-      const el = document.querySelector('textarea.zs-nt-input');
+      const el = document.querySelector('textarea.zws-nt-input');
       el.selectionStart = el.selectionEnd = 0;
     });
     await page.keyboard.press('ArrowDown');
     await settle(page);
-    assert.ok(await page.evaluate(() => document.querySelector('textarea.zs-nt-input').selectionStart) > 0,
+    assert.ok(await page.evaluate(() => document.querySelector('textarea.zws-nt-input').selectionStart) > 0,
       '正文里按 ↓ 应移动光标');
-    assert.equal(await page.evaluate(() => Math.round(document.querySelector('.zs-nt-scroll').scrollTop)), 0,
+    assert.equal(await page.evaluate(() => Math.round(document.querySelector('.zws-nt-scroll').scrollTop)), 0,
       '正文里按 ↓ 不该滚正文容器');
     assert.deepEqual(await selectedPaths(page), [], '更不该因为按 ↓ 而选中树行');
   });
@@ -571,14 +571,14 @@ test('⑥ Delete（有区间选中）→ 弹确认条、磁盘未删、取消后
     // 模拟真机：点过别处之后 activeElement 落回 BODY，而选择还在。
     await page.evaluate(() => document.activeElement?.blur?.());
     await page.keyboard.press('Delete');
-    const confirm = page.locator('.zs-nt-confirm');
+    const confirm = page.locator('.zws-nt-confirm');
     await confirm.waitFor();
 
     const text = await confirm.innerText();
     assert.match(text, /删除这 3 条/, `确认条要说清一共几条：${text}`);
     assert.match(text, /找不回来/, '确认条要说清不可撤销');
     const listed = await page.evaluate(() =>
-      [...document.querySelectorAll('.zs-nt-confirm-list li')].map((li) => li.textContent.trim()));
+      [...document.querySelectorAll('.zws-nt-confirm-list li')].map((li) => li.textContent.trim()));
     assert.deepEqual(listed, order.slice(0, 3), '缩略清单要逐条列出被删的路径（用户眼睛未必数过）');
 
     // 确认之前，一个字都不能动：RPC 里不许有 removeMany，夹具（磁盘）仍是 4 条。
@@ -592,9 +592,9 @@ test('⑥ Delete（有区间选中）→ 弹确认条、磁盘未删、取消后
     //    1. 确认条按钮第一下落空（见文件顶部"布局位移"那一段）；
     //    2. 取消把选择一起清掉 —— "我反悔了"不等于"我放弃这段选择"。
     //       清掉的话用户再按一次 Delete 就什么都不弹了，得从头 Shift+↓ 一遍。
-    await page.locator('.zs-nt-confirm-actions').getByRole('button', { name: '取消' }).click();
+    await page.locator('.zws-nt-confirm-actions').getByRole('button', { name: '取消' }).click();
     await settle(page);
-    assert.equal(await page.locator('.zs-nt-confirm').count(), 0, '取消后确认条要一次点击就消失');
+    assert.equal(await page.locator('.zws-nt-confirm').count(), 0, '取消后确认条要一次点击就消失');
     assert.deepEqual(await rowPaths(page), order, '取消后树里一行都不能少');
     assert.equal(await fixtureLen(page), TREE.length, '取消后磁盘上一条都不能少');
     assert.deepEqual(await selectedPaths(page), order.slice(0, 3),
@@ -614,13 +614,13 @@ test('⑦ 确认后：行消失，且只发出一次 removeMany', async (t) => {
     const order = await rowPaths(page);
     await selectFirstThree(page, order);
     await page.keyboard.press('Delete');
-    const confirm = page.locator('.zs-nt-confirm');
+    const confirm = page.locator('.zws-nt-confirm');
     await confirm.waitFor();
-    assert.equal(await page.locator('.zs-nt-confirm .zs-nt-confirm-list li').count(), 3, '前置：确认条列了 3 条');
+    assert.equal(await page.locator('.zws-nt-confirm .zws-nt-confirm-list li').count(), 3, '前置：确认条列了 3 条');
 
-    await page.locator('.zs-nt-confirm-actions .zs-nt-danger').click();
+    await page.locator('.zws-nt-confirm-actions .zws-nt-danger').click();
     await page.waitForFunction(
-      (expected) => document.querySelectorAll('.zs-nt-rowbtn[data-path]').length === expected,
+      (expected) => document.querySelectorAll('.zws-nt-rowbtn[data-path]').length === expected,
       TREE.length - 3,
     );
     await settle(page);
@@ -632,7 +632,7 @@ test('⑦ 确认后：行消失，且只发出一次 removeMany', async (t) => {
     assert.deepEqual(removeMany[0].args.paths, order.slice(0, 3), 'payload 要正好是选中的那三条');
     assert.deepEqual(await rowPaths(page), order.slice(3), '树里应只剩没被选中的那几行');
     assert.equal(await fixtureLen(page), TREE.length - 3, '磁盘上真的只剩没被选中的那几条');
-    assert.equal(await page.locator('.zs-nt-confirm').count(), 0, '删完确认条要收掉');
+    assert.equal(await page.locator('.zws-nt-confirm').count(), 0, '删完确认条要收掉');
     assert.equal(await selectionText(page), null, '删完选择与计数条都要清掉（不能指向已不存在的路径）');
   });
 });
@@ -663,11 +663,11 @@ test('⑧ Esc：撤区间选择但保留游标；确认条挂着时先撤确认�
     await settle(page);
     assert.deepEqual(await selectedPaths(page), order.slice(1, 3), '从游标原处重新起一段（锚点=游标）');
     await page.keyboard.press('Delete');
-    await page.locator('.zs-nt-confirm').waitFor();
+    await page.locator('.zws-nt-confirm').waitFor();
 
     await page.keyboard.press('Escape');
     await settle(page);
-    assert.equal(await page.locator('.zs-nt-confirm').count(), 0, '第一次 Esc 先撤确认条');
+    assert.equal(await page.locator('.zws-nt-confirm').count(), 0, '第一次 Esc 先撤确认条');
     assert.deepEqual(await selectedPaths(page), order.slice(1, 3), '第一次 Esc 不该顺带把选择也撤掉');
 
     await page.keyboard.press('Escape');
@@ -688,7 +688,7 @@ test('⑧ Esc：撤区间选择但保留游标；确认条挂着时先撤确认�
  */
 const realClickRow = async (page, index) => {
   const point = await page.evaluate((at) => {
-    const btn = document.querySelectorAll('.zs-nt-rowbtn[data-path]')[at];
+    const btn = document.querySelectorAll('.zws-nt-rowbtn[data-path]')[at];
     if (!btn) throw new Error(`树里没有第 ${at} 行`);
     const rect = btn.getBoundingClientRect();
     return {
@@ -705,7 +705,7 @@ const realClickRow = async (page, index) => {
 
 /** 当前**打开**（激活）的那一行 —— 真机上就是正文区在显示谁。 */
 const activePath = (page) => page.evaluate(() =>
-  document.querySelector('.zs-nt-row.is-current .zs-nt-rowbtn')?.dataset?.path ?? null);
+  document.querySelector('.zws-nt-row.is-current .zws-nt-rowbtn')?.dataset?.path ?? null);
 
 test('⑨ 有区间选中时点树上另一行：**一次点击**就切换激活笔记，并清掉选择', async (t) => {
   // # 这条钉的缺陷（真机上"第一下点击落空"的第二种形状）
@@ -728,7 +728,7 @@ test('⑨ 有区间选中时点树上另一行：**一次点击**就切换激活
   //   pointerup   → SPAN:第四篇丁     ← 计数条已卸载，整棵树**上移一行（28px）**
   //   click       → UL:树容器         ← 合成 click 落在容器上，行的 onClick 没跑
   //
-  // 根因与确认条那条**同一个**：`.zs-nt-selection` 是插在树**上面**的一条会伸缩的
+  // 根因与确认条那条**同一个**：`.zws-nt-selection` 是插在树**上面**的一条会伸缩的
   // 横条。任何"在 pointerdown 里改变它"的逻辑，都会把下面整片内容推动，
   // 让按下与抬起落在不同元素上 —— 于是 click 必然不落在用户按的那个东西上。
   // 修法是把"清选择"挪到 `click`（按下与抬起之间布局完全不动）。
@@ -747,7 +747,7 @@ test('⑨ 有区间选中时点树上另一行：**一次点击**就切换激活
       // 每一轮都从干净状态开始：重新加载 → 点第一行 → Shift+↓ 两次。
       await page.reload({ waitUntil: 'networkidle' });
       await page.waitForFunction(
-        (expected) => document.querySelectorAll('.zs-nt-rowbtn[data-path]').length === expected,
+        (expected) => document.querySelectorAll('.zws-nt-rowbtn[data-path]').length === expected,
         TREE.length,
       );
       await clickRow(page, 0);

@@ -25,7 +25,7 @@
 
 ## 依赖什么
 
-`inject: ['zhiyunStudy', 'tools']` —— `zhiyunStudy` 由 `core/study` 提供，
+`inject: ['zwStudy', 'tools']` —— `zwStudy` 由 `core/study` 提供，
 两个包之间只剩**服务契约**，没有模块级 import。
 
 两条注入都是惰性的：宿主没有 `tools` 服务时这一包不起作用，学习页照常可用。
@@ -45,11 +45,11 @@
 平台原始数据的读：课程、节次、课件与录像、字幕检索、直播采集状态、课堂文字、
 今天的直播候选，以及本地组件诊断与安装计划。
 
-它**不与** `study_*` 争同一件事：`study_*` 读的是**已整理的讲义**（`zhiyunStudy`
+它**不与** `study_*` 争同一件事：`study_*` 读的是**已整理的讲义**（`zwStudy`
 的知识库），本工具读的是**平台上的原始数据**（`source/classroom`）。前者是加工过的，
 后者是取证用的。
 
-`zhiyunClassroom` **没有**写进 `inject`：那样课堂数据源没装时，连 `study_*` 三个
+`zwClassroom` **没有**写进 `inject`：那样课堂数据源没装时，连 `study_*` 三个
 讲义工具都会一起不激活。它只提供平台取证，是附加能力，缺席时那一个工具如实报
 `SERVICE_MISSING`，`study_*` 照常可用。
 

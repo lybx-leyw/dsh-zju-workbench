@@ -1,0 +1,136 @@
+body[data-zw] {
+  /* 求是蓝来自官网公开主题配置；浅色表面保持 Pro 的暖灰层次。 */
+  --zw-bg:#f7f7f5;--zw-surface:#fff;--zw-sidebar:#eff1f3;--zw-text:#252a30;--zw-secondary:#666b72;--zw-muted:#6b7178;--zw-line:#e1e3e5;--zw-accent:#00479d;--zw-soft:#e7eef8;--zw-hover:#e6eaf0;--zw-brand:#00479d;--zw-brand-soft:#e7eef8;--zw-action:#00479d;--zw-action-hover:#003b83;
+  /* 一个字体栈，全产品共用：Windows 上优先 Segoe UI Variable（Win11 的 UI 字），
+     中文落到雅黑 UI。会话区里的自有表面（会话条/历史面板）不继承 .zw-page，
+     所以它们自己再声明一次同一个变量，避免两处字体不一样。 */
+  /* 字号阶梯（P0-1）：中文正文 ≥12px，元信息 ≥11px，禁止 <11px。 */
+  --zw-fs-meta:11px;--zw-fs-sm:12px;--zw-fs-base:13px;--zw-fs-md:14px;--zw-fs-lg:17px;--zw-fs-xl:21px;--zw-fs-display:24px;
+  /* 间距阶梯（P2）：4px 基准，新代码优先使用；存量逐步迁移，不强制重排。 */
+  --zw-space-1:4px;--zw-space-2:8px;--zw-space-3:12px;--zw-space-4:16px;--zw-space-6:24px;--zw-space-8:32px;--zw-space-12:48px;--zw-space-16:64px;
+  --zw-font:'Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
+  /* 会话抽屉宽度。JS 侧的同名真源在 components.jsx 的 DRAWER_WIDTH（两边必须一致：
+     抽屉多宽，问一问那一列就要让出多宽，否则「挤压」会错位）。 */
+  --dsw-font-family:var(--zw-font);
+  --dsw-alias-button-info-fill:var(--zw-action);--dsw-alias-button-info-hover:var(--zw-action-hover);
+}
+body[data-zw][data-ds-dark-theme] {
+  --zw-bg:#191c20;--zw-surface:#22262b;--zw-sidebar:#15181c;--zw-text:#e8ebee;--zw-secondary:#afb6bf;--zw-muted:#9099a4;--zw-line:#363b43;--zw-accent:#94bdf4;--zw-soft:#25344a;--zw-hover:#2b3440;--zw-brand:#94bdf4;--zw-brand-soft:#25344a;--zw-action:#245fa9;--zw-action-hover:#2b70c3;
+}
+.zw-page, .zw-search-dialog, .zw-page *, .zw-search-dialog *{box-sizing:border-box;}
+/* `appearance:none` 是按钮的常规重置：让平台的原生绘制（边框、圆角、底色）不参与，
+ * 只用我们写的样式。
+ *
+ * ⚠️ 别把它当成"圆角不生效"的解 —— 排查头像那个超椭圆问题时我一度这么以为，
+ *    实测（同尺寸对照：加不加 appearance 都按圆角命中）证明不成立。真正的原因是
+ *    宿主继承下来的 `corner-shape`，见下面 `.zw-rail-avatar` 那一段。 */
+.zw-page button, .zw-search-dialog button{font:inherit;cursor:pointer;border:0;color:inherit;background:transparent;appearance:none;}
+/* 焦点环：不能只覆盖 button。
+ *
+ * 页面里大量可聚焦元素不是 <button> —— 链接（a）、输入框、可聚焦的容器
+ * （[tabindex]）、<summary>（折叠区标题）。只给 button 写焦点样式，
+ * 键盘用户在这几类元素上就看不见自己停在哪，等于键盘导航断掉。
+ *
+ * 用 `:is()` 把清单集中在一处，新增可聚焦元素时只改这一行。 */
+a, [tabindex]):focus-visible, .zw-page :is(button, a, [tabindex], summary):focus-visible, .zw-search-dialog :is(button, a, [tabindex]):focus-visible{
+  outline: 2px solid var(--zw-accent);
+  outline-offset: 3px;
+}
+
+/* 输入类控件用更贴边的焦点环：外扩 3px 会和相邻标签重叠 */
+.zw-page :is(input, textarea, select):focus-visible {
+  outline: 2px solid var(--zw-accent);
+  outline-offset: 1px;
+}
+.zw-page svg{flex-shrink:0;}
+
+
+
+/* The motto replaces the native hero brand title. */
+.zw-mark {display:inline-flex;align-items:center;justify-content:center;width:44px;height:38px;color:var(--zw-brand);flex-shrink:0;}
+.zw-mark svg {width:44px;height:36px;}
+.zw-mark-large {width:68px;height:56px;}.zw-mark-large svg{width:68px;height:56px;}
+.zw-mark-compact{width:32px;height:38px;}.zw-mark-compact svg{width:30px;height:36px;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.zw-page {display:flex;flex-direction:column;height:100%;min-width:0;background:var(--zw-bg);}
+.zw-scroll{flex:1;overflow:auto;min-height:0;}.zw-content{max-width:980px;margin:0 auto;padding:43px 48px 28px;}
+/* 整幅铺开的应用型页面（见 model.js 的 FULL_BLEED_PAGES）。
+ * ⚠️ 选择器写成 `.zw-content.zw-content-flush`（两个类）而不是单个类：下面窄屏
+ *    的 @media 只改 `.zw-content`，同特异性时后者会因为靠后而赢 —— 那样窗口一窄，
+ *    文章式内边距又会回来。两个类直接压过它，不依赖声明顺序。
+ * height:100% 能解析，是因为 `.zw-scroll` 在 `.zw-page` 这个列向 flex 里 flex:1，
+ * 高度是确定的。于是面板填满整个内容区，滚动交给页面内部的分区。 */
+.zw-content.zw-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0;}
+/* 二级入口（`NAV` 的 `parent`）：主线页里通往子页的一行按钮，以及子页的回程。
+ * 两者都排在内容之前、只有一行高，不抢页面自己的版式 —— 子页本身是完整页面，
+ * 壳只负责给出「进去」和「回来」两个动作。 */
+.zw-page-subnav{display:flex;align-items:center;gap:8px;margin:0 0 22px;}
+.zw-page-subnav button,.zw-page-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:1;padding:7px 13px;border:1px solid var(--zw-line);border-radius:999px;background:var(--zw-surface);color:var(--zw-secondary);}
+.zw-page-subnav button:hover,.zw-page-back:hover{color:var(--zw-text);border-color:var(--zw-accent);}
+.zw-page-back{margin:0 0 16px;padding-left:10px;}
+.zw-intro {display:flex;justify-content:space-between;align-items:center;margin-bottom:34px;gap:24px;}.zw-eyebrow{font-size:11px;color:var(--zw-accent);letter-spacing:1.2px;}.zw-intro h1{font-size:24px;font-weight:500;line-height:1.4;letter-spacing:-.7px;margin:9px 0 9px;}.zw-intro p{font-size:12px;color:var(--zw-secondary);margin:0;}.zw-intro>svg,.zw-date-icon{color:var(--zw-accent);opacity:.65;}.zw-date-icon{margin-right:12px;}
+.zw-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 12px;}.zw-section-title h2{font-size:13px;font-weight:600;margin:0;}.zw-section-title>span{font-size:11px;color:var(--zw-muted);}
+.zw-now {border:1px solid color-mix(in srgb,var(--zw-accent) 13%,var(--zw-line));border-left:3px solid var(--zw-accent);background:var(--zw-soft);border-radius:9px;padding:21px 24px 19px;}.zw-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--zw-accent);}.zw-pill>span{width:5px;height:5px;border-radius:50%;background:var(--zw-accent);}.zw-now h2{font-size:19px;letter-spacing:-.3px;font-weight:500;margin:11px 0 5px;}.zw-now p{font-size:11px;color:var(--zw-secondary);margin:0 0 15px;}
+.zw-text-button{display:inline-flex;align-items:center;gap:8px;padding:0!important;color:var(--zw-accent)!important;font-size:11px!important;}.zw-text-button:hover{text-decoration:underline;text-underline-offset:3px;}
+.zw-agenda-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:28px;}.zw-empty-row{display:flex;align-items:center;gap:13px;border:1px solid var(--zw-line);border-radius:8px;padding:19px 17px;background:var(--zw-surface);}.zw-empty-row>svg{color:var(--zw-muted);}.zw-empty-row strong{font-size:12px;font-weight:500;}.zw-empty-row p{font-size:11px;color:var(--zw-muted);margin:4px 0 0;}
+.zw-resume{display:flex;align-items:center;gap:16px;padding:19px 21px;border:1px solid var(--zw-line);border-radius:9px;background:var(--zw-surface);}.zw-book-cover{height:56px;width:45px;display:grid;place-items:center;background:var(--zw-sidebar);color:var(--zw-secondary);border:1px solid var(--zw-line);border-left:4px solid var(--zw-line);border-radius:3px 6px 6px 3px;flex-shrink:0;}.zw-resume h3{font-size:12px;font-weight:500;margin:0 0 5px;}.zw-resume p{font-size:11px;color:var(--zw-muted);margin:0;}.zw-resume>.zw-secondary{margin-left:auto;flex-shrink:0;}
+.zw-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--zw-line)!important;border-radius:6px;background:var(--zw-surface)!important;padding:7px 11px!important;font-size:11px!important;}.zw-secondary:hover{border-color:var(--zw-accent)!important;color:var(--zw-accent)!important;}
+.zw-quiet-footer {font-size:11px;text-align:center;color:var(--zw-muted);padding-top:32px;letter-spacing:.4px;}.zw-empty{min-height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:48px 28px;text-align:center;}.zw-empty-icon{width:68px;height:68px;display:grid;place-items:center;border-radius:20px;background:var(--zw-sidebar);color:var(--zw-accent);margin-bottom:20px;}.zw-empty h3{font-size:16px;font-weight:500;margin:0 0 9px;}.zw-empty p{font-size:12px;color:var(--zw-secondary);max-width:350px;margin:0;line-height:1.9;}
+
+
+@media(max-width:1050px){.zw-content{padding:32px 28px;}.zw-agenda-grid{gap:14px;}.zw-empty-row{padding:16px 12px;}}
+@media(max-width:650px){.zw-content{padding:25px 19px;}.zw-intro h1{font-size:21px;}.zw-agenda-grid{grid-template-columns:1fr;gap:0;margin-bottom:20px;}.zw-resume{flex-wrap:wrap;padding:17px;}.zw-resume>.zw-secondary{margin-left:61px;}.zw-now{padding:18px;}.zw-intro>svg,.zw-date-icon{display:none;}}
+@media(prefers-reduced-motion:no-preference){.zw-content{animation:zw-enter 180ms ease-out;}@keyframes zw-enter{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}}
+
+
+
+.zw-eyebrow{color:var(--zw-secondary);font-size:11px;letter-spacing:.5px;}
+.zw-intro h1{font-weight:600;letter-spacing:-.5px;}
+.zw-intro p{font-size:13px;line-height:1.8;}
+.zw-intro>svg,.zw-date-icon{color:var(--zw-muted);opacity:.55;}
+
+
+.zw-now{background:var(--zw-surface);border-color:var(--zw-line);border-left-color:var(--zw-accent);}
+.zw-now h2{font-weight:600;}.zw-now p{font-size:12px;line-height:1.8;}
+.zw-page button{transition:background-color 120ms ease,color 120ms ease;}
+@media(max-width:650px){}
+@media(prefers-reduced-motion:reduce){.zw-page button{transition:none;}}

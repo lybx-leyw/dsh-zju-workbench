@@ -54,7 +54,7 @@ test('createUpstreamQuizEngine：没有 tutor 时抛 CONFIG 并说清缺什么',
     () => createUpstreamQuizEngine({}),
     (error) => {
       assert.equal(error.code, 'CONFIG');
-      assert.match(error.message, /zhiyunDeepTutor/);
+      assert.match(error.message, /zwDeepTutor/);
       assert.match(error.message, /dsh-zhiyun-host-deeptutor/);
       // 关键：要明确说本包自己的路径不受影响，否则用户会以为整个出题坏了
       assert.match(error.message, /不该阻止本包自己的出题路径/);

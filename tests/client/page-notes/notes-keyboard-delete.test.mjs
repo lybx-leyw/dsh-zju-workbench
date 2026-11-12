@@ -58,11 +58,11 @@ test('键盘删除的作用对象与豁免（源码级守卫）', async () => {
   const body = handler.slice(0, handler.indexOf('if (phase === '));
   assert.match(body, /input, textarea, select, \[contenteditable/, '必须豁免输入框/正文（textarea）');
   assert.match(body, /ctrlKey \|\| event\.metaKey \|\| event\.altKey/, '必须让开带修饰键的组合');
-  assert.match(body, /closest\('\.zs-nt-rowbtn\[data-path\]'\)/, '必须要求焦点落在树行上');
+  assert.match(body, /closest\('\.zws-nt-rowbtn\[data-path\]'\)/, '必须要求焦点落在树行上');
   const preventAt = body.indexOf('event.preventDefault()');
   const exemptAt = body.indexOf('contenteditable');
   assert.ok(preventAt > exemptAt, 'preventDefault 必须在输入框豁免之后 —— 否则正文里打不了字');
-  const rowAt = body.indexOf('closest(\'.zs-nt-rowbtn[data-path]\')');
+  const rowAt = body.indexOf('closest(\'.zws-nt-rowbtn[data-path]\')');
   assert.ok(preventAt > rowAt, 'preventDefault 必须在"焦点在树行上"判断之后');
 });
 
@@ -96,7 +96,7 @@ test('批量删除：作用对象是区间选择，且不要求焦点落在树�
   // ⚠️ 有选择时**不能**坚持"焦点必须在树行上"。
   //
   //    与 ↑/↓ 的 B 方案同源：真机上点完树行 `activeElement` 仍是 `BODY`，
-  //    事件目标也就不是树行。若这里先 `closest('.zs-nt-rowbtn')` 再判断选择，
+  //    事件目标也就不是树行。若这里先 `closest('.zws-nt-rowbtn')` 再判断选择，
   //    用户 Shift+↓ 选了三行再按 Delete 会**什么都不发生** —— 一个看起来
   //    "实现了但按下去没反应"的功能。
   const selectedAt = body.indexOf('const selected = [...selectedPaths]');

@@ -25,8 +25,8 @@ try {
   await page.getByRole('navigation', { name: '主要页面' }).waitFor({ timeout: 30000 });
   const rpc = async (method, extra = {}) => {
     const envelope = await page.evaluate(async ({ method, args }) => {
-      const response = await fetch('/api/zhiyun-study', { method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ type: 'client-request', rpcId: crypto.randomUUID(), method: 'zhiyun-study', payload: { method, args } }), signal: AbortSignal.timeout(900000) });
+      const response = await fetch('/api/zw-study', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ type: 'client-request', rpcId: crypto.randomUUID(), method: 'zw-study', payload: { method, args } }), signal: AbortSignal.timeout(900000) });
       if (!response.ok) throw Error(`Study HTTP ${response.status}`);
       return response.json();
     }, { method, args: { courseId, subId, ...extra } });

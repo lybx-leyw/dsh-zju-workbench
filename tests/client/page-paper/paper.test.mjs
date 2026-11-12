@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { PaperError, PAPER_ERROR_STATUS, paperErrorStatus } from '../../../packages/vendor/paper-reader/dist/paper-errors.js';
 import { createSelectionTranslator, SELECTION_MAX_CHARS } from '../../../packages/vendor/paper-reader/dist/paper-selection.js';
 import { createPaperHandler, PAPER_ROUTE_PREFIX } from '../../../packages/vendor/paper-reader/dist/paper-routes.js';
-import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from '../../../archive/deprecated-packages/dsh-zhiyun-host-paper/src/upstream.js';
+import { UPSTREAM_PACKAGE, UPSTREAM_VERSION } from '../../../archive/deprecated-packages/dsh-zju-host-paper/src/upstream.js';
 
 import {
   applyFrame,
@@ -981,15 +981,15 @@ test('悬停停顿：同 key 幂等、换 key 取消上一个、cancel 后不触
 /* ────────────────────────── iframe 主题注入 ────────────────────────── */
 
 test('主题注入：外层变量映射进 iframe，缺失时回落兜底色', () => {
-  const fakeStyle = { getPropertyValue: (name) => ({ '--zy-bg': '#101010', '--zy-accent': '  ' }[name] ?? '') };
+  const fakeStyle = { getPropertyValue: (name) => ({ '--zw-bg': '#101010', '--zw-accent': '  ' }[name] ?? '') };
   const tokens = readThemeTokens(fakeStyle);
-  assert.equal(tokens['--zp-frame-bg'], '#101010');
-  assert.equal(tokens['--zp-frame-accent'], '#165dff', '空值回落兜底色，别让 iframe 变透明黑');
-  assert.equal(tokens['--zp-frame-text'], '#1f2328');
+  assert.equal(tokens['--zwp-frame-bg'], '#101010');
+  assert.equal(tokens['--zwp-frame-accent'], '#165dff', '空值回落兜底色，别让 iframe 变透明黑');
+  assert.equal(tokens['--zwp-frame-text'], '#1f2328');
 
   const fallback = readThemeTokens(undefined);
   assert.equal(Object.keys(fallback).length, 6);
-  assert.equal(fallback['--zp-frame-surface'], '#f7f7f8');
+  assert.equal(fallback['--zwp-frame-surface'], '#f7f7f8');
 });
 
 test('主题注入：藏掉已经搬到本壳的上游控件', () => {
@@ -998,52 +998,52 @@ test('主题注入：藏掉已经搬到本壳的上游控件', () => {
     assert.match(css, new RegExp(`${selector} \\{ display: none !important; \\}`), `${selector} 必须被藏掉`);
   }
   assert.match(css, /:root \{/);
-  assert.match(css, /--zp-frame-bg: #ffffff;/);
-  assert.match(css, /html, body \{ background: var\(--zp-frame-bg\); color: var\(--zp-frame-text\); \}/);
+  assert.match(css, /--zwp-frame-bg: #ffffff;/);
+  assert.match(css, /html, body \{ background: var\(--zwp-frame-bg\); color: var\(--zwp-frame-text\); \}/);
 });
 
 /* ────────────────────────── 助手回答的 Markdown 与页码引用 ────────────────────────── */
 
 test('页码引用：单个引用改写成 Markdown 链接，页数原样保留', () => {
   assert.equal(linkCitations('摘要第一句就划线（第 1 页）。'),
-    '摘要第一句就划线（[第 1 页](https://zhiyun.invalid/paper/page/1)）。');
-  assert.equal(linkCitations('见 [12]。'), '见 [第 12 页](https://zhiyun.invalid/paper/page/12)。');
+    '摘要第一句就划线（[第 1 页](https://zw.invalid/paper/page/1)）。');
+  assert.equal(linkCitations('见 [12]。'), '见 [第 12 页](https://zw.invalid/paper/page/12)。');
 });
 
 test('页码引用：多页引用把每个页码单独做成链接，读起来仍是「第 1、9、12 页」', () => {
   // 实测的真实回答就是这么写的（`（第 1、9、12 页）`）——不能整段包成一个链接，
   // 那样点哪都跳第一页。
   assert.equal(linkCitations('（第 1、9、12 页）'),
-    '（第 [1](https://zhiyun.invalid/paper/page/1)、[9](https://zhiyun.invalid/paper/page/9)、[12](https://zhiyun.invalid/paper/page/12) 页）');
+    '（第 [1](https://zw.invalid/paper/page/1)、[9](https://zw.invalid/paper/page/9)、[12](https://zw.invalid/paper/page/12) 页）');
   // 「和」「及」「/」都是模型写过的连接词。
   assert.match(linkCitations('（第 9 和 7 页）'), /\[9\].*\[7\]/);
 });
 
 test('页码引用：区间展开成逐页链接，超大区间不猜', () => {
   assert.equal(linkCitations('第 1-3 页'),
-    '第 [1](https://zhiyun.invalid/paper/page/1)、[2](https://zhiyun.invalid/paper/page/2)、[3](https://zhiyun.invalid/paper/page/3) 页');
+    '第 [1](https://zw.invalid/paper/page/1)、[2](https://zw.invalid/paper/page/2)、[3](https://zw.invalid/paper/page/3) 页');
   // `第 1-100 页` 更像误匹配（或真是一大段），展开成 100 个链接只会把回答刷屏。
   assert.equal(linkCitations('第 1-100 页'), '第 1-100 页');
 });
 
 test('页码引用：代码块与行内代码、已有链接里面一律不动', () => {
   const fenced = '```js\n// 第 1 页\nconst a = 1;\n```\n正文（第 3 页）';
-  assert.equal(linkCitations(fenced), '```js\n// 第 1 页\nconst a = 1;\n```\n正文（[第 3 页](https://zhiyun.invalid/paper/page/3)）');
+  assert.equal(linkCitations(fenced), '```js\n// 第 1 页\nconst a = 1;\n```\n正文（[第 3 页](https://zw.invalid/paper/page/3)）');
   assert.equal(linkCitations('`第 1 页` 不该动'), '`第 1 页` 不该动');
   assert.equal(linkCitations('[已有](https://x.test/a)（第 2 页）'),
-    '[已有](https://x.test/a)（[第 2 页](https://zhiyun.invalid/paper/page/2)）');
+    '[已有](https://x.test/a)（[第 2 页](https://zw.invalid/paper/page/2)）');
 });
 
 test('页码引用：链接地址是保留域，且能双向解析回来', () => {
-  const href = 'https://zhiyun.invalid/paper/page/42';
+  const href = 'https://zw.invalid/paper/page/42';
   assert.equal(pageFromLink(href), 42);
   assert.equal(pageFromLink('https://example.com/paper/page/42'), null, '别人发的链接不能被当页码');
-  assert.equal(pageFromLink('https://zhiyun.invalid/paper/page/0'), null);
-  assert.equal(pageFromLink('https://zhiyun.invalid/paper/page/abc'), null);
+  assert.equal(pageFromLink('https://zw.invalid/paper/page/0'), null);
+  assert.equal(pageFromLink('https://zw.invalid/paper/page/abc'), null);
   assert.equal(pageFromLink(null), null);
   // RFC 2606 保留域：拦截失效时浏览器也只会得到一个必然解析失败的地址，
   // 不会把「第 12 页」真的发到某个站点去。
-  assert.match(href, /^https:\/\/zhiyun\.invalid\//);
+  assert.match(href, /^https:\/\/zw\.invalid\//);
 });
 
 test('页码引用：没有引用的回答原样返回（不能凭空加东西）', () => {
@@ -1064,20 +1064,20 @@ test('接线：助手气泡走宿主的 Markdown 渲染器，用户气泡保持�
   assert.ok(labels, 'labels 必须是模块级常量');
   assert.ok(!/labels=\{\{/.test(source), 'labels 不能写成内联字面量');
   // 用户气泡是纯文本：选区里带着 `*`、反引号时渲染反而走样。
-  assert.match(source, /role === 'user'\s*\n?\s*\? <div className="zp-bubble-text">\{text\}<\/div>/);
+  assert.match(source, /role === 'user'\s*\n?\s*\? <div className="zwp-bubble-text">\{text\}<\/div>/);
   // 页码链接必须被 delegate 拦下来跳页，不能真去开那个地址。
   assert.match(source, /openExternalLink=\{openExternalLink\}/);
   assert.match(source, /pageFromLink\(href\)/);
 });
 
 test('接线：样式不许跟宿主 CSS Modules 的哈希类名（.markdown）挂钩', () => {
-  // 真踩过：一开始写 `.zp-md .markdown { font-size: 12px }`，但宿主用 CSS Modules，
+  // 真踩过：一开始写 `.zwp-md .markdown { font-size: 12px }`，但宿主用 CSS Modules，
   // 产物里的类名是 `_markdown_1ypvv_5` 这种哈希 —— 规则一条都不命中，字号/行高
   // 全部静默失效，肉眼只会觉得「有点大」。宿主显式写进 DOM 的稳定钩子是
   // `data-markdown-variant`，样式必须挂在它上面。
   const css = readFileSync(path.join(here, '../../../packages/client/page-paper/src/style.css'), 'utf8');
   assert.match(css, /\[data-markdown-variant\]/, 'MarkdownText 的样式要选稳定属性');
-  assert.ok(!/\.zp-md[^{]*\s\.markdown[\s>{:]/.test(css), '不能选宿主哈希出来的 .markdown 类名');
+  assert.ok(!/\.zwp-md[^{]*\s\.markdown[\s>{:]/.test(css), '不能选宿主哈希出来的 .markdown 类名');
 });
 
 /* ────────────────────────── 会话标签（宿主半边） ────────────────────────── */
@@ -1092,7 +1092,7 @@ test('会话标签：注入的工作台上下文不算提问，第一条真人�
   // 技能目录，直接取第一条会把每行标签都显示成同一段系统文本。
   const events = [
     { type: 'session/permission', data: {} },
-    userMessage('# AGENTS.md\n\n你是智云 Pro…', { kind: 'agent-instructions' }),
+    userMessage('# AGENTS.md\n\n你是ZJU Workbench…', { kind: 'agent-instructions' }),
     userMessage('Current runtime context:\n…', { kind: 'runtime-context' }),
     userMessage('[论文伴读] 文献：未分类/Nature25-PFN（同目录下，search_paper 可直接检索；回答注明页码）\n用户的问题：用一句话说明这篇论文的核心贡献，并标出页码。'),
     userMessage('第二个问题不该被选中'),
@@ -1368,12 +1368,12 @@ test('接线：两个新包都已进 profile 与构建清单', () => {
 
 test('接线：页面包只注册自己的插槽，设置入口集中在 settings.section', () => {
   const source = readFileSync(path.join(here, '../../../packages/client/page-paper/src/client.jsx'), 'utf8');
-  // 迁移到 `dsh-pages` 后没有 `zhiyun.paper.content` 这个子槽了：页面自己把内容
+  // 迁移到 `dsh-pages` 后没有 `zw.paper.content` 这个子槽了：页面自己把内容
   // 注册到页面壳的 `page.content`，key 就是页面 id。断的是**新协议**。
   assert.match(source, /registerPageContent\(/, '页面要把内容注册到 page.content');
   assert.match(source, /id: 'paper'/, '注册的 key 必须是页面 id');
   assert.match(source, /'settings\.section'/);
-  assert.match(source, /export const name = 'zhiyun-page-paper-client'/);
+  assert.match(source, /export const name = 'zw-page-paper-client'/);
   assert.ok(!/sidebar\.workspaces/.test(source), '上游客户端会抢侧栏，我们不引入它');
   assert.ok(!/shell\.overlay/.test(source), 'overlay 归外壳，页面不该占');
 });

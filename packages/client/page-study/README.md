@@ -25,11 +25,11 @@
 整理 → 回看），拆成三页的代价是每一步都要离开当前上下文：看课时读不到讲义，
 读讲义时又回不到那一段，还得记着自己是从哪进来的。
 
-现在播放是正文区的一栏（`zs-content-switch` 的「视频」），课程目录是左栏。
+现在播放是正文区的一栏（`zws-content-switch` 的「视频」），课程目录是左栏。
 **导航因此少两项，功能一个没少**；那两个包已删除。
 
 反过来也发生过一次：**「题库」页曾经寄居在这里**（壳的 `pageBundle` 特判把
-`zhiyun.quiz.content` 交给本包），但两者走的方向不同 —— 学习页按课程 → 节次纵向走，
+`zw.quiz.content` 交给本包），但两者走的方向不同 —— 学习页按课程 → 节次纵向走，
 题库页按知识点横向跨课程走。现在它独立成 `@lybx-leyw/dsh-zju-page-quiz`，本页只留知识点卡片上
 那一小块点级题板。依赖方向是单向的 `study → quiz`。
 
@@ -47,7 +47,7 @@
 ## 边界
 
 - **领域状态不在这里**：账号、课程树取数、解析任务、持久化都在 `@lybx-leyw/dsh-zju-core-study`
-  提供的 `zhiyunStudyController` 里，本包用 `ctx.inject(['zhiyunStudyController'], …)` 惰性取。
+  提供的 `zwStudyController` 里，本包用 `ctx.inject(['zwStudyController'], …)` 惰性取。
   停用领域包时这一页空着，不会把整个前端拖成 pending。
 - **检索与格式化留在本包**：`searchLesson` / `hitBlockIndexes` / `layerSpecOf` /
   `time` / `lessonWhen` 只有这一页用，属于「这一页怎么呈现」，不属于领域。
@@ -55,12 +55,12 @@
 - `lecture-reader.jsx` 用宿主的 `@deepseek-ai/dsh-client-ui-primitives`（`MarkdownText`，种子词），
   跨包原语用 `@lybx-leyw/dsh-zju-ui-shared`（`useStudy` / `Notice`）—— 两个不同的包，别混。
 - **两张样式表**：`style.css`（整页）与 `video.css`（视频栏）。同包内后写的赢，
-  顺序是确定的，不吃挂载顺序的亏；视频栏的类名一律 `zs-video-` 前缀，与整页的
-  `zs-*` 不重名，`npm run check:css` 因此不会把它们报成跨包竞争。
+  顺序是确定的，不吃挂载顺序的亏；视频栏的类名一律 `zws-video-` 前缀，与整页的
+  `zws-*` 不重名，`npm run check:css` 因此不会把它们报成跨包竞争。
 
 ## 插槽
 
-在 `zhiyun.study.content` 注册内容（`children` 声明归外壳）。`ModelSettings` 是这一页的
+在 `zw.study.content` 注册内容（`children` 声明归外壳）。`ModelSettings` 是这一页的
 「生成配置」按钮浮层，读领域状态的路由配置，界面留在本包。
 
 ## 生成讲义

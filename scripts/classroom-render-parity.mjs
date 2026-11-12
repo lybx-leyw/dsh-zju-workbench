@@ -12,7 +12,7 @@
  *              分别 `renderToStaticMarkup`，抽出的文本**多重集**必须相等。
  *              实现差异（缺字、多字）→ divergent；仅顺序/空白不同 → equivalent。
  *
- *   2. html    `ctx.zhiyunClassroomExport.html(doc)` 的产物里，每个场景的标题与正文
+ *   2. html    `ctx.zwClassroomExport.html(doc)` 的产物里，每个场景的标题与正文
  *              都要在（文案取自 `--reference`，默认就是同一份 fixture）。场景按
  *              「类型 + 序号」配对，缺场景 / 缺行 → divergent。产物的文本来源是
  *              **静态 DOM 文本 ∪ 内嵌清单 payload**（这份 HTML 是播放器壳：正文装在
@@ -456,7 +456,7 @@ async function loadExportService() {
     },
     on() {},
   }, { logger: silent });
-  const service = provided.get('zhiyunClassroomExport');
+  const service = provided.get('zwClassroomExport');
   if (!service || typeof service.html !== 'function') throw new Error('导出服务没有注册（html 缺失）');
   exportService = service;
   return service;

@@ -124,7 +124,7 @@ test('带查询串但路径是 .mp4 的仍算非 HLS', () => {
 });
 
 test('查询串里藏着 m3u8 的转发地址仍按 HLS 处理（不给原生 src）', () => {
-  const url = 'http://127.0.0.1:3092/zhiyun-live/hls?u=' + encodeURIComponent(M3U8);
+  const url = 'http://127.0.0.1:3092/zw-live/hls?u=' + encodeURIComponent(M3U8);
   const out = html({ src: url });
   assert.equal(out.includes('src='), false, '转发的 HLS 必须走 hls.js 分支');
 });

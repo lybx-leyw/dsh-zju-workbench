@@ -24,8 +24,8 @@ async function profileCapabilities() {
   const has = name => bundles.includes(name);
   return {
     bundles,
-    // 外壳：决定页面上有没有 .zy-page 与智云导轨。
-    hasShell: has('dsh-zhiyun-shell-workbench'),
+    // 外壳：决定页面上有没有 .zw-page 与智云导轨。
+    hasShell: has('dsh-zju-shell-workbench'),
     // 页面包：决定导航里能不能点开具体页。
     pages: bundles.filter(name => name.startsWith('@lybx-leyw/dsh-zju-page-')),
     // 四个启动标记的产出方（都是业务插件，瘦身后不在 profile 里）。
@@ -39,8 +39,8 @@ async function profileCapabilities() {
 /**
  * 等「产品面」出现。
  *
- * 有外壳时等 `.zy-page[data-page=today]`（原行为）；没有外壳时只等 DOM 就绪 ——
- * 界面是原生 DSH，不存在 .zy-page，硬等只会得到一个与根因无关的超时。
+ * 有外壳时等 `.zw-page[data-page=today]`（原行为）；没有外壳时只等 DOM 就绪 ——
+ * 界面是原生 DSH，不存在 .zw-page，硬等只会得到一个与根因无关的超时。
  *
  * @param page - Playwright 页面。
  * @param caps - {@link profileCapabilities} 的返回值。
@@ -51,7 +51,7 @@ async function waitForProductSurface(page, caps, timeout = 60000) {
     await page.waitForLoadState('domcontentloaded');
     return;
   }
-  await page.locator('.zy-page[data-page=today]').waitFor({ timeout });
+  await page.locator('.zw-page[data-page=today]').waitFor({ timeout });
 }
 
 /** The host runs its own first-run steps — the developer-preview notice and the
@@ -142,7 +142,7 @@ async function reloadProductEventually(page) {
   while (Date.now() < deadline) {
     await page.reload({ waitUntil: 'domcontentloaded' });
     try {
-      await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 8000 });
+      await page.locator('.zw-page[data-page=today]').waitFor({ timeout: 8000 });
       await settleHostOverlays(page);
       return;
     } catch {
@@ -161,7 +161,7 @@ async function reloadNativeEventually(page) {
     try {
       await page.locator('[class*="_sidebarCol"]').waitFor({ timeout: 8000 });
       await settleHostOverlays(page);
-      if (await page.locator('.zy-sidebar').count() === 0) return;
+      if (await page.locator('.zw-sidebar').count() === 0) return;
     } catch { /* previous graph still booting; retry */ }
     await page.waitForTimeout(1000);
   }
@@ -203,12 +203,12 @@ function minimalPdf(lines) {
  */
 function productRowIds() {
   const bundles = [...CLIENT_PACKAGES, ''@ggboy123/dsh-paper-reader''];
-  return [...new Set(bundles.map(bundle => bundle === 'dsh-zhiyun-shell-workbench' ? 'zhiyun-shell' : bundle.replace(/^dsh-/, '')))].sort();
+  return [...new Set(bundles.map(bundle => bundle === 'dsh-zju-shell-workbench' ? 'zw-shell' : bundle.replace(/^dsh-/, '')))].sort();
 }
 
 /** 往 profile 的文献库里放一篇真论文，供下面的抽屉端到端断言使用。 */
 async function writeProbePaper(runtime) {
-  const dir = path.join(runtime.profile, 'data', 'zhiyun-paper', 'host-probe');
+  const dir = path.join(runtime.profile, 'data', 'zw-paper', 'host-probe');
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, 'probe-paper.pdf'), minimalPdf([
     'Attention Is All You Need',
@@ -223,13 +223,13 @@ async function writeProbePaper(runtime) {
  *  发一个问题 → 回答流里只出现对话本身。 */
 async function paperProbe(page, evidence, checks) {
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '论文', exact: true }).click();
-  await page.locator('.zy-page[data-page=paper]').waitFor();
-  await page.locator('.zp-library-trigger').click();
-  await page.locator('.zp-library-pop').waitFor();
-  await page.locator('.zp-library-topic button', { hasText: 'probe-paper' }).first().click();
+  await page.locator('.zw-page[data-page=paper]').waitFor();
+  await page.locator('.zwp-library-trigger').click();
+  await page.locator('.zwp-library-pop').waitFor();
+  await page.locator('.zwp-library-topic button', { hasText: 'probe-paper' }).first().click();
 
   // 左侧必须真的是 PDF（canvas 由 pdf.js 画出来，文本层可选中）。
-  const reader = page.frameLocator('.zp-frame');
+  const reader = page.frameLocator('.zwp-frame');
   await reader.locator('.page canvas').first().waitFor({ timeout: 30000 });
   // 文本层比 canvas 晚一步（pdf.js 先画布后铺 span），所以要等它出现再数，
   // 否则这条断言会随机失败。
@@ -237,14 +237,14 @@ async function paperProbe(page, evidence, checks) {
   assert.ok(await reader.locator('.textLayer span').count() >= 3, 'the PDF text layer is selectable');
 
   // 抽屉默认收起，展开后必须占住正文右缘（不是浮在中间，也不是把正文压没）。
-  assert.equal(await page.locator('.zp-drawer.is-open').count(), 0);
-  await page.locator('.zp-bar-actions').getByRole('button', { name: 'AI 助手', exact: true }).click();
-  await page.locator('.zp-drawer.is-open').waitFor();
+  assert.equal(await page.locator('.zwp-drawer.is-open').count(), 0);
+  await page.locator('.zwp-bar-actions').getByRole('button', { name: 'AI 助手', exact: true }).click();
+  await page.locator('.zwp-drawer.is-open').waitFor();
   // 抽屉在正文**右边**：它的左缘要贴上正文的右缘（探针实测 drawer.left=1048 =
   // main.right，drawer 一直延伸到视口右缘）。
   const box = await page.evaluate(() => {
-    const drawer = document.querySelector('.zp-drawer');
-    const main = document.querySelector('.zp-main');
+    const drawer = document.querySelector('.zwp-drawer');
+    const main = document.querySelector('.zwp-main');
     const d = drawer.getBoundingClientRect();
     const m = main.getBoundingClientRect();
     return {
@@ -265,50 +265,50 @@ async function paperProbe(page, evidence, checks) {
 
   // 发一个问题：这里走的是上游宿主半边的 /api/ask，会真的建一个会话。
   const asked = page.waitForResponse(response => response.url().includes('/paper-reader/api/ask'), { timeout: 60000 });
-  await page.locator('.zp-drawer-compose textarea').fill('这篇论文的核心贡献是什么？');
-  await page.locator('.zp-drawer-compose').getByRole('button', { name: '发送', exact: true }).click();
+  await page.locator('.zwp-drawer-compose textarea').fill('这篇论文的核心贡献是什么？');
+  await page.locator('.zwp-drawer-compose').getByRole('button', { name: '发送', exact: true }).click();
   const answer = await asked;
   assert.equal(answer.status(), 200, `POST /paper-reader/api/ask → ${answer.status()}`);
 
-  await page.locator('.zp-bubble').first().waitFor({ timeout: 60000 });
-  const bubbles = await page.locator('.zp-bubble-text').allInnerTexts();
+  await page.locator('.zwp-bubble').first().waitFor({ timeout: 60000 });
+  const bubbles = await page.locator('.zwp-bubble-text').allInnerTexts();
   const leaked = bubbles.filter(text => /<system-reminder>|Current runtime context|A skill is a reusable/.test(text));
   assert.deepEqual(leaked, [], 'workbench context must never be rendered as chat bubbles');
   assert.match(bubbles.join('\n'), /核心贡献/, 'the question itself is shown');
   // 折叠了几条要如实说，否则用户会以为助手一句话没说。
-  assert.equal(await page.locator('.zp-drawer-folded').count(), 1, 'folded context is reported to the user');
+  assert.equal(await page.locator('.zwp-drawer-folded').count(), 1, 'folded context is reported to the user');
   // 用户气泡是纯文本：划选来的原文常带 `*`、反引号、`#`，按 Markdown 渲染会把原样文字画走样。
   // （助手气泡反过来必须走渲染器，这里没模型凭证拿不到助手回答，那条由 tests/paper.test.mjs 守。）
   assert.equal(
-    await page.locator('.zp-bubble.is-user [data-markdown-variant]').count(),
+    await page.locator('.zwp-bubble.is-user [data-markdown-variant]').count(),
     0,
     'the user bubble must stay plain text',
   );
 
   // `/resume` 是命令不是提问：它必须被输入框拦下，而不是发给论文助手。
-  const labeled = page.waitForResponse(response => response.url().includes('/zhiyun-paper/api/sessions/labels'), { timeout: 60000 });
-  await page.locator('.zp-drawer-compose textarea').fill('/resume');
-  await page.locator('.zp-drawer-compose textarea').press('Enter');
-  await page.locator('.zp-resume').waitFor({ timeout: 15000 });
+  const labeled = page.waitForResponse(response => response.url().includes('/zw-paper/api/sessions/labels'), { timeout: 60000 });
+  await page.locator('.zwp-drawer-compose textarea').fill('/resume');
+  await page.locator('.zwp-drawer-compose textarea').press('Enter');
+  await page.locator('.zwp-resume').waitFor({ timeout: 15000 });
   assert.equal((await labeled).status(), 200, 'the session labels endpoint answers for this paper');
   // 标签里的「首句」必须是**用户自己问的那句**：上游把文献路径、选区、`用户的问题：`
   // 前缀都拼进了同一条消息，直接显示原文会把每行都撑满且看不出区别。
-  await page.locator('.zp-resume-row .zp-resume-first', { hasText: '这篇论文的核心贡献是什么？' })
+  await page.locator('.zwp-resume-row .zwp-resume-first', { hasText: '这篇论文的核心贡献是什么？' })
     .first().waitFor({ timeout: 15000 });
-  assert.equal(await page.locator('.zp-drawer-compose textarea').inputValue(), '', 'the command is consumed, not left in the box');
-  assert.equal(await page.locator('.zp-bubble.is-user', { hasText: '/resume' }).count(), 0, '/resume must never reach the model');
+  assert.equal(await page.locator('.zwp-drawer-compose textarea').inputValue(), '', 'the command is consumed, not left in the box');
+  assert.equal(await page.locator('.zwp-bubble.is-user', { hasText: '/resume' }).count(), 0, '/resume must never reach the model');
   const palette = await page.evaluate(() => {
-    const box = document.querySelector('.zp-resume');
-    const list = document.querySelector('.zp-resume-list');
+    const box = document.querySelector('.zwp-resume');
+    const list = document.querySelector('.zwp-resume-list');
     const rect = box.getBoundingClientRect();
-    const rows = [...document.querySelectorAll('.zp-resume-row')];
+    const rows = [...document.querySelectorAll('.zwp-resume-row')];
     return {
       focused: box.contains(document.activeElement),
       width: Math.round(rect.width),
       height: Math.round(rect.height),
       scrollable: getComputedStyle(list).overflowY,
-      codes: rows.map(row => row.querySelector('.zp-resume-code')?.textContent ?? ''),
-      firsts: rows.map(row => row.querySelector('.zp-resume-first')?.textContent ?? ''),
+      codes: rows.map(row => row.querySelector('.zwp-resume-code')?.textContent ?? ''),
+      firsts: rows.map(row => row.querySelector('.zwp-resume-first')?.textContent ?? ''),
     };
   });
   assert.ok(palette.focused, 'the palette takes focus so ↑↓/Enter/Delete hit it, not the textarea');
@@ -321,39 +321,39 @@ async function paperProbe(page, evidence, checks) {
 
   // ↑↓ 在面板上移动选中项，到边界绕回另一端。本次探针只发过一个问题，
   // 所以这里往往只有一行 —— 单行时绕回原位是正确的，不能当成失败。
-  const activeAt = () => page.evaluate(() => [...document.querySelectorAll('.zp-resume-row')].findIndex(row => row.classList.contains('is-active')));
+  const activeAt = () => page.evaluate(() => [...document.querySelectorAll('.zwp-resume-row')].findIndex(row => row.classList.contains('is-active')));
   const wasAt = await activeAt();
-  await page.locator('.zp-resume').press('ArrowUp');
+  await page.locator('.zwp-resume').press('ArrowUp');
   const upAt = await activeAt();
   if (palette.codes.length > 1) {
     assert.notEqual(upAt, wasAt, 'ArrowUp moves the selection');
   } else {
     assert.equal(upAt, 0, 'a single-row list keeps its only row selected');
   }
-  await page.locator('.zp-resume').press('ArrowDown');
+  await page.locator('.zwp-resume').press('ArrowDown');
   assert.equal(await activeAt(), wasAt, 'ArrowDown moves it back');
 
   await page.screenshot({ path: path.join(evidence, 'paper-resume.png'), fullPage: true });
-  await page.locator('.zp-resume').press('Escape');
-  await page.waitForFunction(() => document.querySelectorAll('.zp-resume').length === 0, null, { timeout: 5000 });
+  await page.locator('.zwp-resume').press('Escape');
+  await page.waitForFunction(() => document.querySelectorAll('.zwp-resume').length === 0, null, { timeout: 5000 });
 
   await page.screenshot({ path: path.join(evidence, 'paper-drawer.png'), fullPage: true });
-  await page.locator('.zp-drawer-toggle').click();
-  assert.equal(await page.locator('.zp-drawer.is-open').count(), 0, 'the drawer collapses again');
+  await page.locator('.zwp-drawer-toggle').click();
+  assert.equal(await page.locator('.zwp-drawer.is-open').count(), 0, 'the drawer collapses again');
   checks.push('Paper page: local PDF renders, the AI drawer answers, injected context stays folded');
   checks.push('Paper page: /resume opens a fixed-size scrollable session palette with ↑↓ navigation');
 }
 /** A real loader package, generated only in the disposable test profile. */
 async function writeNativePluginProbe(runtime) {
-  const dir = path.join(runtime.profile, 'node_modules', 'zhiyun-test-native-panel');
+  const dir = path.join(runtime.profile, 'node_modules', 'zw-test-native-panel');
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, 'package.json'), JSON.stringify({
-    name: 'zhiyun-test-native-panel', private: true, type: 'module',
+    name: 'zw-test-native-panel', private: true, type: 'module',
     exports: { '.': './index.js', './client': './client.js', './package.json': './package.json' },
     dsh: { client: { platform: 'web', inject: ['@deepseek-ai/dsh-client-ui-layout', '@deepseek-ai/dsh-client-ui-sidebar'] } },
   }));
   await writeFile(path.join(dir, 'index.js'), 'export function apply() {}\n');
-  await writeFile(path.join(dir, 'client.js'), `window.__ModuleLoader__.load({ id: 'zhiyun-test-native-panel', factory: require => {
+  await writeFile(path.join(dir, 'client.js'), `window.__ModuleLoader__.load({ id: 'zw-test-native-panel', factory: require => {
     const React = require('react');
     return { inject: ['slots'], apply(ctx) {
       ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: 'test-import-session' },
@@ -376,21 +376,21 @@ let runtime;
 const errors = [];
 const checks = [];
 // 先问 profile：它有什么，就验什么（见文件头 profileCapabilities 的说明）。
-// 这一步必须早于任何 waitFor —— 否则会在一个不存在的 .zy-page 上白等 60 秒，
+// 这一步必须早于任何 waitFor —— 否则会在一个不存在的 .zw-page 上白等 60 秒，
 // 而超时信息完全指不出真正原因（测试对象被移除了）。
 const CAPS = await profileCapabilities();
 if (!CAPS.hasShell) {
-  console.log('[adaptive] profile 没有外壳包（dsh-zhiyun-shell-workbench），界面是原生 DSH；'
+  console.log('[adaptive] profile 没有外壳包（dsh-zju-shell-workbench），界面是原生 DSH；'
     + '跳过页面导航类断言，只验启动、无报错、插件不被跳过。');
 }
 try {
-  let url = process.env.ZHIYUN_TEST_URL;
+  let url = process.env.ZW_TEST_URL;
   if (!url && process.argv.includes('--running')) {
     url = (await readFile(path.join(root, 'host.log'), 'utf8')).match(/dsh web: (http:\/\/\S+)/)?.[1];
   }
   if (!url) {
     runtime = await initialize({ home: path.join(evidence, `host-${Date.now()}`) });
-    await symlink(path.join(root, 'tests/fixtures/course-panel'), path.join(runtime.profile, 'node_modules', 'zhiyun-test-course-panel'), process.platform === 'win32' ? 'junction' : 'dir');
+    await symlink(path.join(root, 'tests/fixtures/course-panel'), path.join(runtime.profile, 'node_modules', 'zw-test-course-panel'), process.platform === 'win32' ? 'junction' : 'dir');
     await writeNativePluginProbe(runtime);
     // 抽屉那段断言需要一篇真实文献；宿主起来之前先放进文献库，页面加载时就能列出来。
     await writeProbePaper(runtime);
@@ -411,7 +411,7 @@ try {
       server.on('exit', code => { clearTimeout(timeout); reject(new Error(`Host exited ${code}: ${hostLog.slice(-2000)}`)); });
     });
   }
-  browser = await chromium.launch({ channel: process.env.ZHIYUN_BROWSER_CHANNEL ?? 'msedge', headless: true });
+  browser = await chromium.launch({ channel: process.env.ZW_BROWSER_CHANNEL ?? 'msedge', headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 980 }, locale: 'zh-CN', colorScheme: 'light' });
   // Model onboarding can arrive after remote readiness, including after a reload.
   // Acknowledge that host-owned prompt when it blocks any later user action.
@@ -439,7 +439,7 @@ try {
     await page.keyboard.press('Control+k');
     await page.getByRole('textbox', { name: '搜索页面' }).fill('今天');
     await page.keyboard.press('Enter');
-    await page.locator('.zy-page[data-page=today]').waitFor();
+    await page.locator('.zw-page[data-page=today]').waitFor();
     checks.push('Product page search owns Ctrl+K only outside Ask');
   }
   // Focused layout lane avoids unrelated parser graph and model-backed PDF checks.
@@ -448,50 +448,50 @@ try {
   if (!process.argv.includes('--bridge-only') && CAPS.hasShell) {
   for (const [label, id] of [['论文', 'paper'], ['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
-    await page.locator(`.zy-page[data-page=${id}]`).waitFor();
+    await page.locator(`.zw-page[data-page=${id}]`).waitFor();
   }
   // 「个人」页已删除：导轨最下方那格圆形头像**不是页面**，点它浮出账号面板
   // （登录 / 设置）。账号与数据的内容都在原生设置浮窗的「账号与数据」分区里，
   // 这里先确认头像只开面板、不跳页。
   await page.getByRole('button', { name: '账号', exact: true }).click();
-  await page.locator('.zy-account-menu').waitFor();
-  assert.equal(await page.locator('.zy-page[data-page=me]').count(), 0, 'the Personal page no longer exists');
-  assert.deepEqual(await page.locator('.zy-account-menu .zy-rail-menu-open').allInnerTexts(), ['登录', '设置'], 'the account menu offers sign-in and settings only');
+  await page.locator('.zw-account-menu').waitFor();
+  assert.equal(await page.locator('.zw-page[data-page=me]').count(), 0, 'the Personal page no longer exists');
+  assert.deepEqual(await page.locator('.zw-account-menu .zw-rail-menu-open').allInnerTexts(), ['登录', '设置'], 'the account menu offers sign-in and settings only');
   await page.keyboard.press('Escape');
   checks.push('All product pages navigate through host layout; the account avatar opens a menu, not a page');
   // 「插件」也不在导轨上：它属于「···」菜单（默认不固定，要用了再钉）。
   // 所以这里走菜单，而不是直接找导航按钮。
-  await page.locator('.zy-rail-more').click();
-  await page.locator('.zy-rail-menu-open', { hasText: '插件' }).click();
-  await page.locator('.zy-page[data-page=plugins]').waitFor();
-  await page.locator('.zpl-row').first().waitFor({ timeout: 60000 });
-  const pluginRows = await page.locator('.zpl-row').evaluateAll(list => list.map(row => ({
-    name: row.querySelector('.zpl-row-head strong')?.textContent,
-    inner: row.querySelector('.zpl-badge-inner') !== null,
+  await page.locator('.zw-rail-more').click();
+  await page.locator('.zw-rail-menu-open', { hasText: '插件' }).click();
+  await page.locator('.zw-page[data-page=plugins]').waitFor();
+  await page.locator('.zwpl-row').first().waitFor({ timeout: 60000 });
+  const pluginRows = await page.locator('.zwpl-row').evaluateAll(list => list.map(row => ({
+    name: row.querySelector('.zwpl-row-head strong')?.textContent,
+    inner: row.querySelector('.zwpl-badge-inner') !== null,
   })));
   const parserRow = pluginRows.find(row => row.name === 'parser');
   assert.ok(parserRow?.inner === true, '解析包必须显示为「被 N 个包依赖」，而不是叶');
-  assert.deepEqual(await page.locator('.zpl-badge-wait').allInnerTexts(), [], '健康组合里不该有「等待依赖」');
+  assert.deepEqual(await page.locator('.zwpl-badge-wait').allInnerTexts(), [], '健康组合里不该有「等待依赖」');
   checks.push('The plugins page derives the dependency graph from the runtime, including host-plane hard edges');
   await page.screenshot({ path: path.join(evidence, 'plugins.png'), fullPage: true });
   // 「论文」页在真实宿主里必须真的渲染出来：导航能点开只证明外壳注册了插槽，
   // 不证明页面包激活了。这里等它自己的 DOM 出现，并确认空文献库走的是空态。
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '论文', exact: true }).click();
-  await page.locator('.zy-page[data-page=paper]').waitFor();
-  await page.locator('.zp-landing').waitFor({ timeout: 30000 });
-  assert.equal(await page.locator('.zy-content .zy-empty').count(), 1, 'an empty library shows the landing empty state');
-  assert.equal(await page.locator('.zp-frame').count(), 0, 'no reader frame is mounted before a paper is picked');
+  await page.locator('.zw-page[data-page=paper]').waitFor();
+  await page.locator('.zwp-landing').waitFor({ timeout: 30000 });
+  assert.equal(await page.locator('.zw-content .zw-empty').count(), 1, 'an empty library shows the landing empty state');
+  assert.equal(await page.locator('.zwp-frame').count(), 0, 'no reader frame is mounted before a paper is picked');
   await page.screenshot({ path: path.join(evidence, 'paper.png'), fullPage: true });
   checks.push('The paper page activates and renders its own empty state');
-  // 上游宿主插件（锁版依赖）必须挂上了它的前缀路由；页面包自有的 /zhiyun-paper 也必须活着。
+  // 上游宿主插件（锁版依赖）必须挂上了它的前缀路由；页面包自有的 /zw-paper 也必须活着。
   const paperStatus = await page.evaluate(async () => {
     const [own, upstream] = await Promise.all([
-      fetch('/zhiyun-paper/api/status').then(r => r.status).catch(() => 0),
+      fetch('/zw-paper/api/status').then(r => r.status).catch(() => 0),
       fetch('/paper-reader/api/library').then(r => r.status).catch(() => 0),
     ]);
     return { own, upstream };
   });
-  assert.equal(paperStatus.own, 200, 'the compat layer serves /zhiyun-paper/api/status');
+  assert.equal(paperStatus.own, 200, 'the compat layer serves /zw-paper/api/status');
   assert.equal(paperStatus.upstream, 200, 'the pinned upstream host half serves its own /paper-reader routes');
   checks.push('Both the compat layer and the pinned upstream plugin answer on their own route prefixes');
   // 右侧 AI 助手抽屉：打开后必须真的占住正文右缘、能提交问题，并且**不把工作台注入的
@@ -514,7 +514,7 @@ try {
   await page.keyboard.press('Control+k');
   await page.getByRole('textbox', { name: '搜索页面' }).fill('今天');
   await page.keyboard.press('Enter');
-  await page.locator('.zy-page[data-page=today]').waitFor();
+  await page.locator('.zw-page[data-page=today]').waitFor();
   checks.push('Search dialog and keyboard navigation');
   await page.getByRole('button', { name: '切换明暗', exact: true }).click();
   await page.waitForFunction(() => document.body.hasAttribute('data-ds-dark-theme'));
@@ -531,7 +531,7 @@ try {
     checks.push('profile 无外壳包：跳过问一问 / 账号面板 / 设置分区 / 导轨相关断言');
   } else {
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
-  const native = page.locator('.zy-workbench-native');
+  const native = page.locator('.zw-workbench-native');
   await native.waitFor();
   const nativeSidebar = native.locator('[class*="_sidebarCol"]');
   const nativeMain = native.locator('[class*="_centerCol"]');
@@ -542,14 +542,14 @@ try {
     assert.ok(await native.getByLabel(control, { exact: true }).count() > 0, `native workspace browser offers ${control}`);
   }
   assert.ok(await native.locator('[aria-label*="新建会话"]').count() > 0, 'native per-workspace New Session is retained');
-  assert.equal(await page.locator('.zy-workbench-navigation [aria-label="添加工作区"]').count(), 0, 'outer navigation is independent of native workspaces');
-  assert.equal(await page.locator('.zy-drawer').count(), 0, 'Ask does not recreate the workspace browser in a custom drawer');
+  assert.equal(await page.locator('.zw-workbench-navigation [aria-label="添加工作区"]').count(), 0, 'outer navigation is independent of native workspaces');
+  assert.equal(await page.locator('.zw-drawer').count(), 0, 'Ask does not recreate the workspace browser in a custom drawer');
   await page.waitForFunction(() => !document.body.innerText.includes('选择一个工作区开始'), undefined, { timeout: 30000 });
   assert.ok((await native.innerText()).includes(LEARNING_SPACE_TITLE), 'the fixed learning space is selected');
   const retained = await native.evaluateHandle(node => ({ root: node.firstElementChild, main: node.querySelector('[class*="_centerCol"]'), sidebar: node.querySelector('[class*="_sidebarCol"]') }));
   await page.screenshot({ path: path.join(evidence, 'ask.png'), fullPage: true });
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '今天', exact: true }).click();
-  await page.locator('.zy-page[data-page=today]').waitFor();
+  await page.locator('.zw-page[data-page=today]').waitFor();
   assert.equal(await native.isVisible(), false, 'Today hides the entire native UI');
   assert.equal(await native.getAttribute('hidden'), '', 'native UI is hidden rather than unmounted');
   assert.equal(await native.getAttribute('inert'), '', 'hidden native controls cannot receive focus');
@@ -559,21 +559,21 @@ try {
   await native.waitFor();
   assert.ok(await native.evaluate((node, previous) => node.firstElementChild === previous.root && node.querySelector('[class*="_centerCol"]') === previous.main && node.querySelector('[class*="_sidebarCol"]') === previous.sidebar, retained), 'returning to Ask preserves native root, main and sidebar DOM identities');
   await retained.dispose();
-  assert.equal(await page.locator('.zy-workbench-frame').getAttribute('data-workbench-page'), 'ask');
+  assert.equal(await page.locator('.zw-workbench-frame').getAttribute('data-workbench-page'), 'ask');
   await page.screenshot({ path: path.join(evidence, 'ask-sessions.png'), fullPage: true });
   checks.push('Ask retains native sidebar/workspaces and fixed learning space; outer navigation hides and restores the same native root/main');
   await page.getByRole('button', { name: '账号', exact: true }).click();
-  await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
+  await page.locator('.zw-account-menu .zw-rail-menu-open', { hasText: '设置' }).click();
   // 设置 = 宿主原生浮窗（与 DSH 一致）。「个人」页已删除，所以这里也顺带证明
   // 打开设置不会跳到任何产品页。
   const settingsDialog = page.locator('[role="dialog"][aria-modal="true"][data-shortcut-modal="settings"]');
   await settingsDialog.waitFor({ timeout: 30000 });
-  assert.equal(await page.locator('.zy-page[data-page=me]').count(), 0, 'the Personal page no longer exists');
+  assert.equal(await page.locator('.zw-page[data-page=me]').count(), 0, 'the Personal page no longer exists');
   // 新增的「账号与数据」分区必须在这里，且排在网络代理之前。
   const accountNav = settingsDialog.getByRole('button', { name: /账号与数据/ });
   await accountNav.waitFor({ timeout: 30000 });
   await accountNav.click();
-  await settingsDialog.locator('.zy-account-data').waitFor({ timeout: 30000 });
+  await settingsDialog.locator('.zw-account-data').waitFor({ timeout: 30000 });
   const sectionLabels = await settingsDialog.locator('nav button').allInnerTexts();
   assert.ok(sectionLabels.findIndex(label => label.includes('账号与数据')) < sectionLabels.findIndex(label => label.includes('网络代理')), `section order = ${JSON.stringify(sectionLabels)}`);
   checks.push('The account-and-data settings section exists and precedes network proxy');
@@ -581,8 +581,8 @@ try {
   const paperNav = settingsDialog.getByRole('button', { name: /论文阅读/ });
   await paperNav.waitFor({ timeout: 30000 });
   await paperNav.click();
-  await settingsDialog.locator('.zp-settings').waitFor({ timeout: 30000 });
-  assert.ok(await settingsDialog.locator('.zp-card').count() >= 2, '两个上游端点各一张卡');
+  await settingsDialog.locator('.zwp-settings').waitFor({ timeout: 30000 });
+  assert.ok(await settingsDialog.locator('.zwp-card').count() >= 2, '两个上游端点各一张卡');
   if (!process.argv.includes('--bridge-only')) assert.match(await settingsDialog.innerText(), /锁定/, '要显示锁定的上游版本');
   await page.screenshot({ path: path.join(evidence, 'settings.png'), fullPage: true });
   // 网络代理已从「个人」页改注册进原生设置分区：同一个浮窗里必须能打开它。
@@ -595,20 +595,20 @@ try {
   await settingsDialog.waitFor({ state: 'detached', timeout: 15000 });
   checks.push('Settings open as the host native modal, with plugin settings.section contributions inside it');
   if (await page.locator('body').evaluate(body => body.hasAttribute('data-ds-dark-theme'))) {
-    await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
+    await page.locator('.zw-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
     await page.waitForFunction(() => !document.body.hasAttribute('data-ds-dark-theme'));
   }
   await page.screenshot({ path: path.join(evidence, 'theme-light.png'), fullPage: true });
-  await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
+  await page.locator('.zw-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
   await page.waitForFunction(() => document.body.hasAttribute('data-ds-dark-theme'));
   await page.waitForTimeout(250);
   await page.screenshot({ path: path.join(evidence, 'theme-dark.png'), fullPage: true });
-  await page.locator('.zy-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
+  await page.locator('.zw-sidebar-bottom').getByRole('button', { name: '切换明暗', exact: true }).click();
   // 宿主设置快捷键直接打开同一个浮窗，且不会把用户带到任何产品页。
   await page.getByRole('button', { name: '今天', exact: true }).click();
   await page.keyboard.press('Control+Alt+Comma');
   await settingsDialog.waitFor({ timeout: 15000 });
-  assert.equal(await page.locator('.zy-page[data-page=today]').count(), 1, 'the host settings shortcut opens the modal without navigating away');
+  assert.equal(await page.locator('.zw-page[data-page=today]').count(), 1, 'the host settings shortcut opens the modal without navigating away');
   await page.setViewportSize({ width: 760, height: 900 });
   const models = settingsDialog.getByRole('button', { name: /AI 服务|模型/ }).first();
   if (await models.count() > 0) await models.click();
@@ -624,11 +624,11 @@ try {
   await reloadProduct(page);
   // ⚠️ 侧栏**不允许展开**（产品决定）：导轨只有图标，名字靠悬停浮出。
   //    所以这里不再有「收起/展开导航」按钮，改验「它一直是收起的、且悬停能读到名字」。
-  await page.locator('.zy-sidebar.zy-collapsed').waitFor({ timeout: 10000 });
-  const railWidth = await page.locator('.zy-sidebar').evaluate(node => Math.round(node.getBoundingClientRect().width));
+  await page.locator('.zw-sidebar.zw-collapsed').waitFor({ timeout: 10000 });
+  const railWidth = await page.locator('.zw-sidebar').evaluate(node => Math.round(node.getBoundingClientRect().width));
   assert.ok(railWidth <= 60, `导轨应保持收起的 56px，实测 ${railWidth}px`);
-  await page.locator('.zy-rail-nav .zy-rail-item').first().hover();
-  const tip = page.locator('.zy-rail-tip');
+  await page.locator('.zw-rail-nav .zw-rail-item').first().hover();
+  const tip = page.locator('.zw-rail-tip');
   await tip.waitFor({ timeout: 5000 });
   assert.ok((await tip.textContent()).trim().length > 0, '悬停必须浮出页面名字（导轨没有常驻文字）');
   checks.push('Rail-only navigation: always collapsed, names surface on hover');
@@ -644,16 +644,16 @@ try {
     const patch = path.join(runtime.profile, 'cordis.patch.yml');
     // Installing a row is an install: the file watcher applies the new layer
     // first, then the next document load carries the new entry in its boot graph.
-    await writeFile(patch, '- insert:\n    - id: test-course-panel\n      name: zhiyun-test-course-panel\n');
+    await writeFile(patch, '- insert:\n    - id: test-course-panel\n      name: zw-test-course-panel\n');
     await page.waitForTimeout(800);
     await reloadProduct(page);
     // 插件遮蔽的是「今天」页正文 —— 启动就落在今天，所以不用先点导航。
-    // （原先遮蔽「我的课」；那个页面包并入「学习」之后已经没有 `zhiyun.courses.content`
+    // （原先遮蔽「我的课」；那个页面包并入「学习」之后已经没有 `zw.courses.content`
     //  这个插槽了。用例要证的东西没变：外部插件能顶掉产品内容，并靠服务跳转。）
     await page.locator('[data-test-course-provider]').waitFor({ timeout: 30000 });
     await clickAfterOnboarding(page, page.getByRole('button', { name: '去学习', exact: true }));
-    await page.locator('.zy-page[data-page=study]').waitFor();
-    await writeFile(patch, '- insert:\n    - id: test-native-panel\n      name: zhiyun-test-native-panel\n');
+    await page.locator('.zw-page[data-page=study]').waitFor();
+    await writeFile(patch, '- insert:\n    - id: test-native-panel\n      name: zw-test-native-panel\n');
     await page.waitForTimeout(800);
     await reloadProduct(page);
     const importAction = native.getByRole('button', { name: '导入会话', exact: true });
@@ -667,12 +667,12 @@ try {
     await importAction.waitFor();
     await importAction.click();
     await native.locator('[data-test-native-panel]').waitFor();
-    assert.equal(await page.locator('.zy-workbench-frame').getAttribute('data-workbench-page'), 'ask', 'native panel selection must not change the outer page');
+    assert.equal(await page.locator('.zw-workbench-frame').getAttribute('data-workbench-page'), 'ask', 'native panel selection must not change the outer page');
     assert.ok(await overlay.isVisible());
     assert.ok(await footer.isVisible());
-    assert.ok(await overlay.evaluate(node => node.closest('.zy-workbench-native') !== null), 'ordinary shell.overlay must not portal to body');
-    assert.ok(await footer.evaluate(node => node.closest('.zy-workbench-native') !== null), 'native sidebar footer remains inside Ask');
-    const bounds = await overlay.evaluate(node => ({ overlay: node.getBoundingClientRect().toJSON(), ask: node.closest('.zy-workbench-native').getBoundingClientRect().toJSON() }));
+    assert.ok(await overlay.evaluate(node => node.closest('.zw-workbench-native') !== null), 'ordinary shell.overlay must not portal to body');
+    assert.ok(await footer.evaluate(node => node.closest('.zw-workbench-native') !== null), 'native sidebar footer remains inside Ask');
+    const bounds = await overlay.evaluate(node => ({ overlay: node.getBoundingClientRect().toJSON(), ask: node.closest('.zw-workbench-native').getBoundingClientRect().toJSON() }));
     assert.ok(bounds.overlay.left >= bounds.ask.left && bounds.overlay.right <= bounds.ask.right + 1, 'fixed native overlay is confined to Ask, not the outer rail');
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '今天', exact: true }).click();
     assert.equal(await overlay.isVisible(), false);
@@ -700,15 +700,15 @@ try {
     await writeFile(patch, productRows.join('\n') + '\n');
     await page.waitForTimeout(800);
     await reloadNativeEventually(page);
-    await page.waitForFunction(() => !document.body.hasAttribute('data-zhiyun'), undefined, { timeout: 60000 });
-    assert.equal(await page.locator('style[data-zhiyun-style]').count(), 0);
-    assert.equal(await page.locator('.zy-sidebar').count(), 0);
-    assert.equal(await page.locator('.zy-workbench-frame, style[data-zhiyun-bridge]').count(), 0, 'unloading restores native root and removes bridge styles');
+    await page.waitForFunction(() => !document.body.hasAttribute('data-zw'), undefined, { timeout: 60000 });
+    assert.equal(await page.locator('style[data-zw-style]').count(), 0);
+    assert.equal(await page.locator('.zw-sidebar').count(), 0);
+    assert.equal(await page.locator('.zw-workbench-frame, style[data-zw-bridge]').count(), 0, 'unloading restores native root and removes bridge styles');
     await page.screenshot({ path: path.join(evidence, 'disabled-host-sidebar.png'), fullPage: true });
     await writeFile(patch, '[]\n');
     await page.waitForTimeout(800);
     await reloadProductEventually(page);
-    assert.equal(await page.locator('style[data-zhiyun-style]').count(), 1);
+    assert.equal(await page.locator('style[data-zw-style]').count(), 1);
     checks.push('Disabling the product bundle retracts its styles and slots and restores the host sidebar');
   }
   assert.deepEqual(errors, [], 'No browser activation/render errors');
@@ -717,21 +717,21 @@ try {
     // 所以按 profile 实际具备的能力决定断言，而不是无条件要求。
     // 无条件要求会把「这一层被主动裁掉了」误报成「宿主不兼容」。
     if (CAPS.hasClassroom) {
-      assert.ok(hostLog.includes('ZHIYUN_CLASSROOM_HOST_READY'), 'Business plugin injected the real classroom service in this host');
+      assert.ok(hostLog.includes('ZW_CLASSROOM_HOST_READY'), 'Business plugin injected the real classroom service in this host');
       checks.push('Independent business plugin injects the classroom source from the product profile');
     }
     if (CAPS.hasParser) {
-      assert.ok(hostLog.includes('ZHIYUN_PARSER_HOST_READY'), 'Business plugin injected the parser in this host');
+      assert.ok(hostLog.includes('ZW_PARSER_HOST_READY'), 'Business plugin injected the parser in this host');
       checks.push('Independent business plugin injects the parser backed by host LLM and attachments');
     }
     // 讲义装配（含习坎的全文润色）也必须在**真实宿主**里激活过：单测用的是假 ctx，
     // 而 `inject` 了一个不存在的服务只有在真宿主里才表现为永远 pending。
     if (CAPS.hasLecture) {
-      assert.ok(hostLog.includes('ZHIYUN_LECTURE_HOST_READY'), 'Lecture assembler activated in this host');
+      assert.ok(hostLog.includes('ZW_LECTURE_HOST_READY'), 'Lecture assembler activated in this host');
       checks.push('Lecture assembler (incl. full-text polish) activates from the product profile');
     }
     if (CAPS.hasStore) {
-      assert.ok(hostLog.includes('ZHIYUN_STORE_HOST_READY'), 'Quiz, notes and knowledge services activated from the product profile');
+      assert.ok(hostLog.includes('ZW_STORE_HOST_READY'), 'Quiz, notes and knowledge services activated from the product profile');
       checks.push('Quiz, notes and knowledge storage services activate from the product profile');
     }
     checks.push(`profile 能力：shell=${CAPS.hasShell} pages=${CAPS.pages.length}`);

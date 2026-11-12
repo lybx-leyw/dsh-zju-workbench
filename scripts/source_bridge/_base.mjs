@@ -14,8 +14,8 @@
  *
  * # 装配顺序是有讲究的
  *
- * 必须**先** `apply()` `@lybx-leyw/dsh-zju-source-campus`：它 `provide('zhiyunEgress')`，
- * 其余包经 `sharedFetch(ctx)` → `ctx.get('zhiyunEgress')` 才拿得到共享出口。
+ * 必须**先** `apply()` `@lybx-leyw/dsh-zju-source-campus`：它 `provide('zwEgress')`，
+ * 其余包经 `sharedFetch(ctx)` → `ctx.get('zwEgress')` 才拿得到共享出口。
  * 顺序反了不会报错，只会静默退化成 `globalThis.fetch`（走宿主给 LLM 配的
  * 全局代理，国内站点基本必失败）。
  */
@@ -137,7 +137,7 @@ export function makeContext({ dataDir, fetchImpl }) {
  * 也最接近宿主里的实际行为。
  *
  * @param handler - `(req, res) => void | Promise<void>`。
- * @param pathAndQuery - 形如 `/api/zhiyun-campus?pta-cookie`。
+ * @param pathAndQuery - 形如 `/api/zw-campus?pta-cookie`。
  * @param init - fetch 的 init（method / headers / body）。
  * @returns `{ status, headers, data }`（data 是解出的 JSON，解不出就是原文）。
  */
@@ -215,7 +215,7 @@ export async function mount(name, { dataDir, fetchImpl = globalThis.fetch, crede
 /**
  * 先装 campus。
  *
- * 它是唯一 `provide('zhiyunEgress')` 的包，其余 `source-*` 的 `sharedFetch(ctx)`
+ * 它是唯一 `provide('zwEgress')` 的包，其余 `source-*` 的 `sharedFetch(ctx)`
  * 都指向那个服务。所以任何真机链路都要先过这一手。
  *
  * @param options.dataDir - campus 自己的落盘目录（与会话文件放一起）。
@@ -291,7 +291,7 @@ export async function rpcXxt(route, method, args = {}) {
 
 /**
  * `campus` 的路由是**原生 webServer handler**：
- * `POST /api/zhiyun-campus?<action>` + 头 `x-zhiyun-campus: 1` + JSON body。
+ * `POST /api/zw-campus?<action>` + 头 `x-zw-campus: 1` + JSON body。
  *
  * `route` 必须是从 `routeOf(routes, path, 'webServer')` 取的那条 ——
  * 它带 `call()`，会真的起服务器跑 handler。
@@ -299,7 +299,7 @@ export async function rpcXxt(route, method, args = {}) {
 export async function campusAction(route, action, body = {}) {
   const { status, data } = await route.call(`${route.path}?${action}`, {
     method: 'POST',
-    headers: { 'x-zhiyun-campus': '1' },
+    headers: { 'x-zw-campus': '1' },
     body: JSON.stringify(body),
   });
   if (status >= 400) {

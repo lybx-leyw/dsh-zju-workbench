@@ -2,7 +2,7 @@
   "id": "v2-candidate-r1",
   "status": "frozen-experiment-only",
   "rebasedFrom": "402c528e",
-  "rebasedReason": "import-path regroup in a96e5e94 (packages/dsh-zhiyun-core-quiz -> packages/core/quiz); digests recomputed over LF-normalised bytes",
+  "rebasedReason": "import-path regroup in a96e5e94 (packages/dsh-zju-core-quiz -> packages/core/quiz); digests recomputed over LF-normalised bytes",
   "files": {
     "blueprint.mjs": "d265e4166c258f6d3b7de5ddfc98946504cc0e55039b5c1f5dae29c065263b6a",
     "points.mjs": "59b3281a2ab1c1161d8f48b13a093353390fb5db6622168ac3f75852a0a68d5f",

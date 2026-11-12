@@ -89,16 +89,16 @@ export function NoteGraph({ graph, current, onOpen }) {
   // 节点太多时 fcose 会卡住主线程；此时已退到 preset，但要在界面上说清楚。
   const heavy = nodeCount > GRAPH_LAYOUT_LIMIT;
 
-  return <section className="zs-nt-graph" aria-label="笔记图谱">
-    <div className="zs-nt-graph-head">
+  return <section className="zws-nt-graph" aria-label="笔记图谱">
+    <div className="zws-nt-graph-head">
       <strong>图谱</strong>
-      <span className="zs-muted">{nodeCount} 篇 · {elements.edges.length} 条关系</span>
+      <span className="zws-muted">{nodeCount} 篇 · {elements.edges.length} 条关系</span>
     </div>
     {failed
-      ? <p className="zs-muted">图谱没能画出来：{failed}</p>
+      ? <p className="zws-muted">图谱没能画出来：{failed}</p>
       : empty
-        ? <p className="zs-muted">库里还没有笔记。</p>
-        : <div ref={boxRef} className="zs-nt-graph-canvas" role="img" aria-label={`共 ${nodeCount} 篇笔记的链接图`} />}
-    {heavy && <p className="zs-muted">笔记较多，已改用简单排布（不做力导向）。</p>}
+        ? <p className="zws-muted">库里还没有笔记。</p>
+        : <div ref={boxRef} className="zws-nt-graph-canvas" role="img" aria-label={`共 ${nodeCount} 篇笔记的链接图`} />}
+    {heavy && <p className="zws-muted">笔记较多，已改用简单排布（不做力导向）。</p>}
   </section>;
 }

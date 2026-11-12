@@ -4,10 +4,10 @@
 
 | 上游 provides | 本包方法 | 做什么 |
 |---|---|---|
-| `doc text` | `ctx.zhiyunDoc.text(file)` | PDF / Word / Excel / PPT / HTML / 纯文本 → 文字（按页给出），全文另存 Markdown |
-| `doc pdf` | `ctx.zhiyunDoc.pdf(files, opts)` | 图片、PDF、Office 文档按顺序合成一个 PDF |
-| `doc pages` | `ctx.zhiyunDoc.pages(file, rule, opts)` | 从 PDF 取出指定页另存 |
-| `doc find` | `ctx.zhiyunDoc.find(file, keywords)` | 找关键词在 PDF 的哪几页，每页附上下文 |
+| `doc text` | `ctx.zwDoc.text(file)` | PDF / Word / Excel / PPT / HTML / 纯文本 → 文字（按页给出），全文另存 Markdown |
+| `doc pdf` | `ctx.zwDoc.pdf(files, opts)` | 图片、PDF、Office 文档按顺序合成一个 PDF |
+| `doc pages` | `ctx.zwDoc.pages(file, rule, opts)` | 从 PDF 取出指定页另存 |
+| `doc find` | `ctx.zwDoc.find(file, keywords)` | 找关键词在 PDF 的哪几页，每页附上下文 |
 
 模型侧的入口是 `@lybx-leyw/dsh-zju-tool-doc` 的 `campus_doc`（一条工具收 `action`）。
 

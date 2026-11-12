@@ -3,12 +3,12 @@
  *
  * # 这里修的是一个长期存在的假象
  *
- * `sharedFetch(ctx)` 一直写着「借 campus 提供的 `zhiyunEgress` 服务」，
- * 但全仓**没有任何一处 `ctx.provide('zhiyunEgress')`** —— 于是它每次调用都
+ * `sharedFetch(ctx)` 一直写着「借 campus 提供的 `zwEgress` 服务」，
+ * 但全仓**没有任何一处 `ctx.provide('zwEgress')`** —— 于是它每次调用都
  * 落到 `fallback`，也就是 `globalThis.fetch`。众包的注释与 README 都在描述
  * 一个不存在的服务，而实际行为是它们最想避免的那一种（走全局代理）。
  *
- * 现在由本模块真正提供 `zhiyunEgress`：
+ * 现在由本模块真正提供 `zwEgress`：
  *
  *   - 用 `@lybx-leyw/dsh-zju-source-webvpn` 的策略层建一份出口；
  *   - 在 `apply` 期间 `provide`，卸载时收回；
@@ -18,7 +18,7 @@
  *
  * 各包自己 `new undici.Agent()` 会各开一套连接池；各自登录 WebVPN 会互相
  * 作废会话（与 CAS 双登录同一类事故）。所以服务形态是**全局唯一**的，
- * 谁需要就 `ctx.get('zhiyunEgress')` 取那一份。
+ * 谁需要就 `ctx.get('zwEgress')` 取那一份。
  *
  * # 校园网探测的代价
  *
@@ -155,7 +155,7 @@ export function apply(ctx) {
       },
     };
 
-    const disposeService = ctx.provide('zhiyunEgress', service);
+    const disposeService = ctx.provide('zwEgress', service);
 
     return async () => {
       disposed = true;

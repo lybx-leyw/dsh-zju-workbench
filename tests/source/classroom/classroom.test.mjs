@@ -28,7 +28,7 @@ test('models preserve resource metadata and all time units', () => {
   const l = models.lesson({ course_id: 8, sub_id: 9, status: 6, content: JSON.stringify({ playback: { url: 'https://example.test/video' },
     save_playback: { contents_duration: 123000000000 }, api_pass: { ppt_status: 'finished' }, file_list: [{ file_type: '0_objpic_wbp_ebp', file_name: 'thumb' }] }) });
   assert.equal(l.resources.videoDurationMs, 123000); assert.equal(l.resources.thumbWebpUrl, 'thumb');
-  assert.equal(l.sourceId, 'zhiyun:112:8:9'); assert.equal(l.isPlayable, true); assert.equal(l.resources.pptUrl, null);
+  assert.equal(l.sourceId, 'zw:112:8:9'); assert.equal(l.isPlayable, true); assert.equal(l.resources.pptUrl, null);
   assert.deepEqual(models.subtitle({ BeginSec: '1.2345', EndSec: '2.8', Text: ' 原文 ', TransText: ' English ' }), { startMs: 1235, endMs: 2800, text: '原文', english: 'English' });
   assert.equal(models.slide(slide(1, 10), 1).startMs, 10000);
   assert.equal(models.shanghaiDate(new Date('2026-10-06T16:00:00Z')), '2026-10-07');
@@ -152,7 +152,7 @@ test('cookies respect domain/path and never attach SSO to a CDN; disposal cancel
   await assert.rejects(waiting.request('https://classroom.zju.edu.cn/'), { code: 'DISPOSED' });
 });
 test('Windows persisted sessions are encrypted, restore correctly and logout removes user cookie', { skip: process.platform !== 'win32' }, async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-session-')); const file = path.join(dir, 'session.dpapi');
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-session-')); const file = path.join(dir, 'session.dpapi');
   try {
     const session = new SessionStore({ file });
     await session.jar.setCookie('JWTUser=%7B%22sub%22%3A%221%22%7D; Path=/; Secure', 'https://classroom.zju.edu.cn/');
@@ -165,7 +165,7 @@ test('Windows persisted sessions are encrypted, restore correctly and logout rem
 });
 test('Cordis registers an independent service without logging in and cancels it on unmount', async () => {
   let service, dispose;
-  dispose = await apply({ profileContext: { dir: path.join(tmpdir(), `zhiyun-plugin-${Date.now()}`) }, provide: (key, value) => { assert.equal(key, 'zhiyunClassroom'); service = value; } });
+  dispose = await apply({ profileContext: { dir: path.join(tmpdir(), `zw-plugin-${Date.now()}`) }, provide: (key, value) => { assert.equal(key, 'zwClassroom'); service = value; } });
   assert.equal(await service.getCurrentUser(), null); await dispose(); assert.equal(service.transport.closed, true);
 });
 // oauth 入口与 cas 入口共用 CAS 表单，但起点与表单之后的续跑不同：casapi 会先跳

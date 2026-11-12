@@ -25,7 +25,7 @@
  * 实测：apply 刚进来时 roster 里还没有新 preset，几秒后才是完整的。
  * 所以自检放在一个短延时里，且**只读不写**，出错也只 warn。
  */
-export const name = 'zhiyun-preset-zju';
+export const name = 'zw-preset-zju';
 
 export const inject = ['agentPresets'];
 

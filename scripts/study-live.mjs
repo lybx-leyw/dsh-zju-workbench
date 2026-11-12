@@ -20,18 +20,18 @@ const routes = {};
 for (const [stage, base, key, model] of [
   ['vision', env.FUSION_BASE_URL, env.FUSION_API_KEY, env.FUSION_VISION_MODEL],
   ['text', env.FUSION_TEXT_BASE_URL || env.FUSION_BASE_URL, env.FUSION_TEXT_API_KEY || env.FUSION_API_KEY, env.FUSION_TEXT_MODEL],
-  ['agent', env.ZHIYUN_AGENT_BASE_URL || env.FUSION_BASE_URL, env.ZHIYUN_AGENT_API_KEY || env.FUSION_API_KEY, env.ZHIYUN_AGENT_MODEL || env.FUSION_TEXT_MODEL],
+  ['agent', env.ZW_AGENT_BASE_URL || env.FUSION_BASE_URL, env.ZW_AGENT_API_KEY || env.FUSION_API_KEY, env.ZW_AGENT_MODEL || env.FUSION_TEXT_MODEL],
 ]) {
   if (!base || !key || !model) throw new Error(`Missing ${stage} model configuration`);
-  const ref = `ZHIYUN_LIVE_${stage.toUpperCase()}_KEY`; process.env[ref] = key;
-  routes[`zhiyun-live-${stage}`] = { api: 'openai-completions', baseURL: endpoint(base), apiKeyEnv: ref,
+  const ref = `ZW_LIVE_${stage.toUpperCase()}_KEY`; process.env[ref] = key;
+  routes[`zw-live-${stage}`] = { api: 'openai-completions', baseURL: endpoint(base), apiKeyEnv: ref,
     models: [{ id: model, input: stage === 'vision' ? ['text', 'image'] : ['text'], contextWindow: 1048576, maxTokens: 32768, reasoningEfforts: { off: null, high: 'high' },
       compat: { supportsStore: false, supportsDeveloperRole: false, maxTokensField: 'max_tokens', thinkingFormat: 'deepseek', supportsReasoningEffort: false } }] };
 }
 const patch = [
   { id: 'llm-pi-ai', config: { providers: routes } },
-  { id: 'agent-default-model', config: { provider: 'zhiyun-live-agent', model: env.ZHIYUN_AGENT_MODEL || env.FUSION_TEXT_MODEL, reasoningEffort: 'off' } },
-  { id: 'zhiyun-parser', config: { concurrency: 3, vision: { provider: 'zhiyun-live-vision', model: env.FUSION_VISION_MODEL }, text: { provider: 'zhiyun-live-text', model: env.FUSION_TEXT_MODEL } } },
+  { id: 'agent-default-model', config: { provider: 'zw-live-agent', model: env.ZW_AGENT_MODEL || env.FUSION_TEXT_MODEL, reasoningEffort: 'off' } },
+  { id: 'zw-parser', config: { concurrency: 3, vision: { provider: 'zw-live-vision', model: env.FUSION_VISION_MODEL }, text: { provider: 'zw-live-text', model: env.FUSION_TEXT_MODEL } } },
 ];
 await writeFile(path.join(runtime.profile, 'cordis.patch.yml'), yaml.dump(patch));
 let server, browser, page, hostLog = '', url;
@@ -41,7 +41,7 @@ const redact = input => secrets.reduce((s, secret) => s.replaceAll(secret, '[red
 const log = message => console.log(redact(message));
 async function rpc(method, payload = {}) {
   return page.evaluate(async ({ method, payload }) => {
-    const response = await fetch('/api/zhiyun-study', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'client-request', rpcId: crypto.randomUUID(), method: 'zhiyun-study', payload: { method, args: payload } }) });
+    const response = await fetch('/api/zw-study', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'client-request', rpcId: crypto.randomUUID(), method: 'zw-study', payload: { method, args: payload } }) });
     const body = await response.json(); if (!body.result?.ok) throw new Error(JSON.stringify(body.result?.error ?? { status: response.status })); return body.result.value;
   }, { method, payload });
 }
@@ -125,12 +125,12 @@ try {
     report.checks.push('Current persisted handout searchable independently; reload retains polished revision');
     const nav = name => page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name, exact: true });
     await nav('学习').click();
-    await page.locator('.zs-course-toggle').filter({ hasText: selected.course.title }).first().click();
+    await page.locator('.zws-course-toggle').filter({ hasText: selected.course.title }).first().click();
     await page.getByRole('button', { name: new RegExp(selected.lesson.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).last().click();
     await page.getByRole('tab', { name: '阅读讲义', exact: true }).click();
-    await page.locator('.zs-handout-topic').first().waitFor({ timeout: 30000 });
+    await page.locator('.zws-handout-topic').first().waitFor({ timeout: 30000 });
     await page.screenshot({ path: path.join(dir, 'handout.png'), fullPage: true });
-    await page.locator('.zs-source-anchor').first().click(); await page.locator('.zs-block').first().waitFor();
+    await page.locator('.zws-source-anchor').first().click(); await page.locator('.zws-block').first().waitFor();
     await page.screenshot({ path: path.join(dir, 'final-transcript.png'), fullPage: true });
     report.checks.push('Rendered structured handout; source jump opens independent final transcript; reload restores domain data');
     report.ok = report.errors.length === 0;

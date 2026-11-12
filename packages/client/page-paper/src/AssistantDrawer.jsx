@@ -27,7 +27,7 @@ import { RESUME_COMMAND_TEXT, isResumeCommand } from './resume.js';
  * 抽屉宽度可拖动，宽度记在 localStorage：读论文时「宽一点看答案」是常态需求。
  */
 
-const WIDTH_KEY = 'zhiyun.paper.drawer';
+const WIDTH_KEY = 'zw.paper.drawer';
 const MIN_WIDTH = 300;
 /**
  * 没有宽度上限：读长答案、对照原文时常常需要把抽屉拖得很宽。
@@ -44,7 +44,7 @@ const DEFAULT_WIDTH = 392;
  * 必须是**模块级常量**：`MarkdownText` 按 `labels` 的**身份**缓存它的组件表
  * （宿主源码注释：「a fresh object per render would rebuild MarkdownText's
  * component table every chunk」），每次渲染新建一个字面量会让流式回答每来一个
- * 增量就重建一遍。`packages/dsh-zhiyun-page-study/src/lecture-reader.jsx` 也是这么写的。
+ * 增量就重建一遍。`packages/dsh-zju-page-study/src/lecture-reader.jsx` 也是这么写的。
  */
 const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
 
@@ -272,7 +272,7 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
    * 现在拖动只改 **CSS 变量**（浏览器合成层里做，不触发布局递归、不渲染 React），
    * 松手时才 `setWidth` 提交一次，让 React 状态与 DOM 对齐。
    *
-   * 宽度落在 `--zp-drawer-width` 上，抽屉的宽由 CSS 用它计算（见 style.css），
+   * 宽度落在 `--zwp-drawer-width` 上，抽屉的宽由 CSS 用它计算（见 style.css），
    * 所以拖动过程中的视觉反馈依旧是实时的。
    */
   const startResize = useCallback((event) => {
@@ -292,7 +292,7 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
     const paint = () => {
       frame = 0;
       // 只写变量：不 setState、不触发 React 渲染。
-      root.style.setProperty('--zp-drawer-width', `${pending}px`);
+      root.style.setProperty('--zwp-drawer-width', `${pending}px`);
     };
     const move = (moveEvent) => {
       // 抽屉在右侧：往左拖 = 变宽。上限只由窗口宽度决定。
@@ -307,13 +307,13 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', finish);
       document.removeEventListener('pointercancel', finish);
-      document.body.classList.remove('zp-resizing');
-      root.style.removeProperty('--zp-drawer-width');
+      document.body.classList.remove('zwp-resizing');
+      root.style.removeProperty('--zwp-drawer-width');
       // 只在真的动过时才提交，避免一次单击也触发整棵树的重新渲染。
       if (pending !== startWidth) setWidth(pending);
     };
     // 拖动期间禁掉文本选择，否则鼠标划过正文会选中一整片字。
-    document.body.classList.add('zp-resizing');
+    document.body.classList.add('zwp-resizing');
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', finish);
     document.addEventListener('pointercancel', finish);
@@ -339,15 +339,15 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
 
   const messages = state.messages;
   const live = state.live;
-  return <aside ref={drawerRef} className={`zp-drawer${open ? ' is-open' : ''}`} style={open ? { '--zp-drawer-width': `${width}px` } : undefined} aria-label="论文 AI 助手" aria-hidden={!open}>
-    <div className="zp-drawer-resize" role="separator" aria-orientation="vertical" aria-label="调整助手宽度"
+  return <aside ref={drawerRef} className={`zwp-drawer${open ? ' is-open' : ''}`} style={open ? { '--zwp-drawer-width': `${width}px` } : undefined} aria-label="论文 AI 助手" aria-hidden={!open}>
+    <div className="zwp-drawer-resize" role="separator" aria-orientation="vertical" aria-label="调整助手宽度"
       title="拖动调整宽度，双击恢复默认" onPointerDown={startResize} onDoubleClick={resetWidth}/>
-    <header className="zp-drawer-head">
-      <button type="button" className="zp-drawer-toggle" aria-label={open ? '收起 AI 助手' : '展开 AI 助手'} title={open ? '收起 AI 助手' : '展开 AI 助手'} onClick={onToggle}><Icon name={open ? 'chevron' : 'chat'} size={17}/></button>
+    <header className="zwp-drawer-head">
+      <button type="button" className="zwp-drawer-toggle" aria-label={open ? '收起 AI 助手' : '展开 AI 助手'} title={open ? '收起 AI 助手' : '展开 AI 助手'} onClick={onToggle}><Icon name={open ? 'chevron' : 'chat'} size={17}/></button>
       {open && <>
         <strong>AI 助手</strong>
-        <span className="zp-drawer-session" title={state.sessionId ?? ''}>{state.sessionId ? `会话 ${state.n ?? '—'}` : '未连接'}</span>
-        <div className="zp-drawer-head-actions">
+        <span className="zwp-drawer-session" title={state.sessionId ?? ''}>{state.sessionId ? `会话 ${state.n ?? '—'}` : '未连接'}</span>
+        <div className="zwp-drawer-head-actions">
           <button type="button" title="切换会话（/resume）" aria-label="切换会话" onClick={() => setPaletteOpen(true)}><Icon name="history" size={16}/></button>
           <button type="button" title="新建会话" aria-label="新建会话" onClick={startFresh}><Icon name="plus" size={16}/></button>
         </div>
@@ -355,26 +355,26 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
     </header>
 
     {open && <>
-      <div className="zp-drawer-list" ref={listRef}>
+      <div className="zwp-drawer-list" ref={listRef}>
         {/* 折叠了几条要如实说。**不能只在列表为空时才显示** —— 恰恰是列表里
             有了真对话之后，用户才会以为「这里看到的就是全部」，而会话日志里
             其实还躺着文献路径、运行时策略和技能目录。 */}
-        {state.contextCount > 0 && <div className="zp-drawer-folded">
+        {state.contextCount > 0 && <div className="zwp-drawer-folded">
           <Icon name="layers" size={14}/>已折叠 {state.contextCount} 条工作台上下文（文献路径、运行时策略等），只显示对话本身。
         </div>}
-        {messages.length === 0 && !live && !state.turnError && <div className="zp-drawer-empty">
+        {messages.length === 0 && !live && !state.turnError && <div className="zwp-drawer-empty">
           <Icon name="chat" size={22}/>
           <strong>关于这篇文献，问点什么</strong>
           <p>在左侧选中英文会自动翻译；想深入就点浮层里的「就此提问」，或直接在下面输入。</p>
         </div>}
         {messages.map((message) => <Bubble key={message.id} role={message.role} text={message.text} onJumpToPage={onJumpToPage}/>)}
         {live && <Bubble role="assistant" live text={live.text} onJumpToPage={onJumpToPage}/>}
-        {state.turnError && <div className="zp-drawer-error"><Icon name="close" size={14}/>{state.turnError}</div>}
-        {state.phase === 'error' && state.error && <div className="zp-drawer-error"><Icon name="close" size={14}/>{state.error}</div>}
+        {state.turnError && <div className="zwp-drawer-error"><Icon name="close" size={14}/>{state.turnError}</div>}
+        {state.phase === 'error' && state.error && <div className="zwp-drawer-error"><Icon name="close" size={14}/>{state.error}</div>}
       </div>
 
-      <form className="zp-drawer-compose" onSubmit={submit}>
-        {selection?.text && <div className="zp-drawer-quote" title={selection.text}>
+      <form className="zwp-drawer-compose" onSubmit={submit}>
+        {selection?.text && <div className="zwp-drawer-quote" title={selection.text}>
           <span>选中{selection.page ? `（第 ${selection.page} 页）` : ''}</span>
           <p>{selection.text.length > 120 ? `${selection.text.slice(0, 120)}…` : selection.text}</p>
         </div>}
@@ -388,8 +388,8 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
             if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submit(); }
           }}
         />
-        <div className="zp-drawer-compose-actions">
-          <span className="zp-drawer-hint">{busy ? '发送中…' : notice ?? `回答会带上页码引用 · ${RESUME_COMMAND_TEXT} 管理会话`}</span>
+        <div className="zwp-drawer-compose-actions">
+          <span className="zwp-drawer-hint">{busy ? '发送中…' : notice ?? `回答会带上页码引用 · ${RESUME_COMMAND_TEXT} 管理会话`}</span>
           <button type="submit" className="is-primary" disabled={busy || !draft.trim()}><Icon name="arrow" size={15}/>发送</button>
         </div>
       </form>
@@ -406,12 +406,12 @@ export function AssistantDrawer({ topic, name, open, onToggle, selection, onSele
 }
 
 function Bubble({ role, text, live = false, onJumpToPage }) {
-  return <div className={`zp-bubble is-${role}${live ? ' is-live' : ''}`}>
-    <div className="zp-bubble-role">{role === 'user' ? '我' : '助手'}{live && <span className="zp-bubble-dot"/>}</div>
+  return <div className={`zwp-bubble is-${role}${live ? ' is-live' : ''}`}>
+    <div className="zwp-bubble-role">{role === 'user' ? '我' : '助手'}{live && <span className="zwp-bubble-dot"/>}</div>
     {/* 用户的提问保持纯文本：选中一段英文再提问时，选区里常带 Markdown 记号
         （`*`、`[]`、反引号），渲染出来反而走样。助手的回答才是 Markdown。 */}
     {role === 'user'
-      ? <div className="zp-bubble-text">{text}</div>
+      ? <div className="zwp-bubble-text">{text}</div>
       : <AssistantText text={text} live={live} onJumpToPage={onJumpToPage}/>}
   </div>;
 }
@@ -439,10 +439,10 @@ function AssistantText({ text, live, onJumpToPage }) {
     // 回答里真出现外链（论文 DOI、arXiv）时按宿主的默认行为开新窗口。
     globalThis.open?.(href, '_blank', 'noopener,noreferrer');
   }, [onJumpToPage]);
-  return <div className="zp-bubble-text zp-md">
+  return <div className="zwp-bubble-text zwp-md">
     <MarkdownDelegateProvider openExternalLink={openExternalLink}>
       <MarkdownText text={rendered} streaming={live} labels={MARKDOWN_LABELS} variant="compact"/>
     </MarkdownDelegateProvider>
-    {live && !text && <span className="zp-typing"><i/><i/><i/></span>}
+    {live && !text && <span className="zwp-typing"><i/><i/><i/></span>}
   </div>;
 }

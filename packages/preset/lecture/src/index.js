@@ -19,7 +19,7 @@
  * 实测：apply 刚进来时 roster 是 0 项，3 秒后才是完整的 6 项。
  * 所以自检放在一个短延时里，且**只读不写**，出错也只 warn。
  */
-export const name = 'zhiyun-preset-lecture';
+export const name = 'zw-preset-lecture';
 
 export const inject = ['agentPresets'];
 

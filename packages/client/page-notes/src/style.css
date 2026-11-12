@@ -1,9 +1,9 @@
-/* packages/dsh-zhiyun-page-notes/src/style.css
+/* packages/dsh-zju-page-notes/src/style.css
  *
- * 笔记页样式。前缀 `zs-nt-*` 专属本页 —— 上一轮我在「我的课」用 `.zs-lesson`
+ * 笔记页样式。前缀 `zws-nt-*` 专属本页 —— 上一轮我在「我的课」用 `.zws-lesson`
  * 撞了 ui-primitives 的同名类（CSS 检查抓到），这里从一开始就用专属前缀。
  *
- * 颜色只取壳的 `--zy-*` 变量，明暗两套主题自动跟随。
+ * 颜色只取壳的 `--zw-*` 变量，明暗两套主题自动跟随。
  *
  * # 版式照着 Obsidian 的分区来
  *
@@ -13,26 +13,26 @@
  *
  * 四处是刻意的：
  *   1. **铺满整个内容区，不是浮在文章流里的一张卡片**。这一页在壳的
- *      `FULL_BLEED_PAGES` 清单里（见 model.js），不套 `.zy-content` 的 980px 版心。
+ *      `FULL_BLEED_PAGES` 清单里（见 model.js），不套 `.zw-content` 的 980px 版心。
  *      外面那圈边框与圆角也一并去掉了 —— 应用面板的边界是窗口，不是描边。
  *   2. **正文列宽封顶 ~700px 并居中**（Obsidian 的 "readable line length"）。
  *      面板铺开了，但正文行宽不能跟着铺开，否则宽屏上每行长得读不下去。
  *   3. **激活的标签页与编辑器同色**，非激活的融进标签栏。靠背景色区分，
  *      不靠边框加粗，这样一排标签页看起来是一条连续的带子。
- *   4. **左缩进用 `--zs-nt-depth` 变量算**，不给每一层写一条 CSS。
+ *   4. **左缩进用 `--zws-nt-depth` 变量算**，不给每一层写一条 CSS。
  *
  * 尺寸按"能连点一小时不累"定：文件树行高约 27px、正文 15.5px、正文行高 1.9。
  * 第一版按信息密度调（12.5px / 4px 内边距），在真实窗口里读起来太紧。
  */
 
-body[data-zhiyun] .zs-nt {
+body[data-zw] .zws-nt {
   display: flex;
   flex-direction: column;
-  /* ⚠️ 没有 `gap`：顶部工具栏（`.zs-nt-topbar`）必须与下面的三栏**贴齐**。
+  /* ⚠️ 没有 `gap`：顶部工具栏（`.zws-nt-topbar`）必须与下面的三栏**贴齐**。
    *    留 12px 缝的话，那条工具栏会看起来像浮在页面上的一条，而不是版面的一部分。
-   *    下面的提示条自己带外边距（`.zs-notice` 有 `margin:12px 0`）。 */
+   *    下面的提示条自己带外边距（`.zws-notice` 有 `margin:12px 0`）。 */
   gap: 0;
-  /* 父级 `.zy-content-flush` 是列向 flex，`flex:1` 让面板吃满整个内容区高度。 */
+  /* 父级 `.zw-content-flush` 是列向 flex，`flex:1` 让面板吃满整个内容区高度。 */
   flex: 1;
   min-height: 0;
 }
@@ -40,12 +40,12 @@ body[data-zhiyun] .zs-nt {
 /* 整块工作区。**没有边框与圆角**：它填满内容区，边界由窗口给。
  * `overflow:hidden` 是兜底：下面三栏都设了最小宽度，窗口极窄时总宽会超出容器 ——
  * 与其让状态栏横着溢出到窗口外，不如裁掉（用户会关掉一栏，这是可恢复的）。 */
-body[data-zhiyun] .zs-nt-work {
+body[data-zw] .zws-nt-work {
   display: flex;
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  background: var(--zy-bg);
+  background: var(--zw-bg);
 }
 
 /* ── 顶部工具栏：本页操作用一排横着的图标 ────────────────────────────
@@ -62,16 +62,16 @@ body[data-zhiyun] .zs-nt-work {
  *
  * 「右栏」开关仍在最右端（原在竖列底部）：面板开关分处两端，与导航栏把
  * 「入口」和「面板」分开的直觉一致。 */
-body[data-zhiyun] .zs-nt-topbar {
+body[data-zw] .zws-nt-topbar {
   flex: none;
   display: flex;
   align-items: center;
   gap: 3px;
   padding: 5px 8px;
-  background: var(--zy-sidebar);
-  border-bottom: 1px solid var(--zy-line);
+  background: var(--zw-sidebar);
+  border-bottom: 1px solid var(--zw-line);
 }
-body[data-zhiyun] .zs-nt-topbar button {
+body[data-zw] .zws-nt-topbar button {
   width: 30px;
   height: 30px;
   display: inline-flex;
@@ -80,49 +80,49 @@ body[data-zhiyun] .zs-nt-topbar button {
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-topbar button:hover {
-  background: var(--zy-hover);
-  color: var(--zy-text);
+body[data-zw] .zws-nt-topbar button:hover {
+  background: var(--zw-hover);
+  color: var(--zw-text);
 }
 /* 开着的面板：图标染色，让"我现在开着什么"不用去数面板。 */
-body[data-zhiyun] .zs-nt-topbar button.is-on {
-  color: var(--zy-accent);
-  background: var(--zy-soft);
+body[data-zw] .zws-nt-topbar button.is-on {
+  color: var(--zw-accent);
+  background: var(--zw-soft);
 }
-body[data-zhiyun] .zs-nt-topbar button:disabled {
+body[data-zw] .zws-nt-topbar button:disabled {
   opacity: .45;
   cursor: default;
 }
 /* 把右栏开关推到最右端：面板类开关与入口类按钮分开两头。 */
-body[data-zhiyun] .zs-nt-topbar-gap {
+body[data-zw] .zws-nt-topbar-gap {
   flex: 1;
 }
 
 /* ── 文件树 ──────────────────────────────────────────────────────── */
-body[data-zhiyun] .zs-nt-explorer {
-  /* ⚠️ `0 1 var(--zy-pane-w)` 而不是 `none`：两侧面板**必须能让位**给正文。
+body[data-zw] .zws-nt-explorer {
+  /* ⚠️ `0 1 var(--zw-pane-w)` 而不是 `none`：两侧面板**必须能让位**给正文。
    *    第一版写成 `flex:none`（永不收缩），于是窄窗口 + 右栏打开时，
    *    正文区被挤到 298px —— 面板铺得越满，这个毛病越明显。 */
-  flex: 0 1 var(--zy-pane-w);
+  flex: 0 1 var(--zw-pane-w);
   min-width: 190px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-height: 0;
   padding: 10px 8px;
-  background: var(--zy-sidebar);
-  border-right: 1px solid var(--zy-line);
+  background: var(--zw-sidebar);
+  border-right: 1px solid var(--zw-line);
 }
-body[data-zhiyun] .zs-nt-explorer-head {
+body[data-zw] .zws-nt-explorer-head {
   display: flex;
   align-items: center;
   gap: 2px;
   padding: 0 2px;
 }
-body[data-zhiyun] .zs-nt-explorer-head button {
+body[data-zw] .zws-nt-explorer-head button {
   width: 26px;
   height: 26px;
   display: inline-flex;
@@ -131,70 +131,70 @@ body[data-zhiyun] .zs-nt-explorer-head button {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-explorer-head button:hover {
-  background: var(--zy-hover);
-  color: var(--zy-text);
+body[data-zw] .zws-nt-explorer-head button:hover {
+  background: var(--zw-hover);
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-nt-explorer-head button:disabled {
+body[data-zw] .zws-nt-explorer-head button:disabled {
   opacity: .45;
   cursor: default;
 }
-body[data-zhiyun] .zs-nt-filter {
+body[data-zw] .zws-nt-filter {
   margin: 0 2px;
   padding: 7px 10px;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 7px;
-  background: var(--zy-surface);
-  color: var(--zy-text);
+  background: var(--zw-surface);
+  color: var(--zw-text);
   font: inherit;
   font-size: 13px;
 }
-body[data-zhiyun] .zs-nt-filter:focus-visible {
-  outline: 2px solid var(--zy-accent);
+body[data-zw] .zws-nt-filter:focus-visible {
+  outline: 2px solid var(--zw-accent);
   outline-offset: 0;
 }
-body[data-zhiyun] .zs-nt-hint {
+body[data-zw] .zws-nt-hint {
   margin: 10px 6px;
   font-size: 12.5px;
   line-height: 1.8;
 }
 /* 键盘删除的就地确认条。用左侧粗边框而不是整块红底：这是确认，不是出错；
-   红色留给"真的会出事"的那个按钮（`.zs-nt-confirm .zs-button.zs-nt-danger`）。 */
-body[data-zhiyun] .zs-nt-confirm {
+   红色留给"真的会出事"的那个按钮（`.zws-nt-confirm .zws-button.zws-nt-danger`）。 */
+body[data-zw] .zws-nt-confirm {
   margin: 8px 6px;
   padding: 10px 12px;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-left: 3px solid #e05252;
   border-radius: 8px;
-  background: var(--zy-hover);
+  background: var(--zw-hover);
 }
-body[data-zhiyun] .zs-nt-confirm p {
+body[data-zw] .zws-nt-confirm p {
   margin: 0 0 8px;
   font-size: 12.5px;
   line-height: 1.7;
 }
-body[data-zhiyun] .zs-nt-confirm-actions {
+body[data-zw] .zws-nt-confirm-actions {
   display: flex;
   gap: 8px;
 }
-/* ⚠️ 不在这里改 `.zs-button` 的 padding：那条规则属于 `@lybx-leyw/dsh-zju-ui-shared`
-   （`body[data-zhiyun] .zs-button`），两个包争同一属性同一个元素的同一个值，
+/* ⚠️ 不在这里改 `.zws-button` 的 padding：那条规则属于 `@lybx-leyw/dsh-zju-ui-shared`
+   （`body[data-zw] .zws-button`），两个包争同一属性同一个元素的同一个值，
    胜负就只看样式表的挂载顺序 —— `tests/css-order.test.mjs` 会直接判红。
    确认条只需要"窄一点"，用 `align-self` + 让按钮自己按内容撑开即可。 */
 /* 确认条里的危险按钮要能一眼认出来：边框、文字都走红，但不用填充红底
    —— 填充红底在暗色主题下会压过整页的层级。 */
-body[data-zhiyun] .zs-nt-confirm-actions .zs-nt-danger {
+body[data-zw] .zws-nt-confirm-actions .zws-nt-danger {
   border-color: #e05252;
   color: #e05252;
 }
-body[data-zhiyun] .zs-nt-confirm-actions .zs-nt-danger:hover:not(:disabled) {
+body[data-zw] .zws-nt-confirm-actions .zws-nt-danger:hover:not(:disabled) {
   background: #e05252;
   color: #fff;
 }
-body[data-zhiyun] .zs-nt-tree {
+body[data-zw] .zws-nt-tree {
   list-style: none;
   margin: 0;
   padding: 0 0 10px;
@@ -202,41 +202,41 @@ body[data-zhiyun] .zs-nt-tree {
   flex: 1;
   min-height: 0;
 }
-body[data-zhiyun] .zs-nt-rowbtn {
+body[data-zw] .zws-nt-rowbtn {
   display: flex;
   align-items: center;
   gap: 7px;
   width: 100%;
-  padding: 5px 8px 5px calc(4px + var(--zs-nt-depth, 0) * 15px);
+  padding: 5px 8px 5px calc(4px + var(--zws-nt-depth, 0) * 15px);
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--zy-text);
+  color: var(--zw-text);
   font: inherit;
   font-size: 13.5px;
   text-align: left;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-rowbtn:hover {
-  background: var(--zy-hover);
+body[data-zw] .zws-nt-rowbtn:hover {
+  background: var(--zw-hover);
 }
-body[data-zhiyun] .zs-nt-row.is-current > .zs-nt-rowbtn {
-  background: var(--zy-soft);
-  color: var(--zy-accent);
+body[data-zw] .zws-nt-row.is-current > .zws-nt-rowbtn {
+  background: var(--zw-soft);
+  color: var(--zw-accent);
 }
 /* ↑/↓ 在树上移动时的"游标"。
  *
  * ⚠️ 这条样式是**功能必需**，不是装饰：真机上树行拿不到焦点
  *    （实测点完树行 `activeElement` 仍是 `BODY`，`focusin` 日志为空），
  *    所以浏览器不会给任何焦点环。没有这条高亮，用户按 ↑/↓ 会以为键没反应。 */
-body[data-zhiyun] .zs-nt-row.is-cursor > .zs-nt-rowbtn {
-  box-shadow: inset 2px 0 0 var(--zy-accent);
-  background: var(--zy-hover);
+body[data-zw] .zws-nt-row.is-cursor > .zws-nt-rowbtn {
+  box-shadow: inset 2px 0 0 var(--zw-accent);
+  background: var(--zw-hover);
 }
 /* 同时是当前打开的笔记时，游标要压过 is-current 的底色。 */
-body[data-zhiyun] .zs-nt-row.is-current.is-cursor > .zs-nt-rowbtn {
-  background: var(--zy-soft);
-  box-shadow: inset 2px 0 0 var(--zy-accent);
+body[data-zw] .zws-nt-row.is-current.is-cursor > .zws-nt-rowbtn {
+  background: var(--zw-soft);
+  box-shadow: inset 2px 0 0 var(--zw-accent);
 }
 /* Shift+↑/↓ 框出来的**区间选择**（批量删除的作用对象）。
  *
@@ -246,114 +246,114 @@ body[data-zhiyun] .zs-nt-row.is-current.is-cursor > .zs-nt-rowbtn {
  *    选中：整块 accent 淡底 + 左侧更粗的竖线（"这一段都会被删"）。
  *    两者可叠加（区间端点既是游标又是选中），届时以选中为主、保留竖线。
  *
- * 用 `color-mix` 而不是新造一个颜色变量：本页只许用壳的 `--zy-*` 配色，
+ * 用 `color-mix` 而不是新造一个颜色变量：本页只许用壳的 `--zw-*` 配色，
  * 直接混出淡底就能自动跟随亮暗两套主题。 */
-body[data-zhiyun] .zs-nt-row.is-selected > .zs-nt-rowbtn {
-  background: color-mix(in srgb, var(--zy-accent) 14%, transparent);
-  box-shadow: inset 3px 0 0 var(--zy-accent);
-  color: var(--zy-text);
+body[data-zw] .zws-nt-row.is-selected > .zws-nt-rowbtn {
+  background: color-mix(in srgb, var(--zw-accent) 14%, transparent);
+  box-shadow: inset 3px 0 0 var(--zw-accent);
+  color: var(--zw-text);
 }
-/* 选中又同时是当前打开的笔记：底色仍取选中色，别被 is-current 的 var(--zy-soft) 盖掉。 */
-body[data-zhiyun] .zs-nt-row.is-selected.is-current > .zs-nt-rowbtn {
-  background: color-mix(in srgb, var(--zy-accent) 14%, transparent);
-  color: var(--zy-text);
+/* 选中又同时是当前打开的笔记：底色仍取选中色，别被 is-current 的 var(--zw-soft) 盖掉。 */
+body[data-zw] .zws-nt-row.is-selected.is-current > .zws-nt-rowbtn {
+  background: color-mix(in srgb, var(--zw-accent) 14%, transparent);
+  color: var(--zw-text);
 }
-/* 选中行上的悬停：加深一点，但不要跳到 var(--zy-hover) —— 那会让人以为选择丢了。 */
-body[data-zhiyun] .zs-nt-row.is-selected > .zs-nt-rowbtn:hover {
-  background: color-mix(in srgb, var(--zy-accent) 20%, transparent);
+/* 选中行上的悬停：加深一点，但不要跳到 var(--zw-hover) —— 那会让人以为选择丢了。 */
+body[data-zw] .zws-nt-row.is-selected > .zws-nt-rowbtn:hover {
+  background: color-mix(in srgb, var(--zw-accent) 20%, transparent);
 }
 /* 选中计数条：贴在过滤框下面、"选中几条 + 取消选择"。只在 >1 条时出现。 */
-body[data-zhiyun] .zs-nt-selection {
+body[data-zw] .zws-nt-selection {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 6px;
   padding: 4px 8px;
   border-radius: 6px;
-  background: color-mix(in srgb, var(--zy-accent) 12%, transparent);
-  color: var(--zy-text);
+  background: color-mix(in srgb, var(--zw-accent) 12%, transparent);
+  color: var(--zw-text);
   font-size: 12.5px;
 }
-body[data-zhiyun] .zs-nt-selection button {
+body[data-zw] .zws-nt-selection button {
   margin-left: auto;
   border: 0;
   border-radius: 4px;
   padding: 2px 6px;
   background: transparent;
-  color: var(--zy-accent);
+  color: var(--zw-accent);
   font: inherit;
   font-size: 12.5px;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-selection button:hover {
-  background: var(--zy-hover);
+body[data-zw] .zws-nt-selection button:hover {
+  background: var(--zw-hover);
 }
 /* 批量确认条里的缩略清单：只列文件名，不抢戏。 */
-body[data-zhiyun] .zs-nt-confirm-list {
+body[data-zw] .zws-nt-confirm-list {
   list-style: none;
   margin: 0 0 8px;
   padding: 0;
   max-height: 96px;
   overflow-y: auto;
   font-size: 12.5px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-nt-confirm-list li {
+body[data-zw] .zws-nt-confirm-list li {
   padding: 1px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 /* 正在被拖的那一行淡下去：拖动时用户需要知道"我拿起来的是哪一个"。 */
-body[data-zhiyun] .zs-nt-row.is-dragging > .zs-nt-rowbtn {
+body[data-zw] .zws-nt-row.is-dragging > .zws-nt-rowbtn {
   opacity: .45;
 }
-body[data-zhiyun] .zs-nt-caret {
+body[data-zw] .zws-nt-caret {
   flex: none;
   width: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
 /* 折叠箭头默认朝右（chevron 的形状），展开时转 90°。 */
-body[data-zhiyun] .zs-nt-caret svg {
+body[data-zw] .zws-nt-caret svg {
   transition: transform .12s ease;
 }
-body[data-zhiyun] .zs-nt-row.is-expanded > .zs-nt-rowbtn .zs-nt-caret svg {
+body[data-zw] .zws-nt-row.is-expanded > .zws-nt-rowbtn .zws-nt-caret svg {
   transform: rotate(90deg);
 }
-body[data-zhiyun] .zs-nt-rowicon {
+body[data-zw] .zws-nt-rowicon {
   flex: none;
   display: inline-flex;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-nt-rowicon.zs-nt-folder {
-  color: var(--zy-secondary);
+body[data-zw] .zws-nt-rowicon.zws-nt-folder {
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-nt-rowname {
+body[data-zw] .zws-nt-rowname {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-body[data-zhiyun] .zs-nt-rowname.is-open {
+body[data-zw] .zws-nt-rowname.is-open {
   font-weight: 500;
 }
 /* 附件的类型角标（PNG / PDF…）：一眼看出这条不是能编辑的正文。 */
-body[data-zhiyun] .zs-nt-ext {
+body[data-zw] .zws-nt-ext {
   flex: none;
   padding: 1px 6px;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 4px;
   font-size: 11px;
   letter-spacing: .4px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
 
 /* ── 中：标签页 + 编辑器 + 状态栏 ────────────────────────────────── */
-body[data-zhiyun] .zs-nt-main {
+body[data-zw] .zws-nt-main {
   /* 正文是这一页的主角：给它一个最低宽度，窄窗口时让两侧面板退让，
    * 而不是把编辑器压成一条。 */
   flex: 1 1 auto;
@@ -361,36 +361,36 @@ body[data-zhiyun] .zs-nt-main {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: var(--zy-bg);
+  background: var(--zw-bg);
 }
-body[data-zhiyun] .zs-nt-tabs {
+body[data-zw] .zws-nt-tabs {
   flex: none;
   display: flex;
   align-items: flex-end;
   gap: 2px;
   padding: 8px 10px 0;
-  background: var(--zy-sidebar);
-  border-bottom: 1px solid var(--zy-line);
+  background: var(--zw-sidebar);
+  border-bottom: 1px solid var(--zw-line);
   overflow-x: auto;
 }
-body[data-zhiyun] .zs-nt-tab {
+body[data-zw] .zws-nt-tab {
   display: inline-flex;
   align-items: center;
   flex: none;
   max-width: 210px;
   border-radius: 7px 7px 0 0;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-nt-tab:hover {
-  background: var(--zy-hover);
+body[data-zw] .zws-nt-tab:hover {
+  background: var(--zw-hover);
 }
 /* 激活页与编辑器同色，且把下边框"吃掉"，于是它看起来和正文连成一片。 */
-body[data-zhiyun] .zs-nt-tab.is-active {
-  background: var(--zy-bg);
-  color: var(--zy-text);
-  box-shadow: inset 0 1px 0 var(--zy-line), inset 1px 0 0 var(--zy-line), inset -1px 0 0 var(--zy-line);
+body[data-zw] .zws-nt-tab.is-active {
+  background: var(--zw-bg);
+  color: var(--zw-text);
+  box-shadow: inset 0 1px 0 var(--zw-line), inset 1px 0 0 var(--zw-line), inset -1px 0 0 var(--zw-line);
 }
-body[data-zhiyun] .zs-nt-tabname {
+body[data-zw] .zws-nt-tabname {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -406,14 +406,14 @@ body[data-zhiyun] .zs-nt-tabname {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-body[data-zhiyun] .zs-nt-dot {
+body[data-zw] .zws-nt-dot {
   flex: none;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--zy-accent);
+  background: var(--zw-accent);
 }
-body[data-zhiyun] .zs-nt-tabclose {
+body[data-zw] .zws-nt-tabclose {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -423,14 +423,14 @@ body[data-zhiyun] .zs-nt-tabclose {
   border: 0;
   border-radius: 5px;
   background: transparent;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-tabclose:hover {
-  background: var(--zy-line);
-  color: var(--zy-text);
+body[data-zw] .zws-nt-tabclose:hover {
+  background: var(--zw-line);
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-nt-tabnew {
+body[data-zw] .zws-nt-tabnew {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -441,26 +441,26 @@ body[data-zhiyun] .zs-nt-tabnew {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-tabnew:hover {
-  background: var(--zy-hover);
-  color: var(--zy-text);
+body[data-zw] .zws-nt-tabnew:hover {
+  background: var(--zw-hover);
+  color: var(--zw-text);
 }
 
 /* 面包屑：← → 是打开历史，右边是"在哪个目录里的哪一篇"。 */
-body[data-zhiyun] .zs-nt-crumbs {
+body[data-zw] .zws-nt-crumbs {
   flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  border-bottom: 1px solid var(--zy-line);
+  border-bottom: 1px solid var(--zw-line);
   font-size: 12.5px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-nt-nav {
+body[data-zw] .zws-nt-nav {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -469,78 +469,78 @@ body[data-zhiyun] .zs-nt-nav {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-nav:hover:not(:disabled) {
-  background: var(--zy-hover);
-  color: var(--zy-text);
+body[data-zw] .zws-nt-nav:hover:not(:disabled) {
+  background: var(--zw-hover);
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-nt-nav:disabled {
+body[data-zw] .zws-nt-nav:disabled {
   opacity: .35;
   cursor: default;
 }
-body[data-zhiyun] .zs-nt-crumb-path {
+body[data-zw] .zws-nt-crumb-path {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-body[data-zhiyun] .zs-nt-crumb-path em {
+body[data-zw] .zws-nt-crumb-path em {
   font-style: normal;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-nt-crumb-path strong {
-  color: var(--zy-text);
+body[data-zw] .zws-nt-crumb-path strong {
+  color: var(--zw-text);
   font-weight: 500;
 }
-body[data-zhiyun] .zs-nt-crumbs-right {
+body[data-zw] .zws-nt-crumbs-right {
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: 10px;
 }
-body[data-zhiyun] .zs-nt-saving {
-  color: var(--zy-muted);
+body[data-zw] .zws-nt-saving {
+  color: var(--zw-muted);
   font-size: 12px;
 }
-body[data-zhiyun] .zs-nt-mode {
+body[data-zw] .zws-nt-mode {
   padding: 5px 12px;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 6px;
   background: transparent;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-mode:hover {
-  color: var(--zy-text);
+body[data-zw] .zws-nt-mode:hover {
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-nt-mode.is-on {
-  background: var(--zy-soft);
-  border-color: var(--zy-accent);
-  color: var(--zy-accent);
+body[data-zw] .zws-nt-mode.is-on {
+  background: var(--zw-soft);
+  border-color: var(--zw-accent);
+  color: var(--zw-accent);
 }
 
 
 /* PDF 标签页的正文：iframe 撑满正文列。
  *
- * 不套 `.zs-nt-scroll`：那个容器是给**文本正文**用的（有自己的 padding 与纵向
+ * 不套 `.zws-nt-scroll`：那个容器是给**文本正文**用的（有自己的 padding 与纵向
  * flex），而 PDF 阅读器要自己管滚动 —— 嵌套两层滚动条会让滚轮行为变得不可预测。
- * 这里让它直接吃满 `.zs-nt-main` 剩下的高度。 */
-body[data-zhiyun] .zs-nt-pdf {
+ * 这里让它直接吃满 `.zws-nt-main` 剩下的高度。 */
+body[data-zw] .zws-nt-pdf {
   flex: 1;
   min-height: 0;
   width: 100%;
   border: 0;
   display: block;
-  background: var(--zy-bg);
+  background: var(--zw-bg);
 }
 
 /* 正文列：封顶 + 居中。面板铺开了，但读到第 100 个字时眼睛要能回来。 */
-body[data-zhiyun] .zs-nt-scroll {
+body[data-zw] .zws-nt-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -548,16 +548,16 @@ body[data-zhiyun] .zs-nt-scroll {
   flex-direction: column;
   padding: 34px 40px 64px;
 }
-body[data-zhiyun] .zs-nt-title,
-body[data-zhiyun] .zs-nt-input,
-body[data-zhiyun] .zs-nt-preview-body {
+body[data-zw] .zws-nt-title,
+body[data-zw] .zws-nt-input,
+body[data-zw] .zws-nt-preview-body {
   width: 100%;
   max-width: 720px;
   margin-left: auto;
   margin-right: auto;
 }
 /* 文件名即大标题（Obsidian 的 inline title）。 */
-body[data-zhiyun] .zs-nt-title {
+body[data-zw] .zws-nt-title {
   flex: none;
   margin-top: 0;
   margin-bottom: 16px;
@@ -566,13 +566,13 @@ body[data-zhiyun] .zs-nt-title {
   line-height: 1.3;
   letter-spacing: .3px;
 }
-body[data-zhiyun] .zs-nt-input {
+body[data-zw] .zws-nt-input {
   flex: 1;
   min-height: 420px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--zy-text);
+  color: var(--zw-text);
   /* 与 Obsidian 一致：正文用界面字体（不是等宽），行高给足。 */
   font-family: inherit;
   font-size: 15.5px;
@@ -580,192 +580,192 @@ body[data-zhiyun] .zs-nt-input {
   resize: none;
   outline: none;
 }
-body[data-zhiyun] .zs-nt-input:focus-visible {
+body[data-zw] .zws-nt-input:focus-visible {
   outline: none;
 }
-body[data-zhiyun] .zs-nt-input::placeholder {
-  color: var(--zy-muted);
+body[data-zw] .zws-nt-input::placeholder {
+  color: var(--zw-muted);
 }
 /* 阅读态正文。
  *
  * 宿主 `MarkdownText` 自带一套排版基线，但它服务的是**助手消息**（14px/24px）。
  * 笔记页是长文阅读，需要更大的字、更松的行距。
  *
- * ⚠️ 字号与行高必须写在**根节点自身上**，不能只写在 `.zs-nt-preview-body` 上：
+ * ⚠️ 字号与行高必须写在**根节点自身上**，不能只写在 `.zws-nt-preview-body` 上：
  *    宿主根节点的 `.markdown{ font: var(--dsw-font-markdown-base) }` 是 `font` 简写，
  *    会把自己重置成 14px/24px，父元素的 font-size 继承不进去。根节点类名是
  *    CSS Modules 哈希过的，选不到，所以用「预览体的直接子元素」定位它 ——
  *    那个 div 是 `MarkdownText` 唯一的直接子元素。
  *
- * ⚠️ 只作用于 `.zs-nt-preview-body` 的后代，**不碰宿主包本身**：同一个组件也被
+ * ⚠️ 只作用于 `.zws-nt-preview-body` 的后代，**不碰宿主包本身**：同一个组件也被
  *    论文页与讲义阅读器使用，改它的模块样式会波及那两处。
  */
-body[data-zhiyun] .zs-nt-preview-body {
+body[data-zw] .zws-nt-preview-body {
   font-size: 15.5px;
   line-height: 1.85;
-  color: var(--zy-text);
+  color: var(--zw-text);
   /* 中文长文：字间距给一点点，避免小字号挤成一坨。 */
   letter-spacing: .01em;
 }
 /* 根节点：把被 `font:` 简写重置掉的字号/行距改回来。 */
-body[data-zhiyun] .zs-nt-preview-body > div {
+body[data-zw] .zws-nt-preview-body > div {
   font-size: 15.5px;
   line-height: 1.85;
-  color: var(--zy-text);
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-nt-preview-body > :first-child,
-body[data-zhiyun] .zs-nt-preview-body > div > :first-child {
+body[data-zw] .zws-nt-preview-body > :first-child,
+body[data-zw] .zws-nt-preview-body > div > :first-child {
   margin-top: 0;
 }
-body[data-zhiyun] .zs-nt-preview-body p {
+body[data-zw] .zws-nt-preview-body p {
   margin: 0 0 1.05em;
 }
-body[data-zhiyun] .zs-nt-preview-body h1,
-body[data-zhiyun] .zs-nt-preview-body h2,
-body[data-zhiyun] .zs-nt-preview-body h3,
-body[data-zhiyun] .zs-nt-preview-body h4 {
-  color: var(--zy-text);
+body[data-zw] .zws-nt-preview-body h1,
+body[data-zw] .zws-nt-preview-body h2,
+body[data-zw] .zws-nt-preview-body h3,
+body[data-zw] .zws-nt-preview-body h4 {
+  color: var(--zw-text);
   font-weight: 600;
   /* 宿主对标题用的是 `font:` **简写**（含行高），所以这里必须把行高一起写死，
      只给 font-size 会留下简写里的旧行高，标题会显得上下留白不均。 */
   line-height: 1.4;
   margin: 1.9em 0 .6em;
 }
-body[data-zhiyun] .zs-nt-preview-body h1 { font-size: 1.62em; }
-body[data-zhiyun] .zs-nt-preview-body h2 { font-size: 1.34em; }
-body[data-zhiyun] .zs-nt-preview-body h3 { font-size: 1.14em; }
-body[data-zhiyun] .zs-nt-preview-body h4 { font-size: 1em; color: var(--zy-secondary); }
+body[data-zw] .zws-nt-preview-body h1 { font-size: 1.62em; }
+body[data-zw] .zws-nt-preview-body h2 { font-size: 1.34em; }
+body[data-zw] .zws-nt-preview-body h3 { font-size: 1.14em; }
+body[data-zw] .zws-nt-preview-body h4 { font-size: 1em; color: var(--zw-secondary); }
 /* 二级标题下压一条细线：长文里最容易用来扫读的锚点。 */
-body[data-zhiyun] .zs-nt-preview-body h2 {
+body[data-zw] .zws-nt-preview-body h2 {
   padding-bottom: .34em;
-  border-bottom: 1px solid var(--zy-line);
+  border-bottom: 1px solid var(--zw-line);
 }
-body[data-zhiyun] .zs-nt-preview-body ul,
-body[data-zhiyun] .zs-nt-preview-body ol {
+body[data-zw] .zws-nt-preview-body ul,
+body[data-zw] .zws-nt-preview-body ol {
   margin: 0 0 1.05em;
   padding-left: 1.45em;
 }
-body[data-zhiyun] .zs-nt-preview-body li {
+body[data-zw] .zws-nt-preview-body li {
   margin: .3em 0;
 }
 /* 嵌套列表不要再多一层缩进，长文里会一路缩到右边去。 */
-body[data-zhiyun] .zs-nt-preview-body li > ul,
-body[data-zhiyun] .zs-nt-preview-body li > ol {
+body[data-zw] .zws-nt-preview-body li > ul,
+body[data-zw] .zws-nt-preview-body li > ol {
   margin: .3em 0 .3em;
 }
-body[data-zhiyun] .zs-nt-preview-body blockquote {
+body[data-zw] .zws-nt-preview-body blockquote {
   margin: 1.2em 0;
   padding: .1em 0 .1em 1em;
-  border-left: 3px solid var(--zy-line);
-  color: var(--zy-secondary);
+  border-left: 3px solid var(--zw-line);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-nt-preview-body blockquote p:last-child {
+body[data-zw] .zws-nt-preview-body blockquote p:last-child {
   margin-bottom: 0;
 }
-body[data-zhiyun] .zs-nt-preview-body a {
-  color: var(--zy-accent);
+body[data-zw] .zws-nt-preview-body a {
+  color: var(--zw-accent);
   text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--zy-accent) 35%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--zw-accent) 35%, transparent);
 }
-body[data-zhiyun] .zs-nt-preview-body a:hover {
-  border-bottom-color: var(--zy-accent);
+body[data-zw] .zws-nt-preview-body a:hover {
+  border-bottom-color: var(--zw-accent);
 }
 /* 行内代码与代码块：区分「引用一个词」和「贴一段代码」。 */
-body[data-zhiyun] .zs-nt-preview-body code {
+body[data-zw] .zws-nt-preview-body code {
   padding: .16em .38em;
   border-radius: 5px;
-  background: var(--zy-soft);
+  background: var(--zw-soft);
   font-size: .92em;
 }
-body[data-zhiyun] .zs-nt-preview-body pre {
+body[data-zw] .zws-nt-preview-body pre {
   margin: 1.2em 0;
   padding: 14px 16px;
   border-radius: 10px;
-  background: var(--zy-soft);
+  background: var(--zw-soft);
   overflow-x: auto;
   line-height: 1.65;
 }
-body[data-zhiyun] .zs-nt-preview-body pre code {
+body[data-zw] .zws-nt-preview-body pre code {
   padding: 0;
   background: transparent;
   font-size: .9em;
 }
-body[data-zhiyun] .zs-nt-preview-body hr {
+body[data-zw] .zws-nt-preview-body hr {
   margin: 2em 0;
   border: 0;
-  border-top: 1px solid var(--zy-line);
+  border-top: 1px solid var(--zw-line);
 }
-body[data-zhiyun] .zs-nt-preview-body table {
+body[data-zw] .zws-nt-preview-body table {
   width: 100%;
   margin: 1.2em 0;
   border-collapse: collapse;
   font-size: .95em;
 }
-body[data-zhiyun] .zs-nt-preview-body th,
-body[data-zhiyun] .zs-nt-preview-body td {
+body[data-zw] .zws-nt-preview-body th,
+body[data-zw] .zws-nt-preview-body td {
   padding: 8px 12px;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   text-align: left;
 }
-body[data-zhiyun] .zs-nt-preview-body th {
-  background: var(--zy-soft);
+body[data-zw] .zws-nt-preview-body th {
+  background: var(--zw-soft);
   font-weight: 600;
 }
-body[data-zhiyun] .zs-nt-preview-body img {
+body[data-zw] .zws-nt-preview-body img {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
 }
-body[data-zhiyun] .zs-nt-empty {
+body[data-zw] .zws-nt-empty {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-nt-empty strong {
+body[data-zw] .zws-nt-empty strong {
   font-size: 16px;
-  color: var(--zy-text);
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-nt-empty p {
+body[data-zw] .zws-nt-empty p {
   margin: 0;
   font-size: 13px;
 }
 
 /* 状态栏：左"这是哪个库"，右"这篇有多少东西"。 */
-body[data-zhiyun] .zs-nt-status {
+body[data-zw] .zws-nt-status {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 6px 16px;
-  background: var(--zy-sidebar);
-  border-top: 1px solid var(--zy-line);
+  background: var(--zw-sidebar);
+  border-top: 1px solid var(--zw-line);
   font-size: 11.5px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   /* ⚠️ 不许换行：状态栏一换行就会变成三四行、把编辑器挤掉一截。
      挤不下时宁可截断（下面的 overflow 处理），也不要撑高。 */
   white-space: nowrap;
 }
-body[data-zhiyun] .zs-nt-status-left {
+body[data-zw] .zws-nt-status-left {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   min-width: 0;
   overflow: hidden;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-nt-status-right {
+body[data-zw] .zws-nt-status-right {
   display: inline-flex;
   align-items: center;
   gap: 14px;
   min-width: 0;
   overflow: hidden;
 }
-body[data-zhiyun] .zs-nt-stat {
+body[data-zw] .zws-nt-stat {
   border: 0;
   background: transparent;
   color: inherit;
@@ -775,17 +775,17 @@ body[data-zhiyun] .zs-nt-stat {
   cursor: default;
 }
 /* 反链那一项是有用的：点它把右栏叫出来（右栏关着的时候尤其需要）。 */
-body[data-zhiyun] button.zs-nt-stat {
+body[data-zw] button.zws-nt-stat {
   cursor: pointer;
 }
-body[data-zhiyun] button.zs-nt-stat:hover {
-  color: var(--zy-accent);
+body[data-zw] button.zws-nt-stat:hover {
+  color: var(--zw-accent);
 }
 
 /* ── 右：关系 ─────────────────────────────────────────────────────── */
-body[data-zhiyun] .zs-nt-side {
+body[data-zw] .zws-nt-side {
   /* 与文件树同理：可收缩，但有个地板。右栏是一列链接，190px 仍然读得下去。 */
-  flex: 0 1 var(--zy-pane-w);
+  flex: 0 1 var(--zw-pane-w);
   min-width: 186px;
   display: flex;
   flex-direction: column;
@@ -793,31 +793,31 @@ body[data-zhiyun] .zs-nt-side {
   min-height: 0;
   overflow-y: auto;
   padding: 16px;
-  background: var(--zy-sidebar);
-  border-left: 1px solid var(--zy-line);
+  background: var(--zw-sidebar);
+  border-left: 1px solid var(--zw-line);
 }
-body[data-zhiyun] .zs-nt-side section {
+body[data-zw] .zws-nt-side section {
   display: flex;
   flex-direction: column;
   gap: 7px;
 }
-body[data-zhiyun] .zs-nt-side h3 {
+body[data-zw] .zws-nt-side h3 {
   font-size: 12px;
   font-weight: 600;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   margin: 0;
 }
-body[data-zhiyun] .zs-nt-side h3 span {
+body[data-zw] .zws-nt-side h3 span {
   margin-left: 6px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
   font-weight: 400;
 }
-body[data-zhiyun] .zs-nt-side p {
+body[data-zw] .zws-nt-side p {
   margin: 0;
   font-size: 12px;
   line-height: 1.8;
 }
-body[data-zhiyun] .zs-nt-sidebtn {
+body[data-zw] .zws-nt-sidebtn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -826,24 +826,24 @@ body[data-zhiyun] .zs-nt-sidebtn {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   font: inherit;
   font-size: 12.5px;
   text-align: left;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-sidebtn:hover:not(:disabled) {
-  background: var(--zy-hover);
-  color: var(--zy-text);
+body[data-zw] .zws-nt-sidebtn:hover:not(:disabled) {
+  background: var(--zw-hover);
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-nt-sidebtn:disabled {
+body[data-zw] .zws-nt-sidebtn:disabled {
   opacity: .5;
   cursor: default;
 }
-body[data-zhiyun] .zs-nt-danger:hover:not(:disabled) {
+body[data-zw] .zws-nt-danger:hover:not(:disabled) {
   color: #e05252;
 }
-body[data-zhiyun] .zs-nt-refs {
+body[data-zw] .zws-nt-refs {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -851,60 +851,60 @@ body[data-zhiyun] .zs-nt-refs {
   flex-direction: column;
   gap: 4px;
 }
-/* ⚠️ 不给 `.zs-text`（**跨包共享的类**）设字号。
+/* ⚠️ 不给 `.zws-text`（**跨包共享的类**）设字号。
  *
- * 原先这里写的是 `.zs-nt-refs .zs-text { font-size: 11.5px }` —— 与学习页里
- * 多处 `.zs-text` 同特异性，谁赢只看**挂载顺序**（CSS 顺序检查当场抓到 4 条）。
+ * 原先这里写的是 `.zws-nt-refs .zws-text { font-size: 11.5px }` —— 与学习页里
+ * 多处 `.zws-text` 同特异性，谁赢只看**挂载顺序**（CSS 顺序检查当场抓到 4 条）。
  * 正确做法是把字号挂在自己的专属类上，让共享类保持宿主/原语给的样子。
  */
-body[data-zhiyun] .zs-nt-ref {
+body[data-zw] .zws-nt-ref {
   display: block;
   width: 100%;
   padding: 3px 0;
   border: 0;
   background: transparent;
-  color: var(--zy-accent);
+  color: var(--zw-accent);
   font: inherit;
   font-size: 12.5px;
   text-align: left;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-nt-ref:hover {
+body[data-zw] .zws-nt-ref:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-body[data-zhiyun] .zs-nt-tags {
+body[data-zw] .zws-nt-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-body[data-zhiyun] .zs-nt-tags span {
+body[data-zw] .zws-nt-tags span {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 3px 10px;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 999px;
   font-size: 12px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-nt-tags b {
+body[data-zw] .zws-nt-tags b {
   font-weight: 400;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-nt-rename {
+body[data-zw] .zws-nt-rename {
   display: flex;
   gap: 7px;
 }
-body[data-zhiyun] .zs-nt-rename input {
+body[data-zw] .zws-nt-rename input {
   flex: 1;
   min-width: 0;
 }
-body[data-zhiyun] .zs-nt-note-ok {
-  /* 与工作区之间留一点缝：`.zs-nt` 没有 gap 了（见那条规则的说明）。 */
+body[data-zw] .zws-nt-note-ok {
+  /* 与工作区之间留一点缝：`.zws-nt` 没有 gap 了（见那条规则的说明）。 */
   margin: 10px 2px 0;
   font-size: 12.5px;
-  color: var(--zy-accent);
+  color: var(--zw-accent);
 }
 
 /* 窄屏：把两侧面板的**基准宽度**收一收（现在它们是可收缩的 flex 项，
@@ -912,17 +912,17 @@ body[data-zhiyun] .zs-nt-note-ok {
    **不**用 `display:none` 强行藏掉任何一栏 —— 那会让顶部工具栏上的开关按下没反应
    （看起来像坏了）。收不收由用户决定；挤不下时面板自己让位给正文。 */
 @media (max-width: 1280px) {
-  body[data-zhiyun] .zs-nt-side {
+  body[data-zw] .zws-nt-side {
     flex-basis: 232px;
   }
 }
 @media (max-width: 1080px) {
-  body[data-zhiyun] .zs-nt-explorer {
+  body[data-zw] .zws-nt-explorer {
     flex-basis: 226px;
   }
 }
 @media (max-width: 900px) {
-  body[data-zhiyun] .zs-nt-scroll {
+  body[data-zw] .zws-nt-scroll {
     padding: 26px 24px 48px;
   }
 }

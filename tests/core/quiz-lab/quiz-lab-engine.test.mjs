@@ -146,9 +146,9 @@ test('checkpoint 版本不符时拒绝恢复并说明为什么', () => {
 
 test('lab 的 apply 注册引擎，返回的注销函数把它摘掉', () => {
   const registered = [];
-  const ctx = {zhiyunQuiz: {engines: {register: entry => {registered.push(entry); return registerEngine(entry);}}}};
-  assert.equal(labName, 'zhiyun-quiz-lab');
-  assert.deepEqual(inject, ['zhiyunQuiz']);
+  const ctx = {zwQuiz: {engines: {register: entry => {registered.push(entry); return registerEngine(entry);}}}};
+  assert.equal(labName, 'zw-quiz-lab');
+  assert.deepEqual(inject, ['zwQuiz']);
   const off = apply(ctx);
   try {
     assert.equal(engineVersion('r4-lab'), CHECKPOINT_VERSION);
@@ -163,7 +163,7 @@ test('lab 的 apply 注册引擎，返回的注销函数把它摘掉', () => {
 });
 
 test('core-quiz 没有暴露注册表时，apply 明确报错而不是静默不挂', () => {
-  assert.throws(() => apply({zhiyunQuiz: {}}), /没有暴露引擎注册表/);
+  assert.throws(() => apply({zwQuiz: {}}), /没有暴露引擎注册表/);
 });
 
 // ── 以下三条钉的是「测试形状必须等于产品形状」这个教训 ──

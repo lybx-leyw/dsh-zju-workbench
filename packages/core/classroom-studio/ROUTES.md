@@ -160,7 +160,7 @@ $ find ref/OpenMAIC/app/api -maxdepth 2 -name route.ts | wc -l   # 即 app/api/*
 
 `agents`、`materials`、`parse-pdf`、`transcription`、`proxy-media`、`usage`、`verify-*`（4 个）、`folders`、`azure-voices`、`comfyui-workflows` —— 共 11 条，规范里**没有**对应方法。
 
-后果：L2 要么自己发明名字（`ctx.zhiyunClassroom.materials`），要么把逻辑塞进 `classroom.load/save`（语义错位），三批 builder 各自发明就再也不会一致。
+后果：L2 要么自己发明名字（`ctx.zwClassroom.materials`），要么把逻辑塞进 `classroom.load/save`（语义错位），三批 builder 各自发明就再也不会一致。
 建议：先补规范 §4 的命名，再动代码。候选（已在主表「迁成哪个 service 方法」一栏逐条给出）。
 
 ### G-2 `ctx.vault` 不存在（直接卡死规范第 3 通道）
@@ -171,21 +171,21 @@ $ find ref/OpenMAIC/app/api -maxdepth 2 -name route.ts | wc -l   # 即 app/api/*
 $ grep -rn "ctx\.vault\|provide('vault'" packages/ src/ scripts/   # 零命中
 ```
 
-本仓只有 `zhiyunVault`（`@lybx-leyw/dsh-zju-core-vault`，笔记库索引），**没有事务、没有行级写、没有 owner 分区**，接不住 `lib/persistence` 的 SQL 语义。
-后果：`@lybx-leyw/dsh-zju-core-classroom-vault` 开工第一天就会卡住，且三条路（新建 `vault` / 扩 `zhiyunVault` / 直接持 `pg`）的选型会影响两个既有包。
+本仓只有 `zwVault`（`@lybx-leyw/dsh-zju-core-vault`，笔记库索引），**没有事务、没有行级写、没有 owner 分区**，接不住 `lib/persistence` 的 SQL 语义。
+后果：`@lybx-leyw/dsh-zju-core-classroom-vault` 开工第一天就会卡住，且三条路（新建 `vault` / 扩 `zwVault` / 直接持 `pg`）的选型会影响两个既有包。
 处置：`src/adapter.js` 里已把 SQL→端口的映射表写全（7 个方法 + 3 条不能丢的语义），选型定了照表实现即可。
 
-### G-3 `zhiyunClassroom` 服务名与 bundle id 双重撞车（**会静默覆盖既有服务**）
+### G-3 `zwClassroom` 服务名与 bundle id 双重撞车（**会静默覆盖既有服务**）
 
 | 冲突点 | 现状 |
 |---|---|
-| 服务名 | `@lybx-leyw/dsh-zju-source-classroom/src/index.js:101` 已经 `ctx.provide('zhiyunClassroom', source)`，提供 `getCurrentUser`/`acquireSso`/`transport` |
-| 依赖方 | `@lybx-leyw/dsh-zju-core-parser`（`inject: ['llm','attachments','agentDefaultModel','profileContext','zhiyunClassroom']`）与 `@lybx-leyw/dsh-zju-core-study` 都 inject 这个名字，用的是**源包**的形状 |
-| bundle 行 id | 规则是「包名去 `dsh-` 前缀」（`scripts/test-host.mjs:90-93`），`@lybx-leyw/dsh-zju-source-classroom` 与 `@lybx-leyw/dsh-zju-core-classroom-studio` 都得 `zhiyun-classroom` |
+| 服务名 | `@lybx-leyw/dsh-zju-source-classroom/src/index.js:101` 已经 `ctx.provide('zwClassroom', source)`，提供 `getCurrentUser`/`acquireSso`/`transport` |
+| 依赖方 | `@lybx-leyw/dsh-zju-core-parser`（`inject: ['llm','attachments','agentDefaultModel','profileContext','zwClassroom']`）与 `@lybx-leyw/dsh-zju-core-study` 都 inject 这个名字，用的是**源包**的形状 |
+| bundle 行 id | 规则是「包名去 `dsh-` 前缀」（`scripts/test-host.mjs:90-93`），`@lybx-leyw/dsh-zju-source-classroom` 与 `@lybx-leyw/dsh-zju-core-classroom-studio` 都得 `zw-classroom` |
 
 后果：同一个 profile 里两个都开，后注册的覆盖先注册的；`core-parser` / `core-study` 会拿到 `{runs, classroom, export}`，然后在 `source.acquireSso()` 上以 `TypeError` 崩掉 —— 而且崩在解析包里，日志看不出是课堂包干的。
 本包的处理：按规范 provide（不改名，规范是唯一事实来源），但 `apply()` 会探测并 `log.error`，且写进 `status().detail.conflict = { occupiedBy, detail }` / `state: 'partial'`，测试里有一条专门钉住它。
-建议：规范层定名（`zhiyunClassroomHost`？或把源包并进本服务的一个命名空间），再统一改三处 inject。
+建议：规范层定名（`zwClassroomHost`？或把源包并进本服务的一个命名空间），再统一改三处 inject。
 
 ### G-4 `status()` 的语义没定死，"partial" 全靠约定
 
@@ -200,9 +200,9 @@ $ grep -rn "ctx\.vault\|provide('vault'" packages/ src/ scripts/   # 零命中
 后果：如果 L1 按 21 排期，实际要在流式层（SSE 转发 + `AsyncIterable` 桥）多花一整个批次；而规范 §4 只说"事件流用 AsyncIterable"，**没说 SSE 帧格式、心跳、重连**怎么落到 Cordis 服务上（上游有 4 套 SSE 实现：`generation/run/sse.ts`、`stages/[id]/freshness`、`agent/owner-events`、`chat/pi`）。
 建议：先定一个 SSE 桥（帧格式 + 25s 心跳 + `retry:` 提示），4 条流照它搬。
 
-### G-6 `.zyc-` 样式前缀在宿主层无落点
+### G-6 `.zwc-` 样式前缀在宿主层无落点
 
-规范 §5 要求「每个包一个 `src/style.css`，选择器一律 `.zyc-` 前缀」。但本包是**纯服务端包**（无 `src/client.jsx`），没有样式可写，也不该进 `CLIENT_PACKAGES`。
+规范 §5 要求「每个包一个 `src/style.css`，选择器一律 `.zwc-` 前缀」。但本包是**纯服务端包**（无 `src/client.jsx`），没有样式可写，也不该进 `CLIENT_PACKAGES`。
 后果：`tests/build-seeds.test.mjs` 若按"每个包都要有 style.css"断言会误报。当前它只查 `client.jsx`，所以暂时安全 —— 记在这里免得下一个 builder 照 §5 给本包加一个空 css。
 
 ---
@@ -350,7 +350,7 @@ $ grep -rn "ctx\.vault\|provide('vault'" packages/ src/ scripts/   # 零命中
 ```
 packages/core/classroom-studio/
 ├── package.json            # type: module / main: src/index.js / dsh.bundle.patch / private
-├── cordis.patch.yml        # - insert: - id: zhiyun-classroom
+├── cordis.patch.yml        # - insert: - id: zw-classroom
 ├── ROUTES.md               # 本文件
 └── src/
     ├── index.js            # name / inject / apply（永不抛）+ 组合层冲突探测 + provide
@@ -389,7 +389,7 @@ packages/core/classroom-studio/
 | 13 | `comfyui-workflows` GET | `media.comfyuiWorkflows()` | done | 上游读 `cwd/public`；本包读 `dataDir/public`，`dataDir` 为 null 时走上游「目录不存在」分支（空清单 200） | `comfyui-workflows/route.ts:16-23`（发现逻辑 `lib/media/comfyui-workflows.ts:72-98`） |
 | 14 | `generate/image` POST | `media.image(body)` | done | `x-image-*` / `x-api-key` / `x-base-url` 头改成 body 字段；`SensitiveContent` 仍判 400 `CONTENT_SENSITIVE` | `generate/image/route.ts:47-103`（出图调用 `70-77`） |
 | 15 | `generate/tts` POST | `media.tts(body)` | done | 合成步骤 = `ports.media.tts`，base64 在这一层编码（同上游 `125`）；`previewProvider` 预览路径随槽位一起下沉 | `generate/tts/route.ts:57-167`（合成调用 `109-131`） |
-| 16 | `generate/video` POST | `media.video(body)` | degraded | **端口缺方法**：`zhiyunClassroomMedia` 的签名里没有 `video`，所以这条恒抛 `E_NOT_IMPLEMENTED`（不编结果） | `generate/video/route.ts:51-108`（提交调用 `74-81`） |
+| 16 | `generate/video` POST | `media.video(body)` | degraded | **端口缺方法**：`zwClassroomMedia` 的签名里没有 `video`，所以这条恒抛 `E_NOT_IMPLEMENTED`（不编结果） | `generate/video/route.ts:51-108`（提交调用 `74-81`） |
 | 17 | `generate/voice` POST | `media.voice(body)` | degraded | **端口缺方法**：上游走各 provider 的 `VoiceRegistrationAdapter`（register/exists/bootstrap/delete），本仓无端口 → 校验完入参即抛；要接 `ports.media.voice` | `generate/voice/route.ts:74-339`（适配器取用 `141-148`） |
 
 **状态分布：15 done / 2 degraded / 0 skipped。**
@@ -442,7 +442,7 @@ packages/core/classroom-studio/
 | 15 | `stages/[id]/manifest` GET | `stages.manifest(id)` | done | `{rev, scenes:[{id,order,rev}]}` 形状照抄；`rev` 来源同 #13（`updatedAt`，不是触发器 rev） | `stages/[id]/manifest/route.ts:28-37` |
 | 16 | `stages/[id]/publish` POST | `stages.publish(id, body)` | degraded | **端口缺方法**：`ports.stage.setPublished` 未注入即抛 `E_NOT_IMPLEMENTED`（变更类不静默）；`course:publish` 角色 / 匿名 `login_required` 401 / `forbidden` 403 / 已公开幂等 200 照抄；`principal` 需要 `kind`/`roles`，所以本文件另有一个 `withPrincipal`（`support.withOwner` 只传 `{ownerId,headers}`） | `stages/[id]/publish/route.ts:24-76` |
 | 17 | `stages/[id]/scenes` GET（**上游没有 POST**） | `stages.scenes(id, opts)` / `stages.putScenes(id, body)` | degraded | GET 的 `ids` 解析（去空、去重、单字符/代理对过滤）、200 上限、400 `empty_scene_ids`/`too_many_scene_ids` 照抄；**表里的 POST 上游不存在**（81 行只有 GET）→ `putScenes` 恒抛 `E_NOT_IMPLEMENTED` | `stages/[id]/scenes/route.ts:48-80` |
-| 18 | `stages/[id]/status` GET | `stages.status(id)` | degraded | 无 auth、`{isPublic, publishedAt}`、404 `{error:'not_found'}`、500 `{error:'internal_error'}` 照抄；但 `resolveStageAccess` 要 `stage_meta` 那一行，**`zhiyunClassroomVault` 不写 `stage_meta`** → 接 `ports.stage.access` 之前这条恒 404 | `stages/[id]/status/route.ts:21-44` |
+| 18 | `stages/[id]/status` GET | `stages.status(id)` | degraded | 无 auth、`{isPublic, publishedAt}`、404 `{error:'not_found'}`、500 `{error:'internal_error'}` 照抄；但 `resolveStageAccess` 要 `stage_meta` 那一行，**`zwClassroomVault` 不写 `stage_meta`** → 接 `ports.stage.access` 之前这条恒 404 | `stages/[id]/status/route.ts:21-44` |
 | 19 | `stages/[id]/unpublish` POST | `stages.unpublish(id, body)` | degraded | 同 #16（同一个 `setPublished`，`publishedAt = null`） | `stages/[id]/unpublish/route.ts:21-62` |
 | 20 | `stage-meta/[stageId]` GET | `stages.meta(stageId)` | degraded | `{isOwner, isPublic, publishedAt, generationComplete, source}` 照抄且**永不带 `ownerId`**；同 #18，`stage_meta` 来源缺失 → 接 `ports.stage.access` 之前恒 404 | `stage-meta/[stageId]/route.ts:39-88` |
 
@@ -465,7 +465,7 @@ packages/core/classroom-studio/
 - **`stages/[id]/scenes` 上游只有 GET**（`route.ts` 全长 81 行，只有一个 `export async function GET`）；批表第 1 节写的是「GET / POST」，POST 那个 handler 不存在，所以 `stages.putScenes` 没有可搬的 body。本表附录 A 第 331 行的「stages/[id]/scenes | GET」才是对的；
 - **`stages/[id]` 是四个动词**（GET/PUT/PATCH/DELETE），批表只给了三个方法名（`get`/`put`/`remove`），PATCH（改名）没有落点 → 已补 `stages.patch`；
 - **`generation-runs` GET 必须 `?active=1`**，否则 400「Only the active runs are listed」。本表 §2 第 66 行只写了 GET `{runs, limits}`，漏了这条 400 分支；批表的 `runs.list()` 也没有参数位，所以本实现取 `runs.list(opts)`（`opts.active` / `opts.query`）；
-- **`isRunId` 的格式与生成端口对不上**：上游是 `/^run-[A-Za-z0-9_-]{16}$/`（`store.ts:219-221`），而 `zhiyunClassroomGenerate` 用 `randomUUID()` 造 id。照抄会让「刚生成的 run 自己取不到」→ 本文件额外接受 UUID，这是本批唯一放宽的入参判据；
+- **`isRunId` 的格式与生成端口对不上**：上游是 `/^run-[A-Za-z0-9_-]{16}$/`（`store.ts:219-221`），而 `zwClassroomGenerate` 用 `randomUUID()` 造 id。照抄会让「刚生成的 run 自己取不到」→ 本文件额外接受 UUID，这是本批唯一放宽的入参判据；
 - 主表 §2 把 `generate-classroom` 记成 `generate(brief, opts)`、把 `stages` 记成 `classroom.load/save`；批表改成了 `generate.start` / `stages.*`。两处口径不一致，本批按**批表**落地，`service.generate` 本体仍是 `service.js` 里的空壳（第 0 节要求「不要整体替换」），真正入口是 `generate.start`。
 
 ---

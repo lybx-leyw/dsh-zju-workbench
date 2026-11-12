@@ -1,5 +1,5 @@
 /**
- * 智云 Pro 在**宿主凭据服务**（`ctx.credentials`）上的读写封装。
+ * ZJU Workbench 在**宿主凭据服务**（`ctx.credentials`）上的读写封装。
  *
  * # 为什么要有这一个文件
  *
@@ -18,10 +18,10 @@
  *
  * ```yaml
  * records:
- *   zhiyun-classroom/account:
+ *   zw-classroom/account:
  *     kind: grant
  *     payload: { username: '...', password: '...' }
- *   zhiyun-classroom/xzzd-session:
+ *   zw-classroom/xzzd-session:
  *     kind: grant
  *     payload: { cookies: [...] }
  * ```
@@ -44,7 +44,7 @@
 import { readCard, writeCard } from '@lybx-leyw/dsh-zju-source-login';
 
 /** 记录键的两段：`<scope>/<id>`。scope 必须是**注册的插件名**。 */
-export const RECORD_SCOPE = 'zhiyun-classroom';
+export const RECORD_SCOPE = 'zw-classroom';
 
 /** 记录 id：账号（用户名 + 密码）。 */
 export const ACCOUNT_ID = 'account';

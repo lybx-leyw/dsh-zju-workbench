@@ -18,10 +18,10 @@
  */
 
 /** 设置路由。与其它包一致用 `/_dsh/` 前缀。 */
-export const ROUTE_PATH = '/_dsh/zhiyun-card';
+export const ROUTE_PATH = '/_dsh/zw-card';
 
 /** 写操作必须带的自定义头（跨站发不出，等于 CSRF 闸）。 */
-export const WRITE_HEADER = 'x-zhiyun-card';
+export const WRITE_HEADER = 'x-zw-card';
 
 /** 密码回显值：页面回传它表示"不改密码"。 */
 export const MASK = '********';
@@ -30,7 +30,7 @@ export const MASK = '********';
  * 把宿主回的失败信息翻成**一句能读的话**。
  *
  * 宿主当前一律回**字符串** `{ error: '...' }`，所以这条路径现在很少走到对象分支；
- * 但同一仓的其它设置路由（`dsh-zhiyun-page-planning`）回的是 `{ code, message }`
+ * 但同一仓的其它设置路由（`dsh-zju-page-planning`）回的是 `{ code, message }`
  * 对象，而 `new Error(对象)` 会把它字符串化成 `[object Object]` —— 用户看到的是一句
  * 完全没有信息量的话。这个函数让"将来改了错误形状"不会静默退化成那样。
  *

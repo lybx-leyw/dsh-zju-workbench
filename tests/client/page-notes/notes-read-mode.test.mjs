@@ -42,7 +42,7 @@ test('新建笔记后切到编辑态，否则用户面对「（空笔记）」�
 });
 
 test('阅读态不传 variant="compact"（那是聊天气泡的短 Markdown 变体）', () => {
-  const at = src.indexOf('zs-nt-preview-body');
+  const at = src.indexOf('zws-nt-preview-body');
   assert.ok(at >= 0, '找不到阅读态容器');
   const body = src.slice(at, at + 900);
   // 注释里会提到 `variant="compact"` 作为反例，所以先剥注释再查真正会执行的代码。

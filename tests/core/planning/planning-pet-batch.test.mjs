@@ -15,22 +15,22 @@ async function boot(t, replies) {
     provide: (name, value) => { services.set(name, value); return () => services.delete(name); } };
   ctx.inject = (_names, factory) => factory({ ...ctx, effect: fn => fn(), webServer: { register: row => { handler = row.handler; return () => {}; } } });
   const reply = () => replies[Math.min(index++, replies.length - 1)];
-  services.set('zhiyunParser', { llm: { resolve: async () => ({ model: 'fixture' }),
+  services.set('zwParser', { llm: { resolve: async () => ({ model: 'fixture' }),
     call: async request => { calls.push(request); return { text: JSON.stringify(reply()) }; },
     async *callStream(request) { calls.push(request); yield { type: 'delta', text: JSON.stringify(reply()) }; } } });
   // 拆包后两个平台分属两个 source 包（tier 1 互不依赖），这里各给一个桩。
-  services.set('zhiyunXuezai', { todos: async () => ({ xzzd: { ok: true, rows: [
+  services.set('zwXuezai', { todos: async () => ({ xzzd: { ok: true, rows: [
     { id: 'p1', source: 'xzzd', title: '虚构平台任务一', due: '2026-11-08T12:00:00+08:00' },
     { id: 'p2', source: 'xzzd', title: '虚构平台任务二', due: '2026-11-08T12:00:00+08:00' } ] } }) });
-  services.set('zhiyunPta', { todos: async () => ({ pta: { ok: true, rows: [] } }) });
+  services.set('zwPta', { todos: async () => ({ pta: { ok: true, rows: [] } }) });
   const dispose = await apply(ctx, {}); t.after(dispose);
-  return { dir, calls, service: services.get('zhiyunPlanning'), get handler() { return handler; } };
+  return { dir, calls, service: services.get('zwPlanning'), get handler() { return handler; } };
 }
 
 async function post(host, action, body) {
   const { EventEmitter } = await import('node:events');
   const req = new EventEmitter();
-  Object.assign(req, { url: `/_dsh/zhiyun-planning?${action}`, method: 'POST', headers: { host: 'localhost', 'x-zhiyun-planning': '1' } });
+  Object.assign(req, { url: `/_dsh/zw-planning?${action}`, method: 'POST', headers: { host: 'localhost', 'x-zw-planning': '1' } });
   req[Symbol.asyncIterator] = async function* () { yield Buffer.from(JSON.stringify(body)); };
   let output = '';
   const res = { on() {}, writeHead() {}, setHeader() {}, flushHeaders() {}, write(chunk) { output += chunk; }, end(chunk = '') { output += chunk; } };
@@ -50,7 +50,7 @@ test('a three-item batch reaches the model in full and saves all three atomicall
   const reply = await host.service.mine.pet('安排到周六下午');
   // The first canned reply is an empty batch -> refused; prove the guard rather than a silent partial write.
   assert.equal(reply.action, 'ask');
-  assert.equal(new ScheduleStore(path.join(host.dir, 'data/zhiyun-planning/schedule.json')).all().length, 0);
+  assert.equal(new ScheduleStore(path.join(host.dir, 'data/zw-planning/schedule.json')).all().length, 0);
   assert.ok(slots.every(slot => slot.taskKey.startsWith('local:')));
   assert.ok(host.calls[0].constant.includes('期末作业'));
 });
@@ -61,7 +61,7 @@ test('confirmation facts survive restarts so the assistant can quote the real pr
   const key = `local:${task.id}`;
   const saved = JSON.parse(await post(host, 'schedule-save', { taskKey: key, title: task.title, start: '2026-11-02T10:00:00Z', end: '2026-11-02T12:00:00Z' })).schedule[0];
   await post(host, 'schedule-save', { id: saved.id, taskKey: key, title: task.title, start: '2026-11-02T10:50:00Z', end: '2026-11-02T12:00:00Z' });
-  const store = new ScheduleStore(path.join(host.dir, 'data/zhiyun-planning/schedule.json'));
+  const store = new ScheduleStore(path.join(host.dir, 'data/zw-planning/schedule.json'));
   const events = store.recentEvents();
   assert.equal(events.length, 2);
   assert.deepEqual(events[1].before, { start: '2026-11-02T10:00:00Z', end: '2026-11-02T12:00:00Z' });
@@ -80,8 +80,8 @@ test('batch endpoint rejects the whole proposal when any item is stale', async t
     { taskKey: key, title: task.title, start: 'bad', end: '2026-11-03T15:00:00Z' },
   ] });
   assert.match(stale, /error|INVALID/i);
-  const store = new ScheduleStore(path.join(host.dir, 'data/zhiyun-planning/schedule.json'));
+  const store = new ScheduleStore(path.join(host.dir, 'data/zw-planning/schedule.json'));
   assert.deepEqual(store.all(), [first], '任何一项不合法都不能留下半个结果');
-  const file = JSON.parse(await readFile(path.join(host.dir, 'data/zhiyun-planning/schedule.json'), 'utf8'));
+  const file = JSON.parse(await readFile(path.join(host.dir, 'data/zw-planning/schedule.json'), 'utf8'));
   assert.equal(file.slots.length, 1);
 });

@@ -32,7 +32,7 @@ test('检查器可跑：真实 buildView 上给出 LIVENESS_ERODES，且报告�
 
 test('真实 buildView：关掉 study-core 之后，parser 被当成叶、并被允许取消', () => {
   // 这是「取消掉不该取消的包」的那条路径：parser 明明还在替 study-core 顶着
-  // zhiyunParser，只因为 study-core 不在了，它就变成了「没有任何下游」。
+  // zwParser，只因为 study-core 不在了，它就变成了「没有任何下游」。
   const result = probe(realBuildView, livePlugins());
   const study = result.cases.find(item => item.closed === '@lybx-leyw/dsh-zju-core-study');
   assert.ok(study.newlyCancellable.includes('@lybx-leyw/dsh-zju-core-parser'), 'parser 会新获得可取消资格');

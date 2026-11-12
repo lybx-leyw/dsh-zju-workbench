@@ -52,7 +52,7 @@ import {
 } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunXxt: '@lybx-leyw/dsh-zju-source-xxt',
+  zwXxt: '@lybx-leyw/dsh-zju-source-xxt',
 });
 
 /**
@@ -78,7 +78,7 @@ const ACTIONS = [
  * @returns 工具定义数组。
  */
 export function createXxtReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunXxt', SERVICE_SOURCES.zhiyunXxt);
+  const need = () => serviceLookup(services, 'zwXxt', SERVICE_SOURCES.zwXxt);
 
   return [
     {

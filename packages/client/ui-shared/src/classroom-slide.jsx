@@ -52,7 +52,7 @@ export function ClassroomSlide({ slide, width = 800 }) {
 
   return (
     <div
-      className="zyc-slide"
+      className="zwc-slide"
       style={{
         position: 'relative',
         width,
@@ -148,7 +148,7 @@ function renderText(element) {
     whiteSpace: 'pre-wrap',
     overflowWrap: 'break-word',
     // 块级子元素（<p>）默认有 margin，会把内容顶出格子
-    // 这里用 CSS 变量式写法不合适，交给 style.css 的 .zyc-slide p 规则
+    // 这里用 CSS 变量式写法不合适，交给 style.css 的 .zwc-slide p 规则
   };
   const html = typeof element.content === 'string' ? element.content : '';
   return <div style={style} dangerouslySetInnerHTML={{ __html: html }} />;

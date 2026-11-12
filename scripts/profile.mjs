@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, access, symlink, realpath, rm, readdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, access, symlink, realpath, rename, rm, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -10,7 +10,7 @@ export const lock = JSON.parse(await readFile(new URL('../runtime.lock.json', im
  * 本仓自有的 bundle = `packages/` 下带 manifest、且不属于隔离区的包。
  *
  * 判据是**位置**而不是名字前缀（见 `workspace-packages.mjs`）：包名不再必须以
- * `dsh-zhiyun-` 开头，`dsh-radar-*` 则始终排除。profile 的目录链接表、产品升级
+ * `dsh-zju-` 开头，`dsh-radar-*` 则始终排除。profile 的目录链接表、产品升级
  * 白名单、客户端构建产物检查都从这一份推导 —— 加包只需要建目录。
  *
  * 值是**包名**（manifest.name），不是目录名：profile 的 `bundles` 与宿主在
@@ -135,7 +135,7 @@ async function readHost(app) {
   const REQUIRED = ['dsh', 'dsh-base', 'dsh-web-app', 'dsh-client-ui-layout'];
   for (const name of REQUIRED) {
     const file = path.join(modules, '@deepseek-ai', name, 'package.json');
-    if (!await exists(file)) throw new Error(`找不到 DSH 宿主：${file}。请用 ZHIYUN_DSH_APP_DIR 指向已安装的 resources/app。`);
+    if (!await exists(file)) throw new Error(`找不到 DSH 宿主：${file}。请用 ZW_DSH_APP_DIR 指向已安装的 resources/app。`);
     const { version } = JSON.parse(await readFile(file, 'utf8'));
     if (!supported.includes(version)) throw new Error(`DSH ${name}=${version}，本工作台验证过的版本是 ${supported.join(' / ')}。请指定匹配宿主，不能混用版本。`);
     seen.add(version);
@@ -153,7 +153,7 @@ async function readHost(app) {
 /**
  * 找到要用的宿主。
  *
- * 候选顺序：`ZHIYUN_DSH_APP_DIR` 指定 → 本机已安装的 DSH Desktop →
+ * 候选顺序：`ZW_DSH_APP_DIR` 指定 → 本机已安装的 DSH Desktop →
  * 本仓库 `.runtime/dsh-<已验证版本>`（新版在前）。
  *
  * 为什么要回退：声明支持的版本一旦变化（例如不再支持已安装的那个 0.1.5），
@@ -161,13 +161,13 @@ async function readHost(app) {
  * 版本上，实际用的是哪个宿主会打印出来，不是隐式魔法。
  */
 export async function locateHost(env = process.env) {
-  const explicit = env.ZHIYUN_DSH_APP_DIR;
+  const explicit = env.ZW_DSH_APP_DIR;
   // 回退顺序由 preferredHostVersion 决定（默认用 latest 那条线，而不是 alpha），
   // 不是一个隐式排序：写清楚了才看得出 `npm start` 会用到哪一份。
   const preferred = lock.preferredHostVersion ?? lock.hostVersions[0];
   const ordered = [preferred, ...lock.hostVersions.filter(version => version !== preferred)];
   const candidates = explicit
-    ? [{ app: explicit, why: 'ZHIYUN_DSH_APP_DIR' }]
+    ? [{ app: explicit, why: 'ZW_DSH_APP_DIR' }]
     : [
         { app: path.join(env.LOCALAPPDATA ?? '', 'Programs', 'DSH Desktop', 'resources', 'app'), why: '本机已安装的 DSH Desktop' },
         ...ordered.map(version => ({ app: path.join(root, '.runtime', `dsh-${version}`), why: `本仓库临时安装 ${version}` })),
@@ -316,6 +316,80 @@ async function linkDirectory(target, link, { adopt = false } = {}) {
   await symlink(target, link, process.platform === 'win32' ? 'junction' : 'dir');
   return 'created';
 }
+/**
+ * 数据目录改名表（旧 → 新）。
+ *
+ * 刻意写成**显式清单**而不是「把 `data/zhiyun-*` 批量改成 `data/zw-*`」：
+ * 后者会顺手搬走用户自己放的目录，而那些目录不是我们的东西。
+ * 加一个带持久数据的新包时，在这里补一行。
+ */
+export const DATA_DIR_RENAMES = Object.freeze([
+  ['zhiyun-campus', 'zw-campus'],
+  ['zhiyun-cc98', 'zw-cc98'],
+  ['zhiyun-chalaoshi', 'zw-chalaoshi'],
+  ['zhiyun-classroom', 'zw-classroom'],
+  ['zhiyun-deeptutor', 'zw-deeptutor'],
+  ['zhiyun-ebook', 'zw-ebook'],
+  ['zhiyun-lab', 'zw-lab'],
+  ['zhiyun-mail', 'zw-mail'],
+  ['zhiyun-market', 'zw-market'],
+  ['zhiyun-net-proxy', 'zw-net-proxy'],
+  ['zhiyun-notice', 'zw-notice'],
+  ['zhiyun-paper', 'zw-paper'],
+  ['zhiyun-parser', 'zw-parser'],
+  ['zhiyun-planning', 'zw-planning'],
+  ['zhiyun-pta', 'zw-pta'],
+  ['zhiyun-study', 'zw-study'],
+  ['zhiyun-sztz', 'zw-sztz'],
+  ['zhiyun-tyys', 'zw-tyys'],
+  ['zhiyun-vault', 'zw-vault'],
+  ['zhiyun-vault-notes', 'zw-vault-notes'],
+  ['zhiyun-workshop', 'zw-workshop'],
+  ['zhiyun-xuezai', 'zw-xuezai'],
+  ['zhiyun-xxt', 'zw-xxt'],
+  ['zhiyun-yjsy', 'zw-yjsy'],
+  ['zhiyun-zdbk', 'zw-zdbk'],
+]);
+
+/**
+ * 把旧前缀的 `<profile>/data/zhiyun-*` 目录改成新前缀 `zw-*`。
+ *
+ * # 为什么必须在启动时搬，而不是「让用户重新登一次」
+ *
+ * 这些目录里装的是**不可重建**的东西：DPAPI 加密过的会话、下载好的课件缓存、
+ * 已解析的讲义、笔记库、规划快照。改名只动了代码里的路径常量，磁盘上的目录还是
+ * 旧名 —— 不改的话表现是「升级后全都得像第一次用一样重新登录 / 重新解析」，
+ * 而且旧数据仍占着几百 MB，用户根本发现不了它还躺在那里。
+ *
+ * # 三条必须守住的规则
+ *
+ * 1. **目标已存在就一个字节都不动。** 那说明用户已经在新名下产生了数据（或上一次
+ *    迁移中途成功、这次是重跑）。往一个非空目录上合并会把两代数据混成一份，
+ *    比「没搬」糟糕得多。这种情况只留下旧目录，由人来判断。
+ * 2. **`rename` 而不是复制。** 同一文件系统内是原子操作，中途断电不会留下半份数据。
+ * 3. **只搬登记过的名字。** 不按前缀通配：`data/` 下可能有用户自己放的目录，
+ *    名字恰好同前缀；把它们搬走等于擅自改别人的文件。
+ *
+ * @param profile - profile 目录（数据根在它下面的 `data/`）。
+ * @returns 实际搬动的 `[旧名, 新名]` 列表（启动日志用）。
+ */
+export async function migrateDataDirectories(profile) {
+  const dataDir = path.join(profile, 'data');
+  const entries = new Set(await readdir(dataDir).catch(() => []));
+  const moved = [];
+  for (const [before, after] of DATA_DIR_RENAMES) {
+    if (!entries.has(before) || entries.has(after)) continue;
+    try {
+      await rename(path.join(dataDir, before), path.join(dataDir, after));
+      moved.push([before, after]);
+    } catch (error) {
+      // 搬不动不该让产品起不来：旧目录原样留着，各包退回「没有数据」的首次状态。
+      console.warn(`数据目录 ${before} → ${after} 迁移失败：${error.message}`);
+    }
+  }
+  return moved;
+}
+
 export async function initialize({ home = path.join(root, '.runtime', 'home'), env = process.env } = {}) {
   const host = await locateHost(env);
   const profile = path.join(home, 'profiles', lock.profile);
@@ -411,22 +485,23 @@ export async function initialize({ home = path.join(root, '.runtime', 'home'), e
     if (await linkDirectory(target, link, { adopt: true }) === 'repointed') repointed.push(path.basename(link));
   }
   await mkdir(path.join(home, 'workspace'), { recursive: true });
-  return { ...host, home: path.resolve(home), profile, repointed };
+  const movedData = await migrateDataDirectories(profile);
+  return { ...host, home: path.resolve(home), profile, repointed, movedData };
 }
 /**
  * 把 `profile.mjs start` 的额外参数拼成宿主参数表 —— **同名参数只出现一次**。
  *
- * 这里曾经是 `['--no-open', '--port', ZHIYUN_PORT ?? '3091', ...extra]`，于是
+ * 这里曾经是 `['--no-open', '--port', ZW_PORT ?? '3091', ...extra]`，于是
  * `npm start -- --port 3081` 会拼出 `--port 3091 --no-open --port 3081`，
  * 而宿主取**前一个** 3091：用户以为起在 3081，实际听的是 3091（那里常已被别的
  * 实例占着，于是表现为「启动了却打不开」，或报 EADDRINUSE 后连 webserver 一起
  * 拖垮十个依赖它的插件）。同名参数出现两次本身就是错的。
  *
- * 端口优先级：显式 `--port` / `--port=` > `ZHIYUN_PORT` > 3091。
+ * 端口优先级：显式 `--port` / `--port=` > `ZW_PORT` > 3091。
  * `--no-open` 同理：调用方已经写了就不再补。
  *
  * @param extra - 传给宿主的额外参数（`process.argv.slice(3)`）。
- * @param envPort - `ZHIYUN_PORT` 的值，可为空。
+ * @param envPort - `ZW_PORT` 的值，可为空。
  * @returns 宿主参数表。
  */
 export function hostArgs(extra = [], envPort = undefined) {
@@ -471,14 +546,15 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     const command = process.argv[2] ?? 'check';
     if (!['init', 'check', 'dump', 'start'].includes(command)) throw new Error('用法：profile.mjs init|check|dump|start');
-    const runtime = await initialize({ home: process.env.ZHIYUN_DSH_HOME });
-    console.log(`智云 Pro · DSH ${runtime.version}\n宿主: ${runtime.app}\nProfile: ${runtime.profile}\n数据: ${runtime.home}`);
+    const runtime = await initialize({ home: process.env.ZW_DSH_HOME });
+    console.log(`ZJU Workbench · DSH ${runtime.version}\n宿主: ${runtime.app}\nProfile: ${runtime.profile}\n数据: ${runtime.home}`);
     if (runtime.repointed?.length) console.log(`已把 profile 的宿主链接改指到当前安装：${runtime.repointed.join('、')}`);
+    if (runtime.movedData?.length) console.log(`已把旧前缀的数据目录迁到新名前缀：${runtime.movedData.map(([a, b]) => `${a} → ${b}`).join('、')}`);
     if (command === 'start' || command === 'dump') {
       const missing = await missingClientBundles();
       if (missing.length > 0) throw new Error(`请先运行 npm run build（缺客户端产物：${missing.join('、')}）`);
       const extra = process.argv.slice(3);
-      const args = command === 'dump' ? ['--dump-config'] : hostArgs(extra, process.env.ZHIYUN_PORT);
+      const args = command === 'dump' ? ['--dump-config'] : hostArgs(extra, process.env.ZW_PORT);
       const child = runHost(runtime, args);
       child.on('error', error => { console.error(error.message); process.exitCode = 1; });
       child.on('exit', code => { process.exitCode = code ?? 1; });

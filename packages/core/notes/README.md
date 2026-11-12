@@ -2,11 +2,11 @@
 
 节笔记的领域层：Markdown 正文、`zy://section` 时间链和页码链、`zy-asset` 附件记录。零 UI。持久化由注入的 store 完成，本包不自己写文件。
 
-学习页的笔记栏在 `dsh-zhiyun-page-study`。读写经过 `@lybx-leyw/dsh-zju-core-study` 的 `note` / `note-save` / `note-link` / `note-link-text`。工作台调用本包时把节 id 写成 `账号.节次`，因为这里的键只有课程和节次，本身不区分登录身份。
+学习页的笔记栏在 `dsh-zju-page-study`。读写经过 `@lybx-leyw/dsh-zju-core-study` 的 `note` / `note-save` / `note-link` / `note-link-text`。工作台调用本包时把节 id 写成 `账号.节次`，因为这里的键只有课程和节次，本身不区分登录身份。
 
 ## 服务
 
-插件激活后提供 `ctx.zhiyunNotes`。`inject: ['storageDomain']`：没有宿主存储域时不激活，而不是退成重启就丢的内存笔记。测试和离线调用可以传 `config.store`，例如 `createMemorySectionNoteStore()`。
+插件激活后提供 `ctx.zwNotes`。`inject: ['storageDomain']`：没有宿主存储域时不激活，而不是退成重启就丢的内存笔记。测试和离线调用可以传 `config.store`，例如 `createMemorySectionNoteStore()`。
 
 | 方法 | 说明 |
 | --- | --- |

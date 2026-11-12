@@ -26,7 +26,7 @@
  * 就是 `workspaceRegistry.archiveSession()`：从所有列表里消失、日志保留、可撤销。
  * 面板上照实说成「删除（归档，可在宿主会话列表里恢复）」，不假装是物理删除。
  *
- * # 从 `dsh-zhiyun-host-paper` 迁入
+ * # 从 `dsh-zju-host-paper` 迁入
  *
  * 只依赖宿主两个可选服务，取不到就如实 503 —— 不拦插件激活。
  */

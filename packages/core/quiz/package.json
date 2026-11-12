@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-quiz",
   "version": "0.1.0",
-  "description": "智云 Pro 出题与质检：题形状 + 先筛后出 + 三态硬检查（零 UI、零落盘，llm 由集成层注入）",
+  "description": "ZJU Workbench 出题与质检：题形状 + 先筛后出 + 三态硬检查（零 UI、零落盘，llm 由集成层注入）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

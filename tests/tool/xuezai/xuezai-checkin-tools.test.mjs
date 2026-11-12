@@ -88,7 +88,7 @@ function harness({ rows = [radarRow(1, '数据结构'), radarRow(2, '算法')], 
   const asked = [];
   const registered = [];
   const ctx = {
-    get: (key) => (key === 'zhiyunXuezai' ? service : undefined),
+    get: (key) => (key === 'zwXuezai' ? service : undefined),
     tools: { register: (tool) => { registered.push(tool); return () => {}; } },
     approval: { async request(request) { asked.push(request); return outcome; } },
     effect: (fn) => fn(),
@@ -217,7 +217,7 @@ test('审批被拒后能**立刻**重试同一个动作（不 WRITE_BUSY）', as
   let outcome = 'rejected';
   const registered = [];
   apply({
-    get: (key) => (key === 'zhiyunXuezai' ? service : undefined),
+    get: (key) => (key === 'zwXuezai' ? service : undefined),
     tools: { register: (tool) => { registered.push(tool); return () => {}; } },
     approval: { request: async () => outcome },
     effect: (fn) => fn(),
@@ -259,7 +259,7 @@ test('审批通道不可用（没有 agent）时不发请求，且会话被撤�
 test('source 缺 Cancel 时立刻报 CONTRACT_MISSING（否则审批被拒后永久不可用）', async () => {
   const registered = [];
   apply({
-    get: (key) => (key === 'zhiyunXuezai'
+    get: (key) => (key === 'zwXuezai'
       ? { rollcallAllPrepare: async () => 's', rollcallAllExecute: async () => ({}) }
       : undefined),
     tools: { register: (tool) => { registered.push(tool); return () => {}; } },

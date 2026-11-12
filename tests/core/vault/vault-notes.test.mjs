@@ -95,8 +95,8 @@ test('宿主半边：写读往返 + 列表 + 删除（真落盘到临时目录�
       get: () => undefined, // vault 索引器不在场 —— 页面只是没有反链
     };
     await mod.apply(ctx, { dir: path.join(dir, 'notes') });
-    const svc = provided.zhiyunVaultNotes;
-    assert.ok(svc, '应提供 zhiyunVaultNotes 服务');
+    const svc = provided.zwVaultNotes;
+    assert.ok(svc, '应提供 zwVaultNotes 服务');
     assert.deepEqual(await svc.list(), [], '初始为空');
 
     // 新建 → 写 → 读回
@@ -170,13 +170,13 @@ test('宿主半边：重命名会改写别的笔记里指向它的链接', async
     await vaultMod.apply(makeCtx(services), {});
     // 索引器要先拿到笔记才能算改写；页面写盘后会推给它，这里手动同步一次。
     await mod.apply(makeCtx(provided), { dir: path.join(dir, 'notes') });
-    const svc = provided.zhiyunVaultNotes;
+    const svc = provided.zwVaultNotes;
 
     await svc.create('甲');
     await svc.create('乙');
     await svc.write('甲', '见 [[乙]] 与 [[乙|别名]]');
     await svc.write('乙', '乙的正文');
-    await services.zhiyunVault.setNotes(await svc.list().then(async (items) => {
+    await services.zwVault.setNotes(await svc.list().then(async (items) => {
       const out = [];
       for (const item of items) out.push({ path: `${item.title}.md`, markdown: (await svc.read(item.title)).markdown });
       return out;
@@ -199,7 +199,7 @@ test('宿主半边：重命名会改写别的笔记里指向它的链接', async
 });
 
 test('NOTES_DIR 常量与 README 里写的一致', () => {
-  assert.equal(NOTES_DIR, 'zhiyun-vault-notes');
+  assert.equal(NOTES_DIR, 'zw-vault-notes');
 });
 
 /* ────────────────────────── 子目录（vault 就是一棵树） ────────────────────────── */
@@ -242,7 +242,7 @@ test('宿主半边：文件夹的建 / 列 / 移 / 删，以及嵌套路径下�
       provide: (n, v) => { provided[n] = v; return () => {}; },
       get: (n) => services[n],
     }, { dir: path.join(dir, 'notes') });
-    const svc = provided.zhiyunVaultNotes;
+    const svc = provided.zwVaultNotes;
 
     // 建两个文件夹；同名会自动加序号，不覆盖
     assert.equal((await svc.mkdir('理学')).path, '理学');
@@ -300,11 +300,11 @@ test('宿主半边：文件夹的建 / 列 / 移 / 删，以及嵌套路径下�
       for (const entry of all.filter((e) => e.type === 'note')) {
         payload.push({ path: `${entry.path}.md`, markdown: (await svc.read(entry.path)).markdown });
       }
-      await services.zhiyunVault.setNotes(payload);
+      await services.zwVault.setNotes(payload);
     };
     await pushIndex();
-    // 直接读索引（`zhiyunVault.index()` 是宿主侧的索引面，不必绕 HTTP 信封）。
-    const index = services.zhiyunVault.index();
+    // 直接读索引（`zwVault.index()` 是宿主侧的索引面，不必绕 HTTP 信封）。
+    const index = services.zwVault.index();
     const backlinks = index.backlinks.get('理学/大数定律.md') ?? [];
     assert.equal(backlinks.length, 1, `同目录的 [[大数定律]] 应解析到 理学/大数定律.md，实际 ${JSON.stringify(backlinks)}`);
     assert.equal(backlinks[0].from, '理学/概率论.md');
@@ -370,7 +370,7 @@ test('宿主半边：批量删除（removeMany）一次 RPC 删多条，索引�
     //    只断言"文件删掉了"的话，一个内部逐条 `refreshIndex()` 的实现也能全绿 ——
     //    但它把批量删除的意义丢掉了（20 篇 = 20 次全库 Markdown 重读）。
     //    计数是最便宜的不变量。
-    const vault = services.zhiyunVault;
+    const vault = services.zwVault;
     let setNotesCalls = 0;
     /** 最近一次推给索引器的 payload —— 用来断言"刷的那一次内容是对的"。 */
     let lastPushed = null;
@@ -384,9 +384,9 @@ test('宿主半边：批量删除（removeMany）一次 RPC 删多条，索引�
       logger: { info: () => {}, warn: () => {} },
       inject: (deps, cb) => cb({ connection: { fetch: { register: () => () => {} } }, effect: (fn) => { const d = fn(); return () => { if (typeof d === 'function') d(); }; } }),
       provide: (n, v) => { provided[n] = v; return () => {}; },
-      get: (n) => (n === 'zhiyunVault' ? countingVault : services[n]),
+      get: (n) => (n === 'zwVault' ? countingVault : services[n]),
     }, { dir: path.join(dir, 'notes') });
-    const svc = provided.zhiyunVaultNotes;
+    const svc = provided.zwVaultNotes;
     const notesDir = path.join(dir, 'notes');
 
     // ── 布置：三篇笔记 + 一个附件 + 一个装了文件的文件夹 + 一个"名字撞前缀"的文件夹 ──
@@ -470,7 +470,7 @@ test('宿主半边：批量删除（removeMany）一次 RPC 删多条，索引�
     );
 
     // 删完以后反链里不该再有被删的笔记（索引真的更新了，不是停留在旧快照）
-    const indexAfter = services.zhiyunVault.index();
+    const indexAfter = services.zwVault.index();
     assert.equal(
       indexAfter.backlinks.get('乙.md'),
       undefined,

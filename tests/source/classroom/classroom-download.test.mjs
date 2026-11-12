@@ -24,7 +24,7 @@ test('streaming downloads validate Range, restart ignored Range, keep cancelled 
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-download-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-download-'));
   const ds = new ClassroomSource();
   const seed = async (destination, url) => {
     await writeFile(`${destination}.part`, bytes.subarray(0, 100));
@@ -49,7 +49,7 @@ test('streaming downloads validate Range, restart ignored Range, keep cancelled 
 });
 
 test('batch slide downloads bound concurrency and report per-page failures', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-slides-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-slides-'));
   let active = 0, maximum = 0;
   const ds = new ClassroomSource({ fetch: async url => {
     if (new URL(url).pathname.includes('search-ppt')) return new Response(JSON.stringify({ total: 5, list: Array.from({ length: 5 }, (_, i) => ({ created_sec: i, content: { pptimgurl: `https://example.test/${i}.jpg` } })) }));

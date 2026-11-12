@@ -1,5 +1,5 @@
 /**
- * 壳域：**版式与路由契约**（`dsh-zhiyun-shell-workbench/src/model.js`）。
+ * 壳域：**版式与路由契约**（`dsh-zju-shell-workbench/src/model.js`）。
  *
  * # 为什么基准需要壳
  *

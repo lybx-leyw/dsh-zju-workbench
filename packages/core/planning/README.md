@@ -18,7 +18,7 @@ re-export 把 `node:` 内置模块打进浏览器产物 —— 构建往往还�
 
 | 模块 | 职责 | IO |
 | --- | --- | --- |
-| `index.js` | **数据聚合**：四份来源并成一张表、`/_dsh/zhiyun-planning` 路由、快照、AI 规划、pet 对话 | 文件 + 网络 |
+| `index.js` | **数据聚合**：四份来源并成一张表、`/_dsh/zw-planning` 路由、快照、AI 规划、pet 对话 | 文件 + 网络 |
 | `entries.js` | 中转站条目的内容指纹键（含旧口径迁移） | `node:crypto` |
 | `plans.js` | AI 拆分：提示词、卡片校验、「源条目 → 卡片」映射 | 注入读写 |
 | `time.js` | 上海时区口径、紧迫度、月历分格、日期对照表 | 无 |
@@ -41,13 +41,13 @@ re-export 把 `node:` 内置模块打进浏览器产物 —— 构建往往还�
 按本仓分层（page 只做 UI，core 管数据与宿主服务），这整块不属于页面。搬迁后：
 
 - 页面 `src/index.js` 只剩一个空 `apply()`（保留是为了让客户端 bundle 进启动图谱）；
-- **停用页面不再等于停用这套数据**（脚本、将来的 tool 都能直接调 `zhiyunPlanning`）；
+- **停用页面不再等于停用这套数据**（脚本、将来的 tool 都能直接调 `zwPlanning`）；
 - `tests/page-isolation.test.mjs` 的「页面不许碰 `node:fs`」终于全绿。
 
 ## 装配
 
-`cordis.patch.yml` 只登记一行 `zhiyun-planning`；`apply()` 自己把存储、索引与
-路由一起挂起来，并在 `ctx.provide('zhiyunPlanning')` 上暴露只读面。
+`cordis.patch.yml` 只登记一行 `zw-planning`；`apply()` 自己把存储、索引与
+路由一起挂起来，并在 `ctx.provide('zwPlanning')` 上暴露只读面。
 
 ## 验证
 

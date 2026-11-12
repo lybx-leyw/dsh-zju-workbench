@@ -14,7 +14,7 @@ import { renderSlideChapter } from '@lybx-leyw/dsh-zju-core-classroom-generate/h
  *   scenes   — 逐页产出 canvas 元素（标题/要点/图形）+ 口播稿（`phases/scenes.js`）
  *   media    — 配图（`phases/media.js`）
  *
- * 这套东西就是 `zhiyunClassroomGenerate` 服务（`core-classroom-generate`）。
+ * 这套东西就是 `zwClassroomGenerate` 服务（`core-classroom-generate`）。
  * 自己再写一套 prompt，等于把已经调好、有 schema 约束、有失败降级的管线
  * 重造一遍 —— 而且必然更差：会漏掉「按顺序规划」「每页元素布局」
  * 「承接上下文」这些它已经处理过的事。
@@ -209,7 +209,7 @@ export function pagesFromScenes(scenes) {
  * outputs 里。所以这里只认 run-done / run-error 两种终止事件。
  *
  * @param {object} deps
- * @param {object} deps.generate    zhiyunClassroomGenerate 服务
+ * @param {object} deps.generate    zwClassroomGenerate 服务
  * @param {object} deps.brief       `briefFromLecture` 的产出
  * @param {string} [deps.stageId]   课堂所属的舞台 id
  * @returns {Promise<{runId: string, pages: object[], skipped: object[]}>}

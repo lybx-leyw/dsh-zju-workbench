@@ -62,7 +62,7 @@
 
 ## 一个包缺席会怎样
 
-每个工具包 `inject` 的都是主机的服务（`zhiyunZdbk` / `zhiyunCc98` / …）与
+每个工具包 `inject` 的都是主机的服务（`zwZdbk` / `zwCc98` / …）与
 `tools` 注册表。某个数据源没装时，它对应的工具如实报 `SERVICE_MISSING`，
 **不影响其他工具** —— 这正是按域分包的好处。
 

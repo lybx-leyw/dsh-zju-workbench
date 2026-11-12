@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSettingsOpener } from '../../archive/deprecated-packages/dsh-zhiyun-shell-workbench/src/settings-opener.js';
+import { createSettingsOpener } from '../../archive/deprecated-packages/dsh-zju-shell-workbench/src/settings-opener.js';
 
 test('settings opener forwards to the native entry store and detaches safely', () => {
   const opener = createSettingsOpener();

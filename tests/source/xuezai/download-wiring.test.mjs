@@ -1,5 +1,5 @@
 /**
- * 学在浙大下载的**接线**：`apply()` → `zhiyunXuezai.xzzdDownload` → 路由。
+ * 学在浙大下载的**接线**：`apply()` → `zwXuezai.xzzdDownload` → 路由。
  *
  * # 为什么单开一份而不是并进 `downloads.test.mjs`
  *
@@ -26,7 +26,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 /**
- * 装配出一个可用的 `zhiyunXuezai` 服务面。
+ * 装配出一个可用的 `zwXuezai` 服务面。
  *
  * `apply()` 要 `profileContext.dir`（会话文件落盘）与凭据读取；两者都给最小替身。
  * 下载动作会先 `xzzdClient()` → 会话检查 → 可能走 CAS，所以这里让 `fetch`
@@ -58,7 +58,7 @@ async function mount({ downloadDir, fetch: fetcher, dataDir } = {}) {
     }),
   });
   return {
-    service: services.get('zhiyunXuezai'),
+    service: services.get('zwXuezai'),
     dispose,
     sent: calls,
     dataDir: dir,
@@ -68,7 +68,7 @@ async function mount({ downloadDir, fetch: fetcher, dataDir } = {}) {
 test('服务面暴露 xzzdDownload 与 downloadDir，且下载**不在** writeMethods 里', async () => {
   const { service, dispose } = await mount();
   try {
-    assert.equal(typeof service.xzzdDownload, 'function', 'zhiyunXuezai 没有 xzzdDownload —— 下载能力装不上');
+    assert.equal(typeof service.xzzdDownload, 'function', 'zwXuezai 没有 xzzdDownload —— 下载能力装不上');
     assert.equal(typeof service.downloadDir, 'function', '页面要知道文件去哪了，所以要有 downloadDir');
     // 判据：会不会改变**平台**状态。下载一个字节都没改，所以不在写方法表里。
     for (const name of service.writeMethods) {
@@ -148,7 +148,7 @@ test('downloadDir 由装配层决定：配置了就落在那儿，默认在数�
     // 它是插件的派生产物，该跟数据目录一起被清理，不混进用户自己的「下载」。
     assert.equal(
       fallback.service.downloadDir(),
-      path.resolve(path.join(fallback.dataDir, 'data', 'zhiyun-xuezai', 'downloads')),
+      path.resolve(path.join(fallback.dataDir, 'data', 'zw-xuezai', 'downloads')),
     );
   } finally { await fallback.dispose?.(); await rm(fallback.dataDir, { recursive: true, force: true }); }
 });

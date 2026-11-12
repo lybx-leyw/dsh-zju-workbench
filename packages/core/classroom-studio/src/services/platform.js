@@ -1233,7 +1233,7 @@ export function mountPlatform(service, deps = {}) {
     async get(id) {
       void id;
       throw notImplemented(
-        'zhiyunClassroomStudio.folders.get',
+        'zwClassroomStudio.folders.get',
         'app/api/folders/[id]/route.ts（上游只有 PATCH / DELETE，没有 GET）',
       );
     },
@@ -1318,7 +1318,7 @@ export function mountPlatform(service, deps = {}) {
        */
       async list() {
         throw notImplemented(
-          'zhiyunClassroomStudio.folders.members.list',
+          'zwClassroomStudio.folders.members.list',
           'app/api/folders/members/route.ts（上游只有 POST，没有列表接口）',
         );
       },
@@ -1630,7 +1630,7 @@ export function mountPlatform(service, deps = {}) {
           const port = providersPort();
           if (!port || typeof port.savedChatEndpoint !== 'function') {
             throw notImplemented(
-              'zhiyunClassroomStudio.providers.probe',
+              'zwClassroomStudio.providers.probe',
               'app/api/provider/probe-models/route.ts:39-50（按已保存 provider 探测需要工作区设置表）',
             );
           }
@@ -1731,7 +1731,7 @@ export function mountPlatform(service, deps = {}) {
           const port = providersPort();
           if (!port || typeof port.savedChatEndpoint !== 'function') {
             throw notImplemented(
-              'zhiyunClassroomStudio.providers.verifyModel',
+              'zwClassroomStudio.providers.verifyModel',
               'app/api/verify-model/route.ts:39-51（按已保存 provider 验证需要工作区设置表）',
             );
           }
@@ -2004,7 +2004,7 @@ export function mountPlatform(service, deps = {}) {
     const port = providersPort();
     if (!port || typeof port.verifyAliDocMind !== 'function') {
       throw notImplemented(
-        'zhiyunClassroomStudio.providers.verifyPdf',
+        'zwClassroomStudio.providers.verifyPdf',
         'app/api/verify-pdf-provider/route.ts:187-196（AliDocMind 走 SDK 签名，需要端口）',
       );
     }
@@ -2020,7 +2020,7 @@ export function mountPlatform(service, deps = {}) {
     const port = providersPort();
     if (!port || typeof port.savedMediaConnection !== 'function') {
       throw notImplemented(
-        'zhiyunClassroomStudio.providers.verifyPdf',
+        'zwClassroomStudio.providers.verifyPdf',
         'app/api/verify-pdf-provider/route.ts:86-120（按已保存 provider 验证需要工作区设置表）',
       );
     }
@@ -2071,7 +2071,7 @@ export function mountPlatform(service, deps = {}) {
         const port = providersPort();
         if (!port || typeof port.savedMediaConnection !== 'function') {
           throw notImplemented(
-            `zhiyunClassroomStudio.providers.verify${isImage ? 'Image' : 'Video'}`,
+            `zwClassroomStudio.providers.verify${isImage ? 'Image' : 'Video'}`,
             `app/api/verify-${label}-provider/route.ts:50-71（按已保存 provider 验证需要工作区设置表）`,
           );
         }
@@ -2622,7 +2622,7 @@ export function mountPlatform(service, deps = {}) {
         const port = chatPort();
         if (!port) {
           throw notImplemented(
-            'zhiyunClassroomStudio.quiz.grade',
+            'zwClassroomStudio.quiz.grade',
             'app/api/quiz-grade/route.ts:72-82（上游 callLLM，需要 ports.agent.complete）',
           );
         }
@@ -2713,7 +2713,7 @@ ${commentPrompt ? `Grading guidance: ${commentPrompt}\n` : ''}Student answer: ${
   function requirePblMethod(name, source) {
     const port = pblPort();
     if (!port || typeof port[name] !== 'function') {
-      throw notImplemented(`zhiyunClassroomStudio.pbl.${name}`, source);
+      throw notImplemented(`zwClassroomStudio.pbl.${name}`, source);
     }
     return port[name].bind(port);
   }
@@ -2751,7 +2751,7 @@ ${commentPrompt ? `Grading guidance: ${commentPrompt}\n` : ''}Student answer: ${
       const port = pblPort();
       if (!port) {
         throw notImplemented(
-          'zhiyunClassroomStudio.pbl.evaluate',
+          'zwClassroomStudio.pbl.evaluate',
           'app/api/pbl/v2/evaluate/route.ts:93-131（上游 runTaskEvaluation / runMilestoneEvaluation / runFinalEvaluation）',
         );
       }
@@ -2763,7 +2763,7 @@ ${commentPrompt ? `Grading guidance: ${commentPrompt}\n` : ''}Student answer: ${
         return pblStream(evaluateThroughGrade(port, body, request));
       }
       throw notImplemented(
-        'zhiyunClassroomStudio.pbl.evaluate',
+        'zwClassroomStudio.pbl.evaluate',
         'app/api/pbl/v2/evaluate/route.ts:93-131（ports.pbl 需要 evaluate 或 rubric+grade）',
       );
     },
@@ -2831,7 +2831,7 @@ ${commentPrompt ? `Grading guidance: ${commentPrompt}\n` : ''}Student answer: ${
         return pblStream(stream);
       }
       throw notImplemented(
-        'zhiyunClassroomStudio.pbl.openTask',
+        'zwClassroomStudio.pbl.openTask',
         'app/api/pbl/v2/open-task/route.ts:83-92（上游 runInstructorTurn，userMessage 为空）',
       );
     },

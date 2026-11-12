@@ -21,10 +21,10 @@
  * # 路由协议（照本包 `src/index.js`）
  *
  * ```text
- *   POST /api/zhiyun-mail   { action: 'mail.snapshot' }
- *   POST /api/zhiyun-mail   { action: 'mail.saveAccount', input: { address, password } }
- *   POST /api/zhiyun-mail   { action: 'mail.clearAccount' }
- *   POST /api/zhiyun-mail   { action: 'mail.test' }
+ *   POST /api/zw-mail   { action: 'mail.snapshot' }
+ *   POST /api/zw-mail   { action: 'mail.saveAccount', input: { address, password } }
+ *   POST /api/zw-mail   { action: 'mail.clearAccount' }
+ *   POST /api/zw-mail   { action: 'mail.test' }
  * ```
  *
  * 动作名是 `mail.xxx`（与方法表一致），写错不会报「未知动作」以外的线索，
@@ -44,11 +44,11 @@ import {
   registerText,
 } from '@lybx-leyw/dsh-zju-ui-shared';
 
-const ROUTE_PATH = '/api/zhiyun-mail';
+const ROUTE_PATH = '/api/zw-mail';
 const NAMESPACE = 'zju-source-mail';
 const SECTION_ID = 'zju-source-mail';
 
-export const name = 'zhiyun-source-mail-client';
+export const name = 'zw-source-mail-client';
 
 /** 只要插槽与本地化。 */
 export const inject = ['slots', 'locale'];

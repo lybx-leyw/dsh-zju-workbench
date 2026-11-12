@@ -23,12 +23,12 @@ import assert from 'node:assert/strict';
 
 /** 六个包：目录名 → { 写工厂, 读工厂, 服务名, 写工具名, 读工具名 }。 */
 const PACKAGES = [
-  { dir: 'zdbk', factory: 'createZdbkWriteTools', readFactory: 'createZdbkReadTools', service: 'zhiyunZdbk', pkg: '@lybx-leyw/dsh-zju-source-zdbk', tools: ['campus_course_select'], reads: ['campus_zdbk_read'] },
-  { dir: 'sztz', factory: 'createSztzWriteTools', readFactory: 'createSztzReadTools', service: 'zhiyunSztz', pkg: '@lybx-leyw/dsh-zju-source-sztz', tools: ['campus_activity'], reads: ['campus_sztz_read'] },
-  { dir: 'tyys', factory: 'createTyysWriteTools', readFactory: 'createTyysReadTools', service: 'zhiyunTyys', pkg: '@lybx-leyw/dsh-zju-source-tyys', tools: ['campus_venue'], reads: ['campus_tyys_read'] },
-  { dir: 'xuezai', factory: 'createXuezaiWriteTools', readFactory: 'createXuezaiReadTools', service: 'zhiyunXuezai', pkg: '@lybx-leyw/dsh-zju-source-xuezai', tools: ['campus_homework', 'campus_checkin'], reads: ['campus_xuezai_read'] },
-  { dir: 'pta', factory: 'createPtaWriteTools', readFactory: 'createPtaReadTools', service: 'zhiyunPta', pkg: '@lybx-leyw/dsh-zju-source-pta', tools: ['campus_answer'], reads: ['campus_pta_read'] },
-  { dir: 'lab', factory: 'createLabWriteTools', readFactory: 'createLabReadTools', service: 'zhiyunLab', pkg: '@lybx-leyw/dsh-zju-source-lab', tools: ['campus_lab_select'], reads: ['campus_lab_read'] },
+  { dir: 'zdbk', factory: 'createZdbkWriteTools', readFactory: 'createZdbkReadTools', service: 'zwZdbk', pkg: '@lybx-leyw/dsh-zju-source-zdbk', tools: ['campus_course_select'], reads: ['campus_zdbk_read'] },
+  { dir: 'sztz', factory: 'createSztzWriteTools', readFactory: 'createSztzReadTools', service: 'zwSztz', pkg: '@lybx-leyw/dsh-zju-source-sztz', tools: ['campus_activity'], reads: ['campus_sztz_read'] },
+  { dir: 'tyys', factory: 'createTyysWriteTools', readFactory: 'createTyysReadTools', service: 'zwTyys', pkg: '@lybx-leyw/dsh-zju-source-tyys', tools: ['campus_venue'], reads: ['campus_tyys_read'] },
+  { dir: 'xuezai', factory: 'createXuezaiWriteTools', readFactory: 'createXuezaiReadTools', service: 'zwXuezai', pkg: '@lybx-leyw/dsh-zju-source-xuezai', tools: ['campus_homework', 'campus_checkin'], reads: ['campus_xuezai_read'] },
+  { dir: 'pta', factory: 'createPtaWriteTools', readFactory: 'createPtaReadTools', service: 'zwPta', pkg: '@lybx-leyw/dsh-zju-source-pta', tools: ['campus_answer'], reads: ['campus_pta_read'] },
+  { dir: 'lab', factory: 'createLabWriteTools', readFactory: 'createLabReadTools', service: 'zwLab', pkg: '@lybx-leyw/dsh-zju-source-lab', tools: ['campus_lab_select'], reads: ['campus_lab_read'] },
 ];
 
 /** 载入一个包。 */

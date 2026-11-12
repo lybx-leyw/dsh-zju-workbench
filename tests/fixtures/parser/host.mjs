@@ -81,8 +81,8 @@ export async function mountHost(version, directory, respond = answer, { modaliti
     ctx.llm.registerAdapter(['fixture-provider'], new Adapter());
     ctx.provide('profileContext', { dir: directory });
     ctx.provide('agentDefaultModel', { currentSelection: () => ({ provider: 'fixture-provider', model: 'fixture-model', reasoningEffort: 'high' }) });
-    ctx.provide('zhiyunClassroom', {});
+    ctx.provide('zwClassroom', {});
     const fiber = await ctx.plugin(parserPlugin, parserConfig);
-    return { ctx, parser: ctx.get('zhiyunParser'), requests, fiber, dispose: () => ctx.fiber.dispose() };
+    return { ctx, parser: ctx.get('zwParser'), requests, fiber, dispose: () => ctx.fiber.dispose() };
   } catch (error) { await ctx.fiber.dispose(); throw error; }
 }

@@ -17,18 +17,18 @@ import { createWriteToolRegistrar, contractOf, inputError, optStr, serviceLookup
 import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createZdbkReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-zdbk';
+export const name = 'zw-tool-zdbk';
 
 /**
  * 本包消费的 source 服务。
  *
- * `tools` 与 `approval` 由宿主提供；`zhiyunZdbk` 缺失时**整包不激活**
+ * `tools` 与 `approval` 由宿主提供；`zwZdbk` 缺失时**整包不激活**
  * （用 String 形式的 inject 就是惰性语义）。
  */
-export const inject = ['tools', 'approval', 'zhiyunZdbk'];
+export const inject = ['tools', 'approval', 'zwZdbk'];
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunZdbk: '@lybx-leyw/dsh-zju-source-zdbk',
+  zwZdbk: '@lybx-leyw/dsh-zju-source-zdbk',
 });
 
 /**
@@ -64,7 +64,7 @@ export function createZdbkWriteTools(services) {
         if (!['select', 'drop', 'reorder'].includes(action)) {
           throw inputError(`不认识的 action：${action}`);
         }
-        const zdbk = need('zhiyunZdbk');
+        const zdbk = need('zwZdbk');
 
         if (action === 'select') {
           const section = str(args.section, '教学班编号（select 需要）');

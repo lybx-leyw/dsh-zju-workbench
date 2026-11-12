@@ -12,7 +12,7 @@ node scripts/classroom-golden-parity.mjs --a <dirA> --b <dirB> [--json]
 ```
 
 `--a` / `--b` 是两份**课堂产物目录** —— 通常是"上游 `ref/OpenMAIC` 跑出来的"和"本仓
-`ctx.zhiyunClassroomExport` 跑出来的"，也可以是同一个目录自比（冒烟）。
+`ctx.zwClassroomExport` 跑出来的"，也可以是同一个目录自比（冒烟）。
 
 - `--json`：输出完整报告（机器读）；默认输出四行人类可读摘要。
 - `--help`：用法。

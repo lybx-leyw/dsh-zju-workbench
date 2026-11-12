@@ -3,7 +3,7 @@
  *
  * # 这个包做什么（D17：数据源只读）
  *
- * 提供一个 `zhiyunYjsy` 服务，暴露「本人研究生课表」这一条能力。
+ * 提供一个 `zwYjsy` 服务，暴露「本人研究生课表」这一条能力。
  * **不注册 AI 工具**、**不含写操作** —— 写操作按 D17 归 `packages/tool/*`。
  * 与 `source/zdbk` 的注释同口径：「本包是数据包，不注册任何 AI 工具」。
  *
@@ -45,7 +45,7 @@ export const inject = [];
  * 与 `source/zdbk` / `source/cc98` 同构：一条同源路由，动作名 + 参数。
  * 只读，所以只有 `timetable` 一个动作。
  */
-export const ROUTE_PATH = '/api/zhiyun-yjsy';
+export const ROUTE_PATH = '/api/zw-yjsy';
 
 /**
  * 把 `Transport` 的 `request` 适配成 `Yjsy` 期望的形状。
@@ -133,7 +133,7 @@ export function apply(ctx) {
      * @returns `Promise<string>`：换到的 token。
      */
     const tokenFromSharedCas = async ({ entry, service }) => {
-      const card = ctx.get?.('zhiyunCard');
+      const card = ctx.get?.('zwCard');
       if (typeof card?.casLoginFor !== 'function') {
         throw new YjsyError(
           'CONFIG',
@@ -168,7 +168,7 @@ export function apply(ctx) {
     const client = async ({ username, fresh = false } = {}) => {
       // 两条路都算「已接入」：注入的 provider，或宿主的共享 CAS。
       // 只认前者会把「装了 login、没手动注入」误报成「用户没配账号」。
-      if (!acquireToken && typeof ctx.get?.('zhiyunCard')?.casLoginFor !== 'function') {
+      if (!acquireToken && typeof ctx.get?.('zwCard')?.casLoginFor !== 'function') {
         throw new YjsyError(
           'CONFIG',
           '研究生教务网还没接入登录：到「设置 → 浙大一卡通」配置学号密码后重试'
@@ -272,7 +272,7 @@ export function apply(ctx) {
        * 那正是本轮修掉的那类误导。
        */
       ready() {
-        return acquireToken !== null || typeof ctx.get?.('zhiyunCard')?.casLoginFor === 'function';
+        return acquireToken !== null || typeof ctx.get?.('zwCard')?.casLoginFor === 'function';
       },
       timetable: readTimetable,
       /** 清掉缓存的会话（换账号、或用户点了「重新登录」）。 */
@@ -282,7 +282,7 @@ export function apply(ctx) {
       },
     };
 
-    const disposeService = ctx.provide('zhiyunYjsy', service);
+    const disposeService = ctx.provide('zwYjsy', service);
 
     // 同源数据路由：与 zdbk / cc98 同构，只读。
     let removeRoute = null;

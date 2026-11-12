@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-lecture",
   "version": "0.1.0",
-  "description": "智云 Pro 讲义装配：PPT 知识树 + 习坎填充 + 书面语验收（零宿主依赖，llm 由集成层注入）",
+  "description": "ZJU Workbench 讲义装配：PPT 知识树 + 习坎填充 + 书面语验收（零宿主依赖，llm 由集成层注入）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

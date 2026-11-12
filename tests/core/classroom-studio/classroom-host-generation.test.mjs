@@ -38,7 +38,7 @@ function vError(code, message) {
 }
 
 /**
- * 内存版 `ctx.zhiyunClassroomVault`：方法与 `@lybx-leyw/dsh-zju-core-classroom-vault` 的
+ * 内存版 `ctx.zwClassroomVault`：方法与 `@lybx-leyw/dsh-zju-core-classroom-vault` 的
  * `classroom.*` / `runs.*` 同名同参（只实现本批用到的那几个）。
  */
 function memoryVault({ ownerId = 'local' } = {}) {
@@ -222,7 +222,7 @@ function memoryVault({ ownerId = 'local' } = {}) {
 }
 
 /**
- * 内存版 `ctx.zhiyunClassroomGenerate`：签名照 `@lybx-leyw/dsh-zju-core-classroom-generate`
+ * 内存版 `ctx.zwClassroomGenerate`：签名照 `@lybx-leyw/dsh-zju-core-classroom-generate`
  * 的 `start / stream / get / list / cancel / resume`。
  */
 function memoryGenerate({ runId = RUN_A } = {}) {
@@ -267,7 +267,7 @@ function memoryGenerate({ runId = RUN_A } = {}) {
   };
 }
 
-/** 内存版 `ctx.zhiyunClassroomStage`（stage_meta 的写侧）。 */
+/** 内存版 `ctx.zwClassroomStage`（stage_meta 的写侧）。 */
 function memoryStage(vault) {
   const writes = [];
   return {
@@ -323,7 +323,7 @@ function mountWith({ ports = {}, owner, providerConfig } = {}) {
   mountGeneration(service, {
     ports,
     log: quiet,
-    dataDir: '/tmp/zyc-test',
+    dataDir: '/tmp/zwc-test',
     providerConfig: providerConfig ?? createDegradedProviderConfig(),
     ...(owner ? { owner } : {}),
   });
@@ -343,7 +343,7 @@ function mountThroughService(ports = {}) {
       get media() { return ports.media ?? null; },
     },
     mounts: [mountGeneration],
-    dataDir: '/tmp/zyc-test',
+    dataDir: '/tmp/zwc-test',
   });
 }
 

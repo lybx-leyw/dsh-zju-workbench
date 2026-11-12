@@ -32,7 +32,7 @@ const SLASH = String.fromCharCode(92);
  * - `core-planning`：入口 re-export 了 `schedule.js` / `ticks.js`（`node:fs`）；
  *   `./browser` 只导出纯函数。
  * - `core-vault`：整个包都是宿主侧的（落盘 + PDF 字节流 + pdfjs-dist）。
- * - `core-plugin-graph`：入口 `apply()` 会注册 `/api/zhiyun-plugins` 路由并 inject
+ * - `core-plugin-graph`：入口 `apply()` 会注册 `/api/zw-plugins` 路由并 inject
  *   `connection`/`loader`；客户端只需要 `./browser` 里那几个折叠函数。误引入口虽然
  *   不会白屏（它不碰 node 内置模块），但会把一个宿主插件塞进浏览器产物 ——
  *   更糟的是它看起来"能用"，于是没人发现边界破了。

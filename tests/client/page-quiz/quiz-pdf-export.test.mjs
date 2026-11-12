@@ -162,35 +162,35 @@ test('导出流程：离屏挂载 → 等排版 → 桌面桥接优先 → 浏�
   assert.match(source, new RegExp(`QUIZ_EXPORT_ROOT_ID|'${QUIZ_EXPORT_ROOT_ID}'`), '没有用统一的挂载点 id');
   assert.match(source, /createRoot\(element\)/);
   assert.match(source, /document\.body\.append\(element\)/);
-  assert.match(source, /window\.zhiyunPdf/, '没有优先走桌面壳的保存对话框');
+  assert.match(source, /window\.zwPdf/, '没有优先走桌面壳的保存对话框');
   assert.match(source, /window\.print\(\)/, '浏览器里没有回落');
   assert.match(source, /root\.unmount\(\)/, '导出后没有卸载文档');
   assert.match(source, /element\.remove\(\)/, '导出后没有移除挂载点');
   assert.match(source, /exporting\s*=\s*false/, '失败路径没有释放互斥锁');
 });
 
-test('纸面样式只锚定 #zs-quiz-export，打印时隐藏应用界面', () => {
+test('纸面样式只锚定 #zws-quiz-export，打印时隐藏应用界面', () => {
   const css = read('packages/client/page-quiz/src/question-export.css');
   assert.match(css, new RegExp(`#${QUIZ_EXPORT_ROOT_ID}\\b`), '样式没有以挂载点 id 作用域化');
   assert.match(css, /@media print/, '缺少打印样式');
   assert.match(css, /@page\s*\{\s*size:\s*A4/, '缺 A4 页面设置');
-  assert.match(css, /body\s*>\s*\*:not\(#zs-quiz-export\)\s*\{\s*display:\s*none/, '打印时没有隐藏应用界面');
+  assert.match(css, /body\s*>\s*\*:not\(#zws-quiz-export\)\s*\{\s*display:\s*none/, '打印时没有隐藏应用界面');
   // 题号与答案段必须分页：卷末附录不该跟最后一道题挤在同一页
-  assert.match(css, /\.zs-pdf-answers\s*\{[^}]*break-before:\s*page/, '答案附录没有另起一页');
+  assert.match(css, /\.zws-pdf-answers\s*\{[^}]*break-before:\s*page/, '答案附录没有另起一页');
 });
 
 /* ── 桌面桥接 ─────────────────────────────────────────────────────────── */
 
-test('preload 暴露 zhiyunPdf 并保留旧键', () => {
+test('preload 暴露 zwPdf 并保留旧键', () => {
   const preload = read('apps/desktop/src/preload.cjs');
-  assert.match(preload, /exposeInMainWorld\(\s*'zhiyunPdf'/, '没有暴露新的 PDF 桥');
-  assert.match(preload, /invoke\(\s*'zhiyun:pdf-save'\s*,\s*filename\s*,\s*kind\s*\)/, '没有把文档类型传给主进程');
+  assert.match(preload, /exposeInMainWorld\(\s*'zwPdf'/, '没有暴露新的 PDF 桥');
+  assert.match(preload, /invoke\(\s*'zw:pdf-save'\s*,\s*filename\s*,\s*kind\s*\)/, '没有把文档类型传给主进程');
   assert.match(preload, /exposeInMainWorld\(\s*'lecturePdf'/, '旧键被删掉会让已发布的讲义导出失效');
 });
 
-test('主进程注册 zhiyun:pdf-save，并保留旧通道', () => {
+test('主进程注册 zw:pdf-save，并保留旧通道', () => {
   const main = read('apps/desktop/src/main.js');
-  assert.match(main, /ipcMain\.handle\(\s*'zhiyun:pdf-save'/, '没有注册新通道');
+  assert.match(main, /ipcMain\.handle\(\s*'zw:pdf-save'/, '没有注册新通道');
   assert.match(main, /ipcMain\.handle\(\s*'lecture:pdf-save'/, '旧通道被删掉了');
   assert.match(main, /createPdfExportHandler/, '没有用共享处理器');
 });
@@ -233,7 +233,7 @@ test('未知 kind 回落成讲义（不打印整个应用），讲义判据保�
   const seen = [];
   const f = fixture({selectorSeen: seen});
   await f.handler(f.event, '讲义.pdf', '不认识');
-  assert.ok(seen[0].includes('#zs-lecture-export .zs-pdf-lecture'));
+  assert.ok(seen[0].includes('#zws-lecture-export .zws-pdf-lecture'));
 });
 
 test('题库文档已卸载时拒绝打印（否则打出的是整个应用界面）', async () => {
@@ -293,5 +293,5 @@ test('旧入口 createLecturePdfHandler 仍固定讲义判据', async () => {
   });
   await handler({sender, senderFrame: mainFrame}, '讲义.pdf');
   assert.equal(seen.length, 1);
-  assert.ok(seen[0].includes('#zs-lecture-export'), `旧入口的判据被换掉了：${seen[0]}`);
+  assert.ok(seen[0].includes('#zws-lecture-export'), `旧入口的判据被换掉了：${seen[0]}`);
 });

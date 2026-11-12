@@ -128,7 +128,7 @@ function mailWith(boxes, options = {}) {
     ...(options.smtp ? { smtp: options.smtp } : {}),
     ...(options.parse ? { parse: options.parse } : {}),
     ...(options.draftDir ? { draftDir: options.draftDir } : {}),
-    downloadRoot: options.downloadRoot ?? path.join(os.tmpdir(), 'zhiyun-mail-test-downloads'),
+    downloadRoot: options.downloadRoot ?? path.join(os.tmpdir(), 'zw-mail-test-downloads'),
     ...(options.timeouts ? { timeouts: options.timeouts } : {}),
   });
   return { mail, calls, client };
@@ -658,7 +658,7 @@ test('read：邮件不存在 / 超 25 MB / 解析失败 三种各有明确的码
 });
 
 test('download：真的落盘、文件名消毒、大小是字节数', async () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zhiyun-mail-dl-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zw-mail-dl-'));
   const { mail } = mailWith(simpleBox(), {
     downloadRoot: root,
     parse: async () => fakeParsed({
@@ -717,7 +717,7 @@ function writeDraft(dir, draft) {
 }
 
 test('drafts：只给当前账号的，按 createdAt 倒序，附件不含正文', async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zhiyun-mail-drafts-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zw-mail-drafts-'));
   const mine = createHash('sha256').update('a@zju.edu.cn').digest('hex');
   const other = createHash('sha256').update('b@zju.edu.cn').digest('hex');
   try {
@@ -741,7 +741,7 @@ test('drafts：只给当前账号的，按 createdAt 倒序，附件不含正文
 });
 
 test('drafts：没有目录 → 空列表；没配 draftDir → CONFIG；坏文件 → SHAPE（不静默跳过）', async () => {
-  const empty = mailWith(simpleBox(), { draftDir: path.join(os.tmpdir(), 'zhiyun-mail-not-here-xyz') });
+  const empty = mailWith(simpleBox(), { draftDir: path.join(os.tmpdir(), 'zw-mail-not-here-xyz') });
   assert.deepEqual((await empty.mail.drafts()).drafts, []);
 
   const none = mailWith(simpleBox());
@@ -751,7 +751,7 @@ test('drafts：没有目录 → 空列表；没配 draftDir → CONFIG；坏文�
     return true;
   });
 
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zhiyun-mail-bad-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zw-mail-bad-'));
   try {
     fs.writeFileSync(path.join(dir, '44444444-4444-4444-4444-444444444444.json'), '{not json', 'utf8');
     const broken = mailWith(simpleBox(), { draftDir: dir });
@@ -853,15 +853,15 @@ function fakeCtx(profileDir = null) {
 function mount(config = {}, profileDir = null) {
   const { ctx, services, routes, disposed } = fakeCtx(profileDir);
   const dispose = apply(ctx, config);
-  return { mail: services.get('zhiyunMail'), routes, services, disposed, dispose };
+  return { mail: services.get('zwMail'), routes, services, disposed, dispose };
 }
 
-test('apply()：provide zhiyunMail + 注册 /api/zhiyun-mail', () => {
+test('apply()：provide zwMail + 注册 /api/zw-mail', () => {
   const { mail, routes } = mount();
-  assert.ok(mail, '必须 provide zhiyunMail');
+  assert.ok(mail, '必须 provide zwMail');
   assert.equal(routes.length, 1);
-  assert.equal(routes[0].path, '/api/zhiyun-mail');
-  assert.equal(ROUTE_PATH, '/api/zhiyun-mail');
+  assert.equal(routes[0].path, '/api/zw-mail');
+  assert.equal(ROUTE_PATH, '/api/zw-mail');
   assert.equal(mail.readOnly, true);
   assert.equal(mail.platform, 'mail');
   assert.equal(mail.routePath, ROUTE_PATH);
@@ -983,9 +983,9 @@ test('apply() 注入假 IMAP 后，整条链路离线走得通（路由 → list
 });
 
 test('apply()：profileContext 决定草稿目录；没有它时 drafts 明确报 CONFIG', async () => {
-  const profileDir = path.join(os.tmpdir(), 'zhiyun-mail-profile-xyz');
+  const profileDir = path.join(os.tmpdir(), 'zw-mail-profile-xyz');
   const withProfile = mount({}, profileDir);
-  assert.equal(withProfile.mail.draftDir, path.join(profileDir, 'data', 'zhiyun-mail', 'outbox'));
+  assert.equal(withProfile.mail.draftDir, path.join(profileDir, 'data', 'zw-mail', 'outbox'));
 
   const withoutProfile = mount();
   assert.equal(withoutProfile.mail.draftDir, null);
@@ -997,10 +997,10 @@ test('apply()：profileContext 决定草稿目录；没有它时 drafts 明确�
 
 test('apply()：卸载会收回服务与路由', () => {
   const { dispose, services, routes } = mount();
-  assert.equal(services.has('zhiyunMail'), true);
+  assert.equal(services.has('zwMail'), true);
   assert.equal(routes.length, 1);
   dispose();
-  assert.equal(services.has('zhiyunMail'), false);
+  assert.equal(services.has('zwMail'), false);
   assert.equal(routes.length, 0);
 });
 

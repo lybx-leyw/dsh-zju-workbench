@@ -40,7 +40,7 @@
 
 ```js
 // 常规路径：装了 source/login 就能用（会在「设置 → 浙大一卡通」取账号）
-const table = await ctx.get('zhiyunYjsy').timetable({ username: '2234567890' })
+const table = await ctx.get('zwYjsy').timetable({ username: '2234567890' })
 
 // 可选：装配方有更完整的票据链时，注入自己的 provider，优先于共享 CAS
 yjsy.setTokenProvider(async ({ entry, service, username }) => {
@@ -63,7 +63,7 @@ yjsy.setTokenProvider(async ({ entry, service, username }) => {
 
 | 成员 | 作用 |
 | --- | --- |
-| `routePath` | `/api/zhiyun-yjsy` |
+| `routePath` | `/api/zw-yjsy` |
 | `readOnly` | 恒为 `true` |
 | `methods` | `['yjsy.timetable']` |
 | `setTokenProvider(handler)` | 注入取 token 的能力（优先于共享 CAS）；返回撤销函数 |
@@ -71,7 +71,7 @@ yjsy.setTokenProvider(async ({ entry, service, username }) => {
 | `timetable(input)` | 取课表；会话失效时自动重换一次 token |
 | `reset()` | 清掉缓存的会话（换账号、或用户点了「重新登录」） |
 
-同源数据路由 `POST /api/zhiyun-yjsy`，信封 `{ action: 'timetable', input: {...} }`，
+同源数据路由 `POST /api/zw-yjsy`，信封 `{ action: 'timetable', input: {...} }`，
 响应 `{ ok, value }` 或 `{ ok: false, error: { code, message } }`。
 
 ## 出口与网络

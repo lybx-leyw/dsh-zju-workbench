@@ -1,4 +1,4 @@
 # Keep native DSH composition intact; only wrap its existing root presentation.
 - insert:
     - id: zhiyun-shell-bridge
-      name: dsh-zhiyun-shell-bridge
+      name: dsh-zju-shell-bridge

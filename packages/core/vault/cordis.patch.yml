@@ -1,9 +1,9 @@
 # dsh bundle patch：把 Obsidian 式笔记库插进 profile 的层栈。
 #
 # 本包含两半，都在 core 里（一个页面包不该管文件）：
-#   1. 索引器 `src/host.js`（`zhiyun-vault`）—— 纯逻辑，零 IO；
-#   2. 存储 `src/notes-host.js`（`zhiyun-vault-notes-store`）—— 落盘成
-#      普通的 .md 文件、路径安全检查、PDF 字节流、`/api/zhiyun-vault-notes` 路由。
+#   1. 索引器 `src/host.js`（`zw-vault`）—— 纯逻辑，零 IO；
+#   2. 存储 `src/notes-host.js`（`zw-vault-notes-store`）—— 落盘成
+#      普通的 .md 文件、路径安全检查、PDF 字节流、`/api/zw-vault-notes` 路由。
 #
 # 存储半边原先住在 `packages/client/page-notes/src/index.js`：那是「页面包管存储」，
 # 违反「page 只做 UI」。搬过来之后页面只剩渲染，存储照旧工作 —— 停用页面不等于
@@ -14,5 +14,5 @@
 #    当成独立 bundle 解析**本仓无法验证**，赌错是静默失效（页面只是"空了"）。
 #    一行 = 一个包名，与 profile 的目录链接推导完全一致。
 - insert:
-    - id: zhiyun-vault
+    - id: zw-vault
       name: '@lybx-leyw/dsh-zju-core-vault'

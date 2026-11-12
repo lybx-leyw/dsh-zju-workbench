@@ -1,6 +1,6 @@
 # 写一个插件包
 
-本项目的功能单位是**插件包**（`packages/dsh-zhiyun-*`），不是往某个大插件里塞代码。
+本项目的功能单位是**插件包**（`packages/dsh-zju-*`），不是往某个大插件里塞代码。
 贡献一个新功能，就是提供一个包，或改动已有的包。
 
 插件包怎么写没有额外规定，参考现成实现即可。除此之外只有四条约定，其中最重要的
@@ -8,10 +8,10 @@
 
 ## 一个页面包需要五个文件
 
-以 `packages/dsh-zhiyun-page-docs` 为例：
+以 `packages/dsh-zju-page-docs` 为例：
 
 ```text
-packages/dsh-zhiyun-page-docs/
+packages/dsh-zju-page-docs/
 ├── OWNERS              # 归属声明
 ├── README.md           # 讲取舍与踩坑，不是复述代码
 ├── package.json        # 入口、exports、dsh 声明
@@ -53,20 +53,20 @@ packages/dsh-zhiyun-page-docs/
 宿主半边只需要把名字交出去：
 
 ```js
-export const name = 'zhiyun-page-docs';
+export const name = 'zw-page-docs';
 export function apply() {}
 ```
 
 浏览器半边要导出三个东西：`name`、`inject`、`apply`。
 
 ```jsx
-export const name = 'zhiyun-page-docs-client';
+export const name = 'zw-page-docs-client';
 export const inject = ['slots'];
 
 export function apply(ctx) {
-  mountStyle(ctx, { attribute: 'zhiyunDocsStyle', css, label: 'zhiyun: docs page styles' });
-  ctx.slots.inject('zhiyun.docs.content', () => ctx.slots.register(
-    { name: 'zhiyun.docs.content' },
+  mountStyle(ctx, { attribute: 'zwDocsStyle', css, label: 'zw: docs page styles' });
+  ctx.slots.inject('zw.docs.content', () => ctx.slots.register(
+    { name: 'zw.docs.content' },
     Docs,
   ));
 }

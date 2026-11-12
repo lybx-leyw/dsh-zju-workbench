@@ -16,7 +16,7 @@
 import { createReadToolRegistrar, defined, inputError, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunLab: '@lybx-leyw/dsh-zju-source-lab',
+  zwLab: '@lybx-leyw/dsh-zju-source-lab',
 });
 
 const ACTIONS = ['terms', 'currentTerm', 'courseList', 'labList', 'weekStatus', 'mySelections', 'openStatus', 'notices', 'timetable', 'myInfo'];
@@ -48,7 +48,7 @@ async function resolveCourse(service, wanted) {
  * @returns 工具定义数组。
  */
 export function createLabReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunLab', SERVICE_SOURCES.zhiyunLab);
+  const need = () => serviceLookup(services, 'zwLab', SERVICE_SOURCES.zwLab);
 
   return [
     {

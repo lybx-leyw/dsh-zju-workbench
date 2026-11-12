@@ -20,7 +20,7 @@ export async function run({ account, dataDir, card }) {
   const creds = memoryCredentials();
 
   // 让 campus 在这一轮把耗时剖析挂在结果上（只影响"记不记诊断数据"）
-  process.env.ZHIYUN_PROFILE_TODOS = '1';
+  process.env.ZW_PROFILE_TODOS = '1';
 
   const { ctx, routes, services } = await mount('@lybx-leyw/dsh-zju-source-campus', {
     dataDir,
@@ -28,7 +28,7 @@ export async function run({ account, dataDir, card }) {
   });
   await card.writeCard(ctx, account);
 
-  const route = routeOf(routes, '/api/zhiyun-campus', 'webServer');
+  const route = routeOf(routes, '/api/zw-campus', 'webServer');
 
   const began = Date.now();
   const data = await campusGet(route);
@@ -56,7 +56,7 @@ export async function run({ account, dataDir, card }) {
    */
   let loginProfile = null;
   try {
-    loginProfile = services.get('zhiyunCampus')?.loginProfile?.() ?? null;
+    loginProfile = services.get('zwCampus')?.loginProfile?.() ?? null;
   } catch { /* 诊断数据拿不到不影响主流程 */ }
 
   // `xzzd.ok === false` 是**链路失败**（会话、权限、网络），不是"没有待办"。
@@ -80,7 +80,7 @@ export async function run({ account, dataDir, card }) {
     // 顺带把出口状态带出来，报告里能看出走的是直连还是网关
     egress: data.egress ?? null,
     /**
-     * 性能剖析。**不再单独爬一遍** —— campus 在 `ZHIYUN_PROFILE_TODOS=1` 时
+     * 性能剖析。**不再单独爬一遍** —— campus 在 `ZW_PROFILE_TODOS=1` 时
      * 会把 `todos()` 的 profile 挂在 `xzzd.profile` 上（见 `loadTodosUncached`）。
      *
      * 早先这里写的是「再调一次 `xzzdClient().todos({profile:true})`」，

@@ -86,7 +86,7 @@ test('sharedFetch：有出口服务时，请求走 egress（而不是宿主 fetc
   };
   const hostFetch = async () => { seen.push(['host']); return 'from-host'; };
 
-  const fetch = sharedFetch(fakeCtx({ zhiyunEgress: egress }), { fallback: hostFetch });
+  const fetch = sharedFetch(fakeCtx({ zwEgress: egress }), { fallback: hostFetch });
   const result = await fetch(URL_UNDER_TEST, { method: 'GET' });
 
   assert.equal(result, 'from-egress');
@@ -101,7 +101,7 @@ test('sharedFetch：没有出口服务时退回宿主 fetch（缺 campus 仍可�
 
 test('sharedFetch：服务没有 fetch 方法时也要退回（半残服务不能把请求打死）', async () => {
   const hostFetch = async () => 'from-host';
-  const fetch = sharedFetch(fakeCtx({ zhiyunEgress: { state: () => ({}) } }), { fallback: hostFetch });
+  const fetch = sharedFetch(fakeCtx({ zwEgress: { state: () => ({}) } }), { fallback: hostFetch });
   assert.equal(await fetch(URL_UNDER_TEST), 'from-host');
 });
 
@@ -131,11 +131,11 @@ test('sharedFetch：**惰性**解析 —— 服务晚于调用方就绪也能用
   assert.equal(await fetch(URL_UNDER_TEST), 'from-host');
 
   // 服务出现之后：必须立刻切换过去（如果实现把结果缓存在闭包里，这里会失败）
-  services.zhiyunEgress = { fetch: async () => 'from-egress' };
+  services.zwEgress = { fetch: async () => 'from-egress' };
   assert.equal(await fetch(URL_UNDER_TEST), 'from-egress');
 
   // 服务消失（卸载）：退回宿主
-  delete services.zhiyunEgress;
+  delete services.zwEgress;
   assert.equal(await fetch(URL_UNDER_TEST), 'from-host');
 });
 
@@ -144,14 +144,14 @@ test('sharedFetch：**惰性**解析 —— 服务晚于调用方就绪也能用
 test('共享出口由 source-http 提供，campus 不再重复注册', async () => {
   // ⚠️ 这条测试的**位置换过**，别按老样子改回去。
   //
-  // 历史上 `ctx.provide('zhiyunEgress', …)` 在 campus 里 —— 那是「出口所有权在
+  // 历史上 `ctx.provide('zwEgress', …)` 在 campus 里 —— 那是「出口所有权在
   // 业务包」。代价是 `cc98` / `xxt` / `zdbk` 为了用出口，只能依赖 **campus 这个
   // tier1 业务包**（tier1 → tier1 的横向依赖）。
   //
   // 拆出 `@lybx-leyw/dsh-zju-source-http`（tier 0）之后，出口归它提供。
   // campus 里那段被**有意删除**，原因写在它自己的注释里：
   // 同名服务注册两次会让 Cordis 直接报
-  // `service "zhiyunEgress" has been registered at <zju-source-http>`，
+  // `service "zwEgress" has been registered at <zju-source-http>`，
   // 整个 campus 插件激活失败、设置面板都点不开。
   //
   // 所以现在要断言的是**两件事**：
@@ -161,7 +161,7 @@ test('共享出口由 source-http 提供，campus 不再重复注册', async () 
   const http = await readFile(
     new URL('../../../packages/source/http/src/host.js', import.meta.url), 'utf8',
   );
-  assert.match(http, /ctx\.provide\('zhiyunEgress'/, 'source-http 必须 provide 这个服务名');
+  assert.match(http, /ctx\.provide\('zwEgress'/, 'source-http 必须 provide 这个服务名');
   // 成员名以 `packages/source/http/src/host.js` 的 `service = { … }` 实际定义为准。
   // 曾经这里断言的是 campus 那版实现（含 `mode` / `toPhysical` / `probeCampus`），
   // 出口搬到 tier 0 之后接口收窄成下面这几个 —— 断言也得跟着换，否则它守的
@@ -191,7 +191,7 @@ test('共享出口由 source-http 提供，campus 不再重复注册', async () 
     // 锚到**代码行首**（行内只有缩进），对象方法简写与 `key: value` 都算；
     // 这样 `instance.state()` 之类的调用点不会误命中。
     assert.match(literalCode, new RegExp(`^[^\\S\\n]+(?:async\\s+)?${key}\\s*[(:]`, 'm'),
-      `zhiyunEgress 缺成员 ${key}（要的是 service 对象里的成员定义，不是调用点或注释）`);
+      `zwEgress 缺成员 ${key}（要的是 service 对象里的成员定义，不是调用点或注释）`);
   }
 
   // 除 `source/http` 之外，**任何** source 包都不许再 provide 这个服务名。
@@ -199,7 +199,7 @@ test('共享出口由 source-http 提供，campus 不再重复注册', async () 
   // 拆包前这里只查 `source/campus` 一个文件（当年是它重复注册的），
   // `campus` 已按平台拆成 `xuezai` + `pta` 并退役，所以改成扫全量：
   // 这既覆盖了当年的那处、也挡住了将来任何新包再犯同一个错
-  // （同名服务注册两次会让 Cordis 直接抛 `service "zhiyunEgress" has been
+  // （同名服务注册两次会让 Cordis 直接抛 `service "zwEgress" has been
   // registered at <zju-source-http>`，整个插件激活失败、设置面板都点不开）。
   const offenders = [];
   for (const group of ['source', 'core', 'client', 'tool']) {
@@ -222,11 +222,11 @@ test('共享出口由 source-http 提供，campus 不再重复注册', async () 
       const code = file
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/^\s*\/\/.*$/gm, '');
-      if (/ctx\.provide\('zhiyunEgress'/.test(code)) offenders.push(`${group}/${name}`);
+      if (/ctx\.provide\('zwEgress'/.test(code)) offenders.push(`${group}/${name}`);
     }
   }
   assert.deepEqual(offenders, [],
-    `除 source/http 外不许 provide zhiyunEgress（会让整个插件激活失败）：${offenders.join(', ')}`);
+    `除 source/http 外不许 provide zwEgress（会让整个插件激活失败）：${offenders.join(', ')}`);
 });
 
 test('各 source 包都接了 sharedFetch（不许再直接用 globalThis.fetch）', async () => {
@@ -252,11 +252,11 @@ test('classroom 也优先用共享出口，并保留自己的本地兜底', asyn
   const src = await readFile(
     new URL('../../../packages/source/classroom/src/index.js', import.meta.url), 'utf8',
   );
-  assert.match(src, /zhiyunEgress/, 'classroom 应当优先取共享出口');
+  assert.match(src, /zwEgress/, 'classroom 应当优先取共享出口');
   assert.match(src, /localNet/, '拿不到共享出口时要有本地兜底');
   // 顺序要求：先试共享出口，再退回本地
   assert.ok(
-    src.indexOf('zhiyunEgress') < src.indexOf('localNet.fetch'),
+    src.indexOf('zwEgress') < src.indexOf('localNet.fetch'),
     '必须先查共享出口，再退回本地网络',
   );
 });

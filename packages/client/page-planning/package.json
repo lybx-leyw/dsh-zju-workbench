@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-page-planning",
   "version": "0.1.0",
-  "description": "智云 Pro「规划」页（只含 UI）：列表、日历、日程与 pet 对话。数据聚合与路由由 core-planning 提供",
+  "description": "ZJU Workbench「规划」页（只含 UI）：列表、日历、日程与 pet 对话。数据聚合与路由由 core-planning 提供",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

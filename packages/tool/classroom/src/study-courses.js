@@ -29,8 +29,8 @@
 import { createReadToolRegistrar, inputError, optInt, optStr, serviceLookup } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunStudy: '@lybx-leyw/dsh-zju-core-study',
-  zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom',
+  zwStudy: '@lybx-leyw/dsh-zju-core-study',
+  zwClassroom: '@lybx-leyw/dsh-zju-source-classroom',
 });
 
 /** 这一节的整理状态。 */
@@ -140,8 +140,8 @@ export function createStudyCoursesTools(services) {
         const includeLessons = args.includeLessons !== false;
         const limit = optInt(args.limit, 'limit', { min: 1, max: 200 }) ?? 50;
 
-        const study = need('zhiyunStudy');
-        const classroom = need('zhiyunClassroom');
+        const study = need('zwStudy');
+        const classroom = need('zwClassroom');
         await study.ready;
 
         // 课程列表来自**平台**（实时），不是来自资料库 —— 所以未整理的课也在。

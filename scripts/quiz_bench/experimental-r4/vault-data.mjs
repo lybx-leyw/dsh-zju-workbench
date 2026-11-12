@@ -2,11 +2,11 @@
  * 把**笔记库里的讲义 md**转成 quiz_bench 可用的标准图谱。
  *
  * 来源：`npm run desktop` 起的 App，学习页「导出讲义到笔记库」写出的文件。
- *   根目录 = `{profileContext.dir}/data/zhiyun-vault-notes`
- *           即 `.runtime/home/profiles/zju-workbench/data/zhiyun-vault-notes`
+ *   根目录 = `{profileContext.dir}/data/zw-vault-notes`
+ *           即 `.runtime/home/profiles/zju-workbench/data/zw-vault-notes`
  *   路径规则（core-handout `currentNotePath`）= `{学期}/{课程名}/{节次名}.md`
  *
- * 为什么用它、而不是 `com.zhiyun/zhiyun_pro`：那是 App 的**手写笔记本**
+ * 为什么用它、而不是 `com.zw/zw_pro`：那是 App 的**手写笔记本**
  * （`.ink` 笔迹），不是这条链路；也不是 `knowledge/`（讲义原始记录）。
  * 笔记库 md 是**已定稿的产品产物**：`## 章 / ### 知识点 / #### 讲解|定义|例题`。
  *
@@ -15,7 +15,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const VAULT = path.resolve('.runtime/home/profiles/zju-workbench/data/zhiyun-vault-notes');
+const VAULT = path.resolve('.runtime/home/profiles/zju-workbench/data/zw-vault-notes');
 const OUT_ROOT = path.resolve('scripts/quiz_bench/experimental-r4/bench-data');
 
 /** 递归列出所有 .md（跳过 PDF 之类的附件）。 */

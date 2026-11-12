@@ -34,16 +34,16 @@ import { hintWindow, scheduleHint } from '@lybx-leyw/dsh-zju-core-planning/brows
 import { clearFocus, focusDecision, focusElementId, readFocus } from '@lybx-leyw/dsh-zju-core-planning/browser';
 import { errorText } from '@lybx-leyw/dsh-zju-core-planning/browser';
 
-export const name = 'zhiyun-page-planning-client';
+export const name = 'zw-page-planning-client';
 
 /** 只要插槽：这一页不依赖智云账号，领域包停用时也要能打开。 */
 export const inject = ['slots'];
 
 /** 宿主注册的设置路由，与宿主 `src/index.js` 的 `ROUTE_PATH` 一致。 */
-const ROUTE = '/_dsh/zhiyun-planning';
+const ROUTE = '/_dsh/zw-planning';
 
 /** 写操作的自定义头，名字必须与宿主 `WRITE_HEADER` 一致。 */
-const WRITE_HEADER = 'x-zhiyun-planning';
+const WRITE_HEADER = 'x-zw-planning';
 
 /** 与宿主 `MASK` 一致：回传这个值表示"不改密钥"。 */
 const MASK = '********';
@@ -78,14 +78,14 @@ async function settings(action = '', body) {
  * 而这一页同时出现五六种来源，只靠色相区分等于没区分（skill ch03 规则 3）。
  */
 const KIND = {
-  plan: { label: '规划', icon: 'calendar', cls: 'zpg-kind-plan' },
-  diary: { label: '日记', icon: 'notebook', cls: 'zpg-kind-diary' },
-  note: { label: '笔记', icon: 'fileText', cls: 'zpg-kind-note' },
-  event: { label: '事件', icon: 'clock', cls: 'zpg-kind-event' },
-  todo: { label: '学在浙大', icon: 'check', cls: 'zpg-kind-todo' },
-  problemSet: { label: '拼题A', icon: 'bulb', cls: 'zpg-kind-pta' },
+  plan: { label: '规划', icon: 'calendar', cls: 'zwpg-kind-plan' },
+  diary: { label: '日记', icon: 'notebook', cls: 'zwpg-kind-diary' },
+  note: { label: '笔记', icon: 'fileText', cls: 'zwpg-kind-note' },
+  event: { label: '事件', icon: 'clock', cls: 'zwpg-kind-event' },
+  todo: { label: '学在浙大', icon: 'check', cls: 'zwpg-kind-todo' },
+  problemSet: { label: '拼题A', icon: 'bulb', cls: 'zwpg-kind-pta' },
   // AI 拆出的卡片：它是"从你的笔记里提出来的具体动作"，来源标签要写明这点
-  planCard: { label: 'AI 规划', icon: 'check', cls: 'zpg-kind-plan-card' },
+  planCard: { label: 'AI 规划', icon: 'check', cls: 'zwpg-kind-plan-card' },
 };
 const KIND_FALLBACK = { label: '记录', icon: 'fileText', cls: '' };
 
@@ -125,9 +125,9 @@ function countdown(iso, now = Date.now()) {
 /** 同一分类内的分组键：条目按天，待办按紧迫度（见 `time.js`）。 */
 
 export function apply(ctx) {
-  mountStyle(ctx, { attribute: 'zhiyunPlanningStyle', css: `${css}\n${scheduleCss}`, label: 'zhiyun: planning styles' });
+  mountStyle(ctx, { attribute: 'zwPlanningStyle', css: `${css}\n${scheduleCss}`, label: 'zw: planning styles' });
   // 直接注册给页面壳的 `page.content`（keyed）。
-  // 把 ctx 传进去只为**惰性取** `zhiyunStudyController`（课表上下文）；不在 apply 时取，
+  // 把 ctx 传进去只为**惰性取** `zwStudyController`（课表上下文）；不在 apply 时取，
   // 因为那个控制器由领域包的客户端半边提供，而本页在它停用时也要能打开。
   registerPageContent(ctx, {
     id: 'planning',
@@ -150,7 +150,7 @@ export function apply(ctx) {
   // 上游（用户自建的中转站）：域名 + 读密钥，只有这页消费。
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
-    id: 'zhiyun-relay',
+    id: 'zw-relay',
     order: 70,
     label: () => '个人中转站',
   }, RelaySection));
@@ -209,7 +209,7 @@ const ScheduleAction = createContext(null);
 function ScheduleButton({ row }) {
   const action = useContext(ScheduleAction);
   if (!action || row.done) return null;
-  return <button type="button" className="zpg-link" onClick={() => action(row)} aria-label={`为「${row.title}」安排时间`}>安排时间</button>;
+  return <button type="button" className="zwpg-link" onClick={() => action(row)} aria-label={`为「${row.title}」安排时间`}>安排时间</button>;
 }
 
 export function Planning({ ctx }) {
@@ -762,7 +762,7 @@ export function Planning({ ctx }) {
   /**
    * 读截止日前后的课表，作为规划的**上下文**。
    *
-   * 为什么是上下文而不是合并：`zhiyunStudyController` 属于领域包，可能没装、
+   * 为什么是上下文而不是合并：`zwStudyController` 属于领域包，可能没装、
    * 可能没登录 —— 拿不到就安静地不显示，绝不让这一页因此报错或空掉。
    * 这正是当初决定"两个页面不合并"的理由，这里必须守住。
    *
@@ -770,7 +770,7 @@ export function Planning({ ctx }) {
    * 结果留在本组件，不写回共享状态。每个账号只读一次。
    */
   useEffect(() => {
-    const controller = ctx?.get?.('zhiyunStudyController');
+    const controller = ctx?.get?.('zwStudyController');
     if (!controller || typeof controller.readScheduleWindow !== 'function') return undefined;
     let stop = false;
     let attemptFor;
@@ -987,7 +987,7 @@ export function Planning({ ctx }) {
 
   return (
     <ScheduleAction.Provider value={openSchedule}>
-    <div className="zpg-page" ref={pageRef}>
+    <div className="zwpg-page" ref={pageRef}>
       {/*
         ⚠️ **这里刻意没有大标题。**
 
@@ -998,16 +998,16 @@ export function Planning({ ctx }) {
         留下的只有一条**极轻的工具行**：左侧是规模数字，右侧是真正有用的
         四个动作（视图切换 / AI 规划 / 刷新）。它不占据视线，但随时够得到。
       */}
-      <div className="zpg-head">
-        <span className="zpg-count">
+      <div className="zwpg-head">
+        <span className="zwpg-count">
           {!loading ? summarize(todos.rows.length + planCards.length + localRows.length, state.entries.length) : ''}
         </span>
-        <div className="zpg-tools">
+        <div className="zwpg-tools">
           {/* 视图切换：列表 / 日历。日历只呈现有截止时间的事，切换不发请求。 */}
-          <span className="zpg-view" role="group" aria-label="视图">
+          <span className="zwpg-view" role="group" aria-label="视图">
             <button
               type="button"
-              className={view === 'list' ? 'zpg-view-on' : ''}
+              className={view === 'list' ? 'zwpg-view-on' : ''}
               aria-pressed={view === 'list'}
               onClick={() => setView('list')}
             >
@@ -1015,18 +1015,18 @@ export function Planning({ ctx }) {
             </button>
             <button
               type="button"
-              className={view === 'calendar' ? 'zpg-view-on' : ''}
+              className={view === 'calendar' ? 'zwpg-view-on' : ''}
               aria-pressed={view === 'calendar'}
               onClick={() => setView('calendar')}
             >
               DDL 月历
             </button>
-            <button type="button" className={view === 'schedule' ? 'zpg-view-on' : ''}
+            <button type="button" className={view === 'schedule' ? 'zwpg-view-on' : ''}
               aria-pressed={view === 'schedule'} onClick={() => setView('schedule')}>日程表</button>
           </span>
           <button
             type="button"
-            className="zy-secondary zpg-plan"
+            className="zw-secondary zwpg-plan"
             onClick={runPlan}
             disabled={loading || planning || !hasAnything}
             title="把中转站里混杂的条目按事项拆成卡片"
@@ -1036,7 +1036,7 @@ export function Planning({ ctx }) {
           </button>
           <button
             type="button"
-            className="zy-secondary zpg-refresh"
+            className="zw-secondary zwpg-refresh"
             onClick={refresh}
             disabled={loading || refreshing || planning}
             title="重新拉一次平台待办与中转站"
@@ -1060,15 +1060,15 @@ export function Planning({ ctx }) {
       </div>
 
       {loading && (
-        <div className="zpg-slot" role="status" aria-live="polite">
-          <p className="zpg-status"><span className="zpg-dot" aria-hidden="true" />正在读取待办与中转站…</p>
+        <div className="zwpg-slot" role="status" aria-live="polite">
+          <p className="zwpg-status"><span className="zwpg-dot" aria-hidden="true" />正在读取待办与中转站…</p>
         </div>
       )}
 
       {!loading && (
-        <div className="zpg-slot">
+        <div className="zwpg-slot">
           {planMsg && (
-            <p className={`zpg-plan-msg ${planMsg.kind === 'error' ? 'zpg-plan-msg-error' : ''}`} role="status">
+            <p className={`zwpg-plan-msg ${planMsg.kind === 'error' ? 'zwpg-plan-msg-error' : ''}`} role="status">
               {planMsg.text}
             </p>
           )}
@@ -1089,7 +1089,7 @@ export function Planning({ ctx }) {
             点一下滚到对应分组，是"结论 + 入口"而不仅是个数字。
           */}
           {view !== 'schedule' && <FocusBar focus={focus} />}
-          {view !== 'schedule' && <p className="zpg-foot">DDL 记录最晚何时交；点击任务的「安排时间」，把准备执行的时间段放进日程表。</p>}
+          {view !== 'schedule' && <p className="zwpg-foot">DDL 记录最晚何时交；点击任务的「安排时间」，把准备执行的时间段放进日程表。</p>}
 
           {view !== 'schedule' && !hasAnything && !error && (
             <Empty icon="calendar" title="还没有内容">
@@ -1108,13 +1108,13 @@ export function Planning({ ctx }) {
             用原生 `<details>`：键盘可用、无需 JS 状态、默认收起。
           */}
           {view !== 'schedule' && (doneMine.length > 0 || doneCards.length > 0 || doneTodos.length > 0) && (
-            <details className="zpg-done-fold">
+            <details className="zwpg-done-fold">
               <summary>
                 <Icon name="check" size={15} />
                 <span>已完成 {doneMine.length + doneCards.length + doneTodos.length} 条</span>
                 <small>点开查看</small>
               </summary>
-              <ul className="zpg-list zpg-done-list">
+              <ul className="zwpg-list zwpg-done-list">
                 {doneMine.map((row) => (
                   <MineRow
                     key={row.id}
@@ -1163,18 +1163,18 @@ export function Planning({ ctx }) {
               {/* 待办分组：平台待办、自己写的、AI 拆出的**同池**按紧迫度排，
                   但各自用不同形态 —— 它们能被做的动作不一样。 */}
               {groups.todoGroups.length > 0 && (
-                <div className="zpg-days">
+                <div className="zwpg-days">
                   {groups.todoGroups.map((group) => (
-                    <section key={group.key} className={`zpg-day ${group.key === 'overdue' ? 'zpg-day-overdue' : ''}`} aria-labelledby={`zpg-${group.key}`}>
+                    <section key={group.key} className={`zwpg-day ${group.key === 'overdue' ? 'zwpg-day-overdue' : ''}`} aria-labelledby={`zwpg-${group.key}`}>
                       {/*
                         用**轻量分组标签**而不是外壳的 `SectionTitle`（它渲染 `<h2>`）。
                         一页有六档分组，六个 `<h2>` 会让"分组"看起来比"条目"还重 ——
                         而这些标签只是路标，不是章节标题。
                       */}
-                      <GroupLabel id={`zpg-${group.key}`} count={group.rows.length} tone={group.key}>
+                      <GroupLabel id={`zwpg-${group.key}`} count={group.rows.length} tone={group.key}>
                         {group.label}
                       </GroupLabel>
-                      <ul className="zpg-list">
+                      <ul className="zwpg-list">
                         {group.rows.map((row) => {
                           if (row.source === 'mine') {
                             return (
@@ -1222,12 +1222,12 @@ export function Planning({ ctx }) {
                 否则同一批内容会在两个地方各出现一次，让人以为重复了。
               */}
               {newEntries.length > 0 && (
-                <div className="zpg-days">
-                  <section className="zpg-day zpg-day-new" aria-labelledby="zpg-arrivals">
-                    <GroupLabel id="zpg-arrivals" count={newEntries.length} tone="new">
+                <div className="zwpg-days">
+                  <section className="zwpg-day zwpg-day-new" aria-labelledby="zwpg-arrivals">
+                    <GroupLabel id="zwpg-arrivals" count={newEntries.length} tone="new">
                       新到
                     </GroupLabel>
-                    <ul className="zpg-list">
+                    <ul className="zwpg-list">
                       {newEntries.map((item) => (
                         <EntryRow
                           key={item.seq ?? item.prefix}
@@ -1242,11 +1242,11 @@ export function Planning({ ctx }) {
               )}
 
               {groups.entryGroups.length > 0 && (
-                <div className="zpg-days">
+                <div className="zwpg-days">
                   {groups.entryGroups.map((group) => (
-                    <section key={group.key} className="zpg-day" aria-labelledby={`zpg-day-${group.key}`}>
-                      <DayHeading id={`zpg-day-${group.key}`} label={group.label} rows={group.rows} />
-                      <ul className="zpg-list">
+                    <section key={group.key} className="zwpg-day" aria-labelledby={`zwpg-day-${group.key}`}>
+                      <DayHeading id={`zwpg-day-${group.key}`} label={group.label} rows={group.rows} />
+                      <ul className="zwpg-list">
                         {group.rows.map((item) => (
                           <EntryRow
                             key={item.seq ?? item.prefix}
@@ -1264,7 +1264,7 @@ export function Planning({ ctx }) {
           )}
 
           {hasAnything && (
-            <p className="zpg-foot">
+            <p className="zwpg-foot">
               中转站的内容已在本机留了一份，那台创空间丢了数据也不会影响这里。
               你自己写的规划只存在本机。
             </p>
@@ -1273,7 +1273,7 @@ export function Planning({ ctx }) {
       )}
 
       {/*
-        助手固定在右下角。放在 `.zpg-page` 内部（而不是 portal 到 body）：
+        助手固定在右下角。放在 `.zwpg-page` 内部（而不是 portal 到 body）：
         它是这一页的一部分，离开这一页就该消失 —— 全局悬浮要改 shell 包，
         而且一个在「设置」页插嘴的助手是打扰。
       */}
@@ -1343,19 +1343,19 @@ function FocusBar({ focus }) {
   const arrivals = focus?.newArrivals ?? 0;
   if (items.length === 0 && arrivals === 0) return null;
 
-  /** 滚到分组标题。分组 id 由渲染处写成 `zpg-<key>`。 */
+  /** 滚到分组标题。分组 id 由渲染处写成 `zwpg-<key>`。 */
   const jump = (key) => {
-    const target = document.getElementById(`zpg-${key}`);
+    const target = document.getElementById(`zwpg-${key}`);
     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
-    <div className="zpg-focus" role="group" aria-label="现在的重点">
+    <div className="zwpg-focus" role="group" aria-label="现在的重点">
       {items.map((item) => (
         <button
           key={item.key}
           type="button"
-          className={`zpg-focus-item zpg-focus-${item.tone}`}
+          className={`zwpg-focus-item zwpg-focus-${item.tone}`}
           onClick={() => jump(item.key)}
           title={`跳到「${item.label}」`}
         >
@@ -1366,7 +1366,7 @@ function FocusBar({ focus }) {
       {arrivals > 0 && (
         <button
           type="button"
-          className="zpg-focus-item zpg-focus-new"
+          className="zwpg-focus-item zwpg-focus-new"
           onClick={() => jump('arrivals')}
           title="跳到新到的条目"
         >
@@ -1418,14 +1418,14 @@ function SourceBar({ todos, pta, remote, entryCount, mineCount }) {
 
   if (!hasTrouble) {
     return (
-      <p className="zpg-sources-compact" title="数据源状态：都在正常工作">
+      <p className="zwpg-sources-compact" title="数据源状态：都在正常工作">
         {compact}
       </p>
     );
   }
 
   return (
-    <div className="zpg-sources">
+    <div className="zwpg-sources">
       {/* 自己写的排第一：它不需要任何配置，也是这一页的主动作 */}
       <SourceItem label="我的规划" ok text={mineCount > 0 ? `${mineCount} 条` : '还没有 · 在上面写一条'} />
       <SourceItem
@@ -1460,8 +1460,8 @@ function SourceBar({ todos, pta, remote, entryCount, mineCount }) {
 
 function SourceItem({ label, ok, text, title }) {
   return (
-    <span className={`zpg-source ${ok ? 'zpg-source-ok' : 'zpg-source-warn'}`} title={title ?? undefined}>
-      <span className="zpg-source-dot" aria-hidden="true" />
+    <span className={`zwpg-source ${ok ? 'zwpg-source-ok' : 'zwpg-source-warn'}`} title={title ?? undefined}>
+      <span className="zwpg-source-dot" aria-hidden="true" />
       <strong>{label}</strong>
       <span>{text}</span>
     </span>
@@ -1571,17 +1571,17 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
   };
 
   return (
-    <div className="zpg-fab-wrap" ref={rootRef}>
+    <div className="zwpg-fab-wrap" ref={rootRef}>
       {/*
         收起态：工具行里一个与其它按钮同高的「+」。
         它排在最后，因为"写"比"看"用得少 —— 但**始终在手边**，不必滚动。
       */}
       <button
         type="button"
-        className="zy-secondary zpg-fab"
+        className="zw-secondary zwpg-fab"
         onClick={() => setPanel((v) => !v)}
         aria-expanded={panel}
-        aria-controls="zpg-composer-panel"
+        aria-controls="zwpg-composer-panel"
         title={panel ? '收起（Esc）' : '添加一条规划'}
       >
         <Icon name={panel ? 'close' : 'plus'} size={16} />
@@ -1590,15 +1590,15 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
 
       {panel && (
         <form
-          id="zpg-composer-panel"
-          className="zpg-composer zpg-composer-panel"
+          id="zwpg-composer-panel"
+          className="zwpg-composer zwpg-composer-panel"
           onSubmit={submit}
           role="dialog"
           aria-label="添加一条规划"
         >
-          <div className="zpg-composer-row">
-            <label className="zpg-composer-title">
-              <span className="zpg-visually-hidden">要做什么</span>
+          <div className="zwpg-composer-row">
+            <label className="zwpg-composer-title">
+              <span className="zwpg-visually-hidden">要做什么</span>
               <input
                 ref={titleRef}
                 type="text"
@@ -1610,7 +1610,7 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
                 aria-label="要做什么"
               />
             </label>
-            <button type="submit" className="zy-primary zpg-composer-add" disabled={busy || !title.trim()}>
+            <button type="submit" className="zw-primary zwpg-composer-add" disabled={busy || !title.trim()}>
               {busy ? '保存中…' : '添加'}
             </button>
           </div>
@@ -1620,13 +1620,13 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
             只在**没填时间时**显示 —— 已经有时间了还给一堆候选，等于让人再选一次。
           */}
           {!due && quick.length > 0 && (
-            <div className="zpg-quick" role="group" aria-label="快捷截止时间">
-              <span className="zpg-quick-hint">什么时候？</span>
+            <div className="zwpg-quick" role="group" aria-label="快捷截止时间">
+              <span className="zwpg-quick-hint">什么时候？</span>
               {quick.map((item) => (
                 <button
                   key={item.key}
                   type="button"
-                  className="zpg-quick-item"
+                  className="zwpg-quick-item"
                   onClick={() => applyQuick(item.due)}
                   disabled={busy}
                 >
@@ -1638,8 +1638,8 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
 
           {/* 备注与截止时间默认收起：绝大多数情况只需要写一句话 */}
           {open ? (
-            <div className="zpg-composer-more">
-              <label className="zpg-field">
+            <div className="zwpg-composer-more">
+              <label className="zwpg-field">
                 <span>备注（可选）</span>
                 <textarea
                   rows={3}
@@ -1650,7 +1650,7 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
                   disabled={busy}
                 />
               </label>
-              <label className="zpg-field zpg-field-inline">
+              <label className="zwpg-field zwpg-field-inline">
                 <span>截止时间（可选）</span>
                 <input
                   type="datetime-local"
@@ -1660,7 +1660,7 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
                 />
                 {/* 课表上下文：只在真读到了课表时才说，读不到就一个字都不提 */}
                 {due && scheduleHint(schedule, due) && (
-                  <small className="zpg-schedule-hint">{scheduleHint(schedule, due)}</small>
+                  <small className="zwpg-schedule-hint">{scheduleHint(schedule, due)}</small>
                 )}
               </label>
               {/*
@@ -1668,9 +1668,9 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
                 没有起点就没有"下一次"，让人选一个算不出结果的规则只会更困惑。
               */}
               {due && (
-                <div className="zpg-field zpg-field-inline zpg-repeat">
+                <div className="zwpg-field zwpg-field-inline zwpg-repeat">
                   <span>重复</span>
-                  <div className="zpg-repeat-row">
+                  <div className="zwpg-repeat-row">
                     <select
                       value={repeatUnit}
                       onChange={(event) => setRepeatUnit(event.target.value)}
@@ -1696,7 +1696,7 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
                     )}
                   </div>
                   {repeatUnit && (
-                    <small className="zpg-schedule-hint">
+                    <small className="zwpg-schedule-hint">
                       {repeatAnchor === 'due'
                         ? '每次仍按原来的截止日往后推（拖到最后也还是压同一个点）'
                         : '下次从你实际做完那天起算（间隔按你的真实节奏）'}
@@ -1706,12 +1706,12 @@ function PlanComposer({ busy, error, onCreate, schedule }) {
               )}
             </div>
           ) : (
-            <button type="button" className="zpg-link" onClick={() => setOpen(true)}>
+            <button type="button" className="zwpg-link" onClick={() => setOpen(true)}>
               + 加备注或截止时间
             </button>
           )}
 
-          {error && <p className="zpg-composer-error" role="alert">{error}</p>}
+          {error && <p className="zwpg-composer-error" role="alert">{error}</p>}
         </form>
       )}
     </div>
@@ -1752,10 +1752,10 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
   const mark = !row.done ? focusElementId(`local:${row.id}`) : '';
   return (
     <li id={mark || undefined}>
-      <div className={`zpg-item zpg-item-mine ${row.done ? 'zpg-item-done' : ''}`}>
+      <div className={`zwpg-item zwpg-item-mine ${row.done ? 'zwpg-item-done' : ''}`}>
         {editing ? (
-          <form className="zpg-edit" onSubmit={save}>
-            <label className="zpg-field">
+          <form className="zwpg-edit" onSubmit={save}>
+            <label className="zwpg-field">
               <span>要做什么</span>
               <input
                 type="text"
@@ -1766,7 +1766,7 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
                 autoFocus
               />
             </label>
-            <label className="zpg-field">
+            <label className="zwpg-field">
               <span>备注</span>
               <textarea
                 rows={2}
@@ -1776,7 +1776,7 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
                 disabled={busy}
               />
             </label>
-            <label className="zpg-field zpg-field-inline">
+            <label className="zwpg-field zwpg-field-inline">
               <span>截止时间</span>
               <input
                 type="datetime-local"
@@ -1785,37 +1785,37 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
                 disabled={busy}
               />
             </label>
-            <div className="zpg-edit-foot">
-              <button className="zy-primary" disabled={busy || !draft.title.trim()}>
+            <div className="zwpg-edit-foot">
+              <button className="zw-primary" disabled={busy || !draft.title.trim()}>
                 {busy ? '正在保存…' : '保存'}
               </button>
-              <button type="button" className="zpg-link" onClick={() => setEditing(false)} disabled={busy}>
+              <button type="button" className="zwpg-link" onClick={() => setEditing(false)} disabled={busy}>
                 取消
               </button>
             </div>
           </form>
         ) : (
           <>
-            <div className="zpg-summary zpg-summary-static">
+            <div className="zwpg-summary zwpg-summary-static">
               {/* 勾选框是**原生控件**：键盘可操作、朗读器认、不依赖自绘 */}
               <input
                 type="checkbox"
-                className="zpg-check"
+                className="zwpg-check"
                 checked={row.done}
                 disabled={busy}
                 onChange={() => onToggle(row)}
                 aria-label={row.done ? `把「${row.title}」标为未完成` : `把「${row.title}」标为已完成`}
               />
-              <span className={`zpg-kind ${row.splitFrom ? 'zpg-kind-split' : 'zpg-kind-mine'}`}>
+              <span className={`zwpg-kind ${row.splitFrom ? 'zwpg-kind-split' : 'zwpg-kind-mine'}`}>
                 <Icon name={row.splitFrom ? 'layers' : 'check'} size={13} />
                 {row.splitFrom ? 'AI 拆出' : '我的规划'}
               </span>
-              <span className={`zpg-title ${row.done ? 'zpg-title-done' : ''}`}>{row.title}</span>
-              <span className="zpg-meta">
-                {splitCount > 0 && <span className="zpg-planned">已拆 {splitCount} 条</span>}
+              <span className={`zwpg-title ${row.done ? 'zwpg-title-done' : ''}`}>{row.title}</span>
+              <span className="zwpg-meta">
+                {splitCount > 0 && <span className="zwpg-planned">已拆 {splitCount} 条</span>}
                 {/* 重复标记：让人一眼看出这条勾掉之后还会再来一次 */}
                 {row.repeat && (
-                  <span className="zpg-repeat-tag" title={
+                  <span className="zwpg-repeat-tag" title={
                     row.repeat.anchor === 'done'
                       ? '勾完成后，下一次从你实际做完那天起算'
                       : '勾完成后，下一次仍按原来的截止日往后推'
@@ -1827,9 +1827,9 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
                     {row.repeat.anchor === 'done' ? '·按完成日' : ''}
                   </span>
                 )}
-                <span className="zpg-due">
+                <span className="zwpg-due">
                   {whenIso(row.due)}
-                  {row.due && !row.done && <em className="zpg-left">{countdown(row.due)}</em>}
+                  {row.due && !row.done && <em className="zwpg-left">{countdown(row.due)}</em>}
                 </span>
               </span>
             </div>
@@ -1840,36 +1840,36 @@ function MineRow({ row, onToggle, onRemove, onEdit, onSplit, onUnsplit, busy, sc
 
             {/* 课表上下文：只在有截止时间、且真读到课表时出现 */}
             {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
-              <p className="zpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
+              <p className="zwpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
             )}
 
-            <div className="zpg-row-actions">
+            <div className="zwpg-row-actions">
               <ScheduleButton row={row} />
               {/* 让 AI 拆这一条 —— 这一页最有用的动作，所以放在第一个 */}
-              <button type="button" className="zpg-link" onClick={() => onSplit(row)} disabled={busy}>
+              <button type="button" className="zwpg-link" onClick={() => onSplit(row)} disabled={busy}>
                 <Icon name="bulb" size={13} />
                 {busy ? '正在拆分…' : splitCount > 0 ? '重新拆分' : 'AI 拆分'}
               </button>
               {splitCount > 0 && (
-                <button type="button" className="zpg-link" onClick={() => onUnsplit(row)} disabled={busy}>
+                <button type="button" className="zwpg-link" onClick={() => onUnsplit(row)} disabled={busy}>
                   忘掉这次拆分
                 </button>
               )}
-              <button type="button" className="zpg-link" onClick={() => setEditing(true)} disabled={busy}>
+              <button type="button" className="zwpg-link" onClick={() => setEditing(true)} disabled={busy}>
                 编辑
               </button>
               {confirming ? (
                 <>
                   {/* 删除不可撤销，所以要一次确认；但确认就地做，不弹窗 */}
-                  <button type="button" className="zpg-link zpg-link-danger" onClick={() => onRemove(row)} disabled={busy}>
+                  <button type="button" className="zwpg-link zwpg-link-danger" onClick={() => onRemove(row)} disabled={busy}>
                     确认删除
                   </button>
-                  <button type="button" className="zpg-link" onClick={() => setConfirming(false)} disabled={busy}>
+                  <button type="button" className="zwpg-link" onClick={() => setConfirming(false)} disabled={busy}>
                     取消
                   </button>
                 </>
               ) : (
-                <button type="button" className="zpg-link" onClick={() => setConfirming(true)} disabled={busy}>
+                <button type="button" className="zwpg-link" onClick={() => setConfirming(true)} disabled={busy}>
                   删除
                 </button>
               )}
@@ -1930,14 +1930,14 @@ function toLocalInput(iso) {
 function DetailsBlock({ action, detail }) {
   const [open, setOpen] = useState(false);
   return (
-    <details className="zpg-details" open={open}>
+    <details className="zwpg-details" open={open}>
       <summary onClick={(event) => { event.preventDefault(); setOpen((v) => !v); }}>
         <Icon name="arrow" size={12} />
         查看详情
       </summary>
-      <div className="zpg-details-body">
-        {action && <p className="zpg-todo-action">{action}</p>}
-        {detail && <p className="zpg-row-hint">{detail}</p>}
+      <div className="zwpg-details-body">
+        {action && <p className="zwpg-todo-action">{action}</p>}
+        {detail && <p className="zwpg-row-hint">{detail}</p>}
       </div>
     </details>
   );
@@ -1946,25 +1946,25 @@ function DetailsBlock({ action, detail }) {
 export function CardRow({ row, onToggle, busy, schedule }) {
   return (
     <li>
-      <div className={`zpg-item zpg-item-card ${row.done ? 'zpg-item-done' : ''}`}>
-        <div className="zpg-summary zpg-summary-static">
+      <div className={`zwpg-item zwpg-item-card ${row.done ? 'zwpg-item-done' : ''}`}>
+        <div className="zwpg-summary zwpg-summary-static">
           <input
             type="checkbox"
-            className="zpg-check"
+            className="zwpg-check"
             checked={row.done}
             disabled={busy}
             onChange={() => onToggle(row)}
             aria-label={row.done ? `把「${row.title}」标为未完成` : `把「${row.title}」标为已完成`}
           />
-          <span className="zpg-kind zpg-kind-split">
+          <span className="zwpg-kind zwpg-kind-split">
             <Icon name="layers" size={13} />
             AI 拆出
           </span>
-          <span className={`zpg-title ${row.done ? 'zpg-title-done' : ''}`}>{row.title}</span>
-          <span className="zpg-meta">
-            <span className="zpg-due">
+          <span className={`zwpg-title ${row.done ? 'zwpg-title-done' : ''}`}>{row.title}</span>
+          <span className="zwpg-meta">
+            <span className="zwpg-due">
               {whenIso(row.due)}
-              {row.due && !row.done && <em className="zpg-left">{countdown(row.due)}</em>}
+              {row.due && !row.done && <em className="zwpg-left">{countdown(row.due)}</em>}
             </span>
           </span>
         </div>
@@ -1978,7 +1978,7 @@ export function CardRow({ row, onToggle, busy, schedule }) {
           <DetailsBlock action={row.action} detail={row.detail} />
         )}
         {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
-          <p className="zpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
+          <p className="zwpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
         )}
         <ScheduleButton row={row} />
       </div>
@@ -2014,21 +2014,21 @@ function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId, 
   const { weeks, monthLabel, weekdayLabels, undated } = calendar;
 
   return (
-    <div className="zpg-cal">
-      <header className="zpg-cal-bar">
+    <div className="zwpg-cal">
+      <header className="zwpg-cal-bar">
         <button
           type="button"
-          className="zpg-cal-nav"
+          className="zwpg-cal-nav"
           onClick={() => onShiftMonth(-1)}
           aria-label="上个月"
           title="上个月"
         >
           ‹
         </button>
-        <span className="zpg-cal-month">{monthLabel}</span>
+        <span className="zwpg-cal-month">{monthLabel}</span>
         <button
           type="button"
-          className="zpg-cal-nav"
+          className="zwpg-cal-nav"
           onClick={() => onShiftMonth(1)}
           aria-label="下个月"
           title="下个月"
@@ -2036,17 +2036,17 @@ function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId, 
           ›
         </button>
         {monthOffset !== 0 && (
-          <button type="button" className="zpg-link zpg-cal-today-btn" onClick={() => onShiftMonth(0)}>
+          <button type="button" className="zwpg-link zwpg-cal-today-btn" onClick={() => onShiftMonth(0)}>
             回到本月
           </button>
         )}
       </header>
 
-      <div className="zpg-cal-weekdays" aria-hidden="true">
+      <div className="zwpg-cal-weekdays" aria-hidden="true">
         {weekdayLabels.map((label) => <span key={label}>{label}</span>)}
       </div>
 
-      <div className="zpg-cal-grid" role="grid" aria-label={monthLabel}>
+      <div className="zwpg-cal-grid" role="grid" aria-label={monthLabel}>
         {weeks.map((week) => week.days.map((day) => {
           const overdue = day.isPast && !day.isToday && day.rows.some((row) => !row.done);
           return (
@@ -2054,17 +2054,17 @@ function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId, 
               key={day.key}
               role="gridcell"
               className={[
-                'zpg-cal-cell',
-                day.outside ? 'zpg-cal-outside' : '',
-                day.isToday ? 'zpg-cal-today' : '',
-                overdue ? 'zpg-cal-past' : '',
+                'zwpg-cal-cell',
+                day.outside ? 'zwpg-cal-outside' : '',
+                day.isToday ? 'zwpg-cal-today' : '',
+                overdue ? 'zwpg-cal-past' : '',
               ].filter(Boolean).join(' ')}
             >
-              <header className="zpg-cal-head">
-                <span className="zpg-cal-day">{day.dayNumber}</span>
+              <header className="zwpg-cal-head">
+                <span className="zwpg-cal-day">{day.dayNumber}</span>
               </header>
               {day.rows.length > 0 ? (
-                <ul className="zpg-cal-list">
+                <ul className="zwpg-cal-list">
                   {day.rows.map((row) => {
                     const toggle = row.source === 'mine'
                       ? () => onTogglePlan(row)
@@ -2075,17 +2075,17 @@ function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId, 
                       ? `todo:${row.source}:${row.id}`
                       : row.id;
                     return (
-                      <li key={`${row.source}:${row.id}`} className="zpg-cal-item">
+                      <li key={`${row.source}:${row.id}`} className="zwpg-cal-item">
                         <input
                           type="checkbox"
-                          className="zpg-check zpg-check-sm"
+                          className="zwpg-check zwpg-check-sm"
                           checked={Boolean(row.done)}
                           disabled={busyId === busyKey}
                           onChange={toggle}
                           aria-label={`把「${row.title}」标为已完成`}
                         />
                         <span
-                          className={`zpg-cal-title ${row.done ? 'zpg-title-done' : ''}`}
+                          className={`zwpg-cal-title ${row.done ? 'zwpg-title-done' : ''}`}
                           title={row.title}
                         >
                           {row.title}
@@ -2101,7 +2101,7 @@ function CalendarView({ calendar, onToggle, onTogglePlan, onToggleTodo, busyId, 
       </div>
 
       {undated > 0 && (
-        <p className="zpg-cal-note">
+        <p className="zwpg-cal-note">
           另外 {undated} 件没有截止时间 —— 没有日期就不该被摆在某一天里，它们在列表视图里都在。
         </p>
       )}
@@ -2125,11 +2125,11 @@ function TodoRow({ row, onToggle, busy, schedule }) {
   const mark = !row.done ? focusElementId(`${row.source}:${row.id}`) : '';
   return (
     <li id={mark || undefined}>
-      <div className={`zpg-item zpg-item-todo ${row.done ? 'zpg-item-done' : ''}`}>
-        <div className="zpg-summary zpg-summary-static">
+      <div className={`zwpg-item zwpg-item-todo ${row.done ? 'zwpg-item-done' : ''}`}>
+        <div className="zwpg-summary zwpg-summary-static">
           <input
             type="checkbox"
-            className="zpg-check"
+            className="zwpg-check"
             checked={Boolean(row.done)}
             disabled={busy}
             onChange={() => onToggle(row)}
@@ -2137,19 +2137,19 @@ function TodoRow({ row, onToggle, busy, schedule }) {
               ? `把「${row.title}」标为未完成（只影响本页，不影响平台）`
               : `把「${row.title}」标为已完成（只影响本页，不影响平台）`}
           />
-          <span className={`zpg-kind ${kind.cls}`}>
+          <span className={`zwpg-kind ${kind.cls}`}>
             <Icon name={kind.icon} size={13} />
             {row.sourceLabel}
           </span>
-          <span className={`zpg-title ${row.done ? 'zpg-title-done' : ''}`}>{row.title}</span>
-          <span className="zpg-meta">
-            <span className="zpg-due">
+          <span className={`zwpg-title ${row.done ? 'zwpg-title-done' : ''}`}>{row.title}</span>
+          <span className="zwpg-meta">
+            <span className="zwpg-due">
               {whenIso(row.due)}
-              {row.due && !row.done && <em className="zpg-left">{countdown(row.due)}</em>}
+              {row.due && !row.done && <em className="zwpg-left">{countdown(row.due)}</em>}
             </span>
           </span>
           {row.url && (
-            <a className="zpg-open" href={row.url} target="_blank" rel="noreferrer" aria-label={`打开 ${row.title}`}>
+            <a className="zwpg-open" href={row.url} target="_blank" rel="noreferrer" aria-label={`打开 ${row.title}`}>
               <Icon name="arrow" size={15} />
             </a>
           )}
@@ -2163,12 +2163,12 @@ function TodoRow({ row, onToggle, busy, schedule }) {
           <DetailsBlock detail={row.detail} />
         )}
         {row.due && !row.done && scheduleHint(schedule, toLocalInput(row.due)) && (
-          <p className="zpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
+          <p className="zwpg-row-hint">{scheduleHint(schedule, toLocalInput(row.due))}</p>
         )}
         <ScheduleButton row={row} />
         {/* 勾掉之后才说这句话：没勾的人不需要读，勾了的人必须知道它的边界。 */}
         {row.done && (
-          <p className="zpg-row-hint">
+          <p className="zwpg-row-hint">
             已在本页标记完成，平台那边的状态没有改变。
             {row.url && '要真正提交，仍要点右边的箭头去原页面。'}
           </p>
@@ -2182,11 +2182,11 @@ function TodoRow({ row, onToggle, busy, schedule }) {
 function DayHeading({ id, label, rows }) {
   const scope = describeScope(rows);
   return (
-    <div className="zpg-day-head">
+    <div className="zwpg-day-head">
       <GroupLabel id={id} count={rows.length}>
         {label}
       </GroupLabel>
-      <p className="zpg-day-scope">{scope}</p>
+      <p className="zwpg-day-scope">{scope}</p>
     </div>
   );
 }
@@ -2209,9 +2209,9 @@ function DayHeading({ id, label, rows }) {
  */
 function GroupLabel({ id, count = 0, tone = '', children }) {
   return (
-    <div className={`zpg-group-label ${tone ? `zpg-group-${tone}` : ''}`}>
+    <div className={`zwpg-group-label ${tone ? `zwpg-group-${tone}` : ''}`}>
       <span id={id} role="heading" aria-level={3}>{children}</span>
-      {count > 1 && <span className="zpg-group-count">{count}</span>}
+      {count > 1 && <span className="zwpg-group-count">{count}</span>}
     </div>
   );
 }
@@ -2243,39 +2243,39 @@ function EntryRow({ item, plan, onForget }) {
 
   return (
     <li>
-      <details className="zpg-item">
-        <summary className="zpg-summary">
-          <span className={`zpg-kind ${kind.cls}`}>
+      <details className="zwpg-item">
+        <summary className="zwpg-summary">
+          <span className={`zwpg-kind ${kind.cls}`}>
             <Icon name={kind.icon} size={13} />
             {kind.label}
           </span>
-          <span className="zpg-title">{item.title}</span>
-          <span className="zpg-meta">
+          <span className="zwpg-title">{item.title}</span>
+          <span className="zwpg-meta">
             {/* 已拆过的条目标出来：用户一眼能看出这条不用再规划，也说明映射还在 */}
-            {cards && <span className="zpg-planned">已拆 {cards.length} 张</span>}
-            <span className="zpg-chars">{text.length} 字</span>
-            <time className="zpg-time" dateTime={new Date(at * 1000).toISOString()}>
+            {cards && <span className="zwpg-planned">已拆 {cards.length} 张</span>}
+            <span className="zwpg-chars">{text.length} 字</span>
+            <time className="zwpg-time" dateTime={new Date(at * 1000).toISOString()}>
               {when(item.at)}
             </time>
           </span>
-          <span className="zpg-caret" aria-hidden="true"><Icon name="chevron" size={15} /></span>
+          <span className="zwpg-caret" aria-hidden="true"><Icon name="chevron" size={15} /></span>
         </summary>
-        <div className="zpg-body">
+        <div className="zwpg-body">
           {/* 卡片**不再**在这里重复渲染：它们已经升格成待办，按自己的截止时间
               进了上方的「一周内 / 更晚」。同一条内容在两处出现会让人以为是两件事。
               这里只留一句指路 + 撤销入口。 */}
           {cards && cards.length > 0 && (
-            <div className="zpg-planned-note">
+            <div className="zwpg-planned-note">
               <span>已拆成 {cards.length} 条，按截止时间列在上方的分组里。</span>
-              <button type="button" className="zpg-link" onClick={() => onForget(item.prefix)}>
+              <button type="button" className="zwpg-link" onClick={() => onForget(item.prefix)}>
                 忘掉这次拆分
               </button>
             </div>
           )}
-          <p className="zpg-text">{text}</p>
+          <p className="zwpg-text">{text}</p>
           {tags.length > 0 && (
-            <ul className="zpg-tags" aria-label="标签">
-              {tags.map((tag) => <li key={tag} className="zpg-tag">{tag}</li>)}
+            <ul className="zwpg-tags" aria-label="标签">
+              {tags.map((tag) => <li key={tag} className="zwpg-tag">{tag}</li>)}
             </ul>
           )}
         </div>
@@ -2293,12 +2293,12 @@ function EntryRow({ item, plan, onForget }) {
 function ErrorBlock({ error }) {
   const info = ERROR[error.code] ?? { title: '读取失败', next: null };
   return (
-    <div className="zpg-error" role="alert">
-      <span className="zpg-error-icon" aria-hidden="true"><Icon name="close" size={16} /></span>
-      <div className="zpg-error-body">
+    <div className="zwpg-error" role="alert">
+      <span className="zwpg-error-icon" aria-hidden="true"><Icon name="close" size={16} /></span>
+      <div className="zwpg-error-body">
         <strong>{info.title}</strong>
-        <p className="zpg-error-why">{error.message}</p>
-        {info.next && <p className="zpg-error-next">{info.next}</p>}
+        <p className="zwpg-error-why">{error.message}</p>
+        {info.next && <p className="zwpg-error-next">{info.next}</p>}
       </div>
     </div>
   );
@@ -2357,8 +2357,8 @@ export function RelaySection() {
 
   return (
     <>
-      <form className="zpg-form" onSubmit={saveEndpoint}>
-        <label className="zpg-field">
+      <form className="zwpg-form" onSubmit={saveEndpoint}>
+        <label className="zwpg-field">
           <span>中转站域名</span>
           <input
             name="endpoint"
@@ -2373,7 +2373,7 @@ export function RelaySection() {
           />
           <small>你自己部署的那台中转站，只支持 http / https。同步过的内容会在本机留一份。</small>
         </label>
-        <label className="zpg-field">
+        <label className="zwpg-field">
           <span>读密钥</span>
           <input
             name="readKey"
@@ -2388,11 +2388,11 @@ export function RelaySection() {
             打码值 <code>{MASK}</code> 表示不改。这一项只能读，写内容要用中转站的写密钥。
           </small>
         </label>
-        <div className="zpg-form-foot">
-          <button className="zy-primary" disabled={state.loading || state.saving}>
+        <div className="zwpg-form-foot">
+          <button className="zw-primary" disabled={state.loading || state.saving}>
             {state.saving ? '正在保存并同步…' : '保存并同步'}
           </button>
-          <span className="zpg-form-state">{summary}</span>
+          <span className="zwpg-form-state">{summary}</span>
         </div>
       </form>
 
@@ -2594,27 +2594,27 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
   if (!open) {
     return <button
       type="button"
-      className="zpg-pet-fab"
+      className="zwpg-pet-fab"
       onClick={() => setOpen(true)}
       aria-label="打开规划助手"
       title="跟助手聊聊要做什么"
     >
-      <span className="zpg-pet-face" aria-hidden="true">
-        <span className="zpg-pet-eye" /><span className="zpg-pet-eye" />
+      <span className="zwpg-pet-face" aria-hidden="true">
+        <span className="zwpg-pet-eye" /><span className="zwpg-pet-eye" />
       </span>
     </button>;
   }
 
-  return <div className="zpg-pet" role="dialog" aria-label="规划助手">
-    <header className="zpg-pet-head">
-      <span className="zpg-pet-face zpg-pet-face-sm" aria-hidden="true">
-        <span className="zpg-pet-eye" /><span className="zpg-pet-eye" />
+  return <div className="zwpg-pet" role="dialog" aria-label="规划助手">
+    <header className="zwpg-pet-head">
+      <span className="zwpg-pet-face zwpg-pet-face-sm" aria-hidden="true">
+        <span className="zwpg-pet-eye" /><span className="zwpg-pet-eye" />
       </span>
-      <span className="zpg-pet-name">小助</span>
-      <span className="zpg-pet-hint">说说你要做什么</span>
+      <span className="zwpg-pet-name">小助</span>
+      <span className="zwpg-pet-hint">说说你要做什么</span>
       <button
         type="button"
-        className="zpg-pet-close"
+        className="zwpg-pet-close"
         onClick={() => setOpen(false)}
         aria-label="收起助手"
         title="收起（Esc）"
@@ -2623,9 +2623,9 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
       </button>
     </header>
 
-    <div className="zpg-pet-body" ref={listRef}>
+    <div className="zwpg-pet-body" ref={listRef}>
       {messages.length === 0 && (
-        <p className="zpg-pet-hello">
+        <p className="zwpg-pet-hello">
           可以记 DDL，也能安排日程，比如「把高数作业安排到明晚 7—9 点」。AI 先出草案，你确认后才保存。
         </p>
       )}
@@ -2638,15 +2638,15 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
       {messages.map((item, index) => (
         <p
           key={index}
-          className={`zpg-pet-msg zpg-pet-msg-${item.role}${item.role === 'assistant' && !item.text ? ' zpg-pet-thinking' : ''}`}
+          className={`zwpg-pet-msg zwpg-pet-msg-${item.role}${item.role === 'assistant' && !item.text ? ' zwpg-pet-thinking' : ''}`}
         >
           {item.text || (item.role === 'assistant' ? '…' : '')}
         </p>
       ))}
 
-      {pendingSchedule && <div className="zpg-pet-draft" aria-label="日程草案">
-        <p className="zpg-pet-draft-title">{scheduleDraftItems(pendingSchedule).some(item => item.id) ? '调整日程' : '新增日程'}</p>
-        <ol className="zpg-pet-draft-meta">
+      {pendingSchedule && <div className="zwpg-pet-draft" aria-label="日程草案">
+        <p className="zwpg-pet-draft-title">{scheduleDraftItems(pendingSchedule).some(item => item.id) ? '调整日程' : '新增日程'}</p>
+        <ol className="zwpg-pet-draft-meta">
           {scheduleDraftItems(pendingSchedule).map((item, index) => <li key={`${item.id ?? item.taskKey}-${index}`}>
             <strong>{schedulePreview?.draft && Array.isArray(schedulePreview.draft.slots) ? schedulePreview.draft.slots[index]?.title : schedulePreview?.draft?.title ?? item.title}</strong>
             {' '}{whenIso(item.start)} — {whenIso(item.end)}（上海时间）
@@ -2656,18 +2656,18 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
         {pendingSchedule.assumptions?.length > 0 && <p>假设：{pendingSchedule.assumptions.join('；')}</p>}
         <p>仅修改执行时间，不改变 DDL。确认前不会保存。</p>
         {schedulePreview?.action !== 'schedule' && <p role="alert">{schedulePreview?.say}</p>}
-        {(schedulePreview?.warnings ?? []).map((warning, i) => <p className="zpg-schedule-warning" key={i}>{warning}</p>)}
-        <div className="zpg-pet-draft-actions">
-          <button type="button" className="zy-primary" onClick={confirmSchedule} disabled={sending || schedulePreview?.action !== 'schedule'}>确认保存日程</button>
-          <button type="button" className="zy-secondary" disabled={sending} onClick={() => setPendingSchedule(null)}>取消日程草案</button>
+        {(schedulePreview?.warnings ?? []).map((warning, i) => <p className="zwpg-schedule-warning" key={i}>{warning}</p>)}
+        <div className="zwpg-pet-draft-actions">
+          <button type="button" className="zw-primary" onClick={confirmSchedule} disabled={sending || schedulePreview?.action !== 'schedule'}>确认保存日程</button>
+          <button type="button" className="zw-secondary" disabled={sending} onClick={() => setPendingSchedule(null)}>取消日程草案</button>
         </div>
       </div>}
 
       {/* 确认卡：把模型的理解**摊开**给人看，而不是只报一句"记好了" */}
       {pendingDraft && (
-        <div className="zpg-pet-draft">
-          <p className="zpg-pet-draft-title">{pendingDraft.title}</p>
-          <dl className="zpg-pet-draft-meta">
+        <div className="zwpg-pet-draft">
+          <p className="zwpg-pet-draft-title">{pendingDraft.title}</p>
+          <dl className="zwpg-pet-draft-meta">
             <div>
               <dt>时间</dt>
               <dd>{pendingDraft.due ? whenIso(pendingDraft.due) : '没定'}</dd>
@@ -2682,13 +2682,13 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
               </div>
             )}
           </dl>
-          <div className="zpg-pet-draft-actions">
-            <button type="button" className="zy-primary" onClick={confirm} disabled={sending}>
+          <div className="zwpg-pet-draft-actions">
+            <button type="button" className="zw-primary" onClick={confirm} disabled={sending}>
               好，记下
             </button>
             <button
               type="button"
-              className="zy-secondary"
+              className="zw-secondary"
               onClick={() => { setPendingDraft(null); }}
               disabled={sending}
             >
@@ -2698,10 +2698,10 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
         </div>
       )}
 
-      {error && <p className="zpg-pet-error" role="alert">{error}</p>}
+      {error && <p className="zwpg-pet-error" role="alert">{error}</p>}
     </div>
 
-    <div className="zpg-pet-input">
+    <div className="zwpg-pet-input">
       <input
         ref={inputRef}
         type="text"
@@ -2720,7 +2720,7 @@ function PlanningPet({ onCreated, onSchedule, tasks = [], slots = [] }) {
       />
       <button
         type="button"
-        className="zy-primary"
+        className="zw-primary"
         onClick={() => void send()}
         disabled={sending || !text.trim()}
       >

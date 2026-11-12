@@ -106,7 +106,7 @@ test('the live prompt grants formula corrections and matches the relaxed guard',
 });
 
 test('legacy successful cache is revalidated and migrated; invalid cache still requests the model', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-correction-cache-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-correction-cache-')); let host;
   try {
     host = await mountHost(lock.hostVersions[0], dir);
     const cache = new ParserCache(); host.parser.cache = cache;

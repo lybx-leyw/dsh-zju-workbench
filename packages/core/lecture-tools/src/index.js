@@ -73,7 +73,7 @@ import {
   promptHintsFor,
 } from './prompt-hints.js';
 
-export const name = 'zhiyun-lecture-tools';
+export const name = 'zw-lecture-tools';
 
 /**
  * 同层的 `core-tool` / `core-llm` 都**不是** Cordis 插件（没有 `apply` / `inject`）：

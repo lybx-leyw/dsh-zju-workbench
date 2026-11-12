@@ -836,9 +836,9 @@ test('客户端：withQuery 用 URL 语义拼参数（中文与 & 不破坏查�
 /* ══════════════════════════════════════ 路由与插件形状 */
 
 test('插件形状：name / inject 与路由常量', () => {
-  assert.equal(name, 'zhiyun-xxt');
+  assert.equal(name, 'zw-xxt');
   assert.deepEqual(inject, ['profileContext']);
-  assert.equal(ROUTE_PATH, '/api/zhiyun-xxt');
+  assert.equal(ROUTE_PATH, '/api/zw-xxt');
 });
 
 test('方法白名单：16 个只读方法，一个不多一个不少', () => {

@@ -67,7 +67,7 @@ test('outline sanitizing drops only the untrusted spans and keeps the rest', () 
   assert.deepEqual(sanitizeOutline([{ title:'x', from:1, to:1 }], 0), { outline:[], warnings:[] }, '没有块就不该有主线区间');
 });
 test('disk cache binds inputs and tolerates interrupted or old records', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-cache-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-cache-'));
   try {
     const cache = new ParserCache(dir), key = cache.key('mix', ['model', 'time', 'text']);
     await cache.put(key, 'answer'); assert.equal((await new ParserCache(dir).get(key)).raw, 'answer');
@@ -83,7 +83,7 @@ test('concurrency limiter cancels queued tasks and releases capacity', async () 
   assert.equal(await limit.run(() => 42), 42); assert.equal(limit.active, 0);
 });
 for (const version of lock.hostVersions) test(`DSH ${version}: real LLM, attachments, plugin lifecycle and cache run the three-stage parser`, async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-host-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-host-')); let host;
   try {
     host = await mountHost(version, dir);
     assert.ok(host.parser, 'Cordis must activate the parser');
@@ -98,11 +98,11 @@ for (const version of lock.hostVersions) test(`DSH ${version}: real LLM, attachm
     const cached = await host.parser.parse(lesson()); assert.equal(host.requests.length, 4); assert.ok(cached.calls.every(c=>c.cached)); assert.equal(cached.version, output.version);
     const changed = lesson(); changed.subtitles[0].startMs++;
     await host.parser.parse(changed); assert.ok(host.requests.length > 4, 'time anchor change invalidates dependent cache');
-    const service = host.parser; await host.fiber.dispose(); assert.equal(service.closed, true); assert.equal(host.ctx.get('zhiyunParser'), undefined);
+    const service = host.parser; await host.fiber.dispose(); assert.equal(service.closed, true); assert.equal(host.ctx.get('zwParser'), undefined);
   } finally { await host?.dispose(); await rm(dir, { recursive:true, force:true }); }
 });
 test('host text-only model fails preflight without submitting images or consuming tokens', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-vision-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-vision-')); let host;
   try { host = await mountHost(lock.hostVersions[0], dir, answer, { modalities:['text'] }); await assert.rejects(host.parser.parse(lesson()), {code:'VISION_MODEL'}); assert.equal(host.requests.length,0); }
   finally { await host?.dispose(); await rm(dir, {recursive:true,force:true}); }
 });
@@ -124,7 +124,7 @@ test('纯字幕输入无需视觉模型，仍清洗标记并保留逐句来源',
 });
 
 test('mix retries an incomplete inline tag card without an independent tags call', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-inline-tags-')); let host; let attempts = 0;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-inline-tags-')); let host; let attempts = 0;
   try {
     host = await mountHost(lock.hostVersions[0], dir, options => {
       const constant = options.messages[0].content[0].text;
@@ -152,7 +152,7 @@ test('disposal aborts source fetch and explicit partial-source opt-in is require
   await assert.rejects(partial.parseClassroom('1','2'),{code:'PARTIAL_SOURCE'});
 });
 test('an over-limit rewrite reverts that sentence, keeps the block, and caches the page', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-retry-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-retry-')); let host;
   try {
     host = await mountHost(lock.hostVersions[0], dir, options => options.messages[0].content[0].text.includes('逐块语音稿清洗器') ? '## 逐块标注\n1. 正文：完全重写原文为不相关的一段话\n块 1-2\n## 块标记\n{"tags":[{"index":1,"role":"主线","facets":["概念"],"summary":"原稿知识"}]}' : answer(options));
     const output = await host.parser.parse(lesson());
@@ -172,7 +172,7 @@ test('an over-limit rewrite reverts that sentence, keeps the block, and caches t
   } finally {await host?.dispose();await rm(dir,{recursive:true,force:true});}
 });
 test('one bad page retains all subtitles while successful neighboring pages remain usable', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-partial-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-partial-')); let host;
   try {
     host = await mountHost(lock.hostVersions[0], dir, answer);
     const input = lesson(); input.slides.push({page:2,createdSec:3,imageBytes:Buffer.from('bad'),mediaType:'image/png'});
@@ -182,7 +182,7 @@ test('one bad page retains all subtitles while successful neighboring pages rema
   } finally {await host?.dispose();await rm(dir,{recursive:true,force:true});}
 });
 test('Cordis plugin disposal cancels an active host LLM stream', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-cancel-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-cancel-')); let host;
   let started; const entered = new Promise(r=>started=r);
   try {
     host = await mountHost(lock.hostVersions[0], dir, async options => {started();return new Promise((_,reject)=>options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true}));});
@@ -456,7 +456,7 @@ test('★ json file vocabulary store writes through the host atomic writer', asy
   assert.equal(writes[0][0], 'vocabulary.json');
   assert.deepEqual(JSON.parse(writes[0][1]), { v: 1, kind: 'tag_vocabulary', terms: [{ name: '睡眠', aliases: [] }] });
   // 真落盘路径也要能读回来（宿主的原子写会自己建父目录）。
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-vocab-file-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-vocab-file-'));
   try {
     const real = createJsonFileVocabularyStore({ file: path.join(dir, 'nested/vocabulary.json') });
     assert.deepEqual((await real.load()).map(t => t.name), seedVocabulary().map(t => t.name), '没有文件 = 种子词表，不是错误');
@@ -467,11 +467,11 @@ test('★ json file vocabulary store writes through the host atomic writer', asy
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 test('★ real host: v4 default budgets and the persisted vocabulary reach the host prompt', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-vocab-host-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-vocab-host-')); let host;
   try {
-    // 宿主侧的默认词表文件（`<profile>/data/zhiyun-parser/vocabulary.json`）先放一个
+    // 宿主侧的默认词表文件（`<profile>/data/zw-parser/vocabulary.json`）先放一个
     // 别的节长出来的标签：插件必须**从它加载**，而不是每次从种子起步。
-    const file = path.join(dir, 'data/zhiyun-parser/vocabulary.json');
+    const file = path.join(dir, 'data/zw-parser/vocabulary.json');
     await mkdir(path.dirname(file), { recursive: true });
     await writeFile(file, JSON.stringify({ v: 1, kind: 'tag_vocabulary', terms: [...seedVocabulary(), { name: '休息', aliases: [] }] }));
     host = await mountHost(lock.hostVersions[0], dir, taggingAnswer('休息'));
@@ -502,18 +502,18 @@ test('★ plugin config is the second accel entry point and reaches every stage'
       yield { type: 'finish', reason: { kind: 'stop' } };
     } }; },
   };
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-plugin-config-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-plugin-config-'));
   try {
     const provided = new Map();
     const ctx = {
       llm: inner, attachments: { saveImage: () => ({ attachmentId: 'fixture-image' }) },
       agentDefaultModel: { currentSelection: () => ({ provider: 'fixture-provider', model: 'fixture-model' }) },
-      profileContext: { dir }, zhiyunClassroom: {},
+      profileContext: { dir }, zwClassroom: {},
       provide: (name, value) => provided.set(name, value),
     };
     const teardown = await apply(ctx, { concurrency: 2, visionBatchSize: 2, accel: { tags: { maxTokens: 4096, reasoningEffort: 'low' } } });
-    const parser = provided.get('zhiyunParser');
-    assert.ok(parser, '插件要提供 zhiyunParser');
+    const parser = provided.get('zwParser');
+    assert.ok(parser, '插件要提供 zwParser');
     assert.equal(parser.visionBatchSize, 2, '插件配置实际传给课件分组入口');
     const output = await parser.parse(lesson());
     assert.equal(output.status, 'ready');
@@ -533,7 +533,7 @@ test('★ plugin config is the second accel entry point and reaches every stage'
 
 
 test('unrecognized model block syntax retries and cannot become cached ready through the whole-page fallback', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-missing-blocks-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-missing-blocks-')); let host;
   try {
     host = await mountHost(lock.hostVersions[0], dir, options => {
       const prompt=options.messages[0].content[0].text;

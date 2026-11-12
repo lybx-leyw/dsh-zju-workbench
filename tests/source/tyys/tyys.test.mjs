@@ -1846,7 +1846,7 @@ function fakeCtx() {
 function mount() {
   const { ctx, services, routes } = fakeCtx();
   apply(ctx);
-  return { tyys: services.get('zhiyunTyys'), routes, services, ctx };
+  return { tyys: services.get('zwTyys'), routes, services, ctx };
 }
 
 /**
@@ -1873,11 +1873,11 @@ function makeReq(body) {
   return req;
 }
 
-test('index：apply() 真的 provide 了 zhiyunTyys，且只注册一条同源路由', () => {
+test('index：apply() 真的 provide 了 zwTyys，且只注册一条同源路由', () => {
   const { tyys, routes } = mount();
-  assert.ok(tyys, '必须 provide zhiyunTyys');
+  assert.ok(tyys, '必须 provide zwTyys');
   assert.equal(routes.length, 1, '必须注册一条路由');
-  assert.equal(routes[0].path, '/api/zhiyun-tyys');
+  assert.equal(routes[0].path, '/api/zw-tyys');
   assert.equal(routes[0].path, ROUTE_PATH);
   assert.equal(routes[0].kind, 'exact');
 });
@@ -2133,7 +2133,7 @@ test('路由：写操作名不在动作表里（D17）', async () => {
 test('清理后服务被摘掉、路由被注销（不泄漏）', async () => {
   const { ctx, services } = fakeCtx();
   const dispose = apply(ctx);
-  assert.ok(services.get('zhiyunTyys'));
+  assert.ok(services.get('zwTyys'));
   await assert.doesNotReject(async () => { await dispose?.(); });
 });
 

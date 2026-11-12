@@ -27,7 +27,7 @@ export const name = 'zju-source-lab';
 export const inject = [];
 
 /** 同源数据路由。 */
-export const ROUTE_PATH = '/api/zhiyun-lab';
+export const ROUTE_PATH = '/api/zw-lab';
 
 /**
  * 把 `sharedFetch` 适配成数据层期望的形状。
@@ -96,7 +96,7 @@ export function apply(ctx) {
      */
     const credentialsOf = async () => {
       if (typeof credentials === 'function') return credentials();
-      // `auth: "own"`：读的是**实验课平台自己**那份账号（`zhiyun-lab/account`），
+      // `auth: "own"`：读的是**实验课平台自己**那份账号（`zw-lab/account`），
       // 不是「浙大一卡通」。用户名通常是学号，但密码与统一身份认证**不是同一个**。
       return readLab(ctx);
     };
@@ -179,7 +179,7 @@ export function apply(ctx) {
       /**
        * 保存实验课平台的账号。
        *
-       * `auth: "own"`：这份账号存在 `source/login` 的 `zhiyun-lab/account` 记录里，
+       * `auth: "own"`：这份账号存在 `source/login` 的 `zw-lab/account` 记录里，
        * 与「浙大一卡通」分开（用户名通常同学号，但**密码不是同一个**）。
        *
        * @param input - `{ username, password }`。
@@ -316,7 +316,7 @@ export function apply(ctx) {
       async myInfo() { return (await client()).myInfo(); },
     };
 
-    const disposeService = ctx.provide('zhiyunLab', service);
+    const disposeService = ctx.provide('zwLab', service);
 
     let removeRoute = null;
     ctx.inject(['webServer'], (scope) => {

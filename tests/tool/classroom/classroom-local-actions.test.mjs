@@ -44,7 +44,7 @@ function fakeClassroom(overrides = {}) {
   return { service, calls };
 }
 
-const run = (service, args) => createClassroomReadTools({ zhiyunClassroom: service })[0].run(args, {});
+const run = (service, args) => createClassroomReadTools({ zwClassroom: service })[0].run(args, {});
 
 /* ══════════════════════════════════ liveCandidates ══════════════════════════════════ */
 

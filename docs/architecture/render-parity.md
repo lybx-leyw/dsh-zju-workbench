@@ -51,7 +51,7 @@ node scripts/classroom-render-parity.mjs [--doc <path>] [--reference <path>] [--
   （`SlideCanvas` / `SlideElement` / effects），quiz / interactive / pbl 走播放器
   页面与 iframe，不是这个包的渲染树。它们由维度 2/3 兜住。
 
-### 2. html：`ctx.zhiyunClassroomExport.html(doc)`
+### 2. html：`ctx.zwClassroomExport.html(doc)`
 
 - `html(doc, { lang })` 产出完整单文件文档（`<!doctype html>` 开头），从里面取两样：
   1. **静态 DOM 文本**：去 script/style 后的可见文本；
@@ -67,7 +67,7 @@ node scripts/classroom-render-parity.mjs [--doc <path>] [--reference <path>] [--
 > （fixture 上是 3 行）。只看静态 DOM 会得出「一个场景都没有」的假结论；只看 payload
 > 又测不出壳损坏。两者相加才等于「这个文件真正带着的内容」。
 
-### 3. pptx：`ctx.zhiyunClassroomExport.pptx(doc)`
+### 3. pptx：`ctx.zwClassroomExport.pptx(doc)`
 
 - 用 `node:zlib` + 手写中央目录读取（复用 `classroom-golden-parity.mjs` 的
   `readPptxStructure`，仓库不新增依赖），读 `ppt/slides/slideN.xml` 的 `<a:t>`。
@@ -150,7 +150,7 @@ console.log(createRequire("/abs/repo/ref/OpenMAIC/packages/@openmaic/renderer/di
 
 | # | 差异 | 为什么不影响效果 | 脚本怎么处理 |
 |---|---|---|---|
-| 1 | class 名不同（`.slide-renderer-*` vs 我们的 `.zyc-*` 包裹层） | 类名只是样式作用域，视觉由 CSS 规则决定。维度 1 比的是**文本**与**标记字节**，不是选择器语义；包裹层不在比对范围内（两侧都直接渲染 `SlideCanvas`） | 只比文本多重集 + markup 字节 |
+| 1 | class 名不同（`.slide-renderer-*` vs 我们的 `.zwc-*` 包裹层） | 类名只是样式作用域，视觉由 CSS 规则决定。维度 1 比的是**文本**与**标记字节**，不是选择器语义；包裹层不在比对范围内（两侧都直接渲染 `SlideCanvas`） | 只比文本多重集 + markup 字节 |
 | 2 | 空白/换行/缩进不同（HTML 序列化、PPTX run 切分） | 排版由 `white-space`/段落属性决定，折叠空白不改变视觉 | 压空白后再比；空白差落 `equivalent` |
 | 3 | `data-*` 属性（`data-indent`、`data-inline-math`、`data-element-id`） | 这些是渲染器的内部钩子，不产生可见文本 | 抽文本时整段丢弃标签，不参与比对 |
 | 4 | 零宽字符（`\u200b` 等） | 不占宽、不可见；常被编辑器当光标锚点插入 | 归一化时删除，夹具里刻意放了 `课堂小\u200b结` |

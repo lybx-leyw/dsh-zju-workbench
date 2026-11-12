@@ -928,7 +928,7 @@ test('⑧ 本包不 import 任何兄弟包（零宿主依赖，可单独发布�
     for (const m of text.matchAll(/^\s*import\s[^;]*?from\s+['"]([^'"]+)['"]/gm)) {
       assert.ok(m[1].startsWith('./'), `${file} import 了兄弟包 / 外部包：${m[1]}`);
     }
-    assert.equal(/^\s*import\s+['"][^'"]*dsh-zhiyun-(?!quiz)/m.test(text), false, `${file} 有副作用式 import 兄弟包`);
+    assert.equal(/^\s*import\s+['"][^'"]*dsh-zju-(?!quiz)/m.test(text), false, `${file} 有副作用式 import 兄弟包`);
   }
 });
 
@@ -1775,16 +1775,16 @@ test('⚠️ 未实现判据：讲义题送进硬检查会在 schema 上 fail（
 // Cordis 插件包装（薄）—— 本包唯一的宿主接缝
 // ═══════════════════════════════════════════════════════════════
 
-test('插件：inject 只声明真正需要的（不声明存储），provide zhiyunQuiz 并返回 disposer', async () => {
+test('插件：inject 只声明真正需要的（不声明存储），provide zwQuiz 并返回 disposer', async () => {
   const plugin = await import('../../../packages/core/quiz/src/index.js');
-  assert.equal(plugin.name, 'zhiyun-quiz');
-  assert.deepEqual(plugin.inject, ['zhiyunParser'], '只声明 zhiyunParser（本包不落盘，不声明存储）');
+  assert.equal(plugin.name, 'zw-quiz');
+  assert.deepEqual(plugin.inject, ['zwParser'], '只声明 zwParser（本包不落盘，不声明存储）');
   assert.equal(plugin.inject.includes('storage'), false);
 
   const provided = [];
   let removed = 0;
   const ctx = {
-    zhiyunParser: { llm: { async call() { return { text: '{"statements":["甲"]}' }; } } },
+    zwParser: { llm: { async call() { return { text: '{"statements":["甲"]}' }; } } },
     provide(name, service) {
       provided.push([name, service]);
       return () => { removed++; };
@@ -1793,7 +1793,7 @@ test('插件：inject 只声明真正需要的（不声明存储），provide zh
 
   const dispose = await plugin.apply(ctx, {});
   assert.equal(provided.length, 1);
-  assert.equal(provided[0][0], 'zhiyunQuiz');
+  assert.equal(provided[0][0], 'zwQuiz');
   const service = provided[0][1];
   for (const key of ['generate', 'dispose', 'store']) {
     assert.ok(key in service, `服务缺少 ${key}`);
@@ -1816,12 +1816,12 @@ test('插件：没注入 llm → 抛 CONFIG（而不是「生成了 0 题」）'
   );
 });
 
-test('插件：config.llm 可以直接注入（集成层不必依赖 zhiyunParser）', async () => {
+test('插件：config.llm 可以直接注入（集成层不必依赖 zwParser）', async () => {
   const plugin = await import('../../../packages/core/quiz/src/index.js');
   const provided = [];
   const ctx = { provide(n, s) { provided.push([n, s]); return () => {}; } };
   await plugin.apply(ctx, { llm: { async call() { return { text: '[]' }; } } });
-  assert.equal(provided[0][0], 'zhiyunQuiz');
+  assert.equal(provided[0][0], 'zwQuiz');
   assert.equal(provided[0][1].closed, false);
 });
 
@@ -1830,7 +1830,7 @@ test('插件：llm 的 route 延迟解析（没配模型时不该激活失败）
   const seen = [];
   const ctx = {
     provide() { return () => {}; },
-    zhiyunParser: {
+    zwParser: {
       llm: {
         resolve: async () => ({ text: 'route-text' }),
         async call(request) { seen.push(request); return { text: '{"statements":["甲"]}' }; },
@@ -1844,7 +1844,7 @@ test('插件：llm 的 route 延迟解析（没配模型时不该激活失败）
   const provided = [];
   const ctx2 = {
     provide(n, s) { provided.push([n, s]); return () => {}; },
-    zhiyunParser: ctx.zhiyunParser,
+    zwParser: ctx.zwParser,
   };
   await plugin.apply(ctx2, {});
   const svc = provided[0][1];

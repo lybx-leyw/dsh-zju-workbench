@@ -183,21 +183,21 @@ test('rewritePlaylist rewrites both segments and URI= attributes against the pla
   const lines = actual.split('\n');
   assert.equal(lines[0], '#EXTM3U');
   // 相对 URI 以播放列表地址为基准解析，否则 KEY 会指到本站根下。
-  assert.match(lines[1], /^#EXT-X-KEY:METHOD=AES-128,URI="\/zhiyun-live\/hls\?u=/);
+  assert.match(lines[1], /^#EXT-X-KEY:METHOD=AES-128,URI="\/zw-live\/hls\?u=/);
   assert.match(decodeURIComponent(lines[1]), /https:\/\/v\.cmc\.zju\.edu\.cn\/live\/key\.bin/);
   assert.equal(lines[2], '#EXTINF:2.0,');
-  assert.match(lines[3], /^\/zhiyun-live\/hls\?u=/);
+  assert.match(lines[3], /^\/zw-live\/hls\?u=/);
   assert.match(decodeURIComponent(lines[3]), /https:\/\/v\.cmc\.zju\.edu\.cn\/live\/seg-1\.ts$/);
   assert.equal(lines[4], '');
   // `../` 必须被正确归一化。
   assert.match(decodeURIComponent(lines[5]), /https:\/\/v\.cmc\.zju\.edu\.cn\/v3\/seg-2\.ts\?auth_key=2$/);
   // 分片本身也要经过转发，且必须重新过一遍白名单（由 handler 对每个请求再做）。
-  for (const line of [lines[3], lines[5]]) assert.match(decodeURIComponent(line), /^\/zhiyun-live\/hls\?u=https:/);
+  for (const line of [lines[3], lines[5]]) assert.match(decodeURIComponent(line), /^\/zw-live\/hls\?u=https:/);
 });
 
 test('stream relay surfaces the route prefix shared with the host wiring', async () => {
   const { STREAM_ROUTE_PREFIX, createStreamHandler } = await import('../../../packages/source/classroom/src/stream.js');
-  assert.equal(STREAM_ROUTE_PREFIX, '/zhiyun-live');
+  assert.equal(STREAM_ROUTE_PREFIX, '/zw-live');
   // handler 的签名必须是 (req, res)：宿主 WebRoute.handler 用 Node 响应所有权模型，
   // 不是 Fetch 的 Request => Response。写错的表现是请求挂死到超时。
   assert.equal(typeof createStreamHandler(), 'function');

@@ -5,7 +5,7 @@
  *
  * # 为什么规则是「必须带 scope」而不是「不许出现机构名」
  *
- * 早先这里是四条正则（`/zju/i`、`/zhiyun/i`、`/浙大/`、`/智云/`），理由是
+ * 早先这里是四条正则（`/zju/i`、`/zw/i`、`/浙大/`、`/智云/`），理由是
  * 「机构名发到 npm 上会被读成官方发布」。那条理由**不成立**：
  *
  * - npm 的官方归属靠 **scope**，不靠名字里的词。`@lybx-leyw/dsh-zju-core-parser`
@@ -136,7 +136,7 @@ test('the page shell dependency is an exact published version, not a local copy'
   const rootManifest = readManifest('package.json');
   // 桥接包已归档（`archive/deprecated-packages/`）—— 但仍要守住它当初的错误：
   // 「桥接包重复声明页面壳」会让 `pages` 服务被注册两次。归档副本同样不该带这条依赖。
-  const bridgePath = 'archive/deprecated-packages/dsh-zhiyun-shell-bridge/package.json';
+  const bridgePath = 'archive/deprecated-packages/dsh-zju-shell-bridge/package.json';
   const name = '@lybx-leyw/dsh-pages';
   const range = rootManifest.dependencies?.[name];
   assert.equal(typeof range, 'string', `${name} 必须在根 package.json 里声明`);

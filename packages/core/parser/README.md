@@ -3,13 +3,13 @@
 > **授权：MIT**。本包是本仓唯一按 MIT 独立开源的包，不适用仓库默认的
 > GPL-3.0-or-later —— 详见仓库根 [LICENSING.md](../../../LICENSING.md)。
 
-从 Flutter `lib/fusion/` 移植的独立 Cordis 插件。profile 自动加载并提供 `ctx.zhiyunParser`。所有模型调用直接使用宿主 `ctx.llm`；图片由 `ctx.attachments` 持久化与校验。没有独立 API key、模型 HTTP 客户端或另一套 agent runtime。
+从 Flutter `lib/fusion/` 移植的独立 Cordis 插件。profile 自动加载并提供 `ctx.zwParser`。所有模型调用直接使用宿主 `ctx.llm`；图片由 `ctx.attachments` 持久化与校验。没有独立 API key、模型 HTTP 客户端或另一套 agent runtime。
 
 ```js
-export const inject = ['zhiyunClassroom', 'zhiyunParser'];
+export const inject = ['zwClassroom', 'zwParser'];
 export async function apply(ctx) {
   // 登录交给数据源与产品账号流程，不自动读取开发凭证。
-  const result = await ctx.zhiyunParser.parseClassroom(courseId, subId, {
+  const result = await ctx.zwParser.parseClassroom(courseId, subId, {
     context: '课程名 · 节次', signal, onProgress: progress => { /* 更新进度 */ }
   });
 }
@@ -19,7 +19,7 @@ export async function apply(ctx) {
 
 ## 流水线形状：一个队列，N 个 worker
 
-`docs/show/zhiyun-pipeline.html` 是这条流水线的**可执行规格**。代码按它的顺序落：
+`docs/show/zw-pipeline.html` 是这条流水线的**可执行规格**。代码按它的顺序落：
 
 ```
                  ┌──────────── 共享 FIFO（有上限，背压）────────────┐
@@ -74,7 +74,7 @@ mix每页同一次调用返回逐句clean转录稿、块区间及role/facets/sum
 默认跟随 DSH 当前模型的 provider/model，但不继承聊天的推理档位。视觉模型必须明确支持 image；否则开跑前抛 `VISION_MODEL`。可用用户 profile overlay 单独选择视觉与文本路由（凭据仍在宿主模型设置中）：
 
 ```yaml
-- id: zhiyun-parser
+- id: zw-parser
   config:
     concurrency: 3
     visionBatchSize: 4
@@ -95,7 +95,7 @@ mix每页同一次调用返回逐句clean转录稿、块区间及role/facets/sum
 按阶段配置，**没给的字段一个都不发送**（由宿主决定默认值），所以不配 `accel` 时发出的请求与不加速逐字段相同：
 
 ```yaml
-- id: zhiyun-parser
+- id: zw-parser
   config:
     accel:
       faithful: { maxTokens: 32768 }        # 看图阶段
@@ -111,9 +111,9 @@ mix每页同一次调用返回逐句clean转录稿、块区间及role/facets/sum
 
 ### 词表持久化
 
-`vocabularyStore` 是词表落盘的口子（`{ load(), save(vocabulary) }`），插件默认用 `<profile>/data/zhiyun-parser/vocabulary.json`，落盘走宿主 `@deepseek-ai/dsh-atomic-write`。解析开跑前 `load()` 一次作为种子，解析结束后**只在真的有新增标签时** `save()` 一次；同一节的所有mix页共享加载后那一份快照，因此词表变了旧标注就不会再命中缓存。`load()` 抛错或数据损坏**不会**让解析失败：退回种子词表，原因同时进 `warnings` 与 `parser.loadIssues`，不静默当成「这次没有新增词」。解析失败时会保留已经提名的新标签，**取消时不写盘**（用户按了停，就不在磁盘上留下他没收下的东西）。
+`vocabularyStore` 是词表落盘的口子（`{ load(), save(vocabulary) }`），插件默认用 `<profile>/data/zw-parser/vocabulary.json`，落盘走宿主 `@deepseek-ai/dsh-atomic-write`。解析开跑前 `load()` 一次作为种子，解析结束后**只在真的有新增标签时** `save()` 一次；同一节的所有mix页共享加载后那一份快照，因此词表变了旧标注就不会再命中缓存。`load()` 抛错或数据损坏**不会**让解析失败：退回种子词表，原因同时进 `warnings` 与 `parser.loadIssues`，不静默当成「这次没有新增词」。解析失败时会保留已经提名的新标签，**取消时不写盘**（用户按了停，就不在磁盘上留下他没收下的东西）。
 
-缓存位于独立 profile 的 `data/zhiyun-parser/cache`，绑定模型路由、提示词、图片内容、原字幕和时间。缓存含课程转述与文字，属于用户数据。`dispose()` 会取消本插件所有任务，Cordis 卸载自动调用。
+缓存位于独立 profile 的 `data/zw-parser/cache`，绑定模型路由、提示词、图片内容、原字幕和时间。缓存含课程转述与文字，属于用户数据。`dispose()` 会取消本插件所有任务，Cordis 卸载自动调用。
 
 `parseClassroom` 默认要求课件和字幕均确认收全；可显式传 `allowPartialSource: true` 调试未完成数据，结果仍标记部分完成。截图过滤是结果上的 gate 元数据，不丢弃其对应字幕。逐页失败不会抹掉其他页的有效结果。
 

@@ -104,7 +104,7 @@ const header = `# 「讲义」Agent preset —— 标准模式 + 课程资料检
     # 本包自己。**这一行不能省** —— 它才是让 Loader 去 import 本包、跑
     # \`apply()\` 的入口。少了它，下面的 preset row 照样会被解析并注册进 roster，
     # 但本包里任何代码都不会执行。
-    - id: zhiyun-preset-lecture
+    - id: zw-preset-lecture
       name: '@lybx-leyw/dsh-zju-preset-lecture'
 
     - id: preset-lecture
@@ -134,7 +134,7 @@ ${ITEM}# 前六个分成两组是有意的：study_* 读的是**二次加工过�
 ${ITEM}# raw_* 读的是**原始素材**。混在一起时模型会把「老师随口说的话」当成
 ${ITEM}# 讲义的结论，也会把 PPT 的图片当成页面上的文字去引用。
 ${ITEM}#
-${ITEM}# 它 inject 的是主机的 \`zhiyunStudy\`（\`core/study\` provide）与 \`tools\`
+${ITEM}# 它 inject 的是主机的 \`zwStudy\`（\`core/study\` provide）与 \`tools\`
 ${ITEM}# 注册表，自己不 provide 任何服务，所以不需要 \`isolate\` realm ——
 ${ITEM}# realm 只用于隔离 preset 自己对外发布的服务名，不隔离对主机服务的读取。
 ${ITEM}#
@@ -147,7 +147,7 @@ ${ITEM}  name: '@lybx-leyw/dsh-zju-tool-classroom'
 ${ITEM}# ── 本 preset 独有：本地文档处理 ─────────────────────────────────────
 ${ITEM}#
 ${ITEM}# \`campus_doc\`（text / pdf / pages / find）由 \`@lybx-leyw/dsh-zju-tool-doc\`
-${ITEM}# 注册，读的是主机 \`zhiyunDoc\` 服务（\`core/doc\` provide）。
+${ITEM}# 注册，读的是主机 \`zwDoc\` 服务（\`core/doc\` provide）。
 ${ITEM}#
 ${ITEM}# 与 \`tool-classroom\` 同一条理由放在 preset 而不是 profile：它不是每个
 ${ITEM}# 会话都要用的东西，而工具表每多一格都在挤占模型的选择空间。

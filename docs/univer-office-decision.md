@@ -84,7 +84,7 @@ npm `dsh-univer-office@0.3.7`）—— **Univer 官方为 DeepSeek Harness 出�
 
 > `if (!sourceBundles.includes(bundle) …) throw new Error('profile 缺少 …，请检查自己的配置；初始化不会重写配置。')`
 
-`sourceBundles` 只扫 `packages/dsh-zhiyun-*` 目录名。模板里一旦出现非本仓包，
+`sourceBundles` 只扫 `packages/dsh-zju-*` 目录名。模板里一旦出现非本仓包，
 **已有 profile 的升级路径**就会抛错 —— 而 `initialize()` 正在 `npm start` 的路径上，
 所以表现不是「少了 Office 能力」，是**整个工作台起不来**。（全新 init 会照抄模板、
 不触发这条校验，所以只在升级时炸 —— 更难发现。）
@@ -99,7 +99,7 @@ npm `dsh-univer-office@0.3.7`）—— **Univer 官方为 DeepSeek Harness 出�
 `dsh.profile.bundles` 里不会被自动加载。漏了它，上游的客户端半边照样进图谱、
 包装包的宿主半边却静默不跑（实测：状态路由 404、启动无日志）。
 
-这与 `dsh-zhiyun-host-paper` 的情况不同：那个上游**只有宿主半边、没有客户端图谱声明**，
+这与 `dsh-zju-host-paper` 的情况不同：那个上游**只有宿主半边、没有客户端图谱声明**，
 所以要包一层来提供自己的 UI。这里上游是完整的双半边 bundle，包装层只负责装配。
 
 ## 目录

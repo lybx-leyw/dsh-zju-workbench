@@ -579,7 +579,7 @@ test('usage.get: 读 dataDir/usage/*.jsonl 并聚合（目录不存在 → 空�
   assert.equal(empty.httpStatus, 200);
   assert.equal(empty.body.totals.requests, 0);
 
-  const dataDir = await mkdtemp(join(tmpdir(), 'zyc-usage-'));
+  const dataDir = await mkdtemp(join(tmpdir(), 'zwc-usage-'));
   await mkdir(join(dataDir, 'usage'), { recursive: true });
   const rows = [
     { kind: 'llm', modelId: 'gpt-4o', inputTokens: 10, outputTokens: 5, createdAt: 1730000000000 },
@@ -614,7 +614,7 @@ test('persistence: dataDir 为 null → 404 PERSISTENCE_NOT_CONFIGURED（三动�
 });
 
 test('persistence: get / put / remove 往返（dataDir/persistence/ 下的 JSON 文件）', async () => {
-  const dataDir = await mkdtemp(join(tmpdir(), 'zyc-kv-'));
+  const dataDir = await mkdtemp(join(tmpdir(), 'zwc-kv-'));
   const { service } = makeService({ dataDir });
 
   const written = await service.persistence.put('documents/stage-1', { id: 'stage-1' });
@@ -634,7 +634,7 @@ test('persistence: get / put / remove 往返（dataDir/persistence/ 下的 JSON 
 });
 
 test('persistence: 路径穿越（.. / 编码斜杠）400 INVALID_PATH', async () => {
-  const dataDir = await mkdtemp(join(tmpdir(), 'zyc-kv-'));
+  const dataDir = await mkdtemp(join(tmpdir(), 'zwc-kv-'));
   const { service } = makeService({ dataDir });
 
   const relative = await service.persistence.get('../../etc/passwd');

@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-lecture-tools",
   "version": "0.1.0",
-  "description": "智云 Pro 出题专用工具集：讲义检索（rag）、大纲/清单（kb_files）、按知识点读取原文（read_source）、历史题查询（question_bank）。工具 description 与 parameters 逐字取自上游 DeepTutor，纯 JS、零第三方依赖、只读内存里的讲义",
+  "description": "ZJU Workbench 出题专用工具集：讲义检索（rag）、大纲/清单（kb_files）、按知识点读取原文（read_source）、历史题查询（question_bank）。工具 description 与 parameters 逐字取自上游 DeepTutor，纯 JS、零第三方依赖、只读内存里的讲义",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

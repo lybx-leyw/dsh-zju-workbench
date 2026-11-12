@@ -130,7 +130,7 @@ Node 22 与 24 上不一致（`assert` 与 `with` 两种写法互不兼容），
 （信息技术中心）落到统一身份认证登录页时才要。本包的做法是「遇到再说」：
 
 ```js
-const notice = ctx.get('zhiyunNotice')
+const notice = ctx.get('zwNotice')
 notice.setServiceLoginProvider(async ({ service, host }) => {
   // 拿 service 走一遍 CAS（通用实现在 @lybx-leyw/dsh-zju-source-login/cas，tier 0）
 })

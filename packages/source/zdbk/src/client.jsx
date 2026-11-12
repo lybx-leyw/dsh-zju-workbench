@@ -21,10 +21,10 @@ import {
   registerText,
 } from '@lybx-leyw/dsh-zju-ui-shared';
 
-const ROUTE_PATH = '/api/zhiyun-zdbk';
+const ROUTE_PATH = '/api/zw-zdbk';
 const NAMESPACE = 'zju-source-zdbk';
 
-export const name = 'zhiyun-source-zdbk-client';
+export const name = 'zw-source-zdbk-client';
 
 export const inject = ['slots', 'locale'];
 
@@ -168,7 +168,7 @@ export function apply(ctx) {
   // 「浙大统一身份认证」分区的「这份凭据的用途」卡片：三者共用同一份 CAS
   // 凭据，状态放在一起才能回答「我填的这份凭据到底通了哪些」。
   //
-  // 数据服务（`zhiyunZdbk`）与路由都保留，
+  // 数据服务（`zwZdbk`）与路由都保留，
   // 页面与脚本照常用它们，只是不在设置里占一格。
   void ctx;
 }

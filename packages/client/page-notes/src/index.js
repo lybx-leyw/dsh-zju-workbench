@@ -6,7 +6,7 @@
 //
 // 保留 Loader entry 是为了让客户端 bundle 进入启动图谱
 // （见 dsh-client-modules 的 ClientModuleRegistry：没有宿主入口的包不会被扫描）。
-export const name = 'zhiyun-page-notes-host';
+export const name = 'zw-page-notes-host';
 
 /** 无宿主行为：存储由 core-vault 提供，页面内容全部在客户端。 */
 export function apply() {}

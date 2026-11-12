@@ -20,7 +20,7 @@ export const name = 'zju-source-ebook';
 export const inject = [];
 
 /** 同源数据路由。 */
-export const ROUTE_PATH = '/api/zhiyun-ebook';
+export const ROUTE_PATH = '/api/zw-ebook';
 
 /**
  * 把 `sharedFetch` 适配成数据层期望的形状。
@@ -63,7 +63,7 @@ export function apply(ctx) {
       },
     };
 
-    const disposeService = ctx.provide('zhiyunEbook', service);
+    const disposeService = ctx.provide('zwEbook', service);
 
     let removeRoute = null;
     ctx.inject(['webServer'], (scope) => {

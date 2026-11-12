@@ -1021,7 +1021,7 @@ test('语言经 createLectureTools 的 language 选项生效（无插件壳，�
   const module = await import('../src/index.js');
   // 同层的 core-tool / core-llm 都不是 Cordis 插件；本包沿用同一约定。
   assert.equal(module.apply, undefined);
-  assert.equal(module.name, 'zhiyun-lecture-tools');
+  assert.equal(module.name, 'zw-lecture-tools');
 
   const zh = module.createLectureTools({ lecture: sampleLecture(), language: 'zh' });
   const en = module.createLectureTools({ lecture: sampleLecture(), language: 'en' });

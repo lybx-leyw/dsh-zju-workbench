@@ -64,7 +64,7 @@ test('下载两个 action 的分派真的在（不是落到默认分支）', asy
   for (const action of ['materialDownload', 'homeworkDownload']) {
     const { service } = recordingService({ assignments: [{ id: '101', title: '作业一' }] });
     try {
-      await run({ zhiyunXuezai: service }, { action, course: '7', uploadIds: '11', homework: '101' });
+      await run({ zwXuezai: service }, { action, course: '7', uploadIds: '11', homework: '101' });
     } catch (error) {
       assert.equal(/分派漏了/.test(String(error.message)), false, `${action} 落到了默认分支：${error.message}`);
     }
@@ -75,7 +75,7 @@ test('下载两个 action 的分派真的在（不是落到默认分支）', asy
 
 test('materialDownload：names / uploadIds 拆成数组，all 原样交给 source', async () => {
   const { service, seen } = recordingService();
-  await run({ zhiyunXuezai: service }, {
+  await run({ zwXuezai: service }, {
     action: 'materialDownload',
     course: '数据结构',
     names: '第一讲.pdf|第二讲.pdf',
@@ -90,13 +90,13 @@ test('materialDownload：names / uploadIds 拆成数组，all 原样交给 sourc
   });
 
   const byId = recordingService();
-  await run({ zhiyunXuezai: byId.service }, { action: 'materialDownload', course: '7', uploadIds: '11，12' });
+  await run({ zwXuezai: byId.service }, { action: 'materialDownload', course: '7', uploadIds: '11，12' });
   // 全角逗号也要认：中文输入法下很容易打出来
   assert.deepEqual(byId.seen[0].uploadIds, ['11', '12']);
   assert.equal('names' in byId.seen[0], false);
 
   const all = recordingService();
-  await run({ zhiyunXuezai: all.service }, { action: 'materialDownload', course: '7', all: true });
+  await run({ zwXuezai: all.service }, { action: 'materialDownload', course: '7', all: true });
   assert.equal(all.seen[0].all, true);
   assert.equal('names' in all.seen[0], false);
   assert.equal('uploadIds' in all.seen[0], false);
@@ -105,7 +105,7 @@ test('materialDownload：names / uploadIds 拆成数组，all 原样交给 sourc
 test('materialDownload：不给名字也不给 all 时当场拒绝，不默认下整门课', async () => {
   const { service, seen } = recordingService();
   await assert.rejects(
-    () => run({ zhiyunXuezai: service }, { action: 'materialDownload', course: '7' }),
+    () => run({ zwXuezai: service }, { action: 'materialDownload', course: '7' }),
     (error) => error.code === 'INPUT',
   );
   assert.equal(seen.length, 0, '参数不合法时不该调 source');
@@ -114,7 +114,7 @@ test('materialDownload：不给名字也不给 all 时当场拒绝，不默认�
 test('materialDownload：all 与 names 互斥（同时给会让结果取决于实现判序）', async () => {
   const { service, seen } = recordingService();
   await assert.rejects(
-    () => run({ zhiyunXuezai: service }, { action: 'materialDownload', course: '7', all: true, names: 'a.pdf' }),
+    () => run({ zwXuezai: service }, { action: 'materialDownload', course: '7', all: true, names: 'a.pdf' }),
     (error) => error.code === 'INPUT',
   );
   assert.equal(seen.length, 0);
@@ -122,7 +122,7 @@ test('materialDownload：all 与 names 互斥（同时给会让结果取决于�
 
 test('homeworkDownload：课程名解析成 id、作业名解析成 id，再交给 source', async () => {
   const { service, seen } = recordingService({ assignments: [{ id: '101', title: '第三次作业' }] });
-  await run({ zhiyunXuezai: service }, {
+  await run({ zwXuezai: service }, {
     action: 'homeworkDownload',
     course: '数据结构',
     homework: '第三次作业',
@@ -139,14 +139,14 @@ test('homeworkDownload：课程名解析成 id、作业名解析成 id，再交�
 
 test('homeworkDownload：没给 parts 时**不传**（让 source 用它自己的默认三类）', async () => {
   const { service, seen } = recordingService({ assignments: [{ id: '101', title: '作业一' }] });
-  await run({ zhiyunXuezai: service }, { action: 'homeworkDownload', course: '7', homework: '101' });
+  await run({ zwXuezai: service }, { action: 'homeworkDownload', course: '7', homework: '101' });
   assert.equal('parts' in seen[0], false, '塞一个默认值会覆盖 source 的默认口径');
 });
 
 test('homeworkDownload：parts 里写了不认识的类别时在封装层就说清可选值', async () => {
   const { service, seen } = recordingService({ assignments: [{ id: '101', title: '作业一' }] });
   await assert.rejects(
-    () => run({ zhiyunXuezai: service }, { action: 'homeworkDownload', course: '7', homework: '101', parts: 'attachments,comments' }),
+    () => run({ zwXuezai: service }, { action: 'homeworkDownload', course: '7', homework: '101', parts: 'attachments,comments' }),
     (error) => {
       assert.equal(error.code, 'INPUT');
       assert.match(error.message, /attachments/);
@@ -161,7 +161,7 @@ test('homeworkDownload：作业名对不上时报错并列出候选，不猜', a
     assignments: [{ id: '101', title: '作业一' }, { id: '102', title: '作业二' }],
   });
   await assert.rejects(
-    () => run({ zhiyunXuezai: service }, { action: 'homeworkDownload', course: '7', homework: '作业' }),
+    () => run({ zwXuezai: service }, { action: 'homeworkDownload', course: '7', homework: '作业' }),
     (error) => {
       assert.equal(error.code, 'INPUT');
       assert.match(error.message, /101|102/, '要给出候选编号');
@@ -174,7 +174,7 @@ test('homeworkDownload：作业名对不上时报错并列出候选，不猜', a
 test('未知 action 仍是 INPUT（新增两个 action 没把校验放宽）', async () => {
   const { service, seen } = recordingService();
   await assert.rejects(
-    () => run({ zhiyunXuezai: service }, { action: 'materialDownloadAll' }),
+    () => run({ zwXuezai: service }, { action: 'materialDownloadAll' }),
     (error) => {
       assert.equal(error.code, 'INPUT');
       assert.match(error.message, /materialDownload/);
@@ -195,7 +195,7 @@ test('下载两个 action 走读链：execute 全程**不碰审批**', async () 
   let approvalAsked = false;
   const registered = [];
   const ctx = {
-    get: (name) => (name === 'zhiyunXuezai' ? service : undefined),
+    get: (name) => (name === 'zwXuezai' ? service : undefined),
     tools: { register: (toolDefinition) => { registered.push(toolDefinition); return () => {}; } },
     approval: { request: async () => { approvalAsked = true; return 'allowed-once'; } },
     effect: (fn) => fn(),

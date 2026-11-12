@@ -44,14 +44,14 @@ function fakeCtx() {
 function mount() {
   const { ctx, services, routes } = fakeCtx();
   apply(ctx);
-  return { yjsy: services.get('zhiyunYjsy'), routes, services };
+  return { yjsy: services.get('zwYjsy'), routes, services };
 }
 
-test('apply() 真的 provide 了 zhiyunYjsy 并注册了路由', () => {
+test('apply() 真的 provide 了 zwYjsy 并注册了路由', () => {
   const { yjsy, routes } = mount();
-  assert.ok(yjsy, '必须 provide zhiyunYjsy');
+  assert.ok(yjsy, '必须 provide zwYjsy');
   assert.equal(routes.length, 1, '必须注册一条路由');
-  assert.equal(routes[0].path, '/api/zhiyun-yjsy');
+  assert.equal(routes[0].path, '/api/zw-yjsy');
 });
 
 test('没有注入 token provider 时，timetable 抛 CONFIG 且文案可操作', async () => {
@@ -161,7 +161,7 @@ test('清理后 transport 被关闭（不泄漏 AbortController）', async () =>
   // 这里至少钉住「清理函数存在且可调用」。
   const { ctx, services } = fakeCtx();
   const dispose = apply(ctx);
-  assert.ok(services.get('zhiyunYjsy'));
+  assert.ok(services.get('zwYjsy'));
   await assert.doesNotReject(async () => { await dispose?.(); });
 });
 
@@ -204,7 +204,7 @@ function makeReq(body) {
  * `ecf080f` 把 `lab` / `mail` / `sztz` / `tyys` / `notice` 都改成自己取凭据，
  * 只有 `yjsy` 漏了。这里钉住它现在也走共享 CAS：
  *
- *   1. 宿主有 `zhiyunCard.casLoginFor` 时 `ready()` 就该是 true；
+ *   1. 宿主有 `zwCard.casLoginFor` 时 `ready()` 就该是 true；
  *   2. 换 token 的那一跳（`validateLogin`）由本包发，`ticket` 来自落地 URL；
  *   3. 换不到 token 时把**平台原话**带出来（本科生走研究生入口就是这一种）。
  */
@@ -219,7 +219,7 @@ function fakeCtxWithCard({ landingUrl, validate }) {
   };
   /**
    * 出口替身：换 token 那一跳会经 `sharedFetch(ctx)`，而它会先问
-   * `ctx.get('zhiyunEgress')`。这里给一个假出口，测试就**不联网**，
+   * `ctx.get('zwEgress')`。这里给一个假出口，测试就**不联网**，
    * 也能精确断言「带上了哪个 ticket、哪个 service」。
    */
   const egress = {
@@ -237,8 +237,8 @@ function fakeCtxWithCard({ landingUrl, validate }) {
       callback(scope);
     },
     get(name) {
-      if (name === 'zhiyunCard') return card;
-      if (name === 'zhiyunEgress') return egress;
+      if (name === 'zwCard') return card;
+      if (name === 'zwEgress') return egress;
       return undefined;
     },
   };
@@ -251,7 +251,7 @@ test('装了 source/login 时 ready() 为 true，且用落地票换 token', asyn
     validate: { success: true, code: 200, message: 'ok', result: { token: 'TOKEN-1' } },
   });
   apply(host.ctx);
-  const yjsy = host.services.get('zhiyunYjsy');
+  const yjsy = host.services.get('zwYjsy');
   assert.equal(yjsy.ready(), true, '有共享 CAS 就算「已接入」');
 
   // 换 token 成功之后才去读课表；课表那一跳同样经假出口，回一个空但合法的形状。
@@ -273,7 +273,7 @@ test('装了 source/login 时 ready() 为 true，且用落地票换 token', asyn
 test('共享 CAS 但没有票时抛 REJECTED，说清是认证那边的问题', async () => {
   const host = fakeCtxWithCard({ landingUrl: 'https://yjsy.zju.edu.cn/' });
   apply(host.ctx);
-  const yjsy = host.services.get('zhiyunYjsy');
+  const yjsy = host.services.get('zwYjsy');
   await assert.rejects(() => yjsy.timetable({ username: '2234567890' }), (error) => {
     assert.equal(error.code, 'REJECTED', '两个入口都失败时归成 REJECTED');
     assert.match(error.message, /签票|不让这个账号登录/);
@@ -288,7 +288,7 @@ test('换不到 token 时把平台原话带出来（本科生走研究生入口�
     validate: { success: false, code: 500, message: '无效的用户信息' },
   });
   apply(host.ctx);
-  const yjsy = host.services.get('zhiyunYjsy');
+  const yjsy = host.services.get('zwYjsy');
   await assert.rejects(() => yjsy.timetable({ username: '3234567890' }), (error) => {
     assert.equal(error.code, 'REJECTED');
     assert.match(error.message, /无效的用户信息/, '平台原话要出现在最终错误里');
@@ -303,7 +303,7 @@ test('注入的 provider 优先于共享 CAS（装配方可以有更完整的票
     validate: { success: true, code: 200, message: 'ok', result: { token: 'FROM-CAS' } },
   });
   apply(host.ctx);
-  const yjsy = host.services.get('zhiyunYjsy');
+  const yjsy = host.services.get('zwYjsy');
   yjsy.setTokenProvider(async () => { called += 1; return 'INJECTED'; });
   await yjsy.timetable({ username: '2234567890' }).catch(() => {});
   assert.equal(called > 0, true, '注入的 provider 必须被调用');

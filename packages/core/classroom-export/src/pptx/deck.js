@@ -12,7 +12,7 @@
  *
  * 1. **媒体解析**：源经 `useMediaGenerationStore` / `resolveStoredBytes` / IndexedDB
  *    拿字节。宿主侧没有这些 store，媒体由调用方以 `assets: ref → dataURI|bytes`
- *    注入（`ctx.zhiyunClassroomUpload`/页面包负责落盘与取回）。拿不到的引用直接
+ *    注入（`ctx.zwClassroomUpload`/页面包负责落盘与取回）。拿不到的引用直接
  *    跳过该元素（源的行为也是"跳过"），不会把不透明 handle 塞进 pptxgenjs。
  * 2. **视频封面**：源先试 poster，再退到 `<video>` + canvas 抓首帧。Node 没有
  *    canvas，所以只用 poster；没有 poster 就只嵌视频本体（PowerPoint 显示默认播放键）。

@@ -13,7 +13,7 @@
  * `?.` 只护住它**紧挨着**的那一个值。这里 `contentDocument` 命中了，
  * 于是继续读 `.documentElement.classList` —— 对 `null` 取属性直接抛
  * `TypeError: Cannot read properties of null (reading 'classList')`。
- * 异常抛在 `useEffect` 里，被 `zhiyun.paper.content` 那个 slot 的 error boundary
+ * 异常抛在 `useEffect` 里，被 `zw.paper.content` 那个 slot 的 error boundary
  * 接住，**整个论文页变成空白**（用户看到的是"点开论文，页面没了"）。
  *
  * 这个窗口期是**时序相关**的，在测试机上时而命中时而不命中 —— 所以判定逻辑

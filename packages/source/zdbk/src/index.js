@@ -25,11 +25,11 @@
  *
  * # 暴露面
  *
- * 一个 `zhiyunZdbk` 服务 + 一条同源数据路由（默认 `/api/zhiyun-zdbk`）：
+ * 一个 `zwZdbk` 服务 + 一条同源数据路由（默认 `/api/zw-zdbk`）：
  *
  * ```text
- *   GET  /api/zhiyun-zdbk   → 有哪些数据方法（自描述）
- *   POST /api/zhiyun-zdbk   → { type:'client-request', rpcId, method:'zdbk.timetable', payload:{…} }
+ *   GET  /api/zw-zdbk   → 有哪些数据方法（自描述）
+ *   POST /api/zw-zdbk   → { type:'client-request', rpcId, method:'zdbk.timetable', payload:{…} }
  * ```
  *
  * `method` 一律是 `zdbk.<方法名>`。这是 omni 时代的调用口径，刻意保留：
@@ -38,7 +38,7 @@
  * # 网络出口：走**共享出口**，自动分域
  *
  * 教务站是校园域（`zdbk.zju.edu.cn`），请求经 `sharedFetch(ctx)` 借
- * `@lybx-leyw/dsh-zju-source-http` 提供的 `zhiyunEgress` 服务：
+ * `@lybx-leyw/dsh-zju-source-http` 提供的 `zwEgress` 服务：
  *
  *   - 境内直连（**绕开宿主为 LLM 配的全局代理** —— 浙大站点经代理基本必失败）；
  *   - 校内直连、校外自动绕 WebVPN；
@@ -61,13 +61,13 @@ import { casLogin } from './cas.js';
 import { ZDBK_BASE, ZDBK_HOST, ZDBK_HOSTS, ZDBK_PATHS } from './hosts.js';
 import { ZdbkError, fault } from './errors.js';
 
-export const name = 'zhiyun-zdbk';
+export const name = 'zw-zdbk';
 
 /** 只硬依赖 `profileContext`（数据目录）。`connection` 走 `ctx.inject` 惰性取。 */
 export const inject = ['profileContext'];
 
-/** 本包的数据路由。与 campus 的 `/api/zhiyun-campus` 并列，互不干扰。 */
-export const ROUTE_PATH = '/api/zhiyun-zdbk';
+/** 本包的数据路由。与 campus 的 `/api/zw-campus` 并列，互不干扰。 */
+export const ROUTE_PATH = '/api/zw-zdbk';
 
 export { ZdbkClient } from './client.js';
 export { ZdbkReader } from './reads.js';
@@ -160,12 +160,12 @@ export function toError(error) {
 
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-zdbk] ${message}`;
+    const line = `[zw-zdbk] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
 
-  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zhiyun-zdbk');
+  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zw-zdbk');
 
   /* ── 会话存储 ───────────────────────────────────────────────────────
    * 与 campus 的三个 jar 分开存：教务的会话是**自己的** `JSESSIONID`，
@@ -185,7 +185,7 @@ export async function apply(ctx, config = {}) {
    *
    * `config.fetch` 是测试注入口 —— 单测注入假 fetch 时不该真的发网络请求。
    *
-   * 生产路径走**共享出口**（`zhiyunEgress`，由 `@lybx-leyw/dsh-zju-source-http` 提供）：
+   * 生产路径走**共享出口**（`zwEgress`，由 `@lybx-leyw/dsh-zju-source-http` 提供）：
    * 教务站是校园域，自动出口会在校内直连、在校外绕 WebVPN，并且**绕开宿主为
    * LLM 配的全局代理**（浙大站点经那个代理基本必失败）。
    *
@@ -469,7 +469,7 @@ export async function apply(ctx, config = {}) {
       });
       log(`数据路由：${ROUTE_PATH}（会话 ${dataDir}）`);
       return remove;
-    }, 'zhiyun: zdbk data route');
+    }, 'zw: zdbk data route');
   });
 
   /**
@@ -487,7 +487,7 @@ export async function apply(ctx, config = {}) {
    * 那条链（`readWithRetry` + 新建客户端）。登录态没有业务数据可读，硬塞进去
    * 会让「查登录状态」触发一次 CAS 登录 —— 那正好是这条接口要避免的事。
    */
-  const removeService = ctx.provide('zhiyunZdbk', {
+  const removeService = ctx.provide('zwZdbk', {
     routePath: ROUTE_PATH,
     platform: 'zdbk',
     label: '教务系统',

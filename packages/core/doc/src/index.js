@@ -1,5 +1,5 @@
 /**
- * `@lybx-leyw/dsh-zju-core-doc` 的插件包装（薄）：把四条文档能力挂到 `ctx.zhiyunDoc`。
+ * `@lybx-leyw/dsh-zju-core-doc` 的插件包装（薄）：把四条文档能力挂到 `ctx.zwDoc`。
  *
  * # 为什么这一层几乎不做事
  *
@@ -43,7 +43,7 @@ import { extractFile } from './text.js';
 import { sniff } from './sniff.js';
 
 /** Cordis 插件名（loader 诊断用）。 */
-export const name = 'zhiyun-doc';
+export const name = 'zw-doc';
 
 /**
  * 只硬依赖 `profileContext`（拿 profile 目录做输出根）。
@@ -250,7 +250,7 @@ export function apply(ctx, config = {}) {
       + '或确保 ctx.profileContext.dir 可用');
   }
   const service = createDocService({ outputDir });
-  const remove = ctx.provide('zhiyunDoc', service);
+  const remove = ctx.provide('zwDoc', service);
   return async () => {
     // 先摘服务再收资源：反过来的话，卸载途中还在飞的调用会拿到一个已经失效的服务，
     // 而它报出来的是「文档处理坏了」，不是「插件卸载了」。

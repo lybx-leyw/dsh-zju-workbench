@@ -10,12 +10,12 @@ import { createWriteToolRegistrar, contractOf, inputError, serviceLookup, str } 
 import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createCc98ReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-cc98';
+export const name = 'zw-tool-cc98';
 
-export const inject = ['tools', 'approval', 'zhiyunCc98'];
+export const inject = ['tools', 'approval', 'zwCc98'];
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunCc98: '@lybx-leyw/dsh-zju-source-cc98',
+  zwCc98: '@lybx-leyw/dsh-zju-source-cc98',
 });
 
 /**
@@ -59,7 +59,7 @@ export function createCc98WriteTools(services) {
         if (!['post', 'reply', 'edit', 'message'].includes(action)) {
           throw inputError(`不认识的 action：${action}`);
         }
-        const cc98 = need('zhiyunCc98');
+        const cc98 = need('zwCc98');
 
         if (action === 'post') {
           const board = str(args.board, '版面编号（post 需要）');
@@ -123,7 +123,7 @@ export function createCc98WriteTools(services) {
         if (!['like', 'down', 'unlike', 'favorite', 'unfavorite', 'rate'].includes(action)) {
           throw inputError(`不认识的 action：${action}`);
         }
-        const cc98 = need('zhiyunCc98');
+        const cc98 = need('zwCc98');
 
         if (action === 'like' || action === 'down' || action === 'unlike') {
           const { prepare, execute, cancel } = contractOf(cc98, 'likeFloor');
@@ -153,7 +153,7 @@ export function createCc98WriteTools(services) {
       description: 'CC98 每日签到。签到有连签奖励，重复签到不会有额外收益。执行前会请求你批准。',
       parameters: { type: 'object', properties: {}, additionalProperties: false },
       async prepare() {
-        const cc98 = need('zhiyunCc98');
+        const cc98 = need('zwCc98');
         const { prepare, execute, cancel } = contractOf(cc98, 'signIn');
         return { summary: await prepare(), execute, cancel };
       },

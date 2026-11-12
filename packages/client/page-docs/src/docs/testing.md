@@ -10,7 +10,7 @@
 ```js
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { scanHeadings } from '../packages/dsh-zhiyun-page-docs/src/outline.js';
+import { scanHeadings } from '../packages/dsh-zju-page-docs/src/outline.js';
 
 test('围栏代码块里的 ## 不算标题', () => {
   const markdown = ['# 甲', '```', '## 不是标题', '```', '## 真标题'].join('\n');

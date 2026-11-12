@@ -89,7 +89,7 @@ export async function produceScenes({ outlines, brief, llm, pbl, stageId, emit, 
   return { scenes, skipped };
 }
 
-/** pbl 场景走 `zhiyunClassroomPbl`，其余走模型。 */
+/** pbl 场景走 `zwClassroomPbl`，其余走模型。 */
 async function produceScene({ outline, brief, llm, pbl, stageId, index, total, previousSpeeches, signal, now }) {
   const sceneId = sceneIdOf(outline, index);
 

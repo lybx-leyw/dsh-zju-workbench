@@ -40,7 +40,7 @@ test('xzzdRead 的动作白名单：有 courses / courseBundle，且没把写动
 });
 
 /**
- * 装配出一个可用的 `zhiyunXuezai` 服务面。
+ * 装配出一个可用的 `zwXuezai` 服务面。
  *
  * `apply()` 要 `profileContext.dir`（会话文件落盘）与凭据读取；两者都给最小替身。
  * 读动作真正发请求前会 `xzzdClient()` → CAS，而测试里的 `config.fetch` 直接拒发，
@@ -66,7 +66,7 @@ async function mount() {
     fetch: async () => { requested = true; throw new Error('测试不该发真实请求'); },
   });
   return {
-    service: services.get('zhiyunXuezai'),
+    service: services.get('zwXuezai'),
     dispose,
     sent: () => requested,
   };
@@ -134,7 +134,7 @@ test('pta 的读白名单：有 exam，没有 start / finish', async () => {
   };
   const dispose = await apply(ctx, { fetch: async () => { throw new Error('测试不该发真实请求'); } });
   try {
-    const pta = services.get('zhiyunPta');
+    const pta = services.get('zwPta');
     assert.deepEqual([...pta.reads].sort(),
       ['exam', 'problem', 'problemSet', 'problems', 'progress', 'submission', 'submissions']);
     // 开始答题 / 交卷是写操作：它们会启动计时、交卷后不能改。

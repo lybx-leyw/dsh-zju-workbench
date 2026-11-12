@@ -1,5 +1,5 @@
 /**
- * **Cordis 插件包装（薄）**：把节笔记领域服务挂到 `ctx.zhiyunNotes`。
+ * **Cordis 插件包装（薄）**：把节笔记领域服务挂到 `ctx.zwNotes`。
  *
  * # 本包不落盘，落盘只有一条路：注入 store
  *
@@ -12,7 +12,7 @@
  *    的 `KvTable` 正好就是这个形状）。内存实现见
  *    `createMemorySectionNoteStore()`，测试与"先跑起来"都用它。
  * 2. **`ctx.storageDomain`**（宿主存储栈，生产路径）：本包自己
- *    `defineDomain` 声明一个 `zhiyun_notes` 域并 `open` 它。签名是照宿主
+ *    `defineDomain` 声明一个 `zw_notes` 域并 `open` 它。签名是照宿主
  *    0.2.x 的 `lib/types/*.d.ts` 写的（`open(spec) → Domain`、`Domain.table(name) → KvTable`、
  *    `KvTable.get/keys/put/delete`、`Domain.close()`），**不是猜的**；但它在本仓的
  *    离线用例里**没有**被真正跑过（宿主包不在仓库根 node_modules，只能从 profile 里解析）。
@@ -43,7 +43,7 @@ import { noteKey } from './note.js';
 import { createSectionNoteService } from './store.js';
 
 /** Cordis 插件名（loader 诊断用）。 */
-export const name = 'zhiyun-notes';
+export const name = 'zw-notes';
 
 /**
  * 真正依赖的宿主服务名。
@@ -66,7 +66,7 @@ export const name = 'zhiyun-notes';
 export const inject = ['storageDomain'];
 
 /** 宿主 domain 的名字；要过 `UNIT_NAME_RE = /^[a-z][a-z0-9_]*$/`。 */
-export const kNotesDomainName = 'zhiyun_notes';
+export const kNotesDomainName = 'zw_notes';
 /** domain 里的表名（同上，必须匹配 `UNIT_NAME_RE`）。 */
 export const kNotesTableName = 'notes';
 /** domain 格式版本（与 Dart 的 `kSectionNotesSchema` 对齐）。 */
@@ -222,7 +222,7 @@ export async function apply(ctx, config = {}) {
     nextAssetId: config.nextAssetId,
   });
 
-  const removeService = ctx.provide('zhiyunNotes', service);
+  const removeService = ctx.provide('zwNotes', service);
 
   return async () => {
     // 顺序：先摘服务、再收自己开的东西。

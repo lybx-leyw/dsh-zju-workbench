@@ -19,7 +19,7 @@
 import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunChalaoshi: '@lybx-leyw/dsh-zju-source-chalaoshi',
+  zwChalaoshi: '@lybx-leyw/dsh-zju-source-chalaoshi',
 });
 
 const ACTIONS = ['search', 'teacher', 'course'];
@@ -31,7 +31,7 @@ const ACTIONS = ['search', 'teacher', 'course'];
  * @returns 工具定义数组。
  */
 export function createChalaoshiReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunChalaoshi', SERVICE_SOURCES.zhiyunChalaoshi);
+  const need = () => serviceLookup(services, 'zwChalaoshi', SERVICE_SOURCES.zwChalaoshi);
 
   return [
     {
@@ -110,10 +110,10 @@ export function createChalaoshiReadTools(services) {
   ];
 }
 
-export const name = 'zhiyun-tool-chalaoshi';
+export const name = 'zw-tool-chalaoshi';
 
 /**
- * 惰性注入：`tools` 由宿主提供，`zhiyunChalaoshi` 由对应的 source 包提供。
+ * 惰性注入：`tools` 由宿主提供，`zwChalaoshi` 由对应的 source 包提供。
  *
  * # 为什么必须声明
  *
@@ -125,7 +125,7 @@ export const name = 'zhiyun-tool-chalaoshi';
  * 都声明了，这四个包当初漏了。因为这个包一直没被 preset 挂载，
  * 「不声明也能跑」从未被验证过。
  */
-export const inject = ['tools', 'zhiyunChalaoshi'];
+export const inject = ['tools', 'zwChalaoshi'];
 
 export function apply(ctx) {
   createReadToolRegistrar({

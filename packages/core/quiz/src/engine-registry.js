@@ -13,7 +13,7 @@
  * `planEngineQuestions` / `canResumeEngine` / `engineComplete` 都是**同步纯函数**，
  * 而 Cordis 服务是异步注入的。注册表若只活在 `ctx` 上，这三个函数就查不到它。
  * 所以真相在模块级，`index.js` 交出的服务只是把注册/注销动作暴露给插件
- * （见 `ctx.provide('zhiyunQuizEngines', …)`）。
+ * （见 `ctx.provide('zwQuizEngines', …)`）。
  *
  * 副作用边界：模块级状态只会被 `register` 改动，而 `register` 只有经过 Cordis
  * 服务才拿得到。**未安装任何 lab 包时，本表恒为空，所有纯函数行为与改动前逐字一致。**

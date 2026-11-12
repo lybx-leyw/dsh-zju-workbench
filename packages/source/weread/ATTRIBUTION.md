@@ -19,7 +19,7 @@
 
 上游 `packages/vendor/zju-assistant/package.json` 的 `license` 字段写的是
 `GPL-3.0-only`，仓库根的 `LICENSE` 是 GPLv3 全文（第 3 版，2007-06-29）。
-本仓（`zhiyun-pro-js`）对**非 vendor 包**统一采用 **GPL-3.0-or-later**，
+本仓（`zju-workbench`）对**非 vendor 包**统一采用 **GPL-3.0-or-later**，
 这个 `-or-later` 与上游的 `-only` 是兼容的：GPLv3 §14 允许 `-only` 的衍生作品
 按更高版本授权，前提是不额外限制。**注意这是两个不同的声明**，不是笔误：
 

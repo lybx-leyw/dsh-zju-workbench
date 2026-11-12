@@ -22,7 +22,7 @@ import yaml from 'js-yaml';
  *
  * # 这个 bug 真的发生过
  *
- * 包改名 `dsh-zhiyun-source-cc98` → `@lybx-leyw/dsh-zju-source-cc98` 之后：
+ * 包改名 `dsh-zju-source-cc98` → `@lybx-leyw/dsh-zju-source-cc98` 之后：
  * `name:` 的值以 **`@` 开头**，而 `@` 是 YAML 的保留字符，裸写非法。
  * 批量改名只换了字符串，没意识到**换进来的字符本身有语法意义**；
  * JS-YAML 报的却是「缩进错误」，把人引向完全无关的方向。

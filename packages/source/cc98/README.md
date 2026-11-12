@@ -14,8 +14,8 @@
 把 CC98 的读取接口收成 22 个方法，挂在一条同源数据路由上：
 
 ```text
-GET  /api/zhiyun-cc98        → 自描述（能干什么、参数示例）+ 当前登录状态（不回令牌本身）
-POST /api/zhiyun-cc98        → { type:'client-request', rpcId, method:'cc98.hot', payload:{…} }
+GET  /api/zw-cc98        → 自描述（能干什么、参数示例）+ 当前登录状态（不回令牌本身）
+POST /api/zw-cc98        → { type:'client-request', rpcId, method:'cc98.hot', payload:{…} }
 ```
 
 信封里的 `method` 既接受顶层（本包约定），也接受 `payload.method`（omni 时代的口径）；
@@ -99,7 +99,7 @@ POST https://openid.cc98.org/connect/token
 | --- | --- | --- |
 | 身份服务 | `zjuam.zju.edu.cn`（CAS） | `openid.cc98.org`（OAuth2） |
 | 账号形态 | 学号 | CC98 自己的账号（论坛 ID / 注册邮箱那一路） |
-| 凭据记录 | `zhiyun-classroom/account` | **`zhiyun-cc98/account`**（独立） |
+| 凭据记录 | `zw-classroom/account` | **`zw-cc98/account`**（独立） |
 
 一个只注册过 CC98 的人可以正常发帖，但他没有（也不需要）浙大身份；反过来说，
 有一卡通也不能推出"一定能登 CC98"。omni 自己就是把 CC98 当**独立账号种类**处理的：
@@ -188,7 +188,7 @@ omni 的 `client.ts` 里有一支 `mode === 'webvpn'`，依赖 omni 自己的
 本包**不依赖它**。
 
 本包改用**共享出口**：请求经 `sharedFetch(ctx)` 借 `@lybx-leyw/dsh-zju-source-campus`
-提供的 `zhiyunEgress` 服务。CC98 是公网域，策略判定为**直连** —— 关键是这条直连
+提供的 `zwEgress` 服务。CC98 是公网域，策略判定为**直连** —— 关键是这条直连
 会**绕开宿主为 LLM 配的全局代理**（实测：同一个 `api.cc98.org` 请求，
 `globalThis.fetch` 10.7 秒后 `NETWORK` 失败，走共享出口 97ms 就拿到响应）。
 
@@ -220,7 +220,7 @@ omni 的 `client.ts` 里有一支 `mode === 'webvpn'`，依赖 omni 自己的
 | --- | --- | --- | --- |
 | 实现语言 | TypeScript | 纯 JS（ESM） | 不需要编译步骤，`node -e` 直接可用 |
 | 包结构 | 六平台合一 | 只 CC98 | 六平台的认证方式根本不同（CAS cookie / WebVPN / OAuth2 Bearer），混在一起 regression 面太大 |
-| 网络抽象 | `ctx.network.chooseMode()` + `webvpnJar()` | 共享层 `Transport` + 共享出口 `zhiyunEgress`（自动分域） | 出口只有一份（campus 持有），各包共用同一个 dispatcher 与 WebVPN 会话 |
+| 网络抽象 | `ctx.network.chooseMode()` + `webvpnJar()` | 共享层 `Transport` + 共享出口 `zwEgress`（自动分域） | 出口只有一份（campus 持有），各包共用同一个 dispatcher 与 WebVPN 会话 |
 | 失败处理 | `assertNoRecentFailure` 封锁 15 分钟 | 不缓存失败 | 一次网络抖动被放大成"半天不可用" |
 | 写操作 | `actions.ts`（发帖/回复/私信） | **不移植** | 只读数据源，写操作归 `packages/tool/campus-write` |
 | `[code]` | 未处理，裸标签留在正文里 | 剥标签、留内容 | 与函数自己的语义一致 |
@@ -260,11 +260,11 @@ import { Transport, SessionStore, ClassroomError, shape, object, array } from '@
 ```text
 packages/source/cc98/
 ├── package.json        # type: module, main: ./src/index.js
-├── cordis.patch.yml    # id: zhiyun-cc98
+├── cordis.patch.yml    # id: zw-cc98
 ├── OWNERS
 ├── README.md
 └── src/
-    ├── index.js        # Cordis 插件：apply + 数据路由 + zhiyunCc98 服务
+    ├── index.js        # Cordis 插件：apply + 数据路由 + zwCc98 服务
     ├── hosts.js        # CC98_API / TOKEN_URL / CC98_HOSTS
     ├── token.js        # OAuth2 密码模式：获取 / 刷新 / 缓存
     ├── client.js       # Cc98Client：GET + Bearer + 状态翻译 + 401 重试一次 + fetchFile
@@ -274,11 +274,11 @@ packages/source/cc98/
 
 ## 挂载
 
-`cordis.patch.yml` 会把 `zhiyun-cc98` 插进 profile：
+`cordis.patch.yml` 会把 `zw-cc98` 插进 profile：
 
 ```yaml
 - insert:
-    - id: zhiyun-cc98
+    - id: zw-cc98
       name: @lybx-leyw/dsh-zju-source-cc98
 ```
 
@@ -286,7 +286,7 @@ packages/source/cc98/
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
-| `dataDir` | `<profile>/data/zhiyun-cc98` | 令牌与会话目录；**传 `null` 则纯内存**（测试据此不碰 DPAPI） |
+| `dataDir` | `<profile>/data/zw-cc98` | 令牌与会话目录；**传 `null` 则纯内存**（测试据此不碰 DPAPI） |
 | `downloadDir` | `null`（**不落盘**） | `cc98.topicDownload` 的文件目录。不默认开：写满磁盘这件事应当显式同意 |
 | `fetch` | `globalThis.fetch` | 出口实现，测试注入假 fetch |
 | `protect` | `dpapi` | `SessionStore` 的保护器 |

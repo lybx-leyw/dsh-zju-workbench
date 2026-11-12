@@ -34,7 +34,7 @@ import { createReadToolRegistrar, defined, inputError, optBool, optInt, optStr, 
  * 读与写两条注册链共用它。
  */
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunZdbk: '@lybx-leyw/dsh-zju-source-zdbk',
+  zwZdbk: '@lybx-leyw/dsh-zju-source-zdbk',
 });
 
 /** `campus_zdbk_read` 的 action 表。顺序即描述里列举的顺序。 */
@@ -51,7 +51,7 @@ const ACTIONS = [
  * @returns 工具定义数组。
  */
 export function createZdbkReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunZdbk', SERVICE_SOURCES.zhiyunZdbk);
+  const need = () => serviceLookup(services, 'zwZdbk', SERVICE_SOURCES.zwZdbk);
 
   return [
     {

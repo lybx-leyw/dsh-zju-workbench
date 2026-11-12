@@ -17,7 +17,7 @@
 //
 // 它原先在 `packages/client/page-plugins/src/runtime.js`，但**宿主半边的 `host.js` 与
 // 客户端的 `store.js` 都 import 它** —— 两边共用一份纯逻辑，正是「该放在 core」的信号。
-// 搬过来之后页面只渲染（`Panel.jsx`），图的计算与 `/api/zhiyun-plugins` 都在 core。
+// 搬过来之后页面只渲染（`Panel.jsx`），图的计算与 `/api/zw-plugins` 都在 core。
 
 /**
  * 只看本仓的包；上游 `@deepseek-ai/*` 一律不进这张图。
@@ -31,15 +31,15 @@
  * 迁移是**逐批**进行的，所以同一时刻两种命名都真实存在。只认一种的表现是
  * 「插件页里少了一半的包」—— 而少掉的那批恰好是不报错的（它们被静默过滤掉）。
  *
- * **2026-11 状态：迁移已完成** —— 全仓 53 个产品包的包名无一以 `dsh-zhiyun-` 开头
+ * **2026-11 状态：迁移已完成** —— 全仓产品包的包名无一以 `dsh-zhiyun-` 开头
  * （已核对，见本轮重构）。旧前缀**仍然保留**，理由是它还会匹配到本仓之外、
  * 用户自己装的旧前缀包；删掉只会让那些包在插件页里静默消失，而这正是上面说的
  * 那类「不报错的缺失」。要彻底删，先确认没有外部旧包在用。
  */
-export const ZHIYUN_PREFIXES = Object.freeze(['dsh-zhiyun-', '@lybx-leyw/dsh-zju-']);
+export const ZW_PREFIXES = Object.freeze(['dsh-zhiyun-', '@lybx-leyw/dsh-zju-']);
 
 /** 兼容旧调用方：单个前缀（新命名）。 */
-export const ZHIYUN_PREFIX = '@lybx-leyw/dsh-zju-';
+export const ZW_PREFIX = '@lybx-leyw/dsh-zju-';
 
 /**
  * 把模块说明符归一到拥有它的图行。
@@ -59,7 +59,7 @@ const EMPTY = Object.freeze([]);
  * 把某个 fiber 追溯到拥有它的包名。
  *
  * 包的 Loader 条目只有一条 fiber，但包里的 `ctx.inject([...], cb)` / `ctx.plugin(...)` 会生出
- * 子 fiber —— 那些子 fiber 才是「等 zhiyunStudyController 到位」这类等待关系的真正持有者。
+ * 子 fiber —— 那些子 fiber 才是「等 zwStudyController 到位」这类等待关系的真正持有者。
  * 顺着 `parent.fiber` 往上走就能把它们归到同一个包，这也是 Cordis 自己在解析服务时走的路径。
  * @param owner - 包 fiber → 包名。
  * @param fiber - 起点 fiber。
@@ -150,13 +150,13 @@ export function readPlane({ entries, runtimes, store }) {
  *
  * 为什么这条边必须进图：本仓的页面与外壳之间**只有**一条边 —— 「外壳声明插槽、页面填内容」
  * （见 dsh-zhiyun-page-today/README.md）。这条边既不是 `dsh.client.inject`/`external`，
- * 也不是服务 inject：页面用 `ctx.slots.inject('zhiyun.today.content', …)` 等外壳声明。
- * 少了它，`dsh-zhiyun-shell-workbench` 就会因为没有入边被判成「可以取消的叶」—— 而取消外壳正是
+ * 也不是服务 inject：页面用 `ctx.slots.inject('zw.today.content', …)` 等外壳声明。
+ * 少了它，`dsh-zju-shell-workbench` 就会因为没有入边被判成「可以取消的叶」—— 而取消外壳正是
  * 会让五个页面一起消失的那种操作。
  *
  * 两个名字都不是包名，必须先翻回来（真机验证时两条都踩到过）：
  *   - `occupants[].registrant` 是 **fiber 名**（`ctx.fiber.name`，即插件导出的 `name`，
- *     如 `zhiyun-page-today-client`）；
+ *     如 `zw-page-today-client`）；
  *   - `declaredBy` 是**诊断串**，DSH 的两种写法是 `an entry in "<插槽名>" (<registrant>)`
  *     与 `factory "<名>" (<registrant>)`，所以声明者的名字在末尾括号里，得解出来。
  * @param roots - `ctx.slots.snapshot()` 的结果。
@@ -170,7 +170,7 @@ export function slotEdges(roots, inScope, fiberNames = new Map()) {
     if (inScope.has(value)) return value;
     const direct = fiberNames.get(value);
     if (direct !== undefined) return direct;
-    // 诊断串：`an entry in "main" (zhiyun-shell-client)` / `factory "x" (name)`。
+    // 诊断串：`an entry in "main" (zw-shell-client)` / `factory "x" (name)`。
     const tagged = /\(([^()]+)\)\s*$/.exec(value);
     return tagged === null ? undefined : fiberNames.get(tagged[1]);
   };
@@ -293,7 +293,7 @@ export function orderGraph(names, edges, baseline) {
  *   翻回包名）、`prefix`。
  * @returns 拓扑序的 `rows`、`leaves`、层序违例、环，以及计数。
  */
-export function buildView({ bundles, modules, host, client, plugins, slots, fiberNames, prefix = ZHIYUN_PREFIXES }) {
+export function buildView({ bundles, modules, host, client, plugins, slots, fiberNames, prefix = ZW_PREFIXES }) {
   // `prefix` 接受单个字符串或一组 —— 迁移期两种命名并存，只认一种会静默
   // 过滤掉另一半（表现是「插件页少了几个包」，不报错）。
   const prefixes = Array.isArray(prefix) ? prefix : [prefix];

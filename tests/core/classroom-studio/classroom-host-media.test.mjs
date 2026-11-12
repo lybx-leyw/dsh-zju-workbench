@@ -713,7 +713,7 @@ test('media.comfyuiWorkflows：dataDir 为 null → 空清单 200（上游「目
 });
 
 test('media.comfyuiWorkflows：有 public/ → 按名字排序，只认约定文件名', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'zyc-comfy-'));
+  const dir = await mkdtemp(join(tmpdir(), 'zwc-comfy-'));
   await mkdir(join(dir, 'public'));
   await writeFile(join(dir, 'public', 'comfyui-portrait.json'), '{}');
   await writeFile(join(dir, 'public', 'my-workflow.json'), '{}');

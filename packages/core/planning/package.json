@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-planning",
   "version": "0.1.0",
-  "description": "规划域宿主半边：数据聚合与 /_dsh/zhiyun-planning 路由、上海时区口径、我的规划、pet 协议、执行时间块与平台勾选存储（不含 UI）",
+  "description": "规划域宿主半边：数据聚合与 /_dsh/zw-planning 路由、上海时区口径、我的规划、pet 协议、执行时间块与平台勾选存储（不含 UI）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

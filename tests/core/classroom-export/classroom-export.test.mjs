@@ -37,7 +37,7 @@ const plugin = await import(INDEX_URL);
 function makeCtx({ services = {}, studio } = {}) {
   const provided = new Map(Object.entries(services));
   const disposers = [];
-  if (studio) provided.set('zhiyunClassroomStudio', studio);
+  if (studio) provided.set('zwClassroomStudio', studio);
   const ctx = {
     logger: { debug() {}, info() {}, warn() {}, error() {} },
     get: (name) => provided.get(name),
@@ -66,7 +66,7 @@ function scageId(stage) {
 function boot(options) {
   const { ctx, provided, disposers } = makeCtx(options);
   plugin.apply(ctx, { logger: { debug() {}, info() {}, warn() {}, error() {} } });
-  return { service: provided.get('zhiyunClassroomExport'), provided, ctx, disposers };
+  return { service: provided.get('zwClassroomExport'), provided, ctx, disposers };
 }
 
 // ── 1. html() ───────────────────────────────────────────────────────────────
@@ -243,7 +243,7 @@ test('apply() 永不抛；服务可卸载；缺宿主时报 E_NO_STUDIO', async 
 
   assert.equal(disposers.length, 1);
   disposers[0]();
-  assert.equal(provided.has('zhiyunClassroomExport'), false);
+  assert.equal(provided.has('zwClassroomExport'), false);
 });
 
 test('apply()：宿主就位后按 id 加载文档', async () => {

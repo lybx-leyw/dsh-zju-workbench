@@ -55,7 +55,7 @@ export const IDENTITY_HOST = 'identity.zju.edu.cn';
  * `new undici.Agent()`（各开一套连接池），要么各自登录 WebVPN（互相作废会话）。
  * 三种都不对。
  *
- * 这里统一从 `zhiyunEgress` 服务借那份**唯一的**出口：
+ * 这里统一从 `zwEgress` 服务借那份**唯一的**出口：
  *
  *   - 非校园域（pintia.cn、cc98.org、chaoxing.com）→ 直连（绕开全局代理）；
  *   - 校园域（*.zju.edu.cn）→ 按 `auto` 策略：校内直连、校外绕 WebVPN；
@@ -74,7 +74,7 @@ export const IDENTITY_HOST = 'identity.zju.edu.cn';
 export function sharedFetch(ctx, { fallback = globalThis.fetch } = {}) {
   return function egressAwareFetch(url, init) {
     try {
-      const egress = ctx?.get?.('zhiyunEgress');
+      const egress = ctx?.get?.('zwEgress');
       if (egress && typeof egress.fetch === 'function') return egress.fetch(url, init);
     } catch {
       // 服务解析失败（例如 ctx 已销毁）不该把一次请求变成异常 —— 直接退回直连。

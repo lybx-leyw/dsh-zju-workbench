@@ -130,7 +130,7 @@ export class SlideCache {
       parsed = JSON.parse(await readFile(this.indexFile, 'utf8'));
     } catch (error) {
       if (error?.code !== 'ENOENT') {
-        this.log(`[zhiyun-classroom] 课件缓存索引不可读，按空索引处理：${error?.message ?? error}`);
+        this.log(`[zw-classroom] 课件缓存索引不可读，按空索引处理：${error?.message ?? error}`);
       }
       this.index = {};
       return this.index;
@@ -173,7 +173,7 @@ export class SlideCache {
     });
     // 一次写失败不该让后续写入永久卡在 rejected 链上。
     this.writing = task.catch((error) => {
-      this.log(`[zhiyun-classroom] 课件缓存索引写入失败：${error?.message ?? error}`);
+      this.log(`[zw-classroom] 课件缓存索引写入失败：${error?.message ?? error}`);
     });
     return this.writing;
   }
@@ -213,7 +213,7 @@ export class SlideCache {
    * 反倒比直接用原地址更慢。
    */
   async localUrl(key) {
-    return (await this.lookup(key)) === null ? null : `/zhiyun-slides/${key}`;
+    return (await this.lookup(key)) === null ? null : `/zw-slides/${key}`;
   }
 
   /**
@@ -232,7 +232,7 @@ export class SlideCache {
       const key = cacheKeyForSlide(slide?.imageUrl);
       if (key === null) return { ...slide };
       const hit = await this.lookup(key);
-      return { ...slide, cacheKey: key, ...(hit === null ? {} : { cacheUrl: `/zhiyun-slides/${key}` }) };
+      return { ...slide, cacheKey: key, ...(hit === null ? {} : { cacheUrl: `/zw-slides/${key}` }) };
     }));
   }
 
@@ -267,7 +267,7 @@ export class SlideCache {
         } catch (error) {
           if (error?.code === 'CANCELLED' || signal?.aborted) return;
           failed += 1;
-          this.log(`[zhiyun-classroom] 课件第 ${job.page} 页缓存失败：${error?.code ?? error?.message ?? error}`);
+          this.log(`[zw-classroom] 课件第 ${job.page} 页缓存失败：${error?.code ?? error?.message ?? error}`);
         } finally {
           done += 1;
           onProgress?.({ phase: 'cache-slides', completed: done, total: todo.length });
@@ -343,7 +343,7 @@ export class SlideCache {
     for (const file of victims) {
       await rm(path.join(this.directory, file), { force: true }).catch(() => {});
     }
-    this.log(`[zhiyun-classroom] 课件缓存淘汰 ${plan.evict.length} 项，释放 ${plan.evictedBytes} 字节`);
+    this.log(`[zw-classroom] 课件缓存淘汰 ${plan.evict.length} 项，释放 ${plan.evictedBytes} 字节`);
     return plan;
   }
 
@@ -387,11 +387,11 @@ function touchKeys(index, keys) {
 /**
  * 课件缓存路由的前缀。客户端拼 `cacheUrl` 时用的是同一个值。
  *
- * 单独一个前缀（不是挂在 `/zhiyun-live` 下）是刻意的：直播转发端点的安全姿态
+ * 单独一个前缀（不是挂在 `/zw-live` 下）是刻意的：直播转发端点的安全姿态
  * 是"代你去白名单域名取任意 URL"，而这里是"只给你我磁盘上已有的字节"。
  * 两套威胁模型混在一个前缀里，审起来就只能按更松的那个看。
  */
-export const SLIDE_ROUTE_PREFIX = '/zhiyun-slides';
+export const SLIDE_ROUTE_PREFIX = '/zw-slides';
 
 /**
  * 创建课件图路由的 handler。
@@ -420,7 +420,7 @@ export function createSlideHandler(cache, { log = () => {} } = {}) {
     /**
      * ⚠️ 取 pathname 必须在**规范化之前**判前缀。
      *
-     * `new URL('/zhiyun-slides/../../etc/passwd', 'http://localhost')` 会把 `..`
+     * `new URL('/zw-slides/../../etc/passwd', 'http://localhost')` 会把 `..`
      * 折成 `/etc/passwd` —— 前缀没了，`slice(prefix.length)` 却照样切出一段看似
      * 无害的字符串。拿规范化后的结果做前缀判断，等于让一次穿越静默变成"另一个
      * 路由"。所以先用原始 pathname 确认它**确实落在本前缀下**。

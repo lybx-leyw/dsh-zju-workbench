@@ -50,4 +50,4 @@ import { NoteGraph, css } from '@lybx-leyw/dsh-zju-ui-graph-render';
 - **超过 800 个节点**不再跑力导向布局（fcose 在几千节点上是秒级且阻塞主线程），
   改用 `ringPositions` 的圆周排列，并在界面上说明。阈值待用真实笔记库校准。
 - **导出 PDF 会空白**：组件用 canvas 渲染器（交互需要它）。走 PDF 导出时须显式切 SVG。
-- 明暗主题靠壳的 `--zy-*` 变量，样式表里不写死色值（`tests/note-graph-model.test.mjs` 钉住了这条）。
+- 明暗主题靠壳的 `--zw-*` 变量，样式表里不写死色值（`tests/note-graph-model.test.mjs` 钉住了这条）。

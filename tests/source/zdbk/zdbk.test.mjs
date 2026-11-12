@@ -951,10 +951,10 @@ test('端到端：CAS 要求验证码时明确报 AUTH_CHALLENGE_REQUIRED，不�
 /* ─────────────────────────────────────── 插件形态与路由 */
 
 test('插件形态：导出 name / inject / apply，且 name 与目录名一致', () => {
-  assert.equal(plugin.name, 'zhiyun-zdbk');
+  assert.equal(plugin.name, 'zw-zdbk');
   assert.deepEqual(plugin.inject, ['profileContext']);
   assert.equal(typeof plugin.apply, 'function');
-  assert.equal(plugin.ROUTE_PATH, '/api/zhiyun-zdbk');
+  assert.equal(plugin.ROUTE_PATH, '/api/zw-zdbk');
 });
 
 /**
@@ -1004,10 +1004,10 @@ test('插件装配：注册服务与数据路由，路由信封按 { type, rpcId
     fetch: async () => new Response('', { status: 500 }),
   });
 
-  assert.ok(services.zhiyunZdbk, '必须注册 zhiyunZdbk 服务');
-  assert.equal(services.zhiyunZdbk.routePath, '/api/zhiyun-zdbk');
+  assert.ok(services.zwZdbk, '必须注册 zwZdbk 服务');
+  assert.equal(services.zwZdbk.routePath, '/api/zw-zdbk');
   assert.ok(registered, '必须注册数据路由');
-  assert.equal(registered.path, '/api/zhiyun-zdbk');
+  assert.equal(registered.path, '/api/zw-zdbk');
   assert.deepEqual(registered.methods, ['GET', 'POST']);
   assert.equal(registered.requestBody, 'buffered');
 
@@ -1015,7 +1015,7 @@ test('插件装配：注册服务与数据路由，路由信封按 { type, rpcId
   // 前四个是移植来的，后八个是补齐上游 `plan view/list` + `selection` 六条查询。
   // ⚠️ 顺序是**契约**：`READ_METHODS` 是数组而不是 Set，就是为了让这份自描述稳定。
   //    选课的 select/reorder/drop 三条写操作**不在**这里（归 packages/tool/zdbk）。
-  const getResponse = await registered.fetch(new Request('http://127.0.0.1/api/zhiyun-zdbk', { method: 'GET' }));
+  const getResponse = await registered.fetch(new Request('http://127.0.0.1/api/zw-zdbk', { method: 'GET' }));
   const described = await getResponse.json();
   assert.equal(described.ok, true);
   assert.deepEqual(described.value.methods.map((m) => m.method), [
@@ -1033,7 +1033,7 @@ test('插件装配：注册服务与数据路由，路由信封按 { type, rpcId
   // （若被调用会得到 500 → PLATFORM_ERROR，而不是这份自描述）。
 
   // POST：拒绝非法信封（返回 server-response，带 invalid-request）。
-  const badEnvelope = await registered.fetch(new Request('http://127.0.0.1/api/zhiyun-zdbk', {
+  const badEnvelope = await registered.fetch(new Request('http://127.0.0.1/api/zw-zdbk', {
     method: 'POST', body: JSON.stringify({ type: 'nope', rpcId: 'r1', method: 'zdbk.grades' }),
   }));
   const badBody = await badEnvelope.json();
@@ -1044,7 +1044,7 @@ test('插件装配：注册服务与数据路由，路由信封按 { type, rpcId
   // POST：原型链上的名字一律拒绝（这是安全边界，不能只靠"看起来对"）。
   // `selectionPages` / `plansOfYear` 是本轮新增的内部编排方法，同样不许从路由拨到。
   for (const method of ['zdbk.constructor', 'zdbk.__proto__', 'zdbk.toString', 'zdbk.items', 'zdbk.rows', 'zdbk.selectionPages', 'zdbk.plansOfYear', 'zdbk.myPlanIdentity', '__proto__', 'grades', 42, null]) {
-    const response = await registered.fetch(new Request('http://127.0.0.1/api/zhiyun-zdbk', {
+    const response = await registered.fetch(new Request('http://127.0.0.1/api/zw-zdbk', {
       method: 'POST', body: JSON.stringify({ type: 'client-request', rpcId: 'r2', method }),
     }));
     const body = await response.json();
@@ -1055,7 +1055,7 @@ test('插件装配：注册服务与数据路由，路由信封按 { type, rpcId
 
   // 卸载要把服务摘掉。
   await dispose();
-  assert.equal(services.zhiyunZdbk, undefined);
+  assert.equal(services.zwZdbk, undefined);
 });
 
 test('插件装配：未配凭据时 invocation 报 NEED_LOGIN（而不是崩）', async (t) => {
@@ -1074,13 +1074,13 @@ test('插件装配：未配凭据时 invocation 报 NEED_LOGIN（而不是崩）
     protect: async (bytes) => bytes,
     fetch: async () => { throw new Error('不该发请求'); },
   });
-  await assert.rejects(() => services.zhiyunZdbk.timetable(), (error) => {
+  await assert.rejects(() => services.zwZdbk.timetable(), (error) => {
     assert.equal(error.code, 'NEED_LOGIN');
     assert.match(error.message, /浙大一卡通/);
     return true;
   });
   // hasSession 只看 cookie，不发请求、不登录 —— 没会话就是 false。
-  assert.equal(await services.zhiyunZdbk.hasSession(), false);
+  assert.equal(await services.zwZdbk.hasSession(), false);
 });
 
 test('换账号后不许复用上一个人的会话（这是把别人的成绩读给你看）', async (t) => {
@@ -1136,16 +1136,16 @@ test('换账号后不许复用上一个人的会话（这是把别人的成绩�
   });
 
   // 第一次读：登录一次。
-  await services.zhiyunZdbk.grades();
+  await services.zwZdbk.grades();
   assert.equal(loginPosts, 1, '首次读要登录');
 
   // 同一账号再读：**不许**再登（单点会话下重登会作废前一张票）。
-  await services.zhiyunZdbk.grades();
+  await services.zwZdbk.grades();
   assert.equal(loginPosts, 1, '同一账号不该重复登录');
 
   // 换账号：必须重登，且旧会话要被清掉。
   account = { username: 'bob', password: 'p2' };
-  await services.zhiyunZdbk.grades();
+  await services.zwZdbk.grades();
   assert.equal(loginPosts, 2, '换账号必须重新登录，不许拿 alice 的会话读 bob 的数据');
 });
 
@@ -2189,7 +2189,7 @@ test('服务面：12 条只读方法都接到 invoke（名字与路由 action �
     fetch: async () => { throw new Error('不该发请求'); },
   });
 
-  const service = services.zhiyunZdbk;
+  const service = services.zwZdbk;
   // ⚠️ 接写操作后这里从 true 改成 false：本包现在含 `xxxPrepare` / `xxxExecute`
   // （见 `writes.js`）。只读方法表 `methods` 仍是 12 条，写方法另列在 `writeMethods`。
   assert.equal(service.readOnly, false);
@@ -2230,7 +2230,7 @@ test('服务面：status 不联网、logout 清会话且立即落盘', async (t)
     protect: async (bytes) => bytes,
     fetch: async () => { requests++; throw new Error('status/logout 不该发请求'); },
   });
-  const service = services.zhiyunZdbk;
+  const service = services.zwZdbk;
 
   // 没登录过：logged_in=false，但**一次请求都不能发**。
   const before = await service.status();

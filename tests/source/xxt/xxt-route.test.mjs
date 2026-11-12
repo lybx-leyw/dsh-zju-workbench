@@ -1,5 +1,5 @@
 ﻿/**
- * 学习通数据源的**路由层**测试：只测 `apply()` 挂出来的那条 `/api/zhiyun-xxt`。
+ * 学习通数据源的**路由层**测试：只测 `apply()` 挂出来的那条 `/api/zw-xxt`。
  *
  * # 为什么要单独一份
  *
@@ -86,7 +86,7 @@ async function harness({ fetch: fetcher, now } = {}) {
     route,
     post,
     get,
-    service: services.get('zhiyunXxt'),
+    service: services.get('zwXxt'),
     cleanup: async () => {
       await dispose();
       await rm(dir, { recursive: true, force: true });
@@ -228,7 +228,7 @@ test('路由：导入 Cookie 后 xxt.exams 真的会发请求并按信封回数�
   }
 });
 
-test('路由：服务面（zhiyunXxt）能直接调用，不必绕 HTTP', async () => {
+test('路由：服务面（zwXxt）能直接调用，不必绕 HTTP', async () => {
   const host = await harness();
   try {
     assert.equal(host.service.routePath, ROUTE_PATH);
@@ -251,5 +251,5 @@ test('路由：卸载后 route 与 service 都被摘掉', async () => {
   assert.ok(host.service);
   await host.cleanup();
   // cleanup() 已经调过 dispose，这里只需要证明没有抛错
-  assert.equal(name, 'zhiyun-xxt');
+  assert.equal(name, 'zw-xxt');
 });

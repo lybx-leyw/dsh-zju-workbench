@@ -1,5 +1,5 @@
 // Share the knowledge-point projection without inlining another package's source.
-export const name = 'zhiyun-quiz-client';
+export const name = 'zw-quiz-client';
 export const inject = [];
 export function apply() {}
 export { knowledgePoints, knowledgeChapters } from './knowledge-points.js';

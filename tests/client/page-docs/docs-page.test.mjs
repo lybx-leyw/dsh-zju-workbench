@@ -60,7 +60,7 @@ test('清单 id 唯一，且都不含「规划」（Ctrl+K 的守卫别名）', 
     // tests/profile.test.mjs 断言 matchingPages('规划') 只命中问一问与规划。
     assert.ok(!`${page.title} ${page.summary}`.includes('规划'),
       `「${page.title}」的标题或摘要含「规划」，会污染 matchingPages 守卫`);
-    // id 要能被 'zhiyun.<id>.content' 的正则匹配到（只认小写字母）。
+    // id 要能被 'zw.<id>.content' 的正则匹配到（只认小写字母）。
     assert.match(page.id, /^[a-z]+$/);
   }
 });
@@ -311,16 +311,16 @@ test('包声明与接线清单四处对齐', async () => {
 
   // 2. 宿主半边入口存在（空壳也算）。
   assert.equal(manifest.main, './src/index.js');
-  assert.ok((await readFile(join(pkg, 'src', 'index.js'), 'utf8')).includes("'zhiyun-page-docs'"));
+  assert.ok((await readFile(join(pkg, 'src', 'index.js'), 'utf8')).includes("'zw-page-docs'"));
 
   // 3. cordis.patch.yml 指向正确的 id。
   //
   // ⚠️ 这里是**包名**，用的是新命名 `@lybx-leyw/dsh-zju-*`。早先写的是未加作用域的
-  // `dsh-zhiyun-page-docs` —— 那是重命名迁移前的形态。`plugins-page.test.mjs`
+  // `dsh-zju-page-docs` —— 那是重命名迁移前的形态。`plugins-page.test.mjs`
   // 有一条「前缀可换」的用例说明本仓**同时认两套命名**，所以旧断言不会在别处报错，
   // 只会在本包自证时炸。
   const patch = await readFile(join(pkg, 'cordis.patch.yml'), 'utf8');
-  assert.match(patch, /id: zhiyun-page-docs/);
+  assert.match(patch, /id: zw-page-docs/);
   assert.match(patch, /name: '@lybx-leyw\/dsh-zju-page-docs'/);
 
   // 4. 进构建清单与 profile 装载清单（这两条 plugins-page.test.mjs 也查，
@@ -341,12 +341,12 @@ test('包声明与接线清单四处对齐', async () => {
 
 test('client.jsx 注册的页面 id 与 NAV 里的 id 一致', async () => {
   const client = await readFile(join(pkg, 'src', 'client.jsx'), 'utf8');
-  // 迁移后页面自己注册 `page.content`，key 就是页面 id（不再有 `zhiyun.<id>.content`）。
+  // 迁移后页面自己注册 `page.content`，key 就是页面 id（不再有 `zw.<id>.content`）。
   assert.match(client, /id: '([a-z]+)'/);
   const id = /id: '([a-z]+)'/.exec(client)[1];
   assert.equal(id, 'docs');
 
-  // ⚠️ 这个文件搬过家：原 `dsh-zhiyun-shell-workbench/src/model.js` 已拆进
+  // ⚠️ 这个文件搬过家：原 `dsh-zju-shell-workbench/src/model.js` 已拆进
   // `ui-shared`，归档目录里只留一份 135 字节的墓碑（指向这里），不能当代码读。
   const model = await readFile(
     join(root, 'packages', 'client', 'ui-shared', 'src', 'pages-model.js'), 'utf8');

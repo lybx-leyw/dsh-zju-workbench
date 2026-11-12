@@ -66,7 +66,7 @@ test('不传第二个参数也不炸（修饰键默认全 false）', () => {
 // ---------------------------------------------------------------- 步长
 
 test('翻页是视口的 85%，方向带符号', () => {
-  // 1200×700 的窗口里实测 `.zyd-main` 的 clientHeight ≈ 659，85% → 560。
+  // 1200×700 的窗口里实测 `.zwd-main` 的 clientHeight ≈ 659，85% → 560。
   assert.equal(scrollAmount(scrollIntent('PageDown'), { height: 659 }), 560);
   assert.equal(scrollAmount(scrollIntent('PageUp'), { height: 659 }), -560);
   assert.equal(PAGE_RATIO, 0.85);

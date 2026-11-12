@@ -6,12 +6,12 @@
  * 它验的是**事件路由与布局**，纯函数与 SSR 都测不出来。改这一版之前先跑了一个
  * 探针（1200×700，三栏铺开，`maxScroll=3168`），量出三件事 —— 它们决定了实现形状：
  *
- *   1. **焦点在 `<body>` 上时，Chrome 原生就会滚 `.zyd-main`**（PageDown 576px、
+ *   1. **焦点在 `<body>` 上时，Chrome 原生就会滚 `.zwd-main`**（PageDown 576px、
  *      ↓ 40px）。所以"完全没反应"不是全貌，只按这一条写测试，会得到一个
  *      "改之前也绿"的假测试。
  *   2. **焦点在按钮上时一动不动**（连按两个键 `scrollTop` 仍是 0）。而点左侧目录
  *      跳篇、点右侧目录跳节之后焦点正好落在按钮上 —— 这才是用户报的"不支持"。
- *      原生不滚的原因：按钮所在的 `.zyd-nav` 没有溢出，再往外 `html/body` 是
+ *      原生不滚的原因：按钮所在的 `.zwd-nav` 没有溢出，再往外 `html/body` 是
  *      `overflow:hidden`，浏览器找不到可滚的东西。
  *   3. **滤镜框里 ↑/↓ 归输入框**（实测 `scrollTop` 不变、输入框自己处理）——
  *      这条是必须保留的豁免，测试要反过来钉住"不许接管"。
@@ -23,8 +23,8 @@
  * 这一页只 inject `slots`，不依赖任何领域服务 —— 页面组件本身可以直接渲染。
  * 起宿主会让这条测试慢几十秒、还要处理宿主的 `inert` 弹层（见
  * `tests/paper-tree-keys.test.mjs` 里那段 dismissDialogs），收益为零。
- * 布局链照抄真机（`.zy-page > .zy-scroll > .zy-content-flush`），并且**真的**
- * 把本包的 `style.css` 贴进去 —— 少了它 `.zyd-main` 根本不会被限高，
+ * 布局链照抄真机（`.zw-page > .zw-scroll > .zw-content-flush`），并且**真的**
+ * 把本包的 `style.css` 贴进去 —— 少了它 `.zwd-main` 根本不会被限高，
  * "能滚"就是假象（这一条是笔记页那边踩过的坑）。
  */
 import test from 'node:test';
@@ -39,16 +39,16 @@ import { chromium } from 'playwright';
 const root = fileURLToPath(new URL('../../..', import.meta.url));
 const pkg = path.join(root, 'packages', 'client', 'page-docs');
 
-/** 外壳的布局链 + 主题变量。页面样式表依赖 `--zy-*` 与 `.zy-content-flush`。 */
+/** 外壳的布局链 + 主题变量。页面样式表依赖 `--zw-*` 与 `.zw-content-flush`。 */
 const SHELL_CSS = [
   'html,body{margin:0;height:100%;overflow:hidden}',
-  '.zy-page{display:flex;flex-direction:column;height:100%;min-width:0}',
-  '.zy-scroll{flex:1;overflow:auto;min-height:0}',
-  '.zy-content.zy-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0}',
+  '.zw-page{display:flex;flex-direction:column;height:100%;min-width:0}',
+  '.zw-scroll{flex:1;overflow:auto;min-height:0}',
+  '.zw-content.zw-content-flush{max-width:none;padding:0;height:100%;display:flex;flex-direction:column;min-height:0}',
   '.host{display:flex;flex-direction:column;flex:1;min-height:0}',
-  ':root{--zy-bg:#fff;--zy-surface:#fafafa;--zy-sidebar:#f4f4f5;--zy-soft:#f0f0f2;--zy-line:#e2e2e6;',
-  '--zy-hover:#f2f2f4;--zy-text:#1a1a1a;--zy-secondary:#555;--zy-muted:#888;--zy-accent:#2f6feb;',
-  '--zy-font:system-ui,sans-serif}',
+  ':root{--zw-bg:#fff;--zw-surface:#fafafa;--zw-sidebar:#f4f4f5;--zw-soft:#f0f0f2;--zw-line:#e2e2e6;',
+  '--zw-hover:#f2f2f4;--zw-text:#1a1a1a;--zw-secondary:#555;--zw-muted:#888;--zw-accent:#2f6feb;',
+  '--zw-font:system-ui,sans-serif}',
 ].join('\n');
 
 /**
@@ -141,7 +141,7 @@ test('文档页：四个滚动键在任何焦点下都滚正文，且在输入�
   const pageFile = path.join(dir, 'host.html');
   await writeFile(pageFile, `<!doctype html><meta charset="utf-8">
     <style>${SHELL_CSS}</style><style>${pageCss}</style>
-    <div class="zy-page" data-page="docs"><main class="zy-scroll"><div class="zy-content zy-content-flush">
+    <div class="zw-page" data-page="docs"><main class="zw-scroll"><div class="zw-content zw-content-flush">
     <div class="host" id="host"></div></div></main></div><script src="/app.js"></script>`);
 
   const server = createServer(async (req, res) => {
@@ -160,7 +160,7 @@ test('文档页：四个滚动键在任何焦点下都滚正文，且在输入�
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle' });
 
-    const scroller = page.locator('.zyd-main').first();
+    const scroller = page.locator('.zwd-main').first();
     await scroller.waitFor();
     await page.waitForTimeout(200);
 
@@ -172,7 +172,7 @@ test('文档页：四个滚动键在任何焦点下都滚正文，且在输入�
     // 前提：正文真的能滚，右目录真的存在。任一不成立，下面的断言都没有意义。
     assert.ok(await maxScroll() > 600,
       `正文应明显超过一屏（实测 maxScroll=${await maxScroll()}）；CSS 链没接上时这里会是 0`);
-    assert.ok(await page.locator('.zyd-toc-link').count() >= 2,
+    assert.ok(await page.locator('.zwd-toc-link').count() >= 2,
       '应有页内目录（MarkdownText 的 stub 要真的产出 h2）');
 
     // ── ① 点正文（焦点落回 body）后 PageDown 要滚 ──
@@ -201,7 +201,7 @@ test('文档页：四个滚动键在任何焦点下都滚正文，且在输入�
     //
     // 点左侧目录换篇 → 页面回到顶部、焦点留在那个 <button> 上。
     // 改之前实测：这里连按 PageDown / ↓，scrollTop 恒为 0。
-    await page.locator('.zyd-link').nth(2).click();
+    await page.locator('.zwd-link').nth(2).click();
     await page.waitForTimeout(250);
     await reset();
     assert.equal(await activeLabel(), 'BUTTON', '点目录之后焦点应在 button 上');
@@ -221,7 +221,7 @@ test('文档页：四个滚动键在任何焦点下都滚正文，且在输入�
     assert.equal(await activeLabel(), 'BUTTON');
 
     // ── ⑤ 焦点在页内目录按钮上，同样要滚 ──
-    await page.locator('.zyd-toc-link').nth(1).click();
+    await page.locator('.zwd-toc-link').nth(1).click();
     await page.waitForTimeout(500);
     const afterJump = await top();
     assert.ok(afterJump > 0, `点页内目录第 2 项应跳到第二节，实际 ${afterJump}`);
@@ -232,7 +232,7 @@ test('文档页：四个滚动键在任何焦点下都滚正文，且在输入�
 
     // ── ⑥ 输入框里必须让位（不许接管） ──
     await reset();
-    const filter = page.locator('.zyd-filter input');
+    const filter = page.locator('.zwd-filter input');
     await filter.click();
     await page.keyboard.press('ArrowDown');
     await page.waitForTimeout(250);
@@ -278,7 +278,7 @@ test('文档页：四个滚动键在任何焦点下都滚正文，且在输入�
       `松开后画面不该继续爬：采样时=${held}, 250ms 后=${settled}`);
 
     // ── ⑧ 换页之后仍能用（处理器挂在 document 上，不能因为换页就失效） ──
-    await page.locator('.zyd-section').nth(1).click();
+    await page.locator('.zwd-section').nth(1).click();
     await page.waitForTimeout(300);
     await reset();
     await page.keyboard.press('PageDown');

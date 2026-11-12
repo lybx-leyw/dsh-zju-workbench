@@ -39,7 +39,7 @@
 
 登录态**不在**上面那张数据方法表里 —— 那张表走的是「每次调用都读一次业务数据」
 那条链，把「查登录状态」塞进去会让它触发一次 CAS 登录，正好是这条接口要避免的事。
-它们挂在同一个服务（`zhiyunZdbk`）上：
+它们挂在同一个服务（`zwZdbk`）上：
 
 ```js
 await zdbk.status();  // 不联网：{ logged_in, account_known, account, session_file, … }
@@ -226,11 +226,11 @@ RSA 加密照搬学校 `login.js` / `security.js` 的打包方式：
 
 ## 数据路由
 
-`/api/zhiyun-zdbk`（走宿主的 `connection.fetch`，与 study / vault / notes 同一条受鉴权通道）
+`/api/zw-zdbk`（走宿主的 `connection.fetch`，与 study / vault / notes 同一条受鉴权通道）
 
 ```text
-GET  /api/zhiyun-zdbk   → { ok: true, value: { methods: [...] } }        自描述
-POST /api/zhiyun-zdbk   → { type:'client-request', rpcId, method:'zdbk.timetable', payload:{ academic_year:'2025-2026', term:'秋' } }
+GET  /api/zw-zdbk   → { ok: true, value: { methods: [...] } }        自描述
+POST /api/zw-zdbk   → { type:'client-request', rpcId, method:'zdbk.timetable', payload:{ academic_year:'2025-2026', term:'秋' } }
                         ← { type:'server-response', rpcId, result:{ ok:true, value:{…} } }
 ```
 
@@ -240,7 +240,7 @@ POST 的 `method` 既接受**顶层**（本包约定的形态），也接受 `pa
 宿主侧也可以直接拿服务：
 
 ```js
-const zdbk = ctx.get('zhiyunZdbk');
+const zdbk = ctx.get('zwZdbk');
 await zdbk.timetable({ academic_year: '2025-2026', term: '秋' });
 await zdbk.gpaSummary();
 await zdbk.planList({ year: '2025', college: '计算机' });
@@ -309,9 +309,9 @@ import { readCard } from '@lybx-leyw/dsh-zju-source-login';
 | `zdbk selection select` | **归 tool** | `packages/tool/campus-write`（本次未建） |
 | `zdbk selection reorder` | **归 tool** | `packages/tool/campus-write`（本次未建） |
 | `zdbk selection drop` | **归 tool** | `packages/tool/campus-write`（本次未建） |
-| `zdbk session login` | **本仓已有** | 服务面 `zhiyunZdbk.login()`（= 上游 `verify`：真登 + 真读一次） |
-| `zdbk session status` | **本仓已有**（本次补成独立方法） | 服务面 `zhiyunZdbk.status()`（不联网）+ 既有 `hasSession()` |
-| `zdbk session logout` | **本仓已有**（本次补成独立方法） | 服务面 `zhiyunZdbk.logout()`（`persist: true`） |
+| `zdbk session login` | **本仓已有** | 服务面 `zwZdbk.login()`（= 上游 `verify`：真登 + 真读一次） |
+| `zdbk session status` | **本仓已有**（本次补成独立方法） | 服务面 `zwZdbk.status()`（不联网）+ 既有 `hasSession()` |
+| `zdbk session logout` | **本仓已有**（本次补成独立方法） | 服务面 `zwZdbk.logout()`（`persist: true`） |
 
 **明确丢弃：0 条。**
 
@@ -328,7 +328,7 @@ import { readCard } from '@lybx-leyw/dsh-zju-source-login';
 ## 已知取舍（如实说明，别当成已完成）
 
 1. **网络出口走共享层，自动分域。** 本包不再自己配出口：请求经
-   `sharedFetch(ctx)` 借 `@lybx-leyw/dsh-zju-source-campus` 提供的 `zhiyunEgress` 服务 ——
+   `sharedFetch(ctx)` 借 `@lybx-leyw/dsh-zju-source-campus` 提供的 `zwEgress` 服务 ——
    校内直连、校外自动绕 WebVPN，并**绕开宿主为 LLM 配的全局代理**
    （浙大站点经那个代理基本必失败）。出口只有一份，各包共用同一个 undici
    dispatcher 与同一份 WebVPN 会话（各自登录会互相踢掉）。

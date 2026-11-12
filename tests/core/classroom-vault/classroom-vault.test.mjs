@@ -2,7 +2,7 @@
 //
 // 覆盖三件事（其余交给人工）：
 //   1. 端口实现度：host-classroom 声明的 7 个方法一个不少，且 apply() 提供
-//      `zhiyunClassroomVault` 后 status() 报 ready；
+//      `zwClassroomVault` 后 status() 报 ready；
 //   2. CRUD 全链路（临时目录）：目录 → 课堂 → 场景 → 资产 → run → 快照 → KV → 删除；
 //   3. 两条硬边界：并发写同一课堂不产生半截文件；损坏的 meta.json 读到降级不抛。
 //
@@ -46,12 +46,12 @@ function makeCtx(profileDir) {
 }
 
 async function withProfile(run) {
-  const profileDir = await mkdtemp(join(tmpdir(), 'zyc-vault-'));
+  const profileDir = await mkdtemp(join(tmpdir(), 'zwc-vault-'));
   try {
     const { ctx, provided, disposers } = makeCtx(profileDir);
     const dispose = plugin.apply(ctx, {});
-    const service = provided.get('zhiyunClassroomVault');
-    assert.ok(service, 'apply() 必须 provide zhiyunClassroomVault');
+    const service = provided.get('zwClassroomVault');
+    assert.ok(service, 'apply() 必须 provide zwClassroomVault');
     await run({ service, profileDir, ctx, provided, disposers });
     dispose();
     await rm(profileDir, { recursive: true, force: true });
@@ -74,7 +74,7 @@ const doc = (stageId, scenes) => ({
   stageMeta: { isPublic: false, generationComplete: true },
 });
 
-test('端口实现度：7/7，status 报 ready，数据根落在 profile/data/zhiyun-classroom', async () => {
+test('端口实现度：7/7，status 报 ready，数据根落在 profile/data/zw-classroom', async () => {
   await withProfile(async ({ service, profileDir }) => {
     assert.deepEqual(service.ports().methods, [...adapterModule.ADAPTER_METHODS]);
     assert.deepEqual(service.ports().missing, []);
@@ -89,14 +89,14 @@ test('端口实现度：7/7，status 报 ready，数据根落在 profile/data/zh
 
     const status = await service.status();
     assert.equal(status.state, 'ready');
-    assert.equal(status.detail.root, join(profileDir, 'data', 'zhiyun-classroom'));
+    assert.equal(status.detail.root, join(profileDir, 'data', 'zw-classroom'));
     assert.equal(status.detail.counts.classrooms, 0);
   });
 });
 
 test('CRUD 全链路：目录 → 课堂 → 场景 → 资产 → run → 快照 → KV → 删除', async () => {
   await withProfile(async ({ service, profileDir }) => {
-    const root = join(profileDir, 'data', 'zhiyun-classroom');
+    const root = join(profileDir, 'data', 'zw-classroom');
     const stageId = 'stage-crud';
 
     // 文件树
@@ -205,7 +205,7 @@ test('CRUD 全链路：目录 → 课堂 → 场景 → 资产 → run → 快�
 
 test('并发写同一课堂：全部落盘后 meta.json 可解析，场景文件无半截', async () => {
   await withProfile(async ({ service, profileDir }) => {
-    const root = join(profileDir, 'data', 'zhiyun-classroom');
+    const root = join(profileDir, 'data', 'zw-classroom');
     const stageId = 'stage-race';
     await service.classroom.create(doc(stageId, [{ id: 'base' }]));
 
@@ -238,7 +238,7 @@ test('并发写同一课堂：全部落盘后 meta.json 可解析，场景文件
 
 test('损坏的 meta.json：load 降级不抛，仍能读出场景', async () => {
   await withProfile(async ({ service, profileDir }) => {
-    const root = join(profileDir, 'data', 'zhiyun-classroom');
+    const root = join(profileDir, 'data', 'zw-classroom');
     const stageId = 'stage-broken';
     await service.classroom.create(doc(stageId, [{ id: 's1' }]));
 
@@ -261,7 +261,7 @@ test('损坏的 meta.json：load 降级不抛，仍能读出场景', async () =>
 });
 
 test('端口语义：rev 乐观锁、键集分页、伪事务提交', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'zyc-port-'));
+  const dir = await mkdtemp(join(tmpdir(), 'zwc-port-'));
   try {
     let clock = 1000;
     const adapter = adapterModule.createLocalVaultAdapter({ rootDir: dir, now: () => clock++ });
@@ -318,7 +318,7 @@ test('端口语义：rev 乐观锁、键集分页、伪事务提交', async () =
 test('没有 profileContext 时 apply 不抛，数据方法给出可读错误', async () => {
   const { ctx, provided } = makeCtx(null);
   const dispose = plugin.apply(ctx, {});
-  const service = provided.get('zhiyunClassroomVault');
+  const service = provided.get('zwClassroomVault');
   assert.ok(service);
   await assert.rejects(() => service.classroom.load('x'), /没有数据根|适配器不可用/);
   dispose();
@@ -326,7 +326,7 @@ test('没有 profileContext 时 apply 不抛，数据方法给出可读错误', 
 
 test('损坏的 stage-meta.json 不影响课堂读取', async () => {
   await withProfile(async ({ service, profileDir }) => {
-    const root = join(profileDir, 'data', 'zhiyun-classroom');
+    const root = join(profileDir, 'data', 'zw-classroom');
     const stageId = 'stage-meta-broken';
     await service.classroom.create(doc(stageId, [{ id: 's1' }]));
     await mkdir(join(root, 'classroom', stageId), { recursive: true });

@@ -40,19 +40,19 @@ import {
 } from '@lybx-leyw/dsh-zju-ui-shared';
 
 /** 本包的数据路由（登录状态从这里读）。 */
-const ROUTE_PATH = '/api/zhiyun-cc98';
+const ROUTE_PATH = '/api/zw-cc98';
 /**
  * 凭据读写走 **login 包的宿主半边**：动作名与记录键都在那里。
  * 客户端只换入口，不搬服务 —— 免得两套记录键各存一份。
  */
-const CREDENTIAL_ROUTE = '/_dsh/zhiyun-card';
+const CREDENTIAL_ROUTE = '/_dsh/zw-card';
 /** 写操作的自定义头，服务端用它挡 CSRF。 */
-const WRITE_HEADER = 'x-zhiyun-card';
+const WRITE_HEADER = 'x-zw-card';
 /** 「沿用已存密码」的哨兵值。 */
 const MASK = '********';
 const NAMESPACE = 'zju-source-cc98';
 
-export const name = 'zhiyun-source-cc98-client';
+export const name = 'zw-source-cc98-client';
 
 export const inject = ['slots', 'locale'];
 

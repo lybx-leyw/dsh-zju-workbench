@@ -27,7 +27,7 @@ import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 
 import { createXxtReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-xxt';
+export const name = 'zw-tool-xxt';
 
 /**
  * 只声明 `tools` 与自己的数据源。
@@ -35,10 +35,10 @@ export const name = 'zhiyun-tool-xxt';
  * 没有 `approval`：这一包一条写操作都没有，声明它只会误导后来加工具的人
  * 「审批已经接好了」。
  */
-export const inject = ['tools', 'zhiyunXxt'];
+export const inject = ['tools', 'zwXxt'];
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunXxt: '@lybx-leyw/dsh-zju-source-xxt',
+  zwXxt: '@lybx-leyw/dsh-zju-source-xxt',
 });
 
 export function apply(ctx) {

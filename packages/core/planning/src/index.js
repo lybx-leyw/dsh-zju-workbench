@@ -1,5 +1,5 @@
 /**
- * 规划域的**宿主半边**：四个数据源的聚合 + `/_dsh/zhiyun-planning` 路由。
+ * 规划域的**宿主半边**：四个数据源的聚合 + `/_dsh/zw-planning` 路由。
  *
  * # 为什么它在 core 而不在页面里
  *
@@ -12,8 +12,8 @@
  * 不是"读一个来源"，是把**四份东西并到一张表**：
  *
  * ```text
- *   学在浙大待办   ← zhiyunXuezai.todos()（与智云共用 CAS 账号，配置在别处）
- *   拼题A 待办     ← zhiyunPta.todos()   （Cookie，由 source/pta 的设置分区配）
+ *   学在浙大待办   ← zwXuezai.todos()（与智云共用 CAS 账号，配置在别处）
+ *   拼题A 待办     ← zwPta.todos()   （Cookie，由 source/pta 的设置分区配）
  *   中转站条目     ← 用户自己的创空间     （域名 + 读密钥）
  *   本地留存       ← 本文件维护          （中转站之上的一层缓存）
  * ```
@@ -57,16 +57,16 @@ export {
 } from './entries.js';
 export { TickStore, tickKey } from './ticks.js';
 
-export const name = 'zhiyun-planning';
+export const name = 'zw-planning';
 
 /** 只硬依赖 `profileContext`（数据目录）。其它宿主服务走 `ctx.inject` / `ctx.get`。 */
 export const inject = ['profileContext'];
 
 /** 本包自有路由前缀。用 `/_dsh/` 与宿主其它设置路由保持一致。 */
-export const ROUTE_PATH = '/_dsh/zhiyun-planning';
+export const ROUTE_PATH = '/_dsh/zw-planning';
 
 /** 写操作必须带的自定义头。 */
-export const WRITE_HEADER = 'x-zhiyun-planning';
+export const WRITE_HEADER = 'x-zw-planning';
 
 /** 回显密钥时的打码值。页面回传它表示"不改"。 */
 const MASK = '********';
@@ -912,7 +912,7 @@ export function createHandler({
       /**
        * 快照各段耗时 + 总耗时。
        *
-       * 页面不显示它；`curl 'http://127.0.0.1:<port>/_dsh/zhiyun-planning'` 一次
+       * 页面不显示它；`curl 'http://127.0.0.1:<port>/_dsh/zw-planning'` 一次
        * 就能读出「哪一段慢」。缓存是否命中也是一眼的事（命中时 `todos` 个位数）。
        */
       timing: { ...timing, total: Date.now() - beginAll, cached: { remote: remote?.cached === true } },
@@ -1464,12 +1464,12 @@ export function createHandler({
 
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-planning] ${message}`;
+    const line = `[zw-planning] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
 
-  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zhiyun-planning');
+  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zw-planning');
   const configFile = config.dataFile ?? path.join(dataDir, 'config.json');
   const cacheFile = config.cacheFile ?? path.join(dataDir, 'entries.json');
 
@@ -1539,12 +1539,12 @@ export async function apply(ctx, config = {}) {
   /**
    * 取窄 llm 接口。
    *
-   * 本仓铁律：AI 调用一律走 `ctx.zhiyunParser.llm`（`{ call, resolve }`），
+   * 本仓铁律：AI 调用一律走 `ctx.zwParser.llm`（`{ call, resolve }`），
    * 不直接碰宿主的 `ctx.llm`（它只有 prepareCall/stream，适配已由解析器包做过一遍）。
    * **惰性取**：解析器晚于本包就绪是常态，apply 时缓存 null 会永久失效。
    */
   const llmOf = () => {
-    const parser = ctx.get('zhiyunParser');
+    const parser = ctx.get('zwParser');
     const llm = config.llm ?? parser?.llm ?? null;
     return llm && typeof llm.call === 'function' ? llm : null;
   };
@@ -1915,8 +1915,8 @@ export async function apply(ctx, config = {}) {
    *
    * # 数据来源：两个 source 包，不是一个
    *
-   * 学在浙大待办来自 `zhiyunXuezai`，拼题A 题集来自 `zhiyunPta` ——
-   * 拆包前它们都在 `zhiyunCampus` 里，现在按平台分开了。
+   * 学在浙大待办来自 `zwXuezai`，拼题A 题集来自 `zwPta` ——
+   * 拆包前它们都在 `zwCampus` 里，现在按平台分开了。
    *
    * # 为什么在这里合并，而不是让两个 source 包互相依赖
    *
@@ -1949,8 +1949,8 @@ export async function apply(ctx, config = {}) {
       }
     };
 
-    const xuezai = ctx.get('zhiyunXuezai');
-    const pta = ctx.get('zhiyunPta');
+    const xuezai = ctx.get('zwXuezai');
+    const pta = ctx.get('zwPta');
 
     const [xzzd, ptaHalf] = await Promise.all([
       half(xuezai && (() => xuezai.todos().then((r) => r.xzzd)), '学在浙大'),
@@ -1963,7 +1963,7 @@ export async function apply(ctx, config = {}) {
   /** 拼题A 是否已配 Cookie（只回键名，不回值）。 */
   const ptaStatus = async () => {
     // Cookie 存在 `source/pta` 自己的会话文件里（拆包前在 campus）。
-    const pta = ctx.get('zhiyunPta');
+    const pta = ctx.get('zwPta');
     if (!pta) return { configured: false, error: '拼题A 数据包未启用（需要 @lybx-leyw/dsh-zju-source-pta）' };
     try {
       const status = await pta.ptaStatus();
@@ -1988,7 +1988,7 @@ export async function apply(ctx, config = {}) {
    * 设置分区负责（`zju-source-campus`）。这条 HTTP 动作只为兼容保留。
    */
   const savePtaCookie = async (raw) => {
-    const pta = ctx.get('zhiyunPta');
+    const pta = ctx.get('zwPta');
     if (!pta) throw new Error('拼题A 数据包未启用（需要 @lybx-leyw/dsh-zju-source-pta），无法保存拼题A Cookie');
     const result = await pta.saveCookie(raw);
     log(`拼题A Cookie 已保存（来源：${result?.source ?? '未知'}，${result?.names?.length ?? 0} 个键）`);
@@ -2022,7 +2022,7 @@ export async function apply(ctx, config = {}) {
       const dispose = scope.webServer.register({ kind: 'exact', path: ROUTE_PATH, handler });
       log(`设置路由：${ROUTE_PATH}（中转站留存 ${cacheFile}；我的规划 ${mineFile}）`);
       return dispose;
-    }, 'zhiyun: planning settings route');
+    }, 'zw: planning settings route');
   });
 
   const mineService = {
@@ -2039,7 +2039,7 @@ export async function apply(ctx, config = {}) {
     file: mineFile,
   };
 
-  const removeService = ctx.provide('zhiyunPlanning', {
+  const removeService = ctx.provide('zwPlanning', {
     routePath: ROUTE_PATH,
     configFile,
     cacheFile,

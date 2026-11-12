@@ -249,7 +249,7 @@ node -e "import('./packages/source/bilibili/src/wbi.js').then(m=>console.log(Obj
 这两条在真实视频上的长期稳定性没有实测记录。
 
 
-## dsh-zhiyun-shell-workbench / -shell-bridge（产品界面外壳）
+## dsh-zju-shell-workbench / -shell-bridge（产品界面外壳）
 
 ### 是什么
 
@@ -257,8 +257,8 @@ node -e "import('./packages/source/bilibili/src/wbi.js').then(m=>console.log(Obj
 
 | 包 | 职责 | 规模 |
 | --- | --- | --- |
-| `dsh-zhiyun-shell-workbench` | 侧栏 / 页框架 / 主题 / 导航服务 `zhiyunNavigation` / 11 个页面目录 | 10 个源文件，约 40 KB |
-| `dsh-zhiyun-shell-bridge` | 产品背景样式 + 原生首页 slogan 替换 | 5 个源文件，约 12 KB |
+| `dsh-zju-shell-workbench` | 侧栏 / 页框架 / 主题 / 导航服务 `zwNavigation` / 11 个页面目录 | 10 个源文件，约 40 KB |
+| `dsh-zju-shell-bridge` | 产品背景样式 + 原生首页 slogan 替换 | 5 个源文件，约 12 KB |
 
 `shell-workbench` 的 `NAV` 原先定义整条导轨：
 
@@ -272,7 +272,7 @@ quiz 题库 · planning 规划 · notes 笔记 · plugins 插件 · docs 文档 
 profile 在「Step 1 瘦身」后收敛成 **4 个宿主包 + 4 个数据源包**，不含任何页面包，
 因此这两个包的运行时消费者为零：
 
-- `zhiyunNavigation` 的 5 个调用方（`core-study`、`page-paper`、
+- `zwNavigation` 的 5 个调用方（`core-study`、`page-paper`、
   `page-classroom-build`、`ui-shared/page-registration`、`radar-section-deeplink`）
   全部随页面包一起不在 profile 里；
 - 页面外壳改由 profile 直接挂载的 `@lybx-leyw/dsh-pages` 提供 ——
@@ -300,15 +300,15 @@ profile 在「Step 1 瘦身」后收敛成 **4 个宿主包 + 4 个数据源包*
 
 ```bash
 # 1. 搬回产品树
-git mv archive/deprecated-packages/dsh-zhiyun-shell-workbench packages/
-git mv archive/deprecated-packages/dsh-zhiyun-shell-bridge   packages/
+git mv archive/deprecated-packages/dsh-zju-shell-workbench packages/
+git mv archive/deprecated-packages/dsh-zju-shell-bridge   packages/
 
 # 2. 恢复 model.js（归档副本里已替换成指针说明）
-git show HEAD~1:packages/dsh-zhiyun-shell-workbench/src/model.js \
-  > packages/dsh-zhiyun-shell-workbench/src/model.js
+git show HEAD~1:packages/dsh-zju-shell-workbench/src/model.js \
+  > packages/dsh-zju-shell-workbench/src/model.js
 
 # 3. 测试与脚本的 import 改回原路径
-#    pages-model.js -> dsh-zhiyun-shell-workbench/src/model.js
+#    pages-model.js -> dsh-zju-shell-workbench/src/model.js
 #    影响的文件：tests/{profile,feedback,paper,plugins-page}.test.mjs、
 #                scripts/test-host.mjs、scripts/knowledge_tree_bench/_base.mjs
 
@@ -331,7 +331,7 @@ git show HEAD~1:packages/dsh-zhiyun-shell-workbench/src/model.js \
 
 ### 顺带记录一个测试教训
 
-`tests/profile.test.mjs` 曾断言「profile 里必须有 `dsh-zhiyun-shell-workbench` 的链接」。
+`tests/profile.test.mjs` 曾断言「profile 里必须有 `dsh-zju-shell-workbench` 的链接」。
 这个包在 Step 1 就离开 profile 了，但断言**一直没红** —— 因为包目录还在仓库里，
 `realpath` 能解析到源码。直到本轮把它移进 `archive/`，才暴露出这条断言早已过期。
 

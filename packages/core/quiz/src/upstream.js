@@ -1,5 +1,5 @@
 /**
- * 上游候选生成引擎的**契约层**（本包 ⇄ `zhiyunDeepTutor` 之间唯一的耦合面）。
+ * 上游候选生成引擎的**契约层**（本包 ⇄ `zwDeepTutor` 之间唯一的耦合面）。
  *
  * # 这个文件为什么存在
  *
@@ -14,7 +14,7 @@
  * # 为什么本文件不 import 宿主服务包的实现
  *
  * 本包零依赖（`tests/quiz.test.mjs` 有断言钉住），且算法层必须能脱离宿主单测。
- * 所以 `tutor` 是**注入**的：集成层把 `ctx.zhiyunDeepTutor` 传进来，测试传一个假对象。
+ * 所以 `tutor` 是**注入**的：集成层把 `ctx.zwDeepTutor` 传进来，测试传一个假对象。
  *
  * # 输出形状必须落回本包词汇
  *
@@ -81,7 +81,7 @@ export function checkCandidate(candidate) {
  * 只会造出「看起来在动其实不知道在干什么」的假进度。
  *
  * @param {object} options
- * @param {object} options.tutor  宿主服务 `ctx.zhiyunDeepTutor`（注入，便于测试替换）
+ * @param {object} options.tutor  宿主服务 `ctx.zwDeepTutor`（注入，便于测试替换）
  * @param {object} [options.resourceHandle] 已 attach 的标准学习资源句柄
  * @param {string} [options.capability] 上游能力名，默认 `deep_question`
  * @param {object} [options.options] 透传给上游的运行选项
@@ -98,7 +98,7 @@ export function createUpstreamQuizEngine({
 } = {}) {
   if (!tutor || typeof tutor.runs?.start !== 'function') {
     throw new QuizError('CONFIG',
-      '上游出题引擎需要注入 zhiyunDeepTutor 服务（ctx.zhiyunDeepTutor）；'
+      '上游出题引擎需要注入 zwDeepTutor 服务（ctx.zwDeepTutor）；'
       + '该服务由 dsh-zhiyun-host-deeptutor 注册，未安装时它不存在是正常的 —— '
       + '这不该阻止本包自己的出题路径工作');
   }

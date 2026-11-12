@@ -1,7 +1,7 @@
 // @lybx-leyw/dsh-zju-core-classroom-agent 的装配与契约测试。
 //
 // 覆盖三件事（对应任务书的验证条款）：
-//   1. 用假 ctx apply 一次不抛，并 provide `zhiyunClassroomAgent`；
+//   1. 用假 ctx apply 一次不抛，并 provide `zwClassroomAgent`；
 //   2. 固定 brief → plan() 的场景序列（数量 / 类型 / 顺序）与上游大纲同形；
 //   3. run() 是 AsyncIterable、能正常结束，且事件名与 director-loop 一致。
 //
@@ -67,10 +67,10 @@ function makeStudio() {
   };
 }
 
-function mount(config, { services = { zhiyunClassroomStudio: makeStudio() }, provideThrows = false } = {}) {
+function mount(config, { services = { zwClassroomStudio: makeStudio() }, provideThrows = false } = {}) {
   const harness = makeCtx({ services, provideThrows });
   const dispose = plugin.apply(harness.ctx, config);
-  return { ...harness, dispose, service: harness.provided.get('zhiyunClassroomAgent') };
+  return { ...harness, dispose, service: harness.provided.get('zwClassroomAgent') };
 }
 
 async function collect(iterable) {
@@ -81,12 +81,12 @@ async function collect(iterable) {
 
 // ── 1. apply ───────────────────────────────────────────────────────────────
 
-test('apply() 在假 ctx 上不抛，并 provide zhiyunClassroomAgent（plan/run/cancel 齐备）', () => {
+test('apply() 在假 ctx 上不抛，并 provide zwClassroomAgent（plan/run/cancel 齐备）', () => {
   const { service, dispose } = mount();
   assert.equal(typeof dispose, 'function', 'apply() 必须返回 disposer');
-  assert.ok(service, 'apply() 必须 provide zhiyunClassroomAgent');
+  assert.ok(service, 'apply() 必须 provide zwClassroomAgent');
   for (const method of ['plan', 'run', 'cancel', 'status']) {
-    assert.equal(typeof service[method], 'function', `缺少 zhiyunClassroomAgent.${method}`);
+    assert.equal(typeof service[method], 'function', `缺少 zwClassroomAgent.${method}`);
   }
   assert.equal(typeof service.runs.get, 'function');
 });
@@ -94,7 +94,7 @@ test('apply() 在假 ctx 上不抛，并 provide zhiyunClassroomAgent（plan/run
 test('apply() 在宿主服务缺失时不抛，status().state=degraded', async () => {
   const harness = makeCtx();
   assert.doesNotThrow(() => plugin.apply(harness.ctx, {}));
-  const service = harness.provided.get('zhiyunClassroomAgent');
+  const service = harness.provided.get('zwClassroomAgent');
   const status = await service.status();
   assert.equal(status.state, 'degraded');
   assert.equal(status.detail.studio, 'missing');

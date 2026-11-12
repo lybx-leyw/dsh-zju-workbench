@@ -6,7 +6,7 @@
 
 ## 这是什么
 
-一个 Cordis 插件 + 一条同源数据路由（`/api/zhiyun-pta`），把拼题A 上「我有哪些题集、
+一个 Cordis 插件 + 一条同源数据路由（`/api/zw-pta`），把拼题A 上「我有哪些题集、
 每个题集里有哪些题、我还差几题没做」读出来，交给规划页 / 脚本去消费。
 
 **它不重写任何接口知识**：这份实现原先住在 `@lybx-leyw/dsh-zju-source-campus`
@@ -56,7 +56,7 @@
 
 | 方法与路由 | 作用 |
 | --- | --- |
-| `ptaStatus()` / `GET /api/zhiyun-pta` | 回了 `{ configured, names }` —— **只报键名，不回值**，不发网络请求 |
+| `ptaStatus()` / `GET /api/zw-pta` | 回了 `{ configured, names }` —— **只报键名，不回值**，不发网络请求 |
 | `saveCookie(raw)` / `POST ?cookie` | 存 Cookie，回 `{ source, names, cleared }` |
 | `saveCookie('')` / `clearCookie()` / `POST ?cookie {}` | 清除（**空串就是清除**，不是"没识别出 Cookie"） |
 
@@ -95,7 +95,7 @@ pta.problemSets({ includeEnded, limit, now })  // → 原始形状，不归一
 它实现在 tier 0 的 `@lybx-leyw/dsh-zju-source-http`（多个数据源共用同一套识别规则），
 本包只 re-export。
 
-会话落在 `data/zhiyun-pta/pta.session`，默认走 Windows DPAPI 加密。
+会话落在 `data/zw-pta/pta.session`，默认走 Windows DPAPI 加密。
 
 ## 写操作去哪了
 
@@ -121,7 +121,7 @@ pta.problemSets({ includeEnded, limit, now })  // → 原始形状，不归一
 请求一个 cookie 都不带、回来的 `Set-Cookie` 也一个都不存，表现为"刚粘完 Cookie 又像没配"，
 且**不报错**。
 
-出口走共享的 `zhiyunEgress`（`sharedFetch(ctx)`）：拼题A 是公网域，判定为**直连** ——
+出口走共享的 `zwEgress`（`sharedFetch(ctx)`）：拼题A 是公网域，判定为**直连** ——
 关键作用是绕开宿主为 LLM 配的**全局代理**（国内站点经代理基本必失败）。
 
 ## 没有设置分区
@@ -137,10 +137,10 @@ pta.problemSets({ includeEnded, limit, now })  // → 原始形状，不归一
   逐行相同，只换了站点常量的来源），所以原有接口口径的可信度不变；但**新的
   `index.js`（会话文件位置、路由路径、`WRITE_HEADER` 改名）只在测试里跑过**，
   没有用真实 Cookie 打过 `pintia.cn`。
-- **`WRITE_HEADER` 从 `x-zhiyun-campus` 改成了 `x-zhiyun-pta`**。旧前端
+- **`WRITE_HEADER` 从 `x-zw-campus` 改成了 `x-zw-pta`**。旧前端
   （`source/campus/src/client.jsx`）还在发旧头，**在它迁过来之前写动作会 403**。
   读取（`GET`）不受影响。
-- **会话文件位置变了**（`data/zhiyun-campus/pta.session` → `data/zhiyun-pta/pta.session`）。
+- **会话文件位置变了**（`data/zw-campus/pta.session` → `data/zw-pta/pta.session`）。
   用户升级后需要**重新粘一次 Cookie** —— 因为密文由 DPAPI 按用户绑定，不能直接搬。
   *(推测：也可以写一段迁移逻辑去读旧路径，但那要在 campus 退役时一起做。)*
 - **只覆盖「看题」这一层**：提交记录（`listSubmissions` / `getSubmission` /

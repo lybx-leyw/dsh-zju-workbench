@@ -114,7 +114,7 @@ test('bad provenance and malformed options are rejected; storage failures stop p
 });
 
 test('global bank spans courses, preserves questions across regeneration and restart, grades once, and isolates accounts',async()=>{
-  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-point-bank-'));let host,service,user={id:'fixture'};
+  const directory=await mkdtemp(path.join(tmpdir(),'zw-point-bank-'));let host,service,user={id:'fixture'};
   const open=async()=>{
     host=await mountKnowledge(directory);
     // 目录必须**纯本地**：课堂接口一旦被碰就抛，用来锁住「进刷题页不打网络」。
@@ -153,7 +153,7 @@ test('global bank spans courses, preserves questions across regeneration and res
 });
 
 test('legacy section questions are archived before a lecture can replace the section result',async()=>{
-  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-bank-legacy-')),host=await mountKnowledge(directory);
+  const directory=await mkdtemp(path.join(tmpdir(),'zw-bank-legacy-')),host=await mountKnowledge(directory);
   const user={id:'fixture'},service=new StudyWorkbench({directory,knowledge:host.service,classroom:{getCurrentUser:async()=>user},parser:{llm:{routes:{}}},llm:{}});
   try{
     const old={id:'old',type:'cloze',status:'accepted',stem:'称为{{c1::概率}}',answer:'概率',blockIndex:1,createdAt:new Date().toISOString()};
@@ -204,7 +204,7 @@ test('a failed question write resumes from the persisted draft cursor, without a
 });
 
 test('background progress remains readable, pauses durably and resumes the identical random plan after host restart',async()=>{
-  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-bank-checkpoint-'));let host,service;
+  const directory=await mkdtemp(path.join(tmpdir(),'zw-bank-checkpoint-'));let host,service;
   const user={id:'fixture'},calls=[];let entered,firstPhase=new Promise(resolve=>entered=resolve),block=true;
   const call=async request=>{
     calls.push(request.stage);
@@ -238,7 +238,7 @@ test('background progress remains readable, pauses durably and resumes the ident
 });
 
 test('retry fills only failed allocations and leaves completed question ids unchanged',async()=>{
-  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-bank-retry-')),host=await mountKnowledge(directory),user={id:'fixture'};
+  const directory=await mkdtemp(path.join(tmpdir(),'zw-bank-retry-')),host=await mountKnowledge(directory),user={id:'fixture'};
   let failNext=true;const calls=[];
   const generate=createPointQuizGenerator({call:async request=>{
     calls.push(request.stage);
@@ -338,7 +338,7 @@ test('all question types are staged before batch comparison and duplicates recei
 });
 
 test('host archives duplicate drafts and completes their tickets with usable replacements',async()=>{
-  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-bank-rectify-')),host=await mountKnowledge(directory),user={id:'fixture'};
+  const directory=await mkdtemp(path.join(tmpdir(),'zw-bank-rectify-')),host=await mountKnowledge(directory),user={id:'fixture'};
   // 两道题都挂账，但考查角度相同 —— 本地那一关在最后统一整改时才判掉第二道。
   const sameAngle=async request=>{
     if(request.stage!=='quiz-point-shortAnswer')return advancedCall(request);
@@ -435,7 +435,7 @@ test('mixed practice honors the requested proportion and supports strategy and q
 });
 
 test('global bank persists concept caches and records short answers as explicit self-assessments',async()=>{
-  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-strategy-bank-'));let host,service;const user={id:'fixture'},calls=[];
+  const directory=await mkdtemp(path.join(tmpdir(),'zw-strategy-bank-'));let host,service;const user={id:'fixture'},calls=[];
   const open=async()=>{host=await mountKnowledge(directory);service=new StudyWorkbench({directory,knowledge:host.service,classroom:{getCurrentUser:async()=>user,listCourses:async()=>({items:[]})},parser:{llm:{routes:{}}},llm:{},quiz:()=>({generatePoints:createPointQuizGenerator({call:async request=>{calls.push(request.stage);return advancedCall(request);}})})});};
   try{
     await open();await host.service.put(record());const {points}=await service.invoke('bank-catalog');
@@ -484,7 +484,7 @@ test('global bank persists concept caches and records short answers as explicit 
 });
 
 test('incremental recall completion survives real host storage and preserves old question links after restart',async()=>{
-  const directory=await mkdtemp(path.join(tmpdir(),'zhiyun-recall-completion-'));let host,service;const user={id:'fixture'},calls=[];
+  const directory=await mkdtemp(path.join(tmpdir(),'zw-recall-completion-'));let host,service;const user={id:'fixture'},calls=[];
   const open=async()=>{
     host=await mountKnowledge(directory);
     const call=async request=>{

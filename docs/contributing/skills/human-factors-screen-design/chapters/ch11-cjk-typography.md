@@ -97,7 +97,7 @@ visual_min = 2 × atan( (size_mm × 字面率) / 2 / distance_mm ) × (180/π) �
 ## 11.6 与本仓库的关系
 
 本仓库的字号 token、实测 arcmin 与已知偏差，见 [../repo-profile.md](../repo-profile.md)。
-其中 `--zy-fs-meta` 当前为 11 px（14.7′，**低于 16′**），已在 repo-profile 中登记为待决策项。
+其中 `--zw-fs-meta` 当前为 11 px（14.7′，**低于 16′**），已在 repo-profile 中登记为待决策项。
 
 ---
 

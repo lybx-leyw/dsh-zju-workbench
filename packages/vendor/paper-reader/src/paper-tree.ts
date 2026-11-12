@@ -24,7 +24,7 @@
  * 因此把分隔符自身也转义：`%` → `%25`，`+` → `%2B`，段间用 `+`。
  * 已实测往返无损，且 `a+b` 与 `a/b` 编码后不同。
  *
- * # 从 `dsh-zhiyun-host-paper` 迁入
+ * # 从 `dsh-zju-host-paper` 迁入
  *
  * 纯函数，零宿主依赖。页面侧保留了同规则的 `decodeTopic` 副本（客户端不能
  * import 宿主模块），`tests/paper-tree.test.mjs` 守两份规则一致。

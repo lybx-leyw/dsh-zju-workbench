@@ -8,7 +8,7 @@
  *     ref/OpenMAIC/packages/@openmaic/storage/src/material/pg.ts:58-88
  *     ref/OpenMAIC/lib/store/snapshot.ts:38-120
  *
- * 布局（`<root>` = `<profile>/data/zhiyun-classroom`）：
+ * 布局（`<root>` = `<profile>/data/zw-classroom`）：
  *
  * ```
  * classroom/<stageId>/meta.json              document_stages 一行

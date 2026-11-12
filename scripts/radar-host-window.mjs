@@ -243,7 +243,7 @@ function reasonOf(verdict) {
 async function fetchManifest(name, version) {
   try {
     const response = await fetch(`${REGISTRY}${name.replace('/', '%2F')}`, {
-      headers: { 'user-agent': 'zhiyun-radar' },
+      headers: { 'user-agent': 'zw-radar' },
       signal: AbortSignal.timeout(20_000),
     });
     if (!response.ok) return { error: `HTTP ${response.status}` };

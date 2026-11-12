@@ -102,7 +102,7 @@ test('页面组件能真的渲染出 HTML（白屏的第一道闸）', async () 
   //    hooks 顺序错乱 —— 都会在这里抛出来而不是在用户屏幕上变成白屏。
   const html = renderToStaticMarkup(React.createElement(client.Planning, { ctx: null }));
   assert.ok(html.length > 200, `渲染结果太短，可能是空页面：${html.length}`);
-  assert.match(html, /zpg-page/, '应渲染出页面的根节点');
+  assert.match(html, /zwpg-page/, '应渲染出页面的根节点');
   /**
    * ⚠️ 这里**不再断言出现「规划」二字**。
    *
@@ -113,8 +113,8 @@ test('页面组件能真的渲染出 HTML（白屏的第一道闸）', async () 
    * 「正在读取」），所以写入口还没出现 —— 那是真实行为，不该被断言成"必须有"。
    * 稳定的锚点是根节点与工具行：它们无论加载与否都在。
    */
-  assert.match(html, /zpg-tools/, '应渲染出工具行（加载中也存在）');
-  assert.match(html, /zpg-head/, '应渲染出页头');
+  assert.match(html, /zwpg-tools/, '应渲染出工具行（加载中也存在）');
+  assert.match(html, /zwpg-head/, '应渲染出页头');
 });
 
 test('本页只注册「个人中转站」一个设置分区，且它能渲染', async () => {
@@ -122,7 +122,7 @@ test('本页只注册「个人中转站」一个设置分区，且它能渲染',
   // `@lybx-leyw/dsh-zju-source-campus` 的凭据，由那个包自己注册设置分区；
   // 本页再注册一个，设置栏里就会出现两个「拼题A」入口、各打各的路由。
   //
-  // 所以现在：本页只有 `RelaySection`（`zhiyun-relay`），
+  // 所以现在：本页只有 `RelaySection`（`zw-relay`），
   // `PtaSection` 与旧的合并组件 `SettingsSection` 都应不存在。
   const React = (await import('react')).default;
   const { renderToStaticMarkup } = await import('react-dom/server');
@@ -139,7 +139,7 @@ test('本页只注册「个人中转站」一个设置分区，且它能渲染',
 });
 
 test('页面组件在没有宿主 ctx 时也不炸（这是它必须能独立打开的前提）', async () => {
-  // 领域包停用、控制器缺席时，`ctx?.get?.('zhiyunStudyController')` 返回 undefined，
+  // 领域包停用、控制器缺席时，`ctx?.get?.('zwStudyController')` 返回 undefined，
   // 课表上下文应该**安静地降级**而不是抛错 —— 这是"不与今天页合并"那条决定的直接后果。
   const React = (await import('react')).default;
   const { renderToStaticMarkup } = await import('react-dom/server');
@@ -171,9 +171,9 @@ test('添加入口默认收起：HTML 里不出现输入框', async () => {
 
   const html = renderToStaticMarkup(React.createElement(client.Planning, { ctx: null }));
 
-  assert.match(html, /zpg-fab/, '应渲染出浮动的添加入口');
+  assert.match(html, /zwpg-fab/, '应渲染出浮动的添加入口');
   assert.equal(
-    /zpg-composer-title/.test(html), false,
+    /zwpg-composer-title/.test(html), false,
     '默认不该渲染输入框 —— 那会重新占掉首屏',
   );
   assert.match(html, /aria-expanded="false"/, '按钮要声明当前是收起的');
@@ -187,7 +187,7 @@ test('加载中也能添加入口（不必等数据读完）', async () => {
 
   const html = renderToStaticMarkup(React.createElement(client.Planning, { ctx: null }));
   assert.match(html, /正在读取/, '这个用例的前提是处于加载态');
-  assert.match(html, /zpg-fab/, '加载中也应能添加');
+  assert.match(html, /zwpg-fab/, '加载中也应能添加');
 });
 
 /* ────────────────────────────── 详情默认收起：点「查看详情」才展开 */
@@ -211,7 +211,7 @@ test('卡片详情默认收起，不在 HTML 里铺开', async () => {
   const card = { title: '写报告', action: '先把提纲列出来', detail: '周三前给导师', done: false, id: 'c1' };
   const html = renderToStaticMarkup(React.createElement(client.CardRow, { row: card, onToggle: () => {}, busy: false }));
 
-  assert.match(html, /zpg-details/, '有详情就该有展开控件');
+  assert.match(html, /zwpg-details/, '有详情就该有展开控件');
   assert.equal(
     /<details[^>]*\sopen/.test(html), false,
     '默认不该带 open 属性（那会一进来就展开）',
@@ -226,7 +226,7 @@ test('没有 detail/action 的卡片不渲染展开控件', async () => {
   const card = { title: '买水果', done: false, id: 'c2' };
   const html = renderToStaticMarkup(React.createElement(client.CardRow, { row: card, onToggle: () => {}, busy: false }));
 
-  assert.equal(/zpg-details/.test(html), false, '没有详情时不该多一个"查看详情"');
+  assert.equal(/zwpg-details/.test(html), false, '没有详情时不该多一个"查看详情"');
 });
 
 test('已完成的卡片不渲染详情（勾掉就是不想再看）', async () => {
@@ -237,5 +237,5 @@ test('已完成的卡片不渲染详情（勾掉就是不想再看）', async ()
   const card = { title: '写报告', action: '先列提纲', detail: '周三前', done: true, id: 'c3' };
   const html = renderToStaticMarkup(React.createElement(client.CardRow, { row: card, onToggle: () => {}, busy: false }));
 
-  assert.equal(/zpg-details/.test(html), false, '勾掉的卡片不该再带详情');
+  assert.equal(/zwpg-details/.test(html), false, '勾掉的卡片不该再带详情');
 });

@@ -51,8 +51,8 @@ test('抽屉不注册任何插槽', () => {
 
 test('折叠态与展开态都有稳定选择器（供页面测试）', () => {
   const src = readFileSync(drawer, 'utf8');
-  assert.match(src, /data-zhiyun-drawer="open"/, '展开态要能选到');
-  assert.match(src, /data-zhiyun-drawer="collapsed"/, '折叠态要能选到');
+  assert.match(src, /data-zw-drawer="open"/, '展开态要能选到');
+  assert.match(src, /data-zw-drawer="collapsed"/, '折叠态要能选到');
 });
 
 test('宽度有上下界，不会把正文挤没', () => {
@@ -70,7 +70,7 @@ test('拖宽手柄有定位基准（不然会跑到窗口角落）', () => {
   const src = readFileSync(drawer, 'utf8');
   // 手柄是 position:absolute + left:-3；其父容器必须有 position:relative
   assert.match(src, /position: 'relative'/, '展开态容器需要 position:relative');
-  assert.match(src, /data-zhiyun-drawer-handle/, '拖宽手柄要有标记');
+  assert.match(src, /data-zw-drawer-handle/, '拖宽手柄要有标记');
 });
 
 test('传输层由调用方决定（send 是回调，不写死接口）', () => {
@@ -83,7 +83,7 @@ test('传输层由调用方决定（send 是回调，不写死接口）', () => 
     return !(t.startsWith("//") || t.startsWith("*") || t.startsWith("/*"));
   }).join(String.fromCharCode(10));
   assert.ok(!code.includes("/paper-reader/"), "抽屉代码里不该写死论文阅读的接口");
-  assert.ok(!code.includes("/zhiyun-paper/"), "抽屉代码里不该写死智云的接口");
+  assert.ok(!code.includes("/zw-paper/"), "抽屉代码里不该写死智云的接口");
 });
 
 test('偏好（开合与宽度）用 localStorage 记住，且失败不崩', () => {

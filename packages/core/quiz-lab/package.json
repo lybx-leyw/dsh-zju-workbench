@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-quiz-lab",
   "version": "0.1.0",
-  "description": "出题实验室：r4 按需求缓构建考法与题模，作为可挂载的出题引擎注册进 zhiyunQuiz.engines（纯宿主办，无客户端半边）",
+  "description": "出题实验室：r4 按需求缓构建考法与题模，作为可挂载的出题引擎注册进 zwQuiz.engines（纯宿主办，无客户端半边）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

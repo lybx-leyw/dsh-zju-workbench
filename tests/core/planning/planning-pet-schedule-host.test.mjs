@@ -13,12 +13,12 @@ async function boot(t) {
   const calls = [];
   const ctx = { profileContext: { dir }, get: name => services.get(name), provide: (name, value) => { services.set(name,value); return () => services.delete(name); } };
   ctx.inject = (_names, factory) => factory({ ...ctx, effect: fn => fn(), webServer: { register: row => { handler = row.handler; return () => {}; } } });
-  services.set('zhiyunParser', { llm: { resolve: async () => ({model:'fixture'}), call: async request => { calls.push(request); return {text:modelReply}; }, async *callStream(request) { calls.push(request); yield {type:'delta',text:modelReply}; } } });
+  services.set('zwParser', { llm: { resolve: async () => ({model:'fixture'}), call: async request => { calls.push(request); return {text:modelReply}; }, async *callStream(request) { calls.push(request); yield {type:'delta',text:modelReply}; } } });
   // 拆包后两个平台分属两个 source 包，各给一个桩。
-  services.set('zhiyunXuezai', { todos: async () => ({xzzd:{ok:true,rows:[{id:'external',source:'xzzd',title:'虚构平台任务',due:null}]}}) });
-  services.set('zhiyunPta', { todos: async () => ({pta:{ok:true,rows:[]}}) });
+  services.set('zwXuezai', { todos: async () => ({xzzd:{ok:true,rows:[{id:'external',source:'xzzd',title:'虚构平台任务',due:null}]}}) });
+  services.set('zwPta', { todos: async () => ({pta:{ok:true,rows:[]}}) });
   const dispose = await apply(ctx, {}); t.after(dispose);
-  return { dir, calls, service: services.get('zhiyunPlanning'), reply: value => { modelReply = typeof value === 'string' ? value : JSON.stringify(value); }, get handler(){return handler;} };
+  return { dir, calls, service: services.get('zwPlanning'), reply: value => { modelReply = typeof value === 'string' ? value : JSON.stringify(value); }, get handler(){return handler;} };
 }
 
 test('host grounds schedule drafts in real local/platform tasks without writing schedules', async t => {
@@ -30,7 +30,7 @@ test('host grounds schedule drafts in real local/platform tasks without writing 
   assert.equal(result.draft.start,'2026-11-02T11:00:00.000Z');
   assert.match(host.calls[0].constant,/xzzd:external/);
   assert.match(host.calls[0].constant,/local:/);
-  const file = path.join(host.dir,'data/zhiyun-planning/schedule.json');
+  const file = path.join(host.dir,'data/zw-planning/schedule.json');
   await assert.rejects(access(file),{code:'ENOENT'});
   assert.equal(host.service.mine.find(local.id).due,local.due);
   host.reply({say:'请确认',action:'schedule',draft:{taskKey:'local:invented',start:'2026-11-02T11:00:00Z',end:'2026-11-02T12:00:00Z'}});
@@ -41,12 +41,12 @@ test('host grounds schedule drafts in real local/platform tasks without writing 
 test('existing blocks reach model as context; adjustments preserve id and do not persist until confirmation', async t => {
   const host = await boot(t);
   const local = host.service.mine.create({title:'虚构本地任务'});
-  const file = path.join(host.dir,'data/zhiyun-planning/schedule.json');
+  const file = path.join(host.dir,'data/zw-planning/schedule.json');
   // Store instance inside host reads are live; create via the same protected route used by confirmation.
   const input = {taskKey:`local:${local.id}`,title:local.title,start:'2026-11-02T11:00:00Z',end:'2026-11-02T12:00:00Z'};
   async function post(action,body) {
     const {EventEmitter} = await import('node:events');
-    const req = new EventEmitter(); Object.assign(req,{url:'/_dsh/zhiyun-planning?'+action,method:'POST',headers:{host:'localhost','x-zhiyun-planning':'1'}});
+    const req = new EventEmitter(); Object.assign(req,{url:'/_dsh/zw-planning?'+action,method:'POST',headers:{host:'localhost','x-zw-planning':'1'}});
     let output=''; const res = {on(){},writeHead(){},setHeader(){},flushHeaders(){},write(chunk){output+=chunk;},end(chunk=''){output+=chunk;}};
     req[Symbol.asyncIterator] = async function* () { yield Buffer.from(JSON.stringify(body)); };
     await host.handler(req,res);

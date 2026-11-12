@@ -15,11 +15,11 @@
  * # 为什么断言在源码上而不是截图上
  *
  * 截图能证明"这一次是横的"，但守不住下一次。这里钉的是三个结构事实：
- *   1. 页面上不再有 `.zs-nt-ribbon` 这个竖列容器；
- *   2. 操作按钮在 `.zs-nt-topbar` 里，且它是 `role="toolbar"`；
- *   3. `.zs-nt-work`（三栏）里**不含**工具栏 —— 工具栏在工作区之外、之上。
+ *   1. 页面上不再有 `.zws-nt-ribbon` 这个竖列容器；
+ *   2. 操作按钮在 `.zws-nt-topbar` 里，且它是 `role="toolbar"`；
+ *   3. `.zws-nt-work`（三栏）里**不含**工具栏 —— 工具栏在工作区之外、之上。
  *
- * 位置关系（在 `.zs-nt-work` 之前）这条 3 是纯粹的 DOM 顺序，读源码就能判，
+ * 位置关系（在 `.zws-nt-work` 之前）这条 3 是纯粹的 DOM 顺序，读源码就能判，
  * 不需要造 DOM 桩。真机上的交互（开关文件树 / 右栏、新建笔记真的落盘）
  * 另由 `notes-batch-select.test.mjs` 那套真浏览器用例与提交记录里的实测覆盖。
  */
@@ -35,9 +35,9 @@ const STYLE = 'packages/client/page-notes/src/style.css';
 const src = readFileSync(path.join(root, CLIENT), 'utf8');
 const css = readFileSync(path.join(root, STYLE), 'utf8');
 
-/** 取 `<section className="zs-nt"` 到文件末尾的渲染树（只在 JSX 里找，注释先剥掉）。 */
+/** 取 `<section className="zws-nt"` 到文件末尾的渲染树（只在 JSX 里找，注释先剥掉）。 */
 function renderTree() {
-  const at = src.indexOf('return <section className="zs-nt"');
+  const at = src.indexOf('return <section className="zws-nt"');
   assert.ok(at >= 0, '找不到笔记页的渲染树');
   return src
     .slice(at)
@@ -47,20 +47,20 @@ function renderTree() {
 }
 
 test('本页不再有左侧竖列（ribbon）—— 竖导航只留页面壳那一条', () => {
-  assert.doesNotMatch(src, /zs-nt-ribbon/, '渲染树里不该再出现 zs-nt-ribbon');
-  assert.doesNotMatch(css, /\.zs-nt-ribbon/, '样式表里不该再出现 .zs-nt-ribbon');
-  assert.doesNotMatch(css, /\.zs-nt-ribbon-gap/, '样式表里不该再出现 .zs-nt-ribbon-gap');
+  assert.doesNotMatch(src, /zws-nt-ribbon/, '渲染树里不该再出现 zws-nt-ribbon');
+  assert.doesNotMatch(css, /\.zws-nt-ribbon/, '样式表里不该再出现 .zws-nt-ribbon');
+  assert.doesNotMatch(css, /\.zws-nt-ribbon-gap/, '样式表里不该再出现 .zws-nt-ribbon-gap');
 });
 
 test('操作按钮横排在页面顶部的工具栏里，且是 role="toolbar"', () => {
   const tree = renderTree();
-  const barAt = tree.indexOf('className="zs-nt-topbar"');
-  assert.ok(barAt >= 0, '找不到顶部工具栏 .zs-nt-topbar');
+  const barAt = tree.indexOf('className="zws-nt-topbar"');
+  assert.ok(barAt >= 0, '找不到顶部工具栏 .zws-nt-topbar');
 
-  // 工具栏要在 `.zs-nt-work`（三栏工作区）**之前**：它是页面的一条顶栏，
+  // 工具栏要在 `.zws-nt-work`（三栏工作区）**之前**：它是页面的一条顶栏，
   // 不是工作区里的一列。顺序反了就是"又回到侧栏"。
-  const workAt = tree.indexOf('className="zs-nt-work"');
-  assert.ok(workAt >= 0, '找不到工作区 .zs-nt-work');
+  const workAt = tree.indexOf('className="zws-nt-work"');
+  assert.ok(workAt >= 0, '找不到工作区 .zws-nt-work');
   assert.ok(barAt < workAt, '顶部工具栏必须在工作区之前（DOM 顺序即视觉上的上/左）');
 
   // role="toolbar" 是这排按钮的无障碍身份：一串图标按钮不带 role 时，
@@ -75,8 +75,8 @@ test('操作按钮横排在页面顶部的工具栏里，且是 role="toolbar"',
 });
 
 test('工具栏是横排：flex-direction 不是 column，且没有固定竖列宽度', () => {
-  const at = css.indexOf('body[data-zhiyun] .zs-nt-topbar {');
-  assert.ok(at >= 0, '找不到 .zs-nt-topbar 的样式规则');
+  const at = css.indexOf('body[data-zw] .zws-nt-topbar {');
+  assert.ok(at >= 0, '找不到 .zws-nt-topbar 的样式规则');
   const rule = css.slice(at, css.indexOf('}', at));
   // 断言"没写 column"，而不是要求显式写 row：flex 默认就是 row，
   // 硬写一条 `flex-direction: row` 只会多一行没人维护的噪音。

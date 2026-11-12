@@ -9,18 +9,18 @@ let exporting=false;
 export function LecturePdfDocument({snapshot,onReady}) {
   useEffect(()=>{onReady?.();},[]);
   const {lecture,graph,course,lesson}=snapshot,chapters=lecture.chapters??[],sheets=graphSheets(graph);
-  return <div className="zs-pdf"><style>{printCss}</style><header className="zs-pdf-title"><span>课堂讲义 · 知识图谱</span><h1>{lesson||lecture.title||'课堂讲义'}</h1>{course&&<p>{course}</p>}<small>{chapters.length} 章 · {chapters.reduce((sum,c)=>sum+(c.topics?.length??0),0)} 个知识点</small>
-    {lecture.polish?.complete===false&&<p className="zs-pdf-warning">部分终审未完成，请结合课堂资料核对。</p>}</header>
-    <nav className="zs-pdf-contents" aria-label="PDF 目录"><h2>目录</h2><ol>{chapters.map((chapter,ci)=><li key={ci}><a href={`#pdf-chapter-${ci}`}>{chapter.title}</a><ol>{(chapter.topics??[]).map((topic,ti)=><li key={ti}><a href={`#pdf-topic-${ci}-${ti}`}>{topic.title}</a></li>)}</ol></li>)}<li><a href="#pdf-graph">知识图谱</a></li></ol></nav>
-    <main className="zs-pdf-lecture">{chapters.map((chapter,ci)=><section key={ci} className="zs-pdf-chapter" id={`pdf-chapter-${ci}`}><h2><small>第 {ci+1} 章</small>{chapter.title}</h2>{(chapter.topics??[]).map((topic,ti)=><article key={ti} id={`pdf-topic-${ci}-${ti}`}><h3>{topic.title}</h3>
-      {(topic.fromPage??topic.anchor?.page)!=null&&<p className="zs-pdf-source">课堂课件 P{topic.fromPage??topic.anchor.page}{topic.toPage>topic.fromPage?`–${topic.toPage}`:''}</p>}
-      {topic.register!=='written'&&<p className="zs-pdf-warning">本知识点保留课堂原话，尚未写成书面稿。</p>}
-      {blocksOf(topic).map((block,bi)=><section className="zs-pdf-block" key={bi}><h4>{kinds[kindOf(block)]?.[0]??'讲解'}{block.title?` · ${block.title}`:''}</h4><LectureBlockBody block={block} expanded/></section>)}
+  return <div className="zws-pdf"><style>{printCss}</style><header className="zws-pdf-title"><span>课堂讲义 · 知识图谱</span><h1>{lesson||lecture.title||'课堂讲义'}</h1>{course&&<p>{course}</p>}<small>{chapters.length} 章 · {chapters.reduce((sum,c)=>sum+(c.topics?.length??0),0)} 个知识点</small>
+    {lecture.polish?.complete===false&&<p className="zws-pdf-warning">部分终审未完成，请结合课堂资料核对。</p>}</header>
+    <nav className="zws-pdf-contents" aria-label="PDF 目录"><h2>目录</h2><ol>{chapters.map((chapter,ci)=><li key={ci}><a href={`#pdf-chapter-${ci}`}>{chapter.title}</a><ol>{(chapter.topics??[]).map((topic,ti)=><li key={ti}><a href={`#pdf-topic-${ci}-${ti}`}>{topic.title}</a></li>)}</ol></li>)}<li><a href="#pdf-graph">知识图谱</a></li></ol></nav>
+    <main className="zws-pdf-lecture">{chapters.map((chapter,ci)=><section key={ci} className="zws-pdf-chapter" id={`pdf-chapter-${ci}`}><h2><small>第 {ci+1} 章</small>{chapter.title}</h2>{(chapter.topics??[]).map((topic,ti)=><article key={ti} id={`pdf-topic-${ci}-${ti}`}><h3>{topic.title}</h3>
+      {(topic.fromPage??topic.anchor?.page)!=null&&<p className="zws-pdf-source">课堂课件 P{topic.fromPage??topic.anchor.page}{topic.toPage>topic.fromPage?`–${topic.toPage}`:''}</p>}
+      {topic.register!=='written'&&<p className="zws-pdf-warning">本知识点保留课堂原话，尚未写成书面稿。</p>}
+      {blocksOf(topic).map((block,bi)=><section className="zws-pdf-block" key={bi}><h4>{kinds[kindOf(block)]?.[0]??'讲解'}{block.title?` · ${block.title}`:''}</h4><LectureBlockBody block={block} expanded/></section>)}
     </article>)}</section>)}</main>
-    {!!lecture.polish?.warnings?.length&&<section className="zs-pdf-review"><h2>待复核提示</h2>{lecture.polish.warnings.map((warning,i)=><p key={i}>{warning}</p>)}</section>}
-    {sheets.map((sheet,index)=><section className="zs-pdf-map-sheet" id="pdf-graph" key={index}><header><span>知识图谱</span><h2>{course||lesson||'课堂知识'}</h2><p>章节 → 知识点 · 沿用应用中的层级关系</p></header>
-      <div className="zs-pdf-map-viewport"><div className="zs-pdf-map-grid" style={{gridTemplateColumns:`repeat(${sheet.columns.length},minmax(0,1fr))`}}>
-        {sheet.columns.map((column,col)=><div className="zs-pdf-map-column" key={col}>{column.map((part,pi)=><div className="zs-pdf-map-chapter" key={pi}><div className="zs-pdf-map-root">{part.chapterIndex+1}. {part.title}{part.total>1?` · ${part.part}/${part.total}`:''}</div><ol className="zs-pdf-map-branches">{part.topics.map((topic,ti)=><li key={ti}><span>{String(part.offset+ti+1).padStart(2,'0')}</span><strong>{topic.title}</strong></li>)}</ol></div>)}</div>)}
+    {!!lecture.polish?.warnings?.length&&<section className="zws-pdf-review"><h2>待复核提示</h2>{lecture.polish.warnings.map((warning,i)=><p key={i}>{warning}</p>)}</section>}
+    {sheets.map((sheet,index)=><section className="zws-pdf-map-sheet" id="pdf-graph" key={index}><header><span>知识图谱</span><h2>{course||lesson||'课堂知识'}</h2><p>章节 → 知识点 · 沿用应用中的层级关系</p></header>
+      <div className="zws-pdf-map-viewport"><div className="zws-pdf-map-grid" style={{gridTemplateColumns:`repeat(${sheet.columns.length},minmax(0,1fr))`}}>
+        {sheet.columns.map((column,col)=><div className="zws-pdf-map-column" key={col}>{column.map((part,pi)=><div className="zws-pdf-map-chapter" key={pi}><div className="zws-pdf-map-root">{part.chapterIndex+1}. {part.title}{part.total>1?` · ${part.part}/${part.total}`:''}</div><ol className="zws-pdf-map-branches">{part.topics.map((topic,ti)=><li key={ti}><span>{String(part.offset+ti+1).padStart(2,'0')}</span><strong>{topic.title}</strong></li>)}</ol></div>)}</div>)}
       </div></div>
     </section>)}
   </div>;
@@ -38,7 +38,7 @@ async function waitForContent(element) {
   await Promise.race([Promise.all([document.fonts?.ready,...[...element.querySelectorAll('img')].map(image=>image.decode())]),new Promise((_,reject)=>setTimeout(()=>reject(new Error('字体或图片未能加载，请稍后重试')),15000))]);
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   // Measure at the landscape page width after fonts settle; fit all nodes without clipping.
-  for(const viewport of element.querySelectorAll('.zs-pdf-map-viewport')){
+  for(const viewport of element.querySelectorAll('.zws-pdf-map-viewport')){
     const grid=viewport.firstElementChild;
     let scale=1;
     if(grid.scrollHeight>viewport.clientHeight){
@@ -91,5 +91,5 @@ export function LectureExportButton({state}) {
   const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState(''),live=useRef(true);
   useEffect(()=>{live.current=true;return()=>{live.current=false;};},[]);
   const start=async()=>{setBusy(true);setMessage('正在排版讲义与知识图谱…');setError('');try{const result=await exportLecturePdf(state);if(live.current)setMessage(result);}catch(error){if(live.current){setError(error.message);setMessage('');}}finally{if(live.current)setBusy(false);}};
-  return <div className="zs-handout-export"><button type="button" className="zs-button" disabled={busy} onClick={start} title="将整节讲义与完整知识图谱导出为一个 PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></svg>{busy?'正在导出…':'导出 PDF'}</button>{message&&<small role="status">{message}</small>}{error&&<small role="alert">{error}</small>}</div>;
+  return <div className="zws-handout-export"><button type="button" className="zws-button" disabled={busy} onClick={start} title="将整节讲义与完整知识图谱导出为一个 PDF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></svg>{busy?'正在导出…':'导出 PDF'}</button>{message&&<small role="status">{message}</small>}{error&&<small role="alert">{error}</small>}</div>;
 }

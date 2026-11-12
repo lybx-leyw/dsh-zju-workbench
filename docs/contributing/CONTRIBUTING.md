@@ -1,6 +1,6 @@
-# 参与智云 Pro
+# 参与 ZJU Workbench
 
-本文档约定智云 Pro 的开发环境与协作流程。新增的 AGENTS、skills 等协作材料也放在本目录下。
+本文档约定 ZJU Workbench 的开发环境与协作流程。新增的 AGENTS、skills 等协作材料也放在本目录下。
 
 ## 0. 安装 Node.js、npm 和 Git
 
@@ -143,25 +143,25 @@ npm run desktop
 
 | 变量 | 作用 | 默认行为 |
 | --- | --- | --- |
-| `ZHIYUN_DSH_APP_DIR` | 指定宿主绝对路径，指向包含 `node_modules` 的那一层 | 先查找 Windows 默认位置的 DSH Desktop，再查找 `.runtime/dsh-<版本>/` 中受支持的宿主 |
-| `ZHIYUN_DSH_HOME` | 用绝对路径指定会话、配置和存储的数据目录 | `.runtime/home/` |
-| `ZHIYUN_PORT` | 指定端口 | `3091`，可由命令行 `--port` 覆盖 |
+| `ZW_DSH_APP_DIR` | 指定宿主绝对路径，指向包含 `node_modules` 的那一层 | 先查找 Windows 默认位置的 DSH Desktop，再查找 `.runtime/dsh-<版本>/` 中受支持的宿主 |
+| `ZW_DSH_HOME` | 用绝对路径指定会话、配置和存储的数据目录 | `.runtime/home/` |
+| `ZW_PORT` | 指定端口 | `3091`，可由命令行 `--port` 覆盖 |
 
 例如，将路径替换为已安装宿主的实际位置，按自己的终端选择一种写法，然后在**同一终端**执行 `npm start`。以下设置仅对当前终端及其启动的进程生效；显式指定的宿主不可用时，脚本会报错，不再自动查找其他位置。
 
 ```powershell
 # PowerShell
-$env:ZHIYUN_DSH_APP_DIR = 'C:\Users\me\dsh-host'
+$env:ZW_DSH_APP_DIR = 'C:\Users\me\dsh-host'
 ```
 
 ```bat
 :: cmd
-set "ZHIYUN_DSH_APP_DIR=C:\Users\me\dsh-host"
+set "ZW_DSH_APP_DIR=C:\Users\me\dsh-host"
 ```
 
 ```bash
 # macOS / Linux
-export ZHIYUN_DSH_APP_DIR="$HOME/dsh-host"
+export ZW_DSH_APP_DIR="$HOME/dsh-host"
 ```
 
 **`.runtime/home/` 保存真实数据，不要作为缓存删除。** `.runtime/dsh-<版本>/` 则是可重新安装的宿主目录。
@@ -225,8 +225,8 @@ Owner: @alice, @bob + Open
 
 ```text
 OWNERS                                      # 可不写；不写即为 shared
-packages/dsh-zhiyun-shell-workbench/OWNERS            Owner: @alice
-packages/dsh-zhiyun-shell-workbench/src/OWNERS        Owner: @alice, @bob + Open
+packages/dsh-zju-shell-workbench/OWNERS            Owner: @alice
+packages/dsh-zju-shell-workbench/src/OWNERS        Owner: @alice, @bob + Open
 scripts/OWNERS                              Owner: @bob, @carol + Open
 ```
 
@@ -234,7 +234,7 @@ scripts/OWNERS                              Owner: @bob, @carol + Open
 
 ## 3. 贡献方式：提供插件包
 
-本项目的功能单位是插件包（`packages/dsh-zhiyun-*`），不是往某个大插件里塞代码。贡献一个新功能，就是提供一个包，或改动已有的包；改动某一页时只动对应的包（各包职责见 [README](../../README.md) 与包内的 `README.md`）。
+本项目的功能单位是插件包（`packages/dsh-zju-*`），不是往某个大插件里塞代码。贡献一个新功能，就是提供一个包，或改动已有的包；改动某一页时只动对应的包（各包职责见 [README](../../README.md) 与包内的 `README.md`）。
 
 > `packages/radar/` 下的 `dsh-radar-*` 是**参考实现库**（[reference-library.md](../reference-library.md)）：静态归档，不再维护、不再更新。它们不是正式包，不参与构建、不进 profile。实现某项能力前可以去那里看「别人怎么做过」，但**参考，不要照搬**——真要采用须新建正式包并重写。
 
@@ -272,7 +272,7 @@ test('用例名说清被钉住的行为', () => {
 
 目录约定与「新增测试放哪」的完整说明见 [tests/README.md](../../tests/README.md)。
 
-需要外部真值的用例，把夹具放在包内的 `fixtures/`，并在注释里写明生成方式；例见 `packages/dsh-zhiyun-core-notes/fixtures/dart-golden-*.json`。涉及宿主的改动（插槽、导航、主题、宿主适配）用 `npm run test:host` 在真实宿主中验证，它会在 `artifacts/` 留下报告与截图。
+需要外部真值的用例，把夹具放在包内的 `fixtures/`，并在注释里写明生成方式；例见 `packages/dsh-zju-core-notes/fixtures/dart-golden-*.json`。涉及宿主的改动（插槽、导航、主题、宿主适配）用 `npm run test:host` 在真实宿主中验证，它会在 `artifacts/` 留下报告与截图。
 
 ### 3.3 参考其他项目前先确认协议
 

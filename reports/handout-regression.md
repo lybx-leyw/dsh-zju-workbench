@@ -76,7 +76,7 @@ npm run check:css
 
 ### 2.3 顺带清掉的两处
 
-- `packages/dsh-zhiyun-page-notes/src/index.js` 的 85 行新增（`ARCHIVE_DIR` /
+- `packages/dsh-zju-page-notes/src/index.js` 的 85 行新增（`ARCHIVE_DIR` /
   `isArchivePath` / `walk({skipArchive})` / `readRaw` / `writeRaw`）**已整体回退到 HEAD**。
   理由：新架构不再产生 `讲义归档/`，这套逻辑没有生产方。回退前已备份（见第五节）。
 - `tmp-handoff-handout/clear/` 此前登记的「版本对 / 归档 / swap」本体概念已不适配新架构。
@@ -90,7 +90,7 @@ npm run check:css
 | 讲义生成路径未被破坏 | `study.test.mjs` 20 条全过，其中 `:92` 断言 `lectureHistory.length === 0` |
 | `workbench.js` 改动未破坏 RPC | 同上；新增的 `handout-export` 只加进 method 白名单，不动既有分支 |
 | 笔记库行为未变 | `notes` 42 条、`vault` 37 条、`vault-notes` 11 条全过；`page-notes` 已回到 HEAD |
-| profile 登记正确 | `profile.test.mjs` 14 条全过，其逐字期望清单已补 `dsh-zhiyun-core-handout` |
+| profile 登记正确 | `profile.test.mjs` 14 条全过，其逐字期望清单已补 `dsh-zju-core-handout` |
 | 样式无跨包顺序依赖 | `npm run check:css` 原文见第一节 |
 
 ---
@@ -156,7 +156,7 @@ node -e "require('esbuild').buildSync({stdin:{contents:'let a=1'},write:false})"
 3. **导出按钮的 RPC 未做端到端真机验证**：链路（按钮 → `controller.request` →
    `rpc.call` → method 白名单 → `exportHandout` → `zhiyunHandout.exportLecture`）
    已逐层核对，但没有在运行中的应用里点过一次。
-4. **`dsh-zhiyun-core-handout` 没有 `client.jsx`**，因此**未加进**
+4. **`dsh-zju-core-handout` 没有 `client.jsx`**，因此**未加进**
    `scripts/build.mjs` 的 `CLIENT_PACKAGES`。那个清单的判据是「有 src/client.jsx」，
    硬加会让构建去找一个不存在的源文件。交接单第 9 步要求加，是基于旧架构要写
    版本面板 UI 的前提；新架构的 UI 按钮在 `page-study` 里（它本来就是客户端包）。

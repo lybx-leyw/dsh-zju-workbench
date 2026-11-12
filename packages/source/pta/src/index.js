@@ -3,7 +3,7 @@
  *
  * # 这个包是什么
  *
- * 一个 Cordis 插件 + 一条同源数据路由（`/api/zhiyun-pta`）。它把拼题A 的
+ * 一个 Cordis 插件 + 一条同源数据路由（`/api/zw-pta`）。它把拼题A 的
  * **题集列表**、题集详情、题目列表、题面原文、做题进度读出来，交给页面 / 脚本 /
  * 规划页去消费。**不注册任何 AI 工具** —— 那是消费方的适配，钉在包里以后想换
  * 客户端就得绕开它（与 `source/yjsy` / `source/zdbk` 同口径）。
@@ -44,22 +44,22 @@ export const name = 'zju-source-pta';
 /** 只硬依赖 `profileContext`（数据目录）。`webServer` 走 `ctx.inject` 惰性取。 */
 export const inject = ['profileContext'];
 
-/** 本包的数据路由。与 `/api/zhiyun-campus`、`/api/zhiyun-xxt` 并列，互不干扰。 */
-export const ROUTE_PATH = '/api/zhiyun-pta';
+/** 本包的数据路由。与 `/api/zw-campus`、`/api/zw-xxt` 并列，互不干扰。 */
+export const ROUTE_PATH = '/api/zw-pta';
 
 /**
  * 写操作必须带的自定义头。
  *
- * # 为什么换了名字（`x-zhiyun-campus` → `x-zhiyun-pta`）
+ * # 为什么换了名字（`x-zw-campus` → `x-zw-pta`）
  *
- * 原路由在 campus 上，用的是 `x-zhiyun-campus`。拆包后本包是**独立的路由**，
+ * 原路由在 campus 上，用的是 `x-zw-campus`。拆包后本包是**独立的路由**，
  * 继续收 campus 的域名会让"这条请求属于谁"在日志里读不出来。
  * 前端要跟着改（`source/campus/src/client.jsx` 那份设置分区会随 campus 退役）。
  *
  * 值必须是 `'1'`：跨站发不出自定义头，而硬带会触发浏览器预检 —— 本路由不响应
  * 预检，于是 CSRF 被挡住。这是**唯一**的 CSRF 防线，不要删。
  */
-export const WRITE_HEADER = 'x-zhiyun-pta';
+export const WRITE_HEADER = 'x-zw-pta';
 
 /** 客户端动作：不是读取方法，不进 `read()` 的白名单。 */
 const CLIENT_ACTIONS = Object.freeze(['status', 'saveCookie', 'clearCookie']);
@@ -91,13 +91,13 @@ const fault = (code, message) => new ClassroomError(code, message);
  */
 export function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-pta] ${message}`;
+    const line = `[zw-pta] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
 
   // 数据目录跟着 profile 走：能跟 profile 一起被备份/清理，也与其他数据包一致。
-  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zhiyun-pta');
+  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zw-pta');
 
   /**
    * 会话文件是**一份**。
@@ -442,7 +442,7 @@ export function apply(ctx, config = {}) {
       const dispose = scope.webServer.register({ kind: 'exact', path: routePath, handler });
       log(`数据路由：${routePath}（会话 ${dataDir}）`);
       return dispose;
-    }, 'zhiyun: pta data route');
+    }, 'zw: pta data route');
   });
 
   /**
@@ -460,7 +460,7 @@ export function apply(ctx, config = {}) {
     return writesCache.api;
   };
 
-  const removeService = ctx.provide('zhiyunPta', {
+  const removeService = ctx.provide('zwPta', {
     routePath,
     dataDir,
     platform: 'pta',

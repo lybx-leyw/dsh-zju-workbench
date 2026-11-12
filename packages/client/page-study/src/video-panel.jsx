@@ -6,7 +6,7 @@
 // 但换一节看、看完整理、整理完再回看 —— 这三件事是**同一段动线**，拆成两个页面
 // 的代价是每次都要离开当前上下文：看课时读不到讲义，读讲义时又回不到那一段。
 //
-// 现在它是学习页正文区的一栏（`zs-content-switch` 里的「视频」）。课程目录、
+// 现在它是学习页正文区的一栏（`zws-content-switch` 里的「视频」）。课程目录、
 // 节次、解析终稿、出题、笔记全在同一页，切栏不换页，`<video>` 也就不会因为
 // 切栏而重建 —— 那正是下面第一条约定要保的东西。
 //
@@ -85,7 +85,7 @@ function safeMedia(value) {
  * # 为什么优先本地
  *
  * 翻页卡顿的根因是**每翻一页都是一次带签名 URL 的网络往返**。宿主把每次读到的
- * 课件页缓存到本地磁盘后用 `/zhiyun-slides/<key>` 暴露出来，命中时翻页就退化成
+ * 课件页缓存到本地磁盘后用 `/zw-slides/<key>` 暴露出来，命中时翻页就退化成
  * 磁盘读取 —— 这才是"缓存"要换的东西，不是省流量。
  *
  * # 为什么未命中就回原始地址
@@ -143,7 +143,7 @@ function TranscriptLine({ line, index, active, onJump, domId, dim = false }) {
   return <button
     type="button"
     id={domId}
-    className={`zs-video-line${active ? ' is-active' : ''}${dim ? ' is-dim' : ''}`}
+    className={`zws-video-line${active ? ' is-active' : ''}${dim ? ' is-dim' : ''}`}
     onClick={() => onJump(line.startMs)}
     title={dim ? '这条的时间不可信（清洗插值或尾噪），仅供参考' : undefined}
   >
@@ -153,7 +153,7 @@ function TranscriptLine({ line, index, active, onJump, domId, dim = false }) {
 }
 
 function SectionFacts({ stats }) {
-  return <dl className="zs-video-facts">{sectionFacts(stats).map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
+  return <dl className="zws-video-facts">{sectionFacts(stats).map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
 }
 
 /**
@@ -184,13 +184,13 @@ function ContentRail({ bar, nowMs, onJump }) {
     const step = event.key === 'ArrowRight' ? 5000 : -5000;
     onJump(Math.min(bar.axisMs, Math.max(0, nowMs + step)));
   };
-  return <div className="zs-video-rail">
-    <div className="zs-video-heat" aria-hidden="true">{bar.heat.map((bucket, index) => <span key={index} className="zs-video-heat-cell" data-empty={bucket.heat == null ? 'true' : undefined} style={{ left: `${bucket.from * 100}%`, width: `${Math.max(0, (bucket.to - bucket.from) * 100)}%`, '--heat': bucket.heat ?? 0 }} />)}</div>
-    <div className="zs-video-seek" role="slider" tabIndex={0} aria-label="按课堂内容跳转" aria-valuemin={0} aria-valuemax={Math.round(bar.axisMs)} aria-valuenow={Math.round(Math.min(bar.axisMs, Math.max(0, nowMs)))} onClick={seek} onKeyDown={nudge}>
-      {bar.segments.map((segment, index) => <span key={index} className="zs-video-seg" data-role={segment.role ?? 'none'} title={segment.summary || undefined} style={{ left: `${segment.from * 100}%`, width: `${Math.max(0, (segment.to - segment.from) * 100)}%` }} />)}
-      <span className="zs-video-playhead" style={{ left: `${play * 100}%` }} />
+  return <div className="zws-video-rail">
+    <div className="zws-video-heat" aria-hidden="true">{bar.heat.map((bucket, index) => <span key={index} className="zws-video-heat-cell" data-empty={bucket.heat == null ? 'true' : undefined} style={{ left: `${bucket.from * 100}%`, width: `${Math.max(0, (bucket.to - bucket.from) * 100)}%`, '--heat': bucket.heat ?? 0 }} />)}</div>
+    <div className="zws-video-seek" role="slider" tabIndex={0} aria-label="按课堂内容跳转" aria-valuemin={0} aria-valuemax={Math.round(bar.axisMs)} aria-valuenow={Math.round(Math.min(bar.axisMs, Math.max(0, nowMs)))} onClick={seek} onKeyDown={nudge}>
+      {bar.segments.map((segment, index) => <span key={index} className="zws-video-seg" data-role={segment.role ?? 'none'} title={segment.summary || undefined} style={{ left: `${segment.from * 100}%`, width: `${Math.max(0, (segment.to - segment.from) * 100)}%` }} />)}
+      <span className="zws-video-playhead" style={{ left: `${play * 100}%` }} />
     </div>
-    <p className="zs-video-rail-note"><span data-role="main">主线</span><span data-role="branch">支线</span><span>细条是语速，灰段是估不出来</span>{current?.summary ? <span className="zs-video-rail-now">{current.summary}</span> : null}</p>
+    <p className="zws-video-rail-note"><span data-role="main">主线</span><span data-role="branch">支线</span><span>细条是语速，灰段是估不出来</span>{current?.summary ? <span className="zws-video-rail-now">{current.summary}</span> : null}</p>
   </div>;
 }
 
@@ -497,7 +497,7 @@ export function VideoPanel({ state, seek = null }) {
   };
 
   /**
-   * 全屏**整个视频舞台**（`.zs-video-grid`），不是 `<video>`、也不是只含画面的 `frame`。
+   * 全屏**整个视频舞台**（`.zws-video-grid`），不是 `<video>`、也不是只含画面的 `frame`。
    *
    * # 为什么不全屏 `<video>`
    *
@@ -505,7 +505,7 @@ export function VideoPanel({ state, seek = null }) {
    * `<video>` 元素放大，**兄弟节点全部不显示**，于是烧上去的字幕在全屏里消失
    * （用户实测）。所以原生按钮被 `controlsList="nofullscreen"` 去掉了。
    *
-   * # 为什么不全屏 `.zs-video-frame`
+   * # 为什么不全屏 `.zws-video-frame`
    *
    * 第一版全屏的是 `frame`（视频 + 字幕），字幕确实留住了，但**PPT 被排除在外** ——
    * 全屏后想切课件必须退出全屏再切（用户实测："上课爽全屏能自由切 PPT，我们不行"）。
@@ -604,7 +604,7 @@ export function VideoPanel({ state, seek = null }) {
     if (!grid || !stageFullscreen || !splitPane) return undefined;
     /** 找右栏里课件舞台那一格，用 grid 的行来算剩余。 */
     const measure = () => {
-      const stage = grid.querySelector('.zs-video-stage-ppt');
+      const stage = grid.querySelector('.zws-video-stage-ppt');
       if (!stage) { setTopicAreaPx(Number.POSITIVE_INFINITY); return; }
       const gridRect = grid.getBoundingClientRect();
       const pptRect = stage.getBoundingClientRect();
@@ -640,12 +640,12 @@ export function VideoPanel({ state, seek = null }) {
   }, [seek?.nonce, videoUrl]);
 
   if (state.contentLoading) {
-    return <div className="zs-video-loading"><span className="zs-spinner" />正在读取课件与字幕…</div>;
+    return <div className="zws-video-loading"><span className="zws-spinner" />正在读取课件与字幕…</div>;
   }
 
   // 没有回放就**没有视频舞台**。小窗那一格是内容位：拿它装一句"没有回放"，
   // 等于让一块不是内容的东西长期占座，把本该给课件的空间锁死。那句提醒降级成
-  // 栏顶一行小字（见下面的 `zs-video-notice`），不配卡片。
+  // 栏顶一行小字（见下面的 `zws-video-notice`），不配卡片。
   //
   // 这不违反"播放器常驻"：没有 `videoUrl` 也就没有 `<video>` 可卸载。有回放时
   // 两个舞台照旧都在树里，只有 `data-main` 变。
@@ -657,12 +657,12 @@ export function VideoPanel({ state, seek = null }) {
   //    它仍然把同一个 `ref` 交回来 —— `timeupdate` / `currentTime` 那套时间轴
   //    契约完全没有变，这是本栏"时间轴是唯一真源"的前提。
   const videoStage = videoUrl
-    ? <div className="zs-video-stage zs-video-stage-video">
-      {/* ⚠️ 视频单独包一层 `.zs-video-frame`，只为给烧上去的字幕一个**相对画面**的
-          定位上下文。舞台底部还有内容条（`.zs-video-rail`），若字幕相对舞台定位，
+    ? <div className="zws-video-stage zws-video-stage-video">
+      {/* ⚠️ 视频单独包一层 `.zws-video-frame`，只为给烧上去的字幕一个**相对画面**的
+          定位上下文。舞台底部还有内容条（`.zws-video-rail`），若字幕相对舞台定位，
           `bottom` 就会落在内容条上 —— 之前真的发生过：字幕压在蓝色分段条上。
           这一层不改变 `<video>` 的挂载与尺寸（它仍是 `flex: 1`），原生 controls 保留。 */}
-      <div className="zs-video-frame" ref={frameRef} data-controls={USE_CUSTOM_CONTROLS ? 'custom' : 'native'}>
+      <div className="zws-video-frame" ref={frameRef} data-controls={USE_CUSTOM_CONTROLS ? 'custom' : 'native'}>
         {/* ⚠️ `controlsList="nofullscreen"`：把原生控制条里的全屏按钮去掉。
             原因见下面 `fullscreenchange` 那段 —— 原生全屏只把 `<video>` 放进去，
             而字幕层是它的兄弟节点，全屏后会被排除在外（用户实测：全屏看不到字幕）。
@@ -670,7 +670,7 @@ export function VideoPanel({ state, seek = null }) {
         <HlsVideo
           ref={videoRef}
           src={videoUrl}
-          className="zs-video-media"
+          className="zws-video-media"
           preload="metadata"
           controlsList="nofullscreen"
           /* 自绘控制条接管时关掉原生；`USE_CUSTOM_CONTROLS = false` 时回到原生。 */
@@ -681,18 +681,18 @@ export function VideoPanel({ state, seek = null }) {
             用户在画面上看到的纵向顺序就是层级顺序。
             空隙（老师停顿/翻页）时 `currentTopic` 为 null —— 那时**不显示**，
             而不是拿上一个顶上：假装还在讲某个知识点比空着更误导。 */}
-        {currentTopic && <div className="zs-video-topic" title={topicLabel(currentTopic)}>
-          {currentTopic.chapterTitle && <span className="zs-video-topic-chapter">{currentTopic.chapterTitle}</span>}
-          <span className="zs-video-topic-title">{currentTopic.title}</span>
+        {currentTopic && <div className="zws-video-topic" title={topicLabel(currentTopic)}>
+          {currentTopic.chapterTitle && <span className="zws-video-topic-chapter">{currentTopic.chapterTitle}</span>}
+          <span className="zws-video-topic-title">{currentTopic.title}</span>
         </div>}
         {/* 字幕**烧进播放器**：贴在画面底部。只显示「时间可信」的那一句，
             空档期继续挂着上一句并淡化（见 `burnLine`）。 */}
         {burn.line && <div
-          className="zs-video-burn"
+          className="zws-video-burn"
           data-gap={burn.leadMs != null ? 'true' : undefined}
           aria-live="polite"
         >
-          <span className="zs-video-burn-text">{burn.line.text}</span>
+          <span className="zws-video-burn-text">{burn.line.text}</span>
         </div>}
         {/* 自绘控制条：贴在画面底部。那一条轨道**既是播放进度也是内容结构**
             （缓冲段 + 说话带 + 主线/支线分段 + 播放头）。
@@ -721,11 +721,11 @@ export function VideoPanel({ state, seek = null }) {
           split={splitPane}
           onToggleSplit={stageFullscreen ? () => setSplitPane((value) => !value) : undefined}
         />}
-        {/* 原生模式下的全屏按钮：全屏 `.zs-video-grid`（整个舞台），
+        {/* 原生模式下的全屏按钮：全屏 `.zws-video-grid`（整个舞台），
             不是 `<video>` —— 对 `<video>` 全屏会把字幕和 PPT 都排除在外。 */}
         {!USE_CUSTOM_CONTROLS && <button
           type="button"
-          className="zs-video-fullscreen"
+          className="zws-video-fullscreen"
           aria-label="全屏"
           title="全屏（保留字幕与课件）"
           onClick={toggleStageFullscreen}
@@ -765,32 +765,32 @@ export function VideoPanel({ state, seek = null }) {
   const backToLive = () => setPinnedIndex(null);
 
   /** 课件舞台：翻页控制 + 当前页。主视图与小窗共用同一份 DOM。 */
-  const pptStage = <div className="zs-video-stage zs-video-stage-ppt">
+  const pptStage = <div className="zws-video-stage zws-video-stage-ppt">
     {main === 'ppt' && slides.length > 0
       ? <>
-        <div className="zs-video-bar">
+        <div className="zws-video-bar">
           <button
-            className="zs-video-step"
+            className="zws-video-step"
             aria-label="上一页"
             disabled={slideIndex <= 0}
             onClick={() => goSlide(slideIndex - 1, false)}
           >‹</button>
-          <span className="zs-video-pos">
+          <span className="zws-video-pos">
             第 <strong>{current?.page ?? slideIndex + 1}</strong> 页
-            <span className="zs-muted"> / {slides.length}</span>
-            {current?.startMs != null && <span className="zs-video-at">{time(current.startMs)}</span>}
+            <span className="zws-muted"> / {slides.length}</span>
+            {current?.startMs != null && <span className="zws-video-at">{time(current.startMs)}</span>}
           </span>
           {/* 「回到当前页」：只有**真正脱离**视频时才出现。
               用户翻回当前页时 `detached` 为假，按钮自动消失 ——
               那时他已经恢复跟随了，不需要再点。 */}
           {detached && <button
             type="button"
-            className="zs-video-follow"
+            className="zws-video-follow"
             onClick={backToLive}
             title="回到视频正在讲的那一页"
           >回到当前页</button>}
           <button
-            className="zs-video-step"
+            className="zws-video-step"
             aria-label="下一页"
             disabled={slideIndex >= slides.length - 1}
             onClick={() => goSlide(slideIndex + 1, false)}
@@ -798,19 +798,19 @@ export function VideoPanel({ state, seek = null }) {
         </div>
         {slideSource(current)
           ? <img
-            className="zs-video-slide"
+            className="zws-video-slide"
             src={slideSource(current)}
             alt={`第 ${current.page ?? slideIndex + 1} 页课件`}
             /* 脱离时整张图略微变暗 + 虚线边框：让"我现在看的是别处"这件事
                在画面上就能感知到，而不是只有那个小按钮在提示。 */
             data-detached={detached ? 'true' : undefined}
           />
-          : <div className="zs-video-empty"><strong>这一页没有图片</strong><p>服务端没有给这一页的帧。</p></div>}
+          : <div className="zws-video-empty"><strong>这一页没有图片</strong><p>服务端没有给这一页的帧。</p></div>}
       </>
       : (slides.length > 0 && slideSource(current)
         ? <>
           <img
-            className="zs-video-slide"
+            className="zws-video-slide"
             src={slideSource(current)}
             alt={`第 ${current.page ?? slideIndex + 1} 页课件（小窗）`}
             data-detached={detached ? 'true' : undefined}
@@ -820,10 +820,10 @@ export function VideoPanel({ state, seek = null }) {
               而默认是视频作主视图、课件缩在小窗 —— 那里没有任何翻页控件，
               于是"自由翻课件"在最常见的布局下根本用不了（用户报的"ppt 还不行"）。
               小窗空间小，所以只给两个箭头 + 一个"回到当前"，页号用悬停提示。 */}
-          <div className="zs-video-mini-bar" data-detached={detached ? 'true' : undefined}>
+          <div className="zws-video-mini-bar" data-detached={detached ? 'true' : undefined}>
             <button
               type="button"
-              className="zs-video-mini-step"
+              className="zws-video-mini-step"
               aria-label="上一页"
               title={`上一页（第 ${Math.max(1, slideIndex)} 页）`}
               disabled={slideIndex <= 0}
@@ -831,7 +831,7 @@ export function VideoPanel({ state, seek = null }) {
             >‹</button>
             <button
               type="button"
-              className="zs-video-mini-step"
+              className="zws-video-mini-step"
               aria-label="下一页"
               title={`下一页（第 ${Math.min(slides.length, slideIndex + 2)} 页）`}
               disabled={slideIndex >= slides.length - 1}
@@ -839,14 +839,14 @@ export function VideoPanel({ state, seek = null }) {
             >›</button>
             {detached && <button
               type="button"
-              className="zs-video-mini-follow"
+              className="zws-video-mini-follow"
               aria-label="回到视频当前页"
               title={`回到视频当前页（第 ${followSlide + 1} 页）`}
               onClick={backToLive}
             >回到当前</button>}
           </div>
         </>
-        : <div className="zs-video-empty"><strong>这节课暂时没有课件</strong></div>)}
+        : <div className="zws-video-empty"><strong>这节课暂时没有课件</strong></div>)}
   </div>;
 
   /**
@@ -871,7 +871,7 @@ export function VideoPanel({ state, seek = null }) {
   const singleFullscreen = stageFullscreen && !splitPane;
 
   return <section
-    className="zs-video"
+    className="zws-video"
     data-main={videoUrl ? main : undefined}
     data-transcript={transcriptOpen ? 'on' : 'off'}
     data-fullscreen={stageFullscreen ? 'on' : undefined}
@@ -883,7 +883,7 @@ export function VideoPanel({ state, seek = null }) {
   >
     {!(singleFullscreen) && sectionStats && <SectionFacts stats={sectionStats} />}
     <div
-      className="zs-video-grid"
+      className="zws-video-grid"
       ref={stageRef}
       /* 分屏比例走内联样式：它是用户拖出来的连续值，写不进 class。 */
       style={stageFullscreen && splitPane ? { gridTemplateColumns: splitColumns(splitRatio) } : undefined}
@@ -894,13 +894,13 @@ export function VideoPanel({ state, seek = null }) {
       {stage}
 
       {/* 互换钮是**小窗这个格子**的，不是某个舞台的 —— 放进课件舞台会跟着课件
-          跑到主视图去。它在网格里自成一项、落在小窗那一格（`.zs-video-swap` 用
+          跑到主视图去。它在网格里自成一项、落在小窗那一格（`.zws-video-swap` 用
           `grid-column`/`grid-row` 定位，见 video.css），所以无论谁是主视图，
           它永远停在小窗的左上角。没有回放就没有小窗、也没得换，所以不渲染。
           全屏单画面时也不渲染：那时没有小窗可换。 */}
       {videoUrl && !singleFullscreen && <button
         type="button"
-        className="zs-video-swap"
+        className="zws-video-swap"
         aria-label={main === 'video' ? '切换到课件为主视图' : '切换到视频为主视图'}
         title={main === 'video' ? '课件为主视图' : '视频为主视图'}
         onClick={() => setMain((value) => (value === 'video' ? 'ppt' : 'video'))}
@@ -908,7 +908,7 @@ export function VideoPanel({ state, seek = null }) {
 
       {/* 分屏的分隔条。**只在分屏时存在** —— 单画面没有可拖的东西。 */}
       {stageFullscreen && splitPane && <div
-        className="zs-split-handle"
+        className="zws-split-handle"
         role="separator"
         tabIndex={0}
         aria-label="拖动调整视频与课件的宽度"
@@ -941,23 +941,23 @@ export function VideoPanel({ state, seek = null }) {
               不该和知识点的标题行争位置。 */}
           <button
             type="button"
-            className="zs-side-switch zs-side-switch-topic"
+            className="zws-side-switch zws-side-switch-topic"
             aria-label="切换到字幕列表"
             title="看完整字幕列表"
             onClick={() => setSidePanel('transcript')}
           >字幕</button>
         </>
-        : <aside className="zs-video-transcript" aria-label="字幕">
-          <div className="zs-video-transcript-head">
+        : <aside className="zws-video-transcript" aria-label="字幕">
+          <div className="zws-video-transcript-head">
             <span>字幕</span>
             {/* 没有回放的提醒挂在这一行的右侧：它是**说明**，不是内容，
-                所以不给它卡片、不占网格 —— 详情见 video.css 的 .zs-video-notice。 */}
-            {!videoUrl && <span className="zs-video-notice">这一节没有回放视频</span>}
+                所以不给它卡片、不占网格 —— 详情见 video.css 的 .zws-video-notice。 */}
+            {!videoUrl && <span className="zws-video-notice">这一节没有回放视频</span>}
             {subtitles.length > 0 && <small>{subtitles.length} 条</small>}
             {/* 可信度必须标出来：清洗后的句子和原始 ASR 碎片长得几乎一样，
                 但只有前者是能读的。不标的话，用户会以为碎片就是这节课的全部内容。 */}
             {subtitles.length > 0 && <span
-              className="zs-video-track-kind"
+              className="zws-video-track-kind"
               data-kind={track.kind}
               title={track.kind === TRACK_KIND.CLEANED
                 ? '来自解析终稿的清洗句子（已纠错、已合并成句）'
@@ -965,7 +965,7 @@ export function VideoPanel({ state, seek = null }) {
             >{track.kind === TRACK_KIND.CLEANED ? '清洗后' : '原始碎片'}</span>}
             {subtitles.length > 0 && <button
               type="button"
-              className="zs-video-transcript-toggle"
+              className="zws-video-transcript-toggle"
               aria-expanded={transcriptOpen}
               aria-label={transcriptOpen ? '收起字幕' : '展开字幕'}
               title={transcriptOpen ? '收起字幕，只留当前一句' : '展开字幕，看完整列表'}
@@ -977,19 +977,19 @@ export function VideoPanel({ state, seek = null }) {
             {/* 有知识点时给一个"回知识点"的入口 —— 否则切到字幕后就没有回头路。 */}
             {topicRanges.length > 0 && <button
               type="button"
-              className="zs-video-transcript-toggle"
+              className="zws-video-transcript-toggle"
               aria-label="切换到知识点"
               title="看知识点路径"
               onClick={() => setSidePanel('topic')}
             >知识点</button>}
           </div>
           {subtitles.length === 0
-            ? <p className="zs-video-transcript-empty">这节课暂时没有字幕</p>
+            ? <p className="zws-video-transcript-empty">这节课暂时没有字幕</p>
             : <>
-              <div className="zs-video-transcript-body">
+              <div className="zws-video-transcript-body">
                 {subtitles.map((line, index) => <TranscriptLine
                   key={`${line.startMs}-${index}`}
-                  domId={`zs-video-line-${index}`}
+                  domId={`zws-video-line-${index}`}
                   line={line}
                   index={index}
                   active={index === activeLine}
@@ -998,8 +998,8 @@ export function VideoPanel({ state, seek = null }) {
                 />)}
               </div>
               {/* 折叠时才显示的一行。放在 body 之后是因为它和列表**不同时可见**
-                  （CSS 用 `display: none` 切换，见 .zs-video[data-transcript="off"]）。 */}
-              <div className="zs-video-transcript-active">
+                  （CSS 用 `display: none` 切换，见 .zws-video[data-transcript="off"]）。 */}
+              <div className="zws-video-transcript-active">
                 {activeTranscriptLine
                   ? <TranscriptLine
                     line={activeTranscriptLine}
@@ -1007,7 +1007,7 @@ export function VideoPanel({ state, seek = null }) {
                     active
                     onJump={(ms) => { setPinnedIndex(null); jumpTo(ms); }}
                   />
-                  : <p className="zs-video-transcript-idle">还没讲到字幕</p>}
+                  : <p className="zws-video-transcript-idle">还没讲到字幕</p>}
               </div>
             </>}
         </aside>)}

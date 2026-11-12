@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-classroom-generate",
   "version": "0.1.0",
-  "description": "智云 Pro「互动课堂」生成管线：把 brief 跑成完整课堂文档（outline → scenes → media → finalize 四段，逐段落盘、可断点续跑），挂成 ctx.zhiyunClassroomGenerate",
+  "description": "ZJU Workbench「互动课堂」生成管线：把 brief 跑成完整课堂文档（outline → scenes → media → finalize 四段，逐段落盘、可断点续跑），挂成 ctx.zwClassroomGenerate",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

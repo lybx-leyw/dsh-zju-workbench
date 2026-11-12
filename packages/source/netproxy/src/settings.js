@@ -1,5 +1,5 @@
 /**
- * 设置页的 HTTP 面（`/_dsh/zhiyun-net-proxy`）。
+ * 设置页的 HTTP 面（`/_dsh/zw-net-proxy`）。
  *
  * 只有三个动作，够「个人 → 网络代理」面板用：
  *
@@ -13,7 +13,7 @@
  *
  *   1. **Host 校验**：只接受回环 Host。防的是 DNS rebinding —— 恶意域名解析到
  *      127.0.0.1 后，浏览器会把请求当同源发过来读走凭据；
- *   2. **自定义头**：写操作必须带 `x-zhiyun-net-proxy`。跨站的「简单请求」带不了
+ *   2. **自定义头**：写操作必须带 `x-zw-net-proxy`。跨站的「简单请求」带不了
  *      自定义头，一旦带上就会触发 CORS 预检，而本路由不响应 OPTIONS，预检必失败 ——
  *      于是 `evil.com` 无法用表单或 `text/plain` 改写代理配置（CSRF）。
  *
@@ -27,7 +27,7 @@ import { openTunnel } from './connect.js';
 const MASK = '***';
 
 const MAX_BODY = 64 * 1024;
-export const WRITE_HEADER = 'x-zhiyun-net-proxy';
+export const WRITE_HEADER = 'x-zw-net-proxy';
 const ALLOWED_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
 
 function sendJson(res, status, payload) {

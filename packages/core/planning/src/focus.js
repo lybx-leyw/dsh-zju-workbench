@@ -9,13 +9,13 @@
  * 纯函数（storage 由调用方注入），所以页面与测试共用同一份实现。
  */
 
-export const FOCUS_STORAGE_KEY = 'zhiyun.planning.focus';
+export const FOCUS_STORAGE_KEY = 'zw.planning.focus';
 
 const MAX_AGE = 2 * 60 * 1000;
 const KEY = /^(local|xzzd|pta):[A-Za-z0-9][A-Za-z0-9._-]{0,80}$/;
 
 export function focusElementId(key) {
-  return KEY.test(String(key ?? '')) ? `zpg-due-${key}` : '';
+  return KEY.test(String(key ?? '')) ? `zwpg-due-${key}` : '';
 }
 
 export function readFocus(storage, now = Date.now()) {

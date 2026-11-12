@@ -1,6 +1,6 @@
 # @lybx-leyw/dsh-zju-core-lecture
 
-智云 Pro 的**讲义装配**层：PPT 知识树 → 录音稿填充 → 书面语验收。
+ZJU Workbench 的**讲义装配**层：PPT 知识树 → 录音稿填充 → 书面语验收。
 
 零 UI、零 Flutter 依赖、**零落盘**。llm 由集成层注入窄接口（`{ call({stage, route, constant, variable, signal}) }`），
 本包不自建模型客户端，也不碰宿主存储。
@@ -41,9 +41,9 @@
 ```js
 import { apply } from '@lybx-leyw/dsh-zju-core-lecture';
 
-// 宿主侧：提供 llm（这里由 zhiyunParser 透传），也可以用 config.llm 直接给
+// 宿主侧：提供 llm（这里由 zwParser 透传），也可以用 config.llm 直接给
 const dispose = await apply(ctx, { concurrency: 2 });
-const lecture = await ctx.zhiyunLecture.assemble({ tree, blocks, context: 'T' });
+const lecture = await ctx.zwLecture.assemble({ tree, blocks, context: 'T' });
 ```
 
 没有可用的 llm 时 `apply()` 抛 `CONFIG`（**不静默降级**）—— 装配一条没有模型的讲义，
@@ -60,6 +60,6 @@ node --test tests/lecture.test.mjs
 
 ## v4 共享生成入口
 
-产品集成与 bench 均调用 `zhiyunLecture.generate({ record, title, signal, onProgress, onAssembled })`。它要求解析器的重构树，统一主线输入映射，顺序执行现有装配和逐点终审；返回 `{ assembled, polished, lecture }`。`onAssembled` 可保存成稿检查点；进度按实际完成分卷/知识点报告。提示词、分组和验收算法继续由原模块负责。
+产品集成与 bench 均调用 `zwLecture.generate({ record, title, signal, onProgress, onAssembled })`。它要求解析器的重构树，统一主线输入映射，顺序执行现有装配和逐点终审；返回 `{ assembled, polished, lecture }`。`onAssembled` 可保存成稿检查点；进度按实际完成分卷/知识点报告。提示词、分组和验收算法继续由原模块负责。
 
 `createRun({ llm, concurrency })` 为一次生成建立隔离实例，可与解析器共享多供应商 worker 池；成稿和终审使用传入的总 worker 数，不另设较低并发上限。

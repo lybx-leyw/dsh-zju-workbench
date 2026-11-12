@@ -19,10 +19,10 @@ export function SearchDialog({ controller, open, onClose, pages }) {
     if (open) { setQuery(''); dialog.current.showModal(); }
     else if (dialog.current.open) dialog.current.close();
   }, [open]);
-  return <dialog className="zy-search-dialog" ref={dialog} aria-label="跳转到" onCancel={onClose} onClose={onClose} onClick={event => { if (event.target === dialog.current) onClose(); }}>
+  return <dialog className="zw-search-dialog" ref={dialog} aria-label="跳转到" onCancel={onClose} onClose={onClose} onClick={event => { if (event.target === dialog.current) onClose(); }}>
     <form method="dialog" onSubmit={event => { event.preventDefault(); if (items[0]) { controller.navigate(items[0].id); onClose(); } }}>
-      <div className="zy-search-input"><Icon name="search"/><input aria-label="搜索页面" placeholder="想去哪里？" value={query} onChange={event => setQuery(event.target.value)} autoFocus/><button type="button" onClick={onClose} aria-label="关闭跳转"><kbd>Esc</kbd></button></div>
-      <div className="zy-search-results">{items.length ? items.map(item => <button type="button" key={item.id} onClick={() => { controller.navigate(item.id); onClose(); }}><Icon name={item.icon}/><span>{item.label}<small>{item.hint}</small></span><Icon name="arrow" size={16}/></button>) : <p>没有找到这个页面</p>}</div>
+      <div className="zw-search-input"><Icon name="search"/><input aria-label="搜索页面" placeholder="想去哪里？" value={query} onChange={event => setQuery(event.target.value)} autoFocus/><button type="button" onClick={onClose} aria-label="关闭跳转"><kbd>Esc</kbd></button></div>
+      <div className="zw-search-results">{items.length ? items.map(item => <button type="button" key={item.id} onClick={() => { controller.navigate(item.id); onClose(); }}><Icon name={item.icon}/><span>{item.label}<small>{item.hint}</small></span><Icon name="arrow" size={16}/></button>) : <p>没有找到这个页面</p>}</div>
     </form>
   </dialog>;
 }

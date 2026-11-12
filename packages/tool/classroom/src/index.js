@@ -24,8 +24,8 @@
  *
  * # 取 workbench 的方式
  *
- * 本包通过 `inject: ['zhiyunStudy']` 从宿主取 —— `core/study` 早就
- * `ctx.provide("zhiyunStudy", workbench)`，两个包之间因此只剩**服务契约**，
+ * 本包通过 `inject: ['zwStudy']` 从宿主取 —— `core/study` 早就
+ * `ctx.provide("zwStudy", workbench)`，两个包之间因此只剩**服务契约**，
  * 没有模块级 import。
  *
  * # 可选能力
@@ -50,16 +50,16 @@ import { createRawMaterialTools } from './raw-materials.js';
 import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createClassroomReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-classroom';
+export const name = 'zw-tool-classroom';
 
 /**
- * `zhiyunStudy` 由 `core/study` 提供；`tools` 由宿主提供。
+ * `zwStudy` 由 `core/study` 提供；`tools` 由宿主提供。
  * 取不到时整包不激活，不影响学习面板。
  */
-export const inject = ['zhiyunStudy', 'tools'];
+export const inject = ['zwStudy', 'tools'];
 
 export function apply(ctx) {
-  const workbench = ctx.zhiyunStudy;
+  const workbench = ctx.zwStudy;
 
   /**
    * 把一个课名解析成 courseId，跨学期同名时**明确报歧义**。
@@ -69,7 +69,7 @@ export function apply(ctx) {
    * 不静默降级成「按全部记录搜」，那正是会答错学期的那条路。
    */
   const resolveCourse = async (wanted, { term, signal } = {}) => {
-    const classroom = ctx.get('zhiyunClassroom');
+    const classroom = ctx.get('zwClassroom');
     if (!classroom || typeof classroom.listCourses !== 'function') return { kind: 'unsupported' };
     const listed = await classroom.listCourses({ signal });
     let courses = Array.isArray(listed?.items) ? listed.items : [];
@@ -102,29 +102,29 @@ export function apply(ctx) {
   /**
    * 平台原始数据的读工具（课程 / 节次 / 课件 / 字幕 / 直播状态）。
    *
-   * ⚠️ **不把 `zhiyunClassroom` 写进 `inject`**：那样课堂数据源没装时，
+   * ⚠️ **不把 `zwClassroom` 写进 `inject`**：那样课堂数据源没装时，
    * 连 `study_*` 三个讲义工具都会一起不激活。它只提供平台取证，是附加能力，
    * 缺席时那一个工具如实报 `SERVICE_MISSING`，`study_*` 照常可用。
    */
   createReadToolRegistrar({
     ctx,
     build: createClassroomReadTools,
-    serviceSources: { zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom' },
+    serviceSources: { zwClassroom: '@lybx-leyw/dsh-zju-source-classroom' },
   }).register(createClassroomReadTools);
 
   /**
    * 入口索引：有哪些课、每节整理到什么程度（含**未整理**的）。
    *
-   * 单独一个注册器，因为它要**同时**用 `zhiyunStudy`（资料库状态）与
-   * `zhiyunClassroom`（课程列表）。二者缺一时它如实报错，不影响其他工具 ——
+   * 单独一个注册器，因为它要**同时**用 `zwStudy`（资料库状态）与
+   * `zwClassroom`（课程列表）。二者缺一时它如实报错，不影响其他工具 ——
    * 这正是把它与 `study_*` 分开注册的理由。
    */
   createReadToolRegistrar({
     ctx,
     build: createStudyCoursesTools,
     serviceSources: {
-      zhiyunStudy: '@lybx-leyw/dsh-zju-core-study',
-      zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom',
+      zwStudy: '@lybx-leyw/dsh-zju-core-study',
+      zwClassroom: '@lybx-leyw/dsh-zju-source-classroom',
     },
   }).register(createStudyCoursesTools);
 
@@ -133,8 +133,8 @@ export function apply(ctx) {
     ctx,
     build: createRawMaterialTools,
     serviceSources: {
-      zhiyunStudy: '@lybx-leyw/dsh-zju-core-study',
-      zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom',
+      zwStudy: '@lybx-leyw/dsh-zju-core-study',
+      zwClassroom: '@lybx-leyw/dsh-zju-source-classroom',
     },
   }).register(createRawMaterialTools);
 }

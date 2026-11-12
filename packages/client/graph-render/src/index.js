@@ -24,7 +24,7 @@
  * - **不新增页面**：只有组件与纯函数，由「笔记」页 import 使用。
  */
 
-export const name = 'zhiyun-graph-render';
+export const name = 'zw-graph-render';
 
 /**
  * 本包不提供任何运行时服务。

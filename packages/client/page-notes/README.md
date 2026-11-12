@@ -2,7 +2,7 @@
 
 「笔记」页：**Obsidian 式笔记库**的**界面** —— 文件树、多标签页、双链、反链、标签。
 
-> ⚠️ **本包只含 UI**。存储（落盘、路径安全、PDF 字节流、`/api/zhiyun-vault-notes`）
+> ⚠️ **本包只含 UI**。存储（落盘、路径安全、PDF 字节流、`/api/zw-vault-notes`）
 > 在 `@lybx-leyw/dsh-zju-core-vault`（`src/notes-host.js`）。本包的 `apply()` 是空的，
 > 它能存在只是为了把客户端 bundle 带进启动图谱。
 > 页面不认识存储细节，只按路由要数据 —— 这是分层要求：page 只管渲染。
@@ -31,7 +31,7 @@
 ⚠️ **右栏默认收起**：宿主里这一页的可用宽度是窗口减去它自己的侧栏，再常驻一列
 250px 会把正文挤到读不下去（实测状态栏都换行了）。Obsidian 的右栏同样默认收起。
 
-配色只用壳的 `--zy-*` 变量，明暗两套自动跟随。
+配色只用壳的 `--zw-*` 变量，明暗两套自动跟随。
 
 ## 子目录：vault 就是一棵树
 
@@ -70,7 +70,7 @@
 `@lybx-leyw/dsh-zju-core-notes`）。区别在**模型本身**：那些是应用数据，这个是用户文件。
 这是一处**有意的破例**，不是随手为之。
 
-落盘位置：`<profile>/data/zhiyun-vault-notes/`（可以是一棵目录树）。
+落盘位置：`<profile>/data/zw-vault-notes/`（可以是一棵目录树）。
 
 ## 分工
 
@@ -83,7 +83,7 @@
 ```
 
 两边都不做对方的事：索引器不认识文件系统，本包不解析 Markdown。
-`vault` 缺席时（`ctx.get('zhiyunVault')` 取不到）页面只是**没有反链**，正文照常读写 ——
+`vault` 缺席时（`ctx.get('zwVault')` 取不到）页面只是**没有反链**，正文照常读写 ——
 所以它**不写进 `inject`**。
 
 ## 四条交互决定
@@ -154,7 +154,7 @@ Markdown 的可编辑性本身就是它的价值。
 
 ## 插槽
 
-在 `zhiyun.notes.content` 注册内容（`children` 声明归外壳）。
+在 `zw.notes.content` 注册内容（`children` 声明归外壳）。
 
 ## 验证
 

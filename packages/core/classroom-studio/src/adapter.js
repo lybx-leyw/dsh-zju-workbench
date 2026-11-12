@@ -6,19 +6,19 @@
  * 上游 `lib/persistence/` 与 `lib/store/` 里散着 400+ 处 SQL（`@openmaic/storage`
  * 的 `Queryable` 端口）。规范第 3 通道要求：**SQL 语义保留，driver 换成 `ctx.vault`，
  * 且不许在业务里散写 IO**。于是所有"怎么落盘"的问题都必须收敛到这一个文件：
- * 业务代码只调 `zhiyunClassroomStudio.classroom.load()` 这一层，它再调本文件的端口。
+ * 业务代码只调 `zwClassroomStudio.classroom.load()` 这一层，它再调本文件的端口。
  *
  * # ⚠️ 落地前必须先解决的一件事（会阻塞 L2）
  *
  * 规范 §2 写着"driver 换成 `ctx.vault`（本仓既有）"。**本仓没有 `ctx.vault` 这个服务。**
  * 全仓 grep `ctx.vault` / `provide('vault'` 零命中；与之名字最接近的是
- * `@lybx-leyw/dsh-zju-core-vault` 提供的 `zhiyunVault`（笔记库，`src/host.js`），它的接口是
+ * `@lybx-leyw/dsh-zju-core-vault` 提供的 `zwVault`（笔记库，`src/host.js`），它的接口是
  * "笔记的索引与查询"，**没有事务、没有行级写、没有 owner 分区**。
  *
  * 所以在有 `ctx.vault` 之前，本文件只能声明端口。三种可能，必须先选一种再动手：
  *
  * 1. 新增宿主服务 `vault`（真做 SQL 语义：事务 + 行锁 + 键集分页）；
- * 2. 复用 `zhiyunVault` 并扩展它（会把它从"纯笔记"变成"通用存储"，影响两个既有包）；
+ * 2. 复用 `zwVault` 并扩展它（会把它从"纯笔记"变成"通用存储"，影响两个既有包）；
  * 3. 让 `@lybx-leyw/dsh-zju-core-classroom-vault` 直接持 `pg`（违反第 3 通道"不许散写 IO"的初衷，
  *    但只需要一个 driver 名字对齐）。
  *

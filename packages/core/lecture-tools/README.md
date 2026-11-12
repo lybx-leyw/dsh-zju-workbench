@@ -1,6 +1,6 @@
 # @lybx-leyw/dsh-zju-core-lecture-tools
 
-智云 Pro **出题专用工具集**：讲义检索、讲义清单、按知识点读原文、历史题查询。
+ZJU Workbench **出题专用工具集**：讲义检索、讲义清单、按知识点读原文、历史题查询。
 
 上游对应 `DeepTutor` 的 `tools/{builtin,question_bank,prompting,builtin_specs}.py`，
 但**只搬出题时真正挂载的那四个工具**（判断依据见下文）。纯 JS、零第三方依赖、

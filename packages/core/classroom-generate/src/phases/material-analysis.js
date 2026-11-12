@@ -105,8 +105,8 @@ export function allocateMaterialBudgets(lengths, maxChars) {
  *
  * @param {object} input
  * @param {object} input.brief 归一化后的 brief（只读 `materialIds`）
- * @param {object} input.vault `ctx.zhiyunClassroomVault`
- * @param {object} input.media `ctx.zhiyunClassroomMedia`（`parsePdf`）
+ * @param {object} input.vault `ctx.zwClassroomVault`
+ * @param {object} input.media `ctx.zwClassroomMedia`（`parsePdf`）
  * @param {(phase: string, kind: string, payload: object) => void} input.emit
  * @param {string} [input.phase]
  * @param {AbortSignal} [input.signal]
@@ -138,14 +138,14 @@ export async function produceMaterialAnalysis({
   if (!vault?.assets?.bytes || !vault?.assets?.get) {
     throw new ClassroomGenerateError(
       'E_MATERIAL_UNAVAILABLE',
-      '传了讲义但课堂持久层没有装载（缺 zhiyunClassroomVault.assets）',
+      '传了讲义但课堂持久层没有装载（缺 zwClassroomVault.assets）',
       { materialIds: picked },
     );
   }
   if (typeof media?.parsePdf !== 'function') {
     throw new ClassroomGenerateError(
       'E_MATERIAL_UNAVAILABLE',
-      '传了讲义但 PDF 解析层没有装载（缺 zhiyunClassroomMedia.parsePdf）',
+      '传了讲义但 PDF 解析层没有装载（缺 zwClassroomMedia.parsePdf）',
       { materialIds: picked },
     );
   }

@@ -1,5 +1,5 @@
 /**
- * 编排域：`zhiyunStudy` 的**全部 RPC 动作**。
+ * 编排域：`zwStudy` 的**全部 RPC 动作**。
  *
  * 这一层是"把各域串起来"的地方，也是基准最想测的 —— 因为**跨域契约**
  * 只在这里成立：讲义必须只取主线块、润色不许改动解析产物、换账号要取消
@@ -18,7 +18,7 @@ import { mount, serviceOf, apiOf, memoryCredentials, urlOf } from './_base.mjs';
 /** 知识域：存储服务（study 需要它，否则构造直接拒绝）。 */
 export async function mountKnowledge({ dataDir } = {}) {
   const mounted = await mount('@lybx-leyw/dsh-zju-core-knowledge', { dataDir });
-  const service = serviceOf(mounted, 'zhiyunKnowledge');
+  const service = serviceOf(mounted, 'zwKnowledge');
   return { mounted, service, ...apiOf(service) };
 }
 
@@ -43,15 +43,15 @@ export async function mountStudy({ dataDir, llm, parser, classroom, lecture, qui
     dataDir,
     llm,
     services: {
-      zhiyunKnowledge: knowledge.service,
-      zhiyunParser: parser ?? { llm, async parse() { throw Object.assign(new Error('基准没有接解析器'), { code: 'NO_PARSER' }); } },
-      zhiyunClassroom: classroom ?? inMemoryClassroom(),
-      ...(lecture ? { zhiyunLecture: lecture } : {}),
-      ...(quiz ? { zhiyunQuiz: quiz } : {}),
-      ...(notes ? { zhiyunNotes: notes } : {}),
+      zwKnowledge: knowledge.service,
+      zwParser: parser ?? { llm, async parse() { throw Object.assign(new Error('基准没有接解析器'), { code: 'NO_PARSER' }); } },
+      zwClassroom: classroom ?? inMemoryClassroom(),
+      ...(lecture ? { zwLecture: lecture } : {}),
+      ...(quiz ? { zwQuiz: quiz } : {}),
+      ...(notes ? { zwNotes: notes } : {}),
     },
   });
-  const service = serviceOf(mounted, 'zhiyunStudy');
+  const service = serviceOf(mounted, 'zwStudy');
   return { mounted, service, knowledge, ...apiOf(service) };
 }
 
@@ -80,16 +80,16 @@ export function inMemoryClassroom() {
 export async function mountQuiz({ dataDir, parser } = {}) {
   const mounted = await mount('@lybx-leyw/dsh-zju-core-quiz', {
     dataDir,
-    services: { zhiyunParser: parser ?? { async parse() { throw Object.assign(new Error('基准没有接解析器'), { code: 'NO_PARSER' }); } } },
+    services: { zwParser: parser ?? { async parse() { throw Object.assign(new Error('基准没有接解析器'), { code: 'NO_PARSER' }); } } },
   });
-  const service = serviceOf(mounted, 'zhiyunQuiz');
+  const service = serviceOf(mounted, 'zwQuiz');
   return { mounted, service, ...apiOf(service) };
 }
 
 /** notes 域：节笔记。 */
 export async function mountNotes({ dataDir } = {}) {
   const mounted = await mount('@lybx-leyw/dsh-zju-core-notes', { dataDir });
-  const service = serviceOf(mounted, 'zhiyunNotes');
+  const service = serviceOf(mounted, 'zwNotes');
   return { mounted, service, ...apiOf(service) };
 }
 

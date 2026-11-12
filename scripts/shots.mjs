@@ -14,14 +14,14 @@ if (!url) throw new Error('用法：node scripts/shots.mjs "<带 token 的地址
 const out = path.join(root, 'artifacts', 'shots');
 await mkdir(out, { recursive: true });
 
-const browser = await chromium.launch({ channel: process.env.ZHIYUN_BROWSER_CHANNEL ?? 'msedge', headless: true });
+const browser = await chromium.launch({ channel: process.env.ZW_BROWSER_CHANNEL ?? 'msedge', headless: true });
 const consoleErrors = [];
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 980 }, locale: 'zh-CN' });
   page.on('console', message => { if (message.type() === 'error' || message.text().startsWith('[zhiyun')) consoleErrors.push(message.text()); });
   page.on('pageerror', error => consoleErrors.push(`pageerror: ${error.message}`));
   await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+  await page.locator('.zw-page[data-page=today]').waitFor({ timeout: 60000 });
   for (const label of ['继续', '稍后配置']) {
     const button = page.getByRole('button', { name: label, exact: true });
     if (await button.isVisible().catch(() => false)) await button.click();
@@ -29,28 +29,28 @@ try {
   await page.screenshot({ path: path.join(out, 'today.png'), fullPage: true });
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
   // 问一问 = 完整原生 DSH 工作区（原生侧栏、工作区浏览器、设置都在里面）。
-  await page.locator('.zy-workbench-native [class*="_sidebarCol"]').waitFor({ timeout: 30000 });
+  await page.locator('.zw-workbench-native [class*="_sidebarCol"]').waitFor({ timeout: 30000 });
   await page.screenshot({ path: path.join(out, 'ask.png'), fullPage: true });
   console.log('布局：' + await page.evaluate(() => {
-    const native = document.querySelector('.zy-workbench-native');
+    const native = document.querySelector('.zw-workbench-native');
     const sidebar = native?.querySelector('[class*="_sidebarCol"]');
-    return `外层页=${document.querySelector('.zy-workbench-frame')?.getAttribute('data-workbench-page')} ｜ 原生侧栏=${sidebar ? Math.round(sidebar.getBoundingClientRect().width) + 'px' : '缺失'} ｜ 导航栏右缘=${Math.round(document.querySelector('.zy-workbench-navigation').getBoundingClientRect().right)}`;
+    return `外层页=${document.querySelector('.zw-workbench-frame')?.getAttribute('data-workbench-page')} ｜ 原生侧栏=${sidebar ? Math.round(sidebar.getBoundingClientRect().width) + 'px' : '缺失'} ｜ 导航栏右缘=${Math.round(document.querySelector('.zw-workbench-navigation').getBoundingClientRect().right)}`;
   }));
   // 外层导航切换时原生工作区隐藏但不卸载（返回后状态还在）。
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '今天', exact: true }).click();
-  await page.locator('.zy-page[data-page=today]').waitFor();
+  await page.locator('.zw-page[data-page=today]').waitFor();
   await page.screenshot({ path: path.join(out, 'today-after-ask.png'), fullPage: true });
   console.log('原生工作区在离开问一问后：' + await page.evaluate(() => {
-    const node = document.querySelector('.zy-workbench-native');
+    const node = document.querySelector('.zw-workbench-native');
     return node === null ? '已卸载' : (node.hasAttribute('hidden') ? '已隐藏（保留挂载）' : '仍可见');
   }));
   for (const [label, pageId] of [['学习', 'study']]) {
     await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: label, exact: true }).click();
-    await page.locator(`.zy-page[data-page=${pageId}]`).waitFor();
+    await page.locator(`.zw-page[data-page=${pageId}]`).waitFor();
   }
   // 「个人」页已删除：头像 → 账号面板 → 设置，拍的是宿主原生设置浮窗。
   await page.getByRole('button', { name: '账号', exact: true }).click();
-  await page.locator('.zy-account-menu .zy-rail-menu-open', { hasText: '设置' }).click();
+  await page.locator('.zw-account-menu .zw-rail-menu-open', { hasText: '设置' }).click();
   const settingsModal = page.locator('[role="dialog"][aria-modal="true"][data-shortcut-modal="settings"]');
   await settingsModal.waitFor();
   await page.screenshot({ path: path.join(out, 'settings.png'), fullPage: true });
@@ -65,7 +65,7 @@ try {
     if (!(await quizEntry.isVisible().catch(() => false))) return false;
     try {
       await quizEntry.click();
-      await page.locator('.zy-page[data-page=quiz]').waitFor({ timeout: 30000 });
+      await page.locator('.zw-page[data-page=quiz]').waitFor({ timeout: 30000 });
       return true;
     } catch (error) {
       console.log('题库页没打开，跳过 quiz 截图：' + error.message);
@@ -79,9 +79,9 @@ try {
       await page.screenshot({ path: path.join(out, file + '.png'), fullPage: true });
       if (width !== 1440) continue;
       const quiz = await page.evaluate(() => {
-        const pageBox = document.querySelector('.zs-qz-page');
-        const setupBox = document.querySelector('.zs-qz-setup')?.getBoundingClientRect();
-        const footBox = document.querySelector('.zs-qz-setup-foot')?.getBoundingClientRect();
+        const pageBox = document.querySelector('.zws-qz-page');
+        const setupBox = document.querySelector('.zws-qz-setup')?.getBoundingClientRect();
+        const footBox = document.querySelector('.zws-qz-setup-foot')?.getBoundingClientRect();
         return {
           pageScrollHeight: pageBox ? Math.round(pageBox.scrollHeight) : -1,
           pageClientHeight: pageBox ? Math.round(pageBox.clientHeight) : -1,
@@ -92,7 +92,7 @@ try {
           pageScrolls: document.documentElement.scrollHeight > window.innerHeight,
         };
       });
-      quiz.genEmptyShown = await page.locator('.zs-qz-gen-empty').isVisible().catch(() => false);
+      quiz.genEmptyShown = await page.locator('.zws-qz-gen-empty').isVisible().catch(() => false);
       console.log('题库读数(page-scrollHeight)=' + quiz.pageScrollHeight);
       console.log('题库读数(page-clientHeight)=' + quiz.pageClientHeight);
       console.log('题库读数(setup-height)=' + quiz.setupHeight);
@@ -105,7 +105,7 @@ try {
   }
   await page.setViewportSize({ width: 760, height: 900 });
   await page.getByRole('navigation', { name: '主要页面' }).getByRole('button', { name: '问一问', exact: true }).click();
-  await page.locator('.zy-workbench-native [class*="_sidebarCol"]').waitFor();
+  await page.locator('.zw-workbench-native [class*="_sidebarCol"]').waitFor();
   await page.waitForTimeout(300);
   await page.screenshot({ path: path.join(out, 'ask-narrow.png'), fullPage: true });
   console.log(`截图已写入 ${out}`);

@@ -23,14 +23,14 @@ async function fixture(directory){
   const dispose=service.dispose.bind(service);service.dispose=async()=>{await dispose();await host.dispose();};return service;
 }
 
-test('study results persist after host restart and are isolated by classroom account',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-'));const service=await fixture(dir);try{
+test('study results persist after host restart and are isolated by classroom account',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zw-study-'));const service=await fixture(dir);try{
   const key={courseId:'10',subId:'20'};const first=await service.invoke('start',key);assert.equal(first.state,'running');await [...service.jobs.values()][0].done;
   assert.equal((await service.invoke('result',key)).result.status,'ready');const summary=await service.invoke('result',{...key,includeResult:false});assert.equal(summary.result,null);assert.equal(summary.hasResult,true);assert.equal(summary.resultStatus,'ready');await service.dispose();
   const restored=await fixture(dir);await restored.ready;assert.equal((await restored.invoke('result',key)).result.status,'ready');
   await restored.invoke('login',{username:'2',password:'fixture'});assert.equal((await restored.invoke('result',key)).result,null);
   await restored.invoke('logout');await assert.rejects(restored.invoke('result',key),{code:'SESSION_EXPIRED'});await restored.dispose();
 }finally{await service.dispose();await rm(dir,{recursive:true,force:true});}});
-test('cancel retains earlier result, failed replacement does not overwrite it, duplicate starts deduplicate',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-job-'));const service=await fixture(dir);try{
+test('cancel retains earlier result, failed replacement does not overwrite it, duplicate starts deduplicate',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zw-study-job-'));const service=await fixture(dir);try{
   const key={courseId:'10',subId:'20'};await service.start('10','20');await [...service.jobs.values()][0].done;
   service.parser.parseClassroom=async(_c,_s,{signal})=>new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));
   const active=await service.invoke('start',key);assert.equal((await service.invoke('start',key)).id,active.id);
@@ -39,7 +39,7 @@ test('cancel retains earlier result, failed replacement does not overwrite it, d
   service.parser.parseClassroom=async()=>{throw Object.assign(new Error('SECRET password or provider response'),{code:'CONFIG'});};await service.invoke('start',key);await [...service.jobs.values()][0].done;
   const data=await service.invoke('result',key);assert.equal(data.job.state,'failed');assert.ok(!JSON.stringify(data).includes('SECRET'));assert.equal(data.result.status,'ready');
 }finally{await service.dispose();await rm(dir,{recursive:true,force:true});}});
-test('model routing uses host catalog validation and never persists credential-shaped fields',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-model-'));const service=await fixture(dir);try{
+test('model routing uses host catalog validation and never persists credential-shaped fields',async()=>{const dir=await mkdtemp(path.join(tmpdir(),'zw-study-model-'));const service=await fixture(dir);try{
   await service.invoke('models-save',{routes:{vision:{provider:'fixture',model:'vision',apiKey:'PRIVATE'}}});assert.deepEqual(service.parser.llm.routes,{vision:{provider:'fixture',model:'vision'}});
   await assert.rejects(service.invoke('start',{courseId:'../../etc',subId:'1'}),{code:'INPUT'});
   assert.ok(!JSON.stringify(publicError(new Error('password PRIVATE'))).includes('PRIVATE'));
@@ -83,7 +83,7 @@ const wiredFixture=async(directory,{lecture=true,polish=true}={})=>{const base=a
   base.lectureOf=()=>{const service=resolve();return service?{...service,generate:input=>generateLecture({...input,service})}:undefined;};
   return base;};
 test('one job parses, assembles and reviews; old generation endpoints are removed',async()=>{
- const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-unified-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
+ const dir=await mkdtemp(path.join(tmpdir(),'zw-unified-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
  try{
   const job=await s.invoke('start',key);assert.equal(job.state,'running');await [...s.jobs.values()][0].done;
   const data=await s.invoke('result',key);
@@ -111,7 +111,7 @@ test('generation exposes actual concurrent phase counts and partial review state
 });
 
 test('cancel during generation aborts the entire job and retains parsed resource',async()=>{
- const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-cancel-generation-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
+ const dir=await mkdtemp(path.join(tmpdir(),'zw-cancel-generation-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
  try{
   let entered;const started=new Promise(r=>entered=r);
   s.lectureOf=()=>({generate:async({signal})=>{entered();await new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));}});
@@ -121,7 +121,7 @@ test('cancel during generation aborts the entire job and retains parsed resource
 });
 
 test('old stored handouts are hidden and a new run replaces them',async()=>{
- const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-v4-only-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
+ const dir=await mkdtemp(path.join(tmpdir(),'zw-v4-only-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
  try{
   await s.invoke('start',key);await [...s.jobs.values()][0].done;
   const id=s.key({id:'1'},'10','20');const data=await s.result(id);
@@ -145,7 +145,7 @@ test('controller starts one background generation and never sends separate hando
 });
 
 test('knowledge search distinguishes immutable final transcript from current reviewed handout and never trusts a caller account',async()=>{
-  const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-layer-search-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
+  const dir=await mkdtemp(path.join(tmpdir(),'zw-layer-search-'));const s=await wiredFixture(dir),key={courseId:'10',subId:'20'};
   try{
     await s.invoke('start',key);await [...s.jobs.values()][0].done;
     assert.equal((await s.invoke('search',{query:'老师原话',layer:'final'})).length,1);
@@ -180,7 +180,7 @@ test('sessions that cannot be replayed stay out of the study tree and are never 
 });
 
 test('quiz stays proposed until adopted, notes stay on this account, and unwired actions fail by name',async()=>{
-  const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-study-quiz-note-'));
+  const dir=await mkdtemp(path.join(tmpdir(),'zw-study-quiz-note-'));
   const s=await wiredFixture(dir);
   const key={courseId:'10',subId:'20'};
   const calls=[];
@@ -345,7 +345,7 @@ test('provider/model/worker configuration persists sanitized quotas and creates 
  }finally{await s.dispose();await rm(dir,{recursive:true,force:true});}
 });
 test('模型目录按供应商缓存在进程内，只有刷新或新供应商才重新发现',async()=>{
- const dir=await mkdtemp(path.join(tmpdir(),'zhiyun-catalog-cache-'));const s=await fixture(dir);const calls=[];
+ const dir=await mkdtemp(path.join(tmpdir(),'zw-catalog-cache-'));const s=await fixture(dir);const calls=[];
  try{
   await s.ready;                                            // 先让预热跑完（此时没有供应商），再装计数桩
   s.llm.listProviders=()=>[{id:'a',name:'A'},{id:'b',name:'B'}];
@@ -375,7 +375,7 @@ test('模型目录按供应商缓存在进程内，只有刷新或新供应商�
 });
 
 test('FIFO generation queue skips cancelled entries, deduplicates and continues after failure', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-queue-')), service = await fixture(dir);
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-queue-')), service = await fixture(dir);
   const started = [], releases = new Map();
   const parsed = await service.parser.parseClassroom();
   service.parser.parseClassroom = async (_course, subId, { signal }) => {
@@ -414,7 +414,7 @@ test('FIFO generation queue skips cancelled entries, deduplicates and continues 
 });
 
 test('logout cancels running and waiting jobs without starting another classroom', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-queue-account-')), service = await fixture(dir);
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-queue-account-')), service = await fixture(dir);
   let calls = 0;
   service.parser.parseClassroom = async (_course, _sub, { signal }) => {
     calls++;

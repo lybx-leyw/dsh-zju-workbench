@@ -1,5 +1,5 @@
 /**
- * `ctx.zhiyunClassroomStudio` 的形状。
+ * `ctx.zwClassroomStudio` 的形状。
  *
  * # 这份文件在做什么
  *
@@ -7,14 +7,14 @@
  * —— 不是"声明一部分，剩下的等以后加"，因为 L2/L3 是照这份声明并行开工的：
  *
  * ```
- * ctx.zhiyunClassroomStudio.status()                  // { state, version, detail }
- * ctx.zhiyunClassroomStudio.generate(brief, opts)     // { runId, events: AsyncIterable<event> }
- * ctx.zhiyunClassroomStudio.runs.get(runId)
- * ctx.zhiyunClassroomStudio.runs.cancel(runId)
- * ctx.zhiyunClassroomStudio.classroom.load(id)        // { scenes, meta, assets }
- * ctx.zhiyunClassroomStudio.classroom.save(id, doc)
- * ctx.zhiyunClassroomStudio.export.pptx(id) / .html(id)
- * ctx.zhiyunClassroomStudio.providers.list() / .set(key, cfg)
+ * ctx.zwClassroomStudio.status()                  // { state, version, detail }
+ * ctx.zwClassroomStudio.generate(brief, opts)     // { runId, events: AsyncIterable<event> }
+ * ctx.zwClassroomStudio.runs.get(runId)
+ * ctx.zwClassroomStudio.runs.cancel(runId)
+ * ctx.zwClassroomStudio.classroom.load(id)        // { scenes, meta, assets }
+ * ctx.zwClassroomStudio.classroom.save(id, doc)
+ * ctx.zwClassroomStudio.export.pptx(id) / .html(id)
+ * ctx.zwClassroomStudio.providers.list() / .set(key, cfg)
  * ```
  *
  * # 两种"还没有"
@@ -45,7 +45,7 @@ import { createServerProvidersHandler } from './upstream/server-providers.js';
  * @param {object} options.providerConfig 见 `upstream/provider-config.js`
  * @param {() => Promise<object>} options.resolveCapabilities
  * @param {{ error: Function, warn: Function, info: Function, debug: Function }} options.log
- * @param {boolean} options.conflict 组合层冲突（`zhiyunClassroomStudio` 已被别的包占用）
+ * @param {boolean} options.conflict 组合层冲突（`zwClassroomStudio` 已被别的包占用）
  */
 export function createClassroomService({
   version = '0.0.0',
@@ -91,7 +91,7 @@ export function createClassroomService({
      *
      * `state` 的三种取值在本包里各有所指：
      * - `ready`：health 探针跑通（**不等于**课堂链路可用，链路可用性看 `detail.implemented`）；
-     * - `partial`：组合层冲突（`zhiyunClassroomStudio` 被别的包占了），服务仍可用但不是全量；
+     * - `partial`：组合层冲突（`zwClassroomStudio` 被别的包占了），服务仍可用但不是全量；
      * - `degraded`：health 探针本身抛了；`detail.error` 带原因。
      *
      * 这个方法**永不抛**：它是页面第一个调的东西，抛了页面就白屏。
@@ -134,20 +134,20 @@ export function createClassroomService({
     async generate(brief, opts) {
       void brief;
       void opts;
-      throw notImplemented('zhiyunClassroomStudio.generate', 'app/api/generation-runs/route.ts:43-81');
+      throw notImplemented('zwClassroomStudio.generate', 'app/api/generation-runs/route.ts:43-81');
     },
 
     runs: {
       /** 源文件:app/api/generation-runs/[id]/route.ts（GET） */
       async get(runId) {
         void runId;
-        throw notImplemented('zhiyunClassroomStudio.runs.get', 'app/api/generation-runs/[id]/route.ts');
+        throw notImplemented('zwClassroomStudio.runs.get', 'app/api/generation-runs/[id]/route.ts');
       },
       /** 源文件:app/api/generation-runs/[id]/route.ts（DELETE） */
       async cancel(runId) {
         void runId;
         throw notImplemented(
-          'zhiyunClassroomStudio.runs.cancel',
+          'zwClassroomStudio.runs.cancel',
           'app/api/generation-runs/[id]/route.ts',
         );
       },
@@ -157,13 +157,13 @@ export function createClassroomService({
       /** 源文件:app/api/stages/[id]/route.ts（GET，含 scenes/manifest） */
       async load(id) {
         void id;
-        throw notImplemented('zhiyunClassroomStudio.classroom.load', 'app/api/stages/[id]/route.ts');
+        throw notImplemented('zwClassroomStudio.classroom.load', 'app/api/stages/[id]/route.ts');
       },
       /** 源文件:app/api/stages/[id]/route.ts（PUT/PATCH） */
       async save(id, doc) {
         void id;
         void doc;
-        throw notImplemented('zhiyunClassroomStudio.classroom.save', 'app/api/stages/[id]/route.ts');
+        throw notImplemented('zwClassroomStudio.classroom.save', 'app/api/stages/[id]/route.ts');
       },
     },
 
@@ -171,12 +171,12 @@ export function createClassroomService({
       /** 源文件:app/api/export-video/render/route.ts + lib/export/（PPTX 导出） */
       async pptx(id) {
         void id;
-        throw notImplemented('zhiyunClassroomStudio.export.pptx', 'lib/export/（无对应 route）');
+        throw notImplemented('zwClassroomStudio.export.pptx', 'lib/export/（无对应 route）');
       },
       /** 源文件:lib/export/（HTML 导出，无对应 route） */
       async html(id) {
         void id;
-        throw notImplemented('zhiyunClassroomStudio.export.html', 'lib/export/（无对应 route）');
+        throw notImplemented('zwClassroomStudio.export.html', 'lib/export/（无对应 route）');
       },
     },
 
@@ -206,7 +206,7 @@ export function createClassroomService({
       async set(key, cfg) {
         void key;
         void cfg;
-        throw notImplemented('zhiyunClassroomStudio.providers.set', 'app/api/model-config/route.ts:82-141');
+        throw notImplemented('zwClassroomStudio.providers.set', 'app/api/model-config/route.ts:82-141');
       },
     },
   };

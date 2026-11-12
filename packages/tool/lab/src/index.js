@@ -10,12 +10,12 @@ import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createWriteToolRegistrar, contractOf, inputError, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
 import { createLabReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-lab';
+export const name = 'zw-tool-lab';
 
-export const inject = ['tools', 'approval', 'zhiyunLab'];
+export const inject = ['tools', 'approval', 'zwLab'];
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunLab: '@lybx-leyw/dsh-zju-source-lab',
+  zwLab: '@lybx-leyw/dsh-zju-source-lab',
 });
 
 /**
@@ -54,12 +54,12 @@ export function createLabWriteTools(services) {
         if (action === 'select') {
           const target = str(args.lab, '班次编号（select 需要）');
           const week = str(args.week, '周次段（select 需要）');
-          const lab = need('zhiyunLab');
+          const lab = need('zwLab');
           const { prepare, execute, cancel } = contractOf(lab, 'selectLab');
           return { summary: await prepare({ course, lab: target, week }), execute, cancel };
         }
         const record = str(args.record, '选课记录编号（cancel 需要）');
-        const lab = need('zhiyunLab');
+        const lab = need('zwLab');
         const { prepare, execute, cancel } = contractOf(lab, 'cancelLab');
         return { summary: await prepare({ course, record }), execute, cancel };
       },

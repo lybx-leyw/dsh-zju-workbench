@@ -53,7 +53,7 @@ export async function assertNoRelativePackageRefs(directory = KERNEL) {
   for (const name of await readdir(directory)) {
     if (!name.endsWith('.mjs')) continue;
     const source = await readFile(path.join(directory, name), 'utf8');
-    if (/from\s+['"][^'"]*packages\/dsh-zhiyun-/.test(source)) offenders.push(name);
+    if (/from\s+['"][^'"]*packages\/dsh-zju-/.test(source)) offenders.push(name);
   }
   return offenders;
 }

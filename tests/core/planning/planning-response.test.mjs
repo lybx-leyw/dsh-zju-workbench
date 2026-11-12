@@ -45,7 +45,7 @@ function call(handler, method, url, body) {
     const req = {
       method,
       url,
-      headers: { host: '127.0.0.1:43120', 'x-zhiyun-planning': '1' },
+      headers: { host: '127.0.0.1:43120', 'x-zw-planning': '1' },
       [Symbol.asyncIterator]: async function* iterator() {
         if (body !== undefined) yield Buffer.from(JSON.stringify(body));
       },

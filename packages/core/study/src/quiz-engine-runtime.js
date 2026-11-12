@@ -117,7 +117,7 @@ export const pooledToolCall=pool=>request=>pool.execute(async route=>{
     const prepared=await pool.base.llm.prepareCall(route,signal);
     return {stream:async function*(options){
       const outer=options.signal??signal;
-      for await(const chunk of prepared.stream({...prepared.config,...options,messages:options.messages.map(m=>({id:randomUUID(),...m,source:{kind:m.role==='tool'?'tool':'zhiyun-quiz',...m.source}}))})){
+      for await(const chunk of prepared.stream({...prepared.config,...options,messages:options.messages.map(m=>({id:randomUUID(),...m,source:{kind:m.role==='tool'?'tool':'zw-quiz',...m.source}}))})){
         // kernel 只认 text / tool-call / usage，终止块必须在这里变成异常，
         // 否则 provider 失败会被静默读成"模型什么都没返回"（见 finishFailure 注释）。
         if(chunk.type==='finish'){const error=finishFailure(chunk.reason,outer);if(error)throw error;}

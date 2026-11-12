@@ -3,8 +3,8 @@
 // 这里**没有**领域状态：账号、课程、解析任务属于 @lybx-leyw/dsh-zju-core-study，
 // 通过 Cordis 服务传递（见下面的 useStudy）。这个包只回答「长什么样」。
 import React, { useSyncExternalStore } from 'react';
-import brandMark from './assets/zhiyun-mark.svg';
-import compactBrandMark from './assets/zhiyun-mark-compact.svg';
+import brandMark from './assets/zw-mark.svg';
+import compactBrandMark from './assets/zw-mark-compact.svg';
 
 const paths = {
   sun: 'M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
@@ -87,7 +87,7 @@ export function Icon({ name, size = 19 }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] ?? paths.book}/></svg>;
 }
 export function Mark({ large = false, compact = false }) {
-  return <span className={`zy-mark${large ? ' zy-mark-large' : ''}${compact ? ' zy-mark-compact' : ''}`} aria-hidden="true" dangerouslySetInnerHTML={{ __html: compact ? compactBrandMark : brandMark }}/>;
+  return <span className={`zw-mark${large ? ' zw-mark-large' : ''}${compact ? ' zw-mark-compact' : ''}`} aria-hidden="true" dangerouslySetInnerHTML={{ __html: compact ? compactBrandMark : brandMark }}/>;
 }
 
 /**
@@ -95,7 +95,7 @@ export function Mark({ large = false, compact = false }) {
  *
  * 为什么不用 `Icon`：那一套是 24×24 纯描边（`fill:none` + stroke），而头像要**实心**
  * 剪影 —— 描边画不出「一坨人形」。所以这里逐段给 fill，颜色用 `currentColor`，
- * 由使用方（`.zy-rail-avatar`）决定配色，明暗主题自动跟随。
+ * 由使用方（`.zw-rail-avatar`）决定配色，明暗主题自动跟随。
  *
  * ⚠️ 肩部特意收窄到 5.4–18.6：再宽就会超出直径 24 的圆，被 `border-radius` 切出
  *    一条直边 —— 头像的圆边出现直边是很显眼的破绽。
@@ -113,9 +113,9 @@ export function StudentAvatar({ size = 26 }) {
 }
 
 export function Empty({ icon = 'book', title, children, action }) {
-  return <div className="zy-empty"><span className="zy-empty-icon"><Icon name={icon} size={27}/></span><h3>{title}</h3><p>{children}</p>{action}</div>;
+  return <div className="zw-empty"><span className="zw-empty-icon"><Icon name={icon} size={27}/></span><h3>{title}</h3><p>{children}</p>{action}</div>;
 }
-export function SectionTitle({ children, aside }) { return <div className="zy-section-title"><h2>{children}</h2>{aside && <span>{aside}</span>}</div>; }
+export function SectionTitle({ children, aside }) { return <div className="zw-section-title"><h2>{children}</h2>{aside && <span>{aside}</span>}</div>; }
 
 /** 订阅宿主的客户端 store（快照 + 订阅就是它的全部接口）。 */
 export function useStore(store) {
@@ -131,7 +131,7 @@ export const useStudy = (controller) => useSyncExternalStore(controller.subscrib
 
 /** 一句话的提示条；没有内容时不占位。 */
 export function Notice({ children }) {
-  return children ? <div className="zs-notice" role="alert">{children}</div> : null;
+  return children ? <div className="zws-notice" role="alert">{children}</div> : null;
 }
 
 /**

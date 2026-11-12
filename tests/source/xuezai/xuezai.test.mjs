@@ -15,7 +15,7 @@
  *
  * 纯函数全绿但插件起不来，是本仓出现过的事故类型：`session: { jar: null }`
  * 让一次真实请求也发不出去，而纯解析测试照样全绿。本文件的
- * 「apply() 真的 provide 了 zhiyunXuezai 并注册了路由」与
+ * 「apply() 真的 provide 了 zwXuezai 并注册了路由」与
  * 「GET 路由离线也能返回形状完整的 todos」两条就是拦这个的。
  *
  * # 全部离线
@@ -1230,14 +1230,14 @@ async function mount({ services = new Map(), dir = tempDir(), fetch } = {}) {
   return { service: services.get(SERVICE_NAME), routes, services, dispose, dir };
 }
 
-test('apply() 真的 provide 了 zhiyunXuezai 并注册了 /api/zhiyun-xuezai', async () => {
+test('apply() 真的 provide 了 zwXuezai 并注册了 /api/zw-xuezai', async () => {
   const services = new Map();
   const { service, routes } = await mount({ services });
   assert.ok(service, `必须 provide ${SERVICE_NAME}`);
-  assert.equal(SERVICE_NAME, 'zhiyunXuezai');
+  assert.equal(SERVICE_NAME, 'zwXuezai');
   assert.equal(routes.length, 1, '必须注册恰好一条路由');
-  assert.equal(routes[0].path, '/api/zhiyun-xuezai');
-  assert.equal(ROUTE_PATH, '/api/zhiyun-xuezai');
+  assert.equal(routes[0].path, '/api/zw-xuezai');
+  assert.equal(ROUTE_PATH, '/api/zw-xuezai');
   assert.equal(routes[0].kind, 'exact');
 });
 
@@ -1303,16 +1303,16 @@ test('xzzdRead() 的非法 action 抛 INVALID_INPUT 且列出可选值', async (
   await assert.rejects(() => service.xzzdRead({}), (error) => error.code === 'INVALID_INPUT');
 });
 
-test('egress() 在没有 zhiyunEgress 服务时如实报 unavailable', async () => {
+test('egress() 在没有 zwEgress 服务时如实报 unavailable', async () => {
   const { service } = await mount();
   const state = await service.egress();
   assert.equal(state.mode, 'unavailable');
-  assert.match(state.reason, /zhiyunEgress/);
+  assert.match(state.reason, /zwEgress/);
 });
 
 test('egress() 有服务时转述它的状态，不改写', async () => {
   const services = new Map();
-  services.set('zhiyunEgress', {
+  services.set('zwEgress', {
     async state() { return { mode: 'auto', campus: 'inside', viaWebvpn: false, degraded: false, downgraded: [] }; },
     async forget() { fleet.forgot = true; },
     async probe() { fleet.probed = true; return true; },
@@ -1329,7 +1329,7 @@ test('egress() 有服务时转述它的状态，不改写', async () => {
 
 test('egress() 服务抛错时降级成 unavailable，不把状态查询变成异常', async () => {
   const services = new Map();
-  services.set('zhiyunEgress', { async state() { throw new Error('坏了'); } });
+  services.set('zwEgress', { async state() { throw new Error('坏了'); } });
   const { service } = await mount({ services });
   const state = await service.egress();
   assert.equal(state.mode, 'unavailable');
@@ -1380,14 +1380,14 @@ test('GET 路由离线也能返回形状完整的 todos（xzzd + pta 两半都�
   assert.ok(out.body.egress, '必须带出口状态');
 });
 
-test('POST 缺 x-zhiyun-xuezai 头 → 403（CSRF 闸）', async () => {
+test('POST 缺 x-zw-xuezai 头 → 403（CSRF 闸）', async () => {
   const { routes } = await mount();
   const out = await call(routes[0].handler, fakeReq({
     method: 'POST', url: `${ROUTE_PATH}?xzzd-read`, body: '{"action":"activities","courseId":"7"}',
   }));
   assert.equal(out.status, 403);
-  assert.match(out.body.error, /x-zhiyun-xuezai/);
-  assert.equal(WRITE_HEADER, 'x-zhiyun-xuezai');
+  assert.match(out.body.error, /x-zw-xuezai/);
+  assert.equal(WRITE_HEADER, 'x-zw-xuezai');
 });
 
 test('POST 带头但动作名未知 → 400，且错误里带出动作名', async () => {
@@ -1536,13 +1536,13 @@ test('invalidate() 可调用且不抛（待办缓存失效）', async () => {
 
 test('旧 campus 会话文件会被一次性复制到新目录（避免升级即掉线）', async () => {
   const dir = tempDir();
-  const legacyDir = path.join(dir, 'data', 'zhiyun-campus');
+  const legacyDir = path.join(dir, 'data', 'zw-campus');
   mkdirSync(legacyDir, { recursive: true });
   const legacyFile = path.join(legacyDir, 'xzzd.session');
   const payload = Buffer.from([0xde, 0xad, 0xbe, 0xef, 0x00, 0x01]);
   writeFileSync(legacyFile, payload);
 
-  const dataDir = path.join(dir, 'data', 'zhiyun-xuezai');
+  const dataDir = path.join(dir, 'data', 'zw-xuezai');
   const { ctx } = fakeCtx({ dir });
   const services = new Map();
   await apply(ctx, { dataDir, legacyDataDir: legacyDir, fetch: async () => { throw new Error('不该发请求'); } });
@@ -1556,8 +1556,8 @@ test('旧 campus 会话文件会被一次性复制到新目录（避免升级即
 
 test('新目录已有会话时不再覆盖（不重复迁移）', async () => {
   const dir = tempDir();
-  const legacyDir = path.join(dir, 'data', 'zhiyun-campus');
-  const dataDir = path.join(dir, 'data', 'zhiyun-xuezai');
+  const legacyDir = path.join(dir, 'data', 'zw-campus');
+  const dataDir = path.join(dir, 'data', 'zw-xuezai');
   mkdirSync(legacyDir, { recursive: true });
   mkdirSync(dataDir, { recursive: true });
   writeFileSync(path.join(legacyDir, 'xzzd.session'), Buffer.from('old'));

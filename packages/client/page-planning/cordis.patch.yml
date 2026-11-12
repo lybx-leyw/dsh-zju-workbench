@@ -1,11 +1,11 @@
 # dsh bundle patch：把「规划」页插进 profile 的层栈。
 #
 # 本包现在是**纯页面**：只渲染（列表 / 日历 / 日程 / pet 对话）。
-# 数据聚合与路由（`/_dsh/zhiyun-planning`）已搬到
+# 数据聚合与路由（`/_dsh/zw-planning`）已搬到
 # `@lybx-leyw/dsh-zju-core-planning` —— 一个页面包不该同时是服务器。
 #
 # 所以：**本包不再有宿主行为**，`src/index.js` 只剩一个空 `apply()`，
 # 它存在的唯一理由是让客户端 bundle 进入启动图谱。
 - insert:
-    - id: zhiyun-page-planning
+    - id: zw-page-planning
       name: '@lybx-leyw/dsh-zju-page-planning'

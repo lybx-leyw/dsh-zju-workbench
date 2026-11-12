@@ -4,7 +4,7 @@
 //    （本工作台自己的数据目录）优先；没有该变量时退回宿主进程的工作目录 ——
 //    我们的启动脚本就是 `cwd = <数据目录>/workspace`，两者指向同一个目录。
 //    `create` 是「建或复用」且按 fs.realpath 归一化：重复启动只会拿到同一条记录。
-// 2. 学习工作台：把课程/解析/持久化编排挂成 `zhiyunStudy` 服务 + /api/zhiyun-study。
+// 2. 学习工作台：把课程/解析/持久化编排挂成 `zwStudy` 服务 + /api/zw-study。
 import { mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { StudyWorkbench, publicError } from "./workbench.js";
@@ -12,7 +12,7 @@ import { LEARNING_SPACE_DIR, LEARNING_SPACE_TITLE } from './learning-space.js';
 
 // ⚠️ 只声明**硬依赖**：讲义、终审、出题与节笔记是可选加工步骤，用 `ctx.get` 惰性取。
 //    写进 inject 会让「停用其中一个」直接拖死整个学习面板（连解析都用不了）。
-export const inject = ["workspaceRegistry", "connection", "profileContext", "zhiyunClassroom", "zhiyunParser", "llm", "zhiyunKnowledge"];
+export const inject = ["workspaceRegistry", "connection", "profileContext", "zwClassroom", "zwParser", "llm", "zwKnowledge"];
 
 export async function apply(ctx) {
   const home = process.env.DSH_HOME;
@@ -21,37 +21,37 @@ export async function apply(ctx) {
     await mkdir(dir, { recursive: true });
     if (!(await stat(dir)).isDirectory()) throw new Error('不是一个目录');
     const workspace = await ctx.workspaceRegistry.create(dir, LEARNING_SPACE_TITLE);
-    ctx.logger?.info?.(`zhiyun: 学习空间就绪 ${workspace.id} → ${dir}`);
+    ctx.logger?.info?.(`zw: 学习空间就绪 ${workspace.id} → ${dir}`);
   } catch (error) {
     // 学习空间建不出来不该让学习面板装不上：如实警告，客户端会退回「让用户选」。
-    ctx.logger?.warn?.(`zhiyun: 学习空间 ${dir} 不可用：${error}`);
+    ctx.logger?.warn?.(`zw: 学习空间 ${dir} 不可用：${error}`);
   }
-  const workbench = new StudyWorkbench({ classroom: ctx.zhiyunClassroom, parser: ctx.zhiyunParser, llm: ctx.llm,
-    knowledge: ctx.zhiyunKnowledge,
-    directory: path.join(ctx.profileContext.dir, "data/zhiyun-study"),
-    lecture: () => ctx.get("zhiyunLecture"),
-    quiz: () => ctx.get("zhiyunQuiz"), notes: () => ctx.get("zhiyunNotes"),
-    deeptutor: () => ctx.get("zhiyunDeepTutor"), learningResource: () => ctx.get("zhiyunLearningResource"),
+  const workbench = new StudyWorkbench({ classroom: ctx.zwClassroom, parser: ctx.zwParser, llm: ctx.llm,
+    knowledge: ctx.zwKnowledge,
+    directory: path.join(ctx.profileContext.dir, "data/zw-study"),
+    lecture: () => ctx.get("zwLecture"),
+    quiz: () => ctx.get("zwQuiz"), notes: () => ctx.get("zwNotes"),
+    deeptutor: () => ctx.get("zwDeepTutor"), learningResource: () => ctx.get("zwLearningResource"),
     // 课堂生成：AI 备课（outline + scenes 两段管线）。惰性取 —— 它缺席时
     // 只让「AI 教学」栏报未接入，不拖垮学习面板（同 lecture 那条注释的理由）。
-    generate: () => ctx.get("zhiyunClassroomGenerate"),
+    generate: () => ctx.get("zwClassroomGenerate"),
     // 导出服务：PPTX 保存。同样惰性取。
-    export: () => ctx.get("zhiyunClassroomExport"),
+    export: () => ctx.get("zwClassroomExport"),
     // 课堂库存：按 stageId 读写场景，重启后靠它找回已生成的课件。
-    vault: () => ctx.get("zhiyunClassroomVault"),
+    vault: () => ctx.get("zwClassroomVault"),
     // 讲义导出到笔记库：可选附加能力，同上面几条一样惰性取。
-    handout: () => ctx.get("zhiyunHandout") });
+    handout: () => ctx.get("zwHandout") });
   await workbench.ready;
-  ctx.provide("zhiyunStudy", workbench);
+  ctx.provide("zwStudy", workbench);
   // 学习资料工具已搬到 `@lybx-leyw/dsh-zju-tool-study`（`packages/tool/study`）。
-  // 本包只负责把 workbench 挂成 `zhiyunStudy` 服务；那个包自己
-  // `inject: ['zhiyunStudy', 'tools']` 取走。两边只剩服务契约，没有 import。
+  // 本包只负责把 workbench 挂成 `zwStudy` 服务；那个包自己
+  // `inject: ['zwStudy', 'tools']` 取走。两边只剩服务契约，没有 import。
   // 也因此：工具表注册失败（宿主没启用 tools）完全不影响学习面板。
-  const remove = ctx.connection.fetch.register({ path: "/api/zhiyun-study", methods: ["POST"], requestBody: "buffered", fetch: async (request) => {
+  const remove = ctx.connection.fetch.register({ path: "/api/zw-study", methods: ["POST"], requestBody: "buffered", fetch: async (request) => {
     let rpcId = "invalid-request", result;
     try {
       const message = await request.json();
-      if (message?.type !== "client-request" || message.method !== "zhiyun-study" || typeof message.rpcId !== "string" || message.rpcId.length > 200) throw Object.assign(new Error("invalid envelope"), { code: "INPUT" });
+      if (message?.type !== "client-request" || message.method !== "zw-study" || typeof message.rpcId !== "string" || message.rpcId.length > 200) throw Object.assign(new Error("invalid envelope"), { code: "INPUT" });
       rpcId = message.rpcId;
       const { method, args } = message.payload ?? {};
       if (!["bank-progress", "bank-pause", "bank-resume", "bank-catalog", "bank-load", "bank-generate", "bank-practice", "bank-answer", "bank-discard", "bank-export", "bank-curate", "state", "queue", "login", "logout", "courses", "schedule", "recent", "recent-save", "review", "lessons", "content", "result", "results", "course-graph", "start", "cancel", "models", "models-save", "search", "quiz", "quiz-generate", "quiz-adopt", "quiz-discard", "note", "note-save", "note-link", "note-link-text", "handout-export", "teach-generate", "teach-poll", "teach-export", "teach-resume", "teach-load", "live-today", "live-day", "live-streams"].includes(method) || args === null || typeof args !== "object" || Array.isArray(args)) throw Object.assign(new Error("unknown"), { code: "INPUT" });

@@ -8,7 +8,7 @@
 
 ## 0. 共同的挂载协议（4 批都一样，逐字照做）
 
-每条 route 搬成一个方法，挂在 `ctx.zhiyunClassroomStudio` 的某个命名空间下。
+每条 route 搬成一个方法，挂在 `ctx.zwClassroomStudio` 的某个命名空间下。
 每个批次**只创建自己的文件**，不改 `src/service.js` / `src/index.js`（由编排层统一接）。
 
 ### 文件
@@ -26,7 +26,7 @@ export function mount<批次名首字母大写>(service, deps) { … }
 - `deps`：`{ ports, log, dataDir, providerConfig }`
   - `ports`：`{ vault, media, generate, agent, pbl, export, stage, studio }`，任一可能为 `null`
   - `log`：`{ debug, info, warn, error }`
-  - `dataDir`：`string|null`（本包的数据目录，`profileContext.dir/data/zhiyun-classroom/`）
+  - `dataDir`：`string|null`（本包的数据目录，`profileContext.dir/data/zw-classroom/`）
   - `providerConfig`：`{ configured, get(key) }`（`upstream/provider-config.js`）
 
 ### 挂载方式

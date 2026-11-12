@@ -8,4 +8,4 @@ export const DEFAULT_TIMEOUT_MS = 60000;
  * 也挂在这个前缀下），但路径是本包自己的，避免和别的插件撞车 ——
  * 宿主 `webServer.register` 遇到重复路径会抛错，那会连累整个前端。
  */
-export const ROUTE_PATH = '/_dsh/zhiyun-net-proxy';
+export const ROUTE_PATH = '/_dsh/zw-net-proxy';

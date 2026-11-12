@@ -20,7 +20,7 @@
 import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunNotice: '@lybx-leyw/dsh-zju-source-notice',
+  zwNotice: '@lybx-leyw/dsh-zju-source-notice',
 });
 
 const ACTIONS = ['list', 'view', 'new', 'sources'];
@@ -32,7 +32,7 @@ const ACTIONS = ['list', 'view', 'new', 'sources'];
  * @returns 工具定义数组。
  */
 export function createNoticeReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunNotice', SERVICE_SOURCES.zhiyunNotice);
+  const need = () => serviceLookup(services, 'zwNotice', SERVICE_SOURCES.zwNotice);
 
   return [
     {
@@ -99,10 +99,10 @@ export function createNoticeReadTools(services) {
   ];
 }
 
-export const name = 'zhiyun-tool-notice';
+export const name = 'zw-tool-notice';
 
 /**
- * 惰性注入：`tools` 由宿主提供，`zhiyunNotice` 由对应的 source 包提供。
+ * 惰性注入：`tools` 由宿主提供，`zwNotice` 由对应的 source 包提供。
  *
  * # 为什么必须声明
  *
@@ -114,7 +114,7 @@ export const name = 'zhiyun-tool-notice';
  * 都声明了，这四个包当初漏了。因为这个包一直没被 preset 挂载，
  * 「不声明也能跑」从未被验证过。
  */
-export const inject = ['tools', 'zhiyunNotice'];
+export const inject = ['tools', 'zwNotice'];
 
 export function apply(ctx) {
   createReadToolRegistrar({

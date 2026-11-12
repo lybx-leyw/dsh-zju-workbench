@@ -1135,7 +1135,7 @@ export function createQuizGenerator({
   if (!llm || typeof llm.call !== 'function') {
     throw new QuizError('CONFIG',
       '出题需要注入窄 llm 接口（{ call({stage,route,constant,variable,signal}) }）；'
-      + '宿主侧由 zhiyunParser 提供，也可用 config.llm 直接给出');
+      + '宿主侧由 zwParser 提供，也可用 config.llm 直接给出');
   }
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 16) {
     throw new QuizError('CONFIG', '出题并发须为 1–16');

@@ -44,7 +44,7 @@ async function launchBrowser() {
 
 /** 产物比源码新，否则真机测试会测旧产物并给出假绿灯。 */
 
-test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对话框改名', { skip: "旧界面（shell-workbench + page-paper 的 .zy-page/.zp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
+test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对话框改名', { skip: "旧界面（shell-workbench + page-paper 的 .zw-page/.zwp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
   await assertBundleFresh('@lybx-leyw/dsh-zju-page-paper', ['Paper.jsx', 'PaperTree.jsx', 'style.css', 'client.jsx']);
 
   const browser = await launchBrowser();
@@ -58,7 +58,7 @@ test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对�
 
   const home = await mkdtemp(path.join(tmpdir(), 'paper-keys-'));
   const runtime = await initialize({ home });
-  const dataDir = path.join(runtime.profile, 'data', 'zhiyun-paper');
+  const dataDir = path.join(runtime.profile, 'data', 'zw-paper');
   await mkdir(path.join(dataDir, '心理学'), { recursive: true });
   await writeFile(path.join(dataDir, '心理学', '待删.pdf'), minimalPdf());
   // 派生文件：删除时应连带消失（这正是"必须确认"的理由）
@@ -88,7 +88,7 @@ test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对�
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+    await page.locator('.zw-page[data-page=today]').waitFor({ timeout: 60000 });
     /**
      * 关掉宿主的「预览版说明」弹层。
      *
@@ -130,27 +130,27 @@ test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对�
 
     /** 点树上一行（页内 click 绕开宿主遮罩）。 */
     const clickRow = (target) => page.evaluate((p) => {
-      [...document.querySelectorAll('.zp-tree-btn')].find((b) => b.dataset.path === p)?.click();
+      [...document.querySelectorAll('.zwp-tree-btn')].find((b) => b.dataset.path === p)?.click();
     }, target);
 
     // 等树真的渲染出来（宿主启动后还有客户端模块加载的时序）。
-    await page.locator('.zp-tree-btn').first().waitFor({ timeout: 30000 });
+    await page.locator('.zwp-tree-btn').first().waitFor({ timeout: 30000 });
     await clickRow('心理学');
     await sleep(600);
     // 展开后要等子行出现，否则下面的 clickRow 会落空。
     await page.waitForFunction(
-      () => [...document.querySelectorAll('.zp-tree-btn')].some((b) => b.dataset.path === '心理学/待删.pdf'),
+      () => [...document.querySelectorAll('.zwp-tree-btn')].some((b) => b.dataset.path === '心理学/待删.pdf'),
       null, { timeout: 15000 },
     );
 
     // ① 选中一行 → 出现游标（不然用户不知道快捷键作用在谁身上）
     await clickRow('心理学/待删.pdf');
     await page.waitForFunction(
-      () => document.querySelector('.zp-tree-row.is-cursor .zp-tree-btn')?.dataset?.path === '心理学/待删.pdf',
+      () => document.querySelector('.zwp-tree-row.is-cursor .zwp-tree-btn')?.dataset?.path === '心理学/待删.pdf',
       null, { timeout: 15000 },
     );
     assert.equal(
-      await page.evaluate(() => document.querySelector('.zp-tree-row.is-cursor .zp-tree-btn')?.dataset?.path ?? null),
+      await page.evaluate(() => document.querySelector('.zwp-tree-row.is-cursor .zwp-tree-btn')?.dataset?.path ?? null),
       '心理学/待删.pdf',
       '点一行后应出现游标高亮',
     );
@@ -158,12 +158,12 @@ test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对�
     // ② Delete → 弹确认，**不直接删**
     await page.keyboard.press('Delete');
     await sleep(600);
-    assert.equal(await page.locator('.zp-tree-confirm').count(), 1, 'Delete 应先弹确认条');
+    assert.equal(await page.locator('.zwp-tree-confirm').count(), 1, 'Delete 应先弹确认条');
     assert.ok((await readdir(path.join(dataDir, '心理学'))).includes('待删.pdf'), '未确认前不该删文件');
 
     // ③ 确认 → 本体与派生文件一起消失
     await page.evaluate(() => {
-      [...document.querySelectorAll('.zp-tree-confirm-actions button')]
+      [...document.querySelectorAll('.zwp-tree-confirm-actions button')]
         .find((b) => b.textContent?.includes('确认删除'))?.click();
     });
     await sleep(2000);
@@ -183,10 +183,10 @@ test('论文树：Delete 需确认并连带删派生文件，F2 用 portal 对�
 
     await page.keyboard.press('F2');
     // 对话框 portal 到 body：等它真的出现。
-    await page.locator('.zp-rename-input').waitFor({ timeout: 15000 });
+    await page.locator('.zwp-rename-input').waitFor({ timeout: 15000 });
 
     // 输入框必须能真正拿到焦点（这是 portal 方案的全部意义）。
-    const focused = await page.evaluate(() => document.activeElement?.className?.includes('zp-rename-input') ?? false);
+    const focused = await page.evaluate(() => document.activeElement?.className?.includes('zwp-rename-input') ?? false);
     assert.equal(focused, true, '重命名输入框应能获得焦点（工作台内部是 inert 的，故 portal 到 body）');
 
     // 全选后键入新名字（真实键盘输入）。

@@ -7,7 +7,7 @@
  * 有题干与解答两段），而笔记库里它必须是一份**用户能用任何编辑器打开的 .md**。
  * 两边形状不同，中间就得有人翻译，而且**必须能翻译回来** —— 学习页的讲义阅读器
  * 与 PDF 导出都按 `kind` 决定怎么渲染（例题要拆成题干 / 解答两块，见
- * `dsh-zhiyun-page-study/src/lecture-content.jsx`），解不回来就只剩一大段纯文本。
+ * `dsh-zju-page-study/src/lecture-content.jsx`），解不回来就只剩一大段纯文本。
  *
  * # 结构锁定的直接后果：md 里只放内容，不放 metadata
  *

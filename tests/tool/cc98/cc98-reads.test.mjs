@@ -40,7 +40,7 @@ function recordingService() {
 }
 
 /** 取本包唯一那个读工具。 */
-const tool = (service) => createCc98ReadTools({ zhiyunCc98: service })[0];
+const tool = (service) => createCc98ReadTools({ zwCc98: service })[0];
 
 /** 跑一个 action，返回它调了哪个方法、带了什么参数。 */
 async function run(service, args) {

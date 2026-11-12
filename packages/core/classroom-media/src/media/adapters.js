@@ -507,7 +507,7 @@ function sleep(ms) {
 export async function generateWithComfyuiImage(ctx, config, options) {
   const baseUrl = normalizeBase(config.baseUrl, 'http://localhost:8188');
   const workflow = patchWorkflow(await loadWorkflow(config), options);
-  const clientId = `zhiyun-${Math.random().toString(36).slice(2)}`;
+  const clientId = `zw-${Math.random().toString(36).slice(2)}`;
 
   const queue = await ctx.fetch(`${baseUrl}/prompt`, {
     method: 'POST',

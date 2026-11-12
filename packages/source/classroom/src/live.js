@@ -40,7 +40,7 @@ function rows(value, label, field, parse) {
   });
 }
 function result(items, { complete = true, reason = 'single-response', total = null, pages = 1, ...extra } = {}) {
-  return { items, meta: { source: 'zhiyun-classroom', fetchedAt: new Date().toISOString(), complete, reason, total, pages, version: digest(items), ...extra } };
+  return { items, meta: { source: 'zw-classroom', fetchedAt: new Date().toISOString(), complete, reason, total, pages, version: digest(items), ...extra } };
 }
 // 上游把成功码写成字符串 '0'，不是 HTTP 200。数字 0 一并认，其余任何值都按失败处理：
 // 把未知状态读成「当天没有课」比抛错难查得多。

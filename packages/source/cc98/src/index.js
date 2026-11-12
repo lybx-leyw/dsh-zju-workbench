@@ -6,8 +6,8 @@
  * 一个 Cordis 插件 + 一条同源数据路由。挂上之后：
  *
  * ```text
- *   GET  /api/zhiyun-cc98   → 这个包能干什么、当前登录状态
- *   POST /api/zhiyun-cc98   → { type:'client-request', rpcId, method:'cc98.hot', payload:{...} }
+ *   GET  /api/zw-cc98   → 这个包能干什么、当前登录状态
+ *   POST /api/zw-cc98   → { type:'client-request', rpcId, method:'cc98.hot', payload:{...} }
  * ```
  *
  * `method` 一律是 `cc98.<函数名>`，函数名就是 `Cc98Reader` 上的 22 个只读方法。
@@ -36,7 +36,7 @@
  *    "凭据被拒"并封锁 15 分钟 —— 偶发失败被放大成"半天不可用"。这里一次失败
  *    就是一次失败，下次调用照常再试。
  *
- * # 凭据：CC98 有**自己的**账号记录（`zhiyun-cc98/account`）
+ * # 凭据：CC98 有**自己的**账号记录（`zw-cc98/account`）
  *
  * 本包用 `@lybx-leyw/dsh-zju-source-login` 的 `readCc98(ctx)` 取 CC98 账号
  * （`{ username, password }`），与「浙大一卡通」是**两条独立记录**。
@@ -67,7 +67,7 @@ import { Cc98Reader, cc98Id } from './reads.js';
 import { TokenStore } from './token.js';
 import { ubbToText } from './ubb.js';
 
-export const name = 'zhiyun-cc98';
+export const name = 'zw-cc98';
 
 /**
  * 只硬依赖 `profileContext`（数据目录）。
@@ -77,8 +77,8 @@ export const name = 'zhiyun-cc98';
  */
 export const inject = ['profileContext'];
 
-/** 本包的数据路由。与 `/api/zhiyun-campus`、`/api/zhiyun-omni` 并列。 */
-export const ROUTE_PATH = '/api/zhiyun-cc98';
+/** 本包的数据路由。与 `/api/zw-campus`、`/api/zw-omni` 并列。 */
+export const ROUTE_PATH = '/api/zw-cc98';
 
 /**
  * 暴露的方法白名单。
@@ -185,7 +185,7 @@ const TRANSPORT_LABEL = '直连 api.cc98.org（本包不做 WebVPN）';
  *
  * @param ctx - Cordis 上下文。
  * @param [config]
- * @param [config.dataDir] - 会话/令牌目录；默认 `<profile>/data/zhiyun-cc98`。
+ * @param [config.dataDir] - 会话/令牌目录；默认 `<profile>/data/zw-cc98`。
  *   传 `null` 表示**纯内存**（不落盘、不碰 DPAPI），测试用它。
  * @param [config.fetch] - 出口实现（测试注入假 fetch 时用）。
  * @param [config.protect] - `SessionStore` 的保护器（默认 DPAPI）。
@@ -197,7 +197,7 @@ const TRANSPORT_LABEL = '直连 api.cc98.org（本包不做 WebVPN）';
  */
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-cc98] ${message}`;
+    const line = `[zw-cc98] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
@@ -211,7 +211,7 @@ export async function apply(ctx, config = {}) {
    * 日志里还会印出一个并不存在的路径，排查时误导人。
    */
   const persist = config.dataDir !== null;
-  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zhiyun-cc98');
+  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zw-cc98');
   const timeoutMs = config.timeoutMs ?? 20000;
 
   /* ── 令牌存储 ─────────────────────────────────────────────────────
@@ -244,7 +244,7 @@ export async function apply(ctx, config = {}) {
    * 早先这里读的是「浙大一卡通」那份记录 —— 在那个假设下，只有 CC98 账号的人
    * 永远登不进去，而失败提示还把用户指向「改一卡通密码」，方向完全相反。
    * 现在改用 `@lybx-leyw/dsh-zju-source-login` 的 `readCc98`（独立记录键
-   * `zhiyun-cc98/account`）。
+   * `zw-cc98/account`）。
    *
    * ⚠️ **每次现读，不缓存**：凭据服务可能晚于本包就绪（profile 里 cc98 排在
    * 凭据包之前是常态），把 null 缓存下来的后果是「配了也一直说没配」。
@@ -257,7 +257,7 @@ export async function apply(ctx, config = {}) {
   /**
    * 本包的 `fetch`。
    *
-   * 走**共享出口**（`zhiyunEgress`，由 `source-http` 提供）：CC98 是公网域，出口策略会
+   * 走**共享出口**（`zwEgress`，由 `source-http` 提供）：CC98 是公网域，出口策略会
    * 判定为直连 —— 关键是它会**绕开宿主为 LLM 配的全局代理**，那个代理打国内
    * 站点基本必失败。同时保留 campus 那份校园域判定，将来若有站内资源要过
    * WebVPN 也不用再改这里。
@@ -451,7 +451,7 @@ export async function apply(ctx, config = {}) {
       });
       log(`数据路由：${ROUTE_PATH}（会话 ${persist ? dataDir : '内存，不落盘'}）`);
       return remove;
-    }, 'zhiyun: cc98 data route');
+    }, 'zw: cc98 data route');
   });
 
   /**
@@ -481,7 +481,7 @@ export async function apply(ctx, config = {}) {
     ]),
   );
 
-  const removeService = ctx.provide('zhiyunCc98', {
+  const removeService = ctx.provide('zwCc98', {
     routePath: ROUTE_PATH,
     platform: 'cc98',
     label: 'CC98 论坛',

@@ -87,7 +87,7 @@ Q4 未经你明确表态，此处按推荐项采纳。若你不认同，只需�
 
 ### 1.3 宿主工具包
 
-`core-study` 新增导出 `dsh-zhiyun-core-study/engine-kit`：
+`core-study` 新增导出 `dsh-zju-core-study/engine-kit`：
 
 ```js
 export {pooledToolCall, runtimeState, serial, fault, bankQuestion}
@@ -103,11 +103,11 @@ export {pooledToolCall, runtimeState, serial, fault, bankQuestion}
 
 | 文件 | 内容 |
 |---|---|
-| `packages/dsh-zhiyun-core-quiz/src/engine-registry.js` | 注册表 + `engineVersionOf` / `engineEntries` |
+| `packages/dsh-zju-core-quiz/src/engine-registry.js` | 注册表 + `engineVersionOf` / `engineEntries` |
 | `packages/dsh-zhiyun-quiz-lab/package.json` | 包声明；**无** `dsh.client`（纯宿主办） |
 | `packages/dsh-zhiyun-quiz-lab/OWNERS` | `Owner: @lybx-leyw + Open` |
 | `packages/dsh-zhiyun-quiz-lab/README.md` | 取舍与边界，见第 7 节 |
-| `packages/dsh-zhiyun-quiz-lab/cordis.patch.yml` | `insert` 一行，id `zhiyun-quiz-lab` |
+| `packages/dsh-zhiyun-quiz-lab/cordis.patch.yml` | `insert` 一行，id `zw-quiz-lab` |
 | `packages/dsh-zhiyun-quiz-lab/src/index.js` | `apply()` 里注册、返回 dispose 注销 |
 | `packages/dsh-zhiyun-quiz-lab/src/engine.js` | `createRun(hosts)` → 适配 r4 到 `generatePoints` |
 | `packages/dsh-zhiyun-quiz-lab/src/checkpoint.js` | 检查点版本与迁移边界 |
@@ -120,7 +120,7 @@ export {pooledToolCall, runtimeState, serial, fault, bankQuestion}
 | 文件 | 改动 | 风险 |
 |---|---|---|
 | `core-quiz/src/engines.js` | 三处判据改走 `engineVersionOf`；`isNativeEngine` 查注册表 | 低；不碰 `versions` 字面量 |
-| `core-quiz/src/index.js` | `ctx.provide('zhiyunQuizEngines', {register, list, versionOf})`，dispose 时注销 | 低 |
+| `core-quiz/src/index.js` | `ctx.provide('zwQuizEngines', {register, list, versionOf})`，dispose 时注销 | 低 |
 | `core-study/src/quiz-engine-runtime.js` | 末尾加 `engine-kit` 导出 | 低；不改既有函数体 |
 | `core-study/src/question-bank.js:213-218` | switch 改为 `registry.get(engine)?.createRun(hosts)`，三条内建分支原样保留为兜底 | 中；必须逐字保留 r3 分支 |
 | `core-study/src/question-bank.js:289` | `QUIZ_ENGINES` → `engineEntries()` | 低 |
@@ -129,8 +129,8 @@ export {pooledToolCall, runtimeState, serial, fault, bankQuestion}
 
 ### 不动
 
-- `packages/dsh-zhiyun-core-quiz/src/engines/{r1,r3-v9}/**`：一个字节都不改。
-- `packages/dsh-zhiyun-core-quiz/src/engines/versions.json`：不登记 r4。
+- `packages/dsh-zju-core-quiz/src/engines/{r1,r3-v9}/**`：一个字节都不改。
+- `packages/dsh-zju-core-quiz/src/engines/versions.json`：不登记 r4。
 - `scripts/quiz_bench/experimental-r4/**`：冻结存档，只读。
 - `scripts/build.mjs` 的 `CLIENT_PACKAGES`：lab 无 client 半边，不需要加。
 
@@ -139,11 +139,11 @@ export {pooledToolCall, runtimeState, serial, fault, bankQuestion}
 ### 3.1 `apply()`
 
 ```js
-export const name = 'zhiyun-quiz-lab';
-export const inject = ['zhiyunQuizEngines'];
+export const name = 'zw-quiz-lab';
+export const inject = ['zwQuizEngines'];
 
 export function apply(ctx) {
-  const remove = ctx.zhiyunQuizEngines.register(LAB_ENGINE);
+  const remove = ctx.zwQuizEngines.register(LAB_ENGINE);
   // 卸载时必须注销：不注销则 profile 热重载后目录里留着一条指向已消失包的引擎。
   return () => remove();
 }
@@ -201,7 +201,7 @@ export function apply(ctx) {
 `item-model.mjs`、`run.mjs`、`scheduler.mjs`、`tools.mjs` 迁入 lab 时做两件事：
 
 1. **深路径 import 改包名。** 今天这些文件从
-   `../../../packages/dsh-zhiyun-core-quiz/src/concepts.js`、
+   `../../../packages/dsh-zju-core-quiz/src/concepts.js`、
    `.../src/strategies.js`、`.../src/engines/r3-v9/{common,tree,graph,tools}.mjs`、
    `.../src/generate.js` 取值，而 core-quiz 的 `exports` 字段**一个都没导出**。
    必须给 core-quiz 补 `./concepts` `./strategies` `./engines/r3-v9/*` 等子路径，

@@ -354,8 +354,8 @@ test('apply()：服务面把 course 列进 methods，路由也认这个动作', 
   };
   const dispose = apply(ctx);
   try {
-    const service = services.get('zhiyunChalaoshi');
-    assert.ok(service, '必须 provide zhiyunChalaoshi');
+    const service = services.get('zwChalaoshi');
+    assert.ok(service, '必须 provide zwChalaoshi');
     assert.deepEqual([...service.methods].sort(), ['chalaoshi.course', 'chalaoshi.search', 'chalaoshi.teacher']);
     assert.equal(typeof service.course, 'function');
     assert.equal(routes[0].path, ROUTE_PATH);

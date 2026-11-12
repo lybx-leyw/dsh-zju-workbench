@@ -205,7 +205,7 @@ export function makeContext({ dataDir, fetchImpl = globalThis.fetch, llm, servic
   };
 
   // 宿主里服务既可 `ctx.get(name)` 也可 `ctx.<name>`（例如 lecture 包直接读
-  // `ctx.zhiyunParser?.llm`）。基准必须同样两种都给，否则"产品能跑、基准跑不了"
+  // `ctx.zwParser?.llm`）。基准必须同样两种都给，否则"产品能跑、基准跑不了"
   // 就变成基准自己的 bug。这里用 Proxy 把服务表接到属性读取上。
   const proxied = new Proxy(ctx, {
     get(target, prop, receiver) {
@@ -354,7 +354,7 @@ export async function mount(name, { dataDir, fetchImpl = globalThis.fetch, llm, 
  * 取一个服务；没有就**有名字地**失败。
  *
  * @param mounted - `mount()` 的返回值。
- * @param service - 服务名（如 `zhiyunParser`）。
+ * @param service - 服务名（如 `zwParser`）。
  */
 export function serviceOf(mounted, service) {
   const value = mounted.services.get(service);
@@ -417,7 +417,7 @@ function findDescriptor(target, name) {
 /**
  * 先装 `@lybx-leyw/dsh-zju-source-campus`。
  *
- * 它是唯一 `provide('zhiyunEgress')` 的包，其余 `source-*` 的 `sharedFetch(ctx)`
+ * 它是唯一 `provide('zwEgress')` 的包，其余 `source-*` 的 `sharedFetch(ctx)`
  * 都指向那个服务。所以任何**要出网**的链路都要先过这一手 —— 否则不会报错，
  * 只会静默退化成 `globalThis.fetch`（走宿主给 LLM 配的全局代理，国内站点基本必失败）。
  *
@@ -441,7 +441,7 @@ export function fail(error) {
 /* ── 壳（版式与路由契约）───────────────────────────────────────────── */
 
 /**
- * 「壳的功能函数」：`dsh-zhiyun-shell-workbench/src/model.js` 里的**纯函数**。
+ * 「壳的功能函数」：`dsh-zju-shell-workbench/src/model.js` 里的**纯函数**。
  *
  * 它们没有 ctx、没有 DOM，所以不需要装配 —— 直接 import 模块取用。
  * 但**必须**取用产品那一份：基准要回答"这棵树该长在哪一页、哪些页整幅铺开"，

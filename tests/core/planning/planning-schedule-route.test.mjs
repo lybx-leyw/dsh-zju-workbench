@@ -23,7 +23,7 @@ function harness(t, { cached = false, enabled = true } = {}) {
     ptaStatus: async () => ({ configured: false }),
   });
   async function call(action = '', body, headers = {}, method = 'POST') {
-    const req = { method, url: `/?${action}`, headers: { host: '127.0.0.1', 'x-zhiyun-planning': '1', ...headers },
+    const req = { method, url: `/?${action}`, headers: { host: '127.0.0.1', 'x-zw-planning': '1', ...headers },
       async *[Symbol.asyncIterator]() { if (body !== undefined) yield Buffer.from(JSON.stringify(body)); } };
     let status, result;
     await handler(req, { writeHead(value) { status = value; }, end(value) { result = JSON.parse(value); } });
@@ -54,7 +54,7 @@ test('save/update/remove are local-only, return all slots, and survive restart',
 test('write header, loopback, body validation, optional store', async (t) => {
   const h = harness(t);
   for (const action of ['schedule-save', 'schedule-remove']) {
-    assert.equal((await h.call(action, block, { 'x-zhiyun-planning': '' })).status, 403);
+    assert.equal((await h.call(action, block, { 'x-zw-planning': '' })).status, 403);
     assert.equal((await h.call(action, block, { host: 'evil.example' })).status, 403);
     assert.equal((await h.call(action, null)).status, 400);
     assert.equal((await h.call(action, {})).status, 400);

@@ -1,5 +1,5 @@
 /**
- * 跨包客户端接线：`dsh-zhiyun-page-notes` external import `@lybx-leyw/dsh-zju-ui-graph-render`。
+ * 跨包客户端接线：`dsh-zju-page-notes` external import `@lybx-leyw/dsh-zju-ui-graph-render`。
  *
  * # 为什么值得一条常驻测试
  *
@@ -111,13 +111,13 @@ test('页面 require 到的 graph-render 带着 NoteGraph 与 css（跨包接线
   }
   assert.equal(typeof graph.NoteGraph, 'function', 'NoteGraph 必须是组件函数');
   assert.equal(typeof graph.css, 'string', 'css 必须是字符串（页面拿它传给 mountStyle）');
-  assert.match(graph.css, /\.zs-nt-graph/, 'graph-render 的样式表里没有 .zs-nt-graph');
+  assert.match(graph.css, /\.zws-nt-graph/, 'graph-render 的样式表里没有 .zws-nt-graph');
   assert.ok(graph.css.length > 100, `样式表疑似为空（${graph.css.length} 字符）`);
   // 与其它包一致的作用域前缀：少了它整块样式不生效（不是「稍微不一样」）。
-  assert.match(graph.css, /body\[data-zhiyun\] \.zs-nt-graph/, '图谱样式缺 body[data-zhiyun] 前缀');
+  assert.match(graph.css, /body\[data-zw\] \.zws-nt-graph/, '图谱样式缺 body[data-zw] 前缀');
 
   // 最后再走一遍页面：它能跑起来，就证明 external 面真的解到了渲染包。
-  const notes = await loadInto('dsh-zhiyun-page-notes', registry, buildClientPackage);
+  const notes = await loadInto('dsh-zju-page-notes', registry, buildClientPackage);
   assert.equal(typeof notes.apply, 'function', '页面没有导出 apply');
 });
 

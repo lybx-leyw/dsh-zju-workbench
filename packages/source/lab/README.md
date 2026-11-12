@@ -76,7 +76,7 @@ sign = md5(secret + path + 排序后(按参数名)的 k+v（跳过空值和对�
 凭据由集成层注入，本包不知道凭据从哪来：
 
 ```js
-const lab = ctx.get('zhiyunLab')
+const lab = ctx.get('zwLab')
 lab.setCredentialProvider(async () => ({ username, password }))
 lab.setSession({ load: () => JSON.parse(read()), save: (auth) => write(auth) })
 await lab.myTimetable({ term: 7 })

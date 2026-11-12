@@ -1,4 +1,4 @@
-export const EXPORT_ROOT_ID='zs-lecture-export';
+export const EXPORT_ROOT_ID='zws-lecture-export';
 export function pdfFilename(course,lesson) {
   const name=[course,lesson].filter(Boolean).join(' - ').normalize('NFKC').replace(/[<>:"/\\|?*\u0000-\u001f]/g,'_').replace(/[. ]+$/g,'').slice(0,140).trim();
   return `${name||'课堂讲义'} - 讲义与知识图谱.pdf`;

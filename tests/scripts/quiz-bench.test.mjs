@@ -14,7 +14,7 @@ import {applyCorrections,evidenceOf,seedOf} from '../../scripts/quiz_bench/evide
 import http from 'node:http';
 
 const defaults={fixture:true,counts:[3],batches:2,repeats:1,strategies:['recall'],types:['cloze']};
-const temporary=async work=>{const dir=await fs.mkdtemp(path.join(tmpdir(),'zhiyun-quiz-bench-'));try{return await work(dir);}finally{await fs.rm(dir,{recursive:true,force:true});}};
+const temporary=async work=>{const dir=await fs.mkdtemp(path.join(tmpdir(),'zw-quiz-bench-'));try{return await work(dir);}finally{await fs.rm(dir,{recursive:true,force:true});}};
 
 test('quiz bench validates a bounded matrix and seeds the product allocation deterministically',()=>{
   assert.equal(optionsOf().scenarios.length,2);

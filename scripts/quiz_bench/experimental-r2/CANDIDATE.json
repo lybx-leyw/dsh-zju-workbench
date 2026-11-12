@@ -4,7 +4,7 @@
   "status": "not-promoted-no-heldout-win",
   "productionEnabled": false,
   "rebasedFrom": "402c528e",
-  "rebasedReason": "import-path regroup in a96e5e94 (packages/dsh-zhiyun-core-quiz -> packages/core/quiz); digests recomputed over LF-normalised bytes",
+  "rebasedReason": "import-path regroup in a96e5e94 (packages/dsh-zju-core-quiz -> packages/core/quiz); digests recomputed over LF-normalised bytes",
   "files": {
     "scripts/quiz_bench/experimental-r2/blueprint.mjs": "d265e4166c258f6d3b7de5ddfc98946504cc0e55039b5c1f5dae29c065263b6a",
     "scripts/quiz_bench/experimental-r2/points.mjs": "51be5d60eeee59d3cb3d541c32317bfcd3c790bcac80a33b53726caea83629e4",

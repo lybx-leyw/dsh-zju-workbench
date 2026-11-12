@@ -1,4 +1,4 @@
 # Native sidebar stays enabled inside ask. Product navigation uses separate slots.
 - insert:
     - id: zhiyun-shell
-      name: dsh-zhiyun-shell-workbench
+      name: dsh-zju-shell-workbench

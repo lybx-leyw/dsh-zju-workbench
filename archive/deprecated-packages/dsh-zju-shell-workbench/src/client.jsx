@@ -43,7 +43,7 @@ function applyUI(ctx) {
    */
   const account = createToggleStore();
   // binding 必须先于 controller 建立：controller.navigate 立刻就会用到它，
-  // 而别的插件在自己的 apply 里调 zhiyunNavigation.navigate 也可能早于下面几行执行。
+  // 而别的插件在自己的 apply 里调 zwNavigation.navigate 也可能早于下面几行执行。
   const binding = createLearningSpaceBinding(ctx, () => false);
   // 设置 = 宿主原生浮窗。只把它的 store 动作接到壳上。
   const settings = createSettingsOpener();
@@ -90,16 +90,16 @@ function applyUI(ctx) {
     style.dataset.zhiyunStyle = 'true';
     style.textContent = css;
     document.head.append(style);
-    const previous = document.body.getAttribute('data-zhiyun');
-    document.body.setAttribute('data-zhiyun', 'true');
+    const previous = document.body.getAttribute('data-zw');
+    document.body.setAttribute('data-zw', 'true');
     return () => {
       style.remove();
-      if (previous === null) document.body.removeAttribute('data-zhiyun');
-      else document.body.setAttribute('data-zhiyun', previous);
+      if (previous === null) document.body.removeAttribute('data-zw');
+      else document.body.setAttribute('data-zw', previous);
     };
   }, 'zhiyun: owned styles');
-  ctx.effect(() => ctx.reflect.provide('zhiyunNavigation', controller), 'zhiyun: navigation service');
-  ctx.effect(() => ctx.theme.overrideTokens('dsh-zhiyun-shell-workbench', {
+  ctx.effect(() => ctx.reflect.provide('zwNavigation', controller), 'zhiyun: navigation service');
+  ctx.effect(() => ctx.theme.overrideTokens('dsh-zju-shell-workbench', {
     '--dsw-alias-bg-base': { light: '#f7f7f5', dark: '#191c20' },
     '--dsw-alias-label-primary': { light: '#252a30', dark: '#e8ebee' },
     '--dsw-alias-label-secondary': { light: '#666b72', dark: '#afb6bf' },

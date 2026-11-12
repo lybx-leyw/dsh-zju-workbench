@@ -118,7 +118,7 @@ export function ringPositions(nodes) {
 /**
  * 图谱的样式表。
  *
- * 颜色全部走壳的 `--zy-*` 变量（候选 README 明确要求「不得写死色值」），
+ * 颜色全部走壳的 `--zw-*` 变量（候选 README 明确要求「不得写死色值」），
  * 否则明暗主题切换时图会变成一块孤岛。
  *
  * @returns {object[]} cytoscape style 数组。
@@ -126,11 +126,11 @@ export function ringPositions(nodes) {
 export function graphStyles() {
   return [
     { selector: 'node', style: {
-      'background-color': 'var(--zy-surface, #fff)',
-      'border-color': 'var(--zy-border, #d0d0d0)',
+      'background-color': 'var(--zw-surface, #fff)',
+      'border-color': 'var(--zw-border, #d0d0d0)',
       'border-width': 1.5,
       label: 'data(label)',
-      color: 'var(--zy-text, #222)',
+      color: 'var(--zw-text, #222)',
       'font-size': 10,
       'text-valign': 'bottom',
       'text-margin-y': 4,
@@ -140,18 +140,18 @@ export function graphStyles() {
       height: 'mapData(inDegree, 0, 8, 18, 40)',
     } },
     { selector: 'node[current]', style: {
-      'background-color': 'var(--zy-accent, #4a7cff)',
-      color: 'var(--zy-accent, #4a7cff)',
-      'border-color': 'var(--zy-accent, #4a7cff)',
+      'background-color': 'var(--zw-accent, #4a7cff)',
+      color: 'var(--zw-accent, #4a7cff)',
+      'border-color': 'var(--zw-accent, #4a7cff)',
     } },
     { selector: 'node[orphan]', style: {
       'border-style': 'dashed',
-      'border-color': 'var(--zy-muted, #999)',
+      'border-color': 'var(--zw-muted, #999)',
     } },
     { selector: 'edge', style: {
       width: 'mapData(weight, 1, 4, 1, 2.5)',
-      'line-color': 'var(--zy-border, #ccc)',
-      'target-arrow-color': 'var(--zy-border, #ccc)',
+      'line-color': 'var(--zw-border, #ccc)',
+      'target-arrow-color': 'var(--zw-border, #ccc)',
       'target-arrow-shape': 'triangle',
       'curve-style': 'bezier',
       'arrow-scale': 0.7,

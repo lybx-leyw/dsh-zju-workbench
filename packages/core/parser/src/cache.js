@@ -5,7 +5,7 @@ import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write';
 export const hash = value => createHash('sha256').update(typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value)).digest('hex');
 export class ParserCache {
   constructor(directory) { this.directory = directory; this.memory = new Map(); }
-  key(stage, inputs) { return hash(['zhiyun-parser-v1', stage, inputs]); }
+  key(stage, inputs) { return hash(['zw-parser-v1', stage, inputs]); }
   async get(key) {
     if (!this.directory) return this.memory.get(key) ?? null;
     try {

@@ -24,5 +24,5 @@ export async function makeVault() {
     get: () => undefined,
   };
   await mod.apply(ctx, { dir: path.join(dir, 'notes') });
-  return { dir: path.join(dir, 'notes'), svc: provided.zhiyunVaultNotes, mod, cleanup: () => rm(dir, { recursive: true, force: true }) };
+  return { dir: path.join(dir, 'notes'), svc: provided.zwVaultNotes, mod, cleanup: () => rm(dir, { recursive: true, force: true }) };
 }

@@ -3,7 +3,7 @@
  *
  * # 为什么这一层必须存在
  *
- * `core/doc` 是一个服务（`ctx.zhiyunDoc`），模型看不到服务 —— 它只看得到工具表。
+ * `core/doc` 是一个服务（`ctx.zwDoc`），模型看不到服务 —— 它只看得到工具表。
  * 只做服务不做工具，结果就是 `coverage-gaps.md` 里反复记过的那种失效：
  * **名字对得上，工具走不到**。上游这四条是 CLI 命令（`zju doc text|pdf|pages|find`），
  * 迁移到本仓就是四个 **action** —— 一个工具收 `action`，比四个工具少占三格表面，
@@ -26,7 +26,7 @@ import { createReadToolRegistrar, inputError, optStr, serviceLookup, str } from 
 
 /** 本包消费的服务。`inject` 由包入口 `index.js` 声明。 */
 export const SERVICE_SOURCES = Object.freeze({
-  zhiyunDoc: '@lybx-leyw/dsh-zju-core-doc',
+  zwDoc: '@lybx-leyw/dsh-zju-core-doc',
 });
 
 /**
@@ -38,19 +38,19 @@ export const SERVICE_SOURCES = Object.freeze({
  * 直接读会抛 `cannot get property "tools" without inject` —— 它不是 `undefined`。
  * 也就是说「不声明、用时判空」这条路根本走不通：第一次注册就炸。
  *
- * ## 为什么也声明 `zhiyunDoc`
+ * ## 为什么也声明 `zwDoc`
  *
  * 声明它等于「没有 `core/doc` 时本包不激活」。这是**对的**：本包唯一能做的事就是
  * 调那个服务的四个方法，服务不在时它没有任何价值。不声明的话，插件会激活、
  * 注册一个每次都报 `SERVICE_MISSING` 的工具 —— 模型会看到一格永远失败的工具，
  * 而真相是「那个包没装」。
  *
- * ⚠️ 与 `tool/classroom` 的取舍一致（那里是 `['zhiyunStudy', 'tools']`）。
+ * ⚠️ 与 `tool/classroom` 的取舍一致（那里是 `['zwStudy', 'tools']`）。
  *    `tool/ebook` / `tool/notice` 那几个只读包**没有** `inject` —— 它们目前
  *    也没有任何 preset 挂载，所以「不声明也能跑」这件事从未被验证过。
  *    本包会被 `preset/lecture` 挂上，所以按能跑的那条路写。
  */
-export const inject = ['tools', 'zhiyunDoc'];
+export const inject = ['tools', 'zwDoc'];
 
 /** `action` 的取值，顺序与上游 `docCommands` 一致（text / pdf / pages / find）。 */
 export const DOC_ACTIONS = Object.freeze(['text', 'pdf', 'pages', 'find']);
@@ -80,7 +80,7 @@ export function splitList(value, name) {
  * @returns {object[]} 工具定义数组（只有一个）。
  */
 export function createDocTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunDoc', SERVICE_SOURCES.zhiyunDoc);
+  const need = () => serviceLookup(services, 'zwDoc', SERVICE_SOURCES.zwDoc);
 
   return [
     {

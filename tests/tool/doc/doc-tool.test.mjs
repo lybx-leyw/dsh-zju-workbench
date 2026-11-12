@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 
 import { apply, createDocTools, DOC_ACTIONS, inject, splitList } from '../../../packages/tool/doc/src/index.js';
 
-/** 造一个记录调用的假 `zhiyunDoc`。 */
+/** 造一个记录调用的假 `zwDoc`。 */
 function fakeService() {
   const calls = [];
   const service = {
@@ -57,17 +57,17 @@ test('一个工具，四个 action —— 与上游 doc 的四条 provides 一�
   assert.ok(tool.description.length > 60, 'description 太短，模型会选错');
 });
 
-test('inject 声明 tools 与 zhiyunDoc —— 少一个就装不上或装上一个永远失败的工具', () => {
+test('inject 声明 tools 与 zwDoc —— 少一个就装不上或装上一个永远失败的工具', () => {
   // Cordis 里没写进 inject 的服务，直读会抛 `cannot get property ... without inject`，
-  // 所以 `tools` 必须在；而 `zhiyunDoc` 不在 inject 里的话，插件照样激活、注册出一个
+  // 所以 `tools` 必须在；而 `zwDoc` 不在 inject 里的话，插件照样激活、注册出一个
   // 每次都报 SERVICE_MISSING 的工具 —— 模型看到的是「一格永远失败的工具」。
-  assert.deepEqual(inject, ['tools', 'zhiyunDoc']);
+  assert.deepEqual(inject, ['tools', 'zwDoc']);
 });
 
 test('每个 action 都真的分派到对应方法（没有列在 enum 里却走 default 的）', async () => {
   for (const action of DOC_ACTIONS) {
     const { service, calls } = fakeService();
-    const tool = createDocTools({ zhiyunDoc: service })[0];
+    const tool = createDocTools({ zwDoc: service })[0];
     const args = { action, file: 'a.pdf', pages: '1-2', keyword: '甲' };
     await tool.run(args);
     assert.equal(calls.length, 1, `${action} 应当只调一个方法`);
@@ -77,13 +77,13 @@ test('每个 action 都真的分派到对应方法（没有列在 enum 里却走
 
 test('text：文件原样交给服务，不带多余参数', async () => {
   const { service, calls } = fakeService();
-  await createDocTools({ zhiyunDoc: service })[0].run({ action: 'text', file: '讲义.pdf' });
+  await createDocTools({ zwDoc: service })[0].run({ action: 'text', file: '讲义.pdf' });
   assert.deepEqual(calls, [['text', ['讲义.pdf']]]);
 });
 
 test('find：多个关键词用竖线/顿号/逗号都能拆开', async () => {
   const { service, calls } = fakeService();
-  const tool = createDocTools({ zhiyunDoc: service })[0];
+  const tool = createDocTools({ zwDoc: service })[0];
   await tool.run({ action: 'find', file: 'a.pdf', keyword: '左式堆|斜堆' });
   await tool.run({ action: 'find', file: 'a.pdf', keyword: '左式堆｜斜堆' });
   await tool.run({ action: 'find', file: 'a.pdf', keyword: '左式堆、斜堆，习题' });
@@ -96,7 +96,7 @@ test('find：多个关键词用竖线/顿号/逗号都能拆开', async () => {
 
 test('pages：页码与他人给的 out 都透传；不给 out 时不留一个 undefined 键', async () => {
   const { service, calls } = fakeService();
-  const tool = createDocTools({ zhiyunDoc: service })[0];
+  const tool = createDocTools({ zwDoc: service })[0];
   await tool.run({ action: 'pages', file: 'book.pdf', pages: '43-49', out: 'C:/tmp/take.pdf' });
   await tool.run({ action: 'pages', file: 'book.pdf', pages: '1' });
   assert.deepEqual(calls[0][1], ['book.pdf', '43-49', { out: 'C:/tmp/take.pdf' }]);
@@ -105,7 +105,7 @@ test('pages：页码与他人给的 out 都透传；不给 out 时不留一个 u
 
 test('pdf：多文件按 | 拆开且顺序不变；size 默认 a4', async () => {
   const { service, calls } = fakeService();
-  const tool = createDocTools({ zhiyunDoc: service })[0];
+  const tool = createDocTools({ zwDoc: service })[0];
   await tool.run({ action: 'pdf', file: '第1页.jpg|截图.png|说明.docx' });
   await tool.run({ action: 'pdf', file: 'a.png', size: 'original' });
   assert.deepEqual(calls[0][1], [['第1页.jpg', '截图.png', '说明.docx'], { size: 'a4' }]);
@@ -114,7 +114,7 @@ test('pdf：多文件按 | 拆开且顺序不变；size 默认 a4', async () => 
 
 test('pdf：单个文件不需要分隔符也能用', async () => {
   const { service, calls } = fakeService();
-  await createDocTools({ zhiyunDoc: service })[0].run({ action: 'pdf', file: 'a.png', out: 'x.pdf' });
+  await createDocTools({ zwDoc: service })[0].run({ action: 'pdf', file: 'a.png', out: 'x.pdf' });
   assert.deepEqual(calls[0][1], [['a.png'], { size: 'a4', out: 'x.pdf' }]);
 });
 
@@ -133,7 +133,7 @@ test('未知 action 报 INPUT，且**先于**服务查找（不先抱怨包没�
 test('关键词为空时在工具层就拒（不发一个必然空的查询）', async () => {
   const { service, calls } = fakeService();
   await assert.rejects(
-    () => createDocTools({ zhiyunDoc: service })[0].run({ action: 'find', file: 'a.pdf', keyword: ' || ' }),
+    () => createDocTools({ zwDoc: service })[0].run({ action: 'find', file: 'a.pdf', keyword: ' || ' }),
     /keyword 里没有内容/,
   );
   assert.deepEqual(calls, []);
@@ -142,7 +142,7 @@ test('关键词为空时在工具层就拒（不发一个必然空的查询）',
 test('pages 缺 pages 参数时说明「需要 pages」，而不是走到服务再炸', async () => {
   const { service, calls } = fakeService();
   await assert.rejects(
-    () => createDocTools({ zhiyunDoc: service })[0].run({ action: 'pages', file: 'a.pdf' }),
+    () => createDocTools({ zwDoc: service })[0].run({ action: 'pages', file: 'a.pdf' }),
     /需要 pages/,
   );
   assert.deepEqual(calls, []);
@@ -164,7 +164,7 @@ test('注册后 execute 全程不碰审批（读链）', async () => {
   let approvalAsked = false;
   const tools = [];
   const ctx = {
-    get: (key) => (key === 'zhiyunDoc' ? service : undefined),
+    get: (key) => (key === 'zwDoc' ? service : undefined),
     tools: { register: (tool) => { tools.push(tool); return () => {}; } },
     approval: { request: async () => { approvalAsked = true; return 'rejected'; } },
     effect: (fn) => fn(),
@@ -187,7 +187,7 @@ test('每次 execute 都重新查一次服务（装配顺序不保证）', async
   );
   // 之后才装配上，同一个已注册的工具必须能用 —— 快照下来的服务表会让它永远失败。
   const { service, calls } = fakeService();
-  registry.zhiyunDoc = service;
+  registry.zwDoc = service;
   const result = await tools[0].execute({ action: 'text', file: 'a.pdf' }, {});
   assert.equal(result.ok, true);
   assert.equal(calls.length, 1);

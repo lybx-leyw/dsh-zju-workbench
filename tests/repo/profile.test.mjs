@@ -11,7 +11,7 @@ test('navigation preserves native conversation and ignores foreign panel ids', (
   // 所以导轨上不高亮任何产品页 —— 返回 null 而不是硬塞一个页 id。
   assert.equal(activePage(null), null);
   assert.equal(activePage('conversation'), null);
-  assert.equal(activePage('zhiyun.today'), 'today');
+  assert.equal(activePage('zw.today'), 'today');
   assert.equal(activePage('other-plugin'), null);
   // 「规划」只命中真实存在的那一页：「问一问」已删除，不再参与搜索。
   assert.deepEqual(matchingPages('规划').map(page => page.id), ['planning']);
@@ -26,7 +26,7 @@ test('被取消的页从侧栏与跳转里一起消失（两处必须同一份�
   assert.equal(pageBundle('today'), '@lybx-leyw/dsh-zju-page-today');
   assert.equal(pageBundle('paper'), '@lybx-leyw/dsh-zju-page-paper');
   // 「题库」曾经是寄居在学习页里的一个 tab，`pageBundle` 给它开了特例把包名指到
-  // `dsh-zhiyun-page-study`。拆成独立包之后特例去掉 —— 这条断言就是那个特例的
+  // `dsh-zju-page-study`。拆成独立包之后特例去掉 —— 这条断言就是那个特例的
   // 纪念碑：谁再把它改回指向学习页，这里立刻红（包被取消时藏页与跳转都靠这条）。
   assert.equal(pageBundle('quiz'), '@lybx-leyw/dsh-zju-page-quiz');
 
@@ -51,7 +51,7 @@ test('被取消的页从侧栏与跳转里一起消失（两处必须同一份�
 
 test('「我的课」「看课」已并入「学习」：导航只剩一个入口，两个页面包不再被访问', () => {
   // ⚠️ 这条钉的是**合并**而不是删除功能：回放与课程目录都还在，只是住进了「学习」页
-  //    （`zs-content-switch` 的「视频」栏 + 左栏课程目录）。留在这里的守卫是：
+  //    （`zws-content-switch` 的「视频」栏 + 左栏课程目录）。留在这里的守卫是：
   //    NAV 里不许再出现 courses / player 两个 id —— 它们对应的 bundle 已经删了，
   //    留着 id 会让 `navigate()` 把一个没人承载的面板切出来（空白页）。
   assert.equal(NAV.some(page => page.id === 'courses'), false, '「我的课」不再是独立页');
@@ -71,9 +71,9 @@ test('「我的课」「看课」已并入「学习」：导航只剩一个入�
 
 test('activePage 只认还在的页：被取消的页不再算作当前页', () => {
   const pages = visiblePages(hiddenPageIds(new Map([['@lybx-leyw/dsh-zju-page-paper', false]])));
-  assert.equal(activePage('zhiyun.paper', pages), null, '取消后它不是一个可停留的页');
-  assert.equal(activePage('zhiyun.paper', NAV), 'paper', '未过滤时照旧');
-  assert.equal(activePage('zhiyun.today', pages), 'today');
+  assert.equal(activePage('zw.paper', pages), null, '取消后它不是一个可停留的页');
+  assert.equal(activePage('zw.paper', NAV), 'paper', '未过滤时照旧');
+  assert.equal(activePage('zw.today', pages), 'today');
 });
 test('date uses Beijing midnight even when machine timezone differs', () => {
   assert.match(beijingDate(new Date('2026-10-06T16:01:00Z')), /10月7日/);
@@ -107,7 +107,7 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   assert.equal(JSON.parse(await readFile(manifest, 'utf8')).description, 'user customization');
   // 抽一个**当前真在 profile 里**的本仓包，验证它的目录链接指向真实源码。
   //
-  // ⚠️ 这里原来写死 `dsh-zhiyun-shell-workbench` —— 那个包早已不在 profile 里
+  // ⚠️ 这里原来写死 `dsh-zju-shell-workbench` —— 那个包早已不在 profile 里
   //    （Step 1 瘦身 + 本轮归档）。它以前之所以没红，只是因为**包目录还在仓库里**，
   //    `realpath` 能解析到源码；`shell-workbench` 一移进 `archive/` 就暴露了。
   //    写死具体包名的断言，会在「包退役」时给出与主题无关的失败。
@@ -238,7 +238,7 @@ test('existing product profile adds the source bundle without replacing user set
   assert.ok((await readFile(patch, 'utf8')).startsWith('# custom overrides\n[]\n'));
 });
 test('改名/拆包后，profile 里指向已不存在的本仓包会被移除', async () => {
-  // ⚠️ 这条钉的是拆包真机踩过的坑：`dsh-zhiyun-pro-ui` 改名成 `dsh-zhiyun-shell-workbench` 之后，
+  // ⚠️ 这条钉的是拆包真机踩过的坑：`dsh-zhiyun-pro-ui` 改名成 `dsh-zju-shell-workbench` 之后，
   //    老 profile 里仍留着旧名 —— Loader 解不开那一行，整个 profile 起不来。
   //    只清 `retiredBundles` 登记表里的旧名，不做前缀猜测：同前缀但没登记的条目
   //    可能来自别的分支或用户自己链进来的包。
@@ -273,7 +273,7 @@ test('unsupported host version fails with an actionable error', async () => {
   const dir = path.join(app, 'node_modules', '@deepseek-ai', 'dsh');
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, 'package.json'), '{"version":"0.9.0"}');
-  await assert.rejects(locateHost({ ZHIYUN_DSH_APP_DIR: app }), /不能混用版本/);
+  await assert.rejects(locateHost({ ZW_DSH_APP_DIR: app }), /不能混用版本/);
 });
 
 test('本机已安装版本不受支持时，回退到仓库内已验证的临时安装', async (t) => {
@@ -297,15 +297,15 @@ test('宿主换版本时改指链接，但用户自己的实体目录不覆盖',
   const [first, second] = lock.hostVersions.map(version => path.join(root, '.runtime', `dsh-${version}`));
   if (!await exists(first) || !await exists(second)) return t.skip('本机没有两份临时安装，无法验证换宿主');
   const home = await mkdtemp(path.join(parent, 'switch-'));
-  assert.equal((await initialize({ home, env: { ZHIYUN_DSH_APP_DIR: first } })).version, lock.hostVersions[0]);
-  const switched = await initialize({ home, env: { ZHIYUN_DSH_APP_DIR: second } });
+  assert.equal((await initialize({ home, env: { ZW_DSH_APP_DIR: first } })).version, lock.hostVersions[0]);
+  const switched = await initialize({ home, env: { ZW_DSH_APP_DIR: second } });
   assert.equal(switched.version, lock.hostVersions[1]);
   assert.ok(switched.repointed.includes('@deepseek-ai'), '换宿主应改指宿主链接');
   // 把那条链接换成用户自己放的实体目录 → 一律不覆盖，直接报错。
   const link = path.join(home, 'profiles', lock.profile, 'node_modules', '@deepseek-ai');
   await rm(link, { recursive: true, force: true });
   await mkdir(link, { recursive: true });
-  await assert.rejects(initialize({ home, env: { ZHIYUN_DSH_APP_DIR: first } }), /未覆盖/);
+  await assert.rejects(initialize({ home, env: { ZW_DSH_APP_DIR: first } }), /未覆盖/);
 });
 test('启动参数里同名参数只出现一次（显式 --port 优先，不再拼出两个）', () => {
   // ⚠️ 这条钉的是一个真机上踩过的坑：`npm start -- --port 3081` 曾拼出
@@ -317,7 +317,7 @@ test('启动参数里同名参数只出现一次（显式 --port 优先，不再
   assert.deepEqual(hostArgs(['--port', '3081'], undefined), ['--no-open', '--port', '3081']);
   assert.equal(countPorts(hostArgs(['--port', '3081'], undefined)), 1, '显式 --port 不许再补一个');
   assert.equal(countPorts(hostArgs(['--port=3081'], '3091')), 1);
-  assert.deepEqual(hostArgs([], '3081'), ['--no-open', '--port', '3081'], 'ZHIYUN_PORT 生效');
+  assert.deepEqual(hostArgs([], '3081'), ['--no-open', '--port', '3081'], 'ZW_PORT 生效');
   assert.deepEqual(hostArgs([], undefined), ['--no-open', '--port', '3091'], '都没给时用默认端口');
   // 调用方自己写了 --no-open 时不许再补一个（实测命令行里出现过两个）。
   assert.equal(countNoOpen(hostArgs(['--no-open', '--port', '3081'], undefined)), 1);
@@ -326,3 +326,42 @@ test('启动参数里同名参数只出现一次（显式 --port 优先，不再
   assert.deepEqual(hostArgs(['--verbose'], '3081'), ['--no-open', '--port', '3081', '--verbose']);
 });
 
+
+test('旧前缀的数据目录在启动时搬到新名，已有的新目录不会被合并覆盖', async () => {
+  // 数据目录里装的是 DPAPI 会话、课件缓存、笔记库这类**不可重建**的东西。
+  // 改名只动了代码里的路径常量；磁盘上的目录若还叫旧名，用户看到的就是
+  // 「升级后全部得像第一次用一样重来一遍」，而旧数据仍占着几百 MB 没人知道。
+  const { mkdir: make, writeFile: put, readdir: list } = await import('node:fs/promises');
+  const parent = await mkdtemp(path.join(root, '.runtime', 'data-move-'));
+  const home = path.join(parent, 'home');
+  const dataDir = path.join(home, 'profiles', lock.profile, 'data');
+  await make(path.join(dataDir, 'zhiyun-classroom', 'slides'), { recursive: true });
+  await put(path.join(dataDir, 'zhiyun-classroom', 'slides', '1.jpg'), 'bytes');
+  await make(path.join(dataDir, 'zhiyun-study'), { recursive: true });
+  await put(path.join(dataDir, 'zhiyun-study', 'session.json'), '{}');
+  // 用户自己放的目录：名字不在登记表里，一个字节都不许碰。
+  await make(path.join(dataDir, 'my-own-notes'), { recursive: true });
+  // 已经存在的新目录：绝不与旧目录合并（两代数据混成一份比没搬更糟）。
+  await make(path.join(dataDir, 'zw-pta'), { recursive: true });
+  await put(path.join(dataDir, 'zw-pta', 'new.json'), '{"new":true}');
+  await make(path.join(dataDir, 'zhiyun-pta'), { recursive: true });
+  await put(path.join(dataDir, 'zhiyun-pta', 'old.json'), '{"old":true}');
+
+  const runtime = await initialize({ home });
+  assert.deepEqual(
+    runtime.movedData.map(([before]) => before).sort(),
+    ['zhiyun-classroom', 'zhiyun-study'],
+    '只搬两个没撞名的',
+  );
+  const after = (await list(dataDir)).sort();
+  assert.ok(after.includes('zw-classroom'), '课件缓存要跟着改名');
+  assert.ok(!after.includes('zhiyun-classroom'), '旧名不该留下');
+  assert.equal(await readFile(path.join(dataDir, 'zw-classroom', 'slides', '1.jpg'), 'utf8'), 'bytes', '内容原样搬过去');
+  assert.ok(after.includes('my-own-notes'), '没登记过的目录不动');
+  assert.ok(after.includes('zhiyun-pta'), '撞名时旧目录原样留着，由人判断');
+  assert.equal(await readFile(path.join(dataDir, 'zw-pta', 'new.json'), 'utf8'), '{"new":true}', '新目录不被旧数据覆盖');
+
+  // 重跑一次必须是空操作（幂等）：这次没有可搬的。
+  assert.deepEqual((await initialize({ home })).movedData, []);
+  await rm(parent, { recursive: true, force: true });
+});

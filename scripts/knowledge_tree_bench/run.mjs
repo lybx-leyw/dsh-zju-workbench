@@ -3,7 +3,7 @@
  *
  * # 为什么是"吐中间产物"而不是"只吐结果"
  *
- * 界面上要按 `docs/show/zhiyun-pipeline.html` 那条链路逐步展示：
+ * 界面上要按 `docs/show/zw-pipeline.html` 那条链路逐步展示：
  * 识别 → 标记 → 建树 → 重构 → 习坎 → 终稿。若这里只回最终讲义，前端就只能
  * "转圈等到结束，然后啪一下出现结果" —— 那看不出任何一步在做什么。
  *
@@ -260,7 +260,7 @@ async function main() {
       dataDir: path.join(workDir, `.${cacheNs}`) + path.sep,
       services: {
         llm: host,
-        zhiyunClassroom: {
+        zwClassroom: {
           async getLessonContent() { throw Object.assign(new Error('离线基准不接课堂'), { code: 'NO_CLASSROOM' }); },
           transport: { request() { throw new Error('离线基准不出网'); } },
         },
@@ -269,7 +269,7 @@ async function main() {
         accel: V4_ACCEL,
       },
     });
-    const parser = serviceOf(mounted, 'zhiyunParser');
+    const parser = serviceOf(mounted, 'zwParser');
 
     await writer?.meta({
       what: 'start', at: new Date().toISOString(),
@@ -525,10 +525,10 @@ async function main() {
       };
       const lectureMounted = await mount('@lybx-leyw/dsh-zju-core-lecture', {
         dataDir: path.join(workDir, `.${cacheNs}-lecture`) + path.sep,
-        services: { zhiyunParser: { llm: narrow, cache: parser.cache } },
+        services: { zwParser: { llm: narrow, cache: parser.cache } },
         config: { concurrency: Math.min(4, concurrency) },
       });
-      const lecture = serviceOf(lectureMounted, 'zhiyunLecture');
+      const lecture = serviceOf(lectureMounted, 'zwLecture');
 
       const generated = await lecture.generate({
         record: result, title: section.pagesDoc.title ?? sectionKey,

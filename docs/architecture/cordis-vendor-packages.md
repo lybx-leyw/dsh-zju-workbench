@@ -132,7 +132,7 @@ DSH 的 `vendor/README.md` 另注明**有意不 vendor**：`reggol`、`@cordisjs
 1. **`.ref-cordis` 不能用来推断 DSH 的真实行为**。它是上游，DSH 改了 23 处。
 2. **要查 DSH 的实际语义，看 `.ref/vendor/`**（这是我们仓内的参考副本）或 `.ref/packages/`。
 3. **升级宿主时**，vendor 层的变化要按 DSH 的 sync procedure 重新核对，不是简单比版本号。
-4. **我们自己的包**（`dsh-zhiyun-*`）建立在 **DSH 层**，不直接接触 vendor。页面壳 `@lybx-leyw/dsh-pages` 是锁版本的 npm 依赖（独立仓库发布），同样只使用 DSH 层的 `shell.overlay` 与自有子槽，不替换原生 root。
+4. **我们自己的包**（`dsh-zju-*`）建立在 **DSH 层**，不直接接触 vendor。页面壳 `@lybx-leyw/dsh-pages` 是锁版本的 npm 依赖（独立仓库发布），同样只使用 DSH 层的 `shell.overlay` 与自有子槽，不替换原生 root。
 
 ## 7. DSH 自研包地图（319 个，54 个分组）
 
@@ -264,7 +264,7 @@ vendor/（9 个）           ← Cordis 框架：effect/coeffect 原语、装载
        ↓ 提供 ctx.effect / ctx.on / ctx.plugin
 packages/（319 个）        ← DSH 自研插件：agent、工具、会话、UI、宿主
        ↓ 通过 ctx.slots / ctx.layout / ctx.uiWorkspace 等
-我们仓（dsh-zhiyun-*）  ← 产品层插件（页面壳 @lybx-leyw/dsh-pages 为锁版本 npm 依赖）
+我们仓（dsh-zju-*）  ← 产品层插件（页面壳 @lybx-leyw/dsh-pages 为锁版本 npm 依赖）
 ```
 
 **关键区分**：Cordis 只提供"组件如何组合、如何撤销"，**不含任何 agent 逻辑、工具、UI 组件**。那 319 个包全是 DSH 的发明。

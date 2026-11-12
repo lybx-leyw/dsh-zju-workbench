@@ -123,7 +123,7 @@ function toHostMessages(messages) {
     const base = {
       id: m.id ?? `${m.role}-${Math.random().toString(36).slice(2)}`,
       role: m.role,
-      source: { kind: m.role === 'tool' ? 'tool' : 'zhiyun-quiz', ...m.source },
+      source: { kind: m.role === 'tool' ? 'tool' : 'zw-quiz', ...m.source },
     };
     // 工具结果消息的关联 id 在**消息顶层**，不在 source 里。
     //

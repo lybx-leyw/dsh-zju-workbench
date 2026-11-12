@@ -132,35 +132,35 @@ export function SessionPalette({ topic, name, currentN, onPick, onClose }) {
     return `${rows.length} 个会话（旧 → 新）`;
   }, [error, rows]);
 
-  return <div className="zp-resume" role="dialog" aria-label="切换会话" tabIndex={-1} ref={boxRef} onKeyDown={onKeyDown}>
-    <div className="zp-resume-head">
+  return <div className="zwp-resume" role="dialog" aria-label="切换会话" tabIndex={-1} ref={boxRef} onKeyDown={onKeyDown}>
+    <div className="zwp-resume-head">
       <Icon name="history" size={15}/>
       <strong>切换会话</strong>
-      <span className="zp-resume-count">{hint}</span>
-      <button type="button" className="zp-resume-close" title="关闭" aria-label="关闭" onClick={onClose}><Icon name="close" size={14}/></button>
+      <span className="zwp-resume-count">{hint}</span>
+      <button type="button" className="zwp-resume-close" title="关闭" aria-label="关闭" onClick={onClose}><Icon name="close" size={14}/></button>
     </div>
-    <div className="zp-resume-list" role="listbox" aria-label="会话列表" ref={listRef}>
+    <div className="zwp-resume-list" role="listbox" aria-label="会话列表" ref={listRef}>
       {(rows ?? []).map((row, at) => <div
         key={row.sessionId}
         role="option"
         aria-selected={at === index}
-        className={`zp-resume-row${at === index ? ' is-active' : ''}${row.current ? ' is-current' : ''}`}
+        className={`zwp-resume-row${at === index ? ' is-active' : ''}${row.current ? ' is-current' : ''}`}
         title={`${rowText(row, name)}\n${row.sessionId}`}
         onMouseEnter={() => setIndex(at)}
         onClick={() => pick(row)}
       >
-        <span className="zp-resume-code">#{sessionCode(row.sessionId)}</span>
-        <div className="zp-resume-text">
-          <span className="zp-resume-first">{row.firstQuestion || row.title || (row.blank ? '（还没有提问）' : '（没有可读的内容）')}</span>
-          <span className="zp-resume-meta">
+        <span className="zwp-resume-code">#{sessionCode(row.sessionId)}</span>
+        <div className="zwp-resume-text">
+          <span className="zwp-resume-first">{row.firstQuestion || row.title || (row.blank ? '（还没有提问）' : '（没有可读的内容）')}</span>
+          <span className="zwp-resume-meta">
             {name}{row.current ? ' · 当前' : ''}{row.running ? ' · 生成中' : ''}
           </span>
         </div>
       </div>)}
     </div>
-    <div className="zp-resume-foot">
-      <span className="zp-resume-keys">↑↓ 选择 · Enter 切换 · Delete 删除（归档）· Esc 关闭</span>
-      <span className="zp-resume-notice">{notice}</span>
+    <div className="zwp-resume-foot">
+      <span className="zwp-resume-keys">↑↓ 选择 · Enter 切换 · Delete 删除（归档）· Esc 关闭</span>
+      <span className="zwp-resume-notice">{notice}</span>
     </div>
   </div>;
 }

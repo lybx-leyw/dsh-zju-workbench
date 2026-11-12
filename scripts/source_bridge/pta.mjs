@@ -28,7 +28,7 @@ export async function run({ cookie, dataDir }) {
     dataDir,
     credentials: creds.service,
   });
-  const route = routeOf(routes, '/api/zhiyun-campus', 'webServer');
+  const route = routeOf(routes, '/api/zw-campus', 'webServer');
 
   // ① 用产品的导入路径落 Cookie（不要在探针里自己种）
   const saved = await campusAction(route, 'pta-cookie', { cookie });

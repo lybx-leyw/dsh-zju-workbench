@@ -16,10 +16,10 @@ core-parser → core-lecture        （现有：解析与讲义提取）
 core-knowledge / core-study        （现有：知识点树、终稿、复核记录）
       │
       ▼  标准学习资源（schema v1）
-dsh-zhiyun-core-learning-resource  （新：校验 / 内容哈希 / 投影 / 来源锚点）
+dsh-zju-core-learning-resource  （新：校验 / 内容哈希 / 投影 / 来源锚点）
       │
       ▼  resourceHandle（不可变快照 + revision）
-dsh-zhiyun-host-deeptutor          （新：ctx.zhiyunDeepTutor，独占上游运行时）
+dsh-zhiyun-host-deeptutor          （新：ctx.zwDeepTutor，独占上游运行时）
       │  NDJSON stdio
       ▼
 vendor/deeptutor 的 Python 进程    （锁版快照 + 独立 venv + DEEPTUTOR_HOME）
@@ -40,7 +40,7 @@ core-quiz（候选题目再经现有质量门 → 全局题库）  ·  将来的
 | 资源投影 | `core-learning-resource` | 资源 schema、校验、内容哈希、投影、锚点索引 | 不落用户题库，不调上游 |
 | 上游宿主 | `host-deeptutor` | 版本锁、Python 进程、协议、模型与配额桥、能力五态、运行证据 | 不定义课程/题库结构，不写业务判断 |
 
-**业务包只能通过 `ctx.zhiyunDeepTutor` 使用上游能力。** 直接 `import` vendor 下的任何模块、
+**业务包只能通过 `ctx.zwDeepTutor` 使用上游能力。** 直接 `import` vendor 下的任何模块、
 或者自己 spawn 一个 Python 进程，都是越界 —— 那会让版本锁、数据落点、失败解释同时失效。
 
 ## 为什么用独立子进程而不是嵌入
@@ -88,10 +88,10 @@ core-quiz（候选题目再经现有质量门 → 全局题库）  ·  将来的
 | --- | --- | --- |
 | 课程、讲义终稿、知识点 | 现有 `core-knowledge` / `core-study` 存储 | 智云 |
 | 全局题库 | 现有 `core-quiz` 存储 | 智云（上游只读授权题史 + 输出候选） |
-| 标准学习资源快照 | `<profile>/data/zhiyun-deeptutor/resources/snapshots/` | 派生，可重建 |
-| 上游会话 / 日志 / 索引 | `<profile>/data/zhiyun-deeptutor/home/` | 上游私有 |
-| 每次 run 的证据 | `<profile>/data/zhiyun-deeptutor/runs/<runId>/` | 诊断用 |
-| 能力状态 | `<profile>/data/zhiyun-deeptutor/capabilities-state.json` | 见上「五态」 |
+| 标准学习资源快照 | `<profile>/data/zw-deeptutor/resources/snapshots/` | 派生，可重建 |
+| 上游会话 / 日志 / 索引 | `<profile>/data/zw-deeptutor/home/` | 上游私有 |
+| 每次 run 的证据 | `<profile>/data/zw-deeptutor/runs/<runId>/` | 诊断用 |
+| 能力状态 | `<profile>/data/zw-deeptutor/capabilities-state.json` | 见上「五态」 |
 
 **终稿与派生物分离**：上游会话与索引是可丢的，终稿和题库不是。
 所以前者的目录可以整体删掉重建，后者不行。
@@ -110,7 +110,7 @@ core-quiz（候选题目再经现有质量门 → 全局题库）  ·  将来的
 
 ## 与现有页面的关系
 
-题库页面在独立页面包 `dsh-zhiyun-page-quiz`（`page-study` 只保留知识点卡片上那一小块同源面板）。上游候选题目进来之后，
+题库页面在独立页面包 `dsh-zju-page-quiz`（`page-study` 只保留知识点卡片上那一小块同源面板）。上游候选题目进来之后，
 **仍然走现有的质量门与落库流程** —— 上游只是把「出题」这一步换成它的实现，
 题目质量校验、去重、覆盖台账、复习排程都还是本仓的。
 

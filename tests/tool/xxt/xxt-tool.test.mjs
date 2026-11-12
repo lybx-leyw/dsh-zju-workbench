@@ -37,7 +37,7 @@ function fakeService(result = { ok: true }) {
 }
 
 /** 造一个工具定义（带给定 source）。 */
-const tool = (service) => createXxtReadTools({ zhiyunXxt: service })[0];
+const tool = (service) => createXxtReadTools({ zwXxt: service })[0];
 
 /** 跑一个 action。 */
 async function run(service, args) {
@@ -49,9 +49,9 @@ const ACTIONS = ['courseList', 'chapterList', 'materialList', 'materialDownload'
 /* ══════════════════════════════════════ 形状 */
 
 test('工具名与包形状：与 source 一一对应，且不声明 approval', () => {
-  assert.equal(name, 'zhiyun-tool-xxt');
+  assert.equal(name, 'zw-tool-xxt');
   // 这一包一条写操作都没有 —— 声明 approval 只会让后来加工具的人以为审批接好了。
-  assert.deepEqual(inject, ['tools', 'zhiyunXxt']);
+  assert.deepEqual(inject, ['tools', 'zwXxt']);
 });
 
 test('七个 action 就是审计 B-1 的七条 provides', () => {
@@ -189,7 +189,7 @@ test('未知 action 报 INPUT，先于服务查找', async () => {
 });
 
 test('服务没装配时报 SERVICE_MISSING，并说清装哪个包', async () => {
-  // ⚠️ 服务表里**不能有这个键**：`tool({})` 会造出 `{ zhiyunXxt: {} }`，
+  // ⚠️ 服务表里**不能有这个键**：`tool({})` 会造出 `{ zwXxt: {} }`，
   // 那是个真值 —— serviceLookup 认得它，然后会在 `invoke` 上炸出一个
   // 与「包没装」毫无关系的 TypeError。
   const definition = createXxtReadTools({})[0];

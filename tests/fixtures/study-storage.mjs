@@ -11,5 +11,5 @@ export async function mountKnowledge(directory) {
   const ctx = new Context();
   await ctx.plugin(Storage); await ctx.plugin(Json, { root: path.join(directory, 'storage') }); await ctx.plugin(Domain, { backend: 'json' });
   ctx.provide('profileContext', { dir: anchor }); await ctx.plugin(knowledge);
-  return { service: ctx.get('zhiyunKnowledge'), dispose: () => ctx.fiber.dispose() };
+  return { service: ctx.get('zwKnowledge'), dispose: () => ctx.fiber.dispose() };
 }

@@ -226,7 +226,7 @@ async function checkVendorVersion() {
 // ── 4. 找可用的 Python ────────────────────────────────────────────────────────
 async function findPython() {
   const candidates = [];
-  if (process.env.ZHIYUN_DEEPTUTOR_PYTHON) candidates.push(process.env.ZHIYUN_DEEPTUTOR_PYTHON);
+  if (process.env.ZW_DEEPTUTOR_PYTHON) candidates.push(process.env.ZW_DEEPTUTOR_PYTHON);
   // 仓库自带的受管环境优先于系统解释器：它才是按 upstream.lock.json 装出来的那个
   const managed = join(root, '.runtime', 'deeptutor-py311', 'Scripts', 'python.exe');
   candidates.push(managed);

@@ -10,8 +10,8 @@
  * # 路由协议（照抄本包 `src/index.js` 的约定，别自创）
  *
  * ```text
- *   GET  /api/zhiyun-xxt                      → { ok, value: 能力描述 }
- *   POST /api/zhiyun-xxt
+ *   GET  /api/zw-xxt                      → { ok, value: 能力描述 }
+ *   POST /api/zw-xxt
  *        { type:'client-request', rpcId, payload:{ method:'xxt.importCookie', args:{ input } } }
  * ```
  *
@@ -36,10 +36,10 @@ import {
   registerText,
 } from '@lybx-leyw/dsh-zju-ui-shared';
 
-const ROUTE_PATH = '/api/zhiyun-xxt';
+const ROUTE_PATH = '/api/zw-xxt';
 const NAMESPACE = 'zju-source-xxt';
 
-export const name = 'zhiyun-source-xxt-client';
+export const name = 'zw-source-xxt-client';
 
 /** 只要插槽。 */
 export const inject = ['slots', 'locale'];

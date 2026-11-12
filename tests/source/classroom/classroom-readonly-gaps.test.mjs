@@ -223,8 +223,8 @@ test('resolveFfmpeg honours FFMPEG_PATH, then the managed install path', () => {
 
   const managed = resolveFfmpeg({ env: {}, dataDirectory: 'C:/data/zhiyun' });
   assert.equal(managed.source, 'managed');
-  // 与上游 ffmpeg.ts:11 的托管路径同形：tools/zhiyun-media/node_modules/ffmpeg-static。
-  assert.match(managed.executable, /tools[\\/]zhiyun-media[\\/]node_modules[\\/]ffmpeg-static[\\/]ffmpeg/);
+  // 与上游 ffmpeg.ts:11 的托管路径同形：tools/zw-media/node_modules/ffmpeg-static。
+  assert.match(managed.executable, /tools[\\/]zw-media[\\/]node_modules[\\/]ffmpeg-static[\\/]ffmpeg/);
 
   assert.deepEqual(resolveFfmpeg({ env: {} }), { executable: 'ffmpeg', source: 'path' });
 });
@@ -320,7 +320,7 @@ test('checkAsr reports the runtime as missing instead of pretending transcriptio
 test('checkAsr reports missing model files when the runtime happens to be present', async () => {
   // 直接复用真包名解析会依赖本机环境，所以这里只验证「模型文件存在与否」这一支：
   // 用 HOME 指向一个空目录 → 三个文件都缺。
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-asr-check-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-asr-check-'));
   try {
     const result = await checkAsr({ home: dir, files: ['a.onnx', 'b.txt'] });
     assert.equal(result.models.length, 2);
@@ -358,7 +358,7 @@ test('checkComponents("media") returns exactly one result with the component lab
 });
 
 test('source.check() forwards the profile data directory so media diagnostics resolve the managed path', async () => {
-  const source = new ClassroomSource({ fetch: async () => json({}) , dataDirectory: 'C:/profile/data/zhiyun-classroom' });
+  const source = new ClassroomSource({ fetch: async () => json({}) , dataDirectory: 'C:/profile/data/zw-classroom' });
   try {
     const result = await source.check('media', {
       env: {},
@@ -366,7 +366,7 @@ test('source.check() forwards the profile data directory so media diagnostics re
     });
     assert.equal(result.results.length, 1);
     assert.equal(result.results[0].source, 'managed');
-    assert.match(result.results[0].executable, /zhiyun-classroom[\\/]tools[\\/]zhiyun-media/);
+    assert.match(result.results[0].executable, /zw-classroom[\\/]tools[\\/]zw-media/);
   } finally { await source.dispose(); }
 });
 
@@ -437,7 +437,7 @@ test('renderMarkdown declares that it is a rough draft, never a summary', () => 
 });
 
 test('transcribeAudio fails loudly when no engine is injected instead of returning empty text', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-asr-none-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-asr-none-'));
   try {
     const file = path.join(dir, 'a.m4a');
     await writeFile(file, 'not-really-audio');
@@ -453,7 +453,7 @@ test('transcribeAudio fails loudly when no engine is injected instead of returni
 });
 
 test('transcribeAudio validates absolute paths and a real non-empty input file', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-asr-paths-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-asr-paths-'));
   const transcribe = async () => ({ segments: [{ start: 0, end: 1, text: 'x' }] });
   try {
     const source = new ClassroomSource({ fetch: async () => json({}) });
@@ -485,7 +485,7 @@ test('transcribeAudio validates absolute paths and a real non-empty input file',
 });
 
 test('transcribeAudio writes four files atomically, de-duplicates on re-run and reports NO_TEXT', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-asr-run-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-asr-run-'));
   const file = path.join(dir, 'a.m4a');
   await writeFile(file, 'audio-bytes');
   let runs = 0;
@@ -531,7 +531,7 @@ test('transcribeAudio writes four files atomically, de-duplicates on re-run and 
 });
 
 test('transcribeAudio cleans the staging directory and never leaves half a result', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-asr-fail-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-asr-fail-'));
   const file = path.join(dir, 'a.m4a');
   await writeFile(file, 'audio');
   const out = path.join(dir, 'out');
@@ -553,7 +553,7 @@ test('transcribeAudio cleans the staging directory and never leaves half a resul
 });
 
 test('transcribeAudio can be aborted and does not write a cache entry', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-asr-abort-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-asr-abort-'));
   const file = path.join(dir, 'a.m4a');
   await writeFile(file, 'audio');
   const out = path.join(dir, 'out');
@@ -572,7 +572,7 @@ test('transcribeAudio can be aborted and does not write a cache entry', async ()
 });
 
 test('transcribeAudio honours its own timeout budget', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-asr-slow-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-asr-slow-'));
   const file = path.join(dir, 'a.m4a');
   await writeFile(file, 'audio');
   const source = new ClassroomSource({ fetch: async () => json({}) });
@@ -1102,7 +1102,7 @@ test('idle and ping constants match the upstream protocol numbers', () => {
 /* ══════════════════════════════════ search captions（W-13 / 漏-5） ══════════════════════════════════ */
 
 /**
- * 字幕关键词检索（对应上游 `zhiyun/materials.ts` 的 `searchCaptions`）。
+ * 字幕关键词检索（对应上游 `zw/materials.ts` 的 `searchCaptions`）。
  *
  * ⚠️ 夹具按上游 `parseTranscript` 的形状（`list[].all_content[]`，字段
  * `BeginSec` / `EndSec` / `Text`）手写，**未经真实字幕接口验证**。

@@ -102,8 +102,8 @@ export function TeachingProgress({ progress, startedAt }) {
     ? Math.min(100, Math.round((chaptersDone / chapterTotal) * 100))
     : 0;
 
-  return <section className="zs-teach-progress" aria-label="备课进度">
-    <header className="zs-teach-progress-head">
+  return <section className="zws-teach-progress" aria-label="备课进度">
+    <header className="zws-teach-progress-head">
       <div>
         <strong>{displayStage}</strong>
         <span>
@@ -113,40 +113,40 @@ export function TeachingProgress({ progress, startedAt }) {
           {elapsed >= 1000 ? ` · 已用 ${formatElapsed(elapsed)}` : ''}
         </span>
       </div>
-      {chapterTotal > 0 && <b className="zs-teach-percent">{percent}%</b>}
+      {chapterTotal > 0 && <b className="zws-teach-percent">{percent}%</b>}
     </header>
 
-    <div className="zs-teach-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}
+    <div className="zws-teach-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}
       aria-label={`备课总进度 ${percent}%`}>
       <i style={{ width: `${percent}%` }} />
     </div>
 
     {/* 章节列表：每章三段各自的勾/点/圈，一眼看出「同时跑的三章各在哪一步」。 */}
-    {chapters.length ? <ol className="zs-teach-chapter-list">
+    {chapters.length ? <ol className="zws-teach-chapter-list">
       {chapters.map(chapter => {
         const stage = chapter.status === 'done' ? STEPS.length : (STAGE_INDEX[chapter.stage] ?? -1);
         const pages = chapter.scenesTotal
           ? `第 ${(chapter.sceneIndex ?? 0) + 1}/${chapter.scenesTotal} 页`
           : null;
         return <li key={chapter.chapterId ?? chapter.chapterIndex} data-status={chapter.status}>
-          <div className="zs-teach-chapter-line">
-            <span className="zs-teach-chapter-name" title={chapter.title}>
+          <div className="zws-teach-chapter-line">
+            <span className="zws-teach-chapter-name" title={chapter.title}>
               {chapter.title || `第 ${chapter.chapterIndex + 1} 章`}
             </span>
-            <span className="zs-teach-chapter-meta">
+            <span className="zws-teach-chapter-meta">
               {chapter.status === 'done'
                 ? `完成 · ${chapter.slidesDone} 页`
                 : pages ? `${pages} · 已定 ${chapter.slidesDone} 页` : `已定 ${chapter.slidesDone} 页`}
             </span>
           </div>
-          <ol className="zs-teach-steps">
+          <ol className="zws-teach-steps">
             {STEPS.map((step, i) => {
               // done = 已经走过；active = 正在做；其余是未开始。
               const state = i < stage ? 'done' : i === stage ? 'active' : 'pending';
               return <li key={step.key} data-state={state} title={step.hint}>
                 <i aria-hidden="true" />
                 <span>{step.label}</span>
-                <em className="zs-teach-sr-only">
+                <em className="zws-teach-sr-only">
                   {state === 'done' ? '已完成' : state === 'active' ? '进行中' : '未开始'}
                 </em>
               </li>;
@@ -157,7 +157,7 @@ export function TeachingProgress({ progress, startedAt }) {
     </ol> : null}
 
     {/* 还没拿到章节列表时，至少把三步画出来，让用户知道接下来会发生什么。 */}
-    {!chapters.length && stageIndex !== null ? <ol className="zs-teach-steps zs-teach-steps-standalone">
+    {!chapters.length && stageIndex !== null ? <ol className="zws-teach-steps zws-teach-steps-standalone">
       {STEPS.map((step, i) => <li key={step.key} data-state={i < stageIndex ? 'done' : i === stageIndex ? 'active' : 'pending'} title={step.hint}>
         <i aria-hidden="true" />
         <span>{step.label}</span>

@@ -44,14 +44,14 @@ export function createStore(ctx) {
         listener();
       } catch (error) {
         // 订阅者是页面组件；一个坏订阅者不该让整张图停止更新。
-        console.error('zhiyun-plugins: subscriber failed', error);
+        console.error('zw-plugins: subscriber failed', error);
       }
     }
   };
 
   /** 宿主面的读数：与 @lybx-leyw/dsh-zju-core-study 同一套信封，只读一个方法。 */
   const hostPlane = async () => {
-    const result = await ctx.connection.rpc.call('/api', 'zhiyun-plugins', { method: 'graph' }, undefined);
+    const result = await ctx.connection.rpc.call('/api', 'zw-plugins', { method: 'graph' }, undefined);
     if (!result?.ok) throw Object.assign(new Error(result?.error?.message ?? '宿主未返回依赖图'), { code: result?.error?.code });
     return result.value;
   };

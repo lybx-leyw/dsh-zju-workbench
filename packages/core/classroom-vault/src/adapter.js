@@ -52,7 +52,7 @@ const MAX_PAGE_SIZE = 500;
  * 建一个本地文件适配器。
  *
  * @param {object} deps
- * @param {string} deps.rootDir 存储根（`<profile>/data/zhiyun-classroom`）
+ * @param {string} deps.rootDir 存储根（`<profile>/data/zw-classroom`）
  * @param {() => number} [deps.now] 时钟（测试可注入）
  * @param {{warn: Function, debug?: Function}} [deps.logger]
  * @param {number} [deps.pageSize] 默认页大小

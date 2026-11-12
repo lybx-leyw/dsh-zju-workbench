@@ -33,7 +33,7 @@ export const name = 'zju-source-sztz';
 export const inject = [];
 
 /** 同源数据路由。 */
-export const ROUTE_PATH = '/api/zhiyun-sztz';
+export const ROUTE_PATH = '/api/zw-sztz';
 
 /**
  * 取一个**已登录**的请求函数。
@@ -44,12 +44,12 @@ export const ROUTE_PATH = '/api/zhiyun-sztz';
  * 于是它虽然挂在 profile 里，却永远拿不到会话，任何一次读取都报
  * 「还没接入登录」。那不是「用户没配账号」，是「没人给它喂账号」。
  *
- * 现在改成向 tier 0 的 `zhiyunCard` 要一份已带 CAS 票的传输层：
+ * 现在改成向 tier 0 的 `zwCard` 要一份已带 CAS 票的传输层：
  * 由 `login` 统一走 CAS、统一持有会话，本包只说明自己的入口与主机。
  *
  * 两个来源按优先级：
  * 1. 注入了 `setSessionProvider`（测试与特殊部署）→ 用它；
- * 2. 否则 → `ctx.get('zhiyunCard').casTransport({ entry, hosts })`。
+ * 2. 否则 → `ctx.get('zwCard').casTransport({ entry, hosts })`。
  *
  * @param ctx - 宿主上下文。
  * @param getProvider - 返回当前注入的 provider（可能为 null）。
@@ -64,7 +64,7 @@ const requestWithLogin = (ctx, getProvider) => async (url, init = {}) => {
     return { status: response.status, text: await response.text() };
   }
   // 没注入就向 `login` 要共享会话（它会替我们走一次 CAS）。
-  const card = ctx.get?.('zhiyunCard');
+  const card = ctx.get?.('zwCard');
   if (typeof card?.casTransport !== 'function') {
     throw new SztzError(
       'CONFIG',
@@ -106,13 +106,13 @@ export function apply(ctx) {
     /** 取客户端（无状态，登录由 provider 或共享 CAS 会话负责）。 */
     const ensure = () => {
       client ??= new Sztz({
-        // 用带登录的那个：没注入 provider 时它会向 `zhiyunCard` 要共享会话。
+        // 用带登录的那个：没注入 provider 时它会向 `zwCard` 要共享会话。
         request: requestWithLogin(ctx, () => acquireSession),
         acquireSession: () => {
           if (typeof acquireSession === 'function') return acquireSession();
           // 走共享 CAS 的路径不需要在这里做任何事 —— `requestWithLogin`
           // 在发第一个请求前已经把票拿好了。
-          if (typeof ctx.get?.('zhiyunCard')?.casTransport === 'function') return Promise.resolve();
+          if (typeof ctx.get?.('zwCard')?.casTransport === 'function') return Promise.resolve();
           throw new SztzError(
             'CONFIG',
             '素质拓展平台还没接入登录：到「设置 → 浙大一卡通」配置后重试'
@@ -203,7 +203,7 @@ export function apply(ctx) {
        */
       ready() {
         return typeof acquireSession === 'function'
-          || typeof ctx.get?.('zhiyunCard')?.casTransport === 'function';
+          || typeof ctx.get?.('zwCard')?.casTransport === 'function';
       },
 
       /* ── 只读接口 ── */
@@ -254,7 +254,7 @@ export function apply(ctx) {
       },
     };
 
-    const disposeService = ctx.provide('zhiyunSztz', service);
+    const disposeService = ctx.provide('zwSztz', service);
 
     let removeRoute = null;
     ctx.inject(['webServer'], (scope) => {

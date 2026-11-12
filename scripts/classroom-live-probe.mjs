@@ -271,7 +271,7 @@ try {
   // 生产代码里的常量与客户端改写用的常量一致 —— 两者不一致会让所有流 404。
   add('relay', {
     prefix: STREAM_ROUTE_PREFIX,
-    note: '真实宿主是否已注册该前缀需跑起工作台后访问 /zhiyun-live/status 确认',
+    note: '真实宿主是否已注册该前缀需跑起工作台后访问 /zw-live/status 确认',
   });
 
   report.ok = true;

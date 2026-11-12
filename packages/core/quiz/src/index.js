@@ -14,7 +14,7 @@
  * 课题约束：本包不落盘、不读环境变量。题目 / 作答 / 额度台账的持久化
  * 由**集成层**用宿主的存储服务负责 —— 那是宿主已有的能力，
  * 在这里自己写一遍文件就是本仓明令禁止的「重复造轮子」。
- * 本文件只通过 `ctx.provide('zhiyunQuiz', …)` 交出**领域服务**，
+ * 本文件只通过 `ctx.provide('zwQuiz', …)` 交出**领域服务**，
  * 由集成层决定把它接到哪一层存储上。
  *
  * # llm 从哪来
@@ -22,7 +22,7 @@
  * 宿主的 `ctx.llm` 服务形状是 `prepareCall / stream`（流式、带模型解析），
  * 而本包要的是窄接口 `call({stage, route, constant, variable, signal})`。
  * 那层适配**已经存在**：`@lybx-leyw/dsh-zju-core-parser` 的 `HarnessLlm` 就是它，
- * 且它挂在 `ctx.zhiyunParser.llm` 上（study / lecture 两个包已经在这样用）。
+ * 且它挂在 `ctx.zwParser.llm` 上（study / lecture 两个包已经在这样用）。
  * 所以这里直接取用，而不是再写第四个适配器 —— 本仓对「同一件事有两份实现」
  * 是明令禁止的（两条路会在半年内无声漂开）。
  *
@@ -36,10 +36,10 @@ import { createQuizGenerator } from './generate.js';
 import { createQuizStore } from './store.js';
 import { checkCandidate, createUpstreamQuizEngine } from './upstream.js';
 
-export const name = 'zhiyun-quiz';
+export const name = 'zw-quiz';
 
 /**
- * 依赖声明：`zhiyunParser` 提供宿主适配好的窄 llm。
+ * 依赖声明：`zwParser` 提供宿主适配好的窄 llm。
  *
  * ⚠️ 声明它（而不是 `llm`）是有意的：直接用 `ctx.llm` 就得在本包内重写一遍
  * `prepareCall / resolveModelInfo / stream` 的适配，那是解析器包已有的活。
@@ -49,13 +49,13 @@ export const name = 'zhiyun-quiz';
  * ⚠️ **只声明它真正需要的**：本包不声明 `storage` —— 因为本包**不落盘**。
  * 谁要持久化谁去声明，那是集成层的依赖。
  */
-export const inject = ['zhiyunParser'];
+export const inject = ['zwParser'];
 
 export async function apply(ctx, config = {}) {
-  const llm = config.llm ?? ctx.zhiyunParser?.llm;
+  const llm = config.llm ?? ctx.zwParser?.llm;
   if (!llm || typeof llm.call !== 'function') {
     throw new QuizError('CONFIG', '出题需要注入窄 llm 接口（{ call({stage,route,constant,variable,signal}) }）；'
-      + '宿主侧由 zhiyunParser 提供，也可用 config.llm 直接给出');
+      + '宿主侧由 zwParser 提供，也可用 config.llm 直接给出');
   }
 
   // 路由**延迟解析**：插件激活不该因为「模型还没配好」而失败 ——
@@ -125,7 +125,7 @@ export async function apply(ctx, config = {}) {
     /**
      * 构造一个**上游候选生成引擎**（DeepTutor 主出题流水线）。
      *
-     * ⚠️ `zhiyunDeepTutor` **不进 `inject`**：它是可选增强服务，装没装 Python、
+     * ⚠️ `zwDeepTutor` **不进 `inject`**：它是可选增强服务，装没装 Python、
      * 配没配模型都可能是「没有」。声明成必需依赖会让本插件在没装上游的机器上
      * 一直 pending —— 那样连本包自己的出题路径都用不了，这正是「可选」不该有的代价。
      * 所以这里用 `ctx.get` 惰性取，且允许调用方直接注入（便于测试与替换）。
@@ -134,11 +134,11 @@ export async function apply(ctx, config = {}) {
      * 才炸的壳 —— 早失败的那一侧永远更好定位。
      */
     createUpstreamEngine(options = {}) {
-      const tutor = options.tutor ?? (typeof ctx.get === 'function' ? ctx.get('zhiyunDeepTutor') : undefined)
-        ?? ctx.zhiyunDeepTutor;
+      const tutor = options.tutor ?? (typeof ctx.get === 'function' ? ctx.get('zwDeepTutor') : undefined)
+        ?? ctx.zwDeepTutor;
       if (!tutor) {
         throw new QuizError('CONFIG',
-          '这台机器上没有上游出题服务（ctx.zhiyunDeepTutor）：dsh-zhiyun-host-deeptutor 未安装或未启动。'
+          '这台机器上没有上游出题服务（ctx.zwDeepTutor）：dsh-zhiyun-host-deeptutor 未安装或未启动。'
           + '本包自己的出题路径不受影响，可以继续用 generate / generatePoints');
       }
       return createUpstreamQuizEngine({ ...options, tutor, now: options.now ?? config.now, logger: options.logger ?? ctx.logger });
@@ -153,7 +153,7 @@ export async function apply(ctx, config = {}) {
      * 交给外部包（`@lybx-leyw/dsh-zju-core-quiz-lab`）的唯一动作是 `register`。
      * 真相住在 `engine-registry.js` 的模块级表里 —— 因为
      * `planEngineQuestions` / `canResumeEngine` 是同步纯函数，读不到 `ctx`。
-     * 挂在既有 `zhiyunQuiz` 服务上、而不是另开一个服务名是有意的：
+     * 挂在既有 `zwQuiz` 服务上、而不是另开一个服务名是有意的：
      * 第二个 `provide` 会让只把首个值赋给变量的测试替身静默拿到错误那个，
      * 而失败现场（`service.generateR1Points is not a function`）离真正原因很远。
      */
@@ -168,7 +168,7 @@ export async function apply(ctx, config = {}) {
     get closed() { return generator.closed; },
   };
 
-  const removeService = ctx.provide('zhiyunQuiz', service);
+  const removeService = ctx.provide('zwQuiz', service);
   return () => {
     // ⚠️ 先中断在飞的请求，再摘服务：反过来会让刚被调用的 generate 在
     //    服务已消失之后还往模型端点发请求（白花钱，而且没人收结果）。

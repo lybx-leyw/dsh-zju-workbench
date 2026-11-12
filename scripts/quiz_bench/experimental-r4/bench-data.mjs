@@ -18,7 +18,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const KNOWLEDGE = path.join(process.env.APPDATA, 'com.zhiyun/zhiyun_pro/zhiyun/knowledge');
+const KNOWLEDGE = path.join(process.env.APPDATA, 'com.zw/zw_pro/zw/knowledge');
 const OUT_ROOT = path.resolve('scripts/quiz_bench/experimental-r4/bench-data');
 
 const args = process.argv.slice(2).filter(a => !a.startsWith('--'));

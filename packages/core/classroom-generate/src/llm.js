@@ -11,7 +11,7 @@ import { ClassroomGenerateError } from './errors.js';
  * 上游浏览器端不持有 key：它把「用哪个模型」交给服务端的模型槽解析
  * （`resolveModelSlot`），自己只发 prompt。这里照同一分工：
  *
- *   1. `ctx.zhiyunClassroomStudio.providers.list()` → `{ httpStatus, body }`；
+ *   1. `ctx.zwClassroomStudio.providers.list()` → `{ httpStatus, body }`；
  *      `body.providers` 是 `Record<providerId, { models?: string[] }>`（L1 的降级
  *      实现返回 `{}`，也就是「一个都没配」）；
  *   2. 取第一个有模型清单的 provider（或用调用方指定的 `provider`/`model`）；
@@ -31,7 +31,7 @@ export const DEFAULT_LANGUAGE_DIRECTIVE = 'Teach in the language that matches th
 
 /**
  * @param {object} options
- * @param {object|null} options.studio `ctx.zhiyunClassroomStudio`（可为 null）
+ * @param {object|null} options.studio `ctx.zwClassroomStudio`（可为 null）
  * @param {object|null} [options.llm] 窄 llm：`{ call }` 或 `{ stream }`
  * @param {string} [options.provider] 指定 providerId
  * @param {string} [options.model] 指定 model
@@ -40,7 +40,7 @@ export const DEFAULT_LANGUAGE_DIRECTIVE = 'Teach in the language that matches th
 export async function resolveLlm({ studio = null, llm = null, provider, model } = {}) {
   // ── 优先用**本仓**注入的 llm ────────────────────────────────────────
   //
-  // 课堂生成最初只能向 `zhiyunClassroomStudio.providers.list()`（上游浙大
+  // 课堂生成最初只能向 `zwClassroomStudio.providers.list()`（上游浙大
   // 服务端）要「用哪个模型」。那条路依赖课堂登录态：登录失效时清单为空，
   // 「AI 备课」就整个不可用 —— 而本仓的 `ctx.llm` 明明好好的。
   //
@@ -76,8 +76,8 @@ export async function resolveLlm({ studio = null, llm = null, provider, model } 
   if (!studio || typeof studio.providers?.list !== 'function') {
     throw new ClassroomGenerateError(
       'E_MISSING_SERVICE',
-      '课堂生成需要一个模型通道：既没有注入宿主 llm，也没有 zhiyunClassroomStudio.providers',
-      { service: 'zhiyunClassroomStudio' },
+      '课堂生成需要一个模型通道：既没有注入宿主 llm，也没有 zwClassroomStudio.providers',
+      { service: 'zwClassroomStudio' },
     );
   }
 
@@ -88,7 +88,7 @@ export async function resolveLlm({ studio = null, llm = null, provider, model } 
     throw new ClassroomGenerateError(
       'E_NO_LLM_PROVIDER',
       `读取 provider 清单失败：${messageOf(error)}`,
-      { service: 'zhiyunClassroomStudio.providers.list', cause: messageOf(error) },
+      { service: 'zwClassroomStudio.providers.list', cause: messageOf(error) },
     );
   }
 

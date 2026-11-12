@@ -4,7 +4,7 @@ export function noteAnchor(y, rect) {
 }
 
 export function attachCornellNotes(doc, { topic, name, storage }) {
-  const key = `zhiyun.paper.cornell.anchors.${JSON.stringify([topic, name])}`;
+  const key = `zw.paper.cornell.anchors.${JSON.stringify([topic, name])}`;
   let notes = [];
   let status = '点击空白处记笔记 · 当前浏览器保存';
   let readFailed = false;
@@ -22,18 +22,18 @@ export function attachCornellNotes(doc, { topic, name, storage }) {
   const mounted = new Map();
   const style = doc.createElement('style');
   style.textContent = `
-    .zp-cornell-visible #pdf-pages > .page { margin-left: 280px; }
-    .zp-page-notes { display: none; position: absolute; right: calc(100% + 12px); top: 0;
-      bottom: 0; width: 260px; box-sizing: border-box; background: var(--zp-frame-surface);
-      color: var(--zp-frame-text); border: 1px solid var(--zp-frame-line); }
-    .zp-cornell-visible .zp-page-notes { display: block; }
-    .zp-page-notes-label { position: absolute; top: 0; left: 8px; right: 8px;
-      font: 11px/18px sans-serif; color: var(--zp-frame-secondary); pointer-events: none; }
-    .zp-page-note { position: absolute; left: 8px; width: 242px; box-sizing: border-box;
-      padding: 4px 6px; min-height: 32px; resize: none; border: 1px solid var(--zp-frame-line);
-      border-radius: 4px; background: var(--zp-frame-surface); color: var(--zp-frame-text);
+    .zwp-cornell-visible #pdf-pages > .page { margin-left: 280px; }
+    .zwp-page-notes { display: none; position: absolute; right: calc(100% + 12px); top: 0;
+      bottom: 0; width: 260px; box-sizing: border-box; background: var(--zwp-frame-surface);
+      color: var(--zwp-frame-text); border: 1px solid var(--zwp-frame-line); }
+    .zwp-cornell-visible .zwp-page-notes { display: block; }
+    .zwp-page-notes-label { position: absolute; top: 0; left: 8px; right: 8px;
+      font: 11px/18px sans-serif; color: var(--zwp-frame-secondary); pointer-events: none; }
+    .zwp-page-note { position: absolute; left: 8px; width: 242px; box-sizing: border-box;
+      padding: 4px 6px; min-height: 32px; resize: none; border: 1px solid var(--zwp-frame-line);
+      border-radius: 4px; background: var(--zwp-frame-surface); color: var(--zwp-frame-text);
       font: 14px/22px sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; }
-    .zp-page-note:focus { outline: 2px solid var(--zp-frame-accent); z-index: 2; }
+    .zwp-page-note:focus { outline: 2px solid var(--zwp-frame-accent); z-index: 2; }
   `;
   doc.head.append(style);
   const updateStatus = () => {
@@ -59,7 +59,7 @@ export function attachCornellNotes(doc, { topic, name, storage }) {
   };
   const addEditor = (entry, note, focus = false) => {
     const field = doc.createElement('textarea');
-    field.className = 'zp-page-note';
+    field.className = 'zwp-page-note';
     field.setAttribute('aria-label', `第 ${note.page} 页位置笔记`);
     field.style.top = `${note.y * 100}%`;
     field.dataset.anchorY = String(note.y);
@@ -84,10 +84,10 @@ export function attachCornellNotes(doc, { topic, name, storage }) {
       if (mounted.has(node)) continue;
       const page = Number(node.dataset.page);
       const aside = doc.createElement('aside');
-      aside.className = 'zp-page-notes';
+      aside.className = 'zwp-page-notes';
       aside.setAttribute('aria-label', `第 ${page} 页康奈尔笔记`);
       const label = doc.createElement('div');
-      label.className = 'zp-page-notes-label'; label.setAttribute('role', 'status');
+      label.className = 'zwp-page-notes-label'; label.setAttribute('role', 'status');
       aside.append(label);
       // Keep the upstream canvas at firstChild.
       node.append(aside);
@@ -112,6 +112,6 @@ export function attachCornellNotes(doc, { topic, name, storage }) {
     observer.disconnect();
     for (const entry of mounted.values()) { entry.resize.disconnect(); entry.aside.remove(); }
     mounted.clear(); style.remove();
-    doc.documentElement.classList.remove('zp-cornell-visible');
+    doc.documentElement.classList.remove('zwp-cornell-visible');
   };
 }

@@ -1,8 +1,8 @@
-/* packages/dsh-zhiyun-page-study/src/video.css
+/* packages/dsh-zju-page-study/src/video.css
  *
- * 「视频」栏的样式。前缀 `zs-video-*` 只为这一栏服务，与学习页其余两栏互不遮蔽。
+ * 「视频」栏的样式。前缀 `zws-video-*` 只为这一栏服务，与学习页其余两栏互不遮蔽。
  *
- * 颜色一律取壳里的 `--zy-*` 变量，不引入新色板 —— 明暗两套主题自动跟随。
+ * 颜色一律取壳里的 `--zw-*` 变量，不引入新色板 —— 明暗两套主题自动跟随。
  *
  * ⚠️ 视频节点用 CSS 控制**位置与尺寸**，不用条件渲染 —— 条件渲染会把它从树里
  *    摘掉，声音当场断（原始设计的第一条约定）。所以「互换主视图」在 CSS 里只是
@@ -18,7 +18,7 @@
  * 不靠一个钉死的像素下限 —— 见下面的 min-height）。
  */
 
-body[data-zhiyun] .zs-video {
+body[data-zw] .zws-video {
   display: flex;
   flex-direction: column;
   height: 76vh;
@@ -50,7 +50,7 @@ body[data-zhiyun] .zs-video {
  * 它按比例算出来的高度会超过整栏，把第二行压到 0（字幕整块消失）。允许它被压扁，
  * 宽高比就自然让位给"看得见"。
  */
-body[data-zhiyun] .zs-video-grid {
+body[data-zw] .zws-video-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 28%);
   grid-template-rows: minmax(0, auto) minmax(0, 1fr);
@@ -62,25 +62,25 @@ body[data-zhiyun] .zs-video-grid {
 /* 舞台（视频与课件共用的一组外观）。
  * `min-*: 0` 是网格里的必需品：默认 `min-height: auto` 会让块拒绝收缩，
  * 内容一多就把整行顶高、突破上面的分配。 */
-body[data-zhiyun] .zs-video-stage {
+body[data-zw] .zws-video-stage {
   position: relative;
   min-width: 0;
   min-height: 0;
-  background: var(--zy-sidebar);
-  border: 1px solid var(--zy-line);
+  background: var(--zw-sidebar);
+  border: 1px solid var(--zw-line);
   border-radius: 10px;
   overflow: hidden;
 }
 
 /* 主视图：左列跨两行。不写高宽，由网格给。 */
-body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-video,
-body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-ppt {
+body[data-zw] .zws-video[data-main="video"] .zws-video-stage-video,
+body[data-zw] .zws-video[data-main="ppt"] .zws-video-stage-ppt {
   grid-column: 1;
   grid-row: 1 / span 2;
 }
 /* 小窗：右列第一行。高度按内容比例（下面给 16:9 兜住）。 */
-body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt,
-body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-video {
+body[data-zw] .zws-video[data-main="video"] .zws-video-stage-ppt,
+body[data-zw] .zws-video[data-main="ppt"] .zws-video-stage-video {
   grid-column: 2;
   grid-row: 1;
   aspect-ratio: 16 / 9;
@@ -95,10 +95,10 @@ body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-video {
  * 或者被迫改成上下堆叠，与"有回放时"的版式差得太远，读课件的位置会跳。
  * 列宽保持一致，用户读的永远是"左边那块大的"。
  *
- * 特异性：`.zs-video:not([data-main]) …-ppt` 比上面那条小窗规则多一个伪类，
+ * 特异性：`.zws-video:not([data-main]) …-ppt` 比上面那条小窗规则多一个伪类，
  * 不靠书写顺序取胜（同包内顺序是确定的，但这里没必要依赖它）。
  */
-body[data-zhiyun] .zs-video:not([data-main]) .zs-video-stage-ppt {
+body[data-zw] .zws-video:not([data-main]) .zws-video-stage-ppt {
   grid-column: 1;
   grid-row: 1 / span 2;
 }
@@ -107,19 +107,19 @@ body[data-zhiyun] .zs-video:not([data-main]) .zs-video-stage-ppt {
  * 自动排布会把它塞进右列第一行，而第一行是 `minmax(0, auto)` —— 1300 多条字幕会
  * 把那个 auto 撑成整幅列表的高度，整栏溢出（今天不会，因为小窗先占住了第一行）。
  * 跨两行则让它在右列里有确定的剩余高度、内部自己滚。 */
-body[data-zhiyun] .zs-video:not([data-main]) .zs-video-transcript {
+body[data-zw] .zws-video:not([data-main]) .zws-video-transcript {
   grid-column: 2;
   grid-row: 1 / span 2;
 }
 /* 知识面板在「没有回放」时也要显式占右列两行 —— 理由同上：自动排布会把它
    塞进第一行（`minmax(0, auto)`），而知识点列表没有天然高度上限，会把整栏顶长。 */
-body[data-zhiyun] .zs-video:not([data-main]) .zs-topic-track {
+body[data-zw] .zws-video:not([data-main]) .zws-topic-track {
   grid-column: 2;
   grid-row: 1 / span 2;
 }
 
 /* ── 视频 ──────────────────────────────────────────────────────── */
-body[data-zhiyun] .zs-video-stage-video {
+body[data-zw] .zws-video-stage-video {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -128,12 +128,12 @@ body[data-zhiyun] .zs-video-stage-video {
 }
 /* 视频单独一层：给"烧上去的字幕"一个**相对画面**的定位上下文。
  *
- * 为什么需要它：舞台底部还有内容条（`.zs-video-rail`）。若把字幕直接放在舞台里
+ * 为什么需要它：舞台底部还有内容条（`.zws-video-rail`）。若把字幕直接放在舞台里
  * 用 `bottom` 定位，它会落在内容条上 —— 之前真的发生过（字幕压在蓝色分段条上）。
  *
  * 它不改变 `<video>` 的挂载与尺寸：视频仍是这一层的 `flex: 1` 子元素，
  * 原生 `controls` 一个字节都没动。 */
-body[data-zhiyun] .zs-video-frame {
+body[data-zw] .zws-video-frame {
   position: relative;
   flex: 1;
   min-height: 0;
@@ -148,16 +148,16 @@ body[data-zhiyun] .zs-video-frame {
  * 纵向排布而不是力导向图：视频只有一条时间线，**顺序本身**就是最重要的信息。
  * 力导向会把顺序打乱，在 300px 宽的右栏里也只会缩成一团。
  */
-body[data-zhiyun] .zs-topic-track {
+body[data-zw] .zws-topic-track {
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 10px;
-  background: var(--zy-surface);
+  background: var(--zw-surface);
   overflow: hidden;
-  /* ⚠️ 和 `.zs-video-transcript` 一样**不写 grid 定位**，交给自动排布。
+  /* ⚠️ 和 `.zws-video-transcript` 一样**不写 grid 定位**，交给自动排布。
    *
    * 我最初写死 `grid-row: 1 / span 2`，结果把右上角的 PPT 小窗整个盖住了
    * （用户实测："右上角 PPT 被遮盖"）。原因是网格是：
@@ -171,74 +171,74 @@ body[data-zhiyun] .zs-topic-track {
    * `min-height: 0` 是网格里的必需品（默认 `auto` 会让块拒绝收缩）。 */
   min-width: 0;
 }
-body[data-zhiyun] .zs-topic-track-head {
+body[data-zw] .zws-topic-track-head {
   display: flex;
   flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 8px 11px;
-  border-bottom: 1px solid var(--zy-line);
+  border-bottom: 1px solid var(--zw-line);
   font-size: 11.5px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-topic-track-head small {
-  color: var(--zy-muted);
+body[data-zw] .zws-topic-track-head small {
+  color: var(--zw-muted);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 /* 「回到当前」：脱离视频时才出现，用主色标出它是可用的动作。 */
-body[data-zhiyun] .zs-topic-follow {
+body[data-zw] .zws-topic-follow {
   flex: none;
   padding: 1px 7px;
-  border: 1px solid var(--zy-accent);
+  border: 1px solid var(--zw-accent);
   border-radius: 5px;
-  background: var(--zy-soft);
-  color: var(--zy-accent);
+  background: var(--zw-soft);
+  color: var(--zw-accent);
   font: inherit;
   font-size: 10.5px;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-topic-follow:hover {
-  background: var(--zy-accent);
+body[data-zw] .zws-topic-follow:hover {
+  background: var(--zw-accent);
   color: #fff;
 }
 /* 章节切换条：章名居中、两侧箭头各占 24px。
    只在多于一章时渲染（单章的课给它只会多两个灰按钮）。 */
-body[data-zhiyun] .zs-topic-chapters {
+body[data-zw] .zws-topic-chapters {
   display: flex;
   flex: none;
   align-items: center;
   gap: 6px;
   padding: 5px 9px;
-  border-bottom: 1px solid var(--zy-line);
-  background: color-mix(in srgb, var(--zy-soft) 55%, transparent);
+  border-bottom: 1px solid var(--zw-line);
+  background: color-mix(in srgb, var(--zw-soft) 55%, transparent);
 }
-body[data-zhiyun] .zs-topic-chapter-step {
+body[data-zw] .zws-topic-chapter-step {
   flex: none;
   display: grid;
   width: 22px;
   height: 22px;
   place-items: center;
   padding: 0;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 5px;
-  background: var(--zy-surface);
-  color: var(--zy-secondary);
+  background: var(--zw-surface);
+  color: var(--zw-secondary);
   font: inherit;
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-topic-chapter-step:hover:not(:disabled) {
-  border-color: var(--zy-accent);
-  color: var(--zy-accent);
+body[data-zw] .zws-topic-chapter-step:hover:not(:disabled) {
+  border-color: var(--zw-accent);
+  color: var(--zw-accent);
 }
-body[data-zhiyun] .zs-topic-chapter-step:disabled {
+body[data-zw] .zws-topic-chapter-step:disabled {
   opacity: .35;
   cursor: default;
 }
-body[data-zhiyun] .zs-topic-chapter-name {
+body[data-zw] .zws-topic-chapter-name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -246,46 +246,46 @@ body[data-zhiyun] .zs-topic-chapter-name {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11.5px;
-  color: var(--zy-text);
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-topic-chapter-no {
-  color: var(--zy-muted);
+body[data-zw] .zws-topic-chapter-no {
+  color: var(--zw-muted);
   font-variant-numeric: tabular-nums;
 }
 /* 空档/首尾的说明。只在需要澄清时出现，常态不占位置。 */
-body[data-zhiyun] .zs-topic-track-note {
+body[data-zw] .zws-topic-track-note {
   flex: none;
   margin: 0;
   padding: 6px 11px;
-  border-bottom: 1px solid var(--zy-line);
-  background: var(--zy-soft);
-  color: var(--zy-secondary);
+  border-bottom: 1px solid var(--zw-line);
+  background: var(--zw-soft);
+  color: var(--zw-secondary);
   font-size: 11px;
   line-height: 1.5;
 }
-body[data-zhiyun] .zs-topic-track-body {
+body[data-zw] .zws-topic-track-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 6px 0;
 }
 /* 折叠提示：「还有 N 个」。灰、小、居中 —— 它是边界，不是内容。 */
-body[data-zhiyun] .zs-topic-track-more {
+body[data-zw] .zws-topic-track-more {
   margin: 2px 0;
   text-align: center;
   font-size: 10.5px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-topic-track-empty {
+body[data-zw] .zws-topic-track-empty {
   margin: 0;
   padding: 18px 12px;
   font-size: 11.5px;
   line-height: 1.6;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
 
 /* 一个知识点节点。整块可点 —— 目标是"跳过去"，不是"选中"。 */
-body[data-zhiyun] .zs-topic-node {
+body[data-zw] .zws-topic-node {
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -294,91 +294,91 @@ body[data-zhiyun] .zs-topic-node {
   border: 0;
   border-left: 2px solid transparent;
   background: transparent;
-  color: var(--zy-text);
+  color: var(--zw-text);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-topic-node:hover {
-  background: var(--zy-hover);
+body[data-zw] .zws-topic-node:hover {
+  background: var(--zw-hover);
 }
 /* 圆点：轨道感的来源。竖线由相邻节点的圆点连成的视觉暗示，不额外画线。 */
-body[data-zhiyun] .zs-topic-dot {
+body[data-zw] .zws-topic-dot {
   flex: none;
   width: 7px;
   height: 7px;
   margin-top: 5px;
   border-radius: 50%;
-  border: 1.5px solid var(--zy-line);
-  background: var(--zy-surface);
+  border: 1.5px solid var(--zw-line);
+  background: var(--zw-surface);
 }
-body[data-zhiyun] .zs-topic-node[data-state="past"] .zs-topic-dot {
-  background: var(--zy-muted);
-  border-color: var(--zy-muted);
+body[data-zw] .zws-topic-node[data-state="past"] .zws-topic-dot {
+  background: var(--zw-muted);
+  border-color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-topic-node[data-state="current"] .zs-topic-dot {
-  background: var(--zy-accent);
-  border-color: var(--zy-accent);
+body[data-zw] .zws-topic-node[data-state="current"] .zws-topic-dot {
+  background: var(--zw-accent);
+  border-color: var(--zw-accent);
   /* 当前节点外圈放大：它要能在快速滚动的一列里被一眼抓住。 */
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--zy-accent) 22%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--zw-accent) 22%, transparent);
 }
-body[data-zhiyun] .zs-topic-node[data-state="next"] .zs-topic-dot {
-  border-color: var(--zy-accent);
+body[data-zw] .zws-topic-node[data-state="next"] .zws-topic-dot {
+  border-color: var(--zw-accent);
 }
-body[data-zhiyun] .zs-topic-text {
+body[data-zw] .zws-topic-text {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
 }
-body[data-zhiyun] .zs-topic-title {
+body[data-zw] .zws-topic-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
   line-height: 1.5;
 }
-body[data-zhiyun] .zs-topic-meta {
+body[data-zw] .zws-topic-meta {
   display: flex;
   align-items: baseline;
   gap: 6px;
   font-size: 10.5px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-topic-meta time {
+body[data-zw] .zws-topic-meta time {
   font-variant-numeric: tabular-nums;
 }
 /* 状态标签：已讲/现在/接下来。当前那个用主色，其余灰。 */
-body[data-zhiyun] .zs-topic-state {
-  color: var(--zy-muted);
+body[data-zw] .zws-topic-state {
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-topic-node[data-state="current"] .zs-topic-state {
-  color: var(--zy-accent);
+body[data-zw] .zws-topic-node[data-state="current"] .zws-topic-state {
+  color: var(--zw-accent);
   font-weight: 600;
 }
 /* 当前节点整行加重：圆点 + 底色的双重标记，扫视时更容易定位。 */
-body[data-zhiyun] .zs-topic-node[data-state="current"] {
-  border-left-color: var(--zy-accent);
-  background: var(--zy-soft);
+body[data-zw] .zws-topic-node[data-state="current"] {
+  border-left-color: var(--zw-accent);
+  background: var(--zw-soft);
 }
-body[data-zhiyun] .zs-topic-node[data-state="current"] .zs-topic-title {
+body[data-zw] .zws-topic-node[data-state="current"] .zws-topic-title {
   font-weight: 600;
 }
 /* 已讲过的整体退一档：它们在视觉上应该"过去"了。 */
-body[data-zhiyun] .zs-topic-node[data-state="past"] .zs-topic-title {
-  color: var(--zy-secondary);
+body[data-zw] .zws-topic-node[data-state="past"] .zws-topic-title {
+  color: var(--zw-secondary);
 }
 /* 空档里当前节点其实还没开始 —— 用虚线感的圆点提示。 */
-body[data-zhiyun] .zs-topic-node[data-state="current"]:not([data-inview]) .zs-topic-dot {
-  background: var(--zy-surface);
-  border-color: var(--zy-accent);
+body[data-zw] .zws-topic-node[data-state="current"]:not([data-inview]) .zws-topic-dot {
+  background: var(--zw-surface);
+  border-color: var(--zw-accent);
   border-style: dashed;
   box-shadow: none;
 }
 
 /* 右栏切换钮：浮在轨道右上角。
    它是"次要出口"，不该和知识点的标题行争位置。 */
-body[data-zhiyun] .zs-side-switch {
+body[data-zw] .zws-side-switch {
   grid-column: 2;
   grid-row: 1;
   align-self: start;
@@ -386,18 +386,18 @@ body[data-zhiyun] .zs-side-switch {
   margin: 8px 10px 0 0;
   z-index: 3;
   padding: 1px 7px;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 5px;
-  background: color-mix(in srgb, var(--zy-surface) 90%, transparent);
-  color: var(--zy-secondary);
+  background: color-mix(in srgb, var(--zw-surface) 90%, transparent);
+  color: var(--zw-secondary);
   font: inherit;
   font-size: 10.5px;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-side-switch:hover {
-  border-color: var(--zy-accent);
-  color: var(--zy-accent);
-  background: var(--zy-surface);
+body[data-zw] .zws-side-switch:hover {
+  border-color: var(--zw-accent);
+  color: var(--zw-accent);
+  background: var(--zw-surface);
 }
 
 /* ── 当前知识点（画面顶部）───────────────────────────────────────
@@ -409,7 +409,7 @@ body[data-zhiyun] .zs-side-switch:hover {
  *
  * `right: 48px` 是给右上角的全屏按钮让位，否则文字会压到按钮底下。
  */
-body[data-zhiyun] .zs-video-topic {
+body[data-zw] .zws-video-topic {
   position: absolute;
   top: 8px;
   left: 12px;
@@ -425,7 +425,7 @@ body[data-zhiyun] .zs-video-topic {
   pointer-events: none;
 }
 /* 章：更小更淡 —— 它是"上下文"，不是此刻的主角。 */
-body[data-zhiyun] .zs-video-topic-chapter {
+body[data-zw] .zws-video-topic-chapter {
   flex: none;
   max-width: 42%;
   overflow: hidden;
@@ -435,7 +435,7 @@ body[data-zhiyun] .zs-video-topic-chapter {
   color: rgba(255, 255, 255, .62);
 }
 /* 知识点：主信息。 */
-body[data-zhiyun] .zs-video-topic-title {
+body[data-zw] .zws-video-topic-title {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -445,21 +445,21 @@ body[data-zhiyun] .zs-video-topic-title {
   color: #fff;
 }
 /* 全屏下放大一号：画面大了，字号不跟上就等于看不清。 */
-body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-topic {
+body[data-zw] .zws-video-grid:fullscreen .zws-video-topic {
   top: 16px;
   left: 20px;
   right: 60px;
   padding: 6px 14px;
 }
-body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-topic-title {
+body[data-zw] .zws-video-grid:fullscreen .zws-video-topic-title {
   font-size: 17px;
 }
-body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-topic-chapter {
+body[data-zw] .zws-video-grid:fullscreen .zws-video-topic-chapter {
   font-size: 13px;
 }
 /* 窄屏：章太长会挤掉知识点，只留知识点本身。 */
 @media (max-width: 720px) {
-  body[data-zhiyun] .zs-video-topic-chapter { display: none; }
+  body[data-zw] .zws-video-topic-chapter { display: none; }
 }
 
 /* 烧在画面底部的字幕。
@@ -469,7 +469,7 @@ body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-topic-chapter {
  *
  * 用 `position: absolute` 而不是占 flex 高度：占高度会改变 `object-fit: contain`
  * 的可视区，字幕出现/消失时画面会跳。 */
-body[data-zhiyun] .zs-video-burn {
+body[data-zw] .zws-video-burn {
   position: absolute;
   left: 50%;
   bottom: 60px;
@@ -482,7 +482,7 @@ body[data-zhiyun] .zs-video-burn {
   pointer-events: none;
   text-align: center;
 }
-body[data-zhiyun] .zs-video-burn-text {
+body[data-zw] .zws-video-burn-text {
   font-size: 15px;
   line-height: 1.5;
   color: #fff;
@@ -490,10 +490,10 @@ body[data-zhiyun] .zs-video-burn-text {
 }
 /* 当前句已说完、下一句还没开始（空档）：继续挂着上一句，但明显收一档。
    直接闪成空白会让用户以为字幕坏了。 */
-body[data-zhiyun] .zs-video-burn[data-gap="true"] {
+body[data-zw] .zws-video-burn[data-gap="true"] {
   background: rgba(0, 0, 0, .42);
 }
-body[data-zhiyun] .zs-video-burn[data-gap="true"] .zs-video-burn-text {
+body[data-zw] .zws-video-burn[data-gap="true"] .zws-video-burn-text {
   color: rgba(255, 255, 255, .6);
 }
 /* 全屏按钮。
@@ -503,7 +503,7 @@ body[data-zhiyun] .zs-video-burn[data-gap="true"] .zs-video-burn-text {
  * `controlsList="nofullscreen"` 去掉了，改由这个按钮全屏「视频 + 字幕」这一层。
  *
  * 放右上角：底部是原生控制条，右上不打架。默认半透明，悬停/聚焦才实。 */
-body[data-zhiyun] .zs-video-fullscreen {
+body[data-zw] .zws-video-fullscreen {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -523,15 +523,15 @@ body[data-zhiyun] .zs-video-fullscreen {
   opacity: .55;
   transition: opacity .15s ease;
 }
-body[data-zhiyun] .zs-video-frame:hover .zs-video-fullscreen,
-body[data-zhiyun] .zs-video-fullscreen:focus-visible {
+body[data-zw] .zws-video-frame:hover .zws-video-fullscreen,
+body[data-zw] .zws-video-fullscreen:focus-visible {
   opacity: 1;
 }
-body[data-zhiyun] .zs-video-fullscreen:focus-visible {
-  outline: 2px solid var(--zy-accent);
+body[data-zw] .zws-video-fullscreen:focus-visible {
+  outline: 2px solid var(--zw-accent);
   outline-offset: 1px;
 }
-/* 全屏态：全屏的是 **`.zs-video-grid`**（整个舞台），不是只含画面的 frame。
+/* 全屏态：全屏的是 **`.zws-video-grid`**（整个舞台），不是只含画面的 frame。
  *
  * 为什么改：只全屏 `frame` 会把 PPT 小窗排除在外 —— 全屏后想切课件必须退出
  * 全屏（用户实测："上课爽全屏能自由切 PPT，我们不行"）。全屏整个网格之后，
@@ -543,7 +543,7 @@ body[data-zhiyun] .zs-video-fullscreen:focus-visible {
  * 各自决定（分屏时还是用户拖出来的连续值，走内联样式）。在这里写死会覆盖
  * 内联的 `gridTemplateColumns` —— 症状是"拖分隔条没反应"。
  */
-body[data-zhiyun] .zs-video-grid:fullscreen {
+body[data-zw] .zws-video-grid:fullscreen {
   width: 100vw;
   height: 100vh;
   /* 全屏时贴边，不留页面内边距 —— 画面能多大就多大。 */
@@ -551,15 +551,15 @@ body[data-zhiyun] .zs-video-grid:fullscreen {
   gap: 8px;
   background: #000;
 }
-body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-burn {
+body[data-zw] .zws-video-grid:fullscreen .zws-video-burn {
   /* 全屏下画面高得多，控制条也更高，字幕再抬一点。 */
   bottom: 84px;
   max-width: min(80%, 1100px);
 }
-body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-burn-text {
+body[data-zw] .zws-video-grid:fullscreen .zws-video-burn-text {
   font-size: 20px;
 }
-body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-fullscreen {
+body[data-zw] .zws-video-grid:fullscreen .zws-video-fullscreen {
   /* 全屏下这个按钮仍然要能点（退出去）。 */
   top: 14px;
   right: 14px;
@@ -573,20 +573,20 @@ body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-fullscreen {
  * 实现方式：**不改 DOM**（`<video>` 一卸载就断声音、丢 currentTime），
  * 而是把非主视图的格子 `display: none`，让主视图独占整个网格。
  */
-body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-grid {
+body[data-zw] .zws-video[data-fullscreen="on"]:not([data-split="on"]) .zws-video-grid {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
 }
-body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-stage-video {
+body[data-zw] .zws-video[data-fullscreen="on"]:not([data-split="on"]) .zws-video-stage-video {
   grid-column: 1;
   grid-row: 1;
 }
 /* 单画面：课件舞台、侧栏、切换钮、互换钮全部退场。 */
-body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-stage-ppt,
-body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-topic-track,
-body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-transcript,
-body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-side-switch,
-body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-video-swap {
+body[data-zw] .zws-video[data-fullscreen="on"]:not([data-split="on"]) .zws-video-stage-ppt,
+body[data-zw] .zws-video[data-fullscreen="on"]:not([data-split="on"]) .zws-topic-track,
+body[data-zw] .zws-video[data-fullscreen="on"]:not([data-split="on"]) .zws-video-transcript,
+body[data-zw] .zws-video[data-fullscreen="on"]:not([data-split="on"]) .zws-side-switch,
+body[data-zw] .zws-video[data-fullscreen="on"]:not([data-split="on"]) .zws-video-swap {
   display: none;
 }
 
@@ -601,44 +601,44 @@ body[data-zhiyun] .zs-video[data-fullscreen="on"]:not([data-split="on"]) .zs-vid
  * 「PPT 优先满足大小」是这套网格的自然结果：PPT 在自己的 `aspect-ratio`
  * 下要多大给多大，知识点吃剩下的 —— 剩多少不足 120px 时 JS 会整块隐藏。
  */
-body[data-zhiyun] .zs-video[data-split="on"] .zs-video-grid {
+body[data-zw] .zws-video[data-split="on"] .zws-video-grid {
   grid-template-rows: minmax(0, auto) minmax(0, 1fr);
 }
-body[data-zhiyun] .zs-video[data-split="on"] .zs-video-stage-video {
+body[data-zw] .zws-video[data-split="on"] .zws-video-stage-video {
   grid-column: 1;
   grid-row: 1 / span 2;
 }
-body[data-zhiyun] .zs-video[data-split="on"] .zs-video-stage-ppt {
+body[data-zw] .zws-video[data-split="on"] .zws-video-stage-ppt {
   grid-column: 2;
   grid-row: 1;
   width: 100%;
 }
-body[data-zhiyun] .zs-video[data-split="on"] .zs-topic-track,
-body[data-zhiyun] .zs-video[data-split="on"] .zs-video-transcript {
+body[data-zw] .zws-video[data-split="on"] .zws-topic-track,
+body[data-zw] .zws-video[data-split="on"] .zws-video-transcript {
   grid-column: 2;
   grid-row: 2;
 }
-body[data-zhiyun] .zs-video[data-split="on"] .zs-side-switch {
+body[data-zw] .zws-video[data-split="on"] .zws-side-switch {
   grid-column: 2;
   grid-row: 1;
   align-self: start;
   justify-self: end;
 }
 /* 分屏时互换钮没有位置（两栏各有明确用途），藏掉避免误点。 */
-body[data-zhiyun] .zs-video[data-split="on"] .zs-video-swap {
+body[data-zw] .zws-video[data-split="on"] .zws-video-swap {
   display: none;
 }
 /* 知识点高度不足时（JS 量出 < 120px 加这个属性）整块隐藏。
    为什么不用纯 CSS：高度取决于课件图片的宽高比，CSS 表达不了
    "剩余不足就整块消失"，而 `auto` 塌陷会留下边框与内边距的残影。 */
-body[data-zhiyun] .zs-video[data-split="on"][data-topic-hidden="on"] .zs-topic-track,
-body[data-zhiyun] .zs-video[data-split="on"][data-topic-hidden="on"] .zs-video-transcript {
+body[data-zw] .zws-video[data-split="on"][data-topic-hidden="on"] .zws-topic-track,
+body[data-zw] .zws-video[data-split="on"][data-topic-hidden="on"] .zws-video-transcript {
   display: none;
 }
 
 /* 分隔条：8px 宽的可拖区域，压在左右两栏交界处。
    只有中间 2px 可见 —— 太粗会显得像个"框"，太细又抓不住。 */
-body[data-zhiyun] .zs-split-handle {
+body[data-zw] .zws-split-handle {
   grid-column: 1;
   grid-row: 1 / span 2;
   justify-self: end;
@@ -650,7 +650,7 @@ body[data-zhiyun] .zs-split-handle {
   user-select: none;
   touch-action: none;
 }
-body[data-zhiyun] .zs-split-handle::after {
+body[data-zw] .zws-split-handle::after {
   content: "";
   position: absolute;
   top: 0;
@@ -660,11 +660,11 @@ body[data-zhiyun] .zs-split-handle::after {
   background: rgba(255, 255, 255, .18);
   transition: background .15s ease;
 }
-body[data-zhiyun] .zs-split-handle:hover::after,
-body[data-zhiyun] .zs-split-handle:focus-visible::after {
-  background: var(--zy-accent);
+body[data-zw] .zws-split-handle:hover::after,
+body[data-zw] .zws-split-handle:focus-visible::after {
+  background: var(--zw-accent);
 }
-body[data-zhiyun] .zs-split-handle:focus-visible {
+body[data-zw] .zws-split-handle:focus-visible {
   outline: none;
 }
 
@@ -675,18 +675,18 @@ body[data-zhiyun] .zs-split-handle:focus-visible {
  * ⚠️ 触屏没有 hover —— 所以 `:focus-within` 也要唤醒它。
  * 不做这条的话，平板上永远调不出控制条。
  */
-body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-mc {
+body[data-zw] .zws-video[data-fullscreen="on"] .zws-mc {
   opacity: 0;
   pointer-events: none;
   transition: opacity .2s ease;
 }
-body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-video-frame:hover .zs-mc,
-body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-mc:focus-within {
+body[data-zw] .zws-video[data-fullscreen="on"] .zws-video-frame:hover .zws-mc,
+body[data-zw] .zws-video[data-fullscreen="on"] .zws-mc:focus-within {
   opacity: 1;
   pointer-events: auto;
 }
 /* 全屏下字幕高度：控制条隐藏时不必躲，出现时为它让位（中间值两者都照顾）。 */
-body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-video-burn {
+body[data-zw] .zws-video[data-fullscreen="on"] .zws-video-burn {
   bottom: 56px;
 }
 
@@ -698,7 +698,7 @@ body[data-zhiyun] .zs-video[data-fullscreen="on"] .zs-video-burn {
  *
  * 压在画面底部，**不自动隐藏** —— 它承载的是内容结构，隐藏等于看课时看不到
  * 这节课讲了什么。只在指针移出画面后降不透明度。 */
-body[data-zhiyun] .zs-mc {
+body[data-zw] .zws-mc {
   position: absolute;
   left: 0;
   right: 0;
@@ -713,26 +713,26 @@ body[data-zhiyun] .zs-mc {
   background: linear-gradient(to top, rgba(0, 0, 0, .76), rgba(0, 0, 0, 0));
   transition: opacity .18s ease;
 }
-body[data-zhiyun] .zs-mc-trackrow {
+body[data-zw] .zws-mc-trackrow {
   display: flex;
   width: 100%;
 }
-body[data-zhiyun] .zs-mc-row {
+body[data-zw] .zws-mc-row {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
 /* 把右侧那组按钮推到右边 */
-body[data-zhiyun] .zs-mc-spacer {
+body[data-zw] .zws-mc-spacer {
   flex: 1;
   min-width: 0;
 }
-body[data-zhiyun] .zs-video-frame:not(:hover) .zs-mc {
+body[data-zw] .zws-video-frame:not(:hover) .zws-mc {
   /* 淡一点但**不消失**：上面有内容结构。 */
   opacity: .74;
 }
-body[data-zhiyun] .zs-mc-btn {
+body[data-zw] .zws-mc-btn {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -748,13 +748,13 @@ body[data-zhiyun] .zs-mc-btn {
   line-height: 1;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-mc-btn:hover { background: rgba(255, 255, 255, .16); }
-body[data-zhiyun] .zs-mc-btn:focus-visible {
-  outline: 2px solid var(--zy-accent);
+body[data-zw] .zws-mc-btn:hover { background: rgba(255, 255, 255, .16); }
+body[data-zw] .zws-mc-btn:focus-visible {
+  outline: 2px solid var(--zw-accent);
   outline-offset: 1px;
 }
-body[data-zhiyun] .zs-mc-play { min-width: 30px; font-size: 13px; }
-body[data-zhiyun] .zs-mc-rate {
+body[data-zw] .zws-mc-play { min-width: 30px; font-size: 13px; }
+body[data-zw] .zws-mc-rate {
   min-width: 38px;
   font-variant-numeric: tabular-nums;
 }
@@ -765,23 +765,23 @@ body[data-zhiyun] .zs-mc-rate {
  * 无间隙，读作一个加减控件。
  *
  * 到边界时按钮 `disabled` 变灰 —— 这是不暴露数值的前提下唯一能给的反馈。 */
-body[data-zhiyun] .zs-mc-speed {
+body[data-zw] .zws-mc-speed {
   flex: none;
   display: inline-flex;
   align-items: center;
 }
-body[data-zhiyun] .zs-mc-speed-btn {
+body[data-zw] .zws-mc-speed-btn {
   min-width: 24px;
   padding: 0;
   font-size: 14px;
   font-weight: 600;
   border-radius: 5px;
 }
-body[data-zhiyun] .zs-mc-speed-btn:disabled {
+body[data-zw] .zws-mc-speed-btn:disabled {
   opacity: .3;
   cursor: default;
 }
-body[data-zhiyun] .zs-mc-speed-btn:disabled:hover {
+body[data-zw] .zws-mc-speed-btn:disabled:hover {
   background: transparent;
 }
 /* 倍率本体：夹在「−」「＋」之间，点它切换显示/隐藏。 *
@@ -790,34 +790,34 @@ body[data-zhiyun] .zs-mc-speed-btn:disabled:hover {
  *
  * 隐藏态用一个中性点 `·` 而不是留空：留空会让「−」「＋」贴在一起，看着像少了
  * 一个按钮；点号明确表示"这里有个东西，只是不显示数字"。 */
-body[data-zhiyun] .zs-mc-rateview {
+body[data-zw] .zws-mc-rateview {
   min-width: 40px;
   padding: 0 2px;
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
 }
-body[data-zhiyun] .zs-mc-rateview[data-visible="false"] {
+body[data-zw] .zws-mc-rateview[data-visible="false"] {
   color: rgba(255, 255, 255, .42);
   font-size: 15px;
   line-height: 1;
 }
 /* 非原速时给一点提示色：这样隐藏数字后仍能看出"现在不是原速"。
    这是"藏起数字"与"知道自己正在变速"之间的折中 —— 只给颜色，不给数值。 */
-body[data-zhiyun] .zs-mc-rateview[data-visible="false"][data-away="true"] {
-  color: color-mix(in srgb, var(--zy-action) 42%, #fff);
+body[data-zw] .zws-mc-rateview[data-visible="false"][data-away="true"] {
+  color: color-mix(in srgb, var(--zw-action) 42%, #fff);
 }
-body[data-zhiyun] .zs-mc-time {
+body[data-zw] .zws-mc-time {
   flex: none;
   font-size: 11.5px;
   color: rgba(255, 255, 255, .82);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-body[data-zhiyun] .zs-mc-time strong { color: #fff; font-weight: 600; }
-body[data-zhiyun] .zs-mc-dim { color: rgba(255, 255, 255, .5); }
+body[data-zw] .zws-mc-time strong { color: #fff; font-weight: 600; }
+body[data-zw] .zws-mc-dim { color: rgba(255, 255, 255, .5); }
 /* 当前段概述："这段在讲什么"。它是**内容**不是图例，所以在按钮行给它位置；
    窄屏省略，不和按钮抢空间。 */
-body[data-zhiyun] .zs-mc-now {
+body[data-zw] .zws-mc-now {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -832,7 +832,7 @@ body[data-zhiyun] .zs-mc-now {
  *
  * `flex: none` + `nowrap`：这行字的长度会随数字变化（"23 分钟" → "1 小时 5 分"），
  * 不让它压缩或换行，否则整行按钮会跟着抖动。 */
-body[data-zhiyun] .zs-mc-eta {
+body[data-zw] .zws-mc-eta {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -843,16 +843,16 @@ body[data-zhiyun] .zs-mc-eta {
 }
 /* 「省了多久」：只在真的省下 1 分钟以上时出现。
    用主色而不是白色 —— 它是收益，不该和"还剩多久"混成一句话。 */
-body[data-zhiyun] .zs-mc-saved {
+body[data-zw] .zws-mc-saved {
   padding: 0 5px;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--zy-action) 34%, transparent);
+  background: color-mix(in srgb, var(--zw-action) 34%, transparent);
   color: #fff;
   font-size: 10.5px;
 }
 /* 图例：用的就是轨道上那两种实际观感（实心蓝 / 深色白描边），不是抽象色点。
    没有它，"深色块 = 支线"只能靠猜，而主次正是这段 UI 的核心信息。 */
-body[data-zhiyun] .zs-mc-legend {
+body[data-zw] .zws-mc-legend {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -861,20 +861,20 @@ body[data-zhiyun] .zs-mc-legend {
   color: rgba(255, 255, 255, .72);
   white-space: nowrap;
 }
-body[data-zhiyun] .zs-mc-legend i {
+body[data-zw] .zws-mc-legend i {
   display: inline-block;
   width: 12px;
   border-radius: 2px;
 }
 /* 图例按**实际线宽**画：主线 8px、支线 5px。
    图例和轨道长得一样，用户才能对上号。 */
-body[data-zhiyun] .zs-mc-legend i[data-role="main"] {
+body[data-zw] .zws-mc-legend i[data-role="main"] {
   height: 8px;
-  background: color-mix(in srgb, var(--zy-action) 46%, #a8ccff);
+  background: color-mix(in srgb, var(--zw-action) 46%, #a8ccff);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
   margin-left: 2px;
 }
-body[data-zhiyun] .zs-mc-legend i[data-role="branch"] {
+body[data-zw] .zws-mc-legend i[data-role="branch"] {
   height: 5px;
   background: rgba(8, 12, 18, .42);
   margin-left: 8px;
@@ -886,7 +886,7 @@ body[data-zhiyun] .zs-mc-legend i[data-role="branch"] {
  * 两者都放大，主支线才真的读得出来 —— 原来 5px 的槽里画 2px 的线，
  * 在 100 分钟的课上几乎分辨不了。
  */
-body[data-zhiyun] .zs-mc-track {
+body[data-zw] .zws-mc-track {
   position: relative;
   flex: 1;
   min-width: 0;
@@ -897,7 +897,7 @@ body[data-zhiyun] .zs-mc-track {
   align-items: center;
 }
 /* 底槽：8px 高（原 5px） */
-body[data-zhiyun] .zs-mc-track::before {
+body[data-zw] .zws-mc-track::before {
   content: "";
   position: absolute;
   left: 0;
@@ -908,17 +908,17 @@ body[data-zhiyun] .zs-mc-track::before {
   border-radius: 4px;
   background: rgba(255, 255, 255, .24);
 }
-body[data-zhiyun] .zs-mc-track:focus-visible {
-  outline: 2px solid var(--zy-accent);
+body[data-zw] .zws-mc-track:focus-visible {
+  outline: 2px solid var(--zw-accent);
   outline-offset: 2px;
   border-radius: 4px;
 }
-body[data-zhiyun] .zs-mc-buffered,
-body[data-zhiyun] .zs-mc-voice,
-body[data-zhiyun] .zs-mc-seg,
-body[data-zhiyun] .zs-mc-played,
-body[data-zhiyun] .zs-mc-skip,
-body[data-zhiyun] .zs-mc-thumb {
+body[data-zw] .zws-mc-buffered,
+body[data-zw] .zws-mc-voice,
+body[data-zw] .zws-mc-seg,
+body[data-zw] .zws-mc-played,
+body[data-zw] .zws-mc-skip,
+body[data-zw] .zws-mc-thumb {
   position: absolute;
   top: 50%;
   pointer-events: none;
@@ -935,13 +935,13 @@ body[data-zhiyun] .zs-mc-thumb {
    * 分段排在"已播放"之上：进度是叠在内容上的，不能让进度把内容洗掉。 */
   z-index: 1;
 }
-body[data-zhiyun] .zs-mc-buffered { z-index: 1; }
-body[data-zhiyun] .zs-mc-voice { z-index: 2; }
-body[data-zhiyun] .zs-mc-played { z-index: 3; }
-body[data-zhiyun] .zs-mc-seg { z-index: 4; }
-body[data-zhiyun] .zs-mc-skip { z-index: 5; }
-body[data-zhiyun] .zs-mc-thumb { z-index: 6; }
-body[data-zhiyun] .zs-mc-buffered {
+body[data-zw] .zws-mc-buffered { z-index: 1; }
+body[data-zw] .zws-mc-voice { z-index: 2; }
+body[data-zw] .zws-mc-played { z-index: 3; }
+body[data-zw] .zws-mc-seg { z-index: 4; }
+body[data-zw] .zws-mc-skip { z-index: 5; }
+body[data-zw] .zws-mc-thumb { z-index: 6; }
+body[data-zw] .zws-mc-buffered {
   height: 8px;
   margin-top: -4px;
   border-radius: 4px;
@@ -949,7 +949,7 @@ body[data-zhiyun] .zs-mc-buffered {
 }
 /* 说话带：更亮的一层。时间不可信的段（尾噪 / 插值）压淡。
    ⚠️ 这一层原先是 .55，会把下面的分段"洗白"——分段才是主角，它只是背景分布。 */
-body[data-zhiyun] .zs-mc-voice {
+body[data-zw] .zws-mc-voice {
   height: 8px;
   margin-top: -4px;
   border-radius: 4px;
@@ -958,7 +958,7 @@ body[data-zhiyun] .zs-mc-voice {
      分段才是主角，所以压到 .16。 */
   background: rgba(255, 255, 255, .16);
 }
-body[data-zhiyun] .zs-mc-voice[data-state="located_only"] {
+body[data-zw] .zws-mc-voice[data-state="located_only"] {
   background: rgba(255, 255, 255, .09);
 }
 /* 内容分段：**主线是主角，支线后退**。
@@ -974,19 +974,19 @@ body[data-zhiyun] .zs-mc-voice[data-state="located_only"] {
  *
  * 线宽本身就是层级信号：粗的比细的"重"。比单纯调色更稳，换主题也不会散。
  */
-body[data-zhiyun] .zs-mc-seg {
+body[data-zw] .zws-mc-seg {
   height: 8px;
   margin-top: -4px;
   border-radius: 4px;
 }
-body[data-zhiyun] .zs-mc-seg[data-role="main"] {
-  /* 提亮：`--zy-action` 在深色模式下是 #245fa9，压在深色画面上偏暗；
+body[data-zw] .zws-mc-seg[data-role="main"] {
+  /* 提亮：`--zw-action` 在深色模式下是 #245fa9，压在深色画面上偏暗；
      混一点浅蓝让它在两种主题下都够亮、够饱和。 */
-  background: color-mix(in srgb, var(--zy-action) 46%, #a8ccff);
+  background: color-mix(in srgb, var(--zw-action) 46%, #a8ccff);
   /* 一道弱内描边把主线从槽里"托"起来；**不做发光** —— 发光会和播放头抢。 */
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
 }
-body[data-zhiyun] .zs-mc-seg[data-role="branch"] {
+body[data-zw] .zws-mc-seg[data-role="branch"] {
   /* 半透明深色、**不加亮边**：读作"压低的一段"，不是"被挖掉的洞"。
      高度与不透明度都低于主线，视线自然先落在主线上。 */
   height: 5px;
@@ -994,7 +994,7 @@ body[data-zhiyun] .zs-mc-seg[data-role="branch"] {
   background: rgba(8, 12, 18, .42);
 }
 /* 未标注：更矮更淡 —— 它既不是主线也不是支线。 */
-body[data-zhiyun] .zs-mc-seg[data-role="none"] {
+body[data-zw] .zws-mc-seg[data-role="none"] {
   height: 3px;
   margin-top: -1.5px;
   background: rgba(255, 255, 255, .12);
@@ -1005,14 +1005,14 @@ body[data-zhiyun] .zs-mc-seg[data-role="none"] {
  * 原来用的是主色的浅化版（蓝）—— 那和"主线分段"是同一个色系，播过一段就把
  * 主线染成了另一个蓝，两种语义糊在一起。改成低不透明度的白：叠加在底槽上
  * 只是"更亮"，不引入新色相，分段仍然一眼可辨。 */
-body[data-zhiyun] .zs-mc-played {
+body[data-zw] .zws-mc-played {
   left: 0;
   height: 8px;
   margin-top: -4px;
   border-radius: 4px;
   background: rgba(255, 255, 255, .2);
 }
-body[data-zhiyun] .zs-mc-thumb {
+body[data-zw] .zws-mc-thumb {
   position: absolute;
   top: 50%;
   width: 12px;
@@ -1023,7 +1023,7 @@ body[data-zhiyun] .zs-mc-thumb {
   box-shadow: 0 1px 3px rgba(0, 0, 0, .55);
   pointer-events: none;
 }
-body[data-zhiyun] .zs-mc-vol {
+body[data-zw] .zws-mc-vol {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -1031,37 +1031,37 @@ body[data-zhiyun] .zs-mc-vol {
 }
 /* 「跳支线」开关：开启时高亮，关闭时与普通按钮同款。
    只在真的有支线时渲染（没有就点了没反应，比没有更差）。 */
-body[data-zhiyun] .zs-mc-skip-toggle {
+body[data-zw] .zws-mc-skip-toggle {
   flex: none;
   padding: 0 7px;
   font-size: 11px;
   letter-spacing: .02em;
 }
-body[data-zhiyun] .zs-mc-skip-toggle[data-on="true"] {
-  background: color-mix(in srgb, var(--zy-action) 78%, transparent);
+body[data-zw] .zws-mc-skip-toggle[data-on="true"] {
+  background: color-mix(in srgb, var(--zw-action) 78%, transparent);
   color: #fff;
 }
-body[data-zhiyun] .zs-mc-skip-toggle[data-on="true"]:hover {
-  background: color-mix(in srgb, var(--zy-action) 92%, transparent);
+body[data-zw] .zws-mc-skip-toggle[data-on="true"]:hover {
+  background: color-mix(in srgb, var(--zw-action) 92%, transparent);
 }
 /* 「均速」开关：与「跳支线」同款，靠 `data-on` 区分开启态。
    开启后倍率标签显示的是**此刻**的实际倍率（`data-auto` 加标记色），
    否则用户会奇怪"我设了 2x 怎么在 1.15x"。 */
-body[data-zhiyun] .zs-mc-uniform-toggle {
+body[data-zw] .zws-mc-uniform-toggle {
   flex: none;
   padding: 0 7px;
   font-size: 11px;
 }
-body[data-zhiyun] .zs-mc-uniform-toggle[data-on="true"] {
-  background: color-mix(in srgb, var(--zy-secondary) 62%, transparent);
+body[data-zw] .zws-mc-uniform-toggle[data-on="true"] {
+  background: color-mix(in srgb, var(--zw-secondary) 62%, transparent);
   color: #fff;
 }
-body[data-zhiyun] .zs-mc-uniform-toggle[data-on="true"]:hover {
-  background: color-mix(in srgb, var(--zy-secondary) 78%, transparent);
+body[data-zw] .zws-mc-uniform-toggle[data-on="true"]:hover {
+  background: color-mix(in srgb, var(--zw-secondary) 78%, transparent);
 }
 /* 均速模式下的倍率标签：用次要色标出来，说明它不是用户直接设的那个数。 */
-body[data-zhiyun] .zs-mc-rateview[data-auto="true"] {
-  color: color-mix(in srgb, var(--zy-secondary) 34%, #fff);
+body[data-zw] .zws-mc-rateview[data-auto="true"] {
+  color: color-mix(in srgb, var(--zw-secondary) 34%, #fff);
 }
 /* 均速模式下的平均速度小字。
  *
@@ -1070,7 +1070,7 @@ body[data-zhiyun] .zs-mc-rateview[data-auto="true"] {
  *
  * 视觉上明确弱于主数字：更小、更淡、不加边框。它是**参照**，不是读数。
  * `flex: none` + `nowrap`：数字从 `1x` 变 `1.3x` 时不能压缩，否则整行会跳。 */
-body[data-zhiyun] .zs-mc-avg {
+body[data-zw] .zws-mc-avg {
   flex: none;
   font-size: 10.5px;
   color: rgba(255, 255, 255, .5);
@@ -1080,7 +1080,7 @@ body[data-zhiyun] .zs-mc-avg {
 /* 被"叉掉"的支线：斜纹覆盖。
    为什么是斜纹而不是只变淡 —— 变淡和"时间不可信"（`located_only`）的样式
    太像，两者语义完全不同，混在一起会让人读不出区别。 */
-body[data-zhiyun] .zs-mc-skip {
+body[data-zw] .zws-mc-skip {
   position: absolute;
   top: 50%;
   /* 与支线同高（5px）：斜纹只该盖住支线，不该盖到更高的主线上。 */
@@ -1096,11 +1096,11 @@ body[data-zhiyun] .zs-mc-skip {
   /* 半透明：让下面的支线仍然隐约可见，而不是完全盖成一条白杠。 */
   opacity: .85;
 }
-body[data-zhiyun] .zs-mc-volume {
+body[data-zw] .zws-mc-volume {
   width: 52px;
   height: 3px;
   margin: 0;
-  accent-color: var(--zy-action);
+  accent-color: var(--zw-action);
   cursor: pointer;
 }
 /* 自绘模式下字幕要抬到控制条之上（控制条约 38px 高）。
@@ -1109,25 +1109,25 @@ body[data-zhiyun] .zs-mc-volume {
 
    ⚠️ 全屏那条的祖先选择器是 **grid**（全屏目标换了），不是 frame ——
    `frame` 在全屏时只是 grid 内部的普通子元素，`:fullscreen` 不再命中它。 */
-body[data-zhiyun] .zs-video-frame[data-controls="custom"] .zs-video-burn {
+body[data-zw] .zws-video-frame[data-controls="custom"] .zws-video-burn {
   bottom: 78px;
 }
-body[data-zhiyun] .zs-video-grid:fullscreen .zs-video-frame[data-controls="custom"] .zs-video-burn {
+body[data-zw] .zws-video-grid:fullscreen .zws-video-frame[data-controls="custom"] .zws-video-burn {
   bottom: 92px;
 }
 /* 窄屏：音量滑块让位，否则轨道被挤没 */
 @media (max-width: 720px) {
-  body[data-zhiyun] .zs-mc-volume { display: none; }
-  body[data-zhiyun] .zs-mc-time .zs-mc-dim { display: none; }
+  body[data-zw] .zws-mc-volume { display: none; }
+  body[data-zw] .zws-mc-time .zws-mc-dim { display: none; }
   /* 窄屏没有余量放"这段在讲什么"，让轨道优先。 */
-  body[data-zhiyun] .zs-mc-now { display: none; }
-  body[data-zhiyun] .zs-mc-legend { display: none; }
+  body[data-zw] .zws-mc-now { display: none; }
+  body[data-zw] .zws-mc-legend { display: none; }
   /* 窄屏放不下估算，让轨道优先。 */
-  body[data-zhiyun] .zs-mc-eta { display: none; }
+  body[data-zw] .zws-mc-eta { display: none; }
 }
-/* 没有回放时这里根本没有舞台 —— 那句提醒是一条 `.zs-video-notice`（见下），
+/* 没有回放时这里根本没有舞台 —— 那句提醒是一条 `.zws-video-notice`（见下），
    不再是一张卡面，所以原先 `.is-empty` 的一整套退色样式随之删除。 */
-body[data-zhiyun] .zs-video-media {
+body[data-zw] .zws-video-media {
   display: block;
   width: 100%;
   height: 100%;
@@ -1138,72 +1138,72 @@ body[data-zhiyun] .zs-video-media {
   object-fit: contain;
   background: #000;
 }
-body[data-zhiyun] .zs-video-novideo,
-body[data-zhiyun] .zs-video-empty {
+body[data-zw] .zws-video-novideo,
+body[data-zw] .zws-video-empty {
   margin: auto;
   padding: 24px 16px;
   text-align: center;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-video-empty strong {
+body[data-zw] .zws-video-empty strong {
   display: block;
   margin-bottom: 5px;
   font-size: 13px;
-  color: var(--zy-text);
+  color: var(--zw-text);
 }
-body[data-zhiyun] .zs-video-empty p {
+body[data-zw] .zws-video-empty p {
   margin: 0;
   font-size: 11.5px;
 }
 /* 内容条贴在视频下面。课件当主视图时视频缩进小窗，这条会把缩略图挤没，所以藏起来。 */
-body[data-zhiyun] .zs-video-rail {
+body[data-zw] .zws-video-rail {
   flex: none;
   width: 100%;
   padding: 6px 8px 8px;
   background: #000;
 }
-body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-rail { display: none; }
-body[data-zhiyun] .zs-video-heat,
-body[data-zhiyun] .zs-video-seek {
+body[data-zw] .zws-video[data-main="ppt"] .zws-video-rail { display: none; }
+body[data-zw] .zws-video-heat,
+body[data-zw] .zws-video-seek {
   position: relative;
   height: 6px;
   background: #000;
 }
-body[data-zhiyun] .zs-video-seek {
+body[data-zw] .zws-video-seek {
   height: 10px;
   margin-top: 3px;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-video-heat-cell,
-body[data-zhiyun] .zs-video-seg,
-body[data-zhiyun] .zs-video-playhead {
+body[data-zw] .zws-video-heat-cell,
+body[data-zw] .zws-video-seg,
+body[data-zw] .zws-video-playhead {
   position: absolute;
   top: 0;
   bottom: 0;
   pointer-events: none;
 }
-body[data-zhiyun] .zs-video-seg[data-role="main"] { background: var(--zy-action); }
-body[data-zhiyun] .zs-video-seg[data-role="branch"] { background: var(--zy-secondary); }
-body[data-zhiyun] .zs-video-seg[data-role="none"] { background: var(--zy-muted); }
-body[data-zhiyun] .zs-video-heat-cell[data-empty="true"] { background: var(--zy-muted); }
-body[data-zhiyun] .zs-video-heat-cell:not([data-empty="true"]) {
-  background: color-mix(in srgb, var(--zy-action) calc(var(--heat) * 100%), #000);
+body[data-zw] .zws-video-seg[data-role="main"] { background: var(--zw-action); }
+body[data-zw] .zws-video-seg[data-role="branch"] { background: var(--zw-secondary); }
+body[data-zw] .zws-video-seg[data-role="none"] { background: var(--zw-muted); }
+body[data-zw] .zws-video-heat-cell[data-empty="true"] { background: var(--zw-muted); }
+body[data-zw] .zws-video-heat-cell:not([data-empty="true"]) {
+  background: color-mix(in srgb, var(--zw-action) calc(var(--heat) * 100%), #000);
 }
-body[data-zhiyun] .zs-video-playhead {
+body[data-zw] .zws-video-playhead {
   width: 2px;
   margin-left: -1px;
   background: #fff;
 }
-body[data-zhiyun] .zs-video-rail-note {
+body[data-zw] .zws-video-rail-note {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin: 4px 0 0;
   font-size: 11px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-video-rail-note [data-role="main"]::before,
-body[data-zhiyun] .zs-video-rail-note [data-role="branch"]::before {
+body[data-zw] .zws-video-rail-note [data-role="main"]::before,
+body[data-zw] .zws-video-rail-note [data-role="branch"]::before {
   content: "";
   display: inline-block;
   width: 8px;
@@ -1211,25 +1211,25 @@ body[data-zhiyun] .zs-video-rail-note [data-role="branch"]::before {
   margin-right: 4px;
   vertical-align: -1px;
 }
-body[data-zhiyun] .zs-video-rail-note [data-role="main"]::before { background: var(--zy-action); }
-body[data-zhiyun] .zs-video-rail-note [data-role="branch"]::before { background: var(--zy-secondary); }
-body[data-zhiyun] .zs-video-rail-now { color: var(--zy-text); }
-body[data-zhiyun] .zs-video-facts {
+body[data-zw] .zws-video-rail-note [data-role="main"]::before { background: var(--zw-action); }
+body[data-zw] .zws-video-rail-note [data-role="branch"]::before { background: var(--zw-secondary); }
+body[data-zw] .zws-video-rail-now { color: var(--zw-text); }
+body[data-zw] .zws-video-facts {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 18px;
   margin: 0 0 10px;
 }
-body[data-zhiyun] .zs-video-facts div { min-width: 0; }
-body[data-zhiyun] .zs-video-facts dt {
+body[data-zw] .zws-video-facts div { min-width: 0; }
+body[data-zw] .zws-video-facts dt {
   font-size: 11px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-video-facts dd {
+body[data-zw] .zws-video-facts dd {
   margin: 1px 0 0;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-  color: var(--zy-text);
+  color: var(--zw-text);
 }
 
 /* 没有回放的一行提示，落在字幕标题行的右侧（见 video-panel.jsx 的 transcript-head）。
@@ -1242,34 +1242,34 @@ body[data-zhiyun] .zs-video-facts dd {
  * 空当裂成两段。这里让它自己占下那条空当、文字靠右，是同一个视觉结果，
  * 且与相邻元素谁在谁右边无关。
  */
-body[data-zhiyun] .zs-video-notice {
+body[data-zw] .zws-video-notice {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
   font-size: 11px;
 }
 
 /* ── 课件 ──────────────────────────────────────────────────────── */
 /* 舞台是一张两行网格：翻页条按自身高度占第一行，图片吃掉第二行剩下的。 */
-body[data-zhiyun] .zs-video-stage-ppt {
+body[data-zw] .zws-video-stage-ppt {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  background: var(--zy-surface);
+  background: var(--zw-surface);
 }
-body[data-zhiyun] .zs-video-bar {
+body[data-zw] .zws-video-bar {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border-bottom: 1px solid var(--zy-line);
+  border-bottom: 1px solid var(--zw-line);
   font-size: 11.5px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-video-pos {
+body[data-zw] .zws-video-pos {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -1277,68 +1277,68 @@ body[data-zhiyun] .zs-video-pos {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-body[data-zhiyun] .zs-video-at {
+body[data-zw] .zws-video-at {
   margin-left: 6px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
   font-variant-numeric: tabular-nums;
 }
-body[data-zhiyun] .zs-video-pin {
+body[data-zw] .zws-video-pin {
   margin-left: 6px;
   padding: 1px 6px;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 999px;
   font-size: 11px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
 /* 「回到当前页」：用户翻到别的课件页、脱离视频跟随时出现。 */
-body[data-zhiyun] .zs-video-follow {
+body[data-zw] .zws-video-follow {
   flex: none;
   margin-left: 4px;
   padding: 1px 7px;
-  border: 1px solid var(--zy-accent);
+  border: 1px solid var(--zw-accent);
   border-radius: 5px;
-  background: var(--zy-soft);
-  color: var(--zy-accent);
+  background: var(--zw-soft);
+  color: var(--zw-accent);
   font: inherit;
   font-size: 10.5px;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-video-follow:hover {
-  background: var(--zy-accent);
+body[data-zw] .zws-video-follow:hover {
+  background: var(--zw-accent);
   color: #fff;
 }
 /* 脱离态：课件图略微变暗 + 虚线内描边。
    为什么要有视觉提示：只有那个小按钮在说"你已经不在当前页了"时，用户
    很容易忘了自己翻走过 —— 看到进度条在走、课件却不动，会以为卡了。 */
-body[data-zhiyun] .zs-video-slide[data-detached="true"] {
+body[data-zw] .zws-video-slide[data-detached="true"] {
   opacity: .88;
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--zy-accent) 55%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--zw-accent) 55%, transparent);
 }
-body[data-zhiyun] .zs-video-step {
+body[data-zw] .zws-video-step {
   flex: none;
   display: grid;
   width: 24px;
   height: 24px;
   place-items: center;
   padding: 0;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 6px;
-  background: var(--zy-surface);
-  color: var(--zy-secondary);
+  background: var(--zw-surface);
+  color: var(--zw-secondary);
   font: inherit;
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-video-step:hover:not(:disabled) {
-  border-color: var(--zy-accent);
-  color: var(--zy-accent);
+body[data-zw] .zws-video-step:hover:not(:disabled) {
+  border-color: var(--zw-accent);
+  color: var(--zw-accent);
 }
-body[data-zhiyun] .zs-video-step:disabled {
+body[data-zw] .zws-video-step:disabled {
   opacity: .4;
   cursor: default;
 }
-body[data-zhiyun] .zs-video-stage-ppt .zs-video-slide {
+body[data-zw] .zws-video-stage-ppt .zws-video-slide {
   display: block;
   /* 占满网格给它的那一行。`contain` 保证整页可见、不裁掉边上的公式，
      多出来的留白是背景色 —— 这是"图比格子窄"时的正常结果，不是布局错。 */
@@ -1346,9 +1346,9 @@ body[data-zhiyun] .zs-video-stage-ppt .zs-video-slide {
   height: 100%;
   min-height: 0;
   object-fit: contain;
-  background: var(--zy-surface);
+  background: var(--zw-surface);
 }
-body[data-zhiyun] .zs-video-stage-ppt .zs-video-empty {
+body[data-zw] .zws-video-stage-ppt .zws-video-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1363,7 +1363,7 @@ body[data-zhiyun] .zs-video-stage-ppt .zs-video-empty {
  * `grid-column: 2; grid-row: 1` 落在小窗那一格（右列第一行），再 `align/justify: start`
  * 贴到左上角。所以无论谁是主视图，它永远停在小窗的左上角，不会跟着课件跑到主视图。
  */
-body[data-zhiyun] .zs-video-swap {
+body[data-zw] .zws-video-swap {
   grid-column: 2;
   grid-row: 1;
   align-self: start;
@@ -1375,23 +1375,23 @@ body[data-zhiyun] .zs-video-swap {
   height: 24px;
   place-items: center;
   padding: 0;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 6px;
-  background: color-mix(in srgb, var(--zy-surface) 88%, transparent);
-  color: var(--zy-secondary);
+  background: color-mix(in srgb, var(--zw-surface) 88%, transparent);
+  color: var(--zw-secondary);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-video-swap:hover {
-  border-color: var(--zy-accent);
-  color: var(--zy-accent);
-  background: var(--zy-surface);
+body[data-zw] .zws-video-swap:hover {
+  border-color: var(--zw-accent);
+  color: var(--zw-accent);
+  background: var(--zw-surface);
 }
 /* 小窗里的课件只当预览：没有翻页条，图片铺满整个格子。 */
-body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt .zs-video-slide {
+body[data-zw] .zws-video[data-main="video"] .zws-video-stage-ppt .zws-video-slide {
   border-radius: 10px;
-  background: var(--zy-surface);
+  background: var(--zw-surface);
 }
 /* 小窗的翻页控件：贴在图片下沿。
  *
@@ -1401,7 +1401,7 @@ body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt .zs-video-sli
  *
  * 小窗只有约 220×124，所以控件做得很小：两个箭头 + 需要时才出现的「回到当前」。
  * 悬停才显示，不挡画面。 */
-body[data-zhiyun] .zs-video-mini-bar {
+body[data-zw] .zws-video-mini-bar {
   position: absolute;
   left: 0;
   right: 0;
@@ -1420,11 +1420,11 @@ body[data-zhiyun] .zs-video-mini-bar {
    那个按钮是"你已脱离视频"的唯一提示，藏起来等于没提示。
    用 `data-detached` 而不是 `:has()`：后者在旧 Chromium 上不支持，
    而这条正好是「脱离态必须可见」的关键提示，不能赌兼容。 */
-body[data-zhiyun] .zs-video-stage-ppt:hover .zs-video-mini-bar,
-body[data-zhiyun] .zs-video-mini-bar[data-detached="true"] {
+body[data-zw] .zws-video-stage-ppt:hover .zws-video-mini-bar,
+body[data-zw] .zws-video-mini-bar[data-detached="true"] {
   opacity: 1;
 }
-body[data-zhiyun] .zs-video-mini-step {
+body[data-zw] .zws-video-mini-step {
   flex: none;
   display: grid;
   width: 20px;
@@ -1440,21 +1440,21 @@ body[data-zhiyun] .zs-video-mini-step {
   line-height: 1;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-video-mini-step:hover:not(:disabled) {
-  border-color: var(--zy-accent);
-  background: var(--zy-accent);
+body[data-zw] .zws-video-mini-step:hover:not(:disabled) {
+  border-color: var(--zw-accent);
+  background: var(--zw-accent);
 }
-body[data-zhiyun] .zs-video-mini-step:disabled {
+body[data-zw] .zws-video-mini-step:disabled {
   opacity: .35;
   cursor: default;
 }
-body[data-zhiyun] .zs-video-mini-follow {
+body[data-zw] .zws-video-mini-follow {
   flex: none;
   padding: 0 6px;
   height: 20px;
-  border: 1px solid var(--zy-accent);
+  border: 1px solid var(--zw-accent);
   border-radius: 4px;
-  background: color-mix(in srgb, var(--zy-accent) 80%, transparent);
+  background: color-mix(in srgb, var(--zw-accent) 80%, transparent);
   color: #fff;
   font: inherit;
   font-size: 10px;
@@ -1462,41 +1462,41 @@ body[data-zhiyun] .zs-video-mini-follow {
   cursor: pointer;
   white-space: nowrap;
 }
-body[data-zhiyun] .zs-video-mini-follow:hover {
-  background: var(--zy-accent);
+body[data-zw] .zws-video-mini-follow:hover {
+  background: var(--zw-accent);
 }
 
 /* ── 字幕（右下）─────────────────────────────────────────────── */
-body[data-zhiyun] .zs-video-transcript {
+body[data-zw] .zws-video-transcript {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 10px;
-  background: var(--zy-surface);
+  background: var(--zw-surface);
   overflow: hidden;
 }
-body[data-zhiyun] .zs-video-transcript-head {
+body[data-zw] .zws-video-transcript-head {
   display: flex;
   flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 8px 11px;
-  border-bottom: 1px solid var(--zy-line);
+  border-bottom: 1px solid var(--zw-line);
   font-size: 11.5px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
 }
-body[data-zhiyun] .zs-video-transcript-head small {
+body[data-zw] .zws-video-transcript-head small {
   /* 标题行现在最多有四样东西（标题 / 无回放提示 / 条数 / 折叠钮），
      靠 `space-between` 自动分布，不给其中任何一样写 `margin-left: auto` ——
      两处 auto 会叠出第二个空当，看着像排版塌了。 */
-  color: var(--zy-muted);
+  color: var(--zw-muted);
   font-size: 11px;
 }
 /* 折叠钮：外观贴着标题走（无边框、只有 hover 才显形），因为它是一个"视图开关"，
    不是这一栏的主操作 —— 有边框的按钮会和翻页钮抢注意力。尺寸由内容 + padding 定。 */
-body[data-zhiyun] .zs-video-transcript-toggle {
+body[data-zw] .zws-video-transcript-toggle {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -1505,16 +1505,16 @@ body[data-zhiyun] .zs-video-transcript-toggle {
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   font: inherit;
   font-size: 11px;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-video-transcript-toggle:hover {
-  background: var(--zy-hover);
-  color: var(--zy-accent);
+body[data-zw] .zws-video-transcript-toggle:hover {
+  background: var(--zw-hover);
+  color: var(--zw-accent);
 }
-body[data-zhiyun] .zs-video-transcript-body {
+body[data-zw] .zws-video-transcript-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -1524,54 +1524,54 @@ body[data-zhiyun] .zs-video-transcript-body {
    （漏了就是展开时列表和单行同时出现）。
    高度交给内容：一句短话就一行，长句子最多两行（超出的用省略号收），
    右栏因此不会被一句长字幕撑长，也就不会反过来把课件压扁。 */
-body[data-zhiyun] .zs-video-transcript-active {
+body[data-zw] .zws-video-transcript-active {
   display: none;
   flex: none;
   min-width: 0;
   overflow: hidden;
 }
-body[data-zhiyun] .zs-video[data-transcript="off"] .zs-video-transcript-active {
+body[data-zw] .zws-video[data-transcript="off"] .zws-video-transcript-active {
   display: block;
 }
 /* 折叠态：只留"正在讲的那一句"。
    列表用 `display: none` 藏起来而不是不渲染 —— 1300 多条重新挂载一次很贵，
    而且收起再展开时用户还停在原来那一段附近（滚动位置不丢）。
-   这一条写在 `.zs-video-transcript-body` 之后：两者管同一个属性，同包内后写的赢，
+   这一条写在 `.zws-video-transcript-body` 之后：两者管同一个属性，同包内后写的赢，
    虽然带属性的版本特异性更高、胜负其实与顺序无关，但让"覆盖"排在"基规则"后面
    读起来才是正常顺序。 */
-body[data-zhiyun] .zs-video[data-transcript="off"] .zs-video-transcript-body {
+body[data-zw] .zws-video[data-transcript="off"] .zws-video-transcript-body {
   display: none;
 }
 /* 折叠时面板**不撑满**那一格：`align-self: start` 让它收缩到标题行 + 一句的高度。
    不加这句，网格默认的 stretch 会把它拉满右列下方，收起之后反而多出一大块空面板
    —— 那和"把空间还回去"正好相反。 */
-body[data-zhiyun] .zs-video[data-transcript="off"] .zs-video-transcript {
+body[data-zw] .zws-video[data-transcript="off"] .zws-video-transcript {
   align-self: start;
 }
-body[data-zhiyun] .zs-video-transcript-active .zs-video-line {
+body[data-zw] .zws-video-transcript-active .zws-video-line {
   cursor: pointer;
 }
-body[data-zhiyun] .zs-video-transcript-active .zs-video-line span {
+body[data-zw] .zws-video-transcript-active .zws-video-line span {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-body[data-zhiyun] .zs-video-transcript-idle {
+body[data-zw] .zws-video-transcript-idle {
   margin: 0;
   padding: 8px 10px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
   font-size: 11.5px;
 }
-body[data-zhiyun] .zs-video-transcript-empty {
+body[data-zw] .zws-video-transcript-empty {
   margin: 0;
   padding: 18px 12px;
   font-size: 11.5px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
 
 /* 一行字幕：时间 + 文本。时间列固定宽 —— 不等宽会让文本起点参差，扫读时很晃。 */
-body[data-zhiyun] .zs-video-line {
+body[data-zw] .zws-video-line {
   display: grid;
   grid-template-columns: 44px 1fr;
   gap: 8px;
@@ -1581,43 +1581,43 @@ body[data-zhiyun] .zs-video-line {
   border: 0;
   border-left: 2px solid transparent;
   background: transparent;
-  color: var(--zy-text);
+  color: var(--zw-text);
   font: inherit;
   font-size: 12px;
   line-height: 1.65;
   text-align: left;
   cursor: pointer;
 }
-body[data-zhiyun] .zs-video-line:hover {
-  background: var(--zy-hover);
+body[data-zw] .zws-video-line:hover {
+  background: var(--zw-hover);
 }
-body[data-zhiyun] .zs-video-line time {
-  color: var(--zy-muted);
+body[data-zw] .zws-video-line time {
+  color: var(--zw-muted);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 /* 当前正在讲的那一句：左侧竖条 + 底色。竖条比整行强调色更克制 ——
    一整行高亮会在快速播放时闪得很花。 */
-body[data-zhiyun] .zs-video-line.is-active {
-  border-left-color: var(--zy-accent);
-  background: var(--zy-soft);
+body[data-zw] .zws-video-line.is-active {
+  border-left-color: var(--zw-accent);
+  background: var(--zw-soft);
 }
-body[data-zhiyun] .zs-video-line.is-active time {
-  color: var(--zy-accent);
+body[data-zw] .zws-video-line.is-active time {
+  color: var(--zw-accent);
 }
 /* 时间不可信的行：仍然显示（用户要看原文），但退一档并划掉时间戳。
    不退的话，用户会以为这一句的时间是准的 —— 尾噪条跨几十分钟、
    插值句的秒数是算出来的，两者都不该看起来和正常句一样。 */
-body[data-zhiyun] .zs-video-line.is-dim {
+body[data-zw] .zws-video-line.is-dim {
   opacity: .55;
 }
-body[data-zhiyun] .zs-video-line.is-dim time {
+body[data-zw] .zws-video-line.is-dim time {
   text-decoration: line-through;
-  text-decoration-color: color-mix(in srgb, var(--zy-muted) 60%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--zw-muted) 60%, transparent);
 }
 /* 字幕轨来源标签：清洗后 / 原始碎片。
    两者内容长得几乎一样，但可信度完全不同，必须能一眼分清。 */
-body[data-zhiyun] .zs-video-track-kind {
+body[data-zw] .zws-video-track-kind {
   flex: none;
   /* 标题行是 `space-between`。新加这一项后若不吸收空隙，四个元素会被均匀摊开
      （「字幕」「条数」「清洗后」「收起」各占一角）。让它吃掉空隙、紧贴左边那一组。 */
@@ -1626,21 +1626,21 @@ body[data-zhiyun] .zs-video-track-kind {
   border-radius: 4px;
   font-size: 10px;
   line-height: 1.5;
-  color: var(--zy-secondary);
-  background: color-mix(in srgb, var(--zy-muted) 18%, transparent);
+  color: var(--zw-secondary);
+  background: color-mix(in srgb, var(--zw-muted) 18%, transparent);
 }
-body[data-zhiyun] .zs-video-track-kind[data-kind="cleaned"] {
-  color: var(--zy-action);
-  background: color-mix(in srgb, var(--zy-action) 14%, transparent);
+body[data-zw] .zws-video-track-kind[data-kind="cleaned"] {
+  color: var(--zw-action);
+  background: color-mix(in srgb, var(--zw-action) 14%, transparent);
 }
 
-body[data-zhiyun] .zs-video-loading {
+body[data-zw] .zws-video-loading {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   height: 180px;
-  color: var(--zy-secondary);
+  color: var(--zw-secondary);
   font-size: 11px;
 }
 
@@ -1654,7 +1654,7 @@ body[data-zhiyun] .zs-video-loading {
  *    同特异性下后写的那条赢，900 的竖排要能盖住这里的"两行版式"。
  */
 @media (max-width: 1120px) {
-  body[data-zhiyun] .zs-video-grid {
+  body[data-zw] .zws-video-grid {
     /* 两行：上面一排是主视图 + 小窗，底下一整行归字幕。
        两行都用 `fr` 分那 76vh，而**不是**用 `auto` 让小窗定高：小窗的 16:9
        在 220px 宽时只有 124px，`auto` 会让上面整排缩成一条横幅，主视图跟着没。
@@ -1662,40 +1662,40 @@ body[data-zhiyun] .zs-video-loading {
     grid-template-rows: minmax(0, 1.4fr) minmax(0, 1fr);
   }
   /* 主视图只占**第一行**了 —— 底下一行让给字幕，跨两行会和它重叠。 */
-  body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-video,
-  body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-ppt {
+  body[data-zw] .zws-video[data-main="video"] .zws-video-stage-video,
+  body[data-zw] .zws-video[data-main="ppt"] .zws-video-stage-ppt {
     grid-row: 1;
   }
-  body[data-zhiyun] .zs-video-transcript {
+  body[data-zw] .zws-video-transcript {
     grid-column: 1 / -1;
     grid-row: 2;
   }
   /* 知识面板跟随字幕：这个断点下主视图只占第一行，侧栏整幅横跨第二行。
      不写这一条会走自动排布，被塞进右列 —— 而右列在这一段已经不存在了，
      它会被排进隐式列，整页横向溢出。 */
-  body[data-zhiyun] .zs-topic-track {
+  body[data-zw] .zws-topic-track {
     grid-column: 1 / -1;
     grid-row: 2;
   }
-  body[data-zhiyun] .zs-video:not([data-main]) .zs-topic-track {
+  body[data-zw] .zws-video:not([data-main]) .zws-topic-track {
     grid-column: 1 / -1;
     grid-row: 2;
   }
   /* 侧栏切换钮跟着换到右下 —— 面板横跨整行后，右上角是主视图了。 */
-  body[data-zhiyun] .zs-side-switch {
+  body[data-zw] .zws-side-switch {
     grid-column: 1 / -1;
     grid-row: 2;
   }
   /* 没有回放时字幕的落位与上面那条相同（横跨整行、放底下），但**要再写一遍**：
-     基规则里那条 `.zs-video:not([data-main]) .zs-video-transcript` 多一个伪类，
-     特异性高于这里的 `.zs-video-transcript`，不重写就压不住它。 */
-  body[data-zhiyun] .zs-video:not([data-main]) .zs-video-transcript {
+     基规则里那条 `.zws-video:not([data-main]) .zws-video-transcript` 多一个伪类，
+     特异性高于这里的 `.zws-video-transcript`，不重写就压不住它。 */
+  body[data-zw] .zws-video:not([data-main]) .zws-video-transcript {
     grid-column: 1 / -1;
     grid-row: 2;
   }
   /* 没有回放时上面整排只有课件一块，那就让它占满整行 —— 右列本来就没内容，
      留着那 28% 的空档只会让课件变窄。 */
-  body[data-zhiyun] .zs-video:not([data-main]) .zs-video-stage-ppt {
+  body[data-zw] .zws-video:not([data-main]) .zws-video-stage-ppt {
     grid-column: 1 / -1;
     grid-row: 1;
   }
@@ -1705,8 +1705,8 @@ body[data-zhiyun] .zs-video-loading {
      让它按自身比例贴着格子顶边，下面留的空白算行距。
      但**不能让它比那一行还高**（窗口很矮时 16:9 会算出比行高更大的值，那就压到
      字幕那一行上去了），所以补一条 `max-height: 100%` 把它夹在格子里。 */
-  body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt,
-  body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-video {
+  body[data-zw] .zws-video[data-main="video"] .zws-video-stage-ppt,
+  body[data-zw] .zws-video[data-main="ppt"] .zws-video-stage-video {
     align-self: start;
     max-height: 100%;
   }
@@ -1723,7 +1723,7 @@ body[data-zhiyun] .zs-video-loading {
  * 就不必和那两套版式互相提防。
  */
 @media (max-width: 1120px) and (min-width: 901px) {
-  body[data-zhiyun] .zs-video[data-transcript="off"] .zs-video-grid {
+  body[data-zw] .zws-video[data-transcript="off"] .zws-video-grid {
     grid-template-rows: minmax(0, 1fr) auto;
   }
 }
@@ -1734,25 +1734,25 @@ body[data-zhiyun] .zs-video-loading {
  * 页面照常滚动。互换依然成立：`data-main` 只决定谁在上面。
  */
 @media (max-width: 900px) {
-  body[data-zhiyun] .zs-video {
+  body[data-zw] .zws-video {
     height: auto;
     max-height: none;
   }
-  body[data-zhiyun] .zs-video-grid {
+  body[data-zw] .zws-video-grid {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto;
   }
-  body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-video,
-  body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-ppt {
+  body[data-zw] .zws-video[data-main="video"] .zws-video-stage-video,
+  body[data-zw] .zws-video[data-main="ppt"] .zws-video-stage-ppt {
     grid-column: 1;
     grid-row: 1;
   }
-  body[data-zhiyun] .zs-video[data-main="video"] .zs-video-stage-ppt,
-  body[data-zhiyun] .zs-video[data-main="ppt"] .zs-video-stage-video {
+  body[data-zw] .zws-video[data-main="video"] .zws-video-stage-ppt,
+  body[data-zw] .zws-video[data-main="ppt"] .zws-video-stage-video {
     grid-column: 1;
     grid-row: 2;
   }
-  body[data-zhiyun] .zs-video-transcript {
+  body[data-zw] .zws-video-transcript {
     grid-column: 1;
     grid-row: 3;
     max-height: 40vh;
@@ -1760,28 +1760,28 @@ body[data-zhiyun] .zs-video-loading {
   /* 同上：没回放时基规则那条带 `:not([data-main])` 的落位特异性更高，得在这里
      覆盖成竖排的第三行，否则字幕会留在"右列跨两行"的位置上 —— 那时候已经没有
      右列了，它会被塞进隐式列，整页横向溢出。 */
-  body[data-zhiyun] .zs-video:not([data-main]) .zs-video-transcript {
+  body[data-zw] .zws-video:not([data-main]) .zws-video-transcript {
     grid-column: 1;
     grid-row: 3;
   }
   /* 窄屏上下堆叠后，小窗挪到第二行，互换钮跟着到第二行的左上角。 */
-  body[data-zhiyun] .zs-video-swap {
+  body[data-zw] .zws-video-swap {
     grid-column: 1;
     grid-row: 2;
   }
   /* 知识面板在窄屏落到第三行（与字幕同位），并限高 —— 否则几十个知识点
      会把整页拉得很长，滚到视频要滑好几屏。 */
-  body[data-zhiyun] .zs-topic-track {
+  body[data-zw] .zws-topic-track {
     grid-column: 1;
     grid-row: 3;
     max-height: 40vh;
   }
-  body[data-zhiyun] .zs-video:not([data-main]) .zs-topic-track {
+  body[data-zw] .zws-video:not([data-main]) .zws-topic-track {
     grid-column: 1;
     grid-row: 3;
   }
   /* 切换钮在窄屏挪到第三行右上（面板顶部右侧）。 */
-  body[data-zhiyun] .zs-side-switch {
+  body[data-zw] .zws-side-switch {
     grid-column: 1;
     grid-row: 3;
     align-self: start;

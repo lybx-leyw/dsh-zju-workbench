@@ -176,7 +176,7 @@ export async function verifyEgress() {
   const { module } = await loadHarnessProxy();
   if (!module || typeof module.proxyRouteFor !== 'function') return { verified: false, reason: 'proxyRouteFor 不可用' };
   try {
-    const route = module.proxyRouteFor(new URL('https://zhiyun-net-proxy-selfcheck.invalid/'));
+    const route = module.proxyRouteFor(new URL('https://zw-net-proxy-selfcheck.invalid/'));
     return { verified: route?.proxied === true, reason: route?.proxied ? null : '策略未生效' };
   } catch (error) {
     return { verified: false, reason: error.message };

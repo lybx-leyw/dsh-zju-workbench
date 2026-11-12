@@ -1,7 +1,7 @@
 /**
  * 智云核心「互动课堂」导出层（L2 领域包）。
  *
- * 把 OpenMAIC 的导出层搬成 `ctx.zhiyunClassroomExport`：
+ * 把 OpenMAIC 的导出层搬成 `ctx.zwClassroomExport`：
  *
  *   pptx(classroom)          → Buffer，一个 .pptx（PPT/ZIP 容器）
  *   html(classroom)          → string，完整单文件 HTML 文档（可直接进 <iframe srcdoc>）
@@ -10,7 +10,7 @@
  *
  * # 依赖方向
  *
- * `inject: ['zhiyunClassroomStudio']` 只声明**硬依赖**（规范 §4）：课堂文档从
+ * `inject: ['zwClassroomStudio']` 只声明**硬依赖**（规范 §4）：课堂文档从
  * 宿主服务取。`apply()` **永不抛** —— 服务照常 provide，拿不到文档时方法在自己的
  * 错误里说明原因（与 `host-deeptutor` / `host-classroom` 同一条约定）。
  *
@@ -38,29 +38,29 @@ import { playerStrings, resolveLang } from './pptx/i18n.js';
 import { exportVideo } from './video.js';
 import { orderManifestScenes } from './standalone/order-scenes.js';
 
-export const name = 'zhiyun-core-classroom-export';
+export const name = 'zw-core-classroom-export';
 
 /** 规范 §4：业务包只认服务，不认实现。 */
-export const inject = ['zhiyunClassroomStudio'];
+export const inject = ['zwClassroomStudio'];
 
 export const PACKAGE_VERSION = '0.1.0';
 
 function makeLogger(ctx, config) {
   if (config.logger) return config.logger;
   return {
-    debug: (...args) => ctx.logger?.debug?.('[zhiyun-classroom-export]', ...args),
-    info: (...args) => ctx.logger?.info?.('[zhiyun-classroom-export]', ...args),
-    warn: (...args) => ctx.logger?.warn?.('[zhiyun-classroom-export]', ...args),
-    error: (...args) => ctx.logger?.error?.('[zhiyun-classroom-export]', ...args),
+    debug: (...args) => ctx.logger?.debug?.('[zw-classroom-export]', ...args),
+    info: (...args) => ctx.logger?.info?.('[zw-classroom-export]', ...args),
+    warn: (...args) => ctx.logger?.warn?.('[zw-classroom-export]', ...args),
+    error: (...args) => ctx.logger?.error?.('[zw-classroom-export]', ...args),
   };
 }
 
 /**
- * 服务面：每个方法自己取 `ctx.get('zhiyunClassroomStudio')`（宿主可能被重挂），
+ * 服务面：每个方法自己取 `ctx.get('zwClassroomStudio')`（宿主可能被重挂），
  * 因此不缓存实例。
  */
 function createExportService(ctx, config, log) {
-  const studio = () => ctx.get?.('zhiyunClassroomStudio');
+  const studio = () => ctx.get?.('zwClassroomStudio');
 
   const load = async (classroom, options) => {
     const resolved = await resolveClassroom(studio(), classroom);
@@ -266,17 +266,17 @@ export function apply(ctx, config = {}) {
   try {
     const service = createExportService(ctx, config, log);
     try {
-      remove = ctx.provide('zhiyunClassroomExport', service) ?? (() => {});
+      remove = ctx.provide('zwClassroomExport', service) ?? (() => {});
     } catch (error) {
       // 服务名被占用：能力缺席比整个 profile 起不来好（CONTRIBUTING 3.1）。
-      log.error('zhiyunClassroomExport 注册失败，导出能力本次不可用', error?.message ?? error);
+      log.error('zwClassroomExport 注册失败，导出能力本次不可用', error?.message ?? error);
     }
     try {
       ctx.on?.('dispose', () => {
         try {
           remove();
         } catch (error) {
-          log.warn('卸载时注销 zhiyunClassroomExport 失败', error?.message ?? error);
+          log.warn('卸载时注销 zwClassroomExport 失败', error?.message ?? error);
         }
       });
     } catch (error) {

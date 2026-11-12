@@ -1,5 +1,5 @@
 /**
- * 智云 Pro 的**网络代理宿主半边**。
+ * ZJU Workbench 的**网络代理宿主半边**。
  *
  * # 它解决什么问题
  *
@@ -39,7 +39,7 @@ import { createRelay } from './relay.js';
 import { directHosts, installEgress, verifyEgress } from './egress.js';
 import { createSettingsHandler } from './settings.js';
 
-export const name = 'zhiyun-net-proxy';
+export const name = 'zw-net-proxy';
 
 /**
  * 只硬依赖 `profileContext`（拿数据目录）。`webServer` 走 `ctx.inject` 惰性取 ——
@@ -50,12 +50,12 @@ export const inject = ['profileContext'];
 
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-net-proxy] ${message}`;
+    const line = `[zw-net-proxy] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
   const warn = (message) => {
-    const line = `[zhiyun-net-proxy] ${message}`;
+    const line = `[zw-net-proxy] ${message}`;
     if (typeof ctx.logger?.warn === 'function') ctx.logger.warn(line);
     else console.warn(line);
   };
@@ -189,10 +189,10 @@ export async function apply(ctx, config = {}) {
       const dispose = scope.webServer.register({ kind: 'exact', path: ROUTE_PATH, handler });
       log(`设置路由：${ROUTE_PATH}`);
       return dispose;
-    }, 'zhiyun: net-proxy settings route');
+    }, 'zw: net-proxy settings route');
   });
 
-  const removeService = ctx.provide('zhiyunNetProxy', {
+  const removeService = ctx.provide('zwNetProxy', {
     routePath: ROUTE_PATH,
     file,
     relayUrl: () => relay.url,

@@ -26,12 +26,12 @@ test('PDF：导入后在笔记页里真的能读，并跟随宿主亮暗', {
   // 这条是**真宿主 + 真浏览器**的端到端，前置条件比其它用例重得多：
   // 宿主必须先登录（或配好 API Key）并选定工作区，工作台页面才会挂载。
   // 全新 home 起出来的宿主只有「新会话 + 登录 / 添加 API Key」落地页，
-  // `.zy-page` 永远不出现 —— 那不是 PDF 坏了，而是这台机器跑不了端到端。
+  // `.zw-page` 永远不出现 —— 那不是 PDF 坏了，而是这台机器跑不了端到端。
   //
   // 所以显式用环境变量开启，而不是靠探测去猜（探测会把「等 60 秒后超时」变成常态）：
-  //   ZHIYUN_PDF_E2E=1 npm test   # 已登录的机器上跑
-  skip: !process.env.ZHIYUN_PDF_E2E
-    && '端到端需要已登录且已选工作区的宿主；设 ZHIYUN_PDF_E2E=1 在那种机器上开启',
+  //   ZW_PDF_E2E=1 npm test   # 已登录的机器上跑
+  skip: !process.env.ZW_PDF_E2E
+    && '端到端需要已登录且已选工作区的宿主；设 ZW_PDF_E2E=1 在那种机器上开启',
 }, async (t) => {
   const browser = await launchBrowser();
   if (browser === null) {
@@ -72,7 +72,7 @@ test('PDF：导入后在笔记页里真的能读，并跟随宿主亮暗', {
     // 宿主首次运行是**多步**的：先「继续」确认预览版说明，之后才轮到登录 / API Key。
     // 所以要反复点掉确认层，并在每一步之后**轮询**落到了哪一屏 —— 一次点击只走一步，
     // 界面也不是瞬时切换。两条出路：
-    //   · 工作台页面挂上了（`.zy-page`）→ 正常走端到端；
+    //   · 工作台页面挂上了（`.zw-page`）→ 正常走端到端；
     //   · 停在「登录 / 添加 API Key」→ 这台机器没有凭证，skip。
     // 把「等页面」与「等决定」分开写，就不会在没有凭证时干等 60 秒再报一句无用的超时。
     let mounted = false;
@@ -86,7 +86,7 @@ test('PDF：导入后在笔记页里真的能读，并跟随宿主亮暗', {
         return count;
       });
       const state = await page.evaluate(() => ({
-        mounted: document.querySelector('.zy-page') !== null,
+        mounted: document.querySelector('.zw-page') !== null,
         credentials: /登录 DeepSeek 账号|添加 API Key|请选择模型/.test(document.body?.innerText ?? ''),
       }));
       mounted = state.mounted;
@@ -100,12 +100,12 @@ test('PDF：导入后在笔记页里真的能读，并跟随宿主亮暗', {
       t.skip('宿主未登录、也没有 API Key：工作台页面不会挂载，端到端无从开始');
       return;
     }
-    await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+    await page.locator('.zw-page[data-page=today]').waitFor({ timeout: 60000 });
     await sleep(500);
 
     // 导入（走与页面相同的 RPC 信封）
     const imported = await page.evaluate(async (base64) => {
-      const r = await fetch('/api/zhiyun-vault-notes', {
+      const r = await fetch('/api/zw-vault-notes', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ type: 'client-request', rpcId: 'i', payload: { method: 'importAsset', args: { title: '端到端', folder: '', ext: 'pdf', base64 } } }),
@@ -120,13 +120,13 @@ test('PDF：导入后在笔记页里真的能读，并跟随宿主亮暗', {
     await page.evaluate(() => document.querySelector('nav[aria-label="主要页面"] button[aria-label="笔记"]')?.click());
     await sleep(1500);
     await page.evaluate((p) => {
-      [...document.querySelectorAll('.zs-nt-rowbtn[data-path]')].find((b) => b.dataset.path === p)?.click();
+      [...document.querySelectorAll('.zws-nt-rowbtn[data-path]')].find((b) => b.dataset.path === p)?.click();
     }, pdfPath);
     await sleep(2500);
 
-    assert.equal(await page.locator('iframe.zs-nt-pdf').count(), 1, 'PDF 应渲染成 iframe');
+    assert.equal(await page.locator('iframe.zws-nt-pdf').count(), 1, 'PDF 应渲染成 iframe');
 
-    const frame = page.frameLocator('iframe.zs-nt-pdf');
+    const frame = page.frameLocator('iframe.zws-nt-pdf');
     await frame.locator('.pdf-page canvas').first().waitFor({ timeout: 30000 });
 
     const drawn = await frame.locator('body').evaluate(() => ({

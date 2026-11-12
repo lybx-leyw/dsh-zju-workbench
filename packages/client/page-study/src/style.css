@@ -1,122 +1,122 @@
-/* packages/dsh-zhiyun-page-study/src/style.css
+/* packages/dsh-zju-page-study/src/style.css
  *
  * 由 packages/dsh-zhiyun-study/src/style.css 按「哪个包真的用到这个类」机械切分而来，
- * 规则文本逐字未改（顺序保持原文件中的相对顺序）。.zy-* 与宿主外观无关的
+ * 规则文本逐字未改（顺序保持原文件中的相对顺序）。.zw-* 与宿主外观无关的
  * 公共类留在壳，领域状态的样式跟着各自的包走。
  */
 
-body[data-zhiyun] .zy-page[data-page=study] .zy-content {
+body[data-zw] .zw-page[data-page=study] .zw-content {
   max-width: 1400px;
 }
-body[data-zhiyun] .zs-workbench {
+body[data-zw] .zws-workbench {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   gap: 28px;
   align-items: start;
 }
-body[data-zhiyun] .zs-reader {
+body[data-zw] .zws-reader {
   min-width: 0;
 }
-body[data-zhiyun] .zs-progress {
+body[data-zw] .zws-progress {
   padding: 13px 0;
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 12px;
-  color: var(--zy-accent);
+  color: var(--zw-accent);
 }
-body[data-zhiyun] .zs-progress progress {
+body[data-zw] .zws-progress progress {
   min-width: 40px;
   width: 100px;
-  accent-color: var(--zy-action);
+  accent-color: var(--zw-action);
 }
-body[data-zhiyun] .zs-progress button {
+body[data-zw] .zws-progress button {
   margin-left: auto;
 }
-body[data-zhiyun] .zs-outline {
-  border-left: 2px solid var(--zy-accent);
+body[data-zw] .zws-outline {
+  border-left: 2px solid var(--zw-accent);
   padding: 0 0 0 15px;
   margin: 24px 0;
 }
-body[data-zhiyun] .zs-outline small {
+body[data-zw] .zws-outline small {
   font-size: 11px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-outline h3 {
+body[data-zw] .zws-outline h3 {
   font-size: 17px;
   font-weight: 500;
   margin: 6px 0 10px;
 }
-body[data-zhiyun] .zs-outline button {
+body[data-zw] .zws-outline button {
   font-size: 11px;
   margin-right: 15px;
 }
-body[data-zhiyun] .zs-block {
+body[data-zw] .zws-block {
   scroll-margin: 25px;
-  border-bottom: 1px solid var(--zy-line);
+  border-bottom: 1px solid var(--zw-line);
   padding: 20px 0;
 }
-body[data-zhiyun] .zs-block header {
+body[data-zw] .zws-block header {
   display: flex;
   justify-content: space-between;
   gap: 10px;
   font-size: 11px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-block h3 {
+body[data-zw] .zws-block h3 {
   font-size: 16px;
   font-weight: 500;
   margin: 12px 0;
 }
-body[data-zhiyun] .zs-block p {
+body[data-zw] .zws-block p {
   font-size: 13px;
   line-height: 1.95;
   margin: 8px 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-body[data-zhiyun] .zs-facet {
+body[data-zw] .zws-facet {
   font-size: 11px;
   padding: 2px 5px;
-  background: var(--zy-soft);
-  color: var(--zy-accent);
+  background: var(--zw-soft);
+  color: var(--zw-accent);
   border-radius: 3px;
   margin-left: 4px;
 }
-body[data-zhiyun] .zs-block p.zs-bridge {
-  color: var(--zy-secondary);
+body[data-zw] .zws-block p.zws-bridge {
+  color: var(--zw-secondary);
   padding-left: 12px;
-  border-left: 2px solid var(--zy-line);
+  border-left: 2px solid var(--zw-line);
   font-size: 12px;
 }
-body[data-zhiyun] .zs-diagnostics {
+body[data-zw] .zws-diagnostics {
   margin: 24px 0;
   font-size: 11px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
 }
-body[data-zhiyun] .zs-diagnostics summary,
-body[data-zhiyun] .zs-models summary {
+body[data-zw] .zws-diagnostics summary,
+body[data-zw] .zws-models summary {
   cursor: pointer;
 }
-body[data-zhiyun] .zs-models {
+body[data-zw] .zws-models {
   margin-top: 24px;
   padding-top: 15px;
-  border-top: 1px solid var(--zy-line);
+  border-top: 1px solid var(--zw-line);
   font-size: 11px;
 }
-body[data-zhiyun] .zs-models p {
-  color: var(--zy-secondary);
+body[data-zw] .zws-models p {
+  color: var(--zw-secondary);
   line-height: 1.8;
 }
-body[data-zhiyun] .zs-models label {
+body[data-zw] .zws-models label {
   margin: 12px 0;
 }
-body[data-zhiyun] .zs-models select {
+body[data-zw] .zws-models select {
   max-width: 100%;
   width: 100%;
   font-size: 11px;
 }
-body[data-zhiyun] .zs-slide-controls {
+body[data-zw] .zws-slide-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -124,182 +124,182 @@ body[data-zhiyun] .zs-slide-controls {
   font-size: 11px;
   margin-bottom: 16px;
 }
-body[data-zhiyun] .zs-slide {
+body[data-zw] .zws-slide {
   display: block;
   max-width: 100%;
   width: 100%;
   height: auto;
-  border: 1px solid var(--zy-line);
+  border: 1px solid var(--zw-line);
   border-radius: 4px;
 }
-body[data-zhiyun] .zs-transcript p {
+body[data-zw] .zws-transcript p {
   display: flex;
   gap: 18px;
   padding: 9px 0;
   margin: 0;
-  border-bottom: 1px solid var(--zy-line);
+  border-bottom: 1px solid var(--zw-line);
   line-height: 1.85;
 }
-body[data-zhiyun] .zs-transcript time {
+body[data-zw] .zws-transcript time {
   font-size: 11px;
-  color: var(--zy-muted);
+  color: var(--zw-muted);
   padding-top: 3px;
   flex: none;
 }
-body[data-zhiyun] .zs-transcript span {
+body[data-zw] .zws-transcript span {
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
-body[data-zhiyun] .zs-study select {
+body[data-zw] .zws-study select {
   max-width: 100%;
 }
 /* Study is a page in the product shell: it owns one wide, persistent workspace,
    with the course tree and the selected lesson sharing the same reading flow. */
-body[data-zhiyun] .zy-page[data-page=study] .zy-content { max-width:none; width:100%; padding:28px 34px 34px; }
-body[data-zhiyun] .zs-study { width:100%; color:var(--zy-text); }
-body[data-zhiyun] .zs-workbench-shell { width:100%; }
-body[data-zhiyun] .zs-workbench { display:grid; grid-template-columns:minmax(246px, 286px) minmax(0,1fr); gap:34px; align-items:start; }
+body[data-zw] .zw-page[data-page=study] .zw-content { max-width:none; width:100%; padding:28px 34px 34px; }
+body[data-zw] .zws-study { width:100%; color:var(--zw-text); }
+body[data-zw] .zws-workbench-shell { width:100%; }
+body[data-zw] .zws-workbench { display:grid; grid-template-columns:minmax(246px, 286px) minmax(0,1fr); gap:34px; align-items:start; }
 /* 目录收起：左列收成一条窄导轨，正文吃掉让出来的宽度。
    收起状态不写死宽度的原因是 —— 它的内容只有一个竖向「目录」钮，宽度由内容自己撑。 */
-body[data-zhiyun] .zs-workbench.is-tree-collapsed { grid-template-columns:auto minmax(0,1fr); }
-body[data-zhiyun] .zs-course-tree { position:sticky; top:0; display:flex; flex-direction:column; min-width:0; max-height:calc(100vh - 132px); padding:2px 0 0; }
+body[data-zw] .zws-workbench.is-tree-collapsed { grid-template-columns:auto minmax(0,1fr); }
+body[data-zw] .zws-course-tree { position:sticky; top:0; display:flex; flex-direction:column; min-width:0; max-height:calc(100vh - 132px); padding:2px 0 0; }
 /* 收起时目录缩成一个窄条，只有一个竖向「目录」钮。 */
-body[data-zhiyun] .zs-course-tree.is-collapsed { align-items:flex-start; }
-body[data-zhiyun] .zs-tree-collapse { flex:none; width:26px; height:26px; display:grid; place-items:center; border:0; border-radius:6px; background:transparent; color:var(--zy-muted); font:inherit; font-size:15px; cursor:pointer; margin-left:6px; }
-body[data-zhiyun] .zs-tree-collapse:hover { background:var(--zy-hover); color:var(--zy-text); }
-body[data-zhiyun] .zs-tree-expand { display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 6px; border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); color:var(--zy-muted); font:inherit; font-size:15px; cursor:pointer; }
-body[data-zhiyun] .zs-tree-expand:hover { background:var(--zy-hover); color:var(--zy-text); }
+body[data-zw] .zws-course-tree.is-collapsed { align-items:flex-start; }
+body[data-zw] .zws-tree-collapse { flex:none; width:26px; height:26px; display:grid; place-items:center; border:0; border-radius:6px; background:transparent; color:var(--zw-muted); font:inherit; font-size:15px; cursor:pointer; margin-left:6px; }
+body[data-zw] .zws-tree-collapse:hover { background:var(--zw-hover); color:var(--zw-text); }
+body[data-zw] .zws-tree-expand { display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 6px; border:1px solid var(--zw-line); border-radius:8px; background:var(--zw-surface); color:var(--zw-muted); font:inherit; font-size:15px; cursor:pointer; }
+body[data-zw] .zws-tree-expand:hover { background:var(--zw-hover); color:var(--zw-text); }
 /* 「目录」两个字竖排：窄条里横排会折行。 */
-body[data-zhiyun] .zs-tree-expand-text { writing-mode:vertical-rl; font-size:11px; letter-spacing:.15em; }
-body[data-zhiyun] .zs-tree-top { display:flex; align-items:center; justify-content:space-between; padding:0 10px 16px; }
-body[data-zhiyun] .zs-eyebrow { display:block; color:var(--zy-muted); font-size:11px; letter-spacing:.08em; }
-body[data-zhiyun] .zs-tree-top h2 { margin:3px 0 0; font-size:16px; font-weight:600; }
-body[data-zhiyun] .zs-course-total { min-width:25px; height:25px; display:grid; place-items:center; border-radius:7px; background:var(--zy-soft); color:var(--zy-accent); font-size:11px; }
-body[data-zhiyun] .zs-tree-search { display:flex; align-items:center; gap:9px; height:36px; margin:0 0 12px; padding:0 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-muted); }
-body[data-zhiyun] .zs-tree-search>span { font-size:19px; line-height:1; }
-body[data-zhiyun] .zs-tree-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--zy-text); font:inherit; font-size:12px; }
+body[data-zw] .zws-tree-expand-text { writing-mode:vertical-rl; font-size:11px; letter-spacing:.15em; }
+body[data-zw] .zws-tree-top { display:flex; align-items:center; justify-content:space-between; padding:0 10px 16px; }
+body[data-zw] .zws-eyebrow { display:block; color:var(--zw-muted); font-size:11px; letter-spacing:.08em; }
+body[data-zw] .zws-tree-top h2 { margin:3px 0 0; font-size:16px; font-weight:600; }
+body[data-zw] .zws-course-total { min-width:25px; height:25px; display:grid; place-items:center; border-radius:7px; background:var(--zw-soft); color:var(--zw-accent); font-size:11px; }
+body[data-zw] .zws-tree-search { display:flex; align-items:center; gap:9px; height:36px; margin:0 0 12px; padding:0 10px; border:1px solid var(--zw-line); border-radius:7px; background:var(--zw-surface); color:var(--zw-muted); }
+body[data-zw] .zws-tree-search>span { font-size:19px; line-height:1; }
+body[data-zw] .zws-tree-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--zw-text); font:inherit; font-size:12px; }
 /* 内层 input 关掉了 outline，环就**必须**画在外层容器上 —— 否则键盘聚焦课程目录搜索框时
    一点反馈都没有。这和工具栏那颗搜索框是同一个缺陷，两处都要有环。 */
-body[data-zhiyun] .zs-tree-search:focus-within { border-color:var(--zy-accent); outline:2px solid var(--zy-accent); outline-offset:1px; }
-body[data-zhiyun] .zs-corpus { margin:0 0 12px; }
-body[data-zhiyun] .zs-corpus .zs-tree-search { margin-bottom:8px; }
-body[data-zhiyun] .zs-corpus-list { display:flex; flex-direction:column; gap:6px; }
-body[data-zhiyun] .zs-corpus-hit { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; padding:8px 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:inherit; text-align:left; }
-body[data-zhiyun] .zs-corpus-hit strong { font-size:12px; font-weight:500; }
-body[data-zhiyun] .zs-corpus-hit small { font-size:11px; color:var(--zy-muted); }
-body[data-zhiyun] .zs-course-list { flex:1; min-height:0; overflow:auto; padding-right:4px; }
-body[data-zhiyun] .zs-course-group { margin-bottom:3px; }
-body[data-zhiyun] .zs-course-toggle { display:flex; align-items:center; width:100%; min-height:49px; gap:9px; padding:6px 9px; border:0; border-radius:7px; background:transparent; color:var(--zy-text); text-align:left; cursor:pointer; }
-body[data-zhiyun] .zs-course-toggle:hover { background:var(--zy-hover); }
-body[data-zhiyun] .zs-chevron { width:14px; flex:none; color:var(--zy-muted); font-size:17px; text-align:center; }
-body[data-zhiyun] .zs-course-name { display:flex; flex-direction:column; min-width:0; flex:1; gap:2px; }
-body[data-zhiyun] .zs-course-name strong { overflow:hidden; color:var(--zy-text); font-size:12.5px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zw] .zws-tree-search:focus-within { border-color:var(--zw-accent); outline:2px solid var(--zw-accent); outline-offset:1px; }
+body[data-zw] .zws-corpus { margin:0 0 12px; }
+body[data-zw] .zws-corpus .zws-tree-search { margin-bottom:8px; }
+body[data-zw] .zws-corpus-list { display:flex; flex-direction:column; gap:6px; }
+body[data-zw] .zws-corpus-hit { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; padding:8px 10px; border:1px solid var(--zw-line); border-radius:7px; background:var(--zw-surface); color:inherit; text-align:left; }
+body[data-zw] .zws-corpus-hit strong { font-size:12px; font-weight:500; }
+body[data-zw] .zws-corpus-hit small { font-size:11px; color:var(--zw-muted); }
+body[data-zw] .zws-course-list { flex:1; min-height:0; overflow:auto; padding-right:4px; }
+body[data-zw] .zws-course-group { margin-bottom:3px; }
+body[data-zw] .zws-course-toggle { display:flex; align-items:center; width:100%; min-height:49px; gap:9px; padding:6px 9px; border:0; border-radius:7px; background:transparent; color:var(--zw-text); text-align:left; cursor:pointer; }
+body[data-zw] .zws-course-toggle:hover { background:var(--zw-hover); }
+body[data-zw] .zws-chevron { width:14px; flex:none; color:var(--zw-muted); font-size:17px; text-align:center; }
+body[data-zw] .zws-course-name { display:flex; flex-direction:column; min-width:0; flex:1; gap:2px; }
+body[data-zw] .zws-course-name strong { overflow:hidden; color:var(--zw-text); font-size:12.5px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
 /* 学期（「2026-2027」）与节次数都是用户要读的元信息：按 repo-profile 第 1 节，
    必须读的元信息 ≥12px，11px 只留给可忽略的装饰。 */
-body[data-zhiyun] .zs-course-name small,.zs-course-count { color:var(--zy-muted); font-size:12px; }
-body[data-zhiyun] .zs-course-count { flex:none; }
-body[data-zhiyun] .zs-course-group.is-open > .zs-course-toggle { background:color-mix(in srgb,var(--zy-soft) 46%,transparent); }
-body[data-zhiyun] .zs-tree-lessons { margin:2px 0 7px 13px; padding-left:9px; border-left:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-tree-lesson { display:flex; align-items:center; width:100%; min-height:47px; gap:8px; padding:6px 7px; border:0; border-radius:6px; background:transparent; color:var(--zy-text); text-align:left; cursor:pointer; }
-body[data-zhiyun] .zs-tree-lesson:hover { background:var(--zy-hover); }
-body[data-zhiyun] .zs-tree-lesson.is-selected { background:var(--zy-soft); color:var(--zy-accent); }
-body[data-zhiyun] .zs-state-dot { width:6px; height:6px; flex:none; border-radius:50%; background:var(--zy-muted); }
-body[data-zhiyun] .zs-state-dot.is-ready { background:#44856a; }
-body[data-zhiyun] .zs-state-dot.is-running { background:#bd8745; animation:zs-pulse 1s infinite alternate; }
-@keyframes zs-pulse { to { opacity:.35; } }
-body[data-zhiyun] .zs-tree-lesson-copy { display:flex; flex-direction:column; min-width:0; flex:1; gap:2px; }
-body[data-zhiyun] .zs-tree-lesson-copy strong { overflow:hidden; font-size:12.5px; font-weight:500; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zw] .zws-course-name small,.zws-course-count { color:var(--zw-muted); font-size:12px; }
+body[data-zw] .zws-course-count { flex:none; }
+body[data-zw] .zws-course-group.is-open > .zws-course-toggle { background:color-mix(in srgb,var(--zw-soft) 46%,transparent); }
+body[data-zw] .zws-tree-lessons { margin:2px 0 7px 13px; padding-left:9px; border-left:1px solid var(--zw-line); }
+body[data-zw] .zws-tree-lesson { display:flex; align-items:center; width:100%; min-height:47px; gap:8px; padding:6px 7px; border:0; border-radius:6px; background:transparent; color:var(--zw-text); text-align:left; cursor:pointer; }
+body[data-zw] .zws-tree-lesson:hover { background:var(--zw-hover); }
+body[data-zw] .zws-tree-lesson.is-selected { background:var(--zw-soft); color:var(--zw-accent); }
+body[data-zw] .zws-state-dot { width:6px; height:6px; flex:none; border-radius:50%; background:var(--zw-muted); }
+body[data-zw] .zws-state-dot.is-ready { background:#44856a; }
+body[data-zw] .zws-state-dot.is-running { background:#bd8745; animation:zws-pulse 1s infinite alternate; }
+@keyframes zws-pulse { to { opacity:.35; } }
+body[data-zw] .zws-tree-lesson-copy { display:flex; flex-direction:column; min-width:0; flex:1; gap:2px; }
+body[data-zw] .zws-tree-lesson-copy strong { overflow:hidden; font-size:12.5px; font-weight:500; text-overflow:ellipsis; white-space:nowrap; }
 /* 节次时间与「待整理 / 已整理 / 解析中」是状态信息，用户要据此判断该不该打开这一节 ——
    同属「必须能读」，因此跟着提到 12px。 */
-body[data-zhiyun] .zs-tree-lesson-copy small,.zs-state-label { color:var(--zy-muted); font-size:12px; white-space:nowrap; }
-body[data-zhiyun] .zs-state-label { flex:none; }
-body[data-zhiyun] .zs-tree-hint { padding:7px 9px; color:var(--zy-muted); font-size:11px; }
-body[data-zhiyun] .zs-tree-empty { margin:10px 8px; padding:12px 10px; border:1px dashed var(--zy-line); border-radius:7px; color:var(--zy-muted); font-size:11px; }
-body[data-zhiyun] .zs-tree-empty p { margin:0; }
-body[data-zhiyun] .zs-tree-empty .zs-text { margin-top:7px; font-size:11px; }
-body[data-zhiyun] .zs-tree-footer { flex:none; margin-top:10px; padding:10px 8px 0; border-top:1px solid var(--zy-line); color:var(--zy-muted); font-size:11px; }
-body[data-zhiyun] .zs-models { margin-top:7px; padding-top:0; border:0; }
-body[data-zhiyun] .zs-models > summary { padding:5px 0; color:var(--zy-secondary); }
-body[data-zhiyun] .zs-models > p { font-size:11px; }
-body[data-zhiyun] .zs-reader { min-width:0; padding:0 0 30px; }
-body[data-zhiyun] .zs-reader-empty { min-height:min(680px,calc(100vh - 190px)); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:42px; text-align:center; }
-body[data-zhiyun] .zs-motto-text { color:var(--zy-accent); font-family:"Songti SC","SimSun",serif; font-size:20px; letter-spacing:.12em; }
-body[data-zhiyun] .zs-reader-empty h1 { max-width:560px; margin:17px 0 8px; font-size:21px; font-weight:500; letter-spacing:-.02em; }
-body[data-zhiyun] .zs-reader-empty > p { max-width:510px; margin:0; color:var(--zy-secondary); font-size:11px; line-height:1.9; }
-body[data-zhiyun] .zs-empty-hint { display:flex; align-items:center; gap:11px; margin-top:34px; padding:16px 20px; border-top:1px solid var(--zy-line); border-bottom:1px solid var(--zy-line); text-align:left; }
-body[data-zhiyun] .zs-empty-hint > span { color:var(--zy-accent); font-size:11px; }
-body[data-zhiyun] .zs-empty-hint > div { display:flex; flex-direction:column; gap:3px; padding-right:20px; }
-body[data-zhiyun] .zs-empty-hint strong { font-size:11px; font-weight:500; }
-body[data-zhiyun] .zs-empty-hint small { color:var(--zy-muted); font-size:11px; }
+body[data-zw] .zws-tree-lesson-copy small,.zws-state-label { color:var(--zw-muted); font-size:12px; white-space:nowrap; }
+body[data-zw] .zws-state-label { flex:none; }
+body[data-zw] .zws-tree-hint { padding:7px 9px; color:var(--zw-muted); font-size:11px; }
+body[data-zw] .zws-tree-empty { margin:10px 8px; padding:12px 10px; border:1px dashed var(--zw-line); border-radius:7px; color:var(--zw-muted); font-size:11px; }
+body[data-zw] .zws-tree-empty p { margin:0; }
+body[data-zw] .zws-tree-empty .zws-text { margin-top:7px; font-size:11px; }
+body[data-zw] .zws-tree-footer { flex:none; margin-top:10px; padding:10px 8px 0; border-top:1px solid var(--zw-line); color:var(--zw-muted); font-size:11px; }
+body[data-zw] .zws-models { margin-top:7px; padding-top:0; border:0; }
+body[data-zw] .zws-models > summary { padding:5px 0; color:var(--zw-secondary); }
+body[data-zw] .zws-models > p { font-size:11px; }
+body[data-zw] .zws-reader { min-width:0; padding:0 0 30px; }
+body[data-zw] .zws-reader-empty { min-height:min(680px,calc(100vh - 190px)); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:42px; text-align:center; }
+body[data-zw] .zws-motto-text { color:var(--zw-accent); font-family:"Songti SC","SimSun",serif; font-size:20px; letter-spacing:.12em; }
+body[data-zw] .zws-reader-empty h1 { max-width:560px; margin:17px 0 8px; font-size:21px; font-weight:500; letter-spacing:-.02em; }
+body[data-zw] .zws-reader-empty > p { max-width:510px; margin:0; color:var(--zw-secondary); font-size:11px; line-height:1.9; }
+body[data-zw] .zws-empty-hint { display:flex; align-items:center; gap:11px; margin-top:34px; padding:16px 20px; border-top:1px solid var(--zw-line); border-bottom:1px solid var(--zw-line); text-align:left; }
+body[data-zw] .zws-empty-hint > span { color:var(--zw-accent); font-size:11px; }
+body[data-zw] .zws-empty-hint > div { display:flex; flex-direction:column; gap:3px; padding-right:20px; }
+body[data-zw] .zws-empty-hint strong { font-size:11px; font-weight:500; }
+body[data-zw] .zws-empty-hint small { color:var(--zw-muted); font-size:11px; }
 /* 表头只有一行：面包屑（课程 / 节次）在上，整理状态与时间在左、动作在右。
    这里刻意**没有**节次大标题 —— 左侧目录里已经高亮着同一句话，
    再写一遍就是把主视图的高度挪去说重复的话。
    三张「终稿 / 课件 / 字幕」卡片同理已删除：它们的去向 tab 栏里都有。 */
-body[data-zhiyun] .zs-current-section { padding:0 0 12px; border-bottom:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-breadcrumb { display:flex; align-items:center; gap:8px; overflow:hidden; color:var(--zy-muted); font-size:11px; white-space:nowrap; }
-body[data-zhiyun] .zs-breadcrumb span:last-child { overflow:hidden; color:var(--zy-secondary); text-overflow:ellipsis; }
-body[data-zhiyun] .zs-current-main { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:8px; }
-body[data-zhiyun] .zs-current-meta { display:flex; align-items:center; gap:10px; min-width:0; }
-body[data-zhiyun] .zs-current-when { overflow:hidden; color:var(--zy-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
-body[data-zhiyun] .zs-current-state { display:inline-flex; flex:none; align-items:center; gap:6px; color:var(--zy-secondary); font-size:11px; }
-body[data-zhiyun] .zs-current-state i { width:6px; height:6px; border-radius:50%; background:#b88a4a; }
-body[data-zhiyun] .zs-current-state.is-ready i { background:#44856a; }
-body[data-zhiyun] .zs-current-actions { display:flex; align-items:center; gap:8px; flex:none; }
-body[data-zhiyun] .zs-progress { margin-top:12px; padding:9px 11px; border-radius:6px; background:var(--zy-soft); font-size:11px; }
-body[data-zhiyun] .zs-content-section { min-width:0; }
-body[data-zhiyun] .zs-content-heading { display:flex; align-items:end; justify-content:space-between; gap:16px; padding:4px 0 10px; border-bottom:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-content-heading h2 { margin:3px 0 0; font-size:15px; font-weight:600; }
-body[data-zhiyun] .zs-content-tools { display:flex; align-items:center; gap:12px; }
-/* `.zs-content-switch` 与 ui-primitives 的 `.zs-tabs` 是同一语义（互斥视图切换）的两种呈现：
+body[data-zw] .zws-current-section { padding:0 0 12px; border-bottom:1px solid var(--zw-line); }
+body[data-zw] .zws-breadcrumb { display:flex; align-items:center; gap:8px; overflow:hidden; color:var(--zw-muted); font-size:11px; white-space:nowrap; }
+body[data-zw] .zws-breadcrumb span:last-child { overflow:hidden; color:var(--zw-secondary); text-overflow:ellipsis; }
+body[data-zw] .zws-current-main { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-top:8px; }
+body[data-zw] .zws-current-meta { display:flex; align-items:center; gap:10px; min-width:0; }
+body[data-zw] .zws-current-when { overflow:hidden; color:var(--zw-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zw] .zws-current-state { display:inline-flex; flex:none; align-items:center; gap:6px; color:var(--zw-secondary); font-size:11px; }
+body[data-zw] .zws-current-state i { width:6px; height:6px; border-radius:50%; background:#b88a4a; }
+body[data-zw] .zws-current-state.is-ready i { background:#44856a; }
+body[data-zw] .zws-current-actions { display:flex; align-items:center; gap:8px; flex:none; }
+body[data-zw] .zws-progress { margin-top:12px; padding:9px 11px; border-radius:6px; background:var(--zw-soft); font-size:11px; }
+body[data-zw] .zws-content-section { min-width:0; }
+body[data-zw] .zws-content-heading { display:flex; align-items:end; justify-content:space-between; gap:16px; padding:4px 0 10px; border-bottom:1px solid var(--zw-line); }
+body[data-zw] .zws-content-heading h2 { margin:3px 0 0; font-size:15px; font-weight:600; }
+body[data-zw] .zws-content-tools { display:flex; align-items:center; gap:12px; }
+/* `.zws-content-switch` 与 ui-primitives 的 `.zws-tabs` 是同一语义（互斥视图切换）的两种呈现：
    这里是药丸式，那里是下划线式。观感可以不同，但**度量必须对齐** —— 字号、命中高度、焦点环，
    否则同一个产品里两组切换一个「轻」一个「重」，用户按下时会觉得是两个东西。
-   对照值：`.zs-tabs button` 是 12px + 垂直 padding 12px（命中高度约 40px）。
+   对照值：`.zws-tabs button` 是 12px + 垂直 padding 12px（命中高度约 40px）。
    药丸式不必这么大，只要别掉到 24px 以下：12px 字号乘继承的 1.6 行高 ≈ 19px 行盒，
    加 7px 上下 padding 约 33px 命中高度，留有余量。 */
-body[data-zhiyun] .zs-content-switch { display:flex; align-items:center; gap:4px; padding:3px; border-radius:7px; background:color-mix(in srgb,var(--zy-sidebar) 65%,var(--zy-bg)); }
-body[data-zhiyun] .zs-content-switch button { padding:7px 10px; border:0; border-radius:5px; background:transparent; color:var(--zy-secondary); font:inherit; font-size:12px; cursor:pointer; }
-/* 键盘可达：外壳的 `.zy-page button:focus-visible` 已经给了环，这里仍显式写一条 ——
+body[data-zw] .zws-content-switch { display:flex; align-items:center; gap:4px; padding:3px; border-radius:7px; background:color-mix(in srgb,var(--zw-sidebar) 65%,var(--zw-bg)); }
+body[data-zw] .zws-content-switch button { padding:7px 10px; border:0; border-radius:5px; background:transparent; color:var(--zw-secondary); font:inherit; font-size:12px; cursor:pointer; }
+/* 键盘可达：外壳的 `.zw-page button:focus-visible` 已经给了环，这里仍显式写一条 ——
    它是 tablist，读屏与键盘用户会反复在它上面左右箭头，环必须落在按钮本体上（offset 2px，
    药丸圆角外侧不会被切掉），而不是依赖后代继承来的偶然结果。 */
-body[data-zhiyun] .zs-content-switch button:focus-visible { outline:2px solid var(--zy-accent); outline-offset:2px; }
-body[data-zhiyun] .zs-content-switch button[aria-selected=true] { background:var(--zy-surface); color:var(--zy-accent); box-shadow:0 1px 3px #00000012; }
-/* 下面这几条自带 `font-size` 的控件规则必须比 :58 的宿主重置（`body[data-zhiyun] .zs-study button`
-   的 `font: inherit`，特异性 0-2-2）更高：多写一层 `.zs-study` 就够了，否则声明会被 inherit 顶掉，
+body[data-zw] .zws-content-switch button:focus-visible { outline:2px solid var(--zw-accent); outline-offset:2px; }
+body[data-zw] .zws-content-switch button[aria-selected=true] { background:var(--zw-surface); color:var(--zw-accent); box-shadow:0 1px 3px #00000012; }
+/* 下面这几条自带 `font-size` 的控件规则必须比 :58 的宿主重置（`body[data-zw] .zws-study button`
+   的 `font: inherit`，特异性 0-2-2）更高：多写一层 `.zws-study` 就够了，否则声明会被 inherit 顶掉，
    界面上量到的就是继承来的 13px。 */
-body[data-zhiyun] .zs-study .zs-icon-button { display:grid; width:29px; height:29px; place-items:center; border:1px solid var(--zy-line); border-radius:6px; background:var(--zy-surface); color:var(--zy-secondary); font-size:17px; cursor:pointer; }
-body[data-zhiyun] .zs-outline { display:flex; justify-content:space-between; gap:20px; margin:20px 0 15px; padding:3px 0 3px 13px; border-left-width:2px; }
-body[data-zhiyun] .zs-outline h3 { margin:5px 0 0; font-size:14px; }
-body[data-zhiyun] .zs-outline-links { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px 12px; }
-body[data-zhiyun] .zs-outline-links .zs-text { font-size:11px; }
-body[data-zhiyun] .zs-outline-links .zs-text span { margin-left:5px; color:var(--zy-muted); }
-body[data-zhiyun] .zs-slide-controls { margin-top:17px; }
-body[data-zhiyun] .zs-slide-controls > span { font-size:11px; }
-body[data-zhiyun] .zs-slide-controls > div { display:flex; gap:7px; }
-body[data-zhiyun] .zs-slide { max-height:calc(100vh - 320px); object-fit:contain; background:var(--zy-surface); }
-body[data-zhiyun] .zs-slide-time { color:var(--zy-muted); font-size:11px; }
-body[data-zhiyun] .zs-transcript { max-height:calc(100vh - 270px); overflow:auto; margin-top:8px; }
-body[data-zhiyun] .zs-transcript p { gap:20px; padding:12px 8px; font-size:11px; }
-body[data-zhiyun] .zs-transcript time { min-width:40px; color:var(--zy-accent); }
-body[data-zhiyun] .zs-content-empty,.zs-unparsed { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:250px; padding:30px; text-align:center; }
-body[data-zhiyun] .zs-content-empty > span,.zs-unparsed-icon { display:grid; width:38px; height:38px; place-items:center; margin-bottom:11px; border-radius:10px; background:var(--zy-soft); color:var(--zy-accent); font-size:18px; }
-body[data-zhiyun] .zs-content-empty strong,.zs-unparsed h3 { margin:0; font-size:13px; font-weight:500; }
-body[data-zhiyun] .zs-content-empty small,.zs-unparsed p { max-width:400px; margin:6px 0 0; color:var(--zy-muted); font-size:11px; line-height:1.8; }
-body[data-zhiyun] .zs-unparsed { min-height:290px; }
-body[data-zhiyun] .zs-unparsed-icon { font-size:16px; }
-body[data-zhiyun] .zs-unparsed .zs-text { margin-top:15px; font-size:11px; }
-body[data-zhiyun] .zs-diagnostics { padding:12px 0; border-top:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-content-loading,.zs-workspace-loading { display:flex; align-items:center; justify-content:center; gap:10px; min-height:180px; color:var(--zy-secondary); font-size:11px; }
-body[data-zhiyun] .zs-spinner { width:15px; height:15px; border:2px solid var(--zy-line); border-top-color:var(--zy-accent); border-radius:50%; animation:zs-spin .8s linear infinite; }
-@keyframes zs-spin { to { transform:rotate(360deg); } }
-body[data-zhiyun] .zs-workspace-signin { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; }
-body[data-zhiyun] .zs-signin-mark { display:grid; width:48px; height:48px; place-items:center; border:2px solid var(--zy-accent); border-radius:13px; color:var(--zy-accent); font-size:21px; font-weight:700; }
-body[data-zhiyun] .zs-workspace-signin h1 { margin:16px 0 4px; font-size:20px; font-weight:600; }
-body[data-zhiyun] .zs-workspace-signin p { margin:0 0 17px; color:var(--zy-secondary); font-size:11px; }
-body[data-zhiyun] .zs-mobile-tree-toggle { display:none; }
-/* 这两块原本住在 ui-primitives 的 <style> 里，但它们的基规则在本包（上方的 .zs-workbench
-   与 .zs-models 两处），而两张表同特异性、按挂载顺序决胜：primitives 的 inject 为空、最先挂，
-   页面包等 zhiyunStudyController 才挂、排在后 —— 留在那边就必输，覆盖永远不生效
-   （曾真实回归：≤760 时 .zs-heading 还是 24px/26px 而非 18px/23px）。
+body[data-zw] .zws-study .zws-icon-button { display:grid; width:29px; height:29px; place-items:center; border:1px solid var(--zw-line); border-radius:6px; background:var(--zw-surface); color:var(--zw-secondary); font-size:17px; cursor:pointer; }
+body[data-zw] .zws-outline { display:flex; justify-content:space-between; gap:20px; margin:20px 0 15px; padding:3px 0 3px 13px; border-left-width:2px; }
+body[data-zw] .zws-outline h3 { margin:5px 0 0; font-size:14px; }
+body[data-zw] .zws-outline-links { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px 12px; }
+body[data-zw] .zws-outline-links .zws-text { font-size:11px; }
+body[data-zw] .zws-outline-links .zws-text span { margin-left:5px; color:var(--zw-muted); }
+body[data-zw] .zws-slide-controls { margin-top:17px; }
+body[data-zw] .zws-slide-controls > span { font-size:11px; }
+body[data-zw] .zws-slide-controls > div { display:flex; gap:7px; }
+body[data-zw] .zws-slide { max-height:calc(100vh - 320px); object-fit:contain; background:var(--zw-surface); }
+body[data-zw] .zws-slide-time { color:var(--zw-muted); font-size:11px; }
+body[data-zw] .zws-transcript { max-height:calc(100vh - 270px); overflow:auto; margin-top:8px; }
+body[data-zw] .zws-transcript p { gap:20px; padding:12px 8px; font-size:11px; }
+body[data-zw] .zws-transcript time { min-width:40px; color:var(--zw-accent); }
+body[data-zw] .zws-content-empty,.zws-unparsed { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:250px; padding:30px; text-align:center; }
+body[data-zw] .zws-content-empty > span,.zws-unparsed-icon { display:grid; width:38px; height:38px; place-items:center; margin-bottom:11px; border-radius:10px; background:var(--zw-soft); color:var(--zw-accent); font-size:18px; }
+body[data-zw] .zws-content-empty strong,.zws-unparsed h3 { margin:0; font-size:13px; font-weight:500; }
+body[data-zw] .zws-content-empty small,.zws-unparsed p { max-width:400px; margin:6px 0 0; color:var(--zw-muted); font-size:11px; line-height:1.8; }
+body[data-zw] .zws-unparsed { min-height:290px; }
+body[data-zw] .zws-unparsed-icon { font-size:16px; }
+body[data-zw] .zws-unparsed .zws-text { margin-top:15px; font-size:11px; }
+body[data-zw] .zws-diagnostics { padding:12px 0; border-top:1px solid var(--zw-line); }
+body[data-zw] .zws-content-loading,.zws-workspace-loading { display:flex; align-items:center; justify-content:center; gap:10px; min-height:180px; color:var(--zw-secondary); font-size:11px; }
+body[data-zw] .zws-spinner { width:15px; height:15px; border:2px solid var(--zw-line); border-top-color:var(--zw-accent); border-radius:50%; animation:zws-spin .8s linear infinite; }
+@keyframes zws-spin { to { transform:rotate(360deg); } }
+body[data-zw] .zws-workspace-signin { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; }
+body[data-zw] .zws-signin-mark { display:grid; width:48px; height:48px; place-items:center; border:2px solid var(--zw-accent); border-radius:13px; color:var(--zw-accent); font-size:21px; font-weight:700; }
+body[data-zw] .zws-workspace-signin h1 { margin:16px 0 4px; font-size:20px; font-weight:600; }
+body[data-zw] .zws-workspace-signin p { margin:0 0 17px; color:var(--zw-secondary); font-size:11px; }
+body[data-zw] .zws-mobile-tree-toggle { display:none; }
+/* 这两块原本住在 ui-primitives 的 <style> 里，但它们的基规则在本包（上方的 .zws-workbench
+   与 .zws-models 两处），而两张表同特异性、按挂载顺序决胜：primitives 的 inject 为空、最先挂，
+   页面包等 zwStudyController 才挂、排在后 —— 留在那边就必输，覆盖永远不生效
+   （曾真实回归：≤760 时 .zws-heading 还是 24px/26px 而非 18px/23px）。
    跟着基规则搬到本包后，位置与原 dsh-zhiyun-study/style.css 一致：在下面 980/720 两块之前。 */
 
 /* ── AI 教学栏 ─────────────────────────────────────────────────────────────
@@ -309,499 +309,499 @@ body[data-zhiyun] .zs-mobile-tree-toggle { display:none; }
  * 版心收窄到 760px：课件页是「读一段」而不是「扫一屏」，
  * 行宽超过 80 字符眼睛要回扫，反而更慢。
  */
-.zs-ai-teach { display: flex; flex-direction: column; gap: var(--zy-space-4); max-width: 760px; margin: 0 auto; padding: var(--zy-space-5) 0 var(--zy-space-6); }
+.zws-ai-teach { display: flex; flex-direction: column; gap: var(--zw-space-4); max-width: 760px; margin: 0 auto; padding: var(--zw-space-5) 0 var(--zw-space-6); }
 
 /* 章节 HTML 自带左右两栏（固定 PPT + 滚动讲解）。它按**自己的视口宽度**决定排版：
    小于 900px 就堆叠成「上 PPT / 下讲解」—— 这正是曾经「改了没效果」的原因：
    父容器 max-width:760px 让 iframe 永远只有 760px，永远走堆叠分支。
    所以承载它的容器必须放开到可用宽度。 */
-.zs-ai-teach:has(.zs-ai-slide-frame) { max-width: none; width: 100%; }
-.zs-ai-slide-frame { width: 100%; display: flex; flex-direction: column; gap: var(--zy-space-2); }
-.zs-ai-slide-frame > iframe { width: 100%; height: min(78vh, 900px); min-height: 520px; border: 0; border-radius: 12px; background: #e7e3d9; }
-@media (max-width: 900px) { .zs-ai-slide-frame > iframe { height: 82vh; min-height: 540px; } }
+.zws-ai-teach:has(.zws-ai-slide-frame) { max-width: none; width: 100%; }
+.zws-ai-slide-frame { width: 100%; display: flex; flex-direction: column; gap: var(--zw-space-2); }
+.zws-ai-slide-frame > iframe { width: 100%; height: min(78vh, 900px); min-height: 520px; border: 0; border-radius: 12px; background: #e7e3d9; }
+@media (max-width: 900px) { .zws-ai-slide-frame > iframe { height: 82vh; min-height: 540px; } }
 
 /* 页头：左标题右翻页，标题先换行也不能把按钮挤没 */
-.zs-ai-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--zy-space-4); }
-.zs-ai-head > div:first-child { min-width: 0; }
-.zs-ai-head h2 { margin: var(--zy-space-1) 0 0; font-size: 20px; font-weight: 600; line-height: 1.4; letter-spacing: -0.2px; }
-.zs-ai-nav { display: flex; align-items: center; gap: var(--zy-space-2); flex-shrink: 0; }
-.zs-ai-count { font-size: 12px; color: var(--zy-muted); font-variant-numeric: tabular-nums; min-width: 56px; text-align: center; }
+.zws-ai-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--zw-space-4); }
+.zws-ai-head > div:first-child { min-width: 0; }
+.zws-ai-head h2 { margin: var(--zw-space-1) 0 0; font-size: 20px; font-weight: 600; line-height: 1.4; letter-spacing: -0.2px; }
+.zws-ai-nav { display: flex; align-items: center; gap: var(--zw-space-2); flex-shrink: 0; }
+.zws-ai-count { font-size: 12px; color: var(--zw-muted); font-variant-numeric: tabular-nums; min-width: 56px; text-align: center; }
 
 /* 进度条：2px 足够，太粗会抢标题的视觉重量 */
-.zs-ai-progress { height: 2px; border-radius: 999px; background: var(--zy-line); overflow: hidden; }
-.zs-ai-progress > i { display: block; height: 100%; background: var(--zy-accent); transition: width 220ms cubic-bezier(0.2, 0, 0, 1); }
+.zws-ai-progress { height: 2px; border-radius: 999px; background: var(--zw-line); overflow: hidden; }
+.zws-ai-progress > i { display: block; height: 100%; background: var(--zw-accent); transition: width 220ms cubic-bezier(0.2, 0, 0, 1); }
 
 /* 章内页进度：比章节进度粗一点、用虚线感区分 —— 它表示的是「这一章读到第几页」 */
-.zs-ai-deck-progress { height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--zy-accent) 14%, var(--zy-line)); overflow: hidden; }
-.zs-ai-deck-progress > i { display: block; height: 100%; background: var(--zy-accent); opacity: 0.75; transition: width 180ms cubic-bezier(0.2, 0, 0, 1); }
+.zws-ai-deck-progress { height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--zw-accent) 14%, var(--zw-line)); overflow: hidden; }
+.zws-ai-deck-progress > i { display: block; height: 100%; background: var(--zw-accent); opacity: 0.75; transition: width 180ms cubic-bezier(0.2, 0, 0, 1); }
 
 /* 要点：左侧细线 + 略大字号，一眼能看出这是「这一页要记的三件事」 */
-.zs-ai-points { margin: 0; padding: 0 0 0 var(--zy-space-3); list-style: none; border-left: 2px solid color-mix(in srgb, var(--zy-accent) 40%, var(--zy-line)); display: flex; flex-direction: column; gap: 6px; }
-.zs-ai-points li { font-size: 13px; line-height: 1.65; color: var(--zy-secondary); }
+.zws-ai-points { margin: 0; padding: 0 0 0 var(--zw-space-3); list-style: none; border-left: 2px solid color-mix(in srgb, var(--zw-accent) 40%, var(--zw-line)); display: flex; flex-direction: column; gap: 6px; }
+.zws-ai-points li { font-size: 13px; line-height: 1.65; color: var(--zw-secondary); }
 
 /* 正文：行高 1.8 比默认松 —— 这是要逐段读的内容，不是扫一眼的列表 */
-.zs-ai-body { font-size: 14px; line-height: 1.8; color: var(--zy-text); }
-.zs-ai-body p { margin: 0 0 var(--zy-space-3); }
-.zs-ai-body p:last-child { margin-bottom: 0; }
+.zws-ai-body { font-size: 14px; line-height: 1.8; color: var(--zw-text); }
+.zws-ai-body p { margin: 0 0 var(--zw-space-3); }
+.zws-ai-body p:last-child { margin-bottom: 0; }
 
 /* 页脚：次要动作沉到左边，主动作在右 */
-.zs-ai-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--zy-space-3); padding-top: var(--zy-space-3); border-top: 1px solid var(--zy-line); }
-.zs-ai-foot .zs-primary { min-width: 96px; justify-content: center; }
+.zws-ai-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--zw-space-3); padding-top: var(--zw-space-3); border-top: 1px solid var(--zw-line); }
+.zws-ai-foot .zws-primary { min-width: 96px; justify-content: center; }
 
 /* 空态：讲义还没生成时给出去哪里的指引，而不是一句「暂无数据」 */
-.zs-ai-empty { padding: var(--zy-space-6) var(--zy-space-4); text-align: center; border: 1px dashed var(--zy-line); border-radius: 10px; }
-.zs-ai-empty strong { display: block; font-size: 14px; margin-bottom: var(--zy-space-2); }
-.zs-ai-empty p { margin: 0; font-size: 12px; color: var(--zy-muted); line-height: 1.7; }
+.zws-ai-empty { padding: var(--zw-space-6) var(--zw-space-4); text-align: center; border: 1px dashed var(--zw-line); border-radius: 10px; }
+.zws-ai-empty strong { display: block; font-size: 14px; margin-bottom: var(--zw-space-2); }
+.zws-ai-empty p { margin: 0; font-size: 12px; color: var(--zw-muted); line-height: 1.7; }
 
 
-.zs-ai-err { color: var(--zy-danger, #c0392b); }
+.zws-ai-err { color: var(--zw-danger, #c0392b); }
 
 
 /* 课件页：居中、留白、带一圈很淡的边界，让它看起来像「一页」而不是一块内容。
  * 阴影不用 color-mix（本仓的构建链对它支持不稳），用 rgba。
  */
-.zs-ai-slide { display: flex; justify-content: center; padding: var(--zy-space-3); background: var(--zy-surface); border: 1px solid var(--zy-line); border-radius: 10px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); overflow: auto; }
+.zws-ai-slide { display: flex; justify-content: center; padding: var(--zw-space-3); background: var(--zw-surface); border: 1px solid var(--zw-line); border-radius: 10px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); overflow: auto; }
 
 /* 讲课稿：左细线 + 略浅的文字色，视觉上从属于课件页，不抢版面 */
-.zs-ai-speech { padding: var(--zy-space-3) 0 0 var(--zy-space-3); border-left: 2px solid var(--zy-line); }
-.zs-ai-speech-label { display: block; font-size: 11px; color: var(--zy-muted); margin-bottom: 6px; letter-spacing: 0.5px; }
-.zs-ai-speech p { margin: 0 0 var(--zy-space-2); font-size: 13px; line-height: 1.75; color: var(--zy-secondary); }
-.zs-ai-speech p:last-child { margin-bottom: 0; }
+.zws-ai-speech { padding: var(--zw-space-3) 0 0 var(--zw-space-3); border-left: 2px solid var(--zw-line); }
+.zws-ai-speech-label { display: block; font-size: 11px; color: var(--zw-muted); margin-bottom: 6px; letter-spacing: 0.5px; }
+.zws-ai-speech p { margin: 0 0 var(--zw-space-2); font-size: 13px; line-height: 1.75; color: var(--zw-secondary); }
+.zws-ai-speech p:last-child { margin-bottom: 0; }
 
 
 /* 起始页：只给一个入口和一个原因。没有降级内容，所以这里就是整栏的全部。 */
-.zs-ai-start { display: flex; flex-direction: column; align-items: flex-start; gap: var(--zy-space-2); padding: var(--zy-space-5) var(--zy-space-4); border: 1px dashed var(--zy-line); border-radius: 10px; }
-.zs-ai-start strong { font-size: 14px; }
-.zs-ai-start p { margin: 0; font-size: 12px; color: var(--zy-muted); line-height: 1.7; max-width: 52ch; }
-.zs-ai-start-actions { display: flex; align-items: center; gap: var(--zy-space-3); margin-top: var(--zy-space-2); }
-.zs-ai-err { color: var(--zy-danger, #c0392b); }
+.zws-ai-start { display: flex; flex-direction: column; align-items: flex-start; gap: var(--zw-space-2); padding: var(--zw-space-5) var(--zw-space-4); border: 1px dashed var(--zw-line); border-radius: 10px; }
+.zws-ai-start strong { font-size: 14px; }
+.zws-ai-start p { margin: 0; font-size: 12px; color: var(--zw-muted); line-height: 1.7; max-width: 52ch; }
+.zws-ai-start-actions { display: flex; align-items: center; gap: var(--zw-space-3); margin-top: var(--zw-space-2); }
+.zws-ai-err { color: var(--zw-danger, #c0392b); }
 
 /* ── 备课进度面板：总进度 + 每章三步骤 ─────────────────────────────
    一章内部是串行的三段（预判障碍 → 设计分镜 → 逐页出图），耗时主要在最后一段。
    只显示「已完成 N 章」时，整章跑完之前数字不动，用户会以为卡住了。 */
-.zs-teach-progress { display: flex; flex-direction: column; gap: var(--zy-space-3); width: 100%; max-width: 52ch; margin-top: var(--zy-space-3); padding: var(--zy-space-3) var(--zy-space-4); border: 1px solid var(--zy-line); border-radius: 10px; background: color-mix(in srgb, var(--zy-accent) 3%, var(--zy-surface)); }
+.zws-teach-progress { display: flex; flex-direction: column; gap: var(--zw-space-3); width: 100%; max-width: 52ch; margin-top: var(--zw-space-3); padding: var(--zw-space-3) var(--zw-space-4); border: 1px solid var(--zw-line); border-radius: 10px; background: color-mix(in srgb, var(--zw-accent) 3%, var(--zw-surface)); }
 
-.zs-teach-progress-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--zy-space-3); }
-.zs-teach-progress-head > div { display: grid; gap: 2px; min-width: 0; }
-.zs-teach-progress-head strong { font-size: 13px; font-weight: 600; }
-.zs-teach-progress-head span { color: var(--zy-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-.zs-teach-percent { flex: none; color: var(--zy-accent); font-size: 13px; font-variant-numeric: tabular-nums; }
+.zws-teach-progress-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--zw-space-3); }
+.zws-teach-progress-head > div { display: grid; gap: 2px; min-width: 0; }
+.zws-teach-progress-head strong { font-size: 13px; font-weight: 600; }
+.zws-teach-progress-head span { color: var(--zw-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.zws-teach-percent { flex: none; color: var(--zw-accent); font-size: 13px; font-variant-numeric: tabular-nums; }
 
 /* 总进度条：6px，比页头那根 2px 的章节条更重 —— 它是这一屏的主进度 */
-.zs-teach-bar { height: 6px; border-radius: 999px; background: var(--zy-line); overflow: hidden; }
-.zs-teach-bar > i { display: block; height: 100%; border-radius: 999px; background: var(--zy-accent); transition: width 320ms cubic-bezier(0.2, 0, 0, 1); }
+.zws-teach-bar { height: 6px; border-radius: 999px; background: var(--zw-line); overflow: hidden; }
+.zws-teach-bar > i { display: block; height: 100%; border-radius: 999px; background: var(--zw-accent); transition: width 320ms cubic-bezier(0.2, 0, 0, 1); }
 
-.zs-teach-chapter-list, .zs-teach-steps { list-style: none; margin: 0; padding: 0; }
-.zs-teach-chapter-list { display: flex; flex-direction: column; gap: var(--zy-space-3); }
+.zws-teach-chapter-list, .zws-teach-steps { list-style: none; margin: 0; padding: 0; }
+.zws-teach-chapter-list { display: flex; flex-direction: column; gap: var(--zw-space-3); }
 
-.zs-teach-chapter-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--zy-space-3); margin-bottom: 6px; }
-.zs-teach-chapter-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--zy-secondary); }
-.zs-teach-chapter-meta { flex: none; font-size: 11px; color: var(--zy-muted); font-variant-numeric: tabular-nums; }
-.zs-teach-chapter-list > li[data-status="done"] .zs-teach-chapter-meta { color: var(--zy-accent); }
+.zws-teach-chapter-line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--zw-space-3); margin-bottom: 6px; }
+.zws-teach-chapter-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--zw-secondary); }
+.zws-teach-chapter-meta { flex: none; font-size: 11px; color: var(--zw-muted); font-variant-numeric: tabular-nums; }
+.zws-teach-chapter-list > li[data-status="done"] .zws-teach-chapter-meta { color: var(--zw-accent); }
 
 /* 三步骤：横向紧凑排列，用点 + 文字表达状态，不占纵向空间 */
-.zs-teach-steps { display: flex; flex-wrap: wrap; gap: 4px var(--zy-space-3); }
-.zs-teach-steps > li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--zy-muted); }
-.zs-teach-steps > li > i { flex: none; width: 6px; height: 6px; border-radius: 999px; border: 1px solid currentColor; background: transparent; }
-.zs-teach-steps > li[data-state="active"] { color: var(--zy-accent); font-weight: 600; }
-.zs-teach-steps > li[data-state="active"] > i { border-color: var(--zy-accent); background: var(--zy-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--zy-accent) 22%, transparent); animation: zs-teach-pulse 1.6s ease-in-out infinite; }
-.zs-teach-steps > li[data-state="done"] { color: var(--zy-secondary); }
-.zs-teach-steps > li[data-state="done"] > i { border-color: var(--zy-accent); background: var(--zy-accent); opacity: 0.55; }
-.zs-teach-steps-standalone { margin-top: var(--zy-space-2); }
+.zws-teach-steps { display: flex; flex-wrap: wrap; gap: 4px var(--zw-space-3); }
+.zws-teach-steps > li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--zw-muted); }
+.zws-teach-steps > li > i { flex: none; width: 6px; height: 6px; border-radius: 999px; border: 1px solid currentColor; background: transparent; }
+.zws-teach-steps > li[data-state="active"] { color: var(--zw-accent); font-weight: 600; }
+.zws-teach-steps > li[data-state="active"] > i { border-color: var(--zw-accent); background: var(--zw-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--zw-accent) 22%, transparent); animation: zws-teach-pulse 1.6s ease-in-out infinite; }
+.zws-teach-steps > li[data-state="done"] { color: var(--zw-secondary); }
+.zws-teach-steps > li[data-state="done"] > i { border-color: var(--zw-accent); background: var(--zw-accent); opacity: 0.55; }
+.zws-teach-steps-standalone { margin-top: var(--zw-space-2); }
 
-@keyframes zs-teach-pulse { 0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--zy-accent) 22%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--zy-accent) 10%, transparent); } }
-@media (prefers-reduced-motion: reduce) { .zs-teach-steps > li[data-state="active"] > i { animation: none; } }
+@keyframes zws-teach-pulse { 0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--zw-accent) 22%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--zw-accent) 10%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .zws-teach-steps > li[data-state="active"] > i { animation: none; } }
 
 /* 只给读屏的补充说明（「进行中 / 未开始」） */
-.zs-teach-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.zws-teach-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 
 
-.zs-ai-foot-left { display: flex; align-items: center; gap: var(--zy-space-3); }
+.zws-ai-foot-left { display: flex; align-items: center; gap: var(--zw-space-3); }
 
 @media (max-width: 1050px) {
-  body[data-zhiyun] .zs-workbench {
+  body[data-zw] .zws-workbench {
     grid-template-columns: 210px minmax(0, 1fr);
     gap: 20px;
   }
 }
 @media (max-width: 760px) {
-  body[data-zhiyun] .zs-workbench {
+  body[data-zw] .zws-workbench {
     grid-template-columns: 1fr;
   }
-  body[data-zhiyun] .zs-models {
+  body[data-zw] .zws-models {
     margin-top: 15px;
   }
-  /* 与上面同理：.zs-progress 的基规则在本包（:27 起），覆盖也跟过来。 */
-  body[data-zhiyun] .zs-progress {
+  /* 与上面同理：.zws-progress 的基规则在本包（:27 起），覆盖也跟过来。 */
+  body[data-zw] .zws-progress {
     flex-wrap: wrap;
   }
 }
 @media (max-width: 980px) {
-  body[data-zhiyun] .zy-page[data-page=study] .zy-content { padding:20px 22px 28px; }
-  body[data-zhiyun] .zs-workbench { grid-template-columns:minmax(210px,240px) minmax(0,1fr); gap:22px; }
+  body[data-zw] .zw-page[data-page=study] .zw-content { padding:20px 22px 28px; }
+  body[data-zw] .zws-workbench { grid-template-columns:minmax(210px,240px) minmax(0,1fr); gap:22px; }
 }
 @media (max-width: 720px) {
-  body[data-zhiyun] .zy-page[data-page=study] .zy-content { padding:12px 15px 24px; }
-  body[data-zhiyun] .zs-mobile-tree-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:40px; margin-bottom:12px; padding:0 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-text); font:inherit; font-size:11px; }
-  body[data-zhiyun] .zs-mobile-tree-toggle span:nth-child(2) { overflow:hidden; margin-left:auto; margin-right:9px; color:var(--zy-secondary); text-overflow:ellipsis; white-space:nowrap; }
-  body[data-zhiyun] .zs-workbench { display:flex; flex-direction:column; gap:12px; }
-  body[data-zhiyun] .zs-course-tree { display:none; position:static; width:100%; max-height:45vh; padding:9px; border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); }
-  body[data-zhiyun] .zs-workbench.is-tree-open .zs-course-tree { display:flex; }
-  body[data-zhiyun] .zs-tree-top { padding-bottom:9px; }
-  body[data-zhiyun] .zs-reader { width:100%; }
+  body[data-zw] .zw-page[data-page=study] .zw-content { padding:12px 15px 24px; }
+  body[data-zw] .zws-mobile-tree-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:40px; margin-bottom:12px; padding:0 10px; border:1px solid var(--zw-line); border-radius:7px; background:var(--zw-surface); color:var(--zw-text); font:inherit; font-size:11px; }
+  body[data-zw] .zws-mobile-tree-toggle span:nth-child(2) { overflow:hidden; margin-left:auto; margin-right:9px; color:var(--zw-secondary); text-overflow:ellipsis; white-space:nowrap; }
+  body[data-zw] .zws-workbench { display:flex; flex-direction:column; gap:12px; }
+  body[data-zw] .zws-course-tree { display:none; position:static; width:100%; max-height:45vh; padding:9px; border:1px solid var(--zw-line); border-radius:8px; background:var(--zw-surface); }
+  body[data-zw] .zws-workbench.is-tree-open .zws-course-tree { display:flex; }
+  body[data-zw] .zws-tree-top { padding-bottom:9px; }
+  body[data-zw] .zws-reader { width:100%; }
   /* 表头只有一行，窄屏也不必改成竖排 —— 动作钮换到下一行就够。 */
-  body[data-zhiyun] .zs-current-main { flex-wrap:wrap; gap:8px; }
-  body[data-zhiyun] .zs-current-actions { margin-left:auto; }
-  body[data-zhiyun] .zs-content-heading { align-items:flex-start; flex-direction:column; }
-  body[data-zhiyun] .zs-content-tools { width:100%; justify-content:space-between; }
-  body[data-zhiyun] .zs-outline { flex-direction:column; gap:11px; }
-  body[data-zhiyun] .zs-outline-links { justify-content:flex-start; }
-  body[data-zhiyun] .zs-empty-hint { flex-wrap:wrap; justify-content:center; }
+  body[data-zw] .zws-current-main { flex-wrap:wrap; gap:8px; }
+  body[data-zw] .zws-current-actions { margin-left:auto; }
+  body[data-zw] .zws-content-heading { align-items:flex-start; flex-direction:column; }
+  body[data-zw] .zws-content-tools { width:100%; justify-content:space-between; }
+  body[data-zw] .zws-outline { flex-direction:column; gap:11px; }
+  body[data-zw] .zws-outline-links { justify-content:flex-start; }
+  body[data-zw] .zws-empty-hint { flex-wrap:wrap; justify-content:center; }
 }
-body[data-zhiyun] .zs-layer-note { display:flex; flex-wrap:wrap; gap:10px; color:var(--zy-muted); font-size:13px; line-height:1.8; margin:0 0 18px; }
+body[data-zw] .zws-layer-note { display:flex; flex-wrap:wrap; gap:10px; color:var(--zw-muted); font-size:13px; line-height:1.8; margin:0 0 18px; }
 /* A bounded reading column; the TOC takes space only while it is open. */
-body[data-zhiyun] .zs-handout { width:100%; min-width:0; max-width:1200px; margin-inline:auto; container:handout / inline-size; --zs-reader-link:var(--zy-accent); }
-body[data-zhiyun][data-ds-dark-theme] .zs-handout { --zs-reader-link:#a4c8fa; }
-body[data-zhiyun] .zs-handout .zs-text { color:var(--zs-reader-link); }
-body[data-zhiyun] .zs-handout-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; min-height:52px; padding:4px 0 18px; border-bottom:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-handout-meta { display:flex; align-items:baseline; justify-content:flex-end; flex-wrap:wrap; gap:6px 14px; color:var(--zy-muted); text-align:right; }
-body[data-zhiyun] .zs-handout-meta strong { font-size:13px; font-weight:500; }
-body[data-zhiyun] .zs-handout-meta small { font-size:12px; }
-body[data-zhiyun] .zs-handout-toc-toggle { display:inline-flex; align-items:center; flex-shrink:0; gap:8px; min-height:40px; padding:8px 12px; border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); color:var(--zy-text); font:inherit; font-size:13px; cursor:pointer; }
-body[data-zhiyun] .zs-handout-toc-toggle:hover { background:var(--zy-hover); }
-body[data-zhiyun] .zs-handout button:focus-visible, body[data-zhiyun] .zs-handout summary:focus-visible { outline:2px solid var(--zs-reader-link); outline-offset:3px; }
-body[data-zhiyun] .zs-handout-body { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; align-items:start; width:100%; margin-top:24px; }
-body[data-zhiyun] .zs-handout-main { box-sizing:border-box; width:100%; min-width:0; max-width:46rem; margin-inline:auto; padding:28px clamp(20px,4cqi,40px) 48px; background:var(--zy-surface); border:1px solid var(--zy-line); border-radius:12px; }
-body[data-zhiyun] .zs-handout-drawer { min-width:0; max-height:40vh; overflow:auto; overscroll-behavior:contain; padding:4px 12px 12px 0; scrollbar-width:thin; }
-body[data-zhiyun] .zs-handout-drawer-title { padding:8px 10px 16px; color:var(--zy-muted); font-size:11px; letter-spacing:.1em; }
+body[data-zw] .zws-handout { width:100%; min-width:0; max-width:1200px; margin-inline:auto; container:handout / inline-size; --zws-reader-link:var(--zw-accent); }
+body[data-zw][data-ds-dark-theme] .zws-handout { --zws-reader-link:#a4c8fa; }
+body[data-zw] .zws-handout .zws-text { color:var(--zws-reader-link); }
+body[data-zw] .zws-handout-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; min-height:52px; padding:4px 0 18px; border-bottom:1px solid var(--zw-line); }
+body[data-zw] .zws-handout-meta { display:flex; align-items:baseline; justify-content:flex-end; flex-wrap:wrap; gap:6px 14px; color:var(--zw-muted); text-align:right; }
+body[data-zw] .zws-handout-meta strong { font-size:13px; font-weight:500; }
+body[data-zw] .zws-handout-meta small { font-size:12px; }
+body[data-zw] .zws-handout-toc-toggle { display:inline-flex; align-items:center; flex-shrink:0; gap:8px; min-height:40px; padding:8px 12px; border:1px solid var(--zw-line); border-radius:8px; background:var(--zw-surface); color:var(--zw-text); font:inherit; font-size:13px; cursor:pointer; }
+body[data-zw] .zws-handout-toc-toggle:hover { background:var(--zw-hover); }
+body[data-zw] .zws-handout button:focus-visible, body[data-zw] .zws-handout summary:focus-visible { outline:2px solid var(--zws-reader-link); outline-offset:3px; }
+body[data-zw] .zws-handout-body { display:grid; grid-template-columns:minmax(0,1fr); gap:24px; align-items:start; width:100%; margin-top:24px; }
+body[data-zw] .zws-handout-main { box-sizing:border-box; width:100%; min-width:0; max-width:46rem; margin-inline:auto; padding:28px clamp(20px,4cqi,40px) 48px; background:var(--zw-surface); border:1px solid var(--zw-line); border-radius:12px; }
+body[data-zw] .zws-handout-drawer { min-width:0; max-height:40vh; overflow:auto; overscroll-behavior:contain; padding:4px 12px 12px 0; scrollbar-width:thin; }
+body[data-zw] .zws-handout-drawer-title { padding:8px 10px 16px; color:var(--zw-muted); font-size:11px; letter-spacing:.1em; }
 @container handout (min-width:860px) {
-  body[data-zhiyun] .zs-handout-body[data-toc="open"] { grid-template-columns:210px minmax(0,1fr); gap:32px; }
-  body[data-zhiyun] .zs-handout-body[data-toc="open"] .zs-handout-drawer { position:sticky; top:20px; max-height:calc(100dvh - 80px); }
+  body[data-zw] .zws-handout-body[data-toc="open"] { grid-template-columns:210px minmax(0,1fr); gap:32px; }
+  body[data-zw] .zws-handout-body[data-toc="open"] .zws-handout-drawer { position:sticky; top:20px; max-height:calc(100dvh - 80px); }
 }
 @container handout (max-width:859px) {
-  body[data-zhiyun] .zs-handout-drawer { border-bottom:1px solid var(--zy-line); padding-bottom:20px; }
+  body[data-zw] .zws-handout-drawer { border-bottom:1px solid var(--zw-line); padding-bottom:20px; }
 }
 @container handout (max-width:520px) {
-  body[data-zhiyun] .zs-handout-main { padding:24px 18px 32px; border-radius:8px; }
-  body[data-zhiyun] .zs-handout-meta small { display:none; }
+  body[data-zw] .zws-handout-main { padding:24px 18px 32px; border-radius:8px; }
+  body[data-zw] .zws-handout-meta small { display:none; }
 }
-body[data-zhiyun] .zs-handout-tree-branch > summary, body[data-zhiyun] .zs-handout-tree-leaf > summary { display:flex; align-items:baseline; gap:2px; cursor:pointer; list-style:none; }
-body[data-zhiyun] .zs-handout-drawer summary::-webkit-details-marker { display:none; }
-body[data-zhiyun] .zs-handout-tree-branch > summary::before, body[data-zhiyun] .zs-handout-tree-leaf > summary::before { content:'▸'; flex-shrink:0; font-size:11px; color:var(--zy-muted); }
-body[data-zhiyun] .zs-handout-tree-branch[open] > summary::before, body[data-zhiyun] .zs-handout-tree-leaf[open] > summary::before { content:'▾'; }
-body[data-zhiyun] .zs-handout-tree-leaf { margin-left:10px; }
-body[data-zhiyun] .zs-handout-tree-chapter, body[data-zhiyun] .zs-handout-tree-topic, body[data-zhiyun] .zs-handout-tree-block { display:block; min-width:0; width:100%; border:0; border-radius:5px; background:transparent; cursor:pointer; text-align:left; color:var(--zy-text); padding:9px 8px; font:inherit; font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
-body[data-zhiyun] .zs-handout-tree-chapter { font-weight:600; }
-body[data-zhiyun] .zs-handout-tree-topic { color:var(--zy-secondary); }
-body[data-zhiyun] .zs-handout-tree-block { width:calc(100% - 22px); margin-left:22px; padding:7px 10px; border-left:1px solid var(--zy-line); border-radius:0; color:var(--zy-muted); font-size:12px; }
-body[data-zhiyun] .zs-handout-drawer button:hover, body[data-zhiyun] .zs-handout-drawer button.is-active { color:var(--zs-reader-link); background:var(--zy-hover); }
-body[data-zhiyun] [data-handout-location] { scroll-margin-top:32px; }
-body[data-zhiyun] .zs-handout-chapter { padding:0; }
-body[data-zhiyun] .zs-handout-chapter + .zs-handout-chapter { margin-top:56px; padding-top:40px; border-top:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-handout-chapter > header { padding-bottom:24px; margin-bottom:28px; border-bottom:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-handout-chapter > header small { color:var(--zy-muted); font-size:12px; letter-spacing:.14em; }
-body[data-zhiyun] .zs-handout-chapter > header h2 { font-size:clamp(24px,3.4cqi,30px); line-height:1.5; margin:10px 0 0; font-weight:650; letter-spacing:.02em; overflow-wrap:anywhere; }
-body[data-zhiyun] .zs-handout-topic { padding:0; }
-body[data-zhiyun] .zs-handout-topic + .zs-handout-topic { margin-top:40px; }
-body[data-zhiyun] .zs-handout-topic > header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:8px 16px; margin-bottom:20px; }
-body[data-zhiyun] .zs-handout-topic h3 { font-size:20px; line-height:1.6; margin:0; font-weight:600; overflow-wrap:anywhere; }
-body[data-zhiyun] .zs-source-anchor { font-size:12px; white-space:nowrap; }
-body[data-zhiyun] .zs-handout-block { font-size:17px; line-height:1.9; margin:24px 0; overflow-wrap:anywhere; }
-body[data-zhiyun] .zs-handout-block p, body[data-zhiyun] .zs-handout-block li { font-size:17px; line-height:1.9; }
-body[data-zhiyun] .zs-handout-block p { margin-block:0 1em; }
-body[data-zhiyun] .zs-handout-block p:last-child { margin-bottom:0; }
-body[data-zhiyun] .zs-handout-block--definition, body[data-zhiyun] .zs-handout-block--example { padding:18px 20px; background:var(--zy-hover); border-radius:8px; }
-body[data-zhiyun] .zs-handout-kind { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px 12px; margin-bottom:10px; font-size:13px; }
-body[data-zhiyun] .zs-handout-kind > span { color:var(--zs-reader-link); font-size:12px; font-weight:600; }
-body[data-zhiyun] .zs-handout-kind strong { color:var(--zy-text); font-weight:600; }
-body[data-zhiyun] .zs-block-source { margin-left:auto; white-space:nowrap; font-size:11px; }
-body[data-zhiyun] .zs-draft-label { color:var(--zy-muted); font-size:13px; line-height:1.7; padding:10px 14px; background:var(--zy-hover); border-radius:6px; }
-body[data-zhiyun] .zs-example-label { color:var(--zy-secondary); font-size:12px; }
-body[data-zhiyun] .zs-example-solution { margin-top:16px; border-top:1px solid var(--zy-line); padding-top:10px; }
-body[data-zhiyun] .zs-example-solution > summary { cursor:pointer; color:var(--zs-reader-link); font-size:13px; }
-body[data-zhiyun] .zs-handout-block .katex-display, body[data-zhiyun] .zs-handout-block pre { max-width:100%; overflow-x:auto; overflow-y:hidden; padding-block:8px; }
-body[data-zhiyun] .zs-handout-block table { display:block; max-width:100%; overflow-x:auto; }
-body[data-zhiyun] .zs-filter-panel { margin:0 0 14px; padding:13px 15px; border:1px solid var(--zy-line); border-radius:9px; background:var(--zy-surface); }
-body[data-zhiyun] .zs-filter-row { display:flex; align-items:flex-start; gap:11px; margin:0 0 8px; }
-body[data-zhiyun] .zs-filter-label { flex:0 0 52px; padding-top:4px; color:var(--zy-muted); font-size:11px; letter-spacing:.04em; }
-body[data-zhiyun] .zs-chips { display:flex; flex-wrap:wrap; gap:5px; min-width:0; }
-body[data-zhiyun] .zs-study .zs-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border:1px solid var(--zy-line); border-radius:99px; background:transparent; color:var(--zy-secondary); font:inherit; font-size:11px; line-height:1.6; cursor:pointer; }
-body[data-zhiyun] .zs-chip-count { color:var(--zy-muted); font-size:11px; font-variant-numeric:tabular-nums; }
-body[data-zhiyun] .zs-chip.is-on .zs-chip-count { color:inherit; opacity:.75; }
-body[data-zhiyun] .zs-chip:disabled { cursor:default; }
-body[data-zhiyun] .zs-chip.is-idle { border-style:dotted; color:var(--zy-muted); opacity:.55; }
-body[data-zhiyun] .zs-chip.is-idle:hover { border-color:var(--zy-line); color:var(--zy-muted); }
-body[data-zhiyun] .zs-chip.is-idle.is-on { border-color:transparent; background:transparent; color:var(--zy-muted); font-weight:400; opacity:.55; }
-body[data-zhiyun] .zs-chip:hover { border-color:color-mix(in srgb,var(--zy-accent) 40%,var(--zy-line)); color:var(--zy-accent); }
-body[data-zhiyun] .zs-chip.is-on { border-color:transparent; background:var(--zy-soft); color:var(--zy-accent); font-weight:600; }
-body[data-zhiyun] .zs-chip.is-off { border-style:dashed; color:var(--zy-muted); cursor:default; opacity:.72; }
-body[data-zhiyun] .zs-chip.is-off:hover { border-color:var(--zy-line); color:var(--zy-muted); }
-body[data-zhiyun] .zs-filter-hint { margin:2px 0 11px 63px; color:var(--zy-muted); font-size:11px; line-height:1.7; }
-body[data-zhiyun] .zs-filter-panel > .zs-text { margin:0 0 8px 63px; font-size:11px; }
-body[data-zhiyun] .zs-results { margin:0 0 14px; padding:13px 15px; border:1px solid var(--zy-line); border-radius:9px; background:var(--zy-bg); }
-body[data-zhiyun] .zs-results-head { margin:0; font-size:11px; font-weight:600; }
-body[data-zhiyun] .zs-results-note { margin:5px 0 0; color:var(--zy-muted); font-size:11px; line-height:1.75; }
-body[data-zhiyun] .zs-hit-list { display:flex; flex-direction:column; gap:1px; margin-top:11px; }
-body[data-zhiyun] .zs-hit { display:block; width:100%; padding:9px 10px; border:0; border-radius:6px; background:transparent; color:var(--zy-text); font:inherit; text-align:left; cursor:pointer; }
-body[data-zhiyun] .zs-hit:hover { background:var(--zy-hover); }
-body[data-zhiyun] .zs-hit-top { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
-body[data-zhiyun] .zs-hit-layer { pointer-events:none; }
-body[data-zhiyun] .zs-hit-where { color:var(--zy-muted); font-size:11px; }
-body[data-zhiyun] .zs-hit-text { display:block; font-size:11px; line-height:1.8; color:var(--zy-secondary); overflow-wrap:anywhere; }
-body[data-zhiyun] .zs-hit:hover .zs-hit-text { color:var(--zy-text); }
-body[data-zhiyun][data-ds-dark-theme] .zs-filter-panel { background:color-mix(in srgb,var(--zy-surface) 80%,var(--zy-bg)); }
-body[data-zhiyun][data-ds-dark-theme] .zs-results { background:color-mix(in srgb,var(--zy-bg) 70%,var(--zy-surface)); }
-body[data-zhiyun] .zs-breadcrumb-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; }
-body[data-zhiyun] .zs-breadcrumb { min-width:0; }
-body[data-zhiyun] .zs-search-entry { position:relative; display:flex; flex:0 0 auto; align-items:center; gap:8px; min-width:0; }
-body[data-zhiyun] .zs-search-box { display:flex; align-items:center; gap:6px; width:252px; max-width:44vw; min-width:0; padding:0 9px; border:1px solid var(--zy-line); border-radius:6px; background:var(--zy-surface); color:var(--zy-muted); font-size:11px; transition:border-color .15s; }
-/* 焦点环画在外层 .zs-search-box 上，而不是里面的 input 上：input 是无边框、无内边距的
+body[data-zw] .zws-handout-tree-branch > summary, body[data-zw] .zws-handout-tree-leaf > summary { display:flex; align-items:baseline; gap:2px; cursor:pointer; list-style:none; }
+body[data-zw] .zws-handout-drawer summary::-webkit-details-marker { display:none; }
+body[data-zw] .zws-handout-tree-branch > summary::before, body[data-zw] .zws-handout-tree-leaf > summary::before { content:'▸'; flex-shrink:0; font-size:11px; color:var(--zw-muted); }
+body[data-zw] .zws-handout-tree-branch[open] > summary::before, body[data-zw] .zws-handout-tree-leaf[open] > summary::before { content:'▾'; }
+body[data-zw] .zws-handout-tree-leaf { margin-left:10px; }
+body[data-zw] .zws-handout-tree-chapter, body[data-zw] .zws-handout-tree-topic, body[data-zw] .zws-handout-tree-block { display:block; min-width:0; width:100%; border:0; border-radius:5px; background:transparent; cursor:pointer; text-align:left; color:var(--zw-text); padding:9px 8px; font:inherit; font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+body[data-zw] .zws-handout-tree-chapter { font-weight:600; }
+body[data-zw] .zws-handout-tree-topic { color:var(--zw-secondary); }
+body[data-zw] .zws-handout-tree-block { width:calc(100% - 22px); margin-left:22px; padding:7px 10px; border-left:1px solid var(--zw-line); border-radius:0; color:var(--zw-muted); font-size:12px; }
+body[data-zw] .zws-handout-drawer button:hover, body[data-zw] .zws-handout-drawer button.is-active { color:var(--zws-reader-link); background:var(--zw-hover); }
+body[data-zw] [data-handout-location] { scroll-margin-top:32px; }
+body[data-zw] .zws-handout-chapter { padding:0; }
+body[data-zw] .zws-handout-chapter + .zws-handout-chapter { margin-top:56px; padding-top:40px; border-top:1px solid var(--zw-line); }
+body[data-zw] .zws-handout-chapter > header { padding-bottom:24px; margin-bottom:28px; border-bottom:1px solid var(--zw-line); }
+body[data-zw] .zws-handout-chapter > header small { color:var(--zw-muted); font-size:12px; letter-spacing:.14em; }
+body[data-zw] .zws-handout-chapter > header h2 { font-size:clamp(24px,3.4cqi,30px); line-height:1.5; margin:10px 0 0; font-weight:650; letter-spacing:.02em; overflow-wrap:anywhere; }
+body[data-zw] .zws-handout-topic { padding:0; }
+body[data-zw] .zws-handout-topic + .zws-handout-topic { margin-top:40px; }
+body[data-zw] .zws-handout-topic > header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:8px 16px; margin-bottom:20px; }
+body[data-zw] .zws-handout-topic h3 { font-size:20px; line-height:1.6; margin:0; font-weight:600; overflow-wrap:anywhere; }
+body[data-zw] .zws-source-anchor { font-size:12px; white-space:nowrap; }
+body[data-zw] .zws-handout-block { font-size:17px; line-height:1.9; margin:24px 0; overflow-wrap:anywhere; }
+body[data-zw] .zws-handout-block p, body[data-zw] .zws-handout-block li { font-size:17px; line-height:1.9; }
+body[data-zw] .zws-handout-block p { margin-block:0 1em; }
+body[data-zw] .zws-handout-block p:last-child { margin-bottom:0; }
+body[data-zw] .zws-handout-block--definition, body[data-zw] .zws-handout-block--example { padding:18px 20px; background:var(--zw-hover); border-radius:8px; }
+body[data-zw] .zws-handout-kind { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px 12px; margin-bottom:10px; font-size:13px; }
+body[data-zw] .zws-handout-kind > span { color:var(--zws-reader-link); font-size:12px; font-weight:600; }
+body[data-zw] .zws-handout-kind strong { color:var(--zw-text); font-weight:600; }
+body[data-zw] .zws-block-source { margin-left:auto; white-space:nowrap; font-size:11px; }
+body[data-zw] .zws-draft-label { color:var(--zw-muted); font-size:13px; line-height:1.7; padding:10px 14px; background:var(--zw-hover); border-radius:6px; }
+body[data-zw] .zws-example-label { color:var(--zw-secondary); font-size:12px; }
+body[data-zw] .zws-example-solution { margin-top:16px; border-top:1px solid var(--zw-line); padding-top:10px; }
+body[data-zw] .zws-example-solution > summary { cursor:pointer; color:var(--zws-reader-link); font-size:13px; }
+body[data-zw] .zws-handout-block .katex-display, body[data-zw] .zws-handout-block pre { max-width:100%; overflow-x:auto; overflow-y:hidden; padding-block:8px; }
+body[data-zw] .zws-handout-block table { display:block; max-width:100%; overflow-x:auto; }
+body[data-zw] .zws-filter-panel { margin:0 0 14px; padding:13px 15px; border:1px solid var(--zw-line); border-radius:9px; background:var(--zw-surface); }
+body[data-zw] .zws-filter-row { display:flex; align-items:flex-start; gap:11px; margin:0 0 8px; }
+body[data-zw] .zws-filter-label { flex:0 0 52px; padding-top:4px; color:var(--zw-muted); font-size:11px; letter-spacing:.04em; }
+body[data-zw] .zws-chips { display:flex; flex-wrap:wrap; gap:5px; min-width:0; }
+body[data-zw] .zws-study .zws-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border:1px solid var(--zw-line); border-radius:99px; background:transparent; color:var(--zw-secondary); font:inherit; font-size:11px; line-height:1.6; cursor:pointer; }
+body[data-zw] .zws-chip-count { color:var(--zw-muted); font-size:11px; font-variant-numeric:tabular-nums; }
+body[data-zw] .zws-chip.is-on .zws-chip-count { color:inherit; opacity:.75; }
+body[data-zw] .zws-chip:disabled { cursor:default; }
+body[data-zw] .zws-chip.is-idle { border-style:dotted; color:var(--zw-muted); opacity:.55; }
+body[data-zw] .zws-chip.is-idle:hover { border-color:var(--zw-line); color:var(--zw-muted); }
+body[data-zw] .zws-chip.is-idle.is-on { border-color:transparent; background:transparent; color:var(--zw-muted); font-weight:400; opacity:.55; }
+body[data-zw] .zws-chip:hover { border-color:color-mix(in srgb,var(--zw-accent) 40%,var(--zw-line)); color:var(--zw-accent); }
+body[data-zw] .zws-chip.is-on { border-color:transparent; background:var(--zw-soft); color:var(--zw-accent); font-weight:600; }
+body[data-zw] .zws-chip.is-off { border-style:dashed; color:var(--zw-muted); cursor:default; opacity:.72; }
+body[data-zw] .zws-chip.is-off:hover { border-color:var(--zw-line); color:var(--zw-muted); }
+body[data-zw] .zws-filter-hint { margin:2px 0 11px 63px; color:var(--zw-muted); font-size:11px; line-height:1.7; }
+body[data-zw] .zws-filter-panel > .zws-text { margin:0 0 8px 63px; font-size:11px; }
+body[data-zw] .zws-results { margin:0 0 14px; padding:13px 15px; border:1px solid var(--zw-line); border-radius:9px; background:var(--zw-bg); }
+body[data-zw] .zws-results-head { margin:0; font-size:11px; font-weight:600; }
+body[data-zw] .zws-results-note { margin:5px 0 0; color:var(--zw-muted); font-size:11px; line-height:1.75; }
+body[data-zw] .zws-hit-list { display:flex; flex-direction:column; gap:1px; margin-top:11px; }
+body[data-zw] .zws-hit { display:block; width:100%; padding:9px 10px; border:0; border-radius:6px; background:transparent; color:var(--zw-text); font:inherit; text-align:left; cursor:pointer; }
+body[data-zw] .zws-hit:hover { background:var(--zw-hover); }
+body[data-zw] .zws-hit-top { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+body[data-zw] .zws-hit-layer { pointer-events:none; }
+body[data-zw] .zws-hit-where { color:var(--zw-muted); font-size:11px; }
+body[data-zw] .zws-hit-text { display:block; font-size:11px; line-height:1.8; color:var(--zw-secondary); overflow-wrap:anywhere; }
+body[data-zw] .zws-hit:hover .zws-hit-text { color:var(--zw-text); }
+body[data-zw][data-ds-dark-theme] .zws-filter-panel { background:color-mix(in srgb,var(--zw-surface) 80%,var(--zw-bg)); }
+body[data-zw][data-ds-dark-theme] .zws-results { background:color-mix(in srgb,var(--zw-bg) 70%,var(--zw-surface)); }
+body[data-zw] .zws-breadcrumb-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; }
+body[data-zw] .zws-breadcrumb { min-width:0; }
+body[data-zw] .zws-search-entry { position:relative; display:flex; flex:0 0 auto; align-items:center; gap:8px; min-width:0; }
+body[data-zw] .zws-search-box { display:flex; align-items:center; gap:6px; width:252px; max-width:44vw; min-width:0; padding:0 9px; border:1px solid var(--zw-line); border-radius:6px; background:var(--zw-surface); color:var(--zw-muted); font-size:11px; transition:border-color .15s; }
+/* 焦点环画在外层 .zws-search-box 上，而不是里面的 input 上：input 是无边框、无内边距的
    裸输入区，它的 outline 会紧贴文字、钻到放大镜图标与「×」下面，看起来像渲染错位。
    外层是用户认知里的「整个搜索框」，环画在它的圆角外沿才和按钮、tab 的焦点环一致。
    因此内层 input 的 outline 显式关掉 —— 关掉的**前提**就是下面这条可见的环，不能只留 outline:none。 */
-body[data-zhiyun] .zs-search-box:focus-within { border-color:color-mix(in srgb,var(--zy-accent) 45%,var(--zy-line)); outline:2px solid var(--zy-accent); outline-offset:1px; }
-body[data-zhiyun] .zs-search-box input { flex:1 1 auto; width:100%; min-width:0; min-height:28px; padding:0; border:0; background:transparent; color:var(--zy-text); font-size:11px; }
-body[data-zhiyun] .zs-search-box input:focus-visible { outline:none; }
-body[data-zhiyun] .zs-search-box input::placeholder { color:var(--zy-muted); }
-body[data-zhiyun] .zs-search-clear { flex:0 0 auto; padding:2px 3px; border:0; background:transparent; color:var(--zy-muted); font-size:13px; line-height:1; cursor:pointer; }
-body[data-zhiyun] .zs-search-clear:hover { color:var(--zy-text); }
-body[data-zhiyun] .zs-study .zs-search-trigger { flex:0 0 auto; padding:6px 11px; border:1px solid var(--zy-line); border-radius:6px; background:var(--zy-surface); color:var(--zy-secondary); font:inherit; font-size:11px; white-space:nowrap; cursor:pointer; transition:background .15s,color .15s,border-color .15s; }
-body[data-zhiyun] .zs-search-trigger:hover { border-color:color-mix(in srgb,var(--zy-accent) 40%,var(--zy-line)); color:var(--zy-accent); }
-body[data-zhiyun] .zs-search-trigger[aria-expanded="true"] { border-color:transparent; background:var(--zy-soft); color:var(--zy-accent); font-weight:600; }
-body[data-zhiyun] .zs-advanced-popover { position:absolute; top:calc(100% + 8px); right:0; z-index:30; width:min(560px,78vw); max-height:min(70vh,520px); overflow:auto; padding:14px 16px; border:1px solid var(--zy-line); border-radius:10px; background:var(--zy-surface); box-shadow:0 18px 40px -18px rgba(15,23,42,.35); }
-body[data-zhiyun] .zs-advanced-popover .zs-filter-panel { margin:0; padding:0; border:0; background:transparent; }
-body[data-zhiyun] .zs-search-drawer { margin:13px 0 0; padding:14px 16px; border:1px solid var(--zy-line); border-radius:10px; background:var(--zy-surface); }
-body[data-zhiyun] .zs-search-drawer .zs-results { margin:0; padding:0; border:0; background:transparent; }
-body[data-zhiyun] .zs-search-drawer .zs-chips { row-gap:6px; }
-body[data-zhiyun][data-ds-dark-theme] .zs-search-box,
-body[data-zhiyun][data-ds-dark-theme] .zs-search-trigger { background:color-mix(in srgb,var(--zy-surface) 80%,var(--zy-bg)); }
-body[data-zhiyun][data-ds-dark-theme] .zs-advanced-popover { background:color-mix(in srgb,var(--zy-surface) 80%,var(--zy-bg)); box-shadow:0 18px 40px -18px rgba(0,0,0,.6); }
-body[data-zhiyun] .zs-quiz, body[data-zhiyun] .zs-note { display:flex; flex-direction:column; gap:12px; }
-body[data-zhiyun] .zs-quiz-blocks, body[data-zhiyun] .zs-quiz-group ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
-body[data-zhiyun] .zs-quiz-blocks label, body[data-zhiyun] .zs-quiz-tools label { display:flex; gap:8px; align-items:flex-start; font-size:13px; line-height:1.6; }
-body[data-zhiyun] .zs-quiz-tools, body[data-zhiyun] .zs-note-tools, body[data-zhiyun] .zs-quiz-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-body[data-zhiyun] .zs-quiz-tools input[type="number"] { width:4em; margin-left:6px; }
-body[data-zhiyun] .zs-quiz-item { display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-quiz-item p { margin:4px 0 0; }
-body[data-zhiyun] .zs-quiz-group h3 { margin:8px 0 0; font-size:14px; }
-body[data-zhiyun] .zs-quiz-problem { margin:0; color:var(--zy-accent); font-size:13px; line-height:1.6; }
-body[data-zhiyun] .zs-note-editor { width:100%; min-height:160px; padding:12px; border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); color:var(--zy-text); font:inherit; line-height:1.7; resize:vertical; }
-body[data-zhiyun] .zs-note-preview { white-space:pre-wrap; line-height:1.8; }
-body[data-zhiyun] .zs-transcript p.zs-line-focus { background:var(--zy-soft); border-radius:6px; }
-@media(max-width:1050px) { body[data-zhiyun] .zs-search-box { width:190px; max-width:38vw; } }
-@media(max-width:850px) { body[data-zhiyun] .zs-content-switch { flex-wrap:wrap; } body[data-zhiyun] .zs-breadcrumb-row { flex-wrap:wrap; } body[data-zhiyun] .zs-search-entry { flex:1 1 100%; } body[data-zhiyun] .zs-search-box { width:auto; max-width:none; flex:1 1 auto; } body[data-zhiyun] .zs-advanced-popover { width:auto; left:0; right:0; } }
+body[data-zw] .zws-search-box:focus-within { border-color:color-mix(in srgb,var(--zw-accent) 45%,var(--zw-line)); outline:2px solid var(--zw-accent); outline-offset:1px; }
+body[data-zw] .zws-search-box input { flex:1 1 auto; width:100%; min-width:0; min-height:28px; padding:0; border:0; background:transparent; color:var(--zw-text); font-size:11px; }
+body[data-zw] .zws-search-box input:focus-visible { outline:none; }
+body[data-zw] .zws-search-box input::placeholder { color:var(--zw-muted); }
+body[data-zw] .zws-search-clear { flex:0 0 auto; padding:2px 3px; border:0; background:transparent; color:var(--zw-muted); font-size:13px; line-height:1; cursor:pointer; }
+body[data-zw] .zws-search-clear:hover { color:var(--zw-text); }
+body[data-zw] .zws-study .zws-search-trigger { flex:0 0 auto; padding:6px 11px; border:1px solid var(--zw-line); border-radius:6px; background:var(--zw-surface); color:var(--zw-secondary); font:inherit; font-size:11px; white-space:nowrap; cursor:pointer; transition:background .15s,color .15s,border-color .15s; }
+body[data-zw] .zws-search-trigger:hover { border-color:color-mix(in srgb,var(--zw-accent) 40%,var(--zw-line)); color:var(--zw-accent); }
+body[data-zw] .zws-search-trigger[aria-expanded="true"] { border-color:transparent; background:var(--zw-soft); color:var(--zw-accent); font-weight:600; }
+body[data-zw] .zws-advanced-popover { position:absolute; top:calc(100% + 8px); right:0; z-index:30; width:min(560px,78vw); max-height:min(70vh,520px); overflow:auto; padding:14px 16px; border:1px solid var(--zw-line); border-radius:10px; background:var(--zw-surface); box-shadow:0 18px 40px -18px rgba(15,23,42,.35); }
+body[data-zw] .zws-advanced-popover .zws-filter-panel { margin:0; padding:0; border:0; background:transparent; }
+body[data-zw] .zws-search-drawer { margin:13px 0 0; padding:14px 16px; border:1px solid var(--zw-line); border-radius:10px; background:var(--zw-surface); }
+body[data-zw] .zws-search-drawer .zws-results { margin:0; padding:0; border:0; background:transparent; }
+body[data-zw] .zws-search-drawer .zws-chips { row-gap:6px; }
+body[data-zw][data-ds-dark-theme] .zws-search-box,
+body[data-zw][data-ds-dark-theme] .zws-search-trigger { background:color-mix(in srgb,var(--zw-surface) 80%,var(--zw-bg)); }
+body[data-zw][data-ds-dark-theme] .zws-advanced-popover { background:color-mix(in srgb,var(--zw-surface) 80%,var(--zw-bg)); box-shadow:0 18px 40px -18px rgba(0,0,0,.6); }
+body[data-zw] .zws-quiz, body[data-zw] .zws-note { display:flex; flex-direction:column; gap:12px; }
+body[data-zw] .zws-quiz-blocks, body[data-zw] .zws-quiz-group ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+body[data-zw] .zws-quiz-blocks label, body[data-zw] .zws-quiz-tools label { display:flex; gap:8px; align-items:flex-start; font-size:13px; line-height:1.6; }
+body[data-zw] .zws-quiz-tools, body[data-zw] .zws-note-tools, body[data-zw] .zws-quiz-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+body[data-zw] .zws-quiz-tools input[type="number"] { width:4em; margin-left:6px; }
+body[data-zw] .zws-quiz-item { display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--zw-line); }
+body[data-zw] .zws-quiz-item p { margin:4px 0 0; }
+body[data-zw] .zws-quiz-group h3 { margin:8px 0 0; font-size:14px; }
+body[data-zw] .zws-quiz-problem { margin:0; color:var(--zw-accent); font-size:13px; line-height:1.6; }
+body[data-zw] .zws-note-editor { width:100%; min-height:160px; padding:12px; border:1px solid var(--zw-line); border-radius:8px; background:var(--zw-surface); color:var(--zw-text); font:inherit; line-height:1.7; resize:vertical; }
+body[data-zw] .zws-note-preview { white-space:pre-wrap; line-height:1.8; }
+body[data-zw] .zws-transcript p.zws-line-focus { background:var(--zw-soft); border-radius:6px; }
+@media(max-width:1050px) { body[data-zw] .zws-search-box { width:190px; max-width:38vw; } }
+@media(max-width:850px) { body[data-zw] .zws-content-switch { flex-wrap:wrap; } body[data-zw] .zws-breadcrumb-row { flex-wrap:wrap; } body[data-zw] .zws-search-entry { flex:1 1 100%; } body[data-zw] .zws-search-box { width:auto; max-width:none; flex:1 1 auto; } body[data-zw] .zws-advanced-popover { width:auto; left:0; right:0; } }
 
 /* ------------------------------------------------------------------ 直播 */
 
 /* 直播入口夹在「课程目录」标题与搜索框之间，所以它的外边距要跟旁边几个块对齐：
-   `.zs-tree-search` 与 `.zs-corpus` 都是 `margin:0 0 12px`，这里也 12px —— 三块顶栏
+   `.zws-tree-search` 与 `.zws-corpus` 都是 `margin:0 0 12px`，这里也 12px —— 三块顶栏
    之间任何一个间距不一样，收起来的目录一眼就能看出来歪。 */
-body[data-zhiyun] .zs-live-fold { margin:0 0 12px; }
-body[data-zhiyun] .zs-live-fold-toggle { display:flex; align-items:center; gap:8px; width:100%; min-height:34px; padding:0 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-text); text-align:left; }
-body[data-zhiyun] .zs-live-fold-toggle:hover { background:var(--zy-hover); }
-body[data-zhiyun] .zs-live-fold-toggle:focus-visible { outline:2px solid var(--zy-accent); outline-offset:1px; }
+body[data-zw] .zws-live-fold { margin:0 0 12px; }
+body[data-zw] .zws-live-fold-toggle { display:flex; align-items:center; gap:8px; width:100%; min-height:34px; padding:0 10px; border:1px solid var(--zw-line); border-radius:7px; background:var(--zw-surface); color:var(--zw-text); text-align:left; }
+body[data-zw] .zws-live-fold-toggle:hover { background:var(--zw-hover); }
+body[data-zw] .zws-live-fold-toggle:focus-visible { outline:2px solid var(--zw-accent); outline-offset:1px; }
 /* 那颗点只表达「此刻有没有在播」，不用红点：红点在明暗两套主题里都得另配一个值，
-   而 `--zy-accent` 本来就是这套界面里「这里有事」的颜色。`[data-on]` 而不是
+   而 `--zw-accent` 本来就是这套界面里「这里有事」的颜色。`[data-on]` 而不是
    `is-on`，因为它是**状态值**（on/off）而不是布尔类，取值写在 DOM 上更直白。 */
-body[data-zhiyun] .zs-live-fold-dot { flex:none; width:6px; height:6px; border-radius:50%; background:var(--zy-muted); }
-body[data-zhiyun] .zs-live-fold-dot[data-on="on"] { background:var(--zy-accent); }
-body[data-zhiyun] .zs-live-fold-title { flex:1; min-width:0; font-size:12px; }
-body[data-zhiyun] .zs-live-fold-chevron { flex:none; color:var(--zy-muted); font-size:12px; }
-body[data-zhiyun] .zs-live-fold-body { margin-top:6px; padding:6px 0 0 9px; border-left:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-live-fold-list { display:flex; flex-direction:column; gap:6px; }
-body[data-zhiyun] .zs-live-fold-item { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; padding:8px 10px; border:1px solid var(--zy-line); border-radius:7px; background:var(--zy-surface); color:var(--zy-text); text-align:left; }
-body[data-zhiyun] .zs-live-fold-item:hover { border-color:color-mix(in srgb,var(--zy-accent) 40%,var(--zy-line)); background:var(--zy-hover); }
-body[data-zhiyun] .zs-live-fold-item strong { overflow:hidden; max-width:100%; font-size:12.5px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-body[data-zhiyun] .zs-live-fold-item small { color:var(--zy-muted); font-size:12px; line-height:1.6; }
+body[data-zw] .zws-live-fold-dot { flex:none; width:6px; height:6px; border-radius:50%; background:var(--zw-muted); }
+body[data-zw] .zws-live-fold-dot[data-on="on"] { background:var(--zw-accent); }
+body[data-zw] .zws-live-fold-title { flex:1; min-width:0; font-size:12px; }
+body[data-zw] .zws-live-fold-chevron { flex:none; color:var(--zw-muted); font-size:12px; }
+body[data-zw] .zws-live-fold-body { margin-top:6px; padding:6px 0 0 9px; border-left:1px solid var(--zw-line); }
+body[data-zw] .zws-live-fold-list { display:flex; flex-direction:column; gap:6px; }
+body[data-zw] .zws-live-fold-item { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; padding:8px 10px; border:1px solid var(--zw-line); border-radius:7px; background:var(--zw-surface); color:var(--zw-text); text-align:left; }
+body[data-zw] .zws-live-fold-item:hover { border-color:color-mix(in srgb,var(--zw-accent) 40%,var(--zw-line)); background:var(--zw-hover); }
+body[data-zw] .zws-live-fold-item strong { overflow:hidden; max-width:100%; font-size:12.5px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zw] .zws-live-fold-item small { color:var(--zw-muted); font-size:12px; line-height:1.6; }
 /* 「未接入」「部分时段未取到」这类说明用强调色：它是**结论**，不是装饰 ——
    灰底小字在这一列里跟节次的元信息长得一模一样，会被直接跳过。 */
-body[data-zhiyun] .zs-live-reason { color:var(--zy-accent); line-height:1.75; }
-/* 折叠区里的重试钮：`.zs-text` 是零内边距的裸文字钮，直接跟在
-   `.zs-tree-hint` 的 7px/9px 内边距后面会贴着左边缘之外的视觉基线，
+body[data-zw] .zws-live-reason { color:var(--zw-accent); line-height:1.75; }
+/* 折叠区里的重试钮：`.zws-text` 是零内边距的裸文字钮，直接跟在
+   `.zws-tree-hint` 的 7px/9px 内边距后面会贴着左边缘之外的视觉基线，
    补同一份左右内边距让它跟上面的说明对齐。 */
-body[data-zhiyun] .zs-live-retry { display:block; margin:0 9px; font-size:11px; }
+body[data-zw] .zws-live-retry { display:block; margin:0 9px; font-size:11px; }
 
 /* 直播面板：机位一行、播放器一块、说明若干行。 */
-body[data-zhiyun] .zs-live { display:flex; flex-direction:column; gap:12px; }
-body[data-zhiyun] .zs-live-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
-body[data-zhiyun] .zs-live-head-copy { display:flex; flex-direction:column; min-width:0; gap:3px; }
-body[data-zhiyun] .zs-live-title { overflow:hidden; font-size:14px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-body[data-zhiyun] .zs-live-meta { color:var(--zy-muted); font-size:12px; }
-body[data-zhiyun] .zs-live-busy { flex:none; color:var(--zy-secondary); font-size:11px; }
+body[data-zw] .zws-live { display:flex; flex-direction:column; gap:12px; }
+body[data-zw] .zws-live-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+body[data-zw] .zws-live-head-copy { display:flex; flex-direction:column; min-width:0; gap:3px; }
+body[data-zw] .zws-live-title { overflow:hidden; font-size:14px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zw] .zws-live-meta { color:var(--zw-muted); font-size:12px; }
+body[data-zw] .zws-live-busy { flex:none; color:var(--zw-secondary); font-size:11px; }
 /* 机位组横排且允许换行：一节直播最多四路机位（教师/屏幕/学生/其他），窄屏下
    四颗药丸会顶出目录宽度 —— 换行比横向滚动好，机位数量本来就不固定。 */
-body[data-zhiyun] .zs-live-seats { display:flex; flex-wrap:wrap; gap:6px; }
-/* 多写一层 `.zs-study`（0-3-1）是为了压过 ui-primitives 的
-   `body[data-zhiyun] .zs-study button { font:inherit; cursor:pointer }`（0-2-2）：
+body[data-zw] .zws-live-seats { display:flex; flex-wrap:wrap; gap:6px; }
+/* 多写一层 `.zws-study`（0-3-1）是为了压过 ui-primitives 的
+   `body[data-zw] .zws-study button { font:inherit; cursor:pointer }`（0-2-2）：
    同特异性下 tab 与药丸的度量必须对齐，靠挂载顺序决胜迟早会漂。 */
-body[data-zhiyun] .zs-study .zs-live-seat { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border:1px solid var(--zy-line); border-radius:99px; background:transparent; color:var(--zy-secondary); font:inherit; font-size:12px; line-height:1.6; }
-body[data-zhiyun] .zs-study .zs-live-seat:hover { border-color:color-mix(in srgb,var(--zy-accent) 40%,var(--zy-line)); color:var(--zy-accent); }
-body[data-zhiyun] .zs-study .zs-live-seat:focus-visible { outline:2px solid var(--zy-accent); outline-offset:2px; }
+body[data-zw] .zws-study .zws-live-seat { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border:1px solid var(--zw-line); border-radius:99px; background:transparent; color:var(--zw-secondary); font:inherit; font-size:12px; line-height:1.6; }
+body[data-zw] .zws-study .zws-live-seat:hover { border-color:color-mix(in srgb,var(--zw-accent) 40%,var(--zw-line)); color:var(--zw-accent); }
+body[data-zw] .zws-study .zws-live-seat:focus-visible { outline:2px solid var(--zw-accent); outline-offset:2px; }
 /* 选中态要「一眼看出」，所以同时换三样：底色、字色、字重。
    只换边框的话，在明色主题下跟 hover 几乎分不开。 */
-body[data-zhiyun] .zs-study .zs-live-seat.is-on { border-color:transparent; background:var(--zy-soft); color:var(--zy-accent); font-weight:600; }
+body[data-zw] .zws-study .zws-live-seat.is-on { border-color:transparent; background:var(--zw-soft); color:var(--zw-accent); font-weight:600; }
 /* 放不了的机位用虚线边：实线 + 灰字跟「没选中」太像，用户会以为再点一下就能播。 */
-body[data-zhiyun] .zs-study .zs-live-seat:disabled { border-style:dashed; color:var(--zy-muted); cursor:default; opacity:.72; }
-body[data-zhiyun] .zs-study .zs-live-seat:disabled:hover { border-color:var(--zy-line); color:var(--zy-muted); }
-/* 播放器背景用 `--zy-bg` 而不是写死黑：HLS 起播前那几帧要给出一块"这块是画面"的底色，
+body[data-zw] .zws-study .zws-live-seat:disabled { border-style:dashed; color:var(--zw-muted); cursor:default; opacity:.72; }
+body[data-zw] .zws-study .zws-live-seat:disabled:hover { border-color:var(--zw-line); color:var(--zw-muted); }
+/* 播放器背景用 `--zw-bg` 而不是写死黑：HLS 起播前那几帧要给出一块"这块是画面"的底色，
    而写死黑色在暗色主题下会跟页面糊成一片、看起来像播放器没渲染。 */
-body[data-zhiyun] .zs-live-video { display:block; width:100%; max-height:calc(100vh - 300px); border:1px solid var(--zy-line); border-radius:6px; background:var(--zy-bg); }
-/* 一个能播的机位都没有：这是**内容位**的空态，不是错误 —— 所以照 `.zs-content-empty`
-   的口径做，不加 `zs-live-reason` 的强调色。 */
-body[data-zhiyun] .zs-live-noplay { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:220px; padding:30px; border:1px dashed var(--zy-line); border-radius:6px; text-align:center; }
-body[data-zhiyun] .zs-live-noplay strong { font-size:13px; font-weight:500; }
-body[data-zhiyun] .zs-live-noplay small { max-width:400px; margin-top:6px; color:var(--zy-muted); font-size:11px; line-height:1.8; }
+body[data-zw] .zws-live-video { display:block; width:100%; max-height:calc(100vh - 300px); border:1px solid var(--zw-line); border-radius:6px; background:var(--zw-bg); }
+/* 一个能播的机位都没有：这是**内容位**的空态，不是错误 —— 所以照 `.zws-content-empty`
+   的口径做，不加 `zws-live-reason` 的强调色。 */
+body[data-zw] .zws-live-noplay { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:220px; padding:30px; border:1px dashed var(--zw-line); border-radius:6px; text-align:center; }
+body[data-zw] .zws-live-noplay strong { font-size:13px; font-weight:500; }
+body[data-zw] .zws-live-noplay small { max-width:400px; margin-top:6px; color:var(--zw-muted); font-size:11px; line-height:1.8; }
 /* 换节途中的「正在取这一节的机位…」与重试钮都属于这块占位内容，跟着它居中；
-   `.zs-text` 是左对齐的裸文字钮，不单独摆一下会贴在左侧边框上。 */
-body[data-zhiyun] .zs-live-noplay .zs-text { margin-top:10px; font-size:11px; }
+   `.zws-text` 是左对齐的裸文字钮，不单独摆一下会贴在左侧边框上。 */
+body[data-zw] .zws-live-noplay .zws-text { margin-top:10px; font-size:11px; }
 /* dropped 只说明、不占按钮位，所以给它正文级的行高与长度容忍（一行放不下就折行），
    而不是节次元信息那种 `nowrap`。 */
-body[data-zhiyun] .zs-live-dropped { margin:0; color:var(--zy-muted); font-size:11px; line-height:1.8; overflow-wrap:anywhere; }
-body[data-zhiyun] .zs-live-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:250px; padding:30px; text-align:center; }
-body[data-zhiyun] .zs-live-empty > span { display:grid; width:38px; height:38px; place-items:center; margin-bottom:11px; border-radius:10px; background:var(--zy-soft); color:var(--zy-accent); font-size:18px; }
-body[data-zhiyun] .zs-live-empty strong { font-size:13px; font-weight:500; }
-body[data-zhiyun] .zs-live-empty small { max-width:400px; margin-top:6px; color:var(--zy-muted); font-size:11px; line-height:1.8; }
+body[data-zw] .zws-live-dropped { margin:0; color:var(--zw-muted); font-size:11px; line-height:1.8; overflow-wrap:anywhere; }
+body[data-zw] .zws-live-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:250px; padding:30px; text-align:center; }
+body[data-zw] .zws-live-empty > span { display:grid; width:38px; height:38px; place-items:center; margin-bottom:11px; border-radius:10px; background:var(--zw-soft); color:var(--zw-accent); font-size:18px; }
+body[data-zw] .zws-live-empty strong { font-size:13px; font-weight:500; }
+body[data-zw] .zws-live-empty small { max-width:400px; margin-top:6px; color:var(--zw-muted); font-size:11px; line-height:1.8; }
 /* 空态里的原因与重试跟着空态走：`p` 默认有外边距，会把居中的整块顶歪。 */
-body[data-zhiyun] .zs-live-empty .zs-live-reason { max-width:400px; margin:10px 0 0; font-size:11px; }
-body[data-zhiyun] .zs-live-empty .zs-text { margin-top:10px; font-size:11px; }
-/* 暗色下机位药丸与折叠区都要比卡片再深一档，否则 `--zy-surface` 与页面底几乎同色、
+body[data-zw] .zws-live-empty .zws-live-reason { max-width:400px; margin:10px 0 0; font-size:11px; }
+body[data-zw] .zws-live-empty .zws-text { margin-top:10px; font-size:11px; }
+/* 暗色下机位药丸与折叠区都要比卡片再深一档，否则 `--zw-surface` 与页面底几乎同色、
    边框成了唯一的形状线索。 */
-body[data-zhiyun][data-ds-dark-theme] .zs-live-fold-toggle,
-body[data-zhiyun][data-ds-dark-theme] .zs-live-fold-item { background:color-mix(in srgb,var(--zy-surface) 80%,var(--zy-bg)); }
-body[data-zhiyun] .zs-content-switch button[aria-pressed=true] { background:var(--zy-surface); color:var(--zy-accent); box-shadow:0 1px 3px #00000012; }
-body[data-zhiyun] .zs-k-home { display:flex; flex-direction:column; gap:14px; margin-top:14px; }
-body[data-zhiyun] .zs-k-tools { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
-body[data-zhiyun] .zs-k-tools-main { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-body[data-zhiyun] .zs-k-spine { margin:0; color:var(--zy-secondary); font-size:13px; line-height:1.6; }
-body[data-zhiyun] .zs-k-chapters { display:flex; flex-direction:column; gap:18px; }
-body[data-zhiyun] .zs-k-chapter-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
-body[data-zhiyun] .zs-k-chapter-head h3 { margin:0; font-size:13px; font-weight:600; }
-body[data-zhiyun] .zs-k-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
-body[data-zhiyun] .zs-study .zs-k-card { display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-height:92px; padding:12px; border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); color:inherit; font:inherit; font-size:13px; text-align:left; cursor:pointer; }
-body[data-zhiyun] .zs-study .zs-k-card:hover { border-color:color-mix(in srgb,var(--zy-accent) 45%,var(--zy-line)); }
-body[data-zhiyun] .zs-study .zs-k-card:focus-visible,
-body[data-zhiyun] .zs-study .zs-k-graph-chapter:focus-visible,
-body[data-zhiyun] .zs-study .zs-k-graph-node:focus-visible { outline:2px solid var(--zy-accent); outline-offset:2px; }
-body[data-zhiyun] .zs-k-card strong { font-weight:600; line-height:1.45; }
-body[data-zhiyun] .zs-k-card small,
-body[data-zhiyun] .zs-k-graph-node small { color:var(--zy-muted); font-size:11px; }
-body[data-zhiyun] .zs-k-marks { display:flex; flex-wrap:wrap; gap:6px; }
-body[data-zhiyun] .zs-k-mark { padding:1px 7px; border-radius:99px; background:var(--zy-soft); color:var(--zy-secondary); font-size:11px; }
-body[data-zhiyun] .zs-k-mark.is-note { color:var(--zy-accent); }
-body[data-zhiyun] .zs-k-graph { display:flex; gap:28px; overflow-x:auto; padding:4px 2px 12px; }
-body[data-zhiyun] .zs-k-graph-col { display:flex; flex-direction:column; align-items:stretch; min-width:180px; max-width:240px; }
-body[data-zhiyun] .zs-study .zs-k-graph-chapter,
-body[data-zhiyun] .zs-study .zs-k-graph-node { display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:8px 10px; border:1px solid var(--zy-line); border-radius:8px; color:inherit; font:inherit; font-size:12px; text-align:left; cursor:pointer; }
-body[data-zhiyun] .zs-study .zs-k-graph-chapter { background:var(--zy-soft); font-size:13px; font-weight:600; }
-body[data-zhiyun] .zs-study .zs-k-graph-node { background:var(--zy-surface); }
-body[data-zhiyun] .zs-k-graph-stem { width:1px; height:14px; margin-left:18px; background:var(--zy-line); }
-body[data-zhiyun] .zs-k-graph-topics { display:flex; flex-direction:column; gap:8px; margin-left:18px; padding-left:12px; border-left:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-k-point { margin-top:12px; }
-body[data-zhiyun] .zs-k-point-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
-body[data-zhiyun] .zs-k-point-title { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
-body[data-zhiyun] .zs-k-point-title h3,
-body[data-zhiyun] .zs-k-point-head h3 { margin:0; font-size:16px; font-weight:600; }
-body[data-zhiyun] .zs-k-point .zs-content-switch { margin-bottom:12px; }
-body[data-zhiyun] .zs-k-cues { display:flex; flex-direction:column; }
-body[data-zhiyun] .zs-k-cue { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-k-cue p { margin:0; font-size:13px; line-height:1.6; }
-body[data-zhiyun] .zs-k-cue small { color:var(--zy-muted); font-size:11px; }
-body[data-zhiyun] .zs-k-cue .zs-text { flex:none; }
+body[data-zw][data-ds-dark-theme] .zws-live-fold-toggle,
+body[data-zw][data-ds-dark-theme] .zws-live-fold-item { background:color-mix(in srgb,var(--zw-surface) 80%,var(--zw-bg)); }
+body[data-zw] .zws-content-switch button[aria-pressed=true] { background:var(--zw-surface); color:var(--zw-accent); box-shadow:0 1px 3px #00000012; }
+body[data-zw] .zws-k-home { display:flex; flex-direction:column; gap:14px; margin-top:14px; }
+body[data-zw] .zws-k-tools { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+body[data-zw] .zws-k-tools-main { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+body[data-zw] .zws-k-spine { margin:0; color:var(--zw-secondary); font-size:13px; line-height:1.6; }
+body[data-zw] .zws-k-chapters { display:flex; flex-direction:column; gap:18px; }
+body[data-zw] .zws-k-chapter-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+body[data-zw] .zws-k-chapter-head h3 { margin:0; font-size:13px; font-weight:600; }
+body[data-zw] .zws-k-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+body[data-zw] .zws-study .zws-k-card { display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-height:92px; padding:12px; border:1px solid var(--zw-line); border-radius:8px; background:var(--zw-surface); color:inherit; font:inherit; font-size:13px; text-align:left; cursor:pointer; }
+body[data-zw] .zws-study .zws-k-card:hover { border-color:color-mix(in srgb,var(--zw-accent) 45%,var(--zw-line)); }
+body[data-zw] .zws-study .zws-k-card:focus-visible,
+body[data-zw] .zws-study .zws-k-graph-chapter:focus-visible,
+body[data-zw] .zws-study .zws-k-graph-node:focus-visible { outline:2px solid var(--zw-accent); outline-offset:2px; }
+body[data-zw] .zws-k-card strong { font-weight:600; line-height:1.45; }
+body[data-zw] .zws-k-card small,
+body[data-zw] .zws-k-graph-node small { color:var(--zw-muted); font-size:11px; }
+body[data-zw] .zws-k-marks { display:flex; flex-wrap:wrap; gap:6px; }
+body[data-zw] .zws-k-mark { padding:1px 7px; border-radius:99px; background:var(--zw-soft); color:var(--zw-secondary); font-size:11px; }
+body[data-zw] .zws-k-mark.is-note { color:var(--zw-accent); }
+body[data-zw] .zws-k-graph { display:flex; gap:28px; overflow-x:auto; padding:4px 2px 12px; }
+body[data-zw] .zws-k-graph-col { display:flex; flex-direction:column; align-items:stretch; min-width:180px; max-width:240px; }
+body[data-zw] .zws-study .zws-k-graph-chapter,
+body[data-zw] .zws-study .zws-k-graph-node { display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:8px 10px; border:1px solid var(--zw-line); border-radius:8px; color:inherit; font:inherit; font-size:12px; text-align:left; cursor:pointer; }
+body[data-zw] .zws-study .zws-k-graph-chapter { background:var(--zw-soft); font-size:13px; font-weight:600; }
+body[data-zw] .zws-study .zws-k-graph-node { background:var(--zw-surface); }
+body[data-zw] .zws-k-graph-stem { width:1px; height:14px; margin-left:18px; background:var(--zw-line); }
+body[data-zw] .zws-k-graph-topics { display:flex; flex-direction:column; gap:8px; margin-left:18px; padding-left:12px; border-left:1px solid var(--zw-line); }
+body[data-zw] .zws-k-point { margin-top:12px; }
+body[data-zw] .zws-k-point-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+body[data-zw] .zws-k-point-title { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+body[data-zw] .zws-k-point-title h3,
+body[data-zw] .zws-k-point-head h3 { margin:0; font-size:16px; font-weight:600; }
+body[data-zw] .zws-k-point .zws-content-switch { margin-bottom:12px; }
+body[data-zw] .zws-k-cues { display:flex; flex-direction:column; }
+body[data-zw] .zws-k-cue { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--zw-line); }
+body[data-zw] .zws-k-cue p { margin:0; font-size:13px; line-height:1.6; }
+body[data-zw] .zws-k-cue small { color:var(--zw-muted); font-size:11px; }
+body[data-zw] .zws-k-cue .zws-text { flex:none; }
 
-body[data-zhiyun] .zs-generation { position:relative; margin:14px 0 4px; padding:0; border:1px solid var(--zy-line); border-radius:9px; background:var(--zy-surface); }
-body[data-zhiyun] .zs-generation-heading { display:flex; align-items:center; gap:8px 16px; flex-wrap:wrap; min-height:44px; padding:10px 14px; cursor:pointer; list-style:none; font-size:12px; color:var(--zy-muted); }
-body[data-zhiyun] .zs-generation-heading::-webkit-details-marker { display:none; }
-body[data-zhiyun] .zs-generation-heading strong { color:var(--zy-secondary); font-weight:500; }
-body[data-zhiyun] .zs-generation-disclosure { margin-left:auto; display:flex; align-items:center; gap:8px; }
-body[data-zhiyun] .zs-generation details[open] .zs-generation-disclosure > span { transform:rotate(180deg); }
-body[data-zhiyun] .zs-generation:has(.zs-generation-cancel) .zs-generation-heading { padding-right:70px; }
-body[data-zhiyun] .zs-generation-cancel { position:absolute; top:9px; right:14px; }
-body[data-zhiyun] .zs-generation-stages { display:grid; gap:12px; padding:8px 14px 18px; border-top:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-generation-stage { display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap; font-size:12px; color:var(--zy-muted); font-variant-numeric:tabular-nums; }
-body[data-zhiyun] .zs-generation-stage > span:first-child { min-width:100px; color:var(--zy-secondary); }
-body[data-zhiyun] .zs-generation-stage progress { width:100px; height:4px; accent-color:var(--zy-accent); }
-body[data-zhiyun] .zs-handout > .zs-diagnostics { box-sizing:border-box; width:100%; max-width:46rem; margin:20px auto 0; }
+body[data-zw] .zws-generation { position:relative; margin:14px 0 4px; padding:0; border:1px solid var(--zw-line); border-radius:9px; background:var(--zw-surface); }
+body[data-zw] .zws-generation-heading { display:flex; align-items:center; gap:8px 16px; flex-wrap:wrap; min-height:44px; padding:10px 14px; cursor:pointer; list-style:none; font-size:12px; color:var(--zw-muted); }
+body[data-zw] .zws-generation-heading::-webkit-details-marker { display:none; }
+body[data-zw] .zws-generation-heading strong { color:var(--zw-secondary); font-weight:500; }
+body[data-zw] .zws-generation-disclosure { margin-left:auto; display:flex; align-items:center; gap:8px; }
+body[data-zw] .zws-generation details[open] .zws-generation-disclosure > span { transform:rotate(180deg); }
+body[data-zw] .zws-generation:has(.zws-generation-cancel) .zws-generation-heading { padding-right:70px; }
+body[data-zw] .zws-generation-cancel { position:absolute; top:9px; right:14px; }
+body[data-zw] .zws-generation-stages { display:grid; gap:12px; padding:8px 14px 18px; border-top:1px solid var(--zw-line); }
+body[data-zw] .zws-generation-stage { display:flex; align-items:center; gap:8px 12px; flex-wrap:wrap; font-size:12px; color:var(--zw-muted); font-variant-numeric:tabular-nums; }
+body[data-zw] .zws-generation-stage > span:first-child { min-width:100px; color:var(--zw-secondary); }
+body[data-zw] .zws-generation-stage progress { width:100px; height:4px; accent-color:var(--zw-accent); }
+body[data-zw] .zws-handout > .zws-diagnostics { box-sizing:border-box; width:100%; max-width:46rem; margin:20px auto 0; }
 
-body[data-zhiyun] .zs-task-root { display:inline-flex; flex:none; min-width:0; color:var(--zy-text); font-size:13px; }
-body[data-zhiyun] .zs-task-trigger { position:relative; display:grid; place-items:center; width:32px; height:32px; padding:0; border:0; border-radius:6px; background:transparent; color:var(--zy-muted); cursor:pointer; }
-body[data-zhiyun] .zs-task-trigger svg { color:var(--zy-accent); }
-body[data-zhiyun] .zs-task-dot { position:absolute; top:4px; right:4px; width:5px; height:5px; border-radius:50%; background:var(--zy-accent); }
-body[data-zhiyun] .zs-task-trigger:hover { background:var(--zy-hover); }
-body[data-zhiyun] .zs-task-panel { box-sizing:border-box; position:fixed; inset:auto; margin:0; padding:0; width:min(480px,calc(100vw - 32px)); max-height:min(560px,calc(100dvh - 32px)); color:var(--zy-text); box-shadow:0 12px 40px #0003; display:flex; flex-direction:column; border:1px solid var(--zy-line); border-radius:16px; background:var(--zy-surface); overflow:hidden; }
-body[data-zhiyun] .zs-task-panel > header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:20px; border-bottom:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-task-panel > header strong { font-size:17px; font-weight:600; }
-body[data-zhiyun] .zs-task-panel > header p { margin:6px 0 0; font-size:12px; color:var(--zy-muted); }
-body[data-zhiyun] .zs-task-panel > header > button { border:0; background:none; color:var(--zy-muted); font-size:24px; line-height:1; padding:0 4px; cursor:pointer; }
-body[data-zhiyun] .zs-task-body { overflow:auto; overscroll-behavior:contain; padding:0 20px 16px; }
-body[data-zhiyun] .zs-task-body section { padding-top:18px; }
-body[data-zhiyun] .zs-task-body h3 { display:flex; gap:8px; margin:0 0 12px; font-size:12px; font-weight:600; color:var(--zy-secondary); }
-body[data-zhiyun] .zs-task-body h3 > span { font-weight:400; color:var(--zy-muted); }
-body[data-zhiyun] .zs-task-current { border-left:2px solid var(--zy-accent); padding-left:12px; }
-body[data-zhiyun] .zs-task-title { display:grid; gap:4px; min-width:0; max-width:100%; padding:0; background:none; border:0; color:var(--zy-text); text-align:left; cursor:pointer; }
-body[data-zhiyun] .zs-task-title strong { font-size:13px; font-weight:600; overflow-wrap:anywhere; }
-body[data-zhiyun] .zs-task-title span { font-size:12px; color:var(--zy-muted); overflow-wrap:anywhere; }
-body[data-zhiyun] .zs-task-title:hover strong { color:var(--zy-accent); }
-body[data-zhiyun] .zs-task-empty { font-size:12px; line-height:1.8; color:var(--zy-muted); margin:0; }
-body[data-zhiyun] .zs-task-waiting { margin:0; padding:0 0 0 20px; }
-body[data-zhiyun] .zs-task-waiting li { position:relative; padding:0 82px 14px 4px; color:var(--zy-muted); }
-body[data-zhiyun] .zs-task-waiting li > button:last-child { position:absolute; right:0; top:0; border:0; background:none; color:var(--zy-muted); padding:4px; font-size:11px; cursor:pointer; }
-body[data-zhiyun] .zs-task-history { padding:12px 0; border-top:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-task-row { display:flex; justify-content:space-between; gap:16px; }
-body[data-zhiyun] .zs-task-row > span { flex-shrink:0; font-size:11px; color:var(--zy-muted); }
-body[data-zhiyun] .zs-task-row > span[data-state=failed] { color:var(--zy-accent); }
-body[data-zhiyun] .zs-task-panel .zs-generation { margin-top:8px; padding:10px 0; border:0; }
-body[data-zhiyun] .zs-task-panel .zs-generation-heading { gap:6px 10px; font-size:11px; }
-body[data-zhiyun] .zs-task-panel .zs-generation-heading strong { font-size:12px; }
-body[data-zhiyun] .zs-task-panel .zs-generation-stage { gap:5px 8px; font-size:11px; padding:3px 0; }
-body[data-zhiyun] .zs-task-panel .zs-generation-stage > span:first-child { min-width:84px; }
-body[data-zhiyun] .zs-task-panel .zs-generation-stage progress { width:100%; }
-body[data-zhiyun] .zs-task-panel > footer { padding:12px 20px; border-top:1px solid var(--zy-line); color:var(--zy-muted); font-size:11px; line-height:1.7; }
-body[data-zhiyun] .zs-task-root button:focus-visible { outline:2px solid var(--zy-accent); outline-offset:3px; }
+body[data-zw] .zws-task-root { display:inline-flex; flex:none; min-width:0; color:var(--zw-text); font-size:13px; }
+body[data-zw] .zws-task-trigger { position:relative; display:grid; place-items:center; width:32px; height:32px; padding:0; border:0; border-radius:6px; background:transparent; color:var(--zw-muted); cursor:pointer; }
+body[data-zw] .zws-task-trigger svg { color:var(--zw-accent); }
+body[data-zw] .zws-task-dot { position:absolute; top:4px; right:4px; width:5px; height:5px; border-radius:50%; background:var(--zw-accent); }
+body[data-zw] .zws-task-trigger:hover { background:var(--zw-hover); }
+body[data-zw] .zws-task-panel { box-sizing:border-box; position:fixed; inset:auto; margin:0; padding:0; width:min(480px,calc(100vw - 32px)); max-height:min(560px,calc(100dvh - 32px)); color:var(--zw-text); box-shadow:0 12px 40px #0003; display:flex; flex-direction:column; border:1px solid var(--zw-line); border-radius:16px; background:var(--zw-surface); overflow:hidden; }
+body[data-zw] .zws-task-panel > header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:20px; border-bottom:1px solid var(--zw-line); }
+body[data-zw] .zws-task-panel > header strong { font-size:17px; font-weight:600; }
+body[data-zw] .zws-task-panel > header p { margin:6px 0 0; font-size:12px; color:var(--zw-muted); }
+body[data-zw] .zws-task-panel > header > button { border:0; background:none; color:var(--zw-muted); font-size:24px; line-height:1; padding:0 4px; cursor:pointer; }
+body[data-zw] .zws-task-body { overflow:auto; overscroll-behavior:contain; padding:0 20px 16px; }
+body[data-zw] .zws-task-body section { padding-top:18px; }
+body[data-zw] .zws-task-body h3 { display:flex; gap:8px; margin:0 0 12px; font-size:12px; font-weight:600; color:var(--zw-secondary); }
+body[data-zw] .zws-task-body h3 > span { font-weight:400; color:var(--zw-muted); }
+body[data-zw] .zws-task-current { border-left:2px solid var(--zw-accent); padding-left:12px; }
+body[data-zw] .zws-task-title { display:grid; gap:4px; min-width:0; max-width:100%; padding:0; background:none; border:0; color:var(--zw-text); text-align:left; cursor:pointer; }
+body[data-zw] .zws-task-title strong { font-size:13px; font-weight:600; overflow-wrap:anywhere; }
+body[data-zw] .zws-task-title span { font-size:12px; color:var(--zw-muted); overflow-wrap:anywhere; }
+body[data-zw] .zws-task-title:hover strong { color:var(--zw-accent); }
+body[data-zw] .zws-task-empty { font-size:12px; line-height:1.8; color:var(--zw-muted); margin:0; }
+body[data-zw] .zws-task-waiting { margin:0; padding:0 0 0 20px; }
+body[data-zw] .zws-task-waiting li { position:relative; padding:0 82px 14px 4px; color:var(--zw-muted); }
+body[data-zw] .zws-task-waiting li > button:last-child { position:absolute; right:0; top:0; border:0; background:none; color:var(--zw-muted); padding:4px; font-size:11px; cursor:pointer; }
+body[data-zw] .zws-task-history { padding:12px 0; border-top:1px solid var(--zw-line); }
+body[data-zw] .zws-task-row { display:flex; justify-content:space-between; gap:16px; }
+body[data-zw] .zws-task-row > span { flex-shrink:0; font-size:11px; color:var(--zw-muted); }
+body[data-zw] .zws-task-row > span[data-state=failed] { color:var(--zw-accent); }
+body[data-zw] .zws-task-panel .zws-generation { margin-top:8px; padding:10px 0; border:0; }
+body[data-zw] .zws-task-panel .zws-generation-heading { gap:6px 10px; font-size:11px; }
+body[data-zw] .zws-task-panel .zws-generation-heading strong { font-size:12px; }
+body[data-zw] .zws-task-panel .zws-generation-stage { gap:5px 8px; font-size:11px; padding:3px 0; }
+body[data-zw] .zws-task-panel .zws-generation-stage > span:first-child { min-width:84px; }
+body[data-zw] .zws-task-panel .zws-generation-stage progress { width:100%; }
+body[data-zw] .zws-task-panel > footer { padding:12px 20px; border-top:1px solid var(--zw-line); color:var(--zw-muted); font-size:11px; line-height:1.7; }
+body[data-zw] .zws-task-root button:focus-visible { outline:2px solid var(--zw-accent); outline-offset:3px; }
 @media (max-width:600px) {
-  body[data-zhiyun] .zs-task-trigger { flex:none; }
-  body[data-zhiyun] .zs-task-panel { max-height:65dvh; }
+  body[data-zw] .zws-task-trigger { flex:none; }
+  body[data-zw] .zws-task-panel { max-height:65dvh; }
 }
 
-body[data-zhiyun] .zs-task-panel:not(:popover-open) { display:none; }
+body[data-zw] .zws-task-panel:not(:popover-open) { display:none; }
 /* Side material has its own board, separate from the main lecture reader. */
-body[data-zhiyun] .zs-branch-board { min-width:0; padding:20px 0; }
-body[data-zhiyun] .zs-branch-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
-body[data-zhiyun] .zs-branch-heading strong { color:var(--zy-text); font-size:16px; font-weight:600; }
-body[data-zhiyun] .zs-branch-heading strong span { margin-left:8px; font-size:12px; color:var(--zy-muted); font-weight:400; }
-body[data-zhiyun] .zs-branch-heading p { margin:7px 0 0; color:var(--zy-muted); font-size:12px; line-height:1.7; }
-body[data-zhiyun] .zs-branch-heading input { box-sizing:border-box; width:min(260px,100%); border:1px solid var(--zy-line); border-radius:8px; background:var(--zy-surface); color:var(--zy-text); padding:9px 12px; font:inherit; font-size:13px; }
-body[data-zhiyun] .zs-branch-grid { display:flex; flex-direction:column; border:1px solid var(--zy-line); border-radius:8px; overflow:hidden; }
-body[data-zhiyun] .zs-branch-card { min-width:0; border:0; border-bottom:1px solid var(--zy-line); background:var(--zy-surface); padding:0; scroll-margin-top:24px; }
-body[data-zhiyun] .zs-branch-card[data-focused=true] { outline:2px solid var(--zy-accent); outline-offset:3px; }
-body[data-zhiyun] .zs-branch-meta { display:flex; align-items:center; gap:8px; min-width:0; font-size:12px; color:var(--zy-muted); white-space:nowrap; }
-body[data-zhiyun] .zs-branch-card h3 { min-width:0; margin:0; color:var(--zy-text); font-size:13px; line-height:1.6; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-body[data-zhiyun] .zs-branch-tags { display:inline-flex; flex-wrap:nowrap; gap:4px; max-width:min(180px,28vw); overflow:hidden; }
-body[data-zhiyun] .zs-branch-tags span { flex:none; padding:2px 6px; border-radius:5px; background:var(--zy-hover); color:var(--zy-secondary); font-size:11px; }
-body[data-zhiyun] .zs-branch-context { color:var(--zy-muted); padding-left:12px; border-left:2px solid var(--zy-line); font-size:13px; line-height:1.8; }
-body[data-zhiyun] .zs-branch-text { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--zy-text); font-size:13px; line-height:1.8; }
-body[data-zhiyun] .zs-branch-card > small { display:block; margin-top:12px; color:var(--zy-muted); }
+body[data-zw] .zws-branch-board { min-width:0; padding:20px 0; }
+body[data-zw] .zws-branch-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+body[data-zw] .zws-branch-heading strong { color:var(--zw-text); font-size:16px; font-weight:600; }
+body[data-zw] .zws-branch-heading strong span { margin-left:8px; font-size:12px; color:var(--zw-muted); font-weight:400; }
+body[data-zw] .zws-branch-heading p { margin:7px 0 0; color:var(--zw-muted); font-size:12px; line-height:1.7; }
+body[data-zw] .zws-branch-heading input { box-sizing:border-box; width:min(260px,100%); border:1px solid var(--zw-line); border-radius:8px; background:var(--zw-surface); color:var(--zw-text); padding:9px 12px; font:inherit; font-size:13px; }
+body[data-zw] .zws-branch-grid { display:flex; flex-direction:column; border:1px solid var(--zw-line); border-radius:8px; overflow:hidden; }
+body[data-zw] .zws-branch-card { min-width:0; border:0; border-bottom:1px solid var(--zw-line); background:var(--zw-surface); padding:0; scroll-margin-top:24px; }
+body[data-zw] .zws-branch-card[data-focused=true] { outline:2px solid var(--zw-accent); outline-offset:3px; }
+body[data-zw] .zws-branch-meta { display:flex; align-items:center; gap:8px; min-width:0; font-size:12px; color:var(--zw-muted); white-space:nowrap; }
+body[data-zw] .zws-branch-card h3 { min-width:0; margin:0; color:var(--zw-text); font-size:13px; line-height:1.6; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+body[data-zw] .zws-branch-tags { display:inline-flex; flex-wrap:nowrap; gap:4px; max-width:min(180px,28vw); overflow:hidden; }
+body[data-zw] .zws-branch-tags span { flex:none; padding:2px 6px; border-radius:5px; background:var(--zw-hover); color:var(--zw-secondary); font-size:11px; }
+body[data-zw] .zws-branch-context { color:var(--zw-muted); padding-left:12px; border-left:2px solid var(--zw-line); font-size:13px; line-height:1.8; }
+body[data-zw] .zws-branch-text { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--zw-text); font-size:13px; line-height:1.8; }
+body[data-zw] .zws-branch-card > small { display:block; margin-top:12px; color:var(--zw-muted); }
 
-body[data-zhiyun] .zs-branch-card > summary { display:grid; grid-template-columns:minmax(0,1fr) auto 14px; align-items:center; gap:12px; cursor:pointer; list-style:none; padding:12px 16px; }
-body[data-zhiyun] .zs-branch-card > summary::-webkit-details-marker { display:none; }
-body[data-zhiyun] .zs-branch-card > summary:focus-visible { outline:2px solid var(--zy-accent); outline-offset:6px; border-radius:3px; }
-body[data-zhiyun] .zs-branch-chevron { color:var(--zy-muted); font-size:12px; text-align:center; }
-body[data-zhiyun] .zs-branch-card[open] .zs-branch-chevron { transform:rotate(180deg); }
-body[data-zhiyun] .zs-branch-card .zs-branch-tags { margin-bottom:0; }
-body[data-zhiyun] .zs-branch-body { margin:0; padding:12px 16px 16px; border-top:1px solid var(--zy-line); }
-body[data-zhiyun] .zs-branch-body > .zs-text { margin-bottom:10px; font-size:12px; }
+body[data-zw] .zws-branch-card > summary { display:grid; grid-template-columns:minmax(0,1fr) auto 14px; align-items:center; gap:12px; cursor:pointer; list-style:none; padding:12px 16px; }
+body[data-zw] .zws-branch-card > summary::-webkit-details-marker { display:none; }
+body[data-zw] .zws-branch-card > summary:focus-visible { outline:2px solid var(--zw-accent); outline-offset:6px; border-radius:3px; }
+body[data-zw] .zws-branch-chevron { color:var(--zw-muted); font-size:12px; text-align:center; }
+body[data-zw] .zws-branch-card[open] .zws-branch-chevron { transform:rotate(180deg); }
+body[data-zw] .zws-branch-card .zws-branch-tags { margin-bottom:0; }
+body[data-zw] .zws-branch-body { margin:0; padding:12px 16px 16px; border-top:1px solid var(--zw-line); }
+body[data-zw] .zws-branch-body > .zws-text { margin-bottom:10px; font-size:12px; }
 
-body[data-zhiyun] .zs-branch-card:last-child { border-bottom:0; }
-body[data-zhiyun] .zs-branch-card > summary:hover { background:var(--zy-hover); }
+body[data-zw] .zws-branch-card:last-child { border-bottom:0; }
+body[data-zw] .zws-branch-card > summary:hover { background:var(--zw-hover); }
 
 /* Lecture export action (lecture-export.jsx). */
-body[data-zhiyun] .zs-handout-export { display:flex; flex-direction:column; align-items:flex-end; gap:5px; margin-left:auto; max-width:300px; }
-body[data-zhiyun] .zs-handout-export button { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:12px; }
-body[data-zhiyun] .zs-handout-export small { color:var(--zy-muted); font-size:11px; line-height:1.6; text-align:right; }
+body[data-zw] .zws-handout-export { display:flex; flex-direction:column; align-items:flex-end; gap:5px; margin-left:auto; max-width:300px; }
+body[data-zw] .zws-handout-export button { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:12px; }
+body[data-zw] .zws-handout-export small { color:var(--zw-muted); font-size:11px; line-height:1.6; text-align:right; }
 
 /* 「导出到笔记库」(handout-export.jsx)：与上面的「导出 PDF」并列在同一个工具栏，
    但产物去向完全不同（写进笔记库的 md vs 打印成 PDF）。
    它不抢 margin-left:auto —— 那是 PDF 按钮用来把整组推到右边的。 */
-body[data-zhiyun] .zs-handout-note-export { display:flex; flex-direction:column; align-items:flex-end; gap:5px; max-width:300px; }
-body[data-zhiyun] .zs-handout-note-export button { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:12px; }
-body[data-zhiyun] .zs-handout-note-export small { color:var(--zy-muted); font-size:11px; line-height:1.6; text-align:right; }
+body[data-zw] .zws-handout-note-export { display:flex; flex-direction:column; align-items:flex-end; gap:5px; max-width:300px; }
+body[data-zw] .zws-handout-note-export button { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:12px; }
+body[data-zw] .zws-handout-note-export small { color:var(--zw-muted); font-size:11px; line-height:1.6; text-align:right; }

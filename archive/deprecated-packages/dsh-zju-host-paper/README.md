@@ -1,4 +1,4 @@
-# dsh-zhiyun-host-paper
+# dsh-zju-host-paper
 
 「论文阅读」的**宿主半边**：把上游 `@ggboy123/dsh-paper-reader` 锁版挂载进来，并补上它没有的一件事 —— 选中即译。
 

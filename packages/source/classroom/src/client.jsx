@@ -18,7 +18,7 @@ import {
 
 const NAMESPACE = 'zju-source-classroom';
 
-export const name = 'zhiyun-source-classroom-client';
+export const name = 'zw-source-classroom-client';
 
 export const inject = ['slots', 'locale'];
 
@@ -106,8 +106,8 @@ export const TEXT = {
 };
 
 /**
- * 课堂的状态来自 Cordis 服务 `zhiyunClassroom`，不是 HTTP 路由 ——
- * 它没有自己的 webServer 端点（见本包 `src/index.js` 的 `ctx.provide('zhiyunClassroom', …)`）。
+ * 课堂的状态来自 Cordis 服务 `zwClassroom`，不是 HTTP 路由 ——
+ * 它没有自己的 webServer 端点（见本包 `src/index.js` 的 `ctx.provide('zwClassroom', …)`）。
  * 客户端拿不到服务对象，所以这里只呈现**由宿主注入的** `controller` 提供的读数；
  * 没有 controller 时如实显示「未知」，不伪造状态。
  */
@@ -148,7 +148,7 @@ export function apply(ctx) {
   // 「浙大统一身份认证」分区的「这份凭据的用途」卡片：三者共用同一份 CAS
   // 凭据，状态放在一起才能回答「我填的这份凭据到底通了哪些」。
   //
-  // 数据服务（`zhiyunClassroom`）与路由都保留，
+  // 数据服务（`zwClassroom`）与路由都保留，
   // 页面与脚本照常用它们，只是不在设置里占一格。
   void ctx;
 }

@@ -188,7 +188,7 @@ test('反向：requires 里写的每个本仓 source 包都真的被 import 了�
   for (const { dir, manifest } of sourcePackages()) {
     const imported = new Set([...bareImports(dir)].map(packageOf));
     for (const dep of manifest.dsh?.capability?.requires ?? []) {
-      if (!dep.startsWith('@lybx-leyw/') && !dep.startsWith('dsh-zhiyun-')) continue;
+      if (!dep.startsWith('@lybx-leyw/') && !dep.startsWith('dsh-zju-')) continue;
       // 只对本仓 source 分组内的包做反向检查
       const isSourcePkg = sourcePackages().some(({ manifest: m }) => m.name === dep);
       if (!isSourcePkg) continue;

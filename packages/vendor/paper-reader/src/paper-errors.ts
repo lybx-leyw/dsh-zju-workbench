@@ -6,10 +6,10 @@
  * （`message.includes('模型')`）是这类兼容层最容易腐化的地方 —— 文案一改，
  * 分支就静默失效，而且没有测试会红。
  *
- * # 从 `dsh-zhiyun-host-paper` 迁入
+ * # 从 `dsh-zju-host-paper` 迁入
  *
  * 原先住在智云的兼容层包里。合并到 vendor 后，上游与智云共用这一套错误码：
- * 它们是**同一个 HTTP 面**（`/paper-reader/*` 与 `/zhiyun-paper/*`）的错误约定，
+ * 它们是**同一个 HTTP 面**（`/paper-reader/*` 与 `/zw-paper/*`）的错误约定，
  * 分两处定义迟早漂移。
  */
 

@@ -4,12 +4,12 @@
 
 | action | 做什么 | 服务方法 |
 |---|---|---|
-| `text` | PDF / Word / Excel / PPT / HTML / 纯文本 → 文字（按页），全文另存 Markdown | `zhiyunDoc.text` |
-| `pdf` | 图片、PDF、Office 文档按顺序合成一个 PDF | `zhiyunDoc.pdf` |
-| `pages` | 从 PDF 取出指定页另存 | `zhiyunDoc.pages` |
-| `find` | 找关键词在 PDF 的哪几页 | `zhiyunDoc.find` |
+| `text` | PDF / Word / Excel / PPT / HTML / 纯文本 → 文字（按页），全文另存 Markdown | `zwDoc.text` |
+| `pdf` | 图片、PDF、Office 文档按顺序合成一个 PDF | `zwDoc.pdf` |
+| `pages` | 从 PDF 取出指定页另存 | `zwDoc.pages` |
+| `find` | 找关键词在 PDF 的哪几页 | `zwDoc.find` |
 
-服务由 `@lybx-leyw/dsh-zju-core-doc` 提供（`ctx.zhiyunDoc`）。
+服务由 `@lybx-leyw/dsh-zju-core-doc` 提供（`ctx.zwDoc`）。
 
 ## 为什么一个工具而不是四个
 

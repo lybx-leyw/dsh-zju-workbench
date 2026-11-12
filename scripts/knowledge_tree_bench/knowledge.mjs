@@ -1,5 +1,5 @@
 /**
- * 知识域：`zhiyunKnowledge` 的存储动作 + 检索。
+ * 知识域：`zwKnowledge` 的存储动作 + 检索。
  *
  * 基准需要它，因为**树与讲义是落盘的**：基准如果不经过这一层，就测不到
  * "写了之后读回来还是不是同一棵"、"版本失效会不会把讲义一起作废"。
@@ -30,6 +30,6 @@ export async function mountKnowledge({ dataDir, storageDomain } = {}) {
     );
   }
   const mounted = await mount('@lybx-leyw/dsh-zju-core-knowledge', { dataDir, services: { storageDomain } });
-  const service = serviceOf(mounted, 'zhiyunKnowledge');
+  const service = serviceOf(mounted, 'zwKnowledge');
   return { mounted, service, ...apiOf(service) };
 }

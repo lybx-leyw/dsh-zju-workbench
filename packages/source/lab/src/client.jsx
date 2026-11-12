@@ -14,10 +14,10 @@
  * # 路由协议（照本包 `src/index.js`）
  *
  * ```text
- *   GET  /api/zhiyun-lab   → 读能力描述（含 status）
- *   POST /api/zhiyun-lab   { action: 'save-account', input: { username, password } }
- *   POST /api/zhiyun-lab   { action: 'clear-account' }
- *   POST /api/zhiyun-lab   { action: 'status' }
+ *   GET  /api/zw-lab   → 读能力描述（含 status）
+ *   POST /api/zw-lab   { action: 'save-account', input: { username, password } }
+ *   POST /api/zw-lab   { action: 'clear-account' }
+ *   POST /api/zw-lab   { action: 'status' }
  * ```
  *
  * 动作名带连字符（`save-account`），与 `src/index.js` 的 `handlers` 表一致 ——
@@ -38,11 +38,11 @@ import {
   registerText,
 } from '@lybx-leyw/dsh-zju-ui-shared';
 
-const ROUTE_PATH = '/api/zhiyun-lab';
+const ROUTE_PATH = '/api/zw-lab';
 const NAMESPACE = 'zju-source-lab';
 const SECTION_ID = 'zju-source-lab';
 
-export const name = 'zhiyun-source-lab-client';
+export const name = 'zw-source-lab-client';
 
 /** 只要插槽与本地化。 */
 export const inject = ['slots', 'locale'];

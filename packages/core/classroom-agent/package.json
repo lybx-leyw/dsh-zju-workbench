@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-classroom-agent",
   "version": "0.1.0",
-  "description": "智云 Pro「课堂智能体编排」领域包：把 OpenMAIC 的 lib/{workbench,orchestration,chat,agent,action,choreography,prompts} 搬成 ctx.zhiyunClassroomAgent（plan / run / cancel）",
+  "description": "ZJU Workbench「课堂智能体编排」领域包：把 OpenMAIC 的 lib/{workbench,orchestration,chat,agent,action,choreography,prompts} 搬成 ctx.zwClassroomAgent（plan / run / cancel）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

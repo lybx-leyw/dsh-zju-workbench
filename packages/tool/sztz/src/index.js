@@ -12,12 +12,12 @@ import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createWriteToolRegistrar, contractOf, inputError, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
 import { createSztzReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-sztz';
+export const name = 'zw-tool-sztz';
 
-export const inject = ['tools', 'approval', 'zhiyunSztz'];
+export const inject = ['tools', 'approval', 'zwSztz'];
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunSztz: '@lybx-leyw/dsh-zju-source-sztz',
+  zwSztz: '@lybx-leyw/dsh-zju-source-sztz',
 });
 
 /**
@@ -83,7 +83,7 @@ export function createSztzWriteTools(services) {
         if (!prefix) {
           throw inputError(`sztz 只支持 ${Object.keys(ACTIONS).join(' / ')}，收到 ${action}`);
         }
-        const sztz = need('zhiyunSztz');
+        const sztz = need('zwSztz');
         const { prepare, execute, cancel } = contractOf(sztz, prefix);
         return { summary: await prepare({ activity }), execute, cancel };
       },

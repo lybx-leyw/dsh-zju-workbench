@@ -10,7 +10,7 @@
  * # 副作用全走注入
  *
  * - `llm`：可选。没有就走确定性兜底（不发任何请求），`status().detail.llm` 写明。
- * - `studio`：宿主的 `ctx.zhiyunClassroomStudio`。只用它的 `status()` 与
+ * - `studio`：宿主的 `ctx.zwClassroomStudio`。只用它的 `status()` 与
  *   `runs.cancel()`，且两处都 try/catch —— 上游没搬完时本包照常可用（规范 §4）。
  * - 顶层没有任何 `new Client()` / `fetch` / `process.env` 读取。
  *
@@ -184,7 +184,7 @@ function buildBody(plan, scene, opts) {
 
 /**
  * @param {object} options
- * @param {object} [options.studio] `ctx.zhiyunClassroomStudio`
+ * @param {object} [options.studio] `ctx.zwClassroomStudio`
  * @param {{ call?: Function, stream?: Function }} [options.llm] 窄 llm 接口
  * @param {object} [options.log]
  * @param {() => string} [options.newId]

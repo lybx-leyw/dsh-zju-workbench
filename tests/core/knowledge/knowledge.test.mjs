@@ -76,7 +76,7 @@ async function mountHost({ storageRoot, version = HOST_VERSION, config = {} } = 
     await ctx.plugin(stack.storageDomain, { backend: 'json' });
     ctx.provide('profileContext', { dir: stack.anchor });
     const fiber = await ctx.plugin(plugin, config);
-    return { ctx, fiber, service: ctx.get('zhiyunKnowledge'), stack };
+    return { ctx, fiber, service: ctx.get('zwKnowledge'), stack };
   } catch (error) {
     await ctx.fiber.dispose().catch(() => {});
     throw error;
@@ -102,7 +102,7 @@ function lectureRecord({
     accountId, courseId, subId,
     // 解析器产物
     schema: 1,
-    sourceId: `zhiyun:112:${courseId}:${subId}`,
+    sourceId: `zw:112:${courseId}:${subId}`,
     status,
     fetchedAt,
     pages: [{ page: 1, transcription: { pageText: '概率密度函数', pageVisual: '一张曲线图' } }],
@@ -137,7 +137,7 @@ async function rewriteMedium(storageRoot, mutate) {
 
 /** 每个用例一份独立介质；挂过的宿主都在收尾时卸载（dispose 幂等）。 */
 async function withMedia(run) {
-  const storageRoot = await mkdtemp(path.join(tmpdir(), 'zhiyun-knowledge-'));
+  const storageRoot = await mkdtemp(path.join(tmpdir(), 'zw-knowledge-'));
   const mounted = [];
   try {
     return await run({ storageRoot, mount: (options) => { const host = mountHost({ storageRoot, ...options }); mounted.push(host); return host; } });
@@ -165,7 +165,7 @@ test('键由身份拼出且分隔符不可伪造：段里含冒号会让两个�
 });
 
 test('插件声明了宿主依赖：没有 storageDomain 就没有持久化，绝不静默自建落盘', () => {
-  assert.equal(plugin.name, 'zhiyun-knowledge');
+  assert.equal(plugin.name, 'zw-knowledge');
   assert.ok(plugin.inject.includes('storageDomain'), 'inject 要写明 storageDomain');
   assert.ok(plugin.inject.includes('profileContext'), 'inject 要写明 profileContext（解析锚点）');
   assert.equal(typeof plugin.apply, 'function');
@@ -177,7 +177,7 @@ test('没有 ctx.storageDomain 时如实报配置错，而不是退化成自己�
 });
 
 test('配置错了就报配置错：profile 目录里解析不到域层时如实失败', async () => {
-  const emptyDir = await mkdtemp(path.join(tmpdir(), 'zhiyun-knowledge-empty-'));
+  const emptyDir = await mkdtemp(path.join(tmpdir(), 'zw-knowledge-empty-'));
   try {
     const storageDomain = { open: async () => { throw new Error('不该走到 open'); } };
     await assert.rejects(plugin.apply({ storageDomain, profileContext: { dir: emptyDir }, provide: () => {} }, {}),
@@ -439,7 +439,7 @@ test('⑥ 卸载后服务消失、域被释放，旧引用拿到的是 DISPOSED 
 
     await host.fiber.dispose();   // 只卸载本插件
 
-    assert.equal(host.ctx.get('zhiyunKnowledge'), undefined, '服务要从 ctx 上消失');
+    assert.equal(host.ctx.get('zwKnowledge'), undefined, '服务要从 ctx 上消失');
     assert.equal(host.ctx.storageDomain.get(DOMAIN_NAME), undefined, '宿主域要被释放（域名放开）');
     assert.equal(service.closed, true);
     assert.throws(() => service.get({ accountId: '1', courseId: '10', subId: '20' }), (error) => error.code === 'DISPOSED');
@@ -464,7 +464,7 @@ test('⑥续 名单里的每个宿主版本都能挂起来用（宿主 API 不�
   if (!available.length) return t.skip('没有安装任何清单里的宿主');
 
   for (const version of available) {
-    const storageRoot = await mkdtemp(path.join(tmpdir(), `zhiyun-knowledge-${version}-`));
+    const storageRoot = await mkdtemp(path.join(tmpdir(), `zw-knowledge-${version}-`));
     const stack = await loadHostStack(version);
     const ctx = new stack.cordis.Context();
     try {
@@ -474,13 +474,13 @@ test('⑥续 名单里的每个宿主版本都能挂起来用（宿主 API 不�
       // 这里**不**注入 config.storage：走真实的 profile 锚点解析路径。
       ctx.provide('profileContext', { dir: stack.anchor });
       const fiber = await ctx.plugin(plugin, {});
-      const service = ctx.get('zhiyunKnowledge');
+      const service = ctx.get('zwKnowledge');
       assert.ok(service, `${version}: 服务要挂上`);
       await service.put(lectureRecord());
       assert.equal(service.get({ accountId: '1', courseId: '10', subId: '20' }).status, 'ready', `${version}: 写入-读回`);
       assert.equal(service.search({ accountId: '1', query: '旧事史' }).length, 1, `${version}: 检索`);
       await fiber.dispose();
-      assert.equal(ctx.get('zhiyunKnowledge'), undefined, `${version}: 卸载后服务消失`);
+      assert.equal(ctx.get('zwKnowledge'), undefined, `${version}: 卸载后服务消失`);
       assert.equal(ctx.storageDomain.get(DOMAIN_NAME), undefined, `${version}: 卸载后域释放`);
     } finally {
       await ctx.fiber.dispose().catch(() => {});
@@ -501,8 +501,8 @@ test('⑥续 provide 撞名时挂载失败，但域不许被永久占住（否�
       ctx.provide('profileContext', { dir: stack.anchor });
       // 用一个**可卸载**的占位插件占住这个名字：`provide` 的所有权绑在 fiber 上，
       // 卸载它才会真正放开名字（`ctx.reflect.set` 只是改值，不释放注册）。
-      const placeholder = await ctx.plugin({ apply(c) { c.provide('zhiyunKnowledge', { 占位: true }); } });
-      await assert.rejects(async () => { await ctx.plugin(plugin, {}); }, /zhiyunKnowledge|already/i);
+      const placeholder = await ctx.plugin({ apply(c) { c.provide('zwKnowledge', { 占位: true }); } });
+      await assert.rejects(async () => { await ctx.plugin(plugin, {}); }, /zwKnowledge|already/i);
 
       // 关键：失败的挂载**不许**把域留在 facility 里（留着就等于域名被 reserved，
       // 之后任何一次 open 都会以 already-open 失败 —— 插件再也起不来）。
@@ -511,7 +511,7 @@ test('⑥续 provide 撞名时挂载失败，但域不许被永久占住（否�
       // 放开占位服务后，同一个宿主里能重新挂上并正常用。
       await placeholder.dispose();
       const fiber = await ctx.plugin(plugin, {});
-      const service = ctx.get('zhiyunKnowledge');
+      const service = ctx.get('zwKnowledge');
       assert.ok(service?.put, '重新挂载后服务要可用');
       await service.put(lectureRecord());
       assert.equal(service.size, 1);
@@ -561,10 +561,10 @@ test('⑦续 config.storage 可注入宿主栈：不依赖 profile 解析，也�
       // profileContext 依旧要给（inject 里是硬依赖，见 index.js 的说明），
       // 但这里**故意把它指到一个没有宿主包的目录**：证明这条路真的只靠注入的栈，
       // 没有偷偷回落到 profile 解析。
-      const emptyDir = await mkdtemp(path.join(tmpdir(), 'zhiyun-knowledge-noanchor-'));
+      const emptyDir = await mkdtemp(path.join(tmpdir(), 'zw-knowledge-noanchor-'));
       ctx.provide('profileContext', { dir: emptyDir });
       const fiber = await ctx.plugin(plugin, { storage: stack.storage });
-      const service = ctx.get('zhiyunKnowledge');
+      const service = ctx.get('zwKnowledge');
       assert.ok(service, '注入宿主栈后服务要能用（不经过 profile 解析）');
       await service.put(lectureRecord());
       assert.equal(service.get({ accountId: '1', courseId: '10', subId: '20' }).status, 'ready');
@@ -596,7 +596,7 @@ test('⑦续 从真实 profile 目录解析宿主栈（生产里 profileContext.
   try { await access(path.join(profileDir, 'node_modules', '@deepseek-ai', 'dsh-storage-domain')); }
   catch { return t.skip('本机还没初始化 profile（npm run profile:init）'); }
 
-  const storageRoot = await mkdtemp(path.join(tmpdir(), 'zhiyun-knowledge-profile-'));
+  const storageRoot = await mkdtemp(path.join(tmpdir(), 'zw-knowledge-profile-'));
   const stack = await loadHostStack();
   const ctx = new stack.cordis.Context();
   try {
@@ -606,13 +606,13 @@ test('⑦续 从真实 profile 目录解析宿主栈（生产里 profileContext.
     ctx.provide('profileContext', { dir: profileDir });
     // 不注入 config.storage：真的走 profile 解析。
     const fiber = await ctx.plugin(plugin, {});
-    const service = ctx.get('zhiyunKnowledge');
+    const service = ctx.get('zwKnowledge');
     assert.ok(service, '从真实 profile 目录解析出宿主栈并挂上服务');
     await service.put(lectureRecord());
     assert.equal(service.get({ accountId: '1', courseId: '10', subId: '20' }).status, 'ready');
     assert.equal(service.search({ accountId: '1', query: '旧事史' }).length, 1);
     await fiber.dispose();
-    assert.equal(ctx.get('zhiyunKnowledge'), undefined);
+    assert.equal(ctx.get('zwKnowledge'), undefined);
   } finally {
     await ctx.fiber.dispose().catch(() => {});
     await rm(storageRoot, { recursive: true, force: true });

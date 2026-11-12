@@ -8,8 +8,8 @@ export function NotePanel({ state, controller, slides, subtitles, pageIndex, onL
   const [hint, setHint] = useState("");
   const box = React.useRef(null);
   useEffect(() => { setDraft(saved); setHint(""); }, [state.lesson?.id, state.course?.id, state.note?.updatedAt, saved]);
-  if (!state.noteWired) return <div className="zs-content-empty"><span>✎</span><strong>节笔记没有接入</strong><small>笔记服务未启用时，这一节不能读写笔记。</small></div>;
-  if (!state.note) return <div className="zs-content-empty"><span>✎</span><strong>这节笔记暂时读不出来</strong><small>没有读到原文之前，这里不会用空白覆盖已有笔记。</small></div>;
+  if (!state.noteWired) return <div className="zws-content-empty"><span>✎</span><strong>节笔记没有接入</strong><small>笔记服务未启用时，这一节不能读写笔记。</small></div>;
+  if (!state.note) return <div className="zws-content-empty"><span>✎</span><strong>这节笔记暂时读不出来</strong><small>没有读到原文之前，这里不会用空白覆盖已有笔记。</small></div>;
   const slide = slides[pageIndex];
   async function insert(kind) {
     setHint("");
@@ -43,17 +43,17 @@ export function NotePanel({ state, controller, slides, subtitles, pageIndex, onL
       setHint(error.message);
     }
   }
-  return <div className="zs-note">
-    <p className="zs-layer-note">笔记跟这一节走。插入的页码和时间链，点开后回到本节的课件或字幕。</p>
-    <div className="zs-note-tools">
-      <button className="zs-button" disabled={!slide || state.noteBusy} onClick={() => void insert("page")}>插入本页</button>
-      <button className="zs-button" disabled={!slide || state.noteBusy} onClick={() => void insert("time")}>插入此刻</button>
-      <button className="zs-primary" disabled={state.noteBusy || draft === saved} onClick={() => void controller.saveNote(draft)}>{state.noteBusy ? "正在保存…" : "保存笔记"}</button>
+  return <div className="zws-note">
+    <p className="zws-layer-note">笔记跟这一节走。插入的页码和时间链，点开后回到本节的课件或字幕。</p>
+    <div className="zws-note-tools">
+      <button className="zws-button" disabled={!slide || state.noteBusy} onClick={() => void insert("page")}>插入本页</button>
+      <button className="zws-button" disabled={!slide || state.noteBusy} onClick={() => void insert("time")}>插入此刻</button>
+      <button className="zws-primary" disabled={state.noteBusy || draft === saved} onClick={() => void controller.saveNote(draft)}>{state.noteBusy ? "正在保存…" : "保存笔记"}</button>
     </div>
-    <textarea ref={box} className="zs-note-editor" aria-label="本节笔记" value={draft} onChange={(event) => setDraft(event.target.value)} />
-    {hint && <p className="zs-quiz-problem">{hint}</p>}
-    <div className="zs-note-preview">{noteSegments(draft).map((part, index) => part.kind === "link"
-      ? <button type="button" className="zs-text" key={index} onClick={() => void openLink(part.href)}>{part.label}</button>
+    <textarea ref={box} className="zws-note-editor" aria-label="本节笔记" value={draft} onChange={(event) => setDraft(event.target.value)} />
+    {hint && <p className="zws-quiz-problem">{hint}</p>}
+    <div className="zws-note-preview">{noteSegments(draft).map((part, index) => part.kind === "link"
+      ? <button type="button" className="zws-text" key={index} onClick={() => void openLink(part.href)}>{part.label}</button>
       : <span key={index}>{part.text}</span>)}</div>
   </div>;
 }

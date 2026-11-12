@@ -103,7 +103,7 @@ if (isDirectRun()) {
     cwd: appRoot,
     stdio: 'inherit',
     windowsHide: false,
-    env: { ...process.env, ZHIYUN_NODE: process.execPath },
+    env: { ...process.env, ZW_NODE: process.execPath },
   });
   child.on('error', (error) => {
     console.error(`启动 Electron 失败：${error.message}`);

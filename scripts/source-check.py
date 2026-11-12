@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""智云 Pro 工作台的**交互式全链路验证器**（含真实站点登录）。
+"""ZJU Workbench 工作台的**交互式全链路验证器**（含真实站点登录）。
 
 # 交互 = 运行时向用户要凭证
 
@@ -272,7 +272,7 @@ class CredentialVault:
         # CC98 不在这一份里
 
         CC98 有自己的身份服务（`openid.cc98.org`）和自己的账号，**不是**浙大统一认证，
-        所以它读 `cc98()` 那一份（对应 `zhiyun-cc98/account` 记录），不从这里取。
+        所以它读 `cc98()` 那一份（对应 `zw-cc98/account` 记录），不从这里取。
 
         环境变量优先（CI），但交互模式下**只在没给 CLI 参数时**才问。
         """
@@ -299,7 +299,7 @@ class CredentialVault:
 
         CC98 的账号体系是独立的（论坛 ID / 注册邮箱那一路），与一卡通不是一回事：
         只有 CC98 账号的人没有浙大统一认证身份。所以这里单独取一份，
-        对应凭据记录 `zhiyun-cc98/account`。
+        对应凭据记录 `zw-cc98/account`。
         """
         if "cc98" in self._accounts:
             return self._accounts["cc98"]
@@ -791,7 +791,7 @@ def chain_workspace(v: Verifier, r: Chain) -> None:
 
     no_patch, bad_patch, no_owners, no_readme = [], [], [], []
     for name, meta in packages.items():
-        if not name.startswith("dsh-zhiyun-"):
+        if not name.startswith("dsh-zju-"):
             continue
         manifest = meta["json"] or {}
         patch_rel = ((manifest.get("dsh") or {}).get("bundle") or {}).get("patch")
@@ -812,7 +812,7 @@ def chain_workspace(v: Verifier, r: Chain) -> None:
         if not (meta["dir"] / "README.md").is_file():
             no_readme.append(name)
 
-    ours = [n for n in packages if n.startswith("dsh-zhiyun-")]
+    ours = [n for n in packages if n.startswith("dsh-zju-")]
     r.add("声明 dsh.bundle.patch", FAIL if no_patch else PASS,
           detail=f"{len(ours) - len(no_patch)}/{len(ours)}", evidence="\n".join(no_patch))
     r.add("patch insert 指向自己", FAIL if bad_patch else PASS,
@@ -933,7 +933,7 @@ def chain_load(v: Verifier, r: Chain, probe: dict | None = None) -> None:
 #: 它们在 README 里明确写着「未评审、未接入 profile、不可直接使用」，`apply()` 就是
 #: 故意抛 `候选骨架，尚未实现` 的。把它们计入失败，报告会永远红着 ——
 #: 而"永远红"的报告等于没人看的报告。所以单独归 SKIP（如实记录），
-#: 只对**产品包**（真正的 dsh-zhiyun-* 与官方包）要求可接线。
+#: 只对**产品包**（真正的 dsh-zju-* 与官方包）要求可接线。
 SKELETON_PREFIX = "dsh-radar-"
 
 
@@ -1307,7 +1307,7 @@ def chain_git(v: Verifier, r: Chain) -> None:
 
 LIVE_PLATFORMS = [
     # CC98 有自己的账号体系（openid.cc98.org），**不是**浙大统一认证 ——
-    # 它读自己那份凭据（`zhiyun-cc98/account`），不借用一卡通。
+    # 它读自己那份凭据（`zw-cc98/account`），不借用一卡通。
     ("cc98", "CC98 论坛", "OAuth2 密码模式 → Bearer（CC98 自己的账号）"),
     ("xzzd", "学在浙大", "CAS（不带 service）→ 待办"),
     ("zdbk", "教务系统", "CAS（带 service）→ 成绩/GPA/课表"),
@@ -1724,7 +1724,7 @@ def render_json(results: list[Chain], meta: dict) -> str:
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="智云 Pro 交互式全链路验证器（含真实站点登录；凭证只在内存里）",
+        description="ZJU Workbench 交互式全链路验证器（含真实站点登录；凭证只在内存里）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="不带参数运行进入交互模式；--offline 完全不需要账号；CI 用 --only tests --yes。",
     )
@@ -1852,7 +1852,7 @@ def main(argv: list[str] | None = None) -> int:
 
     verifier = Verifier(jobs=jobs, timeout=args.timeout, vault=vault)
 
-    print(painter.bold("智云 Pro · 全链路验证"))
+    print(painter.bold("ZJU Workbench · 全链路验证"))
     print(painter.dim(f"仓库 {ROOT.name} · {sys.platform} · node {verifier.node or '未找到'}"))
 
     live_selected = [k for k in selected if k in LIVE_INDEX]
@@ -2078,7 +2078,7 @@ def _web_html(token: str) -> str:
     """
     return f"""<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8">
-<title>源检查 · 智云 Pro</title>
+<title>源检查 · ZJU Workbench</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 :root{{
@@ -2736,7 +2736,7 @@ def serve_web(args: argparse.Namespace) -> int:
     url = f"http://127.0.0.1:{port}/?t={token}"
 
     print()
-    print("  智云 Pro · 源检查（网页模式）")
+    print("  ZJU Workbench · 源检查（网页模式）")
     print()
     print(f"    打开： {url}")
     print()

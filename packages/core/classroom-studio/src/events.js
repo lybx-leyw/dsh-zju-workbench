@@ -150,7 +150,7 @@ export function runEventStream({
               type: 'resync',
               reason: 'compacted',
               from: cursor,
-              snapshot: 'zhiyunClassroomStudio.runs.get',
+              snapshot: 'zwClassroomStudio.runs.get',
               oldestSeq: Number(page[0].seq),
             },
             phase: caughtUp ? 'live' : 'backlog',

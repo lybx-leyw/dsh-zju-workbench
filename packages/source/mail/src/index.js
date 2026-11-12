@@ -41,7 +41,7 @@ export const name = 'zju-source-mail';
 export const inject = [];
 
 /** 同源数据路由。 */
-export const ROUTE_PATH = '/api/zhiyun-mail';
+export const ROUTE_PATH = '/api/zw-mail';
 
 /**
  * 服务面暴露的只读方法名。
@@ -90,7 +90,7 @@ export function apply(ctx, config = {}) {
     /** 草稿目录：没有 `profileContext` 时退化成 null（`drafts()` 会明确报 CONFIG）。 */
     const profileDir = ctx.get?.('profileContext')?.dir ?? null;
     const draftDir = config.draftDir
-      ?? (profileDir === null ? null : path.join(profileDir, 'data', 'zhiyun-mail', 'outbox'));
+      ?? (profileDir === null ? null : path.join(profileDir, 'data', 'zw-mail', 'outbox'));
     const downloadRoot = config.downloadRoot ?? downloadDirectory();
 
     /**
@@ -119,7 +119,7 @@ export function apply(ctx, config = {}) {
        * —— 于是「设置 → 邮箱」永远显示「未配凭据」，用户也没有地方填。
        * 那是「接线断了」，不是「用户没配」。
        *
-       * 现在用户在设置分区里填一次，就存在 `zhiyun-mail/account`，
+       * 现在用户在设置分区里填一次，就存在 `zw-mail/account`，
        * 这里每次现取（不缓存），换账号立刻生效。
        */
       credentialProvider: async () => {
@@ -223,7 +223,7 @@ export function apply(ctx, config = {}) {
       }),
     };
 
-    const disposeService = ctx.provide('zhiyunMail', service);
+    const disposeService = ctx.provide('zwMail', service);
 
     let removeRoute = null;
     ctx.inject?.(['webServer'], (scope) => {

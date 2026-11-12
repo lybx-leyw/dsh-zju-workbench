@@ -96,12 +96,12 @@ test('labels 是模块级常量（否则每次渲染重建组件表）', () => {
 
 test('题干、选项、答案、解析四处都走富文本', () => {
   for (const [name, pattern] of [
-    ['题干', /<RichText className="zs-qz-stem"/],
-    ['选项', /<RichText className="zs-qz-choice-text"/],
+    ['题干', /<RichText className="zws-qz-stem"/],
+    ['选项', /<RichText className="zws-qz-choice-text"/],
     // 答案区改成了「标签 + RichText」的结构（判分增强时一并调整）：
-    // 外层 .zs-qz-answer 带「答案」小标签，内容仍是 RichText
-    ['答案', /zs-qz-answer["'][^>]*>\s*<span>答案<\/span>\s*<RichText/],
-    ['解析', /<RichText className="zs-qz-explanation"/],
+    // 外层 .zws-qz-answer 带「答案」小标签，内容仍是 RichText
+    ['答案', /zws-qz-answer["'][^>]*>\s*<span>答案<\/span>\s*<RichText/],
+    ['解析', /<RichText className="zws-qz-explanation"/],
   ]) {
     assert.match(pageSrc, pattern, `${name}必须经过 RichText，否则那里的公式会显示成原始 TeX`);
   }

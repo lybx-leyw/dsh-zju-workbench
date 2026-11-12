@@ -26,7 +26,7 @@ fs.writeFileSync(stub, [
 
 // 学习页**不再 import 题库页**：它只从 ui-shared 的契约表取组件。
 // 这里替身 ui-shared，让 `usePublishedComponent` 返回上面那个可观测的桩 ——
-// 断言的事没变（传了哪些 props、有没有 `.zs-qz` 祖先），但不再跨页 import。
+// 断言的事没变（传了哪些 props、有没有 `.zws-qz` 祖先），但不再跨页 import。
 const sharedStub = path.join(dir, 'ui-shared.mjs');
 fs.writeFileSync(sharedStub, "export { usePublishedComponent } from './published.mjs';\n");
 fs.writeFileSync(path.join(dir, 'published.mjs'), [
@@ -52,11 +52,11 @@ test('reuses the provider+workers configuration panel instead of a bespoke numbe
   assert.match(html, /data-purpose="teaching"/, '教学配额要单独一份，不能和解析/出题共用');
 });
 
-test('wraps the panel in .zs-qz so quiz styles actually apply', () => {
+test('wraps the panel in .zws-qz so quiz styles actually apply', () => {
   const html = render({ controller: {}, onGenerate() {} });
-  // GenerationModels 的每条样式都限定在 .zs-qz / .zs-qz-page 下；缺这一层，
-  // 用真实浏览器量到 .zs-generation-split 会退回 display:block。
-  assert.match(html, /class="zs-teach-generate zs-qz"/, '缺 .zs-qz 祖先时面板布局会失效');
+  // GenerationModels 的每条样式都限定在 .zws-qz / .zws-qz-page 下；缺这一层，
+  // 用真实浏览器量到 .zws-generation-split 会退回 display:block。
+  assert.match(html, /class="zws-teach-generate zws-qz"/, '缺 .zws-qz 祖先时面板布局会失效');
 });
 
 test('no vision model required: teaching generates no images', () => {
@@ -81,7 +81,7 @@ test('the old bespoke chapter-concurrency popover is gone', () => {
   // 注释里会提到旧名字（说明为什么不用它），所以先把注释剥掉再断言。
   const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   assert.doesNotMatch(code, /chapterConcurrency/, '不能再出现独立的章节并发数字');
-  assert.doesNotMatch(code, /zs-teach-panel/, '不能再自造一套 popover');
+  assert.doesNotMatch(code, /zws-teach-panel/, '不能再自造一套 popover');
   assert.doesNotMatch(code, /<input/, '不再自己画输入框：配额编辑交给 GenerationModels');
   assert.match(code, /purpose="teaching"/);
 });

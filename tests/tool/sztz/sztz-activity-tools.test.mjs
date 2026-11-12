@@ -101,7 +101,7 @@ function harness({ client = fakeClient(), outcome = 'allowed-once' } = {}) {
 
   const registered = [];
   const ctx = {
-    get: (key) => (key === 'zhiyunSztz' ? service : undefined),
+    get: (key) => (key === 'zwSztz' ? service : undefined),
     tools: { register: (tool) => { registered.push(tool); return () => {}; } },
     approval,
     effect: (fn) => fn(),
@@ -204,7 +204,7 @@ test('审批被拒后能**立刻**重试同一个动作（不 WRITE_BUSY，也�
   const asked = [];
   const registered = [];
   const ctx = {
-    get: (key) => (key === 'zhiyunSztz' ? service : undefined),
+    get: (key) => (key === 'zwSztz' ? service : undefined),
     tools: { register: (tool) => { registered.push(tool); return () => {}; } },
     approval: { async request(request) { asked.push(request); return outcome; } },
     effect: (fn) => fn(),
@@ -285,7 +285,7 @@ test('source 缺 Cancel 时立刻报 CONTRACT_MISSING（否则审批被拒后永
     // 故意不给 Cancel
   }
   apply({
-    get: (key) => (key === 'zhiyunSztz' ? half : undefined),
+    get: (key) => (key === 'zwSztz' ? half : undefined),
     tools: { register: (tool) => { registered.push(tool); return () => {}; } },
     approval: { request: async () => 'allowed-once' },
     effect: (fn) => fn(),
