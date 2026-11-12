@@ -14,40 +14,14 @@
 
 import { guardWrite, WriteRejected, WRITE_CODES } from './approval.js';
 
-/** 参数错误。与 `WriteRejected` 分开：那是「用户不批」，这是「调用方说错了」。 */
-export const inputError = (message) => Object.assign(new Error(message), { code: 'INPUT' });
-
-/** 必填字符串。 */
-export const str = (value, name, { max = 200 } = {}) => {
-  if (typeof value !== 'string' || !value.trim()) throw inputError(`需要 ${name}`);
-  if (value.length > max) throw inputError(`${name} 过长（上限 ${max} 字）`);
-  return value.trim();
-};
-
-/** 可选字符串。 */
-export const optStr = (value, name, options) => (value === undefined ? undefined : str(value, name, options));
-
 /**
- * 取一个 source 服务；没有就说清要装哪个包。
+ * 参数判据从 `tool/kit` 转出，**不在这里再写一份**。
  *
- * 缺包是安装问题，模型据此才知道该对用户说什么 —— 笼统的「服务不可用」
- * 只会让它反复重试。
- *
- * @param services - 服务表（`{ [key]: service }`）。
- * @param key - 服务名。
- * @param pkg - 对应的包名（报错时用）。
- * @returns 服务对象。
+ * 读工具与写工具校验同一批参数（必填字符串、可选整数、枚举取值），
+ * 两处各写一份时它们会漂：一个包把空串当「没给」、另一个当成错误，
+ * 模型于是在两个同名参数上得到相反的反馈。判据只能有一份。
  */
-export function serviceLookup(services, key, pkg) {
-  const service = services[key];
-  if (!service) {
-    throw Object.assign(
-      new Error(`这个动作需要 ${pkg}（服务 ${key}），但它没有装配。请先启用那个数据源包。`),
-      { code: 'SERVICE_MISSING', service: key },
-    );
-  }
-  return service;
-}
+export { inputError, str, optStr, serviceLookup } from '@lybx-leyw/dsh-zju-tool-kit';
 
 /**
  * source 必须提供的三个方法。缺了就是契约不完整，要立即报错而不是等到执行时。

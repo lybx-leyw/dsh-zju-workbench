@@ -1,31 +1,34 @@
 /**
- * 按域拆开的六个写工具包的结构守卫。
+ * 按域拆开的六个工具包（写 + 读）的结构守卫。
  *
  * # 这一份守什么
  *
- * 六个包（zdbk / sztz / tyys / xuezai / pta / lab）各自只有一个工具，
+ * 六个包（zdbk / sztz / tyys / xuezai / pta / lab）各有一个写工具；
+ * 本轮起它们还各有一个**读**工具（`campus_<域>_read`），由另一条注册链挂载。
  * 逐条写参数测试的收益不如守住**共同契约**：
  *
  *   1. 每个包只声明**一个** source 服务 —— 按域拆的意义就在这里；
  *   2. 每个包的 `inject` 都带 `tools` / `approval` / 自己那个服务；
- *   3. 每个工具都通过 `contractOf` 拿 source 契约（不许自己拼方法名）；
- *   4. 服务没装配时报 `SERVICE_MISSING` 并说清装哪个包。
+ *   3. 每个写工具都通过 `contractOf` 拿 source 契约（不许自己拼方法名）；
+ *   4. 服务没装配时报 `SERVICE_MISSING` 并说清装哪个包；
+ *   5. **读工具不过审批** —— 它走另一条注册链，且不读 `ctx.approval`。
  *
- * 逐条参数透传的测试在 `tests/tool/cc98`（那个包工具最多），以及
+ * 逐条参数透传的测试在 `tests/tool/cc98`（那个包工具最多）、
+ * `tests/tool/reads`（读工具的共同契约），以及
  * `scripts/probe-write-contract.mjs`（跨层真契约）。
  */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-/** 六个包：目录名 → { 模块, 工厂, 服务名, 工具名 }。 */
+/** 六个包：目录名 → { 写工厂, 读工厂, 服务名, 写工具名, 读工具名 }。 */
 const PACKAGES = [
-  { dir: 'zdbk', factory: 'createZdbkWriteTools', service: 'zhiyunZdbk', pkg: '@lybx-leyw/dsh-zju-source-zdbk', tools: ['campus_course_select'] },
-  { dir: 'sztz', factory: 'createSztzWriteTools', service: 'zhiyunSztz', pkg: '@lybx-leyw/dsh-zju-source-sztz', tools: ['campus_activity'] },
-  { dir: 'tyys', factory: 'createTyysWriteTools', service: 'zhiyunTyys', pkg: '@lybx-leyw/dsh-zju-source-tyys', tools: ['campus_venue'] },
-  { dir: 'xuezai', factory: 'createXuezaiWriteTools', service: 'zhiyunXuezai', pkg: '@lybx-leyw/dsh-zju-source-xuezai', tools: ['campus_homework', 'campus_checkin'] },
-  { dir: 'pta', factory: 'createPtaWriteTools', service: 'zhiyunPta', pkg: '@lybx-leyw/dsh-zju-source-pta', tools: ['campus_answer'] },
-  { dir: 'lab', factory: 'createLabWriteTools', service: 'zhiyunLab', pkg: '@lybx-leyw/dsh-zju-source-lab', tools: ['campus_lab_select'] },
+  { dir: 'zdbk', factory: 'createZdbkWriteTools', readFactory: 'createZdbkReadTools', service: 'zhiyunZdbk', pkg: '@lybx-leyw/dsh-zju-source-zdbk', tools: ['campus_course_select'], reads: ['campus_zdbk_read'] },
+  { dir: 'sztz', factory: 'createSztzWriteTools', readFactory: 'createSztzReadTools', service: 'zhiyunSztz', pkg: '@lybx-leyw/dsh-zju-source-sztz', tools: ['campus_activity'], reads: ['campus_sztz_read'] },
+  { dir: 'tyys', factory: 'createTyysWriteTools', readFactory: 'createTyysReadTools', service: 'zhiyunTyys', pkg: '@lybx-leyw/dsh-zju-source-tyys', tools: ['campus_venue'], reads: ['campus_tyys_read'] },
+  { dir: 'xuezai', factory: 'createXuezaiWriteTools', readFactory: 'createXuezaiReadTools', service: 'zhiyunXuezai', pkg: '@lybx-leyw/dsh-zju-source-xuezai', tools: ['campus_homework', 'campus_checkin'], reads: ['campus_xuezai_read'] },
+  { dir: 'pta', factory: 'createPtaWriteTools', readFactory: 'createPtaReadTools', service: 'zhiyunPta', pkg: '@lybx-leyw/dsh-zju-source-pta', tools: ['campus_answer'], reads: ['campus_pta_read'] },
+  { dir: 'lab', factory: 'createLabWriteTools', readFactory: 'createLabReadTools', service: 'zhiyunLab', pkg: '@lybx-leyw/dsh-zju-source-lab', tools: ['campus_lab_select'], reads: ['campus_lab_read'] },
 ];
 
 /** 载入一个包。 */
@@ -172,8 +175,8 @@ test('每个包的 apply 都能装配到最小 ctx 上而不抛', async () => {
     mod.apply(ctx);
     assert.deepEqual(
       registered.sort(),
-      [...entry.tools].sort(),
-      `${entry.dir} 的 apply 没有把工具注册进 ctx.tools`,
+      [...entry.tools, ...(entry.reads ?? [])].sort(),
+      `${entry.dir} 的 apply 没有把（写 + 读）工具都注册进 ctx.tools`,
     );
   }
 });

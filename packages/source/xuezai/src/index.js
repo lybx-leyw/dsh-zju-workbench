@@ -79,6 +79,16 @@ export const SERVICE_NAME = 'zhiyunXuezai';
 
 /** 重新导出，供别处（脚本/测试）直接构造。 */
 export { XzzdApi, XzzdReader, hasXzzdSession, diffTodos };
+
+/**
+ * `xzzdRead` 认识的读取动作。
+ *
+ * 导出而不是写在闭包里：工具层与测试都要能回答「这个 source 能读什么」，
+ * 而答案只有一个来源才不会漂。
+ */
+export const XZZD_READ_ACTIONS = Object.freeze([
+  'courses', 'courseBundle', 'activities', 'assignments', 'activity', 'materials', 'submission', 'rollcallHistory',
+]);
 export { XZZD_BASE, XZZD_HOST, CAS_HOST, XUEZAI_HOSTS } from './hosts.js';
 
 /**
@@ -575,15 +585,49 @@ export async function apply(ctx, config = {}) {
      */
     // `rollcallHistory` 是纯读（上游 rollcall-cli.ts:52 明写「只查看，不签到」）。
     // 先前被一句「上游和签到绑定」的假理由漏掉了，审计查出后补回。
-    const ACTIONS = ['activities', 'assignments', 'activity', 'materials', 'submission', 'rollcallHistory'];
-    if (!ACTIONS.includes(action)) {
-      throw fault('INVALID_INPUT', `未知的作业读取动作：${action || '(空)'}。可选 ${ACTIONS.join(' / ')}`);
+    if (!XZZD_READ_ACTIONS.includes(action)) {
+      throw fault('INVALID_INPUT', `未知的作业读取动作：${action || '(空)'}。可选 ${XZZD_READ_ACTIONS.join(' / ')}`);
+    }
+    // ⚠️ `courseBundle` 的 courseId 也在这里校验，**早于** `xzzdClient()`。
+    // 反过来的话，一个非法的 id 会先触发一次 CAS 登录，然后才回 400 ——
+    // 用户看到的延迟与「好像很慢」全归因错了，与上面动作名那条是同一类。
+    if (action === 'courseBundle') {
+      const id = Number(body.courseId);
+      if (!Number.isFinite(id) || id <= 0) throw fault('INVALID_INPUT', 'courseBundle 需要正整数 courseId');
     }
 
     const api = await xzzdClient();
     const reader = new XzzdReader(api, XZZD_BASE);
     const signal = undefined;
     switch (action) {
+      /**
+       * 本人课程列表（上游 `xuezai course list`）。
+       *
+       * 不给 `semester` 时取「正在上的学期」—— 判据在
+       * `XzzdApi.activeSemesterIds()` 里（含短学期与相邻 id），这里是它的唯一消费者
+       * 之外的第二个入口，**不复制那份判断**。
+       *
+       * 为什么不在这里做关键词/简称匹配：那是「用户手里有个说法，要找到哪门课」
+       * 的解析，属于**工具层**（`tool/xuezai` 的 course 参数）。source 只回答
+       * 「我有哪些课、id 是什么」。
+       */
+      case 'courses': {
+        const ids = body.semester === undefined
+          ? await api.activeSemesterIds({ signal })
+          : [Number(body.semester)];
+        const rows = await api.courses(ids, { signal });
+        return { count: rows.length, courses: rows, semesterIds: ids };
+      }
+      /**
+       * 一门课的原始数据（`courseBundle`）：活动 / 测验 / 作业提交状态 / 课堂互动。
+       *
+       * 上游 `xuezai course view` 把这份数据加上章节树拼成「简介 + 章节 + 每章的
+       * 活动」。章节树与视图拼装在**工具层**（`tool/xuezai`），因为那是
+       * 「给模型看什么形状」的决定，不是数据源的事实。
+       */
+      case 'courseBundle':
+        // id 已在上面（取会话之前）校验过，这里直接用。
+        return api.courseBundle(Number(body.courseId), { signal });
       case 'activities':
         return reader.activities(body.courseId, {
           page: Number(body.page ?? 1),

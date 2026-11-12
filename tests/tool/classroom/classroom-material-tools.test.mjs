@@ -70,10 +70,15 @@ test('optional host injection publishes schemas, executes canonical output and u
   const f = fixture();
   ctx.provide('zhiyunStudy', f.workbench);
   const fiber = ctx.plugin(toolClassroom);
+  // 本包现在**还**注册一个平台原始数据的读工具（`campus_classroom_read`）。
+  // 它的 source（`zhiyunClassroom`）不在本 case 的 ctx 里 —— 那正是设计：
+  // `zhiyunClassroom` **没有**写进 `inject`，缺席时那个工具如实报
+  // SERVICE_MISSING，而 `study_*` 照常可用。
+  const expected = [...Object.keys(f.tools), 'campus_classroom_read'].sort();
   try {
     await fiber;
-    assert.deepEqual(registry.schemas().map(tool => tool.name).sort(), Object.keys(f.tools).sort());
-    assert.deepEqual(promptSchemas({}).schemas.map(tool => tool.name).sort(), Object.keys(f.tools).sort());
+    assert.deepEqual(registry.schemas().map(tool => tool.name).sort(), expected);
+    assert.deepEqual(promptSchemas({}).schemas.map(tool => tool.name).sort(), expected);
     const signal = new AbortController().signal;
     // ⚠️ `execute()` 收的是**一批调用**，不是单条：原生执行器读 `input.calls`
     // 然后 `map` 过去。旧写法 `{ callId, name, arguments }` 会死在
@@ -97,7 +102,7 @@ test('optional host injection publishes schemas, executes canonical output and u
     assert.equal(read.isError, false);
     assert.match(read.content[0].text, /a完整推导/);
   } finally { await fiber.dispose(); }
-  for (const name of Object.keys(f.tools)) assert.equal(registry.get(name), undefined);
+  for (const name of expected) assert.equal(registry.get(name), undefined);
 });
 
 test('missing optional registry does not block its parent plugin', async () => {

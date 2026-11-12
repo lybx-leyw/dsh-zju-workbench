@@ -35,20 +35,30 @@
 本仓走相反方向（一个动作一个字段齐全的工具），所以下面的清单回答的是
 **「哪些能力值得变成工具」**，不是「上游有几个工具」。
 
-### 本仓现状：13 个工具
+### 本仓现状：21 个工具（2026-11-12 之后）
 
-| 包 | 工具 |
-| --- | --- |
-| `tool/zdbk` | `campus_course_select` |
-| `tool/sztz` | `campus_activity` |
-| `tool/tyys` | `campus_venue` |
-| `tool/xuezai` | `campus_homework`、`campus_checkin` |
-| `tool/pta` | `campus_answer` |
-| `tool/cc98` | `campus_post`、`campus_react`、`campus_signin` |
-| `tool/lab` | `campus_lab_select` |
-| `tool/classroom` | `study_catalog`、`study_read`、`study_search` |
+> 本节原来写的是「13 个工具，一条查课表 / 查成绩 / 看通知都没有」。那份现状已被
+> 本轮落地改写，见 §八；**这一张表是新的现状**，上面的分类与统计仍是当时的口径。
 
-**这 13 个全是写操作或课堂资料 —— 一条「查课表 / 查成绩 / 看通知」都没有。**
+| 包 | 写工具 | 读工具 |
+| --- | --- | --- |
+| `tool/zdbk` | `campus_course_select` | `campus_zdbk_read` |
+| `tool/sztz` | `campus_activity` | `campus_sztz_read` |
+| `tool/tyys` | `campus_venue` | `campus_tyys_read` |
+| `tool/xuezai` | `campus_homework`、`campus_checkin` | `campus_xuezai_read` |
+| `tool/pta` | `campus_answer` | `campus_pta_read` |
+| `tool/cc98` | `campus_post`、`campus_react`、`campus_signin` | `campus_cc98_read` |
+| `tool/lab` | `campus_lab_select` | `campus_lab_read` |
+| `tool/classroom` | — | `study_catalog`、`study_read`、`study_search`、`campus_classroom_read` |
+| `tool/notice`（新） | — | `campus_notice_read` |
+| `tool/chalaoshi`（新） | — | `campus_chalaoshi_read` |
+| `tool/ebook`（新） | — | `campus_ebook_read` |
+| `tool/yjsy`（新） | — | `campus_yjsy_read` |
+
+**读工具一律不过审批，写工具一律逐次审批 —— 两条注册链，见 §8.4。**
+
+⚠️ 它们与写工具一样**还没有挂载点**（preset / D11 未定）：工具在表里，但到不了
+agent。这是独立于本清单的空洞（§8.6）。
 
 ---
 
@@ -361,3 +371,86 @@ node scripts/probe-write-contract.mjs
    `section` 的 action；
 3. 读操作**不过审批**（审批只给写操作）；
 4. 若依赖跨域字段（如 `gpaSummary` 依赖学籍），在 `coverage-gaps.md` 登记。
+
+---
+
+## 八、落地记录（2026-11-12）
+
+本轮把 **A 类 84 条里能直接做的**做成了 **12 个读工具**，并补了 3 处 source 缺口。
+
+### 8.1 新增的读工具（按域，一个域一个工具 + action 枚举）
+
+| 包 | 工具 | action 数 | 覆盖的 provides |
+| --- | --- | --- | --- |
+| `tool/zdbk` | `campus_zdbk_read` | 12 | 11 条 A-1 全部（`selection credits` 与 `gpa` 各算一条） |
+| `tool/xuezai` | `campus_xuezai_read` | 7 | 10 条 A-2（`homework view` 一条覆盖 `activity` + `activitySubmission`；4 条点名只有 `rollcallHistory` 有 source 方法） |
+| `tool/cc98` | `campus_cc98_read` | 22 | 21 条 A-3 全部 |
+| `tool/pta` | `campus_pta_read` | 6 | A-5 的 6 条读（`homework start` / `finish` **未做**，见 8.3） |
+| `tool/sztz` | `campus_sztz_read` | 6 | A-4 的 7 条里 6 条（`activity favorite` **未做**，见 8.3） |
+| `tool/tyys` | `campus_tyys_read` | 5 | A-4 的 4 条（`venue list` 一个 action 覆盖目录与余量）+ 签到历史 |
+| `tool/lab` | `campus_lab_read` | 10 | A-8 的 3 条 + `lab selected` / `lab notices`（两条半成品已能读） |
+| `tool/classroom` | `campus_classroom_read` | 7 | A-6 的 7 条**读侧**（`zhiyun text` 用 `liveText`，`zhiyun live start/stop` 未做） |
+| `tool/notice`（新） | `campus_notice_read` | 4 | A-7 的 4 条 |
+| `tool/chalaoshi`（新） | `campus_chalaoshi_read` | 3 | A-7 的 3 条 |
+| `tool/ebook`（新） | `campus_ebook_read` | 1 | A-7 的 1 条 |
+| `tool/yjsy`（新） | `campus_yjsy_read` | 1 | A-7 的 1 条 |
+
+`webvpn`（4 条）**没有**做成工具：清单 A-7 自己就说「它们更可能挂在设置页的诊断
+按钮上，而不是给 agent 的工具」。做成工具会让模型有机会去碰出口配置。
+
+**工具数从 13 涨到 21**（不是清单 §6.1 估的「12～14 个新增」，而是 8 个新增
+工具 + 1 个新增到 `classroom` 里）。差别的来源：清单按「能力条数 ÷ 域」估，
+实际按「一个域一个工具」落 —— `cc98` 的 21 条压成 1 个工具、`zdbk` 的 11 条压成
+1 个，所以工具数比条数少得多。
+
+### 8.2 顺带补的 source 缺口（3 处）
+
+| # | 缺什么 | 补在哪 | 为什么归 source |
+| --- | --- | --- | --- |
+| S-1 | `xuezai course list` | `source/xuezai` 的 `xzzdRead` 加 `courses` 动作 | 「正在上的学期」的判据在 `activeSemesterIds()` 里，复制到工具层就会漂 |
+| S-2 | `xuezai course view` | 同上，加 `courseBundle` 动作 | 5 个端点的降级口径是平台知识（403 只丢那一类） |
+| S-3 | `pta homework view` 的读侧 | `source/pta` 的 `READ_ACTIONS` 加 `exam`（走 `api.getExam`） | 这是 GET，**不**启动计时；`homework start` 才是写操作 |
+
+三处都只补**基础函数**，视图拼装与名字解析留在工具层。
+
+### 8.3 明确没做的（不是遗漏）
+
+| 项 | 条数 | 为什么不做 |
+| --- | --- | --- |
+| `pta homework start` / `homework finish` | 2 | **写操作**且是产品决定：「替用户开计时」= 替他做决定。`pta/README.md:107-110` 记过原因，清单 A-5 也把它归为「要补的话属于产品决定，不是缺口」 |
+| `sztz activity favorite` | 1 | 上游是**写**（收藏 / 取消收藏），而 `source/sztz` 只实现了收藏的**读**。按「source 做完整基础函数」这条分工，它不是缺工具，是基础函数没写完 → 归 B 类 |
+| `tyys` 的签到（`rollcall` 写） | — | 同 `favorite`：`source/tyys` 只有考勤历史（读），没有签到方法 |
+| `zhiyun live start` / `live stop` | 2 | 起停后台采集进程（改状态、占资源），且直播链路未真机验证（B-3）。本包只读 `liveStatus` / `liveText` |
+| `zhiyun download` / `xuezai * download` / `chaoxing * download` | 4+ | D21 已澄清「source 可以落盘」，所以**不再是裁决问题**，是工作量问题：要处理保存目录、重名、断点续传。本轮不动 |
+| `doc` 的 4 条 | 4 | B-2：`pdf-lib` 全仓 0 命中、`mergePages:true` 丢了页边界。归属未裁决（Q-1） |
+| `chaoxing` 的 7 条 | 7 | B-4：全部只到半成品（缺「资料」栏等） |
+| `zhiyun setup` / `trans audio` / `check` | 3 | B-3：FFmpeg / ASR 模型安装与内核注入都没有装配方 |
+| `webvpn` 的 4 条 | 4 | 见 8.1：属于设置页诊断，不是 agent 工具 |
+| `cnki` 的 2 条 | 2 | C 类：用户明确不做知网数据源 |
+
+### 8.4 读工具的共享底座
+
+新增 `packages/tool/kit`（`@lybx-leyw/dsh-zju-tool-kit`）：参数判据 +
+`createReadToolRegistrar`。`tool/write-kit` 从它**转出** `inputError` / `str` /
+`optStr` / `serviceLookup`，不复制一份。
+
+分开两个底座的理由写在包 README：写工具必须审批、读工具**必须不** —— 共用一条
+注册链的后果是某天有人把审批也套在读工具上，而**测试里看不出来**。
+
+### 8.5 验收口径的对账（对照本文 §七）
+
+| 口径 | 本轮结果 |
+| --- | --- |
+| source 方法已存在且返回完整 | 12 个工具全部只调 source 已有方法；3 处缺的补在 source（8.2） |
+| 工具参数里不出现用户拿不到的东西 | 所有「编号」类参数都另有 action 能取到；`selectionSections` 的 `pool` / `category` 在描述里写明「来自 selectionCourses」 |
+| 读操作不过审批 | `tests/tool/reads/read-tools.test.mjs` 有一条断言：走宿主注册出来的 `execute`，`ctx.approval.request` 一次都不许被调 |
+| 依赖跨域字段要登记 | `gpaSummary` 依赖学籍（专业 GPA 走另一个接口）—— 已在 `source/zdbk` 的 `gpaSummary` 注释里说明；本轮没新增跨域依赖 |
+
+### 8.6 还没解决的
+
+- **preset（D11）仍未定**：12 个读工具与 7 个写工具一样**没有挂载点**。
+  按约定它们不进 profile bundles，所以现在**一个都到不了 agent**（与重构前
+  的写工具同一处境）。这是本仓已知的、独立于本轮的空洞，不能靠加工具解决。
+- `tests/tool/classroom` 的 3 条用例需要 `.runtime/dsh-<版本>` 宿主，
+  本机没有那份临时安装 —— 它们在改动前就是红的（`ERR_MODULE_NOT_FOUND`）。
+- `tests/repo/profile.test.mjs` 的 6 条同理（需要已安装的 DSH 宿主）。

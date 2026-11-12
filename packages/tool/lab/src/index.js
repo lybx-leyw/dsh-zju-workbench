@@ -6,7 +6,9 @@
  * 每个班次的名额独立，退选之后名额可能被别人占掉，所以每个动作都要逐次批准。
  * 审批与注册器在 `tool/write-kit`，**不重复实现**。
  */
+import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createWriteToolRegistrar, contractOf, inputError, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
+import { createLabReadTools } from './reads.js';
 
 export const name = 'zhiyun-tool-lab';
 
@@ -72,4 +74,13 @@ export function apply(ctx) {
     serviceSources: SERVICE_SOURCES,
   });
   registrar.register(createLabWriteTools);
+
+  // 读工具与写工具同域同 source，但**两条注册链**：读那条没有审批。
+  createReadToolRegistrar({
+    ctx,
+    build: createLabReadTools,
+    serviceSources: SERVICE_SOURCES,
+  }).register(createLabReadTools);
 }
+
+export { createLabReadTools } from './reads.js';

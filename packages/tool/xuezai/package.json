@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-tool-xuezai",
   "version": "0.1.0",
-  "description": "学在浙大写操作工具包：交作业、撤作业、课堂点名签到。每个动作都要用户逐次批准",
+  "description": "学在浙大工具包：交作业、点名签到（逐次审批），以及待办/课程/作业的读工具（不过审批）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -19,6 +19,7 @@
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@lybx-leyw/dsh-zju-tool-kit": "0.1.0",
     "@lybx-leyw/dsh-zju-tool-write-kit": "0.1.0"
   },
   "dsh": {

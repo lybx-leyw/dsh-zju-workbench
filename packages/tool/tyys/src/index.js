@@ -6,7 +6,9 @@
  * 预约占名额、有时段，取消之后可能被别人约走，所以每个动作都要逐次批准。
  * 审批与注册器在 `tool/write-kit`，**不重复实现**。
  */
+import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createWriteToolRegistrar, contractOf, inputError, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
+import { createTyysReadTools } from './reads.js';
 
 export const name = 'zhiyun-tool-tyys';
 
@@ -73,4 +75,13 @@ export function apply(ctx) {
     serviceSources: SERVICE_SOURCES,
   });
   registrar.register(createTyysWriteTools);
+
+  // 读工具与写工具同域同 source，但**两条注册链**：读那条没有审批。
+  createReadToolRegistrar({
+    ctx,
+    build: createTyysReadTools,
+    serviceSources: SERVICE_SOURCES,
+  }).register(createTyysReadTools);
 }
+
+export { createTyysReadTools } from './reads.js';

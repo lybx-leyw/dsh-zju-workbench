@@ -7,6 +7,8 @@
  * 所以每个动作都要逐次批准。审批与注册器在 `tool/write-kit`，**不重复实现**。
  */
 import { createWriteToolRegistrar, contractOf, inputError, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
+import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
+import { createXuezaiReadTools } from './reads.js';
 
 export const name = 'zhiyun-tool-xuezai';
 
@@ -91,4 +93,14 @@ export function apply(ctx) {
     serviceSources: SERVICE_SOURCES,
   });
   registrar.register(createXuezaiWriteTools);
+
+  // 读工具**不过审批**：审批只给会改变平台状态的动作。两条注册链分开，
+  // 免得某天有人「顺手」把审批也套在查作业上。
+  createReadToolRegistrar({
+    ctx,
+    build: createXuezaiReadTools,
+    serviceSources: SERVICE_SOURCES,
+  }).register(createXuezaiReadTools);
 }
+
+export { createXuezaiReadTools } from './reads.js';

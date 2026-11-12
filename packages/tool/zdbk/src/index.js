@@ -14,6 +14,8 @@
  * 审批与注册器在 `tool/write-kit`，**不重复实现**。
  */
 import { createWriteToolRegistrar, contractOf, inputError, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
+import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
+import { createZdbkReadTools } from './reads.js';
 
 export const name = 'zhiyun-tool-zdbk';
 
@@ -94,4 +96,14 @@ export function apply(ctx) {
     serviceSources: SERVICE_SOURCES,
   });
   registrar.register(createZdbkWriteTools);
+
+  // 读工具与写工具同一个域、同一个 source，但**两条注册链**：
+  // 读那条没有审批，写那条必须有。混成一条会让「读也问一次」变得唾手可得。
+  createReadToolRegistrar({
+    ctx,
+    build: createZdbkReadTools,
+    serviceSources: SERVICE_SOURCES,
+  }).register(createZdbkReadTools);
 }
+
+export { createZdbkReadTools } from './reads.js';
