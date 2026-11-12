@@ -1,6 +1,6 @@
 ﻿# dsh-zju-shell-workbench
 
-智云 Pro 的界面外壳插件：侧栏、页框架、主题层、导航服务与插槽契约。当前验证宿主为 `0.2.0-rc.2`。宿主提供 React 和全部 DSH 客户端服务；不要再打包一份 React。
+ZJU Workbench 的界面外壳插件：侧栏、页框架、主题层、导航服务与插槽契约。当前验证宿主为 `0.2.0-rc.2`。宿主提供 React 和全部 DSH 客户端服务；不要再打包一份 React。
 
 外壳**不认识任何具体页面**：它声明 `NAV` 里每个页面（除「问一问」是宿主原生会话）的面板骨架和内容插槽，页面由各自的插件包填充（`dsh-zhiyun-page-today / -paper / -study / -me / -plugins / -feedback`）。内容插槽按 `NAV` 的条目逐个注册：加一项导航就自动多一个 `zhiyun.<id>.content`。页面包没装时页面显示「暂时不可用」占位，外壳照常工作。
 

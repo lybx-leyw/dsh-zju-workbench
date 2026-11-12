@@ -1,7 +1,7 @@
 {
   "name": "dsh-zju-shell-workbench",
   "version": "0.1.0",
-  "description": "智云 Pro 学习工作台：界面外壳（侧栏、页框架、主题、导航服务与插槽契约）",
+  "description": "ZJU Workbench 学习工作台：界面外壳（侧栏、页框架、主题、导航服务与插槽契约）",
   "private": true,
   "type": "module",
   "main": "./src/index.js",

@@ -1,7 +1,7 @@
 {
   "name": "dsh-zju-host-paper",
   "version": "0.1.0",
-  "description": "智云 Pro「论文阅读」的宿主半边：锁版挂载上游 dsh-paper-reader（/paper-reader），并补上 /zhiyun-paper 的选中即译",
+  "description": "ZJU Workbench「论文阅读」的宿主半边：锁版挂载上游 dsh-paper-reader（/paper-reader），并补上 /zw-paper 的选中即译",
   "private": true,
   "type": "module",
   "main": "./src/index.js",
