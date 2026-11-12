@@ -84,11 +84,3 @@ export function createReadToolRegistrar({ ctx, build, serviceSources }) {
 
   return { register, services, toHostTool };
 }
-
-/**
- * 定义一个读工具 —— 把「名字 / 描述 / 参数 / 跑什么」收成一行，少写样板。
- *
- * @param options - `{ name, description, parameters, run }`。
- * @returns 定义。
- */
-export const readTool = (options) => options;

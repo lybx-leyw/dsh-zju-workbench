@@ -23,4 +23,4 @@
  */
 
 export { inputError, str, optStr, optBool, optInt, serviceLookup, defined } from './args.js';
-export { createReadToolRegistrar, readTool } from './register.js';
+export { createReadToolRegistrar } from './register.js';

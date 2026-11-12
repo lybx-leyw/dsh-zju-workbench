@@ -13,7 +13,7 @@
  * 本文件只补读，不扩大写面。
  */
 
-import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
+import { createReadToolRegistrar, defined, inputError, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
   zhiyunLab: '@lybx-leyw/dsh-zju-source-lab',

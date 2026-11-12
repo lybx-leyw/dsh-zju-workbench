@@ -4,7 +4,7 @@
  * 只有一条 provides：`ebook search`。纯只读，不下载、不借阅。
  */
 
-import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
+import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
   zhiyunEbook: '@lybx-leyw/dsh-zju-source-ebook',
