@@ -453,6 +453,8 @@ node scripts/probe-write-contract.mjs
 - **preset（D11）仍未定**：12 个读工具与 7 个写工具一样**没有挂载点**。
   按约定它们不进 profile bundles，所以现在**一个都到不了 agent**（与重构前
   的写工具同一处境）。这是本仓已知的、独立于本轮的空洞，不能靠加工具解决。
-- `tests/tool/classroom` 的 3 条用例需要 `.runtime/dsh-<版本>` 宿主，
-  本机没有那份临时安装 —— 它们在改动前就是红的（`ERR_MODULE_NOT_FOUND`）。
-- `tests/repo/profile.test.mjs` 的 6 条同理（需要已安装的 DSH 宿主）。
+- `tests/tool/classroom` 与 `tests/repo/profile.test.mjs` 里共有 9 条用例**需要
+  一份装好的 DSH 宿主**（`.runtime/dsh-<版本>` 或 `ZHIYUN_DSH_APP_DIR`）。
+  没有宿主时它们报 `ERR_MODULE_NOT_FOUND` / 「找不到可用的 DSH 宿主」——
+  那是环境问题，与本轮改动无关。本轮把 `.runtime/dsh-0.2.2-rc.1` 链到本机
+  已装的宿主之后，这 9 条都通过（`.runtime/` 在 `.gitignore` 里，不入库）。
