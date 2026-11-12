@@ -47,7 +47,7 @@
 // 把用户删掉的内容又救回来。
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives';
-import { Icon, Notice, mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
+import { Icon, Notice, mountStyle, registerPageContent, useRegisterPageSidebar } from '@lybx-leyw/dsh-zju-ui-shared';
 // 图谱渲染是独立包（`@lybx-leyw/dsh-zju-ui-graph-render`，整包移植自雷达候选 note-graph）：
 // 页面只负责把 vault 的 graph 读数递进去，不背 cytoscape 这份依赖。
 import { NoteGraph, css as graphCss } from '@lybx-leyw/dsh-zju-ui-graph-render';
@@ -458,6 +458,18 @@ export function NotesLibrary() {
   const [active, setActive] = useState(() => lastLibrary?.active ?? null);
   const [expanded, setExpanded] = useState(() => new Set(lastLibrary?.expanded ?? []));
   const [explorerOpen, setExplorerOpen] = useState(true);
+  /**
+   * 把「文件树」的开关交给导轨顶部那只鲸鱼（`ui-shared` 的页面侧栏契约）。
+   *
+   * ⚠️ **必须在所有提前 return 之前**：这个 hook 里有 `useEffect`，写在
+   * `if (phase === 'loading') return …` 之后会让 React 在两次渲染之间看到不同的
+   * hook 数量并直接抛错，表现是整页空白（见 `tests/repo/hooks-order.test.mjs`）。
+   *
+   * 收起态用 `!explorerOpen` 传出去：导轨那个按钮的 `aria-label` 要能说清
+   * 「点一下是收起还是展开」，而不是永远写着「收起侧边栏」。
+   */
+  const toggleExplorer = useCallback(() => setExplorerOpen((open) => !open), []);
+  useRegisterPageSidebar('notes', { expanded: explorerOpen, toggle: toggleExplorer, label: explorerOpen ? '收起文件树' : '展开文件树' });
   // ⚠️ 右栏**默认收起**：宿主里这一页的可用宽度只有窗口减去它自己的侧栏，
   //    再常驻一列 250px 会把正文挤到读不下去（实测状态栏都换行了）。
   //    Obsidian 的右栏同样是默认收起的。开关在顶部工具栏上，状态栏的反链数也能叫出来。

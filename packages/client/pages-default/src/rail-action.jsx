@@ -1,23 +1,33 @@
 /**
- * 把原生「收起侧边栏」按钮收进导轨顶部那只鲸鱼里 —— **只在 home 页**。
+ * 把「收起 / 展开侧栏」收进导轨顶部那只鲸鱼里 —— **每一页**。
  *
  * # 为什么是「按页注册槽位」而不是改 DOM
  *
  * 页面壳把导轨顶部那格声明为 `page.rail-action`，**keyed 槽，key 就是当前页 id**
  * （见 `@lybx-leyw/dsh-pages` 的 `page-shell.jsx`）。keyed 槽的语义是「每个 key 一格，
- * 没注册的 key 走 fallback」。所以：
+ * 没注册的 key 走 fallback」。
  *
- *   - 这里**只**注册 `home` 这一个 key；
- *   - 「插件管理」等其余页面**不注册**，自动落到页面壳原本的 fallback（纯鲸鱼图标，
- *     不可点），折叠按钮仍在原生侧栏头部 —— 也就是用户说的「默认路径」；
- *   - 将来哪一页想要自己的动作，加一个同形状的组件到 `RAIL_ACTIONS` 即可，
- *     不必动本文件的其余部分。
+ * # 两种「侧栏」，同一个位置
+ *
+ * 顶层导航左边那条导轨（页面壳的）与各页**自己的**侧栏（论文库 / 笔记文件树 /
+ * 文档目录 / 课程目录）是两列不同的东西，但收起它们的动作都该落在这只鲸鱼上 ——
+ * 用户看到的是同一个位置，不该「home 能点、别的页不能点」。
+ *
+ * 所以这一格按页给出不同的动作：
+ *
+ *   - `home` —— 收起**原生**侧栏（`ctx.layout.toggleSidebar`）。那是宿主自己的
+ *     展开/收起，与产品页无关。
+ *   - 其他页 —— 该页**自己**的侧栏。页面通过 `ui-shared` 的
+ *     `useRegisterPageSidebar(pageId, …)` 把自己的开关登记进来（见该文件顶部为什么
+ *     必须是单向契约）；这里只按 `pageId` 取用，**不认识任何具体页面**。
+ *   - 没登记（这一页没有侧栏，或者还没挂载完）—— 渲染纯鲸鱼，与加这个功能之前
+ *     完全一致。**不登记就是默认路径**。
  *
  * # 交互照抄宿主自己的收起态
  *
  * 宿主侧栏在收起态本来就是「常态显示鲸鱼 / hover 换成面板图标」（`SidebarRoot` 的
  * `railMark` + `panelIcon` + CSS 的 `:hover` 切换）。这里复刻同一套观感，用户不用
- * 重新学：常态是鲸鱼，hover 变面板图标，点击折叠。
+ * 重新学：常态是鲸鱼，hover 变面板图标，点击切换。
  *
  * # 原生那个按钮怎么让位
  *
@@ -26,7 +36,7 @@
  * 藏的方式是加一个属性 + 由本包的样式表接管，卸载时属性一撤，按钮原样回来。
  *
  * **收起态同样隐藏**：用户明确要求收起后也只留鲸鱼。展开入口于是只剩两条 ——
- * home 页那只鲸鱼，以及快捷键 `Control+Alt+B`（宿主自己注册的全局快捷键，未受影响）。
+ * 导轨那只鲸鱼，以及快捷键 `Control+Alt+B`（宿主自己注册的全局快捷键，未受影响）。
  *
  * # 收起 = 整列消失，不是窄轨
  *
@@ -37,6 +47,7 @@
 
 import React from 'react';
 import { WhaleIcon } from './icons.jsx';
+import { usePageSidebar } from '@lybx-leyw/dsh-zju-ui-shared';
 
 /** 本包在原生折叠按钮上打的标记，用来让样式精准命中它、也用来在卸载时只还原自己改的。 */
 const NATIVE_TOGGLE_MARK = 'data-zju-native-toggle';
@@ -74,7 +85,7 @@ export function PanelIcon({ size = 18 }) {
 }
 
 /**
- * home 页的导轨动作：鲸鱼 / 悬停面板图标，点击折叠侧栏。
+ * 导轨顶部那一格的动作按钮：常态鲸鱼 / 悬停面板图标，点击切换侧栏。
  *
  * 按钮自身的样式全部内联，因为页面壳给这一格的颜色是 secondary 灰，且它会缩放整格
  * （`transform: scale(railWidth / 64)`）—— 内联样式不必和任何哈希类名竞争。
@@ -85,28 +96,27 @@ export function PanelIcon({ size = 18 }) {
  * 动作的页面落进去的是**裸 svg**（鲸鱼约 23×17，**不经缩放**），所以那一格量出来约 35px。
  *
  * 这里如果把按钮做成导轨按钮那种 46 * scale 的方块，它比格子高，格子就被撑到 53px ——
- * 表现是「home 页的鲸鱼比别的页低一截、顶栏也更高」。真机踩过。
+ * 表现是「带动作的那一页鲸鱼比别的页低一截、顶栏也更高」。真机踩过。
  *
  * 所以按钮**尺寸只取图标本身**（23 × 17.04/23.16 ≈ 17px 高），也不乘 scale ——
- * fallback 的 svg 就没乘，乘了反而两边又不一致。这样两种页面量出来一样高，
- * 只是 home 页多一个可点区域。
+ * fallback 的 svg 就没乘，乘了反而两边又不一致。
  *
- * @param root0 - 槽位传入的属性。
- * @param root0.layout - 布局服务（`ctx.layout`），提供 `toggleSidebar`。
- * @param root0.railWidth - 当前导轨宽度（保留入参，本组件不再据此缩放）。
- * @param root0.t - 文案函数。
+ * @param root0 - 按钮属性。
+ * @param root0.label - 无障碍名（也是 tooltip），必须说清「点一下会发生什么」。
+ * @param root0.onClick - 点击动作。
+ * @param root0.shortcut - 若有，写进 `aria-keyshortcuts`（读屏会念出来）。
  * @returns 动作按钮。
  */
-function CollapseIntoWhale({ layout, t }) {
+function WhaleButton({ label, onClick, shortcut }) {
   const [hover, setHover] = React.useState(false);
-  const label = t?.('toggle.collapse') ?? '收起侧边栏';
   /** 鲸图的宽高比（23.16 : 17.04），高度据此推出，避免压扁。 */
   const WHALE_WIDTH = 23;
   const WHALE_HEIGHT = (WHALE_WIDTH * 17.04) / 23.16;
   return (
     <button type="button" data-zju-rail-collapse=""
-      title={label} aria-label={label} aria-keyshortcuts="Control+Alt+B"
-      onClick={() => layout?.toggleSidebar?.()}
+      title={label} aria-label={label}
+      {...(shortcut === undefined ? {} : { 'aria-keyshortcuts': shortcut })}
+      onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onFocus={() => setHover(true)}
@@ -123,25 +133,81 @@ function CollapseIntoWhale({ layout, t }) {
 }
 
 /**
- * 「哪一页用什么动作」的登记表。**没登记的页面走页面壳的默认 fallback。**
+ * home 页：鲸鱼切换**原生**侧栏（宿主自己的展开 / 收起）。
  *
- * 加新页时只加一行；不想给某页做动作就什么都不要写 —— 这正是「默认路径」的表达方式。
+ * @param root0 - 槽位传入的属性。
+ * @param root0.layout - 布局服务（`ctx.layout`），提供 `toggleSidebar`。
+ * @param root0.t - 文案函数。
+ * @returns 动作按钮。
  */
-const RAIL_ACTIONS = Object.freeze({
-  home: CollapseIntoWhale,
-});
+function CollapseIntoWhale({ layout, t }) {
+  const label = t?.('toggle.collapse') ?? '收起侧边栏';
+  return <WhaleButton label={label} shortcut="Control+Alt+B"
+    onClick={() => layout?.toggleSidebar?.()}/>;
+}
 
 /**
- * 把内容包进页面壳要求的形状里，并接上布局服务。
+ * 其他页：鲸鱼切换**该页自己的**侧栏（论文库 / 笔记文件树 / 文档目录 / 课程目录）。
+ *
+ * # 两件事都要「按页」而不是「全局」
+ *
+ *   - **动作**：来自 `usePageSidebar(pageId)` —— 页面通过 `ui-shared` 的
+ *     `useRegisterPageSidebar` 登记进来的开关。本组件不认识任何具体页面。
+ *   - **文案**：`title` / `aria-label` 必须说清「点一下是收起还是展开」。页面可以给
+ *     自己的说法（`label`），没给就按 `expanded` 推出「收起 / 展开侧边栏」。
+ *
+ * # 没登记的页面渲染什么
+ *
+ * **裸鲸鱼，与页面壳原本的 fallback 逐个像素相同**。这一页可能只是没有侧栏
+ * （插件页 / 页面管理），也可能是页面还没挂载完。两种情况都不该出现一个按了没反应的
+ * 按钮 —— 那比不给按钮更糟（用户会以为界面卡住了）。
+ *
+ * @param root0 - 槽位传入的属性。
+ * @param root0.pageId - 当前页 id（页面壳按 keyed 槽传入）。
+ * @returns 动作按钮，或与 fallback 一致的裸鲸鱼。
+ */
+function PageSidebarAction({ pageId }) {
+  const control = usePageSidebar(pageId);
+  if (control === undefined) return <WhaleIcon/>;
+  const label = control.label ?? (control.expanded === false ? '展开侧边栏' : '收起侧边栏');
+  return <WhaleButton label={label} onClick={() => control.toggle()}/>;
+}
+
+/**
+ * 把内容包进页面壳要求的形状里，并接上页面壳给的上下文。
  *
  * @param Action - 该页要渲染的组件。
- * @param layout - 布局服务。
+ * @param extra - 额外注入的 props（`layout`）。
  * @returns 可直接交给 `slots.register` 的组件。
  */
-function wrap(Action, layout) {
+function wrap(Action, extra) {
   return function RailAction(props) {
-    return <Action {...props} layout={layout}/>;
+    return <Action {...props} {...extra}/>;
   };
+}
+
+/**
+ * 算出当前要给哪些页面 id 注册动作。
+ *
+ * # 为什么不能写死一张表
+ *
+ * 「带侧栏的页面」随插件装载而变（用户可以在「插件」页停掉某一页），而 keyed 槽只认
+ * 精确的 key —— 没注册的 key 直接走 fallback。所以注册面必须跟着 `pages` 服务的
+ * 快照走：快照里有哪几页，就给哪几页挂一个动作。
+ *
+ * 这个动作对「没有侧栏」的页面是无害的：`PageSidebarAction` 取不到登记就渲染裸鲸鱼，
+ * 与 fallback 完全一致。所以不必（也不可能）在注册时就知道哪几页有侧栏。
+ *
+ * @param pages - 页面服务（`ctx.pages`）。
+ * @returns 当前页面 id 数组。
+ */
+function pageIds(pages) {
+  const snapshot = pages?.getSnapshot?.();
+  const entries = Array.isArray(snapshot?.pages) ? snapshot.pages : [];
+  const ids = entries.map(entry => entry?.id).filter(id => typeof id === 'string' && id !== '');
+  // 拿不到快照（服务形状变了、或者宿主换版本）时至少保住 home 那一条：
+  // 宁可少几页，也不能让「收起侧边栏」这个主入口整体消失。
+  return ids.length > 0 ? ids : [pages?.config?.homePage ?? 'home'];
 }
 
 /**
@@ -472,31 +538,94 @@ export function sidebarWidthCss() {
   ].join('\n');
 }
 
+/**
+ * 把「收起 / 展开」挂进导轨顶部那一格 —— **每一页**。
+ *
+ * # 注册面跟着 `pages` 快照走
+ *
+ * keyed 槽只认精确的 key：快照里有哪几页，就得给哪几页各注册一份。页面可以晚到
+ * （插件按需装载）、也可能被用户从「页面管理」里回收 —— 所以这里订阅快照，
+ * 集合变了就重挂一次。**不重挂**的后果是新装的页面上那一格退回纯鲸鱼，
+ * 而用户刚从「插件」页把它打开。
+ *
+ * # 顺序是有讲究的
+ *
+ * **先挂替身，成功了才藏原生按钮**。反过来做过，结果是槽位服务形状不对时
+ * 「原生按钮已经被藏、替身没挂上」—— 用户既没有鲸鱼也没有原生入口，只能靠快捷键。
+ * 测试抓到了这个顺序错误。
+ *
+ * # 原生按钮为什么在所有页都藏
+ *
+ * 它长在宿主侧栏的 `logoRow` 里，而产品把那个位置的入口统一收到了导轨鲸鱼上。
+ * 留着它，同一屏就有两个「收起侧边栏」。藏是可逆的（属性 + 样式表，卸载即撤）。
+ *
+ * @param root0 - 依赖。
+ * @param root0.slots - 槽位服务。
+ * @param root0.pages - 页面服务（`ctx.pages`）。
+ * @param root0.layout - 布局服务（`ctx.layout`）。
+ * @param root0.doc - 文档对象（测试可注入）。
+ * @returns 撤销函数。
+ */
 export function installCollapseIntoWhale({ slots, pages, layout, doc = globalThis.document }) {
-  const disposers = [];
-  // 顺序是有讲究的：**先挂替身，成功了才藏原生按钮**。
-  // 反过来做过，结果是槽位服务形状不对时「原生按钮已经被藏、替身没挂上」——
-  // 用户既没有鲸鱼也没有原生入口，只能靠快捷键。测试抓到了这个顺序错误。
-  const slot = pages?.config?.railActionSlot ?? 'page.rail-action';
   if (slots?.inject === undefined || slots?.register === undefined) return () => {};
-  try {
-    for (const [pageId, Action] of Object.entries(RAIL_ACTIONS)) {
-      const component = wrap(Action, layout);
-      disposers.push(slots.inject(slot, () => slots.register({ name: slot, key: pageId }, component)));
-    }
-  } catch {
-    // 槽位形状不对（宿主换版本）：把已经挂上的撤掉，**不动 DOM**（还没动过）。
-    for (const dispose of disposers.splice(0)) {
+  const slot = pages?.config?.railActionSlot ?? 'page.rail-action';
+  /** 已注册的 pageId → disposer。重挂时按差集增删，不是整批推倒。 */
+  const registered = new Map();
+  /** 已挂上的槽位注入 scope。 */
+  const scopes = [];
+  let failed = false;
+
+  /**
+   * 该页要渲染的组件：home 是原生侧栏，其他页是该页自己的侧栏。
+   *
+   * `pageId` **由这里绑死**，不依赖槽位传进来的同名 prop。两者现在一定相等
+   * （keyed 槽的 key 就是 activePage），但把「我注册的是哪一页」焊在闭包里，
+   * 就不会因为页面壳将来改传参而静默拿到另一页的侧栏开关。
+   */
+  const componentFor = pageId => (pageId === (pages?.config?.homePage ?? 'home')
+    ? wrap(CollapseIntoWhale, { layout })
+    : wrap(PageSidebarAction, { pageId }));
+
+  const sync = () => {
+    if (failed) return;
+    const wanted = new Set(pageIds(pages));
+    // 先摘掉已经不存在的页。
+    for (const [pageId, dispose] of [...registered]) {
+      if (wanted.has(pageId)) continue;
+      registered.delete(pageId);
       try { dispose?.(); } catch { /* 撤销失败没有补救手段 */ }
     }
-    return () => {};
-  }
+    // 再补上新出现的页。
+    for (const pageId of wanted) {
+      if (registered.has(pageId)) continue;
+      try {
+        const component = componentFor(pageId);
+        const dispose = slots.inject(slot, () => slots.register({ name: slot, key: pageId }, component));
+        registered.set(pageId, dispose);
+        scopes.push(dispose);
+      } catch {
+        // 槽位形状不对（宿主换版本）：把已经挂上的撤掉，**不动 DOM**（还没动过）。
+        failed = true;
+        for (const dispose of scopes.splice(0)) {
+          try { dispose?.(); } catch { /* 同上 */ }
+        }
+        registered.clear();
+        return;
+      }
+    }
+  };
+
+  sync();
+  // 快照变化（晚到的页面 / 回收 / 重新排序）都要重算注册面。
+  const unsubscribe = typeof pages?.subscribe === 'function' ? pages.subscribe(sync) : undefined;
   const undoDom = hideNativeToggle(doc);
   const undoColumn = collapseSidebarColumn(doc);
   return () => {
-    for (const dispose of disposers.splice(0)) {
+    unsubscribe?.();
+    for (const dispose of scopes.splice(0)) {
       try { dispose?.(); } catch { /* 同上 */ }
     }
+    registered.clear();
     undoDom();
     undoColumn();
   };

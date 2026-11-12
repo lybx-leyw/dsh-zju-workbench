@@ -22,6 +22,20 @@ async function bundleModule(relative) {
   const result = await build({
     entryPoints: [path.join(root, relative)],
     bundle: true, write: false, format: 'esm', platform: 'neutral', jsx: 'automatic', logLevel: 'silent',
+    // `@lybx-leyw/dsh-zju-ui-shared` 在本包里是 external（运行时由客户端模块表提供），
+    // 而它的 `main` 指向**宿主半边** `src/index.js` —— 那里没有 React 组件。
+    // 直接打进来会得到 `No matching export … usePageSidebar`，与 `rail-action.test.mjs`
+    // 同一处坑，用同样的桩绕开。
+    plugins: [{
+      name: 'ui-shared-stub',
+      setup(builder) {
+        builder.onResolve({ filter: /^@lybx-leyw\/dsh-zju-ui-shared$/ }, () => ({ path: 'ui-shared', namespace: 'stub' }));
+        builder.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
+          contents: 'export function usePageSidebar() { return undefined; }',
+          loader: 'js',
+        }));
+      },
+    }],
   });
   return import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
 }

@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { GenerationQueue } from './generation-queue.jsx';
 import { CourseGraph } from './course-graph.jsx';
-import { useStudy } from '@lybx-leyw/dsh-zju-ui-shared';
+import { useRegisterPageSidebar, useStudy } from '@lybx-leyw/dsh-zju-ui-shared';
 import { VideoPanel } from "./video-panel.jsx";
 import { AiTeaching } from './ai-teaching.jsx';
 import { BranchBoard } from './branch-board.jsx';
@@ -406,6 +406,27 @@ export function StudyWorkspace({ controller, Notice, ModelSettings, safeLink }) 
   // 所以 `course`/`lesson` 不该跟着动，而 `livePick` 正是「我在看直播」这件事的住址。
   const [graphCourseId, setGraphCourseId] = useState(null);
   const courseGraphOpen = graphCourseId != null && String(graphCourseId) === String(state.course?.id);
+  /**
+   * 把「课程目录」的开关交给导轨顶部那只鲸鱼（`ui-shared` 的页面侧栏契约）。
+   *
+   * # 为什么未登录时传 null
+   *
+   * 没登录时整页只有一句引导（见下面 `if (!state.user)`），课程目录**根本不在树里**。
+   * 那时若照样登记一个开关，导轨上会出现一个按下去什么都不变的按钮 —— 比不给更糟。
+   * `null` 让这一页退回纯鲸鱼，与加这个功能之前一致。
+   *
+   * # 为什么必须在提前 return 之前
+   *
+   * 下面有 `if (state.loading) return …` / `if (!state.user) return …` 两条早退。
+   * 这个 hook 里有 `useEffect`，写在它们之后会让两次渲染的 hook 数量不同，
+   * React 直接抛错、整页空白（`tests/repo/hooks-order.test.mjs` 守的就是这条）。
+   */
+  const toggleTree = useCallback(() => setTreeCollapsed((value) => !value), []);
+  useRegisterPageSidebar('study', state.user ? {
+    expanded: !treeCollapsed,
+    toggle: toggleTree,
+    label: treeCollapsed ? '展开课程目录' : '收起课程目录',
+  } : null);
   const liveOn = LIVE_UI_ENABLED && screen === "live";
   /**
    * 点左侧「正在直播」里的某一场。
