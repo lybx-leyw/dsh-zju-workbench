@@ -208,6 +208,7 @@ function minimalArgs(definition, action) {
     // pta
     setList: {},
     setView: { problemSet: '1' },
+    problemList: { problemSet: '1' },
     problemView: { problemSet: '1', problem: '2' },
     submissionList: { problemSet: '1' },
     submissionView: { problemSet: '1', submission: '3' },

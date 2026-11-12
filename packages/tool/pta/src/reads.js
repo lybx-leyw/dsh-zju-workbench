@@ -29,7 +29,7 @@ const SERVICE_SOURCES = Object.freeze({
   zhiyunPta: '@lybx-leyw/dsh-zju-source-pta',
 });
 
-const ACTIONS = ['setList', 'setView', 'problemView', 'submissionList', 'submissionView', 'reconcile'];
+const ACTIONS = ['setList', 'setView', 'problemList', 'problemView', 'submissionList', 'submissionView', 'reconcile'];
 
 /** 题集名 → 题集行。**不猜**：同名就拒绝并给候选。 */
 async function resolveSet(service, wanted) {
@@ -65,19 +65,19 @@ export function createPtaReadTools(services) {
     {
       name: 'campus_pta_read',
       description:
-        '查拼题A 的只读数据：题集列表、题集作答状态、题目内容、我的提交记录、作答进度。'
+        '查拼题A 的只读数据：题集列表、题集作答状态、题目清单、题目内容、我的提交记录、作答进度。'
         + 'campus_answer 要的题集编号与题目编号都从这里取。它不开始答题、不启动计时、不交卷 —— '
         + '那些是写操作，要用户逐次批准。',
       parameters: {
         type: 'object',
         properties: {
           action: { type: 'string', enum: ACTIONS, description: '要查什么' },
-          problemSet: { type: 'string', description: '题集名或题集 id（setView / problemView / submissionList / submissionView / reconcile 需要）' },
-          problem: { type: 'string', description: '题目编号（problemView 需要；可用问题列表或题集状态拿到）' },
+          problemSet: { type: 'string', description: '题集名或题集 id（setView / problemList / problemView / submissionList / submissionView / reconcile 需要）' },
+          problem: { type: 'string', description: '题目编号（problemView 需要；先用 problemList 取）' },
           submission: { type: 'string', description: '提交编号（submissionView 需要）' },
-          problemType: { type: 'string', description: 'problemView 只取某类题（可不给）' },
-          page: { type: 'integer', minimum: 1, description: '页码，默认 1' },
-          limit: { type: 'integer', minimum: 1, maximum: 100, description: '每页条数，默认 50（提交记录默认 30）' },
+          problemType: { type: 'string', description: 'problemList：只看某类题（如 PROGRAMMING / CODE_COMPLETION；不给就取第一类有题的）' },
+          page: { type: 'integer', minimum: 1, description: 'problemList：页码，默认 1' },
+          limit: { type: 'integer', minimum: 1, maximum: 100, description: 'problemList 每页条数（默认 50）；submissionList 条数（默认 30）' },
           offset: { type: 'integer', minimum: 0, description: 'problemView：题目正文的起始偏移，默认 0' },
           maxCharacters: { type: 'integer', minimum: 1, description: 'problemView：正文截断长度，默认 16000' },
           before: { type: 'string', description: 'submissionList：只看这个时间之前的提交' },
@@ -101,6 +101,19 @@ export function createPtaReadTools(services) {
         const set = await resolveSet(pta, args.problemSet);
 
         switch (action) {
+          case 'problemList':
+            // 题集里的题目清单（含我的作答状态）。`problem` 那个编号从这里取 ——
+            // 缺这一步，`problemView` 就又要让用户猜编号了。
+            return {
+              set,
+              ...await pta.read(defined({
+                action: 'problems',
+                problemSetId: set.id,
+                problemType: optStr(args.problemType, '题型'),
+                page: optInt(args.page, 'page', { min: 1 }),
+                limit: optInt(args.limit, 'limit', { min: 1, max: 100 }),
+              })),
+            };
           case 'setView':
             return { set, ...await pta.read({ action: 'exam', problemSetId: set.id }) };
           case 'problemView':

@@ -385,7 +385,7 @@ node scripts/probe-write-contract.mjs
 | `tool/zdbk` | `campus_zdbk_read` | 12 | 11 条 A-1 全部（`selection credits` 与 `gpa` 各算一条） |
 | `tool/xuezai` | `campus_xuezai_read` | 7 | 10 条 A-2（`homework view` 一条覆盖 `activity` + `activitySubmission`；4 条点名只有 `rollcallHistory` 有 source 方法） |
 | `tool/cc98` | `campus_cc98_read` | 22 | 21 条 A-3 全部 |
-| `tool/pta` | `campus_pta_read` | 6 | A-5 的 6 条读（`homework start` / `finish` **未做**，见 8.3） |
+| `tool/pta` | `campus_pta_read` | 7 | A-5 的 7 条读（含 `problem view` 的清单 + 正文两步；`homework start` / `finish` **未做**，见 8.3） |
 | `tool/sztz` | `campus_sztz_read` | 6 | A-4 的 7 条里 6 条（`activity favorite` **未做**，见 8.3） |
 | `tool/tyys` | `campus_tyys_read` | 5 | A-4 的 4 条（`venue list` 一个 action 覆盖目录与余量）+ 签到历史 |
 | `tool/lab` | `campus_lab_read` | 10 | A-8 的 3 条 + `lab selected` / `lab notices`（两条半成品已能读） |

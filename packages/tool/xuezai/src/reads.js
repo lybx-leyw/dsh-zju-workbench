@@ -72,7 +72,10 @@ export function createXuezaiReadTools(services) {
           action: { type: 'string', enum: ACTIONS, description: '要查什么' },
           course: { type: 'string', description: '课程名（支持常见简称）或课程 id；courseView / materialList / homeworkList / homeworkView / rollcallHistory 需要' },
           homework: { type: 'string', description: '作业名或作业 id（homeworkView 需要；可用 homeworkList 查到）' },
-          mode: { type: 'string', enum: ['fast', 'slow', 'diff'], description: 'todos：fast 走聚合端点（默认）、slow 逐课抓、diff 两路对账' },
+          // ⚠️ 没有 `mode`：待办走哪条路（fast / slow / diff）由 source 读
+          // `ZHIYUN_TODOS` 环境变量决定，工具层传什么都没有效果。留一个
+          // 「传了但被忽略」的参数，会让模型以为它切了模式。
+
           semester: { type: 'string', description: 'courseList：学期 id；不给时只列正在上的学期' },
           page: { type: 'integer', minimum: 1, description: '分页页码，默认 1（材料、作业、活动）' },
           pageSize: { type: 'integer', minimum: 1, maximum: 100, description: '每页条数，默认 30' },
@@ -93,13 +96,13 @@ export function createXuezaiReadTools(services) {
 
         switch (action) {
           case 'todos': {
-            const mode = optStr(args.mode, 'mode') ?? 'fast';
             const result = await service.todos();
             const half = result?.xzzd ?? { ok: false, rows: [], error: null };
             return {
               ...half,
-              mode,
-              note: '这是学在浙大的一半；拼题A 的待办在 source/pta。mode=diff 的对账诊断要靠 ZHIYUN_TODOS 环境变量，本工具只转述结果。',
+              note: '这是学在浙大的一半；拼题A 的待办在 source/pta。'
+                + '两条抓取路径（fast 聚合端点 / slow 逐课）由数据源的 ZHIYUN_TODOS 环境变量选择，'
+                + '结果里的形状是一样的。',
             };
           }
           case 'courseList':
