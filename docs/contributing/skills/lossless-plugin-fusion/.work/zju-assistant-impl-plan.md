@@ -58,7 +58,7 @@
 | **D18** | **CAS 取票件** | **抽进 `source/login` 插件包**（tier 0），供所有走 CAS 的数据源共用 | 用户 |
 | **D19** | **skill 包不带 patch** | **`wechat-chat` / `dingtalk-chat` / `weread` 删除 `cordis.patch.yml`**（它们是 agent skill，无 `main`/`exports`，插 patch 会 `ERR_MODULE_NOT_FOUND`） | 用户 |
 | **D20** | **skill 发现机制** | **待裁决** —— 这仓的 skill 怎么被发现/安装尚未确认；当前阶段专注数据源构建，遇到对应场景再问 | 用户 |
-| **D21** | **下载归 core** | **下载由 `packages/core/*` 执行；`source/*` 只暴露下载所需的全部参数（url / headers / 文件名 / 预期大小 / 变体），不碰文件系统** | 用户 |
+| **D21** | **下载归 core** | **下载由 `packages/core/*` 执行；`source/*` 只暴露下载所需的全部参数（url / headers / 文件名 / 预期大小 / 变体）** —— ⚠️ 原文曾由 agent 追加「不碰文件系统」，**用户从未如此裁决**，2026-11-12 已更正：`source` 可以落盘，缓存与临时文件也在其职责内 | 用户 |
 
 ### D14 的落地含义
 
@@ -205,6 +205,8 @@ Loader 解不开任意一条 bundle → **整个工作台起不来**（`profile.
 | W6 | `do-confirm-login` 二次确认（带 `onConfirm` 留痕） | 是 | ✅ |
 | W7 | `probeWebvpnSession` + `importWebvpnTicket` | 否 | ✅ |
 | W8 | `src/doctor.js` 网络诊断（凭据由调用方传入） | 否 | ✅ |
+| **W9** | `src/probe.js` 单主机探测（DoH / 私网 / TUN / 跳转 / casRedirect / `via`） | 否 | ✅ **2026-11-12 补** |
+| **W10** | `src/reach.js` 逐主机可达性（TTL 缓存，落盘可选） | 否 | ✅ **2026-11-12 补** |
 
 **爆炸半径**：`source/http/src/host.js`、`source/campus/src/egress.js` 直接消费，10 个数据源包全部受影响。
 **保留**：`isCampusHost` / `isPublicHost` 作为 `unknown` 回退；「只重试 GET/HEAD」保护未被覆盖。
@@ -217,7 +219,7 @@ Loader 解不开任意一条 bundle → **整个工作台起不来**（`profile.
 | **R-2** | `HOSTS_GENERATED_AT` 是 2026-10-09 的快照，接手时已过期约一个月 | 已知 |
 | **R-3** | `setWebvpnSession` 有时序要求，且**当前无人调用** → 校外场景 `source/http` 仍抛 `WEBVPN_REQUIRED`（cc98/zdbk/xxt 校外用不了）。**修好了「静默失败」，没修「能工作」** | **未解除** |
 | **R-4** | 三处已知未修：`probeCampus` 失败不缓存/无去重、`fromWebvpnUrl` 不剥离 `vpn-12-o2-`（当前无触发）、IPv6 主机名被拒 | 已知 |
-| **R-5** | `webvpn check --host` 缺服务面版本（只有维护者脚本） | 已知 |
+| **R-5** | ~~`webvpn check --host` 缺服务面版本（只有维护者脚本）~~ → **2026-11-12 已关闭**：`checkReachable()` / `requireReachable()` 在 `src/reach.js` | ✅ **已解除** |
 | **R-6** | 全仓 26 个既有测试失败与本批无关（严格比对：基线 27 → 26，新增 0） | 已核实 |
 
 **结论**：可作为「**实现完成**」提交，**不能标为「验收通过」**。打勾需 R-1 与 R-3 解除。

@@ -158,7 +158,7 @@ login / netproxy / webvpn / xxt / zdbk）全部受影响。必须整包回归，
 
 ## 六、实施状态（2026-11-10）
 
-**W1–W8 全部已实现并有测试**，147 条相关测试通过（含反证）。
+**W1–W10 全部已实现并有测试**，85 条 webvpn 用例通过（含反证）。
 
 | 阶段 | 内容 | 状态 |
 | --- | --- | --- |
@@ -170,6 +170,12 @@ login / netproxy / webvpn / xxt / zdbk）全部受影响。必须整包回归，
 | W6 | `do-confirm-login` 二次确认（带 `onConfirm` 回调留痕） | ✅ |
 | W7 | `probeWebvpnSession` + `importWebvpnTicket` 逃生口 | ✅ |
 | W8 | `src/doctor.js` 网络诊断（凭据由调用方传入，tier 0 约束） | ✅ |
+| **W9** | `src/probe.js` 单主机探测 —— 把 W4 的脚本逻辑提升为**服务面**（DoH 解析 / 私网判定 / TUN 检测 / 跟跳转 / `casRedirect` / `via` 外部实测） | ✅ **2026-11-12** |
+| **W10** | `src/reach.js` 逐主机可达性 —— 补齐 `webvpn check --host`（TTL 缓存，落盘可选） | ✅ **2026-11-12** |
+
+> **W9/W10 的由来**：上游 `probe.ts` 与 `reach.ts` 是**库**，本仓原先只有 CLI 脚本，
+> 于是「探测」这项能力对设置页与 agent 不可达 —— 覆盖率差 6.25%。
+> 补的方式是**把判定留在库里、脚本降级为包装**，而不是给脚本加参数。
 
 ### 实施中查出并修复的四个缺陷
 

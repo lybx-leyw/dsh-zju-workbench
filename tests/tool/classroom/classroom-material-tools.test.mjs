@@ -34,11 +34,11 @@ async function loadHost() {
   return { Context, ToolRuntime, nativeToolExecutor };
 }
 
-// 工具实现与注册动作都搬到了 `packages/tool/study`：
+// 工具实现与注册动作在 `packages/tool/classroom`：
 //   - `createStudyMaterialTools` 仍是纯函数，用来单测工具行为；
 //   - 注册改由包的 `apply(ctx)` 承担，它从 `zhiyunStudy` 服务取 workbench。
-import { createStudyMaterialTools } from '../../../packages/tool/study/src/tools.js';
-import * as toolStudy from '../../../packages/tool/study/src/index.js';
+import { createStudyMaterialTools } from '../../../packages/tool/classroom/src/tools.js';
+import * as toolClassroom from '../../../packages/tool/classroom/src/index.js';
 
 test('real host registry accepts definitions and unregisters every tool', async () => {
   const { Context, ToolRuntime } = await loadHost();
@@ -69,7 +69,7 @@ test('optional host injection publishes schemas, executes canonical output and u
   await ctx.plugin(nativeToolExecutor);
   const f = fixture();
   ctx.provide('zhiyunStudy', f.workbench);
-  const fiber = ctx.plugin(toolStudy);
+  const fiber = ctx.plugin(toolClassroom);
   try {
     await fiber;
     assert.deepEqual(registry.schemas().map(tool => tool.name).sort(), Object.keys(f.tools).sort());
@@ -107,7 +107,7 @@ test('missing optional registry does not block its parent plugin', async () => {
   // 宿主没有 `tools` 服务：本包的 inject 不满足，应当**不激活且不抛**
   // —— 这正是「工具表是附加能力」的契约。
   ctx.provide('zhiyunStudy', {});
-  const parent = ctx.plugin({ apply(scope) { scope.plugin(toolStudy); loaded = true; } });
+  const parent = ctx.plugin({ apply(scope) { scope.plugin(toolClassroom); loaded = true; } });
   try { await parent; assert.equal(loaded, true); } finally { await parent.dispose(); }
 });
 

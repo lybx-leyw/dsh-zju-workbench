@@ -21,12 +21,17 @@
 | 包 | 上游 | A 已实现 | B 有差异 | C 未做 | D 归他处 | 覆盖率 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `zdbk` | 17 | 5 | 9 | 0 | 3 | **100%** |
-| `cc98` | 32 | 14 | 10 | 0 | 8 | **100%** |
+| `cc98` | 32 | 14 → **18** | 10 → **6** | 0 | 8 | **100%**（严格口径 56% → **72%**） |
 | `tyys` | 9 | 4 | 3 | 0 | 2 | **100%** |
 | `xuezai` | 18 | 2 | 4 | 5 | 7 | **72.2%** |
-| **合计** | **76** | **25** | **26** | **5** | **20** | **93.4%** |
+| **合计** | **76** | 25 → **29** | 26 → **22** | **5** | **20** | **93.4%** |
 
 覆盖率 = (A + B + D) / 总数。
+**严格口径** = 只把 A 算已完成（`upstream-gap-audit-2026-11-12.md` 用的是这个）。
+
+> **2026-11-12 的改动**：cc98 四个写动作的参数错位、赞踩无法取消、发帖/回帖丢标签与匿名
+> 已全部修好，四条 B 转 A（`board post` / `topic reply` / `floor like` / `floor edit` 等）。
+> 图片上传仍未做，那是多段上传，单独记待办。
 
 **⚠️ 覆盖率严重高估可用性，看这张表时请连读下面三条：**
 
@@ -499,15 +504,18 @@
 | --- | --- | --- | --- |
 | 🔴 **废掉** | `tyys venue book` / `venue order cancel` | `bookVenuePrepare` / `cancelVenuePrepare` 存在且被测试断言过 | 调用即 `ReferenceError`（漏-1） |
 | 🔴 **废掉** | `zdbk selection select` / `reorder` / `drop` | `selectCoursePrepare` 等 6 个方法都在服务面上 | `prepare()` 必抛 `INVALID_ARGUMENT`（漏-2） |
-| 🔴 **废掉** | `cc98 floor edit` / `favorite` / `rate` / `pm send` | 4 对方法齐全 | 参数名错位，`prepare()` 必抛（漏-3） |
+| ~~🔴 **废掉**~~ → ✅ **已修** | `cc98 floor edit` / `favorite` / `rate` / `pm send` | 4 对方法齐全 | 参数名错位，`prepare()` 必抛（漏-3）。**2026-11-12 已对齐**：`edit` 改收 `post`、`rate` 必传 `reason` 并说明编号从哪查、`favorite` 补 `on` 开关、`pm send` 用户名由 source 解析 |
 | 🔴 **废掉** | `xuezai rollcall` | `rollcallPrepare` 存在 | 工具给不了坐标与 id，必抛（漏-4） |
-| 🟠 **残** | `cc98 floor like` | `likeFloor` 通 | **不能取消**：上游「再次发送当前状态即取消」，本仓只能发 1/2（`writes.js:178-182`） |
-| 🟠 **残** | `cc98 board post` | `postTopic` 通 | 丢掉标签/匿名/Markdown/图片，**有必选标签的版面发不出去** |
-| 🟠 **残** | `cc98 topic reply` | `replyTopic` 通 | 丢掉引用/匿名/通知全体/图片/Markdown |
+| ~~🟠 **残**~~ → ✅ **已修** | `cc98 floor like` | `likeFloor` 通 | ~~不能取消~~ **2026-11-12 修**：`state` 认 `'none'` / `0` / `'cancel'`，工具层新增 `unlike` 动作 |
+| ~~🟠 **残**~~ → ✅ **已修** | `cc98 board post` | `postTopic` 通 | ~~丢掉标签/匿名~~ **2026-11-12 修**：收 `tag1` / `tag2` / `anonymous` / `contentType` / `title`，必选标签的版面能发出去 |
+| ~~🟠 **残**~~ → ✅ **已修** | `cc98 topic reply` | `replyTopic` 通 | ~~丢掉引用/匿名/通知全体~~ **2026-11-12 修**：收 `quote`（楼层号）/ `anonymous` / `notifyAll` / `contentType` |
 | 🟠 **残** | `zdbk selection reorder` | `reorderCourse` 通 | 语义不同：上游「给完整顺序」vs 本仓「移到第 N 位」（`writes.js:216-226`） |
 | 🟡 **弱** | `zdbk timetable` | `timetable()` 通 | 少六类非正式课 + 学籍 + 节次表来源 + 缓存（漏-13） |
 | 🟡 **弱** | `cc98 search` | `search()` 通 | 单关键词直通，多说法/相关度/排序全丢（漏-9） |
 | 🟡 **弱** | `xuezai todos` | `todos` 通 | 默认不跑作业扫描，且形状与上游不同（#1） |
+
+> **图片上传仍未做**：上游 `post` / `reply` 支持图片，本仓没有。那是**多段上传**
+> （先传图拿 id，再带 id 发帖），比补一个参数重得多，单独记作待办。
 
 **还有一条最隐蔽的**：`cc98 messages` 名字一样、字段一样，**唯独顺序反了** ——
 上游 `thread()` 有 `.reverse()` 把它变成「从早到晚」（`index.ts:353` 的

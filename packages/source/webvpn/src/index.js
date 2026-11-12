@@ -25,6 +25,8 @@ export * from './protocol.js';
 export * from './login.js';
 export * from './doctor.js';
 export * from './egress.js';
+export * from './probe.js';
+export * from './reach.js';
 // 主机归属表：`egress.js` 内部已用它做三级判定，这里一并导出，
 // 让探测脚本、诊断面板与将来的数据源包能直接查「这个站属于哪一侧」。
 export { HOSTS, HOSTS_GENERATED_AT, HOSTS_VIA, classifyHost, needsCas } from './hosts.js';

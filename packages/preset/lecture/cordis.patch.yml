@@ -11,7 +11,7 @@
 #
 # `plugins` 是宿主**当前版本自带**的
 # `@deepseek-ai/dsh-web-app/presets/standard.patch.yml` 里那棵 row 树的
-# 逐行复制 + 末尾追加一行 `tool-study`。
+# 逐行复制 + 末尾追加一行 `tool-classroom`。
 #
 # 为什么必须用这一份：从 pnpm 存储里翻到的
 # `@deepseek-ai/dsh-agent-presets@0.1.5-rc.3` 是**旧版遗留**，它的 persona 写
@@ -164,7 +164,7 @@
 
           # ── 本 preset 独有：课程资料检索 ─────────────────────────────────────
           #
-          # 这三个工具由 `@lybx-leyw/dsh-zju-tool-study` 注册（study_catalog /
+          # 这三个工具由 `@lybx-leyw/dsh-zju-tool-classroom` 注册（study_catalog /
           # study_read / study_search）。它 inject 的是主机的 `zhiyunStudy` 服务
           # （`core/study` provide）和 `tools` 注册表，自己不 provide 任何服务，
           # 所以不需要 `isolate` realm —— realm 只用于隔离 preset 自己对外发布的
@@ -172,13 +172,5 @@
           #
           # 该包**不在** profile 的 bundles 里，正是为了让它只出现在这个 preset：
           # 放进 profile 就是主机平面，所有 preset 都会看到。
-          #
-          # # 分工：tool 只注册，preset 才注入
-          #
-          # `tool/study` 是**纯工具包**：只有 `apply()` 里那一圈
-          # `ctx.tools.register()`，**不带自己在 cordis.patch.yml 里的挂载行**
-          # （早先带过，于是同一个包既能被 preset 插一次、又能被 profile 当
-          # bundle 挂一次 —— 工具在表里注册两遍）。所以「什么时候把这些工具给
-          # agent」只由**本 preset** 决定：下面这一行是它唯一的注入点。
-          - id: tool-study
-            name: '@lybx-leyw/dsh-zju-tool-study'
+          - id: tool-classroom
+            name: '@lybx-leyw/dsh-zju-tool-classroom'

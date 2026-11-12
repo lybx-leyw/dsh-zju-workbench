@@ -185,6 +185,54 @@ export function createZdbkWrites(reader) {
     return { context, sections };
   };
 
+  /**
+   * 在一批已选志愿里定位一个教学班：优先按 `section`，其次按课程名。
+   *
+   * # 为什么课程名也要收
+   *
+   * 工具层对用户说的是「退掉这门课」，用户手里通常只有课程名，没有那串
+   * `(2025-2026-1)-A-1-1`。先前只认 section，于是 `drop` / `reorder` 在
+   * 工具传 `{course}` 时必抛 `需要 section` —— 模型只能去问用户要一个
+   * 用户根本不知道的编号。
+   *
+   * 按课程名定位是**这个数据源的知识**（要知道志愿表里哪个字段是课程名），
+   * 不该让每个调用方各查一遍。
+   *
+   * # 同名多志愿不猜
+   *
+   * 同一门课可能有第一、第二志愿两个教学班。那时按名字定位是**歧义**，
+   * 要列出来让用户/模型用 section 指定 —— 猜错等于替他退错了班。
+   *
+   * @param choices - `selectionSelected` 的 choices。
+   * @param args - `{ section?, course? }`。
+   * @returns 命中的志愿行。
+   */
+  const findChoice = (choices, args) => {
+    const section = String(args.section ?? '').trim();
+    if (section) {
+      const hit = choices.find((row) => String(row.section ?? '') === section);
+      if (hit) return hit;
+      throw invalid(`你没有教学班 ${section} 的志愿（用 selectionSelected 看真实班号）`);
+    }
+
+    const wanted = String(args.course ?? '').trim();
+    if (!wanted) throw invalid('需要 section（教学班号）或 course（课程名）');
+
+    const exact = choices.filter((row) => String(row.course ?? '').trim() === wanted);
+    const partial = choices.filter((row) => String(row.course ?? '').includes(wanted));
+    const hits = exact.length ? exact : partial;
+
+    if (hits.length === 1) return hits[0];
+    if (!hits.length) {
+      throw invalid(`志愿表里没有「${wanted}」（用 selectionSelected 看已选课程）`);
+    }
+    throw invalid(
+      `「${wanted}」有 ${hits.length} 个志愿：`
+      + `${hits.slice(0, 5).map((row) => `${row.course}（${row.section}）`).join('、')}`
+      + ' 请用 section 指定。',
+    );
+  };
+
   return {
     selectCourse: pair('zdbk.selectCourse', async (args) => {
       const section = String(args.section ?? '').trim();
@@ -227,14 +275,9 @@ export function createZdbkWrites(reader) {
     }),
 
     dropCourse: pair('zdbk.dropCourse', async (args) => {
-      const section = String(args.section ?? '').trim();
-      if (!section) throw invalid('需要 section（教学班号，来自 selectionSelected 的 section）');
-
       const mine = await reader.selectionSelected({ with_credits: false });
-      const hit = (mine.choices ?? []).find((row) => String(row.section ?? '') === section);
-      if (!hit) {
-        throw invalid(`你没有教学班 ${section} 的志愿（用 selectionSelected 看真实班号）`);
-      }
+      const hit = findChoice(mine.choices ?? [], args);
+      const section = String(hit.section);
 
       return {
         summarized: `退课：${hit.course ?? section}（教学班 ${section}）`,
@@ -243,15 +286,13 @@ export function createZdbkWrites(reader) {
     }),
 
     reorderCourse: pair('zdbk.reorderCourse', async (args) => {
-      const section = String(args.section ?? '').trim();
       const order = Number(args.order);
-      if (!section) throw invalid('需要 section（教学班号）');
       if (!Number.isInteger(order) || order < 1) throw invalid('需要正整数 order（目标志愿序号）');
 
       const mine = await reader.selectionSelected({ with_credits: false });
       const choices = mine.choices ?? [];
-      const hit = choices.find((row) => String(row.section ?? '') === section);
-      if (!hit) throw invalid(`你没有教学班 ${section} 的志愿`);
+      const hit = findChoice(choices, args);
+      const section = String(hit.section);
 
       // 排序必须提交**同一志愿组的完整顺序**，否则服务端会拒。
       // 这里是「把目标移到第 N 位」的语义：同组其它项保持相对顺序补位。

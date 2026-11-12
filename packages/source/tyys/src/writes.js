@@ -100,11 +100,30 @@ export function createTyysWrites(client) {
     bookVenue: pair('tyys.bookVenue', async (args) => {
       const site = String(args.venue ?? '').trim();
       const date = String(args.date ?? '').trim();
-      const start = String(args.start ?? '').trim();
-      const end = String(args.end ?? '').trim();
+      // `slot` 与 `start`/`end` 都收。
+      //
+      // # 为什么要收 slot
+      //
+      // 用户与模型看到的时段是「19:00-20:00」这样一整串（那正是查询接口
+      // 给人的形状），而下单要拆成两个字段。先前只认 start/end，于是工具层
+      // 传 slot 时必抛「start / end 要写成 HH:MM」—— 一条用户无法照做的错误，
+      // 因为他在界面上根本看不到分开的两个值。
+      //
+      // 拆分放在这里而不是工具层：**时段是什么形状**是这个数据源的知识。
+      let start = String(args.start ?? '').trim();
+      let end = String(args.end ?? '').trim();
+      if ((!start || !end) && typeof args.slot === 'string') {
+        const parts = args.slot.trim().split(/\s*[-–—~至]\s*/);
+        if (parts.length === 2) {
+          start = parts[0].trim();
+          end = parts[1].trim();
+        }
+      }
       if (!site) throw invalid('需要 venue（场地编号，来自场馆查询）');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw invalid('date 要写成 YYYY-MM-DD');
-      if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) throw invalid('start / end 要写成 HH:MM');
+      if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) {
+        throw invalid('需要时段：传 slot（如 "19:00-20:00"）或分开的 start / end（HH:MM）');
+      }
 
       // 1) 这一天的空场（只读）。
       const day = await client.day(site, date);

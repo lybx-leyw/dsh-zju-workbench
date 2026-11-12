@@ -1297,7 +1297,7 @@ test('apply: 新增的 12 个方法都在白名单里，且旧的那批一个不
     assert.ok(METHODS.includes(key), `缺 cc98.${key}`);
   }
   assert.equal(METHODS.length, 22);
-  // 写操作名一个都不能进来（它们归 packages/tool/campus-write）
+  // 写操作名一个都不能进来（它们归 packages/tool/cc98）
   for (const write of ['reply', 'post', 'favorite', 'like', 'rate', 'edit', 'send', 'signin']) {
     assert.equal(METHODS.includes(write), false, `写操作 ${write} 不该出现在只读方法表里`);
   }

@@ -95,10 +95,34 @@ async function probe(tool, action, run) {
     api: { post: async () => ({}), postArray: async () => [{ xkkh: '(2025-2026-1)-A-1-1', tabname: 'xk_1' }] },
   };
   const writes = () => createZdbkWrites(reader);
-  // 工具层 campus_course_select 实际传的三个对象（见 tools.js 的 prepare）
+  // 工具层 campus_course_select 实际传的对象（见 packages/tool/zdbk 的 prepare）
   await probe('campus_course_select', 'select', () => writes().selectCourse.prepare({ course: '高等数学', section: '(2025-2026-1)-A-1-1' }));
-  await probe('campus_course_select', 'drop', () => writes().dropCourse.prepare({ course: '高等数学' }));
-  await probe('campus_course_select', 'reorder', () => writes().reorderCourse.prepare({ course: '高等数学', order: 1 }));
+  // drop / reorder 既能按 section 也能按课程名定位。上面那个 reader 里同一门课
+  // 有**两个志愿**，按名字是歧义 —— 那种情况 source 应当拒绝并列候选，而不是猜。
+  await probe('campus_course_select', 'drop（按 section）', () => writes().dropCourse.prepare({ section: '(2025-2026-1)-A-1-1' }));
+  await probe('campus_course_select', 'reorder（按 section）', () => writes().reorderCourse.prepare({ section: '(2025-2026-1)-A-1-1', order: 1 }));
+  // 只按课程名、且唯一命中 → 必须能定位
+  const single = {
+    ...reader,
+    selectionSelected: async () => ({
+      choices: [
+        { section: '(2025-2026-1)-A-1-1', course: '高等数学', group: 'g1' },
+        { section: '(2025-2026-1)-A-1-2', course: '高等数学', group: 'g1' },
+        { section: '(2025-2026-1)-B-1-1', course: '线性代数', group: 'g2' },
+      ],
+    }),
+  };
+  await probe('campus_course_select', 'drop（按唯一课程名）', () => createZdbkWrites(single).dropCourse.prepare({ course: '线性代数' }));
+  // 歧义时必须拒绝并列出候选 —— 猜错等于替用户退错了班
+  await probe('campus_course_select', 'drop（歧义应拒）', async () => {
+    try {
+      await writes().dropCourse.prepare({ course: '高等数学' });
+      throw new Error('本应因歧义被拒，却通过了');
+    } catch (error) {
+      if (/本应因歧义被拒/.test(String(error?.message))) throw error;
+      // 预期内的拒绝：吞掉，让这条判为通过
+    }
+  });
 }
 
 /* ─────────────────────────── cc98 ─────────────────────────── */
@@ -114,12 +138,22 @@ async function probe(tool, action, run) {
   const writes = () => createCc98Writes(reader);
   await probe('campus_post', 'post', () => writes().postTopic.prepare({ board: '200', content: '正文' }));
   await probe('campus_post', 'reply', () => writes().replyTopic.prepare({ topic: '999', content: '顶' }));
-  await probe('campus_post', 'edit', () => writes().editPost.prepare({ topic: '999', content: '改' }));
+  await probe('campus_post', 'edit', () => writes().editPost.prepare({ post: '999', content: '改' }));
   await probe('campus_post', 'message', () => writes().sendMessage.prepare({ recipient: '某用户', content: 'hi' }));
   await probe('campus_react', 'like', () => writes().likeFloor.prepare({ post: '999' }));
+  await probe('campus_react', 'unlike', () => writes().likeFloor.prepare({ post: '999', state: 'none' }));
   await probe('campus_react', 'favorite', () => writes().favoriteTopic.prepare({ post: '999' }));
-  // 工具层把 reason 当可选（optStr），source 要求必填
-  await probe('campus_react', 'rate', () => writes().rateFloor.prepare({ post: '999', value: 2, reason: undefined }));
+  // 工具层现在必传 reason（与 source 的必填一致），所以这条测的是**正常路径**
+  await probe('campus_react', 'rate', () => writes().rateFloor.prepare({ post: '999', value: 2, reason: '1' }));
+  // 而缺 reason 仍必须被拒 —— 那是平台的要求，不能因为工具层补了就放松
+  await probe('campus_react', 'rate（缺 reason 应拒）', async () => {
+    try {
+      await writes().rateFloor.prepare({ post: '999', value: 2 });
+      throw new Error('缺 reason 却通过了');
+    } catch (error) {
+      if (/缺 reason 却通过了/.test(String(error?.message))) throw error;
+    }
+  });
   await probe('campus_checkin', 'cc98 signin', () => writes().signIn.prepare({}));
 }
 
@@ -176,8 +210,9 @@ async function probe(tool, action, run) {
     auth: { username: 'u' },
   };
   const writes = () => createLabWrites(client);
-  // 工具参数写着「实验课程名或编号」，source 的 id() 只收正整数
-  await probe('campus_lab_select', 'select', () => writes().selectLab.prepare({ course: '大学物理实验', lab: '42', week: '1-16' }));
+  // 工具参数写着「实验课程名或编号」—— 两种都必须能定位
+  await probe('campus_lab_select', 'select（按名称）', () => writes().selectLab.prepare({ course: '大学物理实验', lab: '42', week: '1-16' }));
+  await probe('campus_lab_select', 'select（按编号）', () => writes().selectLab.prepare({ course: 7, lab: '42', week: '1-16' }));
   await probe('campus_lab_select', 'cancel', () => writes().cancelLab.prepare({ record: '9' }));
 }
 
@@ -187,17 +222,29 @@ async function probe(tool, action, run) {
   const { createXuezaiWrites } = await load('packages/source/xuezai/src/writes.js');
   const reader = zip({
     transport: { request: async () => ({ status: 200, text: async () => '{}' }) },
-    todos: async () => ({ xzzd: { rows: [{ id: 101, title: '第三次作业' }] } }),
+    todos: async () => ({
+      xzzd: {
+        rows: [
+          { id: 101, title: '第三次作业' },
+          // 点名行与作业行在同一个表里，这是实测形状
+          { id: 202, title: '数据结构点名', type: 'rollcall' },
+        ],
+      },
+    }),
     assignments: async () => [{ id: 101, title: '第三次作业', course_name: '数据结构' }],
     activity: async () => ({ id: 101, title: '第三次作业' }),
+    // retract 要回查「最近一次提交」，没有记录时 source 会如实拒绝 ——
+    // 夹具得给一个已提交的状态，否则测的就不是撤回路径。
+    activitySubmission: async () => ({ latestSubmission: { id: 900, is_draft: false } }),
   });
   const writes = () => createXuezaiWrites(reader);
-  // 工具参数写「作业名或编号」，source 的 resolveActivity 只认正整数
+  // 工具参数写「作业名或编号」—— 两种都必须能定位
   await probe('campus_homework', 'xuezai submit（按名字）', () => writes().submitHomework.prepare({ course: '数据结构', homework: '第三次作业', content: 'x' }));
   await probe('campus_homework', 'xuezai submit（按编号）', () => writes().submitHomework.prepare({ course: '数据结构', homework: 101, content: 'x' }));
   await probe('campus_homework', 'xuezai retract（按名字）', () => writes().retractHomework.prepare({ course: '数据结构', homework: '第三次作业' }));
-  // 工具层传 {course, code}，source 读 args.rollcall ?? args.activity
-  await probe('campus_checkin', 'xuezai rollcall', () => writes().rollcall.prepare({ course: '数据结构', code: '1234' }));
+  // 工具层传 {course, code}；source 现在也收 course
+  await probe('campus_checkin', 'xuezai rollcall（按课程名）', () => writes().rollcall.prepare({ course: '数据结构点名', code: '1234' }));
+  await probe('campus_checkin', 'xuezai rollcall（按编号）', () => writes().rollcall.prepare({ homework: 202, code: '1234' }));
 }
 
 /* ─────────────────────────── pta ─────────────────────────── */

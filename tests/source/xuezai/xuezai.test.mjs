@@ -1245,7 +1245,7 @@ test('服务声明自己的能力面：只读方法 + 写方法分开列', async
   // ⚠️ 这条原名是「服务声明自己是只读数据源（D17）」，在接写操作时改过。
   // D17 判的是「**读**操作进 source、**写**操作要经审批」——不是「source 不许有
   // 写能力」。写方法现在成对出现在本包里（`xxxPrepare` 算参数、`xxxExecute` 发请求），
-  // 审批在 `packages/tool/campus-write`。所以 readOnly 如实改成 false，
+  // 审批在 `packages/tool/xuezai`。所以 readOnly 如实改成 false，
   // 但两批方法仍然分开列：混在一起会让「能力清单里有 9 条读取」这种误解成立。
   const { service } = await mount();
   assert.equal(service.readOnly, false);

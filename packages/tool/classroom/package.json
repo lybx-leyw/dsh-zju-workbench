@@ -1,12 +1,12 @@
 {
-  "name": "@lybx-leyw/dsh-zju-tool-study",
+  "name": "@lybx-leyw/dsh-zju-tool-classroom",
   "version": "0.1.0",
-  "description": "学习资料工具包：把已整理的讲义放进 agent 的工具表（study_catalog / study_read / study_search）",
+  "description": "智云课堂工具包：把已整理的讲义放进 agent 的工具表（study_catalog / study_read / study_search）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./study-materials": "./src/study-materials.js",
+    "./classroom-materials": "./src/classroom-materials.js",
     "./tools": "./src/tools.js",
     "./package.json": "./package.json"
   },
@@ -17,10 +17,19 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
-    "directory": "packages/tool/study"
+    "directory": "packages/tool/classroom"
   },
   "license": "GPL-3.0-or-later",
   "peerDependencies": {
     "@lybx-leyw/dsh-zju-core-lecture": "0.1.0"
+  },
+  "dsh": {
+    "capability": {
+      "tier": 1,
+      "auth": "own",
+      "network": "none",
+      "writes": false,
+      "requires": []
+    }
   }
 }

@@ -57,25 +57,34 @@
 | D18 | CAS 取票件抽进 `source/login` | `source/login/src/cas.js` 导出 `casLogin` 等 7 个符号；`zdbk` 的 `cas.js` 只剩三个教务专有常量 | ✅ 完成（`zdbk` `xuezai` 已用） | `zdbk/src/cas.js:40` |
 | D19 | 3 个 skill 包删除 `cordis.patch.yml` | 三个包都**没有** patch 文件 | ✅ 完成 | `ls packages/source/{weread,wechat-chat,dingtalk-chat}` |
 | D20 | skill 发现机制：待裁决 | 仍是待裁决；`packages/skill/` 不存在 | ⏸ 按裁决延迟 | — |
-| D21 | 下载归 `core/*`；`source/*` 只暴露参数、**不碰文件系统** | **三个方向都没落地**：① core 里没有下载执行方；② 多个 source 包**自己在写文件**（`classroom/download.js`、`cc98/reads.js`、`mail/mail.js`…）；③ `xxt` 的参数接口正确但没人消费 | ❌ **未完成**，见第三节 A-1~A-3 | `grep -rln "createWriteStream\|writeFile" packages/source/*/src` |
+| D21 | 下载归 `core/*`；`source/*` 只暴露参数 | ⚠️ 见 1.1 —— **2026-11-12 已更正口径**：原文被 agent 加了「不碰文件系统」，用户从未如此裁决。按更正后的口径，source 侧落盘**不是违规**；真正的缺口只剩「core 里没有下载执行方」与「参数无消费者」 | ⚠️ 部分，见 A-1~A-3 | `grep -rn "downloadParams\|saveFiles\|downloadTo" packages/core` → 空 |
 
 ### 1.1 D21 是本轮最大的问题（单独展开）
 
-D21 原文（`impl-plan.md:56`）：
+> **⚠️ 2026-11-12 更正**：这一节原来把「`source/*` 不碰文件系统」当成用户裁决，
+> 并据此把 `cc98` / `classroom` / `mail` 的落盘判成「架构违规」（连 `upstream-gap-audit`
+> 的 B-7 也照抄了这条）。**用户明确否定了这个限定** —— 他说的是「下载归 core」，
+> 没有说 source 不许写文件。下面的口径已按此更正。
 
-> **下载由 `packages/core/*` 执行；`source/*` 只暴露下载所需的全部参数（url / headers / 文件名 / 预期大小 / 变体），不碰文件系统**
+D21 原文（`impl-plan.md:61`，已更正）：
 
-三个方向的实际状态：
+> **下载由 `packages/core/*` 执行；`source/*` 只暴露下载所需的全部参数（url / headers / 文件名 / 预期大小 / 变体）**
+
+两个方向的实际状态：
 
 | 方向 | 要求 | 实际 | 证据 |
 | --- | --- | --- | --- |
 | core 侧 | 有一个下载执行方 | **没有**。`packages/core/` 28 个包 grep `downloadParams` / `saveFiles` / `downloadTo` / `downloadFile` 全空 | `grep -rn "downloadParams\|saveFiles\|downloadTo" packages/core` → 空 |
-| source 侧 | 不碰文件系统 | **违反**。至少 12 个 source 文件有 `writeFile` / `createWriteStream` / `mkdir`：`classroom/{download,asr,session,slide-store,source}.js`、`cc98/reads.js`、`mail/mail.js`、`chalaoshi/index.js`、`cnki/index.js`、`xuezai/index.js`、`http/session.js`、`netproxy/config.js` | `grep -rln` 同上 |
+| source 侧 | 暴露下载所需的全部参数 | **多数做到了**，个别没做全（`zdbk` 只回 `pdf_url`）。**顺带落盘是允许的**，不再算违规 | `grep -rln "createWriteStream\|writeFile" packages/source/*/src` |
 | 参数与执行之间 | 有「谁接参数」的说明 | **没有**。`xxt` 的 `downloadParams` 返回 `{url, variant, filename, size, headers, note}`，全仓无消费者，也没有一句说「交给谁」 | `grep -rn downloadParams packages` 只命中定义处与自述注释 |
 
 **判读**：D21 是一条**没有派生出实施任务**的裁决。它写在清单里，看起来像已定方案，
-但没人去 `core/` 建那个执行方，也没人回头改 source 里已有的落盘。
+但没人去 `core/` 建那个执行方。
 `coverage-gaps.md` 的 W-30 记了其中两条（`xuezai` 的下载），漏了 `zdbk` / `cc98` / `xxt` 三条。
+
+**这也是一条关于「记录本身会腐化」的实例**：一条裁决在被转述时被加了限定词，
+之后所有引用它的文档都继承了那个限定，并据此报出 12 处「违规」——
+而那些「违规」全都不成立。
 
 **这也是本仓自主记下的那条教训的第三个实例**：
 > 「引用一条裁决」不等于「问题已解决」。
