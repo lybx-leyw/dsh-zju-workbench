@@ -1354,6 +1354,64 @@ body[data-zw] .zwp-resume-notice {
   }
 }
 
+/* 手机宽度（≤ 700px）：论文库与正文**竖着叠**。
+ *
+ * 并排时树栏的地板宽度会吃掉大半屏：`.zwp-tree-pane` 是
+ * `flex: 0 1 var(--zw-pane-w)` 且 `min-width: 190px`，配上一个不接受收缩的
+ * `.zwp-landing`（`flex:1; min-width:0` 但内容是窄列排版），实测 390px 宽时
+ * 落地页只剩 **84px** 宽 —— 那行「惟学无际」被压成一条竖排的字，
+ * 正文完全读不了。
+ *
+ * 改法只动**排布方向**，不动「树开着还是关着」（那归用户与导轨那只鲸鱼）：
+ *   - 页面改列向：树在上、正文在下；
+ *   - 树限高并自己滚动，展开时不会把正文顶出屏幕；
+ *   - 落地页恢复常规内边距，不再被挤成一条。
+ *
+ * ⚠️ 树收起（`.is-collapsed`）时那 28px 的**竖**窄条在竖排下没有意义：它本来是
+ * 「在正文学右边留一个召回入口」的横向占位。这里改成一条**横**的浅条，展开按钮
+ * 仍在原位、仍可点 —— 收起/展开的入口一个都不减少（另有导轨那只鲸鱼）。
+ * 不做成 `display:none`：那会凭空删掉一个用户已经学会的入口。 */
+@media (max-width: 700px) {
+  body[data-zw] .zwp-page {
+    flex-direction: column;
+  }
+  body[data-zw] .zwp-tree-pane {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    max-height: 45vh;
+    overflow-y: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--zw-line);
+  }
+  /* 收起态：竖窄条 → 横浅条，按钮留在同一侧，不删入口。 */
+  body[data-zw] .zwp-tree-pane.is-collapsed {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    max-height: none;
+    padding: 4px 8px;
+    overflow: visible;
+  }
+  body[data-zw] .zwp-main,
+  body[data-zw] .zwp-landing {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+  body[data-zw] .zwp-landing {
+    padding: 24px 18px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  body[data-zw] .zwp-landing h1 {
+    font-size: 18px;
+    margin: 12px 0 6px;
+  }
+}
+
 /* 重命名对话框。
  *
  * ⚠️ 这一套样式**不在工作台的层叠上下文里** —— 组件 portal 到 `document.body`，

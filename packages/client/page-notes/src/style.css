@@ -927,3 +927,42 @@ body[data-zw] .zws-nt-note-ok {
   }
 }
 
+/* 手机宽度（≤ 700px）：文件树与正文**竖着叠**，不再并排。
+ *
+ * 并排时两栏的最小宽度加起来超过手机屏宽（树 190 + 正文 400 = 590 > 390），
+ * 正文被挤到容器外面 —— 实测 390px 宽时 `.zws-nt-main` 的 x=241、宽 400，
+ * 右端落在 641px 处，正文整块看不见。`overflow:hidden` 又把多出来的部分裁掉，
+ * 于是用户看到的是「右边一片空白」（暗色主题下就是黑屏）。
+ *
+ * 这里不动「谁该收起」的判断（那归用户），只把**排布方向**换掉：
+ *   - 工作区改列向，树在上、正文在下；
+ *   - 正文的 `min-width:400px` 在手机上收回 `0` —— 它是为了桌面端「别把编辑器
+ *     压成一条」而设的地板，手机上只会把内容推出屏外；
+ *   - 树限高并自己滚动，展开时不会把正文顶到屏幕之外。
+ *
+ * 收起态的入口仍然只有顶栏那个开关（`useRegisterPageSidebar`），这里不加新按钮。 */
+@media (max-width: 700px) {
+  body[data-zw] .zws-nt-work {
+    flex-direction: column;
+  }
+  body[data-zw] .zws-nt-explorer,
+  body[data-zw] .zws-nt-side {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    max-height: 45vh;
+    overflow-y: auto;
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 1px solid var(--zw-line);
+  }
+  body[data-zw] .zws-nt-main {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+  body[data-zw] .zws-nt-scroll {
+    padding: 18px 16px 40px;
+  }
+}
+

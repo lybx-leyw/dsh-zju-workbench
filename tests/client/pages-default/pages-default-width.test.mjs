@@ -455,19 +455,43 @@ test('CSS 规则覆盖两层内联样式，且都带 !important', () => {
   assert.match(css, /width:var\(--zju-sidebar-width\)[^;}]*!important/);
 });
 
-test('CSS 规则只在展开态生效 —— 否则收起后也锁在 229', () => {
-  // 真机踩过：少了这个限定，宿主把内联写成 56px（收起轨），
-  // 计算值却还是 229，**侧栏根本收不起来**。
+test('「让出导轨宽度」的三条规则只在展开态、且非抽屉态生效', () => {
+  // 真机踩过两件事，各要一条限定：
+  //   ① 收起态：宿主把内联写成 56px（收起轨），少了限定计算值仍锁在 229，
+  //      **侧栏根本收不起来**；
+  //   ② 抽屉态（手机 / dsh-pocket 等接管侧栏）：侧栏是绝对定位浮层，网格第一列
+  //      不该再被钉成 229 —— 实测 390px 宽时被锁成 `229px 110px 0`，主内容只剩
+  //      110px 一条。
   const css = rail.sidebarWidthCss();
-  const lines = css.split('\n').filter(line => line.includes('data-slot') && line.includes('{'));
-  assert.equal(lines.length, 3, '应当正好三条规则');
-  for (const rule of lines) {
+  const narrowers = css.split('\n')
+    .filter(line => line.includes('--zju-sidebar-width') && line.includes('!important'));
+  assert.equal(narrowers.length, 3, '让宽规则应当正好三条（网格 / 侧栏宽 / 拖拽手柄）');
+  for (const rule of narrowers) {
     // 收起态判定有两种写法：宿主把属性写在被选元素上（\:not(...)），
     // 或写在后代上（:has(\:not(...))）。两种都算有防护。
     const guarded = rule.includes(':not([data-sidebar-collapsed="true"])')
       || rule.includes(':not(:has([data-sidebar-collapsed="true"]))');
     assert.ok(guarded, `缺少展开态限定: ${rule.slice(0, 70)}`);
+    const notDrawer = rule.includes(':not([data-sidebar-drawer])')
+      || rule.includes(':not(:has([data-sidebar-drawer]))');
+    assert.ok(notDrawer, `缺少抽屉态豁免: ${rule.slice(0, 70)}`);
   }
+});
+
+test('抽屉态下主内容列横跨整行 —— 否则网格一压就整页空白', () => {
+  // 手机上（< 768）宿主把侧栏做成抽屉，主内容列带着 `grid-area: 1/2`；
+  // 第三方移动端插件把网格压成 `1fr 0 0` 之后，主内容落进 0 宽的轨道，
+  // 整页只剩背景色（暗色主题下就是用户说的「黑屏」）。
+  //
+  // ⚠️ 认列必须用 `[data-slot="main"]` 而不是 `:nth-child(2)`：抽屉态会在侧栏
+  //    前面插一个遮罩，序号整体错位，按序号取会取到侧栏本身。
+  const css = rail.sidebarWidthCss();
+  const rule = css.split('\n').find(line => line.includes('data-sidebar-drawer') && line.includes('[data-slot="main"]'));
+  assert.ok(rule, '缺少抽屉态主内容列规则');
+  assert.match(rule, /grid-column:1\/-1 *!important/);
+  assert.match(rule, /grid-row:1 *!important/);
+  assert.match(rule, /min-width:0 *!important/);
+  assert.doesNotMatch(rule, /nth-child/, '抽屉态下序号会错位，不能按 nth-child 认列');
 });
 
 test('拖拽手柄的位置也用同一个变量 —— 否则它停在旧位置', () => {
