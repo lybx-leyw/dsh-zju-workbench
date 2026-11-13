@@ -124,6 +124,23 @@ spellcheck=false`，字号仍是第二轮定下的 16px。
 见 T10。当前没有观察到故障，但这是「碰巧都对」而不是「设计上对」。
 要处理需要给 `navOpen` 加一个「用户是否手动改过」的标记 —— 属于行为变更。
 
+### 3.3 Node 22 的测试运行器不稳定（CI 暂时只跑 Node 24）
+
+`engines` 声明 `^22.19.0 || >=24.0.0`，但同一套代码在两条线上表现不同：
+
+| | `--test-concurrency=1` | 再加 `isolation=none` |
+| --- | --- | --- |
+| Node 24 | fail 0 / cancelled 0 | fail 0 / cancelled 0 |
+| Node 22.19 | fail 0 / **cancelled 80** | fail 0 / **cancelled 1160–1446** |
+
+被取消的用例报 `failureType: 'cancelledByParent'` /
+`Promise resolution is still pending but the event loop has already resolved`，
+**不计入 `fail`** —— 只看失败数会以为全绿，实际有几百个用例根本没跑。
+
+没有任何一个开关能同时稳住两条线（`isolation=none` 在 24 上变好、在 22 上变坏）。
+所以 CI 现在只跑 Node 24；「Node 22 到底怎么收敛」留成待办：要么逐个定位那批
+依赖定时器的用例，要么接受「CI 只验证一条线」并在 `engines` 里写清楚。
+
 ---
 
 ## 4. CI：清空既有失败，接一条不装浏览器的工作流
