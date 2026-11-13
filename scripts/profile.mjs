@@ -390,6 +390,125 @@ export async function migrateDataDirectories(profile) {
   return moved;
 }
 
+/**
+ * 旧产品名在**持久化状态**里留下的绝对路径。
+ *
+ * `migrateDataDirectories` 只搬 `<profile>/data/` 下的目录。但还有两类地方
+ * 记着**带旧前缀的绝对路径**，它们不会因为目录改名而自动更新：
+ *
+ * | 位置 | 记什么 | 不改的后果 |
+ * | --- | --- | --- |
+ * | `storages/workspace.json` | 工作区注册表，每条带一个绝对 `path` | 打开工作区时 `chdir` 失败：`directory does not exist` |
+ * | `storages/session_projcache/sessions/*.json` | 每个会话的 `cwd` | 打开历史会话直接报错 |
+ *
+ * # 为什么不能只做一次字符串替换
+ *
+ * 实测踩过两个坑，都值得写下来：
+ *
+ * 1. **改名会撞车。** 直接把 `data/zhiyun-paper/X` 改成 `data/zw-paper/X` 时，
+ *    如果 `zw-paper/X` 已经作为另一个工作区存在，注册表里就有两条指向同一
+ *    `path` 的记录，宿主拒绝启动：`path ... is claimed by both workspace A and B`。
+ *    正确做法是**删掉旧记录**，让新记录独占那个路径。
+ * 2. **删记录必须同时清索引。** `global.workspaceIds` 存着顺序表，删了记录不清它，
+ *    宿主报 `registry order references missing workspace`，服务照样起不来。
+ *
+ * 所以这里不是无脑替换，而是「**先改名，改名后与已有路径重复就删旧记录**」，
+ * 最后把索引与实际记录对齐。
+ *
+ * # 三条必须守住的规则（与目录迁移一致）
+ *
+ * 1. **只在文件真的存在、且真的含旧前缀时才写。** 不制造空改动。
+ * 2. **写之前先验证改出来的 JSON 仍可解析。** 一份坏掉的注册表会让整个产品起不来，
+ *    比「路径没迁」严重得多 —— 宁可跳过这一个文件。
+ * 3. **认不出的字段一个都不动。** 只改 `path` 字段与 `workspaceIds` 数组，
+ *    其余原样写回（保留缩进风格）。
+ *
+ * @param home - DSH home（`storages/` 在它下面）。
+ * @returns `{ workspaces, removed, sessions, notes }`：改了几条、删了几条、改了几个会话。
+ */
+export async function migratePersistedPaths(home = path.join(root, '.runtime', 'home')) {
+  const storages = path.join(home, 'storages');
+  const result = { workspaces: 0, removed: 0, sessions: 0, notes: [] };
+
+  /** 把一段文本里的旧前缀换成新前缀。只认这两个（改名时的实际映射）。 */
+  const rewrite = (text) => text
+    .split('zhiyun-bench').join(lock.profile)
+    .split('zhiyun-paper').join('zw-paper');
+
+  /* ── 工作区注册表 ─────────────────────────────────────────── */
+  const registry = path.join(storages, 'workspace.json');
+  try {
+    const raw = await readFile(registry, 'utf8');
+    if (raw.includes('zhiyun-bench') || raw.includes('zhiyun-paper')) {
+      const doc = JSON.parse(raw);
+      const rows = doc?.tables?.workspaces;
+      if (rows && typeof rows === 'object') {
+        // 先改名；改完如果和已有记录撞路径，就把**旧记录**删掉（新记录是当前在用的那份）。
+        for (const [id, row] of Object.entries(rows)) {
+          const before = String(row?.path ?? row?.root ?? '');
+          if (!before) continue;
+          const after = rewrite(before);
+          if (after === before) continue;
+          // 这个路径是否已被**另一条**记录占着
+          const taken = Object.entries(rows).some(([otherId, other]) =>
+            otherId !== id && rewrite(String(other?.path ?? other?.root ?? '')) === after);
+          if (taken) {
+            delete rows[id];
+            result.removed += 1;
+            continue;
+          }
+          if (row.path !== undefined) row.path = after;
+          else row.root = after;
+          result.workspaces += 1;
+        }
+        // 索引必须与实际记录对齐，否则宿主报 `references missing workspace`
+        const ids = doc?.global?.workspaceIds;
+        if (Array.isArray(ids)) {
+          const alive = new Set(Object.keys(rows));
+          const kept = ids.filter((id) => alive.has(id));
+          for (const id of alive) if (!kept.includes(id)) kept.push(id);
+          doc.global.workspaceIds = kept;
+        }
+        const text = JSON.stringify(doc, null, raw.includes('\n  ') ? 2 : 0);
+        // 防御性检查：`JSON.stringify` 的输出在正常输入下必然合法（从 `JSON.parse`
+        // 来的数据不可能含循环引用或 BigInt），所以这行**测不出差异**，不假装它被
+        // 测试覆盖。留着是因为「写坏一份注册表 = 产品起不来」，代价远大于一行 parse。
+        JSON.parse(text);
+        await writeFile(registry, text);
+        if (result.removed > 0) {
+          result.notes.push(`工作区注册表删掉了 ${result.removed} 条与新路径重复的旧记录`);
+        }
+      }
+    }
+  } catch (error) {
+    // 注册表坏掉不该让产品起不来：原样留着，让宿主自己去报那个具体的错。
+    result.notes.push(`工作区注册表迁移跳过：${error.message}`);
+  }
+
+  /* ── 各会话的 cwd ─────────────────────────────────────────── */
+  const sessionsDir = path.join(storages, 'session_projcache', 'sessions');
+  try {
+    for (const name of await readdir(sessionsDir).catch(() => [])) {
+      if (!name.endsWith('.json')) continue;
+      const file = path.join(sessionsDir, name);
+      try {
+        const raw = await readFile(file, 'utf8');
+        if (!raw.includes('zhiyun-bench') && !raw.includes('zhiyun-paper')) continue;
+        const text = rewrite(raw);
+        JSON.parse(text); // 规则 2
+        await writeFile(file, text);
+        result.sessions += 1;
+      } catch {
+        // 单个会话坏掉就跳过它，不影响其他会话。
+      }
+    }
+  } catch (error) {
+    result.notes.push(`会话路径迁移跳过：${error.message}`);
+  }
+
+  return result;
+}
+
 export async function initialize({ home = path.join(root, '.runtime', 'home'), env = process.env } = {}) {
   const host = await locateHost(env);
   const profile = path.join(home, 'profiles', lock.profile);
@@ -486,7 +605,11 @@ export async function initialize({ home = path.join(root, '.runtime', 'home'), e
   }
   await mkdir(path.join(home, 'workspace'), { recursive: true });
   const movedData = await migrateDataDirectories(profile);
-  return { ...host, home: path.resolve(home), profile, repointed, movedData };
+  // 目录搬完还要搬**记着绝对路径的那些地方**：工作区注册表与会话 cwd 里
+  // 仍然写着旧前缀，不改的话打开工作区/历史会话会 chdir 到不存在的目录。
+  // 顺序要紧：必须先搬目录，否则改写出来的新路径指向一个还不存在的位置。
+  const movedPaths = await migratePersistedPaths(home);
+  return { ...host, home: path.resolve(home), profile, repointed, movedData, movedPaths };
 }
 /**
  * 把 `profile.mjs start` 的额外参数拼成宿主参数表 —— **同名参数只出现一次**。
@@ -550,6 +673,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.log(`ZJU Workbench · DSH ${runtime.version}\n宿主: ${runtime.app}\nProfile: ${runtime.profile}\n数据: ${runtime.home}`);
     if (runtime.repointed?.length) console.log(`已把 profile 的宿主链接改指到当前安装：${runtime.repointed.join('、')}`);
     if (runtime.movedData?.length) console.log(`已把旧前缀的数据目录迁到新名前缀：${runtime.movedData.map(([a, b]) => `${a} → ${b}`).join('、')}`);
+    const movedPaths = runtime.movedPaths;
+    if (movedPaths && (movedPaths.workspaces || movedPaths.sessions)) {
+      const parts = [];
+      if (movedPaths.workspaces) parts.push(`工作区 ${movedPaths.workspaces} 条`);
+      if (movedPaths.sessions) parts.push(`会话 ${movedPaths.sessions} 个`);
+      console.log(`已把持久化状态里的旧前缀路径改成新名：${parts.join('、')}`);
+    }
+    for (const note of movedPaths?.notes ?? []) console.warn(`路径迁移提示：${note}`);
     if (command === 'start' || command === 'dump') {
       const missing = await missingClientBundles();
       if (missing.length > 0) throw new Error(`请先运行 npm run build（缺客户端产物：${missing.join('、')}）`);
