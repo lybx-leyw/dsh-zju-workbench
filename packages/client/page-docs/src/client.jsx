@@ -44,6 +44,31 @@ export const name = 'zw-page-docs-client';
 
 export const inject = ['slots'];
 
+/**
+ * 这个宽度下目录是**浮层**而不是并排的一栏。
+ *
+ * 与 `style.css` 的 `@media (max-width: 640px)` 是同一个数 —— 那边决定"怎么画"，
+ * 这边决定"默认开不开"。两处必须一致，测试里钉着这一条。
+ */
+export const PHONE_MAX_WIDTH = 640;
+
+/**
+ * 当前视口是不是手机档。
+ *
+ * 用 `matchMedia` 而不是 `innerWidth`：SSR / 测试环境没有 `window` 时直接返回
+ * `false`（按桌面处理），不会在模块求值阶段就抛错。真正跟着视口变化的那种
+ * 「用户拖窗口」不需要处理 —— 那是**初始值**的判断，之后一律由用户显式开关。
+ *
+ * @returns 是否窄屏。
+ */
+export function isPhoneViewport() {
+  try {
+    return globalThis.matchMedia?.(`(max-width: ${PHONE_MAX_WIDTH}px)`)?.matches ?? false;
+  } catch {
+    return false;
+  }
+}
+
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zwDocsStyle', css, label: 'zw: docs page styles' });
   // 直接注册给页面壳的 `page.content`（keyed），不再依赖外壳为它声明子槽。
@@ -142,8 +167,18 @@ export function Docs() {
    * 默认展开（第一次进来看得到「这一片有哪些篇」），收起后由导轨那只鲸鱼叫回来。
    * 与论文库不同，这里**不记进 localStorage**：文档页是「读哪一篇」的临时位置，
    * 宽度偏好那种跨会话的东西不属于它（与 `pageId` 本身一样不留存）。
+   *
+   * # 手机（≤ 640）：默认**收起**，展开时是浮层
+   *
+   * 手机屏宽 390 减去导轨 51 只剩 339，目录按桌面那样占 229 就只剩 110 给正文 ——
+   * 一行不到 5 个汉字。所以窄屏下目录改成**盖在正文上的浮层**（见样式表那条
+   * `@media (max-width: 640px)`），并且默认不展开：进来先读，要挑篇再点鲸鱼。
+   *
+   * ⚠️ 默认值必须跟着视口走，不能写死 `true`。写死 `true` 时手机上一进来就是
+   * 「目录盖住正文」，而用户并不知道盖住它的东西能收；写死 `false` 则桌面用户
+   * 每次都要多点一下才看得到目录（桌面 229 + 正文 740 明明放得下）。
    */
-  const [navOpen, setNavOpen] = useState(true);
+  const [navOpen, setNavOpen] = useState(() => !isPhoneViewport());
   /** 把目录开关交给导轨鲸鱼（见 `ui-shared/page-sidebar.js`）。 */
   const toggleNav = useCallback(() => setNavOpen((value) => !value), []);
   useRegisterPageSidebar('docs', { expanded: navOpen, toggle: toggleNav, label: navOpen ? '收起文档目录' : '展开文档目录' });
@@ -285,6 +320,9 @@ export function Docs() {
   const open = id => {
     setPageId(FLAT.some(page => page.id === id) ? id : DEFAULT_PAGE);
     setQuery('');
+    // 手机上目录是盖在正文上的浮层：挑完这一篇就该让开，否则用户还得再去找那只鲸鱼。
+    // 桌面（并排的一栏）不收 —— 那一栏本来就该一直在。
+    if (isPhoneViewport()) setNavOpen(false);
   };
 
   /**

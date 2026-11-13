@@ -480,12 +480,65 @@ body[data-zw] .zwd-source code {
   body[data-zw] .zwd-sections {
     padding: 0 16px;
     gap: 16px;
+    /* 手机上三个分区 + 边距 ≈ 210px，放得下；但不能让长语种（i18n）把它撑出横向滚动。 */
+    overflow-x: auto;
+    scrollbar-width: none;
   }
-  /* 极窄时左目录让位，正文吃满 —— 这时读正文比在目录里挑更重要。 */
-  body[data-zw] .zwd-nav {
+  body[data-zw] .zwd-sections::-webkit-scrollbar {
     display: none;
+  }
+  /* 左目录改成**盖在正文上的浮层**，不再是让位消失。
+   *
+   * # 为什么不能继续用 `display: none`
+   *
+   * 导轨那只鲸鱼按 `navOpen` 显示「收起文档目录 / 展开文档目录」，并在点击时
+   * 翻转 `navOpen`。可窄屏下目录是 `display:none`，于是：
+   *
+   *   - 默认 `navOpen = true` → 鲸鱼写着「收起文档目录」，但目录**根本没显示**；
+   *   - 点一下 → `navOpen = false` → 鲸鱼变「展开文档目录」；
+   *   - 再点 → `navOpen = true` → 目录仍然 `display:none`。
+   *
+   * 用户看到的是「手机上文档目录永远打不开，按钮还自相矛盾」。这正是反馈里
+   * 「设置项移到导航栏……没法很好落实到窄屏上面」那一类：桌面上的机制搬过来了，
+   * 窄屏上的**可见性前提**没跟着搬。
+   *
+   * 改成浮层之后，`navOpen` 与「看不看得见」重新是同一件事。浮层盖住正文而不是
+   * 把它压成 110px —— 挑篇是**一次**动作，读完就收起；读的时候要满宽。 */
+  body[data-zw] .zwd-body {
+    position: relative;
+  }
+  body[data-zw] .zwd-nav {
+    display: block;
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 5;
+    width: min(272px, 84%);
+    padding: 14px 12px 20px 16px;
+    background: var(--zw-surface);
+    box-shadow: 4px 0 18px color-mix(in srgb, #000 14%, transparent);
   }
   body[data-zw] .zwd-article {
     padding: 20px 16px 32px;
+  }
+  /* 浮层里的条目是**手指**在点：桌面 29px 一行在触屏上太挤（相邻两行只差 30px）。
+     撑到 39px，与 repo-profile 的触控口径一致；可见字号不变。 */
+  body[data-zw] .zwd-nav .zwd-link {
+    padding: 10px 8px;
+  }
+  /* 筛选框：全站输入框的 32px 地板被这里写死的 `height: 28px` 压掉了。
+     手机上 28px 既不好点也不好读（iOS 会在聚焦时自动放大字号）。 */
+  body[data-zw] .zwd-filter {
+    height: 36px;
+  }
+  /* 分区 tab：30×41。宽度由两个字撑出来，用**命中区**补到 44，不靠加字距 ——
+     三个 tab 的间距是 16，各扩 7 正好把间隙对半分，不会互相抢。 */
+  body[data-zw] .zwd-section {
+    padding: 14px 2px 12px;
+    position: relative;
+  }
+  body[data-zw] .zwd-section::after {
+    content: "";
+    position: absolute;
+    inset: -2px -7px;
   }
 }
