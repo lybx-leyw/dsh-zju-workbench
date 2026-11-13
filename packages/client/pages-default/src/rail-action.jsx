@@ -278,6 +278,86 @@ const TOUCH_CSS = `
   [data-dsh-pages-rail] button:not([data-zju-rail-collapse])::after{
     content:"";position:absolute;inset:-3px -6px;
   }
+
+  /* ---- 点按反馈 -------------------------------------------------------
+   *
+   * 触屏没有 hover。整站 1856 条自有规则里只有 **2 条** \`:active\`（宿主那边有 9 条），
+   * 于是手机上按下任何按钮都**毫无反馈** —— 手指盖住按钮、又没有任何状态变化，
+   * 用户无法判断这一次到底点中没有。ch05：反馈要在 0.1s 内出现。
+   *
+   * 用背景色（不是 transform 位移，也不是 opacity）：背景色不改变布局，也不会
+   * 在快速连点时抖动。取 \`--zw-hover\` 的同源色，明暗两套自动跟随。 */
+  [data-dsh-pages-rail] button:active{
+    background:var(--zw-hover, rgba(0,0,0,.08)) !important;
+  }
+  /* 侧栏动作那格本来就是透明底，按下时用一层内阴影压深更清楚 —— 它比导航项小得多。 */
+  [data-zju-rail-collapse]:active{
+    background:transparent !important;
+    box-shadow:inset 0 0 0 999px color-mix(in srgb, currentColor 14%, transparent);
+    border-radius:6px;
+  }
+
+  /* ---- 点按高亮 -------------------------------------------------------
+   *
+   * 移动端 WebKit 在每次点击后给元素盖一层半透明蓝（默认
+   * \`rgba(51,181,229,.4)\`）约 300ms。它与我们自己的 \`:active\` 反馈**叠加**，
+   * 表现为「按一下闪一下蓝」—— 暗色主题下尤其突兀，而且这个蓝不属于产品色板。
+   *
+   * 关掉它、改用上面那条 \`:active\`：颜色归产品，时长归我们。 */
+  [data-dsh-pages-rail] button,
+  [data-zju-rail-collapse]{
+    -webkit-tap-highlight-color:transparent;
+  }
+}
+/* ---- 安全区：手机底部 / 刘海 -----------------------------------------
+ *
+ * 宿主把 viewport 写成 \`viewport-fit=cover\`（实测 meta 就是这一串），意思是
+ * 「画到屏幕物理边缘，刘海与 home indicator 盖住的地方也归你」。
+ * 于是**必须**自己把内容让开那块区域 —— 否则 iPhone 的 home indicator 会压在
+ * 导轨最底下那一项上。实测 390×844：导轨最后一项「页面管理」底边 831，
+ * 而 home indicator 占底部 34px（844 − 34 = 810）—— 重叠 21px，那一项有一半
+ * 在指示条底下，点它容易误触系统手势。
+ *
+ * \`env()\` 在非刘海设备与不支持它的浏览器上取到 0，所以对桌面与普通安卓机
+ * 是空操作。用 \`max()\` 而不是直接相加：没有安全区时不要凭空多出内边距。 */
+@supports (inset: env(safe-area-inset-bottom)){
+  [data-dsh-pages-rail]{
+    padding-bottom:max(12.75px, env(safe-area-inset-bottom)) !important;
+    /* 导轨自己也是一层可滚容器（十项在矮视口下会超出）。它划到底时不该把
+       剩下的滑动传给外面 —— 那会让整页跟着动，而用户以为自己在滚导轨。
+       写在同一条规则里而不是另起一条：同一个元素同一块属性，合并写更清楚，
+       也不会和别处的 padding 规则争特异性。 */
+    overscroll-behavior-y:contain;
+  }
+  /* 规划页那只宠物气泡贴右下角，同样会压到指示条。 */
+  [class*="zwpg-pet-fab"]{
+    bottom:max(14px, env(safe-area-inset-bottom)) !important;
+  }
+}
+/* ---- 横屏（矮视口）：导轨装不下十项 -----------------------------------
+ *
+ * 实测 844×390：导轨内容 454px、可视 390px —— 溢出 64px，最后两项
+ * 「学习」「插件」要先把导轨滚一下才够得着，而那条 51px 宽、没有滚动条的细列
+ * 完全看不出「这里还能滚」。
+ *
+ * 缩的是**间距**，不是命中区（上一条已经把命中区撑到 43 高、彼此相接，
+ * 再压会重叠）。导轨用自己的 padding + gap 换出这 64px：
+ *   上下 padding 12.75 → 6（省 13.5）
+ *   间距 6.375 → 2（九个间隙省 39.4）
+ *   动作格的下内边距 15.9 → 4（省 11.9）
+ * 合计约 65px，正好把 454 收回 390 以内，且每一项的可点范围一个像素不减。
+ *
+ * 只在「视口又矮又是触屏」时生效：桌面窗口拖成 844×390 同样是矮视口，
+ * 但鼠标不需要为手指留出的那点余量，而把间距压掉会让它看起来挤。 */
+@media (pointer: coarse) and (max-height: 460px){
+  [data-dsh-pages-rail]{
+    padding-top:6px !important;
+    padding-bottom:6px !important;
+    gap:2px !important;
+  }
+  [data-dsh-pages-rail-action]{
+    padding-bottom:4px !important;
+  }
 }
 `;
 /** 隐藏原生折叠按钮的样式：只认本包打的标记，绝不泛化到别的按钮。 */

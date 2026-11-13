@@ -1424,6 +1424,20 @@ body[data-zw] .zws-video-stage-ppt:hover .zws-video-mini-bar,
 body[data-zw] .zws-video-mini-bar[data-detached="true"] {
   opacity: 1;
 }
+/* 触屏没有 hover —— 这条控制条里是**翻课件**的上一页 / 下一页。
+ *
+ * 实测（390×844，`(pointer: coarse)`）：`hover: none` 为真，而这条控制条的基态是
+ * `opacity:0`，唯一的显形途径是 `.zws-video-stage-ppt:hover` 或「已脱离」。
+ * 手机上永远 hover 不到，于是**课件小窗里的翻页按钮根本出不来** ——
+ * 那不是「不好看」，是「有一组操作在手机上不可达」（WCAG 2.1.1）。
+ *
+ * 粗指针下直接常驻：让出画面那点空间，换回一组本来就不该藏起来的操作。
+ * 用 `opacity` 而不是 `display` 的切换逻辑保持不变（桌面那套仍然成立）。 */
+@media (pointer: coarse) {
+  body[data-zw] .zws-video-mini-bar {
+    opacity: 1;
+  }
+}
 body[data-zw] .zws-video-mini-step {
   flex: none;
   display: grid;
