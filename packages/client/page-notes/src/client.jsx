@@ -1324,6 +1324,13 @@ export function NotesLibrary() {
           placeholder="过滤笔记"
           value={filter}
           aria-label="过滤笔记"
+          /* 手机键盘：默认的回车键写「换行」，而这个框按回车只会收起键盘。
+             写 `enterKeyHint="search"` 与它的实际作用对齐；关掉自动大写，
+             免得中英混排时英文关键词被首字母大写后搜不到。 */
+          enterKeyHint="search"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           onChange={(e) => setFilter(e.target.value)}
         />
         {/* 选了多行时说清"选中几条"，并给一个不用键盘也能退出选择的口子。

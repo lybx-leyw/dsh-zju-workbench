@@ -161,6 +161,12 @@ export function PaperTree({
       placeholder="过滤文献"
       aria-label="过滤文献"
       value={filter}
+      /* 手机键盘：默认回车键写「换行」，而这个框按回车只会收起键盘。
+         `enterKeyHint="search"` 与它的实际作用对齐；自动大写会毁掉英文关键词。 */
+      enterKeyHint="search"
+      autoCapitalize="none"
+      autoCorrect="off"
+      spellCheck={false}
       onChange={(event) => onFilter?.(event.target.value)}
     />
 

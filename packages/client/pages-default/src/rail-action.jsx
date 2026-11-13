@@ -322,7 +322,18 @@ const TOUCH_CSS = `
  * 是空操作。用 \`max()\` 而不是直接相加：没有安全区时不要凭空多出内边距。 */
 @supports (inset: env(safe-area-inset-bottom)){
   [data-dsh-pages-rail]{
+    /* # 四条边都要让，不只底边
+     *
+     * 竖屏时只有底部有 home indicator；但**横屏时刘海跑到左边**，而导轨正好
+     * 贴在屏幕最左边：实测 844×390 下导轨 x=0、第一个按钮 x=7，而 iPhone 横屏
+     * 的刘海约占左侧 47px —— **整条导轨连同全部十个按钮都压在刘海底下**。
+     *
+     * 所以上下左右都取 env()。\`max(原内边距, 安全区)\`：没有安全区的设备与
+     * 桌面浏览器上 env() 是 0，取到的仍是原来的内边距，不会凭空多出空白。 */
+    padding-top:max(12.75px, env(safe-area-inset-top)) !important;
     padding-bottom:max(12.75px, env(safe-area-inset-bottom)) !important;
+    padding-left:max(6.375px, env(safe-area-inset-left)) !important;
+    padding-right:max(6.375px, env(safe-area-inset-right)) !important;
     /* 导轨自己也是一层可滚容器（十项在矮视口下会超出）。它划到底时不该把
        剩下的滑动传给外面 —— 那会让整页跟着动，而用户以为自己在滚导轨。
        写在同一条规则里而不是另起一条：同一个元素同一块属性，合并写更清楚，

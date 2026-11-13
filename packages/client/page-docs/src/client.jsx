@@ -478,6 +478,15 @@ export function Docs() {
             value={query}
             placeholder="筛选文档"
             aria-label="筛选文档"
+            /* 手机键盘上的回车键文案与大小写行为。
+               默认是「换行」键 —— 而这个框按回车不换行，只会让人以为按错了。
+               `enterKeyHint="search"` 让它显示「搜索 / 前往」，与这个框的实际作用一致。
+               `autoCapitalize="none"`：中文输入法本身不受影响，但中英混排时
+               英文关键词会被自动首字母大写，反而搜不到。 */
+            enterKeyHint="search"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             onChange={event => setQuery(event.target.value)}
           />
         </label>
