@@ -523,18 +523,44 @@ export function applySidebarWidth({ doc = globalThis.document, railWidth = DEFAU
  * @returns 样式表文本。
  */
 export function sidebarWidthCss() {
+  /**
+   * 「侧栏是绝对定位抽屉」的那种 frame —— 手机上（视口 < 768）与第三方
+   * 移动端插件（`dsh-pocket` 等）接管时就是它，宿主会写 `data-sidebar-drawer`。
+   *
+   * ⚠️ 抽屉态**必须**把下面那三条「让出 51px」的规则排除掉。抽屉里侧栏是
+   * 浮层，网格第一列不该再被钉成 229：真机实测（390px 宽 + dsh-pocket）点开
+   * 侧栏后，网格被锁成 `229px 110px 0`，主内容只剩 110px 宽的一条。
+   */
+  const drawer = '[data-sidebar-drawer]';
+  /** 收起态。收起时第一列由 `collapseSidebarColumn` 压成 0，这里不该插手。 */
+  const collapsed = '[data-sidebar-collapsed="true"]';
   return [
     // ⚠️ **只在展开态生效**（`:not([data-sidebar-collapsed="true"])`）。
     //
     // 少了这个限定，收起后网格仍被 `!important` 锁在 229 —— 真机踩过：
     // 宿主把内联写成 56px（收起轨），计算值却还是 229，**侧栏根本收不起来**。
     // 收起态交给 `collapseSidebarColumn`（它把第一列压成 0）。
-    `[data-slot="root"] > *:not([data-sidebar-collapsed="true"]){grid-template-columns:var(${SIDEBAR_WIDTH_VAR}) minmax(0px,1fr) minmax(0px,0px) !important}`,
-    `[data-slot="root"]:not(:has([data-sidebar-collapsed="true"])) [data-slot="sidebar"] > *{width:var(${SIDEBAR_WIDTH_VAR}) !important;max-width:var(${SIDEBAR_WIDTH_VAR}) !important}`,
+    `[data-slot="root"] > *:not(${collapsed}):not(${drawer}){grid-template-columns:var(${SIDEBAR_WIDTH_VAR}) minmax(0px,1fr) minmax(0px,0px) !important}`,
+    `[data-slot="root"]:not(:has(${collapsed})):not(:has(${drawer})) [data-slot="sidebar"] > *{width:var(${SIDEBAR_WIDTH_VAR}) !important;max-width:var(${SIDEBAR_WIDTH_VAR}) !important}`,
     // 拖拽手柄用内联 `left` 定位（`<DragHandle left={cols.sidebar}>`），
     // 收窄网格后它还停在旧位置 —— 用户看到的是一条离侧栏 51px 的拖拽线。
     // 同样只在展开态改写；`margin-left:-4px` 是宿主自己的居中补偿，保留。
-    `[data-slot="root"] > *:not([data-sidebar-collapsed="true"]) > [class*="handle"]{left:var(${SIDEBAR_WIDTH_VAR}) !important}`,
+    `[data-slot="root"] > *:not(${collapsed}):not(${drawer}) > [class*="handle"]{left:var(${SIDEBAR_WIDTH_VAR}) !important}`,
+    // 抽屉态：主内容列**钉死在整行**。
+    //
+    // # 这条挡的是什么
+    //
+    // 手机（< 768）上宿主把侧栏做成绝对定位的抽屉，网格列由它自己与第三方移动端
+    // 插件（`dsh-pocket` 等）反复用 `!important` 改写。只要有人把网格压成
+    // `1fr 0 0`，而主内容列又落在第 2 轨（宿主给 `centerCol` 写的 `grid-area:1/2`），
+    // 主内容就是 0 宽 —— 真机看到的是「整页只剩背景色」（暗色主题下就是黑屏）。
+    //
+    // # 为什么用 `:has([data-slot="main"])` 认列，而不是 `:nth-child(2)`
+    //
+    // 抽屉态会在侧栏**前面**插一个遮罩，于是从第 2 个子元素起序号整体错位：
+    // 按序号取列会取到侧栏而不是主内容（`dsh-pocket` 2.12.0 就是这么写的，真机复现）。
+    // `data-slot` 是宿主插槽服务写的语义锚点，不受 DOM 顺序影响。
+    `[data-slot="root"] > ${drawer} > *:has([data-slot="main"]){grid-column:1/-1 !important;grid-row:1 !important;min-width:0 !important}`,
   ].join('\n');
 }
 

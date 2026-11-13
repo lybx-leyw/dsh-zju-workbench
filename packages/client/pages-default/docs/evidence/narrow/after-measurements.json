@@ -1,0 +1,60 @@
+{
+ "390-home": {
+  "center": [
+   51,
+   339
+  ],
+  "text": "探索未至之境 | 预览版 | 选择工作区 | 标准模式 | 选择一个工作区开始"
+ },
+ "390-drawer-open": {
+  "drawer": "true",
+  "grid": "339px 0px 0px",
+  "center": [
+   51,
+   339
+  ],
+  "centerWidth": 339,
+  "text": "探索未至之境 | 预览版 | ZJU 学习空间 | 标准模式 | 描述你想要构建的内容,"
+ },
+ "390-paper": {
+  "id": "paper",
+  "tree": [
+   51,
+   307
+  ],
+  "landing": [
+   51,
+   307
+  ],
+  "pageFlex": "column",
+  "notesExplorer": null,
+  "notesMain": null,
+  "workFlex": null,
+  "overflowRight": 0
+ },
+ "390-notes": {
+  "id": "notes",
+  "tree": null,
+  "landing": null,
+  "pageFlex": null,
+  "notesExplorer": [
+   51,
+   307
+  ],
+  "notesMain": [
+   51,
+   307
+  ],
+  "workFlex": "column",
+  "overflowRight": 0
+ },
+ "1440-dark-collapsed": {
+  "collapsed": "true",
+  "grid": "0px 1389px 0px",
+  "center": [
+   51,
+   1389
+  ],
+  "text": "探索未至之境 | 预览版 | ZJU 学习空间 | 标准模式 | 描述你想要构建的内容,"
+ }
+}
