@@ -53,7 +53,7 @@ test('one AI reply proposing three time blocks saves all three after a single co
     } }] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    await page.route('http://planning.test/**', route => route.fulfill({ contentType: 'text/html', body: '<html><body data-zhiyun><div id="root"></div></body></html>' }));
+    await page.route('http://planning.test/**', route => route.fulfill({ contentType: 'text/html', body: '<html><body data-zw><div id="root"></div></body></html>' }));
     await page.goto('http://planning.test/');
     await page.addScriptTag({ content: result.outputFiles[0].text });
     await page.getByRole('button', { name: '打开规划助手', exact: true }).click();
@@ -61,7 +61,7 @@ test('one AI reply proposing three time blocks saves all three after a single co
     await page.getByRole('button', { name: '说', exact: true }).click();
     await page.getByRole('button', { name: '确认保存日程', exact: true }).waitFor();
     // All three blocks must be visible in the confirmation card before saving.
-    assert.equal(await page.locator('.zpg-pet-draft li').count(), 3, '三项草案必须一次全部展示');
+    assert.equal(await page.locator('.zwpg-pet-draft li').count(), 3, '三项草案必须一次全部展示');
     assert.equal(await page.evaluate(() => window.probe.schedule.length), 0, '确认前不能写入');
     await page.getByRole('button', { name: '确认保存日程', exact: true }).click();
     await page.waitForFunction(() => window.probe.schedule.length === 3);

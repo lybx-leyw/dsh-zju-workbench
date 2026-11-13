@@ -2,18 +2,18 @@
 // 壳保持薄：agent 循环/模型层交给 dsh 框架，本插件只注册工具和 HTTP 路由。
 // 核心逻辑（转录/检索）是 src/ 下不依赖 Cordis 的纯函数模块，方便日后迁移。
 //
-// # 智云能力已并入（原 `dsh-zhiyun-host-paper`）
+// # 智云能力已并入（原 `dsh-zju-host-paper`）
 //
 // 原先分两个包：
 //
-//   `dsh-zhiyun-host-paper`  ← 兼容层，把上游当子插件挂上，再叠自己的路由
+//   `dsh-zju-host-paper`  ← 兼容层，把上游当子插件挂上，再叠自己的路由
 //   `@ggboy123/dsh-paper-reader`（npm 1.3.1）  ← 上游
 //
 // 现在合成一个 vendor 包。理由：两个包之间有 24 条 HTTP 路由的契约耦合，
 // 「锁版本 + 兼容层」的代价是每次上游升级都要重新核对路由；既然本来就要自己
 // 维护，不如合到一处 —— 上游代码就在本仓里，改哪里、为什么改都看得见。
 //
-// 并入的能力（`/zhiyun-paper/*`，与上游的 `/paper-reader/*` 并存）：
+// 并入的能力（`/zw-paper/*`，与上游的 `/paper-reader/*` 并存）：
 //
 //   - 论文库**多级**文件树（上游只认一层 topic，见 `paper-tree.ts`）
 //   - 选中即译（毫秒级单句，与上游整篇 babeldoc 翻译是两种粒度）
@@ -35,7 +35,7 @@ export const inject = ['tools', 'profileContext']
 
 /** 配置：上游那一套，加上智云侧的两项可选覆盖。 */
 export interface ZhyunPluginConfig extends PluginConfig {
-  /** 窄 llm 接口；缺省时取 `ctx.zhiyunParser.llm`（解析器包提供）。 */
+  /** 窄 llm 接口；缺省时取 `ctx.zwParser.llm`（解析器包提供）。 */
   llm?: NarrowLlm | null
   /** 选中翻译缓存条数上限。 */
   cacheLimit?: number
@@ -48,13 +48,13 @@ export function apply(ctx: Context, config: ZhyunPluginConfig = {}) {
   console.log(`[dsh-paper-reader] registered tools: list_papers, transcribe_pdf, search_paper, study_progress, study_update`)
 
   // 论文库目录：与上游同一个（`dataDir` 是唯一真相，两侧不能各算各的）。
-  const dataDir = config.dataDir ?? `${(ctx as unknown as { profileContext: { dir: string } }).profileContext.dir}/data/zhiyun-paper`
+  const dataDir = config.dataDir ?? `${(ctx as unknown as { profileContext: { dir: string } }).profileContext.dir}/data/zw-paper`
 
   // ── 选中翻译：惰性构建 ────────────────────────────────────────────────
   // 模型没配好时插件照样激活（阅读器、文献库、转录都不需要模型），
   // 只有真的悬停翻译时才报 CONFIG —— 与 core-lecture 的取舍一致。
   const pickLlm = (): NarrowLlm | null =>
-    config.llm ?? (ctx.get('zhiyunParser') as { llm?: NarrowLlm } | undefined)?.llm ?? null
+    config.llm ?? (ctx.get('zwParser') as { llm?: NarrowLlm } | undefined)?.llm ?? null
 
   let translator: ReturnType<typeof createSelectionTranslator> | null = null
   const getTranslator = (): ReturnType<typeof createSelectionTranslator> | null => {
@@ -74,7 +74,7 @@ export function apply(ctx: Context, config: ZhyunPluginConfig = {}) {
     return translator
   }
 
-  // 状态：`/zhiyun-paper/api/status` 的负载。
+  // 状态：`/zw-paper/api/status` 的负载。
   const status = {
     prefix: PAPER_ROUTE_PREFIX,
     dataDir,
@@ -99,9 +99,9 @@ export function apply(ctx: Context, config: ZhyunPluginConfig = {}) {
        *
        * `config.dataDir` 在 profile 里通常没配，`registerRoutes` 内部会退回上游默认
        * `~/.dsh-paper-reader/data`；而智云兼容面用的是上面算好的 `dataDir`
-       * （`<profile>/data/zhiyun-paper`）。
+       * （`<profile>/data/zw-paper`）。
        *
-       * 不统一的后果（真机踩到）：页面树走 `/zhiyun-paper/api/tree` 列出
+       * 不统一的后果（真机踩到）：页面树走 `/zw-paper/api/tree` 列出
        * `PsyC/jov-8-15-3`，点开却走 `/paper-reader/api/paper` —— 那个库里没有这篇，
        * 返回 `文献不存在`，阅读器一片空白。
        *
@@ -131,14 +131,14 @@ export function apply(ctx: Context, config: ZhyunPluginConfig = {}) {
           webServer: { register(entry: { kind: 'prefix'; path: string; handler: unknown }): () => void }
         }).webServer.register({ kind: 'prefix', path: PAPER_ROUTE_PREFIX, handler })
         return dispose
-      }, 'paper-reader: zhiyun routes')
+      }, 'paper-reader: zw routes')
     },
   )
 
   // 对外服务：别的包（或页面轮询）可以读状态、调翻译。
   ctx.effect(() => {
     const remove = (ctx as unknown as { provide(name: string, value: unknown): void | (() => void) })
-      .provide('zhiyunPaper', {
+      .provide('zwPaper', {
         prefix: PAPER_ROUTE_PREFIX,
         dataDir,
         status: () => status,
@@ -152,5 +152,5 @@ export function apply(ctx: Context, config: ZhyunPluginConfig = {}) {
       if (typeof remove === 'function') remove()
       translator = null
     }
-  }, 'paper-reader: zhiyunPaper service')
+  }, 'paper-reader: zwPaper service')
 }

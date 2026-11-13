@@ -30,7 +30,7 @@
 import { KnowledgeError } from './errors.js';
 
 /** 域（= 后端介质里的单元名）与格式版本。必须匹配宿主的 UNIT_NAME_RE：`/^[a-z][a-z0-9_]*$/`。 */
-export const DOMAIN_NAME = 'zhiyun_knowledge';
+export const DOMAIN_NAME = 'zw_knowledge';
 export const DOMAIN_VERSION = 1;
 /** 唯一的表名。 */
 export const LECTURES_TABLE = 'lectures';
@@ -107,7 +107,7 @@ function lectureSchema(z) {
     accountId: z.string().min(1),
     courseId: z.string().min(1),
     subId: z.string().min(1),
-    /** 数据源标识（课堂服务给的 `zhiyun:<orgId>:<courseId>:<subId>`），可能为空。 */
+    /** 数据源标识（课堂服务给的 `zw:<orgId>:<courseId>:<subId>`），可能为空。 */
     sourceId: z.string().nullable(),
     status: z.enum(LECTURE_STATUSES),
     fetchedAt: z.string().min(1),
@@ -154,7 +154,7 @@ export function createLectureSpec(host) {
     version: DOMAIN_VERSION,
     // 不声明 global：格式版本已由 `version` 这一个地方说了算，再加一个全局槽
     // 就是把同一件事说两遍（本仓禁止的"同一件事两份实现"），而词表属于解析器包
-    // （它自己落在 profile 的 data/zhiyun-parser/ 下），不该在知识库里再存一份。
+    // （它自己落在 profile 的 data/zw-parser/ 下），不该在知识库里再存一份。
     tables: { [LECTURES_TABLE]: domainTable(lectureSchema(z)),
       [QUESTION_BANK_TABLE]: domainTable(z.object({ accountId:z.string().min(1), questions:z.array(question), sessions:z.array(session),
         conceptCache:z.record(z.string(),z.looseObject({version:z.string(),materialKey:z.string(),pointKey:z.string(),createdAt:z.string(),concepts:z.array(z.looseObject({id:z.string(),statement:z.string(),basis:z.string(),blanks:z.array(z.looseObject({id:z.string(),start:z.number().int().nonnegative(),text:z.string(),aliases:z.array(z.string())}))}))})).optional(),

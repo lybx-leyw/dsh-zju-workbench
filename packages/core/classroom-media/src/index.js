@@ -2,30 +2,30 @@
 // 由 `app/api/generate/tts|asr|…` 的 route 直接调用。这里的服务方法就是那些 route body
 // 去掉 NextRequest/NextResponse 之后的形状（规范 §2 通道 2）。
 /**
- * 智云 Pro「互动课堂」的**语音 / 媒体 / 检索**半边（L2 领域包）。
+ * ZJU Workbench「互动课堂」的**语音 / 媒体 / 检索**半边（L2 领域包）。
  *
  * 把 OpenMAIC 的 `lib/audio` `lib/media` `lib/media-parse` `lib/web-search`
- * `lib/web-fetch` `lib/pdf` 搬成一个 Cordis 插件，挂在 `ctx.zhiyunClassroomMedia`。
+ * `lib/web-fetch` `lib/pdf` 搬成一个 Cordis 插件，挂在 `ctx.zwClassroomMedia`。
  *
  * ```
- * ctx.zhiyunClassroomMedia.tts(text, voice?)      // → { ok, bytes, format, durationSeconds }
- * ctx.zhiyunClassroomMedia.asr(file, opts?)       // → { ok, text }
- * ctx.zhiyunClassroomMedia.image(prompt, opts?)   // → { ok, url|base64, width, height }
- * ctx.zhiyunClassroomMedia.search(query, opts?)   // → { ok, answer, sources, query, responseTime }
- * ctx.zhiyunClassroomMedia.fetchPage(url, opts?)  // → { ok, title, markdown, finalUrl, truncated }
- * ctx.zhiyunClassroomMedia.parsePdf(buffer, opts?)// → { ok, text, images, metadata }
- * ctx.zhiyunClassroomMedia.timeline(clips, opts?) // → { ok, totalMs, segments, track }
- * ctx.zhiyunClassroomMedia.providers(capability)  // → 各 provider 的配置状态
- * ctx.zhiyunClassroomMedia.status()
+ * ctx.zwClassroomMedia.tts(text, voice?)      // → { ok, bytes, format, durationSeconds }
+ * ctx.zwClassroomMedia.asr(file, opts?)       // → { ok, text }
+ * ctx.zwClassroomMedia.image(prompt, opts?)   // → { ok, url|base64, width, height }
+ * ctx.zwClassroomMedia.search(query, opts?)   // → { ok, answer, sources, query, responseTime }
+ * ctx.zwClassroomMedia.fetchPage(url, opts?)  // → { ok, title, markdown, finalUrl, truncated }
+ * ctx.zwClassroomMedia.parsePdf(buffer, opts?)// → { ok, text, images, metadata }
+ * ctx.zwClassroomMedia.timeline(clips, opts?) // → { ok, totalMs, segments, track }
+ * ctx.zwClassroomMedia.providers(capability)  // → 各 provider 的配置状态
+ * ctx.zwClassroomMedia.status()
  * ```
  *
  * # 三条硬约定
  *
  * 1. **`apply()` 永不因上游缺失而抛错**（照 `host-classroom` / `host-deeptutor`）：
- *    没注入 `zhiyunClassroomStudio` 时服务照样 provide，每个方法各自说明"为什么不可用"。
+ *    没注入 `zwClassroomStudio` 时服务照样 provide，每个方法各自说明"为什么不可用"。
  * 2. **方法返回结果、不 throw**。课堂链路跑在渲染树里，一个 provider 没配不该炸页面
  *    （理由与 taxonomy 见 `errors.js` 头注）。内部工具函数仍用 throw，边界处统一转结果。
- * 3. **密钥与 baseURL 只从 `ctx.zhiyunClassroomStudio.providers` 拿**，其次 `config.providers`
+ * 3. **密钥与 baseURL 只从 `ctx.zwClassroomStudio.providers` 拿**，其次 `config.providers`
  *    注入；`process.env` 只是桌面端的最后兜底，见 `providers.js` 的解析顺序。
  */
 
@@ -40,7 +40,7 @@ import { parsePDF } from './pdf/parse.js';
 import { buildTimeline, concatWav, renderNarrationTrack } from './audio/timeline.js';
 import { measureAudioDuration } from './audio/duration.js';
 
-export const name = 'zhiyun-classroom-media';
+export const name = 'zw-classroom-media';
 
 /**
  * 只硬依赖宿主半边。
@@ -48,9 +48,9 @@ export const name = 'zhiyun-classroom-media';
  * 注意：写进 `inject` 意味着本插件在 `host-classroom` 未装载时**不会激活** ——
  * 这是有意的：本包每个能力都要问 `providers`，宿主缺席时它没有可做的事。
  * 但 `apply()` 仍然不抛（见文件头第 1 条）：真到了这个状态，
- * `ctx.get('zhiyunClassroomMedia')` 的调用方拿到的是"每个方法都说未配置"的服务。
+ * `ctx.get('zwClassroomMedia')` 的调用方拿到的是"每个方法都说未配置"的服务。
  */
-export const inject = ['zhiyunClassroomStudio'];
+export const inject = ['zwClassroomStudio'];
 
 export const PACKAGE_VERSION = '0.1.0';
 
@@ -105,17 +105,17 @@ function normalizeVoiceArg(voice) {
  */
 export function apply(ctx, config = {}) {
   const log = config.logger ?? {
-    debug: (...args) => ctx?.logger?.debug?.('[zhiyun-classroom-media]', ...args),
-    info: (...args) => ctx?.logger?.info?.('[zhiyun-classroom-media]', ...args),
-    warn: (...args) => ctx?.logger?.warn?.('[zhiyun-classroom-media]', ...args),
-    error: (...args) => ctx?.logger?.error?.('[zhiyun-classroom-media]', ...args),
+    debug: (...args) => ctx?.logger?.debug?.('[zw-classroom-media]', ...args),
+    info: (...args) => ctx?.logger?.info?.('[zw-classroom-media]', ...args),
+    warn: (...args) => ctx?.logger?.warn?.('[zw-classroom-media]', ...args),
+    error: (...args) => ctx?.logger?.error?.('[zw-classroom-media]', ...args),
   };
 
-  // 宿主服务的取用**推迟到方法调用时**：apply 阶段 `ctx.zhiyunClassroomStudio` 可能还没
+  // 宿主服务的取用**推迟到方法调用时**：apply 阶段 `ctx.zwClassroomStudio` 可能还没
   // provide（Cordis 的加载顺序不保证），此刻取一次就永久绑死一个 undefined。
   const getStudio = () => {
     try {
-      return ctx?.zhiyunClassroomStudio ?? ctx?.get?.('zhiyunClassroomStudio') ?? null;
+      return ctx?.zwClassroomStudio ?? ctx?.get?.('zwClassroomStudio') ?? null;
     } catch {
       return null;
     }
@@ -150,7 +150,7 @@ export function apply(ctx, config = {}) {
       throw notConfigured(
         capability,
         explicitId,
-        '宿主服务 zhiyunClassroomStudio 未装载，且没有注入 config.providers',
+        '宿主服务 zwClassroomStudio 未装载，且没有注入 config.providers',
       );
     }
 
@@ -465,9 +465,9 @@ export function apply(ctx, config = {}) {
   // apply() 里唯一可能抛的地方：provide。抛了就降级 —— 工作台还活着，媒体能力这次不可用。
   let removeService = () => {};
   try {
-    removeService = ctx.provide('zhiyunClassroomMedia', service) ?? (() => {});
+    removeService = ctx.provide('zwClassroomMedia', service) ?? (() => {});
   } catch (error) {
-    log.error('zhiyunClassroomMedia 注册失败（服务名可能已被占用），媒体能力本次不可用', error?.message ?? error);
+    log.error('zwClassroomMedia 注册失败（服务名可能已被占用），媒体能力本次不可用', error?.message ?? error);
   }
 
   try {
@@ -475,7 +475,7 @@ export function apply(ctx, config = {}) {
       try {
         removeService();
       } catch (error) {
-        log.warn('卸载时注销 zhiyunClassroomMedia 失败', error?.message ?? error);
+        log.warn('卸载时注销 zwClassroomMedia 失败', error?.message ?? error);
       }
     });
   } catch (error) {

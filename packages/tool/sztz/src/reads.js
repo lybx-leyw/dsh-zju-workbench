@@ -16,7 +16,7 @@
 import { createReadToolRegistrar, defined, inputError, optBool, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunSztz: '@lybx-leyw/dsh-zju-source-sztz',
+  zwSztz: '@lybx-leyw/dsh-zju-source-sztz',
 });
 
 const ACTIONS = ['activities', 'newActivities', 'mine', 'credits', 'projects', 'notices'];
@@ -28,7 +28,7 @@ const ACTIONS = ['activities', 'newActivities', 'mine', 'credits', 'projects', '
  * @returns 工具定义数组。
  */
 export function createSztzReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunSztz', SERVICE_SOURCES.zhiyunSztz);
+  const need = () => serviceLookup(services, 'zwSztz', SERVICE_SOURCES.zwSztz);
 
   return [
     {

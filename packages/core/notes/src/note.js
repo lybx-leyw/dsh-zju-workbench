@@ -338,7 +338,7 @@ function collectAssetLinks(markdown) {
  *
  * 还有一些**根本不是内链**的行内内容会被如实报成 `type: 'unknown-inline'`：
  * `[文字](https://…)`、`[文字](/courses/1/section/2)`、`[文字](zy://asset/…)`、
- * 任意 `zy-*://` 串，以及 markdown 里常见的 `![图](本地.png)`。这类不是错误
+ * 任意 `zw-*://` 串，以及 markdown 里常见的 `![图](本地.png)`。这类不是错误
  * （它们本来就不该跳），只是「这条内链本包处理不了」的诚实交代。
  *
  * @param {unknown} markdown - 正文；非字符串按空串处理。
@@ -363,7 +363,7 @@ export function parseInlineLinks(markdown) {
       code = 'EMPTY_TARGET';
       reason = '链接目标为空';
     } else if (/^z[ya]-/.test(target) || /^zy:/.test(target)) {
-      // 长得像自家 scheme 但不是（`zy://asset/…`、`zy-ink://…` 等）。
+      // 长得像自家 scheme 但不是（`zy://asset/…`、`zw-ink://…` 等）。
       code = 'BAD_SCHEME_SHAPE';
       reason = `形如内链但不是已知 scheme：${target}`;
     }

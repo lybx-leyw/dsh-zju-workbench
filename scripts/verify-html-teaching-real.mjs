@@ -7,7 +7,7 @@ import { parseEnv } from 'node:util';
 
 const args = process.argv.slice(2);
 if (args.includes('--help') || args.includes('-h')) {
-  console.log('Usage: node scripts/verify-html-teaching-real.mjs --live | --resume-saved\n--resume-saved reuses only saved real first responses after exact source matching and repairs failed stages.\nReads .env in memory (BaseURL, APIkey, ModelName). Optional model override: ZHIYUN_REAL_CHAPTER_MODEL.\nWrites artifacts/html-teaching-real; refuses when SUCCESS exists. Real requests incur cost. No whole-run retries.');
+  console.log('Usage: node scripts/verify-html-teaching-real.mjs --live | --resume-saved\n--resume-saved reuses only saved real first responses after exact source matching and repairs failed stages.\nReads .env in memory (BaseURL, APIkey, ModelName). Optional model override: ZW_REAL_CHAPTER_MODEL.\nWrites artifacts/html-teaching-real; refuses when SUCCESS exists. Real requests incur cost. No whole-run retries.');
 } else {
   await main();
 }
@@ -18,7 +18,7 @@ async function main() {
   let output;
   let report;
   let redact = text => String(text);
-  const keyName = 'ZHIYUN_HTML_TEACHING_VERIFY_KEY';
+  const keyName = 'ZW_HTML_TEACHING_VERIFY_KEY';
   try {
     if (args.length !== 1 || !['--live', '--resume-saved'].includes(args[0])) throw new Error('opt-in required');
     const reuseSaved = args[0] === '--resume-saved';
@@ -32,7 +32,7 @@ async function main() {
     } catch (error) { if (error.code !== 'ENOENT') throw error; }
     const env = parseEnv(await fs.readFile(path.join(root, '.env'), 'utf8'));
     // ModelName is intentional: do not silently pick a vision or unrelated model.
-    const model = process.env.ZHIYUN_REAL_CHAPTER_MODEL || env.ModelName;
+    const model = process.env.ZW_REAL_CHAPTER_MODEL || env.ModelName;
     const base = env.BaseURL;
     const key = env.APIkey;
     if (!base || !key || !model) throw new Error('configuration missing');

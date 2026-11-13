@@ -74,7 +74,7 @@ UIDVALIDITY 是定位邮件的唯一锚点：`list()` 交给调用方，`read()`
 **本包不读凭据服务、不写任何凭据文件。** 调用方通过 `setCredentialProvider` 注入：
 
 ```js
-const mail = ctx.get('zhiyunMail')
+const mail = ctx.get('zwMail')
 mail.setCredentialProvider(async () => ({ address: '3200000000@zju.edu.cn', password: '******' }))
 const page = await mail.list({ limit: 20 })
 ```
@@ -113,7 +113,7 @@ const page = await mail.list({ limit: 20 })
 
 ```js
 apply(ctx, {
-  draftDir,      // 草稿目录（只读打开）；缺省 <profileContext>/data/zhiyun-mail/outbox
+  draftDir,      // 草稿目录（只读打开）；缺省 <profileContext>/data/zw-mail/outbox
   downloadRoot,  // 附件落盘根；缺省 CAMPUS_DOWNLOADS_DIR/CampusAgent 或 ~/Downloads/CampusAgent
   timeouts,      // { connectMs, operationMs }
   imap, smtp, parse,  // 工厂注入点：测试传假的，全链路离线

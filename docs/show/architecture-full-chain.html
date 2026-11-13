@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>智云 Pro · 数据流泳道图</title>
+<title>ZJU Workbench · 数据流泳道图</title>
 <style>
   /* ===========================================================
      方向：工程手册 / 印刷图纸
@@ -424,7 +424,7 @@
 <header>
   <div class="fig-head">
     <span class="no">图 1</span>
-    <span>智云 Pro · 数据流泳道</span>
+    <span>ZJU Workbench · 数据流泳道</span>
     <span class="rt">FIG.1 — SIGNAL FLOW · rev.2026-11</span>
   </div>
 
@@ -509,7 +509,7 @@
           </div>
           <span class="arw"></span>
           <div class="node n-tool">
-            <div class="t">zhiyunStudy</div>
+            <div class="t">zwStudy</div>
             <div class="io"><em>领域服务 · 页面与工具的唯一真源</em></div>
           </div>
         </div>
@@ -519,13 +519,13 @@
           <span class="row-label">终点 A · 人</span>
           <div class="node n-ui">
             <div class="t">学习页<small>page-study</small></div>
-            <div class="io"><em>直接读 zhiyunStudyController，不经过 HTTP</em></div>
+            <div class="io"><em>直接读 zwStudyController，不经过 HTTP</em></div>
           </div>
           <span class="arw plus"><span class="pl">‖</span></span>
           <span class="row-label split">终点 B · agent</span>
           <div class="node n-tool">
             <div class="t">工具包<small>tool/study</small></div>
-            <div class="io"><b>入</b><em>zhiyunStudy</em> + <code>tools</code> 注册表<br><b>出</b><code>study_catalog</code> / <code>study_read</code> / <code>study_search</code></div>
+            <div class="io"><b>入</b><em>zwStudy</em> + <code>tools</code> 注册表<br><b>出</b><code>study_catalog</code> / <code>study_read</code> / <code>study_search</code></div>
           </div>
           <span class="arw"></span>
           <div class="node n-tool">
@@ -594,7 +594,7 @@
           <span class="arw"></span>
           <div class="node n-proc">
             <div class="t">笔记库</div>
-            <div class="io"><b>出</b>普通 <em>.md</em> 文件 · 经 <code>zhiyunVaultNotes</code></div>
+            <div class="io"><b>出</b>普通 <em>.md</em> 文件 · 经 <code>zwVaultNotes</code></div>
           </div>
         </div>
       </div>
@@ -644,7 +644,7 @@
         <span class="chip">工具调度 <code>core/tool</code></span>
         <span class="chip">讲义检索 <code>core/lecture-tools</code></span>
         <span class="cap">引擎</span>
-        <span class="chip"><code>core/quiz-lab</code> 把 r4 注册进 <code>zhiyunQuiz.engines</code></span>
+        <span class="chip"><code>core/quiz-lab</code> 把 r4 注册进 <code>zwQuiz.engines</code></span>
       </div>
     </div>
   </section>
@@ -736,10 +736,10 @@
       </div>
       <div class="side">
         <span class="cap">宿主路由</span>
-        <span class="chip"><code>/_dsh/zhiyun-planning</code></span>
+        <span class="chip"><code>/_dsh/zw-planning</code></span>
         <span class="cap">惰性取 · 不写进 inject</span>
-        <span class="chip"><code>zhiyunCampus</code></span>
-        <span class="chip"><code>zhiyunParser</code></span>
+        <span class="chip"><code>zwCampus</code></span>
+        <span class="chip"><code>zwParser</code></span>
       </div>
     </div>
   </section>
@@ -777,10 +777,10 @@
       </div>
       <div class="side">
         <span class="cap">宿主半边</span>
-        <span class="chip"><code>zhiyunVault</code></span>
-        <span class="chip"><code>zhiyunVaultNotes</code> → <code>/api/zhiyun-vault-notes</code></span>
+        <span class="chip"><code>zwVault</code></span>
+        <span class="chip"><code>zwVaultNotes</code> → <code>/api/zw-vault-notes</code></span>
         <span class="cap">页内节笔记</span>
-        <span class="chip">走 <code>zhiyunNotes</code>，键是 <code>账号.节次</code></span>
+        <span class="chip">走 <code>zwNotes</code>，键是 <code>账号.节次</code></span>
       </div>
     </div>
   </section>
@@ -802,7 +802,7 @@
           <span class="arw"></span>
           <div class="node n-proc">
             <div class="t">论文宿主</div>
-            <div class="io"><b>出</b>文件与转录 + <code>zhiyunPaper</code></div>
+            <div class="io"><b>出</b>文件与转录 + <code>zwPaper</code></div>
           </div>
           <span class="arw"></span>
           <div class="node n-proc">
@@ -847,7 +847,7 @@
       </div>
       <div class="side">
         <span class="cap">宿主路由</span>
-        <span class="chip"><code>/api/zhiyun-plugins</code></span>
+        <span class="chip"><code>/api/zw-plugins</code></span>
         <span class="cap">取消走</span>
         <span class="chip"><code>pluginManager.setPluginEnabled</code>，不另开写入口</span>
       </div>
@@ -866,7 +866,7 @@
         <div class="row">
           <div class="node n-src">
             <div class="t">浙大一卡通<small>source/login</small></div>
-            <div class="io"><b>出</b><code>zhiyunCard</code> 唯一凭证来源</div>
+            <div class="io"><b>出</b><code>zwCard</code> 唯一凭证来源</div>
           </div>
           <span class="arw"></span>
           <div class="node n-proc">
@@ -876,7 +876,7 @@
           <span class="arw"></span>
           <div class="node n-proc">
             <div class="t">唯一出口<small>source/http</small></div>
-            <div class="io"><b>出</b><code>zhiyunEgress</code>，所有源共用一份</div>
+            <div class="io"><b>出</b><code>zwEgress</code>，所有源共用一份</div>
           </div>
           <span class="arw plus"><span class="pl">+</span></span>
           <div class="node n-proc">
@@ -966,24 +966,24 @@
         <div class="row">
           <div class="node n-ghost">
             <div class="t">CC98<small>source/cc98</small></div>
-            <div class="io"><b>出</b><code>zhiyunCc98</code> 10 个只读方法<br><em>仓内 0 处取用</em></div>
+            <div class="io"><b>出</b><code>zwCc98</code> 10 个只读方法<br><em>仓内 0 处取用</em></div>
           </div>
           <span class="arw cut"></span>
           <div class="node n-ghost">
             <div class="t">学习通<small>source/xxt</small></div>
-            <div class="io"><b>出</b><code>zhiyunXxt</code> 课程 / 作业 / 考试<br><em>仓内 0 处取用</em></div>
+            <div class="io"><b>出</b><code>zwXxt</code> 课程 / 作业 / 考试<br><em>仓内 0 处取用</em></div>
           </div>
           <span class="arw cut"></span>
           <div class="node n-ghost">
             <div class="t">教务<small>source/zdbk</small></div>
-            <div class="io"><b>出</b><code>zhiyunZdbk</code> 成绩 / GPA / 课表<br><em>仅登录页健康探测取一次</em></div>
+            <div class="io"><b>出</b><code>zwZdbk</code> 成绩 / GPA / 课表<br><em>仅登录页健康探测取一次</em></div>
           </div>
         </div>
       </div>
       <div class="side">
         <span class="cap">判据</span>
-        <span class="chip">全仓搜 <code>zhiyunCc98</code> / <code>zhiyunXxt</code> 只命中各自的 <code>provide</code></span>
-        <span class="chip"><code>zhiyunZdbk</code> 只在 <code>source/login</code> 的 <code>probeZdbk</code> 里被 <code>ctx.get</code></span>
+        <span class="chip">全仓搜 <code>zwCc98</code> / <code>zwXxt</code> 只命中各自的 <code>provide</code></span>
+        <span class="chip"><code>zwZdbk</code> 只在 <code>source/login</code> 的 <code>probeZdbk</code> 里被 <code>ctx.get</code></span>
       </div>
     </div>
   </section>
@@ -1007,7 +1007,7 @@
     <div class="note-no">02</div>
     <div class="note-body">
       <h3>「汇流」一句话盖掉了三个节点</h3>
-      <p>那句「把两条链的产物装成一个可用的工作台」不是节点，是三个节点被压成一句：<strong>资源终稿</strong> → <strong>入库</strong> → <strong>zhiyunStudy</strong>。</p>
+      <p>那句「把两条链的产物装成一个可用的工作台」不是节点，是三个节点被压成一句：<strong>资源终稿</strong> → <strong>入库</strong> → <strong>zwStudy</strong>。</p>
       <p>压掉之后，<code>lecture</code> 依赖 <code>parser</code>、<code>knowledge</code> 依赖 <code>storageDomain</code> 这两条边在图上就没有了落点。</p>
     </div>
   </div>
@@ -1016,7 +1016,7 @@
     <div class="note-no">03</div>
     <div class="note-body">
       <h3>图上全画，仓里没有</h3>
-      <p>旧版画了 CC98、学习通、教务三个源，看起来和课堂、学在浙大一样在用。实际上 <code>zhiyunCc98</code> 与 <code>zhiyunXxt</code> 在仓内没有任何消费者，<code>zhiyunZdbk</code> 只被登录页的健康探测摸一次。</p>
+      <p>旧版画了 CC98、学习通、教务三个源，看起来和课堂、学在浙大一样在用。实际上 <code>zwCc98</code> 与 <code>zwXxt</code> 在仓内没有任何消费者，<code>zwZdbk</code> 只被登录页的健康探测摸一次。</p>
       <p>这不是「图不够美」，是会误导判断：读者会以为停掉 CC98 会影响某条链路，其实一条都不影响。</p>
     </div>
   </div>

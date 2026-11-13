@@ -12,14 +12,14 @@
  *      用户还得同时理解「章节数」和「并发数」两个不同的东西。
  *   3. 上限只能靠猜。真正的上限是 **Σ workers**，池子自己知道。
  *
- * 所以这里直接挂 `GenerationModels`（`dsh-zhiyun-page-quiz` 已导出），
+ * 所以这里直接挂 `GenerationModels`（`dsh-zju-page-quiz` 已导出），
  * 用 `purpose='teaching'` 单独存一份配额（`teaching-models.json`）。
  *
- * # 为什么要包一层 `.zs-qz`
+ * # 为什么要包一层 `.zws-qz`
  *
  * `GenerationModels` 的样式（`page-quiz/src/style.css`）**每条规则都限定在
- * `.zs-qz` / `.zs-qz-page` 之下**。不套这个祖先类，浮窗虽然渲染得出来，
- * 但 `zs-generation-split` 会退回 `display:block`、面板宽度/定位全丢 ——
+ * `.zws-qz` / `.zws-qz-page` 之下**。不套这个祖先类，浮窗虽然渲染得出来，
+ * 但 `zws-generation-split` 会退回 `display:block`、面板宽度/定位全丢 ——
  * 用真实浏览器量过：无祖先时 `display:block`，有祖先时 `display:flex`。
  * 所以这层 wrapper 不是装饰，是让复用成立的前提。
  *
@@ -32,16 +32,16 @@ import React from 'react';
 import { usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
 
 /**
- * 取已发布的配置面板，套上 `.zs-qz` 祖先类后渲染。
+ * 取已发布的配置面板，套上 `.zws-qz` 祖先类后渲染。
  *
- * `.zs-qz` 不能省：`GenerationModels` 的每条样式都限定在 `.zs-qz` / `.zs-qz-page`
- * 之下，不套的话浮窗能渲染但 `zs-generation-split` 退回 `display:block`，
+ * `.zws-qz` 不能省：`GenerationModels` 的每条样式都限定在 `.zws-qz` / `.zws-qz-page`
+ * 之下，不套的话浮窗能渲染但 `zws-generation-split` 退回 `display:block`，
  * 宽度与定位全丢（真实浏览器量过：无祖先 block、有祖先 flex）。
  */
 function ConfigPanel(props) {
   const Models = usePublishedComponent('quiz.generationModels');
   if (!Models) {
-    return <p className="zs-muted" role="status">模型与并发配置由「题库」页提供；该页未启用时用设置里的默认模型。</p>;
+    return <p className="zws-muted" role="status">模型与并发配置由「题库」页提供；该页未启用时用设置里的默认模型。</p>;
   }
   return <Models {...props} />;
 }
@@ -55,7 +55,7 @@ function ConfigPanel(props) {
  * @param {() => void} props.onGenerate
  */
 export function TeachingGenerate({ controller, disabled = false, running = false, hasResult = false, onGenerate }) {
-  return <div className="zs-teach-generate zs-qz">
+  return <div className="zws-teach-generate zws-qz">
     <ConfigPanel
       controller={controller}
       purpose="teaching"

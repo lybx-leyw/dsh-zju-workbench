@@ -24,20 +24,20 @@ export function Page({ page, controller, renderSlot }) {
   //
   // 应用型页面（笔记页的编辑器）不套版心：980px 上限 + 文章式内边距会把
   // 多栏面板挤成一张小卡片。见 model.js 的 FULL_BLEED_PAGES。
-  const contentClass = FULL_BLEED_PAGES.includes(page) ? 'zy-content zy-content-flush' : 'zy-content';
+  const contentClass = FULL_BLEED_PAGES.includes(page) ? 'zw-content zw-content-flush' : 'zw-content';
   // 二级入口（`parent`）与回程：都是 NAV 里的字段，不另立清单 ——
   // 「课堂 → 生成」是子页，子页在导轨与 Ctrl+K 里都不出现（`sidebar: false`），
   // 所以它的唯一入口是主线页里这一行按钮，回程也必须由这里给。
   const children = NAV.filter(entry => entry.parent === page);
   const parent = item?.parent ? NAV.find(entry => entry.id === item.parent) : undefined;
-  return <div className="zy-page" data-page={page}>
+  return <div className="zw-page" data-page={page}>
     {/* skip link 的落点。
         `tabIndex={-1}` 不是为了进 Tab 序列，而是让锚点跳转能把焦点**移进**这个容器：
         不写的话浏览器只滚动、焦点还留在链接上，再按一次 Tab 又从头绕回导轨。
         `-1` 同时保证它自己不出现在 Tab 序列里。 */}
-    <main className="zy-scroll" id="zy-main" tabIndex={-1}><div className={contentClass}>
-      {parent && <button type="button" className="zy-page-back" onClick={() => controller.navigate(parent.id)}><Icon name="arrowLeft" size={14}/>{parent.label}</button>}
-      {children.length > 0 && <div className="zy-page-subnav" role="group" aria-label={`${item.label}的更多入口`}>
+    <main className="zw-scroll" id="zw-main" tabIndex={-1}><div className={contentClass}>
+      {parent && <button type="button" className="zw-page-back" onClick={() => controller.navigate(parent.id)}><Icon name="arrowLeft" size={14}/>{parent.label}</button>}
+      {children.length > 0 && <div className="zw-page-subnav" role="group" aria-label={`${item.label}的更多入口`}>
         {children.map(child => <button type="button" key={child.id} onClick={() => controller.navigate(child.id)}>{child.label}<Icon name="arrow" size={14}/></button>)}
       </div>}
       {renderSlot(pageSlot(item ?? { id: page }), { controller, renderSlot }, { fallback: React.createElement(missing) })}

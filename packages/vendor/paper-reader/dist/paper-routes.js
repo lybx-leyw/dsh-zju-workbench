@@ -1,5 +1,5 @@
 /**
- * 智云兼容面自有的 HTTP 路由（前缀 `/zhiyun-paper`）。
+ * 智云兼容面自有的 HTTP 路由（前缀 `/zw-paper`）。
  *
  * # 为什么只有这几条
  *
@@ -13,7 +13,7 @@
  *   - `/api/sessions/labels` —— `/resume` 面板的会话标签；
  *   - `/api/sessions/archive` —— 归档任意会话（上游那条只允许空白会话）。
  *
- * 之所以不把上游的路由反代一遍（页面统一打 `/zhiyun-paper/*`）：那需要复刻
+ * 之所以不把上游的路由反代一遍（页面统一打 `/zw-paper/*`）：那需要复刻
  * 上游每个端点的请求/响应形状，等于把「兼容层」写成了「重新实现」，
  * 上游一升级就要跟着改一遍。
  *
@@ -23,7 +23,7 @@
  * `webserver: duplicate prefix route "/paper-reader"`。上游已经占了那条前缀，
  * 我们再用就是把自己炸掉；换个前缀，两条路由表各活各的。
  *
- * # 从 `dsh-zhiyun-host-paper` 迁入
+ * # 从 `dsh-zju-host-paper` 迁入
  *
  * 迁入后与上游同住一个包：路由前缀仍分开，但装配、错误码、会话管理都是同一份，
  * 不再需要「兼容层挂子插件」那一层间接。
@@ -31,7 +31,7 @@
 import { PaperError, paperErrorStatus } from "./paper-errors.js";
 import { readPaperTree, upstreamRefFor } from "./paper-tree.js";
 /** 本包自有路由前缀。页面侧的同名常量在 `@lybx-leyw/dsh-zju-page-paper/src/library.js`。 */
-export const PAPER_ROUTE_PREFIX = '/zhiyun-paper';
+export const PAPER_ROUTE_PREFIX = '/zw-paper';
 /** 请求体上限：一段选中文本最多千余字符，64KB 只用来拦住畸形请求。 */
 const MAX_BODY_BYTES = 64 * 1024;
 function sendJson(res, status, payload) {

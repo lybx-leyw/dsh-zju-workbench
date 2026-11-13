@@ -64,7 +64,7 @@ test('会话行：只列本空间、最近更新在前、空白会话不编标�
 });
 
 test('原生归档或关闭会话不会自动再补壳，只有显式进入 ask 才请求绑定', async () => {
-  const { createLearningSpaceBinding } = await import('../../../archive/deprecated-packages/dsh-zhiyun-shell-workbench/src/learning-binding.js');
+  const { createLearningSpaceBinding } = await import('../../../archive/deprecated-packages/dsh-zju-shell-workbench/src/learning-binding.js');
   const listeners = new Set(), starts = [], cleanups = [];
   let ready = false, active = true, sessionId, activePanelId = null;
   const list = { getSnapshot: () => ({ phase: ready ? 'ready' : 'loading', items: [] }), subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); } };

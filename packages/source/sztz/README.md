@@ -76,7 +76,7 @@
 这段流程由集成层注入：
 
 ```js
-const sztz = ctx.get('zhiyunSztz')
+const sztz = ctx.get('zwSztz')
 sztz.setSessionProvider(async () => {
   // 走一遍 CAS（D18 之后通用实现在 source/login/src/cas.js）
 })

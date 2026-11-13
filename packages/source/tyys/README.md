@@ -171,7 +171,7 @@ tyys 的点字验证码与 cnki 的滑块拼图在性质上是同一类东西 �
 凭据由集成层注入，本包不知道凭据从哪来，也不走 CAS：
 
 ```js
-const tyys = ctx.get('zhiyunTyys')
+const tyys = ctx.get('zwTyys')
 tyys.setAccountProvider(async () => '3230100000')
 tyys.setLoginProvider(async ({ service }) => {
   // service 是 VENUE_LOGIN_SERVICE 或 APP_LOGIN_SERVICE

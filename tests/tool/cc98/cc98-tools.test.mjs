@@ -45,7 +45,7 @@ test('三个工具，名唯一，都有 description 与 parameters', () => {
 
 test('campus_post 的 post：标签、标题、匿名都要透给 source', async () => {
   const { source, seen } = recordingSource('postTopic');
-  await tool({ zhiyunCc98: source }, 'campus_post').prepare({
+  await tool({ zwCc98: source }, 'campus_post').prepare({
     action: 'post', board: '12', content: '出二手', title: '出售', tag1: '交易', tag2: '数码', anonymous: true,
   });
   assert.deepEqual(seen[0], {
@@ -57,13 +57,13 @@ test('campus_post 的 post：没给的字段不许塞默认值', async () => {
   // 塞 `tag1: ''` 之类会覆盖掉 source 的「不传就用平台默认」，
   // 而有必选标签的版面恰恰靠 source 那边的判断。
   const { source, seen } = recordingSource('postTopic');
-  await tool({ zhiyunCc98: source }, 'campus_post').prepare({ action: 'post', board: '1', content: 'x' });
+  await tool({ zwCc98: source }, 'campus_post').prepare({ action: 'post', board: '1', content: 'x' });
   assert.deepEqual(seen[0], { board: '1', content: 'x' });
 });
 
 test('campus_post 的 reply：引用、匿名、通知全体都要透给 source', async () => {
   const { source, seen } = recordingSource('replyTopic');
-  await tool({ zhiyunCc98: source }, 'campus_post').prepare({
+  await tool({ zwCc98: source }, 'campus_post').prepare({
     action: 'reply', topic: '9', content: '同意', quote: '12', anonymous: true, notifyAll: true,
   });
   assert.deepEqual(seen[0], { topic: '9', content: '同意', quote: '12', anonymous: true, notifyAll: true });
@@ -73,7 +73,7 @@ test('campus_post 的 edit：传的是楼层 post，不是主题 topic', async (
   // 多楼帖里 postId ≠ topicId。用 topic 去编辑会改到别的楼 —— 静默改错内容，
   // 比报错严重得多。所以这里要求工具必须收 `post` 并原样传下去。
   const { source, seen } = recordingSource('editPost');
-  const post = tool({ zhiyunCc98: source }, 'campus_post');
+  const post = tool({ zwCc98: source }, 'campus_post');
 
   await post.prepare({ action: 'edit', post: '88', content: '改一下' });
   assert.equal(seen[0].post, '88');
@@ -89,7 +89,7 @@ test('campus_post 的 edit：传的是楼层 post，不是主题 topic', async (
 test('campus_post 的 message：用户名原样交给 source 去解析', async () => {
   // 名字→id 是数据源的知识（要知道去哪个接口查），不该让工具层抄一遍。
   const { source, seen } = recordingSource('sendMessage');
-  await tool({ zhiyunCc98: source }, 'campus_post').prepare({
+  await tool({ zwCc98: source }, 'campus_post').prepare({
     action: 'message', recipient: '某用户', content: 'hi',
   });
   assert.equal(seen[0].recipient, '某用户', '工具层不做解析，只透传');
@@ -98,7 +98,7 @@ test('campus_post 的 message：用户名原样交给 source 去解析', async (
 
 test('campus_react：赞、踩、取消三种状态都到得了 source', async () => {
   const { source, seen } = recordingSource('likeFloor');
-  const react = tool({ zhiyunCc98: source }, 'campus_react');
+  const react = tool({ zwCc98: source }, 'campus_react');
   await react.prepare({ action: 'like', post: '5' });
   await react.prepare({ action: 'down', post: '5' });
   await react.prepare({ action: 'unlike', post: '5' });
@@ -107,7 +107,7 @@ test('campus_react：赞、踩、取消三种状态都到得了 source', async (
 
 test('campus_react：favorite 与 unfavorite 都到得了 source', async () => {
   const { source, seen } = recordingSource('favoriteTopic');
-  const react = tool({ zhiyunCc98: source }, 'campus_react');
+  const react = tool({ zwCc98: source }, 'campus_react');
   await react.prepare({ action: 'favorite', post: '3' });
   await react.prepare({ action: 'unfavorite', post: '3' });
   assert.deepEqual(seen.map((item) => item.on), [true, false]);
@@ -118,7 +118,7 @@ test('campus_react：rate 缺 reason 时在封装层就说清去哪查', async (
   // 但他不知道编号从哪来。封装层该替他补上这句话。
   const { source } = recordingSource('rateFloor');
   await assert.rejects(
-    () => tool({ zhiyunCc98: source }, 'campus_react').prepare({ action: 'rate', post: '1', value: 2 }),
+    () => tool({ zwCc98: source }, 'campus_react').prepare({ action: 'rate', post: '1', value: 2 }),
     (error) => {
       assert.equal(error.code, 'INPUT');
       assert.match(error.message, /理由编号/);
@@ -129,7 +129,7 @@ test('campus_react：rate 缺 reason 时在封装层就说清去哪查', async (
 
 test('campus_react：rate 传了 reason 就原样到底', async () => {
   const { source, seen } = recordingSource('rateFloor');
-  await tool({ zhiyunCc98: source }, 'campus_react').prepare({
+  await tool({ zwCc98: source }, 'campus_react').prepare({
     action: 'rate', post: '1', value: -2, reason: '7',
   });
   assert.deepEqual(seen[0], { post: '1', value: -2, reason: '7' });
@@ -137,7 +137,7 @@ test('campus_react：rate 传了 reason 就原样到底', async () => {
 
 test('campus_signin：不需要参数', async () => {
   const { source, seen } = recordingSource('signIn');
-  await tool({ zhiyunCc98: source }, 'campus_signin').prepare({});
+  await tool({ zwCc98: source }, 'campus_signin').prepare({});
   assert.deepEqual(seen[0], undefined, 'source 的 signIn 不收参数');
 });
 
@@ -170,7 +170,7 @@ test('服务没装配时报 SERVICE_MISSING 并说清装哪个包', async () => 
 });
 
 test('source 缺 Prepare / Execute 时报 CONTRACT_MISSING', async () => {
-  const tools = createCc98WriteTools({ zhiyunCc98: {} });
+  const tools = createCc98WriteTools({ zwCc98: {} });
   await assert.rejects(
     () => tools.find((item) => item.name === 'campus_signin').prepare({}),
     (error) => error.code === 'CONTRACT_MISSING',
@@ -183,7 +183,7 @@ test('source 缺 cancel 时报 CONTRACT_MISSING —— 否则审批被拒后动�
     signInExecute: async () => ({}),
     // 故意不给 signInCancel
   };
-  const tools = createCc98WriteTools({ zhiyunCc98: half });
+  const tools = createCc98WriteTools({ zwCc98: half });
   await assert.rejects(
     () => tools.find((item) => item.name === 'campus_signin').prepare({}),
     (error) => {
@@ -194,8 +194,8 @@ test('source 缺 cancel 时报 CONTRACT_MISSING —— 否则审批被拒后动�
   );
 });
 
-test('inject 声明了 zhiyunCc98，缺它就整包不激活', async () => {
+test('inject 声明了 zwCc98，缺它就整包不激活', async () => {
   const mod = await import('../../../packages/tool/cc98/src/index.js');
-  assert.deepEqual(mod.inject, ['tools', 'approval', 'zhiyunCc98']);
-  assert.equal(mod.name, 'zhiyun-tool-cc98');
+  assert.deepEqual(mod.inject, ['tools', 'approval', 'zwCc98']);
+  assert.equal(mod.name, 'zw-tool-cc98');
 });

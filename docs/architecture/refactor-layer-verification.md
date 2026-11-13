@@ -34,7 +34,7 @@
 | `client/page-notes/src` | `core/vault` | 存储半边（900 行）+ PDF 路由（427 行） |
 | `client/page-planning/src` | `core/planning` | 全部 11 个模块 + 2068 行宿主半边 |
 | `client/page-plugins/src` | `core/plugin-graph` | `runtime.js`（413 行纯函数）+ 只读路由 |
-| `client/page-planning` 的 `zhiyun-pta` 分区 | `source/campus` 已有分区 | 删除页面重复的凭据入口 |
+| `client/page-planning` 的 `zw-pta` 分区 | `source/campus` 已有分区 | 删除页面重复的凭据入口 |
 | `packages/tool/study` 的 patch | `preset/lecture` 的 plugins 树 | 工具只注册、注入点唯一 |
 
 ### 未完成 / 需人工处理

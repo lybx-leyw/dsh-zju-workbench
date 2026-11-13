@@ -3,8 +3,8 @@
 # 与其它领域包一致：bundle 列在 `dsh.profile.bundles` 里不会自动加载，
 # 必须在自己的 patch 里 insert（见 `@lybx-leyw/dsh-zju-core-classroom-agent` 的同名说明）。
 #
-# 本包只消费宿主服务 `zhiyunClassroomStudio`，自己不碰网络、不 new 客户端；
+# 本包只消费宿主服务 `zwClassroomStudio`，自己不碰网络、不 new 客户端；
 # 上游缺失时 `apply()` 照常返回，`status().state` 显示 `degraded`。
 - insert:
-    - id: zhiyun-classroom-pbl
+    - id: zw-classroom-pbl
       name: '@lybx-leyw/dsh-zju-core-classroom-pbl'

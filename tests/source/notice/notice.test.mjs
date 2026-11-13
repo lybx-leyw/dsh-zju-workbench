@@ -1674,14 +1674,14 @@ function fakeCtx() {
 function mountPlugin() {
   const { ctx, services, routes } = fakeCtx();
   const dispose = apply(ctx);
-  return { notice: services.get('zhiyunNotice'), routes, services, dispose };
+  return { notice: services.get('zwNotice'), routes, services, dispose };
 }
 
-test('apply() 真的 provide 了 zhiyunNotice，并注册了唯一的同源路由', () => {
+test('apply() 真的 provide 了 zwNotice，并注册了唯一的同源路由', () => {
   const { notice, routes } = mountPlugin();
-  assert.ok(notice, '必须 provide zhiyunNotice');
+  assert.ok(notice, '必须 provide zwNotice');
   assert.equal(routes.length, 1, '必须注册恰好一条路由');
-  assert.equal(routes[0].path, '/api/zhiyun-notice');
+  assert.equal(routes[0].path, '/api/zw-notice');
   assert.equal(routes[0].path, ROUTE_PATH);
   assert.equal(routes[0].kind, 'exact');
 });
@@ -1744,7 +1744,7 @@ test('路由：status 动作给出 ready 与路由自身信息', async () => {
   await routes[0].handler(makeReq(JSON.stringify({ action: 'status' })), res);
   assert.equal(payload.ok, true);
   assert.equal(payload.value.ready, false);
-  assert.equal(payload.value.routePath, '/api/zhiyun-notice');
+  assert.equal(payload.value.routePath, '/api/zw-notice');
 });
 
 test('路由：list 的参数错误以 ok:false + CONFIG 返回（不是 500）', async () => {
@@ -1809,9 +1809,9 @@ test('reset() 不会抛（换账号时的清理入口）', () => {
 test('卸载后服务与路由都被收回', async () => {
   const { ctx, services } = fakeCtx();
   const dispose = apply(ctx);
-  assert.ok(services.get('zhiyunNotice'));
+  assert.ok(services.get('zwNotice'));
   await assert.doesNotReject(async () => { await dispose?.(); });
-  assert.equal(services.has('zhiyunNotice'), false, '卸载后服务应当被摘掉');
+  assert.equal(services.has('zwNotice'), false, '卸载后服务应当被摘掉');
 });
 
 test('插件不 import 任何 tier 1 业务包（只依赖 tier 0 的 source-http）', async () => {

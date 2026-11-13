@@ -1,6 +1,6 @@
-# zhiyun-pro-desktop
+# zju-workbench-desktop
 
-智云 Pro 的**桌面快捷入口**：起一个 DSH 实例，把它开在窗口里。
+ZJU Workbench 的**桌面快捷入口**：起一个 DSH 实例，把它开在窗口里。
 
 ## 它是什么，不是什么
 

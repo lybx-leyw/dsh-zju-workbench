@@ -31,8 +31,8 @@ await esbuild.build({ entryPoints: [entry], bundle: true, outfile: path.join(dir
   define: { 'process.env.NODE_ENV': '"development"' } });
 
 const studyCss = fs.readFileSync(path.join(ROOT, 'packages/client/page-study/src/style.css'), 'utf8');
-const shellCss = `:root{--zy-surface:#fffdf8;--zy-line:#dcd6c8;--zy-text:#1d2724;--zy-muted:#6b7671;--zy-secondary:#3f4b47;--zy-accent:#176c68;--zy-hover:#eef2ef;--zy-space-1:4px;--zy-space-2:8px;--zy-space-3:12px;--zy-space-4:16px;--zy-space-5:20px;--zy-fs-sm:13px;--zy-fs-md:15px}
-body[data-zhiyun]{margin:0;padding:32px;background:#f2efe7;font-family:system-ui,sans-serif;color:var(--zy-text)}`;
+const shellCss = `:root{--zw-surface:#fffdf8;--zw-line:#dcd6c8;--zw-text:#1d2724;--zw-muted:#6b7671;--zw-secondary:#3f4b47;--zw-accent:#176c68;--zw-hover:#eef2ef;--zw-space-1:4px;--zw-space-2:8px;--zw-space-3:12px;--zw-space-4:16px;--zw-space-5:20px;--zw-fs-sm:13px;--zw-fs-md:15px}
+body[data-zw]{margin:0;padding:32px;background:#f2efe7;font-family:system-ui,sans-serif;color:var(--zw-text)}`;
 
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const page = await browser.newPage({ viewport: { width: 640, height: 620 }, deviceScaleFactor: 2 });
@@ -40,16 +40,16 @@ const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 try {
   await page.goto('about:blank');
-  await page.setContent(`<!doctype html><body data-zhiyun><div id="root"></div></body>`);
+  await page.setContent(`<!doctype html><body data-zw><div id="root"></div></body>`);
   await page.addStyleTag({ content: shellCss });
   await page.addStyleTag({ content: studyCss });
   await page.addScriptTag({ path: path.join(dir, 'bundle.js') });
-  await page.waitForSelector('.zs-teach-progress');
+  await page.waitForSelector('.zws-teach-progress');
 
   const report = await page.evaluate(() => {
-    const panel = document.querySelector('.zs-teach-progress');
+    const panel = document.querySelector('.zws-teach-progress');
     const box = panel.getBoundingClientRect();
-    const steps = [...panel.querySelectorAll('.zs-teach-steps > li')].map(li => ({
+    const steps = [...panel.querySelectorAll('.zws-teach-steps > li')].map(li => ({
       state: li.dataset.state,
       label: li.querySelector('span').textContent,
       dotBg: getComputedStyle(li.querySelector('i')).backgroundColor,
@@ -59,11 +59,11 @@ try {
     const count = state => steps.filter(step => step.state === state).length;
     return {
       phases: panel.querySelector('strong').textContent,
-      percent: panel.querySelector('.zs-teach-percent')?.textContent,
+      percent: panel.querySelector('.zws-teach-percent')?.textContent,
       elapsed: [...panel.querySelectorAll('span')].find(span => span.textContent.includes('已用'))?.textContent ?? null,
       overflows: panel.scrollWidth > panel.clientWidth + 1,
       inViewport: box.right <= innerWidth + 1 && box.left >= -1,
-      chapters: panel.querySelectorAll('.zs-teach-chapter-list > li').length,
+      chapters: panel.querySelectorAll('.zws-teach-chapter-list > li').length,
       stepCounts: { done: count('done'), active: count('active'), pending: count('pending') },
       distinctVisuals: {
         activeDotFilled: steps.find(s => s.state === 'active')?.dotBg,

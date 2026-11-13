@@ -21,7 +21,7 @@
 | # | 通道 | 规则 |
 |---|---|---|
 | 1 | 语言 | **不手改 TS→JS**。`scripts/build.mjs` 的 esbuild 直接吃 `.ts/.tsx`。新增 `src/*.tsx` 即可，禁止为了"统一风格"把 760k 行翻成 JS。 |
-| 2 | 服务端 | `app/api/*/route.ts` 的 handler body 原样搬进 `ctx.provide('zhiyunClassroomStudio*', …)` 的方法。禁止保留 `NextRequest/NextResponse`，改签名，不改逻辑。 |
+| 2 | 服务端 | `app/api/*/route.ts` 的 handler body 原样搬进 `ctx.provide('zwClassroomStudio*', …)` 的方法。禁止保留 `NextRequest/NextResponse`，改签名，不改逻辑。 |
 | 3 | 存储 | `lib/persistence` `lib/store` 的 SQL 语义保留，driver 换成 `ctx.vault`（本仓既有）。适配层单独一个文件 `adapter.js`，不许在业务里散写 IO。 |
 | 4 | UI | `app/(routes)` + `components/` 切成 `page-*` 包，按 slots 注册。只换壳（路由→插槽、全局布局→外壳），**不重写渲染树**。 |
 | 5 | 第三方 | `langgraph` `@copilotkit/*` `echarts` `shiki` `motion` `tailwindcss@4` `@ai-sdk/*` **原样保留为依赖**。禁止"顺手换成我们自己的实现"。 |
@@ -34,11 +34,11 @@
 | `packages/@openmaic/renderer` | `dsh-zhiyun-classroom-renderer` | vendor + 客户端产物 |
 | `packages/@openmaic/{generation,importer,editor,storage}` | 各自同名 `dsh-zhiyun-classroom-*` | 移植 |
 | `lib/server/` 50.7k | `dsh-zhiyun-host-classroom` | 宿主侧 |
-| `lib/workbench/` `lib/chat/` `lib/orchestration/` `lib/agent*/` | `dsh-zhiyun-core-classroom-agent` | 领域 |
-| `lib/audio/` `lib/media/` `lib/web-*` | `dsh-zhiyun-core-classroom-media` | 领域 |
-| `lib/pbl/` `lib/quiz/` | `dsh-zhiyun-core-classroom-pbl` / 并入 `core-quiz` | 领域 |
-| `lib/export/` `lib/video-export*/` | `dsh-zhiyun-core-classroom-export` | 领域 |
-| `lib/persistence/` `lib/store/` `lib/document*/` | `dsh-zhiyun-core-classroom-vault` | 领域 |
+| `lib/workbench/` `lib/chat/` `lib/orchestration/` `lib/agent*/` | `dsh-zju-core-classroom-agent` | 领域 |
+| `lib/audio/` `lib/media/` `lib/web-*` | `dsh-zju-core-classroom-media` | 领域 |
+| `lib/pbl/` `lib/quiz/` | `dsh-zju-core-classroom-pbl` / 并入 `core-quiz` | 领域 |
+| `lib/export/` `lib/video-export*/` | `dsh-zju-core-classroom-export` | 领域 |
+| `lib/persistence/` `lib/store/` `lib/document*/` | `dsh-zju-core-classroom-vault` | 领域 |
 | `lib/whiteboard/` `lib/choreography/` `lib/action/` | `dsh-zhiyun-core-classroom-stage` | 领域 |
 | `app/(pages)` + `components/` 89k | `page-classroom` / `-build` / `-play` / `-editor` | 页面 |
 
@@ -47,15 +47,15 @@
 宿主包只暴露服务，不暴露实现：
 
 ```
-ctx.zhiyunClassroomStudio.status()                  // { state, version, detail }
-ctx.zhiyunClassroomStudio.generate(brief, opts)     // 流式，返回 runId + AsyncIterable<event>
-ctx.zhiyunClassroomStudio.materials.create({ buffer, filename, mimeType })  // → { materialId }
-ctx.zhiyunClassroomStudio.runs.get(runId)
-ctx.zhiyunClassroomStudio.runs.cancel(runId)
-ctx.zhiyunClassroomStudio.classroom.load(id)        // { scenes, meta, assets }
-ctx.zhiyunClassroomStudio.classroom.save(id, doc)
-ctx.zhiyunClassroomStudio.export.pptx(id) / .html(id)
-ctx.zhiyunClassroomStudio.providers.list() / .set(key, cfg)
+ctx.zwClassroomStudio.status()                  // { state, version, detail }
+ctx.zwClassroomStudio.generate(brief, opts)     // 流式，返回 runId + AsyncIterable<event>
+ctx.zwClassroomStudio.materials.create({ buffer, filename, mimeType })  // → { materialId }
+ctx.zwClassroomStudio.runs.get(runId)
+ctx.zwClassroomStudio.runs.cancel(runId)
+ctx.zwClassroomStudio.classroom.load(id)        // { scenes, meta, assets }
+ctx.zwClassroomStudio.classroom.save(id, doc)
+ctx.zwClassroomStudio.export.pptx(id) / .html(id)
+ctx.zwClassroomStudio.providers.list() / .set(key, cfg)
 ```
 
 讲义走 `generate({ requirement, materialIds })`：**只传 id，不传正文**（上游明确拒绝
@@ -64,13 +64,13 @@ ctx.zhiyunClassroomStudio.providers.list() / .set(key, cfg)
 约束：
 
 - `apply()` **永不因上游缺失而抛错**（照 `host-deeptutor` 的约定），缺失表现为 `status().state`；
-- 页面包 `inject: ['slots']` + 惰性 `ctx.inject(['zhiyunClassroomStudio'], …)`，领域包停用时不注册、外壳显示占位；
+- 页面包 `inject: ['slots']` + 惰性 `ctx.inject(['zwClassroomStudio'], …)`，领域包停用时不注册、外壳显示占位；
 - 事件流用 AsyncIterable，不用回调注册表（避免卸载泄漏）。
 
 ## 5. 样式与依赖
 
-- 每个包一个 `src/style.css`，选择器一律 `.zyc-` 前缀；外壳的 `.zy-` 不动。
-- Tailwind 4 只允许在 `classroom-renderer` 内引入，且必须 `@scope` 到 `.zyc-root`，防止 reset 污染工作台。
+- 每个包一个 `src/style.css`，选择器一律 `.zwc-` 前缀；外壳的 `.zw-` 不动。
+- Tailwind 4 只允许在 `classroom-renderer` 内引入，且必须 `@scope` 到 `.zwc-root`，防止 reset 污染工作台。
 - 新增客户端包必须同时：① 在 `scripts/build.mjs` 的 `CLIENT_PACKAGES` 登记；② `package.json` 的 `dsh.client` 声明 `platform/external`；③ 不进 `HOST_SEEDS`。
 
 ## 6. 并行切分（互不阻塞）
@@ -107,12 +107,12 @@ ctx.zhiyunClassroomStudio.providers.list() / .set(key, cfg)
 | `dsh-zhiyun-classroom-geometry` | 13 文件 / 220K | 否 | 否 | 否 | 同上（`@openmaic/geometry@0.1.0`），被 stage/renderer 内联 |
 | `dsh-zhiyun-classroom-renderer` | 252 文件 / 17M | **是** | **是** | 否（被播放页消费） | vendor `@openmaic/renderer@0.2.0`；`lib/client.js` 14MB，只外置 react 三件套 |
 | `dsh-zhiyun-host-classroom` | 23 文件 | **是** | 否 | 否 | 82 条 route 的宿主侧全部落地点 |
-| `dsh-zhiyun-core-classroom-vault` | 8 文件 | **是** | 否 | 否 | 文件树存储，`classroom/ scenes/ runs/ assets/ materials/` 六张逻辑表 |
-| `dsh-zhiyun-core-classroom-media` | 17 文件 | **是** | 否 | 否 | TTS/ASR/生图/检索/PDF，全 provider 分支保留 |
-| `dsh-zhiyun-core-classroom-pbl` | 13 文件 | **是** | 否 | 否 | PBL v2 planner + rubric + grade |
-| `dsh-zhiyun-core-classroom-agent` | 20 文件 | **是** | **是** | 否 | Director 编排 / 角色调度 / 动作归一化 |
-| `dsh-zhiyun-core-classroom-generate` | 14 文件 | **是** | 否 | 否 | 四段管线（outline→scenes→media→finalize），逐段 checkpoint、可 resume |
-| `dsh-zhiyun-core-classroom-export` | 37 文件 | **是** | 否 | 否 | PPTX / HTML / ZIP / video；HTML 可直接进 `<iframe srcdoc>` |
+| `dsh-zju-core-classroom-vault` | 8 文件 | **是** | 否 | 否 | 文件树存储，`classroom/ scenes/ runs/ assets/ materials/` 六张逻辑表 |
+| `dsh-zju-core-classroom-media` | 17 文件 | **是** | 否 | 否 | TTS/ASR/生图/检索/PDF，全 provider 分支保留 |
+| `dsh-zju-core-classroom-pbl` | 13 文件 | **是** | 否 | 否 | PBL v2 planner + rubric + grade |
+| `dsh-zju-core-classroom-agent` | 20 文件 | **是** | **是** | 否 | Director 编排 / 角色调度 / 动作归一化 |
+| `dsh-zju-core-classroom-generate` | 14 文件 | **是** | 否 | 否 | 四段管线（outline→scenes→media→finalize），逐段 checkpoint、可 resume |
+| `dsh-zju-core-classroom-export` | 37 文件 | **是** | 否 | 否 | PPTX / HTML / ZIP / video；HTML 可直接进 `<iframe srcdoc>` |
 | `dsh-zhiyun-core-classroom-stage` | 19 文件 | **是** | **是** | 间接 | 动作账本 + 客户端 `<ClassroomStage>` |
 | `dsh-zhiyun-page-classroom-build` | 8 文件 | **是** | **是** | **是** | 「课堂 → 生成」二级入口（`NAV.classroom-build`） |
 | `dsh-zhiyun-page-classroom-play` | 7 文件 | **是** | **是** | **是** | 导轨「课堂」（`NAV.classroom`） |
@@ -166,7 +166,7 @@ Loader 建一条「装载了但什么都不做」的条目；消费它们的包�
    `classroom.load(id)` 要给课堂文档本身 → `export.html(id)` 对存在的课堂报 `E_NOT_FOUND`。
    修法：兼容层剥信封，4xx 转 `E_NOT_FOUND`。
 4. **`export.pptx/html` 是死路径**：宿主里恒抛 `E_NOT_IMPLEMENTED`，真实现只在
-   `ctx.zhiyunClassroomExport`。修法：转发到 `ports.export`，入参 id 与文档对象都接受。
+   `ctx.zwClassroomExport`。修法：转发到 `ports.export`，入参 id 与文档对象都接受。
 
 ### 8.5 讲义链路（2026-10-31 追加）
 
@@ -193,7 +193,7 @@ Loader 建一条「装载了但什么都不做」的条目；消费它们的包�
 `E_MATERIAL_UNAVAILABLE`（同上游 `ClassroomMaterialsUnavailableError`：不静默让模型凭空讲）。
 
 **依赖**：`unpdf`（纯 JS，无原生依赖）已装进
-`packages/dsh-zhiyun-core-classroom-media/node_modules/`。它**不进**根 `package.json`
+`packages/dsh-zju-core-classroom-media/node_modules/`。它**不进**根 `package.json`
 ——根安装会被 3 个私有 radar 包 404 挡住（见 §8.4 第 2 条同源问题）。换机器时把
 `npm pack unpdf` 的产物解到上述目录即可；缺它时 `parsePdf` 返回 `E_DEPENDENCY_MISSING`
 （`tests/classroom-media.test.mjs` 用隔离目录守着这条语义）。
@@ -207,7 +207,7 @@ Loader 建一条「装载了但什么都不做」的条目；消费它们的包�
 | # | 事 | 影响 | 建议 |
 |---|---|---|---|
 | R-1 | `sanitize.escapeText` 对 `&` 二次转义（`&amp;` → `&amp;amp;`） | 播放器会把 `&amp;` 显示成字面量 | 上游同位置也有此行为；修它会让 parity 差异多一条，建议与上游一起改 |
-| R-2 | 取 `ctx.zhiyunClassroomStudio` 的时机有四种写法（apply 抓一次 / 惰性） | 真 Cordis 靠 `inject` 推迟掩盖；容器不推迟就静默降级 | 统一成惰性 getter（`media`/`export` 已是） |
+| R-2 | 取 `ctx.zwClassroomStudio` 的时机有四种写法（apply 抓一次 / 惰性） | 真 Cordis 靠 `inject` 推迟掩盖；容器不推迟就静默降级 | 统一成惰性 getter（`media`/`export` 已是） |
 | R-3 | 「模型未配」有两套答案：宿主 `status().detail.providerConfig` vs run-error `E_NO_LLM_PROVIDER` | 用户看到两个入口说不同的话 | 页面统一读 `providers.list()`，把 run-error 当兜底 |
 | R-4 | `proxy-media` 的 SSRF 只做了协议 + 字面内网地址两层 | DNS 重绑定可绕过 | 需要 undici 的 `lookup` 钉定，属新增依赖，未做 |
 | R-5 | `scripts/test-host.mjs` 在本机跑不到 | 没有 DSH 宿主（`.runtime/` 只有夹具），`initialize()` 就退出 | 端到端闸门改用静态校验 + `tests/classroom-e2e.test.mjs` 的进程内装配 |

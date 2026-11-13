@@ -1,19 +1,19 @@
 # @lybx-leyw/dsh-zju-core-classroom-media
 
-智云 Pro 互动课堂的**语音 / 媒体 / 检索**半边。把 OpenMAIC 的
+ZJU Workbench 互动课堂的**语音 / 媒体 / 检索**半边。把 OpenMAIC 的
 `lib/audio`（9.7k）`lib/media`（9.1k）`lib/media-parse` `lib/web-search`（2.1k）
 `lib/web-fetch` `lib/pdf`（2.1k）搬成一个 Cordis 插件。
 
 ```
-ctx.zhiyunClassroomMedia.tts(text, voice?)       → { ok, bytes, format, durationSeconds }
-ctx.zhiyunClassroomMedia.asr(file, opts?)        → { ok, text }
-ctx.zhiyunClassroomMedia.image(prompt, opts?)    → { ok, url|base64, width, height }
-ctx.zhiyunClassroomMedia.search(query, opts?)    → { ok, answer, sources, query, responseTime }
-ctx.zhiyunClassroomMedia.fetchPage(url, opts?)   → { ok, title, markdown, finalUrl, truncated }
-ctx.zhiyunClassroomMedia.parsePdf(buffer, opts?) → { ok, text, images, metadata }
-ctx.zhiyunClassroomMedia.timeline(clips, opts?)  → { ok, timeline, track }
-ctx.zhiyunClassroomMedia.providers(capability?)  → 六段 provider 的可用性
-ctx.zhiyunClassroomMedia.status()
+ctx.zwClassroomMedia.tts(text, voice?)       → { ok, bytes, format, durationSeconds }
+ctx.zwClassroomMedia.asr(file, opts?)        → { ok, text }
+ctx.zwClassroomMedia.image(prompt, opts?)    → { ok, url|base64, width, height }
+ctx.zwClassroomMedia.search(query, opts?)    → { ok, answer, sources, query, responseTime }
+ctx.zwClassroomMedia.fetchPage(url, opts?)   → { ok, title, markdown, finalUrl, truncated }
+ctx.zwClassroomMedia.parsePdf(buffer, opts?) → { ok, text, images, metadata }
+ctx.zwClassroomMedia.timeline(clips, opts?)  → { ok, timeline, track }
+ctx.zwClassroomMedia.providers(capability?)  → 六段 provider 的可用性
+ctx.zwClassroomMedia.status()
 ```
 
 ## 四条纪律
@@ -21,7 +21,7 @@ ctx.zhiyunClassroomMedia.status()
 1. **`apply()` 永不抛**。缺 studio、`provide` 撞名、日志桩不全 —— 一律降级，不白屏。
 2. **方法返回结果、不 throw**。课堂链路跑在渲染树里，一个 provider 没配不该炸页面；
    失败形状统一是 `{ ok: false, code, message, detail }`，`code` 见 `src/errors.js`。
-3. **密钥只从宿主拿**：`ctx.zhiyunClassroomStudio.providers` → `config.providers` 注入 →
+3. **密钥只从宿主拿**：`ctx.zwClassroomStudio.providers` → `config.providers` 注入 →
    `process.env`（仅桌面端过渡兜底，`src/providers.js` 有逐条注释）。
 4. **二进制用 `Buffer`**，没有 Node stream。
 

@@ -57,7 +57,7 @@ const call = (handler, method, url, body, headers = {}) => new Promise((resolve)
 
 test('记录 id 沿用旧值（换 id 会让已有用户丢凭据）', () => {
   // 这条不是美观问题：id 变了，所有已登录用户的凭据读不到，会被迫重登一次。
-  assert.equal(CARD_RECORD_KEY, 'zhiyun-classroom/account');
+  assert.equal(CARD_RECORD_KEY, 'zw-classroom/account');
 });
 
 test('服务不可用时读写都安全返回，不抛', async () => {
@@ -243,8 +243,8 @@ test('从没存过密码却传打码值 → 拒绝（不能存个空密码）', 
 });
 
 test('路径与写头与客户端常量一致（跨端漂移会表现为"保存没反应"）', () => {
-  assert.equal(ROUTE_PATH, '/_dsh/zhiyun-card');
-  assert.equal(WRITE_HEADER, 'x-zhiyun-card');
+  assert.equal(ROUTE_PATH, '/_dsh/zw-card');
+  assert.equal(WRITE_HEADER, 'x-zw-card');
   assert.ok(ROUTE_PATH.startsWith('/_dsh/'), '与宿主其它设置路由同前缀');
 });
 

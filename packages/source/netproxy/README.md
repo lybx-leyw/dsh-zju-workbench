@@ -1,6 +1,6 @@
 # @lybx-leyw/dsh-zju-source-netproxy
 
-智云 Pro 的**分域网络代理**宿主半边。
+ZJU Workbench 的**分域网络代理**宿主半边。
 
 ## 它解决什么问题
 
@@ -33,7 +33,7 @@ DSH 实例会继承全局代理设置。对 DeepSeek 官方接口这类海外目
 
 ## 配置形状
 
-落在 `<profile>/data/zhiyun-net-proxy/config.json`：
+落在 `<profile>/data/zw-net-proxy/config.json`：
 
 ```jsonc
 {
@@ -94,7 +94,7 @@ DSH 实例会继承全局代理设置。对 DeepSeek 官方接口这类海外目
 
 - 中继只监听 `127.0.0.1`，无鉴权，与用户自建的回环代理同级。
 - 设置路由只接受回环 Host（防 DNS rebinding），写操作必须带自定义头
-  `x-zhiyun-net-proxy`（防 CSRF —— 跨站简单请求带不了自定义头）。
+  `x-zw-net-proxy`（防 CSRF —— 跨站简单请求带不了自定义头）。
 - 读配置时密码一律打码；前端回传打码值表示「未改动」，服务端保留原值。
 
 ## 只用宿主已有的东西

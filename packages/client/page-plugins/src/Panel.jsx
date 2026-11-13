@@ -1,13 +1,13 @@
 // 「插件」页的呈现：一张按依赖拓扑排列的清单 + 只对叶包开放的取消开关。
 //
 // 页面不认识任何服务：图与写动作都由 store 通过插槽 inject 递进来（`{ store }`），
-// 组件只读快照、只调回调。样式用本包自己的 `zpl-` 前缀，不去改外壳的 `.zy-*`。
+// 组件只读快照、只调回调。样式用本包自己的 `zwpl-` 前缀，不去改外壳的 `.zw-*`。
 import React, { useEffect, useMemo, useState } from 'react';
 import { Icon, Notice, SectionTitle, useStore } from '@lybx-leyw/dsh-zju-ui-shared';
 import { createLedger, summarize } from './usage.js';
 
 /** 使用账本在 localStorage 里的键。改名等于重置统计，所以带版本号。 */
-const USAGE_KEY = 'zhiyun-plugin-usage-v1';
+const USAGE_KEY = 'zw-plugin-usage-v1';
 
 /** 「还没有图」时喂给 `useUsageRows` 的空清单。必须是模块级常量：每次渲染新建数组会让
  *  `useMemo` 的依赖每次都不相等，白白重算。 */
@@ -48,12 +48,12 @@ function useUsageRows(rows) {
 /** 一行左侧的状态点：已启用 / 已取消 / 等待依赖。 */function StateDot({ row }) {
   const state = !row.enabled ? 'off' : row.waiting.length > 0 || row.phase === 'pending' ? 'wait' : 'on';
   const label = state === 'on' ? '已启用' : state === 'off' ? '已取消' : '等待依赖';
-  return <span className={`zpl-dot zpl-dot-${state}`} title={label} aria-label={label}/>;
+  return <span className={`zwpl-dot zwpl-dot-${state}`} title={label} aria-label={label}/>;
 }
 
 /** 一行的标签：叶 / 有下游 / 只读。 */
 function Badge({ tone, children }) {
-  return <span className={`zpl-badge zpl-badge-${tone}`}>{children}</span>;
+  return <span className={`zwpl-badge zwpl-badge-${tone}`}>{children}</span>;
 }
 
 function Row({ row, busy, onToggle }) {
@@ -61,26 +61,26 @@ function Row({ row, busy, onToggle }) {
   const { cancellable } = row;
   // 已经关掉的包要给回「打开」的路：这里不能用 cancellable（它要求正在运行）。
   const openable = !row.enabled && row.entryId !== undefined && row.readOnlyReason === undefined;
-  return <li className={`zpl-row${row.enabled ? '' : ' is-off'}${row.leaf ? ' is-leaf' : ''}`}>
+  return <li className={`zwpl-row${row.enabled ? '' : ' is-off'}${row.leaf ? ' is-leaf' : ''}`}>
     <StateDot row={row}/>
-    <div className="zpl-row-main">
-      <div className="zpl-row-head">
+    <div className="zwpl-row-main">
+      <div className="zwpl-row-head">
         <strong>{row.short}</strong>
         {row.leaf ? <Badge tone="leaf">叶</Badge> : <Badge tone="inner">被 {row.dependents.length} 个包依赖</Badge>}
         {!row.enabled && <Badge tone="off">已取消</Badge>}
         {row.readOnlyReason !== undefined && <Badge tone="lock">不可更改</Badge>}
         {row.waiting.length > 0 && <Badge tone="wait">等待 {row.waiting.join('、')}</Badge>}
       </div>
-      <p className="zpl-row-meta">
+      <p className="zwpl-row-meta">
         <code>{row.name}</code>
-        {row.deps.length > 0 && <span>依赖：{row.deps.map(dep => dep.replace(/^dsh-zhiyun-/, '')).join('、')}</span>}
+        {row.deps.length > 0 && <span>依赖：{row.deps.map(dep => dep.replace(/^dsh-zju-/, '')).join('、')}</span>}
         {row.deps.length === 0 && <span>不依赖本工作台的任何其他包</span>}
       </p>
-      {row.blocking !== undefined && <p className="zpl-row-block">
-        取消它会让 {row.blocking.map(name => name.replace(/^dsh-zhiyun-/, '')).join('、')} 找不到依赖。
+      {row.blocking !== undefined && <p className="zwpl-row-block">
+        取消它会让 {row.blocking.map(name => name.replace(/^dsh-zju-/, '')).join('、')} 找不到依赖。
       </p>}
     </div>
-    <label className={`zpl-switch${cancellable || openable ? '' : ' is-disabled'}`}>
+    <label className={`zwpl-switch${cancellable || openable ? '' : ' is-disabled'}`}>
       <input
         type="checkbox"
         checked={row.enabled}
@@ -111,12 +111,12 @@ export function Panel({ store }) {
   const usage = useUsageRows(view?.rows ?? NO_ROWS);
 
   if (state.status === 'loading' || state.status === 'idle') {
-    return <section className="zp"><SectionTitle>插件依赖</SectionTitle><p className="zpl-muted">正在读取这个工作台的依赖关系…</p></section>;
+    return <section className="zp"><SectionTitle>插件依赖</SectionTitle><p className="zwpl-muted">正在读取这个工作台的依赖关系…</p></section>;
   }
   if (view === null) {
     return <section className="zp"><SectionTitle>插件依赖</SectionTitle>
       <Notice>{state.error || '读不到这个工作台的依赖关系。'}</Notice>
-      <button className="zpl-button" onClick={() => { void store.refresh(); }}>重试</button>
+      <button className="zwpl-button" onClick={() => { void store.refresh(); }}>重试</button>
     </section>;
   }
 
@@ -128,18 +128,18 @@ export function Panel({ store }) {
   // `usage` 在上面（提前 return 之前）已经算好，这里只是用它。
 
   return <section className="zp">
-    <header className="zpl-head">
+    <header className="zwpl-head">
       <div>
         <small>拓扑序 · 依赖在前</small>
         <h1>插件依赖</h1>
         <p>这张图读的是运行时自己的依赖关系，不是哪份手写的清单：每个包下面写着它依赖谁，没有任何包依赖它的是<strong>叶</strong>。</p>
       </div>
-      <button className="zpl-button" disabled={state.pendingAction !== null} onClick={() => { void store.refresh(); }}>重新读取</button>
+      <button className="zwpl-button" disabled={state.pendingAction !== null} onClick={() => { void store.refresh(); }}>重新读取</button>
     </header>
 
     <Notice>{state.error}</Notice>
 
-    <div className="zpl-summary">
+    <div className="zwpl-summary">
       <span><strong>{view.rows.length}</strong> 个包</span>
       <span><strong>{view.enabled.length}</strong> 启用</span>
       <span><strong>{view.disabled.length}</strong> 已取消</span>
@@ -147,36 +147,36 @@ export function Panel({ store }) {
     </div>
 
     {view.cycles.length > 0 && <Notice>
-      依赖里存在环：{view.cycles.map(group => group.map(name => name.replace(/^dsh-zhiyun-/, '')).join(' ↔ ')).join('；')}。环内无法定先后，已按运行时顺序排。
+      依赖里存在环：{view.cycles.map(group => group.map(name => name.replace(/^dsh-zju-/, '')).join(' ↔ ')).join('；')}。环内无法定先后，已按运行时顺序排。
     </Notice>}
 
     <SectionTitle aside="没有任何包依赖它们 —— 取消不会让别的包缺依赖">叶包</SectionTitle>
     {leaves.length === 0
-      ? <p className="zpl-muted">没有叶包。</p>
-      : <ul className="zpl-list">{leaves.map(row => <Row key={row.name} row={row} busy={state.busy} onToggle={(entryId, on) => { void store.setPluginEnabled(entryId, on); }}/>)}</ul>}
+      ? <p className="zwpl-muted">没有叶包。</p>
+      : <ul className="zwpl-list">{leaves.map(row => <Row key={row.name} row={row} busy={state.busy} onToggle={(entryId, on) => { void store.setPluginEnabled(entryId, on); }}/>)}</ul>}
 
     <SectionTitle aside="被别的包依赖 —— 取消会让它们进入「等待依赖」">支撑包</SectionTitle>
-    <ul className="zpl-list">{inner.map(row => <Row key={row.name} row={row} busy={state.busy} onToggle={(entryId, on) => { void store.setPluginEnabled(entryId, on); }}/>)}</ul>
+    <ul className="zwpl-list">{inner.map(row => <Row key={row.name} row={row} busy={state.busy} onToggle={(entryId, on) => { void store.setPluginEnabled(entryId, on); }}/>)}</ul>
 
     <SectionTitle aside="按使用计数排 —— 一次没用过的在最前">吃灰</SectionTitle>
     {usage.filter(entry => entry.state !== 'active').length === 0
-      ? <p className="zpl-muted">每个包都被用过。本机还没有使用记录时，这里会全部显示「没用过」。</p>
-      : <ul className="zpl-list">{usage.filter(entry => entry.state !== 'active').map(entry => <li key={entry.key} className="zpl-row">
-        <span className="zpl-name">{entry.name.replace(/^dsh-zhiyun-/, '')}</span>
-        <span className="zpl-muted">{entry.state === 'never' ? '没用过' : `上次 ${new Date(entry.lastUsed).toLocaleDateString()} · ${entry.count} 次`}</span>
+      ? <p className="zwpl-muted">每个包都被用过。本机还没有使用记录时，这里会全部显示「没用过」。</p>
+      : <ul className="zwpl-list">{usage.filter(entry => entry.state !== 'active').map(entry => <li key={entry.key} className="zwpl-row">
+        <span className="zwpl-name">{entry.name.replace(/^dsh-zju-/, '')}</span>
+        <span className="zwpl-muted">{entry.state === 'never' ? '没用过' : `上次 ${new Date(entry.lastUsed).toLocaleDateString()} · ${entry.count} 次`}</span>
       </li>)}</ul>}
 
-    <details className="zpl-details" open={open} onToggle={event => setOpen(event.currentTarget.open)}>
+    <details className="zwpl-details" open={open} onToggle={event => setOpen(event.currentTarget.open)}>
       <summary>这个工作台的层序与依赖序并不总是一致（{view.layerViolations.length} 处）</summary>
-      <p className="zpl-muted">
+      <p className="zwpl-muted">
         profile 的 <code>dsh.profile.bundles</code> 是<strong>层顺序</strong>：后一层覆盖前一层，而把包重新打开会被追加到列表末尾，于是层序会随时间漂移。下面的依赖若排在它的消费者之后，两者就是两套顺序。
       </p>
       {view.layerViolations.length === 0
-        ? <p className="zpl-muted">当前层序与依赖序一致。</p>
-        : <ul className="zpl-list zpl-list-plain">{view.layerViolations.map(item => <li key={`${item.dependent}->${item.dependency}`}>
-          <code>{item.dependent.replace(/^dsh-zhiyun-/, '')}</code> 依赖 <code>{item.dependency.replace(/^dsh-zhiyun-/, '')}</code>，但后者排在它前面。
+        ? <p className="zwpl-muted">当前层序与依赖序一致。</p>
+        : <ul className="zwpl-list zwpl-list-plain">{view.layerViolations.map(item => <li key={`${item.dependent}->${item.dependency}`}>
+          <code>{item.dependent.replace(/^dsh-zju-/, '')}</code> 依赖 <code>{item.dependency.replace(/^dsh-zju-/, '')}</code>，但后者排在它前面。
         </li>)}</ul>}
-      <p className="zpl-muted">完整的拓扑序：{view.order.map(name => name.replace(/^dsh-zhiyun-/, '')).join(' → ')}</p>
+      <p className="zwpl-muted">完整的拓扑序：{view.order.map(name => name.replace(/^dsh-zju-/, '')).join(' → ')}</p>
     </details>
   </section>;
 }

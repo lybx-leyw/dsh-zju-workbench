@@ -62,10 +62,10 @@ async function checkHostBoot() {
 }
 
 try {
-  const viaLauncher = hostLaunch({ ZHIYUN_NODE: 'C:\\Program Files\\nodejs\\node.exe' });
+  const viaLauncher = hostLaunch({ ZW_NODE: 'C:\\Program Files\\nodejs\\node.exe' });
   assert.equal(viaLauncher.executable, 'C:\\Program Files\\nodejs\\node.exe');
   assert.equal(viaLauncher.electronBinary, false, '普通 node 不应再套 ELECTRON_RUN_AS_NODE');
-  assert.equal(hostLaunch({ ZHIYUN_NODE: 'C:\\electron\\electron.exe' }).electronBinary, true);
+  assert.equal(hostLaunch({ ZW_NODE: 'C:\\electron\\electron.exe' }).electronBinary, true);
   assert.equal(hostLaunch({}).executable, process.execPath);
   checks.push('宿主用启动器传入的 node，不用 Electron 自带的那个');
   await checkHostBoot();
@@ -99,15 +99,15 @@ if (!existsSync(electronBin)) {
    * 于是「窗口从不显示」这类故障会一路绿灯，直到用户报"一打开就白屏"。
    * 而"白屏"和"窗口压根没 show"在用户眼里是同一件事，排查却完全不同。
    *
-   * `ZHIYUN_DESKTOP_SMOKE=1` 让壳走一遍真实启动 → 加载产品页 → 退出，
+   * `ZW_DESKTOP_SMOKE=1` 让壳走一遍真实启动 → 加载产品页 → 退出，
    * 并把 `visible` 写进 `launcher.log`。
    *
    * ⚠️ 不能读 `spawnSync` 的 stdout：`launch.mjs` 用 `stdio: 'inherit'` 把
    *    Electron 的输出直接接到终端，捕获回来是空的。**日志文件是唯一可靠来源**
    *    （这也是排查时必须先找到它的原因）。
    */
-  const logFile = process.env.ZHIYUN_DESKTOP_LOG
-    || path.join(process.env.APPDATA ?? '', 'Zhiyun Pro Launcher', 'launcher.log');
+  const logFile = process.env.ZW_DESKTOP_LOG
+    || path.join(process.env.APPDATA ?? '', 'ZJU Workbench Launcher', 'launcher.log');
   let before = '';
   try { before = await readFile(logFile, 'utf8'); } catch { /* 第一次跑，没有日志 */ }
 
@@ -115,7 +115,7 @@ if (!existsSync(electronBin)) {
     cwd: path.join(root, 'apps/desktop'),
     timeout: 180_000,
     windowsHide: true,
-    env: { ...process.env, ZHIYUN_DESKTOP_SMOKE: '1' },
+    env: { ...process.env, ZW_DESKTOP_SMOKE: '1' },
   });
 
   let after = '';

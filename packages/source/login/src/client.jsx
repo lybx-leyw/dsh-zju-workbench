@@ -13,7 +13,7 @@
 //
 // # 两个容易写错的地方
 //
-//   1. **不能包 `<details>` / `.zy-settings-group`。** 壳里的 `PersonalSettingsBridge`
+//   1. **不能包 `<details>` / `.zw-settings-group`。** 壳里的 `PersonalSettingsBridge`
 //      已经为每个 `settings.section` 画好了外层折叠分组（图标 + 标题 + 副标题 + chevron），
 //      再包一层就是"壳套壳"两个折叠框、两个标题。本组件直接返回 `<form>`。
 //      参考 `@lybx-leyw/dsh-zju-page-paper/src/SettingsSection.jsx`。
@@ -35,7 +35,7 @@ import {
 import css from './style.css';
 import { MASK, ROUTE_PATH, WRITE_HEADER, errorText } from './shared.js';
 
-export const name = 'zhiyun-login-client';
+export const name = 'zw-login-client';
 
 /** 只要插槽：这一块不依赖任何领域服务，凭据由宿主半边负责。 */
 export const inject = ['slots', 'locale'];
@@ -550,7 +550,7 @@ const TEXT = {
 };
 
 export function apply(ctx) {
-  mountStyle(ctx, { attribute: 'zhiyunCardStyle', css, label: 'zhiyun: card settings styles' });
+  mountStyle(ctx, { attribute: 'zwCardStyle', css, label: 'zw: card settings styles' });
   const text = registerText(ctx, 'zju-source-login', TEXT);
   ctx.effect(() => () => text.dispose(), 'zju: login settings i18n');
 
@@ -558,9 +558,9 @@ export function apply(ctx) {
   // 排在拼题A（65）与个人中转站（70）之前 —— 那两项各自是独立来源，缺了只影响一处。
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
-    id: 'zhiyun-card',
+    id: 'zw-card',
     order: 60,
-    // `id` 保持 `zhiyun-card` 不变：规划页的报错文案按它指路，改名会让那条指引失效。
+    // `id` 保持 `zw-card` 不变：规划页的报错文案按它指路，改名会让那条指引失效。
     // 显示名已改为「浙大统一身份认证」—— 一卡通是校园卡，与本页配的 CAS 凭据不是一回事。
     label: () => text.t('section'),
   }, () => React.createElement(SettingsSection, { t: text.t })));
@@ -595,7 +595,7 @@ export function SettingsSection({ t }) {
    * ⚠️ 必须声明在 `applyCard` **之前**：那个 `useCallback` 的体里引用了
    *    `setHasPassword`，虽然只在调用时求值（不会真的踩 TDZ），但本仓有过
    *    "const 写在引用它的 useMemo 之后 → 首次渲染白屏"的先例
-   *    （见 `dsh-zhiyun-page-planning/src/client.jsx` 里 `openTodos` 那段）。
+   *    （见 `dsh-zju-page-planning/src/client.jsx` 里 `openTodos` 那段）。
    *    顺序写对是零成本的，不值得为它赌一次。
    */
   const [hasPassword, setHasPassword] = useState(false);

@@ -923,18 +923,18 @@ test('⑥ ★★ Dart golden：系统提示词与 App 的 kLectureWrittenSystemP
 
 test('⑦ 插件：provide 服务 + disposer 释放（宿主服务由注入项提供）', async () => {
   const plugin = await import('../../../packages/core/lecture/src/index.js');
-  assert.equal(plugin.name, 'zhiyun-lecture');
-  assert.deepEqual(plugin.inject, ['zhiyunParser']);
+  assert.equal(plugin.name, 'zw-lecture');
+  assert.deepEqual(plugin.inject, ['zwParser']);
 
   const provided = new Map();
   const llm = fakeLlm();
   const ctx = {
-    zhiyunParser: { llm: { call: llm.call, resolve: async () => ({ text: { provider: 'p', model: 'm' } }) } },
+    zwParser: { llm: { call: llm.call, resolve: async () => ({ text: { provider: 'p', model: 'm' } }) } },
     provide(name, value) { provided.set(name, value); return () => provided.delete(name); },
   };
   const dispose = await plugin.apply(ctx, { concurrency: 2 });
-  const service = provided.get('zhiyunLecture');
-  assert.ok(service, 'ctx.zhiyunLecture 要可用');
+  const service = provided.get('zwLecture');
+  assert.ok(service, 'ctx.zwLecture 要可用');
   assert.equal(service.concurrency, 2);
 
   const fx = lessonFixture();
@@ -944,7 +944,7 @@ test('⑦ 插件：provide 服务 + disposer 释放（宿主服务由注入项�
   assert.deepEqual(llm.calls[0].route, { provider: 'p', model: 'm' }, '路由由集成层解析后透传');
 
   await dispose();
-  assert.equal(provided.get('zhiyunLecture'), undefined, '卸载后服务要消失');
+  assert.equal(provided.get('zwLecture'), undefined, '卸载后服务要消失');
   assert.equal(service.closed, true, '加工器要被释放');
   await assert.rejects(service.assemble({ tree: fx.tree, blocks: fx.blocks }),
     (error) => error.code === 'DISPOSED');
@@ -974,15 +974,15 @@ test('⑨ ★★ 真实 Cordis 宿主：服务挂载 / 隔离 / 卸载释放（�
     // 「本卷有本概念」→ 每个都重试一次（那是正确行为，但会让「八次调用」这条断言失真）。
     const replyFor = (body) => echoAll(body, () => '书面语正文');
     const stub = () => ({ llm: { call: async ({ stage, variable }) => { calls.push(stage); return { text: replyFor(variable), usage: { totalTokens: 1 } }; } } });
-    first.provide('zhiyunParser', stub());
-    second.provide('zhiyunParser', stub());
+    first.provide('zwParser', stub());
+    second.provide('zwParser', stub());
 
     try {
       const fiber = await first.plugin(plugin);
       const other = await second.plugin(plugin);
-      const service = first.get('zhiyunLecture');
-      const isolated = second.get('zhiyunLecture');
-      assert.ok(service, `Cordis ${version}: 插件要挂上 zhiyunLecture`);
+      const service = first.get('zwLecture');
+      const isolated = second.get('zwLecture');
+      assert.ok(service, `Cordis ${version}: 插件要挂上 zwLecture`);
       assert.ok(isolated, `Cordis ${version}: 第二个 Context 也要挂上`);
       assert.notEqual(service, isolated, `Cordis ${version}: 两个 Context 之间必须隔离`);
 
@@ -994,7 +994,7 @@ test('⑨ ★★ 真实 Cordis 宿主：服务挂载 / 隔离 / 卸载释放（�
       assert.equal(topics[0].passages[0].text, '书面语正文', `Cordis ${version}: 正文写进去了`);
 
       await fiber.dispose();
-      assert.equal(first.get('zhiyunLecture'), undefined, `Cordis ${version}: 卸载后服务要消失`);
+      assert.equal(first.get('zwLecture'), undefined, `Cordis ${version}: 卸载后服务要消失`);
       assert.equal(service.closed, true, `Cordis ${version}: 加工器要被释放`);
       await assert.rejects(service.assemble({ tree: fx.tree, blocks: fx.blocks }),
         (error) => error.code === 'DISPOSED', `Cordis ${version}: 释放后再用要抛 DISPOSED`);
@@ -1017,7 +1017,7 @@ test('⑦ 插件：没有 llm 时如实报配置错（不静默降级）', async
   const provided = new Map();
   const ctx2 = { provide(n, v) { provided.set(n, v); return () => provided.delete(n); } };
   const dispose = await plugin.apply(ctx2, { llm });
-  assert.ok(provided.get('zhiyunLecture'));
+  assert.ok(provided.get('zwLecture'));
   await dispose();
 });
 

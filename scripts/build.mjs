@@ -50,7 +50,7 @@ export const CLIENT_PACKAGES = [
   // 共享 UI 原语：目录名 `ui-shared`，发布名 `@lybx-leyw/dsh-zju-ui-shared`。
   // 同样写目录名 —— 这一列是 `packages/client/<目录>` 的键。
   'ui-shared',
-  // `dsh-zhiyun-shell-workbench` / `-shell-bridge` 已归档到
+  // `dsh-zju-shell-workbench` / `-shell-bridge` 已归档到
   // `archive/deprecated-packages/`（产品界面外壳，当前 profile 不装配）。
   // **不要在这里加回来** —— 除非它们真的搬回 `packages/`；
   // 留着会让构建报 `no package directory named ...`。
@@ -215,7 +215,7 @@ export async function buildClientPackage(name, options = {}) {
     jsx: 'automatic',
     external: [...HOST_SEEDS, ...declared],
     // `.md` 进 text loader：文档页把 `src/docs/*.md` 当字符串打进 bundle
-    //（见 dsh-zhiyun-page-docs）。esbuild 默认不认识 .md，不配这一行会在构建时
+    //（见 dsh-zju-page-docs）。esbuild 默认不认识 .md，不配这一行会在构建时
     // 直接报 "No loader is configured for .md files"。用 text 而不是自己写插件，
     // 是因为正文只需要原文，不需要在构建期解析。
     loader: { '.css': 'text', '.svg': 'text', '.md': 'text' },

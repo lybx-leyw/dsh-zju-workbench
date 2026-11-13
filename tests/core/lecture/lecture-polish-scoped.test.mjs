@@ -16,12 +16,12 @@ test('知识点终审隔离其他题设；一段格式失败只重试该段，�
     return {text:fail?'坏JSON':JSON.stringify({edits:[],warnings:['本段待核实']})};
   }}});
   try{
-    const partial=await ctx.zhiyunLecture.polish(input());
+    const partial=await ctx.zwLecture.polish(input());
     assert.equal(partial.complete,false);assert.equal(partial.failures[0].code,'FORMAT');
     assert.equal(partial.lecture.chapters[0].topics[0].blocks[0].text,'修改1。');
     assert.equal(partial.lecture.chapters[0].topics[1].blocks[0].text,'正文2。');
     assert.equal(first,1);assert.equal(second,2);fail=false;
-    const out=await ctx.zhiyunLecture.polish(input());
+    const out=await ctx.zwLecture.polish(input());
     assert.equal(out.complete,true);
     assert.equal(first,1);assert.equal(second,3);assert.deepEqual(out.warnings,['本段待核实']);
     assert.equal(out.lecture.chapters[0].topics[0].blocks[0].text,'修改1。');
@@ -31,6 +31,6 @@ test('知识点终审隔离其他题设；一段格式失败只重试该段，�
 test('模型即使知道另一知识点的ref也不能跨边界改写',async()=>{
   const ctx={provide(n,v){this[n]=v;}};let calls=0;
   const dispose=await apply(ctx,{llm:{async call(request){calls++;return {text:JSON.stringify({edits:request.variable.includes('ref=c1t1b1')?[{ref:'c1t2b1',before:'正文2',after:'污染'}]:[]})};}}});
-  try{const out=await ctx.zhiyunLecture.polish(input());assert.equal(out.complete,false);assert.equal(out.failures[0].code,'FORMAT');
+  try{const out=await ctx.zwLecture.polish(input());assert.equal(out.complete,false);assert.equal(out.failures[0].code,'FORMAT');
     assert.deepEqual(out.lecture.chapters[0].topics.map(t=>t.blocks[0].text),['正文1。','正文2。']);assert.equal(calls,3);}finally{dispose();}
 });

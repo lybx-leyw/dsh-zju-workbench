@@ -108,7 +108,7 @@ function fakeFfmpeg(payload) {
 /* ══════════════════════════════════ check（asr 的目录布局与校验） ══════════════════════════════════ */
 
 test('checkAsr 按上游的嵌套布局找模型, 三种都齐时才算可用', async () => {
-  const home = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-asr-layout-'));
+  const home = await mkdtemp(path.join(tmpdirSafe(), 'zw-asr-layout-'));
   const base = path.join(home, 'speech-to-text', 'sensevoice', 'models');
   try {
     // 平铺目录里什么都没有 → 默认报缺。
@@ -129,7 +129,7 @@ test('checkAsr 按上游的嵌套布局找模型, 三种都齐时才算可用', 
 
 test('checkAsr 认得出手工平铺的布局, 不因为「不在上游位置」就报缺', async () => {
   // 这是本包早先注释与实际摆放的形状。只认嵌套会让这半用户「文件明明在却说缺」。
-  const home = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-asr-flat-'));
+  const home = await mkdtemp(path.join(tmpdirSafe(), 'zw-asr-flat-'));
   const base = path.join(home, 'speech-to-text', 'sensevoice', 'models');
   try {
     await mkdir(base, { recursive: true });
@@ -145,7 +145,7 @@ test('checkAsr 认得出手工平铺的布局, 不因为「不在上游位置」
 test('checkAsr 把截断的权重报成问题, 而不是「文件在就算准备好」', async () => {
   // 下载中断留下的是一个**大小不对**的文件：它在目录里，但 sherpa 加载会失败。
   // 只判 present 的话，用户看到 check 绿的、转写却崩 —— 最难查的一种。
-  const home = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-asr-short-'));
+  const home = await mkdtemp(path.join(tmpdirSafe(), 'zw-asr-short-'));
   const base = path.join(home, 'speech-to-text', 'sensevoice', 'models');
   try {
     await mkdir(path.join(base, 'sensevoice-onnx'), { recursive: true });
@@ -160,7 +160,7 @@ test('checkAsr 把截断的权重报成问题, 而不是「文件在就算准备
 });
 
 test('checkAsr({verify:true}) 真算 SHA-256, 不符时报错而不是冒充通过', async () => {
-  const home = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-asr-hash-'));
+  const home = await mkdtemp(path.join(tmpdirSafe(), 'zw-asr-hash-'));
   const base = path.join(home, 'speech-to-text', 'sensevoice', 'models');
   const asset = ASR_ASSETS.tokens;
   try {
@@ -181,7 +181,7 @@ test('checkAsr({verify:true}) 摘要全对时 verified 为 true —— 正例也
   // 只写反例的话，「verified 恒为 false」也能让那些测试全绿 —— 那等于把「校验通过」
   // 这个状态永久锁死了。清单里 240 MB 的摘要没法在测试里复现，所以用 `assets`
   // 覆盖一份「内容与摘要真的对得上」的清单，走一次真正的正例分支。
-  const home = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-asr-hash-ok-'));
+  const home = await mkdtemp(path.join(tmpdirSafe(), 'zw-asr-hash-ok-'));
   const base = path.join(home, 'speech-to-text', 'sensevoice', 'models');
   try {
     await mkdir(path.join(base, 'sensevoice-onnx'), { recursive: true });
@@ -212,7 +212,7 @@ test('checkAsr({verify:true}) 摘要全对时 verified 为 true —— 正例也
 });
 
 test('sha256File 流式计算, 提前中止时抛 AbortError', async () => {
-  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-sha-'));
+  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zw-sha-'));
   const file = path.join(dir, 'a.bin');
   try {
     await writeFile(file, Buffer.alloc(64 * 1024, 7));
@@ -227,7 +227,7 @@ test('sha256File 流式计算, 提前中止时抛 AbortError', async () => {
 /* ══════════════════════════════════ setupPlan（只做计划，绝不执行） ══════════════════════════════════ */
 
 test('setupPlan 给出可复算的步骤, 但明确 executed:false 且一步都不做', async () => {
-  const home = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-plan-'));
+  const home = await mkdtemp(path.join(tmpdirSafe(), 'zw-plan-'));
   try {
     const plan = await setupPlan('all', { home, dataDirectory: path.join(home, 'data') });
     assert.equal(plan.executed, false, '这是契约：本函数从不执行任何一步');
@@ -236,7 +236,7 @@ test('setupPlan 给出可复算的步骤, 但明确 executed:false 且一步都�
     const media = plan.steps.filter((step) => step.component === 'media');
     assert.equal(media.length, 1);
     assert.equal(media[0].package, 'ffmpeg-static@5.3.0', '与上游 setup.ts:31 同一个包与版本');
-    assert.match(media[0].target, /tools[\\/]zhiyun-media[\\/]node_modules[\\/]ffmpeg-static[\\/]ffmpeg/);
+    assert.match(media[0].target, /tools[\\/]zw-media[\\/]node_modules[\\/]ffmpeg-static[\\/]ffmpeg/);
 
     const downloads = plan.steps.filter((step) => step.kind === 'download');
     assert.deepEqual(downloads.map((step) => step.name).sort(), Object.values(ASR_ASSETS).map((a) => a.name).sort());
@@ -254,7 +254,7 @@ test('setupPlan 给出可复算的步骤, 但明确 executed:false 且一步都�
 });
 
 test('setupPlan 把已就位的步骤标成 satisfied, 免得用户重下 240 MB', async () => {
-  const home = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-plan-done-'));
+  const home = await mkdtemp(path.join(tmpdirSafe(), 'zw-plan-done-'));
   const base = path.join(home, 'speech-to-text', 'sensevoice', 'models');
   try {
     await mkdir(path.join(base, 'sensevoice-onnx'), { recursive: true });
@@ -293,7 +293,7 @@ test('findDataChunk 跳过 LIST 块找到真正的音频起点', () => {
 });
 
 test('extractAudio 传对 SenseVoice 要求的参数, 并把「没有音轨」与「跑失败」分开报', async () => {
-  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-ffmpeg-'));
+  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zw-ffmpeg-'));
   const input = path.join(dir, 'in.m4a');
   const output = path.join(dir, 'out.wav');
   try {
@@ -355,7 +355,7 @@ test('createHostTranscriber 拒绝形状不对的宿主服务, 而不是等到�
 });
 
 test('createHostTranscriber 抽一次音频、按块识别、把时间戳拼回整节课的坐标', async () => {
-  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-host-asr-'));
+  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zw-host-asr-'));
   const source = path.join(dir, 'lecture.mp4');
   const output = path.join(dir, 'out');
   try {
@@ -395,7 +395,7 @@ test('createHostTranscriber 抽一次音频、按块识别、把时间戳拼回�
 test('createHostTranscriber 把 provider 的单次字节上限考虑进去, 不切出超限的块', async () => {
   // 上限压到 1.5 秒的量：请求的 chunkSeconds 是 10，实际必须被压下来。
   const maxAudioBytes = 44 + 16000 * 2 * 1.5;
-  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-host-limit-'));
+  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zw-host-limit-'));
   try {
     const seen = [];
     const transcriber = createHostTranscriber({
@@ -416,7 +416,7 @@ test('createHostTranscriber 把 provider 的单次字节上限考虑进去, 不�
 });
 
 test('createHostTranscriber 遇到没有音轨或坏 WAV 时按各自的原因报错', async () => {
-  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-host-bad-'));
+  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zw-host-bad-'));
   try {
     const speaker = { resolve: (r) => r, transcribe: async () => ({ text: 'x' }) };
     // 只有 44 字节的头：没有音轨。
@@ -442,7 +442,7 @@ test('createHostTranscriber 遇到没有音轨或坏 WAV 时按各自的原因�
 test('装配好的转写器一路走 ClassroomSource.transcribeAudio, 落盘四个文件', async () => {
   // 这条是端到端的「接线」验证：漏-4 的原症状是 `assertTranscriber(null)` 抛
   // DEPENDENCY_MISSING，所以必须证明「注入之后真的跑通并落盘」。
-  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zhiyun-host-e2e-'));
+  const dir = await mkdtemp(path.join(tmpdirSafe(), 'zw-host-e2e-'));
   const file = path.join(dir, 'lecture.m4a');
   await writeFile(file, 'audio-bytes');
   const classroom = new ClassroomSource({ fetch: async () => new Response('{}') });
@@ -474,17 +474,17 @@ test('装配层把 setupPlan 挂到服务对象上 —— 工具层与路由都�
   const { apply } = await import('../../../packages/source/classroom/src/index.js');
   const provided = {};
   const ctx = {
-    profileContext: { dir: path.join(os.tmpdir(), `zhiyun-apply-${Date.now()}`) },
+    profileContext: { dir: path.join(os.tmpdir(), `zw-apply-${Date.now()}`) },
     provide: (name, value) => { provided[name] = value; },
     get: () => undefined,
     effect: (fn) => { fn(); return () => {}; },
     logger: { info: () => {}, debug: () => {} },
     // 没有 webServer → 装配层走「跳过路由」那条分支；服务本身照旧必须可用。
   };
-  const dispose = await apply(ctx, { asrHome: path.join(os.tmpdir(), 'zhiyun-home-fixed') });
+  const dispose = await apply(ctx, { asrHome: path.join(os.tmpdir(), 'zw-home-fixed') });
   try {
-    const service = provided.zhiyunClassroom;
-    assert.ok(service, '装配必须 provide zhiyunClassroom');
+    const service = provided.zwClassroom;
+    assert.ok(service, '装配必须 provide zwClassroom');
     assert.equal(typeof service.setupPlan, 'function', 'setupPlan 必须挂在服务对象上');
     assert.equal(typeof service.check, 'function');
     assert.equal(typeof service.live?.remaining, 'function', 'liveCandidates 依赖它');
@@ -494,7 +494,7 @@ test('装配层把 setupPlan 挂到服务对象上 —— 工具层与路由都�
     assert.equal(plan.steps.filter((step) => step.kind === 'download').length, 3);
     // 目标路径必须用注入的 asrHome 推，而不是进程环境变量 ——
     // 否则多 profile 的机器上会指到别人的目录。
-    assert.match(plan.steps.find((step) => step.name === 'tokens.txt').destination, /zhiyun-home-fixed/);
+    assert.match(plan.steps.find((step) => step.name === 'tokens.txt').destination, /zw-home-fixed/);
   } finally { await dispose(); }
 });
 

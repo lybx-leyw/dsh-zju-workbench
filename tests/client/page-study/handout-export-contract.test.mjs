@@ -68,5 +68,5 @@ test('宿主侧对「没有讲义」给具体原因，不退化成 INPUT 的通�
 test('handout-export 在 method 白名单里，且 host 注入了 handout 取值函数', () => {
   const host = read('packages/core/study/src/host.js');
   assert.ok(host.includes('"handout-export"'), 'method 白名单缺 handout-export，请求会被直接拒成 unknown');
-  assert.ok(/handout:\s*\(\)\s*=>\s*ctx\.get\("zhiyunHandout"\)/.test(host), 'host 没有注入 handout 取值函数');
+  assert.ok(/handout:\s*\(\)\s*=>\s*ctx\.get\("zwHandout"\)/.test(host), 'host 没有注入 handout 取值函数');
 });

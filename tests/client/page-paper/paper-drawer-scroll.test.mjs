@@ -53,7 +53,7 @@ async function launchBrowser() {
 
 /** 产物比源码新，否则真机测试会测旧产物并给出假绿灯。 */
 
-test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: "旧界面（shell-workbench + page-paper 的 .zy-page/.zp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
+test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: "旧界面（shell-workbench + page-paper 的 .zw-page/.zwp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
   await assertBundleFresh('@lybx-leyw/dsh-zju-page-paper', ['AssistantDrawer.jsx', 'Paper.jsx']);
 
   const browser = await launchBrowser();
@@ -67,7 +67,7 @@ test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: 
 
   const home = await mkdtemp(path.join(tmpdir(), 'drawer-scroll-'));
   const runtime = await initialize({ home });
-  const dataDir = path.join(runtime.profile, 'data', 'zhiyun-paper');
+  const dataDir = path.join(runtime.profile, 'data', 'zw-paper');
   await mkdir(path.join(dataDir, '心理学'), { recursive: true });
   await writeFile(path.join(dataDir, '心理学', '甲.pdf'), minimalPdf());
 
@@ -94,7 +94,7 @@ test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+    await page.locator('.zw-page[data-page=today]').waitFor({ timeout: 60000 });
     // 宿主弹层：开着时整个工作台是 `inert` 的，键盘事件会被吞掉。
     for (let i = 0; i < 8; i += 1) {
       const open = await page.evaluate(() => document.querySelectorAll('[role="dialog"]').length);
@@ -105,10 +105,10 @@ test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: 
 
     await page.evaluate(() => document.querySelector('nav[aria-label="主要页面"] button[aria-label="论文"]')?.click());
     await sleep(2000);
-    await page.evaluate(() => [...document.querySelectorAll('.zp-tree-btn')]
+    await page.evaluate(() => [...document.querySelectorAll('.zwp-tree-btn')]
       .find((b) => b.dataset.path === '心理学')?.click());
     await sleep(400);
-    await page.evaluate(() => [...document.querySelectorAll('.zp-tree-btn')]
+    await page.evaluate(() => [...document.querySelectorAll('.zwp-tree-btn')]
       .find((b) => b.dataset.path === '心理学/甲.pdf')?.click());
     await sleep(3000);
 
@@ -146,14 +146,14 @@ test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: 
 
     // 等消息经 SSE 回来并被渲染出来。
     await page.waitForFunction(
-      () => document.querySelectorAll('.zp-drawer-list .zp-bubble, .zp-drawer-list [class*="bubble"]').length > 0,
+      () => document.querySelectorAll('.zwp-drawer-list .zwp-bubble, .zwp-drawer-list [class*="bubble"]').length > 0,
       null, { timeout: 25000 },
     );
     await sleep(800);
 
     // ② 消息到达后应当贴底（这正是用户抱怨的那条）。
     const afterArrival = await page.evaluate(() => {
-      const l = document.querySelector('.zp-drawer-list');
+      const l = document.querySelector('.zwp-drawer-list');
       const max = l.scrollHeight - l.clientHeight;
       return { atBottom: Math.abs(l.scrollTop - max) <= 2, scrollTop: Math.round(l.scrollTop), max };
     });
@@ -162,7 +162,7 @@ test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: 
 
     // ③ 用户往上翻：应停在顶部（不被拽回）。
     const userTop = await page.evaluate(async () => {
-      const l = document.querySelector('.zp-drawer-list');
+      const l = document.querySelector('.zwp-drawer-list');
       l.scrollTop = 0;
       await new Promise((r) => setTimeout(r, 250));
       return Math.round(l.scrollTop);
@@ -171,7 +171,7 @@ test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: 
 
     // ④ 收起再展开：重置「翻过」标记，重新贴底
     await page.evaluate(() => {
-      [...document.querySelectorAll('.zp-drawer-head button')]
+      [...document.querySelectorAll('.zwp-drawer-head button')]
         .find((b) => b.getAttribute('aria-label')?.includes('收起'))?.click();
     });
     await sleep(600);
@@ -181,7 +181,7 @@ test('伴读抽屉：贴底判据尊重用户回看，重开时重置', { skip: 
     });
     await sleep(1200);
     const reopened = await page.evaluate(() => {
-      const l = document.querySelector('.zp-drawer-list');
+      const l = document.querySelector('.zwp-drawer-list');
       if (!l) return { found: false };
       const max = l.scrollHeight - l.clientHeight;
       return { found: true, atBottom: Math.abs(l.scrollTop - max) <= 2 };

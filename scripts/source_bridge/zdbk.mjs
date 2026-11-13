@@ -27,7 +27,7 @@ export async function run({ account, dataDir, card }) {
   });
   await card.writeCard(ctx, account);
 
-  const route = routeOf(routes, '/api/zhiyun-zdbk');
+  const route = routeOf(routes, '/api/zw-zdbk');
 
   // 成绩是必读项：它同时验证「CAS 带 service 登录」与「业务接口鉴权」两段
   const grades = await rpcEnvelope(route, 'zdbk.grades', {});

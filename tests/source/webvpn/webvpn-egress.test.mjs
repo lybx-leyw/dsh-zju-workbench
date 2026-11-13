@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
  * 出口策略层的守卫。
  *
  * 这一层是从 `@lybx-leyw/dsh-zju-source-campus` 的 `egress.js` 抽出来的。抽出来之前，
- * `cc98` / `zdbk` 想走校园网只能借 campus 的 `zhiyunEgress` —— 一个数据包的
+ * `cc98` / `zdbk` 想走校园网只能借 campus 的 `zwEgress` —— 一个数据包的
  * 能力被另一个业务包绑架。这些断言锁住「策略层不认识任何业务包」这件事。
  */
 

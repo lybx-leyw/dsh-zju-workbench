@@ -3,7 +3,7 @@
 「规划」页：**写下要做的事**，让 AI 帮你拆成可执行条目；同时把学在浙大待办、
 拼题A 题集、以及你自己中转站里的内容并到同一张表上。
 
-> ⚠️ **本包只含 UI**。数据聚合与路由（`/_dsh/zhiyun-planning`、快照、AI 规划、
+> ⚠️ **本包只含 UI**。数据聚合与路由（`/_dsh/zw-planning`、快照、AI 规划、
 > pet 对话）已整体下沉到 `@lybx-leyw/dsh-zju-core-planning`。
 > 本包的 `apply()` 是空的，它能存在只是为了把客户端 bundle 带进启动图谱。
 >
@@ -224,7 +224,7 @@ repeat: { every: 1, unit: 'week', anchor: 'due' }
 
 | | 今天页 | 规划页 |
 | --- | --- | --- |
-| 依赖 | 领域包 + 登录（`zhiyunStudyController`） | 只要插槽，**领域包停用也能打开** |
+| 依赖 | 领域包 + 登录（`zwStudyController`） | 只要插槽，**领域包停用也能打开** |
 | 空白的含义 | **正确性**：课表没收全就绝不画成"今天没课" | **配置**：没配中转站/没登录/没 Cookie，各有各的恢复办法 |
 
 今天页是扫一眼就走的仪表盘，规划页是坐下来整理的工作台。合并会把规划页绑在
@@ -243,13 +243,13 @@ repeat: { every: 1, unit: 'week', anchor: 'due' }
 
 ## 配置放在哪
 
-`<profile>/data/zhiyun-planning/config.json`：
+`<profile>/data/zw-planning/config.json`：
 
 ```jsonc
 { "endpoint": "https://你的账号-空间名.ms.show", "readKey": "中转站里的读密钥" }
 ```
 
-界面入口在「个人 → 设置 → 规划数据源」，复用壳的 `.zy-settings-group` 公共类，
+界面入口在「个人 → 设置 → 规划数据源」，复用壳的 `.zw-settings-group` 公共类，
 与这一页其它设置项逐像素同源（折叠交互归壳管，面板自己不画卡片）。
 
 ## 为什么取数走宿主，不让页面直连
@@ -295,7 +295,7 @@ repeat: { every: 1, unit: 'week', anchor: 'due' }
 - 读密钥**永远不回显明文**：接口回给页面的一律是打码值 `********`，
   页面回传打码值表示"不改密钥"。
 - 客户端**不写任何本地存储**（`localStorage` / `cookie` 等），有测试钉住。
-- 设置路由只接受回环 Host（防 DNS rebinding），写操作要求 `x-zhiyun-planning` 头
+- 设置路由只接受回环 Host（防 DNS rebinding），写操作要求 `x-zw-planning` 头
   （跨站发不出自定义头，硬带会触发本路由不响应的预检）。
 - 域名只接受 `http`/`https` 且只保留 origin；带账号密码的 URL 直接拒绝。
 - 拉取路径固定为 `/entries`，用户无法借这个入口打到任意路径。
@@ -372,8 +372,8 @@ append-only、只有追加没有更新 —— 合并改动等于让页面永远�
 
 ## 路由动作一览
 
-`GET /_dsh/zhiyun-planning` 回一份完整快照（`config` / `entries` / `remote` / `todos` /
-`pta` / `plans` / `plannedKeys` / `local`）。所有 POST 都要 `x-zhiyun-planning: 1` 头，
+`GET /_dsh/zw-planning` 回一份完整快照（`config` / `entries` / `remote` / `todos` /
+`pta` / `plans` / `plannedKeys` / `local`）。所有 POST 都要 `x-zw-planning: 1` 头，
 且每条写操作都回**完整快照**，页面不必再补一次 GET。
 
 | 动作 | 作用 |
@@ -460,7 +460,7 @@ node --test tests/planning.test.mjs tests/planning-plans.test.mjs \
 ## 另一个坑：一个来源读不到，整页回 400
 
 `snapshot()` 原来用 `Promise.all`，注释还写着「各链路内部都把异常收成了 error，
-所以 all 不会被 reject」。这句话是错的 —— `loadTodos` 在 `zhiyunOmni` 缺席、
+所以 all 不会被 reject」。这句话是错的 —— `loadTodos` 在 `zwOmni` 缺席、
 或 `omni.invoke` 在 try 之外抛错时**会** reject。链路是：
 
 ```text

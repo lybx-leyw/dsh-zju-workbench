@@ -1,4 +1,4 @@
-﻿// 智云 Pro 桌面壳 —— **只是快捷入口**。
+﻿// ZJU Workbench 桌面壳 —— **只是快捷入口**。
 //
 // 它只做两件事：起一个 DSH 实例、把它开在窗口里。
 //   · 不打包、不安装 dsh、不生成 .exe；
@@ -37,7 +37,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
  * 给 `scripts/test-desktop.mjs` 用 —— 见那个脚本的说明。需要图形会话才能真正开窗。
  * 进程得由 `launch.mjs` 拉起（或发行目录已经是 Medium 完整性），否则到不了这里。
  */
-const SMOKE = process.env.ZHIYUN_DESKTOP_SMOKE === '1';
+const SMOKE = process.env.ZW_DESKTOP_SMOKE === '1';
 
 /**
  * 日志文件。
@@ -47,10 +47,10 @@ const SMOKE = process.env.ZHIYUN_DESKTOP_SMOKE === '1';
  *    在命令行里完全看不见 —— 而一个启动失败却说不清原因的启动器没有用。
  *    写成文件两边都成立：用户能找到它，脚本与测试也能读它。
  *
- * 位置优先用 `ZHIYUN_DESKTOP_LOG`（测试要一个确定的路径），否则落在 Electron 的
+ * 位置优先用 `ZW_DESKTOP_LOG`（测试要一个确定的路径），否则落在 Electron 的
  * userData 目录里（每个用户自己的 AppData，不污染仓库）。
  */
-let logFile = process.env.ZHIYUN_DESKTOP_LOG ?? '';
+let logFile = process.env.ZW_DESKTOP_LOG ?? '';
 function log(line) {
   try {
     if (!logFile) {
@@ -156,7 +156,7 @@ function createWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 600,
-    title: '智云 Pro',
+    title: 'ZJU Workbench',
     backgroundColor: '#f7f7f5',
     autoHideMenuBar: true,
     show: false,
@@ -276,7 +276,7 @@ if (!app.requestSingleInstanceLock()) {
     // 讲义与题库共用同一个处理器：同源、主框架、忙碌互斥、路径净化只维护一份。
     // 旧的 `lecture:pdf-save` 保留给已发布的壳与旧前端（它固定 kind=lecture）。
     const pdfExport = createPdfExportHandler({getWindow:()=>win,getHostUrl:()=>host?.url,dialog,downloads:()=>app.getPath('downloads')});
-    ipcMain.handle('zhiyun:pdf-save', pdfExport);
+    ipcMain.handle('zw:pdf-save', pdfExport);
     ipcMain.handle('lecture:pdf-save', createLecturePdfHandler({getWindow:()=>win,getHostUrl:()=>host?.url,dialog,downloads:()=>app.getPath('downloads')}));
     void boot();
   });

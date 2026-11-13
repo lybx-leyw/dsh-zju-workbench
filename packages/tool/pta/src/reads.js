@@ -26,7 +26,7 @@
 import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunPta: '@lybx-leyw/dsh-zju-source-pta',
+  zwPta: '@lybx-leyw/dsh-zju-source-pta',
 });
 
 const ACTIONS = ['setList', 'setView', 'problemList', 'problemView', 'submissionList', 'submissionView', 'reconcile'];
@@ -59,7 +59,7 @@ async function resolveSet(service, wanted) {
  * @returns 工具定义数组。
  */
 export function createPtaReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunPta', SERVICE_SOURCES.zhiyunPta);
+  const need = () => serviceLookup(services, 'zwPta', SERVICE_SOURCES.zwPta);
 
   return [
     {

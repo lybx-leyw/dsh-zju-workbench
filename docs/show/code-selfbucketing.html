@@ -338,7 +338,7 @@ footer{display:flex;justify-content:space-between;gap:20px;font-size:10px;color:
 
   <footer>
     <span>分类 ≠ 重构。桶间依赖环<b>只报告，不自动解</b>。</span>
-    <span>规格文件 · 与本仓 <code>docs/show/zhiyun-pipeline.html</code> 同一套词汇表</span>
+    <span>规格文件 · 与本仓 <code>docs/show/zw-pipeline.html</code> 同一套词汇表</span>
   </footer>
 </div>
 
@@ -379,7 +379,7 @@ const FILES = [
   /* ── 真实文件：符号名逐个核对过 export 列表 ── */
   { path:'packages/core/parser/src/index.js', units:[
     { n:'apply', k:'fn', l:'preset', f:['di','provide'], c:0.92,
-      s:'装配 HarnessLlm / 词表 store / 缓存，ctx.provide("zhiyunParser")，返回 dispose',
+      s:'装配 HarnessLlm / 词表 store / 缓存，ctx.provide("zwParser")，返回 dispose',
       alt:'core', why:'它不实现任何算法，只在装配。归 core 会让人以为解析逻辑在这里。' }
   ]},
 

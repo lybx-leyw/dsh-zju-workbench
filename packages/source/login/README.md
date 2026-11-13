@@ -27,7 +27,7 @@
 
 | 项 | 值 |
 | --- | --- |
-| 记录键 | `zhiyun-classroom/account` |
+| 记录键 | `zw-classroom/account` |
 | label | 浙大一卡通 |
 | payload | `{ username, password }` |
 
@@ -72,7 +72,7 @@ apply 阶段缓存成 null 会永久失效。
 
 ## 设置路由
 
-`/_dsh/zhiyun-card`
+`/_dsh/zw-card`
 
 | 动作 | 作用 |
 | --- | --- |
@@ -80,7 +80,7 @@ apply 阶段缓存成 null 会永久失效。
 | `POST ?save` | 存；`password` 传 `********` 表示**不改密码** |
 | `POST ?clear` | 清除 |
 
-POST 需要 `x-zhiyun-card: 1` 头，且只接受回环 Host。
+POST 需要 `x-zw-card: 1` 头，且只接受回环 Host。
 
 ## 两条不能松的边界
 

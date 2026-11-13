@@ -5,8 +5,8 @@
  *
  * 那一块的后端探测曾经有两个问题，都没有任何测试覆盖：
  *
- * 1. **`probeCampusSource` 查的是已退役的 `zhiyunCampus`。**
- *    `source/campus` 拆成 `xuezai` + `pta` 之后服务名变成了 `zhiyunXuezai`，
+ * 1. **`probeCampusSource` 查的是已退役的 `zwCampus`。**
+ *    `source/campus` 拆成 `xuezai` + `pta` 之后服务名变成了 `zwXuezai`，
  *    但那段没跟着改 —— 于是「学在浙大」那一行**永远**显示「数据源未启用」，
  *    即使它明明装着。
  * 2. **只探了 3 个数据源**（campus / classroom / zdbk），其余六个有状态的包
@@ -51,8 +51,8 @@ async function boot({ services = {}, credentials = null } = {}) {
     inject: (_names, factory) => factory({
       ...ctx,
       webServer: {
-        // 路由路径是 `/_dsh/zhiyun-card`，不是含 `login` 的名字 —— 按路径精确取。
-        register: (row) => { if (row.path === '/_dsh/zhiyun-card') registered = row; return () => {}; },
+        // 路由路径是 `/_dsh/zw-card`，不是含 `login` 的名字 —— 按路径精确取。
+        register: (row) => { if (row.path === '/_dsh/zw-card') registered = row; return () => {}; },
       },
     }),
   };
@@ -107,13 +107,13 @@ async function readSources(handler) {
   return payload.sources ?? {};
 }
 
-test('学在浙大：查 zhiyunXuezai（不是已退役的 zhiyunCampus）', async () => {
+test('学在浙大：查 zwXuezai（不是已退役的 zwCampus）', async () => {
   // 这条钉住那个 bug：改了服务名之后没跟着改，于是永远「未启用」。
   let asked = [];
   const { handler } = await boot({
     services: {
       // 旧的退役服务名**故意不提供** —— 如果代码还在查它，就会报 NOT_INSTALLED
-      zhiyunXuezai: {
+      zwXuezai: {
         async egress() { asked.push('xuezai'); return { campus: 'inside', viaWebvpn: false }; },
       },
     },
@@ -121,12 +121,12 @@ test('学在浙大：查 zhiyunXuezai（不是已退役的 zhiyunCampus）', asy
   const sources = await readSources(handler);
   assert.equal(sources.campus?.ok, true, '装了就应当报可用，不能恒为「未启用」');
   assert.equal(sources.campus?.code, 'INSIDE');
-  assert.deepEqual(asked, ['xuezai'], '要真的去问 zhiyunXuezai');
+  assert.deepEqual(asked, ['xuezai'], '要真的去问 zwXuezai');
 });
 
 test('学在浙大：校外未配 WebVPN 要如实报', async () => {
   const { handler } = await boot({
-    services: { zhiyunXuezai: { async egress() { return { campus: 'outside', viaWebvpn: false }; } } },
+    services: { zwXuezai: { async egress() { return { campus: 'outside', viaWebvpn: false }; } } },
   });
   const sources = await readSources(handler);
   assert.equal(sources.campus?.ok, false);
@@ -139,17 +139,17 @@ test('九个共用统一身份认证的数据源都有分项状态（lab 有自�
   const stub = (ready = true) => ({ async ready() { return ready; } });
   const { handler } = await boot({
     services: {
-      zhiyunXuezai: {
+      zwXuezai: {
         async egress() { return { campus: 'inside' }; },
         async fingerprint() { return 'abc123'; },
       },
-      zhiyunClassroom: { async restoreSession() { return { authenticated: true, user: { name: '张三' } }; } },
-      zhiyunZdbk: { async login() {} },
-      zhiyunLab: { status() { return { loggedIn: true, username: 'u' }; } },
-      zhiyunSztz: stub(),
-      zhiyunTyys: stub(),
-      zhiyunNotice: stub(),
-      zhiyunMail: stub(),
+      zwClassroom: { async restoreSession() { return { authenticated: true, user: { name: '张三' } }; } },
+      zwZdbk: { async login() {} },
+      zwLab: { status() { return { loggedIn: true, username: 'u' }; } },
+      zwSztz: stub(),
+      zwTyys: stub(),
+      zwNotice: stub(),
+      zwMail: stub(),
     },
     credentials: {
       async readRecord() { return { kind: 'grant', payload: { username: 'u', password: 'p' } }; },
@@ -181,9 +181,9 @@ test('没装的包报 NOT_INSTALLED，不抛错', async () => {
 test('一个源挂了不影响其它源（各自兜底）', async () => {
   const { handler } = await boot({
     services: {
-      zhiyunSztz: { ready() { throw new Error('炸了'); } },
-      zhiyunNotice: { ready() { return true; } },
-      zhiyunMail: { async ready() { return true; } },
+      zwSztz: { ready() { throw new Error('炸了'); } },
+      zwNotice: { ready() { return true; } },
+      zwMail: { async ready() { return true; } },
     },
   });
   const sources = await readSources(handler);
@@ -200,7 +200,7 @@ test('学在浙大：出口未知不能判成「校外」', async () => {
   // 现场症状是同一时刻 xuezai 会话探测成功、出口却说校外，两个结论矛盾。
   const { handler } = await boot({
     services: {
-      zhiyunXuezai: {
+      zwXuezai: {
         // 模拟未探测：campus 是 unknown
         async egress() { return { campus: 'unknown', viaWebvpn: false }; },
       },
@@ -216,7 +216,7 @@ test('学在浙大：探测时要带 probe:true（否则永远是 unknown）', a
   let asked = null;
   const { handler } = await boot({
     services: {
-      zhiyunXuezai: {
+      zwXuezai: {
         async egress(options) { asked = options; return { campus: 'inside' }; },
       },
     },

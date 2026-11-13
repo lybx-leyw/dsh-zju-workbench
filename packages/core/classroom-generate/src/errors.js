@@ -13,8 +13,8 @@
  * | code | 谁的问题 | 调用方该怎么办 |
  * |---|---|---|
  * | `E_INVALID_INPUT` | brief / opts 不合法 | 改 brief，别重试 |
- * | `E_MISSING_SERVICE` | `zhiyunClassroomVault` 或缺 studio | 装插件，别重试 |
- * | `E_NO_LLM_PROVIDER` | `zhiyunClassroomStudio.providers` 里没有可用对话模型 | 去设置页配模型 |
+ * | `E_MISSING_SERVICE` | `zwClassroomVault` 或缺 studio | 装插件，别重试 |
+ * | `E_NO_LLM_PROVIDER` | `zwClassroomStudio.providers` 里没有可用对话模型 | 去设置页配模型 |
  * | `E_NO_LLM_TRANSPORT` | provider 解析到了，但没有可调用的通道 | 注入 `config.llm` |
  * | `E_UPSTREAM_ERROR` | 模型侧失败（HTTP/超时/凭证） | 可重试 |
  * | `E_BAD_OUTPUT` | 模型回了非 JSON / 结构不合法 | 可重试（换模型更稳） |

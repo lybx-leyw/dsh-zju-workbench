@@ -254,7 +254,7 @@ button[data-dsh-pages-more] svg{
      - 未固定：维持次要色，悬停才给底。
    这样不碰 dsh-pages，也让「当前是否固定」一眼可辨。 */
 [data-dsh-pages-more-panel] button[data-dsh-pages-pin][aria-pressed="true"]{
-  color:var(--dsw-alias-label-info,var(--zy-brand,#94bdf4)) !important;
+  color:var(--dsw-alias-label-info,var(--zw-brand,#94bdf4)) !important;
   background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.06)) !important;
 }
 /* 已固定时把图钉转 45°，形成「钉住」与「待钉」的形状差异 ——

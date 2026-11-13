@@ -118,7 +118,7 @@ test('未生成时只有入口按钮，不出现讲义原文', () => {
   const { html, text } = render({ state: LESSON, controller: makeController(null) });
   assert.ok(html.includes('生成课件'), '要有生成入口');
   assert.ok(!text.includes('讲义原文甲'), '不能拿讲义原文冒充课件 —— 那是在骗人');
-  assert.ok(html.includes('zs-ai-start'));
+  assert.ok(html.includes('zws-ai-start'));
 });
 
 test('未生成时不渲染 ClassroomSlide', () => {

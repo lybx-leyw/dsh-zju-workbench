@@ -29,7 +29,7 @@ export class ClassroomAgentError extends Error {
 export function upstreamMissing(what, detail) {
   return new ClassroomAgentError(
     ERROR_KINDS.UPSTREAM,
-    `${what} 需要 zhiyunClassroomStudio（宿主未提供或未实现）`,
+    `${what} 需要 zwClassroomStudio（宿主未提供或未实现）`,
     detail,
   );
 }

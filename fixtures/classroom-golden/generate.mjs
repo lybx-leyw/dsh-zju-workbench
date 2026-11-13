@@ -23,7 +23,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
 
 const exportUrl = pathToFileURL(
-  path.join(root, 'packages', 'dsh-zhiyun-core-classroom-export', 'src', 'index.js'),
+  path.join(root, 'packages', 'dsh-zju-core-classroom-export', 'src', 'index.js'),
 ).href;
 const plugin = await import(exportUrl);
 
@@ -39,7 +39,7 @@ plugin.apply({
   on() {},
 }, { logger: log });
 
-const service = provided.get('zhiyunClassroomExport');
+const service = provided.get('zwClassroomExport');
 if (!service) throw new Error('导出服务没有注册');
 
 const classroom = {

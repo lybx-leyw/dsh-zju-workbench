@@ -10,12 +10,12 @@ import { createWriteToolRegistrar, contractOf, inputError, optStr, serviceLookup
 import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createPtaReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-pta';
+export const name = 'zw-tool-pta';
 
-export const inject = ['tools', 'approval', 'zhiyunPta'];
+export const inject = ['tools', 'approval', 'zwPta'];
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunPta: '@lybx-leyw/dsh-zju-source-pta',
+  zwPta: '@lybx-leyw/dsh-zju-source-pta',
 });
 
 /**
@@ -53,11 +53,11 @@ export function createPtaWriteTools(services) {
 
         if (action === 'save') {
           const content = optStr(args.content, '要保存的代码', { max: 20000 });
-          const pta = need('zhiyunPta');
+          const pta = need('zwPta');
           const { prepare, execute, cancel } = contractOf(pta, 'saveAnswer');
           return { summary: await prepare({ homework, problem, content }), execute, cancel };
         }
-        const pta = need('zhiyunPta');
+        const pta = need('zwPta');
         const { prepare, execute, cancel } = contractOf(pta, 'submitAnswer');
         return { summary: await prepare({ homework, problem }), execute, cancel };
       },

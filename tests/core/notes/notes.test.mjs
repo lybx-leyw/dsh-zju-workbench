@@ -98,10 +98,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_DIR = path.join(HERE, '..', '..', '..', 'packages', 'core', 'notes');
 /**
  * 与 Flutter 仓库的对照是可选增强：默认取与本仓库同级的 `zhiyun-pro`，
- * 也可用 `ZHIYUN_FLUTTER_ROOT` 指向其它位置；找不到时该用例自行跳过。
+ * 也可用 `ZW_FLUTTER_ROOT` 指向其它位置；找不到时该用例自行跳过。
  */
-const FLUTTER_ROOT = process.env.ZHIYUN_FLUTTER_ROOT
-  ? path.resolve(process.env.ZHIYUN_FLUTTER_ROOT)
+const FLUTTER_ROOT = process.env.ZW_FLUTTER_ROOT
+  ? path.resolve(process.env.ZW_FLUTTER_ROOT)
   : path.resolve(HERE, '..', '..', '..', '..', 'zhiyun-pro');
 const FLUTTER_DART = path.join(FLUTTER_ROOT, 'lib', 'data', 'section_note_store.dart');
 
@@ -552,7 +552,7 @@ test('normalizeNote 丢掉坏记录与坏附件，但保住整条笔记', () => 
 // ⑤ 插件：装载 / 卸载 / store 形状
 // ---------------------------------------------------------------------------
 
-test('真实 Cordis：装载后 ctx.zhiyunNotes 可用；卸载后服务消失、写确实落到了 store', async () => {
+test('真实 Cordis：装载后 ctx.zwNotes 可用；卸载后服务消失、写确实落到了 store', async () => {
   const Context = await hostContext();
   const ctx = new Context();
   // 插件声明了 `inject: ['storageDomain']`（真机验收定的），所以装载前必须有这个服务；
@@ -561,14 +561,14 @@ test('真实 Cordis：装载后 ctx.zhiyunNotes 可用；卸载后服务消失�
   const store = createMemorySectionNoteStore();
   const dispose = await ctx.plugin(plugin, { store });
   try {
-    const service = ctx.get('zhiyunNotes');
+    const service = ctx.get('zwNotes');
     assert.ok(service, '装载后服务必须在 ctx 上');
     await service.put({ courseId: '1', sectionId: '2', markdown: '装起来就能用' });
     assert.equal((await service.get('1', '2')).markdown, '装起来就能用');
   } finally {
     await dispose.dispose();
   }
-  assert.equal(ctx.get('zhiyunNotes'), undefined, '卸载后服务必须消失');
+  assert.equal(ctx.get('zwNotes'), undefined, '卸载后服务必须消失');
   assert.ok(store.writes > 0, '写确实落到了注入的 store');
   assert.equal(store.records.length, 1, '注销后注入的 store 仍归调用方所有（本包不替它清空）');
 });
@@ -578,7 +578,7 @@ test('卸载之后的调用给出有名字的 CLOSED，而不是没法解释的�
   const ctx = new Context();
   ctx.provide('storageDomain', { open: async () => { throw new Error('不应走到宿主域'); } });
   const dispose = await ctx.plugin(plugin, { store: createMemorySectionNoteStore() });
-  const service = ctx.get('zhiyunNotes');
+  const service = ctx.get('zwNotes');
   await dispose.dispose();
   await assert.rejects(service.list(), (error) => error instanceof NoteError && error.code === 'CLOSED');
 });
@@ -591,14 +591,14 @@ test('没有注入 store 且宿主没有 storageDomain 时，插件**等待依�
   const Context = await hostContext();
   const ctx = new Context();
   await ctx.plugin(plugin, {});
-  assert.equal(ctx.get('zhiyunNotes'), undefined, '依赖缺失时不许挂上半吊子服务');
+  assert.equal(ctx.get('zwNotes'), undefined, '依赖缺失时不许挂上半吊子服务');
 
   // 依赖到位后同一个 ctx 就会激活 —— 证明上面不是"永久失败"。
   ctx.provide('storageDomain', { open: async () => { throw new Error('不应走到宿主域'); } });
   const ctx2 = new Context();
   ctx2.provide('storageDomain', { open: async () => { throw new Error('不应走到宿主域'); } });
   await ctx2.plugin(plugin, { store: createMemorySectionNoteStore() });
-  assert.ok(ctx2.get('zhiyunNotes'), '依赖就绪后必须激活');
+  assert.ok(ctx2.get('zwNotes'), '依赖就绪后必须激活');
 });
 
 test('config.domain=false 时也只认注入的 store', async () => {
@@ -608,7 +608,7 @@ test('config.domain=false 时也只认注入的 store', async () => {
   let opened = 0;
   ctx.provide('storageDomain', { open: async () => { opened += 1; throw new Error('config.domain=false 时不该开域'); } });
   const dispose = await ctx.plugin(plugin, { store: createMemorySectionNoteStore(), domain: false });
-  assert.ok(ctx.get('zhiyunNotes'));
+  assert.ok(ctx.get('zwNotes'));
   assert.equal(opened, 0, 'config.domain=false 时不许碰宿主域');
   await dispose.dispose();
 });
@@ -664,13 +664,13 @@ test('宿主存储路径：用 ctx.storageDomain 打开域、读写走 KvTable�
     }),
   });
 
-  assert.ok(provided.get('zhiyunNotes'), '服务要挂上 ctx');
+  assert.ok(provided.get('zwNotes'), '服务要挂上 ctx');
   assert.equal(calls.opened, 1);
-  assert.equal(calls.spec.name, 'zhiyun_notes', '域名字要能过宿主的 UNIT_NAME_RE');
+  assert.equal(calls.spec.name, 'zw_notes', '域名字要能过宿主的 UNIT_NAME_RE');
   assert.equal(calls.spec.version, 1);
   assert.ok(calls.spec.tables.notes, '表名字要能过宿主的 UNIT_NAME_RE');
 
-  const service = provided.get('zhiyunNotes');
+  const service = provided.get('zwNotes');
   await service.put({ courseId: '1', sectionId: '2', markdown: '走宿主域' });
   assert.equal(calls.puts, 1);
   assert.equal(records.get('1/2').markdown, '走宿主域');
@@ -681,7 +681,7 @@ test('宿主存储路径：用 ctx.storageDomain 打开域、读写走 KvTable�
 
   await dispose();
   assert.equal(calls.closed, 1, '域的句柄归本插件关闭（宿主文档：caller owns the handle）');
-  assert.equal(provided.has('zhiyunNotes'), false, '卸载后服务要摘掉');
+  assert.equal(provided.has('zwNotes'), false, '卸载后服务要摘掉');
 });
 
 test('真实 Cordis：本插件**声明** inject 后能拿到 storageDomain（新契约，真机验收定的）', async () => {
@@ -719,7 +719,7 @@ test('真实 Cordis：本插件**声明** inject 后能拿到 storageDomain（�
   const real = new Context();
   real.provide('storageDomain', { open: async () => { throw new Error('不应走到宿主域'); } });
   await real.plugin(plugin, { store: createMemorySectionNoteStore() });
-  assert.ok(real.get('zhiyunNotes'), '依赖就绪后插件必须激活');
+  assert.ok(real.get('zwNotes'), '依赖就绪后插件必须激活');
   await real.fiber.dispose();
 });
 
@@ -759,7 +759,7 @@ test('真实 Cordis + 真实 storageDomain 形状：走宿主存储路径能装�
     }),
   });
 
-  const service = ctx.get('zhiyunNotes');
+  const service = ctx.get('zwNotes');
   assert.ok(service, '走宿主存储路径也要挂上服务');
   assert.equal(calls.opened, 1);
   await service.put({ courseId: '1', sectionId: '2', markdown: '走真 cordis + 宿主域' });
@@ -767,7 +767,7 @@ test('真实 Cordis + 真实 storageDomain 形状：走宿主存储路径能装�
   assert.equal(calls.puts, 1);
 
   await fiber.dispose();
-  assert.equal(ctx.get('zhiyunNotes'), undefined);
+  assert.equal(ctx.get('zwNotes'), undefined);
   assert.equal(calls.closed, 1, '域的句柄归本插件关闭');
 });
 
@@ -902,7 +902,7 @@ test('本包源码不 import node:fs / 不读环境变量 / 不自己写文件',
 
   // 反向确认：剥离器不是在"删掉一切"（那样上面全是假绿）。
   const indexCode = stripComments(readFileSync(path.join(PACKAGE_DIR, 'src', 'index.js'), 'utf8'));
-  assert.match(indexCode, /ctx\.provide\('zhiyunNotes'/, '剥离后仍要看得见真代码');
+  assert.match(indexCode, /ctx\.provide\('zwNotes'/, '剥离后仍要看得见真代码');
   // 契约：必须声明 storageDomain（理由见上面那条真实 Cordis 用例）。
   assert.match(indexCode, /inject\s*=\s*\[\s*'storageDomain'\s*\]/, '剥离后仍要看得见真代码');
 });

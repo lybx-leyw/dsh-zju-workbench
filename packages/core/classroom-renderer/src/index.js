@@ -21,7 +21,7 @@
  * 把「core 提供服务、page 只渲染」变成「page 依赖 core 的 UI」。
  */
 
-export const name = 'zhiyun-classroom-renderer';
+export const name = 'zw-classroom-renderer';
 // ↑ 与被别的包 require 时的模块 id（`@lybx-leyw/dsh-zju-core-classroom-renderer`）不同名，
 // 但宿主按 __ModuleLoader__ 注册的 id 建表，不需要它们一致。
 

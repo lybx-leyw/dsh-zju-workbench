@@ -139,7 +139,7 @@ export function serviceOf(deps, key) {
 export function requireVault(deps) {
   const vault = serviceOf(deps, 'vault');
   if (!vault) {
-    throw missingService('zhiyunClassroomVault', '课堂持久层未装载：classroom / folders / runs / materials 都需要它');
+    throw missingService('zwClassroomVault', '课堂持久层未装载：classroom / folders / runs / materials 都需要它');
   }
   return vault;
 }

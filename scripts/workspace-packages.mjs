@@ -1,7 +1,7 @@
 /**
  * 本仓自有 workspace 包的判定。
  *
- * 约定不再是「包名必须以 `dsh-zhiyun-` 开头」——那只是历史命名，profile 已经叫
+ * 约定不再是「包名必须以 `dsh-zju-` 开头」——那只是历史命名，profile 已经叫
  * `zju-workbench`，硬编码前缀只会让改名变成一次到处补字符串的重构。
  *
  * 现在的判据是**位置**：`packages/` 下带 `package.json` 的目录就是本仓包。

@@ -29,12 +29,12 @@
  * # 端口（`deps.ports` 是惰性 getter，每次访问现取，可能为 `null`）
  *
  * ```js
- * ports.generate = ctx.zhiyunClassroomGenerate   // start(brief,opts) / stream(id) / cancel / resume / get / list / status
- * ports.vault    = ctx.zhiyunClassroomVault      // classroom.{list,load,save,create,remove,meta}
+ * ports.generate = ctx.zwClassroomGenerate   // start(brief,opts) / stream(id) / cancel / resume / get / list / status
+ * ports.vault    = ctx.zwClassroomVault      // classroom.{list,load,save,create,remove,meta}
  *                                                // runs.{put,get,list,patch,remove,appendEvent,events,
  *                                                //       putStep,steps,putCommand,command}
- * ports.stage    = ctx.zhiyunClassroomStage      // 可选：access / setPublished / markComplete / library
- * ports.media    = ctx.zhiyunClassroomMedia      // 可选：extractableMimeTypes（capabilities 的 formats）
+ * ports.stage    = ctx.zwClassroomStage      // 可选：access / setPublished / markComplete / library
+ * ports.media    = ctx.zwClassroomMedia      // 可选：extractableMimeTypes（capabilities 的 formats）
  * ```
  *
  * # 端口缺失时的行为（逐条，与上游「没有持久层」那一条分支同答案，不自造错误）
@@ -867,7 +867,7 @@ export function mountGeneration(service, deps) {
     const generate = port(deps, 'generate');
     if (typeof generate?.start !== 'function') {
       throw notImplemented(
-        'zhiyunClassroomStudio.generate.start',
+        'zwClassroomStudio.generate.start',
         'app/api/generate-classroom/route.ts:30-83',
       );
     }
@@ -1003,7 +1003,7 @@ export function mountGeneration(service, deps) {
     const generate = port(deps, 'generate');
     if (typeof generate?.start !== 'function') {
       throw notImplemented(
-        'zhiyunClassroomStudio.runs.start',
+        'zwClassroomStudio.runs.start',
         'app/api/generation-runs/route.ts:43-81',
       );
     }
@@ -1703,7 +1703,7 @@ export function mountGeneration(service, deps) {
     const stagePort = port(deps, 'stage');
     if (typeof stagePort?.setPublished !== 'function') {
       throw notImplemented(
-        'zhiyunClassroomStudio.stages.publish',
+        'zwClassroomStudio.stages.publish',
         'lib/persistence/stage-meta.ts（端口 ports.stage.setPublished 未注入）',
       );
     }
@@ -1742,7 +1742,7 @@ export function mountGeneration(service, deps) {
     const stagePort = port(deps, 'stage');
     if (typeof stagePort?.setPublished !== 'function') {
       throw notImplemented(
-        'zhiyunClassroomStudio.stages.unpublish',
+        'zwClassroomStudio.stages.unpublish',
         'lib/persistence/stage-meta.ts（端口 ports.stage.setPublished 未注入）',
       );
     }
@@ -1822,7 +1822,7 @@ export function mountGeneration(service, deps) {
     void body;
     void opts;
     throw notImplemented(
-      'zhiyunClassroomStudio.stages.putScenes',
+      'zwClassroomStudio.stages.putScenes',
       'app/api/stages/[id]/scenes/route.ts（上游只有 GET，没有 POST）',
     );
   }

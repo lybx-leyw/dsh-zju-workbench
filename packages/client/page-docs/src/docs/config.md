@@ -18,14 +18,14 @@
 
 | 变量 | 作用 | 默认 |
 | --- | --- | --- |
-| `ZHIYUN_DSH_APP_DIR` | 宿主绝对路径，指向包含 `node_modules` 的那一层 | 先找 Windows 默认位置的 DSH Desktop，再找 `.runtime/dsh-<版本>/` |
-| `ZHIYUN_DSH_HOME` | 会话、配置与存储的数据目录 | `.runtime/home/` |
-| `ZHIYUN_PORT` | 端口 | `3091`，可被 `--port` 覆盖 |
+| `ZW_DSH_APP_DIR` | 宿主绝对路径，指向包含 `node_modules` 的那一层 | 先找 Windows 默认位置的 DSH Desktop，再找 `.runtime/dsh-<版本>/` |
+| `ZW_DSH_HOME` | 会话、配置与存储的数据目录 | `.runtime/home/` |
+| `ZW_PORT` | 端口 | `3091`，可被 `--port` 覆盖 |
 
 以 PowerShell 为例，把路径换成自己机器上的实际位置：
 
 ```powershell
-$env:ZHIYUN_DSH_APP_DIR = 'C:\Users\me\dsh-host'
+$env:ZW_DSH_APP_DIR = 'C:\Users\me\dsh-host'
 npm start
 ```
 
@@ -38,7 +38,7 @@ npm start
 ## 起不来时按这个顺序查
 
 1. **提示宿主缺失或版本不匹配** → 按「安装与启动」装对应版本，并检查有没有设
-   指向别处的 `ZHIYUN_DSH_APP_DIR`。显式指定的宿主不可用时脚本会直接报错，
+   指向别处的 `ZW_DSH_APP_DIR`。显式指定的宿主不可用时脚本会直接报错，
    不会自动回退到别的位置。
 2. **提示缺少客户端产物** → 先 `npm run dev`（或只 `npm run build`）。`lib/` 是构建产物，
    不进仓库。

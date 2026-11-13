@@ -53,7 +53,7 @@ test('设置路由：密码绝不外泄，写操作必须有自定义头，坏�
     const out = { code: 0, body: '' };
     return { writeHead(code) { out.code = code; }, end(text) { out.body = text ?? ''; }, get result() { return out; } };
   };
-  const write = (body) => req({ method: 'POST', headers: { 'x-zhiyun-net-proxy': '1' }, body });
+  const write = (body) => req({ method: 'POST', headers: { 'x-zw-net-proxy': '1' }, body });
 
   // 三条返回路径都必须打码 —— 漏掉任何一条，同源页面就能读走代理凭据。
   for (const [label, request] of [

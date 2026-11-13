@@ -77,13 +77,13 @@ test('ringPositions 给每个节点唯一坐标（preset 布局要求）', () =>
   assert.equal(keys.size, 5, '五个节点不能堆在同一个点');
 });
 
-test('样式表只用 --zy-* 变量，不写死色值', () => {
+test('样式表只用 --zw-* 变量，不写死色值', () => {
   // 明暗主题靠壳的变量切换；写死 #fff 会在深色模式里变成一块白板。
   const flat = JSON.stringify(graphStyles());
   const hex = flat.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [];
-  // 允许 `var(--zy-x, #fallback)` 里的兜底色：它们只在变量未定义时生效。
+  // 允许 `var(--zw-x, #fallback)` 里的兜底色：它们只在变量未定义时生效。
   for (const h of hex) {
-    assert.ok(flat.includes(`var(--zy-`) || flat.includes(`var(--zy`), `样式里出现了裸色值 ${h}`);
+    assert.ok(flat.includes(`var(--zw-`) || flat.includes(`var(--zy`), `样式里出现了裸色值 ${h}`);
   }
-  assert.ok(flat.includes('var(--zy-accent'), '当前节点必须用主题强调色');
+  assert.ok(flat.includes('var(--zw-accent'), '当前节点必须用主题强调色');
 });

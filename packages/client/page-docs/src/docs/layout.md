@@ -16,20 +16,20 @@
 
 ## `packages/` 里怎么分包
 
-包名一律带 `dsh-zhiyun-` 前缀，后半段说明它在链路里的位置：
+包名一律带 `dsh-zju-` 前缀，后半段说明它在链路里的位置：
 
 | 前缀 | 职责 | 例子 |
 | --- | --- | --- |
-| `shell-` | 外壳本身：导航、插槽、共享原语 | `dsh-zhiyun-shell-workbench`、`@lybx-leyw/dsh-zju-ui-shared` |
+| `shell-` | 外壳本身：导航、插槽、共享原语 | `dsh-zju-shell-workbench`、`@lybx-leyw/dsh-zju-ui-shared` |
 | `source-` | 外部数据源：登录、抓取、缓存 | `@lybx-leyw/dsh-zju-source-zdbk`、`@lybx-leyw/dsh-zju-source-cc98` |
 | `core-` | 领域逻辑：解析、索引、状态、出题 | `@lybx-leyw/dsh-zju-core-parser`、`@lybx-leyw/dsh-zju-core-notes` |
 | `host-` | 宿主侧能力 | `dsh-zhiyun-host-office`、`'@ggboy123/dsh-paper-reader'` |
-| `page-` | 界面上的**一页** | `dsh-zhiyun-page-docs`、`dsh-zhiyun-page-notes` |
+| `page-` | 界面上的**一页** | `dsh-zju-page-docs`、`dsh-zju-page-notes` |
 
 一个包内部分两个半边：
 
 ```text
-packages/dsh-zhiyun-page-docs/
+packages/dsh-zju-page-docs/
 ├── src/index.js       # 宿主半边（Node）
 ├── src/client.jsx     # 浏览器半边（构建产物 lib/client.js 不进仓库）
 ├── src/style.css      # 自带样式

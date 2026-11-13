@@ -240,7 +240,7 @@ test('凭据：cc98 包读的是 CC98 独立记录，不是「浙大一卡通」
 
 test('凭据：card 包为 CC98 单独开了记录键与四个操作', async () => {
   const card = await import('../../../packages/source/login/src/index.js');
-  assert.equal(card.CC98_RECORD_KEY, 'zhiyun-cc98/account');
+  assert.equal(card.CC98_RECORD_KEY, 'zw-cc98/account');
   assert.notEqual(card.CC98_RECORD_KEY, card.CARD_RECORD_KEY, '不能与一卡通共用同一个键');
   assert.notEqual(card.CC98_RECORD_KEY, card.WEBVPN_RECORD_KEY, '不能与 WebVPN 共用');
   for (const fn of ['readCc98', 'writeCc98', 'clearCc98', 'cc98Status']) {
@@ -676,7 +676,7 @@ test('apply: 注册一条 GET/POST 路由，方法表就是那 22 个只读方�
   // 每个方法都带一份参数示例（调用方靠它发现能力，不在别处维护第二份清单）
   assert.ok(status.value.methods.every(m => m.args && typeof m.args === 'object'));
 
-  const service = services.get('zhiyunCc98');
+  const service = services.get('zwCc98');
   assert.equal(service.readOnly, false);
   assert.equal(service.methods.length, 22);
   assert.equal(service.describe().platform, 'cc98');
@@ -1310,7 +1310,7 @@ test('describe：会话动作与读取方法分开列，且 logout 在清单里'
   // 「能力清单里有 23 条读取」这种误解成立。
   const { ctx, services } = fakeContext();
   const dispose = await apply(ctx);
-  const described = services.get('zhiyunCc98').describe();
+  const described = services.get('zwCc98').describe();
   assert.equal(described.readOnly, false);
   assert.ok(Array.isArray(described.actions), 'describe 要有 actions');
   const names = described.actions.map((item) => item.action);

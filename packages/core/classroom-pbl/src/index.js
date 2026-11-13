@@ -6,7 +6,7 @@
 
 /**
  * Cordis 包装（薄）：取宿主服务与可选 llm，把 PBL 能力挂成
- * `ctx.zhiyunClassroomPbl`。
+ * `ctx.zwClassroomPbl`。
  *
  * 与 `@lybx-leyw/dsh-zju-core-classroom-agent` / `@lybx-leyw/dsh-zju-core-lecture` 同一形态：
  * - 算法在 `planner.js` / `project.js` / `rubric.js` / `grade.js` / `briefing.js`，
@@ -30,10 +30,10 @@
 import { createPblService, PBL_PACKAGE_VERSION } from './service.js';
 import { PblError, ERROR_KINDS } from './errors.js';
 
-export const name = 'zhiyun-classroom-pbl';
+export const name = 'zw-classroom-pbl';
 
 /** 规范 §4：领域包只 declare 它消费的宿主服务。 */
-export const inject = ['zhiyunClassroomStudio'];
+export const inject = ['zwClassroomStudio'];
 
 /**
  * @param {object} ctx Cordis 上下文
@@ -44,20 +44,20 @@ export const inject = ['zhiyunClassroomStudio'];
  */
 export function apply(ctx, config = {}) {
   const log = config.logger ?? {
-    debug: (...args) => ctx?.logger?.debug?.('[zhiyun-classroom-pbl]', ...args),
-    info: (...args) => ctx?.logger?.info?.('[zhiyun-classroom-pbl]', ...args),
-    warn: (...args) => ctx?.logger?.warn?.('[zhiyun-classroom-pbl]', ...args),
-    error: (...args) => ctx?.logger?.error?.('[zhiyun-classroom-pbl]', ...args),
+    debug: (...args) => ctx?.logger?.debug?.('[zw-classroom-pbl]', ...args),
+    info: (...args) => ctx?.logger?.info?.('[zw-classroom-pbl]', ...args),
+    warn: (...args) => ctx?.logger?.warn?.('[zw-classroom-pbl]', ...args),
+    error: (...args) => ctx?.logger?.error?.('[zw-classroom-pbl]', ...args),
   };
 
   let studio = null;
   try {
-    studio = ctx?.zhiyunClassroomStudio ?? ctx?.get?.('zhiyunClassroomStudio') ?? null;
+    studio = ctx?.zwClassroomStudio ?? ctx?.get?.('zwClassroomStudio') ?? null;
   } catch (error) {
-    log.warn('读取 zhiyunClassroomStudio 失败（按缺失处理）', error?.message ?? error);
+    log.warn('读取 zwClassroomStudio 失败（按缺失处理）', error?.message ?? error);
   }
   if (!studio) {
-    log.warn('zhiyunClassroomStudio 尚未提供：PBL 服务以降级形态上线（status().state=degraded）');
+    log.warn('zwClassroomStudio 尚未提供：PBL 服务以降级形态上线（status().state=degraded）');
   }
 
   let service;
@@ -71,9 +71,9 @@ export function apply(ctx, config = {}) {
 
   let removeService = () => {};
   try {
-    removeService = ctx?.provide?.('zhiyunClassroomPbl', service) ?? (() => {});
+    removeService = ctx?.provide?.('zwClassroomPbl', service) ?? (() => {});
   } catch (error) {
-    log.error('zhiyunClassroomPbl 注册失败（服务名可能已被占用）', error?.message ?? error);
+    log.error('zwClassroomPbl 注册失败（服务名可能已被占用）', error?.message ?? error);
   }
 
   try {
@@ -81,7 +81,7 @@ export function apply(ctx, config = {}) {
       try {
         removeService();
       } catch (error) {
-        log.warn('卸载时注销 zhiyunClassroomPbl 失败', error?.message ?? error);
+        log.warn('卸载时注销 zwClassroomPbl 失败', error?.message ?? error);
       }
     });
   } catch (error) {
@@ -101,7 +101,7 @@ export function apply(ctx, config = {}) {
     try {
       removeService();
     } catch (error) {
-      log.warn('卸载时注销 zhiyunClassroomPbl 失败', error?.message ?? error);
+      log.warn('卸载时注销 zwClassroomPbl 失败', error?.message ?? error);
     }
   };
 }

@@ -25,23 +25,23 @@ const history = read('packages/client/page-quiz/src/question-history.jsx');
 const css = read('packages/client/page-quiz/src/style.css');
 
 test('练习页的原文依据用 details 包裹', () => {
-  assert.match(practice, /<details className="zs-qz-basis">/, '必须是可折叠容器');
+  assert.match(practice, /<details className="zws-qz-basis">/, '必须是可折叠容器');
   assert.match(practice, /<summary>原文依据<\/summary>/, '标题在 summary 里');
 });
 
 test('details 不带 open 属性 —— 默认收起', () => {
   assert.ok(
-    !/<details[^>]*className="zs-qz-basis"[^>]*\sopen/.test(practice),
+    !/<details[^>]*className="zws-qz-basis"[^>]*\sopen/.test(practice),
     '默认要收起，不能给 details 加 open',
   );
   assert.ok(
-    !/<details[^>]*\sopen[^>]*className="zs-qz-basis"/.test(practice),
+    !/<details[^>]*\sopen[^>]*className="zws-qz-basis"/.test(practice),
     '默认要收起（属性顺序另一种写法）',
   );
 });
 
 test('历史题库页同样默认收起', () => {
-  assert.match(history, /<details className="zs-qz-basis">/, '历史页也要折叠');
+  assert.match(history, /<details className="zws-qz-basis">/, '历史页也要折叠');
   assert.ok(!/<details[^>]*\sopen/.test(history), '历史页也不能默认展开');
 });
 
@@ -51,21 +51,21 @@ test('原文依据不再直接铺在正文里', () => {
 });
 
 test('展开后的内容是富文本（公式仍能渲染）', () => {
-  assert.match(practice, /<details className="zs-qz-basis">[\s\S]{0,220}<RichText/, '依据里可能有公式，要走 RichText');
+  assert.match(practice, /<details className="zws-qz-basis">[\s\S]{0,220}<RichText/, '依据里可能有公式，要走 RichText');
 });
 
 test('summary 可点击且有键盘焦点环', () => {
-  assert.match(css, /\.zs-qz-basis > summary[^}]*cursor:\s*pointer/, 'summary 要显示可点击');
-  assert.match(css, /\.zs-qz-basis > summary:focus-visible/, '要有键盘焦点环');
+  assert.match(css, /\.zws-qz-basis > summary[^}]*cursor:\s*pointer/, 'summary 要显示可点击');
+  assert.match(css, /\.zws-qz-basis > summary:focus-visible/, '要有键盘焦点环');
 });
 
 test('自绘展开箭头，且展开时旋转', () => {
-  assert.match(css, /\.zs-qz-basis > summary::before/, '要自绘箭头');
-  assert.match(css, /\.zs-qz-basis\[open\] > summary::before/, '展开态要变向');
+  assert.match(css, /\.zws-qz-basis > summary::before/, '要自绘箭头');
+  assert.match(css, /\.zws-qz-basis\[open\] > summary::before/, '展开态要变向');
   assert.match(css, /rotate\(90deg\)/, '箭头旋转 90 度表示展开');
 });
 
 test('隐藏浏览器默认的三角标记', () => {
-  assert.match(css, /\.zs-qz-basis > summary::-webkit-details-marker/, 'WebKit 默认标记');
+  assert.match(css, /\.zws-qz-basis > summary::-webkit-details-marker/, 'WebKit 默认标记');
   assert.match(css, /list-style:\s*none/, '标准属性也要关掉');
 });

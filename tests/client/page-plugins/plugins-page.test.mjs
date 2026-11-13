@@ -12,7 +12,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { ownPackages } from '../../../scripts/workspace-packages.mjs';
 import { fileURLToPath } from 'node:url';
-import { buildView, fiberNameIndex, orderGraph, readPlane, slotEdges, stripClientSuffix, ZHIYUN_PREFIX, ZHIYUN_PREFIXES } from '../../../packages/core/plugin-graph/src/runtime.js';
+import { buildView, fiberNameIndex, orderGraph, readPlane, slotEdges, stripClientSuffix, ZW_PREFIX, ZW_PREFIXES } from '../../../packages/core/plugin-graph/src/runtime.js';
 
 const root = fileURLToPath(new URL('../../..', import.meta.url));
 const read = relative => readFileSync(path.join(root, relative), 'utf8');
@@ -58,28 +58,28 @@ test('模块说明符归一到图行：<包名>/client 与裸包名是同一行'
 });
 
 test('readPlane：包内的子 fiber 归到同一个包，硬边才认得出来', () => {
-  // 包页面的 `ctx.inject(['zhiyunStudyController'], …)` 会生出子 fiber，
+  // 包页面的 `ctx.inject(['zwStudyController'], …)` 会生出子 fiber，
   // 等待关系住在子 fiber 上 —— 只读条目自己的 fiber 会漏掉这条边。
   // Cordis 的形状：fiber.parent 是 Context，父 fiber 经 `parent.fiber` 拿；
   // 而且 `entry.fiber` 就是 `runtime.fibers` 里那一个对象（不是副本）。
   const pageFiber = { inject: { slots: null }, store: {}, parent: null };
   const pageContext = { fiber: pageFiber };
   // 子 fiber 的 store 里已经有实现 = 它等到了；没有的才算「等待依赖」。
-  const childFiber = { inject: { zhiyunStudyController: null }, store: { zhiyunStudyController: {} }, parent: pageContext };
+  const childFiber = { inject: { zwStudyController: null }, store: { zwStudyController: {} }, parent: pageContext };
   const coreFiber = { inject: { connection: null }, store: {}, parent: null };
-  const store = { [Symbol('zhiyunStudyController')]: { name: 'zhiyunStudyController', fiber: coreFiber } };
+  const store = { [Symbol('zwStudyController')]: { name: 'zwStudyController', fiber: coreFiber } };
   const read = readPlane({
     entries: [
       { options: { name: '@lybx-leyw/dsh-zju-core-study' }, fiber: coreFiber },
-      { options: { name: 'dsh-zhiyun-page-study' }, fiber: pageFiber },
+      { options: { name: 'dsh-zju-page-study' }, fiber: pageFiber },
     ],
     runtimes: [{ fibers: [coreFiber, pageFiber, childFiber] }],
     store,
   });
-  const page = read.rows.find(row => row.name === 'dsh-zhiyun-page-study');
-  assert.deepEqual(page.requires, ['slots', 'zhiyunStudyController'], '子 fiber 的 inject 要算到包上');
+  const page = read.rows.find(row => row.name === 'dsh-zju-page-study');
+  assert.deepEqual(page.requires, ['slots', 'zwStudyController'], '子 fiber 的 inject 要算到包上');
   assert.deepEqual(page.unresolved, ['slots'], 'store 里没有的才是「等待依赖」');
-  assert.equal(read.providers.get('zhiyunStudyController'), '@lybx-leyw/dsh-zju-core-study');
+  assert.equal(read.providers.get('zwStudyController'), '@lybx-leyw/dsh-zju-core-study');
 });
 
 test('readPlane：内核服务的提供者不属任何条目，但不算「等待依赖」', () => {
@@ -100,62 +100,62 @@ test('readPlane：内核服务的提供者不属任何条目，但不算「等�
 
 test('fiberNameIndex：只收有 Loader 条目的 fiber，未命名的不进表', () => {
   const index = fiberNameIndex([
-    { options: { name: 'dsh-zhiyun-shell-workbench' }, fiber: { runtime: { name: 'zhiyun-shell-client' } } },
+    { options: { name: 'dsh-zju-shell-workbench' }, fiber: { runtime: { name: 'zw-shell-client' } } },
     // 没有 runtime.name 的（如 `ctx.inject` 生出的子 fiber）靠 fiber.name 兜底。
-    { options: { name: 'dsh-zhiyun-settings-account' }, fiber: { name: 'zhiyun-settings-account-client' } },
+    { options: { name: 'dsh-zhiyun-settings-account' }, fiber: { name: 'zw-settings-account-client' } },
     // 根 fiber 的兜底名是 'root'，不能进表（否则会把不相干的声明算到某个包上）。
     { options: { name: '@lybx-leyw/dsh-zju-core-notes' }, fiber: { name: 'root' } },
     { options: { name: '@lybx-leyw/dsh-zju-core-quiz' } },
   ]);
-  assert.equal(index.get('zhiyun-shell-client'), 'dsh-zhiyun-shell-workbench');
-  assert.equal(index.get('zhiyun-settings-account-client'), 'dsh-zhiyun-settings-account');
+  assert.equal(index.get('zw-shell-client'), 'dsh-zju-shell-workbench');
+  assert.equal(index.get('zw-settings-account-client'), 'dsh-zhiyun-settings-account');
   assert.equal(index.has('root'), false);
   assert.equal(index.size, 2);
 });
 
 test('插槽边：填内容的包依赖声明插槽的包（外壳因此不会被当成叶）', () => {
-  const inScope = new Set(['dsh-zhiyun-shell-workbench', 'dsh-zhiyun-page-today']);
+  const inScope = new Set(['dsh-zju-shell-workbench', 'dsh-zhiyun-page-today']);
   const roots = [{
-    type: 'slot', name: 'main', declaredBy: 'dsh-zhiyun-shell-workbench',
+    type: 'slot', name: 'main', declaredBy: 'dsh-zju-shell-workbench',
     occupants: [],
     children: [{
-      type: 'slot', name: 'zhiyun.today.content', declaredBy: 'dsh-zhiyun-shell-workbench',
+      type: 'slot', name: 'zw.today.content', declaredBy: 'dsh-zju-shell-workbench',
       occupants: [{ registrant: 'dsh-zhiyun-page-today', active: true, priority: 0 }],
       children: [],
     }],
   }];
-  assert.deepEqual(slotEdges(roots, inScope), [{ from: 'dsh-zhiyun-page-today', to: 'dsh-zhiyun-shell-workbench' }]);
+  assert.deepEqual(slotEdges(roots, inScope), [{ from: 'dsh-zhiyun-page-today', to: 'dsh-zju-shell-workbench' }]);
   // 不在范围内的注册者不产生边。
-  assert.deepEqual(slotEdges(roots, new Set(['dsh-zhiyun-shell-workbench'])), []);
+  assert.deepEqual(slotEdges(roots, new Set(['dsh-zju-shell-workbench'])), []);
 });
 
 test('插槽边：declaredBy 是诊断串、registrant 是 fiber 名，两个都要翻回包名', () => {
   // ⚠️ 真机踩到的两种形状：
-  //    declaredBy 是 DSH 拼出来的诊断串 `an entry in "main" (zhiyun-shell-client)`，
-  //    registrant 是插件自己导出的 name（`zhiyun-page-today-client`）—— 都不是包名。
+  //    declaredBy 是 DSH 拼出来的诊断串 `an entry in "main" (zw-shell-client)`，
+  //    registrant 是插件自己导出的 name（`zw-page-today-client`）—— 都不是包名。
   //    直接拿包名比对会一条边都匹配不上。
-  const inScope = new Set(['dsh-zhiyun-shell-workbench', 'dsh-zhiyun-page-today']);
+  const inScope = new Set(['dsh-zju-shell-workbench', 'dsh-zhiyun-page-today']);
   const fiberNames = fiberNameIndex([
-    { options: { name: 'dsh-zhiyun-shell-workbench' }, fiber: { runtime: { name: 'zhiyun-shell-client' } } },
-    { options: { name: 'dsh-zhiyun-page-today' }, fiber: { runtime: { name: 'zhiyun-page-today-client' } } },
+    { options: { name: 'dsh-zju-shell-workbench' }, fiber: { runtime: { name: 'zw-shell-client' } } },
+    { options: { name: 'dsh-zhiyun-page-today' }, fiber: { runtime: { name: 'zw-page-today-client' } } },
   ]);
   const shape = declaredBy => ([{
     type: 'slot', name: 'main', declaredBy,
     occupants: [],
     children: [{
-      type: 'slot', name: 'zhiyun.today.content', declaredBy,
-      occupants: [{ registrant: 'zhiyun-page-today-client', active: true, priority: 0 }],
+      type: 'slot', name: 'zw.today.content', declaredBy,
+      occupants: [{ registrant: 'zw-page-today-client', active: true, priority: 0 }],
       children: [],
     }],
   }]);
-  const expected = [{ from: 'dsh-zhiyun-page-today', to: 'dsh-zhiyun-shell-workbench' }];
-  assert.deepEqual(slotEdges(shape('an entry in "main" (zhiyun-shell-client)'), inScope, fiberNames), expected,
+  const expected = [{ from: 'dsh-zhiyun-page-today', to: 'dsh-zju-shell-workbench' }];
+  assert.deepEqual(slotEdges(shape('an entry in "main" (zw-shell-client)'), inScope, fiberNames), expected,
     '「an entry in …」是声明插槽的那条注册的写法');
-  assert.deepEqual(slotEdges(shape('factory "x" (zhiyun-shell-client)'), inScope, fiberNames), expected,
+  assert.deepEqual(slotEdges(shape('factory "x" (zw-shell-client)'), inScope, fiberNames), expected,
     'factory 那条也要认');
-  assert.deepEqual(slotEdges(shape('zhiyun-shell-client'), inScope, fiberNames), expected,
+  assert.deepEqual(slotEdges(shape('zw-shell-client'), inScope, fiberNames), expected,
     '裸 fiber 名也照收');
-  assert.deepEqual(slotEdges(shape('an entry in "main" (zhiyun-shell-client)'), inScope), [],
+  assert.deepEqual(slotEdges(shape('an entry in "main" (zw-shell-client)'), inScope), [],
     '没有对照表就一条边都没有 —— 这正是要修的形状');
 });
 
@@ -183,8 +183,8 @@ test('叶 = 没有任何包请求它；有下游的包不给勾选框', () => {
     ],
     // 宿主面：study-core 硬依赖 parser 的服务。这条边决定 parser 不是叶。
     host: plane([
-      { name: '@lybx-leyw/dsh-zju-core-parser', provides: ['zhiyunParser'], requires: [] },
-      { name: '@lybx-leyw/dsh-zju-core-study', requires: ['zhiyunParser'] },
+      { name: '@lybx-leyw/dsh-zju-core-parser', provides: ['zwParser'], requires: [] },
+      { name: '@lybx-leyw/dsh-zju-core-study', requires: ['zwParser'] },
       { name: 'dsh-zhiyun-page-today', requires: [] },
     ]),
     client: plane([]),
@@ -209,38 +209,38 @@ test('关闭中的包不能勾；只读包不能勾；只统计本仓前缀', ()
     bundles: [
       bundle('dsh-zhiyun-page-today'),
       bundle('dsh-zhiyun-settings-account'),
-      bundle('dsh-zhiyun-page-study'),
+      bundle('@lybx-leyw/dsh-zju-page-study'),
       // `removable: false` 说的是「不能 pnpm remove」，不是「不能停用」——不能拿它当闸门。
       bundle('@lybx-leyw/dsh-zju-page-paper', { removable: false }),
-      bundle('dsh-zhiyun-page-notes'),
+      bundle('@lybx-leyw/dsh-zju-page-notes'),
       bundle('@deepseek-ai/dsh-client-ui-layout'),
     ],
     // 行级开关的真源：`account` 已经被用户关掉了，`page-study` 是只读的。
     plugins: [
       plugin('dsh-zhiyun-page-today'), plugin('@lybx-leyw/dsh-zju-page-paper'),
       plugin('dsh-zhiyun-settings-account', { enabled: false }),
-      plugin('dsh-zhiyun-page-study', { readOnlyReason: 'management-required' }),
+      plugin('@lybx-leyw/dsh-zju-page-study', { readOnlyReason: 'management-required' }),
     ],
     modules: [], host: plane([]), client: plane([]), slots: [],
   });
   // 四个之间没有任何边，于是平局按 profile 层序落地（不是字母序）——「依赖在前」定不下来的
   // 部分才交给层序，这样图不会因为一次重建就换个排布。
   assert.deepEqual(view.rows.map(row => row.name), [
-    'dsh-zhiyun-page-today', 'dsh-zhiyun-settings-account', 'dsh-zhiyun-page-study',
-    '@lybx-leyw/dsh-zju-page-paper', 'dsh-zhiyun-page-notes',
+    'dsh-zhiyun-page-today', 'dsh-zhiyun-settings-account', '@lybx-leyw/dsh-zju-page-study',
+    '@lybx-leyw/dsh-zju-page-paper', '@lybx-leyw/dsh-zju-page-notes',
   ], '上游包不进图，剩下的按层序');
   const cancellable = new Set(view.cancellable);
   assert.ok(cancellable.has('dsh-zhiyun-page-today'));
   assert.ok(cancellable.has('@lybx-leyw/dsh-zju-page-paper'), 'profile 依赖照样能停用（removable 不是闸门）');
   assert.ok(!cancellable.has('dsh-zhiyun-settings-account'), '已经关掉的不该再给「取消」');
-  assert.ok(!cancellable.has('dsh-zhiyun-page-study'), '只读的不该给勾选框');
-  assert.ok(!cancellable.has('dsh-zhiyun-page-notes'), '没有 Loader 条目的行没有句柄，不能给勾选框');
+  assert.ok(!cancellable.has('@lybx-leyw/dsh-zju-page-study'), '只读的不该给勾选框');
+  assert.ok(!cancellable.has('@lybx-leyw/dsh-zju-page-notes'), '没有 Loader 条目的行没有句柄，不能给勾选框');
 
   const byName = Object.fromEntries(view.rows.map(row => [row.name, row]));
   assert.equal(byName['dsh-zhiyun-settings-account'].enabled, false, '行级开关决定这一行的状态');
   assert.equal(byName['dsh-zhiyun-settings-account'].entryId, 'entry:dsh-zhiyun-settings-account', '关掉的包也要留着句柄才能再打开');
   assert.equal(byName['dsh-zhiyun-page-today'].entryId, 'entry:dsh-zhiyun-page-today', '写动作要的是行句柄');
-  assert.equal(byName['dsh-zhiyun-page-study'].readOnlyReason, 'management-required', '只读原因来自行');
+  assert.equal(byName['@lybx-leyw/dsh-zju-page-study'].readOnlyReason, 'management-required', '只读原因来自行');
 });
 
 test('层序违例：依赖排在消费者之后要说出来，但不重排', () => {
@@ -249,8 +249,8 @@ test('层序违例：依赖排在消费者之后要说出来，但不重排', ()
     bundles: [bundle('@lybx-leyw/dsh-zju-core-study'), bundle('@lybx-leyw/dsh-zju-core-parser')],
     modules: [], plugins: [], slots: [],
     host: plane([
-      { name: '@lybx-leyw/dsh-zju-core-parser', provides: ['zhiyunParser'] },
-      { name: '@lybx-leyw/dsh-zju-core-study', requires: ['zhiyunParser'] },
+      { name: '@lybx-leyw/dsh-zju-core-parser', provides: ['zwParser'] },
+      { name: '@lybx-leyw/dsh-zju-core-study', requires: ['zwParser'] },
     ]),
     client: plane([]),
   });
@@ -264,19 +264,19 @@ test('等待依赖：被取消的提供者会让消费者带上 unresolved', () 
     // parser 被取消了（不在 bundles 里），study-core 还在。
     bundles: [bundle('@lybx-leyw/dsh-zju-core-study')],
     modules: [], plugins: [], slots: [],
-    host: plane([{ name: '@lybx-leyw/dsh-zju-core-study', requires: ['zhiyunParser', 'zhiyunClassroom'] }, { name: '@lybx-leyw/dsh-zju-source-classroom', provides: ['zhiyunClassroom'] }]),
+    host: plane([{ name: '@lybx-leyw/dsh-zju-core-study', requires: ['zwParser', 'zwClassroom'] }, { name: '@lybx-leyw/dsh-zju-source-classroom', provides: ['zwClassroom'] }]),
     client: plane([]),
   });
-  // classroom 不在 bundles 里，所以图里没有它；study-core 无从解析 zhiyunParser。
+  // classroom 不在 bundles 里，所以图里没有它；study-core 无从解析 zwParser。
   const row = view.rows.find(item => item.name === '@lybx-leyw/dsh-zju-core-study');
-  assert.deepEqual(row.waiting, ['zhiyunParser'], '缺哪个依赖要说清楚');
+  assert.deepEqual(row.waiting, ['zwParser'], '缺哪个依赖要说清楚');
 });
 
 test('前缀可换：本仓默认同时认新旧两套命名', () => {
-  // 迁移期两种命名并存（旧 `dsh-zhiyun-*`、新 `@lybx-leyw/dsh-zju-*`），
+  // 迁移期两种命名并存（旧 `dsh-zju-*`、新 `@lybx-leyw/dsh-zju-*`），
   // 默认要**两个都认** —— 只认一种会把另一半静默过滤掉，表现是
   // 「插件页少了几个包」而没有任何报错。
-  assert.deepEqual([...ZHIYUN_PREFIXES], ['dsh-zhiyun-', '@lybx-leyw/dsh-zju-']);
+  assert.deepEqual([...ZW_PREFIXES], ['dsh-zhiyun-', '@lybx-leyw/dsh-zju-']);
   const view = buildView({
     bundles: [bundle('acme-page'), bundle('dsh-zhiyun-page-today')],
     modules: [], plugins: [], slots: [], host: plane([]), client: plane([]), prefix: 'acme-',
@@ -297,7 +297,7 @@ test('前缀可换：本仓默认同时认新旧两套命名', () => {
 test('接线：每个有客户端半边的包都进了构建清单、profile 与外壳 NAV', async () => {
   // ⚠️ 按 `package.json` 的 name 收集，**不能按目录名**。
   //
-  // 这里原来是 `entry.name.startsWith('dsh-zhiyun-')` —— 只覆盖扁平布局的旧包。
+  // 这里原来是 `entry.name.startsWith('dsh-zju-')` —— 只覆盖扁平布局的旧包。
   // 重构把包分进了 `packages/source/*` 与 `packages/client/*`，目录名变成
   // `campus` / `cc98` / `ui-shared`，包名才是 `@lybx-leyw/dsh-zju-*`。
   // 于是这个扫描器从重构起就**一个都扫不到**，只是靠 `length >= 8` 的下限
@@ -351,7 +351,7 @@ test('接线：每个有客户端半边的包都进了构建清单、profile 与
   }
   // 页面包额外要求：它注册的页面 id 必须出现在外壳 NAV 里。
   //
-  // 迁移到 dsh-pages 后不再有 `zhiyun.<id>.content` 子槽：每个页面包自己把内容注册到
+  // 迁移到 dsh-pages 后不再有 `zw.<id>.content` 子槽：每个页面包自己把内容注册到
   // 页面壳的 `page.content`，key 就是页面 id。于是这条判据从「解析插槽名」变成
   // 「解析页面包注册的 id」—— 语义没变（漏了就没有入口），而且更直接。
   const navIds = new Set([...nav.matchAll(/id: '([^']+)'/g)].map((match) => match[1]));
@@ -390,7 +390,7 @@ test('接线：每个有客户端半边的包都进了构建清单、profile 与
  */
 test('F-3 · 服务由上游包提供时，行上显示「不依赖任何包」而开关仍可点 —— 现状钉死', () => {
   // 真实形状：`@lybx-leyw/dsh-zju-core-notes` 真的 inject 了宿主提供的服务（如 office / vault），
-  // 而提供者不在 `dsh-zhiyun-` 前缀内 → addEdge 因 !inScope.has(to) 直接丢弃。
+  // 而提供者不在 `dsh-zju-` 前缀内 → addEdge 因 !inScope.has(to) 直接丢弃。
   const view = buildView({
     bundles: [bundle('@lybx-leyw/dsh-zju-core-notes')],
     modules: [],

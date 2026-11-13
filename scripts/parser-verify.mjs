@@ -8,7 +8,7 @@ import { mountHost, lesson } from '../tests/fixtures/parser/host.mjs';
 // Offline acceptance: actual host services, deterministic provider, synthetic content.
 const report = [];
 for (const version of lock.hostVersions) {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-parser-verify-')); let host;
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-parser-verify-')); let host;
   try {
     host = await mountHost(version, dir);
     const output = await host.parser.parse(lesson());

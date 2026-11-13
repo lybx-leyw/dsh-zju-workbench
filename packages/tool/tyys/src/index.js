@@ -10,12 +10,12 @@ import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createWriteToolRegistrar, contractOf, inputError, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-write-kit';
 import { createTyysReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-tyys';
+export const name = 'zw-tool-tyys';
 
-export const inject = ['tools', 'approval', 'zhiyunTyys'];
+export const inject = ['tools', 'approval', 'zwTyys'];
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunTyys: '@lybx-leyw/dsh-zju-source-tyys',
+  zwTyys: '@lybx-leyw/dsh-zju-source-tyys',
 });
 
 /**
@@ -55,12 +55,12 @@ export function createTyysWriteTools(services) {
           const slot = str(args.slot, '时段（预约需要）');
           const date = str(args.date, '日期（预约需要）');
           if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw inputError('date 要写成 YYYY-MM-DD');
-          const tyys = need('zhiyunTyys');
+          const tyys = need('zwTyys');
           const { prepare, execute, cancel } = contractOf(tyys, 'bookVenue');
           return { summary: await prepare({ venue, slot, date }), execute, cancel };
         }
         const order = str(args.order, '预约单号（取消需要）');
-        const tyys = need('zhiyunTyys');
+        const tyys = need('zwTyys');
         const { prepare, execute, cancel } = contractOf(tyys, 'cancelVenue');
         return { summary: await prepare({ order }), execute, cancel };
       },

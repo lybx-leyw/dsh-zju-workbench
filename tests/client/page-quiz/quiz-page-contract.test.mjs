@@ -9,7 +9,7 @@
  *     等于读不清；壳的 style.css 自己也写明「元信息≥11px」。
  *   - 缺 :disabled / :focus-visible / color-scheme：禁用态没有视觉、键盘用户看不出
  *     焦点落在哪、深色主题下 select/input 还是白底。
- *   - 硬编码色值：这一页的规矩是「颜色只取壳的 --zy-* 变量」，硬编码在换肤后会变成
+ *   - 硬编码色值：这一页的规矩是「颜色只取壳的 --zw-* 变量」，硬编码在换肤后会变成
  *     一块孤立颜色（上一版就留了 #ffd787 与 #39876a）。
  *   - 顶层同名选择器重复：胜负只由「谁写在后面」决定，改第一处不生效，必须读完整张
  *     表才知道哪条赢 —— 原表有 18 组这样的重复。
@@ -46,10 +46,10 @@ const smallFontSizes = text => [...text.matchAll(/font-size:\s*([\d.]+)(px|rem)/
   .filter(hit => hit.size < 11)
   .map(hit => hit.line + ':' + hit.raw.trim());
 
-// 顶层规则的选择器：只认行首的 body[data-zhiyun]；@media 里的规则有缩进，因此天然被
+// 顶层规则的选择器：只认行首的 body[data-zw]；@media 里的规则有缩进，因此天然被
 // 排除 —— 媒体查询里同一个选择器再写一次是合法的响应式覆盖，不是重复。
 // 选择器组要按「顶层逗号」拆：`:is(a, b)` 里的逗号不是分隔符，按 split(',') 拆会把
-// 一条选择器切成两半，于是 .zs-qz-page 这种正常的成组写法反而被误报成重复。
+// 一条选择器切成两半，于是 .zws-qz-page 这种正常的成组写法反而被误报成重复。
 function splitSelectors(head) {
   const parts = [];
   let depth = 0, quote = null, current = '';
@@ -66,7 +66,7 @@ function splitSelectors(head) {
 }
 
 function topLevelSelectors(sheet) {
-  const heads = sheet.match(/^body\[data-zhiyun\][^{]*\{/gm) ?? [];
+  const heads = sheet.match(/^body\[data-zw\][^{]*\{/gm) ?? [];
   return heads.map(head => head.replace(/\{$/, '')).flatMap(splitSelectors);
 }
 
@@ -92,7 +92,7 @@ test('样式表补齐禁用态、键盘焦点与原生控件配色', () => {
   assert.ok(/appearance\s*:\s*none/.test(css), '原生控件没有 reset：13 个 select、number 的微调箭头、checkbox 都会与自绘圆角卡并存');
 });
 
-test('颜色只取壳的 --zy-* 变量，不硬编码色值', () => {
+test('颜色只取壳的 --zw-* 变量，不硬编码色值', () => {
   const hex = lineList(css, /#[0-9a-fA-F]{3,8}\b/g);
   assert.deepEqual(hex, [], '这些行硬编码了色值：' + hex.join('、') + '。换肤后会变成一块孤立颜色，暗色主题下也无法自适应');
   assert.ok(!/#ffd787|#39876a/i.test(css), '旧版那两个孤立色值又回来了');
@@ -105,39 +105,39 @@ test('顶层规则没有同名选择器重复（不靠「后写的赢」做覆�
   assert.deepEqual(duplicated, [], '这些选择器在顶层出现了不止一次，改第一处不生效：' + duplicated.join(' / '));
 });
 
-test('版面按 884px 可用宽设计：.zs-qz-page 不再写 1080px', () => {
-  // 壳的 .zy-content 是 max-width:980px + 左右各 48px padding，题库页永远拿不到 1080。
-  // 允许 max-width 写在 .zs-qz-page 自己的规则里，也允许与 .zs-qz 成组写成
-  // :is(.zs-qz-page, .zs-qz) —— 后者是更省事的写法，不该因为形式不同就判失败。
+test('版面按 884px 可用宽设计：.zws-qz-page 不再写 1080px', () => {
+  // 壳的 .zw-content 是 max-width:980px + 左右各 48px padding，题库页永远拿不到 1080。
+  // 允许 max-width 写在 .zws-qz-page 自己的规则里，也允许与 .zws-qz 成组写成
+  // :is(.zws-qz-page, .zws-qz) —— 后者是更省事的写法，不该因为形式不同就判失败。
   const widths = [];
-  for (const rule of css.matchAll(/^body\[data-zhiyun\][^{]*\{([^}]*)\}/gm)) {
+  for (const rule of css.matchAll(/^body\[data-zw\][^{]*\{([^}]*)\}/gm)) {
     const head = rule[0].slice(0, rule[0].indexOf('{'));
-    if (!/(?:^|[\s,(])\.zs-qz-page(?=[\s,){])/.test(head)) continue;
+    if (!/(?:^|[\s,(])\.zws-qz-page(?=[\s,){])/.test(head)) continue;
     const declared = /max-width:\s*(\d+)px/.exec(rule[1]);
     if (declared) widths.push(Number(declared[1]));
   }
-  assert.ok(widths.length > 0, '没找到 .zs-qz-page 的 max-width：版面预算回到「想当然」的状态');
+  assert.ok(widths.length > 0, '没找到 .zws-qz-page 的 max-width：版面预算回到「想当然」的状态');
   const widest = Math.max(...widths);
-  assert.ok(widest <= 900, '.zs-qz-page 的 max-width 是 ' + widest + 'px，超过壳给的 884px 可用宽，双列会一直挤');
+  assert.ok(widest <= 900, '.zws-qz-page 的 max-width 是 ' + widest + 'px，超过壳给的 884px 可用宽，双列会一直挤');
 });
 
 test('出题设置用新契约（setup / aside / more / chips），旧的长条结构与 scope-trigger 已消失', () => {
   const bank = read(BANK);
   assert.ok(bank.length > 1000, BANK + ' 读不到内容');
-  for (const name of ['zs-qz-setup', 'zs-qz-aside', 'zs-qz-more', 'zs-qz-chips', 'zs-qz-setup-foot']) {
+  for (const name of ['zws-qz-setup', 'zws-qz-aside', 'zws-qz-more', 'zws-qz-chips', 'zws-qz-setup-foot']) {
     assert.ok(bank.includes(name), BANK + ' 里没有 ' + name + '：出题设置没按「一屏两栏」重排，shots 的几何读数与 CSS 契约都会落空');
   }
-  for (const gone of ['zs-qz-scope-trigger', 'zs-qz-gen-settings', 'zs-qz-strategy-advanced']) {
+  for (const gone of ['zws-qz-scope-trigger', 'zws-qz-gen-settings', 'zws-qz-strategy-advanced']) {
     assert.ok(!bank.includes(gone), BANK + ' 里仍有 ' + gone + '：旧版那些折叠层是「要滚两屏」的直接原因');
   }
 });
 
 test('生成按钮的禁用原因写成可见文字，不只藏在 hover title 里', () => {
   const bank = read(BANK);
-  assert.ok(bank.includes('zs-qz-hint'), BANK + ' 里没有 .zs-qz-hint：7 项条件里缺哪一项、用户该怎么补，必须常驻可见');
+  assert.ok(bank.includes('zws-qz-hint'), BANK + ' 里没有 .zws-qz-hint：7 项条件里缺哪一项、用户该怎么补，必须常驻可见');
   assert.ok(/blockers/.test(bank), BANK + ' 里没有 blockers：合取条件没有被逐条翻译成人话');
   const models = read(MODELS);
-  assert.ok(models.includes('zs-qz-blocked'), MODELS + ' 里没有 .zs-qz-blocked：生成配置没就绪时没有一个可见的说明位');
+  assert.ok(models.includes('zws-qz-blocked'), MODELS + ' 里没有 .zws-qz-blocked：生成配置没就绪时没有一个可见的说明位');
 });
 
 test('未配置供应商时不再把生成按钮永久变灰', () => {
@@ -169,7 +169,7 @@ test('生成配置浮窗不会「随便滚一下就关掉」', () => {
 
 test('进度栏没有批次时也有内容，不把右栏留成空白', () => {
   const progress = read(PROGRESS);
-  assert.ok(progress.includes('zs-qz-gen-empty'), PROGRESS + ' 里没有空态卡：没出过题时右栏首屏是一片空白，用户分不清「这是进度」还是「页面坏了」');
+  assert.ok(progress.includes('zws-qz-gen-empty'), PROGRESS + ' 里没有空态卡：没出过题时右栏首屏是一片空白，用户分不清「这是进度」还是「页面坏了」');
   assert.ok(!/if\(!run\)return null/.test(progress), PROGRESS + ' 仍是 if(!run) return null');
   // 英文枚举直接进 aria-label 会让屏幕阅读器念出 needs-repair 这类内部词。
   assert.ok(!/aria-label=\{t\.state\}/.test(progress), PROGRESS + ' 仍把任务状态原值塞进 aria-label');
@@ -179,16 +179,16 @@ test('进度栏没有批次时也有内容，不把右栏留成空白', () => {
 /* ------------------------------------------------------- 造坏：确认守卫抓得住 */
 
 test('守卫能发现「顶层同名选择器出现两次」', () => {
-  const baked = 'body[data-zhiyun] .zs-a {\n  color: var(--zy-text);\n}\nbody[data-zhiyun] .zs-b,\nbody[data-zhiyun] .zs-a {\n  margin: 0;\n}';
-  assert.deepEqual(duplicatedSelectors(baked), ['body[data-zhiyun] .zs-a']);
+  const baked = 'body[data-zw] .zws-a {\n  color: var(--zw-text);\n}\nbody[data-zw] .zws-b,\nbody[data-zw] .zws-a {\n  margin: 0;\n}';
+  assert.deepEqual(duplicatedSelectors(baked), ['body[data-zw] .zws-a']);
 });
 
 test('守卫不把 @media 里的覆盖误判成顶层重复（否则这条断言会被迫删掉）', () => {
-  const baked = 'body[data-zhiyun] .zs-a {\n  gap: 8px;\n}\n@media (max-width: 760px) {\n  body[data-zhiyun] .zs-a {\n    gap: 4px;\n  }\n}';
+  const baked = 'body[data-zw] .zws-a {\n  gap: 8px;\n}\n@media (max-width: 760px) {\n  body[data-zw] .zws-a {\n    gap: 4px;\n  }\n}';
   assert.deepEqual(duplicatedSelectors(baked), []);
 });
 
 test('守卫能发现小于 11px 的字号', () => {
-  const baked = 'body[data-zhiyun] .zs-a {\n  font-size: 10px;\n}\nbody[data-zhiyun] .zs-b {\n  font-size: 0.5rem;\n}\nbody[data-zhiyun] .zs-c {\n  font-size: 12px;\n}';
+  const baked = 'body[data-zw] .zws-a {\n  font-size: 10px;\n}\nbody[data-zw] .zws-b {\n  font-size: 0.5rem;\n}\nbody[data-zw] .zws-c {\n  font-size: 12px;\n}';
   assert.deepEqual(smallFontSizes(baked), ['2:font-size: 10px', '5:font-size: 0.5rem']);
 });

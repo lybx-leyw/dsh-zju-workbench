@@ -105,7 +105,7 @@ test('页面不重复注册数据源已有的设置分区（凭据入口只有�
   // 需求：凭证管理统一在 source 注册时加进设置栏。页面又注册一份，用户会看到
   // 两个入口、各自打不同的路由 —— 不知道该信哪个，也不知道该删哪个。
   //
-  // 真发生过：`page-planning` 注册过 `zhiyun-pta`（「拼题A」），而
+  // 真发生过：`page-planning` 注册过 `zw-pta`（「拼题A」），而
   // `source/campus` 已经注册了含同一份 Cookie 配置的 `zju-source-campus`。
   // 两份都调 `settings('pta', …)` 落同一个 Cookie，于是设置栏里出现两个「拼题A」。
   //

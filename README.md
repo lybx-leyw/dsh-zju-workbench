@@ -1,12 +1,10 @@
-# 智云 Pro · DSH 工作台
+# ZJU Workbench · DSH 工作台
 
-用 DSH 插件把 DeepSeek Harness 改造成浙大自己的学习工作台：一个独立的 `zju-workbench` profile，加一层界面外壳，对应「今天 / 论文 / 问一问 / 学习 / 课堂 / 题库 / 规划 / 笔记 / 插件 / 文档 / 反馈」；账号与数据在原生设置浮窗里。界面按职责拆包：外壳只声明页框架与插槽、不认识具体页面，跨页共用的领域状态只有一份；依赖方向单向。
+把 DeepSeek Harness 改造成浙大自己的学习工作台：一个独立的 `zju-workbench` profile，加一层界面外壳，侧栏是「今天 / 论文 / 学习 / 题库 / 规划 / 笔记 / 插件 / 文档」，原生 DSH 工作区作为页面壳的首页承载会话；账号与数据在原生设置浮窗里。
 
-项目形态是**插件生态**，所以期望任何人都能做自己想做的那一块 —— 给 AI 加更多 tool、把解析后的智云数据继续加工（出题、可视化、内嵌播放器）、补本地 OCR 与笔记管理、把「论文阅读」做得更深（批注、多篇对比、引用图）等。只要不违反 [OWNER 核心规则](docs/contributing/CONTRIBUTING.md#2-owner-机制)，就可以做想做的一切。
+产品是**插件生态**，不是一个单体应用：外壳只声明页框架与插槽、不认识具体页面；每个数据源、每个工具、每个页面都是独立包，依赖方向单向。想给 AI 加工具、想把某个数据源接进来、想重做某一页的交互，都可以只改一个包——不必碰其它部分。只要不违反 [OWNER 核心规则](docs/contributing/CONTRIBUTING.md#2-owner-机制)，就可以做想做的一切。
 
-「插件」页（`packages/dsh-zhiyun-page-plugins/`）就是给这个插件生态自己用的：它把本工作台的依赖关系**从运行时**读出来按拓扑序摆开，让用户能取消没有被任何包依赖的叶包。
-
-工作台布局由 [shell-bridge](packages/dsh-zhiyun-shell-bridge/README.md) 分为两层：智云导航与业务页面使用独立槽位；「问一问」承载完整原生 DSH 工作区，普通插件的原生导航入口不会混入智云主导航。设置沿用 DSH 的原生浮窗（导轨「设置」与账号菜单同一入口），插件的设置分区零改动。新增桥接或升级后请完整刷新页面；全局 DOM、快捷键和 body 弹窗不属于隔离沙箱。
+> **关于「智云」**：智云课堂（`classroom.zju.edu.cn`）只是本工作台接入的**数据源之一**（`packages/source/classroom/`，服务名 `zwClassroom`），和学在浙大、教务网、CC98、拼题A 平级。它不是产品名，产品名是 ZJU Workbench。
 
 ## 从这里开始
 
@@ -18,6 +16,77 @@
 | [ATTRIBUTION.md](ATTRIBUTION.md) | 参考或移植第三方项目时的来源与许可说明 |
 | [LICENSING.md](LICENSING.md) | **授权**：非 vendor 包默认 GPL-3.0-or-later，例外与上游 MIT 归属逐条列明 |
 | [docs/dependency-graph.html](docs/dependency-graph.html) | 插件依赖图（静态存档；运行时的活图在「插件」页） |
+
+## 快速开始
+
+```bash
+# 1. 宿主：按 runtime.lock.json 的 preferredHostVersion 装一份独立实例
+npm install --prefix .runtime/dsh-<版本> @deepseek-ai/dsh@<版本>
+
+# 2. 仓库依赖。**不要用 `npm install` 装工作区**（原因见 AGENTS.md）
+npm ci
+node scripts/link-workspace-packages.mjs   # 链接 workspace 包，离线，不碰锁文件
+
+# 3. 构建客户端产物并启动
+npm run build
+npm start
+```
+
+`npm start` 会检查宿主版本、链接本仓插件、初始化 `zju-workbench` profile，并打印带访问令牌的地址。默认端口 3091，可用 `ZW_PORT` 或 `--port` 覆盖。`npm run dev` 是 `build` + `start` 的合称，**不会**持续监听源码变化。
+
+数据默认落在 `.runtime/home/profiles/zju-workbench/`；`ZW_DSH_HOME` 可改数据根，`ZW_DSH_APP_DIR` 可指定宿主安装目录（只接受 `runtime.lock.json` 里登记过的版本）。
+
+桌面壳是同一个 profile 的窗口入口，不安装宿主、不构建客户端：
+
+```bash
+npm --prefix apps/desktop install
+npm run desktop
+```
+
+## 目录结构
+
+```
+packages/
+  client/    浏览器侧：外壳、页面、共享 UI 原语
+  core/      纯逻辑与宿主服务：解析、讲义、出题、笔记、知识库、课堂管线…
+  source/    数据源：教务、学在浙大、智云课堂、CC98、拼题A、邮箱、网络代理…
+  tool/      工具定义：把 source 的能力注册成 AI 可调用的 tool
+  preset/    Agent preset：决定一次会话里装配哪些工具
+  radar/     生态扫描的候选骨架（隔离区，不参与产品构建）
+  vendor/    需要改动的上游副本（隔离区，各自走自己的协议）
+profiles/    DSH profile 模板（产品装配层）
+scripts/     构建、启动、校验与一次性工具
+tests/       分层组织的测试（core / client / source / tool / repo / scripts）
+```
+
+`packages/` 下四个产品分组的职责是硬的，`tests/repo/` 里有守卫在盯：
+
+| 分组 | 只做 | 不做 |
+| --- | --- | --- |
+| `core/` | 纯逻辑与宿主服务（`ctx.provide`、HTTP 路由） | **任何 UI**。不 import React，不出组件 |
+| `client/page-*` | **只做 UI**：渲染、交互、样式 | 宿主路由、落盘、取数、凭据；也不认识其它 page |
+| `source/` | 注册数据源、管理自己的凭据（在设置里注册分区）、把错误翻成能直接上屏的一句 | 工具层；不管下流怎么用 |
+| `tool/` | 只注册工具（`ctx.tools.register`） | 不注入 preset（注入点在 `preset/*` 的 patch 里） |
+
+两条推论，读代码时最常碰到：
+
+- **页面之间零交互**：没有 `page-study` import `page-quiz` 这种事。跨页复用的组件走
+  `ui-shared` 的组件契约（`publishComponent` / `usePublishedComponent`），对方没装配
+  就渲染一句说明，而不是白屏。
+- **下游不重做错误处理**：数据源返回的 `error` 已经是 `{ code, message }`，
+  `message` 就是该给用户看的那句（含「去设置里配」的指引）。页面只透传，不建第二张码表。
+
+### 命名约定
+
+| 前缀 | 含义 | 例子 |
+| --- | --- | --- |
+| `@lybx-leyw/dsh-zju-*` | 本仓发布包名 | `@lybx-leyw/dsh-zju-core-parser` |
+| `dsh-zhiyun-*` | **历史包名**，仅出现在退役登记表里 | `retiredBundles`（`scripts/profile.mjs`） |
+| `zw` / `zw-` | 产品标识：服务名、路由、数据目录、DOM 作用域 | `ctx.zwParser`、`/api/zw-study`、`data/zw-classroom` |
+| `zw-` / `zws-` / `zwp-` / `zwd-` / `zwc-` | CSS 类与自定义属性：外壳、学习页、论文页、文档页、课堂 | `--zw-accent`、`.zws-btn`、`.zwp-drawer` |
+| `智云课堂` / `zhiyun`（CLI） | **数据源**与上游工具名，不改 | `packages/source/classroom/` |
+
+退役登记表里的旧名**不要**跟着改名：它们的作用是认出老 profile 里还挂着的旧条目，改掉就等于关掉了迁移本身。
 
 ## 授权
 
@@ -36,32 +105,33 @@
 OpenMAIC 来源），这些归属记录在各自的 `ATTRIBUTION.md` 里，不影响按包划分的协议。
 完整规则见 [LICENSING.md](LICENSING.md)。
 
-`profiles/zju-workbench/` 是 profile 模板；`packages/dsh-zhiyun-*` 是功能包，其中 `page-{today,paper,study,quiz,planning,notes,plugins,docs}` 对应侧栏各页（`paper` 是「论文阅读」，见 `packages/dsh-zhiyun-page-paper/README.md` 与它下面的 `dsh-zhiyun-host-paper`；`quiz` 是跨课程题库，见 `packages/dsh-zhiyun-page-quiz/README.md`；`plugins` 是依赖图与插件裁剪，见 `packages/dsh-zhiyun-page-plugins/README.md`），其余为外壳、UI 原语、领域状态与业务能力；`scripts/`、`tests/` 是工具与测试。每个包内有自己的 `README.md`，用法与限制以包内那份为准。
+## 数据源与工具
 
-`packages/source/netproxy/` 是**分域网络代理**：所有出口流量经一个本地中继，按你在「设置 → 网络代理」里配置的域名规则分发到不同代理或直连（代理数量不设上限）。它存在的理由是智云是国内站点，不该跟着全局代理绕道海外。设计与配置形状见该包 [README](packages/source/netproxy/README.md)。
+`packages/source/` 下每个包管一个**外部服务**的接入与凭据，`packages/tool/` 把它们的
+能力注册成 AI 可调用的工具。两者分开的理由是：数据源不该关心谁能消费它（页面、脚本、
+AI 都行），而工具层不该管凭据与网络。
 
-## 分层：谁负责什么
-
-`packages/` 下四个分组，职责是硬的（`tests/core-no-ui.test.mjs`、
-`tests/page-isolation.test.mjs`、`tests/source-error-contract.test.mjs` 在盯）：
-
-| 分组 | 只做 | 不做 |
+| 数据源 | 包 | 服务名 |
 | --- | --- | --- |
-| `core/` | 纯逻辑与宿主服务（`ctx.provide`、HTTP 路由） | **任何 UI**。不 import React，不出组件 |
-| `client/page-*` | **只做 UI**：渲染、交互、样式 | 宿主路由、落盘、取数、凭据；也不认识其它 page |
-| `source/` | 注册数据源、管理自己的凭据（在设置里注册分区）、把错误翻成能直接上屏的一句 | 工具层；不管下流怎么用 |
-| `tool/` | 只注册工具（`ctx.tools.register`） | 不注入 preset（注入点在 `preset/*` 的 patch 里） |
+| 统一身份认证（CAS） | `source/login` | `zwCard` |
+| 校园网 / WebVPN 选路 | `source/webvpn`、`source/http` | `zwEgress` |
+| 智云课堂 | `source/classroom` | `zwClassroom` |
+| 教务网（成绩 / 课表 / 考试） | `source/zdbk` | `zwZdbk` |
+| 学在浙大 | `source/xuezai` | `zwXuezai` |
+| 学习通 | `source/xxt` | `zwXxt` |
+| CC98 | `source/cc98` | `zwCc98` |
+| 拼题A | `source/pta` | `zwPta` |
+| 研究生教务 / 二课 / 体艺 / 实验室 / 场馆 | `source/yjsy`、`sztz`、`tyys`、`lab`、`chalaoshi` | `zwYjsy` 等 |
+| 邮箱 / 通知 / 电子书 / 微信读书 | `source/mail`、`notice`、`ebook`、`weread` | `zwMail` 等 |
+| 分域网络代理 | `source/netproxy` | `zwNetProxy` |
 
-两条推论，读代码时最常碰到：
+`packages/source/netproxy/` 值得单独说：所有出口流量经一个本地中继，按你在
+「设置 → 网络代理」里配置的域名规则分发到不同代理或直连（代理数量不设上限）。
+它存在的理由是**环境变量表达不了分域路由** —— `NO_PROXY` 只能给一个绕开名单，
+而这里需要「域 A 走代理 1、域 B 走代理 2、域 C 直连」。设计与配置形状见该包
+[README](packages/source/netproxy/README.md)。
 
-- **页面之间零交互**：不再有 `page-study` import `page-quiz` 这种事。跨页复用的组件走
-  `ui-shared` 的组件契约（`publishComponent` / `usePublishedComponent`），对方没装配
-  就渲染一句说明，而不是白屏。
-- **下游不重做错误处理**：`campus.todos()` 返回的 `error` 已经是
-  `{ code, message }`，`message` 就是该给用户看的那句（含「去设置里配」的指引）。
-  页面只透传，不建第二张码表。
-
-### 客户端只能用 `core/*` 的 `/browser` 子入口
+## 客户端只能用 `core/*` 的 `/browser` 子入口
 
 `core/` 里既有纯函数，也有落盘与路由。一个包的**裸入口**往往 re-export 了带
 `node:fs` / `node:crypto` 的模块 —— 客户端 `import` 它，esbuild 会把这些一起打进
@@ -71,12 +141,22 @@ OpenMAIC 来源），这些归属记录在各自的 `ATTRIBUTION.md` 里，不�
 
 | 包 | 裸入口 | `/browser` |
 | --- | --- | --- |
-| `core-planning` | 纯逻辑 + 文件存储 + 路由 | 只有纯函数 |
-| `core-plugin-graph` | 图折叠 + `/api/zhiyun-plugins` 路由 | 只有图折叠 |
-| `core-vault` | 落盘 + PDF 字节流（**无** browser 入口，页面不直接用它） | — |
+| `core/planning` | 纯逻辑 + 文件存储 + 路由 | 只有纯函数 |
+| `core/plugin-graph` | 图折叠 + `/api/zw-plugins` 路由 | 只有图折叠 |
+| `core/vault` | 落盘 + PDF 字节流（**无** browser 入口，页面不直接用它） | — |
 
-`tests/page-isolation.test.mjs` 会**沿 import 链**检查：从 `client.jsx` 出发跟进同包内
+`tests/repo/page-isolation.test.mjs` 会**沿 import 链**检查：从 `client.jsx` 出发跟进同包内
 的相对 import，链上任何一环出现裸入口就报错。
 
-`packages/dsh-zhiyun-source-omni/` 是**浙大校园数据包**（移植自 [ZJU-Omni](https://github.com/Vita0818/ZJU-Omni)，MIT）：教务课表/成绩/绩点/考试、学在浙大作业与课件、CC98、拼题A，共 44 个数据函数。它**不做工具层** —— 对外只暴露数据，谁来消费（页面 / 脚本 / 将来要接的 AI）由调用方决定。凭据在 Windows 上用 DPAPI 加密落盘（上游的 macOS 钥匙串在 Windows 上不可用）。见该包 [README](packages/dsh-zhiyun-source-omni/README.md) 与 [ATTRIBUTION](packages/dsh-zhiyun-source-omni/ATTRIBUTION.md)。
+## 校验
 
+```bash
+npm run build              # 客户端产物
+npm test                   # 全量测试
+npm run check:css          # 跨包 CSS 竞争与 @media 顺序依赖
+npm run test:host          # 在真实宿主里跑端到端（会起实例、抓截图）
+node scripts/link-workspace-packages.mjs --check   # 工作区链接是否齐全
+```
+
+测试按包的分层放在 `tests/core/`、`tests/client/`、`tests/source/`、`tests/tool/`，
+跨包守卫与仓库级不变量在 `tests/repo/`。

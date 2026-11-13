@@ -489,11 +489,11 @@ export function MediaControls({
   // 单行版（轨道挤在按钮中间）在真实宽度下只剩 ~40%，一条 100 分钟的课
   // 里一分钟的支线只有几个像素，根本看不出主次。轨道独占一行后宽度接近 100%，
   // 同样的支线宽了 2.5 倍 —— 这才是"能看清主支线"的前提。
-  return <div className="zs-mc" data-playing={playing ? 'true' : 'false'}>
-    <div className="zs-mc-trackrow">
+  return <div className="zws-mc" data-playing={playing ? 'true' : 'false'}>
+    <div className="zws-mc-trackrow">
       {/* 轨道：这一条**既是进度条也是内容条** */}
       <div
-        className="zs-mc-track"
+        className="zws-mc-track"
         role="slider"
         tabIndex={0}
         aria-label="播放进度（轨道上同时显示主线与支线分段）"
@@ -508,18 +508,18 @@ export function MediaControls({
       >
         {buffered.map((range, index) => <span
           key={`buf${index}`}
-          className="zs-mc-buffered"
+          className="zws-mc-buffered"
           style={{ left: `${range.from * 100}%`, width: `${Math.max(0, (range.to - range.from) * 100)}%` }}
         />)}
         {bands.map((band, index) => <span
           key={`band${index}`}
-          className="zs-mc-voice"
+          className="zws-mc-voice"
           data-state={band.state}
           style={{ left: `${band.from * 100}%`, width: `${Math.max(0, (band.to - band.from) * 100)}%` }}
         />)}
         {(bar?.segments ?? []).map((segment, index) => <span
           key={`seg${index}`}
-          className="zs-mc-seg"
+          className="zws-mc-seg"
           data-role={segment.role ?? 'none'}
           title={segment.summary || undefined}
           style={{ left: `${segment.from * 100}%`, width: `${Math.max(0, (segment.to - segment.from) * 100)}%` }}
@@ -528,49 +528,49 @@ export function MediaControls({
             用斜纹而不是仅变淡 —— 变淡和"时间不可信"的样式太像，会混淆两种语义。 */}
         {skipped.map((range, index) => <span
           key={`skip${index}`}
-          className="zs-mc-skip"
+          className="zws-mc-skip"
           title={range.summary ? `跳过支线：${range.summary}` : '跳过支线'}
           style={{ left: `${range.from * 100}%`, width: `${Math.max(0, (range.to - range.from) * 100)}%` }}
         />)}
-        <span className="zs-mc-played" style={{ width: `${progress * 100}%` }} />
-        <span className="zs-mc-thumb" style={{ left: `${progress * 100}%` }} />
+        <span className="zws-mc-played" style={{ width: `${progress * 100}%` }} />
+        <span className="zws-mc-thumb" style={{ left: `${progress * 100}%` }} />
       </div>
     </div>
 
-    <div className="zs-mc-row">
+    <div className="zws-mc-row">
       <button
         type="button"
-        className="zs-mc-btn zs-mc-play"
+        className="zws-mc-btn zws-mc-play"
         aria-label={playing ? '暂停' : '播放'}
         title={playing ? '暂停' : '播放'}
         onClick={togglePlay}
       ><span aria-hidden="true">{playing ? '❚❚' : '▶'}</span></button>
 
-      <span className="zs-mc-time" aria-label="播放进度">
+      <span className="zws-mc-time" aria-label="播放进度">
         <strong>{formatTime(nowMs)}</strong>
-        <span className="zs-mc-dim"> / {formatTime(axis)}</span>
+        <span className="zws-mc-dim"> / {formatTime(axis)}</span>
       </span>
 
       {/* 当前段概述。它是**内容**不是图例，所以给它在控制条上留位置；
           窄屏时省略，不和按钮抢空间。 */}
-      {currentSummary && <span className="zs-mc-now" title={currentSummary}>{currentSummary}</span>}
+      {currentSummary && <span className="zws-mc-now" title={currentSummary}>{currentSummary}</span>}
 
       {/* 预计还要看多久。粗粒度（分钟/小时）—— 预估本来就是估算，精确到秒是假精度。
           `savedText` 只在真的跳掉了 1 分钟以上的支线时才出现，否则是噪声。 */}
-      <span className="zs-mc-eta" title="按当前倍速估算">
+      <span className="zws-mc-eta" title="按当前倍速估算">
         还剩 {etaText}
-        {savedText && <span className="zs-mc-saved">{savedText}</span>}
+        {savedText && <span className="zws-mc-saved">{savedText}</span>}
       </span>
 
       {/* 图例：告诉用户轨道上那两种块是什么。
           没有它，"深色块 = 支线"只能靠猜 —— 而支线和主线是这段 UI 的核心信息。
           只在真的有分段时出现；窄屏省略。 */}
-      {hasSegments && <span className="zs-mc-legend" aria-hidden="true">
+      {hasSegments && <span className="zws-mc-legend" aria-hidden="true">
         <i data-role="main" />主线
         <i data-role="branch" />支线
       </span>}
 
-      <span className="zs-mc-spacer" />
+      <span className="zws-mc-spacer" />
 
       {/* 速度控制。
           自由模式（FREE_SPEED_MODE）：「慢 / 快」两个按钮，每次 0.1。
@@ -578,13 +578,13 @@ export function MediaControls({
           有人想看着数字精确调，有人不想被数字牵着走，两边都留着。
           双击整组回到原速：不给独立的"重置"按钮，避免在控制条上再加一个钮。 */}
       {FREE_SPEED_MODE ? <span
-        className="zs-mc-speed"
+        className="zws-mc-speed"
         onDoubleClick={resetRate}
         title="双击回到原速（Q 加速 / S 减速，可按住）"
       >
         <button
           type="button"
-          className="zs-mc-btn zs-mc-speed-btn"
+          className="zws-mc-btn zws-mc-speed-btn"
           aria-label="减速 0.1 倍"
           title="慢一点（按住 S 可持续减速）"
           disabled={atMinRate}
@@ -598,7 +598,7 @@ export function MediaControls({
             `data-auto` 让它带标记色，与"平均值"区分 —— 平均值在下面那个小字里。 */}
         <button
           type="button"
-          className="zs-mc-btn zs-mc-rateview"
+          className="zws-mc-btn zws-mc-rateview"
           data-visible={rateVisible ? 'true' : 'false'}
           data-away={Math.round(Number(rate) * 10) === 10 ? 'false' : 'true'}
           data-auto={uniform && uniformAvailable ? 'true' : undefined}
@@ -618,12 +618,12 @@ export function MediaControls({
             只在均速开启且倍率可见时出现：隐藏倍率是用户明确要求"别让我看数字"，
             此时硬塞一个平均速度进去等于没听他的。 */}
         {uniform && uniformAvailable && rateVisible && <span
-          className="zs-mc-avg"
+          className="zws-mc-avg"
           title="均速模式：这是你设定的平均速度，上面的数字是此刻的实际倍率"
         >平均 {formatRate(rate)}</span>}
         <button
           type="button"
-          className="zs-mc-btn zs-mc-speed-btn"
+          className="zws-mc-btn zws-mc-speed-btn"
           aria-label="加速 0.1 倍"
           title="快一点（按住 Q 可持续加速）"
           disabled={atMaxRate}
@@ -631,7 +631,7 @@ export function MediaControls({
         ><span aria-hidden="true">＋</span></button>
       </span> : <button
         type="button"
-        className="zs-mc-btn zs-mc-rate"
+        className="zws-mc-btn zws-mc-rate"
         aria-label={`倍速 ${formatRate(rate)}，点击切换`}
         title="切换倍速"
         onClick={cycleRate}
@@ -641,7 +641,7 @@ export function MediaControls({
           显示一个点了没反应的按钮比没有更差。 */}
       {uniformAvailable && <button
         type="button"
-        className="zs-mc-btn zs-mc-uniform-toggle"
+        className="zws-mc-btn zws-mc-uniform-toggle"
         data-on={uniform ? 'true' : 'false'}
         aria-pressed={uniform ? 'true' : 'false'}
         aria-label={uniform ? '关闭均速模式' : '开启均速模式'}
@@ -654,7 +654,7 @@ export function MediaControls({
       {/* 跳支线开关。没有支线可跳时不渲染 —— 一个点了没反应的按钮比没有按钮更差。 */}
       {branchCount > 0 && <button
         type="button"
-        className="zs-mc-btn zs-mc-skip-toggle"
+        className="zws-mc-btn zws-mc-skip-toggle"
         data-on={skipBranch ? 'true' : 'false'}
         aria-pressed={skipBranch ? 'true' : 'false'}
         aria-label={skipBranch ? '关闭跳过支线' : `跳过支线（共 ${branchCount} 段）`}
@@ -664,16 +664,16 @@ export function MediaControls({
         onClick={onToggleSkipBranch}
       >跳支线</button>}
 
-      <span className="zs-mc-vol">
+      <span className="zws-mc-vol">
         <button
           type="button"
-          className="zs-mc-btn"
+          className="zws-mc-btn"
           aria-label={muted || volume === 0 ? '取消静音' : '静音'}
           title={muted || volume === 0 ? '取消静音' : '静音'}
           onClick={toggleMute}
         ><span aria-hidden="true">{muted || volume === 0 ? '🔇' : '🔊'}</span></button>
         <input
-          className="zs-mc-volume"
+          className="zws-mc-volume"
           type="range"
           min={0}
           max={1}
@@ -688,7 +688,7 @@ export function MediaControls({
           全屏单画面时它是唯一能唤出课件的入口，所以图标要显眼一点。 */}
       {onToggleSplit && <button
         type="button"
-        className="zs-mc-btn zs-mc-split"
+        className="zws-mc-btn zws-mc-split"
         data-on={split ? 'true' : 'false'}
         aria-pressed={split ? 'true' : 'false'}
         aria-label={split ? '关闭分屏' : '分屏：右侧显示课件与知识点'}
@@ -698,7 +698,7 @@ export function MediaControls({
 
       <button
         type="button"
-        className="zs-mc-btn"
+        className="zws-mc-btn"
         aria-label="全屏"
         title="全屏"
         onClick={onFullscreen}

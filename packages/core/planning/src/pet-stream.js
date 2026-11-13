@@ -47,7 +47,7 @@ export function createPetStream({
     try {
       response = await doFetch(url, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-zhiyun-planning': '1' },
+        headers: { 'content-type': 'application/json', 'x-zw-planning': '1' },
         body: JSON.stringify(body),
       });
     } catch (error) {

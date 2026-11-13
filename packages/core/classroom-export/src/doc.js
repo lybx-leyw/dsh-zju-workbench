@@ -6,7 +6,7 @@
  *     ref/OpenMAIC/lib/export/standalone-html/build-standalone-html.ts:633-650
  *
  * 方法签名按规范 §4 是 `export.pptx(id)` —— 宿主侧拿 id，业务侧拿文档。本包两种都
- * 接受：字符串或 `{ id }` 走 `ctx.zhiyunClassroomStudio.classroom.load(id)`；已经是
+ * 接受：字符串或 `{ id }` 走 `ctx.zwClassroomStudio.classroom.load(id)`；已经是
  * `{ stage, scenes }` 的文档直接用（页面包手上常常就有，省一次往返）。
  */
 
@@ -60,7 +60,7 @@ export async function resolveClassroom(studio, input) {
 async function loadById(studio, id) {
   const loader = studio?.classroom?.load;
   if (typeof loader !== 'function') {
-    throw Object.assign(new Error('zhiyunClassroomStudio.classroom.load 不可用'), {
+    throw Object.assign(new Error('zwClassroomStudio.classroom.load 不可用'), {
       code: 'E_NO_STUDIO',
     });
   }

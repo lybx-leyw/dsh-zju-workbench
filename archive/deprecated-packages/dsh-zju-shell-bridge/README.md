@@ -1,10 +1,10 @@
-# dsh-zhiyun-shell-bridge
+# dsh-zju-shell-bridge
 
 智云外壳与原生 DSH 工作区的布局桥接。智云主导航只表达学习场景；普通 DSH 插件的导航、页面、聊天扩展、工作区浏览器和右侧面板保留在「问一问」内部，不自动混入智云主导航。
 
 ## 组合与槽位
 
-由 profile 作为独立 bundle 加载，向 `dsh-zhiyun-shell-workbench` 提供布局服务，必须同时保留原生 `ui-layout`、`ui-sidebar`、`ui-sidebar-right`。桥接服务 `zhiyunWorkbench` 管理外层 `activePage`，与 `ctx.layout` 的内层面板选择独立。
+由 profile 作为独立 bundle 加载，向 `dsh-zju-shell-workbench` 提供布局服务，必须同时保留原生 `ui-layout`、`ui-sidebar`、`ui-sidebar-right`。桥接服务 `zhiyunWorkbench` 管理外层 `activePage`，与 `ctx.layout` 的内层面板选择独立。
 
 本插件在原生 `shell.overlay` 注册一个生命周期所有者，声明两个新槽位；其渲染结果通过 React portal 放入外层布局的导航和页面容器：
 

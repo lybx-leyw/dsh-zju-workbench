@@ -4,7 +4,7 @@ import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 import {png,answer} from '../parser/host.mjs';
 import {syntheticFactAudit,syntheticSourceCheck,syntheticProofReview} from '../../../scripts/quiz_bench/fixture.mjs';
-export const inject=['zhiyunStudy','zhiyunParser','llm','connection','profileContext'];
+export const inject=['zwStudy','zwParser','llm','connection','profileContext'];
 export async function apply(ctx){
   const require=createRequire(path.join(ctx.profileContext.dir,'package.json'));
   const {LlmAdapter}=await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-llm')).href);
@@ -44,12 +44,12 @@ export async function apply(ctx){
   const source={
     getCurrentUser:async()=>user,login:async()=>{user={id:'777',name:'测试同学'};return{user};},logout:async()=>{user=null;},
     listCourses:async()=>({items:[{id:'10',title:'概率论与数理统计',teacher:'测试教师',termName:'2026 秋冬',totalCount:3}],meta}),
-    listLessons:async()=>({items:[{id:'10_20',courseId:'10',subId:'20',sourceId:'zhiyun:112:10:20',title:'第一节 · 概率密度函数',isPlayable:true},{id:'10_21',courseId:'10',subId:'21',title:'第二节 · 尚未解析',isPlayable:true},{id:'10_22',courseId:'10',subId:'22',title:'第三节 · 尚未发布',isPlayable:false,status:'2'}],meta}),
-    getLessonContent:async(_c,subId)=>({sourceId:`zhiyun:112:10:${subId}`,slides:{items:[{page:1,createdSec:1,startMs:1000,imageBytes:png,mediaType:'image/png',imageUrl:'/api/zhiyun-study-slide'}],meta},subtitles:{items:[{startMs:1234,endMs:2000,text:'旧事史'},{startMs:2200,endMs:3100,text:'概率密度函数'}],meta},slidesProcessingSuspected:false})
+    listLessons:async()=>({items:[{id:'10_20',courseId:'10',subId:'20',sourceId:'zw:112:10:20',title:'第一节 · 概率密度函数',isPlayable:true},{id:'10_21',courseId:'10',subId:'21',title:'第二节 · 尚未解析',isPlayable:true},{id:'10_22',courseId:'10',subId:'22',title:'第三节 · 尚未发布',isPlayable:false,status:'2'}],meta}),
+    getLessonContent:async(_c,subId)=>({sourceId:`zw:112:10:${subId}`,slides:{items:[{page:1,createdSec:1,startMs:1000,imageBytes:png,mediaType:'image/png',imageUrl:'/api/zw-study-slide'}],meta},subtitles:{items:[{startMs:1234,endMs:2000,text:'旧事史'},{startMs:2200,endMs:3100,text:'概率密度函数'}],meta},slidesProcessingSuspected:false})
   };
-  const oldSource=ctx.zhiyunStudy.classroom,oldParserSource=ctx.zhiyunParser.classroom,oldRoutes=ctx.zhiyunParser.llm.routes;
-  ctx.zhiyunStudy.classroom=source;ctx.zhiyunParser.classroom=source;
-  ctx.zhiyunParser.llm.routes={vision:{provider:'study-fixture',model:'vision'},text:{provider:'study-fixture',model:'text'}};
-  const remove=ctx.connection.fetch.register({path:'/api/zhiyun-study-slide',methods:['GET'],requestBody:'buffered',fetch:async()=>new Response(png,{headers:{'content-type':'image/png'}})});
-  return async()=>{await remove();unregister();ctx.zhiyunStudy.classroom=oldSource;ctx.zhiyunParser.classroom=oldParserSource;ctx.zhiyunParser.llm.routes=oldRoutes;};
+  const oldSource=ctx.zwStudy.classroom,oldParserSource=ctx.zwParser.classroom,oldRoutes=ctx.zwParser.llm.routes;
+  ctx.zwStudy.classroom=source;ctx.zwParser.classroom=source;
+  ctx.zwParser.llm.routes={vision:{provider:'study-fixture',model:'vision'},text:{provider:'study-fixture',model:'text'}};
+  const remove=ctx.connection.fetch.register({path:'/api/zw-study-slide',methods:['GET'],requestBody:'buffered',fetch:async()=>new Response(png,{headers:{'content-type':'image/png'}})});
+  return async()=>{await remove();unregister();ctx.zwStudy.classroom=oldSource;ctx.zwParser.classroom=oldParserSource;ctx.zwParser.llm.routes=oldRoutes;};
 }

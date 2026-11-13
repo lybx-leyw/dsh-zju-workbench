@@ -1,6 +1,6 @@
 # @lybx-leyw/dsh-zju-core-quiz
 
-智云 Pro 的**出题与质检**层：题形状 + 先筛后出 + 三态硬检查。
+ZJU Workbench 的**出题与质检**层：题形状 + 先筛后出 + 三态硬检查。
 
 零 UI、零 Flutter 依赖、**零落盘**。llm 由集成层注入窄接口，持久化交给宿主存储栈。
 
@@ -108,8 +108,8 @@ const out = await gen.generate({
 // out: { admitted, rejected, problems, calls, rate, density, ok, summary }
 ```
 
-Cordis 插件形式：`ctx.provide('zhiyunQuiz', { generate, store, dispose, … })`，
-`inject: ['zhiyunParser']`（**不声明存储** —— 本包不落盘）。
+Cordis 插件形式：`ctx.provide('zwQuiz', { generate, store, dispose, … })`，
+`inject: ['zwParser']`（**不声明存储** —— 本包不落盘）。
 
 ## 验收
 

@@ -8,7 +8,7 @@ import { createTopic, loadLibrary, uploadPaper } from './library.js';
  * 它是「打开本地 PDF」的入口：上传走 `POST /paper-reader/api/library/upload`
  * （原始字节 + `x-dpr-topic` / `x-dpr-name` 头，中文用 `encodeURIComponent` 传，
  * 因为 HTTP 头不允许非 Latin-1），落盘位置由上游决定（默认 `$DSH_HOME/.dsh-paper-reader/data`，
- * 本仓把它指向 profile 目录下的 `data/zhiyun-paper`）。
+ * 本仓把它指向 profile 目录下的 `data/zw-paper`）。
  *
  * 不做删除：删文献会连带删掉转录、译文与会话，误点代价太大；
  * 需要清理就去 profile 的 data 目录里删（页头会显示该目录路径）。
@@ -102,27 +102,27 @@ export function LibraryPanel({ current, onPick, onReload }) {
 
   const label = current ? `${current.topic} / ${current.name}` : '选择文献';
 
-  return <div className="zp-library" ref={rootRef}>
-    <button type="button" className="zp-library-trigger" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
+  return <div className="zwp-library" ref={rootRef}>
+    <button type="button" className="zwp-library-trigger" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
       <Icon name="book" size={16}/>
       <span title={label}>{label}</span>
       <Icon name="chevron" size={15}/>
     </button>
 
-    {open && <div className="zp-library-pop" role="dialog" aria-label="文献库">
-      <div className="zp-library-head">
+    {open && <div className="zwp-library-pop" role="dialog" aria-label="文献库">
+      <div className="zwp-library-head">
         <strong>文献库</strong>
         <button type="button" title="刷新" aria-label="刷新" onClick={refresh}><Icon name="history" size={15}/></button>
       </div>
 
-      {error && <div className="zp-library-error">{error}</div>}
+      {error && <div className="zwp-library-error">{error}</div>}
 
-      <div className="zp-library-list">
-        {papers.length === 0 && !error && <p className="zp-library-empty">
+      <div className="zwp-library-list">
+        {papers.length === 0 && !error && <p className="zwp-library-empty">
           还没有文献。新建一个专题，然后上传 PDF。
         </p>}
-        {grouped.map(([topic, items]) => <div className="zp-library-topic" key={topic}>
-          <div className="zp-library-topic-name">{topic}<span>{items.length}</span></div>
+        {grouped.map(([topic, items]) => <div className="zwp-library-topic" key={topic}>
+          <div className="zwp-library-topic-name">{topic}<span>{items.length}</span></div>
           {items.map((paper) => <button
             type="button"
             key={`${paper.topic}/${paper.name}`}
@@ -135,8 +135,8 @@ export function LibraryPanel({ current, onPick, onReload }) {
         </div>)}
       </div>
 
-      <div className="zp-library-foot">
-        <div className="zp-library-row">
+      <div className="zwp-library-foot">
+        <div className="zwp-library-row">
           <input
             type="text"
             placeholder="新建专题，例如：多模态"
@@ -146,7 +146,7 @@ export function LibraryPanel({ current, onPick, onReload }) {
           />
           <button type="button" onClick={addTopic} disabled={busy || !topicDraft.trim()}><Icon name="plus" size={15}/>新建</button>
         </div>
-        <div className="zp-library-row">
+        <div className="zwp-library-row">
           <select value={uploadTopic} onChange={(event) => setUploadTopic(event.target.value)} aria-label="上传到专题">
             {topics.length === 0 && <option value="">未分类</option>}
             {topics.map((topic) => <option key={topic} value={topic}>{topic}</option>)}
@@ -156,8 +156,8 @@ export function LibraryPanel({ current, onPick, onReload }) {
           </button>
         </div>
         <input ref={fileRef} type="file" accept="application/pdf,.pdf" multiple hidden onChange={(event) => void pickFiles(event.target.files)}/>
-        {notice && <div className="zp-library-notice">{notice}</div>}
-        {library?.dataDir && <div className="zp-library-dir" title={library.dataDir}>存放于 {library.dataDir}</div>}
+        {notice && <div className="zwp-library-notice">{notice}</div>}
+        {library?.dataDir && <div className="zwp-library-dir" title={library.dataDir}>存放于 {library.dataDir}</div>}
       </div>
     </div>}
   </div>;

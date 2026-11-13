@@ -1,17 +1,17 @@
 # @lybx-leyw/dsh-zju-core-classroom-export
 
-智云 Pro「互动课堂」的**导出层**。把 OpenMAIC 的 `lib/export`（9.2k）、
+ZJU Workbench「互动课堂」的**导出层**。把 OpenMAIC 的 `lib/export`（9.2k）、
 `lib/video-export`（5k）、`lib/video-export-app`（2.2k）搬成一个 Cordis 插件。
 
 ```
-ctx.zhiyunClassroomExport.pptx(classroom, opts?)  → Buffer（.pptx，PK\x03\x04 开头）
-ctx.zhiyunClassroomExport.html(classroom, opts?)  → string（完整文档，可直接进 <iframe srcdoc>）
-ctx.zhiyunClassroomExport.zip(classroom, opts?)   → Buffer（classroom.html + 媒体 + README）
-ctx.zhiyunClassroomExport.video(classroom, opts?) → 时间轴 + 字幕计划（注入渲染器才出片）
-ctx.zhiyunClassroomExport.status()                → { state, version, detail }
+ctx.zwClassroomExport.pptx(classroom, opts?)  → Buffer（.pptx，PK\x03\x04 开头）
+ctx.zwClassroomExport.html(classroom, opts?)  → string（完整文档，可直接进 <iframe srcdoc>）
+ctx.zwClassroomExport.zip(classroom, opts?)   → Buffer（classroom.html + 媒体 + README）
+ctx.zwClassroomExport.video(classroom, opts?) → 时间轴 + 字幕计划（注入渲染器才出片）
+ctx.zwClassroomExport.status()                → { state, version, detail }
 ```
 
-`classroom` 可以是 `{ id }` / `'<id>'`（走 `zhiyunClassroomStudio.classroom.load(id)`），
+`classroom` 可以是 `{ id }` / `'<id>'`（走 `zwClassroomStudio.classroom.load(id)`），
 也可以是 `{ stage, scenes, assets? }` 文档本体（页面包手上常有，省一次往返）。
 所有方法都 `async`；`pptx()` / `html()` / `zip()` 还支持 `{ report: true }`，此时返回
 `{ buffer|html, fileName, byteSize, slideCount|unresolvedMedia|entries, … }` 而不是裸产物
@@ -19,7 +19,7 @@ ctx.zhiyunClassroomExport.status()                → { state, version, detail }
 
 ## 四条纪律
 
-1. **`inject: ['zhiyunClassroomStudio']` 只声明硬依赖**（`classroom-port.md` §4）：
+1. **`inject: ['zwClassroomStudio']` 只声明硬依赖**（`classroom-port.md` §4）：
    业务包只认服务，不认实现。
 2. **`apply()` 永不抛**。宿主缺席、`provide` 撞名、日志桩不全 —— 一律降级，不白屏；
    缺宿主表现为 `status().state === 'degraded'` 与方法调用时的 `E_NO_STUDIO`。
@@ -64,7 +64,7 @@ ctx.zhiyunClassroomExport.status()                → { state, version, detail }
 
 | 需要 | 用在哪 | 缺了会怎样 |
 |---|---|---|
-| `zhiyunClassroomStudio.classroom.load(id)` | 只传 id 时取课堂文档 | `E_NO_STUDIO` / `E_NOT_FOUND`；直传 `{stage,scenes}` 不需要 |
+| `zwClassroomStudio.classroom.load(id)` | 只传 id 时取课堂文档 | `E_NO_STUDIO` / `E_NOT_FOUND`；直传 `{stage,scenes}` 不需要 |
 | **媒体字节 `assets`**：`ref → data:` 或 `ref → { bytes, mimeType }` | PPTX 内嵌图片/视频、HTML 内联、ZIP 落盘、视频源 | 拿不到的引用按上游口径**丢弃**并记进 `report.unresolvedMedia`；不报错、不占位 |
 | `fetch`（可选） | `buildClassroomManifest` 展开互动页的 `@import` / 外链资产 | 默认用全局 `fetch`；离线环境里失败的记进 `report.inlineFailures` |
 | `baseUrl`（可选） | 互动页里相对路径的基准 | 相对资源抓不到，同上记失败 |

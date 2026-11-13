@@ -128,7 +128,7 @@ test('apply() 在没有任何宿主服务时也不抛，服务仍可注册', () 
 
   const dispose = apply(ctx, {});
   assert.equal(typeof dispose, 'function');
-  assert.ok(provided.has('zhiyunClassroomGenerate'));
+  assert.ok(provided.has('zwClassroomGenerate'));
   dispose();
   assert.equal(provided.size, 0);
 });

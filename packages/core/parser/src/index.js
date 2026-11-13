@@ -2,8 +2,8 @@ import path from 'node:path';
 import { LectureParser, HarnessLlm, ParserCache } from './parser.js';
 import { createJsonFileVocabularyStore } from './vocabulary.js';
 import { V4_PROFILE, V4_ACCEL } from './generation-profile.js';
-export const name = 'zhiyun-parser';
-export const inject = ['llm', 'attachments', 'agentDefaultModel', 'profileContext', 'zhiyunClassroom'];
+export const name = 'zw-parser';
+export const inject = ['llm', 'attachments', 'agentDefaultModel', 'profileContext', 'zwClassroom'];
 export async function apply(ctx, config = {}) {
   const llm = new HarnessLlm({ llm: ctx.llm, attachments: ctx.attachments,
     selection: () => ctx.agentDefaultModel.currentSelection(), routes: { vision: config.vision, text: config.text }, timeoutMs: config.timeoutMs,
@@ -14,13 +14,13 @@ export async function apply(ctx, config = {}) {
   const injected = config.vocabularyStore;
   const vocabularyStore = injected && typeof injected.load === 'function' && typeof injected.save === 'function'
     ? injected
-    : createJsonFileVocabularyStore({ file: path.join(ctx.profileContext.dir, 'data/zhiyun-parser/vocabulary.json') });
-  const parser = new LectureParser({ llm, concurrency: config.concurrency ?? V4_PROFILE.concurrency, classroom: ctx.zhiyunClassroom, vocabularyStore,
+    : createJsonFileVocabularyStore({ file: path.join(ctx.profileContext.dir, 'data/zw-parser/vocabulary.json') });
+  const parser = new LectureParser({ llm, concurrency: config.concurrency ?? V4_PROFILE.concurrency, classroom: ctx.zwClassroom, vocabularyStore,
     visionBatchSize: config.visionBatchSize ?? V4_PROFILE.visionBatchSize,
     // 斩杀线（token）与队列上限：两个都影响"树长什么样"，所以都从 config 走，
     // 不在包里写死 —— 不同课程的内容密度差得很远。
     splitLine: config.splitLine ?? V4_PROFILE.splitLine, queueCapacity: config.queueCapacity,
-    cache: new ParserCache(path.join(ctx.profileContext.dir, 'data/zhiyun-parser/cache')) });
-  ctx.provide('zhiyunParser', parser);
+    cache: new ParserCache(path.join(ctx.profileContext.dir, 'data/zw-parser/cache')) });
+  ctx.provide('zwParser', parser);
   return () => parser.dispose();
 }

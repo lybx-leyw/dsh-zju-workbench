@@ -9,14 +9,14 @@ import { createHandler } from '../../../packages/core/planning/src/index.js';
 
 /**
  * ⚠️ 本文件测的是**逐课爬取**那条路的完整契约（会话失效重试、429 中止、
- * 结构漂移、并发上限）。那些语义只在 `ZHIYUN_TODOS=slow` 下存在 ——
+ * 结构漂移、并发上限）。那些语义只在 `ZW_TODOS=slow` 下存在 ——
  * 聚合端点 `/api/todos` 是 1 个请求，压根没有"逐课循环"可测。
  *
  * 所以这里**显式钉住 slow 模式**，而不是依赖产品默认值：默认值将来怎么变
  * （例如为了性能切成 fast）都不该让这组契约测试悄悄失去意义，也不该让它们
  * 因为夹具只模拟了逐课端点而集体变红。
  */
-process.env.ZHIYUN_TODOS = 'slow';
+process.env.ZW_TODOS = 'slow';
 
 async function harness(t, {expire=false,rateLimit=false,badShape=false,realClassroom=false,classroomUnavailable=false}={}) {
  const dir=await mkdtemp(path.join(tmpdir(),'campus-contract-'));
@@ -64,11 +64,11 @@ async function harness(t, {expire=false,rateLimit=false,badShape=false,realClass
   } finally {active--;}
  };
  const credentials={readRecord:async()=>account?{kind:'grant',payload:account}:null,modifyRecord:async()=>{}};
- const ctx={profileContext:{dir},logger:{info(){}},inject(){},get:name=>name==='credentials'?credentials:name==='zhiyunClassroom'&&!realClassroom?{acquireSso:async()=>{authorizations++;return [{toString:()=> 'iPlanetDirectoryPro=fake; Domain=zju.edu.cn; Path=/; Secure'}];}}:services[name],provide:(name,value)=>{services[name]=value;return()=>{};}};
+ const ctx={profileContext:{dir},logger:{info(){}},inject(){},get:name=>name==='credentials'?credentials:name==='zwClassroom'&&!realClassroom?{acquireSso:async()=>{authorizations++;return [{toString:()=> 'iPlanetDirectoryPro=fake; Domain=zju.edu.cn; Path=/; Secure'}];}}:services[name],provide:(name,value)=>{services[name]=value;return()=>{};}};
  const disposeClassroom=realClassroom?await applyClassroom(ctx,{fetch,protect:async bytes=>bytes}):null;
  const dispose=await apply(ctx,{dataDir:dir,fetch,protect:async bytes=>bytes,readTtlMs:0});
  t.after(async()=>{await dispose();await disposeClassroom?.();await rm(dir,{recursive:true,force:true});});
- return {service:services.zhiyunXuezai,calls,maxActive:()=>maxActive,authorizations:()=>authorizations,removeAccount:()=>{account=null;}};
+ return {service:services.zwXuezai,calls,maxActive:()=>maxActive,authorizations:()=>authorizations,removeAccount:()=>{account=null;}};
 }
 
 test('empty profile → saved account SSO → all five endpoints → planning route',async t=>{

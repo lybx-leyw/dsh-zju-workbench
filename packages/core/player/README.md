@@ -14,7 +14,7 @@
 不把本包源码打进学习页自己的 bundle。宿主侧别的插件仍然可以：
 
 ```js
-const stats = ctx.get('zhiyunPlayerStats');
+const stats = ctx.get('zwPlayerStats');
 const s = stats.computeSectionStats(blocks);       // 分段 / 语速 / 汇总
 const bar = stats.toSeekBar(s, videoDurationMs);   // 进度条绘制输入
 ```
@@ -74,5 +74,5 @@ node --test tests/player.test.mjs
 ```
 src/
   stats.js    纯计算（对外主入口；无 import、无 IO）
-  index.js    宿主半边：把纯函数挂成 zhiyunPlayerStats 服务
+  index.js    宿主半边：把纯函数挂成 zwPlayerStats 服务
 ```

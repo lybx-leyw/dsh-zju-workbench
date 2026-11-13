@@ -12,7 +12,7 @@ DSH（DeepSeek Harness）本身是一个可组装的 agent 宿主 —— 它提�
 **一页一个包，改动某一页时只动对应的包**。所以你在左侧导航里看到的每一页，
 在 `packages/` 下都能找到同名目录。
 
-这个工作台本身也遵守同一条规则 —— 「文档」这一页就是 `packages/dsh-zhiyun-page-docs`。
+这个工作台本身也遵守同一条规则 —— 「文档」这一页就是 `packages/dsh-zju-page-docs`。
 
 ## 一个插件包的两个半边
 

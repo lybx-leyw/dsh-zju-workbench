@@ -4,7 +4,7 @@
  * # 为什么单独一层
  *
  * 原来凭据散在两处：`@lybx-leyw/dsh-zju-source-classroom` 登录时写进宿主凭据
- * （`zhiyun-classroom/account`），`dsh-zhiyun-source-omni` / `@lybx-leyw/dsh-zju-source-campus` 各读各的。
+ * （`zw-classroom/account`），`dsh-zhiyun-source-omni` / `@lybx-leyw/dsh-zju-source-campus` 各读各的。
  * 而写入点是「个人」页那个**连接课堂**表单 —— 那意味着"想用学在浙大待办，
  * 得先点一次连接课堂"，两件不相关的事被绑在一起。
  *
@@ -29,7 +29,7 @@
  * # 存储
  *
  * 沿用宿主 `ctx.credentials` 的 `kind: 'grant'` 记录（DPAPI 加密，
- * 值不回显给任何界面）。记录 id 保持 `zhiyun-classroom/account` ——
+ * 值不回显给任何界面）。记录 id 保持 `zw-classroom/account` ——
  * **不是**为了"还叫课堂"，而是因为已经登录过的用户数据就在那里；
  * 换 id 会让所有现有用户凭空丢掉凭据、被迫重登一次。
  * 语义上它现在表示"浙大一卡通账号"，别名见 `CARD_RECORD_KEY`。
@@ -48,7 +48,7 @@ import { casLogin } from './cas.js';
 import { MASK, ROUTE_PATH, WRITE_HEADER } from './shared.js';
 
 /** 记录键。沿用旧 id 以免既有用户丢凭据（语义已是"一卡通"）。 */
-export const CARD_RECORD_KEY = 'zhiyun-classroom/account';
+export const CARD_RECORD_KEY = 'zw-classroom/account';
 
 /**
  * WebVPN「上网账号」的记录键。**与一卡通分开存**。
@@ -61,7 +61,7 @@ export const CARD_RECORD_KEY = 'zhiyun-classroom/account';
  *
  * 分开存还有一个好处：清除其中一个不会顺手动掉另一个。
  */
-export const WEBVPN_RECORD_KEY = 'zhiyun-campus/webvpn';
+export const WEBVPN_RECORD_KEY = 'zw-campus/webvpn';
 
 /** 语义别名：新代码里读它，比记忆"为什么叫 classroom"清楚。 */
 export const CARD_RECORD_KEY_LEGACY_NOTE = '沿用旧记录 id：换 id 会让已有用户丢凭据';
@@ -172,9 +172,9 @@ export const WEBVPN_LABEL = 'WebVPN 上网账号';
  * 分开存还有两个好处：清除其中一个不会顺手动掉另一个；失败时能明确说清
  * 「是哪一套账号被拒了」。
  */
-export const CC98_RECORD_KEY = 'zhiyun-cc98/account';
+export const CC98_RECORD_KEY = 'zw-cc98/account';
 /** 实验课平台自己的账号（`auth: "own"`：与统一身份认证**不是**同一份）。 */
-export const LAB_RECORD_KEY = 'zhiyun-lab/account';
+export const LAB_RECORD_KEY = 'zw-lab/account';
 export const LAB_LABEL = '实验课平台';
 /**
  * 浙大邮箱的**客户端专用密码**（16 位，在邮箱网页版生成）。
@@ -183,7 +183,7 @@ export const LAB_LABEL = '实验课平台';
  * 只认这串专用密码（依据：上游 `plugin/client/MailSettings.tsx` 硬校验 16 位，
  * 并给出「设置 → 安全设置 → 客户端专用密码」的生成路径）。
  */
-export const MAIL_RECORD_KEY = 'zhiyun-mail/account';
+export const MAIL_RECORD_KEY = 'zw-mail/account';
 export const MAIL_LABEL = '邮箱';
 
 /** CC98 那份凭据在宿主凭据列表里的说明。 */
@@ -597,7 +597,7 @@ export async function cc98Status(ctx) {
 
 /* ══════════════════════════════════════════════════════════ 宿主半边 */
 
-export const name = 'zhiyun-login';
+export const name = 'zw-login';
 
 /** 只硬依赖 `profileContext`：凭据走 `ctx.credentials` 惰性取。 */
 export const inject = ['profileContext'];
@@ -800,8 +800,8 @@ export function createHandler({ ctx, log = () => {} }) {
    *
    * # 服务名换过了（这里曾经是 bug）
    *
-   * `source/campus` 拆成 `xuezai` + `pta` 之后，服务名从 `zhiyunCampus` 变成
-   * `zhiyunXuezai`。这一段没跟着改，于是它**永远**返回 `NOT_INSTALLED`
+   * `source/campus` 拆成 `xuezai` + `pta` 之后，服务名从 `zwCampus` 变成
+   * `zwXuezai`。这一段没跟着改，于是它**永远**返回 `NOT_INSTALLED`
    * —— 设置页里「学在浙大」那一行恒显示「数据源未启用」，即使它明明装着。
    *
    * # 为什么用 `egress()` 而不是读一次数据
@@ -816,7 +816,7 @@ export function createHandler({ ctx, log = () => {} }) {
    */
   const probeCampusSource = async (ctx) => {
     try {
-      const xuezai = ctx?.get?.('zhiyunXuezai');
+      const xuezai = ctx?.get?.('zwXuezai');
       if (!xuezai) return { ok: false, code: 'NOT_INSTALLED', detail: '数据源未启用' };
       if (typeof xuezai.egress !== 'function') {
         return { ok: false, code: 'PROBE_FAILED', detail: '服务未暴露 egress()' };
@@ -867,7 +867,7 @@ export function createHandler({ ctx, log = () => {} }) {
    */
   const probeClassroom = async (ctx) => {
     try {
-      const classroom = ctx?.get?.('zhiyunClassroom');
+      const classroom = ctx?.get?.('zwClassroom');
       if (!classroom) return { ok: false, code: 'NOT_INSTALLED', detail: '数据源未启用' };
       // 没配凭据时先给准确提示，不去跑一次注定失败的登录。
       const card = await cardStatus(ctx).catch(() => null);
@@ -915,7 +915,7 @@ export function createHandler({ ctx, log = () => {} }) {
    */
   const probeZdbk = async (ctx) => {
     try {
-      const zdbk = ctx?.get?.('zhiyunZdbk');
+      const zdbk = ctx?.get?.('zwZdbk');
       if (!zdbk) return { ok: false, code: 'NOT_INSTALLED', detail: '数据源未启用' };
       // 没配凭据时先给出准确提示，不去跑一次注定失败的登录。
       const card = await cardStatus(ctx).catch(() => null);
@@ -1011,7 +1011,7 @@ export function createHandler({ ctx, log = () => {} }) {
    */
   const probeXuezai = async (ctx) => {
     try {
-      const xuezai = ctx?.get?.('zhiyunXuezai');
+      const xuezai = ctx?.get?.('zwXuezai');
       if (!xuezai) return { ok: false, code: 'NOT_INSTALLED', detail: '数据源未启用' };
       const card = await cardStatus(ctx).catch(() => null);
       if (!card?.configured) {
@@ -1044,7 +1044,7 @@ export function createHandler({ ctx, log = () => {} }) {
    */
   const probeSztz = async (ctx) => {
     try {
-      const sztz = ctx?.get?.('zhiyunSztz');
+      const sztz = ctx?.get?.('zwSztz');
       if (!sztz) return { ok: false, code: 'NOT_INSTALLED', detail: '数据源未启用' };
       // `ready()` 是**同步**的（直接返回布尔）；先前按 Promise 写 `.catch()` 会抛
     // `ready(...).catch is not a function` —— 那正是设置页四个包恒报「登录失败」的原因。
@@ -1068,7 +1068,7 @@ export function createHandler({ ctx, log = () => {} }) {
    */
   const probeTyys = async (ctx) => {
     try {
-      const tyys = ctx?.get?.('zhiyunTyys');
+      const tyys = ctx?.get?.('zwTyys');
       if (!tyys) return { ok: false, code: 'NOT_INSTALLED', detail: '数据源未启用' };
       const ready = await safeReady(tyys);
       return ready
@@ -1090,7 +1090,7 @@ export function createHandler({ ctx, log = () => {} }) {
    */
   const probeNotice = async (ctx) => {
     try {
-      const notice = ctx?.get?.('zhiyunNotice');
+      const notice = ctx?.get?.('zwNotice');
       if (!notice) return { ok: false, code: 'NOT_INSTALLED', detail: '数据源未启用' };
       const ready = await safeReady(notice);
       return ready
@@ -1321,7 +1321,7 @@ export function createHandler({ ctx, log = () => {} }) {
 
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-card] ${message}`;
+    const line = `[zw-card] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
@@ -1332,7 +1332,7 @@ export async function apply(ctx, config = {}) {
       const dispose = scope.webServer.register({ kind: 'exact', path: ROUTE_PATH, handler });
       log(`设置路由：${ROUTE_PATH}`);
       return dispose;
-    }, 'zhiyun: card credential route');
+    }, 'zw: card credential route');
   });
 
   /**
@@ -1348,7 +1348,7 @@ export async function apply(ctx, config = {}) {
    * 所以这里由 `login` 建**一份**会话，别的包向它要：
    *
    * ```js
-   * const shared = ctx.get('zhiyunCard');
+   * const shared = ctx.get('zwCard');
    * const transport = await shared.casTransport({ entry, hosts });
    * // transport 的 jar 里已经有 CAS 票，直接拿它发业务请求
    * ```
@@ -1508,7 +1508,7 @@ export async function apply(ctx, config = {}) {
     });
   };
 
-  const removeService = ctx.provide('zhiyunCard', {
+  const removeService = ctx.provide('zwCard', {
     routePath: ROUTE_PATH,
     read: () => readCard(ctx),
     write: (account) => writeCard(ctx, account),

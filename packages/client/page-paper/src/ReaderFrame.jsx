@@ -59,9 +59,9 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
     //    的那个值。iframe 刚换 src（打开一篇新文献、上传后自动打开）时，`contentDocument`
     //    已经存在，但里面还是空文档，`documentElement` 为 `null`，再往下取 `.classList`
     //    就是「Cannot read properties of null」。这个异常抛在 effect 里会被
-    //    `zhiyun.paper.content` 那个 slot 的 error boundary 接住，**整页变成空白**。
+    //    `zw.paper.content` 那个 slot 的 error boundary 接住，**整页变成空白**。
     //    真正的兜底与判定在 `frame-dom.js`（那边有可单独测的说明）。
-    toggleFrameClass(frameRef.current?.contentDocument, 'zp-cornell-visible', cornellOpen);
+    toggleFrameClass(frameRef.current?.contentDocument, 'zwp-cornell-visible', cornellOpen);
   }, [cornellOpen, ready]);
 
   const url = useMemo(() => readerUrl(topic, name, { page, q }), [topic, name, page, q]);
@@ -182,11 +182,11 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
       if (!doc) { setFailure('阅读器加载失败：拿不到同源文档（iframe 被跨域隔离了？）'); return; }
       detachNotes?.();
       detachNotes = attachCornellNotes(doc, { topic, name });
-      toggleFrameClass(doc, 'zp-cornell-visible', cornellOpenRef.current);
+      toggleFrameClass(doc, 'zwp-cornell-visible', cornellOpenRef.current);
       try {
         // 主题 + 藏掉「已经搬到本壳」的控件：只注入一张样式表，不碰上游脚本。
         const style = doc.createElement('style');
-        style.dataset.zhiyunFrame = 'true';
+        style.dataset.zwFrame = 'true';
         style.textContent = frameThemeCss(readThemeTokens(getComputedStyle(document.documentElement)));
         doc.head.append(style);
       } catch (error) {
@@ -250,17 +250,17 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
     setPop(null);
   }, [pop, onAskAbout]);
 
-  return <div className="zp-reader" ref={hostRef}>
+  return <div className="zwp-reader" ref={hostRef}>
     <iframe
       ref={frameRef}
-      className="zp-frame"
+      className="zwp-frame"
       title={`${topic} / ${name}`}
       src={url}
       // 刻意不加 sandbox：需要同源地读 contentDocument 才能做选区和悬停判定。
       // 上游 HTML 是本地打包产物、与宿主同源，风险等同宿主自身页面。
     />
-    {failure && <div className="zp-frame-hint is-error">{failure}</div>}
-    {!ready && !failure && <div className="zp-frame-hint"><span className="zp-spinner"/>正在打开阅读器…</div>}
+    {failure && <div className="zwp-frame-hint is-error">{failure}</div>}
+    {!ready && !failure && <div className="zwp-frame-hint"><span className="zwp-spinner"/>正在打开阅读器…</div>}
     {pop && <SelectionPopover
       pop={pop}
       innerRef={popRef}
@@ -286,23 +286,23 @@ function SelectionPopover({ pop, innerRef, onAsk, onRetry, onClose }) {
     return { left, top };
   }, [rect]);
 
-  return <div className="zp-pop" ref={innerRef} style={style} role="dialog" aria-label="选中内容翻译">
-    <div className="zp-pop-source" title={pop.text}>{pop.text.length > 96 ? `${pop.text.slice(0, 96)}…` : pop.text}</div>
-    {pop.status === 'loading' && <div className="zp-pop-body"><span className="zp-spinner"/><span>翻译中…</span></div>}
-    {pop.status === 'error' && <div className="zp-pop-body is-error">
-      <div className="zp-pop-message">{pop.message}</div>
-      <div className="zp-pop-actions">
+  return <div className="zwp-pop" ref={innerRef} style={style} role="dialog" aria-label="选中内容翻译">
+    <div className="zwp-pop-source" title={pop.text}>{pop.text.length > 96 ? `${pop.text.slice(0, 96)}…` : pop.text}</div>
+    {pop.status === 'loading' && <div className="zwp-pop-body"><span className="zwp-spinner"/><span>翻译中…</span></div>}
+    {pop.status === 'error' && <div className="zwp-pop-body is-error">
+      <div className="zwp-pop-message">{pop.message}</div>
+      <div className="zwp-pop-actions">
         <button type="button" onClick={onRetry}><Icon name="history" size={14}/>重试</button>
         <button type="button" onClick={onClose}>关闭</button>
       </div>
     </div>}
     {pop.status === 'done' && <>
-      <div className="zp-pop-body"><Icon name="translate" size={15}/><p>{pop.translation}</p></div>
-      {pop.truncated && <div className="zp-pop-note">选区较长，只翻译了前 1200 个字符。</div>}
-      <div className="zp-pop-actions">
+      <div className="zwp-pop-body"><Icon name="translate" size={15}/><p>{pop.translation}</p></div>
+      {pop.truncated && <div className="zwp-pop-note">选区较长，只翻译了前 1200 个字符。</div>}
+      <div className="zwp-pop-actions">
         <button type="button" className="is-primary" onClick={onAsk}><Icon name="chat" size={14}/>就此提问</button>
         <button type="button" onClick={onClose}>关闭</button>
-        {pop.cached && <span className="zp-pop-cache">来自缓存</span>}
+        {pop.cached && <span className="zwp-pop-cache">来自缓存</span>}
       </div>
     </>}
   </div>;

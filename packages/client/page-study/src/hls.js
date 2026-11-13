@@ -44,7 +44,7 @@ const HLS_PATTERN = /\.m3u8(?:[?#]|$)/i;
 /** 把任意地址归一成「是不是 HLS 流」。空值、非法值一律 false。 */
 export function isHlsUrl(url) {
   if (typeof url !== 'string' || !url.trim()) return false;
-  // 本机转发端点的地址形如 `/zhiyun-live/hls?u=<编码后的原始 m3u8>`：
+  // 本机转发端点的地址形如 `/zw-live/hls?u=<编码后的原始 m3u8>`：
   // 只看 query 会漏掉它，所以解码后再判一次 —— 否则直播会被当成普通 mp4
   // 直接塞给 <video>，Chrome 上表现为「一直是黑屏、也不报错」。
   if (HLS_PATTERN.test(url)) return true;

@@ -44,12 +44,12 @@ export const lecturePdfOptions = pdfOptions;
 export const PDF_DOCUMENTS = Object.freeze({
   lecture: Object.freeze({
     dialogTitle: '导出讲义与知识图谱',
-    readySelector: '#zs-lecture-export .zs-pdf-lecture',
+    readySelector: '#zws-lecture-export .zws-pdf-lecture',
     fallbackName: '课堂讲义',
   }),
   quiz: Object.freeze({
     dialogTitle: '导出练习题 PDF',
-    readySelector: '#zs-quiz-export .zs-pdf-body',
+    readySelector: '#zws-quiz-export .zws-pdf-body',
     fallbackName: '题库练习卷',
   }),
 });

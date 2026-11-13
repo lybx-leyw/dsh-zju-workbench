@@ -1439,7 +1439,7 @@ function createMediaContext(deps) {
       const port = mediaPort();
       if (!port || typeof port.parsePdf !== 'function') {
         throw notImplemented(
-          'zhiyunClassroomStudio.media.parsePdf',
+          'zwClassroomStudio.media.parsePdf',
           'app/api/parse-pdf/route.ts:99-105',
         );
       }
@@ -1486,7 +1486,7 @@ function createMediaContext(deps) {
       const port = mediaPort();
       if (!port || typeof port.asr !== 'function') {
         throw notImplemented(
-          'zhiyunClassroomStudio.media.transcribe',
+          'zwClassroomStudio.media.transcribe',
           'app/api/transcription/route.ts:94-96',
         );
       }
@@ -1635,7 +1635,7 @@ function createMediaContext(deps) {
       const port = mediaPort();
       if (!port || typeof port.image !== 'function') {
         throw notImplemented(
-          'zhiyunClassroomStudio.media.image',
+          'zwClassroomStudio.media.image',
           'app/api/generate/image/route.ts:70-77',
         );
       }
@@ -1683,7 +1683,7 @@ function createMediaContext(deps) {
       const port = mediaPort();
       if (!port || typeof port.tts !== 'function') {
         throw notImplemented(
-          'zhiyunClassroomStudio.media.tts',
+          'zwClassroomStudio.media.tts',
           'app/api/generate/tts/route.ts:109-131',
         );
       }
@@ -1733,7 +1733,7 @@ function createMediaContext(deps) {
       const port = mediaPort();
       if (!port || typeof port.video !== 'function') {
         throw notImplemented(
-          'zhiyunClassroomStudio.media.video',
+          'zwClassroomStudio.media.video',
           'app/api/generate/video/route.ts:74-81',
         );
       }
@@ -1771,7 +1771,7 @@ function createMediaContext(deps) {
       const port = mediaPort();
       if (!port || typeof port.voice !== 'function') {
         throw notImplemented(
-          'zhiyunClassroomStudio.media.voice',
+          'zwClassroomStudio.media.voice',
           'app/api/generate/voice/route.ts:141-148',
         );
       }

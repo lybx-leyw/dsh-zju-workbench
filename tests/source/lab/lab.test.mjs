@@ -403,7 +403,7 @@ test('logout：清掉内存登录态与持久化会话，并如实报出之前�
   const { ctx, services } = fakeCtx();
   const dispose = apply(ctx);
   try {
-    const service = services.get('zhiyunLab');
+    const service = services.get('zwLab');
     const session = fakeSession({ token: 'T', expiresAt: Date.now() + 3600_000 });
     service.setSession(session);
 
@@ -422,7 +422,7 @@ test('logout：没有注入持久化层时不抛错（纯内存模式下也要�
   const { ctx, services } = fakeCtx();
   const dispose = apply(ctx);
   try {
-    const service = services.get('zhiyunLab');
+    const service = services.get('zwLab');
     assert.deepEqual(await service.logout(), { cleared: false });
   } finally {
     await dispose?.();

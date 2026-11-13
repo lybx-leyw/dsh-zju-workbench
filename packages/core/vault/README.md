@@ -8,8 +8,8 @@
 | 文件 | 作用 | IO |
 | --- | --- | --- |
 | `src/parse/links.js`、`src/index/vault-index.js` | 解析与索引 | 零 IO 的纯函数 |
-| `src/host.js`（`zhiyun-vault`） | 薄宿主半边：把笔记集变成索引，经 `/api/zhiyun-vault` 交给页面 | 不写文件 |
-| `src/notes-host.js`（`zhiyun-vault-notes-store`） | 笔记库的**存储**：列目录、原子写、路径安全、PDF 字节流、`/api/zhiyun-vault-notes` | 落盘 |
+| `src/host.js`（`zw-vault`） | 薄宿主半边：把笔记集变成索引，经 `/api/zw-vault` 交给页面 | 不写文件 |
+| `src/notes-host.js`（`zw-vault-notes-store`） | 笔记库的**存储**：列目录、原子写、路径安全、PDF 字节流、`/api/zw-vault-notes` | 落盘 |
 | `src/pdf-viewer.js` | 同源 iframe 的 PDF 阅读器页面 + 静态资源 | 读 pdfjs-dist |
 
 ## 为什么存储在这里，而不是在「笔记」页里
@@ -18,10 +18,10 @@
 管理文件系统」—— 职责错位：
 
 - 页面只该渲染。它需要的是「往哪个路由要什么」，而不是列目录、拼路径、算 content-type；
-- 停用页面不该等于停用笔记库（讲义导出 `core/handout` 读的就是 `zhiyunVaultNotes`）；
+- 停用页面不该等于停用笔记库（讲义导出 `core/handout` 读的就是 `zwVaultNotes`）；
 - 路径安全这类东西是**安全边界**，它应该离调用方越远越好。
 
-所以 2026-11 把存储整体搬到 core，服务名 `zhiyunVaultNotes` 与路由都不变，
+所以 2026-11 把存储整体搬到 core，服务名 `zwVaultNotes` 与路由都不变，
 页面那边只是少了一个 `apply()`。
 
 ## 与 `@lybx-leyw/dsh-zju-core-notes` 的关系（两者互补，不互相 import）
@@ -78,8 +78,8 @@
 ### HTTP（页面用）
 
 ```
-GET  /api/zhiyun-vault     → 索引概况
-POST /api/zhiyun-vault     → { type:'client-request', rpcId, payload:{ method, args } }
+GET  /api/zw-vault     → 索引概况
+POST /api/zw-vault     → { type:'client-request', rpcId, payload:{ method, args } }
 ```
 
 方法：`describe` / `notes` / `note` / `backlinks` / `tags` / `tag` /
@@ -88,7 +88,7 @@ POST /api/zhiyun-vault     → { type:'client-request', rpcId, payload:{ method,
 ### 宿主侧
 
 ```js
-const vault = ctx.get('zhiyunVault');
+const vault = ctx.get('zwVault');
 vault.setNotes([{ path: 'a.md', markdown: '[[b]] #标签' }, ...]);  // 推入笔记集
 vault.index().backlinks.get('b.md');                                // 拿索引
 vault.invoke('graph');                                              // 同 HTTP 的读数

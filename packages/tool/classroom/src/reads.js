@@ -3,7 +3,7 @@
  *
  * # 与 `study_catalog` / `study_read` / `study_search` 的分工
  *
- * 那三个工具读的是**已整理的讲义**（`zhiyunStudy` 的知识库），属于「学习空间」；
+ * 那三个工具读的是**已整理的讲义**（`zwStudy` 的知识库），属于「学习空间」；
  * 本文件的工具读的是**平台上的原始数据**（课程、节次、课件、字幕、直播状态），
  * 属于 `source/classroom`。两者不是同一层：讲义是加工过的，平台数据是取证用的。
  * 放在同一个包里，是因为它们是同一个域（课堂），只是数据来源不同。
@@ -31,7 +31,7 @@
 import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom',
+  zwClassroom: '@lybx-leyw/dsh-zju-source-classroom',
 });
 
 const ACTIONS = [
@@ -47,7 +47,7 @@ const ACTIONS = [
  * @returns 工具定义数组。
  */
 export function createClassroomReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunClassroom', SERVICE_SOURCES.zhiyunClassroom);
+  const need = () => serviceLookup(services, 'zwClassroom', SERVICE_SOURCES.zwClassroom);
 
   return [
     {

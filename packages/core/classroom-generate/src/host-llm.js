@@ -3,7 +3,7 @@
  *
  * # 为什么需要这层
  *
- * 课堂生成最初只认 `zhiyunClassroomStudio.providers.list()` —— 那是从**上游
+ * 课堂生成最初只认 `zwClassroomStudio.providers.list()` —— 那是从**上游
  * 浙大服务端**要「用哪个模型」的清单。这条路径有两个问题：
  *
  *   1. 它依赖课堂登录态。登录失效时（`providers.list()` 返回 `{}`），

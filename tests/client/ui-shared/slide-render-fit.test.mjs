@@ -110,7 +110,7 @@ test('行高默认值低于 1.5（给字体度量留余量）', () => {
 });
 
 test('段落默认 margin 被压掉（否则首行被顶出格子）', () => {
-  assert.match(CSS, /\.zyc-slide p\s*\{\s*margin:\s*0;/, '必须压掉 <p> 的默认 margin');
+  assert.match(CSS, /\.zwc-slide p\s*\{\s*margin:\s*0;/, '必须压掉 <p> 的默认 margin');
 });
 
 test('文本保留换行与长词折行', () => {

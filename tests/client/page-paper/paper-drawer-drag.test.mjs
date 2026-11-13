@@ -36,7 +36,7 @@ test('拖动抽屉时不触发整页重渲染，阅读器也不跟着漂移', { 
           const ro = new ResizeObserver(() => { window.__frameResizes = (window.__frameResizes ?? 0) + 1; });
           ro.observe(el); return () => ro.disconnect();
         }, []);
-        return React.createElement('iframe', { ref, className: 'zp-frame', style: { width: '100%', height: '100%', border: 0 } });
+        return React.createElement('iframe', { ref, className: 'zwp-frame', style: { width: '100%', height: '100%', border: 0 } });
       };
       let commits = 0;
       function App() {
@@ -50,7 +50,7 @@ test('拖动抽屉时不触发整页重渲染，阅读器也不跟着漂移', { 
           const pointer = event.currentTarget;
           try { pointer.setPointerCapture?.(event.pointerId); } catch {}
           let frame = 0, pending = startWidth;
-          const paint = () => { frame = 0; root.style.setProperty('--zp-drawer-width', pending + 'px'); };
+          const paint = () => { frame = 0; root.style.setProperty('--zwp-drawer-width', pending + 'px'); };
           const move = (e) => { pending = Math.min(Math.max(300, startWidth + (startX - e.clientX)), 900);
             if (frame === 0) frame = requestAnimationFrame(paint); };
           const finish = () => {
@@ -59,20 +59,20 @@ test('拖动抽屉时不触发整页重渲染，阅读器也不跟着漂移', { 
             try { pointer.releasePointerCapture?.(event.pointerId); } catch {}
             document.removeEventListener('pointermove', move);
             document.removeEventListener('pointerup', finish);
-            document.body.classList.remove('zp-resizing');
-            root.style.removeProperty('--zp-drawer-width');
+            document.body.classList.remove('zwp-resizing');
+            root.style.removeProperty('--zwp-drawer-width');
             if (pending !== startWidth) setWidth(pending);
           };
-          document.body.classList.add('zp-resizing');
+          document.body.classList.add('zwp-resizing');
           document.addEventListener('pointermove', move);
           document.addEventListener('pointerup', finish);
         };
         window.__commits = () => commits;
         return React.createElement('div', { style: { display: 'flex', width: '900px', height: '600px' } },
-          React.createElement('div', { className: 'zp-reader', style: { flex: 1, minWidth: 0 } }, React.createElement(Frame)),
-          React.createElement('aside', { ref: startRef, className: 'zp-drawer is-open',
-            style: { '--zp-drawer-width': width + 'px', flexShrink: 0, borderLeft: '1px solid #ccc', width: 'var(--zp-drawer-width)' } },
-            React.createElement('div', { className: 'zp-drawer-resize', style: { width: 6, cursor: 'col-resize', height: '100%' }, onPointerDown })));
+          React.createElement('div', { className: 'zwp-reader', style: { flex: 1, minWidth: 0 } }, React.createElement(Frame)),
+          React.createElement('aside', { ref: startRef, className: 'zwp-drawer is-open',
+            style: { '--zwp-drawer-width': width + 'px', flexShrink: 0, borderLeft: '1px solid #ccc', width: 'var(--zwp-drawer-width)' } },
+            React.createElement('div', { className: 'zwp-drawer-resize', style: { width: 6, cursor: 'col-resize', height: '100%' }, onPointerDown })));
       }
       createRoot(document.getElementById('root')).render(React.createElement(App));
     `, resolveDir: root, loader: 'jsx' }, bundle: true, write: false, format: 'iife', define: { 'process.env.NODE_ENV': '"development"' } });
@@ -81,7 +81,7 @@ test('拖动抽屉时不触发整页重渲染，阅读器也不跟着漂移', { 
     await page.addScriptTag({ content: result.outputFiles[0].text });
     await page.waitForFunction(() => typeof window.__commits === 'function');
     const before = await page.evaluate(() => window.__commits());
-    const box = await page.locator('.zp-drawer-resize').boundingBox();
+    const box = await page.locator('.zwp-drawer-resize').boundingBox();
     await page.mouse.move(box.x + 3, box.y + 200);
     await page.mouse.down();
     for (let i = 0; i < 40; i += 1) await page.mouse.move(box.x + 3 - i * 6, box.y + 200);
@@ -90,7 +90,7 @@ test('拖动抽屉时不触发整页重渲染，阅读器也不跟着漂移', { 
     const after = await page.evaluate(() => ({ commits: window.__commits(), resizes: window.__frameResizes ?? 0 }));
     // 拖动 40 步只应提交一次（松手时），而不是每一步一次。
     assert.ok(after.commits - before <= 2, `拖动期间 React 提交次数应靠近 1，实际 ${after.commits - before}`);
-    const width = await page.evaluate(() => document.querySelector('.zp-drawer').getBoundingClientRect().width);
+    const width = await page.evaluate(() => document.querySelector('.zwp-drawer').getBoundingClientRect().width);
     assert.ok(width > 500, `松手后宽度应真的变了：${width}`);
   } finally { await browser.close(); }
 });

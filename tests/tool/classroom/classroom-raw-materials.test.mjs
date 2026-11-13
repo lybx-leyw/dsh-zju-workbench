@@ -23,7 +23,7 @@ import { createRawMaterialTools } from '../../../packages/tool/classroom/src/raw
 /** 造一个假课堂服务。 */
 function classroom({ subtitles, slides, transcribe } = {}) {
   return {
-    zhiyunClassroom: {
+    zwClassroom: {
       getSubtitles: async () => {
         if (subtitles instanceof Error) throw subtitles;
         return { items: subtitles ?? [] };
@@ -152,10 +152,10 @@ test('PPT 是图片不是文字 —— 结果里必须标明这一点', async ()
 
 test('命中本地缓存时带上 localUrl', async () => {
   const services = classroom({
-    slides: [{ imageUrl: 'https://x/p1.jpg', cacheUrl: '/zhiyun-slides/abc' }],
+    slides: [{ imageUrl: 'https://x/p1.jpg', cacheUrl: '/zw-slides/abc' }],
   });
   const result = await call(services, 'raw_slides', { courseId: 'c1', subId: 's1' });
-  assert.equal(result.items[0].localUrl, '/zhiyun-slides/abc');
+  assert.equal(result.items[0].localUrl, '/zw-slides/abc');
 });
 
 test('分页：从 0 算的 offset，页码从 1 报', async () => {

@@ -53,7 +53,7 @@ async function launchBrowser() {
   return null;
 }
 
-test('论文页：树栏可收起、可展开、状态被记住', { skip: "旧界面（shell-workbench + page-paper 的 .zy-page/.zp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
+test('论文页：树栏可收起、可展开、状态被记住', { skip: "旧界面（shell-workbench + page-paper 的 .zw-page/.zwp-* 选择器）已归档，新界面用 dsh-pages + vendor 内联样式；等新界面稳定后按这些断言重写", timeout: 180000 }, async (t) => {
   // ⚠️ 守卫放在**最前面**：产物过期时立刻失败，不用先花 20 秒起浏览器再报错。
   //    这条是必须的 —— 见 assertBundleFresh 的说明（它来自一次真实的假绿灯）。
   await assertBundleFresh('@lybx-leyw/dsh-zju-page-paper', ['Paper.jsx', 'PaperTree.jsx', 'style.css', 'client.jsx']);
@@ -70,7 +70,7 @@ test('论文页：树栏可收起、可展开、状态被记住', { skip: "旧�
   const home = await mkdtemp(path.join(tmpdir(), 'paper-collapse-'));
   const runtime = await initialize({ home });
   // 预置一篇文献，树栏才有内容可收起。
-  const dataDir = path.join(runtime.profile, 'data', 'zhiyun-paper');
+  const dataDir = path.join(runtime.profile, 'data', 'zw-paper');
   await mkdir(path.join(dataDir, '心理学'), { recursive: true });
   await writeFile(path.join(dataDir, '心理学', '总论.pdf'), minimalPdf());
 
@@ -97,7 +97,7 @@ test('论文页：树栏可收起、可展开、状态被记住', { skip: "旧�
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.locator('.zy-page[data-page=today]').waitFor({ timeout: 60000 });
+    await page.locator('.zw-page[data-page=today]').waitFor({ timeout: 60000 });
     await page.evaluate(() => {
       for (const b of document.querySelectorAll('button')) {
         if (['继续', '稍后配置'].includes(b.textContent?.trim() ?? '')) b.click();
@@ -113,7 +113,7 @@ test('论文页：树栏可收起、可展开、状态被记住', { skip: "旧�
       await sleep(1500);
     };
     /** 树栏的实际像素宽度。 */
-    const paneWidth = () => page.locator('.zp-tree-pane').first()
+    const paneWidth = () => page.locator('.zwp-tree-pane').first()
       .evaluate((el) => Math.round(el.getBoundingClientRect().width));
     /**
      * 点收起/展开（绕开宿主遮罩）。
@@ -124,14 +124,14 @@ test('论文页：树栏可收起、可展开、状态被记住', { skip: "旧�
      * 这是照笔记库的结构做的，测试必须按这个结构点，而不是固守某个 class。
      */
     const clickToggle = () => page.evaluate(() => {
-      const head = [...document.querySelectorAll('.zp-tree-head button')]
+      const head = [...document.querySelectorAll('.zwp-tree-head button')]
         .find((b) => b.title === '收起论文库');
       if (head) { head.click(); return; }
-      document.querySelector('.zp-tree-toggle')?.click();
+      document.querySelector('.zwp-tree-toggle')?.click();
     });
 
     await goPaper();
-    assert.equal(await page.locator('.zp-tree-pane').count(), 1, '树栏应存在');
+    assert.equal(await page.locator('.zwp-tree-pane').count(), 1, '树栏应存在');
 
     const openWidth = await paneWidth();
     assert.ok(openWidth > 150, `默认应展开，实际宽=${openWidth}`);
@@ -140,7 +140,7 @@ test('论文页：树栏可收起、可展开、状态被记住', { skip: "旧�
     await sleep(500);
     const closedWidth = await paneWidth();
     assert.ok(closedWidth < 60, `点收起后应变窄：${openWidth} → ${closedWidth}`);
-    assert.equal(await page.locator('.zp-tree-toggle').count(), 1, '收起后必须留一个展开按钮，否则叫不回来');
+    assert.equal(await page.locator('.zwp-tree-toggle').count(), 1, '收起后必须留一个展开按钮，否则叫不回来');
 
     await clickToggle();
     await sleep(500);

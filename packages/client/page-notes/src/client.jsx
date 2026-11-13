@@ -17,7 +17,7 @@
 // 每一块都对应真实存在的东西，不是装饰：
 //   - **顶部工具栏**：新建笔记 / 新建文件夹 / 导入 PDF / 过滤 / 开关两侧面板；
 //     它是**横排**的，不占左侧 —— 页面壳自己已经有一条竖导轨，再竖一条会让
-//     人分不清哪条管切页、哪条管笔记库内部（见 `.zs-nt-topbar` 的样式注释）；
+//     人分不清哪条管切页、哪条管笔记库内部（见 `.zws-nt-topbar` 的样式注释）；
 //   - **文件树**：文件夹可折叠、笔记与附件分形状、拖到文件夹上即移动；
 //   - **标签页**：同时开多篇，各自带自己的草稿与未保存状态；
 //   - **面包屑**：`← →` 是打开历史（后退/前进），右边是所在目录 + 文件名；
@@ -53,7 +53,7 @@ import { Icon, Notice, mountStyle, registerPageContent, useRegisterPageSidebar }
 import { NoteGraph, css as graphCss } from '@lybx-leyw/dsh-zju-ui-graph-render';
 import css from './style.css';
 
-export const name = 'zhiyun-page-notes-client';
+export const name = 'zw-page-notes-client';
 export const inject = ['slots'];
 
 /**
@@ -64,15 +64,15 @@ export const inject = ['slots'];
  */
 const MARKDOWN_LABELS = { code: { copyLabel: '复制', copiedLabel: '已复制' }, footnotes: '注释' };
 
-const NOTES_ROUTE = '/api/zhiyun-vault-notes';
-const VAULT_ROUTE = '/api/zhiyun-vault';
+const NOTES_ROUTE = '/api/zw-vault-notes';
+const VAULT_ROUTE = '/api/zw-vault';
 /**
  * PDF 阅读器的同源地址（宿主路由，见 `src/pdf-viewer.js`）。
  *
  * 阅读器是 iframe 而不是本 bundle 里的组件：pdf.js 的 worker 必须是独立脚本，
  * 而本包客户端有「不许内联 src/ 之外文件」的构建守卫。同源则是为了把主题送进去。
  */
-const PDF_VIEWER_PREFIX = '/zhiyun-vault-pdf/';
+const PDF_VIEWER_PREFIX = '/zw-vault-pdf/';
 const AUTOSAVE_MS = 800;
 /** 历史栈上限：够来回找，又不会把内存当日记本。 */
 const HISTORY_LIMIT = 60;
@@ -251,10 +251,10 @@ function ancestorsOf(rel) {
 }
 
 export function apply(ctx) {
-  mountStyle(ctx, { attribute: 'zhiyunNotesPageStyle', css, label: 'zhiyun: notes page styles' });
+  mountStyle(ctx, { attribute: 'zwNotesPageStyle', css, label: 'zw: notes page styles' });
   // 图谱的样式随包走（`@lybx-leyw/dsh-zju-ui-graph-render` 导出自己的 css），
   // 页面只负责在同一个 ctx 里挂上 —— 样式归属跟着组件走，不散落在页面里。
-  mountStyle(ctx, { attribute: 'zhiyunGraphRenderStyle', css: graphCss, label: 'zhiyun: graph render styles' });
+  mountStyle(ctx, { attribute: 'zwGraphRenderStyle', css: graphCss, label: 'zw: graph render styles' });
     registerPageContent(ctx, {
     id: 'notes',
     // 导轨图标：ui-shared 的统一描边集，与内建页同源同风格。
@@ -270,8 +270,8 @@ function TreeRow({ row, current, cursor, selected, expanded, onOpen, onToggle, o
   const isFolder = row.type === 'folder';
   const isOpen = isFolder && expanded.has(row.path);
   return <li
-    className={`zs-nt-row${row.path === current ? ' is-current' : ''}${row.path === cursor ? ' is-cursor' : ''}${selected ? ' is-selected' : ''}${isOpen ? ' is-expanded' : ''}${dragging === row.path ? ' is-dragging' : ''}`}
-    style={{ '--zs-nt-depth': String(row.depth) }}
+    className={`zws-nt-row${row.path === current ? ' is-current' : ''}${row.path === cursor ? ' is-cursor' : ''}${selected ? ' is-selected' : ''}${isOpen ? ' is-expanded' : ''}${dragging === row.path ? ' is-dragging' : ''}`}
+    style={{ '--zws-nt-depth': String(row.depth) }}
     draggable
     onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', row.path); onDragStart(row.path); }}
     onDragEnd={() => onDragStart(null)}
@@ -280,7 +280,7 @@ function TreeRow({ row, current, cursor, selected, expanded, onOpen, onToggle, o
   >
     <button
       type="button"
-      className="zs-nt-rowbtn"
+      className="zws-nt-rowbtn"
       title={row.path}
       /* 键盘删除的落点：keydown 处理里靠 `data-path` 认出"焦点落在哪一行"。
          比维护一个 `selected` state 更贴合真实操作 —— 行的焦点**就是**选中，
@@ -289,12 +289,12 @@ function TreeRow({ row, current, cursor, selected, expanded, onOpen, onToggle, o
       data-kind={row.type}
       onClick={() => (isFolder ? onToggle(row.path) : onOpen(row.path))}
     >
-      <span className="zs-nt-caret">{isFolder ? <Icon name="chevron" size={13} /> : null}</span>
-      <span className={`zs-nt-rowicon${isFolder ? ' zs-nt-folder' : ''}`}>
+      <span className="zws-nt-caret">{isFolder ? <Icon name="chevron" size={13} /> : null}</span>
+      <span className={`zws-nt-rowicon${isFolder ? ' zws-nt-folder' : ''}`}>
         <Icon name={isFolder ? 'folder' : row.type === 'note' ? 'fileText' : 'paper'} size={14} />
       </span>
-      <span className={`zs-nt-rowname${isFolder && isOpen ? ' is-open' : ''}`}>{baseOf(row.path)}</span>
-      {row.type === 'attachment' ? <span className="zs-nt-ext">{row.ext}</span> : null}
+      <span className={`zws-nt-rowname${isFolder && isOpen ? ' is-open' : ''}`}>{baseOf(row.path)}</span>
+      {row.type === 'attachment' ? <span className="zws-nt-ext">{row.ext}</span> : null}
     </button>
   </li>;
 }
@@ -330,7 +330,7 @@ function PdfViewer({ page, title }) {
       : 'light');
     const push = () => {
       // `contentWindow` 在同源下拿得到；拿不到说明被隔离了，那就只能维持默认。
-      frame.contentWindow?.postMessage({ type: 'zhiyun-pdf-theme', theme: readTheme() }, '*');
+      frame.contentWindow?.postMessage({ type: 'zw-pdf-theme', theme: readTheme() }, '*');
     };
     // 加载完成时补发（iframe 自己解析完才有 listener）。
     frame.addEventListener('load', push);
@@ -346,7 +346,7 @@ function PdfViewer({ page, title }) {
 
   return <iframe
     ref={frameRef}
-    className="zs-nt-pdf"
+    className="zws-nt-pdf"
     src={src}
     title={title}
     /* 同源（要读写主题），但不要给它 `allow-same-origin` 之外的权限。 */
@@ -357,15 +357,15 @@ function PdfViewer({ page, title }) {
 /** 标签页条。每一页带自己的 ×；右侧的 ＋ 新建一篇。 */
 /** 标签页条。每一页带自己的 ×；右侧的 ＋ 新建一篇。 */
 function TabStrip({ tabs, active, onPick, onClose, onCreate }) {
-  return <div className="zs-nt-tabs" role="tablist">
-    {tabs.map((tab) => <span key={tab.path} className={`zs-nt-tab${tab.path === active ? ' is-active' : ''}`}>
-      <button type="button" role="tab" aria-selected={tab.path === active} className="zs-nt-tabname" onClick={() => onPick(tab.path)} title={tab.path}>
+  return <div className="zws-nt-tabs" role="tablist">
+    {tabs.map((tab) => <span key={tab.path} className={`zws-nt-tab${tab.path === active ? ' is-active' : ''}`}>
+      <button type="button" role="tab" aria-selected={tab.path === active} className="zws-nt-tabname" onClick={() => onPick(tab.path)} title={tab.path}>
         {tab.title}
-        {tab.dirty ? <b className="zs-nt-dot" aria-label="未保存" /> : null}
+        {tab.dirty ? <b className="zws-nt-dot" aria-label="未保存" /> : null}
       </button>
-      <button type="button" className="zs-nt-tabclose" aria-label={`关闭 ${tab.title}`} onClick={() => onClose(tab.path)}><Icon name="close" size={12} /></button>
+      <button type="button" className="zws-nt-tabclose" aria-label={`关闭 ${tab.title}`} onClick={() => onClose(tab.path)}><Icon name="close" size={12} /></button>
     </span>)}
-    <button type="button" className="zs-nt-tabnew" aria-label="新建笔记" title="新建笔记" onClick={() => onCreate()}><Icon name="plus" size={14} /></button>
+    <button type="button" className="zws-nt-tabnew" aria-label="新建笔记" title="新建笔记" onClick={() => onCreate()}><Icon name="plus" size={14} /></button>
   </div>;
 }
 
@@ -384,29 +384,29 @@ function NoteRelations({ name, markdown, backlinks, tags, graph, onOpen, onRenam
   const [nextName, setNextName] = useState(name);
   useEffect(() => { setNextName(name); setRenameOpen(false); }, [name]);
 
-  return <aside className="zs-nt-side" aria-label="链接与标签">
+  return <aside className="zws-nt-side" aria-label="链接与标签">
     <section>
       <h3>{name ? baseOf(name) : '这篇笔记'}</h3>
       {name ? <>
-        <button type="button" className="zs-nt-sidebtn" disabled={busy} onClick={() => setRenameOpen((v) => !v)}>
+        <button type="button" className="zws-nt-sidebtn" disabled={busy} onClick={() => setRenameOpen((v) => !v)}>
           <Icon name="pencil" size={13} />{renameOpen ? '取消改名' : '改标题（改写全库链接）'}
         </button>
-        {renameOpen && <div className="zs-nt-rename">
+        {renameOpen && <div className="zws-nt-rename">
           <input value={nextName} onChange={(e) => setNextName(e.target.value)} aria-label="新标题" onKeyDown={(e) => { if (e.key === 'Enter' && nextName.trim()) void onRename(name, nextName.trim()); }} />
-          <button className="zs-button" disabled={busy || !nextName.trim()} onClick={() => void onRename(name, nextName.trim())}>确定</button>
+          <button className="zws-button" disabled={busy || !nextName.trim()} onClick={() => void onRename(name, nextName.trim())}>确定</button>
         </div>}
-        <button type="button" className="zs-nt-sidebtn zs-nt-danger" disabled={busy} onClick={() => void onRemove(name)}>
+        <button type="button" className="zws-nt-sidebtn zws-nt-danger" disabled={busy} onClick={() => void onRemove(name)}>
           <Icon name="trash" size={13} />删除这篇笔记
         </button>
-      </> : <p className="zs-muted">左边选一篇，或按 ＋ 新建。</p>}
+      </> : <p className="zws-muted">左边选一篇，或按 ＋ 新建。</p>}
     </section>
 
     <section>
       <h3>反向链接 <span>{backlinks.length}</span></h3>
       {backlinks.length === 0
-        ? <p className="zs-muted">还没有别的笔记提到它。</p>
-        : <ul className="zs-nt-refs">{backlinks.map((b, i) => <li key={`${b.from}-${i}`}>
-          <button type="button" className="zs-nt-ref" onClick={() => onOpen(b.from.replace(/\.md$/i, ''))}>{b.fromTitle}</button>
+        ? <p className="zws-muted">还没有别的笔记提到它。</p>
+        : <ul className="zws-nt-refs">{backlinks.map((b, i) => <li key={`${b.from}-${i}`}>
+          <button type="button" className="zws-nt-ref" onClick={() => onOpen(b.from.replace(/\.md$/i, ''))}>{b.fromTitle}</button>
         </li>)}</ul>}
     </section>
 
@@ -415,22 +415,22 @@ function NoteRelations({ name, markdown, backlinks, tags, graph, onOpen, onRenam
     <section>
       <h3>指向 <span>{parse.links.length}</span></h3>
       {parse.links.length === 0
-        ? <p className="zs-muted">还没有链接到别的笔记。</p>
-        : <ul className="zs-nt-refs">{parse.links.map((target) => <li key={target}>
-          <button type="button" className="zs-nt-ref" onClick={() => onOpen(target)}>{target}</button>
+        ? <p className="zws-muted">还没有链接到别的笔记。</p>
+        : <ul className="zws-nt-refs">{parse.links.map((target) => <li key={target}>
+          <button type="button" className="zws-nt-ref" onClick={() => onOpen(target)}>{target}</button>
         </li>)}</ul>}
     </section>
 
     <section>
       <h3>标签 <span>{parse.tags.length}</span></h3>
       {parse.tags.length === 0
-        ? <p className="zs-muted">还没有标签（写 <code>#标签</code>）。</p>
-        : <p className="zs-nt-tags">{parse.tags.map((t) => <span key={t}>#{t}</span>)}</p>}
+        ? <p className="zws-muted">还没有标签（写 <code>#标签</code>）。</p>
+        : <p className="zws-nt-tags">{parse.tags.map((t) => <span key={t}>#{t}</span>)}</p>}
     </section>
 
     {tags.length > 0 && <section>
       <h3>全库标签 <span>{tags.length}</span></h3>
-      <p className="zs-nt-tags">{tags.slice(0, 20).map((t) => <span key={t.tag}>{t.tag}<b>{t.count}</b></span>)}</p>
+      <p className="zws-nt-tags">{tags.slice(0, 20).map((t) => <span key={t.tag}>{t.tag}<b>{t.count}</b></span>)}</p>
     </section>}
   </aside>;
 }
@@ -520,7 +520,7 @@ export function NotesLibrary() {
    */
   const [selectionAnchor, setSelectionAnchor] = useState(null);
   const filterRef = useRef(null);
-  /** 正文滚动容器（`.zs-nt-scroll`）。阅读态与编辑态共用这一个，翻页键的目标就是它。 */
+  /** 正文滚动容器（`.zws-nt-scroll`）。阅读态与编辑态共用这一个，翻页键的目标就是它。 */
   const scrollRef = useRef(null);
   /** 本页根节点：document 级键盘处理器靠它判断"我还在不在页面上"。 */
   const rootRef = useRef(null);
@@ -980,7 +980,7 @@ export function NotesLibrary() {
    *
    * # 实测出来的三条事实（决定了这份实现的形状）
    *
-   * 1. **不能指望浏览器原生滚动**。正文是 `.zs-nt-scroll`，它没有焦点时浏览器
+   * 1. **不能指望浏览器原生滚动**。正文是 `.zws-nt-scroll`，它没有焦点时浏览器
    *    对 `PageDown` 毫无反应（实测焦点在 `<body>` 上按 PageDown，`scrollTop`
    *    仍是 0）。所以必须自己 `scrollBy`。
    * 2. **焦点在树行上时，这四个键归树**（B 方案）。否则用户在树里按 `↓` 想选下一篇，
@@ -1029,15 +1029,15 @@ export function NotesLibrary() {
     //    树行永远不是 keydown 的 target。若只认 target，B 方案（树上 ↑/↓ 选笔记）
     //    在真机上等于不存在。所以补一条：**最近一次在树里按过方向键**也算在树上，
     //    由 `treeCursor`（ref）记住，任何一次点击正文/别处都会清掉它。
-    const rowFromTarget = target.closest('.zs-nt-rowbtn[data-path]');
+    const rowFromTarget = target.closest('.zws-nt-rowbtn[data-path]');
     const row = rowFromTarget ?? (treeCursorRef.current !== null
-      ? rootRef.current?.querySelector(`.zs-nt-rowbtn[data-path="${CSS.escape(treeCursorRef.current)}"]`) ?? null
+      ? rootRef.current?.querySelector(`.zws-nt-rowbtn[data-path="${CSS.escape(treeCursorRef.current)}"]`) ?? null
       : null);
     if (row !== null) {
       if (isPage) return false;           // 让浏览器滚树容器本身
-      const root = row.closest('.zs-nt');
+      const root = row.closest('.zws-nt');
       if (root === null) return false;
-      const buttons = [...root.querySelectorAll('.zs-nt-rowbtn[data-path]')];
+      const buttons = [...root.querySelectorAll('.zws-nt-rowbtn[data-path]')];
       const at = buttons.indexOf(row);
       const next = at < 0 ? undefined : buttons[at + step];
       // 移得动就接管；移不动（已到头）也不拦，保持"没反应"的一致观感。
@@ -1149,10 +1149,10 @@ export function NotesLibrary() {
     // ⚠️ 有区间选择时**不要求**焦点落在树行上。
     //
     //    原因与 ↑/↓ 的 B 方案同源：真机上焦点根本留不住（点完树行 activeElement
-    //    仍是 BODY）。若这里坚持 `target.closest('.zs-nt-rowbtn')`，用户在树上
+    //    仍是 BODY）。若这里坚持 `target.closest('.zws-nt-rowbtn')`，用户在树上
     //    Shift+↓ 选了三行、然后按 Delete —— 事件目标是 BODY，于是什么都没发生。
     //    选择本身（`.is-selected` 高亮 + 计数）就是"用户在树上"的证据，够了。
-    const row = target.closest('.zs-nt-rowbtn[data-path]');
+    const row = target.closest('.zws-nt-rowbtn[data-path]');
     const selected = [...selectedPaths];
     if (selected.length > 0) {
       event.preventDefault();
@@ -1222,8 +1222,8 @@ export function NotesLibrary() {
       if (!(target instanceof Element)) return;
       // 确认条 / 选中计数条上的点击**不是"用户换了一行"**，而是在操作当前这段
       // 选择本身，所以不重置游标。
-      if (target.closest('.zs-nt-confirm, .zs-nt-selection')) return;
-      const row = target.closest('.zs-nt-rowbtn[data-path]');
+      if (target.closest('.zws-nt-confirm, .zws-nt-selection')) return;
+      const row = target.closest('.zws-nt-rowbtn[data-path]');
       const path = row === null ? null : (row.dataset.path ?? null);
       treeCursorRef.current = path;
       setTreeCursorPath(path);
@@ -1235,7 +1235,7 @@ export function NotesLibrary() {
       //      选中 3 条后点树上的另一篇 → 第一下打不开，要点两下（6 行里 5 行中招）。
       //
       //    两者的因果链同一条：pointerdown 是**按下**，而清掉锚点会让计数条
-      //    （`.zs-nt-selection`）当场卸载 → 它下面的整个文件树上移一行 / 确认条
+      //    （`.zws-nt-selection`）当场卸载 → 它下面的整个文件树上移一行 / 确认条
       //    上移约 48px → 手指抬起时**按钮和行都已经不在原来的坐标上了** → 浏览器
       //    合成的 click 命中的是移动后顶上来的另一个元素 → 原来那个元素的 onClick
       //    一次都没跑。用户看到的就是"点了没反应"。
@@ -1255,9 +1255,9 @@ export function NotesLibrary() {
     const onClick = (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
-      if (target.closest('.zs-nt-confirm')) return;
+      if (target.closest('.zws-nt-confirm')) return;
       // 计数条自己的按钮会清（`取消选择`）；点条上的文字也不该把它收掉。
-      if (target.closest('.zs-nt-selection')) return;
+      if (target.closest('.zws-nt-selection')) return;
       setSelectionAnchor(null);
     };
     document.addEventListener('click', onClick);
@@ -1268,34 +1268,34 @@ export function NotesLibrary() {
     };
   });
 
-  if (phase === 'loading') return <section className="zs-nt"><p className="zs-muted">正在读取笔记库…</p></section>;
+  if (phase === 'loading') return <section className="zws-nt"><p className="zws-muted">正在读取笔记库…</p></section>;
   if (phase === 'error') {
-    return <section className="zs-nt">
+    return <section className="zws-nt">
       <Notice>{notice?.text}</Notice>
-      <button className="zs-button" onClick={() => void refreshTree()}>重试</button>
+      <button className="zws-button" onClick={() => void refreshTree()}>重试</button>
     </section>;
   }
 
   const draft = activeTab?.draft ?? '';
   const folderOfActive = activeTab ? dirOf(activeTab.path) : '';
 
-  return <section className="zs-nt" ref={rootRef}>
+  return <section className="zws-nt" ref={rootRef}>
     {/* 顶部工具栏：本页自己的操作全在这里。
         ⚠️ 它原先是最左边一条 46px 的竖列（ribbon），紧挨着页面壳的导轨 ——
         于是「笔记库」一个页面就有**两条竖导航**：一条切页面、一条管笔记库内部，
         用户第一眼分不清哪条是干什么的（真机反馈原话：「有两个导航bar」）。
         现在横排到页面顶上，竖着那条只留页面壳的。 */}
-    <div className="zs-nt-topbar" role="toolbar" aria-label="笔记库操作">
+    <div className="zws-nt-topbar" role="toolbar" aria-label="笔记库操作">
       <button type="button" title="文件树" aria-label="文件树" aria-pressed={explorerOpen} className={explorerOpen ? 'is-on' : ''} onClick={() => setExplorerOpen((v) => !v)}><Icon name="collapse" size={16} /></button>
       <button type="button" title="新建笔记" aria-label="新建笔记" disabled={busy} onClick={() => void createNote(folderOfActive)}><Icon name="plus" size={16} /></button>
       <button type="button" title="新建文件夹" aria-label="新建文件夹" disabled={busy} onClick={() => void createFolder(folderOfActive)}><Icon name="folderPlus" size={16} /></button>
       <button type="button" title="导入 PDF" aria-label="导入 PDF" disabled={busy} onClick={() => pdfInputRef.current?.click()}><Icon name="paper" size={16} /></button>
       <button type="button" title="过滤笔记" aria-label="过滤笔记" onClick={() => { setExplorerOpen(true); filterRef.current?.focus(); }}><Icon name="search" size={16} /></button>
-      <span className="zs-nt-topbar-gap" />
+      <span className="zws-nt-topbar-gap" />
       <button type="button" title="右栏" aria-label="右栏" aria-pressed={rightOpen} className={rightOpen ? 'is-on' : ''} onClick={() => setRightOpen((v) => !v)}><Icon name="panelRight" size={16} /></button>
     </div>
 
-    <div className="zs-nt-work">
+    <div className="zws-nt-work">
       {/* 隐藏的文件选择器：导入 PDF 的唯一入口（见 importPdf 里为什么不用拖拽）。
           选完立刻清空 value，否则同一个文件第二次选不会触发 onChange。 */}
       <input
@@ -1310,8 +1310,8 @@ export function NotesLibrary() {
         }}
       />
 
-      {explorerOpen && <aside className="zs-nt-explorer" aria-label="文件树">
-        <div className="zs-nt-explorer-head">
+      {explorerOpen && <aside className="zws-nt-explorer" aria-label="文件树">
+        <div className="zws-nt-explorer-head">
           <button type="button" title="新建笔记" disabled={busy} onClick={() => void createNote(folderOfActive)}><Icon name="plus" size={14} /></button>
           <button type="button" title="新建文件夹" disabled={busy} onClick={() => void createFolder(folderOfActive)}><Icon name="folderPlus" size={14} /></button>
           <button type="button" title="全部折叠" onClick={() => setExpanded(new Set())}><Icon name="collapse" size={14} /></button>
@@ -1320,7 +1320,7 @@ export function NotesLibrary() {
         <input
           ref={filterRef}
           type="search"
-          className="zs-nt-filter"
+          className="zws-nt-filter"
           placeholder="过滤笔记"
           value={filter}
           aria-label="过滤笔记"
@@ -1330,7 +1330,7 @@ export function NotesLibrary() {
             为什么必须是**看得见的**一行：Shift+↑/↓ 不像拖拽那样有连续的视觉反馈，
             用户框了几行只能靠数高亮块；行数一多就数不清了，而下一步就是不可逆删除。
             单行时不显示 —— 那是普通游标，不算"批量"。 */}
-        {selectedPaths.size > 1 && <div className="zs-nt-selection" role="status">
+        {selectedPaths.size > 1 && <div className="zws-nt-selection" role="status">
           <span>已选中 {selectedPaths.size} 条</span>
           <button type="button" onClick={() => setSelectionAnchor(null)}>取消选择</button>
         </div>}
@@ -1338,7 +1338,7 @@ export function NotesLibrary() {
             删除没有回收站，所以这一步不省；但也不弹系统窗 —— 见 `pendingDelete` 的说明。
             批量时把"几条 / 其中几个文件夹"一次说清：用户按的是 Shift+↑/↓，
             眼睛未必数过自己框了几行。 */}
-        {pendingDelete !== null && <div className="zs-nt-confirm" role="alertdialog" aria-label="确认删除">
+        {pendingDelete !== null && <div className="zws-nt-confirm" role="alertdialog" aria-label="确认删除">
           <p>
             {pendingDelete.items.length === 1
               ? <>删除「{baseOf(pendingDelete.items[0].path)}」
@@ -1348,16 +1348,16 @@ export function NotesLibrary() {
                 ？删掉就找不回来了。</>}
           </p>
           {/* 批量时列个缩略清单：只有一条时不需要（标题已经说清了）。 */}
-          {pendingDelete.items.length > 1 && <ul className="zs-nt-confirm-list">
+          {pendingDelete.items.length > 1 && <ul className="zws-nt-confirm-list">
             {pendingDelete.items.slice(0, 6).map((item) => <li key={item.path}>
               {baseOf(item.path)}{item.kind === 'folder' ? '/' : ''}
             </li>)}
-            {pendingDelete.items.length > 6 ? <li className="zs-muted">…还有 {pendingDelete.items.length - 6} 条</li> : null}
+            {pendingDelete.items.length > 6 ? <li className="zws-muted">…还有 {pendingDelete.items.length - 6} 条</li> : null}
           </ul>}
-          <div className="zs-nt-confirm-actions">
+          <div className="zws-nt-confirm-actions">
             <button
               type="button"
-              className="zs-button zs-nt-danger"
+              className="zws-button zws-nt-danger"
               disabled={busy}
               onClick={() => {
                 const targets = pendingDelete.items.map((item) => item.path);
@@ -1365,15 +1365,15 @@ export function NotesLibrary() {
                 void removePaths(targets);
               }}
             >{pendingDelete.items.length === 1 ? '确认删除' : `确认删除这 ${pendingDelete.items.length} 条`}</button>
-            <button type="button" className="zs-button" onClick={() => setPendingDelete(null)}>取消</button>
+            <button type="button" className="zws-button" onClick={() => setPendingDelete(null)}>取消</button>
           </div>
         </div>}
         {entries.length === 0
-          ? <p className="zs-muted zs-nt-hint">还没有笔记。点 ＋ 开始写第一篇。</p>
+          ? <p className="zws-muted zws-nt-hint">还没有笔记。点 ＋ 开始写第一篇。</p>
           : rows.length === 0
-            ? <p className="zs-muted zs-nt-hint">没有匹配「{filter.trim()}」的笔记。</p>
+            ? <p className="zws-muted zws-nt-hint">没有匹配「{filter.trim()}」的笔记。</p>
             : <ul
-              className="zs-nt-tree"
+              className="zws-nt-tree"
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => { e.preventDefault(); void dropOn(e.dataTransfer.getData('text/plain'), ''); }}
             >
@@ -1393,7 +1393,7 @@ export function NotesLibrary() {
             </ul>}
       </aside>}
 
-      <main className="zs-nt-main">
+      <main className="zws-nt-main">
         <TabStrip
           tabs={tabs}
           active={active}
@@ -1403,26 +1403,26 @@ export function NotesLibrary() {
         />
 
         {activeTab === null
-          ? <div className="zs-nt-empty">
+          ? <div className="zws-nt-empty">
             <strong>还没有打开任何笔记</strong>
             <p>从左边选一篇，或者点标签栏的 ＋ 新建一篇。</p>
           </div>
           : <>
-            <div className="zs-nt-crumbs">
-              <button type="button" className="zs-nt-nav" title="后退" disabled={!canBack} onClick={() => void walkHistory(-1)}><Icon name="arrowLeft" size={14} /></button>
-              <button type="button" className="zs-nt-nav" title="前进" disabled={!canForward} onClick={() => void walkHistory(1)}><Icon name="arrow" size={14} /></button>
-              <span className="zs-nt-crumb-path">
+            <div className="zws-nt-crumbs">
+              <button type="button" className="zws-nt-nav" title="后退" disabled={!canBack} onClick={() => void walkHistory(-1)}><Icon name="arrowLeft" size={14} /></button>
+              <button type="button" className="zws-nt-nav" title="前进" disabled={!canForward} onClick={() => void walkHistory(1)}><Icon name="arrow" size={14} /></button>
+              <span className="zws-nt-crumb-path">
                 {folderOfActive !== '' ? <>{folderOfActive}<em>/</em></> : null}
                 <strong>{baseOf(activeTab.path)}</strong>
               </span>
-              <span className="zs-nt-crumbs-right">
-                {activeTab.kind === 'pdf' ? <span className="zs-nt-saving">只读 · PDF</span> : <>
+              <span className="zws-nt-crumbs-right">
+                {activeTab.kind === 'pdf' ? <span className="zws-nt-saving">只读 · PDF</span> : <>
                   {activeTab.dirty
-                    ? <span className="zs-nt-saving">未保存…</span>
+                    ? <span className="zws-nt-saving">未保存…</span>
                     : activeTab.savedAt
-                      ? <span className="zs-nt-saving">已保存 {new Date(activeTab.savedAt).toLocaleTimeString('zh-CN', { hour12: false })}</span>
+                      ? <span className="zws-nt-saving">已保存 {new Date(activeTab.savedAt).toLocaleTimeString('zh-CN', { hour12: false })}</span>
                       : null}
-                  <button type="button" className={`zs-nt-mode${preview ? ' is-on' : ''}`} aria-pressed={preview} onClick={() => setPreview((v) => !v)}>
+                  <button type="button" className={`zws-nt-mode${preview ? ' is-on' : ''}`} aria-pressed={preview} onClick={() => setPreview((v) => !v)}>
                     {preview ? '编辑' : '阅读'}
                   </button>
                 </>}
@@ -1431,22 +1431,22 @@ export function NotesLibrary() {
 
             {activeTab.kind === 'pdf'
               ? <PdfViewer page={activeTab.path} title={activeTab.title}/>
-              : <div className="zs-nt-scroll" ref={scrollRef}>
-              <h1 className="zs-nt-title">{baseOf(activeTab.path)}</h1>
+              : <div className="zws-nt-scroll" ref={scrollRef}>
+              <h1 className="zws-nt-title">{baseOf(activeTab.path)}</h1>
               {preview
-                ? <div className="zs-nt-preview-body">
+                ? <div className="zws-nt-preview-body">
                   {draft.trim() === ''
-                    ? <p className="zs-muted">（空笔记）</p>
+                    ? <p className="zws-muted">（空笔记）</p>
                     // ⚠️ 不要传 `variant="compact"`。那个变体是给**聊天里夹一段短
                     //    Markdown** 用的：字号压到 13px/20px、正文用三级灰、而且
                     //    `.compact :is(h1..h6){font:inherit}` 会把标题压平、
                     //    `p/ul/ol/blockquote` 的 margin 收到 4px。用在整页长文上就是
                     //    「又小又挤、标题不起作用」，这是这页此前显得简陋的根因。
-                    //    笔记正文要的是长文排版，用默认变体 + 本页的 .zs-nt-preview-body。
+                    //    笔记正文要的是长文排版，用默认变体 + 本页的 .zws-nt-preview-body。
                     : <MarkdownText text={draft} labels={MARKDOWN_LABELS} />}
                 </div>
                 : <textarea
-                  className="zs-nt-input"
+                  className="zws-nt-input"
                   value={draft}
                   spellCheck={false}
                   aria-label="笔记正文（Markdown）"
@@ -1456,17 +1456,17 @@ export function NotesLibrary() {
               </div>}
           </>}
 
-        <div className="zs-nt-status">
-          <span className="zs-nt-status-left">
+        <div className="zws-nt-status">
+          <span className="zws-nt-status-left">
             <Icon name="book" size={12} />笔记库
           </span>
-          <span className="zs-nt-status-right">
+          <span className="zws-nt-status-right">
             {activeTab ? <>
-              <button type="button" className="zs-nt-stat" onClick={() => setRightOpen(true)}>{backlinks.length} 条反向链接</button>
-              <span className="zs-nt-stat">{countWords(draft)} 个词</span>
-              <span className="zs-nt-stat">{draft.length} 个字符</span>
-              <button type="button" className="zs-nt-stat" onClick={() => setRightOpen(true)}>{countLinks(draft)} 条链接 · {countTags(draft)} 个标签</button>
-            </> : <span className="zs-nt-stat">{entries.filter((e) => e.type === 'note').length} 篇笔记</span>}
+              <button type="button" className="zws-nt-stat" onClick={() => setRightOpen(true)}>{backlinks.length} 条反向链接</button>
+              <span className="zws-nt-stat">{countWords(draft)} 个词</span>
+              <span className="zws-nt-stat">{draft.length} 个字符</span>
+              <button type="button" className="zws-nt-stat" onClick={() => setRightOpen(true)}>{countLinks(draft)} 条链接 · {countTags(draft)} 个标签</button>
+            </> : <span className="zws-nt-stat">{entries.filter((e) => e.type === 'note').length} 篇笔记</span>}
           </span>
         </div>
       </main>
@@ -1485,6 +1485,6 @@ export function NotesLibrary() {
     </div>
 
     <Notice>{notice?.tone === 'bad' ? notice.text : ''}</Notice>
-    {notice?.tone === 'ok' && <p className="zs-nt-note-ok">{notice.text}</p>}
+    {notice?.tone === 'ok' && <p className="zws-nt-note-ok">{notice.text}</p>}
   </section>;
 }

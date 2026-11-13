@@ -7,7 +7,7 @@ import { SettingsSection } from './SettingsSection.jsx';
  * 「论文」页的客户端入口。
  *
  * 三处注册：
- *   1. `zhiyun.paper.content` —— 外壳 `main` 插槽为每一页声明的 children 之一
+ *   1. `zw.paper.content` —— 外壳 `main` 插槽为每一页声明的 children 之一
  *      （`shell/src/client.jsx` 里 generator 的那一段），只注册内容，页框架归外壳；
  *   2. `settings.section` —— 设置集中管理。壳里的 `PersonalSettingsBridge` 会把
  *      所有 `settings.section` 注册按 order 摊成折叠分组，所以新插件零改壳；
@@ -17,16 +17,16 @@ import { SettingsSection } from './SettingsSection.jsx';
  * 因为客户端 bundle 有「不许内联本包 src 之外的文件」的构建守卫，
  * pdf.js 那 1.8MB 不能进这个 bundle —— 这是选 iframe 而不是 react-pdf 的硬理由。
  *
- * 这里的 `controller` 由外壳通过插槽 inject 递进来（就是 `zhiyunNavigation`），
+ * 这里的 `controller` 由外壳通过插槽 inject 递进来（就是 `zwNavigation`），
  * 用来跳去「问一问」；拿不到也不影响本页，所以不做硬依赖。
  */
 
-export const name = 'zhiyun-page-paper-client';
+export const name = 'zw-page-paper-client';
 
 export const inject = ['slots'];
 
 export function apply(ctx) {
-  mountStyle(ctx, { attribute: 'zhiyunPaperStyle', css, label: 'zhiyun: paper page styles' });
+  mountStyle(ctx, { attribute: 'zwPaperStyle', css, label: 'zw: paper page styles' });
 
   // 直接注册给页面壳的 `page.content`（keyed）。
   // 论文页沿用文章版心（与迁移前一致：`FULL_BLEED_PAGES` 只有 notes / docs）。

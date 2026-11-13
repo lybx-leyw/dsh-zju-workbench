@@ -6,14 +6,14 @@ import * as primitives from './primitives.jsx';
 import css from './style.css';
 import classroomSlideCss from './classroom-slide.css';
 
-export const name = 'zhiyun-ui-primitives-client';
+export const name = 'zw-ui-primitives-client';
 /** 纯展示包：除了客户端的 `slots` 什么都不依赖。 */
 export const inject = [];
 export function apply(ctx) {
   /**
-   * `data-zhiyun` 属性：全仓 CSS 的限界开关。
+   * `data-zw` 属性：全仓 CSS 的限界开关。
    *
-   * 所有页面的选择器都写成 `body[data-zhiyun] .xxx`。这个属性原来由
+   * 所有页面的选择器都写成 `body[data-zw] .xxx`。这个属性原来由
    * `shell-workbench` 设置，而它已归档 —— 没有它，规则一条都不匹配，
    * 页面看起来就是「只有裸 HTML、没有 CSS」。
    *
@@ -24,24 +24,24 @@ export function apply(ctx) {
    * 等于设了又删（实测日志：after set true → cleanup → null）。
    */
   ctx.effect(() => {
-    const previous = document.body.getAttribute('data-zhiyun');
-    document.body.setAttribute('data-zhiyun', 'true');
+    const previous = document.body.getAttribute('data-zw');
+    document.body.setAttribute('data-zw', 'true');
     return () => {
-      if (previous === null) document.body.removeAttribute('data-zhiyun');
-      else document.body.setAttribute('data-zhiyun', previous);
+      if (previous === null) document.body.removeAttribute('data-zw');
+      else document.body.setAttribute('data-zw', previous);
     };
-  }, 'zhiyun: body attribute');
+  }, 'zw: body attribute');
 
   // 样式随本包的生命周期装卸；卸载后页面回到宿主原生外观。
   primitives.mountStyle(ctx, {
-    attribute: 'zhiyunPrimitivesStyle',
+    attribute: 'zwPrimitivesStyle',
     css,
-    label: 'zhiyun: shared primitive styles',
+    label: 'zw: shared primitive styles',
   });
   primitives.mountStyle(ctx, {
-    attribute: 'zhiyunClassroomSlideStyle',
+    attribute: 'zwClassroomSlideStyle',
     css: classroomSlideCss,
-    label: 'zhiyun: classroom slide styles',
+    label: 'zw: classroom slide styles',
   });
 }
 // ⚠️ 这张清单是**逐个列**的，新增原语必须同时加到这里，否则它在 `primitives.jsx` 里

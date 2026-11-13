@@ -66,8 +66,8 @@ export function HandoutExportButton({ controller, state }) {
     }
   };
 
-  return <div className="zs-handout-note-export">
-    <button type="button" className="zs-button" disabled={busy || !hasLecture} onClick={start}
+  return <div className="zws-handout-note-export">
+    <button type="button" className="zws-button" disabled={busy || !hasLecture} onClick={start}
       title="把这一节的讲义写成笔记库里的一份 Markdown 笔记；同名笔记不会被覆盖">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 4h11l5 5v11H4z"/><path d="M15 4v5h5"/><path d="M8 13h8M8 16h5"/></svg>
       {busy ? '正在导出…' : '导出到笔记库'}

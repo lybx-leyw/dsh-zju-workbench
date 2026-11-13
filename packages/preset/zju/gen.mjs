@@ -127,7 +127,7 @@ const header = `# 「校园」Agent preset —— 标准模式 + 全部校园工
     # 本包自己。**这一行不能省** —— 它才是让 Loader 去 import 本包、跑
     # \`apply()\` 的入口。少了它，下面的 preset row 照样会被解析并注册进 roster，
     # 但本包里任何代码都不会执行。
-    - id: zhiyun-preset-zju
+    - id: zw-preset-zju
       name: '@lybx-leyw/dsh-zju-preset-zju'
 
     - id: preset-zju
@@ -147,7 +147,7 @@ ${ITEM}# 下面 12 行各挂一个工具包。它们**都不在** profile 的 bu
 ${ITEM}# 放进 profile 就是主机平面，所有 preset 都会看到；而工具表每多一格
 ${ITEM}# 都在挤占模型的选择空间。
 ${ITEM}#
-${ITEM}# 每个包 inject 的都是主机的服务（\`zhiyunZdbk\` / \`zhiyunCc98\` / …）与
+${ITEM}# 每个包 inject 的都是主机的服务（\`zwZdbk\` / \`zwCc98\` / …）与
 ${ITEM}# \`tools\` 注册表，自己不 provide 任何服务，所以都不需要 \`isolate\` realm。
 ${ITEM}#
 ${ITEM}# 一个包缺席时（没装那个数据源），它的工具如实报 SERVICE_MISSING，

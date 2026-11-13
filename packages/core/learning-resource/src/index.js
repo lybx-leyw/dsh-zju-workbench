@@ -26,7 +26,7 @@ import { project, lookupAnchor } from './project.js';
 import { anchors, buildAnchorIndex, normalizeAnchor } from './anchors.js';
 import { fromLecture, describeResource, resourceIdFor, lectureBlockText, lectureBlockType, LECTURE_BLOCK_TYPE_MAP } from './sources.js';
 
-export const name = 'zhiyun-learning-resource';
+export const name = 'zw-learning-resource';
 
 /** 不依赖任何宿主服务：全是纯函数（见文件头注释）。 */
 export const inject = [];
@@ -104,7 +104,7 @@ export function apply(ctx, config = {}) {
     },
   };
 
-  const removeService = typeof ctx?.provide === 'function' ? ctx.provide('zhiyunLearningResource', service) : undefined;
+  const removeService = typeof ctx?.provide === 'function' ? ctx.provide('zwLearningResource', service) : undefined;
 
   return () => {
     if (typeof removeService === 'function') removeService();
@@ -112,7 +112,7 @@ export function apply(ctx, config = {}) {
 }
 
 // 纯函数也直接从包里导出：宿主侧（resources.js）要在没有 ctx 的单测里直接调用，
-// 走 `ctx.zhiyunLearningResource` 反而要求测试先搭一个假 ctx。
+// 走 `ctx.zwLearningResource` 反而要求测试先搭一个假 ctx。
 export { validate, loadSchema, formatErrors, assertValid, SCHEMA_PATH, KNOWN_KEYWORDS };
 export { contentHash, revisionOf, canonicalJson, hashOf, stamp, contentOf };
 export { project, lookupAnchor };

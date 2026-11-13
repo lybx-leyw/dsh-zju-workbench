@@ -55,7 +55,7 @@ function totalOf(value) {
   return null;
 }
 function result(items, { complete = true, reason = 'single-response', total = null, pages = 1, ...extra } = {}) {
-  return { items, meta: { source: 'zhiyun-classroom', fetchedAt: new Date().toISOString(), complete, reason, total, pages, version: digest(items), ...extra } };
+  return { items, meta: { source: 'zw-classroom', fetchedAt: new Date().toISOString(), complete, reason, total, pages, version: digest(items), ...extra } };
 }
 
 export class ClassroomSource {
@@ -112,7 +112,7 @@ export class ClassroomSource {
       // 不是偷偷收集。失败只记日志，绝不回滚已成功的登录。
       if (this.onLogin) {
         try { await this.onLogin({ credentials, jar: this.transport.session.jar, user }); }
-        catch (error) { this.transport.log?.(`[zhiyun-classroom] 写入宿主凭据失败：${error?.message ?? error}`); }
+        catch (error) { this.transport.log?.(`[zw-classroom] 写入宿主凭据失败：${error?.message ?? error}`); }
       }
       return { authenticated: true, user };
     });
@@ -543,7 +543,7 @@ export class ClassroomSource {
     /**
      * 给课件页补上缓存地址。
      *
-     * 命中时多一个 `cacheUrl`（本机 `/zhiyun-slides/<key>`），前端优先用它 —— 
+     * 命中时多一个 `cacheUrl`（本机 `/zw-slides/<key>`），前端优先用它 —— 
      * 那是磁盘读取，翻页不再吃一次带签名的网络往返。未命中的页**没有**这个字段，
      * 前端回退到 `imageUrl`（原始签名地址），所以这条路径在缓存空着时行为和以前
      * 完全一致。
@@ -559,7 +559,7 @@ export class ClassroomSource {
       try {
         decorated = { ...slides, items: await this.slideCache.decorate(slides.items) };
       } catch (error) {
-        this.transport.log?.(`[zhiyun-classroom] 课件缓存信息补全失败，改用原始地址：${error?.message ?? error}`);
+        this.transport.log?.(`[zw-classroom] 课件缓存信息补全失败，改用原始地址：${error?.message ?? error}`);
       }
     }
     /**
@@ -671,7 +671,7 @@ export class ClassroomSource {
       playable: lesson.isPlayable,
       kinds: wanted,
       resources,
-      meta: { source: 'zhiyun-classroom', fetchedAt: new Date().toISOString(), version: digest(resources) },
+      meta: { source: 'zw-classroom', fetchedAt: new Date().toISOString(), version: digest(resources) },
     };
   }
 
@@ -812,7 +812,7 @@ export class ClassroomSource {
     const collector = new LiveCollector({
       live: this.live,
       lessons: [{ courseId, subId, title, room, startsAt: begin, endsAt: finish }],
-      log: (event) => this.transport.log?.(`[zhiyun-classroom] live ${JSON.stringify(event)}`),
+      log: (event) => this.transport.log?.(`[zw-classroom] live ${JSON.stringify(event)}`),
     });
     this.liveTasks.set(scope, collector);
     collector.start();
@@ -959,10 +959,10 @@ export class ClassroomSource {
     const task = (async () => {
       try {
         const result = await this.slideCache.ensureSlides(slides, { signal: controller.signal });
-        this.transport.log?.(`[zhiyun-classroom] 课件缓存 ${key}：新增 ${result.downloaded}，命中 ${result.skipped}，失败 ${result.failed}`);
+        this.transport.log?.(`[zw-classroom] 课件缓存 ${key}：新增 ${result.downloaded}，命中 ${result.skipped}，失败 ${result.failed}`);
         return result;
       } catch (error) {
-        this.transport.log?.(`[zhiyun-classroom] 课件缓存 ${key} 中断：${error?.message ?? error}`);
+        this.transport.log?.(`[zw-classroom] 课件缓存 ${key} 中断：${error?.message ?? error}`);
         return null;
       } finally {
         this.prefetchAbort.delete(controller);
@@ -1034,7 +1034,7 @@ export class ClassroomSource {
     const live = [...this.liveTasks.values()];
     this.liveTasks.clear();
     for (const collector of live) {
-      try { await collector.stop(); } catch (error) { this.transport.log?.(`[zhiyun-classroom] 停止实时字幕失败：${error?.message ?? error}`); }
+      try { await collector.stop(); } catch (error) { this.transport.log?.(`[zw-classroom] 停止实时字幕失败：${error?.message ?? error}`); }
     }
     await Promise.allSettled(pending);
     this.transport.close();

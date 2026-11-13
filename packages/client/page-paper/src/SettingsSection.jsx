@@ -48,8 +48,8 @@ export function SettingsSection() {
     return () => { live = false; };
   }, []);
 
-  return <div className="zp-settings">
-    <p className="zp-settings-lead">
+  return <div className="zwp-settings">
+    <p className="zwp-settings-lead">
       论文页的 AI 能力分两处：<strong>选中翻译与问答</strong>走工作台自己的模型
       （在「AI 服务」里配置）；这里的两个端点只用于<strong>整篇 PDF 翻译</strong>与<strong>检索重排</strong>。
     </p>
@@ -73,7 +73,7 @@ export function SettingsSection() {
       requireModel={false}
     />
 
-    {status && <div className="zp-settings-meta">
+    {status && <div className="zwp-settings-meta">
       <span>上游 {status.upstream?.installed ?? '未知'}（锁定 {status.upstream?.expected ?? '—'}）</span>
       <span>选中翻译{status.translate?.available ? '已就绪' : '未就绪'}</span>
     </div>}
@@ -131,12 +131,12 @@ function EndpointCard({ title, description, load, save, clear, keyPlaceholder, r
 
   const configured = Boolean(config?.hasApiKey ?? config?.apiKeyHint);
 
-  return <form className="zp-card" onSubmit={submit}>
-    <div className="zp-card-head">
+  return <form className="zwp-card" onSubmit={submit}>
+    <div className="zwp-card-head">
       <strong>{title}</strong>
       <span className={configured ? 'is-ok' : undefined}>{SOURCE_LABEL[config?.source] ?? '读取中…'}{config?.apiKeyHint ? `（${config.apiKeyHint}）` : ''}</span>
     </div>
-    <p className="zp-card-desc">{description}</p>
+    <p className="zwp-card-desc">{description}</p>
 
     <label>端点地址
       <input type="url" inputMode="url" placeholder="https://open.bigmodel.cn/api/paas/v4" value={form.baseUrl} onChange={(event) => setForm({ ...form, baseUrl: event.target.value })}/>
@@ -148,9 +148,9 @@ function EndpointCard({ title, description, load, save, clear, keyPlaceholder, r
       <input type="password" autoComplete="off" placeholder={keyPlaceholder} value={form.apiKey} onChange={(event) => setForm({ ...form, apiKey: event.target.value })}/>
     </label>
 
-    {message && <div className={`zp-card-msg is-${message.kind}`}>{message.text}</div>}
+    {message && <div className={`zwp-card-msg is-${message.kind}`}>{message.text}</div>}
 
-    <div className="zp-card-actions">
+    <div className="zwp-card-actions">
       <button type="submit" className="is-primary" disabled={busy || !form.baseUrl.trim() || (requireModel && !form.model.trim())}>
         <Icon name="check" size={15}/>保存并验证
       </button>

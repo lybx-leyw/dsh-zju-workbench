@@ -3,7 +3,7 @@
  *
  * # 这个包是什么
  *
- * 一个 Cordis 插件 + 一条同源数据路由（默认 `/api/zhiyun-xxt`）。它把学习通的
+ * 一个 Cordis 插件 + 一条同源数据路由（默认 `/api/zw-xxt`）。它把学习通的
  * 课程、作业、截止时间、考试、通知、课表读出来，交给页面 / 脚本 / 将来要接的 AI
  * 去消费。**不注册任何 AI 工具** —— 那是消费方的适配，钉在包里以后想换客户端
  * 就得绕开它。
@@ -43,13 +43,13 @@ import { XxtClient, XXT_DEFAULT_TIMEOUT_MS } from './client.js';
 import { XxtReader, XXT_METHODS, describeError } from './reads.js';
 import { XXT_BASE, XXT_HOST } from './hosts.js';
 
-export const name = 'zhiyun-xxt';
+export const name = 'zw-xxt';
 
 /** 只硬依赖 `profileContext`（数据目录）。`connection` 走 `ctx.inject` 惰性取。 */
 export const inject = ['profileContext'];
 
-/** 本包的数据路由。与 `/api/zhiyun-campus`、`/api/zhiyun-omni` 并列，互不干扰。 */
-export const ROUTE_PATH = '/api/zhiyun-xxt';
+/** 本包的数据路由。与 `/api/zw-campus`、`/api/zw-omni` 并列，互不干扰。 */
+export const ROUTE_PATH = '/api/zw-xxt';
 
 export { XxtClient, XXT_SETUP, XXT_COOKIE_ENV, withQuery } from './client.js';
 export { XxtReader, XXT_METHODS } from './reads.js';
@@ -134,13 +134,13 @@ export function splitMethod(method) {
 
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-xxt] ${message}`;
+    const line = `[zw-xxt] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
 
   // 数据目录跟着 profile 走：能跟 profile 一起被备份/清理，也与其他数据包一致。
-  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zhiyun-xxt');
+  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zw-xxt');
 
   /**
    * 会话文件是**一份**，不是三份。
@@ -310,10 +310,10 @@ export async function apply(ctx, config = {}) {
       });
       log(`数据路由：${routePath}（会话 ${dataDir}）`);
       return remove;
-    }, 'zhiyun: xxt data route');
+    }, 'zw: xxt data route');
   });
 
-  const removeService = ctx.provide('zhiyunXxt', {
+  const removeService = ctx.provide('zwXxt', {
     routePath,
     dataDir,
     /** 下载根目录：工具层把它写进返回值，用户据此知道文件到了哪。 */

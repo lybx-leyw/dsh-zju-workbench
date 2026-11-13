@@ -32,7 +32,7 @@ import { Empty, Icon } from './primitives.jsx';
 /**
  * PageFrame 的三层几何。
  *
- * `zy-page` 撑满页面槽、`zy-scroll` 负责滚动、`zy-content` 是内容列。
+ * `zw-page` 撑满页面槽、`zw-scroll` 负责滚动、`zw-content` 是内容列。
  * 只写结构性约束（尺寸 / 溢出 / 弹性），不写颜色与字体 —— 后者留给各页面包，
  * 否则内联样式（特异性最高）会把主题化锁死。
  *
@@ -66,18 +66,18 @@ export function PageFrame({
   /** Page body. */
   body,
 }) {
-  const contentClass = fullBleed ? 'zy-content zy-content-flush' : 'zy-content';
+  const contentClass = fullBleed ? 'zw-content zw-content-flush' : 'zw-content';
   const missing = <Empty title={`${label}暂时不可用`}>这个页面由独立的插件包提供，当前未启用。</Empty>;
-  return <div className="zy-page" data-page={page} style={FRAME_STYLE.page}>
+  return <div className="zw-page" data-page={page} style={FRAME_STYLE.page}>
     {/* `tabIndex={-1}` is not for tab order: it lets the skip link move focus in.
         `-1` also keeps the container itself out of the tab sequence. */}
-    <main className="zy-scroll" id="zy-main" tabIndex={-1} style={FRAME_STYLE.scroll}><div
+    <main className="zw-scroll" id="zw-main" tabIndex={-1} style={FRAME_STYLE.scroll}><div
       className={contentClass}
       style={fullBleed ? FRAME_STYLE.contentFlush : FRAME_STYLE.content}
     >
-      {parent && navigate && <button type="button" className="zy-page-back"
+      {parent && navigate && <button type="button" className="zw-page-back"
         onClick={() => navigate(parent.id)}><Icon name="arrowLeft" size={14}/>{parent.label}</button>}
-      {children.length > 0 && navigate && <div className="zy-page-subnav" role="group" aria-label={`${label}的更多入口`}>
+      {children.length > 0 && navigate && <div className="zw-page-subnav" role="group" aria-label={`${label}的更多入口`}>
         {children.map(child => <button type="button" key={child.id}
           onClick={() => navigate(child.id)}>{child.label}<Icon name="arrow" size={14}/></button>)}
       </div>}

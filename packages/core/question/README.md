@@ -1,6 +1,6 @@
 # @lybx-leyw/dsh-zju-core-question
 
-智云 Pro 的**出题流水线**。上游 `DeepTutor` `deep_question` 主链的纯 JS 重写：
+ZJU Workbench 的**出题流水线**。上游 `DeepTutor` `deep_question` 主链的纯 JS 重写：
 零第三方依赖、零落盘、不真调模型（`llm` 与 `tools` 都由集成层注入）。
 
 上游来源：`vendor/deeptutor/deeptutor/agents/question/pipeline.py`（2309 行）

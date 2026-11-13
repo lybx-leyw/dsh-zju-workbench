@@ -12,7 +12,7 @@
  * 单独打桩的调用方。
  */
 
-export const name = 'zhiyun-source-webvpn';
+export const name = 'zw-source-webvpn';
 
 /**
  * 纯库：不注册路由、不 provide 服务、不挂样式。

@@ -15,7 +15,7 @@ export function id(value, label = '标识') {
   if (!/^\d+$/.test(text) || BigInt(text) <= 0n) throw shape(label, 'id');
   return text;
 }
-export function lessonKey(courseId, subId, tenant = '112') { return `zhiyun:${tenant}:${courseId}:${subId}`; }
+export function lessonKey(courseId, subId, tenant = '112') { return `zw:${tenant}:${courseId}:${subId}`; }
 export function course(row) {
   const progress = embedded(row.progress) ?? {};
   const info = embedded(row.information) ?? {};

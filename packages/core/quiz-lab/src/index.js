@@ -20,21 +20,21 @@
 
 import {LAB_ENGINE, createLabRun} from './engine.js';
 
-export const name = 'zhiyun-quiz-lab';
+export const name = 'zw-quiz-lab';
 
 /**
- * 硬依赖 `zhiyunQuiz`：注册表挂在它上面（见 core-quiz 的 `service.engines`）。
+ * 硬依赖 `zwQuiz`：注册表挂在它上面（见 core-quiz 的 `service.engines`）。
  *
  * Cordis 的 `Inject` 只有必需注入（`registry.d.ts` 里没有可选形态），
  * 所以这里无法写成「有则用、无则跳过」。这是可接受的：没有注册表的机器上，
  * 本包本来也无处注册。反过来 core-quiz **不**依赖本包 —— 方向是单向的。
  */
-export const inject = ['zhiyunQuiz'];
+export const inject = ['zwQuiz'];
 
 export function apply(ctx) {
-  const registry = ctx.zhiyunQuiz?.engines;
+  const registry = ctx.zwQuiz?.engines;
   if (!registry || typeof registry.register !== 'function') {
-    throw Object.assign(Error('当前 core-quiz 没有暴露引擎注册表（zhiyunQuiz.engines），出题实验室无处注册'), { code: 'CONFIG' });
+    throw Object.assign(Error('当前 core-quiz 没有暴露引擎注册表（zwQuiz.engines），出题实验室无处注册'), { code: 'CONFIG' });
   }
   const unregister = registry.register({...LAB_ENGINE, createRun: createLabRun});
   return () => {

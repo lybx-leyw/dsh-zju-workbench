@@ -2,5 +2,5 @@
 # 卸载方式与其它包一致 —— 在「插件」页关掉这一行即可，写进的是用户自己的
 # cordis.patch.yml，不会被 scripts/profile.mjs 的初始化撤销。
 - insert:
-    - id: zhiyun-quiz-lab
+    - id: zw-quiz-lab
       name: '@lybx-leyw/dsh-zju-core-quiz-lab'

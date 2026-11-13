@@ -60,28 +60,28 @@ export function ScheduleView({ tasks = [], slots = [], onSave, onRemove, selecte
     } catch (err) { setError(errorText(err)); }
     finally { busy.current = false; setPending(false); }
   }
-  return <section className="zpg-schedule" aria-label="执行日程">
-    <header className="zpg-schedule-head"><div><h2>日程表</h2><p>准备什么时候做，而不是最晚何时交。上海时间（UTC+8） · 同一 DDL 可分多段，不改变截止时间。</p></div></header>
-    <nav className="zpg-schedule-nav" aria-label="日程周导航">
+  return <section className="zwpg-schedule" aria-label="执行日程">
+    <header className="zwpg-schedule-head"><div><h2>日程表</h2><p>准备什么时候做，而不是最晚何时交。上海时间（UTC+8） · 同一 DDL 可分多段，不改变截止时间。</p></div></header>
+    <nav className="zwpg-schedule-nav" aria-label="日程周导航">
       <button type="button" onClick={() => setAnchor(addDays(anchor, -7))}>上一周</button>
       <button type="button" onClick={() => setAnchor(weekStart())}>本周</button>
       <button type="button" onClick={() => setAnchor(addDays(anchor, 7))}>下一周</button>
       <strong aria-live="polite">{anchor} — {addDays(anchor, 6)}</strong>
     </nav>
-    <div className="zpg-schedule-week">{days.map((day, index) => <section key={day.date} className={`zpg-schedule-day${day.date === shanghaiDate() ? ' is-today' : ''}`} aria-label={`${day.date} 周${'一二三四五六日'[index]}`}>
+    <div className="zwpg-schedule-week">{days.map((day, index) => <section key={day.date} className={`zwpg-schedule-day${day.date === shanghaiDate() ? ' is-today' : ''}`} aria-label={`${day.date} 周${'一二三四五六日'[index]}`}>
       <h3>周{'一二三四五六日'[index]} <time dateTime={day.date}>{day.date.slice(5)}</time>{day.date === shanghaiDate() && <small>今天</small>}</h3>
-      {!day.entries.length && <p className="zpg-schedule-empty">暂无安排</p>}
-      {day.entries.map((slot) => { const linked = taskMap.get(slot.taskKey); return <article key={slot.id} className={`zpg-schedule-block${linked?.done ? ' is-done' : ''}`}>
-        <div className="zpg-schedule-time">{slot.continuesBefore ? '承前日 · ' : ''}{toShanghaiLocal(slot.segmentStart).slice(11)} — {toShanghaiLocal(slot.segmentEnd).slice(0, 10) !== toShanghaiLocal(slot.segmentStart).slice(0, 10) && toShanghaiLocal(slot.segmentEnd).slice(11) === '00:00' ? '24:00' : toShanghaiLocal(slot.segmentEnd).slice(11)}{slot.continuesAfter ? ' · 续次日' : ''}</div>
+      {!day.entries.length && <p className="zwpg-schedule-empty">暂无安排</p>}
+      {day.entries.map((slot) => { const linked = taskMap.get(slot.taskKey); return <article key={slot.id} className={`zwpg-schedule-block${linked?.done ? ' is-done' : ''}`}>
+        <div className="zwpg-schedule-time">{slot.continuesBefore ? '承前日 · ' : ''}{toShanghaiLocal(slot.segmentStart).slice(11)} — {toShanghaiLocal(slot.segmentEnd).slice(0, 10) !== toShanghaiLocal(slot.segmentStart).slice(0, 10) && toShanghaiLocal(slot.segmentEnd).slice(11) === '00:00' ? '24:00' : toShanghaiLocal(slot.segmentEnd).slice(11)}{slot.continuesAfter ? ' · 续次日' : ''}</div>
         <strong>{linked?.title || slot.title || '历史安排'}</strong>
-        {linked?.done && <span className="zpg-schedule-tag">关联 DDL 已完成</span>}
-        {!linked && <span className="zpg-schedule-tag">历史安排 · 关联任务已删除或离线</span>}
-        {conflicts.has(slot.id) && <span className="zpg-schedule-warning">与其他安排重叠</span>}
-        {isAfterDue(slot, linked) && <span className="zpg-schedule-warning">晚于截止时间</span>}
-        <div className="zpg-schedule-actions"><button type="button" disabled={pending} onClick={() => edit(slot)}>编辑</button><button type="button" disabled={pending} onClick={() => remove(slot.id)}>删除</button></div>
+        {linked?.done && <span className="zwpg-schedule-tag">关联 DDL 已完成</span>}
+        {!linked && <span className="zwpg-schedule-tag">历史安排 · 关联任务已删除或离线</span>}
+        {conflicts.has(slot.id) && <span className="zwpg-schedule-warning">与其他安排重叠</span>}
+        {isAfterDue(slot, linked) && <span className="zwpg-schedule-warning">晚于截止时间</span>}
+        <div className="zwpg-schedule-actions"><button type="button" disabled={pending} onClick={() => edit(slot)}>编辑</button><button type="button" disabled={pending} onClick={() => remove(slot.id)}>删除</button></div>
       </article>; })}
     </section>)}</div>
-    <form ref={formRef} className="zpg-schedule-form" onSubmit={save} aria-busy={pending}>
+    <form ref={formRef} className="zwpg-schedule-form" onSubmit={save} aria-busy={pending}>
       <h3>{form.id ? '编辑安排' : '添加执行时间'}</h3>
       <fieldset disabled={pending}><label>关联 DDL<select value={form.taskKey} onChange={(event) => { update({ taskKey: event.target.value }); onSelectTask?.(event.target.value); }} required>
         <option value="">请选择 DDL</option>
@@ -91,9 +91,9 @@ export function ScheduleView({ tasks = [], slots = [], onSave, onRemove, selecte
       <label>开始（上海时间）<input type="datetime-local" value={form.start} onChange={(event) => update({ start: event.target.value })} required /></label>
       <label>结束（上海时间）<input type="datetime-local" value={form.end} onChange={(event) => update({ end: event.target.value })} required /></label>
       </fieldset>
-      {(previewConflict || isAfterDue(preview, task)) && <p className="zpg-schedule-warning">{previewConflict ? '与其他安排重叠。' : ''}{isAfterDue(preview, task) ? '执行结束晚于截止时间。' : ''}仍可保存，不改变 DDL。</p>}
-      <div className="zpg-schedule-actions"><button type="submit" disabled={pending}>{pending ? '处理中…' : form.id ? '保存修改' : '保存安排'}</button><button type="button" disabled={pending} onClick={() => { revision.current += 1; setForm(emptyForm()); setError(''); setNotice(''); }}>清空 / 取消</button></div>
-      {pending && <p role="status">正在保存或删除，请稍候…</p>}{error && <p role="alert" className="zpg-schedule-warning">{error}</p>}{notice && <p role="status">{notice}</p>}
+      {(previewConflict || isAfterDue(preview, task)) && <p className="zwpg-schedule-warning">{previewConflict ? '与其他安排重叠。' : ''}{isAfterDue(preview, task) ? '执行结束晚于截止时间。' : ''}仍可保存，不改变 DDL。</p>}
+      <div className="zwpg-schedule-actions"><button type="submit" disabled={pending}>{pending ? '处理中…' : form.id ? '保存修改' : '保存安排'}</button><button type="button" disabled={pending} onClick={() => { revision.current += 1; setForm(emptyForm()); setError(''); setNotice(''); }}>清空 / 取消</button></div>
+      {pending && <p role="status">正在保存或删除，请稍候…</p>}{error && <p role="alert" className="zwpg-schedule-warning">{error}</p>}{notice && <p role="status">{notice}</p>}
     </form>
   </section>;
 }

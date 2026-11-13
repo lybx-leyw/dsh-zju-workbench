@@ -7,7 +7,7 @@
 ## 1. 根与布局
 
 ```
-<profile>/data/zhiyun-classroom/            # 与 host-classroom 同一个数据根
+<profile>/data/zw-classroom/            # 与 host-classroom 同一个数据根
 ├── classroom/<stageId>/
 │   ├── meta.json                           # document_stages 一行
 │   ├── stage-meta.json                     # stage_meta 一行

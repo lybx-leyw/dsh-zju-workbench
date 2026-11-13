@@ -3,7 +3,7 @@
  *
  * # 这是照抄笔记库那棵树，不是"像素对齐"
  *
- * 笔记库（`dsh-zhiyun-page-notes`）的树栏结构是：
+ * 笔记库（`dsh-zju-page-notes`）的树栏结构是：
  *
  *     ┌─ 栏头：一排 26×26 图标按钮（新建 / 新建文件夹 / 全部折叠 / 收起）
  *     ├─ 过滤框
@@ -140,7 +140,7 @@ export function PaperTree({
   return <>
     {/* 栏头：与笔记库同一排 26×26 图标按钮。
         上传与新建文件夹都在这里 —— 用户不必离开树去页头找入口。 */}
-    <div className="zp-tree-head">
+    <div className="zwp-tree-head">
       <button type="button" title="导入 PDF" disabled={busy} onClick={onUploadClick}>
         <Icon name="plus" size={14} />
       </button>
@@ -157,31 +157,31 @@ export function PaperTree({
 
     <input
       type="search"
-      className="zp-tree-filter"
+      className="zwp-tree-filter"
       placeholder="过滤文献"
       aria-label="过滤文献"
       value={filter}
       onChange={(event) => onFilter?.(event.target.value)}
     />
 
-    {error !== null && <p className="zp-tree-error">{error}</p>}
+    {error !== null && <p className="zwp-tree-error">{error}</p>}
 
     {entries.length === 0
-      ? <p className="zp-tree-hint">还没有文献。点上面的 ＋ 导入 PDF。</p>
+      ? <p className="zwp-tree-hint">还没有文献。点上面的 ＋ 导入 PDF。</p>
       : rows.length === 0
-        ? <p className="zp-tree-hint">没有匹配「{String(filter).trim()}」的文献。</p>
-        : <ul className="zp-tree-list">
+        ? <p className="zwp-tree-hint">没有匹配「{String(filter).trim()}」的文献。</p>
+        : <ul className="zwp-tree-list">
           {rows.map((row) => {
             const isFolder = row.type === 'folder';
             const open = isFolder && expanded.has(row.path);
             return <li
               key={row.path}
-              className={`zp-tree-row${currentPaths.has(row.path) ? ' is-current' : ''}${open ? ' is-expanded' : ''}${row.path === cursor ? ' is-cursor' : ''}`}
-              style={{ '--zp-depth': String(row.depth) }}
+              className={`zwp-tree-row${currentPaths.has(row.path) ? ' is-current' : ''}${open ? ' is-expanded' : ''}${row.path === cursor ? ' is-cursor' : ''}`}
+              style={{ '--zwp-depth': String(row.depth) }}
             >
               <button
                 type="button"
-                className="zp-tree-btn"
+                className="zwp-tree-btn"
                 title={row.path}
                 data-path={row.path}
                 data-kind={row.type}
@@ -190,12 +190,12 @@ export function PaperTree({
                   if (isFolder) onToggle(row.path); else onOpen(row);
                 }}
               >
-                <span className="zp-tree-caret">{isFolder ? <Icon name="chevron" size={13} /> : null}</span>
+                <span className="zwp-tree-caret">{isFolder ? <Icon name="chevron" size={13} /> : null}</span>
                 {/* 文件夹与文献分色：与笔记库一致。 */}
-                <span className={`zp-tree-icon${isFolder ? ' is-folder' : ''}`}>
+                <span className={`zwp-tree-icon${isFolder ? ' is-folder' : ''}`}>
                   <Icon name={isFolder ? 'folder' : 'paper'} size={14} />
                 </span>
-                <span className="zp-tree-name">{row.title ?? baseOf(row.path)}</span>
+                <span className="zwp-tree-name">{row.title ?? baseOf(row.path)}</span>
               </button>
             </li>;
           })}

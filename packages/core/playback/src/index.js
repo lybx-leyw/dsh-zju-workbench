@@ -21,7 +21,7 @@
  * 页面包不能把本包源码打进自己的 bundle（构建守卫不许内联本包 `src/` 之外
  * 的文件，见 `tests/build-seeds.test.mjs`）。所以两条路：
  *
- * - 宿主侧：`ctx.get('zhiyunPlayback')` 拿同一批函数；
+ * - 宿主侧：`ctx.get('zwPlayback')` 拿同一批函数；
  * - 客户端：`src/client.jsx` 导出同一批（学习页视频栏 external import 它）。
  *   两边不各写一份算法。
  */
@@ -54,11 +54,11 @@ import {
   tagSuspicion,
 } from './probe.js';
 
-export const name = 'zhiyun-playback';
+export const name = 'zw-playback';
 
 /** 无宿主行为：本包只有纯计算。 */
 export function apply(ctx) {
-  return ctx.provide('zhiyunPlayback', {
+  return ctx.provide('zwPlayback', {
     // 字幕轨
     TRACK_KIND,
     resolveTrack,

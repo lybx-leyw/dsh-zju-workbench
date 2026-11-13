@@ -1,6 +1,6 @@
-﻿# dsh-zhiyun-shell-workbench
+﻿# dsh-zju-shell-workbench
 
-智云 Pro 的界面外壳插件：侧栏、页框架、主题层、导航服务与插槽契约。当前验证宿主为 `0.2.0-rc.2`。宿主提供 React 和全部 DSH 客户端服务；不要再打包一份 React。
+ZJU Workbench 的界面外壳插件：侧栏、页框架、主题层、导航服务与插槽契约。当前验证宿主为 `0.2.0-rc.2`。宿主提供 React 和全部 DSH 客户端服务；不要再打包一份 React。
 
 外壳**不认识任何具体页面**：它声明 `NAV` 里每个页面（除「问一问」是宿主原生会话）的面板骨架和内容插槽，页面由各自的插件包填充（`dsh-zhiyun-page-today / -paper / -study / -me / -plugins / -feedback`）。内容插槽按 `NAV` 的条目逐个注册：加一项导航就自动多一个 `zhiyun.<id>.content`。页面包没装时页面显示「暂时不可用」占位，外壳照常工作。
 
@@ -60,7 +60,7 @@ export function apply(ctx) {
 
 页面组件同时从渲染参数里拿到外壳注入的 `controller`（`navigate / toggleTheme / openSettings / openAccount / toggleSidebar`）和 `renderSlot`。`ctx.slots.inject` 在声明已存在时立即执行，声明后到也会补执行，外壳卸载时贡献随之撤销（连同 `ctx.inject` 的作用域一起）。`openSettings()` 打开宿主原生设置浮窗；原生设置项缺失时打印错误而不是静默无响应。
 
-`controller.navigate(id)` 支持 `NAV` 中的页面 ID，`ask` 显示原生 DSH 工作区并保留其当前面板；不会强制将外部插件页面切回聊天。仅在聊天面板缺少会话时，显式进入 ask 才尝试绑定学习空间。此接口属于**客户端服务**（`zhiyunNavigation`），不应在宿主插件中注入。外层 `Ctrl+K` 页面搜索仅在业务页面生效；ask 内将该组合键交还原生 DSH。
+`controller.navigate(id)` 支持 `NAV` 中的页面 ID，`ask` 显示原生 DSH 工作区并保留其当前面板；不会强制将外部插件页面切回聊天。仅在聊天面板缺少会话时，显式进入 ask 才尝试绑定学习空间。此接口属于**客户端服务**（`zwNavigation`），不应在宿主插件中注入。外层 `Ctrl+K` 页面搜索仅在业务页面生效；ask 内将该组合键交还原生 DSH。
 
 ## 取消一页之后
 
@@ -85,9 +85,9 @@ export function apply(ctx) {
 
 ## 生命周期与兼容
 
-profile 同时加载本包与 `dsh-zhiyun-shell-bridge` 两个 bundle，各自提供自己的组合条目；不再停用官方 `ui-sidebar`。本包只注册智云导航与业务页面槽位；原生侧栏、页面、会话入口和右侧栏在 ask 内保持完整。参见 [桥接插件](../dsh-zhiyun-shell-bridge/README.md)。普通外部页面继续使用原生导航协议，不会自动进入智云主导航。
+profile 同时加载本包与 `dsh-zju-shell-bridge` 两个 bundle，各自提供自己的组合条目；不再停用官方 `ui-sidebar`。本包只注册智云导航与业务页面槽位；原生侧栏、页面、会话入口和右侧栏在 ask 内保持完整。参见 [桥接插件](../dsh-zju-shell-bridge/README.md)。普通外部页面继续使用原生导航协议，不会自动进入智云主导航。
 
-主题通过 `theme.overrideTokens('dsh-zhiyun-shell-workbench', …)` 层叠，卸载后撤销。业务内容插槽在外壳卸载时消失，依赖插件应使用 `slots.inject` 随其声明生命周期装卸。
+主题通过 `theme.overrideTokens('dsh-zju-shell-workbench', …)` 层叠，卸载后撤销。业务内容插槽在外壳卸载时消失，依赖插件应使用 `slots.inject` 随其声明生命周期装卸。
 
 恢复原生界面时同时停用 `zhiyun-shell` 和 `zhiyun-shell-bridge`，然后完整刷新；原生侧栏无需额外启用。已有机器本地 patch 如果单独停用了 `ui-sidebar`，需移除那条覆盖。
 
@@ -95,7 +95,7 @@ profile 同时加载本包与 `dsh-zhiyun-shell-bridge` 两个 bundle，各自�
 
 共享的图标、品牌标记、空态与分区标题来自 `@lybx-leyw/dsh-zju-ui-shared`（`dsh.client.external` 里声明，esbuild 里 external）。
 
-`src/style.css` 只保留智云导航与业务页面需要的 `.zy-*` 规则；原生工作区、原生侧栏、原生设置外观与浮层一律沿用宿主样式，不在这里覆盖。无前缀状态类（`is-active` 等）是跨包共享命名空间：给壳侧同名类新增属性前，先确认不与页面包的声明撞同名属性。
+`src/style.css` 只保留智云导航与业务页面需要的 `.zw-*` 规则；原生工作区、原生侧栏、原生设置外观与浮层一律沿用宿主样式，不在这里覆盖。无前缀状态类（`is-active` 等）是跨包共享命名空间：给壳侧同名类新增属性前，先确认不与页面包的声明撞同名属性。
 
-兼容范围仅包含锁定版本，不承诺与任意未来 DSH 或任意第三方 UI 同时工作。普通插件是否可用取决于它使用的槽位与服务是否仍在原生工作区内；本包不再逐个适配插件。README 中的 `NAV` 页面 ID 与 `zhiyunNavigation` 契约保持不变，页面包无需因本次布局拆分而修改。
+兼容范围仅包含锁定版本，不承诺与任意未来 DSH 或任意第三方 UI 同时工作。普通插件是否可用取决于它使用的槽位与服务是否仍在原生工作区内；本包不再逐个适配插件。README 中的 `NAV` 页面 ID 与 `zwNavigation` 契约保持不变，页面包无需因本次布局拆分而修改。
 

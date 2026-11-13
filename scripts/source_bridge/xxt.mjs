@@ -23,7 +23,7 @@ export async function run({ cookie, dataDir }) {
     dataDir,
     credentials: creds.service,
   });
-  const route = routeOf(routes, '/api/zhiyun-xxt');
+  const route = routeOf(routes, '/api/zw-xxt');
 
   // 导入走产品的动作（它会按域分片种 cookie，自己不重复实现）
   await rpcXxt(route, 'xxt.importCookie', { cookie });

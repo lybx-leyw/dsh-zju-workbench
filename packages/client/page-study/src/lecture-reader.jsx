@@ -41,33 +41,33 @@ export function LectureReader({ state, controller, onSource, focus, scope = null
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [focus?.nonce]);
   const tocId = `${prefix}-toc`;
-  return <div className="zs-handout" ref={root}>
-    <div className="zs-handout-toolbar">
-      {topics.length > 0 && <button type="button" className="zs-handout-toc-toggle" onClick={()=>setTocOpen(v=>!v)} aria-expanded={tocOpen} aria-controls={tocId}>
+  return <div className="zws-handout" ref={root}>
+    <div className="zws-handout-toolbar">
+      {topics.length > 0 && <button type="button" className="zws-handout-toc-toggle" onClick={()=>setTocOpen(v=>!v)} aria-expanded={tocOpen} aria-controls={tocId}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m4-11h4m-4 4h4"/></svg>
         {tocOpen ? '收起目录' : '展开目录'}
       </button>}
-      <div className="zs-handout-meta"><strong>{lecture ? `${chapters.length} 章 · ${topics.length} 个知识点` : '阅读讲义'}</strong>
+      <div className="zws-handout-meta"><strong>{lecture ? `${chapters.length} 章 · ${topics.length} 个知识点` : '阅读讲义'}</strong>
         <small>{lecture?.polish?.complete === false ? '部分终审未完成，请留意正文提示' : '按章节阅读 · 保留课堂来源'}</small>
       </div>
       {topics.length>0&&<LectureExportButton state={state}/>}
       {topics.length>0&&<HandoutExportButton controller={controller} state={state}/>}
     </div>
-    {!topics.length ? <div className="zs-content-empty"><strong>这节课还没有生成讲义</strong><small>点击上方「生成讲义」，可查看各阶段进度。</small></div> : !shown.length ? <div className="zs-content-empty"><strong>阅读讲义里没有这一段</strong><small>可以改看整节，或重新生成阅读讲义。</small></div> : <>
-      <div className="zs-handout-body" data-toc={tocOpen ? 'open' : 'closed'}>
-      {tocOpen && <aside className="zs-handout-drawer" id={tocId}><nav aria-label="讲义目录"><div className="zs-handout-drawer-title">本节目录</div>{shown.map(({ c, ci, topics: rows })=><details className="zs-handout-tree-branch" key={ci} open><summary>{treeLink(idOf(ci),`${String(ci+1).padStart(2,'0')} ${c.title}`,'zs-handout-tree-chapter')}</summary>{rows.map(({ t, ti })=><details key={ti} className="zs-handout-tree-leaf" open={scopeTopic != null}><summary>{treeLink(idOf(ci,ti),`${ti+1}. ${t.title}`,'zs-handout-tree-topic')}</summary>{blocksOf(t).map((b,bi)=>{const label=kinds[kindOf(b)]?.[0]??'讲解';return <React.Fragment key={bi}>{treeLink(idOf(ci,ti,bi),`${label} · ${b.title||`${label} ${bi+1}`}`,'zs-handout-tree-block')}</React.Fragment>;})}</details>)}</details>)}</nav></aside>}
-      <div className="zs-handout-main" aria-label="讲义正文">
-      {shown.map(({ c, ci, topics: rows })=><section className="zs-handout-chapter" id={idOf(ci)} data-handout-location key={ci}><header><small>第 {ci+1} 章</small><h2>{c.title}</h2></header>{rows.map(({ t, ti })=><article className="zs-handout-topic" id={idOf(ci,ti)} data-handout-location key={ti}><header><h3>{t.title}</h3><button className="zs-text zs-source-anchor" onClick={()=>onSource(t)}>{t.fromPage != null || t.anchor?.page != null ? `P${t.fromPage ?? t.anchor.page}${t.toPage > t.fromPage ? `–${t.toPage}` : ''} · ` : ''}课堂来源 ↗</button></header>
-        {t.register!=='written'&&<p className="zs-draft-label">本知识点保留课堂原话，尚未写成书面稿。</p>}
-        {blocksOf(t).map((b,bi)=>{const kind=kindOf(b),[label,tone]=kinds[kind]??kinds.elaboration;return <section className={`zs-handout-block zs-handout-block--${tone}`} id={idOf(ci,ti,bi)} data-handout-location key={bi}>
-          <div className="zs-handout-kind"><span>{label}</span>{b.title&&<strong>{b.title}</strong>}{b.sourceBlockIndexes?.length>0&&<button className="zs-text zs-block-source" onClick={()=>onSource(b)}>来源 ↗</button>}</div>
+    {!topics.length ? <div className="zws-content-empty"><strong>这节课还没有生成讲义</strong><small>点击上方「生成讲义」，可查看各阶段进度。</small></div> : !shown.length ? <div className="zws-content-empty"><strong>阅读讲义里没有这一段</strong><small>可以改看整节，或重新生成阅读讲义。</small></div> : <>
+      <div className="zws-handout-body" data-toc={tocOpen ? 'open' : 'closed'}>
+      {tocOpen && <aside className="zws-handout-drawer" id={tocId}><nav aria-label="讲义目录"><div className="zws-handout-drawer-title">本节目录</div>{shown.map(({ c, ci, topics: rows })=><details className="zws-handout-tree-branch" key={ci} open><summary>{treeLink(idOf(ci),`${String(ci+1).padStart(2,'0')} ${c.title}`,'zws-handout-tree-chapter')}</summary>{rows.map(({ t, ti })=><details key={ti} className="zws-handout-tree-leaf" open={scopeTopic != null}><summary>{treeLink(idOf(ci,ti),`${ti+1}. ${t.title}`,'zws-handout-tree-topic')}</summary>{blocksOf(t).map((b,bi)=>{const label=kinds[kindOf(b)]?.[0]??'讲解';return <React.Fragment key={bi}>{treeLink(idOf(ci,ti,bi),`${label} · ${b.title||`${label} ${bi+1}`}`,'zws-handout-tree-block')}</React.Fragment>;})}</details>)}</details>)}</nav></aside>}
+      <div className="zws-handout-main" aria-label="讲义正文">
+      {shown.map(({ c, ci, topics: rows })=><section className="zws-handout-chapter" id={idOf(ci)} data-handout-location key={ci}><header><small>第 {ci+1} 章</small><h2>{c.title}</h2></header>{rows.map(({ t, ti })=><article className="zws-handout-topic" id={idOf(ci,ti)} data-handout-location key={ti}><header><h3>{t.title}</h3><button className="zws-text zws-source-anchor" onClick={()=>onSource(t)}>{t.fromPage != null || t.anchor?.page != null ? `P${t.fromPage ?? t.anchor.page}${t.toPage > t.fromPage ? `–${t.toPage}` : ''} · ` : ''}课堂来源 ↗</button></header>
+        {t.register!=='written'&&<p className="zws-draft-label">本知识点保留课堂原话，尚未写成书面稿。</p>}
+        {blocksOf(t).map((b,bi)=>{const kind=kindOf(b),[label,tone]=kinds[kind]??kinds.elaboration;return <section className={`zws-handout-block zws-handout-block--${tone}`} id={idOf(ci,ti,bi)} data-handout-location key={bi}>
+          <div className="zws-handout-kind"><span>{label}</span>{b.title&&<strong>{b.title}</strong>}{b.sourceBlockIndexes?.length>0&&<button className="zws-text zws-block-source" onClick={()=>onSource(b)}>来源 ↗</button>}</div>
           <LectureBlockBody block={b}/>
         </section>;})}
       </article>)}</section>)}
       </div>
       </div>
     </>}
-    {!!reviewWarnings.length&&<details className="zs-diagnostics"><summary>终审仍有 {reviewWarnings.length} 项待复核</summary>{reviewWarnings.map((w,i)=><p key={i}>{w}</p>)}</details>}
-    {!!lecture?.warnings?.length&&<details className="zs-diagnostics"><summary>讲义加工记录</summary>{lecture.warnings.map((w,i)=><p key={i}>{w}</p>)}</details>}
+    {!!reviewWarnings.length&&<details className="zws-diagnostics"><summary>终审仍有 {reviewWarnings.length} 项待复核</summary>{reviewWarnings.map((w,i)=><p key={i}>{w}</p>)}</details>}
+    {!!lecture?.warnings?.length&&<details className="zws-diagnostics"><summary>讲义加工记录</summary>{lecture.warnings.map((w,i)=><p key={i}>{w}</p>)}</details>}
   </div>;
 }

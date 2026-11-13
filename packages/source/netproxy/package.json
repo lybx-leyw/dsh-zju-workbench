@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-source-netproxy",
   "version": "0.1.0",
-  "description": "智云 Pro 的分域网络代理：所有出口流量经本地中继，按用户配置的域名规则分发到不同代理或直连，配可视化设置页",
+  "description": "ZJU Workbench 的分域网络代理：所有出口流量经本地中继，按用户配置的域名规则分发到不同代理或直连，配可视化设置页",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

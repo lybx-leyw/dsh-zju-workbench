@@ -24,7 +24,7 @@
 import { createReadToolRegistrar, defined, inputError, optBool, optInt, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunCc98: '@lybx-leyw/dsh-zju-source-cc98',
+  zwCc98: '@lybx-leyw/dsh-zju-source-cc98',
 });
 
 const ACTIONS = [
@@ -41,7 +41,7 @@ const ACTIONS = [
  * @returns 工具定义数组。
  */
 export function createCc98ReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunCc98', SERVICE_SOURCES.zhiyunCc98);
+  const need = () => serviceLookup(services, 'zwCc98', SERVICE_SOURCES.zwCc98);
 
   return [
     {

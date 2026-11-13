@@ -275,7 +275,7 @@ drawerCls: "zp-drawer is-open"        ✓
 - [x] 构建 `dist/` 并入库
 - [x] 智云 5 个能力迁入（`paper-tree` / `paper-errors` / `paper-session` /
       `paper-selection` / `paper-routes`），严格 TS
-- [x] 归档 `dsh-zhiyun-host-paper`
+- [x] 归档 `dsh-zju-host-paper`
 - [x] 移除 `dsh.client`：本包只做 host，UI 全部归 `page-paper`
 - [x] 伴读会话固定 `paper-reader` preset
 - [x] `lib/client.js` 保持上游原文（哈希与 npm 1.8.2 一致）

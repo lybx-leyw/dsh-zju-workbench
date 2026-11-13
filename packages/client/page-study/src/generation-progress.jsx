@@ -19,17 +19,17 @@ export function GenerationProgress({ job, onCancel, disabled }) {
   if (!job) return null;
   const elapsed = running ? Math.max(0, now - job.startedAt) : job.elapsedMs ?? 0;
   const observed = new Map((job.progress?.stages ?? [job.progress]).filter(Boolean).map(p => [p.phase, p]));
-  return <div className="zs-generation" role="status" aria-live="polite">
+  return <div className="zws-generation" role="status" aria-live="polite">
     <details open={running}>
-      <summary className="zs-generation-heading"><strong>{running ? '正在生成讲义' : ({ ready: '讲义已生成', partial: '生成部分完成', failed: '生成失败', cancelled: '已取消生成' })[job.state]}</strong>
-        <span>总耗时 {duration(elapsed)}</span>{job.concurrency && <span>{job.concurrency} workers</span>}<span className="zs-generation-disclosure">阶段详情 <span aria-hidden="true">⌄</span></span>
+      <summary className="zws-generation-heading"><strong>{running ? '正在生成讲义' : ({ ready: '讲义已生成', partial: '生成部分完成', failed: '生成失败', cancelled: '已取消生成' })[job.state]}</strong>
+        <span>总耗时 {duration(elapsed)}</span>{job.concurrency && <span>{job.concurrency} workers</span>}<span className="zws-generation-disclosure">阶段详情 <span aria-hidden="true">⌄</span></span>
       </summary>
-    <div className="zs-generation-stages">{stages.map(([phase, label, unit]) => {
+    <div className="zws-generation-stages">{stages.map(([phase, label, unit]) => {
       const p = observed.get(phase);
       if (!p) return null;
       const elapsedMs = running && !p.finishedAt ? Math.max(0, now - (p.startedAt ?? job.startedAt ?? now)) : p.elapsedMs ?? 0;
       const seconds = Math.max(0.001, elapsedMs / 1000);
-      return <div className="zs-generation-stage" key={phase}>
+      return <div className="zws-generation-stage" key={phase}>
         <span>{label}</span><span>{p.done > 0 || p.total > 0 ? `${p.done ?? 0}${p.total > 0 ? ` / ${p.total}` : ''} ${unit}` : p.finishedAt ? '已结束' : '处理中'}{p.failed ? ` · ${p.failed} 失败` : ''}</span>
         <span>{duration(elapsedMs)}{p.done > 0 && elapsedMs >= 50 ? ` · ${(p.done * 60 / seconds).toFixed(1)} ${unit}/分` : running && !p.finishedAt && !p.done ? ' · 等待首个结果' : ''}</span>
         {p.total > 0 && <progress value={p.done ?? 0} max={p.total} aria-label={label} />}
@@ -37,6 +37,6 @@ export function GenerationProgress({ job, onCancel, disabled }) {
     })}</div>
     {job.error && <small>{job.error.message}</small>}
     </details>
-    {running && <button className="zs-text zs-generation-cancel" disabled={disabled} onClick={onCancel}>取消</button>}
+    {running && <button className="zws-text zws-generation-cancel" disabled={disabled} onClick={onCancel}>取消</button>}
   </div>;
 }

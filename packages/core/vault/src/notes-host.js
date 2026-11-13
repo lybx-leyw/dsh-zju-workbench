@@ -1,13 +1,13 @@
 /**
- * 笔记库的**存储半边**：落盘、路径安全、PDF 字节流、`/api/zhiyun-vault-notes` 路由。
+ * 笔记库的**存储半边**：落盘、路径安全、PDF 字节流、`/api/zw-vault-notes` 路由。
  *
  * # 为什么它在 core 而不在「笔记」页里
  *
  * 它原先是 `packages/client/page-notes/src/index.js`。那是「一个页面包管理文件系统」，
  * 与本仓分层冲突：page 只做 UI，core 管数据与宿主服务。搬到这里的副作用是好的 ——
- * **停用页面不再等于停用笔记库**（讲义导出 `core/handout` 读的就是 `zhiyunVaultNotes`）。
+ * **停用页面不再等于停用笔记库**（讲义导出 `core/handout` 读的就是 `zwVaultNotes`）。
  *
- * 于是本文件的插件名也从 `zhiyun-page-notes-page` 改成了 `zhiyun-vault-notes-store`：
+ * 于是本文件的插件名也从 `zw-page-notes-page` 改成了 `zw-vault-notes-store`：
  * 插件图里不该出现「一个 page 服务」。
  *
  * # 为什么直接落盘成 .md（而不是宿主存储栈）
@@ -52,7 +52,7 @@ import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write';
 import { PDF_ROUTE_PREFIX, servePdfRoute } from './pdf-viewer.js';
 export { PDF_ROUTE_PREFIX };
 
-export const name = 'zhiyun-vault-notes-store';
+export const name = 'zw-vault-notes-store';
 
 /**
  * 笔记文件的权限。
@@ -67,14 +67,14 @@ export const name = 'zhiyun-vault-notes-store';
  */
 const NOTE_FILE_OPTS = { mode: 0o644, dirMode: 0o755 };
 
-/** 只硬依赖 `profileContext`（拿数据目录）。`connection` 与 `zhiyunVault` 惰性取。 */
+/** 只硬依赖 `profileContext`（拿数据目录）。`connection` 与 `zwVault` 惰性取。 */
 export const inject = ['profileContext'];
 
-export const ROUTE_PATH = '/api/zhiyun-vault-notes';
+export const ROUTE_PATH = '/api/zw-vault-notes';
 
 
 /** 笔记目录名（落在 profile 的 data/ 下）。 */
-export const NOTES_DIR = 'zhiyun-vault-notes';
+export const NOTES_DIR = 'zw-vault-notes';
 
 const MAX_NOTE_BYTES = 512 * 1024;
 
@@ -228,12 +228,12 @@ function depthOf(rel) {
 
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-vault-notes] ${message}`;
+    const line = `[zw-vault-notes] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
   const warn = (message) => {
-    const line = `[zhiyun-vault-notes] ${message}`;
+    const line = `[zw-vault-notes] ${message}`;
     if (typeof ctx.logger?.warn === 'function') ctx.logger.warn(line);
     else console.warn(line);
   };
@@ -307,7 +307,7 @@ export async function apply(ctx, config = {}) {
 
   /** 把当前全部笔记推给索引器（若它可用）。索引器缺席时页面只是没有反链。 */
   async function refreshIndex() {
-    const vault = ctx.get('zhiyunVault');
+    const vault = ctx.get('zwVault');
     const notes = await readAll();
     status.count = notes.length;
     const entries = await walk();
@@ -344,7 +344,7 @@ export async function apply(ctx, config = {}) {
     // （resolver 的顺序是精确路径 → 同目录 → 全库唯一 basename）。
     const sameTitle = baseOf(from).toLowerCase() === baseOf(to).toLowerCase();
     const notes = await readAll();
-    const vault = ctx.get('zhiyunVault');
+    const vault = ctx.get('zwVault');
     const changes = sameTitle || !vault?.renameLinks
       ? []
       : vault.renameLinks(notes, `${from}${NOTES_EXT}`, `${to}${NOTES_EXT}`);
@@ -803,7 +803,7 @@ export async function apply(ctx, config = {}) {
       });
       log(`数据路由：${routePath}`);
       return remove;
-    }, 'zhiyun: vault notes route');
+    }, 'zw: vault notes route');
   });
 
   // ── PDF 阅读器：静态资源 + 阅读页 ─────────────────────────────────────
@@ -869,13 +869,13 @@ export async function apply(ctx, config = {}) {
     // 注册返回的是 disposer；用 `ctx.effect` 挂到插件生命周期上，
     // 卸载时自动摘掉，不会在宿主里留一条指向已销毁闭包的路由。
     if (typeof ctx.effect === 'function' && typeof dispose === 'function') {
-      ctx.effect(() => dispose, 'zhiyun: pdf viewer route');
+      ctx.effect(() => dispose, 'zw: pdf viewer route');
     }
     if (typeof dispose !== 'function') warn('webServer.register 没有返回 disposer，PDF 路由将随宿主退出才消失');
     log(`PDF 阅读器路由：${PDF_ROUTE_PREFIX}`);
   }
 
-  const removeService = ctx.provide('zhiyunVaultNotes', {
+  const removeService = ctx.provide('zwVaultNotes', {
     routePath,
     dir,
     list: () => invoke('list'),

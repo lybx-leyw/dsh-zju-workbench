@@ -35,7 +35,7 @@ import path from 'node:path';
 const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const ROOT = path.resolve(HERE, '..', '..');
 const DATA = path.join(HERE, 'data');
-const RUNTIME_STORE = path.join(ROOT, '.runtime', 'home', 'storages', 'zhiyun_knowledge.json');
+const RUNTIME_STORE = path.join(ROOT, '.runtime', 'home', 'storages', 'zw_knowledge.json');
 
 const arg = (name, fallback) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -75,7 +75,7 @@ async function main() {
   await fs.mkdir(workDir, { recursive: true });
   await mountCampus({ dataDir: path.join(workDir, 'campus') + path.sep, credentials: creds.service });
   const mounted = await mount('@lybx-leyw/dsh-zju-source-classroom', { dataDir: workDir, credentials: creds.service });
-  const classroom = serviceOf(mounted, 'zhiyunClassroom');
+  const classroom = serviceOf(mounted, 'zwClassroom');
 
   console.log('登录智云课堂…');
   await classroom.login(account);
@@ -141,7 +141,7 @@ async function main() {
  * 从宿主 profile 的凭据文件里读课堂账号。
  *
  * ⚠️ 这是**唯一**一处读 `.credentials.yaml` 的地方，且只读
- *    `zhiyun-classroom/account` 那一条 —— 值与产品登录用的是同一份。
+ *    `zw-classroom/account` 那一条 —— 值与产品登录用的是同一份。
  *    读不到就如实返回 null（由调用方报"请先登录"），不做任何猜测。
  */
 async function readAccountFromProfile() {
@@ -153,7 +153,7 @@ async function readAccountFromProfile() {
     let inClassroom = false, username = null, password = null;
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed.startsWith('zhiyun-classroom/account:')) { inClassroom = true; continue; }
+      if (trimmed.startsWith('zw-classroom/account:')) { inClassroom = true; continue; }
       // 同级的下一条 record 出现就说明离开了这一段
       if (inClassroom && /^ {2}[a-zA-Z][\w-]*\/[\w-]+:/.test(line)) { inClassroom = false; continue; }
       if (!inClassroom) continue;

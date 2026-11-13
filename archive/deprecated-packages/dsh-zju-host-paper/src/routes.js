@@ -1,5 +1,5 @@
 /**
- * 兼容层自有的 HTTP 面（前缀 `/zhiyun-paper`）。
+ * 兼容层自有的 HTTP 面（前缀 `/zw-paper`）。
  *
  * # 为什么只有四条路由
  *
@@ -9,7 +9,7 @@
  * **会话标签**与**归档任意会话**（上游那条归档路由只允许删空白会话，理由见
  * `session-admin.js`）。
  *
- * 之所以不把上游的路由反代一遍（页面统一打 `/zhiyun-paper/*`）：那需要复刻
+ * 之所以不把上游的路由反代一遍（页面统一打 `/zw-paper/*`）：那需要复刻
  * 上游每个端点的请求/响应形状，等于把「兼容层」写成了「重新实现」，
  * 上游一升级就要跟着改一遍 —— 而锁版的意义正是「不改上游」。
  *
@@ -24,7 +24,7 @@ import { PaperError, paperErrorStatus } from './errors.js';
 import { readPaperTree, upstreamRefFor } from './paper-tree.js';
 
 /** 本包自有路由前缀。页面侧的同名常量在 `@lybx-leyw/dsh-zju-page-paper/src/library.js`。 */
-export const PAPER_ROUTE_PREFIX = '/zhiyun-paper';
+export const PAPER_ROUTE_PREFIX = '/zw-paper';
 
 /** 请求体上限：一段选中文本最多千余字符，64KB 只用来拦住畸形请求。 */
 const MAX_BODY_BYTES = 64 * 1024;

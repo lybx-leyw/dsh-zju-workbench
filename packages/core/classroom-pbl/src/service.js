@@ -4,7 +4,7 @@
 // 源：ref/OpenMAIC/packages/@openmaic/generation/src/pbl/planner-single-call.ts:477-578（结构化输出 + 重试）
 
 /**
- * `ctx.zhiyunClassroomPbl` 的领域服务实现。
+ * `ctx.zwClassroomPbl` 的领域服务实现。
  *
  * 五个方法各自对应上游的一段能力：
  * - `plan`      ← Planner（多阶段推理，走注入 llm）
@@ -25,7 +25,7 @@ export const PBL_PACKAGE_VERSION = '0.1.0';
 
 /**
  * @param {object} [config]
- * @param {object|null} [config.studio] 宿主 `zhiyunClassroomStudio`（可缺失）
+ * @param {object|null} [config.studio] 宿主 `zwClassroomStudio`（可缺失）
  * @param {{call?:Function}|null} [config.llm] 窄 llm
  * @param {object} [config.log]
  */

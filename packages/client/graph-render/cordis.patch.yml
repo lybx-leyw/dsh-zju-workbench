@@ -5,5 +5,5 @@
 # 输出是一个 React 组件。因此它的「插入」只是让打包器与解析器认到这个包，
 # 不在运行时提供任何服务。
 - insert:
-    - id: zhiyun-graph-render
+    - id: zw-graph-render
       name: '@lybx-leyw/dsh-zju-ui-graph-render'

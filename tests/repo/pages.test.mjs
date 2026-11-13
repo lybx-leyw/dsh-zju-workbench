@@ -13,12 +13,12 @@ test('configuration exposes only the supported page shell and storage identity f
     homeLabel: { en: 'DSH workbench', zh: 'DSH 工作台' },
     managerLabel: { en: 'Pages', zh: '页面管理' }, homeIcon: undefined, managerIcon: undefined,
   });
-  const config = normalizeConfig({ homePage: 'ask', managerPage: 'manager', pageSlot: 'page.zhiyun.page',
-    navigationSlot: 'page.zhiyun.navigation', classPrefix: 'zy-workbench', page: 'today',
+  const config = normalizeConfig({ homePage: 'ask', managerPage: 'manager', pageSlot: 'page.zw.page',
+    navigationSlot: 'page.zw.navigation', classPrefix: 'zw-workbench', page: 'today',
     copyPagesPrototype: true, floatingPages: true, slotViews: ['main'] });
   assert.equal(config.homePage, 'ask');
-  assert.equal(config.pageSlot, 'page.zhiyun.page');
-  assert.equal(config.navigationSlot, 'page.zhiyun.navigation');
+  assert.equal(config.pageSlot, 'page.zw.page');
+  assert.equal(config.navigationSlot, 'page.zw.navigation');
   assert.deepEqual(normalizeConfig(config), config);
   for (const retired of ['page', 'copyPagesPrototype', 'floatingPages', 'slotViews']) assert.equal(retired in config, false);
 });

@@ -36,7 +36,7 @@ async function loadHost() {
 
 // 工具实现与注册动作在 `packages/tool/classroom`：
 //   - `createStudyMaterialTools` 仍是纯函数，用来单测工具行为；
-//   - 注册改由包的 `apply(ctx)` 承担，它从 `zhiyunStudy` 服务取 workbench。
+//   - 注册改由包的 `apply(ctx)` 承担，它从 `zwStudy` 服务取 workbench。
 import { createStudyMaterialTools } from '../../../packages/tool/classroom/src/tools.js';
 import * as toolClassroom from '../../../packages/tool/classroom/src/index.js';
 
@@ -61,14 +61,14 @@ test('optional host injection publishes schemas, executes canonical output and u
   let promptSchemas;
   ctx.provide('systemPrompt', { tools: callback => { promptSchemas = callback; return () => {}; } });
   // `ToolRuntime` 构造时自己就把 `tools` 服务 provide 出去了 —— 这里不能再 provide 一次
-  // （会报 `service "tools" has been registered"`）。只需补新包要的 `zhiyunStudy`。
+  // （会报 `service "tools" has been registered"`）。只需补新包要的 `zwStudy`。
   const registry = new ToolRuntime(ctx);
   // **必须挂载执行器**：`ToolRuntime` 构造时会接一个 `systemPrompt.tools` 回调，
   // 它内部走 `selectExecutor()`；没有执行器时**连渲染 prompt 都会抛**
   // `TOOL_EXECUTOR_UNAVAILABLE`（不只是 `execute()`）。
   await ctx.plugin(nativeToolExecutor);
   const f = fixture();
-  ctx.provide('zhiyunStudy', f.workbench);
+  ctx.provide('zwStudy', f.workbench);
   const fiber = ctx.plugin(toolClassroom);
   // 本包现在注册三组工具：
   //   - `study_*` 三个（讲义 wiki）
@@ -76,8 +76,8 @@ test('optional host injection publishes schemas, executes canonical output and u
   //   - `study_courses` 一个（入口索引：有哪些课、整理到什么程度）
   //   - `raw_transcript` / `raw_slides` 两个（原始素材：课堂原话、PPT 图）
   //
-  // 它们的 source（`zhiyunClassroom`）不在本 case 的 ctx 里 —— 那正是设计：
-  // `zhiyunClassroom` **没有**写进 `inject`，缺席时那些工具如实报
+  // 它们的 source（`zwClassroom`）不在本 case 的 ctx 里 —— 那正是设计：
+  // `zwClassroom` **没有**写进 `inject`，缺席时那些工具如实报
   // SERVICE_MISSING，而 `study_*` 照常可用。
   const expected = [
     ...Object.keys(f.tools),
@@ -122,7 +122,7 @@ test('missing optional registry does not block its parent plugin', async () => {
   let loaded = false;
   // 宿主没有 `tools` 服务：本包的 inject 不满足，应当**不激活且不抛**
   // —— 这正是「工具表是附加能力」的契约。
-  ctx.provide('zhiyunStudy', {});
+  ctx.provide('zwStudy', {});
   const parent = ctx.plugin({ apply(scope) { scope.plugin(toolClassroom); loaded = true; } });
   try { await parent; assert.equal(loaded, true); } finally { await parent.dispose(); }
 });

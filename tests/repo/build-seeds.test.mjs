@@ -99,7 +99,7 @@ test('每个有 src/client.jsx 的包都在 CLIENT_PACKAGES 里', async () => {
   const missing = [];
   for (const entry of entries) {
     // 判据是「有 manifest 的包目录」，不是包名前缀 —— 包名不再强制
-    // `dsh-zhiyun-`，`dsh-radar-*` 则是隔离区，不参与产品客户端构建。
+    // `dsh-zju-`，`dsh-radar-*` 则是隔离区，不参与产品客户端构建。
     if (!entry.isDirectory() || isIsolated(entry.name)) continue;
     const hasManifest = await readFile(`${root}packages/${entry.name}/package.json`, 'utf8').then(() => true, () => false);
     if (!hasManifest) continue;

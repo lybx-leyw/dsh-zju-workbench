@@ -6,7 +6,7 @@
  * 本包**没有**任何文件读写：不 `node:fs`、不 tmp+rename、不自建 JSON 索引。
  * 数据由 `ctx.storageDomain` 打开的域负责落盘（本仓 profile 里 `storage-domain`
  * 配的是 `backend: json`，root = `dshHomePath('storages')`，即
- * `~/.dsh/storages/zhiyun_knowledge.json` 这样一份**宿主看管的**文档）。
+ * `~/.dsh/storages/zw_knowledge.json` 这样一份**宿主看管的**文档）。
  * 这一条不是风格偏好：之前学习面板自己写 `results/<sha256>.json`，键是哈希，
  * 「这份结果属于哪个账号的哪门课」从盘上根本读不出来，也就谈不上按课程检索。
  *
@@ -29,7 +29,7 @@ import { createLectureSpec, DOMAIN_NAME, LECTURES_TABLE } from './domain.js';
 import { createKnowledgeService } from './service.js';
 import { loadHostStorage, assertHostStorage } from './host.js';
 
-export const name = 'zhiyun-knowledge';
+export const name = 'zw-knowledge';
 
 /**
  * 依赖声明。
@@ -87,7 +87,7 @@ export async function apply(ctx, config = {}) {
   // 必须在这里就放掉 —— 否则一次失败的挂载会永久占住域名，之后再也 open 不上。
   let removeService;
   try {
-    removeService = ctx.provide('zhiyunKnowledge', service);
+    removeService = ctx.provide('zwKnowledge', service);
   } catch (error) {
     await service.close();
     await domain.close();

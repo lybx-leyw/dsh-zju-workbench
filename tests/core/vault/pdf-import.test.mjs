@@ -162,40 +162,40 @@ test('PDF 路由：路径穿越与非法资源被挡', async () => {
     };
 
     // 阅读器页面
-    const pageRes = await call('/zhiyun-vault-pdf/');
+    const pageRes = await call('/zw-vault-pdf/');
     assert.equal(pageRes.status, 200);
     assert.match(String(pageRes.body), /pdf\.min\.mjs/);
 
     // pdf.js 静态资源
-    const jsRes = await call('/zhiyun-vault-pdf/pdfjs/build/pdf.min.mjs');
+    const jsRes = await call('/zw-vault-pdf/pdfjs/build/pdf.min.mjs');
     assert.equal(jsRes.status, 200);
     assert.ok(Number(jsRes.body.length) > 10000);
 
     // 穿越：`new URL()` 会把 `..` 规范化掉（`/pdfjs/../../.env` → `/.env`），
     // 于是它落到「未知路径」或阅读器页面 —— 无论哪个，**都读不到库外文件**。
     // 所以断言的是"没拿到 .env 的内容"，而不是某个具体状态码。
-    const trav = await call('/zhiyun-vault-pdf/pdfjs/../../.env');
+    const trav = await call('/zw-vault-pdf/pdfjs/../../.env');
     const travBody = String(trav.body ?? '');
     assert.ok(!travBody.includes('APIkey'), '绝不能读出库外的 .env');
     assert.ok(!travBody.includes('BaseURL'), '绝不能读出库外的 .env');
 
     // 白名单之外的子目录（package.json）必须 404
-    assert.equal((await call('/zhiyun-vault-pdf/pdfjs/package.json')).status, 404);
+    assert.equal((await call('/zw-vault-pdf/pdfjs/package.json')).status, 404);
     // 编码后的穿越同样不能得手
-    const encoded = await call('/zhiyun-vault-pdf/pdfjs/%2e%2e%2f%2e%2e%2f.env');
+    const encoded = await call('/zw-vault-pdf/pdfjs/%2e%2e%2f%2e%2e%2f.env');
     assert.ok(!String(encoded.body ?? '').includes('APIkey'), '编码穿越也不得读出 .env');
 
     // 库内文件
-    const fileRes = await call('/zhiyun-vault-pdf/file?path=a.pdf');
+    const fileRes = await call('/zw-vault-pdf/file?path=a.pdf');
     assert.equal(fileRes.status, 200);
     assert.equal(fileRes.headers['content-type'], 'application/pdf');
     assert.equal(fileRes.body.subarray(0, 5).toString('latin1'), '%PDF-');
 
     // 越界与不存在
-    assert.equal((await call('/zhiyun-vault-pdf/file?path=../../etc/passwd')).status, 400);
-    assert.equal((await call('/zhiyun-vault-pdf/file?path=nope.pdf')).status, 404);
+    assert.equal((await call('/zw-vault-pdf/file?path=../../etc/passwd')).status, 400);
+    assert.equal((await call('/zw-vault-pdf/file?path=nope.pdf')).status, 404);
     // 未知路径
-    assert.equal((await call('/zhiyun-vault-pdf/whatever')).status, 404);
+    assert.equal((await call('/zw-vault-pdf/whatever')).status, 404);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

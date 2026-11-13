@@ -25,12 +25,12 @@ import { createStudyCoursesTools, indexRecords, matchCourses } from '../../../pa
 /** 造一套假服务：classroom 给课程与节次，study 给知识库记录。 */
 function fixture({ courses = [], lessons = {}, records = [] } = {}) {
   return {
-    zhiyunStudy: {
+    zwStudy: {
       ready: Promise.resolve(),
       user: async () => ({ id: 'u1' }),
       knowledge: { listByAccount: async () => records },
     },
-    zhiyunClassroom: {
+    zwClassroom: {
       listCourses: async () => ({ items: courses }),
       listLessons: async (courseId) => ({ items: lessons[courseId] ?? [] }),
     },
@@ -185,7 +185,7 @@ test('includeLessons=false 时只给统计，不拉节次', async () => {
     courses: [{ id: 'c1', title: '大学物理', termName: '2025-2026 春夏' }],
     records: [{ courseId: 'c1', subId: 's1', lecture: { title: 'A' }, blocks: [] }],
   });
-  services.zhiyunClassroom.listLessons = async () => { called += 1; return { items: [] }; };
+  services.zwClassroom.listLessons = async () => { called += 1; return { items: [] }; };
   const result = await run(services, { includeLessons: false });
   assert.equal(called, 0, '不要为了统计去拉全部节次');
   assert.equal(result.items[0].counts.wiki, 1);

@@ -1,6 +1,6 @@
 # @lybx-leyw/dsh-zju-core-tool
 
-智云 Pro 的**工具协议与调度层**。上游 `DeepTutor` 对应模块的纯 JS 重写，零第三方依赖、
+ZJU Workbench 的**工具协议与调度层**。上游 `DeepTutor` 对应模块的纯 JS 重写，零第三方依赖、
 零 UI、零落盘、不真调模型。
 
 ## 这是干什么的

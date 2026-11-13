@@ -17,7 +17,7 @@
 //
 // # 这一页是整幅铺开的
 //
-// 它在壳的 `FULL_BLEED_PAGES` 里：不套 `.zy-content` 的 980px 版心。原因是它自己
+// 它在壳的 `FULL_BLEED_PAGES` 里：不套 `.zw-content` 的 980px 版心。原因是它自己
 // 就是三栏布局 —— 再套一层版心，左右两栏会把正文挤成一条缝。滚动也由这一页自己
 // 负责（正文区单独 overflow），所以整页不再纵向滚动。
 //
@@ -40,12 +40,12 @@ import { isInstantScroll, scrollAmount, scrollIntent } from './keys.js';
 import { filterPages, flattenPages, neighbors, scanHeadings, stripHeading1 } from './outline.js';
 import css from './style.css';
 
-export const name = 'zhiyun-page-docs-client';
+export const name = 'zw-page-docs-client';
 
 export const inject = ['slots'];
 
 export function apply(ctx) {
-  mountStyle(ctx, { attribute: 'zhiyunDocsStyle', css, label: 'zhiyun: docs page styles' });
+  mountStyle(ctx, { attribute: 'zwDocsStyle', css, label: 'zw: docs page styles' });
   // 直接注册给页面壳的 `page.content`（keyed），不再依赖外壳为它声明子槽。
   registerPageContent(ctx, {
     id: 'docs',
@@ -81,24 +81,24 @@ const DEFAULT_SOURCE = '摘写自仓库文档，原文见 docs/contributing/；�
  * 正文区的滚动容器里，所有会出现在目录里的标题。
  * 用后代选择器而不是给标题挂 id：宿主不写 id，我们只能按出现顺序认。
  */
-const HEADING_SELECTOR = '.zyd-md h2, .zyd-md h3';
+const HEADING_SELECTOR = '.zwd-md h2, .zwd-md h3';
 
 /**
  * 量一次「这次按键该滚多少」所需的两个尺寸。
  *
  * `height` 取滚动容器自己的 `clientHeight`（就是"一屏"）。
- * `lineHeight` 必须从**正文块**上量：`.zyd-main` 自己不设行高，它继承到的是
- * `normal`（`parseFloat` 得 `NaN`）；真正的行高写在 `.zyd-md > div` 上
+ * `lineHeight` 必须从**正文块**上量：`.zwd-main` 自己不设行高，它继承到的是
+ * `normal`（`parseFloat` 得 `NaN`）；真正的行高写在 `.zwd-md > div` 上
  * （`style.css` 的 1.85）。量错对象会让 ↑/↓ 每次只走 `FALLBACK_LINE_HEIGHT`
  * 兜底值 —— 不报错、只是"按了几乎不动"。
  *
- * 正文为空（`Empty` 空态）时没有 `.zyd-md`，此时返回 `NaN` 让纯函数层退回兜底值。
+ * 正文为空（`Empty` 空态）时没有 `.zwd-md`，此时返回 `NaN` 让纯函数层退回兜底值。
  *
- * @param scroller - `.zyd-main` 那个元素。
+ * @param scroller - `.zwd-main` 那个元素。
  * @returns `{ height, lineHeight }`，交给 `scrollAmount`。
  */
 function measureScroll(scroller) {
-  const block = scroller.querySelector('.zyd-md > div');
+  const block = scroller.querySelector('.zwd-md > div');
   return {
     height: scroller.clientHeight,
     lineHeight: block === null ? Number.NaN : Number.parseFloat(getComputedStyle(block).lineHeight),
@@ -178,7 +178,7 @@ export function Docs() {
   const current = FLAT.find(page => page.id === pageId) ?? FLAT[0];
 
   // 正文：去掉开头那个 h1 再渲染。文件里保留 `# 标题` 是为了这些 md 单独打开时
-  // 也自带标题；页面上标题由 `.zyd-head` 画，两处都画就重复了。
+  // 也自带标题；页面上标题由 `.zwd-head` 画，两处都画就重复了。
   const markdown = contentOf(current.id);
   const body = useMemo(() => stripHeading1(markdown), [markdown]);
   const headings = useMemo(() => scanHeadings(body), [body]);
@@ -311,11 +311,11 @@ export function Docs() {
    * 改这一版之前先量过现状（1200×700，三栏铺开，`maxScroll=3168`）：
    *
    *   · 焦点在 `<body>`（点过正文之后就是这样）：Chrome **原生就会滚**
-   *     `.zyd-main`（PageDown 576px、↓ 40px）。所以"完全没反应"并不是全貌。
+   *     `.zwd-main`（PageDown 576px、↓ 40px）。所以"完全没反应"并不是全貌。
    *   · 焦点在一个**按钮**上（点过左侧目录、页内目录之后就是这样）：
    *     `scrollTop` **一动不动**（实测连按两个键仍是 0）。而"点目录跳到某篇、
    *     某节，然后接着往下读"正是这一页最常走的路径 —— 用户遇到的"不支持"
-   *     就是这个。原生之所以不滚：按钮所在的 `.zyd-nav` 没有溢出，再往外
+   *     就是这个。原生之所以不滚：按钮所在的 `.zwd-nav` 没有溢出，再往外
    *     `html/body` 是 `overflow:hidden`，浏览器找不到可滚的东西。
    *   · 焦点在筛选框里：↑/↓ 归输入框，**不能碰**（见下面第 1 条豁免）。
    *
@@ -328,7 +328,7 @@ export function Docs() {
    * "这一篇 ↔ 那一篇"的跳转按钮，点一下就换篇，没有"选中态"可言；
    * 若再给它加一套方向键游标，用户点完目录随手按 ↓ 想继续读，只会看到
    * 高亮在目录里挪、正文纹丝不动 —— 那正是他要报的 bug。右目录更不能加：
-   * 它的高亮由滚动位置算出来（`.zyd-toc-active`），再加一个游标高亮会在
+   * 它的高亮由滚动位置算出来（`.zwd-toc-active`），再加一个游标高亮会在
    * 同一栏里打架。
    *
    * # 输入区豁免（只有这一条）
@@ -416,7 +416,7 @@ export function Docs() {
 
   return <div className="zyd" ref={rootRef}>
     {/* 分区 tab。与左侧目录是两种粒度：这里是"哪一片"，左边是"哪一篇"。 */}
-    <div className="zyd-sections" role="tablist" aria-label="文档分区">
+    <div className="zwd-sections" role="tablist" aria-label="文档分区">
       {SECTIONS.map(item => {
         const selected = item.id === current.sectionId;
         return <button
@@ -424,16 +424,16 @@ export function Docs() {
           type="button"
           role="tab"
           aria-selected={selected}
-          className="zyd-section"
+          className="zwd-section"
           onClick={() => open(item.pages[0].id)}
         >{item.label}</button>;
       })}
     </div>
 
-    <div className="zyd-body">
+    <div className="zwd-body">
       {/* 左：目录。按分区成组，组头不可点。收起时整栏退场（导轨那只鲸鱼负责叫回来）。 */}
-      {navOpen && <nav className="zyd-nav" aria-label="文档目录">
-        <label className="zyd-filter">
+      {navOpen && <nav className="zwd-nav" aria-label="文档目录">
+        <label className="zwd-filter">
           <Icon name="search" size={14}/>
           <input
             type="search"
@@ -447,28 +447,28 @@ export function Docs() {
           const pages = item.pages.filter(page => matched.has(page.id));
           // 分区里一篇都没命中就整组收掉 —— 留一个空组头只会让人以为下面没加载出来。
           if (pages.length === 0) return null;
-          return <div className="zyd-group" key={item.id}>
-            <p className="zyd-group-title">{item.label}</p>
+          return <div className="zwd-group" key={item.id}>
+            <p className="zwd-group-title">{item.label}</p>
             {pages.map(page => <button
               key={page.id}
               type="button"
-              className="zyd-link"
+              className="zwd-link"
               aria-current={page.id === current.id ? 'page' : undefined}
               title={page.summary}
               onClick={() => open(page.id)}
             >{page.title}</button>)}
           </div>;
         })}
-        {matched.size === 0 && <p className="zyd-nav-empty">没有匹配的文档</p>}
+        {matched.size === 0 && <p className="zwd-nav-empty">没有匹配的文档</p>}
       </nav>}
 
       {/* 中：正文。整页唯一的滚动容器。 */}
-      <div className="zyd-main" ref={scrollRef}>
-        <article className="zyd-article">
-          <header className="zyd-head">
-            <p className="zyd-crumb">{section.label}</p>
+      <div className="zwd-main" ref={scrollRef}>
+        <article className="zwd-article">
+          <header className="zwd-head">
+            <p className="zwd-crumb">{section.label}</p>
             <h1>{current.title}</h1>
-            <p className="zyd-summary">{current.summary}</p>
+            <p className="zwd-summary">{current.summary}</p>
           </header>
 
           {body === ''
@@ -477,20 +477,20 @@ export function Docs() {
             ? <Empty icon="fileText" title="这一篇暂时读不到">文档清单里有它，但包内没有对应的 markdown 文件。</Empty>
             /* `MarkdownText` 产出的是一组块元素（p / ul / pre / table），
                所以容器用 `<div>` 而不是包在 `<p>` 里 —— 块元素嵌进 `<p>` 是无效 HTML。 */
-            : <div className="zyd-md"><MarkdownText text={body} labels={MARKDOWN_LABELS}/></div>}
+            : <div className="zwd-md"><MarkdownText text={body} labels={MARKDOWN_LABELS}/></div>}
 
           {/* 翻页。跨分区连着走，首/末页各少一个方向。 */}
-          <nav className="zyd-pager" aria-label="上下篇">
+          <nav className="zwd-pager" aria-label="上下篇">
             {prev
-              ? <button type="button" className="zyd-pager-item" onClick={() => open(prev.id)}>
-                <span className="zyd-pager-dir">← 上一篇</span>
-                <span className="zyd-pager-title">{prev.title}</span>
+              ? <button type="button" className="zwd-pager-item" onClick={() => open(prev.id)}>
+                <span className="zwd-pager-dir">← 上一篇</span>
+                <span className="zwd-pager-title">{prev.title}</span>
               </button>
               : <span/>}
             {next
-              ? <button type="button" className="zyd-pager-item zyd-pager-next" onClick={() => open(next.id)}>
-                <span className="zyd-pager-dir">下一篇 →</span>
-                <span className="zyd-pager-title">{next.title}</span>
+              ? <button type="button" className="zwd-pager-item zwd-pager-next" onClick={() => open(next.id)}>
+                <span className="zwd-pager-dir">下一篇 →</span>
+                <span className="zwd-pager-title">{next.title}</span>
               </button>
               : <span/>}
           </nav>
@@ -498,17 +498,17 @@ export function Docs() {
           {/* 如实标出这一篇的出处。文档站最怕让人以为看到的就是权威版本。
               清单里给了 `source` 就用它（比如口述整理的那篇，仓库里没有原文，
               照默认写法会把人引去找一份不存在的东西）。 */}
-          <p className="zyd-source">{current.source ?? DEFAULT_SOURCE}</p>
+          <p className="zwd-source">{current.source ?? DEFAULT_SOURCE}</p>
         </article>
       </div>
 
       {/* 右：页内目录。只有一个标题时不摆 —— 那一栏会显得空。 */}
-      {headings.length > 1 && <nav className="zyd-toc" aria-label="本页目录">
-        <p className="zyd-toc-title">本页</p>
+      {headings.length > 1 && <nav className="zwd-toc" aria-label="本页目录">
+        <p className="zwd-toc-title">本页</p>
         {headings.map((heading, index) => <button
           key={`${heading.text}-${index}`}
           type="button"
-          className={`zyd-toc-link${index === activeHeading ? ' zyd-toc-active' : ''}`}
+          className={`zwd-toc-link${index === activeHeading ? ' zwd-toc-active' : ''}`}
           data-depth={heading.depth}
           onClick={() => jumpTo(index)}
         >{heading.text}</button>)}
@@ -516,7 +516,7 @@ export function Docs() {
             要粘出去时，人想要的是能独立成立的整篇文档。 */}
         <button
           type="button"
-          className="zyd-copy"
+          className="zwd-copy"
           onClick={() => copyPage(markdown)}
         >{copied ? '已复制' : '复制本页'}</button>
       </nav>}

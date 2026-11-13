@@ -1,6 +1,6 @@
-// 「题库」页独立成包（`dsh-zhiyun-page-quiz`）之后的自证测试。
+// 「题库」页独立成包（`dsh-zju-page-quiz`）之后的自证测试。
 //
-// 这个包是从 `dsh-zhiyun-page-study` 里拆出来的：拆的时候最容易坏的不是渲染，
+// 这个包是从 `dsh-zju-page-study` 里拆出来的：拆的时候最容易坏的不是渲染，
 // 而是那些**手写清单** —— 少一处不会立刻报错，而是「真机上那一页空白」。
 // 所以这里按 docs-page.test.mjs 的形状把四处清单全部钉一遍。
 
@@ -22,11 +22,11 @@ test('包声明与接线清单四处对齐', async () => {
   assert.equal(manifest.main, './src/index.js');
 
   // 2. 宿主半边入口存在（纯页面是空壳，但 Loader 要能扫到它）。
-  assert.ok((await readFile(join(pkg, 'src', 'index.js'), 'utf8')).includes("'zhiyun-page-quiz'"));
+  assert.ok((await readFile(join(pkg, 'src', 'index.js'), 'utf8')).includes("'zw-page-quiz'"));
 
   // 3. cordis.patch.yml 指向正确的 id。
   const patch = await readFile(join(pkg, 'cordis.patch.yml'), 'utf8');
-  assert.match(patch, /id: zhiyun-page-quiz/);
+  assert.match(patch, /id: zw-page-quiz/);
   // ⚠️ 正则里 scope 的 `/` 只需**一层**转义（`\/`）。写成 `\\/` 时
   // `\\` 表示「字面反斜杠」、紧跟的 `/` 提前闭合正则 → 整个文件
   // `Invalid regular expression flags`。批量改包名时踩过。
@@ -46,7 +46,7 @@ test('包声明与接线清单四处对齐', async () => {
 
 test('client.jsx 注册的页面 id 与 NAV 里的 id 一致', async () => {
   const client = await readFile(join(pkg, 'src', 'client.jsx'), 'utf8');
-  // 迁移后页面自己注册 `page.content`，key 就是页面 id（不再有 `zhiyun.<id>.content`）。
+  // 迁移后页面自己注册 `page.content`，key 就是页面 id（不再有 `zw.<id>.content`）。
   assert.match(client, /id: '([a-z]+)'/);
   const id = /id: '([a-z]+)'/.exec(client)[1];
   assert.equal(id, 'quiz');
@@ -81,16 +81,16 @@ test('两个页面包之间只有一条单向依赖：study → quiz', async () 
   // 那种历史说明不该被这条测试判成环。
   const quizFiles = ['client.jsx', 'question-bank.jsx', 'question-history.jsx',
     'question-generation-progress.jsx', 'quiz-panel.jsx', 'generation-models.jsx'];
-  const importsStudy = /(?:from|require\()\s*['"]dsh-zhiyun-page-study/;
+  const importsStudy = /(?:from|require\()\s*['"]dsh-zju-page-study/;
   for (const file of quizFiles) {
     const source = await readFile(join(pkg, 'src', file), 'utf8');
     assert.ok(!importsStudy.test(source),
-      `${file} 反向 import 了 dsh-zhiyun-page-study，客户端加载图会成环`);
+      `${file} 反向 import 了 dsh-zju-page-study，客户端加载图会成环`);
   }
 
   const quizManifest = JSON.parse(await readFile(join(pkg, 'package.json'), 'utf8'));
   assert.ok(
-    !quizManifest.dsh.client.external.some((d) => d === 'dsh-zhiyun-page-study' || d === '@lybx-leyw/dsh-zju-page-study'),
+    !quizManifest.dsh.client.external.some((d) => d === 'dsh-zju-page-study' || d === '@lybx-leyw/dsh-zju-page-study'),
     '题库包不该把学习页声明成 external 依赖');
 
   // 学习页这一侧**不再**把题库包声明成 external —— 它已改成按契约名取组件
@@ -99,18 +99,18 @@ test('两个页面包之间只有一条单向依赖：study → quiz', async () 
   const studyManifest = JSON.parse(await readFile(
     join(root, 'packages', 'client', 'page-study', 'package.json'), 'utf8'));
   assert.ok(
-    !studyManifest.dsh.client.external.some((d) => d === 'dsh-zhiyun-page-quiz' || d === '@lybx-leyw/dsh-zju-page-quiz'),
+    !studyManifest.dsh.client.external.some((d) => d === 'dsh-zju-page-quiz' || d === '@lybx-leyw/dsh-zju-page-quiz'),
     '学习页不该再把题库包声明成 external —— 页面之间靠契约名，不靠 import');
   for (const file of ['client.jsx', 'knowledge-board.jsx', 'teaching-generate.jsx']) {
     const source = await readFile(join(root, 'packages', 'client', 'page-study', 'src', file), 'utf8');
-    assert.ok(!/from\s+['"](dsh-zhiyun-page-quiz|@lybx-leyw\/dsh-zju-page-quiz)['"]/.test(source),
+    assert.ok(!/from\s+['"](dsh-zju-page-quiz|@lybx-leyw\/dsh-zju-page-quiz)['"]/.test(source),
       `${file} 又直接 import 了题库页 —— 页面之间不许互相认识`);
   }
 });
 
 test('学习页不再自己注册题库内容槽', async () => {
   // 迁移到 dsh-pages 后，每个页面包各自把内容注册到页面壳的 `page.content`
-  // （key 是自己的页面 id），不再有 `zhiyun.<id>.content` 这层子槽。
+  // （key 是自己的页面 id），不再有 `zw.<id>.content` 这层子槽。
   // 这条守卫的**本意**仍在：题库只能有一个注册者。
   const studyClient = await readFile(
     join(root, 'packages', 'client', 'page-study', 'src', 'client.jsx'), 'utf8');

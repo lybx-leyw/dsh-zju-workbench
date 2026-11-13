@@ -41,7 +41,7 @@ function fakeCtx() {
 test('没注册回调时，出口服务仍然可用（不因缺注入而崩）', async () => {
   const { ctx, services } = fakeCtx();
   apply(ctx);
-  const egress = services.get('zhiyunEgress');
+  const egress = services.get('zwEgress');
   assert.ok(egress, '必须 provide 服务');
   assert.equal(typeof egress.setWebvpnSession, 'function', '必须暴露注入点');
 });
@@ -49,7 +49,7 @@ test('没注册回调时，出口服务仍然可用（不因缺注入而崩）',
 test('setWebvpnSession 注册后生效，返回撤销函数', async () => {
   const { ctx, services } = fakeCtx();
   apply(ctx);
-  const egress = services.get('zhiyunEgress');
+  const egress = services.get('zwEgress');
 
   let called = 0;
   const undo = egress.setWebvpnSession(async () => { called += 1; return true; });
@@ -63,7 +63,7 @@ test('setWebvpnSession 注册后生效，返回撤销函数', async () => {
 test('setWebvpnSession(null) 取消注册', async () => {
   const { ctx, services } = fakeCtx();
   apply(ctx);
-  const egress = services.get('zhiyunEgress');
+  const egress = services.get('zwEgress');
   egress.setWebvpnSession(async () => true);
   assert.doesNotThrow(() => egress.setWebvpnSession(null));
 });
@@ -71,7 +71,7 @@ test('setWebvpnSession(null) 取消注册', async () => {
 test('服务的 state() 在有 undici 时报告出口事实，无 undici 时如实降级', async () => {
   const { ctx, services } = fakeCtx();
   apply(ctx);
-  const egress = services.get('zhiyunEgress');
+  const egress = services.get('zwEgress');
   const state = await egress.state();
   // 本机装没装 undici 由环境决定；这里只要求「有形状」且不抛。
   assert.equal(typeof state, 'object');
@@ -81,7 +81,7 @@ test('服务的 state() 在有 undici 时报告出口事实，无 undici 时如�
 test('forget() 可调用且不抛（换网络后的重置入口）', async () => {
   const { ctx, services } = fakeCtx();
   apply(ctx);
-  const egress = services.get('zhiyunEgress');
+  const egress = services.get('zwEgress');
   await assert.doesNotReject(() => egress.forget());
 });
 
@@ -91,7 +91,7 @@ test('注入的回调抛错时，出口把它当成「建不起来」而不是�
   // 否则上层在装配期就会崩。
   const { ctx, services } = fakeCtx();
   apply(ctx);
-  const egress = services.get('zhiyunEgress');
+  const egress = services.get('zwEgress');
   await assert.doesNotReject(async () => {
     egress.setWebvpnSession(async () => { throw new Error('boom'); });
   });

@@ -1,6 +1,6 @@
 # 智云课堂数据源
 
-宿主插件注册 `ctx.zhiyunClassroom`；业务插件声明 `inject = ['zhiyunClassroom']` 后使用。挂载插件时只建立客户端，不联网。首次读取用户状态时复用已有会话；令牌过期后，从「设置 → 浙大一卡通」读取账号并恢复连接。状态按 DSH `profileContext.dir` 隔离，卸载时撤销服务、取消请求。
+宿主插件注册 `ctx.zwClassroom`；业务插件声明 `inject = ['zwClassroom']` 后使用。挂载插件时只建立客户端，不联网。首次读取用户状态时复用已有会话；令牌过期后，从「设置 → 浙大一卡通」读取账号并恢复连接。状态按 DSH `profileContext.dir` 隔离，卸载时撤销服务、取消请求。
 
 纯 JS 使用不需要 Cordis：
 
@@ -49,12 +49,12 @@ try {
 | `downloadSlides(courseId,subId,{directory,concurrency=6,signal,onProgress})` | 图片下载结果逐页汇总，最多 8 并发 |
 | `dispose()` | 取消请求、停止实时字幕采集、关闭客户端、等待会话写入 |
 
-HTTP 数据路由是 `/api/zhiyun-classroom`（`exact`），body 为 `{action, input}`。
+HTTP 数据路由是 `/api/zw-classroom`（`exact`），body 为 `{action, input}`。
 **action 名与方法名逐字一致**：`searchResources` / `searchCaptions` / `check` / `transcribeAudio` /
 `liveStart` / `liveStatus` / `liveStop` / `liveText`。老方法不在这条路由上
 （它们历史上走 Cordis 服务对象，这里不改既有形状）。
 
-## 课件缓存（`/zhiyun-slides`）
+## 课件缓存（`/zw-slides`）
 
 翻页卡顿的根因是**每翻一页都是一次带签名 URL 的网络往返**。`src/slide-cache.js` 是决策层（纯函数），`src/slide-store.js` 是文件层与路由，两者合起来把课件帧落到本地磁盘。
 
@@ -68,7 +68,7 @@ HTTP 数据路由是 `/api/zhiyun-classroom`（`exact`），body 为 `{action, i
 | 索引、原子落盘、路由 | `slide-store.js` | 索引写临时文件再 `rename`；写一半的 JSON 会让整份缓存判为损坏而归零 |
 | 何时补缓存 | `source.js` 的 `prefetchInBackground` | **读完再补**、不 await、按节去重、不跟调用方 signal |
 
-目录布局与容量：默认 `<profile>/data/zhiyun-classroom/slides/`，`index.json` + `<页序>-<键前 12 位>.jpg`，上限 2 GB（约 100 节课），按 `usedAt` 做 LRU。淘汰按最近使用而不是最早创建 —— 否则用户最常看的那门课会被新看的挤掉。
+目录布局与容量：默认 `<profile>/data/zw-classroom/slides/`，`index.json` + `<页序>-<键前 12 位>.jpg`，上限 2 GB（约 100 节课），按 `usedAt` 做 LRU。淘汰按最近使用而不是最早创建 —— 否则用户最常看的那门课会被新看的挤掉。
 
 失败一律降级：索引读不出、目录建不了、某页下失败，都只是「这次没缓存到」，不阻塞读课件。`getLessonContent` 未命中时**不带** `cacheUrl`，前端回退原始签名地址。
 
@@ -79,7 +79,7 @@ HTTP 数据路由是 `/api/zhiyun-classroom`（`exact`），body 为 `{action, i
 
 挡穿越靠两道：键必须是 32 位十六进制；索引里的 `file` 必须是单段文件名（`isSlideFileName`，同时挡 `..`、`/`、`\` 与 `C:` 盘符相对路径）。前缀判断用**原始** pathname —— `new URL` 会把 `..` 折掉，先规范化再判前缀等于让穿越静默变成「另一个路由」。
 
-`GET /zhiyun-slides/status` 报出 `{files, bytes, quotaBytes}` 供设置页显示。响应带 `Cache-Control: private, no-cache` + `ETag`（键+大小）：本地一次 304 只有零点几毫秒，换来的是「课件重传后不会永久显示旧图」。
+`GET /zw-slides/status` 报出 `{files, bytes, quotaBytes}` 供设置页显示。响应带 `Cache-Control: private, no-cache` + `ETag`（键+大小）：本地一次 304 只有零点几毫秒，换来的是「课件重传后不会永久显示旧图」。
 
 ## 直播（`source.live`）
 
@@ -100,7 +100,7 @@ HTTP 数据路由是 `/api/zhiyun-classroom`（`exact`），body 为 `{action, i
 
 不可播放的流（`webrtc`/`mp4`/图片）进 `dropped` 而不是静默丢弃 —— 北教部分教室只给 `webrtc://`，直接 return 会让那个机位在界面上凭空消失。
 
-浏览器里播直播**必须**经过本机转发（`/zhiyun-live`，见 `src/stream.js`）：CDN 校验 Referer、m3u8 里的分片是相对地址且带鉴权参数、以及跨域。转发层只做「拉取 + 改写 + 转发」，白名单是 `*.zju.edu.cn` 且仅 https，日志不含 query（那是签名）。
+浏览器里播直播**必须**经过本机转发（`/zw-live`，见 `src/stream.js`）：CDN 校验 Referer、m3u8 里的分片是相对地址且带鉴权参数、以及跨域。转发层只做「拉取 + 改写 + 转发」，白名单是 `*.zju.edu.cn` 且仅 https，日志不含 query（那是签名）。
 
 登录支持两个入口：`entry:'cas'`（默认，`tgmedia` 直连）与 `entry:'oauth'`（`yjapi/casapi` 授权码）。后者多一条取 JWT 的路径，`_token` cookie 里藏的就是它。`inspectJwt()` 只解析 payload、**不校验签名**，仅用于「会话还剩多久」这类展示。
 
@@ -196,7 +196,7 @@ npm run classroom:live-probe -- --live --trace               # 打印每条请�
 
 | component | 查什么 | 关键判据 |
 | --- | --- | --- |
-| `media` | FFmpeg | 真的跑一次 `-version`（PATH 里有同名文件 ≠ 能跑）。可执行文件按 `FFMPEG_PATH` → `data/tools/zhiyun-media/...` → `ffmpeg` 顺序解析 |
+| `media` | FFmpeg | 真的跑一次 `-version`（PATH 里有同名文件 ≠ 能跑）。可执行文件按 `FFMPEG_PATH` → `data/tools/zw-media/...` → `ffmpeg` 顺序解析 |
 | `asr` | 语音运行库与模型 | 运行库能否解析（`createRequire.resolve`，只解析不加载）+ 模型目录里三个文件在不在、多大 |
 
 每个结果都带 `action` 字段，明说「缺什么、怎么办」—— 只说 `available:false`
@@ -217,10 +217,10 @@ npm run classroom:live-probe -- --live --trace               # 打印每条请�
 
 所以本包给的是 `setupPlan()` —— 一份**可复算的安装计划**。它在
 `src/diagnostics.js` 里（纯函数，不碰会话），由 `index.js` 的
-`/api/zhiyun-classroom` 路由以 `action: 'setupPlan'` 暴露：
+`/api/zw-classroom` 路由以 `action: 'setupPlan'` 暴露：
 
 ```js
-const { value } = await (await fetch('/api/zhiyun-classroom', {
+const { value } = await (await fetch('/api/zw-classroom', {
   method: 'POST',
   body: JSON.stringify({ action: 'setupPlan', input: { component: 'all' } }),
 })).json();

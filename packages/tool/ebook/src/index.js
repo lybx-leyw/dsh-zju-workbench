@@ -7,7 +7,7 @@
 import { createReadToolRegistrar, defined, inputError, optInt, optStr, serviceLookup } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunEbook: '@lybx-leyw/dsh-zju-source-ebook',
+  zwEbook: '@lybx-leyw/dsh-zju-source-ebook',
 });
 
 /**
@@ -17,7 +17,7 @@ const SERVICE_SOURCES = Object.freeze({
  * @returns 工具定义数组。
  */
 export function createEbookReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunEbook', SERVICE_SOURCES.zhiyunEbook);
+  const need = () => serviceLookup(services, 'zwEbook', SERVICE_SOURCES.zwEbook);
 
   return [
     {
@@ -48,10 +48,10 @@ export function createEbookReadTools(services) {
   ];
 }
 
-export const name = 'zhiyun-tool-ebook';
+export const name = 'zw-tool-ebook';
 
 /**
- * 惰性注入：`tools` 由宿主提供，`zhiyunEbook` 由对应的 source 包提供。
+ * 惰性注入：`tools` 由宿主提供，`zwEbook` 由对应的 source 包提供。
  *
  * # 为什么必须声明
  *
@@ -63,7 +63,7 @@ export const name = 'zhiyun-tool-ebook';
  * 都声明了，这四个包当初漏了。因为这个包一直没被 preset 挂载，
  * 「不声明也能跑」从未被验证过。
  */
-export const inject = ['tools', 'zhiyunEbook'];
+export const inject = ['tools', 'zwEbook'];
 
 export function apply(ctx) {
   createReadToolRegistrar({

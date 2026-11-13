@@ -1,7 +1,7 @@
 // @lybx-leyw/dsh-zju-core-classroom-pbl 的装配与契约测试。
 //
 // 覆盖任务书的三条验证：
-//   1. 假 ctx apply 不抛，并 provide `zhiyunClassroomPbl`（含 provide 抛错的降级路径）；
+//   1. 假 ctx apply 不抛，并 provide `zwClassroomPbl`（含 provide 抛错的降级路径）；
 //   2. 固定 brief + 假 llm → plan() 产出结构化项目（阶段数 / 交付物 / rubric 维度）；
 //   3. rubric() 的维度数在普通项目与场景项目之间保持稳定（恒 12）。
 //
@@ -145,24 +145,24 @@ function scenarioSpec() {
 
 // ── 1. 装配 ────────────────────────────────────────────────────────────────
 
-test('假 ctx apply 不抛，provide zhiyunClassroomPbl，dispose 后注销', () => {
-  const { ctx, provided, disposers } = makeCtx({ services: { zhiyunClassroomStudio: STUDIO } });
+test('假 ctx apply 不抛，provide zwClassroomPbl，dispose 后注销', () => {
+  const { ctx, provided, disposers } = makeCtx({ services: { zwClassroomStudio: STUDIO } });
   let dispose;
   assert.doesNotThrow(() => { dispose = plugin.apply(ctx); });
-  const service = provided.get('zhiyunClassroomPbl');
+  const service = provided.get('zwClassroomPbl');
   assert.ok(service);
   for (const method of ['plan', 'buildPlan', 'rubric', 'grade', 'briefing', 'status']) {
     assert.equal(typeof service[method], 'function', `缺少方法 ${method}`);
   }
   assert.equal(disposers.length, 1);
   dispose();
-  assert.equal(provided.get('zhiyunClassroomPbl'), undefined);
+  assert.equal(provided.get('zwClassroomPbl'), undefined);
 });
 
 test('studio 缺失 / provide 抛错都只降级，不抛', () => {
   const missing = makeCtx();
   assert.doesNotThrow(() => plugin.apply(missing.ctx));
-  assert.ok(missing.provided.get('zhiyunClassroomPbl'));
+  assert.ok(missing.provided.get('zwClassroomPbl'));
 
   const conflict = makeCtx({ provideThrows: true });
   assert.doesNotThrow(() => plugin.apply(conflict.ctx));
@@ -172,9 +172,9 @@ test('studio 缺失 / provide 抛错都只降级，不抛', () => {
 // ── 2. plan() ──────────────────────────────────────────────────────────────
 
 test('plan() 用固定 brief + 假 llm 产出结构化项目', async () => {
-  const { ctx, provided } = makeCtx({ services: { zhiyunClassroomStudio: STUDIO } });
+  const { ctx, provided } = makeCtx({ services: { zwClassroomStudio: STUDIO } });
   plugin.apply(ctx, { llm: makeFakeLlm({ milestoneCount: 4, tasksPerMilestone: 3 }) });
-  const service = provided.get('zhiyunClassroomPbl');
+  const service = provided.get('zwClassroomPbl');
 
   const project = await service.plan(BRIEF);
 
@@ -208,10 +208,10 @@ test('plan() 用固定 brief + 假 llm 产出结构化项目', async () => {
 });
 
 test('plan() 对不合法输出抛 PLAN_INVALID 且带 partial', async () => {
-  const { ctx, provided } = makeCtx({ services: { zhiyunClassroomStudio: STUDIO } });
+  const { ctx, provided } = makeCtx({ services: { zwClassroomStudio: STUDIO } });
   const badLlm = { async call() { return JSON.stringify({ projectInfo: {}, milestones: [] }); } };
   plugin.apply(ctx, { llm: badLlm });
-  const service = provided.get('zhiyunClassroomPbl');
+  const service = provided.get('zwClassroomPbl');
   await assert.rejects(
     () => service.plan(BRIEF, { retries: 0 }),
     (error) => error.kind === 'PLAN_INVALID' && Array.isArray(error.detail.gaps),
@@ -221,9 +221,9 @@ test('plan() 对不合法输出抛 PLAN_INVALID 且带 partial', async () => {
 // ── 3. rubric() 稳定性 ─────────────────────────────────────────────────────
 
 test('rubric() 维度数稳定：不同形状的普通项目恒 12 维且 key 一致', () => {
-  const { ctx, provided } = makeCtx({ services: { zhiyunClassroomStudio: STUDIO } });
+  const { ctx, provided } = makeCtx({ services: { zwClassroomStudio: STUDIO } });
   plugin.apply(ctx);
-  const service = provided.get('zhiyunClassroomPbl');
+  const service = provided.get('zwClassroomPbl');
 
   const small = service.buildPlan({
     ...skeleton(3),
@@ -256,9 +256,9 @@ test('rubric() 维度数稳定：不同形状的普通项目恒 12 维且 key �
 });
 
 test('场景项目的 rubric 仍是 12 维，但走场景判据与场景红线', () => {
-  const { ctx, provided } = makeCtx({ services: { zhiyunClassroomStudio: STUDIO } });
+  const { ctx, provided } = makeCtx({ services: { zwClassroomStudio: STUDIO } });
   plugin.apply(ctx);
-  const service = provided.get('zhiyunClassroomPbl');
+  const service = provided.get('zwClassroomPbl');
 
   const project = service.buildPlan(scenarioSpec());
   assert.equal(project.milestones.map((m) => m.scenarioStage).join(','), 'prep,roleplay,wrapup');
@@ -274,9 +274,9 @@ test('场景项目的 rubric 仍是 12 维，但走场景判据与场景红线',
 // ── 4. 降级与简报 ──────────────────────────────────────────────────────────
 
 test('grade() 无 llm 时显式降级（mode=local），不伪造维度分', async () => {
-  const { ctx, provided } = makeCtx({ services: { zhiyunClassroomStudio: STUDIO } });
+  const { ctx, provided } = makeCtx({ services: { zwClassroomStudio: STUDIO } });
   plugin.apply(ctx);
-  const service = provided.get('zhiyunClassroomPbl');
+  const service = provided.get('zwClassroomPbl');
 
   const project = service.buildPlan({
     ...skeleton(3),
@@ -295,9 +295,9 @@ test('grade() 无 llm 时显式降级（mode=local），不伪造维度分', asy
 });
 
 test('briefing() 渲染标题、交付物与阶段计划', () => {
-  const { ctx, provided } = makeCtx({ services: { zhiyunClassroomStudio: STUDIO } });
+  const { ctx, provided } = makeCtx({ services: { zwClassroomStudio: STUDIO } });
   plugin.apply(ctx);
-  const service = provided.get('zhiyunClassroomPbl');
+  const service = provided.get('zwClassroomPbl');
 
   const project = service.buildPlan({
     ...skeleton(2),

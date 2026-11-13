@@ -121,7 +121,7 @@ export class HarnessLlm {
     const timed = AbortSignal.any([AbortSignal.timeout(stage === 'faithful' ? Math.min(this.timeoutMs, 120000) : this.timeoutMs), ...(signal ? [signal] : [])]);
     const content = [{ type: 'text', text: constant }, { type: 'text', text: variable }];
     if (image) content.push({ type: 'image', attachment: image });
-    const message = Object.freeze({ id: randomUUID(), role: 'user', source: Object.freeze({ kind: 'zhiyun-parser' }),
+    const message = Object.freeze({ id: randomUUID(), role: 'user', source: Object.freeze({ kind: 'zw-parser' }),
       content: Object.freeze(content.map(block => Object.freeze(block))) });
     // 档位与路由在这里合成；未配 accel 时 `current` 就是 `route` 本身（同一个对象，
     // 不是等价的副本）—— 「不配就等于没改过」由构造保证，而不是靠逐字段比对。
@@ -190,7 +190,7 @@ export class HarnessLlm {
     const timed = AbortSignal.any([AbortSignal.timeout(this.timeoutMs), ...(signal ? [signal] : [])]);
     const content = [{ type: 'text', text: constant }, { type: 'text', text: variable }];
     if (image) content.push({ type: 'image', attachment: image });
-    const message = Object.freeze({ id: randomUUID(), role: 'user', source: Object.freeze({ kind: 'zhiyun-parser' }),
+    const message = Object.freeze({ id: randomUUID(), role: 'user', source: Object.freeze({ kind: 'zw-parser' }),
       content: Object.freeze(content.map(block => Object.freeze(block))) });
     const current = applyAccel(route, this.accel[stage] ?? null);
     let usage = null;

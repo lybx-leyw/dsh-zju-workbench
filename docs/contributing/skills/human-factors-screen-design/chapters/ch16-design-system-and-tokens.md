@@ -17,16 +17,16 @@
 
 | 层 | 作用 | 例 |
 |---|---|---|
-| **基础（primitive）** | 原始值，不含语义 | `--zy-blue-500: #00479d` |
-| **语义（semantic）** | 表达用途，可换主题 | `--zy-accent`、`--zy-muted`、`--zy-fs-base` |
+| **基础（primitive）** | 原始值，不含语义 | `--zw-blue-500: #00479d` |
+| **语义（semantic）** | 表达用途，可换主题 | `--zw-accent`、`--zw-muted`、`--zw-fs-base` |
 | **组件（component）** | 仅某个组件用 | `--zpl-badge-bg` |
 
 规则：
 
 - 组件只消费**语义层**；不要直接用基础色（换主题会漏）。
 - 语义层要能回答「这是什么用途」，而不是「这是什么颜色」。
-- 本仓库现状：`--zy-*` 是语义层；`--dsw-alias-*` 是宿主语义层。**不要混用**
-  （插件页曾混用，已统一到 `--zy-*`）。
+- 本仓库现状：`--zw-*` 是语义层；`--dsw-alias-*` 是宿主语义层。**不要混用**
+  （插件页曾混用，已统一到 `--zw-*`）。
 
 ---
 
@@ -38,12 +38,12 @@
 
 | 类别 | 例 |
 |---|---|
-| 颜色 | `--zy-text`、`--zy-secondary`、`--zy-muted`、`--zy-line` |
-| 字号 | `--zy-fs-meta` … `--zy-fs-display` |
-| 间距 | `--zy-space-1` … `--zy-space-16` |
-| 圆角 | `--zy-radius-sm/md/lg` |
+| 颜色 | `--zw-text`、`--zw-secondary`、`--zw-muted`、`--zw-line` |
+| 字号 | `--zw-fs-meta` … `--zw-fs-display` |
+| 间距 | `--zw-space-1` … `--zw-space-16` |
+| 圆角 | `--zw-radius-sm/md/lg` |
 
-- 不要用 `--zy-color-1`、`--zy-big` 这种无语义命名。
+- 不要用 `--zw-color-1`、`--zw-big` 这种无语义命名。
 - 一个 token 改名要**全仓替换**，不能留别名超过一个迭代。
 
 ---
@@ -62,9 +62,9 @@ CSS 在本仓库是**按包挂载**的，每包一个 `<style>`，顺序影响�
 
 - 同特异性下，**后挂载的赢**；跨包覆盖会变成「死规则」（曾真实回归，见
   `ui-primitives/style.css` 与 `page-courses/style.css` 的注释）。
-- 覆盖必须与被覆盖的**基规则同包**；跨包覆盖只能靠提高特异性（如加 `body[data-zhiyun]`）。
+- 覆盖必须与被覆盖的**基规则同包**；跨包覆盖只能靠提高特异性（如加 `body[data-zw]`）。
 - `scripts/check-css-order.mjs` 是门禁：**跨包 @media 顺序依赖 0 条**才算过。
-- 新增页面样式：用本包前缀（`zpl-`、`zs-`、`zp-`），不要改 `.zy-*`。
+- 新增页面样式：用本包前缀（`zwpl-`、`zws-`、`zwp-`），不要改 `.zw-*`。
 
 ---
 
@@ -94,7 +94,7 @@ CSS 在本仓库是**按包挂载**的，每包一个 `<style>`，顺序影响�
 | 位置 | 问题 | 影响 | 计划 |
 | --- | --- | --- | --- |
 | page-notes:221 | 10.5px 字号 | 低于 16 arcmin | 已修（2026-10-17） |
-| .zpl-switch input | 15px 命中区 | <24px AA | 待确认 label 命中区 |
+| .zwpl-switch input | 15px 命中区 | <24px AA | 待确认 label 命中区 |
 ```
 
 本仓库的登记位置：`repo-profile.md` §5「已知偏差与待办」。
@@ -104,5 +104,5 @@ CSS 在本仓库是**按包挂载**的，每包一个 `<style>`，顺序影响�
 ## 16.9 本仓库检查点
 
 - 新组件不得引入第二套颜色/字号体系。
-- 页面样式用本包前缀；跨包只共享 `ui-primitives` 的 `.zs-*`。
+- 页面样式用本包前缀；跨包只共享 `ui-primitives` 的 `.zws-*`。
 - 改 token 后重跑：`node scripts/check-hf.mjs` + `node scripts/check-css-order.mjs`。

@@ -42,7 +42,7 @@ export const name = 'zju-source-notice';
 export const inject = [];
 
 /** 同源数据路由。 */
-export const ROUTE_PATH = '/api/zhiyun-notice';
+export const ROUTE_PATH = '/api/zw-notice';
 
 /**
  * 把 `sharedFetch` 适配成数据层期望的形状。
@@ -99,7 +99,7 @@ export function apply(ctx) {
           host: input?.host,
         });
       }
-      const card = ctx.get?.('zhiyunCard');
+      const card = ctx.get?.('zwCard');
       if (typeof card?.casTransport !== 'function') {
         throw new NoticeError(
           'AUTH_REQUIRED',
@@ -128,7 +128,7 @@ export function apply(ctx) {
         acquireServiceLogin: (input) => {
           // 注入优先（测试与特殊部署）。
           if (typeof serviceLogin === 'function') return serviceLogin(input);
-          // 否则向 tier 0 的 `zhiyunCard` 要共享 CAS 会话。
+          // 否则向 tier 0 的 `zwCard` 要共享 CAS 会话。
           return casLoginFor(input);
         },
       });
@@ -201,7 +201,7 @@ export function apply(ctx) {
        */
       ready() {
         return typeof serviceLogin === 'function'
-          || typeof ctx.get?.('zhiyunCard')?.casTransport === 'function';
+          || typeof ctx.get?.('zwCard')?.casTransport === 'function';
       },
 
       /** 清掉缓存（换账号、或用户点了「重新登录」）。 */
@@ -246,7 +246,7 @@ export function apply(ctx) {
       },
     };
 
-    const disposeService = ctx.provide('zhiyunNotice', service);
+    const disposeService = ctx.provide('zwNotice', service);
 
     let removeRoute = null;
     ctx.inject(['webServer'], (scope) => {

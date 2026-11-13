@@ -55,7 +55,7 @@ async function harness(options = {}) {
     const req = {
       method,
       url,
-      headers: { host: '127.0.0.1:43120', 'x-zhiyun-planning': '1', ...headers },
+      headers: { host: '127.0.0.1:43120', 'x-zw-planning': '1', ...headers },
       [Symbol.asyncIterator]: async function* iterator() {
         if (body !== undefined) yield Buffer.from(JSON.stringify(body));
       },
@@ -73,10 +73,10 @@ async function harness(options = {}) {
 
 /* ─────────────────────────────────────────── 安全边界 */
 
-test('写操作缺 x-zhiyun-planning 头 → 403', async () => {
+test('写操作缺 x-zw-planning 头 → 403', async () => {
   const h = await harness();
   try {
-    const r = await h.call('POST', '/?local-create', { title: '偷写的' }, { 'x-zhiyun-planning': '' });
+    const r = await h.call('POST', '/?local-create', { title: '偷写的' }, { 'x-zw-planning': '' });
     assert.equal(r.status, 403);
     assert.equal(h.local.list().length, 0, '被拒的请求不该产生任何条目');
   } finally {
@@ -329,7 +329,7 @@ test('没有模型服务时拆分回 400 而不是崩', async () => {
     const r = await new Promise((resolve) => {
       const req = {
         method: 'POST', url: '/?local-split',
-        headers: { host: '127.0.0.1', 'x-zhiyun-planning': '1' },
+        headers: { host: '127.0.0.1', 'x-zw-planning': '1' },
         [Symbol.asyncIterator]: async function* () { yield Buffer.from(JSON.stringify({ id: created.id })); },
       };
       const res = { writeHead(s) { this.status = s; }, end(c) { resolve({ status: this.status, body: JSON.parse(c) }); } };

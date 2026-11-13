@@ -5,10 +5,10 @@
  *
  *   - `/paper-reader/*` —— **上游**的 24 条路由（文献库、PDF、转录、整篇翻译、
  *     会话、SSE）。兼容层原样复用，不反代，所以页面直接按上游的地址打。
- *   - `/zhiyun-paper/*` —— **本包自有**的两条路由（选中翻译、挂载状态）。
+ *   - `/zw-paper/*` —— **本包自有**的两条路由（选中翻译、挂载状态）。
  *
  * 上游的客户端插件（它的 `lib/client.js`）我们刻意不引入：它会抢
- * `sidebar.workspaces`、注册自己的 `shell.overlay` 与设置分组，与智云 Pro 的外壳
+ * `sidebar.workspaces`、注册自己的 `shell.overlay` 与设置分组，与 ZJU Workbench 的外壳
  * 是两套布局主张。所以本文件里的每一个调用**都是照上游 host 的真实契约写的**，
  * 锁版的意义就在这里：契约一旦变，这些函数就是唯一需要核对的地方。
  */
@@ -16,7 +16,7 @@
 export const UPSTREAM_PREFIX = '/paper-reader';
 
 /** 与宿主侧 `routes.js` 的常量必须一致。 */
-export const PAPER_PREFIX = '/zhiyun-paper';
+export const PAPER_PREFIX = '/zw-paper';
 
 /** 判页眉标题用；上游 reader HTML 的标题是「论文伴读」。 */
 export const PRODUCT_LABEL = '论文阅读';

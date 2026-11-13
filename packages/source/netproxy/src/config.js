@@ -211,7 +211,7 @@ export function withInheritedDirect(config, hosts = []) {
 }
 
 export function configPath(profileDir) {
-  return path.join(profileDir, 'data', 'zhiyun-net-proxy', 'config.json');
+  return path.join(profileDir, 'data', 'zw-net-proxy', 'config.json');
 }
 
 /** 读配置。文件不存在或读坏时回退默认值 —— 起不来比走错出口更糟。 */

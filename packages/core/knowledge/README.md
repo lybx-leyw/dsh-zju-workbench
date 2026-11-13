@@ -5,7 +5,7 @@
 ## 一条硬约束：持久化只用宿主的存储栈
 
 本包是 Cordis 插件，`inject: ['storageDomain', 'profileContext']`，挂载后提供
-`ctx.zhiyunKnowledge`。落盘、原子替换、JSON 序列化、变更事件全部由宿主负责：
+`ctx.zwKnowledge`。落盘、原子替换、JSON 序列化、变更事件全部由宿主负责：
 
 - `ctx.storageDomain`（`@deepseek-ai/dsh-storage-domain`）：schema 校验 + 单写链的 KV 域。
 - `ctx.storage`（`@deepseek-ai/dsh-storage`）：后端注册表；本仓 profile 里 `storage-domain`

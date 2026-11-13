@@ -82,7 +82,7 @@ export class ClassroomError extends Error {
  * `source` 必须是**上游文件的真实路径:行号**，因为「还没搬」的下一步动作就是
  * 去那个位置读代码；只写「未实现」等于把定位成本转嫁给下一个人。
  *
- * @param {string} method 服务方法名，例如 `zhiyunClassroomStudio.generate`
+ * @param {string} method 服务方法名，例如 `zwClassroomStudio.generate`
  * @param {string} source 上游源位置，例如 `app/api/generation-runs/route.ts:43-81`
  */
 export function notImplemented(method, source) {

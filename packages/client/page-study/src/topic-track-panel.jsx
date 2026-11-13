@@ -66,25 +66,25 @@ export function TopicTrack({ ranges, atMs, onJump, browseChapterNo = null, onBro
 
   // 没有任何知识点：说清楚是"没生成讲义"，而不是"这里没东西"。
   if (track.total === 0) {
-    return <aside className="zs-topic-track" aria-label="知识点">
-      <div className="zs-topic-track-head">
+    return <aside className="zws-topic-track" aria-label="知识点">
+      <div className="zws-topic-track-head">
         <span>知识点</span>
       </div>
-      <p className="zs-topic-track-empty">
+      <p className="zws-topic-track-empty">
         这节课还没有知识点结构。生成讲义后，这里会显示知识点路径。
       </p>
     </aside>;
   }
 
-  return <aside className="zs-topic-track" aria-label="知识点">
-    <div className="zs-topic-track-head">
+  return <aside className="zws-topic-track" aria-label="知识点">
+    <div className="zws-topic-track-head">
       <span>知识点</span>
       <small>{track.currentIndex + 1} / {track.total}</small>
       {/* 「回到当前」：只有**真的脱离**视频时才出现。
           用户翻回当前章时 `following` 为真，按钮自动消失。 */}
       {!browse.following && <button
         type="button"
-        className="zs-topic-follow"
+        className="zws-topic-follow"
         onClick={() => onBrowseChapter?.(null)}
         title="回到视频正在讲的知识点"
       >回到当前</button>}
@@ -92,22 +92,22 @@ export function TopicTrack({ ranges, atMs, onJump, browseChapterNo = null, onBro
 
     {/* 章节切换条：只在**多于一章**且章有标题时出现。
         单章的课（没做整节梳理）给它只会多两个灰按钮。 */}
-    {browse.chapters.length > 1 && browse.chapters.some((c) => c.chapterTitle) && <div className="zs-topic-chapters">
+    {browse.chapters.length > 1 && browse.chapters.some((c) => c.chapterTitle) && <div className="zws-topic-chapters">
       <button
         type="button"
-        className="zs-topic-chapter-step"
+        className="zws-topic-chapter-step"
         aria-label="上一章"
         disabled={prevChapter === null}
         onClick={() => onBrowseChapter?.(prevChapter)}
       >‹</button>
-      <span className="zs-topic-chapter-name" title={browse.chapters[currentChapterIndex]?.chapterTitle}>
-        <span className="zs-topic-chapter-no">{currentChapterIndex + 1}/{browse.chapters.length}</span>
+      <span className="zws-topic-chapter-name" title={browse.chapters[currentChapterIndex]?.chapterTitle}>
+        <span className="zws-topic-chapter-no">{currentChapterIndex + 1}/{browse.chapters.length}</span>
         {' '}
         {browse.chapters[currentChapterIndex]?.chapterTitle || '（未命名章）'}
       </span>
       <button
         type="button"
-        className="zs-topic-chapter-step"
+        className="zws-topic-chapter-step"
         aria-label="下一章"
         disabled={nextChapter === null}
         onClick={() => onBrowseChapter?.(nextChapter)}
@@ -115,10 +115,10 @@ export function TopicTrack({ ranges, atMs, onJump, browseChapterNo = null, onBro
     </div>}
 
     {/* 空档/首尾的说明。只在需要澄清时出现 —— 常态（inside）下不占位置。 */}
-    {note && <p className="zs-topic-track-note">{note}</p>}
+    {note && <p className="zws-topic-track-note">{note}</p>}
 
-    <div className="zs-topic-track-body">
-      {browse.items.length === 0 && <p className="zs-topic-track-empty">这一章没有已定位的知识点。</p>}
+    <div className="zws-topic-track-body">
+      {browse.items.length === 0 && <p className="zws-topic-track-empty">这一章没有已定位的知识点。</p>}
 
       {browse.items.map((item) => {
         const target = seekTargetMs(item);
@@ -131,18 +131,18 @@ export function TopicTrack({ ranges, atMs, onJump, browseChapterNo = null, onBro
         return <button
           key={`${item.index}-${item.fromMs}`}
           type="button"
-          className="zs-topic-node"
+          className="zws-topic-node"
           data-state={nodeState}
           data-inview={isLive && phase === 'inside' ? 'true' : undefined}
           title={item.title || '（无名知识点）'}
           onClick={() => { if (target != null) onJump?.(target); }}
         >
-          <span className="zs-topic-dot" aria-hidden="true" />
-          <span className="zs-topic-text">
-            <span className="zs-topic-title">{item.title || '（无名知识点）'}</span>
-            <span className="zs-topic-meta">
+          <span className="zws-topic-dot" aria-hidden="true" />
+          <span className="zws-topic-text">
+            <span className="zws-topic-title">{item.title || '（无名知识点）'}</span>
+            <span className="zws-topic-meta">
               <time>{time(item.fromMs)}</time>
-              {browse.following && <span className="zs-topic-state">{stateLabel(nodeState)}</span>}
+              {browse.following && <span className="zws-topic-state">{stateLabel(nodeState)}</span>}
             </span>
           </span>
         </button>;
@@ -151,7 +151,7 @@ export function TopicTrack({ ranges, atMs, onJump, browseChapterNo = null, onBro
       {/* 折叠提示：一章知识点多于 `pageSize` 时，告诉用户这一章还有多少没显示。
           用的是 `browse.hidden`（当前章被折叠的条数），不是轨道的前后折叠 ——
           后者是"按当前位置取前后几个"，在按章浏览的列表里没有意义。 */}
-      {browse.hidden > 0 && <p className="zs-topic-track-more">本章还有 {browse.hidden} 个（切换章节可看更多）</p>}
+      {browse.hidden > 0 && <p className="zws-topic-track-more">本章还有 {browse.hidden} 个（切换章节可看更多）</p>}
     </div>
   </aside>;
 }

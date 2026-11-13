@@ -603,7 +603,7 @@ test('runtime.ownerEvents：没有 runtime → 404；owner 已退役 → 只一�
 // ── 11. agent/skills ────────────────────────────────────────────────────────
 
 async function makeSkillsDir() {
-  const dir = await mkdtemp(join(tmpdir(), 'zyc-agent-'));
+  const dir = await mkdtemp(join(tmpdir(), 'zwc-agent-'));
   const skillDir = join(dir, 'skills', 'my-outline');
   await mkdir(skillDir, { recursive: true });
   await writeFile(

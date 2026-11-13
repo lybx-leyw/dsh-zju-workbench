@@ -2,7 +2,7 @@
   "name": "zju-workbench-profile",
   "version": "0.1.0",
   "private": true,
-  "description": "智云 Pro 的独立 DSH 工作台配置",
+  "description": "ZJU Workbench 的独立 DSH 工作台配置",
   "dsh": {
     "profile": {
       "bundles": [

@@ -28,10 +28,10 @@ const safe=s=>secretValues.reduce((t,key)=>t.replaceAll(key,'[redacted]'),String
 try {
  const base=env.FUSION_BASE_URL,model=env.FUSION_VISION_MODEL,key=env.FUSION_API_KEY;
  if(!base||!model||!key)throw Error('Vision model configuration missing');
- process.env.ZHIYUN_VISION_BENCH_KEY=key;
+ process.env.ZW_VISION_BENCH_KEY=key;
  const endpoint=base.replace(/\/+$/,'').replace(/\/chat\/completions$/,'');
  await ctx.plugin(Llm);await ctx.plugin(Attachments,{dshHome:path.join(root,'.runtime/vision-bench')});
- await ctx.plugin(PiAi,{providers:{'vision-bench':{api:'openai-completions',baseURL:/\/v\d+$/.test(endpoint)?endpoint:endpoint+'/v1',apiKeyEnv:'ZHIYUN_VISION_BENCH_KEY',models:[{id:model,input:['text','image'],contextWindow:1048576,maxTokens:32768,reasoningEfforts:{off:null,high:'high'},compat:{supportsStore:false,supportsDeveloperRole:false,maxTokensField:'max_tokens',thinkingFormat:'deepseek',supportsReasoningEffort:false}}]}}});
+ await ctx.plugin(PiAi,{providers:{'vision-bench':{api:'openai-completions',baseURL:/\/v\d+$/.test(endpoint)?endpoint:endpoint+'/v1',apiKeyEnv:'ZW_VISION_BENCH_KEY',models:[{id:model,input:['text','image'],contextWindow:1048576,maxTokens:32768,reasoningEfforts:{off:null,high:'high'},compat:{supportsStore:false,supportsDeveloperRole:false,maxTokensField:'max_tokens',thinkingFormat:'deepseek',supportsReasoningEffort:false}}]}}});
  const adapter=new HarnessLlm({llm:ctx.llm,attachments:ctx.attachments,selection:()=>({provider:'vision-bench',model}),timeoutMs:600000});
  let route;
  try{route=(await adapter.resolve()).vision;}catch(e){

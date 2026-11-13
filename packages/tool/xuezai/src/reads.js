@@ -20,7 +20,7 @@ import { createReadToolRegistrar, defined, inputError, optBool, optInt, optStr, 
 
 /** 本包消费的 source 服务（与写工具同一份）。`inject` 由包入口 `index.js` 声明。 */
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunXuezai: '@lybx-leyw/dsh-zju-source-xuezai',
+  zwXuezai: '@lybx-leyw/dsh-zju-source-xuezai',
 });
 
 const ACTIONS = [
@@ -121,7 +121,7 @@ async function resolveCourse(service, wanted) {
  * @returns 工具定义数组。
  */
 export function createXuezaiReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunXuezai', SERVICE_SOURCES.zhiyunXuezai);
+  const need = () => serviceLookup(services, 'zwXuezai', SERVICE_SOURCES.zwXuezai);
 
   return [
     {
@@ -140,7 +140,7 @@ export function createXuezaiReadTools(services) {
           course: { type: 'string', description: '课程名（支持常见简称）或课程 id；除 todos / courseList 外都需要' },
           homework: { type: 'string', description: '作业名或作业 id（homeworkView / homeworkDownload 需要；可用 homeworkList 查到）' },
           // ⚠️ 没有 `mode`：待办走哪条路（fast / slow / diff）由 source 读
-          // `ZHIYUN_TODOS` 环境变量决定，工具层传什么都没有效果。留一个
+          // `ZW_TODOS` 环境变量决定，工具层传什么都没有效果。留一个
           // 「传了但被忽略」的参数，会让模型以为它切了模式。
 
           semester: { type: 'string', description: 'courseList：学期 id；不给时只列正在上的学期' },
@@ -189,7 +189,7 @@ export function createXuezaiReadTools(services) {
             return {
               ...half,
               note: '这是学在浙大的一半；拼题A 的待办在 source/pta。'
-                + '两条抓取路径（fast 聚合端点 / slow 逐课）由数据源的 ZHIYUN_TODOS 环境变量选择，'
+                + '两条抓取路径（fast 聚合端点 / slow 逐课）由数据源的 ZW_TODOS 环境变量选择，'
                 + '结果里的形状是一样的。',
             };
           }

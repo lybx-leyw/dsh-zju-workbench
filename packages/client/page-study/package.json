@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-page-study",
   "version": "0.1.0",
-  "description": "智云 Pro「学习」页：课程树、讲义阅读、分层检索与习题（页面插件）",
+  "description": "ZJU Workbench「学习」页：课程树、讲义阅读、分层检索与习题（页面插件）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

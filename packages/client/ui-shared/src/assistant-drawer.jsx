@@ -31,8 +31,8 @@ const MAX_WIDTH = 720;
 const DEFAULT_WIDTH = 400;
 
 /** 记住宽度：用户的长期偏好，不该每次切页就重置。 */
-const WIDTH_KEY = 'zhiyun.drawer.width';
-const OPEN_KEY = 'zhiyun.drawer.open';
+const WIDTH_KEY = 'zw.drawer.width';
+const OPEN_KEY = 'zw.drawer.open';
 
 /**
  * 一个页面的 AI 助手抽屉。
@@ -79,12 +79,12 @@ function MessageBlocks({ blocks, fallback, streaming = false }) {
     {/* 思考过程：默认展开（用户想知道模型在想什么），可收起。 */}
     {reasoning.length > 0 && <div data-md-part="reasoning" style={{
       margin: '0 0 6px', borderRadius: '8px',
-      background: 'var(--zy-layer, #f6f7f9)',
+      background: 'var(--zw-layer, #f6f7f9)',
     }}>
       <button type="button" onClick={() => setOpenThink(!openThink)} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: '6px',
         padding: '6px 9px', border: 'none', background: 'transparent', cursor: 'pointer',
-        fontSize: '11px', color: 'var(--zy-muted, #656d76)', font: 'inherit', textAlign: 'left',
+        fontSize: '11px', color: 'var(--zw-muted, #656d76)', font: 'inherit', textAlign: 'left',
       }}>
         <span style={{ transform: openThink ? 'rotate(90deg)' : 'none', transition: 'transform .12s' }}>›</span>
         <span>思考过程</span>
@@ -97,12 +97,12 @@ function MessageBlocks({ blocks, fallback, streaming = false }) {
     {/* 工具调用：默认收起成一行徽标，点开看参数与结果摘要。 */}
     {tools.length > 0 && <div data-md-part="tools" style={{
       margin: '0 0 6px', borderRadius: '8px',
-      border: '0.5px solid var(--zy-line, #e8eaed)',
+      border: '0.5px solid var(--zw-line, #e8eaed)',
     }}>
       <button type="button" onClick={() => setOpenTools(!openTools)} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: '6px',
         padding: '6px 9px', border: 'none', background: 'transparent', cursor: 'pointer',
-        fontSize: '11px', color: 'var(--zy-muted, #656d76)', font: 'inherit', textAlign: 'left',
+        fontSize: '11px', color: 'var(--zw-muted, #656d76)', font: 'inherit', textAlign: 'left',
       }}>
         <span style={{ transform: openTools ? 'rotate(90deg)' : 'none', transition: 'transform .12s' }}>›</span>
         <span>{tools.length} 次工具调用</span>
@@ -113,9 +113,9 @@ function MessageBlocks({ blocks, fallback, streaming = false }) {
       {openTools && <div style={{ padding: '0 9px 8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {tools.map((tool) => <div key={tool.id || tool.name} style={{
           fontSize: '11px', fontFamily: 'ui-monospace, monospace',
-          color: 'var(--zy-muted, #656d76)', wordBreak: 'break-all',
+          color: 'var(--zw-muted, #656d76)', wordBreak: 'break-all',
         }}>
-          <span style={{ color: 'var(--zy-text, #24292f)', fontWeight: 600 }}>{tool.name}</span>
+          <span style={{ color: 'var(--zw-text, #24292f)', fontWeight: 600 }}>{tool.name}</span>
           {tool.arguments !== '' && <div style={{ opacity: 0.8 }}>{argsSummary(tool.arguments)}</div>}
         </div>)}
       </div>}
@@ -126,7 +126,7 @@ function MessageBlocks({ blocks, fallback, streaming = false }) {
       <Markdown text={block.text} />
       {streaming && index === texts.length - 1 && <span style={{
         display: 'inline-block', width: '6px', height: '13px', marginLeft: '2px',
-        background: 'var(--zy-accent, #0969da)', borderRadius: '1px',
+        background: 'var(--zw-accent, #0969da)', borderRadius: '1px',
         animation: 'zydrawer-blink 1s steps(2) infinite', verticalAlign: 'text-bottom',
       }} />}
     </div>)}
@@ -134,7 +134,7 @@ function MessageBlocks({ blocks, fallback, streaming = false }) {
     {/* 只有思考/工具、没有正文时，也要有流式光标的位置 */}
     {streaming && texts.length === 0 && <span style={{
       display: 'inline-block', width: '6px', height: '13px',
-      background: 'var(--zy-accent, #0969da)', borderRadius: '1px',
+      background: 'var(--zw-accent, #0969da)', borderRadius: '1px',
       animation: 'zydrawer-blink 1s steps(2) infinite',
     }} />}
   </div>;
@@ -342,11 +342,11 @@ export function AssistantDrawer({
   // 折叠态：一条窄条，点击展开。
   if (!open) {
     return <div
-      data-zhiyun-drawer="collapsed"
+      data-zw-drawer="collapsed"
       style={{
         flex: 'none', width: '36px', display: 'flex', flexDirection: 'column',
         alignItems: 'center', paddingTop: '10px', gap: '8px',
-        borderLeft: '0.5px solid var(--zy-line, #e8eaed)',
+        borderLeft: '0.5px solid var(--zw-line, #e8eaed)',
       }}
     >
       <button
@@ -356,7 +356,7 @@ export function AssistantDrawer({
         onClick={() => setOpen(true)}
         style={{
           width: '26px', height: '26px', border: 'none', borderRadius: '6px',
-          background: 'transparent', cursor: 'pointer', color: 'var(--zy-muted, #656d76)',
+          background: 'transparent', cursor: 'pointer', color: 'var(--zw-muted, #656d76)',
           display: 'grid', placeItems: 'center',
         }}
       ><Icon name={collapsedIcon} size={14}/></button>
@@ -364,22 +364,22 @@ export function AssistantDrawer({
   }
 
   return <div
-    data-zhiyun-drawer="open"
+    data-zw-drawer="open"
     style={{
       // `position: relative` 是拖宽手柄的定位基准 —— 手柄贴在左缘（left:-3px），
       // 没有它就会以整页为基准，跑到窗口左上角去。
       position: 'relative',
       flex: 'none', width: `${width}px`, display: 'flex', flexDirection: 'column',
       minHeight: 0, height: '100%',
-      borderLeft: '0.5px solid var(--zy-line, #e8eaed)',
-      background: 'var(--zy-surface, #fff)',
+      borderLeft: '0.5px solid var(--zw-line, #e8eaed)',
+      background: 'var(--zw-surface, #fff)',
     }}
   >
     {/* 拖宽手柄：贴在左缘 */}
     <div
       role="separator"
       aria-orientation="vertical"
-      data-zhiyun-drawer-handle=""
+      data-zw-drawer-handle=""
       onMouseDown={onDragStart}
       style={{
         position: 'absolute', left: '-3px', top: 0, bottom: 0, width: '6px',
@@ -389,9 +389,9 @@ export function AssistantDrawer({
     {/* 顶栏 */}
     <div style={{
       flex: 'none', display: 'flex', alignItems: 'center', gap: '8px',
-      padding: '8px 10px', borderBottom: '0.5px solid var(--zy-line, #e8eaed)',
+      padding: '8px 10px', borderBottom: '0.5px solid var(--zw-line, #e8eaed)',
     }}>
-      <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, color: 'var(--zy-text, #24292f)' }}>{title}</span>
+      <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, color: 'var(--zw-text, #24292f)' }}>{title}</span>
       <button
         type="button"
         title="收起"
@@ -399,7 +399,7 @@ export function AssistantDrawer({
         onClick={() => setOpen(false)}
         style={{
           width: '24px', height: '24px', border: 'none', borderRadius: '6px',
-          background: 'transparent', cursor: 'pointer', color: 'var(--zy-muted, #656d76)',
+          background: 'transparent', cursor: 'pointer', color: 'var(--zw-muted, #656d76)',
           display: 'grid', placeItems: 'center',
         }}
       ><Icon name="arrow" size={13}/></button>
@@ -408,20 +408,20 @@ export function AssistantDrawer({
     {/* 上下文提示 */}
     {context !== undefined && context !== null && <div style={{
       flex: 'none', padding: '6px 10px', fontSize: '11px',
-      color: 'var(--zy-muted, #656d76)', borderBottom: '0.5px solid var(--zy-line, #e8eaed)',
+      color: 'var(--zw-muted, #656d76)', borderBottom: '0.5px solid var(--zw-line, #e8eaed)',
     }}>{context}</div>}
 
     {/* 消息列表 */}
     <div
       ref={listRef}
-      data-zhiyun-drawer-list=""
+      data-zw-drawer-list=""
       style={{
         flex: '1 1 auto', minHeight: 0, overflowY: 'auto',
         padding: '10px', display: 'flex', flexDirection: 'column', gap: '10px',
       }}
     >
       {messages.length === 0 && <div style={{
-        fontSize: '12px', color: 'var(--zy-muted, #656d76)', lineHeight: 1.7,
+        fontSize: '12px', color: 'var(--zw-muted, #656d76)', lineHeight: 1.7,
       }}>就当前论文提问。选中正文后再问，回答会带上那段文字作为上下文。</div>}
       {messages.map((m, i) => {
         // 流式中：最后一条助手消息带光标。
@@ -430,38 +430,38 @@ export function AssistantDrawer({
         const isUser = m.role === 'user';
         return <div
           key={m.id ?? i}
-          data-zhiyun-drawer-msg={m.role}
+          data-zw-drawer-msg={m.role}
           style={{
             alignSelf: isUser ? 'flex-end' : 'flex-start',
             maxWidth: isUser ? '92%' : '100%',
             padding: '7px 10px', borderRadius: '10px',
             fontSize: '13px', lineHeight: 1.65, wordBreak: 'break-word',
             background: isUser
-              ? 'var(--zy-soft, rgba(9,105,218,.10))'
+              ? 'var(--zw-soft, rgba(9,105,218,.10))'
               : 'transparent',
-            color: 'var(--zy-text, #24292f)',
+            color: 'var(--zw-text, #24292f)',
           }}
         >{isUser
           ? <span style={{ whiteSpace: 'pre-wrap' }}>{m.text}</span>
           : <MessageBlocks blocks={m.blocks} fallback={m.text} streaming={isStreaming} />}
         </div>;
       })}
-      {busy && <div style={{ fontSize: '12px', color: 'var(--zy-muted, #656d76)' }}>思考中…</div>}
+      {busy && <div style={{ fontSize: '12px', color: 'var(--zw-muted, #656d76)' }}>思考中…</div>}
       {error !== null && <div style={{
-        fontSize: '12px', color: 'var(--zy-danger, #cf222e)', lineHeight: 1.6,
+        fontSize: '12px', color: 'var(--zw-danger, #cf222e)', lineHeight: 1.6,
       }}>{error}</div>}
     </div>
 
     {/* 引用条 + 输入区 */}
     <div style={{
-      flex: 'none', borderTop: '0.5px solid var(--zy-line, #e8eaed)', padding: '8px 10px 10px',
+      flex: 'none', borderTop: '0.5px solid var(--zw-line, #e8eaed)', padding: '8px 10px 10px',
       display: 'flex', flexDirection: 'column', gap: '6px',
     }}>
       {selection?.text !== undefined && selection.text !== '' && <div style={{
         display: 'flex', alignItems: 'flex-start', gap: '6px',
         padding: '6px 8px', borderRadius: '8px',
-        background: 'var(--zy-soft, rgba(9,105,218,.08))',
-        fontSize: '11px', color: 'var(--zy-muted, #656d76)', lineHeight: 1.5,
+        background: 'var(--zw-soft, rgba(9,105,218,.08))',
+        fontSize: '11px', color: 'var(--zw-muted, #656d76)', lineHeight: 1.5,
       }}>
         <span style={{ flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
           引用：{selection.text}
@@ -486,13 +486,13 @@ export function AssistantDrawer({
         style={{
           width: '100%', boxSizing: 'border-box', resize: 'none',
           padding: '7px 9px', borderRadius: '8px', fontSize: '13px', lineHeight: 1.6,
-          border: '0.5px solid var(--zy-line, #e8eaed)',
-          background: 'var(--zy-layer, #fff)', color: 'var(--zy-text, #24292f)',
+          border: '0.5px solid var(--zw-line, #e8eaed)',
+          background: 'var(--zw-layer, #fff)', color: 'var(--zw-text, #24292f)',
           font: 'inherit',
         }}
       />
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ flex: 1, fontSize: '11px', color: 'var(--zy-muted, #656d76)' }}>
+        <span style={{ flex: 1, fontSize: '11px', color: 'var(--zw-muted, #656d76)' }}>
           Enter 发送 · Shift+Enter 换行
         </span>
         <button
@@ -503,7 +503,7 @@ export function AssistantDrawer({
             padding: '5px 14px', borderRadius: '8px', border: 'none', fontSize: '12px',
             cursor: busy || draft.trim() === '' ? 'default' : 'pointer',
             opacity: busy || draft.trim() === '' ? 0.5 : 1,
-            background: 'var(--zy-accent, #0969da)', color: '#fff', font: 'inherit',
+            background: 'var(--zw-accent, #0969da)', color: '#fff', font: 'inherit',
           }}
         >发送</button>
       </div>

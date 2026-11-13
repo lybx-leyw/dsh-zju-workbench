@@ -33,8 +33,8 @@
 import { createReadToolRegistrar, inputError, optInt, optStr, serviceLookup } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunStudy: '@lybx-leyw/dsh-zju-core-study',
-  zhiyunClassroom: '@lybx-leyw/dsh-zju-source-classroom',
+  zwStudy: '@lybx-leyw/dsh-zju-core-study',
+  zwClassroom: '@lybx-leyw/dsh-zju-source-classroom',
 });
 
 /**
@@ -82,7 +82,7 @@ export function createRawMaterialTools(services) {
         const offset = optInt(args.offset, 'offset', { min: 0 }) ?? 0;
         const limit = optInt(args.limit, 'limit', { min: 1, max: 2000 }) ?? 400;
 
-        const classroom = need('zhiyunClassroom');
+        const classroom = need('zwClassroom');
         let sentences = [];
         let via = 'platform';
         try {
@@ -156,7 +156,7 @@ export function createRawMaterialTools(services) {
         const offset = optInt(args.offset, 'offset', { min: 0 }) ?? 0;
         const limit = optInt(args.limit, 'limit', { min: 1, max: 500 }) ?? 50;
 
-        const classroom = need('zhiyunClassroom');
+        const classroom = need('zwClassroom');
         const result = await classroom.getSlides(courseId, subId, { signal });
         signal?.throwIfAborted();
         const items = Array.isArray(result?.items) ? result.items : [];

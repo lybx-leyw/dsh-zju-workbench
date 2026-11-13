@@ -35,29 +35,29 @@ import {
   buildIndex, createResolver, renameLinks, titleOf, targetCandidates,
 } from './index/vault-index.js';
 
-export const name = 'zhiyun-vault';
+export const name = 'zw-vault';
 
 /**
  * 只硬依赖 `profileContext`（拿数据目录）。
  *
  * 笔记内容**不从磁盘读**：由调用方经 `config.readNotes()` 注入，
- * 或由 `provide` 出去的 `zhiyunVault.setNotes()` 推入。
+ * 或由 `provide` 出去的 `zwVault.setNotes()` 推入。
  * 这样本包能跑在任何存储之上（宿主存储栈 / 测试内存 / 将来的同步后端），
  * 而不是把持久层写死在领域包里（本仓所有领域包都遵守这条：落盘归宿主）。
  */
 export const inject = ['profileContext'];
 
 /** 数据路由：页面向这里要索引。 */
-export const ROUTE_PATH = '/api/zhiyun-vault';
+export const ROUTE_PATH = '/api/zw-vault';
 
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-vault] ${message}`;
+    const line = `[zw-vault] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
   const warn = (message) => {
-    const line = `[zhiyun-vault] ${message}`;
+    const line = `[zw-vault] ${message}`;
     if (typeof ctx.logger?.warn === 'function') ctx.logger.warn(line);
     else console.warn(line);
   };
@@ -74,7 +74,7 @@ export async function apply(ctx, config = {}) {
    * 赌错的后果是静默的：存储不启动 → 笔记页两条路由都 404，页面看上去只是"空了"。
    *
    * 所以改成由本包入口显式挂载：一行 bundle 条目、一个包名，解析路径不变。
-   * 存储先起（它建目录、注册路由），索引器随后即可经 `zhiyunVault` 拿到内容。
+   * 存储先起（它建目录、注册路由），索引器随后即可经 `zwVault` 拿到内容。
    */
   if (config.notesStore !== false) {
     try {
@@ -85,7 +85,7 @@ export async function apply(ctx, config = {}) {
       //    那个函数），但读起来像"effect 的返回值是 disposer 本身"，下一个人很容易
       //    改成 `ctx.effect(disposeStore)` —— 那会在求值时立刻执行一次 disposer。
       if (typeof disposeStore === 'function') {
-        ctx.effect(() => () => disposeStore(), 'zhiyun: notes store');
+        ctx.effect(() => () => disposeStore(), 'zw: notes store');
       }
     } catch (error) {
       // 存储起不来不该拖垮索引器：反链还能算，只是没有正文可读。
@@ -230,10 +230,10 @@ export async function apply(ctx, config = {}) {
       });
       log(`数据路由：${routePath}`);
       return remove;
-    }, 'zhiyun: vault data route');
+    }, 'zw: vault data route');
   });
 
-  const removeService = ctx.provide('zhiyunVault', {
+  const removeService = ctx.provide('zwVault', {
     routePath,
     /** 推入/替换笔记集。调用方持有内容与持久化，本包只做索引。 */
     setNotes(next) {

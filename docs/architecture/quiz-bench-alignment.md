@@ -4,7 +4,7 @@
 
 基线是 `scripts/quiz_bench/experimental/CANDIDATE.json` 中的
 `v2-candidate-r1`，不是 `experimental-r2`。
-产品内核位于 `packages/dsh-zhiyun-core-quiz/src/engines/r1/`。
+产品内核位于 `packages/dsh-zju-core-quiz/src/engines/r1/`。
 `versions.json` 分别记录实验源码摘要和产品源码摘要；两者不同不能被解释为完全一致。
 
 产品保留已要求的题面自足性、学习价值审核与失败重试修复，因此不再是冻结实验的逐字副本。
@@ -55,7 +55,7 @@ DSH 宿主则**从不抛异常**：它把 provider 失败规整成终止块
 
 1. 把 `finish` 块翻译成异常；DSH 的 code 词表
    （`RATE_LIMIT`/`SERVER`/`AUTH`/`QUOTA`/`CONTEXT_WINDOW_EXCEEDED`/`INVALID_REQUEST`）
-   先折回状态码，再交给 `dsh-zhiyun-core-llm-error` 分类 —— 直接丢进去会落到
+   先折回状态码，再交给 `dsh-zju-core-llm-error` 分类 —— 直接丢进去会落到
    `unknown` 被判成不可重试，等于没修。
 2. `aborted` 单独给 `CANCELLED` 且永不重试：用户点了暂停，重试等于继续烧钱。
 3. 传输层重试 `[500,1500]ms` 两次（与上游 `agent_loop.py` 同量级）。kernel 的重试

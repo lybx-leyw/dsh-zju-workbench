@@ -1,6 +1,6 @@
 # @lybx-leyw/dsh-zju-core-learning-resource
 
-智云 Pro **标准学习资源层**：一份资源（讲义 / 阅读材料 / 题源）在这套仓库里长什么样、
+ZJU Workbench **标准学习资源层**：一份资源（讲义 / 阅读材料 / 题源）在这套仓库里长什么样、
 怎么校验、怎么算缓存键、怎么投影给 DeepTutor 上游，以及**产出的题目怎么回到来源**。
 
 本包是**纯函数包**：不落盘、不读环境变量、不碰宿主存储、不依赖任何宿主服务
@@ -160,10 +160,10 @@ const bundle = stamp(fromLecture({
 ## Cordis 插件
 
 ```js
-export const name = 'zhiyun-learning-resource';
+export const name = 'zw-learning-resource';
 export const inject = [];
 export function apply(ctx, config = {});
-// ctx.provide('zhiyunLearningResource', { schema, validate, contentHash, project, anchors, … })
+// ctx.provide('zwLearningResource', { schema, validate, contentHash, project, anchors, … })
 ```
 
 `inject` 是空数组而不是省略：全是纯函数，不依赖宿主任何服务 —— 让"本包不拖慢启动"在启动图谱上直接可见。
@@ -172,8 +172,8 @@ export function apply(ctx, config = {});
 core-learning-resource 可能在 host-deeptutor 之后才加载）：
 
 ```js
-validate: (bundle) => ctx.get('zhiyunLearningResource').validate(bundle),
-contentHash: (value) => ctx.get('zhiyunLearningResource').contentHash(value),
+validate: (bundle) => ctx.get('zwLearningResource').validate(bundle),
+contentHash: (value) => ctx.get('zwLearningResource').contentHash(value),
 ```
 
 ---

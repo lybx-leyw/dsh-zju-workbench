@@ -215,7 +215,7 @@ import { createQuestionBankController } from './question-bank-client.js';
      *
      * 登录入口有三个页面用得到，但那三页手上的 `controller` 是**本控制器**、
      * 不是壳的控制器 —— 所以壳的动作要顺着 `navigation` 这条路转发出来，
-     * 和 `navigate` 完全一样的走法。`?.` 是防御：壳不在场时（`zhiyunNavigation`
+     * 和 `navigate` 完全一样的走法。`?.` 是防御：壳不在场时（`zwNavigation`
      * 取不到）按一下不该抛异常。
      */
     openAccount: () => navigation.openAccount?.(),
@@ -334,7 +334,7 @@ import { createQuestionBankController } from './question-bank-client.js';
     /**
      * 取某节课的机位清单（`live-streams`）。
      *
-     * 地址改写（换成 `/zhiyun-live/hls?u=…`）在**宿主侧**做，这里拿到的
+     * 地址改写（换成 `/zw-live/hls?u=…`）在**宿主侧**做，这里拿到的
      * `playUrl` 已经是能直接塞给 `<video>` 的本机地址 —— 客户端不该知道、也不
      * 该需要知道原始 CDN 域名与签名。
      *

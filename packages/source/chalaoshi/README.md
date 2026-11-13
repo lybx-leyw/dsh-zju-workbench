@@ -49,7 +49,7 @@
 
 | 成员 | 作用 |
 | --- | --- |
-| `routePath` | `/api/zhiyun-chalaoshi` |
+| `routePath` | `/api/zw-chalaoshi` |
 | `readOnly` | 恒为 `true` |
 | `methods` | `['chalaoshi.search', 'chalaoshi.teacher', 'chalaoshi.course']` |
 | `indexStatus()` | 索引状态 |
@@ -58,7 +58,7 @@
 | `teacher(input)` | `{ id }` → 详情页 HTML |
 | `course(input)` | `{ course }` → `{ course, count, teachers[] }`（均绩点 / 标准差 / 样本） |
 
-同源路由 `POST /api/zhiyun-chalaoshi`，动作 `search` / `teacher` / `course` /
+同源路由 `POST /api/zw-chalaoshi`，动作 `search` / `teacher` / `course` /
 `index-status` / `refresh`。
 
 > `course` 早先被写成「解析留给消费方」。那不是裁决 —— 它等于把上游一条能力

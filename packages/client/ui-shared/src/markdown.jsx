@@ -76,7 +76,7 @@ function inline(text, keyPrefix) {
         key,
         style: {
           padding: '1px 5px', borderRadius: '4px', fontSize: '12px',
-          background: 'var(--zy-layer, #f0f1f3)', fontFamily: 'ui-monospace, monospace',
+          background: 'var(--zw-layer, #f0f1f3)', fontFamily: 'ui-monospace, monospace',
         },
       }, first.m[1]));
     } else if (first.kind === 'bold') {
@@ -93,7 +93,7 @@ function inline(text, keyPrefix) {
           key, href: url,
           target: url.startsWith('http') ? '_blank' : undefined,
           rel: 'noreferrer',
-          style: { color: 'var(--zy-accent, #0969da)' },
+          style: { color: 'var(--zw-accent, #0969da)' },
         }, first.m[1]));
       }
     }
@@ -116,7 +116,7 @@ export function Markdown({ text = '', muted = false }) {
   let i = 0;
   let key = 0;
 
-  const baseColor = muted ? 'var(--zy-muted, #656d76)' : 'var(--zy-text, #24292f)';
+  const baseColor = muted ? 'var(--zw-muted, #656d76)' : 'var(--zw-text, #24292f)';
 
   while (i < lines.length) {
     const line = lines[i];
@@ -136,7 +136,7 @@ export function Markdown({ text = '', muted = false }) {
         'data-md-block': 'code',
         style: {
           margin: '6px 0', padding: '8px 10px', borderRadius: '8px',
-          background: 'var(--zy-layer, #f6f7f9)', overflowX: 'auto',
+          background: 'var(--zw-layer, #f6f7f9)', overflowX: 'auto',
           fontSize: '12px', lineHeight: 1.6,
           fontFamily: 'ui-monospace, SFMono-Regular, monospace',
           color: baseColor,
@@ -148,7 +148,7 @@ export function Markdown({ text = '', muted = false }) {
     // 分隔线
     if (/^(---|\*\*\*)\s*$/.test(line)) {
       blocks.push(React.createElement('hr', {
-        key: key++, style: { border: 'none', borderTop: '0.5px solid var(--zy-line, #e8eaed)', margin: '10px 0' },
+        key: key++, style: { border: 'none', borderTop: '0.5px solid var(--zw-line, #e8eaed)', margin: '10px 0' },
       }));
       i += 1;
       continue;
@@ -178,8 +178,8 @@ export function Markdown({ text = '', muted = false }) {
         key: key++,
         style: {
           margin: '6px 0', padding: '2px 0 2px 10px',
-          borderLeft: '2px solid var(--zy-line, #e8eaed)',
-          color: 'var(--zy-muted, #656d76)', fontSize: '12px', lineHeight: 1.7,
+          borderLeft: '2px solid var(--zw-line, #e8eaed)',
+          color: 'var(--zw-muted, #656d76)', fontSize: '12px', lineHeight: 1.7,
         },
       }, inline(quote.join(' '), `q${key}`)));
       continue;

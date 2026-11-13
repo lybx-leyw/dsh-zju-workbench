@@ -3,7 +3,7 @@
  *
  * # 这条测试守的是真实故障
  *
- * 「插件」页（`dsh-zhiyun-page-plugins`）在加「吃灰」一栏时，把 `useUsageRows`
+ * 「插件」页（`dsh-zju-page-plugins`）在加「吃灰」一栏时，把 `useUsageRows`
  * 写在了两个提前 return 之后。这一页的运行期顺序恰好是：
  *
  *   1. 挂载 → `status: 'idle'` / `view: null` → 走第一个 return，渲染「正在读取…」

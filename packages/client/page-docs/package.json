@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-page-docs",
   "version": "0.1.0",
-  "description": "智云 Pro「文档」页：内置 markdown 的开发与协作文档，左侧目录 + 右侧页内目录 + 上下篇翻页",
+  "description": "ZJU Workbench「文档」页：内置 markdown 的开发与协作文档，左侧目录 + 右侧页内目录 + 上下篇翻页",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

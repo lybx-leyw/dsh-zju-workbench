@@ -63,15 +63,15 @@ export function RenameDialog({ open, initial = '', onSubmit, onCancel }) {
   // ⚠️ portal 到 body：必须落在 `inert` 容器之外，否则输入框拿不到焦点。
   return createPortal(
     <div
-      className="zp-rename-mask"
+      className="zwp-rename-mask"
       role="presentation"
       onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel?.(); }}
     >
-      <div className="zp-rename-box" role="dialog" aria-modal="true" aria-label="重命名">
-        <p className="zp-rename-title">重命名</p>
+      <div className="zwp-rename-box" role="dialog" aria-modal="true" aria-label="重命名">
+        <p className="zwp-rename-title">重命名</p>
         <input
           ref={inputRef}
-          className="zp-rename-input"
+          className="zwp-rename-input"
           value={value}
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={(event) => {
@@ -81,8 +81,8 @@ export function RenameDialog({ open, initial = '', onSubmit, onCancel }) {
             event.stopPropagation();
           }}
         />
-        <div className="zp-rename-actions">
-          <button type="button" className="zp-rename-primary" onClick={submit}>确定</button>
+        <div className="zwp-rename-actions">
+          <button type="button" className="zwp-rename-primary" onClick={submit}>确定</button>
           <button type="button" onClick={() => onCancel?.()}>取消</button>
         </div>
       </div>

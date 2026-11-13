@@ -10,8 +10,8 @@
  * 「SQL 语义保留，driver 换成本仓约定」。`host-classroom/src/adapter.js` 当时只
  * 声明了 7 个端口方法，并指出本仓没有 `ctx.vault`。本包的做法是**第三种**：
  * 自带一个文件驱动的适配器（`src/adapter.js`），不新建宿主服务、不改
- * `zhiyunVault`、也不引 `pg`。数据根固定在
- * `<profile>/data/zhiyun-classroom/`（与 `host-classroom` 同一个根，见
+ * `zwVault`、也不引 `pg`。数据根固定在
+ * `<profile>/data/zw-classroom/`（与 `host-classroom` 同一个根，见
  * `host-classroom/src/index.js:82`），所以宿主换掉空壳适配器只需要
  * `config.adapter = createLocalVaultAdapter({ rootDir })`。
  *
@@ -25,15 +25,15 @@
  * # 服务形状
  *
  * ```
- * ctx.zhiyunClassroomVault.status()
- * ctx.zhiyunClassroomVault.classroom.{list,load,save,create,remove,exists,meta}
- * ctx.zhiyunClassroomVault.scenes.{list,get,put,remove}
- * ctx.zhiyunClassroomVault.folders.{list,get,create,rename,remove,assign}
- * ctx.zhiyunClassroomVault.runs.{put,get,list,patch,remove,appendEvent,events,putStep,steps,putCommand,command}
- * ctx.zhiyunClassroomVault.assets.{put,get,bytes,list,remove,addRef,removeRef,refs}
- * ctx.zhiyunClassroomVault.materials.{put,get,list,remove}
- * ctx.zhiyunClassroomVault.snapshots.{list,get,add,prune,clear}
- * ctx.zhiyunClassroomVault.kv.{get,set,remove,keys}
+ * ctx.zwClassroomVault.status()
+ * ctx.zwClassroomVault.classroom.{list,load,save,create,remove,exists,meta}
+ * ctx.zwClassroomVault.scenes.{list,get,put,remove}
+ * ctx.zwClassroomVault.folders.{list,get,create,rename,remove,assign}
+ * ctx.zwClassroomVault.runs.{put,get,list,patch,remove,appendEvent,events,putStep,steps,putCommand,command}
+ * ctx.zwClassroomVault.assets.{put,get,bytes,list,remove,addRef,removeRef,refs}
+ * ctx.zwClassroomVault.materials.{put,get,list,remove}
+ * ctx.zwClassroomVault.snapshots.{list,get,add,prune,clear}
+ * ctx.zwClassroomVault.kv.{get,set,remove,keys}
  * ```
  */
 
@@ -42,7 +42,7 @@ import { join } from 'node:path';
 import { ADAPTER_METHODS, createLocalVaultAdapter } from './adapter.js';
 import { createVaultStore, VaultError } from './store.js';
 
-export const name = 'zhiyun-classroom-vault';
+export const name = 'zw-classroom-vault';
 
 /**
  * 只硬依赖 `profileContext`（拿 profile 目录）。`logger` 之类都是可选，
@@ -50,7 +50,7 @@ export const name = 'zhiyun-classroom-vault';
  */
 export const inject = ['profileContext'];
 
-export const SERVICE_NAME = 'zhiyunClassroomVault';
+export const SERVICE_NAME = 'zwClassroomVault';
 export const PACKAGE_VERSION = '0.1.0';
 
 export { ADAPTER_METHODS, createLocalVaultAdapter, createVaultStore, VaultError };
@@ -58,7 +58,7 @@ export { ADAPTER_METHODS, createLocalVaultAdapter, createVaultStore, VaultError 
 /**
  * @param {object} ctx Cordis 上下文
  * @param {object} [config]
- * @param {string} [config.rootDir] 数据根，默认 `<profile>/data/zhiyun-classroom`
+ * @param {string} [config.rootDir] 数据根，默认 `<profile>/data/zw-classroom`
  * @param {string} [config.ownerId] owner 分区键，默认 `'local'`（单机单用户）
  * @param {number} [config.snapshotLimit] 快照历史上限，默认 20（上游同值）
  * @param {object} [config.adapter] 直接注入一个端口实现（测试 / 换后端）
@@ -67,10 +67,10 @@ export { ADAPTER_METHODS, createLocalVaultAdapter, createVaultStore, VaultError 
  */
 export function apply(ctx, config = {}) {
   const logger = config.logger ?? {
-    debug: (...args) => ctx.logger?.debug?.('[zhiyun-classroom-vault]', ...args),
-    info: (...args) => ctx.logger?.info?.('[zhiyun-classroom-vault]', ...args),
-    warn: (...args) => ctx.logger?.warn?.('[zhiyun-classroom-vault]', ...args),
-    error: (...args) => ctx.logger?.error?.('[zhiyun-classroom-vault]', ...args),
+    debug: (...args) => ctx.logger?.debug?.('[zw-classroom-vault]', ...args),
+    info: (...args) => ctx.logger?.info?.('[zw-classroom-vault]', ...args),
+    warn: (...args) => ctx.logger?.warn?.('[zw-classroom-vault]', ...args),
+    error: (...args) => ctx.logger?.error?.('[zw-classroom-vault]', ...args),
   };
 
   // 取不到 profileContext 也算"能起来"：root 为 null，服务照常 provide，
@@ -78,7 +78,7 @@ export function apply(ctx, config = {}) {
   let rootDir = null;
   try {
     rootDir = config.rootDir
-      ?? (ctx?.profileContext?.dir ? join(ctx.profileContext.dir, 'data/zhiyun-classroom') : null);
+      ?? (ctx?.profileContext?.dir ? join(ctx.profileContext.dir, 'data/zw-classroom') : null);
   } catch (error) {
     logger.warn('解析数据目录失败，课堂持久层将以无数据根状态启动', error?.message ?? error);
   }

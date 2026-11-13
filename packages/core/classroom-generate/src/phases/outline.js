@@ -16,7 +16,7 @@ import { buildOutlinePrompt } from '../prompts.js';
  *
  * 1. **模型大纲**（上游 `generateSceneOutlinesFromRequirements`）：一次调用，JSON 解析；
  * 2. **确定性兜底**：模型调不通 / 回的不是大纲 JSON 时，改用
- *    `ctx.zhiyunClassroomAgent.plan(brief)` 的场景序列（那位同事的 `planScenes`
+ *    `ctx.zwClassroomAgent.plan(brief)` 的场景序列（那位同事的 `planScenes`
  *    本来就是「brief → 场景序列」的确定性落法）。
  *
  * 兜底不是「编数据」：上游浏览器端在 outline 流失败时同样退回到
@@ -100,7 +100,7 @@ export async function produceOutline({
     // 缺配置的 interactive / pbl 在这里就降级成 slide（上游 applyOutlineFallbacks）。
     // 不降级的话，它会一路跑到 scenes 阶段才因为"产出对不上类型"而失败，
     // 表现出来是"某一页莫名消失"，而根因其实在大纲。
-    // pbl 是否可用由 pbl 服务是否存在决定（scenes 段会走 ctx.zhiyunClassroomPbl）。
+    // pbl 是否可用由 pbl 服务是否存在决定（scenes 段会走 ctx.zwClassroomPbl）。
     const { outlines, fallbacks } = applyOutlineFallbacks(parsed.outlines, {
       hasPblService: options?.hasPblService !== false,
     });

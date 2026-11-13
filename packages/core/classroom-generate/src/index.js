@@ -8,7 +8,7 @@
 /**
  * # 课堂生成管线（Cordis 插件）
  *
- * 挂载 `ctx.zhiyunClassroomGenerate`：
+ * 挂载 `ctx.zwClassroomGenerate`：
  *
  *   start(brief, opts) → { runId, stageId, status }
  *   stream(runId)      → AsyncIterable<event>   // 从头重放 + 之后实时
@@ -30,10 +30,10 @@
  * # 端口注入
  *
  * 管线本身（`pipeline.js`）不认识 Cordis。这里把服务翻译成 ports：
- *   agent  ← ctx.zhiyunClassroomAgent   （`plan(brief)` 决定场景序列）
- *   pbl    ← ctx.zhiyunClassroomPbl     （PBL 场景的项目内容）
- *   media  ← ctx.zhiyunClassroomMedia   （配音 / 配图）
- *   vault  ← ctx.zhiyunClassroomVault   （段产物、资产、最终 classroom 文档）
+ *   agent  ← ctx.zwClassroomAgent   （`plan(brief)` 决定场景序列）
+ *   pbl    ← ctx.zwClassroomPbl     （PBL 场景的项目内容）
+ *   media  ← ctx.zwClassroomMedia   （配音 / 配图）
+ *   vault  ← ctx.zwClassroomVault   （段产物、资产、最终 classroom 文档）
  *
  * 缺任何一个端口都不阻止 start：管线在需要它的那一段降级（`outline` 段没有 agent
  * 就走 `planScenes` 的确定性兜底），与上游「provider 缺失只影响对应能力」的语义一致。
@@ -51,18 +51,18 @@ import { adaptPoolTransport } from './llm-pool.js';
 import { runPipeline } from './pipeline.js';
 import { validateHtmlWithBrowser } from './html-slide-audit.js';
 
-export const name = 'zhiyun-classroom-generate';
+export const name = 'zw-classroom-generate';
 
 /** 规范 §4：领域包只 declare 它消费的宿主服务。 */
 export const inject = [
-  'zhiyunClassroomStudio',
-  'zhiyunClassroomAgent',
-  'zhiyunClassroomPbl',
-  'zhiyunClassroomMedia',
-  'zhiyunClassroomVault',
+  'zwClassroomStudio',
+  'zwClassroomAgent',
+  'zwClassroomPbl',
+  'zwClassroomMedia',
+  'zwClassroomVault',
 ];
 
-export const SERVICE_NAME = 'zhiyunClassroomGenerate';
+export const SERVICE_NAME = 'zwClassroomGenerate';
 export const PACKAGE_VERSION = '0.1.0';
 
 /**
@@ -75,10 +75,10 @@ export const PACKAGE_VERSION = '0.1.0';
  */
 export function apply(ctx, config = {}) {
   const log = config.logger ?? {
-    debug: (...args) => ctx?.logger?.debug?.('[zhiyun-classroom-generate]', ...args),
-    info: (...args) => ctx?.logger?.info?.('[zhiyun-classroom-generate]', ...args),
-    warn: (...args) => ctx?.logger?.warn?.('[zhiyun-classroom-generate]', ...args),
-    error: (...args) => ctx?.logger?.error?.('[zhiyun-classroom-generate]', ...args),
+    debug: (...args) => ctx?.logger?.debug?.('[zw-classroom-generate]', ...args),
+    info: (...args) => ctx?.logger?.info?.('[zw-classroom-generate]', ...args),
+    warn: (...args) => ctx?.logger?.warn?.('[zw-classroom-generate]', ...args),
+    error: (...args) => ctx?.logger?.error?.('[zw-classroom-generate]', ...args),
   };
 
   const pick = (serviceName) => {
@@ -90,7 +90,7 @@ export function apply(ctx, config = {}) {
     }
   };
 
-  const studio = pick('zhiyunClassroomStudio');
+  const studio = pick('zwClassroomStudio');
   // 宿主 llm 是**首选**：本仓的解析/讲义/出题都走它，课堂生成也该走它。
   // 只有宿主没给的时候才退回 studio 的模型清单（那条路依赖课堂登录态）。
   // 取宿主 llm 要用 `ctx.get`：Cordis 里直接读属性会抛
@@ -110,24 +110,24 @@ export function apply(ctx, config = {}) {
   }
   const hostLlm = config.llm ?? createHostLlmTransport(hostSvc);
   const ports = {
-    agent: pick('zhiyunClassroomAgent'),
-    pbl: pick('zhiyunClassroomPbl'),
-    // ⚠️ 媒体必须过适配层。`zhiyunClassroomMedia` 的接口是
+    agent: pick('zwClassroomAgent'),
+    pbl: pick('zwClassroomPbl'),
+    // ⚠️ 媒体必须过适配层。`zwClassroomMedia` 的接口是
     // `tts(text, voice)` / `image(prompt, options)` 且返回 `{ok, base64|bytes}`，
     // 而 `phases/media.js` 的端口契约是 `speech({text})` / `image({prompt})` 且要
     // `Buffer|{data,mime}`。直接把服务当端口传进去，图片会 100% 失败、配音会 100% 跳过
     // （详见 `media-port.js` 头注释）。这里只做形状对齐，不改服务本身。
-    media: config.media ?? adaptMediaService(pick('zhiyunClassroomMedia')),
-    vault: pick('zhiyunClassroomVault'),
+    media: config.media ?? adaptMediaService(pick('zwClassroomMedia')),
+    vault: pick('zwClassroomVault'),
     validateHtml: config.validateHtml ?? validateHtmlWithBrowser,
     now: typeof config.now === 'function' ? config.now : () => Date.now(),
   };
 
   for (const key of ['agent', 'pbl', 'media', 'vault']) {
-    if (!ports[key]) log.warn(`zhiyunClassroom${key[0].toUpperCase()}${key.slice(1)} 尚未提供：对应段降级`);
+    if (!ports[key]) log.warn(`zwClassroom${key[0].toUpperCase()}${key.slice(1)} 尚未提供：对应段降级`);
   }
   if (!studio && !config.llm) {
-    log.warn('既没有 zhiyunClassroomStudio 也没有注入 llm：生成会以 CONFIG 错误拒绝');
+    log.warn('既没有 zwClassroomStudio 也没有注入 llm：生成会以 CONFIG 错误拒绝');
   }
 
   let service;

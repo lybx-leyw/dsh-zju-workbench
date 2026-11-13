@@ -48,7 +48,7 @@ test('DDL task -> multiple execution slots -> edit/delete, with independent due 
     } }] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 960 } });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    await page.route('http://planning.test/**', route => route.fulfill({ contentType: 'text/html', body: '<html><body data-zhiyun><div id="root"></div></body></html>' }));
+    await page.route('http://planning.test/**', route => route.fulfill({ contentType: 'text/html', body: '<html><body data-zw><div id="root"></div></body></html>' }));
     await page.goto('http://planning.test/');
     await page.addScriptTag({ content: result.outputFiles[0].text });
     await page.getByRole('button', { name: '为「虚构作业」安排时间' }).click();
@@ -58,23 +58,23 @@ test('DDL task -> multiple execution slots -> edit/delete, with independent due 
     await start.fill('2026-11-03T09:00'); await end.fill('2026-11-03T10:00');
     await page.getByRole('button', { name: '保存安排', exact: true }).click();
     await page.getByText('安排已保存', {exact:true}).waitFor();
-    assert.equal(await page.locator('.zpg-schedule-block').count(), 1);
+    assert.equal(await page.locator('.zwpg-schedule-block').count(), 1);
     assert.equal(await page.evaluate(()=>window.probe.local.due), '2026-11-08T15:59:00.000Z');
     await page.getByLabel('关联 DDL').selectOption('local:demo');
     await start.fill('2026-11-03T11:00'); await end.fill('2026-11-03T12:00');
     await page.getByRole('button', { name: '保存安排', exact: true }).click();
-    await page.waitForFunction(()=>window.probe.schedule.length===2 && document.querySelectorAll('.zpg-schedule-block').length===2);
-    assert.equal(await page.locator('.zpg-schedule-block').count(), 2);
-    await page.locator('.zpg-schedule-block').first().getByRole('button',{name:'编辑',exact:true}).click();
+    await page.waitForFunction(()=>window.probe.schedule.length===2 && document.querySelectorAll('.zwpg-schedule-block').length===2);
+    assert.equal(await page.locator('.zwpg-schedule-block').count(), 2);
+    await page.locator('.zwpg-schedule-block').first().getByRole('button',{name:'编辑',exact:true}).click();
     await end.fill('2026-11-03T10:30');
     await page.getByRole('button',{name:'保存修改',exact:true}).click();
     await page.waitForFunction(()=>window.probe.schedule[1].end==='2026-11-03T02:30:00.000Z');
-    await page.locator('.zpg-schedule-block').first().getByRole('button',{name:'删除',exact:true}).click();
-    await page.waitForFunction(()=>window.probe.schedule.length===1 && document.querySelectorAll('.zpg-schedule-block').length===1);
+    await page.locator('.zwpg-schedule-block').first().getByRole('button',{name:'删除',exact:true}).click();
+    await page.waitForFunction(()=>window.probe.schedule.length===1 && document.querySelectorAll('.zwpg-schedule-block').length===1);
     await page.getByRole('button',{name:'DDL 列表',exact:true}).click();
     await page.getByRole('button', { name: '为「虚构作业」安排时间' }).waitFor();
     await page.getByRole('button',{name:'日程表',exact:true}).click();
-    assert.equal(await page.locator('.zpg-schedule-block').count(), 1);
+    assert.equal(await page.locator('.zwpg-schedule-block').count(), 1);
     await page.getByRole('button',{name:'DDL 列表',exact:true}).click();
     await page.getByRole('button', { name: '为「虚构AI任务」安排时间' }).click();
     assert.equal(await start.inputValue(), '');
@@ -97,7 +97,7 @@ test('DDL task -> multiple execution slots -> edit/delete, with independent due 
     assert.equal(await page.evaluate(()=>window.probe.local.due), '2026-11-08T15:59:00.000Z');
     await page.getByRole('button',{name:'收起助手',exact:true}).click();
     await page.setViewportSize({width:390,height:844});
-    await page.waitForFunction(()=>document.querySelector('.zpg-schedule-week') && getComputedStyle(document.querySelector('.zpg-schedule-week')).gridTemplateColumns.split(' ').length===1);
+    await page.waitForFunction(()=>document.querySelector('.zwpg-schedule-week') && getComputedStyle(document.querySelector('.zwpg-schedule-week')).gridTemplateColumns.split(' ').length===1);
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth), '日程和工具栏不应造成横向溢出');
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }

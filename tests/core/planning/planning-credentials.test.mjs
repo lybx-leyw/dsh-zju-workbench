@@ -5,7 +5,7 @@
  * 「未配置账号，去终端跑 configure」—— 同一个浙大账号被要两次，其中一次还要开终端。
  *
  * 断言集中在四件事：
- *   1. 记录键是 `zhiyun-classroom/account`，形状是 `{kind:'grant', payload}`（宿主认的形状）；
+ *   1. 记录键是 `zw-classroom/account`，形状是 `{kind:'grant', payload}`（宿主认的形状）；
  *   2. 宿主没装凭据服务时**全部降级**，不抛错 —— 课堂必须照常能用；
  *   3. 空用户名/空密码不写（半个凭据比没有更糟）；
  *   4. omni 侧读到的是同一份，且宿主凭据优先于它自己的 DPAPI。
@@ -48,17 +48,17 @@ const ctxWith = (service) => ({ get: (name) => (name === 'credentials' ? service
 /* ───────────────────────────────────────── 记录键与形状 */
 
 test('记录键是 <scope>/<id>，与写入方约定一致', () => {
-  assert.equal(RECORD_SCOPE, 'zhiyun-classroom');
+  assert.equal(RECORD_SCOPE, 'zw-classroom');
   assert.equal(ACCOUNT_ID, 'account');
-  assert.equal(recordKey(ACCOUNT_ID), 'zhiyun-classroom/account');
-  assert.equal(recordKey(XZZD_SESSION_ID), 'zhiyun-classroom/xzzd-session');
+  assert.equal(recordKey(ACCOUNT_ID), 'zw-classroom/account');
+  assert.equal(recordKey(XZZD_SESSION_ID), 'zw-classroom/xzzd-session');
 });
 
 test('写入形状是宿主认的 grant 记录', async () => {
   const service = fakeCredentials();
   const ok = await writeAccount(ctxWith(service), { username: 'u', password: 'p' });
   assert.equal(ok, true);
-  const stored = service.store.get('zhiyun-classroom/account');
+  const stored = service.store.get('zw-classroom/account');
   assert.equal(stored.kind, 'grant', 'api-key 的形状塞不下结构化数据，必须用 grant');
 
   // ⚠️ 顶层**只能有 kind 与 payload**：宿主 `dsh-credentials-local` 的 `parseRecord`
@@ -115,7 +115,7 @@ test('空用户名或空密码不写 —— 半个凭据比没有更糟', async 
 
 test('记录形状不是 grant 时不认（避免把 api-key 记录误读成账号）', async () => {
   const service = fakeCredentials();
-  service.store.set('zhiyun-classroom/account', { kind: 'api-key', key: 'x' });
+  service.store.set('zw-classroom/account', { kind: 'api-key', key: 'x' });
   assert.equal(await readAccount(ctxWith(service)), null);
   assert.equal(await readRecord(ctxWith(service), ACCOUNT_ID), null);
 });
@@ -133,7 +133,7 @@ test('会话记录：空数组不写，非空可读回', async () => {
   assert.deepEqual(await readXzzdSession(ctx), cookies);
 
   // 形状坏掉时读成 null，而不是把半个对象交给调用方
-  service.store.set('zhiyun-classroom/xzzd-session', { kind: 'grant', payload: { cookies: 'nope' } });
+  service.store.set('zw-classroom/xzzd-session', { kind: 'grant', payload: { cookies: 'nope' } });
   assert.equal(await readXzzdSession(ctx), null);
 });
 
@@ -147,7 +147,7 @@ test('课堂写、omni 读：同一个键，同一份账号', async () => {
   await writeAccount(ctx, { username: 'alice', password: 'pw' });
 
   // omni 侧的读取器（host.js 里那个）读同一个键
-  const record = await service.readRecord('zhiyun-classroom/account');
+  const record = await service.readRecord('zw-classroom/account');
   assert.equal(record.kind, 'grant');
   assert.equal(record.payload.username, 'alice');
   assert.equal(record.payload.password, 'pw');

@@ -15,7 +15,7 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const PKG_DIR = path.join(ROOT, 'packages');
-const SHELL_CSS = path.join(PKG_DIR, 'dsh-zhiyun-shell-workbench', 'src', 'style.css');
+const SHELL_CSS = path.join(PKG_DIR, 'dsh-zju-shell-workbench', 'src', 'style.css');
 
 const errors = [];
 const warns = [];
@@ -74,7 +74,7 @@ function ratio(a, b) {
 }
 function parseTokens(block) {
   const out = {};
-  const re = /--zy-([a-z-]+)\s*:\s*(#[0-9a-fA-F]{3,8})/g;
+  const re = /--zw-([a-z-]+)\s*:\s*(#[0-9a-fA-F]{3,8})/g;
   let m;
   while ((m = re.exec(block))) out[m[1]] = m[2];
   return out;
@@ -84,7 +84,7 @@ if (!fs.existsSync(SHELL_CSS)) {
   errors.push(`找不到 shell 样式表：${rel(SHELL_CSS)}`);
 } else {
   const css = fs.readFileSync(SHELL_CSS, 'utf8');
-  const parts = css.split('body[data-zhiyun][data-ds-dark-theme]');
+  const parts = css.split('body[data-zw][data-ds-dark-theme]');
   const themes = [
     ['浅色', parseTokens(parts[0] || '')],
     ['深色', parseTokens(parts[1] || '')],

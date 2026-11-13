@@ -1232,7 +1232,7 @@ export function mountAgentRuntime(service, deps) {
   async function putAgent(id, body, request) {
     const store = agentStore(deps);
     if (!store) {
-      throw notImplementedAt('zhiyunClassroomStudio.agents.put', 'app/api/agents/[id]/route.ts:31-46');
+      throw notImplementedAt('zwClassroomStudio.agents.put', 'app/api/agents/[id]/route.ts:31-46');
     }
     return withOwner(ownerDeps(deps), request, async ({ ownerId, headers }) => {
       const parsed = parseAgentBody(body, id);
@@ -1256,7 +1256,7 @@ export function mountAgentRuntime(service, deps) {
   async function removeAgent(id, request) {
     const store = agentStore(deps);
     if (!store) {
-      throw notImplementedAt('zhiyunClassroomStudio.agents.remove', 'app/api/agents/[id]/route.ts:48-63');
+      throw notImplementedAt('zwClassroomStudio.agents.remove', 'app/api/agents/[id]/route.ts:48-63');
     }
     return withOwner(ownerDeps(deps), request, async ({ ownerId, headers }) => {
       if (isBuiltInAgent(store, id)) return builtInReadOnlyResponse(headers);
@@ -1282,7 +1282,7 @@ export function mountAgentRuntime(service, deps) {
   async function importAgents(body, request) {
     const store = agentStore(deps);
     if (!store) {
-      throw notImplementedAt('zhiyunClassroomStudio.agents.import', 'app/api/agents/import/route.ts:39-83');
+      throw notImplementedAt('zwClassroomStudio.agents.import', 'app/api/agents/import/route.ts:39-83');
     }
     return withOwner(ownerDeps(deps), request, async ({ ownerId, headers }) => {
       const read = readJsonBody(body);
@@ -1369,7 +1369,7 @@ export function mountAgentRuntime(service, deps) {
     if (!store) {
       // 变更类：没有会话存储就抛（协议 §0），不回 404 —— 404 会让调用方以为
       // "这个会话不存在"，而事实上是"整个 runtime 没接"。
-      throw notImplementedAt('zhiyunClassroomStudio.sessions.create', 'app/api/agent/sessions/route.ts:43-224');
+      throw notImplementedAt('zwClassroomStudio.sessions.create', 'app/api/agent/sessions/route.ts:43-224');
     }
 
     const read = readJsonBody(body);
@@ -1539,7 +1539,7 @@ export function mountAgentRuntime(service, deps) {
   async function updateSession(id, body, request) {
     const store = sessionStore();
     if (!store) {
-      throw notImplementedAt('zhiyunClassroomStudio.sessions.update', 'app/api/agent/sessions/[id]/route.ts:29-63');
+      throw notImplementedAt('zwClassroomStudio.sessions.update', 'app/api/agent/sessions/[id]/route.ts:29-63');
     }
     return withOwner(ownerDeps(deps), request, async ({ ownerId, headers }) => {
       const read = readJsonBody(body);
@@ -1567,7 +1567,7 @@ export function mountAgentRuntime(service, deps) {
   async function removeSession(id) {
     void id;
     throw notImplementedAt(
-      'zhiyunClassroomStudio.sessions.remove',
+      'zwClassroomStudio.sessions.remove',
       'app/api/agent/sessions/[id]/route.ts:13-63',
       '上游该 route 只有 GET/PATCH，没有 DELETE；批表第 4 行的 DELETE 不存在',
     );
@@ -1577,7 +1577,7 @@ export function mountAgentRuntime(service, deps) {
   async function cancelSession(id, request) {
     const store = sessionStore();
     if (!store) {
-      throw notImplementedAt('zhiyunClassroomStudio.sessions.cancel', 'app/api/agent/sessions/[id]/cancel/route.ts:16-45');
+      throw notImplementedAt('zwClassroomStudio.sessions.cancel', 'app/api/agent/sessions/[id]/cancel/route.ts:16-45');
     }
     return withOwner(ownerDeps(deps), request, async ({ ownerId, headers }) => {
       const meta = await store.getSession(id);
@@ -1661,7 +1661,7 @@ export function mountAgentRuntime(service, deps) {
   async function sendMessage(id, body, request) {
     const store = sessionStore();
     if (!store) {
-      throw notImplementedAt('zhiyunClassroomStudio.sessions.send', 'app/api/agent/sessions/[id]/messages/route.ts:27-149');
+      throw notImplementedAt('zwClassroomStudio.sessions.send', 'app/api/agent/sessions/[id]/messages/route.ts:27-149');
     }
     return withOwner(ownerDeps(deps), request, async ({ ownerId, headers }) => {
       const meta = await store.getSession(id);
@@ -1805,7 +1805,7 @@ export function mountAgentRuntime(service, deps) {
       return agent.startRuntime(body, opts);
     }
     throw notImplementedAt(
-      'zhiyunClassroomStudio.runtime.start',
+      'zwClassroomStudio.runtime.start',
       'app/api/agent/runtime/route.ts:27-35',
       '上游只有 GET 状态探针，没有 POST；要起 run 请用 ports.agent.plan/run',
     );
@@ -1910,7 +1910,7 @@ export function mountAgentRuntime(service, deps) {
     const dir = skillsDirOf(deps);
     if (!dir) {
       throw notImplementedAt(
-        'zhiyunClassroomStudio.skills.install',
+        'zwClassroomStudio.skills.install',
         'app/api/agent/skills/route.ts:48-104',
         'dataDir 为 null：没有可写的技能目录（上游 createUserSkill 写 pg）',
       );
@@ -1930,7 +1930,7 @@ export function mountAgentRuntime(service, deps) {
       const filename = String(file.filename ?? 'SKILL.md');
       if (filename.toLowerCase().endsWith('.zip')) {
         throw notImplementedAt(
-          'zhiyunClassroomStudio.skills.install',
+          'zwClassroomStudio.skills.install',
           'app/api/agent/skills/route.ts:70-71',
           'zip 解包要 JSZip（本包不加依赖），请上传裸 SKILL.md',
         );
@@ -1999,7 +1999,7 @@ export function mountAgentRuntime(service, deps) {
     void id;
     void body;
     throw notImplementedAt(
-      'zhiyunClassroomStudio.skills.put',
+      'zwClassroomStudio.skills.put',
       'app/api/agent/skills/[id]/route.ts:18-54',
       '上游只有 GET/DELETE；编辑走 patchUserSkill（JSON-pointer），不是整份覆盖',
     );
@@ -2013,7 +2013,7 @@ export function mountAgentRuntime(service, deps) {
   async function removeSkill(id, request) {
     const dir = skillsDirOf(deps);
     if (!dir) {
-      throw notImplementedAt('zhiyunClassroomStudio.skills.remove', 'app/api/agent/skills/[id]/route.ts:31-54');
+      throw notImplementedAt('zwClassroomStudio.skills.remove', 'app/api/agent/skills/[id]/route.ts:31-54');
     }
     return withOwner(ownerDeps(deps), request, async ({ headers }) => {
       if (!String(id).startsWith('usk_')) {
@@ -2045,7 +2045,7 @@ export function mountAgentRuntime(service, deps) {
     if (id === 'openmaic') {
       // 上游 `buildOpenClawSkillZip()` 打包仓库自带的 skill；本包没有那棵树。
       throw notImplementedAt(
-        'zhiyunClassroomStudio.skills.view',
+        'zwClassroomStudio.skills.view',
         'app/api/skills/[id]/route.ts:28-31',
         'buildOpenClawSkillZip 打的是 ref/OpenMAIC/skills 目录，本包没有',
       );
@@ -2060,7 +2060,7 @@ export function mountAgentRuntime(service, deps) {
       const exporter = port(deps, 'export');
       if (typeof exporter?.skillZip !== 'function') {
         throw notImplementedAt(
-          'zhiyunClassroomStudio.skills.view',
+          'zwClassroomStudio.skills.view',
           'app/api/skills/[id]/route.ts:38-46',
           'zip 由 JSZip 生成；注入 ports.export.skillZip 后本方法返回 { buffer, mimeType }',
         );
@@ -2163,7 +2163,7 @@ export function mountAgentRuntime(service, deps) {
       const agent = port(deps, 'agent');
       if (typeof agent?.resolveElementReference !== 'function') {
         throw notImplementedAt(
-          'zhiyunClassroomStudio.chat.send',
+          'zwClassroomStudio.chat.send',
           'lib/chat/pi/element-reference.ts:115-1640',
           '课件引用的解析（1640 行）未搬；注入 ports.agent.resolveElementReference 即可',
         );
@@ -2221,7 +2221,7 @@ export function mountAgentRuntime(service, deps) {
     const agent = port(deps, 'agent');
     if (typeof agent?.run !== 'function') {
       throw notImplementedAt(
-        'zhiyunClassroomStudio.chat.send',
+        'zwClassroomStudio.chat.send',
         'app/api/chat/pi/route.ts:271-345',
         '传输层是 ports.agent.run(plan, opts)（上游是 CopilotKit 的 pi 导演循环）',
       );
@@ -2460,7 +2460,7 @@ async function writeAgent(store, action, ownerId, payload) {
         : store.port.import;
     if (typeof method !== 'function') {
       throw notImplementedAt(
-        `zhiyunClassroomStudio.agents.${action === 'update' ? 'put' : action === 'remove' ? 'remove' : 'import'}`,
+        `zwClassroomStudio.agents.${action === 'update' ? 'put' : action === 'remove' ? 'remove' : 'import'}`,
         'app/api/agents/[id]/route.ts:31-63',
         `注入的 agents 端口没有 ${action} 方法`,
       );
@@ -2483,7 +2483,7 @@ async function writeAgent(store, action, ownerId, payload) {
     if (!(await kv.get(key))) return false;
     if (typeof kv.remove !== 'function') {
       throw notImplementedAt(
-        'zhiyunClassroomStudio.agents.remove',
+        'zwClassroomStudio.agents.remove',
         'app/api/agents/[id]/route.ts:48-63',
         'vault.kv 没有 remove 方法',
       );

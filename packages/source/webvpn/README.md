@@ -54,7 +54,7 @@ https://webvpn.zju.edu.cn/https/<hex>/api/…   ← 物理地址（真正发出�
 zju 数据源都成立 —— 学在浙大、教务、学习通、智云课堂用的都是同一套校园域名。
 
 在拆出来之前，它躺在 `@lybx-leyw/dsh-zju-source-campus` 里，于是 `cc98` / `zdbk` 想用
-只能借 campus 的 `zhiyunEgress` 服务：**一个数据包的能力被另一个业务包绑架** ——
+只能借 campus 的 `zwEgress` 服务：**一个数据包的能力被另一个业务包绑架** ——
 campus 不装，它们就退回 `globalThis.fetch`，而那条路会走全局代理
 （实测同一个 `api.cc98.org` 请求：全局代理 10.7 秒失败，共享出口 97ms 成功）。
 

@@ -10,12 +10,12 @@ import { createWriteToolRegistrar, contractOf, inputError, optStr, serviceLookup
 import { createReadToolRegistrar } from '@lybx-leyw/dsh-zju-tool-kit';
 import { createXuezaiReadTools } from './reads.js';
 
-export const name = 'zhiyun-tool-xuezai';
+export const name = 'zw-tool-xuezai';
 
-export const inject = ['tools', 'approval', 'zhiyunXuezai'];
+export const inject = ['tools', 'approval', 'zwXuezai'];
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunXuezai: '@lybx-leyw/dsh-zju-source-xuezai',
+  zwXuezai: '@lybx-leyw/dsh-zju-source-xuezai',
 });
 
 /**
@@ -53,11 +53,11 @@ export function createXuezaiWriteTools(services) {
 
         if (action === 'submit') {
           const content = str(args.content, '要提交的正文', { max: 20000 });
-          const xuezai = need('zhiyunXuezai');
+          const xuezai = need('zwXuezai');
           const { prepare, execute, cancel } = contractOf(xuezai, 'submitHomework');
           return { summary: await prepare({ course, homework, content }), execute, cancel };
         }
-        const xuezai = need('zhiyunXuezai');
+        const xuezai = need('zwXuezai');
         const { prepare, execute, cancel } = contractOf(xuezai, 'retractHomework');
         return { summary: await prepare({ course, homework }), execute, cancel };
       },
@@ -95,7 +95,7 @@ export function createXuezaiWriteTools(services) {
           // 批量模式下每门课的口令不同，一个口令签不了多个点名 —— 那是两个动作。
           throw inputError('all: true 时不能同时给 code：批量签到不猜口令，数字点名会如实报「签不了」');
         }
-        const xuezai = need('zhiyunXuezai');
+        const xuezai = need('zwXuezai');
 
         if (all) {
           const { prepare, execute, cancel } = contractOf(xuezai, 'rollcallAll');

@@ -123,7 +123,7 @@ export function createMemoryVocabularyStore(initial = null) {
 }
 
 /**
- * JSON 文件词表（`<profile>/data/zhiyun-parser/vocabulary.json`）。
+ * JSON 文件词表（`<profile>/data/zw-parser/vocabulary.json`）。
  *
  * 落盘**不自己写 tmp+rename**：宿主的 `dsh-atomic-write` 已经处理了 Windows 上
  * rename 的瞬态 EACCES/EBUSY/EPERM 重试，手写一份只会得到更脆的副本。

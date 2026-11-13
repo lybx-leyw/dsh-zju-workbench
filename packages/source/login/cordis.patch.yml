@@ -1,3 +1,3 @@
 - insert:
-    - id: zhiyun-login
+    - id: zw-login
       name: "@lybx-leyw/dsh-zju-source-login"

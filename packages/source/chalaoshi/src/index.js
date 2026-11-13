@@ -3,7 +3,7 @@
  *
  * # 分层（D17）
  *
- * 纯只读数据源：`ctx.provide('zhiyunChalaoshi')` + 一条同源数据路由。
+ * 纯只读数据源：`ctx.provide('zwChalaoshi')` + 一条同源数据路由。
  * **不注册 AI 工具**、**无写操作**。
  *
  * # 索引缓存放在哪
@@ -26,7 +26,7 @@ export const name = 'zju-source-chalaoshi';
 export const inject = ['profileContext'];
 
 /** 同源数据路由。 */
-export const ROUTE_PATH = '/api/zhiyun-chalaoshi';
+export const ROUTE_PATH = '/api/zw-chalaoshi';
 
 /**
  * 刷新失败后的冷却期。
@@ -185,7 +185,7 @@ export function apply(ctx) {
       },
     };
 
-    const disposeService = ctx.provide('zhiyunChalaoshi', service);
+    const disposeService = ctx.provide('zwChalaoshi', service);
 
     let removeRoute = null;
     ctx.inject(['webServer'], (scope) => {

@@ -9,7 +9,7 @@
 //   - 这边真的花钱、真的连网，只证明**这条链路今天在这台机器上真的通**，不放进 npm test。
 //
 // 凭证来源（按顺序）：
-//   1. 环境变量 ZHIYUN_SMOKE_BASE_URL / ZHIYUN_SMOKE_API_KEY / ZHIYUN_SMOKE_MODEL
+//   1. 环境变量 ZW_SMOKE_BASE_URL / ZW_SMOKE_API_KEY / ZW_SMOKE_MODEL
 //   2. 仓库根 `.env` 的 BaseURL / APIkey / ModelName（该文件已被 .gitignore 忽略）
 // 本脚本**从不打印密钥**，也不把它写进任何落盘文件。
 //
@@ -135,9 +135,9 @@ async function resolveCredentials() {
     return { value: '', source: '' };
   };
   // 仓库根的键名是 BaseURL / APIkey / ModelName；同时接受更规范的大写写法。
-  const baseUrl = pick('ZHIYUN_SMOKE_BASE_URL', 'DEEPSEEK_BASE_URL', 'BaseURL', 'BASE_URL');
-  const apiKey = pick('ZHIYUN_SMOKE_API_KEY', 'DEEPSEEK_API_KEY', 'APIkey', 'API_KEY');
-  const model = pick('ZHIYUN_SMOKE_MODEL', 'DEEPSEEK_MODEL', 'ModelName', 'MODEL_NAME');
+  const baseUrl = pick('ZW_SMOKE_BASE_URL', 'DEEPSEEK_BASE_URL', 'BaseURL', 'BASE_URL');
+  const apiKey = pick('ZW_SMOKE_API_KEY', 'DEEPSEEK_API_KEY', 'APIkey', 'API_KEY');
+  const model = pick('ZW_SMOKE_MODEL', 'DEEPSEEK_MODEL', 'ModelName', 'MODEL_NAME');
   return {
     baseUrl: baseUrl.value,
     apiKey: apiKey.value,
@@ -433,7 +433,7 @@ async function main() {
     report.error = {
       stage: 'credentials',
       message: `缺少模型凭证：${missing.join('、')}`,
-      hint: '在仓库根 .env 里写 BaseURL / APIkey / ModelName，或设置 ZHIYUN_SMOKE_* 环境变量',
+      hint: '在仓库根 .env 里写 BaseURL / APIkey / ModelName，或设置 ZW_SMOKE_* 环境变量',
     };
     return finish(report, options, 2);
   }

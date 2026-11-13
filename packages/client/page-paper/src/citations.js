@@ -20,7 +20,7 @@
  */
 
 /** 保留域，永不解析；只作为「这一页」的载体。 */
-const PAGE_LINK_ORIGIN = 'https://zhiyun.invalid';
+const PAGE_LINK_ORIGIN = 'https://zw.invalid';
 const PAGE_LINK_PREFIX = `${PAGE_LINK_ORIGIN}/paper/page/`;
 
 /** 页码引用 → 跳转地址。 */

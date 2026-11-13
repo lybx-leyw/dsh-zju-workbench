@@ -20,7 +20,7 @@ disagreement is recorded rather than averaged away — see [CROSS-SOURCE-REGISTE
 - **Quick numbers** — `cheatsheet.md`. **Implementable techniques** — `patterns.md`.
   **Terminology** — `glossary.md`.
 - **For this repository** — read [repo-profile.md](repo-profile.md) first: it maps the tokens
-  (`--zy-fs-*`, `--zy-muted`, …) to the thresholds below and records known deviations.
+  (`--zw-fs-*`, `--zw-muted`, …) to the thresholds below and records known deviations.
   Run `node scripts/check-hf.mjs` before a PR; tick [checklist.md](checklist.md).
 
 ---

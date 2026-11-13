@@ -129,7 +129,7 @@ test('每条消息都带 id 与 source（会话归因依赖它们）', () => {
   const out = toHostMessages([{ role: 'user', content: 'hi' }]);
   assert.ok(out[0].id, '缺 id');
   assert.ok(out[0].source, '缺 source');
-  assert.equal(out[0].source.kind, 'zhiyun-quiz');
+  assert.equal(out[0].source.kind, 'zw-quiz');
 });
 
 // ── 工具定义格式（2026-10-31 第六次真机失败）────────────────────────────

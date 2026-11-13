@@ -11,7 +11,7 @@
  * 2. **pdf.js 的 worker 必须是独立脚本**（`GlobalWorkerOptions.workerSrc` 指向一个
  *    URL）。esbuild 打出来的 cjs 封装里没有可用的模块 URL。
  * 3. **主题要能跟进 iframe**。只有同源才能 `contentDocument` 读写 —— 非同源连
- *    `--zy-*` 都注不进去，暗色模式就会退化成一块刺眼的白。
+ *    `--zw-*` 都注不进去，暗色模式就会退化成一块刺眼的白。
  *
  * 这套分工是照「论文」页的成例（见 `@lybx-leyw/dsh-zju-page-paper/src/ReaderFrame.jsx`），
  * 那一页也是同源 iframe + 上游自渲染 HTML。
@@ -41,7 +41,7 @@ const require = createRequire(import.meta.url);
  * 这个常量归本文件：前缀下面挂的三类资源（阅读页、pdf.js 静态文件、库内文件）
  * 都由 `servePdfRoute` 自己分派，调用方只需要知道「往哪儿注册」。
  */
-export const PDF_ROUTE_PREFIX = '/zhiyun-vault-pdf';
+export const PDF_ROUTE_PREFIX = '/zw-vault-pdf';
 
 /** 允许从 `pdfjs-dist` 里取出的**子目录 / 文件**白名单（见 `servePdfRoute`）。 */
 const PDFJS_ALLOWED = /^(?:build\/[\w.-]+|cmaps\/[\w.-]+|standard_fonts\/[\w.-]+|iccs\/[\w.-]+)$/;
@@ -202,7 +202,7 @@ function applyTheme(theme) {
 }
 window.addEventListener('message', (event) => {
   const data = event.data;
-  if (data && data.type === 'zhiyun-pdf-theme') applyTheme(data.theme);
+  if (data && data.type === 'zw-pdf-theme') applyTheme(data.theme);
 });
 // 首帧先按系统偏好猜一次，父页面随后会纠正。
 if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) applyTheme('dark');

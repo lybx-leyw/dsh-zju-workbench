@@ -17,7 +17,7 @@ xxt 这一块拆出来时顺带修了三处**落在用户可见路径上**的问
 
 ## 能力
 
-`/api/zhiyun-xxt` 上的 16 个**只读**方法，方法名即 `xxt.<名字>`：
+`/api/zw-xxt` 上的 16 个**只读**方法，方法名即 `xxt.<名字>`：
 
 > 早先这里写「9 个」并漏了三行（`chapters` / `materials` / `downloadParams`）。
 > 实际的方法表是 `reads.js` 的 `XXT_METHODS` —— 它才是权威，本表只是导读。
@@ -97,7 +97,7 @@ JSON 接口 —— 列表页是服务端渲染的 HTML。所以要让用户看�
 判定顺序：
 
 1. 环境变量 `CHAOXING_COOKIE`（临时覆盖，不写进会话文件）；
-2. 已导入的会话（`<profile>/data/zhiyun-xxt/xxt.session`，DPAPI 密文）。
+2. 已导入的会话（`<profile>/data/zw-xxt/xxt.session`，DPAPI 密文）。
 
 ### 接受的四种粘贴形态
 
@@ -132,13 +132,13 @@ JSON 接口 —— 列表页是服务端渲染的 HTML。所以要让用户看�
 
 ## 数据路由
 
-`/api/zhiyun-xxt`，与 `/api/zhiyun-campus`、`/api/zhiyun-omni` 并列。
+`/api/zw-xxt`，与 `/api/zw-campus`、`/api/zw-omni` 并列。
 
 ```http
-GET  /api/zhiyun-xxt
+GET  /api/zw-xxt
 → { ok: true, value: { route, platform, methods, actions, note } }
 
-POST /api/zhiyun-xxt
+POST /api/zw-xxt
 { "type": "client-request", "rpcId": "…", "payload": { "method": "xxt.deadlines", "args": { "horizon_days": 30 } } }
 → { "type": "server-response", "rpcId": "…", "result": { "ok": true, "value": … } }
 ```
@@ -147,11 +147,11 @@ POST /api/zhiyun-xxt
 限死在 xxt 上），但别的平台前缀一律拒。
 
 方法名按**静态白名单**校验，不做任意属性访问 —— 这条路由是给同源页面用的，不该成为一个
-能拨动插件进程内部对象的口子（`constructor` / `__proto__` 会被 `/api/zhiyun-xxt` 直接拒）。
+能拨动插件进程内部对象的口子（`constructor` / `__proto__` 会被 `/api/zw-xxt` 直接拒）。
 
 ## 会话存在哪
 
-`<profile>/data/zhiyun-xxt/xxt.session` —— **一份**，不是三份（学习通只有一个登录态）。
+`<profile>/data/zw-xxt/xxt.session` —— **一份**，不是三份（学习通只有一个登录态）。
 Windows 上走 DPAPI，只有同一台机器的同一 Windows 用户能解开。会话文件坏掉不会让插件起不来，
 按「未配置」处理并记一行日志：重新导入一次比让用户去删文件友好。
 

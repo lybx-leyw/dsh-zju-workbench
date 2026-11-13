@@ -18,12 +18,12 @@
  *
  * # 路由
  *
- * `POST /api/zhiyun-pta?cookie`（需 `x-zhiyun-pta: 1` 头）。
+ * `POST /api/zw-pta?cookie`（需 `x-zw-pta: 1` 头）。
  *
  * # 为什么这一页没有「出口状态」
  *
  * 拆包前 campus 那版这里还有一行「出口：校内直连 / 校外」。那是
- * `zhiyunEgress`（tier 0）的事实，而拼题A 是**公网站**
+ * `zwEgress`（tier 0）的事实，而拼题A 是**公网站**
  * （`hosts.js` 把它归 `PUBLIC_HOSTS`），本来就不该被网关改写。
  * 把无关读数摆进这一页，用户会以为「出口错了」是 Cookie 失效的原因。
  * 需要看出口状态时去「浙大统一身份认证」分区，那里才是它该在的地方。
@@ -45,13 +45,13 @@ import {
 } from '@lybx-leyw/dsh-zju-ui-shared';
 
 /** 与本包 `index.js` 的 `ROUTE_PATH` 一致。 */
-const ROUTE_PATH = '/api/zhiyun-pta';
+const ROUTE_PATH = '/api/zw-pta';
 /** 写操作必须带的自定义头（服务端用它挡 CSRF）。 */
-const WRITE_HEADER = 'x-zhiyun-pta';
+const WRITE_HEADER = 'x-zw-pta';
 /** i18n namespace。**一包一个**，重复注册同名同语言会抛错。 */
 const NAMESPACE = 'zju-source-pta';
 
-export const name = 'zhiyun-source-pta-client';
+export const name = 'zw-source-pta-client';
 
 /** 只要插槽：设置分区不依赖任何领域服务。 */
 export const inject = ['slots', 'locale'];
@@ -318,7 +318,7 @@ export function SettingsSection({ t }) {
       // 卡片二：Cookie 状态。与「输入」分开 —— 混在一张卡里会让值看起来属于输入框。
       //
       // ⚠️ 这里**只有** Cookie 状态，没有「出口」那一行。
-      //   出口状态属于 `zhiyunEgress`（tier 0），本包不碰网络出口判定；
+      //   出口状态属于 `zwEgress`（tier 0），本包不碰网络出口判定；
       //   而拼题A 是公网站（`hosts.js` 归 `PUBLIC_HOSTS`），本来也不该被网关改写。
       //   把无关读数摆进这一页，用户会以为「出口错了」是 Cookie 失效的原因。
       React.createElement(Card, {

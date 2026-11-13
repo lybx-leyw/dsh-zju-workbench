@@ -30,7 +30,7 @@ function model(options) {
   return answer(options);
 }
 async function withHost(fn, respond = model, version = lock.hostVersions[0]) {
-  const dir = await mkdtemp(path.join(tmpdir(), 'zhiyun-collage-test-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'zw-collage-test-'));
   let host;
   try { host = await mountHost(version, dir, respond); await fn(host); }
   finally { await host?.dispose(); await rm(dir, { recursive: true, force: true }); }

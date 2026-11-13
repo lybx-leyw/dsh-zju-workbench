@@ -45,7 +45,7 @@ async function boot({ reply }) {
   };
   ctx.provide('slots', { register: () => () => {} });
 
-  ctx.provide('zhiyunParser', {
+  ctx.provide('zwParser', {
     llm: {
       resolve: async () => ({ provider: 'fake', model: 'fake-model' }),
       call: async (request) => {
@@ -56,7 +56,7 @@ async function boot({ reply }) {
   });
 
   await apply(ctx, {});
-  return { dir, calls, service: () => provided.get('zhiyunPlanning') };
+  return { dir, calls, service: () => provided.get('zwPlanning') };
 }
 
 test('普通对话：回话 + action，且带 model', async () => {
@@ -210,7 +210,7 @@ test('模型不可用 → NO_LLM，信息可读', async () => {
   await apply(ctx, {});
   try {
     await assert.rejects(
-      () => provided.get('zhiyunPlanning').mine.pet('你好'),
+      () => provided.get('zwPlanning').mine.pet('你好'),
       (error) => {
         assert.equal(error.code, 'NO_LLM');
         assert.match(error.message, /设置|模型/);

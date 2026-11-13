@@ -13,7 +13,7 @@ DSH 运行时本来就把依赖认好了，而且是两套真源，各自有各�
 | 模块边 | `ctx.modules.manifest.modules`（宿主侧 `ctx.clientModules.graph().entries`） | 每行的 `inject`（包名边）与 `external`（精确模块请求，`<包名>/client` 折回包名）。**顺序已经是拓扑序** —— DSH 的 `orderByModuleGraph` 保证被请求的行排在消费者之前 |
 | 硬边 | 每个 Cordis fiber 的 `inject` 服务名 + `ctx.reflect.store` 里该服务的提供者 fiber | 唯一「停用提供方 → 消费者变 `pending`」的关系，也就是界面上那句「等待依赖」 |
 
-两套真源分处两棵插件树：宿主的树与浏览器的树互不可见。而本仓最要命的几条边全在**宿主面**（`@lybx-leyw/dsh-zju-core-study` 的 `inject` 里写着 `zhiyunClassroom / zhiyunParser / zhiyunKnowledge`，解析包写着 `zhiyunClassroom`，讲义与出题包写着 `zhiyunParser`）。所以本包有真正干活的宿主半边：`/api/zhiyun-plugins` 把宿主面的读数交给浏览器，浏览器面（模块边、客户端硬边）由客户端就地读，最后用同一个纯函数折成一张图。
+两套真源分处两棵插件树：宿主的树与浏览器的树互不可见。而本仓最要命的几条边全在**宿主面**（`@lybx-leyw/dsh-zju-core-study` 的 `inject` 里写着 `zwClassroom / zwParser / zwKnowledge`，解析包写着 `zwClassroom`，讲义与出题包写着 `zwParser`）。所以本包有真正干活的宿主半边：`/api/zw-plugins` 把宿主面的读数交给浏览器，浏览器面（模块边、客户端硬边）由客户端就地读，最后用同一个纯函数折成一张图。
 
 **只读宿主那棵树的依赖事实，不解析源码、不扫目录**：`src/runtime.js` 只碰 Loader 条目的 `options.name`/`fiber`、fiber 的 `inject`、以及 `ctx.reflect.store` 里每条实现的 `name`/`fiber`。
 
@@ -31,7 +31,7 @@ DSH 运行时本来就把依赖认好了，而且是两套真源，各自有各�
 
 ## 取消之后会发生什么
 
-- **侧栏那一项消失**：外壳按同一份行级状态过滤 `NAV`，所以被取消的页不再出现在侧栏，`Ctrl+K` 跳转里也搜不到（两处共用一份清单，见 `dsh-zhiyun-shell-workbench/src/model.js` 的 `hiddenPageIds`）。正停在那一页时会被送回「今天」。
+- **侧栏那一项消失**：外壳按同一份行级状态过滤 `NAV`，所以被取消的页不再出现在侧栏，`Ctrl+K` 跳转里也搜不到（两处共用一份清单，见 `dsh-zju-shell-workbench/src/model.js` 的 `hiddenPageIds`）。正停在那一页时会被送回「今天」。
 - **它承载的面板与插槽仍在**（外壳照常注册），页面包的内容贡献因此不挂载 —— 那一页显示外壳的「暂时不可用」占位。这是有意的：撤注册要在远程事件回来的异步时点调 `ctx.slots.register`，容易撞 `INACTIVE_EFFECT`；把取消落在呈现上时序最简单。
 - **再打开就回来**：行级开关写在用户 overlay 里，随时可撤销，侧栏那一项随之恢复。
 
@@ -41,10 +41,10 @@ DSH 运行时本来就把依赖认好了，而且是两套真源，各自有各�
 
 ## 边界
 
-- 只声明 `slots` / `connection` / `remote` / `remote.pluginManager` / `loader` / `modules`。刻意**不**把领域服务（`zhiyunStudyController` 等）写进 `inject`：这一页要在领域包被停用时照样打得开 —— 那正是它存在的意义。
+- 只声明 `slots` / `connection` / `remote` / `remote.pluginManager` / `loader` / `modules`。刻意**不**把领域服务（`zwStudyController` 等）写进 `inject`：这一页要在领域包被停用时照样打得开 —— 那正是它存在的意义。
 - 宿主半边只读一个方法 `graph`。要改开关请走 `pluginManager`，不要在这里加写入口。
-- 样式用本包自己的 `zpl-` 前缀，不去改外壳的 `.zy-*`（改了会影响另外五个页面），也不与论文页已占用的 `zp-` 撞车。
+- 样式用本包自己的 `zwpl-` 前缀，不去改外壳的 `.zw-*`（改了会影响另外五个页面），也不与论文页已占用的 `zwp-` 撞车。
 
 ## 插槽
 
-在 `zhiyun.plugins.content` 注册内容。声明 `children` 的是外壳（`NAV` 里每一项都会自动声明 `<page>.content`，声明即认领），本包只注册。
+在 `zw.plugins.content` 注册内容。声明 `children` 的是外壳（`NAV` 里每一项都会自动声明 `<page>.content`，声明即认领），本包只注册。

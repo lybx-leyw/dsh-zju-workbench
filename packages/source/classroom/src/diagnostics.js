@@ -12,7 +12,7 @@
  *
  * 读了 `setup.ts` 之后可以确定 `setup` 是**写操作**：
  *
- *   - `media` 分支 `npm install ffmpeg-static@5.3.0` 到 `<data>/tools/zhiyun-media`；
+ *   - `media` 分支 `npm install ffmpeg-static@5.3.0` 到 `<data>/tools/zw-media`；
  *   - `asr` 分支从 HuggingFace / hf-mirror **下载约 240 MB 模型**并落盘。
  *
  * 两者都改**本机状态**，而且都属于「安装」而不是「读取」。本包的能力声明是
@@ -112,7 +112,7 @@ const VERSION_TIMEOUT_MS = 5000;
  * 环境变量覆盖 → 本包数据目录下装好的 → PATH 里的 `ffmpeg`。
  *
  * @param {object} options
- * @param {string} [options.dataDirectory] - 本 profile 的数据目录（`<profile>/data/zhiyun-classroom`）。
+ * @param {string} [options.dataDirectory] - 本 profile 的数据目录（`<profile>/data/zw-classroom`）。
  * @param {string} [options.env] - 环境变量来源（测试可注入）。
  * @returns {{executable: string, source: 'env'|'managed'|'path'}}
  */
@@ -121,7 +121,7 @@ export function resolveFfmpeg({ dataDirectory, env = process.env } = {}) {
   if (configured) return { executable: configured, source: 'env' };
   if (dataDirectory) {
     const managed = path.join(
-      dataDirectory, 'tools', 'zhiyun-media', 'node_modules', 'ffmpeg-static',
+      dataDirectory, 'tools', 'zw-media', 'node_modules', 'ffmpeg-static',
       process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg',
     );
     return { executable: managed, source: 'managed' };
@@ -194,7 +194,7 @@ export async function checkMedia({ dataDirectory, env, spawn: spawner, timeoutMs
     action: probe.available
       ? null
       : '安装 FFmpeg：设置环境变量 FFMPEG_PATH 指向已有的 ffmpeg 可执行文件（推荐），'
-        + '或由宿主安装层把 ffmpeg-static 装到本包的 data/tools/zhiyun-media 下。'
+        + '或由宿主安装层把 ffmpeg-static 装到本包的 data/tools/zw-media 下。'
         + '本包不执行 npm install。',
   };
 }

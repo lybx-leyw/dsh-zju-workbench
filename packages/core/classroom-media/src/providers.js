@@ -12,7 +12,7 @@
  *
  * # 本仓的改法
  *
- * 上游的"密钥从哪来"整层换成宿主服务：**一律问 `ctx.zhiyunClassroomStudio.providers`**
+ * 上游的"密钥从哪来"整层换成宿主服务：**一律问 `ctx.zwClassroomStudio.providers`**
  * （规范 §4 的 `providers.list()` / `providers.set()`）。本包不持久化、不读 YAML。
  *
  * 读 env 只作为**最后兜底**：桌面端还没有设置页时，用户把 key 放在环境变量里仍能跑通。
@@ -398,7 +398,7 @@ function normalizeEntry(entry, meta) {
  *
  * 解析顺序（第一个有值的胜）：
  *   1. `config.providers[capability][id]` —— 集成层/测试注入，最高优先级；
- *   2. `ctx.zhiyunClassroomStudio.providers.list()` —— 宿主配置（规范 §4）；
+ *   2. `ctx.zwClassroomStudio.providers.list()` —— 宿主配置（规范 §4）；
  *   3. `process.env[meta.envKey]` —— **最后兜底**，仅为了桌面端在设置页落地前可用。
  *
  * 第 3 条是有意的例外，所以它只提供 key/baseURL，不提供 `disabled` 之类的语义。

@@ -53,6 +53,6 @@ test('dsh-pages 的其它 config 字段保持原样', () => {
   assert.equal(cfg.homePage, 'home');
   assert.equal(cfg.managerPage, 'pages');
   assert.equal(cfg.pageSlot, 'page.content');
-  assert.equal(cfg.classPrefix, 'zy-workbench');
+  assert.equal(cfg.classPrefix, 'zw-workbench');
   assert.equal(cfg.defaultRailWidth, 51);
 });

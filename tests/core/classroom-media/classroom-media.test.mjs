@@ -79,10 +79,10 @@ async function mount({ providers = {}, fetch: fetchImpl } = {}) {
       set: async () => ({ httpStatus: 200, body: {} }),
     },
   };
-  const { ctx, provided, disposers } = makeCtx({ services: { zhiyunClassroomStudio: studio } });
+  const { ctx, provided, disposers } = makeCtx({ services: { zwClassroomStudio: studio } });
   const dispose = plugin.apply(ctx, { providers, fetch: fetchImpl });
-  const media = provided.get('zhiyunClassroomMedia');
-  assert.ok(media, 'apply() 之后应能从容器里取到 zhiyunClassroomMedia');
+  const media = provided.get('zwClassroomMedia');
+  assert.ok(media, 'apply() 之后应能从容器里取到 zwClassroomMedia');
   return { media, ctx, dispose, disposers, provided };
 }
 
@@ -91,7 +91,7 @@ async function mount({ providers = {}, fetch: fetchImpl } = {}) {
 test('apply() 在没有任何上游服务时不抛，并照常 provide', () => {
   const { ctx, provided } = makeCtx();
   assert.doesNotThrow(() => plugin.apply(ctx, {}));
-  const media = provided.get('zhiyunClassroomMedia');
+  const media = provided.get('zwClassroomMedia');
   assert.equal(typeof media.tts, 'function');
   assert.equal(typeof media.asr, 'function');
   assert.equal(typeof media.image, 'function');
@@ -108,7 +108,7 @@ test('apply() 在 provide 抛错时也不抛（降级为"能力不可用"）', (
 test('status() 永不抛，且缺 studio 时 state=degraded', async () => {
   const { ctx, provided } = makeCtx();
   plugin.apply(ctx, {});
-  const status = await provided.get('zhiyunClassroomMedia').status();
+  const status = await provided.get('zwClassroomMedia').status();
   assert.equal(status.state, 'degraded');
   assert.equal(status.detail.studio, 'missing');
   assert.equal(status.version, plugin.PACKAGE_VERSION);
@@ -290,7 +290,7 @@ test('parsePdf() 用 unpdf 解析真实 PDF（本地、无网络）', async () =
 });
 
 test('parsePdf() 在没有 unpdf 的环境里返回 E_DEPENDENCY_MISSING', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'zyc-media-nodeps-'));
+  const dir = await mkdtemp(join(tmpdir(), 'zwc-media-nodeps-'));
   try {
     await cp(join(fileURLToPath(PACKAGE_DIR), 'src'), join(dir, 'src'), { recursive: true });
     const isolated = await import(pathToFileURL(join(dir, 'src', 'pdf', 'parse.js')).href);

@@ -26,19 +26,19 @@ import assert from 'node:assert/strict';
 
 /** 本轮的读工具包：目录 → { 模块, 工厂, 服务名, 工具名, 包名 }。 */
 const PACKAGES = [
-  { dir: 'zdbk', factory: 'createZdbkReadTools', service: 'zhiyunZdbk', tool: 'campus_zdbk_read', pkg: '@lybx-leyw/dsh-zju-source-zdbk' },
-  { dir: 'xuezai', factory: 'createXuezaiReadTools', service: 'zhiyunXuezai', tool: 'campus_xuezai_read', pkg: '@lybx-leyw/dsh-zju-source-xuezai' },
-  { dir: 'cc98', factory: 'createCc98ReadTools', service: 'zhiyunCc98', tool: 'campus_cc98_read', pkg: '@lybx-leyw/dsh-zju-source-cc98' },
-  { dir: 'pta', factory: 'createPtaReadTools', service: 'zhiyunPta', tool: 'campus_pta_read', pkg: '@lybx-leyw/dsh-zju-source-pta' },
-  { dir: 'sztz', factory: 'createSztzReadTools', service: 'zhiyunSztz', tool: 'campus_sztz_read', pkg: '@lybx-leyw/dsh-zju-source-sztz' },
-  { dir: 'tyys', factory: 'createTyysReadTools', service: 'zhiyunTyys', tool: 'campus_tyys_read', pkg: '@lybx-leyw/dsh-zju-source-tyys' },
-  { dir: 'lab', factory: 'createLabReadTools', service: 'zhiyunLab', tool: 'campus_lab_read', pkg: '@lybx-leyw/dsh-zju-source-lab' },
-  { dir: 'classroom', factory: 'createClassroomReadTools', service: 'zhiyunClassroom', tool: 'campus_classroom_read', pkg: '@lybx-leyw/dsh-zju-source-classroom' },
-  { dir: 'notice', factory: 'createNoticeReadTools', service: 'zhiyunNotice', tool: 'campus_notice_read', pkg: '@lybx-leyw/dsh-zju-source-notice' },
-  { dir: 'chalaoshi', factory: 'createChalaoshiReadTools', service: 'zhiyunChalaoshi', tool: 'campus_chalaoshi_read', pkg: '@lybx-leyw/dsh-zju-source-chalaoshi' },
-  { dir: 'ebook', factory: 'createEbookReadTools', service: 'zhiyunEbook', tool: 'campus_ebook_read', pkg: '@lybx-leyw/dsh-zju-source-ebook' },
-  { dir: 'yjsy', factory: 'createYjsyReadTools', service: 'zhiyunYjsy', tool: 'campus_yjsy_read', pkg: '@lybx-leyw/dsh-zju-source-yjsy' },
-  { dir: 'xxt', factory: 'createXxtReadTools', service: 'zhiyunXxt', tool: 'campus_xxt_read', pkg: '@lybx-leyw/dsh-zju-source-xxt' },
+  { dir: 'zdbk', factory: 'createZdbkReadTools', service: 'zwZdbk', tool: 'campus_zdbk_read', pkg: '@lybx-leyw/dsh-zju-source-zdbk' },
+  { dir: 'xuezai', factory: 'createXuezaiReadTools', service: 'zwXuezai', tool: 'campus_xuezai_read', pkg: '@lybx-leyw/dsh-zju-source-xuezai' },
+  { dir: 'cc98', factory: 'createCc98ReadTools', service: 'zwCc98', tool: 'campus_cc98_read', pkg: '@lybx-leyw/dsh-zju-source-cc98' },
+  { dir: 'pta', factory: 'createPtaReadTools', service: 'zwPta', tool: 'campus_pta_read', pkg: '@lybx-leyw/dsh-zju-source-pta' },
+  { dir: 'sztz', factory: 'createSztzReadTools', service: 'zwSztz', tool: 'campus_sztz_read', pkg: '@lybx-leyw/dsh-zju-source-sztz' },
+  { dir: 'tyys', factory: 'createTyysReadTools', service: 'zwTyys', tool: 'campus_tyys_read', pkg: '@lybx-leyw/dsh-zju-source-tyys' },
+  { dir: 'lab', factory: 'createLabReadTools', service: 'zwLab', tool: 'campus_lab_read', pkg: '@lybx-leyw/dsh-zju-source-lab' },
+  { dir: 'classroom', factory: 'createClassroomReadTools', service: 'zwClassroom', tool: 'campus_classroom_read', pkg: '@lybx-leyw/dsh-zju-source-classroom' },
+  { dir: 'notice', factory: 'createNoticeReadTools', service: 'zwNotice', tool: 'campus_notice_read', pkg: '@lybx-leyw/dsh-zju-source-notice' },
+  { dir: 'chalaoshi', factory: 'createChalaoshiReadTools', service: 'zwChalaoshi', tool: 'campus_chalaoshi_read', pkg: '@lybx-leyw/dsh-zju-source-chalaoshi' },
+  { dir: 'ebook', factory: 'createEbookReadTools', service: 'zwEbook', tool: 'campus_ebook_read', pkg: '@lybx-leyw/dsh-zju-source-ebook' },
+  { dir: 'yjsy', factory: 'createYjsyReadTools', service: 'zwYjsy', tool: 'campus_yjsy_read', pkg: '@lybx-leyw/dsh-zju-source-yjsy' },
+  { dir: 'xxt', factory: 'createXxtReadTools', service: 'zwXxt', tool: 'campus_xxt_read', pkg: '@lybx-leyw/dsh-zju-source-xxt' },
 ];
 
 const load = (dir) => import(`../../../packages/tool/${dir}/src/index.js`);
@@ -85,7 +85,7 @@ test('每个读工具都能被读注册器挂上，且 execute 不碰审批', as
     // `definition.run`：审批只可能被注册器加进去，绕过注册器就测不到它。
     // 这条曾经确实测不到 —— 把 `ctx.approval.request` 塞进注册器后守卫仍然是绿的。
     const definition = mod[entry.factory]({})[0];
-    const args = entry.service === 'zhiyunEbook' || entry.dir === 'ebook'
+    const args = entry.service === 'zwEbook' || entry.dir === 'ebook'
       ? { title: '算法导论' }
       : minimalArgs(definition, actionOf(definition)?.enum?.[0]);
     try {
@@ -185,15 +185,15 @@ test('每个工具包都声明了 inject —— 漏了会在挂载时抛 undefin
   // 「不声明也能跑」从未被验证过。补上之后这条守卫挡住复发。
   //
   // ⚠️ 只断言 `tools`。**不断言服务名**：`tool/classroom` 用的是
-  // `zhiyunStudy`（讲义来自 `core/study`），与它的目录名 classroom 不是
+  // `zwStudy`（讲义来自 `core/study`），与它的目录名 classroom 不是
   // 同一个词；按「目录名推出服务名」写断言会误报。服务名对不对由
   // 上一组 SERVICE_MISSING 测试覆盖（它拿 `entry.service` 实际去查）。
   for (const entry of PACKAGES) {
     const mod = await load(entry.dir);
     assert.ok(Array.isArray(mod.inject), `${entry.dir} 必须声明 inject`);
     assert.ok(mod.inject.includes('tools'), `${entry.dir} 的 inject 必须含 tools`);
-    assert.ok(typeof mod.name === 'string' && mod.name.startsWith('zhiyun-tool-'),
-      `${entry.dir} 的 name 应当以 zhiyun-tool- 开头`);
+    assert.ok(typeof mod.name === 'string' && mod.name.startsWith('zw-tool-'),
+      `${entry.dir} 的 name 应当以 zw-tool- 开头`);
   }
 });
 

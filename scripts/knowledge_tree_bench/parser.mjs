@@ -1,5 +1,5 @@
 /**
- * 解析域：`zhiyunParser` 的全部对外动作 + 建树/重构的纯函数。
+ * 解析域：`zwParser` 的全部对外动作 + 建树/重构的纯函数。
  *
  * # 两段桥，分开说
  *
@@ -89,7 +89,7 @@ export async function tokenizeFunctions() {
  */
 export async function mountParser({ dataDir, respond, config = {} } = {}) {
   const host = hostLlm(respond);
-  // 解析器 `inject` 了 `zhiyunClassroom`，但基准不跑真课堂：给一个
+  // 解析器 `inject` 了 `zwClassroom`，但基准不跑真课堂：给一个
   // **明确报错**的替身，好过让它变成 undefined 然后在深处炸。
   const classroom = {
     async getLessonContent() {
@@ -101,10 +101,10 @@ export async function mountParser({ dataDir, respond, config = {} } = {}) {
     dataDir,
     // 这一层的 ctx.llm 必须是**宿主形状**（prepareCall / resolveModelInfo），
     // 因为包内部要用产品自己的 HarnessLlm 去适配它。
-    services: { llm: host, zhiyunClassroom: classroom },
+    services: { llm: host, zwClassroom: classroom },
     config,
   });
-  const service = serviceOf(mounted, 'zhiyunParser');
+  const service = serviceOf(mounted, 'zwParser');
   const api = apiOf(service);
   // 功能名摊到顶层（与 `pureApi()` 的形状一致），调用方不必记两层。
   return { mounted, service, host, ...api.functions, getters: api.getters };

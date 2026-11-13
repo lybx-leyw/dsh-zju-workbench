@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-classroom-export",
   "version": "0.1.0",
-  "description": "智云 Pro「互动课堂」导出层：PPTX（含 MathML→OMML、富文本、占位页）/ 单文件 HTML（样式字体脚本内联、srcset）/ ZIP / 视频时间轴，源头 lib/export 与 lib/video-export*",
+  "description": "ZJU Workbench「互动课堂」导出层：PPTX（含 MathML→OMML、富文本、占位页）/ 单文件 HTML（样式字体脚本内联、srcset）/ ZIP / 视频时间轴，源头 lib/export 与 lib/video-export*",
   "type": "module",
   "main": "./src/index.js",
   "exports": {

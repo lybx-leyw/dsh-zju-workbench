@@ -119,6 +119,6 @@ test('resume stage names are recognised, unknown ones still fall through verbati
 
 test('accessibility: step state is announced, not only colour-coded', () => {
   const html = render({ progress: running(), startedAt: Date.now() });
-  assert.match(html, /class="zs-teach-sr-only"[^>]*>(已完成|进行中|未开始)</);
+  assert.match(html, /class="zws-teach-sr-only"[^>]*>(已完成|进行中|未开始)</);
   assert.match(html, /aria-label="备课总进度/);
 });

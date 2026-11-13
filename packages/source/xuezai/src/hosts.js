@@ -57,7 +57,7 @@ export const XUEZAI_HOSTS = new Set([
  * 也就是说校外**能直连**，绕网关只会多一跳、多一次网关登录。
  *
  * 所以本包的 `dsh.capability.network` 是 `public` 而不是 `campus`，也不自带
- * WebVPN 会话。若哪天这张表把学在浙大改判成 `campus`，出口层（`zhiyunEgress`，
+ * WebVPN 会话。若哪天这张表把学在浙大改判成 `campus`，出口层（`zwEgress`，
  * 由 `@lybx-leyw/dsh-zju-source-http` 提供）会自己升级到网关 —— 那是那层的职责，
  * 本包不需要为此改代码。真正需要它时抛的是 `WEBVPN_REQUIRED`，
  * `translateXzzdError()` 会把 message 原样交给用户（里面已经写了去配上网账号）。

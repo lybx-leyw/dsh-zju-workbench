@@ -2,7 +2,7 @@
 //
 // 与其它纯页面包一样是空壳，但**必须存在** —— 客户端 bundle 靠宿主 Loader 的
 // `ctx.loader.entries()` 进启动图谱，没有宿主入口的包不会被扫描，`dsh.client` 声明读不到。
-export const name = 'zhiyun-page-docs';
+export const name = 'zw-page-docs';
 
 /**
  * 无宿主行为：这一页读的是**打包进本包的** markdown 正文（`src/docs/*.md`，构建时由

@@ -26,15 +26,15 @@ test('Cornell notes scroll with pages, restore anchors after reconstruction, wra
       contentType: 'text/html; charset=utf-8', body: `<meta charset="utf-8"><style>
         #pane {height:700px;overflow:auto} #pdf-pages{display:flex;flex-direction:column;align-items:safe center;gap:14px}
         .page{position:relative;width:600px;height:900px;flex-shrink:0;background:white}
-        :root{--zp-frame-surface:#fafafa;--zp-frame-text:#222;--zp-frame-line:#ddd;--zp-frame-accent:blue}
+        :root{--zwp-frame-surface:#fafafa;--zwp-frame-text:#222;--zwp-frame-line:#ddd;--zwp-frame-accent:blue}
       </style><div id="pane"><div id="pdf-pages"><div class="page" data-page="1"><canvas></canvas></div>
       <div class="page" data-page="2"><canvas></canvas></div></div></div>
       <script type="module">${source}
-      window.mount = (name='paper') => { window.detach?.(); window.detach=attachCornellNotes(document,{topic:'topic',name});document.documentElement.classList.add('zp-cornell-visible'); };
+      window.mount = (name='paper') => { window.detach?.(); window.detach=attachCornellNotes(document,{topic:'topic',name});document.documentElement.classList.add('zwp-cornell-visible'); };
       window.mount();</script>`,
     }));
     await page.goto('http://cornell.test/');
-    const aside = page.locator('.zp-page-notes').first();
+    const aside = page.locator('.zwp-page-notes').first();
     await aside.click({ position: { x: 80, y: 225 } });
     const field = page.getByRole('textbox', { name: '第 1 页位置笔记' });
     const text = '段落旁的笔记自动换行'.repeat(20);
@@ -60,8 +60,8 @@ test('Cornell notes scroll with pages, restore anchors after reconstruction, wra
     await field.waitFor();
     assert.equal(await field.inputValue(), text);
     assert.ok(Math.abs((await geometry()).relative - before.relative) < 0.002);
-    await page.evaluate(() => document.documentElement.classList.remove('zp-cornell-visible'));
-    await page.evaluate(() => document.documentElement.classList.add('zp-cornell-visible'));
+    await page.evaluate(() => document.documentElement.classList.remove('zwp-cornell-visible'));
+    await page.evaluate(() => document.documentElement.classList.add('zwp-cornell-visible'));
     assert.equal(await field.inputValue(), text);
     await page.reload(); await field.waitFor();
     assert.equal(await field.inputValue(), text);
@@ -72,7 +72,7 @@ test('Cornell notes scroll with pages, restore anchors after reconstruction, wra
     assert.equal(await field.inputValue(), text);
     // Page-mode navigation discards page DOM. Returning must reconstruct the same note.
     await page.evaluate(() => { document.querySelector('[data-page="1"]').remove(); });
-    await page.locator('.zp-page-notes').click({ position: { x: 80, y: 200 } });
+    await page.locator('.zwp-page-notes').click({ position: { x: 80, y: 200 } });
     await page.getByRole('textbox', { name: '第 2 页位置笔记' }).fill('第二页独立笔记');
     await page.evaluate(() => {
       const node = document.createElement('div'); node.className='page'; node.dataset.page='1';
@@ -87,7 +87,7 @@ test('Cornell notes scroll with pages, restore anchors after reconstruction, wra
       Storage.prototype.setItem=()=>{ throw new Error('quota'); };
     });
     await field.fill('未保存草稿');
-    assert.match(await page.locator('.zp-page-notes-label').first().textContent(), /保存失败/);
+    assert.match(await page.locator('.zwp-page-notes-label').first().textContent(), /保存失败/);
     await page.evaluate(() => {
       const node=document.querySelector('[data-page="1"]');
       const next=node.cloneNode(false); next.append(document.createElement('canvas')); node.replaceWith(next);

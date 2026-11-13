@@ -5,7 +5,7 @@
  * <style>，同特异性下胜负只看哪张表后挂载，而挂载顺序取决于各 fiber 的 inject
  * 满足时机。拆包时这里真的踩过一次 —— 原 dsh-zhiyun-study/style.css 尾部的两个
  * @media 被整块留在 ui-primitives（inject 为空、永远最先挂），基规则却跟着组件去了
- * 页面包，移动端覆盖全部变成死规则（≤760 时 .zs-heading 仍是 24px/26px，真机复现）。
+ * 页面包，移动端覆盖全部变成死规则（≤760 时 .zws-heading 仍是 24px/26px，真机复现）。
  *
  * 这个回归不会让任何断言失败、不会报错、也不影响桌面观感，只会在窄屏上悄悄变丑，
  * 所以只能靠静态守卫拦。
@@ -49,7 +49,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
   // 学习页有两张表（`style.css` + `video.css`，播放器那一栏自带一份）——
   // `loadSheets` 按包聚合，所以它仍然只是**一行**。两张表同属一个包，
   // 所以「跨包顺序依赖」的守卫对它们之间的关系不作判断：同包内谁后写谁赢，
-  // 这是确定的，不是挂载顺序。视频栏的类名全部带 `zs-video-` 前缀，正是为此。
+  // 这是确定的，不是挂载顺序。视频栏的类名全部带 `zws-video-` 前缀，正是为此。
   assert.deepEqual([...sheets.keys()], [
     // key 是**包目录名**（`loadSheets` 按 `packages/<group>/<目录>` 收集），
     // 不是包名 —— 目录改名（`dsh-zhiyun-page-*` → `client/page-*`）时这里要跟着改。
@@ -88,8 +88,8 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
 test('守卫能发现「@media 覆盖的基规则在别的包」', () => {
   const sheets = new Map([
     // alpha 先挂载（像 ui-primitives），beta 后挂载（像页面包）
-    ['dsh-zhiyun-alpha', parseRules('body[data-zhiyun] .zs-heading { margin-bottom: 24px; }\n@media (max-width: 760px) { body[data-zhiyun] .zs-heading { margin-bottom: 18px; } }')],
-    ['dsh-zhiyun-beta', parseRules('body[data-zhiyun] .zs-heading { margin-bottom: 24px; }')],
+    ['dsh-zhiyun-alpha', parseRules('body[data-zw] .zws-heading { margin-bottom: 24px; }\n@media (max-width: 760px) { body[data-zw] .zws-heading { margin-bottom: 18px; } }')],
+    ['dsh-zhiyun-beta', parseRules('body[data-zw] .zws-heading { margin-bottom: 24px; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.equal(problems.length, 1);
@@ -101,8 +101,8 @@ test('守卫能发现「@media 覆盖的基规则在别的包」', () => {
 
 test('守卫能发现「跨包用不同的值声明同一个 (选择器, 属性)」', () => {
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('body[data-zhiyun] .zs-shared { color: red; padding: 4px; }')],
-    ['dsh-zhiyun-beta', parseRules('body[data-zhiyun] .zs-shared { color: blue; padding: 4px; }')],
+    ['dsh-zhiyun-alpha', parseRules('body[data-zw] .zws-shared { color: red; padding: 4px; }')],
+    ['dsh-zhiyun-beta', parseRules('body[data-zw] .zws-shared { color: blue; padding: 4px; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   // 只有 color 值不同算隐患；padding 两边都是 4px，谁赢都一样
@@ -115,8 +115,8 @@ test('守卫能发现「简写 vs 它重置的长写」跨包竞争', () => {
   // margin 会重置 margin-bottom，两者争同一块地盘，但属性名字面不同 ——
   // 只比对名字的守卫会漏掉这种情况。
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('body[data-zhiyun] .zs-box { margin: 4px; }')],
-    ['dsh-zhiyun-beta', parseRules('body[data-zhiyun] .zs-box { margin-bottom: 8px; }')],
+    ['dsh-zhiyun-alpha', parseRules('body[data-zw] .zws-box { margin: 4px; }')],
+    ['dsh-zhiyun-beta', parseRules('body[data-zw] .zws-box { margin-bottom: 8px; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.equal(problems.length, 1, `简写/长写竞争未被捕获：${JSON.stringify(problems)}`);
@@ -131,12 +131,12 @@ test('守卫能发现「同一个选择器在别的包里换了拼写」（特�
   // 不相等（中间的祖先链换了写法），但特异性相同 ⇒ 胜负只剩挂载顺序。
   // 只按选择器字符串全等建索引的守卫会完全看不见这种。
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('.zs-study .zs-heading h1 { font-size: 26px; }')],
-    ['dsh-zhiyun-beta', parseRules('[data-zhiyun] .zs-heading h1 { font-size: 99px; }')],
+    ['dsh-zhiyun-alpha', parseRules('.zws-study .zws-heading h1 { font-size: 26px; }')],
+    ['dsh-zhiyun-beta', parseRules('[data-zw] .zws-heading h1 { font-size: 99px; }')],
   ]);
   // 前置条件：两条选择器确实特异性相同，否则这个用例证明不了「按字符串配对」的盲区
-  assert.deepEqual(specificity('.zs-study .zs-heading h1'), [0, 2, 1]);
-  assert.deepEqual(specificity('[data-zhiyun] .zs-heading h1'), [0, 2, 1]);
+  assert.deepEqual(specificity('.zws-study .zws-heading h1'), [0, 2, 1]);
+  assert.deepEqual(specificity('[data-zw] .zws-heading h1'), [0, 2, 1]);
   const { problems } = analyzeSheets(sheets);
   assert.equal(problems.length, 1, `拼写差异导致的真实冲突未被捕获：${JSON.stringify(problems)}`);
   assert.equal(problems[0].kind, 'cross-package-value');
@@ -144,15 +144,15 @@ test('守卫能发现「同一个选择器在别的包里换了拼写」（特�
 });
 
 test('守卫不误报：主题作用域前缀不同会改变特异性，因而由特异性决胜、与顺序无关', () => {
-  // 复核报告把这一条列为「换了拼写就会漏」，但 `body[data-zhiyun]` 前缀会抬高特异性
+  // 复核报告把这一条列为「换了拼写就会漏」，但 `body[data-zw]` 前缀会抬高特异性
   // （属性选择器算 class 级），带前缀的那条**无论挂载顺序都赢** —— 这是确定性结果，
   // 不是顺序依赖。守卫按特异性过滤是正确的；把它报出来反而是误报。
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('body[data-zhiyun] .zs-heading h1 { font-size: 26px; }')],
-    ['dsh-zhiyun-beta', parseRules('.zs-heading h1 { font-size: 99px; }')],
+    ['dsh-zhiyun-alpha', parseRules('body[data-zw] .zws-heading h1 { font-size: 26px; }')],
+    ['dsh-zhiyun-beta', parseRules('.zws-heading h1 { font-size: 99px; }')],
   ]);
-  assert.deepEqual(specificity('body[data-zhiyun] .zs-heading h1'), [0, 2, 2]);
-  assert.deepEqual(specificity('.zs-heading h1'), [0, 1, 1]);
+  assert.deepEqual(specificity('body[data-zw] .zws-heading h1'), [0, 2, 2]);
+  assert.deepEqual(specificity('.zws-heading h1'), [0, 1, 1]);
   const { problems } = analyzeSheets(sheets);
   assert.deepEqual(problems, [], `特异性不同不该报：${JSON.stringify(problems)}`);
 });
@@ -161,8 +161,8 @@ test('守卫能发现跨包「不同的 @media 条件在同一宽度下都生效
   // 两个包的 @media 条件不同（1050 vs 760），但在 700px 下都命中 ——
   // 只按 (选择器, 媒体条件) 精确配对的守卫会漏。
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('@media (max-width: 1050px) { body[data-zhiyun] .zs-workbench { grid-template-columns: 210px 1fr; } }')],
-    ['dsh-zhiyun-beta', parseRules('@media (max-width: 760px) { body[data-zhiyun] .zs-workbench { grid-template-columns: 1fr; } }')],
+    ['dsh-zhiyun-alpha', parseRules('@media (max-width: 1050px) { body[data-zw] .zws-workbench { grid-template-columns: 210px 1fr; } }')],
+    ['dsh-zhiyun-beta', parseRules('@media (max-width: 760px) { body[data-zw] .zws-workbench { grid-template-columns: 1fr; } }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.equal(problems.length, 1, `跨包不同媒体条件的冲突未被捕获：${JSON.stringify(problems)}`);
@@ -172,7 +172,7 @@ test('守卫能发现跨包「不同的 @media 条件在同一宽度下都生效
 test('守卫能发现「同一个包内 @media 覆盖写在了基规则之前」', () => {
   // 同包内也是后写的赢；覆盖排在基规则之前就是死规则，且不会有任何报错。
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('@media (max-width: 760px) { body[data-zhiyun] .zs-x { padding: 12px; } }\nbody[data-zhiyun] .zs-x { padding: 30px; }')],
+    ['dsh-zhiyun-alpha', parseRules('@media (max-width: 760px) { body[data-zw] .zws-x { padding: 12px; } }\nbody[data-zw] .zws-x { padding: 30px; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.equal(problems.length, 1, `同包倒序未被捕获：${JSON.stringify(problems)}`);
@@ -182,8 +182,8 @@ test('守卫能发现「同一个包内 @media 覆盖写在了基规则之前」
 
 test('守卫不误报：跨包但特异性不同（高的那条无论顺序都赢）', () => {
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('body[data-zhiyun] .zs-x { color: red; }')],
-    ['dsh-zhiyun-beta', parseRules('body[data-zhiyun] #zs-target .zs-x { color: blue; }')],
+    ['dsh-zhiyun-alpha', parseRules('body[data-zw] .zws-x { color: red; }')],
+    ['dsh-zhiyun-beta', parseRules('body[data-zw] #zws-target .zws-x { color: blue; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.deepEqual(problems, [], `特异性不同不该报：${JSON.stringify(problems)}`);
@@ -191,8 +191,8 @@ test('守卫不误报：跨包但特异性不同（高的那条无论顺序都�
 
 test('守卫不误报：值相同（谁赢都一样），以及大小写不同的同值颜色', () => {
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('body[data-zhiyun] .zs-x { color: RED; padding: 4px; }')],
-    ['dsh-zhiyun-beta', parseRules('body[data-zhiyun] .zs-x { color: red; padding: 4px; }')],
+    ['dsh-zhiyun-alpha', parseRules('body[data-zw] .zws-x { color: RED; padding: 4px; }')],
+    ['dsh-zhiyun-beta', parseRules('body[data-zw] .zws-x { color: red; padding: 4px; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.deepEqual(problems, [], `同值不该报：${JSON.stringify(problems)}`);
@@ -201,8 +201,8 @@ test('守卫不误报：值相同（谁赢都一样），以及大小写不同�
 test('守卫不误报：两个包各管主体不同的元素，即使类名有重合', () => {
   // 主体不同的规则不可能命中同一个元素，不该因为「共享了一个祖先类名」而误报。
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('body[data-zhiyun] .zs-study .zs-card { color: red; }')],
-    ['dsh-zhiyun-beta', parseRules('body[data-zhiyun] .zs-study .zs-chip { color: blue; }')],
+    ['dsh-zhiyun-alpha', parseRules('body[data-zw] .zws-study .zws-card { color: red; }')],
+    ['dsh-zhiyun-beta', parseRules('body[data-zw] .zws-study .zws-chip { color: blue; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.deepEqual(problems, [], `主体不同不该报：${JSON.stringify(problems)}`);
@@ -211,8 +211,8 @@ test('守卫不误报：两个包各管主体不同的元素，即使类名有�
 test('守卫不误报：分属两包的 margin-top 与 margin-bottom 互不重置', () => {
   // 两个长写之间没有覆盖关系，哪个赢都对彼此无影响。
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('body[data-zhiyun] .zs-box { margin-top: 4px; color: red; }')],
-    ['dsh-zhiyun-beta', parseRules('body[data-zhiyun] .zs-box { margin-bottom: 8px; color: red; }')],
+    ['dsh-zhiyun-alpha', parseRules('body[data-zw] .zws-box { margin-top: 4px; color: red; }')],
+    ['dsh-zhiyun-beta', parseRules('body[data-zw] .zws-box { margin-bottom: 8px; color: red; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.deepEqual(problems, [], `不应误报：${JSON.stringify(problems)}`);
@@ -221,11 +221,11 @@ test('守卫不误报：分属两包的 margin-top 与 margin-bottom 互不重�
 test('守卫不误报：自足的 @media（基规则和覆盖同包、覆盖在后）与 @keyframes 内部选择器', () => {
   const sheets = new Map([
     ['dsh-zhiyun-alpha', parseRules(`
-      body[data-zhiyun] .zs-workbench { display: grid; }
-      @media (max-width: 760px) { body[data-zhiyun] .zs-workbench { display: flex; } }
-      @keyframes zs-spin { from { opacity: 0; } to { opacity: 1; } }
+      body[data-zw] .zws-workbench { display: grid; }
+      @media (max-width: 760px) { body[data-zw] .zws-workbench { display: flex; } }
+      @keyframes zws-spin { from { opacity: 0; } to { opacity: 1; } }
     `)],
-    ['dsh-zhiyun-beta', parseRules('body[data-zhiyun] .zs-other { color: red; }')],
+    ['dsh-zhiyun-beta', parseRules('body[data-zw] .zws-other { color: red; }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.deepEqual(problems, [], `不应误报：${JSON.stringify(problems)}`);
@@ -233,8 +233,8 @@ test('守卫不误报：自足的 @media（基规则和覆盖同包、覆盖在�
 
 test('守卫不误报：媒体条件互斥（min-width 与 max-width 不重叠）', () => {
   const sheets = new Map([
-    ['dsh-zhiyun-alpha', parseRules('@media (min-width: 900px) { body[data-zhiyun] .zs-x { font-size: 20px; } }')],
-    ['dsh-zhiyun-beta', parseRules('@media (max-width: 760px) { body[data-zhiyun] .zs-x { font-size: 12px; } }')],
+    ['dsh-zhiyun-alpha', parseRules('@media (min-width: 900px) { body[data-zw] .zws-x { font-size: 20px; } }')],
+    ['dsh-zhiyun-beta', parseRules('@media (max-width: 760px) { body[data-zw] .zws-x { font-size: 12px; } }')],
   ]);
   const { problems } = analyzeSheets(sheets);
   assert.deepEqual(problems, [], `互斥媒体条件不该报：${JSON.stringify(problems)}`);
@@ -243,14 +243,14 @@ test('守卫不误报：媒体条件互斥（min-width 与 max-width 不重叠�
 /* ------------------------------------------------------------------ 选择器工具 */
 
 test('特异性计算覆盖 :is/:where/#id/属性/伪元素', () => {
-  // 注意 `body[data-zhiyun] .zs-heading h1` 是 [0,2,2]：属性选择器与类同级，
+  // 注意 `body[data-zw] .zws-heading h1` 是 [0,2,2]：属性选择器与类同级，
   // 主题作用域前缀会实实在在抬高特异性 —— 这一点决定了「跨包覆盖」是否由顺序决胜。
-  assert.deepEqual(specificity('body[data-zhiyun] .zs-heading h1'), [0, 2, 2]);
-  assert.deepEqual(specificity('.zs-x'), [0, 1, 0]);
+  assert.deepEqual(specificity('body[data-zw] .zws-heading h1'), [0, 2, 2]);
+  assert.deepEqual(specificity('.zws-x'), [0, 1, 0]);
   assert.deepEqual(specificity('#a .b c'), [1, 1, 1]);
   assert.deepEqual(specificity(':where(#a) .b'), [0, 1, 0], ':where() 计 0');
   assert.deepEqual(specificity(':is(#a, .b)'), [1, 0, 0], ':is() 取最高的那个');
-  assert.deepEqual(specificity('.zs-icon-button::before'), [0, 1, 1]);
+  assert.deepEqual(specificity('.zws-icon-button::before'), [0, 1, 1]);
   assert.deepEqual(specificity('*'), [0, 0, 0]);
 });
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://zhiyun.local/schema/learning-resource.v1.json",
+  "$id": "https://zw.local/schema/learning-resource.v1.json",
   "title": "Zhiyun standard learning resource (v1)",
   "description": "智云标准学习资源投影。DeepTutor 以该结构作为高质量资源输入。字段定义见 packages/dsh-zhiyun-host-deeptutor/docs/contracts.md §6。",
   "type": "object",

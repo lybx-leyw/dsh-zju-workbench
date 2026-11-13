@@ -55,7 +55,7 @@
 import { Readable } from 'node:stream';
 
 /** 本端点占用的路由前缀。宿主半边注册 prefix 路由时用同一个常量。 */
-export const STREAM_ROUTE_PREFIX = '/zhiyun-live';
+export const STREAM_ROUTE_PREFIX = '/zw-live';
 
 /** 目标 URL 长度上限。m3u8 的签名串通常几百字符，4096 只用来拦住畸形请求。 */
 const MAX_TARGET_URL_LENGTH = 4096;
@@ -204,7 +204,7 @@ export function checkTarget(raw) {
  * @param {number} [options.timeoutMs] 上游超时；超时回 504。
  */
 export function createStreamHandler({ fetch = globalThis.fetch, log = () => {}, timeoutMs = 20000 } = {}) {
-  /** `/zhiyun-live/hls` 与 `/zhiyun-live/status` 的实现。 */
+  /** `/zw-live/hls` 与 `/zw-live/status` 的实现。 */
   async function dispatch(res, url, kind) {
     if (kind === 'status') {
       sendJson(res, 200, {

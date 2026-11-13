@@ -8,7 +8,7 @@
  */
 
 /** 导出文档挂载点的 id。桌面壳的 PDF 处理器按这个 id 判断文档是否还在。 */
-export const QUIZ_EXPORT_ROOT_ID = 'zs-quiz-export';
+export const QUIZ_EXPORT_ROOT_ID = 'zws-quiz-export';
 
 /** 文件名/正文里不能出现的字符（Windows 与 macOS 的并集）。 */
 const UNSAFE_FILENAME = /[<>:"/\\|?*\u0000-\u001f]/g;
@@ -16,7 +16,7 @@ const UNSAFE_FILENAME = /[<>:"/\\|?*\u0000-\u001f]/g;
 /**
  * 清洗一段可用于文件名的文字。
  *
- * 与 `dsh-zhiyun-page-study` 的 `pdfFilename` 保持同一套规则（NFKC + 去非法字符 +
+ * 与 `dsh-zju-page-study` 的 `pdfFilename` 保持同一套规则（NFKC + 去非法字符 +
  * 去尾部点空格 + 截断），只是这里不拼讲义后缀 —— 两份导出件放在同一个下载目录里，
  * 命名规则漂移会让用户分不清哪份是卷子、哪份是讲义。
  */

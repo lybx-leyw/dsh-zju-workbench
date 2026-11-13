@@ -24,7 +24,7 @@
 
 ## 能力（读取 + 下载）
 
-服务名 `zhiyunXuezai`，路由 `/api/zhiyun-xuezai`。
+服务名 `zwXuezai`，路由 `/api/zw-xuezai`。
 
 | 方法 | 作用 | 端点 |
 | --- | --- | --- |
@@ -42,11 +42,11 @@
 | `loginProfile()` | 上次登录的分段耗时（诊断） | — |
 | `reset()` / `invalidate()` | 丢本地会话 / 让待办缓存失效 | — |
 
-路由动作（`POST` 需带头 `x-zhiyun-xuezai: 1`）：
+路由动作（`POST` 需带头 `x-zw-xuezai: 1`）：
 
 | 动作 | 方法 | 说明 |
 | --- | --- | --- |
-| `GET /api/zhiyun-xuezai` | GET | `{ todos, egress }` |
+| `GET /api/zw-xuezai` | GET | `{ todos, egress }` |
 | `?xzzd-read` | POST | 上面五个深入读取动作，参数走 body |
 | `?xzzd-download` | POST | 两个下载动作，参数走 body |
 | `?reprobe` | POST | 重新探测出口 |
@@ -56,7 +56,7 @@
 ### 下载：落盘位置与安全边界
 
 **目录由装配层定，调用方传不进路径。** 根是 `config.downloadDir`，默认
-`<数据目录>/downloads`（`data/zhiyun-xuezai/downloads`）；往下的层级由
+`<数据目录>/downloads`（`data/zw-xuezai/downloads`）；往下的层级由
 `src/downloads.js` 按「课程 → 类别 → 作业」拼：
 
 ```text
@@ -110,7 +110,7 @@
 
 **⚠️ `pta` 这一半不在本包。** 拆包前 `campus.todos()` 同时返回两半，而
 `core/planning` 期待的是一份**合并结果**。合并由集成层做（它同时持有
-`zhiyunXuezai` 与 `zhiyunPta`）。
+`zwXuezai` 与 `zwPta`）。
 
 `pta` 键**保留**而不是删掉，理由是可识别性：合并方据此丢弃这一半，
 而不是把它当成「拼题A 读取失败」显示给用户。若直接删掉，合并方就得写
@@ -213,14 +213,14 @@
 （`@lybx-leyw/dsh-zju-source-login` 的 `readCard`）。本包每次现读、不缓存 ——
 凭据服务可能晚于本包就绪，缓存 `null` 的后果是「配了也一直说没配」。
 
-会话落在 `data/zhiyun-xuezai/xzzd.session`（Windows DPAPI 加密、按用户绑定）。
+会话落在 `data/zw-xuezai/xzzd.session`（Windows DPAPI 加密、按用户绑定）。
 
 **拆包迁移**：首次装配时若新文件不存在而旧文件
-`data/zhiyun-campus/xzzd.session` 存在，**按字节复制**过去（同一台机器、
+`data/zw-campus/xzzd.session` 存在，**按字节复制**过去（同一台机器、
 同一个 Windows 用户，DPAPI 密文原样可解）。只复制，不删除旧文件 ——
 campus 的退役由 OWNER 统一处理。
 
-若智云课堂（`zhiyunClassroom`）恰好已有一张 SSO 票，就拿来用，省掉一整条 CAS。
+若智云课堂（`zwClassroom`）恰好已有一张 SSO 票，就拿来用，省掉一整条 CAS。
 这是**运行时软依赖**（`ctx.get`），没装 classroom 时整体跳过。
 同号两次 CAS 登录会互相作废 ticket，所以能复用就复用。
 
@@ -235,7 +235,7 @@ campus 的退役由 OWNER 统一处理。
    只服务拼题A 的 Cookie 设置；学在浙大没有设置项，所以没有对应 UI。
 
 3. **`/api/todos` 与逐课两条路的口径没有定论。** 「`/api/todos` 会漏」这句话
-   在本仓与上游传了几手，但**从未有数据**。`ZHIYUN_TODOS=diff` 会两条都跑并
+   在本仓与上游传了几手，但**从未有数据**。`ZW_TODOS=diff` 会两条都跑并
    输出差异（`diffTodos()` 按 `courseId:type:id` 比对），要核实随时可跑。
    已知的结构性差异：聚合端点不返回**课堂互动**（`classroom` 类），
    以及不做「满分即完成」的过滤。
@@ -274,7 +274,7 @@ campus 的退役由 OWNER 统一处理。
    `@lybx-leyw/dsh-zju-source-http` / `source-webvpn` 里，本包不改它、也不
    自己登录网关。没装那个服务时如实返回 `{ mode: 'unavailable', reason }`。
 
-10. **`loginProfile` 只在 `ZHIYUN_PROFILE_TODOS=1` 时收集。** 生产不带这个变量，
+10. **`loginProfile` 只在 `ZW_PROFILE_TODOS=1` 时收集。** 生产不带这个变量，
     所以它是 `null`。
 
 11. **离线验收覆盖不到真实契约。** 全部测试用假 `request` / 假 `api`，

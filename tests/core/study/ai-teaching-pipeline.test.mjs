@@ -5,7 +5,7 @@
  *
  *   学习页讲义（chapters/topics/blocks）
  *     → briefFromLecture()   提炼 brief
- *     → zhiyunClassroomGenerate.start/stream
+ *     → zwClassroomGenerate.start/stream
  *     → run-done.outputs.scenes.scenes
  *     → pagesFromScenes()    转成渲染层能画的 {canvas, speech, title}
  *

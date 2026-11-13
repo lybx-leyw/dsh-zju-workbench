@@ -62,7 +62,7 @@ const { parse, dispose } = await mountParser({
 - `mountParser` 给的是**宿主形状**（`prepareCall` / `resolveModelInfo` / `stream`），
   因为解析器内部还有一层产品自己的 `HarnessLlm` 适配器要走；
 - `mountLecture` 给的是**窄接口**（`{ call({stage,route,constant,variable,signal}) }`），
-  因为它从 `ctx.zhiyunParser.llm` 借 —— 那个 llm 已经被适配过了。
+  因为它从 `ctx.zwParser.llm` 借 —— 那个 llm 已经被适配过了。
 
 ## 交互式基准（推荐入口）
 

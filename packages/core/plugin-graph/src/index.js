@@ -2,8 +2,8 @@
 //
 // 为什么需要一个真正干活的宿主半边：宿主与浏览器各有一棵独立的 Cordis 插件树，
 // 而本仓最重要的那几条依赖边全在**宿主面** —— @lybx-leyw/dsh-zju-core-study 的 `inject` 里写着
-// `zhiyunClassroom / zhiyunParser / zhiyunKnowledge`，解析包写着 `zhiyunClassroom`，
-// 讲义与出题包写着 `zhiyunParser`。浏览器里读不到宿主那棵树，所以由这里读出来交给客户端；
+// `zwClassroom / zwParser / zwKnowledge`，解析包写着 `zwClassroom`，
+// 讲义与出题包写着 `zwParser`。浏览器里读不到宿主那棵树，所以由这里读出来交给客户端；
 // 浏览器面（模块边、客户端硬边）由客户端自己就地读。
 //
 // 数据只走运行时已有的字段：Loader 条目的 `options.name`/`fiber`、fiber 的 `inject`、
@@ -40,7 +40,7 @@ function readHostPlane(ctx) {
 }
 
 /**
- * 注册 `/api/zhiyun-plugins`：目前只有一个只读方法 `graph`。
+ * 注册 `/api/zw-plugins`：目前只有一个只读方法 `graph`。
  *
  * 只读是一件刻意的事：改开关走宿主自带的 `pluginManager.setPluginEnabled`（客户端直接调
  * 那个 Remote），这里再开一个写入口就等于把同一件事做出两条路径 —— 一条会绕过宿主的
@@ -50,7 +50,7 @@ function readHostPlane(ctx) {
  */
 export async function apply(ctx) {
   return ctx.connection.fetch.register({
-    path: '/api/zhiyun-plugins',
+    path: '/api/zw-plugins',
     methods: ['POST'],
     requestBody: 'buffered',
     fetch: async (request) => {
@@ -58,7 +58,7 @@ export async function apply(ctx) {
       let result;
       try {
         const message = await request.json();
-        if (message?.type !== 'client-request' || message.method !== 'zhiyun-plugins'
+        if (message?.type !== 'client-request' || message.method !== 'zw-plugins'
           || typeof message.rpcId !== 'string' || message.rpcId.length > MAX_METHOD_LENGTH) {
           throw Object.assign(new Error('invalid envelope'), { code: 'INPUT' });
         }

@@ -53,7 +53,7 @@ const fail = (code, message, details) => {
 function assertNotes(notes) {
   const required = ['tree', 'read', 'write'];
   if (!notes || typeof notes !== 'object') {
-    fail('CONFIG', '讲义导出需要一个笔记服务（zhiyunVaultNotes 的形状）', { got: typeof notes });
+    fail('CONFIG', '讲义导出需要一个笔记服务（zwVaultNotes 的形状）', { got: typeof notes });
   }
   const missing = required.filter((name) => typeof notes[name] !== 'function');
   if (missing.length) {

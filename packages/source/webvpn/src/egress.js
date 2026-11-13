@@ -9,7 +9,7 @@
  *
  * 但在这之前，它躺在 `@lybx-leyw/dsh-zju-source-campus` 里，于是：
  *
- *   - `cc98` / `zdbk` 想用，只能借 campus 的 `zhiyunEgress` 服务 ——
+ *   - `cc98` / `zdbk` 想用，只能借 campus 的 `zwEgress` 服务 ——
  *     **一个数据包的能力被另一个业务包绑架**：campus 不装，它们就退回
  *     `globalThis.fetch`，而那条路会走全局代理（实测 10.7 秒后失败）；
  *   - 各包若自己复制一份判定，两份规则迟早漂移，且「校园网探测」会被重复调用。

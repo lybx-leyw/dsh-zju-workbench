@@ -1,5 +1,5 @@
 /**
- * 讲义域：`zhiyunLecture` 的两级加工 + 知识树构建。
+ * 讲义域：`zwLecture` 的两级加工 + 知识树构建。
  *
  * 两级都在这里桥出来，因为它们是**一条链的两段**，分开测会漏掉衔接：
  *   一级 `assemble`：树 + 主线块 → 分章分知识点的讲义正文（口语→书面）
@@ -71,7 +71,7 @@ export async function pureApi() {
  * 装配真讲义服务。
  *
  * ⚠️ lecture 包要的是**窄 llm 接口**（`{ call({stage,route,constant,variable,signal}) }`），
- *    不是宿主的 `prepareCall` 形状 —— 它是从 `ctx.zhiyunParser?.llm` 借的，
+ *    不是宿主的 `prepareCall` 形状 —— 它是从 `ctx.zwParser?.llm` 借的，
  *    而那个 llm 已经被解析器适配过。所以这里给窄接口桩；这与
  *    `mountParser()` 要给宿主形状的 llm 是两件事，不能混。
  *
@@ -84,10 +84,10 @@ export async function mountLecture({ dataDir, respond, config = {} } = {}) {
   const mounted = await mount('@lybx-leyw/dsh-zju-core-lecture', {
     dataDir,
     config,
-    // lecture 的 llm 来源：`config.llm ?? ctx.zhiyunParser?.llm`
-    services: { zhiyunParser: { llm: narrow } },
+    // lecture 的 llm 来源：`config.llm ?? ctx.zwParser?.llm`
+    services: { zwParser: { llm: narrow } },
   });
-  const service = serviceOf(mounted, 'zhiyunLecture');
+  const service = serviceOf(mounted, 'zwLecture');
   const api = apiOf(service);
   return { mounted, service, llm: narrow, ...api.functions, getters: api.getters };
 }

@@ -5,7 +5,7 @@
  *
  * 第一版 `snapshot()` 用 `Promise.all`，注释还写着"各链路内部都把异常收成了 error，
  * 所以 all 不会被 reject"。这句话是错的：`loadTodos` 在校园数据包缺席时**会** reject
- * （当年那个包叫 `zhiyunOmni`，现已按平台拆分删除；但这条降级约束不变）。
+ * （当年那个包叫 `zwOmni`，现已按平台拆分删除；但这条降级约束不变）。
  *
  * 后果不是"某一区块缺失"，而是：
  *
@@ -78,7 +78,7 @@ function post(handler, action = '', body = {}) {
     const req = {
       method: 'POST',
       url: `/?${action}`,
-      headers: { host: '127.0.0.1:43120', 'x-zhiyun-planning': '1', 'content-type': 'application/json' },
+      headers: { host: '127.0.0.1:43120', 'x-zw-planning': '1', 'content-type': 'application/json' },
       async *[Symbol.asyncIterator]() { yield Buffer.from(payload); },
     };
     const res = {

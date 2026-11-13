@@ -21,7 +21,7 @@
     homePage: home
     managerPage: pages
     pageSlot: page.content
-    classPrefix: zy-workbench
+    classPrefix: zw-workbench
     defaultRailWidth: 51
     # 两个内建页的名字。**不改上游包**：`dsh-pages` 的 `registerPage()` 接受
     # `LocalizedText`（`isLocalizedText` 要求 `en` 为 string、其余值也是 string），

@@ -6,7 +6,7 @@
  * 它是从 `@lybx-leyw/dsh-zju-source-campus` **拆出来**的，不是新建。
  * 那个包原先同时装着两个平台（学在浙大 + 拼题A），两者的凭据体系、
  * 错误码表、会话文件、写入面都不一样，却共用一份 `apply()`、一条路由、
- * 一个 `zhiyunCampus` 服务：
+ * 一个 `zwCampus` 服务：
  *
  *   - 装拼题A 就得连带装上学在浙大的整套 CAS 与逐课抓取；
  *   - 任何一方要加能力，都得改同一个 924 行的 `index.js`；
@@ -17,7 +17,7 @@
  *
  * # 本包提供什么（D17：数据源只读）
  *
- * 一个 `zhiyunXuezai` 服务 + 一条同源路由 `/api/zhiyun-xuezai`。
+ * 一个 `zwXuezai` 服务 + 一条同源路由 `/api/zw-xuezai`。
  * **不含任何写操作** —— 提交作业、撤回、点名签到那些按 D17 归
  * `packages/tool/campus-write`，本包的方法全部只发 GET。
  *
@@ -62,7 +62,7 @@ export const name = 'zju-source-xuezai';
 export const inject = ['profileContext'];
 
 /** 本包的数据路由。与 pta / campus 的路由并列，互不干扰。 */
-export const ROUTE_PATH = '/api/zhiyun-xuezai';
+export const ROUTE_PATH = '/api/zw-xuezai';
 
 /**
  * 写操作必须带的自定义头（跨站发不出，等于 CSRF 闸）。
@@ -70,14 +70,14 @@ export const ROUTE_PATH = '/api/zhiyun-xuezai';
  * `xzzd-read` 虽然是只读，但它带 id 参数、且响应里有作业说明原文，
  * 所以照样走 POST + 自定义头，不塞进查询串（查询串会进代理日志与 Referer）。
  */
-export const WRITE_HEADER = 'x-zhiyun-xuezai';
+export const WRITE_HEADER = 'x-zw-xuezai';
 
 /**
  * 路由的 service 名。
  *
  * 与包名分开的常量：页面/脚本按**服务名**取能力，改名会让它们静默拿不到。
  */
-export const SERVICE_NAME = 'zhiyunXuezai';
+export const SERVICE_NAME = 'zwXuezai';
 
 /** 重新导出，供别处（脚本/测试）直接构造。 */
 export { XzzdApi, XzzdReader, hasXzzdSession, diffTodos, XzzdDownloads };
@@ -165,12 +165,12 @@ export function translateXzzdError(error) {
  */
 export async function apply(ctx, config = {}) {
   const log = (message) => {
-    const line = `[zhiyun-xuezai] ${message}`;
+    const line = `[zw-xuezai] ${message}`;
     if (typeof ctx.logger?.info === 'function') ctx.logger.info(line);
     else console.log(line);
   };
 
-  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zhiyun-xuezai');
+  const dataDir = config.dataDir ?? path.join(ctx.profileContext.dir, 'data', 'zw-xuezai');
 
   /**
    * 旧会话目录：`source/campus` 时期的学在浙大会话文件。
@@ -178,7 +178,7 @@ export async function apply(ctx, config = {}) {
    * # 为什么要迁
    *
    * 拆包前，学在浙大的 `session` cookie 落在
-   * `data/zhiyun-campus/xzzd.session`（DPAPI 加密、按 Windows 用户绑定）。
+   * `data/zw-campus/xzzd.session`（DPAPI 加密、按 Windows 用户绑定）。
    * 拆包后如果只认新目录，**所有已有用户会在升级那一刻被踢下线**，
    * 必须重新输一次密码 —— 而他们并没有改过密码。
    *
@@ -190,7 +190,7 @@ export async function apply(ctx, config = {}) {
    */
   const migrateLegacySession = () => {
     try {
-      const legacyDir = config.legacyDataDir ?? path.join(ctx.profileContext.dir, 'data', 'zhiyun-campus');
+      const legacyDir = config.legacyDataDir ?? path.join(ctx.profileContext.dir, 'data', 'zw-campus');
       const target = path.join(dataDir, 'xzzd.session');
       const legacy = path.join(legacyDir, 'xzzd.session');
       if (existsSync(target) || !existsSync(legacy)) return false;
@@ -222,7 +222,7 @@ export async function apply(ctx, config = {}) {
    * 读的 `HTTPS_PROXY`。对海外目标那是对的，但浙大域名是**国内校园站点**：
    * 实测把它们交给本机代理会全部 7 秒后 ECONNRESET，直连 0.1 秒返回 200。
    *
-   * `sharedFetch(ctx)` 去取 `zhiyunEgress` 服务（由 tier 0 的
+   * `sharedFetch(ctx)` 去取 `zwEgress` 服务（由 tier 0 的
    * `@lybx-leyw/dsh-zju-source-http` 提供）：非校园域直连、校园域按策略选路。
    * 拿不到服务时它自己退回宿主 fetch —— 所以这里不需要再判一次。
    *
@@ -288,7 +288,7 @@ export async function apply(ctx, config = {}) {
    *
    * 所以放在 `finally` 里：成功、失败、超时都能拿到。
    */
-  const loginMarksEnabled = () => process.env.ZHIYUN_PROFILE_TODOS === '1';
+  const loginMarksEnabled = () => process.env.ZW_PROFILE_TODOS === '1';
 
   /**
    * 确保有学在浙大会话；没有就用 CAS 登一次。
@@ -335,7 +335,7 @@ export async function apply(ctx, config = {}) {
      * `classroom` 是 undefined，这段整体跳过，照常走完整 CAS。
      * 同一学号两次 CAS 登录会互相作废 ticket，所以能复用就复用。
      */
-    const classroom = ctx.get?.('zhiyunClassroom');
+    const classroom = ctx.get?.('zwClassroom');
     if (typeof classroom?.acquireSso === 'function') {
       for (const cookie of await classroom.acquireSso(account)) {
         await session.jar.setCookie(cookie.toString(), `https://${CAS_HOST}/cas/login`);
@@ -419,7 +419,7 @@ export async function apply(ctx, config = {}) {
   /**
    * 学在浙大待办。
    *
-   * # 数据源两条路（`ZHIYUN_TODOS` 环境变量）
+   * # 数据源两条路（`ZW_TODOS` 环境变量）
    *
    *   `fast`（默认）  官方聚合端点 `/api/todos?no-intercept=true`，**1 个请求**
    *   `slow`          逐课抓取，`5N` 个请求（旧行为，留作对照与兜底）
@@ -442,7 +442,7 @@ export async function apply(ctx, config = {}) {
    */
   const loadTodosUncached = async () => {
     const wantProfile = loginMarksEnabled();
-    const todoMode = String(process.env.ZHIYUN_TODOS ?? 'fast').toLowerCase();
+    const todoMode = String(process.env.ZW_TODOS ?? 'fast').toLowerCase();
 
     const xzzd = await (async () => {
       try {
@@ -483,8 +483,8 @@ export async function apply(ctx, config = {}) {
      *
      * 拆包之前 `todos()` 同时返回 `{ xzzd, pta }`，因为它属于 campus。
      * 拆开之后本包只拥有 `xzzd` 那一半，而 `core/planning` 期待的是一份
-     * **合并结果**。合并由集成层做（它同时持有 `zhiyunXuezai` 与
-     * `zhiyunPta` 两个服务）。
+     * **合并结果**。合并由集成层做（它同时持有 `zwXuezai` 与
+     * `zwPta` 两个服务）。
      *
      * 这里仍然**返回这个键**，理由是让合并方不必先判形状：
      *
@@ -547,12 +547,12 @@ export async function apply(ctx, config = {}) {
    * 为什么值得单列一个接口：用户看到"连不上"时，第一个要回答的问题就是
    * **走的是哪条路**。没有这一行，所有人都会先去怀疑密码。
    *
-   * 出口由 `zhiyunEgress`（tier 0）提供，本包只**转述**它的状态，不改它。
+   * 出口由 `zwEgress`（tier 0）提供，本包只**转述**它的状态，不改它。
    * 没装那个服务时如实返回 `{ mode: 'unavailable' }`。
    */
   const egressStatus = async ({ probe = false } = {}) => {
-    const egress = (() => { try { return ctx.get?.('zhiyunEgress') ?? null; } catch { return null; } })();
-    if (!egress) return { mode: 'unavailable', reason: 'zhiyunEgress 服务未注册（@lybx-leyw/dsh-zju-source-http 未启用）' };
+    const egress = (() => { try { return ctx.get?.('zwEgress') ?? null; } catch { return null; } })();
+    if (!egress) return { mode: 'unavailable', reason: 'zwEgress 服务未注册（@lybx-leyw/dsh-zju-source-http 未启用）' };
     try {
       if (probe) { await egress.forget?.(); loadTodos.invalidate(); }
       if (probe) await egress.probe?.();
@@ -894,7 +894,7 @@ export async function apply(ctx, config = {}) {
       log(`数据路由：${ROUTE_PATH}（会话 ${dataDir}）`);
       return disposeRoute;
     };
-    if (typeof scope?.effect === 'function') scope.effect(register, 'zhiyun: xuezai data route');
+    if (typeof scope?.effect === 'function') scope.effect(register, 'zw: xuezai data route');
     else register();
   });
 

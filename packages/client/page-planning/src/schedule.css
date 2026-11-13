@@ -1,49 +1,49 @@
 /* Mounted with the planning client styles; view tabs must wrap on narrow screens. */
-body[data-zhiyun] .zpg-tools { flex-wrap: wrap; max-width: 100%; }
-body[data-zhiyun] .zpg-view { white-space: nowrap; }
-body[data-zhiyun] .zpg-schedule { margin-top: 24px; color: var(--zy-text); font-size: var(--zy-fs-sm); }
-body[data-zhiyun] .zpg-schedule h2 { margin: 0; font-size: var(--zy-fs-md); font-weight: 650; }
-body[data-zhiyun] .zpg-schedule h3 { margin: 0; font-size: var(--zy-fs-sm); }
-body[data-zhiyun] .zpg-schedule-head p { color: var(--zy-secondary); line-height: 1.7; }
-body[data-zhiyun] .zpg-schedule-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0; }
-body[data-zhiyun] .zpg-schedule-nav strong { margin-left: auto; font-weight: 500; font-variant-numeric: tabular-nums; }
-body[data-zhiyun] .zpg-schedule button { min-height: 34px; padding: 6px 10px; border: 1px solid var(--zy-line); border-radius: 6px; background: var(--zy-surface); color: var(--zy-text); font: inherit; cursor: pointer; }
-body[data-zhiyun] .zpg-schedule button:hover { border-color: var(--zy-accent); }
-body[data-zhiyun] .zpg-schedule button:disabled { opacity: .55; cursor: wait; }
+body[data-zw] .zwpg-tools { flex-wrap: wrap; max-width: 100%; }
+body[data-zw] .zwpg-view { white-space: nowrap; }
+body[data-zw] .zwpg-schedule { margin-top: 24px; color: var(--zw-text); font-size: var(--zw-fs-sm); }
+body[data-zw] .zwpg-schedule h2 { margin: 0; font-size: var(--zw-fs-md); font-weight: 650; }
+body[data-zw] .zwpg-schedule h3 { margin: 0; font-size: var(--zw-fs-sm); }
+body[data-zw] .zwpg-schedule-head p { color: var(--zw-secondary); line-height: 1.7; }
+body[data-zw] .zwpg-schedule-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0; }
+body[data-zw] .zwpg-schedule-nav strong { margin-left: auto; font-weight: 500; font-variant-numeric: tabular-nums; }
+body[data-zw] .zwpg-schedule button { min-height: 34px; padding: 6px 10px; border: 1px solid var(--zw-line); border-radius: 6px; background: var(--zw-surface); color: var(--zw-text); font: inherit; cursor: pointer; }
+body[data-zw] .zwpg-schedule button:hover { border-color: var(--zw-accent); }
+body[data-zw] .zwpg-schedule button:disabled { opacity: .55; cursor: wait; }
 /* 焦点环只补 `outline`，**不写 `outline-offset`** —— 那个属性归基础层
  * （`ui-shared` 的「输入类控件用更贴边的焦点环」），两处都声明时特异性相近、
  * 胜负只取决于挂载顺序，`check-css-order` 会判成跨包竞争（真报过）。
  * 值也保持与基础层一致（2px 实线 + accent 色）。 */
-body[data-zhiyun] .zpg-schedule :is(button, input, select):focus-visible { outline: 2px solid var(--zy-accent); }
-body[data-zhiyun] .zpg-schedule-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: start; }
-body[data-zhiyun] .zpg-schedule-day { min-width: 0; min-height: 160px; border: 1px solid var(--zy-line); border-radius: 8px; background: var(--zy-surface); padding: 10px; }
-body[data-zhiyun] .zpg-schedule-day.is-today { border-color: var(--zy-accent); }
-body[data-zhiyun] .zpg-schedule-day h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-bottom: 10px; }
-body[data-zhiyun] .zpg-schedule-day time { color: var(--zy-secondary); font-weight: 400; }
-body[data-zhiyun] .zpg-schedule-day small { color: var(--zy-accent); font-size: var(--zy-fs-meta); }
-body[data-zhiyun] .zpg-schedule-empty { color: var(--zy-secondary); font-size: var(--zy-fs-meta); }
-body[data-zhiyun] .zpg-schedule-block { border-top: 1px solid var(--zy-line); padding: 12px 0; overflow-wrap: anywhere; }
-body[data-zhiyun] .zpg-schedule-block > strong { display: block; margin: 6px 0; line-height: 1.6; }
-body[data-zhiyun] .zpg-schedule-time { color: var(--zy-secondary); font-size: var(--zy-fs-meta); font-variant-numeric: tabular-nums; }
-body[data-zhiyun] .zpg-schedule-tag { display: block; color: var(--zy-secondary); font-size: var(--zy-fs-meta); margin: 4px 0; }
-body[data-zhiyun] .zpg-schedule-block.is-done > strong { text-decoration: line-through; color: var(--zy-secondary); }
-body[data-zhiyun] .zpg-schedule-warning { display: block; color: var(--zy-accent); line-height: 1.6; margin: 6px 0; }
-body[data-zhiyun] .zpg-schedule-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-body[data-zhiyun] .zpg-schedule-form { margin-top: 18px; padding: 16px; border: 1px solid var(--zy-line); border-radius: 8px; background: var(--zy-surface); scroll-margin-top: 24px; }
-body[data-zhiyun] .zpg-schedule-form fieldset { display: grid; grid-template-columns: minmax(180px, 2fr) repeat(2, minmax(180px, 1fr)); gap: 12px; border: 0; padding: 0; margin: 14px 0; min-width: 0; }
-body[data-zhiyun] .zpg-schedule-form label { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+body[data-zw] .zwpg-schedule :is(button, input, select):focus-visible { outline: 2px solid var(--zw-accent); }
+body[data-zw] .zwpg-schedule-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: start; }
+body[data-zw] .zwpg-schedule-day { min-width: 0; min-height: 160px; border: 1px solid var(--zw-line); border-radius: 8px; background: var(--zw-surface); padding: 10px; }
+body[data-zw] .zwpg-schedule-day.is-today { border-color: var(--zw-accent); }
+body[data-zw] .zwpg-schedule-day h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-bottom: 10px; }
+body[data-zw] .zwpg-schedule-day time { color: var(--zw-secondary); font-weight: 400; }
+body[data-zw] .zwpg-schedule-day small { color: var(--zw-accent); font-size: var(--zw-fs-meta); }
+body[data-zw] .zwpg-schedule-empty { color: var(--zw-secondary); font-size: var(--zw-fs-meta); }
+body[data-zw] .zwpg-schedule-block { border-top: 1px solid var(--zw-line); padding: 12px 0; overflow-wrap: anywhere; }
+body[data-zw] .zwpg-schedule-block > strong { display: block; margin: 6px 0; line-height: 1.6; }
+body[data-zw] .zwpg-schedule-time { color: var(--zw-secondary); font-size: var(--zw-fs-meta); font-variant-numeric: tabular-nums; }
+body[data-zw] .zwpg-schedule-tag { display: block; color: var(--zw-secondary); font-size: var(--zw-fs-meta); margin: 4px 0; }
+body[data-zw] .zwpg-schedule-block.is-done > strong { text-decoration: line-through; color: var(--zw-secondary); }
+body[data-zw] .zwpg-schedule-warning { display: block; color: var(--zw-accent); line-height: 1.6; margin: 6px 0; }
+body[data-zw] .zwpg-schedule-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+body[data-zw] .zwpg-schedule-form { margin-top: 18px; padding: 16px; border: 1px solid var(--zw-line); border-radius: 8px; background: var(--zw-surface); scroll-margin-top: 24px; }
+body[data-zw] .zwpg-schedule-form fieldset { display: grid; grid-template-columns: minmax(180px, 2fr) repeat(2, minmax(180px, 1fr)); gap: 12px; border: 0; padding: 0; margin: 14px 0; min-width: 0; }
+body[data-zw] .zwpg-schedule-form label { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
 /* 尺寸与排版交给基础层（`ui-shared` 的「全站输入类控件 32px / padding 5px 9px /
    13px」）—— 那段注释写明「只声明尺寸与排版，不碰 border / outline，视觉归页面层」。
    这里只说**视觉**：边框、圆角、底色、字色。
    早先这里还写了 `min-height: 38px` 和 `padding: 7px 9px`，与基础层争同一属性、
    特异性又接近 —— 挂载顺序一变输入框就在两套尺寸之间跳（`check-css-order` 会报）。 */
-body[data-zhiyun] .zpg-schedule-form :is(input, select) { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid var(--zy-line); border-radius: 6px; background: var(--zy-surface); color: var(--zy-text); font-family: inherit; }
+body[data-zw] .zwpg-schedule-form :is(input, select) { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid var(--zw-line); border-radius: 6px; background: var(--zw-surface); color: var(--zw-text); font-family: inherit; }
 @media (max-width: 1100px) {
-  body[data-zhiyun] .zpg-schedule-week { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  body[data-zhiyun] .zpg-schedule-form fieldset { grid-template-columns: 1fr; }
+  body[data-zw] .zwpg-schedule-week { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body[data-zw] .zwpg-schedule-form fieldset { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
-  body[data-zhiyun] .zpg-schedule-week { grid-template-columns: 1fr; }
-  body[data-zhiyun] .zpg-schedule-day { min-height: 0; }
-  body[data-zhiyun] .zpg-schedule-nav strong { width: 100%; margin-left: 0; }
+  body[data-zw] .zwpg-schedule-week { grid-template-columns: 1fr; }
+  body[data-zw] .zwpg-schedule-day { min-height: 0; }
+  body[data-zw] .zwpg-schedule-nav strong { width: 100%; margin-left: 0; }
 }

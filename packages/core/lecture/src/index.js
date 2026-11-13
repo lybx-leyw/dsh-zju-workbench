@@ -19,7 +19,7 @@
  * 宿主的 `ctx.llm` 服务形状是 `prepareCall / stream`（流式、带模型解析），
  * 而本包要的是窄接口 `call({stage, route, constant, variable, signal})`。
  * 那层适配**已经存在**：`@lybx-leyw/dsh-zju-core-parser` 的 `HarnessLlm` 就是它，
- * 且它挂在 `ctx.zhiyunParser.llm` 上（study 包已经在这样用）。
+ * 且它挂在 `ctx.zwParser.llm` 上（study 包已经在这样用）。
  * 所以这里直接取用，而不是再写第三个适配器 —— 本仓对「同一件事有两份实现」
  * 是明令禁止的（两条路会在半年内无声漂开）。
  *
@@ -35,23 +35,23 @@ import { LectureError } from './errors.js';
 import { generateLecture } from './generate.js';
 export { GENERATION_VERSION } from './generate.js';
 
-export const name = 'zhiyun-lecture';
+export const name = 'zw-lecture';
 
 /**
- * 依赖声明：`zhiyunParser` 提供宿主适配好的窄 llm。
+ * 依赖声明：`zwParser` 提供宿主适配好的窄 llm。
  *
  * ⚠️ 声明它（而不是 `llm`）是有意的：直接用 `ctx.llm` 就得在本包内重写一遍
  *    `prepareCall / resolveModelInfo / stream` 的适配，那是解析器包已有的活。
  *    声明依赖也让「谁提供模型」这件事对宿主可见 —— 靠 `ctx.llm` 猜出来
  *    反而是隐式魔法。
  */
-export const inject = ['zhiyunParser'];
+export const inject = ['zwParser'];
 
 export function createLectureService(config = {}) {
   const llm = config.llm;
   if (!llm || typeof llm.call !== 'function') {
     throw new LectureError('CONFIG', '讲义加工需要注入窄 llm 接口（{ call({stage,route,constant,variable,signal}) }）；'
-      + '宿主侧由 zhiyunParser 提供，也可用 config.llm 直接给出');
+      + '宿主侧由 zwParser 提供，也可用 config.llm 直接给出');
   }
 
   // 路由**延迟解析**：插件激活不该因为「模型还没配好」而失败 ——
@@ -149,8 +149,8 @@ export function createLectureService(config = {}) {
 }
 
 export async function apply(ctx, config = {}) {
-  const service = createLectureService({ ...config, llm: config.llm ?? ctx.zhiyunParser?.llm,
-    cache: config.cache ?? ctx.zhiyunParser?.cache });
-  const removeService = ctx.provide('zhiyunLecture', service);
+  const service = createLectureService({ ...config, llm: config.llm ?? ctx.zwParser?.llm,
+    cache: config.cache ?? ctx.zwParser?.cache });
+  const removeService = ctx.provide('zwLecture', service);
   return () => { service.dispose(); removeService?.(); };
 }

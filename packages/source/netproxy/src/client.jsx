@@ -2,10 +2,10 @@
 //
 // 面板**不判断路由，也不复刻校验**：域名怎么匹配、配置算不算合法，真源都在宿主半边的
 // `src/config.js`（`normalize` / `matchesHost`）。这里只做三件事 —— 读出当前配置、
-// 让用户改、把结果原样交给 `/_dsh/zhiyun-net-proxy`。校验失败时把宿主返回的那句话
+// 让用户改、把结果原样交给 `/_dsh/zw-net-proxy`。校验失败时把宿主返回的那句话
 // 直接显示出来，于是「面板说存不下」和「宿主拒绝的原因」永远是同一句。
 //
-// 写操作必须带 `x-zhiyun-net-proxy` 头：宿主用它挡 CSRF（跨站发不出自定义头，硬带上
+// 写操作必须带 `x-zw-net-proxy` 头：宿主用它挡 CSRF（跨站发不出自定义头，硬带上
 // 就会触发本路由不响应的预检）。漏了它每次保存都是 403。
 //
 // # 外观为什么自己只画内容（这一段决定了整个面板的形状）
@@ -20,7 +20,7 @@ import React, { useEffect, useState } from 'react';
 import { Icon, Notice, mountStyle, registerText } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 
-export const name = 'zhiyun-net-proxy-client';
+export const name = 'zw-net-proxy-client';
 
 /**
  * 只要插槽与 locale。
@@ -55,7 +55,7 @@ const TEXT = {
 };
 
 export function apply(ctx) {
-  mountStyle(ctx, { attribute: 'zhiyunNetProxyStyle', css, label: 'zhiyun: net proxy styles' });
+  mountStyle(ctx, { attribute: 'zwNetProxyStyle', css, label: 'zw: net proxy styles' });
   const text = registerText(ctx, 'zju-source-netproxy', TEXT);
   ctx.effect(() => () => text.dispose(), 'zju: netproxy settings i18n');
   // 设置是宿主原生浮窗（`settings.section` 的子槽位），所以面板直接进那里，
@@ -67,10 +67,10 @@ export function apply(ctx) {
 }
 
 /** 宿主注册的设置路由，与宿主 `src/constants.js` 的 `ROUTE_PATH` 一致。 */
-const ROUTE = '/_dsh/zhiyun-net-proxy';
+const ROUTE = '/_dsh/zw-net-proxy';
 
 /** 写操作的自定义头，名字必须与宿主 `settings.js` 的 `WRITE_HEADER` 一致。 */
-const WRITE_HEADER = 'x-zhiyun-net-proxy';
+const WRITE_HEADER = 'x-zw-net-proxy';
 
 /** 「直连」的保留目标，与宿主 `config.js` 的 `DIRECT` 一致。 */
 const DIRECT = 'direct';
@@ -305,7 +305,7 @@ export function NetworkProxy() {
     return frame(<>
       <p className="znp-muted">{phase === 'loading' ? '正在读取代理配置…' : '读不到代理配置。'}</p>
       <Notice>{notice?.text}</Notice>
-      {phase === 'error' && <div><button type="button" className="zs-button" onClick={() => void load()}>重新读取</button></div>}
+      {phase === 'error' && <div><button type="button" className="zws-button" onClick={() => void load()}>重新读取</button></div>}
     </>);
   }
 
@@ -342,7 +342,7 @@ export function NetworkProxy() {
     <section className="znp-group" aria-label="代理">
       <div className="znp-group-head">
         <h4 className="znp-h">代理</h4>
-        <button type="button" className="zs-button" onClick={addProxy}><Icon name="plus" size={14}/>添加代理</button>
+        <button type="button" className="zws-button" onClick={addProxy}><Icon name="plus" size={14}/>添加代理</button>
       </div>
       {config.proxies.length === 0
         ? <p className="znp-muted">还没有代理。添加之后，规则与默认策略就能指向它。</p>
@@ -410,7 +410,7 @@ export function NetworkProxy() {
           <div className="znp-item-foot">
             <button
               type="button"
-              className="zs-button"
+              className="zws-button"
               disabled={!testable(proxy.id) || busy !== ''}
               title={testable(proxy.id) ? '直接连这个出口' : '先保存，宿主才认得这个出口'}
               onClick={() => void probe(proxy.id)}
@@ -424,7 +424,7 @@ export function NetworkProxy() {
     <section className="znp-group" aria-label="路由规则">
       <div className="znp-group-head">
         <h4 className="znp-h">路由规则</h4>
-        <button type="button" className="zs-button" onClick={addRule}><Icon name="plus" size={14}/>添加规则</button>
+        <button type="button" className="zws-button" onClick={addRule}><Icon name="plus" size={14}/>添加规则</button>
       </div>
       <p className="znp-hint">{MATCH_HINT}</p>
       {config.rules.length === 0
@@ -465,7 +465,7 @@ export function NetworkProxy() {
         </label>
         <button
           type="button"
-          className="zs-button"
+          className="zws-button"
           disabled={!testable(config.fallback) || busy !== ''}
           title={testable(config.fallback) ? '直接连这个出口' : '先保存，宿主才认得这个出口'}
           onClick={() => void probe(config.fallback)}
@@ -479,8 +479,8 @@ export function NetworkProxy() {
         {dirty ? '有未保存的改动。测试打的是已保存的配置。' : '与宿主当前生效的配置一致。'}
       </span>
       <div className="znp-foot-actions">
-        <button type="button" className="zs-button" disabled={busy !== ''} onClick={() => void load()}>重新读取</button>
-        <button type="button" className="zs-primary" disabled={busy !== ''} onClick={() => void save()}>
+        <button type="button" className="zws-button" disabled={busy !== ''} onClick={() => void load()}>重新读取</button>
+        <button type="button" className="zws-primary" disabled={busy !== ''} onClick={() => void save()}>
           {busy === 'save' ? '保存中…' : '保存'}
         </button>
       </div>

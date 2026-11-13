@@ -1,12 +1,12 @@
 # dsh bundle patch：把「插件」页插进 profile 的层栈。
 #
 # 本包现在是**纯页面**：只渲染依赖图与行开关。
-# 图的计算（`runtime.js`）与 `/api/zhiyun-plugins` 只读路由已搬到
+# 图的计算（`runtime.js`）与 `/api/zw-plugins` 只读路由已搬到
 # `@lybx-leyw/dsh-zju-core-plugin-graph` —— 一个页面包不该注册宿主路由，
 # 而 `runtime.js` 本来就被宿主与客户端同时 import，属于「两端共用的纯逻辑」。
 #
 # 所以：**本包不再有宿主行为**，`src/index.js` 只剩一个空 `apply()`，
 # 它存在的唯一理由是让客户端 bundle 进入启动图谱。
 - insert:
-    - id: zhiyun-page-plugins
+    - id: zw-page-plugins
       name: '@lybx-leyw/dsh-zju-page-plugins'

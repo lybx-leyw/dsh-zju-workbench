@@ -11,7 +11,7 @@
 import { createReadToolRegistrar, defined, optStr, serviceLookup } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunYjsy: '@lybx-leyw/dsh-zju-source-yjsy',
+  zwYjsy: '@lybx-leyw/dsh-zju-source-yjsy',
 });
 
 /**
@@ -21,7 +21,7 @@ const SERVICE_SOURCES = Object.freeze({
  * @returns 工具定义数组。
  */
 export function createYjsyReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunYjsy', SERVICE_SOURCES.zhiyunYjsy);
+  const need = () => serviceLookup(services, 'zwYjsy', SERVICE_SOURCES.zwYjsy);
 
   return [
     {
@@ -49,10 +49,10 @@ export function createYjsyReadTools(services) {
   ];
 }
 
-export const name = 'zhiyun-tool-yjsy';
+export const name = 'zw-tool-yjsy';
 
 /**
- * 惰性注入：`tools` 由宿主提供，`zhiyunYjsy` 由对应的 source 包提供。
+ * 惰性注入：`tools` 由宿主提供，`zwYjsy` 由对应的 source 包提供。
  *
  * # 为什么必须声明
  *
@@ -64,7 +64,7 @@ export const name = 'zhiyun-tool-yjsy';
  * 都声明了，这四个包当初漏了。因为这个包一直没被 preset 挂载，
  * 「不声明也能跑」从未被验证过。
  */
-export const inject = ['tools', 'zhiyunYjsy'];
+export const inject = ['tools', 'zwYjsy'];
 
 export function apply(ctx) {
   createReadToolRegistrar({

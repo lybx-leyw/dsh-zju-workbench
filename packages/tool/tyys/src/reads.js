@@ -16,7 +16,7 @@
 import { createReadToolRegistrar, defined, inputError, optStr, serviceLookup, str } from '@lybx-leyw/dsh-zju-tool-kit';
 
 const SERVICE_SOURCES = Object.freeze({
-  zhiyunTyys: '@lybx-leyw/dsh-zju-source-tyys',
+  zwTyys: '@lybx-leyw/dsh-zju-source-tyys',
 });
 
 const ACTIONS = ['venueList', 'venueSlots', 'venueNotice', 'orderList', 'rollcallHistory'];
@@ -28,7 +28,7 @@ const ACTIONS = ['venueList', 'venueSlots', 'venueNotice', 'orderList', 'rollcal
  * @returns 工具定义数组。
  */
 export function createTyysReadTools(services) {
-  const need = () => serviceLookup(services, 'zhiyunTyys', SERVICE_SOURCES.zhiyunTyys);
+  const need = () => serviceLookup(services, 'zwTyys', SERVICE_SOURCES.zwTyys);
 
   return [
     {

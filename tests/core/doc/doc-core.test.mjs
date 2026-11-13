@@ -682,7 +682,7 @@ test('服务层：没有 outputDir 直接 CONFIG', () => {
   });
 });
 
-test('插件层：provide zhiyunDoc，卸载时摘掉；没有输出目录时抛 CONFIG', async () => {
+test('插件层：provide zwDoc，卸载时摘掉；没有输出目录时抛 CONFIG', async () => {
   const provided = new Map();
   const ctx = {
     // `inject: ['profileContext']` —— 真实宿主由 Cordis 保证它已就绪。
@@ -698,9 +698,9 @@ test('插件层：provide zhiyunDoc，卸载时摘掉；没有输出目录时抛
   assert.deepEqual(inject, ['profileContext']);
 
   const dispose = apply(ctx);
-  assert.equal(typeof provided.get('zhiyunDoc')?.text, 'function');
+  assert.equal(typeof provided.get('zwDoc')?.text, 'function');
   await dispose();
-  assert.equal(provided.has('zhiyunDoc'), false);
+  assert.equal(provided.has('zwDoc'), false);
 
   // 没有 profile 目录、也没有 config.outputDir：抛 CONFIG，不静默退化。
   //
@@ -716,7 +716,7 @@ test('插件层：provide zhiyunDoc，卸载时摘掉；没有输出目录时抛
   // 显式配置可以顶替 profile 目录（离线用例与嵌入方走这条）。
   const custom = new Map();
   apply({ provide: (name, value) => { custom.set(name, value); return () => {}; } }, { outputDir: at('explicit') });
-  assert.equal(typeof custom.get('zhiyunDoc')?.pdf, 'function');
+  assert.equal(typeof custom.get('zwDoc')?.pdf, 'function');
 });
 
 test('插件层：profileContext 读起来抛错时按「没有目录」处理，不崩在属性访问上', async () => {

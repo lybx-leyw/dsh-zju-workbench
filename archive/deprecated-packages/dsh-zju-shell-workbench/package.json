@@ -1,7 +1,7 @@
 {
-  "name": "dsh-zhiyun-shell-workbench",
+  "name": "dsh-zju-shell-workbench",
   "version": "0.1.0",
-  "description": "智云 Pro 学习工作台：界面外壳（侧栏、页框架、主题、导航服务与插槽契约）",
+  "description": "ZJU Workbench 学习工作台：界面外壳（侧栏、页框架、主题、导航服务与插槽契约）",
   "private": true,
   "type": "module",
   "main": "./src/index.js",
@@ -11,7 +11,7 @@
     "client": {
       "platform": "web",
       "inject": [
-        "dsh-zhiyun-shell-bridge",
+        "dsh-zju-shell-bridge",
         "@deepseek-ai/dsh-client-ui-layout",
         "@deepseek-ai/dsh-client-ui-workspace",
         "@deepseek-ai/dsh-client-ui-theme",

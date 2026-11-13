@@ -18,7 +18,7 @@ export const label = 'CC98 论坛';
 export async function run({ account, dataDir, card }) {
   const creds = memoryCredentials();
 
-  // ① 先装 campus：它 provide zhiyunEgress，cc98 的 sharedFetch(ctx) 指着它
+  // ① 先装 campus：它 provide zwEgress，cc98 的 sharedFetch(ctx) 指着它
   await mountCampus({ dataDir: `${dataDir}host/`, credentials: creds.service });
 
   // ② 再装 cc98 本身
@@ -26,10 +26,10 @@ export async function run({ account, dataDir, card }) {
     dataDir,
     credentials: creds.service,
   });
-  const hasEgress = typeof ctx.get('zhiyunEgress')?.fetch === 'function';
+  const hasEgress = typeof ctx.get('zwEgress')?.fetch === 'function';
   await card.writeCc98(ctx, account);
 
-  const route = routeOf(routes, '/api/zhiyun-cc98');
+  const route = routeOf(routes, '/api/zw-cc98');
 
   const hot = await rpcEnvelope(route, 'cc98.hot', { range: 'today' });
   const boards = await rpcEnvelope(route, 'cc98.boards', {});

@@ -1,6 +1,6 @@
 /**
  * Cordis 包装（薄）：从注入项取宿主服务与可选 llm，把编排能力挂成
- * `ctx.zhiyunClassroomAgent`。
+ * `ctx.zwClassroomAgent`。
  *
  * 与 `@lybx-leyw/dsh-zju-core-lecture/src/index.js` 同一形态：
  * - 算法在 `src/orchestrator.js` 与各搬运文件里，可脱离宿主单测；
@@ -17,10 +17,10 @@
 import { createAgentService } from './orchestrator.js';
 import { ClassroomAgentError } from './errors.js';
 
-export const name = 'zhiyun-classroom-agent';
+export const name = 'zw-classroom-agent';
 
 /** 规范 §4：领域包只 declare 它消费的宿主服务。 */
-export const inject = ['zhiyunClassroomStudio'];
+export const inject = ['zwClassroomStudio'];
 
 /**
  * @param {object} ctx Cordis 上下文
@@ -31,20 +31,20 @@ export const inject = ['zhiyunClassroomStudio'];
  */
 export function apply(ctx, config = {}) {
   const log = config.logger ?? {
-    debug: (...args) => ctx?.logger?.debug?.('[zhiyun-classroom-agent]', ...args),
-    info: (...args) => ctx?.logger?.info?.('[zhiyun-classroom-agent]', ...args),
-    warn: (...args) => ctx?.logger?.warn?.('[zhiyun-classroom-agent]', ...args),
-    error: (...args) => ctx?.logger?.error?.('[zhiyun-classroom-agent]', ...args),
+    debug: (...args) => ctx?.logger?.debug?.('[zw-classroom-agent]', ...args),
+    info: (...args) => ctx?.logger?.info?.('[zw-classroom-agent]', ...args),
+    warn: (...args) => ctx?.logger?.warn?.('[zw-classroom-agent]', ...args),
+    error: (...args) => ctx?.logger?.error?.('[zw-classroom-agent]', ...args),
   };
 
   let studio = null;
   try {
-    studio = ctx?.zhiyunClassroomStudio ?? ctx?.get?.('zhiyunClassroomStudio') ?? null;
+    studio = ctx?.zwClassroomStudio ?? ctx?.get?.('zwClassroomStudio') ?? null;
   } catch (error) {
-    log.warn('读取 zhiyunClassroomStudio 失败（按缺失处理）', error?.message ?? error);
+    log.warn('读取 zwClassroomStudio 失败（按缺失处理）', error?.message ?? error);
   }
   if (!studio) {
-    log.warn('zhiyunClassroomStudio 尚未提供：课堂智能体以降级形态上线（status().state=degraded）');
+    log.warn('zwClassroomStudio 尚未提供：课堂智能体以降级形态上线（status().state=degraded）');
   }
 
   let service;
@@ -76,9 +76,9 @@ export function apply(ctx, config = {}) {
 
   let removeService = () => {};
   try {
-    removeService = ctx?.provide?.('zhiyunClassroomAgent', service) ?? (() => {});
+    removeService = ctx?.provide?.('zwClassroomAgent', service) ?? (() => {});
   } catch (error) {
-    log.error('zhiyunClassroomAgent 注册失败（服务名可能已被占用）', error?.message ?? error);
+    log.error('zwClassroomAgent 注册失败（服务名可能已被占用）', error?.message ?? error);
   }
 
   try {
@@ -86,7 +86,7 @@ export function apply(ctx, config = {}) {
       try {
         removeService();
       } catch (error) {
-        log.warn('卸载时注销 zhiyunClassroomAgent 失败', error?.message ?? error);
+        log.warn('卸载时注销 zwClassroomAgent 失败', error?.message ?? error);
       }
     });
   } catch (error) {

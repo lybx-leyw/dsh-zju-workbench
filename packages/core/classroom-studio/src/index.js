@@ -1,8 +1,8 @@
 /**
- * 智云 Pro「互动课堂」的宿主半边（L1）。
+ * ZJU Workbench「互动课堂」的宿主半边（L1）。
  *
  * 把 OpenMAIC 的 21 个 `app/api/*` route（实测 20 个，见 `ROUTES.md` 开头的
- * 「口径差异」）搬成 `ctx.zhiyunClassroomStudio` 上的服务方法。本包只做**宿主层**：
+ * 「口径差异」）搬成 `ctx.zwClassroomStudio` 上的服务方法。本包只做**宿主层**：
  * 路由形状 → 服务方法、Next 的请求/响应对象 → 普通参数与普通返回值。
  *
  * # 三条硬约定（与 `host-deeptutor` / `host-paper` 完全一致）
@@ -12,21 +12,21 @@
  *    `status().state` 与 `status().detail.implemented`，不是白屏。
  *    本文件里**每一处**可能抛的地方都有边界：目录、provide、时钟、形状自检。
  * 2. **判断都推迟到方法被调用时**。`apply()` 里不做任何 IO、不探测、不 import 上游。
- * 3. **业务包只调 `ctx.zhiyunClassroomStudio`**，不 import 本包 `src/` 下的任何文件
+ * 3. **业务包只调 `ctx.zwClassroomStudio`**，不 import 本包 `src/` 下的任何文件
  *    （`exports` 里给的子路径只供测试与 HTTP 桥用）。
  *
- * # 命名：为什么不叫 `zhiyunClassroom`
+ * # 命名：为什么不叫 `zwClassroom`
  *
- * `zhiyunClassroom` 已被 `@lybx-leyw/dsh-zju-source-classroom` 占用
+ * `zwClassroom` 已被 `@lybx-leyw/dsh-zju-source-classroom` 占用
  * （`packages/source/classroom/src/index.js:101`），那边是浙大教务的
  * 课堂数据源（`getCurrentUser` / `acquireSso` / `transport`），
- * 而 `@lybx-leyw/dsh-zju-core-parser`、`@lybx-leyw/dsh-zju-core-study` 都 `inject: ['zhiyunClassroom']`。
+ * 而 `@lybx-leyw/dsh-zju-core-parser`、`@lybx-leyw/dsh-zju-core-study` 都 `inject: ['zwClassroom']`。
  * 若本包也叫这名，那两个包会拿到本包的服务，在 `acquireSso` 上崩。
  *
  * 同理 `cordis.patch.yml` 的 bundle 行 id 是「包名去 `dsh-` 前缀」
- * （`scripts/test-host.mjs:90-93` 有这条规则的实现），`zhiyun-classroom` 会与源包
- * 逐字相同、两行撞 id。因此本包统一用 `zhiyun-classroom-studio` /
- * `zhiyunClassroomStudio`（规范 §4 已同步改名）。
+ * （`scripts/test-host.mjs:90-93` 有这条规则的实现），`zw-classroom` 会与源包
+ * 逐字相同、两行撞 id。因此本包统一用 `zw-classroom-studio` /
+ * `zwClassroomStudio`（规范 §4 已同步改名）。
  *
  * 即便如此，`apply()` 仍会**探测**同名服务：撞上了就大声 warn、写进
  * `status().detail.conflict`，并且仍然 provide —— 不 provide 会让契约凭空少一个服务，
@@ -49,7 +49,7 @@ import { mountPlatform } from './services/platform.js';
 /** 内置的四个域，顺序无依赖（各自只往自己的命名空间写）。 */
 const DOMAIN_MOUNTS = Object.freeze([mountGeneration, mountMedia, mountAgentRuntime, mountPlatform]);
 
-export const name = 'zhiyun-classroom';
+export const name = 'zw-classroom';
 
 /**
  * 只硬依赖 `profileContext`（拿 profile 目录做数据根）。
@@ -66,7 +66,7 @@ export const PACKAGE_VERSION = '0.1.0';
 /**
  * @param {object} ctx Cordis 上下文
  * @param {object} [config]
- * @param {string} [config.dataDir] 数据根，默认 `<profile>/data/zhiyun-classroom`
+ * @param {string} [config.dataDir] 数据根，默认 `<profile>/data/zw-classroom`
  * @param {object} [config.providerConfig] 注入 provider 装载器（见 `upstream/provider-config.js`）
  * @param {() => Promise<object>} [config.resolveCapabilities] 注入能力位解析器
  * @param {object} [config.adapter] 注入存储适配器（见 `adapter.js`）
@@ -77,10 +77,10 @@ export function apply(ctx, config = {}) {
   // 兜底 logger：`ctx.logger` 在测试桩里常常只有一部分方法，
   // 缺哪个就退到 console —— 不能在打日志这一行上抛。
   const log = config.logger ?? {
-    debug: (...args) => ctx.logger?.debug?.('[zhiyun-classroom]', ...args),
-    info: (...args) => ctx.logger?.info?.('[zhiyun-classroom]', ...args),
-    warn: (...args) => ctx.logger?.warn?.('[zhiyun-classroom]', ...args),
-    error: (...args) => ctx.logger?.error?.('[zhiyun-classroom]', ...args),
+    debug: (...args) => ctx.logger?.debug?.('[zw-classroom]', ...args),
+    info: (...args) => ctx.logger?.info?.('[zw-classroom]', ...args),
+    warn: (...args) => ctx.logger?.warn?.('[zw-classroom]', ...args),
+    error: (...args) => ctx.logger?.error?.('[zw-classroom]', ...args),
   };
 
   // ── 数据根 ────────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ export function apply(ctx, config = {}) {
   let dataDir = null;
   try {
     const profileDir = ctx?.profileContext?.dir;
-    dataDir = config.dataDir ?? (profileDir ? join(profileDir, 'data/zhiyun-classroom') : null);
+    dataDir = config.dataDir ?? (profileDir ? join(profileDir, 'data/zw-classroom') : null);
   } catch (error) {
     log.warn('解析数据目录失败，课堂服务将以无数据根状态启动', error?.message ?? error);
   }
@@ -98,7 +98,7 @@ export function apply(ctx, config = {}) {
   // ── 组合层冲突探测（**只探测，不改名**，理由见文件头）────────────────
   let conflict = null;
   try {
-    const existing = ctx.get?.('zhiyunClassroomStudio');
+    const existing = ctx.get?.('zwClassroomStudio');
     if (existing) {
       // 源包的形状（`transport` / `acquireSso`）与本服务的形状（`runs` / `classroom`）
       // 完全不重叠，所以"像不像源包"可以直接看特征方法，而不是猜。
@@ -106,19 +106,19 @@ export function apply(ctx, config = {}) {
         || typeof existing.getCurrentUser === 'function'
         || existing.transport !== undefined;
       conflict = {
-        service: 'zhiyunClassroomStudio',
+        service: 'zwClassroomStudio',
         occupiedBy: looksLikeSource ? '@lybx-leyw/dsh-zju-source-classroom' : 'unknown-provider',
         detail: looksLikeSource
           ? '服务名与浙大教务课堂数据源重复；两者只能有一个生效，需要规范层面定名'
           : '服务名已被另一个包占用',
       };
       log.error(
-        `zhiyunClassroomStudio 已被 ${conflict.occupiedBy} 占用，本包将覆盖它。`
-        + 'inject zhiyunClassroomStudio 的既有包（core-parser / core-study）会拿到错误的服务',
+        `zwClassroomStudio 已被 ${conflict.occupiedBy} 占用，本包将覆盖它。`
+        + 'inject zwClassroomStudio 的既有包（core-parser / core-study）会拿到错误的服务',
       );
     }
   } catch (error) {
-    log.warn('探测 zhiyunClassroomStudio 占用情况失败（已忽略）', error?.message ?? error);
+    log.warn('探测 zwClassroomStudio 占用情况失败（已忽略）', error?.message ?? error);
   }
 
   // ── 依赖装配 ──────────────────────────────────────────────────────────
@@ -161,14 +161,14 @@ export function apply(ctx, config = {}) {
   // 本包 apply 之后才 provide（Cordis 的加载顺序不保证）。取不到就是 null，
   // 各域的 route 自己决定降级分支 —— 这里不做任何"假装有"的兜底。
   const ports = {
-    get vault() { return safeService(ctx, 'zhiyunClassroomVault'); },
-    get media() { return safeService(ctx, 'zhiyunClassroomMedia'); },
-    get generate() { return safeService(ctx, 'zhiyunClassroomGenerate'); },
-    get agent() { return safeService(ctx, 'zhiyunClassroomAgent'); },
-    get pbl() { return safeService(ctx, 'zhiyunClassroomPbl'); },
-    get export() { return safeService(ctx, 'zhiyunClassroomExport'); },
-    get stage() { return safeService(ctx, 'zhiyunClassroomStage'); },
-    get studio() { return safeService(ctx, 'zhiyunClassroomStudio'); },
+    get vault() { return safeService(ctx, 'zwClassroomVault'); },
+    get media() { return safeService(ctx, 'zwClassroomMedia'); },
+    get generate() { return safeService(ctx, 'zwClassroomGenerate'); },
+    get agent() { return safeService(ctx, 'zwClassroomAgent'); },
+    get pbl() { return safeService(ctx, 'zwClassroomPbl'); },
+    get export() { return safeService(ctx, 'zwClassroomExport'); },
+    get stage() { return safeService(ctx, 'zwClassroomStage'); },
+    get studio() { return safeService(ctx, 'zwClassroomStudio'); },
   };
 
   const service = createClassroomService({
@@ -188,7 +188,7 @@ export function apply(ctx, config = {}) {
   try {
     missing = inspectShape(service);
     if (missing.length > 0) {
-      log.error(`zhiyunClassroomStudio 形状与规范 §4 不符，缺少：${missing.join(', ')}`);
+      log.error(`zwClassroomStudio 形状与规范 §4 不符，缺少：${missing.join(', ')}`);
     }
   } catch (error) {
     log.warn('形状自检失败（已忽略）', error?.message ?? error);
@@ -209,10 +209,10 @@ export function apply(ctx, config = {}) {
   try {
     // `ctx.provide` 在真 Cordis 里遇到同名服务可能抛（取决于宿主版本）。
     // 抛了就降级：服务没了，但工作台还活着 —— 这正是本仓的取舍。
-    removeService = ctx.provide('zhiyunClassroomStudio', service) ?? (() => {});
+    removeService = ctx.provide('zwClassroomStudio', service) ?? (() => {});
   } catch (error) {
     log.error(
-      'zhiyunClassroomStudio 注册失败（服务名可能已被占用），课堂能力本次不可用',
+      'zwClassroomStudio 注册失败（服务名可能已被占用），课堂能力本次不可用',
       error?.message ?? error,
     );
   }
@@ -223,7 +223,7 @@ export function apply(ctx, config = {}) {
       try {
         removeService();
       } catch (error) {
-        log.warn('卸载时注销 zhiyunClassroomStudio 失败', error?.message ?? error);
+        log.warn('卸载时注销 zwClassroomStudio 失败', error?.message ?? error);
       }
     });
   } catch (error) {

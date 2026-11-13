@@ -241,7 +241,7 @@ function normalizeMediaRequests(list) {
  * （scene-builder.ts:36-112）：
  *   slide → `{ type:'slide', canvas }`、quiz → `{ type:'quiz', questions }`、
  *   interactive → `{ type:'interactive', url, html, widgetType }`、pbl → `{ type:'pbl', projectV2 }`
- * （pbl 的 projectV2 由 `zhiyunClassroomPbl` 产出，不走 LLM 解析，见 phases/scenes.js）。
+ * （pbl 的 projectV2 由 `zwClassroomPbl` 产出，不走 LLM 解析，见 phases/scenes.js）。
  */
 export function parseSceneResponse(raw, outline, { sceneIndex = 0, stageId = '' } = {}) {
   const parsed = tryParseJsonObject(raw);

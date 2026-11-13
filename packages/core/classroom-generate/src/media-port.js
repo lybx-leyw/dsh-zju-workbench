@@ -12,7 +12,7 @@
  *   }
  *   ```
  *
- * 但仓内**唯一真实存在**的媒体服务是 `ctx.zhiyunClassroomMedia`，它的接口是：
+ * 但仓内**唯一真实存在**的媒体服务是 `ctx.zwClassroomMedia`，它的接口是：
  *
  *   ```js
  *   svc.tts(text, voice?)            -> { ok, provider, bytes, format, durationSeconds, voice }
@@ -68,9 +68,9 @@ function codeOfFailure(payload) {
 }
 
 /**
- * 把 `zhiyunClassroomMedia` 包成 `media.js` 认的端口。
+ * 把 `zwClassroomMedia` 包成 `media.js` 认的端口。
  *
- * @param {object|null} service `ctx.zhiyunClassroomMedia`
+ * @param {object|null} service `ctx.zwClassroomMedia`
  * @returns {object|null} 端口；服务不存在时返回 null（media 段会整体跳过）
  */
 export function adaptMediaService(service) {

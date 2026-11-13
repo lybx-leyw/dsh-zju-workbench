@@ -1,4 +1,4 @@
-﻿# 参与智云 Pro
+﻿# 参与ZJU Workbench
 
 协作规范正文见 [docs/contributing/CONTRIBUTING.md](docs/contributing/CONTRIBUTING.md)。
 

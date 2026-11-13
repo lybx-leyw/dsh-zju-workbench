@@ -1,7 +1,7 @@
 {
   "name": "@lybx-leyw/dsh-zju-core-knowledge",
   "version": "0.1.0",
-  "description": "智云 Pro 知识入库与检索：解析产物按「账号 + 课程 + 节次」落进宿主 storage-domain，支持按课程列取与字面检索（零 UI、零自建落盘）",
+  "description": "ZJU Workbench 知识入库与检索：解析产物按「账号 + 课程 + 节次」落进宿主 storage-domain，支持按课程列取与字面检索（零 UI、零自建落盘）",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
