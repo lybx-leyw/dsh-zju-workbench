@@ -8,7 +8,7 @@ import {
   intersectsRects,
   unionRect,
 } from './selection-text.js';
-import { frameThemeCss, readThemeTokens } from './frame-theme.js';
+import { frameThemeCss, readDocumentThemeTokens } from './frame-theme.js';
 import { toggleFrameClass } from './frame-dom.js';
 import { attachCornellNotes } from './cornell-notes.js';
 
@@ -176,6 +176,52 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
     const onMouseDown = () => { dwellRef.current?.cancel(); };
     const onKeyDown = (event) => { if (event.key === 'Escape') setPop(null); };
 
+    /**
+     * 把主题色写进 iframe。
+     *
+     * 幂等：反复调用（宿主切主题时）只改**同一张**样式表的文本，不会堆叠注入。
+     */
+    const paintFrameTheme = () => {
+      if (!doc?.head) return;
+      let style = doc.querySelector('style[data-zw-frame]');
+      if (!style) {
+        style = doc.createElement('style');
+        style.dataset.zwFrame = 'true';
+        doc.head.append(style);
+      }
+      style.textContent = frameThemeCss(readDocumentThemeTokens(document));
+    };
+
+    /**
+     * 宿主切主题（`body[data-ds-dark-theme]`）后重刷一次注入的色值。
+     *
+     * 只读一次的话，暗色是**运行时**切过来时 iframe 里仍是亮色兜底 —— 阅读器的
+     * 页面区自己会跟着变暗（它读宿主属性），外圈那层 `html/body` 底色却停在白，
+     * 于是白边留到下次打开这篇文献才消失。
+     */
+    const watchHostTheme = () => {
+      if (typeof MutationObserver !== 'function') return null;
+      try {
+        const observer = new MutationObserver(() => paintFrameTheme());
+        observer.observe(document.body, {
+          attributes: true,
+          attributeFilter: ['data-ds-dark-theme', 'data-ds-theme-source', 'class'],
+        });
+        if (document.documentElement) {
+          observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-ds-dark-theme', 'data-ds-theme-source', 'class'],
+          });
+        }
+        return observer;
+      } catch {
+        // 拿不到外层文档（极端宿主）：保持载入时那一份，不影响阅读。
+        return null;
+      }
+    };
+
+    let themeObserver = null;
+
     const onLoad = () => {
       if (cancelled) return;
       doc = frame.contentDocument;
@@ -185,13 +231,12 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
       toggleFrameClass(doc, 'zwp-cornell-visible', cornellOpenRef.current);
       try {
         // 主题 + 藏掉「已经搬到本壳」的控件：只注入一张样式表，不碰上游脚本。
-        const style = doc.createElement('style');
-        style.dataset.zwFrame = 'true';
-        style.textContent = frameThemeCss(readThemeTokens(getComputedStyle(document.documentElement)));
-        doc.head.append(style);
+        paintFrameTheme();
       } catch (error) {
         setFailure(`阅读器皮肤注入失败：${error instanceof Error ? error.message : String(error)}`);
       }
+      themeObserver?.disconnect();
+      themeObserver = watchHostTheme();
       doc.addEventListener('mouseup', onMouseUp);
       doc.addEventListener('mousemove', onMouseMove);
       doc.addEventListener('mousedown', onMouseDown);
@@ -210,6 +255,8 @@ export function ReaderFrame({ topic, name, page, q, reloadKey, translate, onAskA
     return () => {
       cancelled = true;
       detachNotes?.();
+      themeObserver?.disconnect();
+      themeObserver = null;
       frame.removeEventListener('load', onLoad);
       frame.removeEventListener('error', onError);
       if (doc) {
