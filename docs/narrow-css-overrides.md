@@ -5,8 +5,11 @@
 > [human-factors-screen-design](contributing/skills/human-factors-screen-design/SKILL.md) 与
 > [repo-profile.md](contributing/skills/human-factors-screen-design/repo-profile.md)。
 >
-> 复现：`node .runtime/probe/evidence.mjs "<实例地址>" before|after`（做法见 §5）。
+> 复现：`node scripts/narrow-audit.mjs "<实例地址>" before|after`（做法见 §5）。
 > 读数落在 `artifacts/narrow-ergonomics/<tag>/measurements.json`。
+>
+> **第二轮**（触摸相关的补充项：安全区、按下反馈、点按高亮、滚动链、输入框字号、
+> 横屏）见 [`narrow-touch-ergonomics-round2.md`](narrow-touch-ergonomics-round2.md)。
 
 ## 0. 口径
 
@@ -302,16 +305,15 @@
 | --- | --- | --- | --- | --- |
 | 1 | 文档页正文 13.5 px | 长文口径要 ≥14 px | 手机上读长文略吃力 | P1 |
 | 2 | 11 px 元信息 | 多处 | 低于 16′ legibility floor；仅装饰性信息 | P1 |
-| 3 | 横屏导轨溢出 | 454 / 390，底部两项要滚 | iOS 横屏时「页面管理」要滚一下才够得着 | P2 |
+| 3 | 横屏导轨溢出 | ~~454 / 390~~ **已修**：390 / 390 | 第二轮 T7 | ✓ |
 | 4 | 「复制本页」按钮 | 22×18，在右页内目录里 | ≤1100 时右目录隐藏，手机上**不出现** | — |
 | 5 | 论文页落地页标题 18 px | 窄屏降档 | 仍 ≥24′，但已到「快速阅读」下限 | P3 |
 | 6 | 学习页 / 题库页的登录态页面 | 未登录时只有一个「登录」按钮 | 登录后的复杂版式**没有**在本轮量过 | P2 |
 | 7 | 原生输入框的发送按钮透到产品页上 | 截图右缘那枚蓝色圆钮（`[330, 482, 34, 34]`） | **不是窄屏特有**，1440 也能看到；属外壳分层问题 | P2 |
 
-第 3 条值得单独说：横屏 844×390 时导轨 `scrollHeight = 454 > clientHeight = 390`。
-这不是回归（改前改后都是 454），而是**导轨固定 51 px + 十项**在 390 高下装不下。
-它有一个自然的修法（横屏时导轨改横向），但那会改变页面壳的布局形态 ——
-属于「需要协调多个模块的重设计」，不在本轮授权范围内。
+第 3 条已在**第二轮**修掉：不改成横向导轨（那会动页面壳的布局形态），而是
+在矮视口下收间距 —— 454 → 390，溢出归零，命中区一个像素不减。
+见 [`narrow-touch-ergonomics-round2.md`](narrow-touch-ergonomics-round2.md) T7。
 
 第 6 条同理：本轮所有页面的**未登录态**都量过，登录后学习页的课程树 / 播放器、
 题库页的出题表单是更复杂的版式，需要真实的课程数据才能量。
