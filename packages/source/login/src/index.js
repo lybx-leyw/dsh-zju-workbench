@@ -490,46 +490,57 @@ export async function readMail(ctx) {
 /**
  * 写邮箱账号（无条件覆盖）。
  *
- * # 为什么要校验 16 位
+ * # 关于「16 位」这条提示：只警告，不拦
  *
- * 上游 `MailSettings.tsx` 把「保存」按钮直接绑在 `password.length !== 16` 上 ——
- * 这不是美观问题：用户很容易把**统一身份认证密码**填进来（它们都是"浙大的密码"），
- * 然后 IMAP 一直认证失败，而他不会知道错在哪。长度校验当场拦住这个错误。
+ * 上游 `MailSettings.tsx` 把「保存」按钮直接绑在 `password.length !== 16` 上。
+ * 本仓原先照搬了这个硬校验，但**实测证明它是过严的**（2026-11-17）：浙大邮箱
+ * 实际接受的客户端密码并不总是 16 位。
+ *
+ * 关键证据在 `source/mail`：它走 IMAP，凭据处理只有 `text(password, 128, false)`
+ * —— 也就是「非空、不超长」，没有任何长度要求。既然真正的认证方不要求 16 位，
+ * 拦在这里只会把一条**本可走通**的路堵死，而且给的理由（"你可能填错了"）
+ * 在用户确实是对的时，会让他反复去生成新密码。
+ *
+ * 所以现在是：**照常保存，长度不等于 16 时给一条提示**（不改返回值、不抛错）。
+ * 提示的价值在于「如果你填的是统一身份认证密码，这里可能就是原因」，
+ * 而不是「你不许保存」。
  *
  * @param ctx - 插件上下文。
  * @param account - `{ address, password }`。
- * @returns 写成功返回 true。
- * @throws {ClassroomError} 地址格式不对，或密码不是 16 位。
+ * @returns `true` 写成功；`false` 没有凭据服务。长度异常时附 `warning` 字段。
+ * @throws {ClassroomError} 地址格式不对。
  */
 export async function writeMail(ctx, account) {
   const service = credentialsOf(ctx);
   if (!service) return false;
   const address = String(account?.address ?? '').trim();
   const password = String(account?.password ?? '').trim();
-  // 这一版走**专用密码**这条路：账号是完整邮箱地址、密码是 16 位专用密码。
-  // 学号 / CAS / OAuth2 属于后续工作，混进来会让失败原因说不清。
+  // 这一版走**专用密码**这条路：账号是完整邮箱地址。学号 / CAS / OAuth2
+  // 属于后续工作，混进来会让失败原因说不清。
   if (!/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(address)) {
     throw new ClassroomError('CREDENTIALS', '请填写完整的邮箱地址（例如 1234567890@zju.edu.cn）。');
   }
-  /**
-   * 客户端专用密码是 **16 位**。
-   *
-   * # 为什么要卡长度
-   *
-   * 用户很容易把**统一身份认证密码**填进来（它们都是"浙大的密码"），
-   * 然后 IMAP 一直认证失败，而他不会知道错在哪。长度校验当场拦住这个错误，
-   * 并明确指出该去哪儿生成对的密码。
-   */
-  if (password.length !== 16) {
-    throw new ClassroomError(
-      'CREDENTIALS',
-      '客户端专用密码是 16 位 —— 你填的可能是统一身份认证密码。'
-      + '去邮箱网页版「设置 → 安全设置 → 客户端专用密码」生成一个。',
-    );
+  if (!password) {
+    // 空密码是真的没法用，这个必须拦。
+    throw new ClassroomError('CREDENTIALS', '请填写邮箱密码。');
   }
 
   await service.modifyRecord(MAIL_RECORD_KEY, () => ({ kind: 'grant', payload: { address, password } }));
-  return true;
+
+  /**
+   * 长度提示（**不阻断保存**）。
+   *
+   * 常见来源是「把统一身份认证密码填进来了」。但 16 位不是硬性事实，
+   * 所以这里只给一句可忽略的提示，由调用方（设置卡片）决定怎么显示。
+   */
+  if (password.length !== 16) {
+    return {
+      saved: true,
+      warning: '浙大邮箱通常用「客户端专用密码」（网页版「设置 → 安全设置」生成），'
+        + '一般 16 位。已按你填的保存；若之后认证失败，先怀疑是不是填成了统一身份认证密码。',
+    };
+  }
+  return { saved: true };
 }
 
 /** 清掉邮箱账号。 */
@@ -877,13 +888,50 @@ export function createHandler({ ctx, log = () => {} }) {
       if (typeof classroom.restoreSession !== 'function') {
         return { ok: false, code: 'PROBE_FAILED', detail: '服务未暴露 restoreSession()' };
       }
-      const result = await classroom.restoreSession({});
-      return result?.authenticated === true
-        ? { ok: true, code: 'OK', detail: result.user?.name ?? '已登录' }
-        : { ok: false, code: 'NEEDS_LOGIN', detail: '会话已失效，需重新登录' };
+
+      /**
+       * 先用现成会话；**没有会话就用刚存的凭据真登一次**。
+       *
+       * # 这里原来只做 `restoreSession()`
+       *
+       * `restoreSession` 只试已有会话，**不会**拿凭据去登录。于是用户填完学号密码、
+       * 立刻点「重新检测」时，必然得到「会话已失效，需重新登录」——
+       * 他会以为刚填的密码有问题，其实只是还没登过。
+       *
+       * 这与「教务」那条探测的口径也不一致：`probeZdbk` 是直接 `login()` 的。
+       * 同一个设置页里两套口径，用户看到的结论就没法互相比。
+       */
+      const restored = await classroom.restoreSession({});
+      if (restored?.authenticated === true) {
+        return { ok: true, code: 'OK', detail: restored.user?.name ?? '已登录' };
+      }
+      // 会话不可用 → 用存着的那份凭据登录（`login` 失败会抛，交给下面的 catch 分类）
+      if (typeof classroom.login !== 'function') {
+        return { ok: false, code: 'NEEDS_LOGIN', detail: '会话已失效，且服务未暴露 login()' };
+      }
+      /**
+       * ⚠️ 这里必须用 `readCard()`，**不能用 `cardStatus()`**。
+       *
+       * `cardStatus()` 是给界面看的：它只回 `{ configured, username }`，
+       * **刻意不带密码**（凭据不回显是设计）。拿它去登录，`password` 就是
+       * `undefined`，`authenticate()` 立刻抛
+       * 「请先在「设置 → 浙大一卡通」填入学号与密码」——
+       * 用户明明填了，页面却让他再填一次。
+       *
+       * `readCard()` 是内部读取，回 `{ username, password }` 全文，正是登录要的东西。
+       */
+      const full = await readCard(ctx).catch(() => null);
+      if (!full?.username || !full?.password) {
+        return { ok: false, code: 'NEEDS_CREDENTIAL', detail: '还没配统一身份认证' };
+      }
+      const user = await classroom.login({ username: full.username, password: full.password });
+      return { ok: true, code: 'OK', detail: user?.name ?? '已登录' };
     } catch (error) {
       const code = error?.code ?? 'PROBE_FAILED';
-      if (code === 'NEED_LOGIN' || code === 'CREDENTIALS') {
+      // ⚠️ 只有**明确**的「没凭据」才报 NEEDS_CREDENTIAL。其余一律如实说是登录失败，
+      //    并把站点或网络给的原话带上 —— 把密码错/网络问题说成「还没配」会把用户
+      //    赶去反复重填一份本来就对的账号。
+      if (code === 'NEED_CREDENTIAL') {
         return { ok: false, code: 'NEEDS_CREDENTIAL', detail: '还没配统一身份认证' };
       }
       return { ok: false, code: 'NEEDS_LOGIN', detail: String(error?.message ?? error) };
@@ -929,8 +977,18 @@ export function createHandler({ ctx, log = () => {} }) {
       return { ok: true, code: 'OK', detail: '已登录' };
     } catch (error) {
       const code = error?.code ?? 'PROBE_FAILED';
-      // `NEED_LOGIN` 是 zdbk 自己的错误码（没配账号）；其余一律视为登录失败。
-      if (code === 'NEED_LOGIN' || code === 'CREDENTIALS') {
+      /**
+       * ⚠️ 只有 `NEED_CREDENTIAL` 才报「还没配」。
+       *
+       * 原先把 `NEED_LOGIN` 也归到这一支，但 `zdbk.login()` 在 **CAS 拒绝**
+       * 或**网络失败**时抛的正是 `NEED_LOGIN`（见 `source/zdbk/src/index.js`：
+       * `AUTH_REJECTED` / `CREDENTIALS` 都被转成它）。于是「密码不对」和
+       * 「根本没配」在页面上长得一模一样 —— 用户按提示去重填一份本来就对的密码，
+       * 而真正的原因（CAS 不认、或网不通）永远看不到。
+       *
+       * 现在把 `error.message` 原样带出去：那句话里就是站点给的原因。
+       */
+      if (code === 'NEED_CREDENTIAL') {
         return { ok: false, code: 'NEEDS_CREDENTIAL', detail: '还没配统一身份认证' };
       }
       return { ok: false, code: 'NEEDS_LOGIN', detail: String(error?.message ?? error) };

@@ -362,10 +362,17 @@ export function SettingsSection({ t }) {
     setBusy('save');
     setMessage(null);
     try {
-      await rpc('mail.saveAccount', { address: form.address.trim(), password: form.password });
+      const result = await rpc('mail.saveAccount', { address: form.address.trim(), password: form.password });
       // 密码框清空：与一卡通那块同一个理由 —— 留着会让下次输入被**追加**。
       setForm((prev) => ({ ...prev, password: '' }));
-      setMessage({ tone: 'ok', text: t('saved') });
+      /**
+       * 保存成功，但后端可能带一条**警告**（密码长度不是常见的 16 位）。
+       *
+       * 这不是失败：认证方（IMAP）并不要求 16 位，硬拦会把本可走通的路堵死。
+       * 用 `warn` 而不是 `bad` 显示 —— 用户要看得到，但不该以为自己做错了。
+       */
+      if (result?.warning) setMessage({ tone: 'warn', text: result.warning });
+      else setMessage({ tone: 'ok', text: t('saved') });
       await refresh();
     } catch (error) {
       setMessage({ tone: 'bad', text: `${t('failed')}: ${error.message}` });

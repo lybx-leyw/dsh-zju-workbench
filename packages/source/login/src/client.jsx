@@ -638,6 +638,24 @@ export function SettingsSection({ t }) {
 
 
   /**
+   * 把「凭据种类 + 操作」拼成宿主的动作名。
+   *
+   * # 为什么不能直接 `${prefix}-${op}`
+   *
+   * 一卡通的 `actionPrefix` 是**空字符串**（历史动作名就是 `save` / `clear`，
+   * 没有前缀）。无条件加连字符会拼出 `-save` —— 宿主回「未知动作 -save」，
+   * 而页面上只表现为「点了没反应」（那时 message 也没接上）。
+   *
+   * 这个问题一直存在，只是先后被 `busy` 不匹配与 `message.scope` 缺失遮住了：
+   * 三层错误叠在一起时，看到的永远是最后一层的症状。
+   *
+   * @param prefix - `''` 或 `'webvpn'` 之类。
+   * @param op - `'save'` / `'clear'`。
+   * @returns 宿主的动作名：`save` 或 `webvpn-save`。
+   */
+  const actionOf = (prefix, op) => (prefix ? `${prefix}-${op}` : op);
+
+  /**
    * 三种凭据的"界面接线"表。
    *
    * 每一项只声明**差异**（读哪份表单、回填哪一块、按钮忙态前缀、提示文案），
@@ -692,7 +710,9 @@ export function SettingsSection({ t }) {
         // 读不到**不等于**没配：状态条说"未配置"会让用户以为凭据丢了，去重填一遍。
         setStatus((current) => current ?? { configured: false, username: '' });
         setVpnStatus((current) => current ?? { configured: false, username: '' });
-        setMessage({ kind: 'error', text: failure.message });
+        // 读取失败是整块的，不属于某一张卡片 —— `scope: 'card'` 让它在
+        // 主卡（统一身份认证）下方显示出来，否则用户什么都看不到。
+        setMessage({ kind: 'error', scope: 'card', text: failure.message });
       },
     );
     return () => { live = false; };
@@ -720,9 +740,9 @@ export function SettingsSection({ t }) {
       const payload = await settings('probe', { probe: true });
       setSources(payload.sources ?? null);
       setSourcesAt(payload.sourcesAt ?? Date.now());
-      setMessage({ tone: 'ok', text: t('probeDone') });
+      setMessage({ kind: 'ok', scope: 'sources', text: t('probeDone') });
     } catch (error) {
-      setMessage({ tone: 'warn', text: String(error?.message ?? error) });
+      setMessage({ kind: 'error', scope: 'sources', text: String(error?.message ?? error) });
     } finally {
       setBusy(null);
     }
@@ -738,7 +758,7 @@ export function SettingsSection({ t }) {
     setBusy(`${kind}-save`);
     setMessage(null);
     try {
-      const payload = await settings(`${spec.actionPrefix}-save`, {
+      const payload = await settings(actionOf(spec.actionPrefix, 'save'), {
         username: source.username,
         // 留空 = 沿用已存的密码。翻成打码值是宿主约定的"不改"表示法；没存过密码
         // 却传打码值，宿主会明确拒绝（"还没有保存过密码，请填写一次"），
@@ -746,9 +766,9 @@ export function SettingsSection({ t }) {
         password: source.password ? source.password : MASK,
       });
       spec.apply(state, payload[kind]);
-      setMessage({ kind: 'ok', text: spec.savedText });
+      setMessage({ kind: 'ok', scope: kind, text: spec.savedText });
     } catch (failure) {
-      setMessage({ kind: 'error', text: failure.message });
+      setMessage({ kind: 'error', scope: kind, text: failure.message });
     } finally {
       setBusy(null);
     }
@@ -760,11 +780,11 @@ export function SettingsSection({ t }) {
     setBusy(`${kind}-clear`);
     setMessage(null);
     try {
-      const payload = await settings(`${spec.actionPrefix}-clear`, {});
+      const payload = await settings(actionOf(spec.actionPrefix, 'clear'), {});
       spec.apply(state, payload[kind]);
-      setMessage({ kind: 'ok', text: spec.clearedText });
+      setMessage({ kind: 'ok', scope: kind, text: spec.clearedText });
     } catch (failure) {
-      setMessage({ kind: 'error', text: failure.message });
+      setMessage({ kind: 'error', scope: kind, text: failure.message });
     } finally {
       setBusy(null);
     }
@@ -865,7 +885,22 @@ export function SettingsSection({ t }) {
       PROBE_TIMEOUT: () => t('sourceTimeout'),
     };
     const render = byCode[state.code];
-    return { value: render === undefined ? t('sourceNeedsLogin') : render(), tone: 'warn' };
+    const label = render === undefined ? t('sourceNeedsLogin') : render();
+    /**
+     * 把后端给的 `detail` 附在后面。
+     *
+     * # 为什么必须带上
+     *
+     * 原来只显示「登录失败」四个字。而失败原因差别很大：
+     * CAS 不认这个密码 / 网络不通 / 服务没装 —— 三种要做的事完全不同。
+     * 只说「登录失败」，用户只能猜，最常见的结果是去反复重填一份本来就对的密码。
+     *
+     * 截断到 90 字：`StatusLine` 的 `value` 是一行，太长的站点原始报错会挤爆布局。
+     */
+    const detail = typeof state.detail === 'string' ? state.detail.trim() : '';
+    if (!detail) return { value: label, tone: 'warn' };
+    const short = detail.length > 90 ? `${detail.slice(0, 90)}…` : detail;
+    return { value: `${label} · ${short}`, tone: 'warn' };
   };
 
   return (
@@ -890,7 +925,7 @@ export function SettingsSection({ t }) {
                 disabled={!canSave}
                 onClick={() => { void saveOne('card'); }}
               >
-                {busy === 'save' ? t('saving') : t('save')}
+                {busy === 'card-save' ? t('saving') : t('save')}
               </button>
               <button
                 type="button"
@@ -898,7 +933,7 @@ export function SettingsSection({ t }) {
                 title={configured ? t('clearTitleReady') : t('clearTitleEmpty')}
                 onClick={() => { void clearOne('card'); }}
               >
-                {busy === 'clear' ? t('clearing') : t('clear')}
+                {busy === 'card-clear' ? t('clearing') : t('clear')}
               </button>
             </Actions>
           )}
@@ -959,14 +994,14 @@ export function SettingsSection({ t }) {
                 disabled={!canSaveVpn}
                 onClick={() => { void saveOne('webvpn'); }}
               >
-                {busy === 'vpn-save' ? t('saving') : t('vpnSave')}
+                {busy === 'webvpn-save' ? t('saving') : t('vpnSave')}
               </button>
               <button
                 type="button"
                 disabled={working || !vpnStatus?.configured}
                 onClick={() => { void clearOne('webvpn'); }}
               >
-                {busy === 'vpn-clear' ? t('clearing') : t('clear')}
+                {busy === 'webvpn-clear' ? t('clearing') : t('clear')}
               </button>
             </Actions>
           )}
@@ -1038,6 +1073,9 @@ export function SettingsSection({ t }) {
           <StatusLine label={t('sourceSztz')} {...sourceRow(sources, 'sztz')} />
           <StatusLine label={t('sourceTyys')} {...sourceRow(sources, 'tyys')} />
           <StatusLine label={t('sourceNotice')} {...sourceRow(sources, 'notice')} />
+          {message !== null && message.scope === 'sources' ? (
+            <p className="zju-setting-hint" role="status">{message.text}</p>
+          ) : null}
         </Card>
       </Rows>
     </Section>
