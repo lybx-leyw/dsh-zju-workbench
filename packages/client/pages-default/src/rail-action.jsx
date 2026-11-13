@@ -233,9 +233,57 @@ function pageIds(pages) {
  * `overflow:hidden`，内容会被裁掉，不需要我们再加任何隐藏规则。
  */
 
+/**
+ * 导轨上的触摸命中区。
+ *
+ * # 为什么只放大**命中区**、不动可见尺寸
+ *
+ * 导轨宽度 51 是产品口径（`DEFAULT_RAIL_WIDTH`，壳层与页面层的 `--zw-pane-w: 229`
+ * 都从它推出来），改它要动一圈。而 51 宽的一列里塞 44 的方块，视觉上也会把图标挤散。
+ *
+ * WCAG 2.5.8 的判据本来就是**命中区**而不是可见图形。所以这里用一层透明的
+ * `::after` 把可点范围撑开，图形一个像素都不变 —— 手指点得准，眼睛看到的
+ * 还是原来那条细导轨。
+ *
+ * # 只在粗指针（手机 / 平板）上生效
+ *
+ * 鼠标不需要放大：桌面上把每个图标扩开会让相邻两个都够得着，反而误点。
+ * `(pointer: coarse)` 是设备能力，不是窗口宽度 —— 桌面把窗口拖窄仍然是鼠标。
+ *
+ * # 命中区**不许互相重叠**
+ *
+ * 相邻两格的中心距是 43px（37 按钮 + 6 间隙）。各向外扩 3px 正好把间隙对半分，
+ * 再大就有两个按钮抢同一块区域，点下去是哪一个全看谁的层在上面 —— 那比小一点更糟。
+ *
+ * 所以这里的目标是「把到手的空间用满」而不是硬凑 44：
+ *   - 导航项 37 → **50×43**（横向吃满导轨内宽，纵向吃掉半条间隙）；
+ *   - 侧栏动作（鲸鱼）23×17 → **44×44**（它上面与左右都有余量，第一个导航项
+ *     在 y=54，扩到 44 高仍不碰）。
+ *
+ * ⚠️ 两条规则的**特异性必须拉开**：鲸鱼按钮本身也在 `[data-dsh-pages-rail]` 里，
+ * 若两条都写 `… button::after`，后一条（更具体）会连鲸鱼一起盖掉，鲸鱼只剩 24px。
+ * 所以通用那条显式 `:not([data-zju-rail-collapse])`。
+ */
+const TOUCH_CSS = `
+@media (pointer: coarse){
+  /* 侧栏动作（鲸鱼 / 面板图标）：23×17 的图形，命中区撑到 44×44。
+     上边到视口顶只剩 14px，所以纵向取 −13.5（14 − 13.5 = 0.5，刚好不出屏）。 */
+  [data-zju-rail-collapse]{position:relative}
+  [data-zju-rail-collapse]::after{
+    content:"";position:absolute;inset:-13.5px -10.5px;
+  }
+  /* 导航项：横向吃满导轨内宽（51 − 两侧 padding ≈ 38 → 再加 12 = 50），
+     纵向各扩 3px（正好分掉 6px 间隙，不与相邻项重叠）。 */
+  [data-dsh-pages-rail] button:not([data-zju-rail-collapse]){position:relative}
+  [data-dsh-pages-rail] button:not([data-zju-rail-collapse])::after{
+    content:"";position:absolute;inset:-3px -6px;
+  }
+}
+`;
 /** 隐藏原生折叠按钮的样式：只认本包打的标记，绝不泛化到别的按钮。 */
 const CSS = `
 [${NATIVE_TOGGLE_MARK}]{display:none !important}
+${TOUCH_CSS}
 `;
 
 /**
