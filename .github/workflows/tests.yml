@@ -102,14 +102,28 @@ jobs:
           echo "host version: $version"
           npm install --prefix ".runtime/dsh-$version" "@deepseek-ai/dsh@$version" --no-audit --no-fund
 
-      # 不带浏览器的全部守卫：仓库层、脚本、部署、核心、数据源、桌面壳、客户端。
+      # 不带浏览器的全部守卫，**按顶层目录分批**跑。
       #
-      # 排除方式按源码判定（import playwright → 要浏览器），不维护文件名清单：
-      # 清单会漂，而漂掉的表现是 CI 卡在一个要装 Playwright 的用例上直到超时，
-      # 比干脆失败更难查。浏览器用例仍可本地跑，进不进 PR 见文档 §3。
+      # # 为什么必须分批
+      #
+      # 第一次跑时把 324 个文件一次性喂给一个 `node --test`（4685 个用例），
+      # 结果是 `pass 4560 / fail 1 / cancelled 83` —— 83 个被**取消**，报的错是
+      # `Promise resolution is still pending but the event loop has already
+      # resolved`。那不是断言失败，是同一个进程里塞太多相互独立的异步用例之后
+      # 事件循环提前收尾。分批（每批一个 tests/<层>）就不会走到那个形状。
+      #
+      # 排除浏览器用例按源码判定（`import … from 'playwright'`），不维护文件名
+      # 清单：清单会漂，而漂掉的表现是 CI 卡在一个用例上直到超时，比干脆失败
+      # 更难查。浏览器用例仍可本地跑，进不进 PR 见文档 §3。
       - name: guards
         run: |
           set -euo pipefail
-          mapfile -t files < <(grep -rL "from 'playwright'" --include='*.test.mjs' tests/ | sort)
-          printf 'run %d files\n' "${#files[@]}"
-          node --test "${files[@]}"
+          status=0
+          for group in repo scripts deploy core source tool apps client; do
+            [ -d "tests/$group" ] || continue
+            mapfile -t files < <(grep -rL "from 'playwright'" --include='*.test.mjs' "tests/$group" | sort)
+            [ "${#files[@]}" -eq 0 ] && continue
+            printf '\n=== %s: %d files ===\n' "$group" "${#files[@]}"
+            if ! node --test "${files[@]}"; then status=1; fi
+          done
+          exit "$status"
