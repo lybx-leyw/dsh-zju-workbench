@@ -8,6 +8,8 @@
 
 - 顶栏：文献库下拉（切文献 / 上传 PDF / 新建专题）、页数与转录状态、转录、「AI 助手」、「问一问」。
 - 阅读区：同源 `<iframe>` 承载上游 `/paper-reader/` 页面。**不 fork 上游 HTML** —— 锁版的意义就在于不改上游源码；改为在 iframe 载入后注入一张样式表（`frame-theme.js`）把 `--zw-*` 映射进去，并藏掉已经搬到本壳的上游控件（`#cfg-pop` 端点弹窗、`#ask-pop` 选中即问浮层、`#pdf-path`、`#ver`）。
+  - 取色读的是 `body`（`--zw-*` 声明在 `body[data-zw]` 上，读 `document.documentElement` 会全部落回亮色兜底，暗色下阅读器四周就是一圈白边）。见 `readDocumentThemeTokens`。
+  - 宿主切主题（`data-ds-dark-theme`）后重刷同一张 `style[data-zw-frame]`，不能只在 iframe 载入时读一次。
 - 右侧抽屉：`AssistantDrawer.jsx`，订阅上游 SSE `/paper-reader/api/session/follow` 显示流式回答，带「第 N 页」可点跳转。
 - 悬停翻译：`ReaderFrame.jsx` 在 iframe 内挂 `mouseup`/`mousemove`，判定（`selection-text.js`，纯函数可测）通过后停顿 260ms 触发，结果渲染在父页面的浮层里。
 

@@ -14,7 +14,8 @@
  *   - `#pdf-path`/`#ver` 藏掉 —— 那是给独立页面用的调试信息。
  *
  * 纯函数、不碰 DOM：`tests/paper.test.mjs` 直接断言它生成的选择器与取值。
- * 注入动作在 `ReaderFrame.jsx`。
+ * 取色（哪一层、哪个元素上读 `--zw-*`）单列在 {@link readDocumentThemeTokens}，
+ * 注入与主题切换时的重刷在 `ReaderFrame.jsx`。
  */
 
 /** 外层 CSS 变量 → 上游 iframe 里实际会读到的属性。 */
@@ -48,6 +49,38 @@ export function readThemeTokens(style) {
     tokens[target] = value || FALLBACK[source];
   }
   return tokens;
+}
+
+/**
+ * 从外壳文档里取主题色。
+ *
+ * # 必须读 `body`，不能读 `documentElement`
+ *
+ * `--zw-*` 声明在 `body[data-zw]` 上（见 `ui-shared/src/style.css`），是**元素级**
+ * 自定义属性，不会出现在 `html` 上。早先这里传的是
+ * `getComputedStyle(document.documentElement)`：拿到的六个值全是空串，于是
+ * **每一条都落进亮色兜底**，暗色模式下阅读器里外都是一片 `#ffffff` —— 页面四周
+ * 那圈白边就是这么来的（实测：暗色下 `html/body` 的 `background-color` 为
+ * `rgb(255,255,255)`，而阅读器自己的 `.page` 已经是 `#1b1b1c`）。
+ *
+ * 根元素只作兜底：将来变量若上移到 `:root` 也照样读得到，且不影响现在的取值。
+ *
+ * @param doc - 外壳文档（默认 `globalThis.document`）。拿不到 `defaultView` 或
+ *   `body`（服务端渲染、测试）时返回纯兜底色，不抛。
+ */
+export function readDocumentThemeTokens(doc = globalThis.document) {
+  const view = doc?.defaultView;
+  const body = doc?.body;
+  if (!view?.getComputedStyle || !body) return readThemeTokens(undefined);
+  const bodyStyle = view.getComputedStyle(body);
+  const rootStyle = doc.documentElement ? view.getComputedStyle(doc.documentElement) : null;
+  return readThemeTokens({
+    getPropertyValue(name) {
+      const onBody = bodyStyle?.getPropertyValue?.(name)?.trim();
+      if (onBody) return onBody;
+      return rootStyle?.getPropertyValue?.(name) ?? '';
+    },
+  });
 }
 
 /**

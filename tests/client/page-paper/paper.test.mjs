@@ -42,7 +42,7 @@ import {
   createDwell,
 } from '../../../packages/client/page-paper/src/selection-text.js';
 import { createSessionFeed } from '../../../packages/client/page-paper/src/session-feed.js';
-import { frameThemeCss, readThemeTokens } from '../../../packages/client/page-paper/src/frame-theme.js';
+import { frameThemeCss, readDocumentThemeTokens, readThemeTokens } from '../../../packages/client/page-paper/src/frame-theme.js';
 import { linkCitations, pageFromLink } from '../../../packages/client/page-paper/src/citations.js';
 import {
   buildRows,
@@ -1000,6 +1000,66 @@ test('主题注入：藏掉已经搬到本壳的上游控件', () => {
   assert.match(css, /:root \{/);
   assert.match(css, /--zwp-frame-bg: #ffffff;/);
   assert.match(css, /html, body \{ background: var\(--zwp-frame-bg\); color: var\(--zwp-frame-text\); \}/);
+});
+
+test('主题注入：暗色下必须从 body 取到深色值，而不是落回亮色兜底', () => {
+  // 用户实测的那条（暗色模式下阅读器四周一圈白边）：
+  // `--zw-*` 声明在 `body[data-zw]` 上，读 `document.documentElement` 只能拿到空串，
+  // 于是六条全部回落成亮色兜底 —— 阅读器页面自己已经变暗，外圈 html/body 却还是白的。
+  const DARK = {
+    '--zw-bg': '#191c20', '--zw-surface': '#22262b', '--zw-text': '#e8ebee',
+    '--zw-secondary': '#afb6bf', '--zw-line': '#363b43', '--zw-accent': '#94bdf4',
+  };
+  const styleOf = (vars) => ({ getPropertyValue: (name) => vars[name] ?? '' });
+  const doc = {
+    defaultView: { getComputedStyle: (el) => styleOf(el === 'body' ? DARK : {}) }, // 根元素上没有 --zw-*
+    body: 'body',
+    documentElement: 'html',
+  };
+  const tokens = readDocumentThemeTokens(doc);
+  assert.equal(tokens['--zwp-frame-bg'], '#191c20', '暗色页面底色要真的跟着变，否则就是那圈白边');
+  assert.equal(tokens['--zwp-frame-surface'], '#22262b');
+  assert.equal(tokens['--zwp-frame-line'], '#363b43');
+  assert.equal(tokens['--zwp-frame-text'], '#e8ebee');
+});
+
+test('主题注入：变量上移到 :root 时也读得到（根元素兜底）', () => {
+  const styleOf = (vars) => ({ getPropertyValue: (name) => vars[name] ?? '' });
+  const doc = {
+    defaultView: { getComputedStyle: (el) => styleOf(el === 'html' ? { '--zw-bg': '#101010' } : {}) },
+    body: 'body',
+    documentElement: 'html',
+  };
+  assert.equal(readDocumentThemeTokens(doc)['--zwp-frame-bg'], '#101010');
+  // body 有值时以 body 为准（声明处优先）。
+  const both = {
+    defaultView: {
+      getComputedStyle: (el) => styleOf(el === 'body' ? { '--zw-bg': '#202020' } : { '--zw-bg': '#101010' }),
+    },
+    body: 'body',
+    documentElement: 'html',
+  };
+  assert.equal(readDocumentThemeTokens(both)['--zwp-frame-bg'], '#202020');
+});
+
+test('主题注入：拿不到外壳文档（服务端渲染/测试）时回落兜底色，不抛', () => {
+  for (const doc of [undefined, null, {}, { body: null }, { defaultView: null, body: {} }]) {
+    const tokens = readDocumentThemeTokens(doc);
+    assert.equal(Object.keys(tokens).length, 6);
+    assert.equal(tokens['--zwp-frame-bg'], '#ffffff');
+  }
+});
+
+test('主题注入：宿主切主题后会重刷同一张样式表，而不是再注入一张', () => {
+  // 静态约束：重刷与注入必须共用同一张 `style[data-zw-frame]`。
+  // 每次 `load` 都 `append` 一张新表的话，切几次主题就叠几层，旧值仍会被后写者覆盖 ——
+  // 但样式表数量会无限增长，而且主题监听也失去意义。
+  const source = readFileSync(new URL('../../../packages/client/page-paper/src/ReaderFrame.jsx', import.meta.url), 'utf8');
+  assert.match(source, /style\[data-zw-frame\]/, '重刷要复用同一张表');
+  assert.match(source, /MutationObserver/, '宿主切主题要能触发重刷');
+  assert.match(source, /data-ds-dark-theme/, '观察面必须包含宿主的暗色开关');
+  assert.doesNotMatch(source, /readThemeTokens\(getComputedStyle\(document\.documentElement\)\)/,
+    '不能回到「从根元素取色」那条路径 —— 那正是白边的根因');
 });
 
 /* ────────────────────────── 助手回答的 Markdown 与页码引用 ────────────────────────── */
