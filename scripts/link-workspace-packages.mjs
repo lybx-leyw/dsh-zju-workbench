@@ -50,6 +50,18 @@ const VENDOR_LINKS = [
   // 它的源码在 `packages/vendor/paper-reader/`，但根 package.json 没有声明它，
   // 于是 `npm ci` 不会把它装进 node_modules —— 不在这里补，启动时
   // `realpath('node_modules/@ggboy123/dsh-paper-reader')` 会直接 ENOENT。
+  //
+  // # ⚠️ 链的只是**包本身**，它的 dependencies 没人装
+  //
+  // 这份白名单只建一个 junction，不跑依赖解析。而 `packages/vendor/*` 不在根
+  // `package.json` 的 `workspaces` 里，npm 也不会替它装。
+  //
+  // 后果实测过（2026-11-13）：paper-reader 的 `dist/typesafe-config.js` 顶层静态
+  // `import '@typesafe-ai/sdk'`，那个包从没被装过 —— 整个插件加载失败，
+  // 日志只有一行 `failed to import: Cannot find package`，论文页不可用。
+  //
+  // 所以：**往这里加一个 vendor 包时，同时确认它的 dependencies 能从根
+  // `node_modules` 解析到**（通常是往根 `package.json` 加一条），否则链上了也跑不起来。
   'packages/vendor/paper-reader',
 ];
 

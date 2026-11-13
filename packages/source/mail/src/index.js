@@ -197,9 +197,23 @@ export function apply(ctx, config = {}) {
         const password = String(input?.password ?? '');
         if (!address) throw new MailError('CONFIG', '请填写邮箱账号。');
         if (!password) throw new MailError('CONFIG', '请填写邮箱密码。');
-        await writeMail(ctx, { address, password });
+        /**
+         * 保存**不因密码长度失败**。
+         *
+         * `writeMail` 现在返回 `{ saved, warning? }` 而不是 `true`：
+         * 「16 位」只是常见情形，不是认证方的硬要求（IMAP 侧只校验非空、不超长）。
+         * 把长度不符直接判失败，会把一条本可走通的路堵死。
+         *
+         * 但提示要传出去 —— 用户如果真填了统一身份认证密码，越早知道越好。
+         */
+        const written = await writeMail(ctx, { address, password });
         injectedCredentials = async () => ({ address, password });
-        return { configured: true, address };
+        const warning = written && typeof written === 'object' ? written.warning : undefined;
+        return {
+          configured: true,
+          address,
+          ...(warning ? { warning } : {}),
+        };
       },
 
       /** 清掉邮箱账号。 */
