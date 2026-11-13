@@ -51,10 +51,23 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
 
-      # ⚠️ 用 `npm ci` 不用 `npm install`：后者会重写锁文件、并按旧 glob
-      #    把 51 个工作区包当 extraneous 清掉（AGENTS.md 记了这次事故）。
+      # ⚠️ `npm ci` **必须带 `--legacy-peer-deps`**。
+      #
+      # 本仓的 `@deepseek-ai/cordis` 是各包声明的 **peerDependency**
+      # （`packages/source/*/package.json`），不在根依赖里；npm 7+ 的 `ci`
+      # 会把「peer 没写进锁文件」当成锁与 package.json 不同步而直接失败：
+      #   npm error `npm ci` can only install packages when your package.json
+      #   and package-lock.json … are in sync
+      #   npm error Missing: @deepseek-ai/cordis@4.1.0 from lock file
+      # 这正是本工作流第一次跑就红的原因。
+      #
+      # 文档里也是这个口径：AGENTS.md §「依赖坏了怎么修」给的就是
+      # `npm ci --legacy-peer-deps …`。
+      #
+      # 另：用 `ci` 不用 `install` —— 后者会重写锁文件、并按旧 glob 把 51 个
+      # 工作区包当 extraneous 清掉（AGENTS.md 记了那次事故）。
       - name: install
-        run: npm ci --ignore-scripts
+        run: npm ci --legacy-peer-deps --ignore-scripts
 
       # 工作区包不由 npm 管，要单独建链接。`--check` 会断言 52 个包都链上。
       - name: link workspaces
