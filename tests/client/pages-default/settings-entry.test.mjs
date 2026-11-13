@@ -112,6 +112,38 @@ test('a snapshot without a usable rail width yields nothing rather than garbage'
   assert.deepEqual(settingsGeometry({ railWidth: 3.5 }), {});
 });
 
+test('the settings entry is not transplanted while the sidebar is a drawer', () => {
+  const css = entry.SETTINGS_ENTRY_CSS;
+  /**
+   * 手机 / 移动端插件接管侧栏时，宿主把侧栏做成**绝对定位抽屉**并给整列
+   * `transform: translateX(-280px)` 做开合动画。
+   *
+   * `transform` 会让祖先成为 `position: fixed` 的**包含块** —— 于是搬到
+   * `left: 6px` 的账号入口实际落在「相对那条 −280 浮层再左移」的位置。真机实测
+   * 390×844：入口 rect 是 `[-223, 757, 37, 37]`，整个在视口左边外面。
+   * 用户的原话是「设置项移到导航栏……没法很好落实到窄屏上面」。
+   *
+   * 抽屉态本来就有正确位置（抽屉底部），所以整段搬移必须挂 `:not(:has(drawer))`。
+   */
+  assert.match(css, /html:not\(:has\(\[data-sidebar-drawer\]\)\)/,
+    '搬移规则要以「不存在抽屉 frame」为前缀');
+
+  // 每一条碰位置的规则都要带这个前缀。少了任何一条，抽屉态都会留下半对齐的痕迹。
+  const positioningSelectors = [
+    '.hHd-Xa_settingsArea{',
+    '.hHd-Xa_settingsArea .yHnPSG_trigger{',
+    '.hHd-Xa_settingsArea .yHnPSG_avatar{',
+    '.hHd-Xa_settingsArea .yHnPSG_label{',
+  ];
+  for (const selector of positioningSelectors) {
+    const at = css.indexOf(selector);
+    assert.ok(at > 0, `样式表里应有 ${selector}`);
+    const before = css.slice(Math.max(0, at - 60), at);
+    assert.match(before, /html:not\(:has\(\[data-sidebar-drawer\]\)\) ?$/,
+      `${selector} 必须被抽屉条件排除，否则抽屉态会按常驻列摆`);
+  }
+});
+
 test('the native entry is repositioned by variables, never hidden with display:none', () => {
   const css = entry.SETTINGS_ENTRY_CSS;
   /**
