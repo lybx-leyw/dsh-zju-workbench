@@ -1,0 +1,102 @@
+name: tests
+
+# 装一份验证过的 DSH 宿主，跑**除浏览器之外**的全部守卫。
+#
+# # 为什么先接这一档
+#
+# 仓库此前没有任何 CI（`.github/` 不存在），PR 上那条「CI passed 0/0」是
+# 一个检查都没跑。接 CI 的前提是**基线是绿的**：先接一条注定红的工作流，
+# 等于把「没有检查」换成「有检查但永远红」，信息量一样，还训练所有人忽略红色。
+#
+# 所以范围刻意收在「不装 Playwright」：
+#   · **装** DSH 宿主 —— parser / quiz / study / notes / knowledge 有一批用例
+#     会经 `tests/fixtures/parser/host.mjs` 或 `@deepseek-ai/cordis` 解析到
+#     `.runtime/dsh-<version>`。不装它们会报 `Cannot find module
+#     '@deepseek-ai/cordis'`，看起来像代码坏了，其实是环境没装齐（实测：
+#     这台机器上不装宿主时 4545 个用例里有 23 个这样失败）。
+#   · **不装** Playwright —— 浏览器类用例（docs-scroll-keys、paper-tree-keys…）
+#     启动一次要十几秒，进 PR 检查会让每次推送都卡几分钟。它们进不进 PR
+#     是另一个决定，见 docs/narrow-touch-ergonomics-round3.md §3。
+#
+# ⚠️ 已知的验证缺口：「装宿主」这一步**没能在开发机上实跑过** —— 那台机器
+#    只有 1.8 GB 内存，`npm install` 中途被 OOM killer 杀掉（EXIT=137，
+#    dmesg 里是 `oom-kill ... task=npm`）。命令本身取自 CONTRIBUTING.md §1.2
+#    的既定流程（`npm install --prefix .runtime/dsh-<version> @deepseek-ai/dsh@<version>`），
+#    GitHub 的 ubuntu runner 内存足够；但「第一次跑会不会绿」仍需看首次 CI 结果。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: unit (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 跟 package.json 的 engines 对齐：`^22.19.0 || >=24.0.0`。
+        # 两个都跑，因为引擎声明了两条线 —— 只跑一条会让另一条的分歧
+        # 等到用户装错版本才暴露。
+        node: ['22.19.0', '24']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # ⚠️ 用 `npm ci` 不用 `npm install`：后者会重写锁文件、并按旧 glob
+      #    把 51 个工作区包当 extraneous 清掉（AGENTS.md 记了这次事故）。
+      - name: install
+        run: npm ci --ignore-scripts
+
+      # 工作区包不由 npm 管，要单独建链接。`--check` 会断言 52 个包都链上。
+      - name: link workspaces
+        run: node scripts/link-workspace-packages.mjs
+
+      - name: link check
+        run: node scripts/link-workspace-packages.mjs --check
+
+      # 样式表的跨包顺序依赖：同特异性撞同一属性时胜负只看挂载顺序。
+      # 这条跑得很快，而且它拦的是「单看每个包都对、装到一起才错」那类问题。
+      - name: css order
+        run: npm run check:css
+
+      # 装一份本仓验证过的 DSH 宿主到 `.runtime/dsh-<version>`。
+      #
+      # # 为什么这一步不能省
+      #
+      # 不少用例（parser / quiz / study / notes / knowledge）会经由
+      # `tests/fixtures/parser/host.mjs` 或 `@deepseek-ai/cordis` 解析到这份
+      # **仓库内临时安装**的宿主。没有它时它们报 `Cannot find module
+      # '@deepseek-ai/cordis'` —— 看起来像代码坏了，其实是环境没装齐。
+      #
+      # 用 `preferredHostVersion` 而不是 `latest`：runtime.lock.json 只验证过
+      # 一个版本，装别的等于在 CI 里测另一套插槽名。
+      #
+      # ⚠️ 这里是 `npm install --prefix`，不是仓库根的 `npm install` ——
+      #    后者会重写锁文件（AGENTS.md 记过那次事故）。装到 `.runtime/` 下
+      #    与本地开发完全同构。
+      - name: install verified host
+        run: |
+          version=$(node -p "JSON.parse(require('fs').readFileSync('runtime.lock.json','utf8')).preferredHostVersion")
+          echo "host version: $version"
+          npm install --prefix ".runtime/dsh-$version" "@deepseek-ai/dsh@$version" --no-audit --no-fund
+
+      # 不带浏览器的全部守卫：仓库层、脚本、部署、核心、数据源、桌面壳、客户端。
+      #
+      # 排除方式按源码判定（import playwright → 要浏览器），不维护文件名清单：
+      # 清单会漂，而漂掉的表现是 CI 卡在一个要装 Playwright 的用例上直到超时，
+      # 比干脆失败更难查。浏览器用例仍可本地跑，进不进 PR 见文档 §3。
+      - name: guards
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(grep -rL "from 'playwright'" --include='*.test.mjs' tests/ | sort)
+          printf 'run %d files\n' "${#files[@]}"
+          node --test "${files[@]}"

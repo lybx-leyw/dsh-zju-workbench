@@ -14,6 +14,20 @@
 body[data-zw] {
   /* 求是蓝来自官网公开主题配置；浅色表面保持 Pro 的暖灰层次。 */
   --zw-bg:#f7f7f5;--zw-surface:#fff;--zw-sidebar:#eff1f3;--zw-text:#252a30;--zw-secondary:#666b72;--zw-muted:#6b7178;--zw-line:#e1e3e5;--zw-accent:#00479d;--zw-soft:#e7eef8;--zw-hover:#e6eaf0;--zw-brand:#00479d;--zw-brand-soft:#e7eef8;--zw-action:#00479d;--zw-action-hover:#003b83;
+  /* 危险 / 破坏性动作（弃用、删除、错误提示）。
+   *
+   * 页面上原来各自硬编码 `#b91c1c` / `#c2410c` / `#fca5a5` / `#fdba74` —— 四组
+   * 红色散在题库页里，换肤不会跟着变，暗色下还各自成块。改成两个语义 token：
+   *
+   *   --zw-danger       前景（文字 / 图标 / 左竖条）
+   *   --zw-danger-soft  底（浅色是极浅红，深色是极深红）
+   *
+   * 浅色取 red-700（`#b91c1c`，白底上 6.36:1）、深色取 red-300（`#fca5a5`，
+   * `#191c20` 上约 8.9:1），两侧都过 AA 的 4.5:1。 */
+  --zw-danger:#b91c1c;--zw-danger-soft:color-mix(in srgb, #b91c1c 8%, var(--zw-surface));
+  /* 强调色实底上的文字（选中态的 chip / 主按钮）。
+   * 浅色主题强调色是深蓝 → 白字；深色主题强调色是浅蓝 → 深字。 */
+  --zw-on-accent:#fff;
   /* 一个字体栈，全产品共用：Windows 上优先 Segoe UI Variable（Win11 的 UI 字），
      中文落到雅黑 UI。会话区里的自有表面（会话条/历史面板）不继承 .zw-page，
      所以它们自己再声明一次同一个变量，避免两处字体不一样。 */
@@ -46,6 +60,10 @@ body[data-zw] {
 }
 body[data-zw][data-ds-dark-theme] {
   --zw-bg:#191c20;--zw-surface:#22262b;--zw-sidebar:#15181c;--zw-text:#e8ebee;--zw-secondary:#afb6bf;--zw-muted:#9099a4;--zw-line:#363b43;--zw-accent:#94bdf4;--zw-soft:#25344a;--zw-hover:#2b3440;--zw-brand:#94bdf4;--zw-brand-soft:#25344a;--zw-action:#245fa9;--zw-action-hover:#2b70c3;
+  /* 深色下同一个「危险」语义换成浅红：深红在 #191c20 上只有 2.4:1，读不清。 */
+  --zw-danger:#fca5a5;--zw-danger-soft:color-mix(in srgb, #fca5a5 12%, var(--zw-surface));
+  /* 深色强调色是浅蓝，白字在上面只有 1.9:1 —— 必须用深色字。 */
+  --zw-on-accent:#10141a;
 }
 /* 全产品统一 `border-box`。
  *

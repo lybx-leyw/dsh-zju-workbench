@@ -318,17 +318,6 @@ body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-error {
   overflow-wrap: anywhere;
 }
 
-body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-notice {
-  margin: var(--zw-space-3) 0 0;
-  padding: var(--zw-space-2) var(--zw-space-3);
-  border: 1px solid var(--zw-line);
-  border-radius: 6px;
-  background: var(--zw-soft);
-  color: var(--zw-secondary);
-  font-size: var(--zw-fs-sm);
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
 
 /* ── 出题器：左侧设置、右侧进度 ───────────────────────────────────────── */
 
@@ -1239,9 +1228,12 @@ body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-choice:hover {
 
 body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-choice:has(input:checked) { border-color: var(--zw-accent); background: var(--zw-soft); }
 
+/* 判分反馈。原来有两条同名顶层规则，后一条只改 `gap`（8 → 10），
+   于是前一条里除 gap 外的声明看起来生效、实际一直靠后者兜底。合并成一条，
+   gap 取原来**实际渲染**的 10px。 */
 body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-feedback {
   display: grid;
-  gap: var(--zw-space-2);
+  gap: 10px;
   padding: var(--zw-space-3);
   border: 1px solid var(--zw-line);
   border-left: 2px solid var(--zw-accent);
@@ -1551,8 +1543,10 @@ body[data-zw] .zws-qz-composer .zws-qz-row[data-required] > .zws-qz-row-label::a
   content: '必选';
   margin-left: 6px;
   padding: 1px 5px;
-  font-size: 10px;
-  font-weight: 500;
+  /* 「必选」是中文小徽标。10px 在 100% 缩放下读不清（repo-profile §1：中文
+     元信息 ≥11px，9–10px 一律禁止），抬到 11px 并加一点字重补清晰度。 */
+  font-size: var(--zw-fs-meta);
+  font-weight: 600;
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--zw-accent) 80%, var(--zw-text));
   background: color-mix(in srgb, var(--zw-accent) 9%, transparent);
@@ -1648,17 +1642,14 @@ body[data-zw] .zws-qz-composer :is(.zws-qz-preset, .zws-qz-chip):hover:not(:disa
 /* 选中：实心强调色。这是全页少数使用强调色填充的地方 */
 body[data-zw] .zws-qz-composer .zws-qz-chip[data-on],
 body[data-zw] .zws-qz-composer .zws-qz-preset[aria-pressed='true'] {
-  color: #fff;
+  color: var(--zw-on-accent);
   font-weight: 600;
   background: var(--zw-accent);
   border-color: var(--zw-accent);
 }
 
-body[data-zw][data-ds-dark-theme] .zws-qz-composer .zws-qz-chip[data-on],
-body[data-zw][data-ds-dark-theme] .zws-qz-composer .zws-qz-preset[aria-pressed='true'] {
-  /* 深色下强调色是浅蓝，白字对比不足 —— 改深色文字 */
-  color: #10141a;
-}
+/* 深色下的这个色值已经收进 `--zw-on-accent` 语义 token（见 ui-shared 的变量块），
+   这里不再单独写一遍硬编码色值。 */
 
 body[data-zw] .zws-qz-composer :is(.zws-qz-preset, .zws-qz-chip):disabled {
   opacity: 0.4;
@@ -1907,10 +1898,8 @@ body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-answer p {
 }
 
 /* 解析：比答案弱一档，避免抢焦点 */
-body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-explanation {
-  color: var(--zw-secondary);
-  font-size: var(--zw-fs-sm);
-}
+/* `.zws-qz-explanation` 的排版在更早那条规则里（含 line-height 与
+   overflow-wrap），这里不再重复同名顶层规则 —— 重复会让早那条的前半截失效。 */
 
 body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-explanation p {
   margin: 0 0 6px;
@@ -1969,11 +1958,6 @@ body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-feedback[data-verdict='incorrec
 }
 
 /* 反馈区整体：评价与解析之间留一道分隔 */
-body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-feedback {
-  display: grid;
-  gap: 10px;
-}
-
 body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-feedback > .zws-qz-answer {
   padding-top: 2px;
 }
@@ -1991,23 +1975,27 @@ body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-practice-actions {
 /* 「弃用」是破坏性动作：与普通文字按钮拉开区分，但不做成红色大按钮 ——
    它在练习流里是次要动作，过度强调会诱导误点。 */
 body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-practice-actions .zws-text[data-tone='danger']:hover:not(:disabled) {
-  color: color-mix(in srgb, #c2410c 75%, var(--zw-text));
-  background: color-mix(in srgb, #c2410c 7%, transparent);
-}
-
-body[data-zw][data-ds-dark-theme] :is(.zws-qz-page, .zws-qz) .zws-qz-practice-actions .zws-text[data-tone='danger']:hover:not(:disabled) {
-  color: #fdba74;
-  background: color-mix(in srgb, #fdba74 10%, transparent);
+  color: var(--zw-danger);
+  background: var(--zw-danger-soft);
 }
 
 /* 操作后的临时提示（已跳过 N 道 / 已弃用）*/
+/* 提示条。「已跳过 N 道 / 已弃用」这类操作后的临时反馈。
+ *
+ * 曾经有两条同名顶层规则（一条在这里、一条在练习区下面），靠「后写的赢」
+ * 让后者的 margin / padding / 底色覆盖前者 —— 改前一条不生效、也没人知道为什么。
+ * 现在只有一条，早先那版的 border / line-height / overflow-wrap 一并并进来，
+ * 渲染结果与合并前逐像素一致。 */
 body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-notice {
   margin: 0;
   padding: 7px 12px;
-  font-size: var(--zw-fs-sm);
-  color: var(--zw-secondary);
-  background: color-mix(in srgb, var(--zw-line) 26%, transparent);
+  border: 1px solid var(--zw-line);
   border-radius: 7px;
+  background: color-mix(in srgb, var(--zw-line) 26%, transparent);
+  color: var(--zw-secondary);
+  font-size: var(--zw-fs-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 /* 章节标题行：题数与操作按钮分开，窄屏自动换行不挤压 */
@@ -2092,15 +2080,9 @@ body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-basis > :not(summary) > :last-c
 
 /* 提示条的错误态：与「已跳过 N 道」这类中性提示区分开 */
 body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-notice[data-tone='error'] {
-  color: color-mix(in srgb, #b91c1c 82%, var(--zw-text));
-  background: color-mix(in srgb, #b91c1c 8%, transparent);
-  border-left: 2px solid color-mix(in srgb, #b91c1c 55%, transparent);
-}
-
-body[data-zw][data-ds-dark-theme] :is(.zws-qz-page, .zws-qz) .zws-qz-notice[data-tone='error'] {
-  color: #fca5a5;
-  background: color-mix(in srgb, #fca5a5 12%, transparent);
-  border-left-color: color-mix(in srgb, #fca5a5 45%, transparent);
+  color: var(--zw-danger);
+  background: var(--zw-danger-soft);
+  border-left: 2px solid color-mix(in srgb, var(--zw-danger) 55%, transparent);
 }
 
 /* 导出成功是「完成了某件事」，用强调色左侧线而不是绿色 */

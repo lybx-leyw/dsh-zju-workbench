@@ -78,7 +78,33 @@ test('activePage 只认还在的页：被取消的页不再算作当前页', () 
 test('date uses Beijing midnight even when machine timezone differs', () => {
   assert.match(beijingDate(new Date('2026-10-06T16:01:00Z')), /10月7日/);
 });
-test('profile initialization is isolated, repeatable, and preserves user data and overlays', async () => {
+
+/**
+ * 这一组用例都要 `initialize()` —— 它第一步就 `locateHost()`，**必须有**一份
+ * 装好的 DSH 宿主。CI 上没有（也不能为跑单元测试去装一个几百 MB 的宿主），
+ * 所以凡是需要宿主的用例，先问一句「本机有没有」；没有就 `t.skip` 并写明原因。
+ *
+ * 为什么用 skip 而不是让它们失败：这七条测的是 profile 的**初始化与迁移逻辑**
+ * （链接改指、bundle 退役、数据目录改名），那份逻辑本身不需要真宿主参与 ——
+ * 没有宿主时它连第一步都走不到，失败信息（「找不到 DSH 宿主」）与这七条
+ * 想守的东西毫无关系。让它们红着，只会训练所有人忽略红色。
+ *
+ * `tests/repo/pages-host-export.test.mjs` 早就是同样的处理（`locateHost()` 抛错
+ * 就 skip），这里只是把它补齐到同一口径。
+ *
+ * @returns 可用的宿主，或 null（调用方据此 skip）。
+ */
+async function requireHost(t) {
+  try {
+    return await locateHost();
+  } catch (error) {
+    t.skip(`本机没有可用的 DSH 宿主，跳过：${String(error.message).split('\n')[0]}`);
+    return null;
+  }
+}
+
+test('profile initialization is isolated, repeatable, and preserves user data and overlays', async (t) => {
+  if (!await requireHost(t)) return;
   const parent = path.join(root, '.runtime', 'tests');
   await mkdir(parent, { recursive: true });
   const home = await mkdtemp(path.join(parent, 'profile-'));
@@ -133,6 +159,7 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   }
 });
 test('existing profiles add the bridge once without altering user bundles or overlays', async t => {
+  if (!await requireHost(t)) return;
   const parent = path.join(root, '.runtime', 'tests');
   await mkdir(parent, { recursive: true });
   const home = await mkdtemp(path.join(parent, 'bridge-upgrade-'));
@@ -168,7 +195,8 @@ test('existing profiles add the bridge once without altering user bundles or ove
   );
 });
 
-test('foreign profile is refused without overwriting its manifest', async () => {
+test('foreign profile is refused without overwriting its manifest', async (t) => {
+  if (!await requireHost(t)) return;
   const parent = path.join(root, '.runtime', 'tests');
   await mkdir(parent, { recursive: true });
   const home = await mkdtemp(path.join(parent, 'foreign-'));
@@ -179,7 +207,8 @@ test('foreign profile is refused without overwriting its manifest', async () => 
   await assert.rejects(initialize({ home }), /不属于智云/);
   assert.equal(await readFile(path.join(dir, 'package.json'), 'utf8'), original);
 });
-test('existing product profile upgrades the parser bundle while preserving overlays', async () => {
+test('existing product profile upgrades the parser bundle while preserving overlays', async (t) => {
+  if (!await requireHost(t)) return;
   const parent = path.join(root, '.runtime', 'tests'); await mkdir(parent,{recursive:true});
   // 样例取模板里的**最后五个**本仓 bundle：它们一定存在，且「追加到末尾」的语义最直观。
   // 从模板读而不是写死名字 —— 写死的话每次增删 bundle 都要回来修这条测试（已经发生过两次）。
@@ -218,7 +247,8 @@ test('existing product profile upgrades the parser bundle while preserving overl
   }
 });
 
-test('existing product profile adds the source bundle without replacing user settings', async () => {
+test('existing product profile adds the source bundle without replacing user settings', async (t) => {
+  if (!await requireHost(t)) return;
   const parent = path.join(root, '.runtime', 'tests'); await mkdir(parent, { recursive: true });
   const home = await mkdtemp(path.join(parent, 'upgrade-')); const runtime = await initialize({ home });
   const file = path.join(runtime.profile, 'package.json');
@@ -237,7 +267,8 @@ test('existing product profile adds the source bundle without replacing user set
   // 用户段保留，本仓配置层合并进来。
   assert.ok((await readFile(patch, 'utf8')).startsWith('# custom overrides\n[]\n'));
 });
-test('改名/拆包后，profile 里指向已不存在的本仓包会被移除', async () => {
+test('改名/拆包后，profile 里指向已不存在的本仓包会被移除', async (t) => {
+  if (!await requireHost(t)) return;
   // ⚠️ 这条钉的是拆包真机踩过的坑：`dsh-zhiyun-pro-ui` 改名成 `dsh-zju-shell-workbench` 之后，
   //    老 profile 里仍留着旧名 —— Loader 解不开那一行，整个 profile 起不来。
   //    只清 `retiredBundles` 登记表里的旧名，不做前缀猜测：同前缀但没登记的条目
@@ -327,7 +358,8 @@ test('启动参数里同名参数只出现一次（显式 --port 优先，不再
 });
 
 
-test('旧前缀的数据目录在启动时搬到新名，已有的新目录不会被合并覆盖', async () => {
+test('旧前缀的数据目录在启动时搬到新名，已有的新目录不会被合并覆盖', async (t) => {
+  if (!await requireHost(t)) return;
   // 数据目录里装的是 DPAPI 会话、课件缓存、笔记库这类**不可重建**的东西。
   // 改名只动了代码里的路径常量；磁盘上的目录若还叫旧名，用户看到的就是
   // 「升级后全部得像第一次用一样重来一遍」，而旧数据仍占着几百 MB 没人知道。

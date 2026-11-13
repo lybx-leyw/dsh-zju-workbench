@@ -74,7 +74,10 @@ async function bundle(workdir) {
       // for import registerPageContent" —— 而那个错误在测试里表现为**进程不退出**，
       // 看起来像 hang，实际是构建失败后没打印摘要。补成空实现即可：
       // 本文件测的是滚动与选中行为，不关心页面注册。
-      export const registerPageContent = () => {};`,
+      export const registerPageContent = () => {};
+      // 同理：页面用这个 hook 把自己的侧栏开关交给导轨那只鲸鱼。本文件不起宿主、
+      // 也不关心那个开关，只要它存在即可（返回值在这里从未被用到）。
+      export const useRegisterPageSidebar = () => undefined;`,
     '@deepseek-ai/dsh-client-ui-primitives': `import React from "react";
       export const MarkdownText = (p) => React.createElement("div", null,
         String(p.text).split(/\\n\\n/).map((block, i) => {
@@ -139,10 +142,16 @@ test('文档页：四个滚动键在任何焦点下都滚正文，且在输入�
   const { dir, outfile } = await bundle(workdir);
   const pageCss = await readFile(path.join(pkg, 'src', 'style.css'), 'utf8');
   const pageFile = path.join(dir, 'host.html');
+  // ⚠️ `body[data-zw]` 是**所有页面样式的作用域**（变量与每条规则都挂它上面）。
+  //    夹具少了这个属性时，整份 style.css 一条都不生效 —— `.zwd-main` 不会被限高、
+  //    正文撑不出滚动量，第一条断言（`maxScroll > 600`）就会以 0 失败。
+  //    真机里这个属性由外壳写在 body 上，这里照抄。
   await writeFile(pageFile, `<!doctype html><meta charset="utf-8">
     <style>${SHELL_CSS}</style><style>${pageCss}</style>
+    <body data-zw>
     <div class="zw-page" data-page="docs"><main class="zw-scroll"><div class="zw-content zw-content-flush">
-    <div class="host" id="host"></div></div></main></div><script src="/app.js"></script>`);
+    <div class="host" id="host"></div></div></main></div>
+    <script src="/app.js"></script></body>`);
 
   const server = createServer(async (req, res) => {
     const name = (req.url ?? '/').split('?')[0];

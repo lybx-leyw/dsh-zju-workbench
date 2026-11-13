@@ -9,6 +9,9 @@
 
 ## 0. 先说 CI：`CI passed 0/0` 是真的什么都没跑
 
+> **本轮已处置（第四节）**：清空了能清的既有失败，并接上了一条不装浏览器的
+> 工作流。下面这段保留为当时的证据与判断依据。
+
 PR #70 上出现过一条 `CI passed 0/0`。核实结果：
 
 | 检查 | 结果 |
@@ -108,21 +111,13 @@ spellcheck=false`，字号仍是第二轮定下的 16px。
 
 ## 3. 需要人决定的两件事
 
-这两件都不是「再改几行 CSS」能解决的，而且都超出本轮授权：
+其中 3.1 已由用户授权处置；3.2 仍属行为变更，留给后续：
 
-### 3.1 CI 要不要接、接哪些
+### 3.1 CI 要不要接、接哪些 —— **已处置，见 §4**
 
-现在仓库**没有任何 CI**。接之前得先决定：
-
-1. 那 7 条 profile 失败是修掉、还是先标 `skip`（它们测的是 profile 初始化，
-   与本产品功能无关，但红着就没人看 CI 了）；
-2. 3 条 quiz 字号/颜色失败同理（`page-quiz/src/style.css:1554` 的 10px 中文
-   确实低于 legibility floor，是**真问题**，但改它属于另一件事）；
-3. 浏览器类测试（`docs-scroll-keys`、`paper-tree-keys` 等）要装 Playwright
-   与宿主，跑一次几分钟 —— 是放进 PR 检查还是只做夜间。
-
-我倾向于：**先接「纯 Node、不装浏览器、不依赖宿主」的那一批**（`tests/repo`、
-`tests/client/*` 里读源码的那些），把基线修绿再接，而不是先接一条红的工作流。
+用户已授权由我决定（「CI 不一定要接，你可以自己决定。如果要接的话就先把既有
+失败清空」）。结论：接，范围收在「不装 Playwright」。既有失败逐条清掉，
+过程与依据见 §4。
 
 ### 3.2 旋转时要不要重算断点状态
 
@@ -131,7 +126,55 @@ spellcheck=false`，字号仍是第二轮定下的 16px。
 
 ---
 
-## 4. 复现
+## 4. CI：清空既有失败，接一条不装浏览器的工作流
+
+用户说「CI 不一定要接，你可以自己决定。如果要接的话就先把既有失败清空」。
+决定：**接**，范围收在「不装 Playwright」这一档。为接它而清掉的既有失败如下。
+
+### 4.1 清掉的失败（全部是测试自身的缺陷，不是被测代码的问题）
+
+| # | 失败 | 根因 | 处置 |
+| --- | --- | --- | --- |
+| 1 | `profile.test.mjs` 7 条 | 用例第一步就 `locateHost()`，没有宿主时直接抛错 | 加 `requireHost(t)` 守卫，没有宿主时 `t.skip` 并写明原因（同一文件里另两条早就是这么做的） |
+| 2 | `docs-scroll-keys.test.mjs` 构建失败 | 桩里漏了 `useRegisterPageSidebar`，而 `client.jsx` 早就 import 了它 | 补进桩 |
+| 3 | `docs-scroll-keys.test.mjs` `maxScroll=0` | 夹具忘了写 `body[data-zw]` —— 整份 `style.css` 的作用域前缀，少了它一条规则都不生效 | 夹具补上该属性（真机里由外壳写在 body 上） |
+| 4 | `quiz-page-contract.test.mjs` 字号 | `page-quiz` 里「必选」徽标 `font-size: 10px` | **这是真问题**：repo-profile §1 明写「9–10px 一律禁止用于中文」。抬到 `--zw-fs-meta`（11px） |
+| 5 | `quiz-page-contract.test.mjs` 硬编码色值 | 12 处 `#b91c1c` / `#c2410c` / `#fca5a5` / `#fdba74` / `#fff` / `#10141a` | 新增两个语义 token `--zw-danger` / `--zw-on-accent`（明暗各一套），替掉全部硬编码 |
+| 6 | `quiz-page-contract.test.mjs` 同名顶层选择器 | `.zws-qz-notice` / `.zws-qz-explanation` / `.zws-qz-feedback` 各出现两次，靠「后写的赢」 | 合并成一条，属性和并后按**实际渲染**取值 |
+
+第 4、5、6 条是**真的**在产品代码里：10px 中文读不清、12 处颜色不跟主题走、
+三条规则改第一处不生效。它们不是「测试太严」，是本轮清单正好覆盖的那类问题。
+
+新增 token 的对比度实测（脚本算，不是估）：
+
+```text
+浅色  danger/bg 6.03:1   danger/surface 6.47:1   #fff on accent 8.79:1
+深色  danger/bg 9.01:1   danger/surface 8.02:1   #10141a on accent 9.54:1
+```
+
+### 4.2 接上的工作流
+
+`.github/workflows/tests.yml`，两个 Node 版本（22.19 / 24，与 `engines` 的两条线对齐）
+× 四步：`npm ci` → 链接工作区 → `check:css` → 装验证过的宿主 → 跑**不 import
+playwright** 的全部用例。
+
+排除浏览器用例用的是「源码里有没有 `from 'playwright'`」而不是文件名清单 ——
+清单会漂，而漂掉的表现是 CI 卡在一个用例上直到超时，比干脆失败更难查。
+
+**已知验证缺口**：这台机器只有 1.8 GB 内存，装宿主那步 `npm install` 被 OOM
+killer 杀掉（EXIT=137，dmesg 里是 `oom-kill … task=npm`），所以「装宿主」这个
+**步骤本身没能在本地实跑过**。命令取自 CONTRIBUTING.md §1.2 的既定流程，
+GitHub runner 内存足够；第一次 CI 是否会绿，要看实际结果。这一点写进了工作流
+头部的注释，不假装验证过。
+
+### 4.3 仍然不接的部分
+
+浏览器类用例（12 个文件）。它们要装 Playwright + Chromium（约 300 MB），
+单次启动十几秒。要不要进 PR 检查、还是只做夜间，是产品决策；本轮不擅自决定。
+
+---
+
+## 5. 复现
 
 ```bash
 # 起实例后
