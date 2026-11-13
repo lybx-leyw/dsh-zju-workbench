@@ -219,7 +219,14 @@ export function createTyysWrites(client) {
       // 而两者原因完全不同，用户会以为是平台挂了。
       //
       // `listOrders` 是模块级函数（不是 client 上的方法），与只读侧同一份实现。
-      const list = await listOrders(client, {});
+      // `now` 是 `listOrders` 的**第三个位置参数**，不是 filter 的字段 ——
+      // 写成 `listOrders(client, { now })` 会被当成 filter 里一个没人读的键，
+      // 实际仍用默认的 `Date.now()`。那会让「查本人订单」的默认过滤条件
+      // `date >= 今天` 跟着**真实日期**漂移：夹具里写死的订单日期一旦早于现实中的
+      // 今天就被过滤掉，报出来却是「没找到订单 O-1」—— 一个会自己变红的用例。
+      //
+      // 传 `client.now()` 让写侧与只读侧共用同一个可注入时钟（测试与回放都靠它）。
+      const list = await listOrders(client, {}, client.now());
       const hit = (list?.orders ?? []).find((row) => String(row.number) === order || String(row.id) === order);
       if (!hit) {
         throw invalid(`没找到订单 ${order}（用 tyys.orders 看真实单号）`);

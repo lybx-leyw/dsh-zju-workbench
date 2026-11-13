@@ -124,6 +124,17 @@ jobs:
             mapfile -t files < <(grep -rL "from 'playwright'" --include='*.test.mjs' "tests/$group" | sort)
             [ "${#files[@]}" -eq 0 ] && continue
             printf '\n=== %s: %d files ===\n' "$group" "${#files[@]}"
-            if ! node --test "${files[@]}"; then status=1; fi
+            # `--test-concurrency=1`：**文件之间串行**。
+            #
+            # 默认并发 = CPU 核数，runner 上会同时铺开很多个进程。这批用例里有
+            # 不少是「起一个假宿主、挂定时器、等超时」的形态，同时铺开之后
+            # 互相把对方的计时挤掉，报出来的是
+            #   failureType: 'cancelledByParent'
+            #   error: 'Promise resolution is still pending but the event loop has already resolved'
+            # —— 看着像断言失败，其实是并发把用例取消了（实测 source 组
+            # 80 个用例这样消失，而 fail 只有 2）。
+            #
+            # 单个文件内部的用例仍然并行（那是同一个进程里的 Promise，不受影响）。
+            if ! node --test --test-concurrency=1 "${files[@]}"; then status=1; fi
           done
           exit "$status"

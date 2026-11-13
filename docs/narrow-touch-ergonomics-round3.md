@@ -161,11 +161,27 @@ playwright** 的全部用例。
 排除浏览器用例用的是「源码里有没有 `from 'playwright'`」而不是文件名清单 ——
 清单会漂，而漂掉的表现是 CI 卡在一个用例上直到超时，比干脆失败更难查。
 
-**已知验证缺口**：这台机器只有 1.8 GB 内存，装宿主那步 `npm install` 被 OOM
-killer 杀掉（EXIT=137，dmesg 里是 `oom-kill … task=npm`），所以「装宿主」这个
-**步骤本身没能在本地实跑过**。命令取自 CONTRIBUTING.md §1.2 的既定流程，
-GitHub runner 内存足够；第一次 CI 是否会绿，要看实际结果。这一点写进了工作流
-头部的注释，不假装验证过。
+**接上之后 CI 立刻抓到三件事**（这正是它存在的理由 —— 此前这些问题一条都
+不会被人看见）：
+
+| 次序 | 症状 | 根因 | 处置 |
+| --- | --- | --- | --- |
+| 1 | `install` 步直接失败 | `npm ci` 缺 `--legacy-peer-deps`：`@deepseek-ai/cordis` 是各包的 **peerDependency**，npm 7+ 的 `ci` 判定锁文件不同步 | 加 flag（与 AGENTS.md「依赖坏了怎么修」同口径） |
+| 2 | `pass 4560 / fail 1 / cancelled 83` | 把 324 个文件（4685 用例）一次性喂给**一个** `node --test` 进程，事件循环提前收尾，83 个用例被取消 | 按 `tests/<层>` 分批，每批独立进程 |
+| 3 | `Cannot find module '@deepseek-ai/cordis'` | 没装宿主。装了之后同一套用例从 4476 通过变成 4560 通过 | 工作流显式装 `preferredHostVersion` |
+
+第 2 条特别值得记下来：表面是「fail 1」，看起来像一个孤立的坏用例；实际是
+**跑法错了** —— 只看失败数会把排查方向带偏。
+
+**本地的验证缺口**：这台开发机只有 1.8 GB 内存，`npm install` 装宿主那步被
+OOM killer 杀掉（EXIT=137，dmesg 是 `oom-kill … task=npm`），所以那一步在本机
+跑不了。但它在 GitHub runner 上是**成功**的 —— 这反过来也证明了本机是内存不够，
+不是命令写错。分批跑法已在本地按同一脚本验证：
+
+```text
+tests/repo    129 用例  119 通过  0 失败  0 cancelled  10 skip
+tests/client  605 用例  598 通过  0 失败  0 cancelled   7 skip
+```
 
 ### 4.3 仍然不接的部分
 
