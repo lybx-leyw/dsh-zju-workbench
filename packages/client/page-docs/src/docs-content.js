@@ -22,6 +22,7 @@ import attribution from './docs/attribution.md';
 import privacy from './docs/privacy.md';
 import layout from './docs/layout.md';
 import shell from './docs/shell.md';
+import narrow from './docs/narrow.md';
 
 /**
  * 页面 id → markdown 原文。
@@ -41,6 +42,7 @@ export const PAGE_CONTENT = Object.freeze({
   privacy,
   layout,
   shell,
+  narrow,
 });
 
 /**
