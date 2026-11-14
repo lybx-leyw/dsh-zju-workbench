@@ -121,12 +121,31 @@ export function strokeWidthFor(displaySize) {
  * 样式表。
  *
  * 两块：
- *   - 原生设置区：藏起来（入口由我们自己的按钮承担）；
- *   - 我们的按钮：位置尺寸全部走 `pages` 服务算出的变量。
+ *   - 原生账号入口：搬进导轨底部（抽屉态除外，见 {@link ONLY_PINNED}）；
+ *   - 尺寸与描边：全部走 `pages` 服务算出的变量。
  *
- * 因为按钮挂在 `body` 下，它不在任何带 `opacity`/`transform` 过渡的侧栏子树里，
- * 所以收起侧栏时它**不会跟着淡出** —— 这正是这一版要解决的问题。
+ * 搬移的前提是「侧栏是一个常驻列」。抽屉态下侧栏是绝对定位浮层，宿主还会给它
+ * `transform` 做开合动画 —— 那会成为 `position: fixed` 的包含块，`left: 6px`
+ * 于是相对浮层再左移。实测 390×844 下原生入口 rect 是 `[-223, 757, 37, 37]`：
+ * 账号 / 设置入口整个落在视口外，手机上调不出来。抽屉态就留在抽屉底部不动。
  */
+
+/** 抽屉态 frame 的标记属性（宿主在手机 / 移动端插件接管侧栏时写它）。 */
+const DRAWER = '[data-sidebar-drawer]';
+
+/**
+ * 只在「侧栏不是抽屉」时生效的前缀。
+ *
+ * 挂 `html:not(:has(...))` 而不是给每条规则加 `:not()`：
+ *   - 抽屉属性写在宿主最外层 AppFrame 上，是「整页布局形态」而不是某个元素的状态；
+ *   - 一套前缀改一处，六个选择器不会各漏一个。
+ *
+ * 与 `rail-action.jsx` 的 `sidebarWidthCss()` 用的是**同一条判据**：那边也是
+ * `:not([data-sidebar-drawer])`。两处必须一致，否则会出现「侧栏不占列了、
+ * 但账号入口还按常驻列摆」这种半对齐。
+ */
+const ONLY_PINNED = `html:not(:has(${DRAWER})) `;
+
 export const SETTINGS_ENTRY_CSS = `
 /* 原生账号入口：**搬过来、正常显示**，不再自绘一个替代品。
  *
@@ -151,8 +170,16 @@ export const SETTINGS_ENTRY_CSS = `
  * # 为什么之前用 display:none 是错的
  *
  * 原生菜单锚在触发器的 getBoundingClientRect 上。display:none 会让 rect 变成
- * (0,0,0,0)，菜单就跑到视口左上角。保留它并定位，rect 才对，菜单才贴着它弹。 */
-${AREA}{
+ * (0,0,0,0)，菜单就跑到视口左上角。保留它并定位，rect 才对，菜单才贴着它弹。
+ *
+ * # 抽屉态（手机 / 移动端插件接管侧栏）：**不要搬**
+ *
+ * 抽屉态下侧栏是绝对定位浮层，宿主给它 \`transform: translateX(-280px)\` 做开合
+ * 动画；\`transform\` 会让祖先成为 \`position: fixed\` 的**包含块**，于是
+ * \`left: 6px\` 变成「相对那条 −280 的浮层再左移」。实测 390×844 下原生入口的
+ * rect 是 \`[-223, 757, 37, 37]\` —— 账号 / 设置入口整个落在视口外面，手机上根本
+ * 调不出来。抽屉态本来就有正确位置（抽屉底部），所以搬移只在没有抽屉时生效。 */
+${ONLY_PINNED}${AREA}{
   position:fixed !important;
   /* 与目标位置**逐变量对齐**：同一组 --zju-settings-* 决定位置，
      所以原生触发器的 rect 就是菜单要锚的那个 rect。
@@ -175,10 +202,10 @@ ${AREA}{
    - 隐藏昵称文字：导轨只有图标，名字靠悬停提示；
    - 头像铺满按钮并圆形裁切；
    - 去掉原生那层的 padding / 背景。 */
-${AREA} .yHnPSG_label{
+${ONLY_PINNED}${AREA} .yHnPSG_label{
   display:none !important;
 }
-${AREA} .yHnPSG_trigger{
+${ONLY_PINNED}${AREA} .yHnPSG_trigger{
   width:100% !important;
   height:100% !important;
   padding:0 !important;
@@ -189,7 +216,7 @@ ${AREA} .yHnPSG_trigger{
   border-radius:var(${VARS.radius},7px) !important;
   cursor:pointer;
 }
-${AREA} .yHnPSG_avatar{
+${ONLY_PINNED}${AREA} .yHnPSG_avatar{
   width:calc(var(${VARS.button},37px) * 0.78) !important;
   height:calc(var(${VARS.button},37px) * 0.78) !important;
   border-radius:999px !important;
@@ -197,13 +224,13 @@ ${AREA} .yHnPSG_avatar{
   display:grid !important;
   place-items:center !important;
 }
-${AREA} .yHnPSG_avatar img{
+${ONLY_PINNED}${AREA} .yHnPSG_avatar img{
   width:100% !important;
   height:100% !important;
   object-fit:cover !important;
   border-radius:999px !important;
 }
-${AREA} :is(button, [role="button"]):focus-visible{
+${ONLY_PINNED}${AREA} :is(button, [role="button"]):focus-visible{
   outline:2px solid var(${VARS.stroke}, currentColor);
   outline-offset:2px;
 }

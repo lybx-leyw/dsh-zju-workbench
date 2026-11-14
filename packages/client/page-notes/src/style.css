@@ -964,5 +964,27 @@ body[data-zw] .zws-nt-note-ok {
   body[data-zw] .zws-nt-scroll {
     padding: 18px 16px 40px;
   }
+  /* 手机上这里只剩**手指**。顶栏与树栏的工具按钮是 26/30px 的图标格 ——
+     桌面鼠标够准，触屏上相邻两格只差 33px，误点率很高（WCAG 2.5.8 的可点判据
+     本来就是命中区，不是可见图形）。所以横向撑开命中区，图形不放大：
+     格子行高保持 30，只把左右 padding 补上，图标仍然居中、间距观感不变。 */
+  body[data-zw] .zws-nt-topbar button,
+  body[data-zw] .zws-nt-explorer-head button,
+  body[data-zw] .zws-nt-tabnew {
+    position: relative;
+  }
+  body[data-zw] .zws-nt-topbar button::after,
+  body[data-zw] .zws-nt-explorer-head button::after,
+  body[data-zw] .zws-nt-tabnew::after {
+    content: "";
+    position: absolute;
+    /* 30 → 44（上下各 7）、26 → 44（上下各 9）；左右也各补到 44 宽。
+       相邻格中心距 33 / 28，各扩 7 / 8 不会互相盖住。 */
+    inset: -7px -5px;
+  }
+  body[data-zw] .zws-nt-explorer-head button::after,
+  body[data-zw] .zws-nt-tabnew::after {
+    inset: -9px -6px;
+  }
 }
 

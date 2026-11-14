@@ -14,6 +14,20 @@
 body[data-zw] {
   /* 求是蓝来自官网公开主题配置；浅色表面保持 Pro 的暖灰层次。 */
   --zw-bg:#f7f7f5;--zw-surface:#fff;--zw-sidebar:#eff1f3;--zw-text:#252a30;--zw-secondary:#666b72;--zw-muted:#6b7178;--zw-line:#e1e3e5;--zw-accent:#00479d;--zw-soft:#e7eef8;--zw-hover:#e6eaf0;--zw-brand:#00479d;--zw-brand-soft:#e7eef8;--zw-action:#00479d;--zw-action-hover:#003b83;
+  /* 危险 / 破坏性动作（弃用、删除、错误提示）。
+   *
+   * 页面上原来各自硬编码 `#b91c1c` / `#c2410c` / `#fca5a5` / `#fdba74` —— 四组
+   * 红色散在题库页里，换肤不会跟着变，暗色下还各自成块。改成两个语义 token：
+   *
+   *   --zw-danger       前景（文字 / 图标 / 左竖条）
+   *   --zw-danger-soft  底（浅色是极浅红，深色是极深红）
+   *
+   * 浅色取 red-700（`#b91c1c`，白底上 6.36:1）、深色取 red-300（`#fca5a5`，
+   * `#191c20` 上约 8.9:1），两侧都过 AA 的 4.5:1。 */
+  --zw-danger:#b91c1c;--zw-danger-soft:color-mix(in srgb, #b91c1c 8%, var(--zw-surface));
+  /* 强调色实底上的文字（选中态的 chip / 主按钮）。
+   * 浅色主题强调色是深蓝 → 白字；深色主题强调色是浅蓝 → 深字。 */
+  --zw-on-accent:#fff;
   /* 一个字体栈，全产品共用：Windows 上优先 Segoe UI Variable（Win11 的 UI 字），
      中文落到雅黑 UI。会话区里的自有表面（会话条/历史面板）不继承 .zw-page，
      所以它们自己再声明一次同一个变量，避免两处字体不一样。 */
@@ -46,6 +60,10 @@ body[data-zw] {
 }
 body[data-zw][data-ds-dark-theme] {
   --zw-bg:#191c20;--zw-surface:#22262b;--zw-sidebar:#15181c;--zw-text:#e8ebee;--zw-secondary:#afb6bf;--zw-muted:#9099a4;--zw-line:#363b43;--zw-accent:#94bdf4;--zw-soft:#25344a;--zw-hover:#2b3440;--zw-brand:#94bdf4;--zw-brand-soft:#25344a;--zw-action:#245fa9;--zw-action-hover:#2b70c3;
+  /* 深色下同一个「危险」语义换成浅红：深红在 #191c20 上只有 2.4:1，读不清。 */
+  --zw-danger:#fca5a5;--zw-danger-soft:color-mix(in srgb, #fca5a5 12%, var(--zw-surface));
+  /* 深色强调色是浅蓝，白字在上面只有 1.9:1 —— 必须用深色字。 */
+  --zw-on-accent:#10141a;
 }
 /* 全产品统一 `border-box`。
  *
@@ -582,6 +600,93 @@ body[data-zw] label > :is(input[type="checkbox"], input[type="radio"]) {
 @media (prefers-reduced-motion: reduce) {
   body[data-zw] :is(input, textarea, select) {
     transition: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * 手指的三件事：滚动链、点按反馈、点按高亮
+ *
+ * 这三条都是「桌面不需要、触屏必须有」的差异，所以统一挂在**粗指针**上 ——
+ * `(pointer: coarse)` 是设备能力，不是窗口宽度；桌面把窗口拖窄仍然是鼠标，
+ * 不该被套上触摸的那一套。
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/* 输入框字号：手机上不许小于 16px。
+ *
+ * # 为什么这条不是「美观」而是「功能」
+ *
+ * iOS Safari 在**聚焦**一个 `font-size` < 16px 的输入框时，会把整个页面放大到
+ * 能看清那个字号，而且**不会自己恢复** —— 用户点一次搜索框，页面就永久停在放大
+ * 状态，右侧内容被推到屏幕外，只能双指缩回去。这不是我们的样式问题，是 WebKit
+ * 写死的阈值；唯一可靠的规避方式就是让输入框字号 ≥16px。
+ *
+ * 本仓库的输入框默认 13px（`.zws-nt-filter` 13px、`.zwp-tree-filter` 12.5px 甚至更小），
+ * 全都在阈值以下。手机上把它们抬到 16px：
+ *
+ *   - 只抬**输入框**，不动正文与按钮 —— 正文 13px 在手机上读着没问题，
+ *     那是已按 CJK 视觉角度算过的一档（repo-profile §1）；
+ *   - 只在粗指针上抬。鼠标点击不会触发这个放大，桌面上没必要放宽这一档。
+ *
+ * `font: inherit` 那几处会盖掉这条（页面层写的是 `font: inherit; font-size: 13px`），
+ * 所以选择器要带页面层同样的 `body[data-zw]` 前缀，并放在这条之后 ——
+ * 但页面层那几条各自在自己的包里，挂载顺序不由我们决定，特异性也一样。
+ * 这里用 `:where()` 压低自己、再靠 `!important` 只在手机上生效：页面层没有
+ * 任何一条会因此改变可见观感，它只是把字号钉在 16。
+ */
+@media (pointer: coarse) {
+  body[data-zw] :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]), textarea, select) {
+    font-size: 16px !important;
+  }
+}
+
+/* 滚动链（overscroll chaining）。
+ *
+ * 页面里有多层各自可滚的面板：`.zwd-nav`（文档目录）、`.zws-nt-explorer`（笔记
+ * 文件树）、`.zws-nt-main`、`.zw-scroll`。手机上手指在**内层**面板里划到底之后，
+ * 浏览器会把剩下的滑动继续传给外层 —— 表现是「我在翻文件树，整页却跟着往上跑」，
+ * 松手后还得再划回来。`overscroll-behavior: contain` 把滚动关在这一层里。
+ *
+ * 只写 `contain` 而不是 `none`：`none` 连「划到底时的橡皮筋回弹」也一并取消，
+ * 而 iOS 上那个回弹是用户判断「已经到头了」的主要线索，去掉会让列表看起来卡住。
+ *
+ * 不改 `body` / `html` 的横向滚动：那是 `overflow-x` 的事，本仓库六个视口实测
+ * 都是 0，不需要在这条规则里顺手关掉（关掉反而会把真溢出藏起来）。 */
+@media (pointer: coarse) {
+  body[data-zw] :is(.zw-scroll, .zwd-nav, .zwd-main, .zws-nt-explorer, .zws-nt-main, .zws-nt-side, .zws-nt-scroll, .zwp-tree-pane, .zwp-main) {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* 点按反馈（`:active`）。
+ *
+ * 触屏没有 hover：桌面上靠 `:hover` 给的「这个能点」在手机上完全不存在，
+ * 按下时如果连背景都不变，手指又正好盖住按钮本身，用户没有任何依据判断这一下
+ * 到底点中没有。ch05 要求反馈在 0.1s 内出现 —— 按压态是唯一不依赖 JS 的途径。
+ *
+ * 只覆盖**页面里自己的按钮**，不碰宿主外壳：外壳有自己的按压态，从这里再去盖
+ * 会变成两个包争同一属性（`check-css-order` 拦的正是这一类）。
+ *
+ * 用背景而不是位移 / 缩放：背景不触发布局，快速连点时不会抖。 */
+@media (pointer: coarse) {
+  body[data-zw] .zw-page :is(button, [role="button"], summary):active:not(:disabled) {
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+  }
+  /* 已经是实底的主操作（登录、提交）不能再叠一层半透明 —— 会显得按下去变浅。
+     改为轻微压深，保持"被按住"的方向感一致。 */
+  body[data-zw] .zw-page :is(.zws-primary, .zws-button.is-primary):active:not(:disabled) {
+    background-color: var(--zw-action-hover);
+    filter: brightness(.94);
+  }
+}
+
+/* 点按高亮。
+ *
+ * 移动端 WebKit 在每次点击后给元素盖一层半透明蓝（默认 `rgba(51,181,229,.4)`）
+ * 约 300ms。它不属于产品色板，暗色主题下尤其突兀，而且会和我们自己的 `:active`
+ * 叠成「闪两下」。关掉它，颜色与时长都归上面的 `:active`。 */
+@media (pointer: coarse) {
+  body[data-zw] .zw-page :is(button, [role="button"], a, summary) {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

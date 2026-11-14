@@ -233,9 +233,148 @@ function pageIds(pages) {
  * `overflow:hidden`，内容会被裁掉，不需要我们再加任何隐藏规则。
  */
 
+/**
+ * 导轨上的触摸命中区。
+ *
+ * # 为什么只放大**命中区**、不动可见尺寸
+ *
+ * 导轨宽度 51 是产品口径（`DEFAULT_RAIL_WIDTH`，壳层与页面层的 `--zw-pane-w: 229`
+ * 都从它推出来），改它要动一圈。而 51 宽的一列里塞 44 的方块，视觉上也会把图标挤散。
+ *
+ * WCAG 2.5.8 的判据本来就是**命中区**而不是可见图形。所以这里用一层透明的
+ * `::after` 把可点范围撑开，图形一个像素都不变 —— 手指点得准，眼睛看到的
+ * 还是原来那条细导轨。
+ *
+ * # 只在粗指针（手机 / 平板）上生效
+ *
+ * 鼠标不需要放大：桌面上把每个图标扩开会让相邻两个都够得着，反而误点。
+ * `(pointer: coarse)` 是设备能力，不是窗口宽度 —— 桌面把窗口拖窄仍然是鼠标。
+ *
+ * # 命中区**不许互相重叠**
+ *
+ * 相邻两格的中心距是 43px（37 按钮 + 6 间隙）。各向外扩 3px 正好把间隙对半分，
+ * 再大就有两个按钮抢同一块区域，点下去是哪一个全看谁的层在上面 —— 那比小一点更糟。
+ *
+ * 所以这里的目标是「把到手的空间用满」而不是硬凑 44：
+ *   - 导航项 37 → **50×43**（横向吃满导轨内宽，纵向吃掉半条间隙）；
+ *   - 侧栏动作（鲸鱼）23×17 → **44×44**（它上面与左右都有余量，第一个导航项
+ *     在 y=54，扩到 44 高仍不碰）。
+ *
+ * ⚠️ 两条规则的**特异性必须拉开**：鲸鱼按钮本身也在 `[data-dsh-pages-rail]` 里，
+ * 若两条都写 `… button::after`，后一条（更具体）会连鲸鱼一起盖掉，鲸鱼只剩 24px。
+ * 所以通用那条显式 `:not([data-zju-rail-collapse])`。
+ */
+const TOUCH_CSS = `
+@media (pointer: coarse){
+  /* 侧栏动作（鲸鱼 / 面板图标）：23×17 的图形，命中区撑到 44×44。
+     上边到视口顶只剩 14px，所以纵向取 −13.5（14 − 13.5 = 0.5，刚好不出屏）。 */
+  [data-zju-rail-collapse]{position:relative}
+  [data-zju-rail-collapse]::after{
+    content:"";position:absolute;inset:-13.5px -10.5px;
+  }
+  /* 导航项：横向吃满导轨内宽（51 − 两侧 padding ≈ 38 → 再加 12 = 50），
+     纵向各扩 3px（正好分掉 6px 间隙，不与相邻项重叠）。 */
+  [data-dsh-pages-rail] button:not([data-zju-rail-collapse]){position:relative}
+  [data-dsh-pages-rail] button:not([data-zju-rail-collapse])::after{
+    content:"";position:absolute;inset:-3px -6px;
+  }
+
+  /* ---- 点按反馈 -------------------------------------------------------
+   *
+   * 触屏没有 hover。整站 1856 条自有规则里只有 **2 条** \`:active\`（宿主那边有 9 条），
+   * 于是手机上按下任何按钮都**毫无反馈** —— 手指盖住按钮、又没有任何状态变化，
+   * 用户无法判断这一次到底点中没有。ch05：反馈要在 0.1s 内出现。
+   *
+   * 用背景色（不是 transform 位移，也不是 opacity）：背景色不改变布局，也不会
+   * 在快速连点时抖动。取 \`--zw-hover\` 的同源色，明暗两套自动跟随。 */
+  [data-dsh-pages-rail] button:active{
+    background:var(--zw-hover, rgba(0,0,0,.08)) !important;
+  }
+  /* 侧栏动作那格本来就是透明底，按下时用一层内阴影压深更清楚 —— 它比导航项小得多。 */
+  [data-zju-rail-collapse]:active{
+    background:transparent !important;
+    box-shadow:inset 0 0 0 999px color-mix(in srgb, currentColor 14%, transparent);
+    border-radius:6px;
+  }
+
+  /* ---- 点按高亮 -------------------------------------------------------
+   *
+   * 移动端 WebKit 在每次点击后给元素盖一层半透明蓝（默认
+   * \`rgba(51,181,229,.4)\`）约 300ms。它与我们自己的 \`:active\` 反馈**叠加**，
+   * 表现为「按一下闪一下蓝」—— 暗色主题下尤其突兀，而且这个蓝不属于产品色板。
+   *
+   * 关掉它、改用上面那条 \`:active\`：颜色归产品，时长归我们。 */
+  [data-dsh-pages-rail] button,
+  [data-zju-rail-collapse]{
+    -webkit-tap-highlight-color:transparent;
+  }
+}
+/* ---- 安全区：手机底部 / 刘海 -----------------------------------------
+ *
+ * 宿主把 viewport 写成 \`viewport-fit=cover\`（实测 meta 就是这一串），意思是
+ * 「画到屏幕物理边缘，刘海与 home indicator 盖住的地方也归你」。
+ * 于是**必须**自己把内容让开那块区域 —— 否则 iPhone 的 home indicator 会压在
+ * 导轨最底下那一项上。实测 390×844：导轨最后一项「页面管理」底边 831，
+ * 而 home indicator 占底部 34px（844 − 34 = 810）—— 重叠 21px，那一项有一半
+ * 在指示条底下，点它容易误触系统手势。
+ *
+ * \`env()\` 在非刘海设备与不支持它的浏览器上取到 0，所以对桌面与普通安卓机
+ * 是空操作。用 \`max()\` 而不是直接相加：没有安全区时不要凭空多出内边距。 */
+@supports (inset: env(safe-area-inset-bottom)){
+  [data-dsh-pages-rail]{
+    /* # 四条边都要让，不只底边
+     *
+     * 竖屏时只有底部有 home indicator；但**横屏时刘海跑到左边**，而导轨正好
+     * 贴在屏幕最左边：实测 844×390 下导轨 x=0、第一个按钮 x=7，而 iPhone 横屏
+     * 的刘海约占左侧 47px —— **整条导轨连同全部十个按钮都压在刘海底下**。
+     *
+     * 所以上下左右都取 env()。\`max(原内边距, 安全区)\`：没有安全区的设备与
+     * 桌面浏览器上 env() 是 0，取到的仍是原来的内边距，不会凭空多出空白。 */
+    padding-top:max(12.75px, env(safe-area-inset-top)) !important;
+    padding-bottom:max(12.75px, env(safe-area-inset-bottom)) !important;
+    padding-left:max(6.375px, env(safe-area-inset-left)) !important;
+    padding-right:max(6.375px, env(safe-area-inset-right)) !important;
+    /* 导轨自己也是一层可滚容器（十项在矮视口下会超出）。它划到底时不该把
+       剩下的滑动传给外面 —— 那会让整页跟着动，而用户以为自己在滚导轨。
+       写在同一条规则里而不是另起一条：同一个元素同一块属性，合并写更清楚，
+       也不会和别处的 padding 规则争特异性。 */
+    overscroll-behavior-y:contain;
+  }
+  /* 规划页那只宠物气泡贴右下角，同样会压到指示条。 */
+  [class*="zwpg-pet-fab"]{
+    bottom:max(14px, env(safe-area-inset-bottom)) !important;
+  }
+}
+/* ---- 横屏（矮视口）：导轨装不下十项 -----------------------------------
+ *
+ * 实测 844×390：导轨内容 454px、可视 390px —— 溢出 64px，最后两项
+ * 「学习」「插件」要先把导轨滚一下才够得着，而那条 51px 宽、没有滚动条的细列
+ * 完全看不出「这里还能滚」。
+ *
+ * 缩的是**间距**，不是命中区（上一条已经把命中区撑到 43 高、彼此相接，
+ * 再压会重叠）。导轨用自己的 padding + gap 换出这 64px：
+ *   上下 padding 12.75 → 6（省 13.5）
+ *   间距 6.375 → 2（九个间隙省 39.4）
+ *   动作格的下内边距 15.9 → 4（省 11.9）
+ * 合计约 65px，正好把 454 收回 390 以内，且每一项的可点范围一个像素不减。
+ *
+ * 只在「视口又矮又是触屏」时生效：桌面窗口拖成 844×390 同样是矮视口，
+ * 但鼠标不需要为手指留出的那点余量，而把间距压掉会让它看起来挤。 */
+@media (pointer: coarse) and (max-height: 460px){
+  [data-dsh-pages-rail]{
+    padding-top:6px !important;
+    padding-bottom:6px !important;
+    gap:2px !important;
+  }
+  [data-dsh-pages-rail-action]{
+    padding-bottom:4px !important;
+  }
+}
+`;
 /** 隐藏原生折叠按钮的样式：只认本包打的标记，绝不泛化到别的按钮。 */
 const CSS = `
 [${NATIVE_TOGGLE_MARK}]{display:none !important}
+${TOUCH_CSS}
 `;
 
 /**

@@ -100,6 +100,15 @@ export const SECTIONS = Object.freeze([
         summary: '导航、插槽名、整幅铺开的判定，与样式变量的清单',
         file: 'shell.md',
       },
+      {
+        id: 'narrow',
+        title: '窄屏 CSS 覆盖与工效学',
+        summary: '窄屏改了哪些覆盖、逐项读数，以及命中区与「按钮自相矛盾」两个坑',
+        file: 'narrow.md',
+        // 摘要表在页内，完整读数与截图在仓库根的那份清单里 —— 页脚要照实说，
+        // 否则读者会以为这一页就是全部。
+        source: '摘要自仓库 docs/narrow-css-overrides.md —— 完整读数与改前 / 改后截图都在那份清单里，两处冲突时以原文为准。',
+      },
     ],
   },
 ]);

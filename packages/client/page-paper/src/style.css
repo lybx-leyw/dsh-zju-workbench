@@ -1410,6 +1410,27 @@ body[data-zw] .zwp-resume-notice {
     font-size: 18px;
     margin: 12px 0 6px;
   }
+  /* 手机上这里只剩**手指**。栏头那排 22/26px 的图标格（新建 / 新建文件夹 /
+     全部折叠 / 收起 / 导入 PDF）在桌面上够用，触屏上相邻两格只差 28px 左右，
+     很容易点错邻居 —— 而「全部折叠」与「删除」只隔一个像素级间隙时后果不小。
+     按 WCAG 2.5.8 的口径撑开**命中区**：图形与排布一像素不动，只把可点范围放大。 */
+  body[data-zw] .zwp-tree-head button,
+  body[data-zw] .zwp-tree-toggle {
+    position: relative;
+  }
+  body[data-zw] .zwp-tree-head button::after {
+    content: "";
+    position: absolute;
+    /* 26 → 44（上下左右各 9）。相邻两格中心距 28，各扩 9 会差 1px 相接 ——
+       取 8 留出 2px 明确间隔，宁可 42 也不要两个按钮抢同一块。 */
+    inset: -8px -8px;
+  }
+  body[data-zw] .zwp-tree-toggle::after {
+    content: "";
+    position: absolute;
+    /* 22 → 38（22 + 8×2）。它左邻树行的展开箭头，不扩太多。 */
+    inset: -8px -6px;
+  }
 }
 
 /* 重命名对话框。
