@@ -41,26 +41,6 @@ const NO_SETTINGS = new Map([
   // 卡片 —— 三者共用同一份 CAS 凭据，状态放一起才形成「填了什么 → 换来了什么」
   // 的因果闭环。留两个只能看状态的分区，用户会看到同一件事出现两处。
   ['classroom', '状态已并入统一身份认证分区；本包无用户可配置项'],
-  ['zdbk', '状态已并入统一身份认证分区；本包无用户可配置项'],
-  // 研究生教务网与 zdbk 同类：只走 CAS、没有任何用户可配置项，
-  // 状态读数并入统一身份认证分区的那张「这份凭据的用途」卡片。
-  // 硬造一个只显示状态的设置页，会让同一件事在设置里出现两处。
-  ['yjsy', '状态已并入统一身份认证分区；本包无用户可配置项'],
-  // 查老师无需登录、也没有可配置项；索引刷新是动作，不是配置。
-  ['chalaoshi', '无需登录、无用户可配置项；索引刷新走服务动作而不是设置'],
-  // 电子图书按 IP 认证：校外经 WebVPN，没有账号要填、也没有可配置项。
-  ['ebook', '按 IP 认证、无用户可配置项；校外经 WebVPN'],
-  ['xuezai', '与 zdbk/classroom 同口径：走「浙大一卡通」的 CAS 凭据，状态并入那个分区，本包不另占一格'],
-  ['sztz', '凭据由集成层注入、本包无用户可配置项；校外经 WebVPN'],
-  ['wechat-chat', '独立 agent skill、无客户端半边也无可配置项；纯本机只读，不联网'],
-  ['dingtalk-chat', '独立 agent skill、无客户端半边也无可配置项；数据位置走 --data-dir'],
-  ['weread', '独立 agent skill、无设置分区；凭据是微信读书扫码登录，不进本仓凭据体系'],
-  // 通知是纯读的来源表 + 正文解析：统一身份认证由集成层注入（本包只在落到
-  // CAS 登录页时请它做一次该站的委托登录），没有账号要填、也没有可配置项。
-  ['notice', '统一身份认证由集成层注入、本包无用户可配置项；站点多在校内，经 WebVPN'],
-  // 体艺有两个面（场馆平台 / 体艺 App），登录与学号都由集成层注入，
-  // 本包没有任何用户可配置项；两个主机判 public，校外能直连。
-  ['tyys', '凭据与学号由集成层注入、本包无用户可配置项；场馆与 App 均判 public，校外可直连'],
 ]);
 
 function packages() {
@@ -124,18 +104,6 @@ test('每个设置分区都做了双语（标题跟随语言 + 存在 en 条目�
     if (!hasEntries) problems.push(`${name}: en 字典是空的`);
   }
   assert.deepEqual(problems, [], problems.join('\n'));
-});
-
-test('netproxy 的分区标题也跟随语言', () => {
-  const source = clientSource(path.join(SOURCE_ROOT, 'netproxy'));
-  assert.ok(source !== null);
-  // netproxy 现在与其它包走**同一套** i18n：registerText + text.t('section')。
-  // 早先它有个内联的 sectionLabel(ctx)，读 locale.language（不存在的字段），
-  // 于是永远走兜底分支 —— 标题恒为中文而界面是英文。这条测试钉住
-  // 「不许再退回自己判语言」。
-  assert.ok(source.includes('registerText('), 'netproxy 必须用 registerText 注册字典');
-  assert.ok(/label:\s*\(\)\s*=>\s*text\.t\('section'\)/.test(source), "netproxy 的 label 必须用 text.t('section')");
-  assert.ok(!source.includes('function sectionLabel'), 'netproxy 不该再自己判语言');
 });
 
 test('设置分区的 order 不重复（重复会让排序不确定）', () => {

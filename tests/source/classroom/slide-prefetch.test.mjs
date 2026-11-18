@@ -64,11 +64,45 @@ function fakeDownload({ bytes = 64, delayMs = 0, fail = false, calls = [] } = {}
 
 async function withDir(fn) {
   const dir = await mkdtemp(path.join(tmpdir(), 'prefetch-'));
-  try { await fn(dir); } finally { await rm(dir, { recursive: true, force: true }); }
+  try { await fn(dir); } finally { await removeRetrying(dir); }
+}
+
+/**
+ * Windows：`rm -rf` 与「后台仍在写盘的预取」会撞车 —— 目录刚判定为空、正要
+ * rmdir，另一个句柄又写进一个文件，于是抛 `ENOTEMPTY`。`force: true` 只忽略
+ * 「本来就不存在」，不覆盖这个竞态。目录最终一定会空，重试即可。
+ */
+async function removeRetrying(dir) {
+  for (let attempt = 0; ; attempt += 1) {
+    try { await rm(dir, { recursive: true, force: true }); return; }
+    catch (error) {
+      if (attempt >= 10 || !['ENOTEMPTY', 'EBUSY', 'EPERM'].includes(error?.code)) throw error;
+      await new Promise(resolve => setTimeout(resolve, 20 * (attempt + 1)));
+    }
+  }
 }
 
 /** 等一轮 microtask + 定时器，让后台任务跑完。 */
 const settle = (ms = 30) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * 等到预取真的跑完 —— 轮询 `source.prefetching`，而不是睡固定时长。
+ *
+ * 原来这里写的是 `await settle(50)`：睡 50ms 再看结果。机器一忙就不够，
+ * 实测 6 次里红 5 次。`prefetching` 是预取队列的真源（`prefetchInBackground`
+ * 在 `finally` 里 delete），队列空就代表后台活真干完了。
+ *
+ * 起始判定要留一个 tick：`getLessonContent` 里 `prefetchInBackground` 是**同步**
+ * 塞进 Map 的，但我们仍等一轮 microtask，避免「刚好在填充前看到空 Map」。
+ */
+const drainPrefetch = async (source, limitMs = 5000) => {
+  await settle(0);
+  const deadline = Date.now() + limitMs;
+  while (source.prefetching.size > 0) {
+    if (Date.now() > deadline) throw new Error(`预取队列在 ${limitMs}ms 内没有排空`);
+    await settle(5);
+  }
+};
 
 // ── 不阻塞 ───────────────────────────────────────────────
 
@@ -101,7 +135,7 @@ test('预取在后台把缓存填上，之后再读就带 cacheUrl', async () =>
     source.attachSlideCache(cache);
 
     await source.getLessonContent('1', '2');
-    await settle(50);
+    await drainPrefetch(source);
 
     const again = await source.getLessonContent('1', '2');
     assert.equal(again.slides.items.length, 2);
@@ -163,7 +197,7 @@ test('下载全失败时读取照常返回，不抛错', async () => {
 
     const content = await source.getLessonContent('1', '2');
     assert.equal(content.slides.items.length, 1);
-    await settle(50);
+    await drainPrefetch(source);
     // 失败被记录，但没冒泡
     assert.ok(log.some((line) => /缓存/.test(line)), `应记一条缓存日志，实际：${JSON.stringify(log)}`);
   });

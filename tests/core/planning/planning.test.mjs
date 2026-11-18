@@ -11,7 +11,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
@@ -357,13 +357,11 @@ test('拼题A 的配置入口归数据源，页面不重复提供', async () => 
   assert.equal(/name="username"/.test(code), false, '本页不该重复录入浙大账号');
   assert.equal(/name="password"/.test(code), false, '本页不该重复录入浙大密码');
 
-  // 数据源那一侧必须真的有这个入口，否则两处都没有 = 用户无处可配。
-  //
-  // 拆包前它在 `source/campus`；按「设置分区跟凭证走」拆开后归 `source/pta`
-  // —— 拼题A 才有独立凭证（Cookie），学在浙大走 CAS、不占分区。
-  const pta = await readFile(
-    new URL('../../../packages/source/pta/src/client.jsx', import.meta.url), 'utf8',
-  );
-  assert.match(pta, /拼题A Cookie/, '拼题A 数据源必须提供 Cookie 的配置入口');
-  assert.match(pta, /settings\.section/, '而且必须注册成设置分区，用户才找得到');
+  // 拼题A 数据源已在 2026-11-18 的清理中整体归档（未接入任何页面）。
+  // 契约随之变成：**两处都不提供** —— 页面不提供入口，仓库里也不再有那个数据源。
+  // 这条断言留着是为了让「哪天把 pta 加回来」时被迫同时想清楚入口归谁，
+  // 而不是默默变成「页面有、数据源没有」或反之。
+  const ptaExists = await stat(new URL('../../../packages/source/pta', import.meta.url))
+    .then(() => true, () => false);
+  assert.equal(ptaExists, false, 'source/pta 已归档；若加回来，这条测试要改回「数据源提供、页面不重复」');
 });

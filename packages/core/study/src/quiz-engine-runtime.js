@@ -318,6 +318,20 @@ export function createTreeQuizRun({pool,records,graph:frozenGraph=null,cache=nul
  * 断点续跑、题库落盘、知识点归属全部沿用既有逻辑。
  *
  * 回退方式：把下面这行改成 'deeptutor'，其余不动。
+ *
+ * # 2026-11-18：这四个包为什么还在树里
+ *
+ * `core-question-backend.js` 用**字符串**动态 import 四个包 —— `core-question`、
+ * `core-tool`、`core-lecture-tools`、`core-question-stream` —— 而
+ * `packages/core/study/package.json` 从未声明过它们。所以按 package.json 与
+ * cordis.patch.yml 做的依赖分析**看不到这条边**。
+ *
+ * 当日仓库清理（归档未接入页面的包）就漏了这一条，后果是出题链一道题都产不出来：
+ * 动态 import 失败 → 相对兜底路径也指向已不存在的目录 → 异常被折叠成
+ * 「题未产出」，界面只显示 phase=partial，看不出真正原因。
+ *
+ * 四个包已恢复。若日后又要把它们归档，必须同时改这里的 NATIVE_BACKEND，
+ * 或先把适配层一起删掉 —— 只删包会让失败静默。
  */
 export const NATIVE_BACKEND = 'core-question';
 

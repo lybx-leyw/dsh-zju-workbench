@@ -230,16 +230,28 @@ test('共享出口由 source-http 提供，campus 不再重复注册', async () 
 });
 
 test('各 source 包都接了 sharedFetch（不许再直接用 globalThis.fetch）', async () => {
-  // 路径写的是**分组后的目录**（`packages/source/<目录>`），不是包名 ——
-  // 包名仍是 `dsh-zhiyun-source-*`，两者刻意不同（见 README 的分组说明）。
-  const targets = [
-    ['packages/source/zdbk/src/index.js', 'zdbk'],
-    ['packages/source/cc98/src/index.js', 'cc98'],
-    ['packages/source/xxt/src/index.js', 'xxt'],
-  ];
-  for (const [path, pkg] of targets) {
-    const src = await readFile(new URL(`../../../${path}`, import.meta.url), 'utf8');
-    assert.match(src, /sharedFetch\(ctx\)/, `${pkg} 应当用 sharedFetch(ctx)`);
+  // 动态枚举 `packages/source/<目录>`，不再写死包名：写死的话每归档一个数据源
+  // 都要回来改这条测试，而且「漏读一个包」不会有人发现。
+  const { readdir, stat } = await import('node:fs/promises');
+  const sourceRoot = new URL('../../../packages/source/', import.meta.url);
+  const checked = [];
+  for (const entry of await readdir(sourceRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const indexPath = new URL(`${entry.name}/src/index.js`, sourceRoot);
+    try { await stat(indexPath); } catch { continue; }
+    checked.push([entry.name, await readFile(indexPath, 'utf8')]);
+  }
+  assert.ok(checked.length >= 1, `没有读到任何 source 包，扫描可能失效（读到 ${checked.length} 个）`);
+  for (const [pkg, src] of checked) {
+    // `http` 本身就是提供 sharedFetch 与 zwEgress 的那一层，不消费自己。
+    if (pkg === 'http') continue;
+    // 纯协议/凭据库（login、webvpn）不起网络请求，这条规则对它们不适用。
+    if (!/fetch/i.test(src)) continue;
+    // 两种合法形态：直接用 `sharedFetch(ctx)`，或像 classroom 那样自建出口路由
+    // （先走 egress、再回退本地网络）。两者都不能直接拿 `globalThis.fetch` 当生产出口。
+    const hasShared = /sharedFetch\(ctx\)/.test(src);
+    const hasOwnEgress = /egress\.fetch\(/.test(src) && /config\.fetch/.test(src);
+    assert.ok(hasShared || hasOwnEgress, `${pkg} 要么用 sharedFetch(ctx)，要么自建 egress 路由`);
     assert.doesNotMatch(
       src,
       /(?:config\.fetch \?\? |: )globalThis\.fetch\b(?!\s*\))/,

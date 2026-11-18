@@ -75,6 +75,8 @@ async function loadClient(suffix = '') {
               // 注册自己，少了它 esbuild 会报 No matching export，八条用例全红。
               // 新增原语时这里也要跟着加（同 ui-shared 的导出清单）。
               export const registerPageContent = () => {};
+              export const useRegisterPageSidebar = () => {};
+              export const usePageSidebar = () => ({ expanded: true, toggle: () => {} });
               export const AssistantDrawer = () => null;
               export const Markdown = () => null;
               export const PageFrame = () => null;

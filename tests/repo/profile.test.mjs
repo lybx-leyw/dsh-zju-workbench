@@ -167,7 +167,7 @@ test('existing profiles add the bridge once without altering user bundles or ove
   const runtime = await initialize({ home });
   const file = path.join(runtime.profile, 'package.json');
   const manifest = JSON.parse(await readFile(file, 'utf8'));
-  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(name => name !== '@lybx-leyw/dsh-zju-source-cc98');
+  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(name => name !== '@lybx-leyw/dsh-zju-source-classroom');
   manifest.dsh.profile.bundles.push('user-owned-plugin');
   manifest.custom = { keep: true };
   await writeFile(file, JSON.stringify(manifest));
@@ -177,7 +177,7 @@ test('existing profiles add the bridge once without altering user bundles or ove
   await initialize({ home });
   await initialize({ home });
   const upgraded = JSON.parse(await readFile(file, 'utf8'));
-  assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, '@lybx-leyw/dsh-zju-source-cc98']);
+  assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, '@lybx-leyw/dsh-zju-source-classroom']);
   assert.deepEqual(upgraded.custom, manifest.custom);
   // 用户段不动，本仓配置层被合并进来（且重复初始化不会叠第二份）。
   const merged = await readFile(patch, 'utf8');
@@ -187,10 +187,10 @@ test('existing profiles add the bridge once without altering user bundles or ove
   // ⚠️ 不能拼 `packages/<包名>`：包可能住在分组目录（`packages/source/<目录>`），
   //    而目录名不等于包名。按 manifest.name 反查才是唯一稳的写法。
   const restored = (await ownPackages(path.join(root, 'packages')))
-    .find(entry => entry.manifest.name === '@lybx-leyw/dsh-zju-source-cc98');
-  assert.ok(restored, 'source-cc98 应当能按 manifest.name 反查到目录');
+    .find(entry => entry.manifest.name === '@lybx-leyw/dsh-zju-source-classroom');
+  assert.ok(restored, 'source-classroom 应当能按 manifest.name 反查到目录');
   assert.equal(
-    await realpath(path.join(runtime.profile, 'node_modules', '@lybx-leyw/dsh-zju-source-cc98')),
+    await realpath(path.join(runtime.profile, 'node_modules', '@lybx-leyw/dsh-zju-source-classroom')),
     await realpath(restored.path),
   );
 });

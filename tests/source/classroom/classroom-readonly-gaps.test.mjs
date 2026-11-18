@@ -1,7 +1,8 @@
 /**
  * 补齐上游七条只读能力的契约测试。
  *
- * 对应 `packages/vendor/zju-assistant/core/zju/lib/zhiyun/` 里的：
+ * 对应上游 `dsh-zju-assistant` 的 `core/zju/lib/zhiyun/`（该包已移出仓库，
+ * 现留档于 `.ref_zju/zju-assistant/`，不入版本控制）里的：
  *
  *   - `search resources`  → `source.searchResources()`（`resources.js`）
  *   - `check`             → `source.check()`            （`diagnostics.js`）

@@ -57,7 +57,11 @@ async function bundle() {
       export const mountStyle = () => {};
       // 页面半边 import 了这个（见 page-notes/client.jsx 的 apply）。
       // 桩里缺它会让 esbuild 构建失败，而失败后的进程不退出，看着像 hang。
-      export const registerPageContent = () => {};`,
+      export const registerPageContent = () => {};
+      // 侧栏注册钩子：页面 apply 里会调用，桩里缺同名导出会在构建阶段报
+      // "No matching export"，而构建失败后的进程不退出，看着像 hang。
+      export const useRegisterPageSidebar = () => {};
+      export const usePageSidebar = () => ({ expanded: true, toggle: () => {} });`,
     '@lybx-leyw/dsh-zju-ui-graph-render': `export const NoteGraph = () => null; export const css = "";`,
     '@deepseek-ai/dsh-client-ui-primitives': `import React from "react";
       export const MarkdownText = (p) => React.createElement("div", { className: "md" },

@@ -6,6 +6,7 @@ tmp-*
 .temp-*
 .tmp-*
 .ref/
+.ref_zju/
 .ref_book2skill/
 .ref-codex-ui/
 .ref_ppt2note/

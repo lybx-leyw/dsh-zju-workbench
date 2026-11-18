@@ -186,18 +186,19 @@ test('页面识别 NEED_LOGIN 并显示成"待登录"，而非"读取失败"', a
 });
 
 test('数据源把 LOGIN_REQUIRED 翻译成 NEED_LOGIN', async () => {
-  const { readFile: rf } = await import('node:fs/promises');
-  // 翻译表住在**数据源**里，不在页面里：页面换一个、或新增一页来用学在浙大，
+  const { readFile: rf, stat } = await import('node:fs/promises');
+  // 翻译表住在**数据源**里，不在页面里：页面换一个、或新增一页来用同一份数据，
   // 都不该把码表再抄一遍。
   //
-  // ⚠️ 这条原先指向 `packages/source/campus`，而 campus 后来按平台拆成了
-  //    `source/xuezai`（学在浙大）与 `source/pta`（拼题A），目录已不存在。
-  //    产出 `NEED_LOGIN` 的是 xuezai —— 断言内容不变，只把路径改到真正那一份。
-  const source = await rf(
-    new URL('../../../packages/source/xuezai/src/index.js', import.meta.url), 'utf8',
-  );
-  assert.match(source, /code: 'NEED_LOGIN'/, '数据源必须产出统一码');
-  assert.equal(source.includes("npm run"), false, '数据源不该让用户去终端跑命令');
+  // ⚠️ 这条的路径跟着重构走了几站：`source/campus` → `source/xuezai` →
+  //    2026-11-18 清理时 xuezai 整体归档。保留集里统一码由 `source/login`
+  //    产出（它把各数据源的登录失败归一成 NEED_LOGIN/CREDENTIALS/CONFIG）。
+  const target = new URL('../../../packages/source/login/src/index.js', import.meta.url);
+  const exists = await stat(target).then(() => true, () => false);
+  assert.equal(exists, true, 'source/login 应当存在（保留集里的统一身份认证层）');
+  const source = await rf(target, 'utf8');
+  assert.match(source, /NEED_LOGIN/, '登录层必须产出统一码');
+  assert.equal(source.includes('npm run'), false, '数据源不该让用户去终端跑命令');
 });
 
 test('规划域的宿主半边不再自己翻译数据源的错误码（码表只有一份）', async () => {
