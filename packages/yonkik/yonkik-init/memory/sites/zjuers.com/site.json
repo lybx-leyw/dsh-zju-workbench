@@ -1,0 +1,19 @@
+{
+  "key": "zjuers.com",
+  "origin": "https://zjuers.com",
+  "via": null,
+  "requires": [],
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "triage 待定，先取保守默认"
+  },
+  "auth": {
+    "type": "none"
+  },
+  "notes": "triage 中：疑似浙大站点导航枢纽，聚合多站，多站可用一卡通 SSO（cred-1）",
+  "status": "done",
+  "statusUpdated": "2026-11-19",
+  "exploredAt": "2026-11-17"
+}

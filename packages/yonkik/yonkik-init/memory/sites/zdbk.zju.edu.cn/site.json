@@ -1,0 +1,29 @@
+{
+  "key": "zdbk.zju.edu.cn",
+  "status": "done",
+  "origin": "https://zdbk.zju.edu.cn",
+  "systemPath": "/jwglxt",
+  "title": "本科教学管理信息服务平台（正方 zfsoft 教务系统）",
+  "via": null,
+  "requires": [],
+  "auth": {
+    "type": "zjuam-login",
+    "note": "教务系统通知需学号登录；本次未登录，仅取证跳转链。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "source": "default",
+    "evidence": "响应头无 X-RateLimit-*；robots.txt 不存在（/robots.txt 302 → 登录页）；全文未找到自动化条款。沿用保守默认串行 ≥2s、并发 1，全程 0 次 429。"
+  },
+  "protocol": {
+    "robots": "无（/jwglxt/robots.txt 与 /robots.txt 均 302 到 login_slogin.html，无 robots.txt 可读）",
+    "toS": "未发现自动化/爬取条款；页面仅有版权与技术支持信息",
+    "server": "Tengine/2.1.2 + 正方 zfsoft jwglxt（Tomcat/Java）",
+    "session": "JSESSIONID + route cookie；未登录即可读公开通知区"
+  },
+  "exploredAt": "2026-11-19",
+  "scopeNote": "2026-11-19 二次探索：登录区已通（CAS，验证码关闭）。未做写操作。",
+  "evidenceRank": "direct",
+  "scope": "public-notices + logged-in (student-info/grades/program/graduation-check)",
+  "endpointsFile": "endpoints.json"
+}

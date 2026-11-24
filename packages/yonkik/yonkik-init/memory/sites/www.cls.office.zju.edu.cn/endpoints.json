@@ -1,0 +1,292 @@
+{
+  "site": "www.cls.office.zju.edu.cn",
+  "access": "公开 HTTP；HTTPS 443 连接被拒。目录 .htm 一律 301 到同站 .psp；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.cls.office.zju.edu.cn/25820/list.htm",
+      "column": "最新通知",
+      "verifiesPath": "/25820/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cls.office.zju.edu.cn/25820/list.psp",
+        "catalogPath": "/25820/list.htm",
+        "status": 200,
+        "column": "最新通知",
+        "displayTitle": "最新通知",
+        "sectionTitle": "科室信息",
+        "trail": [
+          [
+            "/ksxx_79365/list.htm",
+            "科室信息"
+          ],
+          [
+            "/kyhz_80631/list.htm",
+            "科研合作"
+          ],
+          [
+            "/25820/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 501,
+        "pages": 36,
+        "externalLinks": 14,
+        "firstId": "3227742",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.cls.office.zju.edu.cn/cggs/list.htm",
+      "column": "出国公示",
+      "verifiesPath": "/cggs/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cls.office.zju.edu.cn/cggs/list.psp",
+        "catalogPath": "/cggs/list.htm",
+        "status": 200,
+        "column": "出国公示",
+        "displayTitle": "出国公示",
+        "sectionTitle": "科室信息",
+        "trail": [
+          [
+            "/ksxx_79365/list.htm",
+            "科室信息"
+          ],
+          [
+            "/gjjl_79410/list.htm",
+            "国际交流"
+          ],
+          [
+            "/cggs/list.htm",
+            "出国公示"
+          ]
+        ],
+        "count": 14,
+        "total": 452,
+        "pages": 33,
+        "externalLinks": 0,
+        "firstId": "3229794",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.cls.office.zju.edu.cn/25875/list.htm",
+      "column": "海外交流",
+      "verifiesPath": "/25875/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cls.office.zju.edu.cn/25875/list.psp",
+        "catalogPath": "/25875/list.htm",
+        "status": 200,
+        "column": "海外交流",
+        "displayTitle": "海外交流",
+        "sectionTitle": "科室信息",
+        "trail": [
+          [
+            "/ksxx_79365/list.htm",
+            "科室信息"
+          ],
+          [
+            "/25821/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/25875/list.htm",
+            "海外交流"
+          ]
+        ],
+        "count": 14,
+        "total": 110,
+        "pages": 8,
+        "externalLinks": 3,
+        "firstId": "3085718",
+        "firstDate": "2025-09-25"
+      }
+    },
+    {
+      "id": "GET www.cls.office.zju.edu.cn/25812/list.htm",
+      "column": "安全教育",
+      "verifiesPath": "/25812/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cls.office.zju.edu.cn/25812/list.psp",
+        "catalogPath": "/25812/list.htm",
+        "status": 200,
+        "column": "安全教育",
+        "displayTitle": "安全教育",
+        "sectionTitle": "科室信息",
+        "trail": [
+          [
+            "/ksxx_79365/list.htm",
+            "科室信息"
+          ],
+          [
+            "/aqgl_79366/list.htm",
+            "信息公开"
+          ],
+          [
+            "/25812/list.htm",
+            "安全教育"
+          ]
+        ],
+        "count": 14,
+        "total": 81,
+        "pages": 6,
+        "externalLinks": 6,
+        "firstId": "3223540",
+        "firstDate": "2026-11-08"
+      }
+    },
+    {
+      "id": "GET www.cls.office.zju.edu.cn/gsgg_80891/list.htm",
+      "column": "科室信息·公示公告（办公网）",
+      "verifiesPath": "/gsgg_80891/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cls.office.zju.edu.cn/gsgg_80891/list.psp",
+        "catalogPath": "/gsgg_80891/list.htm",
+        "status": 200,
+        "column": "科室信息·公示公告（办公网）",
+        "displayTitle": "公示公告",
+        "sectionTitle": "科室信息",
+        "trail": [
+          [
+            "/ksxx_79365/list.htm",
+            "科室信息"
+          ],
+          [
+            "/25824/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/gsgg_80891/list.htm",
+            "公示公告"
+          ]
+        ],
+        "count": 6,
+        "total": 6,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3223443",
+        "firstDate": "2026-11-05"
+      }
+    },
+    {
+      "id": "GET www.cls.office.zju.edu.cn/gsgg_80892/list.htm",
+      "column": "科室信息·公示公告（办公网）2",
+      "verifiesPath": "/gsgg_80892/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cls.office.zju.edu.cn/gsgg_80892/list.psp",
+        "catalogPath": "/gsgg_80892/list.htm",
+        "status": 200,
+        "column": "科室信息·公示公告（办公网）2",
+        "displayTitle": "公示公告",
+        "sectionTitle": "科室信息",
+        "trail": [
+          [
+            "/ksxx_79365/list.htm",
+            "科室信息"
+          ],
+          [
+            "/25821/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/gsgg_80892/list.htm",
+            "公示公告"
+          ]
+        ],
+        "count": 14,
+        "total": 30,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3205164",
+        "firstDate": "2026-09-18"
+      }
+    },
+    {
+      "id": "GET www.cls.office.zju.edu.cn/gsgg_80890/list.htm",
+      "column": "科室信息·公示公告（办公网）3",
+      "verifiesPath": "/gsgg_80890/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cls.office.zju.edu.cn/gsgg_80890/list.psp",
+        "catalogPath": "/gsgg_80890/list.htm",
+        "status": 200,
+        "column": "科室信息·公示公告（办公网）3",
+        "displayTitle": "公示公告",
+        "sectionTitle": "科室信息",
+        "trail": [
+          [
+            "/ksxx_79365/list.htm",
+            "科室信息"
+          ],
+          [
+            "/kyhz_80631/list.htm",
+            "科研合作"
+          ],
+          [
+            "/gsgg_80890/list.htm",
+            "公示公告"
+          ]
+        ],
+        "count": 6,
+        "total": 6,
+        "pages": 1,
+        "externalLinks": 1,
+        "firstId": "3177378",
+        "firstDate": "2026-06-11"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/25821/list.htm",
+      "pageTitle": "本科通知",
+      "sectionTitle": "本科生教育",
+      "claimedColumnPath": "/25871/list.htm",
+      "claimedColumnTitle": "本科通知",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/25824/list.htm",
+      "pageTitle": "研究生通知",
+      "sectionTitle": "研究生教育",
+      "claimedColumnPath": "/25888/list.htm",
+      "claimedColumnTitle": "研究生通知",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/gjjl_79410/list.htm",
+      "pageTitle": "外事通知",
+      "sectionTitle": "国际交流",
+      "claimedColumnPath": "/25900/list.htm",
+      "claimedColumnTitle": "外事通知",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/qctx1/list.htm",
+      "pageTitle": "组织设置",
+      "sectionTitle": "学生思政",
+      "claimedColumnPath": "/zzsz_84289/list.htm",
+      "claimedColumnTitle": "组织设置",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余生命科学学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

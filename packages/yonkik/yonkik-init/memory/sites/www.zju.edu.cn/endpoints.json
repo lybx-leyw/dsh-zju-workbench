@@ -1,0 +1,20 @@
+{
+  "site": "www.zju.edu.cn",
+  "access": "公开 HTTPS。",
+  "collegeDirectory": {
+    "source": "https://www.zju.edu.cn/xywxw/list.htm",
+    "title": "学院（系）",
+    "httpStatus": 200,
+    "length": 50720,
+    "renderedBy": "sui-app 3.0.85（Webplus），数据在 JS 内嵌 `list._links` / 学院条目数组里，不在 DOM",
+    "parsedItems": 54,
+    "collegeHosts": 46,
+    "indexCovered": 43,
+    "indexMissing": [
+      "sociology.zju.edu.cn",
+      "www.chem.zju.edu.cn",
+      "www.cmm.zju.edu.cn"
+    ],
+    "note": "这是上游用于生成学院目录的权威映射。54 条含学部与学院；去掉学部与 www.zju.edu.cn 相对路径后得到 46 个学院主机。"
+  }
+}

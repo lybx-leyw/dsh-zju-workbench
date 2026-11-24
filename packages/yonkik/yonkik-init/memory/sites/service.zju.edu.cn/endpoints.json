@@ -1,0 +1,142 @@
+{
+  "siteKey": "service.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "verified": [
+    {
+      "id": "svc-apps",
+      "name": "服务目录（按分类列出全部应用，49 个）",
+      "method": "GET",
+      "path": "https://service.zju.edu.cn/mobile/loadServiceApps.rst?parentCategoryId=36&categoryId=&orgId=&modeId=&appName=",
+      "requires": "none（实测无 cookie 直接 200）",
+      "params": {
+        "parentCategoryId": "36（全站根分类，唯一有效值；空值/17/11/35 都回空数组）",
+        "categoryId": "可选，过滤分类，如 13=教育教学",
+        "orgId": "空串",
+        "modeId": "可选，1/2/3",
+        "appName": "可选，按名称模糊搜（会按分类返回空 appList 的壳）"
+      },
+      "response": "{result:'1', reason:'', data:[{categoryId, categoryName, appList:[{id, name, appName, appDetail, appUrl, entranceUrl, appType, clickNum, favoritesCount, isAllow, isTest, iconUrl}]}]}",
+      "notes": "2026-11-20 实测 6 个分类 49 个应用。categoryId 12=办公办事(22) 13=教育教学(12) 14=资源(0) 15=工具(0) 16=浙大生活(8) 35=实用工具(7)。"
+    },
+    {
+      "id": "svc-tags",
+      "name": "服务分类词表（服务对象/服务场景）",
+      "method": "GET",
+      "path": "https://service.zju.edu.cn/mobile/getPortalCenterTermByStrategy.rst",
+      "requires": "none",
+      "response": "{result:'1', data:{serviceRole:[{id,uniqueIden,roleName}], serviceCategory:[], org:[], serviceMode:[{id,modeName}]}}",
+      "notes": "serviceRole 10 项（匿名/学生/本科生/研究生/教职工/内部用户/…）；serviceMode 3 项（线上办理/线上线下相结合/线下办理）。"
+    },
+    {
+      "id": "svc-detail",
+      "name": "事项详情（HTML 空壳，勿用于取数据）",
+      "method": "GET",
+      "path": "https://service.zju.edu.cn/_web/customized/serviceCenter/detailnew.html?id=<事项id>&_p=YXM9MiZ0PTUmZD0yMzAmcD0xJmY9NDAxJm09TiY_",
+      "requires": "none（HTML 页，服务端渲染）",
+      "params": {
+        "id": "数字 appId（如 483=班车查询）；参数名是 id 不是 dataId"
+      },
+      "response": "HTML：事项编号/受理机构/岗位责任人/办理模式/办事对象/材料清单/受理时间/窗口/咨询监督电话/流程图/常见问题",
+      "notes": "【2026-11-20 更正】detailnew.html 是纯前端空壳：服务端恒渲染同一个默认事项（「在校本科生出国成绩单开具」，编号占位符 dddd），传 id=483/546/206/2112 返回完全相同内容，dataId/serviceId/appId 一律被忽略。真接口见 svc-detail-jsonp。",
+      "deprecated": true
+    },
+    {
+      "id": "svc-fwzn",
+      "name": "办事大厅地址 + 窗口电话 + 窗口管理办法（含全文）",
+      "method": "GET",
+      "path": "https://service.zju.edu.cn/_s2/anonymous_fwzn/main.psp",
+      "requires": "none",
+      "response": "HTML 116KB：24 个窗口的单位/房号/联系电话表 + 《浙江大学行政服务办事大厅窗口管理办法》全文",
+      "notes": "统一咨询热线 88981234；管理中心 88981617。"
+    },
+    {
+      "id": "svc-zzfw",
+      "name": "自助服务点（6 校区地点与开放时间）",
+      "method": "GET",
+      "path": "https://service.zju.edu.cn/_s2/anonymous_zzfw/main.psp",
+      "requires": "none",
+      "response": "HTML 51KB：紫金港纳米服务楼112/114（24h）、玉泉行政楼135、西溪西3-230、华家池老图105、舟山龙泉楼北楼（24h）、海宁校园服务中心"
+    },
+    {
+      "id": "search-all",
+      "name": "浙大百事通站内统一搜索（跨 7 个库）",
+      "method": "GET",
+      "path": "https://s.zju.edu.cn/search/all.do?words=<关键词>",
+      "requires": "none（搜索无需登录）",
+      "response": "HTML：按「常见问题 / 办事指南 / 规范性文件 / 学校文件 / 通知公告 / 资讯」分栏返回命中条目",
+      "notes": "另有分类端点：faq.do（常见问题）、workGuide.do（办事指南）、addrBook.do（通讯录）、normFile.do（规范性文件）、schoolFile.do（学校文件）、info.do（资讯）。服务端渲染，直接正则解析。"
+    },
+    {
+      "id": "search-workguide",
+      "name": "办事指南专项检索（含受理时间/机构/电话）",
+      "method": "GET",
+      "path": "https://s.zju.edu.cn/search/workGuide.do?words=<关键词>&pageNo=<页>",
+      "requires": "none",
+      "response": "HTML：dd.D2 条目，每条含 事项名（id=data_ZNNNN）+ 受理时间 + 监督电话 + 咨询电话 + 受理机构 + 受理地方 + 可选「点击详情」直达表单",
+      "notes": "搜索「证明」回 54 项 / 6 页（每页 10）。条目名里的关键词被 <font color='red'> 包裹，解析时要剥标签。"
+    },
+    {
+      "id": "search-faq",
+      "name": "常见问题检索（问答对）",
+      "method": "GET",
+      "path": "https://s.zju.edu.cn/search/faq.do?words=<关键词>",
+      "requires": "none",
+      "response": "HTML：问题 + 答案全文 + 联系电话"
+    },
+    {
+      "id": "hot-workguide",
+      "name": "热点办事指南 Top N",
+      "method": "GET",
+      "path": "https://s.zju.edu.cn/hotsearch/hotWorkGuide.do?count=31",
+      "requires": "none",
+      "response": "HTML 片段：排名 + 事项名 + 直达表单 URL + saveInfoViewLog(this,'ZNNNN','work_guide')"
+    },
+    {
+      "id": "svc-detail-jsonp",
+      "name": "事项详情（真接口，JSONP）",
+      "method": "GET",
+      "path": "https://service.zju.edu.cn/_web/customized/getServiceAppDetail.jsp?callback=cb&appVersionId=<appId>&_p=YXM9MiZ0PTUmZD0yMzAmcD0xJmY9NDAxJm09TiY_",
+      "requires": "none",
+      "params": {
+        "callback": "必须，JSONP 回调名",
+        "appVersionId": "参数名叫 appVersionId，但值传 **appId**（如 483/206/2129）",
+        "_p": "门户上下文 token，缺了 403"
+      },
+      "response": "{result:'1', data:{appName,appType,serviceMode,applyUserScope,responsibleDept,contactUser,contactPhone,handleTime,handleAddress,entranceUrl,isOpen,favoritesCount,starPoints,fileList,jbxx,sltj,sqcl,fwyj,fwfs,tbcx,cjwt}}",
+      "notes": "实测 483=班车查询 / 206=教师资源管理系统 / 2111=财务综合平台 / 2129=学在浙大 均正确返回。"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "svc-loadServiceApps-jsp",
+      "path": "https://service.zju.edu.cn/_web/customized/loadServiceApps.jsp?_p=...&parentCategoryId=17",
+      "why": "页面 JS 里用的老接口，实测恒回 {result:'0', reason:'获取各分类下服务列表出错!'}，已被 /mobile/*.rst 取代。别用。"
+    },
+    {
+      "id": "svc-getServiceAppDetail-jsp",
+      "path": "https://service.zju.edu.cn/_web/customized/getServiceAppDetail.jsp?_p=...&id=483",
+      "why": "实测 {result:'0', reason:'服务id不能为空'} —— 参数名不是 id，未能确定；改用 detailnew.html 已够。"
+    },
+    {
+      "id": "svc-anonymous-bszx",
+      "path": "https://service.zju.edu.cn/_s2/anonymous_bszx/main.psp",
+      "why": "已下线：返回「提示：访问地址无效，anonymous_bszx找不到对应的栏目！」。但 s.zju.edu.cn 的 FAQ 仍在把学生导向这个死链（见 wiki 坑节）。"
+    },
+    {
+      "id": "svc-logged-in-area",
+      "path": "登录后：我的待办 / 办事申请 / 收藏 / 评价",
+      "why": "本次未登录。CAS 登录本身可行（getKaptchaStatus=false，验证码关闭），但服务目录与办事指南全部免登录，登录区对本任务无增量价值。"
+    }
+  ],
+  "scripts": {
+    "crawler": "crawler.mjs（apps / guide / detail / hot / faq）",
+    "note": "全部 op 免登录，无需 state.json。"
+  },
+  "implementedOps": [
+    "apps",
+    "guide",
+    "detail",
+    "hot",
+    "faq"
+  ]
+}

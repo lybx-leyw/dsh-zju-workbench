@@ -1,0 +1,31 @@
+{
+ "key": "chat.zju.edu.cn",
+ "origin": "https://chat.zju.edu.cn",
+ "via": null,
+ "requires": [
+  "campus-sso"
+ ],
+ "rateLimit": {
+  "minIntervalMs": 2000,
+  "concurrency": 1,
+  "source": "default",
+  "evidence": "未发现 X-RateLimit-* / Retry-After；robots.txt 被 SPA 外壳覆盖（/robots.txt 返回 1930B HTML，base=/chat/），故无 robots 条款可依。按 site-recon 保守默认串行 >=2s。"
+ },
+ "auth": {
+  "type": "cas",
+  "credentialKey": "campus-sso",
+  "ssoFamily": "zjuam-cas",
+  "loginUrl": "https://zjuam.zju.edu.cn/cas/login",
+  "serviceParam": "http://chat.zju.edu.cn/commoncallback/",
+  "stateFile": "state.json",
+  "captcha": "disabled (cas/v2/getKaptchaStatus = false, 2026-11-20 实测)",
+  "loginFlow": "chat.zju.edu.cn/ --301--> zjuam CAS(service=http://chat.zju.edu.cn/commoncallback/) --ST--> http://chat.zju.edu.cn/commoncallback/?ticket= --307--> https --301--> https://chat.zju.edu.cn/ ; SPA 静态资源（/chat/js/*、/chat/static/*）免登录，只有 /aiqa/ 与 /wdzsk/ 业务路径被网关拦"
+ },
+ "notes": "浙大「晓浙 / 浙晓智」AI 问答平台（苏迪 sudytech wdzsk 底座）。SPA base=/chat/，静态配置在 /chat/js/chat-ui-config.js 与 context.js。业务 API 两大前缀：/aiqa/ai-helper/*（301 到 CAS）与 /aiqa/px/_web/apps/agent/*（苏迪 Coreplus，未登录返 resultCode 2010 而非 301）。详见 wiki.md。",
+ "status": "done",
+ "exploredAt": "2026-11-20",
+ "endpointsFile": "endpoints.json",
+ "statusUpdated": "2026-11-20",
+ "checkOp": "check-auth",
+ "loginScript": "login.mjs"
+}

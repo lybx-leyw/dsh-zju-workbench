@@ -1,0 +1,21 @@
+{
+  "key": "chalaoshi.xhuya.cn",
+  "origin": "https://chalaoshi.xhuya.cn",
+  "via": null,
+  "requires": [],
+  "rateLimit": {
+    "minIntervalMs": 1500,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "无 robots 约束信息；Vercel 托管、内存缓存 25 条；取保守默认（2026-11-20）"
+  },
+  "auth": {
+    "type": "none",
+    "credentialKey": null,
+    "notes": "**全部端点免鉴权**，支持 CORS。数据来自上游 chalaoshi.de / dahua309.uk 的代理与解析。"
+  },
+  "status": "done",
+  "statusUpdated": "2026-11-20",
+  "exploredAt": "2026-11-20",
+  "notes": "浙大「查老师」匿名教评系统的 Vercel 代理 + 结构化 API。是学生选课前查老师评分/给分的主入口之一。**数据为主观匿名上报 + 第三方「课否」绩点，均为历史数据**。同源网页版：dahua309.uk（Cloudflare）。chalaoshi.de 本机 DNS 失败、chalaoshi.netlify.app 已 503。"
+}

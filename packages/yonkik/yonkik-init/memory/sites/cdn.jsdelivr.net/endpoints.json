@@ -1,0 +1,61 @@
+{
+  "site": "cdn.jsdelivr.net",
+  "dataset": "NateScarlet/holiday-cn",
+  "source": {
+    "repo": "https://github.com/NateScarlet/holiday-cn",
+    "baseline": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/plugin/host/holidays.mjs",
+    "schema": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/schema.json",
+    "crossCheckReference": "e8ea0633fb5de9b03e72278b858554a60669ba99"
+  },
+  "verified": [
+    {
+      "id": "holiday-cn-annual",
+      "method": "GET",
+      "path": "/gh/NateScarlet/holiday-cn@master/{year}.json",
+      "requires": "none",
+      "responses": [
+        {
+          "year": 2026,
+          "url": "https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/2026.json",
+          "httpStatus": 200,
+          "contentType": "application/json; charset=utf-8",
+          "verifiedAt": "2026-11-22",
+          "state": "official-cross-checked",
+          "official": "https://www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm",
+          "notice": "国办发明电〔2025〕7号",
+          "issuedAt": "2025-11-04",
+          "mirrorReference": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/e8ea0633fb5de9b03e72278b858554a60669ba99/2026.json",
+          "off": 33,
+          "makeUpWork": 6,
+          "entries": 39
+        },
+        {
+          "year": 2027,
+          "url": "https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/2027.json",
+          "httpStatus": 200,
+          "contentType": "application/json; charset=utf-8",
+          "verifiedAt": "2026-11-22",
+          "state": "official-cross-checked",
+          "official": "https://www.gov.cn/zhengce/zhengceku/202611/content_7085102.htm",
+          "notice": "国办发明电〔2026〕10号",
+          "issuedAt": "2026-11-05",
+          "mirrorReference": "https://raw.githubusercontent.com/NateScarlet/holiday-cn/e8ea0633fb5de9b03e72278b858554a60669ba99/2027.json",
+          "off": 29,
+          "makeUpWork": 5,
+          "entries": 34
+        }
+      ]
+    }
+  ],
+  "notAvailable": [
+    {
+      "year": 2028,
+      "url": "https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/2028.json",
+      "httpStatus": 404,
+      "checkedAt": "2026-11-22",
+      "state": "file-not-found",
+      "note": "仅记录该日镜像状态；不能独自证明公告未公布，也不能当作无假期。"
+    }
+  ],
+  "note": "只有 2026/2027 与国务院原文逐项核对；其他非空年份只报告镜像格式已读，不自动加入日历覆盖。"
+}

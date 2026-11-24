@@ -1,0 +1,12 @@
+{
+  "key": "sociology.zju.edu.cn",
+  "origin": "https://sociology.zju.edu.cn",
+  "status": "blocked",
+  "label": "社会学系",
+  "auth": {
+    "type": "unknown"
+  },
+  "via": "probe-only",
+  "exploredAt": "2026-11-22",
+  "blockedReason": "本环境不可达；且上游清单明确跳过该站。"
+}

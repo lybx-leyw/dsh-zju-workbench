@@ -1,0 +1,44 @@
+{
+  "key": "form.zju.edu.cn",
+  "origin": "https://form.zju.edu.cn",
+  "verified": [
+    {
+      "id": "shell",
+      "method": "GET",
+      "path": "/ (及任意未匹配路径)",
+      "purpose": "SPA 壳（nginx history fallback）",
+      "auth": "none",
+      "responseType": "text/html",
+      "structure": "5256B。`<title></title>` 空标题；`window.routerBase='/'`；引用 ./umi.d895a68c.js、./formInfo.js、./city.js、./themes.js、./alert.js、./hwh5-cloudonline.js、cdn.bootcss.com/vConsole；无任何登录跳转",
+      "note": "标题为空是 CC98 6112974「点开就是空白」的成因：壳能 200 返回，但 `<title>` 为空、渲染依赖 21MB JS 与内网 API，JS 未加载完就是白屏。不是死站。"
+    },
+    {
+      "id": "forminfo",
+      "method": "GET",
+      "path": "/formInfo.js",
+      "purpose": "**表单元数据（服务端注入）**：表单短码 → 返回码文案映射",
+      "auth": "none",
+      "responseType": "application/javascript",
+      "structure": "1908B。`window.formInfoPus = [{sUrl:'n8ymTRwq', formInfo:{...}}, {sUrl:'35dU2mb6', formInfo:{...}}]`；formInfo 是状态码→提示语字典（'0':'表单ID异常！','1':'未找到表单配置！','2':'表单已停止收集！','8':'请输入表单访问密码：','100':'未获取到用户登录信息！','200':'表单提交成功！','400':'表单提交失败…'）",
+      "note": "**这是唯一免登录可读的业务数据**：证明站是活站点，且当前至少有 2 个表单短码在册。第二个表单的 '200' 文案被改成「测试！测试！测试！」，说明有人在维护/自测。"
+    },
+    {
+      "id": "umi-bundle",
+      "method": "GET",
+      "path": "/umi.d895a68c.js",
+      "purpose": "前端 bundle（路由与 API 路径取证）",
+      "auth": "none",
+      "responseType": "application/javascript",
+      "structure": "**21,825,378B（21MB）**。路由含 /formDesign · /formReportDetail · /formDetailMobile · /formVerifyDetail · /formDataView · /formGoVerify · /web/fillingManage · /web/fillingData · /web/dataAudit · /web/powerTaskManage · /formTemplate/upLoad · /formCodeConfig/waterMark · /formCodeConfig/logoUpLoad",
+      "note": "21MB 是「打开慢/白屏」的另一半原因。该 bundle 是多校共用版本（内含 auth.nsi.edu.cn、portal.nsi.edu.cn、dhu.edu.cn、nwu.edu.cn 等其它高校的配置占位），说明底层是第三方（NSI / 南大苏富特系）表单产品，浙大是其中一个部署实例。"
+    }
+  ],
+  "unverified": [
+    { "id": "form-api", "method": "?", "path": "（未定位）", "whyUnverified": "bundle 里能看到的业务后端只有 ../dfi/nsiTaskPush/pushProcess?dataWid=..&formWid=..&messageCatalog=form&sendType=fillToFlowAudit&entry=..（**POST，且是「推送流程审核」，属写操作**）。真正的表单读取/提交 API 前缀没在静态分析里定位到。按只读契约不猜、不调。" },
+    { "id": "form-design", "method": "—", "path": "/formDesign", "whyUnverified": "表单设计器，需登录且写操作，不探。" },
+    { "id": "web-fillingData", "method": "—", "path": "/web/fillingData · /web/dataAudit", "whyUnverified": "填报数据管理/审核，属他人数据 + 写操作，不探。" }
+  ],
+  "blocked": [
+    { "what": "确认表单是否仍能创建/填写", "why": "需 WeLink/浙大钉登录态 + 21MB JS 渲染；无凭据键覆盖，且创建表单是写操作。", "howToUnblock": "用户手动在浏览器打开任一表单短码（如 https://form.zju.edu.cn/#/formDetailMobile?..），或提供 WeLink 登录态。仅需确认「能否打开」，属人可以做的验证，agent 不必越界。" }
+  ]
+}

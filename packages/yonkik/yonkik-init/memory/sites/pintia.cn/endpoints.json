@@ -1,0 +1,221 @@
+{
+  "key": "pintia.cn",
+  "origin": "https://pintia.cn",
+  "apiPrefix": "/api/*（Spring Boot；GET 未匹配路由会 fallback 到 SPA 壳 9161B，注意区分）",
+  "authCookie": "PTASession（UUID，domain=.pintia.cn，由 passport.pintia.cn 下发）+ JSESSIONID（domain=pintia.cn）",
+  "credentialKey": "PTA凭证",
+  "verified": [
+    {
+      "id": "spa-shell",
+      "method": "GET",
+      "path": "/",
+      "purpose": "SPA 外壳 + SERVER_CONFIG",
+      "auth": "无",
+      "observed": "200，9161B。SERVER_CONFIG: EDITION=MAIN, PTA_URL, CDN_URL=//static.pintia.cn/sparkling-daydream/, GIT_COMMIT_HASH=680067d",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "login-page",
+      "method": "GET",
+      "path": "/auth/login",
+      "purpose": "登录页（React SPA）",
+      "auth": "无",
+      "observed": "200，8843B。3 个 input：text(电子邮箱或手机号码) / password / checkbox(记住我)；按钮 button.pc-button 文案「登录」",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "users-sessions",
+      "method": "POST",
+      "path": "https://passport.pintia.cn/api/users/sessions",
+      "purpose": "账密登录，下发 PTASession",
+      "auth": "凭据 PTA凭证",
+      "observed": "**登录取证**：浏览器内提交成功 → 200 返回 user{id,nickname,phone,...}；裸 HTTP 提交 → 400 GATEWAY_WRONG_CAPTCHA（前端会先带腾讯 TCaptcha ticket）",
+      "status": "verified-login"
+    },
+    {
+      "id": "u-current",
+      "method": "GET",
+      "path": "https://passport.pintia.cn/api/u/current",
+      "purpose": "当前登录用户",
+      "auth": "cookie",
+      "observed": "匿名 200 {emailLogin:false,...,userMfa:[]}；登录后 200 返回 user{id,nickname,phone,roles,organizationId,...}",
+      "status": "verified"
+    },
+    {
+      "id": "problem-sets-list",
+      "method": "GET",
+      "path": "/api/problem-sets?limit=100&page=0&order_by=END_AT&asc=false",
+      "purpose": "我的全部题目集（分页）",
+      "auth": "cookie",
+      "observed": "200 {total:109, problemSets:[...]}。每页最多 100。**order_by 只接受 END_AT**，传 CREATE_AT → 400",
+      "status": "verified"
+    },
+    {
+      "id": "problem-sets-upcoming",
+      "method": "GET",
+      "path": "/api/problem-sets?filter={\"endAtAfter\":\"<ISO8601>\"}&limit=50&order_by=END_AT&asc=true",
+      "purpose": "**待办主接口**：未截止题目集",
+      "auth": "cookie",
+      "observed": "200 {total:6, problemSets:[...], homeworkByProblemSetId:{...}}。按 endAt 升序。homeworkByProblemSetId 里内含 peerReviewConfig",
+      "status": "verified"
+    },
+    {
+      "id": "problem-set-exams",
+      "method": "GET",
+      "path": "/api/problem-sets/{problemSetId}/exams",
+      "purpose": "**题目集详情真源**：problemSet + 我的 exam + homework(互评配置)",
+      "auth": "cookie",
+      "observed": "200 {serverTime, problemSet{id,name,type,timeType,startAt,endAt,problemSetConfig}, exam{id,score,startAt,endAt,status,ended,startedAt,acceptCount}, status, homework{peerReviewConfig,result}}。exam 字段仅在已开始答题时存在",
+      "status": "verified"
+    },
+    {
+      "id": "problem-set-submissions",
+      "method": "GET",
+      "path": "/api/problem-sets/{problemSetId}/submissions?limit=200",
+      "purpose": "提交记录（**返回所有人的**，不只自己的）",
+      "auth": "cookie",
+      "observed": "200 {submissions:[{id,userId,problemType,problemSetProblemId,submitAt,status,score,compiler,time,memory,...}]}。按 userId 过滤出自己的",
+      "status": "verified"
+    },
+    {
+      "id": "notifications",
+      "method": "GET",
+      "path": "/api/notifications?filter={\"onlyUnread\":true,\"type\":\"UNKNOWN_NOTIFICATION_TYPE\"}&page=0&limit=50",
+      "purpose": "未读通知",
+      "auth": "cookie",
+      "observed": "200 {total:0, notifications:[]}",
+      "status": "verified"
+    },
+    {
+      "id": "always-available",
+      "method": "GET",
+      "path": "/api/problem-sets/always-available",
+      "purpose": "常驻题目集（教材题集，无截止时间）",
+      "auth": "cookie",
+      "observed": "200 {problemSets:[{id,name,type:BOOK,timeType:ALWAYS_AVAILABLE,organizationName,ownerNickname,...}]}",
+      "status": "verified"
+    }
+  ],
+  "forbidden": [
+    {
+      "id": "problem-set-detail",
+      "method": "GET",
+      "path": "/api/problem-sets/{id}",
+      "observed": "403 {\"error\":{\"code\":\"PERMISSION_DENIED\"}}",
+      "note": "普通学生无权。**用 /exams 代替**"
+    },
+    {
+      "id": "problem-set-problems",
+      "method": "GET",
+      "path": "/api/problem-sets/{id}/problems",
+      "observed": "403 PERMISSION_DENIED",
+      "note": "做题页在答题会话里按需加载 chunk，非静态列表"
+    },
+    {
+      "id": "user-groups",
+      "method": "GET",
+      "path": "/api/user-groups",
+      "observed": "403 PERMISSION_DENIED（匿名时 401 USER_NOT_LOGGED_IN）",
+      "note": "该账号无用户组"
+    },
+    {
+      "id": "course-classes",
+      "method": "GET",
+      "path": "/api/course-classes",
+      "observed": "406"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "start-exam",
+      "method": "POST",
+      "path": "/api/problem-sets/{id}/exams",
+      "purpose": "开始答题（建立答题会话）",
+      "why_unverified": "**写操作**，按只读契约不执行"
+    },
+    {
+      "id": "submit-code",
+      "method": "POST",
+      "path": "/api/problem-sets/{id}/submissions",
+      "purpose": "提交代码",
+      "why_unverified": "写操作"
+    },
+    {
+      "id": "peer-review-submit",
+      "method": "POST",
+      "path": "/api/problem-sets/{id}/reviews",
+      "purpose": "互评打分",
+      "why_unverified": "写操作"
+    },
+    {
+      "id": "user-storage",
+      "method": "?",
+      "path": "/api/user-storage/{recent-visits,names}",
+      "purpose": "用户本地存储同步",
+      "why_unverified": "含写语义"
+    }
+  ],
+  "notes": [
+    "**SPA fallback 陷阱**：GET 不存在的 /api/* 路径返回 9161B HTML 壳（200），不是 404。判据是 content-type 与 body 是否 JSON。",
+    "401/403 的 content-type 也报 text/html（body 却是 JSON）。别用 content-type 判 JSON。",
+    "**登录必须走浏览器**：裸 POST /api/users/sessions 被 CAPTCHA 网关拦（GATEWAY_WRONG_CAPTCHA）。",
+    "**order_by 只接受 END_AT**（传 CREATE_AT → 400）。分页 limit + page（0-based）。",
+    "PEER_REVIEW 型的四档截止在 homework.peerReviewConfig：submitDeadline / reviewDeadline / complainDeadline / feedbackDeadline，各不相同。",
+    "status 有两个层级：顶层 status 是题目集状态(READY/PROCESSING/END)，exam.status 是我的答题状态。",
+    "campus-sso 不适用（主包搜 zjuam|zju.edu.cn 为 0）。PTA 是百腾教育自有账号体系。",
+    "Spring Boot 特征：/robots.txt /sitemap.xml /passport 根都是 Whitelabel 或 JSON 404。"
+  ],
+  "upstreamQueryEndpoints": {
+    "discoveredFrom": "上游清单第 46 行（PTA 逐题状态/草稿）",
+    "probes": [
+      {
+        "path": "/api/problem-sets/problems/{pid}/exam-draft",
+        "checkedAt": "2026-11-22",
+        "status": 401,
+        "ctype": "application/json",
+        "bodySample": "{\"error\":{\"code\":\"USER_NOT_LOGGED_IN\"}}",
+        "meaning": "本人题目草稿",
+        "verdict": "路由存在，需登录（返回明确的 USER_NOT_LOGGED_IN）"
+      },
+      {
+        "path": "/api/problem-sets/{set}/problem-status",
+        "checkedAt": "2026-11-22",
+        "status": 200,
+        "ctype": "text/html",
+        "bodySample": "<!DOCTYPE html>…",
+        "meaning": "逐题状态",
+        "verdict": "**返回 HTML 而非 JSON**：该路径在无考试会话时回落到页面，不能视为可用接口"
+      }
+    ],
+    "judgement": "exam-draft 路由确认；problem-status 需要考试会话（与「读操作不能替用户开考」一致），不进一步尝试。",
+    "notAttempted": [
+      "不建立考试会话以获取逐题状态",
+      "不猜 pid 穷举"
+    ]
+  },
+  "policyExcluded": [
+    {
+      "name": "submit-answer",
+      "method": "POST",
+      "path": "/api/problem-sets/{id}/submissions",
+      "reason": "提交答案（写操作，影响成绩）",
+      "action": "不调用"
+    },
+    {
+      "name": "start-exam",
+      "method": "POST",
+      "path": "/api/problem-sets/{id}/exams",
+      "reason": "开启答题会话（写操作）",
+      "action": "不调用"
+    },
+    {
+      "name": "login",
+      "method": "POST",
+      "path": "https://passport.pintia.cn/api/users/sessions",
+      "reason": "登录（建立会话）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "**/submissions 是提交答案（写操作，会影响成绩）**；sessions 是登录；exams 是答题会话开启。",
+  "policyRecordedAt": "2026-11-23"
+}

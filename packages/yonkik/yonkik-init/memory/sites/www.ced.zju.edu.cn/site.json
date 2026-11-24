@@ -1,0 +1,37 @@
+{
+  "key": "www.ced.zju.edu.cn",
+  "origin": "http://www.ced.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.ced.zju.edu.cn/26970/list.htm",
+  "column": "研究生培养",
+  "exactNoticeColumns": {
+    "count": 12,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/cedoffice/26836/list.htm",
+      "/cedoffice/26841/list.htm",
+      "/cedoffice/26808/list.htm",
+      "/cedoffice/26840/list.htm",
+      "/cedoffice/26794/list.htm",
+      "/jldt/list.htm",
+      "/cedoffice/26831/list.htm",
+      "/cedoffice/26845/list.htm",
+      "/cedoffice/26822/list.htm",
+      "/26970/list.htm",
+      "/cedoffice/26782/list.htm",
+      "/cedoffice/gsl/list.htm"
+    ],
+    "note": "四栏显示标题同为「信息公告」，靠 nr_top 内「当前位置」父级（学生思政 / 本科生教育 / 学院党政 / 国际合作）区分；/jldt 另有父级与子级同路径的情形。"
+  }
+}

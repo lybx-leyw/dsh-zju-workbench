@@ -1,0 +1,277 @@
+{
+  "site": "zjutw.zju.edu.cn",
+  "base": "https://zjutw.zju.edu.cn",
+  "exploredAt": "2026-11-22",
+  "source": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/core/zju/lib/notice/sources.ts#L36-L47",
+  "notices": [
+    {
+      "id": "tzgg",
+      "name": "通知公告",
+      "method": "GET",
+      "path": "/tzgg/list.psp",
+      "catalogPath": "/tzgg/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 304,
+        "total": 4253,
+        "localArticleLinks": null
+      }
+    },
+    {
+      "id": "shsjhzyz_32442",
+      "name": "实践志愿",
+      "method": "GET",
+      "path": "/shsjhzyz_32442/list.psp",
+      "catalogPath": "/shsjhzyz_32442/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 82,
+        "total": 1148,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "st_49186",
+      "name": "素质拓展",
+      "method": "GET",
+      "path": "/st_49186/list.psp",
+      "catalogPath": "/st_49186/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 5,
+        "total": 67,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "xskj_32440",
+      "name": "创新创业",
+      "method": "GET",
+      "path": "/xskj_32440/list.psp",
+      "catalogPath": "/xskj_32440/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 43,
+        "total": 599,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "wt_32438",
+      "name": "校园文化",
+      "method": "GET",
+      "path": "/wt_32438/list.psp",
+      "catalogPath": "/wt_32438/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 18,
+        "total": 246,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "st_32443",
+      "name": "学生社团",
+      "method": "GET",
+      "path": "/st_32443/list.psp",
+      "catalogPath": "/st_32443/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 33,
+        "total": 461,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "xsh_44064",
+      "name": "学生会",
+      "method": "GET",
+      "path": "/xsh_44064/list.psp",
+      "catalogPath": "/xsh_44064/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 18,
+        "total": 244,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "qmgc",
+      "name": "青马工程",
+      "method": "GET",
+      "path": "/qmgc/list.psp",
+      "catalogPath": "/qmgc/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 9,
+        "total": 117,
+        "localArticleLinks": 14
+      }
+    }
+  ],
+  "verified": [
+    {
+      "id": "tzgg",
+      "name": "通知公告",
+      "method": "GET",
+      "path": "/tzgg/list.psp",
+      "catalogPath": "/tzgg/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 304,
+        "total": 4253,
+        "localArticleLinks": null
+      }
+    },
+    {
+      "id": "shsjhzyz_32442",
+      "name": "实践志愿",
+      "method": "GET",
+      "path": "/shsjhzyz_32442/list.psp",
+      "catalogPath": "/shsjhzyz_32442/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 82,
+        "total": 1148,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "st_49186",
+      "name": "素质拓展",
+      "method": "GET",
+      "path": "/st_49186/list.psp",
+      "catalogPath": "/st_49186/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 5,
+        "total": 67,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "xskj_32440",
+      "name": "创新创业",
+      "method": "GET",
+      "path": "/xskj_32440/list.psp",
+      "catalogPath": "/xskj_32440/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 43,
+        "total": 599,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "wt_32438",
+      "name": "校园文化",
+      "method": "GET",
+      "path": "/wt_32438/list.psp",
+      "catalogPath": "/wt_32438/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 18,
+        "total": 246,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "st_32443",
+      "name": "学生社团",
+      "method": "GET",
+      "path": "/st_32443/list.psp",
+      "catalogPath": "/st_32443/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 33,
+        "total": 461,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "xsh_44064",
+      "name": "学生会",
+      "method": "GET",
+      "path": "/xsh_44064/list.psp",
+      "catalogPath": "/xsh_44064/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 18,
+        "total": 244,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "qmgc",
+      "name": "青马工程",
+      "method": "GET",
+      "path": "/qmgc/list.psp",
+      "catalogPath": "/qmgc/list.htm",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "observed": {
+        "pages": 9,
+        "total": 117,
+        "localArticleLinks": 14
+      }
+    },
+    {
+      "id": "notice-page-2",
+      "method": "GET",
+      "path": "/tzgg/list2.psp",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "returns": "14 items, curr_page=2, all_pages=304, all_count=4253"
+    },
+    {
+      "id": "article",
+      "method": "GET",
+      "path": "/YYYY/MMDD/c{column}a{article}/page.psp",
+      "samplePath": "/2026/1103/c32290a3222398/page.psp",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "returns": "div.wp_articlecontent，样本文本 593 字符；未下载附件"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "other-category-paging",
+      "note": "验证为总栏第 2 页；各分类的通用深页模板还没逐栏实测"
+    },
+    {
+      "id": "attachment-metadata",
+      "note": "只从正文 a 元素提取指向链接，并未用带附件的真实样本闭环或请求附件"
+    }
+  ]
+}

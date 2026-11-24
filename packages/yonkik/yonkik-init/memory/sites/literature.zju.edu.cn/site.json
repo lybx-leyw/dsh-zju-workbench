@@ -1,0 +1,27 @@
+{
+  "key": "literature.zju.edu.cn",
+  "origin": "https://literature.zju.edu.cn",
+  "status": "done",
+  "label": "文学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-https-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "HTTP 同路径 301 到 HTTPS。"
+  },
+  "exactNoticeColumns": {
+    "count": 3,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/bksjy_65102/list.htm",
+      "/yjsjy/list.htm",
+      "/zxtz/list.htm"
+    ],
+    "note": "该站没有面包屑。身份判据是「左侧导航 menu-item selected 的 href 与文字」+「侧栏 menu-header 内 h3 大类名」，两者一致才开放。/rcpy 不在左侧导航里，无 selected 项可核，标 identity-mismatch。"
+  }
+}

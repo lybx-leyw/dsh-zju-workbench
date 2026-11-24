@@ -1,0 +1,174 @@
+{
+  "site": "sztz.zju.edu.cn",
+  "exploredAt": "2026-11-22",
+  "base": "https://sztz.zju.edu.cn",
+  "auth": "部分公开 GET 无认证；本人学分、报名/收藏/认定记录未登录验证",
+  "network": {
+    "doH": "210.32.129.11",
+    "note": "本地 DNS 被代理伪造为 198.18.x，必须 DoH 取真实 IP 直连。HTTP(80) 会 302 到 HTTPS。"
+  },
+  "verified": [
+    {
+      "name": "dekt-root",
+      "method": "GET",
+      "path": "/dekt/",
+      "returns": "HTML 3,161B，title「浙江大学大学生素质拓展数智平台」，SPA 壳",
+      "note": "真正的二课（素质拓展）平台入口。根路径 / 只是 142B 的「正在跳转...」页",
+      "status": 200
+    },
+    {
+      "name": "root-redirect",
+      "method": "GET",
+      "path": "/",
+      "returns": "142B HTML，`location.href='https://sztz.zju.edu.cn/dekt/'`",
+      "note": "根路径是跳转页，不是首页",
+      "status": 200
+    },
+    {
+      "name": "file-download",
+      "method": "GET",
+      "path": "/common/file/download",
+      "returns": "142B 跳转页（与 / 相同）",
+      "note": "**裸调不带参数会掉到跳转页**，不是 404 也不是文件。真下载要带 file id 参数，未取到参数名",
+      "status": 200
+    },
+    {
+      "name": "public-notifications",
+      "method": "GET",
+      "path": "/dekt/student/home/getTzggList",
+      "auth": "none",
+      "verifiedAt": "2026-11-20",
+      "evidence": "wiki.md#接口详见-endpointsjson",
+      "note": "通知，旧样本 20 条；正文及附件字段存在，不是下载权限"
+    },
+    {
+      "name": "public-faq",
+      "method": "GET",
+      "path": "/dekt/student/home/getDyjhList",
+      "auth": "none",
+      "verifiedAt": "2026-11-20",
+      "evidence": "wiki.md#接口详见-endpointsjson",
+      "note": "公开答疑；只记历史脱敏证据"
+    },
+    {
+      "name": "daily-activities",
+      "method": "GET",
+      "path": "/dekt/student/home/getHdList",
+      "auth": "none",
+      "verifiedAt": "2026-11-20",
+      "evidence": "wiki.md#接口详见-endpointsjson",
+      "note": "活动日历按 date 查询，旧样本"
+    },
+    {
+      "name": "project-catalog",
+      "method": "GET",
+      "path": "/dekt/student/home/getXmList",
+      "auth": "none",
+      "verifiedAt": "2026-11-20",
+      "evidence": "wiki.md#接口详见-endpointsjson",
+      "note": "lx=1 项目库，老证据；不同于 lx=2 活动"
+    },
+    {
+      "name": "project-types",
+      "method": "GET",
+      "path": "/dekt/student/home/getXmBaseData",
+      "auth": "none",
+      "verifiedAt": "2026-11-20",
+      "evidence": "wiki.md#接口详见-endpointsjson",
+      "note": "项目分类，旧样本"
+    },
+    {
+      "name": "activity-catalog",
+      "method": "GET",
+      "path": "/dekt/student/home/getXmList",
+      "query": {
+        "keyword": "",
+        "lx": 2,
+        "page": 1,
+        "limit": 5,
+        "finished": "false"
+      },
+      "auth": "none",
+      "verifiedAt": "2026-11-22",
+      "httpStatus": 200,
+      "contentType": "application/json",
+      "code": 0,
+      "pageIndex": 1,
+      "pageSize": 5,
+      "observations": {
+        "count": 5,
+        "declaredTotal": 5409,
+        "declaredPages": 1082,
+        "rowsWithStart": 5,
+        "rowsWithSignupWindow": 5
+      },
+      "note": "在原项目接口上验证活动分支；已有同类按日活动读取；不启用其他参数或页码"
+    },
+    {
+      "name": "bulletins-alternative",
+      "method": "GET",
+      "path": "/dekt/student/tzgg/ajaxList",
+      "query": {
+        "pageIndex": 1,
+        "pageSize": 5,
+        "mc": ""
+      },
+      "auth": "none",
+      "verifiedAt": "2026-11-22",
+      "httpStatus": 200,
+      "contentType": "application/json",
+      "code": 0,
+      "pageIndex": 1,
+      "pageSize": 5,
+      "observations": {
+        "count": 5,
+        "declaredTotal": 16,
+        "declaredPages": 4,
+        "rowsWithDate": 5,
+        "rowsWithAttachmentMetadata": 1
+      },
+      "note": "同类通知替代路由，不计为新的通知能力。仅读取标题、日期与附件数量"
+    }
+  ],
+  "unverified": [
+    {
+      "name": "public-bulletin-attachment",
+      "method": "GET",
+      "path": "/dekt/common/file/download",
+      "parameter": "id",
+      "source": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/core/zju/lib/sztz/index.ts",
+      "note": "源码路径；样本公告提供 1 个带附件 ID 的条目，未验证文件响应，不下载，不输出附件链接或 ID"
+    },
+    {
+      "name": "my-sztz-overview",
+      "method": "GET",
+      "path": "/dekt/student/home/getMyInfo",
+      "source": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/core/zju/lib/sztz/index.ts",
+      "note": "本人授权会话需要；本轮未调用"
+    },
+    {
+      "name": "my-credit-records",
+      "method": "POST",
+      "path": "/dekt/student/home/getZdySqjl",
+      "source": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/core/zju/lib/sztz/index.ts",
+      "note": "源码描述是查询；本人授权和身份检查未验证，不纳入本轮脚本"
+    },
+    {
+      "name": "my-activity-records",
+      "method": "POST",
+      "path": "/dekt/student/home/getWdhdList",
+      "source": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/core/zju/lib/sztz/index.ts",
+      "note": "源码描述是查询；本人报名、收藏、认定读取未验证"
+    },
+    {
+      "name": "student-login-service",
+      "method": "GET",
+      "path": "/dekt/login/getLoginUrl",
+      "source": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/core/zju/lib/sztz/index.ts",
+      "note": "只记源码线索，未访问登录、不打开会话或验证码"
+    }
+  ],
+  "note": "verified 前三条为入口/反例，随后七条为业务场景，getXmList 按 lx 分别计。",
+  "readOnlyNote": "dekt/student/home 下的 getZdySqjl/getWdhdList 是「查询我的申请/活动记录」，POST 仅因身份参数在请求体；本人授权未验证，不纳入脚本。",
+  "readOnlyNoteAt": "2026-11-23"
+}

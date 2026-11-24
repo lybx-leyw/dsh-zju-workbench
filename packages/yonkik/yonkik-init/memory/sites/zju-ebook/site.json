@@ -1,0 +1,48 @@
+{
+  "key": "zju-ebook",
+  "type": "学校订购电子图书（双源）",
+  "status": "done",
+  "exploredAt": "2026-11-22",
+  "sources": [
+    {
+      "name": "Serials Solutions 360 电子书刊导航",
+      "host": "gk4pb6yy8y.search.serialssolutions.com",
+      "libraryId": "GK4PB6YY8Y",
+      "from": "图书馆主页「电子图书」入口",
+      "queryShape": "GET /?V=1.0&N=<每页条数>&tab=BOOKS&L=GK4PB6YY8Y&S=<匹配方式>&C=<词>",
+      "paging": "翻页加 &sortby=SB_T&B=<起始偏移>",
+      "matchModes": {
+        "A_T_B": "标题开头为",
+        "A_T_M": "标题等于",
+        "T_W_A": "标题包含所有词",
+        "I_M": "ISBN 等于"
+      },
+      "knownConstraint": "**含汉字的书名用 T_W_A 会 35 秒超时**（来自 dsh-zju-campus 实测，2026-10-07，四个词都如此）。所以中文按 A_T_B 开头匹配，不够数时再补 T_W_A。每页 100 条要 10 秒以上，一页取 20 条约 2.7 秒。",
+      "resultStructure": "每条 div.SS_Holding：书名 .SS_JournalTitle>strong、.SS_BookISBN、.SS_Edition、.SS_Authors、.SS_Publisher、.SS_Date；平台名与直达地址在 a.SS_JournalHyperLink（地址形如 /log?…&U=<平台上的地址>）；总数在 .SS_ResultsCount"
+    },
+    {
+      "name": "超星电子书（汇雅）",
+      "host": "www.sslibrary.com",
+      "queryShape": "GET /book/search/do?sw=<词>&field=<1书名|2作者|6目录|all全文>&page=1&pagesize=<n>",
+      "returns": "JSON { success, data: { result, total, maxpage } }",
+      "knownConstraint": "书名是**包含匹配**，正好补上导航对中文只能按开头匹配的不足。无独立 ISBN 字段，但 field=all 能按 ISBN 找到（带不带连字符都行）。",
+      "bookPage": "/book/card?cnFenlei=…&ssid=…&d=<bookCardD>&isFromBW=…&websiteId=…（只带 ssid 会报 500）"
+    }
+  ],
+  "whyThisMatters": "两源互补：导航覆盖文泉学堂/科学文库/书递及各外文平台（按 ISBN 合并），超星补包含匹配。查「有没有某本书的电子版、在哪个平台、直达地址」用它。",
+  "compliance": "按《图书馆电子资源使用管理办法》第三条，只做**检索与元数据**；**不下载全文**（第四条 1/2/3 明令禁止自动下载与批量下载，后果是封全校 IP）。",
+  "nextStep": "若能拿到企业微信/上网账号走 WebVPN，可复用 sites/webvpn.zju.edu.cn/crawler.mjs 的 URL 重写规则（AES-128-CFB，key=iv=wrdvpnisthebest!）经隧道访问，再做检索。",
+  "policy": {
+    "mode": "path-only",
+    "neverAutomate": true,
+    "reason": "图书馆官方入口 + 《电子资源使用管理办法》第四条；后果是封全校 IP，不是封个人。",
+    "action": "用户需要电子书时，直接给图书馆入口路径，不代查、不代下、不写自动检索脚本。",
+    "entries": {
+      "电子图书": "http://gk4pb6yy8y.search.serialssolutions.com/?L=GK4PB6YY8Y&tab=BOOKS",
+      "数据库导航": "https://libdb.zju.edu.cn/s/lib/libtb/",
+      "Summon": "https://zju.summon.serialssolutions.com/",
+      "图书馆主页": "https://libweb.zju.edu.cn/"
+    }
+  },
+  "note": "汇雅 book/search/do 免凭据可取书目（双重 JSON）；Summon SS360 走机构 SSO。只记书目检索契约，不做全文与批量翻页。"
+}

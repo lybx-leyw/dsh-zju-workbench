@@ -1,0 +1,25 @@
+{
+  "key": "www.zhihu.com",
+  "origin": "https://www.zhihu.com",
+  "via": null,
+  "requires": [
+    "登录态（知乎账号）"
+  ],
+  "rateLimit": {
+    "minIntervalMs": 3000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 无 User-agent 通配段；实测出人机验证拦截"
+  },
+  "auth": {
+    "type": "cookie-session",
+    "credentialKey": null,
+    "stateFile": null,
+    "note": "YONKIK 凭据仅 cc98 与 campus-sso，无知乎账号；需用户在设置中另填"
+  },
+  "status": "blocked",
+  "statusUpdated": "2026-11-20",
+  "notes": "2026-11-20 侦察：匿名访问全站 403，含 question 页、api v4 search_v3、api v4 answers、m 站点安全验证页。robots.txt 对 /search 显式 Disallow，且无通配 User-agent 段。api 报 need_login 并跳 account/unhuman 人机验证。按安全契约不绕过访问控制，未伪造 cookie 或指纹。正文不可得。",
+  "exploredAt": "2026-11-20",
+  "exploredAtNote": "R220 补填：此前 site.json 缺 exploredAt，按索引节点的 exploredAt 回填。"
+}

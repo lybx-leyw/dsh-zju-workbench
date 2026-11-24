@@ -1,0 +1,299 @@
+{
+  "site": "ic.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS（同主机同路径）。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET ic.zju.edu.cn/54032/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/54032/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/54032/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/53661/list.htm",
+            "学生思政"
+          ],
+          [
+            "/54032/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 14,
+        "total": 107,
+        "pages": 8,
+        "externalLinks": 0,
+        "firstId": "3229331",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET ic.zju.edu.cn/54029/list.htm",
+      "column": "学生思政·通知公告",
+      "verifiesPath": "/54029/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/54029/list.htm",
+        "status": 200,
+        "column": "学生思政·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/53661/list.htm",
+            "学生思政"
+          ],
+          [
+            "/54029/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 169,
+        "pages": 13,
+        "externalLinks": 0,
+        "firstId": "3228325",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET ic.zju.edu.cn/54033/list.htm",
+      "column": "困难资助",
+      "verifiesPath": "/54033/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/54033/list.htm",
+        "status": 200,
+        "column": "困难资助",
+        "displayTitle": "困难资助",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/53661/list.htm",
+            "学生思政"
+          ],
+          [
+            "/54033/list.htm",
+            "困难资助"
+          ]
+        ],
+        "count": 14,
+        "total": 22,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3213754",
+        "firstDate": "2026-10-12"
+      }
+    },
+    {
+      "id": "GET ic.zju.edu.cn/54036/list.htm",
+      "column": "国际交流",
+      "verifiesPath": "/54036/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/54036/list.htm",
+        "status": 200,
+        "column": "国际交流",
+        "displayTitle": "国际交流",
+        "sectionTitle": "合作交流",
+        "trail": [
+          [
+            "/53663/list.htm",
+            "合作交流"
+          ],
+          [
+            "/54036/list.htm",
+            "国际交流"
+          ]
+        ],
+        "count": 8,
+        "total": 8,
+        "pages": 1,
+        "externalLinks": 2,
+        "firstId": "3213930",
+        "firstDate": "2026-10-13"
+      }
+    },
+    {
+      "id": "GET ic.zju.edu.cn/54026/list.htm",
+      "column": "培养管理",
+      "verifiesPath": "/54026/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/54026/list.htm",
+        "status": 200,
+        "column": "培养管理",
+        "displayTitle": "培养管理",
+        "sectionTitle": "教学招生",
+        "trail": [
+          [
+            "/53660/list.htm",
+            "教学招生"
+          ],
+          [
+            "/54026/list.htm",
+            "培养管理"
+          ]
+        ],
+        "count": 14,
+        "total": 80,
+        "pages": 6,
+        "externalLinks": 0,
+        "firstId": "3215795",
+        "firstDate": "2026-10-16"
+      }
+    },
+    {
+      "id": "GET ic.zju.edu.cn/54027/list.htm",
+      "column": "学位管理",
+      "verifiesPath": "/54027/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/54027/list.htm",
+        "status": 200,
+        "column": "学位管理",
+        "displayTitle": "学位管理",
+        "sectionTitle": "教学招生",
+        "trail": [
+          [
+            "/53660/list.htm",
+            "教学招生"
+          ],
+          [
+            "/54027/list.htm",
+            "学位管理"
+          ]
+        ],
+        "count": 14,
+        "total": 32,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3222250",
+        "firstDate": "2026-11-03"
+      }
+    },
+    {
+      "id": "GET ic.zju.edu.cn/tzgg/list.htm",
+      "column": "教学招生·通知公告",
+      "verifiesPath": "/tzgg/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/tzgg/list.htm",
+        "status": 200,
+        "column": "教学招生·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "教学招生",
+        "trail": [
+          [
+            "/53660/list.htm",
+            "教学招生"
+          ],
+          [
+            "/tzgg/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 238,
+        "pages": 17,
+        "externalLinks": 0,
+        "firstId": "3229244",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET ic.zju.edu.cn/tzgg_54532/list.htm",
+      "column": "综合服务·通知公告",
+      "verifiesPath": "/tzgg_54532/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/tzgg_54532/list.htm",
+        "status": 200,
+        "column": "综合服务·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "综合服务",
+        "trail": [
+          [
+            "/zhfw/list.htm",
+            "综合服务"
+          ],
+          [
+            "/tzgg_54532/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 70,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3227931",
+        "firstDate": "2026-11-16"
+      }
+    },
+    {
+      "id": "GET ic.zju.edu.cn/tzgg_81346/list.htm",
+      "column": "教工之家·通知公告",
+      "verifiesPath": "/tzgg_81346/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ic.zju.edu.cn/tzgg_81346/list.htm",
+        "status": 200,
+        "column": "教工之家·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "教工之家",
+        "trail": [
+          [
+            "/jgzj_81345/list.htm",
+            "教工之家"
+          ],
+          [
+            "/tzgg_81346/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 39,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3226001",
+        "firstDate": "2026-11-11"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/53663/list.htm",
+      "pageTitle": "通知公告",
+      "sectionTitle": "学生思政",
+      "claimedColumnPath": "/tzgg_54534/list.htm",
+      "claimedColumnTitle": "通知公告",
+      "note": "数字路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/54034/list.htm",
+      "pageTitle": "通知公告",
+      "sectionTitle": "学生思政",
+      "claimedColumnPath": "/tzgg_87720/list.htm",
+      "claimedColumnTitle": "通知公告",
+      "note": "数字路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余集成电路学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "site": "www.xgb.zju.edu.cn",
+  "access": "公开 HTTP，无身份认证；HTTPS robots 连接拒绝、HTTP robots 404。固定调用，不发认证信息，不进行回退。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.xgb.zju.edu.cn/53403/list.htm",
+      "verifiesPath": "/53403/list.psp",
+      "verifiedAt": "2026-11-22",
+      "observation": {
+        "status": 200,
+        "url": "http://www.xgb.zju.edu.cn/53403/list.psp",
+        "pages": 58,
+        "total": 804,
+        "count": 14,
+        "candidates": 14,
+        "unidentified": 0,
+        "externalLinks": 2,
+        "firstId": "3228946",
+        "displayTitle": "重要通知"
+      },
+      "displayedBreadcrumb": [
+        "/53403/list.htm"
+      ],
+      "transport": "public-http-no-session",
+      "catalogPathStatus": 301
+    },
+    {
+      "id": "GET www.xgb.zju.edu.cn/53395/list.htm",
+      "verifiesPath": "/53395/list.psp",
+      "verifiedAt": "2026-11-22",
+      "observation": {
+        "status": 200,
+        "url": "http://www.xgb.zju.edu.cn/53395/list.psp",
+        "pages": 59,
+        "total": 825,
+        "count": 14,
+        "candidates": 14,
+        "unidentified": 0,
+        "externalLinks": 1,
+        "firstId": "3221086",
+        "displayTitle": "重要通知"
+      },
+      "displayedBreadcrumb": [
+        "/53395/list.htm",
+        "/53397/list.htm"
+      ],
+      "transport": "public-http-no-session",
+      "catalogPathStatus": 301
+    },
+    {
+      "id": "GET www.xgb.zju.edu.cn/53396/list.htm",
+      "verifiesPath": "/53396/list.psp",
+      "verifiedAt": "2026-11-22",
+      "observation": {
+        "status": 200,
+        "url": "http://www.xgb.zju.edu.cn/53396/list.psp",
+        "pages": 73,
+        "total": 1021,
+        "count": 14,
+        "candidates": 14,
+        "unidentified": 0,
+        "externalLinks": 0,
+        "firstId": "3223278",
+        "displayTitle": "重要通知"
+      },
+      "displayedBreadcrumb": [
+        "/53396/list.htm",
+        "/53400/list.htm"
+      ],
+      "transport": "public-http-no-session",
+      "catalogPathStatus": 301
+    },
+    {
+      "id": "GET www.xgb.zju.edu.cn/53405/list.htm",
+      "verifiesPath": "/53405/list.psp",
+      "verifiedAt": "2026-11-22",
+      "observation": {
+        "status": 200,
+        "url": "http://www.xgb.zju.edu.cn/53405/list.psp",
+        "pages": 1,
+        "total": 10,
+        "count": 10,
+        "candidates": 10,
+        "unidentified": 0,
+        "externalLinks": 1,
+        "firstId": "2742161",
+        "displayTitle": "公示公告"
+      },
+      "displayedBreadcrumb": [
+        "/53405/list.htm"
+      ],
+      "transport": "public-http-no-session",
+      "catalogPathStatus": 301
+    },
+    {
+      "id": "GET www.xgb.zju.edu.cn/53388/list.htm",
+      "verifiesPath": "/53388/list.psp",
+      "verifiedAt": "2026-11-22",
+      "observation": {
+        "url": "http://www.xgb.zju.edu.cn/53388/list.psp",
+        "status": 200,
+        "count": 14,
+        "pages": 13,
+        "total": 177,
+        "candidates": 14,
+        "unidentified": 0,
+        "externalLinks": 0,
+        "firstId": "3228464",
+        "displayTitle": "最新通知"
+      },
+      "displayedBreadcrumb": [
+        "/53388/list.htm"
+      ],
+      "transport": "public-http-no-session",
+      "catalogPathStatus": 301
+    }
+  ]
+}

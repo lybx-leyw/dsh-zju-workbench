@@ -1,0 +1,140 @@
+{
+  "site": "scholar.edu.cn",
+  "base": "https://scholar.edu.cn",
+  "auth": "无账号体系。准入 = 专用浏览器 UA 白名单 + 校网 IP 识别（服务端）",
+  "verified": [
+    {
+      "name": "spa-shell",
+      "method": "GET",
+      "path": "/ 与 /download.html",
+      "returns": "两者返回同一个 5943B SPA 壳（Vue3+Vite，/static/js/index-B6FK3pQo.js）。**/download.html 是前端路由，不是独立页**。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "legacy-nav",
+      "method": "GET",
+      "path": "/legacy/",
+      "returns": "92KB 静态 HTML（非 SPA），title=学术资源服务。含完整资源清单 + 内联 UA 白名单脚本 + /ipinfo 探测逻辑。",
+      "note": "绕过 SPA 壳直接拿内容的入口。同类：/legacy/download.html(69KB)、/legacy/faq.html(6.4KB)、/legacy/question.html(23KB)、/legacy/ytb/。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "ipinfo",
+      "method": "GET",
+      "path": "/ipinfo",
+      "returns": "{\"ip\":\"<本机IP>\"} —— 自有 IP 回显端点，免登录。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "identifyIP",
+      "method": "GET",
+      "path": "/api/system/school-info-entity/identifyIP",
+      "returns": "{code:200,data:{schoolName:'浙江大学', netType:1, ipaddr:'<本机IP>', ipLocation:{city:'杭州市',country:'中国',isp:'中国教育网'}, id:2139, provinceCode:'330000'}}",
+      "note": "免登录。id=2139 是浙大内部 schoolId（学校表主键）；id=2139 与 0（全部大学）组合为 schoolIdList。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "site-list",
+      "method": "POST",
+      "path": "/api/system/site-management-entity/page/list",
+      "body": "{\"current\":1,\"size\":100,\"schoolIdList\":[0,2139]}",
+      "returns": "{code:200,data:{current,pages,records[],total}}；record: siteName/siteLink/siteType/siteIntroduce/allowScope/schoolId/isRecommend/firstChar/siteWeight。total=91，size=100 一次全取。",
+      "note": "**分页参数是 current/size（MyBatis-Plus），不是 pageNum/pageSize**。用后者会被忽略、恒回首页 10 条（实测踩过）。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "client-app-list",
+      "method": "POST",
+      "path": "/api/system/client-app-entity/page/list",
+      "body": "{\"current\":1,\"size\":100}",
+      "returns": "data.records[]: appName/dicWeight/platformNames/platformResultList[]{platformCode,platformName,packageList[]{packagePath,versionNo,useDescPath}}。实测 5 个客户端。",
+      "note": "packagePath 常用英文逗号分隔多个下载地址（主站 + 厂商 CDN 备选）。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "notice-list",
+      "method": "POST",
+      "path": "/api/system/system-notice-entity/page/list",
+      "body": "{\"current\":1,\"size\":50}",
+      "returns": "data.records[]: noticeTitle/noticeDetail(HTML 全文)/createTime/viewCount。实测 1 条「系统迁移通知」。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "notice-top",
+      "method": "GET",
+      "path": "/api/system/system-notice-entity/homePage/top",
+      "returns": "{data:[{id:46, noticeTitle:'系统迁移通知', noticeType:1}]}",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "dict-all",
+      "method": "GET",
+      "path": "/api/system/system-dictionary-entity/dict/all",
+      "returns": "data[]: dicName/dicNo/dicList[]（站点分类字典，是 siteType 取值的字典表）。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "system-help",
+      "method": "GET",
+      "path": "/api/system/system-notice-entity/systemHelp",
+      "returns": "{code:200,message:'操作成功',success:true} —— **data 为空**，即当前无系统帮助内容。空不是错误。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "api-root-without-system",
+      "method": "GET",
+      "path": "/api/notice 等（漏写 /system 前缀）",
+      "returns": "500 {code:500,message:'系统繁忙，请稍后再试',path:'/notice'}",
+      "note": "**这是最容易误判的一点**：漏 /system 前缀时后端回 500「系统繁忙」，看起来像服务挂了，其实只是路径错。",
+      "verifiedAt": "2026-11-20",
+      "status": 500
+    }
+  ],
+  "unverified": [
+    {
+      "name": "user-feedback-add",
+      "method": "POST",
+      "path": "/api/system/system-user-feedback-entity/add",
+      "semantics": "write（提交反馈）— 禁止调用"
+    },
+    {
+      "name": "terminal-save",
+      "method": "POST",
+      "path": "/api/system/terminal/save",
+      "semantics": "write（终端注册）— 禁止调用"
+    },
+    {
+      "name": "visit-record",
+      "method": "POST",
+      "path": "/api/system/visit-info-entity/record/website 与 /record/appClient",
+      "semantics": "write（埋点上报）— 禁止调用"
+    },
+    {
+      "name": "site-fetch",
+      "method": "GET",
+      "path": "/api/system/site-connect-entity/site/fetch/{id}",
+      "semantics": "read（站点连通性探测），需登录态。漏 /system 时 500。",
+      "status": "untested"
+    }
+  ],
+  "blocked": [
+    {
+      "path": "「使用专用浏览器实际访问境外资源」这一步",
+      "status": "out-of-scope",
+      "reason": "需要下载并安装 Open 浏览器/夸克云桥版客户端，任务明确禁止下载安装。因此**「专用浏览器内是否真的能打开 Google/Scholar 等」本机未验证**，只验证了清单与准入机制。"
+    }
+  ],
+  "verifiedCount": 11,
+  "readOnlyNote": "page/list 系列是分页查询，POST 仅因查询体在请求体，不是写操作。",
+  "policyRecordedAt": "2026-11-23"
+}

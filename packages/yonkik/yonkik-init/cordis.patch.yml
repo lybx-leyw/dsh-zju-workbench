@@ -1,0 +1,9 @@
+# YONKIK 初始记忆 bundle：这一行让 Loader import 本包入口、跑 apply()。
+#
+# 本包**不注册任何工具或页面**：它只是一个数据包 + 一个 seed() 导出，
+# 由 @lybx-leyw/dsh-zju-yonkik-tool 的 `yonkik init` 动作调用。
+# 之所以单独成包而不是塞进 tool：记忆内容是**可替换的产品数据**（132 个站的
+# 知识库，3 MB），跟着工具版本走会让工具包变得臃肿，也让"换一份种子"变成改代码。
+- insert:
+    - id: zw-yonkik-init
+      name: "@lybx-leyw/dsh-zju-yonkik-init"

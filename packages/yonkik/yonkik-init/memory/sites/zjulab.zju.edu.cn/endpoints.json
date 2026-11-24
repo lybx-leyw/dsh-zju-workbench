@@ -1,0 +1,60 @@
+{
+  "site": "zjulab.zju.edu.cn",
+  "updatedAt": "2026-11-20T17:35:00+08:00",
+  "apiBase": "http://zjulab.zju.edu.cn",
+  "auth": "无（全站免登录，纯内容站）",
+  "verified": [
+    {
+      "id": "home",
+      "method": "GET",
+      "path": "/",
+      "purpose": "首页栏目树 + 31 条链接（制度/流程/公示/下载）",
+      "params": {},
+      "responseShape": "HTML 39628B / 48765B（含链接）",
+      "sample": "机构设置/文件制度/办事流程/安全教育/下载专区/工作动态/实验安全/设备共享"
+    },
+    {
+      "id": "flow-pdf",
+      "method": "GET",
+      "path": "/_upload/article/files/<hash>/<uuid>.pdf",
+      "purpose": "★ 办事流程 PDF 原件直链（可行性论证/验收/建账/危化品全流程）",
+      "params": {},
+      "responseShape": "application/pdf",
+      "sample": "免登录可下，无 cookie/Referer 要求"
+    },
+    {
+      "id": "page",
+      "method": "GET",
+      "path": "/YYYY/MMDD/c<栏目>a<文章>/page.htm",
+      "purpose": "文章正文（Webplus 标准形）",
+      "params": {},
+      "responseShape": "HTML 2321B~",
+      "sample": "注意：自行拼 URL 会回「错误的栏目参数」，必须从列表页 href 取"
+    },
+    {
+      "id": "fee-notice",
+      "method": "GET",
+      "path": "（首页公示栏）",
+      "purpose": "★ 「关于 N 年新增仪器/服务项目拟采用收费标准的公示（第 N 批）」",
+      "params": {},
+      "responseShape": "HTML",
+      "sample": "实测首页同时可见第 30/31/32/33 批（2026-11-02 ~ 11-20）"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "doc-list",
+      "method": "GET",
+      "path": "（文件制度栏目）",
+      "suspected": "read",
+      "reason": "首页 href 为空（http://），需进栏目页拿真实 id，未探"
+    },
+    {
+      "id": "safe-edu",
+      "method": "GET",
+      "path": "（安全教育）",
+      "suspected": "read",
+      "reason": "是否独立子系统未查"
+    }
+  ]
+}

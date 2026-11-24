@@ -1,0 +1,40 @@
+{
+  "_note": "一证多站：campus-sso（浙大一卡通/统一身份认证）是整个 CAS 家族的统一凭据，由 workbench 自动桥接。所有 CAS 家族（zjuam-form / zjuam-cas-oauth2 / identity-keycloak）都用同一套 campus-sso，不需要各站独立密码。凭据经 yonkik 工具注入脚本进程（YONKIK_CREDENTIALS），不在你的 shell env 里——用 yonkik 工具跑脚本即可拿到，不要去翻加密 .session 或 Chrome cookie。",
+  "_updatedAt": "2026-11-20",
+  "_修正记录": "2026-11-20 实测修正：classroom.zju.edu.cn 不从 identity-keycloak 家族走，而是 zjuam CAS-OAuth2.0 直连（见 zjuam-cas-oauth2 家族）。原归类基于 courses 的跳转外推，属推测未实测。",
+  "families": {
+    "zjuam-form": {
+      "idp": "zjuam.zju.edu.cn",
+      "loginUrl": "https://zjuam.zju.edu.cn/cas/login",
+      "credentialKey": "campus-sso",
+      "members": ["service.zju.edu.cn", "xwfw.zju.edu.cn", "cwcx.zju.edu.cn", "libweb.zju.edu.cn", "booking.lib.zju.edu.cn", "zdbk.zju.edu.cn", "yjsy.zju.edu.cn", "sztz.zju.edu.cn", "tyys.zju.edu.cn", "pan.zju.edu.cn", "chat.zju.edu.cn", "eta.zju.edu.cn"],
+      "sessionScope": "CAS ticket 回跳各种 service；cookie 在各 service 域",
+      "loginNotes": "表单含 username/password/authcode(验证码)/execution；password 经 CreateRatePasswdReq RSA 加密。模型自写 playwright 登录脚本（campus-sso）；验证码先用视觉/OCR 自主攻破，多次失败才请用户。先探 GET /cas/v2/getKaptchaStatus：false 时无需 OCR。",
+      "evidence": "service.zju.edu.cn 302 → zjuam.zju.edu.cn/cas/login?service=...（2026-11-17 triage）；CAS 登录页含 authcode 与 RSA 口令加密；chat.zju.edu.cn 2026-11-20 实测同链（service=http://chat.zju.edu.cn/commoncallback/，注意是 http，登录后 307 升级）"
+    },
+    "zjuam-cas-oauth2": {
+      "idp": "zjuam.zju.edu.cn",
+      "loginUrl": "https://zjuam.zju.edu.cn/cas/oauth2.0/authorize",
+      "credentialKey": "campus-sso",
+      "members": ["classroom.zju.edu.cn", "yuque.zju.edu.cn"],
+      "sessionScope": "CAS OAuth2.0 授权码模式（不是 ticket 回跳）。站点自带回调页，cookie 落在站点自己的域。",
+      "loginNotes": "判据：302 目标形如 zjuam.zju.edu.cn/cas/oauth2.0/authorize?client_id=...&redirect_uri=...。与 zjuam-form 的区别是发 authorization code 而非 ST ticket，且各站有独立 client_id。登录本身仍是同一套账密表单，用 campus-sso。",
+      "evidence": "classroom.zju.edu.cn 2026-11-20 实测：/cas/oauth2.0/authorize?client_id=ObXIv4FvjcC1e9hVcS，回调经 tgmedia.cmc.zju.edu.cn/index.php?r=auth/get-info 中转；identity.zju.edu.cn 的 broker 端点对该站只回 400 非法的请求（即不走 Keycloak）。yuque.zju.edu.cn 实测 client_id=ExFpJX8tiyJNvpXZUz，回调 /r/passport/oauth/callback。"
+    },
+    "identity-keycloak": {
+      "idp": "identity.zju.edu.cn",
+      "loginUrl": "https://identity.zju.edu.cn/auth/realms/zju/broker/cas-client/login",
+      "credentialKey": "campus-sso",
+      "members": ["courses.zju.edu.cn"],
+      "sessionScope": "Keycloak broker CAS；TronClass client。学在浙大(courses)经此 broker 回 CAS，用同一套一卡通。",
+      "loginNotes": "courses 302 → identity Keycloak（Wisdomgarden SSO），broker 回 CAS。登录用 campus-sso（一卡通），不是独立密码。模型自写登录脚本，验证码先自主尝试。",
+      "evidence": "courses.zju.edu.cn 302 → identity.zju.edu.cn/.../cas-client/login?client_id=TronClass（2026-11-17）；2026-11-20 复核仍走 broker。identity.zju.edu.cn 根路径回 1087B 自动跳转页。"
+    }
+  },
+  "independent": {
+    "_note": "自有账号体系，campus-sso 一卡通用不上。需要各自的凭据键。",
+    "pintia.cn": { "auth": "百腾自有账号 passport.pintia.cn，POST /api/sessions + MFA，PTASession cookie", "credentialKey": "(缺)", "evidence": "2026-11-20 实测：主包搜 zjuam|zju.edu.cn 零命中，与统一身份无关" },
+    "www.cc98.org": { "auth": "CC98 自有账号，OAuth password grant（openid.cc98.org）", "credentialKey": "cc98", "evidence": "2026-11-17 实测登录成功" },
+    "www.nexushd.org": { "auth": "NexusPHP 自有账密 POST takelogin.php；注册仅限校网", "credentialKey": "(缺)", "evidence": "2026-11-20 实测登录页三入口：登录（校网/校外 IPv6）/注册（仅限校网）" }
+  }
+}

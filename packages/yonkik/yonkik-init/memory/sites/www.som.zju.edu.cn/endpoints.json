@@ -1,0 +1,36 @@
+{
+  "site": "www.som.zju.edu.cn",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.som.zju.edu.cn/xshd/list.htm",
+      "column": "讲座活动",
+      "verifiesPath": "/xshd/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.som.zju.edu.cn/xshd/list.htm",
+        "status": 200,
+        "column": "讲座活动",
+        "displayTitle": "讲座活动",
+        "sectionTitle": "新闻中心",
+        "trail": [
+          [
+            "/63464/list.htm",
+            "新闻中心"
+          ],
+          [
+            "/xshd/list.htm",
+            "讲座活动"
+          ]
+        ],
+        "count": 5,
+        "total": 1623,
+        "pages": 325,
+        "externalLinks": 1,
+        "firstId": "3228482",
+        "firstDate": "2026-11-18",
+        "note": "每页 5 条，日期格式 [YYYY/MM/DD]。"
+      }
+    }
+  ]
+}

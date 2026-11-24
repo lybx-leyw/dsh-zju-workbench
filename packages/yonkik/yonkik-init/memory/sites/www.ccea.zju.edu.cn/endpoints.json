@@ -1,0 +1,373 @@
+{
+  "site": "www.ccea.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.ccea.zju.edu.cn/gsgg_77254/list.htm",
+      "column": "公示公告",
+      "verifiesPath": "/gsgg_77254/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/gsgg_77254/list.htm",
+        "status": 200,
+        "column": "公示公告",
+        "displayTitle": "公示公告",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/8024/list.htm",
+            "国际交流"
+          ],
+          [
+            "/gsgg_77254/list.htm",
+            "公示公告"
+          ]
+        ],
+        "count": 14,
+        "total": 1322,
+        "pages": 95,
+        "externalLinks": 0,
+        "firstId": "3229523",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/18459/list.htm",
+      "column": "学生事务",
+      "verifiesPath": "/18459/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/18459/list.htm",
+        "status": 200,
+        "column": "学生事务",
+        "displayTitle": "学生事务",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ],
+          [
+            "/18459/list.htm",
+            "学生事务"
+          ]
+        ],
+        "count": 14,
+        "total": 434,
+        "pages": 31,
+        "externalLinks": 0,
+        "firstId": "3211960",
+        "firstDate": "2026-10-08"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/18461/list.htm",
+      "column": "学生组织",
+      "verifiesPath": "/18461/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/18461/list.htm",
+        "status": 200,
+        "column": "学生组织",
+        "displayTitle": "学生组织",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ],
+          [
+            "/18461/list.htm",
+            "学生组织"
+          ]
+        ],
+        "count": 14,
+        "total": 269,
+        "pages": 20,
+        "externalLinks": 0,
+        "firstId": "3101835",
+        "firstDate": "2025-11-03"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/19119/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/19119/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/19119/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ],
+          [
+            "/18459/list.htm",
+            "学生事务"
+          ],
+          [
+            "/19119/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 14,
+        "total": 1153,
+        "pages": 83,
+        "externalLinks": 0,
+        "firstId": "3211960",
+        "firstDate": "2026-10-08"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/19120/list.htm",
+      "column": "学生资助",
+      "verifiesPath": "/19120/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/19120/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ],
+          [
+            "/18459/list.htm",
+            "学生事务"
+          ],
+          [
+            "/19120/list.htm",
+            "学生资助"
+          ]
+        ],
+        "count": 14,
+        "total": 440,
+        "pages": 32,
+        "externalLinks": 0,
+        "firstId": "3126390",
+        "firstDate": "2026-01-06"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/zpxx/list.htm",
+      "column": "就业信息",
+      "verifiesPath": "/zpxx/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/zpxx/list.htm",
+        "status": 200,
+        "column": "就业信息",
+        "displayTitle": "就业信息",
+        "sectionTitle": "就业工作",
+        "trail": [
+          [
+            "/18474/list.htm",
+            "就业工作"
+          ],
+          [
+            "/tzgg/list.htm",
+            "通知公告"
+          ],
+          [
+            "/zpxx/list.htm",
+            "就业信息"
+          ]
+        ],
+        "count": 14,
+        "total": 3517,
+        "pages": 252,
+        "externalLinks": 4,
+        "firstId": "3228418",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/xytz/list.htm",
+      "column": "学院通知",
+      "verifiesPath": "/xytz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/xytz/list.htm",
+        "status": 200,
+        "column": "学院通知",
+        "displayTitle": "学院通知",
+        "sectionTitle": "就业工作",
+        "trail": [
+          [
+            "/18474/list.htm",
+            "就业工作"
+          ],
+          [
+            "/tzgg/list.htm",
+            "通知公告"
+          ],
+          [
+            "/xytz/list.htm",
+            "学院通知"
+          ]
+        ],
+        "count": 14,
+        "total": 83,
+        "pages": 6,
+        "externalLinks": 3,
+        "firstId": null,
+        "firstDate": "2025-03-07"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/12261/list.htm",
+      "column": "公派资助",
+      "verifiesPath": "/12261/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/12261/list.htm",
+        "status": 200,
+        "column": "公派资助",
+        "displayTitle": "公派资助",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/8024/list.htm",
+            "国际交流"
+          ],
+          [
+            "/gpzz/list.htm",
+            "交流资助"
+          ],
+          [
+            "/12261/list.htm",
+            "公派资助"
+          ]
+        ],
+        "count": 14,
+        "total": 63,
+        "pages": 5,
+        "externalLinks": 8,
+        "firstId": "3135144",
+        "firstDate": "2026-02-26"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/18417/list.htm",
+      "column": "学籍管理",
+      "verifiesPath": "/18417/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/18417/list.htm",
+        "status": 200,
+        "column": "学籍管理",
+        "displayTitle": "学籍管理",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/bksjy/list.htm",
+            "教育教学"
+          ],
+          [
+            "/18404/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/18417/list.htm",
+            "学籍管理"
+          ]
+        ],
+        "count": 14,
+        "total": 66,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3086989",
+        "firstDate": "2025-09-28"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/18418/list.htm",
+      "column": "学位申请",
+      "verifiesPath": "/18418/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/18418/list.htm",
+        "status": 200,
+        "column": "学位申请",
+        "displayTitle": "学位申请",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/bksjy/list.htm",
+            "教育教学"
+          ],
+          [
+            "/18404/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/18418/list.htm",
+            "学位申请"
+          ]
+        ],
+        "count": 14,
+        "total": 81,
+        "pages": 6,
+        "externalLinks": 1,
+        "firstId": "3221697",
+        "firstDate": "2026-11-02"
+      }
+    },
+    {
+      "id": "GET www.ccea.zju.edu.cn/xsgz/list.htm",
+      "column": "学生工作",
+      "verifiesPath": "/xsgz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ccea.zju.edu.cn/xsgz/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "学生工作",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ]
+        ],
+        "count": 14,
+        "total": 18,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3211960",
+        "firstDate": "2026-10-08"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/18403/list.htm",
+      "pageTitle": "教学教务",
+      "claimedColumnPath": "/18410/list.htm",
+      "claimedColumnTitle": "教学教务",
+      "note": "该数字路径可访问且标题一致，但「当前位置」末项自认 /18410/，属同一栏目的两个地址；未确认权威地址前不纳入精确通路。"
+    }
+  ],
+  "unverified": [
+    "其余建筑工程学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

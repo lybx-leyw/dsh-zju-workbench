@@ -1,0 +1,13 @@
+{
+  "key": "wechat-mp",
+  "origin": "https://mp.weixin.qq.com",
+  "status": "blocked",
+  "label": "微信公众号文章",
+  "auth": {
+    "type": "wechat-oauth-session",
+    "note": "需微信客户端内登录态；无独立的公开检索接口。"
+  },
+  "via": "not-attempted-by-design",
+  "exploredAt": "2026-11-22",
+  "blockedReason": "公众号文章检索与正文读取依赖微信登录态（且平台无公开检索 API）；按只读纪律不做任何未授权抓取。"
+}

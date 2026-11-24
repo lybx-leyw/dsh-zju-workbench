@@ -1,0 +1,20 @@
+{
+  "key": "www.douyin.com",
+  "origin": "https://www.douyin.com",
+  "label": "抖音（网页版）",
+  "status": "done",
+  "via": null,
+  "requires": [],
+  "auth": {
+    "type": "none-for-hotlist",
+    "note": "热榜/首页精选流免登录；详情接口被 ArgusSecurityPlugin 拦截（403 Uifid Not Found），需浏览器内运行或登录态"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2500,
+    "concurrency": 1,
+    "source": "robots",
+    "evidence": "https://www.douyin.com/robots.txt 对 Googlebot/Bingbot/Baiduspider 等 30+ 爬虫显式 Disallow：*general_search*、*enter_from=*、*vid=*、/follow、/search/（Baiduspider 另禁 /video/ /note/）。中文站内无通用 Crawl-delay，取保守默认 2.5s 串行。"
+  },
+  "exploredAt": "2026-11-20",
+  "scope": "免登录可达面探测（是否可不登录拿内容），不做批量抓取"
+}

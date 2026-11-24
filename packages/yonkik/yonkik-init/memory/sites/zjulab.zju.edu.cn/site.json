@@ -1,0 +1,21 @@
+{
+  "key": "zjulab.zju.edu.cn",
+  "origin": "http://zjulab.zju.edu.cn",
+  "via": null,
+  "requires": [],
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 404（Webplus），无 Crawl-delay；取保守默认（2026-11-20）"
+  },
+  "auth": {
+    "type": "none",
+    "credentialKey": null,
+    "notes": "纯内容站，全站免登录。无个人业务。"
+  },
+  "status": "done",
+  "statusUpdated": "2026-11-20",
+  "exploredAt": "2026-11-20",
+  "notes": "实验室与设备管理处（Webplus 内容站），**仅 HTTP，https 拒连**。与 yqgx.hic（科创中心大仪系统）分工不同：本站在全校范围管制度/流程/公示，yqgx 管科创中心自己的仪器预约。隐藏价值＝「新增仪器/服务项目拟采用收费标准公示（第N批）」与可行性论证公示。"
+}

@@ -1,0 +1,9 @@
+{
+  "key": "www.xlzx.zju.edu.cn",
+  "origin": "http://www.xlzx.zju.edu.cn",
+  "status": "done",
+  "type": "心理健康教育与咨询中心（门户，GBK）",
+  "auth": { "type": "none", "note": "门户免登录。真正的咨询预约走 www.xlfw.zju.edu.cn，需统一身份认证（campus-sso）。" },
+  "rateLimit": { "minIntervalMs": 2000, "concurrency": 1 },
+  "exploredAt": "2026-11-20"
+}

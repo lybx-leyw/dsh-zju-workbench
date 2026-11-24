@@ -1,0 +1,17 @@
+{
+  "key": "speedtest.zju.edu.cn",
+  "origin": "https://speedtest.zju.edu.cn",
+  "status": "done",
+  "label": "校网测速",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-https-public",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "两个入口页各 1 次。"
+  }
+}

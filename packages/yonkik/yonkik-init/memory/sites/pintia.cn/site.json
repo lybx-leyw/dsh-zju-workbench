@@ -1,0 +1,28 @@
+{
+  "key": "pintia.cn",
+  "origin": "https://pintia.cn",
+  "via": null,
+  "requires": ["PTA凭证"],
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "GET /robots.txt → 404 Whitelabel Error Page，无 robots 条款。未发现 X-RateLimit-*/Retry-After。保守默认 >=2s，2026-11-20 二次探索全程串行未触发 429。"
+  },
+  "auth": {
+    "type": "own-account",
+    "credentialKey": "PTA凭证",
+    "ssoFamily": null,
+    "loginUrl": "https://pintia.cn/auth/login",
+    "captcha": "腾讯 TCaptcha（滑块），仅风险触发；正常账密直登不弹（2026-11-20 实测）",
+    "stateFile": "state.json",
+    "loginFlow": "playwright 打开 /auth/login → 填 input[0](登录名) + input[1](密码) → 点 button.pc-button → 跳 /problem-sets/dashboard → storageState 落 state.json",
+    "note": "裸 HTTP POST /api/users/sessions 返回 400 GATEWAY_WRONG_CAPTCHA，必须走浏览器。campus-sso 不适用。"
+  },
+  "notes": "PTA 拼题A（杭州百腾教育运营）。Spring Boot + React SPA。**登录已打通，只读数据全可取**：109 个题目集、未截止待办、详情（/exams 是真源，不是 /problem-sets/{id}）、互评四档截止、提交记录、通知。详见 wiki.md。",
+  "status": "done",
+  "exploredAt": "2026-11-20",
+  "endpointsFile": "endpoints.json",
+  "statusUpdated": "2026-11-20",
+  "checkOp": "ps"
+}

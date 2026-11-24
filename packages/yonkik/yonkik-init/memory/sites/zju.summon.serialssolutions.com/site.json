@@ -1,0 +1,29 @@
+{
+  "key": "zju.summon.serialssolutions.com",
+  "origin": "https://zju.summon.serialssolutions.com",
+  "title": "求是学术搜索（Summon 2.0 / Ex Libris）",
+  "via": null,
+  "requires": "none",
+  "auth": {
+    "mode": "ip-and-session",
+    "credentialKey": null,
+    "notes": "无需登录。页面给 rack.session cookie；机构识别靠 IP 段（custom_data 的 info.authenticated=true / s.role=authenticated）。聚合检索与书目全文解析在校园网 IP 下直接可用。CAS 登录只在 /library_card（我的借阅）与 /research_assistant 需要（前端路由标 auth:!0）。",
+    "casService": "cas",
+    "casSessionMinutes": 60,
+    "vpnBanner": "https://webvpn.zju.edu.cn/"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2500,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 返回 403（nginx/1.22.1），无自动化条款可引；页面 meta robots 为 \"noindex, nofollow, noarchive, nosnippet\"。响应头无 X-RateLimit-*，无 Retry-After。按 skill 保守默认 2500ms 串行。"
+  },
+  "clientId": "GK4PB6YY8Y",
+  "institution": "86ZJU_INST",
+  "status": "done",
+  "exploredAt": "2026-11-20",
+  "profile": {
+    "facets": ["academic-discovery", "library-catalog", "journal-article", "fulltext-resolver", "openurl"],
+    "confidence": 0.95
+  }
+}

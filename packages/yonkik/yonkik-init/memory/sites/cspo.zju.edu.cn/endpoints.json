@@ -1,0 +1,185 @@
+{
+  "site": "cspo.zju.edu.cn",
+  "access": "公开 HTTP；HTTPS 443 连接被拒。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET cspo.zju.edu.cn/27169/list.htm",
+      "column": "研究生教育·最新通知",
+      "verifiesPath": "/27169/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://cspo.zju.edu.cn/27169/list.htm",
+        "status": 200,
+        "column": "研究生教育·最新通知",
+        "displayTitle": "最新通知",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/27169/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/27169/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 15,
+        "total": 879,
+        "pages": 59,
+        "externalLinks": 2,
+        "firstId": "3094508",
+        "firstDate": "2025-10-22"
+      }
+    },
+    {
+      "id": "GET cspo.zju.edu.cn/27173/list.htm",
+      "column": "学位",
+      "verifiesPath": "/27173/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://cspo.zju.edu.cn/27173/list.htm",
+        "status": 200,
+        "column": "学位",
+        "displayTitle": "学位管理",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/27169/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/27173/list.htm",
+            "学位管理"
+          ]
+        ],
+        "count": 2,
+        "total": 2,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3113240",
+        "firstDate": "2025-12-02"
+      }
+    },
+    {
+      "id": "GET cspo.zju.edu.cn/27225/list.htm",
+      "column": "发展联络·最新通知",
+      "verifiesPath": "/27225/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://cspo.zju.edu.cn/27225/list.htm",
+        "status": 200,
+        "column": "发展联络·最新通知",
+        "displayTitle": "最新通知",
+        "sectionTitle": "发展联络",
+        "trail": [
+          [
+            "/27113/list.htm",
+            "发展联络"
+          ],
+          [
+            "/27225/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 15,
+        "total": 17,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3177272",
+        "firstDate": "2026-06-10"
+      }
+    },
+    {
+      "id": "GET cspo.zju.edu.cn/27181/list.htm",
+      "column": "学生活动",
+      "verifiesPath": "/27181/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://cspo.zju.edu.cn/27181/list.htm",
+        "status": 200,
+        "column": "学生活动",
+        "displayTitle": "学生活动",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/27110/list.htm",
+            "学生工作"
+          ],
+          [
+            "/27181/list.htm",
+            "学生活动"
+          ]
+        ],
+        "count": 15,
+        "total": 221,
+        "pages": 15,
+        "externalLinks": 0,
+        "firstId": "3219909",
+        "firstDate": "2026-10-28"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/27179/list.htm",
+      "pageTitle": "评奖评优",
+      "sectionTitle": "学生工作",
+      "claimedColumnPath": "/27183/list.htm",
+      "claimedColumnTitle": "评奖评优",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/27110/list.htm",
+      "pageTitle": "最新消息",
+      "sectionTitle": "学生工作",
+      "claimedColumnPath": "/27175/list.htm",
+      "claimedColumnTitle": "最新消息",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/27108/list.htm",
+      "pageTitle": "最新通知",
+      "sectionTitle": "本科生教育",
+      "claimedColumnPath": "/29529/list.htm",
+      "claimedColumnTitle": "最新通知",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/27109/list.htm",
+      "pageTitle": "研究生教育",
+      "sectionTitle": "研究生教育",
+      "claimedColumnPath": "/27169/list.htm",
+      "claimedColumnTitle": "研究生教育",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/27111/list.htm",
+      "pageTitle": "最新通知",
+      "sectionTitle": "就业工作",
+      "claimedColumnPath": "/27197/list.htm",
+      "claimedColumnTitle": "最新通知",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/27180/list.htm",
+      "pageTitle": "本科生学生组织",
+      "sectionTitle": "学生工作",
+      "claimedColumnPath": "/27186/list.htm",
+      "claimedColumnTitle": "本科生学生组织",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余计算机学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

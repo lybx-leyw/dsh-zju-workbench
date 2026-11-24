@@ -1,0 +1,17 @@
+{
+  "siteKey": "xwfw.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "verified": [
+    {
+      "id": "xwfw-redirect",
+      "name": "整站 301 到 service（唯一的「接口」）",
+      "method": "GET",
+      "path": "https://xwfw.zju.edu.cn/<任意路径>",
+      "requires": "none",
+      "response": "301 → Location: https://service.zju.edu.cn/_s2/cs_bszx/main.psp",
+      "notes": "实测 / 与 /robots.txt 均 301 同一目标（169B nginx 默认 301 页）。本域自身不返回任何内容。"
+    }
+  ],
+  "unverified": [],
+  "conclusion": "本域零独立接口。要取数据请直接用 sites/service.zju.edu.cn/ 的 endpoints.json（同一套后台，公开面完全相同）。"
+}

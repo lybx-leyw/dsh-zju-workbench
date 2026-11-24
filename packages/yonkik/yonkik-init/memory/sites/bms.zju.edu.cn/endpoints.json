@@ -1,0 +1,50 @@
+{
+  "site": "bms.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS。固定路径、无凭据、不跟跳转。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET bms.zju.edu.cn/85147/list.htm",
+      "column": "研究生教育教学",
+      "verifiesPath": "/85147/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://bms.zju.edu.cn/85147/list.htm",
+        "status": 200,
+        "column": "研究生教育教学",
+        "displayTitle": "研究生教育教学",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/85097/list.htm",
+            "教育教学"
+          ],
+          [
+            "/85147/list.htm",
+            "研究生教育教学"
+          ]
+        ],
+        "count": 20,
+        "total": 119,
+        "pages": 6,
+        "externalLinks": 16,
+        "firstId": "3198692",
+        "firstDate": "2026-09-06"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/85097/list.htm",
+      "pageTitle": "本科生教育教学",
+      "sectionTitle": "教育教学",
+      "claimedColumnPath": "/85146/list.htm",
+      "claimedColumnTitle": "本科生教育教学",
+      "note": "目录路径可访问、页面标题与清单标签不同（清单写教育教学、页面是本科生教育教学），且「当前位置」末项自认 /85146/，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余基础医学系栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

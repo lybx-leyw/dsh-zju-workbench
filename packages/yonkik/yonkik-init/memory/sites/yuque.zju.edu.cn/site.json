@@ -1,0 +1,29 @@
+{
+  "key": "yuque.zju.edu.cn",
+  "origin": "https://yuque.zju.edu.cn",
+  "title": "浙大语雀（语雀私有云部署 / Yuque Private Cloud）",
+  "via": null,
+  "requires": "campus-sso (CAS OAuth2)",
+  "auth": {
+    "mode": "cas-oauth2",
+    "credentialKey": "campus-sso",
+    "flow": "GET / → 302 /dashboard → 302 /login?org=zero&goto=... → 302 zjuam.zju.edu.cn/cas/oauth2.0/authorize?response_type=code&client_id=ExFpJX8tiyJNvpXZUz&redirect_uri=https://yuque.zju.edu.cn/r/passport/oauth/callback → 302 zjuam /cas/login?service=/cas/oauth2.0/callbackAuthorize → 200 统一身份认证平台",
+    "casClientId": "ExFpJX8tiyJNvpXZUz",
+    "casRedirectUri": "https://yuque.zju.edu.cn/r/passport/oauth/callback",
+    "deployment": "private-cloud",
+    "deploymentEvidence": "/explore 的 window.appData：isYuque=true, isPrivateCloud=true, isPublicCloud=false, isEnterprise=false, siteName='浙大语雀', env='prod'"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2500,
+    "concurrency": 1,
+    "source": "robots.txt",
+    "evidence": "robots.txt 原文：'# If you would like to crawl Yuque contact us at support@yuque.com.\n# We also provide an extensive API: https://yuque.com/yuque/developer\n\nuser-agent: *\nDisallow: /docs/share/'",
+    "note": "robots 只禁 /docs/share/，其余未禁；但仍按 2500ms 串行（无 RateLimit 头）"
+  },
+  "status": "done",
+  "exploredAt": "2026-11-20",
+  "profile": {
+    "facets": ["private-cloud-wiki", "document-collaboration", "alibaba-yuque", "cas-sso"],
+    "confidence": 0.9
+  }
+}

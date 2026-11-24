@@ -1,0 +1,158 @@
+{
+  "site": "ai.office.zju.edu.cn",
+  "access": "公开 HTTP；Tailwind 版模板，无 CMS 分页条但仍有 all_count。固定路径、无凭据、不跟跳转。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET ai.office.zju.edu.cn/nbgs/list.htm",
+      "column": "内部公示",
+      "verifiesPath": "/nbgs/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ai.office.zju.edu.cn/nbgs/list.htm",
+        "status": 200,
+        "column": "内部公示",
+        "displayTitle": "内部公示",
+        "trail": [
+          [
+            "/tzgg_89915/list.htm",
+            "国际交流"
+          ],
+          [
+            "/jsgjjl/list.htm",
+            "教师国际交流"
+          ],
+          [
+            "/nbgs/list.htm",
+            "内部公示"
+          ]
+        ],
+        "count": 20,
+        "total": 111,
+        "pages": 6,
+        "externalLinks": 0,
+        "firstId": "3229759",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET ai.office.zju.edu.cn/90093/list.htm",
+      "column": "行政综合-通知公告",
+      "verifiesPath": "/90093/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ai.office.zju.edu.cn/90093/list.htm",
+        "status": 200,
+        "column": "行政综合-通知公告",
+        "displayTitle": "行政综合-通知公告",
+        "trail": [
+          [
+            "/xzzh/list.htm",
+            "行政综合"
+          ],
+          [
+            "/90093/list.htm",
+            "行政综合-通知公告"
+          ]
+        ],
+        "count": 3,
+        "total": 3,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3210274",
+        "firstDate": "2026-09-29"
+      }
+    },
+    {
+      "id": "GET ai.office.zju.edu.cn/tzgg_89914/list.htm",
+      "column": "教育教学-通知公告",
+      "verifiesPath": "/tzgg_89914/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ai.office.zju.edu.cn/tzgg_89914/list.htm",
+        "status": 200,
+        "column": "教育教学-通知公告",
+        "displayTitle": "教育教学-通知公告",
+        "trail": [
+          [
+            "/tzgg_89914/list.htm",
+            "教育教学"
+          ],
+          [
+            "/tzgg_89914/list.htm",
+            "教育教学-通知公告"
+          ]
+        ],
+        "count": 18,
+        "total": 18,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3222825",
+        "firstDate": "2026-11-04"
+      }
+    },
+    {
+      "id": "GET ai.office.zju.edu.cn/tzgg_89915/list.htm",
+      "column": "国际交流-通知公告",
+      "verifiesPath": "/tzgg_89915/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ai.office.zju.edu.cn/tzgg_89915/list.htm",
+        "status": 200,
+        "column": "国际交流-通知公告",
+        "displayTitle": "国际交流-通知公告",
+        "trail": [
+          [
+            "/tzgg_89915/list.htm",
+            "国际交流"
+          ],
+          [
+            "/tzgg_89915/list.htm",
+            "国际交流-通知公告"
+          ]
+        ],
+        "count": 2,
+        "total": 2,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3192471",
+        "firstDate": "2026-07-29"
+      }
+    },
+    {
+      "id": "GET ai.office.zju.edu.cn/tzgg_92951/list.htm",
+      "column": "通知公告",
+      "verifiesPath": "/tzgg_92951/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ai.office.zju.edu.cn/tzgg_92951/list.htm",
+        "status": 200,
+        "column": "通知公告",
+        "displayTitle": "通知公告",
+        "trail": [
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ],
+          [
+            "/tzgg_92951/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 2,
+        "total": 2,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3181830",
+        "firstDate": "2026-06-24"
+      }
+    }
+  ],
+  "unverified": [
+    "其余人工智能学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

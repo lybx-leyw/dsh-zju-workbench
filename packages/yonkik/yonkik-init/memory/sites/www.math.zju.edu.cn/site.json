@@ -1,0 +1,35 @@
+{
+  "key": "www.math.zju.edu.cn",
+  "origin": "http://www.math.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.math.zju.edu.cn/SchoolColloquium/list.htm",
+  "column": "School Colloquium",
+  "exactNoticeColumns": {
+    "count": 10,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/38100/list.htm",
+      "/38101/list.htm",
+      "/66212/list.htm",
+      "/38088/list.htm",
+      "/38090/list.htm",
+      "/38086/list.htm",
+      "/38077/list.htm",
+      "/dwjl/list.htm",
+      "/38102/list.htm",
+      "/tmgztz/list.htm"
+    ],
+    "note": "两栏显示标题同为「信息公告」，靠父栏目（本科生/研究生）区分。"
+  }
+}

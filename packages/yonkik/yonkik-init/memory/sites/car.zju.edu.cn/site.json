@@ -1,0 +1,26 @@
+{
+  "key": "car.zju.edu.cn",
+  "origin": "http://car.zju.edu.cn",
+  "via": null,
+  "requires": ["campus-sso"],
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "无 robots.txt（SPA 兜底）；探索期串行单发未触发限流"
+  },
+  "auth": {
+    "type": "cas-oauth2",
+    "credentialKey": "campus-sso",
+    "ssoFamily": "zjuam-cas",
+    "loginFlow": "car.zju.edu.cn → 302 zjuam CAS OAuth2 (client_id=NgRUUG0GFEOUjsV3Vc, redirect_uri=http://car.zju.edu.cn/pages/index/login) → 浏览器填 #username/#password 点 #dl → 回跳 /pages/index/login?code=ST-... → 前端 POST /platform/weChat/zdLoginCode 换 accessToken",
+    "captcha": "disabled（getKaptchaStatus=false，2026-11-19）",
+    "stateFile": "state.json",
+    "tokenNote": "accessToken 形如 UUID，expiresIn=99999 秒；存 localStorage，非 cookie。纯 HTTP 调用需自己带 Authorization 头。"
+  },
+  "notes": "【浙大校车预约系统】uni-app H5。这是**教师班车/校车预约的正主**，与 life.zju.edu.cn 的 busQuery（只读查询）不是同一系统。能查实时余票、可预约、可退票、违约 3 次冻结。接口全为 POST /platform/*，返回 {success:0,msg:'成功',count,data}（success:0 表示成功）。",
+  "status": "done",
+  "exploredAt": "2026-11-19",
+  "endpointsFile": "endpoints.json",
+  "statusUpdated": "2026-11-19"
+}

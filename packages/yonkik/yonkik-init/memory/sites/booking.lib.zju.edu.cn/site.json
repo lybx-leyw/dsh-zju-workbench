@@ -1,0 +1,40 @@
+{
+  "key": "booking.lib.zju.edu.cn",
+  "origin": "http://booking.lib.zju.edu.cn",
+  "title": "图书馆空间预约系统",
+  "status": "done",
+  "via": null,
+  "requires": "campus-sso",
+  "auth": {
+    "type": "cas",
+    "credentialKey": "campus-sso",
+    "loginUrl": "http://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fbooking.lib.zju.edu.cn%2Fapi%2Fcas%2Fcas",
+    "postLogin": "/api/cas/cas",
+    "stateFile": "state.json",
+    "tokenFile": "_scratch/token.txt",
+    "sessionShape": "CAS 回跳 /api/cas/cas 后 SPA 把 JWT 写入 sessionStorage.token；后续请求须同时带 header `authorization: bear<JWT>`（注意 **bearer 与 token 之间没有空格**，SPA 源码是 `bearer${token}`）和 body 里的 authorization 字段。**JWT payload 可 base64 解出学号/姓名/手机号——只存 _scratch/token.txt，绝不进站点根、不 echo 到日志。**",
+    "captcha": "false（GET https://zjuam.zju.edu.cn/cas/v2/getKaptchaStatus，2026-11-20 实测）",
+    "anonEndpointsStillWork": ["/api/index/notice", "/api/index/noticeDetail?id=", "/api/index/booking_rules", "/api/Seminar/tree", "/api/Study/libinfo", "/api/index/time", "/api/seat/label", "/api/index/lang", "/api/index/category(需登录)"]
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "无 robots.txt 规则可依（本站不提供）；响应头无 X-RateLimit-*/Retry-After；未见 429。按 site-recon 保守默认。"
+  },
+  "server": "Apache/2.4.43",
+  "tls": "TLSv1.3, DigiCert, cn=*.lib.zju.edu.cn",
+  "ip": "10.203.60.21（校内网段，必须绕过 env 代理）",
+  "endpoints": { "verified": 13, "unverified": 9 },
+  "safety": {
+    "forbidden": [
+      "/api/Seat/confirm", "/api/Space/cancel", "/api/Space/checkout", "/api/Space/leave", "/api/Space/signin",
+      "/api/Seminar/confirm", "/api/Seminar/submit", "/api/Seminar/roomCancel", "/api/Seminar/roomConfirm",
+      "/reserve/index/confirm", "/api/Study/StudyAreaBook", "/api/Study/StudyAreaCancel", "/api/Study/StudyOrder",
+      "/reserve/activity/submit", "/reserve/activity/confirm", "/reserve/locker/*", "/apiLocker/*"
+    ],
+    "note": "以上均为改变服务端状态的写操作，本次侦察一次都没有调用。crawler.mjs 只实现查询类。"
+  },
+  "exploredAt": "2026-11-20",
+  "exploredBy": "recon-lib"
+}

@@ -1,0 +1,54 @@
+{
+  "site": "webvpn.zju.edu.cn",
+  "exploredAt": "2026-11-22",
+  "auth": "CAS（campus-sso）；票据 cookie wengine_vpn_ticketwebvpn_zju_edu_cn",
+  "note": "深信服 WEngine，URL 重写型 WebVPN。规则公开固定，无需逆向。",
+  "endpoints": [
+    {
+      "id": "login-page",
+      "name": "登录页",
+      "method": "GET",
+      "url": "https://webvpn.zju.edu.cn/login",
+      "status": "verified",
+      "returns": "HTML 47,303B；字段 username / password / captcha / needCaptcha / captcha_id / _csrf",
+      "note": "needCaptcha 当前为空（未强制）。未登录访问任意资源回 302 到本页。"
+    },
+    {
+      "id": "resource-home",
+      "name": "登录后资源站点",
+      "method": "GET",
+      "url": "https://webvpn.zju.edu.cn/",
+      "status": "verified",
+      "returns": "HTML 4,980B「WebVPN - 资源站点」"
+    },
+    {
+      "id": "rewrite",
+      "name": "URL 重写（核心）",
+      "method": "GET",
+      "url": "https://webvpn.zju.edu.cn/{scheme}{-port}/{enc(host)}{path}{sep}vpn-12-o2-{host}",
+      "status": "verified",
+      "returns": "按该结构重写后 GET 即得目标站内容",
+      "note": "enc(host)=hex('wrdvpnisthebest!')+hex(AES-128-CFB(host,key=iv='wrdvpnisthebest!'))。默认端口不写，非默认写成 https-8443 后缀。**误写成 /https/443/ 会得 HOST_NOT_FOUND（把 443 当主机名）**"
+    },
+    {
+      "id": "failed-page",
+      "name": "失败页",
+      "method": "GET",
+      "url": "https://webvpn.zju.edu.cn/wengine-vpn/failed",
+      "status": "verified",
+      "returns": "HTML 200「访问出错」+ 错误代码与错误信息",
+      "note": "HOST_NOT_FOUND 表示 URL 结构错，不是权限错"
+    }
+  ],
+  "penetration": {
+    "note": "以下站直连均为 502（内网子站），经 WebVPN 全部 200 且可读",
+    "verified": [
+      { "host": "ygb.zju.edu.cn", "url": "http://ygb.zju.edu.cn/31555/list.htm", "bytes": 15301, "title": "通知公告" },
+      { "host": "ai.office.zju.edu.cn", "url": "http://ai.office.zju.edu.cn/nbgs/list.htm", "bytes": 115410, "title": "内部公示" },
+      { "host": "bmsoa.zju.edu.cn", "url": "http://bmsoa.zju.edu.cn/85937/list.htm", "bytes": 15871, "title": "内部公示" },
+      { "host": "www.cls.office.zju.edu.cn", "url": "http://www.cls.office.zju.edu.cn/25820/list.htm", "bytes": 50711, "title": "最新通知" },
+      { "host": "office.chem.zju.edu.cn", "url": "http://office.chem.zju.edu.cn/34507/list.htm", "bytes": 44117, "title": "信息公告" },
+      { "host": "doe-oa.zju.edu.cn", "url": "http://doe-oa.zju.edu.cn/75536/list.htm", "bytes": 44734, "title": "学工" }
+    ]
+  }
+}

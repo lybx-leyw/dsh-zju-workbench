@@ -1,0 +1,33 @@
+{
+  "key": "ai.office.zju.edu.cn",
+  "origin": "http://ai.office.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://ai.office.zju.edu.cn/nbgs/list.htm",
+  "column": "内部公示",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 5,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/nbgs/list.htm",
+      "/90093/list.htm",
+      "/tzgg_89914/list.htm",
+      "/tzgg_89915/list.htm",
+      "/tzgg_92951/list.htm"
+    ],
+    "note": "页面是 Tailwind 重写版：没有 col_path/Column_Anchor 类名，身份靠 frag=窗口12 面包屑块 + h2.col_title；列表项是 a.w-full.p-6，日期在 span.font-mono、标题在 h3。"
+  }
+}

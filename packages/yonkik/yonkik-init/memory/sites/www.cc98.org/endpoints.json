@@ -1,0 +1,335 @@
+{
+  "site": "www.cc98.org",
+  "updatedAt": "2026-11-22",
+  "apiBase": "https://api.cc98.org",
+  "auth": "Bearer access_token（openid.cc98.org/connect/token password grant 获取，存 state.json）",
+  "verified": [
+    {
+      "id": "board-all",
+      "method": "GET",
+      "path": "/board/all",
+      "purpose": "全部版块（分组嵌套）",
+      "params": {},
+      "responseShape": "array[{id,name,order,masters,boards:[{id,name,topicCount,postCount,todayCount,description}]}]",
+      "sample": "12 个分组；学习天地 boardId=68",
+      "script": "crawler.mjs#boards"
+    },
+    {
+      "id": "topic-search",
+      "method": "GET",
+      "path": "/topic/search",
+      "purpose": "全站搜索主题（调查提问的核心接口）",
+      "params": {
+        "keyword": "string",
+        "size": "int 每页条数",
+        "from": "int 偏移"
+      },
+      "responseShape": "array[{id,boardId,boardName,title,time,userName,replyCount,hitCount,lastPostContent}]",
+      "sample": "keyword=资源 size=3 → 3 条，首条「2026秋 当代宗教哲学课程资源」boardId=68",
+      "script": "crawler.mjs#search"
+    },
+    {
+      "id": "topic-search-board",
+      "method": "GET",
+      "path": "/topic/search/board/{boardId}",
+      "purpose": "版块内搜索主题",
+      "params": {
+        "boardId": "int",
+        "keyword": "string",
+        "size": "int",
+        "from": "int"
+      },
+      "responseShape": "array[topic]",
+      "script": "crawler.mjs#searchBoard"
+    },
+    {
+      "id": "topic-detail",
+      "method": "GET",
+      "path": "/topic/{id}",
+      "purpose": "主题详情（含标题/计数/末帖内容）",
+      "params": {
+        "id": "int"
+      },
+      "responseShape": "object{id,boardId,title,replyCount,hitCount,lastPostContent,mediaContent,tag1,tag2}",
+      "sample": "/topic/6702898 → 200",
+      "script": "crawler.mjs#topic"
+    },
+    {
+      "id": "topic-hot",
+      "method": "GET",
+      "path": "/topic/hot-{period}",
+      "purpose": "热门主题",
+      "params": {
+        "period": "weekly|monthly|history"
+      },
+      "responseShape": "array[20 topic]",
+      "sample": "/topic/hot-weekly → 20 条",
+      "script": "crawler.mjs#hot"
+    },
+    {
+      "id": "topic-top",
+      "method": "GET",
+      "path": "/topic/toptopics",
+      "purpose": "版块置顶主题",
+      "params": {
+        "boardid": "int"
+      },
+      "responseShape": "array[topic]",
+      "script": "crawler.mjs#（未单独实现，可经 searchBoard 替代）"
+    },
+    {
+      "id": "board-search",
+      "method": "GET",
+      "path": "/board/search",
+      "purpose": "搜索版块",
+      "params": {
+        "keyword": "string"
+      },
+      "responseShape": "array[board]",
+      "script": "crawler.mjs#（未单独实现）"
+    },
+    {
+      "id": "board-tag-v2",
+      "method": "GET",
+      "path": "/board/{id}/tag-v2",
+      "checkedAt": "2026-11-22",
+      "anonymous": true,
+      "status": 200,
+      "responseShape": "object{layers,tags:[{id,name,subTags:[]}]}",
+      "sample": "/board/68/tag-v2 → tags 含「讨论/求助/资源」等",
+      "note": "**免鉴权**。上游清单提到但本地此前未记。"
+    },
+    {
+      "id": "user-by-name",
+      "method": "GET",
+      "path": "/user/name/{name}",
+      "checkedAt": "2026-11-22",
+      "anonymous": true,
+      "status": 200,
+      "responseShape": "object{id,name,postCount,prestige,privilege,groupName,registerTime,…}",
+      "sample": "/user/name/test → 1,147B",
+      "note": "**免鉴权**，返回用户公开资料。仅记录端点，不批量枚举用户名。"
+    },
+    {
+      "id": "topic-isfavorite",
+      "method": "GET",
+      "path": "/topic/{id}/isfavorite",
+      "checkedAt": "2026-11-22",
+      "anonymous": true,
+      "status": 200,
+      "responseShape": "boolean",
+      "sample": "/topic/6702898/isfavorite → false",
+      "note": "**免鉴权**，匿名恒为 false；登录后才有意义。"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "me-signin",
+      "method": "GET",
+      "path": "/me/signin",
+      "suspected": "write",
+      "reason": "签到，产生服务端记录，未调用"
+    },
+    {
+      "id": "me-makeup-signin",
+      "method": "POST",
+      "path": "/me/make-up-missed-signin",
+      "suspected": "write",
+      "reason": "补签"
+    },
+    {
+      "id": "me-transfer-wealth",
+      "method": "POST",
+      "path": "/me/transfer-wealth",
+      "suspected": "write",
+      "reason": "转账/财富变更"
+    },
+    {
+      "id": "me-favorite",
+      "method": "POST",
+      "path": "/me/favorite/",
+      "suspected": "write",
+      "reason": "收藏"
+    },
+    {
+      "id": "me-followee",
+      "method": "POST",
+      "path": "/me/followee/",
+      "suspected": "write",
+      "reason": "关注"
+    },
+    {
+      "id": "me-custom-board",
+      "method": "POST",
+      "path": "/me/custom-board/",
+      "suspected": "write",
+      "reason": "自定义版块"
+    },
+    {
+      "id": "me-theme",
+      "method": "PUT",
+      "path": "/me/theme",
+      "suspected": "write",
+      "reason": "设置主题"
+    },
+    {
+      "id": "post-create",
+      "method": "POST",
+      "path": "/post/",
+      "suspected": "write",
+      "reason": "发帖/回复"
+    },
+    {
+      "id": "topic-create",
+      "method": "POST",
+      "path": "/topic/",
+      "suspected": "write",
+      "reason": "发主题"
+    },
+    {
+      "id": "message-send",
+      "method": "POST",
+      "path": "/message/user/",
+      "suspected": "write",
+      "reason": "发私信"
+    },
+    {
+      "id": "config-update",
+      "method": "POST",
+      "path": "/config/index/update",
+      "suspected": "write",
+      "reason": "配置更新"
+    },
+    {
+      "id": "topic-posts",
+      "method": "GET",
+      "path": "/post/topic/user?topicid=",
+      "suspected": "read",
+      "reason": "按用户取帖，语义只读但本次未单发验证；取全部楼层的路由待抓包确认"
+    },
+    {
+      "id": "board-topic-list",
+      "method": "GET",
+      "path": "/board/{id}/topic",
+      "checkedAt": "2026-11-22",
+      "status": 401,
+      "body": "cannot_entry_board",
+      "note": "本地旧记录说「已有路径记录」；本轮实测 **401 cannot_entry_board**——该板块对匿名不可进。"
+    },
+    {
+      "id": "topic-hot-post",
+      "method": "GET",
+      "path": "/topic/{id}/hot-post",
+      "checkedAt": "2026-11-22",
+      "status": 401,
+      "note": "需登录。"
+    },
+    {
+      "id": "user-recent-topic",
+      "method": "GET",
+      "path": "/user/{id}/recent-topic",
+      "checkedAt": "2026-11-22",
+      "status": 401,
+      "note": "需登录（可能还要求本人）。"
+    },
+    {
+      "id": "post-topic-specific-user",
+      "method": "GET",
+      "path": "/post/topic/specific-user",
+      "checkedAt": "2026-11-22",
+      "status": null,
+      "note": "未请求：需 topicId+userId 组合，属按作者过滤，且会牵涉用户行为画像，按纪律不批量试。"
+    },
+    {
+      "id": "post-original",
+      "method": "GET",
+      "path": "/post/{id}/original",
+      "checkedAt": "2026-11-22",
+      "status": null,
+      "note": "未请求：仅对「有权编辑的本人楼层」有意义，属本人侧。"
+    },
+    {
+      "id": "notification",
+      "method": "GET",
+      "path": "/notification/{reply,at,system}",
+      "checkedAt": "2026-11-22",
+      "status": null,
+      "note": "未请求：本人通知，需登录。"
+    },
+    {
+      "id": "file-cc98",
+      "method": "GET",
+      "path": "https://file.cc98.org/…",
+      "checkedAt": "2026-11-22",
+      "status": null,
+      "note": "未请求：楼层引用附件直链，按「不批量取附件」纪律不做。"
+    }
+  ],
+  "policyExcluded": [
+    {
+      "name": "make-up-missed-signin",
+      "method": "POST",
+      "path": "/me/make-up-missed-signin",
+      "reason": "补签（写操作，会改变账号状态）",
+      "action": "不调用"
+    },
+    {
+      "name": "transfer-wealth",
+      "method": "POST",
+      "path": "/me/transfer-wealth",
+      "reason": "转账（写操作，涉及站内资产）",
+      "action": "不调用"
+    },
+    {
+      "name": "favorite",
+      "method": "POST",
+      "path": "/me/favorite/",
+      "reason": "收藏（写操作，改变账号偏好）",
+      "action": "不调用"
+    },
+    {
+      "name": "followee",
+      "method": "POST",
+      "path": "/me/followee/",
+      "reason": "关注（写操作，产生社交关系）",
+      "action": "不调用"
+    },
+    {
+      "name": "custom-board",
+      "method": "POST",
+      "path": "/me/custom-board/",
+      "reason": "自定义板块（写操作，改变账号配置）",
+      "action": "不调用"
+    },
+    {
+      "name": "create-post",
+      "method": "POST",
+      "path": "/post/",
+      "reason": "发帖（写操作，产生公开内容）",
+      "action": "不调用"
+    },
+    {
+      "name": "create-topic",
+      "method": "POST",
+      "path": "/topic/",
+      "reason": "发主题（写操作，产生公开内容）",
+      "action": "不调用"
+    },
+    {
+      "name": "send-message",
+      "method": "POST",
+      "path": "/message/user/",
+      "reason": "私信（写操作，以用户身份对外发件）",
+      "action": "不调用"
+    },
+    {
+      "name": "config-update",
+      "method": "POST",
+      "path": "/config/index/update",
+      "reason": "配置更新（写操作）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "cc98 的全部 9 个 POST 端点均为写操作（补签/转账/收藏/关注/发帖/私信/配置）。本库只读浏览主题与楼层，不调用任何写端点。R174 补记：此前只列出这些端点存在，未明确标注其写属性与「不调用」处置。",
+  "policyExcludedAt": "2026-11-23"
+}

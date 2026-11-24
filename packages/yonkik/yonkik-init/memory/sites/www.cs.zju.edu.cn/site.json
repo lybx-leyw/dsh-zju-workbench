@@ -1,0 +1,26 @@
+{
+  "key": "www.cs.zju.edu.cn",
+  "origin": "http://www.cs.zju.edu.cn",
+  "status": "done",
+  "label": "计算机科学与技术学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "固定单页首屏；未见 Retry-After。"
+  },
+  "exactNoticeColumns": {
+    "count": 2,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/csen/zdts/list.htm",
+      "/csen/xsjz/list.htm"
+    ],
+    "note": "身份靠 li.col_path 全链路 + Column_Anchor 大类名 + col_title 的 h2 标题；两栏的父级与末项同名同目录，须靠完整路径比对。"
+  }
+}

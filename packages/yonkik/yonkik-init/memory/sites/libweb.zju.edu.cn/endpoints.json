@@ -1,0 +1,293 @@
+{
+  "site": "libweb.zju.edu.cn",
+  "origin": "https://libweb.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "auth": "none",
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default"
+  },
+  "platform": "苏迪 Webplus 门户（静态发布）",
+  "verified": [
+    {
+      "method": "GET",
+      "path": "/main.htm",
+      "purpose": "首页（全站导航入口）",
+      "auth": "none",
+      "responseShape": "HTML 92431B；title『浙江大学图书馆中文网』",
+      "evidence": "200 92431B"
+    },
+    {
+      "method": "GET",
+      "path": "/55976/list.htm",
+      "purpose": "查收查引（检索证明）办事指南——服务内容/方式/时限/地址电话/收费标准/4 种校内转账/银行账号/3 份模板",
+      "auth": "none",
+      "responseShape": "HTML 64734B；正文在 .wp_articlecontent；附件在 /_upload/article/files/<uuid>/<uuid>.<ext>",
+      "evidence": "200 64734B；含 SCIE/SSCI/A&HCI/EI/CPCI-S/CSSCI/CSCD 清单、经费卡号 188610-659105、农行账号 19042201040000014",
+      "keyFacts": {
+        "委托入口": "http://cscy.zju.edu.cn/login.html",
+        "受理时限": "2-3 个工作日",
+        "电话": "0571-87952423",
+        "邮箱": "chaxin1@zju.edu.cn",
+        "地址": "紫金港校区图书馆主馆 222 室",
+        "校内转账经费卡号": "188610-659105",
+        "经办人": "<姓名>",
+        "经办人工号": "<工号>"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/55971/list.htm",
+      "purpose": "文献传递办事指南——CALIS/CASHL/易得/Rapido 四平台、收费标准、付款、7 条 FAQ、取件窗口",
+      "auth": "none",
+      "responseShape": "HTML",
+      "evidence": "200；页面自述『网页更新于 2026 年 1 月 6 日』",
+      "keyFacts": {
+        "Rapido": "本校用户免费，统一身份认证登录，24 小时内完成，连接全球 750+ 图书馆",
+        "CALIS 时限": "国内期刊 2-5 天；国外 2 周-1 个月；借书 10 天",
+        "账户有效期": "本科 4 年 / 研究生 5 年",
+        "电话": "0571-88208468（办公）/ 0571-88208470（取件）",
+        "邮箱": "zjuill@zju.edu.cn",
+        "钉钉群号": "172170002079",
+        "校外工行账号": "1202024609908808891（工行杭州市浙大分理处）"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/56334/list.htm",
+      "purpose": "校外访问指南——WebVPN / CARSI / RVPN 三种方式的真实 URL",
+      "auth": "none",
+      "responseShape": "HTML 40933B",
+      "evidence": "200 40933B",
+      "keyFacts": {
+        "WebVPN": "https://webvpn.zju.edu.cn/ （推荐，支持几乎全部数据库含试用库）",
+        "CARSI": "https://ds.carsi.edu.cn/ （支持部分数据库）",
+        "RVPN": "https://vpn.zju.edu.cn/ （支持部分数据库）"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/55986/list.htm",
+      "purpose": "开放时间（主馆逐楼层逐时段）",
+      "auth": "none",
+      "responseShape": "HTML；title『浙江大学图书馆主馆』；表格在正文",
+      "evidence": "200；自述 2025-01-21 更新；阅览区 8:30-22:30 与 booking 的 seat_rule 互洽"
+    },
+    {
+      "method": "GET",
+      "path": "/55973/list.htm",
+      "purpose": "自助服务子栏目（自助借还书/自助预约取书/自助文印/自助缴费/预约平台）",
+      "auth": "none",
+      "responseShape": "HTML；title 为子项『自助借还书』",
+      "evidence": "200；含 3M 自助借书仪、Bibliotheca 自助借书仪条目"
+    }
+  ],
+  "columnMap": {
+    "服务": {
+      "入馆与借阅": "/55970/list.htm",
+      "文献传递": "/55971/list.htm",
+      "自助服务": "/55973/list.htm",
+      "教学与培训": "/55972/list.htm",
+      "科技查新": "/55975/list.htm",
+      "查收查引": "/55976/list.htm",
+      "情报服务": "/55977/list.htm",
+      "知识产权服务": "/55978/list.htm",
+      "学科服务": "/55979/list.htm",
+      "图书资产管理": "/tszcgl/list.htm",
+      "投稿指南": "/55981/list.htm",
+      "@zju-lib图灵灵": "/tll/list.htm",
+      "校外访问": "/56334/list.htm"
+    },
+    "资源": {
+      "资源动态": "/55543/list.htm",
+      "资源荐购": "/55545/list.htm",
+      "编目绿色通道": "/55546/list.htm",
+      "捐赠": "/tsgjzpt/main.htm"
+    },
+    "概况": {
+      "本馆介绍": "/55984/list.htm",
+      "馆藏分布": "/55985/list.htm",
+      "开放时间": "/55986/list.htm",
+      "规章制度": "/55987/list.htm",
+      "本馆新闻": "/55989/list.htm",
+      "本馆黄页": "/gyhy/list.htm",
+      "党建工作": "/55990/list.htm",
+      "分馆导览": "/56614/list.htm",
+      "参观交流": "/cgjl/list.htm"
+    }
+  },
+  "externalSystems": [
+    {
+      "name": "馆藏书刊目录 OPAC",
+      "url": "https://opac.zju.edu.cn/",
+      "note": "/F/?func=bor-info = 我的图书馆"
+    },
+    {
+      "name": "数据库导航",
+      "url": "https://libdb.zju.edu.cn/s/lib/libtb/"
+    },
+    {
+      "name": "电子图书/期刊（Summon）",
+      "url": "http://gk4pb6yy8y.search.serialssolutions.com/?L=GK4PB6YY8Y&tab=BOOKS"
+    },
+    {
+      "name": "随书光盘",
+      "url": "http://210.32.137.198/"
+    },
+    {
+      "name": "古籍特藏",
+      "url": "http://absc.zju.edu.cn/"
+    },
+    {
+      "name": "预约平台",
+      "url": "http://booking.lib.zju.edu.cn"
+    },
+    {
+      "name": "求是荐书（含芸悦读）",
+      "url": "https://zju.icaifang.cn"
+    },
+    {
+      "name": "CADAL",
+      "url": "http://cadal.edu.cn/"
+    },
+    {
+      "name": "教参服务平台",
+      "url": "https://jc.zju.edu.cn/"
+    },
+    {
+      "name": "新书通报",
+      "url": "https://zju.newbook.pro/"
+    },
+    {
+      "name": "查收查引委托系统",
+      "url": "http://cscy.zju.edu.cn/login.html"
+    },
+    {
+      "name": "知识产权信息服务中心",
+      "url": "https://ip.zju.edu.cn/"
+    },
+    {
+      "name": "信息资源分析研究中心",
+      "url": "https://ciraa.zju.edu.cn/"
+    },
+    {
+      "name": "图书馆办公网",
+      "url": "http://oa.lib.zju.edu.cn/"
+    }
+  ],
+  "downloadableDocs": [
+    {
+      "topic": "查收查引网上委托指南（详细版）",
+      "url": "/_upload/article/files/e4/b2/08a0724044d0b49d2c28ab21c9e4/212ca9ae-ed9f-42a0-946c-7152505de83c.pdf"
+    },
+    {
+      "topic": "查收查引网上委托指南（视频版）",
+      "url": "/_upload/article/videos/e4/b2/08a0724044d0b49d2c28ab21c9e4/f00137cc-b916-4483-bbf6-326d803b3345.mp4"
+    },
+    {
+      "topic": "BibTex 格式文件下载示例",
+      "url": "/_upload/article/files/e4/b2/08a0724044d0b49d2c28ab21c9e4/99350fc7-d576-4e0b-9e7c-251b201c0ebc.pdf"
+    },
+    {
+      "topic": "CSSCI 标准格式下载示例",
+      "url": "/_upload/article/files/e4/b2/08a0724044d0b49d2c28ab21c9e4/f6bcf2a7-c37f-4443-8ce3-6c12f3d078ff.pdf"
+    },
+    {
+      "topic": "Excel 模板",
+      "url": "/_upload/article/files/e4/b2/08a0724044d0b49d2c28ab21c9e4/0a107501-4181-4df0-8563-fdc6f8fa69a2.xls"
+    },
+    {
+      "topic": "帮助文档",
+      "url": "/_upload/tpl/06/99/1689/template1689/images/1fa06860-5cdb-4b47-94bc-4b997c903c08.pdf"
+    }
+  ],
+  "unverified": [
+    {
+      "path": "/55970/list.htm",
+      "purpose": "入馆与借阅（借书册数/期限）",
+      "suspected": "read"
+    },
+    {
+      "path": "/55975/list.htm",
+      "purpose": "科技查新（与查收查引不同业务）",
+      "suspected": "read"
+    },
+    {
+      "path": "/55987/list.htm",
+      "purpose": "规章制度（读者违规处理）",
+      "suspected": "read"
+    },
+    {
+      "path": "/55984/list.htm",
+      "purpose": "本馆介绍",
+      "suspected": "read"
+    },
+    {
+      "path": "/55985/list.htm",
+      "purpose": "馆藏分布",
+      "suspected": "read"
+    },
+    {
+      "path": "/56614/list.htm",
+      "purpose": "分馆导览（各分馆地址/开放时间）",
+      "suspected": "read"
+    },
+    {
+      "path": "/gyhy/list.htm",
+      "purpose": "本馆黄页（部门联系人）",
+      "suspected": "read"
+    },
+    {
+      "path": "/55981/list.htm",
+      "purpose": "投稿指南",
+      "suspected": "read"
+    },
+    {
+      "path": "/55545/list.htm",
+      "purpose": "资源荐购流程",
+      "suspected": "read"
+    },
+    {
+      "path": "http://cscy.zju.edu.cn/login.html",
+      "purpose": "查收查引委托系统本体（需登录）——补打/加急等问题的答案在这里",
+      "suspected": "login-required"
+    }
+  ],
+  "exactNoticeColumns": [
+    {
+      "id": "GET libweb.zju.edu.cn/55989/list.htm",
+      "method": "GET",
+      "verifiesPath": "/55989/list.htm",
+      "verifiedAt": "2026-11-22",
+      "observation": {
+        "url": "https://libweb.zju.edu.cn/55989/list.htm",
+        "status": 200,
+        "count": 14,
+        "total": 720,
+        "pages": 52,
+        "externalLinks": 3,
+        "firstId": "3210697",
+        "firstDate": "2026-09-30",
+        "displayTitle": "本馆新闻"
+      }
+    },
+    {
+      "id": "GET libweb.zju.edu.cn/55543/list.htm",
+      "method": "GET",
+      "verifiesPath": "/55543/list.htm",
+      "verifiedAt": "2026-11-22",
+      "observation": {
+        "url": "https://libweb.zju.edu.cn/55543/list.htm",
+        "status": 200,
+        "count": 14,
+        "total": 1128,
+        "pages": 81,
+        "externalLinks": 0,
+        "firstId": "1959553",
+        "firstDate": "2020-02-11",
+        "displayTitle": "资源动态"
+      }
+    }
+  ]
+}

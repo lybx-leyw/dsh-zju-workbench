@@ -1,0 +1,155 @@
+{
+  "_note": "浙大班车 shuttlebus 只读接口。全部免登录（无需 campus-sso / CAS）。探索期串行单发，未触发 429。",
+  "base": "http://www.life.zju.edu.cn/_web/_apps/lightapp",
+  "verified": [
+    {
+      "id": "stations",
+      "method": "GET",
+      "path": "/shuttlebus/station/api/lists.rst?state=1&page=0&rows=99999",
+      "purpose": "全部乘车站点（31 个）",
+      "response": "{resultCode:0, result:{total, data:[{id,name,sort,state,remark,longitude,latitude}]}}",
+      "op": "stations",
+      "evidence": "2026-11-19 实测 200，31 站点"
+    },
+    {
+      "id": "buses",
+      "method": "GET",
+      "path": "/shuttlebus/bus/api/lists.rst?state=1&page=0&rows=99999",
+      "purpose": "班车目录（22 辆，含 usersType/cycle）",
+      "response": "{resultCode:0, result:{data:[{id,name,sort,state,remark,carNumber,driverName,cycle,usersType}]}}",
+      "op": "buses",
+      "evidence": "2026-11-19 实测 200，22 辆"
+    },
+    {
+      "id": "routes",
+      "method": "GET",
+      "path": "/shuttlebus/route/api/lists.rst?state=1&page=0&rows=99999",
+      "purpose": "线路定义（159 条，含起终站与途经站描述）",
+      "response": "{resultCode:0, result:{total:159, data:[{id,name,startStation,endStation,remark,state}]}}",
+      "op": "routes",
+      "note": "必须带 state=1&page=0&rows=，否则 resultCode=-1、result:{}",
+      "evidence": "2026-11-19 实测 200，159 条"
+    },
+    {
+      "id": "busflight",
+      "method": "GET",
+      "path": "/shuttlebus/busflight/api/lists.rst?id=-1&startStationId={sid}&endStationId={eid}&zj={1..7}&startTime=0000&endTime=2359&page=0&rows=99999",
+      "purpose": "班次时刻（核心接口）",
+      "response": "{resultCode:0, result:{total, data:[{id,busId,busName,busLineId,lineName,startStationId,startStationName,endStationId,endStationName,startTime,endTime,cycle,remark,carNumber,state}]}}",
+      "op": "shifts",
+      "note": "startTime/endTime 是 4 位字符串如 705 / 1737（不是 7:05）。zj=运行周期，1-5 工作日、6-7 周末。id=-1 表示不限班车。",
+      "evidence": "2026-11-19 实测：全周 165 条；工作日(1..5) 155 条"
+    },
+    {
+      "id": "busflight-paged-ui",
+      "method": "GET",
+      "path": "/shuttlebus/busflight/api/lists.rst?...&page=0&rows=10",
+      "purpose": "UI 分页调用（页面用 rows=10，16 页）",
+      "note": "rows 可放大到 99999 一次取全量；这是页面未使用但对批量查询有效的参数",
+      "evidence": "2026-11-19 浏览器抓包确认页面用 rows=10，改 99999 后返回全量 165 条"
+    },
+    {
+      "id": "bus-page",
+      "method": "GET",
+      "path": "/busQuery/mobile/pc/pub/shiftManage.html",
+      "purpose": "PC 版班车查询页（人读入口，免登录）",
+      "note": "页面页头挂 5 个时刻表 PDF 链接 + 暑期班车提醒",
+      "evidence": "2026-11-19 实测 200，11682 bytes"
+    },
+    {
+      "id": "timetable-pdf",
+      "method": "GET",
+      "path": "/busQuery/mobile/zjgbc1110.pdf",
+      "purpose": "浙江大学班车时刻表（完整版 PDF）",
+      "evidence": "2026-11-19 实测 200，232295 bytes，application/pdf"
+    },
+    {
+      "id": "timetable-brief-pdf",
+      "method": "GET",
+      "path": "/busQuery/mobile/bcskjb1110.pdf",
+      "purpose": "浙江大学班车时刻简表（PDF，含注意事项全文）",
+      "evidence": "2026-11-19 实测 200，274177 bytes；本地 pdf.js 转录成功 9766 字符"
+    },
+    {
+      "id": "eastbus-pdf",
+      "method": "GET",
+      "path": "/busQuery/mobile/dtjbc.pdf",
+      "purpose": "紫金港教学区短驳班车（PDF）",
+      "evidence": "2026-11-19 实测 200，49672 bytes"
+    },
+    {
+      "id": "summer-pdf",
+      "method": "GET",
+      "path": "/busQuery/mobile/pc/pub/images/sqbcsk.pdf",
+      "purpose": "暑期班车时刻表（PDF）",
+      "evidence": "页面链接抽出，未单独下载校验"
+    }
+  ],
+  "external-crossref": [
+    {
+      "id": "zwc-bus-notice-list",
+      "method": "GET",
+      "path": "http://www.zwc.zju.edu.cn/hqfwgl/list.htm",
+      "purpose": "总务处班车公告列表（临时调整/节假日安排，最新一条覆盖时刻表）",
+      "evidence": "2026-11-19 实测 200，含 2026-11-18《关于调整部分班车运行安排的通知》等 10 条"
+    },
+    {
+      "id": "zwc-notice-detail",
+      "method": "GET",
+      "path": "http://www.zwc.zju.edu.cn/2026/1118/c23087a3228476/page.htm",
+      "purpose": "班车调整通知正文（示例：11-21 起教师8号紫→之 17:10 改 21:25；11-23 起 22:05 改 22:10）",
+      "evidence": "2026-11-19 实测 200，33558 bytes"
+    },
+    {
+      "id": "ride-rules",
+      "method": "GET",
+      "path": "https://itc.zju.edu.cn/ydxw/2022/0402/c20989a2513531/pagem.htm",
+      "purpose": "乘坐班车注意事项（官方原文：谁能坐、凭证要求、学生开放点规则、联系方式）",
+      "evidence": "2026-11-19 实测 200，25362 bytes，正文全文已提取"
+    },
+    {
+      "id": "zulg-transport",
+      "method": "GET",
+      "path": "https://zulg.zju.edu.cn/guide/transport.htm",
+      "purpose": "后勤集团交通服务页（班车/用车/小白车官方口径）",
+      "evidence": "2026-11-19 实测 200，30102 bytes，正文全文已提取"
+    }
+  ],
+  "unverified": [
+    {
+      "path": "POST /login.jsp?domainId=1 (life.zju.edu.cn)",
+      "suspected": "登录（写操作，仅建立会话）",
+      "reason": "苏迪 Coreplus 表单登录：userName + password(Base64) + validateCode(图形验证码) + isSubmitted=1。2026-11-19 已验证：拿到新验证码后单次提交返回「用户名或密码不正确」——说明验证码校验通过、但该站账号体系不是统一身份认证（campus-sso 不适用），需要站点本地的 life 账号。未再重试，避免锁号。",
+      "status": "需用户提供 life 独立账号，或改由钉钉/浙大钉路径走"
+    },
+    {
+      "path": "学生乘坐班车预约系统",
+      "suspected": "预约（写操作，本技能不执行）",
+      "reason": "官方口径：登录钉钉「浙大钉→浙江大学平台→搜索班车预约」，预约成功后持乘车码上车。轻应用路径未探到公开 pub 入口（busQuery/mobile/index.html 等均 404），且预约本身是写操作，不在只读探索范围内。",
+      "status": "未探（写操作 + 需钉钉客户端）"
+    },
+    {
+      "path": "/_web/_apps/lightapp/shuttlebus/{station,bus,route,busflight}/api/create.rst|edit{0}.rst|deletes.rst",
+      "suspected": "写（后台管理接口，页面 JS 里明文可见）",
+      "reason": "common.js 里同时列出增删改接口；未知权限、语义为写。按安全契约不调用、不记录参数。",
+      "status": "禁止调用"
+    },
+    {
+      "path": "预约码申领（院系下发）",
+      "suspected": "线下发放 + 钉钉端使用",
+      "reason": "官方仅表述为「院系下发的预约码」，无 web 申领入口。已实测排除：应用中心 62 应用无预约应用；life 轻应用 12 个候选名全 404；总务处 46 篇班车通知仅 2 处「预约」且为校园巴士电话；教务网 575 通知 0 条；学工部/eta/ugrs 均无。",
+      "status": "无法从公开 web 获取，需找院系教务科/学工办或致电 88208698"
+    }
+  ],
+  "verified-appcenter": [
+    {
+      "id": "service-appcenter-all",
+      "method": "GET",
+      "path": "https://service.zju.edu.cn/mobile/loadServiceApps.rst?parentCategoryId=36&categoryId=&orgId=&modeId=&appName=",
+      "purpose": "「我的浙大」应用中心全量应用清单（62 个，4 大类）",
+      "requires": "campus-sso（CAS 登录 service.zju.edu.cn 后带 cookie）",
+      "result": "班车类仅 1 个：班车查询 → life.zju.edu.cn/.../shiftManage.html；无「班车预约」应用",
+      "evidence": "2026-11-19 实测 200，解析出 办公办事22 / 教育教学12 / 浙大生活14 / 实用工具14"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "key": "www.cls.zju.edu.cn",
+  "origin": "http://www.cls.zju.edu.cn",
+  "status": "done",
+  "label": "生命科学学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "note": "/clscn 子站；每页 10 条；日期 span.d + span.y 两段；首屏全为公众号外链。"
+  }
+}

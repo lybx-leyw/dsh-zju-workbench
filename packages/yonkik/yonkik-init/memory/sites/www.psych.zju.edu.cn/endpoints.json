@@ -1,0 +1,81 @@
+{
+  "site": "www.psych.zju.edu.cn",
+  "access": "公开 HTTP；HTTPS 443 连接被拒、robots 404。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.psych.zju.edu.cn/27565/list.htm",
+      "column": "学生天地",
+      "verifiesPath": "/27565/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.psych.zju.edu.cn/27565/list.htm",
+        "status": 200,
+        "displayTitle": "学生天地",
+        "count": 20,
+        "total": 1125,
+        "pages": 57,
+        "externalLinks": 0,
+        "firstId": "3229382",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.psych.zju.edu.cn/27568/list.htm",
+      "column": "国际交流",
+      "verifiesPath": "/27568/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.psych.zju.edu.cn/27568/list.htm",
+        "status": 200,
+        "displayTitle": "国际交流",
+        "count": 20,
+        "total": 242,
+        "pages": 13,
+        "externalLinks": 2,
+        "firstId": "3228522",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.psych.zju.edu.cn/27572/list.htm",
+      "column": "研究生教育",
+      "verifiesPath": "/27572/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.psych.zju.edu.cn/27572/list.htm",
+        "status": 200,
+        "displayTitle": "研究生教育",
+        "count": 20,
+        "total": 23,
+        "pages": 2,
+        "externalLinks": 8,
+        "firstId": "3091201",
+        "firstDate": "2025-10-13"
+      }
+    },
+    {
+      "id": "GET www.psych.zju.edu.cn/27573/list.htm",
+      "column": "本科生教育",
+      "verifiesPath": "/27573/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.psych.zju.edu.cn/27573/list.htm",
+        "status": 200,
+        "displayTitle": "本科生教育",
+        "count": 20,
+        "total": 41,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3193581",
+        "firstDate": "2026-08-05"
+      }
+    }
+  ],
+  "unverified": [
+    "其余心理系栏目、分页、正文与附件未验证。"
+  ]
+}

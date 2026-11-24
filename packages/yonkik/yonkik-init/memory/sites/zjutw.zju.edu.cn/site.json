@@ -1,0 +1,25 @@
+{
+  "key": "zjutw.zju.edu.cn",
+  "origin": "https://zjutw.zju.edu.cn",
+  "label": "浙江大学团委",
+  "status": "done",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct",
+  "requires": [],
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "HTTPS /robots.txt 404；公开主页未找到自动化条款链接；不等于无限制。一次命令一请求，不自动翻页/跟随。"
+  },
+  "exploredAt": "2026-11-22",
+  "source": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/core/zju/lib/notice/sources.ts#L36-L47",
+  "robots": {
+    "path": "/robots.txt",
+    "status": 404,
+    "checkedAt": "2026-11-22"
+  },
+  "home": "/main.psp"
+}

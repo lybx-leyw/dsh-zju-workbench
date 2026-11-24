@@ -1,0 +1,203 @@
+{
+  "site": "www.cbeis.zju.edu.cn",
+  "access": "公开 HTTP；/gsgg 的 .htm 301 到同站 .psp。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.cbeis.zju.edu.cn/tzgg_65357/list.htm",
+      "column": "学生工作",
+      "verifiesPath": "/tzgg_65357/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cbeis.zju.edu.cn/tzgg_65357/list.htm",
+        "catalogPath": "/tzgg_65357/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "通知公告",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/tzgg_65357/list.htm",
+            "学生工作"
+          ],
+          [
+            "/tzgg_65357/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 394,
+        "pages": 29,
+        "externalLinks": 0,
+        "firstId": "2571741",
+        "firstDate": "2025-06-05"
+      }
+    },
+    {
+      "id": "GET www.cbeis.zju.edu.cn/tzgg_65360/list.htm",
+      "column": "国际交流",
+      "verifiesPath": "/tzgg_65360/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cbeis.zju.edu.cn/tzgg_65360/list.htm",
+        "catalogPath": "/tzgg_65360/list.htm",
+        "status": 200,
+        "column": "国际交流",
+        "displayTitle": "通知公告",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/tzgg_65360/list.htm",
+            "国际交流"
+          ],
+          [
+            "/tzgg_65360/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 120,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3229433",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.cbeis.zju.edu.cn/63901/list.htm",
+      "column": "教育教学",
+      "verifiesPath": "/63901/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cbeis.zju.edu.cn/63901/list.htm",
+        "catalogPath": "/63901/list.htm",
+        "status": 200,
+        "column": "教育教学",
+        "displayTitle": "通知公告",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/63901/list.htm",
+            "教育教学"
+          ],
+          [
+            "/63901/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/63901/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 57,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3218350",
+        "firstDate": "2026-10-23"
+      }
+    },
+    {
+      "id": "GET www.cbeis.zju.edu.cn/xszz/list.htm",
+      "column": "学生组织",
+      "verifiesPath": "/xszz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cbeis.zju.edu.cn/xszz/list.htm",
+        "catalogPath": "/xszz/list.htm",
+        "status": 200,
+        "column": "学生组织",
+        "displayTitle": "学生组织",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/tzgg_65357/list.htm",
+            "学生工作"
+          ],
+          [
+            "/xszz/list.htm",
+            "学生组织"
+          ]
+        ],
+        "count": 14,
+        "total": 52,
+        "pages": 4,
+        "externalLinks": 0,
+        "firstId": "3227659",
+        "firstDate": "2026-11-16"
+      }
+    },
+    {
+      "id": "GET www.cbeis.zju.edu.cn/tzgg/list.htm",
+      "column": "研究生教育",
+      "verifiesPath": "/tzgg/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cbeis.zju.edu.cn/tzgg/list.htm",
+        "catalogPath": "/tzgg/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "通知公告",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/63901/list.htm",
+            "教育教学"
+          ],
+          [
+            "/tzgg/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/tzgg/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 198,
+        "pages": 15,
+        "externalLinks": 4,
+        "firstId": "3226498",
+        "firstDate": "2026-11-12"
+      }
+    },
+    {
+      "id": "GET www.cbeis.zju.edu.cn/gsgg/list.htm",
+      "column": "公示公告",
+      "verifiesPath": "/gsgg/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cbeis.zju.edu.cn/gsgg/list.psp",
+        "catalogPath": "/gsgg/list.htm",
+        "status": 200,
+        "column": "公示公告",
+        "displayTitle": "公示公告",
+        "sectionTitle": "通知公告",
+        "trail": [
+          [
+            "/tzyg/list.htm",
+            "通知公告"
+          ],
+          [
+            "/gsgg/list.htm",
+            "公示公告"
+          ]
+        ],
+        "count": 14,
+        "total": 133,
+        "pages": 10,
+        "externalLinks": 0,
+        "firstId": "3219767",
+        "firstDate": "2026-10-27"
+      }
+    }
+  ],
+  "unverified": [
+    "其余生仪学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

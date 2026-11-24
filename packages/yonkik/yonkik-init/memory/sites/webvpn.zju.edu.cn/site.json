@@ -1,0 +1,15 @@
+{
+  "key": "webvpn.zju.edu.cn",
+  "origin": "https://webvpn.zju.edu.cn",
+  "status": "done",
+  "type": "WebVPN（深信服 WEngine，URL 重写型）",
+  "auth": {
+    "type": "form-local",
+    "credentialKey": "webvpn",
+    "loginUrl": "https://webvpn.zju.edu.cn/login",
+    "authType": "local",
+    "note": "默认 auth_type=local，用上网账号（校园网账号），不是统一身份认证。页面另有 cas/oidc/escience/dingding/auth_sms 等多种 auth_type，但默认不是 cas。凭据必须用独立的 webvpn 键，不要用 campus-sso——两者不总一致，此前曾出现误用 campus-sso 也能登进去的情况（巧合，不可依赖）。"
+  },
+  "rateLimit": { "minIntervalMs": 1500, "concurrency": 1 },
+  "exploredAt": "2026-11-22"
+}

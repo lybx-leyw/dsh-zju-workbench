@@ -1,0 +1,50 @@
+{
+  "site": "icsr.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS。固定路径、无凭据、不跟跳转。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET icsr.zju.edu.cn/xsgz/list.htm",
+      "column": "学生工作",
+      "verifiesPath": "/xsgz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://icsr.zju.edu.cn/xsgz/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "学生工作",
+        "sectionTitle": "人才培养",
+        "trail": [
+          [
+            "/xkjs/list.htm",
+            "人才培养"
+          ],
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ]
+        ],
+        "count": 14,
+        "total": 35,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3220365",
+        "firstDate": "2026-09-24"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/xsjl/list.htm",
+      "pageTitle": "学术讲座",
+      "sectionTitle": "学术交流",
+      "claimedColumnPath": "/xsjz/list.htm",
+      "claimedColumnTitle": "学术讲座",
+      "note": "目录路径可访问且标题正确，但「当前位置」末项自认 /xsjz/，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余网安学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

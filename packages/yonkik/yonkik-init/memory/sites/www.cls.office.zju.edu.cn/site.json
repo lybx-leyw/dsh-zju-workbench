@@ -1,0 +1,35 @@
+{
+  "key": "www.cls.office.zju.edu.cn",
+  "origin": "http://www.cls.office.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.cls.office.zju.edu.cn/25820/list.htm",
+  "column": "最新通知",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 7,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/25820/list.psp",
+      "/cggs/list.psp",
+      "/25875/list.psp",
+      "/25812/list.psp",
+      "/gsgg_80891/list.psp",
+      "/gsgg_80892/list.psp",
+      "/gsgg_80890/list.psp"
+    ],
+    "note": "三栏显示标题同为「公示公告」（研究生教育 / 本科生教育 / 科研合作），靠「当前位置」完整链路区分；全部按 .psp 有效地址记录。"
+  }
+}

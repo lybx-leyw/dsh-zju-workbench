@@ -1,0 +1,16 @@
+{
+  "key": "chaoxing.com",
+  "origin": "https://www.chaoxing.com",
+  "status": "done",
+  "type": "在线课程平台（第三方商业）",
+  "auth": {
+    "type": "form",
+    "credentialKey": "https://www.chaoxing.com/的账号密码",
+    "loginUrl": "https://passport2.chaoxing.com/login",
+    "submitUrl": "https://passport2.chaoxing.com/fanyalogin",
+    "note": "账密表单登录；密码经 AES 加密（transferKey u2oh6Vu^HWe4_AES），由页面自带 encryptByAES 完成，脚本只需填充输入框后点 #loginBtn。滑块仅在 needVcode=1 时出现，实测未触发。"
+  },
+  "rateLimit": { "minIntervalMs": 2000, "concurrency": 1 },
+  "compliance": "超星为用户自有账号平台，仅做本人账号的只读访问；不代用户交作业、开始考试、签到。2022-06 曾曝疑似 1.7 亿条用户信息泄露（公司否认并报案），多家高校发布过风险预警，凭据不应与其他站点复用。",
+  "exploredAt": "2026-11-20"
+}

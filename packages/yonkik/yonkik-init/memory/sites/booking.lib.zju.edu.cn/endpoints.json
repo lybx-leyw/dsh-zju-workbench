@@ -1,0 +1,317 @@
+{
+  "site": "booking.lib.zju.edu.cn",
+  "origin": "http://booking.lib.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "auth": {
+    "type": "cas-jwt",
+    "credentialKey": "campus-sso",
+    "captcha": false,
+    "headerFormat": "authorization: bearer<JWT>  (无空格，SPA 源码是 `bearer${token}`)",
+    "bodyField": "POST /reserve/* 与部分 /api/* 需在 body 里再带 authorization 字段",
+    "stateFile": "state.json (cookies) + _scratch/token.txt (sessionStorage JWT；敏感，收工删 _scratch/)"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default"
+  },
+  "verified": [
+    {
+      "method": "GET",
+      "path": "/api/index/notice",
+      "purpose": "公告列表",
+      "auth": "none",
+      "responseShape": "{code:1,data:{total:13,per_page:15,current_page:1,last_page:1,data:[{id,title,displayNo,create_time,ROW_NUMBER}]}}",
+      "evidence": "200 1897B"
+    },
+    {
+      "method": "GET",
+      "path": "/api/index/noticeDetail?id=<id>",
+      "purpose": "公告正文",
+      "auth": "none",
+      "responseShape": "{code:1,data:{id,title,content(HTML),displayNo,inputTime,ROW_NUMBER}}",
+      "evidence": "id=40 → 200 877B"
+    },
+    {
+      "method": "GET",
+      "path": "/api/index/booking_rules",
+      "purpose": "全套预约规则（座位/研讨间/活动/储物柜，含英文版）",
+      "auth": "none",
+      "responseShape": "{code:1,msg,data:{seat,seat_rule,seminar_rule,seminar_declare,activity_rule,discussion,locker_rule,locker_declare,isShow*Text,*_en}}",
+      "evidence": "200 51563B",
+      "gotcha": "seat_rule 里是「违约累计3次冻结一周」+「每年首日清零」，不是『连续三次』"
+    },
+    {
+      "method": "GET",
+      "path": "/api/Seminar/tree",
+      "purpose": "馆舍→楼层→房间树（含楼层平面图 URL）",
+      "auth": "none",
+      "responseShape": "{code:1,msg,data:[{id,name,parentId,nameMerge,image_url,children:[...]}]}",
+      "evidence": "200 30491B；4 馆舍：主馆53/基础馆18/农医馆37/方闻馆171"
+    },
+    {
+      "method": "GET",
+      "path": "/api/Study/libinfo",
+      "purpose": "馆舍下拉（12 项）",
+      "auth": "none",
+      "responseShape": "{code:1,msg:'馆舍下拉列表',data:[{libPlace,description}]}",
+      "evidence": "200 600B"
+    },
+    {
+      "method": "GET",
+      "path": "/api/index/time",
+      "purpose": "服务器时间",
+      "auth": "none",
+      "responseShape": "{code:1,msg,data:{time}}",
+      "evidence": "200 59B"
+    },
+    {
+      "method": "GET",
+      "path": "/api/seat/label",
+      "purpose": "座位标签字典",
+      "auth": "none",
+      "responseShape": "{code:1,msg:'操作成功',data:[{id,name,ROW_NUMBER}]}",
+      "evidence": "200 322B, 6 条"
+    },
+    {
+      "method": "GET",
+      "path": "/api/index/lang",
+      "purpose": "中英文案字典（可反推全部 UI 字段）",
+      "auth": "none",
+      "responseShape": "{code:0,data:{zh:{...},en:{...}}}",
+      "evidence": "200 38721B"
+    },
+    {
+      "method": "GET",
+      "path": "/api/Member/my",
+      "purpose": "本人资料",
+      "auth": "jwt",
+      "responseShape": "{code:1,data:{id,name,card,status,joinTime,mobile,email,roleName,deptName,qrcode,date,popUp}}",
+      "evidence": "200 1093B（header+body 双带 authorization）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/Member/reneges",
+      "purpose": "本人违约记录",
+      "auth": "jwt",
+      "responseShape": "{code:1,data:[]}",
+      "evidence": "200 20B"
+    },
+    {
+      "method": "GET",
+      "path": "/api/Member/seat",
+      "purpose": "本人座位预约历史（分页）",
+      "auth": "jwt",
+      "responseShape": "{code:1,data:{total,per_page,current_page,last_page,data:[...]}}",
+      "evidence": "200 11744B（total 随个人使用量变化）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/Member/seminar",
+      "purpose": "本人研讨间预约历史（分页）",
+      "auth": "jwt",
+      "responseShape": "同上",
+      "evidence": "200 11665B（同上）"
+    },
+    {
+      "method": "POST",
+      "path": "/reserve/index/index",
+      "purpose": "预约首页元数据（馆舍/类别/层/噪音/特征/可约日期）",
+      "auth": "jwt",
+      "responseShape": "{code:0,data:{premises:[{id,name}],category:[{id,name:'普通座位'}],storey:[{id,name,floorId:[{id,parentId}]}],noise:[{id,name}],boutique:[{id,name}],date:['2026-11-20','2026-11-21']}}",
+      "evidence": "200 2731B"
+    },
+    {
+      "method": "POST",
+      "path": "/reserve/index/quickSelect",
+      "purpose": "各馆舍/楼层/区域实时座位余量",
+      "auth": "jwt",
+      "responseShape": "{code:0,data:{date:[..],premises:[{id,name,total_num,free_num}],storey:[{id,name,parentId,total_num,free_num}],area:[{id,name,parentId,topId,thumb_img,total_num,free_num}]}}",
+      "evidence": "200；主馆 total=1024，free 随时间变化",
+      "params": {
+        "id": "1",
+        "date": "YYYY-MM-DD（仅今天/明天）",
+        "premisesIds": "[\"53\"]",
+        "members": "0",
+        "authorization": "<JWT>"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/reserve/index/list",
+      "purpose": "区域列表（分页，含余量+图片）",
+      "auth": "jwt",
+      "responseShape": "{code:0,data:{page,size,list:[{id,name,nameMerge,type_name,firstimg,img[],storeyName,premisesName,total_num,free_num}]}}",
+      "evidence": "200，page=1 size=100 返回 10 项"
+    },
+    {
+      "method": "POST",
+      "path": "/reserve/index/detail",
+      "purpose": "单区域详情（噪音/特征/是否可减）",
+      "auth": "jwt",
+      "responseShape": "{code:0,data:{id,name,total_num,free_num,noise:[{id,name}],boutique:[],is_reducible,firstimg,img[]}}",
+      "evidence": "areaId=58 → 200"
+    },
+    {
+      "method": "GET",
+      "path": "/reserve/device/mylist",
+      "purpose": "本人设备预约",
+      "auth": "jwt",
+      "responseShape": "{code:1,data:{total:0,per_page:10,current_page:1,last_page:0,data:[]}}",
+      "evidence": "200 84B"
+    }
+  ],
+  "authRequiredConfirmed": [
+    {
+      "path": "/api/index/category",
+      "anonResponse": "{code:10001,msg:'您尚未登录'}"
+    },
+    {
+      "path": "/api/index/subscribe",
+      "anonResponse": "{code:10001,msg:'您尚未登录'}"
+    },
+    {
+      "path": "/api/Member/my|seat|room|seminar|reneges|invitations",
+      "anonResponse": "{code:10001}"
+    },
+    {
+      "path": "/api/Seminar/v1seminar",
+      "anonResponse": "{code:10001}"
+    },
+    {
+      "path": "/api/Seminar/detail",
+      "anonResponse": "{code:10001}"
+    },
+    {
+      "path": "/api/Seminar/seminar",
+      "anonResponse": "{code:10001}"
+    }
+  ],
+  "deadEndpoints": [
+    {
+      "path": "/api/Seat/tree",
+      "note": "GET 500 / POST code201『服务器异常』，带 token 与 libPlace 均无效；被 /reserve/index/quickSelect 取代"
+    },
+    {
+      "path": "/api/Seat/date",
+      "note": "同上，code201"
+    },
+    {
+      "path": "/api/Seat/seat",
+      "note": "恒回『请选择区域不能为空』，参数名不可得；被 /reserve/index/detail 取代"
+    },
+    {
+      "path": "/api/seat/map",
+      "note": "回 {code:0,msg:'Error'}"
+    },
+    {
+      "path": "/api/Help/index",
+      "note": "回 20B 空"
+    },
+    {
+      "path": "/api/Help/detail",
+      "note": "500 HTML『系统发生错误』"
+    },
+    {
+      "path": "/api/Study/StudyOpenTime",
+      "note": "{code:0,data:[]}，当前无考研预约期数"
+    },
+    {
+      "path": "/api/Study/StudyArea",
+      "note": "{code:0,data:null}"
+    },
+    {
+      "path": "/api/Study/StudyAreaTree",
+      "note": "{code:0,data:[]}"
+    },
+    {
+      "path": "POST /reserve/index/quickSelect 无 premisesIds",
+      "note": "404 'Not Found !'（不是 200 空），参数缺失表现为 404"
+    }
+  ],
+  "forbiddenWriteEndpoints": [
+    "/api/Seat/confirm",
+    "/api/Space/cancel",
+    "/api/Space/checkout",
+    "/api/Space/leave",
+    "/api/Space/signin",
+    "/api/Seminar/confirm",
+    "/api/Seminar/submit",
+    "/api/Seminar/roomCancel",
+    "/api/Seminar/roomConfirm",
+    "/api/seminar/should",
+    "/reserve/index/confirm",
+    "/api/Study/StudyAreaBook",
+    "/api/Study/StudyAreaCancel",
+    "/api/Study/StudyOrder",
+    "/reserve/activity/submit",
+    "/reserve/activity/confirm",
+    "/reserve/activity/partake",
+    "/reserve/activity/like",
+    "/reserve/activity/mycancel",
+    "/reserve/locker/*",
+    "/apiLocker/lock/cancelBook",
+    "/reserve/smartDevice/setLightBrightness",
+    "/reserve/smartDevice/setLightStatus",
+    "/reserve/smartDevice/setRelayStatus"
+  ],
+  "unverified": [
+    {
+      "method": "POST",
+      "path": "/api/Seminar/v1seminar",
+      "purpose": "研讨间当日可约时段（需登录）",
+      "suspected": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/Seminar/date",
+      "purpose": "研讨间可约日期（匿名 GET 已回 date 数组）",
+      "suspected": "read",
+      "evidence": "GET /api/Seminar/date → 200 105B {code:1,data:[5] '2026-11-20'}"
+    },
+    {
+      "method": "POST",
+      "path": "/reserve/activity/mylist",
+      "purpose": "本人活动场地申请",
+      "suspected": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/reserve/activity/monitor",
+      "purpose": "活动场地监控（语义不明，需谨慎）",
+      "suspected": "unknown"
+    },
+    {
+      "method": "POST",
+      "path": "/reserve/locker/getLongTermLockerOrderInfo",
+      "purpose": "长期储物柜订单信息",
+      "suspected": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/reserve/device/deviceInfoByTime",
+      "purpose": "按区域+日期+时段查设备（参数名未摸到，回『区域,日期,时间段都不能为空』）",
+      "suspected": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/Study/StudyBookDetail",
+      "purpose": "考研专座预约详情",
+      "suspected": "read"
+    },
+    {
+      "method": "POST",
+      "path": "/api/Room/list",
+      "purpose": "房间列表（匿名回空数组）",
+      "suspected": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/api/Room/detail?id=<id>",
+      "purpose": "房间详情（匿名回空 data）",
+      "suspected": "read"
+    }
+  ],
+  "readOnlyNote": "reserve/index 系列是场馆/座位查询（list/quickSelect），POST 仅因参数在请求体。本库只读查询，不提交预约。预约提交端点在源码中未见，故不列 policyExcluded。",
+  "readOnlyNoteAt": "2026-11-23"
+}

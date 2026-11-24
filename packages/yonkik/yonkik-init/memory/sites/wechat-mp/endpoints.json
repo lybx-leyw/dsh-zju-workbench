@@ -1,0 +1,16 @@
+{
+  "site": "wechat-mp",
+  "disposition": "per-user-oauth-restricted",
+  "checkedAt": "2026-11-22",
+  "evidence": [
+    "本项目已收录的多个官网栏目首屏即为公众号外链（ls.zju.edu.cn 14/14、www.cls.zju.edu.cn 10/10、www.som.zju.edu.cn 1 条），说明「公众号内容」在通知层面已通过官网转载覆盖",
+    "we.zju.edu.cn 的 /mobile/ 是「浙大后勤」公众号的 mobile 站，需要微信 OAuth 身份，已在档",
+    "mp.weixin.qq.com 无公开检索接口；正文读取依赖客户端登录态（__biz / mid / idx / sn 参数由会话产生）"
+  ],
+  "notAttempted": [
+    "不模拟微信客户端、不抓取未授权文章",
+    "不破解 / 复用他人登录态",
+    "不采集个人朋友圈 / 私聊内容"
+  ],
+  "coveredInstead": "官网转载已覆盖通知类内容：确切计数见 zju-notices 台账中 externalLinks 指向 mp.weixin.qq.com 的条目"
+}

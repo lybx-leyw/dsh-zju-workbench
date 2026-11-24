@@ -1,0 +1,19 @@
+{
+  "key": "www.cps.zju.edu.cn",
+  "origin": "http://www.cps.zju.edu.cn",
+  "status": "done",
+  "label": "药学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/58875/list.htm"
+    ],
+    "note": "无面包屑站点：用 var url 自报地址 + 顶部横幅 span.cn + 条目 c<ID> 前缀三重校验。"
+  }
+}

@@ -1,0 +1,358 @@
+{
+  "site": "www.ced.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26836/list.htm",
+      "column": "学生思政·信息公告",
+      "verifiesPath": "/cedoffice/26836/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26836/list.htm",
+        "status": 200,
+        "column": "学生思政·信息公告",
+        "displayTitle": "信息公告",
+        "trail": [
+          [
+            "/cedoffice/26785/list.htm",
+            "学生思政"
+          ],
+          [
+            "/cedoffice/26836/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 14,
+        "total": 960,
+        "pages": 69,
+        "externalLinks": 0,
+        "firstId": "3229403",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26841/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/cedoffice/26841/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26841/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "trail": [
+          [
+            "/cedoffice/26785/list.htm",
+            "学生思政"
+          ],
+          [
+            "/cedoffice/26841/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 14,
+        "total": 435,
+        "pages": 32,
+        "externalLinks": 0,
+        "firstId": "3227155",
+        "firstDate": "2026-11-13"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26808/list.htm",
+      "column": "本科生教育·信息公告",
+      "verifiesPath": "/cedoffice/26808/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26808/list.htm",
+        "status": 200,
+        "column": "本科生教育·信息公告",
+        "displayTitle": "信息公告",
+        "trail": [
+          [
+            "/cedoffice/26781/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/cedoffice/26808/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 14,
+        "total": 1002,
+        "pages": 72,
+        "externalLinks": 10,
+        "firstId": "3221501",
+        "firstDate": "2026-11-03"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26840/list.htm",
+      "column": "学生资助",
+      "verifiesPath": "/cedoffice/26840/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26840/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "trail": [
+          [
+            "/cedoffice/26785/list.htm",
+            "学生思政"
+          ],
+          [
+            "/cedoffice/26840/list.htm",
+            "学生资助"
+          ]
+        ],
+        "count": 14,
+        "total": 251,
+        "pages": 18,
+        "externalLinks": 1,
+        "firstId": "3223312",
+        "firstDate": "2026-11-05"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26794/list.htm",
+      "column": "学院党政·信息公告",
+      "verifiesPath": "/cedoffice/26794/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26794/list.htm",
+        "status": 200,
+        "column": "学院党政·信息公告",
+        "displayTitle": "信息公告",
+        "trail": [
+          [
+            "/cedoffice/26779/list.htm",
+            "学院党政"
+          ],
+          [
+            "/cedoffice/26794/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 14,
+        "total": 284,
+        "pages": 21,
+        "externalLinks": 0,
+        "firstId": "3210556",
+        "firstDate": "2026-09-29"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26831/list.htm",
+      "column": "国际合作·信息公告",
+      "verifiesPath": "/cedoffice/26831/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26831/list.htm",
+        "status": 200,
+        "column": "国际合作·信息公告",
+        "displayTitle": "信息公告",
+        "trail": [
+          [
+            "/cedoffice/26784/list.htm",
+            "国际合作"
+          ],
+          [
+            "/cedoffice/26831/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 14,
+        "total": 328,
+        "pages": 24,
+        "externalLinks": 3,
+        "firstId": "3158415",
+        "firstDate": "2026-05-06"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26845/list.htm",
+      "column": "公示专区",
+      "verifiesPath": "/cedoffice/26845/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26845/list.htm",
+        "status": 200,
+        "column": "公示专区",
+        "displayTitle": "公示专区",
+        "trail": [
+          [
+            "/cedoffice/26785/list.htm",
+            "学生思政"
+          ],
+          [
+            "/cedoffice/26845/list.htm",
+            "公示专区"
+          ]
+        ],
+        "count": 14,
+        "total": 362,
+        "pages": 26,
+        "externalLinks": 0,
+        "firstId": "3228600",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26822/list.htm",
+      "column": "学位管理",
+      "verifiesPath": "/cedoffice/26822/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26822/list.htm",
+        "status": 200,
+        "column": "学位管理",
+        "displayTitle": "学位管理",
+        "trail": [
+          [
+            "/cedoffice/26782/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/cedoffice/26822/list.htm",
+            "学位管理"
+          ]
+        ],
+        "count": 14,
+        "total": 184,
+        "pages": 14,
+        "externalLinks": 0,
+        "firstId": "3197196",
+        "firstDate": "2026-08-26"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/26782/list.htm",
+      "column": "研究生教育",
+      "verifiesPath": "/cedoffice/26782/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/26782/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "研究生教育",
+        "trail": [
+          [
+            "/cedoffice/26782/list.htm",
+            "研究生教育"
+          ]
+        ],
+        "count": 14,
+        "total": 1300,
+        "pages": 93,
+        "externalLinks": 10,
+        "firstId": "3218046",
+        "firstDate": "2026-11-02"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/cedoffice/gsl/list.htm",
+      "column": "公示栏",
+      "verifiesPath": "/cedoffice/gsl/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/cedoffice/gsl/list.htm",
+        "status": 200,
+        "column": "公示栏",
+        "displayTitle": "公示栏",
+        "trail": [
+          [
+            "/cedoffice/26781/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/cedoffice/gsl/list.htm",
+            "公示栏"
+          ]
+        ],
+        "count": 14,
+        "total": 16,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3184931",
+        "firstDate": "2026-07-03"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/jldt/list.htm",
+      "column": "国际交流",
+      "verifiesPath": "/jldt/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/jldt/list.htm",
+        "status": 200,
+        "column": "国际交流",
+        "displayTitle": "交流动态",
+        "trail": [
+          [
+            "/26950/list.htm",
+            "交流合作"
+          ],
+          [
+            "/jldt/list.htm",
+            "国际交流"
+          ],
+          [
+            "/jldt/list.htm",
+            "交流动态"
+          ]
+        ],
+        "count": 14,
+        "total": 47,
+        "pages": 4,
+        "externalLinks": 7,
+        "firstId": "3209182",
+        "firstDate": "2026-09-24"
+      }
+    },
+    {
+      "id": "GET www.ced.zju.edu.cn/26970/list.htm",
+      "column": "研究生培养",
+      "verifiesPath": "/26970/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ced.zju.edu.cn/26970/list.htm",
+        "status": 200,
+        "column": "研究生培养",
+        "displayTitle": "研究生培养",
+        "trail": [
+          [
+            "/26947/list.htm",
+            "人才培养"
+          ],
+          [
+            "/26970/list.htm",
+            "研究生培养"
+          ]
+        ],
+        "count": 14,
+        "total": 15,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3196722",
+        "firstDate": "2026-08-25"
+      }
+    }
+  ],
+  "unverified": [
+    "其余教育学院栏目、分页、正文与附件未验证；外链只记地址。",
+    "/jldt/list.htm 的「交流动态」页面无分页计数块，属单页列表，本批仍按首屏 14 条口径记录。"
+  ]
+}

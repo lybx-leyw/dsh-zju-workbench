@@ -1,0 +1,42 @@
+{
+  "key": "sztz.zju.edu.cn",
+  "origin": "https://sztz.zju.edu.cn",
+  "title": "浙江大学大学生素质拓展数智平台（第二/三课堂成绩单，校素拓）",
+  "status": "done",
+  "requires": "none（首页与通知/项目库/答疑公开）；个人成绩单与申请需登录",
+  "auth": {
+    "family": "local-session（/dekt/ctx 发 SESSION 会话）",
+    "credentialKey": null,
+    "loginEntry": "https://sztz.zju.edu.cn/dekt/#/login（师生登录）；管理员登录另入口",
+    "note": "未实测登录。公开面已足够回答「这是什么系统、有哪些项目」。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 返回 134B「正在跳转...」脚本（非标准 robots）；无 X-RateLimit-* 头。"
+  },
+  "server": "nginx/1.24.0",
+  "via": "direct",
+  "notes": [
+    "/ → 134B「正在跳转...」→ /dekt/ (Vue3 SPA, window.__basePath='/dekt/')",
+    "首页 3 个 XHR 全免登录：getTzggList（通知）/ getDyjhList（答疑解惑）/ getHdList（活动）",
+    "另有 getXmList（项目总库 100 条）/ getXmBaseData（第二/三课堂分类）",
+    "答疑接口对提问者姓名/学号/电话做掩码（****），未泄露"
+  ],
+  "publicQuery": {
+    "script": "sites/sztz.zju.edu.cn/crawler.mjs",
+    "confirmedOperations": [
+      "activities",
+      "notices"
+    ],
+    "transport": "direct HTTPS, no credentials",
+    "pages": [
+      1
+    ],
+    "pageSize": 5,
+    "verifiedAt": "2026-11-22"
+  },
+  "exploredAt": "2026-11-20",
+  "exploredAtNote": "R220 补填：此前 site.json 缺 exploredAt，按索引节点的 exploredAt 回填。"
+}

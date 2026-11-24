@@ -1,0 +1,22 @@
+{
+  "key": "www.ccea.zju.edu.cn",
+  "origin": "http://www.ccea.zju.edu.cn",
+  "status": "done",
+  "label": "建筑工程学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "固定单页首屏；未见 Retry-After。"
+  },
+  "exactNoticeColumns": {
+    "count": 11,
+    "checkedAt": "2026-11-22",
+    "note": "建筑工程学院全部目录路径均已处置；/xsgz 为一级栏目（面包屑只有本路径）。"
+  }
+}

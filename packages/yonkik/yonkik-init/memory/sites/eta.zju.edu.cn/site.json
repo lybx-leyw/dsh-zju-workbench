@@ -1,0 +1,23 @@
+{
+  "key": "eta.zju.edu.cn",
+  "origin": "https://eta.zju.edu.cn",
+  "status": "done",
+  "title": "ETA 奖学金/学生事务申请系统（zftal 学生工作管理平台）",
+  "via": "direct",
+  "requires": [
+    "campus-sso"
+  ],
+  "auth": {
+    "type": "cas",
+    "credentialKey": "campus-sso",
+    "loginTrigger": "/zftal-xgxt-web/teacher/xtgl/index/check.zf"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2100,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 返回 SPA 壳（无 robots）；未见 X-RateLimit-*；保守默认串行 ≥2s。"
+  },
+  "notes": "Vue2 SPA + 正方 zftal-xgxt-web 后端（.zf 路由）。匿名仅 getCurrentUser/getPublicKey 可用，业务接口 302 → zjuam CAS。绝不提交申请。",
+  "exploredAt": "2026-11-20"
+}

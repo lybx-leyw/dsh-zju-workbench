@@ -27,7 +27,8 @@
         "@lybx-leyw/dsh-zju-core-classroom-renderer",
         "@lybx-leyw/dsh-zju-core-classroom-generate",
         "@lybx-leyw/dsh-zju-yonkik-skill",
-        "@lybx-leyw/dsh-zju-yonkik-tool"
+        "@lybx-leyw/dsh-zju-yonkik-tool",
+        "@lybx-leyw/dsh-zju-yonkik-init"
       ],
       "patchReload": "live"
     }

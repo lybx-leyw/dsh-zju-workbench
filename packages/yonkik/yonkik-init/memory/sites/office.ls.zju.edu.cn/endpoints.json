@@ -1,0 +1,287 @@
+{
+  "site": "office.ls.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET office.ls.zju.edu.cn/65256/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/65256/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65256/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/65251/list.htm",
+            "学生思政"
+          ],
+          [
+            "/65256/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 14,
+        "total": 197,
+        "pages": 15,
+        "externalLinks": 0,
+        "firstId": "3229374",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET office.ls.zju.edu.cn/65255/list.htm",
+      "column": "就业指导",
+      "verifiesPath": "/65255/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65255/list.htm",
+        "status": 200,
+        "column": "就业指导",
+        "displayTitle": "就业指导",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/65251/list.htm",
+            "学生思政"
+          ],
+          [
+            "/65255/list.htm",
+            "就业指导"
+          ]
+        ],
+        "count": 14,
+        "total": 125,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3221433",
+        "firstDate": "2026-11-02"
+      }
+    },
+    {
+      "id": "GET office.ls.zju.edu.cn/65257/list.htm",
+      "column": "学生资助",
+      "verifiesPath": "/65257/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65257/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/65251/list.htm",
+            "学生思政"
+          ],
+          [
+            "/65257/list.htm",
+            "学生资助"
+          ]
+        ],
+        "count": 14,
+        "total": 84,
+        "pages": 6,
+        "externalLinks": 0,
+        "firstId": "3224085",
+        "firstDate": "2026-11-08"
+      }
+    },
+    {
+      "id": "GET office.ls.zju.edu.cn/65254/list.htm",
+      "column": "学生团建",
+      "verifiesPath": "/65254/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65254/list.htm",
+        "status": 200,
+        "column": "学生团建",
+        "displayTitle": "学生团建",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/65251/list.htm",
+            "学生思政"
+          ],
+          [
+            "/65254/list.htm",
+            "学生团建"
+          ]
+        ],
+        "count": 14,
+        "total": 143,
+        "pages": 11,
+        "externalLinks": 2,
+        "firstId": "3220101",
+        "firstDate": "2026-10-28"
+      }
+    },
+    {
+      "id": "GET office.ls.zju.edu.cn/65259/list.htm",
+      "column": "公示专区",
+      "verifiesPath": "/65259/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65259/list.htm",
+        "status": 200,
+        "column": "公示专区",
+        "displayTitle": "公示专区",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/65251/list.htm",
+            "学生思政"
+          ],
+          [
+            "/65259/list.htm",
+            "公示专区"
+          ]
+        ],
+        "count": 14,
+        "total": 63,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3229924",
+        "firstDate": "2026-11-21"
+      }
+    },
+    {
+      "id": "GET office.ls.zju.edu.cn/65253/list.htm",
+      "column": "学生党建",
+      "verifiesPath": "/65253/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65253/list.htm",
+        "status": 200,
+        "column": "学生党建",
+        "displayTitle": "学生党建",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/65251/list.htm",
+            "学生思政"
+          ],
+          [
+            "/65253/list.htm",
+            "学生党建"
+          ]
+        ],
+        "count": 14,
+        "total": 20,
+        "pages": 2,
+        "externalLinks": 4,
+        "firstId": "3226698",
+        "firstDate": "2026-11-12"
+      }
+    },
+    {
+      "id": "GET office.ls.zju.edu.cn/65251/list.htm",
+      "column": "学生思政（办公网）",
+      "verifiesPath": "/65251/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65251/list.htm",
+        "status": 200,
+        "column": "学生思政（办公网）",
+        "displayTitle": "最新通知",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/65251/list.htm",
+            "学生思政"
+          ],
+          [
+            "/65251/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 101,
+        "pages": 8,
+        "externalLinks": 0,
+        "firstId": "3219341",
+        "firstDate": "2026-10-26"
+      }
+    },
+    {
+      "id": "GET office.ls.zju.edu.cn/65280/list.htm",
+      "column": "教育教学",
+      "verifiesPath": "/65280/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65280/list.htm",
+        "status": 200,
+        "column": "教育教学",
+        "displayTitle": "最新通知",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/65280/list.htm",
+            "教育教学"
+          ],
+          [
+            "/65280/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/65280/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 82,
+        "pages": 6,
+        "externalLinks": 0,
+        "firstId": "3216987",
+        "firstDate": "2026-10-20"
+      }
+    },
+    {
+      "id": "GET office.ls.zju.edu.cn/65292/list.htm",
+      "column": "研究生教育",
+      "verifiesPath": "/65292/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.ls.zju.edu.cn/65292/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "最新通知",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/65280/list.htm",
+            "教育教学"
+          ],
+          [
+            "/65292/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/65292/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 112,
+        "pages": 8,
+        "externalLinks": 3,
+        "firstId": "3229689",
+        "firstDate": "2026-11-20"
+      }
+    }
+  ],
+  "unverified": [
+    "其余历史学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

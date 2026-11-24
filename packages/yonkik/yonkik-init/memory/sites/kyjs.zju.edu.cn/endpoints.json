@@ -1,0 +1,54 @@
+{
+  "site": "kyjs.zju.edu.cn",
+  "verified": [
+    {
+      "name": "public-news-detail",
+      "method": "GET",
+      "path": "/prod-api/<路径段>/detail",
+      "query": {
+        "newsId": "10310"
+      },
+      "auth": "none",
+      "date": "2026-11-22",
+      "observation": {
+        "url": "http://kyjs.zju.edu.cn/prod-api/<路径段>/detail?newsId=10310",
+        "status": 200,
+        "ct": "application/json",
+        "retry": null,
+        "bytes": 10262,
+        "code": 0,
+        "dataType": "object",
+        "fields": [
+          "accountName",
+          "content",
+          "contentType",
+          "coverUrl",
+          "createTime",
+          "ext",
+          "files",
+          "newsId",
+          "pageViews",
+          "pdf",
+          "position",
+          "publishTime",
+          "title",
+          "topicId",
+          "urlLink"
+        ],
+        "titleMatches": true,
+        "publishedDay": "2026-11-06",
+        "issuer": true,
+        "bodyChars": 6406,
+        "attachments": 1,
+        "verifiedAt": "2026-11-22",
+        "source": "https://bksy.zju.edu.cn/76426/list.htm",
+        "listedDate": "2026-11-09",
+        "newsId": "10310",
+        "requests": "不带凭据的 HTTP GET，只读单条；未访问详情页外链或附件"
+      }
+    }
+  ],
+  "unverified": [
+    "其他 newsId、报名、作品、成果与个人竞赛数据不在本轮范围；禁止枚举或用猜测 ID。"
+  ]
+}

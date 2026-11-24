@@ -1,0 +1,32 @@
+{
+  "key": "cspo.zju.edu.cn",
+  "origin": "http://cspo.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://cspo.zju.edu.cn/27179/list.htm",
+  "column": "评奖评优",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 4,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/27169/list.htm",
+      "/27173/list.htm",
+      "/27225/list.htm",
+      "/27181/list.htm"
+    ],
+    "note": "六条目录路径被判为别名不一致（末项分别指向 27183 / 27175 / 29529 / 27169 / 27197 / 27186）。本站在补完这两条后，全部 10 栏均已处置：4 栏开放、6 栏 identity-mismatch。"
+  }
+}

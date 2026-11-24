@@ -1,0 +1,33 @@
+{
+  "key": "office.polymer.zju.edu.cn",
+  "origin": "http://office.polymer.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://office.polymer.zju.edu.cn/37282/list.htm",
+  "column": "消息公告",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 5,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/37282/list.htm",
+      "/sjjx/list.htm",
+      "/xsh/list.htm",
+      "/xtw/list.htm",
+      "/37264/list.htm"
+    ],
+    "note": "身份用 div.position 全链路 + 页首 banner 大类名；/sjjx 的日期块被 HTML 注释掉，页面不显示日期，按「无日期列表」开放并记录 datedCount=0。/37259 末项自认 /xxgg/，标 identity-mismatch。"
+  }
+}

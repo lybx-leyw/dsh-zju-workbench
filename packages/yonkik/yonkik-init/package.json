@@ -1,0 +1,35 @@
+{
+  "name": "@lybx-leyw/dsh-zju-yonkik-init",
+  "version": "0.1.0",
+  "description": "YONKIK 初始记忆：内置一份脱敏的站点侦察知识库，`yonkik init` 在记忆区不存在时用它起步",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/",
+    "memory/",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/yonkik/yonkik-init"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": false,
+      "requires": []
+    }
+  }
+}

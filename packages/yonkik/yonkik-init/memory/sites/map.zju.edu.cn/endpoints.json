@@ -1,0 +1,110 @@
+{
+  "key": "map.zju.edu.cn",
+  "origin": "https://map.zju.edu.cn",
+  "verified": [
+    {
+      "id": "root-router",
+      "method": "GET",
+      "path": "/",
+      "purpose": "入口（纯跳转脚本）",
+      "auth": "none",
+      "responseType": "text/html",
+      "structure": "885B。jQuery 判断 UA：移动端 → /mobile/index.html，桌面 → /index.html。**877B 的真相：它只是个 UA 分流器，不是地图本体。**"
+    },
+    {
+      "id": "index",
+      "method": "GET",
+      "path": "/index.html",
+      "purpose": "地图主页面（PC 端壳）",
+      "auth": "none",
+      "responseType": "text/html",
+      "structure": "22992B，`<title></title>` 空。加载 43 个 script：/api/IMAP-source.js（产品本体）、/resource/imap/js/map.setting.v2.js（**图层配置**）、map.loader.v2.js、map.layerRender.*、icssp.*（校园导航/空教室/校车/交通指引/宿舍指引）、/templet/js/control/Map.js"
+    },
+    {
+      "id": "layer-setting",
+      "method": "GET",
+      "path": "/resource/imap/js/map.setting.v2.js",
+      "purpose": "**图层配置（本站最有价值的一个静态文件）**：全部校区的 WMS bbox / extent / resolution / EPSG，以及 POI WFS 端点",
+      "auth": "none",
+      "responseType": "application/javascript",
+      "structure": "7995B。`var basemap_wms_param=[{ename,layers,name,extent,projection:'EPSG:32651',url:'https://map.zju.edu.cn/geowebcache/service/wms',resolution:'[...6 级]',tileorigin,tilesize},...]`；`var entity_wfs_param={url:'https://map.zju.edu.cn/geoserver/wfs', featureNS:'www.imap.com', featureType:'hotmap_261119'}`",
+      "note": "9 个校区图层：紫金港 zjg / 玉泉 yq / 西溪 xx / 华家池 hjc / 之江 zj / 舟山 zs / 海宁 hn / 国际医学院 yxy / 城市学院 gcs。每个都给精确 extent + resolution。"
+    },
+    {
+      "id": "wms-getcapabilities",
+      "method": "GET",
+      "path": "/geowebcache/service/wms?service=WMS&version=1.1.1&request=GetCapabilities",
+      "purpose": "底图瓦片服务能力清单",
+      "auth": "none",
+      "responseType": "application/vnd.ogc.wms_xml",
+      "structure": "9945B。图层列表：xx hjc yq hn zjg zs zj gcs yxy snbj xx_en hjc_en yq_en hn_en zjg_en zs_en zj_en gcs_en yxy_en bhjd xny test_escalate_xxx（每校区含中文版与 `_en` 英文版）"
+    },
+    {
+      "id": "wms-getmap",
+      "method": "GET",
+      "path": "/geowebcache/service/wms?service=WMS&version=1.1.1&request=GetMap&layers=<layer>&styles=&srs=EPSG:32651&bbox=<x0,y0,x1,y1>&width=256&height=256&format=image/png",
+      "purpose": "**底图瓦片（匿名可取，已目视确认）**",
+      "auth": "none",
+      "responseType": "image/png",
+      "structure": "200，image/png，**179261B / 256×256**，PNG magic `89504e47`。已用 read_image 目视核对：玉泉校区航拍底图（含老和山、教工宿舍、田径场），清晰可读。",
+      "verifiedWith": "layers=yq, bbox=1868041.366117438,1973294.025415696,1868799.980968001,1974052.640266259 (256×2.9633392600118533 = 256×res)",
+      "limits": "**必须与 gridset 的 resolution 严格匹配**，否则 GWC 返回 400（见坑 2）"
+    },
+    {
+      "id": "wfs-getcapabilities",
+      "method": "GET",
+      "path": "/geoserver/wfs?service=WFS&version=2.0.0&request=GetCapabilities",
+      "purpose": "POI/要素服务能力清单（**含全量图层名**）",
+      "auth": "none",
+      "responseType": "application/xml",
+      "structure": "94878B。featureTypes 含 IMAP:hotmap_261119（当月在用）、IMAP:zheda_hotmap*（历史版本 0814/0401/0428/0502/0505/0605/0611）、IMAP:IMAP、IMAP:sxt_all_32649、IMAP:ygtt_all_32649、IMAP:map_layer_wdt_1f..5f（室内图 1-5 层）、bhjd:hotmap_bhjd、scut:*（华南理工同款部署的残留）、IMAP:zju_pxdp_sndt_4326",
+      "note": "**featureType 带日期后缀且按月滚动**（261119 = 2026-11-19）。硬编码会突然失效，必须每次从 GetCapabilities 取当前名，或从 map.setting.v2.js 读 entity_wfs_param.featureType。"
+    },
+    {
+      "id": "wfs-describe",
+      "method": "GET",
+      "path": "/geoserver/wfs?service=WFS&version=2.0.0&request=DescribeFeatureType&typeName=IMAP:hotmap_261119",
+      "purpose": "POI 字段结构",
+      "auth": "none",
+      "responseType": "text/xml (GML 3.2 schema)",
+      "structure": "3115B。字段：`id:int · shape:GeometryPropertyType · fid:int · ename · alias · sname · address · enAddress · entityType · remark · houseNum · buildNum · picNum · useType · displayLevel:int · otherName · beforeName · has_indoormap:int · build_year:int · build_area:double · build_floor:int · x:double · y:double`",
+      "note": "**namespace 必须是 `IMAP:`，不是 `www.imap.com:`**（后者报 Unknown namespace，见坑 3）"
+    },
+    {
+      "id": "wfs-getfeature",
+      "method": "GET",
+      "path": "/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=IMAP:hotmap_261119&count=<n>&outputFormat=application/json",
+      "purpose": "**POI 查询（建筑/地标检索）——本组最实用的校园数据接口**",
+      "auth": "none",
+      "responseType": "application/json;charset=UTF-8",
+      "structure": "GeoJSON FeatureCollection。`totalFeatures=1334`（即全校区 1334 个建筑/地标）；`features[].properties` 含 sname/alias/address/entityType/x/y/build_year/build_area/build_floor/has_indoormap；`features[].geometry` 为 MultiPolygon，坐标 EPSG:32651 米制",
+      "verifiedWith": "count=2 → 200，2996B，totalFeatures=1334；首条 sname='海宁国际校区', address='海宁市海州东路718号', x=1933108.838, y=1969888.65"
+    },
+    {
+      "id": "wfs-cql-filter",
+      "method": "GET",
+      "path": "…&CQL_FILTER=sname LIKE '%<关键词>%' OR alias LIKE '%<关键词>%'",
+      "purpose": "**按名检索建筑（如「专家楼是哪一栋」）**",
+      "auth": "none",
+      "responseType": "application/json",
+      "structure": "GeoJSON；命中为 0 时 `totalFeatures:0, features:[]`（71B）",
+      "verifiedWith": "CQL_FILTER 查「专家楼」→ 200，totalFeatures=0",
+      "note": "**语法通、返回正常，但「专家楼」在 1334 条 POI 里确实不存在**。这正好证实 CC98 5973753「校园地图上找不到工院专家楼」。"
+    },
+    {
+      "id": "imap-source",
+      "method": "GET",
+      "path": "/api/IMAP-source.js",
+      "purpose": "地图引擎本体（IMAP 场景服务平台 JS 库）",
+      "auth": "none",
+      "responseType": "text/javascript",
+      "structure": "805679B。首行 `var IMAP={VERSION_NUMBER:\"Release 2.13\",singleFile:!0,...}`。是完整的开源/自研地图库（类 OpenLayers 风格 API），不是数据接口。"
+    }
+  ],
+  "unverified": [
+    { "id": "indoor-maps", "method": "GET", "path": "/geoserver/wfs?typeName=IMAP:map_layer_wdt_1f..5f", "whyUnverified": "室内楼层图（1-5 层），推测可用于「某教室在几楼」类查询。未实测数据量。" },
+    { "id": "empty-classroom", "method": "—", "path": "/resource/imap/skin1.0/js/icssp.ktzy.js", "whyUnverified": "空教室查询（ktzy=空余教室）的前端逻辑，其数据接口未定位。若可复用价值高。" },
+    { "id": "schoolbus-layer", "method": "—", "path": "/resource/imap/skin1.0/js/icssp.schoolbus.js", "whyUnverified": "地图上的校车图层。**但班车正主是 www.life.zju.edu.cn（已 done），不必从地图侧重探。**" },
+    { "id": "login-templet", "method": "GET", "path": "/templet/login.html", "whyUnverified": "后台登录页（5282B，title=登入，3DES 加密 triple des + mode-ecb）。只读取数用不到，不探登录。" }
+  ]
+}

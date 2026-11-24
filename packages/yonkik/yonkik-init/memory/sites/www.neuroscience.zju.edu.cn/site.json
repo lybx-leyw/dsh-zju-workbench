@@ -1,0 +1,31 @@
+{
+  "key": "www.neuroscience.zju.edu.cn",
+  "origin": "http://www.neuroscience.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.neuroscience.zju.edu.cn/45530/list.htm",
+  "column": "通知公告",
+  "exactNoticeColumns": {
+    "count": 6,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/45474/list.htm",
+      "/xssz/list.htm",
+      "/gsgg_54816/list.psp",
+      "/dwjl/list.htm",
+      "/dxsxly_75666/list.htm",
+      "/bksjy/list.htm"
+    ],
+    "note": "身份用 div.list-top_pos 全链路 + span.titl 栏目标题；日期同样是 h3（日）+ p（YYYY-MM）两段，需拼合。/gsgg_54816 的 .htm 301 到同站 .psp，两种地址分别记录。"
+  }
+}

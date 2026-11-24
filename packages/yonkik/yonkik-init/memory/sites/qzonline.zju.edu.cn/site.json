@@ -1,0 +1,35 @@
+{
+  "key": "qzonline.zju.edu.cn",
+  "origin": "https://qzonline.zju.edu.cn",
+  "title": "启真在线 / 启真平台（公共场馆预约 + 自习空间查询，魔点 SaaS）",
+  "status": "done",
+  "requires": [
+    "campus-sso"
+  ],
+  "auth": {
+    "family": "zjuam-cas",
+    "credentialKey": "campus-sso",
+    "stateFile": "state.json",
+    "loginScript": "login.mjs",
+    "loginUrl": "https://zjuam.zju.edu.cn/cas/oauth2.0/authorize?response_type=code&client_id=SO5PrSEqSOVcVaCR4p&redirect_uri=https%3A%2F%2Fqzonline.zju.edu.cn%2Fhom%2Funi%2F",
+    "mechanism": "CAS OAuth2 authorization_code；登录后 POST /uni/harvardweb/account/user/login/auth 换本地会话。会话 cookie = hom.pre-uni + hom.pre-uni.sig。",
+    "kaptchaStatus": false,
+    "note": "CAS 验证码关闭（2026-11-20 实测 getKaptchaStatus=false）。会话过期后重跑 `yonkik run sites/qzonline.zju.edu.cn/login.mjs` 即可，接口知识无需重探。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2300,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 404；无 X-RateLimit-* 头。与本次探索期实测间隔一致（≥2s）。"
+  },
+  "server": "nginx + Ingress（INGRESSCOOKIE）；页面 meta 自称「魔点开放平台」",
+  "via": "direct",
+  "notes": [
+    "SPA（Vue2 + vue-router），基础路径 /hom/uni，API 前缀 /uni",
+    "后端是魔点（MoDian）开放平台 SaaS，接口命名空间 /uni/harvardweb/*",
+    "接口全 POST + JSON body（checkLogin 是 PUT）；响应 {result:'0'=成功}",
+    "CC98 帖 6304967（2025-10）称「启真在线死了」—— 2026-11-20 实测存活（场馆 296 / 自习室 161 / 时段实时）"
+  ],
+  "exploredAt": "2026-11-20",
+  "exploredAtNote": "R220 补填：此前 site.json 缺 exploredAt，按索引节点的 exploredAt 回填。"
+}

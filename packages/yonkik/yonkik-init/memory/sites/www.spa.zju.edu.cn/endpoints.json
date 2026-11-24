@@ -1,0 +1,357 @@
+{
+  "site": "www.spa.zju.edu.cn",
+  "access": "公开 HTTP；robots 404。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/14508/list.htm",
+      "column": "学生团建",
+      "verifiesPath": "/spaoffice/14508/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/14508/list.htm",
+        "status": 200,
+        "column": "学生团建",
+        "displayTitle": "学生团建",
+        "trail": [
+          [
+            "/spaoffice/13915/list.htm",
+            "学生思政"
+          ],
+          [
+            "/spaoffice/14508/list.htm",
+            "学生团建"
+          ]
+        ],
+        "count": 14,
+        "total": 706,
+        "pages": 51,
+        "externalLinks": 0,
+        "firstId": "3216877",
+        "firstDate": "2026-10-20"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/14509/list.htm",
+      "column": "学工事务",
+      "verifiesPath": "/spaoffice/14509/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/14509/list.htm",
+        "status": 200,
+        "column": "学工事务",
+        "displayTitle": "学工事务",
+        "trail": [
+          [
+            "/spaoffice/13915/list.htm",
+            "学生思政"
+          ],
+          [
+            "/spaoffice/14509/list.htm",
+            "学工事务"
+          ]
+        ],
+        "count": 14,
+        "total": 1048,
+        "pages": 75,
+        "externalLinks": 0,
+        "firstId": "3228229",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/14507/list.htm",
+      "column": "学生党建",
+      "verifiesPath": "/spaoffice/14507/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/14507/list.htm",
+        "status": 200,
+        "column": "学生党建",
+        "displayTitle": "学生党建",
+        "trail": [
+          [
+            "/spaoffice/13915/list.htm",
+            "学生思政"
+          ],
+          [
+            "/spaoffice/14507/list.htm",
+            "学生党建"
+          ]
+        ],
+        "count": 14,
+        "total": 116,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3210082",
+        "firstDate": "2026-09-29"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/13987/list.htm",
+      "column": "研究生教育·最新通知",
+      "verifiesPath": "/spaoffice/13987/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/13987/list.htm",
+        "status": 200,
+        "column": "研究生教育·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/spaoffice/13914/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/spaoffice/13987/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 2369,
+        "pages": 170,
+        "externalLinks": 0,
+        "firstId": "3229820",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/14473/list.htm",
+      "column": "学生交流",
+      "verifiesPath": "/spaoffice/14473/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/14473/list.htm",
+        "status": 200,
+        "column": "学生交流",
+        "displayTitle": "学生交流",
+        "trail": [
+          [
+            "/spaoffice/13919/list.htm",
+            "国际事务"
+          ],
+          [
+            "/spaoffice/14473/list.htm",
+            "学生交流"
+          ]
+        ],
+        "count": 14,
+        "total": 116,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3226479",
+        "firstDate": "2026-11-12"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/zxtz/list.htm",
+      "column": "本科教育·最新通知",
+      "verifiesPath": "/spaoffice/zxtz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/zxtz/list.htm",
+        "status": 200,
+        "column": "本科教育·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/spaoffice/zxtz/list.htm",
+            "本科教育"
+          ],
+          [
+            "/spaoffice/zxtz/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 802,
+        "pages": 58,
+        "externalLinks": 0,
+        "firstId": "3212561",
+        "firstDate": "2026-10-09"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spachinese/jzhd_75663/list.htm",
+      "column": "讲座活动",
+      "verifiesPath": "/spachinese/jzhd_75663/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spachinese/jzhd_75663/list.htm",
+        "status": 200,
+        "column": "讲座活动",
+        "displayTitle": "讲座活动",
+        "trail": [
+          [
+            "/spachinese/13204/list.htm",
+            "新闻中心"
+          ],
+          [
+            "/spachinese/jzhd_75663/list.htm",
+            "讲座活动"
+          ]
+        ],
+        "count": 14,
+        "total": 295,
+        "pages": 22,
+        "externalLinks": 0,
+        "firstId": "3229318",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/14486/list.htm",
+      "column": "专业学位教育·最新通知",
+      "verifiesPath": "/spaoffice/14486/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/14486/list.htm",
+        "status": 200,
+        "column": "专业学位教育·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/spaoffice/13916/list.htm",
+            "专业学位教育"
+          ],
+          [
+            "/spaoffice/14486/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 44,
+        "pages": 4,
+        "externalLinks": 1,
+        "firstId": "3200671",
+        "firstDate": "2026-09-09"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/14746/list.htm",
+      "column": "党政管理·最新通知",
+      "verifiesPath": "/spaoffice/14746/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/14746/list.htm",
+        "status": 200,
+        "column": "党政管理·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/spaoffice/13911/list.htm",
+            "党政管理"
+          ],
+          [
+            "/spaoffice/14746/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 368,
+        "pages": 27,
+        "externalLinks": 2,
+        "firstId": "2892909",
+        "firstDate": "2024-03-21"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/14511/list.htm",
+      "column": "就业指导",
+      "verifiesPath": "/spaoffice/14511/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/14511/list.htm",
+        "status": 200,
+        "column": "就业指导",
+        "displayTitle": "就业指导",
+        "trail": [
+          [
+            "/spaoffice/13915/list.htm",
+            "学生思政"
+          ],
+          [
+            "/spaoffice/14511/list.htm",
+            "就业指导"
+          ]
+        ],
+        "count": 14,
+        "total": 1075,
+        "pages": 77,
+        "externalLinks": 0,
+        "firstId": "3223508",
+        "firstDate": "2026-11-05"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/14513/list.htm",
+      "column": "心理资助",
+      "verifiesPath": "/spaoffice/14513/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/14513/list.htm",
+        "status": 200,
+        "column": "心理资助",
+        "displayTitle": "心理资助",
+        "trail": [
+          [
+            "/spaoffice/13915/list.htm",
+            "学生思政"
+          ],
+          [
+            "/spaoffice/14513/list.htm",
+            "心理资助"
+          ]
+        ],
+        "count": 14,
+        "total": 33,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3228451",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.spa.zju.edu.cn/spaoffice/13991/list.htm",
+      "column": "学位管理",
+      "verifiesPath": "/spaoffice/13991/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.spa.zju.edu.cn/spaoffice/13991/list.htm",
+        "status": 200,
+        "column": "学位管理",
+        "displayTitle": "学位管理",
+        "trail": [
+          [
+            "/spaoffice/13914/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/spaoffice/13991/list.htm",
+            "学位管理"
+          ]
+        ],
+        "count": 14,
+        "total": 121,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3223817",
+        "firstDate": "2026-11-06"
+      }
+    }
+  ],
+  "unverified": [
+    "其余公共管理学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

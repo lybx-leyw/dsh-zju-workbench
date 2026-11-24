@@ -1,0 +1,20 @@
+{
+  "site": "s.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS。无需凭据。",
+  "search": {
+    "endpoint": "GET https://s.zju.edu.cn/search/all.do?words=<urlencoded 关键词>",
+    "verifiedAt": "2026-11-22",
+    "status": 200,
+    "length": 51740,
+    "title": "搜索_全部",
+    "paginated": true,
+    "discoveredVia": "zhfw.zju.edu.cn 页面搜索表单的 action",
+    "qualityNote": "标题按字面匹配：搜「校历」返回的标题含「校 历」「校 印」等被拆开的结果，属浅层检索，不能当语义搜索用。",
+    "sampleResults": [
+      "/tool/downNormFile.do?docNo=…（附件下载入口）",
+      "http://zhfw.zju.edu.cn/zhfw_xwgl/…/page.htm",
+      "http://10.203.3.207:8080/xwfw/gfxwj/…（内网地址，本环境不可达）"
+    ]
+  },
+  "note": "此前索引把本站标为 blocked，本轮更正为 done：搜索页可公开访问。仅记录入口与样例，不做批量检索。"
+}

@@ -1,0 +1,80 @@
+{
+  "site": "www.doe.zju.edu.cn",
+  "access": "公开 HTTP；与 doe-oa 是同一学院的不同站点，注意区分。固定路径、无凭据、不跟跳转。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.doe.zju.edu.cn/74397/list.htm",
+      "column": "学生工作·科创竞赛2",
+      "verifiesPath": "/74397/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.doe.zju.edu.cn/74397/list.htm",
+        "status": 200,
+        "column": "学生工作·科创竞赛2",
+        "displayTitle": "科创竞赛",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/74364/list.htm",
+            "学生工作"
+          ],
+          [
+            "/74397/list.htm",
+            "科创竞赛"
+          ]
+        ],
+        "count": 2,
+        "total": 2,
+        "pages": 1,
+        "externalLinks": 2,
+        "firstId": null,
+        "firstDate": "2026-08-15"
+      }
+    },
+    {
+      "id": "GET www.doe.zju.edu.cn/74389/list.htm",
+      "column": "研究生教育·信息公告",
+      "verifiesPath": "/74389/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.doe.zju.edu.cn/74389/list.htm",
+        "status": 200,
+        "column": "研究生教育·信息公告",
+        "displayTitle": "信息公告",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/74362/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/74389/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 122,
+        "pages": 7,
+        "externalLinks": 2,
+        "firstId": "3223814",
+        "firstDate": "2026-11-06"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/74364/list.htm",
+      "pageTitle": "科创竞赛",
+      "sectionTitle": "学生工作",
+      "claimedColumnPath": "/74397/list.htm",
+      "claimedColumnTitle": "科创竞赛",
+      "note": "该地址与 /74397 渲染同一栏目内容，但页面「当前位置」末项自认 /74397/，属同一栏目两个地址；已按 /74397 记录权威通路，/74364 不开放。"
+    }
+  ],
+  "unverified": [
+    "其余能源学院官网栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

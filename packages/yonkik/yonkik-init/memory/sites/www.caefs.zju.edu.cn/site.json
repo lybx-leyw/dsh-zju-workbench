@@ -1,0 +1,25 @@
+{
+  "key": "www.caefs.zju.edu.cn",
+  "origin": "http://www.caefs.zju.edu.cn",
+  "status": "done",
+  "label": "生物系统工程与食品科学学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "固定单页首屏。"
+  },
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/68237/list.htm"
+    ],
+    "note": "与建筑工程学院同模板（news_list.list2 + Column_Anchor），复用 ccea-li 解析器，并把该 host 加入白名单。"
+  }
+}

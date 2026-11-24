@@ -1,0 +1,31 @@
+{
+  "site": "www.lit.zju.edu.cn",
+  "access": "公开 HTTP。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.lit.zju.edu.cn/rcpy/list.htm",
+      "column": "人才培养",
+      "verifiesPath": "/rcpy/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.lit.zju.edu.cn/rcpy/list.htm",
+        "status": 200,
+        "column": "人才培养",
+        "displayTitle": "人才培养",
+        "count": 14,
+        "total": 36,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3218333",
+        "firstDate": "2026-10-01",
+        "datePrecision": "month-only",
+        "identityEvidence": [
+          "var url == /rcpy/list.htm",
+          "nav link text == 人才培养",
+          "single column id c64557 across all item hrefs"
+        ]
+      }
+    }
+  ]
+}

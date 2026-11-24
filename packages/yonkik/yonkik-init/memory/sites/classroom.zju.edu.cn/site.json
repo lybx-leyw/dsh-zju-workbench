@@ -1,0 +1,30 @@
+{
+ "key": "classroom.zju.edu.cn",
+ "origin": "https://classroom.zju.edu.cn",
+ "via": null,
+ "requires": [
+  "campus-sso"
+ ],
+ "rateLimit": {
+  "minIntervalMs": 2000,
+  "concurrency": 1,
+  "source": "default",
+  "evidence": "robots.txt 被 SPA 外壳覆盖（返回 15329B HTML，title=智云课堂），无 robots 条款。未发现 X-RateLimit-*；串行单发未触发 429。保守默认 >=2s。"
+ },
+ "auth": {
+  "type": "cas-oauth2",
+  "credentialKey": "campus-sso",
+  "ssoFamily": "zjuam-cas",
+  "loginUrl": "https://zjuam.zju.edu.cn/cas/login",
+  "captcha": "disabled (cas/v2/getKaptchaStatus=false, 2026-11-20)",
+  "stateFile": "state.json",
+  "loginFlow": "classroom.zju.edu.cn/ --302--> zjuam CAS /cas/oauth2.0/authorize?response_type=code&client_id=ObXIv4FvjcC1e9hVcS&redirect_uri=https://tgmedia.cmc.zju.edu.cn/index.php?r=auth/get-info&url=https://classroom.zju.edu.cn/ --CAS login--> /cas/oauth2.0/callbackAuthorize?ticket=ST-... --> classroom.zju.edu.cn/ (cookie: JWTUser/_token/login_cmc_id 等 @.zju.edu.cn, PHPSESSID@tgmedia.cmc.zju.edu.cn)"
+ },
+ "notes": "智云课堂（杭州正方/CMC 智慧教室系，底层含 TronClass 血统：cmsapi/userapi/courseapi 三前缀）。与 courses.zju.edu.cn 不同：**不走 identity.zju.edu.cn Keycloak broker**，而是 zjuam CAS 的 CAS-OAuth2.0 端点直连，回调中转站是 tgmedia.cmc.zju.edu.cn（PHP：index.php?r=auth/get-info）。子域矩阵丰富：yjapi / resource / personal / education / exam / passport / goim(ws) / livepgc / socketioapp / screen / interactivemeta。详见 wiki.md。",
+ "status": "done",
+ "exploredAt": "2026-11-20",
+ "endpointsFile": "endpoints.json",
+ "statusUpdated": "2026-11-20",
+ "checkOp": "check-auth",
+ "loginScript": "login.mjs"
+}

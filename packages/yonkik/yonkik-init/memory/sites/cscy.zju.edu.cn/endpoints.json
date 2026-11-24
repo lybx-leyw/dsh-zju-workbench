@@ -1,0 +1,87 @@
+{
+  "site": "cscy.zju.edu.cn",
+  "updatedAt": "2026-11-20T17:30:00+08:00",
+  "apiBase": "http://cscy.zju.edu.cn",
+  "auth": "登录委托需 CAS（校内）或本站注册账号（校外）；以下 5 条全部免登录",
+  "verified": [
+    {
+      "id": "home-redirect",
+      "method": "GET",
+      "path": "/",
+      "purpose": "301 → /login.html",
+      "params": {},
+      "responseShape": "redirect",
+      "sample": "301，server=Jetty(6.1.x)"
+    },
+    {
+      "id": "login-page",
+      "method": "GET",
+      "path": "/login.html",
+      "purpose": "登录页 + 联系方式 + 工作时间 + 双认证入口",
+      "params": {},
+      "responseShape": "HTML 24309B",
+      "sample": "含「系统认证」「统一认证」「馆员登录」；电话 0571-87952423"
+    },
+    {
+      "id": "notice",
+      "method": "GET",
+      "path": "/zdNoticeDesc.html",
+      "purpose": "★ 注意事项 8 条（处理时限/计费规则/禁止重复委托）",
+      "params": {},
+      "responseShape": "HTML 8785B（UTF-8）",
+      "sample": "「检索证明一般处理时间为 2-3 个工作日」「已按委托人要求完成的检索证明，即需缴纳相应检索费用」「请勿重复提交委托」"
+    },
+    {
+      "id": "pre-request-form",
+      "method": "GET",
+      "path": "/preRequest2.html",
+      "purpose": "★ 预申请单：全部可检索数据库 + 检索选项 + 年代范围（免登录可读）",
+      "params": {},
+      "responseShape": "HTML 102935B（UTF-8）",
+      "sample": "SCI/EI/CPCI-S/CSCD/MEDLINE/SSCI/AHCI/CSSCI/INSPEC/人大复印/WoS/ESCI/SCOPUS/万方/维普/CNKI/IEEE/ABI/InCites/MathSciNet/专利法律状态/ESI，另支持自定义库名"
+    },
+    {
+      "id": "service-desc",
+      "method": "GET",
+      "path": "/zdServiceDesc.html",
+      "purpose": "服务内容说明（含定制评价服务）",
+      "params": {},
+      "responseShape": "HTML 87859B（**gb2312**）",
+      "sample": "服务范围与学术影响力定制评价"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "request-submit",
+      "method": "POST",
+      "path": "/request*",
+      "suspected": "write",
+      "reason": "提交委托单（含注册密码字段），写操作，未调用"
+    },
+    {
+      "id": "progress",
+      "method": "GET",
+      "path": "/requestList* /progress*",
+      "suspected": "read",
+      "reason": "委托进度查询，需登录，未探"
+    },
+    {
+      "id": "reprint",
+      "method": "GET",
+      "path": "（路径未知）",
+      "suspected": "read",
+      "reason": "「补打」入口是否存在，需登录后在委托列表确认"
+    }
+  ],
+  "policyExcluded": [
+    {
+      "name": "submit-request",
+      "method": "POST",
+      "path": "/request*",
+      "reason": "代查代检委托申请（写操作）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "/request* 是代查代检的提交申请（写操作）。只读浏览服务说明，不提交委托。",
+  "policyRecordedAt": "2026-11-23"
+}

@@ -1,0 +1,12 @@
+{
+  "key": "vpn.zju.edu.cn",
+  "origin": "https://vpn.zju.edu.cn",
+  "status": "blocked",
+  "label": "RVPN",
+  "auth": {
+    "type": "unknown"
+  },
+  "via": "probe-only",
+  "exploredAt": "2026-11-22",
+  "blockedReason": "本环境无法解析该域名。"
+}

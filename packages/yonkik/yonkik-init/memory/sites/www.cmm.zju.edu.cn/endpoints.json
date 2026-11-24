@@ -1,0 +1,14 @@
+{
+  "site": "www.cmm.zju.edu.cn",
+  "access": "公开 HTTP（HTTPS 443 连接被拒），无需凭据。",
+  "pages": [
+    {
+      "url": "http://www.cmm.zju.edu.cn/",
+      "status": 200,
+      "length": 90898,
+      "title": "浙大医学院"
+    }
+  ],
+  "columnLinks": 91,
+  "note": "首页即含 91 个 /list.htm 栏目链接，属 Webplus 标准站。清单把「医学院」列为明确跳过，但本站作为学院目录成员可公开访问；本库只记录入口与栏目规模，不展开抓取。"
+}

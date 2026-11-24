@@ -1,0 +1,38 @@
+{
+  "key": "saa.office.zju.edu.cn",
+  "origin": "http://saa.office.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://saa.office.zju.edu.cn/tzgg_70388/list.htm",
+  "column": "通知公告",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 10,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/tzgg_70388/list.htm",
+      "/66850/list.htm",
+      "/tzgg_70383/list.htm",
+      "/tzgg_70384/list.htm",
+      "/66861/list.htm",
+      "/66866/list.htm",
+      "/67666/list.htm",
+      "/66921/list.htm",
+      "/66920/list.htm",
+      "/66773/list.htm"
+    ],
+    "note": "四栏显示标题同为「通知公告」（学生工作 / 党政综合 / 本科生教育 / 研究生教育），靠「当前位置」完整链路 + Column_Anchor 大类名区分；/66964、/dwjl 末项自认另一路径，标 identity-mismatch。"
+  }
+}

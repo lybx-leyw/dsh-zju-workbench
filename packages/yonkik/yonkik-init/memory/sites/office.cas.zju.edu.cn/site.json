@@ -1,0 +1,37 @@
+{
+  "key": "office.cas.zju.edu.cn",
+  "origin": "http://office.cas.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://office.cas.zju.edu.cn/15927/list.htm",
+  "column": "研究生事务",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 6,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/15927/list.htm",
+      "/15893/list.htm",
+      "/15929/list.htm",
+      "/16447/list.htm",
+      "/16449/list.htm",
+      "/15925/list.htm"
+    ],
+    "containers": [
+      "/15889/list.htm"
+    ],
+    "note": "/15889 是容器页（三个子栏拼一页），已按 container-only 记录；子栏 /16447、/16449 单独验证。其余六栏按 col_path 末项＋大类名＋h2 三重校验。"
+  }
+}

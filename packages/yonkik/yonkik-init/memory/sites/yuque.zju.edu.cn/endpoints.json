@@ -1,0 +1,72 @@
+{
+  "key": "yuque.zju.edu.cn",
+  "origin": "https://yuque.zju.edu.cn",
+  "verified": [
+    {
+      "id": "robots",
+      "method": "GET",
+      "path": "/robots.txt",
+      "purpose": "自动化条款",
+      "auth": "none",
+      "responseType": "text/plain",
+      "structure": "user-agent: * / Disallow: /docs/share/ ；另注 'If you would like to crawl Yuque contact us at support@yuque.com' + 指向 https://yuque.com/yuque/developer"
+    },
+    {
+      "id": "login-page",
+      "method": "GET",
+      "path": "/login",
+      "purpose": "登录页（未登录可读，纯 SPA 壳）",
+      "auth": "none",
+      "responseType": "text/html",
+      "structure": "11029B。`<meta name=description>` 是语雀官方文案；页面内嵌 `window.appData`（URL-encoded JSON），含 space/settings/login/isPrivateCloud 等",
+      "note": "`/login` 本身不跳 CAS（只有 /dashboard 才跳），所以能直接读到壳 + appData"
+    },
+    {
+      "id": "explore-page",
+      "method": "GET",
+      "path": "/explore",
+      "purpose": "公开广场页（**匿名 200 可读壳，但无任何文档数据**）",
+      "auth": "none",
+      "responseType": "text/html",
+      "structure": "10464B；`window.appData` 含 settings.public_space_doc_search_enable=false、settings.enable_search=false",
+      "note": "关键：匿名能拿到页面壳，但 settings 明确关掉了公开空间检索；且 explore 页 appData 里没有 arr_* 文档/知识库列表数组"
+    },
+    {
+      "id": "api-mine",
+      "method": "GET",
+      "path": "/api/mine",
+      "purpose": "当前用户",
+      "auth": "session cookie",
+      "responseType": "application/json",
+      "status": "401",
+      "note": "匿名实测 401 `{\"status\":401,\"message\":\"Unauthorized\"}`。记录即止，不绕过。"
+    },
+    {
+      "id": "landing-redirect-chain",
+      "method": "GET",
+      "path": "/",
+      "purpose": "入口跳转链",
+      "auth": "none",
+      "structure": "5 跳：302 /dashboard → 302 /login?org=zero&goto=… → 302 zjuam/cas/oauth2.0/authorize (client_id=ExFpJX8tiyJNvpXZUz) → 302 zjuam/cas/login → 200 统一身份认证平台（22235B）",
+      "setCookies": ["yuque_ctoken", "lang", "_yuque_session_zju", "JSESSIONID", "_csrf"]
+    },
+    {
+      "id": "api-root",
+      "method": "GET",
+      "path": "/api/",
+      "purpose": "API 根",
+      "auth": "none",
+      "status": "404",
+      "note": "`{\"status\":404,\"message\":\"Not Found\"}`。语雀私有云的 API 是按资源分的（/api/mine 等），没有 /api 索引页。"
+    }
+  ],
+  "unverified": [
+    { "id": "api-groups", "method": "GET", "path": "/api/groups", "whyUnverified": "实测 404。语雀私有云的团队接口名不同（可能 /api/teams 或需 org 前缀）。未继续试。" },
+    { "id": "api-search", "method": "GET", "path": "/api/search?q=…", "whyUnverified": "实测 404。且 settings.enable_search=false / public_space_doc_search_enable=false，本实例大概率未启用检索。" },
+    { "id": "api-users-current", "method": "GET", "path": "/api/users/current", "whyUnverified": "实测 404。用户信息走 /api/mine。" },
+    { "id": "docs-share", "method": "GET", "path": "/docs/share/…", "whyUnverified": "robots 明确 Disallow，不抓。" }
+  ],
+  "blocked": [
+    { "what": "登录后的文档/知识库列表（团队空间内容）", "why": "需 CAS OAuth2 授权码流程 + 浏览器；本轮任务未要求登录，且登录后内容属他人协作数据，按只读契约不批量取。", "howToUnblock": "用 playwright 走 zjuam CAS（getKaptchaStatus 先探），拿 _yuque_session_zju 后调 /api/mine 与团队文档接口。" }
+  ]
+}

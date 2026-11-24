@@ -1,0 +1,65 @@
+{
+  "site": "eta.zju.edu.cn",
+  "base": "https://eta.zju.edu.cn",
+  "auth": "CAS（campus-sso）。匿名仅 2 个接口可用",
+  "platform": "Vue2 SPA（/assets/js/app*.js 1.87MB）+ 正方 zftal-xgxt-web 后端（.zf 路由），Tengine/3.0.0",
+  "verified": [
+    {
+      "name": "getCurrentUser",
+      "method": "GET",
+      "path": "/zftal-xgxt-web/teacher/xtgl/login/getCurrentUser.zf",
+      "returns": "匿名：`{\"msg\":\"success\",\"code\":0,\"data\":0}` → **data=0 表示未登录**（登录后应为用户对象）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "**这是判断登录态的单发探针**：data=0 未登录"
+    },
+    {
+      "name": "getPublicKey",
+      "method": "GET",
+      "path": "/zftal-xgxt-web/teacher/xtgl/login/getPublicKey.zf",
+      "returns": "`{msg:'success',code:0,data:{modulus:'AI4zcvs4mJpEmWkDaRF30dWJ...',exponent:'AQAB'}}`（RSA 公钥，登录时加密密码用）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "与 zdbk 的正方系统同款机制（RSA 加密口令）。但有 CAS 时不必手搓"
+    },
+    {
+      "name": "business-any",
+      "method": "GET",
+      "path": "/zftal-xgxt-web/{module}/**/*.zf",
+      "returns": "**302 → https://zjuam.zju.edu.cn/cas/login?service=http%3A%2F%2Feta.zju.edu.cn%2Fzftal-xgxt-web%2Fteacher%2Fxtgl%2Findex%2Fcheck.zf**",
+      "auth": "cas",
+      "status": 302,
+      "verifiedAt": "2026-11-20",
+      "sample": "实测 /zftal-xgxt-web/pjpy/xmgl/list.zf 与 /zftal-xgxt-web/filemgr/file/downloadArea/list.zf 均 302 到 CAS"
+    },
+    {
+      "name": "spa-shell",
+      "method": "GET",
+      "path": "/",
+      "returns":"SPA 壳 38,156B，title 为空（JS 渲染）。head 里 ~200 个 prefetch chunk",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "ie-warn",
+      "method": "GET",
+      "path": "/ie-warn.html",
+      "returns":"「IE 提醒」页，仅 IE 用户可见",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    }
+  ],
+  "unverified": [
+    {
+      "name": "奖学金/评审业务接口",
+      "semantics": "read（列表/详情）+ **write（申报提交、评审、公示，绝对禁止）**",
+      "note": "从 app.4370c7dc.js 提取到大量路由，全部需登录。按安全契约**不实现任何提交类操作**。见 wiki「从 bundle 提取的接口族」"
+    }
+  ],
+  "verifiedCount": 5,
+  "importantPitfall": "源码里的相对路径有两个前缀：`/zftal-xgxt-web/...` 与裸 `/pjpy/...`、`/xsxx/...`、`/gygl/...`。裸路径前面要补 `/zftal-xgxt-web`。另：`/xsxx/xsxxxg/*.zf`、`/gygl/qgl/*` 里有大量 save/delete/submit 路由——**不要调**。"
+}

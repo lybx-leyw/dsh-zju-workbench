@@ -1,0 +1,56 @@
+{
+  "site": "weread.qq.com",
+  "checkedAt": "2026-11-22",
+  "access": "公开 HTTPS；全部需微信登录态（cookie），无匿名检索接口。",
+  "discoveredFrom": "上游清单第 52 行（微信读书/公众号）",
+  "probes": [
+    {
+      "path": "/web/shelf/sync",
+      "status": 200,
+      "ctype": "application/json",
+      "body": "{\"errCode\":-2010,\"errMsg\":\"用户不存在\"}",
+      "meaning": "书架同步（含书架中的公众号）",
+      "verdict": "路由存在，需登录态（返回业务错误码 -2010，不是 404）"
+    },
+    {
+      "path": "/web/mp/articles",
+      "status": 200,
+      "ctype": "application/json",
+      "body": "{\"errCode\":-2010,\"errMsg\":\"用户不存在\"}",
+      "meaning": "公众号文章列表",
+      "verdict": "路由存在，需登录态"
+    },
+    {
+      "path": "/web/mp/content",
+      "status": 200,
+      "ctype": "text/plain",
+      "body": "{\"errCode\":400,\"errMsg\":\"reviewId is required\"}",
+      "meaning": "公众号文章正文",
+      "verdict": "路由存在；明确要求 reviewId 参数（比笼统错误更有信息量）"
+    },
+    {
+      "path": "/api/store/search",
+      "status": 204,
+      "ctype": "",
+      "bodyLength": 0,
+      "meaning": "微信读书站内按名搜索",
+      "verdict": "路由存在（204 空响应，需参数与登录态）"
+    },
+    {
+      "path": "/web/book/info",
+      "status": 200,
+      "ctype": "application/json",
+      "body": "{\"errCode\":-2010,\"errMsg\":\"用户不存在\"}",
+      "meaning": "书籍信息（旁证，用于确认鉴权族一致）",
+      "verdict": "同族路由，需登录态"
+    }
+  ],
+  "judgement": "四条上游端点的**路由全部确认存在**，统一表现为业务错误码（-2010 用户不存在 / 400 缺 reviewId），而非 404。缺的是微信登录态。",
+  "relation": "与 sites/wechat-mp/ 的分工：mp.weixin.qq.com 侧的正文读取依赖微信客户端；weread 侧是微信读书的登录态，两者不能互借。",
+  "notAttempted": [
+    "不模拟微信登录、不复用他人 cookie",
+    "不猜 reviewId 穷举文章",
+    "不采集书架中的个人阅读数据"
+  ],
+  "whyWithheld": "书架/阅读记录属个人数据；即便日后有登录态，也只应在用户明确请求下读取其本人指定内容，不做批量采集。"
+}

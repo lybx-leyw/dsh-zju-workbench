@@ -1,0 +1,110 @@
+{
+  "site": "myvpn.zju.edu.cn",
+  "base": "https://myvpn.zju.edu.cn",
+  "auth": "网络账号+密码+验证码（Yii2，_csrf-8800）；开号经 CAS OAuth2（campus-sso）",
+  "verified": [
+    {
+      "name": "login-page",
+      "method": "GET",
+      "path": "/",
+      "returns": "18.3KB（18284B），title=「登录」。含 form#login-form（`LoginForm[username]`/`[password]`/`[verifyCode]`）、form#phone-form（短信登录 `LoginForm[phoneCode]`）、验证码图 `/site/captcha?v=<hash>`、隐藏 CSRF `_csrf-8800`、右下「激活账号」链到 `/zju/new-account-sso`、2 条通知（id=2 自助服务改信息指南 / id=6 经费卡转账通知）",
+      "note": "页面用 jquery + crypto-js + base64.js（前端加密），并有 yii.activeForm.js / yii.captcha.js",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "robots",
+      "method": "GET",
+      "path": "/robots.txt",
+      "returns": "404，2789B Yii2 错误页（title=「Not Found (#404)」）",
+      "verifiedAt": "2026-11-20",
+      "status": 404
+    },
+    {
+      "name": "sso-account-create",
+      "method": "GET",
+      "path": "/zju/new-account-sso",
+      "returns": "302 → https://zjuam.zju.edu.cn/cas/oauth2.0/authorize?response_type=code&client_id=GgZvGNbUEHnw9qCPLv&redirect_uri=https://myvpn.zju.edu.cn/zju/new-account-sso",
+      "note": "「激活账号」= 用一卡通开网络账号。这是本站唯一与 campus-sso 相关的入口。",
+      "verifiedAt": "2026-11-20",
+      "status": 302
+    },
+    {
+      "name": "news-detail",
+      "method": "GET",
+      "path": "/news/view?id={n}",
+      "returns": "**免登录可读**。id=2「自助服务修改个人基础信息指南」（2025-03-20，42KB，含四种改手机/改邮箱组合的完整流程、各校区窗口地址与办公时间）；id=6「信息技术中心关于2026年经费卡转账截止时间的通知」（2026-11-17，3.7KB，正文为空只有标题）",
+      "note": "通知正文页免登录。这是本站唯一可免登录读取的业务内容。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "complete-process",
+      "method": "GET",
+      "path": "/site/complete-process",
+      "returns": "18.4KB「大陆身份验证 / 非大陆身份验证」页：**要求上传近期正脸清晰照片做公安人脸校验**（页面原文「本照片只用于公安人脸校验，系统不会保留」）",
+      "note": "这是账号信息补全流程，属身份验证区。**未上传任何照片**。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    }
+  ],
+  "unverified": [
+    {
+      "name": "login-form-submit",
+      "method": "POST",
+      "path": "/",
+      "body": "LoginForm[username] / LoginForm[password] / LoginForm[verifyCode] / _csrf-8800",
+      "semantics": "login（建立会话，唯一允许的写）",
+      "note": "**未登录探**：本站账号是「网络账号」，与一卡通不是同一套；且密码须前端加密（crypto-js/base64.js）。要接需先解决「网络账号密码从哪来」。"
+    },
+    {
+      "name": "fee-bill（网费账单/流量）",
+      "semantics": "read",
+      "status": "blocked-login-wall",
+      "note": "网费余额/账单/流量在登录后「个人信息管理」区。CC98 高频议论（6586947「毕业网费续了十年」、6606662「zju50 元档位带宽」）指向的正是这个区域。**本次未登录，接口路径未确认**。"
+    },
+    {
+      "name": "recharge（充值）",
+      "semantics": "**write — 禁止**",
+      "note": "按安全契约不探。"
+    },
+    {
+      "name": "captcha",
+      "method": "GET",
+      "path": "/site/captcha?v=<hash>",
+      "semantics": "read（验证码图，每次请求新图）",
+      "note": "未单独拉取，登录时才需要。"
+    }
+  ],
+  "blocked": [
+    {
+      "path": "登录后网费/流量只读查询",
+      "status": "not-attempted",
+      "reason": "本站登录用「网络账号」（非学号/一卡通密码），凭据键 campus-sso 只能用于开号（/zju/new-account-sso）不是登录。缺的是「网络账号密码」这一凭据。"
+    }
+  ],
+  "tlsDiagnosis": {
+    "symptom": "UNABLE_TO_VERIFY_LEAF_SIGNATURE（首轮探针出现 1 次）",
+    "chainFromServer": [
+      "CN=*.zju.edu.cn (issuer CN=TrustAsia OV TLS RSA CA 2024, 2026-02-27 ~ 2027-03-27)",
+      "CN=TrustAsia OV TLS RSA CA 2024 (issuer CN=TrustAsia TLS RSA Root CA, 2024-05-15 ~ 2034-05-15)",
+      "CN=TrustAsia TLS RSA Root CA (issuer CN=Certum Trusted Network CA, 2025-10-07 ~ 2029-01-14)",
+      "CN=Certum Trusted Network CA (self-signed, 2008-10-22 ~ 2029-12-31)"
+    ],
+    "chainLen": 4,
+    "strictRecheck": "48/48 次 authorized:true（8× tls.connect 严格校验 + 30× 高并发严格样本 + 6× https.request + 4 种 https.request 写法）",
+    "verdict": "证书链完整，非缺中间证书；该错误为偶发。规避：keepAlive:false + 显式 servername；重试一次即可。不要用 rejectUnauthorized:false。"
+  },
+  "verifiedCount": 5,
+  "policyExcluded": [
+    {
+      "name": "login",
+      "method": "POST",
+      "path": "/",
+      "reason": "登录提交（建立会话）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "POST / 是登录提交（写侧会话建立）。只读记入口，不登录。",
+  "policyRecordedAt": "2026-11-23"
+}

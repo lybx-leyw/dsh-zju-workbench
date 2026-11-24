@@ -1,0 +1,12 @@
+{
+  "key": "net3.zju.edu.cn",
+  "origin": "https://net3.zju.edu.cn",
+  "status": "blocked",
+  "label": "上网认证",
+  "auth": {
+    "type": "unknown"
+  },
+  "via": "probe-only",
+  "exploredAt": "2026-11-22",
+  "blockedReason": "本环境无法解析该域名。"
+}

@@ -1,0 +1,31 @@
+{
+  "key": "www.cbeis.zju.edu.cn",
+  "origin": "http://www.cbeis.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.cbeis.zju.edu.cn/tzgg/list.htm",
+  "column": "通知公告",
+  "exactNoticeColumns": {
+    "count": 6,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/tzgg_65357/list.htm",
+      "/tzgg_65360/list.htm",
+      "/63901/list.htm",
+      "/xszz/list.htm",
+      "/tzgg/list.htm",
+      "/gsgg/list.psp"
+    ],
+    "note": "三栏显示标题同为「通知公告」（学生工作 / 国际交流 / 教育教学），靠 dc-weizhi 全链路 + m1 内 h2 大类名区分；/tzgg 与 /63901 存在父子同路径（父级与末项 href 相同、文字不同）。"
+  }
+}

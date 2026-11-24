@@ -1,0 +1,17 @@
+{
+  "key": "www.cmm.zju.edu.cn",
+  "origin": "http://www.cmm.zju.edu.cn",
+  "status": "done",
+  "label": "医学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "首页 1 次。"
+  }
+}

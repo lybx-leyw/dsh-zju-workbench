@@ -1,0 +1,190 @@
+{
+  "site": "zjuem.zju.edu.cn",
+  "base": "https://zjuem.zju.edu.cn",
+  "auth": "网页端 mail.zju.edu.cn（账号+密码+二次验证码）；客户端用「客户端专用密码」（16 位）",
+  "verified": [
+    {
+      "name": "home",
+      "method": "GET",
+      "path": "/",
+      "returns": "21.8KB，title=「浙江大学邮件系统」。`<base href=\"https://zjuem.zju.edu.cn/coremail/common/index_cmxt50_default.jsp\">`，正文是 Coremail XT5 登录壳模板（handlebars 占位符 {{facade_custom...}}）",
+      "note": "与 /coremail/ 返回同一页（21815B vs 21756B，差 base 标签）",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "robots",
+      "method": "GET",
+      "path": "/robots.txt",
+      "returns": "404，535B Coremail 错误页（`title=Coremail专业邮件系统`，gb2312）",
+      "note": "没有 robots",
+      "verifiedAt": "2026-11-20",
+      "status": 404
+    },
+    {
+      "name": "json-rpc-channel",
+      "method": "GET",
+      "path": "/coremail/s/json?func=user:getUserConfig",
+      "returns": "202 `{code:'FR_INVALID_REQUEST', messages:[{severity:'ERROR',summary:'Invalid method getUserConfig for module user'}]}`。**通道存在且免登录可探**，只是方法名不存在。",
+      "note": "Coremail 标准 JSON 通道；真正的登录方法是 `login:login` 之类（未探，属登录动作）",
+      "verifiedAt": "2026-11-20",
+      "status": 202
+    },
+    {
+      "name": "sso-entry",
+      "method": "GET",
+      "path": "/coremail/cmcu_addon/sso.jsp",
+      "returns": "302 → https://zjuam.zju.edu.cn/cas/oauth2.0/authorize?response_type=code&client_id=dhcjnYjB1X8o15hDqh&redirect_uri=https://mail.zju.edu.cn/coremail/cmcu_addon/sso.jsp",
+      "note": "**关键：SSO 回跳域名是 mail.zju.edu.cn，不是 zjuem**。CAS OAuth2 授权码模式。",
+      "verifiedAt": "2026-11-20",
+      "status": 302
+    },
+    {
+      "name": "changepwd",
+      "method": "GET",
+      "path": "/coremail/changepwd.jsp",
+      "returns": "6.6KB「忘记密码/重置」页（免登录）",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "help-center",
+      "method": "GET",
+      "path": "/coremail/help/index.jsp",
+      "returns": "4.5KB「帮助中心」索引页（免登录）。热门问题含「邮箱登录失败怎么办？」与「二次验证、客户端专用密码如何设置？」及 `clientoption.jsp`（IMAP/POP3/SMTP 配置）、`mobile.jsp`、`2fa.jsp`、`multiSecurity.jsp` 等",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "help-2fa-client-password（本页最有价值）",
+      "method": "GET",
+      "path": "/coremail/help/2fa_zh_CN.html",
+      "returns": "60KB 官方文档《浙江大学邮箱系统二次验证和客户端专用密码设置说明》（最后更新 2026-01-27）。**IMAP/SMTP 与专用密码的权威原文**。",
+      "note": "含四种二次验证方式（短信/微信/浙大钉/第三方OTP）、专用密码 16 位规则、网易邮箱大师/Foxmail/Outlook/Mac邮件/华为/iPhone 六种客户端的逐步配置",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "help-client-option（服务器地址与端口原文）",
+      "method": "GET",
+      "path": "/coremail/help/clientoption.jsp",
+      "returns": "9.9KB。**IMAP/POP3/SMTP 地址与端口的官方表格**（见 wiki「IMAP/SMTP 官方配置」节原文摘录）",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "help-login-guide",
+      "method": "GET",
+      "path": "/coremail/help/login_guide_zh_CN.html",
+      "returns": "21KB《邮箱登录失败怎么办？》（免登录）",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "help-2fa-index",
+      "method": "GET",
+      "path": "/coremail/help/2fa.jsp",
+      "returns": "5.4KB 二次验证帮助页（iframe 容器，指向 2fa_zh_CN.html）",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "webmail-zjuem",
+      "method": "GET",
+      "path": "https://zjuem.zju.edu.cn/",
+      "returns": "HTML 21,815B，title「浙江大学邮件系统」，含登录表单",
+      "note": "DoH 真实 IP 210.32.2.5；本地 DNS 被伪造为 198.18.x",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "webmail-mail",
+      "method": "GET",
+      "path": "https://mail.zju.edu.cn/",
+      "returns": "HTML 21,813B，同标题",
+      "note": "与 zjuem 是同一套系统（字节数仅差 2）",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    }
+  ],
+  "mailServerVerified": [
+    {
+      "name": "imap-ssl",
+      "host": "imap.zju.edu.cn",
+      "port": 993,
+      "tls": true,
+      "result": "TLS 握手成功",
+      "banner": "* OK Coremail System IMap Server Ready(zju.edu.cn[a36a463695f364d3d53e5757cbced314])",
+      "note": "只握手并读 banner，**未发送任何 IMAP 命令、未登录**"
+    },
+    {
+      "name": "imap-plain",
+      "host": "imap.zju.edu.cn",
+      "port": 143,
+      "tls": false,
+      "result": "TCP open",
+      "banner": "* OK Coremail System IMap Server Ready(zju.edu.cn[...])"
+    },
+    {
+      "name": "smtp-ssl-994（非标准端口，重点）",
+      "host": "smtp.zju.edu.cn",
+      "port": 994,
+      "tls": true,
+      "result": "TLS 握手成功",
+      "banner": "220-coremailtid ... \\r\\n220 zju.edu.cn Anti-spam GT for Coremail System (zju.edu.cn[20260918])",
+      "note": "**SSL SMTP 是 994 不是 465**；banner 明确写「Anti-spam GT」= 有反垃圾网关"
+    },
+    {
+      "name": "smtp-plain",
+      "host": "smtp.zju.edu.cn",
+      "port": 25,
+      "tls": false,
+      "result": "TCP open",
+      "banner": "220 zju.edu.cn Anti-spam GT for Coremail System (zju.edu.cn[20260918])"
+    },
+    {
+      "name": "smtp-465",
+      "host": "smtp.zju.edu.cn",
+      "port": 465,
+      "result": "TIMEOUT",
+      "note": "**标准 SMTPS 465 不通**，Mac/Outlook 默认填 465 会失败"
+    },
+    {
+      "name": "smtp-587",
+      "host": "smtp.zju.edu.cn",
+      "port": 587,
+      "result": "TIMEOUT",
+      "note": "**STARTTLS 587 也不通**"
+    },
+    {
+      "name": "pop3-ssl",
+      "host": "pop3.zju.edu.cn",
+      "port": 995,
+      "tls": true,
+      "result": "TLS 握手成功",
+      "banner": "+OK Welcome to coremail Mail Pop3 Server (zju.edu.cns[...])"
+    },
+    {
+      "name": "pop3-plain",
+      "host": "pop3.zju.edu.cn",
+      "port": 110,
+      "tls": false,
+      "result": "TCP open"
+    }
+  ],
+  "unverified": [
+    {
+      "name": "web-login",
+      "path": "https://mail.zju.edu.cn",
+      "semantics": "登录（建立会话）",
+      "note": "未登录探——登录后会进入个人邮箱，属隐私区，**本任务明确禁止**。"
+    },
+    {
+      "name": "json-login",
+      "path": "/coremail/s/json?func=login:login",
+      "semantics": "登录",
+      "note": "Coremail JSON 通道的登录方法名未确认，且属登录动作；未探。"
+    }
+  ],
+  "verifiedCount": 12
+}

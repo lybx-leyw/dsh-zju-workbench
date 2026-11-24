@@ -1,0 +1,38 @@
+{
+  "key": "www.nexushd.org",
+  "origin": "https://www.nexushd.org",
+  "title": "NexusHD（校内 PT 站 / NexusPHP）",
+  "via": null,
+  "requires": "注册账号（仅限 @zju.edu.cn / @intl.zju.edu.cn）+ 校网或校外 IPv6",
+  "auth": {
+    "mode": "nexusphp-form",
+    "credentialKey": null,
+    "loginForm": "POST takelogin.php",
+    "fields": ["username", "password", "logout", "securelogin", "ssl", "trackerssl"],
+    "entryPoints": [
+      { "label": "登录（校网）", "host": "https://www.nexushd.org/login.php" },
+      { "label": "登录（校外 IPv6）", "host": "https://v6.nexushd.org/login.php" },
+      { "label": "注册（仅限校网）", "host": "https://www.nexushd.org/signup.php", "emailDomainWhitelist": ["@zju.edu.cn", "@intl.zju.edu.cn"] }
+    ],
+    "notes": "**本轮未登录、未注册、未下载、未做种、未兑换、未求邀。** 用户无该站凭据（campus-sso 不覆盖 PT 私有账号）。仅读取登录页/注册页/FAQ/robots 的公开 HTML。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2700,
+    "concurrency": 1,
+    "source": "robots.txt",
+    "evidence": "robots.txt 原文：'User-agent: *\nDisallow: /'  —— 全站禁止任何爬虫。**因此本站除人类可读的公开页外一律不抓，且不做任何自动化序列。**",
+    "note": "已把请求数压到最低（6 次），且全部只取公开登录/注册/FAQ 页面。"
+  },
+  "accessControl": {
+    "type": "PT invite/registration-gated",
+    "anonymousVisible": ["/ (301→login.php)", "/login.php", "/signup.php", "/faq.php", "/robots.txt"],
+    "loginRequired": ["/torrents.php", "/torrentrss.php", "/shoutbox.php 之外的站内页"],
+    "evidence": "GET / → 301 /login.php；GET /torrents.php → 301 /login.php?returnto=torrents.php；GET /torrentrss.php → 200 但 body = 'invalid passkey'（15B）"
+  },
+  "status": "done",
+  "exploredAt": "2026-11-20",
+  "profile": {
+    "facets": ["pt-tracker", "bittorrent", "nexusphp", "invite-only", "campus-only"],
+    "confidence": 0.9
+  }
+}

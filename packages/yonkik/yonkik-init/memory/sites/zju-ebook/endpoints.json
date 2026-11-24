@@ -1,0 +1,133 @@
+{
+  "site": "zju-ebook",
+  "status": "blocked",
+  "exploredAt": "2026-11-22",
+  "auth": "按校园网出口 IP / 机构 SSO 认证",
+  "blockedReason": "两源均 302 到登录页：SS360 → login.serialssolutions.com/sso/login?ClientID=GK4PB6YY8Y；超星 → /entry/login。本机代理出口在墙外。",
+  "compliance": "按《浙江大学图书馆电子资源使用管理办法》第三条，只做检索与元数据；第四条禁止自动/批量下载，后果是封全校 IP。",
+  "verified": [
+    {
+      "name": "ss360-blocked",
+      "method": "GET",
+      "url": "https://gk4pb6yy8y.search.serialssolutions.com/?V=1.0&N=20&tab=BOOKS&L=GK4PB6YY8Y",
+      "status": 302,
+      "returns": "302 → https://login.serialssolutions.com/sso/login?ClientID=GK4PB6YY8Y&TARGET=…",
+      "note": "证实按 IP/机构 SSO 认证，本机无校园网出口"
+    },
+    {
+      "name": "sslibrary-blocked",
+      "method": "GET",
+      "url": "https://www.sslibrary.com/",
+      "status": 302,
+      "returns": "302 → https://www.sslibrary.com/entry/login",
+      "note": "超星电子书（汇雅）同样按 IP 认证"
+    },
+    {
+      "name": "summon-works",
+      "method": "GET",
+      "url": "https://zju.summon.serialssolutions.com/",
+      "status": 200,
+      "returns": "HTML 12,243B，title「Summon 2.0」",
+      "note": "**对照组**：同一家的 Summon 发现系统本机 200 可用 —— 说明 Summon 对浙大是 IP 白名单放行、360 导航不是。要检索优先用 Summon（见 sites/zju.summon.serialssolutions.com）"
+    }
+  ],
+  "protocols": {
+    "note": "以下查询协议来自 dsh-zju-campus 的实测记录（2026-10），**本机未复核**（进不去）。字段名与参数名可直接照抄。",
+    "ss360": {
+      "query": "GET /?V=1.0&N=<每页条数>&tab=BOOKS&L=GK4PB6YY8Y&S=<匹配方式>&C=<关键词>",
+      "paging": "&sortby=SB_T&B=<起始偏移>",
+      "matchModes": {
+        "A_T_B": "标题开头为（中文用这个）",
+        "A_T_M": "标题等于",
+        "T_W_A": "标题包含所有词 —— **含汉字会 35 秒超时**，别用",
+        "I_M": "ISBN 等于（带不带连字符都行）"
+      },
+      "resultSelectors": {
+        "item": "div.SS_Holding",
+        "title": ".SS_JournalTitle > strong",
+        "isbn": ".SS_BookISBN",
+        "edition": ".SS_Edition",
+        "authors": ".SS_Authors",
+        "publisher": ".SS_Publisher",
+        "date": ".SS_Date",
+        "platformLink": "a.SS_JournalHyperLink（文字=平台名，href=/log?…&U=<平台地址>）",
+        "totalCount": ".SS_ResultsCount"
+      },
+      "perfHint": "每页 100 条要 10 秒以上，20 条约 2.7 秒 → 一页取 20"
+    },
+    "sslibrary": {
+      "query": "GET /book/search/do?sw=<词>&field=<1书名|2作者|6目录|all全文>&page=1&pagesize=<n>",
+      "returns": "JSON { success, data: { result, total, maxpage } }",
+      "note": "书名是**包含匹配**，正好补 SS360 对中文只能开头匹配的不足。无独立 ISBN 字段，但 field=all 能按 ISBN 搜到",
+      "bookPage": "/book/card?cnFenlei=…&ssid=…&d=<bookCardD>&isFromBW=…&websiteId=…（只带 ssid 会报 500）"
+    }
+  },
+  "sslibrarySearch": {
+    "id": "sslibrary-book-search",
+    "method": "GET",
+    "url": "https://www.sslibrary.com/book/search/do?sw=<urlencoded 关键词>",
+    "checkedAt": "2026-11-22",
+    "anonymous": true,
+    "status": 200,
+    "ctype": "text/html;charset=UTF-8",
+    "responseEncoding": "**双重 JSON**：body 是一个 JSON 字符串，需 JSON.parse 两次才能拿到对象。",
+    "shape": {
+      "success": "boolean",
+      "data": {
+        "result": "[10 条/页]",
+        "total": "number",
+        "maxpage": "number"
+      }
+    },
+    "sample": {
+      "keyword": "高等数学",
+      "total": 8543,
+      "maxpage": 100,
+      "items": 10,
+      "firstThreeTitles": [
+        "高等数学  上",
+        "车辆电磁兼容基础",
+        "（第三条未单独记录）"
+      ]
+    },
+    "itemFields": [
+      "aiD",
+      "author",
+      "bookCardD",
+      "bookName",
+      "cnFenlei",
+      "coverurl",
+      "date",
+      "dxid",
+      "enc",
+      "fenlei",
+      "introduce",
+      "isBlock",
+      "isauthorized",
+      "isbn",
+      "keyword",
+      "mulu",
+      "page",
+      "pdgD",
+      "publisher",
+      "series",
+      "ssid",
+      "time",
+      "zxD",
+      "lawD",
+      "powD"
+    ],
+    "authorizationFlagsObserved": "本次 5 条抽样均为 isBlock:true、isauthorized:true —— 说明在机构授权范围内（与本环境出口 IP 属浙大图书馆一致，见 www.cnki.net 档案）。",
+    "judgement": "**书目检索本身是公开可用的**，与上游清单「未验证成功业务结果」不同：这里已拿到真实结构化书目（含 ISBN、中图分类号、封面、目录字段）。",
+    "boundary": "这是**书目元数据**检索，不等于全文获取。isBlock/isauthorized 控制的是正文可达性；本库只记录书目检索，不做全文抓取、不批量下载、不逐页枚举（maxpage=100 说明单查询最多 100 页，仍属批量取数）。"
+  },
+  "ss360": {
+    "id": "summon-360-navigation",
+    "method": "GET",
+    "url": "https://gk4pb6yy8y.search.serialssolutions.com/",
+    "checkedAt": "2026-11-22",
+    "status": 302,
+    "redirect": "https://login.serialssolutions.com/sso/login",
+    "judgement": "确认存在，但**先跳机构 SSO**，无凭据不可读。与上游清单一致。"
+  }
+}

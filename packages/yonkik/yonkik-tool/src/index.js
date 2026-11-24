@@ -21,7 +21,7 @@ import { MASK, ROUTE_PATH, WRITE_HEADER } from './shared.js'
 const PKG = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 // AI 记忆区：稳定根，与工作目录解耦。脚本经 YONKIK_HOME 读写这里的知识（~/.yonkik）。
 const MEMORY_ROOT = path.resolve(process.env.YONKIK_HOME || path.join(os.homedir(), '.yonkik'))
-const SCRIPTS = ['intake', 'login', 'triage', 'probe', 'recon', 'credcheck', 'put', 'run']
+const SCRIPTS = ['init', 'intake', 'login', 'triage', 'probe', 'recon', 'credcheck', 'put', 'run']
 const CONFIG_KEY = 'yonkik/config'
 // 工作台 source/login 管理的加密记录；YONKIK 只读复用。
 const WORKBENCH_CREDENTIALS = {
@@ -310,7 +310,8 @@ export function apply(ctx) {
 
   ctx.effect(() => ctx.tools.register({
     name: 'yonkik',
-    description: 'YONKIK 只读侦察工具。script ∈ {intake,login,triage,probe,recon,credcheck,put,run}。'
+    description: 'YONKIK 只读侦察工具。script ∈ {init,intake,login,triage,probe,recon,credcheck,put,run}。'
+      + 'init: 记忆区为空时用内置初始记忆铺底（幂等；已有记忆不覆盖，除非 args 含 --force）。'
       + 'put: args=[相对路径, 脚本内容] 把自写脚本落盘记忆根；run: args=[相对路径, ...参数] 运行记忆根内自写脚本'
       + '（注入凭据、宿主进程外沙箱、可起浏览器）——CAS 等登录脚本由你自写后经 put+run 执行。'
       + '其余为固定脚本。凭据经 env 注入，勿在参数传明文密钥。只读侦察；提交/修改/删除等写操作不做。',

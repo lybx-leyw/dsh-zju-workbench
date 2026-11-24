@@ -1,0 +1,23 @@
+{
+  "key": "www.life.zju.edu.cn",
+  "origin": "http://www.life.zju.edu.cn",
+  "via": null,
+  "requires": [],
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "GET /robots.txt → 404（Tomcat/Coreplus 无 robots 规则）；探索期串行单发未触发 429；班次数据每日更新，无需高频轮询"
+  },
+  "auth": {
+    "type": "none-for-shuttlebus-api",
+    "credentialKey": null,
+    "stateFile": null,
+    "note": "shuttlebus 只读接口（station/bus/route/busflight lists）完全免登录；站点首页 / 是苏迪 Coreplus 登录页（账号+密码base64+验证码），只有「班车预约」等业务才需登录"
+  },
+  "notes": "浙大班车数据源。班车查询轻应用在 busQuery/mobile/pc/pub/shiftManage.html，数据接口在 lightapp/shuttlebus/*/api/lists.rst，均免登录。时刻表 PDF 在 busQuery/mobile/*.pdf。详见 wiki.md。",
+  "status": "done",
+  "exploredAt": "2026-11-19",
+  "endpointsFile": "endpoints.json",
+  "statusUpdated": "2026-11-19"
+}

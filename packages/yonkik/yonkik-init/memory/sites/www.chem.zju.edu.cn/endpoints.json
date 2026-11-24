@@ -1,0 +1,33 @@
+{
+  "site": "www.chem.zju.edu.cn",
+  "access": "公开 HTTP（HTTPS 443 连接被拒），无需凭据。",
+  "role": "化学系分站导航页，不含内容",
+  "pages": [
+    {
+      "url": "http://www.chem.zju.edu.cn/",
+      "status": 200,
+      "length": 2255,
+      "title": "化学系"
+    }
+  ],
+  "subSites": [
+    {
+      "label": "中文网",
+      "url": "http://www.chem.zju.edu.cn/chemcn",
+      "columns": 60
+    },
+    {
+      "label": "办公网",
+      "url": "http://office.chem.zju.edu.cn/"
+    },
+    {
+      "label": "校友网",
+      "url": "http://www.chem.zju.edu.cn/bnhx"
+    },
+    {
+      "label": "ENGLISH",
+      "url": "http://www.chem.zju.edu.cn/chemen"
+    }
+  ],
+  "note": "根路径只是 4 个按钮的导航壳；内容在 /chemcn。/chemcn 实测 200、51,413B、60 个 /list.htm 栏目。"
+}

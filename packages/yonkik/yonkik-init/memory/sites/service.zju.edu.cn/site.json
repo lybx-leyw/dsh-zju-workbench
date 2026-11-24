@@ -1,0 +1,27 @@
+{
+  "key": "service.zju.edu.cn",
+  "origin": "https://service.zju.edu.cn",
+  "title": "我的浙大 / 浙大服务平台（苏迪 Webplus + lightapp 服务门户）",
+  "status": "done",
+  "requires": "none（公开区免登录）；登录区 campus-sso（zjuam CAS）",
+  "auth": {
+    "family": "zjuam-cas",
+    "credentialKey": "campus-sso",
+    "loginUrl": "https://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fservice.zju.edu.cn%2F",
+    "note": "首页 / 302 → CAS；但 /_s2/anonymous_*/main.psp 与 /mobile/*.rst 免登录。登录区未深入（服务目录本身免登录可得）。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 404（返回「访问无权限」页，1178B）；响应头无 X-RateLimit-*。按保守默认串行 ≥2s。"
+  },
+  "server": "openresty/1.15.8.1",
+  "via": "direct",
+  "notes": [
+    "xwfw.zju.edu.cn 整站 301 → 本服务（同一后台，见 xwfw 站 wiki）",
+    "zhfw.zju.edu.cn 的「办事中心」链接也指向本服务，zhfw 自身是新闻 CMS"
+  ],
+  "exploredAt": "2026-11-20",
+  "exploredAtNote": "R220 补填：此前 site.json 缺 exploredAt，按索引节点的 exploredAt 回填。"
+}

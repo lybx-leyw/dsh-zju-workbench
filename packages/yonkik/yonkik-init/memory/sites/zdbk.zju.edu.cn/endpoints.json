@@ -1,0 +1,645 @@
+{
+  "site": "zdbk.zju.edu.cn",
+  "base": "https://zdbk.zju.edu.cn",
+  "auth": "公开区：无（JSESSIONID 即可）；登录区：CAS cookie（**必须走 playwright，lib CookieJar 拿不住本站会话**）",
+  "verified": [
+    {
+      "name": "news-list",
+      "method": "POST",
+      "path": "/jwglxt/xtgl/xwck_cxMoreLoginNews.html?doType=query&time=0",
+      "body": {
+        "queryModel.showCount": "20",
+        "queryModel.currentPage": "1",
+        "queryModel.sortName": "sfzd desc,fbsj",
+        "queryModel.sortOrder": "desc"
+      },
+      "altGet": "GET 同路径 + page/rows/sidx/sord 也返回 200，但分页参数被忽略（每页固定 10 条、翻页仍返回第 1 页），必须用 POST + queryModel.* 才是真分页",
+      "returns": "{totalCount, totalPage, pageSize, currentPage, items[]}；item 字段 xwbh(通知编号) xwbt(标题) xwfbr(发布单位/人) fbsj(发布时间) sfzd(1=置顶) sfyd fbnr(正文HTML，列表里已带全文) fbdz(外链字段，本次实测 60/60 全为空——外链不在这里)",
+      "note": "登录前公开可读，无需凭据",
+      "verifiedAt": "2026-11-19",
+      "status": 200
+    },
+    {
+      "name": "news-home-teaser",
+      "method": "GET",
+      "path": "/jwglxt/xtgl/login_cxLoginNews.html?mxb_id=newsnotice",
+      "returns": "登录页右侧「通知公告」HTML 片段（6 条置顶）",
+      "verifiedAt": "2026-11-19",
+      "status": 200
+    },
+    {
+      "name": "news-detail",
+      "method": "GET",
+      "path": "/jwglxt/xtgl/xwck_ckLoginNews.html?xwbh={xwbh}&doType=save",
+      "returns": "通知详情 HTML（标题/发布人/发布时间/浏览人数/正文）。**外链是详情时的服务端 302，不是列表字段**：605C87BF… → /kszx/login/xwxx/ckXwxx.zf?xwbh=…（200 可读）；5F40FC96… → https://bksy.zju.edu.cn/2026/1030/c28350a3220964/page.htm（本机 TLS 重置，校外网络限制）",
+      "verifiedAt": "2026-11-19",
+      "status": 200,
+      "sideEffectNote": "R212 补注：本端点路径含 `doType=save`，与 policyExcluded 的 news-mark-read（`xwgl_ckXw.html?doType=save`，会标已读）**参数名相同但端点不同**。已实测本端点返回 200 且取得详情 HTML，但**未单独验证它是否也产生「标已读」副作用**——为稳妥起见，按「可能标已读」对待：本库只用它做过一次详情读取取证，不纳入批量只读链路。",
+      "sideEffectRisk": "unverified-possible-mark-read",
+      "sideEffectCheckedAt": "2026-11-23"
+    },
+    {
+      "name": "login-publickey",
+      "method": "GET",
+      "path": "/jwglxt/xtgl/login_getPublicKey.html?time={ts}",
+      "returns": "{modulus, exponent}（RSA 公钥，用于加密密码）",
+      "verifiedAt": "2026-11-19",
+      "status": 200,
+      "note": "登录页 JS loginV2022.js 调用；密码先被前端 RSA 加密再提交"
+    },
+    {
+      "name": "login-sso-url",
+      "method": "POST",
+      "path": "/jwglxt/xtgl/login_cxSsoLoginUrl.html",
+      "returns": "{status:'success', ssologinurl:'https://zjuam.zju.edu.cn/cas/login?service=…'}",
+      "verifiedAt": "2026-11-19",
+      "status": 200,
+      "note": "站点唯一正规登录入口（#ssodl 按钮）；返回 CAS 登录 URL"
+    },
+    {
+      "name": "news-detail-external",
+      "method": "GET",
+      "path": "https://bksy.zju.edu.cn/...（由 news-detail 302 给出）",
+      "returns": "本科生院官网通知页 HTML",
+      "status": "network-error",
+      "note": "本机（校外网络）TLS 握手被重置，连 bksy 首页亦不可达；判定校外网络限制，校内网/WebVPN 应可访问",
+      "verifiedAt": "2026-11-19"
+    },
+    {
+      "name": "menu",
+      "method": "GET",
+      "path": "/jwglxt/xtgl/index_initMenu.html?ignoreZoom=1",
+      "returns": "登录后主框架（内含全部功能码 gnmkdm 与 data-gndyym 路径表，222KB）",
+      "auth": "login",
+      "verifiedAt": "2026-11-19",
+      "status": 200
+    },
+    {
+      "name": "student-info",
+      "method": "GET",
+      "path": "/jwglxt/zxzygl/zxzyqr_cxZxzyxsxxIndex.html?gnmkdm=N3015",
+      "returns": "学籍信息表单：学号/姓名/性别/学院/专业/行政班/年级/学制/入学日期/校区/生源地",
+      "auth": "login",
+      "verifiedAt": "2026-11-19",
+      "status": 200
+    },
+    {
+      "name": "grades",
+      "method": "POST",
+      "path": "/jwglxt/cxdy/xscjcx_cxXscjIndex.html?doType=query&gnmkdm=N5083",
+      "body": {
+        "xnm": "",
+        "xqm": "",
+        "queryModel.showCount": "500",
+        "queryModel.currentPage": "1"
+      },
+      "returns": "{items:[{kcmc,xf,cj,jd,xkkh,row_id}]}。**字段是精简版：无 kch/课程性质/开课学院**",
+      "auth": "login",
+      "verifiedAt": "2026-11-19",
+      "status": 200,
+      "note": "实测可返回成绩列表（字段为精简版）"
+    },
+    {
+      "name": "program-list",
+      "method": "POST",
+      "path": "/jwglxt/pyfagl/pyfaxxcx_cxPyfaxscxIndex.html?doType=query&gnmkdm=N153020&su={学号}",
+      "body": {
+        "synj": "年级，如2025",
+        "xydm": "",
+        "zydm": "",
+        "dlbs": "",
+        "jxjhh": "",
+        "queryModel.showCount": "500",
+        "queryModel.currentPage": "1",
+        "queryModel.sortName": "synj desc, xymc, jxjhh"
+      },
+      "returns": "{items:[…]}；关键字段 pyfaxx_id jxjhh zymc zdbyxf(最低毕业学分) exwxf(双学位) fxxf(辅修) wfxxf(微辅修) dektxf/dektxf3/dektxf4(二/三/四课堂) xz(学制) syxw(授予学位) pyyq pymb",
+      "auth": "login",
+      "verifiedAt": "2026-11-19",
+      "status": 200,
+      "note": "synj 是年级不是学年；GET 只回渲染壳，必须 POST"
+    },
+    {
+      "name": "program-pdf",
+      "method": "GET",
+      "path": "/jwglxt/pyfagl/pyfayl_cxPyfaylPdf.html?id={pyfaxx_id}&doType=query",
+      "returns": "application/pdf（培养方案全文，13 页）。**扫描件/无文本层，需 OCR 或渲染读图**",
+      "auth": "login",
+      "verifiedAt": "2026-11-19",
+      "status": 200,
+      "note": "实测 339,223 字节，%PDF-1.4；文本层仅 1246 字符"
+    },
+    {
+      "name": "graduation-check",
+      "method": "POST",
+      "path": "/jwglxt/bysh/byshck_cxByshzsIndex.html?doType=query&gnmkdm=N6025&su={学号}",
+      "body": {
+        "queryModel.showCount": "10000",
+        "queryModel.currentPage": "1"
+      },
+      "returns": "{items:[…]} 学分审核树节点（JDDM/FJDDM/LEAF/JDJB/YXXF/YQXF/SFGXXDJD/课程名称/学分/是否通过）",
+      "auth": "login",
+      "verifiedAt": "2026-11-19",
+      "status": 200,
+      "note": "**未设置个性修读模块时恒回 []**，不是无数据"
+    },
+    {
+      "name": "graduation-check-submit",
+      "method": "POST",
+      "path": "/jwglxt/bysh/byshck_xszsBysh.html?gnmkdm=N6025&su={学号}",
+      "body": {
+        "doType": "submit"
+      },
+      "returns": "{nolimit, taskid, status:RUNNING} → 再 doType=status&taskid=… 轮询 / doType=cancel",
+      "auth": "login",
+      "verifiedAt": "2026-11-19",
+      "status": 200,
+      "note": "未配模块时回 {status:none, message:「还未设置个性修读课程审核模块！」, type:gxxdkcmk}"
+    },
+    {
+      "name": "graduation-module-set",
+      "method": "POST",
+      "path": "/jwglxt/bysh/bysh_cxByshmkbj.html?gnmkdm=N6025&su={学号}",
+      "body": {
+        "xh": "{学号}"
+      },
+      "returns": "HTML 弹窗片段：三个 radio（<培养方案号>-04 本专业进阶 / -05 跨专业学习 / -06 学生自主修读）",
+      "auth": "login",
+      "verifiedAt": "2026-11-19",
+      "status": 200
+    },
+    {
+      "name": "课表查询（数据接口）",
+      "method": "POST",
+      "path": "/jwglxt/kbcx/xskbcx_cxXsKb.html",
+      "body": {
+        "xnm": "学年，如 2026-2027",
+        "xqm": "学期码 1|秋 / 1|冬 / 1|短 / 1|暑 / 2|春 / 2|夏 / 2|短",
+        "xqmmc": "学期名，如 秋",
+        "xxqf": "",
+        "xsfs": "1=列表 0=表格"
+      },
+      "returns": "{ xh, xm, xzb, xy, zy, xnm, xqm, xkkg, kbList[] }；每门课 kcmc/kcdm/jsxm/jszgh/skdd/sksj/xkkh/xkq/sfqd/xksj",
+      "note": "实测可返回课表（kbList 非空）。**没有结构化星期/节次字段**，时间在 sksj 文本里且含 {单周}{双周} 标记，需自行解析。接口不在页面 HTML，在 /jwglxt/js/comp/jwglxt/xkgl/kbcx/xskbcx.js（需登录态）",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "学期码表",
+      "method": "POST",
+      "path": "/jwglxt/kbcx/xskbcx_cxXueqiList.html",
+      "body": {
+        "xxqf": "1"
+      },
+      "returns": "[{xxq:\"1|秋、冬\",xqmc:\"秋、冬\"},{xxq:\"2|春、夏\",xqmc:\"春、夏\"}]",
+      "note": "（需登录态）",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "课表是否开放",
+      "method": "POST",
+      "path": "/jwglxt/kbcx/xskbcx_cxSfkc.html?xn={学年}&xqm={学期码}",
+      "returns": "文本 \"OK\" = 已开放；否则返回提示文案",
+      "note": "参数在 URL 上，不在 body（需登录态）",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "考试查询",
+      "method": "POST",
+      "path": "/jwglxt/xskscx/kscx_cxXsgrksIndex.html?doType=query&gnmkdm=N509070&su={学号}",
+      "body": {
+        "queryModel.showCount": "200",
+        "queryModel.currentPage": "1",
+        "queryModel.sortName": "",
+        "queryModel.sortOrder": "asc"
+      },
+      "returns": "{ items[], totalResult, totalPage }；字段 kcmc/kssj/jsmc/zwxh/xf/xkkh/xxq，及补考 qzkssj/qzjsmc/qzzwxh",
+      "note": "**忽略 xnm/xqm 参数**：实测传 4 种不同学年学期（含乱填）返回字节数完全相同、total 恒定，是全部历史考试。需按 kssj 年份自行过滤。结果里混有 kcmc=军训/身体素质课 等非考试行（需登录态）",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    }
+  ],
+  "unverified": [
+    {
+      "name": "news-keyword-search",
+      "method": "POST",
+      "path": "/jwglxt/xtgl/xwgl_cxXwListGyxtzgg.html",
+      "params": {
+        "xwbt": "关键词"
+      },
+      "semantics": "read (列表工单页的查询表单 action)，疑似只读检索，未单发验证",
+      "note": "cxMoreLoginNews.js 里 #xwbt 回车调 search('tabGrid1', {xwbt})；可能需要登录态"
+    },
+    {
+      "name": "logged-in-news",
+      "method": "POST",
+      "path": "/jwglxt/xtgl/xwck_cxXwList.html",
+      "semantics": "read",
+      "note": "登录后「通知公告」全量（含本科生院栏目），需 CAS 会话"
+    },
+    {
+      "name": "grade / schedule / course-select",
+      "semantics": "read (成绩/课表) + write (选退课，禁止)",
+      "note": "需登录；本次未探。选课/退课属写操作，脚本能力面不实现"
+    },
+    {
+      "name": "schedule",
+      "method": "GET|POST",
+      "path": "/jwglxt/xskbcx/xskbcx_cxXskbcxIndex.html?gnmkdm=N2151",
+      "returns": "课表（本次未验证）",
+      "auth": "login",
+      "status": "untested"
+    },
+    {
+      "name": "exam-arrangement",
+      "method": "GET",
+      "path": "/jwglxt/kscx/kscx_cxXsgrksIndex.html",
+      "returns": "考试安排（本次未验证）",
+      "auth": "login",
+      "status": "untested"
+    }
+  ],
+  "blocked": [
+    {
+      "path": "https://bksy.zju.edu.cn/2026/1030/c28350a3220964/page.htm",
+      "status": "network-error",
+      "reason": "部分通知 fbdz 指向本科生院子站 bksy.zju.edu.cn：本机 TLS 握手被重置（连首页也不可达），判定为校外网络限制，非接口问题；校内网/WebVPN 应可访问。kszx 子站（/kszx/login/xwxx/ckXwxx.zf）正常 200。"
+    }
+  ],
+  "verifiedCount": 18,
+  "importantPitfall": "lib/cookies.mjs 的 jar 键为 domain|path|name，且 importStorageState 强制 hostOnly=false；本站同路径下有 zdbk/jwglxt 与 zdbk/jwglxt/xtgl 两个同名 JSESSIONID，会互相覆盖 → 登录区用 lib/http.mjs 一律 302/901。登录区一律走 playwright ctx.request 或页面内 fetch。",
+  "gnmkdm": {
+    "note": "从 /jwglxt/xtgl/index_initMenu.html 的 data-gnmkdm/data-gndyym/data-gnmkmc 提取，共 67 个。URL 规则：功能页 = /jwglxt<path>?gnmkdm=<code>&su=<学号>（index 不需要 su）。需登录态。",
+    "extractedAt": "2026-11-22",
+    "count": 67,
+    "features": [
+      {
+        "code": "N100830",
+        "name": "学生监护人信息采集",
+        "path": "/jhrxxcj/jhrxscj_cxJhrxxcjIndex.html"
+      },
+      {
+        "code": "N104515",
+        "name": "推免生网上申请",
+        "path": "/tmsgl/tmssq_cxTmsxssq.html"
+      },
+      {
+        "code": "N105210",
+        "name": "竺院主修专业确认申请",
+        "path": "/zxzygl/zyzxzyqr_cxZyzxzyqrIndex.html"
+      },
+      {
+        "code": "N106020",
+        "name": "学生辅修申请",
+        "path": "/fxbmgl/xsfxbm_cxXsfxbmIndex.html"
+      },
+      {
+        "code": "N106027",
+        "name": "学生辅修变更申请",
+        "path": "/fxbmgl/fxbmbg_cxFxbgsqIndex.html"
+      },
+      {
+        "code": "N10653005",
+        "name": "交流生交流项目申请",
+        "path": "/jlsgl/xjlssq_cxJlssqIndex.html"
+      },
+      {
+        "code": "N10653020",
+        "name": "交流生交流手续办理",
+        "path": "/jlsgl/xjlssx_cxJlssxIndex.html"
+      },
+      {
+        "code": "N10653025",
+        "name": "出入（境）交流审批申请",
+        "path": "/jlsgl/jlsjfsq_cxJlsjfsqIndex.html?jfsqlx=0"
+      },
+      {
+        "code": "N106543",
+        "name": "校外学分认定申请",
+        "path": "/xwxfrd/xwxfrdsq_cxXwxfrdsqIndex.html"
+      },
+      {
+        "code": "N106554",
+        "name": "国际化学分查询",
+        "path": "/jlsgl/gjhxfgl_cxGjhxfcxIndex.html"
+      },
+      {
+        "code": "N108001",
+        "name": "第二三四课堂查询",
+        "path": "/dessktgl/dessktcx_cxDessktcxIndex.html"
+      },
+      {
+        "code": "N1087",
+        "name": "学生证补办申请",
+        "path": "/xszbbgl/xszbbsq_cxXszbbsqIndex.html"
+      },
+      {
+        "code": "N1091",
+        "name": "延长学制申请",
+        "path": "/ycxzgl/ycxzsq_cxYcxzsqIndex.html"
+      },
+      {
+        "code": "N109220",
+        "name": "国防科工单位补偿计划",
+        "path": "/xjgl/gfkgbcjhgl_cxGfkgbcjhsbIndex.html"
+      },
+      {
+        "code": "N151040",
+        "name": "课程信息查看",
+        "path": "/kckgl/kcjbxxwh_cxXsKcjbxxIndex.html?kctx=0"
+      },
+      {
+        "code": "N153020",
+        "name": "培养方案查询",
+        "path": "/pyfagl/pyfaxxcx_cxPyfaxscxIndex.html"
+      },
+      {
+        "code": "N15555050",
+        "name": "国际化课程开课查询",
+        "path": "/rwbzgl/gjhkcbz_cxGjhkccxIndex.html"
+      },
+      {
+        "code": "N156530",
+        "name": "研究生申请助教岗位",
+        "path": "/zjsqgl/yjssqzj_cxZjsqIndex.html"
+      },
+      {
+        "code": "N156552",
+        "name": "研究生填写助教周志",
+        "path": "/zjsqgl/yjszzxs_cxZjzzXsIndex.html"
+      },
+      {
+        "code": "N156665",
+        "name": "研究生助教岗位学生评价",
+        "path": "/zjpjgl/zjpjpf_cxZjpjpfIndex.html"
+      },
+      {
+        "code": "N158020",
+        "name": "英语水平测试免测申请",
+        "path": "/yymxgl/yymxsqgl_cxYymxsqIndex.html"
+      },
+      {
+        "code": "N159035",
+        "name": "开课情况",
+        "path": "/jxzlpj/jszlpj_cxKkqkIndex.html"
+      },
+      {
+        "code": "N214505T",
+        "name": "推荐课表查询",
+        "path": "/kbdy/bjkbdy_cxBjkbdyIndex.html"
+      },
+      {
+        "code": "N214510T",
+        "name": "教师课表打印",
+        "path": "/kbdy/jskbdy_cxJskbdyIndex.html"
+      },
+      {
+        "code": "N253508",
+        "name": "学生课表查询",
+        "path": "/kbcx/xskbcx_cxXskbcxIndex.html"
+      },
+      {
+        "code": "N253530",
+        "name": "自主选课",
+        "path": "/xsxk/zzxkghb_cxZzxkGhbIndex.html"
+      },
+      {
+        "code": "N253535",
+        "name": "教材预订",
+        "path": "/xsxjc/xsxjc_cxXsxjcIndex.html"
+      },
+      {
+        "code": "N253540",
+        "name": "补退选申请",
+        "path": "/xsbtx/xsbtx_cxXsbtxIndex.html"
+      },
+      {
+        "code": "N253545",
+        "name": "补考资格查询与确认",
+        "path": "/xsbkqr/xsbkqr_cxXsbkqrIndex.html"
+      },
+      {
+        "code": "N2568",
+        "name": "免听申请",
+        "path": "/xkgl/xsmtsq_cxXsmtsqIndex.html"
+      },
+      {
+        "code": "N258715",
+        "name": "求是大讲堂报名",
+        "path": "/xkgl/xsjzbmgl_cxXsjzbmIndex.html"
+      },
+      {
+        "code": "N258745",
+        "name": "求是大讲堂评价",
+        "path": "/xkgl/xsjzpjgl_cxXsjzpjIndex.html"
+      },
+      {
+        "code": "N2596",
+        "name": "英语能力测试报名",
+        "path": "/yynlcs/yynlcsbm_cxYynlcsbmIndex.html"
+      },
+      {
+        "code": "N3015",
+        "name": "主修专业确认",
+        "path": "/zxzygl/zxzyqr_cxZxzyxsxxIndex.html"
+      },
+      {
+        "code": "N3020",
+        "name": "转专业申请",
+        "path": "/xjydnew/zzysqgl_cxZzysqIndex.html"
+      },
+      {
+        "code": "N3025",
+        "name": "竺院选拔申请",
+        "path": "/zyxsgl/zxsqzy_cxZxsqzyIndex.html"
+      },
+      {
+        "code": "N3035",
+        "name": "学籍相关文档下载",
+        "path": "/wddyxz/wddyxz_cxWddyxzIndex.html"
+      },
+      {
+        "code": "N3095",
+        "name": "免修申请",
+        "path": "/kcmxgl/kcmxsq_cxKcmxsqIndex.html"
+      },
+      {
+        "code": "N438015",
+        "name": "第四课堂认定",
+        "path": "/dsktgl/dsktrd_cxDsktrdIndex.html"
+      },
+      {
+        "code": "N503255",
+        "name": "成绩公示查询",
+        "path": "/cjgzgl/cjgzgl_cxCjgzgsIndex.html"
+      },
+      {
+        "code": "N504050",
+        "name": "课程缓考与缓考考试申请",
+        "path": "/hkgl/xshksq_cxXshksqIndex.html"
+      },
+      {
+        "code": "N5061",
+        "name": "放弃修读课程申请",
+        "path": "/fqxdgl/fqxdsq_cxFqxdsqIndex.html"
+      },
+      {
+        "code": "N506905",
+        "name": "微专业校外成绩申请",
+        "path": "/xtwcj/xtwcjwzy_cxXtwcjWzysqIndex.html"
+      },
+      {
+        "code": "N507029",
+        "name": "系统外课程申请",
+        "path": "/xtwcj/xtwcjsq_cxXtwcjsqIndex.html"
+      },
+      {
+        "code": "N507635",
+        "name": "第一课堂学分认定",
+        "path": "/cjgl/dyktrdgl_cxDyktrdsqIndex.html"
+      },
+      {
+        "code": "N5083",
+        "name": "成绩查询",
+        "path": "/cxdy/xscjcx_cxXscjIndex.html"
+      },
+      {
+        "code": "N509060",
+        "name": "成绩单自助打印申请",
+        "path": "/cxdy/cjdzzdysq_cxCjdzzdysqIndex.html"
+      },
+      {
+        "code": "N509070",
+        "name": "考试查询",
+        "path": "/xskscx/kscx_cxXsgrksIndex.html"
+      },
+      {
+        "code": "N532510T",
+        "name": "学生课题申报",
+        "path": "/xsbysjgl/xstmsb_cxXstmsbIndex.html"
+      },
+      {
+        "code": "N532525T",
+        "name": "学生课题修改申请",
+        "path": "/xsbysjgl/ktxgsq_cxKtxgsqIndex.html"
+      },
+      {
+        "code": "N532530T",
+        "name": "学生选题",
+        "path": "/xsbysjgl/xsxt_cxXsxtIndex.html"
+      },
+      {
+        "code": "N532540T",
+        "name": "学生过程资料",
+        "path": "/xsbysjgl/xsgczl_cxXsgczlIndex.html"
+      },
+      {
+        "code": "N532541T",
+        "name": "论文查重",
+        "path": "/xsbysjgl/xslwcc_cxXslwccIndex.html"
+      },
+      {
+        "code": "N532545T",
+        "name": "更换指导教师申请",
+        "path": "/xsbysjgl/ghzdjssq_cxGhzdjssq.html"
+      },
+      {
+        "code": "N532550T",
+        "name": "答辩信息查看",
+        "path": "/xsbysjgl/dbxxck_cxDbxxckIndex.html"
+      },
+      {
+        "code": "N532564T",
+        "name": "文件资料",
+        "path": "/xtgl/xwck_cxMoreWjList.html?ssmkdm=01"
+      },
+      {
+        "code": "N534601T",
+        "name": "毕业论文信息核对申请",
+        "path": "/xsbysjgl/bylwxxhdsq_cxBylwxxhdsqIndex.html"
+      },
+      {
+        "code": "N537054T",
+        "name": "学生成绩查询（毕业）",
+        "path": "/glybysjgl/xscjcx_cxXscjxxIndex.html"
+      },
+      {
+        "code": "N587050",
+        "name": "我的问卷",
+        "path": "/wjdcgl/wjdctx_cxWdwjIndex.html"
+      },
+      {
+        "code": "N6016",
+        "name": "毕业生信息核对",
+        "path": "/xsxxxggl/xsxxhd_cxXsxxhdIndex.html"
+      },
+      {
+        "code": "N6021",
+        "name": "辅修证书申请",
+        "path": "/fxzssq/fxzssq_cxFxzssqIndex.html"
+      },
+      {
+        "code": "N602315",
+        "name": "辅修课程标注",
+        "path": "/bysh/fxkcbj_cxFxkcXsIndex.html"
+      },
+      {
+        "code": "N602330",
+        "name": "辅修课程标注变更",
+        "path": "/bysh/fxkcbjsq_cxFxkcbjsqIndex.html"
+      },
+      {
+        "code": "N6025",
+        "name": "毕业资格自审",
+        "path": "/bysh/byshck_cxByshzsIndex.html"
+      },
+      {
+        "code": "N729955",
+        "name": "教材领用查询",
+        "path": "/jcdjgl/jcxxcx_cxXsjccxIndex.html"
+      },
+      {
+        "code": "N729960",
+        "name": "教材库存查询",
+        "path": "/jcdjgl/jcxxcx_cxJckccxIndex.html"
+      },
+      {
+        "code": "N908550",
+        "name": "成绩主修数据查询",
+        "path": "/zycjtj/xszgkc_cxXsZgkcIndex.html"
+      }
+    ]
+  },
+  "authenticatedScenario": [
+    {
+      "path": "/jwglxt/xtgl/xwgl_cxXwListAlltzgg.html",
+      "chain": [
+        "https://zdbk.zju.edu.cn/jwglxt/xtgl/xwgl_cxXwListAlltzgg.html -> 302 https://zdbk.zju.edu.cn/jwglxt/xtgl/login_slogin.html"
+      ],
+      "gate": "https://zdbk.zju.edu.cn/jwglxt/xtgl/login_slogin.html",
+      "requires": "学号登录",
+      "note": "清单里挂两个标签（本科生院 / 各院系），登录后应为同一入口的两个视图；未持凭据不计入公开通路。"
+    }
+  ],
+  "evaluationStatusEndpoint": {
+    "id": "my-course-evaluation-status",
+    "method": "POST",
+    "path": "/jwglxt/xtgl/index_cxMyCosJxpj.html",
+    "checkedAt": "2026-11-22",
+    "verified": false,
+    "note": "上游清单第 44 行提到的「本人课程评教状态查询」。本轮**未请求**：该站需 StuId 会话，且评教类路径与提交侧同前缀，静态 probe 无法区分读/写，按纪律不盲试。"
+  },
+  "policyExcluded": [
+    {
+      "name": "news-mark-read",
+      "method": "GET",
+      "path": "/jwglxt/xtgl/xwgl_ckXw.html?doType=save",
+      "reason": "该端点会把通知标记为已读（写操作），因此不纳入只读链路。上游 notice list 带关键词时可能为补全标题继续打开详情，会顺带触发标已读，所以登录后搜索链不能整体视为严格只读。",
+      "source": "上游清单第 68 行明确提示",
+      "verifiedAt": "2026-11-23",
+      "action": "只记录端点与其副作用，不调用"
+    }
+  ]
+}

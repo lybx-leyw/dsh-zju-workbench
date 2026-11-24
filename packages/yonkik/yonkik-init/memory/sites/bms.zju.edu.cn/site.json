@@ -1,0 +1,26 @@
+{
+  "key": "bms.zju.edu.cn",
+  "origin": "https://bms.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "https://bms.zju.edu.cn/85174/list.htm",
+  "column": "研究院公告",
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/85147/list.htm"
+    ],
+    "note": "身份用 div.list-top_pos 全链路 + Column_Anchor 大类名 + span.titl 标题。/85097 末项自认 /85146，且清单标签与页面标题不同，标 identity-mismatch。"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "key": "polymer.zju.edu.cn",
+  "origin": "https://polymer.zju.edu.cn",
+  "status": "done",
+  "label": "高分子科学与工程学系",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-https-public-no-session",
+  "exploredAt": "2026-11-22",
+  "exactNoticeColumns": {
+    "checkedAt": "2026-11-22",
+    "note": "polymer.zju.edu.cn 是学系独立站，与 office.polymer.zju.edu.cn 办公网不同 host。/36748 渲染默认子栏 /36753，标 identity-mismatch。"
+  }
+}

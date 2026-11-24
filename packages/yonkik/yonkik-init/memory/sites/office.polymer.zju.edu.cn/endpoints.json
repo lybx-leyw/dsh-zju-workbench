@@ -1,0 +1,176 @@
+{
+  "site": "office.polymer.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET office.polymer.zju.edu.cn/37282/list.htm",
+      "column": "消息公告",
+      "verifiesPath": "/37282/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.polymer.zju.edu.cn/37282/list.htm",
+        "status": 200,
+        "column": "消息公告",
+        "displayTitle": "消息公告",
+        "sectionTitle": "系务动态",
+        "trail": [
+          [
+            "/37258/list.htm",
+            "系务动态"
+          ],
+          [
+            "/37282/list.htm",
+            "消息公告"
+          ]
+        ],
+        "count": 10,
+        "candidates": 10,
+        "total": 9078,
+        "pages": 908,
+        "datedCount": 10,
+        "externalLinks": 0,
+        "firstId": "3210570",
+        "firstDate": "2026-09-29"
+      }
+    },
+    {
+      "id": "GET office.polymer.zju.edu.cn/sjjx/list.htm",
+      "column": "实践教学",
+      "verifiesPath": "/sjjx/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.polymer.zju.edu.cn/sjjx/list.htm",
+        "status": 200,
+        "column": "实践教学",
+        "displayTitle": "实践教学",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/37259/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/sjjx/list.htm",
+            "实践教学"
+          ]
+        ],
+        "count": 14,
+        "candidates": 14,
+        "total": 199,
+        "pages": 15,
+        "datedCount": 0,
+        "externalLinks": 0,
+        "firstId": "3182012",
+        "firstDate": null
+      }
+    },
+    {
+      "id": "GET office.polymer.zju.edu.cn/xsh/list.htm",
+      "column": "学生会",
+      "verifiesPath": "/xsh/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.polymer.zju.edu.cn/xsh/list.htm",
+        "status": 200,
+        "column": "学生会",
+        "displayTitle": "学生会",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/37264/list.htm",
+            "学生工作"
+          ],
+          [
+            "/xsh/list.htm",
+            "学生会"
+          ]
+        ],
+        "count": 10,
+        "candidates": 10,
+        "total": 453,
+        "pages": 46,
+        "datedCount": 10,
+        "externalLinks": 0,
+        "firstId": "3175670",
+        "firstDate": "2026-06-08"
+      }
+    },
+    {
+      "id": "GET office.polymer.zju.edu.cn/xtw/list.htm",
+      "column": "系团委",
+      "verifiesPath": "/xtw/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.polymer.zju.edu.cn/xtw/list.htm",
+        "status": 200,
+        "column": "系团委",
+        "displayTitle": "系团委",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/37264/list.htm",
+            "学生工作"
+          ],
+          [
+            "/xtw/list.htm",
+            "系团委"
+          ]
+        ],
+        "count": 10,
+        "candidates": 10,
+        "total": 364,
+        "pages": 37,
+        "datedCount": 10,
+        "externalLinks": 0,
+        "firstId": "3150142",
+        "firstDate": "2026-04-10"
+      }
+    },
+    {
+      "id": "GET office.polymer.zju.edu.cn/37264/list.htm",
+      "column": "学生工作",
+      "verifiesPath": "/37264/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.polymer.zju.edu.cn/37264/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "学生工作",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/37264/list.htm",
+            "学生工作"
+          ]
+        ],
+        "count": 3,
+        "candidates": 3,
+        "total": 3,
+        "pages": 1,
+        "datedCount": 3,
+        "externalLinks": 0,
+        "firstId": "3082047",
+        "firstDate": "2025-09-16"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/37259/list.htm",
+      "pageTitle": "消息公告",
+      "sectionTitle": "本科生教育",
+      "claimedColumnPath": "/xxgg/list.htm",
+      "claimedColumnTitle": "消息公告",
+      "note": "目录路径可访问且标题正确，但「当前位置」末项自认 /xxgg/，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余高分子系栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

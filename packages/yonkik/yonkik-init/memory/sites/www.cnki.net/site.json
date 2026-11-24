@@ -1,0 +1,18 @@
+{
+  "key": "www.cnki.net",
+  "origin": "https://www.cnki.net",
+  "status": "done",
+  "label": "中国知网",
+  "auth": {
+    "type": "institutional-ip",
+    "note": "出口 IP 被识别为浙大图书馆机构 IP；但检索入口另有安全验证。"
+  },
+  "via": "direct-https-probe-only",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2400,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "4 次探测各 1 次。"
+  }
+}

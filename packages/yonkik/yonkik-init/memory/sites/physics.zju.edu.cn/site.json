@@ -1,0 +1,26 @@
+{
+  "key": "physics.zju.edu.cn",
+  "origin": "https://physics.zju.edu.cn",
+  "status": "done",
+  "label": "物理学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-https-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "HTTP 同路径 301 到 HTTPS。"
+  },
+  "exactNoticeColumns": {
+    "count": 2,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/zxxx_69701/list.htm",
+      "/zxxx/list.htm"
+    ],
+    "note": "两栏页面标题都是「最新消息」，靠「当前路径为父级与末项共用」+左侧导航 selected + 侧栏 menu-header h3 大类名区分。日期是 span.d（日）+ span.y（YYYY-MM）两段。"
+  }
+}

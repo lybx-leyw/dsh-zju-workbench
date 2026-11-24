@@ -1,0 +1,18 @@
+{
+  "key": "www.xgb.zju.edu.cn",
+  "origin": "http://www.xgb.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.xgb.zju.edu.cn/xfjs/list.htm",
+  "column": "学风建设"
+}

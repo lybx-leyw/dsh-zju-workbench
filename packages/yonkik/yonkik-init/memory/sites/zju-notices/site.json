@@ -1,0 +1,28 @@
+{
+  "key": "zju-notices",
+  "origin": "（聚合源，无单一 origin）",
+  "status": "done",
+  "type": "学院/部处官网通知聚合器（24 个源）",
+  "auth": {
+    "type": "none",
+    "note": "全部源免登录。走校内网直连，不需 WebVPN。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-20",
+  "note": "资料来源：对照 dsh-zju-assistant 的 notice/hosts.json（69 个源），逐站实测后留下 24 个可解析的。",
+  "exactColumns": {
+    "script": "sites/zju-notices/crawler-columns.mjs",
+    "catalog": "sites/zju-notices/columns.json",
+    "auth": "none",
+    "allowed": "仅逐条验证的公开 GET；优先 HTTPS，仅学工部及研究生院门户白名单公开列表可 HTTP，不发凭据、不自动跳转",
+    "rateLimit": {
+      "minIntervalMs": 2000,
+      "concurrency": 1,
+      "note": "用户手动调用间隔；一次命令仅一页，不自动循环"
+    },
+    "checkedAt": "2026-11-22"
+  }
+}

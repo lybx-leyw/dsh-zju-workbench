@@ -1,0 +1,10 @@
+{
+  "site": "sociology.zju.edu.cn",
+  "disposition": "unreachable-in-this-environment",
+  "checkedAt": "2026-11-22",
+  "evidence": [
+    "https://sociology.zju.edu.cn/ → deadline（20s 无响应）",
+    "DNS 解析为 198.18.0.39（IANA 保留的基准测试网段，本环境代理伪造）"
+  ],
+  "note": "上游清单把社会学系列为**明确跳过**；本站本轮亦不可达。两个理由都记录，不推断站点现状。"
+}

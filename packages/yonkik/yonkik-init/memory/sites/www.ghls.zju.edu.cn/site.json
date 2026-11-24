@@ -1,0 +1,36 @@
+{
+  "key": "www.ghls.zju.edu.cn",
+  "origin": "http://www.ghls.zju.edu.cn",
+  "status": "done",
+  "label": "光华法学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "固定单页首屏；未见 Retry-After。"
+  },
+  "exactNoticeColumns": {
+    "count": 12,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/ghlsbg/13767/list.htm",
+      "/ghlsbg/13761/list.htm",
+      "/ghlsbg/13762/list.htm",
+      "/ghlsbg/13763/list.htm",
+      "/ghlsbg/13768/list.htm",
+      "/ghlsbg/13771/list.htm",
+      "/ghlsbg/13813/list.htm",
+      "/ghlsbg/13789/list.htm",
+      "/ghlsbg/13729/list.htm",
+      "/ghlsbg/jyfw/list.htm",
+      "/ghlsbg/xsjz1/list.htm",
+      "/ghlsbg/zxtz/list.htm"
+    ],
+    "note": "判据是 div.bread_crumb 全链路 + h1 横幅栏目名；「公告」挂在对外交流下，「最新通知」的父级是 /_s331/main.psp。"
+  }
+}

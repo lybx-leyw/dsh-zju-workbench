@@ -1,0 +1,32 @@
+{
+  "key": "www.sis.zju.edu.cn",
+  "origin": "http://www.sis.zju.edu.cn",
+  "status": "done",
+  "label": "外国语学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "固定单页首屏；未见 Retry-After。"
+  },
+  "exactNoticeColumns": {
+    "count": 8,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/sischinese/12596/list.htm",
+      "/sischinese/12597/list.htm",
+      "/sischinese/12600/list.htm",
+      "/sischinese/12610/list.htm",
+      "/sischinese/12587/list.htm",
+      "/sischinese/12554/list.htm",
+      "/sischinese/12577/list.htm",
+      "/sischinese/12609/list.htm"
+    ],
+    "note": "「最新通知」在三处以相同页面标题出现（/12554 目录标签同名、/12577 本科教育、/12609 对外交流），只能靠完整链路区分；/12541、/12542 末项自认另一路径，标 identity-mismatch。"
+  }
+}

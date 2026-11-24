@@ -1,0 +1,28 @@
+{
+  "key": "xwfw.zju.edu.cn",
+  "origin": "https://xwfw.zju.edu.cn",
+  "title": "校务服务网（实为 service.zju.edu.cn 的整站别名）",
+  "status": "done",
+  "requires": "none（公开区与 service 完全相同）",
+  "auth": {
+    "family": "zjuam-cas",
+    "credentialKey": "campus-sso",
+    "loginUrl": "https://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fservice.zju.edu.cn%2F",
+    "note": "本域不出登录页——它整站 301 到 service，登录发生在 service 的 CAS。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "无 robots（301 到 service）；无 RateLimit 头。"
+  },
+  "server": "nginx/1.16.1",
+  "via": "direct",
+  "aliasOf": "service.zju.edu.cn",
+  "notes": [
+    "全部路径 301 → https://service.zju.edu.cn/_s2/cs_bszx/main.psp，包括 /robots.txt",
+    "CC98 学生说的「校务服务网」= 本域 = service.zju.edu.cn 的办事服务门户，是同一套后台"
+  ],
+  "exploredAt": "2026-11-20",
+  "exploredAtNote": "R220 补填：此前 site.json 缺 exploredAt，按索引节点的 exploredAt 回填。"
+}

@@ -1,0 +1,63 @@
+{
+  "site": "ugrs.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "auth": "无（全站免登录）",
+  "note": "苏迪 Webplus 平台。搜索是唯一结构化能力；栏目页需按首页列出的路径访问。",
+  "endpoints": [
+    {
+      "id": "home",
+      "name": "首页",
+      "method": "GET",
+      "url": "https://ugrs.zju.edu.cn/",
+      "status": "verified",
+      "returns": "HTML 59KB；含全部真实栏目 list.htm 列表 + 搜索表单（action 里有 _p 签名）",
+      "note": "栏目路径必须从这里取，别猜"
+    },
+    {
+      "id": "search-page",
+      "name": "搜索页",
+      "method": "POST/GET",
+      "url": "https://ugrs.zju.edu.cn/_web/_search/api/search/new.rst?locale=zh_CN&request_locale=zh_CN&_p={p}",
+      "status": "verified",
+      "returns": "HTML 9623B 搜索壳（结果由 JS 异步填充，直接 POST 这里拿不到数据）",
+      "note": "它的作用只有一个：提供 _p 签名与确认接口形态"
+    },
+    {
+      "id": "search-api",
+      "name": "全站搜索（真接口）",
+      "method": "POST",
+      "url": "https://ugrs.zju.edu.cn/_web/_search/api/searchCon/create.rst?_p={p}&tt={random}",
+      "status": "verified",
+      "params": {
+        "searchInfo": "base64(JSON([{field:'pageIndex',value:1},{field:'group',value:''},{field:'searchType',value:''},{field:'keyword',value:'关键词'},{field:'recommend',value:''},{field:4,value:''},{field:5,value:''},{field:6,value:''},{field:7,value:''}]))"
+      },
+      "returns": "JSON { linkSiteId, total(字符串), pages(HTML 分页条), data(HTML 结果片段) }",
+      "note": "**只有一个参数 searchInfo**。拆成 keyword=/page= 会返回与关键词无关的首页推荐，且 total 变成 3605（那是全站数）—— 极易误判成「搜到很多」。实测「培养方案」total=3"
+    },
+    {
+      "id": "column-list",
+      "name": "栏目页",
+      "method": "GET",
+      "url": "https://ugrs.zju.edu.cn/{栏目}/list.htm",
+      "status": "verified",
+      "returns": "HTML；如 /81372/list.htm 专业设置 113KB、/81374/ 培养模式 49KB、/81826/ 教在浙大 39KB",
+      "note": "不存在的栏目会 301→.psp→301→200 但正文是「提示：访问地址无效，X找不到对应的栏目！」（约 2.2KB）。这是「栏目不存在」不是「站挂了」"
+    }
+  ],
+  "knownColumns": {
+    "专业设置": "/81372/list.htm",
+    "培养模式": "/81374/list.htm",
+    "特色项目": "/81375/list.htm",
+    "教学名师": "/81376/list.htm",
+    "教师发展": "/81377/list.htm",
+    "优质课程": "/81475/list.htm",
+    "精品教材": "/81474/list.htm",
+    "一站式科研导航": "/81471/list.htm",
+    "实践平台": "/81379/list.htm",
+    "教学成果": "/jljgjjcgj/list.htm",
+    "教改项目": "/AIGC/list.htm",
+    "基层教学组织": "/81825/list.htm",
+    "教在浙大": "/81826/list.htm",
+    "教学质量": "/jxzl/list.htm"
+  }
+}

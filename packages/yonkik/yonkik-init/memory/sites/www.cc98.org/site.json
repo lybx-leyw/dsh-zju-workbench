@@ -1,0 +1,29 @@
+{
+  "key": "www.cc98.org",
+  "origin": "https://www.cc98.org",
+  "apiUrl": "https://api.cc98.org",
+  "via": null,
+  "requires": [],
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 返回 SPA HTML 壳（无真实 robots），无 Crawl-delay；取保守默认（2026-11-17 triage）"
+  },
+  "auth": {
+    "type": "oauth-password",
+    "credentialKey": "cc98",
+    "stateFile": "state.json",
+    "oauth": {
+      "tokenUrl": "https://openid.cc98.org/connect/token",
+      "clientId": "9a1fd200-8687-44b1-4c20-08d50a96e5cd",
+      "clientSecret": "<client_secret>",
+      "scope": "cc98-api openid offline_access",
+      "grantType": "password"
+    }
+  },
+  "notes": "React SPA v3.5.0。www 仅返回空壳，真实 API 在 api.cc98.org（Bearer token）。登录走 openid.cc98.org/connect/token password grant。自动化浏览器被站点拒绝（ERR_CONNECTION_CLOSED），故全程纯 HTTP。client_id 为前端 JS 公开值；client_secret 在本库已脱敏为占位符，非用户密钥。目标=调查学生关于学校资源的提问",
+  "status": "done",
+  "statusUpdated": "2026-11-19",
+  "exploredAt": "2026-11-17"
+}

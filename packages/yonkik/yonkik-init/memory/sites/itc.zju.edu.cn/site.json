@@ -1,0 +1,15 @@
+{
+  "key": "itc.zju.edu.cn",
+  "origin": "https://itc.zju.edu.cn",
+  "status": "done",
+  "type": "信息技术中心门户（苏迪 Webplus）",
+  "auth": {
+    "type": "zjuam-cas",
+    "note": "通知栏目需 CAS；本次未登录，仅取证跳转链。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-20"
+}

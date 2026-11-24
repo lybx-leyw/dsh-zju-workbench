@@ -1,0 +1,9 @@
+{
+  "key": "zulg.zju.edu.cn",
+  "origin": "https://zulg.zju.edu.cn",
+  "status": "done",
+  "type": "后勤集团门户（博达 Visual SiteBuilder 9）",
+  "auth": { "type": "none", "note": "全站免登录。列表是服务端渲染在 ul.list5 里。" },
+  "rateLimit": { "minIntervalMs": 2000, "concurrency": 1 },
+  "exploredAt": "2026-11-20"
+}
