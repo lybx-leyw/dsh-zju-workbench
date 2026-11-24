@@ -169,13 +169,20 @@ test('九个共用统一身份认证的数据源都有分项状态（lab 有自�
   }
 });
 
-test('没装的包报 NOT_INSTALLED，不抛错', async () => {
+test('没装的数据源**整行不出现**，不是显示成「未启用」', async () => {
+  // 曾经的语义是「每个分项都在，装不上的报 NOT_INSTALLED」。那让设置页长期
+  // 列着「学在浙大 / 教务 / 二课 / 体育场馆 / 通知」几行，每行都写「数据源未启用」
+  // —— 用户会以为点一下就能开，其实那个源**已经不在仓库里了**。
+  //
+  // 现在由 `assembledSources()` 只探真的挂着的服务：没装的分项**根本不出现**。
+  // 这条测试守的就是这个改变 —— 恢复某个源时那一行会自动回来。
   const { handler } = await boot({ services: {} });
   const sources = await readSources(handler);
   assert.equal(sources.lab, undefined, 'lab 有自己的分区，不在这一块');
-  assert.equal(sources.campus?.code, 'NOT_INSTALLED');
-  assert.equal(sources.notice?.code, 'NOT_INSTALLED');
   assert.equal(sources.mail, undefined, 'mail 有独立分区，不在这一块');
+  assert.equal(sources.campus, undefined, '没装 xuezai 时不该有 campus 这一行');
+  assert.equal(sources.notice, undefined, '没装 notice 时不该有这一行');
+  assert.deepEqual(Object.keys(sources), [], '一个源都没装时，这一块应当是空的');
 });
 
 test('一个源挂了不影响其它源（各自兜底）', async () => {
