@@ -804,4 +804,158 @@ body[data-zw] .zws-handout-export small { color:var(--zw-muted); font-size:11px;
    它不抢 margin-left:auto —— 那是 PDF 按钮用来把整组推到右边的。 */
 body[data-zw] .zws-handout-note-export { display:flex; flex-direction:column; align-items:flex-end; gap:5px; max-width:300px; }
 body[data-zw] .zws-handout-note-export button { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; font-size:12px; }
-body[data-zw] .zws-handout-note-export small { color:var(--zw-muted); font-size:11px; line-height:1.6; text-align:right; }
+body[data-zw] .zws-handout-note-export small { color:var(--zw-muted); font-size:11px; line-height:1.6; text-align:right; }/* ── 生成配置（GenerationModels，类名保持原样）────────────────────────── */
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-models {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--zw-space-1);
+  min-width: 0;
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-split { display: inline-flex; align-items: stretch; gap: var(--zw-space-1); }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generate-action { border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generate-options {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--zw-space-1);
+  padding: 0 var(--zw-space-3);
+  border-radius: 6px;
+  font-size: var(--zw-fs-sm);
+  white-space: nowrap;
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-config-pending {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--zw-accent);
+  box-shadow: 0 0 0 2px var(--zw-surface);
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-qz-blocked { margin: 0; color: var(--zw-muted); font-size: var(--zw-fs-meta); line-height: 1.5; }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-config-panel {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(560px, calc(100dvh - 32px));
+  border: 1px solid var(--zw-line);
+  border-radius: 10px;
+  background: var(--zw-surface);
+  color: var(--zw-text);
+  font-size: var(--zw-fs-sm);
+  overflow: auto;
+  box-shadow: 0 24px 64px -32px color-mix(in srgb, var(--zw-text) 55%, transparent);
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-config-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--zw-space-3);
+  padding: var(--zw-space-3) var(--zw-space-4);
+  border-bottom: 1px solid var(--zw-line);
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-config-heading > div { display: grid; gap: var(--zw-space-1); min-width: 0; }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-config-heading strong { font-size: var(--zw-fs-md); }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-config-heading span { color: var(--zw-muted); font-size: var(--zw-fs-meta); }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-config-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--zw-line);
+  border-radius: 6px;
+  background: var(--zw-surface);
+  color: var(--zw-secondary);
+  font-size: var(--zw-fs-md);
+  line-height: 1;
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-config-close:hover { background: var(--zw-hover); color: var(--zw-text); }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-models-content { display: grid; gap: var(--zw-space-3); padding: var(--zw-space-4); }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-models-content > p { margin: 0; color: var(--zw-muted); font-size: var(--zw-fs-sm); line-height: 1.5; }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-provider-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 112px;
+  align-items: center;
+  gap: var(--zw-space-3);
+  padding: var(--zw-space-2) 0;
+  border-top: 1px solid var(--zw-line);
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-provider-row:first-of-type { border-top: 0; }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-provider-row[data-selected="true"] { background: color-mix(in srgb, var(--zw-accent) 6%, transparent); }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-provider-check {
+  display: flex;
+  align-items: center;
+  gap: var(--zw-space-2);
+  min-width: 0;
+  font-size: var(--zw-fs-sm);
+  cursor: pointer;
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-provider-check > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) :is(.zws-provider-model, .zws-provider-workers) {
+  display: flex;
+  align-items: center;
+  gap: var(--zw-space-2);
+  min-width: 0;
+  color: var(--zw-muted);
+  font-size: var(--zw-fs-meta);
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) :is(.zws-provider-model, .zws-provider-workers) > span { flex: none; }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-provider-model > select { flex: 1 1 auto; min-width: 0; }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-provider-workers > input { flex: none; width: 64px; }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-provider-unavailable {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--zw-space-2);
+  color: color-mix(in srgb, var(--zw-accent) 60%, var(--zw-text));
+  font-size: var(--zw-fs-meta);
+  line-height: 1.5;
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-models-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--zw-space-2);
+  padding: var(--zw-space-3) var(--zw-space-4);
+  border-top: 1px solid var(--zw-line);
+}
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-models-footer > div { display: grid; flex: 1 1 auto; gap: var(--zw-space-1); min-width: 0; }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-models-footer strong { font-size: var(--zw-fs-sm); }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-generation-models-footer span { color: var(--zw-muted); font-size: var(--zw-fs-meta); overflow-wrap: anywhere; }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-models-hint { margin: 0; color: var(--zw-muted); font-size: var(--zw-fs-meta); line-height: 1.5; }
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-models-error { margin: 0; color: color-mix(in srgb, var(--zw-accent) 60%, var(--zw-text)); font-size: var(--zw-fs-meta); line-height: 1.5; }
+
+body[data-zw] :is(.zws-qz-page, .zws-qz) .zws-models-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

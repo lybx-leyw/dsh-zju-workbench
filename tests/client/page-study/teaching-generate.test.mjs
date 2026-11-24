@@ -9,9 +9,13 @@ const dir = path.join(ROOT, '.tmp', `teaching-generate-${process.pid}-${Date.now
 fs.mkdirSync(dir, { recursive: true });
 const out = path.join(dir, 'teaching-generate.mjs');
 
-// 只替身 React 之外的依赖：GenerationModels 用真身会把整个 quiz 页拖进来，
+// 只替身 React 之外的依赖：GenerationModels 用真身会拖进整套浮窗与样式，
 // 这里替成一个可观测的桩，断言「传了哪些 props」。
-const stub = path.join(dir, 'quiz.mjs');
+//
+// ⚠️ 它现在住在本包（`page-study/src/generation-models.jsx`），不再是「题库页
+// 通过 `quiz.generationModels` 契约发布」—— 那个发布方已随题库页归档。
+// 所以桩的替身点从「ui-shared 的契约表」换成「这个模块的相对 import」。
+const stub = path.join(dir, 'generation-models.mjs');
 fs.writeFileSync(stub, [
   "import React from 'react';",
   "export const GenerationModels = (props) => React.createElement('div', {",
@@ -24,20 +28,25 @@ fs.writeFileSync(stub, [
   "});",
 ].join('\n'));
 
-// 学习页**不再 import 题库页**：它只从 ui-shared 的契约表取组件。
-// 这里替身 ui-shared，让 `usePublishedComponent` 返回上面那个可观测的桩 ——
-// 断言的事没变（传了哪些 props、有没有 `.zws-qz` 祖先），但不再跨页 import。
+// 学习页**不 import 题库页**。组件现在就在本包内，直接用相对路径的桩替掉它 ——
+// 断言的事没变（传了哪些 props、有没有 `.zws-qz` 祖先），也不再依赖任何契约名。
 const sharedStub = path.join(dir, 'ui-shared.mjs');
-fs.writeFileSync(sharedStub, "export { usePublishedComponent } from './published.mjs';\n");
-fs.writeFileSync(path.join(dir, 'published.mjs'), [
-  `import { GenerationModels } from ${JSON.stringify(stub)};`,
-  "export const usePublishedComponent = (name) => name === 'quiz.generationModels' ? GenerationModels : undefined;",
-].join('\n'));
+fs.writeFileSync(sharedStub, "export const Icon = () => null;\nexport const mountStyle = () => {};\n");
 const esbuild = await import('esbuild');
+// `alias` 只接受裸模块名，绝对路径会被拒绝（"Invalid alias name"）。
+// 要替换一个**相对** import，得在解析阶段拦：插件把 './generation-models.jsx'
+// 解析到桩文件，其余路径原样交回默认解析器。
+const stubPlugin = {
+  name: 'stub-generation-models',
+  setup(build) {
+    build.onResolve({ filter: /\.\/generation-models\.jsx$/ }, () => ({ path: stub }));
+  },
+};
 await esbuild.build({
   entryPoints: [path.join(ROOT, 'packages/client/page-study/src/teaching-generate.jsx')],
   bundle: true, outfile: out, format: 'esm', platform: 'node', external: ['react', 'react-dom'],
   alias: { '@lybx-leyw/dsh-zju-ui-shared': sharedStub },
+  plugins: [stubPlugin],
   jsx: 'automatic', logLevel: 'silent',
 });
 const React = (await import('react')).default;
