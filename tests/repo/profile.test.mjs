@@ -150,7 +150,7 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   assert.deepEqual(data.dsh.profile.bundles, JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8')).dsh.profile.bundles,
     'profile 的 bundles 必须与模板逐项一致（新增本仓 bundle 只改模板，不必再改这里）');
   // 每个本仓包都要有 profile 里的目录链接 —— 漏一个的表现是「启动了但那一页空白」。
-  // 包目录既可能平铺也可能在分组目录下（`packages/client/pages-default/`），
+  // 包目录既可能平铺也可能在分组目录下（`packages/client/page-paper/`），
   // 所以按 manifest.name 反查真实目录，不拼路径。
   for (const { manifest, path: dir } of await ownPackages(path.join(root, 'packages'))) {
     const name = manifest.name;

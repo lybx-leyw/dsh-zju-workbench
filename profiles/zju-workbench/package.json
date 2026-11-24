@@ -8,8 +8,6 @@
       "bundles": [
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
-        "@lybx-leyw/dsh-pages",
-        "@lybx-leyw/dsh-zju-pages-default",
         "@lybx-leyw/dsh-zju-ui-shared",
         "@lybx-leyw/dsh-zju-source-login",
         "@lybx-leyw/dsh-zju-source-webvpn",

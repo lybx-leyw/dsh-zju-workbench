@@ -80,14 +80,35 @@ function apply(ctx) {
     order: 80,
     label: () => "YONKIK \u4FA6\u5BDF\u51ED\u636E"
   }, () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SettingsSection, {})));
-  (0, import_dsh_zju_ui_shared.registerPageContent)(ctx, {
+  (0, import_dsh_zju_ui_shared.registerPage)(ctx, {
     id: "yonkik-wiki",
     label: "YONKIK \u77E5\u8BC6\u5E93",
     order: 90,
+    icon: (size) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BookGlyph, { size }),
     render: () => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WikiPage, {})
   });
 }
 var emptyRow = () => ({ key: "", \u63CF\u8FF0: "", n1: "\u952E\u4E00", n2: "\u952E\u4E8C", v1: "", v2: "", has1: false, has2: false });
+function BookGlyph({ size = 18 }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+    "svg",
+    {
+      width: size,
+      height: size,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "1.65",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": "true",
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M4 5.5A2.5 2.5 0 0 1 6.5 3H19v18H6.5A2.5 2.5 0 0 1 4 18.5z" }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M8 3v18" })
+      ]
+    }
+  );
+}
 function SettingsSection() {
   const [rows, setRows] = (0, import_react.useState)([]);
   const [sites, setSites] = (0, import_react.useState)("");

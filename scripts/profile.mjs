@@ -69,7 +69,9 @@ export const retiredBundles = ['dsh-pages', 'dsh-zhiyun-pro-ui', 'dsh-zhiyun-stu
   '@lybx-leyw/dsh-zju-core-plugin-graph',
   // 更早归档、但从未登记过的两个旧名（老 profile 里可能还在）
   '@lybx-leyw/dsh-zju-core-classroom-vault',
-  '@lybx-leyw/dsh-zju-core-doc'];
+  '@lybx-leyw/dsh-zju-core-doc',
+  '@lybx-leyw/dsh-pages',
+  '@lybx-leyw/dsh-zju-pages-default'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
 
 /**

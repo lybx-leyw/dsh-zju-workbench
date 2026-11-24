@@ -14,7 +14,7 @@
  * 这是**断点与排布方向**的产品口径：改回 `row` 不会报错、也不会让任何功能
  * 测试变红，只会让手机上重新看不见正文。
  *
- * 真机效果与截图见 `packages/client/pages-default/docs/evidence/narrow/`。
+ * 真机效果与截图见 `archive/deprecated-packages/pages-default/docs/evidence/narrow/`。
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';

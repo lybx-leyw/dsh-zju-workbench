@@ -6,7 +6,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import {
   PageTitle, Intro, Card, Field, TextInput, TextArea, Actions, StatusLine, Rows,
-  SETTINGS_CSS, mountStyle, registerPageContent,
+  SETTINGS_CSS, mountStyle, registerPage,
 } from '@lybx-leyw/dsh-zju-ui-shared'
 import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import { MASK, ROUTE_PATH, WRITE_HEADER, errorText } from './shared.js'
@@ -36,15 +36,28 @@ export function apply(ctx) {
     order: 80,
     label: () => 'YONKIK 侦察凭据',
   }, () => <SettingsSection />))
-  registerPageContent(ctx, {
+  // 成对注册到 DSH 原生槽：导轨图标（sidebar.panellist）+ 中央面板（main）。
+  registerPage(ctx, {
     id: 'yonkik-wiki',
     label: 'YONKIK 知识库',
     order: 90,
+    icon: size => <BookGlyph size={size} />,
     render: () => <WikiPage />,
   })
 }
 
 const emptyRow = () => ({ key: '', 描述: '', n1: '键一', n2: '键二', v1: '', v2: '', has1: false, has2: false })
+
+/** 导轨图标：与本仓其它页同一套 24 网格描边风格。 */
+function BookGlyph({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v18H6.5A2.5 2.5 0 0 1 4 18.5z"/>
+      <path d="M8 3v18"/>
+    </svg>
+  );
+}
 
 function SettingsSection() {
   const [rows, setRows] = useState([])

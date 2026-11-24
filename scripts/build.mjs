@@ -48,7 +48,6 @@ export const CLIENT_PACKAGES = [
   //
   // 2026-11-18：未接入页面的数据源与工具包已整体归档（见仓库根的归档说明）。
   // 现存客户端半边只剩页面壳、共享 UI、保留页面，以及几条支撑学习页的 core 包。
-  'pages-default',
   'ui-shared',
   'login',
   'yonkik-tool',

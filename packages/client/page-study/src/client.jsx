@@ -6,7 +6,7 @@ import React from 'react';
 // ⚠️ **本页不 import 题库页**。两页之间只通过 `ui-shared` 的组件契约名认识：
 //   题库页 apply 时 publish 出 `quiz.generationModels` / `quiz.pointPanel`，
 //   本页按名字取。拿不到（题库页已归档）就是一块说明，不是白屏。
-import { Icon, mountStyle, Notice, registerPageContent, usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
+import { Icon, mountStyle, Notice, registerPage, usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { StudyWorkspace } from './study-workspace.jsx';
 import css from './style.css';
 // 视频栏是第二套样式（`zws-video-*`）：它有自己的网格与窄屏断点，不跟正文共用规则。
@@ -22,14 +22,13 @@ export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zwStudyCourseGraphStyle', css: courseGraphCss, label: 'zw: course graph styles' });
   // 惰性取领域状态：停用状态包时这一页只是空着（页面壳显示占位），不会把整个前端拖成 pending。
   ctx.inject(['zwStudyController'], (scope) => {
-    registerPageContent(scope, {
+    // 成对注册到 DSH 原生槽：导轨图标（sidebar.panellist）+ 中央面板（main）。
+    registerPage(scope, {
       id: 'study',
-    // 导轨图标：ui-shared 的统一描边集，与内建页同源同风格。
-    icon: () => <Icon name="book"/>,
-    // 应用型页面：自己管布局与滚动，不套 720px 文章版心。
-    fullBleed: true,
+      order: 30,
+      // 导轨图标：ui-shared 的统一描边集，与内建页同源同风格。
+      icon: size => <Icon name="book" size={size}/>,
       label: '学习',
-      // 版式与迁移前一致：`FULL_BLEED_PAGES` 只有 notes / docs，学习页仍走文章版心。
       render: () => <Study controller={scope.zwStudyController} />,
     });
   });

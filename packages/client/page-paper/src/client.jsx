@@ -1,4 +1,4 @@
-import { Icon, mountStyle, registerPageContent } from '@lybx-leyw/dsh-zju-ui-shared';
+import { Icon, mountStyle, registerPage } from '@lybx-leyw/dsh-zju-ui-shared';
 import css from './style.css';
 import { Paper } from './Paper.jsx';
 import { SettingsSection } from './SettingsSection.jsx';
@@ -28,14 +28,12 @@ export const inject = ['slots'];
 export function apply(ctx) {
   mountStyle(ctx, { attribute: 'zwPaperStyle', css, label: 'zw: paper page styles' });
 
-  // 直接注册给页面壳的 `page.content`（keyed）。
-  // 论文页沿用文章版心（与迁移前一致：`FULL_BLEED_PAGES` 只有 notes / docs）。
-  registerPageContent(ctx, {
+  // 成对注册到 DSH 原生槽：导轨图标（sidebar.panellist）+ 中央面板（main）。
+  registerPage(ctx, {
     id: 'paper',
+    order: 20,
     // 导轨图标：ui-shared 的统一描边集，与内建页同源同风格。
-    icon: () => <Icon name="paper"/>,
-    // 应用型页面：自己管布局与滚动，不套 720px 文章版心。
-    fullBleed: true,
+    icon: size => <Icon name="paper" size={size}/>,
     label: '论文',
     render: () => <Paper/>,
   });
