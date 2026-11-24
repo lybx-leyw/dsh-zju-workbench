@@ -55,7 +55,8 @@ async function walkSource(dir, out = []) {
 
 test('保留集里不存在「引用了本仓包名但那个包不在」的源码', async () => {
   const own = await ownPackages();
-  assert.ok(own.size >= 30, `只读到 ${own.size} 个包，扫描可能失效`);
+  // 下限随退役收缩：2026-11 归档四个页面与它们独占的 core 包后，保留集从 37 降到 30。
+  assert.ok(own.size >= 25, `只读到 ${own.size} 个包，扫描可能失效`);
 
   const problems = [];
   for (const [name, dir] of own) {

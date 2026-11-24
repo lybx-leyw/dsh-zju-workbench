@@ -29,15 +29,10 @@ const SLASH = String.fromCharCode(92);
 /**
  * 这些包的**裸入口**带 `node:` 依赖，客户端只能用它们的 `/browser` 子入口。
  *
- * - `core-vault`：整个包都是宿主侧的（落盘 + PDF 字节流 + pdfjs-dist）。
- * - `core-plugin-graph`：入口 `apply()` 会注册 `/api/zw-plugins` 路由并 inject
- *   `connection`/`loader`；客户端只需要 `./browser` 里那几个折叠函数。误引入口虽然
- *   不会白屏（它不碰 node 内置模块），但会把一个宿主插件塞进浏览器产物 ——
- *   更糟的是它看起来"能用"，于是没人发现边界破了。
+（`core-vault` 与 `core-plugin-graph` 已随笔记页 / 插件页一并归档，
+ *  不再需要在此登记。）
  */
 const BROWSER_SAFE_PACKAGES = [
-  '@lybx-leyw/dsh-zju-core-vault',
-  '@lybx-leyw/dsh-zju-core-plugin-graph',
 ];
 
 /** 一个包目录里的全部源文件（递归，跳过 lib/ 产物与 node_modules）。 */
@@ -83,7 +78,9 @@ function references(body, name) {
 
 test('页面包之间没有任何 import（含 jsx / js / mjs）', () => {
   const pages = pagePackages();
-  assert.ok(pages.length > 5, `页面包清单解析失败（只找到 ${pages.join(',') || '空'}）`);
+  // 2026-11 归档四个页面后只剩两页（论文 / 学习）。下限从 >5 降到 >0，
+  // 但保留断言本身：整表解析失败时仍要红。
+  assert.ok(pages.length > 0, `页面包清单解析失败（只找到 ${pages.join(',') || '空'}）`);
 
   // 每个页面包的**包名**，用来识别「import 的是另一页」。
   const names = new Map();
@@ -182,7 +179,8 @@ test('页面包 src 下的**任何**文件都不碰 node:fs（不只是 index.js
  */
 
 test('页面的**客户端半边**不 import 存储包（否则 node:fs 会被打进浏览器）', () => {
-  // 存储下沉之后有一条新的坑：`core-vault` 这类**非客户端**包（没有
+  // 存储下沉之后有一条新的坑：`core-vault` 这类**非客户端**包（曾用此guard，
+  // 该包已归档）没有
   // `src/client.jsx`、没有 `lib/client.js`）被页面 import 时会被 esbuild
   // **内联**进客户端产物 —— 而它 `import 'node:fs'`。浏览器里没有 node:fs，
   // 后果是进笔记页当场白屏，构建却是绿的（esbuild 对 node 内置模块只警告）。
@@ -214,7 +212,7 @@ test('页面的**客户端半边**不 import 存储包（否则 node:fs 会被�
 
 test('客户端的**间接依赖**也不许碰裸入口（沿 import 链走一遍）', () => {
   // 上一版只查 `*.jsx` 与 `client.js` 这两个**直接**入口。真实的坑是间接的：
-  //   `client.jsx` → `./foo.js` → `@lybx-leyw/dsh-zju-core-vault`
+  //   `client.jsx` → `./foo.js` → `@lybx-leyw/dsh-zju-core-planning`
   // 第一层文件名不带 jsx，于是整条链被跳过 —— 而 esbuild 照样会把 `node:fs`
   // 打进产物。所以这里从 `client.jsx` 出发，把同包内的相对 import 全部跟进。
   const violations = [];
@@ -250,7 +248,7 @@ test('客户端的**间接依赖**也不许碰裸入口（沿 import 链走一�
 });
 
 
-test('跨域读数据只走 URL：笔记页的三条路径必须与 core-vault 的声明一致', () => {
+test.skip('跨域读数据只走 URL：笔记页的三条路径必须与 core-vault 的声明一致（两端均已归档）', () => {
   // 与上一条同源：笔记页不 import core-vault（页面不许认识它），只按 URL 读写。
   // 三条都是隐式契约，任何一条改名都会让**对应功能静默失效**：
   //   · 索引路由改了 → 反链/图谱永远是空的（看起来只是"没有链接"）

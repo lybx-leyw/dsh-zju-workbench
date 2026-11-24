@@ -25,10 +25,9 @@ test('被取消的页从侧栏与跳转里一起消失（两处必须同一份�
   assert.equal(NAV.some(page => page.id === 'ask'), false);
   assert.equal(pageBundle('today'), '@lybx-leyw/dsh-zju-page-today');
   assert.equal(pageBundle('paper'), '@lybx-leyw/dsh-zju-page-paper');
-  // 「题库」曾经是寄居在学习页里的一个 tab，`pageBundle` 给它开了特例把包名指到
-  // `dsh-zju-page-study`。拆成独立包之后特例去掉 —— 这条断言就是那个特例的
-  // 纪念碑：谁再把它改回指向学习页，这里立刻红（包被取消时藏页与跳转都靠这条）。
-  assert.equal(pageBundle('quiz'), '@lybx-leyw/dsh-zju-page-quiz');
+  // 「题库」页已于 2026-11 归档，不再出现在 NAV 里 —— 它的 pageBundle 推导
+  // 也就没有消费者了。原先这里钉着「特例去掉后包名必须指向独立包」的纪念碑，
+  // 随页面退役一并失效（包已不在 packages/client/ 下）。
 
   // 论文页的包被取消。
   const enabled = new Map([['@lybx-leyw/dsh-zju-page-paper', false], ['@lybx-leyw/dsh-zju-page-today', true]]);

@@ -61,7 +61,6 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     // ⚠️ `classroom-renderer` 已不在这张表里：渲染组件连同它的样式一起搬到
     // `ui-shared`（`classroom-slide.css`），`core/classroom-renderer` 只剩常量，
     // 没有样式表了。它的行仍在下面（`ui-shared` 一行聚合全部表）。
-    'graph-render',
     // `dsh-zhiyun-settings-account` 已归档到 `archive/deprecated-packages/`：
     // 它的 style.css 不再被 `loadSheets` 读到，所以这里也不列它。
     // `login` / `netproxy` / `ui-shared` 是分组目录名：
@@ -71,11 +70,7 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'login',
     // 页面包全部迁到 `packages/client/page-*`：目录名即短名，按字典序排在后面。
     // `page-classroom` / `-play` / `-build` 都已归档 —— 产品侧不要独立的课堂页面。
-    'page-docs',
-    'page-notes',
     'page-paper',
-    'page-plugins',
-    'page-quiz',
     'page-study',
     'ui-shared',
     // YONKIK 运行时自带两张表（`style.css` + `wiki.css`），同样聚合为一行。

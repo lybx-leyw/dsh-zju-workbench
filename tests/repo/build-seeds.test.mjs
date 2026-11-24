@@ -169,11 +169,7 @@ const INTENTIONALLY_BUNDLED = {
   // 没有别的包会需要它们、也没有运行时要共享的实例状态，所以不进 external 面、
   // 直接打进自己的 lib/client.js。反过来，如果把 cytoscape 写进 external 却
   // 没有任何客户端包提供它，图谱会在运行时静默不显示。
-  'cytoscape': 'graph-render：纯绘图库，无共享实例需求，按设计内联进自己的 bundle',
-  'cytoscape-fcose': 'graph-render：cytoscape 的 fcose 布局扩展，随宿主库一起内联',
   // fcose 自身的传递依赖（只在布局计算里用，不进 API）。
-  'cose-base': 'graph-render：fcose 的布局基元，随 fcose 内联',
-  'layout-base': 'graph-render：fcose 的布局基元，随 fcose 内联',
   // classroom-agent 的运行时会话 id 用 nanoid 生成。它是纯函数库（无实例状态、
   // 无 IO、体积 ~100B），没有跨包共享实例的需求，按设计随包内联。
   'nanoid': 'classroom-agent：纯函数 id 生成器，无共享实例需求，内联进 bundle',
@@ -220,7 +216,6 @@ const INTENTIONALLY_BUNDLED = {
   // 「运行时由别的包提供」，而浏览器里没人提供它，`makeRequire` 抛错、页面白屏。
   // 所以它们只能被内联，这里点名豁免是**显式声明这件事是设计**。
   //
-  // `core-plugin-graph`：页面用 `…/browser` 取依赖图的折叠函数。
   // `core-classroom-renderer`：只剩两个画布常量，被 `ui-shared` 的
   // `classroom-slide.jsx` 内联。
   //
@@ -229,8 +224,6 @@ const INTENTIONALLY_BUNDLED = {
   // `…/core-plugin-graph/browser` 时查不到，就会报「external 面不完整」——
   // 而那条报错会把人引向「加进 dsh.client.external」，那才是真正的错
   //（这些包没有客户端半边，external 化 = 运行时解析不到 = 白屏）。
-  '@lybx-leyw/dsh-zju-core-plugin-graph': 'core-plugin-graph：无客户端半边，内联',
-  '@lybx-leyw/dsh-zju-core-plugin-graph/browser': 'core-plugin-graph：折叠函数子入口，页面内联',
   '@lybx-leyw/dsh-zju-core-classroom-renderer': 'core-classroom-renderer：只剩画布常量，被 ui-shared 内联',
   'clsx': 'classroom-renderer：className 拼接，纯函数内联',
   'tailwind-merge': 'classroom-renderer：className 去重，纯函数内联',

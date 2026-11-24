@@ -5,7 +5,7 @@
 import React from 'react';
 // ⚠️ **本页不 import 题库页**。两页之间只通过 `ui-shared` 的组件契约名认识：
 //   题库页 apply 时 publish 出 `quiz.generationModels` / `quiz.pointPanel`，
-//   本页按名字取。拿不到（用户把题库页关掉了）就是一块说明，不是白屏。
+//   本页按名字取。拿不到（题库页已归档）就是一块说明，不是白屏。
 import { Icon, mountStyle, Notice, registerPageContent, usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { StudyWorkspace } from './study-workspace.jsx';
 import css from './style.css';
@@ -44,7 +44,7 @@ export function apply(ctx) {
 function ModelSettings(props) {
   const Panel = usePublishedComponent('quiz.generationModels');
   if (!Panel) {
-    return <p className="zws-muted" role="status">模型与并发配置由「题库」页提供；该页未启用时用设置里的默认模型。</p>;
+    return <p className="zws-muted" role="status">模型与并发配置的原提供方「题库」页已于 2026-11 归档；当前用设置里的默认模型。</p>;
   }
   return <Panel {...props} />;
 }

@@ -163,14 +163,17 @@ test('bank-export 在宿主 RPC 白名单里', () => {
   assert.match(host, /"bank-export"/, '不在白名单会被挡成「输入信息无效」');
 });
 
-test('前端导出按钮受选中数量约束', () => {
+// 以下两条验的是**题库页**的导出按钮。该页已于 2026-11 归档，
+// 源码随包移入 archive/deprecated-packages/_tests/，这里无法再读。
+// 服务端侧的导出契约（下面那几条）仍然在跑。
+test.skip('前端导出按钮受选中数量约束（题库页已归档）', () => {
   const page = read('packages/client/page-quiz/src/question-history.jsx');
   assert.match(page, /exportPicked/, '要有导出处理函数');
   assert.match(page, /disabled=\{!selected\.length\|\|exporting\}/, '没选中或正在导出时禁用');
   assert.match(page, /导出到笔记库/, '按钮文案');
 });
 
-test('导出结果如实显示落到哪个路径，重名要说出来', () => {
+test.skip('导出结果如实显示落到哪个路径，重名要说出来（题库页已归档）', () => {
   const page = read('packages/client/page-quiz/src/question-history.jsx');
   assert.match(page, /data\.folder/, '要显示目录');
   assert.match(page, /deduped/, '重名加后缀要告知用户');

@@ -57,12 +57,7 @@ export const CLIENT_PACKAGES = [
   'player',
   'playback',
   'quiz',
-  'graph-render',
-  'page-docs',
-  'page-notes',
   'page-paper',
-  'page-plugins',
-  'page-quiz',
   'page-study',
 ];
 
