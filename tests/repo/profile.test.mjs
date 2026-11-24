@@ -109,17 +109,21 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   const home = await mkdtemp(path.join(parent, 'profile-'));
   const first = await initialize({ home });
   const patch = path.join(first.profile, 'cordis.patch.yml');
-  // 本仓 bundle 的配置层（`- id: dsh-pages` 那段）由模板合并进 live patch，
-  // 用户自己写的那一段原样保留 —— 所以期望是「用户段 + 本仓段」，不是原样不动。
-  const custom = '# user overlay\n[]\n';
-  // 本仓段：取模板里**条目部分**（第一个 `- id:` 起），不含开头的说明注释。
+  // 本仓 bundle 的配置层由模板合并进 live patch，用户自己写的那一段原样保留。
   //
-  // `initialize()` 只合并 YAML 条目，不抄模板顶部那段注释 —— 期望值若用整篇
-  // 模板去比，差的就是那 18 行注释（本节因此红过两轮，最后靠逐字符对比才定位）。
+  // ⚠️ 2026-11 起模板 patch **没有任何条目**（页面壳退役后没有需要 profile 级
+  //    config 的 bundle），所以这里改成「按模板里实际有多少条目来算期望」：
+  //    有条目就拼在用户段之后，没有就只剩用户段。
+  //
+  //    `initialize()` 只合并 YAML 条目，不抄模板顶部那段说明注释 —— 期望值若
+  //    用整篇模板去比，差的就是那些注释（本节因此红过两轮，最后靠逐字符对比才定位）。
+  const custom = '# user overlay\n[]\n';
   const templateBody = (await readFile(path.join(root, 'profiles', lock.profile, 'cordis.patch.yml'), 'utf8'))
     .replace(/\r\n/g, '\n');
   const firstEntry = templateBody.indexOf('- id:');
-  const expectedPatch = custom + templateBody.slice(firstEntry).trimEnd() + '\n';
+  const expectedPatch = firstEntry < 0
+    ? custom
+    : custom + templateBody.slice(firstEntry).trimEnd() + '\n';
   await writeFile(patch, custom);
   await writeFile(path.join(home, 'user-note.txt'), 'keep my notes');
   const manifest = path.join(first.profile, 'package.json');
@@ -181,7 +185,16 @@ test('existing profiles add the bridge once without altering user bundles or ove
   // 用户段不动，本仓配置层被合并进来（且重复初始化不会叠第二份）。
   const merged = await readFile(patch, 'utf8');
   assert.ok(merged.startsWith(userPatch), '用户覆盖必须原样保留在最前');
-  assert.equal(merged.split('- id: dsh-pages').length - 1, 1, '本仓配置层只应出现一次');
+  // 重复初始化不会把模板配置层叠第二份。模板当前没有条目时这条自动成立，
+  // 但仍然守着「将来加回条目后不许重复」这件事。
+  //
+  // 模板在这个用例里要**自己读**：上面的 `templateBody` 属于另一个用例的作用域，
+  // 复用它只会得到 ReferenceError（踩过一次）。
+  const templateText = (await readFile(path.join(root, 'profiles', lock.profile, 'cordis.patch.yml'), 'utf8'))
+    .replace(/\r\n/g, '\n');
+  const entryCount = (merged.match(/^- id: /gm) ?? []).length;
+  const templateEntryCount = (templateText.match(/^- id: /gm) ?? []).length;
+  assert.equal(entryCount, templateEntryCount, '本仓配置层重复初始化后不应叠加');
   // 补回来的包必须有指向真实目录的链接。
   // ⚠️ 不能拼 `packages/<包名>`：包可能住在分组目录（`packages/source/<目录>`），
   //    而目录名不等于包名。按 manifest.name 反查才是唯一稳的写法。

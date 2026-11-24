@@ -122,7 +122,8 @@ async function assertClientKernel(modules, version) {
 // （`packages/vendor/`）被 `ISOLATED_GROUPS` 隔离，不在那个集合里 ——
 // 但它确实是本仓维护、需要装配的包，所以在这里单列。
 const EXTERNAL_BUNDLES = [
-  '@lybx-leyw/dsh-pages',
+  // `@lybx-leyw/dsh-pages` 已于 2026-11 退役（产品页改走 DSH 原生槽），
+  // 不再是从 npm 安装、需要 link 进 profile 的 bundle。
   // 论文阅读：上游代码 + 我们的改动，住在 `packages/vendor/paper-reader/`。
   '@ggboy123/dsh-paper-reader',
 ];
