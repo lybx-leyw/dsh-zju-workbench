@@ -153,7 +153,7 @@
       "method": "GET",
       "path": "/dataapi/py/pyKcbj/queryXskbByLoginUser?xn={学年}&pkxq={11春|12秋|13冬|14夏}",
       "returns": "{ result: { kcbMap: { 星期: { 节次: [课程] } }, sjddList: [] } }",
-      "note": "**本科生返回空 kcbMap 是预期**（本机 6 组参数全空，因 orgName=本科生院）。xq 与 pkxq 编码不同体系。需 token",
+      "note": "**本科生返回空 kcbMap 是预期**（实测 6 组参数全空，因 orgName=本科生院）。xq 与 pkxq 编码不同体系。需 token",
       "verifiedAt": "2026-11-22",
       "status": 200
     },
