@@ -6,6 +6,8 @@ import { ownPackageDirs, ownPackageNames, ownPackages } from './workspace-packag
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
 export const lock = JSON.parse(await readFile(new URL('../runtime.lock.json', import.meta.url), 'utf8'));
+/** profile 名可被 ZW_PROFILE 覆盖（默认 lock.profile），用于挂载独立 profile 而不改默认装配。 */
+const profileName = process.env.ZW_PROFILE ?? lock.profile;
 /**
  * 本仓自有的 bundle = `packages/` 下带 manifest、且不属于隔离区的包。
  *
@@ -511,9 +513,9 @@ export async function migratePersistedPaths(home = path.join(root, '.runtime', '
 
 export async function initialize({ home = path.join(root, '.runtime', 'home'), env = process.env } = {}) {
   const host = await locateHost(env);
-  const profile = path.join(home, 'profiles', lock.profile);
+  const profile = path.join(home, 'profiles', profileName);
   await mkdir(profile, { recursive: true });
-  const template = JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8'));
+  const template = JSON.parse(await readFile(path.join(root, 'profiles', profileName, 'package.json'), 'utf8'));
   const manifestFile = path.join(profile, 'package.json');
   if (await exists(manifestFile)) {
     const existing = JSON.parse(await readFile(manifestFile, 'utf8'));
@@ -550,7 +552,7 @@ export async function initialize({ home = path.join(root, '.runtime', 'home'), e
   // declares) have to reach the live profile too — copying the template only when
   // the file is missing meant a new `dsh-pages` config silently never applied, and
   // "reset width" kept falling back to the shell's own default.
-  const templatePatch = await readFile(path.join(root, 'profiles', lock.profile, 'cordis.patch.yml'), 'utf8');
+  const templatePatch = await readFile(path.join(root, 'profiles', profileName, 'cordis.patch.yml'), 'utf8');
   if (!await exists(patch)) {
     await writeFile(patch, templatePatch, { flag: 'wx' });
   } else {
@@ -636,7 +638,7 @@ export function hostArgs(extra = [], envPort = undefined) {
   ];
 }
 export function runHost(runtime, args, { pipe = false } = {}) {
-  return spawn(process.execPath, [runtime.cli, '--profile', lock.profile, ...args], {
+  return spawn(process.execPath, [runtime.cli, '--profile', profileName, ...args], {
     cwd: path.join(runtime.home, 'workspace'),
     env: { ...process.env, DSH_HOME: runtime.home },
     windowsHide: true, stdio: pipe ? ['ignore', 'pipe', 'pipe'] : 'inherit',

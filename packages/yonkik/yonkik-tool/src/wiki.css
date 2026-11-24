@@ -1,0 +1,21 @@
+body[data-zw] .zw-yonkik-wiki { display:flex; flex-direction:column; gap:16px; color:var(--zw-text); font-size:var(--zw-fs-base); }
+body[data-zw] .zw-yonkik-wiki h2 { margin:0; font-size:var(--zw-fs-lg); font-weight:600; }
+body[data-zw] .zw-ykw-root { color:var(--zw-secondary); font-size:var(--zw-fs-sm); line-height:1.6; }
+body[data-zw] .zw-ykw-tabs { display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid var(--zw-line); padding-bottom:8px; }
+body[data-zw] .zw-ykw-tabs button { padding:5px 12px; border:1px solid var(--zw-line); border-radius:7px; background:var(--zw-surface); color:var(--zw-text); font-size:var(--zw-fs-sm); cursor:pointer; }
+body[data-zw] .zw-ykw-tabs button[data-active] { background:var(--zw-soft); border-color:var(--zw-accent); font-weight:600; }
+body[data-zw] .zw-ykw-list { display:flex; flex-direction:column; gap:6px; }
+body[data-zw] .zw-ykw-site { display:flex; align-items:center; gap:10px; padding:8px 12px; border:1px solid var(--zw-line); border-radius:8px; background:var(--zw-surface); cursor:pointer; }
+body[data-zw] .zw-ykw-site:hover { border-color:var(--zw-accent); }
+body[data-zw] .zw-ykw-badge { font-size:var(--zw-fs-meta); padding:1px 8px; border-radius:999px; border:1px solid var(--zw-line); color:var(--zw-secondary); flex:none; }
+body[data-zw] .zw-ykw-badge[data-status="done"] { color:var(--zw-accent); border-color:var(--zw-accent); }
+body[data-zw] .zw-ykw-badge[data-status="blocked"] { color:var(--zw-danger,#b91c1c); border-color:var(--zw-danger,#b91c1c); }
+body[data-zw] .zw-ykw-site-name { font-weight:500; }
+body[data-zw] .zw-ykw-site-label { color:var(--zw-secondary); font-size:var(--zw-fs-sm); margin-left:auto; text-align:right; }
+body[data-zw] .zw-ykw-md { line-height:1.7; }
+body[data-zw] .zw-ykw-table { width:100%; border-collapse:collapse; font-size:var(--zw-fs-sm); }
+body[data-zw] .zw-ykw-table th, body[data-zw] .zw-ykw-table td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--zw-line); vertical-align:top; }
+body[data-zw] .zw-ykw-table th { color:var(--zw-secondary); font-weight:600; }
+body[data-zw] .zw-ykw-back { align-self:flex-start; padding:4px 10px; border:1px solid var(--zw-line); border-radius:7px; background:var(--zw-surface); color:var(--zw-text); cursor:pointer; font-size:var(--zw-fs-sm); }
+body[data-zw] .zw-ykw-section { display:flex; flex-direction:column; gap:10px; }
+body[data-zw] .zw-ykw-h3 { font-size:var(--zw-fs-md); font-weight:600; margin:8px 0 0; }

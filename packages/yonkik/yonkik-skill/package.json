@@ -1,0 +1,35 @@
+{
+  "name": "@lybx-leyw/dsh-zju-yonkik-skill",
+  "version": "0.1.0",
+  "description": "YONKIK 方法论：只读站点侦察 skill（SKILL.md + references）+ skill provider 注册",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "SKILL.md",
+    "references/",
+    "src/",
+    "cordis.patch.yml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/yonkik/yonkik-skill"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "none",
+      "network": "none",
+      "writes": false,
+      "requires": []
+    }
+  }
+}

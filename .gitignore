@@ -109,3 +109,16 @@ profiles/*/package.json.bak
 
 # 测试用的临时产物（ail-teaching 的 esbuild 输出等）
 .tmp/
+
+# YONKIK 能力包（packages/yonkik/ 分组：yonkik-skill 方法论 + yonkik-tool 运行时）。
+# tool 的 lib/ 是手写运行时源码（非构建产物），豁免上面的 packages/*/*/lib/ 忽略。
+!packages/yonkik/yonkik-tool/lib/
+!packages/yonkik/yonkik-tool/lib/**
+# YONKIK 本地知识库与凭据：真实探索数据/凭据不进公开仓库，仅空骨架与样例入库。
+packages/yonkik/yonkik-tool/sites/*
+!packages/yonkik/yonkik-tool/sites/_index.json
+!packages/yonkik/yonkik-tool/sites/_sso.json
+!packages/yonkik/yonkik-tool/sites/_playbook.md
+!packages/yonkik/yonkik-tool/sites/default-sites.json
+packages/yonkik/yonkik-tool/secrets/*
+!packages/yonkik/yonkik-tool/secrets/*.example.json

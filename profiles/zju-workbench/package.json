@@ -36,7 +36,9 @@
         "@lybx-leyw/dsh-zju-core-plugin-graph",
         "@lybx-leyw/dsh-zju-core-classroom-renderer",
         "@lybx-leyw/dsh-zju-ui-graph-render",
-        "@lybx-leyw/dsh-zju-core-classroom-generate"
+        "@lybx-leyw/dsh-zju-core-classroom-generate",
+        "@lybx-leyw/dsh-zju-yonkik-skill",
+        "@lybx-leyw/dsh-zju-yonkik-tool"
       ],
       "patchReload": "live"
     }

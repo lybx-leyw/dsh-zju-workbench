@@ -79,6 +79,8 @@ test('真实仓库：读到的包就是声明了 CSS 的那几个（漏读会静
     'page-quiz',
     'page-study',
     'ui-shared',
+    // YONKIK 运行时自带两张表（`style.css` + `wiki.css`），同样聚合为一行。
+    'yonkik-tool',
   ]);
 });
 

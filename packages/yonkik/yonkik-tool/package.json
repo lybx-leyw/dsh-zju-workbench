@@ -1,0 +1,47 @@
+{
+  "name": "@lybx-leyw/dsh-zju-yonkik-tool",
+  "version": "0.1.0",
+  "description": "YONKIK 运行时与读工具：零依赖 lib + 侦察脚本 + 本地知识库 + yonkik 读工具注册",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/",
+    "cordis.patch.yml",
+    "lib/",
+    "scripts/",
+    "assets/",
+    "sites/_index.json",
+    "sites/_sso.json",
+    "sites/_playbook.md",
+    "secrets/*.example.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lybx-leyw/dsh-zju-workbench.git",
+    "directory": "packages/yonkik/yonkik-tool"
+  },
+  "license": "GPL-3.0-or-later",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "external": [
+        "@lybx-leyw/dsh-zju-ui-shared"
+      ]
+    },
+    "capability": {
+      "tier": 1,
+      "auth": "own",
+      "network": "public",
+      "writes": false,
+      "requires": []
+    }
+  }
+}

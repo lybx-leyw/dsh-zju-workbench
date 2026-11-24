@@ -51,6 +51,7 @@ export const CLIENT_PACKAGES = [
   'pages-default',
   'ui-shared',
   'login',
+  'yonkik-tool',
   'classroom',
   'study',
   'player',

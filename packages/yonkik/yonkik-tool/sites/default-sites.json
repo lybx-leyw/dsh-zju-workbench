@@ -1,0 +1,494 @@
+{
+  "sites": {
+    "zjuers.com": {
+      "origin": "https://zjuers.com",
+      "label": "📖2026新生宝典",
+      "source": "zjuers.com"
+    },
+    "courses.zju.edu.cn": {
+      "origin": "https://courses.zju.edu.cn",
+      "label": "学在浙大",
+      "source": "zjuers.com"
+    },
+    "zdbk.zju.edu.cn": {
+      "origin": "https://zdbk.zju.edu.cn",
+      "label": "教务网(本)",
+      "source": "zjuers.com"
+    },
+    "chat.zju.edu.cn": {
+      "origin": "https://chat.zju.edu.cn",
+      "label": "大先生AI",
+      "source": "zjuers.com"
+    },
+    "booking.lib.zju.edu.cn": {
+      "origin": "https://booking.lib.zju.edu.cn",
+      "label": "图书馆预约",
+      "source": "zjuers.com"
+    },
+    "classroom.zju.edu.cn": {
+      "origin": "https://classroom.zju.edu.cn",
+      "label": "智云课堂",
+      "source": "zjuers.com"
+    },
+    "yjsy.zju.edu.cn": {
+      "origin": "https://yjsy.zju.edu.cn",
+      "label": "教务网(研)",
+      "source": "zjuers.com"
+    },
+    "research.zju.edu.cn": {
+      "origin": "https://research.zju.edu.cn",
+      "label": "研在浙大",
+      "source": "zjuers.com"
+    },
+    "pintia.cn": {
+      "origin": "https://pintia.cn",
+      "label": "PTA",
+      "source": "zjuers.com"
+    },
+    "sztz.zju.edu.cn": {
+      "origin": "https://sztz.zju.edu.cn",
+      "label": "素质拓展网",
+      "source": "zjuers.com"
+    },
+    "person.zju.edu.cn": {
+      "origin": "https://person.zju.edu.cn",
+      "label": "教师信息查询",
+      "source": "zjuers.com"
+    },
+    "qzonline.zju.edu.cn": {
+      "origin": "https://qzonline.zju.edu.cn",
+      "label": "启真在线",
+      "source": "zjuers.com"
+    },
+    "kyjs.zju.edu.cn": {
+      "origin": "http://kyjs.zju.edu.cn",
+      "label": "竞赛管理",
+      "source": "zjuers.com"
+    },
+    "ugrs.zju.edu.cn": {
+      "origin": "https://ugrs.zju.edu.cn",
+      "label": "对外交流",
+      "source": "zjuers.com"
+    },
+    "vpn.zju.edu.cn": {
+      "origin": "https://vpn.zju.edu.cn",
+      "label": "RVPN",
+      "source": "zjuers.com"
+    },
+    "webvpn.zju.edu.cn": {
+      "origin": "https://webvpn.zju.edu.cn",
+      "label": "WebVPN",
+      "source": "zjuers.com"
+    },
+    "net3.zju.edu.cn": {
+      "origin": "http://net3.zju.edu.cn",
+      "label": "上网认证",
+      "source": "zjuers.com"
+    },
+    "ms.zju.edu.cn": {
+      "origin": "http://ms.zju.edu.cn",
+      "label": "正版软件",
+      "source": "zjuers.com"
+    },
+    "zjuem.zju.edu.cn": {
+      "origin": "https://zjuem.zju.edu.cn",
+      "label": "浙大邮箱",
+      "source": "zjuers.com"
+    },
+    "myvpn.zju.edu.cn": {
+      "origin": "https://myvpn.zju.edu.cn",
+      "label": "网费管理",
+      "source": "zjuers.com"
+    },
+    "pan.zju.edu.cn": {
+      "origin": "https://pan.zju.edu.cn",
+      "label": "浙大云盘",
+      "source": "zjuers.com"
+    },
+    "yuque.zju.edu.cn": {
+      "origin": "https://yuque.zju.edu.cn",
+      "label": "浙大语雀",
+      "source": "zjuers.com"
+    },
+    "form.zju.edu.cn": {
+      "origin": "https://form.zju.edu.cn",
+      "label": "浙大表单",
+      "source": "zjuers.com"
+    },
+    "service.zju.edu.cn": {
+      "origin": "https://service.zju.edu.cn",
+      "label": "浙大服务平台",
+      "source": "zjuers.com"
+    },
+    "xwfw.zju.edu.cn": {
+      "origin": "https://xwfw.zju.edu.cn",
+      "label": "校务服务网",
+      "source": "zjuers.com"
+    },
+    "zhfw.zju.edu.cn": {
+      "origin": "https://zhfw.zju.edu.cn",
+      "label": "综合服务网",
+      "source": "zjuers.com"
+    },
+    "itc.zju.edu.cn": {
+      "origin": "https://itc.zju.edu.cn",
+      "label": "信息技术中心",
+      "source": "zjuers.com"
+    },
+    "mirrors.zju.edu.cn": {
+      "origin": "https://mirrors.zju.edu.cn",
+      "label": "浙大开源镜像",
+      "source": "zjuers.com"
+    },
+    "www.nexushd.org": {
+      "origin": "http://www.nexushd.org",
+      "label": "NexusHD",
+      "source": "zjuers.com"
+    },
+    "www.duoduo.link": {
+      "origin": "https://www.duoduo.link",
+      "label": "朵朵校友圈",
+      "source": "zjuers.com"
+    },
+    "www.life.zju.edu.cn": {
+      "origin": "http://www.life.zju.edu.cn",
+      "label": "班车查询",
+      "source": "zjuers.com"
+    },
+    "cwcx.zju.edu.cn": {
+      "origin": "https://cwcx.zju.edu.cn",
+      "label": "计财处",
+      "source": "zjuers.com"
+    },
+    "www.career.zju.edu.cn": {
+      "origin": "https://www.career.zju.edu.cn",
+      "label": "就业服务",
+      "source": "zjuers.com"
+    },
+    "map.zju.edu.cn": {
+      "origin": "https://map.zju.edu.cn",
+      "label": "校园地图",
+      "source": "zjuers.com"
+    },
+    "mapp.zju.edu.cn": {
+      "origin": "http://mapp.zju.edu.cn",
+      "label": "紧急电话",
+      "source": "zjuers.com"
+    },
+    "www.xlzx.zju.edu.cn": {
+      "origin": "http://www.xlzx.zju.edu.cn",
+      "label": "心理健康中心",
+      "source": "zjuers.com"
+    },
+    "zulg.zju.edu.cn": {
+      "origin": "https://zulg.zju.edu.cn",
+      "label": "浙大后勤",
+      "source": "zjuers.com"
+    },
+    "we.zju.edu.cn": {
+      "origin": "https://we.zju.edu.cn",
+      "label": "就餐指数",
+      "source": "zjuers.com"
+    },
+    "libweb.zju.edu.cn": {
+      "origin": "https://libweb.zju.edu.cn",
+      "label": "浙大图书馆",
+      "source": "zjuers.com"
+    },
+    "zju.summon.serialssolutions.com": {
+      "origin": "https://zju.summon.serialssolutions.com",
+      "label": "求是学术搜索",
+      "source": "zjuers.com"
+    },
+    "www.cnki.net": {
+      "origin": "https://www.cnki.net",
+      "label": "中国知网",
+      "source": "zjuers.com"
+    },
+    "scholar.google.com": {
+      "origin": "https://scholar.google.com",
+      "label": "谷歌学术",
+      "source": "zjuers.com"
+    },
+    "cn.bing.com": {
+      "origin": "https://cn.bing.com",
+      "label": "必应学术",
+      "source": "zjuers.com"
+    },
+    "xueshu.baidu.com": {
+      "origin": "https://xueshu.baidu.com",
+      "label": "百度学术",
+      "source": "zjuers.com"
+    },
+    "www.cqvip.com": {
+      "origin": "https://www.cqvip.com",
+      "label": "维普网",
+      "source": "zjuers.com"
+    },
+    "www.ixueshu.com": {
+      "origin": "https://www.ixueshu.com",
+      "label": "爱学术",
+      "source": "zjuers.com"
+    },
+    "www.wanfangdata.com.cn": {
+      "origin": "https://www.wanfangdata.com.cn",
+      "label": "万方数据",
+      "source": "zjuers.com"
+    },
+    "github.com": {
+      "origin": "https://github.com",
+      "label": "Github",
+      "source": "zjuers.com"
+    },
+    "www.webofscience.com": {
+      "origin": "https://www.webofscience.com",
+      "label": "WOS",
+      "source": "zjuers.com"
+    },
+    "sci-hub.ru": {
+      "origin": "https://sci-hub.ru",
+      "label": "Sci-Hub",
+      "source": "zjuers.com"
+    },
+    "ol.woobx.cn": {
+      "origin": "https://ol.woobx.cn",
+      "label": "一个木函",
+      "source": "zjuers.com"
+    },
+    "tool.browser.qq.com": {
+      "origin": "https://tool.browser.qq.com",
+      "label": "在线工具箱",
+      "source": "zjuers.com"
+    },
+    "www.emojiall.com": {
+      "origin": "https://www.emojiall.com",
+      "label": "Emoji大全",
+      "source": "zjuers.com"
+    },
+    "fanyi.baidu.com": {
+      "origin": "https://fanyi.baidu.com",
+      "label": "百度翻译",
+      "source": "zjuers.com"
+    },
+    "translate.google.com": {
+      "origin": "https://translate.google.com",
+      "label": "谷歌翻译",
+      "source": "zjuers.com"
+    },
+    "lab.magiconch.com": {
+      "origin": "https://lab.magiconch.com",
+      "label": "缩略词复原",
+      "source": "zjuers.com"
+    },
+    "sina.lt": {
+      "origin": "https://sina.lt",
+      "label": "短网址工具",
+      "source": "zjuers.com"
+    },
+    "cli.im": {
+      "origin": "https://cli.im",
+      "label": "二维码生成器",
+      "source": "zjuers.com"
+    },
+    "airportal.cn": {
+      "origin": "https://airportal.cn",
+      "label": "文件空投",
+      "source": "zjuers.com"
+    },
+    "convertio.co": {
+      "origin": "https://convertio.co",
+      "label": "文件格式转换",
+      "source": "zjuers.com"
+    },
+    "www.ilovepdf.com": {
+      "origin": "https://www.ilovepdf.com",
+      "label": "PDF工具箱",
+      "source": "zjuers.com"
+    },
+    "www.iloveimg.com": {
+      "origin": "https://www.iloveimg.com",
+      "label": "在线图片编辑",
+      "source": "zjuers.com"
+    },
+    "www.icourse163.org": {
+      "origin": "https://www.icourse163.org",
+      "label": "MOOC",
+      "source": "zjuers.com"
+    },
+    "www.zhihuishu.com": {
+      "origin": "https://www.zhihuishu.com",
+      "label": "智慧树",
+      "source": "zjuers.com"
+    },
+    "www.xuexi.cn": {
+      "origin": "https://www.xuexi.cn",
+      "label": "学习强国",
+      "source": "zjuers.com"
+    },
+    "www.bilibili.com": {
+      "origin": "https://www.bilibili.com",
+      "label": "Bilibili",
+      "source": "zjuers.com"
+    },
+    "www.iqiyi.com": {
+      "origin": "https://www.iqiyi.com",
+      "label": "爱奇艺",
+      "source": "zjuers.com"
+    },
+    "v.qq.com": {
+      "origin": "https://v.qq.com",
+      "label": "腾讯视频",
+      "source": "zjuers.com"
+    },
+    "www.youku.com": {
+      "origin": "https://www.youku.com",
+      "label": "优酷",
+      "source": "zjuers.com"
+    },
+    "www.mgtv.com": {
+      "origin": "https://www.mgtv.com",
+      "label": "芒果TV",
+      "source": "zjuers.com"
+    },
+    "tv.cctv.com": {
+      "origin": "https://tv.cctv.com",
+      "label": "CCTV",
+      "source": "zjuers.com"
+    },
+    "www.huya.com": {
+      "origin": "https://www.huya.com",
+      "label": "虎牙直播",
+      "source": "zjuers.com"
+    },
+    "www.douyu.com": {
+      "origin": "https://www.douyu.com",
+      "label": "斗鱼直播",
+      "source": "zjuers.com"
+    },
+    "live.qq.com": {
+      "origin": "https://live.qq.com",
+      "label": "企鹅体育",
+      "source": "zjuers.com"
+    },
+    "docs.qq.com": {
+      "origin": "https://docs.qq.com",
+      "label": "腾讯文档",
+      "source": "zjuers.com"
+    },
+    "wenku.baidu.com": {
+      "origin": "https://wenku.baidu.com",
+      "label": "百度文库",
+      "source": "zjuers.com"
+    },
+    "xiumi.us": {
+      "origin": "https://xiumi.us",
+      "label": "秀米",
+      "source": "zjuers.com"
+    },
+    "www.wolframalpha.com": {
+      "origin": "https://www.wolframalpha.com",
+      "label": "Wolfram",
+      "source": "zjuers.com"
+    },
+    "webdemo.myscript.com": {
+      "origin": "https://webdemo.myscript.com",
+      "label": "Myscript",
+      "source": "zjuers.com"
+    },
+    "www.geogebra.org": {
+      "origin": "https://www.geogebra.org",
+      "label": "Geogebra",
+      "source": "zjuers.com"
+    },
+    "www.wjx.cn": {
+      "origin": "https://www.wjx.cn",
+      "label": "问卷星",
+      "source": "zjuers.com"
+    },
+    "snapany.com": {
+      "origin": "https://snapany.com",
+      "label": "视频下载",
+      "source": "zjuers.com"
+    },
+    "tool.chinaz.com": {
+      "origin": "https://tool.chinaz.com",
+      "label": "站长工具",
+      "source": "zjuers.com"
+    },
+    "www.zhihu.com": {
+      "origin": "https://www.zhihu.com",
+      "label": "知乎",
+      "source": "zjuers.com"
+    },
+    "www.douban.com": {
+      "origin": "https://www.douban.com",
+      "label": "豆瓣",
+      "source": "zjuers.com"
+    },
+    "bbs.nga.cn": {
+      "origin": "https://bbs.nga.cn",
+      "label": "NGA",
+      "source": "zjuers.com"
+    },
+    "s.weibo.com": {
+      "origin": "https://s.weibo.com",
+      "label": "微博热搜",
+      "source": "zjuers.com"
+    },
+    "sports.qq.com": {
+      "origin": "https://sports.qq.com",
+      "label": "腾讯体育",
+      "source": "zjuers.com"
+    },
+    "www.hupu.com": {
+      "origin": "https://www.hupu.com",
+      "label": "虎扑网",
+      "source": "zjuers.com"
+    },
+    "pixivic.com": {
+      "origin": "https://pixivic.com",
+      "label": "Pixivic",
+      "source": "zjuers.com"
+    },
+    "www.jd.com": {
+      "origin": "https://www.jd.com",
+      "label": "京东商城",
+      "source": "zjuers.com"
+    },
+    "www.taobao.com": {
+      "origin": "https://www.taobao.com",
+      "label": "淘宝网",
+      "source": "zjuers.com"
+    },
+    "wangsuceshi.bmcx.com": {
+      "origin": "https://wangsuceshi.bmcx.com",
+      "label": "网络测速",
+      "source": "zjuers.com"
+    },
+    "zh.flightaware.com": {
+      "origin": "https://zh.flightaware.com",
+      "label": "实时航班",
+      "source": "zjuers.com"
+    },
+    "www.virscan.org": {
+      "origin": "https://www.virscan.org",
+      "label": "在线病毒扫描",
+      "source": "zjuers.com"
+    },
+    "speedtest.zju.edu.cn": {
+      "origin": "http://speedtest.zju.edu.cn",
+      "label": "校网测速",
+      "source": "zjuers.com"
+    },
+    "www.cc98.org": {
+      "origin": "https://www.cc98.org",
+      "label": "搜索引擎说明",
+      "source": "zjuers.com"
+    },
+    "beian.miit.gov.cn": {
+      "origin": "https://beian.miit.gov.cn",
+      "label": "苏ICP备20026701号",
+      "source": "zjuers.com"
+    }
+  }
+}

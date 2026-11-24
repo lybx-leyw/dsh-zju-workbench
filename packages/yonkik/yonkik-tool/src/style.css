@@ -1,0 +1,21 @@
+.zw-yonkik { display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
+.zw-yonkik .zw-yonkik-intro { color: var(--zw-muted, #888); line-height: 1.5; }
+.zw-yonkik table { width: 100%; border-collapse: collapse; }
+.zw-yonkik th, .zw-yonkik td { padding: 4px 6px; text-align: left; vertical-align: middle; }
+.zw-yonkik th { font-weight: 600; color: var(--zw-muted, #888); font-size: 12px; }
+.zw-yonkik input, .zw-yonkik textarea {
+  width: 100%; box-sizing: border-box; padding: 5px 8px; font-size: 13px;
+  border: 1px solid var(--zw-border, #ccc); border-radius: 6px; background: var(--zw-input-bg, #fff); color: inherit;
+}
+.zw-yonkik textarea { min-height: 72px; resize: vertical; font-family: inherit; }
+.zw-yonkik .zw-yonkik-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.zw-yonkik button {
+  padding: 5px 12px; font-size: 13px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--zw-border, #ccc); background: var(--zw-btn-bg, #f5f5f5); color: inherit;
+}
+.zw-yonkik button.zw-yonkik-primary { background: var(--zw-accent, #4a7); color: #fff; border-color: transparent; }
+.zw-yonkik button:disabled { opacity: 0.5; cursor: default; }
+.zw-yonkik .zw-yonkik-msg { font-size: 12px; }
+.zw-yonkik .zw-yonkik-msg.err { color: #d33; }
+.zw-yonkik .zw-yonkik-msg.ok { color: #4a7; }
+.zw-yonkik .zw-yonkik-del { padding: 2px 8px; }
