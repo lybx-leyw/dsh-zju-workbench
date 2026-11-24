@@ -61,7 +61,6 @@ export const CLIENT_PACKAGES = [
   'page-docs',
   'page-notes',
   'page-paper',
-  'page-planning',
   'page-plugins',
   'page-quiz',
   'page-study',

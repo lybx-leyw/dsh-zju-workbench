@@ -8,9 +8,8 @@
  *      （错误提示走 ui-primitives 的 `.zws-notice`，这里**不**自造红色。）
  *   3. **字号取 `--zw-fs-*`**，不自己写 px。
  *
- * 视觉上与「规划」页的设置表单（`.zwpg-field` / `.zwpg-form` / `.zwpg-form-foot`）
- * 同源，但类名用自己的 `zcd-` 前缀：两个包的表各自独立挂载，共用类名就等于把
- * 胜负交给挂载顺序。
+ * 版式沿用本仓设置表单的既有形状，但类名用自己的 `zcd-` 前缀：各包的样式表
+ * 各自独立挂载，共用类名就等于把胜负交给挂载顺序。
  *
  * 数值依据 docs/contributing/skills/human-factors-screen-design（下称 skill）：
  * 输入框 ≥24px 高（ch06 规则 7）、焦点 2px 描边（ch12）、正文 13px 是 legibility

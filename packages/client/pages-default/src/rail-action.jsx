@@ -340,10 +340,6 @@ const TOUCH_CSS = `
        也不会和别处的 padding 规则争特异性。 */
     overscroll-behavior-y:contain;
   }
-  /* 规划页那只宠物气泡贴右下角，同样会压到指示条。 */
-  [class*="zwpg-pet-fab"]{
-    bottom:max(14px, env(safe-area-inset-bottom)) !important;
-  }
 }
 /* ---- 横屏（矮视口）：导轨装不下十项 -----------------------------------
  *

@@ -50,7 +50,12 @@ export const retiredBundles = ['dsh-pages', 'dsh-zhiyun-pro-ui', 'dsh-zhiyun-stu
   // 校园数据包按平台拆开：`source/campus`（学在浙大 + 拼题A 混装）
   // → `source/xuezai`（学在浙大）+ `source/pta`（拼题A）。
   // 老 profile 里还挂着 campus 的话 Loader 解不开，整个 profile 起不来。
-  '@lybx-leyw/dsh-zju-source-campus'];
+  '@lybx-leyw/dsh-zju-source-campus',
+  // 「规划」页整条链路退役（页面 + 数据域）。两行都要登记：页面包与
+  // core 包各自独立出现在 profile 的 bundles 里，只登记一个的话另一行仍会让
+  // Loader 解析不到、整个 profile 起不来。
+  '@lybx-leyw/dsh-zju-page-planning',
+  '@lybx-leyw/dsh-zju-core-planning'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
 
 /**

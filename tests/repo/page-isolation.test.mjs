@@ -29,8 +29,6 @@ const SLASH = String.fromCharCode(92);
 /**
  * 这些包的**裸入口**带 `node:` 依赖，客户端只能用它们的 `/browser` 子入口。
  *
- * - `core-planning`：入口 re-export 了 `schedule.js` / `ticks.js`（`node:fs`）；
- *   `./browser` 只导出纯函数。
  * - `core-vault`：整个包都是宿主侧的（落盘 + PDF 字节流 + pdfjs-dist）。
  * - `core-plugin-graph`：入口 `apply()` 会注册 `/api/zw-plugins` 路由并 inject
  *   `connection`/`loader`；客户端只需要 `./browser` 里那几个折叠函数。误引入口虽然
@@ -38,7 +36,6 @@ const SLASH = String.fromCharCode(92);
  *   更糟的是它看起来"能用"，于是没人发现边界破了。
  */
 const BROWSER_SAFE_PACKAGES = [
-  '@lybx-leyw/dsh-zju-core-planning',
   '@lybx-leyw/dsh-zju-core-vault',
   '@lybx-leyw/dsh-zju-core-plugin-graph',
 ];
@@ -134,7 +131,7 @@ test('页面包的宿主半边不做存储/取数（page 只含 UI）', () => {
   // 需求：page 包只含 UI，「各个 page 就无交互」，数据从哪里来不归它管。
   //
   // 历史上 page-notes 的 `src/index.js` 是 900 行的存储层（fs/promises、原子写、
-  // PDF 字节流、RPC 路由），page-planning 那 91 KB 也同时管中转站拉取、快照与
+  // PDF 字节流、RPC 路由），已经退役的规划页那 91 KB 也同时管中转站拉取、快照与
   // 待办聚合。判据用**行为**而不是行数：出现文件 IO / 宿主路由注册就算越界。
   const violations = [];
   for (const page of pagePackages()) {
@@ -155,10 +152,8 @@ test('页面包的宿主半边不做存储/取数（page 只含 UI）', () => {
 
 test('页面包 src 下的**任何**文件都不碰 node:fs（不只是 index.js）', () => {
   // 上一版只看 `src/index.js`，于是规划页里那两个直接读写用户 json 文件的
-  // 存储模块（`ticks` 与 `schedule`）一直漏网。
+  // 存储模块（`ticks` 与 `schedule`）一直漏网 —— 那一页与它的数据域后来整块退役。
   //
-  // 它们后来整份搬进了 `@lybx-leyw/dsh-zju-core-planning`，迁走后页面侧一度只剩
-  // 再导出的过渡文件；过渡文件现已删除，再导出也没有了。
   // 这条守卫盯的是**整个 src 目录**，将来再有人往页面里塞存储会立刻红。
   const violations = [];
   for (const page of pagePackages()) {
@@ -176,22 +171,21 @@ test('页面包 src 下的**任何**文件都不碰 node:fs（不只是 index.js
 });
 
 /**
- * 规划域已经全部下沉 —— 这段注释留着是为了记住它曾经拖了多久。
+ * 「页面只含 UI」这条规矩的来历 —— 记住它曾经拖了多久。
  *
  * `page-planning/src/index.js` 原是 2068 行的宿主半边（中转站拉取、快照、待办聚合、
  * `?pta` 转发、AI 规划、pet 对话），`ticks.js` / `schedule.js` / `time.js` /
- * `local.js` / `pet.js` 等十几个模块两半共用。整块搬到
- * `@lybx-leyw/dsh-zju-core-planning` 之后，页面侧 `src/index.js` 只剩一个空
- * `apply()`（保留它是为了让客户端 bundle 进入启动图谱）。
+ * `local.js` / `pet.js` 等十几个模块两半共用。整块搬到 `core/planning` 之后，页面侧
+ * `src/index.js` 只剩一个空 `apply()`。该页与其数据域已于 2026-11 整块退役。
  *
  * 上面那条「页面不许碰 node:fs」的断言现在是**全绿**的；它不会因为这段注释而放松。
  */
 
 test('页面的**客户端半边**不 import 存储包（否则 node:fs 会被打进浏览器）', () => {
-  // 存储下沉之后有一条新的坑：`core-planning` 是**非客户端**包（没有
-  // `src/client.jsx`、没有 `lib/client.js`），页面 import 它时会被 esbuild
+  // 存储下沉之后有一条新的坑：`core-vault` 这类**非客户端**包（没有
+  // `src/client.jsx`、没有 `lib/client.js`）被页面 import 时会被 esbuild
   // **内联**进客户端产物 —— 而它 `import 'node:fs'`。浏览器里没有 node:fs，
-  // 后果是进笔记/规划页当场白屏，构建却是绿的（esbuild 对 node 内置模块只警告）。
+  // 后果是进笔记页当场白屏，构建却是绿的（esbuild 对 node 内置模块只警告）。
   //
   // 所以：只有页面的**宿主半边**（src/index.js 及其它 node 侧文件）能 import 它；
   // `src/client.jsx` / `*.jsx` 一律不许。
@@ -220,7 +214,7 @@ test('页面的**客户端半边**不 import 存储包（否则 node:fs 会被�
 
 test('客户端的**间接依赖**也不许碰裸入口（沿 import 链走一遍）', () => {
   // 上一版只查 `*.jsx` 与 `client.js` 这两个**直接**入口。真实的坑是间接的：
-  //   `client.jsx` → `./foo.js` → `@lybx-leyw/dsh-zju-core-planning`
+  //   `client.jsx` → `./foo.js` → `@lybx-leyw/dsh-zju-core-vault`
   // 第一层文件名不带 jsx，于是整条链被跳过 —— 而 esbuild 照样会把 `node:fs`
   // 打进产物。所以这里从 `client.jsx` 出发，把同包内的相对 import 全部跟进。
   const violations = [];
@@ -289,25 +283,10 @@ test('跨域读数据只走 URL：笔记页的三条路径必须与 core-vault �
   assert.equal(pick(notes, 'PDF_VIEWER_PREFIX'), `${prefix[1]}/`,
     '笔记页的 PDF_VIEWER_PREFIX 与 core-vault 的 PDF_ROUTE_PREFIX 不一致');
 });
-
-test('规划页与 core-planning 的线上协议常量必须一致（MASK / WRITE_HEADER）', () => {
-  // 这两条也是**隐式契约**，失效方式同样安静：
-  //   · `MASK`（'********'）：页面把打码值原样回传表示"不改密钥"。两边不一致时，
-  //     宿主会把它当成真实密钥存下来 —— 用户下次连不上中转站，而界面显示"已保存"。
-  //   · `WRITE_HEADER`：页面写操作必须带这个自定义头（CSRF 的那道闸）。
-  //     不一致时所有写操作被 403，页面只能显示"保存失败"。
-  const page = readFileSync(path.join(CLIENT, 'page-planning', 'src', 'client.jsx'), 'utf8');
-  const core = readFileSync(path.join(ROOT, 'packages', 'core', 'planning', 'src', 'index.js'), 'utf8');
-
-  const pageMask = /const MASK = '([^']+)'/.exec(page);
-  const coreMask = /const MASK = '([^']+)'/.exec(core);
-  assert.ok(pageMask !== null, '页面里没找到 MASK 声明');
-  assert.ok(coreMask !== null, 'core-planning 里没找到 MASK 声明');
-  assert.equal(pageMask[1], coreMask[1], 'MASK 不一致：打码值会被当成真密钥存下来');
-
-  const pageHeader = /const WRITE_HEADER = '([^']+)'/.exec(page);
-  const coreHeader = /export const WRITE_HEADER = '([^']+)'/.exec(core);
-  assert.ok(pageHeader !== null, '页面里没找到 WRITE_HEADER 声明');
-  assert.ok(coreHeader !== null, 'core-planning 里没找到 WRITE_HEADER 导出');
-  assert.equal(pageHeader[1], coreHeader[1], 'WRITE_HEADER 不一致：所有写操作会被 403');
-});
+/**
+ * 这里原本还有一条「规划页与 core-planning 的线上协议常量必须一致
+ * （MASK / WRITE_HEADER）」的守卫。那一页与其数据域已于 2026-11 整块退役，
+ * 两端都不在了，隐式契约自然消失 —— 与「今天」页退役时删掉 ROUTE_PATH 对照
+ * 那条的做法一致。同类的「页面与 core 的常量必须对齐」守卫（笔记页那三条）
+ * 仍然在，规矩本身没放松。
+ */

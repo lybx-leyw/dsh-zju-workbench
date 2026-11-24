@@ -66,7 +66,7 @@ can ship, so a placeholder MIT header here would only hide that step.
 | --- | --- |
 | `home` | 收起 / 展开**原生**侧栏（宿主的 `layout.toggleSidebar`） |
 | 论文 / 笔记 / 文档 / 学习 | 收起 / 展开**这一页自己的**侧栏 |
-| 插件 / 页面管理 / 规划 / 题库 | 不注册 → 渲染裸鲸鱼，与加这个功能之前逐像素相同 |
+| 插件 / 页面管理 / 题库 | 不注册 → 渲染裸鲸鱼，与加这个功能之前逐像素相同 |
 
 ### 页面怎么把侧栏接进来
 

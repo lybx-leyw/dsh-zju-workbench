@@ -88,7 +88,7 @@ async function bareSpecifiers(entry) {
 test('每个有 src/client.jsx 的包都在 CLIENT_PACKAGES 里', async () => {
   // 这份清单是手工维护的，漏一个不会报错：Loader 照旧解析宿主半边，
   // 但那个包没有 lib/client.js，页面渲染成空白占位 —— 排查成本极高。
-  // 「规划」页第一次构建时正是漏在这里，所以补一条会红的断言。
+  // 「规划」页第一次构建时正是漏在这里（该页现已退役），所以留一条会红的断言。
   //
   // ⚠️ `DETACHED.md` 是「包已完工、但决定暂不接进 profile」的显式标记：
   //    没有它，把一页从产品里摘下来就只能靠删包或删 client.jsx，
@@ -220,19 +220,15 @@ const INTENTIONALLY_BUNDLED = {
   // 「运行时由别的包提供」，而浏览器里没人提供它，`makeRequire` 抛错、页面白屏。
   // 所以它们只能被内联，这里点名豁免是**显式声明这件事是设计**。
   //
-  // `core-planning`：页面用 `…/browser` 子入口取纯函数（时区、月历、重复规则、
-  // pet 协议）。它没有客户端产物，整包是宿主半边 + 纯函数。
   // `core-plugin-graph`：页面用 `…/browser` 取依赖图的折叠函数。
   // `core-classroom-renderer`：只剩两个画布常量，被 `ui-shared` 的
   // `classroom-slide.jsx` 内联。
   //
   // ⚠️ **键必须写成源码里真正出现的那个说明符**，包括 `/browser` 子路径。
   // 白名单是按 `specifier` 精确查表的：只登记裸包名，源码 import
-  // `…/core-planning/browser` 时查不到，就会报「external 面不完整」——
+  // `…/core-plugin-graph/browser` 时查不到，就会报「external 面不完整」——
   // 而那条报错会把人引向「加进 dsh.client.external」，那才是真正的错
   //（这些包没有客户端半边，external 化 = 运行时解析不到 = 白屏）。
-  '@lybx-leyw/dsh-zju-core-planning': 'core-planning：无客户端半边，内联',
-  '@lybx-leyw/dsh-zju-core-planning/browser': 'core-planning：纯函数子入口，页面内联',
   '@lybx-leyw/dsh-zju-core-plugin-graph': 'core-plugin-graph：无客户端半边，内联',
   '@lybx-leyw/dsh-zju-core-plugin-graph/browser': 'core-plugin-graph：折叠函数子入口，页面内联',
   '@lybx-leyw/dsh-zju-core-classroom-renderer': 'core-classroom-renderer：只剩画布常量，被 ui-shared 内联',
@@ -303,10 +299,10 @@ test('真实构建（不落盘）的产出里没有任何本包 src/ 之外的�
       // 这条收紧是有意的：放宽能救 classroom 的内核内联，但不能顺手
       // 把「客户端包互相内联」这个真正的边界泄漏也放过去。
       //
-      // ⚠️ 包可能住在**分组目录**下（`packages/core/planning/…`、
+      // ⚠️ 包可能住在**分组目录**下（`packages/core/plugin-graph/…`、
       //    `packages/client/page-study/…`）。早先只取相对路径的第一段，
       //    得到的是分组名（`core` / `client`）—— 那永远不是一个包名，
-      //    于是这些包的内联会被当成「外来文件」误报（`core-planning` 正是如此）。
+      //    于是这些包的内联会被当成「外来文件」误报（`core-plugin-graph` 正是如此）。
       //
       //    正解：逐段往下走，**第一个带 package.json 的目录**才是包根；
       //    它的目录名与 `workspacePkgs`（顶层目录名集合）可比。

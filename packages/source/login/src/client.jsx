@@ -593,9 +593,8 @@ export function SettingsSection({ t }) {
    * 宿主那边是否已存着密码（决定提交时留空该翻成打码值还是报错）。
    *
    * ⚠️ 必须声明在 `applyCard` **之前**：那个 `useCallback` 的体里引用了
-   *    `setHasPassword`，虽然只在调用时求值（不会真的踩 TDZ），但本仓有过
-   *    "const 写在引用它的 useMemo 之后 → 首次渲染白屏"的先例
-   *    （见 `dsh-zju-page-planning/src/client.jsx` 里 `openTodos` 那段）。
+   *    `setHasPassword`，虽然只在调用时求值（不会真的踩 TDZ），但本仓确实有过
+   *    "`const` 写在引用它的 `useMemo` 之后 → 首次渲染白屏"的先例。
    *    顺序写对是零成本的，不值得为它赌一次。
    */
   const [hasPassword, setHasPassword] = useState(false);

@@ -493,7 +493,7 @@ export function NotesLibrary() {
    * 待确认删除的条目（`{ items: [{ path, kind }] }`）；`null` = 没有。
    *
    * 删除在这里**不可撤销**（没有回收站），所以键盘删除要求一次就地确认。
-   * 不做成 `window.confirm`：这个仓库统一用页面内的确认，规划页的 `confirming`
+   * 不做成 `window.confirm`：这个仓库统一用页面内的确认，学习页的删除确认
    * 就是同一做法 —— 系统弹窗在 Electron 里会被窗口样式割裂，而且无法本地化。
    *
    * ⚠️ 从单条改成了 `items` 数组（批量删除）：单条就是长度为 1 的数组。

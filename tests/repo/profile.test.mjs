@@ -13,8 +13,8 @@ test('navigation preserves native conversation and ignores foreign panel ids', (
   assert.equal(activePage('conversation'), null);
   assert.equal(activePage('zw.today'), 'today');
   assert.equal(activePage('other-plugin'), null);
-  // 「规划」只命中真实存在的那一页：「问一问」已删除，不再参与搜索。
-  assert.deepEqual(matchingPages('规划').map(page => page.id), ['planning']);
+  // 「规划」页已退役，导航里不再有任何一页命中这个词；「问一问」更早删除。
+  assert.deepEqual(matchingPages('规划').map(page => page.id), []);
   assert.equal(matchingPages('未知页面').length, 0);
   assert.equal(NAV.some(page => page.id === 'ask'), false, '原生工作台不再是产品页');
 });

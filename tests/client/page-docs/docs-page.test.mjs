@@ -53,11 +53,12 @@ test('清单里的每一篇都有对应的 markdown 文件，且被 docs-content
   }
 });
 
-test('清单 id 唯一，且都不含「规划」（Ctrl+K 的守卫别名）', () => {
+test('清单 id 唯一，且都不含「规划」（退役页的别名，别再被搜出来）', () => {
   const ids = FLAT.map(page => page.id);
   assert.equal(new Set(ids).size, ids.length, '清单里有重复的 id');
   for (const page of FLAT) {
-    // tests/profile.test.mjs 断言 matchingPages('规划') 只命中问一问与规划。
+    // 「规划」页已退役，tests/profile.test.mjs 断言 matchingPages('规划') 命中为空；
+    // 文档页的标题若带这个词，那条断言会因为文档而误红。
     assert.ok(!`${page.title} ${page.summary}`.includes('规划'),
       `「${page.title}」的标题或摘要含「规划」，会污染 matchingPages 守卫`);
     // id 要能被 'zw.<id>.content' 的正则匹配到（只认小写字母）。

@@ -115,9 +115,9 @@ test('安全区：viewport-fit=cover 要求自己让开 home indicator / 刘海'
   assert.doesNotMatch(rail, /padding-bottom:\s*calc\([\d.]+px\s*\+\s*env\(safe-area-inset-bottom\)\s*\)/,
     '用 max() 而不是 calc(原值 + env())，意图是「至少原值」');
 
-  // 规划页那只贴右下角的气泡同样会压到指示条。
-  assert.match(touch, /zwpg-pet-fab[\s\S]{0,160}max\(\s*[\d.]+px\s*,\s*env\(safe-area-inset-bottom\)\s*\)/,
-    '贴着右下角的浮层也要让开指示条');
+  // 这里原本还有一条「贴在右下角的浮层也要让开指示条」，钉的是规划页那只宠物
+  // 气泡的 `zwpg-pet-fab`。那一页已退役，样式也随之删除 —— 规矩本身没放松：
+  // 导航栏的安全区断言仍在上面，将来再有贴右下角的浮层，按同一形状补一条。
 });
 
 // ─────────────────────────────────────────────────────────────── 按下反馈

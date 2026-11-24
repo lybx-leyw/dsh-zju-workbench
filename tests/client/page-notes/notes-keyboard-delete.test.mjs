@@ -16,7 +16,7 @@
  * # 怎么测
  *
  * 用 esbuild 把 `client.jsx` 打成可 import 的 ESM（仓库既有做法，见
- * `planning-render.test.mjs`），用 `react-dom/server` 渲染出真实 DOM 字符串，
+ * `tests/client/page-study/hls-video.test.mjs`），用 `react-dom/server` 渲染出真实 DOM 字符串，
  * 再在一个极小的 DOM 桩上跑事件分派。**不装 jsdom**：本仓没有这个依赖，
  * 而这里要验的只是「哪个 key、什么焦点目标 → 会不会接管」，不需要完整 DOM。
  */
