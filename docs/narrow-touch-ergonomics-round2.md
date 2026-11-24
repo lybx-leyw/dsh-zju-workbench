@@ -54,8 +54,8 @@ indicator 占底部 **34px**（844 − 34 = 810）—— 那一项有 **21px** �
 
 **改法**：`@supports (inset: env(safe-area-inset-bottom))` 里给导轨加
 `padding-bottom: max(12.75px, env(safe-area-inset-bottom))`。用 `max()` 而不是相加：
-非刘海设备上 `env()` 取到 0，不能凭空多出一块内边距。规划页那只贴在右下角的宠物
-气泡同理。
+非刘海设备上 `env()` 取到 0，不能凭空多出一块内边距。当时规划页那只贴在右下角的
+宠物气泡同理 —— 那条规则（`zwpg-pet-fab`）已随该页 2026-11 退役一并删除。
 
 **机制怎么验证**：headless Chromium 里 `env()` 恒为 0，量不出真实差异。所以另外
 注入一条 `padding-bottom: max(12.75px, 34px)`，确认「安全区一旦有值，导轨底部确实

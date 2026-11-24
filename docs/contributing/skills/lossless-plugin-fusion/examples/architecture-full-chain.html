@@ -435,6 +435,13 @@
     <code>get</code> / <code>inject</code> 的服务，画成虚线 —— 不在链路上，就不装成在链路上。
   </p>
 
+  <p class="lede" style="color:var(--ink-3)">
+    <b>这份图是 2026-11-13 的存档快照。</b>之后产品收窄过两轮：<code>source/campus</code>
+    拆成 xuezai / pta 后一并归档、<code>source/netproxy</code> 下线、页面收窄到
+    「今天 / 论文 / 学习 / 题库 / 笔记 / 插件 / 文档」。图上凡标 <b>已退役</b> 的节点，
+    代码已经不在仓库里；保留它们是为了让这张图仍能对照那个时间点的装配。
+  </p>
+
   <div class="meta">
     <div><div class="v">11</div><div class="k">Lanes</div></div>
     <div><div class="v">51</div><div class="k">Packages</div></div>
@@ -702,44 +709,46 @@
   <section class="lane" style="--accent:var(--c-src)">
     <div class="lane-no">05</div>
     <div class="lane-name">
-      <span class="nm">校园待办 → 今天 / 规划</span>
-      <span class="ab">四份来源并成一张表</span>
+      <span class="nm">校园待办 → 今天 <b>（已退役）</b></span>
+      <span class="ab">四份来源并成一张表 · 这一页与它下面那条链路 2026-11 整体下线</span>
     </div>
     <div class="lane-body">
       <div class="flow">
         <div class="row">
           <div class="node n-src">
-            <div class="t">学在浙大 · 拼题A<small>source/campus</small></div>
+            <div class="t">学在浙大 · 拼题A<small>source/campus · 已归档</small></div>
             <div class="io"><em>作业待办 / 未结束的练习</em></div>
           </div>
           <span class="arw plus"><span class="pl">+</span></span>
           <div class="node n-src">
-            <div class="t">中转站</div>
+            <div class="t">中转站<small>deploy/relay-service · 仍在</small></div>
             <div class="io"><em>用户自部署推送的笔记与计划</em></div>
           </div>
           <span class="arw"></span>
           <div class="node n-proc">
-            <div class="t">规划聚合<small>core/planning</small></div>
+            <div class="t">规划聚合<small>core/planning · 已删除</small></div>
             <div class="io"><b>入</b>四源并表<br><b>出</b>快照 + AI 拆分 + pet 对话</div>
           </div>
           <span class="arw"></span>
           <div class="node n-ui">
-            <div class="t">今天页</div>
+            <div class="t">今天页<small>已删除</small></div>
             <div class="io"><em>今天到期 · 插空任务 · 上次打开</em></div>
           </div>
           <span class="arw plus"><span class="pl">+</span></span>
           <div class="node n-ui">
-            <div class="t">规划页</div>
+            <div class="t">规划页<small>已删除</small></div>
             <div class="io"><em>列表 / 日历 / 日程 / 对话</em></div>
           </div>
         </div>
       </div>
       <div class="side">
-        <span class="cap">宿主路由</span>
+        <span class="cap">宿主路由（已随页面下线）</span>
         <span class="chip"><code>/_dsh/zw-planning</code></span>
         <span class="cap">惰性取 · 不写进 inject</span>
-        <span class="chip"><code>zwCampus</code></span>
+        <span class="chip"><code>zwCampus</code>（已归档）</span>
         <span class="chip"><code>zwParser</code></span>
+        <span class="cap">磁盘数据</span>
+        <span class="chip">数据目录已清理，备份见仓库外</span>
       </div>
     </div>
   </section>

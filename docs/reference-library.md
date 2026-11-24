@@ -99,7 +99,7 @@
 | `dsh-radar-skill-stats` | `chen-zz20/dsh-skill-stats` | MIT | — | @dsh-external/dsh-skill-stats@0.1.0 |
 | `dsh-radar-slide-dedup` | `Auspiow/ZYNotes` | 无 | — | 在讲义生成前剔除「回看重复页」 |
 | `dsh-radar-temml` | `ronkok/Temml` | MIT | — | temml（TeX → MathML，零依赖） |
-| `dsh-radar-todo-fence` | `8eoyw/zju-learning-cli` | — | — | 学在浙大待办的「判据围栏」：给今天/规划页已消费的那一份 rows 补上可复核的来源与完整性元数据（fast/slow … |
+| `dsh-radar-todo-fence` | `8eoyw/zju-learning-cli` | — | — | 学在浙大待办的「判据围栏」：给待办消费方那一份 rows 补上可复核的来源与完整性元数据（fast/slow … |
 | `dsh-radar-tongge-schedule` | `DongLanQwQ0/ZJU-Tongge-Schedule` | MIT | — | 提取同格（DongLanQwQ0/ZJU-Tongge-Schedule，MIT）的 .ics 课表本地解析与撞课/同楼… |
 | `dsh-radar-tool-plus` | `xiaoso456/dsh-tool-plus` | MIT | — | 上游 @xiaoso/dsh-tool-plus 0.1.14 |
 | `dsh-radar-upstream-radar` | `MicroMilo/upstream-radar` | Apache-2.0 | — | 上游 upstream-radar@0.45.0 |
