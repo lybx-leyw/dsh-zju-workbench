@@ -250,6 +250,72 @@ node -e "import('./packages/source/bilibili/src/wbi.js').then(m=>console.log(Obj
 
 
 
+
+## 2026-11：第三方页面壳退役（产品页改走 DSH 原生槽）
+
+### 是什么
+
+| 目录 | 原位置 | 作用 |
+| --- | --- | --- |
+| `pages-default` | `packages/client/pages-default` | 对 `@lybx-leyw/dsh-pages` 的产品校准：导航宽度、图标、鲸鱼品牌、设置入口、折叠动效（约 2600 行） |
+
+同批删除的两份源码不在归档里（只为旧壳服务，无独立价值）：
+`ui-shared/src/page-registration.jsx`（98 行）、`ui-shared/src/page-frame.jsx`（89 行）。
+
+### 为什么退役
+
+`@lybx-leyw/dsh-pages` 在 DSH 官方 `main` 面板槽**旁边**又造了一套面板系统
+（自建 rail、面板切换、图钉、偏好持久化、自己的 `page.content` 槽）。页面收窄
+到三页之后，这套系统的维护成本超过了收益。
+
+DSH 原版已提供等价能力，且是官方推荐的页面做法：
+
+- `ui-layout` 的 `main`（`kind:'keyed'`, root）—— 中央面板，key 即页面 id；
+- `ui-sidebar` 的 `sidebar.panellist`（`kind:'list'`, root）—— 导轨图标，
+  拿到 `{ size, active }`，与 `main` 用同一个 id 关联。
+
+官方 README 原话：「插件在 root 作用域的 `sidebar.panellist` list 中注册图标
+组件……同一个 id 寻址布局中 root 作用域 `main` keyed slot 的组件」。
+
+顺带得到官方的折叠轨道、「···」菜单、图钉与无障碍行为，不必自己维护。
+
+### 现在怎么注册页面
+
+```jsx
+import { registerPage } from '@lybx-leyw/dsh-zju-ui-shared';
+
+registerPage(ctx, {
+  id: 'paper',            // 同时是 main 的 key 与 panellist 的 id
+  order: 20,
+  label: '论文',
+  icon: size => <Icon name="paper" size={size} />,
+  render: () => <Paper />,
+});
+```
+
+实现见 `packages/client/ui-shared/src/page-native.jsx`。导航的**真源**就是这些
+注册点；`ui-shared/src/pages-model.js` 的 `NAV` 降级为给测试与脚本用的离线镜像。
+
+### 怎么还原
+
+```powershell
+git mv archive/deprecated-packages/pages-default packages/client/pages-default
+git checkout <本提交之前>~:packages/client/ui-shared/src/page-registration.jsx packages/client/ui-shared/src/
+git checkout <本提交之前>~:packages/client/ui-shared/src/page-frame.jsx packages/client/ui-shared/src/
+```
+
+然后四处一起补：根 `package.json` 的 `@lybx-leyw/dsh-pages` 依赖（精确版本）、
+`profiles/zju-workbench/package.json` 的两个 bundle、`scripts/build.mjs` 的
+`pages-default` 条目，以及把三个页面的 `registerPage()` 换回 `registerPageContent()`。
+
+也可以从 `archive/deprecated-packages/_tests/client/` 移回 6 个 pages-default 测试与
+`touch-ergonomics-round2.test.mjs`。
+
+### 遗留
+
+`ui-shared/src/style.css` 的 `--zw-pane-w: 229px` 仍按旧壳「51px 自建导轨」计算
+（280 − 51）。官方折叠宽度是 `SIDEBAR_COLLAPSED = 56`，这个值应重新核定为 224，
+或改为跟随宿主变量。
 ## 2026-11：题库 / 笔记 / 插件 / 文档 四页退役（含各自独占的 core 包）
 
 ### 是什么
