@@ -46,6 +46,39 @@ import React from 'react';
  * @param props - size（边长像素）、active（是否当前页）、glyph（图形工厂）。
  * @returns 图标元素。
  */
+/**
+ * 面板外壳：给页面内容提供**可滚动**的版式容器。
+ *
+ * # 为什么必须自己包
+ *
+ * DSH 的 `main` 槽只负责「谁占着中央面板」：官方 `ui-layout` 的 `.mainPanel`
+ * 与 `.centerCol` 都是 `overflow: hidden`，**不提供滚动**。滚动归占位者自己
+ * —— 这也是官方对面板的约定（内容多的时候，滚的是面板内部，不是整个窗口）。
+ *
+ * 迁移前的第三方页面壳用 `PageFrame` 提供了三层几何：
+ *
+ *     .zw-page   撑满面板（flex 列，height:100%）
+ *     .zw-scroll flex:1 + overflow:auto，**真正滚动的就是这一层**
+ *     .zw-content 内容列（版心与内边距）
+ *
+ * 那三层随页面壳一起被删掉了，于是页面被 `.mainPanel` 裁在可视区里：
+ * 内容比屏幕高的时候，**下面那截直接看不见、也滚不到**。这里把它补回来。
+ *
+ * 结构必须保持三层：`overflow:auto` 那一层需要有**确定高度**的父级，
+ * 而高度来自 `.zw-page` 在 `.mainPanel` 里拿到的那 100%。
+ */
+function PageSurface({ page, children }) {
+  return (
+    // data-page 是页面样式的锚点：学习页与论文页的 `.zw-content` 覆盖都写成
+    // `.zw-page[data-page=<id>] .zw-content`，少了它那些规则一条都不生效。
+    <div className="zw-page" data-page={page}>
+      <div className="zw-scroll">
+        <div className="zw-content zw-content-flush">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 function RailIcon({ size = 18, active = false, glyph }) {
   return (
     <span
@@ -89,7 +122,7 @@ export function registerPage(ctx, spec) {
       label: spec.label ?? id,
     }, props => <RailIcon {...props} glyph={{ key: id, render: spec.icon }} />));
 
-    const disposePanel = ctx.slots.register({ name: 'main', key: id }, () => <>{spec.render()}</>);
+    const disposePanel = ctx.slots.register({ name: 'main', key: id }, () => <PageSurface page={id}>{spec.render()}</PageSurface>);
 
     return () => {
       // 与注册相反：先摘内容，避免「入口还在、点开空白」的中间态。
