@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, access, symlink, realpath, rename, rm, readdir } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, access, symlink, realpath, rename, rm, readdir, lstat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -55,7 +55,21 @@ export const retiredBundles = ['dsh-pages', 'dsh-zhiyun-pro-ui', 'dsh-zhiyun-stu
   // core 包各自独立出现在 profile 的 bundles 里，只登记一个的话另一行仍会让
   // Loader 解析不到、整个 profile 起不来。
   '@lybx-leyw/dsh-zju-page-planning',
-  '@lybx-leyw/dsh-zju-core-planning'];
+  '@lybx-leyw/dsh-zju-core-planning',
+  // 2026-11 退役：题库 / 笔记 / 插件 / 文档四页，连同它们独占的 core 包
+  // （vault / plugin-graph）与渲染层（graph-render）。老 profile 里留着这些行
+  // 会让 Loader 逐条报「cannot resolve profile bundle」并跳过，页面因此空着。
+  // 七个名字都要登记 —— 只登记页面不登记 core，core 那几行仍会报错。
+  '@lybx-leyw/dsh-zju-page-docs',
+  '@lybx-leyw/dsh-zju-page-notes',
+  '@lybx-leyw/dsh-zju-page-plugins',
+  '@lybx-leyw/dsh-zju-page-quiz',
+  '@lybx-leyw/dsh-zju-core-vault',
+  '@lybx-leyw/dsh-zju-ui-graph-render',
+  '@lybx-leyw/dsh-zju-core-plugin-graph',
+  // 更早归档、但从未登记过的两个旧名（老 profile 里可能还在）
+  '@lybx-leyw/dsh-zju-core-classroom-vault',
+  '@lybx-leyw/dsh-zju-core-doc'];
 export async function exists(file) { try { await access(file); return true; } catch { return false; } }
 
 /**
@@ -578,11 +592,17 @@ export async function initialize({ home = path.join(root, '.runtime', 'home'), e
   //
   // ⚠️ 不能用 `exists()` 判断：悬空 junction 的 `access()` 会失败，正好把最该清掉
   //    的那一个漏过去。改为读目录项本身 —— 目录项存在即说明有这个链接。
+  //
+  // ⚠️ 包名带 scope（`@lybx-leyw/...`）时不能只在 `node_modules` 顶层 `readdir`：
+  //    那一层只有一个 `@lybx-leyw` 目录，集合里永远查不到具体包名，于是整段
+  //    清理**静默失效**（2026-11 实测：7 个悬空链接一直没被删）。
+  //    改为直接判断链接本身是否存在 —— 用 `lstat` 而不是 `exists`：
+  //    悬空 junction 的 `exists` 为假，lstat 仍能看到那条目录项。
   const modulesDir = path.join(profile, 'node_modules');
-  const present = new Set(await readdir(modulesDir).catch(() => []));
+  const entryExists = file => lstat(file).then(() => true, () => false);
   for (const name of retiredBundles) {
-    if (!present.has(name)) continue;
     const link = path.join(modulesDir, name);
+    if (!await entryExists(link)) continue;
     // 实体目录（realpath 等于自身）是用户自己放的，不动；链接一律清掉。
     // 悬空链接的 realpath 会抛错，那正是最该清理的一种，所以抛错即视为链接。
     const isRealDirectory = await realpath(link)
