@@ -76,7 +76,14 @@ function patchFiles(dir, out = []) {
   return out;
 }
 
-const files = patchFiles(path.join(root, 'packages'));
+// ⚠️ `profiles/` 也要扫。profile 的 cordis.patch.yml 由宿主当**覆盖层**解析，
+//    解析失败是硬错误（不像 bundle 的 patch 只是跳过）。我踩过的那个 null 坑
+//    恰好在 `profiles/zju-workbench/cordis.patch.yml` —— 只扫 packages/ 时
+//    守卫全绿，而全新安装直接起不来。
+const files = [
+  ...patchFiles(path.join(root, 'packages')),
+  ...patchFiles(path.join(root, 'profiles')),
+];
 
 test('所有 cordis.patch.yml 都能被 YAML 解析', () => {
   // 下限随退役收缩：归档 7 个包后少 7 份 patch（33 → 26 左右）。
@@ -94,6 +101,32 @@ test('所有 cordis.patch.yml 都能被 YAML 解析', () => {
   // 对 profile 自己的 cordis.patch.yml 则直接抛出（硬失败）。
   // 真正的问题是「那层配置没生效」，而不是「一点痕迹都没有」。
   assert.deepEqual(failures, [], `以下 patch 无法解析（宿主会跳过该 bundle 或直接失败）：\n${failures.join('\n')}`);
+});
+
+test('每个 cordis.patch.yml 解析出来必须是**数组**，不能是 null', () => {
+  // 「能解析」不等于「解析对了」。宿主用 parsePatchList() 要的是
+  //   "a top-level YAML array of loader patch entries"
+  // 而**只剩注释**的文件在 YAML 里解析成 `null` —— 不是空数组。
+  //
+  // # 这个 bug 真的发生过
+  //
+  // 退役 `@lybx-leyw/dsh-pages` 时把 profile 模板 patch 的条目删干净，
+  // 忘了留一个 `[]`。旧 profile 因为 patch 文件已存在、不会重新拷贝，
+  // 所以本机一直正常；只有**全新安装**会炸：
+  //
+  //     dsh: overlay ...\cordis.patch.yml must be a top-level YAML array
+  //           of loader patch entries
+  //
+  // 而这种「只有新用户才会遇到」的故障，最不该靠人肉发现。
+  const offenders = [];
+  for (const file of files) {
+    const parsed = yaml.load(readFileSync(file, 'utf8'), { schema: HOST_SCHEMA });
+    if (!Array.isArray(parsed)) {
+      offenders.push(`${path.relative(root, file)}: 解析结果是 ${parsed === null ? 'null' : typeof parsed}`);
+    }
+  }
+  assert.deepEqual(offenders, [],
+    `以下 patch 解析出来不是数组（空配置请写 \`[]\`，不要只留注释）：\n${offenders.join('\n')}`);
 });
 
 test('name 的值若以 @ 开头，必须显式加引号', () => {

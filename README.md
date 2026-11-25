@@ -1,10 +1,25 @@
 # ZJU Workbench · DSH 工作台
 
-把 DeepSeek Harness 改造成浙大自己的学习工作台：一个独立的 `zju-workbench` profile，加一层界面外壳，侧栏是「今天 / 论文 / 学习 / 题库 / 笔记 / 插件 / 文档」，原生 DSH 工作区作为页面壳的首页承载会话；账号与数据在原生设置浮窗里。
+把 DeepSeek Harness 改造成浙大自己的学习工作台：一个独立的 `zju-workbench` profile，加一层界面外壳，侧栏是「论文 / 学习 / YONKIK 知识库」，原生 DSH 工作区作为首页承载会话；账号与数据在原生设置浮窗里。
+
+![首页](docs/assets/screenshots/home-1440x900.png)
 
 产品是**插件生态**，不是一个单体应用：外壳只声明页框架与插槽、不认识具体页面；每个数据源、每个工具、每个页面都是独立包，依赖方向单向。想给 AI 加工具、想把某个数据源接进来、想重做某一页的交互，都可以只改一个包——不必碰其它部分。只要不违反 [OWNER 核心规则](docs/contributing/CONTRIBUTING.md#2-owner-机制)，就可以做想做的一切。
 
 > **关于「智云」**：智云课堂（`classroom.zju.edu.cn`）只是本工作台接入的**数据源之一**（`packages/source/classroom/`，服务名 `zwClassroom`），和学在浙大、教务网、CC98、拼题A 平级。它不是产品名，产品名是 ZJU Workbench。
+
+## 界面
+
+三个产品页都注册到 DSH **原生**的两个槽（`sidebar.panellist` 出导轨图标、`main` 出中央面板），没有自建面板系统。
+
+| | |
+| --- | --- |
+| ![论文](docs/assets/screenshots/paper-1440x900.png) | ![学习](docs/assets/screenshots/study-1440x900.png) |
+| **论文**：导入 PDF，读、译、就着某一段提问；树栏与宿主侧栏同宽 | **学习**：智云课堂的课程、课件与字幕汇到一处 |
+| ![YONKIK 知识库](docs/assets/screenshots/yonkik-1440x900.png) | |
+| **YONKIK 知识库**：校园站点的侦察档案，每个站点的鉴权链路与接口手册 | |
+
+截图取自**全新 profile**（空工作区、内置初始记忆），不含任何个人数据。尺寸 1440×900。
 
 ## 从这里开始
 
