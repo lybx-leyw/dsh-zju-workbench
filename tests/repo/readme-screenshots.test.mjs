@@ -23,6 +23,15 @@ const readme = readFileSync(path.join(ROOT, 'README.md'), 'utf8');
 /** README 里引用的所有截图（相对路径）。 */
 const refs = [...readme.matchAll(/!\[[^\]]*\]\((docs\/assets\/screenshots\/[^)]+\.png)\)/g)]
   .map(match => match[1]);
+
+/**
+ * README 里引用的**示意图**（`docs/show/`）。
+ *
+ * 它们和截图分开管：示意图不限尺寸（内容决定长宽比），但同样必须存在 ——
+ * 文件名是中文，Markdown 里要用 `<>` 包住路径，否则括号与空格会把链接截断。
+ */
+const diagrams = [...readme.matchAll(/!\[[^\]]*\]\(<(docs\/show\/[^>]+\.png)>\)/g)]
+  .map(match => match[1]);
 /** 目录里实际有的截图。 */
 const dir = path.join(ROOT, 'docs/assets/screenshots');
 
@@ -37,6 +46,19 @@ test('README 引用的每张截图都存在', () => {
   assert.ok(refs.length >= 3, `README 里只有 ${refs.length} 张截图，应当至少 3 张`);
   for (const ref of refs) {
     assert.ok(existsSync(path.join(ROOT, ref)), `README 引用了不存在的截图：${ref}`);
+  }
+});
+
+test('README 引用的示意图都存在，且路径用 <> 包住', () => {
+  assert.ok(diagrams.length >= 2, `README 里只有 ${diagrams.length} 张示意图`);
+  for (const ref of diagrams) {
+    assert.ok(existsSync(path.join(ROOT, ref)), `README 引用了不存在的示意图：${ref}`);
+    // 中文文件名 + 全角逗号，不加 <> 会被 Markdown 的括号/空格规则截断。
+    assert.match(ref, /[^\x00-\x7F]/, '这条断言只对中文文件名的图有意义');
+  }
+  // 反例：同一批图如果写成不带 <> 的形式，正则就抓不到 —— 等于守卫失效。
+  for (const ref of diagrams) {
+    assert.ok(readme.includes(`(<${ref}>)`), `示意图链接应写成 (<路径>)：${ref}`);
   }
 });
 
