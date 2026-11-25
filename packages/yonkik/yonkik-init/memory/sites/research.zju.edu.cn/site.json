@@ -1,0 +1,10 @@
+{
+  "key": "research.zju.edu.cn",
+  "origin": "https://research.zju.edu.cn",
+  "status": "blocked",
+  "type": "科研门户（苏迪 sopplus 匿名版）",
+  "auth": { "type": "none", "note": "匿名门户壳可开但正文为空；内容接口 articleCenter/serviceCenter 全 301 到登录。" },
+  "blockedReason": "匿名壳无内容：内容接口全 301（无 Location）指向登录，壳内静态数据停在 2024-12。属「登录后才有内容」的系统，非站点故障。",
+  "rateLimit": { "minIntervalMs": 2000, "concurrency": 1 },
+  "exploredAt": "2026-11-20"
+}

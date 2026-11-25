@@ -1,0 +1,34 @@
+{
+  "key": "doe-oa.zju.edu.cn",
+  "origin": "http://doe-oa.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://doe-oa.zju.edu.cn/75536/list.htm",
+  "column": "学工",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 6,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/75472/list.htm",
+      "/75509/list.htm",
+      "/75516/list.htm",
+      "/75536/list.htm",
+      "/77471/list.htm",
+      "/jxgg/list.htm"
+    ],
+    "note": "三栏显示标题同为「通知公告」（课程培养 / 专业实践 / 本科生教育），靠「当前位置」完整链路 + Column_Anchor 大类名 + col_title 标题三重校验；/75431、/75435、/75436 末项自认另一路径，标 identity-mismatch。"
+  }
+}

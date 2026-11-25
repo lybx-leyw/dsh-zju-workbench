@@ -1,0 +1,61 @@
+{
+  "site": "www.xlzx.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "auth": "门户免登录；预约需统一身份认证（campus-sso）",
+  "note": "门户与预约是两个站：xlzx（当前，UTF-8）与 xlfw（旧站，GBK，新闻停更 2021）。",
+  "endpoints": [
+    {
+      "id": "home",
+      "name": "门户首页",
+      "method": "GET",
+      "url": "http://www.xlzx.zju.edu.cn/",
+      "status": "verified",
+      "returns": "HTML 63KB UTF-8；19 条新闻（日期在标题之后）+ 导航 + 预约入口",
+      "note": "最新日期实测 2026-11-20，是活站"
+    },
+    {
+      "id": "news-list",
+      "name": "新闻列表解析",
+      "method": "GET",
+      "url": "http://www.xlzx.zju.edu.cn/",
+      "status": "verified",
+      "returns": "每项：<a href=\"/2026/1120/c55627a3229802/page.htm\"><p title=\"标题\">…</p><span>2026-11-20</span></a>",
+      "note": "**日期在标题之后**。按「日期在前再找链接」写正则会得到 0 条"
+    },
+    {
+      "id": "article",
+      "name": "文章详情",
+      "method": "GET",
+      "url": "http://www.xlzx.zju.edu.cn/{yyyy}/{mmdd}/c{catalogId}a{articleId}/page.htm",
+      "status": "verified",
+      "returns": "HTML 正文"
+    },
+    {
+      "id": "booking-notice",
+      "name": "咨询预约须知",
+      "method": "GET",
+      "url": "http://www.xlfw.zju.edu.cn/redir.php?catalog_id=289",
+      "status": "verified",
+      "returns": "GBK HTML；原文写明「通过心理中心网站找到咨询服务，使用统一身份认证登陆」",
+      "note": "这是「预约要登录」的权威依据"
+    },
+    {
+      "id": "booking-login",
+      "name": "预约系统登录",
+      "method": "GET",
+      "url": "http://www.xlfw.zju.edu.cn/advise-service/login",
+      "status": "blocked",
+      "returns": "403 Forbidden（nginx/1.12.2）",
+      "note": "未探明登录方式；疑需 SSO 或内网"
+    },
+    {
+      "id": "old-site-news",
+      "name": "旧站新闻",
+      "method": "GET",
+      "url": "http://www.xlfw.zju.edu.cn/redir.php?catalog_id=10",
+      "status": "verified",
+      "returns": "GBK HTML；内容停更在 2021-03",
+      "note": "别当现状数据用"
+    }
+  ]
+}

@@ -1,0 +1,325 @@
+{
+  "site": "saa.office.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET saa.office.zju.edu.cn/tzgg_70388/list.htm",
+      "column": "学生工作·通知公告",
+      "verifiesPath": "/tzgg_70388/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/tzgg_70388/list.htm",
+        "status": 200,
+        "column": "学生工作·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ],
+          [
+            "/tzgg_70388/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 1732,
+        "pages": 124,
+        "externalLinks": 0,
+        "firstId": "3228840",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/66850/list.htm",
+      "column": "党政综合·通知公告",
+      "verifiesPath": "/66850/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/66850/list.htm",
+        "status": 200,
+        "column": "党政综合·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "党政综合",
+        "trail": [
+          [
+            "/66771/list.htm",
+            "党政综合"
+          ],
+          [
+            "/66850/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 677,
+        "pages": 49,
+        "externalLinks": 8,
+        "firstId": "3220338",
+        "firstDate": "2026-11-04"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/tzgg_70383/list.htm",
+      "column": "本科生教育·通知公告",
+      "verifiesPath": "/tzgg_70383/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/tzgg_70383/list.htm",
+        "status": 200,
+        "column": "本科生教育·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/66772/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/tzgg_70383/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 1226,
+        "pages": 88,
+        "externalLinks": 3,
+        "firstId": "3225289",
+        "firstDate": "2026-11-10"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/tzgg_70384/list.htm",
+      "column": "研究生教育·通知公告",
+      "verifiesPath": "/tzgg_70384/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/tzgg_70384/list.htm",
+        "status": 200,
+        "column": "研究生教育·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/66773/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/tzgg_70384/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 571,
+        "pages": 41,
+        "externalLinks": 3,
+        "firstId": "2767559",
+        "firstDate": "2023-06-26"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/66861/list.htm",
+      "column": "实践教学",
+      "verifiesPath": "/66861/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/66861/list.htm",
+        "status": 200,
+        "column": "实践教学",
+        "displayTitle": "实践教学",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/66772/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/66861/list.htm",
+            "实践教学"
+          ]
+        ],
+        "count": 14,
+        "total": 223,
+        "pages": 16,
+        "externalLinks": 0,
+        "firstId": "3225289",
+        "firstDate": "2026-11-10"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/66866/list.htm",
+      "column": "培养过程",
+      "verifiesPath": "/66866/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/66866/list.htm",
+        "status": 200,
+        "column": "培养过程",
+        "displayTitle": "培养过程",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/66773/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/66866/list.htm",
+            "培养过程"
+          ]
+        ],
+        "count": 14,
+        "total": 148,
+        "pages": 11,
+        "externalLinks": 0,
+        "firstId": "3223387",
+        "firstDate": "2026-11-05"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/67666/list.htm",
+      "column": "奖助贷补",
+      "verifiesPath": "/67666/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/67666/list.htm",
+        "status": 200,
+        "column": "奖助贷补",
+        "displayTitle": "奖助贷补",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/xsgz/list.htm",
+            "学生工作"
+          ],
+          [
+            "/67666/list.htm",
+            "奖助贷补"
+          ]
+        ],
+        "count": 14,
+        "total": 41,
+        "pages": 3,
+        "externalLinks": 1,
+        "firstId": "3218442",
+        "firstDate": "2026-10-23"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/66921/list.htm",
+      "column": "经费资助",
+      "verifiesPath": "/66921/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/66921/list.htm",
+        "status": 200,
+        "column": "经费资助",
+        "displayTitle": "经费资助",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/dwjl/list.htm",
+            "国际交流"
+          ],
+          [
+            "/66921/list.htm",
+            "经费资助"
+          ]
+        ],
+        "count": 14,
+        "total": 64,
+        "pages": 5,
+        "externalLinks": 1,
+        "firstId": "3203298",
+        "firstDate": "2026-09-14"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/66920/list.htm",
+      "column": "交流活动",
+      "verifiesPath": "/66920/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/66920/list.htm",
+        "status": 200,
+        "column": "交流活动",
+        "displayTitle": "交流活动",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/dwjl/list.htm",
+            "国际交流"
+          ],
+          [
+            "/66920/list.htm",
+            "交流活动"
+          ]
+        ],
+        "count": 14,
+        "total": 267,
+        "pages": 20,
+        "externalLinks": 3,
+        "firstId": "3227947",
+        "firstDate": "2026-11-16"
+      }
+    },
+    {
+      "id": "GET saa.office.zju.edu.cn/66773/list.htm",
+      "column": "研究生教育",
+      "verifiesPath": "/66773/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://saa.office.zju.edu.cn/66773/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "研究生教育",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/66773/list.htm",
+            "研究生教育"
+          ]
+        ],
+        "count": 6,
+        "total": 6,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3220466",
+        "firstDate": "2026-10-29"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/66964/list.htm",
+      "pageTitle": "通知公告",
+      "sectionTitle": "就业指导",
+      "claimedColumnPath": "/67668/list.htm",
+      "claimedColumnTitle": "通知公告",
+      "note": "数字路径可访问且标题为「通知公告」，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不纳入精确通路。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/dwjl/list.htm",
+      "pageTitle": "通知公告",
+      "sectionTitle": "国际交流",
+      "claimedColumnPath": "/tzgg_70387/list.htm",
+      "claimedColumnTitle": "通知公告",
+      "note": "数字路径可访问且标题为「通知公告」，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不纳入精确通路。"
+    }
+  ],
+  "unverified": [
+    "其余航空航天学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

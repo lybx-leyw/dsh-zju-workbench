@@ -1428,9 +1428,9 @@ test('接线：两个新包都已进 profile 与构建清单', () => {
 
 test('接线：页面包只注册自己的插槽，设置入口集中在 settings.section', () => {
   const source = readFileSync(path.join(here, '../../../packages/client/page-paper/src/client.jsx'), 'utf8');
-  // 迁移到 `dsh-pages` 后没有 `zw.paper.content` 这个子槽了：页面自己把内容
-  // 注册到页面壳的 `page.content`，key 就是页面 id。断的是**新协议**。
-  assert.match(source, /registerPageContent\(/, '页面要把内容注册到 page.content');
+  // 2026-11 起页面走 DSH **原生**的两个槽（sidebar.panellist + main），
+  // 不再经过第三方页面壳。`registerPage()` 内部成对注册这两者，key 是页面 id。
+  assert.match(source, /registerPage\(/, '页面要用 registerPage 注册到原生槽');
   assert.match(source, /id: 'paper'/, '注册的 key 必须是页面 id');
   assert.match(source, /'settings\.section'/);
   assert.match(source, /export const name = 'zw-page-paper-client'/);

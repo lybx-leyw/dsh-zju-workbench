@@ -1,0 +1,32 @@
+{
+  "key": "www.cst.zju.edu.cn",
+  "origin": "http://www.cst.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.cst.zju.edu.cn/gggs/list.htm",
+  "column": "公告公示",
+  "exactNoticeColumns": {
+    "count": 4,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/zytz_49383/list.htm",
+      "/36233/list.htm",
+      "/36191/list.htm",
+      "/36216/list.htm"
+    ],
+    "containers": [
+      "/36192/list.htm"
+    ],
+    "note": "四个栏目均属「旧版栏目」大类，按 col_path 全链路 + Column_Anchor 校验；日期写成 YYYY.MM.DD 且标题在 div.news_title（不是 span.news_title）。/36192 是单篇文章页，标 container-only 不开放。"
+  }
+}

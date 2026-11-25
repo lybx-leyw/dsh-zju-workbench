@@ -1,0 +1,59 @@
+{
+  "site": "zju-colleges",
+  "exploredAt": "2026-11-22",
+  "auth": "全免登录",
+  "network": {
+    "criticalNote": "代理把所有 *.zju.edu.cn 解析成伪造 IP 198.18.0.x（RFC2544 段，代理 TUN 惯用）；公网站经它正常、校内站连不通。必须 DoH(223.5.5.5) 取真实 IP(210.32.x.x) 后绕过代理直连。",
+    "protoSplit": "63 站中仅 9 站支持 HTTPS，37 站只有 HTTP(80)，执行顺序应为「按记录 proto 试 → 失败降级另一个」"
+  },
+  "parsing": {
+    "impl": "linkedom@0.18.15（pnpm store 内已有，路径见 crawler.mjs 的 LINKEDOM 常量）",
+    "why": "正则版在 www.lit/tzgg 只抓到 4/14 条；DOM 版 13 条 —— 深层嵌套正则必然漏",
+    "linkedomCaveat": "doc.textContent 返回 null（不是空串），取正文要 doc.body.textContent"
+  },
+  "verified": [
+    {
+      "name": "doH-resolve",
+      "method": "GET",
+      "url": "https://223.5.5.5/resolve?name=<host>&type=A",
+      "headers": { "host": "dns.alidns.com", "accept": "application/dns-json" },
+      "returns": "{ Answer: [{ type:1, data:'210.32.x.x' }] }",
+      "note": "取真实 IP 的唯一可靠途径。本地 dns.resolve4 全部返回 198.18.x 伪造地址"
+    },
+    {
+      "name": "column-list",
+      "method": "GET",
+      "url": "http://<host>/<column>/list.htm",
+      "returns": "HTML 列表页",
+      "note": "栏目有两种体系：**数字号**（bksy/76425、www.xgb/53388）与**拼音**（www.lit/tzgg、/xyjj）。别猜，用 crawler.mjs columns <host> 从首页抓"
+    },
+    {
+      "name": "item-formats",
+      "note": "条目链接三种真实格式：",
+      "formats": [
+        "/yyyy/mmdd/cNNNaNNN/page.htm（Webplus）",
+        "/info/NNNN/NNNNN.htm（VSB 博达）",
+        "content.jsp?wbtreeid=&wbnewsid=（VSB 老条目）"
+      ],
+      "returns": "标题在 <a title> 或 <p class=\"title\"> 或 .date 兄弟节点；日期可能是 \"2026-10\"（仅年月）"
+    },
+    {
+      "name": "subpath-follow",
+      "method": "GET",
+      "url": "http://www.cs.zju.edu.cn/csen/",
+      "returns": "HTML 38,823B，10+ 栏目",
+      "note": "**首页是跳转页的站**：www.cs 首页仅 6,530B / 4 个 a 标签，真站在 /csen/；me 在 /mecn/。判据：首页 a<5 且无 list.htm 时，抓首页里指向子目录的 .htm 链接试一遍"
+    }
+  ],
+  "stats": {
+    "total": 63,
+    "reachable": 47,
+    "httpsOnly": 9,
+    "httpOnly": 37,
+    "noARecord": 15,
+    "noARecordNote": "这 15 个（*.office.zju.edu.cn 等）**公共 DNS 无 A 记录 = 纯内网主机**，不是站点下线。需校园网或 WebVPN。"
+  },
+  "crossRef": {
+    "notices": "通知抓取已并入 sites/zju-notices/crawler-merged.mjs（统一源表 63 站）"
+  }
+}

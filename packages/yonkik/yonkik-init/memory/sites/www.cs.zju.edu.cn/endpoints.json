@@ -1,0 +1,69 @@
+{
+  "site": "www.cs.zju.edu.cn",
+  "access": "公开 HTTP；内容在 /csen/ 子站。固定路径、无凭据、不跟跳转。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.cs.zju.edu.cn/csen/zdts/list.htm",
+      "column": "重点提示",
+      "verifiesPath": "/csen/zdts/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cs.zju.edu.cn/csen/zdts/list.htm",
+        "status": 200,
+        "column": "重点提示",
+        "displayTitle": "重点提示",
+        "sectionTitle": "重点提示",
+        "trail": [
+          [
+            "/csen/26710/list.htm",
+            "重点提示"
+          ],
+          [
+            "/csen/zdts/list.htm",
+            "重点提示"
+          ]
+        ],
+        "count": 14,
+        "total": 456,
+        "pages": 33,
+        "externalLinks": 0,
+        "firstId": "3218897",
+        "firstDate": "2026-10-26"
+      }
+    },
+    {
+      "id": "GET www.cs.zju.edu.cn/csen/xsjz/list.htm",
+      "column": "学术讲座",
+      "verifiesPath": "/csen/xsjz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cs.zju.edu.cn/csen/xsjz/list.htm",
+        "status": 200,
+        "column": "学术讲座",
+        "displayTitle": "学术讲座",
+        "sectionTitle": "学术讲座",
+        "trail": [
+          [
+            "/csen/26711/list.htm",
+            "学术讲座"
+          ],
+          [
+            "/csen/xsjz/list.htm",
+            "学术讲座"
+          ]
+        ],
+        "count": 14,
+        "total": 15,
+        "pages": 2,
+        "externalLinks": 3,
+        "firstId": "3219397",
+        "firstDate": "2026-10-26"
+      }
+    }
+  ],
+  "unverified": [
+    "其余计算机学院官网栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

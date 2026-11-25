@@ -1,0 +1,370 @@
+{
+  "site": "marx.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/23602/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/marxbg/23602/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/23602/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "banner": "学生思政",
+        "trail": [
+          [
+            "/marxbg/23524/list.htm",
+            "学生思政"
+          ],
+          [
+            "/marxbg/23602/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 20,
+        "total": 164,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3123496",
+        "firstDate": "2025-12-26"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/xsh/list.htm",
+      "column": "学生会",
+      "verifiesPath": "/marxbg/xsh/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/xsh/list.htm",
+        "status": 200,
+        "column": "学生会",
+        "displayTitle": "学生会",
+        "banner": "学生思政",
+        "trail": [
+          [
+            "/marxbg/23524/list.htm",
+            "学生思政"
+          ],
+          [
+            "/marxbg/xsh/list.htm",
+            "学生会"
+          ]
+        ],
+        "count": 20,
+        "total": 28,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3227512",
+        "firstDate": "2026-11-15"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/23588/list.htm",
+      "column": "研究生教育·最新通知",
+      "verifiesPath": "/marxbg/23588/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/23588/list.htm",
+        "status": 200,
+        "column": "研究生教育·最新通知",
+        "displayTitle": "最新通知",
+        "banner": "研究生教育",
+        "trail": [
+          [
+            "/marxbg/23523/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/marxbg/23588/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 20,
+        "total": 387,
+        "pages": 20,
+        "externalLinks": 0,
+        "firstId": "3108773",
+        "firstDate": "2025-11-21"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/23604/list.htm",
+      "column": "就业指导",
+      "verifiesPath": "/marxbg/23604/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/23604/list.htm",
+        "status": 200,
+        "column": "就业指导",
+        "displayTitle": "就业指导",
+        "banner": "学生思政",
+        "trail": [
+          [
+            "/marxbg/23524/list.htm",
+            "学生思政"
+          ],
+          [
+            "/marxbg/23604/list.htm",
+            "就业指导"
+          ]
+        ],
+        "count": 20,
+        "total": 292,
+        "pages": 15,
+        "externalLinks": 2,
+        "firstId": "3173200",
+        "firstDate": "2026-06-03"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/23524/list.htm",
+      "column": "学生思政·最新通知",
+      "verifiesPath": "/marxbg/23524/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/23524/list.htm",
+        "status": 200,
+        "column": "学生思政·最新通知",
+        "displayTitle": "最新通知",
+        "banner": "学生思政",
+        "trail": [
+          [
+            "/marxbg/23524/list.htm",
+            "学生思政"
+          ],
+          [
+            "/marxbg/23598/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 20,
+        "total": 175,
+        "pages": 9,
+        "externalLinks": 1,
+        "firstId": "3228945",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/23522/list.htm",
+      "column": "思政教学·最新通知",
+      "verifiesPath": "/marxbg/23522/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/23522/list.htm",
+        "status": 200,
+        "column": "思政教学·最新通知",
+        "displayTitle": "最新通知",
+        "banner": "思政教学",
+        "trail": [
+          [
+            "/marxbg/23522/list.htm",
+            "思政教学"
+          ],
+          [
+            "/marxbg/23579/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 20,
+        "total": 232,
+        "pages": 12,
+        "externalLinks": 3,
+        "firstId": "3216535",
+        "firstDate": "2026-10-19"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/bksjy/list.htm",
+      "column": "本科生教育·最新通知",
+      "verifiesPath": "/marxbg/bksjy/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/bksjy/list.htm",
+        "status": 200,
+        "column": "本科生教育·最新通知",
+        "displayTitle": "最新通知",
+        "banner": "本科生教育",
+        "trail": [
+          [
+            "/marxbg/bksjy/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/marxbg/zxtz_77047/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 20,
+        "total": 60,
+        "pages": 3,
+        "externalLinks": 1,
+        "firstId": "3213801",
+        "firstDate": "2026-10-13"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/23541/list.htm",
+      "column": "信息公告",
+      "verifiesPath": "/marxbg/23541/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/23541/list.htm",
+        "status": 200,
+        "column": "信息公告",
+        "displayTitle": "信息公告",
+        "banner": "党政管理",
+        "trail": [
+          [
+            "/marxbg/23520/list.htm",
+            "党政管理"
+          ],
+          [
+            "/marxbg/23541/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 53,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "2754099",
+        "firstDate": "2026-09-01"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/23583/list.htm",
+      "column": "现场教学",
+      "verifiesPath": "/marxbg/23583/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/23583/list.htm",
+        "status": 200,
+        "column": "现场教学",
+        "displayTitle": "现场教学",
+        "banner": "思政教学",
+        "trail": [
+          [
+            "/marxbg/23522/list.htm",
+            "思政教学"
+          ],
+          [
+            "/marxbg/23583/list.htm",
+            "现场教学"
+          ]
+        ],
+        "count": 20,
+        "total": 365,
+        "pages": 19,
+        "externalLinks": 0,
+        "firstId": "1761932",
+        "firstDate": "2019-11-21"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/szry/list.htm",
+      "column": "思政荣誉",
+      "verifiesPath": "/marxbg/szry/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/szry/list.htm",
+        "status": 200,
+        "column": "思政荣誉",
+        "displayTitle": "思政荣誉",
+        "banner": "学生思政",
+        "trail": [
+          [
+            "/marxbg/23524/list.htm",
+            "学生思政"
+          ],
+          [
+            "/marxbg/szry/list.htm",
+            "思政荣誉"
+          ]
+        ],
+        "count": 3,
+        "total": 3,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3168380",
+        "firstDate": "2026-05-31"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/23593/list.htm",
+      "column": "对外交流",
+      "verifiesPath": "/marxbg/23593/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/23593/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "对外交流",
+        "banner": "研究生教育",
+        "trail": [
+          [
+            "/marxbg/23523/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/marxbg/23593/list.htm",
+            "对外交流"
+          ]
+        ],
+        "count": 14,
+        "total": 14,
+        "pages": 1,
+        "externalLinks": 6,
+        "firstId": "3144189",
+        "firstDate": "2026-03-25"
+      }
+    },
+    {
+      "id": "GET marx.zju.edu.cn/marxbg/jxpy/list.htm",
+      "column": "教学培养",
+      "verifiesPath": "/marxbg/jxpy/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://marx.zju.edu.cn/marxbg/jxpy/list.htm",
+        "status": 200,
+        "column": "教学培养",
+        "displayTitle": "教学培养",
+        "banner": "本科生教育",
+        "trail": [
+          [
+            "/marxbg/bksjy/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/marxbg/jxpy/list.htm",
+            "教学培养"
+          ]
+        ],
+        "count": 16,
+        "total": 16,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3214989",
+        "firstDate": "2026-10-15"
+      }
+    }
+  ],
+  "unverified": [
+    "其余马克思主义学院栏目、分页、正文与附件未验证；外链只记地址。",
+    "锚文本 title 属性为空串，完整标题在正文文本里；解析取文本而非属性。"
+  ]
+}

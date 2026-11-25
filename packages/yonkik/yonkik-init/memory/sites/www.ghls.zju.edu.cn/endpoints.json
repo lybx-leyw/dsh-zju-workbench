@@ -1,0 +1,354 @@
+{
+  "site": "www.ghls.zju.edu.cn",
+  "access": "公开 HTTP；robots 未单测（沿用站群默认）；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13767/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/ghlsbg/13767/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13767/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "banner": "学生工作",
+        "trail": [
+          [
+            "/ghlsbg/13725/list.htm",
+            "学生工作"
+          ],
+          [
+            "/ghlsbg/13767/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 20,
+        "total": 403,
+        "pages": 21,
+        "externalLinks": 0,
+        "firstId": "1670363",
+        "firstDate": "2019-09-17"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13761/list.htm",
+      "column": "最新消息",
+      "verifiesPath": "/ghlsbg/13761/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13761/list.htm",
+        "status": 200,
+        "column": "最新消息",
+        "displayTitle": "最新消息",
+        "banner": "学生工作",
+        "trail": [
+          [
+            "/ghlsbg/13725/list.htm",
+            "学生工作"
+          ],
+          [
+            "/ghlsbg/13761/list.htm",
+            "最新消息"
+          ]
+        ],
+        "count": 20,
+        "total": 395,
+        "pages": 20,
+        "externalLinks": 0,
+        "firstId": "3219838",
+        "firstDate": "2026-10-28"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13762/list.htm",
+      "column": "学生党建",
+      "verifiesPath": "/ghlsbg/13762/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13762/list.htm",
+        "status": 200,
+        "column": "学生党建",
+        "displayTitle": "学生党建",
+        "banner": "学生工作",
+        "trail": [
+          [
+            "/ghlsbg/13725/list.htm",
+            "学生工作"
+          ],
+          [
+            "/ghlsbg/13762/list.htm",
+            "学生党建"
+          ]
+        ],
+        "count": 20,
+        "total": 455,
+        "pages": 23,
+        "externalLinks": 0,
+        "firstId": "3223749",
+        "firstDate": "2026-11-06"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13763/list.htm",
+      "column": "学生团建",
+      "verifiesPath": "/ghlsbg/13763/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13763/list.htm",
+        "status": 200,
+        "column": "学生团建",
+        "displayTitle": "学生团建",
+        "banner": "学生工作",
+        "trail": [
+          [
+            "/ghlsbg/13725/list.htm",
+            "学生工作"
+          ],
+          [
+            "/ghlsbg/13763/list.htm",
+            "学生团建"
+          ]
+        ],
+        "count": 20,
+        "total": 261,
+        "pages": 14,
+        "externalLinks": 0,
+        "firstId": "3228934",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13768/list.htm",
+      "column": "学生资助",
+      "verifiesPath": "/ghlsbg/13768/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13768/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "banner": "学生工作",
+        "trail": [
+          [
+            "/ghlsbg/13725/list.htm",
+            "学生工作"
+          ],
+          [
+            "/ghlsbg/13768/list.htm",
+            "学生资助"
+          ]
+        ],
+        "count": 20,
+        "total": 152,
+        "pages": 8,
+        "externalLinks": 0,
+        "firstId": "3225217",
+        "firstDate": "2026-11-10"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13771/list.htm",
+      "column": "学生组织",
+      "verifiesPath": "/ghlsbg/13771/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13771/list.htm",
+        "status": 200,
+        "column": "学生组织",
+        "displayTitle": "学生组织",
+        "banner": "学生工作",
+        "trail": [
+          [
+            "/ghlsbg/13725/list.htm",
+            "学生工作"
+          ],
+          [
+            "/ghlsbg/13771/list.htm",
+            "学生组织"
+          ]
+        ],
+        "count": 20,
+        "total": 126,
+        "pages": 7,
+        "externalLinks": 0,
+        "firstId": "3192172",
+        "firstDate": "2026-06-26"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13813/list.htm",
+      "column": "重点提示",
+      "verifiesPath": "/ghlsbg/13813/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13813/list.htm",
+        "status": 200,
+        "column": "重点提示",
+        "displayTitle": "重点提示",
+        "banner": "重点提示",
+        "trail": [
+          [
+            "/ghlsbg/13813/list.htm",
+            "重点提示"
+          ]
+        ],
+        "count": 20,
+        "total": 5468,
+        "pages": 274,
+        "externalLinks": 0,
+        "firstId": "3228023",
+        "firstDate": "2026-11-16"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13789/list.htm",
+      "column": "公告",
+      "verifiesPath": "/ghlsbg/13789/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13789/list.htm",
+        "status": 200,
+        "column": "公告",
+        "displayTitle": "公告",
+        "banner": "对外交流",
+        "trail": [
+          [
+            "/ghlsbg/13729/list.htm",
+            "对外交流"
+          ],
+          [
+            "/ghlsbg/13789/list.htm",
+            "公告"
+          ]
+        ],
+        "count": 20,
+        "total": 463,
+        "pages": 24,
+        "externalLinks": 0,
+        "firstId": "3228547",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/13729/list.htm",
+      "column": "对外交流",
+      "verifiesPath": "/ghlsbg/13729/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/13729/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "对外交流",
+        "banner": "对外交流",
+        "trail": [
+          [
+            "/ghlsbg/13729/list.htm",
+            "对外交流"
+          ]
+        ],
+        "count": 20,
+        "total": 29,
+        "pages": 2,
+        "externalLinks": 1,
+        "firstId": "3198526",
+        "firstDate": "2026-09-03"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/jyfw/list.htm",
+      "column": "就业服务",
+      "verifiesPath": "/ghlsbg/jyfw/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/jyfw/list.htm",
+        "status": 200,
+        "column": "就业服务",
+        "displayTitle": "就业服务",
+        "banner": "就业服务",
+        "trail": [
+          [
+            "/ghlsbg/jyfw/list.htm",
+            "就业服务"
+          ]
+        ],
+        "count": 20,
+        "total": 1032,
+        "pages": 52,
+        "externalLinks": 11,
+        "firstId": "3161342",
+        "firstDate": "2026-05-11"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/xsjz1/list.htm",
+      "column": "学术讲座",
+      "verifiesPath": "/ghlsbg/xsjz1/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/xsjz1/list.htm",
+        "status": 200,
+        "column": "学术讲座",
+        "displayTitle": "学术讲座",
+        "banner": "学术讲座",
+        "trail": [
+          [
+            "/ghlsbg/xsjz1/list.htm",
+            "学术讲座"
+          ]
+        ],
+        "count": 20,
+        "total": 307,
+        "pages": 16,
+        "externalLinks": 0,
+        "firstId": "3108394",
+        "firstDate": "2025-11-20"
+      }
+    },
+    {
+      "id": "GET www.ghls.zju.edu.cn/ghlsbg/zxtz/list.htm",
+      "column": "最新通知",
+      "verifiesPath": "/ghlsbg/zxtz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.ghls.zju.edu.cn/ghlsbg/zxtz/list.htm",
+        "status": 200,
+        "column": "最新通知",
+        "displayTitle": "最新通知",
+        "banner": "教育教学",
+        "trail": [
+          [
+            "/_s331/main.psp",
+            "教育教学"
+          ],
+          [
+            "/ghlsbg/zxtz/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 19,
+        "total": 19,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "2892567",
+        "firstDate": "2026-06-30"
+      }
+    }
+  ],
+  "unverified": [
+    "其余光华法学院栏目、分页、正文与附件未验证；外链只记地址。",
+    "注意「最新通知」栏的父级链接指向 /_s331/main.psp，是站群共享栏目入口，不是本站路径。"
+  ]
+}

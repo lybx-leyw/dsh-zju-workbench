@@ -1,0 +1,37 @@
+{
+  "site": "bmsoa.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET bmsoa.zju.edu.cn/85937/list.htm",
+      "column": "内部公示",
+      "verifiesPath": "/85937/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://bmsoa.zju.edu.cn/85937/list.htm",
+        "status": 200,
+        "column": "内部公示",
+        "displayTitle": "内部公示",
+        "sectionTitle": "信息公开",
+        "trail": [
+          [
+            "/85922/list.htm",
+            "信息公开"
+          ],
+          [
+            "/85937/list.htm",
+            "内部公示"
+          ]
+        ],
+        "count": 6,
+        "total": 6,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3208924",
+        "firstDate": "2026-09-24",
+        "access": "public-no-login-required"
+      }
+    }
+  ]
+}

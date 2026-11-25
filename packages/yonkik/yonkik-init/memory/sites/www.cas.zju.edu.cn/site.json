@@ -1,0 +1,28 @@
+{
+  "key": "www.cas.zju.edu.cn",
+  "origin": "http://www.cas.zju.edu.cn",
+  "status": "done",
+  "label": "动物科学学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "固定单页首屏；未见 Retry-After。"
+  },
+  "exactNoticeColumns": {
+    "count": 4,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/caschinese/jxxz/list.htm",
+      "/caschinese/15939/list.htm",
+      "/caschinese/pxtz/list.htm",
+      "/caschinese/xsgz/list.htm"
+    ],
+    "note": "身份靠 frag=窗口22 的「当前位置」全链路 + frag=窗口24 侧栏 h3 大类名；日期有两种形态（time-box 的 date+month 拆分、或 time btnText 完整日期），解析器两种都认。/caschinese/15907 末项自认 /caschinese/15911/，标 identity-mismatch。"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "key": "www.lit.zju.edu.cn",
+  "origin": "http://www.lit.zju.edu.cn",
+  "status": "done",
+  "label": "人文学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/rcpy/list.htm"
+    ],
+    "note": "无面包屑：页面自报地址 + 导航项文字 + 条目栏目 ID 唯一。该栏日期只有月粒度，按当月 1 日归档并标 datePrecision=month-only。"
+  }
+}

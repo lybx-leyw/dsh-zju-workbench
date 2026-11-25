@@ -1,0 +1,26 @@
+{
+  "key": "saa.zju.edu.cn",
+  "origin": "http://saa.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://saa.zju.edu.cn/67601/list.htm",
+  "column": "通知公告",
+  "thinPage": true,
+  "verifiedListUrl": {
+    "checkedAt": "2026-11-22",
+    "status": 200,
+    "pageTitle": "通知公告",
+    "total": 10,
+    "pages": 1
+  }
+}

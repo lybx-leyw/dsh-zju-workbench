@@ -1,0 +1,43 @@
+{
+  "site": "www.caefs.zju.edu.cn",
+  "access": "公开 HTTP。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.caefs.zju.edu.cn/68237/list.htm",
+      "column": "教学培养",
+      "verifiesPath": "/68237/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.caefs.zju.edu.cn/68237/list.htm",
+        "status": 200,
+        "column": "教学培养",
+        "displayTitle": "教学培养",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/68195/list.htm",
+            "教育教学"
+          ],
+          [
+            "/68222/list.htm",
+            "本科教育"
+          ],
+          [
+            "/68237/list.htm",
+            "教学培养"
+          ]
+        ],
+        "count": 7,
+        "total": 7,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3197601",
+        "firstDate": "2026-08-30"
+      }
+    }
+  ],
+  "unverified": [
+    "其余生物系统工程与食品科学学院栏目、分页、正文与附件未验证。"
+  ]
+}

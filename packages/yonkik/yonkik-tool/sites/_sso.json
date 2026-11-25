@@ -1,0 +1,14 @@
+{
+  "families": {
+    "cc98-openid": {
+      "idp": "openid.cc98.org",
+      "loginUrl": "https://openid.cc98.org/connect/token",
+      "credentialKey": "cc98",
+      "members": [
+        "www.cc98.org"
+      ],
+      "sessionScope": "CC98 自有账号，与浙大统一身份认证（campus-sso）无关；令牌为 OAuth access_token，非 cookie",
+      "evidence": "https://www.cc98.org/static/config.json → openIdUrl=https://openid.cc98.org；token 端点与 client_id 见 main-f76e0ae5.js 登录组件；2026-11-18 用 cc98 凭据 password grant 实测拿到 access_token（expires_in=3600）"
+    }
+  }
+}

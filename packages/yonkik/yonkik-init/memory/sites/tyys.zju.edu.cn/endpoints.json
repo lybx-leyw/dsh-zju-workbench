@@ -1,0 +1,250 @@
+{
+  "site": "tyys.zju.edu.cn",
+  "base": "https://tyys.zju.edu.cn（官网） / https://www.tyys.zju.edu.cn（业务子系统）",
+  "auth": "官网 wescms 内容页免登录；ggtypt（体测）/ cgyy（场馆）走 zjuam CAS",
+  "platform": "wescms（寸草心科技 hzccx.com），nginx。**GBK/GB18030 编码**",
+  "verified": [
+    {
+      "name": "home",
+      "method": "GET",
+      "path": "/",
+      "returns": "首页 71,408B（**GBK 字节，需 gb18030 解码**）。title=浙江大学公共体育与艺术部",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "响应头 Content-Type 不带 charset；页面 meta 写的是 **charset=\"gb312\"（错别字，应为 gb2312）**——这是乱码的根因"
+    },
+    {
+      "name": "column-list",
+      "method": "GET",
+      "path": "/redir.php?catalog_id={catalogId}",
+      "returns": "栏目列表页。全部栏目靠 catalog_id 路由，URL 无 slug",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "已确认栏目 id 见 wiki「栏目 id 表」"
+    },
+    {
+      "name": "article-detail",
+      "method": "GET",
+      "path": "/redir.php?catalog_id={catalogId}&object_id={objectId}",
+      "returns": "正文页（GBK）。含发布时间/编辑/浏览次数/正文",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "sample": "catalog_id=172630&object_id=219877 → 2026-2027 学年体测安排通知，51,296B"
+    },
+    {
+      "name": "list-paging",
+      "method": "GET",
+      "path": "/redir.php?catalog_id={id}&page={n}",
+      "returns": "**page 从 0 开始还是 1 要看锚点**：本页 links 显示 page=1 → 第 2 页、page=3 → 第 4 页（0-based，共 4 页时末页 page=3）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "每页 10 条；class=\"num\"、class=\"other\" 为分页锚点"
+    },
+    {
+      "name": "attachment-download",
+      "method": "GET",
+      "path": "/wescms/sys/filebrowser/file.php?cmd=download&id={fileId}",
+      "returns": "302 → `/attachments/YYYY-MM/{seq}-{ts}-{id}.{ext}`（公开静态路径，直连可下）",
+      "auth": "none（首次 302 会下发 wsess cookie）",
+      "status": 302,
+      "verifiedAt": "2026-11-20",
+      "sample": "id=219881 → /attachments/2026-04/01-1775809060-219881.xlsx，10,710B"
+    },
+    {
+      "name": "attachment-preview",
+      "method": "GET",
+      "path": "/wescms/sys/filebrowser/file.php?cmd=preview&id={fileId}",
+      "returns": "图片预览（快捷入口图标等）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "ggtypt-entry",
+      "method": "GET",
+      "path": "https://www.tyys.zju.edu.cn/ggtypt/",
+      "returns": "302 → /ggtypt/login;jsessionid=... → 200 返回一段 **JS 跳转脚本**：`window.location.href='https://zjuam.zju.edu.cn/cas/login?service=http://www.tyys.zju.edu.cn/ggtypt/dologin'`",
+      "auth": "cas（campus-sso）",
+      "status": 302,
+      "verifiedAt": "2026-11-20",
+      "note": "**体质健康动态信息系统**。个人体测成绩、体测预约都在这里。匿名无数据可读"
+    },
+    {
+      "name": "cgyy-entry",
+      "method": "GET",
+      "path": "https://www.tyys.zju.edu.cn/cgyy/index",
+      "returns": "场馆预约系统登录页（16,684B，`text/html;charset=UTF-8` —— **这个是 UTF-8，不是 GBK**）。两种登录：`POST /cgyy/xqlogin`（校内统一身份）/ `POST /cgyy/regirest`（校外自注册）",
+      "auth": "cas（校内）/ 自注册（校外）",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "Tomcat 6.0.24（很老）。匿名可看场馆列表与审批流程通知，预约需登录"
+    },
+    {
+      "name": "public-venue-use-rules",
+      "method": "GET",
+      "path": "http://www.tyys.zju.edu.cn/cgfw/redir.php?catalog_id=794&object_id=12021",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "charset": "gb18030",
+      "returns": "官网历史公开《浙江大学体育与艺术场馆使用管理规定》",
+      "observation": {
+        "bodyChars": 12083,
+        "displayedPublicationDate": "2013-05-06",
+        "documentDate": "2013年7月19日"
+      },
+      "note": "两个日期来自页面和落款；不当现行实时约场须知"
+    },
+    {
+      "name": "public-app-guide",
+      "method": "GET",
+      "path": "http://www.tyys.zju.edu.cn/redir.php?catalog_id=172638",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-22",
+      "charset": "gb18030",
+      "returns": "官网 APP预约 图文入口，主体是图片引用；未获取图片"
+    }
+  ],
+  "unverified": [
+    {
+      "name": "ggtypt-endpoints",
+      "semantics": "read（个人体测成绩/预约记录/打卡记录）",
+      "note": "**涉及个人数据，只记形态不批量调用**。需 CAS 登录后才可见；未登录无法枚举路径。按安全契约：只取本人数据，绝不遍历他人学号"
+    },
+    {
+      "name": "cgyy-endpoints",
+      "semantics": "read（场馆余量/我的预约）+ write（预约下单，禁止）",
+      "note": "未探；预约属写操作，脚本能力面不实现"
+    },
+    {
+      "name": "app-venue-day-and-orders",
+      "source": "https://github.com/Anchorite-no/dsh-zju-assistant/blob/aaf602aabf52f3f337cb2449a4495b685b9f5b07/core/zju/lib/tyys/venue.ts",
+      "notes": "单日余量与本人订单须经正式客户端、有权限会话确认；未请求。不尝试签名绕过或猜场馆编号。"
+    }
+  ],
+  "verifiedCount": 10,
+  "importantPitfall": "**GBK 编码三重坑**：① 响应头 Content-Type 不带 charset；② 页面 meta 写成 charset=\"gb312\"（不存在的编码名，浏览器容错猜到 gb2312，Node/python 严格解码会失败）；③ TextDecoder('gbk') 在 Node 上可用但 'gb312' 不可用。正确写法：无条件用 `new TextDecoder('gb18030')`（GBK 超集，兼容最广）。例外：/cgyy/* 是 UTF-8。",
+  "venueBusinessProbes": [
+    {
+      "name": "app-reservation-protocol",
+      "method": "GET",
+      "url": "http://www.tyys.zju.edu.cn/venue-server/api/front/website/protocols/code/RESERVATION_PROTOCOL",
+      "checkedAt": "2026-11-22",
+      "access": "anonymous-no-session",
+      "httpStatus": 200,
+      "contentType": "text/json;charset=utf-8",
+      "businessCode": 400,
+      "bytes": 46,
+      "meaning": "只证明该前缀有结构化响应，未获得内容；通用 Bad Request 不能当作明确的登录、签名或参数诊断"
+    },
+    {
+      "name": "app-venue-tree",
+      "method": "GET",
+      "url": "http://www.tyys.zju.edu.cn/venue-server/api/reservation/campus/venue/info",
+      "checkedAt": "2026-11-22",
+      "access": "anonymous-no-session",
+      "httpStatus": 200,
+      "contentType": "text/json;charset=utf-8",
+      "businessCode": 400,
+      "bytes": 46,
+      "meaning": "只证明该前缀有结构化响应，未获得内容；通用 Bad Request 不能当作明确的登录、签名或参数诊断"
+    },
+    {
+      "method": "GET",
+      "name": "app-reservation-day-info",
+      "url": "http://www.tyys.zju.edu.cn/venue-server/api/reservation/day/info",
+      "checkedAt": "2026-11-22",
+      "access": "anonymous-no-session",
+      "httpStatus": 200,
+      "contentType": "text/json;charset=utf-8",
+      "businessCode": 400,
+      "bytes": 46,
+      "bodySample": "{\"code\":400,\"data\":\"\",\"message\":\"Bad Request\"}",
+      "meaning": "分日余量与放号状态；与该前缀下其他端点表现一致（200 加业务码 400），**路由族整体存在**，缺会话与参数。"
+    },
+    {
+      "method": "GET",
+      "name": "app-orders-mine",
+      "url": "http://www.tyys.zju.edu.cn/venue-server/api/orders/mine",
+      "checkedAt": "2026-11-22",
+      "access": "anonymous-no-session",
+      "httpStatus": 200,
+      "contentType": "text/json;charset=utf-8",
+      "businessCode": 400,
+      "bytes": 46,
+      "bodySample": "{\"code\":400,\"data\":\"\",\"message\":\"Bad Request\"}",
+      "meaning": "本人订单；与该前缀下其他端点表现一致（200 加业务码 400），**路由族整体存在**，缺会话与参数。"
+    }
+  ],
+  "ptmRollcallEndpoints": {
+    "discoveredFrom": "上游清单第 42 行（体育考勤）",
+    "hostNote": "必须用单级域 https://tyys.zju.edu.cn。两级域 www.tyys.zju.edu.cn 的 HTTPS 证书是 *.zju.edu.cn，不覆盖两级子域，直接请求报 ERR_TLS_CERT_ALTNAME_INVALID；两级域的 HTTP 可用且同样返回 2002。",
+    "endpoints": [
+      {
+        "path": "/ptm/api/l/v6/termlist",
+        "meaning": "学期列表",
+        "checkedAt": "2026-11-22",
+        "status": 200,
+        "ctype": "text/json;charset=utf-8",
+        "body": "{\"code\":2002,\"data\":\"\",\"message\":\"非法的请求参数\"}",
+        "judgement": "路由存在（200 加统一业务错误码，不是 404）；缺的是登录会话与业务参数，非登录态下不可读。"
+      },
+      {
+        "path": "/ptm/api/l/v6/student/courselist",
+        "meaning": "本人体育课列表",
+        "checkedAt": "2026-11-22",
+        "status": 200,
+        "ctype": "text/json;charset=utf-8",
+        "body": "{\"code\":2002,\"data\":\"\",\"message\":\"非法的请求参数\"}",
+        "judgement": "路由存在（200 加统一业务错误码，不是 404）；缺的是登录会话与业务参数，非登录态下不可读。"
+      },
+      {
+        "path": "/ptm/api/l/v6/student/attendancelist",
+        "meaning": "本人考勤记录",
+        "checkedAt": "2026-11-22",
+        "status": 200,
+        "ctype": "text/json;charset=utf-8",
+        "body": "{\"code\":2002,\"data\":\"\",\"message\":\"非法的请求参数\"}",
+        "judgement": "路由存在（200 加统一业务错误码，不是 404）；缺的是登录会话与业务参数，非登录态下不可读。"
+      },
+      {
+        "path": "/ptm/api/l/v6/course_times",
+        "meaning": "课程时间",
+        "checkedAt": "2026-11-22",
+        "status": 200,
+        "ctype": "text/json;charset=utf-8",
+        "body": "{\"code\":2002,\"data\":\"\",\"message\":\"非法的请求参数\"}",
+        "judgement": "路由存在（200 加统一业务错误码，不是 404）；缺的是登录会话与业务参数，非登录态下不可读。"
+      }
+    ],
+    "sessionCheck": {
+      "path": "/cgapp-server/api/l/v6/u/info",
+      "note": "上游提到的独立会话检查，本轮未单独请求。"
+    },
+    "notAttempted": [
+      "不构造伪造会话、不猜业务参数以绕过登录",
+      "不请求签到或打卡类写接口"
+    ]
+  },
+  "venueFamilySummary": {
+    "checkedAt": "2026-11-22",
+    "endpointsProbed": [
+      "RESERVATION_PROTOCOL",
+      "campus/venue/info",
+      "day/info",
+      "orders/mine"
+    ],
+    "uniformSignal": "四个端点全部返回 HTTP 200 且业务码 400「Bad Request」，46 字节。",
+    "judgement": "**整族路由存在**，不是个别 404。缺的是会话/参数，因此它们的性质是「待授权会话的业务端点」。",
+    "caveat": "业务码 400 是通用 Bad Request，**不能**据此判断是缺登录、缺签名还是缺参数——这一点必须如实写，不要替它编原因。",
+    "notAttempted": [
+      "不猜参数拼凑出 200",
+      "不做 POST /api/reservation/order/info（订场预览嵌在订场流程，属写操作链路）"
+    ]
+  }
+}

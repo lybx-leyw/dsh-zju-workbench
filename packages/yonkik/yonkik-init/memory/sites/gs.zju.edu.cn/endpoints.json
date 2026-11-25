@@ -1,0 +1,426 @@
+{
+  "site": "gs.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳跟、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET gs.zju.edu.cn/34774/list.htm",
+      "column": "重要通知",
+      "displayTitle": "重要通知",
+      "verifiesPath": "/34774/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/34774/list.htm",
+        "status": 200,
+        "column": "重要通知",
+        "displayTitle": "重要通知",
+        "sectionTitle": "通知公告",
+        "trail": [
+          [
+            "/34769/list.htm",
+            "通知公告"
+          ],
+          [
+            "/34774/list.htm",
+            "重要通知"
+          ]
+        ],
+        "count": 19,
+        "total": 1495,
+        "pages": 75,
+        "externalLinks": 12,
+        "firstId": "3223388",
+        "firstDate": "2026-11-05"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35100/list.htm",
+      "column": "学生工作·通知公告",
+      "displayTitle": "通知公告",
+      "verifiesPath": "/35100/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35100/list.htm",
+        "status": 200,
+        "column": "学生工作·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/35100/list.htm",
+            "学生工作"
+          ],
+          [
+            "/35100/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 20,
+        "total": 729,
+        "pages": 37,
+        "externalLinks": 0,
+        "firstId": "3228424",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35103/list.htm",
+      "column": "奖助贷补",
+      "displayTitle": "奖助贷补",
+      "verifiesPath": "/35103/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35103/list.htm",
+        "status": 200,
+        "column": "奖助贷补",
+        "displayTitle": "奖助贷补",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/35100/list.htm",
+            "学生工作"
+          ],
+          [
+            "/35103/list.htm",
+            "奖助贷补"
+          ]
+        ],
+        "count": 20,
+        "total": 465,
+        "pages": 24,
+        "externalLinks": 0,
+        "firstId": "3229144",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35102/list.htm",
+      "column": "团学建设",
+      "displayTitle": "团学建设",
+      "verifiesPath": "/35102/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35102/list.htm",
+        "status": 200,
+        "column": "团学建设",
+        "displayTitle": "团学建设",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/35100/list.htm",
+            "学生工作"
+          ],
+          [
+            "/35102/list.htm",
+            "团学建设"
+          ]
+        ],
+        "count": 20,
+        "total": 213,
+        "pages": 11,
+        "externalLinks": 0,
+        "firstId": "3209351",
+        "firstDate": "2026-09-26"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35122/list.htm",
+      "column": "就业指导·通知公告",
+      "displayTitle": "通知公告",
+      "verifiesPath": "/35122/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35122/list.htm",
+        "status": 200,
+        "column": "就业指导·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "就业指导",
+        "trail": [
+          [
+            "/35121/list.htm",
+            "就业指导"
+          ],
+          [
+            "/35122/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 20,
+        "total": 168,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3225423",
+        "firstDate": "2026-11-10"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35081/list.htm",
+      "column": "信息公告",
+      "displayTitle": "信息公告",
+      "verifiesPath": "/35081/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35081/list.htm",
+        "status": 200,
+        "column": "信息公告",
+        "displayTitle": "信息公告",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/35081/list.htm",
+            "教育教学"
+          ],
+          [
+            "/35079/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/35081/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 43,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3204358",
+        "firstDate": "2026-09-17"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35088/list.htm",
+      "column": "研究生教育·通知公告",
+      "displayTitle": "通知公告",
+      "verifiesPath": "/35088/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35088/list.htm",
+        "status": 200,
+        "column": "研究生教育·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/35081/list.htm",
+            "教育教学"
+          ],
+          [
+            "/35088/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/35088/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 18,
+        "total": 18,
+        "pages": 1,
+        "externalLinks": 9,
+        "firstId": "3221088",
+        "firstDate": "2026-11-11"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35089/list.htm",
+      "column": "培养管理",
+      "displayTitle": "培养管理",
+      "verifiesPath": "/35089/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35089/list.htm",
+        "status": 200,
+        "column": "培养管理",
+        "displayTitle": "培养管理",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/35081/list.htm",
+            "教育教学"
+          ],
+          [
+            "/35088/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/35089/list.htm",
+            "培养管理"
+          ]
+        ],
+        "count": 12,
+        "total": 12,
+        "pages": 1,
+        "externalLinks": 2,
+        "firstId": "3009811",
+        "firstDate": "2025-01-06"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35091/list.htm",
+      "column": "学位管理",
+      "displayTitle": "学位管理",
+      "verifiesPath": "/35091/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35091/list.htm",
+        "status": 200,
+        "column": "学位管理",
+        "displayTitle": "学位管理",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/35081/list.htm",
+            "教育教学"
+          ],
+          [
+            "/35088/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/35091/list.htm",
+            "学位管理"
+          ]
+        ],
+        "count": 6,
+        "total": 6,
+        "pages": 1,
+        "externalLinks": 2,
+        "firstId": "3211710",
+        "firstDate": "2026-10-08"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35109/list.htm",
+      "column": "国际交流·通知公告",
+      "displayTitle": "通知公告",
+      "verifiesPath": "/35109/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35109/list.htm",
+        "status": 200,
+        "column": "国际交流·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/bszn/list.htm",
+            "国际交流"
+          ],
+          [
+            "/35109/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 20,
+        "total": 25,
+        "pages": 2,
+        "externalLinks": 9,
+        "firstId": "3128383",
+        "firstDate": "2026-01-16"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/gsxx/list.htm",
+      "column": "公示信息",
+      "verifiesPath": "/gsxx/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/gsxx/list.psp",
+        "catalogPath": "/gsxx/list.htm",
+        "status": 200,
+        "column": "公示信息",
+        "displayTitle": "公示信息",
+        "sectionTitle": "通知公告",
+        "trail": [
+          [
+            "/34769/list.htm",
+            "通知公告"
+          ],
+          [
+            "/gsxx/list.htm",
+            "公示信息"
+          ]
+        ],
+        "count": 20,
+        "total": 321,
+        "pages": 17,
+        "externalLinks": 0,
+        "firstId": "3229774",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET gs.zju.edu.cn/35056/list.htm",
+      "column": "学院党政·通知公告",
+      "verifiesPath": "/35056/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://gs.zju.edu.cn/35056/list.psp",
+        "catalogPath": "/35056/list.htm",
+        "status": 200,
+        "column": "学院党政·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "学院党政",
+        "trail": [
+          [
+            "/34756/list.htm",
+            "学院党政"
+          ],
+          [
+            "/35056/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 6,
+        "total": 6,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3210628",
+        "firstDate": "2026-09-30"
+      }
+    }
+  ],
+  "unverified": [
+    "其余地球科学学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ],
+  "noteAddedRows": "这两条路径不在上游 418 行清单内，只作旁证保留；不新增目录行、不开放通路，避免改动基线口径。",
+  "extraEvidence": [
+    {
+      "path": "/gsxx/list.psp",
+      "sourcePathRecorded": "/gsxx/list.htm",
+      "effectivePath": "/gsxx/list.psp",
+      "status": 200,
+      "title": "公示信息",
+      "sectionTitle": "通知公告",
+      "count": 20,
+      "total": 321,
+      "pages": 17,
+      "firstId": "3229774",
+      "note": "上游清单未列此行；/list.htm 301 到同站 /list.psp，实测内容有效。按「不扩充基线」原则只作旁证记录，不占 418 行额度、不计入可运行通路。"
+    },
+    {
+      "path": "/35056/list.psp",
+      "sourcePathRecorded": "/35056/list.htm",
+      "effectivePath": "/35056/list.psp",
+      "status": 200,
+      "title": "通知公告",
+      "sectionTitle": "学院党政",
+      "count": 6,
+      "total": 6,
+      "pages": 1,
+      "firstId": "3210628",
+      "note": "上游清单未列此行；/list.htm 301 到同站 /list.psp，实测内容有效。按「不扩充基线」原则只作旁证记录，不占 418 行额度、不计入可运行通路。"
+    }
+  ]
+}

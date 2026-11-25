@@ -25,7 +25,7 @@
 
 - [dsh-zju-assistant](https://github.com/Anchorite-no/dsh-zju-assistant) · **GPL-3.0-only** ✅（`LICENSE` 实文已核，35,149 B，GitHub API 确认 `main` @ `e59b81e1c254d979402f047c6fc8e43bf30b9713`）· npm `dsh-zju-assistant@0.1.8`（`engines.dsh >= 0.2.1-rc.3 < 0.3.0`，与本仓锁定的 `0.2.0-rc.2` / `0.2.1-alpha.1` **不兼容**）。浙大学生的一站式校园助手，DSH 插件形态，覆盖教务、学在浙大、智云课堂、学习通、PTA、通知、场馆、CC98、邮箱、微信/钉钉聊天等。
 
-  **⚠️ 本仓已实际融合其实现**（此前这条写的是「未复制其任何源码」，那是当时的真实状态，现已不成立）。上游以 `packages/vendor/zju-assistant/` 形式整包 vendor 进来，逐包移植细节见各包内 `ATTRIBUTION.md`；总账如下。
+  **⚠️ 本仓已实际融合其实现**（此前这条写的是「未复制其任何源码」，那是当时的真实状态，现已不成立）。上游曾以 `packages/vendor/zju-assistant/` 形式整包 vendor 进来，**该目录已于 2026-11-18 移出仓库**（现留档于 `.ref_zju/zju-assistant/`，不入版本控制）；融合已完成，移植结果见各包内 `ATTRIBUTION.md`，总账如下。
 
   本次借鉴的是**模块清单的设计**（`module.json` 的 `tier` / `auth` / `network` / `writes` / `provides` / `requires` 六个字段），落到本仓 `packages/source/*/package.json` 的 `dsh.capability` 与 `tests/source-capability.test.mjs`。具体采纳的只有一条判断：**业务域应当平级依赖基础设施，而不是互相依赖。** 其清单里 `webvpn` 与 `zjuam` 是 `tier: 0` 的基础设施，`zhiyun` / `zdbk` / `xuezai` / `cc98` 等 `tier: 1` 业务域一律写成 `requires: [..., webvpn, zjuam]`，**没有一个业务域依赖另一个业务域**。这正好命中本仓此前的实际形状（`cc98` / `zdbk` / `xxt` 都 `import` 了 `@lybx-leyw/dsh-zju-source-campus`，即一个数据包的能力被另一个业务包绑架），因此把这条约束写成了可执行的守卫。
 

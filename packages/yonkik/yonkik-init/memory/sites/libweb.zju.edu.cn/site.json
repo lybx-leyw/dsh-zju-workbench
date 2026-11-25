@@ -1,0 +1,26 @@
+{
+  "key": "libweb.zju.edu.cn",
+  "origin": "https://libweb.zju.edu.cn",
+  "title": "浙江大学图书馆中文网",
+  "status": "done",
+  "via": null,
+  "requires": "none",
+  "auth": {
+    "type": "none",
+    "note": "全站**办事指南类页面完全免登录**。本站是苏迪 Webplus 门户（纯静态发布），无任何账号体系；真正的业务系统（opac / libdb / cscy / booking / rapido / CALIS）都在外链的独立域名上。"
+  },
+  "platform": "苏迪 Webplus 门户（URL 形如 /<栏目id>/list.htm、/<year>/<mmdd>/c<栏目id>a<文章id>/page.htm），可直接当静态站抓",
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt → 404（196B）；响应头无限流字段；未见 429。按 site-recon 保守默认。"
+  },
+  "server": "nginx",
+  "tls": "TLSv1.2, TrustAsia, cn=*.zju.edu.cn",
+  "ip": "10.203.4.78（校内网段，必须绕过 env 代理）",
+  "endpoints": { "verified": 6, "unverified": 8 },
+  "contentValue": "本组五站里**预备资产价值最高**：查收查引/文献传递/校外访问/开放时间四个栏目的办事指南全部免登录、含电话地址收费标准付款账号，可直接回答『SCI检索证明怎么开』类问题。",
+  "exploredAt": "2026-11-20",
+  "exploredBy": "recon-lib"
+}

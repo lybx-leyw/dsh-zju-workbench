@@ -1,0 +1,47 @@
+{
+  "key": "10.203.16.55",
+  "origin": "http://10.203.16.55:86",
+  "api": {
+    "baseUrl": "http://10.203.16.55:8098/lab-course",
+    "evidence": "前端 app.js 硬编码 serverUrl='http://10.203.16.55:8098/lab-course'（变量 g）；:86 只服务 SPA 静态资源，API 全在 :8098"
+  },
+  "requires": [
+    "http://10.203.16.55:86/lab-course/login的登录密码"
+  ],
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "policy",
+    "evidence": "探索期串行单发未触发限流；站点无 X-RateLimit-* 头"
+  },
+  "auth": {
+    "type": "form+token",
+    "credentialKey": "http://10.203.16.55:86/lab-course/login的登录密码",
+    "loginEndpoint": "POST /lab-course/api/login",
+    "captcha": "disabled（登录页仅 username/password/记住帐号，无验证码图）",
+    "stateFile": "state.json",
+    "loginFlow": "POST /api/login (form: username+password+app_key+timestamp+sign) → data.token.access_token，Bearer 方式放 Authorization 头",
+    "signature": "前端反混淆：app_key=base64→hex(reverse('==wnD0g66qYL7qDSn3ZOox46'))；sign=MD5(X+path+排序后的k+v拼接+timestamp+' '+X)，X=base64→hex('fNR2q4ZrSdepeIrZ9HiUlQ==')。完整实现见 login.mjs。",
+    "note": "2026-11-20 二次验证：凭据更新后一次登录成功。裸 HTTP POST /api/login 即可，无需浏览器。**code 恒为 200，成败看 data 是字符串(错误)还是对象(成功)**。"
+  },
+  "trap": "本机 env NODE_USE_ENV_PROXY=1 + HTTP(S)_PROXY=<本地代理>，node:http 启动即绑该代理；该代理出口在墙外回不到 10.x → 502 且响应头带 proxy-connection。必须每请求 agent:false。",
+  "notes": "浙江大学实验选课系统（创高软件）。SPA Vue2 + jQuery/Ace 后台主题。只读探索。",
+  "status": "done",
+  "exploredAt": "2026-11-20",
+  "endpointsFile": "endpoints.json",
+  "statusUpdated": "2026-11-20",
+  "fieldMapping": {
+    "trap": "本 API 返回 **snake_case**，不是前端那套 camelCase。用 camelCase 取值会全为 null（2026-11-20 实测踩中）。",
+    "/api/courses/uid": "courseName / count / startDate / endDate / termId / week / time / teacherNames",
+    "/api/course/lab/students/full": "lab_name / teacher_name / teacher_id / select_week / dates / times / address / is_must / total_score / final_score / lab_final_score / course_lab_final_score / choose_date / open_week"
+  },
+  "scheduleChain": {
+    "steps": [
+      "GET /api/terms {page:-1,size:-1} → 挑 currentTerm==1（本期 id=15）",
+      "GET /api/courses/uid {termId,uid,page:-1,size:-1} → 我的课程",
+      "GET /api/course/lab/students/full {termId,uid,courseId,page:-1,size:-1} → 每个实验的日期/教师/教室/分数"
+    ],
+    "verifiedAt": "2026-11-20",
+    "result": "本期 1 门课（courseId=270），12 个实验，全部取到日期/教师/教室。"
+  }
+}

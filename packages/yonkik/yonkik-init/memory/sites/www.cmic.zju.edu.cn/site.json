@@ -1,0 +1,26 @@
+{
+  "key": "www.cmic.zju.edu.cn",
+  "origin": "http://www.cmic.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.cmic.zju.edu.cn/35554/list.htm",
+  "column": "学院动态",
+  "thinPage": true,
+  "verifiedListUrl": {
+    "checkedAt": "2026-11-22",
+    "status": 200,
+    "pageTitle": "信息速递",
+    "total": null,
+    "pages": 80
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "site": "10.203.16.55",
+  "origin": "http://10.203.16.55:86",
+  "apiBase": "http://10.203.16.55:8098/lab-course",
+  "auth": {
+    "scheme": "Bearer token (data.token.access_token) + 全局签名 app_key/timestamp/sign",
+    "header": "Authorization: <token_type> <access_token>",
+    "signature": "sign = MD5( X + path + Σ(sorted(value-kv pairs)) + timestamp + ' ' + X )，X = hex(base64('fNR2q4ZrSdepeIrZ9HiUlQ=='))；app_key = hex(base64(reverse('==wnD0g66qYL7qDSn3ZOox46')))；path 为不含 /lab-course 前缀的接口路径",
+    "verifyStatus": "2026-11-20 实测：伪造 sign → {<code>:401}；不带三参数 → {<code>:400}；正确 sign → 到达业务层。证明签名算法复刻正确"
+  },
+  "envelope": {
+    "note": "全站统一信封，HTTP 恒 200",
+    "shape": "{ code, message, data }",
+    "code": {
+      "200": "业务成功（但注意 :/api/login 失败时也是 code=200，data 为字符串错误消息）",
+      "400": "Bad Request（缺必填参数）",
+      "401": "Unauthorized（签名错/缺参、或 token 无效/缺失）"
+    }
+  },
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/api/login",
+      "auth": "none（需签名）",
+      "params": "username, password",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "2026-11-20 实测：字段名正确（缺任一字段返回 code=400/data=null）；本案凭据被拒，返回 code=200 + data='用户名或密码错误'（注意 code 仍为 200）",
+      "notes": "成功时 data 为对象：{ username, name, gender, phone, role, roles[], menus[], token:{access_token, token_type} }（键名据前端 U() 函数推断，未实测到成功态）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/terms",
+      "auth": "bearer",
+      "params": "page, size",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401。前端 store action getTermList 调用；学生课表第一步取当前期次",
+      "role": "student"
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/uid",
+      "auth": "bearer",
+      "params": "termId, uid, page=-1, size=-1",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401；组件 studentCourse.getCourse() 源码确认参数。这是「我的课表」取课程列表的第一步",
+      "role": "student",
+      "scheduleRelevance": "P0 — 学生课表主入口"
+    },
+    {
+      "method": "GET",
+      "path": "/api/course/lab/students/full",
+      "auth": "bearer",
+      "params": "termId, uid, courseId, page=-1, size=-1",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401；组件 studentCourse.getCourseList() 源码确认，返回 { content[], totalPages }",
+      "role": "student",
+      "scheduleRelevance": "P0 — 每门课的实验（实验名称/教师/周次/评分）列表"
+    },
+    {
+      "method": "GET",
+      "path": "/api/courseLabTimes/date",
+      "auth": "bearer",
+      "params": "courseId, courseLabId",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测未直接探（经前端源码确认调用点 getWeek()）；返回 weekDate 对象（周次→日期映射）",
+      "role": "student",
+      "scheduleRelevance": "P1 — 周次→具体上课日期"
+    },
+    {
+      "method": "GET",
+      "path": "/api/courseLabTimes",
+      "auth": "bearer",
+      "params": "courseLabId, page=-1, size=-1",
+      "verified": false,
+      "confidence": "medium",
+      "evidence": "仅源码确认（PreviewWeekDate.getWeekDate），未单发实测",
+      "role": "student",
+      "scheduleRelevance": "P1 — 某实验课的上课周次与日期清单"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notices/student",
+      "auth": "bearer",
+      "params": "uid",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401",
+      "role": "student"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notices",
+      "auth": "bearer",
+      "params": "page, size",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401",
+      "role": "any"
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses",
+      "auth": "bearer",
+      "params": "page, size, termId",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401",
+      "role": "teacher/manage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/syssets",
+      "auth": "bearer",
+      "params": "-",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401",
+      "role": "any"
+    },
+    {
+      "method": "GET",
+      "path": "/api/systemlist",
+      "auth": "bearer",
+      "params": "-",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401；带正确 sign 无 token 也是 401（说明签名通过、鉴权拦下）",
+      "role": "any"
+    },
+    {
+      "method": "GET",
+      "path": "/api/user/groups",
+      "auth": "bearer",
+      "params": "-",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token 实测 → code=401",
+      "role": "any"
+    },
+    {
+      "method": "GET",
+      "path": "/api/logout",
+      "auth": "bearer/cookie",
+      "verified": true,
+      "confidence": "high",
+      "evidence": "无 token GET 实测 → HTTP 302 Location: http://chc.appdemo.chingo.cn/（跳到厂商演示站，说明本站是创高 chc 产品的部署实例）",
+      "role": "any",
+      "sideEffect": "⚠️ 会登出，不属只读操作，本资产不调用"
+    }
+  ],
+  "writeEndpointsSeenButNeverCalled": [
+    {
+      "path": "/api/change_role",
+      "method": "POST"
+    },
+    {
+      "path": "/api/course/lab/students/del/",
+      "method": "DELETE"
+    },
+    {
+      "path": "/api/courseLabTimes/all",
+      "method": "POST",
+      "note": "改上课日期"
+    },
+    {
+      "path": "/api/students/updatepass",
+      "method": "POST"
+    },
+    {
+      "path": "/api/courses/limits",
+      "method": "POST",
+      "note": "选课名额"
+    }
+  ],
+  "uiRoutes": {
+    "login": "/lab-course/login",
+    "studentSchedule": "/lab-course/（登录后 Vue router 根，title「我的课表」）",
+    "note": "SPA 用 history 模式，任意未匹配路径都回 index.html（fallback），不能凭 200 判断接口存在"
+  },
+  "otherHosts": {
+    "10.203.16.55:86": "Nginx 1.18.0 (Ubuntu)，只服务 SPA 静态资源（index.html 1120B + /lab-course/static/**）",
+    "10.203.16.55:8098": "后端 API（Spring Boot 风格：'No handler found for GET ...' + Transfer-Encoding: chunked），仅 /lab-course/** 前缀"
+  },
+  "upstreamLabEndpoints": {
+    "discoveredFrom": "上游清单第 48 行（物理实验 班次/余量）",
+    "apiBase": "http://10.203.16.55:8098/lab-course",
+    "probes": [
+      {
+        "path": "/api/course/labs/status",
+        "checkedAt": "2026-11-22",
+        "status": 200,
+        "ctype": "text/json;charset=utf-8",
+        "bodySample": "{\"code\":400,\"message\":\"Bad Request\"}",
+        "meaning": "周次余量",
+        "verdict": "路由存在，缺必填参数（200 加 code:400，不是 404）"
+      },
+      {
+        "path": "/api/course/open_status",
+        "checkedAt": "2026-11-22",
+        "status": 200,
+        "ctype": "text/json;charset=utf-8",
+        "bodySample": "{\"code\":400,\"message\":\"Bad Request\"}",
+        "meaning": "开放窗口/可选数",
+        "verdict": "路由存在，缺必填参数（同上）"
+      },
+      {
+        "path": "/api/courseId/{courseId}/course/labs",
+        "checkedAt": "2026-11-22",
+        "status": 200,
+        "ctype": "text/json;charset=utf-8",
+        "bodySample": "{\"code\":400,\"data\":\"\",\"message\":\"Bad Request\"}",
+        "meaning": "候选实验班次",
+        "verdict": "与已收录 /api/courses/uid、/api/course/lab/students/full 同族，未单独验",
+        "judged": "用已知 courseId=270 实测：200 + 业务码 400。说明该路由存在但还需其他参数（如学期），**不是 404**。"
+      },
+      {
+        "path": "/api/course/lab/students",
+        "checkedAt": "2026-11-22",
+        "status": null,
+        "ctype": null,
+        "bodySample": "不请求",
+        "meaning": "本人选中记录",
+        "verdict": "**刻意不请求 POST 同名路径**；GET 语义与已收录 /api/course/lab/students/full 重复"
+      }
+    ],
+    "judgement": "两个余量类端点**路由存在**（200 加 code:400 说明进了业务层、只是缺参数）。这会填补「班次余量/开放窗口」这一项空白。",
+    "notAttempted": [
+      "不猜 courseId 穷举",
+      "不触碰同名 POST（选班写操作）"
+    ]
+  }
+}

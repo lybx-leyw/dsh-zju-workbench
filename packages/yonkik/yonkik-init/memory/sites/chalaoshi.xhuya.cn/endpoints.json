@@ -1,0 +1,163 @@
+{
+  "site": "chalaoshi.xhuya.cn",
+  "updatedAt": "2026-11-20T17:50:00+08:00",
+  "apiBase": "https://chalaoshi.xhuya.cn",
+  "auth": "无（全部 GET 免鉴权，支持 CORS）",
+  "dataProvenance": "老师评价＝匿名用户上报（历史）；课程绩点＝第三方「课否」（历史，仅统计使用该平台的人，有选择偏差）",
+  "verified": [
+    {
+      "id": "search",
+      "method": "GET",
+      "path": "/api/search",
+      "purpose": "★ 按姓名或拼音搜老师 → 拿 tid",
+      "params": {
+        "q": "string 必填，中文需 encodeURIComponent；支持拼音"
+      },
+      "responseShape": "{q, count, teachers:[{tid,name,college,score}]}",
+      "sample": "q=陈建海 → count:1, [{tid:\"1902\",name:\"陈建海\",college:\"计算机科学与技术学院\",score:\"9.8\"}]"
+    },
+    {
+      "id": "teacher",
+      "method": "GET",
+      "path": "/api/teacher/{tid}",
+      "purpose": "★ 老师详情：综合评分/打分人数/点名率/评论数/各课历史均绩",
+      "params": {
+        "tid": "string 数字 ID"
+      },
+      "responseShape": "{tid,name,college,score,ratingCount,rollCallRate,commentCount,courses:[{name,gpa,count}]}",
+      "sample": "tid=2218 → 徐翔 9.31 / 262人 / 点名率21.8% / 231评论 / 优化实用算法 3.93(465)、复变 3.59(500+)、常微分 3.45(500+)"
+    },
+    {
+      "id": "comments",
+      "method": "GET",
+      "path": "/api/comments/{tid}",
+      "purpose": "评论列表，支持排序分页",
+      "params": {
+        "tid": "string",
+        "sort": "time|rate（默认 time）",
+        "limit": "1-100 默认20",
+        "offset": "0-100000 默认0"
+      },
+      "responseShape": "{tid,sort,total,offset,limit,hasMore,comments:[{id,content,likes,date}]}",
+      "sample": "2218&limit=3&sort=rate → total:231, 高赞评论日期 2018.09.16 / 2016.05.18 / 2015.07.02（**高赞集中在多年前**）"
+    },
+    {
+      "id": "gpa",
+      "method": "GET",
+      "path": "/api/gpa",
+      "purpose": "★★ 按课程名查该课全部任课老师的平均绩点 ± 标准差 + 上报人数，按绩点排序",
+      "params": {
+        "course": "string 必填，支持模糊匹配"
+      },
+      "responseShape": "{course, count(老师数), rows:[{teacher, gpa:\"3.85 ±0.87\", count(样本数)}]}",
+      "sample": "course=概率论与数理统计 → count:14，梁克维 3.85±0.87(88)、黄炜 3.85±0.89(500+)、赵敏智 …"
+    },
+    {
+      "id": "recent",
+      "method": "GET",
+      "path": "/api/recent",
+      "purpose": "最近被访问的老师/有绩点数据的课程（**仅内存，重启清空，多实例不共享**）",
+      "params": {},
+      "responseShape": "{teachers:[{name}], courses:[{course,...}]}",
+      "sample": "teachers: 翁恺/竺可桢/康熙/张我华/陈建海…"
+    },
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/api/health",
+      "purpose": "存活检查 + 上游地址",
+      "params": {
+        "probe": "1 时真实探测上游，失败返 502"
+      },
+      "responseShape": "{ok, time, cacheEntries, upstream:{web:[],api:[]}}",
+      "sample": "upstream.web=[\"https://dahua309.uk\",\"https://chalaoshi.de\"]（证明与 dahua309 同源）"
+    },
+    {
+      "id": "docs",
+      "method": "GET",
+      "path": "/docs",
+      "purpose": "API 文档页（含 Agent Skill 安装指引）",
+      "params": {},
+      "responseShape": "HTML 27122B",
+      "sample": "自述「代理自 chalaoshi.de 的浙大老师教评数据接口」"
+    },
+    {
+      "name": "origin-home",
+      "method": "GET",
+      "path": "https://chalaoshi.de/",
+      "returns": "HTML 16,267B（Cloudflare）",
+      "note": "**原站可访问**（早前记录的 ENOTFOUND 是当时网络环境问题）。无 /api/gpa",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "origin-api-404",
+      "method": "GET",
+      "path": "https://api.chalaoshi.de/api/gpa",
+      "returns": "404（原站无此 API）",
+      "note": "结构化 GPA API 只在 chalaoshi.xhuya.cn 上有",
+      "verifiedAt": "2026-11-22",
+      "status": 404
+    }
+  ],
+  "unverified": [
+    {
+      "id": "rate-submit",
+      "method": "POST",
+      "path": "/teacher/{tid}/rate（网页版 dahua309.uk）",
+      "suspected": "write",
+      "reason": "提交评分，写操作，按安全契约未调用"
+    }
+  ],
+  "siblingMirrors": [
+    {
+      "url": "https://dahua309.uk",
+      "status": "200 OK（Cloudflare，16KB）",
+      "note": "网页版原站，学生最常贴的地址；有 /t/<tid>/ 与 /teacher/<tid>/rate"
+    },
+    {
+      "url": "https://chalaoshi.de",
+      "status": "ENOTFOUND（本机 DNS 失败）",
+      "note": "原始站点；CC98 称「被墙，要科学上网」，可能需代理"
+    },
+    {
+      "url": "https://chalaoshi.netlify.app",
+      "status": "503 usage_exceeded",
+      "note": "Netlify 免费额度耗尽，不是代码问题"
+    },
+    {
+      "url": "https://api.dahua309.uk",
+      "status": "200（仅说明页）",
+      "note": "原站 API 说明，端点为 /q、/comments/{id}"
+    }
+  ],
+  "upstreamReconciliation": [
+    {
+      "checkedAt": "2026-11-22",
+      "question": "上游清单用 GET {origin}/gpa，本地只测过 /api/gpa；原站家族到底有没有 /gpa？",
+      "answer": "没有。三种 origin 各自实测如下。",
+      "evidence": [
+        "https://api.chalaoshi.de/gpa?course=高等数学 → connect ETIMEDOUT 157.240.3.8:443（本环境代理把该主机名映射到境外地址后不可达）",
+        "https://api.chalaoshi.de/ → 同样 ETIMEDOUT（说明不是路径问题，是该主机整体不可达）",
+        "https://chalaoshi.de/gpa?course=高等数学 → getaddrinfo ENOTFOUND（本环境解析回落，非站点消失）",
+        "https://dahua309.uk/gpa?course=高等数学 → 404（444B）——即原站家族**没有** /gpa 这个路径",
+        "https://dahua309.uk/ → 200，15522B，可用（网页版）",
+        "本地已有结论不变：chalaoshi.xhuya.cn /api/gpa 200 有结构化数据（{count, rows:[{teacher,gpa,count}]}）",
+        "DNS 观察：chalaoshi.de → 198.18.0.9、api.chalaoshi.de → 198.18.0.10、dahua309.uk → 198.18.0.11，均为 IANA 保留的基准测试网段，说明本环境 DNS 走本地代理，**DNS 结果不能作为站点存活证据**"
+      ],
+      "conclusion": "上游的 GET {origin}/gpa 在原站家族上不可用；可用的同义能力是 chalaoshi.xhuya.cn 镜像的 GET /api/gpa。这不是「本地漏了一个端点」，而是上游该路径本身就取不到数据。",
+      "consequence": "不新增通路，不改动既有 5 个免鉴权端点；本条只把「原站路线和镜像路线」的口径差补齐。"
+    }
+  ],
+  "policyExcluded": [
+    {
+      "name": "rate-teacher",
+      "method": "POST",
+      "path": "/teacher/{tid}/rate",
+      "reason": "给老师评分（写操作，产生公开评价内容）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "查老师的评分端点属写操作（发布评价），本库只读教师评分与课程评价，不提交任何评分。R174 补记。",
+  "policyExcludedAt": "2026-11-23"
+}

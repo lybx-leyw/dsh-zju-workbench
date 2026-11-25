@@ -1,0 +1,371 @@
+{
+  "site": "mse.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS（同主机、同路径）。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET mse.zju.edu.cn/51031/list.htm",
+      "column": "学生事务",
+      "displayTitle": "学生事务",
+      "verifiesPath": "/51031/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/51031/list.htm",
+        "status": 200,
+        "column": "学生事务",
+        "displayTitle": "学生事务",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/50920/list.htm",
+            "学生思政"
+          ],
+          [
+            "/51031/list.htm",
+            "学生事务"
+          ]
+        ],
+        "count": 20,
+        "total": 545,
+        "pages": 28,
+        "externalLinks": 0,
+        "firstId": "3229169",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/51043/list.htm",
+      "column": "外事通知",
+      "displayTitle": "外事通知",
+      "verifiesPath": "/51043/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/51043/list.htm",
+        "status": 200,
+        "column": "外事通知",
+        "displayTitle": "外事通知",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/50921/list.htm",
+            "国际交流"
+          ],
+          [
+            "/51043/list.htm",
+            "外事通知"
+          ]
+        ],
+        "count": 20,
+        "total": 218,
+        "pages": 11,
+        "externalLinks": 3,
+        "firstId": "3209458",
+        "firstDate": "2026-09-28"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/50999/list.htm",
+      "column": "研究生教学·消息公告",
+      "displayTitle": "消息公告",
+      "verifiesPath": "/50999/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/50999/list.htm",
+        "status": 200,
+        "column": "研究生教学·消息公告",
+        "displayTitle": "消息公告",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/50918/list.htm",
+            "教育教学"
+          ],
+          [
+            "/50982/list.htm",
+            "研究生教学"
+          ],
+          [
+            "/50999/list.htm",
+            "消息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 902,
+        "pages": 46,
+        "externalLinks": 1,
+        "firstId": "2433401",
+        "firstDate": "2021-10-22"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/51029/list.htm",
+      "column": "学生党建",
+      "displayTitle": "学生党建",
+      "verifiesPath": "/51029/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/51029/list.htm",
+        "status": 200,
+        "column": "学生党建",
+        "displayTitle": "学生党建",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/50920/list.htm",
+            "学生思政"
+          ],
+          [
+            "/51029/list.htm",
+            "学生党建"
+          ]
+        ],
+        "count": 20,
+        "total": 237,
+        "pages": 12,
+        "externalLinks": 0,
+        "firstId": "3229940",
+        "firstDate": "2026-11-21"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/50983/list.htm",
+      "column": "本科生教学·消息公告",
+      "displayTitle": "消息公告",
+      "verifiesPath": "/50983/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/50983/list.htm",
+        "status": 200,
+        "column": "本科生教学·消息公告",
+        "displayTitle": "消息公告",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/50918/list.htm",
+            "教育教学"
+          ],
+          [
+            "/50981/list.htm",
+            "本科生教学"
+          ],
+          [
+            "/50983/list.htm",
+            "消息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 569,
+        "pages": 29,
+        "externalLinks": 1,
+        "firstId": "2433401",
+        "firstDate": "2021-10-22"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/51001/list.htm",
+      "column": "学位申请",
+      "displayTitle": "学位申请",
+      "verifiesPath": "/51001/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/51001/list.htm",
+        "status": 200,
+        "column": "学位申请",
+        "displayTitle": "学位申请",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/50918/list.htm",
+            "教育教学"
+          ],
+          [
+            "/50982/list.htm",
+            "研究生教学"
+          ],
+          [
+            "/51001/list.htm",
+            "学位申请"
+          ]
+        ],
+        "count": 20,
+        "total": 60,
+        "pages": 3,
+        "externalLinks": 1,
+        "firstId": "2221663",
+        "firstDate": "2025-01-13"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/50963/list.htm",
+      "column": "综合办公室·消息公告",
+      "displayTitle": "消息公告",
+      "verifiesPath": "/50963/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/50963/list.htm",
+        "status": 200,
+        "column": "综合办公室·消息公告",
+        "displayTitle": "消息公告",
+        "sectionTitle": "党政综合",
+        "trail": [
+          [
+            "/50917/list.htm",
+            "党政综合"
+          ],
+          [
+            "/50955/list.htm",
+            "综合办公室"
+          ],
+          [
+            "/50963/list.htm",
+            "消息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 89,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3189050",
+        "firstDate": "2026-07-14"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/50982/list.htm",
+      "column": "研究生教学",
+      "displayTitle": "研究生教学",
+      "verifiesPath": "/50982/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/50982/list.htm",
+        "status": 200,
+        "column": "研究生教学",
+        "displayTitle": "研究生教学",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/50918/list.htm",
+            "教育教学"
+          ],
+          [
+            "/50982/list.htm",
+            "研究生教学"
+          ]
+        ],
+        "count": 14,
+        "total": 14,
+        "pages": 1,
+        "externalLinks": 5,
+        "firstId": "3183368",
+        "firstDate": "2026-07-03"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/51027/list.htm",
+      "column": "最新消息",
+      "displayTitle": "最新消息",
+      "verifiesPath": "/51027/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/51027/list.htm",
+        "status": 200,
+        "column": "最新消息",
+        "displayTitle": "最新消息",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/50920/list.htm",
+            "学生思政"
+          ],
+          [
+            "/51027/list.htm",
+            "最新消息"
+          ]
+        ],
+        "count": 20,
+        "total": 1768,
+        "pages": 89,
+        "externalLinks": 0,
+        "firstId": "3159916",
+        "firstDate": "2026-05-08"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/51050/list.htm",
+      "column": "就业工作",
+      "displayTitle": "就业工作",
+      "verifiesPath": "/51050/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/51050/list.htm",
+        "status": 200,
+        "column": "就业工作",
+        "displayTitle": "就业工作",
+        "sectionTitle": "招生就业",
+        "trail": [
+          [
+            "/50922/list.htm",
+            "招生就业"
+          ],
+          [
+            "/51050/list.htm",
+            "就业工作"
+          ]
+        ],
+        "count": 6,
+        "total": 6,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3159327",
+        "firstDate": "2026-05-07"
+      }
+    },
+    {
+      "id": "GET mse.zju.edu.cn/50920/list.htm",
+      "column": "学生思政",
+      "displayTitle": "学生思政",
+      "verifiesPath": "/50920/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://mse.zju.edu.cn/50920/list.htm",
+        "status": 200,
+        "column": "学生思政",
+        "displayTitle": "学生思政",
+        "sectionTitle": "学生思政",
+        "trail": [
+          [
+            "/50920/list.htm",
+            "学生思政"
+          ]
+        ],
+        "count": 20,
+        "total": 43,
+        "pages": 3,
+        "externalLinks": 1,
+        "firstId": "3105376",
+        "firstDate": "2025-11-12"
+      }
+    }
+  ],
+  "containerPages": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/50918/list.htm",
+      "pageTitle": "教育教学",
+      "hasList": false,
+      "note": "该地址渲染「教育教学」大类导航页，页面无文章列表与分页计数；目录标签写作「本科生教学」。不是可解析的列表栏目，故不开放通路。"
+    }
+  ],
+  "unverified": [
+    "其余材料学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

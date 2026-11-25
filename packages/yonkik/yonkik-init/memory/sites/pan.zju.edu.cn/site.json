@@ -1,0 +1,39 @@
+{
+  "key": "pan.zju.edu.cn",
+  "origin": "https://pan.zju.edu.cn",
+  "title": "浙大云盘（Fangcloud 亿方云 SaaS）",
+  "status": "done",
+  "via": null,
+  "requires": "campus-sso",
+  "auth": {
+    "type": "cas",
+    "credentialKey": "campus-sso",
+    "note": "**纯 CAS，无本地账密表单**。登录页的 #username/#password 在 HTML 里被注释掉了（第 37-41 行），只剩一个「点击统一身份认证登录」按钮。",
+    "loginFlow": [
+      "GET / → 302 → /sso/login",
+      "→ 302 → /zjusso/login?service=https%3A%2F%2Fpan.zju.edu.cn%2Fsso%2Fcas%2Fpostlogin%3FstateID%3D_<random>",
+      "登录页 login.js 的 login() 只做一件事：window.location.href = 'https://zjuam.zju.edu.cn/cas/login?service='+service",
+      "CAS 登录后回 /sso/cas/postlogin → 下发 pan.zju.edu.cn 的 fc_session 等 cookie"
+    ],
+    "stateFile": "state.json",
+    "captcha": "false（GET https://zjuam.zju.edu.cn/cas/v2/getKaptchaStatus → false，2026-11-20）"
+  },
+  "product": "Fangcloud（亿方云）SaaS，前端走 v3static.fangcloud.com/atlas-web，后端是 /poseidon /galaxy /apps /kbase 等 Fangcloud 原生路径",
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "无 robots.txt；响应头无限流字段；未见 429。按 site-recon 保守默认。"
+  },
+  "server": "nginx",
+  "tls": "TLSv1.2, TrustAsia, cn=*.zju.edu.cn",
+  "ip": "10.203.3.172（校内网段，必须绕过 env 代理）",
+  "endpoints": { "verified": 5, "unverified": 2 },
+  "safety": {
+    "hardRule": "本次侦察**只做了登录 + 只读列出**。未上传、未下载任何用户文件、未删除、未改名、未分享、未新建。",
+    "forbiddenPrefixes": ["upload", "delete", "move", "rename", "share", "create", "copy", "restore", "permanent_delete", "update"],
+    "note": "Fangcloud 的写接口大量是 POST /apps/* 与 /galaxy/*，与只读接口共用同一前缀，必须逐个看语义、不能按前缀批量判断。"
+  },
+  "exploredAt": "2026-11-20",
+  "exploredBy": "recon-lib"
+}

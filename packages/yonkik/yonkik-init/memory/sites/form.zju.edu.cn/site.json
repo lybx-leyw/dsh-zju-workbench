@@ -1,0 +1,24 @@
+{
+  "key": "form.zju.edu.cn",
+  "origin": "https://form.zju.edu.cn",
+  "title": "浙大表单（浙大钉 / WeLink 系表单 SPA）",
+  "via": null,
+  "requires": "none for shell; CAS/Welink for actual forms",
+  "auth": {
+    "mode": "spa-bearer-welink",
+    "credentialKey": null,
+    "notes": "站点是 umi 打包的 React SPA，无需登录即可加载壳。真实业务数据走内网 API，表单元数据由 /formInfo.js 服务端注入（免登录可读）。填写与设计需 WeLink/浙大钉登录态；未探。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2600,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 返回与首页完全相同的 5256B HTML（SPA history fallback，不是 robots 文件）；无 RateLimit 头。按默认保守。"
+  },
+  "status": "done",
+  "exploredAt": "2026-11-20",
+  "profile": {
+    "facets": ["form-builder", "survey", "spa", "welink-dingtalk"],
+    "confidence": 0.8
+  }
+}

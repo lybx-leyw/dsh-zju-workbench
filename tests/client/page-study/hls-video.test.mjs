@@ -16,7 +16,7 @@
  *
  * # 为什么用 esbuild 现打一份
  *
- * node 不能直接 import `.jsx`。仓库里已有先例（`planning-render.test.mjs`）：
+ * node 不能直接 import `.jsx`。仓库里已有先例（`ai-teaching.test.mjs`）：
  * 用 esbuild 打成 ESM 再 import。React 必须 external —— 打进来会变成第二份
  * React，hooks 拿到 null dispatcher。
  */
@@ -34,8 +34,7 @@ const root = path.resolve(new URL('../../..', import.meta.url).pathname.replace(
  * 因为本测试只关心「`<video>` 上有没有 src」，不关心真去拉流。
  *
  * ⚠️ 产物必须落在**仓库内**（`.verify-render-*`）。写到 `os.tmpdir()` 会因
- *    Windows 上的目录权限被 esbuild 拒绝（Access is denied）——
- *    与 `planning-render.test.mjs` 踩过的是同一个坑。
+ *    Windows 上的目录权限被 esbuild 拒绝（Access is denied）。
  *
  * @returns `{ HlsVideo, dir }`。
  */

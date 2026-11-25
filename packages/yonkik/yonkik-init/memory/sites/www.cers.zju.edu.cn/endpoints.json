@@ -1,0 +1,30 @@
+{
+  "site": "www.cers.zju.edu.cn",
+  "access": "公开 HTTP。",
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/cercn/rcpy/list.htm",
+      "httpStatus": 200,
+      "pageTitle": "信息公告",
+      "sectionTitle": "招生教育",
+      "trail": [
+        [
+          "/cercn/main.htm",
+          "首页"
+        ],
+        [
+          "/cercn/rcpy/list.htm",
+          "招生教育"
+        ],
+        [
+          "/cercn/xxgg/list.htm",
+          "信息公告"
+        ]
+      ],
+      "claimedColumnPath": "/cercn/xxgg/list.htm",
+      "claimedColumnTitle": "信息公告",
+      "note": "请求 /cercn/rcpy（面包屑里叫「招生教育」），渲染的是其默认子栏 /cercn/xxgg（信息公告）。末项路径与本路径不等，属别名不一致，不开放。"
+    }
+  ]
+}

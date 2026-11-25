@@ -1,0 +1,86 @@
+{
+  "site": "s1.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "auth": "CAS 必须登录（campus-sso）；匿名请求 302 到 zjuam",
+  "note": "浙大百事通新址。旧 s.zju.edu.cn 已 502。七个检索域端点与旧站完全相同，但新址要登录。",
+  "endpoints": [
+    {
+      "id": "cas-login",
+      "name": "CAS 登录跳转",
+      "method": "GET",
+      "url": "https://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fs1.zju.edu.cn%2F",
+      "status": "verified",
+      "returns": "CAS 登录页；#username/#password/#authcode，验证码当前关闭",
+      "note": "提交后得会话 cookie，落 state.json"
+    },
+    {
+      "id": "guide",
+      "name": "办事指南检索",
+      "method": "GET",
+      "url": "https://s1.zju.edu.cn/search/workGuide.do",
+      "status": "verified",
+      "params": { "words": "关键词", "pageNo": "页码（第1页可省）" },
+      "returns": "HTML；div.info_list > dd.D2 > div.T3#data_ZNNNN（标题）+ <b>受理时间/监督电话/咨询电话/受理机构/受理地方",
+      "note": "实测「证明」54 项 / lastPage=5，与旧站记录一致。命中数在 div.txts_result h3 的 span 里"
+    },
+    {
+      "id": "faq",
+      "name": "常见问题检索",
+      "method": "GET",
+      "url": "https://s1.zju.edu.cn/search/faq.do",
+      "status": "verified",
+      "params": { "words": "关键词", "pageNo": "页码" },
+      "returns": "HTML；dd.D3 > div.T1（问）+ div.T2>h4.da_high_content（答）+ <b>咨询电话/服务对象/受理部门",
+      "note": "实测「借教室」56 项。答案里含 .expand-btn/.close-btn 的「展开/收起」文字需剥离"
+    },
+    {
+      "id": "schoolFile",
+      "name": "学校文件检索",
+      "method": "GET",
+      "url": "https://s1.zju.edu.cn/search/schoolFile.do",
+      "status": "verified",
+      "params": { "words": "关键词", "pageNo": "页码" },
+      "returns": "HTML；实测「培养方案」1204 项",
+      "note": "以校发公文为主，相关性偏弱（搜培养方案会先出学位名单通知）"
+    },
+    {
+      "id": "normFile",
+      "name": "规范性文件检索",
+      "method": "GET",
+      "url": "https://s1.zju.edu.cn/search/normFile.do",
+      "status": "unverified",
+      "params": { "words": "关键词" }
+    },
+    {
+      "id": "info",
+      "name": "资讯检索",
+      "method": "GET",
+      "url": "https://s1.zju.edu.cn/search/info.do",
+      "status": "unverified",
+      "params": { "words": "关键词" }
+    },
+    {
+      "id": "addrBook",
+      "name": "通讯录检索",
+      "method": "GET",
+      "url": "https://s1.zju.edu.cn/search/addrBook.do",
+      "status": "unverified",
+      "params": { "words": "关键词" }
+    },
+    {
+      "id": "all",
+      "name": "全部域聚合检索",
+      "method": "GET",
+      "url": "https://s1.zju.edu.cn/search/all.do",
+      "status": "unverified",
+      "params": { "words": "关键词" }
+    }
+  ],
+  "predecessor": {
+    "host": "s.zju.edu.cn",
+    "status": "down",
+    "evidence": "2026-11-20 实测：http 恒 502/0B，https 三端点全 ECONNRESET；对照组 service/zjuam 正常。DNS 10.203.9.28，TCP 443/80 open",
+    "note": "旧站曾免登录；新址 s1 需要 CAS。数据一致（同一系统）。"
+  },
+  "discovery": "从 service.zju.edu.cn 服务目录 id=202「浙大百事通」的 entranceUrl 找到 https://s1.zju.edu.cn"
+}

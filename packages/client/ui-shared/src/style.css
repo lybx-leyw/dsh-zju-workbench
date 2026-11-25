@@ -37,21 +37,25 @@ body[data-zw] {
   --zw-space-1:4px;--zw-space-2:8px;--zw-space-3:12px;--zw-space-4:16px;--zw-space-6:24px;--zw-space-8:32px;--zw-space-12:48px;--zw-space-16:64px;
   /* 页面侧栏（左目录 / 文件树 / 课程树）的统一宽度。
    *
-   * # 为什么是 229
+   * # 为什么是 280
    *
-   * 页面壳在左侧有一条 51px 的导轨（鲸鱼 + 图标，见 pages-default 的
-   * `DEFAULT_RAIL_WIDTH`）。所有页面的内容区都从那条导轨右边算起，
-   * 所以各页自己的侧栏应当**让出导轨占掉的那 51px**：
+   * 取宿主侧栏的出厂宽度：`.ref` 里 `ui-layout/src/client/columns.ts` 的
+   * `SIDEBAR_DEFAULT = 280`。页面内自绘的侧栏与宿主侧栏同宽，并排看才是
+   * 同一条视觉基线。
    *
-   *     280 − 51 = 229
+   * # 曾经是 229，那是旧页面壳的补偿值
    *
-   * 280 是宿主侧栏的出厂宽度（`ui-layout` 的 `SIDEBAR_DEFAULT`），
-   * 壳层已经把它收成 229；页面内自绘的侧栏跟着对齐，视觉上才是同一条线。
+   * 旧壳（`@lybx-leyw/dsh-pages` + `pages-default`）自己在左侧又加了一条
+   * **51px 的图标导轨**，并把宿主侧栏压到 229 —— 于是页面侧栏取
+   * `280 − 51 = 229` 才能与那条被压缩的栏对齐。
    *
-   * ⚠️ 改这里之前先看 `pages-default/src/rail-action.jsx` 的
-   * `MIN_SIDEBAR_WIDTH` —— 壳层与页面层必须是同一个数，否则首页侧栏
-   * 与其他页侧栏会差一截。 */
-  --zw-pane-w:229px;
+   * 2026-11 页面壳退役、页面改走 DSH 原生 `main` + `sidebar.panellist` 之后，
+   * **那条自建导轨不存在了**：官方的 `SIDEBAR_COLLAPSED = 56`（收起）/
+   * `SIDEBAR_DEFAULT = 280`（展开）就是全部。229 失去了依据，实测页面树栏
+   * 229px 而侧栏 280px，两者差了 51px。
+   *
+   * ⚠️ 改这里时与 `SIDEBAR_DEFAULT` 保持一致；页面层与壳层必须是同一个数。 */
+  --zw-pane-w:280px;
   --zw-font:'Segoe UI Variable Text','Segoe UI','Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
   /* 会话抽屉宽度。JS 侧的同名真源在 components.jsx 的 DRAWER_WIDTH（两边必须一致：
      抽屉多宽，问一问那一列就要让出多宽，否则「挤压」会错位）。 */

@@ -1,0 +1,49 @@
+{
+  "site": "oc.zju.edu.cn",
+  "access": "公开 HTTP；注意与已收录的 oca.zju.edu.cn 是不同 host。固定路径、无凭据、不跟跳转。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET oc.zju.edu.cn/tzgg/list.htm",
+      "column": "学院动态·通知公告",
+      "verifiesPath": "/tzgg/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://oc.zju.edu.cn/tzgg/list.htm",
+        "status": 200,
+        "column": "学院动态·通知公告",
+        "displayTitle": "通知公告",
+        "parentTitle": "学院动态",
+        "count": 20,
+        "total": 471,
+        "pages": 24,
+        "externalLinks": 0,
+        "firstId": "3223687",
+        "firstDate": "2026-11-06"
+      }
+    },
+    {
+      "id": "GET oc.zju.edu.cn/86050/list.htm",
+      "column": "学术活动",
+      "verifiesPath": "/86050/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://oc.zju.edu.cn/86050/list.htm",
+        "status": 200,
+        "column": "学术活动",
+        "displayTitle": "学术活动",
+        "parentTitle": "学院动态",
+        "count": 20,
+        "total": 130,
+        "pages": 7,
+        "externalLinks": 0,
+        "firstId": "3222645",
+        "firstDate": "2026-11-04"
+      }
+    }
+  ],
+  "unverified": [
+    "其余海洋学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

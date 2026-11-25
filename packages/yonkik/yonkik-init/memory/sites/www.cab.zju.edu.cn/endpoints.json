@@ -1,0 +1,29 @@
+{
+  "site": "www.cab.zju.edu.cn",
+  "access": "公开 HTTP。",
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/chinese/11141/list.htm",
+      "httpStatus": 200,
+      "pageTitle": "最新通知",
+      "trail": [
+        [
+          "/chinese/main.htm",
+          "首页"
+        ],
+        [
+          "/chinese/11141/list.htm",
+          "研究生教育"
+        ],
+        [
+          "/chinese/11167/list.htm",
+          "最新通知"
+        ]
+      ],
+      "claimedColumnPath": "/chinese/11167/list.htm",
+      "claimedColumnTitle": "最新通知",
+      "note": "请求 /chinese/11141（研究生教育），渲染的是其默认子栏 /chinese/11167（最新通知）。末项路径与本请求路径不等，属别名不一致，不开放。"
+    }
+  ]
+}

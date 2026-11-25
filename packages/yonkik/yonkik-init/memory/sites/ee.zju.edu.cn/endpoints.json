@@ -1,0 +1,31 @@
+{
+  "site": "ee.zju.edu.cn",
+  "exactNoticeColumns": [
+    {
+      "id": "GET ee.zju.edu.cn/jzhd/list.htm",
+      "column": "讲座活动",
+      "verifiesPath": "/jzhd/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.zju.edu.cn/jzhd/list.htm",
+        "status": 200,
+        "column": "讲座活动",
+        "displayTitle": "讲座活动",
+        "sectionTitle": "讲座活动",
+        "trail": [
+          [
+            "/jzhd/list.htm",
+            "讲座活动"
+          ]
+        ],
+        "count": 14,
+        "total": 353,
+        "pages": 26,
+        "externalLinks": 0,
+        "firstId": "3218840",
+        "firstDate": "2026-10-26"
+      }
+    }
+  ]
+}

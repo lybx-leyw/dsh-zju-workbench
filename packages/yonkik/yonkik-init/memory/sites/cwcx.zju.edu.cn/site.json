@@ -1,0 +1,36 @@
+{
+  "key": "cwcx.zju.edu.cn",
+  "status": "done",
+  "origin": "https://cwcx.zju.edu.cn",
+  "systemPath": "/WFManager",
+  "title": "浙江大学财务综合平台（计财处 Wingsoft 高级财务管理平台）",
+  "via": null,
+  "requires": [],
+  "auth": {
+    "type": "cas-sso + 本地账号密码",
+    "credentialKey": "campus-sso",
+    "loginUrl": "/WFManager/login.jsp → 「浙大通行证登录」按钮 → home2.jsp → 302 zjuam CAS",
+    "formFlow": "页内登录表单 (LoginForm)：#uid / #pwd / #chkcode1(附加码 code_validateCode.action) / #zhLogin；JS 在 js/login.js + js/jiami.js（Base64，不是 RSA）",
+    "ssoFlow": "GET /WFManager/home2.jsp → 302 https://zjuam.zju.edu.cn/cas/login?service=http%3A%2F%2Fcwcx.zju.edu.cn%2FWFManager%2Fhome2.jsp",
+    "ssoNotes": "CAS 回跳目标是 **http://**（明文）cwcx，不是 https —— 回跳后可能丢 cookie，是本站最可能的登录失败原因（未登录实测，仅记录跳转串）。",
+    "smsLogin": "另有短信验证码登录（activation_huoQuCodesj.action 取码）与扫码登录，见 login.js",
+    "publicZone": "登录页的公告栏（AddTitle 列表 + /WFManager/common/news.jsp?id=N 正文）免登录可读",
+    "stateFile": "state.json"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "source": "default",
+    "evidence": "robots.txt 返回 nginx 404 的 HTML 错误页（无 robots 文件）；响应头无 X-RateLimit-*；未见自动化条款。沿用保守默认串行 ≥2.2s、并发 1，全程 0 次 429。"
+  },
+  "protocol": {
+    "robots": "无（/robots.txt = 404 'An error occurred.' 497B nginx 错误页）",
+    "server": "Web Server/x.x.x（nginx 改写版，错误页为 nginx 默认）",
+    "charset": "登录页 UTF-8；公告正文页 gb2312（必须按 gb2312 解码，否则乱码）",
+    "session": "JSESSIONID"
+  },
+  "exploredAt": "2026-11-20",
+  "scopeNote": "只读探索。318B 空响应已定性为 JS 跳转壳（不是空站、不是错误页）。未做任何报销/预约/写操作。",
+  "evidenceRank": "direct",
+  "scope": "public-notices",
+  "endpointsFile": "endpoints.json"
+}

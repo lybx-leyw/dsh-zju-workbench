@@ -1,0 +1,112 @@
+{
+  "site": "yqgx.hic.zju.edu.cn",
+  "base": "https://yqgx.hic.zju.edu.cn",
+  "auth": "门户 /genee/ 免登录；业务 /lims/ 需登录（本地账号 或 「统一身份登录」gateway）",
+  "platform": "基理科技（geneegroup）LIMS：/genee/ 门户（PHP/JS）+ /lims/ 业务（Research Gets Easier 2.28.0），nginx/1.25.5",
+  "verified": [
+    {
+      "name": "root-redirect",
+      "method": "GET",
+      "path": "/",
+      "returns": "301 → https://yqgx.hic.zju.edu.cn/genee/",
+      "auth": "none",
+      "status": 301,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "portal-home",
+      "method": "GET",
+      "path": "/genee/",
+      "returns": "门户首页 43,158B，title=大型仪器共享管理系统。含仪器预约排行、实时占用、新闻、通知、规章制度/服务指南/常用下载入口",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "**免登录可读**"
+    },
+    {
+      "name": "equipment-list",
+      "method": "GET",
+      "path": "/genee/category/equipment",
+      "returns": "仪器目录第一页 36,029B，每页 15 台。共 5 页：`?st=15 / 30 / 45 / 60`。每台含名称/预约·送样按钮/联系人/地址/电话",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "**免登录可读全目录**（约 75 台）。筛选：`?group={平台id}&cat={分类id}&keywords=`"
+    },
+    {
+      "name": "equipment-detail",
+      "method": "GET",
+      "path": "/genee/equipment/{id}",
+      "returns": "仪器详情 21–22KB。含 仪器编号/规格/生产厂家/型号/制造国家/分类号/放置地点/日期 + 技术指标 + 功能特色 + **收费标准表**",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "**收费标准免登录可读，这是最有复用价值的部分**"
+    },
+    {
+      "name": "news-and-notice",
+      "method": "GET",
+      "path": "/genee/category/{news,notice,rules,services,download,aboutUs}",
+      "returns": "分类页。实测 rules/services/download 均「共 0 条信息」（空栏目）；aboutUs 有联系地址与测试联系人",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "post-detail",
+      "method": "GET",
+      "path": "/genee/post/{id}",
+      "returns": "新闻/通知正文（首页列出 /genee/post/144,154,155,156,157）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "lims-login-page",
+      "method": "GET",
+      "path": "/lims/",
+      "returns": "登录页 15,049B（GB2312 声明但实际 UTF-8/GBK 混合）。三入口：`注册新用户` / `注册新课题组` / `统一身份登录`（→ `/gateway/?from=hic&state=idp.hic&redirect=...`）；表单 `POST /lims/login`",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "lims-signup",
+      "method": "GET",
+      "path": "/lims/!labs/signup  与  /lims/!labs/signup/lab",
+      "returns": "注册页 27,308B / 课题组注册页。可匿名打开",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "**只读打开，未提交任何注册**"
+    },
+    {
+      "name": "reserve-requires-login",
+      "method": "GET",
+      "path": "/lims/!equipments/equipment/index.{id}.reserv 与 .sample",
+      "returns": "**302 → /lims/error/401**",
+      "auth": "login",
+      "status": 302,
+      "verifiedAt": "2026-11-20",
+      "note": "预约/送样必须登录。**未做任何下单/送样提交**"
+    }
+  ],
+  "unverified": [
+    {
+      "name": "lims-business",
+      "path": "/lims/!**",
+      "semantics": "read（我的预约/合同）+ **write（预约、送样、取消 —— 禁止）**",
+      "note": "需登录。按安全契约不实现"
+    },
+    {
+      "name": "gateway-cas",
+      "path": "/gateway/?from=hic&state=idp.hic",
+      "semantics": "auth（统一身份登录网关）",
+      "note": "未实测跳转目标。CC98 与站点名称暗示是浙大 CAS，但 hic 域可能走独立 IdP，需登录才能确认"
+    }
+  ],
+  "verifiedCount": 9,
+  "importantPitfall": "⚠️ **本平台是「杭州国际科创中心」的大仪平台，不是全校统一平台**。仪器目录里的「共享联盟 / 国科大杭州高等研究院」与分类目录显示还接入了外部单位。设备集中在「水博园园区 A09」与「3号楼超净间」，使用者主要是科创中心内部课题组。**注册需课题组制 + 人工激活（CC98 5580983 社区主张，本站点注册页无法证伪也无法证实激活环节）**。",
+  "_httpsNote": "2026-11-20 追加实测：https://yqgx.hic.zju.edu.cn 亦可 200（nginx/1.25.5，40105B，title「大型仪器共享管理系统」，首页有「仪器列表/规章制度/常用下载/服务指南/联系我们」+ 2026-11-18 满意度调查通知）。此前只记了 http，https 同样可用。",
+  "_scopeNote": "限定：本系统属杭州国际科创中心，不是全校大仪平台。全校制度与收费标准公示在 zjulab.zju.edu.cn。"
+}

@@ -1,0 +1,18 @@
+{
+  "key": "weread.qq.com",
+  "origin": "https://weread.qq.com",
+  "status": "done",
+  "label": "微信读书",
+  "auth": {
+    "type": "wechat-cookie",
+    "note": "需微信登录态；本轮仅做路由探测，未登录。"
+  },
+  "via": "direct-https-probe-only",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2400,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "6 次探测各 1 次。"
+  }
+}

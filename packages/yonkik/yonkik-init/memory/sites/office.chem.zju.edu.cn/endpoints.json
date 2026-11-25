@@ -1,0 +1,279 @@
+{
+  "site": "office.chem.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET office.chem.zju.edu.cn/34507/list.htm",
+      "column": "信息公告",
+      "displayTitle": "信息公告",
+      "verifiesPath": "/34507/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/34507/list.htm",
+        "status": 200,
+        "column": "信息公告",
+        "displayTitle": "信息公告",
+        "parentTitle": "学生工作",
+        "count": 10,
+        "total": 1131,
+        "pages": 114,
+        "externalLinks": 1,
+        "firstId": "3229157",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/34510/list.htm",
+      "column": "奖助学金",
+      "displayTitle": "奖助学金",
+      "verifiesPath": "/34510/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/34510/list.htm",
+        "status": 200,
+        "column": "奖助学金",
+        "displayTitle": "奖助学金",
+        "parentTitle": "学生工作",
+        "count": 10,
+        "total": 661,
+        "pages": 67,
+        "externalLinks": 0,
+        "firstId": "3228876",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/34509/list.htm",
+      "column": "学生活动",
+      "displayTitle": "学生活动",
+      "verifiesPath": "/34509/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/34509/list.htm",
+        "status": 200,
+        "column": "学生活动",
+        "displayTitle": "学生活动",
+        "parentTitle": "学生工作",
+        "count": 10,
+        "total": 515,
+        "pages": 52,
+        "externalLinks": 4,
+        "firstId": "3224719",
+        "firstDate": "2026-11-09"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/34490/list.htm",
+      "column": "研究生教育",
+      "displayTitle": "信息公告",
+      "verifiesPath": "/34490/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/34490/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "信息公告",
+        "parentTitle": "研究生教育",
+        "count": 10,
+        "total": 847,
+        "pages": 85,
+        "externalLinks": 1,
+        "firstId": "3000239",
+        "firstDate": "2025-01-07"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/52029/list.htm",
+      "column": "通知公告",
+      "displayTitle": "通知公告",
+      "verifiesPath": "/52029/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/52029/list.htm",
+        "status": 200,
+        "column": "通知公告",
+        "displayTitle": "通知公告",
+        "parentTitle": "就业服务",
+        "count": 10,
+        "total": 88,
+        "pages": 9,
+        "externalLinks": 6,
+        "firstId": null,
+        "firstDate": "2026-11-07"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/55184/list.htm",
+      "column": "实践竞赛",
+      "displayTitle": "实践竞赛",
+      "verifiesPath": "/55184/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/55184/list.htm",
+        "status": 200,
+        "column": "实践竞赛",
+        "displayTitle": "实践竞赛",
+        "parentTitle": "本科生教育",
+        "count": 10,
+        "total": 33,
+        "pages": 4,
+        "externalLinks": 0,
+        "firstId": "3162985",
+        "firstDate": "2026-05-15"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/55192/list.htm",
+      "column": "公示公告",
+      "displayTitle": "公示公告",
+      "verifiesPath": "/55192/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/55192/list.htm",
+        "status": 200,
+        "column": "公示公告",
+        "displayTitle": "公示公告",
+        "parentTitle": "国际交流",
+        "count": 10,
+        "total": 17,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3137660",
+        "firstDate": "2026-03-05"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/55195/list.htm",
+      "column": "交流项目",
+      "displayTitle": "交流项目",
+      "verifiesPath": "/55195/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/55195/list.htm",
+        "status": 200,
+        "column": "交流项目",
+        "displayTitle": "交流项目",
+        "parentTitle": "国际交流",
+        "count": 10,
+        "total": 97,
+        "pages": 10,
+        "externalLinks": 2,
+        "firstId": "3220419",
+        "firstDate": "2026-10-28"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/bksjy/list.htm",
+      "column": "本科生教育",
+      "displayTitle": "本科生教育",
+      "verifiesPath": "/bksjy/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/bksjy/list.htm",
+        "status": 200,
+        "column": "本科生教育",
+        "displayTitle": "本科生教育",
+        "parentTitle": "本科生教育",
+        "count": 10,
+        "total": 922,
+        "pages": 93,
+        "externalLinks": 0,
+        "firstId": null,
+        "firstDate": "2018-04-08"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/xgtw/list.htm",
+      "column": "学生工作",
+      "displayTitle": "学生工作",
+      "verifiesPath": "/xgtw/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/xgtw/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "学生工作",
+        "parentTitle": "学生工作",
+        "count": 10,
+        "total": 146,
+        "pages": 15,
+        "externalLinks": 0,
+        "firstId": "3219321",
+        "firstDate": "2026-10-26"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/55185/list.htm",
+      "column": "党政综合·本科生教育",
+      "displayTitle": "文件汇编",
+      "verifiesPath": "/55185/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/55185/list.htm",
+        "status": 200,
+        "column": "党政综合·本科生教育",
+        "displayTitle": "文件汇编",
+        "parentTitle": "本科生教育",
+        "count": 7,
+        "total": 7,
+        "pages": 1,
+        "externalLinks": 1,
+        "firstId": "3176302",
+        "firstDate": "2026-06-08"
+      }
+    },
+    {
+      "id": "GET office.chem.zju.edu.cn/55193/list.htm",
+      "column": "国际交流",
+      "displayTitle": "办事指南",
+      "verifiesPath": "/55193/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.chem.zju.edu.cn/55193/list.htm",
+        "status": 200,
+        "column": "国际交流",
+        "displayTitle": "办事指南",
+        "parentTitle": "国际交流",
+        "count": 10,
+        "total": 14,
+        "pages": 2,
+        "externalLinks": 4,
+        "firstId": "3139379",
+        "firstDate": "2026-03-11"
+      }
+    }
+  ],
+  "catalogLabelMismatch": [
+    {
+      "path": "/34490/list.htm",
+      "catalogColumn": "研究生教育",
+      "pageTitle": "信息公告"
+    },
+    {
+      "path": "/55185/list.htm",
+      "catalogColumn": "党政综合·本科生教育",
+      "pageTitle": "文件汇编"
+    },
+    {
+      "path": "/55193/list.htm",
+      "catalogColumn": "国际交流",
+      "pageTitle": "办事指南"
+    }
+  ],
+  "unverified": [
+    "其余化学系栏目、分页、正文与附件未验证；外链只记地址。",
+    "/55185、/55193 的页面栏目标题与上游目录标签不同，按页面实测记录，未按目录标签改名。"
+  ]
+}

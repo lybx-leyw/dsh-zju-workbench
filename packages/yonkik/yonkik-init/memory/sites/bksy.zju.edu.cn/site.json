@@ -1,0 +1,19 @@
+{
+  "key": "bksy.zju.edu.cn",
+  "origin": "https://bksy.zju.edu.cn",
+  "status": "done",
+  "title": "浙江大学本科生院办公网",
+  "via": "direct",
+  "requires": [],
+  "auth": {
+    "type": "none"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2100,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 404（无自动化条款）；响应头无 X-RateLimit-*；页面未见 ToS 自动化限制。按站点侦察保守默认串行 ≥2s。"
+  },
+  "notes": "苏迪 Coreplus/Webplus 站群（template2994，siteId=499），nginx。培养方案栏目全部免登录可读，PDF 直链为 /_upload/article/files/... 静态路径，支持 Range/206。",
+  "exploredAt": "2026-11-20"
+}

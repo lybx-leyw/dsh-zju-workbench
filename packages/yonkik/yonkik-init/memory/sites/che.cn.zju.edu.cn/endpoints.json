@@ -1,0 +1,279 @@
+{
+  "site": "che.cn.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET che.cn.zju.edu.cn/15222/list.htm",
+      "column": "学生思政",
+      "verifiesPath": "/15222/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/15222/list.htm",
+        "status": 200,
+        "column": "学生思政",
+        "displayTitle": "学生思政",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/15157/list.htm",
+            "学生工作"
+          ],
+          [
+            "/15222/list.htm",
+            "学生思政"
+          ]
+        ],
+        "count": 20,
+        "total": 150,
+        "pages": 8,
+        "externalLinks": 0,
+        "firstId": "728246",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET che.cn.zju.edu.cn/ygcgwjwgs/list.htm",
+      "column": "出国公示",
+      "verifiesPath": "/ygcgwjwgs/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/ygcgwjwgs/list.htm",
+        "status": 200,
+        "column": "出国公示",
+        "displayTitle": "出国公示",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/gjjl/list.htm",
+            "国际交流"
+          ],
+          [
+            "/ygcgwjwgs/list.htm",
+            "出国公示"
+          ]
+        ],
+        "count": 20,
+        "total": 758,
+        "pages": 38,
+        "externalLinks": 0,
+        "firstId": "728246",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET che.cn.zju.edu.cn/15188/list.htm",
+      "column": "研究生教育·消息公告",
+      "verifiesPath": "/15188/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/15188/list.htm",
+        "status": 200,
+        "column": "研究生教育·消息公告",
+        "displayTitle": "消息公告",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/15153/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/15188/list.htm",
+            "消息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 1015,
+        "pages": 51,
+        "externalLinks": 3,
+        "firstId": "728246",
+        "firstDate": "2024-05-23"
+      }
+    },
+    {
+      "id": "GET che.cn.zju.edu.cn/15198/list.htm",
+      "column": "本科生教育·消息公告",
+      "verifiesPath": "/15198/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/15198/list.htm",
+        "status": 200,
+        "column": "本科生教育·消息公告",
+        "displayTitle": "消息公告",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/15154/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/15198/list.htm",
+            "消息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 782,
+        "pages": 40,
+        "externalLinks": 2,
+        "firstId": "728246",
+        "firstDate": "2026-09-07"
+      }
+    },
+    {
+      "id": "GET che.cn.zju.edu.cn/15227/list.htm",
+      "column": "学生事务",
+      "verifiesPath": "/15227/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/15227/list.htm",
+        "status": 200,
+        "column": "学生事务",
+        "displayTitle": "学生事务",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/15157/list.htm",
+            "学生工作"
+          ],
+          [
+            "/15222/list.htm",
+            "学生思政"
+          ],
+          [
+            "/15227/list.htm",
+            "学生事务"
+          ]
+        ],
+        "count": 20,
+        "total": 373,
+        "pages": 19,
+        "externalLinks": 0,
+        "firstId": "728246",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET che.cn.zju.edu.cn/15157/list.htm",
+      "column": "学生工作",
+      "verifiesPath": "/15157/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/15157/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "学生工作",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/15157/list.htm",
+            "学生工作"
+          ]
+        ],
+        "count": 20,
+        "total": 173,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "728246",
+        "firstDate": "2026-07-01"
+      }
+    },
+    {
+      "id": "GET che.cn.zju.edu.cn/15226/list.htm",
+      "column": "学生党建",
+      "verifiesPath": "/15226/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/15226/list.htm",
+        "status": 200,
+        "column": "学生党建",
+        "displayTitle": "学生党建",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/15157/list.htm",
+            "学生工作"
+          ],
+          [
+            "/15222/list.htm",
+            "学生思政"
+          ],
+          [
+            "/15226/list.htm",
+            "学生党建"
+          ]
+        ],
+        "count": 20,
+        "total": 60,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "728246",
+        "firstDate": "2026-10-23"
+      }
+    },
+    {
+      "id": "GET che.cn.zju.edu.cn/xgtz/list.htm",
+      "column": "国际交流·消息公告",
+      "verifiesPath": "/xgtz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/xgtz/list.htm",
+        "status": 200,
+        "column": "国际交流·消息公告",
+        "displayTitle": "消息公告",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/gjjl/list.htm",
+            "国际交流"
+          ],
+          [
+            "/xgtz/list.htm",
+            "消息公告"
+          ]
+        ],
+        "count": 20,
+        "total": 225,
+        "pages": 12,
+        "externalLinks": 0,
+        "firstId": "728246",
+        "firstDate": "2026-11-04"
+      }
+    },
+    {
+      "id": "GET che.cn.zju.edu.cn/15154/list.htm",
+      "column": "本科生教育",
+      "verifiesPath": "/15154/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.cn.zju.edu.cn/15154/list.htm",
+        "status": 200,
+        "column": "本科生教育",
+        "displayTitle": "本科生教育",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/15154/list.htm",
+            "本科生教育"
+          ]
+        ],
+        "count": 20,
+        "total": 156,
+        "pages": 8,
+        "externalLinks": 0,
+        "firstId": "728246",
+        "firstDate": "2026-04-24"
+      }
+    }
+  ],
+  "unverified": [
+    "其余化工学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

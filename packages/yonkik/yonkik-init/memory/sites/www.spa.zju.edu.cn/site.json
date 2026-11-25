@@ -1,0 +1,36 @@
+{
+  "key": "www.spa.zju.edu.cn",
+  "origin": "http://www.spa.zju.edu.cn",
+  "status": "done",
+  "label": "公共管理学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 404；未见 Retry-After；固定单页首屏。"
+  },
+  "exactNoticeColumns": {
+    "count": 12,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/spaoffice/14508/list.htm",
+      "/spaoffice/14509/list.htm",
+      "/spaoffice/14507/list.htm",
+      "/spaoffice/13987/list.htm",
+      "/spaoffice/14473/list.htm",
+      "/spaoffice/zxtz/list.htm",
+      "/spachinese/jzhd_75663/list.htm",
+      "/spaoffice/14486/list.htm",
+      "/spaoffice/14746/list.htm",
+      "/spaoffice/14511/list.htm",
+      "/spaoffice/14513/list.htm",
+      "/spaoffice/13991/list.htm"
+    ],
+    "note": "四栏显示标题同为「最新通知」，靠「当前位置」完整层级区分；/spaoffice/zxtz/ 的父级与子级链接同路径、文字不同。"
+  }
+}

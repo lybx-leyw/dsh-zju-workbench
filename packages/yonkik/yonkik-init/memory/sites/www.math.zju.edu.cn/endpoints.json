@@ -1,0 +1,255 @@
+{
+  "site": "www.math.zju.edu.cn",
+  "access": "公开 HTTP；HTTPS 未证实、robots 404。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.math.zju.edu.cn/38100/list.htm",
+      "column": "评奖评优",
+      "parentTitle": "党群学工",
+      "displayTitle": "评奖评优",
+      "verifiesPath": "/38100/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/38100/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "parentTitle": "党群学工",
+        "count": 10,
+        "total": 427,
+        "pages": 43,
+        "externalLinks": 0,
+        "firstId": "3217986",
+        "firstDate": "2026-10-22"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/38101/list.htm",
+      "column": "学生资助",
+      "parentTitle": "党群学工",
+      "displayTitle": "学生资助",
+      "verifiesPath": "/38101/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/38101/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "parentTitle": "党群学工",
+        "count": 10,
+        "total": 117,
+        "pages": 12,
+        "externalLinks": 0,
+        "firstId": "3209201",
+        "firstDate": "2026-09-24"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/66212/list.htm",
+      "column": "团学通知",
+      "parentTitle": "党群学工",
+      "displayTitle": "团学通知",
+      "verifiesPath": "/66212/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/66212/list.htm",
+        "status": 200,
+        "column": "团学通知",
+        "displayTitle": "团学通知",
+        "parentTitle": "党群学工",
+        "count": 10,
+        "total": 377,
+        "pages": 38,
+        "externalLinks": 0,
+        "firstId": "2510071",
+        "firstDate": "2022-03-23"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/38088/list.htm",
+      "column": "培养工作",
+      "parentTitle": "研究生",
+      "displayTitle": "培养工作",
+      "verifiesPath": "/38088/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/38088/list.htm",
+        "status": 200,
+        "column": "培养工作",
+        "displayTitle": "培养工作",
+        "parentTitle": "研究生",
+        "count": 10,
+        "total": 39,
+        "pages": 4,
+        "externalLinks": 0,
+        "firstId": "3208248",
+        "firstDate": "2026-09-23"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/38090/list.htm",
+      "column": "毕业学位",
+      "parentTitle": "研究生",
+      "displayTitle": "毕业学位",
+      "verifiesPath": "/38090/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/38090/list.htm",
+        "status": 200,
+        "column": "毕业学位",
+        "displayTitle": "毕业学位",
+        "parentTitle": "研究生",
+        "count": 10,
+        "total": 43,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3202911",
+        "firstDate": "2026-09-15"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/38086/list.htm",
+      "column": "研究生",
+      "parentTitle": "研究生",
+      "displayTitle": "信息公告",
+      "verifiesPath": "/38086/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/38086/list.htm",
+        "status": 200,
+        "column": "研究生",
+        "displayTitle": "信息公告",
+        "parentTitle": "研究生",
+        "count": 10,
+        "total": 153,
+        "pages": 16,
+        "externalLinks": 2,
+        "firstId": "3198843",
+        "firstDate": "2026-09-04"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/38077/list.htm",
+      "column": "本科生",
+      "parentTitle": "本科生",
+      "displayTitle": "信息公告",
+      "verifiesPath": "/38077/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/38077/list.htm",
+        "status": 200,
+        "column": "本科生",
+        "displayTitle": "信息公告",
+        "parentTitle": "本科生",
+        "count": 10,
+        "total": 100,
+        "pages": 10,
+        "externalLinks": 1,
+        "firstId": "3213507",
+        "firstDate": "2026-10-12"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/dwjl/list.htm",
+      "column": "对外交流",
+      "parentTitle": "本科生",
+      "displayTitle": "对外交流",
+      "verifiesPath": "/dwjl/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/dwjl/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "对外交流",
+        "parentTitle": "本科生",
+        "count": 10,
+        "total": 60,
+        "pages": 6,
+        "externalLinks": 0,
+        "firstId": "3195985",
+        "firstDate": "2026-08-21"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/38102/list.htm",
+      "column": "学生文件资料",
+      "parentTitle": "党群学工",
+      "displayTitle": "学生文件资料",
+      "verifiesPath": "/38102/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/38102/list.htm",
+        "status": 200,
+        "column": "学生文件资料",
+        "displayTitle": "学生文件资料",
+        "parentTitle": "党群学工",
+        "count": 10,
+        "total": 19,
+        "pages": 2,
+        "externalLinks": 1,
+        "firstId": "3190620",
+        "firstDate": "2026-07-22"
+      }
+    },
+    {
+      "id": "GET www.math.zju.edu.cn/tmgztz/list.htm",
+      "column": "免试研究生推荐",
+      "parentTitle": "本科生",
+      "displayTitle": "免试研究生推荐",
+      "verifiesPath": "/tmgztz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.math.zju.edu.cn/tmgztz/list.htm",
+        "status": 200,
+        "column": "免试研究生推荐",
+        "displayTitle": "免试研究生推荐",
+        "parentTitle": "本科生",
+        "count": 4,
+        "total": 4,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "1757768",
+        "firstDate": "2019-06-13"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "path": "/38081/list.htm",
+      "column": "实践教学",
+      "observation": {
+        "checkedAt": "2026-11-22",
+        "requestedPath": "/38081/list.htm",
+        "pageTitle": "毕业论文",
+        "claimedColumnPath": "/bylw/list.htm",
+        "claimedColumnTitle": "毕业论文",
+        "note": "目录里的数字路径可访问，但页面自认的栏目路径是语义别名；同一栏目两个地址，未纳入精确通路，须先确认哪一个是权威地址。"
+      }
+    },
+    {
+      "path": "/38080/list.htm",
+      "column": "学籍管理",
+      "observation": {
+        "checkedAt": "2026-11-22",
+        "requestedPath": "/38080/list.htm",
+        "pageTitle": "主修专业确认",
+        "claimedColumnPath": "/zxzyqr/list.htm",
+        "claimedColumnTitle": "主修专业确认",
+        "note": "目录里的数字路径可访问，但页面自认的栏目路径是语义别名；同一栏目两个地址，未纳入精确通路，须先确认哪一个是权威地址。"
+      }
+    }
+  ],
+  "unverified": [
+    "其余数学学院栏目、分页、正文与附件未验证；外链不访问。"
+  ]
+}

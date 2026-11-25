@@ -1,0 +1,26 @@
+{
+  "site": "speedtest.zju.edu.cn",
+  "access": "公开 HTTPS/HTTP，无凭据、无需登录。",
+  "purpose": "校园网测速（前端自 OpenSpeedtest 开源项目）",
+  "pages": [
+    {
+      "url": "https://speedtest.zju.edu.cn/",
+      "status": 200,
+      "title": "浙大校园网网速测试",
+      "length": 8074
+    },
+    {
+      "url": "http://speedtest.zju.edu.cn/",
+      "status": 200,
+      "title": "浙大校园网网速测试",
+      "note": "IPv4 站点入口，与 https 同内容"
+    }
+  ],
+  "downloadableTestFiles": [
+    "/100M（100MB 测试文件）",
+    "/1000M（1000MB 测试文件）",
+    "/10G（10GB 测试文件）"
+  ],
+  "sibling": "http://speedtest.zju6.edu.cn（IPv6 站点，页面内链接，未单独验证）",
+  "note": "测速文件按页面链接存在，本记录**不下载**这些大文件；只记录路径。"
+}

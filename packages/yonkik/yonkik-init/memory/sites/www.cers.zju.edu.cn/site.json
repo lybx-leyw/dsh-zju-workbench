@@ -1,0 +1,15 @@
+{
+  "key": "www.cers.zju.edu.cn",
+  "origin": "http://www.cers.zju.edu.cn",
+  "status": "done",
+  "label": "环境与资源学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "exactNoticeColumns": {
+    "checkedAt": "2026-11-22",
+    "note": "清录中该 host 唯一待核路径 /cercn/rcpy 渲染默认子栏 /cercn/xxgg，标 identity-mismatch。"
+  }
+}

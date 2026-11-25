@@ -1,0 +1,246 @@
+{
+  "site": "www.career.zju.edu.cn",
+  "base": "https://www.career.zju.edu.cn",
+  "auth": "基础数据/资讯免登录；个人中心需登录。**全部免登录接口实测 200**",
+  "verified": [
+    {
+      "name": "spa-shell",
+      "method": "GET",
+      "path": "/ （以及 /robots.txt、/sitemap.xml 等任意未匹配路径）",
+      "returns": "7874B Vue2 SPA 壳，title=「浙江大学就业服务平台」。`<noscript>` 文案：**91JOB doesn't work properly without JavaScript enabled**。资源入口 `/js/app.1795077898189.js` + `/js/chunk-vendors.*.js`",
+      "note": "**前端路由一律 200 返回同一壳**，所以「某路由 200」不代表存在。而且 `/robots.txt`、`/sitemap.xml` 也被这个 fallback 吃掉（返回 7874B HTML，不是真 robots）。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "school-list",
+      "method": "GET",
+      "path": "/pub/getXxxxList",
+      "returns": "`{success:true,code:200,result:[{XXDM:'10335', XSSX:'1', XXMC:'浙江大学'}]}`",
+      "note": "取学校代码 10335，后续接口的 xxdm 用它",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "department-list",
+      "method": "GET",
+      "path": "/pub/getXyxxList",
+      "returns": "`result:[{MC:'教育学院',DM:'0300'}, {MC:'外国语学院',DM:'0500'}, 理学院0600, 生命科学学院0700, 电气工程学院1000, 建筑工程学院1200, 生物系统工程与食品科学学院1300, 环境与资源学院1400, 生物医学工程与仪器科学学院1500, 农业与生物技术学院1600, 动物科学学院1700, …]`（2.7KB）",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "degree-type-list",
+      "method": "GET",
+      "path": "/pub/getXlxxList",
+      "returns": "`result:[{DLDM:'1',XLXL:'01',XLMC:'博士',DLMC:'研究生'}, {DM:'11',XLMC:'硕士',DLMC:'研究生'}, {DLDM:'3',XLMC:'本科',…}]`",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "major-list",
+      "method": "GET",
+      "path": "/pub/getJybzyList",
+      "returns": "**235KB** 专业目录：`result:[{ZYDM:'010100', ZYDMID:'...', ZYLBID:'...', SFZSZY:'0', SFQY:'1', ZYMC:'哲学类'}, …]`",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "site-config",
+      "method": "POST",
+      "path": "/pub/hqpz",
+      "body": "{}",
+      "returns": "`{success:true,code:200,result:'<很长的 hex 串>'}`（站点的加密配置 blob，非 JSON）",
+      "note": "GET 会 405 Method Not Allowed，必须 POST",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "mgr-url",
+      "method": "GET",
+      "path": "/pub/getMgrUrl",
+      "returns": "`{success:true,result:'https://www.career.zju.edu.cn/management/'}`",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "website-id",
+      "method": "GET",
+      "path": "/web/wsjysc/wzsy/getWzid?xxdm=10335&wzlx=0",
+      "returns": "`{success:true,result:'738C287EDD337810E0538713470A8F26'}` —— 浙大就业网站在 91JOB SaaS 内的站点主键",
+      "note": "**后续大多栏目接口都要 wzid**，这是第一把钥匙",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "column-tree",
+      "method": "GET",
+      "path": "/web/wsjysc/wzsy/getXwlm?wzid=738C287EDD337810E0538713470A8F26&xxdm=10335",
+      "returns": "**13.3KB 完整栏目树**：`result:[{lmid, lmmc, lmljdz, fjlmid, xxdm, sfqy, xssx, lmlx, model:[…嵌套子栏目]}]`（见 wiki「栏目树」节）",
+      "note": "**免登录**。每个 lmid 是「栏目 ID」，几乎所有列表接口都要它。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "column-news-list（通用栏目列表）",
+      "method": "POST",
+      "path": "/web/wsjysc/lbxq/getTzggPageList",
+      "body": "{\"current\":1,\"size\":10,\"lmid\":\"<栏目ID>\"}",
+      "returns": "`{success:true,result:{records:[{xwid,xwbt(标题),fbsj(日期),sfzd(置顶),wjlj(文件链接),tzljdz(外链),hdsj,hddd,…}],total,size,current,pages}}`",
+      "note": "**分页参数 current/size**。只传 lmid 即可，不会 500。实测 lmid=16C0456B72044BFAE0653A68DD0E9B18 返回 5 份「毕业生就业质量报告」",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "article-detail",
+      "method": "GET",
+      "path": "/web/wsjysc/lbxq/getTzggxq/{xwid}",
+      "returns": "`{success:true,result:{xwid,xwbt,fbsj,xwnr(正文 HTML，可能为 null),wjlj,djl(点击数),sfxnfw,innerip}}`",
+      "note": "**路径参数，不是 query**。xwnr 为 null 表示正文在外链 tzljdz 里",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "carousel（首页轮播/焦点图）",
+      "method": "GET",
+      "path": "/web/wsjysc/wzsy/getLbt?wzid=738C287EDD337810E0538713470A8F26",
+      "returns": "13 条 `{lbtbt(标题), lbtp(图), ljdz(链接), sffb, sfzd, dkfs}`。实测含「浙江大学2026年秋季法律职业专场就业/实习招聘会」「选调生公告」「国聘行动第七季」「JOB-ONE浙江大学专场双选会」等",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "quick-nav（快捷导航，含全站功能地图）",
+      "method": "GET",
+      "path": "/web/wsjysc/wzsy/getKjdh?wzid=738C287EDD337810E0538713470A8F26",
+      "returns": "**9KB**，按角色分组 `result:{学生:[13条], 教师:[4], 校友:[1], 雇主:[5], 用人单位:[6]}`，每条 `{dhbt(标题), dhtp(图标), dhdz(目标地址), sfzd, xsmc, xssx, dkfs}`",
+      "note": "**这是全站功能地图**：学生端含职业测评/职业发展咨询/求职宝典/招聘信息/基层选调/AI简历智写/AI视频模拟面试/AI生涯导师小叶(chat.career.zju.edu.cn)/就业须知/就业政策/新闻活动",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "site-settings",
+      "method": "GET",
+      "path": "/web/wsjysc/wzsy/getWzsz?wzid=738C287EDD337810E0538713470A8F26",
+      "returns": "1.8KB 站点主题配置（配色 `wzzsd:#0d3d8c`、`wzcsd:#206cb4`、logo、页脚版权 HTML）",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "job-fair-list（线下招聘会/双选会）",
+      "method": "POST",
+      "path": "/jyxt/wzsy/getZhZphQtListAjax.zf",
+      "body": "{\"current\":1,\"size\":20,\"xxdm\":\"10335\"}",
+      "returns": "`{message:'success',code:0,result:{records:[{zphbh(编号), zphmc(名称), zphkssj(开始), zphjssj(结束), cdmc(场地), djl(点击), ztmc(状态:未开始/已结束), ywlx:'zph', sjlx, tzljdz(通知外链)}], total, size, current, pages}}`。**实测 total=728**",
+      "note": "**体量最大的免登录数据源**。code:0 表示成功（不是 200）。场地如「紫金港校区尧坤楼二楼招聘大厅」",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "job-fair-simple（另一口径招聘会列表）",
+      "method": "POST",
+      "path": "/jyxt/wzsy/getZphQtListAjax.zf",
+      "body": "{\"current\":1,\"size\":20,\"xxdm\":\"10335\"}",
+      "returns": "同结构但字段更少（zphjssj/ztmc/ywlx/sjlx 恒为 null）。**实测 total=585**",
+      "note": "两个接口总数不同（728 vs 585），是不同筛选口径；用 `getZhZphQtListAjax`（728）作主口径",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "online-job-fair（空中双选会）",
+      "method": "POST",
+      "path": "/jyxt/wzsy/getKzzpQtListAjax.zf",
+      "body": "{\"current\":1,\"size\":20,\"xxdm\":\"10335\"}",
+      "returns": "`{records:[{zphbh, zphmc, zphkssj, zphjssj, yddws(已定单位数), zpgws(招聘岗位数), bmrs(报名人数), ztmc}], total}`。**实测 total=135**",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "career-talk-list（宣讲会）",
+      "method": "POST",
+      "path": "/jyxt/wzsy/getXjhQtListAjax.zf",
+      "body": "{\"current\":1,\"size\":20,\"xxdm\":\"10335\"}",
+      "returns": "`{records:[{xjhbh, xjhmc, dwmc(单位名), dwxxid, xjhrq(时间), xjhcdmc(场地), djl, fbzt, zpgws, zbfsmc, bmztmc, zbdz, tzljdz}], total}`。**实测 total=9840**（含历史）",
+      "note": "**9840 条是本站最大数据源**。场地如「永谦学生活动中心B108」「紫金港校区尧坤楼222传化厅」",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "article-routes（前端路由清单）",
+      "method": "GET",
+      "path": "/js/app.1795077898189.js（提取）",
+      "returns": "122 条前端路由：`/recruitment/{announcementList,announcementDetail,meetingList,positionList,unitList,policyPost,meetingDetail,jobDetails,companyDetails}`（stationFrom:'home'，**免登录**）、`/lecture/{meetingList,detail}`、`/notification/{announcementList,detail}`、`/activityList`、`/searchList`、`/recommend-jobs`、`/recruitment-information`（requireAuth:true），学生端 `/sc/*` 全部 requireAuth:true",
+      "note": "**`requireAuth:true` 与 `stationFrom:'home'` 是判断免登录/需登录的权威依据**（Vue Router meta）。`/sc/whereabouts`（历届去向查询）、`/sc/reserveRoom`（云面试间预约）、`/sc/selected_student/*`（选调生档案/报名/追踪）**全部被注释掉**。",
+      "verifiedAt": "2026-11-20"
+    }
+  ],
+  "unverified": [
+    {
+      "name": "job-list（招聘岗位信息）",
+      "method": "POST",
+      "path": "/web/wsjysc/lbxq/getZpgwPageList",
+      "body": "{\"current\":1,\"size\":20,\"xxdm\":\"00000\",\"lmid\":\"2B2921EE10ED2DE8E0653A68DD0E9B18\"}",
+      "semantics": "read",
+      "status": "verified-empty",
+      "returns": "200 `{success:true,result:{records:[],total:0,pages:0}}`",
+      "note": "**接口通了但返回空**——不是路径错（错路径会回 `{success:false,message:'系统异常',code:500}`）。空的原因未定：可能该 lmid 当前无在架岗位，或需其它必填参数。**下一位探索者从这里接**：换 xxdm=10335、或从 `/js/29.*.js` 里 PositionList 的 body 构造完整参数（源码里 body 为 `{...query, nrbq, current, size, xxdm, lmid}`，query 含 keyword/byzd4/dwxzdm/dwhydm/zwlbdm/zpdxdm/zpxldm/nrbq）"
+    },
+    {
+      "name": "company-list（单位列表）",
+      "method": "POST",
+      "path": "/web/wsjysc/lbxq/getZpdwPageList",
+      "semantics": "read",
+      "note": "未单发。同族参数应与 getZpgwPageList 一致"
+    },
+    {
+      "name": "posting-list（招聘公告）",
+      "method": "POST",
+      "path": "/web/wsjysc/lbxq/getZpggPageList",
+      "body": "{\"current\":1,\"size\":20,\"xxdm\":\"10335\",\"lmid\":\"A188D7448980110BE055134CA39C9BD7\"}",
+      "semantics": "read",
+      "status": "verified-error",
+      "returns": "200 但 `{success:false,message:'系统异常',code:500}`",
+      "note": "与岗位列表同族但参数要求不同。**下次从这里接**：注意「系统异常」是参数不满足的通用回执，不代表接口不存在"
+    },
+    {
+      "name": "login",
+      "method": "POST",
+      "path": "/stu/auth/login",
+      "semantics": "login",
+      "status": "verified-shape",
+      "returns": "空 body 时 500 Internal Server Error（说明路由存在）",
+      "note": "**未尝试真实登录**。学生账号体系需要账号密码或 CAS"
+    },
+    {
+      "name": "whereabouts（历届去向查询）",
+      "semantics": "read",
+      "status": "route-disabled",
+      "note": "**路由 `/sc/whereabouts` 在 app.js 里被整段注释掉**（`// path: \"/sc/whereabouts\"`）。所以 CC98 6515971「如何链接历年就业去向的学长姐」对应的功能**当前前端未开放**。栏目树里有「就业去向查询」lmid=77AE49D4D06D240BE055000000000001，但其 getTzggPageList 返回 `records:[],total:0`。"
+    },
+    {
+      "name": "reserve-room（云面试间预约）",
+      "semantics": "write（预约）— 禁止",
+      "status": "route-disabled",
+      "note": "`/sc/reserveRoom` 同样被注释；对应 CC98 6284093「面试间预约全是无法预约」。**不探、不预约**。"
+    },
+    {
+      "name": "submit-resume / sign-contract / xuan-diao-signup",
+      "semantics": "**write — 禁止**",
+      "note": "投递简历（/sc/myResume、/sc/recommendation）、两方协议（/sc/paper_protocol_apply）、选调报名（/sc/selected_student/signup）均属写操作，按安全契约不探不调。"
+    }
+  ],
+  "blocked": [
+    {
+      "path": "登录后区域（投递/签约/去向/面试间）",
+      "status": "not-attempted",
+      "reason": "需学生账号登录；且投递/签约/报名全部是写操作，任务明确禁止。"
+    },
+    {
+      "path": "/jyxt/wzsy/getZhXjhQtListAjax.zf（招聘会+宣讲会合并口径，与 getXjhQtListAjax 对照）",
+      "status": "http-429",
+      "reason": "实测返回 **429**（0 字节 body）。**这是本组唯一实测到的限流证据**：连续同类 POST 触发。已停止并退避，未重试成功。写进 site.json rateLimit。"
+    }
+  ],
+  "verifiedCount": 19,
+  "readOnlyNote": "hqpz/getTzggPageList/getZhZphQtListAjax 均为分页查询与配置读取，不是写操作。",
+  "policyRecordedAt": "2026-11-23"
+}

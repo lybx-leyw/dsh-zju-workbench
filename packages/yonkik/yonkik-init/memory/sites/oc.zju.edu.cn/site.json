@@ -1,0 +1,27 @@
+{
+  "key": "oc.zju.edu.cn",
+  "origin": "http://oc.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://oc.zju.edu.cn/tzgg/list.htm",
+  "column": "通知公告",
+  "exactNoticeColumns": {
+    "count": 2,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/tzgg/list.htm",
+      "/86050/list.htm"
+    ],
+    "note": "身份用 div.weizhi 的 h1 标题 + 父栏目 span + 页面自报的 var url 三向确认，与 oca.zju.edu.cn 同一套模板但不同 host。"
+  }
+}

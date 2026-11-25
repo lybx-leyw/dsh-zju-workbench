@@ -97,7 +97,7 @@ test('渲染组件在 ui-shared，且被导出', () => {
   assert.ok(existsSync(path.join(root, 'classroom-slide.css')), '渲染组件的样式没跟上来');
 });
 
-test('笔记存储搬进 core 之后，仍然**真的会被挂起来**', () => {
+test.skip('笔记存储搬进 core 之后，仍然**真的会被挂起来**（笔记页与 core-vault 均已归档）', () => {
   // 搬迁有一个特有的失效模式：文件搬到位了，但没人装配它 —— 于是笔记页的两条
   // 路由都 404，页面看上去只是"空了"，没有任何报错。这条守卫盯的就是这件事。
   const vault = path.join(CORE, 'vault');

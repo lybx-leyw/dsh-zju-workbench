@@ -1,0 +1,28 @@
+{
+  "key": "courses.zju.edu.cn",
+  "origin": "https://courses.zju.edu.cn",
+  "via": null,
+  "requires": [
+    "campus-sso"
+  ],
+  "rateLimit": {
+    "minIntervalMs": 1500,
+    "concurrency": 1,
+    "source": "observed",
+    "evidence": "未发现 X-RateLimit-*；全探索期串行单发未触发 429"
+  },
+  "auth": {
+    "type": "cas",
+    "credentialKey": "campus-sso",
+    "ssoFamily": "identity-keycloak",
+    "loginUrl": "https://identity.zju.edu.cn/auth/realms/zju/broker/cas-client/login",
+    "stateFile": "state.json",
+    "captcha": "disabled (cas/v2/getKaptchaStatus=false, 2026-11-19)",
+    "loginFlow": "courses → identity Keycloak(realm zju, client TronClass) → broker → zjuam CAS 表单；浏览器点 #dl 即可（前端 RSA 加密在 login.js 内）"
+  },
+  "notes": "学在浙大 TronClass。附件下载两步法：/api/activities/{id} 取 uploads[] → /api/uploads/{id}/blob 拿 302 签名直链 → 直链裸 GET 落盘。详见 wiki.md。",
+  "status": "done",
+  "exploredAt": "2026-11-19",
+  "endpointsFile": "endpoints.json",
+  "statusUpdated": "2026-11-19"
+}

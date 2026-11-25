@@ -1,0 +1,228 @@
+{
+  "site": "office.cas.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET office.cas.zju.edu.cn/15927/list.htm",
+      "column": "研究生事务",
+      "verifiesPath": "/15927/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cas.zju.edu.cn/15927/list.htm",
+        "status": 200,
+        "column": "研究生事务",
+        "displayTitle": "研究生事务",
+        "sectionTitle": "学子在线",
+        "trail": [
+          [
+            "/15926/list.htm",
+            "学子在线"
+          ],
+          [
+            "/15927/list.htm",
+            "研究生事务"
+          ]
+        ],
+        "count": 20,
+        "candidates": 20,
+        "total": 681,
+        "pages": 35,
+        "externalLinks": 0,
+        "firstId": "3228622",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET office.cas.zju.edu.cn/15893/list.htm",
+      "column": "国际交流·通知公告",
+      "verifiesPath": "/15893/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cas.zju.edu.cn/15893/list.htm",
+        "status": 200,
+        "column": "国际交流·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "国际交流",
+        "trail": [
+          [
+            "/15893/list.htm",
+            "国际交流"
+          ],
+          [
+            "/15893/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 19,
+        "candidates": 20,
+        "total": 52,
+        "pages": 3,
+        "externalLinks": 17,
+        "firstId": "3193807",
+        "firstDate": "2026-08-07"
+      }
+    },
+    {
+      "id": "GET office.cas.zju.edu.cn/15929/list.htm",
+      "column": "就业工作",
+      "verifiesPath": "/15929/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cas.zju.edu.cn/15929/list.htm",
+        "status": 200,
+        "column": "就业工作",
+        "displayTitle": "就业工作",
+        "sectionTitle": "学子在线",
+        "trail": [
+          [
+            "/15926/list.htm",
+            "学子在线"
+          ],
+          [
+            "/15929/list.htm",
+            "就业工作"
+          ]
+        ],
+        "count": 20,
+        "candidates": 20,
+        "total": 416,
+        "pages": 21,
+        "externalLinks": 2,
+        "firstId": "3218437",
+        "firstDate": "2026-10-22"
+      }
+    },
+    {
+      "id": "GET office.cas.zju.edu.cn/16447/list.htm",
+      "column": "实践教学",
+      "verifiesPath": "/16447/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cas.zju.edu.cn/16447/list.htm",
+        "status": 200,
+        "column": "实践教学",
+        "displayTitle": "实践教学",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/15888/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/15889/list.htm",
+            "实践竞赛"
+          ],
+          [
+            "/16447/list.htm",
+            "实践教学"
+          ]
+        ],
+        "count": 12,
+        "candidates": 12,
+        "total": 12,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3166947",
+        "firstDate": "2026-05-27"
+      }
+    },
+    {
+      "id": "GET office.cas.zju.edu.cn/16449/list.htm",
+      "column": "学科竞赛",
+      "verifiesPath": "/16449/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cas.zju.edu.cn/16449/list.htm",
+        "status": 200,
+        "column": "学科竞赛",
+        "displayTitle": "学科竞赛",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/15888/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/15889/list.htm",
+            "实践竞赛"
+          ],
+          [
+            "/16449/list.htm",
+            "学科竞赛"
+          ]
+        ],
+        "count": 10,
+        "candidates": 10,
+        "total": 10,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3166028",
+        "firstDate": "2026-05-19"
+      }
+    },
+    {
+      "id": "GET office.cas.zju.edu.cn/15925/list.htm",
+      "column": "学生党建",
+      "verifiesPath": "/15925/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cas.zju.edu.cn/15925/list.htm",
+        "status": 200,
+        "column": "学生党建",
+        "displayTitle": "学生党建",
+        "sectionTitle": "学子在线",
+        "trail": [
+          [
+            "/15926/list.htm",
+            "学子在线"
+          ],
+          [
+            "/15925/list.htm",
+            "学生党建"
+          ]
+        ],
+        "count": 20,
+        "candidates": 20,
+        "total": 185,
+        "pages": 10,
+        "externalLinks": 0,
+        "firstId": "3223040",
+        "firstDate": "2026-11-04"
+      }
+    }
+  ],
+  "containers": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/15889/list.htm",
+      "pageTitle": "实践竞赛",
+      "sectionTitle": "本科生教育",
+      "total": 19,
+      "pages": 1,
+      "subcolumns": [
+        [
+          "/16447/list.htm",
+          "实践教学"
+        ],
+        [
+          "/16448/list.htm",
+          "科研训练"
+        ],
+        [
+          "/16449/list.htm",
+          "学科竞赛"
+        ]
+      ],
+      "note": "页面把三个子栏各渲染成一段列表拼在一起（ul.wp_subcolumn_list），CMS 总数 19 是子栏之和，不是单一栏目；子栏 /16447、/16449 已单独验证，/16448 未验证。"
+    }
+  ],
+  "unverified": [
+    "其余动物科学学院栏目（含 /16448 科研训练）、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

@@ -24,5 +24,22 @@ for (const version of lock.hostVersions) test(`actual Cordis ${version}: service
     assert.equal((await service.getCurrentUser()).id, '1'); assert.equal(await isolated.getCurrentUser(), null);
     await fiber.dispose(); assert.equal(service.transport.closed, true); assert.equal(first.get('zwClassroom'), undefined);
     await other.dispose(); assert.equal(isolated.transport.closed, true);
-  } finally { await first.fiber.dispose(); await second.fiber.dispose(); await rm(dir, { recursive: true, force: true }); }
+  } finally {
+    await first.fiber.dispose();
+    await second.fiber.dispose();
+    /**
+     * Windows 上 `rm -rf` 与「后台仍在写盘的预取任务」会撞车：
+     * 目录刚被判定为空、正要 rmdir，另一个句柄又写进一个文件，于是抛
+     * `ENOTEMPTY`。`force: true` 只忽略「本来就不存在」，不忽略这个竞态。
+     *
+     * 重试是最小且正确的修法：目录最终一定会空，只是不保证第一次就空。
+     */
+    for (let attempt = 0; ; attempt += 1) {
+      try { await rm(dir, { recursive: true, force: true }); break; }
+      catch (error) {
+        if (attempt >= 10 || !['ENOTEMPTY', 'EBUSY', 'EPERM'].includes(error?.code)) throw error;
+        await new Promise(resolve => setTimeout(resolve, 20 * (attempt + 1)));
+      }
+    }
+  }
 });

@@ -1,0 +1,185 @@
+{
+  "site": "www.neuroscience.zju.edu.cn",
+  "access": "公开 HTTP；/gsgg_54816 的 .htm 301 到同站 .psp。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.neuroscience.zju.edu.cn/45474/list.htm",
+      "column": "教育思政",
+      "verifiesPath": "/45474/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.neuroscience.zju.edu.cn/45474/list.htm",
+        "catalogPath": "/45474/list.htm",
+        "status": 200,
+        "column": "教育思政",
+        "displayTitle": "教育思政",
+        "trail": [
+          [
+            "/45474/list.htm",
+            "教育思政"
+          ]
+        ],
+        "count": 15,
+        "total": 60,
+        "pages": 4,
+        "externalLinks": 2,
+        "firstId": "3218440",
+        "firstDate": "2026-10-23"
+      }
+    },
+    {
+      "id": "GET www.neuroscience.zju.edu.cn/xssz/list.htm",
+      "column": "学生思政",
+      "verifiesPath": "/xssz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.neuroscience.zju.edu.cn/xssz/list.htm",
+        "catalogPath": "/xssz/list.htm",
+        "status": 200,
+        "column": "学生思政",
+        "displayTitle": "学生思政",
+        "trail": [
+          [
+            "/45474/list.htm",
+            "教育思政"
+          ],
+          [
+            "/xssz/list.htm",
+            "学生思政"
+          ]
+        ],
+        "count": 15,
+        "total": 56,
+        "pages": 4,
+        "externalLinks": 0,
+        "firstId": "3223441",
+        "firstDate": "2026-11-05"
+      }
+    },
+    {
+      "id": "GET www.neuroscience.zju.edu.cn/gsgg_54816/list.htm",
+      "column": "公示公告",
+      "verifiesPath": "/gsgg_54816/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.neuroscience.zju.edu.cn/gsgg_54816/list.psp",
+        "catalogPath": "/gsgg_54816/list.htm",
+        "status": 200,
+        "column": "公示公告",
+        "displayTitle": "公示公告",
+        "trail": [
+          [
+            "/_s642/gsgg/list.psp",
+            "综合服务"
+          ],
+          [
+            "/gsgg_54816/list.htm",
+            "公示公告"
+          ]
+        ],
+        "count": 11,
+        "total": 11,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3229145",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.neuroscience.zju.edu.cn/dwjl/list.htm",
+      "column": "国际交流",
+      "verifiesPath": "/dwjl/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.neuroscience.zju.edu.cn/dwjl/list.htm",
+        "catalogPath": "/dwjl/list.htm",
+        "status": 200,
+        "column": "国际交流",
+        "displayTitle": "国际交流",
+        "trail": [
+          [
+            "/45486/list.htm",
+            "交流合作"
+          ],
+          [
+            "/dwjl/list.htm",
+            "国际交流"
+          ]
+        ],
+        "count": 15,
+        "total": 39,
+        "pages": 3,
+        "externalLinks": 13,
+        "firstId": null,
+        "firstDate": "2026-07-15"
+      }
+    },
+    {
+      "id": "GET www.neuroscience.zju.edu.cn/dxsxly_75666/list.htm",
+      "column": "大学生夏令营",
+      "verifiesPath": "/dxsxly_75666/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.neuroscience.zju.edu.cn/dxsxly_75666/list.htm",
+        "catalogPath": "/dxsxly_75666/list.htm",
+        "status": 200,
+        "column": "大学生夏令营",
+        "displayTitle": "大学生夏令营",
+        "trail": [
+          [
+            "/45474/list.htm",
+            "教育思政"
+          ],
+          [
+            "/dxsxly_75666/list.htm",
+            "大学生夏令营"
+          ]
+        ],
+        "count": 9,
+        "total": 9,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3177529",
+        "firstDate": "2026-06-11"
+      }
+    },
+    {
+      "id": "GET www.neuroscience.zju.edu.cn/bksjy/list.htm",
+      "column": "本科生教育",
+      "verifiesPath": "/bksjy/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.neuroscience.zju.edu.cn/bksjy/list.htm",
+        "catalogPath": "/bksjy/list.htm",
+        "status": 200,
+        "column": "本科生教育",
+        "displayTitle": "本科生教育",
+        "trail": [
+          [
+            "/45474/list.htm",
+            "教育思政"
+          ],
+          [
+            "/bksjy/list.htm",
+            "本科生教育"
+          ]
+        ],
+        "count": 5,
+        "total": 5,
+        "pages": 1,
+        "externalLinks": 3,
+        "firstId": "3107212",
+        "firstDate": "2025-11-17"
+      }
+    }
+  ],
+  "unverified": [
+    "其余脑科学与脑医学系栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

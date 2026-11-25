@@ -1,0 +1,26 @@
+{
+  "key": "www.doe.zju.edu.cn",
+  "origin": "http://www.doe.zju.edu.cn",
+  "status": "done",
+  "label": "能源工程学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "固定单页首屏；未见 Retry-After。"
+  },
+  "exactNoticeColumns": {
+    "count": 2,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/74397/list.htm",
+      "/74389/list.htm"
+    ],
+    "note": "本站与 doe-oa.zju.edu.cn 是同一学院的两个站：doe-oa 是办公网、本站是官网，列表结构同为 jzlb 但面包屑与目录体系不同。/74364 与 /74397 渲染同一栏目，按末项自认的 /74397 记录权威通路。"
+  }
+}

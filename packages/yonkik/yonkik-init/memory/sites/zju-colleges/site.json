@@ -1,0 +1,24 @@
+{
+  "key": "zju-colleges",
+  "type": "浙大学院站群（62 个子站聚合）",
+  "status": "done",
+  "auth": {
+    "type": "none",
+    "note": "全部免登录"
+  },
+  "network": {
+    "criticalNote": "代理把所有 *.zju.edu.cn 解析成伪造 IP 198.18.0.x（代理 TUN 惯用段）；公网站正常、校内站连不通。必须 DoH 取真实 IP(210.32.x.x) 后绕过代理直连。",
+    "protoSplit": "62 站中仅 9 站支持 HTTPS，37 站只有 HTTP(80)，16 站 DoH 无 A 记录",
+    "realIpRange": "210.32.x.x"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1500,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "source": "站点清单来自 dsh-zju-assistant 的 colleges.json（62 站），逐个实测可用性",
+  "scripts": {
+    "crawler": "crawler.mjs",
+    "config": "hosts.json"
+  }
+}

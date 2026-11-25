@@ -249,6 +249,149 @@ node -e "import('./packages/source/bilibili/src/wbi.js').then(m=>console.log(Obj
 这两条在真实视频上的长期稳定性没有实测记录。
 
 
+
+
+## 2026-11：第三方页面壳退役（产品页改走 DSH 原生槽）
+
+### 是什么
+
+| 目录 | 原位置 | 作用 |
+| --- | --- | --- |
+| `pages-default` | `packages/client/pages-default` | 对 `@lybx-leyw/dsh-pages` 的产品校准：导航宽度、图标、鲸鱼品牌、设置入口、折叠动效（约 2600 行） |
+
+同批删除的两份源码不在归档里（只为旧壳服务，无独立价值）：
+`ui-shared/src/page-registration.jsx`（98 行）、`ui-shared/src/page-frame.jsx`（89 行）。
+
+### 为什么退役
+
+`@lybx-leyw/dsh-pages` 在 DSH 官方 `main` 面板槽**旁边**又造了一套面板系统
+（自建 rail、面板切换、图钉、偏好持久化、自己的 `page.content` 槽）。页面收窄
+到三页之后，这套系统的维护成本超过了收益。
+
+DSH 原版已提供等价能力，且是官方推荐的页面做法：
+
+- `ui-layout` 的 `main`（`kind:'keyed'`, root）—— 中央面板，key 即页面 id；
+- `ui-sidebar` 的 `sidebar.panellist`（`kind:'list'`, root）—— 导轨图标，
+  拿到 `{ size, active }`，与 `main` 用同一个 id 关联。
+
+官方 README 原话：「插件在 root 作用域的 `sidebar.panellist` list 中注册图标
+组件……同一个 id 寻址布局中 root 作用域 `main` keyed slot 的组件」。
+
+顺带得到官方的折叠轨道、「···」菜单、图钉与无障碍行为，不必自己维护。
+
+### 现在怎么注册页面
+
+```jsx
+import { registerPage } from '@lybx-leyw/dsh-zju-ui-shared';
+
+registerPage(ctx, {
+  id: 'paper',            // 同时是 main 的 key 与 panellist 的 id
+  order: 20,
+  label: '论文',
+  icon: size => <Icon name="paper" size={size} />,
+  render: () => <Paper />,
+});
+```
+
+实现见 `packages/client/ui-shared/src/page-native.jsx`。导航的**真源**就是这些
+注册点；`ui-shared/src/pages-model.js` 的 `NAV` 降级为给测试与脚本用的离线镜像。
+
+### 怎么还原
+
+```powershell
+git mv archive/deprecated-packages/pages-default packages/client/pages-default
+git checkout <本提交之前>~:packages/client/ui-shared/src/page-registration.jsx packages/client/ui-shared/src/
+git checkout <本提交之前>~:packages/client/ui-shared/src/page-frame.jsx packages/client/ui-shared/src/
+```
+
+然后四处一起补：根 `package.json` 的 `@lybx-leyw/dsh-pages` 依赖（精确版本）、
+`profiles/zju-workbench/package.json` 的两个 bundle、`scripts/build.mjs` 的
+`pages-default` 条目，以及把三个页面的 `registerPage()` 换回 `registerPageContent()`。
+
+也可以从 `archive/deprecated-packages/_tests/client/` 移回 6 个 pages-default 测试与
+`touch-ergonomics-round2.test.mjs`。
+
+### 遗留
+
+`ui-shared/src/style.css` 的 `--zw-pane-w: 229px` 仍按旧壳「51px 自建导轨」计算
+（280 − 51）。官方折叠宽度是 `SIDEBAR_COLLAPSED = 56`，这个值应重新核定为 224，
+或改为跟随宿主变量。
+## 2026-11：题库 / 笔记 / 插件 / 文档 四页退役（含各自独占的 core 包）
+
+### 是什么
+
+产品侧把导航收窄到学习动线两页（今天 / 论文 / 学习）。以下 7 个包整体移入
+本目录，连同它们的测试：
+
+| 目录 | 原位置 | 作用 |
+| --- | --- | --- |
+| `page-docs` | `packages/client/page-docs` | 「文档」页：内置 markdown 说明书 |
+| `page-plugins` | `packages/client/page-plugins` | 「插件」页：依赖图与启停 |
+| `page-notes` | `packages/client/page-notes` | 「笔记」页：文件树 + 编辑器 + 双链 |
+| `page-quiz` | `packages/client/page-quiz` | 「题库」页：跨课程知识点出题 |
+| `vault` | `packages/core/vault` | 笔记存储 + PDF 字节流 + 索引路由（仅笔记页消费） |
+| `graph-render` | `packages/client/graph-render` | 笔记链接图渲染，cytoscape + fcose（仅笔记页消费） |
+| `plugin-graph` | `packages/core/plugin-graph` | 依赖图折叠 + `/api/zw-plugins`（仅插件页消费） |
+
+测试随包放在 `archive/deprecated-packages/_tests/` 下（`client/` 与 `core/` 两层，
+保持原分层），共 21 个文件。
+
+### 为什么归档
+
+产品收窄：侧栏只保留学习动线（今天 / 论文 / 学习）。这四个页面各自都有一套
+独立的存储或渲染链路，留着不装配只会让「哪些包真的在产品里」每年重答一次。
+
+### 归档前核对过什么
+
+1. **消费者只在退役集合内部**：逐一 grep 了 7 个包名，除 `profile` 与彼此
+   之间外，没有第三个消费者。
+2. **`core/quiz` 没有跟着删** —— 学习页是它的真实消费者
+   （`knowledgeChapters`，见 `page-study/src/knowledge-board.jsx`）。它的
+   `cordis.patch.yml` 仍登记在 profile 里。
+3. **`core/notes` 没有跟着删** —— `core/study/src/workbench.js` 依赖
+   `@lybx-leyw/dsh-zju-core-notes/note` 的 `pageLink` / `timeLink` 等纯函数。
+4. 全量测试 2228 项，退役后 2200 通过；唯一失败是 `login-sources` 那条
+   `NOT_INSTALLED`，**在本次改动之前就是红的**（对照基线同为 1 fail）。
+
+### 怎么还原
+
+```powershell
+# 1. 源码搬回原位置
+git mv archive/deprecated-packages/page-docs        packages/client/page-docs
+git mv archive/deprecated-packages/page-plugins     packages/client/page-plugins
+git mv archive/deprecated-packages/page-notes       packages/client/page-notes
+git mv archive/deprecated-packages/page-quiz        packages/client/page-quiz
+git mv archive/deprecated-packages/vault            packages/core/vault
+git mv archive/deprecated-packages/graph-render     packages/client/graph-render
+git mv archive/deprecated-packages/plugin-graph     packages/core/plugin-graph
+
+# 2. 测试搬回
+git mv archive/deprecated-packages/_tests/client/page-docs     tests/client/page-docs
+git mv archive/deprecated-packages/_tests/client/page-notes    tests/client/page-notes
+git mv archive/deprecated-packages/_tests/client/page-plugins  tests/client/page-plugins
+git mv archive/deprecated-packages/_tests/client/page-quiz     tests/client/page-quiz
+git mv archive/deprecated-packages/_tests/client/graph-render  tests/client/graph-render
+git mv archive/deprecated-packages/_tests/core/vault           tests/core/vault
+```
+
+3. 四处清单要一起补（漏一处就是静默失效）：
+
+| 位置 | 补什么 |
+| --- | --- |
+| `packages/client/ui-shared/src/pages-model.js` | `NAV` 里四个页面项、`RAIL_DEFAULT`、`FULL_BLEED_PAGES = ['notes','docs']` |
+| `profiles/zju-workbench/package.json` | 7 个 bundle |
+| `scripts/build.mjs` | `CLIENT_PACKAGES` 里的 `graph-render` / `page-docs` / `page-notes` / `page-plugins` / `page-quiz` |
+| `package-lock.json` | 14 条 workspace 记录（跑 `npm install --package-lock-only --legacy-peer-deps --offline` 重建） |
+
+4. 恢复被跳过的守卫：`tests/repo/page-isolation.test.mjs` 里笔记页三条路由契约、
+   `tests/repo/core-no-ui.test.mjs` 里「笔记存储仍会被挂起来」、
+   `tests/core/study/quiz-export.test.mjs` 里两条题库页前端断言 —— 把 `test.skip` 改回 `test`。
+
+5. 改回降级文案：`page-study/src/knowledge-board.jsx` 与 `client.jsx` 目前写着
+   「原提供方已于 2026-11 归档」；接回题库页后应恢复为「由题库页提供」。
+
+6. `npm run build`（本目录在 `.gitignore` 里，新 clone 拿不到这些包，必须先把文件搬回）。
+
 ## dsh-zju-shell-workbench / -shell-bridge（产品界面外壳）
 
 ### 是什么

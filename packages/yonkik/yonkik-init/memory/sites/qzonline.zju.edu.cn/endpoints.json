@@ -1,0 +1,191 @@
+{
+  "siteKey": "qzonline.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "baseUrl": "https://qzonline.zju.edu.cn/uni",
+  "auth": "全部需登录（storageState 带 cookie）；未登录时 401 {result:'n_e_401_001', message:'登录失效，请重新登录'}",
+  "transport": "POST + JSON body + application/json；响应统一 {result:'0'=成功 | 其他为错误码, message, data}",
+  "verified": [
+    {
+      "id": "campus-list",
+      "name": "校区列表（10 个）",
+      "method": "POST",
+      "path": "/harvardweb/space/campus/alllist",
+      "body": {},
+      "requires": "campus-sso",
+      "response": "{result:'0', data:[{campusId, campusName, campusFlag}]}",
+      "notes": "campusFlag=1 只有紫金港。10 个校区含紫金港/玉泉/西溪/华家池/之江/舟山/海宁等。"
+    },
+    {
+      "id": "campus-list-selfstudy",
+      "name": "校区列表（自习场景）",
+      "method": "POST",
+      "path": "/harvardweb/space/campus/allList/forSelfStudy",
+      "body": {},
+      "requires": "campus-sso",
+      "response": "同上 10 项"
+    },
+    {
+      "id": "building-list",
+      "name": "楼宇列表（某校区，59 栋）",
+      "method": "POST",
+      "path": "/harvardweb/space/building/alllist",
+      "body": {
+        "campusId": "1759975326139547648",
+        "roomType": 1
+      },
+      "requires": "campus-sso",
+      "response": "{result:'0', data:[{buildingId, buildingName, type, name}]}",
+      "notes": "不带 campusId 回空数组（不是无权限）。紫金港 59 栋。"
+    },
+    {
+      "id": "space-type",
+      "name": "资源类型词表（5 类）",
+      "method": "POST",
+      "path": "/harvardweb/spacereserve/space/list",
+      "body": {},
+      "requires": "campus-sso",
+      "response": "{result:'0', data:[{spaceTypeId, spaceTypeName}]}",
+      "notes": "123=会议室(报告厅) 125=学生活动用房 130=剧场 131=体育场馆 210=室外广场"
+    },
+    {
+      "id": "venue-list",
+      "name": "【核心】可预约场馆列表（分页，296 个）",
+      "method": "POST",
+      "path": "/harvardweb/spacereserve/resourceForUser/list",
+      "body": {
+        "buildingIdList": null,
+        "campusId": "1759975326139547648",
+        "openDate": "2026-11-20",
+        "peopleCapacity": "",
+        "resourceName": "",
+        "spaceTypeId": "",
+        "baseConfigIdList": [],
+        "paginator": {
+          "pageNum": 1,
+          "pageSize": 10
+        },
+        "limit": ""
+      },
+      "requires": "campus-sso",
+      "response": "{result:'0', data:{paginator:{pageNum,pageSize,total,pages,...}, list:[{spaceArchivesId, spaceResourceId, resourcePosition, resourceName, approval, peopleCapacity, charge, chargeDetail, minReserveTime, maxReserveTime, picUrl, openStartTime, openEndTime, reservedPeriods, inApprovalPeriods, spaceReserveParamDtoList, limit, inReserveTime}]}",
+      "notes": "紫金港 total=296/pages=30。**无任何个人信息字段**（见 wiki「开盒」结论）。"
+    },
+    {
+      "id": "venue-detail",
+      "name": "场馆详情（管理单位/联系人/宣传图/活动类型）",
+      "method": "POST",
+      "path": "/harvardweb/spacereserve/space/resource/detailForCUser",
+      "body": {
+        "spaceResourceId": "1759764812637667343"
+      },
+      "requires": "campus-sso",
+      "response": "{result:'0', data:{spaceResourceId, spaceArchivesId, resourceLocation, resourceName, approval, dailyOpening, resourceType, activityTypeIdList, peopleCapacity, holidayClose, charge, chargeDetail, description, managementUnit, principal, principalMobile, picUrlList, spaceReserveParamDtoList, eduOpenDateDtoList, reserveMin, reserveMax, activityTypeList}}",
+      "notes": "principal/principalMobile 是**管理单位与其办公电话**（如「会务中心 / 87073129、88981975」），不是个人隐私，见 wiki。"
+    },
+    {
+      "id": "venue-periods",
+      "name": "【核心】某场馆某周的可约/已约时段",
+      "method": "POST",
+      "path": "/harvardweb/spacereserve/reserve/multiPeriodQuery",
+      "body": {
+        "endDate": "2026-11-22",
+        "spaceResourceId": "1759764812637667343",
+        "startDate": "2026-11-16"
+      },
+      "requires": "campus-sso",
+      "response": "{result:'0', data:{globalBeginTime, globalEndTime, reserveMin, reserveMax, auditStatus, oneDayQueryDtoList:[{openFlag, currentDate, oneDayBeginTime, oneDayEndTime, reservedTimeDtoList:[{reserveStartTime, reserveEndTime, activityName}], pendingApprovalTimeDtoList:[]}]}}",
+      "notes": "**必须带 startDate+endDate（不是单个 date）**，否则 ME01130000000 Unknown Error。已占时段只给 activityName（活动名），**不含预约人**。时间为毫秒时间戳字符串。"
+    },
+    {
+      "id": "selfroom-list",
+      "name": "【核心】自习教室列表 + 占座率（161 间）",
+      "method": "POST",
+      "path": "/harvardweb/selfstudyroom/selfroom/list/forstudentv2",
+      "body": {
+        "selfRoomResourceIdList": [],
+        "selfRoomStatusList": [],
+        "buildingIdList": [],
+        "surroundingFacilitiesList": [],
+        "campusId": "1759975326139547648",
+        "selfRoomName": "",
+        "paginator": {
+          "pageNum": 1,
+          "pageSize": 10
+        }
+      },
+      "requires": "campus-sso",
+      "response": "{result:'0', data:{roomCount, responsePageList:{paginator:{total:161,pages:33}, list:[...]}}}",
+      "notes": "紫金港 161 间。含空闲/占座率<30%、忙碌 30-60%、拥挤 >60%、待开放 四档。"
+    },
+    {
+      "id": "selfroom-baseconfig",
+      "name": "自习筛选词表（室内配套/周边配套）",
+      "method": "POST",
+      "path": "/harvardweb/space/baseconfig/list",
+      "body": {},
+      "requires": "campus-sso",
+      "notes": "座位插座/可移动座位；自助饮水机/自动售卖机/咖啡吧/自助打印机"
+    },
+    {
+      "id": "selfroom-building",
+      "name": "自习楼宇列表",
+      "method": "POST",
+      "path": "/harvardweb/space/building/allList/forSelfStudy",
+      "body": {
+        "campusId": "1759975326139547648",
+        "roomType": 1
+      },
+      "requires": "campus-sso"
+    },
+    {
+      "id": "checklogin",
+      "name": "会话探测（前端用它决定是否跳 CAS）",
+      "method": "PUT",
+      "path": "/custom/checkLogin",
+      "body": {},
+      "requires": "none",
+      "response": "未登录也回 200（body 不含用户信息）",
+      "notes": "**PUT 方法**，不是 GET/POST。这是判断「要不要登录」的探针。"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "space-detail-plain",
+      "path": "/harvardweb/spacereserve/space/detail",
+      "body": "{}",
+      "why": "实测 {result:'ME01130000000', message:'Unknown Error'}。页面实际调的是 detailForCUser（带 spaceResourceId 的 POST），spacedetail 可能是弃用或需要别的参数。"
+    },
+    {
+      "id": "space-queryparam",
+      "path": "/harvardweb/spacereserve/space/queryparam",
+      "body": {
+        "spaceResourceId": "..."
+      },
+      "why": "同样 ME01130000000 Unknown Error。参数名可能不是 spaceResourceId（页面未调用此接口）。"
+    },
+    {
+      "id": "reserve-write-ops",
+      "path": "/harvardweb/spacereserve/reserve/add | zju/add | cancelReserve | cache/update",
+      "why": "**写操作，本次一律未调用。** 唯一允许的写是登录。"
+    },
+    {
+      "id": "my-*",
+      "path": "/harvardweb/spacereserve/reserve/listInitiated | listInvited | initiatedReserveDetail",
+      "why": "我的预约列表（只读，但属个人数据）；本次为验证场馆侧能力，未取个人数据。"
+    }
+  ],
+  "scripts": {
+    "login": "login.mjs（CAS OAuth2 登录 → state.json；支持 --check）",
+    "crawler": "crawler.mjs（campuses / spaces / slots / selfstudy / detail）",
+    "note": "会话 TTL 约 30 分钟；401 时脚本会提示重跑 login.mjs。无任何写操作。"
+  },
+  "implementedOps": [
+    "campuses",
+    "spaces",
+    "slots",
+    "selfstudy",
+    "detail"
+  ],
+  "readOnlyNote": "本库脚本 implementedOps 仅含 campuses/spaces/slots/selfstudy/detail 五个只读查询；scripts.note 已写明「无任何写操作」。此处补结构化说明。",
+  "readOnlyNoteAt": "2026-11-23"
+}

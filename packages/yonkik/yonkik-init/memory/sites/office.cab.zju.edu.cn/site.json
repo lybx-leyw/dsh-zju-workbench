@@ -1,0 +1,33 @@
+{
+  "key": "office.cab.zju.edu.cn",
+  "origin": "http://office.cab.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://office.cab.zju.edu.cn/28947/list.htm",
+  "column": "最新通知",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 5,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/28876/list.htm",
+      "/28972/list.htm",
+      "/28974/list.htm",
+      "/28985/list.htm",
+      "/29000/list.htm"
+    ],
+    "note": "页面标题与 h2 可能不同（/28949 标题「国际合作与交流」、h2「通知公告」），所以标题校验只比 h2；/28946、/28947、/28949 末项自认另一路径，标 identity-mismatch。"
+  }
+}

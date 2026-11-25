@@ -1,0 +1,16 @@
+{
+  "key": "ee.zju.edu.cn",
+  "origin": "http://ee.zju.edu.cn",
+  "status": "done",
+  "label": "电气工程学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "note": "电气学院官网 ee.zju.edu.cn 与办公网 ee.office.zju.edu.cn 是不同 host。/jzhd 为一级栏目，面包屑只有本路径。"
+  }
+}

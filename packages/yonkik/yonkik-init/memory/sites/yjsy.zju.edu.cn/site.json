@@ -1,0 +1,29 @@
+{
+  "key": "yjsy.zju.edu.cn",
+  "origin": "https://yjsy.zju.edu.cn",
+  "status": "done",
+  "title": "研究生教育管理信息系统",
+  "via": "direct",
+  "requires": [
+    "campus-sso"
+  ],
+  "auth": {
+    "type": "cas",
+    "credentialKey": "campus-sso",
+    "loginUrl": "https://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fyjsy.zju.edu.cn%2F",
+    "tokenStore": "token.json (JWT, X-Access-Token 头)",
+    "note": "CAS 换 JWT；与 zdbk 不同，用请求头鉴权而非 cookie，纯 node:https 可用"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2100,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 200（内容为 SPA 壳）；无 X-RateLimit-*；保守默认。"
+  },
+  "notes": "jeecg-boot（Vue2 ant-design-pro-vue）SPA。API 基址前端硬编码为 https://yjsy.zju.edu.cn/dataapi。业务接口需 Token（401 Token失效），仅 /dataapi/open/** 免登录。",
+  "exploredAt": "2026-11-22",
+  "scripts": {
+    "login": "login.mjs",
+    "crawler": "crawler.mjs"
+  }
+}

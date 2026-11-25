@@ -1,0 +1,23 @@
+{
+  "key": "cscy.zju.edu.cn",
+  "origin": "http://cscy.zju.edu.cn",
+  "via": null,
+  "requires": [
+    "campus-sso"
+  ],
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 404（Jetty Whitelabel），无 Crawl-delay；取保守默认（2026-11-20）"
+  },
+  "auth": {
+    "type": "cas-or-local",
+    "credentialKey": "campus-sso",
+    "notes": "校内走统一认证（CAS）；校外需注册本站账号。登录后才有委托功能。"
+  },
+  "status": "done",
+  "statusUpdated": "2026-11-20",
+  "exploredAt": "2026-11-20",
+  "notes": "图书馆「代查代检系统」（Jetty 6.1.x），查收查引/检索证明的委托正主。三份关键文档免登录：注意事项、预申请单（含全部可检索库清单）、服务说明。同站编码不一致：zdServiceDesc 是 gb2312，其余 UTF-8。"
+}

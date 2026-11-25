@@ -1,0 +1,78 @@
+{
+  "site": "mirrors.zju.edu.cn",
+  "origin": "https://mirrors.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "auth": "none",
+  "rateLimit": { "minIntervalMs": 2000, "concurrency": 1 },
+  "verified": [
+    {
+      "method": "GET",
+      "path": "/mirrorz.json",
+      "purpose": "镜像清单真源（MirrorZ v1.7）。193 个源的 cname/url/status/desc/upstream/size + site 元信息（disk/note/issue/email）",
+      "auth": "none",
+      "responseShape": "{version, site:{url,abbr,name,logo,homepage,issue,request,email,group,disk,note}, info:[], mirrors:[{cname,url,status,desc,upstream,size}]}",
+      "evidence": "200 57401B ct=application/json; mirrors.length=193; site.disk=654TB; site.note=公网上行 v4/v6 各 100Mbps；校内链路 10Gbps",
+      "gotcha": "status 是拼接串：首字母主状态 S=同步完成 D=等待队列 Y=同步中 F=最近失败 P=暂停；串内还有 X<ts>计划同步 N<ts>下次 O<ts>上次成功"
+    },
+    {
+      "method": "GET",
+      "path": "/<any-dir>/.mirror-index/",
+      "purpose": "任意目录的 JSON 目录列表（等价于 ls，但结构化）",
+      "auth": "none",
+      "responseShape": "[{name, type:'directory'|'file', mtime}]"
+    },
+    {
+      "method": "GET",
+      "path": "/api/is_campus_network",
+      "purpose": "判断请求方是否校园网；站点按此区分校内/校外服务范围",
+      "auth": "none",
+      "responseShape": "1 | 0 | 2 （前端 network.js: n(e)=>e===1||e===2 视为校内）",
+      "evidence": "200 2B → 1（本机在校园网内）"
+    },
+    {
+      "method": "GET",
+      "path": "/news/",
+      "purpose": "公告列表（服务端渲染 Index of 页）",
+      "auth": "none",
+      "responseShape": "HTML 目录列表；配套用 /news/.mirror-index/ 拿机读列表",
+      "evidence": "/news/.mirror-index/ → 200 400B，4 条：221115_hello_mirror, 240410_maintenance, 240605_removal_of_ius, 240624_removal_of_centos_legacy"
+    },
+    {
+      "method": "GET",
+      "path": "/news/<slug>/",
+      "purpose": "单篇公告正文（已移除源的权威依据）",
+      "auth": "none",
+      "responseShape": "HTML；正文含分阶段时间表",
+      "evidence": "/news/240624_removal_of_centos_legacy/ → 200 27877B；/news/240605_removal_of_ius/ → 200 27340B"
+    },
+    {
+      "method": "GET",
+      "path": "/docs/<distro>/",
+      "purpose": "各发行版/包管理器的配置模板（apt/pip/pdm/poetry/uv/homebrew 命令可直接抄）",
+      "auth": "none",
+      "responseShape": "HTML",
+      "evidence": "/docs/pypi/ → 200 59552B，含 pip/PDM/Poetry/uv/Homebrew 全套；文档源自 mirrorz-org/mirrorz-docs @38cd60e0"
+    }
+  ],
+  "verifiedContent": [
+    { "path": "/ubuntu/dists/noble/Release", "status": 200, "bytes": 254968, "note": "Origin: Ubuntu, Version: 24.04, 7 架构", "verified": true },
+    { "path": "/debian/dists/stable/Release", "status": 200, "bytes": 138612, "note": "Last-Modified: 2026-09-12", "verified": true },
+    { "path": "/pypi/web/simple/requests/", "status": 200, "bytes": 60166, "note": "PEP503 simple index，title=Links for requests", "verified": true },
+    { "path": "/anaconda/pkgs/main/noarch/repodata.json", "status": 200, "bytes": 7037813, "note": "Last-Modified: 2026-11-20（当天）", "verified": true },
+    { "path": "/docker-ce/linux/ubuntu/gpg", "status": 200, "bytes": 3817, "note": "Last-Modified: 2026-11-19", "verified": true },
+    { "path": "/centos/7/os/x86_64/repodata/repomd.xml", "status": 404, "note": "已移除（符合 2024-06-24 公告）；/mirrorz.json 里 centos 只剩 4.00M", "verified": true },
+    { "path": "/ius/7/x86_64/repodata/repomd.xml", "status": 404, "note": "已移除（符合 2024-06-05 公告）；ius 只剩 1.00M", "verified": true }
+  ],
+  "removedSources": [
+    { "cname": "centos", "announcedAt": "2024-06-24", "news": "/news/240624_removal_of_centos_legacy/", "schedule": ["2024-06-24 停止与上游同步", "2024-06-30 停止校外访问", "2026-06-30 移除文件终止校内服务"], "currentSizeInManifest": "4.00M" },
+    { "cname": "ius", "announcedAt": "2024-06-05", "news": "/news/240605_removal_of_ius/", "schedule": ["2024-06-05 停止与上游同步", "2024-06-30 隐藏前端与配置描述", "2024-10-01 从服务器移除文件"], "currentSizeInManifest": "1.00M" }
+  ],
+  "failingMirrors": ["alpine", "flightgear", "openwrt", "rocky"],
+  "unverified": [
+    { "path": "/container-images/", "purpose": "容器 Registry 代理缓存 —— registry 端点未探", "suspected": "read" },
+    { "path": "/statistics/", "purpose": "流量统计页，其数据接口未探", "suspected": "read" },
+    { "path": "/history/", "purpose": "站点历史", "suspected": "read" },
+    { "path": "/faq/", "purpose": "常见问题", "suspected": "read" },
+    { "path": "/en/", "purpose": "英文版，与中文版差异未核对", "suspected": "read" }
+  ]
+}

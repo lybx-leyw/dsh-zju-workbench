@@ -1,0 +1,23 @@
+{
+  "key": "www.cse.zju.edu.cn",
+  "origin": "http://www.cse.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.cse.zju.edu.cn/39312/list.htm",
+  "column": "科研学术",
+  "exactNoticeColumns": {
+    "count": 12,
+    "checkedAt": "2026-11-22",
+    "note": "控制学院 cse 站 12 栏全部开放。列表用 div.con1rm2r 内 a 标题 + div.con1rm2l 日期；面包屑在 div.con1rtr（simpleColumnPosition）里。"
+  }
+}

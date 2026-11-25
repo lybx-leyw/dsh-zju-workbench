@@ -1,0 +1,15 @@
+{
+  "key": "www.cab.zju.edu.cn",
+  "origin": "http://www.cab.zju.edu.cn",
+  "status": "done",
+  "label": "农业与生物技术学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public-no-session",
+  "exploredAt": "2026-11-22",
+  "exactNoticeColumns": {
+    "checkedAt": "2026-11-22",
+    "note": "清单中该 host 唯一待核路径 /chinese/11141 渲染默认子栏 /chinese/11167，标 identity-mismatch。"
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "eyebrow": "图 1 · packages/vendor/zju-assistant · 数据流",
+  "eyebrow": "图 1 · .ref_zju/zju-assistant（已移出仓库、不入版本控制） · 数据流",
   "fig_head": "FIG.1 — ZJU-ASSISTANT FUSION LANES · rev.2026-11-09",
   "title": "zju-assistant → 本仓 融合泳道图",
   "subtitle": "dsh-zju-assistant 0.1.8（GPL-3.0-only，整仓 vendored，我们零改动）的全部可执行路径",
@@ -1072,7 +1072,7 @@
       "title": "它是一整个 workspace，不是一个包",
       "paras": [
         "`plugin/` 依赖 `core/*` 七个子包，有独立构建链（`plugin/build.mjs`）、独立锁文件与 `engines: node >=24.18 <25`。只取 `plugin/` 会得到一个跑不起来的半截包 —— 这是 `PATCHES.md` 已经写明的事。",
-        "`packages/vendor/zju-assistant/PATCHES.md` 记录：**我们目前零改动，一个字节没动**。任何融合动作都会让这份「代价清单」开始计数。"
+        "`.ref_zju/zju-assistant（已移出仓库、不入版本控制）/PATCHES.md` 记录：**我们目前零改动，一个字节没动**。任何融合动作都会让这份「代价清单」开始计数。"
       ]
     },
     {

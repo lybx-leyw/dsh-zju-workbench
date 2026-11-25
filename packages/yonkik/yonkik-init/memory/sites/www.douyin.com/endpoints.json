@@ -1,0 +1,108 @@
+{
+  "verified": [
+    {
+      "id": "hot_search_list",
+      "name": "抖音热榜（热搜榜）",
+      "method": "GET",
+      "url": "https://www.douyin.com/aweme/v1/web/hot/search/list/?device_platform=webapp&aid=6383&channel=channel_pc_web&detail_list=1&source=6",
+      "auth": "none",
+      "readOnly": true,
+      "params": {
+        "device_platform": "webapp（必填）",
+        "aid": "6383（必填）",
+        "channel": "channel_pc_web（必填）",
+        "detail_list": "1=带词条封面",
+        "source": "6"
+      },
+      "headers": {
+        "Referer": "https://www.douyin.com/hot",
+        "User-Agent": "普通 PC Chrome UA 即可"
+      },
+      "response": {
+        "status_code": 0,
+        "data.word_list[]": "49 条；字段 word / hot_value / position / sentence_id / event_time / video_count / discuss_video_count / article_detail_count / label / word_cover.url_list / word_type / is_n1",
+        "data.trending_list[]": "5 条",
+        "banner_dark/banner_light": "榜单头图"
+      },
+      "evidence": "2026-11-20 无 cookie GET → HTTP 200，65316 bytes，status_code=0，word_list=49，首位「特朗普结束亚洲行返回白宫」hot_value=10986255",
+      "rateNote": "实测单发通过；robots 未禁该路径（禁的是 *general_search*），仍按 2.5s 串行"
+    },
+    {
+      "id": "home_html",
+      "name": "首页精选流（真实内容，免登录）",
+      "method": "GET",
+      "url": "https://www.douyin.com/",
+      "auth": "none",
+      "readOnly": true,
+      "note": "无 cookie 直接 GET 只得 2397 bytes SPA 壳；须浏览器渲染。渲染后无需登录可见精选流卡片（21+ 张，含标题/时长/点赞数/作者/发布时间）。HTML 里无 SSR 数据（RENDER_DATA 为空壳，awemeId 仅 4 处骨架），内容全靠 XHR/JS 注入。",
+      "evidence": "2026-11-20 headless Chromium：textLen=2166，有 21 个 waterfall-videoCardContainer，href=//www.douyin.com/video/<id>；cookie 仅 ttwid/_waftokenid 等匿名标识，无 sessionid"
+    },
+    {
+      "id": "hot_page",
+      "name": "热点榜页面（免登录 + 无限滚动）",
+      "method": "GET",
+      "url": "https://www.douyin.com/hot",
+      "auth": "none",
+      "readOnly": true,
+      "note": "渲染后可见「热点视频」列表与「抖音热榜」文字榜。滚动 2 次后 a[href*=/video/] 由 0 → 19，可持续加载。",
+      "evidence": "2026-11-20 浏览器实测：before=0 after=19 grew=19；页面内可见 2 个 <video> 元素"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "aweme_detail",
+      "name": "视频详情",
+      "method": "GET",
+      "url": "https://www.douyin.com/aweme/v1/web/aweme/detail/?aweme_id=<id>&device_platform=webapp&aid=6383&channel=channel_pc_web",
+      "status": "blocked-403",
+      "observed": "403 46 bytes: 'Blocked by ArgusSecurityPlugin Uifid Not Found'",
+      "note": "纯 HTTP 无 cookie 被拦截；预热首页拿到匿名 ttwid 后仍 403（UIFID 需真实浏览器指纹）。页面侧 https://www.douyin.com/video/<id> 在无登录 headless 下长时间停在 'Please wait...'（18s 未加载）。语义为只读（详情查询），但通道不可免登录稳定打通。"
+    },
+    {
+      "id": "general_search",
+      "name": "综合搜索",
+      "method": "GET",
+      "url": "https://www.douyin.com/aweme/v1/web/general/search/single/?keyword=<kw>&device_platform=webapp&aid=6383&search_channel=aweme_general&count=10",
+      "status": "login-required",
+      "observed": "HTTP 200 但业务码 status_code=2483, status_msg='请先登录，再继续搜索吧'",
+      "note": "搜索必须登录（与 robots 的 *general_search* Disallow 一致）。浏览器打 /search/<kw> 页面也只出壳 + 安全验证。"
+    },
+    {
+      "id": "live_partition",
+      "name": "直播分区列表",
+      "method": "GET",
+      "url": "https://live.douyin.com/webcast/web/partition/detail/room/?aid=6383&app_name=douyin_web&live_id=1&count=15&offset=0&partition=720&partition_type=1&req_from=2",
+      "status": "blocked-444",
+      "observed": "HTTP 444, X-TT-System-Error: 3"
+    },
+    {
+      "id": "hot_video_list",
+      "name": "热点词视频列表",
+      "method": "GET",
+      "url": "https://www.douyin.com/aweme/v1/web/hot/search/video/list/?device_platform=webapp&aid=6383&channel=channel_pc_web&hotword=<kw>&count=10",
+      "status": "empty",
+      "observed": "HTTP 200 但 body 长度 0（缺签名参数 a_bogus/X-Bogus）"
+    },
+    {
+      "id": "tab_feed",
+      "name": "推荐流",
+      "method": "GET",
+      "url": "https://www.douyin.com/aweme/v1/web/tab/feed/?device_platform=webapp&aid=6383&channel=channel_pc_web&count=10",
+      "status": "empty",
+      "observed": "HTTP 200 但 body 长度 0（缺签名参数）"
+    },
+    {
+      "id": "billboard",
+      "name": "榜单（榜类型2）",
+      "method": "GET",
+      "url": "https://www.douyin.com/aweme/v1/web/billboard/list/?device_platform=webapp&aid=6383&channel=channel_pc_web&board_type=2",
+      "status": "404",
+      "observed": "Unsupported path(Janus)"
+    }
+  ],
+  "blockedPaths": {
+    "iesdouyin_share": "https://www.iesdouyin.com/share/video/<id>/ 已 302 回 www.douyin.com/video/<id>（旧免登录分享页已关）",
+    "m_douyin": "https://m.douyin.com/share/video/<id> 同样 302 到 PC 页",
+    "sitemap": "https://www.douyin.com/sitemap.xml 只有 12 条静态页（首页/协议/入驻），不含视频"
+  }
+}

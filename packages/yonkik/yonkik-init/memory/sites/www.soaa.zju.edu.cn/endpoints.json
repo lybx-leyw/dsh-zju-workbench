@@ -1,0 +1,357 @@
+{
+  "site": "www.soaa.zju.edu.cn",
+  "access": "公开 HTTP；robots 404。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.soaa.zju.edu.cn/31727/list.htm",
+      "column": "学位管理",
+      "verifiesPath": "/31727/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31727/list.htm",
+        "status": 200,
+        "column": "学位管理",
+        "displayTitle": "学位管理",
+        "trail": [
+          [
+            "/31323/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/31727/list.htm",
+            "学位管理"
+          ]
+        ],
+        "count": 15,
+        "total": 37,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "2508644",
+        "firstDate": "2022-03-18"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31730/list.htm",
+      "column": "学生思政·最新通知",
+      "verifiesPath": "/31730/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31730/list.htm",
+        "status": 200,
+        "column": "学生思政·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/31325/list.htm",
+            "学生思政"
+          ],
+          [
+            "/31730/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 15,
+        "total": 367,
+        "pages": 25,
+        "externalLinks": 0,
+        "firstId": "3227827",
+        "firstDate": "2026-11-16"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31735/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/31735/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31735/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "trail": [
+          [
+            "/31325/list.htm",
+            "学生思政"
+          ],
+          [
+            "/31735/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 15,
+        "total": 297,
+        "pages": 20,
+        "externalLinks": 0,
+        "firstId": "3224779",
+        "firstDate": "2026-11-09"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31736/list.htm",
+      "column": "学生资助",
+      "verifiesPath": "/31736/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31736/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "trail": [
+          [
+            "/31325/list.htm",
+            "学生思政"
+          ],
+          [
+            "/31736/list.htm",
+            "学生资助"
+          ]
+        ],
+        "count": 15,
+        "total": 170,
+        "pages": 12,
+        "externalLinks": 0,
+        "firstId": "3229473",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31717/list.htm",
+      "column": "本科教育·学籍管理",
+      "verifiesPath": "/31717/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31717/list.htm",
+        "status": 200,
+        "column": "本科教育·学籍管理",
+        "displayTitle": "学籍管理",
+        "trail": [
+          [
+            "/31322/list.htm",
+            "本科教育"
+          ],
+          [
+            "/31717/list.htm",
+            "学籍管理"
+          ]
+        ],
+        "count": 15,
+        "total": 20,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3200683",
+        "firstDate": "2026-09-08"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31723/list.htm",
+      "column": "研究生教育·最新通知",
+      "verifiesPath": "/31723/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31723/list.htm",
+        "status": 200,
+        "column": "研究生教育·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/31323/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/31723/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 15,
+        "total": 278,
+        "pages": 19,
+        "externalLinks": 2,
+        "firstId": "3228475",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31718/list.htm",
+      "column": "本科教育·教学教务",
+      "verifiesPath": "/31718/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31718/list.htm",
+        "status": 200,
+        "column": "本科教育·教学教务",
+        "displayTitle": "教学教务",
+        "trail": [
+          [
+            "/31322/list.htm",
+            "本科教育"
+          ],
+          [
+            "/31718/list.htm",
+            "教学教务"
+          ]
+        ],
+        "count": 10,
+        "total": 10,
+        "pages": 1,
+        "externalLinks": 5,
+        "firstId": "3219597",
+        "firstDate": "2026-10-27"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31726/list.htm",
+      "column": "研究生教育·教学教务",
+      "verifiesPath": "/31726/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31726/list.htm",
+        "status": 200,
+        "column": "研究生教育·教学教务",
+        "displayTitle": "教学教务",
+        "trail": [
+          [
+            "/31323/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/31726/list.htm",
+            "教学教务"
+          ]
+        ],
+        "count": 15,
+        "total": 37,
+        "pages": 3,
+        "externalLinks": 7,
+        "firstId": "3189775",
+        "firstDate": "2026-07-17"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31738/list.htm",
+      "column": "学生活动",
+      "verifiesPath": "/31738/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31738/list.htm",
+        "status": 200,
+        "column": "学生活动",
+        "displayTitle": "学生活动",
+        "trail": [
+          [
+            "/31325/list.htm",
+            "学生思政"
+          ],
+          [
+            "/31738/list.htm",
+            "学生活动"
+          ]
+        ],
+        "count": 15,
+        "total": 156,
+        "pages": 11,
+        "externalLinks": 0,
+        "firstId": "3223365",
+        "firstDate": "2026-11-05"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31702/list.htm",
+      "column": "党政管理·最新通知",
+      "verifiesPath": "/31702/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31702/list.htm",
+        "status": 200,
+        "column": "党政管理·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/31320/list.htm",
+            "党政管理"
+          ],
+          [
+            "/31702/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 2,
+        "total": 2,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3164439",
+        "firstDate": "2026-05-28"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31720/list.htm",
+      "column": "实践交流",
+      "verifiesPath": "/31720/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31720/list.htm",
+        "status": 200,
+        "column": "实践交流",
+        "displayTitle": "实践交流",
+        "trail": [
+          [
+            "/31322/list.htm",
+            "本科教育"
+          ],
+          [
+            "/31720/list.htm",
+            "实践交流"
+          ]
+        ],
+        "count": 15,
+        "total": 29,
+        "pages": 2,
+        "externalLinks": 6,
+        "firstId": null,
+        "firstDate": "2026-04-23"
+      }
+    },
+    {
+      "id": "GET www.soaa.zju.edu.cn/31725/list.htm",
+      "column": "研究生教育·学籍管理",
+      "verifiesPath": "/31725/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.soaa.zju.edu.cn/31725/list.htm",
+        "status": 200,
+        "column": "研究生教育·学籍管理",
+        "displayTitle": "学籍管理",
+        "trail": [
+          [
+            "/31323/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/31725/list.htm",
+            "学籍管理"
+          ]
+        ],
+        "count": 12,
+        "total": 12,
+        "pages": 1,
+        "externalLinks": 4,
+        "firstId": "3148293",
+        "firstDate": "2026-04-07"
+      }
+    }
+  ],
+  "unverified": [
+    "其余艺术与考古学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

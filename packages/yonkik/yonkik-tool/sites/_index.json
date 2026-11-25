@@ -1,0 +1,937 @@
+{
+  "sites": {
+    "zjuers.com": {
+      "status": "pending",
+      "origin": "https://zjuers.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "📖2026新生宝典"
+      }
+    },
+    "courses.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://courses.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "学在浙大"
+      }
+    },
+    "zdbk.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://zdbk.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "教务网(本)"
+      }
+    },
+    "chat.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://chat.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "大先生AI"
+      }
+    },
+    "booking.lib.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://booking.lib.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "图书馆预约"
+      }
+    },
+    "classroom.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://classroom.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "智云课堂"
+      }
+    },
+    "yjsy.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://yjsy.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "教务网(研)"
+      }
+    },
+    "research.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://research.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "研在浙大"
+      }
+    },
+    "pintia.cn": {
+      "status": "pending",
+      "origin": "https://pintia.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "PTA"
+      }
+    },
+    "sztz.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://sztz.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "素质拓展网"
+      }
+    },
+    "person.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://person.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "教师信息查询"
+      }
+    },
+    "qzonline.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://qzonline.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "启真在线"
+      }
+    },
+    "kyjs.zju.edu.cn": {
+      "status": "pending",
+      "origin": "http://kyjs.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "竞赛管理"
+      }
+    },
+    "ugrs.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://ugrs.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "对外交流"
+      }
+    },
+    "vpn.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://vpn.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "RVPN"
+      }
+    },
+    "webvpn.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://webvpn.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "WebVPN"
+      }
+    },
+    "net3.zju.edu.cn": {
+      "status": "pending",
+      "origin": "http://net3.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "上网认证"
+      }
+    },
+    "ms.zju.edu.cn": {
+      "status": "pending",
+      "origin": "http://ms.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "正版软件"
+      }
+    },
+    "zjuem.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://zjuem.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "浙大邮箱"
+      }
+    },
+    "myvpn.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://myvpn.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "网费管理"
+      }
+    },
+    "pan.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://pan.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "浙大云盘"
+      }
+    },
+    "yuque.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://yuque.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "浙大语雀"
+      }
+    },
+    "form.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://form.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "浙大表单"
+      }
+    },
+    "service.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://service.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "浙大服务平台"
+      }
+    },
+    "xwfw.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://xwfw.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "校务服务网"
+      }
+    },
+    "zhfw.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://zhfw.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "综合服务网"
+      }
+    },
+    "itc.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://itc.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "信息技术中心"
+      }
+    },
+    "mirrors.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://mirrors.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "浙大开源镜像"
+      }
+    },
+    "www.nexushd.org": {
+      "status": "pending",
+      "origin": "http://www.nexushd.org",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "NexusHD"
+      }
+    },
+    "www.duoduo.link": {
+      "status": "pending",
+      "origin": "https://www.duoduo.link",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "朵朵校友圈"
+      }
+    },
+    "www.life.zju.edu.cn": {
+      "status": "pending",
+      "origin": "http://www.life.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "班车查询"
+      }
+    },
+    "cwcx.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://cwcx.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "计财处"
+      }
+    },
+    "www.career.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://www.career.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "就业服务"
+      }
+    },
+    "map.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://map.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "校园地图"
+      }
+    },
+    "mapp.zju.edu.cn": {
+      "status": "pending",
+      "origin": "http://mapp.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "紧急电话"
+      }
+    },
+    "www.xlzx.zju.edu.cn": {
+      "status": "pending",
+      "origin": "http://www.xlzx.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "心理健康中心"
+      }
+    },
+    "zulg.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://zulg.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "浙大后勤"
+      }
+    },
+    "we.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://we.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "就餐指数"
+      }
+    },
+    "libweb.zju.edu.cn": {
+      "status": "pending",
+      "origin": "https://libweb.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "浙大图书馆"
+      }
+    },
+    "zju.summon.serialssolutions.com": {
+      "status": "pending",
+      "origin": "https://zju.summon.serialssolutions.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "求是学术搜索"
+      }
+    },
+    "www.cnki.net": {
+      "status": "pending",
+      "origin": "https://www.cnki.net",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "中国知网"
+      }
+    },
+    "scholar.google.com": {
+      "status": "pending",
+      "origin": "https://scholar.google.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "谷歌学术"
+      }
+    },
+    "cn.bing.com": {
+      "status": "pending",
+      "origin": "https://cn.bing.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "必应学术"
+      }
+    },
+    "xueshu.baidu.com": {
+      "status": "pending",
+      "origin": "https://xueshu.baidu.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "百度学术"
+      }
+    },
+    "www.cqvip.com": {
+      "status": "pending",
+      "origin": "https://www.cqvip.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "维普网"
+      }
+    },
+    "www.ixueshu.com": {
+      "status": "pending",
+      "origin": "https://www.ixueshu.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "爱学术"
+      }
+    },
+    "www.wanfangdata.com.cn": {
+      "status": "pending",
+      "origin": "https://www.wanfangdata.com.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "万方数据"
+      }
+    },
+    "github.com": {
+      "status": "pending",
+      "origin": "https://github.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "Github"
+      }
+    },
+    "www.webofscience.com": {
+      "status": "pending",
+      "origin": "https://www.webofscience.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "WOS"
+      }
+    },
+    "sci-hub.ru": {
+      "status": "pending",
+      "origin": "https://sci-hub.ru",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "Sci-Hub"
+      }
+    },
+    "ol.woobx.cn": {
+      "status": "pending",
+      "origin": "https://ol.woobx.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "一个木函"
+      }
+    },
+    "tool.browser.qq.com": {
+      "status": "pending",
+      "origin": "https://tool.browser.qq.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "在线工具箱"
+      }
+    },
+    "www.emojiall.com": {
+      "status": "pending",
+      "origin": "https://www.emojiall.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "Emoji大全"
+      }
+    },
+    "fanyi.baidu.com": {
+      "status": "pending",
+      "origin": "https://fanyi.baidu.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "百度翻译"
+      }
+    },
+    "translate.google.com": {
+      "status": "pending",
+      "origin": "https://translate.google.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "谷歌翻译"
+      }
+    },
+    "lab.magiconch.com": {
+      "status": "pending",
+      "origin": "https://lab.magiconch.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "缩略词复原"
+      }
+    },
+    "sina.lt": {
+      "status": "pending",
+      "origin": "https://sina.lt",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "短网址工具"
+      }
+    },
+    "cli.im": {
+      "status": "pending",
+      "origin": "https://cli.im",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "二维码生成器"
+      }
+    },
+    "airportal.cn": {
+      "status": "pending",
+      "origin": "https://airportal.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "文件空投"
+      }
+    },
+    "convertio.co": {
+      "status": "pending",
+      "origin": "https://convertio.co",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "文件格式转换"
+      }
+    },
+    "www.ilovepdf.com": {
+      "status": "pending",
+      "origin": "https://www.ilovepdf.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "PDF工具箱"
+      }
+    },
+    "www.iloveimg.com": {
+      "status": "pending",
+      "origin": "https://www.iloveimg.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "在线图片编辑"
+      }
+    },
+    "www.icourse163.org": {
+      "status": "pending",
+      "origin": "https://www.icourse163.org",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "MOOC"
+      }
+    },
+    "www.zhihuishu.com": {
+      "status": "pending",
+      "origin": "https://www.zhihuishu.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "智慧树"
+      }
+    },
+    "www.xuexi.cn": {
+      "status": "pending",
+      "origin": "https://www.xuexi.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "学习强国"
+      }
+    },
+    "www.bilibili.com": {
+      "status": "pending",
+      "origin": "https://www.bilibili.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "Bilibili"
+      }
+    },
+    "www.iqiyi.com": {
+      "status": "pending",
+      "origin": "https://www.iqiyi.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "爱奇艺"
+      }
+    },
+    "v.qq.com": {
+      "status": "pending",
+      "origin": "https://v.qq.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "腾讯视频"
+      }
+    },
+    "www.youku.com": {
+      "status": "pending",
+      "origin": "https://www.youku.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "优酷"
+      }
+    },
+    "www.mgtv.com": {
+      "status": "pending",
+      "origin": "https://www.mgtv.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "芒果TV"
+      }
+    },
+    "tv.cctv.com": {
+      "status": "pending",
+      "origin": "https://tv.cctv.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "CCTV"
+      }
+    },
+    "www.huya.com": {
+      "status": "pending",
+      "origin": "https://www.huya.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "虎牙直播"
+      }
+    },
+    "www.douyu.com": {
+      "status": "pending",
+      "origin": "https://www.douyu.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "斗鱼直播"
+      }
+    },
+    "live.qq.com": {
+      "status": "pending",
+      "origin": "https://live.qq.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "企鹅体育"
+      }
+    },
+    "docs.qq.com": {
+      "status": "pending",
+      "origin": "https://docs.qq.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "腾讯文档"
+      }
+    },
+    "wenku.baidu.com": {
+      "status": "pending",
+      "origin": "https://wenku.baidu.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "百度文库"
+      }
+    },
+    "xiumi.us": {
+      "status": "pending",
+      "origin": "https://xiumi.us",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "秀米"
+      }
+    },
+    "www.wolframalpha.com": {
+      "status": "pending",
+      "origin": "https://www.wolframalpha.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "Wolfram"
+      }
+    },
+    "webdemo.myscript.com": {
+      "status": "pending",
+      "origin": "https://webdemo.myscript.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "Myscript"
+      }
+    },
+    "www.geogebra.org": {
+      "status": "pending",
+      "origin": "https://www.geogebra.org",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "Geogebra"
+      }
+    },
+    "www.wjx.cn": {
+      "status": "pending",
+      "origin": "https://www.wjx.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "问卷星"
+      }
+    },
+    "snapany.com": {
+      "status": "pending",
+      "origin": "https://snapany.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "视频下载"
+      }
+    },
+    "tool.chinaz.com": {
+      "status": "pending",
+      "origin": "https://tool.chinaz.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "站长工具"
+      }
+    },
+    "www.zhihu.com": {
+      "status": "pending",
+      "origin": "https://www.zhihu.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "知乎"
+      }
+    },
+    "www.douban.com": {
+      "status": "pending",
+      "origin": "https://www.douban.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "豆瓣"
+      }
+    },
+    "bbs.nga.cn": {
+      "status": "pending",
+      "origin": "https://bbs.nga.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "NGA"
+      }
+    },
+    "s.weibo.com": {
+      "status": "pending",
+      "origin": "https://s.weibo.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "微博热搜"
+      }
+    },
+    "sports.qq.com": {
+      "status": "pending",
+      "origin": "https://sports.qq.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "腾讯体育"
+      }
+    },
+    "www.hupu.com": {
+      "status": "pending",
+      "origin": "https://www.hupu.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "虎扑网"
+      }
+    },
+    "pixivic.com": {
+      "status": "pending",
+      "origin": "https://pixivic.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "Pixivic"
+      }
+    },
+    "www.jd.com": {
+      "status": "pending",
+      "origin": "https://www.jd.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "京东商城"
+      }
+    },
+    "www.taobao.com": {
+      "status": "pending",
+      "origin": "https://www.taobao.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "淘宝网"
+      }
+    },
+    "wangsuceshi.bmcx.com": {
+      "status": "pending",
+      "origin": "https://wangsuceshi.bmcx.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "网络测速"
+      }
+    },
+    "zh.flightaware.com": {
+      "status": "pending",
+      "origin": "https://zh.flightaware.com",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "实时航班"
+      }
+    },
+    "www.virscan.org": {
+      "status": "pending",
+      "origin": "https://www.virscan.org",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "在线病毒扫描"
+      }
+    },
+    "speedtest.zju.edu.cn": {
+      "status": "pending",
+      "origin": "http://speedtest.zju.edu.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "校网测速"
+      }
+    },
+    "www.cc98.org": {
+      "status": "done",
+      "origin": "https://www.cc98.org",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "搜索引擎说明",
+        "login": "oauth-password",
+        "apiBase": "https://api.cc98.org",
+        "rateLimitHint": "无 robots 规则，取保守默认 2s/并发1；搜索接口有服务端频控（403 TooFrequentSearch）",
+        "compliance": "置顶公告 /topic/6468737 明确禁止爬取论坛数据，违者全站锁定 365 天以上"
+      },
+      "type": "校内论坛",
+      "summary": "CC98 论坛。页面 www.cc98.org 是 SPA，接口在 api.cc98.org，登录走 openid.cc98.org 的 OAuth password grant。",
+      "exploredAt": "2026-11-18",
+      "endpointCount": 13,
+      "wiki": "sites/www.cc98.org/wiki.md",
+      "script": "sites/www.cc98.org/crawler.mjs",
+      "profile": {
+        "facets": [
+          {
+            "covers": "版块目录 / 版块元信息 / 版块主题时间线（含学习天地 board 68）",
+            "confidence": 2,
+            "lastVerified": "2026-11-18",
+            "evidence": "endpoints.json verified: board-all, board-detail, board-topics"
+          },
+          {
+            "covers": "标签体系与按标签筛帖（tag1: 求助 92 / 资源 93 / 讨论 85 …），可用于供需普查",
+            "confidence": 2,
+            "lastVerified": "2026-11-18",
+            "evidence": "endpoints.json verified: board-tags, board-tag-topics"
+          },
+          {
+            "covers": "关键词搜索（全站 / 版内），结果按发帖时间倒序，可做同义词多轮扫",
+            "confidence": 2,
+            "lastVerified": "2026-11-18",
+            "evidence": "endpoints.json verified: topic-search, topic-search-board"
+          },
+          {
+            "covers": "主题主楼元信息与楼层正文（BBCode 原文）",
+            "confidence": 2,
+            "lastVerified": "2026-11-18",
+            "evidence": "endpoints.json verified: topic-detail, topic-posts"
+          },
+          {
+            "covers": "精华区 / 置顶 / 全站热榜",
+            "confidence": 2,
+            "lastVerified": "2026-11-18",
+            "evidence": "endpoints.json verified: board-best, board-toptopics, hot-weekly, hot-monthly"
+          }
+        ],
+        "skipLog": [
+          {
+            "question": "学习天地最近在求什么课程资源",
+            "relevance": "high",
+            "note": "唯一目标站，已深探完毕；未扩展到 80/581/105 等资源密集版块（列为待探）。"
+          }
+        ]
+      }
+    },
+    "beian.miit.gov.cn": {
+      "status": "pending",
+      "origin": "https://beian.miit.gov.cn",
+      "requires": [],
+      "signals": {
+        "source": "zjuers.com",
+        "label": "苏ICP备20026701号"
+      }
+    }
+  }
+}

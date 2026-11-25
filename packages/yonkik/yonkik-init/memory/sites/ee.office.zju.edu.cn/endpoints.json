@@ -1,0 +1,295 @@
+{
+  "site": "ee.office.zju.edu.cn",
+  "access": "公开 HTTP；HTTPS 443 连接被拒。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET ee.office.zju.edu.cn/88758/list.htm",
+      "column": "教学事务",
+      "verifiesPath": "/88758/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88758/list.htm",
+        "status": 200,
+        "column": "教学事务",
+        "displayTitle": "教学事务",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/88735/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/88758/list.htm",
+            "教学事务"
+          ]
+        ],
+        "count": 14,
+        "total": 903,
+        "pages": 65,
+        "externalLinks": 4,
+        "firstId": "3221634",
+        "firstDate": "2026-11-03"
+      }
+    },
+    {
+      "id": "GET ee.office.zju.edu.cn/88757/list.htm",
+      "column": "本科生教育·信息公告",
+      "verifiesPath": "/88757/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88757/list.htm",
+        "status": 200,
+        "column": "本科生教育·信息公告",
+        "displayTitle": "信息公告",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/88735/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/88757/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 14,
+        "total": 3410,
+        "pages": 244,
+        "externalLinks": 6,
+        "firstId": "3089341",
+        "firstDate": "2025-10-10"
+      }
+    },
+    {
+      "id": "GET ee.office.zju.edu.cn/88775/list.htm",
+      "column": "研究生教育·信息公告",
+      "verifiesPath": "/88775/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88775/list.htm",
+        "status": 200,
+        "column": "研究生教育·信息公告",
+        "displayTitle": "信息公告",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/88736/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/88775/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 14,
+        "total": 1266,
+        "pages": 91,
+        "externalLinks": 5,
+        "firstId": "3165399",
+        "firstDate": "2026-05-22"
+      }
+    },
+    {
+      "id": "GET ee.office.zju.edu.cn/88748/list.htm",
+      "column": "通知公告",
+      "verifiesPath": "/88748/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88748/list.htm",
+        "status": 200,
+        "column": "通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "管理服务",
+        "trail": [
+          [
+            "/88412/list.htm",
+            "管理服务"
+          ],
+          [
+            "/88748/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 233,
+        "pages": 17,
+        "externalLinks": 1,
+        "firstId": "3215169",
+        "firstDate": "2026-10-14"
+      }
+    },
+    {
+      "id": "GET ee.office.zju.edu.cn/88780/list.htm",
+      "column": "培养过程",
+      "verifiesPath": "/88780/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88780/list.htm",
+        "status": 200,
+        "column": "培养过程",
+        "displayTitle": "培养过程",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/88736/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/88780/list.htm",
+            "培养过程"
+          ]
+        ],
+        "count": 14,
+        "total": 134,
+        "pages": 10,
+        "externalLinks": 1,
+        "firstId": "3220213",
+        "firstDate": "2026-10-29"
+      }
+    },
+    {
+      "id": "GET ee.office.zju.edu.cn/88736/list.htm",
+      "column": "研究生教育",
+      "verifiesPath": "/88736/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88736/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "研究生教育",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/88736/list.htm",
+            "研究生教育"
+          ]
+        ],
+        "count": 2,
+        "total": 2,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3208214",
+        "firstDate": "2026-09-23"
+      }
+    },
+    {
+      "id": "GET ee.office.zju.edu.cn/88808/list.htm",
+      "column": "奖助事务",
+      "verifiesPath": "/88808/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88808/list.htm",
+        "status": 200,
+        "column": "奖助事务",
+        "displayTitle": "奖助事务",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/88740/list.htm",
+            "学生工作"
+          ],
+          [
+            "/88808/list.htm",
+            "奖助事务"
+          ]
+        ],
+        "count": 14,
+        "total": 355,
+        "pages": 26,
+        "externalLinks": 3,
+        "firstId": "3225167",
+        "firstDate": "2026-11-10"
+      }
+    },
+    {
+      "id": "GET ee.office.zju.edu.cn/88784/list.htm",
+      "column": "研究生教育·学籍管理",
+      "verifiesPath": "/88784/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88784/list.htm",
+        "status": 200,
+        "column": "研究生教育·学籍管理",
+        "displayTitle": "学籍管理",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/88736/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/88784/list.htm",
+            "学籍管理"
+          ]
+        ],
+        "count": 8,
+        "total": 8,
+        "pages": 1,
+        "externalLinks": 6,
+        "firstId": "3207074",
+        "firstDate": "2026-09-22"
+      }
+    },
+    {
+      "id": "GET ee.office.zju.edu.cn/88891/list.htm",
+      "column": "就业服务",
+      "verifiesPath": "/88891/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://ee.office.zju.edu.cn/88891/list.htm",
+        "status": 200,
+        "column": "就业服务",
+        "displayTitle": "就业服务",
+        "sectionTitle": "通知公告",
+        "trail": [
+          [
+            "/tzgg/list.htm",
+            "通知公告"
+          ],
+          [
+            "/88891/list.htm",
+            "就业服务"
+          ]
+        ],
+        "count": 14,
+        "total": 293,
+        "pages": 21,
+        "externalLinks": 10,
+        "firstId": null,
+        "firstDate": "2026-09-08"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/88740/list.htm",
+      "pageTitle": "最新通知",
+      "sectionTitle": "学生工作",
+      "claimedColumnPath": "/88804/list.htm",
+      "claimedColumnTitle": "最新通知",
+      "note": "数字路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/88759/list.htm",
+      "pageTitle": "专业确认",
+      "sectionTitle": "本科生教育",
+      "claimedColumnPath": "/88765/list.htm",
+      "claimedColumnTitle": "专业确认",
+      "note": "数字路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余电气学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

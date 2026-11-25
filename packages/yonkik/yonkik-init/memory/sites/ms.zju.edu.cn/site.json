@@ -1,0 +1,33 @@
+{
+  "key": "ms.zju.edu.cn",
+  "status": "done",
+  "origin": "http://ms.zju.edu.cn",
+  "title": "正版软件管理与服务平台（浙江大学）",
+  "via": null,
+  "requires": [],
+  "auth": {
+    "type": "独立账号 (GP 平台) + 浙大统一身份认证",
+    "credentialKey": "campus-sso",
+    "loginUrl": "http://user.ms.zju.edu.cn/login?ret=http://ms.zju.edu.cn",
+    "notes": "**登录域是独立子域 user.ms.zju.edu.cn**，不在 ms.zju.edu.cn 自身。所有「下载」按钮都指向 user.ms.zju.edu.cn/login?ret=<原下载页>，登录后才 302 回文件。",
+    "downloadGate": "GET /down/GP(zju)-4.0.2.0.exe → 302 → http://user.ms.zju.edu.cn/login?ret=…（未登录被拦）",
+    "matlabLicense": "MATLAB 需用 @zju.edu.cn 邮箱在 MathWorks 侧注册取许可证（页面原文）",
+    "adobeLicense": "Adobe 下载安装后用 @zju.edu.cn 邮箱登录、跳统一身份认证（页面原文）",
+    "publicZone": "软件目录、版本号、MD5、帮助文档、JetBrains 授权服务器地址全部免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "source": "robots",
+    "evidence": "robots.txt → 200，25 字节全文：`User-agent: *` + `Disallow:`（空 = 允许全站抓取）。响应头无 X-RateLimit-*。仍按保守默认串行 ≥2.2s。"
+  },
+  "protocol": {
+    "robots": "User-agent: * / Disallow: （25B，全站允许）",
+    "server": "nginx/1.31.3（仅 HTTP，**443 端口 ECONNREFUSED**）",
+    "cdn": "静态资源在 content.ms.zju.edu.cn"
+  },
+  "exploredAt": "2026-11-20",
+  "scopeNote": "只读探索。未登录、未下载任何安装包、未申请任何许可。",
+  "evidenceRank": "direct",
+  "scope": "public-catalog + help + scholar-edu-cn-link",
+  "endpointsFile": "endpoints.json"
+}

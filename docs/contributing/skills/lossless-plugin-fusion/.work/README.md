@@ -5,6 +5,10 @@
 
 最后更新：2026-11-11
 
+> **后续变更（2026-11 之后）**：本目录里多处提到的 `core/planning` 与
+> `client/page-planning` 已整条链路退役删除。这些记录保持原样 —— 它们是当时
+> 的实施依据，不是现状说明。找当前架构请看 `docs/show/architecture-full-chain.html`。
+
 ---
 
 ## 先读这四份

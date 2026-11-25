@@ -1,0 +1,150 @@
+{
+  "site": "www.cst.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.cst.zju.edu.cn/zytz_49383/list.htm",
+      "column": "重要通知",
+      "verifiesPath": "/zytz_49383/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cst.zju.edu.cn/zytz_49383/list.htm",
+        "status": 200,
+        "column": "重要通知",
+        "displayTitle": "重要通知",
+        "sectionTitle": "旧版栏目",
+        "trail": [
+          [
+            "/jblm/list.htm",
+            "旧版栏目"
+          ],
+          [
+            "/36195/list.htm",
+            "校园服务"
+          ],
+          [
+            "/zytz_49383/list.htm",
+            "重要通知"
+          ]
+        ],
+        "count": 14,
+        "total": 21,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3210900",
+        "firstDate": "2026-09-30"
+      }
+    },
+    {
+      "id": "GET www.cst.zju.edu.cn/36233/list.htm",
+      "column": "最新通知",
+      "verifiesPath": "/36233/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cst.zju.edu.cn/36233/list.htm",
+        "status": 200,
+        "column": "最新通知",
+        "displayTitle": "最新通知",
+        "sectionTitle": "旧版栏目",
+        "trail": [
+          [
+            "/jblm/list.htm",
+            "旧版栏目"
+          ],
+          [
+            "/36193/list.htm",
+            "实习就业"
+          ],
+          [
+            "/36233/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 304,
+        "pages": 22,
+        "externalLinks": 0,
+        "firstId": "3217071",
+        "firstDate": "2026-10-20"
+      }
+    },
+    {
+      "id": "GET www.cst.zju.edu.cn/36191/list.htm",
+      "column": "教学管理",
+      "verifiesPath": "/36191/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cst.zju.edu.cn/36191/list.htm",
+        "status": 200,
+        "column": "教学管理",
+        "displayTitle": "教学管理",
+        "sectionTitle": "旧版栏目",
+        "trail": [
+          [
+            "/jblm/list.htm",
+            "旧版栏目"
+          ],
+          [
+            "/36191/list.htm",
+            "教学管理"
+          ]
+        ],
+        "count": 14,
+        "total": 24,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3216212",
+        "firstDate": "2026-10-19"
+      }
+    },
+    {
+      "id": "GET www.cst.zju.edu.cn/36216/list.htm",
+      "column": "教务信息",
+      "verifiesPath": "/36216/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cst.zju.edu.cn/36216/list.htm",
+        "status": 200,
+        "column": "教务信息",
+        "displayTitle": "教务信息",
+        "sectionTitle": "旧版栏目",
+        "trail": [
+          [
+            "/jblm/list.htm",
+            "旧版栏目"
+          ],
+          [
+            "/36191/list.htm",
+            "教学管理"
+          ],
+          [
+            "/36216/list.htm",
+            "教务信息"
+          ]
+        ],
+        "count": 14,
+        "total": 69,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3202306",
+        "firstDate": "2026-09-14"
+      }
+    }
+  ],
+  "containers": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/36192/list.htm",
+      "pageTitle": "思政工作",
+      "sectionTitle": "旧版栏目",
+      "note": "该页内容区只有一个 div.wp_column_article 单篇正文，没有列表、分页与 CMS 总数；既不是栏目列表也不是多子栏容器，按 list-not-applicable 记录为 container-only 不开放。"
+    }
+  ],
+  "unverified": [
+    "其余软件学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

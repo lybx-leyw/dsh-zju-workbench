@@ -1,0 +1,30 @@
+{
+  "key": "mirrors.zju.edu.cn",
+  "origin": "https://mirrors.zju.edu.cn",
+  "title": "ZJU Mirror · 浙江大学开源软件镜像站",
+  "status": "done",
+  "via": null,
+  "requires": "none",
+  "auth": {
+    "type": "none",
+    "note": "全站免登录只读。纯静态 + 一个 JSON 目录索引 API，无任何账号体系。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt → 404（无爬虫规则可依）；站点未返回 X-RateLimit-* 或 Retry-After。按 site-recon 保守默认 2s/并发1。大文件下载属用户显式决定，不属探索。"
+  },
+  "server": "nginx/1.31.7",
+  "tls": "TLSv1.3, Let's Encrypt, cn=mirrors.zju.edu.cn",
+  "ip": "10.202.236.97（校内网段，必须绕过 env 代理）",
+  "endpoints": { "verified": 6, "unverified": 0 },
+  "notes": [
+    "『已移除的源』有官方公告原文，见 wiki.md「已移除/变更的源」节。",
+    "镜像清单真源是 /mirrorz.json（MirrorZ 规范 v1.7），一次 GET 拿 193 个源的 cname/url/size/upstream/status。",
+    "任意目录可用 /.mirror-index/ 拿 JSON 目录列表（站点自带提示：curl https://mirrors.zju.edu.cn/debian/.mirror-index/）。",
+    "内网判定有现成接口 GET /api/is_campus_network（1=校内）；2026-11-20 实测返回 1。"
+  ],
+  "exploredAt": "2026-11-20",
+  "exploredBy": "recon-lib"
+}

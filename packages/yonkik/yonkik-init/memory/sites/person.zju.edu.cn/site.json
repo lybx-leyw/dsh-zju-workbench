@@ -1,0 +1,20 @@
+{
+  "key": "person.zju.edu.cn",
+  "origin": "https://person.zju.edu.cn",
+  "status": "blocked",
+  "label": "个人主页系统",
+  "auth": {
+    "type": "waf-human-verification",
+    "vendor": "bangruitech",
+    "note": "第三方 WAF 人机校验，不是校内统一身份认证。"
+  },
+  "via": "direct-https-probe-only",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "仅 4 次探测即停，未触发进一步拦截。"
+  },
+  "blockedReason": "入口返回人机校验页；绕过校验被本项目的只读纪律排除。"
+}

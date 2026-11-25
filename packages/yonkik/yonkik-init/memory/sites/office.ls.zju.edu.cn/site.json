@@ -1,0 +1,37 @@
+{
+  "key": "office.ls.zju.edu.cn",
+  "origin": "http://office.ls.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://office.ls.zju.edu.cn/65256/list.htm",
+  "column": "评奖评优",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 9,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/65256/list.htm",
+      "/65255/list.htm",
+      "/65257/list.htm",
+      "/65254/list.htm",
+      "/65259/list.htm",
+      "/65253/list.htm",
+      "/65251/list.htm",
+      "/65280/list.htm",
+      "/65292/list.htm"
+    ],
+    "note": "三处显示标题为「最新通知」：/65251 是「学生思政」的默认子栏、/65280 与 /65292 分别挂在教育教学的本科生教育、研究生教育下；链路里父级与末项可能同为本路径，须比对文字。"
+  }
+}

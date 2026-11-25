@@ -13,8 +13,8 @@ test('navigation preserves native conversation and ignores foreign panel ids', (
   assert.equal(activePage('conversation'), null);
   assert.equal(activePage('zw.today'), 'today');
   assert.equal(activePage('other-plugin'), null);
-  // 「规划」只命中真实存在的那一页：「问一问」已删除，不再参与搜索。
-  assert.deepEqual(matchingPages('规划').map(page => page.id), ['planning']);
+  // 「规划」页已退役，导航里不再有任何一页命中这个词；「问一问」更早删除。
+  assert.deepEqual(matchingPages('规划').map(page => page.id), []);
   assert.equal(matchingPages('未知页面').length, 0);
   assert.equal(NAV.some(page => page.id === 'ask'), false, '原生工作台不再是产品页');
 });
@@ -25,10 +25,9 @@ test('被取消的页从侧栏与跳转里一起消失（两处必须同一份�
   assert.equal(NAV.some(page => page.id === 'ask'), false);
   assert.equal(pageBundle('today'), '@lybx-leyw/dsh-zju-page-today');
   assert.equal(pageBundle('paper'), '@lybx-leyw/dsh-zju-page-paper');
-  // 「题库」曾经是寄居在学习页里的一个 tab，`pageBundle` 给它开了特例把包名指到
-  // `dsh-zju-page-study`。拆成独立包之后特例去掉 —— 这条断言就是那个特例的
-  // 纪念碑：谁再把它改回指向学习页，这里立刻红（包被取消时藏页与跳转都靠这条）。
-  assert.equal(pageBundle('quiz'), '@lybx-leyw/dsh-zju-page-quiz');
+  // 「题库」页已于 2026-11 归档，不再出现在 NAV 里 —— 它的 pageBundle 推导
+  // 也就没有消费者了。原先这里钉着「特例去掉后包名必须指向独立包」的纪念碑，
+  // 随页面退役一并失效（包已不在 packages/client/ 下）。
 
   // 论文页的包被取消。
   const enabled = new Map([['@lybx-leyw/dsh-zju-page-paper', false], ['@lybx-leyw/dsh-zju-page-today', true]]);
@@ -110,17 +109,21 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   const home = await mkdtemp(path.join(parent, 'profile-'));
   const first = await initialize({ home });
   const patch = path.join(first.profile, 'cordis.patch.yml');
-  // 本仓 bundle 的配置层（`- id: dsh-pages` 那段）由模板合并进 live patch，
-  // 用户自己写的那一段原样保留 —— 所以期望是「用户段 + 本仓段」，不是原样不动。
-  const custom = '# user overlay\n[]\n';
-  // 本仓段：取模板里**条目部分**（第一个 `- id:` 起），不含开头的说明注释。
+  // 本仓 bundle 的配置层由模板合并进 live patch，用户自己写的那一段原样保留。
   //
-  // `initialize()` 只合并 YAML 条目，不抄模板顶部那段注释 —— 期望值若用整篇
-  // 模板去比，差的就是那 18 行注释（本节因此红过两轮，最后靠逐字符对比才定位）。
+  // ⚠️ 2026-11 起模板 patch **没有任何条目**（页面壳退役后没有需要 profile 级
+  //    config 的 bundle），所以这里改成「按模板里实际有多少条目来算期望」：
+  //    有条目就拼在用户段之后，没有就只剩用户段。
+  //
+  //    `initialize()` 只合并 YAML 条目，不抄模板顶部那段说明注释 —— 期望值若
+  //    用整篇模板去比，差的就是那些注释（本节因此红过两轮，最后靠逐字符对比才定位）。
+  const custom = '# user overlay\n[]\n';
   const templateBody = (await readFile(path.join(root, 'profiles', lock.profile, 'cordis.patch.yml'), 'utf8'))
     .replace(/\r\n/g, '\n');
   const firstEntry = templateBody.indexOf('- id:');
-  const expectedPatch = custom + templateBody.slice(firstEntry).trimEnd() + '\n';
+  const expectedPatch = firstEntry < 0
+    ? custom
+    : custom + templateBody.slice(firstEntry).trimEnd() + '\n';
   await writeFile(patch, custom);
   await writeFile(path.join(home, 'user-note.txt'), 'keep my notes');
   const manifest = path.join(first.profile, 'package.json');
@@ -151,7 +154,7 @@ test('profile initialization is isolated, repeatable, and preserves user data an
   assert.deepEqual(data.dsh.profile.bundles, JSON.parse(await readFile(path.join(root, 'profiles', lock.profile, 'package.json'), 'utf8')).dsh.profile.bundles,
     'profile 的 bundles 必须与模板逐项一致（新增本仓 bundle 只改模板，不必再改这里）');
   // 每个本仓包都要有 profile 里的目录链接 —— 漏一个的表现是「启动了但那一页空白」。
-  // 包目录既可能平铺也可能在分组目录下（`packages/client/pages-default/`），
+  // 包目录既可能平铺也可能在分组目录下（`packages/client/page-paper/`），
   // 所以按 manifest.name 反查真实目录，不拼路径。
   for (const { manifest, path: dir } of await ownPackages(path.join(root, 'packages'))) {
     const name = manifest.name;
@@ -167,7 +170,7 @@ test('existing profiles add the bridge once without altering user bundles or ove
   const runtime = await initialize({ home });
   const file = path.join(runtime.profile, 'package.json');
   const manifest = JSON.parse(await readFile(file, 'utf8'));
-  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(name => name !== '@lybx-leyw/dsh-zju-source-cc98');
+  manifest.dsh.profile.bundles = manifest.dsh.profile.bundles.filter(name => name !== '@lybx-leyw/dsh-zju-source-classroom');
   manifest.dsh.profile.bundles.push('user-owned-plugin');
   manifest.custom = { keep: true };
   await writeFile(file, JSON.stringify(manifest));
@@ -177,20 +180,29 @@ test('existing profiles add the bridge once without altering user bundles or ove
   await initialize({ home });
   await initialize({ home });
   const upgraded = JSON.parse(await readFile(file, 'utf8'));
-  assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, '@lybx-leyw/dsh-zju-source-cc98']);
+  assert.deepEqual(upgraded.dsh.profile.bundles, [...manifest.dsh.profile.bundles, '@lybx-leyw/dsh-zju-source-classroom']);
   assert.deepEqual(upgraded.custom, manifest.custom);
   // 用户段不动，本仓配置层被合并进来（且重复初始化不会叠第二份）。
   const merged = await readFile(patch, 'utf8');
   assert.ok(merged.startsWith(userPatch), '用户覆盖必须原样保留在最前');
-  assert.equal(merged.split('- id: dsh-pages').length - 1, 1, '本仓配置层只应出现一次');
+  // 重复初始化不会把模板配置层叠第二份。模板当前没有条目时这条自动成立，
+  // 但仍然守着「将来加回条目后不许重复」这件事。
+  //
+  // 模板在这个用例里要**自己读**：上面的 `templateBody` 属于另一个用例的作用域，
+  // 复用它只会得到 ReferenceError（踩过一次）。
+  const templateText = (await readFile(path.join(root, 'profiles', lock.profile, 'cordis.patch.yml'), 'utf8'))
+    .replace(/\r\n/g, '\n');
+  const entryCount = (merged.match(/^- id: /gm) ?? []).length;
+  const templateEntryCount = (templateText.match(/^- id: /gm) ?? []).length;
+  assert.equal(entryCount, templateEntryCount, '本仓配置层重复初始化后不应叠加');
   // 补回来的包必须有指向真实目录的链接。
   // ⚠️ 不能拼 `packages/<包名>`：包可能住在分组目录（`packages/source/<目录>`），
   //    而目录名不等于包名。按 manifest.name 反查才是唯一稳的写法。
   const restored = (await ownPackages(path.join(root, 'packages')))
-    .find(entry => entry.manifest.name === '@lybx-leyw/dsh-zju-source-cc98');
-  assert.ok(restored, 'source-cc98 应当能按 manifest.name 反查到目录');
+    .find(entry => entry.manifest.name === '@lybx-leyw/dsh-zju-source-classroom');
+  assert.ok(restored, 'source-classroom 应当能按 manifest.name 反查到目录');
   assert.equal(
-    await realpath(path.join(runtime.profile, 'node_modules', '@lybx-leyw/dsh-zju-source-cc98')),
+    await realpath(path.join(runtime.profile, 'node_modules', '@lybx-leyw/dsh-zju-source-classroom')),
     await realpath(restored.path),
   );
 });

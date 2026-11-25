@@ -1,0 +1,20 @@
+{
+  "key": "www.xiaohongshu.com",
+  "origin": "https://www.xiaohongshu.com",
+  "label": "小红书（网页版）",
+  "status": "done",
+  "via": null,
+  "requires": [],
+  "auth": {
+    "type": "login-required-for-content",
+    "note": "笔记内容/搜索/信息流全部强制登录；唯一免登录面是 sitemap（50 万条笔记 URL）与 /worldcup26 专题"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2500,
+    "concurrency": 1,
+    "source": "robots",
+    "evidence": "https://www.xiaohongshu.com/robots.txt 原文对 Googlebot: 'Disallow: /'；对 Baiduspider/bingbot/360Spider/Sogou/YisouSpider 组: 'Disallow: /' 后 Allow: /$、/explore、/worldcup26、/download、/sitemap.xml、/sitemap-notes-、/sitemap-worldcup.xml、/robots.txt、/favicon.ico；对 '*' 全禁 Disallow: /。即**只有 sitemap 与少数白名单对普通爬虫开放**，正文页许可只给了白名单搜索引擎 UA。"
+  },
+  "exploredAt": "2026-11-20",
+  "scope": "免登录可达面探测；未登录、未尝试绕过鉴权"
+}

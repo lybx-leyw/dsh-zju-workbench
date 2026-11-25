@@ -1,0 +1,135 @@
+{
+  "key": "zju.summon.serialssolutions.com",
+  "origin": "https://zju.summon.serialssolutions.com",
+  "verified": [
+    {
+      "id": "config",
+      "method": "GET",
+      "path": "/custom_data",
+      "purpose": "机构级配置：标题、libhash(GK4PB6YY8Y)、数据库清单端点、OpenURL/ILL 地址、认证方式、可用 facet 与检索字段",
+      "auth": "none",
+      "responseType": "application/javascript",
+      "structure": "`var __configData = {...}`；顶层键 advanced_search/alma/authentication/home_page/info/search_results/site/...；关键：info.libhash=GK4PB6YY8Y、info.authenticated=true、authentication.service='cas'、site.title='求是学术搜索'、site.link_resolver。需先剥 `var __configData = ` 前缀再 JSON.parse",
+      "note": "17010B。这是本站的元配置，一次抓取即知所有后续端点。"
+    },
+    {
+      "id": "search",
+      "method": "GET",
+      "path": "/api/search?q=<query>&pn=<page>&raw=true",
+      "purpose": "聚合检索（Summon 索引）。返回 JSON：recordCount/pageCount/documents[]/facetFields[]，每条含 Title/Author/ContentType/PublicationYear/DOI/Abstract/hasFullText/link/openUrl/SummonAdditionalLinks",
+      "auth": "none（IP 机构识别；建议先 GET / 拿 rack.session）",
+      "responseType": "application/json",
+      "structure": "{version, sessionId, recordCount, pageCount, documents[25], facetFields[{fieldName,displayName,counts[{value,count}]}], availabilityPath}",
+      "verifiedWith": "q=machine learning → 200，471408B，recordCount=2826632，pageCount=113066，25 条文档",
+      "limits": "ps 固定 25；pn 从 1 起；q 支持 Summon 语法（AuthorCombined/TitleCombined/DOI/ISBN 等，见 config.advanced_search.custom_search_fields）"
+    },
+    {
+      "id": "document",
+      "method": "GET",
+      "path": "/api/document?id=<ID>&raw=true",
+      "purpose": "单条记录详情",
+      "auth": "none",
+      "responseType": "application/json",
+      "status": "blocked-partial",
+      "note": "实测该调用返回空 body（0B），ID 形如 FETCH-zju_catalogus_0006516502。详情内容已在 search 的 documents[] 内，实际不必单发。记为未验证。"
+    },
+    {
+      "id": "databases",
+      "method": "GET",
+      "path": "/api/databases?raw=true",
+      "purpose": "**机构可见数据库清单**（DatabaseName facet，分页 100/页，hasMoreFacets=yes）",
+      "auth": "none",
+      "responseType": "application/json",
+      "structure": "{recordCount:1168758646, facetFields:[{fieldName:'GroupedDBID_s', displayName:'DatabaseName', pageSize:100, hasMoreFacets:'yes', counts:[{value,count}]}]}",
+      "verifiedWith": "200，30002B。首屏 100 库，含 ABI/INFORM、Gale、欧洲专利、Elsevier_Scopus、Web of Science、维普_期刊、Westlaw、DOAJ、ScienceDirect 等"
+    },
+    {
+      "id": "facet_values",
+      "method": "GET",
+      "path": "/api/facet_values?facet=<Field>&pn=<page>&raw=true",
+      "purpose": "单个 facet 的下钻取值（数据库/学科/文献类型…）",
+      "auth": "none",
+      "responseType": "application/json",
+      "note": "实测 facet=GroupedDBID&pn=2 → 200，29579B，但 pageNumber 回显恒为 1（pn 被忽略），counts 恒 100 条。与 zdbk 的「GET 分页被忽略」同类坑。"
+    },
+    {
+      "id": "availability",
+      "method": "GET",
+      "path": "/2.0.0/availability/<libhash>?s.id=<ID>&s.id=<ID>...",
+      "purpose": "馆藏可借状态（逐条 location/callNumber/status）",
+      "auth": "none",
+      "responseType": "application/json",
+      "structure": "{availabilityItems:[{id, availabilities:[{displayString, status, location, callNumber}]}]}",
+      "verifiedWith": "200，5267B；status 实测多为 'unknown'（后端 opac.zju.edu.cn XPath 解析未命中 in stock / CHECKEDOUT 正则）",
+      "note": "完整 URL 直接从 search 响应的 availabilityPath 字段取，不要自己拼。"
+    },
+    {
+      "id": "link",
+      "method": "GET",
+      "path": "/2.0.0/link/0/<opaque-id>（即 documents[].link）",
+      "purpose": "**全文/馆藏解析器（link resolver）**：303 重定向到最终目标",
+      "auth": "none",
+      "responseType": "303 → 任意",
+      "note": "实测两类落点：① 无全文 → 303 opac.zju.edu.cn 书目页（约 42KB，标题含「西文文献库 - 浙江大学图书馆书目系统」）；② 有出版社全文（documents[].SummonAdditionalLinks[].link）→ 303 link.springer.com → 最终 Springer 图书页 200 275887B。全程无需登录。"
+    },
+    {
+      "id": "autocomplete",
+      "method": "GET",
+      "path": "https://api.summon.serialssolutions.com/eautocomplete/suggest/search?q=<q>&site=zju&lang=zh",
+      "purpose": "搜索建议",
+      "auth": "none",
+      "status": "blocked",
+      "note": "实测 502 'Incomplete response received from application'（Rack 后端出错）。参数名可能不是 q/site，未继续试。记为未验证。"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "facet_values_all_pages",
+      "method": "GET",
+      "path": "/api/facet_values?facet=GroupedDBID&pn=2",
+      "whyUnverified": "pn 被忽略，无法翻页取全量库清单；若需完整库表须另找参数（前端用 listValuesCommand 但未见实际请求）"
+    },
+    {
+      "id": "bulk_export",
+      "method": "POST",
+      "path": "/api/bulk_export",
+      "whyUnverified": "前端 apiService.bulkExport 用 POST；语义为导出结果集，可能产生服务端任务。按只读契约不调用。"
+    },
+    {
+      "id": "metrics_event",
+      "method": "POST",
+      "path": "/2.0.0/event",
+      "whyUnverified": "埋点上报（写入）。明确是写，不调用。"
+    },
+    {
+      "id": "research_assistant",
+      "method": "GET",
+      "path": "/api/search（research_assistant 变体）",
+      "whyUnverified": "前端路由 /research_assistant 标 auth:!0，需 CAS 登录。本轮未登录。"
+    },
+    {
+      "id": "sierra_api",
+      "method": "GET",
+      "path": "/sierra_api/patrons/...",
+      "whyUnverified": "个人借阅/预约区，需登录，且 config.sierra.api_integration_enabled=false（未启用）。不探。"
+    }
+  ],
+  "policyExcluded": [
+    {
+      "name": "bulk-export",
+      "method": "POST",
+      "path": "/api/bulk_export",
+      "reason": "批量导出（写操作，且属批量获取，超出只读边界）",
+      "action": "不调用"
+    },
+    {
+      "name": "event-track",
+      "method": "POST",
+      "path": "/2.0.0/event",
+      "reason": "埋点上报（写操作）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "bulk_export 是批量导出（写操作，且涉及批量数据获取）；event 是埋点上报（写）。",
+  "policyRecordedAt": "2026-11-23"
+}

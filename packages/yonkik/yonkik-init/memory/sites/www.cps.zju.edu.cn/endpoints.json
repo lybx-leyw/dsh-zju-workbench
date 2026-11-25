@@ -1,0 +1,31 @@
+{
+  "site": "www.cps.zju.edu.cn",
+  "access": "公开 HTTP。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.cps.zju.edu.cn/58875/list.htm",
+      "column": "研究生教育",
+      "verifiesPath": "/58875/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cps.zju.edu.cn/58875/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "研究生教育",
+        "count": 14,
+        "total": 124,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3228356",
+        "firstDate": "2026-11-17",
+        "identityEvidence": [
+          "var url == /58875/list.htm",
+          "banner span.cn == 研究生教育",
+          "all item hrefs carry c58875a…"
+        ],
+        "note": "无面包屑；用自报地址 + 横幅 + 条目栏目 ID 三重校验。"
+      }
+    }
+  ]
+}

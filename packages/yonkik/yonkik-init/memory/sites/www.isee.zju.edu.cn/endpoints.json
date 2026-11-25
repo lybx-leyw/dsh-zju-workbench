@@ -1,0 +1,245 @@
+{
+  "site": "www.isee.zju.edu.cn",
+  "access": "公开 HTTP；HTTPS 443 连接被拒。目录 .htm 301 到同站 .psp；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.isee.zju.edu.cn/51190/list.htm",
+      "column": "全部通知",
+      "verifiesPath": "/51190/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.isee.zju.edu.cn/51190/list.psp",
+        "catalogPath": "/51190/list.htm",
+        "status": 200,
+        "column": "全部通知",
+        "displayTitle": "全部通知",
+        "trail": [
+          [
+            "/tzggwxw/list.htm",
+            "通知公告"
+          ],
+          [
+            "/51190/list.htm",
+            "全部通知"
+          ]
+        ],
+        "count": 20,
+        "total": 13070,
+        "pages": 654,
+        "externalLinks": 0,
+        "firstId": "3217084",
+        "firstDate": "2026-10-20"
+      }
+    },
+    {
+      "id": "GET www.isee.zju.edu.cn/51191/list.htm",
+      "column": "公示公告",
+      "verifiesPath": "/51191/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.isee.zju.edu.cn/51191/list.psp",
+        "catalogPath": "/51191/list.htm",
+        "status": 200,
+        "column": "公示公告",
+        "displayTitle": "公示公告",
+        "trail": [
+          [
+            "/tzggwxw/list.htm",
+            "通知公告"
+          ],
+          [
+            "/51191/list.htm",
+            "公示公告"
+          ]
+        ],
+        "count": 20,
+        "total": 624,
+        "pages": 32,
+        "externalLinks": 0,
+        "firstId": "3229659",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.isee.zju.edu.cn/51193/list.htm",
+      "column": "本科生教学",
+      "verifiesPath": "/51193/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.isee.zju.edu.cn/51193/list.psp",
+        "catalogPath": "/51193/list.htm",
+        "status": 200,
+        "column": "本科生教学",
+        "displayTitle": "本科生教学",
+        "trail": [
+          [
+            "/tzggwxw/list.htm",
+            "通知公告"
+          ],
+          [
+            "/51193/list.htm",
+            "本科生教学"
+          ]
+        ],
+        "count": 20,
+        "total": 2642,
+        "pages": 133,
+        "externalLinks": 0,
+        "firstId": "3225016",
+        "firstDate": "2026-11-10"
+      }
+    },
+    {
+      "id": "GET www.isee.zju.edu.cn/51194/list.htm",
+      "column": "研究生教学",
+      "verifiesPath": "/51194/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.isee.zju.edu.cn/51194/list.psp",
+        "catalogPath": "/51194/list.htm",
+        "status": 200,
+        "column": "研究生教学",
+        "displayTitle": "研究生教学",
+        "trail": [
+          [
+            "/tzggwxw/list.htm",
+            "通知公告"
+          ],
+          [
+            "/51194/list.htm",
+            "研究生教学"
+          ]
+        ],
+        "count": 20,
+        "total": 865,
+        "pages": 44,
+        "externalLinks": 2,
+        "firstId": "3217084",
+        "firstDate": "2026-10-20"
+      }
+    },
+    {
+      "id": "GET www.isee.zju.edu.cn/51195/list.htm",
+      "column": "学生工作",
+      "verifiesPath": "/51195/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.isee.zju.edu.cn/51195/list.psp",
+        "catalogPath": "/51195/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "学生工作",
+        "trail": [
+          [
+            "/tzggwxw/list.htm",
+            "通知公告"
+          ],
+          [
+            "/51195/list.htm",
+            "学生工作"
+          ]
+        ],
+        "count": 20,
+        "total": 4076,
+        "pages": 204,
+        "externalLinks": 0,
+        "firstId": "3229183",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.isee.zju.edu.cn/51199/list.htm",
+      "column": "对外交流",
+      "verifiesPath": "/51199/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.isee.zju.edu.cn/51199/list.psp",
+        "catalogPath": "/51199/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "对外交流",
+        "trail": [
+          [
+            "/tzggwxw/list.htm",
+            "通知公告"
+          ],
+          [
+            "/51199/list.htm",
+            "对外交流"
+          ]
+        ],
+        "count": 20,
+        "total": 34,
+        "pages": 2,
+        "externalLinks": 0,
+        "firstId": "3214414",
+        "firstDate": "2026-06-20"
+      }
+    },
+    {
+      "id": "GET www.isee.zju.edu.cn/51200/list.htm",
+      "column": "就业实习",
+      "verifiesPath": "/51200/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.isee.zju.edu.cn/51200/list.psp",
+        "catalogPath": "/51200/list.htm",
+        "status": 200,
+        "column": "就业实习",
+        "displayTitle": "就业实习",
+        "trail": [
+          [
+            "/tzggwxw/list.htm",
+            "通知公告"
+          ],
+          [
+            "/51200/list.htm",
+            "就业实习"
+          ]
+        ],
+        "count": 20,
+        "total": 3040,
+        "pages": 152,
+        "externalLinks": 0,
+        "firstId": "3104317",
+        "firstDate": "2025-11-10"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/21056/list.htm",
+      "pageTitle": "培养方案",
+      "claimedColumnPath": "/21061/list.htm",
+      "claimedColumnTitle": "培养方案",
+      "note": "目录路径可访问且标题正确，但「您的位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/21057/list.htm",
+      "pageTitle": "培养方案",
+      "claimedColumnPath": "/21064/list.htm",
+      "claimedColumnTitle": "培养方案",
+      "note": "目录路径可访问且标题正确，但「您的位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/50891/list.htm",
+      "pageTitle": "交流动态",
+      "claimedColumnPath": "/50899/list.htm",
+      "claimedColumnTitle": "交流动态",
+      "note": "目录路径可访问且标题正确，但「您的位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余信电学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

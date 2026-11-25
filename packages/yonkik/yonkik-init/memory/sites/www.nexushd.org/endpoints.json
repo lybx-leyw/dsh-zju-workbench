@@ -1,0 +1,183 @@
+{
+  "key": "www.nexushd.org",
+  "origin": "https://www.nexushd.org",
+  "_note": "**本站在安全契约下按最严标准处理。** robots.txt 明确 Disallow: /（全站禁爬）。以下是仅有的、人类在未登录状态也能看到的公开页。**没有 verified 的业务数据接口** —— 所有种子/用户/积分相关接口均需登录，全部记入 unverified 且本轮未调用。",
+  "verified": [
+    {
+      "id": "root-redirect",
+      "method": "GET",
+      "path": "/",
+      "purpose": "入口（强制跳登录）",
+      "auth": "none",
+      "responseType": "301 → /login.php",
+      "structure": "301，server `nginx/1.10.3`",
+      "note": "无任何匿名可见内容"
+    },
+    {
+      "id": "login-page",
+      "method": "GET",
+      "path": "/login.php",
+      "purpose": "登录页（三入口 + 站规提示 + 求助留言框）",
+      "auth": "none",
+      "responseType": "text/html",
+      "structure": "200，14172B，title `NexusHD :: 登录 - Powered by NexusPHP`。含 `<form method=\"post\" action=\"takelogin.php\">`，字段 username/password/logout/securelogin/ssl/trackerssl。另有 `action=/shoutbox.php method=get` 的求助留言框（shbox_text/sent/type=helpbox）",
+      "observedText": [
+        "登录（校网） / 登录（校外 IPv6） / 注册（仅限校网）",
+        "你需要启用cookies才能登录或切换语言",
+        "如果出现注册失败或帐号被禁用的情况，请发邮件至 staff@nexushd.org",
+        "[ 50 ] 次连续登录失败将导致你的IP地址被禁用! 你还有 [50] 次尝试机会",
+        "限制只能使用本IP登录",
+        "使用 CC98 账号登录 —— 该功能已损坏，请使用 NexusHD 账号与密码登录（已注释）",
+        "被禁用户自助解封入口",
+        "(c) NexusHD 2007-2026 Powered by NexusPHP"
+      ],
+      "note": "**只读页面。未提交任何表单。** 页脚 `2007-2026` 直接印证 18 年站龄（CC98 帖 6382580「十八周年站庆」）。"
+    },
+    {
+      "id": "signup-page",
+      "method": "GET",
+      "path": "/signup.php",
+      "purpose": "注册页（**仅展示规则与字段，未提交任何内容**）",
+      "auth": "none",
+      "responseType": "text/html",
+      "structure": "200，9862B，title `NexusHD :: 注册 - Powered by NexusPHP`。字段：用户名（(a-z)(A-Z)(0-9)，至多 12 字符）/ 密码（≥6 字符）/ 确认密码 / 邮箱 / 国家地区",
+      "observedText": [
+        "账号仅限由注册者本人使用，禁止出借或多人共享。",
+        "每人仅限一个账号，注册小号/马甲者将连同主账号一起封禁。",
+        "你只能使用以下邮箱注册：@zju.edu.cn 或 @intl.zju.edu.cn"
+      ],
+      "note": "**未注册。** 邮箱白名单是硬证据：注册受校网 + 浙大邮箱双重限制。"
+    },
+    {
+      "id": "faq",
+      "method": "GET",
+      "path": "/faq.php",
+      "purpose": "**站点 FAQ（公开、22483 字符正文，本站最有信息量的公开页）**",
+      "auth": "none",
+      "responseType": "text/html",
+      "structure": "200，82484B。10 大章节目录：站点信息与 PT 知识 / 用户信息 / 数据统计 / 发布 / 上传下载做种 / 提升下载速度 / 透明代理 / 连不上 / 求助 / 翻译",
+      "note": "FAQ 1.1 原文：『我们的目标是为注册用户提供一个关于高品质资源的交流分享平台。这是非公开的 BT 站点，你必须注册后才能访问。』—— 这条定义了本站的非公开性质。"
+    },
+    {
+      "id": "robots",
+      "method": "GET",
+      "path": "/robots.txt",
+      "purpose": "自动化条款",
+      "auth": "none",
+      "responseType": "text/plain",
+      "structure": "**26B：`User-agent: *` / `Disallow: /`**",
+      "note": "**全站禁止爬虫。这是本轮只探 6 次、且不碰任何业务接口的直接依据。**"
+    },
+    {
+      "id": "torrents-redirect",
+      "method": "GET",
+      "path": "/torrents.php",
+      "purpose": "种子列表（验证是否需要登录）",
+      "auth": "needed",
+      "status": "301 → /login.php?returnto=torrents.php",
+      "note": "证实「种子列表匿名不可见」。这是唯一一次触到业务页，目的仅为止损验证；未跟随到内容、未下载任何 .torrent。"
+    },
+    {
+      "id": "torrentrss",
+      "method": "GET",
+      "path": "/torrentrss.php",
+      "purpose": "RSS（验证是否需要 passkey）",
+      "auth": "needed (passkey)",
+      "status": "200 但 body = `invalid passkey`（15B）",
+      "note": "**重要坑**：HTTP 200 + 15 字节 body。用状态码判断会误以为「RSS 公开可用」。实际返回的是明文错误串，不是 XML。"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "takeLogin",
+      "method": "POST",
+      "path": "/takelogin.php",
+      "whyUnverified": "**登录表单提交。无凭据，且按安全契约不尝试。** 另：连续失败 50 次会封 IP，绝不可试错。"
+    },
+    {
+      "id": "torrents",
+      "method": "GET",
+      "path": "/torrents.php",
+      "whyUnverified": "301 到登录。登录后才可见，本轮不登录。"
+    },
+    {
+      "id": "details",
+      "method": "GET",
+      "path": "/details.php?id=<torrentId>",
+      "whyUnverified": "NexusPHP 标准种子详情页。需登录，且遍历 id 违反「不遍历猜测他人资源 ID」。**不做。**"
+    },
+    {
+      "id": "download",
+      "method": "GET",
+      "path": "/download.php?id=<torrentId>&passkey=<passkey>",
+      "whyUnverified": "**下载 = 计入下载量，直接影响分享率与账号存活。绝不做。**"
+    },
+    {
+      "id": "usercp",
+      "method": "GET",
+      "path": "/usercp.php",
+      "whyUnverified": "个人中心（分享率/魔力值）。需登录。"
+    },
+    {
+      "id": "mybonus",
+      "method": "GET",
+      "path": "/mybonus.php",
+      "whyUnverified": "魔力值系统。**涉及积分兑换，CC98 帖 6459976 讨论的正是跨站兑财富值，属站规灰区。不探。**"
+    },
+    {
+      "id": "shoutbox",
+      "method": "POST",
+      "path": "/shoutbox.php",
+      "whyUnverified": "登录页那个求助留言框的提交端。**是写操作，不调。**"
+    },
+    {
+      "id": "signupSubmit",
+      "method": "POST",
+      "path": "/signup.php（提交）",
+      "whyUnverified": "**注册 = 创建账号 = 写操作。且用户明确要求「绝不注册」。**"
+    },
+    {
+      "id": "promotion",
+      "method": "GET",
+      "path": "/promotion.php",
+      "whyUnverified": "站内公告页，需登录。**注意：CC98 版块（board \"NexusHD\"）的公告是公开的，那才是本站 18 年历史的公开证据来源。**"
+    }
+  ],
+  "blocked": [
+    {
+      "what": "种子列表 / 站点规模 / 用户数 / 促销种子",
+      "why": "robots.txt `Disallow: /` 全站禁爬 + 全部需登录 + 无凭据。**这是刻意不做的，不是拿不到。**",
+      "howToUnblock": "只有用户本人愿意提供自己的 NexusHD 账号、且明确授权读取自己的页面时才可推进；即便如此也只能读自己的数据，不能遍历。"
+    },
+    {
+      "what": "「校外 IPv6」入口 v6.nexushd.org 的实际差异",
+      "why": "`getaddrinfo ENOTFOUND v6.nexushd.org` —— **本机 DNS 解析不到该子域**（本机无 IPv6 出口/该域名仅 AAAA）。因此无法确认它是同一实例的 IPv6 别名还是独立入口。",
+      "howToUnblock": "在校园网 IPv6 环境下解析。**本机不具备条件，标 blocked 而非「站点坏了」。**"
+    }
+  ],
+  "policyExcluded": [
+    {
+      "name": "signup",
+      "method": "POST",
+      "path": "/signup.php",
+      "reason": "注册账号（写操作）",
+      "action": "不调用"
+    },
+    {
+      "name": "shoutbox",
+      "method": "POST",
+      "path": "/shoutbox.php",
+      "reason": "发言（写操作，产生公开内容）",
+      "action": "不调用"
+    },
+    {
+      "name": "login",
+      "method": "POST",
+      "path": "/takelogin.php",
+      "reason": "登录（建立会话）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "signup.php 是注册（写）、takelogin 是登录、shoutbox 是发言（写）。",
+  "policyRecordedAt": "2026-11-23"
+}

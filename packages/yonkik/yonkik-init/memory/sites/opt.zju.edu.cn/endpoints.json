@@ -1,0 +1,257 @@
+{
+  "site": "opt.zju.edu.cn",
+  "access": "公开 HTTP；部分目录 .htm 301 到同站 .psp。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET opt.zju.edu.cn/73609/list.htm",
+      "column": "出国出境公示",
+      "verifiesPath": "/73609/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://opt.zju.edu.cn/73609/list.psp",
+        "catalogPath": "/73609/list.htm",
+        "status": 200,
+        "column": "出国出境公示",
+        "displayTitle": "出国出境公示",
+        "sectionTitle": "对外交流",
+        "trail": [
+          [
+            "/72686/list.htm",
+            "对外交流"
+          ],
+          [
+            "/73609/list.htm",
+            "出国出境公示"
+          ]
+        ],
+        "count": 20,
+        "total": 363,
+        "pages": 19,
+        "externalLinks": 0,
+        "firstId": "3229681",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET opt.zju.edu.cn/72740/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/72740/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://opt.zju.edu.cn/72740/list.psp",
+        "catalogPath": "/72740/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/72687/list.htm",
+            "学生工作"
+          ],
+          [
+            "/72740/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 20,
+        "total": 55,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3221657",
+        "firstDate": "2026-11-02"
+      }
+    },
+    {
+      "id": "GET opt.zju.edu.cn/72768/list.htm",
+      "column": "重点提示",
+      "verifiesPath": "/72768/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://opt.zju.edu.cn/72768/list.htm",
+        "catalogPath": "/72768/list.htm",
+        "status": 200,
+        "column": "重点提示",
+        "displayTitle": "重点提示",
+        "sectionTitle": "通知公告",
+        "trail": [
+          [
+            "/72763/list.htm",
+            "通知公告"
+          ],
+          [
+            "/72768/list.htm",
+            "重点提示"
+          ]
+        ],
+        "count": 20,
+        "total": 4424,
+        "pages": 222,
+        "externalLinks": 1,
+        "firstId": "3229066",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET opt.zju.edu.cn/72701/list.htm",
+      "column": "综合服务·通知公告",
+      "verifiesPath": "/72701/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://opt.zju.edu.cn/72701/list.htm",
+        "catalogPath": "/72701/list.htm",
+        "status": 200,
+        "column": "综合服务·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "综合服务",
+        "trail": [
+          [
+            "/72681/list.htm",
+            "综合服务"
+          ],
+          [
+            "/72701/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 20,
+        "total": 518,
+        "pages": 26,
+        "externalLinks": 0,
+        "firstId": "3228267",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET opt.zju.edu.cn/72724/list.htm",
+      "column": "学籍管理",
+      "verifiesPath": "/72724/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://opt.zju.edu.cn/72724/list.psp",
+        "catalogPath": "/72724/list.htm",
+        "status": 200,
+        "column": "学籍管理",
+        "displayTitle": "学籍管理",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/72684/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/72724/list.htm",
+            "学籍管理"
+          ]
+        ],
+        "count": 20,
+        "total": 65,
+        "pages": 4,
+        "externalLinks": 0,
+        "firstId": "3208223",
+        "firstDate": "2026-09-23"
+      }
+    },
+    {
+      "id": "GET opt.zju.edu.cn/72739/list.htm",
+      "column": "团学组织",
+      "verifiesPath": "/72739/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://opt.zju.edu.cn/72739/list.htm",
+        "catalogPath": "/72739/list.htm",
+        "status": 200,
+        "column": "团学组织",
+        "displayTitle": "团学组织",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/72687/list.htm",
+            "学生工作"
+          ],
+          [
+            "/72739/list.htm",
+            "团学组织"
+          ]
+        ],
+        "count": 20,
+        "total": 130,
+        "pages": 7,
+        "externalLinks": 0,
+        "firstId": "3218337",
+        "firstDate": "2026-10-23"
+      }
+    },
+    {
+      "id": "GET opt.zju.edu.cn/tzgg/list.htm",
+      "column": "发展联络·通知公告",
+      "verifiesPath": "/tzgg/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://opt.zju.edu.cn/tzgg/list.htm",
+        "catalogPath": "/tzgg/list.htm",
+        "status": 200,
+        "column": "发展联络·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "发展联络",
+        "trail": [
+          [
+            "/72689/list.htm",
+            "发展联络"
+          ],
+          [
+            "/tzgg/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 20,
+        "total": 31,
+        "pages": 2,
+        "externalLinks": 14,
+        "firstId": null,
+        "firstDate": "2026-08-07"
+      }
+    },
+    {
+      "id": "GET opt.zju.edu.cn/72735/list.htm",
+      "column": "对外交流·通知公告",
+      "verifiesPath": "/72735/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://opt.zju.edu.cn/72735/list.htm",
+        "catalogPath": "/72735/list.htm",
+        "status": 200,
+        "column": "对外交流·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "对外交流",
+        "trail": [
+          [
+            "/72686/list.htm",
+            "对外交流"
+          ],
+          [
+            "/72735/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 20,
+        "total": 390,
+        "pages": 20,
+        "externalLinks": 1,
+        "firstId": null,
+        "firstDate": "2026-11-10"
+      }
+    }
+  ],
+  "unverified": [
+    "其余光电学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

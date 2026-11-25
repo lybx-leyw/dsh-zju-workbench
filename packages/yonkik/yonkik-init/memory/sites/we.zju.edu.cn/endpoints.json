@@ -1,0 +1,60 @@
+{
+  "site": "we.zju.edu.cn",
+  "origin": "http://we.zju.edu.cn（注意：**只有 HTTP**，443 TCP 超时）",
+  "exploredAt": "2026-11-20",
+  "auth": { "type": "wechat-oauth", "appid": "wx76332f060ee4d976", "scope": "snsapi_base", "note": "浏览器直连无法完成，需微信内置环境" },
+  "rateLimit": { "minIntervalMs": 2000, "concurrency": 1, "source": "default" },
+  "reachability": {
+    "dns": "10.12.204.25（内网）",
+    "tcp443": "TIMEOUT 8007ms ← 原『实测 TIMEOUT』的真因",
+    "tcp80": "OK 12ms",
+    "httpRoot": "200 1682B title=系统提示"
+  },
+  "verified": [
+    {
+      "method": "GET",
+      "path": "/",
+      "purpose": "跳转公告页（唯一稳定可见内容）",
+      "auth": "none",
+      "responseShape": "HTML 1682B；title『系统提示』；body 含『浙江大学后勤集团网站已升级改版，10秒后自动跳转到首页』；meta refresh 10;url=http://zulg.zju.edu.cn/",
+      "evidence": "200 1682B 786ms server=Apache/2.4.48 (Win64) PHP/5.6.38 x-powered-by=ThinkPHP2.1"
+    },
+    {
+      "method": "GET",
+      "path": "/mobile/",
+      "purpose": "微信公众号应用入口",
+      "auth": "wechat-oauth2",
+      "responseShape": "302 → https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx76332f060ee4d976&redirect_uri=http%3A%2F%2Fwe.zju.edu.cn%2Fmobile%2Findex.php%3Fc%3Daccount%26a%3Dauto&response_type=code&scope=snsapi_base&state=STATE#wechat_redirect",
+      "evidence": "逐跳实测 301(/mobile→/mobile/) → 302(weixin oauth) → 301(weixin) → 200(weixin 授权页 1050B)"
+    },
+    {
+      "method": "GET",
+      "path": "/mobile/index.php?c=account&a=auto",
+      "purpose": "用户中心（无 code 时落到错误态模板）",
+      "auth": "none-but-error",
+      "responseShape": "HTML 4426B；title『用户中心』；模板 tpl_home 含『weui_msg_desc: 微信账户出错！』；含『扫码须知』弹窗文本",
+      "evidence": "200 4426B"
+    }
+  ],
+  "redirectOnly": [
+    { "path": "/mobile/index.php?c=index&a=index", "status": 302, "bytes": 12, "note": "需 openid" },
+    { "path": "/mobile/index.php?c=canteen&a=index", "status": 302, "bytes": 0, "note": "疑似就餐控制器，路由存在但被鉴权拦；未能实证" }
+  ],
+  "catchAll": {
+    "pathsTested": ["/index.php", "/index.php?s=/index/index", "/api/index", "/canteen"],
+    "behavior": "全部 200 且返回同一张 1682B『系统提示』兜底页（ThinkPHP 默认路由）",
+    "detection": "content-length=1682 且 title=系统提示 → 判为兜底，非真页面"
+  },
+  "redirectTarget": {
+    "host": "zulg.zju.edu.cn",
+    "chain": "http://zulg.zju.edu.cn/ → 302 → https://zulg.zju.edu.cn/index.htm → 200 55890B title『浙江大学后勤集团』",
+    "indexKeywordHits": { "就餐": 0, "指数": 0 },
+    "note": "跳转目标首页不含『就餐』『指数』，证明该功能已不在后勤集团主站首页"
+  },
+  "blocked": {
+    "reason": "就餐指数无公开免登录入口；需微信 OAuth code（snsapi_base，须微信内置环境）或浙大钉微应用免登 code",
+    "missing": ["微信 OAuth code / 微信 JS-SDK 环境", "或浙大钉（钉钉）内微应用入口路径", "或 /mobile 下就餐对应确切的 c/a 路由参数"],
+    "nextStep": "请用户在微信内打开 we.zju.edu.cn/mobile/，或告知就餐指数在浙大钉里的具体入口"
+  },
+  "unverified": []
+}

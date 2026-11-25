@@ -1,0 +1,25 @@
+{
+  "key": "cdn.jsdelivr.net",
+  "origin": "https://cdn.jsdelivr.net",
+  "label": "国家节假日数据镜像",
+  "type": "public-static-calendar",
+  "status": "done",
+  "auth": {
+    "type": "none"
+  },
+  "requires": [],
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 为 CDN 的 400 Invalid URL，不是规则文件；README 明示年度镜像，单年手动请求，限流即停。"
+  },
+  "exploredAt": "2026-11-22",
+  "profile": {
+    "facets": [
+      "公共数据",
+      "国务院节假日与调休",
+      "静态 JSON"
+    ]
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "site": "bksy.zju.edu.cn",
+  "base": "https://bksy.zju.edu.cn",
+  "auth": "none（全部免登录）",
+  "platform": "苏迪 Coreplus/Webplus（template2994，siteId=499），nginx",
+  "verified": [
+    {
+      "name": "home",
+      "method": "GET",
+      "path": "/",
+      "returns": "首页 HTML 169,814B（2026-11-20）。含完整两级栏目树（ph-nav-level1/2），是栏目发现的唯一入口",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "pyfa-index",
+      "method": "GET",
+      "path": "/28325/list.htm",
+      "returns": "「培养方案」总栏目：列 2010–2026 各年级入口。每页 14 条 + 真分页（list1.htm / list2.htm）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "分页锚点：class=\"next\" href=\"/28325/list2.htm\"；末页用 javascript:void(0)"
+    },
+    {
+      "name": "pyfa-column-any",
+      "method": "GET",
+      "path": "/{columnId}/list.htm 或 /{slug}/list.htm",
+      "returns": "任意栏目列表页。栏目 URL 有两种形态：纯数字 columnId（如 /28325/）与英文 slug（如 /dlpymspyfa_94116/、/gksybwjsjw/）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "pyfa-dalei-2026",
+      "method": "GET",
+      "path": "/dlpymspyfa_94116/list.htm",
+      "returns": "2026 级「大类培养模式培养方案」：86 条专业条目，**单页全量、无分页**。item 结构 li.right-list-item > a[href] + p(专业名)",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "86 条是 2026 级全体本科专业（含试验班方向）。左侧另有子栏目：必读说明 /bdsm/、专业培养模式 /zypymspyfa_94115/"
+    },
+    {
+      "name": "pyfa-zhuanye-2026",
+      "method": "GET",
+      "path": "/zypymspyfa_94115/list.htm",
+      "returns": "2026 级「专业培养模式培养方案」：共 23 条，**有分页**（第 1 页 14 条，第 2 页 9 条 → /list2.htm）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "major-detail",
+      "method": "GET",
+      "path": "/YYYY/MMDD/c{columnId}a{articleId}/page.htm",
+      "returns": "专业培养方案详情页。附件不在 href 里，而是挂在 **div[pdfsrc]** 自定义属性：`<div pdfsrc=\"/_upload/article/files/....pdf\" sud yfile-attr=\"{'title':'<年级>级<专业>培养方案.pdf'}\">`",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "解析要取 pdfsrc 属性，不是 <a href>。同页还可能有 mp4（swsrc / title='xxx.mp4'）"
+    },
+    {
+      "name": "pdf-direct",
+      "method": "GET",
+      "path": "/_upload/article/files/{xx}/{yy}/{hash}/{uuid}.pdf",
+      "returns": "PDF 原件直链。application/pdf，**支持 Range（206）**，无需 cookie/Referer",
+      "auth": "none",
+      "status": 206,
+      "verifiedAt": "2026-11-20",
+      "sample": "某年级某专业培养方案 → 440,330B，magic=%PDF-1.4"
+    },
+    {
+      "name": "bdsm-per-grade",
+      "method": "GET",
+      "path": "/bdsm/list.htm | /bdsmwjdsp/list.htm | /pyfajd/list.htm",
+      "returns": "各年级「必读说明」栏目。2024 级叫 /pyfajd/（标题「必读说明&解读视频」，2 条：必读说明 + 解读视频）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "search",
+      "method": "POST",
+      "path": "/_web/_search/api/search/new.rst?locale=zh_CN&request_locale=zh_CN&_p={base64 context}&searchWord={kw}",
+      "returns": "**403 Forbidden**（「抱歉，您没有权限访问该页面」）",
+      "auth": "none",
+      "status": 403,
+      "verifiedAt": "2026-11-20",
+      "note": "页面里的搜索表单 target=_blank 直接 POST 到该接口；实测匿名 403。站点内搜索不可用——所以按栏目遍历 + 本地按专业名匹配才是正路（crawler.mjs 的 find 就是这样做的）"
+    }
+  ],
+  "unverified": [
+    {
+      "name": "visitcount",
+      "method": "GET",
+      "path": "/_visitcount?siteId=499&type=2&columnId={id}",
+      "semantics": "read（埋点计数，图片）",
+      "note": "页脚埋点，无数据价值，未单发"
+    },
+    {
+      "name": "column-published-before-next",
+      "method": "GET",
+      "path": "/_web/_column/publishedManage/api/beforeOrNextArticle/new.rst?_p={base64}",
+      "semantics": "read（上一篇/下一篇）",
+      "note": "详情页底部的相邻文章接口，未单发。需要从页面提取 _p（base64 上下文）"
+    }
+  ],
+  "verifiedCount": 9,
+  "importantPitfall": "三个坑：① 附件在 div[pdfsrc] 而非 <a href>；② 栏目 URL 混用纯数字 columnId 与英文 slug，跨年级不通用，必须从 /28325/ 或首页导航表里取；③ 同年级「大类模式」页无分页（80+ 条一页），「专业模式」页有分页（14 条/页 → list2.htm），两种要分别处理。",
+  "exactNoticeColumns": {
+    "script": "sites/zju-notices/crawler-columns.mjs",
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/76425/list.htm",
+        "verification": {
+          "id": "GET bksy.zju.edu.cn/76425/list.htm",
+          "effectivePath": "/76425/list.htm",
+          "status": 200,
+          "total": 52,
+          "pages": 4,
+          "parsedCount": 14,
+          "unidentified": 0,
+          "firstId": "3219197",
+          "pinIconCount": 14
+        },
+        "auth": "none",
+        "via": "HTTPS direct",
+        "verifiedAt": "2026-11-22"
+      },
+      {
+        "method": "GET",
+        "path": "/76426/list.htm",
+        "verification": {
+          "id": "GET bksy.zju.edu.cn/76426/list.htm",
+          "effectivePath": "/76426/list.htm",
+          "status": 200,
+          "total": 76,
+          "pages": 6,
+          "parsedCount": 14,
+          "unidentified": 0,
+          "firstId": "3228078",
+          "pinIconCount": 14
+        },
+        "auth": "none",
+        "via": "HTTPS direct",
+        "verifiedAt": "2026-11-22"
+      }
+    ],
+    "note": "列表可能置顶或外链，不根据首条日期推断最新；仅首屏和附件链接元数据，不自动取正文/附件。"
+  },
+  "readOnlyNote": "POST /search 是只读检索（内容检索走请求体，非写操作）；本库不调用任何写端点。R174 补记以免把 POST 误读为写操作。",
+  "readOnlyNoteAt": "2026-11-23"
+}

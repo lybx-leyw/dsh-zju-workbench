@@ -1,0 +1,30 @@
+{
+  "key": "ygb.zju.edu.cn",
+  "origin": "http://ygb.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://ygb.zju.edu.cn/31555/list.htm",
+  "column": "通知公告",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 2,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/31555/list.htm",
+      "/31546/list.htm"
+    ],
+    "note": "身份用 div.position_dqwz「当前位置」链路 + Column_Anchor 大类名；/31546 的面包屑只有两项（本路径自认），parentPath 不可比，故该栏只做末项与标题校验，并如实记录 parentPath=null。"
+  }
+}

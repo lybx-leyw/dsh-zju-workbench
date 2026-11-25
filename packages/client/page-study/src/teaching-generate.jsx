@@ -12,12 +12,16 @@
  *      用户还得同时理解「章节数」和「并发数」两个不同的东西。
  *   3. 上限只能靠猜。真正的上限是 **Σ workers**，池子自己知道。
  *
- * 所以这里直接挂 `GenerationModels`（`dsh-zju-page-quiz` 已导出），
+ * 所以这里直接挂 `GenerationModels`（组件住在本包 `generation-models.jsx`），
  * 用 `purpose='teaching'` 单独存一份配额（`teaching-models.json`）。
+ *
+ * ⚠️ 它原先挂在「题库」页上、经 `quiz.generationModels` 契约取用。题库页 2026-11
+ * 归档后契约无人发布，这里退回一句说明 —— 而**「生成课件」按钮正是这个组件
+ * 渲染的**，于是整页再也生成不了讲义。组件已随本次修复搬回本包。
  *
  * # 为什么要包一层 `.zws-qz`
  *
- * `GenerationModels` 的样式（`page-quiz/src/style.css`）**每条规则都限定在
+ * `GenerationModels` 的样式（本包 `style.css` 末尾那一段）**每条规则都限定在
  * `.zws-qz` / `.zws-qz-page` 之下**。不套这个祖先类，浮窗虽然渲染得出来，
  * 但 `zws-generation-split` 会退回 `display:block`、面板宽度/定位全丢 ——
  * 用真实浏览器量过：无祖先时 `display:block`，有祖先时 `display:flex`。
@@ -29,7 +33,7 @@
 import React from 'react';
 // 讲义/备课共用的「供应商 + 每供应商 worker 数」面板属于题库页。
 // 本页不 import 它，按契约名取；题库页没装配时退回一句说明。
-import { usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
+import { GenerationModels } from './generation-models.jsx';
 
 /**
  * 取已发布的配置面板，套上 `.zws-qz` 祖先类后渲染。
@@ -39,11 +43,12 @@ import { usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
  * 宽度与定位全丢（真实浏览器量过：无祖先 block、有祖先 flex）。
  */
 function ConfigPanel(props) {
-  const Models = usePublishedComponent('quiz.generationModels');
-  if (!Models) {
-    return <p className="zws-muted" role="status">模型与并发配置由「题库」页提供；该页未启用时用设置里的默认模型。</p>;
-  }
-  return <Models {...props} />;
+  // 直接用自己的组件，不再经「题库」页的组件契约转手。
+  //
+  // 它原先发布在 page-quiz 上（`quiz.generationModels`），而真正的使用者一直是
+  // 本页 —— 题库页归档后契约没人发布，这里退回一句说明，**连「生成课件」按钮
+  // 都是这个组件渲染的**，于是整页再也生成不了讲义。
+  return <GenerationModels {...props} />;
 }
 
 /**

@@ -1,0 +1,261 @@
+{
+  "key": "chat.zju.edu.cn",
+  "origin": "https://chat.zju.edu.cn",
+  "apiPrefixes": {
+    "aiqa": "/aiqa (window.publicServiceDomain)",
+    "px": "/aiqa/px (苏迪 sframe / Coreplus 业务层)",
+    "wdzsk": "/wdzsk (对话管理 + 上传静态)",
+    "ws": "wss://chat.zju.edu.cn/wsqa/qa (AI 对话 WebSocket，需登录)"
+  },
+  "verified": [
+    {
+      "id": "init",
+      "method": "GET",
+      "path": "/aiqa/ai-helper/init",
+      "purpose": "SPA 初始化（学校名/开关/用户态/今日 token 等）",
+      "auth": "CAS 登录 cookie（aiqa）",
+      "observed": "带 cookie 直连该路径返回 resultCode=1002「地址无效」——说明它是 SPA 首屏 XHR（带额外参数/header）才有效；浏览器登录后同路径 200。无参数直打不可作为数据源。",
+      "status": "verified-but-needs-spa-params"
+    },
+    {
+      "id": "model-token",
+      "method": "GET",
+      "path": "/aiqa/ai-helper/model/token",
+      "purpose": "【关键】个人可用模型与 token 用量",
+      "auth": "CAS 登录 cookie",
+      "observed": "resultCode=0；result.data.qa[] 每项含 models[]（如 deepseek-r1-safe-671b-128k-local、qwen3.5-27b-256k-local）、used_quota（数值随账号用量变化）、unlimited_quota=true；result.data.user[] 为自建 token（quota）",
+      "status": "verified"
+    },
+    {
+      "id": "model-category",
+      "method": "GET",
+      "path": "/aiqa/ai-helper/model/category",
+      "purpose": "模型大类目录（llm/embedding/rerank/asr/tts）",
+      "auth": "CAS 登录 cookie",
+      "observed": "resultCode=0；data=[{name:通用对话,id:llm},{文本嵌入,embedding},{重排序,rerank},{语音识别,asr},{语音生成,tts}]，total=-1",
+      "status": "verified"
+    },
+    {
+      "id": "model-square",
+      "method": "GET",
+      "path": "/aiqa/px/_web/apps/agent/model/square.rst?state=1&page=0&rows=200",
+      "purpose": "【关键】模型广场：全校可申请模型的完整清单（含 context 长度、参数规模、部署位置）",
+      "auth": "登录 session（未登录 → 200 + resultCode=2010，不是 301）",
+      "observed": "result.total=5；数据形如 {category,context:'64k',deploymentType:'local',modelId:'qwen3.6-27b-64k-local',paramSize:'27b',releaseDate:'2026-06-22'}。rows 参数被忽略，恒 5 条（2089B）。",
+      "status": "verified"
+    },
+    {
+      "id": "model-options",
+      "method": "GET",
+      "path": "/aiqa/px/_web/apps/agent/model/options.rst",
+      "purpose": "模型下拉选项（label/value 同名 modelId）",
+      "auth": "登录 session",
+      "observed": "resultCode=0，5 项，与 square 一致",
+      "status": "verified"
+    },
+    {
+      "id": "model-categories",
+      "method": "GET",
+      "path": "/aiqa/px/_web/apps/agent/model/categories.rst",
+      "purpose": "模型大类（苏迪层）",
+      "auth": "登录 session",
+      "observed": "resultCode=0；code/name 对：llm/embedding/rerank/asr/tts",
+      "status": "verified"
+    },
+    {
+      "id": "token-list",
+      "method": "GET",
+      "path": "/aiqa/px/_web/apps/agent/token/list.rst?state=1&page=0&rows=50",
+      "purpose": "我的 API Key 列表（含明文 sk- 密钥、额度、可用模型）",
+      "auth": "登录 session",
+      "observed": "resultCode=0；data[0]={name:'1',key:'sk-****(已脱敏，不落盘)',totalQuota:1,remainQuota:1,usedQuota:0,unlimitedQuota:false,models:[]}。total=1。",
+      "status": "verified",
+      "note": "【敏感】返回明文 API 密钥，只读探测可用，但不得写进任何落盘资产。"
+    },
+    {
+      "id": "token-options",
+      "method": "GET",
+      "path": "/aiqa/px/_web/apps/agent/token/options.rst",
+      "purpose": "token 下拉选项",
+      "auth": "登录 session",
+      "observed": "87B 小响应（本账号无可用选项）",
+      "status": "verified"
+    },
+    {
+      "id": "token-user",
+      "method": "GET",
+      "path": "/aiqa/px/_web/apps/agent/token/user.rst",
+      "purpose": "当前用户在我司 token 体系的身份",
+      "auth": "登录 session",
+      "observed": "resultCode=1 / errorMsg=获取用户信息失败（本账号未在 pp 侧建用户）",
+      "status": "verified-null"
+    },
+    {
+      "id": "znt-list",
+      "method": "GET",
+      "path": "/aiqa/ai-helper/znt/list?categoryId=",
+      "purpose": "智能体广场：全校上架的 AI 应用清单",
+      "auth": "登录 session",
+      "observed": "resultCode=0，24 个智能体（WPS灵犀/伏羲万象/口腔医学辅助诊疗/医小研/AI辅导员·启小真/PBL项目式教学/实验报告批改助手/辅助编程/公式识别/浙小本/课程AI助教/心灵树洞 等）",
+      "status": "verified"
+    },
+    {
+      "id": "znt-category",
+      "method": "GET",
+      "path": "/aiqa/ai-helper/znt/category",
+      "purpose": "智能体分类",
+      "auth": "登录 session",
+      "observed": "resultCode=0，193B 分类列表",
+      "status": "verified"
+    },
+    {
+      "id": "znt-skills",
+      "method": "GET",
+      "path": "/aiqa/ai-helper/znt/skills?zntId=1",
+      "purpose": "指定智能体的技能/工具清单",
+      "auth": "登录 session",
+      "observed": "resultCode=0，3469B 技能数组",
+      "status": "verified"
+    },
+    {
+      "id": "model-apply-list",
+      "method": "GET",
+      "path": "/aiqa/px/_web/apps/agent/model/apply_list.rst?state=1&page=0&rows=50",
+      "purpose": "我的模型申请记录",
+      "auth": "登录 session",
+      "observed": "resultCode=0，data.total=0，list=[]（本账号无申请）",
+      "status": "verified"
+    },
+    {
+      "id": "chat-ui-config",
+      "method": "GET",
+      "path": "/chat/js/chat-ui-config.js",
+      "purpose": "【免登录】学校部署配置：接口前缀、菜单项、外部链接、功能开关",
+      "auth": "无（静态资源）",
+      "observed": "200，14066B。CURRENT_THEME='zd'，browserTitle='浙晓智'，chatTitle='晓浙对话'；meaus 六级菜单；publicServiceDomain='/aiqa'；publicAIDomain='/wsqa'；mxsqlcznUrl 指向 itc.zju.edu.cn 官方申请指南；zdzsUrl='https://ai-search.zju.edu.cn'；kygztUrl 指向 research.zju.edu.cn 科研工作台",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "chat-context-js",
+      "method": "GET",
+      "path": "/chat/js/context.js",
+      "purpose": "【免登录】window.* 变量回写逻辑（哪些开关生效）",
+      "auth": "无",
+      "observed": "200，13760B",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "chat-main-bundle",
+      "method": "GET",
+      "path": "/chat/static/js/main.893cff95.js",
+      "purpose": "【免登录】前端主包：完整 XHR 路由表（apiMap）+ 内嵌模型价目目录 + 供应商矩阵",
+      "auth": "无",
+      "observed": "200，1,387,538B。路由表在偏移 ~235,000 处（const d={serInit,newChat,...}）；内嵌 JSON.parse 价目目录 67,221B（OpenAI/Google/Anthropic/xAI/Moonshot/智谱/字节/DeepSeek/阿里/快手/生数 全量价格）",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "cas-kaptcha-status",
+      "method": "GET",
+      "path": "https://zjuam.zju.edu.cn/cas/v2/getKaptchaStatus",
+      "purpose": "登录前探验证码是否开启",
+      "auth": "无",
+      "observed": "body='false'（2026-11-20），即无需验证码",
+      "status": "verified-anonymous"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "ws-qa",
+      "method": "WS",
+      "path": "wss://chat.zju.edu.cn/wsqa/qa",
+      "purpose": "AI 对话主通道（流式）",
+      "why_unverified": "WebSocket 语义上是「发起一次推理」，会消耗 token 额度并写入会话记录，属写操作，按安全契约不调用。"
+    },
+    {
+      "id": "new-chat",
+      "method": "GET/POST",
+      "path": "/aiqa/ai-helper/znt/newChat",
+      "purpose": "新建会话",
+      "why_unverified": "改服务端状态（创建会话记录），疑似写，不调用。"
+    },
+    {
+      "id": "session-list",
+      "method": "GET",
+      "path": "/aiqa/ai-helper/znt/chat/session/list?zntId=&count=30",
+      "purpose": "会话列表（登录后 SPA 首屏会调用，200）",
+      "why_unverified": "读语义但涉及个人会话内容，本次未单独单发验证；登录时被动观察到 200。"
+    },
+    {
+      "id": "token-create",
+      "method": "POST",
+      "path": "/aiqa/px/_web/apps/agent/token/create.rst",
+      "purpose": "创建 API Key",
+      "why_unverified": "写操作，绝不调用。"
+    },
+    {
+      "id": "model-apply",
+      "method": "POST",
+      "path": "/aiqa/px/_web/apps/agent/model/apply.rst",
+      "purpose": "申请模型使用权限",
+      "why_unverified": "写操作（提交审批），不调用。"
+    },
+    {
+      "id": "doc-upload",
+      "method": "POST",
+      "path": "/aiqa/ai-helper/znt/doc/upload",
+      "purpose": "上传知识库文档",
+      "why_unverified": "写操作，不调用。"
+    },
+    {
+      "id": "gbi-",
+      "method": "POST",
+      "path": "/aiqa/pxgbi/api/gbi/query_sql 等 14 个",
+      "purpose": "GBI 数据分析（SQL 查询、归因、预测、报告导出）",
+      "why_unverified": "query_sql 直连数据仓库，语义不明且可能昂贵/有副作用（解释器/导出），本次全部不调用。"
+    },
+    {
+      "id": "dev-platform-action",
+      "method": "POST",
+      "path": "https://dev.zju.edu.cn/service/v1/DoAction.action",
+      "purpose": "开发者平台（苏迪 sframe）统一 action 入口",
+      "why_unverified": "无 action 名清单（需登录后 JS 分片），且该入口语义为通用写分发；本机实测无 body 时返回 code=-1 'req is null'。"
+    },
+    {
+      "id": "api-gateway",
+      "method": "?",
+      "path": "https://api.zju.edu.cn/*",
+      "purpose": "审批通过后的模型调用网关（官方说明页指向此处看调用示例）",
+      "why_unverified": "路径形态未知：/v1/models、/v1/chat/completions、/chat/completions、/models、/health 全部 404 {error:'Not Found'}（nginx/1.18.0）。根路径返回与 dev 站同一套「开发者网站」SPA。真实调用路径需登录开发者平台看示例，本次无该权限。"
+    }
+  ],
+  "notes": [
+    "鉴权分层：/aiqa/ai-helper/* 未登录 → 301 到 zjuam CAS；/aiqa/px/_web/apps/agent/* 未登录 → 200 + {resultCode:2010}。后者适合做「是否已登录」的廉价探针。",
+    "静态资源（/chat/js/*、/chat/static/*、/wdzsk/_upload/*）完全免登录。",
+    "SPA 由 window.publicServiceDomain / publicAIDomain / manage / deleteBz / gbiContext 五个前缀驱动，全部可在 chat-ui-config.js 里改。"
+  ],
+  "policyExcluded": [
+    {
+      "name": "token-create",
+      "method": "POST",
+      "path": "/aiqa/px/_web/apps/agent/token/create.rst",
+      "reason": "创建 token（写操作）",
+      "action": "不调用"
+    },
+    {
+      "name": "model-apply",
+      "method": "POST",
+      "path": "/aiqa/px/_web/apps/agent/model/apply.rst",
+      "reason": "申请模型权限（写操作，走审批流）",
+      "action": "不调用"
+    },
+    {
+      "name": "doc-upload",
+      "method": "POST",
+      "path": "/aiqa/ai-helper/znt/doc/upload",
+      "reason": "上传文档（写操作）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "token/create、model/apply、doc/upload 均为写操作。只读查询模型与智能体列表。",
+  "policyRecordedAt": "2026-11-23"
+}

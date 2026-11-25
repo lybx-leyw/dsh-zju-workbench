@@ -1,0 +1,18 @@
+{
+  "key": "zjuam.zju.edu.cn",
+  "origin": "https://zjuam.zju.edu.cn",
+  "status": "done",
+  "label": "统一身份认证（CAS）",
+  "auth": {
+    "type": "cas-form-with-captcha",
+    "note": "登录需验证码，属人工环节；本库不自动登录。"
+  },
+  "via": "direct-https-probe-only",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2400,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "2 次探测各 1 次。"
+  }
+}

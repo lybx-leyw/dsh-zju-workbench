@@ -1,0 +1,9 @@
+{
+  "key": "ugrs.zju.edu.cn",
+  "origin": "https://ugrs.zju.edu.cn",
+  "status": "done",
+  "type": "本科生院门户（苏迪 Webplus）",
+  "auth": { "type": "none", "note": "全站免登录。栏目页与全站搜索均可匿名读取。" },
+  "rateLimit": { "minIntervalMs": 2000, "concurrency": 1 },
+  "exploredAt": "2026-11-20"
+}

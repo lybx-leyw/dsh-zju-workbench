@@ -1,0 +1,4 @@
+# YONKIK 方法论 bundle：这一行让 Loader import 本包入口、跑 apply()（注册 skill provider）。
+- insert:
+    - id: zw-yonkik-skill
+      name: "@lybx-leyw/dsh-zju-yonkik-skill"

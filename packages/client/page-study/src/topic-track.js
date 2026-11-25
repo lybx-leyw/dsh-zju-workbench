@@ -3,7 +3,7 @@
  *
  * # 为什么不用力导向图
  *
- * 仓库里已有 `@lybx-leyw/dsh-zju-ui-graph-render`（cytoscape + fcose 力导向），但它服务的是
+ * 仓库里曾有 `@lybx-leyw/dsh-zju-ui-graph-render`（cytoscape + fcose 力导向，2026-11 已归档），它服务的是
  * 「笔记之间的链接」，那种图的价值在于**发现意外的关联**。
  *
  * 播放器右栏要回答的是完全不同的问题：

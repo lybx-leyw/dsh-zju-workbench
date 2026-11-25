@@ -1,0 +1,16 @@
+{
+  "key": "s1.zju.edu.cn",
+  "origin": "https://s1.zju.edu.cn",
+  "status": "done",
+  "type": "浙大百事通（统一搜索：办事指南/学校文件/通知公告/常见问题/通讯录/课程/教室）",
+  "auth": {
+    "type": "cas",
+    "credentialKey": "campus-sso",
+    "loginUrl": "https://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fs1.zju.edu.cn%2F",
+    "note": "CAS 统一身份认证。**与旧站 s.zju.edu.cn 不同：新站必须登录，匿名只给 302。** 验证码当前关闭。"
+  },
+  "rateLimit": { "minIntervalMs": 2000, "concurrency": 1 },
+  "compliance": "只读检索办事指南/文件/通知，不提交、不下载附件批量。",
+  "exploredAt": "2026-11-20",
+  "note": "这是 s.zju.edu.cn（已 502）的继任站。办事指南能力完整保留，但需要登录态。"
+}

@@ -1,0 +1,40 @@
+{
+  "key": "www.career.zju.edu.cn",
+  "status": "done",
+  "origin": "https://www.career.zju.edu.cn",
+  "title": "浙江大学就业服务平台（91JOB）",
+  "via": null,
+  "requires": [],
+  "auth": {
+    "type": "学生账号/CAS 双通道；公开资讯免登录",
+    "credentialKey": "campus-sso",
+    "loginUrl": "https://www.career.zju.edu.cn/sc/register · /sc/forget · /login/:xxdm/:mode",
+    "flows": {
+      "student": "POST /stu/auth/login（本站学生账号体系，非一卡通直登）；另有 /stu/grzx/syxx/reg_registAccount 自助注册",
+      "employer": "/jyxt/web/login/dwSlogin.zf（用人单位，传统 .zf 登录页）",
+      "alumni": "/jyxt/web/login/xsSlogin.zf（校友）",
+      "admin": "/jyxt/xtgl/login/slogin.zf（就业管理）",
+      "oauth": "POST /jyxt/oauth/getUserInfo（token 由 /pub/getAccessToken 发）"
+    },
+    "publicZone": "招聘会/宣讲会/双选会/岗位/政策公告/就业质量报告 全部免登录可读（实测）",
+    "loginOnly": "投递简历、签约、两方协议、选调报名、面试间预约、历届去向查询（路由被注释掉）",
+    "stateFile": "state.json"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "source": "default + 实测 429",
+    "evidence": "robots.txt 与 sitemap.xml 都命中 SPA fallback（返回同一份 7874B 首页 HTML，无真实 robots）；响应头无 X-RateLimit-*。**实测触发过一次 429**：连续请求 /jyxt/wzsy/getZhXjhQtListAjax.zf 时返回 429（body 0 字节）。建议 minIntervalMs ≥ 2500，遇 429 立即退避 ≥10s。"
+  },
+  "protocol": {
+    "robots": "无真实 robots（/robots.txt 与 /sitemap.xml 都返回 7874B SPA 首页壳）",
+    "server": "Tengine/2.1.2 + Apache Tomcat/7.0.109（.zf 老接口）",
+    "frontend": "Vue 2 + webpack（/js/app.<build>.js + 50 个 chunk）",
+    "spa": "所有前端路由 200 返回同一个 7874B 壳；`noscript` 文案是「91JOB doesn't work properly without JavaScript enabled」——**系统实名 91JOB**",
+    "apiPrefixes": ["/pub/*（基础数据，免登录）", "/web/wsjysc/*（栏目/公告，免登录）", "/jyxt/wzsy/*.zf（招聘会/宣讲会列表，免登录，POST JSON）", "/stu/*（学生个人中心，需登录）"]
+  },
+  "exploredAt": "2026-11-20",
+  "scopeNote": "只读探索。**未投递简历、未报名任何活动、未预约面试间、未提交任何表单**。",
+  "evidenceRank": "direct",
+  "scope": "public-recruitment-data",
+  "endpointsFile": "endpoints.json"
+}

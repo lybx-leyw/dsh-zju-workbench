@@ -1,0 +1,245 @@
+{
+  "site": "www.cec.zju.edu.cn",
+  "access": "公开 HTTP；robots 404。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.cec.zju.edu.cn/bkssz/list.htm",
+      "column": "本科生思政",
+      "displayTitle": "本科生思政",
+      "parentTitle": "学生思政",
+      "verifiesPath": "/bkssz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/bkssz/list.htm",
+        "status": 200,
+        "column": "本科生思政",
+        "displayTitle": "本科生思政",
+        "parentTitle": "学生思政",
+        "columnPath": "/bkssz/list.htm",
+        "count": 10,
+        "total": 785,
+        "pages": 79,
+        "externalLinks": 0,
+        "firstId": "3210682",
+        "firstDate": "2026-09-30"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/xssz/list.htm",
+      "column": "学生思政",
+      "displayTitle": "重要通知",
+      "parentTitle": "学生思政",
+      "verifiesPath": "/xssz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/xssz/list.htm",
+        "status": 200,
+        "column": "学生思政",
+        "displayTitle": "重要通知",
+        "parentTitle": "学生思政",
+        "columnPath": "/zytz/list.htm",
+        "count": 10,
+        "total": 908,
+        "pages": 91,
+        "externalLinks": 0,
+        "firstId": "2986265",
+        "firstDate": "2022-11-07"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/jxyjw/list.htm",
+      "column": "教学与教务",
+      "displayTitle": "教学与教务",
+      "parentTitle": "本科生教育",
+      "verifiesPath": "/jxyjw/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/jxyjw/list.htm",
+        "status": 200,
+        "column": "教学与教务",
+        "displayTitle": "教学与教务",
+        "parentTitle": "本科生教育",
+        "columnPath": "/jxyjw/list.htm",
+        "count": 10,
+        "total": 67,
+        "pages": 7,
+        "externalLinks": 0,
+        "firstId": "3203058",
+        "firstDate": "2026-09-15"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/pygl/list.htm",
+      "column": "培养管理",
+      "displayTitle": "培养管理",
+      "parentTitle": "研究生教育",
+      "verifiesPath": "/pygl/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/pygl/list.htm",
+        "status": 200,
+        "column": "培养管理",
+        "displayTitle": "培养管理",
+        "parentTitle": "研究生教育",
+        "columnPath": "/pygl/list.htm",
+        "count": 10,
+        "total": 751,
+        "pages": 76,
+        "externalLinks": 0,
+        "firstId": "3227114",
+        "firstDate": "2026-11-13"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/dwjl_36145/list.htm",
+      "column": "对外交流",
+      "displayTitle": "对外交流",
+      "parentTitle": "研究生教育",
+      "verifiesPath": "/dwjl_36145/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/dwjl_36145/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "对外交流",
+        "parentTitle": "研究生教育",
+        "columnPath": "/dwjl_36145/list.htm",
+        "count": 10,
+        "total": 94,
+        "pages": 10,
+        "externalLinks": 2,
+        "firstId": "3182926",
+        "firstDate": "2026-11-04"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/zxxx_36129/list.htm",
+      "column": "研究生教育",
+      "displayTitle": "最新消息",
+      "parentTitle": "研究生教育",
+      "verifiesPath": "/zxxx_36129/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/zxxx_36129/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "最新消息",
+        "parentTitle": "研究生教育",
+        "columnPath": "/zxxx_36129/list.htm",
+        "count": 10,
+        "total": 2154,
+        "pages": 216,
+        "externalLinks": 1,
+        "firstId": "3228080",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/xwgl/list.htm",
+      "column": "学位管理",
+      "verifiesPath": "/xwgl/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/xwgl/list.htm",
+        "status": 200,
+        "column": "学位管理",
+        "displayTitle": "学位管理",
+        "parentTitle": "研究生教育",
+        "count": 10,
+        "total": 842,
+        "pages": 85,
+        "externalLinks": 2,
+        "firstId": "3228737",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/bsszqkh/list.htm",
+      "column": "博士生中期考核",
+      "verifiesPath": "/bsszqkh/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/bsszqkh/list.htm",
+        "status": 200,
+        "column": "博士生中期考核",
+        "displayTitle": "博士生中期考核",
+        "parentTitle": "研究生教育",
+        "count": 10,
+        "total": 28,
+        "pages": 3,
+        "externalLinks": 3,
+        "firstId": "3206405",
+        "firstDate": "2026-09-21"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/xjgl_36132/list.htm",
+      "column": "学籍管理",
+      "verifiesPath": "/xjgl_36132/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/xjgl_36132/list.htm",
+        "status": 200,
+        "column": "学籍管理",
+        "displayTitle": "学籍管理",
+        "parentTitle": "研究生教育",
+        "count": 10,
+        "total": 111,
+        "pages": 12,
+        "externalLinks": 1,
+        "firstId": "3200094",
+        "firstDate": "2026-09-08"
+      }
+    },
+    {
+      "id": "GET www.cec.zju.edu.cn/tjmsyjs/list.htm",
+      "column": "推荐免试研究生",
+      "verifiesPath": "/tjmsyjs/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cec.zju.edu.cn/tjmsyjs/list.htm",
+        "status": 200,
+        "column": "推荐免试研究生",
+        "displayTitle": "推荐免试研究生",
+        "parentTitle": "本科生教育",
+        "count": 10,
+        "total": 87,
+        "pages": 9,
+        "externalLinks": 0,
+        "firstId": "3199519",
+        "firstDate": "2026-09-07"
+      }
+    }
+  ],
+  "unverified": [
+    "其余经济学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/yjssz/list.htm",
+      "pageTitle": "党团建设",
+      "parentTitle": "研究生思政",
+      "claimedColumnPath": "/jdgz_36461/list.htm",
+      "note": "页面在 div.main-header 里自认的栏目地址是 /jdgz_36461/list.htm，与请求路径不同：请求的是父栏，渲染的是其默认子栏内容。按「声明的栏目地址须等于请求路径」判为别名不一致，不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/dwjl1/list.htm",
+      "pageTitle": "最新消息",
+      "parentTitle": "国际交流",
+      "claimedColumnPath": "/zxxx_36164/list.htm",
+      "note": "页面在 div.main-header 里自认的栏目地址是 /zxxx_36164/list.htm，与请求路径不同：请求的是父栏，渲染的是其默认子栏内容。按「声明的栏目地址须等于请求路径」判为别名不一致，不开放。"
+    }
+  ]
+}

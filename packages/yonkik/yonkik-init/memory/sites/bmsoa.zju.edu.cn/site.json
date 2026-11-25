@@ -1,0 +1,28 @@
+{
+  "key": "bmsoa.zju.edu.cn",
+  "origin": "http://bmsoa.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "本栏公开可读，无需登录；页头登录入口是站点通用导航。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://bmsoa.zju.edu.cn/85937/list.htm",
+  "column": "内部公示",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/85937/list.htm"
+    ],
+    "note": "与建筑工程学院同模板，复用 ccea-li；HTTP 301 到同站 HTTPS。"
+  }
+}

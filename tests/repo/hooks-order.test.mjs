@@ -17,7 +17,7 @@
  *
  *   - `tests/plugins-page.test.mjs` 测的是 `runtime.js` 的纯函数，不渲染 React；
  *   - `scripts/build.mjs` 成功（esbuild 只看语法）；
- *   - 现有渲染测试（`planning-render.test.mjs`）用的是 `renderToStaticMarkup`，
+ *   - 现有渲染测试（`hls-video.test.mjs` 等）用的是 `renderToStaticMarkup`，
  *     **只渲染一次**，天然看不见「两次渲染之间」的差异。
  *
  * # 为什么是静态扫描，而不是再渲染一次

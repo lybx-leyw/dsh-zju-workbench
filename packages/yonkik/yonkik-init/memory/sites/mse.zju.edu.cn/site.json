@@ -1,0 +1,36 @@
+{
+  "key": "mse.zju.edu.cn",
+  "origin": "https://mse.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "https://mse.zju.edu.cn/50946/list.htm",
+  "column": "消息公告",
+  "exactNoticeColumns": {
+    "count": 11,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/51031/list.htm",
+      "/51043/list.htm",
+      "/50999/list.htm",
+      "/51029/list.htm",
+      "/50983/list.htm",
+      "/51001/list.htm",
+      "/50963/list.htm",
+      "/50982/list.htm",
+      "/51027/list.htm",
+      "/51050/list.htm",
+      "/50920/list.htm"
+    ],
+    "note": "四栏显示标题同为「消息公告」（研究生教学 / 本科生教学 / 综合办公室）与两栏「学生思政」，靠「当前位置」完整链路 + Column_Anchor 大类名区分。"
+  }
+}

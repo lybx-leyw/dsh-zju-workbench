@@ -79,7 +79,8 @@ function patchFiles(dir, out = []) {
 const files = patchFiles(path.join(root, 'packages'));
 
 test('所有 cordis.patch.yml 都能被 YAML 解析', () => {
-  assert.ok(files.length > 50, `只找到 ${files.length} 个 patch 文件，扫描可能失效`);
+  // 下限随退役收缩：归档 7 个包后少 7 份 patch（33 → 26 左右）。
+  assert.ok(files.length >= 20, `只找到 ${files.length} 个 patch 文件，扫描可能失效`);
   const failures = [];
   for (const file of files) {
     try {

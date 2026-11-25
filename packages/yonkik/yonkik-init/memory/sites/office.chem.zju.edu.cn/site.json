@@ -1,0 +1,40 @@
+{
+  "key": "office.chem.zju.edu.cn",
+  "origin": "http://office.chem.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://office.chem.zju.edu.cn/34507/list.htm",
+  "column": "信息公告",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 12,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/34507/list.htm",
+      "/34510/list.htm",
+      "/34509/list.htm",
+      "/34490/list.htm",
+      "/52029/list.htm",
+      "/55184/list.htm",
+      "/55192/list.htm",
+      "/55195/list.htm",
+      "/bksjy/list.htm",
+      "/xgtw/list.htm",
+      "/55185/list.htm",
+      "/55193/list.htm"
+    ],
+    "note": "两栏显示标题同为「信息公告」（学生工作 / 研究生教育），靠「窗口15」大类名区分；/bksjy、/xgtw 是父容器页，无左侧选中子项。"
+  }
+}

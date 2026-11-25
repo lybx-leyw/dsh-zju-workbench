@@ -1,0 +1,383 @@
+{
+  "key": "classroom.zju.edu.cn",
+  "origin": "https://classroom.zju.edu.cn",
+  "apiPrefixes": {
+    "cmsapi": "https://classroom.zju.edu.cn/cmsapi (门户/站点配置/公告)",
+    "userapi": "https://classroom.zju.edu.cn/userapi (当前用户)",
+    "courseapi": "https://classroom.zju.edu.cn/courseapi (课程/课表/播放模板)",
+    "consoleapi": "https://classroom.zju.edu.cn/consoleapi (管理台)",
+    "yjapi": "https://yjapi.cmc.zju.edu.cn (大量读接口的真实宿主；含 courseapi/cmsapi/sourceapi/localeapi/casapi 子前缀)",
+    "pptnote": "https://classroom.zju.edu.cn/pptnote (PPT 笔记，第二轮新发现)"
+  },
+  "verified": [
+    {
+      "id": "infosimple",
+      "method": "GET",
+      "path": "/userapi/v1/infosimple",
+      "purpose": "当前登录用户身份：账号/姓名/角色/院系树/id（均为个人标识，不入档）",
+      "auth": "登录 cookie（JWTUser/_token @.zju.edu.cn）",
+      "observed": "{code:200, message:'查询成功', params:{account, realname, currentRole:'student', id:<用户id>, structures[院系层级], tenant:{cmcGroup.cmcApiDomain='https://api.cmc.zju.edu.cn', group_id, tenant_name:'浙大', id:112}}}",
+      "status": "verified"
+    },
+    {
+      "id": "recent-learning",
+      "method": "GET",
+      "path": "/courseapi/v3/o-course/recent-learning?page=1&per-page=4",
+      "purpose": "【关键】最近学习：课程 + 小节 + 回放状态 + 上次学习时间",
+      "auth": "登录 cookie",
+      "observed": "success:true, result.data.models[] 每项 {course_id, course_subject_id, course_title, sub_title:'2026-11-02第6-8节', sub_type:'course_live', sub_is_live:'1', sub_lecturer_name, learn_at}；total=58",
+      "status": "verified"
+    },
+    {
+      "id": "course-detail",
+      "method": "GET",
+      "path": "/courseapi/v3/multi-search/get-course-detail?course_id=86159&student=<学号>",
+      "purpose": "【关键】课程详情 + 完整目录 sub_list（按年月分组的全部小节，含 sub_id）",
+      "auth": "登录 cookie（缺 student 参数或未登录 → 401/空）",
+      "observed": "code:0, data:{id, title, realname, structure_name, course_code:'(学年-学期)-<课程号>-<教学班>-1', click_num, learn_num, student_num, term_name:'<学期代码>', teachers[], sub_list:{'2026':{'9':{3:[...],4:[...]},...}}}；本例 15 个小节 id 属示例值",
+      "status": "verified"
+    },
+    {
+      "id": "play-config",
+      "method": "GET",
+      "path": "/courseapi/v2/play-template/get-config?tenant_id=112&sub_id=1996107",
+      "purpose": "【关键】某小节的播放器模板与已启用模块清单（字幕/PPT识别/AI数字教师等）",
+      "auth": "登录 cookie",
+      "observed": "data.data={id:1494779, sub_id, template_id:27217, name:'ai数字教师', type:'course_live', modules:[{code:'one_videos_live_liu',name:'1号视频流'},{code:'ppt_live_liu',name:'AI识别(PPT)'},{code:'captions_live_gn',name:'字幕'},{code:'voice_live_gn',name:'语音识别'},{code:'knowledge_graph_live_gn',name:'知识图谱'},{code:'ai_teacher_live_gn',name:'AI数字教师'},{code:'stream_teacher_liu',name:'教师流'},{code:'transmission_live_gn',name:'同声传译'},{code:'notes_live_gn'},{code:'barrage_live_gn'},{code:'learn_log_live_gn'} ...]}}",
+      "status": "verified"
+    },
+    {
+      "id": "week-schedules",
+      "method": "GET",
+      "path": "/courseapi/v2/schedule/get-week-schedules?user_id=<uid>&tenant_id=112&start_at=YYYY-MM-DD&end_at=YYYY-MM-DD",
+      "purpose": "周课表：每天课程、教室、回放/直播状态",
+      "auth": "登录 cookie + token 查询参数（前端会带 JWT）",
+      "observed": "success:true, result.list[] 每天 day + course[]{id(sub_id), course_id, course_title, room_name:'紫金港西2-417', status:6, status_label:'回放', start_at, end_at, is_live, multi_type:'course_live'|'ilive', teacher_name}",
+      "status": "verified"
+    },
+    {
+      "id": "week-schedules-uid",
+      "method": "GET",
+      "path": "/courseapi/v2/schedule/get-week-schedules?...（不带 token 也可）",
+      "purpose": "同上；实测直接从 lib 客户端（无 token 参数）也能拿到结果",
+      "auth": "登录 cookie 即可",
+      "observed": "4365B，结构与带 token 一致",
+      "status": "verified"
+    },
+    {
+      "id": "term-years",
+      "method": "GET",
+      "path": "/courseapi/index.php/v2/course/get-term-years?tenant=112",
+      "purpose": "全部学期（含起止日期），用于按学期检索课程",
+      "auth": "登录 cookie",
+      "observed": "success:true, result.data={a0:[{id,term_name:'2026-20271',year:'2026-2027',season:'1',begin_date:'2026-09-14',end_date:'2027-01-14'}], a1:[...]}，30188B",
+      "status": "verified"
+    },
+    {
+      "id": "course-list-search",
+      "method": "GET",
+      "path": "/courseapi/v3/multi-search/get-course-list?order=&title=&term=&publish=&page=1&total=0&per_page=12&tenant=112",
+      "purpose": "课程广场检索（全站课程，实测 107096 门）",
+      "auth": "登录 cookie（页面本身匿名可开，接口需登录）",
+      "observed": "SPA 课程广场显示「共 107096 条」，分页 8925 页；接口 200",
+      "status": "verified"
+    },
+    {
+      "id": "late-courses",
+      "method": "GET",
+      "path": "/courseapi/index.php/v2/course/get-late-courses?tenant=112",
+      "purpose": "近期热门/最新课程",
+      "auth": "登录 cookie",
+      "observed": "success:true, result.data[] {id, title, thumb, type, status, start_at, end_at, learn_record_num, click...}",
+      "status": "verified"
+    },
+    {
+      "id": "course-click",
+      "method": "GET",
+      "path": "/courseapi/v3/course2/click?course_id=86159",
+      "purpose": "课程点击计数",
+      "auth": "登录 cookie",
+      "observed": "登录后 success:true；**匿名访问 yjapi 同路径 → 401 'Your request was made with invalid credentials'**",
+      "status": "verified-needs-auth"
+    },
+    {
+      "id": "notice-list",
+      "method": "GET",
+      "path": "/cmsapi/v1/web-notice/get-notice-list?tenant=112",
+      "purpose": "平台公告列表",
+      "auth": "登录 cookie",
+      "observed": "success:true, data.list[] {id:'29', title:'关于智云课堂平台功能升级的通知', publish_time, show:'yes'}，共 3 条",
+      "status": "verified"
+    },
+    {
+      "id": "notice-detail",
+      "method": "GET",
+      "path": "/cmsapi/v1/web-notice/get-notice-detail?notice_id=29",
+      "purpose": "公告正文（HTML 全文）",
+      "auth": "登录 cookie",
+      "observed": "success:true, data.info{id,title,content:'<p ...>HTML 全文</p>'}；含《浙江大学课堂教学视频管理办法》链接（bksy.zju.edu.cn）",
+      "status": "verified"
+    },
+    {
+      "id": "website-info",
+      "method": "GET",
+      "path": "/cmsapi/v1/website/info?tenant=112",
+      "purpose": "门户配置（导航、banner、页脚）",
+      "auth": "登录 cookie",
+      "observed": "success:true, data.info.adv[] {navname:'使用说明'|'构建图谱', linkurl, sort}",
+      "status": "verified"
+    },
+    {
+      "id": "learn-pdf",
+      "method": "GET",
+      "path": "/courseapi/v3/course-apply/get-learn-pdf",
+      "purpose": "【免登录可读】智云课堂使用说明 PDF 的签名直链",
+      "auth": "**无需登录**（实测匿名 lib 客户端 200）",
+      "observed": "{code:1000, data:'https://resource.cmc.zju.edu.cn/play/1/f18b8f4ee40bcd0765cfe987ca82046e/2026/03/01/844ee5ca153d11f1be30aef1edd92f0f.pdf'}",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "locale-languages",
+      "method": "GET",
+      "path": "https://yjapi.cmc.zju.edu.cn/localeapi/localeGetLanguages",
+      "purpose": "支持的界面语言",
+      "auth": "无",
+      "observed": "[{id:'1',language_code:'zh_cn',language_name:'简体中文'},{id:'2',en_us,英文}]",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "config-js",
+      "method": "GET",
+      "path": "/static/config.js?version=498441",
+      "purpose": "【免登录】整站配置：全部子域与登录地址（最有价值的一发）",
+      "auth": "无",
+      "observed": "5252B。LOGIN_URL=tgmedia.cmc.zju.edu.cn；CASAPI=tgmedia.cmc.zju.edu.cn；YJAPI=yjapi.cmc.zju.edu.cn；TENANT_ID=112；WEBSOKET_URL=wss://goim.cmc.zju.edu.cn/ws；INTERACTIVEMETA_DOMAIN=interactivemeta.cmc.zju.edu.cn；EXAM_URL=exam.cmc.zju.edu.cn；TRANSLATE_EDIT=yumi-intelligentsubtitle.cmc.zju.edu.cn；IS_WATERMARK=true；IS_ZD=5；TRANS_RESULT_SEARCH=1；ZD_USE_AI_SUB_ID 列出督导 AI 任务小节 id",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "interactivemeta-config",
+      "method": "GET",
+      "path": "https://interactivemeta.cmc.zju.edu.cn/static/config.js",
+      "purpose": "互动课堂子站配置",
+      "auth": "无",
+      "observed": "1711B。TENANT_ID=112，CASAPI=yjapi.../casapi，SOCKET_IO=socketioapp.cmc.zju.edu.cn，SRS_SERVICE=webrtc://mcloudpush.cmc.zju.edu.cn/live/，OPEN_PLAY_AUTH=true，CLASSROOM_DOMAIN=classroom.zju.edu.cn",
+      "status": "verified-anonymous"
+    },
+    {
+      "id": "tenant-modules",
+      "method": "GET",
+      "path": "/cmsapi/v1/portal-setting/get-tenant-modules",
+      "purpose": "租户模块开关",
+      "auth": "无（但需 tenant 参数）",
+      "observed": "匿名 200 但 data.code=1001 '未传入租户'；带 tenant 可读（登录态实测走 /cmsapi/v1/play-template/get-tenant-modules?pcode=homepage_modules 返回 6 个首页模块）",
+      "status": "verified-partial"
+    },
+    {
+      "id": "search-trans-result",
+      "method": "GET",
+      "path": "/courseapi/v3/web-socket/search-trans-result?sub_id=<sub_id>&format=json",
+      "purpose": "【CC98 问的字幕】课程字幕/同传文本全文（带时间轴）",
+      "auth": "登录 cookie。匿名 403 `Auth Forbidden`（已实测）",
+      "observed": "200，174,615B。{code:0, msg:\"获取同传结果成功\", total:1, list:[{sub_id, resource_guid, trans_type:\"ai\", zh_num, en_num, en_rate, all_content:[{BeginSec,EndSec,Text,TransText}], trans_content}]}。trans_type=ai 时前端改用 all_content[].time 字符串；否则用 BeginSec/EndSec+TransText(英文译文)。**不依赖播放会话**，无签名无 ticket",
+      "status": "verified",
+      "locatedIn": "chunk 27.49c5676f853e8c0ff9a6.js getVideoTransResult()"
+    },
+    {
+      "id": "search-ppt",
+      "method": "GET",
+      "path": "/pptnote/v1/schedule/search-ppt?course_id=<cid>&sub_id=<sid>&page=1&per_page=N",
+      "purpose": "【AI 识别 PPT】按时间轴列出每页 PPT 截图直链与文本",
+      "auth": "登录 cookie。匿名 403（空 body，已实测）",
+      "observed": "200，36,430B。{code:0,total:74,list:[{course_id,sub_id,created_sec,default,old_id,content:\"嵌套 JSON 字符串\"}]}。content 内 {detecttype:\"ppt\",is_key:bool,pptimgurl:\"https://video.cmc.zju.edu.cn/ai3/ppt/<date>/<uuid>/<ts>.jpg\",pptthumb,status}。**per_page 被忽略**（传 3 仍回 74 条）",
+      "status": "verified",
+      "locatedIn": "chunk 27.49c5676f853e8c0ff9a6.js searchPPTList()"
+    },
+    {
+      "name": "portal-get-sub-info",
+      "method": "GET",
+      "path": "https://yjapi.cmc.zju.edu.cn/courseapi/v3/portal-home-setting/get-sub-info",
+      "returns": "{ code:0, msg:\"token合法\", token:\"<JWT>\" }；payload 含 account/cmcGroupCode/cmcGroupId/currentRole(\"student\")/loginType/exp",
+      "note": "无需参数。判断登录角色与取 cmcGroupCode 最省事的一个请求。需 cookie（JWTUser）",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "course-live-get-my-course-day",
+      "method": "GET",
+      "path": "https://yjapi.cmc.zju.edu.cn/courseapi/v2/course-live/get-my-course-day?day=YYYY-MM-DD",
+      "returns": "{ code:0, list: { \"<ts>\": { section:\"上午|下午\", course:[…] } } }",
+      "note": "**参数名是 day**；传 date/tenant 或无参都静默回空 list（36B），不报错——极易误判成「今天没课」。实测 day=2026-11-16 回 2482B。需 cookie",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "course-catalogue",
+      "method": "GET",
+      "path": "https://yjapi.cmc.zju.edu.cn/courseapi/v2/course/catalogue?course_id={cid}",
+      "returns": "{ success:true, result:{ code:200, data:[{ sub_id, lecturer, lecturer_name, type, … }] } }",
+      "note": "**必须带 course_id**；无参或只带 tenant 回 {code:400,msg:\"参数错误\"}(51B)。实测 course_id=86159 → 30,711B 章节目录树。需 cookie",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    }
+  ],
+  "anonymous403": [
+    {
+      "path": "/cmsapi/v1/nav/lists",
+      "status": 403,
+      "body": "Auth Forbidden"
+    },
+    {
+      "path": "/userapi/v1/infosimple",
+      "status": 403,
+      "body": "(空)"
+    },
+    {
+      "path": "https://yjapi.cmc.zju.edu.cn/courseapi/v3/course2/click?course_id=86159",
+      "status": 401,
+      "body": "{\"success\":false,\"result\":{\"name\":\"Unauthorized\",\"message\":\"Your request was made with invalid credentials.\"}}"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "video-permission",
+      "method": "POST",
+      "path": "https://yjapi.cmc.zju.edu.cn/courseapi/v2/course/video-and-live-promission-by-user-id",
+      "purpose": "播放权限判定（决定能否看回放）",
+      "why_unverified": "POST 且需 body（course_id/sub_id/user），本次 GET 探测返回 '课程不存在'，未构造 body 调用。"
+    },
+    {
+      "id": "video-stream",
+      "method": "?",
+      "path": "未定位（SRS/webrtc: mcloudpush.cmc.zju.edu.cn:10443, yjsrs.chinamcache.com）",
+      "purpose": "回放视频流",
+      "why_unverified": "OPEN_PLAY_AUTH=true + 水印（IS_WATERMARK=true）；取流即播放，属写（学习进度）语义，不调用。"
+    },
+    {
+      "id": "course-collect",
+      "method": "GET",
+      "path": "/courseapi/v3/course-collect/lists?page=1&per-page=500",
+      "purpose": "我的收藏课程",
+      "auth": "登录",
+      "observed": "200，data.models=[]，total=0（本账号无收藏）；per-page 被服务端压回 50",
+      "why_unverified": "可读但本次仅单发确认空集，未纳入 crawler 主路径。"
+    }
+  ],
+  "notes": [
+    "第二轮（2026-11-20）：从 42 个懒加载分片挖出字幕端点与 PPT 端点，均已只读单发验证。分片清单见 _scratch/chunk-map.json（若已清理，重新抓 manifest.js 即可复现）。"
+  ],
+  "verifiedCount": 23,
+  "pptnoteSearchlist": {
+    "checkedAt": "2026-11-22",
+    "probes": [
+      {
+        "path": "/pptnote/v1/searchlist",
+        "status": 403,
+        "bodyLength": 0
+      },
+      {
+        "path": "/pptnote/v1/schedule/searchlist",
+        "status": 403,
+        "bodyLength": 0
+      }
+    ],
+    "judgement": "两个候选路径均 403 且空 body，与同站其他登录态接口一致，说明路由存在、需登录；按课名或教师检索课次的成功结果尚未验证。",
+    "notAttempted": [
+      "不遍历猜参数",
+      "不带会话重复尝试"
+    ]
+  },
+  "upstreamGapsNotYetVerified": [
+    {
+      "item": "vlabpassportapi account-profile course（我的课程；宿主 education.cmc.zju.edu.cn）",
+      "state": "本轮未请求该宿主；本站已有等价数据源 /courseapi/v3/o-course/recent-learning 与 get-week-schedules，功能上不构成缺口。"
+    },
+    {
+      "item": "trans_socket_url 实时字幕订阅",
+      "state": "未实测。实时订阅不同于回放字幕；回放字幕与 PPT 文本均已在本站验证。"
+    }
+  ],
+  "vlabpassportHost": {
+    "checkedAt": "2026-11-22",
+    "host": "education.cmc.zju.edu.cn",
+    "probes": [
+      {
+        "path": "/",
+        "status": 200,
+        "length": 862,
+        "note": "主机可达（此前清单提到但从未请求）"
+      },
+      {
+        "path": "/personal/courseapi/vlabpassportapi/v1/account-profile/course",
+        "status": 403,
+        "length": 14,
+        "body": "Auth Forbidden",
+        "meaning": "「我的课程」端点",
+        "verdict": "**路由确认存在**，匿名 403 且响应与本站其他登录态接口完全一致（14B Auth Forbidden）"
+      }
+    ],
+    "conclusion": "R83/R96 把该项标为「未实测、有等价数据源」；本轮已实测：容器可达、端点存在但需登录。等价数据源的说法仍成立（/courseapi/v3/o-course/recent-learning 可匿名取课程），但「未实测」现在可以撤销。",
+    "upgradedFrom": "未实测 → 已实测（路由存在，需登录）"
+  },
+  "playTemplateConfig": {
+    "checkedAt": "2026-11-22",
+    "url": "https://classroom.zju.edu.cn/courseapi/v2/play-template/get-config?tenant_id=112&sub_id=1996107",
+    "anonymous": true,
+    "status": 200,
+    "surprising": "**匿名可读**——清单与本地档案此前都把它当登录态接口（同批接口确实 403）。",
+    "responseShape": "{success, data:{code,msg,data:{id,sub_id,template_id,tenant_id,name,type,is_default,modules[],created_at,temp_config,select_from,return_tmp}}}",
+    "sample": {
+      "name": "ai数字教师",
+      "type": "course_live",
+      "modulesCount": 19,
+      "moduleCodes": [
+        "one_videos_live_liu",
+        "ppt_live_liu",
+        "course_index_live_gn",
+        "hot_words_live_gn",
+        "voice_live_gn",
+        "notes_live_gn",
+        "knowledge_graph_live_gn",
+        "barrage_live_gn",
+        "learn_log_live_gn"
+      ]
+    },
+    "meaning": "返回某课次的播放器模块清单：哪些功能开启（视频流、AI 识别 PPT、语音识别、知识图谱、弹幕等）。这解释了为什么 PPT 文本端点 `/pptnote/v1/schedule/search-ppt` 存在。",
+    "transSocketUrl": "响应中**没有** `trans_socket_url`——清单提到的实时字幕 ws 地址不在此接口；此前「实时字幕未实测」的留白仍然成立，但现在知道它不在 get-config 里。",
+    "notConcluded": [
+      "不因单条 sub_id=1996107 可读就推广为「所有课次可读」",
+      "不做批量枚举 sub_id"
+    ]
+  },
+  "transSocketUrl": {
+    "checkedAt": "2026-11-22",
+    "question": "清单说实时字幕地址来自 `get-sub-info` 的 `trans_socket_url`。这个接口在哪、匿名能否读？",
+    "probes": [
+      {
+        "path": "/courseapi/v3/multi-search/get-sub-info?tenant_id=112&sub_id=1996107",
+        "status": 403,
+        "length": 14,
+        "body": "Auth Forbidden"
+      },
+      {
+        "path": "/courseapi/v3/get-sub-info?sub_id=1996107&tenant_id=112",
+        "status": 403,
+        "length": 14,
+        "body": "Auth Forbidden"
+      },
+      {
+        "path": "/courseapi/v2/play-template/get-config（对照，已知匿名可读）",
+        "status": 200,
+        "length": 1357,
+        "note": "**temp_config 是空对象**，全响应无任何 socket/trans/asr 类键"
+      }
+    ],
+    "conclusion": "**两件事都查清了**：①`get-sub-info` 路由存在但**匿名 403**（与你站其他登录态接口同款 14B `Auth Forbidden`），所以 `trans_socket_url` 确实只能登录后取得；②我上一轮以为它可能藏在 `get-config` 里——实测 `temp_config` 是空对象、响应无 socket 类字段，**排除了这个可能**。",
+    "blankStatus": "从「未实测」升级为「已定位：来源接口存在且需登录，不在匿名可读接口内」。这不是取到了地址，而是把「不知道在哪」变成「知道在哪、且知道为什么取不到」。",
+    "notAttempted": [
+      "不建立 WebSocket 订阅（属实时会话）",
+      "不猜 auth token 拼参数"
+    ]
+  },
+  "readOnlyNote": "video-and-live-promission-by-user-id 是查询用户播放权限，POST 仅因参数在请求体，不是写操作。",
+  "policyRecordedAt": "2026-11-23"
+}

@@ -1,0 +1,17 @@
+{
+  "key": "www.chem.zju.edu.cn",
+  "origin": "http://www.chem.zju.edu.cn",
+  "status": "done",
+  "label": "化学系（导航页）",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-http-public",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "两页各 1 次。"
+  }
+}

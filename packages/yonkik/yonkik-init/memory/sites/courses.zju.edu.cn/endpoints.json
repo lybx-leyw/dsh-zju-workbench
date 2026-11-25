@@ -1,0 +1,179 @@
+{
+  "site": "courses.zju.edu.cn",
+  "base": "https://courses.zju.edu.cn",
+  "auth": {
+    "type": "cookie-session",
+    "how": "CAS via identity.zju.edu.cn Keycloak broker，credentialKey=campus-sso；state.json 存 playwright storage state",
+    "verifiedAt": "2026-11-19"
+  },
+  "verified": [
+    {
+      "method": "GET",
+      "path": "/api/profile",
+      "semantics": "read",
+      "status": 200,
+      "note": "当前用户"
+    },
+    {
+      "method": "GET",
+      "path": "/api/my-courses",
+      "params": [
+        "page",
+        "page_size"
+      ],
+      "semantics": "read",
+      "status": 200,
+      "note": "返回 {courses:[...]}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/{cid}",
+      "semantics": "read",
+      "status": 200,
+      "note": "课程详情含 course_outline"
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/{cid}/modules",
+      "semantics": "read",
+      "status": 200,
+      "note": "章节模块"
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/{cid}/activities",
+      "params": [
+        "page",
+        "page_size"
+      ],
+      "semantics": "read",
+      "status": 200,
+      "note": "列表 data 无 uploads，须再打 /api/activities/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/{cid}/exams",
+      "semantics": "read",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/activities/{activityId}",
+      "semantics": "read",
+      "status": 200,
+      "note": "附件真源：uploads[] = {id,key,name,size,type,status}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/uploads/{uploadId}/blob",
+      "semantics": "read-download",
+      "status": 302,
+      "note": "→ tcmedia.zju.edu.cn 签名直链，token 有时效；直链要裸 GET"
+    },
+    {
+      "name": "radar-rollcalls",
+      "method": "GET",
+      "path": "/api/radar/rollcalls",
+      "returns": "{ rollcalls: [...] }（本账号实测空数组）",
+      "note": "**点名接口是 /api/radar/rollcalls，不是 /api/courses/{cid}/rollcalls**。后者实测 404 {\"message\":\"未找到资源\"}。可选 ?course_id=，但实测带不带返回相同。",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "my-courses",
+      "method": "GET",
+      "path": "/api/my-courses",
+      "returns": "{ courses: [...] }，每项含 id/course_code/course_name/academic_year/teaching_class_name/department",
+      "note": "实测 33,510B（条数随个人选课变化）。course.id 是后续接口要的 cid",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "my-semesters",
+      "method": "GET",
+      "path": "/api/my-semesters",
+      "returns": "{ semesters: [{ id, name, real_name, academic_year_id, is_active, sort }] }",
+      "note": "实测 1,005B",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "todos",
+      "method": "GET",
+      "path": "/api/todos",
+      "returns": "{ todo_list: [{ id, course_id, course_code, course_name, title, end_time, is_locked, is_student, prerequisites }] }",
+      "note": "实测 34,503B，含作业与学习活动截止时间",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    }
+  ],
+  "unverified": [],
+  "blocked": [
+    {
+      "method": "GET",
+      "path": "/api/courses",
+      "status": 403,
+      "note": "全局课程表，学生无权"
+    },
+    {
+      "method": "GET",
+      "path": "/api/user",
+      "status": 403
+    },
+    {
+      "method": "GET",
+      "path": "/api/discussions",
+      "status": 500
+    },
+    {
+      "method": "GET",
+      "path": "/api/courses/{cid}/{assignments,coursewares,chapters,students,rollcalls}",
+      "status": 404,
+      "note": "该形态不存在"
+    },
+    {
+      "method": "GET",
+      "path": "/api/activities/{id} 之外的 /api/activity/{id}, /api/materials/{id}, /api/attachments/{id}, /api/uploads/{id}/{download,file}",
+      "status": 404
+    }
+  ],
+  "rateLimit": {
+    "minIntervalMs": 1500,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "未发现 X-RateLimit-*；全程串行单发未触发 429"
+  },
+  "upstreamHomeworkEndpoints": {
+    "discoveredFrom": "上游清单第 45 行（学在浙大 作业/考勤）",
+    "probes": [
+      {
+        "path": "/api/courses/{cid}/homework-activities",
+        "checkedAt": "2026-11-22",
+        "status": 401,
+        "ctype": "application/json",
+        "bodySample": "{\"message\":\"\"}",
+        "meaning": "按课程的作业活动列表",
+        "verdict": "路由存在，需登录（401 而非 404）"
+      },
+      {
+        "path": "/api/course/{cid}/student/{uid}/rollcalls",
+        "checkedAt": "2026-11-22",
+        "status": 401,
+        "ctype": "application/json",
+        "bodySample": "{\"message\":\"\"}",
+        "meaning": "本人历史点名记录（注意是单数 course）",
+        "verdict": "路由存在，需登录（401 而非 404）"
+      }
+    ],
+    "notProbed": [
+      "/api/activities/{aid}/students/{uid}/submission_list（需真实 aid/uid）",
+      "/api/uploads/{id}/url（已有等价记录）"
+    ],
+    "judgement": "两条上游端点**路由确认存在**，本次无会话未取到数据；与已收录的 /api/todos、/api/radar/rollcalls 互补（前者跨课程汇总，后者按课程明细）。",
+    "notAttempted": [
+      "不伪造 uid/cid 组合穷举",
+      "不带会话重复尝试",
+      "不做自动签到"
+    ]
+  }
+}

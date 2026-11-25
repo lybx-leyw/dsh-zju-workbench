@@ -1,0 +1,230 @@
+{
+  "site": "doe-oa.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET doe-oa.zju.edu.cn/75472/list.htm",
+      "column": "人力资源·信息公告",
+      "verifiesPath": "/75472/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://doe-oa.zju.edu.cn/75472/list.htm",
+        "status": 200,
+        "column": "人力资源·信息公告",
+        "displayTitle": "信息公告",
+        "sectionTitle": "人力资源",
+        "trail": [
+          [
+            "/75430/list.htm",
+            "人力资源"
+          ],
+          [
+            "/75472/list.htm",
+            "信息公告"
+          ]
+        ],
+        "count": 14,
+        "total": 581,
+        "pages": 42,
+        "externalLinks": 0,
+        "firstId": "3214648",
+        "firstDate": "2026-10-14"
+      }
+    },
+    {
+      "id": "GET doe-oa.zju.edu.cn/75509/list.htm",
+      "column": "课程培养·通知公告",
+      "verifiesPath": "/75509/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://doe-oa.zju.edu.cn/75509/list.htm",
+        "status": 200,
+        "column": "课程培养·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/75432/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/75499/list.htm",
+            "课程培养"
+          ],
+          [
+            "/75509/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 34,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3222974",
+        "firstDate": "2026-11-01"
+      }
+    },
+    {
+      "id": "GET doe-oa.zju.edu.cn/75516/list.htm",
+      "column": "答辩通知",
+      "verifiesPath": "/75516/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://doe-oa.zju.edu.cn/75516/list.htm",
+        "status": 200,
+        "column": "答辩通知",
+        "displayTitle": "答辩通知",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/75432/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/75500/list.htm",
+            "论文答辩"
+          ],
+          [
+            "/75516/list.htm",
+            "答辩通知"
+          ]
+        ],
+        "count": 14,
+        "total": 74,
+        "pages": 6,
+        "externalLinks": 0,
+        "firstId": "3206912",
+        "firstDate": "2026-09-22"
+      }
+    },
+    {
+      "id": "GET doe-oa.zju.edu.cn/75536/list.htm",
+      "column": "学工",
+      "verifiesPath": "/75536/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://doe-oa.zju.edu.cn/75536/list.htm",
+        "status": 200,
+        "column": "学工",
+        "displayTitle": "学工",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/75435/list.htm",
+            "学生工作"
+          ],
+          [
+            "/75536/list.htm",
+            "学工"
+          ]
+        ],
+        "count": 14,
+        "total": 552,
+        "pages": 40,
+        "externalLinks": 0,
+        "firstId": "3218816",
+        "firstDate": "2026-10-26"
+      }
+    },
+    {
+      "id": "GET doe-oa.zju.edu.cn/77471/list.htm",
+      "column": "专业实践·通知公告",
+      "verifiesPath": "/77471/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://doe-oa.zju.edu.cn/77471/list.htm",
+        "status": 200,
+        "column": "专业实践·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/75432/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/zysj/list.htm",
+            "专业实践"
+          ],
+          [
+            "/77471/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 11,
+        "total": 11,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3223295",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET doe-oa.zju.edu.cn/jxgg/list.htm",
+      "column": "教学改革",
+      "verifiesPath": "/jxgg/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://doe-oa.zju.edu.cn/jxgg/list.htm",
+        "status": 200,
+        "column": "教学改革",
+        "displayTitle": "教学改革",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/75431/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/jxgg/list.htm",
+            "教学改革"
+          ]
+        ],
+        "count": 14,
+        "total": 59,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3194435",
+        "firstDate": "2026-08-11"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/75431/list.htm",
+      "pageTitle": "通知公告",
+      "sectionTitle": "本科生教育",
+      "claimedColumnPath": "/75479/list.htm",
+      "claimedColumnTitle": "通知公告",
+      "note": "目录路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/75435/list.htm",
+      "pageTitle": "团委",
+      "sectionTitle": "学生工作",
+      "claimedColumnPath": "/tw/list.htm",
+      "claimedColumnTitle": "团委",
+      "note": "目录路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/75436/list.htm",
+      "pageTitle": "通知公告",
+      "sectionTitle": "就业指导",
+      "claimedColumnPath": "/75545/list.htm",
+      "claimedColumnTitle": "通知公告",
+      "note": "目录路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余能源学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

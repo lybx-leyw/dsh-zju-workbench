@@ -1,0 +1,80 @@
+{
+  "site": "che.zju.edu.cn",
+  "access": "公开 HTTP；/checn/ 子站，与 che.cn.zju.edu.cn 是不同的 host。固定路径、无凭据、不跟跳转。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET che.zju.edu.cn/checn/16306/list.htm",
+      "column": "研究生教育",
+      "verifiesPath": "/checn/16306/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.zju.edu.cn/checn/16306/list.htm",
+        "status": 200,
+        "column": "研究生教育",
+        "displayTitle": "研究生教育",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/checn/15792/list.htm",
+            "教育教学"
+          ],
+          [
+            "/checn/16306/list.htm",
+            "研究生教育"
+          ]
+        ],
+        "count": 5,
+        "total": 5,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3218776",
+        "firstDate": "2026-10-23"
+      }
+    },
+    {
+      "id": "GET che.zju.edu.cn/checn/16305/list.htm",
+      "column": "教育教学·本科生教育",
+      "verifiesPath": "/checn/16305/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://che.zju.edu.cn/checn/16305/list.htm",
+        "status": 200,
+        "column": "教育教学·本科生教育",
+        "displayTitle": "本科生教育",
+        "sectionTitle": "教育教学",
+        "trail": [
+          [
+            "/checn/15792/list.htm",
+            "教育教学"
+          ],
+          [
+            "/checn/16305/list.htm",
+            "本科生教育"
+          ]
+        ],
+        "count": 2,
+        "total": 2,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3163129",
+        "firstDate": "2026-05-15"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/checn/15792/list.htm",
+      "pageTitle": "本科生教育",
+      "sectionTitle": "教育教学",
+      "claimedColumnPath": "/checn/16305/list.htm",
+      "claimedColumnTitle": "本科生教育",
+      "note": "该地址与 /checn/16305 渲染同一栏目内容（同为 2 条），但页面「当前位置」末项自认 /checn/16305/，属同一栏目两个地址；已按 /checn/16305 记录权威通路。"
+    }
+  ],
+  "unverified": [
+    "其余化工学院官网栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

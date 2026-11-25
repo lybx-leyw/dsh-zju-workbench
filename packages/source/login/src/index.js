@@ -1212,20 +1212,41 @@ export function createHandler({ ctx, log = () => {} }) {
    * @param signal - 取消信号。
    * @returns 采样时间与结果。
    */
+  /**
+   * 分项 → 对应的数据源服务名。
+   *
+   * # 为什么要有这张表
+   *
+   * 数据源包被逐个归档后，探测函数在拿不到服务时会返回 `NOT_INSTALLED`，
+   * 设置页于是长期列着「学在浙大 / 教务 / 二课 / 体育场馆 / 通知」等行，
+   * 每一行都是「数据源未启用」。那不是在说「装了但没开」，而是在说
+   * **那个数据源已经不存在了** —— 用户会以为点一下就能用，模型也会据此
+   * 以为手边有这些数据源，跑去复用已删的包里那套加密会话。
+   *
+   * 这里只声明「分项依赖哪个服务」，真正的过滤交给 `assembledSources()`：
+   * 只探真的挂着的服务。将来恢复某个源，那一行会自动回来，不必再改这里。
+   */
+  const SOURCE_SERVICES = {
+    campus: ['zwXuezai', () => probeCampusSource(ctx)],
+    classroom: ['zwClassroom', () => probeClassroom(ctx)],
+    zdbk: ['zwZdbk', () => probeZdbk(ctx)],
+    xuezai: ['zwXuezai', () => probeXuezai(ctx)],
+    sztz: ['zwSztz', () => probeSztz(ctx)],
+    tyys: ['zwTyys', () => probeTyys(ctx)],
+    notice: ['zwNotice', () => probeNotice(ctx)],
+  };
+
+  /** 当前装配里真实存在的分项（保持上表顺序）。 */
+  const assembledSources = () => Object.keys(SOURCE_SERVICES)
+    .filter((key) => ctx?.get?.(SOURCE_SERVICES[key][0]) != null);
+
   const runProbes = async (signal) => {
-    const [campus, classroom, zdbk, xuezai, sztz, tyys, notice] = await Promise.all([
-      withDeadline(probeCampusSource(ctx), 'campus'),
-      withDeadline(probeClassroom(ctx), 'classroom'),
-      withDeadline(probeZdbk(ctx), 'zdbk'),
-      withDeadline(probeXuezai(ctx), 'xuezai'),
-      withDeadline(probeSztz(ctx), 'sztz'),
-      withDeadline(probeTyys(ctx), 'tyys'),
-      withDeadline(probeNotice(ctx), 'notice'),
-    ]);
+    const keys = assembledSources();
+    const results = await Promise.all(keys.map((key) => withDeadline(SOURCE_SERVICES[key][1](), key)));
     signal?.throwIfAborted?.();
     // `lab` 不在其中 —— 见 GET 里的说明。
     // `cnki` 不在此列 —— 用户明确不做知网数据源（见 coverage-gaps.md）。
-    probeCache.values = { campus, classroom, zdbk, xuezai, sztz, tyys, notice };
+    probeCache.values = Object.fromEntries(keys.map((key, i) => [key, results[i]]));
     probeCache.at = Date.now();
     return { at: probeCache.at, values: probeCache.values };
   };
@@ -1310,7 +1331,8 @@ export function createHandler({ ctx, log = () => {} }) {
       // 这一块只列「共用统一身份认证」的那些 —— 混进来会让同一件事显示两次。
       // `mail` **不在**这里：它有**自己的密码**（不是 CAS 一套），
       // 有自己的设置分区。列在这儿会让用户以为"配了一卡通就能收信"。
-      for (const key of ['campus', 'classroom', 'zdbk', 'xuezai', 'sztz', 'tyys', 'notice']) {
+      // 只报当前装配里真的存在的分项：已删除的数据源不再画成「未启用」。
+      for (const key of assembledSources()) {
         sources[key] = probeCache.values[key] ?? UNPROBED;
       }
 

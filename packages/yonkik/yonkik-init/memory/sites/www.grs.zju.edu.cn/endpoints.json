@@ -1,0 +1,25 @@
+{
+  "site": "www.grs.zju.edu.cn",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.grs.zju.edu.cn/qbgg/list.htm",
+      "method": "GET",
+      "verifiesPath": "/qbgg/list.htm",
+      "verifiedAt": "2026-11-22",
+      "observation": {
+        "url": "http://www.grs.zju.edu.cn/qbgg/list.htm",
+        "status": 200,
+        "count": 14,
+        "total": 1569,
+        "pages": 113,
+        "externalLinks": 2,
+        "firstId": "3218046",
+        "firstDate": "2026-10-22",
+        "displayTitle": "全部公告"
+      }
+    }
+  ],
+  "unverified": [
+    "深页、详情、附件未访问"
+  ]
+}

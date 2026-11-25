@@ -1,0 +1,132 @@
+{
+  "verified": [
+    {
+      "id": "sitemap_index",
+      "name": "sitemap 索引",
+      "method": "GET",
+      "url": "https://www.xiaohongshu.com/sitemap.xml",
+      "auth": "none",
+      "readOnly": true,
+      "response": "14 个子 sitemap：worldcup 1 个 + sitemap-notes-0..12.xml.gz 共 13 个",
+      "evidence": "2026-11-20 无 cookie GET → 200，1397 bytes，XML 正常解析",
+      "robotsAllowed": true
+    },
+    {
+      "id": "sitemap_notes",
+      "name": "**笔记 URL 清单（核心免登录资产）**",
+      "method": "GET",
+      "url": "https://www.xiaohongshu.com/sitemap-notes-{0..12}.xml.gz",
+      "auth": "none",
+      "readOnly": true,
+      "note": "文件名叫 .gz 但**实际是未压缩的明文 XML**（content-type: application/xml；gunzip 报 incorrect header check）。不必解压，直接按文本解析 <loc>。",
+      "response": "每份含 40000 条（第 12 份 20000 条）https://www.xiaohongshu.com/explore/<24位hex noteId>；**合计 500000 条，去重后 500000（0 重复）**",
+      "evidence": "2026-11-20 逐份 GET（串行 2.5s）：0..11 各 40000 条/3720110 bytes，12 号 20000 条/1860110 bytes；5 份抽样 sha256 前 12 位互不相同",
+      "timeCoverage": {
+        "globalMin": "2023-12-22T08:19:25Z",
+        "globalMax": "2026-10-20T04:36:32Z",
+        "effectiveStart": "2025-08-02（此前仅 4 条异常样本）",
+        "effectiveSpanMonths": 14.6,
+        "before20250801": 4,
+        "after20250801": 499996,
+        "maxGapDays": 380.3,
+        "lagVsExploreDate": "约 1 个月（探索日 2026-11-20，最新 ID 2026-10-20）"
+      },
+      "monthlyCounts": {
+        "2025-08": 5700,
+        "2025-09": 33664,
+        "2025-10": 42634,
+        "2025-11": 40004,
+        "2025-12": 43429,
+        "2026-01": 43545,
+        "2026-02": 35908,
+        "2026-03": 45898,
+        "2026-04": 52148,
+        "2026-05": 51110,
+        "2026-06": 37113,
+        "2026-07": 28908,
+        "2026-08": 14374,
+        "2026-09": 23522,
+        "2026-10": 2039
+      },
+      "caveat": "只含 URL，无 title/desc/作者/图片；不能当全站计量口径（收录标准未知），且打 /explore/<id> 一律 302 登录"
+    },
+    {
+      "id": "worldcup_sitemap",
+      "name": "世界杯专题 sitemap",
+      "method": "GET",
+      "url": "https://www.xiaohongshu.com/sitemap-worldcup.xml",
+      "auth": "none",
+      "readOnly": true,
+      "response": "worldcup26 专题页 URL 列表，带 lastmod / changefreq=hourly / priority",
+      "evidence": "200，66871 bytes"
+    }
+  ],
+  "unverified": [
+    {
+      "id": "note_page",
+      "name": "笔记详情页",
+      "method": "GET",
+      "url": "https://www.xiaohongshu.com/explore/<noteId>",
+      "status": "login-required",
+      "observed": "PC UA → 302 到 www.rednote.com/login?redirectPath=...；Baiduspider/bingbot/Sogou UA → 302 到 /website-login/error；/discovery/item/<id> → 「当前内容仅支持在小红书 APP 内查看」",
+      "note": "sitemap 给的 50 万条 ID **不能**换来正文。这决定「免登录只得 ID，不得内容」。"
+    },
+    {
+      "id": "homefeed",
+      "name": "首页推荐流",
+      "method": "POST",
+      "url": "https://edith.xiaohongshu.com/api/sns/web/v1/homefeed",
+      "status": "406+signature-required",
+      "observed": "POST → HTTP 406, {\"code\":-1,\"success\":false}；纯 GET 同路径 → 404 page not found",
+      "note": "需 X-s / X-t 签名头（前端 WASM 生成）+ 登录态 cookie。"
+    },
+    {
+      "id": "feed",
+      "name": "笔记详情接口",
+      "method": "POST",
+      "url": "https://edith.xiaohongshu.com/api/sns/web/v1/feed",
+      "status": "404-without-signature"
+    },
+    {
+      "id": "search_notes",
+      "name": "搜索笔记",
+      "method": "POST",
+      "url": "https://edith.xiaohongshu.com/api/sns/web/v1/search/notes",
+      "status": "404-without-signature",
+      "note": "浏览器打 /search_result?keyword= 页面 → 页面壳 + 底部 tabs（全部/图文/视频/用户），无结果条目；同时触发 redcaptcha getconfig"
+    },
+    {
+      "id": "explore_page",
+      "name": "发现页",
+      "method": "GET",
+      "url": "https://www.xiaohongshu.com/explore",
+      "status": "login-required",
+      "observed": "302 → www.rednote.com/login；浏览器渲染后 textLen=120，纯登录页（扫码/手机号）"
+    },
+    {
+      "id": "mobile_site",
+      "name": "移动站",
+      "method": "GET",
+      "url": "https://m.xiaohongshu.com/explore",
+      "status": "502",
+      "observed": "502 Bad Gateway（PS-HND-04ez876 节点），移动站当前不可用"
+    },
+    {
+      "id": "worldcup_page",
+      "name": "世界杯 2026 专题页",
+      "method": "GET",
+      "url": "https://www.xiaohongshu.com/worldcup26",
+      "status": "empty-shell",
+      "observed": "200 / 644307 bytes，但渲染后仅页脚 834 字符、0 note 链接；worldcup/* 接口 406/404（缺签名）",
+      "note": "**不可作为免登录内容来源。** HTML 体积大 ≠ 有内容。"
+    }
+  ],
+  "signatureLayers": {
+    "_XHS_SEARCH_CRAWLER_FLAG__": "页面内联脚本，实测值 {\"google\":false,\"bing\":false} —— 站点自己记录了「当前不是搜索引擎爬虫流量」",
+    "redcaptcha": "webapi.rednote.com/api/redcaptcha/v2/getconfig 预先拉配置，登录页与搜索页都会调",
+    "sec": "as.rednote.com/api/sec/v1/scripting + sbtsource + redtrust/cookie/report_runtime_event，前端风控 SDK",
+    "required_headers": "X-s / X-t / X-b3-traceid，由前端 WASM (bundler-runtime.js) 生成，纯 HTTP 无法复现"
+  },
+  "readOnlyNote": "推荐流/笔记详情/搜索均为只读查询，POST 仅因签名体在请求体。",
+  "policyRecordedAt": "2026-11-23"
+}

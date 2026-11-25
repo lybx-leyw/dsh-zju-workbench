@@ -1,0 +1,259 @@
+{
+  "site": "www.sis.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.sis.zju.edu.cn/sischinese/12596/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/sischinese/12596/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.sis.zju.edu.cn/sischinese/12596/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "trail": [
+          [
+            "/sischinese/12542/list.htm",
+            "学生思政"
+          ],
+          [
+            "/sischinese/12596/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 14,
+        "total": 349,
+        "pages": 25,
+        "externalLinks": 0,
+        "firstId": "3227300",
+        "firstDate": "2026-11-13"
+      }
+    },
+    {
+      "id": "GET www.sis.zju.edu.cn/sischinese/12597/list.htm",
+      "column": "学生资助",
+      "verifiesPath": "/sischinese/12597/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.sis.zju.edu.cn/sischinese/12597/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "trail": [
+          [
+            "/sischinese/12542/list.htm",
+            "学生思政"
+          ],
+          [
+            "/sischinese/12597/list.htm",
+            "学生资助"
+          ]
+        ],
+        "count": 14,
+        "total": 293,
+        "pages": 21,
+        "externalLinks": 0,
+        "firstId": "3224898",
+        "firstDate": "2026-11-09"
+      }
+    },
+    {
+      "id": "GET www.sis.zju.edu.cn/sischinese/12600/list.htm",
+      "column": "学生组织",
+      "verifiesPath": "/sischinese/12600/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.sis.zju.edu.cn/sischinese/12600/list.htm",
+        "status": 200,
+        "column": "学生组织",
+        "displayTitle": "学生组织",
+        "trail": [
+          [
+            "/sischinese/12542/list.htm",
+            "学生思政"
+          ],
+          [
+            "/sischinese/12600/list.htm",
+            "学生组织"
+          ]
+        ],
+        "count": 14,
+        "total": 44,
+        "pages": 4,
+        "externalLinks": 3,
+        "firstId": "3088079",
+        "firstDate": "2025-09-30"
+      }
+    },
+    {
+      "id": "GET www.sis.zju.edu.cn/sischinese/12610/list.htm",
+      "column": "国际交流",
+      "verifiesPath": "/sischinese/12610/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.sis.zju.edu.cn/sischinese/12610/list.htm",
+        "status": 200,
+        "column": "国际交流",
+        "displayTitle": "国际交流",
+        "trail": [
+          [
+            "/sischinese/12609/list.htm",
+            "对外交流"
+          ],
+          [
+            "/sischinese/12610/list.htm",
+            "国际交流"
+          ]
+        ],
+        "count": 14,
+        "total": 371,
+        "pages": 27,
+        "externalLinks": 0,
+        "firstId": "3225347",
+        "firstDate": "2026-11-10"
+      }
+    },
+    {
+      "id": "GET www.sis.zju.edu.cn/sischinese/12587/list.htm",
+      "column": "教学教务",
+      "verifiesPath": "/sischinese/12587/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.sis.zju.edu.cn/sischinese/12587/list.htm",
+        "status": 200,
+        "column": "教学教务",
+        "displayTitle": "教学教务",
+        "trail": [
+          [
+            "/sischinese/12541/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/sischinese/12587/list.htm",
+            "教学教务"
+          ]
+        ],
+        "count": 14,
+        "total": 67,
+        "pages": 5,
+        "externalLinks": 7,
+        "firstId": "3135684",
+        "firstDate": "2026-02-27"
+      }
+    },
+    {
+      "id": "GET www.sis.zju.edu.cn/sischinese/12554/list.htm",
+      "column": "最新通知",
+      "verifiesPath": "/sischinese/12554/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.sis.zju.edu.cn/sischinese/12554/list.htm",
+        "status": 200,
+        "column": "最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/sischinese/12537/list.htm",
+            "党政管理"
+          ],
+          [
+            "/sischinese/12554/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 472,
+        "pages": 34,
+        "externalLinks": 8,
+        "firstId": "3125589",
+        "firstDate": "2025-12-05"
+      }
+    },
+    {
+      "id": "GET www.sis.zju.edu.cn/sischinese/12577/list.htm",
+      "column": "本科教育",
+      "verifiesPath": "/sischinese/12577/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.sis.zju.edu.cn/sischinese/12577/list.htm",
+        "status": 200,
+        "column": "本科教育",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/sischinese/12577/list.htm",
+            "本科教育"
+          ],
+          [
+            "/sischinese/12577/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 957,
+        "pages": 69,
+        "externalLinks": 0,
+        "firstId": "3222403",
+        "firstDate": "2026-11-03"
+      }
+    },
+    {
+      "id": "GET www.sis.zju.edu.cn/sischinese/12609/list.htm",
+      "column": "对外交流",
+      "verifiesPath": "/sischinese/12609/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.sis.zju.edu.cn/sischinese/12609/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/sischinese/12609/list.htm",
+            "对外交流"
+          ],
+          [
+            "/sischinese/12609/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 378,
+        "pages": 27,
+        "externalLinks": 1,
+        "firstId": "3228634",
+        "firstDate": "2026-11-18"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/sischinese/12541/list.htm",
+      "pageTitle": "最新通知",
+      "claimedColumnPath": "/sischinese/12584/list.htm",
+      "claimedColumnTitle": "最新通知",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/sischinese/12542/list.htm",
+      "pageTitle": "最新通知",
+      "claimedColumnPath": "/sischinese/12593/list.htm",
+      "claimedColumnTitle": "最新通知",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余外国语学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

@@ -85,8 +85,8 @@ try{
   await page.getByRole('button',{name:'下载与生成任务',exact:true}).click();
   assert.equal(await page.locator('.zws-task-panel').evaluate(el=>getComputedStyle(el).position),'fixed','details render in a floating panel');
   await page.screenshot({path:path.join(artifacts,'generation-queue.png'),fullPage:true});
-  await nav('规划').click();
-  assert.equal(await page.getByRole('button',{name:'下载与生成任务',exact:true}).isVisible(),false,'planning has no task entry competing with its pet');
+  await nav('笔记').click();
+  assert.equal(await page.getByRole('button',{name:'下载与生成任务',exact:true}).isVisible(),false,'other pages have no task entry');
   assert.equal(await page.getByRole('dialog',{name:'下载与生成队列',exact:true}).isVisible(),false,'leaving study hides its panel');
   await page.waitForFunction(async()=>{
     const response=await fetch('/api/zw-study',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({type:'client-request',rpcId:'queue-off-page',method:'zw-study',payload:{method:'queue',args:{}}})});
@@ -101,7 +101,7 @@ try{
   await page.getByRole('button',{name:'重新生成讲义',exact:true}).waitFor();
   assert.equal(await page.getByRole('dialog',{name:'下载与生成队列',exact:true}).isVisible(),false,'opening a task navigates to its classroom and closes the panel');
   await page.getByRole('button',{name:'下载与生成任务',exact:true}).click();
-  checks.push('Page-local queue controls hide on planning, reserve layout space and keep FIFO generation running in the background');
+  checks.push('Page-local queue controls hide off the study page, reserve layout space and keep FIFO generation running in the background');
   const generatedJob=await page.evaluate(async()=>{
     const response=await fetch('/api/zw-study',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({type:'client-request',rpcId:'worker-pool-result',method:'zw-study',payload:{method:'result',args:{courseId:'10',subId:'20'}}})});
     const envelope=await response.json();return envelope.result.value.job;

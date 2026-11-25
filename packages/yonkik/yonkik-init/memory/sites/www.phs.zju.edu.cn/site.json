@@ -1,0 +1,33 @@
+{
+  "key": "www.phs.zju.edu.cn",
+  "origin": "http://www.phs.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.phs.zju.edu.cn/93989/list.htm",
+  "column": "通知公告",
+  "exactNoticeColumns": {
+    "count": 8,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/94008/list.htm",
+      "/94009/list.htm",
+      "/94011/list.htm",
+      "/94014/list.htm",
+      "/94017/list.htm",
+      "/94021/list.htm",
+      "/94024/list.htm",
+      "/94033/list.htm"
+    ],
+    "note": "两栏显示标题同为「通知公告」（研究生培养 / 国际合作），靠「当前位置」完整链路 + Column_Anchor 大类名 + col_title 标题三重校验；/93961、/93964 末项自认另一路径，标 identity-mismatch。"
+  }
+}

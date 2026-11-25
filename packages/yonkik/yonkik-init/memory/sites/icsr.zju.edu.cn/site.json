@@ -1,0 +1,26 @@
+{
+  "key": "icsr.zju.edu.cn",
+  "origin": "https://icsr.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "https://icsr.zju.edu.cn/zsgg/list.htm",
+  "column": "招生公告",
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/xsgz/list.htm"
+    ],
+    "note": "身份用 li.col_path 全链路 + Column_Anchor 大类名 + col_title 的 h2 标题。/xsjl 末项自认 /xsjz/，标 identity-mismatch。"
+  }
+}

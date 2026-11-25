@@ -1,0 +1,9 @@
+{
+  "site": "zjuers.com",
+  "updatedAt": "2026-11-20",
+  "apiBase": "https://zjuers.com",
+  "auth": "无（纯静态导航页）",
+  "_note": "纯静态导航枢纽，无业务 API。0 个 verified 属正常——它的价值是「98 个外链的主机清单」，见 wiki 与 question-site-map.md。",
+  "verified": [],
+  "unverified": []
+}

@@ -1,0 +1,39 @@
+{
+  "key": "office.cmic.zju.edu.cn",
+  "origin": "http://office.cmic.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "webvpn",
+    "credentialKey": "webvpn",
+    "note": "内网子站，直连 502；需经 WebVPN，先跑 sites/webvpn.zju.edu.cn/login.mjs"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://office.cmic.zju.edu.cn/zxtz_40722/list.htm",
+  "column": "最新通知",
+  "directStatus": 502,
+  "vpnStatus": 200,
+  "exactNoticeColumns": {
+    "count": 11,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/zxtz_40722/list.htm",
+      "/40748/list.htm",
+      "/40523/list.htm",
+      "/40505/list.htm",
+      "/40520/list.htm",
+      "/40496/list.htm",
+      "/40524/list.htm",
+      "/40454/list.htm",
+      "/40521/list.htm",
+      "/40465/list.htm",
+      "/40529/list.htm"
+    ],
+    "note": "三栏显示标题同为「最新通知」（学生思政 / 本科教育 / 党政管理），靠「当前位置」完整链路 + Column_Anchor 大类名区分；每页 25 条。"
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "site": "pan.zju.edu.cn",
+  "origin": "https://pan.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "auth": {
+    "type": "cas-only",
+    "credentialKey": "campus-sso",
+    "captcha": false,
+    "note": "无本地账密表单（HTML 里被注释）；login.js 的 login() 只跳 CAS。service 必须带 /sso/login 生成的 stateID。",
+    "stateFile": "state.json（cookie：fc_session / session_sso_cookie_name / __DC_sid 等，域名 pan.zju.edu.cn）"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default"
+  },
+  "verified": [
+    {
+      "method": "GET",
+      "path": "/zjusso/login",
+      "purpose": "登录页；**含『离校停用』公告原文**",
+      "auth": "none",
+      "responseShape": "HTML 4546B；<h6 class='login-tips'>温馨提示<br/>云盘在您办理离校手续后将被停用，请提前处理云盘里的文件！</h6>",
+      "evidence": "200 4546B，HTML 第 48 行"
+    },
+    {
+      "method": "GET",
+      "path": "/zjusso/user_guide.pdf",
+      "purpose": "《使用手册》",
+      "auth": "none",
+      "responseShape": "application/pdf",
+      "evidence": "200 2765002B Last-Modified 2019-05-16"
+    },
+    {
+      "method": "GET",
+      "path": "/zjusso/management-measures.pdf",
+      "purpose": "《使用管理办法》（账号生命周期权威文本）",
+      "auth": "none",
+      "responseShape": "application/pdf",
+      "evidence": "200 146446B Last-Modified 2019-04-04"
+    },
+    {
+      "method": "GET",
+      "path": "/apps/users/account",
+      "purpose": "账号 + 配额",
+      "auth": "cookie",
+      "responseShape": "{id,name,user_group,space_total,is_space_limited,space_used,storage:{storage_id,alias},has_platform_user,success}",
+      "evidence": "200 224B space_total=5368709120(5GB) space_used=0"
+    },
+    {
+      "method": "GET",
+      "path": "/galaxy/list/items?method_type=query_permission&folder_id=<id>&enterprise_id=73274",
+      "purpose": "列目录 + 当前用户权限集",
+      "auth": "cookie + X-Requested-With",
+      "responseShape": "{success,sort_direction,sort_by,permissions:[...],children:[...]}",
+      "evidence": "200 296B folder_id=0 children=[] permissions 13 项"
+    },
+    {
+      "method": "GET",
+      "path": "/galaxy/list/kanban?parent_id=0&folder_type=own&enterprise_id=73274",
+      "purpose": "看板视图",
+      "auth": "cookie",
+      "responseShape": "{success,kanban_file_data}",
+      "evidence": "200"
+    },
+    {
+      "method": "GET",
+      "path": "/token/",
+      "purpose": "取 xsrf_token / csrf_token",
+      "auth": "cookie",
+      "responseShape": "{success,xsrf_token(base64),csrf_token(32字符)}",
+      "evidence": "200 437B"
+    },
+    {
+      "method": "GET",
+      "path": "/trumpet/messages/get_unread_message_count_for_user",
+      "purpose": "未读消息数",
+      "auth": "cookie",
+      "responseShape": "{data:0,isLogin:true}",
+      "evidence": "200 144B"
+    },
+    {
+      "method": "POST",
+      "path": "/poseidon/main_page/data",
+      "purpose": "首页企业/用户配置（只读语义）",
+      "auth": "cookie",
+      "responseShape": "{success,data:{current_enterprise:{id:73274,language_type:'education',is_virus_scan_enabled,...}}}",
+      "evidence": "200"
+    },
+    {
+      "method": "GET",
+      "path": "/enterprises/get_expiration_reminder",
+      "purpose": "套餐到期提醒",
+      "auth": "cookie",
+      "responseShape": "{success,expiration_reminder_info:{need_remind:false,...}}",
+      "evidence": "200"
+    },
+    {
+      "method": "GET",
+      "path": "/apps/frequently_used_items/get_space_info",
+      "purpose": "常用空间归属",
+      "auth": "cookie",
+      "responseShape": "{has_own,has_collab,success}",
+      "evidence": "200"
+    },
+    {
+      "method": "GET",
+      "path": "/apps/space_groups/get_space_group_list",
+      "purpose": "空间组列表",
+      "auth": "cookie",
+      "responseShape": "{groups:[],success}",
+      "evidence": "200"
+    },
+    {
+      "method": "GET",
+      "path": "/alive/link",
+      "purpose": "各端下载链接 + websocket host",
+      "auth": "cookie",
+      "responseShape": "{ios_download_link,android_download_link,mac_download_link,windows_download_link,websocket_host}",
+      "evidence": "200"
+    }
+  ],
+  "authRequired": [
+    {
+      "path": "/kbase/user/info",
+      "note": "裸 cookie → 403 Forbidden；浏览器上下文内 200（需额外 header/来源）"
+    },
+    {
+      "path": "/api/v1/user/current",
+      "note": "401 authentication_failed"
+    }
+  ],
+  "deadPaths": [
+    {
+      "path": "/api/v1/*",
+      "note": "非 Fangcloud 原生 API 前缀。user/current→401，files→400 bad_api_resource，users/current→400，nodes→400"
+    },
+    {
+      "path": "/atlas-api/*",
+      "note": "404 HTML『404 页面未找到』"
+    },
+    {
+      "path": "/sso/user/info",
+      "note": "404 HTML"
+    },
+    {
+      "path": "/sso/cas/postlogin（无 stateID）",
+      "note": "302 → /auth/show_login_error?msg=BADREQUEST('Missing stateID parameter.')"
+    }
+  ],
+  "noiseThirdParty": [
+    "/qidian/*（腾讯企点客服：chatv3、statusManager、wpaVisitor）",
+    "/qdas/s.htm（神策/腾讯埋点）",
+    "/hm.gif",
+    "/marketing_track/track（返回 code:4002『第三方应用的使用时间已到期』）",
+    "/collect/*、/v1/interface/inner/cloudim_*、/v1/wpaVisitor/*"
+  ],
+  "forbiddenWriteEndpoints": [
+    "任何 /apps/* 与 /galaxy/* 下的 upload/create/delete/move/rename/copy/share/restore/permanent_delete/update 语义路径",
+    "/apps/users/update_user_guide_settings（页面加载流里出现的 POST 写操作，改用户偏好）"
+  ],
+  "unverified": [
+    {
+      "method": "GET",
+      "path": "/galaxy/list/items?folder_type=recycle",
+      "purpose": "回收站列表（疑似只读）",
+      "suspected": "read"
+    },
+    {
+      "method": "GET",
+      "path": "/apps/items/search",
+      "purpose": "搜索（路径待确认）",
+      "suspected": "read"
+    },
+    {
+      "path": "management-measures.pdf 正文",
+      "purpose": "账号生命周期/离校流程/保留期限条文",
+      "suspected": "read"
+    },
+    {
+      "path": "文件版本历史接口",
+      "purpose": "版本列表",
+      "suspected": "read"
+    }
+  ],
+  "readOnlyNote": "poseidon/main_page/data 是首页看板数据查询，不是写操作。",
+  "readOnlyNoteAt": "2026-11-23"
+}

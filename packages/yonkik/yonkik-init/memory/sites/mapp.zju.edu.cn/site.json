@@ -1,0 +1,12 @@
+{
+  "key": "mapp.zju.edu.cn",
+  "origin": "https://mapp.zju.edu.cn",
+  "status": "blocked",
+  "label": "紧急电话（mapp）",
+  "auth": {
+    "type": "unknown"
+  },
+  "via": "probe-only",
+  "exploredAt": "2026-11-22",
+  "blockedReason": "四个候选路径均 404；本环境无法进一步判定。"
+}

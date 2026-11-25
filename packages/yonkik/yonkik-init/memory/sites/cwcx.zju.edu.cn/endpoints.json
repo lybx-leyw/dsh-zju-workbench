@@ -1,0 +1,130 @@
+{
+  "site": "cwcx.zju.edu.cn",
+  "base": "https://cwcx.zju.edu.cn",
+  "auth": "公开区：无；业务区：CAS（campus-sso）或本站账号+附加码",
+  "verified": [
+    {
+      "name": "root-js-redirect-shell",
+      "method": "GET",
+      "path": "/",
+      "returns": "318B HTML：只有一个 <script>，判断 URL 是否含 pay.zju.edu.cn，否则 document.location.href='WFManager/login.jsp'。无 <title>。charset=ISO-8859-1。",
+      "note": "这就是「318B 空响应」的真相：既不是错误页也不是 SPA 空壳，是 JS 跳转壳。抓取必须直接打 /WFManager/login.jsp，不要停在 /。同壳揭示 pay.zju.edu.cn 为姊妹部署。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "login-page",
+      "method": "GET",
+      "path": "/WFManager/login.jsp",
+      "returns": "17.3KB HTML，title=「欢迎访问浙江大学信息门户」，含账密表单(#uid/#pwd/#chkcode1)+「浙大通行证登录」+#zhLogin、附加码 code_validateCode.action、重置密码 smsuserinfo.jsp。内嵌 AddTitle() 列出 66 条计财处公告（免登录）。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "login-dir",
+      "method": "GET",
+      "path": "/WFManager/",
+      "returns": "302 → http://cwcx.zju.edu.cn/WFManager/login.jsp（注意是 http 明文）",
+      "verifiedAt": "2026-11-20",
+      "status": 302
+    },
+    {
+      "name": "news-detail",
+      "method": "GET",
+      "path": "/WFManager/common/news.jsp?id={n}",
+      "returns": "2.5–4KB 公告正文 HTML。**charset=gb2312**，需按 gb2312 解码。",
+      "note": "免登录可读。**id 不连续**：实测 1/24/39/50/57/63/64/66 存在（200，2603–4004B）；65/67/100 返回 500（497B nginx 错误页）。id=66「关于学费到款线上认领系统试运行的通知」为最新。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "news-index-script",
+      "method": "GET",
+      "path": "/WFManager/index.js",
+      "returns": "1.3KB，定义 AddTitle()/OpenURL()/EndNews()；登录页用它渲染公告栏",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "login-js",
+      "method": "GET",
+      "path": "/WFManager/js/login.js",
+      "returns": "8.4KB 混淆脚本，调用 loginAction_doLogin.action 提交；取短信码 activation_huoQuCodesj.action；刷新附加码 code_validateCode.action",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "pwd-crypto-js",
+      "method": "GET",
+      "path": "/WFManager/js/jiami.js",
+      "returns": "1.5KB：Base64 编解码（formInfoDealer），不是 RSA。与 zjuam CAS 的 RSA 口令加密不同。",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    },
+    {
+      "name": "sso-entry",
+      "method": "GET",
+      "path": "/WFManager/home2.jsp",
+      "returns": "302 → https://zjuam.zju.edu.cn/cas/login?service=http%3A%2F%2Fcwcx.zju.edu.cn%2FWFManager%2Fhome2.jsp",
+      "note": "CAS 服务串是 http:// 明文，回跳可能丢 SameSite/Secure cookie。",
+      "verifiedAt": "2026-11-20",
+      "status": 302
+    },
+    {
+      "name": "sms-reset-pwd",
+      "method": "GET",
+      "path": "/WFManager/smsuserinfo.jsp",
+      "returns": "3.5KB「重置密码」页（手机号+短信码）",
+      "verifiedAt": "2026-11-20",
+      "status": 200
+    }
+  ],
+  "unverified": [
+    {
+      "name": "loginAction-doLogin",
+      "method": "POST",
+      "path": "/WFManager/loginAction_doLogin.action",
+      "semantics": "write（建立会话；登录是唯一允许的写操作）",
+      "note": "未调用。需附加码 chkcode1 + Base64 密码。预约报销额度相关的业务接口全部在登录后，本次按安全契约未登录探。"
+    },
+    {
+      "name": "reserve-quota",
+      "semantics": "read",
+      "status": "blocked-login-wall",
+      "note": "CC98 19 帖讨论的「预约额度满了」对应登录后的预约报销模块。本次未登录，无法确认接口路径。"
+    },
+    {
+      "name": "activation-huoQuCodesj",
+      "method": "POST",
+      "path": "/WFManager/activation_huoQuCodesj.action",
+      "semantics": "write（触发短信发送）",
+      "note": "绝不调用——会真实发短信。仅从 login.js 字面提取。"
+    }
+  ],
+  "blocked": [
+    {
+      "path": "登录后全部业务区（预约报销/酬金/国库项目/资金有效日期）",
+      "status": "not-attempted",
+      "reason": "CAS 登录需浏览器 + 附加码；且任务禁止任何报销/预约写操作。公开区已足够回答「318B 是什么」这一核心问题。"
+    }
+  ],
+  "verifiedCount": 9,
+  "policyExcluded": [
+    {
+      "name": "login-action",
+      "method": "POST",
+      "path": "/WFManager/loginAction_doLogin.action",
+      "reason": "登录（会建立会话，未验证不调用）",
+      "action": "不调用"
+    },
+    {
+      "name": "activation-code",
+      "method": "POST",
+      "path": "/WFManager/activation_huoQuCodesj.action",
+      "reason": "获取激活码（可能有副作用，未验证不调用）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "doLogin / huoQuCodesj 是登录与激活码获取，均未验证且不调用。",
+  "policyRecordedAt": "2026-11-23"
+}

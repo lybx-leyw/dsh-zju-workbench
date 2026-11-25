@@ -1,0 +1,50 @@
+{
+  "site": "ygb.zju.edu.cn",
+  "exactNoticeColumns": [
+    {
+      "id": "GET ygb.zju.edu.cn/31555/list.htm",
+      "column": "通知公告",
+      "verifiesPath": "/31555/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ygb.zju.edu.cn/31555/list.htm",
+        "status": 200,
+        "column": "通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "党建工作",
+        "parentPath": "/31543/list.htm",
+        "parentTitle": "党建工作",
+        "count": 10,
+        "total": 183,
+        "pages": 19,
+        "externalLinks": 0,
+        "firstId": "3228402",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET ygb.zju.edu.cn/31546/list.htm",
+      "column": "奖助事务",
+      "verifiesPath": "/31546/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ygb.zju.edu.cn/31546/list.htm",
+        "status": 200,
+        "column": "奖助事务",
+        "displayTitle": "奖助事务",
+        "sectionTitle": "奖助事务",
+        "parentPath": null,
+        "parentTitle": null,
+        "count": 3,
+        "total": 3,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3110211",
+        "firstDate": "2025-11-26"
+      }
+    }
+  ],
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS。"
+}

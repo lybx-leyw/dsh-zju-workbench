@@ -1,0 +1,90 @@
+{
+  "_note": "浙大校车预约系统（car.zju.edu.cn）。全部 POST /platform/*，无需 query string，参数走 form body。响应统一 {success:0, msg:'成功', count, data} —— success:0 是成功，不是失败。鉴权：Authorization: bearer <accessToken>（登录后由 /platform/weChat/zdLoginCode 下发）。",
+  "base": "http://car.zju.edu.cn/platform",
+  "auth": {
+    "entry": "http://car.zju.edu.cn/pages/index/login",
+    "casAuthorize": "https://zjuam.zju.edu.cn/cas/oauth2.0/authorize?response_type=code&client_id=NgRUUG0GFEOUjsV3Vc&redirect_uri=http://car.zju.edu.cn/pages/index/login",
+    "tokenExchange": "POST /platform/weChat/zdLoginCode（携带 CAS 回跳的 code）→ {accessToken, tokenType:'bearer', expiresIn:99999, refreshToken}",
+    "credentialKey": "campus-sso"
+  },
+  "verified": [
+    {
+      "id": "user-info",
+      "method": "POST",
+      "path": "/platform/appHome/userInfo",
+      "purpose": "当前登录用户信息",
+      "response": "{success:0, data:{userName, phone, avatar, userStatus:'1', userType:1}}",
+      "evidence": "2026-11-19 实测：`userName` 字段回真实姓名（属个人标识，不入档），`userStatus=1` 表示正常"
+    },
+    {
+      "id": "message",
+      "method": "POST",
+      "path": "/platform/appHome/message",
+      "purpose": "站内通知/公告",
+      "response": "{success:0, data:[]}",
+      "evidence": "2026-11-19 实测，当前无消息"
+    },
+    {
+      "id": "reserve-list",
+      "method": "POST",
+      "path": "/platform/appHome/reserveTicket",
+      "params": "resource=home",
+      "purpose": "我的预约记录",
+      "response": "{success:0, data:[...]}",
+      "evidence": "2026-11-19 实测 data=[]（该实测账号无预约记录，不代表接口恒为空）"
+    },
+    {
+      "id": "stations",
+      "method": "POST",
+      "path": "/platform/car/station/select",
+      "purpose": "全部可预订校区（6 个）",
+      "response": "{success:0, data:[{id:'X101',name:'紫金港校区'},{id:'X202',name:'玉泉校区'},{id:'X303',name:'西溪校区'},{id:'X404',name:'华家池校区'},{id:'X505',name:'之江校区'},{id:'X606',name:'湖滨'}]}",
+      "note": "**只有 6 个校区，没有海宁/舟山**——这与 CC98 上「海宁班车要在国际校区微后勤约」的说法一致",
+      "evidence": "2026-11-19 实测"
+    },
+    {
+      "id": "ticket-search",
+      "method": "POST",
+      "path": "/platform/ticket/search",
+      "params": "destinationName=<校区名>&originName=<校区名>&time=<YYYY-MM-DD>（form-urlencoded）",
+      "purpose": "【核心】按起终校区+日期查班次，**含实时余票**",
+      "response": "{success:0, data:[{originTime:'17:37', destinationTime:null, originNo:'X202', originName:'玉泉校区三舍西侧（前往各校区）', stationStartNo:1, destinationNo:'X101', destinationName:'紫金港校区', stationEndNo:2, seat:9, licence:null, bcName:'教师9号班车', bid:'B101', lid:'L009', timeSort:'17:37:00', estimate:false}]}",
+      "note": "seat = 实时剩余座位（这是 life 的 busQuery 没有的能力）；originName 是**具体站点名**不是校区名（如「玉泉校区三舍西侧（前往各校区）」「玉泉校区教十二北面」），比 busQuery 的粒度细；estimate=true 表示该趟次时间为估计值。",
+      "evidence": "2026-11-19 实测：玉泉→紫金港 2026-11-19 返回 15:10/16:40/17:10/17:37/17:50/18:00/18:05 等，含 seat 数值 0/5/18/14/1/9/35"
+    }
+  ],
+  "unverified": [
+    {
+      "path": "/platform/ticket/reserve 或 /platform/appHome/reserve（预约下单）",
+      "suspected": "写（预约）",
+      "reason": "UI 上「预约」按钮对应的下单接口。语义为写操作，按安全契约不调用、不记录。"
+    },
+    {
+      "path": "退票接口",
+      "suspected": "写（退票）",
+      "reason": "主页有「退票」弹窗（是否确认退票），对应写接口。不调用。"
+    },
+    {
+      "path": "违约申诉入口",
+      "suspected": "写（申诉）",
+      "reason": "CC98 用户反馈「点进班车预约，最下面三个东西，按最右边那个」是申诉入口；属写操作，未探。"
+    }
+  ],
+  "businessRules": {
+    "violationFreeze": "违约记录达到 3 次后，预约资格将被取消（页面原文「温馨提醒:违约记录达到3次后,预约资格将被取消!」）",
+    "violationTrigger": "预约后未点「确认上车」即记为一次违约（CC98 多人反馈）",
+    "appeal": "有申诉入口，写一段检讨可清零（CC98 用户实测「第二天就给我清零了」）",
+    "noHaining": "站点列表只有紫金港/玉泉/西溪/华家池/之江/湖滨，海宁与舟山不在本系统"
+  },
+  "policyExcluded": [
+    {
+      "name": "reserve-ticket",
+      "method": "POST",
+      "path": "/platform/appHome/reserveTicket",
+      "reason": "预约校车（写操作，占用座位）",
+      "action": "不调用"
+    }
+  ],
+  "policyExcludedReason": "reserveTicket 是预约校车（写操作）；userInfo/message 是查询。只读浏览时刻表，不预约。",
+  "policyRecordedAt": "2026-11-23"
+}

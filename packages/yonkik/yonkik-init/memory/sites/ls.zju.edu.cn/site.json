@@ -1,0 +1,25 @@
+{
+  "key": "ls.zju.edu.cn",
+  "origin": "https://ls.zju.edu.cn",
+  "status": "done",
+  "label": "历史学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-https-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "固定单页首屏；HTTP 301 到同站 HTTPS。"
+  },
+  "exactNoticeColumns": {
+    "count": 1,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/65203/list.htm"
+    ],
+    "note": "页面标题「风采动态」与清单标签「学生思政」不同；面包屑两级同路径。首屏 14 条全为微信公众号外链。"
+  }
+}

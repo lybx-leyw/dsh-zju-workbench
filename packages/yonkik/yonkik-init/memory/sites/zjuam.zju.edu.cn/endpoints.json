@@ -1,0 +1,68 @@
+{
+  "site": "zjuam.zju.edu.cn",
+  "checkedAt": "2026-11-22",
+  "access": "公开 HTTPS；登录页匿名可读，登录提交需人工环节。",
+  "role": "全校统一身份认证（CAS）。**认证基础设施，不是业务数据源**。",
+  "probes": [
+    {
+      "path": "/cas/login",
+      "status": 200,
+      "ctype": "text/html;charset=UTF-8",
+      "length": 19009,
+      "title": "统一身份认证平台"
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "ctype": "text/html",
+      "length": 162,
+      "title": "Error",
+      "note": "根路径只是错误页，入口是 /cas/login"
+    }
+  ],
+  "loginForm": {
+    "action": "/cas/login",
+    "method": "post（由 CAS 约定）",
+    "fields": [
+      {
+        "name": "username",
+        "title": "职工号/学号/邮箱/别名",
+        "note": "四种标识都接受"
+      },
+      {
+        "name": "password"
+      },
+      {
+        "name": "authcode",
+        "note": "**验证码**——登录页含 captcha 输入，说明存在人工环节"
+      },
+      {
+        "name": "rememberMe",
+        "type": "checkbox"
+      },
+      {
+        "name": "execution",
+        "type": "hidden",
+        "note": "一次性令牌，形如 `<uuid>_<base64 JWT>`，随页面下发"
+      },
+      {
+        "name": "_eventId",
+        "value": "submit"
+      },
+      {
+        "name": "ys",
+        "value": "5"
+      }
+    ],
+    "hasCaptcha": true
+  },
+  "judgement": "登录页结构已完整记录：用户名字段接受**学号/邮箱/别名**四种标识；提交需要 `execution` 一次性令牌与**验证码**。验证码是硬性人工环节，因此本库**不做自动登录**。",
+  "relation": "被 zdbk / courses / classroom / pintia / s1 等站的 CAS-OAuth2 跳转引用；各站跳转链已在各自档案中逐跳记录。",
+  "notAttempted": [
+    "不提交登录表单",
+    "不识别/绕过验证码",
+    "不缓存 execution 令牌",
+    "不保存任何凭据"
+  ],
+  "whyWithheld": "验证码与一次性令牌的组合说明该入口按「人工确认」设计；自动化登录属绕过其访问控制，与只读侦察纪律冲突。"
+}

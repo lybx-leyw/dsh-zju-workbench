@@ -1,0 +1,4 @@
+# zju profile 装配层（最小）。
+# YONKIK 的 skill 与读工具由包入口 src/index.js 的 apply(ctx) 直接注册，
+# 不需要在这里声明 preset/页面槽。此文件保留为空装配，供 profile.mjs 合并逻辑读取。
+[]

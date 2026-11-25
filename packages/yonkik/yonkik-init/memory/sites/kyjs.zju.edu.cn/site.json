@@ -1,0 +1,24 @@
+{
+  "key": "kyjs.zju.edu.cn",
+  "origin": "http://kyjs.zju.edu.cn",
+  "status": "done",
+  "type": "学科竞赛管理系统（RuoYi 框架 + Vue SPA）",
+  "auth": {
+    "type": "form",
+    "credentialKey": "campus-sso",
+    "note": "竞赛报名、作品、获奖等系统业务仍需登录；校园 CAS 对该业务的支持未验证。公开新闻为单独、免登录的接口。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-20",
+  "publicNews": {
+    "path": "/prod-api/<路径段>/detail",
+    "sample": "10310",
+    "transport": "public-http-no-session",
+    "source": "https://bksy.zju.edu.cn/76426/list.htm",
+    "checkedAt": "2026-11-22",
+    "robotsEvidence": "GET /robots.txt 200 HTML (526B)，不像 robots 文件；未发现规则，保守每次单条、手动间隔 2 秒"
+  }
+}

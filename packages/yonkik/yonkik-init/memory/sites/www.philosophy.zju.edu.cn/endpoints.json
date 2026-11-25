@@ -1,0 +1,373 @@
+{
+  "site": "www.philosophy.zju.edu.cn",
+  "access": "公开 HTTP；robots 404。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.philosophy.zju.edu.cn/64683/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/64683/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/64683/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "trail": [
+          [
+            "/64611/list.htm",
+            "学生思政"
+          ],
+          [
+            "/64683/list.htm",
+            "评奖评优"
+          ]
+        ],
+        "count": 14,
+        "total": 185,
+        "pages": 14,
+        "externalLinks": 0,
+        "firstId": "3227640",
+        "firstDate": "2026-11-16"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/64684/list.htm",
+      "column": "学生资助",
+      "verifiesPath": "/64684/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/64684/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "trail": [
+          [
+            "/64611/list.htm",
+            "学生思政"
+          ],
+          [
+            "/64684/list.htm",
+            "学生资助"
+          ]
+        ],
+        "count": 14,
+        "total": 153,
+        "pages": 11,
+        "externalLinks": 1,
+        "firstId": "3228105",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/gggs_65461/list.htm",
+      "column": "公告公示",
+      "verifiesPath": "/gggs_65461/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/gggs_65461/list.htm",
+        "status": 200,
+        "column": "公告公示",
+        "displayTitle": "公告公示",
+        "trail": [
+          [
+            "/64610/list.htm",
+            "国际合作"
+          ],
+          [
+            "/gggs_65461/list.htm",
+            "公告公示"
+          ]
+        ],
+        "count": 14,
+        "total": 315,
+        "pages": 23,
+        "externalLinks": 0,
+        "firstId": "3228972",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/zxtz/list.htm",
+      "column": "本科生教育·最新通知",
+      "verifiesPath": "/zxtz/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/zxtz/list.htm",
+        "status": 200,
+        "column": "本科生教育·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/64607/list.htm",
+            "教育教学"
+          ],
+          [
+            "/64658/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/zxtz/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 115,
+        "pages": 9,
+        "externalLinks": 3,
+        "firstId": "3214262",
+        "firstDate": "2026-10-16"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/64672/list.htm",
+      "column": "学术活动",
+      "verifiesPath": "/64672/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/64672/list.htm",
+        "status": 200,
+        "column": "学术活动",
+        "displayTitle": "学术活动",
+        "trail": [
+          [
+            "/64609/list.htm",
+            "学术研究"
+          ],
+          [
+            "/64672/list.htm",
+            "学术活动"
+          ]
+        ],
+        "count": 14,
+        "total": 218,
+        "pages": 16,
+        "externalLinks": 2,
+        "firstId": "3228834",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/zxtz_65348/list.htm",
+      "column": "研究生教育·最新通知",
+      "verifiesPath": "/zxtz_65348/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/zxtz_65348/list.htm",
+        "status": 200,
+        "column": "研究生教育·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/64607/list.htm",
+            "教育教学"
+          ],
+          [
+            "/64659/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/zxtz_65348/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 149,
+        "pages": 11,
+        "externalLinks": 2,
+        "firstId": "3219464",
+        "firstDate": "2026-10-27"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/64679/list.htm",
+      "column": "学生思政·最新通知",
+      "verifiesPath": "/64679/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/64679/list.htm",
+        "status": 200,
+        "column": "学生思政·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/64611/list.htm",
+            "学生思政"
+          ],
+          [
+            "/64679/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 172,
+        "pages": 13,
+        "externalLinks": 0,
+        "firstId": "3229179",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/dwjl/list.htm",
+      "column": "对外交流",
+      "verifiesPath": "/dwjl/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/dwjl/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "对外交流",
+        "trail": [
+          [
+            "/64607/list.htm",
+            "教育教学"
+          ],
+          [
+            "/64659/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/dwjl/list.htm",
+            "对外交流"
+          ]
+        ],
+        "count": 14,
+        "total": 59,
+        "pages": 5,
+        "externalLinks": 1,
+        "firstId": "3229223",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/64670/list.htm",
+      "column": "学术研究·最新通知",
+      "verifiesPath": "/64670/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/64670/list.htm",
+        "status": 200,
+        "column": "学术研究·最新通知",
+        "displayTitle": "最新通知",
+        "trail": [
+          [
+            "/64609/list.htm",
+            "学术研究"
+          ],
+          [
+            "/64670/list.htm",
+            "最新通知"
+          ]
+        ],
+        "count": 14,
+        "total": 39,
+        "pages": 3,
+        "externalLinks": 9,
+        "firstId": null,
+        "firstDate": "2026-10-09"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/64681/list.htm",
+      "column": "学生团建",
+      "verifiesPath": "/64681/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/64681/list.htm",
+        "status": 200,
+        "column": "学生团建",
+        "displayTitle": "学生团建",
+        "trail": [
+          [
+            "/64611/list.htm",
+            "学生思政"
+          ],
+          [
+            "/64681/list.htm",
+            "学生团建"
+          ]
+        ],
+        "count": 14,
+        "total": 44,
+        "pages": 4,
+        "externalLinks": 0,
+        "firstId": "3229647",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/xwgl/list.htm",
+      "column": "学位管理",
+      "verifiesPath": "/xwgl/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/xwgl/list.htm",
+        "status": 200,
+        "column": "学位管理",
+        "displayTitle": "学位管理",
+        "trail": [
+          [
+            "/64607/list.htm",
+            "教育教学"
+          ],
+          [
+            "/64659/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/xwgl/list.htm",
+            "学位管理"
+          ]
+        ],
+        "count": 14,
+        "total": 15,
+        "pages": 2,
+        "externalLinks": 1,
+        "firstId": "3196919",
+        "firstDate": "2026-08-31"
+      }
+    },
+    {
+      "id": "GET www.philosophy.zju.edu.cn/64676/list.htm",
+      "column": "国际交流",
+      "verifiesPath": "/64676/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.philosophy.zju.edu.cn/64676/list.htm",
+        "status": 200,
+        "column": "国际交流",
+        "displayTitle": "国际交流",
+        "trail": [
+          [
+            "/64610/list.htm",
+            "国际合作"
+          ],
+          [
+            "/64676/list.htm",
+            "国际交流"
+          ]
+        ],
+        "count": 7,
+        "total": 7,
+        "pages": 1,
+        "externalLinks": 1,
+        "firstId": "3197557",
+        "firstDate": "2026-08-29"
+      }
+    }
+  ],
+  "unverified": [
+    "其余哲学学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

@@ -1,0 +1,293 @@
+{
+  "site": "www.phs.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.phs.zju.edu.cn/94008/list.htm",
+      "column": "研究生培养",
+      "verifiesPath": "/94008/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.phs.zju.edu.cn/94008/list.htm",
+        "status": 200,
+        "column": "研究生培养",
+        "displayTitle": "研究生培养",
+        "sectionTitle": "人才培养",
+        "trail": [
+          [
+            "/93961/list.htm",
+            "人才培养"
+          ],
+          [
+            "/94008/list.htm",
+            "研究生培养"
+          ]
+        ],
+        "count": 14,
+        "total": 22,
+        "pages": 2,
+        "externalLinks": 7,
+        "firstId": "3175399",
+        "firstDate": "2026-06-05"
+      }
+    },
+    {
+      "id": "GET www.phs.zju.edu.cn/94009/list.htm",
+      "column": "培养管理",
+      "verifiesPath": "/94009/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.phs.zju.edu.cn/94009/list.htm",
+        "status": 200,
+        "column": "培养管理",
+        "displayTitle": "培养管理",
+        "sectionTitle": "人才培养",
+        "trail": [
+          [
+            "/93961/list.htm",
+            "人才培养"
+          ],
+          [
+            "/94007/list.htm",
+            "本科生培养"
+          ],
+          [
+            "/94009/list.htm",
+            "培养管理"
+          ]
+        ],
+        "count": 6,
+        "total": 6,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3195851",
+        "firstDate": "2026-06-29"
+      }
+    },
+    {
+      "id": "GET www.phs.zju.edu.cn/94011/list.htm",
+      "column": "对外交流",
+      "verifiesPath": "/94011/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.phs.zju.edu.cn/94011/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "对外交流",
+        "sectionTitle": "人才培养",
+        "trail": [
+          [
+            "/93961/list.htm",
+            "人才培养"
+          ],
+          [
+            "/94007/list.htm",
+            "本科生培养"
+          ],
+          [
+            "/94011/list.htm",
+            "对外交流"
+          ]
+        ],
+        "count": 2,
+        "total": 2,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3197158",
+        "firstDate": "2026-07-16"
+      }
+    },
+    {
+      "id": "GET www.phs.zju.edu.cn/94014/list.htm",
+      "column": "研究生培养·通知公告",
+      "verifiesPath": "/94014/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.phs.zju.edu.cn/94014/list.htm",
+        "status": 200,
+        "column": "研究生培养·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "人才培养",
+        "trail": [
+          [
+            "/93961/list.htm",
+            "人才培养"
+          ],
+          [
+            "/94008/list.htm",
+            "研究生培养"
+          ],
+          [
+            "/94014/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 23,
+        "pages": 2,
+        "externalLinks": 6,
+        "firstId": "3220939",
+        "firstDate": "2026-10-30"
+      }
+    },
+    {
+      "id": "GET www.phs.zju.edu.cn/94017/list.htm",
+      "column": "学位授予",
+      "verifiesPath": "/94017/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.phs.zju.edu.cn/94017/list.htm",
+        "status": 200,
+        "column": "学位授予",
+        "displayTitle": "学位授予",
+        "sectionTitle": "人才培养",
+        "trail": [
+          [
+            "/93961/list.htm",
+            "人才培养"
+          ],
+          [
+            "/94008/list.htm",
+            "研究生培养"
+          ],
+          [
+            "/94017/list.htm",
+            "学位授予"
+          ]
+        ],
+        "count": 4,
+        "total": 4,
+        "pages": 1,
+        "externalLinks": 3,
+        "firstId": "3195870",
+        "firstDate": "2026-01-04"
+      }
+    },
+    {
+      "id": "GET www.phs.zju.edu.cn/94021/list.htm",
+      "column": "国际合作·通知公告",
+      "verifiesPath": "/94021/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.phs.zju.edu.cn/94021/list.htm",
+        "status": 200,
+        "column": "国际合作·通知公告",
+        "displayTitle": "通知公告",
+        "sectionTitle": "交流合作",
+        "trail": [
+          [
+            "/93962/list.htm",
+            "交流合作"
+          ],
+          [
+            "/94019/list.htm",
+            "国际合作"
+          ],
+          [
+            "/94021/list.htm",
+            "通知公告"
+          ]
+        ],
+        "count": 14,
+        "total": 55,
+        "pages": 4,
+        "externalLinks": 0,
+        "firstId": "3226752",
+        "firstDate": "2026-11-13"
+      }
+    },
+    {
+      "id": "GET www.phs.zju.edu.cn/94024/list.htm",
+      "column": "国际交流",
+      "verifiesPath": "/94024/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.phs.zju.edu.cn/94024/list.htm",
+        "status": 200,
+        "column": "国际交流",
+        "displayTitle": "国际交流",
+        "sectionTitle": "交流合作",
+        "trail": [
+          [
+            "/93962/list.htm",
+            "交流合作"
+          ],
+          [
+            "/94019/list.htm",
+            "国际合作"
+          ],
+          [
+            "/94024/list.htm",
+            "国际交流"
+          ]
+        ],
+        "count": 14,
+        "total": 29,
+        "pages": 3,
+        "externalLinks": 5,
+        "firstId": null,
+        "firstDate": "2026-08-27"
+      }
+    },
+    {
+      "id": "GET www.phs.zju.edu.cn/94033/list.htm",
+      "column": "学生活动",
+      "verifiesPath": "/94033/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.phs.zju.edu.cn/94033/list.htm",
+        "status": 200,
+        "column": "学生活动",
+        "displayTitle": "学生活动",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/93964/list.htm",
+            "学生工作"
+          ],
+          [
+            "/94033/list.htm",
+            "学生活动"
+          ]
+        ],
+        "count": 14,
+        "total": 58,
+        "pages": 5,
+        "externalLinks": 11,
+        "firstId": "3225593",
+        "firstDate": "2026-11-11"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/93961/list.htm",
+      "pageTitle": "本科生培养",
+      "sectionTitle": "人才培养",
+      "claimedColumnPath": "/94007/list.htm",
+      "claimedColumnTitle": "本科生培养",
+      "note": "目录路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/93964/list.htm",
+      "pageTitle": "学生事务",
+      "sectionTitle": "学生工作",
+      "claimedColumnPath": "/94032/list.htm",
+      "claimedColumnTitle": "学生事务",
+      "note": "目录路径可访问且标题正确，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余公共卫生学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

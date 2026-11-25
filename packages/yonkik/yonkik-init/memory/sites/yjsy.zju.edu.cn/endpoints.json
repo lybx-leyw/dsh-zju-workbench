@@ -1,0 +1,186 @@
+{
+  "site": "yjsy.zju.edu.cn",
+  "base": "https://yjsy.zju.edu.cn",
+  "apiBase": "https://yjsy.zju.edu.cn/dataapi",
+  "auth": "CAS(campus-sso) → Token（放 header，401 返回「Token失效，请重新登录!」）",
+  "platform": "jeecg-boot + Vue2 ant-design-pro-vue，nginx。前端硬编码 API_BASE_URL=https://yjsy.zju.edu.cn/dataapi、casPrefixUrl=https://zjuam.zju.edu.cn/cas",
+  "verified": [
+    {
+      "name": "open-listPyfaFz",
+      "method": "GET",
+      "path": "/dataapi/open/pyPyfa/listPyfaFz",
+      "returns": "{success:true,code:200,result:[{id,fzmc(方案名称，如'8选3'/'5选3'),zxsl(最少选),zdsl(最多选),createBy,createTime}]} 2,293B",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "**研究生培养方案的选课分组规则**，匿名可读"
+    },
+    {
+      "name": "open-listPyBxxx",
+      "method": "GET",
+      "path": "/dataapi/open/pyPyfa/listPyBxxx",
+      "returns": "{code:200,result:[{value:'必修',text:'必修'},{value:'选修',text:'选修'}]}",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "open-listPyhj",
+      "method": "GET",
+      "path": "/dataapi/open/config/listPyhj",
+      "returns": "{code:200,result:[{id,dm(代码),mc(名称如'始毕业教育'),sfkc,sfsx,mrxf(默认学分),...}]} 3,544B —— 培养环节字典",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "open-listPykc",
+      "method": "GET",
+      "path": "/dataapi/open/config/listPykc",
+      "returns": "{code:200,result:[{id,dm,mc(课程名如'公共学位课'),kcxz,kcxz_dictText,sfkc,sfsx,xwlb,pylx,...}]} **34,423B —— 研究生课程体系字典**",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "本次最大发现：匿名就能拿全研究生课程/培养环节字典"
+    },
+    {
+      "name": "open-pyPyfa-queryById",
+      "method": "GET",
+      "path": "/dataapi/open/pyPyfa/queryById?id={id}",
+      "returns": "**404**（需 POST 或参数名不同；bundle 里是 queryById 但实测 GET?id=1 → 404 No message available）",
+      "auth": "none",
+      "status": 404,
+      "verifiedAt": "2026-11-20",
+      "note": "同族其余方法（queryPyPyfaHjByMainId / queryPyPyfaDetailByMainId / queryPyPyfaKcByMainId）未逐个验证 —— 大概率是 POST 或需 mainId 参数"
+    },
+    {
+      "name": "spa-shell",
+      "method": "GET",
+      "path": "/",
+      "returns": "SPA 壳 9,068B，title=研究生教育管理信息系统。**所有非 /dataapi 路径都被 SPA catch-all 接住回这个壳（含 /api/）**",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "api-root",
+      "method": "GET",
+      "path": "/api/",
+      "returns": "`{\"code\":401,\"msg\":\"invalid token\"}` 34B —— 这是**壳外的真实 API 网关**（与 /dataapi 的响应格式不同）",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "注意：HTTP 200 但 body 是 401 错误，别被状态码骗了"
+    },
+    {
+      "name": "dataapi-required-auth",
+      "method": "GET",
+      "path": "/dataapi/sys/dict/getDictItems/{code}",
+      "returns": "`{\"success\":true,\"message\":\"Token失效，请重新登录!\",\"code\":401,\"result\":null}`（**HTTP 200**）",
+      "auth": "token",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "同样 HTTP 200 + code 401。业务接口全部如此"
+    },
+    {
+      "name": "open-getCurrentZsnf",
+      "method": "GET",
+      "path": "/dataapi/open/zsss/getCurrentZsnf",
+      "returns": "`{success:true,message:'2027',code:200,result:'2027'}` —— 当前招生年份",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "**/dataapi/open/** 是免登录公开区**（招生相关），实测可用"
+    },
+    {
+      "name": "open-queryXyList",
+      "method": "GET",
+      "path": "/dataapi/open/zsss/queryXyList?mllx=1&zsnf=2027",
+      "returns": "`{success:true,code:200,result:[{id,parentId,departName,departNameEn,orgCode,orgCategory,status,...}]}` —— 33,911B，**全部研究生招生院系清单**",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "mllx=1 学术学位 / mllx=0 专业学位（从 bundle 里 queryXyList?mllx=0 推断，未逐个验证）"
+    },
+    {
+      "name": "open-queryXxfsList",
+      "method": "GET",
+      "path": "/dataapi/open/zsss/queryXxfsList",
+      "returns": "`{code:200,result:[{value:'1',text:'全日制'},{value:'2',text:'非全日制'}]}`",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20"
+    },
+    {
+      "name": "open-zsml",
+      "method": "GET",
+      "path": "/dataapi/open/zsss/zsml?nf=2026",
+      "returns": "缺参时 `{success:false,message:'报考院系、报考专业、研究方向必须选择一个查询',code:500}` —— **证明该接口可匿名调用但需三级联动参数**",
+      "auth": "none",
+      "status": 200,
+      "verifiedAt": "2026-11-20",
+      "note": "招生目录查询。参数链：院系(queryXyList) → 专业(queryZyList) → 研究方向。本次未完整走通（预算控制）"
+    },
+    {
+      "name": "cas-validateLogin",
+      "method": "GET",
+      "path": "/dataapi/sys/cas/client/validateLogin?ticket={ST}&service={service}",
+      "returns": "{ success, result: { token, userInfo } }",
+      "note": "CAS 换 JWT。后续请求头 X-Access-Token（不是 cookie）。service 研究生用 https%3A%2F%2Fyjsy.zju.edu.cn%2F，本科生入口加 /bks",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "user-getUserInfo",
+      "method": "GET",
+      "path": "/dataapi/sys/user/getUserInfo",
+      "returns": "{ result: { userInfo: { username, realname, orgName, orgCategory, userIdentity, … } } }；回包 214KB 含部门树与权限",
+      "note": "用 orgName/userIdentity 判断本科/研究生身份。需 token",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "jxrl-calendar",
+      "method": "GET",
+      "path": "/dataapi/system/sysJxrlXqsj/getJxrlByXnxq?xn={学年头年}&xq={11春夏|12秋冬}&sfqr=1",
+      "returns": "{ kssj, jssj, zcs(总周数), pkzcs(排课周数), kszs(考试周数), xdxjKszc(下半学期起始周), sysJxrlSjdList[] }",
+      "note": "**节次时间是 4 位整数 800=08:00、1325=13:25**，不是秒数。第14节 21:20-22:30 比其他节长(71min)。需 token",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "kb-by-login-user",
+      "method": "GET",
+      "path": "/dataapi/py/pyKcbj/queryXskbByLoginUser?xn={学年}&pkxq={11春|12秋|13冬|14夏}",
+      "returns": "{ result: { kcbMap: { 星期: { 节次: [课程] } }, sjddList: [] } }",
+      "note": "**本科生返回空 kcbMap 是预期**（实测 6 组参数全空，因 orgName=本科生院）。xq 与 pkxq 编码不同体系。需 token",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    },
+    {
+      "name": "current-term",
+      "method": "GET",
+      "path": "/dataapi/system/sysApp/queryByDm?dm=py_xsxk",
+      "returns": "{ result: { dqxn: \"2026\", dqxq: \"12\", mc: \"我的课程\", … } }",
+      "note": "查当前学年学期的权威来源。需 token",
+      "verifiedAt": "2026-11-22",
+      "status": 200
+    }
+  ],
+  "unverified": [
+    {
+      "name": "business-write",
+      "path": "/dataapi/** 下 save/edit/delete/submit/applyCheckScore 等",
+      "semantics": "**write —— 禁止调用**",
+      "note": "学位论文提交、奖学金申请、成绩复核申请等都在这里。按安全契约一律不做"
+    },
+    {
+      "name": "open-pyPyfa-remaining",
+      "path": "/dataapi/open/pyPyfa/{queryPyPyfaHjByMainId,queryPyPyfaDetailByMainId,queryPyPyfaKcByMainId}",
+      "semantics": "read（培养方案明细：课程/学分/方向）",
+      "note": "查询方法需要 mainId 且疑似 POST。下次从这里接：先用 listPyfaFz 拿方案 id，再 POST queryPyPyfaXxxByMainId"
+    }
+  ],
+  "verifiedCount": 17,
+  "importantPitfall": "两个反直觉点：① **HTTP 200 携带 code:401** —— 判断鉴权要看 body.code，不能看状态码；② `/api/` 与 `/dataapi/` 是两套不同的后端（响应格式不同），前端实际用 `/dataapi`；③ 除 `/dataapi/**` 外所有路径（含 `/api/`）都有可能被 Vue SPA catch-all 接住，返回同一个 9KB 壳。 ④ **/dataapi/open/ 是整个站唯一免登录区，且内容比预期丰富（研究生课程字典 34KB、培养方案分组规则、招生院系清单全可读）**。"
+}

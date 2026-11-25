@@ -1,0 +1,23 @@
+{
+  "key": "yqgx.hic.zju.edu.cn",
+  "origin": "https://yqgx.hic.zju.edu.cn",
+  "status": "done",
+  "title": "杭州国际科创中心大型仪器共享服务平台（大仪平台）",
+  "via": "direct",
+  "requires": [
+    "hiC-account-or-campus-sso"
+  ],
+  "auth": {
+    "type": "local-or-cas",
+    "loginPath": "/lims/",
+    "casGateway": "/gateway/?from=hic&state=idp.hic"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2100,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 404（/genee/robots.txt 回首页）；无 X-RateLimit-*；保守默认。"
+  },
+  "notes": "基理科技（geneegroup）LIMS：「/genee/」是门户（免登录仪器目录/新闻），「/lims/」是业务（需登录）。预约/送样匿名 302 → /lims/error/401。注册需课题组制 + 人工激活。",
+  "exploredAt": "2026-11-20"
+}

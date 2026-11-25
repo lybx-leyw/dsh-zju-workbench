@@ -593,9 +593,8 @@ export function SettingsSection({ t }) {
    * 宿主那边是否已存着密码（决定提交时留空该翻成打码值还是报错）。
    *
    * ⚠️ 必须声明在 `applyCard` **之前**：那个 `useCallback` 的体里引用了
-   *    `setHasPassword`，虽然只在调用时求值（不会真的踩 TDZ），但本仓有过
-   *    "const 写在引用它的 useMemo 之后 → 首次渲染白屏"的先例
-   *    （见 `dsh-zju-page-planning/src/client.jsx` 里 `openTodos` 那段）。
+   *    `setHasPassword`，虽然只在调用时求值（不会真的踩 TDZ），但本仓确实有过
+   *    "`const` 写在引用它的 `useMemo` 之后 → 首次渲染白屏"的先例。
    *    顺序写对是零成本的，不值得为它赌一次。
    */
   const [hasPassword, setHasPassword] = useState(false);
@@ -871,6 +870,17 @@ export function SettingsSection({ t }) {
    * 那一块**只在点了「重新检测」之后**才真的连一次（C 方案）。没探过就如实
    * 说「未检测」—— 编一个「登录失败」会让用户去排查一个根本不存在的故障。
    */
+  /** 分项 → 文案键的展示顺序；实际渲染由宿主返回的 `sources` 决定。 */
+  const SOURCE_ROWS = [
+    ['campus', 'sourceCampus'],
+    ['classroom', 'sourceClassroom'],
+    ['zdbk', 'sourceZdbk'],
+    ['xuezai', 'sourceXuezaiSession'],
+    ['sztz', 'sourceSztz'],
+    ['tyys', 'sourceTyys'],
+    ['notice', 'sourceNotice'],
+  ];
+
   const sourceRow = (all, name) => {
     if (all === null) return { value: t('reading'), tone: 'plain' };
     const state = all?.[name] ?? {};
@@ -1066,13 +1076,17 @@ export function SettingsSection({ t }) {
             </Actions>
           )}
         >
-          <StatusLine label={t('sourceCampus')} {...sourceRow(sources, 'campus')} />
-          <StatusLine label={t('sourceClassroom')} {...sourceRow(sources, 'classroom')} />
-          <StatusLine label={t('sourceZdbk')} {...sourceRow(sources, 'zdbk')} />
-          <StatusLine label={t('sourceXuezaiSession')} {...sourceRow(sources, 'xuezai')} />
-          <StatusLine label={t('sourceSztz')} {...sourceRow(sources, 'sztz')} />
-          <StatusLine label={t('sourceTyys')} {...sourceRow(sources, 'tyys')} />
-          <StatusLine label={t('sourceNotice')} {...sourceRow(sources, 'notice')} />
+          {/*
+            * 只画宿主真的报上来的分项。
+            *
+            * 宿主现在只探「装配里还真挂着的服务」，已归档的数据源不再出现在
+            * `sources` 里。这里如果仍按老名单硬列 7 行，那些源就会在界面上
+            * 显示成「数据源未启用」—— 用户会以为点一下就能开，实际是整个源
+            * 已经删了。列表跟着 `sources` 走，恢复哪个源就自动多哪一行。
+            */}
+          {SOURCE_ROWS.filter(([key]) => sources === null || key in (sources ?? {})).map(([key, labelKey]) => (
+            <StatusLine key={key} label={t(labelKey)} {...sourceRow(sources, key)} />
+          ))}
           {message !== null && message.scope === 'sources' ? (
             <p className="zju-setting-hint" role="status">{message.text}</p>
           ) : null}

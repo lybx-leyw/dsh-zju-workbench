@@ -1,0 +1,27 @@
+{
+  "key": "zhfw.zju.edu.cn",
+  "origin": "https://zhfw.zju.edu.cn",
+  "title": "综合服务网（Webplus CMS 新闻/公告门户，非办事入口）",
+  "status": "done",
+  "requires": "none（全站公开，免登录）",
+  "auth": {
+    "family": "none",
+    "credentialKey": null,
+    "note": "本站是 Webplus 内容管理系统，全部内容免登录。页面上有「账号/密码」弹窗（浙大通行证），但只影响个人化栏目，不挡内容。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 返回标准 nginx 404（196B）；无 X-RateLimit-* 头。"
+  },
+  "server": "nginx",
+  "via": "direct",
+  "notes": [
+    "判定：zhfw 是新闻/公告/校情门户（Webplus CMS），不是办事入口。",
+    "它的「办事中心」导航链接指向 https://service.zju.edu.cn/_web/customized/bsdt.jsp —— 办事能力在 service，不在本域。",
+    "曾于 triage 时观察到 / 跳 https://webvpn.zju.edu.cn/login；本机 headless 浏览器访问也会被 WebVPN 挡。属本机网络/代理侧问题，直连 HTTPS 200 正常（见坑节）。"
+  ],
+  "exploredAt": "2026-11-20",
+  "exploredAtNote": "R220 补填：此前 site.json 缺 exploredAt，按索引节点的 exploredAt 回填。"
+}

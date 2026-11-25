@@ -123,35 +123,38 @@ test('a publishable package ships its bundle patch', () => {
   assert.deepEqual(violations, [], `发布产物会缺 patch 文件：\n${violations.join('\n')}`);
 });
 
-test('the page shell dependency is an exact published version, not a local copy', async () => {
-  // 页面壳已改为 npm 依赖：本仓不再保留 vendor 副本。这里钉住四件事，
-  // 任何一条松掉都会让「锁版本」变成一句口号：
-  //   1. **根** package.json 声明的是精确版本（没有 ^ / ~ / file: / workspace:）；
-  //   2. 桥接包不再自己声明它 —— 页面壳由 profile 挂载，重复安装会让 `pages`
-  //      服务被注册两次、整条 entry 启动失败（真机踩过）；
-  //   3. `packages/` 下不再出现页面壳目录，避免又被 shadow 回本地副本；
-  //   4. 也没有任何包再 vendor 一份页面壳源码。
+test('产品页走 DSH 原生槽，不再依赖第三方页面壳', async () => {
+  // 2026-11：页面收窄到三页后，第三方页面壳 `@lybx-leyw/dsh-pages` 整体退役。
+  // 页面改为成对注册 DSH 原生的两个槽（详见 ui-shared/src/page-native.jsx）：
+  //   sidebar.panellist —— 导轨图标；main —— 中央面板，两者用同一个 id 关联。
+  //
+  // 这条守卫钉住「退役不会悄悄回潮」：任何一处把页面壳装回来，
+  // 都会重新引入「在官方 main 旁边再建一套面板系统」的问题。
   const { readFileSync, readdirSync, existsSync } = await import('node:fs');
   const readManifest = (relative) => JSON.parse(readFileSync(path.join(root, relative), 'utf8'));
-  const rootManifest = readManifest('package.json');
-  // 桥接包已归档（`archive/deprecated-packages/`）—— 但仍要守住它当初的错误：
-  // 「桥接包重复声明页面壳」会让 `pages` 服务被注册两次。归档副本同样不该带这条依赖。
-  const bridgePath = 'archive/deprecated-packages/dsh-zju-shell-bridge/package.json';
   const name = '@lybx-leyw/dsh-pages';
-  const range = rootManifest.dependencies?.[name];
-  assert.equal(typeof range, 'string', `${name} 必须在根 package.json 里声明`);
-  assert.match(range, /^\d+\.\d+\.\d+$/, `${name} 必须锁精确版本，收到 ${range}`);
-  if (existsSync(path.join(root, bridgePath))) {
-    const bridge = readManifest(bridgePath);
-    assert.equal(bridge.dependencies?.[name], undefined,
-      '桥接包不应重复声明页面壳 —— 它由 profile 挂载，重复安装会撞 pages 服务');
-  }
-  // profile 必须把它挂成 bundle，否则宿主根本不加载页面壳。
+
+  // 1. 根 package.json 不再声明它。
+  const rootManifest = readManifest('package.json');
+  assert.equal(rootManifest.dependencies?.[name], undefined,
+    `${name} 已退役，不应再出现在根依赖里`);
+
+  // 2. profile 不再挂载它 —— 挂载了宿主就会加载第二个面板系统。
   const profile = readManifest('profiles/zju-workbench/package.json');
-  assert.ok(profile.dsh.profile.bundles.includes(name), 'profile 必须挂载页面壳');
-  assert.equal(existsSync(path.join(root, 'packages', 'dsh-pages')), false, 'packages/ 下不应再有页面壳副本');
+  assert.equal(profile.dsh.profile.bundles.includes(name), false,
+    'profile 不应再挂载页面壳');
+
+  // 3. `packages/` 下不再有页面壳目录，也没有包 vendor 一份源码。
+  assert.equal(existsSync(path.join(root, 'packages', 'dsh-pages')), false,
+    'packages/ 下不应有页面壳副本');
   const vendored = readdirSync(path.join(root, 'packages'), { withFileTypes: true })
     .filter(entry => entry.isDirectory())
     .filter(entry => existsSync(path.join(root, 'packages', entry.name, 'vendor', 'dsh-pages')));
   assert.deepEqual(vendored.map(entry => entry.name), [], '不应再有包 vendor 页面壳源码');
+
+  // 4. 页面注册走原生槽：`registerPage()` 同时注册 sidebar.panellist 与 main。
+  const native = readFileSync(
+    path.join(root, 'packages/client/ui-shared/src/page-native.jsx'), 'utf8');
+  assert.match(native, /name: 'sidebar\.panellist'/, '注册函数必须占用导轨图标槽');
+  assert.match(native, /name: 'main'/, '注册函数必须占用中央面板槽');
 });

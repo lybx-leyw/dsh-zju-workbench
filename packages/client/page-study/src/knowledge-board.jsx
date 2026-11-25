@@ -1,8 +1,9 @@
 import { knowledgeChapters } from '@lybx-leyw/dsh-zju-core-quiz';
 import React, { useEffect, useState } from "react";
 import { LectureReader } from "./lecture-reader.jsx";
-// 点级出题面板属于题库页（它要题库的持久化与历史题）。本页**不 import 那一页**，
-// 只按契约名取：题库页 apply 时发布 `quiz.pointPanel`，没装配就显示一行说明。
+// 点级出题面板原先由题库页提供（它要题库的持久化与历史题）。本页**不 import 它**，
+// 只按契约名取：实现方 apply 时发布 `quiz.pointPanel`，没装配就显示一行说明。
+// 题库页已于 2026-11 归档，契约本身保留 —— 将来任何包实现同一契约即可接回。
 import { usePublishedComponent } from '@lybx-leyw/dsh-zju-ui-shared';
 import { NotePanel } from "./note-panel.jsx";
 import { time } from "./format.js";
@@ -15,7 +16,7 @@ import { time } from "./format.js";
 function QuizPanel(props) {
   const Panel = usePublishedComponent('quiz.pointPanel');
   if (!Panel) {
-    return <div className="zws-muted" role="status">知识点出题面板由「题库」页提供；在「插件」页启用题库后就能在这里出题。</div>;
+    return <div className="zws-muted" role="status">知识点出题面板的原提供方「题库」页已于 2026-11 归档，当前不可用。</div>;
   }
   return <Panel {...props} />;
 }

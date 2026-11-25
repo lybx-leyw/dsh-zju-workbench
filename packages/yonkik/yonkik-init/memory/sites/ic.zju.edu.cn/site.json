@@ -1,0 +1,34 @@
+{
+  "key": "ic.zju.edu.cn",
+  "origin": "https://ic.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "https://ic.zju.edu.cn/tzgg_54532/list.htm",
+  "column": "通知公告",
+  "exactNoticeColumns": {
+    "count": 9,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/54032/list.htm",
+      "/54029/list.htm",
+      "/54033/list.htm",
+      "/54036/list.htm",
+      "/54026/list.htm",
+      "/54027/list.htm",
+      "/tzgg/list.htm",
+      "/tzgg_54532/list.htm",
+      "/tzgg_81346/list.htm"
+    ],
+    "note": "五栏显示标题同为「通知公告」（学生思政 / 教学招生 / 综合服务 / 教工之家），靠「当前位置」完整链路 + h3 大类名区分；/53663、/54034 末项自认另一路径，标 identity-mismatch。"
+  }
+}

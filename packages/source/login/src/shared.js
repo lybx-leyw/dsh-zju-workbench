@@ -30,8 +30,8 @@ export const MASK = '********';
  * 把宿主回的失败信息翻成**一句能读的话**。
  *
  * 宿主当前一律回**字符串** `{ error: '...' }`，所以这条路径现在很少走到对象分支；
- * 但同一仓的其它设置路由（`dsh-zju-page-planning`）回的是 `{ code, message }`
- * 对象，而 `new Error(对象)` 会把它字符串化成 `[object Object]` —— 用户看到的是一句
+ * 但同一仓的其它设置路由回的是 `{ code, message }` 对象，
+ * 而 `new Error(对象)` 会把它字符串化成 `[object Object]` —— 用户看到的是一句
  * 完全没有信息量的话。这个函数让"将来改了错误形状"不会静默退化成那样。
  *
  * @param error - `payload.error`：字符串，或 `{ code, message }` 对象。

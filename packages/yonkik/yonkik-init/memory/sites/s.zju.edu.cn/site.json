@@ -1,0 +1,17 @@
+{
+  "key": "s.zju.edu.cn",
+  "origin": "https://s.zju.edu.cn",
+  "status": "done",
+  "label": "全校检索",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-https-public",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2400,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "2 次检索各 1 次。"
+  }
+}

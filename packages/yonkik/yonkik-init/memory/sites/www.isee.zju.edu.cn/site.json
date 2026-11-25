@@ -1,0 +1,32 @@
+{
+  "key": "www.isee.zju.edu.cn",
+  "origin": "http://www.isee.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.isee.zju.edu.cn/xsbg/list.htm",
+  "column": "更多 >>",
+  "exactNoticeColumns": {
+    "count": 7,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/51190/list.psp",
+      "/51191/list.psp",
+      "/51193/list.psp",
+      "/51194/list.psp",
+      "/51195/list.psp",
+      "/51199/list.psp",
+      "/51200/list.psp"
+    ],
+    "note": "七栏都挂在「通知公告」下且标题各不相同，判据是「您的位置」完整链路 + titl 栏目标题；/21056、/21057、/50891 末项自认另一路径，标 identity-mismatch。"
+  }
+}

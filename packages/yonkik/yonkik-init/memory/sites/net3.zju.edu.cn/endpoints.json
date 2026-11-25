@@ -1,0 +1,14 @@
+{
+  "site": "net3.zju.edu.cn",
+  "disposition": "dns-unresolvable-in-environment",
+  "checkedAt": "2026-11-22",
+  "evidence": [
+    "getaddrinfo ENOTFOUND"
+  ],
+  "note": "本环境代理无法解析；不推断站点存在与否。",
+  "dnsSplitHorizon": {
+    "checkedAt": "2026-11-22",
+    "note": "公网 DoH 返回 NXDOMAIN，但浙大域名存在 split-horizon（见 speedtest / s.zju.edu.cn 同为公网 NXDOMAIN 却本地可访问），**不能**据此判定已下线。",
+    "ledger": "sites/_dns-split-horizon.md"
+  }
+}

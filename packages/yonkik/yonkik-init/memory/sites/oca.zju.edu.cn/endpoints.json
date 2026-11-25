@@ -1,0 +1,219 @@
+{
+  "site": "oca.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET oca.zju.edu.cn/pjpy/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/pjpy/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/pjpy/list.psp",
+        "catalogPath": "/pjpy/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "parentTitle": "学生工作",
+        "count": 20,
+        "total": 502,
+        "pages": 26,
+        "externalLinks": 0,
+        "firstId": "3228137",
+        "firstDate": "2026-11-17"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/xszz/list.htm",
+      "column": "学生资助",
+      "verifiesPath": "/xszz/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/xszz/list.psp",
+        "catalogPath": "/xszz/list.htm",
+        "status": 200,
+        "column": "学生资助",
+        "displayTitle": "学生资助",
+        "parentTitle": "学生工作",
+        "count": 20,
+        "total": 223,
+        "pages": 12,
+        "externalLinks": 0,
+        "firstId": "2812755",
+        "firstDate": "2023-10-13"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/xstj/list.htm",
+      "column": "学生团建",
+      "verifiesPath": "/xstj/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/xstj/list.psp",
+        "catalogPath": "/xstj/list.htm",
+        "status": 200,
+        "column": "学生团建",
+        "displayTitle": "学生团建",
+        "parentTitle": "学生工作",
+        "count": 20,
+        "total": 395,
+        "pages": 20,
+        "externalLinks": 0,
+        "firstId": "3229330",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/xsgz/list.htm",
+      "column": "学生工作",
+      "verifiesPath": "/xsgz/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/xsgz/list.psp",
+        "catalogPath": "/xsgz/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "信息公告",
+        "parentTitle": "学生工作",
+        "count": 20,
+        "total": 1164,
+        "pages": 59,
+        "externalLinks": 0,
+        "firstId": "3226191",
+        "firstDate": "2026-11-11"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/dwxxgg/list.htm",
+      "column": "对外合作·信息公告",
+      "verifiesPath": "/dwxxgg/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/dwxxgg/list.htm",
+        "catalogPath": "/dwxxgg/list.htm",
+        "status": 200,
+        "column": "对外合作·信息公告",
+        "displayTitle": "信息公告",
+        "parentTitle": "对外合作",
+        "count": 20,
+        "total": 1398,
+        "pages": 70,
+        "externalLinks": 0,
+        "firstId": "3228620",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/xxgg_29992/list.htm",
+      "column": "人才培养·信息公告",
+      "verifiesPath": "/xxgg_29992/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/xxgg_29992/list.psp",
+        "catalogPath": "/xxgg_29992/list.htm",
+        "status": 200,
+        "column": "人才培养·信息公告",
+        "displayTitle": "信息公告",
+        "parentTitle": "人才培养",
+        "count": 20,
+        "total": 350,
+        "pages": 18,
+        "externalLinks": 12,
+        "firstId": "3199691",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/rcjx/list.htm",
+      "column": "日常教学",
+      "verifiesPath": "/rcjx/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/rcjx/list.psp",
+        "catalogPath": "/rcjx/list.htm",
+        "status": 200,
+        "column": "日常教学",
+        "displayTitle": "日常教学",
+        "parentTitle": "人才培养",
+        "count": 20,
+        "total": 75,
+        "pages": 4,
+        "externalLinks": 6,
+        "firstId": "3221902",
+        "firstDate": "2026-11-02"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/rcpy/list.htm",
+      "column": "人才培养",
+      "verifiesPath": "/rcpy/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/rcpy/list.psp",
+        "catalogPath": "/rcpy/list.htm",
+        "status": 200,
+        "column": "人才培养",
+        "displayTitle": "最新消息",
+        "parentTitle": "人才培养",
+        "count": 20,
+        "total": 756,
+        "pages": 38,
+        "externalLinks": 2,
+        "firstId": "3201882",
+        "firstDate": "2026-09-12"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/tzgg/list.htm",
+      "column": "图书信息·通知公告",
+      "verifiesPath": "/tzgg/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/tzgg/list.psp",
+        "catalogPath": "/tzgg/list.htm",
+        "status": 200,
+        "column": "图书信息·通知公告",
+        "displayTitle": "服务通知",
+        "parentTitle": "图书信息",
+        "count": 20,
+        "total": 141,
+        "pages": 8,
+        "externalLinks": 1,
+        "firstId": null,
+        "firstDate": "2026-11-15"
+      }
+    },
+    {
+      "id": "GET oca.zju.edu.cn/jzyg_68302/list.htm",
+      "column": "讲座预告",
+      "verifiesPath": "/jzyg_68302/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://oca.zju.edu.cn/jzyg_68302/list.psp",
+        "catalogPath": "/jzyg_68302/list.htm",
+        "status": 200,
+        "column": "讲座预告",
+        "displayTitle": "讲座预告",
+        "parentTitle": "图书信息",
+        "count": 20,
+        "total": 71,
+        "pages": 4,
+        "externalLinks": 17,
+        "firstId": "3212830",
+        "firstDate": "2026-10-10"
+      }
+    }
+  ],
+  "unverified": [
+    "其余海洋学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

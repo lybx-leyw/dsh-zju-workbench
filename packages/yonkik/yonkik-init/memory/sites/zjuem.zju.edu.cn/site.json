@@ -1,0 +1,42 @@
+{
+  "key": "zjuem.zju.edu.cn",
+  "status": "done",
+  "origin": "https://zjuem.zju.edu.cn",
+  "title": "浙江大学邮件系统（Coremail XT5）",
+  "via": null,
+  "requires": [],
+  "auth": {
+    "type": "Coremail 本地账号 + 二次验证；登录入口在 mail.zju.edu.cn",
+    "credentialKey": "campus-sso",
+    "loginUrl": "https://mail.zju.edu.cn（网页端唯一登录域名）",
+    "casOauth": "GET /coremail/cmcu_addon/sso.jsp → 302 zjuam CAS oauth2.0 authorize (response_type=code, client_id=dhcjnYjB1X8o15hDqh, redirect_uri=https://mail.zju.edu.cn/coremail/cmcu_addon/sso.jsp)",
+    "twoFactor": "已启用。网页端=自定义密码+验证码；客户端（Foxmail/Outlook/手机邮件App）= 必须用客户端专用密码",
+    "clientPassword": "设置 → 安全设置 → 客户端专用密码：随机 16 位、无空格、区分大小写，仅显示一次，最多 6 个，可多设备共用",
+    "notes": "两个域名不要混：zjuem.zju.edu.cn 是入口/跳转壳，真正登录与业务在 mail.zju.edu.cn（CAS OAuth 的 redirect_uri 指向它）。",
+    "stateFile": "state.json"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "source": "default",
+    "evidence": "/robots.txt 返回 Coremail 404 页（535B，gb2312）；响应头无 X-RateLimit-*；未见自动化条款。沿用保守默认串行 >=2.2s，全程 0 次 429。"
+  },
+  "protocol": {
+    "robots": "无（/robots.txt = 404 Coremail 错误页）",
+    "server": "cmproxy（Coremail 前置代理）",
+    "stack": "Coremail XT5（index_cmxt50_default.jsp）",
+    "jsonApi": "/coremail/s/json?func=<module>:<method>（Coremail 标准 JSON 通道）"
+  },
+  "mailPorts": {
+    "verifiedAt": "2026-11-20（仅 TCP/TLS 握手 + banner，未做任何登录尝试、未读取任何邮件）",
+    "imap": "imap.zju.edu.cn:993 SSL 握手成功 / :143 明文 — banner '* OK Coremail System IMap Server Ready'（见 endpoints.json 全文）",
+    "smtp": "smtp.zju.edu.cn:994 SSL 握手成功 / :25 明文 — banner '220 zju.edu.cn Anti-spam GT for Coremail System'（见 endpoints.json 全文）",
+    "pop3": "pop3.zju.edu.cn:995 SSL / :110 明文 — banner '+OK Welcome to coremail Mail Pop3 Server'",
+    "closed": "smtp.zju.edu.cn:465 与 :587 均 TIMEOUT（不支持常见提交端口，只能用 25/994）",
+    "note": "SMTP 的 SSL 端口是 994（非标准 465）—— CC98 6646659 楼主专门指出，官方帮助页 clientoption.jsp 原文也写 994，已双向确认。"
+  },
+  "exploredAt": "2026-11-20",
+  "scopeNote": "只读探索，只到协议/端口/配置层。未登录邮箱、未读取任何邮件、未发信、未改任何设置。",
+  "evidenceRank": "direct",
+  "scope": "public-help + protocol-ports",
+  "endpointsFile": "endpoints.json"
+}

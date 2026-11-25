@@ -1,0 +1,37 @@
+{
+  "key": "we.zju.edu.cn",
+  "origin": "http://we.zju.edu.cn",
+  "title": "浙大后勤集团 wap 站（原「就餐指数」域名）",
+  "status": "blocked",
+  "via": null,
+  "requires": "wechat-oauth",
+  "auth": {
+    "type": "wechat-oauth",
+    "appid": "wx76332f060ee4d976",
+    "note": "/mobile/ 走微信公众号 snsapi_base 静默授权（open.weixin.qq.com OAuth2），必须在微信内打开才能拿到 code。浏览器直连无法登录。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2000,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "无 robots.txt（404）；响应头无速率字段。按 site-recon 保守默认。"
+  },
+  "server": "Apache/2.4.48 (Win64) PHP/5.6.38, ThinkPHP2.1",
+  "tls": "无可用 HTTPS（443 端口 TCP 超时）",
+  "ip": "10.12.204.25（校内网段，必须绕过 env 代理）",
+  "reachability": {
+    "tcp443": "TIMEOUT（8s 无响应）—— 这就是「实测 TIMEOUT」的真正原因",
+    "tcp80": "OK 12ms",
+    "http200": true
+  },
+  "whatItActuallyIs": "**不是『站点下线』**。根路径 / 返回 200 的「系统提示」页，内容是一句跳转公告 + meta refresh 10 秒后跳 http://zulg.zju.edu.cn/ 。即该域名已废弃，被指到后勤集团主站。",
+  "endpoints": {
+    "verified": 3,
+    "unverified": 0
+  },
+  "verdict": "原「就餐指数」H5 已不在 we.zju.edu.cn 根路径。域名本身活着（HTTP 80），但内容只剩一张跳转页；移动端 /mobile/ 是微信公众号应用，需微信内授权。CC98 说『以前在钉钉看到过』——就餐桌指数现在无公开免登录入口，判定 blocked（缺微信 OAuth 授权域）。",
+  "exploredAt": "2026-11-20",
+  "exploredBy": "recon-lib",
+  "blockedReason": "443 端口 TCP 超时（80 正常，返回 1.6KB 提示页「后勤集团网站已升级改版，10 秒后跳转 zulg.zju.edu.cn」）；跳转目标首页搜「就餐」「指数」均 0 命中。活的业务在 /mobile/，需微信 OAuth2（appid wx76332f060ee4d976，snsapi_base）或浙大钉微应用入口——两者都需要微信内置环境/客户端，纯 HTTP 不可达。",
+  "statusUpdated": "2026-11-20"
+}

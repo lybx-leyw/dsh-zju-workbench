@@ -1,0 +1,25 @@
+{
+  "key": "map.zju.edu.cn",
+  "origin": "https://map.zju.edu.cn",
+  "title": "浙大校园地图（IMAP / iMap 场景服务平台，Release 2.13）",
+  "via": null,
+  "requires": "none",
+  "auth": {
+    "mode": "none-for-read",
+    "credentialKey": null,
+    "notes": "底图 WMS 瓦片与 POI WFS 查询**匿名可用**，无需任何 cookie/登录。站点自报产品名 'IMAP Release 2.13'（/api/IMAP-source.js），meta description 为「场景服务平台」。仅 /templet/login.html 是后台登录页（3DES 加密，与只读取数无关）。"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2800,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "robots.txt 实测 302 → /templet/login.html（nginx 把 robots 也拦到登录），无明文条款；无 RateLimit 头。Geoserver/GeoWebCache 是重服务，取保守 2800ms。"
+  },
+  "crs": "EPSG:32651（UTM 51N），坐标单位为米，非经纬度",
+  "status": "done",
+  "exploredAt": "2026-11-20",
+  "profile": {
+    "facets": ["campus-map", "gis", "wms-tiles", "wfs-poi", "geoserver"],
+    "confidence": 0.93
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "site": "chaoxing.com",
+  "exploredAt": "2026-11-20",
+  "auth": "账密表单（passport2 /fanyalogin），登录态 Cookie: UID/_uid/fid/_d/vc3/uf/cx_p_token",
+  "note": "全部只读；POST 的用途仅为查询（fanyalogin 除外，它是登录）。串行限流 2s/1并发。",
+  "endpoints": [
+    {
+      "id": "login-form",
+      "name": "登录页",
+      "method": "GET",
+      "url": "https://passport2.chaoxing.com/login",
+      "status": "verified",
+      "returns": "HTML；隐藏字段 needVcode / t / fid / refer；可见输入 #phone #pwd；按钮 #loginBtn",
+      "note": "needVcode=1 才会弹 CX 滑块；实测为空串，未触发"
+    },
+    {
+      "id": "login-submit",
+      "name": "账密登录提交",
+      "method": "POST",
+      "url": "https://passport2.chaoxing.com/fanyalogin",
+      "status": "verified",
+      "params": {
+        "fid": "-1 或机构号",
+        "uname": "账号",
+        "password": "t=true 时 AES 加密（transferKey u2oh6Vu^HWe4_AES）",
+        "refer": "登录后回跳，如 http%3A%2F%2Fi.mooc.chaoxing.com",
+        "t": "true",
+        "validate": "滑块通过后的票据，无滑块时为空",
+        "forbidotherlogin": "",
+        "doubleFactorLogin": "",
+        "independentId": "",
+        "independentNameId": ""
+      },
+      "returns": "JSON { status: true, url: '登录后地址' }；失败时 status=false + msg2"
+    },
+    {
+      "id": "space-base",
+      "name": "个人空间（登录态探针）",
+      "method": "GET",
+      "url": "https://i.chaoxing.com/base",
+      "status": "verified",
+      "returns": "HTML 87KB；含 var fid='469'、导航菜单、各应用带签名的 s= 参数"
+    },
+    {
+      "id": "course-list",
+      "name": "课程列表",
+      "method": "POST",
+      "url": "https://mooc2-ans.chaoxing.com/mooc2-ans/visit/courselistdata",
+      "status": "verified",
+      "params": {
+        "fid": "469",
+        "uid": "可空",
+        "courseType": "1"
+      },
+      "returns": "HTML；课程 id 在 stucoursemiddle?courseid&clazzid&cpi&ismooc2；文案在 div.course-info（span.course-name[title] / p.line2.color3[title] / 开课时间）",
+      "note": "**必须 POST**。同路径 GET 返回 1679 字节空壳（里面就一句「暂无课程」），HTTP 200 不报错 —— 极易误判为「这个账号没有课」"
+    },
+    {
+      "id": "course-middle",
+      "name": "课程中间页",
+      "method": "GET",
+      "url": "https://mooc1.chaoxing.com/visit/stucoursemiddle?courseid={cid}&clazzid={clazzid}&cpi={cpi}&ismooc2=1&v=2",
+      "status": "verified",
+      "returns": "302（无 Location 可跟）；不带 cpi 的变体行为不同"
+    },
+    {
+      "id": "chapter-list",
+      "name": "章节目录",
+      "method": "GET",
+      "url": "https://mooc2-ans.chaoxing.com/mooc2-ans/mycourse/studentcourse?courseid={cid}&clazzid={clazzid}&cpi={cpi}&ut=s&t={ts}",
+      "status": "verified",
+      "returns": "HTML 80-91KB；两级：div.catalog_name span[title]=章，div.chapter_item#cur<N> onclick=toOld(courseid, 章节id, clazzid, index)=节",
+      "note": "toOld 的第 2 个参数是章节 id，不是 clazzid；页面不含 cpi，需用课程列表里那个"
+    },
+    {
+      "id": "homework-list",
+      "name": "作业列表（跨课程）",
+      "method": "GET",
+      "url": "https://mooc1-api.chaoxing.com/work/stu-work",
+      "status": "verified",
+      "returns": "HTML；无作业时 3642 字节，正文「暂无作业」。作业截止时间不在列表页，逐条要进详情",
+      "note": "本账号实测为空。仅代表「当前无未完成作业」，不等于接口不可用"
+    },
+    {
+      "id": "notice-list",
+      "name": "通知列表",
+      "method": "POST",
+      "url": "https://notice.chaoxing.com/pc/notice/getNoticeList",
+      "status": "verified",
+      "params": {
+        "page": "1",
+        "pageSize": "20"
+      },
+      "returns": "JSON { status, notices: { lastPage, lastGetId, list[] } }；每条含 title/content/sendTime/createrName/attachment[]",
+      "note": "附件分 att_chat_course（学习任务）与 att_web（作业，含 examOrWorkId/clazzId/courseId/enc）。**原始回包含 receiverArray/toNames/users 三处全班真名，脚本已投影掉**"
+    },
+    {
+      "id": "schedule",
+      "name": "我的课表",
+      "method": "GET",
+      "url": "https://kb.chaoxing.com/pc/curriculum/getMyLessons",
+      "status": "partial",
+      "returns": "JSON { result:1, data:{ curriculum:{ schoolYear, semester, currentWeek:7, maxWeek:25, firstWeekDate, curriculumCount:6, lessonTimeConfigArray[12] }, lessonArray:[] } }",
+      "note": "清单骨架齐全但 lessonArray 恒为空 —— 课程明细不在这个接口，未闭环（getAllLesson / getLessonList 均 404）"
+    },
+    {
+      "id": "notice-page",
+      "name": "收件箱页",
+      "method": "GET",
+      "url": "https://notice.chaoxing.com/pc/notice/myNotice",
+      "status": "verified",
+      "returns": "HTML 页面壳；/pc/notice/noticeList 是 404，别用"
+    }
+  ],
+  "upstreamBackclazzdata": {
+    "discoveredFrom": "上游清单第 47 行（学习通 本人课程 JSON）",
+    "probe": {
+      "path": "/mycourse/backclazzdata",
+      "checkedAt": "2026-11-22",
+      "status": 302,
+      "ctype": "",
+      "bodySample": "",
+      "meaning": "本人课程列表（JSON，替代 HTML 课程表）",
+      "verdict": "路由存在，302 到 passport2.chaoxing.com/login；需账密登录"
+    },
+    "judgement": "路由确认存在，需登录。与已在档的「课程列表」HTML 页互补：这条是 JSON 版，更适合脚本。",
+    "notAttempted": [
+      "不自动登录",
+      "不猜参数"
+    ]
+  }
+}

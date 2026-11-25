@@ -1,0 +1,268 @@
+{
+  "site": "www.cse.zju.edu.cn",
+  "access": "公开 HTTP；HTTPS 443 连接被拒、robots 404。固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET www.cse.zju.edu.cn/39322/list.htm",
+      "column": "本科生教育·最新消息",
+      "parentTitle": "本科生教育",
+      "verifiesPath": "/39322/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39322/list.htm",
+        "status": 200,
+        "column": "本科生教育·最新消息",
+        "displayTitle": "最新消息",
+        "parentTitle": "本科生教育",
+        "count": 20,
+        "total": 2274,
+        "pages": 114,
+        "externalLinks": 0,
+        "firstId": "3229801",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/39333/list.htm",
+      "column": "研究生教育·最新消息",
+      "parentTitle": "研究生教育",
+      "verifiesPath": "/39333/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39333/list.htm",
+        "status": 200,
+        "column": "研究生教育·最新消息",
+        "displayTitle": "最新消息",
+        "parentTitle": "研究生教育",
+        "count": 20,
+        "total": 979,
+        "pages": 49,
+        "externalLinks": 1,
+        "firstId": "3193899",
+        "firstDate": "2026-08-07"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/39342/list.htm",
+      "column": "日常通告",
+      "parentTitle": "学生思政",
+      "verifiesPath": "/39342/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39342/list.htm",
+        "status": 200,
+        "column": "日常通告",
+        "displayTitle": "日常通告",
+        "parentTitle": "学生思政",
+        "count": 20,
+        "total": 1593,
+        "pages": 80,
+        "externalLinks": 0,
+        "firstId": "3111902",
+        "firstDate": "2025-12-01"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/39351/list.htm",
+      "column": "相关通知",
+      "parentTitle": "就业指导",
+      "verifiesPath": "/39351/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39351/list.htm",
+        "status": 200,
+        "column": "相关通知",
+        "displayTitle": "相关通知",
+        "parentTitle": "就业指导",
+        "count": 20,
+        "total": 122,
+        "pages": 7,
+        "externalLinks": 0,
+        "firstId": "3175145",
+        "firstDate": "2026-06-05"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/39353/list.htm",
+      "column": "通知公告",
+      "parentTitle": "对外交流",
+      "verifiesPath": "/39353/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39353/list.htm",
+        "status": 200,
+        "column": "通知公告",
+        "displayTitle": "通知公告",
+        "parentTitle": "对外交流",
+        "count": 20,
+        "total": 812,
+        "pages": 41,
+        "externalLinks": 17,
+        "firstId": "2722750",
+        "firstDate": "2023-03-02"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/39344/list.htm",
+      "column": "评奖评优",
+      "verifiesPath": "/39344/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39344/list.psp",
+        "catalogPath": "/39344/list.htm",
+        "status": 200,
+        "column": "评奖评优",
+        "displayTitle": "评奖评优",
+        "parent": "/_s98/39342/list.psp",
+        "parentTitle": "学生思政",
+        "count": 20,
+        "total": 744,
+        "pages": 38,
+        "externalLinks": 0,
+        "firstId": "3226713",
+        "firstDate": "2026-11-12"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/39345/list.htm",
+      "column": "勤工资助",
+      "verifiesPath": "/39345/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39345/list.psp",
+        "catalogPath": "/39345/list.htm",
+        "status": 200,
+        "column": "勤工资助",
+        "displayTitle": "勤工资助",
+        "parent": "/_s98/39342/list.psp",
+        "parentTitle": "学生思政",
+        "count": 20,
+        "total": 360,
+        "pages": 18,
+        "externalLinks": 1,
+        "firstId": "3229307",
+        "firstDate": "2026-11-19"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/39343/list.htm",
+      "column": "学生党建",
+      "verifiesPath": "/39343/list.psp",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39343/list.psp",
+        "catalogPath": "/39343/list.htm",
+        "status": 200,
+        "column": "学生党建",
+        "displayTitle": "学生党建",
+        "parent": "/_s98/39342/list.psp",
+        "parentTitle": "学生思政",
+        "count": 20,
+        "total": 878,
+        "pages": 44,
+        "externalLinks": 0,
+        "firstId": "3229097",
+        "firstDate": "2026-11-18"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/73393/list.htm",
+      "column": "学生团建",
+      "verifiesPath": "/73393/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/73393/list.htm",
+        "catalogPath": "/73393/list.htm",
+        "status": 200,
+        "column": "学生团建",
+        "displayTitle": "学生团建",
+        "parent": "/39342/list.htm",
+        "parentTitle": "学生思政",
+        "count": 20,
+        "total": 153,
+        "pages": 8,
+        "externalLinks": 0,
+        "firstId": "3229543",
+        "firstDate": "2026-11-20"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/xjgl/list.htm",
+      "column": "学籍管理",
+      "verifiesPath": "/xjgl/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/xjgl/list.htm",
+        "catalogPath": "/xjgl/list.htm",
+        "status": 200,
+        "column": "学籍管理",
+        "displayTitle": "学籍管理",
+        "parent": "/39333/list.htm",
+        "parentTitle": "研究生教育",
+        "count": 19,
+        "total": 19,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": "3213179",
+        "firstDate": "2026-10-12"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/39334/list.htm",
+      "column": "学位管理",
+      "verifiesPath": "/39334/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/39334/list.htm",
+        "catalogPath": "/39334/list.htm",
+        "status": 200,
+        "column": "学位管理",
+        "displayTitle": "学位管理",
+        "parent": "/39333/list.htm",
+        "parentTitle": "研究生教育",
+        "count": 20,
+        "total": 27,
+        "pages": 2,
+        "externalLinks": 3,
+        "firstId": "2663301",
+        "firstDate": "2021-11-17"
+      }
+    },
+    {
+      "id": "GET www.cse.zju.edu.cn/73491/list.htm",
+      "column": "在职硕士（单证）·最新消息",
+      "verifiesPath": "/73491/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://www.cse.zju.edu.cn/73491/list.htm",
+        "catalogPath": "/73491/list.htm",
+        "status": 200,
+        "column": "在职硕士（单证）·最新消息",
+        "displayTitle": "最新消息",
+        "parent": "/73491/list.htm",
+        "parentTitle": "在职硕士（单证）",
+        "count": 20,
+        "total": 42,
+        "pages": 3,
+        "externalLinks": 0,
+        "firstId": "3126878",
+        "firstDate": "2026-01-08"
+      }
+    }
+  ],
+  "unverified": [
+    "其余学院栏目、分页、正文与附件未验证。"
+  ]
+}

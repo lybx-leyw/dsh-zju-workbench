@@ -1,0 +1,23 @@
+{
+  "key": "www.cec.zju.edu.cn",
+  "origin": "http://www.cec.zju.edu.cn",
+  "status": "done",
+  "type": "学院/部处官网",
+  "auth": {
+    "type": "none",
+    "note": "免登录可读"
+  },
+  "rateLimit": {
+    "minIntervalMs": 1200,
+    "concurrency": 1
+  },
+  "exploredAt": "2026-11-22",
+  "aggSource": "zju-notices",
+  "listUrl": "http://www.cec.zju.edu.cn/hytz_36106/list.htm",
+  "column": "会议通知",
+  "exactNoticeColumns": {
+    "count": 342,
+    "checkedAt": "2026-11-22",
+    "note": "经济学院全部 12 栏中：9 栏开放、2 栏因页面自认其他栏目地址（默认子栏）标 identity-mismatch、1 栏此前已开放。身份靠 div.main-header 栏目链路：本栏标题必须出现在链路里且其路径等于 columnPath，前一个链路项必须是父栏。"
+  }
+}

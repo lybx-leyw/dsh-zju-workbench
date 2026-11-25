@@ -1,0 +1,35 @@
+{
+  "key": "myvpn.zju.edu.cn",
+  "status": "done",
+  "origin": "https://myvpn.zju.edu.cn",
+  "title": "浙江大学 MyVPN 自助服务（网费管理 / RVPN 账号）",
+  "via": null,
+  "requires": [],
+  "auth": {
+    "type": "本站网络账号 + 密码 + 验证码；另有统一身份认证开号入口",
+    "credentialKey": "campus-sso",
+    "loginUrl": "/ （POST 到 /）",
+    "form": "form#login-form：LoginForm[username] / LoginForm[password] / LoginForm[verifyCode]（图 /site/captcha?v=...）；另有 LoginForm[phoneCode] 走短信",
+    "ssoEntry": "GET /zju/new-account-sso → 302 zjuam CAS oauth2.0 authorize (client_id=GgZvGNbUEHnw9qCPLv, redirect_uri=https://myvpn.zju.edu.cn/zju/new-account-sso)",
+    "logout": "GET https://zjuam.zju.edu.cn/cas/logout?service=https://myvpn.zju.edu.cn",
+    "notes": "本站账号是「网络账号」，不是学号密码（新生需先「激活账号」走 CAS 开号）。CSRF token 名是 _csrf-8800（Yii2 框架）。",
+    "stateFile": "state.json"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "source": "default",
+    "evidence": "/robots.txt = 404（Yii2 404 页 2789B）；响应头无 X-RateLimit-*；未见自动化条款。沿用保守默认串行 >=2.2s。本站全程 0 次 429。"
+  },
+  "protocol": {
+    "robots": "无（/robots.txt = 404 Yii2 错误页）",
+    "server": "nginx",
+    "stack": "Yii2 PHP（csrf-param _csrf-8800，assets hash 目录）",
+    "tls": "见 tlsNote"
+  },
+  "tlsNote": "UNABLE_TO_VERIFY_LEAF_SIGNATURE 是偶发，不是常态。证书实际是完整 4 级链：*.zju.edu.cn ← TrustAsia OV TLS RSA CA 2024 ← TrustAsia TLS RSA Root CA ← Certum Trusted Network CA（2008-10-22 ~ 2029-12-31）。2026-11-20 首轮探针出现 1 次该错误，随后 48 次连续严格校验（tls.connect rejectUnauthorized:true 8+30 次、https.request 6 次、4 种请求写法）全部 authorized:true、chainLen=4。结论：证书链本身没缺，该错误为偶发/瞬时。规避写法：new https.Agent({ keepAlive: false }) + 显式 servername=<host>；同一请求重试一次通常即恢复。不要默认设 rejectUnauthorized:false。",
+  "exploredAt": "2026-11-20",
+  "scopeNote": "只读探索。未充值、未改密码、未改任何账号设置、未提交身份验证照片。",
+  "evidenceRank": "direct",
+  "scope": "public-news + login-form-shape + tls-diagnosis",
+  "endpointsFile": "endpoints.json"
+}

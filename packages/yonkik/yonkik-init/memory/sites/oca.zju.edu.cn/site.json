@@ -1,0 +1,34 @@
+{
+  "key": "oca.zju.edu.cn",
+  "origin": "https://oca.zju.edu.cn",
+  "status": "done",
+  "label": "海洋学院",
+  "auth": {
+    "type": "none"
+  },
+  "via": "direct-https-public-no-session",
+  "exploredAt": "2026-11-22",
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "HTTP 301 到 HTTPS；固定单页首屏。"
+  },
+  "exactNoticeColumns": {
+    "count": 10,
+    "checkedAt": "2026-11-22",
+    "paths": [
+      "/pjpy/list.psp",
+      "/xszz/list.psp",
+      "/xstj/list.psp",
+      "/xsgz/list.psp",
+      "/dwxxgg/list.htm",
+      "/xxgg_29992/list.psp",
+      "/rcjx/list.psp",
+      "/rcpy/list.psp",
+      "/tzgg/list.psp",
+      "/jzyg_68302/list.psp"
+    ],
+    "note": "两栏显示标题同为「信息公告」（对外合作 / 人才培养 / 学生工作），靠 div.weizhi 的 h1 与「父栏目」span 共同区分；目录 .htm 与有效 .psp 分别记录。"
+  }
+}

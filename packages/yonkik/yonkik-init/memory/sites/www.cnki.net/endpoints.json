@@ -1,0 +1,53 @@
+{
+  "site": "www.cnki.net",
+  "checkedAt": "2026-11-22",
+  "access": "公开 HTTPS。",
+  "probes": [
+    {
+      "url": "https://www.cnki.net/",
+      "status": 200,
+      "length": 98593,
+      "title": "中国知网",
+      "note": "门户首页，含「机构」「IP」「会员」等入口文案"
+    },
+    {
+      "url": "https://kns.cnki.net/kns8s/AdvSearch",
+      "status": 302,
+      "redirect": "https://kns.cnki.net/verify/home",
+      "note": "**高级检索入口先跳安全验证**"
+    },
+    {
+      "url": "https://kns.cnki.net/verify/home",
+      "status": 200,
+      "length": 2355,
+      "title": "安全验证",
+      "note": "人机校验页，未提交任何校验"
+    },
+    {
+      "url": "https://login.cnki.net/TopLogin/api/loginapi/IpLoginFlush",
+      "status": 200,
+      "ctype": "application/json",
+      "length": 477,
+      "note": "机构会话检查，**无凭据即返回 JSON**"
+    }
+  ],
+  "ipSessionObservation": {
+    "IsSuccess": true,
+    "ShowName": "浙江大学图书馆",
+    "UserType": "bk",
+    "ExpireSeen": "2026-11-22 19:02:36",
+    "interpretation": "本环境出口 IP 被知网识别为浙大图书馆机构 IP 段，因此机构会话检查通过。该接口同时下发 Uid 会话令牌——**本库不使用它做任何检索或全文获取**。",
+    "withheld": [
+      "Uid 与 r 参数未写入本档",
+      "未用该会话调用 kns 检索接口"
+    ]
+  },
+  "disposition": "metadata-capability-only",
+  "notAttempted": [
+    "不绕过 kns 的安全验证",
+    "不用机构会话令牌批量检索或下载全文",
+    "不采集知网正文/PDF"
+  ],
+  "policy": "遵守浙大图书馆电子资源使用办法：不批量下载、不系统检索、不规避访问控制。",
+  "note": "仅记录「元数据能力存在 + 检索入口被安全验证拦住」这一事实，不据此启用任何自动检索。"
+}

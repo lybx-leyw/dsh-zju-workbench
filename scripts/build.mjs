@@ -44,74 +44,20 @@ export const HOST_SEEDS = [
  *    `tests/build-seeds.test.mjs` 有一条断言在盯着「有 client.jsx 的包是否都在这里」。
  */
 export const CLIENT_PACKAGES = [
-  // 产品级的 dsh-pages 默认值校准（51px 导航宽度）。目录名是 `pages-default`，
-  // 发布名是 `@lybx-leyw/dsh-zju-pages-default`，所以这里写**目录名**。
-  'pages-default',
-  // 共享 UI 原语：目录名 `ui-shared`，发布名 `@lybx-leyw/dsh-zju-ui-shared`。
-  // 同样写目录名 —— 这一列是 `packages/client/<目录>` 的键。
-  'ui-shared',
-  // `dsh-zju-shell-workbench` / `-shell-bridge` 已归档到
-  // `archive/deprecated-packages/`（产品界面外壳，当前 profile 不装配）。
-  // **不要在这里加回来** —— 除非它们真的搬回 `packages/`；
-  // 留着会让构建报 `no package directory named ...`。
-  // 分域网络代理：目录 `netproxy`（原 `@lybx-leyw/dsh-zju-source-netproxy`），包名不变。
-  'netproxy',
-  // 一卡通凭据（原 `dsh-zhiyun-source-card`）：目录名 `login`，
-  // 发布名 `@lybx-leyw/dsh-zju-source-login`。这一列同样写**目录名**。
-  'login',
-  // 拼题A 的设置分区（Cookie 粘贴入口）。
-  // 拆包前这一格是 `campus`（学在浙大 + 拼题A 混装），按「设置分区跟凭证走」拆开后
-  // 归 `pta` —— 它才有独立凭证；学在浙大走 CAS，不占分区。
-  'pta',
-  // 实验课平台的账号分区（`auth: "own"`：它有自己的密码，不并入一卡通）。
-  'lab',
-  // 邮箱：独立账号（`auth: "own"`），凭据不是一卡通那一套。
-  'mail',
-  // 各数据源的设置分区：只做状态展示与 Cookie 粘贴，不重复收 CAS 密码。
-  'xxt',
-  'zdbk',
-  'cc98',
-  'classroom',
-  // 课堂的**页面**已归档（`page-classroom` / `-play` / `-build`）：
-  // 产品侧只要「AI 教学」这条链路（生成课件 + 单张渲染），不要独立的课堂播放页。
-  // **不要加回来** —— 加了会报 `no package directory named ...`。
-  // 保留的 classroom 包只有 `classroom-agent`（有客户端半边）。
-  // `classroom-renderer` 已不在任何清单里：它的渲染组件搬去了 `ui-shared`。
-  'classroom-agent',
-  'quiz',
-  // `core-study` 的目录名是 `study`（住在 `packages/core/` 下）。
-  // `packageDir()` 按**目录的 basename** 查找，所以这一列只能写目录名 ——
-  // 写包名会 `no package directory named "@lybx-leyw/..."`。
-  'study',
-  // 回放下面那层「主线/语速/四汇总」由本包算，学习页 external import 它 ——
-  // 所以它必须有自己的客户端产物。（远端以旧名 `dsh-zhiyun-player` 加入，
-  // 本仓按性质改名为 `core-player`，合并时对应成新名。）
-  'player',
-  // 回放字幕轨：学习页视频栏 external import 它的 `resolveTrack` / `burnLine`
-  // （清洗句子替换原始碎片、字幕烧进播放器），所以它必须有自己的客户端产物。
-  'playback',
-  'page-study',
-  'page-quiz',
-  'page-planning',
-  // `dsh-zhiyun-settings-account` 已归档到 `archive/deprecated-packages/`
-  // （账号面板占位，从未装配）。**不要加回来** —— 加了会报
-  // `no package directory named "dsh-zhiyun-settings-account"`。
-  // 图谱渲染层：「笔记」页 external import 它（整包移植自雷达候选 note-graph），
-  // 所以它必须有自己的客户端产物 —— 否则外部化后运行时谁都提供不了这个模块。
+  // 这一列写**目录 basename**（`packageDir()` 按 basename 递归查找），不是包名。
   //
-  // ⚠️ 这一列写**目录名**（`packageDir()` 按 basename 递归找），不是包名。
-  // 包已迁到 `packages/client/graph-render`，包名是
-  // `@lybx-leyw/dsh-zju-ui-graph-render` —— 但这里只能写目录短名。
-  'graph-render',
-  'page-notes',
-  // 目录名是 `page-paper`（住在 `packages/client/`），发布名才是
-  // `@lybx-leyw/dsh-zju-page-paper`。`CLIENT_PACKAGES` 是**目录 basename** 的键。
+  // 2026-11-18：未接入页面的数据源与工具包已整体归档（见仓库根的归档说明）。
+  // 现存客户端半边只剩页面壳、共享 UI、保留页面，以及几条支撑学习页的 core 包。
+  'ui-shared',
+  'login',
+  'yonkik-tool',
+  'classroom',
+  'study',
+  'player',
+  'playback',
+  'quiz',
   'page-paper',
-  'page-plugins',
-  'page-docs',
-  // ⚠️ `classroom-renderer` 已从本清单删除：渲染组件（含 React / katex）已搬到
-  // `packages/client/ui-shared/src/classroom-slide.jsx`，`core/classroom-renderer`
-  // 只剩两个画布常量，**没有客户端半边**了。
+  'page-study',
 ];
 
 /**

@@ -1,0 +1,31 @@
+{
+  "site": "ls.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET ls.zju.edu.cn/65203/list.htm",
+      "column": "学生思政",
+      "verifiesPath": "/65203/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://ls.zju.edu.cn/65203/list.htm",
+        "status": 200,
+        "column": "学生思政",
+        "displayTitle": "风采动态",
+        "sectionTitle": "学生思政",
+        "parentPath": "/65203/list.htm",
+        "parentTitle": "学生思政",
+        "count": 14,
+        "total": 62,
+        "pages": 5,
+        "externalLinks": 14,
+        "firstDate": "2026-07-10",
+        "note": "首屏 14 条全部指向微信公众号外链，属正常采集（外链只记地址）。"
+      }
+    }
+  ],
+  "unverified": [
+    "其余历史学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

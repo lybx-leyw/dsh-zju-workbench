@@ -1,0 +1,184 @@
+{
+  "site": "office.cab.zju.edu.cn",
+  "access": "公开 HTTP；固定路径、无凭据、不跟跳转、不回退其他栏目。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET office.cab.zju.edu.cn/28876/list.htm",
+      "column": "学生工作",
+      "verifiesPath": "/28876/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cab.zju.edu.cn/28876/list.htm",
+        "status": 200,
+        "column": "学生工作",
+        "displayTitle": "学生工作",
+        "sectionTitle": "学生工作",
+        "trail": [
+          [
+            "/28876/list.htm",
+            "学生工作"
+          ]
+        ],
+        "count": 14,
+        "total": 64,
+        "pages": 5,
+        "externalLinks": 0,
+        "firstId": "3212977",
+        "firstDate": "2026-10-10"
+      }
+    },
+    {
+      "id": "GET office.cab.zju.edu.cn/28972/list.htm",
+      "column": "教学培养",
+      "verifiesPath": "/28972/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cab.zju.edu.cn/28972/list.htm",
+        "status": 200,
+        "column": "教学培养",
+        "displayTitle": "教学培养",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/28946/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/28972/list.htm",
+            "教学培养"
+          ]
+        ],
+        "count": 13,
+        "total": 13,
+        "pages": 1,
+        "externalLinks": 9,
+        "firstId": null,
+        "firstDate": "2026-11-06"
+      }
+    },
+    {
+      "id": "GET office.cab.zju.edu.cn/28974/list.htm",
+      "column": "对外交流",
+      "verifiesPath": "/28974/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cab.zju.edu.cn/28974/list.htm",
+        "status": 200,
+        "column": "对外交流",
+        "displayTitle": "对外交流",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/28946/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/28974/list.htm",
+            "对外交流"
+          ]
+        ],
+        "count": 10,
+        "total": 10,
+        "pages": 1,
+        "externalLinks": 0,
+        "firstId": null,
+        "firstDate": "2019-09-25"
+      }
+    },
+    {
+      "id": "GET office.cab.zju.edu.cn/28985/list.htm",
+      "column": "海外交流",
+      "verifiesPath": "/28985/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cab.zju.edu.cn/28985/list.htm",
+        "status": 200,
+        "column": "海外交流",
+        "displayTitle": "海外交流",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/28947/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/28985/list.htm",
+            "海外交流"
+          ]
+        ],
+        "count": 14,
+        "total": 58,
+        "pages": 5,
+        "externalLinks": 2,
+        "firstId": "3161559",
+        "firstDate": "2026-05-13"
+      }
+    },
+    {
+      "id": "GET office.cab.zju.edu.cn/29000/list.htm",
+      "column": "师生交流",
+      "verifiesPath": "/29000/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-http-no-session",
+      "observation": {
+        "url": "http://office.cab.zju.edu.cn/29000/list.htm",
+        "status": 200,
+        "column": "师生交流",
+        "displayTitle": "师生交流",
+        "sectionTitle": "国际合作与交流",
+        "trail": [
+          [
+            "/28949/list.htm",
+            "国际合作与交流"
+          ],
+          [
+            "/29000/list.htm",
+            "师生交流"
+          ]
+        ],
+        "count": 14,
+        "total": 389,
+        "pages": 28,
+        "externalLinks": 0,
+        "firstId": "3106687",
+        "firstDate": "2025-11-17"
+      }
+    }
+  ],
+  "identityMismatch": [
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/28946/list.htm",
+      "pageTitle": "通知公告",
+      "sectionTitle": "本科生教育",
+      "claimedColumnPath": "/28971/list.htm",
+      "claimedColumnTitle": "通知公告",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/28947/list.htm",
+      "pageTitle": "最新通知",
+      "sectionTitle": "研究生教育",
+      "claimedColumnPath": "/28979/list.htm",
+      "claimedColumnTitle": "最新通知",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    },
+    {
+      "checkedAt": "2026-11-22",
+      "requestedPath": "/28949/list.htm",
+      "pageTitle": "通知公告",
+      "sectionTitle": "国际合作与交流",
+      "claimedColumnPath": "/28999/list.htm",
+      "claimedColumnTitle": "通知公告",
+      "note": "目录路径可访问且内容正常，但「当前位置」末项自认另一路径，属同一栏目两个地址；未确认权威地址前不开放。"
+    }
+  ],
+  "unverified": [
+    "其余农学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

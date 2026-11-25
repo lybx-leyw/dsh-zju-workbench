@@ -1,0 +1,18 @@
+{
+  "name": "zju-yonkik-profile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZJU profile：挂载 YONKIK 只读侦察能力（最小装配，不含 workbench 页面包）",
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@lybx-leyw/dsh-zju-ui-shared",
+        "@lybx-leyw/dsh-zju-yonkik-skill",
+        "@lybx-leyw/dsh-zju-yonkik-tool"
+      ],
+      "patchReload": "live"
+    }
+  }
+}

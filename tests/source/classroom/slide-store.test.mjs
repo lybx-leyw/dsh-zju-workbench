@@ -30,7 +30,15 @@ async function withDir(fn) {
   try {
     await fn(dir);
   } finally {
-    await rm(dir, { recursive: true, force: true });
+    // Windows：删除与「后台仍在写盘的下载」会撞车，`force` 不覆盖这个竞态。
+    // 目录最终一定会空，重试即可（同 classroom-cordis.test.mjs 里的处理）。
+    for (let attempt = 0; ; attempt += 1) {
+      try { await rm(dir, { recursive: true, force: true }); break; }
+      catch (error) {
+        if (attempt >= 10 || !['ENOTEMPTY', 'EBUSY', 'EPERM'].includes(error?.code)) throw error;
+        await new Promise(resolve => setTimeout(resolve, 20 * (attempt + 1)));
+      }
+    }
   }
 }
 

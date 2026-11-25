@@ -44,20 +44,13 @@ function code(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 }
 
-test('两个校园数据源各自导出错误翻译，且 todos() 的返回值已经翻译过', () => {
-  // 拆包前这条测的是 `source/campus` 一个文件里有两个翻译函数；
-  // 拆开后它们分居两个包，断言也随之分开。
-  const xuezai = readFileSync(path.join(SOURCE, 'xuezai', 'src', 'xzzd.js'), 'utf8');
-  const xuezaiIndex = readFileSync(path.join(SOURCE, 'xuezai', 'src', 'index.js'), 'utf8');
-  assert.match(`${xuezai}\n${xuezaiIndex}`, /translateXzzdError/,
-    'xuezai 应有 translateXzzdError（可在 xzzd.js 或 index.js）');
-  assert.match(xuezaiIndex, /translateXzzdError\(toError\(error\)\)/,
-    'xuezai 的 todos() 没有把错误交给 translateXzzdError —— 下游又得自己翻');
-
-  const ptaIndex = readFileSync(path.join(SOURCE, 'pta', 'src', 'index.js'), 'utf8');
-  assert.match(ptaIndex, /translatePtaError/, 'pta 应有 translatePtaError');
-  assert.match(ptaIndex, /translatePtaError\(toError\(error\)\)/,
-    'pta 的 todos() 没有把错误交给 translatePtaError');
+test('保留下来的数据源把错误留在自己包里', () => {
+  // 拆包前这条测的是 `source/campus` 一个文件里有两个翻译函数；拆开后它们分居
+  // 两个包。现在只保留 classroom 链路，它用的是自己的错误类型而不是翻译函数，
+  // 但同一条不变量成立：错误归数据源所有，下游不该再抄一份码表。
+  const index = readFileSync(path.join(SOURCE, 'classroom', 'src', 'index.js'), 'utf8');
+  assert.match(index, /from '\.\/errors\.js'/, 'classroom 应从自己的 errors 模块取错误类型');
+  assert.match(index, /throw new ClassroomError\(/, 'classroom 应抛自己的错误类型，而不是拼字符串');
 });
 
 test('页面层不再定义数据源的错误码表', () => {
@@ -89,7 +82,7 @@ test('每个 source 包的设置分区都由自己注册（凭证在设置里配
   // 所以只钉住**有凭据**的那几个必须自己注册 `settings.section`。
   // 拆包后 `campus` 已退役，它那一格拆成 `xuezai`(CAS，不占分区) 与 `pta`(Cookie，自己占一格)。
   // 所以这里列的是**真有独立凭证**的包：CAS 那批共用「浙大一卡通」，不在此列。
-  const mustRegister = ['login', 'pta', 'cc98', 'xxt', 'netproxy'];
+  const mustRegister = ['login'];
   const violations = [];
   for (const pkg of mustRegister) {
     const client = path.join(SOURCE, pkg, 'src', 'client.jsx');

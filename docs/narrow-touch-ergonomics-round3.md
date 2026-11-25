@@ -107,6 +107,8 @@ spellcheck=false`，字号仍是第二轮定下的 16px。
 `page-planning` 10/10、`page-study` 220/220、`page-planning+quiz` 中 75/78
 （3 条与本次无关的既有失败，见 §0）。
 
+（`page-planning` 已于 2026-11 退役，这一行是当时的回归记录。）
+
 ---
 
 ## 3. 需要人决定的两件事

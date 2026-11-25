@@ -1,0 +1,63 @@
+{
+  "site": "zulg.zju.edu.cn",
+  "exploredAt": "2026-11-20",
+  "auth": "无（全站免登录）",
+  "note": "博达 Visual SiteBuilder 9。列表是服务端渲染在 ul.list5 里（不是 JS 动态加载）。",
+  "endpoints": [
+    {
+      "id": "notice-daily",
+      "name": "日常通知（高频，停电/停水/食堂）",
+      "method": "GET",
+      "url": "https://zulg.zju.edu.cn/notice/rctz.htm",
+      "status": "verified",
+      "returns": "HTML 约 25KB；列表在 ul.list5 > li > a[title]，日期在 .time 的 h3(日)+h6(年月)",
+      "note": "实测 15 条，最新 2026-11-20。日期必须 h3+h6 拼装，页面无整串日期"
+    },
+    {
+      "id": "notice-gsgg",
+      "name": "公示公告（低频）",
+      "method": "GET",
+      "url": "https://zulg.zju.edu.cn/notice/gsgg.htm",
+      "status": "verified",
+      "returns": "HTML；同 list5 结构，实测 15 条",
+      "note": "最新仅 2026-05-25，低频栏目"
+    },
+    {
+      "id": "notice-procurement",
+      "name": "采购公告",
+      "method": "GET",
+      "url": "https://zulg.zju.edu.cn/notice/procurements.htm",
+      "status": "unverified",
+      "returns": "未测"
+    },
+    {
+      "id": "article-info",
+      "name": "公告正文",
+      "method": "GET",
+      "url": "https://zulg.zju.edu.cn/info/{treeid}/{newsid}.htm",
+      "status": "verified",
+      "returns": "HTML 正文；含停电时段、影响楼栋、联系电话",
+      "note": "实测 /info/1036/104067.htm → 11月22日 8:00-17:00 教二变区域，电话 87951521"
+    },
+    {
+      "id": "article-content-jsp",
+      "name": "公告正文（JSP 变体）",
+      "method": "GET",
+      "url": "https://zulg.zju.edu.cn/content.jsp?urltype=news.NewsContentUrl&wbtreeid={treeid}&wbnewsid={newsid}",
+      "status": "verified",
+      "returns": "HTML 正文（部分老条目用这种形式，如部门黄页、2024 年审计通告）"
+    }
+  ],
+  "knownColumns": {
+    "日常通知": "/notice/rctz.htm",
+    "公示公告": "/notice/gsgg.htm",
+    "采购公告": "/notice/procurements.htm",
+    "综合要闻": "/news/headlines.htm",
+    "部门动态": "/news/events.htm",
+    "后勤追光": "/news/people.htm",
+    "集团介绍": "/about/overview.htm",
+    "机构设置": "/about/departments.htm",
+    "部门黄页": "content.jsp?urltype=news.NewsContentUrl&wbtreeid=3581&wbnewsid=70387"
+  },
+  "externalLinkShare": "日常通知约 1/3 条目 href 指向 mp.weixin.qq.com（食堂推广、课程报名），脚本已标 external:true"
+}

@@ -1,0 +1,69 @@
+{
+  "site": "physics.zju.edu.cn",
+  "access": "公开 HTTPS；HTTP 同路径 301 到 HTTPS。固定路径、无凭据、不跟跳转。",
+  "exactNoticeColumns": [
+    {
+      "id": "GET physics.zju.edu.cn/zxxx_69701/list.htm",
+      "column": "研究生教育·最新消息",
+      "verifiesPath": "/zxxx_69701/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://physics.zju.edu.cn/zxxx_69701/list.htm",
+        "status": 200,
+        "column": "研究生教育·最新消息",
+        "displayTitle": "最新消息",
+        "sectionTitle": "研究生教育",
+        "trail": [
+          [
+            "/zxxx_69701/list.htm",
+            "研究生教育"
+          ],
+          [
+            "/zxxx_69701/list.htm",
+            "最新消息"
+          ]
+        ],
+        "count": 15,
+        "total": 24,
+        "pages": 2,
+        "externalLinks": 1,
+        "firstId": "3191876",
+        "firstDate": "2026-07-27"
+      }
+    },
+    {
+      "id": "GET physics.zju.edu.cn/zxxx/list.htm",
+      "column": "本科生教育·最新消息",
+      "verifiesPath": "/zxxx/list.htm",
+      "verifiedAt": "2026-11-22",
+      "transport": "public-https-no-session",
+      "observation": {
+        "url": "https://physics.zju.edu.cn/zxxx/list.htm",
+        "status": 200,
+        "column": "本科生教育·最新消息",
+        "displayTitle": "最新消息",
+        "sectionTitle": "本科生教育",
+        "trail": [
+          [
+            "/zxxx/list.htm",
+            "本科生教育"
+          ],
+          [
+            "/zxxx/list.htm",
+            "最新消息"
+          ]
+        ],
+        "count": 15,
+        "total": 20,
+        "pages": 2,
+        "externalLinks": 3,
+        "firstId": null,
+        "firstDate": "2026-02-26"
+      }
+    }
+  ],
+  "unverified": [
+    "其余物理学院栏目、分页、正文与附件未验证；外链只记地址。"
+  ]
+}

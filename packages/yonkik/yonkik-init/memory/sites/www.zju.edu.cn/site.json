@@ -1,0 +1,21 @@
+{
+  "key": "www.zju.edu.cn",
+  "origin": "https://www.zju.edu.cn",
+  "status": "done",
+  "title": "浙江大学总站",
+  "via": "direct",
+  "requires": [],
+  "auth": {
+    "type": "none"
+  },
+  "rateLimit": {
+    "minIntervalMs": 2200,
+    "concurrency": 1,
+    "source": "default",
+    "evidence": "学院目录页 1 次请求（200，50,720B）。按站点侦察保守默认串行 ≥2s。"
+  },
+  "notes": "Webplus + sui-app 3.0.85 站群。学院数据写在 JS 的 list._links 与学院条目数组里，不在 DOM 的 a 标签中——按 DOM 解析会得到 0 条。本节点价值是提供「学院目录权威映射」（54 条，去学部与自身后 46 个学院主机），用于校核通知站群清单。",
+  "exploredAt": "2026-11-23",
+  "siteJsonAddedAt": "2026-11-23",
+  "siteJsonNote": "R165 补齐：此前该节点 status=done 但缺 site.json（其余 done 节点均有）。"
+}
