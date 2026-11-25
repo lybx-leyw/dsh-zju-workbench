@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="183mm" height="55.57mm" viewBox="0 0 1020 310" xml:lang="en" role="img" aria-labelledby="title desc"><title id="title">Yonkik: Site Selection, Exploration, and Memory Backup</title><desc id="desc">Select a site from existing candidates using memory. Explore two page levels with Playwright. Back up the exploration trace along the selected path to update memory and retain verified scripts for reuse.</desc><style>text{font-family:Arial,Helvetica,sans-serif}</style><defs><marker id="b" viewBox="0 0 10 8" markerWidth="9" markerHeight="8" refX="9" refY="4" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 4L0 8Z" fill="#28567a"/></marker><marker id="g" viewBox="0 0 10 8" markerWidth="9" markerHeight="8" refX="9" refY="4" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 4L0 8Z" fill="#28567a"/></marker></defs>
+<rect x="0" y="0" width="1020" height="310" fill="#ffffff" stroke="none" stroke-width="1.6" rx="0"/>
+<g transform="translate(-21 -5)">
+<text x="189" y="42" text-anchor="middle" font-size="24" fill="#202630" font-weight="600">1. Select Site</text>
+<text x="146" y="120" text-anchor="end" font-size="15" fill="#202630" opacity="0.55"><tspan font-style="italic">Q</tspan><tspan baseline-shift="sub" font-size="10">LLM</tspan><tspan>(A | M)</tspan></text>
+<text x="232" y="120" text-anchor="start" font-size="15" fill="#28567a" opacity="1"><tspan font-style="italic">Q</tspan><tspan baseline-shift="sub" font-size="10">LLM</tspan><tspan>(B | M)</tspan></text>
+<path d="M174.984375 100L135.09375 137" stroke="#202630" stroke-opacity="0.19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M200.171875 100L231.96875 137" stroke="#28567a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" marker-end="url(#b)"/>
+<rect x="168" y="74" width="42" height="26" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.6" rx="4"/>
+<path d="M169 82H209 M177 89H199 M177 94H194" stroke="#28567a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="99" y="138" width="42" height="26" fill="#ffffff" stroke="#202630" stroke-opacity="0.19" stroke-width="1.6" rx="4"/>
+<path d="M100 146H140 M108 153H130 M108 158H125" stroke="#202630" stroke-opacity="0.19" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="223" y="138" width="42" height="26" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.6" rx="4"/>
+<path d="M224 146H264 M232 153H254 M232 158H249" stroke="#28567a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<text x="120" y="187" text-anchor="middle" font-size="17" fill="#202630" font-weight="600">Site A</text>
+<text x="244" y="187" text-anchor="middle" font-size="17" fill="#28567a" font-weight="600">Site B</text>
+</g>
+<g transform="translate(-57 -5)">
+<text x="570" y="42" text-anchor="middle" font-size="24" fill="#202630" font-weight="600">2. Explore Site</text>
+<path d="M555.984375 100L516.09375 137" stroke="#202630" stroke-opacity="0.19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M581.171875 100L612.96875 137" stroke="#28567a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" marker-end="url(#b)"/>
+<path d="M618.5970149253732 164L598.8955223880597 204" stroke="#202630" stroke-opacity="0.19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M629.8507462686567 164L644.776119402985 204" stroke="#28567a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" marker-end="url(#b)"/>
+<rect x="549" y="74" width="42" height="26" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.6" rx="4"/>
+<path d="M550 82H590 M558 89H580 M558 94H575" stroke="#28567a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="480" y="138" width="42" height="26" fill="#ffffff" stroke="#202630" stroke-opacity="0.19" stroke-width="1.6" rx="4"/>
+<path d="M481 146H521 M489 153H511 M489 158H506" stroke="#202630" stroke-opacity="0.19" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="604" y="138" width="42" height="26" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.6" rx="4"/>
+<path d="M605 146H645 M613 153H635 M613 158H630" stroke="#28567a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<text x="591" y="196" text-anchor="end" font-size="15" fill="#28567a">Children(<tspan font-style="italic">p</tspan>) ← Explore<tspan baseline-shift="sub" font-size="11">LLM+Playwright</tspan>(<tspan font-style="italic">p</tspan> | M)</text>
+<path d="M642 232L614 265" fill="none" stroke="#202630" stroke-opacity="0.19" stroke-width="2" stroke-linecap="round"/>
+<path d="M659 232L680 265" fill="none" stroke="#28567a" stroke-width="3" stroke-linecap="round" marker-end="url(#b)"/>
+<rect x="581" y="267" width="42" height="26" rx="4" fill="#ffffff" stroke="#202630" stroke-opacity="0.19" stroke-width="1.6"/>
+<path d="M582 275H622 M590 282H612 M590 287H607" fill="none" stroke="#202630" stroke-opacity="0.19" stroke-width="1.25" stroke-linecap="round"/>
+<rect x="668" y="267" width="42" height="26" rx="4" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.6"/>
+<path d="M669 275H709 M677 282H699 M677 287H694" fill="none" stroke="#28567a" stroke-width="1.25" stroke-linecap="round"/>
+<text x="730" y="223" text-anchor="start" font-size="16" fill="#202630">Depth 1</text>
+<text x="730" y="285" text-anchor="start" font-size="16" fill="#202630">Depth 2</text>
+<rect x="571" y="205" width="42" height="26" fill="#ffffff" stroke="#202630" stroke-opacity="0.19" stroke-width="1.6" rx="4"/>
+<path d="M572 213H612 M580 220H602 M580 225H597" stroke="#202630" stroke-opacity="0.19" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="629" y="205" width="42" height="26" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.6" rx="4"/>
+<path d="M630 213H670 M638 220H660 M638 225H655" stroke="#28567a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</g>
+<g transform="translate(-111 -5)">
+<text x="951" y="42" text-anchor="middle" font-size="24" fill="#202630" font-weight="600">3. Back Up Memory</text>
+<rect x="946" y="121" width="172" height="183" rx="11" fill="none" stroke="#28567a" stroke-opacity="0.45" stroke-width="1.5"/>
+<rect x="1000" y="191" width="106" height="107" rx="9" fill="none" stroke="#28567a" stroke-opacity="0.65" stroke-width="1.5"/>
+<path d="M936.984375 100L897.09375 137" stroke="#202630" stroke-opacity="0.19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M993.96875 137L962.171875 100" stroke="#28567a" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" fill="none" marker-end="url(#g)"/>
+<path d="M999.5970149253732 164L979.8955223880597 204" stroke="#202630" stroke-opacity="0.19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M1025.7761194029852 204L1010.8507462686567 164" stroke="#28567a" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" fill="none" marker-end="url(#g)"/>
+<rect x="930" y="74" width="42" height="26" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.6" rx="4"/>
+<path d="M931 82H971 M939 89H961 M939 94H956" stroke="#28567a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="861" y="138" width="42" height="26" fill="#ffffff" stroke="#202630" stroke-opacity="0.19" stroke-width="1.6" rx="4"/>
+<path d="M862 146H902 M870 153H892 M870 158H887" stroke="#202630" stroke-opacity="0.19" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="985" y="138" width="42" height="26" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.6" rx="4"/>
+<path d="M986 146H1026 M994 153H1016 M994 158H1011" stroke="#28567a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="952" y="205" width="42" height="26" fill="#ffffff" stroke="#202630" stroke-opacity="0.19" stroke-width="1.6" rx="4"/>
+<path d="M953 213H993 M961 220H983 M961 225H978" stroke="#202630" stroke-opacity="0.19" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<rect x="1010" y="205" width="42" height="26" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.6" rx="4"/>
+<path d="M1011 213H1051 M1019 220H1041 M1019 225H1036" stroke="#28567a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M1023 232L995 265" fill="none" stroke="#202630" stroke-opacity="0.19" stroke-width="2" stroke-linecap="round"/>
+<path d="M1061 265L1041 232" fill="none" stroke="#28567a" stroke-width="4.2" stroke-linecap="round" marker-end="url(#g)"/>
+<rect x="962" y="267" width="42" height="26" rx="4" fill="#ffffff" stroke="#202630" stroke-opacity="0.19" stroke-width="1.6"/>
+<path d="M963 275H1003 M971 282H993 M971 287H988" fill="none" stroke="#202630" stroke-opacity="0.19" stroke-width="1.25" stroke-linecap="round"/>
+<rect x="1049" y="267" width="42" height="26" rx="4" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.6"/>
+<path d="M1050 275H1090 M1058 282H1080 M1058 287H1075" fill="none" stroke="#28567a" stroke-width="1.25" stroke-linecap="round"/>
+<text x="974" y="190" text-anchor="end" font-size="15" fill="#28567a"><tspan font-style="italic">M</tspan>′ ← Backup<tspan baseline-shift="sub" font-size="10">LLM</tspan>(<tspan font-style="italic">M</tspan>, τ)</text>
+</g>
+<path d="M276 34H406 M635 34H725" stroke="#28567a" stroke-width="1.8" fill="none"/>
+<path d="M396 34H406 M715 34H725" stroke="#28567a" stroke-width="1.8" fill="none" marker-end="url(#b)"/>
+</svg>

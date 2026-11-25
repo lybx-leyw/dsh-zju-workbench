@@ -35,7 +35,7 @@
         "campus-sso"
       ],
       "label": "学在浙大",
-      "summary": "学在浙大 TronClass。**点名接口是 /api/radar/rollcalls**（不是 /api/courses/{cid}/rollcalls，后者 404）。my-courses 42 门 / todos 34KB。登录两阶段：login.mjs prep|submit。",
+      "summary": "学在浙大 TronClass。**点名接口是 /api/radar/rollcalls**（不是 /api/courses/{cid}/rollcalls，后者 404）。my-courses 可返回课程列表 / todos 可返回待办。登录两阶段：login.mjs prep|submit。",
       "endpointCount": 12,
       "wiki": "sites/courses.zju.edu.cn/wiki.md",
       "script": "sites/courses.zju.edu.cn/crawler.mjs",
@@ -121,7 +121,7 @@
             "covers": "课表查询（N253508，含教师/地点/时间/单双周）",
             "confidence": 2,
             "lastVerified": "2026-11-22",
-            "evidence": "2026-2027 秋 实测 13 门课"
+            "evidence": "实测某学期可返回课表"
           },
           {
             "covers": "考试查询（N509070）",
@@ -4220,7 +4220,7 @@
             "covers": "课程列表（courseid/clazzid/cpi/课程名/教师/开课时间）",
             "confidence": 2,
             "lastVerified": "2026-11-20",
-            "evidence": "courselistdata POST 实测 3 门课"
+            "evidence": "courselistdata POST 实测可返回课程列表"
           },
           {
             "covers": "章节目录两级（章 catalog_name + 节 chapter_item#curN）",

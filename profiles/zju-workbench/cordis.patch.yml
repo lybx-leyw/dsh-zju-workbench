@@ -8,3 +8,11 @@
 #
 # 保留本文件而不是删除：`initialize()` 会把它合并进 live profile 的 patch，
 # 将来再加需要配置的 bundle 时直接在这里追加条目即可。
+#
+# ⚠️ 下面这个 `[]` **不能删**。宿主用 `parsePatchList()` 解析 patch，要求它是
+#    "a top-level YAML array of loader patch entries"。只剩注释的文件在 YAML 里
+#    解析成 `null`（不是空数组），全新装的 profile 会直接启动失败：
+#        dsh: overlay ... must be a top-level YAML array of loader patch entries
+#    这一条踩过 —— 退役 dsh-pages 时把条目删干净、忘了留 `[]`，
+#    旧 profile 因为 patch 已存在所以没事，只有全新安装会炸。
+[]

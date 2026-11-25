@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="183mm" height="54.75mm" viewBox="0 70 1220 365" xml:lang="zh-CN" role="img" aria-labelledby="title desc"><title id="title">智云课堂讲义整理：知识树的增量维护与重构</title><desc id="desc">三联图：课件建初树，内容块并行归属，批量合并后取叶并分级重建知识树。</desc><style>text{font-family:'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif}</style>
+<rect x="0" y="0" width="1220" height="435" rx="0" fill="#ffffff"/>
+<polyline points="319,221 338,221" fill="none" stroke="#28567a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="338,221 329,225.5 329,216.5" fill="#28567a"/>
+<polyline points="739,221 758,221" fill="none" stroke="#28567a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="758,221 749,225.5 749,216.5" fill="#28567a"/>
+<rect x="126" y="140" width="72" height="46" rx="5" fill="#ffffff" stroke="#28567a" stroke-width="1.65"/>
+<rect x="132" y="134" width="72" height="46" rx="5" fill="#ffffff" stroke="#28567a" stroke-width="1.65"/>
+<polyline points="141,145 191,145" fill="none" stroke="#28567a" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="168" y="171" font-size="17" fill="#28567a" font-weight="700" text-anchor="middle">PPT</text>
+<polyline points="168,186 168,210" fill="none" stroke="#28567a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="168,210 163.5,201 172.5,201" fill="#28567a"/>
+<rect x="130.5" y="210" width="75" height="32" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="168" y="231.94" font-size="18" fill="#28567a" font-weight="700" text-anchor="middle">本节</text>
+<polyline points="168,242 168,262 101,262 101,283" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="168,262 235,262 235,283" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="72.5" y="283" width="57" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="101" y="305.94" font-size="18" fill="#28567a" font-weight="700" text-anchor="middle">A</text>
+<rect x="206.5" y="283" width="57" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="235" y="305.94" font-size="18" fill="#28567a" font-weight="700" text-anchor="middle">B</text>
+<polyline points="539,178 539,193 416,193 416,213" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="539,193 539,213" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="539,193 662,193 662,213" fill="none" stroke="#28567a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"/>
+<rect x="501.5" y="146" width="75" height="32" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="539" y="167.94" font-size="18" fill="#28567a" font-weight="700" text-anchor="middle">本节</text>
+<rect x="387.5" y="213" width="57" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="416" y="235.94" font-size="18" fill="#28567a" font-weight="700" text-anchor="middle">A</text>
+<rect x="510.5" y="213" width="57" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="539" y="235.94" font-size="18" fill="#28567a" font-weight="700" text-anchor="middle">B</text>
+<rect x="633.5" y="213" width="57" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="662" y="235.94" font-size="18" fill="#28567a" font-weight="700" text-anchor="middle">+ C</text>
+<polyline points="380,295 380,275 405,275 405,248" fill="none" stroke="#28567a" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="405,248 409.5,257 400.5,257" fill="#28567a"/>
+<rect x="353.5" y="295" width="53" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="380" y="317.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">b1</text>
+<polyline points="455,295 455,275 428,275 428,248" fill="none" stroke="#28567a" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="428,248 432.5,257 423.5,257" fill="#28567a"/>
+<rect x="428.5" y="295" width="53" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="455" y="317.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">b2</text>
+<polyline points="539,295 539,275 539,275 539,248" fill="none" stroke="#28567a" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="539,248 543.5,257 534.5,257" fill="#28567a"/>
+<rect x="512.5" y="295" width="53" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="539" y="317.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">b3</text>
+<polyline points="662,295 662,275 662,275 662,248" fill="none" stroke="#28567a" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 4"/>
+<polygon points="662,248 666.5,257 657.5,257" fill="#28567a"/>
+<rect x="635.5" y="295" width="53" height="34" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="662" y="317.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">b4</text>
+<text x="842" y="144" font-size="16" fill="#202630" font-weight="700" text-anchor="middle">批量合并</text>
+<text x="981" y="144" font-size="16" fill="#202630" font-weight="700" text-anchor="middle">取叶摊平</text>
+<text x="1118" y="144" font-size="16" fill="#202630" font-weight="700" text-anchor="middle">分级聚合</text>
+<rect x="784" y="179" width="106" height="32" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="837" y="200.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">b1 + b2</text>
+<polyline points="896,195 945,195" fill="none" stroke="#28567a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="945,195 936,199.5 936,190.5" fill="#28567a"/>
+<rect x="946" y="179" width="60" height="32" rx="3" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.65"/>
+<text x="976" y="200.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">L1</text>
+<rect x="784" y="225" width="106" height="32" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="837" y="246.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">b3</text>
+<polyline points="896,241 945,241" fill="none" stroke="#28567a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="945,241 936,245.5 936,236.5" fill="#28567a"/>
+<rect x="946" y="225" width="60" height="32" rx="3" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.65"/>
+<text x="976" y="246.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">L2</text>
+<rect x="784" y="271" width="106" height="32" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="837" y="292.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">b4</text>
+<polyline points="896,287 945,287" fill="none" stroke="#28567a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="945,287 936,291.5 936,282.5" fill="#28567a"/>
+<rect x="946" y="271" width="60" height="32" rx="3" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.65"/>
+<text x="976" y="292.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">L3</text>
+<polyline points="1012,241 1035,241" fill="none" stroke="#28567a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1035,241 1026,245.5 1026,236.5" fill="#28567a"/>
+<rect x="1081" y="164" width="72" height="30" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="1117" y="184.94" font-size="18" fill="#28567a" font-weight="700" text-anchor="middle">本节</text>
+<polyline points="1117,194 1117,205 1078,205 1078,218" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1117,205 1161,205 1161,218" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="1055" y="218" width="46" height="30" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="1078" y="238.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">甲</text>
+<rect x="1138" y="218" width="46" height="30" rx="3" fill="#28567a" fill-opacity="0.08" stroke="#28567a" stroke-width="1.65"/>
+<text x="1161" y="238.28" font-size="16" fill="#28567a" font-weight="700" text-anchor="middle">乙</text>
+<polyline points="1078,248 1078,270 1057,270 1057,294" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1078,270 1104,270 1104,294" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1161,248 1161,294" fill="none" stroke="#202630" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="1036" y="294" width="42" height="30" rx="3" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.65"/>
+<text x="1057" y="313.95" font-size="15" fill="#28567a" font-weight="700" text-anchor="middle">L1</text>
+<rect x="1083" y="294" width="42" height="30" rx="3" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.65"/>
+<text x="1104" y="313.95" font-size="15" fill="#28567a" font-weight="700" text-anchor="middle">L2</text>
+<rect x="1140" y="294" width="42" height="30" rx="3" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.65"/>
+<text x="1161" y="313.95" font-size="15" fill="#28567a" font-weight="700" text-anchor="middle">L3</text>
+<text x="23" y="103" font-size="28" fill="#202630" font-weight="700" text-anchor="start">a</text>
+<text x="59" y="102" font-size="22" fill="#202630" font-weight="700" text-anchor="start">课件初始化</text>
+<polyline points="23,119 301,119" fill="none" stroke="#202630" stroke-opacity="0.19" stroke-width="1.5" stroke-linecap="round"/>
+<text x="352" y="103" font-size="28" fill="#202630" font-weight="700" text-anchor="start">b</text>
+<text x="388" y="102" font-size="22" fill="#202630" font-weight="700" text-anchor="start">并行归属</text>
+<polyline points="352,119 726,119" fill="none" stroke="#202630" stroke-opacity="0.19" stroke-width="1.5" stroke-linecap="round"/>
+<text x="780" y="103" font-size="28" fill="#202630" font-weight="700" text-anchor="start">c</text>
+<text x="816" y="102" font-size="22" fill="#202630" font-weight="700" text-anchor="start">取叶重构</text>
+<polyline points="780,119 1196,119" fill="none" stroke="#202630" stroke-opacity="0.19" stroke-width="1.5" stroke-linecap="round"/>
+<polyline points="21,382 1199,382" fill="none" stroke="#202630" stroke-opacity="0.19" stroke-width="1.4" stroke-linecap="round"/>
+<polyline points="33,405 58,405" fill="none" stroke="#28567a" stroke-width="2.1" stroke-linecap="round"/>
+<text x="67" y="411" font-size="17" fill="#202630" font-weight="400" text-anchor="start">挂到已有分支</text>
+<polyline points="212,405 237,405" fill="none" stroke="#28567a" stroke-width="2.1" stroke-linecap="round" stroke-dasharray="6 4"/>
+<text x="246" y="411" font-size="17" fill="#202630" font-weight="400" text-anchor="start">新建分支</text>
+<rect x="360" y="397" width="20" height="16" rx="2" fill="#28567a" fill-opacity="0.14" stroke="#28567a" stroke-width="1.65"/>
+<text x="389" y="411" font-size="17" fill="#202630" font-weight="400" text-anchor="start">正文叶</text>
+<text x="1196" y="411" font-size="17" fill="#202630" font-weight="400" text-anchor="end">设计示意</text>
+</svg>
