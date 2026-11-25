@@ -68,7 +68,7 @@ body[data-zw] .zwp-page {
 body[data-zw] .zwp-tree-pane {
   /* `0 1 var(--zw-pane-w)` 而不是 `flex:none`：两侧面板必须能让位给正文。
    * 笔记库那边踩过这个坑（写死宽度后窄窗口把正文挤到 298px）。
-   * 宽度取 `var(--zw-pane-w)`（229px，与页面壳侧栏同一条线）。 */
+   * 宽度取 `var(--zw-pane-w)`（280px，与宿主侧栏同宽 —— 见 ui-shared 里该变量的说明）。 */
   flex: 0 1 var(--zw-pane-w);
   min-width: 190px;
   display: flex;
